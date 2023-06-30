@@ -59,8 +59,8 @@ const { title, getDropdownItemStyle, getDropdownItemClass } = useNav();
 const { locale, translationCh, translationEn } = useTranslationLang();
 
 const ruleForm = reactive({
-  username: "nineven",
-  password: "isummer123",
+  username: "",
+  password: "",
   token: "",
   captcha_key: "",
   captcha_code: ""
