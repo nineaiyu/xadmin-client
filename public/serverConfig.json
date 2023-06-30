@@ -1,0 +1,23 @@
+{
+  "Version": "1.1.0",
+  "Title": "xAdmin",
+  "FixedHeader": true,
+  "HiddenSideBar": false,
+  "MultiTagsCache": false,
+  "KeepAlive": true,
+  "Locale": "zh",
+  "Layout": "vertical",
+  "Theme": "default",
+  "DarkMode": false,
+  "Grey": false,
+  "Weak": false,
+  "HideTabs": false,
+  "SidebarStatus": true,
+  "EpThemeColor": "#409EFF",
+  "ShowLogo": true,
+  "ShowModel": "smart",
+  "MenuArrowIconNoTransition": true,
+  "CachingAsyncRoutes": false,
+  "TooltipEffect": "light",
+  "ResponsiveStorageNameSpace": "responsive-"
+}

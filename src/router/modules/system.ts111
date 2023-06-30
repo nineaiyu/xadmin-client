@@ -1,0 +1,42 @@
+import { $t } from "@/plugins/i18n";
+
+export default {
+  path: "/system",
+  redirect: "/about/index",
+  meta: {
+    title: $t("menus.hssysManagement"),
+    rank: 88
+  },
+  children: [
+    {
+      path: "/system/user/index",
+      name: "User",
+      component: () => import("@/views/system/user/index.vue"),
+      meta: {
+        icon: "flUser",
+        title: $t("menus.hsUser")
+        // roles: ["admin"]
+      }
+    },
+    {
+      path: "/system/role/index",
+      name: "Role",
+      component: () => import("@/views/system/role/index.vue"),
+      meta: {
+        icon: "role",
+        title: $t("menus.hsRole")
+        // roles: ["admin"]
+      }
+    },
+    {
+      path: "/system/menu/index",
+      name: "menu",
+      component: () => import("@/views/system/menu/index.vue"),
+      meta: {
+        icon: "menu",
+        title: $t("menus.hsMenu")
+        // roles: ["admin"]
+      }
+    }
+  ]
+} as RouteConfigsTable;
