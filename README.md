@@ -6,3 +6,8 @@ xadmin-基于 Django+vue3 的 rbac 权限管理系统
 
 Django 做后端服务
 [xadmin-server](https://github.com/nineaiyu/xadmin-server)
+
+### 在线预览
+
+[https://xadmin.dvcloud.xin/](https://xadmin.dvcloud.xin/)
+账号密码：admin/admin123
