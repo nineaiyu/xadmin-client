@@ -225,7 +225,6 @@ onBeforeUnmount(() => {
                   v-model="ruleForm.captcha_code"
                   :placeholder="t('login.verifyCode')"
                   :prefix-icon="useRenderIcon('ri:shield-keyhole-line')"
-                  @keyup.enter="onLogin(ruleFormRef)"
                 >
                   <template v-slot:append>
                     <ReImageVerify v-model:code="ruleForm.captcha_key" />
