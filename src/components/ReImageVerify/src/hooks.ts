@@ -9,7 +9,7 @@ export const useImageVerify = () => {
   function getImgCode() {
     getCaptchaApi().then(res => {
       if (res.code === 1000) {
-        imgUrl.value = `${import.meta.env.VITE_API_DOMAIN}${res.captcha_image}`;
+        imgUrl.value = res.captcha_image;
         imgCode.value = res.captcha_key;
         useUserStoreHook().SET_VERIFY_CODE_LENGTH(res.length);
       }

@@ -235,6 +235,7 @@ const {
                       <el-button
                         :class="buttonClass"
                         link
+                        v-if="hasAuth('upload:systemAvatar')"
                         type="primary"
                         :size="size"
                         :icon="useRenderIcon(Avatar)"
