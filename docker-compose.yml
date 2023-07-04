@@ -1,0 +1,24 @@
+version: "3.2"
+
+services:
+  xadmin-client-build:
+    container_name: xadmin-client-build
+    image: "xadmin-client-build"
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    build:
+      context: .
+      dockerfile: Dockerfile.build
+
+  xadmin-client-prod:
+    container_name: xadmin-client-prod
+    restart: always
+    image: "nginx:stable-alpine"
+    volumes:
+      - ./dist:/usr/share/nginx/html
+    command: ["nginx", "-g", "daemon off;"]
+    #depends_on:
+    #   - xadmin-client-build
+    ports:
+      - 8891:80
