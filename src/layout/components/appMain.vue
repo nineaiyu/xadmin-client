@@ -10,7 +10,7 @@ const props = defineProps({
 
 const { $storage, $config } = useGlobal<GlobalPropertiesApi>();
 
-const keepAlive = computed(() => {
+const isKeepAlive = computed(() => {
   return $config?.KeepAlive;
 });
 
@@ -98,7 +98,7 @@ const transitionMain = defineComponent({
           </el-backtop>
           <transitionMain :route="route">
             <keep-alive
-              v-if="keepAlive"
+              v-if="isKeepAlive"
               :include="usePermissionStoreHook().cachePageList"
             >
               <component
@@ -118,7 +118,7 @@ const transitionMain = defineComponent({
         <div v-else>
           <transitionMain :route="route">
             <keep-alive
-              v-if="keepAlive"
+              v-if="isKeepAlive"
               :include="usePermissionStoreHook().cachePageList"
             >
               <component

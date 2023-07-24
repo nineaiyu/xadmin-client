@@ -23,6 +23,7 @@ import "element-plus/dist/index.css";
 import "./assets/iconfont/iconfont.js";
 import "./assets/iconfont/iconfont.css";
 
+import { addPreventDefault } from "@/utils/preventDefault";
 const app = createApp(App);
 
 // 自定义指令
@@ -44,6 +45,7 @@ app.component("FontIcon", FontIcon);
 // 全局注册按钮级别权限组件
 import { Auth } from "@/components/ReAuth";
 app.component("Auth", Auth);
+addPreventDefault();
 
 getServerConfig(app).then(async config => {
   setupStore(app);
