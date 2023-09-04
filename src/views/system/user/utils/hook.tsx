@@ -1,5 +1,7 @@
+import "./reset.css";
 import dayjs from "dayjs";
 import { message } from "@/utils/message";
+import { zxcvbn } from "@zxcvbn-ts/core";
 import {
   createUserApi,
   deleteUserApi,
@@ -8,25 +10,48 @@ import {
   updateUserApi,
   uploadUserAvatarApi
 } from "@/api/system/user";
-import { ElMessageBox } from "element-plus";
+import {
+  ElForm,
+  ElInput,
+  ElFormItem,
+  ElProgress,
+  ElMessageBox
+} from "element-plus";
 import { type PaginationProps, TableColumns } from "@pureadmin/table";
 import { utils, writeFile } from "xlsx";
-import { reactive, ref, computed, onMounted, toRaw, h } from "vue";
+import {
+  type Ref,
+  reactive,
+  ref,
+  computed,
+  onMounted,
+  toRaw,
+  h,
+  watch
+} from "vue";
 import { addDialog } from "@/components/ReDialog/index";
-import editForm from "../form.vue";
-import avatarForm from "../avatar.vue";
-import { FormItemProps } from "./types";
+import croppingUpload from "../upload.vue";
+import roleForm from "../form/role.vue";
+import editForm from "../form/index.vue";
+import { FormItemProps, RoleFormItemProps } from "./types";
 import { getRoleListApi } from "@/api/system/role";
-import { cloneDeep, isEmpty, isString } from "@pureadmin/utils";
+import {
+  cloneDeep,
+  getKeyList,
+  hideTextAtIndex,
+  isAllEmpty,
+  isEmpty,
+  isString
+} from "@pureadmin/utils";
 import { useRoute } from "vue-router";
-
+import avatar from "./avatar.png";
 const sortOptions = [
   { label: "注册时间 Descending", key: "-date_joined" },
   { label: "注册时间 Ascending", key: "date_joined" },
   { label: "登录时间 Descending", key: "-last_login" },
   { label: "登录时间 Ascending", key: "last_login" }
 ];
-export function useUser() {
+export function useUser(tableRef: Ref) {
   const form = reactive({
     pk: "",
     username: "",
@@ -48,7 +73,9 @@ export function useUser() {
     img: "",
     status: false
   });
-  const manySelectData = ref<FormItemProps[]>([]);
+  const manySelectCount = ref(0);
+  const avatarInfo = ref();
+  const ruleFormRef = ref();
   const pagination = reactive<PaginationProps>({
     total: 0,
     pageSize: 10,
@@ -72,7 +99,7 @@ export function useUser() {
       minWidth: 160,
       cellRenderer: ({ row }) => (
         <el-image
-          class="w-[100px] h-[100px]"
+          class="w-[60px] h-[60px]"
           fit={"contain"}
           src={row.avatar}
           loading={"lazy"}
@@ -114,7 +141,8 @@ export function useUser() {
     {
       label: "手机号码",
       prop: "mobile",
-      minWidth: 90
+      minWidth: 90,
+      formatter: ({ mobile }) => hideTextAtIndex(mobile, { start: 3, end: 6 })
     },
     {
       label: "状态",
@@ -163,6 +191,20 @@ export function useUser() {
       "dark:hover:!text-primary"
     ];
   });
+  // 重置的新密码
+  const pwdForm = reactive({
+    newPwd: ""
+  });
+  const pwdProgress = [
+    { color: "#e74242", text: "非常弱" },
+    { color: "#EFBD47", text: "弱" },
+    { color: "#ffa500", text: "一般" },
+    { color: "#1bbf1b", text: "强" },
+    { color: "#008000", text: "非常强" }
+  ];
+  // 当前密码强度（0-4）
+  const curScore = ref();
+  const roleOptions = ref([]);
 
   function onChange({ row, index }) {
     ElMessageBox.confirm(
@@ -233,24 +275,31 @@ export function useUser() {
   }
 
   function handleSelectionChange(val) {
-    manySelectData.value = val;
+    manySelectCount.value = val.length;
+  }
+  function onSelectionCancel() {
+    manySelectCount.value = 0;
+    // 用于多选表格，清空用户的选择
+    tableRef.value.getTableRef().clearSelection();
   }
   function handleManyDelete() {
-    if (manySelectData.value.length === 0) {
+    if (manySelectCount.value === 0) {
       message("数据未选择", { type: "error" });
       return;
     }
+    const manySelectData = tableRef.value.getTableRef().getSelectionRows();
     manyDeleteUserApi({
-      pks: JSON.stringify(manySelectData.value.map(res => res.pk))
+      pks: JSON.stringify(getKeyList(manySelectData, "pk"))
     }).then(async res => {
       if (res.code === 1000) {
-        message(`批量删除了${manySelectData.value.length}条数据`, {
+        message(`批量删除了${manySelectCount.value}条数据`, {
           type: "success"
         });
         await onSearch();
       } else {
         message(`操作失败，${res.detail}`, { type: "error" });
       }
+      tableRef.value.getTableRef().clearSelection();
     });
   }
 
@@ -268,46 +317,31 @@ export function useUser() {
     }, 500);
   }
 
-  const uploadAvatar = (uid: number, file: any, callback: Function) => {
+  const uploadAvatar = (
+    uid: number,
+    file: any,
+    callBack: Function,
+    errorBack: Function = null
+  ) => {
     const data = new FormData();
     data.append("file", file);
     uploadUserAvatarApi({ uid: uid }, data).then(res => {
       if (res.code === 1000) {
-        callback();
+        callBack(res);
       } else {
-        message("头像上传失败" + res.detail, { type: "error" });
+        if (errorBack) {
+          errorBack(res);
+        }
       }
     });
   };
 
-  const resetForm = async formEl => {
-    if (!formEl) return;
-    formEl.resetFields();
-    await onSearch();
-  };
-  function openDialog(
-    is_edit = false,
-    is_reset_password = false,
-    row?: FormItemProps
-  ) {
-    let title = "新增用户";
-    if (is_edit) {
-      title = `修改${row.username}用户`;
-    }
-    if (is_reset_password) {
-      title = `重置${row.username}密码`;
-      // setTimeout(function () {
-      //   formRef.value!.clearValidate([
-      //     "is_active",
-      //     "mobile",
-      //     "email",
-      //   ]);
-      // }, 30);
-    }
+  function openDialog(title = "新增", row?: FormItemProps) {
     addDialog({
-      title: title,
+      title: `${title}用户`,
       props: {
         formInline: {
+          title,
           pk: row?.pk ?? "",
           username: row?.username ?? "",
           nickname: row?.nickname ?? "",
@@ -317,20 +351,17 @@ export function useUser() {
           sex: row?.sex ?? 0,
           roles: row?.roles ?? [],
           password: row?.password ?? "",
-          repeatPassword: row?.password ?? "",
           is_active: row?.is_active ?? true,
-          is_edit: is_edit,
-          is_reset_password: is_reset_password
+          remark: row?.remark ?? ""
         }
       },
-      width: "40%",
+      width: "46%",
       draggable: true,
       fullscreenIcon: true,
       closeOnClickModal: false,
       contentRenderer: () => h(editForm, { ref: formRef }),
       beforeSure: (done, { options }) => {
         const FormRef = formRef.value.getRef();
-        const avatarFile = formRef.value.getAvatarFile();
         const curData = options.props.formInline as FormItemProps;
         async function chores(detail) {
           message(detail, {
@@ -339,26 +370,28 @@ export function useUser() {
           done(); // 关闭弹框
           await onSearch(); // 刷新表格数据
         }
-        FormRef.validate(async valid => {
+        FormRef.validate(valid => {
           if (valid) {
-            if (is_edit || is_reset_password) {
-              updateUserApi(curData.pk, curData).then(async res => {
+            console.log("curData", curData);
+            // 表单规则校验通过
+            if (title === "新增") {
+              createUserApi(curData).then(async res => {
                 if (res.code === 1000) {
+                  // if (avatarFile.file) {
+                  //   uploadAvatar(res.data.pk, avatarFile.file, async () => {
+                  //     await chores(res.detail);
+                  //   });
+                  // } else {
                   await chores(res.detail);
+                  // }
                 } else {
                   message(`操作失败，${res.detail}`, { type: "error" });
                 }
               });
             } else {
-              createUserApi(curData).then(async res => {
+              updateUserApi(curData.pk, curData).then(async res => {
                 if (res.code === 1000) {
-                  if (avatarFile.file) {
-                    uploadAvatar(res.data.pk, avatarFile.file, async () => {
-                      await chores(res.detail);
-                    });
-                  } else {
-                    await chores(res.detail);
-                  }
+                  await chores(res.detail);
                 } else {
                   message(`操作失败，${res.detail}`, { type: "error" });
                 }
@@ -369,23 +402,21 @@ export function useUser() {
       }
     });
   }
-  const getRoleData = () => {
-    loading.value = true;
-    getRoleListApi({ page: 1, size: 100 }).then(res => {
-      if (res.code === 1000) {
-        roleData.value = res.data.results;
-      }
-      loading.value = false;
-    });
+
+  const resetForm = async formEl => {
+    if (!formEl) return;
+    formEl.resetFields();
+    await onSearch();
   };
 
   const exportExcel = () => {
-    if (manySelectData.value.length === 0) {
+    if (manySelectCount.value === 0) {
       message("数据未选择", { type: "error" });
       return;
     }
     loading.value = true;
-    const res: string[][] = manySelectData.value.map((item: FormItemProps) => {
+    const manySelectData = tableRef.value.getTableRef().getSelectionRows();
+    const res: string[][] = manySelectData.map((item: FormItemProps) => {
       const arr = [];
       columns.forEach((column: TableColumns | any) => {
         if (column.label) {
@@ -409,44 +440,37 @@ export function useUser() {
     loading.value = false;
   };
 
-  function updateAvatarDialog(img, row?: FormItemProps, is_edit = false) {
-    currentAvatarData.img = "";
-    currentAvatarData.file = "";
-    currentAvatarData.status = false;
+  /** 上传头像 */
+  function handleUpload(row) {
     addDialog({
-      title: `修改用户头像`,
-      props: {
-        formInline: {
-          pk: row?.pk ?? "",
-          username: row?.username ?? "",
-          nickname: row?.nickname ?? "",
-          avatar: img ? img : row?.avatar ?? "",
-          is_edit: is_edit
-        }
-      },
-      width: "60%",
+      title: `更新用户 ${row.username} 的头像`,
+      width: "40%",
       draggable: true,
-      fullscreenIcon: true,
       closeOnClickModal: false,
-      contentRenderer: () => h(avatarForm, { ref: formRef }),
+      contentRenderer: () =>
+        h(croppingUpload, {
+          imgSrc: row.avatar ?? avatar,
+          onCropper: info => (avatarInfo.value = info)
+        }),
       beforeSure: done => {
-        const FormRef = formRef.value.getRef();
-        const avatarFile = formRef.value.getAvatarFile();
-        const avatarImg = formRef.value.getAvatarImg();
-        FormRef.validate(async valid => {
-          currentAvatarData.file = avatarFile;
-          currentAvatarData.img = avatarImg;
-          if (valid && is_edit) {
-            uploadAvatar(row.pk, avatarFile, async () => {
-              message("头像上传成功", { type: "success" });
-              currentAvatarData.status = true;
-              onSearch();
-              done(); // 关闭弹框
-            });
-          } else {
-            done(); // 关闭弹框
-          }
+        console.log("裁剪后的图片信息：", avatarInfo.value);
+        const avatarFile = new File([avatarInfo.value.blob], "avatar.png", {
+          type: avatarInfo.value.blob.type,
+          lastModified: Date.now()
         });
+        uploadAvatar(
+          row.pk,
+          avatarFile,
+          () => {
+            message("头像更新成功", { type: "success" });
+            onSearch();
+            done();
+          },
+          res => {
+            message("头像上传失败" + res.detail, { type: "error" });
+            done();
+          }
+        );
       }
     });
   }
@@ -462,7 +486,132 @@ export function useUser() {
       form.pk = parameter.pk;
     }
     await onSearch();
+    // 角色列表
+    roleOptions.value = (
+      await getRoleListApi({ page: 1, size: 1000 })
+    ).data.results;
   });
+
+  watch(
+    pwdForm,
+    ({ newPwd }) =>
+      (curScore.value = isAllEmpty(newPwd) ? -1 : zxcvbn(newPwd).score)
+  );
+
+  /** 分配角色 */
+  async function handleRole(row) {
+    addDialog({
+      title: `分配 ${row.username} 用户的角色`,
+      props: {
+        formInline: {
+          username: row?.username ?? "",
+          nickname: row?.nickname ?? "",
+          roleOptions: roleOptions.value ?? [],
+          ids: row?.roles ?? []
+        }
+      },
+      width: "400px",
+      draggable: true,
+      fullscreenIcon: true,
+      closeOnClickModal: false,
+      contentRenderer: () => h(roleForm),
+      beforeSure: (done, { options }) => {
+        const curData = options.props.formInline as RoleFormItemProps;
+        updateUserApi(row.pk, {
+          roles: curData.ids,
+          username: row.username
+        }).then(async res => {
+          if (res.code === 1000) {
+            message(`用户 ${row.username} 角色分配成功`, {
+              type: "success"
+            });
+            onSearch();
+          } else {
+            message(`操作失败，${res.detail}`, { type: "error" });
+          }
+          done(); // 关闭弹框
+        });
+      }
+    });
+  }
+
+  /** 重置密码 */
+  function handleReset(row) {
+    addDialog({
+      title: `重置 ${row.username} 用户的密码`,
+      width: "30%",
+      draggable: true,
+      closeOnClickModal: false,
+      contentRenderer: () => (
+        <>
+          <ElForm ref={ruleFormRef} model={pwdForm}>
+            <ElFormItem
+              prop="newPwd"
+              rules={[
+                {
+                  required: true,
+                  message: "请输入新密码",
+                  trigger: "blur"
+                }
+              ]}
+            >
+              <ElInput
+                clearable
+                show-password
+                type="password"
+                v-model={pwdForm.newPwd}
+                placeholder="请输入新密码"
+              />
+            </ElFormItem>
+          </ElForm>
+          <div class="mt-4 flex">
+            {pwdProgress.map(({ color, text }, idx) => (
+              <div
+                class="w-[19vw]"
+                style={{ marginLeft: idx !== 0 ? "4px" : 0 }}
+              >
+                <ElProgress
+                  striped
+                  striped-flow
+                  duration={curScore.value === idx ? 6 : 0}
+                  percentage={curScore.value >= idx ? 100 : 0}
+                  color={color}
+                  stroke-width={10}
+                  show-text={false}
+                />
+                <p
+                  class="text-center"
+                  style={{ color: curScore.value === idx ? color : "" }}
+                >
+                  {text}
+                </p>
+              </div>
+            ))}
+          </div>
+        </>
+      ),
+      closeCallBack: () => (pwdForm.newPwd = ""),
+      beforeSure: done => {
+        ruleFormRef.value.validate(valid => {
+          if (valid) {
+            updateUserApi(row.pk, {
+              password: pwdForm.newPwd,
+              username: row.username
+            }).then(async res => {
+              if (res.code === 1000) {
+                message(`已成功重置 ${row.username} 用户的密码`, {
+                  type: "success"
+                });
+              } else {
+                message(`操作失败，${res.detail}`, { type: "error" });
+              }
+              done(); // 关闭弹框
+            });
+          }
+        });
+      }
+    });
+  }
 
   return {
     form,
@@ -473,14 +622,17 @@ export function useUser() {
     buttonClass,
     sortOptions,
     roleData,
+    manySelectCount,
     currentAvatarData,
     exportExcel,
-    getRoleData,
     onSearch,
     openDialog,
-    updateAvatarDialog,
+    onSelectionCancel,
     resetForm,
+    handleRole,
     handleDelete,
+    handleUpload,
+    handleReset,
     handleManyDelete,
     handleSizeChange,
     handleCurrentChange,

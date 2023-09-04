@@ -254,7 +254,7 @@ watch(searchValue, val => {
                     :class="buttonClass"
                     link
                     type="danger"
-                    :icon="useRenderIcon(Refresh)"
+                    :icon="useRenderIcon(Delete)"
                   >
                     批量删除
                   </el-button>

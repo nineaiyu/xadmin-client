@@ -1,6 +1,7 @@
 // 虽然字段很少 但是抽离出来 后续有扩展字段需求就很方便了
 
 interface FormItemProps {
+  title?: string;
   /** ID */
   pk?: number;
   /** 用户名 */
@@ -19,17 +20,25 @@ interface FormItemProps {
   roles?: number[];
   /** 密码 */
   password?: string;
-  /** 确认密码 */
-  repeatPassword?: string;
   /** 是否激活 */
   is_active?: boolean;
-  /** 是否是编辑模式 */
-  is_edit?: boolean;
-  /** 是否是重置密码 */
-  is_reset_password?: boolean;
+  /** 备注 */
+  remark?: string;
 }
 interface FormProps {
   formInline: FormItemProps;
 }
 
-export type { FormItemProps, FormProps };
+interface RoleFormItemProps {
+  username: string;
+  nickname: string;
+  /** 角色列表 */
+  roleOptions: any[];
+  /** 选中的角色列表 */
+  ids: Record<number, unknown>[];
+}
+interface RoleFormProps {
+  formInline: RoleFormItemProps;
+}
+
+export type { FormItemProps, FormProps, RoleFormItemProps, RoleFormProps };

@@ -8,8 +8,8 @@
 <script lang="ts">
 import { defineComponent, nextTick } from "vue";
 import { ElConfigProvider } from "element-plus";
-import zhCn from "element-plus/lib/locale/lang/zh-cn";
-import en from "element-plus/lib/locale/lang/en";
+import zhCn from "element-plus/dist/locale/zh-cn.mjs";
+import en from "element-plus/dist/locale/en.mjs";
 import { ReDialog } from "@/components/ReDialog";
 
 import { useWatermark } from "@pureadmin/utils";

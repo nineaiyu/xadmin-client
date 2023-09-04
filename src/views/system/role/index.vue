@@ -18,6 +18,7 @@ defineOptions({
 });
 
 const formRef = ref();
+const tableRef = ref();
 const {
   form,
   loading,
@@ -25,6 +26,8 @@ const {
   dataList,
   pagination,
   sortOptions,
+  manySelectCount,
+  onSelectionCancel,
   onSearch,
   resetForm,
   openDialog,
@@ -33,7 +36,7 @@ const {
   handleSizeChange,
   handleCurrentChange,
   handleSelectionChange
-} = useRole();
+} = useRole(tableRef);
 </script>
 
 <template>
@@ -106,6 +109,29 @@ const {
 
     <PureTableBar title="角色管理" :columns="columns" @refresh="onSearch(true)">
       <template #buttons>
+        <div v-if="manySelectCount > 0" class="w-[300px]">
+          <span
+            style="font-size: var(--el-font-size-base)"
+            class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
+          >
+            已选 {{ manySelectCount }} 项
+          </span>
+          <el-button type="primary" text @click="onSelectionCancel">
+            取消选择
+          </el-button>
+          <el-popconfirm
+            :title="`是否确认批量删除${manySelectCount}条数据?`"
+            @confirm="handleManyDelete"
+            v-if="hasAuth('manyDelete:systemRole')"
+          >
+            <template #reference>
+              <el-button type="danger" plain :icon="useRenderIcon(Delete)">
+                批量删除
+              </el-button>
+            </template>
+          </el-popconfirm>
+        </div>
+
         <el-button
           v-if="hasAuth('create:systemRole')"
           type="primary"
@@ -114,20 +140,10 @@ const {
         >
           新增角色
         </el-button>
-        <el-popconfirm
-          title="是否确认批量删除?"
-          @confirm="handleManyDelete"
-          v-if="hasAuth('manyDelete:systemRole')"
-        >
-          <template #reference>
-            <el-button type="danger" plain :icon="useRenderIcon(Delete)">
-              批量删除
-            </el-button>
-          </template>
-        </el-popconfirm>
       </template>
       <template v-slot="{ size, dynamicColumns }">
         <pure-table
+          ref="tableRef"
           border
           align-whole="center"
           showOverflowTooltip

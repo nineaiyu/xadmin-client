@@ -7,8 +7,8 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Password from "@iconify-icons/ri/lock-password-line";
 import Avatar from "@iconify-icons/ri/user-3-fill";
 import More from "@iconify-icons/ep/more-filled";
-// import Role from "@iconify-icons/ri/admin-line";
 import Delete from "@iconify-icons/ep/delete";
+import Role from "@iconify-icons/ri/admin-line";
 import EditPen from "@iconify-icons/ep/edit-pen";
 import Search from "@iconify-icons/ep/search";
 import Refresh from "@iconify-icons/ep/refresh";
@@ -22,6 +22,7 @@ defineOptions({
 });
 
 const formRef = ref();
+const tableRef = ref();
 const {
   form,
   loading,
@@ -30,17 +31,21 @@ const {
   pagination,
   buttonClass,
   sortOptions,
+  manySelectCount,
   onSearch,
   exportExcel,
   resetForm,
   openDialog,
   handleDelete,
   handleManyDelete,
+  onSelectionCancel,
   handleSizeChange,
-  updateAvatarDialog,
+  handleUpload,
+  handleReset,
+  handleRole,
   handleCurrentChange,
   handleSelectionChange
-} = useUser();
+} = useUser(tableRef);
 </script>
 
 <template>
@@ -128,6 +133,29 @@ const {
         @refresh="onSearch(true)"
       >
         <template #buttons>
+          <div v-if="manySelectCount > 0" class="w-[300px]">
+            <span
+              style="font-size: var(--el-font-size-base)"
+              class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
+            >
+              已选 {{ manySelectCount }} 项
+            </span>
+            <el-button type="primary" text @click="onSelectionCancel">
+              取消选择
+            </el-button>
+            <el-popconfirm
+              :title="`是否确认批量删除${manySelectCount}条数据?`"
+              @confirm="handleManyDelete"
+              v-if="hasAuth('manyDelete:systemUser')"
+            >
+              <template #reference>
+                <el-button type="danger" plain :icon="useRenderIcon(Delete)">
+                  批量删除
+                </el-button>
+              </template>
+            </el-popconfirm>
+          </div>
+
           <el-button
             v-if="hasAuth('create:systemUser')"
             type="primary"
@@ -136,17 +164,6 @@ const {
           >
             新增用户
           </el-button>
-          <el-popconfirm
-            title="是否确认批量删除?"
-            @confirm="handleManyDelete"
-            v-if="hasAuth('manyDelete:systemUser')"
-          >
-            <template #reference>
-              <el-button type="danger" plain :icon="useRenderIcon(Delete)">
-                批量删除
-              </el-button>
-            </template>
-          </el-popconfirm>
           <el-button
             v-optimize="{
               event: 'click',
@@ -163,6 +180,7 @@ const {
         </template>
         <template v-slot="{ size, dynamicColumns }">
           <pure-table
+            ref="tableRef"
             border
             adaptive
             align-whole="center"
@@ -198,7 +216,7 @@ const {
                 type="primary"
                 v-if="hasAuth('update:systemUser')"
                 :size="size"
-                @click="openDialog(true, false, row)"
+                @click="openDialog('编辑', row)"
                 :icon="useRenderIcon(EditPen)"
               >
                 修改
@@ -239,7 +257,7 @@ const {
                         type="primary"
                         :size="size"
                         :icon="useRenderIcon(Avatar)"
-                        @click="updateAvatarDialog(row.avatar, row, true)"
+                        @click="handleUpload(row)"
                       >
                         修改头像
                       </el-button>
@@ -252,9 +270,21 @@ const {
                         type="primary"
                         :size="size"
                         :icon="useRenderIcon(Password)"
-                        @click="openDialog(false, true, row)"
+                        @click="handleReset(row)"
                       >
                         重置密码
+                      </el-button>
+                    </el-dropdown-item>
+                    <el-dropdown-item>
+                      <el-button
+                        :class="buttonClass"
+                        link
+                        type="primary"
+                        :size="size"
+                        :icon="useRenderIcon(Role)"
+                        @click="handleRole(row)"
+                      >
+                        分配角色
                       </el-button>
                     </el-dropdown-item>
                   </el-dropdown-menu>

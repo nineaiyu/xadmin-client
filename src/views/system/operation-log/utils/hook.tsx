@@ -1,19 +1,19 @@
 import dayjs from "dayjs";
 import { message } from "@/utils/message";
 import { type PaginationProps } from "@pureadmin/table";
-import { reactive, ref, onMounted, toRaw } from "vue";
+import { reactive, ref, onMounted, toRaw, type Ref } from "vue";
 import {
   deleteOperationLogApi,
   getOperationLogListApi,
   manyDeleteOperationLogApi
 } from "@/api/system/operation";
 import { useRouter } from "vue-router";
-
+import { getKeyList } from "@pureadmin/utils";
 const sortOptions = [
   { label: "添加时间 Descending", key: "-created_time" },
   { label: "添加时间 Ascending", key: "created_time" }
 ];
-export function useRole() {
+export function useRole(tableRef: Ref) {
   const form = reactive({
     ipaddress: "",
     system: "",
@@ -26,7 +26,7 @@ export function useRole() {
   });
   const router = useRouter();
 
-  const manyPks = ref("");
+  const manySelectCount = ref(0);
   const dataList = ref([]);
   const loading = ref(true);
   const pagination = reactive<PaginationProps>({
@@ -147,25 +147,31 @@ export function useRole() {
   }
 
   function handleSelectionChange(val) {
-    manyPks.value = val.map(res => res.pk);
+    manySelectCount.value = val.length;
+  }
+  function onSelectionCancel() {
+    manySelectCount.value = 0;
+    // 用于多选表格，清空用户的选择
+    tableRef.value.getTableRef().clearSelection();
   }
   function handleManyDelete() {
-    if (manyPks.value.length === 0) {
+    if (manySelectCount.value === 0) {
       message("数据未选择", { type: "error" });
       return;
     }
-    manyDeleteOperationLogApi({ pks: JSON.stringify(manyPks.value) }).then(
-      async res => {
-        if (res.code === 1000) {
-          message(`批量删除了${manyPks.value.length}条数据`, {
-            type: "success"
-          });
-          await onSearch();
-        } else {
-          message(`操作失败，${res.detail}`, { type: "error" });
-        }
+    const manySelectData = tableRef.value.getTableRef().getSelectionRows();
+    manyDeleteOperationLogApi({
+      pks: JSON.stringify(getKeyList(manySelectData, "pk"))
+    }).then(async res => {
+      if (res.code === 1000) {
+        message(`批量删除了${manySelectCount.value}条数据`, {
+          type: "success"
+        });
+        await onSearch();
+      } else {
+        message(`操作失败，${res.detail}`, { type: "error" });
       }
-    );
+    });
   }
 
   async function onSearch(init = false) {
@@ -200,6 +206,8 @@ export function useRole() {
     dataList,
     pagination,
     sortOptions,
+    manySelectCount,
+    onSelectionCancel,
     onSearch,
     resetForm,
     handleDelete,
