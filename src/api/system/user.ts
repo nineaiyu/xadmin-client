@@ -27,5 +27,11 @@ export const manyDeleteUserApi = (data?: object) => {
 };
 
 export const uploadUserAvatarApi = (params?: object, data?: object) => {
-  return http.upload<Result>("/api/system/upload", params, data);
+  return http.upload<Result>("/api/system/user/upload", params, data);
+};
+
+export const updateUserPasswordApi = (data?: object) => {
+  return http.request<Result>("post", "/api/system/user/reset_password", {
+    data: data
+  });
 };

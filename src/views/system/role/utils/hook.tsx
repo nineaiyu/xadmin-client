@@ -17,6 +17,7 @@ import {
 import { getMenuListApi } from "@/api/system/menu";
 import { handleTree } from "@/utils/tree";
 import { getKeyList } from "@pureadmin/utils";
+import { hasAuth } from "@/router/utils";
 
 const sortOptions = [
   { label: "添加时间 Descending", key: "-created_time" },
@@ -77,6 +78,7 @@ export function useRole(tableRef: Ref) {
           inactive-value={false}
           active-text="已启用"
           inactive-text="已停用"
+          disabled={!hasAuth("update:systemRole")}
           inline-prompt
           style={switchStyle.value}
           onChange={() => onChange(scope as any)}

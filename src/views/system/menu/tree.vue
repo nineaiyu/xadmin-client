@@ -231,11 +231,10 @@ watch(searchValue, val => {
                 重置状态
               </el-button>
             </el-dropdown-item>
-            <el-dropdown-item>
+            <el-dropdown-item v-if="hasAuth('list:systemMenu')">
               <el-button
                 :class="buttonClass"
                 link
-                v-if="hasAuth('list:systemMenu')"
                 type="primary"
                 :icon="useRenderIcon(Refresh)"
                 @click="getMenuData"
@@ -243,14 +242,13 @@ watch(searchValue, val => {
                 刷新菜单
               </el-button>
             </el-dropdown-item>
-            <el-dropdown-item>
+            <el-dropdown-item v-if="hasAuth('manyDelete:systemMenu')">
               <el-popconfirm
                 title="是否确认批量删除选中节点?"
                 @confirm="handleManyDelete(treeRef)"
               >
                 <template #reference>
                   <el-button
-                    v-if="hasAuth('manyDelete:systemMenu')"
                     :class="buttonClass"
                     link
                     type="danger"

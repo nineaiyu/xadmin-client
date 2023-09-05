@@ -8,6 +8,7 @@ import {
   getUserListApi,
   manyDeleteUserApi,
   updateUserApi,
+  updateUserPasswordApi,
   uploadUserAvatarApi
 } from "@/api/system/user";
 import {
@@ -34,7 +35,7 @@ import croppingUpload from "../upload.vue";
 import roleForm from "../form/role.vue";
 import editForm from "../form/index.vue";
 import { FormItemProps, RoleFormItemProps } from "./types";
-import { getRoleListApi } from "@/api/system/role";
+import { empowerRoleApi, getRoleListApi } from "@/api/system/role";
 import {
   cloneDeep,
   getKeyList,
@@ -45,6 +46,7 @@ import {
 } from "@pureadmin/utils";
 import { useRoute } from "vue-router";
 import avatar from "./avatar.png";
+import { hasAuth } from "@/router/utils";
 const sortOptions = [
   { label: "注册时间 Descending", key: "-date_joined" },
   { label: "注册时间 Ascending", key: "date_joined" },
@@ -157,6 +159,7 @@ export function useUser(tableRef: Ref) {
           inactive-value={false}
           active-text="已开启"
           inactive-text="已关闭"
+          disabled={!hasAuth("update:systemUser")}
           inline-prompt
           onChange={() => onChange(scope as any)}
         />
@@ -325,6 +328,7 @@ export function useUser(tableRef: Ref) {
   ) => {
     const data = new FormData();
     data.append("file", file);
+    data.append("uid", uid.toString());
     uploadUserAvatarApi({ uid: uid }, data).then(res => {
       if (res.code === 1000) {
         callBack(res);
@@ -517,9 +521,9 @@ export function useUser(tableRef: Ref) {
       contentRenderer: () => h(roleForm),
       beforeSure: (done, { options }) => {
         const curData = options.props.formInline as RoleFormItemProps;
-        updateUserApi(row.pk, {
-          roles: curData.ids,
-          username: row.username
+        empowerRoleApi({
+          uid: row.pk,
+          roles: curData.ids
         }).then(async res => {
           if (res.code === 1000) {
             message(`用户 ${row.username} 角色分配成功`, {
@@ -594,9 +598,9 @@ export function useUser(tableRef: Ref) {
       beforeSure: done => {
         ruleFormRef.value.validate(valid => {
           if (valid) {
-            updateUserApi(row.pk, {
-              password: pwdForm.newPwd,
-              username: row.username
+            updateUserPasswordApi({
+              uid: row.pk,
+              password: pwdForm.newPwd
             }).then(async res => {
               if (res.code === 1000) {
                 message(`已成功重置 ${row.username} 用户的密码`, {

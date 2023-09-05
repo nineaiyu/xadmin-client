@@ -249,11 +249,10 @@ const {
                 />
                 <template #dropdown>
                   <el-dropdown-menu>
-                    <el-dropdown-item>
+                    <el-dropdown-item v-if="hasAuth('upload:systemAvatar')">
                       <el-button
                         :class="buttonClass"
                         link
-                        v-if="hasAuth('upload:systemAvatar')"
                         type="primary"
                         :size="size"
                         :icon="useRenderIcon(Avatar)"
@@ -262,11 +261,10 @@ const {
                         修改头像
                       </el-button>
                     </el-dropdown-item>
-                    <el-dropdown-item>
+                    <el-dropdown-item v-if="hasAuth('update:systemUserPwd')">
                       <el-button
                         :class="buttonClass"
                         link
-                        v-if="hasAuth('update:systemUser')"
                         type="primary"
                         :size="size"
                         :icon="useRenderIcon(Password)"
@@ -275,7 +273,7 @@ const {
                         重置密码
                       </el-button>
                     </el-dropdown-item>
-                    <el-dropdown-item>
+                    <el-dropdown-item v-if="hasAuth('empower:systemRole')">
                       <el-button
                         :class="buttonClass"
                         link

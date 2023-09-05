@@ -13,16 +13,18 @@ const { menuData } = useMenu();
 </script>
 
 <template>
-  <div class="main">
+  <div class="menu-main">
     <tree
       :form-inline="menuData"
       class="w-[48%] float-left"
       v-if="hasAuth('list:systemMenu')"
     />
-    <edit
-      :form-inline="menuData"
-      class="w-[51%] float-right"
-      v-if="hasAuth('list:systemMenu')"
-    />
+    <el-affix :offset="90">
+      <edit
+        :form-inline="menuData"
+        class="w-[51%] float-right"
+        v-if="hasAuth('list:systemMenu')"
+      />
+    </el-affix>
   </div>
 </template>

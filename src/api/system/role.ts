@@ -25,3 +25,9 @@ export const manyDeleteRoleApi = (data?: object) => {
     params: data
   });
 };
+
+export const empowerRoleApi = (data?: object) => {
+  return http.request<Result>("post", "/api/system/role/empower", {
+    data: data
+  });
+};
