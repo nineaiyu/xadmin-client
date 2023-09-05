@@ -245,6 +245,8 @@ export function useUser(tableRef: Ref) {
             message("已成功修改用户状态", {
               type: "success"
             });
+          } else {
+            message(`操作失败，${res.detail}`, { type: "error" });
           }
         });
       })

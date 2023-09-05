@@ -141,6 +141,8 @@ export function useRole(tableRef: Ref) {
             message("已成功修改角色状态", {
               type: "success"
             });
+          } else {
+            message(`操作失败，${res.detail}`, { type: "error" });
           }
         });
       })
