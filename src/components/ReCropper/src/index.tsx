@@ -59,6 +59,7 @@ const defaultOptions: Options = {
 
 const props = {
   src: { type: String, required: true },
+  errSrc: { type: String, required: true },
   alt: { type: String },
   circled: { type: Boolean, default: false },
   realTimePreview: { type: Boolean, default: true },
@@ -84,7 +85,13 @@ export default defineComponent({
     const inSrc = ref(props.src);
     let scaleX = 1;
     let scaleY = 1;
-
+    const onImageError = () => {
+      inSrc.value = props.errSrc;
+      cropper.value?.destroy();
+      delay(400).then(() => {
+        init();
+      });
+    };
     const debounceRealTimeCroppered = debounce(realTimeCroppered, 80);
 
     const getImageStyle = computed((): CSSProperties => {
@@ -402,6 +409,7 @@ export default defineComponent({
       getWrapperStyle,
       getImageStyle,
       isReady,
+      onImageError,
       croppered,
       onContextmenu
     };
@@ -411,6 +419,7 @@ export default defineComponent({
     const {
       inSrc,
       isReady,
+      onImageError,
       getClass,
       getImageStyle,
       onContextmenu,
@@ -431,6 +440,7 @@ export default defineComponent({
           style={getImageStyle}
           src={inSrc}
           alt={alt}
+          onError={onImageError}
           crossorigin={crossorigin}
         />
       </div>

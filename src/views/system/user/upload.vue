@@ -4,7 +4,8 @@ import { formatBytes } from "@pureadmin/utils";
 import ReCropper from "@/components/ReCropper";
 
 const props = defineProps({
-  imgSrc: String
+  imgSrc: String,
+  errSrc: String
 });
 
 const emit = defineEmits(["cropper"]);
@@ -29,6 +30,7 @@ function onCropper({ base64, blob, info }) {
           <ReCropper
             ref="refCropper"
             :src="props.imgSrc"
+            :errSrc="props.errSrc"
             circled
             @cropper="onCropper"
             @readied="showPopover = true"

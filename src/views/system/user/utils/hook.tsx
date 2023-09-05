@@ -456,6 +456,7 @@ export function useUser(tableRef: Ref) {
       contentRenderer: () =>
         h(croppingUpload, {
           imgSrc: row.avatar ?? avatar,
+          errSrc: avatar,
           onCropper: info => (avatarInfo.value = info)
         }),
       beforeSure: done => {
