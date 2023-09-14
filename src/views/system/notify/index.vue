@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { useOperationLog } from "./utils/hook";
+import { useNotify } from "./utils/hook";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 
-// import Database from "@iconify-icons/ri/database-2-line";
-// import More from "@iconify-icons/ep/more-filled";
 import Delete from "@iconify-icons/ep/delete";
 import Search from "@iconify-icons/ep/search";
 import Refresh from "@iconify-icons/ep/refresh";
 import { hasAuth } from "@/router/utils";
-
+import EditPen from "@iconify-icons/ep/edit-pen";
+import AddFill from "@iconify-icons/ri/add-circle-line";
+import Eye from "@iconify-icons/ri/eye-fill";
 defineOptions({
-  name: "OperationLog"
+  name: "Notify"
 });
 
 const formRef = ref();
@@ -25,26 +25,29 @@ const {
   pagination,
   sortOptions,
   manySelectCount,
+  choicesDict,
   onSelectionCancel,
   onSearch,
   resetForm,
+  openDialog,
+  showDialog,
   handleDelete,
   handleManyDelete,
   handleSizeChange,
   handleCurrentChange,
   handleSelectionChange
-} = useOperationLog(tableRef);
+} = useNotify(tableRef);
 </script>
 
 <template>
-  <div class="main" v-if="hasAuth('list:systemOperationLog')">
+  <div class="main" v-if="hasAuth('list:systemNotify')">
     <el-form
       ref="formRef"
       :inline="true"
       :model="form"
       class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px]"
     >
-      <el-form-item label="用户ID：" prop="owner_id">
+      <el-form-item label="用户ID：" prop="recipient_id">
         <el-input
           v-model="form.owner_id"
           placeholder="请输入用户ID"
@@ -53,41 +56,64 @@ const {
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
-      <el-form-item label="IP地址：" prop="ipaddress">
+      <el-form-item label="标题：" prop="title">
         <el-input
-          v-model="form.ipaddress"
-          placeholder="请输入IP地址"
+          v-model="form.title"
+          placeholder="请输入消息标题"
           clearable
           class="!w-[200px]"
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
-      <el-form-item label="操作系统：" prop="system">
+      <el-form-item label="消息内容：" prop="message">
         <el-input
-          v-model="form.system"
-          placeholder="请输入操作系统"
+          v-model="form.message"
+          placeholder="请输入消息内容"
           clearable
           class="!w-[180px]"
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
-      <el-form-item label="浏览器：" prop="browser">
-        <el-input
-          v-model="form.browser"
-          placeholder="请输入浏览器"
+      <el-form-item label="是否已读：" prop="unread">
+        <el-select
+          v-model="form.unread"
+          placeholder="请选择"
           clearable
-          class="!w-[180px]"
-          @keyup.enter="onSearch(true)"
-        />
+          class="!w-[160px]"
+          @change="onSearch(true)"
+        >
+          <el-option label="已读" :value="false" />
+          <el-option label="未读" :value="true" />
+        </el-select>
       </el-form-item>
-      <el-form-item label="接口地址：" prop="path">
-        <el-input
-          v-model="form.path"
-          placeholder="请输入接口地址"
+      <el-form-item label="是否发布：" prop="unread">
+        <el-select
+          v-model="form.publish"
+          placeholder="请选择"
           clearable
-          class="!w-[180px]"
-          @keyup.enter="onSearch(true)"
-        />
+          class="!w-[160px]"
+          @change="onSearch(true)"
+        >
+          <el-option label="已发布" :value="true" />
+          <el-option label="未发布" :value="false" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="通知级别" prop="level">
+        <el-select
+          v-model="form.level"
+          class="filter-item"
+          style="width: 180px"
+          @change="onSearch(true)"
+          clearable
+        >
+          <el-option
+            v-for="item in choicesDict"
+            :key="item.key"
+            :label="item.label"
+            :disabled="item.disabled"
+            :value="item.key"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="排序：">
         <el-select
@@ -120,7 +146,7 @@ const {
     </el-form>
 
     <PureTableBar
-      title="访问日志管理"
+      title="用户消息管理"
       :columns="columns"
       @refresh="onSearch(true)"
     >
@@ -138,7 +164,7 @@ const {
           <el-popconfirm
             :title="`是否确认批量删除${manySelectCount}条数据?`"
             @confirm="handleManyDelete"
-            v-if="hasAuth('manyDelete:systemOperationLog')"
+            v-if="hasAuth('manyDelete:systemNotify')"
           >
             <template #reference>
               <el-button type="danger" plain :icon="useRenderIcon(Delete)">
@@ -147,6 +173,14 @@ const {
             </template>
           </el-popconfirm>
         </div>
+        <el-button
+          v-if="hasAuth('create:systemNotify')"
+          type="primary"
+          :icon="useRenderIcon(AddFill)"
+          @click="openDialog()"
+        >
+          新增用户消息
+        </el-button>
       </template>
       <template v-slot="{ size, dynamicColumns }">
         <pure-table
@@ -172,10 +206,32 @@ const {
           @page-current-change="handleCurrentChange"
         >
           <template #operation="{ row }">
+            <el-button
+              class="reset-margin"
+              link
+              type="primary"
+              v-if="hasAuth('list:systemNotify')"
+              :size="size"
+              @click="showDialog(row)"
+              :icon="useRenderIcon(Eye)"
+            >
+              查看
+            </el-button>
+            <el-button
+              class="reset-margin"
+              link
+              type="primary"
+              v-if="hasAuth('update:systemNotify')"
+              :size="size"
+              @click="openDialog('编辑', row)"
+              :icon="useRenderIcon(EditPen)"
+            >
+              修改
+            </el-button>
             <el-popconfirm
-              :title="`是否确认删除角色名称为${row.module}的这条数据`"
+              :title="`是否确认删除消息名称为 ${row.title} 的这条数据?`"
               @confirm="handleDelete(row)"
-              v-if="hasAuth('delete:systemOperationLog')"
+              v-if="hasAuth('delete:systemNotify')"
             >
               <template #reference>
                 <el-button

@@ -1,14 +1,51 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { noticesData } from "./data";
+import { onMounted, ref } from "vue";
 import NoticeList from "./noticeList.vue";
 import Bell from "@iconify-icons/ep/bell";
+import {
+  getAnnouncementUnreadListApi,
+  getNoticeUnreadListApi
+} from "@/api/system/notice";
+import { TabItem } from "@/layout/components/notice/data";
 
 const noticesNum = ref(0);
-const notices = ref(noticesData);
-const activeKey = ref(noticesData[0].key);
+const notices = ref<TabItem[]>([
+  {
+    key: "1",
+    name: "消息通知",
+    list: []
+  },
+  {
+    key: "2",
+    name: "系统公告",
+    list: []
+  }
+]);
+const activeKey = ref();
 
-notices.value.map(v => (noticesNum.value += v.list.length));
+const getNotifyData = () => {
+  getNoticeUnreadListApi().then(res => {
+    if (res.code === 1000 && res.data) {
+      noticesNum.value += res.data.total;
+      notices.value[0].list = res.data.results;
+      activeKey.value = notices.value[0].key;
+    }
+    console.log(res);
+  });
+  getAnnouncementUnreadListApi().then(res => {
+    if (res.code === 1000 && res.data) {
+      noticesNum.value += res.data.total;
+      notices.value[1].list = res.data.results;
+    }
+    console.log(res);
+  });
+};
+
+onMounted(() => {
+  getNotifyData();
+});
+
+// notices.value.map(v => (noticesNum.value += v.list.length));
 </script>
 
 <template>
@@ -46,6 +83,12 @@ notices.value.map(v => (noticesNum.value += v.list.length));
                 </el-scrollbar>
               </el-tab-pane>
             </template>
+            <el-divider />
+            <el-row style="height: 30px; text-align: center">
+              <el-col :span="24">
+                <el-link :underline="false">查看更多</el-link>
+              </el-col>
+            </el-row>
           </span>
         </el-tabs>
       </el-dropdown-menu>
@@ -70,7 +113,7 @@ notices.value.map(v => (noticesNum.value += v.list.length));
 
 .dropdown-tabs {
   .noticeList-container {
-    padding: 15px 24px 0;
+    padding: 5px 10px 0;
   }
 
   :deep(.el-tabs__header) {
@@ -83,6 +126,10 @@ notices.value.map(v => (noticesNum.value += v.list.length));
 
   :deep(.el-tabs__nav-wrap) {
     padding: 0 36px;
+  }
+
+  :deep(.el-divider--horizontal) {
+    margin: 8px 0;
   }
 }
 </style>

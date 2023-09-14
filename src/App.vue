@@ -13,6 +13,9 @@ import en from "element-plus/dist/locale/en.mjs";
 import { ReDialog } from "@/components/ReDialog";
 
 import { useWatermark } from "@pureadmin/utils";
+import { Boot } from "@wangeditor/editor";
+import attachmentModule from "@wangeditor/plugin-upload-attachment";
+Boot.registerModule(attachmentModule);
 export default defineComponent({
   name: "app",
   components: {

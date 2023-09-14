@@ -15,10 +15,8 @@ import { handleTree } from "@/utils/tree";
 import { cloneDeep } from "@pureadmin/utils";
 import { getMenuFromPk, getMenuOrderPk } from "@/utils";
 const sortOptions = [
-  { label: "注册时间 Descending", key: "-date_joined" },
-  { label: "注册时间 Ascending", key: "date_joined" },
-  { label: "登录时间 Descending", key: "-last_login" },
-  { label: "登录时间 Ascending", key: "last_login" }
+  { label: "添加时间 Descending", key: "-created_time" },
+  { label: "添加时间 Ascending", key: "created_time" }
 ];
 
 const defaultData: FormItemProps = {

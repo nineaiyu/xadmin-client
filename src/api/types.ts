@@ -1,6 +1,7 @@
 export type Result = {
   detail: string;
   code: number;
+  choices_dict?: any[];
   data?: {
     /** 列表数据 */
     results: Array<any>;
@@ -27,4 +28,15 @@ export type MenuDataResult = {
   data: any[];
   choices_dict: any[];
   api_url_list: any[];
+};
+
+type FileInfo = {
+  filename: string;
+  filepath: string;
+  filesize: number;
+};
+export type UploadFileResult = {
+  code: number;
+  data?: FileInfo[];
+  detail?: string;
 };

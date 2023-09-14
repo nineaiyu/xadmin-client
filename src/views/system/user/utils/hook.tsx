@@ -44,7 +44,7 @@ import {
   isEmpty,
   isString
 } from "@pureadmin/utils";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import avatar from "./avatar.png";
 import { hasAuth } from "@/router/utils";
 const sortOptions = [
@@ -64,6 +64,7 @@ export function useUser(tableRef: Ref) {
     size: 10
   });
   const formRef = ref();
+  const router = useRouter();
   const route = useRoute();
   const getParameter = isEmpty(route.params) ? route.query : route.params;
   const dataList = ref([]);
@@ -342,6 +343,14 @@ export function useUser(tableRef: Ref) {
     });
   };
 
+  function goNotify() {
+    const manySelectData = tableRef.value.getTableRef().getSelectionRows();
+    router.push({
+      name: "systemNotify",
+      query: { owners: JSON.stringify(getKeyList(manySelectData, "pk")) }
+    });
+  }
+
   function openDialog(title = "新增", row?: FormItemProps) {
     addDialog({
       title: `${title}用户`,
@@ -378,7 +387,6 @@ export function useUser(tableRef: Ref) {
         }
         FormRef.validate(valid => {
           if (valid) {
-            console.log("curData", curData);
             // 表单规则校验通过
             if (title === "新增") {
               createUserApi(curData).then(async res => {
@@ -460,7 +468,6 @@ export function useUser(tableRef: Ref) {
           onCropper: info => (avatarInfo.value = info)
         }),
       beforeSure: done => {
-        console.log("裁剪后的图片信息：", avatarInfo.value);
         const avatarFile = new File([avatarInfo.value.blob], "avatar.png", {
           type: avatarInfo.value.blob.type,
           lastModified: Date.now()
@@ -634,6 +641,7 @@ export function useUser(tableRef: Ref) {
     exportExcel,
     onSearch,
     openDialog,
+    goNotify,
     onSelectionCancel,
     resetForm,
     handleRole,

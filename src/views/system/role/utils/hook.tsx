@@ -224,11 +224,7 @@ export function useRole(tableRef: Ref) {
     onSearch();
   };
 
-  function openDialog(is_edit = false, row?: FormItemProps) {
-    let title = "新增";
-    if (is_edit) {
-      title = "修改";
-    }
+  function openDialog(title = "新增", row?: FormItemProps) {
     addDialog({
       title: `${title}角色`,
       props: {
@@ -260,8 +256,8 @@ export function useRole(tableRef: Ref) {
         FormRef.validate(valid => {
           if (valid) {
             curData.menu = TreeRef!.getCheckedKeys(false);
-            if (is_edit) {
-              updateRoleApi(curData.pk, curData).then(async res => {
+            if (title === "新增") {
+              createRoleApi(curData).then(async res => {
                 if (res.code === 1000) {
                   await chores();
                 } else {
@@ -269,7 +265,7 @@ export function useRole(tableRef: Ref) {
                 }
               });
             } else {
-              createRoleApi(curData).then(async res => {
+              updateRoleApi(curData.pk, curData).then(async res => {
                 if (res.code === 1000) {
                   await chores();
                 } else {

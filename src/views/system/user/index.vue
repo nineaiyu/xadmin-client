@@ -14,6 +14,7 @@ import Search from "@iconify-icons/ep/search";
 import Refresh from "@iconify-icons/ep/refresh";
 import AddFill from "@iconify-icons/ri/add-circle-line";
 import Download from "@iconify-icons/ri/download-line";
+import Message from "@iconify-icons/ri/message-fill";
 import { hasAuth } from "@/router/utils";
 import { getIndexType } from "@/utils";
 
@@ -36,6 +37,7 @@ const {
   exportExcel,
   resetForm,
   openDialog,
+  goNotify,
   handleDelete,
   handleManyDelete,
   onSelectionCancel,
@@ -157,12 +159,12 @@ const {
           </div>
 
           <el-button
-            v-if="hasAuth('create:systemUser')"
+            v-if="hasAuth('send:systemNotify') && manySelectCount > 0"
             type="primary"
-            :icon="useRenderIcon(AddFill)"
-            @click="openDialog()"
+            :icon="useRenderIcon(Message)"
+            @click="goNotify()"
           >
-            新增用户
+            批量发送通知
           </el-button>
           <el-button
             v-optimize="{
@@ -171,11 +173,19 @@ const {
               immediate: true,
               timeout: 5000
             }"
-            v-if="hasAuth('list:systemUser')"
+            v-if="hasAuth('list:systemUser') && manySelectCount > 0"
             type="primary"
             :icon="useRenderIcon(Download)"
           >
             导出选中数据Excel
+          </el-button>
+          <el-button
+            v-if="hasAuth('create:systemUser')"
+            type="primary"
+            :icon="useRenderIcon(AddFill)"
+            @click="openDialog()"
+          >
+            新增用户
           </el-button>
         </template>
         <template v-slot="{ size, dynamicColumns }">

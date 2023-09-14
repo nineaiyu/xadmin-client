@@ -1,34 +1,38 @@
 import dayjs from "dayjs";
 import { message } from "@/utils/message";
 import { type PaginationProps } from "@pureadmin/table";
-import { reactive, ref, onMounted, toRaw, type Ref } from "vue";
+import { reactive, ref, h, onMounted, toRaw, type Ref } from "vue";
 import {
-  deleteOperationLogApi,
-  getOperationLogListApi,
-  manyDeleteOperationLogApi
-} from "@/api/system/operation";
-import { useRouter } from "vue-router";
+  deleteAnnouncementReadApi,
+  getAnnouncementReadListApi,
+  manyDeleteAnnouncementReadApi
+} from "@/api/system/announcement";
+import { FormItemProps } from "../utils/types";
+import showForm from "../show.vue";
 import { getKeyList } from "@pureadmin/utils";
+import { addDialog } from "@/components/ReDialog/index";
+import { useRouter } from "vue-router";
 const sortOptions = [
   { label: "添加时间 Descending", key: "-created_time" },
   { label: "添加时间 Ascending", key: "created_time" }
 ];
-export function useOperationLog(tableRef: Ref) {
+export function useAnnouncementRead(tableRef: Ref) {
   const form = reactive({
-    ipaddress: "",
-    system: "",
-    browser: "",
-    path: "",
+    title: "",
+    message: "",
+    username: "",
     owner_id: "",
+    announcement_id: "",
     ordering: sortOptions[0].key,
     page: 1,
     size: 10
   });
+  const formRef = ref();
   const router = useRouter();
-
   const manySelectCount = ref(0);
   const dataList = ref([]);
   const loading = ref(true);
+  const choicesDict = ref([]);
   const pagination = reactive<PaginationProps>({
     total: 0,
     pageSize: 10,
@@ -42,67 +46,42 @@ export function useOperationLog(tableRef: Ref) {
       align: "left"
     },
     {
-      label: "日志ID",
+      label: "公告ID",
       prop: "pk",
-      minWidth: 100
-    },
-    {
-      label: "模块名称",
-      prop: "module",
-      minWidth: 120
-    },
-    {
-      label: "操作人",
-      prop: "owner",
       minWidth: 100,
+      cellRenderer: ({ row }) => <el-text>{row.announcement.pk}</el-text>
+    },
+    {
+      label: "公告标题",
+      prop: "title",
+      minWidth: 120,
       cellRenderer: ({ row }) => (
-        <el-link onClick={() => onGoDetail(row as any)}>
-          {row.owner.username ? row.owner.username : "/"}
+        <el-link
+          type={row.announcement.level}
+          onClick={() => onGoAnnouncementDetail(row as any)}
+        >
+          {row.announcement.title}
         </el-link>
       )
     },
     {
-      label: "IP地址",
-      prop: "ipaddress",
-      minWidth: 150
+      label: "已读用户ID",
+      prop: "owner",
+      minWidth: 100,
+      cellRenderer: ({ row }) => <el-text>{row.owner_info.pk}</el-text>
     },
     {
-      label: "接口地址",
-      prop: "path",
-      minWidth: 150,
+      label: "已读用户信息",
+      prop: "owner",
+      minWidth: 100,
       cellRenderer: ({ row }) => (
-        <span>
-          {row.method}: {row.path}
-        </span>
+        <el-link onClick={() => onGoUserDetail(row as any)}>
+          {row.owner_info.username ? row.owner_info.username : "/"}
+        </el-link>
       )
     },
     {
-      label: "请求参数",
-      prop: "body",
-      minWidth: 150
-    },
-    {
-      label: "请求浏览器",
-      prop: "browser",
-      minWidth: 150
-    },
-    {
-      label: "请求操作系统",
-      prop: "system",
-      minWidth: 150
-    },
-    {
-      label: "响应状态码",
-      prop: "response_code",
-      minWidth: 100
-    },
-    {
-      label: "响应数据",
-      prop: "response_result",
-      minWidth: 150
-    },
-    {
-      label: "操作时间",
+      label: "用户已读时间",
       minWidth: 180,
       prop: "createTime",
       formatter: ({ created_time }) =>
@@ -111,24 +90,52 @@ export function useOperationLog(tableRef: Ref) {
     {
       label: "操作",
       fixed: "right",
-      width: 100,
+      width: 200,
       slot: "operation"
     }
   ];
-
-  function onGoDetail(row: any) {
-    if (row.owner && row.owner.pk) {
+  function onGoUserDetail(row: any) {
+    if (row.owner_info && row.owner_info.pk) {
       router.push({
         name: "systemUser",
-        query: { pk: row.owner.pk }
+        query: { pk: row.owner_info.pk }
       });
     }
   }
+  function onGoAnnouncementDetail(row: any) {
+    if (row.announcement && row.announcement.pk) {
+      router.push({
+        name: "systemAnnouncement",
+        query: { pk: row.announcement.pk }
+      });
+    }
+  }
+  function showDialog(row?: FormItemProps) {
+    addDialog({
+      title: `查看系统公告`,
+      props: {
+        formInline: {
+          pk: row?.pk ?? "",
+          title: row?.title ?? "",
+          message: row?.message ?? "",
+          publish: row?.publish ?? true,
+          level: row?.level ?? "",
+          choicesDict: choicesDict.value
+        }
+      },
+      width: "70%",
+      draggable: true,
+      fullscreenIcon: true,
+      closeOnClickModal: false,
+      contentRenderer: () => h(showForm, { ref: formRef })
+    });
+  }
+
   async function handleDelete(row) {
-    deleteOperationLogApi(row.pk).then(async res => {
+    deleteAnnouncementReadApi(row.pk).then(async res => {
       if (res.code === 1000) {
         message("操作成功", { type: "success" });
-        await onSearch();
+        onSearch();
       } else {
         message(`操作失败，${res.detail}`, { type: "error" });
       }
@@ -138,12 +145,12 @@ export function useOperationLog(tableRef: Ref) {
   async function handleSizeChange(val: number) {
     form.page = 1;
     form.size = val;
-    await onSearch();
+    onSearch();
   }
 
   async function handleCurrentChange(val: number) {
     form.page = val;
-    await onSearch();
+    onSearch();
   }
 
   function handleSelectionChange(val) {
@@ -160,33 +167,36 @@ export function useOperationLog(tableRef: Ref) {
       return;
     }
     const manySelectData = tableRef.value.getTableRef().getSelectionRows();
-    manyDeleteOperationLogApi({
+    manyDeleteAnnouncementReadApi({
       pks: JSON.stringify(getKeyList(manySelectData, "pk"))
     }).then(async res => {
       if (res.code === 1000) {
         message(`批量删除了${manySelectCount.value}条数据`, {
           type: "success"
         });
-        await onSearch();
+        onSearch();
       } else {
         message(`操作失败，${res.detail}`, { type: "error" });
       }
     });
   }
 
-  async function onSearch(init = false) {
+  function onSearch(init = false) {
     if (init) {
       pagination.currentPage = form.page = 1;
       pagination.pageSize = form.size = 10;
     }
     loading.value = true;
-    const { data } = await getOperationLogListApi(toRaw(form));
-    dataList.value = data.results;
-    pagination.total = data.total;
-
-    setTimeout(() => {
+    getAnnouncementReadListApi(toRaw(form)).then(res => {
+      if (res.code === 1000 && res.data) {
+        dataList.value = res.data.results;
+        pagination.total = res.data.total;
+        choicesDict.value = res.choices_dict;
+      } else {
+        message(`操作失败，${res.detail}`, { type: "error" });
+      }
       loading.value = false;
-    }, 500);
+    });
   }
 
   const resetForm = formEl => {
@@ -207,9 +217,11 @@ export function useOperationLog(tableRef: Ref) {
     pagination,
     sortOptions,
     manySelectCount,
+    choicesDict,
     onSelectionCancel,
     onSearch,
     resetForm,
+    showDialog,
     handleDelete,
     handleManyDelete,
     handleSizeChange,

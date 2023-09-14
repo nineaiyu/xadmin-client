@@ -3,6 +3,10 @@ import { ListItem } from "./data";
 import { ref, PropType, nextTick } from "vue";
 import { useNav } from "@/layout/hooks/useNav";
 import { deviceDetection } from "@pureadmin/utils";
+import {
+  updateAnnouncementReadApi,
+  updateNoticeReadApi
+} from "@/api/system/notice";
 
 const props = defineProps({
   noticeItem: {
@@ -13,8 +17,8 @@ const props = defineProps({
 
 const titleRef = ref(null);
 const titleTooltip = ref(false);
-const descriptionRef = ref(null);
-const descriptionTooltip = ref(false);
+// const descriptionRef = ref(null);
+// const descriptionTooltip = ref(false);
 const { tooltipEffect } = useNav();
 const isMobile = deviceDetection();
 
@@ -26,25 +30,37 @@ function hoverTitle() {
   });
 }
 
-function hoverDescription(event, description) {
-  // currentWidth 为文本在页面中所占的宽度，创建标签，加入到页面，获取currentWidth ,最后在移除
-  const tempTag = document.createElement("span");
-  tempTag.innerText = description;
-  tempTag.className = "getDescriptionWidth";
-  document.querySelector("body").appendChild(tempTag);
-  const currentWidth = (
-    document.querySelector(".getDescriptionWidth") as HTMLSpanElement
-  ).offsetWidth;
-  document.querySelector(".getDescriptionWidth").remove();
+const handleRead = (notify_type: number, pk: number) => {
+  if (notify_type === 3) {
+    updateAnnouncementReadApi({ pks: [pk] }).then(res => {
+      console.log(res);
+    });
+  } else {
+    updateNoticeReadApi({ pks: [pk] }).then(res => {
+      console.log(res);
+    });
+  }
+};
 
-  // cellWidth为容器的宽度
-  const cellWidth = event.target.offsetWidth;
-
-  // 当文本宽度大于容器宽度两倍时，代表文本显示超过两行
-  currentWidth > 2 * cellWidth
-    ? (descriptionTooltip.value = true)
-    : (descriptionTooltip.value = false);
-}
+// function hoverDescription(event, description) {
+//   // currentWidth 为文本在页面中所占的宽度，创建标签，加入到页面，获取currentWidth ,最后在移除
+//   const tempTag = document.createElement("span");
+//   tempTag.innerText = description;
+//   tempTag.className = "getDescriptionWidth";
+//   document.querySelector("body").appendChild(tempTag);
+//   const currentWidth = (
+//     document.querySelector(".getDescriptionWidth") as HTMLSpanElement
+//   ).offsetWidth;
+//   document.querySelector(".getDescriptionWidth").remove();
+//
+//   // cellWidth为容器的宽度
+//   const cellWidth = event.target.offsetWidth;
+//
+//   // 当文本宽度大于容器宽度两倍时，代表文本显示超过两行
+//   currentWidth > 2 * cellWidth
+//     ? (descriptionTooltip.value = true)
+//     : (descriptionTooltip.value = false);
+// }
 </script>
 
 <template>
@@ -72,36 +88,42 @@ function hoverDescription(event, description) {
             class="notice-title-content"
             @mouseover="hoverTitle"
           >
-            {{ props.noticeItem.title }}
+            <el-text
+              :type="props.noticeItem?.level"
+              @click="
+                handleRead(props.noticeItem.notify_type, props.noticeItem.pk)
+              "
+              >{{ props.noticeItem.title }}</el-text
+            >
           </div>
         </el-tooltip>
-        <el-tag
-          v-if="props.noticeItem?.extra"
-          :type="props.noticeItem?.status"
-          size="small"
-          class="notice-title-extra"
-        >
-          {{ props.noticeItem?.extra }}
-        </el-tag>
+        <!--        <el-tag-->
+        <!--          v-if="props.noticeItem?.extra"-->
+        <!--          :type="props.noticeItem?.level"-->
+        <!--          size="small"-->
+        <!--          class="notice-title-extra"-->
+        <!--        >-->
+        <!--          {{ props.noticeItem?.extra }}-->
+        <!--        </el-tag>-->
       </div>
 
-      <el-tooltip
-        popper-class="notice-title-popper"
-        :effect="tooltipEffect"
-        :disabled="!descriptionTooltip"
-        :content="props.noticeItem.description"
-        placement="top-start"
-      >
-        <div
-          ref="descriptionRef"
-          class="notice-text-description"
-          @mouseover="hoverDescription($event, props.noticeItem.description)"
-        >
-          {{ props.noticeItem.description }}
-        </div>
-      </el-tooltip>
+      <!--      <el-tooltip-->
+      <!--        popper-class="notice-title-popper"-->
+      <!--        :effect="tooltipEffect"-->
+      <!--        :disabled="!descriptionTooltip"-->
+      <!--        :content="props.noticeItem.message"-->
+      <!--        placement="top-start"-->
+      <!--      >-->
+      <!--        <div-->
+      <!--          ref="descriptionRef"-->
+      <!--          class="notice-text-description"-->
+      <!--          @mouseover="hoverDescription($event, props.noticeItem.message)"-->
+      <!--        >-->
+      <!--          {{ props.noticeItem.message }}-->
+      <!--        </div>-->
+      <!--      </el-tooltip>-->
       <div class="notice-text-datetime text-[#00000073] dark:text-white">
-        {{ props.noticeItem.datetime }}
+        {{ props.noticeItem.times }}
       </div>
     </div>
   </div>
@@ -117,7 +139,7 @@ function hoverDescription(event, description) {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 12px 0;
+  padding: 8px 0;
 
   // border-bottom: 1px solid #f0f0f0;
 
@@ -134,7 +156,7 @@ function hoverDescription(event, description) {
 
     .notice-text-title {
       display: flex;
-      margin-bottom: 8px;
+      margin-bottom: 4px;
       font-size: 14px;
       font-weight: 400;
       line-height: 1.5715;

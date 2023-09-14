@@ -20,10 +20,14 @@ const include = [
   "vue-types",
   "js-cookie",
   "sortablejs",
+  "md-editor-v3",
   "@vueuse/core",
   "@pureadmin/utils",
+  "@wangeditor/editor",
   "responsive-storage",
-  "vue-virtual-scroller"
+  "vue-virtual-scroller",
+  "@wangeditor/editor-for-vue",
+  "@wangeditor/plugin-upload-attachment"
 ];
 
 /**
