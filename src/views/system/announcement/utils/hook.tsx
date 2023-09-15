@@ -17,7 +17,7 @@ import { cloneDeep, getKeyList, isEmpty, isString } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog/index";
 import { hasAuth } from "@/router/utils";
 import { ElMessageBox } from "element-plus";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 const sortOptions = [
   { label: "添加时间 Descending", key: "-created_time" },
   { label: "添加时间 Ascending", key: "created_time" }
@@ -34,6 +34,7 @@ export function useAnnouncement(tableRef: Ref) {
     size: 10
   });
   const switchLoadMap = ref({});
+  const router = useRouter();
   const route = useRoute();
   const getParameter = isEmpty(route.params) ? route.query : route.params;
   const formRef = ref();
@@ -69,7 +70,12 @@ export function useAnnouncement(tableRef: Ref) {
       prop: "read_count",
       minWidth: 120,
       cellRenderer: ({ row }) => (
-        <el-text type={row.level}>{row.read_count}</el-text>
+        <el-link
+          type={row.level}
+          onClick={() => onGoAnnouncementReadDetail(row as any)}
+        >
+          {row.read_count}
+        </el-link>
       )
     },
     {
@@ -105,7 +111,14 @@ export function useAnnouncement(tableRef: Ref) {
       slot: "operation"
     }
   ];
-
+  function onGoAnnouncementReadDetail(row: any) {
+    if (row.pk) {
+      router.push({
+        name: "systemAnnouncementRead",
+        query: { announcement_id: row.pk }
+      });
+    }
+  }
   function openDialog(title = "新增", row?: FormItemProps) {
     addDialog({
       title: `${title}系统公告`,
@@ -290,7 +303,9 @@ export function useAnnouncement(tableRef: Ref) {
       } else {
         message(`操作失败，${res.detail}`, { type: "error" });
       }
-      loading.value = false;
+      setTimeout(() => {
+        loading.value = false;
+      }, 500);
     });
   }
 

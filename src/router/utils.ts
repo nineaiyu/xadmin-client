@@ -25,6 +25,7 @@ import { usePermissionStoreHook } from "@/store/modules/permission";
 // 动态路由
 import { getAsyncRoutes } from "@/api/routes";
 import { UserInfo } from "@/api/auth";
+import { useUserStoreHook } from "@/store/modules/user";
 
 const IFrame = () => import("@/layout/frameView.vue");
 // https://cn.vitejs.dev/guide/features.html#glob-import
@@ -176,6 +177,7 @@ function handleAsyncRoutes(routeList) {
     usePermissionStoreHook().handleWholeMenus(routeList);
   }
   addPathMatch();
+  useUserStoreHook().getUserInfo();
 }
 
 /** 初始化路由（`new Promise` 写法防止在异步请求中造成无限循环）*/

@@ -338,7 +338,9 @@ export function useNotify(tableRef: Ref) {
       } else {
         message(`操作失败，${res.detail}`, { type: "error" });
       }
-      loading.value = false;
+      setTimeout(() => {
+        loading.value = false;
+      }, 500);
     });
   }
 

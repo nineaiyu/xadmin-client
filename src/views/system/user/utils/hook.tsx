@@ -31,7 +31,7 @@ import {
   watch
 } from "vue";
 import { addDialog } from "@/components/ReDialog/index";
-import croppingUpload from "../upload.vue";
+import croppingUpload from "@/components/AvatarUpload/index.vue";
 import roleForm from "../form/role.vue";
 import editForm from "../form/index.vue";
 import { FormItemProps, RoleFormItemProps } from "./types";
@@ -45,7 +45,6 @@ import {
   isString
 } from "@pureadmin/utils";
 import { useRoute, useRouter } from "vue-router";
-import avatar from "./avatar.png";
 import { hasAuth } from "@/router/utils";
 const sortOptions = [
   { label: "注册时间 Descending", key: "-date_joined" },
@@ -463,8 +462,7 @@ export function useUser(tableRef: Ref) {
       closeOnClickModal: false,
       contentRenderer: () =>
         h(croppingUpload, {
-          imgSrc: row.avatar ?? avatar,
-          errSrc: avatar,
+          imgSrc: row.avatar ?? "",
           onCropper: info => (avatarInfo.value = info)
         }),
       beforeSure: done => {

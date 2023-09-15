@@ -55,10 +55,6 @@ export const loginApi = (data?: object) => {
   return http.request<TokenResult>("post", "/api/system/login", { data });
 };
 
-export const getUserInfoApi = (data?: object) => {
-  return http.request<UserInfoResult>("get", "/api/system/userinfo", { data });
-};
-
 export const getTempTokenApi = () => {
   return http.request<TempTokenResult>("get", "/api/system/auth/token");
 };

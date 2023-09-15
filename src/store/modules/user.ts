@@ -9,7 +9,6 @@ import {
   registerApi,
   refreshTokenApi,
   logoutApi,
-  getUserInfoApi,
   UserInfo,
   UserInfoResult
 } from "@/api/auth";
@@ -23,6 +22,7 @@ import {
   setUserInfo
 } from "@/utils/auth";
 import { message } from "@/utils/message";
+import { getUserInfoApi } from "@/api/userinfo";
 
 export const useUserStore = defineStore({
   id: "pure-user",
@@ -66,7 +66,6 @@ export const useUserStore = defineStore({
           .then(res => {
             if (res.code === 1000) {
               setToken(res.data);
-              this.getUserInfo();
               resolve(res);
             } else {
               reject(res);

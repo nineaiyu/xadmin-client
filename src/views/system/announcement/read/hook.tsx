@@ -9,9 +9,9 @@ import {
 } from "@/api/system/announcement";
 import { FormItemProps } from "../utils/types";
 import showForm from "../show.vue";
-import { getKeyList } from "@pureadmin/utils";
+import { cloneDeep, getKeyList, isEmpty, isString } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog/index";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 const sortOptions = [
   { label: "添加时间 Descending", key: "-created_time" },
   { label: "添加时间 Ascending", key: "created_time" }
@@ -29,6 +29,8 @@ export function useAnnouncementRead(tableRef: Ref) {
   });
   const formRef = ref();
   const router = useRouter();
+  const route = useRoute();
+  const getParameter = isEmpty(route.params) ? route.query : route.params;
   const manySelectCount = ref(0);
   const dataList = ref([]);
   const loading = ref(true);
@@ -195,7 +197,9 @@ export function useAnnouncementRead(tableRef: Ref) {
       } else {
         message(`操作失败，${res.detail}`, { type: "error" });
       }
-      loading.value = false;
+      setTimeout(() => {
+        loading.value = false;
+      }, 500);
     });
   }
 
@@ -206,6 +210,15 @@ export function useAnnouncementRead(tableRef: Ref) {
   };
 
   onMounted(() => {
+    if (getParameter) {
+      const parameter = cloneDeep(getParameter);
+      Object.keys(parameter).forEach(param => {
+        if (!isString(parameter[param])) {
+          parameter[param] = parameter[param].toString();
+        }
+      });
+      form.announcement_id = parameter.announcement_id;
+    }
     onSearch();
   });
 

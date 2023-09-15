@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import { formatBytes } from "@pureadmin/utils";
 import ReCropper from "@/components/ReCropper";
+import avatar from "./avatar.png";
 
 const props = defineProps({
   imgSrc: String,
@@ -14,7 +15,6 @@ const infos = ref();
 const refCropper = ref();
 const showPopover = ref(false);
 const cropperImg = ref<string>("");
-
 function onCropper({ base64, blob, info }) {
   infos.value = info;
   cropperImg.value = base64;
@@ -29,8 +29,10 @@ function onCropper({ base64, blob, info }) {
         <div class="w-[18vw]">
           <ReCropper
             ref="refCropper"
-            :src="props.imgSrc"
-            :errSrc="props.errSrc"
+            :src="props.imgSrc && props.imgSrc !== '' ? props.imgSrc : avatar"
+            :errSrc="
+              props.errSrc && props.errSrc !== '' ? props.errSrc : avatar
+            "
             circled
             @cropper="onCropper"
             @readied="showPopover = true"
