@@ -14,16 +14,18 @@ interface Owner {
 
 interface FormItemProps {
   pk?: number;
-  owner_info: Owner;
-  owner: number;
-  unread: boolean;
+  owner_info?: Owner;
+  owner?: number;
+  // unread?: boolean;
   publish: boolean;
   level: string;
   title: string;
   message: string;
-  notify_type?: number;
+  notice_type?: number;
+  user_count?: number;
   extra_json?: {};
-  choicesDict?: any[];
+  levelChoices?: any[];
+  noticeChoices?: any[];
   files?: any[];
   owners?: any[];
 }

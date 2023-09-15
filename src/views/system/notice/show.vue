@@ -8,8 +8,8 @@ const props = withDefaults(defineProps<FormProps>(), {
   formInline: () => ({
     pk: 0,
     title: "",
-    message: "",
     publish: false,
+    message: "",
     level: ""
   })
 });
@@ -17,6 +17,7 @@ const ruleFormRef = ref();
 const newFormInline = ref(props.formInline);
 const editorRef = shallowRef();
 const mode = "default";
+
 function getRef() {
   return ruleFormRef.value;
 }
@@ -45,9 +46,9 @@ const loading = ref(false);
   <el-form ref="ruleFormRef" :model="newFormInline" label-width="82px">
     <el-card shadow="never">
       <template #header>
-        <el-text :type="newFormInline.level" size="large">{{
-          newFormInline.title
-        }}</el-text>
+        <el-text :type="newFormInline.level" size="large"
+          >{{ newFormInline.title }}
+        </el-text>
         <el-tag
           :type="newFormInline.publish ? 'success' : 'warning'"
           style="float: right"

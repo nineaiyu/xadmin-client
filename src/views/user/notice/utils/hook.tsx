@@ -3,38 +3,40 @@ import { message } from "@/utils/message";
 import { type PaginationProps } from "@pureadmin/table";
 import { reactive, ref, h, onMounted, toRaw, type Ref } from "vue";
 import {
-  deleteAnnouncementReadApi,
-  getAnnouncementReadListApi,
-  manyDeleteAnnouncementReadApi
-} from "@/api/system/announcement";
-import { FormItemProps } from "../utils/types";
+  getUserNoticeListApi,
+  updateUserNoticeReadApi
+} from "@/api/system/notice";
+import { useRoute } from "vue-router";
+import { FormItemProps } from "./types";
 import showForm from "../show.vue";
 import { cloneDeep, getKeyList, isEmpty, isString } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog/index";
-import { useRoute, useRouter } from "vue-router";
+
 const sortOptions = [
   { label: "添加时间 Descending", key: "-created_time" },
   { label: "添加时间 Ascending", key: "created_time" }
 ];
-export function useAnnouncementRead(tableRef: Ref) {
+
+export function useUserNotice(tableRef: Ref) {
   const form = reactive({
+    pk: "",
     title: "",
     message: "",
-    username: "",
-    owner_id: "",
-    announcement_id: "",
+    level: "",
+    notice_type: "",
+    unread: "",
     ordering: sortOptions[0].key,
     page: 1,
     size: 10
   });
-  const formRef = ref();
-  const router = useRouter();
   const route = useRoute();
   const getParameter = isEmpty(route.params) ? route.query : route.params;
+  const formRef = ref();
   const manySelectCount = ref(0);
   const dataList = ref([]);
   const loading = ref(true);
-  const choicesDict = ref([]);
+  const levelChoices = ref([]);
+  const noticeChoices = ref([]);
   const pagination = reactive<PaginationProps>({
     total: 0,
     pageSize: 10,
@@ -48,46 +50,37 @@ export function useAnnouncementRead(tableRef: Ref) {
       align: "left"
     },
     {
-      label: "公告ID",
+      label: "消息ID",
       prop: "pk",
-      minWidth: 100,
-      cellRenderer: ({ row }) => <el-text>{row.announcement.pk}</el-text>
+      minWidth: 100
     },
     {
-      label: "公告标题",
+      label: "消息标题",
       prop: "title",
       minWidth: 120,
+      cellRenderer: ({ row }) => <el-text type={row.level}>{row.title}</el-text>
+    },
+    {
+      label: "是否已读",
+      prop: "unread",
+      minWidth: 120,
       cellRenderer: ({ row }) => (
-        <el-link
-          type={row.announcement.level}
-          onClick={() => onGoAnnouncementDetail(row as any)}
-        >
-          {row.announcement.title}
-        </el-link>
+        <el-text type={row.unread ? "success" : "info"}>
+          {row.unread ? "未读" : "已读"}
+        </el-text>
       )
     },
     {
-      label: "已读用户ID",
-      prop: "owner",
-      minWidth: 100,
-      cellRenderer: ({ row }) => <el-text>{row.owner_info.pk}</el-text>
-    },
-    {
-      label: "已读用户信息",
-      prop: "owner",
-      minWidth: 100,
-      cellRenderer: ({ row }) => (
-        <el-link onClick={() => onGoUserDetail(row as any)}>
-          {row.owner_info.username ? row.owner_info.username : "/"}
-        </el-link>
-      )
-    },
-    {
-      label: "用户已读时间",
+      label: "提交时间",
       minWidth: 180,
       prop: "createTime",
       formatter: ({ created_time }) =>
         dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
+    },
+    {
+      label: "消息类型",
+      prop: "notice_type_display",
+      minWidth: 120
     },
     {
       label: "操作",
@@ -96,50 +89,36 @@ export function useAnnouncementRead(tableRef: Ref) {
       slot: "operation"
     }
   ];
-  function onGoUserDetail(row: any) {
-    if (row.owner_info && row.owner_info.pk) {
-      router.push({
-        name: "systemUser",
-        query: { pk: row.owner_info.pk }
-      });
-    }
-  }
-  function onGoAnnouncementDetail(row: any) {
-    if (row.announcement && row.announcement.pk) {
-      router.push({
-        name: "systemAnnouncement",
-        query: { pk: row.announcement.pk }
-      });
-    }
-  }
+
   function showDialog(row?: FormItemProps) {
+    if (row.unread) {
+      updateUserNoticeReadApi({ pks: [row.pk] });
+    }
     addDialog({
-      title: `查看系统公告`,
+      title: `查看用户消息`,
       props: {
         formInline: {
           pk: row?.pk ?? "",
           title: row?.title ?? "",
           message: row?.message ?? "",
-          publish: row?.publish ?? true,
           level: row?.level ?? "",
-          choicesDict: choicesDict.value
+          levelChoices: levelChoices.value,
+          noticeChoices: noticeChoices.value
         }
       },
       width: "70%",
       draggable: true,
       fullscreenIcon: true,
       closeOnClickModal: false,
-      contentRenderer: () => h(showForm, { ref: formRef })
-    });
-  }
-
-  async function handleDelete(row) {
-    deleteAnnouncementReadApi(row.pk).then(async res => {
-      if (res.code === 1000) {
-        message("操作成功", { type: "success" });
-        onSearch();
-      } else {
-        message(`操作失败，${res.detail}`, { type: "error" });
+      contentRenderer: () => h(showForm, { ref: formRef }),
+      closeCallBack: () => {
+        if (getParameter.pk) {
+          form.pk = "";
+        }
+        if (row.unread) {
+          form.pk = "";
+          onSearch();
+        }
       }
     });
   }
@@ -158,22 +137,24 @@ export function useAnnouncementRead(tableRef: Ref) {
   function handleSelectionChange(val) {
     manySelectCount.value = val.length;
   }
+
   function onSelectionCancel() {
     manySelectCount.value = 0;
     // 用于多选表格，清空用户的选择
     tableRef.value.getTableRef().clearSelection();
   }
-  function handleManyDelete() {
+
+  function handleManyRead() {
     if (manySelectCount.value === 0) {
       message("数据未选择", { type: "error" });
       return;
     }
     const manySelectData = tableRef.value.getTableRef().getSelectionRows();
-    manyDeleteAnnouncementReadApi({
-      pks: JSON.stringify(getKeyList(manySelectData, "pk"))
+    updateUserNoticeReadApi({
+      pks: getKeyList(manySelectData, "pk")
     }).then(async res => {
       if (res.code === 1000) {
-        message(`批量删除了${manySelectCount.value}条数据`, {
+        message(`批量已读了${manySelectCount.value}条数据`, {
           type: "success"
         });
         onSearch();
@@ -189,16 +170,26 @@ export function useAnnouncementRead(tableRef: Ref) {
       pagination.pageSize = form.size = 10;
     }
     loading.value = true;
-    getAnnouncementReadListApi(toRaw(form)).then(res => {
+    getUserNoticeListApi(toRaw(form)).then(res => {
       if (res.code === 1000 && res.data) {
         dataList.value = res.data.results;
         pagination.total = res.data.total;
-        choicesDict.value = res.choices_dict;
+        levelChoices.value = res.level_choices;
+        noticeChoices.value = res.notice_type_choices;
       } else {
         message(`操作失败，${res.detail}`, { type: "error" });
       }
       setTimeout(() => {
         loading.value = false;
+        console.log(11, getParameter.pk);
+        if (
+          getParameter.pk &&
+          getParameter.pk === form.pk &&
+          getParameter.pk !== "" &&
+          dataList.value.length > 0
+        ) {
+          showDialog(dataList.value[0]);
+        }
       }, 500);
     });
   }
@@ -217,7 +208,7 @@ export function useAnnouncementRead(tableRef: Ref) {
           parameter[param] = parameter[param].toString();
         }
       });
-      form.announcement_id = parameter.announcement_id;
+      form.pk = parameter.pk;
     }
     onSearch();
   });
@@ -230,13 +221,13 @@ export function useAnnouncementRead(tableRef: Ref) {
     pagination,
     sortOptions,
     manySelectCount,
-    choicesDict,
+    levelChoices,
+    noticeChoices,
     onSelectionCancel,
     onSearch,
     resetForm,
     showDialog,
-    handleDelete,
-    handleManyDelete,
+    handleManyRead,
     handleSizeChange,
     handleCurrentChange,
     handleSelectionChange

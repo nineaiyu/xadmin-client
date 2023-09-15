@@ -15,13 +15,12 @@ const props = withDefaults(defineProps<FormProps>(), {
   formInline: () => ({
     pk: 0,
     title: "",
-    unread: true,
     publish: false,
     message: "",
     level: "",
-    owner: null,
-    owner_info: { pk: 0, username: "" },
-    choicesDict: [],
+    notice_type: 1,
+    noticeChoices: [],
+    levelChoices: [],
     owners: []
   })
 });
@@ -171,15 +170,21 @@ const remoteMethod = (query: string) => {
       <template #header>
         <el-row :gutter="30">
           <re-col :value="8" :xs="24" :sm="24">
-            <el-form-item label="是否已读" prop="unread">
+            <el-form-item label="通知类型" prop="level">
               <el-select
-                v-model="newFormInline.unread"
+                v-model="newFormInline.notice_type"
                 class="filter-item"
                 style="width: 180px"
+                :disabled="newFormInline.pk !== 0"
                 clearable
               >
-                <el-option label="已读" :value="false" />
-                <el-option label="未读" :value="true" />
+                <el-option
+                  v-for="item in newFormInline.noticeChoices"
+                  :key="item.key"
+                  :label="item.label"
+                  :disabled="item.disabled"
+                  :value="item.key"
+                />
               </el-select>
             </el-form-item>
           </re-col>
@@ -192,7 +197,7 @@ const remoteMethod = (query: string) => {
                 clearable
               >
                 <el-option
-                  v-for="item in newFormInline.choicesDict"
+                  v-for="item in newFormInline.levelChoices"
                   :key="item.key"
                   :label="item.label"
                   :disabled="item.disabled"
@@ -215,14 +220,12 @@ const remoteMethod = (query: string) => {
             </el-form-item>
           </re-col>
           <re-col>
-            <el-form-item label="用户ID" prop="owner">
-              <el-input
-                disabled
-                v-if="newFormInline.pk"
-                v-model="newFormInline.owner"
-              />
+            <el-form-item
+              label="用户ID"
+              prop="owner"
+              v-if="newFormInline.notice_type === 1"
+            >
               <el-select
-                v-else
                 v-model="newFormInline.owners"
                 multiple
                 style="width: 100%"

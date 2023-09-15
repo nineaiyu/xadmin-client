@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { useAnnouncementRead } from "./hook";
+import { useUserNotice } from "./utils/hook";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 
-import Delete from "@iconify-icons/ep/delete";
 import Search from "@iconify-icons/ep/search";
 import Refresh from "@iconify-icons/ep/refresh";
 import { hasAuth } from "@/router/utils";
-import Eye from "@iconify-icons/ri/eye-fill";
+import Success from "@iconify-icons/ep/success-filled";
 
+import Eye from "@iconify-icons/ri/eye-fill";
 defineOptions({
-  name: "AnnouncementReadUser"
+  name: "UserNotice"
 });
 
 const formRef = ref();
@@ -24,73 +24,100 @@ const {
   pagination,
   sortOptions,
   manySelectCount,
+  levelChoices,
+  noticeChoices,
   onSelectionCancel,
   onSearch,
   resetForm,
   showDialog,
-  handleDelete,
-  handleManyDelete,
+  handleManyRead,
   handleSizeChange,
   handleCurrentChange,
   handleSelectionChange
-} = useAnnouncementRead(tableRef);
+} = useUserNotice(tableRef);
 </script>
 
 <template>
-  <div class="main" v-if="hasAuth('list:systemAnnouncementRead')">
+  <div class="main" v-if="hasAuth('list:userNotice')">
     <el-form
       ref="formRef"
       :inline="true"
       :model="form"
       class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px]"
     >
-      <el-form-item label="用户ID：" prop="message">
+      <el-form-item label="ID：" prop="pk">
         <el-input
-          v-model="form.owner_id"
-          placeholder="请输入用户ID"
+          v-model="form.pk"
+          placeholder="请输入消息ID"
           clearable
-          class="!w-[120px]"
-          @keyup.enter="onSearch(true)"
-        />
-      </el-form-item>
-      <el-form-item label="公告ID：" prop="message">
-        <el-input
-          v-model="form.announcement_id"
-          placeholder="请输入公告ID"
-          clearable
-          class="!w-[120px]"
+          class="!w-[100px]"
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
       <el-form-item label="标题：" prop="title">
         <el-input
           v-model="form.title"
-          placeholder="请输入公告标题"
+          placeholder="请输入消息标题"
           clearable
           class="!w-[200px]"
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
-      <el-form-item label="公告内容：" prop="message">
+      <el-form-item label="消息内容：" prop="message">
         <el-input
           v-model="form.message"
-          placeholder="请输入公告内容"
+          placeholder="请输入消息内容"
           clearable
           class="!w-[180px]"
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
-
-      <el-form-item label="用户名：" prop="message">
-        <el-input
-          v-model="form.username"
-          placeholder="请输入用户名"
+      <el-form-item label="消息状态：" prop="unread">
+        <el-select
+          v-model="form.unread"
+          placeholder="请选择"
           clearable
-          class="!w-[180px]"
-          @keyup.enter="onSearch(true)"
-        />
+          class="!w-[160px]"
+          @change="onSearch(true)"
+        >
+          <el-option label="已读" :value="false" />
+          <el-option label="未读" :value="true" />
+        </el-select>
       </el-form-item>
-
+      <el-form-item label="通知级别" prop="level">
+        <el-select
+          v-model="form.level"
+          class="filter-item"
+          style="width: 180px"
+          @change="onSearch(true)"
+          clearable
+        >
+          <el-option
+            v-for="item in levelChoices"
+            :key="item.key"
+            :label="item.label"
+            :disabled="item.disabled"
+            :value="item.key"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="通知类型" prop="level">
+        <el-select
+          v-model="form.notice_type"
+          class="filter-item"
+          style="width: 180px"
+          @change="onSearch(true)"
+          clearable
+        >
+          <el-option
+            v-for="item in noticeChoices"
+            :key="item.key"
+            :label="item.label"
+            :disabled="item.disabled"
+            :value="item.key"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item label="排序：">
         <el-select
           v-model="form.ordering"
@@ -122,7 +149,7 @@ const {
     </el-form>
 
     <PureTableBar
-      title="用户已读系统公告管理"
+      title="消息公告管理"
       :columns="columns"
       @refresh="onSearch(true)"
     >
@@ -138,13 +165,13 @@ const {
             取消选择
           </el-button>
           <el-popconfirm
-            :title="`是否确认批量删除${manySelectCount}条数据?`"
-            @confirm="handleManyDelete"
-            v-if="hasAuth('manyDelete:systemAnnouncementRead')"
+            :title="`是否确认批量已读${manySelectCount}条数据?`"
+            @confirm="handleManyRead"
+            v-if="hasAuth('update:userNoticeRead')"
           >
             <template #reference>
-              <el-button type="danger" plain :icon="useRenderIcon(Delete)">
-                批量删除
+              <el-button type="success" plain :icon="useRenderIcon(Success)">
+                批量已读
               </el-button>
             </template>
           </el-popconfirm>
@@ -178,30 +205,13 @@ const {
               class="reset-margin"
               link
               type="primary"
-              v-if="hasAuth('list:systemAnnouncementRead')"
+              v-if="hasAuth('list:userNotice')"
               :size="size"
-              @click="showDialog(row.announcement)"
+              @click="showDialog(row)"
               :icon="useRenderIcon(Eye)"
             >
               查看
             </el-button>
-            <el-popconfirm
-              :title="`是否确认删除ID为 ${row.pk} 的这条数据?`"
-              @confirm="handleDelete(row)"
-              v-if="hasAuth('delete:systemAnnouncementRead')"
-            >
-              <template #reference>
-                <el-button
-                  class="reset-margin"
-                  link
-                  type="primary"
-                  :size="size"
-                  :icon="useRenderIcon(Delete)"
-                >
-                  删除
-                </el-button>
-              </template>
-            </el-popconfirm>
           </template>
         </pure-table>
       </template>

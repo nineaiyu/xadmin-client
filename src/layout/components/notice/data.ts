@@ -3,8 +3,7 @@ export interface ListItem {
   avatar?: string;
   title: string;
   created_time?: string;
-  times?: string;
-  notify_type: number;
+  notice_type: number;
   message: string;
   level?: "success" | "warning" | "info" | "danger" | "primary" | "";
   extra?: string;

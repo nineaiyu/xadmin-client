@@ -3,13 +3,14 @@ import { message } from "@/utils/message";
 import { type PaginationProps } from "@pureadmin/table";
 import { reactive, ref, h, onMounted, toRaw, type Ref } from "vue";
 import {
-  deleteAnnouncementApi,
-  getAnnouncementListApi,
-  createAnnouncementApi,
-  manyDeleteAnnouncementApi,
-  updateAnnouncementApi,
-  updateAnnouncementPublishApi
-} from "@/api/system/announcement";
+  deleteNoticeApi,
+  getNoticeListApi,
+  createNoticeApi,
+  manyDeleteNoticeApi,
+  updateNoticeApi,
+  updateNoticePublishApi
+} from "@/api/system/notice";
+import { useRoute, useRouter } from "vue-router";
 import { FormItemProps } from "./types";
 import editForm from "../editor.vue";
 import showForm from "../show.vue";
@@ -17,31 +18,34 @@ import { cloneDeep, getKeyList, isEmpty, isString } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog/index";
 import { hasAuth } from "@/router/utils";
 import { ElMessageBox } from "element-plus";
-import { useRoute, useRouter } from "vue-router";
+
 const sortOptions = [
   { label: "添加时间 Descending", key: "-created_time" },
   { label: "添加时间 Ascending", key: "created_time" }
 ];
-export function useAnnouncement(tableRef: Ref) {
+
+export function useNotice(tableRef: Ref) {
   const form = reactive({
+    pk: "",
     title: "",
     message: "",
     level: "",
-    pk: "",
+    notice_type: "",
     publish: "",
     ordering: sortOptions[0].key,
     page: 1,
     size: 10
   });
-  const switchLoadMap = ref({});
   const router = useRouter();
+  const switchLoadMap = ref({});
   const route = useRoute();
   const getParameter = isEmpty(route.params) ? route.query : route.params;
   const formRef = ref();
   const manySelectCount = ref(0);
   const dataList = ref([]);
   const loading = ref(true);
-  const choicesDict = ref([]);
+  const levelChoices = ref([]);
+  const noticeChoices = ref([]);
   const pagination = reactive<PaginationProps>({
     total: 0,
     pageSize: 10,
@@ -55,26 +59,32 @@ export function useAnnouncement(tableRef: Ref) {
       align: "left"
     },
     {
-      label: "公告ID",
+      label: "消息ID",
       prop: "pk",
       minWidth: 100
     },
     {
-      label: "公告标题",
+      label: "消息标题",
       prop: "title",
       minWidth: 120,
       cellRenderer: ({ row }) => <el-text type={row.level}>{row.title}</el-text>
     },
     {
-      label: "已读用户数",
-      prop: "read_count",
+      label: "消息类型",
+      prop: "notice_type_display",
+      minWidth: 120
+    },
+    {
+      label: "接收人数/已读人数",
+      prop: "user_count",
       minWidth: 120,
       cellRenderer: ({ row }) => (
         <el-link
-          type={row.level}
-          onClick={() => onGoAnnouncementReadDetail(row as any)}
+          type={row.level == "" ? "default" : row.level}
+          onClick={() => onGoNoticeReadDetail(row as any)}
         >
-          {row.read_count}
+          {row.notice_type === 2 ? "全部" : row.user_count}/
+          {row.read_user_count}
         </el-link>
       )
     },
@@ -91,7 +101,7 @@ export function useAnnouncement(tableRef: Ref) {
           inactive-value={false}
           active-text="已发布"
           inactive-text="未发布"
-          disabled={!hasAuth("update:systemAnnouncementPublish")}
+          disabled={!hasAuth("update:systemNoticePublish")}
           inline-prompt
           onChange={() => onChange(scope as any)}
         />
@@ -111,25 +121,30 @@ export function useAnnouncement(tableRef: Ref) {
       slot: "operation"
     }
   ];
-  function onGoAnnouncementReadDetail(row: any) {
+
+  function onGoNoticeReadDetail(row: any) {
     if (row.pk) {
       router.push({
-        name: "systemAnnouncementRead",
-        query: { announcement_id: row.pk }
+        name: "systemNoticeRead",
+        query: { notice_id: row.pk }
       });
     }
   }
+
   function openDialog(title = "新增", row?: FormItemProps) {
     addDialog({
-      title: `${title}系统公告`,
+      title: `${title}用户消息`,
       props: {
         formInline: {
-          pk: row?.pk ?? "",
+          pk: row?.pk ?? 0,
           title: row?.title ?? "",
           publish: row?.publish ?? false,
           message: row?.message ?? "",
           level: row?.level ?? "",
-          choicesDict: choicesDict.value
+          notice_type: row?.notice_type ?? 1,
+          levelChoices: levelChoices.value,
+          noticeChoices: noticeChoices.value,
+          owners: row?.owner ?? []
         }
       },
       width: "60%",
@@ -140,8 +155,11 @@ export function useAnnouncement(tableRef: Ref) {
       beforeSure: (done, { options }) => {
         const FormRef = formRef.value.getRef();
         const curData = options.props.formInline as FormItemProps;
-        delete curData?.choicesDict;
+        delete curData?.levelChoices;
+        delete curData?.noticeChoices;
+        delete curData?.owner_info;
         curData.files = formRef.value.getUploadFiles();
+
         async function chores(detail) {
           message(detail, {
             type: "success"
@@ -149,10 +167,11 @@ export function useAnnouncement(tableRef: Ref) {
           done(); // 关闭弹框
           onSearch(); // 刷新表格数据
         }
+
         FormRef.validate(valid => {
           if (valid) {
             if (title === "新增") {
-              createAnnouncementApi(curData).then(async res => {
+              createNoticeApi(curData).then(async res => {
                 if (res.code === 1000) {
                   await chores(res.detail);
                 } else {
@@ -160,7 +179,7 @@ export function useAnnouncement(tableRef: Ref) {
                 }
               });
             } else {
-              updateAnnouncementApi(curData.pk, curData).then(async res => {
+              updateNoticeApi(curData.pk, curData).then(async res => {
                 if (res.code === 1000) {
                   await chores(res.detail);
                 } else {
@@ -173,17 +192,19 @@ export function useAnnouncement(tableRef: Ref) {
       }
     });
   }
+
   function showDialog(row?: FormItemProps) {
     addDialog({
-      title: `查看系统公告`,
+      title: `查看用户消息`,
       props: {
         formInline: {
           pk: row?.pk ?? "",
           title: row?.title ?? "",
-          message: row?.message ?? "",
           publish: row?.publish ?? false,
+          message: row?.message ?? "",
           level: row?.level ?? "",
-          choicesDict: choicesDict.value
+          levelChoices: levelChoices.value,
+          noticeChoices: noticeChoices.value
         }
       },
       width: "70%",
@@ -193,13 +214,14 @@ export function useAnnouncement(tableRef: Ref) {
       contentRenderer: () => h(showForm, { ref: formRef })
     });
   }
+
   function onChange({ row, index }) {
     ElMessageBox.confirm(
       `确认要<strong>${
         row.publish === false ? "取消发布" : "发布"
       }</strong><strong style="color:var(--el-color-primary)">${
         row.title
-      }</strong>系统公告吗?`,
+      }</strong>用户消息吗?`,
       "系统提示",
       {
         confirmButtonText: "确定",
@@ -217,22 +239,20 @@ export function useAnnouncement(tableRef: Ref) {
             loading: true
           }
         );
-        updateAnnouncementPublishApi(row.pk, { publish: row.publish }).then(
-          res => {
-            if (res.code === 1000) {
-              switchLoadMap.value[index] = Object.assign(
-                {},
-                switchLoadMap.value[index],
-                {
-                  loading: false
-                }
-              );
-              message("操作成功", { type: "success" });
-            } else {
-              message(`操作失败，${res.detail}`, { type: "error" });
-            }
+        updateNoticePublishApi(row.pk, { publish: row.publish }).then(res => {
+          if (res.code === 1000) {
+            switchLoadMap.value[index] = Object.assign(
+              {},
+              switchLoadMap.value[index],
+              {
+                loading: false
+              }
+            );
+            message("操作成功", { type: "success" });
+          } else {
+            message(`操作失败，${res.detail}`, { type: "error" });
           }
-        );
+        });
       })
       .catch(() => {
         row.publish === false ? (row.publish = true) : (row.publish = false);
@@ -240,7 +260,7 @@ export function useAnnouncement(tableRef: Ref) {
   }
 
   async function handleDelete(row) {
-    deleteAnnouncementApi(row.pk).then(async res => {
+    deleteNoticeApi(row.pk).then(async res => {
       if (res.code === 1000) {
         message("操作成功", { type: "success" });
         onSearch();
@@ -264,18 +284,20 @@ export function useAnnouncement(tableRef: Ref) {
   function handleSelectionChange(val) {
     manySelectCount.value = val.length;
   }
+
   function onSelectionCancel() {
     manySelectCount.value = 0;
     // 用于多选表格，清空用户的选择
     tableRef.value.getTableRef().clearSelection();
   }
+
   function handleManyDelete() {
     if (manySelectCount.value === 0) {
       message("数据未选择", { type: "error" });
       return;
     }
     const manySelectData = tableRef.value.getTableRef().getSelectionRows();
-    manyDeleteAnnouncementApi({
+    manyDeleteNoticeApi({
       pks: JSON.stringify(getKeyList(manySelectData, "pk"))
     }).then(async res => {
       if (res.code === 1000) {
@@ -295,11 +317,12 @@ export function useAnnouncement(tableRef: Ref) {
       pagination.pageSize = form.size = 10;
     }
     loading.value = true;
-    getAnnouncementListApi(toRaw(form)).then(res => {
+    getNoticeListApi(toRaw(form)).then(res => {
       if (res.code === 1000 && res.data) {
         dataList.value = res.data.results;
         pagination.total = res.data.total;
-        choicesDict.value = res.choices_dict;
+        levelChoices.value = res.level_choices;
+        noticeChoices.value = res.notice_type_choices;
       } else {
         message(`操作失败，${res.detail}`, { type: "error" });
       }
@@ -323,6 +346,10 @@ export function useAnnouncement(tableRef: Ref) {
           parameter[param] = parameter[param].toString();
         }
       });
+      if (parameter.owners) {
+        parameter.owners = JSON.parse(parameter.owners);
+        openDialog("新增", parameter);
+      }
       form.pk = parameter.pk;
     }
     onSearch();
@@ -336,7 +363,8 @@ export function useAnnouncement(tableRef: Ref) {
     pagination,
     sortOptions,
     manySelectCount,
-    choicesDict,
+    levelChoices,
+    noticeChoices,
     onSelectionCancel,
     onSearch,
     resetForm,

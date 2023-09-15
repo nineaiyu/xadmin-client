@@ -8,14 +8,8 @@ const props = withDefaults(defineProps<FormProps>(), {
   formInline: () => ({
     pk: 0,
     title: "",
-    unread: true,
-    publish: false,
     message: "",
-    level: "",
-    owner: null,
-    owner_info: { pk: 0, username: "" },
-    choicesDict: [],
-    owners: []
+    level: ""
   })
 });
 const ruleFormRef = ref();
@@ -54,11 +48,6 @@ const loading = ref(false);
         <el-text :type="newFormInline.level" size="large"
           >{{ newFormInline.title }}
         </el-text>
-        <el-tag
-          :type="newFormInline.publish ? 'success' : 'warning'"
-          style="float: right"
-          >{{ newFormInline.publish ? "已经发布" : "未发布" }}
-        </el-tag>
       </template>
       <div class="wangeditor">
         <Editor

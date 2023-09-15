@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { useNotify } from "./utils/hook";
+import { useNotice } from "./utils/hook";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 
@@ -12,7 +12,7 @@ import EditPen from "@iconify-icons/ep/edit-pen";
 import AddFill from "@iconify-icons/ri/add-circle-line";
 import Eye from "@iconify-icons/ri/eye-fill";
 defineOptions({
-  name: "Notify"
+  name: "Notice"
 });
 
 const formRef = ref();
@@ -25,7 +25,8 @@ const {
   pagination,
   sortOptions,
   manySelectCount,
-  choicesDict,
+  levelChoices,
+  noticeChoices,
   onSelectionCancel,
   onSearch,
   resetForm,
@@ -36,23 +37,23 @@ const {
   handleSizeChange,
   handleCurrentChange,
   handleSelectionChange
-} = useNotify(tableRef);
+} = useNotice(tableRef);
 </script>
 
 <template>
-  <div class="main" v-if="hasAuth('list:systemNotify')">
+  <div class="main" v-if="hasAuth('list:systemNotice')">
     <el-form
       ref="formRef"
       :inline="true"
       :model="form"
       class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px]"
     >
-      <el-form-item label="用户ID：" prop="recipient_id">
+      <el-form-item label="ID：" prop="pk">
         <el-input
-          v-model="form.owner_id"
-          placeholder="请输入用户ID"
+          v-model="form.pk"
+          placeholder="请输入消息ID"
           clearable
-          class="!w-[200px]"
+          class="!w-[100px]"
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
@@ -73,18 +74,6 @@ const {
           class="!w-[180px]"
           @keyup.enter="onSearch(true)"
         />
-      </el-form-item>
-      <el-form-item label="是否已读：" prop="unread">
-        <el-select
-          v-model="form.unread"
-          placeholder="请选择"
-          clearable
-          class="!w-[160px]"
-          @change="onSearch(true)"
-        >
-          <el-option label="已读" :value="false" />
-          <el-option label="未读" :value="true" />
-        </el-select>
       </el-form-item>
       <el-form-item label="是否发布：" prop="unread">
         <el-select
@@ -107,7 +96,24 @@ const {
           clearable
         >
           <el-option
-            v-for="item in choicesDict"
+            v-for="item in levelChoices"
+            :key="item.key"
+            :label="item.label"
+            :disabled="item.disabled"
+            :value="item.key"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="通知类型" prop="level">
+        <el-select
+          v-model="form.notice_type"
+          class="filter-item"
+          style="width: 180px"
+          @change="onSearch(true)"
+          clearable
+        >
+          <el-option
+            v-for="item in noticeChoices"
             :key="item.key"
             :label="item.label"
             :disabled="item.disabled"
@@ -146,7 +152,7 @@ const {
     </el-form>
 
     <PureTableBar
-      title="用户消息管理"
+      title="消息公告管理"
       :columns="columns"
       @refresh="onSearch(true)"
     >
@@ -164,7 +170,7 @@ const {
           <el-popconfirm
             :title="`是否确认批量删除${manySelectCount}条数据?`"
             @confirm="handleManyDelete"
-            v-if="hasAuth('manyDelete:systemNotify')"
+            v-if="hasAuth('manyDelete:systemNotice')"
           >
             <template #reference>
               <el-button type="danger" plain :icon="useRenderIcon(Delete)">
@@ -174,12 +180,12 @@ const {
           </el-popconfirm>
         </div>
         <el-button
-          v-if="hasAuth('create:systemNotify')"
+          v-if="hasAuth('create:systemNotice')"
           type="primary"
           :icon="useRenderIcon(AddFill)"
           @click="openDialog()"
         >
-          新增用户消息
+          新增消息公告
         </el-button>
       </template>
       <template v-slot="{ size, dynamicColumns }">
@@ -210,7 +216,7 @@ const {
               class="reset-margin"
               link
               type="primary"
-              v-if="hasAuth('list:systemNotify')"
+              v-if="hasAuth('list:systemNotice')"
               :size="size"
               @click="showDialog(row)"
               :icon="useRenderIcon(Eye)"
@@ -221,7 +227,7 @@ const {
               class="reset-margin"
               link
               type="primary"
-              v-if="hasAuth('update:systemNotify')"
+              v-if="hasAuth('update:systemNotice')"
               :size="size"
               @click="openDialog('编辑', row)"
               :icon="useRenderIcon(EditPen)"
@@ -231,7 +237,7 @@ const {
             <el-popconfirm
               :title="`是否确认删除消息名称为 ${row.title} 的这条数据?`"
               @confirm="handleDelete(row)"
-              v-if="hasAuth('delete:systemNotify')"
+              v-if="hasAuth('delete:systemNotice')"
             >
               <template #reference>
                 <el-button

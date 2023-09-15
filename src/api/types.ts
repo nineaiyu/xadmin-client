@@ -2,6 +2,8 @@ export type Result = {
   detail: string;
   code: number;
   choices_dict?: any[];
+  level_choices?: any[];
+  notice_type_choices?: any[];
   data?: {
     /** 列表数据 */
     results: Array<any>;

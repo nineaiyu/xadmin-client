@@ -25,6 +25,7 @@ export interface UserInfo {
   sex: number;
   date_joined: string;
   pk: number;
+  unread_message_count: number;
   mobile: string;
   is_active: boolean;
   roles: number[];

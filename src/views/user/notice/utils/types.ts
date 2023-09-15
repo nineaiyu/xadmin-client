@@ -7,16 +7,27 @@ type ImageElement = SlateElement & {
   href: string;
 };
 
+interface Owner {
+  pk: number;
+  username: string;
+}
+
 interface FormItemProps {
   pk?: number;
+  owner_info?: Owner;
+  owner?: number;
+  // unread?: boolean;
+  unread: boolean;
   level: string;
   title: string;
-  publish: boolean;
   message: string;
-  notify_type?: number;
+  notice_type?: number;
+  user_count?: number;
   extra_json?: {};
-  choicesDict?: any[];
+  levelChoices?: any[];
+  noticeChoices?: any[];
   files?: any[];
+  owners?: any[];
 }
 
 interface ListItem {

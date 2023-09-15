@@ -3,10 +3,8 @@ import { ListItem } from "./data";
 import { ref, PropType, nextTick } from "vue";
 import { useNav } from "@/layout/hooks/useNav";
 import { deviceDetection } from "@pureadmin/utils";
-import {
-  updateAnnouncementReadApi,
-  updateNoticeReadApi
-} from "@/api/system/notice";
+import dayjs from "dayjs";
+import { useRouter } from "vue-router";
 
 const props = defineProps({
   noticeItem: {
@@ -29,17 +27,16 @@ function hoverTitle() {
       : (titleTooltip.value = false);
   });
 }
+const router = useRouter();
 
-const handleRead = (notify_type: number, pk: number) => {
-  if (notify_type === 3) {
-    updateAnnouncementReadApi({ pks: [pk] }).then(res => {
-      console.log(res);
-    });
-  } else {
-    updateNoticeReadApi({ pks: [pk] }).then(res => {
-      console.log(res);
-    });
-  }
+const handleRead = (pk: number) => {
+  router.push({
+    name: "userNotice",
+    query: { pk: pk }
+  });
+  // updateUserNoticeReadApi({ pks: [pk] }).then(res => {
+  //   console.log(res);
+  // });
 };
 
 // function hoverDescription(event, description) {
@@ -90,9 +87,7 @@ const handleRead = (notify_type: number, pk: number) => {
           >
             <el-text
               :type="props.noticeItem?.level"
-              @click="
-                handleRead(props.noticeItem.notify_type, props.noticeItem.pk)
-              "
+              @click="handleRead(props.noticeItem.pk)"
               >{{ props.noticeItem.title }}</el-text
             >
           </div>
@@ -123,7 +118,9 @@ const handleRead = (notify_type: number, pk: number) => {
       <!--        </div>-->
       <!--      </el-tooltip>-->
       <div class="notice-text-datetime text-[#00000073] dark:text-white">
-        {{ props.noticeItem.times }}
+        {{
+          dayjs(props.noticeItem.created_time).format("YYYY年MM月DD日 HH:mm:ss")
+        }}
       </div>
     </div>
   </div>

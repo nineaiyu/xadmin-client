@@ -2,11 +2,9 @@
 import { onMounted, ref } from "vue";
 import NoticeList from "./noticeList.vue";
 import Bell from "@iconify-icons/ep/bell";
-import {
-  getAnnouncementUnreadListApi,
-  getNoticeUnreadListApi
-} from "@/api/system/notice";
+import { getUserNoticeUnreadListApi } from "@/api/system/notice";
 import { TabItem } from "@/layout/components/notice/data";
+import { useRouter } from "vue-router";
 
 const noticesNum = ref(0);
 const notices = ref<TabItem[]>([
@@ -23,33 +21,43 @@ const notices = ref<TabItem[]>([
 ]);
 const activeKey = ref();
 
-const getNotifyData = () => {
-  getNoticeUnreadListApi().then(res => {
+const getNoticeData = () => {
+  getUserNoticeUnreadListApi().then(res => {
     if (res.code === 1000 && res.data) {
-      noticesNum.value += res.data.total;
-      notices.value[0].list = res.data.results;
-      activeKey.value = notices.value[0].key;
+      noticesNum.value = res.data.total;
+      notices.value = res.data.results;
+      if (notices.value.length > 0) {
+        activeKey.value = notices.value[0].key;
+      }
     }
-    console.log(res);
+    loading.value = false;
   });
-  getAnnouncementUnreadListApi().then(res => {
-    if (res.code === 1000 && res.data) {
-      noticesNum.value += res.data.total;
-      notices.value[1].list = res.data.results;
-    }
-    console.log(res);
+};
+const router = useRouter();
+
+const goUserNotice = () => {
+  router.push({
+    name: "userNotice"
   });
 };
 
+const handleCommand = (flag: Boolean) => {
+  if (flag) {
+    getNoticeData();
+  }
+};
+const loading = ref(true);
 onMounted(() => {
-  getNotifyData();
+  getNoticeData();
 });
-
-// notices.value.map(v => (noticesNum.value += v.list.length));
 </script>
 
 <template>
-  <el-dropdown trigger="click" placement="bottom-end">
+  <el-dropdown
+    trigger="hover"
+    placement="bottom-end"
+    @visibleChange="handleCommand"
+  >
     <span class="dropdown-badge navbar-bg-hover select-none">
       <el-badge :value="noticesNum" :max="99">
         <span class="header-notice-icon">
@@ -63,6 +71,7 @@ onMounted(() => {
           :stretch="true"
           v-model="activeKey"
           class="dropdown-tabs"
+          v-loading="loading"
           :style="{ width: notices.length === 0 ? '200px' : '330px' }"
         >
           <el-empty
@@ -86,7 +95,9 @@ onMounted(() => {
             <el-divider />
             <el-row style="height: 30px; text-align: center">
               <el-col :span="24">
-                <el-link :underline="false">查看更多</el-link>
+                <el-link :underline="false" @click="goUserNotice"
+                  >查看更多</el-link
+                >
               </el-col>
             </el-row>
           </span>
