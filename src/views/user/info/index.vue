@@ -5,6 +5,7 @@ import editUserInfo from "./edit.vue";
 import editUserPassword from "./password.vue";
 import editUserAvatar from "./avatar.vue";
 import { hasAuth } from "@/router/utils";
+import dayjs from "dayjs";
 
 defineOptions({
   name: "UserInfo"
@@ -59,10 +60,14 @@ const activeTab = ref("userinfo");
             </el-space>
           </el-descriptions-item>
           <el-descriptions-item label="用户注册日期">
-            {{ currentUserInfo.date_joined }}
+            {{
+              dayjs(currentUserInfo.date_joined).format("YYYY-MM-DD HH:mm:ss")
+            }}
           </el-descriptions-item>
           <el-descriptions-item label="上次登录日期">
-            {{ currentUserInfo.last_login }}
+            {{
+              dayjs(currentUserInfo.last_login).format("YYYY-MM-DD HH:mm:ss")
+            }}
           </el-descriptions-item>
         </el-descriptions>
       </div>
