@@ -16,11 +16,11 @@ interface FormItemProps {
   pk?: number;
   owner_info?: Owner;
   owner?: number;
-  // unread?: boolean;
-  publish: boolean;
-  level: string;
-  title: string;
-  message: string;
+  publish?: boolean;
+  level?: string;
+  notice_type_display?: string;
+  title?: string;
+  message?: string;
   notice_type?: number;
   user_count?: number;
   extra_json?: {};

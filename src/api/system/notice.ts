@@ -86,6 +86,12 @@ export const updateUserNoticeReadApi = (data?: object) => {
   });
 };
 
+export const updateUserNoticeReadAllApi = (data?: object) => {
+  return http.request<Result>("put", "/api/system/notice/read_all", {
+    data: data
+  });
+};
+
 export const getUserNoticeListApi = (data?: object) => {
   return http.request<Result>("get", "/api/system/notice", {
     params: data

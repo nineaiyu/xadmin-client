@@ -25,12 +25,14 @@ const {
   sortOptions,
   manySelectCount,
   levelChoices,
+  unreadCount,
   noticeChoices,
   onSelectionCancel,
   onSearch,
   resetForm,
   showDialog,
   handleManyRead,
+  handleReadAll,
   handleSizeChange,
   handleCurrentChange,
   handleSelectionChange
@@ -176,6 +178,17 @@ const {
             </template>
           </el-popconfirm>
         </div>
+        <el-button
+          class="mr-2"
+          type="primary"
+          @click="handleReadAll"
+          v-if="hasAuth('update:userNoticeReadAll') && unreadCount > 0"
+        >
+          全部已读
+        </el-button>
+        <el-text type="primary" v-if="unreadCount > 0">
+          未读消息 {{ unreadCount }}</el-text
+        >
       </template>
       <template v-slot="{ size, dynamicColumns }">
         <pure-table

@@ -37,7 +37,7 @@ const {
   exportExcel,
   resetForm,
   openDialog,
-  goNotify,
+  goNotice,
   handleDelete,
   handleManyDelete,
   onSelectionCancel,
@@ -162,7 +162,7 @@ const {
             v-if="hasAuth('send:systemNotify') && manySelectCount > 0"
             type="primary"
             :icon="useRenderIcon(Message)"
-            @click="goNotify()"
+            @click="goNotice()"
           >
             批量发送通知
           </el-button>

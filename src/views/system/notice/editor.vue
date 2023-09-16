@@ -18,6 +18,7 @@ const props = withDefaults(defineProps<FormProps>(), {
     publish: false,
     message: "",
     level: "",
+    notice_type_display: "",
     notice_type: 1,
     noticeChoices: [],
     levelChoices: [],
@@ -26,6 +27,7 @@ const props = withDefaults(defineProps<FormProps>(), {
 });
 const ruleFormRef = ref();
 const newFormInline = ref(props.formInline);
+newFormInline.value.noticeChoices[0].disabled = true;
 const editorRef = shallowRef();
 const mode = "default";
 function getRef() {

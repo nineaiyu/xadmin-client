@@ -31,6 +31,7 @@ export function useNotice(tableRef: Ref) {
     message: "",
     level: "",
     notice_type: "",
+    owners: "",
     publish: "",
     ordering: sortOptions[0].key,
     page: 1,
@@ -133,7 +134,7 @@ export function useNotice(tableRef: Ref) {
 
   function openDialog(title = "新增", row?: FormItemProps) {
     addDialog({
-      title: `${title}用户消息`,
+      title: `${title}用户消息通知`,
       props: {
         formInline: {
           pk: row?.pk ?? 0,
@@ -141,6 +142,7 @@ export function useNotice(tableRef: Ref) {
           publish: row?.publish ?? false,
           message: row?.message ?? "",
           level: row?.level ?? "",
+          notice_type_display: row?.notice_type_display ?? "",
           notice_type: row?.notice_type ?? 1,
           levelChoices: levelChoices.value,
           noticeChoices: noticeChoices.value,
@@ -328,6 +330,14 @@ export function useNotice(tableRef: Ref) {
       }
       setTimeout(() => {
         loading.value = false;
+        if (getParameter.owners && form.owners && form.owners !== "") {
+          const parameter = {
+            owner: JSON.parse(getParameter.owners as string),
+            notice_type: 1
+          };
+          form.owners = "";
+          openDialog("新增", parameter);
+        }
       }, 500);
     });
   }
@@ -346,13 +356,10 @@ export function useNotice(tableRef: Ref) {
           parameter[param] = parameter[param].toString();
         }
       });
-      if (parameter.owners) {
-        parameter.owners = JSON.parse(parameter.owners);
-        openDialog("新增", parameter);
-      }
       form.pk = parameter.pk;
+      form.owners = parameter.owners;
     }
-    onSearch();
+    onSearch(true);
   });
 
   return {

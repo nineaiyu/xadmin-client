@@ -4,7 +4,8 @@ import { type PaginationProps } from "@pureadmin/table";
 import { reactive, ref, h, onMounted, toRaw, type Ref } from "vue";
 import {
   getUserNoticeListApi,
-  updateUserNoticeReadApi
+  updateUserNoticeReadApi,
+  updateUserNoticeReadAllApi
 } from "@/api/system/notice";
 import { useRoute } from "vue-router";
 import { FormItemProps } from "./types";
@@ -33,6 +34,7 @@ export function useUserNotice(tableRef: Ref) {
   const getParameter = isEmpty(route.params) ? route.query : route.params;
   const formRef = ref();
   const manySelectCount = ref(0);
+  const unreadCount = ref(0);
   const dataList = ref([]);
   const loading = ref(true);
   const levelChoices = ref([]);
@@ -144,6 +146,12 @@ export function useUserNotice(tableRef: Ref) {
     tableRef.value.getTableRef().clearSelection();
   }
 
+  function handleReadAll() {
+    updateUserNoticeReadAllApi().then(() => {
+      onSearch();
+    });
+  }
+
   function handleManyRead() {
     if (manySelectCount.value === 0) {
       message("数据未选择", { type: "error" });
@@ -151,7 +159,12 @@ export function useUserNotice(tableRef: Ref) {
     }
     const manySelectData = tableRef.value.getTableRef().getSelectionRows();
     updateUserNoticeReadApi({
-      pks: getKeyList(manySelectData, "pk")
+      pks: getKeyList(
+        manySelectData.filter(r => {
+          return r.unread;
+        }),
+        "pk"
+      )
     }).then(async res => {
       if (res.code === 1000) {
         message(`批量已读了${manySelectCount.value}条数据`, {
@@ -176,12 +189,12 @@ export function useUserNotice(tableRef: Ref) {
         pagination.total = res.data.total;
         levelChoices.value = res.level_choices;
         noticeChoices.value = res.notice_type_choices;
+        unreadCount.value = res.unread_count;
       } else {
         message(`操作失败，${res.detail}`, { type: "error" });
       }
       setTimeout(() => {
         loading.value = false;
-        console.log(11, getParameter.pk);
         if (
           getParameter.pk &&
           getParameter.pk === form.pk &&
@@ -220,6 +233,7 @@ export function useUserNotice(tableRef: Ref) {
     dataList,
     pagination,
     sortOptions,
+    unreadCount,
     manySelectCount,
     levelChoices,
     noticeChoices,
@@ -228,6 +242,7 @@ export function useUserNotice(tableRef: Ref) {
     resetForm,
     showDialog,
     handleManyRead,
+    handleReadAll,
     handleSizeChange,
     handleCurrentChange,
     handleSelectionChange

@@ -1,6 +1,7 @@
 export type Result = {
   detail: string;
   code: number;
+  unread_count?: number;
   choices_dict?: any[];
   level_choices?: any[];
   notice_type_choices?: any[];

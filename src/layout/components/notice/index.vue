@@ -54,7 +54,7 @@ onMounted(() => {
 
 <template>
   <el-dropdown
-    trigger="hover"
+    trigger="click"
     placement="bottom-end"
     @visibleChange="handleCommand"
   >

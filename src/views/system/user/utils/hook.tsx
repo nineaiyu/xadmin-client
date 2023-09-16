@@ -342,10 +342,10 @@ export function useUser(tableRef: Ref) {
     });
   };
 
-  function goNotify() {
+  function goNotice() {
     const manySelectData = tableRef.value.getTableRef().getSelectionRows();
     router.push({
-      name: "systemNotify",
+      name: "systemNotice",
       query: { owners: JSON.stringify(getKeyList(manySelectData, "pk")) }
     });
   }
@@ -639,7 +639,7 @@ export function useUser(tableRef: Ref) {
     exportExcel,
     onSearch,
     openDialog,
-    goNotify,
+    goNotice,
     onSelectionCancel,
     resetForm,
     handleRole,
