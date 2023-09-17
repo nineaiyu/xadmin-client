@@ -21,6 +21,8 @@ import { FormProps } from "./utils/types";
 
 const {
   treeData,
+  defaultData,
+  parentIds,
   getMenuData,
   openDialog,
   handleDelete,
@@ -114,6 +116,11 @@ const initMenuData = value => {
     (formInline as any).value[key] = value[key];
   });
   formInline.value.title = formInline.value.meta.title;
+  const p_menus = getMenuFromPk(treeRef.value.data, value.pk);
+  if (p_menus.length > 0) {
+    formInline.value.parent_ids = p_menus.map(res => res.pk);
+    parentIds.value = formInline.value.parent_ids;
+  }
 };
 
 function nodeClick(value) {
@@ -149,7 +156,11 @@ const handleDragEnd = (node, node2, position) => {
 function onReset() {
   highlightMap.value = {};
   searchValue.value = "";
-  toggleRowExpansionAll(true);
+  toggleRowExpansionAll(false);
+  parentIds.value = [];
+  Object.keys(formInline.value).forEach(param => {
+    formInline.value[param] = defaultData[param];
+  });
 }
 
 import DocumentAdd from "@iconify-icons/ep/document-add";
@@ -159,6 +170,7 @@ import { hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { isAllEmpty } from "@pureadmin/utils";
 import { match } from "pinyin-pro";
+import { getMenuFromPk } from "@/utils";
 
 const handleDragDrop = (node1, node2, type) => {
   return !(type === "inner" && node2.data.menu_type === 2);
@@ -170,100 +182,100 @@ watch(searchValue, val => {
 </script>
 
 <template>
-  <div
-    class="h-full bg-bg_color overflow-auto"
-    :style="{ minHeight: `calc(100vh - 133px)` }"
-  >
-    <div class="flex items-center h-[34px]">
-      <p class="flex-1 ml-2 font-bold text-base truncate" title="菜单列表">
-        菜单列表
-      </p>
-      <el-button
-        size="small"
-        class="ml-2"
-        @click="openDialog(0)"
-        v-if="hasAuth('create:systemMenu')"
-        >添加节点</el-button
-      >
-      <el-input
-        size="small"
-        class="flex-1"
-        v-model="searchValue"
-        placeholder="请输入菜单名称"
-        clearable
-      >
-        <template #suffix>
-          <el-icon class="el-input__icon">
+  <div class="h-full bg-bg_color" :style="{ minHeight: `calc(100vh - 133px)` }">
+    <el-affix :offset="85">
+      <el-card :body-style="{ padding: '8px' }">
+        <div class="flex items-center h-[34px]">
+          <p class="flex-1 ml-2 font-bold text-base truncate" title="菜单列表">
+            菜单列表
+          </p>
+          <el-button
+            size="small"
+            class="ml-2"
+            @click="openDialog(0)"
+            v-if="hasAuth('create:systemMenu')"
+            >添加节点</el-button
+          >
+          <el-input
+            size="small"
+            class="flex-1"
+            v-model="searchValue"
+            placeholder="请输入菜单名称"
+            clearable
+          >
+            <template #suffix>
+              <el-icon class="el-input__icon">
+                <IconifyIconOffline
+                  v-show="searchValue.length === 0"
+                  :icon="Search"
+                />
+              </el-icon>
+            </template>
+          </el-input>
+          <el-dropdown :hide-on-click="false">
             <IconifyIconOffline
-              v-show="searchValue.length === 0"
-              :icon="Search"
+              class="w-[28px] cursor-pointer"
+              width="18px"
+              :icon="More2Fill"
             />
-          </el-icon>
-        </template>
-      </el-input>
-      <el-dropdown :hide-on-click="false">
-        <IconifyIconOffline
-          class="w-[28px] cursor-pointer"
-          width="18px"
-          :icon="More2Fill"
-        />
-        <template #dropdown>
-          <el-dropdown-menu>
-            <el-dropdown-item>
-              <el-button
-                :class="buttonClass"
-                link
-                type="primary"
-                :icon="useRenderIcon(isExpand ? ExpandIcon : UnExpandIcon)"
-                @click="toggleRowExpansionAll(isExpand ? false : true)"
-              >
-                {{ isExpand ? "折叠全部" : "展开全部" }}
-              </el-button>
-            </el-dropdown-item>
-            <el-dropdown-item>
-              <el-button
-                :class="buttonClass"
-                link
-                type="primary"
-                :icon="useRenderIcon(Reset)"
-                @click="onReset"
-              >
-                重置状态
-              </el-button>
-            </el-dropdown-item>
-            <el-dropdown-item v-if="hasAuth('list:systemMenu')">
-              <el-button
-                :class="buttonClass"
-                link
-                type="primary"
-                :icon="useRenderIcon(Refresh)"
-                @click="getMenuData"
-              >
-                刷新菜单
-              </el-button>
-            </el-dropdown-item>
-            <el-dropdown-item v-if="hasAuth('manyDelete:systemMenu')">
-              <el-popconfirm
-                title="是否确认批量删除选中节点?"
-                @confirm="handleManyDelete(treeRef)"
-              >
-                <template #reference>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item>
                   <el-button
                     :class="buttonClass"
                     link
-                    type="danger"
-                    :icon="useRenderIcon(Delete)"
+                    type="primary"
+                    :icon="useRenderIcon(isExpand ? ExpandIcon : UnExpandIcon)"
+                    @click="toggleRowExpansionAll(!isExpand)"
                   >
-                    批量删除
+                    {{ isExpand ? "折叠全部" : "展开全部" }}
                   </el-button>
-                </template>
-              </el-popconfirm>
-            </el-dropdown-item>
-          </el-dropdown-menu>
-        </template>
-      </el-dropdown>
-    </div>
-    <el-divider />
+                </el-dropdown-item>
+                <el-dropdown-item>
+                  <el-button
+                    :class="buttonClass"
+                    link
+                    type="primary"
+                    :icon="useRenderIcon(Reset)"
+                    @click="onReset"
+                  >
+                    重置状态
+                  </el-button>
+                </el-dropdown-item>
+                <el-dropdown-item v-if="hasAuth('list:systemMenu')">
+                  <el-button
+                    :class="buttonClass"
+                    link
+                    type="primary"
+                    :icon="useRenderIcon(Refresh)"
+                    @click="getMenuData"
+                  >
+                    刷新菜单
+                  </el-button>
+                </el-dropdown-item>
+                <el-dropdown-item v-if="hasAuth('manyDelete:systemMenu')">
+                  <el-popconfirm
+                    title="是否确认批量删除选中节点?"
+                    @confirm="handleManyDelete(treeRef)"
+                  >
+                    <template #reference>
+                      <el-button
+                        :class="buttonClass"
+                        link
+                        type="danger"
+                        :icon="useRenderIcon(Delete)"
+                      >
+                        批量删除
+                      </el-button>
+                    </template>
+                  </el-popconfirm>
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
+      </el-card>
+    </el-affix>
     <el-tree
       ref="treeRef"
       :data="treeData"
@@ -273,6 +285,7 @@ watch(searchValue, val => {
       show-checkbox
       check-strictly
       :expand-on-click-node="false"
+      :default-expanded-keys="parentIds"
       :filter-node-method="filterMenuNode"
       @node-drag-end="handleDragEnd"
       :allow-drop="handleDragDrop"

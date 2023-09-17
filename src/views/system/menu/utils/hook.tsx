@@ -55,6 +55,7 @@ export function useMenu() {
   const formRef = ref();
   const treeData = ref([]);
   const dataList = ref([]);
+  const parentIds = ref([]);
   const choicesDict = ref([]);
   const menuUrlList = ref([]);
   const menuData = reactive<FormItemProps>(cloneDeep(defaultData));
@@ -72,9 +73,9 @@ export function useMenu() {
 
   const getMenuData = () => {
     loading.value = true;
-    getMenuListApi({ page: 1, size: 100 }).then(res => {
+    getMenuListApi({ page: 1, size: 500 }).then(res => {
       if (res.code === 1000) {
-        treeData.value = handleTree(res.data);
+        treeData.value = handleTree(res.data.results);
         choicesDict.value = res.choices_dict;
         menuUrlList.value = res.api_url_list;
       }
@@ -139,6 +140,7 @@ export function useMenu() {
     if (p_menus.length > 0) {
       row.parent = p_menus[0].pk;
       row.parent_ids = p_menus.map(res => res.pk);
+      parentIds.value = row.parent_ids;
     } else {
       row.parent = "";
     }
@@ -240,7 +242,7 @@ export function useMenu() {
   return {
     form,
     loading,
-
+    parentIds,
     dataList,
     treeData,
     menuData,

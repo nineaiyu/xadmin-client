@@ -28,7 +28,10 @@ export type ResultDetail = {
 export type MenuDataResult = {
   detail: string;
   code: number;
-  data: any[];
+  data: {
+    results: any[];
+    total: number;
+  };
   choices_dict: any[];
   api_url_list: any[];
 };

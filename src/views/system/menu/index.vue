@@ -19,7 +19,7 @@ const { menuData } = useMenu();
       class="w-[48%] float-left"
       v-if="hasAuth('list:systemMenu')"
     />
-    <el-affix :offset="90">
+    <el-affix :offset="85">
       <edit
         :form-inline="menuData"
         class="w-[51%] float-right"
