@@ -75,66 +75,68 @@ const filteredItems = computed(() => {
 </script>
 
 <template>
-  <div>
-    <el-card class="mb-4 box-card w-[50%]" shadow="never">
-      <template #header>
-        <div class="card-header">
-          <span class="font-medium">聊天室 {{ username }}</span>
+  <el-row :gutter="24">
+    <el-col :xs="24" :sm="24" :md="13" :lg="13" :xl="13">
+      <el-card class="mb-4 box-card" shadow="never">
+        <template #header>
+          <div class="card-header">
+            <span class="font-medium">聊天室 {{ username }}</span>
+          </div>
+        </template>
+        <div class="h-[500px]">
+          <DynamicScroller
+            ref="scroller"
+            :items="filteredItems"
+            :min-item-size="20"
+            key-field="time"
+            class="scroller"
+            @resize="scrollToBottom"
+          >
+            <template #default="{ item, index, active }">
+              <DynamicScrollerItem
+                :item="item"
+                :active="active"
+                :size-dependencies="[item.text]"
+                :data-index="index"
+                :data-active="active"
+                :title="`${index} ${item.username}  ${item.uid}`"
+                :class="[userinfo.uid === item.uid ? 'message-me' : 'message']"
+              >
+                <div class="flex items-center">
+                  <el-text type="info">{{ item.username }}：</el-text>
+                  <el-text type="primary">{{ item.text }}</el-text>
+                </div>
+              </DynamicScrollerItem>
+            </template>
+          </DynamicScroller>
         </div>
-      </template>
-      <div class="h-[500px]">
-        <DynamicScroller
-          ref="scroller"
-          :items="filteredItems"
-          :min-item-size="20"
-          key-field="time"
-          class="scroller"
-          @resize="scrollToBottom"
-        >
-          <template #default="{ item, index, active }">
-            <DynamicScrollerItem
-              :item="item"
-              :active="active"
-              :size-dependencies="[item.text]"
-              :data-index="index"
-              :data-active="active"
-              :title="`${index} ${item.username}  ${item.uid}`"
-              :class="[userinfo.uid === item.uid ? 'message-me' : 'message']"
-            >
-              <div class="flex items-center">
-                <el-text type="info">{{ item.username }}：</el-text>
-                <el-text type="primary">{{ item.text }}</el-text>
-              </div>
-            </DynamicScrollerItem>
-          </template>
-        </DynamicScroller>
-      </div>
-    </el-card>
-    <el-card class="w-[50%]">
-      <el-form label-width="100">
-        <el-form-item label="昵称" v-if="!enter">
-          <div class="w-[60%]">
-            <el-input
-              v-model="username"
-              placeholder="请输入昵称"
-              @keyup.enter="enterRoomHandle"
-            />
-          </div>
-          <el-button @click="enterRoomHandle">加入房间</el-button>
-        </el-form-item>
-        <el-form-item label="请输入：" v-else>
-          <div class="w-[60%]">
-            <el-input
-              v-model="chatMsg"
-              @keyup.enter="chatHandle"
-              placeholder="输入消息并回车发送"
-            />
-          </div>
-          <el-button @click="chatHandle">发送</el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
-  </div>
+      </el-card>
+      <el-card>
+        <el-form label-width="100">
+          <el-form-item label="昵称" v-if="!enter">
+            <div class="w-[60%]">
+              <el-input
+                v-model="username"
+                placeholder="请输入昵称"
+                @keyup.enter="enterRoomHandle"
+              />
+            </div>
+            <el-button @click="enterRoomHandle">加入房间</el-button>
+          </el-form-item>
+          <el-form-item label="请输入：" v-else>
+            <div class="w-[60%]">
+              <el-input
+                v-model="chatMsg"
+                @keyup.enter="chatHandle"
+                placeholder="输入消息并回车发送"
+              />
+            </div>
+            <el-button @click="chatHandle">发送</el-button>
+          </el-form-item>
+        </el-form>
+      </el-card>
+    </el-col>
+  </el-row>
 </template>
 
 <style lang="scss" scoped>

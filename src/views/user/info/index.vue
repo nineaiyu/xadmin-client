@@ -17,62 +17,66 @@ const activeTab = ref("userinfo");
 </script>
 
 <template>
-  <div class="flex justify-between">
-    <el-card class="min-w-[400px] mr-2">
-      <template v-slot:header>
-        <div class="clearfix">
-          <span>个人信息</span>
-        </div>
-      </template>
-      <div>
-        <div class="text-center">
-          <el-image
-            class="h-[120px]"
-            :src="currentUserInfo.avatar"
-            :preview-src-list="Array.of(currentUserInfo.avatar)"
-            fit="cover"
-          />
-        </div>
+  <el-row :gutter="24">
+    <el-col :xs="24" :sm="24" :md="8" :lg="8" :xl="8">
+      <el-card>
+        <template v-slot:header>
+          <div class="clearfix">
+            <span>个人信息</span>
+          </div>
+        </template>
+        <div>
+          <div class="text-center">
+            <el-image
+              class="h-[120px]"
+              :src="currentUserInfo.avatar"
+              :preview-src-list="Array.of(currentUserInfo.avatar)"
+              fit="cover"
+            />
+          </div>
 
-        <el-descriptions :column="1" size="large">
-          <el-descriptions-item label="用户名称"
-            >{{ currentUserInfo.username }}
-          </el-descriptions-item>
-          <el-descriptions-item label="用户昵称"
-            >{{ currentUserInfo.nickname }}
-          </el-descriptions-item>
-          <el-descriptions-item label="手机号码"
-            >{{ currentUserInfo.mobile }}
-          </el-descriptions-item>
-          <el-descriptions-item label="用户邮箱"
-            >{{ currentUserInfo.email }}
-          </el-descriptions-item>
-          <el-descriptions-item label="性别">
-            <el-tag :type="['success', '', 'info'][currentUserInfo.sex]">
-              {{ ["男", "女", "未知"][currentUserInfo.sex] }}
-            </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="角色">
-            <el-space>
-              <el-tag v-for="item in currentUserInfo.roles_info" :key="item.pk"
-                >{{ item.name }}
+          <el-descriptions :column="1" size="large">
+            <el-descriptions-item label="用户名称"
+              >{{ currentUserInfo.username }}
+            </el-descriptions-item>
+            <el-descriptions-item label="用户昵称"
+              >{{ currentUserInfo.nickname }}
+            </el-descriptions-item>
+            <el-descriptions-item label="手机号码"
+              >{{ currentUserInfo.mobile }}
+            </el-descriptions-item>
+            <el-descriptions-item label="用户邮箱"
+              >{{ currentUserInfo.email }}
+            </el-descriptions-item>
+            <el-descriptions-item label="性别">
+              <el-tag :type="['success', '', 'info'][currentUserInfo.sex]">
+                {{ ["男", "女", "未知"][currentUserInfo.sex] }}
               </el-tag>
-            </el-space>
-          </el-descriptions-item>
-          <el-descriptions-item label="用户注册日期">
-            {{
-              dayjs(currentUserInfo.date_joined).format("YYYY-MM-DD HH:mm:ss")
-            }}
-          </el-descriptions-item>
-          <el-descriptions-item label="上次登录日期">
-            {{
-              dayjs(currentUserInfo.last_login).format("YYYY-MM-DD HH:mm:ss")
-            }}
-          </el-descriptions-item>
-        </el-descriptions>
-      </div>
-    </el-card>
-    <div class="w-[calc(100%-400px)]">
+            </el-descriptions-item>
+            <el-descriptions-item label="角色">
+              <el-space>
+                <el-tag
+                  v-for="item in currentUserInfo.roles_info"
+                  :key="item.pk"
+                  >{{ item.name }}
+                </el-tag>
+              </el-space>
+            </el-descriptions-item>
+            <el-descriptions-item label="用户注册日期">
+              {{
+                dayjs(currentUserInfo.date_joined).format("YYYY-MM-DD HH:mm:ss")
+              }}
+            </el-descriptions-item>
+            <el-descriptions-item label="上次登录日期">
+              {{
+                dayjs(currentUserInfo.last_login).format("YYYY-MM-DD HH:mm:ss")
+              }}
+            </el-descriptions-item>
+          </el-descriptions>
+        </div>
+      </el-card>
+    </el-col>
+    <el-col :xs="24" :sm="24" :md="16" :lg="16" :xl="16">
       <el-card>
         <template v-slot:header>
           <div class="clearfix">
@@ -106,8 +110,8 @@ const activeTab = ref("userinfo");
           </el-tab-pane>
         </el-tabs>
       </el-card>
-    </div>
-  </div>
+    </el-col>
+  </el-row>
 </template>
 
 <style scoped lang="scss">
@@ -119,5 +123,9 @@ const activeTab = ref("userinfo");
   :deep(.el-form-item) {
     margin-bottom: 12px;
   }
+}
+
+.main-content {
+  margin: 20px 20px 0 !important;
 }
 </style>

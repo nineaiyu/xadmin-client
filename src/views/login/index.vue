@@ -96,7 +96,8 @@ const onLogin = async (formEl: FormInstance | undefined) => {
           });
           loading.value = false;
           initToken();
-        });
+        })
+        .finally(() => (loading.value = false));
     } else {
       loading.value = false;
       return fields;
