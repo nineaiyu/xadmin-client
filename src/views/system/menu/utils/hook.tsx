@@ -150,6 +150,9 @@ export function useMenu() {
     addDialog({
       title: "新增",
       props: {
+        treeData: treeData,
+        choicesDict: choicesDict,
+        menuUrlList: menuUrlList,
         formInline: {
           pk: row?.pk ?? "",
           menu_type: menu_type,
@@ -235,7 +238,7 @@ export function useMenu() {
       }
     });
   };
-  onMounted(async () => {
+  onMounted(() => {
     getMenuData();
   });
 

@@ -11,12 +11,15 @@ import {
   ifOptions,
   MenuTypeOptions
 } from "@/constants/constants";
-import { useMenu } from "./utils/hook";
 import { dirFormRules, menuFormRules, permissionFormRules } from "./utils/rule";
 import { hasAuth } from "@/router/utils";
+import { cloneDeep } from "@pureadmin/utils";
 
-const { treeData, handleConfirm, choicesDict, menuUrlList } = useMenu();
+const emit = defineEmits(["handleConfirm"]);
 const props = withDefaults(defineProps<FormProps>(), {
+  treeData: () => [],
+  choicesDict: () => [],
+  menuUrlList: () => [],
   formInline: () => ({
     menu_type: 0,
     is_add: false,
@@ -45,14 +48,14 @@ const props = withDefaults(defineProps<FormProps>(), {
 });
 
 const ruleFormRef = ref();
+const treeSelectRef = ref();
 const newFormInline = ref(props.formInline);
 
 function getRef() {
   return ruleFormRef.value;
 }
 
-const formRules = ref(dirFormRules);
-
+const formRules = ref(cloneDeep(dirFormRules));
 watch(
   () => newFormInline.value.menu_type,
   () => {
@@ -123,8 +126,9 @@ const getMinHeight = () => {
       </el-form-item>
       <el-form-item label="上级节点" prop="parentId">
         <el-tree-select
+          ref="treeSelectRef"
           v-model="newFormInline.parent"
-          :data="treeData"
+          :data="props.treeData"
           :props="{
             children: 'children',
             label: data => transformI18n(data.meta.title)
@@ -336,7 +340,7 @@ const getMinHeight = () => {
             filterable
           >
             <el-option
-              v-for="item in menuUrlList"
+              v-for="item in props.menuUrlList"
               :key="item.name"
               :label="`${item.name}----${item.url}`"
               :value="item.url"
@@ -351,7 +355,7 @@ const getMinHeight = () => {
             clearable
           >
             <el-option
-              v-for="item in choicesDict"
+              v-for="item in props.choicesDict"
               :key="item.key"
               :label="item.label"
               :disabled="item.disabled"
@@ -386,7 +390,7 @@ const getMinHeight = () => {
       >
         <el-popconfirm
           :title="`是否更新  ${transformI18n(newFormInline.title)} 节点?`"
-          @confirm="handleConfirm(ruleFormRef, newFormInline)"
+          @confirm="emit('handleConfirm', ruleFormRef, newFormInline)"
         >
           <template #reference>
             <el-button

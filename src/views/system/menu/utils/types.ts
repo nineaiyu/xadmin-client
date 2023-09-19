@@ -52,6 +52,23 @@ interface FormItemProps {
 }
 interface FormProps {
   formInline: FormItemProps;
+  treeData: any[];
+  choicesDict: any[];
+  menuUrlList: any[];
 }
 
-export type { FormItemProps, FormProps };
+interface TreeFormProps {
+  formInline: FormItemProps;
+  treeData: any[];
+  defaultData: object;
+  parentIds: any[];
+}
+
+interface Tree {
+  id: number;
+  name: string;
+  highlight?: boolean;
+  children?: Tree[];
+}
+
+export type { FormItemProps, FormProps, Tree, TreeFormProps };

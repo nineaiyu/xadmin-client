@@ -2,34 +2,22 @@
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { ref, computed, watch, getCurrentInstance } from "vue";
 
+import DocumentAdd from "@iconify-icons/ep/document-add";
+import Delete from "@iconify-icons/ep/delete";
+import { transformI18n } from "@/plugins/i18n";
+import { hasAuth } from "@/router/utils";
+import { useI18n } from "vue-i18n";
+import { isAllEmpty } from "@pureadmin/utils";
+import { match } from "pinyin-pro";
+import { getMenuFromPk } from "@/utils";
 import Reset from "@iconify-icons/ri/restart-line";
 import Search from "@iconify-icons/ep/search";
 import More2Fill from "@iconify-icons/ri/more-2-fill";
 import ExpandIcon from "./svg/expand.svg?component";
 import UnExpandIcon from "./svg/unexpand.svg?component";
 import Refresh from "@iconify-icons/ep/refresh";
-
-interface Tree {
-  id: number;
-  name: string;
-  highlight?: boolean;
-  children?: Tree[];
-}
-import { useMenu } from "./utils/hook";
 import { useVModel } from "@vueuse/core";
-import { FormProps } from "./utils/types";
-
-const {
-  treeData,
-  defaultData,
-  parentIds,
-  getMenuData,
-  openDialog,
-  handleDelete,
-  addNewMenu,
-  handleDrag,
-  handleManyDelete
-} = useMenu();
+import { Tree, TreeFormProps } from "./utils/types";
 
 const treeRef = ref();
 
@@ -38,34 +26,12 @@ const searchValue = ref("");
 const highlightMap = ref({});
 const { proxy } = getCurrentInstance();
 
-const customNodeClass = data => {
-  if (data.menu_type === 0) {
-    return "is-penultimate";
-  } else if (data.menu_type === 1) {
-    return "is-permission";
-  }
-  return null;
-};
-
-const defaultProps = {
-  children: "children",
-  class: customNodeClass
-};
-const buttonClass = computed(() => {
-  return [
-    "!h-[20px]",
-    "reset-margin",
-    "!text-gray-500",
-    "dark:!text-white",
-    "dark:hover:!text-primary"
-  ];
-});
-
-// 声明 props 类型
-
 // 声明 props 默认值
 // 推荐阅读：https://cn.vuejs.org/guide/typescript/composition-api.html#typing-component-props
-const props = withDefaults(defineProps<FormProps>(), {
+const props = withDefaults(defineProps<TreeFormProps>(), {
+  treeData: () => [],
+  defaultData: () => ({}),
+  parentIds: () => [],
   formInline: () => ({
     menu_type: 0,
     parent: "",
@@ -92,8 +58,18 @@ const props = withDefaults(defineProps<FormProps>(), {
 });
 
 // 使用 vueuse 的双向绑定工具
-const emit = defineEmits(["update:formInline"]);
+const emit = defineEmits([
+  "update:formInline",
+  "update:parentIds",
+  "getMenuData",
+  "openDialog",
+  "handleDelete",
+  "addNewMenu",
+  "handleDrag",
+  "handleManyDelete"
+]);
 const formInline = useVModel(props, "formInline", emit);
+const parentIds = useVModel(props, "parentIds", emit);
 const { locale } = useI18n();
 
 const filterMenuNode = (value: string, data: any) => {
@@ -149,7 +125,7 @@ function toggleRowExpansionAll(status) {
 }
 
 const handleDragEnd = (node, node2, position) => {
-  handleDrag(treeRef, node, node2, position);
+  emit("handleDrag", treeRef, node, node2, position);
 };
 
 /** 重置状态（选中状态、搜索框值、树初始化） */
@@ -159,18 +135,32 @@ function onReset() {
   toggleRowExpansionAll(false);
   parentIds.value = [];
   Object.keys(formInline.value).forEach(param => {
-    formInline.value[param] = defaultData[param];
+    formInline.value[param] = props.defaultData[param];
   });
 }
 
-import DocumentAdd from "@iconify-icons/ep/document-add";
-import Delete from "@iconify-icons/ep/delete";
-import { transformI18n } from "@/plugins/i18n";
-import { hasAuth } from "@/router/utils";
-import { useI18n } from "vue-i18n";
-import { isAllEmpty } from "@pureadmin/utils";
-import { match } from "pinyin-pro";
-import { getMenuFromPk } from "@/utils";
+const customNodeClass = data => {
+  if (data.menu_type === 0) {
+    return "is-penultimate";
+  } else if (data.menu_type === 1) {
+    return "is-permission";
+  }
+  return null;
+};
+
+const defaultProps = {
+  children: "children",
+  class: customNodeClass
+};
+const buttonClass = computed(() => {
+  return [
+    "!h-[20px]",
+    "reset-margin",
+    "!text-gray-500",
+    "dark:!text-white",
+    "dark:hover:!text-primary"
+  ];
+});
 
 const handleDragDrop = (node1, node2, type) => {
   return !(type === "inner" && node2.data.menu_type === 2);
@@ -192,7 +182,7 @@ watch(searchValue, val => {
           <el-button
             size="small"
             class="ml-2"
-            @click="openDialog(0)"
+            @click="emit('openDialog', 0)"
             v-if="hasAuth('create:systemMenu')"
             >添加节点</el-button
           >
@@ -248,7 +238,7 @@ watch(searchValue, val => {
                     link
                     type="primary"
                     :icon="useRenderIcon(Refresh)"
-                    @click="getMenuData"
+                    @click="emit('getMenuData')"
                   >
                     刷新菜单
                   </el-button>
@@ -256,7 +246,7 @@ watch(searchValue, val => {
                 <el-dropdown-item v-if="hasAuth('manyDelete:systemMenu')">
                   <el-popconfirm
                     title="是否确认批量删除选中节点?"
-                    @confirm="handleManyDelete(treeRef)"
+                    @confirm="emit('handleManyDelete', treeRef)"
                   >
                     <template #reference>
                       <el-button
@@ -278,7 +268,7 @@ watch(searchValue, val => {
     </el-affix>
     <el-tree
       ref="treeRef"
-      :data="treeData"
+      :data="props.treeData"
       node-key="pk"
       size="small"
       :props="defaultProps"
@@ -327,14 +317,14 @@ watch(searchValue, val => {
               :icon="DocumentAdd"
               class="set-icon"
               style="width: 26px; height: 20px; margin-left: 8px"
-              @click.stop="addNewMenu(treeRef, data)"
+              @click.stop="emit('addNewMenu', treeRef, data)"
             />
           </el-tooltip>
 
           <el-popconfirm
             v-if="hasAuth('delete:systemMenu')"
             title="是否确认删除该节点?"
-            @confirm.stop="handleDelete(data)"
+            @confirm.stop="emit('handleDelete', data)"
           >
             <template #reference>
               <IconifyIconOffline
