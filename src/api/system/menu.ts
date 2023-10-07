@@ -20,7 +20,7 @@ export const updateMenuApi = (pk?: number, data?: object) => {
 };
 
 export const manyDeleteMenuApi = (data?: object) => {
-  return http.request<Result>("delete", `/api/system/menu/many_delete`, {
+  return http.request<Result>("delete", `/api/system/menu/many-delete`, {
     params: data
   });
 };

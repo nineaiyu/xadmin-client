@@ -21,7 +21,7 @@ export const updateRoleApi = (pk?: number, data?: object) => {
 };
 
 export const manyDeleteRoleApi = (data?: object) => {
-  return http.request<Result>("delete", `/api/system/role/many_delete`, {
+  return http.request<Result>("delete", `/api/system/role/many-delete`, {
     params: data
   });
 };

@@ -27,7 +27,7 @@ export const updateNoticeApi = (pk?: number, data?: object) => {
 export const manyDeleteNoticeApi = (data?: object) => {
   return http.request<Result>(
     "delete",
-    `/api/system/message/notice/many_delete`,
+    `/api/system/message/notice/many-delete`,
     {
       params: data
     }
@@ -66,7 +66,7 @@ export const deleteNoticeReadApi = (pk?: number) => {
 export const manyDeleteNoticeReadApi = (data?: object) => {
   return http.request<Result>(
     "delete",
-    `/api/system/message/read/many_delete`,
+    `/api/system/message/read/many-delete`,
     {
       params: data
     }
@@ -102,7 +102,7 @@ export const deleteUserNoticeApi = (pk?: number) => {
   return http.request<Result>("delete", `/api/system/notice/${pk}`);
 };
 export const manyDeleteUserNoticeApi = (data?: object) => {
-  return http.request<Result>("delete", `/api/system/notice/many_delete`, {
+  return http.request<Result>("delete", `/api/system/notice/many-delete`, {
     params: data
   });
 };

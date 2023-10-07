@@ -21,7 +21,7 @@ export const updateUserApi = (pk?: number, data?: object) => {
 };
 
 export const manyDeleteUserApi = (data?: object) => {
-  return http.request<Result>("delete", `/api/system/user/many_delete`, {
+  return http.request<Result>("delete", `/api/system/user/many-delete`, {
     params: data
   });
 };
