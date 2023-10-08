@@ -42,4 +42,5 @@ export type userType = {
   roles?: Array<number>;
   verifyCodeLength?: number;
   currentPage?: number;
+  isRemembered?: boolean;
 };

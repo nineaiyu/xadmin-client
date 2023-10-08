@@ -5,7 +5,8 @@ import {
   reactive,
   computed,
   onMounted,
-  onBeforeUnmount
+  onBeforeUnmount,
+  watch
 } from "vue";
 import { useI18n } from "vue-i18n";
 import Motion from "./utils/motion";
@@ -36,6 +37,7 @@ import globalization from "@/assets/svg/globalization.svg?component";
 import Lock from "@iconify-icons/ri/lock-fill";
 import Check from "@iconify-icons/ep/check";
 import User from "@iconify-icons/ri/user-3-fill";
+import Info from "@iconify-icons/ri/information-line";
 import { getTempTokenApi } from "@/api/auth";
 
 defineOptions({
@@ -44,7 +46,7 @@ defineOptions({
 
 const router = useRouter();
 const loading = ref(false);
-const checked = ref(false);
+const checked = ref(true);
 const ruleFormRef = ref<FormInstance>();
 const currentPage = computed(() => {
   return useUserStoreHook().currentPage;
@@ -119,6 +121,9 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.document.removeEventListener("keypress", onkeypress);
+});
+watch(checked, bool => {
+  useUserStoreHook().SET_ISREMEMBERED(bool);
 });
 </script>
 
@@ -238,7 +243,16 @@ onBeforeUnmount(() => {
               <el-form-item>
                 <div class="w-full h-[20px] flex justify-between items-center">
                   <el-checkbox v-model="checked">
-                    {{ t("login.remember") }}
+                    <span class="flex">
+                      {{ t("login.remember") }}
+                      <el-tooltip
+                        effect="dark"
+                        placement="top"
+                        :content="t('login.rememberInfo')"
+                      >
+                        <IconifyIconOffline :icon="Info" class="ml-1" />
+                      </el-tooltip>
+                    </span>
                   </el-checkbox>
                   <el-button
                     link
