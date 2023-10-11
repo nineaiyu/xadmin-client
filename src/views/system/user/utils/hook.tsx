@@ -46,13 +46,28 @@ import {
 } from "@pureadmin/utils";
 import { useRoute, useRouter } from "vue-router";
 import { hasAuth } from "@/router/utils";
-const sortOptions = [
-  { label: "注册时间 Descending", key: "-date_joined" },
-  { label: "注册时间 Ascending", key: "date_joined" },
-  { label: "登录时间 Descending", key: "-last_login" },
-  { label: "登录时间 Ascending", key: "last_login" }
-];
+import { useI18n } from "vue-i18n";
+
 export function useUser(tableRef: Ref) {
+  const { t } = useI18n();
+  const sortOptions = [
+    {
+      label: `${t("sorts.registrationDate")} ${t("labels.descending")}`,
+      key: "-date_joined"
+    },
+    {
+      label: `${t("sorts.registrationDate")} ${t("labels.ascending")}`,
+      key: "date_joined"
+    },
+    {
+      label: `${t("sorts.loginDate")} ${t("labels.descending")}`,
+      key: "-last_login"
+    },
+    {
+      label: `${t("sorts.loginDate")} ${t("labels.ascending")}`,
+      key: "last_login"
+    }
+  ];
   const form = reactive({
     pk: "",
     username: "",
@@ -62,6 +77,7 @@ export function useUser(tableRef: Ref) {
     page: 1,
     size: 10
   });
+
   const formRef = ref();
   const router = useRouter();
   const route = useRoute();
@@ -91,12 +107,12 @@ export function useUser(tableRef: Ref) {
       align: "left"
     },
     {
-      label: "用户ID",
+      label: t("user.id"),
       prop: "pk",
       minWidth: 130
     },
     {
-      label: "用户头像",
+      label: t("user.avatar"),
       prop: "avatar",
       minWidth: 160,
       cellRenderer: ({ row }) => (
@@ -111,17 +127,17 @@ export function useUser(tableRef: Ref) {
       )
     },
     {
-      label: "用户名称",
+      label: t("user.username"),
       prop: "username",
       minWidth: 130
     },
     {
-      label: "用户昵称",
+      label: t("user.nickname"),
       prop: "nickname",
       minWidth: 130
     },
     {
-      label: "性别",
+      label: t("user.gender"),
       prop: "sex",
       minWidth: 90,
       cellRenderer: ({ row, props }) => (
@@ -130,24 +146,18 @@ export function useUser(tableRef: Ref) {
           type={row.sex === 1 ? "danger" : ""}
           effect="plain"
         >
-          {row.sex === 1 ? "女" : "男"}
+          {row.sex === 1 ? t("user.female") : t("user.male")}
         </el-tag>
       )
     },
-    // {
-    //   label: "部门",
-    //   prop: "dept",
-    //   minWidth: 90,
-    //   formatter: ({ dept }) => dept
-    // },
     {
-      label: "手机号码",
+      label: t("user.mobile"),
       prop: "mobile",
       minWidth: 90,
       formatter: ({ mobile }) => hideTextAtIndex(mobile, { start: 3, end: 6 })
     },
     {
-      label: "状态",
+      label: t("user.status"),
       prop: "is_active",
       minWidth: 90,
       cellRenderer: scope => (
@@ -157,8 +167,8 @@ export function useUser(tableRef: Ref) {
           v-model={scope.row.is_active}
           active-value={true}
           inactive-value={false}
-          active-text="已开启"
-          inactive-text="已关闭"
+          active-text={t("labels.active")}
+          inactive-text={t("labels.inactive")}
           disabled={!hasAuth("update:systemUser")}
           inline-prompt
           onChange={() => onChange(scope as any)}
@@ -166,20 +176,20 @@ export function useUser(tableRef: Ref) {
       )
     },
     {
-      label: "角色",
+      label: t("user.roles"),
       prop: "roles",
       width: 160,
       slot: "roles"
     },
     {
-      label: "注册时间",
+      label: t("user.registrationDate"),
       minWidth: 90,
       prop: "date_joined",
       formatter: ({ date_joined }) =>
         dayjs(date_joined).format("YYYY-MM-DD HH:mm:ss")
     },
     {
-      label: "操作",
+      label: t("labels.operations"),
       fixed: "right",
       width: 180,
       slot: "operation"
@@ -194,32 +204,32 @@ export function useUser(tableRef: Ref) {
       "dark:hover:!text-primary"
     ];
   });
-  // 重置的新密码
+  // reset password
   const pwdForm = reactive({
     newPwd: ""
   });
   const pwdProgress = [
-    { color: "#e74242", text: "非常弱" },
-    { color: "#EFBD47", text: "弱" },
-    { color: "#ffa500", text: "一般" },
-    { color: "#1bbf1b", text: "强" },
-    { color: "#008000", text: "非常强" }
+    { color: "#e74242", text: t("password.veryWeak") },
+    { color: "#EFBD47", text: t("password.weak") },
+    { color: "#ffa500", text: t("password.average") },
+    { color: "#1bbf1b", text: t("password.strong") },
+    { color: "#008000", text: t("password.veryStrong") }
   ];
   // 当前密码强度（0-4）
   const curScore = ref();
   const roleOptions = ref([]);
 
   function onChange({ row, index }) {
+    const action =
+      row.is_active === false ? t("labels.disable") : t("labels.enable");
     ElMessageBox.confirm(
-      `确认要<strong>${
-        row.is_active === false ? "停用" : "启用"
-      }</strong><strong style='color:var(--el-color-primary)'>${
-        row.username
-      }</strong>用户吗?`,
-      "系统提示",
+      `${t("buttons.hsoperateconfirm", {
+        action: `<strong>${action}</strong>`,
+        message: `<strong style='color:var(--el-color-primary)'>${row.username}</strong>`
+      })}`,
       {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
+        confirmButtonText: t("buttons.hssure"),
+        cancelButtonText: t("buttons.hscancel"),
         type: "warning",
         dangerouslyUseHTMLString: true,
         draggable: true
@@ -242,11 +252,9 @@ export function useUser(tableRef: Ref) {
                 loading: false
               }
             );
-            message("已成功修改用户状态", {
-              type: "success"
-            });
+            message(t("results.success"), { type: "success" });
           } else {
-            message(`操作失败，${res.detail}`, { type: "error" });
+            message(`${t("results.failed")}，${res.detail}`, { type: "error" });
           }
         });
       })
@@ -260,10 +268,10 @@ export function useUser(tableRef: Ref) {
   async function handleDelete(row) {
     deleteUserApi(row.pk).then(async res => {
       if (res.code === 1000) {
-        message("操作成功", { type: "success" });
+        message(t("results.success"), { type: "success" });
         await onSearch();
       } else {
-        message(`操作失败，${res.detail}`, { type: "error" });
+        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
     });
   }
@@ -289,7 +297,7 @@ export function useUser(tableRef: Ref) {
   }
   function handleManyDelete() {
     if (manySelectCount.value === 0) {
-      message("数据未选择", { type: "error" });
+      message(t("results.noSelectedData"), { type: "error" });
       return;
     }
     const manySelectData = tableRef.value.getTableRef().getSelectionRows();
@@ -297,12 +305,12 @@ export function useUser(tableRef: Ref) {
       pks: JSON.stringify(getKeyList(manySelectData, "pk"))
     }).then(async res => {
       if (res.code === 1000) {
-        message(`批量删除了${manySelectCount.value}条数据`, {
+        message(t("results.batchDelete", { count: manySelectCount.value }), {
           type: "success"
         });
         await onSearch();
       } else {
-        message(`操作失败，${res.detail}`, { type: "error" });
+        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
       tableRef.value.getTableRef().clearSelection();
     });
@@ -350,12 +358,16 @@ export function useUser(tableRef: Ref) {
     });
   }
 
-  function openDialog(title = "新增", row?: FormItemProps) {
+  function openDialog(is_add = true, row?: FormItemProps) {
+    let title = t("buttons.hsedit");
+    if (is_add) {
+      title = t("buttons.hsadd");
+    }
     addDialog({
-      title: `${title}用户`,
+      title: `${title} ${t("user.user")}`,
       props: {
         formInline: {
-          title,
+          is_add,
           pk: row?.pk ?? "",
           username: row?.username ?? "",
           nickname: row?.nickname ?? "",
@@ -387,18 +399,14 @@ export function useUser(tableRef: Ref) {
         FormRef.validate(valid => {
           if (valid) {
             // 表单规则校验通过
-            if (title === "新增") {
+            if (is_add) {
               createUserApi(curData).then(async res => {
                 if (res.code === 1000) {
-                  // if (avatarFile.file) {
-                  //   uploadAvatar(res.data.pk, avatarFile.file, async () => {
-                  //     await chores(res.detail);
-                  //   });
-                  // } else {
                   await chores(res.detail);
-                  // }
                 } else {
-                  message(`操作失败，${res.detail}`, { type: "error" });
+                  message(`${t("results.failed")}，${res.detail}`, {
+                    type: "error"
+                  });
                 }
               });
             } else {
@@ -406,7 +414,9 @@ export function useUser(tableRef: Ref) {
                 if (res.code === 1000) {
                   await chores(res.detail);
                 } else {
-                  message(`操作失败，${res.detail}`, { type: "error" });
+                  message(`${t("results.failed")}，${res.detail}`, {
+                    type: "error"
+                  });
                 }
               });
             }
@@ -424,7 +434,7 @@ export function useUser(tableRef: Ref) {
 
   const exportExcel = () => {
     if (manySelectCount.value === 0) {
-      message("数据未选择", { type: "error" });
+      message(t("results.noSelectedData"), { type: "error" });
       return;
     }
     loading.value = true;
@@ -448,15 +458,15 @@ export function useUser(tableRef: Ref) {
     res.unshift(titleList);
     const workSheet = utils.aoa_to_sheet(res);
     const workBook = utils.book_new();
-    utils.book_append_sheet(workBook, workSheet, "注册用户报表");
-    writeFile(workBook, "用户数据.xlsx");
+    utils.book_append_sheet(workBook, workSheet, t("user.excelSheet"));
+    writeFile(workBook, `${t("user.excelName")}.xlsx`);
     loading.value = false;
   };
 
   /** 上传头像 */
   function handleUpload(row) {
     addDialog({
-      title: `更新用户 ${row.username} 的头像`,
+      title: t("user.updateAvatar", { user: row.username }),
       width: "40%",
       draggable: true,
       closeOnClickModal: false,
@@ -474,12 +484,12 @@ export function useUser(tableRef: Ref) {
           row.pk,
           avatarFile,
           () => {
-            message("头像更新成功", { type: "success" });
+            message(t("results.success"), { type: "success" });
             onSearch();
             done();
           },
           res => {
-            message("头像上传失败" + res.detail, { type: "error" });
+            message(`${t("results.failed")}，${res.detail}`, { type: "error" });
             done();
           }
         );
@@ -513,7 +523,7 @@ export function useUser(tableRef: Ref) {
   /** 分配角色 */
   async function handleRole(row) {
     addDialog({
-      title: `分配 ${row.username} 用户的角色`,
+      title: t("user.assignRole", { user: row.username }),
       props: {
         formInline: {
           username: row?.username ?? "",
@@ -534,12 +544,10 @@ export function useUser(tableRef: Ref) {
           roles: curData.ids
         }).then(async res => {
           if (res.code === 1000) {
-            message(`用户 ${row.username} 角色分配成功`, {
-              type: "success"
-            });
+            message(t("results.success"), { type: "success" });
             onSearch();
           } else {
-            message(`操作失败，${res.detail}`, { type: "error" });
+            message(`${t("results.failed")}，${res.detail}`, { type: "error" });
           }
           done(); // 关闭弹框
         });
@@ -550,7 +558,7 @@ export function useUser(tableRef: Ref) {
   /** 重置密码 */
   function handleReset(row) {
     addDialog({
-      title: `重置 ${row.username} 用户的密码`,
+      title: t("user.resetPasswd", { user: row.username }),
       width: "30%",
       draggable: true,
       closeOnClickModal: false,
@@ -562,7 +570,7 @@ export function useUser(tableRef: Ref) {
               rules={[
                 {
                   required: true,
-                  message: "请输入新密码",
+                  message: t("user.verifyPassword"),
                   trigger: "blur"
                 }
               ]}
@@ -572,7 +580,7 @@ export function useUser(tableRef: Ref) {
                 show-password
                 type="password"
                 v-model={pwdForm.newPwd}
-                placeholder="请输入新密码"
+                placeholder={t("user.verifyPassword")}
               />
             </ElFormItem>
           </ElForm>
@@ -611,11 +619,11 @@ export function useUser(tableRef: Ref) {
               password: pwdForm.newPwd
             }).then(async res => {
               if (res.code === 1000) {
-                message(`已成功重置 ${row.username} 用户的密码`, {
-                  type: "success"
-                });
+                message(t("results.success"), { type: "success" });
               } else {
-                message(`操作失败，${res.detail}`, { type: "error" });
+                message(`${t("results.failed")}，${res.detail}`, {
+                  type: "error"
+                });
               }
               done(); // 关闭弹框
             });
@@ -626,6 +634,7 @@ export function useUser(tableRef: Ref) {
   }
 
   return {
+    t,
     form,
     loading,
     columns,

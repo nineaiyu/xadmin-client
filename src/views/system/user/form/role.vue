@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import ReCol from "@/components/ReCol";
 import { RoleFormProps } from "../utils/types";
+import { useI18n } from "vue-i18n";
 
 const props = withDefaults(defineProps<RoleFormProps>(), {
   formInline: () => ({
@@ -11,6 +12,7 @@ const props = withDefaults(defineProps<RoleFormProps>(), {
     ids: []
   })
 });
+const { t } = useI18n();
 
 const newFormInline = ref(props.formInline);
 </script>
@@ -19,20 +21,19 @@ const newFormInline = ref(props.formInline);
   <el-form :model="newFormInline">
     <el-row :gutter="30">
       <re-col>
-        <el-form-item label="用户名称" prop="username">
+        <el-form-item :label="t('user.username')" prop="username">
           <el-input disabled v-model="newFormInline.username" />
         </el-form-item>
       </re-col>
       <re-col>
-        <el-form-item label="用户昵称" prop="nickname">
+        <el-form-item :label="t('user.nickname')" prop="nickname">
           <el-input disabled v-model="newFormInline.nickname" />
         </el-form-item>
       </re-col>
       <re-col>
-        <el-form-item label="角色列表" prop="ids">
+        <el-form-item :label="t('user.roles')" prop="ids">
           <el-select
             v-model="newFormInline.ids"
-            placeholder="请选择"
             class="w-full"
             clearable
             multiple

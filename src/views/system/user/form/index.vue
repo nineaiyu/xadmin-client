@@ -4,10 +4,11 @@ import ReCol from "@/components/ReCol";
 import { formRules } from "../utils/rule";
 import { FormProps } from "../utils/types";
 import { usePublicHooks } from "../../hooks";
+import { useI18n } from "vue-i18n";
 
 const props = withDefaults(defineProps<FormProps>(), {
   formInline: () => ({
-    title: "新增",
+    is_add: true,
     username: "",
     nickname: "",
     avatar: "",
@@ -19,11 +20,12 @@ const props = withDefaults(defineProps<FormProps>(), {
     is_active: true
   })
 });
+const { t } = useI18n();
 
 const sexOptions = [
-  { label: "男", value: 0 },
-  { label: "女", value: 1 },
-  { label: "未知", value: 2 }
+  { label: t("user.male"), value: 0 },
+  { label: t("user.female"), value: 1 },
+  { label: t("user.unknown"), value: 2 }
 ];
 const ruleFormRef = ref();
 const { switchStyle } = usePublicHooks();
@@ -45,64 +47,54 @@ defineExpose({ getRef });
   >
     <el-row :gutter="30">
       <re-col :value="12" :xs="24" :sm="24">
-        <el-form-item label="用户名称" prop="username">
+        <el-form-item :label="t('user.username')" prop="username">
           <el-input
             v-model="newFormInline.username"
             clearable
-            placeholder="请输入用户名称"
+            :placeholder="t('user.verifyUsername')"
           />
         </el-form-item>
       </re-col>
       <re-col :value="12" :xs="24" :sm="24">
-        <el-form-item label="用户昵称" prop="nickname">
+        <el-form-item :label="t('user.nickname')" prop="nickname">
           <el-input
             v-model="newFormInline.nickname"
             clearable
-            placeholder="请输入用户昵称"
+            :placeholder="t('user.verifyNickname')"
           />
         </el-form-item>
       </re-col>
-      <re-col
-        :value="12"
-        :xs="24"
-        :sm="24"
-        v-if="newFormInline.title === '新增'"
-      >
-        <el-form-item label="用户密码" prop="password">
+      <re-col :value="12" :xs="24" :sm="24" v-if="newFormInline.is_add">
+        <el-form-item :label="t('user.password')" prop="password">
           <el-input
             v-model="newFormInline.password"
             clearable
-            placeholder="请输入用户密码"
+            :placeholder="t('user.verifyPassword')"
           />
         </el-form-item>
       </re-col>
       <re-col :value="12" :xs="24" :sm="24">
-        <el-form-item label="手机号" prop="mobile">
+        <el-form-item :label="t('user.mobile')" prop="mobile">
           <el-input
             v-model="newFormInline.mobile"
             clearable
-            placeholder="请输入手机号"
+            :placeholder="t('user.mobileSearch')"
           />
         </el-form-item>
       </re-col>
 
       <re-col :value="12" :xs="24" :sm="24">
-        <el-form-item label="邮箱" prop="email">
+        <el-form-item :label="t('user.email')" prop="email">
           <el-input
             v-model="newFormInline.email"
             clearable
-            placeholder="请输入邮箱"
+            :placeholder="t('user.verifyEmail')"
           />
         </el-form-item>
       </re-col>
       <re-col :value="12" :xs="24" :sm="24">
-        <el-form-item label="用户性别" prop="sex">
-          <el-select
-            v-model="newFormInline.sex"
-            placeholder="请选择用户性别"
-            class="w-full"
-            clearable
-          >
+        <el-form-item :label="t('user.gender')" prop="sex">
+          <el-select v-model="newFormInline.sex" class="w-full" clearable>
             <el-option
               v-for="item in sexOptions"
               :key="item.value"
@@ -114,24 +106,24 @@ defineExpose({ getRef });
       </re-col>
 
       <re-col :value="12" :xs="24" :sm="24">
-        <el-form-item label="用户状态" prop="is_active">
+        <el-form-item :label="t('user.status')" prop="is_active">
           <el-switch
             v-model="newFormInline.is_active"
             inline-prompt
             :active-value="true"
             :inactive-value="false"
-            active-text="启用"
-            inactive-text="禁用"
+            :active-text="t('labels.active')"
+            :inactive-text="t('labels.inactive')"
             :style="switchStyle"
           />
         </el-form-item>
       </re-col>
 
       <re-col>
-        <el-form-item label="备注">
+        <el-form-item :label="t('user.remark')">
           <el-input
             v-model="newFormInline.remark"
-            placeholder="请输入备注信息"
+            :placeholder="t('user.verifyRemark')"
             type="textarea"
             rows="3"
           />

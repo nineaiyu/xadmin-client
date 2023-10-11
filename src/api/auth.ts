@@ -41,6 +41,7 @@ export type TempTokenResult = {
   code: number;
   token: string;
   detail: string;
+  lifetime?: number;
 };
 
 export type CaptchaResult = {

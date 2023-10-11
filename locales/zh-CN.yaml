@@ -1,3 +1,31 @@
+password:
+  veryWeak: 很弱
+  weak: 弱
+  average: 一般
+  strong: 强
+  veryStrong: 很强
+
+labels:
+  active: 激活
+  inactive: 未激活
+  operations: 操作
+  enable: 启用
+  disable: 禁用
+  sure: 确定
+  cancel: 取消
+  descending: 降序
+  ascending: 升序
+
+results:
+  success: 执行成功
+  failed: 执行失败
+  batchDelete: 批量删除 { count } 条数据
+  noSelectedData: 数据未选择
+
+sorts:
+  registrationDate: 注册时间
+  loginDate: 登录时间
+
 buttons:
   hsLoginOut: 退出系统
   hsfullscreen: 全屏
@@ -22,99 +50,82 @@ buttons:
   hswholeExitFullScreen: 退出全屏
   hscontentFullScreen: 内容区全屏
   hscontentExitFullScreen: 内容区退出全屏
+  hscancel: 取消
+  hssure: 确定
+  hsedit: 编辑
+  hsbatchdelete: 批量删除
+  hsbatchdeleteconfirm: 确定批量删除 { count } 条数据吗？
+  hsoperateconfirm: 确定 { action } { message } ？
+  hsselected: "已选择 { count } 条数据"
+  hsconfirmdelete: 确定删除该数据吗？
+
 menus:
   hshome: 首页
   hslogin: 登录
-  hsempty: 无Layout页
   hssysManagement: 系统管理
   hsUser: 用户管理
   hsRole: 角色管理
   hsMenu: 菜单管理
-  hsDept: 部门管理
-  hseditor: 编辑器
+  permission: 权限管理
   hsabnormal: 异常页面
   hsfourZeroFour: "404"
   hsfourZeroOne: "403"
   hsFive: "500"
-  hscomponents: 组件
-  hsdialog: 函数式弹框组件
-  hsmessage: 消息提示组件
-  hsvideo: 视频组件
-  hssegmented: 分段控制器组件
-  hswaterfall: 瀑布流无限滚动组件
-  hsmap: 地图组件
-  hsdraggable: 拖拽组件
-  hssplitPane: 切割面板
-  hsbutton: 按钮组件
-  hscropping: 图片裁剪
-  hscountTo: 数字动画
-  hsselector: 选择器组件
-  hsflowChart: 流程图
-  hsseamless: 无缝滚动
-  hscontextmenu: 右键菜单
-  hstypeit: 打字机组件
-  hsjsoneditor: JSON编辑器
-  hsmenus: 多级菜单
-  hsmenu1: 菜单1
-  hsmenu1-1: 菜单1-1
-  hsmenu1-2: 菜单1-2
-  hsmenu1-2-1: 菜单1-2-1
-  hsmenu1-2-2: 菜单1-2-2
-  hsmenu1-3: 菜单1-3
-  hsmenu2: 菜单2
-  permission: 权限管理
-  permissionPage: 页面权限
-  permissionButton: 按钮权限
-  hstabs: 标签页操作
-  hsguide: 引导页
-  hsAble: 功能
-  hsMenuTree: 菜单树结构
-  hsOptimize: 防抖、截流、复制指令
-  hsWatermark: 水印
-  hsPrint: 打印
-  hsDownload: 下载
-  hsExternalPage: 外部页面
-  hsPureDocument: 平台文档（内嵌）
-  externalLink: 平台文档（外链）
-  hsEpDocument: Element Plus 文档（内嵌）
-  hsVueDocument: Vue3 文档（内嵌）
-  hsViteDocument: Vite 文档（内嵌）
-  hsPiniaDocument: Pinia 文档（内嵌）
-  hsRouterDocument: Vue Router 文档（内嵌）
-  hsTailwindcssDocument: Tailwindcss 文档（内嵌）
   hsAbout: 关于
-  hsResult: 结果页面
-  hsSuccess: 成功页面
-  hsFail: 失败页面
-  hsIconSelect: 图标选择器
-  hsTimeline: 时间线
-  hsLineTree: 树形连接线
-  hsList: 列表页
-  hsListCard: 卡片列表页
-  hsDebounce: 防抖节流
-  hsFormDesign: 表单设计器
-  hsBarcode: 条形码
-  hsQrcode: 二维码
-  hsCascader: 区域级联选择器
-  hsSwiper: Swiper插件
-  hsVirtualList: 虚拟列表
-  hsPdf: PDF预览
-  hsExecl: 导出Excel
-  hsInfiniteScroll: 表格无限滚动
-  hsdanmaku: 弹幕组件
-  hsPureTableBase: 基础用法（23个示例）
-  hsPureTableHigh: 高级用法（11个示例）
-  hsTree: 大数据树业务组件
-  hsMenuoverflow: 目录超出显示 Tooltip 文字提示
-  hsChildMenuoverflow: 菜单超出显示 Tooltip 文字提示
+
+user:
+  user: 用户
+  id: Id
+  avatar: 头像
+  userIdSearch: 请输入用户ID
+  username: 用户名
+  nickname: 昵称
+  password: 密码
+  email: 邮箱
+  gender: 性别
+  male: 男
+  female: 女
+  unknown: 未知
+  remark: 备注
+  roles: 角色
+  registrationDate: 注册时间
+  usernameSearch: 请输入用户名
+  mobile: 手机号
+  mobileSearch: 请输入手机号
+  status: 状态
+  sort: 排序
+  exportExcel: 导出表格
+  batchSendNotice: 批量发送通知
+  editAvatar: 修改头像
+  resetPassword: 重置密码
+  assignRoles: 分配角色
+  verifyUsername: 请输入用户名
+  verifyPassword: 请输入密码
+  verifyNickname: 请输入昵称
+  verifyRemark: 请输入备注
+  verifyEmail: 清数据邮箱
+  verifySex: 请选择性别
+  verifyStatus: 请选择状态
+  resetPasswd: 重置用户 { user } 的密码
+  assignRole: 分配用户 { user } 的角色
+  updateAvatar: 更新用户 { user } 的头像
+  excelSheet: 用户注册信息
+  excelName: 用户注册报表
+
+role:
+  name: 角色名称
+  code: 角色标识
+  status: 状态
+
 status:
   hsLoad: 加载中...
+
 login:
   username: 账号
   password: 密码
   verifyCode: 验证码
-  remember: 7天内免登录
-  rememberInfo: 勾选并登录后，7天内无需输入用户名和密码会自动登入系统
+  remember: 天内免登录
+  rememberInfo: 勾选并登录后，规定天数内无需输入用户名和密码会自动登入系统
   sure: 确认密码
   forget: 忘记密码?
   login: 登录

@@ -47,6 +47,8 @@ defineOptions({
 const router = useRouter();
 const loading = ref(false);
 const checked = ref(true);
+const loginDay = ref(1);
+const loginDayList = ref([1]);
 const ruleFormRef = ref<FormInstance>();
 const currentPage = computed(() => {
   return useUserStoreHook().currentPage;
@@ -68,10 +70,27 @@ const ruleForm = reactive({
   captcha_code: ""
 });
 
+const formatLoginDayList = () => {
+  const start = 1;
+  const middle = Math.ceil(loginDay.value / 2);
+  if (middle > 0) {
+    if (middle !== start) {
+      loginDayList.value.push(middle);
+    }
+    if (middle !== loginDay.value) {
+      loginDayList.value.push(loginDay.value);
+    }
+  } else {
+    loginDayList.value = [loginDay.value];
+  }
+};
+
 const initToken = () => {
   getTempTokenApi().then(res => {
     if (res.code === 1000) {
       ruleForm.token = res.token;
+      loginDay.value = res.lifetime;
+      formatLoginDayList();
     }
   });
 };
@@ -124,6 +143,9 @@ onBeforeUnmount(() => {
 });
 watch(checked, bool => {
   useUserStoreHook().SET_ISREMEMBERED(bool);
+});
+watch(loginDay, value => {
+  useUserStoreHook().SET_LOGINDAY(value);
 });
 </script>
 
@@ -244,6 +266,24 @@ watch(checked, bool => {
                 <div class="w-full h-[20px] flex justify-between items-center">
                   <el-checkbox v-model="checked">
                     <span class="flex">
+                      <select
+                        v-model="loginDay"
+                        :disabled="loginDayList.length < 2"
+                        :style="{
+                          width: loginDay < 10 ? '10px' : '16px',
+                          outline: 'none',
+                          background: 'none',
+                          appearance: 'none'
+                        }"
+                      >
+                        <option
+                          :value="item"
+                          v-for="item in loginDayList"
+                          :key="item"
+                        >
+                          {{ item }}
+                        </option>
+                      </select>
                       {{ t("login.remember") }}
                       <el-tooltip
                         effect="dark"

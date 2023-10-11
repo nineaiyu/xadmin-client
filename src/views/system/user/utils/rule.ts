@@ -5,11 +5,41 @@ import { isEmail, isPhone } from "@pureadmin/utils";
 
 /** 自定义表单规则校验 */
 export const formRules = reactive<FormRules>({
-  username: [{ required: true, message: "用户名为必填项", trigger: "blur" }],
-  password: [{ required: true, message: "密码必填项", trigger: "blur" }],
-  nickname: [{ required: true, message: "昵称必填项", trigger: "blur" }],
-  sex: [{ required: true, message: "性别必填项", trigger: "blur" }],
-  is_active: [{ required: true, message: "状态必填项", trigger: "blur" }],
+  username: [
+    {
+      required: true,
+      message: transformI18n($t("user.verifyUsername")),
+      trigger: "blur"
+    }
+  ],
+  password: [
+    {
+      required: true,
+      message: transformI18n($t("user.verifyPassword")),
+      trigger: "blur"
+    }
+  ],
+  nickname: [
+    {
+      required: true,
+      message: transformI18n($t("user.verifyNickname")),
+      trigger: "blur"
+    }
+  ],
+  sex: [
+    {
+      required: true,
+      message: transformI18n($t("user.verifySex")),
+      trigger: "blur"
+    }
+  ],
+  is_active: [
+    {
+      required: true,
+      message: transformI18n($t("user.verifyStatus")),
+      trigger: "blur"
+    }
+  ],
   mobile: [
     {
       validator: (rule, value, callback) => {

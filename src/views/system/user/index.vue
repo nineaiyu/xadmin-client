@@ -25,6 +25,7 @@ defineOptions({
 const formRef = ref();
 const tableRef = ref();
 const {
+  t,
   form,
   loading,
   columns,
@@ -59,46 +60,46 @@ const {
         :model="form"
         class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px]"
       >
-        <el-form-item label="用户ID：" prop="pk">
+        <el-form-item :label="t('user.id')" prop="pk">
           <el-input
             v-model="form.pk"
-            placeholder="请输入用户ID"
+            :placeholder="t('user.userIdSearch')"
             clearable
             class="!w-[160px]"
             @keyup.enter="onSearch(true)"
           />
         </el-form-item>
-        <el-form-item label="用户名称：" prop="username">
+        <el-form-item :label="t('user.username')" prop="username">
           <el-input
             v-model="form.username"
-            placeholder="请输入用户名称"
+            :placeholder="t('user.usernameSearch')"
             clearable
             class="!w-[160px]"
             @keyup.enter="onSearch(true)"
           />
         </el-form-item>
-        <el-form-item label="手机号码：" prop="mobile">
+        <el-form-item :label="t('user.mobile')" prop="mobile">
           <el-input
             v-model="form.mobile"
-            placeholder="请输入手机号码"
+            :placeholder="t('user.mobileSearch')"
             clearable
             class="!w-[160px]"
             @keyup.enter="onSearch(true)"
           />
         </el-form-item>
-        <el-form-item label="状态：" prop="is_active">
+        <el-form-item :label="t('user.status')" prop="is_active">
           <el-select
             v-model="form.is_active"
-            placeholder="请选择"
+            :placeholder="t('user.status')"
             clearable
             class="!w-[160px]"
             @change="onSearch(true)"
           >
-            <el-option label="已开启" value="1" />
-            <el-option label="已关闭" value="0" />
+            <el-option :label="t('labels.active')" value="1" />
+            <el-option :label="t('labels.inactive')" value="0" />
           </el-select>
         </el-form-item>
-        <el-form-item label="排序：">
+        <el-form-item :label="t('user.sort')">
           <el-select
             v-model="form.ordering"
             style="width: 180px"
@@ -121,38 +122,40 @@ const {
             :loading="loading"
             @click="onSearch(true)"
           >
-            搜索
+            {{ t("buttons.hssearch") }}
           </el-button>
           <el-button :icon="useRenderIcon(Refresh)" @click="resetForm(formRef)">
-            重置
+            {{ t("buttons.hsreload") }}
           </el-button>
         </el-form-item>
       </el-form>
 
       <PureTableBar
-        title="用户管理"
+        :title="t('menus.hsUser')"
         :columns="columns"
         @refresh="onSearch(true)"
       >
         <template #buttons>
-          <div v-if="manySelectCount > 0" class="w-[300px]">
+          <div v-if="manySelectCount > 0" class="w-[360px]">
             <span
               style="font-size: var(--el-font-size-base)"
               class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
             >
-              已选 {{ manySelectCount }} 项
+              {{ t("buttons.hsselected", { count: manySelectCount }) }}
             </span>
             <el-button type="primary" text @click="onSelectionCancel">
-              取消选择
+              {{ t("buttons.hscancel") }}
             </el-button>
             <el-popconfirm
-              :title="`是否确认批量删除${manySelectCount}条数据?`"
+              :title="
+                t('buttons.hsbatchdeleteconfirm', { count: manySelectCount })
+              "
               @confirm="handleManyDelete"
               v-if="hasAuth('manyDelete:systemUser')"
             >
               <template #reference>
                 <el-button type="danger" plain :icon="useRenderIcon(Delete)">
-                  批量删除
+                  {{ t("buttons.hsbatchdelete") }}
                 </el-button>
               </template>
             </el-popconfirm>
@@ -164,7 +167,7 @@ const {
             :icon="useRenderIcon(Message)"
             @click="goNotice()"
           >
-            批量发送通知
+            {{ t("user.batchSendNotice") }}
           </el-button>
           <el-button
             v-optimize="{
@@ -177,7 +180,7 @@ const {
             type="primary"
             :icon="useRenderIcon(Download)"
           >
-            导出选中数据Excel
+            {{ t("user.exportExcel") }}
           </el-button>
           <el-button
             v-if="hasAuth('create:systemUser')"
@@ -185,7 +188,7 @@ const {
             :icon="useRenderIcon(AddFill)"
             @click="openDialog()"
           >
-            新增用户
+            {{ t("buttons.hsadd") }}
           </el-button>
         </template>
         <template v-slot="{ size, dynamicColumns }">
@@ -226,13 +229,13 @@ const {
                 type="primary"
                 v-if="hasAuth('update:systemUser')"
                 :size="size"
-                @click="openDialog('编辑', row)"
+                @click="openDialog(false, row)"
                 :icon="useRenderIcon(EditPen)"
               >
-                修改
+                {{ t("buttons.hsedit") }}
               </el-button>
               <el-popconfirm
-                title="是否确认删除?"
+                :title="t('buttons.hsconfirmdelete')"
                 @confirm="handleDelete(row)"
                 v-if="hasAuth('delete:systemUser')"
               >
@@ -244,7 +247,7 @@ const {
                     :size="size"
                     :icon="useRenderIcon(Delete)"
                   >
-                    删除
+                    {{ t("buttons.hsdelete") }}
                   </el-button>
                 </template>
               </el-popconfirm>
@@ -268,7 +271,7 @@ const {
                         :icon="useRenderIcon(Avatar)"
                         @click="handleUpload(row)"
                       >
-                        修改头像
+                        {{ t("user.editAvatar") }}
                       </el-button>
                     </el-dropdown-item>
                     <el-dropdown-item v-if="hasAuth('update:systemUserPwd')">
@@ -280,7 +283,7 @@ const {
                         :icon="useRenderIcon(Password)"
                         @click="handleReset(row)"
                       >
-                        重置密码
+                        {{ t("user.resetPassword") }}
                       </el-button>
                     </el-dropdown-item>
                     <el-dropdown-item v-if="hasAuth('empower:systemRole')">
@@ -292,7 +295,7 @@ const {
                         :icon="useRenderIcon(Role)"
                         @click="handleRole(row)"
                       >
-                        分配角色
+                        {{ t("user.assignRoles") }}
                       </el-button>
                     </el-dropdown-item>
                   </el-dropdown-menu>

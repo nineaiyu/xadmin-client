@@ -43,4 +43,5 @@ export type userType = {
   verifyCodeLength?: number;
   currentPage?: number;
   isRemembered?: boolean;
+  loginDay?: number;
 };

@@ -51,12 +51,13 @@ export function setToken(data: TokenInfo) {
   if (data.refresh && data.refresh_token_lifetime) {
     setRefreshToken(data.refresh, data.refresh_token_lifetime - 10);
   }
+  const { isRemembered, loginDay } = useUserStoreHook();
   Cookies.set(
     multipleTabsKey,
     "true",
-    useUserStoreHook().isRemembered
+    isRemembered
       ? {
-          expires: 7
+          expires: loginDay
         }
       : {}
   );
