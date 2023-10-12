@@ -78,7 +78,7 @@ defineExpose({ getRef });
           <el-input
             v-model="newFormInline.mobile"
             clearable
-            :placeholder="t('user.mobileSearch')"
+            :placeholder="t('user.verifyMobile')"
           />
         </el-form-item>
       </re-col>

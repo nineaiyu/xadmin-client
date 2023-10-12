@@ -17,6 +17,7 @@ defineOptions({
 const formRef = ref();
 const tableRef = ref();
 const {
+  t,
   form,
   loading,
   columns,
@@ -47,46 +48,45 @@ const {
       :model="form"
       class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px]"
     >
-      <el-form-item label="ID：" prop="pk">
+      <el-form-item :label="t('labels.id')" prop="pk">
         <el-input
           v-model="form.pk"
-          placeholder="请输入消息ID"
+          :placeholder="t('labels.id')"
           clearable
           class="!w-[100px]"
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
-      <el-form-item label="标题：" prop="title">
+      <el-form-item :label="t('notice.title')" prop="title">
         <el-input
           v-model="form.title"
-          placeholder="请输入消息标题"
+          :placeholder="t('notice.verifyTitle')"
           clearable
           class="!w-[200px]"
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
-      <el-form-item label="消息内容：" prop="message">
+      <el-form-item :label="t('notice.content')" prop="message">
         <el-input
           v-model="form.message"
-          placeholder="请输入消息内容"
+          :placeholder="t('notice.verifyContent')"
           clearable
           class="!w-[180px]"
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
-      <el-form-item label="消息状态：" prop="unread">
+      <el-form-item :label="t('notice.haveRead')" prop="unread">
         <el-select
           v-model="form.unread"
-          placeholder="请选择"
           clearable
           class="!w-[160px]"
           @change="onSearch(true)"
         >
-          <el-option label="已读" :value="false" />
-          <el-option label="未读" :value="true" />
+          <el-option :label="t('labels.read')" :value="false" />
+          <el-option :label="t('labels.unread')" :value="true" />
         </el-select>
       </el-form-item>
-      <el-form-item label="通知级别" prop="level">
+      <el-form-item :label="t('notice.level')" prop="level">
         <el-select
           v-model="form.level"
           class="filter-item"
@@ -103,7 +103,7 @@ const {
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="通知类型" prop="level">
+      <el-form-item :label="t('notice.type')" prop="level">
         <el-select
           v-model="form.notice_type"
           class="filter-item"
@@ -120,7 +120,7 @@ const {
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="排序：">
+      <el-form-item :label="t('labels.sort')">
         <el-select
           v-model="form.ordering"
           style="width: 180px"
@@ -142,16 +142,16 @@ const {
           :loading="loading"
           @click="onSearch(true)"
         >
-          搜索
+          {{ t("buttons.hssearch") }}
         </el-button>
         <el-button :icon="useRenderIcon(Refresh)" @click="resetForm(formRef)">
-          重置
+          {{ t("buttons.hsreload") }}
         </el-button>
       </el-form-item>
     </el-form>
 
     <PureTableBar
-      title="消息公告管理"
+      :title="t('notice.messageManage')"
       :columns="columns"
       @refresh="onSearch(true)"
     >
@@ -161,19 +161,21 @@ const {
             style="font-size: var(--el-font-size-base)"
             class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
           >
-            已选 {{ manySelectCount }} 项
+            {{ t("buttons.hsselected", { count: manySelectCount }) }}
           </span>
           <el-button type="primary" text @click="onSelectionCancel">
-            取消选择
+            {{ t("buttons.hscancel") }}
           </el-button>
           <el-popconfirm
-            :title="`是否确认批量已读${manySelectCount}条数据?`"
+            :title="
+              t('buttons.hsbatchdeleteconfirm', { count: manySelectCount })
+            "
             @confirm="handleManyRead"
             v-if="hasAuth('update:userNoticeRead')"
           >
             <template #reference>
               <el-button type="success" plain :icon="useRenderIcon(Success)">
-                批量已读
+                {{ t("notice.batchRead") }}
               </el-button>
             </template>
           </el-popconfirm>
@@ -184,10 +186,10 @@ const {
           @click="handleReadAll"
           v-if="hasAuth('update:userNoticeReadAll') && unreadCount > 0"
         >
-          全部已读
+          {{ t("notice.allRead") }}
         </el-button>
         <el-text type="primary" v-if="unreadCount > 0">
-          未读消息 {{ unreadCount }}</el-text
+          {{ t("notice.unreadMessage") }} {{ unreadCount }}</el-text
         >
       </template>
       <template v-slot="{ size, dynamicColumns }">
@@ -223,7 +225,7 @@ const {
               @click="showDialog(row)"
               :icon="useRenderIcon(Eye)"
             >
-              查看
+              {{ t("buttons.hsdetail") }}
             </el-button>
           </template>
         </pure-table>

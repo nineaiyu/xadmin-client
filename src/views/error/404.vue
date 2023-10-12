@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
 import noExist from "@/assets/status/404.svg?component";
+import { useI18n } from "vue-i18n";
 
 defineOptions({
   name: "404"
 });
-
 const router = useRouter();
+const { t } = useI18n();
 </script>
 
 <template>
@@ -45,7 +46,7 @@ const router = useRouter();
           }
         }"
       >
-        抱歉，你访问的页面不存在
+        {{ t("error.error404") }}
       </p>
       <el-button
         type="primary"
@@ -63,7 +64,7 @@ const router = useRouter();
           }
         }"
       >
-        返回首页
+        {{ t("error.goBack") }}
       </el-button>
     </div>
   </div>

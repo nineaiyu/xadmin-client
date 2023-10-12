@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
 import noServer from "@/assets/status/500.svg?component";
+import { useI18n } from "vue-i18n";
 
 defineOptions({
   name: "500"
 });
 
 const router = useRouter();
+const { t } = useI18n();
 </script>
 
 <template>
@@ -45,7 +47,7 @@ const router = useRouter();
           }
         }"
       >
-        抱歉，服务器出错了
+        {{ t("error.error500") }}
       </p>
       <el-button
         type="primary"
@@ -63,7 +65,7 @@ const router = useRouter();
           }
         }"
       >
-        返回首页
+        {{ t("error.goBack") }}
       </el-button>
     </div>
   </div>

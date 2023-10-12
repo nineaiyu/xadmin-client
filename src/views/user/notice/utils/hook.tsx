@@ -12,13 +12,20 @@ import { FormItemProps } from "./types";
 import showForm from "../show.vue";
 import { cloneDeep, getKeyList, isEmpty, isString } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog/index";
-
-const sortOptions = [
-  { label: "添加时间 Descending", key: "-created_time" },
-  { label: "添加时间 Ascending", key: "created_time" }
-];
+import { useI18n } from "vue-i18n";
 
 export function useUserNotice(tableRef: Ref) {
+  const { t } = useI18n();
+  const sortOptions = [
+    {
+      label: `${t("sorts.createdDate")} ${t("labels.descending")}`,
+      key: "-created_time"
+    },
+    {
+      label: `${t("sorts.createdDate")} ${t("labels.ascending")}`,
+      key: "created_time"
+    }
+  ];
   const form = reactive({
     pk: "",
     title: "",
@@ -52,40 +59,40 @@ export function useUserNotice(tableRef: Ref) {
       align: "left"
     },
     {
-      label: "消息ID",
+      label: t("labels.id"),
       prop: "pk",
       minWidth: 100
     },
     {
-      label: "消息标题",
+      label: t("notice.title"),
       prop: "title",
       minWidth: 120,
       cellRenderer: ({ row }) => <el-text type={row.level}>{row.title}</el-text>
     },
     {
-      label: "是否已读",
+      label: t("notice.haveRead"),
       prop: "unread",
       minWidth: 120,
       cellRenderer: ({ row }) => (
         <el-text type={row.unread ? "success" : "info"}>
-          {row.unread ? "未读" : "已读"}
+          {row.unread ? t("labels.unread") : t("labels.read")}
         </el-text>
       )
     },
     {
-      label: "提交时间",
+      label: t("sorts.createdDate"),
       minWidth: 180,
       prop: "createTime",
       formatter: ({ created_time }) =>
         dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
     },
     {
-      label: "消息类型",
+      label: t("notice.type"),
       prop: "notice_type_display",
       minWidth: 120
     },
     {
-      label: "操作",
+      label: t("labels.operations"),
       fixed: "right",
       width: 200,
       slot: "operation"
@@ -97,7 +104,7 @@ export function useUserNotice(tableRef: Ref) {
       updateUserNoticeReadApi({ pks: [row.pk] });
     }
     addDialog({
-      title: `查看用户消息`,
+      title: t("notice.showSystemNotice"),
       props: {
         formInline: {
           pk: row?.pk ?? "",
@@ -154,7 +161,7 @@ export function useUserNotice(tableRef: Ref) {
 
   function handleManyRead() {
     if (manySelectCount.value === 0) {
-      message("数据未选择", { type: "error" });
+      message(t("results.noSelectedData"), { type: "error" });
       return;
     }
     const manySelectData = tableRef.value.getTableRef().getSelectionRows();
@@ -167,12 +174,12 @@ export function useUserNotice(tableRef: Ref) {
       )
     }).then(async res => {
       if (res.code === 1000) {
-        message(`批量已读了${manySelectCount.value}条数据`, {
+        message(t("results.batchRead", { count: manySelectCount.value }), {
           type: "success"
         });
         onSearch();
       } else {
-        message(`操作失败，${res.detail}`, { type: "error" });
+        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
     });
   }
@@ -191,7 +198,7 @@ export function useUserNotice(tableRef: Ref) {
         noticeChoices.value = res.notice_type_choices;
         unreadCount.value = res.unread_count;
       } else {
-        message(`操作失败，${res.detail}`, { type: "error" });
+        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
       setTimeout(() => {
         loading.value = false;
@@ -227,6 +234,7 @@ export function useUserNotice(tableRef: Ref) {
   });
 
   return {
+    t,
     form,
     loading,
     columns,

@@ -1,3 +1,9 @@
+error:
+  error403: Sorry, you are not authorized to access this page
+  error404: Sorry, the page you are looking for does not exist
+  error500: Sorry, server error
+  goBack: Back to home page
+
 password:
   veryWeak: Very weak
   weak: Weak
@@ -30,6 +36,7 @@ results:
   success: Executed successfully
   failed: Execution failure
   batchDelete: Batch deletes the { count } items
+  batchRead: Batch read the { count } items
   noSelectedData: Data not selected
   formValidationFailed: Form validation failed
 
@@ -89,11 +96,30 @@ menus:
   hsfourZeroOne: "403"
   hsFive: "500"
   hsAbout: About
+  noticeAndAnnouncement: Notice Announcement
+  newsAndAnnouncement: News Announcement
+  readNotice: Read Notice
+  timingTask: Timing Task
+  personalCenter: UserInfo
+  messageCenter: Notice
+  chat: Chat
+
+userinfo:
+  userinfo: UserInfo
+  edit: Modify personal information
+  basicInfo: Basic information
+  changePassword: Change Password
+  updateAvatar: Update Avatar
+  updateUserInfo: Update UserInfo
+  oldPassword: Old Password
+  newPassword: New Password
+  verifyOldPassword: Please enter old password
+  verifyNewPassword: Please enter new password
+  surePassword: Sure Password
 
 user:
   user: User
   avatar: Avatar
-  userIdSearch: Enter the user id
   username: Username
   nickname: Nickname
   password: Password
@@ -104,17 +130,17 @@ user:
   unknown: Unknown
   roles: Roles
   registrationDate: Registration date
-  usernameSearch: Enter the username
   mobile: Mobile
-  mobileSearch: Enter the mobile
   exportExcel: Export Excel
   batchSendNotice: Batch Send Notice
   editAvatar: Edit Avatar
   resetPassword: Reset Password
   assignRoles: Assign Roles
+  verifyUserId: Please enter user id
   verifyUsername: Please enter username
   verifyPassword: Please enter password
   verifyNickname: Please enter nickname
+  verifyMobile: Please enter mobile
   verifyEmail: Please enter Email
   verifySex: Please enter gender
   resetPasswd: Reset the password of user { user }
@@ -206,6 +232,8 @@ notice:
   allRead: AllRead
   verifyUserIds: The userId can only be a number
   verifyInputUserIds: Enter the user ID. Multiple users need to be separated by press enter
+  batchRead: BatchRead
+  unreadMessage: Unread Message
 
 status:
   hsLoad: Loading...

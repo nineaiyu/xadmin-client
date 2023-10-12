@@ -1,3 +1,9 @@
+error:
+  error403: 抱歉，你无权访问该页面
+  error404: 抱歉，你访问的页面不存在
+  error500: 抱歉，服务器出错了
+  goBack: 返回首页
+
 password:
   veryWeak: 很弱
   weak: 弱
@@ -30,6 +36,7 @@ results:
   success: 执行成功
   failed: 执行失败
   batchDelete: 批量删除 { count } 条数据
+  batchRead: 批量已读 { count } 条数据
   noSelectedData: 数据未选择
   formValidationFailed: 表单校验失败
 
@@ -82,18 +89,37 @@ menus:
   hsUser: 用户管理
   hsRole: 角色管理
   hsMenu: 菜单管理
-  hsOperationLog: 操作日志
+  hsOperationLog: 访问日志
   permission: 权限管理
   hsabnormal: 异常页面
   hsfourZeroFour: "404"
   hsfourZeroOne: "403"
   hsFive: "500"
   hsAbout: 关于
+  noticeAndAnnouncement: 通知公告
+  newsAndAnnouncement: 消息公共
+  readNotice: 已读消息
+  timingTask: 定时任务
+  personalCenter: 个人中心
+  messageCenter: 消息中心
+  chat: 聊天室
+
+userinfo:
+  userinfo: 个人信息
+  edit: 修改个人信息
+  basicInfo: 基本资料
+  changePassword: 修改密码
+  updateAvatar: 更新头像
+  updateUserInfo: 更新信息
+  oldPassword: 旧密码
+  newPassword: 新密码
+  verifyOldPassword: 请输入旧密码
+  verifyNewPassword: 请输入新密码
+  surePassword: 确认密码
 
 user:
   user: 用户
   avatar: 头像
-  userIdSearch: 请输入用户ID
   username: 用户名
   nickname: 昵称
   password: 密码
@@ -104,18 +130,18 @@ user:
   unknown: 未知
   roles: 角色
   registrationDate: 注册时间
-  usernameSearch: 请输入用户名
   mobile: 手机号
-  mobileSearch: 请输入手机号
   exportExcel: 导出表格
   batchSendNotice: 批量发送通知
   editAvatar: 修改头像
   resetPassword: 重置密码
   assignRoles: 分配角色
+  verifyId: 请输入用户ID
   verifyUsername: 请输入用户名
   verifyPassword: 请输入密码
   verifyNickname: 请输入昵称
-  verifyEmail: 清数据邮箱
+  verifyMobile: 请输入手机号
+  verifyEmail: 请输入邮箱
   verifySex: 请选择性别
   resetPasswd: 重置用户 { user } 的密码
   assignRole: 分配用户 { user } 的角色
@@ -206,6 +232,8 @@ notice:
   allRead: 全部已读
   verifyUserIds: 用户ID必须全为数字
   verifyInputUserIds: 请输入用户ID,多个用户需要通过回车进行分割
+  batchRead: 批量已读
+  unreadMessage: 未读消息
 
 status:
   hsLoad: 加载中...

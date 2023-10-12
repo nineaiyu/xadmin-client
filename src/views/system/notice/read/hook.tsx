@@ -84,7 +84,7 @@ export function useNoticeRead(tableRef: Ref) {
     },
     {
       label: t("notice.type"),
-      prop: "owner",
+      prop: "notice_info",
       minWidth: 100,
       cellRenderer: ({ row }) => (
         <el-text>{row.notice_info.notice_type_display}</el-text>

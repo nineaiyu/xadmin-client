@@ -20,15 +20,12 @@ const { t } = useI18n();
 const checked = ref(false);
 const loading = ref(false);
 const ruleForm = reactive({
-  username: "nineven",
-  // phone: "",
-  // verifyCode: "",
-  password: "isummer123",
+  username: "",
+  password: "",
   token: "",
-  repeatPassword: "isummer123"
+  repeatPassword: ""
 });
 const ruleFormRef = ref<FormInstance>();
-// const { isDisabled, text } = useVerifyCode();
 const repeatPasswordRule = [
   {
     validator: (rule, value, callback) => {

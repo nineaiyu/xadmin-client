@@ -16,8 +16,7 @@ interface FormItemProps {
   pk?: number;
   owner_info?: Owner;
   owner?: number;
-  // unread?: boolean;
-  unread: boolean;
+  unread?: boolean;
   level: string;
   title: string;
   message: string;

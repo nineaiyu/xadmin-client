@@ -4,6 +4,7 @@ import ReCol from "@/components/ReCol";
 import { formRules } from "./utils/rule";
 import { FormItemProps, FormProps } from "./utils/types";
 import { hasAuth } from "@/router/utils";
+import { useI18n } from "vue-i18n";
 
 defineOptions({
   name: "editUserInfo"
@@ -19,11 +20,12 @@ const props = withDefaults(defineProps<FormProps>(), {
     sex: 0
   })
 });
+const { t } = useI18n();
 
 const sexOptions = [
-  { label: "男", value: 0 },
-  { label: "女", value: 1 },
-  { label: "未知", value: 2 }
+  { label: t("user.male"), value: 0 },
+  { label: t("user.female"), value: 1 },
+  { label: t("user.unknown"), value: 2 }
 ];
 const ruleFormRef = ref();
 const newFormInline = ref(props.formInline);
@@ -51,46 +53,46 @@ const handleUpdate = row => {
   >
     <el-row :gutter="30">
       <re-col :value="12" :xs="24" :sm="24">
-        <el-form-item label="用户名称" prop="username">
+        <el-form-item :label="t('user.username')" prop="username">
           <el-input
             v-model="newFormInline.username"
             clearable
-            placeholder="请输入用户名称"
+            :placeholder="t('user.verifyUsername')"
           />
         </el-form-item>
       </re-col>
       <re-col :value="12" :xs="24" :sm="24">
-        <el-form-item label="用户昵称" prop="nickname">
+        <el-form-item :label="t('user.nickname')" prop="nickname">
           <el-input
             v-model="newFormInline.nickname"
             clearable
-            placeholder="请输入用户昵称"
+            :placeholder="t('user.verifyNickname')"
           />
         </el-form-item>
       </re-col>
       <re-col :value="12" :xs="24" :sm="24">
-        <el-form-item label="手机号" prop="mobile">
+        <el-form-item :label="t('user.mobile')" prop="mobile">
           <el-input
             v-model="newFormInline.mobile"
             clearable
-            placeholder="请输入手机号"
+            :placeholder="t('user.verifyMobile')"
           />
         </el-form-item>
       </re-col>
       <re-col :value="12" :xs="24" :sm="24">
-        <el-form-item label="邮箱" prop="email">
+        <el-form-item :label="t('user.email')" prop="email">
           <el-input
             v-model="newFormInline.email"
             clearable
-            placeholder="请输入邮箱"
+            :placeholder="t('user.verifyEmail')"
           />
         </el-form-item>
       </re-col>
       <re-col :value="12" :xs="24" :sm="24">
-        <el-form-item label="用户性别" prop="sex">
+        <el-form-item :label="t('user.gender')" prop="sex">
           <el-select
             v-model="newFormInline.sex"
-            placeholder="请选择用户性别"
+            :placeholder="t('user.verifySex')"
             class="w-full"
             clearable
           >
@@ -106,12 +108,12 @@ const handleUpdate = row => {
     </el-row>
     <el-form-item>
       <el-popconfirm
-        title="是否确定更新本人信息?"
+        :title="t('buttons.hsconfirmdupdate')"
         @confirm="handleUpdate(newFormInline)"
         v-if="hasAuth('update:UserInfo')"
       >
         <template #reference>
-          <el-button>保存</el-button>
+          <el-button>{{ t("buttons.hssave") }}</el-button>
         </template>
       </el-popconfirm>
     </el-form-item>

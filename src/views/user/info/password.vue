@@ -4,21 +4,22 @@ import ReCol from "@/components/ReCol";
 import { FormPasswordProps } from "./utils/types";
 import type { FormRules } from "element-plus";
 import { hasAuth } from "@/router/utils";
-import { $t, transformI18n } from "@/plugins/i18n";
 import { isAllEmpty } from "@pureadmin/utils";
 import { zxcvbn } from "@zxcvbn-ts/core";
+import { useI18n } from "vue-i18n";
 
 defineOptions({
   name: "editUserPassword"
 });
+const { t } = useI18n();
 
-const pwdProgress = ref([
-  { color: "#e74242", text: "非常弱" },
-  { color: "#EFBD47", text: "弱" },
-  { color: "#ffa500", text: "一般" },
-  { color: "#1bbf1b", text: "强" },
-  { color: "#008000", text: "非常强" }
-]);
+const pwdProgress = [
+  { color: "#e74242", text: t("password.veryWeak") },
+  { color: "#EFBD47", text: t("password.weak") },
+  { color: "#ffa500", text: t("password.average") },
+  { color: "#1bbf1b", text: t("password.strong") },
+  { color: "#008000", text: t("password.veryStrong") }
+];
 
 const password = reactive<FormPasswordProps>({
   old_password: "",
@@ -29,13 +30,25 @@ const password = reactive<FormPasswordProps>({
 const ruleFormRef = ref();
 const curScore = ref();
 const formPasswordRules = reactive<FormRules>({
-  old_password: [{ required: true, message: "旧密码必填项", trigger: "blur" }],
-  new_password: [{ required: true, message: "新密码必填项", trigger: "blur" }],
+  old_password: [
+    {
+      required: true,
+      message: t("userinfo.verifyOldPassword"),
+      trigger: "blur"
+    }
+  ],
+  new_password: [
+    {
+      required: true,
+      message: t("userinfo.verifyNewPassword"),
+      trigger: "blur"
+    }
+  ],
   sure_password: [
     {
       validator: (rule, value, callback) => {
         if (value !== password.new_password) {
-          callback(new Error(transformI18n($t("login.passwordDifferentReg"))));
+          callback(new Error(t("login.passwordDifferentReg")));
         } else {
           callback();
         }
@@ -71,28 +84,28 @@ watch(
     ref="ruleFormRef"
     :model="password"
     :rules="formPasswordRules"
-    label-width="82px"
+    label-width="130px"
   >
     <el-row :gutter="30">
       <re-col :value="24" :xs="24" :sm="24">
-        <el-form-item label="旧密码" prop="old_password">
+        <el-form-item :label="t('userinfo.oldPassword')" prop="old_password">
           <el-input
             v-model="password.old_password"
             clearable
             show-password
             type="password"
-            placeholder="请输入用户旧密码"
+            :placeholder="t('userinfo.verifyOldPassword')"
           />
         </el-form-item>
       </re-col>
       <re-col :value="24" :xs="24" :sm="24">
-        <el-form-item label="新密码" prop="new_password">
+        <el-form-item :label="t('userinfo.newPassword')" prop="new_password">
           <el-input
             v-model="password.new_password"
             clearable
             show-password
             type="password"
-            placeholder="请输入用户新密码"
+            :placeholder="t('userinfo.verifyNewPassword')"
           />
           <div class="mt-4 flex w-full">
             <div
@@ -121,25 +134,25 @@ watch(
         </el-form-item>
       </re-col>
       <re-col :value="24" :xs="24" :sm="24">
-        <el-form-item label="确定密码" prop="sure_password">
+        <el-form-item :label="t('userinfo.surePassword')" prop="sure_password">
           <el-input
             v-model="password.sure_password"
             clearable
             show-password
             type="password"
-            placeholder="请输入用户新密码"
+            :placeholder="t('userinfo.verifyNewPassword')"
           />
         </el-form-item>
       </re-col>
     </el-row>
     <el-form-item>
       <el-popconfirm
-        title="是否修改本人密码?"
+        :title="t('buttons.hsconfirmdupdate')"
         @confirm="handleUpdate(password)"
         v-if="hasAuth('update:UserInfoPassword')"
       >
         <template #reference>
-          <el-button>保存</el-button>
+          <el-button>{{ t("buttons.hssave") }}</el-button>
         </template>
       </el-popconfirm>
     </el-form-item>

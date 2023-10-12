@@ -63,7 +63,7 @@ const {
         <el-form-item :label="t('labels.id')" prop="pk">
           <el-input
             v-model="form.pk"
-            :placeholder="t('user.userIdSearch')"
+            :placeholder="t('user.verifyUserId')"
             clearable
             class="!w-[160px]"
             @keyup.enter="onSearch(true)"
@@ -72,7 +72,7 @@ const {
         <el-form-item :label="t('user.username')" prop="username">
           <el-input
             v-model="form.username"
-            :placeholder="t('user.usernameSearch')"
+            :placeholder="t('user.verifyUsername')"
             clearable
             class="!w-[160px]"
             @keyup.enter="onSearch(true)"
@@ -81,7 +81,7 @@ const {
         <el-form-item :label="t('user.mobile')" prop="mobile">
           <el-input
             v-model="form.mobile"
-            :placeholder="t('user.mobileSearch')"
+            :placeholder="t('user.verifyMobile')"
             clearable
             class="!w-[160px]"
             @keyup.enter="onSearch(true)"

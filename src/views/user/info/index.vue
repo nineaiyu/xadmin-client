@@ -11,7 +11,7 @@ defineOptions({
   name: "UserInfo"
 });
 
-const { currentUserInfo, handleUpdate, handleUpload, handleResetPassword } =
+const { currentUserInfo, handleUpdate, handleUpload, handleResetPassword, t } =
   useUserInfo();
 const activeTab = ref("userinfo");
 </script>
@@ -22,7 +22,7 @@ const activeTab = ref("userinfo");
       <el-card>
         <template v-slot:header>
           <div class="clearfix">
-            <span>个人信息</span>
+            <span>{{ t("userinfo.userinfo") }}</span>
           </div>
         </template>
         <div>
@@ -36,24 +36,28 @@ const activeTab = ref("userinfo");
           </div>
 
           <el-descriptions :column="1" size="large">
-            <el-descriptions-item label="用户名称"
+            <el-descriptions-item :label="t('user.username')"
               >{{ currentUserInfo.username }}
             </el-descriptions-item>
-            <el-descriptions-item label="用户昵称"
+            <el-descriptions-item :label="t('user.nickname')"
               >{{ currentUserInfo.nickname }}
             </el-descriptions-item>
-            <el-descriptions-item label="手机号码"
+            <el-descriptions-item :label="t('user.mobile')"
               >{{ currentUserInfo.mobile }}
             </el-descriptions-item>
-            <el-descriptions-item label="用户邮箱"
+            <el-descriptions-item :label="t('user.email')"
               >{{ currentUserInfo.email }}
             </el-descriptions-item>
-            <el-descriptions-item label="性别">
+            <el-descriptions-item :label="t('user.gender')">
               <el-tag :type="['success', '', 'info'][currentUserInfo.sex]">
-                {{ ["男", "女", "未知"][currentUserInfo.sex] }}
+                {{
+                  [t("user.male"), t("user.female"), t("user.unknown")][
+                    currentUserInfo.sex
+                  ]
+                }}
               </el-tag>
             </el-descriptions-item>
-            <el-descriptions-item label="角色">
+            <el-descriptions-item :label="t('user.roles')">
               <el-space>
                 <el-tag
                   v-for="item in currentUserInfo.roles_info"
@@ -62,12 +66,12 @@ const activeTab = ref("userinfo");
                 </el-tag>
               </el-space>
             </el-descriptions-item>
-            <el-descriptions-item label="用户注册日期">
+            <el-descriptions-item :label="t('sorts.registrationDate')">
               {{
                 dayjs(currentUserInfo.date_joined).format("YYYY-MM-DD HH:mm:ss")
               }}
             </el-descriptions-item>
-            <el-descriptions-item label="上次登录日期">
+            <el-descriptions-item :label="t('sorts.loginDate')">
               {{
                 dayjs(currentUserInfo.last_login).format("YYYY-MM-DD HH:mm:ss")
               }}
@@ -80,25 +84,25 @@ const activeTab = ref("userinfo");
       <el-card>
         <template v-slot:header>
           <div class="clearfix">
-            <span>修改资料</span>
+            <span>{{ t("userinfo.updateUserInfo") }}</span>
           </div>
         </template>
         <el-tabs v-model="activeTab">
-          <el-tab-pane label="基本资料" name="userinfo">
+          <el-tab-pane :label="t('userinfo.basicInfo')" name="userinfo">
             <edit-user-info
               :form-inline="currentUserInfo"
               @handle-update="handleUpdate"
             />
           </el-tab-pane>
           <el-tab-pane
-            label="修改密码"
+            :label="t('userinfo.changePassword')"
             name="resetPwd"
             v-if="hasAuth('update:UserInfoPassword')"
           >
             <edit-user-password @handle-update="handleResetPassword" />
           </el-tab-pane>
           <el-tab-pane
-            label="修改头像"
+            :label="t('userinfo.updateAvatar')"
             name="avatar"
             v-if="hasAuth('update:UserInfoAvatar')"
           >
