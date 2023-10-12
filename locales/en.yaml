@@ -6,6 +6,12 @@ password:
   veryStrong: Very strong
 
 labels:
+  id: ID
+  status: Status
+  verifyStatus: Please select status
+  remark: Remark
+  verifyRemark: Please enter remark
+  sort: Sort
   active: Active
   inactive: Inactive
   operations: Operations
@@ -21,10 +27,12 @@ results:
   failed: Execution failure
   batchDelete: Batch deletes the { count } items
   noSelectedData: Data not selected
+  formValidationFailed: Form validation failed
 
 sorts:
   registrationDate: Registration Date
   loginDate: Login Date
+  createdDate: Creation date
 
 buttons:
   hsLoginOut: LoginOut
@@ -35,12 +43,14 @@ buttons:
   hsadd: Add
   hsmark: Mark/Cancel
   hssave: Save
+  hsupdate: Update
   hssearch: Search
   hsexpendAll: Expand All
   hscollapseAll: Collapse All
   hssystemSet: Open ProjectConfig
   hsdelete: Delete
   hsreload: Reload
+  hsreset: Reset
   hscloseCurrentTab: Close CurrentTab
   hscloseLeftTabs: Close LeftTabs
   hscloseRightTabs: Close RightTabs
@@ -53,11 +63,12 @@ buttons:
   hscancel: Cancel
   hssure: Ok
   hsedit: Edit
-  hsbatchdelete: Batch Delete
+  hsbatchdelete: BatchDelete
   hsbatchdeleteconfirm: Are you sure to delete { count } pieces of items in batch?
   hsoperateconfirm: Are you sure to { action } { message } ?
   hsselected: "{ count } items are selected"
   hsconfirmdelete: Are you sure to delete this?
+  hsconfirmdupdate: Are you sure to update this?
 
 menus:
   hshome: Home
@@ -75,7 +86,6 @@ menus:
 
 user:
   user: User
-  id: Id
   avatar: Avatar
   userIdSearch: Enter the user id
   username: Username
@@ -86,14 +96,11 @@ user:
   male: Male
   female: Female
   unknown: Unknown
-  remark: Remark
   roles: Roles
   registrationDate: Registration date
   usernameSearch: Enter the username
   mobile: Mobile
   mobileSearch: Enter the mobile
-  status: Status
-  sort: Sort
   exportExcel: Export Excel
   batchSendNotice: Batch Send Notice
   editAvatar: Edit Avatar
@@ -102,10 +109,8 @@ user:
   verifyUsername: Please enter username
   verifyPassword: Please enter password
   verifyNickname: Please enter nickname
-  verifyRemark: Please enter remark
   verifyEmail: Please enter Email
   verifySex: Please enter gender
-  verifyStatus: Please select status
   resetPasswd: Reset the password of user { user }
   assignRole: Assign multiple roles to user { user }
   updateAvatar: Upload and update avatar to { user }
@@ -113,9 +118,52 @@ user:
   excelName: Registered user data
 
 role:
-  name: Role Name
-  code: Role Code
-  status: Status
+  role: Role
+  name: RoleName
+  code: RoleCode
+  verifyRoleName: Please enter role name
+  verifyRoleCode: Please enter role code
+  permissions: Permissions
+
+menu:
+  menus: Menus
+  type: Type
+  title: Title
+  icon: Icon
+  cache: Cache
+  componentName: ComponentName
+  componentPath: ComponentPath
+  exampleComponentName: "For example: 'user', if the external network address needs internal link access, start with 'http(s)://'"
+  exampleRoutePath: "Route address for access, such as' /user ', '/system/about'"
+  exampleComponentPath: "The access component path, such as' system/user/index ', defaults to the 'views' directory"
+  exampleCache: "If yes is selected, it will be cached by 'keep-alive', and the name and address of the matching component must be consistent"
+  exampleShowLink: "Hide the route will not appear in the sidebar, but it will still be accessible"
+  exampleMenuStatus: "If disabled, the route will not appear in the sidebar and cannot be accessed"
+  exampleRequestStatus: "Select Disable to invalidate permissions"
+  exampleExternalLink: "If it exists, the address needs to start with 'http(s)://'"
+  verifyExampleExternalLink: "Default is empty unless there is an external link"
+  exampleAnimation: "The embedded iframe page loads the animation for the first time"
+  examplePermissionCode: "Controller the permissions defined in character, such as: PreAuthorize(`permission.HashPermission('menu: query)`)"
+  routePath: RoutePath
+  verifyType: Please choice menu type
+  verifyTitle: Please enter menu title
+  verifyPath: Please enter routing path
+  verifyComponentPath: Please enter component path
+  verifyRequestMethod: Please enter request method
+  verifyPermissionName: Please enter permission name
+  verifyPermissionCode: Please enter permission code
+  pathError: The route path must start with '/'
+  parentNode: ParentNode
+  showParentMenu: ShowParentMenu
+  showLink: ShowLink
+  externalLink: ExternalLink
+  animation: Animation
+  permissionName: PermissionName
+  permissionCode: PermissionCode
+  permissionPath: PermissionPath
+  requestMethod: RequestMethod
+  expandAll: ExpandAll
+  foldAll: FoldAll
 
 status:
   hsLoad: Loading...

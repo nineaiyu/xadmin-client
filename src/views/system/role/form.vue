@@ -2,13 +2,12 @@
 import { onMounted, ref, watch, nextTick } from "vue";
 import { formRules } from "./utils/rule";
 import { FormProps } from "./utils/types";
-import { ifEnableOptions } from "@/constants/constants";
 import { useRole } from "./utils/hook";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { transformI18n } from "@/plugins/i18n";
 import { isAllEmpty } from "@pureadmin/utils";
 import { match } from "pinyin-pro";
 import { useI18n } from "vue-i18n";
+import { transformI18n } from "@/plugins/i18n";
 
 const props = withDefaults(defineProps<FormProps>(), {
   formInline: () => ({
@@ -44,7 +43,6 @@ const filterMenuNode = (value: string, data: any) => {
           ))
     : false;
 };
-const { menuTreeData, getMenuData } = useRole();
 const ruleFormRef = ref();
 const treeRoleRef = ref();
 const newFormInline = ref(props.formInline);
@@ -55,6 +53,12 @@ function getRef() {
 function getTreeRef() {
   return treeRoleRef.value;
 }
+const { menuTreeData, getMenuData, loading } = useRole(treeRoleRef);
+const { t } = useI18n();
+const ifEnableOptions = [
+  { label: t("labels.enable"), value: true },
+  { label: t("labels.disable"), value: false }
+];
 watch(searchValue, val => {
   treeRoleRef.value!.filter(val);
 });
@@ -74,47 +78,48 @@ onMounted(() => {
     :rules="formRules"
     label-width="82px"
   >
-    <el-form-item label="角色名称" prop="name">
+    <el-form-item :label="t('role.name')" prop="name">
       <el-input
         v-model="newFormInline.name"
         clearable
-        placeholder="请输入角色名称"
+        :placeholder="t('role.verifyRoleName')"
       />
     </el-form-item>
 
-    <el-form-item label="角色标识" prop="code">
+    <el-form-item :label="t('role.code')" prop="code">
       <el-input
         v-model="newFormInline.code"
         clearable
-        placeholder="请输入角色标识"
+        :placeholder="t('role.verifyRoleCode')"
       />
     </el-form-item>
-    <el-form-item label="角色状态" prop="is_active">
+    <el-form-item :label="t('labels.status')" prop="is_active">
       <el-radio-group v-model="newFormInline.is_active">
         <el-radio-button
           v-for="item in ifEnableOptions"
-          :key="item.value"
+          :key="item.label"
           :label="item.value"
           >{{ item.label }}</el-radio-button
         >
       </el-radio-group>
     </el-form-item>
-    <el-form-item label="备注">
+    <el-form-item :label="t('labels.remark')">
       <el-input
         v-model="newFormInline.description"
-        placeholder="请输入备注信息"
+        :placeholder="t('labels.verifyRemark')"
         type="textarea"
       />
     </el-form-item>
-    <el-form-item label="权限信息">
+    <el-form-item :label="t('role.permissions')">
       <el-input
         class="filter-item"
         clearable
         v-model="searchValue"
-        placeholder="菜单搜索"
+        :placeholder="t('buttons.hssearch')"
       />
       <el-tree
         :data="menuTreeData"
+        v-loading="loading"
         ref="treeRoleRef"
         show-checkbox
         node-key="pk"

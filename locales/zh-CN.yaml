@@ -6,6 +6,12 @@ password:
   veryStrong: 很强
 
 labels:
+  id: Id
+  status: 状态
+  verifyStatus: 请选择状态
+  remark: 备注
+  verifyRemark: 请输入备注
+  sort: 排序
   active: 激活
   inactive: 未激活
   operations: 操作
@@ -21,10 +27,12 @@ results:
   failed: 执行失败
   batchDelete: 批量删除 { count } 条数据
   noSelectedData: 数据未选择
+  formValidationFailed: 表单校验失败
 
 sorts:
   registrationDate: 注册时间
   loginDate: 登录时间
+  createdDate: 创建时间
 
 buttons:
   hsLoginOut: 退出系统
@@ -35,12 +43,14 @@ buttons:
   hsadd: 新增
   hsmark: 标记/取消
   hssave: 保存
+  hsupdate: 更新
   hssearch: 搜索
   hsexpendAll: 全部展开
   hscollapseAll: 全部折叠
   hssystemSet: 打开项目配置
   hsdelete: 删除
   hsreload: 重新加载
+  hsreset: 重置
   hscloseCurrentTab: 关闭当前标签页
   hscloseLeftTabs: 关闭左侧标签页
   hscloseRightTabs: 关闭右侧标签页
@@ -58,6 +68,7 @@ buttons:
   hsoperateconfirm: 确定 { action } { message } ？
   hsselected: "已选择 { count } 条数据"
   hsconfirmdelete: 确定删除该数据吗？
+  hsconfirmdupdate: 确定更新该数据吗？
 
 menus:
   hshome: 首页
@@ -75,7 +86,6 @@ menus:
 
 user:
   user: 用户
-  id: Id
   avatar: 头像
   userIdSearch: 请输入用户ID
   username: 用户名
@@ -86,14 +96,11 @@ user:
   male: 男
   female: 女
   unknown: 未知
-  remark: 备注
   roles: 角色
   registrationDate: 注册时间
   usernameSearch: 请输入用户名
   mobile: 手机号
   mobileSearch: 请输入手机号
-  status: 状态
-  sort: 排序
   exportExcel: 导出表格
   batchSendNotice: 批量发送通知
   editAvatar: 修改头像
@@ -102,10 +109,8 @@ user:
   verifyUsername: 请输入用户名
   verifyPassword: 请输入密码
   verifyNickname: 请输入昵称
-  verifyRemark: 请输入备注
   verifyEmail: 清数据邮箱
   verifySex: 请选择性别
-  verifyStatus: 请选择状态
   resetPasswd: 重置用户 { user } 的密码
   assignRole: 分配用户 { user } 的角色
   updateAvatar: 更新用户 { user } 的头像
@@ -113,9 +118,52 @@ user:
   excelName: 用户注册报表
 
 role:
+  role: 角色
   name: 角色名称
   code: 角色标识
-  status: 状态
+  verifyRoleName: 请输入角色名称
+  verifyRoleCode: 请输入角色标识
+  permissions: 权限
+
+menu:
+  menus: 菜单
+  type: 类型
+  title: 名称
+  icon: 图标
+  cache: 缓存
+  componentName: 组件名称
+  componentPath: 组件路径
+  exampleComponentName: "如：`user`，如外网地址需内链访问则以`http(s)://`开头"
+  exampleRoutePath: "访问的路由地址，如：`/user`, `/system/about`"
+  exampleComponentPath: "访问的组件路径，如：`system/user/index`，默认在`views`目录下"
+  exampleCache: "选择是则会被`keep-alive`缓存，需要匹配组件的`name`和地址保持一致"
+  exampleShowLink: "选择隐藏则路由将不会出现在侧边栏，但仍然可以访问"
+  exampleMenuStatus: "选择停用则路由将不会出现在侧边栏，也不能被访问"
+  exampleRequestStatus: "选择停用则权限将失效"
+  exampleExternalLink: "选择是外链则路由地址需要以`http(s)://`开头"
+  verifyExampleExternalLink: "默认为空，除非有外链"
+  exampleAnimation: "内嵌的iframe页面开启首次加载动画"
+  examplePermissionCode: "控制器中定义的权限字符，如：PreAuthorize(`permission.hashPermission('menu:query')`)"
+  routePath: 路由地址
+  verifyType: 请选择菜单类型
+  verifyTitle: 请输入菜单标题
+  verifyPath: 请输入路由地址
+  verifyComponentPath: 请输入组件路径
+  verifyRequestMethod: 请输入请求方式
+  verifyPermissionName: 请输入权限名称
+  verifyPermissionCode: 请输入权限标识
+  pathError: 路由必须`/`开头
+  parentNode: 上级节点
+  showParentMenu: 显示父级菜单
+  showLink: 菜单可见
+  externalLink: 内嵌外链地址
+  animation: 内嵌动画
+  permissionName: 权限名称
+  permissionCode: 权限标识
+  permissionPath: 权限路由
+  requestMethod: 请求方式
+  expandAll: 展开全部
+  foldAll: 折叠全部
 
 status:
   hsLoad: 加载中...

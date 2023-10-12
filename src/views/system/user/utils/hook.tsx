@@ -107,7 +107,7 @@ export function useUser(tableRef: Ref) {
       align: "left"
     },
     {
-      label: t("user.id"),
+      label: t("labels.id"),
       prop: "pk",
       minWidth: 130
     },
@@ -157,7 +157,7 @@ export function useUser(tableRef: Ref) {
       formatter: ({ mobile }) => hideTextAtIndex(mobile, { start: 3, end: 6 })
     },
     {
-      label: t("user.status"),
+      label: t("labels.status"),
       prop: "is_active",
       minWidth: 90,
       cellRenderer: scope => (
@@ -367,7 +367,7 @@ export function useUser(tableRef: Ref) {
       title: `${title} ${t("user.user")}`,
       props: {
         formInline: {
-          is_add,
+          is_add: is_add ?? true,
           pk: row?.pk ?? "",
           username: row?.username ?? "",
           nickname: row?.nickname ?? "",
@@ -390,9 +390,7 @@ export function useUser(tableRef: Ref) {
         const FormRef = formRef.value.getRef();
         const curData = options.props.formInline as FormItemProps;
         async function chores(detail) {
-          message(detail, {
-            type: "success"
-          });
+          message(detail, { type: "success" });
           done(); // 关闭弹框
           await onSearch(); // 刷新表格数据
         }

@@ -18,6 +18,7 @@ defineOptions({
 const formRef = ref();
 const tableRef = ref();
 const {
+  t,
   form,
   loading,
   columns,
@@ -45,37 +46,36 @@ const {
       :model="form"
       class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px]"
     >
-      <el-form-item label="角色名称：" prop="name">
+      <el-form-item :label="t('role.name')" prop="name">
         <el-input
           v-model="form.name"
-          placeholder="请输入角色名称"
+          :placeholder="t('role.verifyRoleName')"
           clearable
           class="!w-[200px]"
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
-      <el-form-item label="角色标识：" prop="code">
+      <el-form-item :label="t('role.code')" prop="code">
         <el-input
           v-model="form.code"
-          placeholder="请输入角色标识"
+          :placeholder="t('role.verifyRoleCode')"
           clearable
           class="!w-[180px]"
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
-      <el-form-item label="状态：" prop="is_active">
+      <el-form-item :label="t('labels.status')" prop="is_active">
         <el-select
           v-model="form.is_active"
-          placeholder="请选择状态"
           clearable
           class="!w-[180px]"
           @change="onSearch(true)"
         >
-          <el-option label="已启用" value="1" />
-          <el-option label="已停用" value="0" />
+          <el-option :label="t('labels.enable')" value="1" />
+          <el-option :label="t('labels.disable')" value="0" />
         </el-select>
       </el-form-item>
-      <el-form-item label="排序：">
+      <el-form-item :label="t('labels.sort')">
         <el-select
           v-model="form.ordering"
           style="width: 180px"
@@ -97,34 +97,40 @@ const {
           :loading="loading"
           @click="onSearch(true)"
         >
-          搜索
+          {{ t("buttons.hssearch") }}
         </el-button>
         <el-button :icon="useRenderIcon(Refresh)" @click="resetForm(formRef)">
-          重置
+          {{ t("buttons.hsreload") }}
         </el-button>
       </el-form-item>
     </el-form>
 
-    <PureTableBar title="角色管理" :columns="columns" @refresh="onSearch(true)">
+    <PureTableBar
+      :title="t('menus.hsRole')"
+      :columns="columns"
+      @refresh="onSearch(true)"
+    >
       <template #buttons>
         <div v-if="manySelectCount > 0" class="w-[300px]">
           <span
             style="font-size: var(--el-font-size-base)"
             class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
           >
-            已选 {{ manySelectCount }} 项
+            {{ t("buttons.hsselected", { count: manySelectCount }) }}
           </span>
           <el-button type="primary" text @click="onSelectionCancel">
-            取消选择
+            {{ t("buttons.hscancel") }}
           </el-button>
           <el-popconfirm
-            :title="`是否确认批量删除${manySelectCount}条数据?`"
+            :title="
+              t('buttons.hsbatchdeleteconfirm', { count: manySelectCount })
+            "
             @confirm="handleManyDelete"
             v-if="hasAuth('manyDelete:systemRole')"
           >
             <template #reference>
               <el-button type="danger" plain :icon="useRenderIcon(Delete)">
-                批量删除
+                {{ t("buttons.hsbatchdelete") }}
               </el-button>
             </template>
           </el-popconfirm>
@@ -136,7 +142,7 @@ const {
           :icon="useRenderIcon(AddFill)"
           @click="openDialog()"
         >
-          新增角色
+          {{ t("buttons.hsadd") }}
         </el-button>
       </template>
       <template v-slot="{ size, dynamicColumns }">
@@ -170,12 +176,12 @@ const {
               type="primary"
               :size="size"
               :icon="useRenderIcon(EditPen)"
-              @click="openDialog('编辑', row)"
+              @click="openDialog(false, row)"
             >
-              修改
+              {{ t("buttons.hsedit") }}
             </el-button>
             <el-popconfirm
-              :title="`是否确认删除角色名称为${row.name}的这条数据`"
+              :title="t('buttons.hsconfirmdelete')"
               @confirm="handleDelete(row)"
               v-if="hasAuth('delete:systemRole')"
             >
@@ -187,7 +193,7 @@ const {
                   :size="size"
                   :icon="useRenderIcon(Delete)"
                 >
-                  删除
+                  {{ t("buttons.hsdelete") }}
                 </el-button>
               </template>
             </el-popconfirm>

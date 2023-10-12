@@ -25,6 +25,7 @@ const isExpand = ref(false);
 const searchValue = ref("");
 const highlightMap = ref({});
 const { proxy } = getCurrentInstance();
+const { t } = useI18n();
 
 // 声明 props 默认值
 // 推荐阅读：https://cn.vuejs.org/guide/typescript/composition-api.html#typing-component-props
@@ -176,21 +177,24 @@ watch(searchValue, val => {
     <el-affix :offset="85">
       <el-card :body-style="{ padding: '8px' }">
         <div class="flex items-center h-[34px]">
-          <p class="flex-1 ml-2 font-bold text-base truncate" title="菜单列表">
-            菜单列表
+          <p
+            class="flex-1 ml-2 font-bold text-base truncate"
+            :title="t('menu.menus')"
+          >
+            {{ t("menu.menus") }}
           </p>
           <el-button
             size="small"
             class="ml-2"
             @click="emit('openDialog', 0)"
             v-if="hasAuth('create:systemMenu')"
-            >添加节点</el-button
+            >{{ t("buttons.hsadd") }}</el-button
           >
           <el-input
             size="small"
             class="flex-1"
             v-model="searchValue"
-            placeholder="请输入菜单名称"
+            :placeholder="t('menu.verifyTitle')"
             clearable
           >
             <template #suffix>
@@ -218,7 +222,7 @@ watch(searchValue, val => {
                     :icon="useRenderIcon(isExpand ? ExpandIcon : UnExpandIcon)"
                     @click="toggleRowExpansionAll(!isExpand)"
                   >
-                    {{ isExpand ? "折叠全部" : "展开全部" }}
+                    {{ isExpand ? t("menu.foldAll") : t("menu.expandAll") }}
                   </el-button>
                 </el-dropdown-item>
                 <el-dropdown-item>
@@ -229,7 +233,7 @@ watch(searchValue, val => {
                     :icon="useRenderIcon(Reset)"
                     @click="onReset"
                   >
-                    重置状态
+                    {{ t("buttons.hsreset") }}
                   </el-button>
                 </el-dropdown-item>
                 <el-dropdown-item v-if="hasAuth('list:systemMenu')">
@@ -240,12 +244,12 @@ watch(searchValue, val => {
                     :icon="useRenderIcon(Refresh)"
                     @click="emit('getMenuData')"
                   >
-                    刷新菜单
+                    {{ t("buttons.hsreload") }}
                   </el-button>
                 </el-dropdown-item>
                 <el-dropdown-item v-if="hasAuth('manyDelete:systemMenu')">
                   <el-popconfirm
-                    title="是否确认批量删除选中节点?"
+                    :title="t('buttons.hsconfirmdelete')"
                     @confirm="emit('handleManyDelete', treeRef)"
                   >
                     <template #reference>
@@ -255,7 +259,7 @@ watch(searchValue, val => {
                         type="danger"
                         :icon="useRenderIcon(Delete)"
                       >
-                        批量删除
+                        {{ t("buttons.hsbatchdelete") }}
                       </el-button>
                     </template>
                   </el-popconfirm>
@@ -309,7 +313,7 @@ watch(searchValue, val => {
           <el-tooltip
             class="box-item"
             effect="dark"
-            content="添加节点"
+            :content="t('buttons.hsadd')"
             placement="top-start"
             v-if="hasAuth('create:systemMenu') && data.menu_type !== 2"
           >
@@ -323,7 +327,7 @@ watch(searchValue, val => {
 
           <el-popconfirm
             v-if="hasAuth('delete:systemMenu')"
-            title="是否确认删除该节点?"
+            :title="t('buttons.hsconfirmdelete')"
             @confirm.stop="emit('handleDelete', data)"
           >
             <template #reference>

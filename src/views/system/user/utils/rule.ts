@@ -36,7 +36,7 @@ export const formRules = reactive<FormRules>({
   is_active: [
     {
       required: true,
-      message: transformI18n($t("user.verifyStatus")),
+      message: transformI18n($t("labels.verifyStatus")),
       trigger: "blur"
     }
   ],

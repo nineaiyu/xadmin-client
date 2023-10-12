@@ -60,7 +60,7 @@ const {
         :model="form"
         class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px]"
       >
-        <el-form-item :label="t('user.id')" prop="pk">
+        <el-form-item :label="t('labels.id')" prop="pk">
           <el-input
             v-model="form.pk"
             :placeholder="t('user.userIdSearch')"
@@ -87,10 +87,10 @@ const {
             @keyup.enter="onSearch(true)"
           />
         </el-form-item>
-        <el-form-item :label="t('user.status')" prop="is_active">
+        <el-form-item :label="t('labels.status')" prop="is_active">
           <el-select
             v-model="form.is_active"
-            :placeholder="t('user.status')"
+            :placeholder="t('labels.status')"
             clearable
             class="!w-[160px]"
             @change="onSearch(true)"
@@ -99,7 +99,7 @@ const {
             <el-option :label="t('labels.inactive')" value="0" />
           </el-select>
         </el-form-item>
-        <el-form-item :label="t('user.sort')">
+        <el-form-item :label="t('labels.sort')">
           <el-select
             v-model="form.ordering"
             style="width: 180px"

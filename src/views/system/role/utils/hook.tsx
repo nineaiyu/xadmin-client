@@ -18,12 +18,20 @@ import { getMenuListApi } from "@/api/system/menu";
 import { handleTree } from "@/utils/tree";
 import { getKeyList } from "@pureadmin/utils";
 import { hasAuth } from "@/router/utils";
+import { useI18n } from "vue-i18n";
 
-const sortOptions = [
-  { label: "添加时间 Descending", key: "-created_time" },
-  { label: "添加时间 Ascending", key: "created_time" }
-];
 export function useRole(tableRef: Ref) {
+  const { t } = useI18n();
+  const sortOptions = [
+    {
+      label: `${t("sorts.createdDate")} ${t("labels.descending")}`,
+      key: "-created_time"
+    },
+    {
+      label: `${t("sorts.createdDate")} ${t("labels.ascending")}`,
+      key: "created_time"
+    }
+  ];
   const form = reactive({
     name: "",
     code: "",
@@ -52,22 +60,22 @@ export function useRole(tableRef: Ref) {
       align: "left"
     },
     {
-      label: "角色ID",
+      label: t("labels.id"),
       prop: "pk",
       minWidth: 100
     },
     {
-      label: "角色名称",
+      label: t("role.name"),
       prop: "name",
       minWidth: 120
     },
     {
-      label: "角色标识",
+      label: t("role.code"),
       prop: "code",
       minWidth: 150
     },
     {
-      label: "状态",
+      label: t("labels.status"),
       minWidth: 130,
       cellRenderer: scope => (
         <el-switch
@@ -76,8 +84,8 @@ export function useRole(tableRef: Ref) {
           v-model={scope.row.is_active}
           active-value={true}
           inactive-value={false}
-          active-text="已启用"
-          inactive-text="已停用"
+          active-text={t("labels.active")}
+          inactive-text={t("labels.inactive")}
           disabled={!hasAuth("update:systemRole")}
           inline-prompt
           style={switchStyle.value}
@@ -86,19 +94,19 @@ export function useRole(tableRef: Ref) {
       )
     },
     {
-      label: "备注",
+      label: t("labels.remark"),
       prop: "description",
       minWidth: 150
     },
     {
-      label: "创建时间",
+      label: t("sorts.createdDate"),
       minWidth: 180,
       prop: "createTime",
       formatter: ({ created_time }) =>
         dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
     },
     {
-      label: "操作",
+      label: t("labels.operations"),
       fixed: "right",
       width: 160,
       slot: "operation"
@@ -106,16 +114,16 @@ export function useRole(tableRef: Ref) {
   ];
 
   function onChange({ row, index }) {
+    const action =
+      row.is_active === false ? t("labels.disable") : t("labels.enable");
     ElMessageBox.confirm(
-      `确认要<strong>${
-        row.is_active === false ? "停用" : "启用"
-      }</strong><strong style='color:var(--el-color-primary)'>${
-        row.name
-      }</strong>吗?`,
-      "系统提示",
+      `${t("buttons.hsoperateconfirm", {
+        action: `<strong>${action}</strong>`,
+        message: `<strong style='color:var(--el-color-primary)'>${row.name}</strong>`
+      })}`,
       {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
+        confirmButtonText: t("buttons.hssure"),
+        cancelButtonText: t("buttons.hscancel"),
         type: "warning",
         dangerouslyUseHTMLString: true,
         draggable: true
@@ -138,11 +146,9 @@ export function useRole(tableRef: Ref) {
                 loading: false
               }
             );
-            message("已成功修改角色状态", {
-              type: "success"
-            });
+            message(t("results.success"), { type: "success" });
           } else {
-            message(`操作失败，${res.detail}`, { type: "error" });
+            message(`${t("results.failed")}，${res.detail}`, { type: "error" });
           }
         });
       })
@@ -156,10 +162,10 @@ export function useRole(tableRef: Ref) {
   async function handleDelete(row) {
     deleteRoleApi(row.pk).then(async res => {
       if (res.code === 1000) {
-        message("操作成功", { type: "success" });
+        message(t("results.success"), { type: "success" });
         await onSearch();
       } else {
-        message(`操作失败，${res.detail}`, { type: "error" });
+        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
     });
   }
@@ -185,7 +191,7 @@ export function useRole(tableRef: Ref) {
   }
   function handleManyDelete() {
     if (manySelectCount.value === 0) {
-      message("数据未选择", { type: "error" });
+      message(t("results.noSelectedData"), { type: "error" });
       return;
     }
     const manySelectData = tableRef.value.getTableRef().getSelectionRows();
@@ -193,12 +199,12 @@ export function useRole(tableRef: Ref) {
       pks: JSON.stringify(getKeyList(manySelectData, "pk"))
     }).then(async res => {
       if (res.code === 1000) {
-        message(`批量删除了${manySelectCount.value}条数据`, {
+        message(t("results.batchDelete", { count: manySelectCount.value }), {
           type: "success"
         });
         await onSearch();
       } else {
-        message(`操作失败，${res.detail}`, { type: "error" });
+        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
     });
   }
@@ -224,9 +230,13 @@ export function useRole(tableRef: Ref) {
     onSearch();
   };
 
-  function openDialog(title = "新增", row?: FormItemProps) {
+  function openDialog(is_add = true, row?: FormItemProps) {
+    let title = t("buttons.hsedit");
+    if (is_add) {
+      title = t("buttons.hsadd");
+    }
     addDialog({
-      title: `${title}角色`,
+      title: `${title} ${t("role.role")}`,
       props: {
         formInline: {
           pk: row?.pk ?? "",
@@ -246,30 +256,32 @@ export function useRole(tableRef: Ref) {
         const FormRef = formRef.value.getRef();
         const TreeRef = formRef.value.getTreeRef();
         const curData = options.props.formInline as FormItemProps;
-        async function chores() {
-          message(`您${title}了角色名称为${curData.name}的这条数据`, {
-            type: "success"
-          });
+        async function chores(detail) {
+          message(detail, { type: "success" });
           done(); // 关闭弹框
           await onSearch(); // 刷新表格数据
         }
         FormRef.validate(valid => {
           if (valid) {
             curData.menu = TreeRef!.getCheckedKeys(false);
-            if (title === "新增") {
+            if (is_add) {
               createRoleApi(curData).then(async res => {
                 if (res.code === 1000) {
-                  await chores();
+                  await chores(res.detail);
                 } else {
-                  message(`操作失败，${res.detail}`, { type: "error" });
+                  message(`${t("results.failed")}，${res.detail}`, {
+                    type: "error"
+                  });
                 }
               });
             } else {
               updateRoleApi(curData.pk, curData).then(async res => {
                 if (res.code === 1000) {
-                  await chores();
+                  await chores(res.detail);
                 } else {
-                  message(`操作失败，${res.detail}`, { type: "error" });
+                  message(`${t("results.failed")}，${res.detail}`, {
+                    type: "error"
+                  });
                 }
               });
             }
@@ -285,7 +297,7 @@ export function useRole(tableRef: Ref) {
     loading.value = true;
     getMenuListApi({ page: 1, size: 100 }).then(res => {
       if (res.code === 1000) {
-        menuTreeData.value = handleTree(res.data);
+        menuTreeData.value = handleTree(res.data.results);
       }
       loading.value = false;
     });
@@ -296,6 +308,7 @@ export function useRole(tableRef: Ref) {
   });
 
   return {
+    t,
     form,
     loading,
     columns,

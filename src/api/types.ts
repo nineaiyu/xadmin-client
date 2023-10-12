@@ -25,11 +25,18 @@ export type ResultDetail = {
   };
 };
 
+export type MenuDetail = {
+  data: any[];
+  id?: string;
+  parentId?: string;
+  children?: string;
+};
+
 export type MenuDataResult = {
   detail: string;
   code: number;
   data: {
-    results: any[];
+    results: MenuDetail[];
     total: number;
   };
   choices_dict: any[];

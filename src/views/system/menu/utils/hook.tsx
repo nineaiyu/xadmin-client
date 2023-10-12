@@ -14,10 +14,7 @@ import { FormItemProps } from "./types";
 import { handleTree } from "@/utils/tree";
 import { cloneDeep } from "@pureadmin/utils";
 import { getMenuFromPk, getMenuOrderPk } from "@/utils";
-const sortOptions = [
-  { label: "添加时间 Descending", key: "-created_time" },
-  { label: "添加时间 Ascending", key: "created_time" }
-];
+import { useI18n } from "vue-i18n";
 
 const defaultData: FormItemProps = {
   menu_type: 0,
@@ -44,6 +41,18 @@ const defaultData: FormItemProps = {
 };
 
 export function useMenu() {
+  const { t } = useI18n();
+  const sortOptions = [
+    {
+      label: `${t("sorts.createdDate")} ${t("labels.descending")}`,
+      key: "-created_time"
+    },
+    {
+      label: `${t("sorts.createdDate")} ${t("labels.ascending")}`,
+      key: "created_time"
+    }
+  ];
+
   const form = reactive({
     username: "",
     mobile: "",
@@ -86,27 +95,27 @@ export function useMenu() {
   async function handleDelete(row) {
     deleteMenuApi(row.pk).then(async res => {
       if (res.code === 1000) {
-        message("操作成功", { type: "success" });
+        message(t("results.success"), { type: "success" });
         getMenuData();
       } else {
-        message(`操作失败，${res.detail}`, { type: "error" });
+        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
     });
   }
   function handleManyDelete(val) {
     const manyPks = val!.getCheckedKeys(false);
     if (manyPks.length === 0) {
-      message("数据未选择", { type: "error" });
+      message(t("results.noSelectedData"), { type: "error" });
       return;
     }
     manyDeleteMenuApi({ pks: JSON.stringify(manyPks) }).then(async res => {
       if (res.code === 1000) {
-        message(`批量删除了${manyPks.length}条数据`, {
+        message(t("results.batchDelete", { count: manyPks.length }), {
           type: "success"
         });
         getMenuData();
       } else {
-        message(`操作失败，${res.detail}`, { type: "error" });
+        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
     });
   }
@@ -130,7 +139,7 @@ export function useMenu() {
           });
         }
       } else {
-        message("表单校验失败", { type: "warning" });
+        message(t("results.formValidationFailed"), { type: "warning" });
       }
     });
   };
@@ -146,9 +155,9 @@ export function useMenu() {
     }
     openDialog(0, row);
   }
-  function openDialog(menu_type, row?: FormItemProps) {
+  function openDialog(menu_type: number, row?: FormItemProps) {
     addDialog({
-      title: "新增",
+      title: t("buttons.hsadd"),
       props: {
         treeData: treeData,
         choicesDict: choicesDict,
@@ -188,10 +197,8 @@ export function useMenu() {
       beforeSure: (done, { options }) => {
         const FormRef = formRef.value.getRef();
         const curData = options.props.formInline as FormItemProps;
-        async function chores() {
-          message(`您新增了了节点名称为${curData.name}的这条数据`, {
-            type: "success"
-          });
+        async function chores(detail) {
+          message(detail, { type: "success" });
           done(); // 关闭弹框
           getMenuData(); // 刷新表格数据
         }
@@ -200,9 +207,11 @@ export function useMenu() {
             curData.meta.title = curData.title;
             createMenuApi(curData).then(async res => {
               if (res.code === 1000) {
-                await chores();
+                await chores(res.detail);
               } else {
-                message(`操作失败，${res.detail}`, { type: "error" });
+                message(`${t("results.failed")}，${res.detail}`, {
+                  type: "error"
+                });
               }
             });
           }
@@ -243,6 +252,7 @@ export function useMenu() {
   });
 
   return {
+    t,
     form,
     loading,
     parentIds,

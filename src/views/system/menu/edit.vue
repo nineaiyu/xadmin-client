@@ -14,7 +14,8 @@ import {
 import { dirFormRules, menuFormRules, permissionFormRules } from "./utils/rule";
 import { hasAuth } from "@/router/utils";
 import { cloneDeep } from "@pureadmin/utils";
-
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
 const emit = defineEmits(["handleConfirm"]);
 const props = withDefaults(defineProps<FormProps>(), {
   treeData: () => [],
@@ -102,11 +103,11 @@ const getMinHeight = () => {
       ref="ruleFormRef"
       :model="newFormInline"
       :rules="formRules"
-      label-width="100px"
+      label-width="160px"
       :disabled="!hasAuth('update:systemMenu')"
       class="search-form bg-bg_color w-[90%] pl-8 pt-[12px]"
     >
-      <el-form-item label="节点类型" prop="menu_type">
+      <el-form-item :label="t('menu.type')" prop="menu_type">
         <el-radio-group
           v-model="newFormInline.menu_type"
           @change="handleChangeMenuType"
@@ -124,7 +125,7 @@ const getMinHeight = () => {
           >
         </el-radio-group>
       </el-form-item>
-      <el-form-item label="上级节点" prop="parentId">
+      <el-form-item :label="t('menu.parentNode')" prop="parentId">
         <el-tree-select
           ref="treeSelectRef"
           v-model="newFormInline.parent"
@@ -162,65 +163,65 @@ const getMinHeight = () => {
         </el-tree-select>
       </el-form-item>
       <div v-if="newFormInline.menu_type !== 2">
-        <el-form-item label="菜单名称" prop="title">
+        <el-form-item :label="t('menu.title')" prop="title">
           <el-input
             v-model="newFormInline.title"
             clearable
-            placeholder="请输入菜单名称"
+            :placeholder="t('menu.verifyTitle')"
           />
         </el-form-item>
-        <el-form-item label="菜单图标" prop="icon">
+        <el-form-item :label="t('menu.icon')" prop="icon">
           <icon-select v-model="newFormInline.meta.icon" style="width: 100%" />
         </el-form-item>
 
-        <el-form-item label="组件名称" prop="name">
+        <el-form-item :label="t('menu.componentName')" prop="name">
           <template #label>
             <from-question
-              label="组件名称"
-              description="如：`user`，如外网地址需内链访问则以`http(s)://`开头"
+              :label="t('menu.componentName')"
+              :description="t('menu.exampleComponentName')"
             />
           </template>
           <el-input
             v-model="newFormInline.name"
             clearable
-            placeholder="组件名称"
+            :placeholder="t('menu.componentName')"
           />
         </el-form-item>
-        <el-form-item label="路由地址" prop="path">
+        <el-form-item :label="t('menu.routePath')" prop="path">
           <template #label>
             <from-question
-              label="路由地址"
-              description="访问的路由地址，如：`/user`, `/system/about`"
+              :label="t('menu.routePath')"
+              :description="t('menu.exampleRoutePath')"
             />
           </template>
           <el-input
             v-model="newFormInline.path"
             clearable
-            placeholder="请输入路由地址"
+            :placeholder="t('menu.verifyPath')"
           />
         </el-form-item>
       </div>
       <div v-if="newFormInline.menu_type === 1">
-        <el-form-item label="组件路径" prop="component">
+        <el-form-item :label="t('menu.componentPath')" prop="component">
           <template #label>
             <from-question
-              label="组件路径"
-              description="访问的组件路径，如：`system/user/index`，默认在`views`目录下"
+              :label="t('menu.componentPath')"
+              :description="t('menu.exampleComponentPath')"
             />
           </template>
           <el-input
             v-model="newFormInline.component"
             clearable
-            placeholder="请输入组件路径"
+            :placeholder="t('menu.verifyComponentPath')"
           />
         </el-form-item>
 
         <el-divider />
-        <el-form-item label="是否缓存" prop="keepAlive">
+        <el-form-item :label="t('menu.cache')" prop="keepAlive">
           <template #label>
             <from-question
-              label="是否缓存"
-              description="选择是则会被`keep-alive`缓存，需要匹配组件的`name`和地址保持一致"
+              :label="t('menu.cache')"
+              :description="t('menu.exampleCache')"
             />
           </template>
           <el-radio-group v-model="newFormInline.meta.is_keepalive">
@@ -232,7 +233,7 @@ const getMinHeight = () => {
             >
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="显示父级菜单" prop="showParent">
+        <el-form-item :label="t('menu.showParentMenu')" prop="showParent">
           <el-radio-group v-model="newFormInline.meta.is_show_parent">
             <el-radio-button
               v-for="(item, index) in ifOptions"
@@ -245,11 +246,11 @@ const getMinHeight = () => {
       </div>
       <div v-if="newFormInline.menu_type !== 2">
         <el-divider />
-        <el-form-item label="菜单可见" prop="showLink">
+        <el-form-item :label="t('menu.showLink')" prop="showLink">
           <template #label>
             <from-question
-              label="菜单可见"
-              description="选择隐藏则路由将不会出现在侧边栏，但仍然可以访问"
+              :label="t('menu.showLink')"
+              :description="t('menu.exampleShowLink')"
             />
           </template>
           <el-radio-group v-model="newFormInline.meta.is_show_menu">
@@ -262,11 +263,11 @@ const getMinHeight = () => {
           </el-radio-group>
         </el-form-item>
 
-        <el-form-item label="菜单状态" prop="is_active">
+        <el-form-item :label="t('labels.status')" prop="is_active">
           <template #label>
             <from-question
-              label="菜单状态"
-              description="选择停用则路由将不会出现在侧边栏，也不能被访问"
+              :label="t('labels.status')"
+              :description="t('menu.exampleMenuStatus')"
             />
           </template>
           <el-radio-group v-model="newFormInline.is_active">
@@ -280,24 +281,24 @@ const getMinHeight = () => {
         </el-form-item>
 
         <el-divider />
-        <el-form-item label="内嵌外链地址" prop="isFrame">
+        <el-form-item :label="t('menu.externalLink')" prop="isFrame">
           <template #label>
             <from-question
-              label="内嵌外链"
-              description="选择是外链则路由地址需要以`http(s)://`开头"
+              :label="t('menu.externalLink')"
+              :description="t('menu.exampleExternalLink')"
             />
           </template>
           <el-input
             v-model="newFormInline.meta.frame_url"
             clearable
-            placeholder="默认为空，除非有外链"
+            :placeholder="t('menu.verifyExampleExternalLink')"
           />
         </el-form-item>
-        <el-form-item label="内嵌动画" prop="frameLoading">
+        <el-form-item :label="t('menu.animation')" prop="frameLoading">
           <template #label>
             <from-question
-              label="内嵌动画"
-              description="内嵌的iframe页面是否开启首次加载动画"
+              :label="t('menu.animation')"
+              :description="t('menu.exampleAnimation')"
             />
           </template>
           <el-radio-group v-model="newFormInline.meta.frame_loading">
@@ -311,27 +312,27 @@ const getMinHeight = () => {
         </el-form-item>
       </div>
       <div v-if="newFormInline.menu_type === 2">
-        <el-form-item label="权限名称" prop="title">
+        <el-form-item :label="t('menu.permissionName')" prop="title">
           <el-input
             v-model="newFormInline.title"
             clearable
-            placeholder="请输入权限名称"
+            :placeholder="t('menu.verifyPermissionName')"
           />
         </el-form-item>
-        <el-form-item label="权限标识" prop="name">
+        <el-form-item :label="t('menu.permissionCode')" prop="name">
           <template #label>
             <from-question
-              label="权限标识"
-              description="控制器中定义的权限字符，如：@PreAuthorize(`@permission.hashPermission('menu:query')`)"
+              :label="t('menu.permissionCode')"
+              :description="t('menu.examplePermissionCode')"
             />
           </template>
           <el-input
             v-model="newFormInline.name"
             clearable
-            placeholder="请输入权限标识"
+            :placeholder="t('menu.verifyPermissionCode')"
           />
         </el-form-item>
-        <el-form-item label="权限路由" prop="path">
+        <el-form-item :label="t('menu.permissionPath')" prop="path">
           <el-select
             style="width: 100%"
             v-model="newFormInline.path"
@@ -347,7 +348,7 @@ const getMinHeight = () => {
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="请求方式" prop="component">
+        <el-form-item :label="t('menu.requestMethod')" prop="component">
           <el-select
             v-model="newFormInline.component"
             class="filter-item"
@@ -363,11 +364,11 @@ const getMinHeight = () => {
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="权限状态" prop="is_active">
+        <el-form-item :label="t('labels.status')" prop="is_active">
           <template #label>
             <from-question
-              label="权限状态"
-              description="选择停用则权限将失效"
+              :label="t('labels.status')"
+              :description="t('menu.exampleRequestStatus')"
             />
           </template>
           <el-radio-group v-model="newFormInline.is_active">
@@ -389,7 +390,7 @@ const getMinHeight = () => {
         class="flex float-right"
       >
         <el-popconfirm
-          :title="`是否更新  ${transformI18n(newFormInline.title)} 节点?`"
+          :title="t('buttons.hsconfirmdupdate')"
           @confirm="emit('handleConfirm', ruleFormRef, newFormInline)"
         >
           <template #reference>
@@ -397,7 +398,7 @@ const getMinHeight = () => {
               :disabled="newFormInline.is_add || !newFormInline.pk"
               plain
               type="danger"
-              >更新节点</el-button
+              >{{ t("buttons.hsupdate") }}</el-button
             >
           </template>
         </el-popconfirm>

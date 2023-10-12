@@ -1,15 +1,33 @@
+import { $t, transformI18n } from "@/plugins/i18n";
+
 /** 自定义表单规则校验 */
 export const dirFormRules = {
-  menu_type: [{ required: true, message: "请选择菜单类型", trigger: "change" }],
-  title: [{ required: true, message: "请输入菜单名称", trigger: "blur" }],
+  menu_type: [
+    {
+      required: true,
+      message: transformI18n($t("menu.verifyType")),
+      trigger: "change"
+    }
+  ],
+  title: [
+    {
+      required: true,
+      message: transformI18n($t("menu.verifyTitle")),
+      trigger: "blur"
+    }
+  ],
   path: [
-    { required: true, message: "请输入路由地址", trigger: "blur" },
+    {
+      required: true,
+      message: transformI18n($t("menu.verifyPath")),
+      trigger: "blur"
+    },
     {
       validator: (rule, value, callback) => {
         if (value && value.startsWith("/")) {
           callback();
         } else {
-          callback(new Error("路由必须`/`开头"));
+          callback(new Error(transformI18n($t("menu.pathError"))));
         }
       },
       trigger: "blur"
@@ -17,16 +35,32 @@ export const dirFormRules = {
   ]
 };
 export const menuFormRules = {
-  menu_type: [{ required: true, message: "请选择菜单类型", trigger: "change" }],
-  title: [{ required: true, message: "请输入菜单名称", trigger: "blur" }],
+  menu_type: [
+    {
+      required: true,
+      message: transformI18n($t("menu.verifyType")),
+      trigger: "change"
+    }
+  ],
+  title: [
+    {
+      required: true,
+      message: transformI18n($t("menu.verifyTitle")),
+      trigger: "blur"
+    }
+  ],
   path: [
-    { required: true, message: "请输入路由地址", trigger: "blur" },
+    {
+      required: true,
+      message: transformI18n($t("menu.verifyPath")),
+      trigger: "blur"
+    },
     {
       validator: (rule, value, callback) => {
         if (value && value.startsWith("/")) {
           callback();
         } else {
-          callback(new Error("路由必须`/`开头"));
+          callback(new Error(transformI18n($t("menu.pathError"))));
         }
       },
       trigger: "blur"
@@ -34,9 +68,39 @@ export const menuFormRules = {
   ]
 };
 export const permissionFormRules = {
-  menu_type: [{ required: true, message: "请选择菜单类型", trigger: "change" }],
-  title: [{ required: true, message: "请输入权限名称", trigger: "blur" }],
-  name: [{ required: true, message: "请输入权限标识", trigger: "blur" }],
-  path: [{ required: true, message: "请输入路由地址", trigger: "blur" }],
-  component: [{ required: true, message: "请输入请求方式", trigger: "blur" }]
+  menu_type: [
+    {
+      required: true,
+      message: transformI18n($t("menu.verifyType")),
+      trigger: "change"
+    }
+  ],
+  title: [
+    {
+      required: true,
+      message: transformI18n($t("menu.verifyPermissionName")),
+      trigger: "blur"
+    }
+  ],
+  name: [
+    {
+      required: true,
+      message: transformI18n($t("menu.verifyPermissionCode")),
+      trigger: "blur"
+    }
+  ],
+  path: [
+    {
+      required: true,
+      message: transformI18n($t("menu.verifyPath")),
+      trigger: "blur"
+    }
+  ],
+  component: [
+    {
+      required: true,
+      message: transformI18n($t("menu.verifyRequestMethod")),
+      trigger: "blur"
+    }
+  ]
 };

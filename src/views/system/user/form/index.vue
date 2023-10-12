@@ -106,7 +106,7 @@ defineExpose({ getRef });
       </re-col>
 
       <re-col :value="12" :xs="24" :sm="24">
-        <el-form-item :label="t('user.status')" prop="is_active">
+        <el-form-item :label="t('labels.status')" prop="is_active">
           <el-switch
             v-model="newFormInline.is_active"
             inline-prompt
@@ -120,10 +120,10 @@ defineExpose({ getRef });
       </re-col>
 
       <re-col>
-        <el-form-item :label="t('user.remark')">
+        <el-form-item :label="t('labels.remark')">
           <el-input
             v-model="newFormInline.remark"
-            :placeholder="t('user.verifyRemark')"
+            :placeholder="t('labels.verifyRemark')"
             type="textarea"
             rows="3"
           />
