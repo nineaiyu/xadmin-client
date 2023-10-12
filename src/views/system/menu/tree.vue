@@ -222,7 +222,11 @@ watch(searchValue, val => {
                     :icon="useRenderIcon(isExpand ? ExpandIcon : UnExpandIcon)"
                     @click="toggleRowExpansionAll(!isExpand)"
                   >
-                    {{ isExpand ? t("menu.foldAll") : t("menu.expandAll") }}
+                    {{
+                      isExpand
+                        ? t("buttons.hscollapseAll")
+                        : t("buttons.hsexpendAll")
+                    }}
                   </el-button>
                 </el-dropdown-item>
                 <el-dropdown-item>

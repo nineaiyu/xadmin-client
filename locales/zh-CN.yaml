@@ -14,6 +14,10 @@ labels:
   sort: 排序
   active: 激活
   inactive: 未激活
+  read: 已读
+  unread: 未读
+  unPublish: 未发布
+  publish: 已发布
   operations: 操作
   enable: 启用
   disable: 禁用
@@ -63,6 +67,7 @@ buttons:
   hscancel: 取消
   hssure: 确定
   hsedit: 编辑
+  hsdetail: 查看
   hsbatchdelete: 批量删除
   hsbatchdeleteconfirm: 确定批量删除 { count } 条数据吗？
   hsoperateconfirm: 确定 { action } { message } ？
@@ -77,6 +82,7 @@ menus:
   hsUser: 用户管理
   hsRole: 角色管理
   hsMenu: 菜单管理
+  hsOperationLog: 操作日志
   permission: 权限管理
   hsabnormal: 异常页面
   hsfourZeroFour: "404"
@@ -162,8 +168,44 @@ menu:
   permissionCode: 权限标识
   permissionPath: 权限路由
   requestMethod: 请求方式
-  expandAll: 展开全部
-  foldAll: 折叠全部
+
+operation:
+  module: 模块
+  userId: 用户ID
+  address: Ip地址
+  system: 操作系统
+  browser: 浏览器
+  statusCode: 状态码
+  parameters: 请求参数
+  response: 响应内容
+  requestPath: 请求路径
+  verifyUserId: 请输入用户ID
+  verifyAddress: 请输入Ip地址
+  verifySystem: 请输入操作系统
+  verifyBrowser: 请输入浏览器
+  verifyRequestPath: 请输入请求路径
+
+notice:
+  notice: 通知公告
+  userId: 用户ID
+  userInfo: 用户信息
+  readDate: 已读时间
+  title: 标题
+  type: 类型
+  level: 通知级别
+  publish: 是否发布
+  content:  内容
+  haveRead: 是否已读
+  showSystemNotice: 查看系统公告
+  verifyUserId: 请输入用户ID
+  verifyTitle: 请输入标题
+  verifyContent: 请输入内容
+  readManage: 用户已读消息公告管理
+  messageManage: 消息公告管理
+  receiveRead: 接收人数/已读人数
+  allRead: 全部已读
+  verifyUserIds: 用户ID必须全为数字
+  verifyInputUserIds: 请输入用户ID,多个用户需要通过回车进行分割
 
 status:
   hsLoad: 加载中...

@@ -10,6 +10,7 @@ import { message } from "@/utils/message";
 import { UploadFileResult } from "@/api/types";
 import { getKeyList } from "@pureadmin/utils";
 import { getUserListApi } from "@/api/system/user";
+import { useI18n } from "vue-i18n";
 
 const props = withDefaults(defineProps<FormProps>(), {
   formInline: () => ({
@@ -26,6 +27,8 @@ const props = withDefaults(defineProps<FormProps>(), {
   })
 });
 const ruleFormRef = ref();
+const { t } = useI18n();
+
 const newFormInline = ref(props.formInline);
 newFormInline.value.noticeChoices[0].disabled = true;
 const editorRef = shallowRef();
@@ -57,7 +60,7 @@ const toolbarConfig: any = {
   }
 };
 const editorConfig = {
-  placeholder: "请输入内容...",
+  placeholder: t("notice.verifyContent"),
   MENU_CONF: {},
   hoverbarKeys: {
     attachment: {
@@ -80,7 +83,7 @@ editorConfig.MENU_CONF["uploadImage"] = {
           res.data[0]?.filepath
         );
       } else {
-        message(`上传失败，${res.detail}`, { type: "error" });
+        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
       loading.value = false;
     });
@@ -97,7 +100,7 @@ editorConfig.MENU_CONF["uploadVideo"] = {
       if (res.code === 1000) {
         insertFn(res.data[0]?.filepath, "");
       } else {
-        message(`上传失败，${res.detail}`, { type: "error" });
+        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
       loading.value = false;
     });
@@ -114,7 +117,7 @@ editorConfig.MENU_CONF["uploadAttachment"] = {
       if (res.code === 1000) {
         insertFn(res.data[0]?.filename, res.data[0]?.filepath);
       } else {
-        message(`上传失败，${res.detail}`, { type: "error" });
+        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
       loading.value = false;
     });
@@ -138,7 +141,7 @@ const loading = ref(false);
 
 const remoteMethod = (query: string) => {
   if (query && !Number(query)) {
-    message("ID只能为数字", { type: "warning" });
+    message(t("notice.verifyUserIds"), { type: "warning" });
     return;
   }
   if (query) {
@@ -172,7 +175,7 @@ const remoteMethod = (query: string) => {
       <template #header>
         <el-row :gutter="30">
           <re-col :value="8" :xs="24" :sm="24">
-            <el-form-item label="通知类型" prop="level">
+            <el-form-item :label="t('notice.type')" prop="level">
               <el-select
                 v-model="newFormInline.notice_type"
                 class="filter-item"
@@ -191,7 +194,7 @@ const remoteMethod = (query: string) => {
             </el-form-item>
           </re-col>
           <re-col :value="8" :xs="24" :sm="24">
-            <el-form-item label="通知级别" prop="level">
+            <el-form-item :label="t('notice.level')" prop="level">
               <el-select
                 v-model="newFormInline.level"
                 class="filter-item"
@@ -209,21 +212,21 @@ const remoteMethod = (query: string) => {
             </el-form-item>
           </re-col>
           <re-col :value="8" :xs="24" :sm="24">
-            <el-form-item label="是否发布" prop="publish">
+            <el-form-item :label="t('notice.publish')" prop="publish">
               <el-select
                 v-model="newFormInline.publish"
                 class="filter-item"
                 style="width: 180px"
                 clearable
               >
-                <el-option label="未发布" :value="false" />
-                <el-option label="已发布" :value="true" />
+                <el-option :label="t('labels.publish')" :value="false" />
+                <el-option :label="t('labels.unPublish')" :value="true" />
               </el-select>
             </el-form-item>
           </re-col>
           <re-col>
             <el-form-item
-              label="用户ID"
+              :label="t('notice.userId')"
               prop="owner"
               v-if="newFormInline.notice_type === 1"
             >
@@ -234,7 +237,7 @@ const remoteMethod = (query: string) => {
                 filterable
                 default-first-option
                 :reserve-keyword="false"
-                placeholder="请输入用户ID,多个用户需要通过回车进行分割"
+                :placeholder="t('notice.verifyInputUserIds')"
                 remote-show-suffix
                 :remote-method="remoteMethod"
                 :loading="loading"
@@ -261,11 +264,11 @@ const remoteMethod = (query: string) => {
           </re-col>
 
           <re-col>
-            <el-form-item label="消息标题" prop="title">
+            <el-form-item :label="t('notice.title')" prop="title">
               <el-input
                 v-model="newFormInline.title"
                 clearable
-                placeholder="请输入通知消息标题"
+                :placeholder="t('notice.verifyTitle')"
               />
             </el-form-item>
           </re-col>

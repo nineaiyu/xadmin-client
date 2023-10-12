@@ -14,6 +14,10 @@ labels:
   sort: Sort
   active: Active
   inactive: Inactive
+  read: Read
+  unread: Unread
+  unPublish: UnPublish
+  publish: publish
   operations: Operations
   enable: Enable
   disable: Disable
@@ -63,6 +67,7 @@ buttons:
   hscancel: Cancel
   hssure: Ok
   hsedit: Edit
+  hsdetail: Detail
   hsbatchdelete: BatchDelete
   hsbatchdeleteconfirm: Are you sure to delete { count } pieces of items in batch?
   hsoperateconfirm: Are you sure to { action } { message } ?
@@ -77,6 +82,7 @@ menus:
   hsUser: User Manage
   hsRole: Role Manage
   hsMenu: Menu Manage
+  hsOperationLog: Operation Log Manage
   permission: Permission Manage
   hsabnormal: Abnormal Page
   hsfourZeroFour: "404"
@@ -162,8 +168,44 @@ menu:
   permissionCode: PermissionCode
   permissionPath: PermissionPath
   requestMethod: RequestMethod
-  expandAll: ExpandAll
-  foldAll: FoldAll
+
+operation:
+  module: Module
+  userId: User Id
+  address: Ip Address
+  system: Operating System
+  browser: Browser
+  statusCode: Status Code
+  parameters: Parameters
+  response: Response
+  requestPath: Request Path
+  verifyUserId: Please enter user id
+  verifyAddress: Please enter ip address
+  verifySystem: Please enter operating system
+  verifyBrowser: Please enter browser
+  verifyRequestPath: Please enter request path
+
+notice:
+  notice: Notice
+  userId: User Id
+  userInfo: User Info
+  readDate: Read Date
+  title: Title
+  type: Type
+  level: Level
+  publish: Publish
+  content:  Content
+  haveRead: Have Read
+  showSystemNotice: Check the system announcement
+  verifyUserId: Please enter user id
+  verifyTitle: Please enter title
+  verifyContent: Please enter content
+  readManage: Read message announcement management
+  messageManage: Message announcement management
+  receiveRead: Receive/Read
+  allRead: AllRead
+  verifyUserIds: The userId can only be a number
+  verifyInputUserIds: Enter the user ID. Multiple users need to be separated by press enter
 
 status:
   hsLoad: Loading...

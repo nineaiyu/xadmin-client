@@ -3,6 +3,7 @@ import { onBeforeUnmount, ref, shallowRef } from "vue";
 import "@wangeditor/editor/dist/css/style.css";
 import { Editor } from "@wangeditor/editor-for-vue";
 import { FormProps } from "./utils/types";
+import { useI18n } from "vue-i18n";
 
 const props = withDefaults(defineProps<FormProps>(), {
   formInline: () => ({
@@ -13,6 +14,8 @@ const props = withDefaults(defineProps<FormProps>(), {
     level: ""
   })
 });
+const { t } = useI18n();
+
 const ruleFormRef = ref();
 const newFormInline = ref(props.formInline);
 const editorRef = shallowRef();
@@ -52,7 +55,9 @@ const loading = ref(false);
         <el-tag
           :type="newFormInline.publish ? 'success' : 'warning'"
           style="float: right"
-          >{{ newFormInline.publish ? "已经发布" : "未发布" }}
+          >{{
+            newFormInline.publish ? t("labels.publish") : t("labels.unPublish")
+          }}
         </el-tag>
       </template>
       <div class="wangeditor">

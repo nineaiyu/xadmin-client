@@ -17,6 +17,7 @@ defineOptions({
 const formRef = ref();
 const tableRef = ref();
 const {
+  t,
   form,
   loading,
   columns,
@@ -46,53 +47,52 @@ const {
       :model="form"
       class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px]"
     >
-      <el-form-item label="用户ID：" prop="message">
+      <el-form-item :label="t('notice.userId')" prop="message">
         <el-input
           v-model="form.owner_id"
-          placeholder="请输入用户ID"
+          :placeholder="t('notice.verifyUserId')"
           clearable
           class="!w-[120px]"
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
-      <el-form-item label="消息公告ID：" prop="message">
+      <el-form-item :label="t('labels.id')" prop="message">
         <el-input
           v-model="form.notice_id"
-          placeholder="请输入消息公告ID"
           clearable
           class="!w-[120px]"
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
-      <el-form-item label="标题：" prop="title">
+      <el-form-item :label="t('notice.title')" prop="title">
         <el-input
           v-model="form.title"
-          placeholder="请输入公告标题"
+          :placeholder="t('notice.verifyTitle')"
           clearable
           class="!w-[200px]"
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
-      <el-form-item label="公告内容：" prop="message">
+      <el-form-item :label="t('notice.content')" prop="message">
         <el-input
           v-model="form.message"
-          placeholder="请输入公告内容"
+          :placeholder="t('notice.verifyContent')"
           clearable
           class="!w-[180px]"
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
 
-      <el-form-item label="用户名：" prop="message">
+      <el-form-item :label="t('user.username')" prop="message">
         <el-input
           v-model="form.username"
-          placeholder="请输入用户名"
+          :placeholder="t('user.verifyUsername')"
           clearable
           class="!w-[180px]"
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
-      <el-form-item label="通知级别" prop="level">
+      <el-form-item :label="t('notice.level')" prop="level">
         <el-select
           v-model="form.level"
           class="filter-item"
@@ -109,7 +109,7 @@ const {
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="通知类型" prop="level">
+      <el-form-item :label="t('notice.type')" prop="level">
         <el-select
           v-model="form.notice_type"
           class="filter-item"
@@ -126,19 +126,18 @@ const {
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="消息状态：" prop="unread">
+      <el-form-item :label="t('notice.haveRead')" prop="unread">
         <el-select
           v-model="form.unread"
-          placeholder="请选择"
           clearable
           class="!w-[160px]"
           @change="onSearch(true)"
         >
-          <el-option label="已读" :value="false" />
-          <el-option label="未读" :value="true" />
+          <el-option :label="t('labels.read')" :value="false" />
+          <el-option :label="t('labels.unread')" :value="true" />
         </el-select>
       </el-form-item>
-      <el-form-item label="排序：">
+      <el-form-item :label="t('labels.sort')">
         <el-select
           v-model="form.ordering"
           style="width: 180px"
@@ -160,38 +159,40 @@ const {
           :loading="loading"
           @click="onSearch(true)"
         >
-          搜索
+          {{ t("buttons.hssearch") }}
         </el-button>
         <el-button :icon="useRenderIcon(Refresh)" @click="resetForm(formRef)">
-          重置
+          {{ t("buttons.hsreload") }}
         </el-button>
       </el-form-item>
     </el-form>
 
     <PureTableBar
-      title="用户已读消息公告管理"
+      :title="t('notice.readManage')"
       :columns="columns"
       @refresh="onSearch(true)"
     >
       <template #buttons>
-        <div v-if="manySelectCount > 0" class="w-[300px]">
+        <div v-if="manySelectCount > 0" class="w-[360px]">
           <span
             style="font-size: var(--el-font-size-base)"
             class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
           >
-            已选 {{ manySelectCount }} 项
+            {{ t("buttons.hsselected", { count: manySelectCount }) }}
           </span>
           <el-button type="primary" text @click="onSelectionCancel">
-            取消选择
+            {{ t("buttons.hscancel") }}
           </el-button>
           <el-popconfirm
-            :title="`是否确认批量删除${manySelectCount}条数据?`"
+            :title="
+              t('buttons.hsbatchdeleteconfirm', { count: manySelectCount })
+            "
             @confirm="handleManyDelete"
             v-if="hasAuth('manyDelete:systemNoticeRead')"
           >
             <template #reference>
               <el-button type="danger" plain :icon="useRenderIcon(Delete)">
-                批量删除
+                {{ t("buttons.hsbatchdelete") }}
               </el-button>
             </template>
           </el-popconfirm>
@@ -230,10 +231,10 @@ const {
               @click="showDialog(row.notice_info)"
               :icon="useRenderIcon(Eye)"
             >
-              查看
+              {{ t("buttons.hsdetail") }}
             </el-button>
             <el-popconfirm
-              :title="`是否确认删除ID为 ${row.pk} 的这条数据?`"
+              :title="t('buttons.hsconfirmdelete')"
               @confirm="handleDelete(row)"
               v-if="hasAuth('delete:systemNoticeRead')"
             >
@@ -245,7 +246,7 @@ const {
                   :size="size"
                   :icon="useRenderIcon(Delete)"
                 >
-                  删除
+                  {{ t("buttons.hsdelete") }}
                 </el-button>
               </template>
             </el-popconfirm>

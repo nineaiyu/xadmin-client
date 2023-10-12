@@ -15,11 +15,19 @@ import { addDialog } from "@/components/ReDialog/index";
 import { useRoute, useRouter } from "vue-router";
 import { hasAuth } from "@/router/utils";
 import { ElMessageBox } from "element-plus";
-const sortOptions = [
-  { label: "添加时间 Descending", key: "-created_time" },
-  { label: "添加时间 Ascending", key: "created_time" }
-];
+import { useI18n } from "vue-i18n";
 export function useNoticeRead(tableRef: Ref) {
+  const { t } = useI18n();
+  const sortOptions = [
+    {
+      label: `${t("sorts.createdDate")} ${t("labels.descending")}`,
+      key: "-created_time"
+    },
+    {
+      label: `${t("sorts.createdDate")} ${t("labels.ascending")}`,
+      key: "created_time"
+    }
+  ];
   const form = reactive({
     title: "",
     message: "",
@@ -56,13 +64,13 @@ export function useNoticeRead(tableRef: Ref) {
       align: "left"
     },
     {
-      label: "消息公告ID",
+      label: t("labels.id"),
       prop: "pk",
       minWidth: 100,
       cellRenderer: ({ row }) => <el-text>{row.notice_info.pk}</el-text>
     },
     {
-      label: "消息公告标题",
+      label: t("notice.title"),
       prop: "title",
       minWidth: 120,
       cellRenderer: ({ row }) => (
@@ -75,7 +83,7 @@ export function useNoticeRead(tableRef: Ref) {
       )
     },
     {
-      label: "消息公告类型",
+      label: t("notice.type"),
       prop: "owner",
       minWidth: 100,
       cellRenderer: ({ row }) => (
@@ -83,13 +91,13 @@ export function useNoticeRead(tableRef: Ref) {
       )
     },
     {
-      label: "用户ID",
+      label: t("notice.userId"),
       prop: "owner",
       minWidth: 100,
       cellRenderer: ({ row }) => <el-text>{row.owner_info.pk}</el-text>
     },
     {
-      label: "用户信息",
+      label: t("notice.userInfo"),
       prop: "owner",
       minWidth: 100,
       cellRenderer: ({ row }) => (
@@ -99,7 +107,7 @@ export function useNoticeRead(tableRef: Ref) {
       )
     },
     {
-      label: "用户已读时间",
+      label: t("notice.readDate"),
       minWidth: 180,
       prop: "createTime",
       cellRenderer: ({ row }) => (
@@ -111,7 +119,7 @@ export function useNoticeRead(tableRef: Ref) {
       )
     },
     {
-      label: "是否已读",
+      label: t("notice.haveRead"),
       prop: "unread",
       minWidth: 90,
       cellRenderer: scope => (
@@ -121,8 +129,8 @@ export function useNoticeRead(tableRef: Ref) {
           v-model={scope.row.unread}
           active-value={false}
           inactive-value={true}
-          active-text="已读"
-          inactive-text="未读"
+          active-text={t("labels.read")}
+          inactive-text={t("labels.unread")}
           disabled={!hasAuth("update:systemNoticeReadState")}
           inline-prompt
           onChange={() => onChange(scope as any)}
@@ -130,23 +138,22 @@ export function useNoticeRead(tableRef: Ref) {
       )
     },
     {
-      label: "操作",
+      label: t("labels.operations"),
       fixed: "right",
       width: 200,
       slot: "operation"
     }
   ];
   function onChange({ row, index }) {
+    const action = row.unread === false ? t("labels.read") : t("labels.unread");
     ElMessageBox.confirm(
-      `确认要<strong>${
-        row.unread === false ? "设置已读" : "设置未读"
-      }</strong><strong style="color:var(--el-color-primary)">${
-        row.notice_info.title
-      }</strong>用户消息吗?`,
-      "系统提示",
+      `${t("buttons.hsoperateconfirm", {
+        action: `<strong>${action}</strong>`,
+        message: `<strong style='color:var(--el-color-primary)'>${row.notice_info.title}</strong>`
+      })}`,
       {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
+        confirmButtonText: t("buttons.hssure"),
+        cancelButtonText: t("buttons.hscancel"),
         type: "warning",
         dangerouslyUseHTMLString: true,
         draggable: true
@@ -169,10 +176,10 @@ export function useNoticeRead(tableRef: Ref) {
                 loading: false
               }
             );
-            message("操作成功", { type: "success" });
+            message(t("results.success"), { type: "success" });
             onSearch();
           } else {
-            message(`操作失败，${res.detail}`, { type: "error" });
+            message(`${t("results.failed")}，${res.detail}`, { type: "error" });
           }
         });
       })
@@ -198,7 +205,7 @@ export function useNoticeRead(tableRef: Ref) {
   }
   function showDialog(row?: FormItemProps) {
     addDialog({
-      title: `查看系统公告`,
+      title: t("notice.showSystemNotice"),
       props: {
         formInline: {
           pk: row?.pk ?? "",
@@ -219,10 +226,10 @@ export function useNoticeRead(tableRef: Ref) {
   async function handleDelete(row) {
     deleteNoticeReadApi(row.pk).then(async res => {
       if (res.code === 1000) {
-        message("操作成功", { type: "success" });
+        message(t("results.success"), { type: "success" });
         onSearch();
       } else {
-        message(`操作失败，${res.detail}`, { type: "error" });
+        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
     });
   }
@@ -248,7 +255,7 @@ export function useNoticeRead(tableRef: Ref) {
   }
   function handleManyDelete() {
     if (manySelectCount.value === 0) {
-      message("数据未选择", { type: "error" });
+      message(t("results.noSelectedData"), { type: "error" });
       return;
     }
     const manySelectData = tableRef.value.getTableRef().getSelectionRows();
@@ -256,12 +263,12 @@ export function useNoticeRead(tableRef: Ref) {
       pks: JSON.stringify(getKeyList(manySelectData, "pk"))
     }).then(async res => {
       if (res.code === 1000) {
-        message(`批量删除了${manySelectCount.value}条数据`, {
+        message(t("results.batchDelete", { count: manySelectCount.value }), {
           type: "success"
         });
         onSearch();
       } else {
-        message(`操作失败，${res.detail}`, { type: "error" });
+        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
     });
   }
@@ -279,7 +286,7 @@ export function useNoticeRead(tableRef: Ref) {
         noticeChoices.value = res.notice_type_choices;
         levelChoices.value = res.level_choices;
       } else {
-        message(`操作失败，${res.detail}`, { type: "error" });
+        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
       setTimeout(() => {
         loading.value = false;
@@ -307,6 +314,7 @@ export function useNoticeRead(tableRef: Ref) {
   });
 
   return {
+    t,
     form,
     loading,
     columns,

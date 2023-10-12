@@ -18,13 +18,20 @@ import { cloneDeep, getKeyList, isEmpty, isString } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog/index";
 import { hasAuth } from "@/router/utils";
 import { ElMessageBox } from "element-plus";
-
-const sortOptions = [
-  { label: "添加时间 Descending", key: "-created_time" },
-  { label: "添加时间 Ascending", key: "created_time" }
-];
+import { useI18n } from "vue-i18n";
 
 export function useNotice(tableRef: Ref) {
+  const { t } = useI18n();
+  const sortOptions = [
+    {
+      label: `${t("sorts.createdDate")} ${t("labels.descending")}`,
+      key: "-created_time"
+    },
+    {
+      label: `${t("sorts.createdDate")} ${t("labels.ascending")}`,
+      key: "created_time"
+    }
+  ];
   const form = reactive({
     pk: "",
     title: "",
@@ -60,23 +67,23 @@ export function useNotice(tableRef: Ref) {
       align: "left"
     },
     {
-      label: "消息ID",
+      label: t("labels.id"),
       prop: "pk",
       minWidth: 100
     },
     {
-      label: "消息标题",
+      label: t("notice.title"),
       prop: "title",
       minWidth: 120,
       cellRenderer: ({ row }) => <el-text type={row.level}>{row.title}</el-text>
     },
     {
-      label: "消息类型",
+      label: t("notice.type"),
       prop: "notice_type_display",
       minWidth: 120
     },
     {
-      label: "接收人数/已读人数",
+      label: t("notice.receiveRead"),
       prop: "user_count",
       minWidth: 120,
       cellRenderer: ({ row }) => (
@@ -84,13 +91,13 @@ export function useNotice(tableRef: Ref) {
           type={row.level == "" ? "default" : row.level}
           onClick={() => onGoNoticeReadDetail(row as any)}
         >
-          {row.notice_type === 2 ? "全部" : row.user_count}/
+          {row.notice_type === 2 ? t("notice.allRead") : row.user_count}/
           {row.read_user_count}
         </el-link>
       )
     },
     {
-      label: "是否发布",
+      label: t("notice.publish"),
       prop: "publish",
       minWidth: 90,
       cellRenderer: scope => (
@@ -100,8 +107,8 @@ export function useNotice(tableRef: Ref) {
           v-model={scope.row.publish}
           active-value={true}
           inactive-value={false}
-          active-text="已发布"
-          inactive-text="未发布"
+          active-text={t("labels.publish")}
+          inactive-text={t("labels.unPublish")}
           disabled={!hasAuth("update:systemNoticePublish")}
           inline-prompt
           onChange={() => onChange(scope as any)}
@@ -109,14 +116,14 @@ export function useNotice(tableRef: Ref) {
       )
     },
     {
-      label: "添加时间",
+      label: t("sorts.createdDate"),
       minWidth: 180,
       prop: "createTime",
       formatter: ({ created_time }) =>
         dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
     },
     {
-      label: "操作",
+      label: t("labels.operations"),
       fixed: "right",
       width: 200,
       slot: "operation"
@@ -132,9 +139,13 @@ export function useNotice(tableRef: Ref) {
     }
   }
 
-  function openDialog(title = "新增", row?: FormItemProps) {
+  function openDialog(is_add = true, row?: FormItemProps) {
+    let title = t("buttons.hsedit");
+    if (is_add) {
+      title = t("buttons.hsadd");
+    }
     addDialog({
-      title: `${title}用户消息通知`,
+      title: `${title} ${t("notice.notice")}`,
       props: {
         formInline: {
           pk: row?.pk ?? 0,
@@ -163,21 +174,21 @@ export function useNotice(tableRef: Ref) {
         curData.files = formRef.value.getUploadFiles();
 
         async function chores(detail) {
-          message(detail, {
-            type: "success"
-          });
+          message(detail, { type: "success" });
           done(); // 关闭弹框
           onSearch(); // 刷新表格数据
         }
 
         FormRef.validate(valid => {
           if (valid) {
-            if (title === "新增") {
+            if (is_add) {
               createNoticeApi(curData).then(async res => {
                 if (res.code === 1000) {
                   await chores(res.detail);
                 } else {
-                  message(`操作失败，${res.detail}`, { type: "error" });
+                  message(`${t("results.failed")}，${res.detail}`, {
+                    type: "error"
+                  });
                 }
               });
             } else {
@@ -185,7 +196,9 @@ export function useNotice(tableRef: Ref) {
                 if (res.code === 1000) {
                   await chores(res.detail);
                 } else {
-                  message(`操作失败，${res.detail}`, { type: "error" });
+                  message(`${t("results.failed")}，${res.detail}`, {
+                    type: "error"
+                  });
                 }
               });
             }
@@ -197,7 +210,7 @@ export function useNotice(tableRef: Ref) {
 
   function showDialog(row?: FormItemProps) {
     addDialog({
-      title: `查看用户消息`,
+      title: t("notice.showSystemNotice"),
       props: {
         formInline: {
           pk: row?.pk ?? "",
@@ -218,16 +231,16 @@ export function useNotice(tableRef: Ref) {
   }
 
   function onChange({ row, index }) {
+    const action =
+      row.publish === false ? t("labels.unPublish") : t("labels.publish");
     ElMessageBox.confirm(
-      `确认要<strong>${
-        row.publish === false ? "取消发布" : "发布"
-      }</strong><strong style="color:var(--el-color-primary)">${
-        row.title
-      }</strong>用户消息吗?`,
-      "系统提示",
+      `${t("buttons.hsoperateconfirm", {
+        action: `<strong>${action}</strong>`,
+        message: `<strong style='color:var(--el-color-primary)'>${row.title}</strong>`
+      })}`,
       {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
+        confirmButtonText: t("buttons.hssure"),
+        cancelButtonText: t("buttons.hscancel"),
         type: "warning",
         dangerouslyUseHTMLString: true,
         draggable: true
@@ -250,9 +263,9 @@ export function useNotice(tableRef: Ref) {
                 loading: false
               }
             );
-            message("操作成功", { type: "success" });
+            message(t("results.success"), { type: "success" });
           } else {
-            message(`操作失败，${res.detail}`, { type: "error" });
+            message(`${t("results.failed")}，${res.detail}`, { type: "error" });
           }
         });
       })
@@ -264,10 +277,10 @@ export function useNotice(tableRef: Ref) {
   async function handleDelete(row) {
     deleteNoticeApi(row.pk).then(async res => {
       if (res.code === 1000) {
-        message("操作成功", { type: "success" });
+        message(t("results.success"), { type: "success" });
         onSearch();
       } else {
-        message(`操作失败，${res.detail}`, { type: "error" });
+        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
     });
   }
@@ -295,7 +308,7 @@ export function useNotice(tableRef: Ref) {
 
   function handleManyDelete() {
     if (manySelectCount.value === 0) {
-      message("数据未选择", { type: "error" });
+      message(t("results.noSelectedData"), { type: "error" });
       return;
     }
     const manySelectData = tableRef.value.getTableRef().getSelectionRows();
@@ -303,12 +316,12 @@ export function useNotice(tableRef: Ref) {
       pks: JSON.stringify(getKeyList(manySelectData, "pk"))
     }).then(async res => {
       if (res.code === 1000) {
-        message(`批量删除了${manySelectCount.value}条数据`, {
+        message(t("results.batchDelete", { count: manySelectCount.value }), {
           type: "success"
         });
         onSearch();
       } else {
-        message(`操作失败，${res.detail}`, { type: "error" });
+        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
     });
   }
@@ -326,7 +339,7 @@ export function useNotice(tableRef: Ref) {
         levelChoices.value = res.level_choices;
         noticeChoices.value = res.notice_type_choices;
       } else {
-        message(`操作失败，${res.detail}`, { type: "error" });
+        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
       setTimeout(() => {
         loading.value = false;
@@ -336,7 +349,7 @@ export function useNotice(tableRef: Ref) {
             notice_type: 1
           };
           form.owners = "";
-          openDialog("新增", parameter);
+          openDialog(true, parameter);
         }
       }, 500);
     });
@@ -363,6 +376,7 @@ export function useNotice(tableRef: Ref) {
   });
 
   return {
+    t,
     form,
     loading,
     columns,

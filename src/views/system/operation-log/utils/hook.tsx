@@ -9,11 +9,19 @@ import {
 } from "@/api/system/operation";
 import { useRouter } from "vue-router";
 import { getKeyList } from "@pureadmin/utils";
-const sortOptions = [
-  { label: "添加时间 Descending", key: "-created_time" },
-  { label: "添加时间 Ascending", key: "created_time" }
-];
+import { useI18n } from "vue-i18n";
 export function useOperationLog(tableRef: Ref) {
+  const { t } = useI18n();
+  const sortOptions = [
+    {
+      label: `${t("sorts.createdDate")} ${t("labels.descending")}`,
+      key: "-created_time"
+    },
+    {
+      label: `${t("sorts.createdDate")} ${t("labels.ascending")}`,
+      key: "created_time"
+    }
+  ];
   const form = reactive({
     ipaddress: "",
     system: "",
@@ -42,17 +50,17 @@ export function useOperationLog(tableRef: Ref) {
       align: "left"
     },
     {
-      label: "日志ID",
+      label: t("labels.id"),
       prop: "pk",
       minWidth: 100
     },
     {
-      label: "模块名称",
+      label: t("operation.module"),
       prop: "module",
       minWidth: 120
     },
     {
-      label: "操作人",
+      label: t("user.user"),
       prop: "owner",
       minWidth: 100,
       cellRenderer: ({ row }) => (
@@ -62,12 +70,12 @@ export function useOperationLog(tableRef: Ref) {
       )
     },
     {
-      label: "IP地址",
+      label: t("operation.address"),
       prop: "ipaddress",
       minWidth: 150
     },
     {
-      label: "接口地址",
+      label: t("operation.requestPath"),
       prop: "path",
       minWidth: 150,
       cellRenderer: ({ row }) => (
@@ -77,39 +85,39 @@ export function useOperationLog(tableRef: Ref) {
       )
     },
     {
-      label: "请求参数",
+      label: t("operation.parameters"),
       prop: "body",
       minWidth: 150
     },
     {
-      label: "请求浏览器",
+      label: t("operation.browser"),
       prop: "browser",
       minWidth: 150
     },
     {
-      label: "请求操作系统",
+      label: t("operation.system"),
       prop: "system",
       minWidth: 150
     },
     {
-      label: "响应状态码",
+      label: t("operation.statusCode"),
       prop: "response_code",
       minWidth: 100
     },
     {
-      label: "响应数据",
+      label: t("operation.response"),
       prop: "response_result",
       minWidth: 150
     },
     {
-      label: "操作时间",
+      label: t("sorts.createdDate"),
       minWidth: 180,
       prop: "createTime",
       formatter: ({ created_time }) =>
         dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
     },
     {
-      label: "操作",
+      label: t("labels.operations"),
       fixed: "right",
       width: 100,
       slot: "operation"
@@ -127,10 +135,10 @@ export function useOperationLog(tableRef: Ref) {
   async function handleDelete(row) {
     deleteOperationLogApi(row.pk).then(async res => {
       if (res.code === 1000) {
-        message("操作成功", { type: "success" });
+        message(t("results.success"), { type: "success" });
         await onSearch();
       } else {
-        message(`操作失败，${res.detail}`, { type: "error" });
+        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
     });
   }
@@ -156,7 +164,7 @@ export function useOperationLog(tableRef: Ref) {
   }
   function handleManyDelete() {
     if (manySelectCount.value === 0) {
-      message("数据未选择", { type: "error" });
+      message(t("results.noSelectedData"), { type: "error" });
       return;
     }
     const manySelectData = tableRef.value.getTableRef().getSelectionRows();
@@ -164,12 +172,12 @@ export function useOperationLog(tableRef: Ref) {
       pks: JSON.stringify(getKeyList(manySelectData, "pk"))
     }).then(async res => {
       if (res.code === 1000) {
-        message(`批量删除了${manySelectCount.value}条数据`, {
+        message(t("results.batchDelete", { count: manySelectCount.value }), {
           type: "success"
         });
         await onSearch();
       } else {
-        message(`操作失败，${res.detail}`, { type: "error" });
+        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
     });
   }
@@ -200,6 +208,7 @@ export function useOperationLog(tableRef: Ref) {
   });
 
   return {
+    t,
     form,
     loading,
     columns,

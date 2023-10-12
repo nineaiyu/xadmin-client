@@ -111,7 +111,7 @@ const {
       @refresh="onSearch(true)"
     >
       <template #buttons>
-        <div v-if="manySelectCount > 0" class="w-[300px]">
+        <div v-if="manySelectCount > 0" class="w-[360px]">
           <span
             style="font-size: var(--el-font-size-base)"
             class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"

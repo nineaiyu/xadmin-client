@@ -3,9 +3,6 @@ import { ref } from "vue";
 import { useOperationLog } from "./utils/hook";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-
-// import Database from "@iconify-icons/ri/database-2-line";
-// import More from "@iconify-icons/ep/more-filled";
 import Delete from "@iconify-icons/ep/delete";
 import Search from "@iconify-icons/ep/search";
 import Refresh from "@iconify-icons/ep/refresh";
@@ -18,6 +15,7 @@ defineOptions({
 const formRef = ref();
 const tableRef = ref();
 const {
+  t,
   form,
   loading,
   columns,
@@ -44,52 +42,52 @@ const {
       :model="form"
       class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px]"
     >
-      <el-form-item label="用户ID：" prop="owner_id">
+      <el-form-item :label="t('operation.userId')" prop="owner_id">
         <el-input
           v-model="form.owner_id"
-          placeholder="请输入用户ID"
+          :placeholder="t('operation.verifyUserId')"
           clearable
           class="!w-[200px]"
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
-      <el-form-item label="IP地址：" prop="ipaddress">
+      <el-form-item :label="t('operation.address')" prop="ipaddress">
         <el-input
           v-model="form.ipaddress"
-          placeholder="请输入IP地址"
+          :placeholder="t('operation.verifyAddress')"
           clearable
           class="!w-[200px]"
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
-      <el-form-item label="操作系统：" prop="system">
+      <el-form-item :label="t('operation.system')" prop="system">
         <el-input
           v-model="form.system"
-          placeholder="请输入操作系统"
+          :placeholder="t('operation.verifySystem')"
           clearable
           class="!w-[180px]"
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
-      <el-form-item label="浏览器：" prop="browser">
+      <el-form-item :label="t('operation.browser')" prop="browser">
         <el-input
           v-model="form.browser"
-          placeholder="请输入浏览器"
+          :placeholder="t('operation.verifyBrowser')"
           clearable
           class="!w-[180px]"
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
-      <el-form-item label="接口地址：" prop="path">
+      <el-form-item :label="t('operation.requestPath')" prop="path">
         <el-input
           v-model="form.path"
-          placeholder="请输入接口地址"
+          :placeholder="t('operation.verifyRequestPath')"
           clearable
           class="!w-[180px]"
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
-      <el-form-item label="排序：">
+      <el-form-item :label="t('labels.sort')">
         <el-select
           v-model="form.ordering"
           style="width: 180px"
@@ -111,38 +109,40 @@ const {
           :loading="loading"
           @click="onSearch(true)"
         >
-          搜索
+          {{ t("buttons.hssearch") }}
         </el-button>
         <el-button :icon="useRenderIcon(Refresh)" @click="resetForm(formRef)">
-          重置
+          {{ t("buttons.hsreload") }}
         </el-button>
       </el-form-item>
     </el-form>
 
     <PureTableBar
-      title="访问日志管理"
+      :title="t('menus.hsOperationLog')"
       :columns="columns"
       @refresh="onSearch(true)"
     >
       <template #buttons>
-        <div v-if="manySelectCount > 0" class="w-[300px]">
+        <div v-if="manySelectCount > 0" class="w-[360px]">
           <span
             style="font-size: var(--el-font-size-base)"
             class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
           >
-            已选 {{ manySelectCount }} 项
+            {{ t("buttons.hsselected", { count: manySelectCount }) }}
           </span>
           <el-button type="primary" text @click="onSelectionCancel">
-            取消选择
+            {{ t("buttons.hscancel") }}
           </el-button>
           <el-popconfirm
-            :title="`是否确认批量删除${manySelectCount}条数据?`"
+            :title="
+              t('buttons.hsbatchdeleteconfirm', { count: manySelectCount })
+            "
             @confirm="handleManyDelete"
             v-if="hasAuth('manyDelete:systemOperationLog')"
           >
             <template #reference>
               <el-button type="danger" plain :icon="useRenderIcon(Delete)">
-                批量删除
+                {{ t("buttons.hsbatchdelete") }}
               </el-button>
             </template>
           </el-popconfirm>
@@ -173,7 +173,7 @@ const {
         >
           <template #operation="{ row }">
             <el-popconfirm
-              :title="`是否确认删除角色名称为${row.module}的这条数据`"
+              :title="t('buttons.hsconfirmdelete')"
               @confirm="handleDelete(row)"
               v-if="hasAuth('delete:systemOperationLog')"
             >
@@ -185,7 +185,7 @@ const {
                   :size="size"
                   :icon="useRenderIcon(Delete)"
                 >
-                  删除
+                  {{ t("buttons.hsdelete") }}
                 </el-button>
               </template>
             </el-popconfirm>
