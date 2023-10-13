@@ -1,3 +1,32 @@
+layout:
+  notice: 消息通知
+  announcement: 系统公告
+  settings: 项目配置
+  total: "共 { total } 项"
+  noData: 暂无结果
+  more: 更多
+  fold: 点击折叠
+  unfold: 点击展开
+  searchPlaceholder: 搜索菜单（中文模式下支持拼音搜索）
+  theme: 主题
+  navigationMode: 导航栏模式
+  leftMode: 左侧模式
+  topMode: 顶部模式
+  mixedMode: 混合模式
+  themeColor: 主题色
+  display: 界面显示
+  greyMode: 灰色模式
+  colorWeakMode: 色弱模式
+  hideTabs: 隐藏标签页
+  sidebarLogo: 侧边栏Logo
+  labelPersistence: 标签页持久化
+  labelStyle: 标签风格
+  card: 卡片
+  smart: 灵动
+  cleanOut: 清空缓存并返回登录页
+  noticeTime: YYYY年MM月DD日 HH:mm:ss
+  backTop: 回到顶部
+
 error:
   error403: 抱歉，你无权访问该页面
   error404: 抱歉，你访问的页面不存在
@@ -12,7 +41,7 @@ password:
   veryStrong: 很强
 
 labels:
-  id: Id
+  id: ID
   status: 状态
   verifyStatus: 请选择状态
   remark: 备注
@@ -72,6 +101,8 @@ buttons:
   hscontentFullScreen: 内容区全屏
   hscontentExitFullScreen: 内容区退出全屏
   hscancel: 取消
+  hsclose: 关闭
+  hsswitch: 切换
   hssure: 确定
   hsedit: 编辑
   hsdetail: 查看
@@ -136,7 +167,7 @@ user:
   editAvatar: 修改头像
   resetPassword: 重置密码
   assignRoles: 分配角色
-  verifyId: 请输入用户ID
+  verifyUserId: 请输入用户ID
   verifyUsername: 请输入用户名
   verifyPassword: 请输入密码
   verifyNickname: 请输入昵称
@@ -205,7 +236,6 @@ operation:
   parameters: 请求参数
   response: 响应内容
   requestPath: 请求路径
-  verifyUserId: 请输入用户ID
   verifyAddress: 请输入Ip地址
   verifySystem: 请输入操作系统
   verifyBrowser: 请输入浏览器
@@ -223,7 +253,6 @@ notice:
   content:  内容
   haveRead: 是否已读
   showSystemNotice: 查看系统公告
-  verifyUserId: 请输入用户ID
   verifyTitle: 请输入标题
   verifyContent: 请输入内容
   readManage: 用户已读消息公告管理

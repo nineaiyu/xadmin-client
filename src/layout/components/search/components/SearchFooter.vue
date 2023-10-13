@@ -9,29 +9,29 @@ const props = withDefaults(defineProps<{ total: number }>(), {
   total: 0
 });
 
-const { device } = useNav();
+const { device, t } = useNav();
 </script>
 
 <template>
   <div class="search-footer text-[#333] dark:text-white">
     <span class="search-footer-item">
       <enterOutlined class="icon" />
-      确认
+      {{ t("buttons.hssure") }}
     </span>
     <span class="search-footer-item">
       <IconifyIconOffline :icon="ArrowUpLine" class="icon" />
       <IconifyIconOffline :icon="ArrowDownLine" class="icon" />
-      切换
+      {{ t("buttons.hsswitch") }}
     </span>
     <span class="search-footer-item">
       <mdiKeyboardEsc class="icon" />
-      关闭
+      {{ t("buttons.hsclose") }}
     </span>
     <p
       v-if="device !== 'mobile' && props.total > 0"
       class="search-footer-total"
     >
-      共{{ props.total }}项
+      {{ t("layout.total", { total: props.total }) }}
     </p>
   </div>
 </template>

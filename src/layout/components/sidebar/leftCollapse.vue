@@ -2,6 +2,7 @@
 import { ref, computed } from "vue";
 import { useNav } from "@/layout/hooks/useNav";
 import MenuFold from "@iconify-icons/ri/menu-fold-fill";
+import { useI18n } from "vue-i18n";
 
 interface Props {
   isActive: boolean;
@@ -37,6 +38,7 @@ const emit = defineEmits<{
 const toggleClick = () => {
   emit("toggleClick");
 };
+const { t } = useI18n();
 </script>
 
 <template>
@@ -45,7 +47,7 @@ const toggleClick = () => {
       placement="right"
       :visible="visible"
       :effect="tooltipEffect"
-      :content="props.isActive ? '点击折叠' : '点击展开'"
+      :content="props.isActive ? t('layout.fold') : t('layout.unfold')"
     >
       <IconifyIconOffline
         :icon="MenuFold"

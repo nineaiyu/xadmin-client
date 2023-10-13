@@ -29,7 +29,7 @@ import Logout from "@iconify-icons/ri/logout-circle-r-line";
 
 const router = useRouter();
 const { isDark } = useDark();
-const { device, tooltipEffect } = useNav();
+const { device, tooltipEffect, t } = useNav();
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 
 const mixRef = ref();
@@ -224,7 +224,7 @@ onBeforeMount(() => {
 
 <template>
   <panel>
-    <el-divider>主题</el-divider>
+    <el-divider>{{ t("layout.theme") }}</el-divider>
     <el-switch
       v-model="dataTheme"
       inline-prompt
@@ -234,12 +234,12 @@ onBeforeMount(() => {
       @change="dataThemeChange"
     />
 
-    <el-divider>导航栏模式</el-divider>
+    <el-divider>{{ t("layout.navigationMode") }}</el-divider>
     <ul class="pure-theme">
       <el-tooltip
         :effect="tooltipEffect"
         class="item"
-        content="左侧模式"
+        :content="t('layout.leftMode')"
         placement="bottom"
         popper-class="pure-tooltip"
       >
@@ -257,7 +257,7 @@ onBeforeMount(() => {
         v-if="device !== 'mobile'"
         :effect="tooltipEffect"
         class="item"
-        content="顶部模式"
+        :content="t('layout.topMode')"
         placement="bottom"
         popper-class="pure-tooltip"
       >
@@ -275,7 +275,7 @@ onBeforeMount(() => {
         v-if="device !== 'mobile'"
         :effect="tooltipEffect"
         class="item"
-        content="混合模式"
+        :content="t('layout.mixedMode')"
         placement="bottom"
         popper-class="pure-tooltip"
       >
@@ -290,7 +290,7 @@ onBeforeMount(() => {
       </el-tooltip>
     </ul>
 
-    <el-divider>主题色</el-divider>
+    <el-divider>{{ t("layout.themeColor") }}</el-divider>
     <ul class="theme-color">
       <li
         v-for="(item, index) in themeColors"
@@ -309,71 +309,71 @@ onBeforeMount(() => {
       </li>
     </ul>
 
-    <el-divider>界面显示</el-divider>
+    <el-divider>{{ t("layout.display") }}</el-divider>
     <ul class="setting">
       <li>
-        <span class="dark:text-white">灰色模式</span>
+        <span class="dark:text-white">{{ t("layout.greyMode") }}</span>
         <el-switch
           v-model="settings.greyVal"
           inline-prompt
           inactive-color="#a6a6a6"
-          active-text="开"
-          inactive-text="关"
+          :active-text="t('labels.active')"
+          :inactive-text="t('labels.inactive')"
           @change="greyChange"
         />
       </li>
       <li>
-        <span class="dark:text-white">色弱模式</span>
+        <span class="dark:text-white">{{ t("layout.colorWeakMode") }}</span>
         <el-switch
           v-model="settings.weakVal"
           inline-prompt
           inactive-color="#a6a6a6"
-          active-text="开"
-          inactive-text="关"
+          :active-text="t('labels.active')"
+          :inactive-text="t('labels.inactive')"
           @change="weekChange"
         />
       </li>
       <li>
-        <span class="dark:text-white">隐藏标签页</span>
+        <span class="dark:text-white">{{ t("layout.hideTabs") }}</span>
         <el-switch
           v-model="settings.tabsVal"
           inline-prompt
           inactive-color="#a6a6a6"
-          active-text="开"
-          inactive-text="关"
+          :active-text="t('labels.active')"
+          :inactive-text="t('labels.inactive')"
           @change="tagsChange"
         />
       </li>
       <li>
-        <span class="dark:text-white">侧边栏Logo</span>
+        <span class="dark:text-white">{{ t("layout.sidebarLogo") }}</span>
         <el-switch
           v-model="logoVal"
           inline-prompt
           :active-value="true"
           :inactive-value="false"
           inactive-color="#a6a6a6"
-          active-text="开"
-          inactive-text="关"
+          :active-text="t('labels.active')"
+          :inactive-text="t('labels.inactive')"
           @change="logoChange"
         />
       </li>
       <li>
-        <span class="dark:text-white">标签页持久化</span>
+        <span class="dark:text-white">{{ t("layout.labelPersistence") }}</span>
         <el-switch
           v-model="settings.multiTagsCache"
           inline-prompt
           inactive-color="#a6a6a6"
-          active-text="开"
-          inactive-text="关"
+          :active-text="t('labels.active')"
+          :inactive-text="t('labels.inactive')"
           @change="multiTagsCacheChange"
         />
       </li>
 
       <li>
-        <span class="dark:text-white">标签风格</span>
+        <span class="dark:text-white">{{ t("layout.labelStyle") }}</span>
         <el-radio-group v-model="markValue" size="small" @change="onChange">
-          <el-radio label="card">卡片</el-radio>
-          <el-radio label="smart">灵动</el-radio>
+          <el-radio label="card">{{ t("layout.card") }}</el-radio>
+          <el-radio label="smart">{{ t("layout.smart") }}</el-radio>
         </el-radio-group>
       </li>
     </ul>
@@ -390,7 +390,7 @@ onBeforeMount(() => {
         height="15"
         style="margin-right: 4px"
       />
-      清空缓存并返回登录页
+      {{ t("layout.cleanOut") }}
     </el-button>
   </panel>
 </template>

@@ -5,17 +5,19 @@ import Bell from "@iconify-icons/ep/bell";
 import { getUserNoticeUnreadListApi } from "@/api/system/notice";
 import { TabItem } from "@/layout/components/notice/data";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 
 const noticesNum = ref(0);
+const { t } = useI18n();
 const notices = ref<TabItem[]>([
   {
     key: "1",
-    name: "消息通知",
+    name: t("layout.notice"),
     list: []
   },
   {
     key: "2",
-    name: "系统公告",
+    name: t("layout.announcement"),
     list: []
   }
 ]);
@@ -76,7 +78,7 @@ onMounted(() => {
         >
           <el-empty
             v-if="notices.length === 0"
-            description="暂无消息"
+            :description="t('layout.noData')"
             :image-size="60"
           />
           <span v-else>
@@ -95,9 +97,9 @@ onMounted(() => {
             <el-divider />
             <el-row style="height: 30px; text-align: center">
               <el-col :span="24">
-                <el-link :underline="false" @click="goUserNotice"
-                  >查看更多</el-link
-                >
+                <el-link :underline="false" @click="goUserNotice">{{
+                  t("layout.more")
+                }}</el-link>
               </el-col>
             </el-row>
           </span>

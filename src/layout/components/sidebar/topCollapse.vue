@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import MenuFold from "@iconify-icons/ri/menu-fold-fill";
 import MenuUnfold from "@iconify-icons/ri/menu-unfold-fill";
+import { useI18n } from "vue-i18n";
 
 interface Props {
   isActive: boolean;
@@ -17,12 +18,13 @@ const emit = defineEmits<{
 const toggleClick = () => {
   emit("toggleClick");
 };
+const { t } = useI18n();
 </script>
 
 <template>
   <div
     class="px-3 mr-1 navbar-bg-hover"
-    :title="props.isActive ? '点击折叠' : '点击展开'"
+    :title="props.isActive ? t('layout.fold') : t('layout.unfold')"
     @click="toggleClick"
   >
     <IconifyIconOffline

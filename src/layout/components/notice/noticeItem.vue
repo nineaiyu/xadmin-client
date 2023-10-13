@@ -5,6 +5,7 @@ import { useNav } from "@/layout/hooks/useNav";
 import { deviceDetection } from "@pureadmin/utils";
 import dayjs from "dayjs";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 
 const props = defineProps({
   noticeItem: {
@@ -19,6 +20,7 @@ const titleTooltip = ref(false);
 // const descriptionTooltip = ref(false);
 const { tooltipEffect } = useNav();
 const isMobile = deviceDetection();
+const { t } = useI18n();
 
 function hoverTitle() {
   nextTick(() => {
@@ -119,7 +121,7 @@ const handleRead = (pk: number) => {
       <!--      </el-tooltip>-->
       <div class="notice-text-datetime text-[#00000073] dark:text-white">
         {{
-          dayjs(props.noticeItem.created_time).format("YYYY年MM月DD日 HH:mm:ss")
+          dayjs(props.noticeItem.created_time).format(t("layout.noticeTime"))
         }}
       </div>
     </div>

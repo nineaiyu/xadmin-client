@@ -50,7 +50,7 @@ const {
       <el-form-item :label="t('notice.userId')" prop="message">
         <el-input
           v-model="form.owner_id"
-          :placeholder="t('notice.verifyUserId')"
+          :placeholder="t('user.verifyUserId')"
           clearable
           class="!w-[120px]"
           @keyup.enter="onSearch(true)"

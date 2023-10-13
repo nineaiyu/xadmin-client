@@ -21,7 +21,7 @@ interface Emits {
   (e: "update:value", val: boolean): void;
 }
 
-const { device } = useNav();
+const { device, t } = useNav();
 const emit = defineEmits<Emits>();
 const props = withDefaults(defineProps<Props>(), {});
 const router = useRouter();
@@ -164,7 +164,7 @@ onKeyStroke("ArrowDown", handleDown);
       size="large"
       v-model="keyword"
       clearable
-      placeholder="搜索菜单（中文模式下支持拼音搜索）"
+      :placeholder="t('layout.searchPlaceholder')"
       @input="handleSearch"
     >
       <template #prefix>
@@ -178,7 +178,7 @@ onKeyStroke("ArrowDown", handleDown);
       <el-scrollbar ref="scrollbarRef" max-height="calc(90vh - 140px)">
         <el-empty
           v-if="resultOptions.length === 0"
-          description="暂无搜索结果"
+          :description="t('layout.noData')"
         />
         <SearchResult
           v-else

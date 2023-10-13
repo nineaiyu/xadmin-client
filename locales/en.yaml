@@ -1,3 +1,32 @@
+layout:
+  notice: Notice
+  announcement: Announcement
+  settings: Settings
+  total: "{ total } items in total"
+  noData: No Data
+  more: More
+  fold: Fold
+  unfold: Unfold
+  searchPlaceholder: Search menu (Pinyin search is supported)
+  theme: Theme
+  navigationMode: NavigationMode
+  leftMode: Left mode
+  topMode: Top mode
+  mixedMode: Mixed mode
+  themeColor: ThemeColor
+  display: Display
+  greyMode: Grey mode
+  colorWeakMode: Color weak mode
+  hideTabs: Hide tabs
+  sidebarLogo: Sidebar Logo
+  labelPersistence: Label persistence
+  labelStyle: Label style
+  card: Card
+  smart: Smart
+  cleanOut: Clear the cache and return the login page
+  noticeTime: YYYY-MM-DD HH:mm:ss
+  backTop: Back Top
+
 error:
   error403: Sorry, you are not authorized to access this page
   error404: Sorry, the page you are looking for does not exist
@@ -72,6 +101,8 @@ buttons:
   hscontentFullScreen: Content FullScreen
   hscontentExitFullScreen: Content ExitFullScreen
   hscancel: Cancel
+  hsclose: Close
+  hsswitch: Switch
   hssure: Ok
   hsedit: Edit
   hsdetail: Detail
@@ -205,7 +236,6 @@ operation:
   parameters: Parameters
   response: Response
   requestPath: Request Path
-  verifyUserId: Please enter user id
   verifyAddress: Please enter ip address
   verifySystem: Please enter operating system
   verifyBrowser: Please enter browser
@@ -223,7 +253,6 @@ notice:
   content:  Content
   haveRead: Have Read
   showSystemNotice: Check the system announcement
-  verifyUserId: Please enter user id
   verifyTitle: Please enter title
   verifyContent: Please enter content
   readManage: Read message announcement management

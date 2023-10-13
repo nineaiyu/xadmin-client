@@ -219,8 +219,8 @@ const remoteMethod = (query: string) => {
                 style="width: 180px"
                 clearable
               >
-                <el-option :label="t('labels.publish')" :value="false" />
-                <el-option :label="t('labels.unPublish')" :value="true" />
+                <el-option :label="t('labels.publish')" :value="true" />
+                <el-option :label="t('labels.unPublish')" :value="false" />
               </el-select>
             </el-form-item>
           </re-col>

@@ -13,10 +13,12 @@ import { useAppStoreHook } from "@/store/modules/app";
 import { useUserStoreHook } from "@/store/modules/user";
 import { useEpThemeStoreHook } from "@/store/modules/epTheme";
 import { usePermissionStoreHook } from "@/store/modules/permission";
+import { useI18n } from "vue-i18n";
 
 const errorInfo = "当前路由配置不正确，请检查配置";
 
 export function useNav() {
+  const { t } = useI18n();
   const pureApp = useAppStoreHook();
   const routers = useRouter().options.routes;
   const { wholeMenus } = storeToRefs(usePermissionStoreHook());
@@ -131,6 +133,7 @@ export function useNav() {
   }
 
   return {
+    t,
     title,
     device,
     layout,

@@ -7,7 +7,7 @@ export const formRules = reactive<FormRules>({
   owners: [
     {
       required: true,
-      message: transformI18n($t("notice.verifyUserId")),
+      message: transformI18n($t("user.verifyUserId")),
       trigger: "blur"
     }
   ],
