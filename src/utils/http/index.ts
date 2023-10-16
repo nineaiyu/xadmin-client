@@ -21,6 +21,7 @@ import {
 import { useUserStoreHook } from "@/store/modules/user";
 import { message } from "@/utils/message";
 import { ElMessage } from "element-plus";
+import { router } from "@/router";
 
 // 相关配置请参考：www.axios-js.com/zh-cn/docs/#axios-request-config-1
 const defaultConfig: AxiosRequestConfig = {
@@ -190,6 +191,12 @@ class PureHttp {
             } else if (error.response.status === 400) {
               ElMessage.error(error.response.data.detail);
               // router.push("/error/403");
+            } else if (error.response.status === 404) {
+              ElMessage.error(error.response.data.detail);
+              router.push("/error/404");
+            } else if (error.response.status === 500) {
+              ElMessage.error(error.response.data.detail);
+              router.push("/error/500");
             }
             reject(error.response.data);
           } else {

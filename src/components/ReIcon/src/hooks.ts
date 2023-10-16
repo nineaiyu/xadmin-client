@@ -9,10 +9,7 @@ import { IconifyIconOnline, IconifyIconOffline, FontIcon } from "../index";
  * @param attrs 可选 iconType 属性
  * @returns Component
  */
-export function useRenderIcon(
-  icon: string | Component | Function | any,
-  attrs?: iconType
-): Component {
+export function useRenderIcon(icon: any, attrs?: iconType): Component {
   // iconfont
   const ifReg = /^IF-/;
   // typeof icon === "function" 属于SVG

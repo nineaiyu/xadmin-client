@@ -2,7 +2,7 @@
 import { ref, watch } from "vue";
 import { FormProps } from "./utils/types";
 import FromQuestion from "@/components/FromQuestion/index.vue";
-import { IconSelect } from "@/components/IconSelect";
+import { IconSelect } from "@/components/ReIcon";
 
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { transformI18n } from "@/plugins/i18n";
