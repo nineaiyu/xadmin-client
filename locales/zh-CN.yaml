@@ -18,6 +18,7 @@ layout:
   greyMode: 灰色模式
   colorWeakMode: 色弱模式
   hideTabs: 隐藏标签页
+  hideFooter: 隐藏页脚
   sidebarLogo: 侧边栏Logo
   labelPersistence: 标签页持久化
   labelStyle: 标签风格

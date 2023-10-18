@@ -18,6 +18,7 @@ layout:
   greyMode: Grey mode
   colorWeakMode: Color weak mode
   hideTabs: Hide tabs
+  hideFooter: Hide Footer
   sidebarLogo: Sidebar Logo
   labelPersistence: Label persistence
   labelStyle: Label style
