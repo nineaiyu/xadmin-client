@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { ref, computed, watch, getCurrentInstance } from "vue";
+import { ref, computed, watch, getCurrentInstance, onMounted } from "vue";
 
 import DocumentAdd from "@iconify-icons/ep/document-add";
 import Delete from "@iconify-icons/ep/delete";
@@ -72,7 +72,7 @@ const emit = defineEmits([
 const formInline = useVModel(props, "formInline", emit);
 const parentIds = useVModel(props, "parentIds", emit);
 const { locale } = useI18n();
-
+const loading = ref(true);
 const filterMenuNode = (value: string, data: any) => {
   if (!value) return true;
   return value
@@ -169,6 +169,12 @@ const handleDragDrop = (node1, node2, type) => {
 
 watch(searchValue, val => {
   treeRef.value!.filter(val);
+});
+onMounted(() => {
+  setTimeout(() => {
+    toggleRowExpansionAll(true);
+    loading.value = false;
+  }, 500);
 });
 </script>
 
@@ -279,6 +285,7 @@ watch(searchValue, val => {
       :data="props.treeData"
       node-key="pk"
       size="small"
+      v-loading="loading"
       :props="defaultProps"
       show-checkbox
       check-strictly

@@ -136,60 +136,61 @@ const {
         @refresh="onSearch(true)"
       >
         <template #buttons>
-          <div v-if="manySelectCount > 0" class="w-[360px]">
-            <span
-              style="font-size: var(--el-font-size-base)"
-              class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
+          <el-space wrap>
+            <div v-if="manySelectCount > 0" class="w-[360px]">
+              <span
+                style="font-size: var(--el-font-size-base)"
+                class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
+              >
+                {{ t("buttons.hsselected", { count: manySelectCount }) }}
+              </span>
+              <el-button type="primary" text @click="onSelectionCancel">
+                {{ t("buttons.hscancel") }}
+              </el-button>
+              <el-popconfirm
+                :title="
+                  t('buttons.hsbatchdeleteconfirm', { count: manySelectCount })
+                "
+                @confirm="handleManyDelete"
+                v-if="hasAuth('manyDelete:systemUser')"
+              >
+                <template #reference>
+                  <el-button type="danger" plain :icon="useRenderIcon(Delete)">
+                    {{ t("buttons.hsbatchdelete") }}
+                  </el-button>
+                </template>
+              </el-popconfirm>
+            </div>
+            <el-button
+              v-if="hasAuth('send:systemNotify') && manySelectCount > 0"
+              type="primary"
+              :icon="useRenderIcon(Message)"
+              @click="goNotice()"
             >
-              {{ t("buttons.hsselected", { count: manySelectCount }) }}
-            </span>
-            <el-button type="primary" text @click="onSelectionCancel">
-              {{ t("buttons.hscancel") }}
+              {{ t("user.batchSendNotice") }}
             </el-button>
-            <el-popconfirm
-              :title="
-                t('buttons.hsbatchdeleteconfirm', { count: manySelectCount })
-              "
-              @confirm="handleManyDelete"
-              v-if="hasAuth('manyDelete:systemUser')"
+            <el-button
+              v-optimize="{
+                event: 'click',
+                fn: exportExcel,
+                immediate: true,
+                timeout: 5000
+              }"
+              v-if="hasAuth('list:systemUser') && manySelectCount > 0"
+              type="primary"
+              :icon="useRenderIcon(Download)"
             >
-              <template #reference>
-                <el-button type="danger" plain :icon="useRenderIcon(Delete)">
-                  {{ t("buttons.hsbatchdelete") }}
-                </el-button>
-              </template>
-            </el-popconfirm>
-          </div>
-
-          <el-button
-            v-if="hasAuth('send:systemNotify') && manySelectCount > 0"
-            type="primary"
-            :icon="useRenderIcon(Message)"
-            @click="goNotice()"
-          >
-            {{ t("user.batchSendNotice") }}
-          </el-button>
-          <el-button
-            v-optimize="{
-              event: 'click',
-              fn: exportExcel,
-              immediate: true,
-              timeout: 5000
-            }"
-            v-if="hasAuth('list:systemUser') && manySelectCount > 0"
-            type="primary"
-            :icon="useRenderIcon(Download)"
-          >
-            {{ t("user.exportExcel") }}
-          </el-button>
-          <el-button
-            v-if="hasAuth('create:systemUser')"
-            type="primary"
-            :icon="useRenderIcon(AddFill)"
-            @click="openDialog()"
-          >
-            {{ t("buttons.hsadd") }}
-          </el-button>
+              {{ t("user.exportExcel") }}
+            </el-button>
+            <el-button
+              v-if="hasAuth('create:systemUser')"
+              type="primary"
+              :icon="useRenderIcon(AddFill)"
+              @click="openDialog()"
+            >
+              {{ t("buttons.hsadd") }}
+            </el-button>
+          </el-space>
         </template>
         <template v-slot="{ size, dynamicColumns }">
           <pure-table

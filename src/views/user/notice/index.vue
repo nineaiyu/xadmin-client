@@ -156,41 +156,43 @@ const {
       @refresh="onSearch(true)"
     >
       <template #buttons>
-        <div v-if="manySelectCount > 0" class="w-[300px]">
-          <span
-            style="font-size: var(--el-font-size-base)"
-            class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
+        <el-space wrap>
+          <div v-if="manySelectCount > 0" class="w-[300px]">
+            <span
+              style="font-size: var(--el-font-size-base)"
+              class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
+            >
+              {{ t("buttons.hsselected", { count: manySelectCount }) }}
+            </span>
+            <el-button type="primary" text @click="onSelectionCancel">
+              {{ t("buttons.hscancel") }}
+            </el-button>
+            <el-popconfirm
+              :title="
+                t('buttons.hsbatchdeleteconfirm', { count: manySelectCount })
+              "
+              @confirm="handleManyRead"
+              v-if="hasAuth('update:userNoticeRead')"
+            >
+              <template #reference>
+                <el-button type="success" plain :icon="useRenderIcon(Success)">
+                  {{ t("notice.batchRead") }}
+                </el-button>
+              </template>
+            </el-popconfirm>
+          </div>
+          <el-button
+            class="mr-2"
+            type="primary"
+            @click="handleReadAll"
+            v-if="hasAuth('update:userNoticeReadAll') && unreadCount > 0"
           >
-            {{ t("buttons.hsselected", { count: manySelectCount }) }}
-          </span>
-          <el-button type="primary" text @click="onSelectionCancel">
-            {{ t("buttons.hscancel") }}
+            {{ t("notice.allRead") }}
           </el-button>
-          <el-popconfirm
-            :title="
-              t('buttons.hsbatchdeleteconfirm', { count: manySelectCount })
-            "
-            @confirm="handleManyRead"
-            v-if="hasAuth('update:userNoticeRead')"
+          <el-text type="primary" v-if="unreadCount > 0">
+            {{ t("notice.unreadMessage") }} {{ unreadCount }}</el-text
           >
-            <template #reference>
-              <el-button type="success" plain :icon="useRenderIcon(Success)">
-                {{ t("notice.batchRead") }}
-              </el-button>
-            </template>
-          </el-popconfirm>
-        </div>
-        <el-button
-          class="mr-2"
-          type="primary"
-          @click="handleReadAll"
-          v-if="hasAuth('update:userNoticeReadAll') && unreadCount > 0"
-        >
-          {{ t("notice.allRead") }}
-        </el-button>
-        <el-text type="primary" v-if="unreadCount > 0">
-          {{ t("notice.unreadMessage") }} {{ unreadCount }}</el-text
-        >
+        </el-space>
       </template>
       <template v-slot="{ size, dynamicColumns }">
         <pure-table
