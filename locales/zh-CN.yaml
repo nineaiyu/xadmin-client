@@ -194,6 +194,8 @@ menu:
   type: 类型
   title: 名称
   icon: 图标
+  transitionLeave: 离场动画
+  transitionEnter: 进场动画
   cache: 缓存
   componentName: 组件名称
   componentPath: 组件路径
@@ -213,6 +215,7 @@ menu:
   verifyTitle: 请输入菜单标题
   verifyPath: 请输入路由地址
   verifyComponentPath: 请输入组件路径
+  verifyTransition: 请选择动画
   verifyRequestMethod: 请输入请求方式
   verifyPermissionName: 请输入权限名称
   verifyPermissionCode: 请输入权限标识

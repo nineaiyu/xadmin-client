@@ -31,6 +31,7 @@ const {
     <el-row :gutter="24">
       <el-col :xs="24" :sm="24" :md="13" :lg="13" :xl="13">
         <tree
+          class="pb-20"
           v-model:form-inline="menuData"
           v-model:parent-ids="parentIds"
           :tree-data="treeData"
@@ -47,6 +48,7 @@ const {
       <el-col :xs="24" :sm="24" :md="11" :lg="11" :xl="11">
         <el-affix :offset="85">
           <edit
+            class="pb-20"
             :form-inline="menuData"
             :choices-dict="choicesDict"
             :tree-data="treeData"

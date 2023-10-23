@@ -7,14 +7,14 @@ export const formRules = reactive(<FormRules>{
   name: [
     {
       required: true,
-      message: transformI18n($t("user.verifyRoleName")),
+      message: transformI18n($t("role.verifyRoleName")),
       trigger: "blur"
     }
   ],
   code: [
     {
       required: true,
-      message: transformI18n($t("user.verifyRoleCode")),
+      message: transformI18n($t("role.verifyRoleCode")),
       trigger: "blur"
     }
   ]

@@ -3,7 +3,7 @@ import { getConfig } from "@/config";
 import { useRouter } from "vue-router";
 import { emitter } from "@/utils/mitt";
 import { routeMetaType } from "../types";
-import defaultAvatar from "@/assets/user.jpg";
+import userAvatar from "@/assets/user.jpg";
 import { getTopMenu } from "@/router/utils";
 import { useGlobal } from "@pureadmin/utils";
 import { transformI18n } from "@/plugins/i18n";
@@ -38,12 +38,6 @@ export function useNav() {
   /** 用户名 */
   const username = computed(() => {
     return useUserStoreHook()?.username;
-  });
-
-  const userAvatar = computed(() => {
-    return useUserStoreHook()?.avatar
-      ? useUserStoreHook()?.avatar
-      : defaultAvatar;
   });
 
   /** 设置国际化选中后的样式 */
@@ -132,6 +126,11 @@ export function useNav() {
     return remainingPaths.includes(path);
   }
 
+  /** 获取`logo` */
+  function getLogo() {
+    return new URL("/logo.svg", import.meta.url).href;
+  }
+
   return {
     t,
     title,
@@ -148,6 +147,7 @@ export function useNav() {
     menuSelect,
     handleResize,
     resolvePath,
+    getLogo,
     isCollapse,
     pureApp,
     username,

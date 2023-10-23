@@ -2,6 +2,7 @@
 import { ref, watch } from "vue";
 import { FormProps } from "./utils/types";
 import FromQuestion from "@/components/FromQuestion/index.vue";
+import ReAnimateSelector from "@/components/ReAnimateSelector";
 import { IconSelect } from "@/components/ReIcon";
 
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
@@ -171,9 +172,20 @@ const getMinHeight = () => {
           />
         </el-form-item>
         <el-form-item :label="t('menu.icon')" prop="icon">
-          <icon-select v-model="newFormInline.meta.icon" style="width: 100%" />
+          <icon-select v-model="newFormInline.meta.icon" />
         </el-form-item>
+        <div v-if="newFormInline.menu_type === 1">
+          <el-form-item :label="t('menu.transitionEnter')" prop="icon">
+            <ReAnimateSelector v-model="newFormInline.meta.transition_enter" />
+          </el-form-item>
 
+          <el-form-item :label="t('menu.transitionLeave')" prop="icon">
+            <ReAnimateSelector
+              v-model="newFormInline.meta.transition_leave"
+              :disabled="!newFormInline.meta.transition_enter"
+            />
+          </el-form-item>
+        </div>
         <el-form-item :label="t('menu.componentName')" prop="name">
           <template #label>
             <from-question

@@ -62,10 +62,10 @@ const transitionMain = defineComponent({
       {
         name: enterTransition ? "pure-classes-transition" : transitionName,
         enterActiveClass: enterTransition
-          ? `animate__animated ${enterTransition}`
+          ? `animate__animated animate__${enterTransition}`
           : undefined,
         leaveActiveClass: leaveTransition
-          ? `animate__animated ${leaveTransition}`
+          ? `animate__animated animate__${leaveTransition}`
           : undefined,
         mode: "out-in",
         appear: true

@@ -194,6 +194,8 @@ menu:
   type: Type
   title: Title
   icon: Icon
+  transitionLeave: Leave Animation
+  transitionEnter: Entry Animation
   cache: Cache
   componentName: ComponentName
   componentPath: ComponentPath
@@ -213,6 +215,7 @@ menu:
   verifyTitle: Please enter menu title
   verifyPath: Please enter routing path
   verifyComponentPath: Please enter component path
+  verifyTransition: Please select animation
   verifyRequestMethod: Please enter request method
   verifyPermissionName: Please enter permission name
   verifyPermissionCode: Please enter permission code
