@@ -296,10 +296,12 @@ export function useRole(tableRef: Ref) {
   const getMenuData = () => {
     loading.value = true;
     getMenuListApi({ page: 1, size: 100 }).then(res => {
-      if (res.code === 1000) {
-        menuTreeData.value = handleTree(res.data.results);
-      }
-      loading.value = false;
+      setTimeout(() => {
+        loading.value = false;
+        if (res.code === 1000) {
+          menuTreeData.value = handleTree(res.data.results);
+        }
+      }, 300);
     });
   };
 

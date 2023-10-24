@@ -27,6 +27,8 @@ layout:
   cleanOut: Clear the cache and return the login page
   noticeTime: YYYY-MM-DD HH:mm:ss
   backTop: Back Top
+  updateCheck: New version detected
+  updateNow: Update now
 
 error:
   error403: Sorry, you are not authorized to access this page

@@ -27,6 +27,8 @@ layout:
   cleanOut: 清空缓存并返回登录页
   noticeTime: YYYY年MM月DD日 HH:mm:ss
   backTop: 回到顶部
+  updateCheck: 检测到新版本
+  updateNow: 立即更新
 
 error:
   error403: 抱歉，你无权访问该页面

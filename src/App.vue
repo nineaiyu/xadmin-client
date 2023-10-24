@@ -7,11 +7,12 @@
 
 <script lang="ts">
 import { defineComponent, nextTick } from "vue";
+import { checkVersion } from "version-rocket";
 import { ElConfigProvider } from "element-plus";
-import zhCn from "element-plus/dist/locale/zh-cn.mjs";
 import en from "element-plus/dist/locale/en.mjs";
 import { ReDialog } from "@/components/ReDialog";
-
+import zhCn from "element-plus/dist/locale/zh-cn.mjs";
+import { $t, transformI18n } from "@/plugins/i18n";
 import { useWatermark } from "@pureadmin/utils";
 import { Boot } from "@wangeditor/editor";
 import attachmentModule from "@wangeditor/plugin-upload-attachment";
@@ -39,6 +40,29 @@ export default defineComponent({
         ]
       });
     });
+  },
+  beforeCreate() {
+    const { version, name: title } = __APP_INFO__.pkg;
+    const { VITE_PUBLIC_PATH, MODE } = import.meta.env;
+    // https://github.com/guMcrey/version-rocket/blob/main/README.zh-CN.md#api
+    if (MODE === "production") {
+      // 版本实时更新检测，只作用于线上环境
+      checkVersion(
+        // config
+        {
+          // 5分钟检测一次版本
+          pollingTime: 300000,
+          localPackageVersion: version,
+          originVersionFileUrl: `${location.origin}${VITE_PUBLIC_PATH}version.json`
+        },
+        // options
+        {
+          title,
+          description: transformI18n($t("layout.updateCheck")),
+          buttonText: transformI18n($t("layout.updateNow"))
+        }
+      );
+    }
   }
 });
 </script>
