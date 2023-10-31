@@ -2,7 +2,7 @@
 #
 #
 # clean old build docker and image
-docker rm -rf xadmin-client-build
+docker rm -f xadmin-client-build
 docker image rm xadmin-client-build
 
 # build web
