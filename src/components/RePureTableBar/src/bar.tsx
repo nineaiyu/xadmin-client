@@ -14,6 +14,7 @@ import ExpandIcon from "./svg/expand.svg?component";
 import RefreshIcon from "./svg/refresh.svg?component";
 import SettingIcon from "./svg/settings.svg?component";
 import CollapseIcon from "./svg/collapse.svg?component";
+import { useI18n } from "vue-i18n";
 
 const props = {
   /** 头部最左边的标题 */
@@ -51,6 +52,7 @@ export default defineComponent({
     let checkColumnList = getKeyList(cloneDeep(props?.columns), "label");
     const checkedColumns = ref(getKeyList(cloneDeep(filterColumns), "label"));
     const dynamicColumns = ref(cloneDeep(props?.columns));
+    const { t } = useI18n();
 
     const getDropdownItemStyle = computed(() => {
       return s => {
@@ -130,7 +132,7 @@ export default defineComponent({
       isIndeterminate.value = false;
       dynamicColumns.value = cloneDeep(props?.columns);
       checkColumnList = [];
-      checkColumnList = await getKeyList(cloneDeep(props?.columns), "label");
+      checkColumnList = getKeyList(cloneDeep(props?.columns), "label");
       checkedColumns.value = getKeyList(cloneDeep(filterColumns), "label");
     }
 
@@ -141,19 +143,19 @@ export default defineComponent({
             style={getDropdownItemStyle.value("large")}
             onClick={() => (size.value = "large")}
           >
-            宽松
+            {t("tableBar.loose")}
           </el-dropdown-item>
           <el-dropdown-item
             style={getDropdownItemStyle.value("default")}
             onClick={() => (size.value = "default")}
           >
-            默认
+            {t("tableBar.default")}
           </el-dropdown-item>
           <el-dropdown-item
             style={getDropdownItemStyle.value("small")}
             onClick={() => (size.value = "small")}
           >
-            紧凑
+            {t("tableBar.compact")}
           </el-dropdown-item>
         </el-dropdown-menu>
       )
@@ -226,7 +228,11 @@ export default defineComponent({
                 <>
                   <el-tooltip
                     effect="dark"
-                    content={isExpandAll.value ? "折叠" : "展开"}
+                    content={
+                      isExpandAll.value
+                        ? t("tableBar.fold")
+                        : t("tableBar.unfold")
+                    }
                     placement="top"
                   >
                     <ExpandIcon
@@ -240,7 +246,11 @@ export default defineComponent({
                   <el-divider direction="vertical" />
                 </>
               ) : null}
-              <el-tooltip effect="dark" content="刷新" placement="top">
+              <el-tooltip
+                effect="dark"
+                content={t("tableBar.refresh")}
+                placement="top"
+              >
                 <RefreshIcon
                   class={[
                     "w-[16px]",
@@ -251,7 +261,11 @@ export default defineComponent({
                 />
               </el-tooltip>
               <el-divider direction="vertical" />
-              <el-tooltip effect="dark" content="密度" placement="top">
+              <el-tooltip
+                effect="dark"
+                content={t("tableBar.density")}
+                placement="top"
+              >
                 <el-dropdown v-slots={dropdown} trigger="click">
                   <CollapseIcon class={["w-[16px]", iconClass.value]} />
                 </el-dropdown>
@@ -262,65 +276,67 @@ export default defineComponent({
                 v-slots={reference}
                 placement="bottom-start"
                 popper-style={{ padding: 0 }}
-                width="160"
+                width="200"
                 trigger="click"
               >
                 <div class={[topClass.value]}>
                   <el-checkbox
                     class="!-mr-1"
-                    label="列展示"
+                    label={t("tableBar.columnDisplay")}
                     v-model={checkAll.value}
                     indeterminate={isIndeterminate.value}
                     onChange={value => handleCheckAllChange(value)}
                   />
                   <el-button type="primary" link onClick={() => onReset()}>
-                    重置
+                    {t("buttons.hsreset")}
                   </el-button>
                 </div>
 
                 <div class="pt-[6px] pl-[11px]">
-                  <el-checkbox-group
-                    v-model={checkedColumns.value}
-                    onChange={value => handleCheckedColumnsChange(value)}
-                  >
-                    <el-space
-                      direction="vertical"
-                      alignment="flex-start"
-                      size={0}
+                  <el-scrollbar max-height="36vh">
+                    <el-checkbox-group
+                      v-model={checkedColumns.value}
+                      onChange={value => handleCheckedColumnsChange(value)}
                     >
-                      {checkColumnList.map(item => {
-                        return (
-                          <div class="flex items-center">
-                            <DragIcon
-                              class={[
-                                "drag-btn w-[16px] mr-2",
-                                isFixedColumn(item)
-                                  ? "!cursor-no-drop"
-                                  : "!cursor-grab"
-                              ]}
-                              onMouseenter={(event: {
-                                preventDefault: () => void;
-                              }) => rowDrop(event)}
-                            />
-                            <el-checkbox
-                              key={item}
-                              label={item}
-                              onChange={value =>
-                                handleCheckColumnListChange(value, item)
-                              }
-                            >
-                              <span
-                                title={item}
-                                class="inline-block w-[120px] truncate hover:text-text_color_primary"
+                      <el-space
+                        direction="vertical"
+                        alignment="flex-start"
+                        size={0}
+                      >
+                        {checkColumnList.map(item => {
+                          return (
+                            <div class="flex items-center">
+                              <DragIcon
+                                class={[
+                                  "drag-btn w-[16px] mr-2",
+                                  isFixedColumn(item)
+                                    ? "!cursor-no-drop"
+                                    : "!cursor-grab"
+                                ]}
+                                onMouseenter={(event: {
+                                  preventDefault: () => void;
+                                }) => rowDrop(event)}
+                              />
+                              <el-checkbox
+                                key={item}
+                                label={item}
+                                onChange={value =>
+                                  handleCheckColumnListChange(value, item)
+                                }
                               >
-                                {item}
-                              </span>
-                            </el-checkbox>
-                          </div>
-                        );
-                      })}
-                    </el-space>
-                  </el-checkbox-group>
+                                <span
+                                  title={item}
+                                  class="inline-block w-[120px] truncate hover:text-text_color_primary"
+                                >
+                                  {item}
+                                </span>
+                              </el-checkbox>
+                            </div>
+                          );
+                        })}
+                      </el-space>
+                    </el-checkbox-group>
+                  </el-scrollbar>
                 </div>
               </el-popover>
             </div>
@@ -341,7 +357,7 @@ export default defineComponent({
               virtual-ref={buttonRef.value}
               virtual-triggering
               trigger="hover"
-              content="列设置"
+              content={t("tableBar.columnSettings")}
             />
           </div>
           {slots.default({

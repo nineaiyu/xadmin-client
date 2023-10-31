@@ -8,11 +8,9 @@ export const useImageVerify = () => {
 
   const apiDomain = res => {
     const httpReg = /^http(s?):\/\//;
-    if (
-      import.meta.env.VITE_API_DOMAIN &&
-      httpReg.test(import.meta.env.VITE_API_DOMAIN)
-    ) {
-      return `${import.meta.env.VITE_API_DOMAIN}${res.captcha_image}`;
+    const api_domain = import.meta.env.VITE_API_DOMAIN;
+    if (api_domain && httpReg.test(api_domain)) {
+      return `${api_domain}${res.captcha_image}`;
     }
     return res.captcha_image;
   };

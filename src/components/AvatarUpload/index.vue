@@ -3,6 +3,7 @@ import { ref } from "vue";
 import { formatBytes } from "@pureadmin/utils";
 import ReCropper from "@/components/ReCropper";
 import avatar from "./avatar.png";
+import { useI18n } from "vue-i18n";
 
 const props = defineProps({
   imgSrc: String,
@@ -10,7 +11,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["cropper"]);
-
+const { t } = useI18n();
 const infos = ref();
 const refCropper = ref();
 const showPopover = ref(false);
@@ -38,7 +39,7 @@ function onCropper({ base64, blob, info }) {
             @readied="showPopover = true"
           />
           <p class="mt-1 text-center" v-show="showPopover">
-            温馨提示：右键上方裁剪区可开启功能菜单
+            {{ t("avatarUpload.tips") }}
           </p>
         </div>
       </template>
@@ -51,11 +52,20 @@ function onCropper({ base64, blob, info }) {
         />
         <div v-if="infos" class="mt-1">
           <p>
-            图像大小：{{ parseInt(infos.width) }} ×
-            {{ parseInt(infos.height) }}像素
+            {{
+              t("avatarUpload.imageSize", {
+                x: parseInt(infos.width),
+                y: parseInt(infos.height)
+              })
+            }}
           </p>
           <p>
-            文件大小：{{ formatBytes(infos.size) }}（{{ infos.size }} 字节）
+            {{
+              t("avatarUpload.fileSize", {
+                x: formatBytes(infos.size),
+                y: infos.size
+              })
+            }}
           </p>
         </div>
       </div>

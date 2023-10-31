@@ -2,6 +2,7 @@
 import { cloneDeep } from "@pureadmin/utils";
 import { IconJson } from "../data";
 import { ref, computed, CSSProperties, toRef, watch } from "vue";
+import { useI18n } from "vue-i18n";
 type ParameterCSSProperties = (item?: string) => CSSProperties | undefined;
 
 defineOptions({
@@ -23,7 +24,7 @@ const icon = ref("add-location");
 const currentActiveType = ref("ep:");
 // 深拷贝图标数据，前端做搜索
 const copyIconList = cloneDeep(iconList.value);
-
+const { t } = useI18n();
 const pageSize = ref(96);
 const currentPage = ref(1);
 
@@ -148,7 +149,7 @@ watch(
           <el-input
             class="p-2"
             v-model="filterValue"
-            placeholder="搜索图标"
+            :placeholder="t('buttons.hssearch')"
             clearable
           />
           <el-divider border-style="dashed" />

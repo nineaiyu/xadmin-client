@@ -119,7 +119,7 @@ function onMouseleave() {
           </ul>
           <el-empty
             v-show="animatesList.length === 0"
-            description="暂无动画"
+            :description="t('layout.noData')"
             :image-size="60"
           />
         </el-scrollbar>

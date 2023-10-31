@@ -10,8 +10,10 @@ import { ref, computed } from "vue";
 import { isFunction } from "@pureadmin/utils";
 import Fullscreen from "@iconify-icons/ri/fullscreen-fill";
 import ExitFullscreen from "@iconify-icons/ri/fullscreen-exit-fill";
+import { useI18n } from "vue-i18n";
 
 const fullscreen = ref(false);
+const { t } = useI18n();
 
 const footerButtons = computed(() => {
   return (options: DialogOptions) => {
@@ -19,7 +21,7 @@ const footerButtons = computed(() => {
       ? options.footerButtons
       : ([
           {
-            label: "取消",
+            label: t("labels.cancel"),
             text: true,
             bg: true,
             btnClick: ({ dialog: { options, index } }) => {
@@ -33,7 +35,7 @@ const footerButtons = computed(() => {
             }
           },
           {
-            label: "确定",
+            label: t("buttons.hssave"),
             type: "primary",
             text: true,
             bg: true,

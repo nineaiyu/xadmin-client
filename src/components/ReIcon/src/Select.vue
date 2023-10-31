@@ -3,6 +3,7 @@ import { IconJson } from "@/components/ReIcon/data";
 import { cloneDeep, isAllEmpty } from "@pureadmin/utils";
 import { ref, computed, CSSProperties, toRef, watch } from "vue";
 import Search from "@iconify-icons/ri/search-eye-line";
+import { useI18n } from "vue-i18n";
 
 type ParameterCSSProperties = (item?: string) => CSSProperties | undefined;
 
@@ -31,7 +32,7 @@ const currentPage = ref(1);
 
 // 搜索条件
 const filterValue = ref("");
-
+const { t } = useI18n();
 const tabsList = [
   {
     label: "Element Plus",
@@ -153,7 +154,7 @@ watch(
           <el-input
             class="px-2 pt-2"
             v-model="filterValue"
-            placeholder="搜索图标"
+            :placeholder="t('buttons.hssearch')"
             clearable
           />
 

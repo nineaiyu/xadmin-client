@@ -7,11 +7,7 @@ import { IconSelect } from "@/components/ReIcon";
 
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { transformI18n } from "@/plugins/i18n";
-import {
-  ifEnableOptions,
-  ifOptions,
-  MenuTypeOptions
-} from "@/constants/constants";
+import { SelectOption } from "@/constants/constants";
 import { dirFormRules, menuFormRules, permissionFormRules } from "./utils/rule";
 import { hasAuth } from "@/router/utils";
 import { cloneDeep } from "@pureadmin/utils";
@@ -52,6 +48,17 @@ const props = withDefaults(defineProps<FormProps>(), {
 const ruleFormRef = ref();
 const treeSelectRef = ref();
 const newFormInline = ref(props.formInline);
+
+const ifEnableOptions: SelectOption<boolean>[] = [
+  { label: t("labels.enable"), value: true },
+  { label: t("labels.disable"), value: false }
+];
+
+const MenuTypeOptions: SelectOption<number>[] = [
+  { label: t("menu.directory"), value: 0 },
+  { label: t("menu.menu"), value: 1 },
+  { label: t("menu.permissions"), value: 2 }
+];
 
 function getRef() {
   return ruleFormRef.value;
@@ -133,7 +140,8 @@ const getMinHeight = () => {
           :data="props.treeData"
           :props="{
             children: 'children',
-            label: data => transformI18n(data.meta.title)
+            label: data => transformI18n(data.meta.title),
+            disabled: data => data.menu_type == 2
           }"
           node-key="pk"
           accordion
@@ -238,7 +246,7 @@ const getMinHeight = () => {
           </template>
           <el-radio-group v-model="newFormInline.meta.is_keepalive">
             <el-radio-button
-              v-for="(item, index) in ifOptions"
+              v-for="(item, index) in ifEnableOptions"
               :label="item.value"
               :key="index"
               >{{ item.label }}</el-radio-button
@@ -248,7 +256,7 @@ const getMinHeight = () => {
         <el-form-item :label="t('menu.showParentMenu')" prop="showParent">
           <el-radio-group v-model="newFormInline.meta.is_show_parent">
             <el-radio-button
-              v-for="(item, index) in ifOptions"
+              v-for="(item, index) in ifEnableOptions"
               :label="item.value"
               :key="index"
               >{{ item.label }}</el-radio-button
@@ -267,7 +275,7 @@ const getMinHeight = () => {
           </template>
           <el-radio-group v-model="newFormInline.meta.is_show_menu">
             <el-radio-button
-              v-for="(item, index) in ifOptions"
+              v-for="(item, index) in ifEnableOptions"
               :label="item.value"
               :key="index"
               >{{ item.label }}</el-radio-button
@@ -315,7 +323,7 @@ const getMinHeight = () => {
           </template>
           <el-radio-group v-model="newFormInline.meta.frame_loading">
             <el-radio-button
-              v-for="(item, index) in ifOptions"
+              v-for="(item, index) in ifEnableOptions"
               :label="item.value"
               :key="index"
               >{{ item.label }}</el-radio-button

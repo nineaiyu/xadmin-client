@@ -1,3 +1,35 @@
+tableBar:
+  loose: Loose
+  default: Default
+  compact: Compact
+  refresh: Refresh
+  density: Density
+  columnDisplay: Column Display
+  columnSettings: Column Settings
+  fold: Fold
+  unfold: Unfold
+
+avatarUpload:
+  tips: 'Tips: Right-click the cropping area can open the function menu'
+  imageSize: "Image size: { x } x { y } pixels"
+  fileSize: "File size: { x } ({ y } bytes)"
+
+cropper:
+  upload: Upload
+  download: Download
+  change: Circular Rectangle Switch
+  reset: Reset
+  up: Long press to move up
+  down: Long press to move down
+  left: Long press to move left
+  right: Long press to move right
+  zoomIn: Long press to zoom in
+  zoomOut: Long press to zoom out
+  flipHorizontal: Flip Horizontal
+  flipVertical: Flip Vertical
+  anticlockwise: Anticlockwise Rotation
+  clockwise: Clockwise Rotation
+
 layout:
   notice: Notice
   announcement: Announcement
@@ -231,6 +263,9 @@ menu:
   permissionCode: PermissionCode
   permissionPath: PermissionPath
   requestMethod: RequestMethod
+  directory: Directory
+  menu: Menu
+  permissions: Permissions
 
 operation:
   module: Module

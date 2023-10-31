@@ -1,3 +1,35 @@
+tableBar:
+  loose: 宽松
+  default: 默认
+  compact: 紧凑
+  refresh: 刷新
+  density: 密度
+  columnDisplay: 列展示
+  columnSettings: 列设置
+  fold: 折叠
+  unfold: 展开
+
+avatarUpload:
+  tips: 温馨提示：右键上方裁剪区可开启功能菜单
+  imageSize: 图像大小：{ x } x { y } 像素
+  fileSize: 文件大小：{ x } （{ y } 字节）
+
+cropper:
+  upload: 上传
+  download: 下载
+  change: 圆形矩形裁剪
+  reset: 重置
+  up: 上移（可长按）
+  down: 下移（可长按）
+  left: 左移（可长按）
+  right: 右移（可长按）
+  zoomIn: 放大（可长按）
+  zoomOut: 缩小（可长按）
+  flipHorizontal: 水平翻转
+  flipVertical: 垂直翻转
+  anticlockwise: 逆时针旋转
+  clockwise: 顺时针旋转
+
 layout:
   notice: 消息通知
   announcement: 系统公告
@@ -231,6 +263,9 @@ menu:
   permissionCode: 权限标识
   permissionPath: 权限路由
   requestMethod: 请求方式
+  directory: 目录
+  menu: 菜单
+  permissions: 权限
 
 operation:
   module: 模块
