@@ -39,7 +39,7 @@ const {
 </script>
 
 <template>
-  <div class="main" v-if="hasAuth('list:systemRole')">
+  <div v-if="hasAuth('list:systemRole')" class="main">
     <el-form
       ref="formRef"
       :inline="true"
@@ -79,8 +79,8 @@ const {
         <el-select
           v-model="form.ordering"
           style="width: 180px"
-          @change="onSearch(true)"
           clearable
+          @change="onSearch(true)"
         >
           <el-option
             v-for="item in sortOptions"
@@ -123,11 +123,11 @@ const {
               {{ t("buttons.hscancel") }}
             </el-button>
             <el-popconfirm
+              v-if="hasAuth('manyDelete:systemRole')"
               :title="
                 t('buttons.hsbatchdeleteconfirm', { count: manySelectCount })
               "
               @confirm="handleManyDelete"
-              v-if="hasAuth('manyDelete:systemRole')"
             >
               <template #reference>
                 <el-button type="danger" plain :icon="useRenderIcon(Delete)">
@@ -172,9 +172,9 @@ const {
         >
           <template #operation="{ row }">
             <el-button
+              v-if="hasAuth('update:systemRole')"
               class="reset-margin"
               link
-              v-if="hasAuth('update:systemRole')"
               type="primary"
               :size="size"
               :icon="useRenderIcon(EditPen)"
@@ -183,9 +183,9 @@ const {
               {{ t("buttons.hsedit") }}
             </el-button>
             <el-popconfirm
+              v-if="hasAuth('delete:systemRole')"
               :title="t('buttons.hsconfirmdelete')"
               @confirm="handleDelete(row)"
-              v-if="hasAuth('delete:systemRole')"
             >
               <template #reference>
                 <el-button

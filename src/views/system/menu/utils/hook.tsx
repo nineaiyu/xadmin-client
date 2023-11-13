@@ -10,7 +10,7 @@ import {
 import { reactive, ref, computed, onMounted, h } from "vue";
 import { addDialog } from "@/components/ReDialog/index";
 import editForm from "../edit.vue";
-import { FormItemProps } from "./types";
+import type { FormItemProps } from "./types";
 import { handleTree } from "@/utils/tree";
 import { cloneDeep } from "@pureadmin/utils";
 import { getMenuFromPk, getMenuOrderPk } from "@/utils";

@@ -22,12 +22,12 @@ const newFormInline = ref(props.formInline);
     <el-row :gutter="30">
       <re-col>
         <el-form-item :label="t('user.username')" prop="username">
-          <el-input disabled v-model="newFormInline.username" />
+          <el-input v-model="newFormInline.username" disabled />
         </el-form-item>
       </re-col>
       <re-col>
         <el-form-item :label="t('user.nickname')" prop="nickname">
-          <el-input disabled v-model="newFormInline.nickname" />
+          <el-input v-model="newFormInline.nickname" disabled />
         </el-form-item>
       </re-col>
       <re-col>

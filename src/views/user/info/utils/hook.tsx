@@ -1,6 +1,6 @@
 import "./reset.css";
 import { message } from "@/utils/message";
-import { FormItemProps } from "./types";
+import type { FormItemProps } from "./types";
 import {
   updateUserInfoApi,
   uploadUserInfoAvatarApi,

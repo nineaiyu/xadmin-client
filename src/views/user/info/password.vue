@@ -147,9 +147,9 @@ watch(
     </el-row>
     <el-form-item>
       <el-popconfirm
+        v-if="hasAuth('update:UserInfoPassword')"
         :title="t('buttons.hsconfirmdupdate')"
         @confirm="handleUpdate(password)"
-        v-if="hasAuth('update:UserInfoPassword')"
       >
         <template #reference>
           <el-button>{{ t("buttons.hssave") }}</el-button>

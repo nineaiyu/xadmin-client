@@ -112,15 +112,15 @@ onMounted(() => {
     </el-form-item>
     <el-form-item :label="t('role.permissions')">
       <el-input
+        v-model="searchValue"
         class="filter-item"
         clearable
-        v-model="searchValue"
         :placeholder="t('buttons.hssearch')"
       />
       <el-tree
-        :data="menuTreeData"
-        v-loading="loading"
         ref="treeRoleRef"
+        v-loading="loading"
+        :data="menuTreeData"
         show-checkbox
         node-key="pk"
         highlight-current

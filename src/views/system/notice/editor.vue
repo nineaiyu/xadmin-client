@@ -226,9 +226,9 @@ const remoteMethod = (query: string) => {
           </re-col>
           <re-col>
             <el-form-item
+              v-if="newFormInline.notice_type === 1"
               :label="t('notice.userId')"
               prop="owner"
-              v-if="newFormInline.notice_type === 1"
             >
               <el-select
                 v-model="newFormInline.owners"
@@ -282,8 +282,8 @@ const remoteMethod = (query: string) => {
           style="border-bottom: 1px solid #ccc"
         />
         <Editor
-          v-loading="loading"
           v-model="newFormInline.message"
+          v-loading="loading"
           :defaultConfig="editorConfig"
           :mode="mode"
           style="height: 400px; overflow-y: hidden"

@@ -6,10 +6,10 @@ import { getRefreshToken, multipleTabsKey, removeToken } from "@/utils/auth";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import {
-  Router,
+  type Router,
   createRouter,
-  RouteRecordRaw,
-  RouteComponent
+  type RouteRecordRaw,
+  type RouteComponent
 } from "vue-router";
 import {
   ascending,

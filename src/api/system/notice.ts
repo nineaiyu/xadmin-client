@@ -1,5 +1,5 @@
 import { http } from "@/utils/http";
-import { Result } from "@/api/types";
+import type { Result } from "@/api/types";
 
 export const getNoticeListApi = (data?: object) => {
   return http.request<Result>("get", "/api/system/message/notice", {

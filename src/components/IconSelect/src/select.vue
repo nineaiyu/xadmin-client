@@ -147,8 +147,8 @@ watch(
           </template>
 
           <el-input
-            class="p-2"
             v-model="filterValue"
+            class="p-2"
             :placeholder="t('buttons.hssearch')"
             clearable
           />

@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { store } from "@/store";
-import { userType } from "./types";
+import type { userType } from "./types";
 import { routerArrays } from "@/layout/types";
 import { router, resetRouter } from "@/router";
 import { storageLocal } from "@pureadmin/utils";
@@ -9,10 +9,10 @@ import {
   registerApi,
   refreshTokenApi,
   logoutApi,
-  UserInfo,
-  UserInfoResult
+  type UserInfo,
+  type UserInfoResult
 } from "@/api/auth";
-import { TokenResult } from "@/api/auth";
+import type { TokenResult } from "@/api/auth";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import {
   setToken,

@@ -17,8 +17,8 @@ const { t } = useI18n();
   <div v-if="props.list.length">
     <NoticeItem
       v-for="(item, index) in props.list"
-      :noticeItem="item"
       :key="index"
+      :noticeItem="item"
     />
   </div>
   <el-empty v-else :description="t('layout.noData')" />

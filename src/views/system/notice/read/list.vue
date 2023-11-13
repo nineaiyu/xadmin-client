@@ -40,7 +40,7 @@ const {
 </script>
 
 <template>
-  <div class="main" v-if="hasAuth('list:systemNoticeRead')">
+  <div v-if="hasAuth('list:systemNoticeRead')" class="main">
     <el-form
       ref="formRef"
       :inline="true"
@@ -97,8 +97,8 @@ const {
           v-model="form.level"
           class="filter-item"
           style="width: 180px"
-          @change="onSearch(true)"
           clearable
+          @change="onSearch(true)"
         >
           <el-option
             v-for="item in levelChoices"
@@ -114,8 +114,8 @@ const {
           v-model="form.notice_type"
           class="filter-item"
           style="width: 180px"
-          @change="onSearch(true)"
           clearable
+          @change="onSearch(true)"
         >
           <el-option
             v-for="item in noticeChoices"
@@ -141,8 +141,8 @@ const {
         <el-select
           v-model="form.ordering"
           style="width: 180px"
-          @change="onSearch(true)"
           clearable
+          @change="onSearch(true)"
         >
           <el-option
             v-for="item in sortOptions"
@@ -185,11 +185,11 @@ const {
               {{ t("buttons.hscancel") }}
             </el-button>
             <el-popconfirm
+              v-if="hasAuth('manyDelete:systemNoticeRead')"
               :title="
                 t('buttons.hsbatchdeleteconfirm', { count: manySelectCount })
               "
               @confirm="handleManyDelete"
-              v-if="hasAuth('manyDelete:systemNoticeRead')"
             >
               <template #reference>
                 <el-button type="danger" plain :icon="useRenderIcon(Delete)">
@@ -225,20 +225,20 @@ const {
         >
           <template #operation="{ row }">
             <el-button
+              v-if="hasAuth('list:systemNoticeRead')"
               class="reset-margin"
               link
               type="primary"
-              v-if="hasAuth('list:systemNoticeRead')"
               :size="size"
-              @click="showDialog(row.notice_info)"
               :icon="useRenderIcon(Eye)"
+              @click="showDialog(row.notice_info)"
             >
               {{ t("buttons.hsdetail") }}
             </el-button>
             <el-popconfirm
+              v-if="hasAuth('delete:systemNoticeRead')"
               :title="t('buttons.hsconfirmdelete')"
               @confirm="handleDelete(row)"
-              v-if="hasAuth('delete:systemNoticeRead')"
             >
               <template #reference>
                 <el-button

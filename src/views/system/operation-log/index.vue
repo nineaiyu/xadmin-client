@@ -35,7 +35,7 @@ const {
 </script>
 
 <template>
-  <div class="main" v-if="hasAuth('list:systemOperationLog')">
+  <div v-if="hasAuth('list:systemOperationLog')" class="main">
     <el-form
       ref="formRef"
       :inline="true"
@@ -91,8 +91,8 @@ const {
         <el-select
           v-model="form.ordering"
           style="width: 180px"
-          @change="onSearch(true)"
           clearable
+          @change="onSearch(true)"
         >
           <el-option
             v-for="item in sortOptions"
@@ -135,11 +135,11 @@ const {
               {{ t("buttons.hscancel") }}
             </el-button>
             <el-popconfirm
+              v-if="hasAuth('manyDelete:systemOperationLog')"
               :title="
                 t('buttons.hsbatchdeleteconfirm', { count: manySelectCount })
               "
               @confirm="handleManyDelete"
-              v-if="hasAuth('manyDelete:systemOperationLog')"
             >
               <template #reference>
                 <el-button type="danger" plain :icon="useRenderIcon(Delete)">
@@ -175,9 +175,9 @@ const {
         >
           <template #operation="{ row }">
             <el-popconfirm
+              v-if="hasAuth('delete:systemOperationLog')"
               :title="t('buttons.hsconfirmdelete')"
               @confirm="handleDelete(row)"
-              v-if="hasAuth('delete:systemOperationLog')"
             >
               <template #reference>
                 <el-button

@@ -174,8 +174,8 @@ watch(loginDay, value => {
               @click="translationCh"
             >
               <IconifyIconOffline
-                class="check-zh"
                 v-show="locale === 'zh'"
+                class="check-zh"
                 :icon="Check"
               />
               简体中文
@@ -185,7 +185,7 @@ watch(loginDay, value => {
               :class="['dark:!text-white', getDropdownItemClass(locale, 'en')]"
               @click="translationEn"
             >
-              <span class="check-en" v-show="locale === 'en'">
+              <span v-show="locale === 'en'" class="check-en">
                 <IconifyIconOffline :icon="Check" />
               </span>
               English
@@ -226,8 +226,8 @@ watch(loginDay, value => {
                 prop="username"
               >
                 <el-input
-                  clearable
                   v-model="ruleForm.username"
+                  clearable
                   :placeholder="t('login.username')"
                   :prefix-icon="useRenderIcon(User)"
                 />
@@ -237,9 +237,9 @@ watch(loginDay, value => {
             <Motion :delay="150">
               <el-form-item prop="password">
                 <el-input
+                  v-model="ruleForm.password"
                   clearable
                   show-password
-                  v-model="ruleForm.password"
                   :placeholder="t('login.password')"
                   :prefix-icon="useRenderIcon(Lock)"
                 />
@@ -249,8 +249,8 @@ watch(loginDay, value => {
             <Motion :delay="200">
               <el-form-item prop="captcha_code">
                 <el-input
-                  clearable
                   v-model="ruleForm.captcha_code"
+                  clearable
                   :placeholder="t('login.verifyCode')"
                   :prefix-icon="useRenderIcon('ri:shield-keyhole-line')"
                 >
@@ -277,9 +277,9 @@ watch(loginDay, value => {
                         }"
                       >
                         <option
-                          :value="item"
                           v-for="item in loginDayList"
                           :key="item"
+                          :value="item"
                         >
                           {{ item }}
                         </option>

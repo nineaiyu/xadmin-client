@@ -1,9 +1,9 @@
 import {
   createWebHashHistory,
   createWebHistory,
-  RouteComponent,
-  RouteRecordRaw,
-  RouterHistory
+  type RouteComponent,
+  type RouteRecordRaw,
+  type RouterHistory
 } from "vue-router";
 import { router } from "./index";
 import { isProxy, toRaw } from "vue";
@@ -17,14 +17,14 @@ import {
   storageLocal
 } from "@pureadmin/utils";
 import { getConfig } from "@/config";
-import { menuType } from "@/layout/types";
+import type { menuType } from "@/layout/types";
 import { buildHierarchyTree } from "@/utils/tree";
 import { userKey } from "@/utils/auth";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 // 动态路由
 import { getAsyncRoutes } from "@/api/routes";
-import { UserInfo } from "@/api/auth";
+import type { UserInfo } from "@/api/auth";
 import { useUserStoreHook } from "@/store/modules/user";
 
 const IFrame = () => import("@/layout/frameView.vue");

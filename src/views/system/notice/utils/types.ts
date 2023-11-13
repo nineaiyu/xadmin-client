@@ -1,4 +1,4 @@
-import { SlateElement } from "@wangeditor/editor";
+import type { SlateElement } from "@wangeditor/editor";
 
 type ImageElement = SlateElement & {
   src: string;

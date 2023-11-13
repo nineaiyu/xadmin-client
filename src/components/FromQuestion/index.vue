@@ -17,9 +17,9 @@ defineOptions({ name: "FromQuestion" });
 <template>
   <div class="flex justify-center items-center">
     <el-tooltip
+      v-if="props.description"
       trigger="hover"
       :content="props.description"
-      v-if="props.description"
       placement="top"
       effect="dark"
     >

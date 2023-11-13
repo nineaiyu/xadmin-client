@@ -1,6 +1,6 @@
 import { http } from "@/utils/http";
-import { Result, ResultDetail } from "@/api/types";
-import { UserInfoResult } from "@/api/auth";
+import type { Result, ResultDetail } from "@/api/types";
+import type { UserInfoResult } from "@/api/auth";
 
 export const getUserInfoApi = () => {
   return http.request<UserInfoResult>("get", "/api/system/userinfo/self");

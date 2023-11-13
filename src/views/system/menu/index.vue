@@ -31,9 +31,10 @@ const {
     <el-row :gutter="24">
       <el-col :xs="24" :sm="24" :md="13" :lg="13" :xl="13">
         <tree
-          class="pb-20"
+          v-if="hasAuth('list:systemMenu')"
           v-model:form-inline="menuData"
           v-model:parent-ids="parentIds"
+          class="pb-20"
           :tree-data="treeData"
           :default-data="defaultData"
           @getMenuData="getMenuData"
@@ -42,19 +43,18 @@ const {
           @addNewMenu="addNewMenu"
           @handleDrag="handleDrag"
           @handleManyDelete="handleManyDelete"
-          v-if="hasAuth('list:systemMenu')"
         />
       </el-col>
       <el-col :xs="24" :sm="24" :md="11" :lg="11" :xl="11">
         <el-affix :offset="85">
           <edit
+            v-if="hasAuth('list:systemMenu')"
             class="pb-20"
             :form-inline="menuData"
             :choices-dict="choicesDict"
             :tree-data="treeData"
             :menu-url-list="menuUrlList"
             @handleConfirm="handleConfirm"
-            v-if="hasAuth('list:systemMenu')"
           />
         </el-affix>
       </el-col>

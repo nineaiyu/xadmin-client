@@ -115,8 +115,8 @@ const initToken = () => {
         prop="username"
       >
         <el-input
-          clearable
           v-model="ruleForm.username"
+          clearable
           :placeholder="t('login.username')"
           :prefix-icon="useRenderIcon(User)"
         />
@@ -161,9 +161,9 @@ const initToken = () => {
     <Motion :delay="200">
       <el-form-item prop="password">
         <el-input
+          v-model="ruleForm.password"
           clearable
           show-password
-          v-model="ruleForm.password"
           :placeholder="t('login.password')"
           :prefix-icon="useRenderIcon(Lock)"
         />
@@ -173,9 +173,9 @@ const initToken = () => {
     <Motion :delay="250">
       <el-form-item :rules="repeatPasswordRule" prop="repeatPassword">
         <el-input
+          v-model="ruleForm.repeatPassword"
           clearable
           show-password
-          v-model="ruleForm.repeatPassword"
           :placeholder="t('login.sure')"
           :prefix-icon="useRenderIcon(Lock)"
         />

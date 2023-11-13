@@ -190,16 +190,16 @@ onMounted(() => {
             {{ t("menu.menus") }}
           </p>
           <el-button
+            v-if="hasAuth('create:systemMenu')"
             size="small"
             class="ml-2"
             @click="emit('openDialog', 0)"
-            v-if="hasAuth('create:systemMenu')"
             >{{ t("buttons.hsadd") }}</el-button
           >
           <el-input
+            v-model="searchValue"
             size="small"
             class="flex-1"
-            v-model="searchValue"
             :placeholder="t('menu.verifyTitle')"
             clearable
           >
@@ -282,20 +282,20 @@ onMounted(() => {
     </el-affix>
     <el-tree
       ref="treeRef"
+      v-loading="loading"
       :data="props.treeData"
       node-key="pk"
       size="small"
-      v-loading="loading"
       :props="defaultProps"
       show-checkbox
       check-strictly
       :expand-on-click-node="false"
       :default-expanded-keys="parentIds"
       :filter-node-method="filterMenuNode"
-      @node-drag-end="handleDragEnd"
       :allow-drop="handleDragDrop"
       highlight-current
       :draggable="hasAuth('rank:systemMenu')"
+      @node-drag-end="handleDragEnd"
       @node-click="nodeClick"
     >
       <template #default="{ node, data }">
@@ -322,11 +322,11 @@ onMounted(() => {
         </span>
         <span class="flex items-center">
           <el-tooltip
+            v-if="hasAuth('create:systemMenu') && data.menu_type !== 2"
             class="box-item"
             effect="dark"
             :content="t('buttons.hsadd')"
             placement="top-start"
-            v-if="hasAuth('create:systemMenu') && data.menu_type !== 2"
           >
             <IconifyIconOffline
               :icon="DocumentAdd"

@@ -35,7 +35,7 @@ defineExpose({ getImgCode });
   <el-image
     style="width: 120px; height: 40px"
     class="cursor-pointer"
-    @click="getImgCode"
     :src="imgUrl"
+    @click="getImgCode"
   />
 </template>

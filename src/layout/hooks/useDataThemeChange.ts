@@ -1,7 +1,7 @@
 import { ref } from "vue";
 import { getConfig } from "@/config";
 import { useLayout } from "./useLayout";
-import { themeColorsType } from "../types";
+import type { themeColorsType } from "../types";
 import { useGlobal } from "@pureadmin/utils";
 import { useEpThemeStoreHook } from "@/store/modules/epTheme";
 import {

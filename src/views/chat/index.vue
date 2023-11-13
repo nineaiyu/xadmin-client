@@ -113,7 +113,7 @@ const filteredItems = computed(() => {
       </el-card>
       <el-card>
         <el-form label-width="100">
-          <el-form-item label="昵称" v-if="!enter">
+          <el-form-item v-if="!enter" label="昵称">
             <div class="w-[60%]">
               <el-input
                 v-model="username"
@@ -123,12 +123,12 @@ const filteredItems = computed(() => {
             </div>
             <el-button @click="enterRoomHandle">加入房间</el-button>
           </el-form-item>
-          <el-form-item label="请输入：" v-else>
+          <el-form-item v-else label="请输入：">
             <div class="w-[60%]">
               <el-input
                 v-model="chatMsg"
-                @keyup.enter="chatHandle"
                 placeholder="输入消息并回车发送"
+                @keyup.enter="chatHandle"
               />
             </div>
             <el-button @click="chatHandle">发送</el-button>

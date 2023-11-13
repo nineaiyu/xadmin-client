@@ -38,7 +38,7 @@ function onCropper({ base64, blob, info }) {
             @cropper="onCropper"
             @readied="showPopover = true"
           />
-          <p class="mt-1 text-center" v-show="showPopover">
+          <p v-show="showPopover" class="mt-1 text-center">
             {{ t("avatarUpload.tips") }}
           </p>
         </div>

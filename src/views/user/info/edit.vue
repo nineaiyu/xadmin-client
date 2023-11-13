@@ -108,9 +108,9 @@ const handleUpdate = row => {
     </el-row>
     <el-form-item>
       <el-popconfirm
+        v-if="hasAuth('update:UserInfo')"
         :title="t('buttons.hsconfirmdupdate')"
         @confirm="handleUpdate(newFormInline)"
-        v-if="hasAuth('update:UserInfo')"
       >
         <template #reference>
           <el-button>{{ t("buttons.hssave") }}</el-button>

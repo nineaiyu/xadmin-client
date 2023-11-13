@@ -1,5 +1,5 @@
 import { store } from "@/store";
-import { appType } from "./types";
+import type { appType } from "./types";
 import { defineStore } from "pinia";
 import { getConfig, responsiveStorageNameSpace } from "@/config";
 import { deviceDetection, storageLocal } from "@pureadmin/utils";

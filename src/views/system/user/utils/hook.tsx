@@ -18,7 +18,7 @@ import {
   ElProgress,
   ElMessageBox
 } from "element-plus";
-import { type PaginationProps, TableColumns } from "@pureadmin/table";
+import type { PaginationProps, TableColumns } from "@pureadmin/table";
 import { utils, writeFile } from "xlsx";
 import {
   type Ref,
@@ -34,7 +34,7 @@ import { addDialog } from "@/components/ReDialog/index";
 import croppingUpload from "@/components/AvatarUpload/index.vue";
 import roleForm from "../form/role.vue";
 import editForm from "../form/index.vue";
-import { FormItemProps, RoleFormItemProps } from "./types";
+import type { FormItemProps, RoleFormItemProps } from "./types";
 import { empowerRoleApi, getRoleListApi } from "@/api/system/role";
 import {
   cloneDeep,

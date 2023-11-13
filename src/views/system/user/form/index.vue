@@ -64,7 +64,7 @@ defineExpose({ getRef });
           />
         </el-form-item>
       </re-col>
-      <re-col :value="12" :xs="24" :sm="24" v-if="newFormInline.is_add">
+      <re-col v-if="newFormInline.is_add" :value="12" :xs="24" :sm="24">
         <el-form-item :label="t('user.password')" prop="password">
           <el-input
             v-model="newFormInline.password"

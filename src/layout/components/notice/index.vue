@@ -70,10 +70,10 @@ onMounted(() => {
     <template #dropdown>
       <el-dropdown-menu>
         <el-tabs
-          :stretch="true"
           v-model="activeKey"
-          class="dropdown-tabs"
           v-loading="loading"
+          :stretch="true"
+          class="dropdown-tabs"
           :style="{ width: notices.length === 0 ? '200px' : '330px' }"
         >
           <el-empty

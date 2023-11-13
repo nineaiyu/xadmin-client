@@ -52,7 +52,7 @@ const {
 </script>
 
 <template>
-  <div class="main" v-if="hasAuth('list:systemUser')">
+  <div v-if="hasAuth('list:systemUser')" class="main">
     <div class="float-left w-[99%]">
       <el-form
         ref="formRef"
@@ -103,8 +103,8 @@ const {
           <el-select
             v-model="form.ordering"
             style="width: 180px"
-            @change="onSearch(true)"
             clearable
+            @change="onSearch(true)"
           >
             <el-option
               v-for="item in sortOptions"
@@ -148,11 +148,11 @@ const {
                 {{ t("buttons.hscancel") }}
               </el-button>
               <el-popconfirm
+                v-if="hasAuth('manyDelete:systemUser')"
                 :title="
                   t('buttons.hsbatchdeleteconfirm', { count: manySelectCount })
                 "
                 @confirm="handleManyDelete"
-                v-if="hasAuth('manyDelete:systemUser')"
               >
                 <template #reference>
                   <el-button type="danger" plain :icon="useRenderIcon(Delete)">
@@ -170,13 +170,13 @@ const {
               {{ t("user.batchSendNotice") }}
             </el-button>
             <el-button
+              v-if="hasAuth('list:systemUser') && manySelectCount > 0"
               v-optimize="{
                 event: 'click',
                 fn: exportExcel,
                 immediate: true,
                 timeout: 5000
               }"
-              v-if="hasAuth('list:systemUser') && manySelectCount > 0"
               type="primary"
               :icon="useRenderIcon(Download)"
             >
@@ -225,20 +225,20 @@ const {
             </template>
             <template #operation="{ row }">
               <el-button
+                v-if="hasAuth('update:systemUser')"
                 class="reset-margin"
                 link
                 type="primary"
-                v-if="hasAuth('update:systemUser')"
                 :size="size"
-                @click="openDialog(false, row)"
                 :icon="useRenderIcon(EditPen)"
+                @click="openDialog(false, row)"
               >
                 {{ t("buttons.hsedit") }}
               </el-button>
               <el-popconfirm
+                v-if="hasAuth('delete:systemUser')"
                 :title="t('buttons.hsconfirmdelete')"
                 @confirm="handleDelete(row)"
-                v-if="hasAuth('delete:systemUser')"
               >
                 <template #reference>
                   <el-button

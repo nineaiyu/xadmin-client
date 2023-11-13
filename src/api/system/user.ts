@@ -1,5 +1,5 @@
 import { http } from "@/utils/http";
-import { Result, ResultDetail } from "@/api/types";
+import type { Result, ResultDetail } from "@/api/types";
 
 /** 获取用户管理列表 */
 export const getUserListApi = (data?: object) => {

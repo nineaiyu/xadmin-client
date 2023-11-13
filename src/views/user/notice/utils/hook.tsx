@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import { message } from "@/utils/message";
-import { type PaginationProps } from "@pureadmin/table";
+import type { PaginationProps } from "@pureadmin/table";
 import { reactive, ref, h, onMounted, toRaw, type Ref } from "vue";
 import {
   getUserNoticeListApi,
@@ -8,7 +8,7 @@ import {
   updateUserNoticeReadAllApi
 } from "@/api/system/notice";
 import { useRoute } from "vue-router";
-import { FormItemProps } from "./types";
+import type { FormItemProps } from "./types";
 import showForm from "../show.vue";
 import { cloneDeep, getKeyList, isEmpty, isString } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog/index";

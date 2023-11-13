@@ -41,7 +41,7 @@ const {
 </script>
 
 <template>
-  <div class="main" v-if="hasAuth('list:userNotice')">
+  <div v-if="hasAuth('list:userNotice')" class="main">
     <el-form
       ref="formRef"
       :inline="true"
@@ -91,8 +91,8 @@ const {
           v-model="form.level"
           class="filter-item"
           style="width: 180px"
-          @change="onSearch(true)"
           clearable
+          @change="onSearch(true)"
         >
           <el-option
             v-for="item in levelChoices"
@@ -108,8 +108,8 @@ const {
           v-model="form.notice_type"
           class="filter-item"
           style="width: 180px"
-          @change="onSearch(true)"
           clearable
+          @change="onSearch(true)"
         >
           <el-option
             v-for="item in noticeChoices"
@@ -124,8 +124,8 @@ const {
         <el-select
           v-model="form.ordering"
           style="width: 180px"
-          @change="onSearch(true)"
           clearable
+          @change="onSearch(true)"
         >
           <el-option
             v-for="item in sortOptions"
@@ -168,11 +168,11 @@ const {
               {{ t("buttons.hscancel") }}
             </el-button>
             <el-popconfirm
+              v-if="hasAuth('update:userNoticeRead')"
               :title="
                 t('buttons.hsbatchdeleteconfirm', { count: manySelectCount })
               "
               @confirm="handleManyRead"
-              v-if="hasAuth('update:userNoticeRead')"
             >
               <template #reference>
                 <el-button type="success" plain :icon="useRenderIcon(Success)">
@@ -182,14 +182,14 @@ const {
             </el-popconfirm>
           </div>
           <el-button
+            v-if="hasAuth('update:userNoticeReadAll') && unreadCount > 0"
             class="mr-2"
             type="primary"
             @click="handleReadAll"
-            v-if="hasAuth('update:userNoticeReadAll') && unreadCount > 0"
           >
             {{ t("notice.allRead") }}
           </el-button>
-          <el-text type="primary" v-if="unreadCount > 0">
+          <el-text v-if="unreadCount > 0" type="primary">
             {{ t("notice.unreadMessage") }} {{ unreadCount }}</el-text
           >
         </el-space>
@@ -219,13 +219,13 @@ const {
         >
           <template #operation="{ row }">
             <el-button
+              v-if="hasAuth('list:userNotice')"
               class="reset-margin"
               link
               type="primary"
-              v-if="hasAuth('list:userNotice')"
               :size="size"
-              @click="showDialog(row)"
               :icon="useRenderIcon(Eye)"
+              @click="showDialog(row)"
             >
               {{ t("buttons.hsdetail") }}
             </el-button>

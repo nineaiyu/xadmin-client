@@ -1,5 +1,5 @@
 import { http } from "@/utils/http";
-import { MenuDataResult, Result } from "@/api/types";
+import type { MenuDataResult, Result } from "@/api/types";
 
 export const getMenuListApi = (data?: object) => {
   return http.request<MenuDataResult>("get", "/api/system/menu", {

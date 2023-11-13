@@ -122,8 +122,8 @@ const getMinHeight = () => {
         >
           <el-radio-button
             v-for="(item, index) in MenuTypeOptions"
-            :label="item.value"
             :key="index"
+            :label="item.value"
             :disabled="
               !newFormInline.is_add &&
               ((newFormInline.menu_type === 2 && index !== 2) ||
@@ -247,8 +247,8 @@ const getMinHeight = () => {
           <el-radio-group v-model="newFormInline.meta.is_keepalive">
             <el-radio-button
               v-for="(item, index) in ifEnableOptions"
-              :label="item.value"
               :key="index"
+              :label="item.value"
               >{{ item.label }}</el-radio-button
             >
           </el-radio-group>
@@ -257,8 +257,8 @@ const getMinHeight = () => {
           <el-radio-group v-model="newFormInline.meta.is_show_parent">
             <el-radio-button
               v-for="(item, index) in ifEnableOptions"
-              :label="item.value"
               :key="index"
+              :label="item.value"
               >{{ item.label }}</el-radio-button
             >
           </el-radio-group>
@@ -276,8 +276,8 @@ const getMinHeight = () => {
           <el-radio-group v-model="newFormInline.meta.is_show_menu">
             <el-radio-button
               v-for="(item, index) in ifEnableOptions"
-              :label="item.value"
               :key="index"
+              :label="item.value"
               >{{ item.label }}</el-radio-button
             >
           </el-radio-group>
@@ -293,8 +293,8 @@ const getMinHeight = () => {
           <el-radio-group v-model="newFormInline.is_active">
             <el-radio-button
               v-for="(item, index) in ifEnableOptions"
-              :label="item.value"
               :key="index"
+              :label="item.value"
               >{{ item.label }}</el-radio-button
             >
           </el-radio-group>
@@ -324,8 +324,8 @@ const getMinHeight = () => {
           <el-radio-group v-model="newFormInline.meta.frame_loading">
             <el-radio-button
               v-for="(item, index) in ifEnableOptions"
-              :label="item.value"
               :key="index"
+              :label="item.value"
               >{{ item.label }}</el-radio-button
             >
           </el-radio-group>
@@ -354,8 +354,8 @@ const getMinHeight = () => {
         </el-form-item>
         <el-form-item :label="t('menu.permissionPath')" prop="path">
           <el-select
-            style="width: 100%"
             v-model="newFormInline.path"
+            style="width: 100%"
             clearable
             placeholder="Select"
             filterable
@@ -394,8 +394,8 @@ const getMinHeight = () => {
           <el-radio-group v-model="newFormInline.is_active">
             <el-radio-button
               v-for="(item, index) in ifEnableOptions"
-              :label="item.value"
               :key="index"
+              :label="item.value"
               >{{ item.label }}</el-radio-button
             >
           </el-radio-group>

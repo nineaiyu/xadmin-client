@@ -2,7 +2,7 @@ import { ElMessage } from "element-plus";
 import { getUsedAccessToken } from "@/utils/token";
 const { VITE_WSS_DOMAIN } = import.meta.env;
 
-interface socket {
+interface Socket {
   close_callback: Function | null;
   open_callback: Function | null;
   receiveMessage: Function | null;
@@ -31,7 +31,7 @@ interface socket {
   reconnect: () => void;
 }
 
-const socket: socket = {
+const socket: Socket = {
   receiveMessage: null,
   username: "",
   websocket: null,

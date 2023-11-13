@@ -1,7 +1,7 @@
 import Cookies from "js-cookie";
 import { storageLocal } from "@pureadmin/utils";
 import { useUserStoreHook } from "@/store/modules/user";
-import { TokenInfo, UserInfo } from "@/api/auth";
+import type { TokenInfo, UserInfo } from "@/api/auth";
 
 export const userKey = "user-info";
 const TokenKey = "X-Token";

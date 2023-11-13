@@ -42,7 +42,7 @@ const {
 </script>
 
 <template>
-  <div class="main" v-if="hasAuth('list:systemNotice')">
+  <div v-if="hasAuth('list:systemNotice')" class="main">
     <el-form
       ref="formRef"
       :inline="true"
@@ -92,8 +92,8 @@ const {
           v-model="form.level"
           class="filter-item"
           style="width: 180px"
-          @change="onSearch(true)"
           clearable
+          @change="onSearch(true)"
         >
           <el-option
             v-for="item in levelChoices"
@@ -109,8 +109,8 @@ const {
           v-model="form.notice_type"
           class="filter-item"
           style="width: 180px"
-          @change="onSearch(true)"
           clearable
+          @change="onSearch(true)"
         >
           <el-option
             v-for="item in noticeChoices"
@@ -125,8 +125,8 @@ const {
         <el-select
           v-model="form.ordering"
           style="width: 180px"
-          @change="onSearch(true)"
           clearable
+          @change="onSearch(true)"
         >
           <el-option
             v-for="item in sortOptions"
@@ -169,11 +169,11 @@ const {
               {{ t("buttons.hscancel") }}
             </el-button>
             <el-popconfirm
+              v-if="hasAuth('manyDelete:systemNotice')"
               :title="
                 t('buttons.hsbatchdeleteconfirm', { count: manySelectCount })
               "
               @confirm="handleManyDelete"
-              v-if="hasAuth('manyDelete:systemNotice')"
             >
               <template #reference>
                 <el-button type="danger" plain :icon="useRenderIcon(Delete)">
@@ -217,31 +217,31 @@ const {
         >
           <template #operation="{ row }">
             <el-button
+              v-if="hasAuth('list:systemNotice')"
               class="reset-margin"
               link
               type="primary"
-              v-if="hasAuth('list:systemNotice')"
               :size="size"
-              @click="showDialog(row)"
               :icon="useRenderIcon(Eye)"
+              @click="showDialog(row)"
             >
               {{ t("buttons.hsdetail") }}
             </el-button>
             <el-button
+              v-if="hasAuth('update:systemNotice')"
               class="reset-margin"
               link
               type="primary"
-              v-if="hasAuth('update:systemNotice')"
               :size="size"
-              @click="openDialog(false, row)"
               :icon="useRenderIcon(EditPen)"
+              @click="openDialog(false, row)"
             >
               {{ t("buttons.hsedit") }}
             </el-button>
             <el-popconfirm
+              v-if="hasAuth('delete:systemNotice')"
               :title="t('buttons.hsconfirmdelete')"
               @confirm="handleDelete(row)"
-              v-if="hasAuth('delete:systemNotice')"
             >
               <template #reference>
                 <el-button

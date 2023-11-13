@@ -62,8 +62,8 @@ const loading = ref(false);
       </template>
       <div class="wangeditor">
         <Editor
-          v-loading="loading"
           v-model="newFormInline.message"
+          v-loading="loading"
           :defaultConfig="editorConfig"
           :mode="mode"
           style="height: 500px; overflow-y: hidden"

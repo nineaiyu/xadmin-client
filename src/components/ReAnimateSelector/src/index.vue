@@ -83,8 +83,8 @@ function onMouseleave() {
     :placeholder="t('menu.verifyTransition')"
     clearable
     filterable
-    @clear="onClear"
     :filter-method="filterMethod"
+    @clear="onClear"
   >
     <template #empty>
       <div class="w-[280px]">
