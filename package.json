@@ -29,7 +29,8 @@
     "typescript",
     "pinia",
     "vue3",
-    "vite"
+    "vite",
+    "esm"
   ],
   "homepage": "https://github.com/nineaiyu/xadmin-client",
   "repository": {
@@ -49,7 +50,7 @@
     "@pureadmin/descriptions": "^1.2.0",
     "@pureadmin/table": "^2.4.0",
     "@pureadmin/utils": "^1.9.10",
-    "@vueuse/core": "^10.6.0",
+    "@vueuse/core": "^10.6.1",
     "@vueuse/motion": "^2.0.0",
     "@wangeditor/editor": "^5.1.23",
     "@wangeditor/editor-for-vue": "^5.1.12",
@@ -101,8 +102,8 @@
     "@types/sortablejs": "^1.15.5",
     "@typescript-eslint/eslint-plugin": "^6.11.0",
     "@typescript-eslint/parser": "^6.11.0",
-    "@vitejs/plugin-vue": "^4.4.1",
-    "@vitejs/plugin-vue-jsx": "^3.0.2",
+    "@vitejs/plugin-vue": "^4.5.0",
+    "@vitejs/plugin-vue-jsx": "^3.1.0",
     "autoprefixer": "^10.4.16",
     "cloc": "^2.11.0",
     "cssnano": "^6.0.1",
@@ -126,8 +127,6 @@
     "stylelint": "^15.11.0",
     "stylelint-config-html": "^1.1.0",
     "stylelint-config-recess-order": "^4.3.0",
-    "stylelint-config-recommended": "^13.0.0",
-    "stylelint-config-recommended-scss": "^13.1.0",
     "stylelint-config-recommended-vue": "^1.5.0",
     "stylelint-config-standard": "^34.0.0",
     "stylelint-config-standard-scss": "^11.1.0",
@@ -137,7 +136,7 @@
     "svgo": "^3.0.3",
     "tailwindcss": "^3.3.5",
     "typescript": "5.2.2",
-    "vite": "5.0.0-beta.18",
+    "vite": "5.0.0",
     "vite-plugin-cdn-import": "^0.3.5",
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-fake-server": "^2.0.0",
@@ -152,13 +151,6 @@
   },
   "packageManager": "pnpm@8.6.10",
   "pnpm": {
-    "peerDependencyRules": {
-      "ignoreMissing": [
-        "rollup",
-        "webpack",
-        "core-js"
-      ]
-    },
     "allowedDeprecatedVersions": {
       "sourcemap-codec": "*",
       "w3c-hr-time": "*",

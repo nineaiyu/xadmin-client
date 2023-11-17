@@ -141,6 +141,9 @@ function onReset() {
 }
 
 const customNodeClass = data => {
+  if (!data.is_active) {
+    return "is-disabled";
+  }
   if (data.menu_type === 0) {
     return "is-penultimate";
   } else if (data.menu_type === 1) {
@@ -179,186 +182,187 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="h-full bg-bg_color" :style="{ minHeight: `calc(100vh - 133px)` }">
-    <el-affix :offset="85">
-      <el-card :body-style="{ padding: '8px' }">
-        <div class="flex items-center h-[34px]">
-          <p
-            class="flex-1 ml-2 font-bold text-base truncate"
-            :title="t('menu.menus')"
-          >
-            {{ t("menu.menus") }}
-          </p>
-          <el-button
-            v-if="hasAuth('create:systemMenu')"
-            size="small"
-            class="ml-2"
-            @click="emit('openDialog', 0)"
-            >{{ t("buttons.hsadd") }}</el-button
-          >
-          <el-input
-            v-model="searchValue"
-            size="small"
-            class="flex-1"
-            :placeholder="t('menu.verifyTitle')"
-            clearable
-          >
-            <template #suffix>
-              <el-icon class="el-input__icon">
-                <IconifyIconOffline
-                  v-show="searchValue.length === 0"
-                  :icon="Search"
-                />
-              </el-icon>
-            </template>
-          </el-input>
-          <el-dropdown :hide-on-click="false">
-            <IconifyIconOffline
-              class="w-[28px] cursor-pointer"
-              width="18px"
-              :icon="More2Fill"
-            />
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item>
-                  <el-button
-                    :class="buttonClass"
-                    link
-                    type="primary"
-                    :icon="useRenderIcon(isExpand ? ExpandIcon : UnExpandIcon)"
-                    @click="toggleRowExpansionAll(!isExpand)"
-                  >
-                    {{
-                      isExpand
-                        ? t("buttons.hscollapseAll")
-                        : t("buttons.hsexpendAll")
-                    }}
-                  </el-button>
-                </el-dropdown-item>
-                <el-dropdown-item>
-                  <el-button
-                    :class="buttonClass"
-                    link
-                    type="primary"
-                    :icon="useRenderIcon(Reset)"
-                    @click="onReset"
-                  >
-                    {{ t("buttons.hsreset") }}
-                  </el-button>
-                </el-dropdown-item>
-                <el-dropdown-item v-if="hasAuth('list:systemMenu')">
-                  <el-button
-                    :class="buttonClass"
-                    link
-                    type="primary"
-                    :icon="useRenderIcon(Refresh)"
-                    @click="emit('getMenuData')"
-                  >
-                    {{ t("buttons.hsreload") }}
-                  </el-button>
-                </el-dropdown-item>
-                <el-dropdown-item v-if="hasAuth('manyDelete:systemMenu')">
-                  <el-popconfirm
-                    :title="t('buttons.hsconfirmdelete')"
-                    @confirm="emit('handleManyDelete', treeRef)"
-                  >
-                    <template #reference>
-                      <el-button
-                        :class="buttonClass"
-                        link
-                        type="danger"
-                        :icon="useRenderIcon(Delete)"
-                      >
-                        {{ t("buttons.hsbatchdelete") }}
-                      </el-button>
-                    </template>
-                  </el-popconfirm>
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-        </div>
-      </el-card>
-    </el-affix>
-    <el-tree
-      ref="treeRef"
-      v-loading="loading"
-      :data="props.treeData"
-      node-key="pk"
-      size="small"
-      :props="defaultProps"
-      show-checkbox
-      check-strictly
-      :expand-on-click-node="false"
-      :default-expanded-keys="parentIds"
-      :filter-node-method="filterMenuNode"
-      :allow-drop="handleDragDrop"
-      highlight-current
-      :draggable="hasAuth('rank:systemMenu')"
-      @node-drag-end="handleDragEnd"
-      @node-click="nodeClick"
-    >
-      <template #default="{ node, data }">
-        <span
-          :class="[
-            'pr-1',
-            'rounded',
-            'flex',
-            'items-center',
-            'select-none',
-            searchValue.trim().length > 0 &&
-              node.label.includes(searchValue) &&
-              'text-red-500',
-            highlightMap[node.id]?.highlight ? 'dark:text-primary' : ''
-          ]"
-          :style="{
-            background: highlightMap[node.id]?.highlight
-              ? 'var(--el-color-primary-light-7)'
-              : 'transparent'
-          }"
+  <div class="h-full bg-bg_color">
+    <el-card :body-style="{ padding: '8px' }">
+      <div class="flex items-center h-[34px]">
+        <p
+          class="flex-1 ml-2 font-bold text-base truncate"
+          :title="t('menu.menus')"
         >
-          <component :is="useRenderIcon(data.meta.icon)" class="m-1" />
-          {{ `${transformI18n(data.meta.title)}` }}
-        </span>
-        <span class="flex items-center">
-          <el-tooltip
-            v-if="hasAuth('create:systemMenu') && data.menu_type !== 2"
-            class="box-item"
-            effect="dark"
-            :content="t('buttons.hsadd')"
-            placement="top-start"
-          >
-            <IconifyIconOffline
-              :icon="DocumentAdd"
-              class="set-icon"
-              style="width: 26px; height: 20px; margin-left: 8px"
-              @click.stop="emit('addNewMenu', treeRef, data)"
-            />
-          </el-tooltip>
-
-          <el-popconfirm
-            v-if="hasAuth('delete:systemMenu')"
-            :title="t('buttons.hsconfirmdelete')"
-            @confirm.stop="emit('handleDelete', data)"
-          >
-            <template #reference>
+          {{ t("menu.menus") }}
+        </p>
+        <el-button
+          v-if="hasAuth('create:systemMenu')"
+          size="small"
+          class="ml-2"
+          @click="emit('openDialog', 0)"
+          >{{ t("buttons.hsadd") }}</el-button
+        >
+        <el-input
+          v-model="searchValue"
+          size="small"
+          class="flex-1"
+          :placeholder="t('menu.verifyTitle')"
+          clearable
+        >
+          <template #suffix>
+            <el-icon class="el-input__icon">
               <IconifyIconOffline
-                :icon="Delete"
-                class="set-icon"
-                style="width: 26px; height: 20px; color: red"
+                v-show="searchValue.length === 0"
+                :icon="Search"
               />
-            </template>
-          </el-popconfirm>
-          <el-text
-            v-if="data.menu_type === 2"
-            type="success"
-            style="margin-left: 10px"
+            </el-icon>
+          </template>
+        </el-input>
+        <el-dropdown :hide-on-click="false">
+          <IconifyIconOffline
+            class="w-[28px] cursor-pointer"
+            width="18px"
+            :icon="More2Fill"
+          />
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item>
+                <el-button
+                  :class="buttonClass"
+                  link
+                  type="primary"
+                  :icon="useRenderIcon(isExpand ? ExpandIcon : UnExpandIcon)"
+                  @click="toggleRowExpansionAll(!isExpand)"
+                >
+                  {{
+                    isExpand
+                      ? t("buttons.hscollapseAll")
+                      : t("buttons.hsexpendAll")
+                  }}
+                </el-button>
+              </el-dropdown-item>
+              <el-dropdown-item>
+                <el-button
+                  :class="buttonClass"
+                  link
+                  type="primary"
+                  :icon="useRenderIcon(Reset)"
+                  @click="onReset"
+                >
+                  {{ t("buttons.hsreset") }}
+                </el-button>
+              </el-dropdown-item>
+              <el-dropdown-item v-if="hasAuth('list:systemMenu')">
+                <el-button
+                  :class="buttonClass"
+                  link
+                  type="primary"
+                  :icon="useRenderIcon(Refresh)"
+                  @click="emit('getMenuData')"
+                >
+                  {{ t("buttons.hsreload") }}
+                </el-button>
+              </el-dropdown-item>
+              <el-dropdown-item v-if="hasAuth('manyDelete:systemMenu')">
+                <el-popconfirm
+                  :title="t('buttons.hsconfirmdelete')"
+                  @confirm="emit('handleManyDelete', treeRef)"
+                >
+                  <template #reference>
+                    <el-button
+                      :class="buttonClass"
+                      link
+                      type="danger"
+                      :icon="useRenderIcon(Delete)"
+                    >
+                      {{ t("buttons.hsbatchdelete") }}
+                    </el-button>
+                  </template>
+                </el-popconfirm>
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </div>
+    </el-card>
+    <div class="overflow-y-auto" :style="{ height: `calc(100vh - 190px)` }">
+      <el-tree
+        ref="treeRef"
+        v-loading="loading"
+        class="pb-5 pt-3"
+        :data="props.treeData"
+        node-key="pk"
+        size="small"
+        :props="defaultProps"
+        show-checkbox
+        check-strictly
+        :expand-on-click-node="false"
+        :default-expanded-keys="parentIds"
+        :filter-node-method="filterMenuNode"
+        :allow-drop="handleDragDrop"
+        highlight-current
+        :draggable="hasAuth('rank:systemMenu')"
+        @node-drag-end="handleDragEnd"
+        @node-click="nodeClick"
+      >
+        <template #default="{ node, data }">
+          <span
+            :class="[
+              'pr-1',
+              'rounded',
+              'flex',
+              'items-center',
+              'select-none',
+              searchValue.trim().length > 0 &&
+                node.label.includes(searchValue) &&
+                'text-red-500',
+              highlightMap[node.id]?.highlight ? 'dark:text-primary' : ''
+            ]"
+            :style="{
+              background: highlightMap[node.id]?.highlight
+                ? 'var(--el-color-primary-light-7)'
+                : 'transparent'
+            }"
           >
-            {{ data.component }} {{ data.path }}
-          </el-text>
-        </span>
-      </template>
-    </el-tree>
+            <component :is="useRenderIcon(data.meta.icon)" class="m-1" />
+            {{ `${transformI18n(data.meta.title)}` }}
+          </span>
+          <span class="flex items-center">
+            <el-tooltip
+              v-if="hasAuth('create:systemMenu') && data.menu_type !== 2"
+              class="box-item"
+              effect="dark"
+              :content="t('buttons.hsadd')"
+              placement="top-start"
+            >
+              <IconifyIconOffline
+                :icon="DocumentAdd"
+                class="set-icon"
+                style="width: 26px; height: 20px; margin-left: 8px"
+                @click.stop="emit('addNewMenu', treeRef, data)"
+              />
+            </el-tooltip>
+
+            <el-popconfirm
+              v-if="hasAuth('delete:systemMenu')"
+              :title="t('buttons.hsconfirmdelete')"
+              @confirm.stop="emit('handleDelete', data)"
+            >
+              <template #reference>
+                <IconifyIconOffline
+                  :icon="Delete"
+                  class="set-icon"
+                  style="width: 26px; height: 20px; color: red"
+                />
+              </template>
+            </el-popconfirm>
+            <el-text
+              v-if="data.menu_type === 2"
+              type="success"
+              style="margin-left: 10px"
+            >
+              {{ data.component }} {{ data.path }}
+            </el-text>
+          </span>
+        </template>
+      </el-tree>
+    </div>
   </div>
 </template>
 
@@ -379,5 +383,9 @@ onMounted(() => {
 
 :deep(.is-permission > .el-tree-node__content) {
   color: #15a307;
+}
+
+:deep(.is-disabled > .el-tree-node__content) {
+  color: #fc0101;
 }
 </style>

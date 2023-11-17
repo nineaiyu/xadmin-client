@@ -34,7 +34,6 @@ const {
           v-if="hasAuth('list:systemMenu')"
           v-model:form-inline="menuData"
           v-model:parent-ids="parentIds"
-          class="pb-20"
           :tree-data="treeData"
           :default-data="defaultData"
           @getMenuData="getMenuData"
@@ -46,17 +45,17 @@ const {
         />
       </el-col>
       <el-col :xs="24" :sm="24" :md="11" :lg="11" :xl="11">
-        <el-affix :offset="85">
+        <div class="overflow-y-auto" :style="{ height: `calc(100vh - 130px)` }">
           <edit
             v-if="hasAuth('list:systemMenu')"
-            class="pb-20"
+            class="pt-10 pb-20"
             :form-inline="menuData"
             :choices-dict="choicesDict"
             :tree-data="treeData"
             :menu-url-list="menuUrlList"
             @handleConfirm="handleConfirm"
           />
-        </el-affix>
+        </div>
       </el-col>
     </el-row>
   </div>
