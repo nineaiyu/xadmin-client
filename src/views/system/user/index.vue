@@ -215,13 +215,15 @@ const {
             @page-current-change="handleCurrentChange"
           >
             <template #roles="{ row }">
-              <el-tag
-                v-for="(role, index) in row.roles_info"
-                :key="role.pk"
-                :type="getIndexType(index + 1)"
-              >
-                {{ role.name }}
-              </el-tag>
+              <el-space wrap>
+                <el-tag
+                  v-for="(role, index) in row.roles_info"
+                  :key="role.pk"
+                  :type="getIndexType(index + 1)"
+                >
+                  {{ role.name }}
+                </el-tag>
+              </el-space>
             </template>
             <template #operation="{ row }">
               <el-button
