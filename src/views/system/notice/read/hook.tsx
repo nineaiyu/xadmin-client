@@ -10,8 +10,14 @@ import {
 } from "@/api/system/notice";
 import type { FormItemProps } from "../utils/types";
 import showForm from "../show.vue";
-import { cloneDeep, getKeyList, isEmpty, isString } from "@pureadmin/utils";
-import { addDialog } from "@/components/ReDialog/index";
+import {
+  cloneDeep,
+  delay,
+  getKeyList,
+  isEmpty,
+  isString
+} from "@pureadmin/utils";
+import { addDialog } from "@/components/ReDialog";
 import { useRoute, useRouter } from "vue-router";
 import { hasAuth } from "@/router/utils";
 import { ElMessageBox } from "element-plus";
@@ -288,9 +294,9 @@ export function useNoticeRead(tableRef: Ref) {
       } else {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
-      setTimeout(() => {
+      delay(500).then(() => {
         loading.value = false;
-      }, 500);
+      });
     });
   }
 

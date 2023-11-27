@@ -8,7 +8,7 @@ import {
   updateMenuApi
 } from "@/api/system/menu";
 import { reactive, ref, computed, onMounted, h } from "vue";
-import { addDialog } from "@/components/ReDialog/index";
+import { addDialog } from "@/components/ReDialog";
 import editForm from "../edit.vue";
 import type { FormItemProps } from "./types";
 import { handleTree } from "@/utils/tree";

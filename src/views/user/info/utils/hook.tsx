@@ -9,6 +9,7 @@ import {
 import { ref, onMounted, reactive } from "vue";
 import { useUserStoreHook } from "@/store/modules/user";
 import { useI18n } from "vue-i18n";
+import { delay } from "@pureadmin/utils";
 
 export function useUserInfo() {
   const { t } = useI18n();
@@ -44,9 +45,9 @@ export function useUserInfo() {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
         }
       });
-    setTimeout(() => {
+    delay(500).then(() => {
       loading.value = false;
-    }, 500);
+    });
   }
 
   /** 上传头像 */

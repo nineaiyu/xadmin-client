@@ -8,7 +8,7 @@ import {
   manyDeleteOperationLogApi
 } from "@/api/system/operation";
 import { useRouter } from "vue-router";
-import { getKeyList } from "@pureadmin/utils";
+import { delay, getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 export function useOperationLog(tableRef: Ref) {
   const { t } = useI18n();
@@ -192,9 +192,9 @@ export function useOperationLog(tableRef: Ref) {
     dataList.value = data.results;
     pagination.total = data.total;
 
-    setTimeout(() => {
+    delay(500).then(() => {
       loading.value = false;
-    }, 500);
+    });
   }
 
   const resetForm = formEl => {

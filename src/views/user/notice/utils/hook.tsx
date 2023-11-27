@@ -11,7 +11,7 @@ import { useRoute } from "vue-router";
 import type { FormItemProps } from "./types";
 import showForm from "../show.vue";
 import { cloneDeep, getKeyList, isEmpty, isString } from "@pureadmin/utils";
-import { addDialog } from "@/components/ReDialog/index";
+import { addDialog } from "@/components/ReDialog";
 import { useI18n } from "vue-i18n";
 
 export function useUserNotice(tableRef: Ref) {

@@ -15,7 +15,7 @@ import type { FormItemProps } from "./types";
 import editForm from "../editor.vue";
 import showForm from "../show.vue";
 import { cloneDeep, getKeyList, isEmpty, isString } from "@pureadmin/utils";
-import { addDialog } from "@/components/ReDialog/index";
+import { addDialog } from "@/components/ReDialog";
 import { hasAuth } from "@/router/utils";
 import { ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";

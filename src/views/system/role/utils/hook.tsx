@@ -16,7 +16,7 @@ import {
 } from "@/api/system/role";
 import { getMenuListApi } from "@/api/system/menu";
 import { handleTree } from "@/utils/tree";
-import { getKeyList } from "@pureadmin/utils";
+import { delay, getKeyList } from "@pureadmin/utils";
 import { hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 
@@ -219,9 +219,9 @@ export function useRole(tableRef: Ref) {
     dataList.value = data.results;
     pagination.total = data.total;
 
-    setTimeout(() => {
+    delay(500).then(() => {
       loading.value = false;
-    }, 500);
+    });
   }
 
   const resetForm = formEl => {

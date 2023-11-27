@@ -30,7 +30,7 @@ import {
   h,
   watch
 } from "vue";
-import { addDialog } from "@/components/ReDialog/index";
+import { addDialog } from "@/components/ReDialog";
 import croppingUpload from "@/components/AvatarUpload/index.vue";
 import roleForm from "../form/role.vue";
 import editForm from "../form/index.vue";
@@ -38,6 +38,7 @@ import type { FormItemProps, RoleFormItemProps } from "./types";
 import { empowerRoleApi, getRoleListApi } from "@/api/system/role";
 import {
   cloneDeep,
+  delay,
   getKeyList,
   hideTextAtIndex,
   isAllEmpty,
@@ -325,11 +326,10 @@ export function useUser(tableRef: Ref) {
     const { data } = await getUserListApi(toRaw(form));
     dataList.value = data.results;
     pagination.total = data.total;
-    setTimeout(() => {
+    delay(500).then(() => {
       loading.value = false;
-    }, 500);
+    });
   }
-
   const uploadAvatar = (
     uid: number,
     file: any,

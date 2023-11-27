@@ -11,6 +11,7 @@ import { useUserStoreHook } from "@/store/modules/user";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Lock from "@iconify-icons/ri/lock-fill";
 import Iphone from "@iconify-icons/ep/iphone";
+import { delay } from "@pureadmin/utils";
 
 const { t } = useI18n();
 const loading = ref(false);
@@ -43,12 +44,12 @@ const onUpdate = async (formEl: FormInstance | undefined) => {
   await formEl.validate((valid, fields) => {
     if (valid) {
       // 模拟请求，需根据实际开发进行修改
-      setTimeout(() => {
+      delay(2000).then(() => {
         message(transformI18n($t("login.passwordUpdateReg")), {
           type: "success"
         });
         loading.value = false;
-      }, 2000);
+      });
     } else {
       loading.value = false;
       return fields;
