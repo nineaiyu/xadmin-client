@@ -350,3 +350,80 @@ login:
   passwordSureReg: Please enter confirm password
   passwordDifferentReg: The two passwords do not match!
   passwordUpdateReg: Password has been updated
+
+MoviesDrive:
+  drive: Aliyun Drive
+  username: Drive Username
+  userid: Drive UserID
+  avatar: Drive User Avatar
+  remark: Remark
+  verifyUsername: Please enter drive username
+  verifyUserid: Please enter drive userid
+  totalSize: Total Size
+  usedSize: Used Size
+  active: Active
+  clean: Clean
+  confirmClean: Are you sure to clear all the data in the storage?
+  actActive: Renewal Authorization
+  driveId: Drive Id
+  sboxDriveId: Sbox Drive Id
+  deviceId: Device Id
+  scanHelp: Mobile phone to open aliyundrive app and scan code authorization
+  updateDate: Update Date
+
+MoviesFile:
+  file: Aliyun File
+  size: Size
+  name: Filename
+  fileId: FileId
+  downloads: Download Times
+  download: Download
+  preview: Preview
+  notVideo: Unable to play non-video files
+  upload: Upload
+  copy: Copy File Url
+  used: Used
+  unused: Unused
+  duration: Duration
+  uploadFailed: Upload Failed { count }
+  uploadTip1: Drop file here or
+  uploadTip2: click to upload
+
+MoviesFilm:
+  films: Film
+  film: Film Management
+  language: Language
+  subtitles: Subtitles
+  director: Director
+  starring: Starring
+  name: Film Name
+  title: Film Translation
+  views: Views
+  rate: Rate
+  region: Region
+  times: Times
+  poster: Poster
+  category: Category
+  updatePosterTitle: Update poster to { name }
+  updatePoster: Update Poster
+  addEpisode: Add Episode
+  getEpisode: See Videos
+
+MoviesEpisode:
+  episode: Episode Management
+  rank: Playing Order
+  name: Episode Name
+  film: FilmId
+  uploadVideo: Upload Videos
+  filmVideo: Video
+
+MoviesCategory:
+  category: Category
+  name: Name
+  count: Number of films
+
+MoviesWatchHistory:
+  history: History
+  times: Play times/all times
+  userId: UserId
+  updateTime: Last play time

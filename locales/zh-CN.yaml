@@ -350,3 +350,80 @@ login:
   passwordSureReg: 请输入确认密码
   passwordDifferentReg: 两次密码不一致!
   passwordUpdateReg: 修改密码成功
+
+MoviesDrive:
+  drive: 阿里云盘
+  username: 阿里云盘用户名
+  userid: 阿里云盘用户ID
+  avatar: 阿里云盘用户头像
+  description: 描述信息
+  verifyUsername: 请输入阿里云盘用户名
+  verifyUserid: 请输入阿里云盘用户ID
+  totalSize: 云盘总大小
+  usedSize: 已使用大小
+  active: 是否激活
+  clean: 清空
+  confirmClean: 确定要清空该存储所有数据么？
+  actActive: 更新授权
+  driveId: 云盘ID
+  sboxDriveId: 云盘保险箱ID
+  deviceId: 设备ID
+  scanHelp: 手机打开阿里云盘应用并扫码授权
+  updateDate: 更新时间
+
+MoviesFile:
+  file: 云盘文件
+  size: 文件大小
+  name: 文件名字
+  fileId: 文件ID
+  downloads: 下载次数
+  download: 下载
+  preview: 预览
+  notVideo: 非视频资源，无法预览
+  upload: 上传文件资源
+  copy: 复制下载连接
+  used: 使用中
+  unused: 未使用
+  duration: 影片时间
+  uploadFailed: 上传失败 { count }
+  uploadTip1: 拖拽文件或
+  uploadTip2: 点击进行上传
+
+MoviesFilm:
+  films: 影视资源
+  film: 影视管理
+  language: 语言
+  subtitles: 字幕
+  director: 主演
+  starring: 演员
+  name: 影视名称
+  title: 影视译名
+  views: 播放次数
+  rate: 影视评分
+  region: 地区
+  times: 影视时长
+  poster: 海报
+  category: 类别
+  updatePosterTitle: 更新影视 { name } 的海报
+  updatePoster: 更新海报
+  addEpisode: 添加视频
+  getEpisode: 查看视频
+
+MoviesEpisode:
+  episode: 单集管理
+  rank: 播放顺序
+  name: 单集视频名称
+  film: 所属影视ID
+  uploadVideo: 上传视频
+  filmVideo: 单集视频
+
+MoviesCategory:
+  category: 影视分类
+  name: 分类名称
+  count: 影片数量
+
+MoviesWatchHistory:
+  history: 观看历史
+  times: 已播放时间/总时间
+  userId: 用户ID
+  updateTime: 最近播放时间
