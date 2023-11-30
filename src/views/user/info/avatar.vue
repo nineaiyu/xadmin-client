@@ -33,7 +33,11 @@ function onCropper({ blob }) {
     <el-row :gutter="30">
       <re-col :value="24" :xs="24" :sm="24">
         <el-form-item :label="t('user.avatar')">
-          <cropping-upload :img-src="props.avatar" @cropper="onCropper" />
+          <cropping-upload
+            :img-src="props.avatar"
+            circled
+            @cropper="onCropper"
+          />
         </el-form-item>
       </re-col>
     </el-row>
