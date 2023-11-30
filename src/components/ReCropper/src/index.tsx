@@ -52,6 +52,7 @@ const defaultOptions: Options = {
   checkCrossOrigin: true,
   checkOrientation: true,
   scalable: true,
+  autoCropArea: 1,
   modal: true,
   guides: true,
   movable: true,

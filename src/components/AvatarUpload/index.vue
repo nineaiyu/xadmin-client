@@ -7,7 +7,9 @@ import { useI18n } from "vue-i18n";
 
 const props = defineProps({
   imgSrc: String,
-  errSrc: String
+  errSrc: String,
+  circled: Boolean,
+  options: Object
 });
 
 const emit = defineEmits(["cropper"]);
@@ -34,7 +36,8 @@ function onCropper({ base64, blob, info }) {
             :errSrc="
               props.errSrc && props.errSrc !== '' ? props.errSrc : avatar
             "
-            circled
+            :circled="props.circled"
+            :options="props.options"
             @cropper="onCropper"
             @readied="showPopover = true"
           />
