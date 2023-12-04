@@ -30,3 +30,9 @@ export const manyDeleteCategoryApi = (data?: object) => {
     params: data
   });
 };
+
+export const actionRankCategoryApi = (data?: object) => {
+  return http.request<Result>("post", `/api/movies/category/action_rank`, {
+    data: data
+  });
+};

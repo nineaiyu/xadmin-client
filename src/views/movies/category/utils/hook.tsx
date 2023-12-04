@@ -5,7 +5,16 @@ import { addDialog } from "@/components/ReDialog";
 import type { FormItemProps } from "./types";
 import editForm from "../form.vue";
 import type { PaginationProps } from "@pureadmin/table";
-import { reactive, ref, onMounted, h, toRaw, type Ref } from "vue";
+import {
+  nextTick,
+  reactive,
+  ref,
+  onMounted,
+  h,
+  toRaw,
+  type Ref,
+  watch
+} from "vue";
 import { delay, getKeyList } from "@pureadmin/utils";
 import { hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
@@ -15,8 +24,10 @@ import {
   deleteCategoryApi,
   getCategoryListApi,
   manyDeleteCategoryApi,
-  updateCategoryApi
+  updateCategoryApi,
+  actionRankCategoryApi
 } from "@/api/movies/category";
+import Sortable from "sortablejs";
 
 export function useMoviesCategory(tableRef: Ref) {
   const { t } = useI18n();
@@ -28,20 +39,31 @@ export function useMoviesCategory(tableRef: Ref) {
     {
       label: `${t("sorts.createdDate")} ${t("labels.ascending")}`,
       key: "created_time"
+    },
+    {
+      label: `${t("MoviesCategory.rank")} ${t("labels.descending")}`,
+      key: "-rank"
+    },
+    {
+      label: `${t("MoviesCategory.rank")} ${t("labels.ascending")}`,
+      key: "rank"
     }
   ];
   const form = reactive({
     name: "",
     enable: "",
-    ordering: sortOptions[0].key,
+    category_type: "",
+    ordering: sortOptions[3].key,
     page: 1,
     size: 10
   });
   const formRef = ref();
+  const canDrop = ref(false);
   const manySelectCount = ref(0);
   const dataList = ref([]);
   const loading = ref(true);
   const switchLoadMap = ref({});
+  const dictChoices = ref([]);
   const { switchStyle } = usePublicHooks();
   const pagination = reactive<PaginationProps>({
     total: 0,
@@ -58,12 +80,35 @@ export function useMoviesCategory(tableRef: Ref) {
     {
       label: t("labels.id"),
       prop: "pk",
-      minWidth: 100
+      minWidth: 100,
+      cellRenderer: ({ row }) => (
+        <div class="flex items-center">
+          <iconify-icon-online
+            v-show={hasAuth("rank:MoviesCategory") && canDrop.value}
+            icon="icon-park-outline:drag"
+            class="drag-btn cursor-grab"
+            onMouseenter={(event: { preventDefault: () => void }) =>
+              rowDrop(event)
+            }
+          />
+          <p class="ml-[16px]">{row.pk}</p>
+        </div>
+      )
     },
     {
       label: t("MoviesCategory.name"),
       prop: "name",
       minWidth: 120
+    },
+    {
+      label: t("MoviesCategory.categoryDisplay"),
+      prop: "category_display",
+      minWidth: 120
+    },
+    {
+      label: t("MoviesCategory.rank"),
+      prop: "rank",
+      minWidth: 100
     },
     {
       label: t("MoviesCategory.count"),
@@ -80,8 +125,8 @@ export function useMoviesCategory(tableRef: Ref) {
           v-model={scope.row.enable}
           active-value={true}
           inactive-value={false}
-          active-text={t("labels.active")}
-          inactive-text={t("labels.inactive")}
+          active-text={t("labels.enable")}
+          inactive-text={t("labels.disable")}
           disabled={!hasAuth("update:MoviesCategory")}
           inline-prompt
           style={switchStyle.value}
@@ -103,6 +148,36 @@ export function useMoviesCategory(tableRef: Ref) {
       slot: "operation"
     }
   ];
+  const rowDrop = (event: { preventDefault: () => void }) => {
+    event.preventDefault();
+    nextTick(() => {
+      const wrapper: HTMLElement = document.querySelector(
+        ".el-table__body-wrapper tbody"
+      );
+      Sortable.create(wrapper, {
+        animation: 300,
+        handle: ".drag-btn",
+        onEnd: ({ newIndex, oldIndex }) => {
+          const currentRow = dataList.value.splice(oldIndex, 1)[0];
+          dataList.value.splice(newIndex, 0, currentRow);
+          if (newIndex !== oldIndex) {
+            actionRankCategoryApi({
+              pks: getKeyList(dataList.value, "pk")
+            }).then(res => {
+              if (res.code === 1000) {
+                message(t("results.success"), { type: "success" });
+                onSearch();
+              } else {
+                message(`${t("results.failed")}，${res.detail}`, {
+                  type: "error"
+                });
+              }
+            });
+          }
+        }
+      });
+    });
+  };
 
   function onChange({ row, index }) {
     const action =
@@ -173,11 +248,13 @@ export function useMoviesCategory(tableRef: Ref) {
   function handleSelectionChange(val) {
     manySelectCount.value = val.length;
   }
+
   function onSelectionCancel() {
     manySelectCount.value = 0;
     // 用于多选表格，清空用户的选择
     tableRef.value.getTableRef().clearSelection();
   }
+
   function handleManyDelete() {
     if (manySelectCount.value === 0) {
       message(t("results.noSelectedData"), { type: "error" });
@@ -204,9 +281,10 @@ export function useMoviesCategory(tableRef: Ref) {
       pagination.pageSize = form.size = 10;
     }
     loading.value = true;
-    const { data }: any = await getCategoryListApi(toRaw(form));
+    const { data, choices_dict }: any = await getCategoryListApi(toRaw(form));
     dataList.value = data.results;
     pagination.total = data.total;
+    dictChoices.value = choices_dict;
     delay(500).then(() => {
       loading.value = false;
     });
@@ -229,9 +307,12 @@ export function useMoviesCategory(tableRef: Ref) {
         formInline: {
           pk: row?.pk ?? "",
           name: row?.name ?? "",
+          rank: row?.rank ?? 999,
           description: row?.description ?? "",
-          enable: row?.enable ?? false
-        }
+          category_type: row?.category_type ?? "",
+          enable: row?.enable ?? true
+        },
+        dictChoices: dictChoices.value
       },
       width: "50%",
       draggable: true,
@@ -241,11 +322,13 @@ export function useMoviesCategory(tableRef: Ref) {
       beforeSure: (done, { options }) => {
         const FormRef = formRef.value.getRef();
         const curData = options.props.formInline as FormItemProps;
+
         async function chores(detail) {
           message(detail, { type: "success" });
           done(); // 关闭弹框
           await onSearch(); // 刷新表格数据
         }
+
         FormRef.validate(valid => {
           if (valid) {
             if (is_add) {
@@ -275,6 +358,17 @@ export function useMoviesCategory(tableRef: Ref) {
     });
   }
 
+  watch(
+    () => form.category_type,
+    () => {
+      if (form.category_type) {
+        canDrop.value = true;
+      } else {
+        canDrop.value = false;
+      }
+    }
+  );
+
   onMounted(() => {
     onSearch();
   });
@@ -287,6 +381,7 @@ export function useMoviesCategory(tableRef: Ref) {
     dataList,
     pagination,
     sortOptions,
+    dictChoices,
     manySelectCount,
     onSelectionCancel,
     onSearch,

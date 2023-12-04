@@ -4,18 +4,19 @@ import { formRules } from "./utils/rule";
 import { FormProps } from "./utils/types";
 import { useI18n } from "vue-i18n";
 import ReCol from "@/components/ReCol";
-import { usePublicHooks } from "@/views/system/hooks";
 
 const props = withDefaults(defineProps<FormProps>(), {
   formInline: () => ({
     pk: "",
     name: "",
-    rank: "",
+    foreign_name: "",
+    sex: "",
+    birthday: "",
+    introduction: "",
     description: "",
-    category_type: "",
     enable: true
   }),
-  dictChoices: () => []
+  categoryData: () => []
 });
 
 const ruleFormRef = ref();
@@ -23,9 +24,13 @@ const newFormInline = ref(props.formInline);
 function getRef() {
   return ruleFormRef.value;
 }
-
 const { t } = useI18n();
-const { switchStyle } = usePublicHooks();
+
+const sexOptions = [
+  { label: t("user.male"), value: 0 },
+  { label: t("user.female"), value: 1 },
+  { label: t("user.unknown"), value: 2 }
+];
 
 defineExpose({ getRef });
 </script>
@@ -35,47 +40,62 @@ defineExpose({ getRef });
     ref="ruleFormRef"
     :model="newFormInline"
     :rules="formRules"
-    label-width="120px"
+    label-width="140px"
   >
     <el-row :gutter="30">
       <re-col :value="24" :xs="24" :sm="24">
-        <el-form-item
-          :label="t('MoviesCategory.categoryDisplay')"
-          prop="category_type"
-        >
-          <el-select
-            v-model="newFormInline.category_type"
-            filterable
-            class="filter-item"
-            style="width: 180px"
-            clearable
-          >
-            <el-option
-              v-for="item in props.dictChoices"
-              :key="item.key"
-              :label="item.label"
-              :disabled="item.disabled"
-              :value="item.key"
-            />
-          </el-select>
-        </el-form-item>
-      </re-col>
-      <re-col :value="24" :xs="24" :sm="24">
-        <el-form-item :label="t('MoviesFilm.name')" prop="name">
+        <el-form-item :label="t('MoviesActor.name')" prop="name">
           <el-input
             v-model="newFormInline.name"
             clearable
-            :placeholder="t('MoviesFilm.name')"
+            :placeholder="t('MoviesActor.name')"
           />
         </el-form-item>
       </re-col>
       <re-col :value="24" :xs="24" :sm="24">
-        <el-form-item :label="t('MoviesCategory.rank')" prop="rank">
+        <el-form-item :label="t('MoviesActor.foreignName')" prop="foreign_name">
           <el-input
-            v-model="newFormInline.rank"
-            type="number"
+            v-model="newFormInline.foreign_name"
             clearable
-            :placeholder="t('MoviesCategory.name')"
+            :placeholder="t('MoviesActor.foreignName')"
+          />
+        </el-form-item>
+      </re-col>
+      <re-col :value="12" :xs="24" :sm="24">
+        <el-form-item :label="t('user.gender')" prop="sex">
+          <el-select v-model="newFormInline.sex" class="w-full" clearable>
+            <el-option
+              v-for="item in sexOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </el-form-item>
+      </re-col>
+
+      <re-col :value="12" :xs="24" :sm="24">
+        <el-form-item :label="t('MoviesActor.birthday')" prop="birthday">
+          <el-date-picker
+            v-model="newFormInline.birthday"
+            type="date"
+            :placeholder="t('MoviesActor.birthday')"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+            clearable
+          />
+        </el-form-item>
+      </re-col>
+      <re-col>
+        <el-form-item
+          :label="t('MoviesActor.introduction')"
+          prop="introduction"
+        >
+          <el-input
+            v-model="newFormInline.introduction"
+            :placeholder="t('MoviesActor.introduction')"
+            type="textarea"
+            rows="5"
           />
         </el-form-item>
       </re-col>

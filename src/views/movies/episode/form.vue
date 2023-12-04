@@ -77,6 +77,18 @@ defineExpose({ getRef });
           />
         </el-form-item>
       </re-col>
+      <re-col :value="12" :xs="24" :sm="24">
+        <el-form-item :label="t('labels.status')" prop="enable">
+          <el-switch
+            v-model="newFormInline.enable"
+            inline-prompt
+            :active-value="true"
+            :inactive-value="false"
+            :active-text="t('labels.publish')"
+            :inactive-text="t('labels.unPublish')"
+          />
+        </el-form-item>
+      </re-col>
       <re-col>
         <el-form-item :label="t('labels.remark')">
           <el-input

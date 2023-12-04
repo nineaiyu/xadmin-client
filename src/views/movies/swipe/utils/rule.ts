@@ -7,21 +7,26 @@ export const formRules = reactive(<FormRules>{
   name: [
     {
       required: true,
-      message: transformI18n($t("MoviesCategory.name")),
+      message: transformI18n($t("MoviesSwipe.name")),
       trigger: "blur"
     }
   ],
   rank: [
     {
       required: true,
-      message: transformI18n($t("MoviesCategory.rank")),
+      message: transformI18n($t("MoviesSwipe.rank")),
       trigger: "blur"
     }
   ],
-  category_type: [
+  route: [
     {
-      required: true,
-      message: transformI18n($t("MoviesCategory.categoryDisplay")),
+      validator: (rule, value, callback) => {
+        if (value && value.startsWith("/")) {
+          callback();
+        } else {
+          callback(new Error(transformI18n($t("menu.pathError"))));
+        }
+      },
       trigger: "blur"
     }
   ]

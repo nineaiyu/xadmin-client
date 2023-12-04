@@ -25,6 +25,13 @@ export const formRules = reactive(<FormRules>{
       trigger: "blur"
     }
   ],
+  channel: [
+    {
+      required: true,
+      message: transformI18n($t("MoviesFilm.channel")),
+      trigger: "blur"
+    }
+  ],
   director: [
     {
       required: true,
@@ -46,10 +53,10 @@ export const formRules = reactive(<FormRules>{
       trigger: "blur"
     }
   ],
-  subtitles: [
+  subtitle: [
     {
       required: true,
-      message: transformI18n($t("MoviesFilm.subtitles")),
+      message: transformI18n($t("MoviesFilm.subtitle")),
       trigger: "blur"
     }
   ],
@@ -64,6 +71,20 @@ export const formRules = reactive(<FormRules>{
     {
       required: true,
       message: transformI18n($t("MoviesFilm.times")),
+      trigger: "blur"
+    }
+  ],
+  release_date: [
+    {
+      required: true,
+      message: transformI18n($t("MoviesFilm.releaseDate")),
+      trigger: "blur"
+    }
+  ],
+  introduction: [
+    {
+      required: true,
+      message: transformI18n($t("MoviesFilm.introduction")),
       trigger: "blur"
     }
   ],

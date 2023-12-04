@@ -30,6 +30,10 @@ const {
   sortOptions,
   buttonClass,
   categoryData,
+  channelData,
+  languageData,
+  subtitleData,
+  regionData,
   manySelectCount,
   onSelectionCancel,
   onSearch,
@@ -38,6 +42,7 @@ const {
   handleAdd,
   handleUpload,
   handleDelete,
+  goActorDetail,
   handleManyDelete,
   handleSizeChange,
   handleCurrentChange,
@@ -80,23 +85,73 @@ const {
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
-      <el-form-item :label="t('MoviesFilm.language')" prop="language">
-        <el-input
-          v-model="form.language"
-          :placeholder="t('MoviesFilm.language')"
+      <el-form-item :label="t('MoviesFilm.channel')" prop="channel">
+        <el-select
+          v-model="form.channel"
+          filterable
           clearable
+          :placeholder="t('MoviesFilm.channel')"
           class="!w-[180px]"
-          @keyup.enter="onSearch(true)"
-        />
+          @change="onSearch(true)"
+        >
+          <el-option
+            v-for="item in channelData"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item :label="t('MoviesFilm.subtitles')" prop="subtitles">
-        <el-input
-          v-model="form.subtitles"
-          :placeholder="t('MoviesFilm.subtitles')"
+      <el-form-item :label="t('MoviesFilm.region')" prop="region">
+        <el-select
+          v-model="form.region"
+          filterable
           clearable
+          :placeholder="t('MoviesFilm.region')"
           class="!w-[180px]"
-          @keyup.enter="onSearch(true)"
-        />
+          @change="onSearch(true)"
+        >
+          <el-option
+            v-for="item in regionData"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item :label="t('MoviesFilm.language')" prop="language">
+        <el-select
+          v-model="form.language"
+          filterable
+          clearable
+          :placeholder="t('MoviesFilm.language')"
+          class="!w-[180px]"
+          @change="onSearch(true)"
+        >
+          <el-option
+            v-for="item in languageData"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item :label="t('MoviesFilm.subtitle')" prop="subtitle">
+        <el-select
+          v-model="form.subtitle"
+          filterable
+          clearable
+          :placeholder="t('MoviesFilm.subtitle')"
+          class="!w-[180px]"
+          @change="onSearch(true)"
+        >
+          <el-option
+            v-for="item in subtitleData"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item :label="t('labels.remark')" prop="description">
         <el-input
@@ -110,6 +165,7 @@ const {
       <el-form-item :label="t('labels.status')" prop="enable">
         <el-select
           v-model="form.enable"
+          filterable
           clearable
           class="!w-[180px]"
           @change="onSearch(true)"
@@ -121,6 +177,7 @@ const {
       <el-form-item :label="t('MoviesFilm.category')" prop="category">
         <el-select
           v-model="form.category"
+          filterable
           multiple
           clearable
           :placeholder="t('MoviesFilm.category')"
@@ -135,9 +192,24 @@ const {
           />
         </el-select>
       </el-form-item>
+
+      <el-form-item :label="t('MoviesFilm.releaseDate')" prop="releaseDate">
+        <el-date-picker
+          v-model="form.release_date"
+          type="daterange"
+          unlink-panels
+          range-separator="To"
+          start-placeholder="Start date"
+          end-placeholder="End date"
+          value-format="YYYY-MM-DD"
+          @change="onSearch(true)"
+        />
+      </el-form-item>
+
       <el-form-item :label="t('labels.sort')">
         <el-select
           v-model="form.ordering"
+          filterable
           style="width: 180px"
           clearable
           @change="onSearch(true)"
@@ -233,11 +305,45 @@ const {
           <template #category="{ row }">
             <el-space wrap>
               <el-tag
-                v-for="(role, index) in row.category_info"
-                :key="role.pk"
+                v-for="(item, index) in row.category_info"
+                :key="item.value"
                 :type="getIndexType(index + 1)"
               >
-                {{ role.name }}
+                {{ item.label }}
+              </el-tag>
+            </el-space>
+          </template>
+          <template #language="{ row }">
+            <el-space wrap>
+              <el-tag
+                v-for="(item, index) in row.language_info"
+                :key="item.value"
+                :type="getIndexType(index + 1)"
+              >
+                {{ item.label }}
+              </el-tag>
+            </el-space>
+          </template>
+          <template #channel="{ row }">
+            <el-space wrap>
+              <el-tag
+                v-for="(item, index) in row.channel_info"
+                :key="item.value"
+                :type="getIndexType(index + 1)"
+              >
+                {{ item.label }}
+              </el-tag>
+            </el-space>
+          </template>
+          <template #director="{ row }">
+            <el-space wrap>
+              <el-tag
+                v-for="(item, index) in row.director_info"
+                :key="item.value"
+                :type="getIndexType(index + 1)"
+                @click="goActorDetail(item.value)"
+              >
+                {{ item.label }}
               </el-tag>
             </el-space>
           </template>

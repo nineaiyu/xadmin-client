@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { useMoviesWatchHistory } from "./utils/hook";
+import { useMoviesSwipe } from "./utils/hook";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 
@@ -11,8 +11,9 @@ import Refresh from "@iconify-icons/ep/refresh";
 import AddFill from "@iconify-icons/ri/add-circle-line";
 import { hasAuth } from "@/router/utils";
 import { getIndexType } from "@/utils";
+import Picture from "@iconify-icons/ep/upload-filled";
 defineOptions({
-  name: "MoviesWatchHistory"
+  name: "MoviesSwipe"
 });
 
 const formRef = ref();
@@ -29,39 +30,53 @@ const {
   onSelectionCancel,
   onSearch,
   resetForm,
+  openDialog,
+  handleUpload,
   handleDelete,
   handleManyDelete,
   handleSizeChange,
   handleCurrentChange,
   handleSelectionChange
-} = useMoviesWatchHistory(tableRef);
+} = useMoviesSwipe(tableRef);
 </script>
 
 <template>
-  <div v-if="hasAuth('list:MoviesWatchHistory')" class="main">
+  <div v-if="hasAuth('list:MoviesSwipe')" class="main">
     <el-form
       ref="formRef"
       :inline="true"
       :model="form"
       class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px]"
     >
-      <el-form-item :label="t('MoviesEpisode.name')" prop="name">
+      <el-form-item :label="t('MoviesSwipe.name')" prop="name">
         <el-input
           v-model="form.name"
-          :placeholder="t('MoviesEpisode.name')"
+          :placeholder="t('MoviesSwipe.name')"
           clearable
           class="!w-[200px]"
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
-      <el-form-item :label="t('MoviesWatchHistory.userId')" prop="userId">
+      <el-form-item :label="t('labels.remark')" prop="description">
         <el-input
-          v-model="form.owner"
-          :placeholder="t('MoviesWatchHistory.userId')"
+          v-model="form.description"
+          :placeholder="t('labels.remark')"
           clearable
-          class="!w-[200px]"
+          class="!w-[180px]"
           @keyup.enter="onSearch(true)"
         />
+      </el-form-item>
+      <el-form-item :label="t('labels.status')" prop="enable">
+        <el-select
+          v-model="form.enable"
+          filterable
+          clearable
+          class="!w-[180px]"
+          @change="onSearch(true)"
+        >
+          <el-option :label="t('labels.enable')" value="1" />
+          <el-option :label="t('labels.disable')" value="0" />
+        </el-select>
       </el-form-item>
       <el-form-item :label="t('labels.sort')">
         <el-select
@@ -95,7 +110,7 @@ const {
     </el-form>
 
     <PureTableBar
-      :title="t('MoviesWatchHistory.history')"
+      :title="t('MoviesSwipe.swipe')"
       :columns="columns"
       @refresh="onSearch(true)"
     >
@@ -112,7 +127,7 @@ const {
               {{ t("buttons.hscancel") }}
             </el-button>
             <el-popconfirm
-              v-if="hasAuth('manyDelete:MoviesWatchHistory')"
+              v-if="hasAuth('manyDelete:MoviesSwipe')"
               :title="
                 t('buttons.hsbatchdeleteconfirm', { count: manySelectCount })
               "
@@ -125,6 +140,15 @@ const {
               </template>
             </el-popconfirm>
           </div>
+
+          <el-button
+            v-if="hasAuth('create:MoviesSwipe')"
+            type="primary"
+            :icon="useRenderIcon(AddFill)"
+            @click="openDialog()"
+          >
+            {{ t("buttons.hsadd") }}
+          </el-button>
         </el-space>
       </template>
       <template v-slot="{ size, dynamicColumns }">
@@ -162,8 +186,19 @@ const {
             </el-space>
           </template>
           <template #operation="{ row }">
+            <el-button
+              v-if="hasAuth('update:MoviesSwipe')"
+              class="reset-margin"
+              link
+              type="primary"
+              :size="size"
+              :icon="useRenderIcon(EditPen)"
+              @click="openDialog(false, row)"
+            >
+              {{ t("buttons.hsedit") }}
+            </el-button>
             <el-popconfirm
-              v-if="hasAuth('delete:MoviesWatchHistory')"
+              v-if="hasAuth('delete:MoviesSwipe')"
               :title="t('buttons.hsconfirmdelete')"
               @confirm="handleDelete(row)"
             >
@@ -179,6 +214,17 @@ const {
                 </el-button>
               </template>
             </el-popconfirm>
+            <el-button
+              v-if="hasAuth('upload:MoviesSwipePicture')"
+              class="reset-margin"
+              link
+              type="primary"
+              :size="size"
+              :icon="useRenderIcon(Picture)"
+              @click="handleUpload(row)"
+            >
+              {{ t("MoviesSwipe.updatePicture") }}
+            </el-button>
           </template>
         </pure-table>
       </template>

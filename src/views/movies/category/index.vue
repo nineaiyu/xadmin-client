@@ -25,6 +25,7 @@ const {
   dataList,
   pagination,
   sortOptions,
+  dictChoices,
   manySelectCount,
   onSelectionCancel,
   onSearch,
@@ -66,9 +67,27 @@ const {
           <el-option :label="t('labels.disable')" value="0" />
         </el-select>
       </el-form-item>
+      <el-form-item :label="t('MoviesCategory.categoryDisplay')" prop="enable">
+        <el-select
+          v-model="form.category_type"
+          filterable
+          class="!w-[180px]"
+          clearable
+          @change="onSearch(true)"
+        >
+          <el-option
+            v-for="item in dictChoices"
+            :key="item.key"
+            :label="item.label"
+            :disabled="item.disabled"
+            :value="item.key"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item :label="t('labels.sort')">
         <el-select
           v-model="form.ordering"
+          filterable
           style="width: 180px"
           clearable
           @change="onSearch(true)"

@@ -4,7 +4,6 @@ import { formRules } from "./utils/rule";
 import { FormProps } from "./utils/types";
 import { useI18n } from "vue-i18n";
 import ReCol from "@/components/ReCol";
-import { usePublicHooks } from "@/views/system/hooks";
 
 const props = withDefaults(defineProps<FormProps>(), {
   formInline: () => ({
@@ -12,10 +11,10 @@ const props = withDefaults(defineProps<FormProps>(), {
     name: "",
     rank: "",
     description: "",
-    category_type: "",
+    route: "",
     enable: true
   }),
-  dictChoices: () => []
+  categoryData: () => []
 });
 
 const ruleFormRef = ref();
@@ -25,7 +24,6 @@ function getRef() {
 }
 
 const { t } = useI18n();
-const { switchStyle } = usePublicHooks();
 
 defineExpose({ getRef });
 </script>
@@ -35,47 +33,33 @@ defineExpose({ getRef });
     ref="ruleFormRef"
     :model="newFormInline"
     :rules="formRules"
-    label-width="120px"
+    label-width="140px"
   >
     <el-row :gutter="30">
       <re-col :value="24" :xs="24" :sm="24">
-        <el-form-item
-          :label="t('MoviesCategory.categoryDisplay')"
-          prop="category_type"
-        >
-          <el-select
-            v-model="newFormInline.category_type"
-            filterable
-            class="filter-item"
-            style="width: 180px"
-            clearable
-          >
-            <el-option
-              v-for="item in props.dictChoices"
-              :key="item.key"
-              :label="item.label"
-              :disabled="item.disabled"
-              :value="item.key"
-            />
-          </el-select>
-        </el-form-item>
-      </re-col>
-      <re-col :value="24" :xs="24" :sm="24">
-        <el-form-item :label="t('MoviesFilm.name')" prop="name">
+        <el-form-item :label="t('MoviesSwipe.name')" prop="name">
           <el-input
             v-model="newFormInline.name"
             clearable
-            :placeholder="t('MoviesFilm.name')"
+            :placeholder="t('MoviesSwipe.name')"
           />
         </el-form-item>
       </re-col>
       <re-col :value="24" :xs="24" :sm="24">
-        <el-form-item :label="t('MoviesCategory.rank')" prop="rank">
+        <el-form-item :label="t('MoviesSwipe.route')" prop="route">
+          <el-input
+            v-model="newFormInline.route"
+            clearable
+            :placeholder="t('MoviesSwipe.route')"
+          />
+        </el-form-item>
+      </re-col>
+      <re-col :value="24" :xs="24" :sm="24">
+        <el-form-item :label="t('MoviesSwipe.rank')" prop="rank">
           <el-input
             v-model="newFormInline.rank"
-            type="number"
             clearable
-            :placeholder="t('MoviesCategory.name')"
+            :placeholder="t('MoviesSwipe.rank')"
           />
         </el-form-item>
       </re-col>

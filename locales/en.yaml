@@ -393,7 +393,7 @@ MoviesFilm:
   films: Film
   film: Film Management
   language: Language
-  subtitles: Subtitles
+  subtitle: Subtitles
   director: Director
   starring: Starring
   name: Film Name
@@ -404,10 +404,13 @@ MoviesFilm:
   times: Times
   poster: Poster
   category: Category
+  channel: Channel
   updatePosterTitle: Update poster to { name }
   updatePoster: Update Poster
   addEpisode: Add Episode
   getEpisode: See Videos
+  releaseDate: Release Date
+  introduction: Introduction
 
 MoviesEpisode:
   episode: Episode Management
@@ -418,12 +421,36 @@ MoviesEpisode:
   filmVideo: Video
 
 MoviesCategory:
-  category: Category
+  category: Category Management
   name: Name
   count: Number of films
+  categoryDisplay: Category Display
+  rank: Show Order
 
 MoviesWatchHistory:
-  history: History
+  history: History Management
   times: Play times/all times
   userId: UserId
   updateTime: Last play time
+
+MoviesSwipe:
+  swipes: Slideshow
+  swipe: Slideshow Management
+  name: Name
+  picture: Picture
+  rank: Playing Order
+  route: Click Route
+  updatePicture: Upload Picture
+  updatePictureTitle: Update slideshow to { name }
+
+MoviesActor:
+  actors: Actor
+  actor: Actor Management
+  name: Name
+  foreignName: Foreign Name
+  avatar: Avatar
+  birthday: Birthday
+  sex: Sex
+  introduction: Introduction
+  updateAvatar: Upload Avatar
+  updateAvatarTitle: Update actor avatar to { name }

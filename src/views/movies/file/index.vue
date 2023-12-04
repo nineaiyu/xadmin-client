@@ -82,6 +82,7 @@ const {
       <el-form-item :label="t('labels.status')">
         <el-select
           v-model="form.used"
+          filterable
           style="width: 180px"
           clearable
           @change="onSearch(true)"
@@ -97,6 +98,7 @@ const {
       <el-form-item :label="t('labels.sort')">
         <el-select
           v-model="form.ordering"
+          filterable
           style="width: 180px"
           clearable
           @change="onSearch(true)"

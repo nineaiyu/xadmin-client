@@ -393,7 +393,7 @@ MoviesFilm:
   films: 影视资源
   film: 影视管理
   language: 语言
-  subtitles: 字幕
+  subtitle: 字幕
   director: 主演
   starring: 演员
   name: 影视名称
@@ -404,10 +404,13 @@ MoviesFilm:
   times: 影视时长
   poster: 海报
   category: 类别
+  channel: 渠道分类
   updatePosterTitle: 更新影视 { name } 的海报
   updatePoster: 更新海报
   addEpisode: 添加视频
   getEpisode: 查看视频
+  releaseDate: 上映时间
+  introduction: 剧情
 
 MoviesEpisode:
   episode: 单集管理
@@ -418,12 +421,36 @@ MoviesEpisode:
   filmVideo: 单集视频
 
 MoviesCategory:
-  category: 影视分类
+  category: 分类管理
   name: 分类名称
   count: 影片数量
+  categoryDisplay: 类型展示
+  rank: 展示顺序
 
 MoviesWatchHistory:
   history: 观看历史
   times: 已播放时间/总时间
   userId: 用户ID
   updateTime: 最近播放时间
+
+MoviesSwipe:
+  swipes: 轮播图
+  swipe: 轮播图管理
+  name: 轮播图名称
+  picture: 轮播图片
+  rank: 播放顺序
+  route: 跳转路由
+  updatePicture: 上传图片
+  updatePictureTitle: 更新轮播图 { name } 的图片
+
+MoviesActor:
+  actors: 演员
+  actor: 演员管理
+  name: 姓名
+  foreignName: 外文名字
+  avatar: 头像
+  birthday: 生日
+  sex: 性别
+  introduction: 简介
+  updateAvatar: 上传头像
+  updateAvatarTitle: 更新演员 { name } 的头像

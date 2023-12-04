@@ -3,7 +3,7 @@ import { onMounted, onUnmounted, ref } from "vue";
 import Player, { Events } from "xgplayer";
 import "xgplayer/dist/index.min.css";
 import { FormProps } from "./utils/types";
-import { debounce, deviceDetection, throttle } from "@pureadmin/utils";
+import { deviceDetection, throttle } from "@pureadmin/utils";
 import { getFilePreviewUrlApi } from "@/api/movies/file";
 import HlsJsPlugin from "xgplayer-hls.js";
 import { message } from "@/utils/message";
@@ -42,7 +42,7 @@ function getPreview() {
         //传入倍速可选数组
         playbackRate: [0.5, 0.75, 1, 1.5, 2],
         defaultPlaybackRate: 1,
-        fitVideoSize: "fixWidth",
+        fitVideoSize: "fixed",
         rotate: {
           //视频旋转按钮配置项
           innerRotate: true, //只旋转内部video
@@ -68,7 +68,7 @@ function getPreview() {
       });
       // 监听网页全屏(即页面全屏)也是一样的逻辑
       player.value.on(Events.TIME_UPDATE, ({ currentTime }) => {
-        updateVideoPlayTimes(currentTime);
+        updateVideoPlayTimes(currentTime, res.data.pk);
       });
     } else {
       message(t("MoviesFile.notVideo"), { type: "error" });
@@ -76,8 +76,8 @@ function getPreview() {
   });
 }
 
-const updateVideoPlayTimes = throttle(times => {
-  updateWatchHistoryTimesApi({ times, file_id: newFormInline.value.pk });
+const updateVideoPlayTimes = throttle((times, pk) => {
+  updateWatchHistoryTimesApi({ times, file_id: pk });
 }, 5 * 1000);
 
 onMounted(() => {

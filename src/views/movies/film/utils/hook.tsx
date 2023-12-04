@@ -61,10 +61,15 @@ export function useMoviesFilm(tableRef: Ref) {
   const form = reactive({
     name: "",
     language: "",
-    subtitles: "",
+    subtitle: "",
+    channel: "",
+    region: "",
     director: "",
     starring: "",
     description: "",
+    release_date: "",
+    min_release_date: "",
+    max_release_date: "",
     enable: "",
     category: "",
     categories: "",
@@ -81,6 +86,10 @@ export function useMoviesFilm(tableRef: Ref) {
   const switchLoadMap = ref({});
   const { switchStyle } = usePublicHooks();
   const categoryData = ref<categoryProps[]>([]);
+  const regionData = ref<categoryProps[]>([]);
+  const channelData = ref<categoryProps[]>([]);
+  const languageData = ref<categoryProps[]>([]);
+  const subtitleData = ref<categoryProps[]>([]);
   const buttonClass = computed(() => {
     return [
       "!h-[20px]",
@@ -128,27 +137,6 @@ export function useMoviesFilm(tableRef: Ref) {
       )
     },
     {
-      label: t("MoviesFilm.director"),
-      prop: "director",
-      minWidth: 120
-    },
-    {
-      label: t("MoviesFilm.views"),
-      prop: "views",
-      minWidth: 120
-    },
-    {
-      label: t("MoviesFilm.language"),
-      prop: "language",
-      minWidth: 120
-    },
-    {
-      label: t("MoviesFilm.category"),
-      prop: "category",
-      width: 160,
-      slot: "category"
-    },
-    {
       label: t("labels.status"),
       minWidth: 130,
       cellRenderer: scope => (
@@ -167,6 +155,41 @@ export function useMoviesFilm(tableRef: Ref) {
         />
       )
     },
+    {
+      label: t("MoviesFilm.director"),
+      prop: "director",
+      minWidth: 170,
+      slot: "director"
+    },
+    {
+      label: t("MoviesFilm.channel"),
+      prop: "channel",
+      minWidth: 120,
+      slot: "channel"
+    },
+    {
+      label: t("MoviesFilm.views"),
+      prop: "views",
+      minWidth: 120
+    },
+    {
+      label: t("MoviesFilm.language"),
+      prop: "language",
+      minWidth: 120,
+      slot: "language"
+    },
+    {
+      label: t("MoviesFilm.releaseDate"),
+      prop: "release_date",
+      minWidth: 120
+    },
+    {
+      label: t("MoviesFilm.category"),
+      prop: "category",
+      width: 160,
+      slot: "category"
+    },
+
     {
       label: t("MoviesFilm.rate"),
       prop: "rate",
@@ -259,11 +282,13 @@ export function useMoviesFilm(tableRef: Ref) {
   function handleSelectionChange(val) {
     manySelectCount.value = val.length;
   }
+
   function onSelectionCancel() {
     manySelectCount.value = 0;
     // 用于多选表格，清空用户的选择
     tableRef.value.getTableRef().clearSelection();
   }
+
   function handleManyDelete() {
     if (manySelectCount.value === 0) {
       message(t("results.noSelectedData"), { type: "error" });
@@ -292,10 +317,24 @@ export function useMoviesFilm(tableRef: Ref) {
     loading.value = true;
     const query = toRaw(form);
     query.categories = JSON.stringify(query.category);
-    const { data, category }: any = await getFilmListApi(query);
+    delete query.category;
+    if (query.release_date && query.release_date.length === 2) {
+      query.min_release_date = query.release_date[0];
+      query.max_release_date = query.release_date[1];
+      delete query.release_date;
+    } else {
+      query.min_release_date = "";
+      query.max_release_date = "";
+    }
+    const { data, category, channel, region, language, subtitle }: any =
+      await getFilmListApi(query);
     dataList.value = data.results;
     pagination.total = data.total;
     categoryData.value = category;
+    channelData.value = channel;
+    regionData.value = region;
+    languageData.value = language;
+    subtitleData.value = subtitle;
     delay(500).then(() => {
       loading.value = false;
     });
@@ -324,16 +363,23 @@ export function useMoviesFilm(tableRef: Ref) {
           episodes: row?.episodes ?? [],
           region: row?.region ?? "",
           language: row?.language ?? "",
-          subtitles: row?.subtitles ?? "",
-          director: row?.director ?? "",
-          starring: row?.starring ?? "",
+          subtitle: row?.subtitle ?? "",
+          channel: row?.channel ?? "",
+          director: row?.director ?? [],
+          release_date: row?.release_date ?? "",
+          starring: row?.starring ?? [],
           description: row?.description ?? "",
+          introduction: row?.introduction ?? "",
           rate: row?.rate ?? 0,
           views: row?.views ?? 0,
           enable: row?.enable ?? false,
           times: row?.times ?? 0
         },
-        categoryData: categoryData
+        categoryData: categoryData,
+        channelData: channelData,
+        regionData: regionData,
+        subtitleData: subtitleData,
+        languageData: languageData
       },
       width: "50%",
       draggable: true,
@@ -343,11 +389,13 @@ export function useMoviesFilm(tableRef: Ref) {
       beforeSure: (done, { options }) => {
         const FormRef = formRef.value.getRef();
         const curData = options.props.formInline as FormItemProps;
+
         async function chores(detail) {
           message(detail, { type: "success" });
           done(); // 关闭弹框
           await onSearch(); // 刷新表格数据
         }
+
         FormRef.validate(valid => {
           if (valid) {
             if (is_add) {
@@ -384,6 +432,13 @@ export function useMoviesFilm(tableRef: Ref) {
     });
   }
 
+  function goActorDetail(pk) {
+    router.push({
+      name: "MoviesActor",
+      query: { pk: pk }
+    });
+  }
+
   function handleUpload(row) {
     addDialog({
       title: t("MoviesFilm.updatePosterTitle", { name: row.name }),
@@ -393,7 +448,9 @@ export function useMoviesFilm(tableRef: Ref) {
       contentRenderer: () =>
         h(croppingUpload, {
           imgSrc: row.poster ?? "",
-          onCropper: info => (avatarInfo.value = info)
+          onCropper: info => (avatarInfo.value = info),
+          options: { aspectRatio: 0.75 },
+          circled: false
         }),
       beforeSure: done => {
         const avatarFile = new File([avatarInfo.value.blob], "avatar.png", {
@@ -416,6 +473,7 @@ export function useMoviesFilm(tableRef: Ref) {
       }
     });
   }
+
   onMounted(() => {
     onSearch();
   });
@@ -430,6 +488,10 @@ export function useMoviesFilm(tableRef: Ref) {
     sortOptions,
     buttonClass,
     categoryData,
+    channelData,
+    languageData,
+    subtitleData,
+    regionData,
     manySelectCount,
     onSelectionCancel,
     onSearch,
@@ -438,6 +500,7 @@ export function useMoviesFilm(tableRef: Ref) {
     openDialog,
     handleUpload,
     handleDelete,
+    goActorDetail,
     handleManyDelete,
     handleSizeChange,
     handleCurrentChange,

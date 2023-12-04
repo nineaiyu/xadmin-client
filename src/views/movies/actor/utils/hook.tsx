@@ -5,16 +5,7 @@ import { addDialog } from "@/components/ReDialog";
 import type { FormItemProps } from "./types";
 import editForm from "../form.vue";
 import type { PaginationProps } from "@pureadmin/table";
-import {
-  reactive,
-  ref,
-  onMounted,
-  h,
-  toRaw,
-  type Ref,
-  nextTick,
-  watch
-} from "vue";
+import { reactive, ref, onMounted, h, toRaw, type Ref } from "vue";
 import {
   cloneDeep,
   delay,
@@ -26,19 +17,17 @@ import { hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { usePublicHooks } from "@/views/system/hooks";
 import {
-  actionRankEpisodeApi,
-  createEpisodeApi,
-  deleteEpisodeApi,
-  getEpisodeListApi,
-  manyDeleteEpisodeApi,
-  updateEpisodeApi
-} from "@/api/movies/episode";
-import Sortable from "sortablejs";
+  createActorApi,
+  deleteActorApi,
+  getActorListApi,
+  manyDeleteActorApi,
+  updateActorApi,
+  uploadFilePosterApi
+} from "@/api/movies/actor";
+import croppingUpload from "@/components/AvatarUpload/index.vue";
 import { useRoute } from "vue-router";
-import previewForm from "@/views/movies/file/preview.vue";
-import { formatTimes } from "@/views/movies/util";
 
-export function useMoviesEpisode(tableRef: Ref) {
+export function useMoviesActor(tableRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -48,35 +37,29 @@ export function useMoviesEpisode(tableRef: Ref) {
     {
       label: `${t("sorts.createdDate")} ${t("labels.ascending")}`,
       key: "created_time"
-    },
-    {
-      label: `${t("MoviesEpisode.rank")} ${t("labels.descending")}`,
-      key: "-rank"
-    },
-    {
-      label: `${t("MoviesEpisode.rank")} ${t("labels.ascending")}`,
-      key: "rank"
     }
   ];
   const form = reactive({
+    pk: "",
     name: "",
-    film_id: "",
+    introduction: "",
+    description: "",
     enable: "",
     ordering: sortOptions[0].key,
     page: 1,
     size: 10
   });
-  const formRef = ref();
-  const manySelectCount = ref(0);
-  const dataList = ref([]);
-  const canAdd = ref(false);
-  const loading = ref(true);
-  const switchLoadMap = ref({});
-  const { switchStyle } = usePublicHooks();
   const route = useRoute();
   const getParameter = cloneDeep(
     isEmpty(route.params) ? route.query : route.params
   );
+  const formRef = ref();
+  const avatarInfo = ref();
+  const manySelectCount = ref(0);
+  const dataList = ref([]);
+  const loading = ref(true);
+  const switchLoadMap = ref({});
+  const { switchStyle } = usePublicHooks();
   const pagination = reactive<PaginationProps>({
     total: 0,
     pageSize: 10,
@@ -92,52 +75,46 @@ export function useMoviesEpisode(tableRef: Ref) {
     {
       label: t("labels.id"),
       prop: "pk",
-      minWidth: 100,
-      cellRenderer: ({ row }) => (
-        <div class="flex items-center">
-          <iconify-icon-online
-            v-show={hasAuth("rank:MoviesEpisode") && canAdd.value}
-            icon="icon-park-outline:drag"
-            class="drag-btn cursor-grab"
-            onMouseenter={(event: { preventDefault: () => void }) =>
-              rowDrop(event)
-            }
-          />
-          <p class="ml-[16px]">{row.pk}</p>
-        </div>
-      )
-    },
-    {
-      label: t("MoviesEpisode.film"),
-      prop: "film",
       minWidth: 100
     },
     {
-      label: t("MoviesEpisode.name"),
+      label: t("MoviesActor.name"),
       prop: "name",
       minWidth: 120
     },
     {
-      label: t("MoviesFile.name"),
-      prop: "name",
-      minWidth: 120,
-      cellRenderer: ({ row }) => <span>{row.files.name}</span>
+      label: t("MoviesActor.foreignName"),
+      prop: "foreign_name",
+      minWidth: 120
     },
     {
-      label: t("MoviesEpisode.rank"),
-      prop: "rank",
-      minWidth: 100
+      label: t("MoviesActor.avatar"),
+      prop: "avatar",
+      minWidth: 160,
+      cellRenderer: ({ row }) => (
+        <el-image
+          class="w-[60px] h-[60px]"
+          fit={"contain"}
+          src={row.avatar}
+          loading={"lazy"}
+          preview-teleported={true}
+          preview-src-list={Array.of(row.picture)}
+        />
+      )
     },
     {
-      label: t("MoviesFile.duration"),
-      prop: "duration",
-      minWidth: 120,
-      cellRenderer: ({ row }) => <span>{formatTimes(row.files.duration)}</span>
-    },
-    {
-      label: t("MoviesFilm.views"),
-      prop: "views",
-      minWidth: 100
+      label: t("user.gender"),
+      prop: "sex",
+      minWidth: 90,
+      cellRenderer: ({ row, props }) => (
+        <el-tag
+          size={props.size}
+          type={row.sex === 1 ? "danger" : ""}
+          effect="plain"
+        >
+          {row.sex === 1 ? t("user.female") : t("user.male")}
+        </el-tag>
+      )
     },
     {
       label: t("labels.status"),
@@ -149,9 +126,9 @@ export function useMoviesEpisode(tableRef: Ref) {
           v-model={scope.row.enable}
           active-value={true}
           inactive-value={false}
-          active-text={t("labels.publish")}
-          inactive-text={t("labels.unPublish")}
-          disabled={!hasAuth("update:MoviesEpisode")}
+          active-text={t("labels.enable")}
+          inactive-text={t("labels.disable")}
+          disabled={!hasAuth("update:MoviesActor")}
           inline-prompt
           style={switchStyle.value}
           onChange={() => onChange(scope as any)}
@@ -168,48 +145,17 @@ export function useMoviesEpisode(tableRef: Ref) {
     {
       label: t("labels.operations"),
       fixed: "right",
-      width: 220,
+      width: 260,
       slot: "operation"
     }
   ];
-  const rowDrop = (event: { preventDefault: () => void }) => {
-    event.preventDefault();
-    nextTick(() => {
-      const wrapper: HTMLElement = document.querySelector(
-        ".el-table__body-wrapper tbody"
-      );
-      Sortable.create(wrapper, {
-        animation: 300,
-        handle: ".drag-btn",
-        onEnd: ({ newIndex, oldIndex }) => {
-          const currentRow = dataList.value.splice(oldIndex, 1)[0];
-          dataList.value.splice(newIndex, 0, currentRow);
-          if (newIndex !== oldIndex) {
-            actionRankEpisodeApi({
-              film: form.film_id,
-              pks: getKeyList(dataList.value, "pk")
-            }).then(res => {
-              if (res.code === 1000) {
-                message(t("results.success"), { type: "success" });
-                // await onSearch();
-              } else {
-                message(`${t("results.failed")}，${res.detail}`, {
-                  type: "error"
-                });
-              }
-            });
-          }
-        }
-      });
-    });
-  };
   function onChange({ row, index }) {
     const action =
       row.enable === false ? t("labels.disable") : t("labels.enable");
     ElMessageBox.confirm(
       `${t("buttons.hsoperateconfirm", {
         action: `<strong>${action}</strong>`,
-        message: `<strong style="color:var(--el-color-primary)">${row.name}</strong>`
+        message: `<strong style='color:var(--el-color-primary)'>${row.name}</strong>`
       })}`,
       {
         confirmButtonText: t("buttons.hssure"),
@@ -227,8 +173,7 @@ export function useMoviesEpisode(tableRef: Ref) {
             loading: true
           }
         );
-        row.file_id = row.files.file_id;
-        updateEpisodeApi(row.pk, row).then(res => {
+        updateActorApi(row.pk, row).then(res => {
           if (res.code === 1000) {
             switchLoadMap.value[index] = Object.assign(
               {},
@@ -249,7 +194,7 @@ export function useMoviesEpisode(tableRef: Ref) {
   }
 
   async function handleDelete(row) {
-    deleteEpisodeApi(row.pk).then(async res => {
+    deleteActorApi(row.pk).then(async res => {
       if (res.code === 1000) {
         message(t("results.success"), { type: "success" });
         await onSearch();
@@ -273,20 +218,18 @@ export function useMoviesEpisode(tableRef: Ref) {
   function handleSelectionChange(val) {
     manySelectCount.value = val.length;
   }
-
   function onSelectionCancel() {
     manySelectCount.value = 0;
     // 用于多选表格，清空用户的选择
     tableRef.value.getTableRef().clearSelection();
   }
-
   function handleManyDelete() {
     if (manySelectCount.value === 0) {
       message(t("results.noSelectedData"), { type: "error" });
       return;
     }
     const manySelectData = tableRef.value.getTableRef().getSelectionRows();
-    manyDeleteEpisodeApi({
+    manyDeleteActorApi({
       pks: JSON.stringify(getKeyList(manySelectData, "pk"))
     }).then(async res => {
       if (res.code === 1000) {
@@ -305,25 +248,13 @@ export function useMoviesEpisode(tableRef: Ref) {
       pagination.currentPage = form.page = 1;
       pagination.pageSize = form.size = 10;
     }
-    if (form.film_id) {
-      form.ordering = sortOptions[3].key;
-    }
     loading.value = true;
-    const { data } = await getEpisodeListApi(toRaw(form));
+    const { data }: any = await getActorListApi(toRaw(form));
     dataList.value = data.results;
     pagination.total = data.total;
     delay(500).then(() => {
       loading.value = false;
     });
-    form.film_id && (canAdd.value = true);
-    if (
-      getParameter.is_add === "true" &&
-      form.film_id &&
-      canAdd.value &&
-      form.film_id === getParameter.film_id
-    ) {
-      openDialog();
-    }
   }
 
   const resetForm = formEl => {
@@ -337,22 +268,21 @@ export function useMoviesEpisode(tableRef: Ref) {
     if (is_add) {
       title = t("buttons.hsadd");
     }
-    getParameter.is_add = false;
     addDialog({
-      title: `${title} ${t("MoviesEpisode.filmVideo")}`,
+      title: `${title} ${t("MoviesActor.actors")}`,
       props: {
         formInline: {
           pk: row?.pk ?? "",
-          film: form?.film_id ?? row.film ?? "",
           name: row?.name ?? "",
+          foreign_name: row?.foreign_name ?? "",
+          sex: row?.sex ?? "",
+          birthday: row?.birthday ?? "",
           description: row?.description ?? "",
-          file_id: row?.files.file_id ?? "",
-          file_pk: row?.files.pk ?? "",
-          rank: row?.rank ?? "",
+          introduction: row?.introduction ?? "",
           enable: row?.enable ?? true
         }
       },
-      width: "800px",
+      width: "50%",
       draggable: true,
       fullscreenIcon: true,
       closeOnClickModal: false,
@@ -365,11 +295,10 @@ export function useMoviesEpisode(tableRef: Ref) {
           done(); // 关闭弹框
           await onSearch(); // 刷新表格数据
         }
-
         FormRef.validate(valid => {
           if (valid) {
             if (is_add) {
-              createEpisodeApi(curData).then(async res => {
+              createActorApi(curData).then(async res => {
                 if (res.code === 1000) {
                   await chores(res.detail);
                 } else {
@@ -379,7 +308,7 @@ export function useMoviesEpisode(tableRef: Ref) {
                 }
               });
             } else {
-              updateEpisodeApi(curData.pk, curData).then(async res => {
+              updateActorApi(curData.pk, curData).then(async res => {
                 if (res.code === 1000) {
                   await chores(res.detail);
                 } else {
@@ -394,24 +323,38 @@ export function useMoviesEpisode(tableRef: Ref) {
       }
     });
   }
-  function previewVideo(row?: FormItemProps) {
+
+  function handleUpload(row) {
     addDialog({
-      title: `${t("MoviesFile.preview")} ${row.name}`,
-      props: {
-        formInline: {
-          pk: row?.files?.pk ?? "-1",
-          name: row?.name ?? "",
-          file_id: row?.file_id ?? "",
-          autoplay: true
-        }
-      },
-      width: "640px",
+      title: t("MoviesActor.updateAvatarTitle", { name: row.name }),
+      width: "40%",
       draggable: true,
-      fullscreenIcon: true,
       closeOnClickModal: false,
-      closeOnPressEscape: false,
-      hideFooter: true,
-      contentRenderer: () => h(previewForm)
+      contentRenderer: () =>
+        h(croppingUpload, {
+          imgSrc: row.poster ?? "",
+          onCropper: info => (avatarInfo.value = info),
+          circled: false
+        }),
+      beforeSure: done => {
+        const avatarFile = new File([avatarInfo.value.blob], "avatar.png", {
+          type: avatarInfo.value.blob.type,
+          lastModified: Date.now()
+        });
+
+        const data = new FormData();
+        data.append("file", avatarFile);
+        uploadFilePosterApi(row.pk, data).then(res => {
+          if (res.code === 1000) {
+            message(t("results.success"), { type: "success" });
+            onSearch();
+            done();
+          } else {
+            message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+            done();
+          }
+        });
+      }
     });
   }
   onMounted(() => {
@@ -422,16 +365,10 @@ export function useMoviesEpisode(tableRef: Ref) {
           parameter[param] = parameter[param].toString();
         }
       });
-      form.film_id = parameter.film_id;
+      form.pk = parameter.pk;
     }
     onSearch();
   });
-  watch(
-    () => form.film_id,
-    () => {
-      canAdd.value = false;
-    }
-  );
 
   return {
     t,
@@ -439,7 +376,6 @@ export function useMoviesEpisode(tableRef: Ref) {
     loading,
     columns,
     dataList,
-    canAdd,
     pagination,
     sortOptions,
     manySelectCount,
@@ -447,8 +383,8 @@ export function useMoviesEpisode(tableRef: Ref) {
     onSearch,
     resetForm,
     openDialog,
+    handleUpload,
     handleDelete,
-    previewVideo,
     handleManyDelete,
     handleSizeChange,
     handleCurrentChange,
