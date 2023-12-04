@@ -222,6 +222,8 @@ role:
   verifyRoleName: Please enter role name
   verifyRoleCode: Please enter role code
   permissions: Permissions
+  autoBind: Auto Bind Role
+  autoBindDesc: If the value of the registration parameter channel is the same as the role code, the user will automatically bind to the role
 
 menu:
   menus: Menus
