@@ -36,6 +36,7 @@ export function useRole(tableRef: Ref) {
     name: "",
     code: "",
     is_active: "",
+    auto_bind: "",
     ordering: sortOptions[0].key,
     page: 1,
     size: 10
@@ -68,6 +69,25 @@ export function useRole(tableRef: Ref) {
       label: t("role.name"),
       prop: "name",
       minWidth: 120
+    },
+    {
+      label: t("role.autoBind"),
+      minWidth: 130,
+      cellRenderer: scope => (
+        <el-switch
+          size={scope.props.size === "small" ? "small" : "default"}
+          loading={switchLoadMap.value[scope.index]?.loading}
+          v-model={scope.row.auto_bind}
+          active-value={true}
+          inactive-value={false}
+          active-text={t("labels.enable")}
+          inactive-text={t("labels.disable")}
+          disabled={!hasAuth("update:systemRole")}
+          inline-prompt
+          style={switchStyle.value}
+          onChange={() => onChangeBind(scope as any)}
+        />
+      )
     },
     {
       label: t("role.code"),
@@ -113,13 +133,59 @@ export function useRole(tableRef: Ref) {
     }
   ];
 
+  function onChangeBind({ row, index }) {
+    const action =
+      row.auto_bind === false ? t("labels.disable") : t("labels.enable");
+    ElMessageBox.confirm(
+      `${t("buttons.hsoperateconfirm", {
+        action: `<strong>${action}</strong>`,
+        message: `<strong style="color:var(--el-color-primary)">${row.name}</strong>`
+      })}`,
+      {
+        confirmButtonText: t("buttons.hssure"),
+        cancelButtonText: t("buttons.hscancel"),
+        type: "warning",
+        dangerouslyUseHTMLString: true,
+        draggable: true
+      }
+    )
+      .then(() => {
+        switchLoadMap.value[index] = Object.assign(
+          {},
+          switchLoadMap.value[index],
+          {
+            loading: true
+          }
+        );
+        updateRoleApi(row.pk, row).then(res => {
+          if (res.code === 1000) {
+            switchLoadMap.value[index] = Object.assign(
+              {},
+              switchLoadMap.value[index],
+              {
+                loading: false
+              }
+            );
+            message(t("results.success"), { type: "success" });
+          } else {
+            message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+          }
+        });
+      })
+      .catch(() => {
+        row.auto_bind === false
+          ? (row.auto_bind = true)
+          : (row.auto_bind = false);
+      });
+  }
+
   function onChange({ row, index }) {
     const action =
       row.is_active === false ? t("labels.disable") : t("labels.enable");
     ElMessageBox.confirm(
       `${t("buttons.hsoperateconfirm", {
         action: `<strong>${action}</strong>`,
-        message: `<strong style='color:var(--el-color-primary)'>${row.name}</strong>`
+        message: `<strong style="color:var(--el-color-primary)">${row.name}</strong>`
       })}`,
       {
         confirmButtonText: t("buttons.hssure"),
@@ -184,11 +250,13 @@ export function useRole(tableRef: Ref) {
   function handleSelectionChange(val) {
     manySelectCount.value = val.length;
   }
+
   function onSelectionCancel() {
     manySelectCount.value = 0;
     // 用于多选表格，清空用户的选择
     tableRef.value.getTableRef().clearSelection();
   }
+
   function handleManyDelete() {
     if (manySelectCount.value === 0) {
       message(t("results.noSelectedData"), { type: "error" });
@@ -244,6 +312,7 @@ export function useRole(tableRef: Ref) {
           code: row?.code ?? "",
           menu: row?.menu ?? [],
           is_active: row?.is_active ?? true,
+          auto_bind: row?.auto_bind ?? false,
           description: row?.description ?? ""
         }
       },
@@ -256,11 +325,13 @@ export function useRole(tableRef: Ref) {
         const FormRef = formRef.value.getRef();
         const TreeRef = formRef.value.getTreeRef();
         const curData = options.props.formInline as FormItemProps;
+
         async function chores(detail) {
           message(detail, { type: "success" });
           done(); // 关闭弹框
           await onSearch(); // 刷新表格数据
         }
+
         FormRef.validate(valid => {
           if (valid) {
             curData.menu = TreeRef!.getCheckedKeys(false);
@@ -295,7 +366,7 @@ export function useRole(tableRef: Ref) {
 
   const getMenuData = () => {
     loading.value = true;
-    getMenuListApi({ page: 1, size: 100 }).then(res => {
+    getMenuListApi({ page: 1, size: 500 }).then(res => {
       setTimeout(() => {
         loading.value = false;
         if (res.code === 1000) {

@@ -8,6 +8,7 @@ import { isAllEmpty } from "@pureadmin/utils";
 import { match } from "pinyin-pro";
 import { useI18n } from "vue-i18n";
 import { transformI18n } from "@/plugins/i18n";
+import FromQuestion from "@/components/FromQuestion/index.vue";
 
 const props = withDefaults(defineProps<FormProps>(), {
   formInline: () => ({
@@ -15,7 +16,8 @@ const props = withDefaults(defineProps<FormProps>(), {
     code: "",
     description: "",
     menu: [],
-    is_active: true
+    is_active: true,
+    auto_bind: true
   })
 });
 const customNodeClass = data => {
@@ -76,7 +78,7 @@ onMounted(() => {
     ref="ruleFormRef"
     :model="newFormInline"
     :rules="formRules"
-    label-width="82px"
+    label-width="140px"
   >
     <el-form-item :label="t('role.name')" prop="name">
       <el-input
@@ -95,6 +97,22 @@ onMounted(() => {
     </el-form-item>
     <el-form-item :label="t('labels.status')" prop="is_active">
       <el-radio-group v-model="newFormInline.is_active">
+        <el-radio-button
+          v-for="item in ifEnableOptions"
+          :key="item.label"
+          :label="item.value"
+          >{{ item.label }}</el-radio-button
+        >
+      </el-radio-group>
+    </el-form-item>
+    <el-form-item :label="t('role.autoBind')" prop="auto_bind">
+      <template #label>
+        <from-question
+          :label="t('role.autoBind')"
+          :description="t('role.autoBindDesc')"
+        />
+      </template>
+      <el-radio-group v-model="newFormInline.auto_bind">
         <el-radio-button
           v-for="item in ifEnableOptions"
           :key="item.label"
