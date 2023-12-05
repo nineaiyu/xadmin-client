@@ -413,6 +413,7 @@ MoviesFilm:
   getEpisode: See Videos
   releaseDate: Release Date
   introduction: Introduction
+  episodeCount: Number Of Episodes
 
 MoviesEpisode:
   episode: Episode Management

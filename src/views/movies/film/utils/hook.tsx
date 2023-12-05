@@ -168,6 +168,11 @@ export function useMoviesFilm(tableRef: Ref) {
       slot: "channel"
     },
     {
+      label: t("MoviesFilm.episodeCount"),
+      prop: "episode_count",
+      minWidth: 120
+    },
+    {
       label: t("MoviesFilm.views"),
       prop: "views",
       minWidth: 120

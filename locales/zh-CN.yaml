@@ -413,6 +413,7 @@ MoviesFilm:
   getEpisode: 查看视频
   releaseDate: 上映时间
   introduction: 剧情
+  episodeCount: 剧集数量
 
 MoviesEpisode:
   episode: 单集管理
