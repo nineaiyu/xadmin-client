@@ -228,10 +228,7 @@ export function useMenu() {
     }
     updateMenuApi(u_menu.pk, u_menu).then((res: any) => {
       if (res.code === 1000) {
-        actionRankMenuApi({
-          action: "order",
-          pks: getMenuOrderPk(treeRef.value?.data)
-        })
+        actionRankMenuApi({ pks: getMenuOrderPk(treeRef.value?.data) })
           .then((res: any) => {
             if (res.code === 1000) {
               message(res.detail, { type: "success" });
