@@ -31,8 +31,9 @@ export const manyDeleteEpisodeApi = (data?: object) => {
   });
 };
 
-export const actionRankEpisodeApi = (data?: object) => {
+export const actionRankEpisodeApi = (params?: object, data?: object) => {
   return http.request<Result>("post", `/api/movies/episode/action_rank`, {
+    params: params,
     data: data
   });
 };

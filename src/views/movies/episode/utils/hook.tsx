@@ -188,10 +188,10 @@ export function useMoviesEpisode(tableRef: Ref) {
           const currentRow = dataList.value.splice(oldIndex, 1)[0];
           dataList.value.splice(newIndex, 0, currentRow);
           if (newIndex !== oldIndex) {
-            actionRankEpisodeApi({
-              film: form.film_id,
-              pks: getKeyList(dataList.value, "pk")
-            }).then(res => {
+            actionRankEpisodeApi(
+              { film_id: form.film_id },
+              { pks: getKeyList(dataList.value, "pk") }
+            ).then(res => {
               if (res.code === 1000) {
                 message(t("results.success"), { type: "success" });
                 // await onSearch();
