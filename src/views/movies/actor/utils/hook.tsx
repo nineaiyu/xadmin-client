@@ -98,7 +98,7 @@ export function useMoviesActor(tableRef: Ref) {
           src={row.avatar}
           loading={"lazy"}
           preview-teleported={true}
-          preview-src-list={Array.of(row.picture)}
+          preview-src-list={Array.of(row.avatar)}
         />
       )
     },

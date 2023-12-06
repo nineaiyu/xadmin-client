@@ -201,7 +201,7 @@ export function useMoviesFilm(tableRef: Ref) {
       prop: "rate",
       minWidth: 180,
       cellRenderer: ({ row }) => (
-        <el-rate v-model={row.rate} disabled show-score></el-rate>
+        <el-rate model-value={Number(row.rate)} disabled show-score></el-rate>
       )
     },
     {
@@ -376,7 +376,7 @@ export function useMoviesFilm(tableRef: Ref) {
           starring: row?.starring ?? [],
           description: row?.description ?? "",
           introduction: row?.introduction ?? "",
-          rate: row?.rate ?? 0,
+          rate: Number(row?.rate) ?? 0,
           views: row?.views ?? 0,
           enable: row?.enable ?? false,
           times: row?.times ?? 0
