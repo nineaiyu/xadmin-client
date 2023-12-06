@@ -354,6 +354,7 @@ onMounted(() => {
             </el-popconfirm>
             <el-text
               v-if="data.menu_type === 2"
+              v-copy="data.path"
               type="success"
               style="margin-left: 10px"
             >
