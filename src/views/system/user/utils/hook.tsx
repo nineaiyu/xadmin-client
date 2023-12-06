@@ -130,7 +130,10 @@ export function useUser(tableRef: Ref) {
     {
       label: t("user.username"),
       prop: "username",
-      minWidth: 130
+      minWidth: 130,
+      cellRenderer: ({ row }) => (
+        <span v-copy={row.username}>{row.username}</span>
+      )
     },
     {
       label: t("user.nickname"),
@@ -226,7 +229,7 @@ export function useUser(tableRef: Ref) {
     ElMessageBox.confirm(
       `${t("buttons.hsoperateconfirm", {
         action: `<strong>${action}</strong>`,
-        message: `<strong style='color:var(--el-color-primary)'>${row.username}</strong>`
+        message: `<strong style="color:var(--el-color-primary)">${row.username}</strong>`
       })}`,
       {
         confirmButtonText: t("buttons.hssure"),
@@ -291,11 +294,13 @@ export function useUser(tableRef: Ref) {
   function handleSelectionChange(val) {
     manySelectCount.value = val.length;
   }
+
   function onSelectionCancel() {
     manySelectCount.value = 0;
     // 用于多选表格，清空用户的选择
     tableRef.value.getTableRef().clearSelection();
   }
+
   function handleManyDelete() {
     if (manySelectCount.value === 0) {
       message(t("results.noSelectedData"), { type: "error" });
@@ -330,25 +335,6 @@ export function useUser(tableRef: Ref) {
       loading.value = false;
     });
   }
-  const uploadAvatar = (
-    uid: number,
-    file: any,
-    callBack: Function,
-    errorBack: Function = null
-  ) => {
-    const data = new FormData();
-    data.append("file", file);
-    data.append("uid", uid.toString());
-    uploadUserAvatarApi({ uid: uid }, data).then(res => {
-      if (res.code === 1000) {
-        callBack(res);
-      } else {
-        if (errorBack) {
-          errorBack(res);
-        }
-      }
-    });
-  };
 
   function goNotice() {
     const manySelectData = tableRef.value.getTableRef().getSelectionRows();
@@ -389,11 +375,13 @@ export function useUser(tableRef: Ref) {
       beforeSure: (done, { options }) => {
         const FormRef = formRef.value.getRef();
         const curData = options.props.formInline as FormItemProps;
+
         async function chores(detail) {
           message(detail, { type: "success" });
           done(); // 关闭弹框
           await onSearch(); // 刷新表格数据
         }
+
         FormRef.validate(valid => {
           if (valid) {
             // 表单规则校验通过
@@ -479,19 +467,18 @@ export function useUser(tableRef: Ref) {
           type: avatarInfo.value.blob.type,
           lastModified: Date.now()
         });
-        uploadAvatar(
-          row.pk,
-          avatarFile,
-          () => {
+        const data = new FormData();
+        data.append("file", avatarFile);
+        uploadUserAvatarApi(row.pk, data).then(res => {
+          if (res.code === 1000) {
             message(t("results.success"), { type: "success" });
             onSearch();
             done();
-          },
-          res => {
+          } else {
             message(`${t("results.failed")}，${res.detail}`, { type: "error" });
             done();
           }
-        );
+        });
       }
     });
   }

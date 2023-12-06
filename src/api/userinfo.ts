@@ -13,7 +13,7 @@ export const updateUserInfoApi = (data?: object) => {
 };
 
 export const uploadUserInfoAvatarApi = (params?: object, data?: object) => {
-  return http.upload<Result>("/api/system/userinfo/upload", params, data);
+  return http.upload<Result>("/api/system/userinfo/self/upload", params, data);
 };
 
 export const updateUserInfoPasswordApi = (data?: object) => {

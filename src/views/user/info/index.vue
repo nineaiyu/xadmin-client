@@ -102,7 +102,7 @@ const activeTab = ref("userinfo");
             <edit-user-password @handle-update="handleResetPassword" />
           </el-tab-pane>
           <el-tab-pane
-            v-if="hasAuth('update:UserInfoAvatar')"
+            v-if="hasAuth('upload:UserInfoAvatar')"
             :label="t('userinfo.updateAvatar')"
             name="avatar"
           >

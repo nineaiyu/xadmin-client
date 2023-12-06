@@ -92,7 +92,8 @@ export function useRole(tableRef: Ref) {
     {
       label: t("role.code"),
       prop: "code",
-      minWidth: 150
+      minWidth: 150,
+      cellRenderer: ({ row }) => <span v-copy={row.code}>{row.code}</span>
     },
     {
       label: t("labels.status"),
