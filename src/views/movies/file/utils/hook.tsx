@@ -71,6 +71,7 @@ export function useFile(tableRef: Ref) {
   const form = reactive({
     name: "",
     drive_id: "",
+    file_id: "",
     description: "",
     used: "",
     ordering: sortOptions[0].key,
@@ -125,18 +126,20 @@ export function useFile(tableRef: Ref) {
     },
     {
       label: t("MoviesDrive.driveId"),
-      prop: "aliyun_drive_id",
+      prop: "aliyun_drive",
       minWidth: 100
     },
     {
       label: t("MoviesFile.name"),
       prop: "name",
-      minWidth: 200
+      minWidth: 200,
+      cellRenderer: ({ row }) => <span v-copy={row.name}>{row.name}</span>
     },
     {
       label: t("MoviesFile.fileId"),
       prop: "file_id",
-      minWidth: 160
+      minWidth: 200,
+      cellRenderer: ({ row }) => <span v-copy={row.file_id}>{row.file_id}</span>
     },
     {
       label: t("MoviesFile.size"),
@@ -172,7 +175,7 @@ export function useFile(tableRef: Ref) {
     },
     {
       label: t("labels.remark"),
-      minWidth: 180,
+      minWidth: 100,
       prop: "description",
       cellRenderer: ({ row, index }) => (
         <div

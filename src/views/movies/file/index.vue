@@ -79,6 +79,15 @@ const {
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
+      <el-form-item :label="t('MoviesFile.fileId')" prop="file_id">
+        <el-input
+          v-model="form.file_id"
+          :placeholder="t('MoviesFile.fileId')"
+          clearable
+          class="!w-[200px]"
+          @keyup.enter="onSearch(true)"
+        />
+      </el-form-item>
       <el-form-item :label="t('labels.status')">
         <el-select
           v-model="form.used"

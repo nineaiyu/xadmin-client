@@ -119,7 +119,8 @@ export function useMoviesFilm(tableRef: Ref) {
     {
       label: t("MoviesFilm.name"),
       prop: "name",
-      minWidth: 120
+      minWidth: 120,
+      cellRenderer: ({ row }) => <span v-copy={row.name}>{row.name}</span>
     },
     {
       label: t("MoviesFilm.poster"),

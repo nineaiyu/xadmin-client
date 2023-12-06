@@ -115,13 +115,16 @@ export function useMoviesEpisode(tableRef: Ref) {
     {
       label: t("MoviesEpisode.name"),
       prop: "name",
-      minWidth: 120
+      minWidth: 120,
+      cellRenderer: ({ row }) => <span v-copy={row.name}>{row.name}</span>
     },
     {
       label: t("MoviesFile.name"),
       prop: "name",
       minWidth: 120,
-      cellRenderer: ({ row }) => <span>{row.files.name}</span>
+      cellRenderer: ({ row }) => (
+        <span v-copy={row.files.name}>{row.files.name}</span>
+      )
     },
     {
       label: t("MoviesEpisode.rank"),
