@@ -32,11 +32,13 @@ import {
   DownloadIcon
 } from "./svg";
 import { useI18n } from "vue-i18n";
+import GetCroppedCanvasOptions = Cropper.GetCroppedCanvasOptions;
 
 type Options = Cropper.Options;
 
 const defaultOptions: Options = {
   aspectRatio: 1,
+  viewMode: 1,
   zoomable: true,
   zoomOnTouch: true,
   zoomOnWheel: true,
@@ -62,6 +64,8 @@ const defaultOptions: Options = {
 const props = {
   src: { type: String, required: true },
   errSrc: { type: String, required: true },
+  quality: { type: Number, required: false, default: 0.98 },
+  type: { type: String, required: false, default: "image/png" },
   alt: { type: String },
   circled: { type: Boolean, default: false },
   realTimePreview: { type: Boolean, default: true },
@@ -71,7 +75,11 @@ const props = {
     default: undefined
   },
   imageStyle: { type: Object as PropType<CSSProperties>, default: () => ({}) },
-  options: { type: Object as PropType<Options>, default: () => ({}) }
+  options: { type: Object as PropType<Options>, default: () => ({}) },
+  canvasOption: {
+    type: Object as PropType<GetCroppedCanvasOptions>,
+    default: () => ({ maxHeight: 1280, maxWidth: 960 })
+  }
 };
 
 export default defineComponent({
@@ -168,31 +176,64 @@ export default defineComponent({
 
     function croppered() {
       if (!cropper.value) return;
+      const sourceCanvas = cropper.value!.getCroppedCanvas(props.canvasOption);
       const canvas = inCircled.value
-        ? getRoundedCanvas()
-        : cropper.value.getCroppedCanvas();
+        ? getRoundedCanvas(sourceCanvas)
+        : sourceCanvas;
+      let quality = props.quality;
+      let type = props.type;
+      if (quality == 0) {
+        const rules = [
+          { value: 0, type: "image/png", quality: 1 },
+          { value: 0.1, type: "image/jpeg", quality: 0.98 },
+          { value: 0.2, type: "image/jpeg", quality: 0.7 },
+          { value: 1, type: "image/jpeg", quality: 0.6 },
+          { value: 5, type: "image/jpeg", quality: 0.5 },
+          { value: 10, type: "image/jpeg", quality: 0.2 }
+        ];
+        rules.sort((a, b) => {
+          return b.value - a.value;
+        });
+        const size = canvas.width * canvas.height;
+        for (let i = 0; i < rules.length; i++) {
+          if (size > 1024 * 1024 * rules[i].value) {
+            quality = rules[i].quality;
+            type = rules[i].type;
+            console.log("get quality", size / 1024, rules[i]);
+            break;
+          }
+        }
+      }
       // https://developer.mozilla.org/zh-CN/docs/Web/API/HTMLCanvasElement/toBlob
-      canvas.toBlob(blob => {
-        if (!blob) return;
-        const fileReader: FileReader = new FileReader();
-        fileReader.readAsDataURL(blob);
-        fileReader.onloadend = e => {
-          if (!e.target?.result || !blob) return;
-          imgBase64.value = e.target.result;
-          emit("cropper", {
-            base64: e.target.result,
-            blob,
-            info: { size: blob.size, ...cropper.value.getData() }
-          });
-        };
-        fileReader.onerror = () => {
-          emit("error");
-        };
-      });
+      canvas.toBlob(
+        blob => {
+          if (!blob) return;
+          const fileReader: FileReader = new FileReader();
+          fileReader.readAsDataURL(blob);
+          fileReader.onloadend = e => {
+            if (!e.target?.result || !blob) return;
+            imgBase64.value = e.target.result;
+            emit("cropper", {
+              base64: e.target.result,
+              blob,
+              // info: { size: blob.size, ...cropper.value.getData() }
+              info: {
+                size: blob.size,
+                width: canvas.width,
+                height: canvas.height
+              }
+            });
+          };
+          fileReader.onerror = () => {
+            emit("error");
+          };
+        },
+        type,
+        quality
+      );
     }
 
-    function getRoundedCanvas() {
-      const sourceCanvas = cropper.value!.getCroppedCanvas();
+    function getRoundedCanvas(sourceCanvas) {
       const canvas = document.createElement("canvas");
       const context = canvas.getContext("2d")!;
       const width = sourceCanvas.width;

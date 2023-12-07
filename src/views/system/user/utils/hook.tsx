@@ -460,7 +460,9 @@ export function useUser(tableRef: Ref) {
         h(croppingUpload, {
           imgSrc: row.avatar ?? "",
           onCropper: info => (avatarInfo.value = info),
-          circled: true
+          circled: false,
+          quality: 0,
+          canvasOption: { width: 512, height: 512 }
         }),
       beforeSure: done => {
         const avatarFile = new File([avatarInfo.value.blob], "avatar.png", {
