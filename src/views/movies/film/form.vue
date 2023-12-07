@@ -5,6 +5,7 @@ import { FormProps } from "./utils/types";
 import { useI18n } from "vue-i18n";
 import ReCol from "@/components/ReCol";
 import { getActorListApi } from "@/api/movies/actor";
+import { cloneDeep, delay } from "@pureadmin/utils";
 
 const props = withDefaults(defineProps<FormProps>(), {
   formInline: () => ({
@@ -43,7 +44,7 @@ function getRef() {
 }
 
 const { t } = useI18n();
-const actorData = ref();
+const actorData = ref([]);
 const loading = ref(false);
 defineExpose({ getRef });
 
@@ -52,7 +53,8 @@ const getActorData = (search: string, pks: string[], init = false) => {
     name: "",
     pks: "",
     page: 1,
-    size: 100,
+    size: 30,
+    ordering: "-created_time",
     enable: true
   };
   if (search) {
@@ -63,14 +65,19 @@ const getActorData = (search: string, pks: string[], init = false) => {
   }
   if (pks || search || init) {
     loading.value = true;
+    if (search) {
+      actorData.value = [];
+    }
     getActorListApi(query).then(res => {
       if (res.code === 1000) {
-        actorData.value = [];
+        const org_data = cloneDeep(actorData.value);
         res.data.results.forEach(item => {
-          actorData.value.push({
-            value: item.pk,
-            label: `${item.name} -- ${item.foreign_name}`
-          });
+          if (!checkExist(item, org_data)) {
+            actorData.value.push({
+              value: item.pk,
+              label: `${item.name} -- ${item.foreign_name}`
+            });
+          }
         });
       }
       loading.value = false;
@@ -78,13 +85,23 @@ const getActorData = (search: string, pks: string[], init = false) => {
   }
 };
 
+const checkExist = (val, list) => {
+  for (let i = 0; i < list.length; i++) {
+    if (val.pk === list[i].value) {
+      return true;
+    }
+  }
+  return false;
+};
+
 onMounted(() => {
   let pks = [...newFormInline.value.director, ...newFormInline.value.starring];
   if (pks && pks.length > 0) {
     getActorData("", pks);
-  } else {
-    getActorData("", null, true);
   }
+  delay(800).then(() => {
+    getActorData("", null, true);
+  });
 });
 </script>
 
@@ -223,7 +240,7 @@ onMounted(() => {
             remote-show-suffix
             :remote-method="getActorData"
             :loading="loading"
-            style="width: 100%"
+            style="width: 80%"
           >
             <el-option
               v-for="item in actorData"
@@ -232,6 +249,9 @@ onMounted(() => {
               :value="item.value"
             />
           </el-select>
+          <el-button @click="getActorData('', null, true)">{{
+            t("buttons.hsreload")
+          }}</el-button>
         </el-form-item>
       </re-col>
 
@@ -248,7 +268,7 @@ onMounted(() => {
             remote-show-suffix
             :remote-method="getActorData"
             :loading="loading"
-            style="width: 100%"
+            style="width: 80%"
           >
             <el-option
               v-for="item in actorData"
@@ -257,6 +277,9 @@ onMounted(() => {
               :value="item.value"
             />
           </el-select>
+          <el-button @click="getActorData('', null, true)">{{
+            t("buttons.hsreload")
+          }}</el-button>
         </el-form-item>
       </re-col>
 
