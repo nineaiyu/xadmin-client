@@ -361,10 +361,12 @@ export function useMoviesSwipe(tableRef: Ref) {
       closeOnClickModal: false,
       contentRenderer: () =>
         h(croppingUpload, {
-          imgSrc: row.poster ?? "",
+          imgSrc: row.picture ?? "",
           onCropper: info => (avatarInfo.value = info),
           options: { aspectRatio: 2 },
-          circled: false
+          circled: false,
+          quality: 0,
+          canvasOption: { width: 1000, height: 1000 }
         }),
       beforeSure: done => {
         const avatarFile = new File([avatarInfo.value.blob], "avatar.png", {

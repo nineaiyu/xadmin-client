@@ -456,7 +456,9 @@ export function useMoviesFilm(tableRef: Ref) {
           imgSrc: row.poster ?? "",
           onCropper: info => (avatarInfo.value = info),
           options: { aspectRatio: 0.75 },
-          circled: false
+          circled: false,
+          quality: 0,
+          canvasOption: { width: 600, height: 600 }
         }),
       beforeSure: done => {
         const avatarFile = new File([avatarInfo.value.blob], "avatar.png", {

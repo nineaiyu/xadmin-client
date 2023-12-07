@@ -1,4 +1,4 @@
-export function formatTimes(times) {
+export function formatTimes(times: number) {
   const h = Math.floor(times / 3600);
   const m = Math.floor((times - 3600 * h) / 60);
   const s = Math.floor(times % 60);

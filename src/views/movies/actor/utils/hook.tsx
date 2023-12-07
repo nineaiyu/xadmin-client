@@ -332,9 +332,11 @@ export function useMoviesActor(tableRef: Ref) {
       closeOnClickModal: false,
       contentRenderer: () =>
         h(croppingUpload, {
-          imgSrc: row.poster ?? "",
+          imgSrc: row.avatar ?? "",
           onCropper: info => (avatarInfo.value = info),
-          circled: false
+          circled: false,
+          quality: 0,
+          canvasOption: { width: 512, height: 512 }
         }),
       beforeSure: done => {
         const avatarFile = new File([avatarInfo.value.blob], "avatar.png", {
