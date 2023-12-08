@@ -69,10 +69,21 @@ export function useFile(tableRef: Ref) {
       key: "false"
     }
   ];
+  const uploadOptions = [
+    {
+      label: t("MoviesFile.uploadFile"),
+      key: "true"
+    },
+    {
+      label: t("MoviesFile.importFile"),
+      key: "false"
+    }
+  ];
   const form = reactive({
     name: "",
     drive_id: "",
     file_id: "",
+    is_upload: "",
     description: "",
     used: "",
     ordering: sortOptions[0].key,
@@ -458,6 +469,7 @@ export function useFile(tableRef: Ref) {
     buttonClass,
     sortOptions,
     usedOptions,
+    uploadOptions,
     manySelectCount,
     onSelectionCancel,
     onSearch,

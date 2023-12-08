@@ -18,6 +18,7 @@ import {
 import {
   cloneDeep,
   delay,
+  formatBytes,
   getKeyList,
   isEmpty,
   isString
@@ -138,6 +139,12 @@ export function useMoviesEpisode(tableRef: Ref) {
       cellRenderer: ({ row }) => <span>{formatTimes(row.files.duration)}</span>
     },
     {
+      label: t("MoviesFile.size"),
+      prop: "size",
+      minWidth: 100,
+      cellRenderer: ({ row }) => <span>{formatBytes(row.files.size)}</span>
+    },
+    {
       label: t("MoviesFilm.views"),
       prop: "views",
       minWidth: 100
@@ -194,7 +201,7 @@ export function useMoviesEpisode(tableRef: Ref) {
             ).then(res => {
               if (res.code === 1000) {
                 message(t("results.success"), { type: "success" });
-                // await onSearch();
+                onSearch();
               } else {
                 message(`${t("results.failed")}，${res.detail}`, {
                   type: "error"

@@ -28,6 +28,7 @@ const {
   pagination,
   sortOptions,
   usedOptions,
+  uploadOptions,
   manySelectCount,
   onSelectionCancel,
   onSearch,
@@ -88,6 +89,22 @@ const {
           class="!w-[200px]"
           @keyup.enter="onSearch(true)"
         />
+      </el-form-item>
+      <el-form-item :label="t('MoviesFile.isUpload')">
+        <el-select
+          v-model="form.is_upload"
+          filterable
+          style="width: 180px"
+          clearable
+          @change="onSearch(true)"
+        >
+          <el-option
+            v-for="item in uploadOptions"
+            :key="item.key"
+            :label="item.label"
+            :value="item.key"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item :label="t('labels.status')">
         <el-select
