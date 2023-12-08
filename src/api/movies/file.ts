@@ -73,3 +73,9 @@ export const uploadCompleteApi = (data?: object) => {
 };
 
 export const directDownloadUrl = `/api/movies/download/`;
+
+export const syncFileInfoApi = (pk?: string, data?: object) => {
+  return http.request<ResultDetail>("post", `/api/movies/file/${pk}/sync`, {
+    data: data
+  });
+};

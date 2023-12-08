@@ -167,7 +167,7 @@ export function useMoviesSwipe(tableRef: Ref) {
               res => {
                 if (res.code === 1000) {
                   message(t("results.success"), { type: "success" });
-                  // await onSearch();
+                  onSearch();
                 } else {
                   message(`${t("results.failed")}，${res.detail}`, {
                     type: "error"

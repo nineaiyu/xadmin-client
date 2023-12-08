@@ -11,7 +11,7 @@ import Eye from "@iconify-icons/ri/eye-line";
 import Download from "@iconify-icons/ri/download-2-line";
 import AddFill from "@iconify-icons/ri/add-circle-line";
 import More from "@iconify-icons/ep/more-filled";
-import Lock from "@iconify-icons/ep/lock";
+import Sync from "@iconify-icons/ri/24-hours-line";
 
 defineOptions({
   name: "MoviesFile"
@@ -35,6 +35,7 @@ const {
   openDialog,
   handelUpload,
   handleDelete,
+  syncFileInfo,
   makeDownloadUrl,
   handleManyDelete,
   handleSizeChange,
@@ -238,6 +239,16 @@ const {
 
               <template #dropdown>
                 <el-dropdown-menu>
+                  <el-dropdown-item v-if="hasAuth('sync:MoviesFileInfo')">
+                    <el-button
+                      link
+                      :size="size"
+                      :icon="useRenderIcon(Sync)"
+                      @click="syncFileInfo(row)"
+                    >
+                      {{ t("MoviesFile.syncInfo") }}
+                    </el-button>
+                  </el-dropdown-item>
                   <el-dropdown-item>
                     <el-button
                       v-copy:click="makeDownloadUrl(row)"

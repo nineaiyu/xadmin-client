@@ -47,6 +47,7 @@ const searchFile = () => {
         fileInfo.name = res.data.results[0].name;
         fileInfo.pk = res.data.results[0].pk;
         fileInfo.created_time = res.data.results[0].created_time;
+        newFormInline.value.name = res.data.results[0].name;
       } else {
         message(`${t("results.failed")}，${res.detail}`, {
           type: "error"

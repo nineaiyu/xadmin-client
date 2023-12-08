@@ -390,13 +390,20 @@ MoviesFile:
   uploadFailed: 上传失败 { count }
   uploadTip1: 拖拽文件或
   uploadTip2: 点击进行上传
+  syncInfo: 同步信息
+  category: 类型
+  batchImport: 批量导入
+  batchImportConfirm: 确定批量导入 { count } 条数据吗？
+  isUpload: 文件类型
+  uploadFile: 上传文件
+  importFile: 导入文件
 
 MoviesFilm:
   films: 影视资源
   film: 影视管理
   language: 语言
   subtitle: 字幕
-  director: 主演
+  director: 导演
   starring: 演员
   name: 影视名称
   title: 影视译名

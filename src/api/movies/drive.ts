@@ -41,3 +41,15 @@ export const manyDeleteDriveApi = (data?: object) => {
     params: data
   });
 };
+
+export const getFileInfoByDriveApi = (pk?: string, params?: object) => {
+  return http.request<Result>("get", `/api/movies/drive/${pk}/get_files`, {
+    params
+  });
+};
+
+export const importFileInfoByDriveApi = (pk?: string, data?: object) => {
+  return http.request<Result>("post", `/api/movies/drive/${pk}/import_files`, {
+    data
+  });
+};

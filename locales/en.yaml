@@ -390,6 +390,13 @@ MoviesFile:
   uploadFailed: Upload Failed { count }
   uploadTip1: Drop file here or
   uploadTip2: click to upload
+  syncInfo: Sync File Info
+  category: category
+  batchImport: Batch Import
+  batchImportConfirm: Are you sure to import { count } pieces of items in batch?
+  isUpload: Upload Type
+  uploadFile: Upload
+  importFile: Import
 
 MoviesFilm:
   films: Film

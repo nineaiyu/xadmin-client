@@ -12,6 +12,7 @@ import {
   manyDeleteDriveApi
 } from "@/api/movies/drive";
 import editForm from "../edit.vue";
+import createForm from "../create/index.vue";
 import { delay, formatBytes, getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
@@ -234,6 +235,24 @@ export function useDrive(tableRef: Ref) {
       });
   }
 
+  function openImportFileDialog(row?: FormItemProps) {
+    addDialog({
+      title: "导入文件",
+      props: {
+        formInline: {
+          pk: row?.pk ?? ""
+        }
+      },
+      width: "60%",
+      draggable: true,
+      fullscreenIcon: true,
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      hideFooter: true,
+      contentRenderer: () => h(createForm)
+    });
+  }
+
   function openDialog(row?: FormItemProps) {
     let title = t("buttons.hsedit");
     addDialog({
@@ -432,6 +451,7 @@ export function useDrive(tableRef: Ref) {
     handleManyDelete,
     handleSizeChange,
     handleCurrentChange,
+    openImportFileDialog,
     handleSelectionChange
   };
 }

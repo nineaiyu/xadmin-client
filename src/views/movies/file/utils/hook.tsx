@@ -17,7 +17,8 @@ import {
   deleteFileApi,
   manyDeleteFileApi,
   getFileDownloadUrlApi,
-  directDownloadUrl
+  directDownloadUrl,
+  syncFileInfoApi
 } from "@/api/movies/file";
 import { delay, formatBytes, getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
@@ -153,6 +154,11 @@ export function useFile(tableRef: Ref) {
       minWidth: 100
     },
     {
+      label: t("MoviesFile.duration"),
+      prop: "duration",
+      minWidth: 100
+    },
+    {
       label: t("labels.status"),
       prop: "used",
       minWidth: 100,
@@ -163,6 +169,22 @@ export function useFile(tableRef: Ref) {
           effect="plain"
         >
           {row.used ? t("MoviesFile.used") : t("MoviesFile.unused")}
+        </el-tag>
+      )
+    },
+    {
+      label: t("MoviesFile.isUpload"),
+      prop: "is_upload",
+      minWidth: 100,
+      cellRenderer: ({ row, props }) => (
+        <el-tag
+          size={props.size}
+          type={row.is_upload ? "success" : "warning"}
+          effect="plain"
+        >
+          {row.is_upload
+            ? t("MoviesFile.uploadFile")
+            : t("MoviesFile.importFile")}
         </el-tag>
       )
     },
@@ -327,6 +349,17 @@ export function useFile(tableRef: Ref) {
     });
   }
 
+  function syncFileInfo(row) {
+    syncFileInfoApi(row.pk).then(res => {
+      if (res.code === 1000) {
+        message(t("results.success"), { type: "success" });
+        onSearch();
+      } else {
+        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+      }
+    });
+  }
+
   function handleDownloadFile(row) {
     getFileDownloadUrlApi(row.pk).then((res: any) => {
       if (res.code === 1000) {
@@ -433,6 +466,7 @@ export function useFile(tableRef: Ref) {
     handelUpload,
     makeDownloadUrl,
     handleDelete,
+    syncFileInfo,
     handleManyDelete,
     handleDownloadFile,
     handleSizeChange,
