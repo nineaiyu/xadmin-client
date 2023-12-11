@@ -417,6 +417,7 @@ MoviesFilm:
   updatePosterTitle: Update poster to { name }
   updatePoster: Update Poster
   addEpisode: Add Episode
+  addSwipe: Add Swipe
   getEpisode: See Videos
   releaseDate: Release Date
   introduction: Introduction

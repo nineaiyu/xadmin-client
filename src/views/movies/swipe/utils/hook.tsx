@@ -6,7 +6,13 @@ import type { FormItemProps } from "./types";
 import editForm from "../form.vue";
 import type { PaginationProps } from "@pureadmin/table";
 import { nextTick, reactive, ref, onMounted, h, toRaw, type Ref } from "vue";
-import { delay, getKeyList } from "@pureadmin/utils";
+import {
+  cloneDeep,
+  delay,
+  getKeyList,
+  isEmpty,
+  isString
+} from "@pureadmin/utils";
 import { hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { usePublicHooks } from "@/views/system/hooks";
@@ -21,6 +27,7 @@ import {
 } from "@/api/movies/swipe";
 import croppingUpload from "@/components/AvatarUpload/index.vue";
 import Sortable from "sortablejs";
+import { useRoute } from "vue-router";
 
 export function useMoviesSwipe(tableRef: Ref) {
   const { t } = useI18n();
@@ -56,6 +63,10 @@ export function useMoviesSwipe(tableRef: Ref) {
   const dataList = ref([]);
   const loading = ref(true);
   const switchLoadMap = ref({});
+  const route = useRoute();
+  const getParameter = cloneDeep(
+    isEmpty(route.params) ? route.query : route.params
+  );
   const { switchStyle } = usePublicHooks();
   const pagination = reactive<PaginationProps>({
     total: 0,
@@ -390,6 +401,17 @@ export function useMoviesSwipe(tableRef: Ref) {
     });
   }
   onMounted(() => {
+    if (getParameter) {
+      const parameter = cloneDeep(getParameter);
+      Object.keys(parameter).forEach(param => {
+        if (!isString(parameter[param])) {
+          parameter[param] = parameter[param].toString();
+        }
+      });
+      if (parameter.is_add) {
+        openDialog(true, parameter);
+      }
+    }
     onSearch();
   });
 

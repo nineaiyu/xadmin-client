@@ -417,6 +417,7 @@ MoviesFilm:
   updatePosterTitle: 更新影视 { name } 的海报
   updatePoster: 更新海报
   addEpisode: 添加视频
+  addSwipe: 添加轮播图
   getEpisode: 查看视频
   releaseDate: 上映时间
   introduction: 剧情

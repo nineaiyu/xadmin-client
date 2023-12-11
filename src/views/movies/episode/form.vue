@@ -133,6 +133,7 @@ defineExpose({ getRef });
             accept="video/*, .mkv"
             :limit="1"
             :multiple="false"
+            @success="searchFile"
           />
         </el-form-item>
       </re-col>

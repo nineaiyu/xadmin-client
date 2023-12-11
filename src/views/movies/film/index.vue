@@ -39,12 +39,13 @@ const {
   onSearch,
   resetForm,
   openDialog,
-  handleAdd,
   handleUpload,
   handleDelete,
   goActorDetail,
+  handleAddSwipe,
   handleManyDelete,
   handleSizeChange,
+  handleAddEpisode,
   handleCurrentChange,
   handleSelectionChange
 } = useMoviesFilm(tableRef);
@@ -405,7 +406,7 @@ const {
                       type="primary"
                       :size="size"
                       :icon="useRenderIcon(AddFill)"
-                      @click="handleAdd(row, 'true')"
+                      @click="handleAddEpisode(row, 'true')"
                     >
                       {{ t("MoviesFilm.addEpisode") }}
                     </el-button>
@@ -417,9 +418,21 @@ const {
                       type="primary"
                       :size="size"
                       :icon="useRenderIcon(Eye)"
-                      @click="handleAdd(row, 'false')"
+                      @click="handleAddEpisode(row, 'false')"
                     >
                       {{ t("MoviesFilm.getEpisode") }}
+                    </el-button>
+                  </el-dropdown-item>
+                  <el-dropdown-item>
+                    <el-button
+                      :class="buttonClass"
+                      link
+                      type="primary"
+                      :size="size"
+                      :icon="useRenderIcon(AddFill)"
+                      @click="handleAddSwipe(row)"
+                    >
+                      {{ t("MoviesFilm.addSwipe") }}
                     </el-button>
                   </el-dropdown-item>
                 </el-dropdown-menu>

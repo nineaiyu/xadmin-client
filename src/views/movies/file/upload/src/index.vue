@@ -31,9 +31,14 @@ const props = defineProps({
 const emit = defineEmits<{
   (e: "update:fileId", v: string);
   (e: "update:filePk", v: string);
+  (e: "success", v: any): void;
 }>();
 
 const { t } = useI18n();
+
+function onSuccess(pk: string) {
+  emit("success", pk);
+}
 
 function BlobToArrayBuffer(file) {
   return new Promise((resolve, reject) => {
@@ -170,6 +175,7 @@ const uploadAction = async (
           option.onProgress({ percent: 100 });
           emit("update:fileId", file_id);
           emit("update:filePk", pk);
+          onSuccess(pk);
           message(t("results.success"), { type: "success" });
         } else {
           message(t("MoviesFile.uploadFailed", { count: 1 }), {
@@ -221,6 +227,7 @@ const uploadRequest: UploadRequestHandler = (option: UploadRequestOptions) => {
                 option.onProgress({ percent: 100 } as UploadProgressEvent);
                 emit("update:fileId", file_id);
                 emit("update:filePk", pk);
+                onSuccess(pk);
                 message(t("results.success"), { type: "success" });
               } else {
                 await uploadAction(

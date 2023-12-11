@@ -333,7 +333,10 @@ export function useFile(tableRef: Ref) {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       hideFooter: true,
-      contentRenderer: () => h(uploadForm)
+      contentRenderer: () =>
+        h(uploadForm, {
+          onSuccess: () => onSearch(true)
+        })
     });
   }
 

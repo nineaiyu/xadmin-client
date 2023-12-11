@@ -431,13 +431,19 @@ export function useMoviesFilm(tableRef: Ref) {
     });
   }
 
-  function handleAdd(row, is_add = "true") {
+  function handleAddEpisode(row, is_add = "true") {
     router.push({
       name: "MoviesEpisode",
       query: { film_id: row.pk, is_add: is_add }
     });
   }
 
+  function handleAddSwipe(row) {
+    router.push({
+      name: "MoviesSwipe",
+      query: { route: `/detail/${row.pk}`, is_add: "true", name: row.name }
+    });
+  }
   function goActorDetail(pk) {
     router.push({
       name: "MoviesActor",
@@ -504,12 +510,13 @@ export function useMoviesFilm(tableRef: Ref) {
     onSelectionCancel,
     onSearch,
     resetForm,
-    handleAdd,
     openDialog,
     handleUpload,
     handleDelete,
     goActorDetail,
+    handleAddSwipe,
     handleManyDelete,
+    handleAddEpisode,
     handleSizeChange,
     handleCurrentChange,
     handleSelectionChange
