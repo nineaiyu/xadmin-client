@@ -12,6 +12,7 @@ interface FormItemProps {
   mode_display?: string;
   mode_type?: number;
   is_active?: boolean;
+  auto_bind?: boolean;
   description?: string;
 }
 interface FormProps {

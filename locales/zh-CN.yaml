@@ -232,6 +232,8 @@ dept:
   assignRoles: 分配角色权限
   assignRole: 分配部门 { dept } 的角色权限
   userCount: 人员数量
+  autoBind: 自动绑定部门
+  autoBindDesc: 注册参数channel的值和该部门code一致，则该用户会自动和该部门绑定
 
 permission:
   permission: 数据权限
@@ -253,8 +255,6 @@ role:
   verifyRoleName: 请输入角色名称
   verifyRoleCode: 请输入角色标识
   permissions: 权限
-  autoBind: 自动绑定角色
-  autoBindDesc: 注册参数channel的值和该角色code一致，则该用户会自动和该角色绑定
 
 menu:
   menus: 菜单

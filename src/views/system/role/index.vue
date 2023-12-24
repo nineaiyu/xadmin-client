@@ -75,17 +75,6 @@ const {
           <el-option :label="t('labels.disable')" value="0" />
         </el-select>
       </el-form-item>
-      <el-form-item :label="t('role.autoBind')" prop="auto_bind">
-        <el-select
-          v-model="form.auto_bind"
-          clearable
-          class="!w-[180px]"
-          @change="onSearch(true)"
-        >
-          <el-option :label="t('labels.enable')" value="1" />
-          <el-option :label="t('labels.disable')" value="0" />
-        </el-select>
-      </el-form-item>
       <el-form-item :label="t('labels.sort')">
         <el-select
           v-model="form.ordering"

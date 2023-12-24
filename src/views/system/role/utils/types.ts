@@ -11,7 +11,6 @@ interface FormItemProps {
   description: string;
   /** 是否启用 */
   is_active: boolean;
-  auto_bind: boolean;
   /** 菜单信息 */
   menu: number[];
 }

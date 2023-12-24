@@ -26,7 +26,7 @@ import { useRoute, useRouter } from "vue-router";
 import { hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { handleTree } from "@/utils/tree";
-import { formatHigherDeptOptions } from "@/views/system/hooks";
+import { formatHigherDeptOptions, usePublicHooks } from "@/views/system/hooks";
 import { getDataPermissionListApi } from "@/api/system/permission";
 
 export function useDept(tableRef: Ref) {
@@ -54,6 +54,7 @@ export function useDept(tableRef: Ref) {
     name: "",
     code: "",
     mode_type: "",
+    auto_bind: "",
     description: "",
     is_active: "",
     ordering: sortOptions[3].key,
@@ -71,6 +72,7 @@ export function useDept(tableRef: Ref) {
   const choicesDict = ref([]);
   const loading = ref(true);
   const switchLoadMap = ref({});
+  const { switchStyle } = usePublicHooks();
   const manySelectCount = ref(0);
   const columns: TableColumnList = [
     {
@@ -116,6 +118,25 @@ export function useDept(tableRef: Ref) {
       minWidth: 90
     },
     {
+      label: t("dept.autoBind"),
+      minWidth: 130,
+      cellRenderer: scope => (
+        <el-switch
+          size={scope.props.size === "small" ? "small" : "default"}
+          loading={switchLoadMap.value[scope.index]?.loading}
+          v-model={scope.row.auto_bind}
+          active-value={true}
+          inactive-value={false}
+          active-text={t("labels.enable")}
+          inactive-text={t("labels.disable")}
+          disabled={!hasAuth("update:systemDept")}
+          inline-prompt
+          style={switchStyle.value}
+          onChange={() => onChangeBind(scope as any)}
+        />
+      )
+    },
+    {
       label: t("labels.status"),
       prop: "is_active",
       minWidth: 90,
@@ -130,6 +151,7 @@ export function useDept(tableRef: Ref) {
           inactive-text={t("labels.inactive")}
           disabled={!hasAuth("update:systemDept")}
           inline-prompt
+          style={switchStyle.value}
           onChange={() => onChange(scope as any)}
         />
       )
@@ -179,6 +201,51 @@ export function useDept(tableRef: Ref) {
       "dark:hover:!text-primary"
     ];
   });
+  function onChangeBind({ row, index }) {
+    const action =
+      row.auto_bind === false ? t("labels.disable") : t("labels.enable");
+    ElMessageBox.confirm(
+      `${t("buttons.hsoperateconfirm", {
+        action: `<strong>${action}</strong>`,
+        message: `<strong style="color:var(--el-color-primary)">${row.name}</strong>`
+      })}`,
+      {
+        confirmButtonText: t("buttons.hssure"),
+        cancelButtonText: t("buttons.hscancel"),
+        type: "warning",
+        dangerouslyUseHTMLString: true,
+        draggable: true
+      }
+    )
+      .then(() => {
+        switchLoadMap.value[index] = Object.assign(
+          {},
+          switchLoadMap.value[index],
+          {
+            loading: true
+          }
+        );
+        updateDeptApi(row.pk, row).then(res => {
+          if (res.code === 1000) {
+            switchLoadMap.value[index] = Object.assign(
+              {},
+              switchLoadMap.value[index],
+              {
+                loading: false
+              }
+            );
+            message(t("results.success"), { type: "success" });
+          } else {
+            message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+          }
+        });
+      })
+      .catch(() => {
+        row.auto_bind === false
+          ? (row.auto_bind = true)
+          : (row.auto_bind = false);
+      });
+  }
 
   function onChange({ row, index }) {
     const action =
@@ -295,6 +362,7 @@ export function useDept(tableRef: Ref) {
           code: row?.code ?? "",
           roles: row?.roles ?? [],
           is_active: row?.is_active ?? true,
+          auto_bind: row?.auto_bind ?? false,
           description: row?.description ?? ""
         },
         treeData: formatHigherDeptOptions(cloneDeep(dataList.value))

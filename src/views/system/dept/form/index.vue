@@ -5,6 +5,7 @@ import { formRules } from "../utils/rule";
 import { FormProps } from "../utils/types";
 import { usePublicHooks } from "../../hooks";
 import { useI18n } from "vue-i18n";
+import FromQuestion from "@/components/FromQuestion/index.vue";
 
 const props = withDefaults(defineProps<FormProps>(), {
   treeData: () => [],
@@ -16,7 +17,8 @@ const props = withDefaults(defineProps<FormProps>(), {
     rank: 99,
     roles: [],
     description: "",
-    is_active: true
+    is_active: true,
+    auto_bind: true
   })
 });
 const { t } = useI18n();
@@ -24,7 +26,10 @@ const { t } = useI18n();
 const ruleFormRef = ref();
 const { switchStyle } = usePublicHooks();
 const newFormInline = ref(props.formInline);
-
+const ifEnableOptions = [
+  { label: t("labels.enable"), value: true },
+  { label: t("labels.disable"), value: false }
+];
 function getRef() {
   return ruleFormRef.value;
 }
@@ -37,7 +42,7 @@ defineExpose({ getRef });
     ref="ruleFormRef"
     :model="newFormInline"
     :rules="formRules"
-    label-width="82px"
+    label-width="140px"
   >
     <el-row :gutter="30">
       <re-col :value="12" :xs="24" :sm="24">
@@ -92,6 +97,25 @@ defineExpose({ getRef });
           />
         </el-form-item>
       </re-col>
+
+      <re-col :value="12" :xs="24" :sm="24">
+        <el-form-item :label="t('dept.autoBind')" prop="auto_bind">
+          <template #label>
+            <from-question
+              :label="t('dept.autoBind')"
+              :description="t('dept.autoBindDesc')"
+            />
+          </template>
+          <el-radio-group v-model="newFormInline.auto_bind">
+            <el-radio-button
+              v-for="item in ifEnableOptions"
+              :key="item.label"
+              :label="item.value"
+              >{{ item.label }}</el-radio-button
+            >
+          </el-radio-group>
+        </el-form-item>
+      </re-col>
       <re-col :value="12" :xs="24" :sm="24">
         <el-form-item :label="t('labels.status')" prop="is_active">
           <el-switch
@@ -105,7 +129,6 @@ defineExpose({ getRef });
           />
         </el-form-item>
       </re-col>
-
       <re-col>
         <el-form-item :label="t('labels.description')">
           <el-input

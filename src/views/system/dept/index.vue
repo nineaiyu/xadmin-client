@@ -86,6 +86,17 @@ const {
             @keyup.enter="onSearch"
           />
         </el-form-item>
+        <el-form-item :label="t('dept.autoBind')" prop="auto_bind">
+          <el-select
+            v-model="form.auto_bind"
+            clearable
+            class="!w-[180px]"
+            @change="onSearch"
+          >
+            <el-option :label="t('labels.enable')" value="1" />
+            <el-option :label="t('labels.disable')" value="0" />
+          </el-select>
+        </el-form-item>
         <el-form-item :label="t('labels.status')" prop="is_active">
           <el-select
             v-model="form.is_active"

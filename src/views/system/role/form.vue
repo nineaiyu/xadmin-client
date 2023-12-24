@@ -26,8 +26,7 @@ const props = withDefaults(defineProps<FormProps>(), {
     code: "",
     description: "",
     menu: [],
-    is_active: true,
-    auto_bind: true
+    is_active: true
   })
 });
 const customNodeClass = data => {
@@ -124,7 +123,7 @@ function onReset() {
     ref="ruleFormRef"
     :model="newFormInline"
     :rules="formRules"
-    label-width="140px"
+    label-width="82px"
   >
     <el-form-item :label="t('role.name')" prop="name">
       <el-input
@@ -143,22 +142,6 @@ function onReset() {
     </el-form-item>
     <el-form-item :label="t('labels.status')" prop="is_active">
       <el-radio-group v-model="newFormInline.is_active">
-        <el-radio-button
-          v-for="item in ifEnableOptions"
-          :key="item.label"
-          :label="item.value"
-          >{{ item.label }}</el-radio-button
-        >
-      </el-radio-group>
-    </el-form-item>
-    <el-form-item :label="t('role.autoBind')" prop="auto_bind">
-      <template #label>
-        <from-question
-          :label="t('role.autoBind')"
-          :description="t('role.autoBindDesc')"
-        />
-      </template>
-      <el-radio-group v-model="newFormInline.auto_bind">
         <el-radio-button
           v-for="item in ifEnableOptions"
           :key="item.label"
