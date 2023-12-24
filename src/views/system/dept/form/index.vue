@@ -83,12 +83,12 @@ defineExpose({ getRef });
       </re-col>
 
       <re-col :value="12" :xs="24" :sm="24">
-        <el-form-item :label="t('dept.rank')" prop="rank">
+        <el-form-item :label="t('sorts.rank')" prop="rank">
           <el-input
             v-model="newFormInline.rank"
             clearable
             type="number"
-            :placeholder="t('dept.rank')"
+            :placeholder="t('sorts.rank')"
           />
         </el-form-item>
       </re-col>

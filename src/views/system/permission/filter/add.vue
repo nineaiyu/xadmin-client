@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { formRules } from "./utils/rule";
 import { FormProps } from "./utils/types";
@@ -51,6 +51,10 @@ const valueTypeChange = value => {
     }
   });
 };
+
+onMounted(() => {
+  valueTypeChange(newFormInline.value.type);
+});
 
 defineExpose({ getRef });
 </script>

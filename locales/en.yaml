@@ -108,6 +108,7 @@ sorts:
   registrationDate: Registration Date
   loginDate: Login Date
   createdDate: Creation date
+  rank: Rank
 
 buttons:
   hsLoginOut: LoginOut
@@ -226,7 +227,6 @@ dept:
   name: Name
   dept: Department
   code: Code
-  rank: rank
   roles: role
   rules: Permissions
   assignRoles: Assign Roles Permissions

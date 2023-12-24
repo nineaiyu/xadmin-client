@@ -108,6 +108,7 @@ sorts:
   registrationDate: 注册时间
   loginDate: 登录时间
   createdDate: 创建时间
+  rank: 排序
 
 buttons:
   hsLoginOut: 退出系统
@@ -226,7 +227,6 @@ dept:
   name: 部门名称
   dept: 部门
   code: 部门标识
-  rank: 排序
   roles: 角色
   rules: 数据权限
   assignRoles: 分配角色权限

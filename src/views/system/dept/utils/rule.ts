@@ -21,7 +21,7 @@ export const formRules = reactive<FormRules>({
   rank: [
     {
       required: true,
-      message: transformI18n($t("dept.rank")),
+      message: transformI18n($t("sorts.rank")),
       trigger: "blur"
     }
   ],

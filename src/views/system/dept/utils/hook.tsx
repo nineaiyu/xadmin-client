@@ -39,6 +39,14 @@ export function useDept(tableRef: Ref) {
     {
       label: `${t("sorts.createdDate")} ${t("labels.ascending")}`,
       key: "created_time"
+    },
+    {
+      label: `${t("sorts.rank")} ${t("labels.descending")}`,
+      key: "-rank"
+    },
+    {
+      label: `${t("sorts.rank")} ${t("labels.ascending")}`,
+      key: "rank"
     }
   ];
   const form = reactive({
@@ -48,7 +56,7 @@ export function useDept(tableRef: Ref) {
     mode_type: "",
     description: "",
     is_active: "",
-    ordering: sortOptions[0].key,
+    ordering: sortOptions[3].key,
     page: 1,
     size: 10
   });
@@ -98,7 +106,7 @@ export function useDept(tableRef: Ref) {
       )
     },
     {
-      label: t("dept.rank"),
+      label: t("sorts.rank"),
       prop: "rank",
       minWidth: 90
     },
