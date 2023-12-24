@@ -26,10 +26,10 @@ export const formRules = reactive<FormRules>({
       trigger: "blur"
     }
   ],
-  sex: [
+  gender: [
     {
       required: true,
-      message: transformI18n($t("user.verifySex")),
+      message: transformI18n($t("user.verifyGender")),
       trigger: "blur"
     }
   ],

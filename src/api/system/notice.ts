@@ -54,8 +54,7 @@ export const getNoticeReadListApi = (data?: object) => {
 
 export const updateNoticeReadStateApi = (pk?: number, data?: object) => {
   return http.request<Result>("put", `/api/system/message/read/${pk}/state`, {
-    data: data,
-    params: { pk: pk }
+    data: data
   });
 };
 

@@ -79,8 +79,8 @@ labels:
   id: ID
   status: Status
   verifyStatus: Please select status
-  remark: Remark
-  verifyRemark: Please enter remark
+  description: Description
+  verifyDescription: Please enter description
   sort: Sort
   active: Active
   inactive: Inactive
@@ -122,6 +122,8 @@ buttons:
   hssearch: Search
   hsexpendAll: Expand All
   hscollapseAll: Collapse All
+  selectAll: Select All
+  unSelectAll: Cancel Select
   hssystemSet: Open ProjectConfig
   hsdelete: Delete
   hsreload: Reload
@@ -153,8 +155,10 @@ menus:
   hslogin: Login
   hssysManagement: System Manage
   hsUser: User Manage
+  hsDept: Department Manage
   hsRole: Role Manage
   hsMenu: Menu Manage
+  hsDataPermission: Data Permission
   hsOperationLog: Operation Log Manage
   permission: Permission Manage
   hsabnormal: Abnormal Page
@@ -201,19 +205,46 @@ user:
   batchSendNotice: Batch Send Notice
   editAvatar: Edit Avatar
   resetPassword: Reset Password
-  assignRoles: Assign Roles
+  assignRoles: Assign Roles Permissions
   verifyUserId: Please enter user id
   verifyUsername: Please enter username
   verifyPassword: Please enter password
   verifyNickname: Please enter nickname
   verifyMobile: Please enter mobile
-  verifyEmail: Please enter Email
-  verifySex: Please enter gender
+  verifyEmail: Please enter email
+  verifyGender: Please enter gender
   resetPasswd: Reset the password of user { user }
-  assignRole: Assign multiple roles to user { user }
+  assignRole: Assign multiple roles and permissions to user { user }
   updateAvatar: Upload and update avatar to { user }
   excelSheet: Registered user report
   excelName: Registered user data
+  deptId: Department ID
+  dept: Belonging Department
+  rules: Permissions
+
+dept:
+  name: Name
+  dept: Department
+  code: Code
+  rank: rank
+  roles: role
+  rules: Permissions
+  assignRoles: Assign Roles Permissions
+  assignRole: Assign multiple roles and permissions to department { dept }
+  userCount: User Count
+
+permission:
+  permission: Permissions
+  name: Name
+  mode: Mode
+  addName: Name
+  addValue: Value
+  addType: Mode
+  addMatch: Match
+  rules: rules
+  table: table
+  field: field
+  rulesFailed: The rules does not exist or is incorrect. Please enter the rules
 
 role:
   role: Role
@@ -268,6 +299,8 @@ menu:
   directory: Directory
   menu: Menu
   permissions: Permissions
+  checkStrictly: Hierarchical association
+  checkUnStrictly: Hierarchical independence
 
 operation:
   module: Module
@@ -293,7 +326,7 @@ notice:
   type: Type
   level: Level
   publish: Publish
-  content:  Content
+  content: Content
   haveRead: Have Read
   showSystemNotice: Check the system announcement
   verifyTitle: Please enter title

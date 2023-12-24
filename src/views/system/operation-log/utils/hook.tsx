@@ -27,7 +27,7 @@ export function useOperationLog(tableRef: Ref) {
     system: "",
     browser: "",
     path: "",
-    owner_id: "",
+    creator_id: "",
     ordering: sortOptions[0].key,
     page: 1,
     size: 10
@@ -61,11 +61,11 @@ export function useOperationLog(tableRef: Ref) {
     },
     {
       label: t("user.user"),
-      prop: "owner",
+      prop: "creator",
       minWidth: 100,
       cellRenderer: ({ row }) => (
         <el-link onClick={() => onGoDetail(row as any)}>
-          {row.owner.username ? row.owner.username : "/"}
+          {row.creator.username ? row.creator.username : "/"}
         </el-link>
       )
     },
@@ -125,10 +125,10 @@ export function useOperationLog(tableRef: Ref) {
   ];
 
   function onGoDetail(row: any) {
-    if (row.owner && row.owner.pk) {
+    if (row.creator && row.creator.pk) {
       router.push({
         name: "systemUser",
-        query: { pk: row.owner.pk }
+        query: { pk: row.creator.pk }
       });
     }
   }

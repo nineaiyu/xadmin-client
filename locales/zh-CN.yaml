@@ -79,8 +79,8 @@ labels:
   id: ID
   status: 状态
   verifyStatus: 请选择状态
-  remark: 备注
-  verifyRemark: 请输入备注
+  description: 备注
+  verifyDescription: 请输入备注
   sort: 排序
   active: 激活
   inactive: 未激活
@@ -122,6 +122,8 @@ buttons:
   hssearch: 搜索
   hsexpendAll: 全部展开
   hscollapseAll: 全部折叠
+  selectAll: 选择全部
+  unSelectAll: 取消选择
   hssystemSet: 打开项目配置
   hsdelete: 删除
   hsreload: 重新加载
@@ -153,8 +155,10 @@ menus:
   hslogin: 登录
   hssysManagement: 系统管理
   hsUser: 用户管理
+  hsDept: 部门管理
   hsRole: 角色管理
   hsMenu: 菜单管理
+  hsDataPermission: 数据权限
   hsOperationLog: 访问日志
   permission: 权限管理
   hsabnormal: 异常页面
@@ -201,19 +205,46 @@ user:
   batchSendNotice: 批量发送通知
   editAvatar: 修改头像
   resetPassword: 重置密码
-  assignRoles: 分配角色
+  assignRoles: 分配角色权限
   verifyUserId: 请输入用户ID
   verifyUsername: 请输入用户名
   verifyPassword: 请输入密码
   verifyNickname: 请输入昵称
   verifyMobile: 请输入手机号
   verifyEmail: 请输入邮箱
-  verifySex: 请选择性别
+  verifyGender: 请选择性别
   resetPasswd: 重置用户 { user } 的密码
-  assignRole: 分配用户 { user } 的角色
+  assignRole: 分配用户 { user } 的角色权限
   updateAvatar: 更新用户 { user } 的头像
   excelSheet: 用户注册信息
   excelName: 用户注册报表
+  deptId: 部门ID
+  dept: 所属部门
+  rules: 数据权限
+
+dept:
+  name: 部门名称
+  dept: 部门
+  code: 部门标识
+  rank: 排序
+  roles: 角色
+  rules: 数据权限
+  assignRoles: 分配角色权限
+  assignRole: 分配部门 { dept } 的角色权限
+  userCount: 人员数量
+
+permission:
+  permission: 数据权限
+  name: 权限名称
+  mode: 权限模式
+  addName: 属性名
+  addValue: 属性值
+  addType: 值类型
+  addMatch: 匹配
+  rules: 规则列表
+  table: 表名
+  field: 字段名
+  rulesFailed: 规则不存在或有误，请输入规则
 
 role:
   role: 角色
@@ -268,6 +299,8 @@ menu:
   directory: 目录
   menu: 菜单
   permissions: 权限
+  checkStrictly: 层级关联
+  checkUnStrictly: 层级独立
 
 operation:
   module: 模块

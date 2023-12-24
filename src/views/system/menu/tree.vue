@@ -12,6 +12,8 @@ import { match } from "pinyin-pro";
 import { getMenuFromPk } from "@/utils";
 import Reset from "@iconify-icons/ri/restart-line";
 import Search from "@iconify-icons/ep/search";
+import Right from "@iconify-icons/ep/bottom-right";
+import Back from "@iconify-icons/ep/back";
 import More2Fill from "@iconify-icons/ri/more-2-fill";
 import ExpandIcon from "./svg/expand.svg?component";
 import UnExpandIcon from "./svg/unexpand.svg?component";
@@ -22,6 +24,7 @@ import { Tree, TreeFormProps } from "./utils/types";
 const treeRef = ref();
 
 const isExpand = ref(false);
+const checkStrictly = ref(true);
 const searchValue = ref("");
 const highlightMap = ref({});
 const { proxy } = getCurrentInstance();
@@ -242,6 +245,21 @@ onMounted(() => {
                   :class="buttonClass"
                   link
                   type="primary"
+                  :icon="useRenderIcon(checkStrictly ? Back : Right)"
+                  @click="checkStrictly = !checkStrictly"
+                >
+                  {{
+                    checkStrictly
+                      ? t("menu.checkUnStrictly")
+                      : t("menu.checkStrictly")
+                  }}
+                </el-button>
+              </el-dropdown-item>
+              <el-dropdown-item>
+                <el-button
+                  :class="buttonClass"
+                  link
+                  type="primary"
                   :icon="useRenderIcon(Reset)"
                   @click="onReset"
                 >
@@ -291,7 +309,8 @@ onMounted(() => {
         size="small"
         :props="defaultProps"
         show-checkbox
-        check-strictly
+        :default-expand-all="isExpand"
+        :check-strictly="checkStrictly"
         :expand-on-click-node="false"
         :default-expanded-keys="parentIds"
         :filter-node-method="filterMenuNode"

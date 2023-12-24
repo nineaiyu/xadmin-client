@@ -38,7 +38,7 @@ export function useNotice(tableRef: Ref) {
     message: "",
     level: "",
     notice_type: "",
-    owners: "",
+    notice_users: "",
     publish: "",
     ordering: sortOptions[0].key,
     page: 1,
@@ -157,7 +157,7 @@ export function useNotice(tableRef: Ref) {
           notice_type: row?.notice_type ?? 1,
           levelChoices: levelChoices.value,
           noticeChoices: noticeChoices.value,
-          owners: row?.owner ?? []
+          notice_users: row?.notice_user ?? []
         }
       },
       width: "60%",
@@ -170,7 +170,6 @@ export function useNotice(tableRef: Ref) {
         const curData = options.props.formInline as FormItemProps;
         delete curData?.levelChoices;
         delete curData?.noticeChoices;
-        delete curData?.owner_info;
         curData.files = formRef.value.getUploadFiles();
 
         async function chores(detail) {
@@ -343,12 +342,16 @@ export function useNotice(tableRef: Ref) {
       }
       setTimeout(() => {
         loading.value = false;
-        if (getParameter.owners && form.owners && form.owners !== "") {
+        if (
+          getParameter.notice_users &&
+          form.notice_users &&
+          form.notice_users !== ""
+        ) {
           const parameter = {
-            owner: JSON.parse(getParameter.owners as string),
+            notice_user: JSON.parse(getParameter.notice_users as string),
             notice_type: 1
           };
-          form.owners = "";
+          form.notice_users = "";
           openDialog(true, parameter);
         }
       }, 500);
@@ -370,7 +373,7 @@ export function useNotice(tableRef: Ref) {
         }
       });
       form.pk = parameter.pk;
-      form.owners = parameter.owners;
+      form.notice_users = parameter.notice_users;
     }
     onSearch(true);
   });

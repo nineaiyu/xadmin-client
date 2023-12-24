@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { useOperationLog } from "./utils/hook";
+import { useDataPermission } from "./utils/hook";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+
 import Delete from "@iconify-icons/ep/delete";
+import EditPen from "@iconify-icons/ep/edit-pen";
 import Search from "@iconify-icons/ep/search";
 import Refresh from "@iconify-icons/ep/refresh";
+import AddFill from "@iconify-icons/ri/add-circle-line";
 import { hasAuth } from "@/router/utils";
 
 defineOptions({
-  name: "OperationLog"
+  name: "DataPermission"
 });
 
 const formRef = ref();
@@ -22,70 +25,64 @@ const {
   dataList,
   pagination,
   sortOptions,
+  choicesDict,
   manySelectCount,
   onSelectionCancel,
   onSearch,
   resetForm,
+  openDialog,
   handleDelete,
   handleManyDelete,
   handleSizeChange,
   handleCurrentChange,
   handleSelectionChange
-} = useOperationLog(tableRef);
+} = useDataPermission(tableRef);
 </script>
 
 <template>
-  <div v-if="hasAuth('list:systemOperationLog')" class="main">
+  <div v-if="hasAuth('list:systemDataPermission')" class="main">
     <el-form
       ref="formRef"
       :inline="true"
       :model="form"
       class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px]"
     >
-      <el-form-item :label="t('operation.userId')" prop="creator_id">
+      <el-form-item :label="t('permission.name')" prop="name">
         <el-input
-          v-model="form.creator_id"
-          :placeholder="t('user.verifyUserId')"
+          v-model="form.name"
+          :placeholder="t('permission.name')"
           clearable
           class="!w-[200px]"
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
-      <el-form-item :label="t('operation.address')" prop="ipaddress">
-        <el-input
-          v-model="form.ipaddress"
-          :placeholder="t('operation.verifyAddress')"
-          clearable
-          class="!w-[200px]"
-          @keyup.enter="onSearch(true)"
-        />
-      </el-form-item>
-      <el-form-item :label="t('operation.system')" prop="system">
-        <el-input
-          v-model="form.system"
-          :placeholder="t('operation.verifySystem')"
+      <el-form-item :label="t('labels.status')" prop="is_active">
+        <el-select
+          v-model="form.is_active"
           clearable
           class="!w-[180px]"
-          @keyup.enter="onSearch(true)"
-        />
+          @change="onSearch(true)"
+        >
+          <el-option :label="t('labels.enable')" value="1" />
+          <el-option :label="t('labels.disable')" value="0" />
+        </el-select>
       </el-form-item>
-      <el-form-item :label="t('operation.browser')" prop="browser">
-        <el-input
-          v-model="form.browser"
-          :placeholder="t('operation.verifyBrowser')"
+      <el-form-item :label="t('permission.mode')" prop="mode">
+        <el-select
+          v-model="form.mode_type"
+          class="filter-item"
+          style="width: 180px"
           clearable
-          class="!w-[180px]"
-          @keyup.enter="onSearch(true)"
-        />
-      </el-form-item>
-      <el-form-item :label="t('operation.requestPath')" prop="path">
-        <el-input
-          v-model="form.path"
-          :placeholder="t('operation.verifyRequestPath')"
-          clearable
-          class="!w-[180px]"
-          @keyup.enter="onSearch(true)"
-        />
+          @change="onSearch(true)"
+        >
+          <el-option
+            v-for="item in choicesDict"
+            :key="item.key"
+            :label="item.label"
+            :disabled="item.disabled"
+            :value="item.key"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item :label="t('labels.sort')">
         <el-select
@@ -118,7 +115,7 @@ const {
     </el-form>
 
     <PureTableBar
-      :title="t('menus.hsOperationLog')"
+      :title="t('menus.hsDataPermission')"
       :columns="columns"
       @refresh="onSearch(true)"
     >
@@ -135,7 +132,7 @@ const {
               {{ t("buttons.hscancel") }}
             </el-button>
             <el-popconfirm
-              v-if="hasAuth('manyDelete:systemOperationLog')"
+              v-if="hasAuth('manyDelete:systemDataPermission')"
               :title="
                 t('buttons.hsbatchdeleteconfirm', { count: manySelectCount })
               "
@@ -148,6 +145,15 @@ const {
               </template>
             </el-popconfirm>
           </div>
+
+          <el-button
+            v-if="hasAuth('create:systemDataPermission')"
+            type="primary"
+            :icon="useRenderIcon(AddFill)"
+            @click="openDialog()"
+          >
+            {{ t("buttons.hsadd") }}
+          </el-button>
         </el-space>
       </template>
       <template v-slot="{ size, dynamicColumns }">
@@ -174,8 +180,19 @@ const {
           @page-current-change="handleCurrentChange"
         >
           <template #operation="{ row }">
+            <el-button
+              v-if="hasAuth('update:systemDataPermission')"
+              class="reset-margin"
+              link
+              type="primary"
+              :size="size"
+              :icon="useRenderIcon(EditPen)"
+              @click="openDialog(false, row)"
+            >
+              {{ t("buttons.hsedit") }}
+            </el-button>
             <el-popconfirm
-              v-if="hasAuth('delete:systemOperationLog')"
+              v-if="hasAuth('delete:systemDataPermission')"
               :title="t('buttons.hsconfirmdelete')"
               @confirm="handleDelete(row)"
             >

@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { useUser } from "./utils/hook";
+import { useDept } from "./utils/hook";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import tree from "./tree.vue";
-import Password from "@iconify-icons/ri/lock-password-line";
-import Avatar from "@iconify-icons/ri/user-3-fill";
+
 import More from "@iconify-icons/ep/more-filled";
 import Delete from "@iconify-icons/ep/delete";
 import Role from "@iconify-icons/ri/admin-line";
@@ -13,60 +11,39 @@ import EditPen from "@iconify-icons/ep/edit-pen";
 import Search from "@iconify-icons/ep/search";
 import Refresh from "@iconify-icons/ep/refresh";
 import AddFill from "@iconify-icons/ri/add-circle-line";
-import Download from "@iconify-icons/ri/download-line";
-import Message from "@iconify-icons/ri/message-fill";
 import { hasAuth } from "@/router/utils";
 import { getIndexType } from "@/utils";
 
 defineOptions({
-  name: "User"
+  name: "Dept"
 });
 
 const formRef = ref();
 const tableRef = ref();
-const treeRef = ref();
 const {
   t,
   form,
   loading,
   columns,
   dataList,
-  treeData,
-  pagination,
   buttonClass,
   sortOptions,
-  treeLoading,
-  modeChoicesDict,
+  choicesDict,
   manySelectCount,
   onSearch,
-  exportExcel,
   resetForm,
   openDialog,
-  goNotice,
   handleRole,
-  handleReset,
-  onTreeSelect,
-  handleUpload,
   handleDelete,
   handleManyDelete,
   onSelectionCancel,
-  handleSizeChange,
-  handleCurrentChange,
   handleSelectionChange
-} = useUser(tableRef, treeRef);
+} = useDept(tableRef);
 </script>
 
 <template>
-  <div v-if="hasAuth('list:systemUser')" class="flex justify-between">
-    <tree
-      ref="treeRef"
-      class="min-w-[250px] mr-2"
-      :treeData="treeData"
-      :treeLoading="treeLoading"
-      :pk="form.dept"
-      @tree-select="onTreeSelect"
-    />
-    <div class="w-[calc(100%-250px)]">
+  <div v-if="hasAuth('list:systemDept')" class="main">
+    <div class="float-left w-[99%]">
       <el-form
         ref="formRef"
         :inline="true"
@@ -76,28 +53,37 @@ const {
         <el-form-item :label="t('labels.id')" prop="pk">
           <el-input
             v-model="form.pk"
-            :placeholder="t('user.verifyUserId')"
+            :placeholder="t('labels.id')"
             clearable
             class="!w-[160px]"
-            @keyup.enter="onSearch(true)"
+            @keyup.enter="onSearch"
           />
         </el-form-item>
-        <el-form-item :label="t('user.username')" prop="username">
+        <el-form-item :label="t('dept.name')" prop="name">
           <el-input
-            v-model="form.username"
-            :placeholder="t('user.verifyUsername')"
+            v-model="form.name"
+            :placeholder="t('dept.name')"
             clearable
             class="!w-[160px]"
-            @keyup.enter="onSearch(true)"
+            @keyup.enter="onSearch"
           />
         </el-form-item>
-        <el-form-item :label="t('user.mobile')" prop="mobile">
+        <el-form-item :label="t('dept.code')" prop="code">
           <el-input
-            v-model="form.mobile"
-            :placeholder="t('user.verifyMobile')"
+            v-model="form.code"
+            :placeholder="t('dept.code')"
             clearable
             class="!w-[160px]"
-            @keyup.enter="onSearch(true)"
+            @keyup.enter="onSearch"
+          />
+        </el-form-item>
+        <el-form-item :label="t('labels.description')" prop="description">
+          <el-input
+            v-model="form.description"
+            :placeholder="t('labels.description')"
+            clearable
+            class="!w-[160px]"
+            @keyup.enter="onSearch"
           />
         </el-form-item>
         <el-form-item :label="t('labels.status')" prop="is_active">
@@ -106,7 +92,7 @@ const {
             :placeholder="t('labels.status')"
             clearable
             class="!w-[160px]"
-            @change="onSearch(true)"
+            @change="onSearch"
           >
             <el-option :label="t('labels.active')" value="1" />
             <el-option :label="t('labels.inactive')" value="0" />
@@ -121,7 +107,7 @@ const {
             @change="onSearch"
           >
             <el-option
-              v-for="item in modeChoicesDict"
+              v-for="item in choicesDict"
               :key="item.key"
               :label="item.label"
               :disabled="item.disabled"
@@ -134,7 +120,7 @@ const {
             v-model="form.ordering"
             style="width: 180px"
             clearable
-            @change="onSearch(true)"
+            @change="onSearch"
           >
             <el-option
               v-for="item in sortOptions"
@@ -150,7 +136,7 @@ const {
             type="primary"
             :icon="useRenderIcon(Search)"
             :loading="loading"
-            @click="onSearch(true)"
+            @click="onSearch"
           >
             {{ t("buttons.hssearch") }}
           </el-button>
@@ -161,9 +147,9 @@ const {
       </el-form>
 
       <PureTableBar
-        :title="t('menus.hsUser')"
+        :title="t('menus.hsDept')"
         :columns="columns"
-        @refresh="onSearch(true)"
+        @refresh="onSearch"
       >
         <template #buttons>
           <el-space wrap>
@@ -178,7 +164,7 @@ const {
                 {{ t("buttons.hscancel") }}
               </el-button>
               <el-popconfirm
-                v-if="hasAuth('manyDelete:systemUser')"
+                v-if="hasAuth('manyDelete:systemDept')"
                 :title="
                   t('buttons.hsbatchdeleteconfirm', { count: manySelectCount })
                 "
@@ -192,28 +178,7 @@ const {
               </el-popconfirm>
             </div>
             <el-button
-              v-if="hasAuth('send:systemNotify') && manySelectCount > 0"
-              type="primary"
-              :icon="useRenderIcon(Message)"
-              @click="goNotice()"
-            >
-              {{ t("user.batchSendNotice") }}
-            </el-button>
-            <el-button
-              v-if="hasAuth('list:systemUser') && manySelectCount > 0"
-              v-optimize="{
-                event: 'click',
-                fn: exportExcel,
-                immediate: true,
-                timeout: 5000
-              }"
-              type="primary"
-              :icon="useRenderIcon(Download)"
-            >
-              {{ t("user.exportExcel") }}
-            </el-button>
-            <el-button
-              v-if="hasAuth('create:systemUser')"
+              v-if="hasAuth('create:systemDept')"
               type="primary"
               :icon="useRenderIcon(AddFill)"
               @click="openDialog()"
@@ -227,22 +192,21 @@ const {
             ref="tableRef"
             border
             adaptive
+            :adaptiveConfig="{ offsetBottom: 32 }"
             align-whole="center"
             table-layout="auto"
+            default-expand-all
             :loading="loading"
             row-key="pk"
             :size="size"
             :data="dataList"
+            showOverflowTooltip
             :columns="dynamicColumns"
-            :pagination="pagination"
-            :paginationSmall="size === 'small'"
             :header-cell-style="{
               background: 'var(--el-table-row-hover-bg-color)',
               color: 'var(--el-text-color-primary)'
             }"
             @selection-change="handleSelectionChange"
-            @page-size-change="handleSizeChange"
-            @page-current-change="handleCurrentChange"
           >
             <template #roles="{ row }">
               <el-space wrap>
@@ -268,7 +232,7 @@ const {
             </template>
             <template #operation="{ row }">
               <el-button
-                v-if="hasAuth('update:systemUser')"
+                v-if="hasAuth('update:systemDept')"
                 class="reset-margin"
                 link
                 type="primary"
@@ -279,7 +243,7 @@ const {
                 {{ t("buttons.hsedit") }}
               </el-button>
               <el-popconfirm
-                v-if="hasAuth('delete:systemUser')"
+                v-if="hasAuth('delete:systemDept')"
                 :title="t('buttons.hsconfirmdelete')"
                 @confirm="handleDelete(row)"
               >
@@ -306,31 +270,7 @@ const {
                 />
                 <template #dropdown>
                   <el-dropdown-menu>
-                    <el-dropdown-item v-if="hasAuth('upload:systemAvatar')">
-                      <el-button
-                        :class="buttonClass"
-                        link
-                        type="primary"
-                        :size="size"
-                        :icon="useRenderIcon(Avatar)"
-                        @click="handleUpload(row)"
-                      >
-                        {{ t("user.editAvatar") }}
-                      </el-button>
-                    </el-dropdown-item>
-                    <el-dropdown-item v-if="hasAuth('update:systemUserPwd')">
-                      <el-button
-                        :class="buttonClass"
-                        link
-                        type="primary"
-                        :size="size"
-                        :icon="useRenderIcon(Password)"
-                        @click="handleReset(row)"
-                      >
-                        {{ t("user.resetPassword") }}
-                      </el-button>
-                    </el-dropdown-item>
-                    <el-dropdown-item v-if="hasAuth('empower:systemUserRole')">
+                    <el-dropdown-item v-if="hasAuth('empower:systemDeptRole')">
                       <el-button
                         :class="buttonClass"
                         link
@@ -339,7 +279,7 @@ const {
                         :icon="useRenderIcon(Role)"
                         @click="handleRole(row)"
                       >
-                        {{ t("user.assignRoles") }}
+                        {{ t("dept.assignRoles") }}
                       </el-button>
                     </el-dropdown-item>
                   </el-dropdown-menu>
@@ -352,15 +292,3 @@ const {
     </div>
   </div>
 </template>
-
-<style scoped lang="scss">
-:deep(.el-dropdown-menu__item i) {
-  margin: 0;
-}
-
-.search-form {
-  :deep(.el-form-item) {
-    margin-bottom: 12px;
-  }
-}
-</style>

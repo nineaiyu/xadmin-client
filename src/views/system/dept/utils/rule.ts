@@ -4,24 +4,31 @@ import { $t, transformI18n } from "@/plugins/i18n";
 
 /** 自定义表单规则校验 */
 export const formRules = reactive<FormRules>({
-  notice_users: [
+  name: [
     {
       required: true,
-      message: transformI18n($t("user.verifyUserId")),
+      message: transformI18n($t("dept.name")),
       trigger: "blur"
     }
   ],
-  title: [
+  code: [
     {
       required: true,
-      message: transformI18n($t("notice.verifyTitle")),
+      message: transformI18n($t("dept.code")),
       trigger: "blur"
     }
   ],
-  message: [
+  rank: [
     {
       required: true,
-      message: transformI18n($t("notice.verifyContent")),
+      message: transformI18n($t("dept.rank")),
+      trigger: "blur"
+    }
+  ],
+  is_active: [
+    {
+      required: true,
+      message: transformI18n($t("labels.verifyStatus")),
       trigger: "blur"
     }
   ]

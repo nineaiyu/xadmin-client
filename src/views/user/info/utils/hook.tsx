@@ -14,6 +14,8 @@ import { delay } from "@pureadmin/utils";
 export function useUserInfo() {
   const { t } = useI18n();
   const loading = ref(true);
+  const choicesDict = ref([]);
+
   // 上传头像信息
   const currentUserInfo = reactive<FormItemProps>({
     avatar: "",
@@ -41,6 +43,7 @@ export function useUserInfo() {
           Object.keys(res.data).forEach(param => {
             currentUserInfo[param] = res.data[param];
           });
+          choicesDict.value = res.choices_dict;
         } else {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
         }
@@ -83,6 +86,7 @@ export function useUserInfo() {
 
   return {
     t,
+    choicesDict,
     currentUserInfo,
     handleUpload,
     handleUpdate,

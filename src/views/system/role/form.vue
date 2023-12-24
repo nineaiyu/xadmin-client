@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { onMounted, ref, watch, nextTick } from "vue";
+import {
+  onMounted,
+  ref,
+  watch,
+  nextTick,
+  computed,
+  getCurrentInstance
+} from "vue";
 import { formRules } from "./utils/rule";
 import { FormProps } from "./utils/types";
 import { useRole } from "./utils/hook";
@@ -9,6 +16,9 @@ import { match } from "pinyin-pro";
 import { useI18n } from "vue-i18n";
 import { transformI18n } from "@/plugins/i18n";
 import FromQuestion from "@/components/FromQuestion/index.vue";
+import Search from "@iconify-icons/ep/search";
+import More2Fill from "@iconify-icons/ri/more-2-fill";
+import Reset from "@iconify-icons/ri/restart-line";
 
 const props = withDefaults(defineProps<FormProps>(), {
   formInline: () => ({
@@ -65,12 +75,48 @@ watch(searchValue, val => {
   treeRoleRef.value!.filter(val);
 });
 defineExpose({ getRef, getTreeRef });
-onMounted(() => {
+const initData = () => {
   getMenuData();
   nextTick(() => {
     treeRoleRef.value!.setCheckedKeys(newFormInline.value.menu, false);
   });
+};
+onMounted(() => {
+  initData();
 });
+const buttonClass = computed(() => {
+  return [
+    "!h-[20px]",
+    "reset-margin",
+    "!text-gray-500",
+    "dark:!text-white",
+    "dark:hover:!text-primary"
+  ];
+});
+const isExpand = ref(false);
+const selectAll = ref(false);
+const checkStrictly = ref(true);
+const { proxy } = getCurrentInstance();
+
+function toggleRowExpansionAll(status) {
+  isExpand.value = status;
+  const nodes = (proxy.$refs["treeRoleRef"] as any).store._getAllNodes();
+  for (let i = 0; i < nodes.length; i++) {
+    nodes[i].expanded = status;
+  }
+}
+function toggleSelectAll(status) {
+  selectAll.value = status;
+  const nodes = (proxy.$refs["treeRoleRef"] as any).store._getAllNodes();
+  for (let i = 0; i < nodes.length; i++) {
+    nodes[i].checked = status;
+  }
+}
+function onReset() {
+  searchValue.value = "";
+  initData();
+  toggleRowExpansionAll(false);
+}
 </script>
 
 <template>
@@ -121,50 +167,129 @@ onMounted(() => {
         >
       </el-radio-group>
     </el-form-item>
-    <el-form-item :label="t('labels.remark')">
+    <el-form-item :label="t('labels.description')">
       <el-input
         v-model="newFormInline.description"
-        :placeholder="t('labels.verifyRemark')"
+        :placeholder="t('labels.verifyDescription')"
         type="textarea"
       />
     </el-form-item>
     <el-form-item :label="t('role.permissions')">
-      <el-input
-        v-model="searchValue"
-        class="filter-item"
-        clearable
-        :placeholder="t('buttons.hssearch')"
-      />
-      <el-tree
-        ref="treeRoleRef"
-        v-loading="loading"
-        :data="menuTreeData"
-        show-checkbox
-        node-key="pk"
-        highlight-current
-        default-expand-all
-        check-strictly
-        :filter-node-method="filterMenuNode"
-        :expand-on-click-node="true"
-        :props="{ class: customNodeClass }"
-      >
-        <template #default="{ data }">
-          <div style="height: 30px">
-            <span
-              :class="[
-                'pr-1',
-                'rounded',
-                'flex',
-                'items-center',
-                'select-none'
-              ]"
-            >
-              <component :is="useRenderIcon(data.meta.icon)" class="m-1" />
-              {{ `${transformI18n(data.meta.title)}` }}</span
-            >
-          </div>
-        </template>
-      </el-tree>
+      <div class="flex items-center h-[34px] w-full mb-2">
+        <el-input
+          v-model="searchValue"
+          class="flex-1"
+          :placeholder="t('menu.verifyTitle')"
+          clearable
+        >
+          <template #suffix>
+            <el-icon class="el-input__icon">
+              <IconifyIconOffline
+                v-show="searchValue.length === 0"
+                :icon="Search"
+              />
+            </el-icon>
+          </template>
+        </el-input>
+        <el-dropdown :hide-on-click="false">
+          <IconifyIconOffline
+            class="w-[28px] cursor-pointer"
+            width="18px"
+            :icon="More2Fill"
+          />
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item>
+                <el-button
+                  :class="buttonClass"
+                  link
+                  type="primary"
+                  @click="toggleSelectAll(!selectAll)"
+                >
+                  {{
+                    selectAll
+                      ? t("buttons.unSelectAll")
+                      : t("buttons.selectAll")
+                  }}
+                </el-button>
+              </el-dropdown-item>
+              <el-dropdown-item>
+                <el-button
+                  :class="buttonClass"
+                  link
+                  type="primary"
+                  @click="toggleRowExpansionAll(!isExpand)"
+                >
+                  {{
+                    isExpand
+                      ? t("buttons.hscollapseAll")
+                      : t("buttons.hsexpendAll")
+                  }}
+                </el-button>
+              </el-dropdown-item>
+              <el-dropdown-item>
+                <el-button
+                  :class="buttonClass"
+                  link
+                  type="primary"
+                  @click="checkStrictly = !checkStrictly"
+                >
+                  {{
+                    checkStrictly
+                      ? t("menu.checkUnStrictly")
+                      : t("menu.checkStrictly")
+                  }}
+                </el-button>
+              </el-dropdown-item>
+              <el-dropdown-item>
+                <el-button
+                  :class="buttonClass"
+                  link
+                  type="primary"
+                  :icon="useRenderIcon(Reset)"
+                  @click="onReset"
+                >
+                  {{ t("buttons.hsreset") }}
+                </el-button>
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </div>
+      <!--      <div class="overflow-y-auto w-full h-[30vh]">-->
+      <div>
+        <el-tree
+          ref="treeRoleRef"
+          v-loading="loading"
+          class="w-full"
+          :data="menuTreeData"
+          :check-strictly="checkStrictly"
+          show-checkbox
+          node-key="pk"
+          highlight-current
+          :default-expand-all="isExpand"
+          :filter-node-method="filterMenuNode"
+          :expand-on-click-node="true"
+          :props="{ class: customNodeClass }"
+        >
+          <template #default="{ data }">
+            <div style="height: 30px">
+              <span
+                :class="[
+                  'pr-1',
+                  'rounded',
+                  'flex',
+                  'items-center',
+                  'select-none'
+                ]"
+              >
+                <component :is="useRenderIcon(data.meta.icon)" class="m-1" />
+                {{ `${transformI18n(data.meta.title)}` }}</span
+              >
+            </div>
+          </template>
+        </el-tree>
+      </div>
     </el-form-item>
   </el-form>
 </template>

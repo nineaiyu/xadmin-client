@@ -3,11 +3,13 @@ export type Result = {
   code: number;
   unread_count?: number;
   choices_dict?: any[];
+  mode_choices?: any[];
   level_choices?: any[];
   notice_type_choices?: any[];
   data?: {
     /** 列表数据 */
     results: Array<any>;
+    values?: Array<any>;
     /** 总条目数 */
     total?: number;
     /** 每页显示条目个数 */

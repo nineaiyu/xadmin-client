@@ -2,42 +2,26 @@
 
 interface FormItemProps {
   is_add?: boolean;
-  /** ID */
   pk?: number;
-  /** 用户名 */
-  username: string;
-  /** 昵称 */
-  nickname: string;
-  /** 头像 */
-  avatar: string;
-  /** 手机号码 */
-  mobile?: string;
-  /** 邮箱 */
-  email?: string;
-  /** 性别 */
-  gender?: number;
-  mode_type?: number;
-  gender_display?: string;
-  /** 角色 */
+  rank?: number;
+  user_count?: number;
+  parent?: string;
+  name?: string;
+  code?: string;
   roles?: number[];
-  /** 密码 */
-  password?: string;
-  /** 是否激活 */
+  mode_display?: string;
+  mode_type?: number;
   is_active?: boolean;
-  /** 备注 */
   description?: string;
-  /** 所属部门 */
-  dept?: string;
 }
 interface FormProps {
   formInline: FormItemProps;
-  treeData: any[];
-  choicesDict: any[];
+  treeData?: any[];
 }
 
 interface RoleFormItemProps {
-  username: string;
-  nickname: string;
+  name?: string;
+  code?: string;
   mode_type?: number;
   mode_display?: string;
   /** 角色列表 */

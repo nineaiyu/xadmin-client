@@ -23,7 +23,7 @@ const props = withDefaults(defineProps<FormProps>(), {
     notice_type: 1,
     noticeChoices: [],
     levelChoices: [],
-    owners: []
+    notice_users: []
   })
 });
 const ruleFormRef = ref();
@@ -228,10 +228,10 @@ const remoteMethod = (query: string) => {
             <el-form-item
               v-if="newFormInline.notice_type === 1"
               :label="t('notice.userId')"
-              prop="owner"
+              prop="notice_users"
             >
               <el-select
-                v-model="newFormInline.owners"
+                v-model="newFormInline.notice_users"
                 multiple
                 style="width: 100%"
                 filterable

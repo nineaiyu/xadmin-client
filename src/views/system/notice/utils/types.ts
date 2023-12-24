@@ -15,7 +15,7 @@ interface Owner {
 interface FormItemProps {
   pk?: number;
   owner_info?: Owner;
-  owner?: number;
+  notice_user?: number;
   publish?: boolean;
   level?: string;
   notice_type_display?: string;
@@ -27,7 +27,7 @@ interface FormItemProps {
   levelChoices?: any[];
   noticeChoices?: any[];
   files?: any[];
-  owners?: any[];
+  notice_users?: any[];
 }
 
 interface ListItem {

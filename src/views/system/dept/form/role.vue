@@ -6,12 +6,12 @@ import { useI18n } from "vue-i18n";
 
 const props = withDefaults(defineProps<RoleFormProps>(), {
   formInline: () => ({
-    username: "",
-    nickname: "",
+    name: "",
+    code: "",
     mode_type: 1,
     rolesOptions: [],
-    choicesDict: [],
     rulesOptions: [],
+    choicesDict: [],
     ids: [],
     pks: []
   })
@@ -22,20 +22,20 @@ const newFormInline = ref(props.formInline);
 </script>
 
 <template>
-  <el-form :model="newFormInline" label-width="100px">
+  <el-form :model="newFormInline" label-width="80px">
     <el-row :gutter="30">
       <re-col>
-        <el-form-item :label="t('user.username')" prop="username">
-          <el-input v-model="newFormInline.username" disabled />
+        <el-form-item :label="t('dept.name')" prop="name">
+          <el-input v-model="newFormInline.name" disabled />
         </el-form-item>
       </re-col>
       <re-col>
-        <el-form-item :label="t('user.nickname')" prop="nickname">
-          <el-input v-model="newFormInline.nickname" disabled />
+        <el-form-item :label="t('dept.code')" prop="code">
+          <el-input v-model="newFormInline.code" disabled />
         </el-form-item>
       </re-col>
       <re-col>
-        <el-form-item :label="t('user.roles')" prop="ids">
+        <el-form-item :label="t('dept.roles')" prop="ids">
           <el-select
             v-model="newFormInline.ids"
             class="w-full"
@@ -80,7 +80,7 @@ const newFormInline = ref(props.formInline);
         </el-form-item>
       </re-col>
       <re-col>
-        <el-form-item :label="t('user.rules')" prop="pks">
+        <el-form-item :label="t('dept.rules')" prop="pks">
           <el-select
             v-model="newFormInline.pks"
             class="w-full"

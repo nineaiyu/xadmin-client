@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import { message } from "@/utils/message";
-import { getRoleListApi } from "@/api/system/role";
+import { getDataPermissionListApi } from "@/api/system/permission";
 import { ElMessageBox } from "element-plus";
 import { usePublicHooks } from "../../hooks";
 import { addDialog } from "@/components/ReDialog";
@@ -9,18 +9,17 @@ import editForm from "../form.vue";
 import type { PaginationProps } from "@pureadmin/table";
 import { reactive, ref, onMounted, h, toRaw, type Ref } from "vue";
 import {
-  createRoleApi,
-  deleteRoleApi,
-  manyDeleteRoleApi,
-  updateRoleApi
-} from "@/api/system/role";
-import { getMenuListApi } from "@/api/system/menu";
-import { handleTree } from "@/utils/tree";
+  createDataPermissionApi,
+  deleteDataPermissionApi,
+  updateDataPermissionApi,
+  manyDeleteDataPermissionApi,
+  getDataPermissionFieldsListApi
+} from "@/api/system/permission";
 import { delay, getKeyList } from "@pureadmin/utils";
 import { hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 
-export function useRole(tableRef: Ref) {
+export function useDataPermission(tableRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -34,9 +33,9 @@ export function useRole(tableRef: Ref) {
   ];
   const form = reactive({
     name: "",
-    code: "",
+    mode_type: "",
     is_active: "",
-    auto_bind: "",
+    description: "",
     ordering: sortOptions[0].key,
     page: 1,
     size: 10
@@ -44,7 +43,9 @@ export function useRole(tableRef: Ref) {
   const formRef = ref();
   const manySelectCount = ref(0);
   const dataList = ref([]);
-  const menuTreeData = ref([]);
+  const fieldLookupsData = ref([]);
+  const choicesDict = ref([]);
+  const valuesData = ref([]);
   const loading = ref(true);
   const switchLoadMap = ref({});
   const { switchStyle } = usePublicHooks();
@@ -66,34 +67,14 @@ export function useRole(tableRef: Ref) {
       minWidth: 100
     },
     {
-      label: t("role.name"),
+      label: t("permission.name"),
       prop: "name",
       minWidth: 120
     },
     {
-      label: t("role.autoBind"),
-      minWidth: 130,
-      cellRenderer: scope => (
-        <el-switch
-          size={scope.props.size === "small" ? "small" : "default"}
-          loading={switchLoadMap.value[scope.index]?.loading}
-          v-model={scope.row.auto_bind}
-          active-value={true}
-          inactive-value={false}
-          active-text={t("labels.enable")}
-          inactive-text={t("labels.disable")}
-          disabled={!hasAuth("update:systemRole")}
-          inline-prompt
-          style={switchStyle.value}
-          onChange={() => onChangeBind(scope as any)}
-        />
-      )
-    },
-    {
-      label: t("role.code"),
-      prop: "code",
-      minWidth: 150,
-      cellRenderer: ({ row }) => <span v-copy={row.code}>{row.code}</span>
+      label: t("permission.mode"),
+      prop: "mode_display",
+      minWidth: 120
     },
     {
       label: t("labels.status"),
@@ -107,7 +88,7 @@ export function useRole(tableRef: Ref) {
           inactive-value={false}
           active-text={t("labels.active")}
           inactive-text={t("labels.inactive")}
-          disabled={!hasAuth("update:systemRole")}
+          disabled={!hasAuth("update:systemDataPermission")}
           inline-prompt
           style={switchStyle.value}
           onChange={() => onChange(scope as any)}
@@ -134,52 +115,6 @@ export function useRole(tableRef: Ref) {
     }
   ];
 
-  function onChangeBind({ row, index }) {
-    const action =
-      row.auto_bind === false ? t("labels.disable") : t("labels.enable");
-    ElMessageBox.confirm(
-      `${t("buttons.hsoperateconfirm", {
-        action: `<strong>${action}</strong>`,
-        message: `<strong style="color:var(--el-color-primary)">${row.name}</strong>`
-      })}`,
-      {
-        confirmButtonText: t("buttons.hssure"),
-        cancelButtonText: t("buttons.hscancel"),
-        type: "warning",
-        dangerouslyUseHTMLString: true,
-        draggable: true
-      }
-    )
-      .then(() => {
-        switchLoadMap.value[index] = Object.assign(
-          {},
-          switchLoadMap.value[index],
-          {
-            loading: true
-          }
-        );
-        updateRoleApi(row.pk, row).then(res => {
-          if (res.code === 1000) {
-            switchLoadMap.value[index] = Object.assign(
-              {},
-              switchLoadMap.value[index],
-              {
-                loading: false
-              }
-            );
-            message(t("results.success"), { type: "success" });
-          } else {
-            message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-          }
-        });
-      })
-      .catch(() => {
-        row.auto_bind === false
-          ? (row.auto_bind = true)
-          : (row.auto_bind = false);
-      });
-  }
-
   function onChange({ row, index }) {
     const action =
       row.is_active === false ? t("labels.disable") : t("labels.enable");
@@ -204,7 +139,7 @@ export function useRole(tableRef: Ref) {
             loading: true
           }
         );
-        updateRoleApi(row.pk, row).then(res => {
+        updateDataPermissionApi(row.pk, row).then(res => {
           if (res.code === 1000) {
             switchLoadMap.value[index] = Object.assign(
               {},
@@ -227,7 +162,7 @@ export function useRole(tableRef: Ref) {
   }
 
   async function handleDelete(row) {
-    deleteRoleApi(row.pk).then(async res => {
+    deleteDataPermissionApi(row.pk).then(async res => {
       if (res.code === 1000) {
         message(t("results.success"), { type: "success" });
         await onSearch();
@@ -264,7 +199,7 @@ export function useRole(tableRef: Ref) {
       return;
     }
     const manySelectData = tableRef.value.getTableRef().getSelectionRows();
-    manyDeleteRoleApi({
+    manyDeleteDataPermissionApi({
       pks: JSON.stringify(getKeyList(manySelectData, "pk"))
     }).then(async res => {
       if (res.code === 1000) {
@@ -284,10 +219,10 @@ export function useRole(tableRef: Ref) {
       pagination.pageSize = form.size = 10;
     }
     loading.value = true;
-    const { data } = await getRoleListApi(toRaw(form));
+    const { data, choices_dict } = await getDataPermissionListApi(toRaw(form));
     dataList.value = data.results;
     pagination.total = data.total;
-
+    choicesDict.value = choices_dict;
     delay(500).then(() => {
       loading.value = false;
     });
@@ -305,26 +240,27 @@ export function useRole(tableRef: Ref) {
       title = t("buttons.hsadd");
     }
     addDialog({
-      title: `${title} ${t("role.role")}`,
+      title: `${title} ${t("permission.permission")}`,
       props: {
         formInline: {
           pk: row?.pk ?? "",
           name: row?.name ?? "",
-          code: row?.code ?? "",
-          menu: row?.menu ?? [],
+          rules: row?.rules ?? [],
+          mode_type: row?.mode_type ?? "",
           is_active: row?.is_active ?? true,
-          auto_bind: row?.auto_bind ?? false,
           description: row?.description ?? ""
-        }
+        },
+        fieldLookupsData: fieldLookupsData.value,
+        valuesData: valuesData.value,
+        choicesDict: choicesDict.value
       },
-      width: "40%",
+      width: "50%",
       draggable: true,
       fullscreenIcon: true,
       closeOnClickModal: false,
       contentRenderer: () => h(editForm, { ref: formRef }),
       beforeSure: (done, { options }) => {
         const FormRef = formRef.value.getRef();
-        const TreeRef = formRef.value.getTreeRef();
         const curData = options.props.formInline as FormItemProps;
 
         async function chores(detail) {
@@ -335,9 +271,14 @@ export function useRole(tableRef: Ref) {
 
         FormRef.validate(valid => {
           if (valid) {
-            curData.menu = TreeRef!.getCheckedKeys(false);
+            if (curData.rules.length === 0) {
+              message(`${t("permission.rulesFailed")}`, {
+                type: "error"
+              });
+              return;
+            }
             if (is_add) {
-              createRoleApi(curData).then(async res => {
+              createDataPermissionApi(curData).then(async res => {
                 if (res.code === 1000) {
                   await chores(res.detail);
                 } else {
@@ -347,7 +288,7 @@ export function useRole(tableRef: Ref) {
                 }
               });
             } else {
-              updateRoleApi(curData.pk, curData).then(async res => {
+              updateDataPermissionApi(curData.pk, curData).then(async res => {
                 if (res.code === 1000) {
                   await chores(res.detail);
                 } else {
@@ -363,22 +304,14 @@ export function useRole(tableRef: Ref) {
     });
   }
 
-  /** 菜单权限 */
-
-  const getMenuData = () => {
-    loading.value = true;
-    getMenuListApi({ page: 1, size: 500 }).then(res => {
-      setTimeout(() => {
-        loading.value = false;
-        if (res.code === 1000) {
-          menuTreeData.value = handleTree(res.data.results);
-        }
-      }, 300);
-    });
-  };
-
   onMounted(() => {
     onSearch();
+    getDataPermissionFieldsListApi().then(res => {
+      if (res.code === 1000) {
+        fieldLookupsData.value = res.data.results;
+        valuesData.value = res.data.values;
+      }
+    });
   });
 
   return {
@@ -389,10 +322,10 @@ export function useRole(tableRef: Ref) {
     dataList,
     pagination,
     sortOptions,
-    menuTreeData,
+    choicesDict,
+    fieldLookupsData,
     manySelectCount,
     onSelectionCancel,
-    getMenuData,
     onSearch,
     resetForm,
     openDialog,

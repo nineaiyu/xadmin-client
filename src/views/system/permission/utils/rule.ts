@@ -3,25 +3,25 @@ import type { FormRules } from "element-plus";
 import { $t, transformI18n } from "@/plugins/i18n";
 
 /** 自定义表单规则校验 */
-export const formRules = reactive<FormRules>({
-  notice_users: [
+export const formRules = reactive(<FormRules>{
+  name: [
     {
       required: true,
-      message: transformI18n($t("user.verifyUserId")),
+      message: transformI18n($t("permission.name")),
       trigger: "blur"
     }
   ],
-  title: [
+  mode_type: [
     {
       required: true,
-      message: transformI18n($t("notice.verifyTitle")),
+      message: transformI18n($t("permission.mode")),
       trigger: "blur"
     }
   ],
-  message: [
+  rules: [
     {
       required: true,
-      message: transformI18n($t("notice.verifyContent")),
+      message: transformI18n($t("permission.rules")),
       trigger: "blur"
     }
   ]

@@ -11,8 +11,14 @@ defineOptions({
   name: "UserInfo"
 });
 
-const { currentUserInfo, handleUpdate, handleUpload, handleResetPassword, t } =
-  useUserInfo();
+const {
+  currentUserInfo,
+  choicesDict,
+  handleUpdate,
+  handleUpload,
+  handleResetPassword,
+  t
+} = useUserInfo();
 const activeTab = ref("userinfo");
 </script>
 
@@ -49,15 +55,22 @@ const activeTab = ref("userinfo");
               >{{ currentUserInfo.email }}
             </el-descriptions-item>
             <el-descriptions-item :label="t('user.gender')">
-              <el-tag :type="['success', '', 'info'][currentUserInfo.sex]">
-                {{
-                  [t("user.male"), t("user.female"), t("user.unknown")][
-                    currentUserInfo.sex
-                  ]
-                }}
+              <el-tag type="success">
+                {{ currentUserInfo.gender_display }}
               </el-tag>
             </el-descriptions-item>
-            <el-descriptions-item :label="t('user.roles')">
+            <el-descriptions-item
+              v-if="currentUserInfo.dept_info"
+              :label="t('user.dept')"
+            >
+              <el-tag type="success">
+                {{ currentUserInfo.dept_info }}
+              </el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item
+              v-if="currentUserInfo.roles_info"
+              :label="t('user.roles')"
+            >
               <el-space>
                 <el-tag
                   v-for="item in currentUserInfo.roles_info"
@@ -90,6 +103,7 @@ const activeTab = ref("userinfo");
         <el-tabs v-model="activeTab">
           <el-tab-pane :label="t('userinfo.basicInfo')" name="userinfo">
             <edit-user-info
+              :choices-dict="choicesDict"
               :form-inline="currentUserInfo"
               @handle-update="handleUpdate"
             />

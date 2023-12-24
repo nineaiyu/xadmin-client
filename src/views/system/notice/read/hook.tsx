@@ -190,7 +190,7 @@ export function useNoticeRead(tableRef: Ref) {
         });
       })
       .catch(() => {
-        row.publish === false ? (row.publish = true) : (row.publish = false);
+        row.unread === false ? (row.unread = true) : (row.unread = false);
       });
   }
   function onGoUserDetail(row: any) {

@@ -22,7 +22,7 @@ export interface UserInfo {
   nickname: string;
   email: string;
   last_login: string;
-  sex: number;
+  gender: number;
   date_joined: string;
   pk: number;
   unread_message_count: number;
@@ -35,6 +35,7 @@ export type UserInfoResult = {
   code: number;
   detail: string;
   data: UserInfo;
+  choices_dict?: any[];
 };
 
 export type TempTokenResult = {

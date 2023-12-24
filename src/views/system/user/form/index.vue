@@ -7,6 +7,8 @@ import { usePublicHooks } from "../../hooks";
 import { useI18n } from "vue-i18n";
 
 const props = withDefaults(defineProps<FormProps>(), {
+  treeData: () => [],
+  choicesDict: () => [],
   formInline: () => ({
     is_add: true,
     username: "",
@@ -14,7 +16,8 @@ const props = withDefaults(defineProps<FormProps>(), {
     avatar: "",
     mobile: "",
     email: "",
-    sex: 0,
+    dept: "",
+    gender: 0,
     roles: [],
     password: "",
     is_active: true
@@ -22,11 +25,6 @@ const props = withDefaults(defineProps<FormProps>(), {
 });
 const { t } = useI18n();
 
-const sexOptions = [
-  { label: t("user.male"), value: 0 },
-  { label: t("user.female"), value: 1 },
-  { label: t("user.unknown"), value: 2 }
-];
 const ruleFormRef = ref();
 const { switchStyle } = usePublicHooks();
 const newFormInline = ref(props.formInline);
@@ -93,18 +91,18 @@ defineExpose({ getRef });
         </el-form-item>
       </re-col>
       <re-col :value="12" :xs="24" :sm="24">
-        <el-form-item :label="t('user.gender')" prop="sex">
-          <el-select v-model="newFormInline.sex" class="w-full" clearable>
+        <el-form-item :label="t('user.gender')" prop="gender">
+          <el-select v-model="newFormInline.gender" class="w-full" clearable>
             <el-option
-              v-for="item in sexOptions"
-              :key="item.value"
+              v-for="item in props.choicesDict"
+              :key="item.key"
               :label="item.label"
-              :value="item.value"
+              :value="item.key"
+              :disabled="item.disabled"
             />
           </el-select>
         </el-form-item>
       </re-col>
-
       <re-col :value="12" :xs="24" :sm="24">
         <el-form-item :label="t('labels.status')" prop="is_active">
           <el-switch
@@ -118,12 +116,34 @@ defineExpose({ getRef });
           />
         </el-form-item>
       </re-col>
-
+      <re-col :value="24" :xs="24" :sm="24">
+        <el-form-item :label="t('user.dept')" prop="parent">
+          <el-cascader
+            v-model="newFormInline.dept"
+            class="w-full"
+            :options="props.treeData"
+            :props="{
+              value: 'pk',
+              label: 'name',
+              emitPath: false,
+              checkStrictly: true
+            }"
+            clearable
+            filterable
+            :placeholder="t('menu.parentNode')"
+          >
+            <template #default="{ node, data }">
+              <span>{{ data.name }}</span>
+              <span v-if="!node.isLeaf"> ({{ data.children.length }}) </span>
+            </template>
+          </el-cascader>
+        </el-form-item>
+      </re-col>
       <re-col>
-        <el-form-item :label="t('labels.remark')">
+        <el-form-item :label="t('labels.description')">
           <el-input
-            v-model="newFormInline.remark"
-            :placeholder="t('labels.verifyRemark')"
+            v-model="newFormInline.description"
+            :placeholder="t('labels.verifyDescription')"
             type="textarea"
             rows="3"
           />
