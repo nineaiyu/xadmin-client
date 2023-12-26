@@ -19,8 +19,7 @@ export const deleteNoticeApi = (pk?: number) => {
 
 export const updateNoticeApi = (pk?: number, data?: object) => {
   return http.request<Result>("put", `/api/system/message/notice/${pk}`, {
-    data: data,
-    params: { pk: pk }
+    data: data
   });
 };
 
@@ -39,8 +38,7 @@ export const updateNoticePublishApi = (pk?: number, data?: object) => {
     "put",
     `/api/system/message/notice/${pk}/publish`,
     {
-      data: data,
-      params: { pk: pk }
+      data: data
     }
   );
 };

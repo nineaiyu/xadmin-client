@@ -68,7 +68,9 @@ const activeTab = ref("userinfo");
               </el-tag>
             </el-descriptions-item>
             <el-descriptions-item
-              v-if="currentUserInfo.roles_info"
+              v-if="
+                currentUserInfo.roles_info && currentUserInfo.roles_info.length
+              "
               :label="t('user.roles')"
             >
               <el-space>

@@ -157,7 +157,9 @@ export function useNotice(tableRef: Ref) {
           notice_type: row?.notice_type ?? 1,
           levelChoices: levelChoices.value,
           noticeChoices: noticeChoices.value,
-          notice_users: row?.notice_user ?? []
+          notice_users: row?.notice_user ?? [],
+          notice_dept: row?.notice_dept ?? [],
+          notice_role: row?.notice_role ?? []
         }
       },
       width: "60%",

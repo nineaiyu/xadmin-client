@@ -42,25 +42,6 @@ const defaultData: FormItemProps = {
 
 export function useMenu() {
   const { t } = useI18n();
-  const sortOptions = [
-    {
-      label: `${t("sorts.createdDate")} ${t("labels.descending")}`,
-      key: "-created_time"
-    },
-    {
-      label: `${t("sorts.createdDate")} ${t("labels.ascending")}`,
-      key: "created_time"
-    }
-  ];
-
-  const form = reactive({
-    username: "",
-    mobile: "",
-    is_active: "",
-    ordering: sortOptions[0].key,
-    page: 1,
-    size: 10
-  });
   const formRef = ref();
   const treeData = ref([]);
   const dataList = ref([]);
@@ -82,7 +63,7 @@ export function useMenu() {
 
   const getMenuData = () => {
     loading.value = true;
-    getMenuListApi({ page: 1, size: 500 }).then(res => {
+    getMenuListApi({ page: 1, size: 1000 }).then(res => {
       if (res.code === 1000) {
         treeData.value = handleTree(res.data.results);
         choicesDict.value = res.choices_dict;
@@ -250,7 +231,6 @@ export function useMenu() {
 
   return {
     t,
-    form,
     loading,
     parentIds,
     dataList,
@@ -261,7 +241,6 @@ export function useMenu() {
     menuUrlList,
     addNewMenu,
     buttonClass,
-    sortOptions,
     defaultData,
     getMenuData,
     handleDrag,

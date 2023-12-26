@@ -116,7 +116,6 @@ const {
             v-for="item in noticeChoices"
             :key="item.key"
             :label="item.label"
-            :disabled="item.disabled"
             :value="item.key"
           />
         </el-select>

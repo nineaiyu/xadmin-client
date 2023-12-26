@@ -59,7 +59,7 @@ export function useDept(tableRef: Ref) {
     is_active: "",
     ordering: sortOptions[3].key,
     page: 1,
-    size: 10
+    size: 1000
   });
 
   const formRef = ref();

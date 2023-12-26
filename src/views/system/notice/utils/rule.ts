@@ -11,6 +11,20 @@ export const formRules = reactive<FormRules>({
       trigger: "blur"
     }
   ],
+  notice_dept: [
+    {
+      required: true,
+      message: transformI18n($t("dept.dept")),
+      trigger: "blur"
+    }
+  ],
+  notice_role: [
+    {
+      required: true,
+      message: transformI18n($t("role.role")),
+      trigger: "blur"
+    }
+  ],
   title: [
     {
       required: true,

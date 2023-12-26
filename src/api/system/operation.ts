@@ -7,21 +7,8 @@ export const getOperationLogListApi = (data?: object) => {
   });
 };
 
-export const createOperationLogApi = (data?: object) => {
-  return http.request<Result>("post", "/api/system/operation-log", {
-    data: data
-  });
-};
-
 export const deleteOperationLogApi = (pk?: number) => {
   return http.request<Result>("delete", `/api/system/operation-log/${pk}`);
-};
-
-export const updateOperationLogApi = (pk?: number, data?: object) => {
-  return http.request<Result>("put", `/api/system/operation-log/${pk}`, {
-    data: data,
-    params: { pk: pk }
-  });
 };
 
 export const manyDeleteOperationLogApi = (data?: object) => {

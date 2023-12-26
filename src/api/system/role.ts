@@ -15,8 +15,7 @@ export const deleteRoleApi = (pk?: number) => {
 
 export const updateRoleApi = (pk?: number, data?: object) => {
   return http.request<Result>("put", `/api/system/role/${pk}`, {
-    data: data,
-    params: { pk: pk }
+    data: data
   });
 };
 

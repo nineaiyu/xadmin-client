@@ -28,6 +28,8 @@ interface FormItemProps {
   noticeChoices?: any[];
   files?: any[];
   notice_users?: any[];
+  notice_dept?: any[];
+  notice_role?: any[];
 }
 
 interface ListItem {
