@@ -127,17 +127,15 @@ export function useColumns(
     }
   }
   const handleSelection = (val, row) => {
-    if (isTree) {
-      if (val.indexOf(row) === -1) {
-        // del
-        if (selectValue.value.indexOf(row.pk) > -1) {
-          selectValue.value.splice(selectValue.value.indexOf(row.pk), 1);
-        }
-      } else {
-        //add
-        if (selectValue.value.indexOf(row.pk) == -1) {
-          selectValue.value.push(row.pk);
-        }
+    if (val.indexOf(row) === -1) {
+      // del
+      if (selectValue.value.indexOf(row.pk) > -1) {
+        selectValue.value.splice(selectValue.value.indexOf(row.pk), 1);
+      }
+    } else {
+      //add
+      if (selectValue.value.indexOf(row.pk) == -1) {
+        selectValue.value.push(row.pk);
       }
     }
   };

@@ -3,12 +3,13 @@ import { ref } from "vue";
 import ReCol from "@/components/ReCol";
 import { RoleFormProps } from "../utils/types";
 import { useI18n } from "vue-i18n";
+import { ModeChoices } from "@/views/system/constants";
 
 const props = withDefaults(defineProps<RoleFormProps>(), {
   formInline: () => ({
     name: "",
     code: "",
-    mode_type: 1,
+    mode_type: ModeChoices.AND,
     rolesOptions: [],
     rulesOptions: [],
     choicesDict: [],
@@ -100,7 +101,7 @@ const newFormInline = ref(props.formInline);
                   font-size: 13px;
                   color: var(--el-text-color-secondary);
                 "
-                >{{ item.mode_display }}</span
+                >{{ item?.mode_display }}</span
               >
             </el-option>
           </el-select>

@@ -3,12 +3,13 @@ import { ref } from "vue";
 import ReCol from "@/components/ReCol";
 import { RoleFormProps } from "../utils/types";
 import { useI18n } from "vue-i18n";
+import { ModeChoices } from "@/views/system/constants";
 
 const props = withDefaults(defineProps<RoleFormProps>(), {
   formInline: () => ({
     username: "",
     nickname: "",
-    mode_type: 1,
+    mode_type: ModeChoices.AND,
     rolesOptions: [],
     choicesDict: [],
     rulesOptions: [],

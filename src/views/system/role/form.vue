@@ -9,18 +9,18 @@ import {
 } from "vue";
 import { formRules } from "./utils/rule";
 import { FormProps } from "./utils/types";
-import { useRole } from "./utils/hook";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { isAllEmpty } from "@pureadmin/utils";
 import { match } from "pinyin-pro";
 import { useI18n } from "vue-i18n";
 import { transformI18n } from "@/plugins/i18n";
-import FromQuestion from "@/components/FromQuestion/index.vue";
 import Search from "@iconify-icons/ep/search";
 import More2Fill from "@iconify-icons/ri/more-2-fill";
 import Reset from "@iconify-icons/ri/restart-line";
+import { MenuChoices } from "@/views/system/constants";
 
 const props = withDefaults(defineProps<FormProps>(), {
+  menuTreeData: () => [],
   formInline: () => ({
     name: "",
     code: "",
@@ -30,9 +30,9 @@ const props = withDefaults(defineProps<FormProps>(), {
   })
 });
 const customNodeClass = data => {
-  if (data.menu_type === 0) {
+  if (data.menu_type === MenuChoices.DIRECTORY) {
     return "is-penultimate";
-  } else if (data.menu_type === 1) {
+  } else if (data.menu_type === MenuChoices.MENU) {
     return "is-permission";
   }
   return null;
@@ -64,7 +64,6 @@ function getRef() {
 function getTreeRef() {
   return treeRoleRef.value;
 }
-const { menuTreeData, getMenuData, loading } = useRole(treeRoleRef);
 const { t } = useI18n();
 const ifEnableOptions = [
   { label: t("labels.enable"), value: true },
@@ -75,7 +74,6 @@ watch(searchValue, val => {
 });
 defineExpose({ getRef, getTreeRef });
 const initData = () => {
-  getMenuData();
   nextTick(() => {
     treeRoleRef.value!.setCheckedKeys(newFormInline.value.menu, false);
   });
@@ -243,9 +241,8 @@ function onReset() {
       <div>
         <el-tree
           ref="treeRoleRef"
-          v-loading="loading"
           class="w-full"
-          :data="menuTreeData"
+          :data="props.menuTreeData"
           :check-strictly="checkStrictly"
           show-checkbox
           node-key="pk"

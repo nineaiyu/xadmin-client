@@ -16,9 +16,10 @@ import editForm from "../editor.vue";
 import showForm from "../show.vue";
 import { cloneDeep, getKeyList, isEmpty, isString } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog";
-import { hasAuth } from "@/router/utils";
+import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
+import { NoticeChoices } from "@/views/system/constants";
 
 export function useNotice(tableRef: Ref) {
   const { t } = useI18n();
@@ -91,8 +92,10 @@ export function useNotice(tableRef: Ref) {
           type={row.level == "" ? "default" : row.level}
           onClick={() => onGoNoticeReadDetail(row as any)}
         >
-          {row.notice_type === 2 ? t("notice.allRead") : row.user_count}/
-          {row.read_user_count}
+          {row.notice_type === NoticeChoices.NOTICE
+            ? t("notice.allRead")
+            : row.user_count}
+          /{row.read_user_count}
         </el-link>
       )
     },
@@ -131,7 +134,7 @@ export function useNotice(tableRef: Ref) {
   ];
 
   function onGoNoticeReadDetail(row: any) {
-    if (row.pk) {
+    if (hasGlobalAuth("list:systemNoticeRead") && row.pk) {
       router.push({
         name: "systemNoticeRead",
         query: { notice_id: row.pk }
@@ -154,7 +157,7 @@ export function useNotice(tableRef: Ref) {
           message: row?.message ?? "",
           level: row?.level ?? "",
           notice_type_display: row?.notice_type_display ?? "",
-          notice_type: row?.notice_type ?? 1,
+          notice_type: row?.notice_type ?? NoticeChoices.NOTICE,
           levelChoices: levelChoices.value,
           noticeChoices: noticeChoices.value,
           notice_users: row?.notice_user ?? [],
@@ -351,7 +354,7 @@ export function useNotice(tableRef: Ref) {
         ) {
           const parameter = {
             notice_user: JSON.parse(getParameter.notice_users as string),
-            notice_type: 1
+            notice_type: NoticeChoices.USER
           };
           form.notice_users = "";
           openDialog(true, parameter);

@@ -20,6 +20,7 @@ import UnExpandIcon from "./svg/unexpand.svg?component";
 import Refresh from "@iconify-icons/ep/refresh";
 import { useVModel } from "@vueuse/core";
 import { Tree, TreeFormProps } from "./utils/types";
+import { MenuChoices } from "@/views/system/constants";
 
 const treeRef = ref();
 
@@ -37,7 +38,7 @@ const props = withDefaults(defineProps<TreeFormProps>(), {
   defaultData: () => ({}),
   parentIds: () => [],
   formInline: () => ({
-    menu_type: 0,
+    menu_type: MenuChoices.DIRECTORY,
     parent: "",
     name: "",
     path: "",
@@ -147,9 +148,9 @@ const customNodeClass = data => {
   if (!data.is_active) {
     return "is-disabled";
   }
-  if (data.menu_type === 0) {
+  if (data.menu_type === MenuChoices.DIRECTORY) {
     return "is-penultimate";
-  } else if (data.menu_type === 1) {
+  } else if (data.menu_type === MenuChoices.MENU) {
     return "is-permission";
   }
   return null;
@@ -170,7 +171,7 @@ const buttonClass = computed(() => {
 });
 
 const handleDragDrop = (node1, node2, type) => {
-  return !(type === "inner" && node2.data.menu_type === 2);
+  return !(type === "inner" && node2.data.menu_type === MenuChoices.PERMISSION);
 };
 
 watch(searchValue, val => {
@@ -344,7 +345,10 @@ onMounted(() => {
           </span>
           <span class="flex items-center">
             <el-tooltip
-              v-if="hasAuth('create:systemMenu') && data.menu_type !== 2"
+              v-if="
+                hasAuth('create:systemMenu') &&
+                data.menu_type !== MenuChoices.PERMISSION
+              "
               class="box-item"
               effect="dark"
               :content="t('buttons.hsadd')"
@@ -372,7 +376,7 @@ onMounted(() => {
               </template>
             </el-popconfirm>
             <el-text
-              v-if="data.menu_type === 2"
+              v-if="data.menu_type === MenuChoices.PERMISSION"
               v-copy="data.path"
               type="success"
               style="margin-left: 10px"

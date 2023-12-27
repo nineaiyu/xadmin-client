@@ -54,6 +54,7 @@ interface FormProps {
   formInline: FormItemProps;
   treeData: any[];
   choicesDict: any[];
+  menuChoices: any[];
   menuUrlList: any[];
 }
 

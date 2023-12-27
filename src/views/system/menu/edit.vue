@@ -12,14 +12,16 @@ import { dirFormRules, menuFormRules, permissionFormRules } from "./utils/rule";
 import { hasAuth } from "@/router/utils";
 import { cloneDeep } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
+import { MenuChoices } from "@/views/system/constants";
 const { t } = useI18n();
 const emit = defineEmits(["handleConfirm"]);
 const props = withDefaults(defineProps<FormProps>(), {
   treeData: () => [],
   choicesDict: () => [],
+  menuChoices: () => [],
   menuUrlList: () => [],
   formInline: () => ({
-    menu_type: 0,
+    menu_type: MenuChoices.DIRECTORY,
     is_add: false,
     parent: "",
     parent_ids: [],
@@ -54,11 +56,11 @@ const ifEnableOptions: SelectOption<boolean>[] = [
   { label: t("labels.disable"), value: false }
 ];
 
-const MenuTypeOptions: SelectOption<number>[] = [
-  { label: t("menu.directory"), value: 0 },
-  { label: t("menu.menu"), value: 1 },
-  { label: t("menu.permissions"), value: 2 }
-];
+// const MenuTypeOptions: SelectOption<number>[] = [
+//   { label: t("menu.directory"), value: 0 },
+//   { label: t("menu.menu"), value: 1 },
+//   { label: t("menu.permissions"), value: 2 }
+// ];
 
 function getRef() {
   return ruleFormRef.value;
@@ -121,13 +123,15 @@ const getMinHeight = () => {
           @change="handleChangeMenuType"
         >
           <el-radio-button
-            v-for="(item, index) in MenuTypeOptions"
+            v-for="(item, index) in menuChoices"
             :key="index"
-            :label="item.value"
+            :label="item.key"
             :disabled="
               !newFormInline.is_add &&
-              ((newFormInline.menu_type === 2 && index !== 2) ||
-                (newFormInline.menu_type !== 2 && index === 2))
+              ((newFormInline.menu_type === MenuChoices.PERMISSION &&
+                index !== 2) ||
+                (newFormInline.menu_type !== MenuChoices.PERMISSION &&
+                  index === 2))
             "
             >{{ item.label }}</el-radio-button
           >
@@ -141,7 +145,7 @@ const getMinHeight = () => {
           :props="{
             children: 'children',
             label: data => transformI18n(data.meta.title),
-            disabled: data => data.menu_type == 2
+            disabled: data => data.menu_type == MenuChoices.PERMISSION
           }"
           node-key="pk"
           accordion
@@ -171,7 +175,7 @@ const getMinHeight = () => {
           </template>
         </el-tree-select>
       </el-form-item>
-      <div v-if="newFormInline.menu_type !== 2">
+      <div v-if="newFormInline.menu_type !== MenuChoices.PERMISSION">
         <el-form-item :label="t('menu.title')" prop="title">
           <el-input
             v-model="newFormInline.title"
@@ -182,7 +186,7 @@ const getMinHeight = () => {
         <el-form-item :label="t('menu.icon')" prop="icon">
           <icon-select v-model="newFormInline.meta.icon" />
         </el-form-item>
-        <div v-if="newFormInline.menu_type === 1">
+        <div v-if="newFormInline.menu_type === MenuChoices.MENU">
           <el-form-item :label="t('menu.transitionEnter')" prop="icon">
             <ReAnimateSelector v-model="newFormInline.meta.transition_enter" />
           </el-form-item>
@@ -221,7 +225,7 @@ const getMinHeight = () => {
           />
         </el-form-item>
       </div>
-      <div v-if="newFormInline.menu_type === 1">
+      <div v-if="newFormInline.menu_type === MenuChoices.MENU">
         <el-form-item :label="t('menu.componentPath')" prop="component">
           <template #label>
             <from-question
@@ -264,7 +268,7 @@ const getMinHeight = () => {
           </el-radio-group>
         </el-form-item>
       </div>
-      <div v-if="newFormInline.menu_type !== 2">
+      <div v-if="newFormInline.menu_type !== MenuChoices.PERMISSION">
         <el-divider />
         <el-form-item :label="t('menu.showLink')" prop="showLink">
           <template #label>
@@ -331,7 +335,7 @@ const getMinHeight = () => {
           </el-radio-group>
         </el-form-item>
       </div>
-      <div v-if="newFormInline.menu_type === 2">
+      <div v-if="newFormInline.menu_type === MenuChoices.PERMISSION">
         <el-form-item :label="t('menu.permissionName')" prop="title">
           <el-input
             v-model="newFormInline.title"

@@ -17,7 +17,7 @@ import {
 import { getMenuListApi } from "@/api/system/menu";
 import { handleTree } from "@/utils/tree";
 import { delay, getKeyList } from "@pureadmin/utils";
-import { hasAuth } from "@/router/utils";
+import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 
 export function useRole(tableRef: Ref) {
@@ -248,7 +248,8 @@ export function useRole(tableRef: Ref) {
           menu: row?.menu ?? [],
           is_active: row?.is_active ?? true,
           description: row?.description ?? ""
-        }
+        },
+        menuTreeData: menuTreeData.value
       },
       width: "40%",
       draggable: true,
@@ -300,7 +301,7 @@ export function useRole(tableRef: Ref) {
 
   const getMenuData = () => {
     loading.value = true;
-    getMenuListApi({ page: 1, size: 500 }).then(res => {
+    getMenuListApi({ page: 1, size: 1000 }).then(res => {
       setTimeout(() => {
         loading.value = false;
         if (res.code === 1000) {
@@ -312,6 +313,9 @@ export function useRole(tableRef: Ref) {
 
   onMounted(() => {
     onSearch();
+    if (hasGlobalAuth("list:systemMenu")) {
+      getMenuData();
+    }
   });
 
   return {
@@ -322,10 +326,8 @@ export function useRole(tableRef: Ref) {
     dataList,
     pagination,
     sortOptions,
-    menuTreeData,
     manySelectCount,
     onSelectionCancel,
-    getMenuData,
     onSearch,
     resetForm,
     openDialog,

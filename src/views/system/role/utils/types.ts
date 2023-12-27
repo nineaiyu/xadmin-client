@@ -16,6 +16,7 @@ interface FormItemProps {
 }
 interface FormProps {
   formInline: FormItemProps;
+  menuTreeData: any[];
 }
 
 export type { FormItemProps, FormProps };

@@ -20,6 +20,12 @@ interface FormProps {
   treeData?: any[];
 }
 
+interface itemProps {
+  name?: string;
+  pk?: string;
+  mode_display?: string;
+}
+
 interface RoleFormItemProps {
   name?: string;
   code?: string;
@@ -27,7 +33,7 @@ interface RoleFormItemProps {
   mode_display?: string;
   /** 角色列表 */
   rolesOptions: any[];
-  rulesOptions: any[];
+  rulesOptions: any[] | itemProps[];
   choicesDict: any[];
   /** 选中的角色列表 */
   ids: Record<number, unknown>[];

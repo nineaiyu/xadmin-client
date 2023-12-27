@@ -16,7 +16,7 @@ import {
   getDataPermissionFieldsListApi
 } from "@/api/system/permission";
 import { delay, getKeyList } from "@pureadmin/utils";
-import { hasAuth } from "@/router/utils";
+import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 
 export function useDataPermission(tableRef: Ref) {
@@ -306,12 +306,14 @@ export function useDataPermission(tableRef: Ref) {
 
   onMounted(() => {
     onSearch();
-    getDataPermissionFieldsListApi().then(res => {
-      if (res.code === 1000) {
-        fieldLookupsData.value = res.data.results;
-        valuesData.value = res.data.values;
-      }
-    });
+    if (hasGlobalAuth("list:systemDataPermissionFields")) {
+      getDataPermissionFieldsListApi().then(res => {
+        if (res.code === 1000) {
+          fieldLookupsData.value = res.data.results;
+          valuesData.value = res.data.values;
+        }
+      });
+    }
   });
 
   return {

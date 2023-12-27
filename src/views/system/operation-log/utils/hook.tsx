@@ -10,6 +10,7 @@ import {
 import { useRouter } from "vue-router";
 import { delay, getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
+import { hasGlobalAuth } from "@/router/utils";
 export function useOperationLog(tableRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
@@ -125,7 +126,7 @@ export function useOperationLog(tableRef: Ref) {
   ];
 
   function onGoDetail(row: any) {
-    if (row.creator && row.creator.pk) {
+    if (hasGlobalAuth("list:systemUser") && row.creator && row.creator.pk) {
       router.push({
         name: "systemUser",
         query: { pk: row.creator.pk }

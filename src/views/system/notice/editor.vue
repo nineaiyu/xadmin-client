@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, reactive, ref, shallowRef } from "vue";
+import { onBeforeUnmount, ref, shallowRef } from "vue";
 import "@wangeditor/editor/dist/css/style.css";
 import { Editor, Toolbar } from "@wangeditor/editor-for-vue";
 import { FormProps, InsertFnType } from "./utils/types";
@@ -13,6 +13,8 @@ import { useI18n } from "vue-i18n";
 import SearchUsers from "@/views/system/base/searchUsers.vue";
 import SearchDepts from "@/views/system/base/searchDepts.vue";
 import SearchRoles from "@/views/system/base/searchRoles.vue";
+import { NoticeChoices } from "@/views/system/constants";
+import { hasGlobalAuth } from "@/router/utils";
 const props = withDefaults(defineProps<FormProps>(), {
   formInline: () => ({
     pk: 0,
@@ -21,7 +23,7 @@ const props = withDefaults(defineProps<FormProps>(), {
     message: "",
     level: "",
     notice_type_display: "",
-    notice_type: 1,
+    notice_type: NoticeChoices.NOTICE,
     noticeChoices: [],
     levelChoices: [],
     notice_dept: [],
@@ -31,13 +33,7 @@ const props = withDefaults(defineProps<FormProps>(), {
 });
 const ruleFormRef = ref();
 const { t } = useI18n();
-const noticeChoices = reactive({
-  SYSTEM: 0,
-  NOTICE: 1,
-  USER: 2,
-  DEPT: 3,
-  ROLE: 4
-});
+
 const newFormInline = ref(props.formInline);
 newFormInline.value.noticeChoices[0].disabled = true;
 const editorRef = shallowRef();
@@ -157,6 +153,15 @@ const loading = ref(false);
     <el-card shadow="never">
       <template #header>
         <el-row :gutter="30">
+          <re-col>
+            <el-form-item :label="t('notice.title')" prop="title">
+              <el-input
+                v-model="newFormInline.title"
+                clearable
+                :placeholder="t('notice.verifyTitle')"
+              />
+            </el-form-item>
+          </re-col>
           <re-col :value="8" :xs="24" :sm="24">
             <el-form-item :label="t('notice.type')" prop="level">
               <el-select
@@ -190,7 +195,11 @@ const loading = ref(false);
                   :label="item.label"
                   :disabled="item.disabled"
                   :value="item.key"
-                />
+                >
+                  <template #default>
+                    <el-text :type="item.key">{{ item.label }}</el-text>
+                  </template>
+                </el-option>
               </el-select>
             </el-form-item>
           </re-col>
@@ -209,35 +218,34 @@ const loading = ref(false);
           </re-col>
           <re-col>
             <el-form-item
-              v-if="newFormInline.notice_type === noticeChoices.USER"
+              v-if="
+                newFormInline.notice_type === NoticeChoices.USER &&
+                hasGlobalAuth('list:systemUser')
+              "
               :label="t('notice.userId')"
               prop="notice_users"
             >
               <search-users v-model:select-value="newFormInline.notice_users" />
             </el-form-item>
             <el-form-item
-              v-if="newFormInline.notice_type === noticeChoices.DEPT"
+              v-if="
+                newFormInline.notice_type === NoticeChoices.DEPT &&
+                hasGlobalAuth('list:systemDept')
+              "
               :label="t('dept.dept')"
               prop="notice_dept"
             >
               <search-depts v-model:select-value="newFormInline.notice_dept" />
             </el-form-item>
             <el-form-item
-              v-if="newFormInline.notice_type === noticeChoices.ROLE"
+              v-if="
+                newFormInline.notice_type === NoticeChoices.ROLE &&
+                hasGlobalAuth('list:systemRole')
+              "
               :label="t('role.role')"
               prop="notice_role"
             >
               <search-roles v-model:select-value="newFormInline.notice_role" />
-            </el-form-item>
-          </re-col>
-
-          <re-col>
-            <el-form-item :label="t('notice.title')" prop="title">
-              <el-input
-                v-model="newFormInline.title"
-                clearable
-                :placeholder="t('notice.verifyTitle')"
-              />
             </el-form-item>
           </re-col>
         </el-row>

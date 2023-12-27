@@ -19,7 +19,7 @@ import {
 } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog";
 import { useRoute, useRouter } from "vue-router";
-import { hasAuth } from "@/router/utils";
+import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 export function useNoticeRead(tableRef: Ref) {
@@ -194,7 +194,11 @@ export function useNoticeRead(tableRef: Ref) {
       });
   }
   function onGoUserDetail(row: any) {
-    if (row.owner_info && row.owner_info.pk) {
+    if (
+      hasGlobalAuth("list:systemUser") &&
+      row.owner_info &&
+      row.owner_info.pk
+    ) {
       router.push({
         name: "systemUser",
         query: { pk: row.owner_info.pk }
@@ -202,7 +206,11 @@ export function useNoticeRead(tableRef: Ref) {
     }
   }
   function onGoNoticeDetail(row: any) {
-    if (row.notice_info && row.notice_info.pk) {
+    if (
+      hasGlobalAuth("list:systemNotice") &&
+      row.notice_info &&
+      row.notice_info.pk
+    ) {
       router.push({
         name: "systemNotice",
         query: { pk: row.notice_info.pk }

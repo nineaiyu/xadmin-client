@@ -23,11 +23,12 @@ import {
   isString
 } from "@pureadmin/utils";
 import { useRoute, useRouter } from "vue-router";
-import { hasAuth } from "@/router/utils";
+import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { handleTree } from "@/utils/tree";
 import { formatHigherDeptOptions, usePublicHooks } from "@/views/system/hooks";
 import { getDataPermissionListApi } from "@/api/system/permission";
+import { ModeChoices } from "@/views/system/constants";
 
 export function useDept(tableRef: Ref) {
   const { t } = useI18n();
@@ -184,7 +185,7 @@ export function useDept(tableRef: Ref) {
   ];
 
   function onGoDetail(row: any) {
-    if (row.user_count && row.pk) {
+    if (hasGlobalAuth("list:systemUser") && row.user_count && row.pk) {
       router.push({
         name: "systemUser",
         query: { dept: row.pk }
@@ -429,13 +430,17 @@ export function useDept(tableRef: Ref) {
       form.pk = parameter.pk;
     }
     await onSearch();
-    // 角色列表
-    rolesOptions.value = (
-      await getRoleListApi({ page: 1, size: 1000 })
-    ).data.results;
-    rulesOptions.value = (
-      await getDataPermissionListApi({ page: 1, size: 1000 })
-    ).data.results;
+
+    if (hasGlobalAuth("list:systemRole")) {
+      rolesOptions.value = (
+        await getRoleListApi({ page: 1, size: 1000 })
+      ).data.results;
+    }
+    if (hasGlobalAuth("list:systemDataPermission")) {
+      rulesOptions.value = (
+        await getDataPermissionListApi({ page: 1, size: 1000 })
+      ).data.results;
+    }
   });
 
   /** 分配角色 */
@@ -446,7 +451,7 @@ export function useDept(tableRef: Ref) {
         formInline: {
           name: row?.name ?? "",
           code: row?.code ?? "",
-          mode_type: row?.mode_type ?? 1,
+          mode_type: row?.mode_type ?? ModeChoices.AND,
           rolesOptions: rolesOptions.value ?? [],
           rulesOptions: rulesOptions.value ?? [],
           choicesDict: choicesDict.value ?? [],

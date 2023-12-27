@@ -155,6 +155,7 @@ export function useUserNotice(tableRef: Ref) {
 
   function handleReadAll() {
     updateUserNoticeReadAllApi().then(() => {
+      form.unread = "";
       onSearch();
     });
   }

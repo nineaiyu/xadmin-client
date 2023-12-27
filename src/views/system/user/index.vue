@@ -15,7 +15,7 @@ import Refresh from "@iconify-icons/ep/refresh";
 import AddFill from "@iconify-icons/ri/add-circle-line";
 import Download from "@iconify-icons/ri/download-line";
 import Message from "@iconify-icons/ri/message-fill";
-import { hasAuth } from "@/router/utils";
+import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { getIndexType } from "@/utils";
 
 defineOptions({
@@ -192,7 +192,7 @@ const {
               </el-popconfirm>
             </div>
             <el-button
-              v-if="hasAuth('send:systemNotify') && manySelectCount > 0"
+              v-if="hasGlobalAuth('create:systemNotice') && manySelectCount > 0"
               type="primary"
               :icon="useRenderIcon(Message)"
               @click="goNotice()"

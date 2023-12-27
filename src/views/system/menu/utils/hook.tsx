@@ -15,9 +15,10 @@ import { handleTree } from "@/utils/tree";
 import { cloneDeep } from "@pureadmin/utils";
 import { getMenuFromPk, getMenuOrderPk } from "@/utils";
 import { useI18n } from "vue-i18n";
+import { MenuChoices } from "@/views/system/constants";
 
 const defaultData: FormItemProps = {
-  menu_type: 0,
+  menu_type: MenuChoices.DIRECTORY,
   parent: "",
   name: "",
   path: "",
@@ -47,6 +48,7 @@ export function useMenu() {
   const dataList = ref([]);
   const parentIds = ref([]);
   const choicesDict = ref([]);
+  const menuChoices = ref([]);
   const menuUrlList = ref([]);
   const menuData = reactive<FormItemProps>(cloneDeep(defaultData));
   const loading = ref(true);
@@ -68,6 +70,7 @@ export function useMenu() {
         treeData.value = handleTree(res.data.results);
         choicesDict.value = res.choices_dict;
         menuUrlList.value = res.api_url_list;
+        menuChoices.value = res.menu_choices;
       }
       loading.value = false;
     });
@@ -134,7 +137,7 @@ export function useMenu() {
     } else {
       row.parent = "";
     }
-    openDialog(0, row);
+    openDialog(MenuChoices.DIRECTORY, row);
   }
   function openDialog(menu_type: number, row?: FormItemProps) {
     addDialog({
@@ -142,6 +145,7 @@ export function useMenu() {
       props: {
         treeData: treeData,
         choicesDict: choicesDict,
+        menuChoices: menuChoices,
         menuUrlList: menuUrlList,
         formInline: {
           pk: row?.pk ?? "",
@@ -237,6 +241,7 @@ export function useMenu() {
     treeData,
     menuData,
     choicesDict,
+    menuChoices,
     handleManyDelete,
     menuUrlList,
     addNewMenu,

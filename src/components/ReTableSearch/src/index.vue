@@ -82,13 +82,13 @@ onMounted(() => {
     v-model="selectValue"
     v-click-outside="handleClickOutSide"
     class="w-full"
+    value-key="pk"
     clearable
     multiple
     @visibleChange="val => (selectVisible = val)"
     @remove-tag="removeTag"
     @clear="onClear"
   >
-    <template #default="data"> {{ data }} </template>
     <template #empty>
       <div class="w-max[800px] m-4">
         <el-form

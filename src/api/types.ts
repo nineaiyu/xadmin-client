@@ -42,6 +42,7 @@ export type MenuDataResult = {
     total: number;
   };
   choices_dict: any[];
+  menu_choices: any[];
   api_url_list: any[];
 };
 
