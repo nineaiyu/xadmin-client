@@ -15,7 +15,7 @@ export function useFieldRule(
   onMounted(() => {
     if (dataList.length) {
       dataList.forEach(item => {
-        ruleInfo.value[`${item.table}__${item.field}`] = {
+        ruleInfo.value[`${item.table}__${item.field}__${item.match}`] = {
           table: item.table,
           field: item.field,
           match: item.match,
@@ -60,7 +60,7 @@ export function useFieldRule(
   ];
 
   function handleDelete(row) {
-    const key = `${row.table}__${row.field}`;
+    const key = `${row.table}__${row.field}__${row.match}`;
     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
     delete ruleInfo.value[key];
   }
@@ -72,7 +72,7 @@ export function useFieldRule(
         fieldLookupsData: fieldLookupsData,
         valuesData: valuesData,
         formInline: {
-          name: [row?.table, row?.field] ?? [],
+          name: [row?.table, row?.field, row?.match] ?? [],
           match: row?.match ?? "",
           value: row?.value ?? "",
           type: row?.type ?? ""
@@ -89,13 +89,14 @@ export function useFieldRule(
         const FormRef = formRef.value.getRef();
         FormRef.validate(valid => {
           if (valid) {
-            ruleInfo.value[`${data.name[0]}__${data.name[1]}`] = {
-              table: data.name[0],
-              field: data.name[1],
-              match: data.match,
-              type: data.type,
-              value: data.value
-            };
+            ruleInfo.value[`${data.name[0]}__${data.name[1]}__${data.match}`] =
+              {
+                table: data.name[0],
+                field: data.name[1],
+                match: data.match,
+                type: data.type,
+                value: data.value
+              };
             done(); // 关闭弹框
           }
         });
