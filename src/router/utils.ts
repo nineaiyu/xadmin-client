@@ -358,6 +358,7 @@ function hasAuth(value: string | Array<string>): boolean {
 
 function getGlobalAuths(arr: any[]) {
   let res = [];
+
   function deep(arr: any[]) {
     arr.forEach(item => {
       let auths = item?.meta?.auths;
@@ -367,6 +368,7 @@ function getGlobalAuths(arr: any[]) {
       item.children && deep(item.children);
     });
   }
+
   deep(arr);
   return res;
 }

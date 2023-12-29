@@ -3,10 +3,10 @@ import { message } from "@/utils/message";
 import type { FormItemProps } from "./types";
 import {
   updateUserInfoApi,
-  uploadUserInfoAvatarApi,
-  updateUserInfoPasswordApi
+  updateUserInfoPasswordApi,
+  uploadUserInfoAvatarApi
 } from "@/api/userinfo";
-import { ref, onMounted, reactive } from "vue";
+import { onMounted, reactive, ref } from "vue";
 import { useUserStoreHook } from "@/store/modules/user";
 import { useI18n } from "vue-i18n";
 import { delay } from "@pureadmin/utils";
@@ -80,6 +80,7 @@ export function useUserInfo() {
       }
     });
   }
+
   onMounted(() => {
     onSearch();
   });

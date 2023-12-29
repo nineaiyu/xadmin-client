@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { ref, computed, watch, getCurrentInstance, onMounted } from "vue";
+import { computed, getCurrentInstance, onMounted, ref, watch } from "vue";
 
 import DocumentAdd from "@iconify-icons/ep/document-add";
 import Delete from "@iconify-icons/ep/delete";
@@ -200,8 +200,8 @@ onMounted(() => {
           size="small"
           class="ml-2"
           @click="emit('openDialog', 0)"
-          >{{ t("buttons.hsadd") }}</el-button
-        >
+          >{{ t("buttons.hsadd") }}
+        </el-button>
         <el-input
           v-model="searchValue"
           size="small"

@@ -4,7 +4,6 @@ import { formatBytes } from "@pureadmin/utils";
 import ReCropper from "@/components/ReCropper";
 import avatar from "./avatar.png";
 import { useI18n } from "vue-i18n";
-import { compressionFileAuto, fileToDataURL } from "@/views/movies/util";
 
 const props = defineProps({
   imgSrc: String,
@@ -22,6 +21,7 @@ const infos = ref();
 const refCropper = ref();
 const showPopover = ref(false);
 const cropperImg = ref<string>("");
+
 function onCropper({ base64, blob, info }) {
   infos.value = info;
   cropperImg.value = base64;

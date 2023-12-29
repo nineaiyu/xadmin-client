@@ -13,6 +13,7 @@ import { hasAuth } from "@/router/utils";
 import { cloneDeep } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { MenuChoices } from "@/views/system/constants";
+
 const { t } = useI18n();
 const emit = defineEmits(["handleConfirm"]);
 const props = withDefaults(defineProps<FormProps>(), {
@@ -133,8 +134,8 @@ const getMinHeight = () => {
                 (newFormInline.menu_type !== MenuChoices.PERMISSION &&
                   index === 2))
             "
-            >{{ item.label }}</el-radio-button
-          >
+            >{{ item.label }}
+          </el-radio-button>
         </el-radio-group>
       </el-form-item>
       <el-form-item :label="t('menu.parentNode')" prop="parentId">
@@ -253,8 +254,8 @@ const getMinHeight = () => {
               v-for="(item, index) in ifEnableOptions"
               :key="index"
               :label="item.value"
-              >{{ item.label }}</el-radio-button
-            >
+              >{{ item.label }}
+            </el-radio-button>
           </el-radio-group>
         </el-form-item>
         <el-form-item :label="t('menu.showParentMenu')" prop="showParent">
@@ -263,8 +264,8 @@ const getMinHeight = () => {
               v-for="(item, index) in ifEnableOptions"
               :key="index"
               :label="item.value"
-              >{{ item.label }}</el-radio-button
-            >
+              >{{ item.label }}
+            </el-radio-button>
           </el-radio-group>
         </el-form-item>
       </div>
@@ -282,8 +283,8 @@ const getMinHeight = () => {
               v-for="(item, index) in ifEnableOptions"
               :key="index"
               :label="item.value"
-              >{{ item.label }}</el-radio-button
-            >
+              >{{ item.label }}
+            </el-radio-button>
           </el-radio-group>
         </el-form-item>
 
@@ -299,8 +300,8 @@ const getMinHeight = () => {
               v-for="(item, index) in ifEnableOptions"
               :key="index"
               :label="item.value"
-              >{{ item.label }}</el-radio-button
-            >
+              >{{ item.label }}
+            </el-radio-button>
           </el-radio-group>
         </el-form-item>
 
@@ -330,8 +331,8 @@ const getMinHeight = () => {
               v-for="(item, index) in ifEnableOptions"
               :key="index"
               :label="item.value"
-              >{{ item.label }}</el-radio-button
-            >
+              >{{ item.label }}
+            </el-radio-button>
           </el-radio-group>
         </el-form-item>
       </div>
@@ -400,8 +401,8 @@ const getMinHeight = () => {
               v-for="(item, index) in ifEnableOptions"
               :key="index"
               :label="item.value"
-              >{{ item.label }}</el-radio-button
-            >
+              >{{ item.label }}
+            </el-radio-button>
           </el-radio-group>
         </el-form-item>
       </div>
@@ -422,8 +423,8 @@ const getMinHeight = () => {
               :disabled="newFormInline.is_add || !newFormInline.pk"
               plain
               type="danger"
-              >{{ t("buttons.hsupdate") }}</el-button
-            >
+              >{{ t("buttons.hsupdate") }}
+            </el-button>
           </template>
         </el-popconfirm>
       </el-form-item>

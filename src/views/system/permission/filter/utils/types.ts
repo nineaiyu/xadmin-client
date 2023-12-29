@@ -4,6 +4,7 @@ interface FormItemProps {
   type?: string;
   value?: string;
 }
+
 interface FormProps {
   formInline?: FormItemProps;
   fieldLookupsData?: any[];

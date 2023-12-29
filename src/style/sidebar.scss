@@ -448,13 +448,13 @@
 
       /* 搜索 */
       .search-container,
-      /* 告警 */
+        /* 告警 */
       .dropdown-badge,
-      /* 国际化 */
+        /* 国际化 */
       .globalization,
-      /* 用户名 */
+        /* 用户名 */
       .el-dropdown-link,
-      /* 设置 */
+        /* 设置 */
       .set-icon {
         &:hover {
           background: $menuHover;
@@ -630,13 +630,13 @@ body[layout="vertical"] {
 
   /* 搜索 */
   .search-container,
-  /* 告警 */
+    /* 告警 */
   .dropdown-badge,
-  /* 国际化 */
+    /* 国际化 */
   .globalization,
-  /* 用户名 */
+    /* 用户名 */
   .el-dropdown-link,
-  /* 设置 */
+    /* 设置 */
   .set-icon {
     &:hover {
       background: #f6f6f6;

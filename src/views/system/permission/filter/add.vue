@@ -5,6 +5,13 @@ import { formRules } from "./utils/rule";
 import { FormProps } from "./utils/types";
 import { getDataPermissionLookupsListApi } from "@/api/system/permission";
 import { message } from "@/utils/message";
+import { FieldKeyChoices } from "@/views/system/constants";
+import { hasGlobalAuth } from "@/router/utils";
+import SearchUsers from "@/views/system/base/searchUsers.vue";
+import { watchDeep } from "@vueuse/core";
+import SearchDepts from "@/views/system/base/searchDepts.vue";
+import SearchRoles from "@/views/system/base/searchRoles.vue";
+import SearchMenus from "@/views/system/base/searchMenus.vue";
 
 const props = withDefaults(defineProps<FormProps>(), {
   valuesData: () => [],
@@ -19,11 +26,13 @@ const props = withDefaults(defineProps<FormProps>(), {
 
 const ruleFormRef = ref();
 const newFormInline = ref(props.formInline);
+
 function getRef() {
   return ruleFormRef.value;
 }
+
 const matchList = ref([]);
-const getMatchData = value => {
+const getMatchData = (value: any) => {
   if (value[0] === "*" && value[1] === "*") {
     matchList.value = ["*"];
     newFormInline.value.match = "*";
@@ -45,16 +54,42 @@ const getMatchData = value => {
 const { t } = useI18n();
 const showValueInput = ref(true);
 const valueTypeChange = value => {
+  tableData.value = [];
   props.valuesData.forEach(item => {
     if (item.key === value) {
-      showValueInput.value = item.value_show;
+      showValueInput.value = item.disabled;
     }
   });
 };
 
+const tableData = ref([]);
+
 onMounted(() => {
   valueTypeChange(newFormInline.value.type);
+  if (newFormInline.value?.name[0]) {
+    getMatchData(newFormInline.value.name);
+  }
+  try {
+    tableData.value = JSON.parse(newFormInline.value.value);
+  } catch (e) {
+    tableData.value = [];
+  }
 });
+watchDeep(
+  () => tableData.value,
+  value => {
+    if (
+      [
+        FieldKeyChoices.TABLE_USER,
+        FieldKeyChoices.TABLE_ROLE,
+        FieldKeyChoices.TABLE_MENU,
+        FieldKeyChoices.TABLE_DEPT
+      ].indexOf(newFormInline.value.type) > -1
+    ) {
+      newFormInline.value.value = JSON.stringify(value);
+    }
+  }
+);
 
 defineExpose({ getRef });
 </script>
@@ -123,6 +158,49 @@ defineExpose({ getRef });
         />
       </el-select>
     </el-form-item>
+    <el-form-item
+      v-if="
+        newFormInline.type === FieldKeyChoices.TABLE_USER &&
+        hasGlobalAuth('list:systemUser')
+      "
+      :label="t('notice.userId')"
+      prop="notice_user"
+    >
+      <search-users v-model:select-value="tableData" />
+    </el-form-item>
+
+    <el-form-item
+      v-if="
+        newFormInline.type === FieldKeyChoices.TABLE_DEPT &&
+        hasGlobalAuth('list:systemDept')
+      "
+      :label="t('dept.dept')"
+      prop="notice_dept"
+    >
+      <search-depts v-model:select-value="tableData" />
+    </el-form-item>
+    <el-form-item
+      v-if="
+        newFormInline.type === FieldKeyChoices.TABLE_ROLE &&
+        hasGlobalAuth('list:systemRole')
+      "
+      :label="t('role.role')"
+      prop="notice_role"
+    >
+      <search-roles v-model:select-value="tableData" />
+    </el-form-item>
+
+    <el-form-item
+      v-if="
+        newFormInline.type === FieldKeyChoices.TABLE_MENU &&
+        hasGlobalAuth('list:systemMenu')
+      "
+      :label="t('menu.menus')"
+      prop="notice_role"
+    >
+      <search-menus v-model:select-value="tableData" />
+    </el-form-item>
+
     <el-form-item
       v-if="showValueInput"
       :label="t('permission.addValue')"

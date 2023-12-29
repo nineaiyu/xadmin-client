@@ -6,23 +6,23 @@ import { getRefreshToken, multipleTabsKey, removeToken } from "@/utils/auth";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import {
-  type Router,
   createRouter,
-  type RouteRecordRaw,
-  type RouteComponent
+  type RouteComponent,
+  type Router,
+  type RouteRecordRaw
 } from "vue-router";
 import {
   ascending,
-  getTopMenu,
-  initRouter,
-  getHistoryMode,
   findRouteByPath,
-  handleAliveRoute,
+  formatFlatteningRoutes,
   formatTwoStageRoutes,
-  formatFlatteningRoutes
+  getHistoryMode,
+  getTopMenu,
+  handleAliveRoute,
+  initRouter
 } from "./utils";
 import { buildHierarchyTree } from "@/utils/tree";
-import { isUrl, openLink, isAllEmpty } from "@pureadmin/utils";
+import { isAllEmpty, isUrl, openLink } from "@pureadmin/utils";
 
 import remainingRouter from "./modules/remaining";
 import Cookies from "js-cookie";
@@ -121,10 +121,12 @@ router.beforeEach((to: ToRouteType, _from, next) => {
       else document.title = transformI18n(item.meta.title);
     });
   }
+
   /** 如果已经登录并存在登录信息后不能跳转到路由白名单，而是继续保持在当前页面 */
   function toCorrectRoute() {
     whiteList.includes(to.fullPath) ? next(_from.fullPath) : next();
   }
+
   if (Cookies.get(multipleTabsKey) && refresh) {
     // // 无权限跳转403页面
     // if (to.meta?.roles && !isOneOfArray(to.meta?.roles, userInfo?.roles)) {

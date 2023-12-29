@@ -2,8 +2,6 @@
 import { hideTextAtIndex } from "@pureadmin/utils";
 import dayjs from "dayjs";
 import { useI18n } from "vue-i18n";
-
-const { t } = useI18n();
 import {
   FormItemEmits,
   FormItemProps
@@ -11,6 +9,8 @@ import {
 import { getUserListApi } from "@/api/system/user";
 import { ReTableSearch } from "@/components/ReTableSearch";
 import { computed } from "vue";
+
+const { t } = useI18n();
 
 const props = withDefaults(defineProps<FormItemProps>(), {
   selectValue: () => []
@@ -28,6 +28,11 @@ const selectValue = computed({
 });
 
 const showColumns: TableColumnList = [
+  {
+    label: "ID",
+    prop: "pk",
+    width: 80
+  },
   {
     label: t("user.username"),
     prop: "username"

@@ -55,8 +55,8 @@ Print.prototype = {
     return obj;
   },
   /**
-    Copy all styles of the original page
-  */
+   Copy all styles of the original page
+   */
   getStyle: function (): string {
     let str = "";
     const styles: NodeListOf<Element> = document.querySelectorAll("style,link");
@@ -120,8 +120,8 @@ Print.prototype = {
     return this.dom.outerHTML;
   },
   /**
-    create iframe
-  */
+   create iframe
+   */
   writeIframe: function (content) {
     let w: Document | Window;
     let doc: Document;
@@ -163,8 +163,8 @@ Print.prototype = {
     };
   },
   /**
-    Print
-  */
+   Print
+   */
   toPrint: function (frameWindow): void {
     try {
       setTimeout(function () {

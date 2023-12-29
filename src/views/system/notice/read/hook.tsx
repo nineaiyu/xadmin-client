@@ -1,10 +1,10 @@
 import dayjs from "dayjs";
 import { message } from "@/utils/message";
 import type { PaginationProps } from "@pureadmin/table";
-import { reactive, ref, h, onMounted, toRaw, type Ref } from "vue";
+import { h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
 import {
-  getNoticeReadListApi,
   deleteNoticeReadApi,
+  getNoticeReadListApi,
   manyDeleteNoticeReadApi,
   updateNoticeReadStateApi
 } from "@/api/system/notice";
@@ -22,6 +22,7 @@ import { useRoute, useRouter } from "vue-router";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
+
 export function useNoticeRead(tableRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
@@ -150,6 +151,7 @@ export function useNoticeRead(tableRef: Ref) {
       slot: "operation"
     }
   ];
+
   function onChange({ row, index }) {
     const action = row.unread === false ? t("labels.read") : t("labels.unread");
     ElMessageBox.confirm(
@@ -193,6 +195,7 @@ export function useNoticeRead(tableRef: Ref) {
         row.unread === false ? (row.unread = true) : (row.unread = false);
       });
   }
+
   function onGoUserDetail(row: any) {
     if (
       hasGlobalAuth("list:systemUser") &&
@@ -205,6 +208,7 @@ export function useNoticeRead(tableRef: Ref) {
       });
     }
   }
+
   function onGoNoticeDetail(row: any) {
     if (
       hasGlobalAuth("list:systemNotice") &&
@@ -217,6 +221,7 @@ export function useNoticeRead(tableRef: Ref) {
       });
     }
   }
+
   function showDialog(row?: FormItemProps) {
     addDialog({
       title: t("notice.showSystemNotice"),
@@ -233,6 +238,7 @@ export function useNoticeRead(tableRef: Ref) {
       draggable: true,
       fullscreenIcon: true,
       closeOnClickModal: false,
+      hideFooter: true,
       contentRenderer: () => h(showForm, { ref: formRef })
     });
   }
@@ -262,11 +268,13 @@ export function useNoticeRead(tableRef: Ref) {
   function handleSelectionChange(val) {
     manySelectCount.value = val.length;
   }
+
   function onSelectionCancel() {
     manySelectCount.value = 0;
     // 用于多选表格，清空用户的选择
     tableRef.value.getTableRef().clearSelection();
   }
+
   function handleManyDelete() {
     if (manySelectCount.value === 0) {
       message(t("results.noSelectedData"), { type: "error" });

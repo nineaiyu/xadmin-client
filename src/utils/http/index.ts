@@ -5,18 +5,18 @@ import Axios, {
 } from "axios";
 import type {
   PureHttpError,
-  RequestMethods,
+  PureHttpRequestConfig,
   PureHttpResponse,
-  PureHttpRequestConfig
+  RequestMethods
 } from "./types.d";
 import { stringify } from "qs";
 import NProgress from "../progress";
 import {
-  getToken,
   formatToken,
   getRefreshToken,
-  setToken,
-  removeToken
+  getToken,
+  removeToken,
+  setToken
 } from "@/utils/auth";
 import { useUserStoreHook } from "@/store/modules/user";
 import { message } from "@/utils/message";

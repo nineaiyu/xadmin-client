@@ -30,6 +30,7 @@ const ifEnableOptions = [
   { label: t("labels.enable"), value: true },
   { label: t("labels.disable"), value: false }
 ];
+
 function getRef() {
   return ruleFormRef.value;
 }
@@ -111,8 +112,8 @@ defineExpose({ getRef });
               v-for="item in ifEnableOptions"
               :key="item.label"
               :label="item.value"
-              >{{ item.label }}</el-radio-button
-            >
+              >{{ item.label }}
+            </el-radio-button>
           </el-radio-group>
         </el-form-item>
       </re-col>

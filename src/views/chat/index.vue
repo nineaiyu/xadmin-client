@@ -2,6 +2,9 @@
 import { computed, onMounted, onUnmounted, reactive, ref } from "vue";
 import { DynamicScroller, DynamicScrollerItem } from "vue-virtual-scroller";
 import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
+import socket from "@/utils/websocket";
+import { message } from "@/utils/message";
+
 defineOptions({
   name: "Chat"
 });
@@ -13,8 +16,7 @@ const userinfo = reactive({
   uid: ""
 });
 const username = ref("");
-import socket from "@/utils/websocket";
-import { message } from "@/utils/message";
+
 const scrollToBottom = () => {
   scroller.value?.scrollToBottom();
 };

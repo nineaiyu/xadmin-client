@@ -5,30 +5,30 @@ import { zxcvbn } from "@zxcvbn-ts/core";
 import {
   createUserApi,
   deleteUserApi,
+  empowerRoleApi,
   getUserListApi,
   manyDeleteUserApi,
   updateUserApi,
-  empowerRoleApi,
   updateUserPasswordApi,
   uploadUserAvatarApi
 } from "@/api/system/user";
 import {
   ElForm,
-  ElInput,
   ElFormItem,
-  ElProgress,
-  ElMessageBox
+  ElInput,
+  ElMessageBox,
+  ElProgress
 } from "element-plus";
 import type { PaginationProps, TableColumns } from "@pureadmin/table";
 import { utils, writeFile } from "xlsx";
 import {
-  type Ref,
+  computed,
+  h,
+  onMounted,
   reactive,
   ref,
-  computed,
-  onMounted,
+  type Ref,
   toRaw,
-  h,
   watch
 } from "vue";
 import { addDialog } from "@/components/ReDialog";
@@ -372,7 +372,7 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
     const manySelectData = tableRef.value.getTableRef().getSelectionRows();
     router.push({
       name: "systemNotice",
-      query: { notice_users: JSON.stringify(getKeyList(manySelectData, "pk")) }
+      query: { notice_user: JSON.stringify(getKeyList(manySelectData, "pk")) }
     });
   }
 

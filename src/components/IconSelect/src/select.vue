@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { cloneDeep } from "@pureadmin/utils";
 import { IconJson } from "../data";
-import { ref, computed, CSSProperties, toRef, watch } from "vue";
+import { computed, CSSProperties, ref, toRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
+
 type ParameterCSSProperties = (item?: string) => CSSProperties | undefined;
 
 defineOptions({
@@ -92,6 +93,7 @@ function onChangeIcon(item) {
 function onCurrentChange(page) {
   currentPage.value = page;
 }
+
 function handleClose() {
   popoverRef.value!.hide();
 }

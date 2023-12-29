@@ -3,7 +3,6 @@ import { computed, onMounted, ref } from "vue";
 import { useColumns } from "./hooks";
 import { FormItemEmits, FormItemProps } from "./types";
 import { ClickOutside as vClickOutside } from "element-plus";
-import { handleTree } from "@/utils/tree";
 
 const props = withDefaults(defineProps<FormItemProps>(), {
   showColumns: () => [],
@@ -27,11 +26,6 @@ const columns = ref([
   {
     type: "selection",
     align: "left"
-  },
-  {
-    label: "ID",
-    prop: "pk",
-    width: 80
   }
 ]);
 
@@ -50,7 +44,6 @@ const {
   onSure,
   onSearch,
   removeTag,
-  handleSelection,
   handleSizeChange,
   handleClickOutSide,
   handleCurrentChange,
@@ -67,7 +60,7 @@ onMounted(() => {
   Object.keys(props.searchKeys).forEach((item: any) => {
     form[item.key] = "";
   });
-  Object.keys(props.sortOptions).forEach((item: any) => {
+  props.sortOptions.forEach((item: any) => {
     sortOptions.value.push(item);
   });
   props.showColumns.forEach(item => {
@@ -85,6 +78,9 @@ onMounted(() => {
     value-key="pk"
     clearable
     multiple
+    collapse-tags
+    :max-collapse-tags="10"
+    collapse-tags-tooltip
     @visibleChange="val => (selectVisible = val)"
     @remove-tag="removeTag"
     @clear="onClear"
@@ -111,7 +107,7 @@ onMounted(() => {
               @keyup.enter="onSearch(true)"
             />
           </el-form-item>
-          <el-form-item :label="t('labels.sort')">
+          <el-form-item v-if="sortOptions.length" :label="t('labels.sort')">
             <el-select
               v-model="form.ordering"
               style="width: 180px"
@@ -133,6 +129,7 @@ onMounted(() => {
           height="400"
           align-whole="center"
           table-layout="auto"
+          showOverflowTooltip
           default-expand-all
           row-key="pk"
           :header-cell-style="{
@@ -143,7 +140,6 @@ onMounted(() => {
           :loading="loading"
           :columns="columns"
           :pagination="pagination"
-          @select="handleSelection"
           @selection-change="handleSelectionChange"
           @page-size-change="!props.isTree ? handleSizeChange : null"
           @page-current-change="!props.isTree ? handleCurrentChange : null"

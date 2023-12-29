@@ -22,3 +22,10 @@ export const ModeChoices = {
   OR: 0,
   AND: 1
 };
+
+export const FieldKeyChoices = {
+  TABLE_USER: "value.table.user.ids",
+  TABLE_MENU: "value.table.menu.ids",
+  TABLE_ROLE: "value.table.role.ids",
+  TABLE_DEPT: "value.table.dept.ids"
+};

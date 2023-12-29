@@ -1,23 +1,24 @@
 import dayjs from "dayjs";
 import { message } from "@/utils/message";
-import { getDataPermissionListApi } from "@/api/system/permission";
+import {
+  createDataPermissionApi,
+  deleteDataPermissionApi,
+  getDataPermissionFieldsListApi,
+  getDataPermissionListApi,
+  manyDeleteDataPermissionApi,
+  updateDataPermissionApi
+} from "@/api/system/permission";
 import { ElMessageBox } from "element-plus";
 import { usePublicHooks } from "../../hooks";
 import { addDialog } from "@/components/ReDialog";
 import type { FormItemProps } from "./types";
 import editForm from "../form.vue";
 import type { PaginationProps } from "@pureadmin/table";
-import { reactive, ref, onMounted, h, toRaw, type Ref } from "vue";
-import {
-  createDataPermissionApi,
-  deleteDataPermissionApi,
-  updateDataPermissionApi,
-  manyDeleteDataPermissionApi,
-  getDataPermissionFieldsListApi
-} from "@/api/system/permission";
+import { h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
 import { delay, getKeyList } from "@pureadmin/utils";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
+import { ModeChoices } from "@/views/system/constants";
 
 export function useDataPermission(tableRef: Ref) {
   const { t } = useI18n();
@@ -246,7 +247,7 @@ export function useDataPermission(tableRef: Ref) {
           pk: row?.pk ?? "",
           name: row?.name ?? "",
           rules: row?.rules ?? [],
-          mode_type: row?.mode_type ?? "",
+          mode_type: row?.mode_type ?? ModeChoices.OR,
           is_active: row?.is_active ?? true,
           description: row?.description ?? ""
         },
@@ -258,6 +259,7 @@ export function useDataPermission(tableRef: Ref) {
       draggable: true,
       fullscreenIcon: true,
       closeOnClickModal: false,
+      top: "10vh",
       contentRenderer: () => h(editForm, { ref: formRef }),
       beforeSure: (done, { options }) => {
         const FormRef = formRef.value.getRef();

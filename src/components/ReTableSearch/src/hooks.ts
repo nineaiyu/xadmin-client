@@ -1,14 +1,14 @@
 import {
-  ref,
+  nextTick,
+  onMounted,
   reactive,
+  ref,
   type Ref,
   toRaw,
-  onMounted,
-  nextTick,
   type WritableComputedRef
 } from "vue";
 import type { PaginationProps } from "@pureadmin/table";
-import { delay } from "@pureadmin/utils";
+import { delay, getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { handleTree } from "@/utils/tree";
 
@@ -24,19 +24,22 @@ export function useColumns(
   const loading = ref(true);
   const selectVisible = ref(false);
   const treeDataList = ref([]);
-  const sortOptions = ref([
-    {
-      label: `${t("sorts.createdDate")} ${t("labels.descending")}`,
-      key: "-created_time"
-    },
-    {
-      label: `${t("sorts.createdDate")} ${t("labels.ascending")}`,
-      key: "created_time"
-    }
-  ]);
+  const sortOptions = ref([]);
+  if (!isTree) {
+    sortOptions.value = [
+      {
+        label: `${t("sorts.createdDate")} ${t("labels.descending")}`,
+        key: "-created_time"
+      },
+      {
+        label: `${t("sorts.createdDate")} ${t("labels.ascending")}`,
+        key: "created_time"
+      }
+    ];
+  }
 
   const form = reactive({
-    ordering: sortOptions.value[0].key,
+    ordering: sortOptions?.value[0]?.key,
     page: 1,
     size: isTree ? 1000 : 10
   });
@@ -53,19 +56,22 @@ export function useColumns(
 
   const handleSelectionChange = val => {
     nextTick(() => {
-      if (val && val.length > 0) {
-        val.forEach(row => {
-          if (selectValue.value.indexOf(row.pk) == -1) {
-            selectValue.value.push(row.pk);
-          }
-        });
-      } else {
-        dataList.value.forEach(row => {
-          if (selectValue.value.indexOf(row.pk) > -1) {
-            selectValue.value.splice(selectValue.value.indexOf(row.pk), 1);
-          }
-        });
-      }
+      // add
+      val.forEach(row => {
+        if (selectValue.value.indexOf(row.pk) == -1) {
+          selectValue.value.push(row.pk);
+        }
+      });
+      // del
+      const valPks = getKeyList(val, "pk");
+      dataList.value.forEach(row => {
+        if (
+          selectValue.value.indexOf(row.pk) > -1 &&
+          valPks.indexOf(row.pk) === -1
+        ) {
+          selectValue.value.splice(selectValue.value.indexOf(row.pk), 1);
+        }
+      });
     });
   };
 
@@ -87,7 +93,7 @@ export function useColumns(
   async function onSearch(init = false) {
     if (init) {
       pagination.currentPage = form.page = 1;
-      pagination.pageSize = form.size = 10;
+      pagination.pageSize = form.size = isTree ? 1000 : 10;
     }
     loading.value = true;
     const { data } = await getListApi(toRaw(form));
@@ -126,19 +132,6 @@ export function useColumns(
       selectRef.value.visible = true;
     }
   }
-  const handleSelection = (val, row) => {
-    if (val.indexOf(row) === -1) {
-      // del
-      if (selectValue.value.indexOf(row.pk) > -1) {
-        selectValue.value.splice(selectValue.value.indexOf(row.pk), 1);
-      }
-    } else {
-      //add
-      if (selectValue.value.indexOf(row.pk) == -1) {
-        selectValue.value.push(row.pk);
-      }
-    }
-  };
 
   onMounted(() => {
     onSearch();
@@ -156,7 +149,6 @@ export function useColumns(
     onClear,
     onSearch,
     removeTag,
-    handleSelection,
     handleSizeChange,
     handleClickOutSide,
     handleCurrentChange,

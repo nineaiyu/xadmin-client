@@ -1,8 +1,8 @@
 import {
+  debounce,
+  isArray,
   isFunction,
   isObject,
-  isArray,
-  debounce,
   throttle
 } from "@pureadmin/utils";
 import { useEventListener } from "@vueuse/core";

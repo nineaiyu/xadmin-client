@@ -4,12 +4,12 @@ import { emitter } from "@/utils/mitt";
 import { RouteConfigs } from "../../types";
 import { useTags } from "../../hooks/useTag";
 import { routerArrays } from "@/layout/types";
-import { handleAliveRoute, getTopMenu } from "@/router/utils";
+import { getTopMenu, handleAliveRoute } from "@/router/utils";
 import { useSettingStoreHook } from "@/store/modules/settings";
-import { useResizeObserver, useFullscreen, onClickOutside } from "@vueuse/core";
-import { isEqual, isAllEmpty, debounce } from "@pureadmin/utils";
+import { onClickOutside, useFullscreen, useResizeObserver } from "@vueuse/core";
+import { debounce, isAllEmpty, isEqual } from "@pureadmin/utils";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
-import { ref, watch, unref, toRaw, nextTick, onBeforeUnmount } from "vue";
+import { nextTick, onBeforeUnmount, ref, toRaw, unref, watch } from "vue";
 
 import ExitFullscreen from "@iconify-icons/ri/fullscreen-exit-fill";
 import Fullscreen from "@iconify-icons/ri/fullscreen-fill";
@@ -157,6 +157,7 @@ function dynamicRouteTag(value: string): void {
       });
     }
   }
+
   concatPath(router.options.routes as any, value);
 }
 

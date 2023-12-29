@@ -3,7 +3,7 @@ import { transformI18n } from "@/plugins/i18n";
 import { useResizeObserver } from "@vueuse/core";
 import { useEpThemeStoreHook } from "@/store/modules/epTheme";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { ref, computed, getCurrentInstance, onMounted } from "vue";
+import { computed, getCurrentInstance, onMounted, ref } from "vue";
 import enterOutlined from "@/assets/svg/enter_outlined.svg?component";
 import Bookmark2Line from "@iconify-icons/ri/bookmark-2-line";
 
@@ -22,6 +22,7 @@ interface Props {
 
 interface Emits {
   (e: "update:value", val: string): void;
+
   (e: "enter"): void;
 }
 

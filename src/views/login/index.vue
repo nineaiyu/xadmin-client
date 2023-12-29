@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import {
+  computed,
+  onBeforeUnmount,
+  onMounted,
+  reactive,
   ref,
   toRaw,
-  reactive,
-  computed,
-  onMounted,
-  onBeforeUnmount,
   watch
 } from "vue";
 import { useI18n } from "vue-i18n";
@@ -24,8 +24,8 @@ import { $t, transformI18n } from "@/plugins/i18n";
 import { operates, thirdParty } from "./utils/enums";
 import { useLayout } from "@/layout/hooks/useLayout";
 import { useUserStoreHook } from "@/store/modules/user";
-import { initRouter, getTopMenu } from "@/router/utils";
-import { bg, avatar, illustration } from "./utils/static";
+import { getTopMenu, initRouter } from "@/router/utils";
+import { avatar, bg, illustration } from "./utils/static";
 import { ReImageVerify } from "@/components/ReImageVerify";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { useTranslationLang } from "@/layout/hooks/useTranslationLang";

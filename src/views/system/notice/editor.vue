@@ -15,29 +15,30 @@ import SearchDepts from "@/views/system/base/searchDepts.vue";
 import SearchRoles from "@/views/system/base/searchRoles.vue";
 import { NoticeChoices } from "@/views/system/constants";
 import { hasGlobalAuth } from "@/router/utils";
+
 const props = withDefaults(defineProps<FormProps>(), {
   formInline: () => ({
     pk: 0,
     title: "",
     publish: false,
     message: "",
-    level: "",
+    level: "primary",
     notice_type_display: "",
     notice_type: NoticeChoices.NOTICE,
     noticeChoices: [],
     levelChoices: [],
     notice_dept: [],
     notice_role: [],
-    notice_users: []
+    notice_user: []
   })
 });
 const ruleFormRef = ref();
 const { t } = useI18n();
-
 const newFormInline = ref(props.formInline);
 newFormInline.value.noticeChoices[0].disabled = true;
 const editorRef = shallowRef();
 const mode = "default";
+
 function getRef() {
   return ruleFormRef.value;
 }
@@ -223,9 +224,9 @@ const loading = ref(false);
                 hasGlobalAuth('list:systemUser')
               "
               :label="t('notice.userId')"
-              prop="notice_users"
+              prop="notice_user"
             >
-              <search-users v-model:select-value="newFormInline.notice_users" />
+              <search-users v-model:select-value="newFormInline.notice_user" />
             </el-form-item>
             <el-form-item
               v-if="

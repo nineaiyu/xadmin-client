@@ -4,6 +4,7 @@ import { useBoolean } from "../../hooks/useBoolean";
 import Search from "@iconify-icons/ep/search";
 
 const { bool: show, toggle } = useBoolean();
+
 function handleSearch() {
   toggle();
 }

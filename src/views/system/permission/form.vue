@@ -1,26 +1,11 @@
 <script setup lang="ts">
-import {
-  onMounted,
-  ref,
-  watch,
-  nextTick,
-  computed,
-  getCurrentInstance
-} from "vue";
+import { ref } from "vue";
 import { formRules } from "./utils/rule";
 import { FormProps } from "./utils/types";
-import { useDataPermission } from "./utils/hook";
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { isAllEmpty } from "@pureadmin/utils";
-import { match } from "pinyin-pro";
 import { useI18n } from "vue-i18n";
-import { transformI18n } from "@/plugins/i18n";
-import FromQuestion from "@/components/FromQuestion/index.vue";
-import Search from "@iconify-icons/ep/search";
-import More2Fill from "@iconify-icons/ri/more-2-fill";
-import Reset from "@iconify-icons/ri/restart-line";
 
 import filterForm from "./filter/index.vue";
+import { ModeChoices } from "@/views/system/constants";
 
 const props = withDefaults(defineProps<FormProps>(), {
   choicesDict: () => [],
@@ -29,7 +14,7 @@ const props = withDefaults(defineProps<FormProps>(), {
   formInline: () => ({
     name: "",
     description: "",
-    mode_type: "",
+    mode_type: ModeChoices.OR,
     rules: [],
     is_active: true
   })
@@ -37,6 +22,7 @@ const props = withDefaults(defineProps<FormProps>(), {
 
 const ruleFormRef = ref();
 const newFormInline = ref(props.formInline);
+
 function getRef() {
   return ruleFormRef.value;
 }
@@ -71,8 +57,8 @@ defineExpose({ getRef });
           v-for="item in ifEnableOptions"
           :key="item.label"
           :label="item.value"
-          >{{ item.label }}</el-radio-button
-        >
+          >{{ item.label }}
+        </el-radio-button>
       </el-radio-group>
     </el-form-item>
     <el-form-item :label="t('permission.mode')" prop="mode_type">

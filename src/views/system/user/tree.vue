@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import {
-  ref,
   computed,
-  watch,
   getCurrentInstance,
+  nextTick,
   onMounted,
-  nextTick
+  ref,
+  watch
 } from "vue";
 import Search from "@iconify-icons/ep/search";
 import More2Fill from "@iconify-icons/ri/more-2-fill";
@@ -89,6 +89,7 @@ function onTreeReset() {
   searchValue.value = "";
   toggleRowExpansionAll(true);
 }
+
 const { t } = useI18n();
 
 watch(searchValue, val => {

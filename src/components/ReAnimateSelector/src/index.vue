@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { animates } from "./animate";
-import { ref, computed, toRef } from "vue";
+import { computed, ref, toRef } from "vue";
 import { cloneDeep } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 
@@ -63,6 +63,7 @@ function filterMethod(value: any) {
 }
 
 const animateMap = ref({});
+
 function onMouseEnter(index: string | number) {
   animateMap.value[index] = animateMap.value[index]?.loading
     ? Object.assign({}, animateMap.value[index], {
@@ -72,6 +73,7 @@ function onMouseEnter(index: string | number) {
         loading: true
       });
 }
+
 function onMouseleave() {
   animateMap.value = {};
 }

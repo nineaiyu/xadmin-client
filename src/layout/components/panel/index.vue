@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { emitter } from "@/utils/mitt";
 import { onClickOutside } from "@vueuse/core";
-import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import Close from "@iconify-icons/ep/close";
 import { useI18n } from "vue-i18n";
 

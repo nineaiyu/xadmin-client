@@ -2,34 +2,34 @@ import "./circled.css";
 import Cropper from "cropperjs";
 import { ElUpload } from "element-plus";
 import type { CSSProperties } from "vue";
-import { useResizeObserver } from "@vueuse/core";
-import { longpress } from "@/directives/longpress";
-import { useTippy, directive as tippy } from "vue-tippy";
-import { delay, debounce, isArray, downloadByBase64 } from "@pureadmin/utils";
 import {
-  ref,
-  unref,
   computed,
-  type PropType,
+  defineComponent,
   onMounted,
   onUnmounted,
-  defineComponent
+  type PropType,
+  ref,
+  unref
 } from "vue";
+import { useResizeObserver } from "@vueuse/core";
+import { longpress } from "@/directives/longpress";
+import { directive as tippy, useTippy } from "vue-tippy";
+import { debounce, delay, downloadByBase64, isArray } from "@pureadmin/utils";
 import {
-  Reload,
-  Upload,
-  ArrowH,
-  ArrowV,
-  ArrowUp,
   ArrowDown,
+  ArrowH,
   ArrowLeft,
-  ChangeIcon,
   ArrowRight,
+  ArrowUp,
+  ArrowV,
+  ChangeIcon,
+  DownloadIcon,
+  Reload,
   RotateLeft,
-  SearchPlus,
   RotateRight,
   SearchMinus,
-  DownloadIcon
+  SearchPlus,
+  Upload
 } from "./svg";
 import { useI18n } from "vue-i18n";
 import GetCroppedCanvasOptions = Cropper.GetCroppedCanvasOptions;

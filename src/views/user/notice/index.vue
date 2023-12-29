@@ -10,6 +10,7 @@ import { hasAuth } from "@/router/utils";
 import Success from "@iconify-icons/ep/success-filled";
 
 import Eye from "@iconify-icons/ri/eye-fill";
+
 defineOptions({
   name: "UserNotice"
 });
@@ -190,8 +191,8 @@ const {
             {{ t("notice.allRead") }}
           </el-button>
           <el-text v-if="unreadCount > 0" type="primary">
-            {{ t("notice.unreadMessage") }} {{ unreadCount }}</el-text
-          >
+            {{ t("notice.unreadMessage") }} {{ unreadCount }}
+          </el-text>
         </el-space>
       </template>
       <template v-slot="{ size, dynamicColumns }">

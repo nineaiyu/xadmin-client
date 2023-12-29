@@ -7,7 +7,7 @@ import {
   manyDeleteMenuApi,
   updateMenuApi
 } from "@/api/system/menu";
-import { reactive, ref, computed, onMounted, h } from "vue";
+import { computed, h, onMounted, reactive, ref } from "vue";
 import { addDialog } from "@/components/ReDialog";
 import editForm from "../edit.vue";
 import type { FormItemProps } from "./types";
@@ -86,6 +86,7 @@ export function useMenu() {
       }
     });
   }
+
   function handleManyDelete(val) {
     const manyPks = val!.getCheckedKeys(false);
     if (manyPks.length === 0) {
@@ -103,6 +104,7 @@ export function useMenu() {
       }
     });
   }
+
   const resetForm = formEl => {
     if (!formEl) return;
     formEl.resetFields();
@@ -127,6 +129,7 @@ export function useMenu() {
       }
     });
   };
+
   function addNewMenu(treeRef, data: FormItemProps) {
     const p_menus = getMenuFromPk(treeRef?.data, data.pk);
     const row = cloneDeep(defaultData);
@@ -139,6 +142,7 @@ export function useMenu() {
     }
     openDialog(MenuChoices.DIRECTORY, row);
   }
+
   function openDialog(menu_type: number, row?: FormItemProps) {
     addDialog({
       title: t("buttons.hsadd"),
@@ -182,11 +186,13 @@ export function useMenu() {
       beforeSure: (done, { options }) => {
         const FormRef = formRef.value.getRef();
         const curData = options.props.formInline as FormItemProps;
+
         async function chores(detail) {
           message(detail, { type: "success" });
           done(); // 关闭弹框
           getMenuData(); // 刷新表格数据
         }
+
         FormRef.validate(async valid => {
           if (valid) {
             curData.meta.title = curData.title;
@@ -204,6 +210,7 @@ export function useMenu() {
       }
     });
   }
+
   const handleDrag = (treeRef, node, node2, position) => {
     const u_menu = node.data;
     if (position === "inner") {

@@ -1,19 +1,19 @@
 import dayjs from "dayjs";
 import { message } from "@/utils/message";
-import { getRoleListApi } from "@/api/system/role";
+import {
+  createRoleApi,
+  deleteRoleApi,
+  getRoleListApi,
+  manyDeleteRoleApi,
+  updateRoleApi
+} from "@/api/system/role";
 import { ElMessageBox } from "element-plus";
 import { usePublicHooks } from "../../hooks";
 import { addDialog } from "@/components/ReDialog";
 import type { FormItemProps } from "./types";
 import editForm from "../form.vue";
 import type { PaginationProps } from "@pureadmin/table";
-import { reactive, ref, onMounted, h, toRaw, type Ref } from "vue";
-import {
-  createRoleApi,
-  deleteRoleApi,
-  manyDeleteRoleApi,
-  updateRoleApi
-} from "@/api/system/role";
+import { h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
 import { getMenuListApi } from "@/api/system/menu";
 import { handleTree } from "@/utils/tree";
 import { delay, getKeyList } from "@pureadmin/utils";

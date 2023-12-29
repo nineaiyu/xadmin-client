@@ -15,7 +15,6 @@ interface Owner {
 interface FormItemProps {
   pk?: number;
   owner_info?: Owner;
-  notice_user?: number;
   publish?: boolean;
   level?: "primary" | "success" | "warning" | "danger" | "info";
   notice_type_display?: string;
@@ -27,7 +26,7 @@ interface FormItemProps {
   levelChoices?: any[];
   noticeChoices?: any[];
   files?: any[];
-  notice_users?: any[];
+  notice_user?: any[];
   notice_dept?: any[];
   notice_role?: any[];
 }

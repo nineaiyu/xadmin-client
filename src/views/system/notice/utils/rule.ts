@@ -4,7 +4,7 @@ import { $t, transformI18n } from "@/plugins/i18n";
 
 /** 自定义表单规则校验 */
 export const formRules = reactive<FormRules>({
-  notice_users: [
+  notice_user: [
     {
       required: true,
       message: transformI18n($t("user.verifyUserId")),

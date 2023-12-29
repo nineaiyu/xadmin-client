@@ -1,9 +1,6 @@
 <script lang="ts" setup>
-import { hideTextAtIndex } from "@pureadmin/utils";
 import dayjs from "dayjs";
 import { useI18n } from "vue-i18n";
-
-const { t } = useI18n();
 import {
   FormItemEmits,
   FormItemProps
@@ -11,6 +8,8 @@ import {
 import { ReTableSearch } from "@/components/ReTableSearch";
 import { computed } from "vue";
 import { getRoleListApi } from "@/api/system/role";
+
+const { t } = useI18n();
 
 const props = withDefaults(defineProps<FormItemProps>(), {
   selectValue: () => []
@@ -28,6 +27,11 @@ const selectValue = computed({
 });
 
 const showColumns: TableColumnList = [
+  {
+    label: "ID",
+    prop: "pk",
+    width: 80
+  },
   {
     label: t("role.name"),
     prop: "name"

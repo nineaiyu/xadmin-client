@@ -14,6 +14,7 @@ interface FormItemProps {
   /** 菜单信息 */
   menu: number[];
 }
+
 interface FormProps {
   formInline: FormItemProps;
   menuTreeData: any[];

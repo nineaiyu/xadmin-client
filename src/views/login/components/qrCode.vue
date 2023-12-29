@@ -8,7 +8,9 @@ const { t } = useI18n();
 </script>
 
 <template>
-  <Motion class="-mt-2 -mb-2"> <ReQrcode :text="t('login.test')" /> </Motion>
+  <Motion class="-mt-2 -mb-2">
+    <ReQrcode :text="t('login.test')" />
+  </Motion>
   <Motion :delay="100">
     <el-divider>
       <p class="text-gray-500 text-xs">{{ t("login.tip") }}</p>

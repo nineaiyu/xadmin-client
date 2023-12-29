@@ -1,8 +1,9 @@
 import forage from "localforage";
-import type { LocalForage, ProxyStorage, ExpiresData } from "./types.d";
+import type { ExpiresData, LocalForage, ProxyStorage } from "./types.d";
 
 class StorageProxy implements ProxyStorage {
   protected storage: LocalForage;
+
   constructor(storageModel) {
     this.storage = storageModel;
     this.storage.config({

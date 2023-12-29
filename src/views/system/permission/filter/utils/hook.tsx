@@ -58,11 +58,13 @@ export function useFieldRule(
       slot: "operation"
     }
   ];
+
   function handleDelete(row) {
     const key = `${row.table}__${row.field}`;
     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
     delete ruleInfo.value[key];
   }
+
   function openDialog(row) {
     addDialog({
       title: `${t("buttons.hsadd")} ${t("permission.rules")}`,
@@ -80,6 +82,7 @@ export function useFieldRule(
       draggable: true,
       fullscreenIcon: true,
       closeOnClickModal: false,
+      top: "10vh",
       contentRenderer: () => h(addForm, { ref: formRef }),
       beforeSure: (done, { options }) => {
         const data = options.props.formInline as FormItemProps;
@@ -99,6 +102,7 @@ export function useFieldRule(
       }
     });
   }
+
   return {
     t,
     columns,

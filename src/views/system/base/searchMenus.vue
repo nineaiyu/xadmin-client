@@ -7,7 +7,8 @@ import {
 } from "@/components/ReTableSearch/src/types";
 import { ReTableSearch } from "@/components/ReTableSearch";
 import { computed } from "vue";
-import { getDeptListApi } from "@/api/system/dept";
+import { getMenuListApi } from "@/api/system/menu";
+import { transformI18n } from "@/plugins/i18n";
 
 const { t } = useI18n();
 
@@ -28,8 +29,11 @@ const selectValue = computed({
 
 const showColumns: TableColumnList = [
   {
-    label: t("dept.name"),
-    prop: "name",
+    label: t("menu.title"),
+    prop: "title",
+    formatter: ({ meta }) => {
+      return transformI18n(meta.title);
+    },
     align: "left",
     minWidth: 300
   },
@@ -38,24 +42,21 @@ const showColumns: TableColumnList = [
     prop: "pk"
   },
   {
-    label: t("dept.code"),
-    prop: "code"
+    label: t("menu.type"),
+    prop: "menu_type_display",
+    width: 90
+  },
+  {
+    label: t("menu.componentPath"),
+    prop: "path",
+    width: 90
   },
   {
     label: t("labels.status"),
     prop: "is_active",
     formatter: ({ is_active }) =>
-      is_active ? t("labels.active") : t("labels.inactive")
-  },
-  {
-    label: t("dept.userCount"),
-    prop: "user_count"
-  },
-  {
-    label: t("dept.autoBind"),
-    prop: "mobile",
-    formatter: ({ auto_bind }) =>
-      auto_bind ? t("labels.enable") : t("labels.disable")
+      is_active ? t("labels.active") : t("labels.inactive"),
+    width: 90
   },
   {
     label: t("sorts.createdDate"),
@@ -67,12 +68,31 @@ const showColumns: TableColumnList = [
 
 const searchKeys = [
   {
-    key: "name",
-    label: t("dept.name")
+    key: "title",
+    label: t("menu.title")
   },
   {
-    key: "code",
-    label: t("dept.code")
+    key: "path",
+    label: t("menu.componentPath")
+  }
+];
+
+const sortOptions = [
+  {
+    label: `${t("sorts.rank")} ${t("labels.descending")}`,
+    key: "-rank"
+  },
+  {
+    label: `${t("sorts.rank")} ${t("labels.ascending")}`,
+    key: "rank"
+  },
+  {
+    label: `${t("sorts.createdDate")} ${t("labels.descending")}`,
+    key: "-created_time"
+  },
+  {
+    label: `${t("sorts.createdDate")} ${t("labels.ascending")}`,
+    key: "created_time"
   }
 ];
 </script>
@@ -81,8 +101,9 @@ const searchKeys = [
   <re-table-search
     v-model:selectValue="selectValue"
     :isTree="true"
-    :getListApi="getDeptListApi"
+    :getListApi="getMenuListApi"
     :showColumns="showColumns"
     :searchKeys="searchKeys"
+    :sortOptions="sortOptions"
   />
 </template>

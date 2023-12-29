@@ -1,11 +1,12 @@
 import dayjs from "dayjs";
 import { message } from "@/utils/message";
 import type { PaginationProps } from "@pureadmin/table";
-import { reactive, ref, h, onMounted, toRaw, type Ref } from "vue";
+import { h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
 import {
+  createAnnouncementApi,
+  createNoticeApi,
   deleteNoticeApi,
   getNoticeListApi,
-  createNoticeApi,
   manyDeleteNoticeApi,
   updateNoticeApi,
   updateNoticePublishApi
@@ -39,13 +40,14 @@ export function useNotice(tableRef: Ref) {
     message: "",
     level: "",
     notice_type: "",
-    notice_users: "",
+    notice_user: "",
     publish: "",
     ordering: sortOptions[0].key,
     page: 1,
     size: 10
   });
   const router = useRouter();
+  const defaultNoticeType = ref(NoticeChoices.NOTICE);
   const switchLoadMap = ref({});
   const route = useRoute();
   const getParameter = isEmpty(route.params) ? route.query : route.params;
@@ -157,10 +159,10 @@ export function useNotice(tableRef: Ref) {
           message: row?.message ?? "",
           level: row?.level ?? "",
           notice_type_display: row?.notice_type_display ?? "",
-          notice_type: row?.notice_type ?? NoticeChoices.NOTICE,
+          notice_type: row?.notice_type ?? defaultNoticeType.value,
           levelChoices: levelChoices.value,
           noticeChoices: noticeChoices.value,
-          notice_users: row?.notice_user ?? [],
+          notice_user: row?.notice_user ?? [],
           notice_dept: row?.notice_dept ?? [],
           notice_role: row?.notice_role ?? []
         }
@@ -169,6 +171,7 @@ export function useNotice(tableRef: Ref) {
       draggable: true,
       fullscreenIcon: true,
       closeOnClickModal: false,
+      top: "10vh",
       contentRenderer: () => h(editForm, { ref: formRef }),
       beforeSure: (done, { options }) => {
         const FormRef = formRef.value.getRef();
@@ -186,7 +189,14 @@ export function useNotice(tableRef: Ref) {
         FormRef.validate(valid => {
           if (valid) {
             if (is_add) {
-              createNoticeApi(curData).then(async res => {
+              let createApi = createNoticeApi;
+              if (
+                curData.notice_type == NoticeChoices.NOTICE &&
+                hasAuth("create:systemAnnouncement")
+              ) {
+                createApi = createAnnouncementApi;
+              }
+              createApi(curData).then(async res => {
                 if (res.code === 1000) {
                   await chores(res.detail);
                 } else {
@@ -342,21 +352,31 @@ export function useNotice(tableRef: Ref) {
         pagination.total = res.data.total;
         levelChoices.value = res.level_choices;
         noticeChoices.value = res.notice_type_choices;
+        noticeChoices.value.forEach(item => {
+          if (item.key == NoticeChoices.NOTICE) {
+            if (!hasAuth("create:systemAnnouncement")) {
+              if (!item.disabled) {
+                item.disabled = true;
+                defaultNoticeType.value = NoticeChoices.USER;
+              }
+            }
+          }
+        });
       } else {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
       setTimeout(() => {
         loading.value = false;
         if (
-          getParameter.notice_users &&
-          form.notice_users &&
-          form.notice_users !== ""
+          getParameter.notice_user &&
+          form.notice_user &&
+          form.notice_user !== ""
         ) {
           const parameter = {
-            notice_user: JSON.parse(getParameter.notice_users as string),
+            notice_user: JSON.parse(getParameter.notice_user as string),
             notice_type: NoticeChoices.USER
           };
-          form.notice_users = "";
+          form.notice_user = "";
           openDialog(true, parameter);
         }
       }, 500);
@@ -378,7 +398,7 @@ export function useNotice(tableRef: Ref) {
         }
       });
       form.pk = parameter.pk;
-      form.notice_users = parameter.notice_users;
+      form.notice_user = parameter.notice_user;
     }
     onSearch(true);
   });

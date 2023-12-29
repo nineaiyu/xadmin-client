@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ListItem } from "./data";
-import { ref, PropType, nextTick } from "vue";
+import { nextTick, PropType, ref } from "vue";
 import { useNav } from "@/layout/hooks/useNav";
 import { deviceDetection } from "@pureadmin/utils";
 import dayjs from "dayjs";
@@ -29,6 +29,7 @@ function hoverTitle() {
       : (titleTooltip.value = false);
   });
 }
+
 const router = useRouter();
 
 const handleRead = (pk: number) => {
@@ -90,8 +91,8 @@ const handleRead = (pk: number) => {
             <el-text
               :type="props.noticeItem?.level"
               @click="handleRead(props.noticeItem.pk)"
-              >{{ props.noticeItem.title }}</el-text
-            >
+              >{{ props.noticeItem.title }}
+            </el-text>
           </div>
         </el-tooltip>
         <!--        <el-tag-->

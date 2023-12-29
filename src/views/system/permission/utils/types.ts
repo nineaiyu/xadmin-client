@@ -8,6 +8,7 @@ interface FormItemProps {
   description: string;
   is_active: boolean;
 }
+
 interface FormProps {
   formInline: FormItemProps;
   fieldLookupsData?: any[];

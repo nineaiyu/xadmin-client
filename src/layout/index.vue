@@ -10,13 +10,13 @@ import { useSettingStoreHook } from "@/store/modules/settings";
 import { deviceDetection, useDark, useGlobal } from "@pureadmin/utils";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
 import {
-  h,
-  ref,
-  reactive,
   computed,
-  onMounted,
+  defineComponent,
+  h,
   onBeforeMount,
-  defineComponent
+  onMounted,
+  reactive,
+  ref
 } from "vue";
 
 import navbar from "./components/navbar.vue";

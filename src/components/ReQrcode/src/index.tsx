@@ -1,15 +1,15 @@
 import {
+  computed,
+  defineComponent,
+  nextTick,
+  type PropType,
   ref,
   unref,
-  watch,
-  nextTick,
-  computed,
-  type PropType,
-  defineComponent
+  watch
 } from "vue";
 import "./index.scss";
 import propTypes from "@/utils/propTypes";
-import { isString, cloneDeep } from "@pureadmin/utils";
+import { cloneDeep, isString } from "@pureadmin/utils";
 import QRCode, { type QRCodeRenderersOptions } from "qrcode";
 import RefreshRight from "@iconify-icons/ep/refresh-right";
 

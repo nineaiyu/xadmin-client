@@ -1,11 +1,11 @@
 import dayjs from "dayjs";
 import { message } from "@/utils/message";
 import type { PaginationProps } from "@pureadmin/table";
-import { reactive, ref, h, onMounted, toRaw, type Ref } from "vue";
+import { h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
 import {
   getUserNoticeListApi,
-  updateUserNoticeReadApi,
-  updateUserNoticeReadAllApi
+  updateUserNoticeReadAllApi,
+  updateUserNoticeReadApi
 } from "@/api/system/notice";
 import { useRoute } from "vue-router";
 import type { FormItemProps } from "./types";
@@ -119,6 +119,7 @@ export function useUserNotice(tableRef: Ref) {
       draggable: true,
       fullscreenIcon: true,
       closeOnClickModal: false,
+      hideFooter: true,
       contentRenderer: () => h(showForm, { ref: formRef }),
       closeCallBack: () => {
         if (getParameter.pk) {

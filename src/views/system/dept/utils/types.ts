@@ -15,6 +15,7 @@ interface FormItemProps {
   auto_bind?: boolean;
   description?: string;
 }
+
 interface FormProps {
   formInline: FormItemProps;
   treeData?: any[];
@@ -39,6 +40,7 @@ interface RoleFormItemProps {
   ids: Record<number, unknown>[];
   pks: Record<number, unknown>[];
 }
+
 interface RoleFormProps {
   formInline: RoleFormItemProps;
 }

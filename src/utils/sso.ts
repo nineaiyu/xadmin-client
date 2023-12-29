@@ -1,5 +1,5 @@
 import { removeToken, setToken } from "./auth";
-import { subBefore, getQueryMap } from "@pureadmin/utils";
+import { getQueryMap, subBefore } from "@pureadmin/utils";
 import type { TokenInfo } from "@/api/auth";
 
 /**

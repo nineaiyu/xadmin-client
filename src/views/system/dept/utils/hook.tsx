@@ -9,7 +9,7 @@ import {
   updateDeptApi
 } from "@/api/system/dept";
 import { ElMessageBox } from "element-plus";
-import { type Ref, reactive, ref, computed, onMounted, toRaw, h } from "vue";
+import { computed, h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
 import { addDialog } from "@/components/ReDialog";
 import roleForm from "../form/role.vue";
 import editForm from "../form/index.vue";
@@ -202,6 +202,7 @@ export function useDept(tableRef: Ref) {
       "dark:hover:!text-primary"
     ];
   });
+
   function onChangeBind({ row, index }) {
     const action =
       row.auto_bind === false ? t("labels.disable") : t("labels.enable");

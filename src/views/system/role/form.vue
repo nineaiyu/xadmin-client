@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import {
+  computed,
+  getCurrentInstance,
+  nextTick,
   onMounted,
   ref,
-  watch,
-  nextTick,
-  computed,
-  getCurrentInstance
+  watch
 } from "vue";
 import { formRules } from "./utils/rule";
 import { FormProps } from "./utils/types";
@@ -58,12 +58,15 @@ const ruleFormRef = ref();
 const treeRoleRef = ref();
 const newFormInline = ref(props.formInline);
 const searchValue = ref("");
+
 function getRef() {
   return ruleFormRef.value;
 }
+
 function getTreeRef() {
   return treeRoleRef.value;
 }
+
 const { t } = useI18n();
 const ifEnableOptions = [
   { label: t("labels.enable"), value: true },
@@ -102,6 +105,7 @@ function toggleRowExpansionAll(status) {
     nodes[i].expanded = status;
   }
 }
+
 function toggleSelectAll(status) {
   selectAll.value = status;
   const nodes = (proxy.$refs["treeRoleRef"] as any).store._getAllNodes();
@@ -109,6 +113,7 @@ function toggleSelectAll(status) {
     nodes[i].checked = status;
   }
 }
+
 function onReset() {
   searchValue.value = "";
   initData();
@@ -144,8 +149,8 @@ function onReset() {
           v-for="item in ifEnableOptions"
           :key="item.label"
           :label="item.value"
-          >{{ item.label }}</el-radio-button
-        >
+          >{{ item.label }}
+        </el-radio-button>
       </el-radio-group>
     </el-form-item>
     <el-form-item :label="t('labels.description')">

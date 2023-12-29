@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import { useFieldRule } from "./utils/hook";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
@@ -7,7 +7,7 @@ import AddFill from "@iconify-icons/ri/add-circle-line";
 import { FormProps } from "./utils/types";
 import EditPen from "@iconify-icons/ep/edit-pen";
 import Delete from "@iconify-icons/ep/delete";
-import { hasAuth, hasGlobalAuth } from "@/router/utils";
+import { hasAuth } from "@/router/utils";
 
 const props = withDefaults(defineProps<FormProps>(), {
   valuesData: () => [],
@@ -35,7 +35,13 @@ watch(ruleInfo.value, () => {
         <el-button
           type="primary"
           :icon="useRenderIcon(AddFill)"
-          @click="openDialog"
+          @click="
+            openDialog({
+              match: '',
+              type: 'value.text',
+              value: ''
+            })
+          "
         >
           {{ t("buttons.hsadd") }}
         </el-button>

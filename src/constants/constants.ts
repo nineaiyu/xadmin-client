@@ -5,9 +5,11 @@ export interface SelectOption<T> {
   label: string;
   value: T;
 }
+
 export interface SelectOptionMap<T> {
   [key: string | number]: T;
 }
+
 /**
  * 状态
  */

@@ -1,4 +1,4 @@
-import { h, defineComponent, withDirectives, resolveDirective } from "vue";
+import { defineComponent, h, resolveDirective, withDirectives } from "vue";
 
 /** 封装@vueuse/motion动画库中的自定义指令v-motion */
 export default defineComponent({

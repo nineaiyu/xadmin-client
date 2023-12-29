@@ -3,7 +3,7 @@ import Search from "../search/index.vue";
 import Notice from "../notice/index.vue";
 import SidebarItem from "./sidebarItem.vue";
 import { isAllEmpty } from "@pureadmin/utils";
-import { ref, nextTick, computed } from "vue";
+import { computed, nextTick, ref } from "vue";
 import { useNav } from "@/layout/hooks/useNav";
 import { useTranslationLang } from "../../hooks/useTranslationLang";
 import { usePermissionStoreHook } from "@/store/modules/permission";

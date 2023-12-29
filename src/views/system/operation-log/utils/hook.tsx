@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import { message } from "@/utils/message";
 import type { PaginationProps } from "@pureadmin/table";
-import { reactive, ref, onMounted, toRaw, type Ref } from "vue";
+import { onMounted, reactive, ref, type Ref, toRaw } from "vue";
 import {
   deleteOperationLogApi,
   getOperationLogListApi,
@@ -11,6 +11,7 @@ import { useRouter } from "vue-router";
 import { delay, getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { hasGlobalAuth } from "@/router/utils";
+
 export function useOperationLog(tableRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
@@ -133,6 +134,7 @@ export function useOperationLog(tableRef: Ref) {
       });
     }
   }
+
   async function handleDelete(row) {
     deleteOperationLogApi(row.pk).then(async res => {
       if (res.code === 1000) {
@@ -158,11 +160,13 @@ export function useOperationLog(tableRef: Ref) {
   function handleSelectionChange(val) {
     manySelectCount.value = val.length;
   }
+
   function onSelectionCancel() {
     manySelectCount.value = 0;
     // 用于多选表格，清空用户的选择
     tableRef.value.getTableRef().clearSelection();
   }
+
   function handleManyDelete() {
     if (manySelectCount.value === 0) {
       message(t("results.noSelectedData"), { type: "error" });

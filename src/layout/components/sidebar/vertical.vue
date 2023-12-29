@@ -6,10 +6,10 @@ import SidebarItem from "./sidebarItem.vue";
 import leftCollapse from "./leftCollapse.vue";
 import { useNav } from "@/layout/hooks/useNav";
 import { responsiveStorageNameSpace } from "@/config";
-import { storageLocal, isAllEmpty } from "@pureadmin/utils";
+import { isAllEmpty, storageLocal } from "@pureadmin/utils";
 import { findRouteByPath, getParentPaths } from "@/router/utils";
 import { usePermissionStoreHook } from "@/store/modules/permission";
-import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 const route = useRoute();
 const showLogo = ref(
