@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { animates } from "./animate";
-import { computed, ref, toRef } from "vue";
+import { computed, ref } from "vue";
 import { cloneDeep } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 
@@ -8,16 +8,8 @@ defineOptions({
   name: "ReAnimateSelector"
 });
 
-const props = defineProps({
-  modelValue: {
-    require: false,
-    type: String
-  }
-});
-const emit = defineEmits<{ (e: "update:modelValue", v: string) }>();
+const inputValue = defineModel({ type: String });
 const { t } = useI18n();
-
-const inputValue = toRef(props, "modelValue");
 const animatesList = ref(animates);
 const copyAnimatesList = cloneDeep(animatesList);
 
@@ -49,11 +41,11 @@ const animateStyle = computed(
 );
 
 function onChangeIcon(animate: string) {
-  emit("update:modelValue", animate);
+  inputValue.value = animate;
 }
 
 function onClear() {
-  emit("update:modelValue", "");
+  inputValue.value = "";
 }
 
 function filterMethod(value: any) {
@@ -63,7 +55,6 @@ function filterMethod(value: any) {
 }
 
 const animateMap = ref({});
-
 function onMouseEnter(index: string | number) {
   animateMap.value[index] = animateMap.value[index]?.loading
     ? Object.assign({}, animateMap.value[index], {
@@ -73,7 +64,6 @@ function onMouseEnter(index: string | number) {
         loading: true
       });
 }
-
 function onMouseleave() {
   animateMap.value = {};
 }

@@ -226,7 +226,7 @@ const loading = ref(false);
               :label="t('notice.userId')"
               prop="notice_user"
             >
-              <search-users v-model:select-value="newFormInline.notice_user" />
+              <search-users v-model="newFormInline.notice_user" />
             </el-form-item>
             <el-form-item
               v-if="
@@ -236,7 +236,7 @@ const loading = ref(false);
               :label="t('dept.dept')"
               prop="notice_dept"
             >
-              <search-depts v-model:select-value="newFormInline.notice_dept" />
+              <search-depts v-model="newFormInline.notice_dept" />
             </el-form-item>
             <el-form-item
               v-if="
@@ -246,7 +246,7 @@ const loading = ref(false);
               :label="t('role.role')"
               prop="notice_role"
             >
-              <search-roles v-model:select-value="newFormInline.notice_role" />
+              <search-roles v-model="newFormInline.notice_role" />
             </el-form-item>
           </re-col>
         </el-row>

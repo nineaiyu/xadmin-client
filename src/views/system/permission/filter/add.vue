@@ -166,7 +166,7 @@ defineExpose({ getRef });
       :label="t('notice.userId')"
       prop="notice_user"
     >
-      <search-users v-model:select-value="tableData" />
+      <search-users v-model="tableData" />
     </el-form-item>
 
     <el-form-item
@@ -177,7 +177,7 @@ defineExpose({ getRef });
       :label="t('dept.dept')"
       prop="notice_dept"
     >
-      <search-depts v-model:select-value="tableData" />
+      <search-depts v-model="tableData" />
     </el-form-item>
     <el-form-item
       v-if="
@@ -187,7 +187,7 @@ defineExpose({ getRef });
       :label="t('role.role')"
       prop="notice_role"
     >
-      <search-roles v-model:select-value="tableData" />
+      <search-roles v-model="tableData" />
     </el-form-item>
 
     <el-form-item
@@ -198,7 +198,7 @@ defineExpose({ getRef });
       :label="t('menu.menus')"
       prop="notice_role"
     >
-      <search-menus v-model:select-value="tableData" />
+      <search-menus v-model="tableData" />
     </el-form-item>
 
     <el-form-item

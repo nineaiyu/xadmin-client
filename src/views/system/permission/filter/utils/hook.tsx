@@ -72,7 +72,7 @@ export function useFieldRule(
         fieldLookupsData: fieldLookupsData,
         valuesData: valuesData,
         formInline: {
-          name: [row?.table, row?.field, row?.match] ?? [],
+          name: [row?.table, row?.field] ?? [],
           match: row?.match ?? "",
           value: row?.value ?? "",
           type: row?.type ?? ""

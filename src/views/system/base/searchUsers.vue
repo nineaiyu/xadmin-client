@@ -2,30 +2,12 @@
 import { hideTextAtIndex } from "@pureadmin/utils";
 import dayjs from "dayjs";
 import { useI18n } from "vue-i18n";
-import {
-  FormItemEmits,
-  FormItemProps
-} from "@/components/ReTableSearch/src/types";
 import { getUserListApi } from "@/api/system/user";
 import { ReTableSearch } from "@/components/ReTableSearch";
-import { computed } from "vue";
 
 const { t } = useI18n();
 
-const props = withDefaults(defineProps<FormItemProps>(), {
-  selectValue: () => []
-});
-
-const emit = defineEmits<FormItemEmits>();
-
-const selectValue = computed({
-  get() {
-    return props.selectValue;
-  },
-  set(val: Array<number>) {
-    emit("update:selectValue", val);
-  }
-});
+const selectValue = defineModel({ type: Array<number> });
 
 const showColumns: TableColumnList = [
   {
@@ -82,7 +64,7 @@ const searchKeys = [
 
 <template>
   <re-table-search
-    v-model:selectValue="selectValue"
+    v-model="selectValue"
     :getListApi="getUserListApi"
     :showColumns="showColumns"
     :searchKeys="searchKeys"

@@ -9,7 +9,7 @@ import {
   updateDataPermissionApi
 } from "@/api/system/permission";
 import { ElMessageBox } from "element-plus";
-import { usePublicHooks } from "../../hooks";
+import { usePublicHooks } from "@/views/system/hooks";
 import { addDialog } from "@/components/ReDialog";
 import type { FormItemProps } from "./types";
 import editForm from "../form.vue";

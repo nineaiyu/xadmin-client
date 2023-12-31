@@ -1,27 +1,19 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { onMounted, ref } from "vue";
 import { useColumns } from "./hooks";
-import { FormItemEmits, FormItemProps } from "./types";
+import { FormItemProps } from "./types";
 import { ClickOutside as vClickOutside } from "element-plus";
 
 const props = withDefaults(defineProps<FormItemProps>(), {
   showColumns: () => [],
-  selectValue: () => [],
   sortOptions: () => [],
   searchKeys: () => [],
   isTree: () => false,
   getListApi: Function
 });
-const emit = defineEmits<FormItemEmits>();
 
-const selectValue = computed({
-  get() {
-    return props.selectValue;
-  },
-  set(val: Array<number>) {
-    emit("update:selectValue", val);
-  }
-});
+const selectValue = defineModel({ type: Array<number> });
+
 const columns = ref([
   {
     type: "selection",

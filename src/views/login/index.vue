@@ -255,7 +255,7 @@ watch(loginDay, value => {
                   :prefix-icon="useRenderIcon('ri:shield-keyhole-line')"
                 >
                   <template v-slot:append>
-                    <ReImageVerify v-model:code="ruleForm.captcha_key" />
+                    <ReImageVerify v-model="ruleForm.captcha_key" />
                   </template>
                 </el-input>
               </el-form-item>

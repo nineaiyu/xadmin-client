@@ -1,11 +1,11 @@
 import {
+  type ModelRef,
   nextTick,
   onMounted,
   reactive,
-  ref,
   type Ref,
-  toRaw,
-  type WritableComputedRef
+  ref,
+  toRaw
 } from "vue";
 import type { PaginationProps } from "@pureadmin/table";
 import { delay, getKeyList } from "@pureadmin/utils";
@@ -17,7 +17,7 @@ export function useColumns(
   tableRef: Ref,
   getListApi: Function,
   isTree: Boolean,
-  selectValue: WritableComputedRef<Array<number>>
+  selectValue: ModelRef<number[], string>
 ) {
   const dataList = ref([]);
   const { t } = useI18n();

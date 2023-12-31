@@ -3,7 +3,7 @@ import { ref } from "vue";
 import ReCol from "@/components/ReCol";
 import { formRules } from "../utils/rule";
 import { FormProps } from "../utils/types";
-import { usePublicHooks } from "../../hooks";
+import { usePublicHooks } from "@/views/system/hooks";
 import { useI18n } from "vue-i18n";
 import FromQuestion from "@/components/FromQuestion/index.vue";
 

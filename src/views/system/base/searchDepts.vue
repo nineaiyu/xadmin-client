@@ -1,30 +1,12 @@
 <script lang="ts" setup>
 import dayjs from "dayjs";
 import { useI18n } from "vue-i18n";
-import {
-  FormItemEmits,
-  FormItemProps
-} from "@/components/ReTableSearch/src/types";
 import { ReTableSearch } from "@/components/ReTableSearch";
-import { computed } from "vue";
 import { getDeptListApi } from "@/api/system/dept";
 
 const { t } = useI18n();
 
-const props = withDefaults(defineProps<FormItemProps>(), {
-  selectValue: () => []
-});
-
-const emit = defineEmits<FormItemEmits>();
-
-const selectValue = computed({
-  get() {
-    return props.selectValue;
-  },
-  set(val: Array<number>) {
-    emit("update:selectValue", val);
-  }
-});
+const selectValue = defineModel({ type: Array<number> });
 
 const showColumns: TableColumnList = [
   {
@@ -79,7 +61,7 @@ const searchKeys = [
 
 <template>
   <re-table-search
-    v-model:selectValue="selectValue"
+    v-model="selectValue"
     :isTree="true"
     :getListApi="getDeptListApi"
     :showColumns="showColumns"
