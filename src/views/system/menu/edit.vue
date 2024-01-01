@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { FormProps } from "./utils/types";
 import FromQuestion from "@/components/FromQuestion/index.vue";
 import ReAnimateSelector from "@/components/ReAnimateSelector";
@@ -13,6 +13,7 @@ import { hasAuth } from "@/router/utils";
 import { cloneDeep } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { MenuChoices } from "@/views/system/constants";
+import Segmented, { type OptionsType } from "@/components/ReSegmented";
 
 const { t } = useI18n();
 const emit = defineEmits(["handleConfirm"]);
@@ -75,7 +76,12 @@ watch(
   }
 );
 
-const handleChangeMenuType = (val: number) => {
+const onChange = ({ option }) => {
+  const { key } = option;
+  handleChangeMenuType(key);
+};
+
+const handleChangeMenuType = menu_type => {
   setTimeout(function () {
     ruleFormRef.value!.clearValidate([
       "menu_type",
@@ -86,9 +92,9 @@ const handleChangeMenuType = (val: number) => {
     ]);
   }, 30);
 
-  if (val === 0) {
+  if (menu_type === MenuChoices.DIRECTORY) {
     formRules.value = dirFormRules;
-  } else if (val === 1) {
+  } else if (menu_type === MenuChoices.MENU) {
     formRules.value = menuFormRules;
   } else {
     formRules.value = permissionFormRules;
@@ -103,6 +109,21 @@ const getMinHeight = () => {
   }
   return "";
 };
+
+const menuOptions = computed<Array<OptionsType>>(() => {
+  const data = cloneDeep(props.menuChoices);
+  data.forEach(item => {
+    item.value = item.key;
+    if (!newFormInline.value.is_add) {
+      if (newFormInline.value.menu_type === MenuChoices.PERMISSION) {
+        item.disabled = item.key !== MenuChoices.PERMISSION;
+      } else {
+        item.disabled = item.key === MenuChoices.PERMISSION;
+      }
+    }
+  });
+  return data;
+});
 </script>
 
 <template>
@@ -119,24 +140,11 @@ const getMinHeight = () => {
       class="search-form bg-bg_color w-[90%] pl-8 pt-[12px]"
     >
       <el-form-item :label="t('menu.type')" prop="menu_type">
-        <el-radio-group
+        <Segmented
           v-model="newFormInline.menu_type"
-          @change="handleChangeMenuType"
-        >
-          <el-radio-button
-            v-for="(item, index) in menuChoices"
-            :key="index"
-            :label="item.key"
-            :disabled="
-              !newFormInline.is_add &&
-              ((newFormInline.menu_type === MenuChoices.PERMISSION &&
-                index !== 2) ||
-                (newFormInline.menu_type !== MenuChoices.PERMISSION &&
-                  index === 2))
-            "
-            >{{ item.label }}
-          </el-radio-button>
-        </el-radio-group>
+          :options="menuOptions"
+          @change="onChange"
+        />
       </el-form-item>
       <el-form-item :label="t('menu.parentNode')" prop="parentId">
         <el-tree-select

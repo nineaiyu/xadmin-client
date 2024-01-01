@@ -63,7 +63,7 @@ const {
       class="min-w-[250px] mr-2"
       :treeData="treeData"
       :treeLoading="treeLoading"
-      :pk="form.dept"
+      :pk="form.dept?.toString()"
       @tree-select="onTreeSelect"
     />
     <div class="w-[calc(100%-250px)]">

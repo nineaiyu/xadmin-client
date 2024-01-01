@@ -61,6 +61,9 @@ layout:
   backTop: 回到顶部
   updateCheck: 检测到新版本
   updateNow: 立即更新
+  clearCache: 清空缓存
+  light: 亮色
+  dark: 暗色
 
 error:
   error403: 抱歉，你无权访问该页面

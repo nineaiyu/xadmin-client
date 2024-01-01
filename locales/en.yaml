@@ -61,6 +61,9 @@ layout:
   backTop: Back Top
   updateCheck: New version detected
   updateNow: Update now
+  clearCache: Clear Cache
+  light: Light
+  dark: Dark
 
 error:
   error403: Sorry, you are not authorized to access this page

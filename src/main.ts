@@ -33,6 +33,10 @@ import {
 } from "./components/ReIcon";
 // 全局注册按钮级别权限组件
 import { Auth } from "@/components/ReAuth";
+// 全局注册`vue-tippy`
+import "tippy.js/dist/tippy.css";
+import "tippy.js/animations/perspective.css";
+import VueTippy from "vue-tippy";
 
 const app = createApp(App);
 
@@ -45,6 +49,11 @@ app.component("IconifyIconOnline", IconifyIconOnline);
 app.component("FontIcon", FontIcon);
 
 app.component("Auth", Auth);
+
+app.use(VueTippy, {
+  defaultProps: { animation: "perspective" }
+});
+
 addPreventDefault();
 
 getPlatformConfig(app).then(async config => {
