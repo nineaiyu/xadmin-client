@@ -1,5 +1,5 @@
 {
-  "Version": "1.3.1",
+  "Version": "1.3.2",
   "Title": "xAdmin",
   "FixedHeader": true,
   "HiddenSideBar": false,
@@ -7,7 +7,7 @@
   "KeepAlive": true,
   "Locale": "zh",
   "Layout": "vertical",
-  "Theme": "default",
+  "Theme": "light",
   "DarkMode": false,
   "Grey": false,
   "Weak": false,

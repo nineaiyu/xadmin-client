@@ -1,11 +1,4 @@
-import type {
-  VNode,
-  FunctionalComponent,
-  PropType as VuePropType,
-  ComponentPublicInstance
-} from "vue";
 import type { ECharts } from "echarts";
-import type { IconifyIcon } from "@iconify/vue";
 import type { TableColumns } from "@pureadmin/table";
 
 /**
@@ -121,6 +114,7 @@ declare global {
     hideFooter?: boolean;
     sidebarStatus?: boolean;
     epThemeColor?: string;
+    themeColor?: string;
     showLogo?: boolean;
     showModel?: string;
     username?: string;
@@ -139,6 +133,7 @@ declare global {
       darkMode?: boolean;
       sidebarStatus?: boolean;
       epThemeColor?: string;
+      themeColor?: string;
     };
     configure: {
       grey?: boolean;

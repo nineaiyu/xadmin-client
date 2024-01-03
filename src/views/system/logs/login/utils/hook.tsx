@@ -3,16 +3,16 @@ import { message } from "@/utils/message";
 import type { PaginationProps } from "@pureadmin/table";
 import { onMounted, reactive, ref, type Ref, toRaw } from "vue";
 import {
-  deleteOperationLogApi,
-  getOperationLogListApi,
-  manyDeleteOperationLogApi
-} from "@/api/system/operation";
+  deleteLoginLogApi,
+  getLoginLogListApi,
+  manyDeleteLoginLogApi
+} from "@/api/system/logs/login";
 import { useRouter } from "vue-router";
 import { delay, getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { hasGlobalAuth } from "@/router/utils";
 
-export function useOperationLog(tableRef: Ref) {
+export function userLoginLog(tableRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -28,14 +28,15 @@ export function useOperationLog(tableRef: Ref) {
     ipaddress: "",
     system: "",
     browser: "",
-    path: "",
+    agent: "",
     creator_id: "",
+    login_type: "",
     ordering: sortOptions[0].key,
     page: 1,
     size: 10
   });
   const router = useRouter();
-
+  const choicesDict = ref([]);
   const manySelectCount = ref(0);
   const dataList = ref([]);
   const loading = ref(true);
@@ -57,11 +58,6 @@ export function useOperationLog(tableRef: Ref) {
       minWidth: 100
     },
     {
-      label: t("operation.module"),
-      prop: "module",
-      minWidth: 120
-    },
-    {
       label: t("user.user"),
       prop: "creator",
       minWidth: 100,
@@ -72,43 +68,28 @@ export function useOperationLog(tableRef: Ref) {
       )
     },
     {
-      label: t("operation.address"),
+      label: t("logsLogin.address"),
       prop: "ipaddress",
       minWidth: 150
     },
     {
-      label: t("operation.requestPath"),
-      prop: "path",
-      minWidth: 150,
-      cellRenderer: ({ row }) => (
-        <span>
-          {row.method}: {row.path}
-        </span>
-      )
-    },
-    {
-      label: t("operation.parameters"),
-      prop: "body",
+      label: t("logsLogin.loginDisplay"),
+      prop: "login_display",
       minWidth: 150
     },
     {
-      label: t("operation.browser"),
+      label: t("logsLogin.browser"),
       prop: "browser",
       minWidth: 150
     },
     {
-      label: t("operation.system"),
+      label: t("logsLogin.system"),
       prop: "system",
       minWidth: 150
     },
     {
-      label: t("operation.statusCode"),
-      prop: "response_code",
-      minWidth: 100
-    },
-    {
-      label: t("operation.response"),
-      prop: "response_result",
+      label: t("logsLogin.agent"),
+      prop: "agent",
       minWidth: 150
     },
     {
@@ -136,7 +117,7 @@ export function useOperationLog(tableRef: Ref) {
   }
 
   async function handleDelete(row) {
-    deleteOperationLogApi(row.pk).then(async res => {
+    deleteLoginLogApi(row.pk).then(async res => {
       if (res.code === 1000) {
         message(t("results.success"), { type: "success" });
         await onSearch();
@@ -173,7 +154,7 @@ export function useOperationLog(tableRef: Ref) {
       return;
     }
     const manySelectData = tableRef.value.getTableRef().getSelectionRows();
-    manyDeleteOperationLogApi({
+    manyDeleteLoginLogApi({
       pks: JSON.stringify(getKeyList(manySelectData, "pk"))
     }).then(async res => {
       if (res.code === 1000) {
@@ -193,10 +174,10 @@ export function useOperationLog(tableRef: Ref) {
       pagination.pageSize = form.size = 10;
     }
     loading.value = true;
-    const { data } = await getOperationLogListApi(toRaw(form));
+    const { data, choices_dict } = await getLoginLogListApi(toRaw(form));
     dataList.value = data.results;
     pagination.total = data.total;
-
+    choicesDict.value = choices_dict;
     delay(500).then(() => {
       loading.value = false;
     });
@@ -220,6 +201,7 @@ export function useOperationLog(tableRef: Ref) {
     dataList,
     pagination,
     sortOptions,
+    choicesDict,
     manySelectCount,
     onSelectionCancel,
     onSearch,

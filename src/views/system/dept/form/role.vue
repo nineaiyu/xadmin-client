@@ -66,8 +66,7 @@ const newFormInline = ref(props.formInline);
         <el-form-item :label="t('permission.mode')" prop="mode_type">
           <el-select
             v-model="newFormInline.mode_type"
-            class="filter-item"
-            style="width: 180px"
+            class="!w-[180px]"
             clearable
           >
             <el-option

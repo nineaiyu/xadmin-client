@@ -90,8 +90,7 @@ const {
       <el-form-item :label="t('notice.level')" prop="level">
         <el-select
           v-model="form.level"
-          class="filter-item"
-          style="width: 180px"
+          class="!w-[180px]"
           clearable
           @change="onSearch(true)"
         >
@@ -107,8 +106,7 @@ const {
       <el-form-item :label="t('notice.type')" prop="level">
         <el-select
           v-model="form.notice_type"
-          class="filter-item"
-          style="width: 180px"
+          class="!w-[180px]"
           clearable
           @change="onSearch(true)"
         >
@@ -124,7 +122,7 @@ const {
       <el-form-item :label="t('labels.sort')">
         <el-select
           v-model="form.ordering"
-          style="width: 180px"
+          class="!w-[180px]"
           clearable
           @change="onSearch(true)"
         >

@@ -112,8 +112,7 @@ const {
         <el-form-item :label="t('permission.mode')" prop="mode">
           <el-select
             v-model="form.mode_type"
-            class="filter-item"
-            style="width: 180px"
+            class="!w-[180px]"
             clearable
             @change="onSearch"
           >
@@ -129,7 +128,7 @@ const {
         <el-form-item :label="t('labels.sort')">
           <el-select
             v-model="form.ordering"
-            style="width: 180px"
+            class="!w-[180px]"
             clearable
             @change="onSearch"
           >

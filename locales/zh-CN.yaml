@@ -160,10 +160,13 @@ menus:
   hssysManagement: 系统管理
   hsUser: 用户管理
   hsDept: 部门管理
-  hsRole: 角色管理
   hsMenu: 菜单管理
+  hsPermission: 权限管理
+  hsRole: 角色权限
   hsDataPermission: 数据权限
+  hsLog: 日志管理
   hsOperationLog: 访问日志
+  hsLoginLog: 登录日志
   permission: 权限管理
   hsabnormal: 异常页面
   hsfourZeroFour: "404"
@@ -305,7 +308,7 @@ menu:
   checkStrictly: 层级关联
   checkUnStrictly: 层级独立
 
-operation:
+logsOperation:
   module: 模块
   userId: 用户ID
   address: Ip地址
@@ -319,6 +322,18 @@ operation:
   verifySystem: 请输入操作系统
   verifyBrowser: 请输入浏览器
   verifyRequestPath: 请输入请求路径
+
+logsLogin:
+  userId: 用户ID
+  address: Ip地址
+  system: 操作系统
+  browser: 浏览器
+  agent: 用户代理
+  loginDisplay: 登录方式
+  verifyAddress: 请输入Ip地址
+  verifySystem: 请输入操作系统
+  verifyBrowser: 请输入浏览器
+  verifyAgent: 请输入用户代理
 
 notice:
   notice: 通知公告

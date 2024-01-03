@@ -167,8 +167,7 @@ const loading = ref(false);
             <el-form-item :label="t('notice.type')" prop="level">
               <el-select
                 v-model="newFormInline.notice_type"
-                class="filter-item"
-                style="width: 180px"
+                class="!w-[180px]"
                 :disabled="newFormInline.pk !== 0"
                 clearable
               >
@@ -186,8 +185,7 @@ const loading = ref(false);
             <el-form-item :label="t('notice.level')" prop="level">
               <el-select
                 v-model="newFormInline.level"
-                class="filter-item"
-                style="width: 180px"
+                class="!w-[180px]"
                 clearable
               >
                 <el-option
@@ -208,8 +206,7 @@ const loading = ref(false);
             <el-form-item :label="t('notice.publish')" prop="publish">
               <el-select
                 v-model="newFormInline.publish"
-                class="filter-item"
-                style="width: 180px"
+                class="!w-[180px]"
                 clearable
               >
                 <el-option :label="t('labels.publish')" :value="true" />

@@ -384,8 +384,7 @@ const menuOptions = computed<Array<OptionsType>>(() => {
         <el-form-item :label="t('menu.requestMethod')" prop="component">
           <el-select
             v-model="newFormInline.component"
-            class="filter-item"
-            style="width: 180px"
+            class="!w-[180px]"
             clearable
           >
             <el-option

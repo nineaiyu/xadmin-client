@@ -62,12 +62,7 @@ defineExpose({ getRef });
       </el-radio-group>
     </el-form-item>
     <el-form-item :label="t('permission.mode')" prop="mode_type">
-      <el-select
-        v-model="newFormInline.mode_type"
-        class="filter-item"
-        style="width: 180px"
-        clearable
-      >
+      <el-select v-model="newFormInline.mode_type" class="!w-[180px]" clearable>
         <el-option
           v-for="item in props.choicesDict"
           :key="item.key"

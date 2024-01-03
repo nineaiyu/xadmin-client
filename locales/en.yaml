@@ -160,10 +160,13 @@ menus:
   hssysManagement: System Manage
   hsUser: User Manage
   hsDept: Department Manage
-  hsRole: Role Manage
   hsMenu: Menu Manage
+  hsPermission: Permission Manage
+  hsRole: Role Permission
   hsDataPermission: Data Permission
+  hsLog: Log Manage
   hsOperationLog: Operation Log Manage
+  hsLoginLog: Login Log Manage
   permission: Permission Manage
   hsabnormal: Abnormal Page
   hsfourZeroFour: "404"
@@ -259,7 +262,6 @@ role:
   verifyRoleCode: Please enter role code
   permissions: Permissions
 
-
 menu:
   menus: Menus
   type: Type
@@ -306,7 +308,7 @@ menu:
   checkStrictly: Hierarchical association
   checkUnStrictly: Hierarchical independence
 
-operation:
+logsOperation:
   module: Module
   userId: User Id
   address: Ip Address
@@ -320,6 +322,18 @@ operation:
   verifySystem: Please enter operating system
   verifyBrowser: Please enter browser
   verifyRequestPath: Please enter request path
+
+logsLogin:
+  userId: User Id
+  address: Ip Address
+  system: Operating System
+  browser: Browser
+  agent: User-Agent
+  loginDisplay: Login Type
+  verifyAddress: Please enter ip address
+  verifySystem: Please enter operating system
+  verifyBrowser: Please enter browser
+  verifyAgent: Please enter User-Agent
 
 notice:
   notice: Notice
