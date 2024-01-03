@@ -14,7 +14,10 @@ interface FormItemProps {
   email?: string;
   /** 性别 */
   gender_display?: string;
-  dept_info?: string;
+  dept_info?: {
+    name?: string;
+    pk?: number;
+  };
   gender?: number;
   /** 角色 */
   roles_info?: any[];

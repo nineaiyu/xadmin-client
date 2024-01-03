@@ -13,6 +13,7 @@ import showForm from "../show.vue";
 import { cloneDeep, getKeyList, isEmpty, isString } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog";
 import { useI18n } from "vue-i18n";
+import { useUserStoreHook } from "@/store/modules/user";
 
 export function useUserNotice(tableRef: Ref) {
   const { t } = useI18n();
@@ -199,6 +200,7 @@ export function useUserNotice(tableRef: Ref) {
         levelChoices.value = res.level_choices;
         noticeChoices.value = res.notice_type_choices;
         unreadCount.value = res.unread_count;
+        useUserStoreHook().SET_NOTICECOUNT(res.unread_count);
       } else {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }

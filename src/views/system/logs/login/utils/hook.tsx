@@ -10,7 +10,7 @@ import {
 import { useRouter } from "vue-router";
 import { delay, getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
-import { hasGlobalAuth } from "@/router/utils";
+import { hasAuth, hasGlobalAuth } from "@/router/utils";
 
 export function userLoginLog(tableRef: Ref) {
   const { t } = useI18n();
@@ -103,7 +103,8 @@ export function userLoginLog(tableRef: Ref) {
       label: t("labels.operations"),
       fixed: "right",
       width: 100,
-      slot: "operation"
+      slot: "operation",
+      hide: !hasAuth("delete:systemLoginLog")
     }
   ];
 

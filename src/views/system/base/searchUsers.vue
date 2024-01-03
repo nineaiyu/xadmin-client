@@ -35,7 +35,10 @@ const showColumns: TableColumnList = [
   },
   {
     label: t("user.dept"),
-    prop: "dept_info"
+    prop: "dept_info",
+    formatter: ({ dept_info }) => {
+      return dept_info.name;
+    }
   },
   {
     label: t("user.mobile"),
