@@ -5,7 +5,8 @@ interface FormItemProps {
   isTree?: Boolean;
   searchKeys?: {
     key: string;
-    label: string;
+    label?: string;
+    value?: string;
   }[];
   getListApi?: Function;
 }

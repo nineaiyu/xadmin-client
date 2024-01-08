@@ -111,6 +111,7 @@ sorts:
   registrationDate: 注册时间
   loginDate: 登录时间
   createdDate: 创建时间
+  updatedDate: 更新时间
   rank: 排序
 
 buttons:
@@ -162,6 +163,9 @@ menus:
   hsDept: 部门管理
   hsMenu: 菜单管理
   hsPermission: 权限管理
+  hsConfig: 配置管理
+  hsSystemConfig: 系统配置
+  hsUserConfig: 用户配置
   hsRole: 角色权限
   hsDataPermission: 数据权限
   hsLog: 日志管理
@@ -226,6 +230,8 @@ user:
   excelSheet: 用户注册信息
   excelName: 用户注册报表
   deptId: 部门ID
+  userId: 用户ID
+  userInfo: 用户信息
   dept: 所属部门
   rules: 数据权限
 
@@ -248,6 +254,7 @@ permission:
   addName: 属性名
   addValue: 属性值
   addType: 值类型
+  addExclude: 排除
   addMatch: 匹配
   rules: 规则列表
   table: 表名
@@ -307,10 +314,11 @@ menu:
   permissions: 权限
   checkStrictly: 层级关联
   checkUnStrictly: 层级独立
+  associationModel: 关联模型
+  exampleAssociationModel: 模型关联用与字段权限控制
 
 logsOperation:
   module: 模块
-  userId: 用户ID
   address: Ip地址
   system: 操作系统
   browser: 浏览器
@@ -324,7 +332,6 @@ logsOperation:
   verifyRequestPath: 请输入请求路径
 
 logsLogin:
-  userId: 用户ID
   address: Ip地址
   system: 操作系统
   browser: 浏览器
@@ -335,10 +342,28 @@ logsLogin:
   verifyBrowser: 请输入浏览器
   verifyAgent: 请输入用户代理
 
+configSystem:
+  configSystem: 系统配置
+  key: 配置名称
+  value: 配置数值
+  cacheValue: 缓存数值
+  invalidCache: 缓存失效
+  confirmInvalid: 确定缓存失效该数据么？
+
+configUser:
+  configUser: 用户配置
+  key: 配置名称
+  value: 配置数值
+  cacheValue: 缓存数值
+  invalidCache: 缓存失效
+  confirmInvalid: 确定缓存失效该数据么？
+
+modelField:
+  name: 模型/字段数值
+  label: 模型/字段名称
+
 notice:
   notice: 通知公告
-  userId: 用户ID
-  userInfo: 用户信息
   readDate: 已读时间
   title: 标题
   type: 类型

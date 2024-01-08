@@ -111,6 +111,7 @@ sorts:
   registrationDate: Registration Date
   loginDate: Login Date
   createdDate: Creation date
+  updatedDate: Updated date
   rank: Rank
 
 buttons:
@@ -162,6 +163,9 @@ menus:
   hsDept: Department Manage
   hsMenu: Menu Manage
   hsPermission: Permission Manage
+  hsConfig: Config Manage
+  hsSystemConfig: System Config
+  hsUserConfig: User Config
   hsRole: Role Permission
   hsDataPermission: Data Permission
   hsLog: Log Manage
@@ -226,6 +230,8 @@ user:
   excelSheet: Registered user report
   excelName: Registered user data
   deptId: Department ID
+  userId: User Id
+  userInfo: User Info
   dept: Belonging Department
   rules: Permissions
 
@@ -248,6 +254,7 @@ permission:
   addName: Name
   addValue: Value
   addType: Mode
+  addExclude: Exclude
   addMatch: Match
   rules: rules
   table: table
@@ -307,10 +314,11 @@ menu:
   permissions: Permissions
   checkStrictly: Hierarchical association
   checkUnStrictly: Hierarchical independence
+  associationModel: Association model
+  exampleAssociationModel: Model association is used with field permission control
 
 logsOperation:
   module: Module
-  userId: User Id
   address: Ip Address
   system: Operating System
   browser: Browser
@@ -324,7 +332,6 @@ logsOperation:
   verifyRequestPath: Please enter request path
 
 logsLogin:
-  userId: User Id
   address: Ip Address
   system: Operating System
   browser: Browser
@@ -335,10 +342,28 @@ logsLogin:
   verifyBrowser: Please enter browser
   verifyAgent: Please enter User-Agent
 
+configSystem:
+  configSystem: System Config
+  key: Config Name
+  value: Config Value
+  cacheValue: Config Cache Value
+  invalidCache: Invalid Cache
+  confirmInvalid: Are you sure to invalid this cache?
+
+configUser:
+  configSystem: User Config
+  key: Config Name
+  value: Config Value
+  cacheValue: Config Cache Value
+  invalidCache: Invalid Cache
+  confirmInvalid: Are you sure to invalid this cache?
+
+modelField:
+  name: Model/field name
+  label: Model/field label
+
 notice:
   notice: Notice
-  userId: User Id
-  userInfo: User Info
   readDate: Read Date
   title: Title
   type: Type

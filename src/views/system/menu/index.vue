@@ -16,6 +16,7 @@ const {
   choicesDict,
   menuChoices,
   menuUrlList,
+  modelList,
   defaultData,
   openDialog,
   addNewMenu,
@@ -52,6 +53,7 @@ const {
             class="pt-10 pb-20"
             :form-inline="menuData"
             :choices-dict="choicesDict"
+            :model-list="modelList"
             :menu-choices="menuChoices"
             :tree-data="treeData"
             :menu-url-list="menuUrlList"

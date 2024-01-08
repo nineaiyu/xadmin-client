@@ -67,7 +67,7 @@ export function useOperationLog(tableRef: Ref) {
       minWidth: 100,
       cellRenderer: ({ row }) => (
         <el-link onClick={() => onGoDetail(row as any)}>
-          {row.creator.username ? row.creator.username : "/"}
+          {row.creator?.username ? row.creator?.username : "/"}
         </el-link>
       )
     },
@@ -128,7 +128,7 @@ export function useOperationLog(tableRef: Ref) {
   ];
 
   function onGoDetail(row: any) {
-    if (hasGlobalAuth("list:systemUser") && row.creator && row.creator.pk) {
+    if (hasGlobalAuth("list:systemUser") && row.creator && row.creator?.pk) {
       router.push({
         name: "systemUser",
         query: { pk: row.creator.pk }

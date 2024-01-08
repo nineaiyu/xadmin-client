@@ -7,7 +7,7 @@ import AddFill from "@iconify-icons/ri/add-circle-line";
 import { FormProps } from "./utils/types";
 import EditPen from "@iconify-icons/ep/edit-pen";
 import Delete from "@iconify-icons/ep/delete";
-import { hasAuth } from "@/router/utils";
+import { hasGlobalAuth } from "@/router/utils";
 
 const props = withDefaults(defineProps<FormProps>(), {
   valuesData: () => [],
@@ -31,7 +31,7 @@ watch(ruleInfo.value, () => {
 <template>
   <div class="main">
     <PureTableBar :title="t('permission.rules')" :columns="columns">
-      <template v-if="hasAuth('list:systemDataPermissionFields')" #buttons>
+      <template v-if="hasGlobalAuth('list:systemModelField')" #buttons>
         <el-button
           type="primary"
           :icon="useRenderIcon(AddFill)"
@@ -66,7 +66,7 @@ watch(ruleInfo.value, () => {
         >
           <template #operation="{ row }">
             <el-button
-              v-if="hasAuth('list:systemDataPermissionFields')"
+              v-if="hasGlobalAuth('list:systemModelField')"
               class="reset-margin"
               link
               type="primary"

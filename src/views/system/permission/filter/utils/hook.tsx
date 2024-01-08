@@ -19,6 +19,7 @@ export function useFieldRule(
           table: item.table,
           field: item.field,
           match: item.match,
+          exclude: item.exclude,
           type: item.type,
           value: item.value
         };
@@ -39,6 +40,11 @@ export function useFieldRule(
     {
       label: t("permission.addMatch"),
       prop: "match",
+      minWidth: 100
+    },
+    {
+      label: t("permission.addExclude"),
+      prop: "exclude",
       minWidth: 100
     },
     {
@@ -74,6 +80,7 @@ export function useFieldRule(
         formInline: {
           name: [row?.table, row?.field] ?? [],
           match: row?.match ?? "",
+          exclude: row?.exclude ?? false,
           value: row?.value ?? "",
           type: row?.type ?? ""
         }
@@ -94,6 +101,7 @@ export function useFieldRule(
                 table: data.name[0],
                 field: data.name[1],
                 match: data.match,
+                exclude: data.exclude,
                 type: data.type,
                 value: data.value
               };

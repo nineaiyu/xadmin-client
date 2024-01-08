@@ -12,7 +12,7 @@ import { delay, getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 
-export function userLoginLog(tableRef: Ref) {
+export function useLoginLog(tableRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -63,7 +63,7 @@ export function userLoginLog(tableRef: Ref) {
       minWidth: 100,
       cellRenderer: ({ row }) => (
         <el-link onClick={() => onGoDetail(row as any)}>
-          {row.creator.username ? row.creator.username : "/"}
+          {row.creator?.username ? row.creator?.username : "/"}
         </el-link>
       )
     },
@@ -109,7 +109,7 @@ export function userLoginLog(tableRef: Ref) {
   ];
 
   function onGoDetail(row: any) {
-    if (hasGlobalAuth("list:systemUser") && row.creator && row.creator.pk) {
+    if (hasGlobalAuth("list:systemUser") && row.creator && row.creator?.pk) {
       router.push({
         name: "systemUser",
         query: { pk: row.creator.pk }

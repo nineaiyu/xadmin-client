@@ -11,7 +11,7 @@ import { isAllEmpty } from "@pureadmin/utils";
 import { match } from "pinyin-pro";
 import { getMenuFromPk } from "@/utils";
 import Reset from "@iconify-icons/ri/restart-line";
-import Search from "@iconify-icons/ep/search";
+
 import Right from "@iconify-icons/ep/bottom-right";
 import Back from "@iconify-icons/ep/back";
 import More2Fill from "@iconify-icons/ri/more-2-fill";
@@ -213,7 +213,7 @@ onMounted(() => {
             <el-icon class="el-input__icon">
               <IconifyIconOffline
                 v-show="searchValue.length === 0"
-                :icon="Search"
+                icon="search"
               />
             </el-icon>
           </template>

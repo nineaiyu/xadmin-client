@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { userLoginLog } from "./utils/hook";
+import { useLoginLog } from "./utils/hook";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Delete from "@iconify-icons/ep/delete";
-import Search from "@iconify-icons/ep/search";
+
 import Refresh from "@iconify-icons/ep/refresh";
 import { hasAuth } from "@/router/utils";
 
@@ -32,7 +32,7 @@ const {
   handleSizeChange,
   handleCurrentChange,
   handleSelectionChange
-} = userLoginLog(tableRef);
+} = useLoginLog(tableRef);
 </script>
 
 <template>
@@ -43,7 +43,7 @@ const {
       :model="form"
       class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px]"
     >
-      <el-form-item :label="t('logsLogin.userId')" prop="creator_id">
+      <el-form-item :label="t('user.userId')" prop="creator_id">
         <el-input
           v-model="form.creator_id"
           :placeholder="t('user.verifyUserId')"
@@ -122,7 +122,7 @@ const {
       <el-form-item>
         <el-button
           type="primary"
-          :icon="useRenderIcon(Search)"
+          :icon="useRenderIcon('search')"
           :loading="loading"
           @click="onSearch(true)"
         >
@@ -200,7 +200,7 @@ const {
                 <el-button
                   class="reset-margin"
                   link
-                  type="primary"
+                  type="danger"
                   :size="size"
                   :icon="useRenderIcon(Delete)"
                 >

@@ -29,3 +29,8 @@ export const FieldKeyChoices = {
   TABLE_ROLE: "value.table.role.ids",
   TABLE_DEPT: "value.table.dept.ids"
 };
+
+export const FieldChoices = {
+  ROLE: 0,
+  DATA: 1
+};

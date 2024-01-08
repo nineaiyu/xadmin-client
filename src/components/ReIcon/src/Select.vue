@@ -2,7 +2,6 @@
 import { IconJson } from "@/components/ReIcon/data";
 import { cloneDeep, isAllEmpty } from "@pureadmin/utils";
 import { computed, CSSProperties, ref, watch } from "vue";
-import Search from "@iconify-icons/ri/search-eye-line";
 import { useI18n } from "vue-i18n";
 
 type ParameterCSSProperties = (item?: string) => CSSProperties | undefined;
@@ -139,7 +138,7 @@ watch(
             <div
               class="w-[40px] h-[32px] cursor-pointer flex justify-center items-center"
             >
-              <IconifyIconOffline v-if="!icon" :icon="Search" />
+              <IconifyIconOffline v-if="!icon" icon="search" />
               <IconifyIconOnline v-else :icon="inputValue" />
             </div>
           </template>

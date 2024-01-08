@@ -29,13 +29,3 @@ export const manyDeleteDataPermissionApi = (data?: object) => {
     params: data
   });
 };
-
-export const getDataPermissionFieldsListApi = () => {
-  return http.request<Result>("get", "/api/system/permission/fields");
-};
-
-export const getDataPermissionLookupsListApi = (params?: object) => {
-  return http.request<Result>("get", "/api/system/permission/lookups", {
-    params: params
-  });
-};

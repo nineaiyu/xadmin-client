@@ -220,7 +220,7 @@ const loading = ref(false);
                 newFormInline.notice_type === NoticeChoices.USER &&
                 hasGlobalAuth('list:systemUser')
               "
-              :label="t('notice.userId')"
+              :label="t('user.userId')"
               prop="notice_user"
             >
               <search-users v-model="newFormInline.notice_user" />

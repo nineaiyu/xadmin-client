@@ -1,12 +1,4 @@
-import {
-  type ModelRef,
-  nextTick,
-  onMounted,
-  reactive,
-  type Ref,
-  ref,
-  toRaw
-} from "vue";
+import { type ModelRef, nextTick, reactive, type Ref, ref, toRaw } from "vue";
 import type { PaginationProps } from "@pureadmin/table";
 import { delay, getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
@@ -117,12 +109,14 @@ export function useColumns(
   }
 
   async function handleSizeChange(val: number) {
+    if (isTree) return;
     form.page = 1;
     form.size = val;
     await onSearch();
   }
 
   async function handleCurrentChange(val: number) {
+    if (isTree) return;
     form.page = val;
     await onSearch();
   }
@@ -133,9 +127,6 @@ export function useColumns(
     }
   }
 
-  onMounted(() => {
-    onSearch();
-  });
   return {
     t,
     form,

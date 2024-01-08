@@ -49,8 +49,8 @@ const {
 );
 
 onMounted(() => {
-  Object.keys(props.searchKeys).forEach((item: any) => {
-    form[item.key] = "";
+  props.searchKeys.forEach((item: any) => {
+    form[item.key] = item.value ?? "";
   });
   props.sortOptions.forEach((item: any) => {
     sortOptions.value.push(item);
@@ -58,6 +58,8 @@ onMounted(() => {
   props.showColumns.forEach(item => {
     columns.value.push(item);
   });
+  onSearch();
+  console.log(props.isTree);
 });
 </script>
 
@@ -86,7 +88,9 @@ onMounted(() => {
           class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px]"
         >
           <el-form-item
-            v-for="item in props.searchKeys"
+            v-for="item in props.searchKeys.filter(x => {
+              return !x.value;
+            })"
             :key="item.key"
             :label="item.label"
             prop="pk"
@@ -133,8 +137,8 @@ onMounted(() => {
           :columns="columns"
           :pagination="pagination"
           @selection-change="handleSelectionChange"
-          @page-size-change="!props.isTree ? handleSizeChange : null"
-          @page-current-change="!props.isTree ? handleCurrentChange : null"
+          @page-size-change="handleSizeChange"
+          @page-current-change="handleCurrentChange"
         />
         <div class="absolute bottom-[17px]">
           <el-space>

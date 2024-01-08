@@ -14,7 +14,6 @@ import { isAllEmpty } from "@pureadmin/utils";
 import { match } from "pinyin-pro";
 import { useI18n } from "vue-i18n";
 import { transformI18n } from "@/plugins/i18n";
-import Search from "@iconify-icons/ep/search";
 import More2Fill from "@iconify-icons/ri/more-2-fill";
 import Reset from "@iconify-icons/ri/restart-line";
 import { MenuChoices } from "@/views/system/constants";
@@ -26,13 +25,14 @@ const props = withDefaults(defineProps<FormProps>(), {
     code: "",
     description: "",
     menu: [],
+    field: [],
     is_active: true
   })
 });
 const customNodeClass = data => {
-  if (data.menu_type === MenuChoices.DIRECTORY) {
+  if (data?.menu_type === MenuChoices.DIRECTORY) {
     return "is-penultimate";
-  } else if (data.menu_type === MenuChoices.MENU) {
+  } else if (data?.menu_type === MenuChoices.MENU) {
     return "is-permission";
   }
   return null;
@@ -42,13 +42,13 @@ const { locale } = useI18n();
 const filterMenuNode = (value: string, data: any) => {
   if (!value) return true;
   return value
-    ? transformI18n(data.meta?.title)
+    ? transformI18n(data?.meta?.title)
         .toLocaleLowerCase()
         .includes(value.toLocaleLowerCase().trim()) ||
         (locale.value === "zh" &&
           !isAllEmpty(
             match(
-              transformI18n(data.meta?.title).toLocaleLowerCase(),
+              transformI18n(data?.meta?.title).toLocaleLowerCase(),
               value.toLocaleLowerCase().trim()
             )
           ))
@@ -78,7 +78,10 @@ watch(searchValue, val => {
 defineExpose({ getRef, getTreeRef });
 const initData = () => {
   nextTick(() => {
-    treeRoleRef.value!.setCheckedKeys(newFormInline.value.menu, false);
+    treeRoleRef.value!.setCheckedKeys(
+      [...newFormInline.value.menu, ...newFormInline.value.field],
+      false
+    );
   });
 };
 onMounted(() => {
@@ -102,6 +105,13 @@ function toggleRowExpansionAll(status) {
   isExpand.value = status;
   const nodes = (proxy.$refs["treeRoleRef"] as any).store._getAllNodes();
   for (let i = 0; i < nodes.length; i++) {
+    if (
+      status &&
+      (nodes[i].data?.model?.length > 0 ||
+        nodes[i].data?.pk?.toString().indexOf("-") > -1)
+    ) {
+      continue;
+    }
     nodes[i].expanded = status;
   }
 }
@@ -111,6 +121,12 @@ function toggleSelectAll(status) {
   const nodes = (proxy.$refs["treeRoleRef"] as any).store._getAllNodes();
   for (let i = 0; i < nodes.length; i++) {
     nodes[i].checked = status;
+  }
+}
+
+function nodeClick(value, node) {
+  if (value.pk.toString().indexOf("-") > -1) {
+    node.checked = !node.checked;
   }
 }
 
@@ -172,7 +188,7 @@ function onReset() {
             <el-icon class="el-input__icon">
               <IconifyIconOffline
                 v-show="searchValue.length === 0"
-                :icon="Search"
+                icon="search"
               />
             </el-icon>
           </template>
@@ -256,6 +272,7 @@ function onReset() {
           :filter-node-method="filterMenuNode"
           :expand-on-click-node="true"
           :props="{ class: customNodeClass }"
+          @node-click="nodeClick"
         >
           <template #default="{ data }">
             <div style="height: 30px">
@@ -265,12 +282,22 @@ function onReset() {
                   'rounded',
                   'flex',
                   'items-center',
-                  'select-none'
+                  'select-none',
+                  'w-full'
                 ]"
               >
-                <component :is="useRenderIcon(data.meta.icon)" class="m-1" />
-                {{ `${transformI18n(data.meta.title)}` }}</span
-              >
+                <component :is="useRenderIcon(data?.meta?.icon)" class="m-1" />
+                <template v-if="data.model">
+                  {{ `${transformI18n(data?.meta?.title)}` }}
+                  <component :is="useRenderIcon('ep:reading')" class="m-1" />
+                </template>
+                <template v-else>
+                  {{
+                    `${transformI18n(data?.meta?.title)}` ||
+                    `${data?.label} (${data?.name})`
+                  }}
+                </template>
+              </span>
             </div>
           </template>
         </el-tree>

@@ -20,6 +20,7 @@ const emit = defineEmits(["handleConfirm"]);
 const props = withDefaults(defineProps<FormProps>(), {
   treeData: () => [],
   choicesDict: () => [],
+  modelList: () => [],
   menuChoices: () => [],
   menuUrlList: () => [],
   formInline: () => ({
@@ -31,6 +32,7 @@ const props = withDefaults(defineProps<FormProps>(), {
     path: "",
     rank: 0,
     component: "",
+    model: [],
     is_active: true,
     meta: {
       title: "",
@@ -368,9 +370,8 @@ const menuOptions = computed<Array<OptionsType>>(() => {
         <el-form-item :label="t('menu.permissionPath')" prop="path">
           <el-select
             v-model="newFormInline.path"
-            style="width: 100%"
+            class="w-full"
             clearable
-            placeholder="Select"
             filterable
           >
             <el-option
@@ -378,6 +379,29 @@ const menuOptions = computed<Array<OptionsType>>(() => {
               :key="item.name"
               :label="`${item.name}----${item.url}`"
               :value="item.url"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item :label="t('menu.associationModel')" prop="model">
+          <template #label>
+            <from-question
+              :description="t('menu.exampleAssociationModel')"
+              :label="t('menu.associationModel')"
+            />
+          </template>
+          <el-select
+            v-model="newFormInline.model"
+            class="w-full"
+            clearable
+            filterable
+            multiple
+          >
+            <el-option
+              v-for="item in props.modelList"
+              :key="item.pk"
+              :disabled="item.disabled || item.name === '*'"
+              :label="`${item.label}(${item.name})`"
+              :value="item.pk"
             />
           </el-select>
         </el-form-item>

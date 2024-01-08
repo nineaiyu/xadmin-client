@@ -21,5 +21,5 @@ const { t } = useI18n();
       :noticeItem="item"
     />
   </div>
-  <el-empty :description="t('layout.noData')" />
+  <el-empty v-else :description="t('layout.noData')" />
 </template>

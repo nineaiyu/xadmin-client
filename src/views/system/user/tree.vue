@@ -8,7 +8,7 @@ import {
   ref,
   watch
 } from "vue";
-import Search from "@iconify-icons/ep/search";
+
 import More2Fill from "@iconify-icons/ri/more-2-fill";
 import ExpandIcon from "./svg/expand.svg?component";
 import UnExpandIcon from "./svg/unexpand.svg?component";
@@ -124,7 +124,7 @@ defineExpose({ onTreeReset });
           <el-icon class="el-input__icon">
             <IconifyIconOffline
               v-show="searchValue.length === 0"
-              :icon="Search"
+              icon="search"
             />
           </el-icon>
         </template>

@@ -16,9 +16,11 @@ import type { PaginationProps } from "@pureadmin/table";
 import { h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
 import { getMenuListApi } from "@/api/system/menu";
 import { handleTree } from "@/utils/tree";
-import { delay, getKeyList } from "@pureadmin/utils";
+import { cloneDeep, delay, getKeyList } from "@pureadmin/utils";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
+import { getModelLabelFieldListApi } from "@/api/system/field";
+import { FieldChoices } from "@/views/system/constants";
 
 export function useRole(tableRef: Ref) {
   const { t } = useI18n();
@@ -44,6 +46,7 @@ export function useRole(tableRef: Ref) {
   const manySelectCount = ref(0);
   const dataList = ref([]);
   const menuTreeData = ref([]);
+  const fieldLookupsData = ref({});
   const loading = ref(true);
   const switchLoadMap = ref({});
   const { switchStyle } = usePublicHooks();
@@ -246,6 +249,7 @@ export function useRole(tableRef: Ref) {
           name: row?.name ?? "",
           code: row?.code ?? "",
           menu: row?.menu ?? [],
+          field: row?.field ?? [],
           is_active: row?.is_active ?? true,
           description: row?.description ?? ""
         },
@@ -269,7 +273,14 @@ export function useRole(tableRef: Ref) {
 
         FormRef.validate(valid => {
           if (valid) {
-            curData.menu = TreeRef!.getCheckedKeys(false);
+            const menu = TreeRef!.getCheckedKeys(false);
+            curData.menu = menu.filter(x => {
+              return x > 0;
+            });
+            curData.fields = menu.filter(x => {
+              return x.toString().indexOf("-") > -1;
+            });
+            delete curData.field;
             if (is_add) {
               createRoleApi(curData).then(async res => {
                 if (res.code === 1000) {
@@ -297,6 +308,29 @@ export function useRole(tableRef: Ref) {
     });
   }
 
+  function autoFieldTree(arr) {
+    function deep(arr) {
+      arr.forEach(item => {
+        if (item.model && item.model.length > 0 && !item.children) {
+          item.children = [];
+          item.model.forEach(m => {
+            let data = cloneDeep(fieldLookupsData.value[m]);
+            data.pk = `+${data.pk}`;
+            data.children.forEach(x => {
+              x.pk = `${item.pk}-${x.pk}`;
+              x.parent = data.pk;
+            });
+            data.disabled = true;
+            item.children.push(data);
+          });
+        }
+        item.children && deep(item.children);
+      });
+    }
+
+    deep(arr);
+  }
+
   /** 菜单权限 */
 
   const getMenuData = () => {
@@ -305,7 +339,21 @@ export function useRole(tableRef: Ref) {
       setTimeout(() => {
         loading.value = false;
         if (res.code === 1000) {
-          menuTreeData.value = handleTree(res.data.results);
+          if (hasGlobalAuth("list:systemModelField")) {
+            getModelLabelFieldListApi({
+              page: 1,
+              size: 1000,
+              field_type: FieldChoices.ROLE
+            }).then(result => {
+              if (result.code === 1000) {
+                handleTree(result.data.results).forEach(item => {
+                  fieldLookupsData.value[item.pk] = item;
+                });
+                menuTreeData.value = handleTree(res.data.results);
+                autoFieldTree(menuTreeData.value);
+              }
+            });
+          }
         }
       }, 300);
     });

@@ -20,7 +20,6 @@ const include = [
   "cropperjs",
   "pinyin-pro",
   "sortablejs",
-  "md-editor-v3",
   "@vueuse/core",
   "@pureadmin/utils",
   "@wangeditor/editor",

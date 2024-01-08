@@ -98,18 +98,18 @@ export function useNoticeRead(tableRef: Ref) {
       )
     },
     {
-      label: t("notice.userId"),
+      label: t("user.userId"),
       prop: "owner",
       minWidth: 100,
-      cellRenderer: ({ row }) => <el-text>{row.owner_info.pk}</el-text>
+      cellRenderer: ({ row }) => <el-text>{row.owner_info?.pk}</el-text>
     },
     {
-      label: t("notice.userInfo"),
+      label: t("user.userInfo"),
       prop: "owner",
       minWidth: 100,
       cellRenderer: ({ row }) => (
         <el-link onClick={() => onGoUserDetail(row as any)}>
-          {row.owner_info.username ? row.owner_info.username : "/"}
+          {row.owner_info?.username ? row.owner_info?.username : "/"}
         </el-link>
       )
     },
@@ -200,7 +200,7 @@ export function useNoticeRead(tableRef: Ref) {
     if (
       hasGlobalAuth("list:systemUser") &&
       row.owner_info &&
-      row.owner_info.pk
+      row.owner_info?.pk
     ) {
       router.push({
         name: "systemUser",

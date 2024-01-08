@@ -3,7 +3,6 @@ import { message } from "@/utils/message";
 import {
   createDataPermissionApi,
   deleteDataPermissionApi,
-  getDataPermissionFieldsListApi,
   getDataPermissionListApi,
   manyDeleteDataPermissionApi,
   updateDataPermissionApi
@@ -19,6 +18,8 @@ import { delay, getKeyList } from "@pureadmin/utils";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { ModeChoices } from "@/views/system/constants";
+import { handleTree } from "@/utils/tree";
+import { getModelLabelFieldListApi } from "@/api/system/field";
 
 export function useDataPermission(tableRef: Ref) {
   const { t } = useI18n();
@@ -308,11 +309,11 @@ export function useDataPermission(tableRef: Ref) {
 
   onMounted(() => {
     onSearch();
-    if (hasGlobalAuth("list:systemDataPermissionFields")) {
-      getDataPermissionFieldsListApi().then(res => {
+    if (hasGlobalAuth("list:systemModelField")) {
+      getModelLabelFieldListApi({ page: 1, size: 1000 }).then(res => {
         if (res.code === 1000) {
-          fieldLookupsData.value = res.data.results;
-          valuesData.value = res.data.values;
+          fieldLookupsData.value = handleTree(res.data.results);
+          valuesData.value = res.choices_dict;
         }
       });
     }

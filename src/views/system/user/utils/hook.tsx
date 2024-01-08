@@ -193,7 +193,7 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
       prop: "dept",
       width: 100,
       cellRenderer: ({ row }) => (
-        <span v-copy={row.dept_info.name}>{row.dept_info.name}</span>
+        <span v-copy={row.dept_info?.name}>{row.dept_info?.name}</span>
       )
     },
     {

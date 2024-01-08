@@ -60,7 +60,9 @@ const activeTab = ref("userinfo");
               </el-tag>
             </el-descriptions-item>
             <el-descriptions-item
-              v-if="currentUserInfo.dept_info && currentUserInfo.dept_info.name"
+              v-if="
+                currentUserInfo?.dept_info && currentUserInfo?.dept_info?.name
+              "
               :label="t('user.dept')"
             >
               <el-tag type="success">

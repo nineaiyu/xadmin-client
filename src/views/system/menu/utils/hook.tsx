@@ -15,7 +15,9 @@ import { handleTree } from "@/utils/tree";
 import { cloneDeep } from "@pureadmin/utils";
 import { getMenuFromPk, getMenuOrderPk } from "@/utils";
 import { useI18n } from "vue-i18n";
-import { MenuChoices } from "@/views/system/constants";
+import { FieldChoices, MenuChoices } from "@/views/system/constants";
+import { hasGlobalAuth } from "@/router/utils";
+import { getModelLabelFieldListApi } from "@/api/system/field";
 
 const defaultData: FormItemProps = {
   menu_type: MenuChoices.DIRECTORY,
@@ -24,6 +26,7 @@ const defaultData: FormItemProps = {
   path: "",
   rank: 0,
   component: "",
+  model: [],
   is_active: true,
   meta: {
     title: "",
@@ -50,6 +53,7 @@ export function useMenu() {
   const choicesDict = ref([]);
   const menuChoices = ref([]);
   const menuUrlList = ref([]);
+  const modelList = ref([]);
   const menuData = reactive<FormItemProps>(cloneDeep(defaultData));
   const loading = ref(true);
 
@@ -150,6 +154,7 @@ export function useMenu() {
         treeData: treeData,
         choicesDict: choicesDict,
         menuChoices: menuChoices,
+        modelList: modelList,
         menuUrlList: menuUrlList,
         formInline: {
           pk: row?.pk ?? "",
@@ -161,6 +166,7 @@ export function useMenu() {
           path: row?.path ?? "",
           rank: row?.rank ?? 0,
           component: row?.component ?? "",
+          model: row?.model ?? [],
           is_active: row?.is_active ?? true,
           meta: {
             title: row?.meta.title ?? "",
@@ -238,6 +244,18 @@ export function useMenu() {
   };
   onMounted(() => {
     getMenuData();
+    if (hasGlobalAuth("list:systemModelField")) {
+      getModelLabelFieldListApi({
+        page: 1,
+        size: 1000,
+        parent: 0,
+        field_type: FieldChoices.ROLE
+      }).then(res => {
+        if (res.code === 1000) {
+          modelList.value = res.data.results;
+        }
+      });
+    }
   });
 
   return {
@@ -249,8 +267,8 @@ export function useMenu() {
     menuData,
     choicesDict,
     menuChoices,
-    handleManyDelete,
     menuUrlList,
+    modelList,
     addNewMenu,
     buttonClass,
     defaultData,
@@ -259,6 +277,7 @@ export function useMenu() {
     openDialog,
     resetForm,
     handleConfirm,
-    handleDelete
+    handleDelete,
+    handleManyDelete
   };
 }
