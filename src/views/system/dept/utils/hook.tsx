@@ -75,6 +75,7 @@ export function useDept(tableRef: Ref) {
   const switchLoadMap = ref({});
   const { switchStyle } = usePublicHooks();
   const manySelectCount = ref(0);
+  const showColumns = ref([]);
   const columns: TableColumnList = [
     {
       type: "selection",
@@ -84,7 +85,8 @@ export function useDept(tableRef: Ref) {
       label: t("dept.name"),
       prop: "name",
       minWidth: 200,
-      cellRenderer: ({ row }) => <span v-copy={row.name}>{row.name}</span>
+      cellRenderer: ({ row }) => <span v-copy={row.name}>{row.name}</span>,
+      hide: () => showColumns.value.indexOf("name") === -1
     },
     {
       label: t("labels.id"),
@@ -96,7 +98,8 @@ export function useDept(tableRef: Ref) {
       label: t("dept.code"),
       prop: "code",
       minWidth: 100,
-      cellRenderer: ({ row }) => <span v-copy={row.code}>{row.code}</span>
+      cellRenderer: ({ row }) => <span v-copy={row.code}>{row.code}</span>,
+      hide: () => showColumns.value.indexOf("code") === -1
     },
     {
       label: t("dept.userCount"),
@@ -106,21 +109,25 @@ export function useDept(tableRef: Ref) {
         <el-link onClick={() => onGoDetail(row as any)}>
           {row.user_count}
         </el-link>
-      )
+      ),
+      hide: () => showColumns.value.indexOf("user_count") === -1
     },
     {
       label: t("sorts.rank"),
       prop: "rank",
-      minWidth: 90
+      minWidth: 90,
+      hide: () => showColumns.value.indexOf("rank") === -1
     },
     {
       label: t("permission.mode"),
       prop: "mode_display",
-      minWidth: 90
+      minWidth: 90,
+      hide: () => showColumns.value.indexOf("mode_display") === -1
     },
     {
       label: t("dept.autoBind"),
       minWidth: 130,
+      prop: "auto_bind",
       cellRenderer: scope => (
         <el-switch
           size={scope.props.size === "small" ? "small" : "default"}
@@ -135,7 +142,8 @@ export function useDept(tableRef: Ref) {
           style={switchStyle.value}
           onChange={() => onChangeBind(scope as any)}
         />
-      )
+      ),
+      hide: () => showColumns.value.indexOf("auto_bind") === -1
     },
     {
       label: t("labels.status"),
@@ -155,26 +163,30 @@ export function useDept(tableRef: Ref) {
           style={switchStyle.value}
           onChange={() => onChange(scope as any)}
         />
-      )
+      ),
+      hide: () => showColumns.value.indexOf("is_active") === -1
     },
     {
       label: t("dept.roles"),
-      prop: "roles",
+      prop: "roles_info",
       width: 160,
-      slot: "roles"
+      slot: "roles",
+      hide: () => showColumns.value.indexOf("roles_info") === -1
     },
     {
       label: t("dept.rules"),
-      prop: "rules",
+      prop: "rules_info",
       width: 160,
-      slot: "rules"
+      slot: "rules",
+      hide: () => showColumns.value.indexOf("rules_info") === -1
     },
     {
       label: t("sorts.createdDate"),
       minWidth: 180,
-      prop: "createTime",
+      prop: "created_time",
       formatter: ({ created_time }) =>
-        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
+        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss"),
+      hide: () => showColumns.value.indexOf("created_time") === -1
     },
     {
       label: t("labels.operations"),
@@ -340,6 +352,9 @@ export function useDept(tableRef: Ref) {
   async function onSearch() {
     loading.value = true;
     const { data, choices_dict } = await getDeptListApi(toRaw(form));
+    if (data.results.length > 0) {
+      showColumns.value = Object.keys(data.results[0]);
+    }
     choicesDict.value = choices_dict;
     dataList.value = handleTree(data.results);
     delay(500).then(() => {
@@ -356,7 +371,6 @@ export function useDept(tableRef: Ref) {
       title: `${title} ${t("dept.dept")}`,
       props: {
         formInline: {
-          is_add: is_add ?? true,
           pk: row?.pk ?? "",
           name: row?.name ?? "",
           parent: row?.parent ?? "",
@@ -367,7 +381,9 @@ export function useDept(tableRef: Ref) {
           auto_bind: row?.auto_bind ?? false,
           description: row?.description ?? ""
         },
-        treeData: formatHigherDeptOptions(cloneDeep(dataList.value))
+        treeData: formatHigherDeptOptions(cloneDeep(dataList.value)),
+        showColumns: showColumns.value,
+        isAdd: is_add
       },
       width: "46%",
       draggable: true,

@@ -6,6 +6,8 @@ import { FormProps } from "./utils/types";
 import { useI18n } from "vue-i18n";
 
 const props = withDefaults(defineProps<FormProps>(), {
+  isAdd: () => false,
+  showColumns: () => [],
   formInline: () => ({
     pk: 0,
     title: "",

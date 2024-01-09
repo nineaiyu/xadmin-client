@@ -8,9 +8,10 @@ import { useI18n } from "vue-i18n";
 import FromQuestion from "@/components/FromQuestion/index.vue";
 
 const props = withDefaults(defineProps<FormProps>(), {
+  isAdd: () => true,
   treeData: () => [],
+  showColumns: () => [],
   formInline: () => ({
-    is_add: true,
     name: "",
     code: "",
     parent: "",
@@ -50,6 +51,7 @@ defineExpose({ getRef });
         <el-form-item :label="t('dept.name')" prop="name">
           <el-input
             v-model="newFormInline.name"
+            :disabled="!props.isAdd && props.showColumns.indexOf('name') === -1"
             clearable
             :placeholder="t('dept.name')"
           />
@@ -59,6 +61,7 @@ defineExpose({ getRef });
         <el-form-item :label="t('dept.code')" prop="code">
           <el-input
             v-model="newFormInline.code"
+            :disabled="!props.isAdd && props.showColumns.indexOf('code') === -1"
             clearable
             :placeholder="t('dept.code')"
           />
@@ -68,6 +71,9 @@ defineExpose({ getRef });
         <el-form-item :label="t('menu.parentNode')" prop="parent">
           <el-cascader
             v-model="newFormInline.parent"
+            :disabled="
+              !props.isAdd && props.showColumns.indexOf('parent') === -1
+            "
             class="w-full"
             :options="props.treeData"
             :props="{
@@ -92,6 +98,7 @@ defineExpose({ getRef });
         <el-form-item :label="t('sorts.rank')" prop="rank">
           <el-input
             v-model="newFormInline.rank"
+            :disabled="!props.isAdd && props.showColumns.indexOf('rank') === -1"
             clearable
             type="number"
             :placeholder="t('sorts.rank')"
@@ -111,6 +118,9 @@ defineExpose({ getRef });
             <el-radio-button
               v-for="item in ifEnableOptions"
               :key="item.label"
+              :disabled="
+                !props.isAdd && props.showColumns.indexOf('auto_bind') === -1
+              "
               :label="item.value"
               >{{ item.label }}
             </el-radio-button>
@@ -121,6 +131,9 @@ defineExpose({ getRef });
         <el-form-item :label="t('labels.status')" prop="is_active">
           <el-switch
             v-model="newFormInline.is_active"
+            :disabled="
+              !props.isAdd && props.showColumns.indexOf('is_active') === -1
+            "
             inline-prompt
             :active-value="true"
             :inactive-value="false"
@@ -134,6 +147,9 @@ defineExpose({ getRef });
         <el-form-item :label="t('labels.description')">
           <el-input
             v-model="newFormInline.description"
+            :disabled="
+              !props.isAdd && props.showColumns.indexOf('description') === -1
+            "
             :placeholder="t('labels.verifyDescription')"
             type="textarea"
             rows="3"

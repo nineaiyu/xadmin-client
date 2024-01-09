@@ -14,6 +14,8 @@ interface FormProps {
   fieldLookupsData?: any[];
   valuesData?: any[];
   choicesDict?: any[];
+  showColumns: any[];
+  isAdd?: boolean;
 }
 
 export type { FormItemProps, FormProps };

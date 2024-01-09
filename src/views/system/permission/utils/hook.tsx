@@ -51,6 +51,7 @@ export function useDataPermission(tableRef: Ref) {
   const loading = ref(true);
   const switchLoadMap = ref({});
   const { switchStyle } = usePublicHooks();
+  const showColumns = ref([]);
   const pagination = reactive<PaginationProps>({
     total: 0,
     pageSize: 10,
@@ -71,16 +72,19 @@ export function useDataPermission(tableRef: Ref) {
     {
       label: t("permission.name"),
       prop: "name",
-      minWidth: 120
+      minWidth: 120,
+      hide: () => showColumns.value.indexOf("name") === -1
     },
     {
       label: t("permission.mode"),
       prop: "mode_display",
-      minWidth: 120
+      minWidth: 120,
+      hide: () => showColumns.value.indexOf("mode_display") === -1
     },
     {
       label: t("labels.status"),
       minWidth: 130,
+      prop: "is_active",
       cellRenderer: scope => (
         <el-switch
           size={scope.props.size === "small" ? "small" : "default"}
@@ -95,19 +99,22 @@ export function useDataPermission(tableRef: Ref) {
           style={switchStyle.value}
           onChange={() => onChange(scope as any)}
         />
-      )
+      ),
+      hide: () => showColumns.value.indexOf("is_active") === -1
     },
     {
       label: t("labels.description"),
       prop: "description",
-      minWidth: 150
+      minWidth: 150,
+      hide: () => showColumns.value.indexOf("description") === -1
     },
     {
       label: t("sorts.createdDate"),
       minWidth: 180,
-      prop: "createTime",
+      prop: "created_time",
       formatter: ({ created_time }) =>
-        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
+        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss"),
+      hide: () => showColumns.value.indexOf("created_time") === -1
     },
     {
       label: t("labels.operations"),
@@ -222,6 +229,9 @@ export function useDataPermission(tableRef: Ref) {
     }
     loading.value = true;
     const { data, choices_dict } = await getDataPermissionListApi(toRaw(form));
+    if (data.results.length > 0) {
+      showColumns.value = Object.keys(data.results[0]);
+    }
     dataList.value = data.results;
     pagination.total = data.total;
     choicesDict.value = choices_dict;
@@ -254,7 +264,9 @@ export function useDataPermission(tableRef: Ref) {
         },
         fieldLookupsData: fieldLookupsData.value,
         valuesData: valuesData.value,
-        choicesDict: choicesDict.value
+        choicesDict: choicesDict.value,
+        showColumns: showColumns.value,
+        isAdd: is_add
       },
       width: "50%",
       draggable: true,

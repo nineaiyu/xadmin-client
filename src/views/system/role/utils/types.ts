@@ -20,6 +20,8 @@ interface FormItemProps {
 interface FormProps {
   formInline: FormItemProps;
   menuTreeData: any[];
+  showColumns: any[];
+  isAdd?: boolean;
 }
 
 export type { FormItemProps, FormProps };

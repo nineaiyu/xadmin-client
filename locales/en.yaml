@@ -169,6 +169,7 @@ menus:
   hsRole: Role Permission
   hsDataPermission: Data Permission
   hsLog: Log Manage
+  hsModelField: Model Field Manage
   hsOperationLog: Operation Log Manage
   hsLoginLog: Login Log Manage
   permission: Permission Manage
@@ -361,6 +362,9 @@ configUser:
 modelField:
   name: Model/field name
   label: Model/field label
+  parent: Parent
+  makeData: Make Field Data
+  fieldType: Field Type
 
 notice:
   notice: Notice

@@ -108,6 +108,7 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
   const manySelectCount = ref(0);
   const avatarInfo = ref();
   const ruleFormRef = ref();
+  const showColumns = ref([]);
   const pagination = reactive<PaginationProps>({
     total: 0,
     pageSize: 10,
@@ -118,6 +119,7 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
   const columns: TableColumnList = [
     {
       type: "selection",
+      prop: "pk",
       align: "left"
     },
     {
@@ -138,20 +140,30 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
           preview-teleported={true}
           preview-src-list={Array.of(row.avatar)}
         />
-      )
+      ),
+      hide: () => showColumns.value.indexOf("avatar") === -1
     },
     {
       label: t("user.username"),
       prop: "username",
       minWidth: 130,
       cellRenderer: ({ row }) => (
-        <span v-copy={row.username}>{row.username}</span>
-      )
+        <span v-show={row?.username} v-copy={row?.username}>
+          {row?.username}
+        </span>
+      ),
+      hide: () => showColumns.value.indexOf("username") === -1
     },
     {
       label: t("user.nickname"),
       prop: "nickname",
-      minWidth: 130
+      minWidth: 130,
+      cellRenderer: ({ row }) => (
+        <span v-show={row?.nickname} v-copy={row?.nickname}>
+          {row?.nickname}
+        </span>
+      ),
+      hide: () => showColumns.value.indexOf("nickname") === -1
     },
     {
       label: t("user.gender"),
@@ -165,7 +177,8 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
         >
           {row.gender_display}
         </el-tag>
-      )
+      ),
+      hide: () => showColumns.value.indexOf("gender") === -1
     },
 
     {
@@ -185,41 +198,49 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
           inline-prompt
           onChange={() => onChange(scope as any)}
         />
-      )
+      ),
+      hide: () => showColumns.value.indexOf("is_active") === -1
     },
 
     {
       label: t("user.dept"),
-      prop: "dept",
+      prop: "dept_info",
       width: 100,
       cellRenderer: ({ row }) => (
-        <span v-copy={row.dept_info?.name}>{row.dept_info?.name}</span>
-      )
+        <span v-show={row?.dept_info?.name} v-copy={row?.dept_info?.name}>
+          {row?.dept_info?.name}
+        </span>
+      ),
+      hide: () => showColumns.value.indexOf("dept_info") === -1
     },
     {
       label: t("user.roles"),
-      prop: "roles",
+      prop: "roles_info",
       width: 160,
-      slot: "roles"
+      slot: "roles",
+      hide: () => showColumns.value.indexOf("roles_info") === -1
     },
     {
       label: t("user.rules"),
-      prop: "rules",
+      prop: "rules_info",
       width: 160,
-      slot: "rules"
+      slot: "rules",
+      hide: () => showColumns.value.indexOf("rules_info") === -1
     },
     {
       label: t("user.mobile"),
       prop: "mobile",
       minWidth: 90,
-      formatter: ({ mobile }) => hideTextAtIndex(mobile, { start: 3, end: 6 })
+      formatter: ({ mobile }) => hideTextAtIndex(mobile, { start: 3, end: 6 }),
+      hide: () => showColumns.value.indexOf("mobile") === -1
     },
     {
       label: t("user.registrationDate"),
       minWidth: 90,
       prop: "date_joined",
       formatter: ({ date_joined }) =>
-        dayjs(date_joined).format("YYYY-MM-DD HH:mm:ss")
+        dayjs(date_joined).format("YYYY-MM-DD HH:mm:ss"),
+      hide: () => showColumns.value.indexOf("date_joined") === -1
     },
     {
       label: t("labels.operations"),
@@ -359,6 +380,9 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
     const { data, choices_dict, mode_choices } = await getUserListApi(
       toRaw(form)
     );
+    if (data.results.length > 0) {
+      showColumns.value = Object.keys(data.results[0]);
+    }
     dataList.value = data.results;
     pagination.total = data.total;
     choicesDict.value = choices_dict;
@@ -385,7 +409,6 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
       title: `${title} ${t("user.user")}`,
       props: {
         formInline: {
-          is_add: is_add ?? true,
           pk: row?.pk ?? "",
           username: row?.username ?? "",
           nickname: row?.nickname ?? "",
@@ -400,7 +423,9 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
           description: row?.description ?? ""
         },
         treeData: formatHigherDeptOptions(cloneDeep(treeData.value)),
-        choicesDict: choicesDict.value
+        choicesDict: choicesDict.value,
+        showColumns: showColumns.value,
+        isAdd: is_add
       },
       width: "46%",
       draggable: true,

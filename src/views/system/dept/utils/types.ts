@@ -1,7 +1,6 @@
 // 虽然字段很少 但是抽离出来 后续有扩展字段需求就很方便了
 
 interface FormItemProps {
-  is_add?: boolean;
   pk?: number;
   rank?: number;
   user_count?: number;
@@ -19,6 +18,8 @@ interface FormItemProps {
 interface FormProps {
   formInline: FormItemProps;
   treeData?: any[];
+  showColumns?: any[];
+  isAdd?: boolean;
 }
 
 interface itemProps {

@@ -57,6 +57,7 @@ export function useNotice(tableRef: Ref) {
   const loading = ref(true);
   const levelChoices = ref([]);
   const noticeChoices = ref([]);
+  const showColumns = ref([]);
   const pagination = reactive<PaginationProps>({
     total: 0,
     pageSize: 10,
@@ -78,12 +79,16 @@ export function useNotice(tableRef: Ref) {
       label: t("notice.title"),
       prop: "title",
       minWidth: 120,
-      cellRenderer: ({ row }) => <el-text type={row.level}>{row.title}</el-text>
+      cellRenderer: ({ row }) => (
+        <el-text type={row?.level}>{row.title}</el-text>
+      ),
+      hide: () => showColumns.value.indexOf("title") === -1
     },
     {
       label: t("notice.type"),
       prop: "notice_type_display",
-      minWidth: 120
+      minWidth: 120,
+      hide: () => showColumns.value.indexOf("notice_type_display") === -1
     },
     {
       label: t("notice.receiveRead"),
@@ -99,7 +104,8 @@ export function useNotice(tableRef: Ref) {
             : row.user_count}
           /{row.read_user_count}
         </el-link>
-      )
+      ),
+      hide: () => showColumns.value.indexOf("user_count") === -1
     },
     {
       label: t("notice.publish"),
@@ -118,14 +124,16 @@ export function useNotice(tableRef: Ref) {
           inline-prompt
           onChange={() => onChange(scope as any)}
         />
-      )
+      ),
+      hide: () => showColumns.value.indexOf("publish") === -1
     },
     {
       label: t("sorts.createdDate"),
       minWidth: 180,
-      prop: "createTime",
+      prop: "created_time",
       formatter: ({ created_time }) =>
-        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
+        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss"),
+      hide: () => showColumns.value.indexOf("created_time") === -1
     },
     {
       label: t("labels.operations"),
@@ -165,7 +173,9 @@ export function useNotice(tableRef: Ref) {
           notice_user: row?.notice_user ?? [],
           notice_dept: row?.notice_dept ?? [],
           notice_role: row?.notice_role ?? []
-        }
+        },
+        showColumns: showColumns.value,
+        isAdd: is_add
       },
       width: "60%",
       draggable: true,
@@ -234,7 +244,9 @@ export function useNotice(tableRef: Ref) {
           level: row?.level ?? "",
           levelChoices: levelChoices.value,
           noticeChoices: noticeChoices.value
-        }
+        },
+        isAdd: false,
+        showColumns: showColumns.value
       },
       width: "70%",
       draggable: true,
@@ -348,6 +360,9 @@ export function useNotice(tableRef: Ref) {
     loading.value = true;
     getNoticeListApi(toRaw(form)).then(res => {
       if (res.code === 1000 && res.data) {
+        if (res.data.results.length > 0) {
+          showColumns.value = Object.keys(res.data.results[0]);
+        }
         dataList.value = res.data.results;
         pagination.total = res.data.total;
         levelChoices.value = res.level_choices;

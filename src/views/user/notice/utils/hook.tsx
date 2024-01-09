@@ -47,6 +47,7 @@ export function useUserNotice(tableRef: Ref) {
   const loading = ref(true);
   const levelChoices = ref([]);
   const noticeChoices = ref([]);
+  const showColumns = ref([]);
   const pagination = reactive<PaginationProps>({
     total: 0,
     pageSize: 10,
@@ -68,7 +69,10 @@ export function useUserNotice(tableRef: Ref) {
       label: t("notice.title"),
       prop: "title",
       minWidth: 120,
-      cellRenderer: ({ row }) => <el-text type={row.level}>{row.title}</el-text>
+      cellRenderer: ({ row }) => (
+        <el-text type={row.level}>{row.title}</el-text>
+      ),
+      hide: () => showColumns.value.indexOf("title") === -1
     },
     {
       label: t("notice.haveRead"),
@@ -78,19 +82,22 @@ export function useUserNotice(tableRef: Ref) {
         <el-text type={row.unread ? "success" : "info"}>
           {row.unread ? t("labels.unread") : t("labels.read")}
         </el-text>
-      )
+      ),
+      hide: () => showColumns.value.indexOf("unread") === -1
     },
     {
       label: t("sorts.createdDate"),
       minWidth: 180,
-      prop: "createTime",
+      prop: "created_time",
       formatter: ({ created_time }) =>
-        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
+        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss"),
+      hide: () => showColumns.value.indexOf("created_time") === -1
     },
     {
       label: t("notice.type"),
       prop: "notice_type_display",
-      minWidth: 120
+      minWidth: 120,
+      hide: () => showColumns.value.indexOf("notice_type_display") === -1
     },
     {
       label: t("labels.operations"),
@@ -195,6 +202,9 @@ export function useUserNotice(tableRef: Ref) {
     loading.value = true;
     getUserNoticeListApi(toRaw(form)).then(res => {
       if (res.code === 1000 && res.data) {
+        if (res.data.results.length > 0) {
+          showColumns.value = Object.keys(res.data.results[0]);
+        }
         dataList.value = res.data.results;
         pagination.total = res.data.total;
         levelChoices.value = res.level_choices;

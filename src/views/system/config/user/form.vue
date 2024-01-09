@@ -7,11 +7,12 @@ import { hasGlobalAuth } from "@/router/utils";
 import SearchUsers from "@/views/system/base/searchUsers.vue";
 
 const props = withDefaults(defineProps<FormProps>(), {
+  isAdd: () => true,
+  showColumns: () => [],
   formInline: () => ({
     key: "",
     value: "",
     owner: "",
-    is_add: false,
     description: "",
     config_user: [],
     is_active: true
@@ -48,13 +49,14 @@ defineExpose({ getRef });
     >
       <search-users
         v-model="newFormInline.config_user"
-        :disabled="!newFormInline.is_add"
+        :disabled="!props.isAdd"
       />
     </el-form-item>
 
     <el-form-item :label="t('configUser.key')" prop="key">
       <el-input
         v-model="newFormInline.key"
+        :disabled="!props.isAdd && props.showColumns.indexOf('key') === -1"
         :placeholder="t('configUser.key')"
         clearable
       />
@@ -63,6 +65,7 @@ defineExpose({ getRef });
     <el-form-item :label="t('configUser.value')" prop="value">
       <el-input
         v-model="newFormInline.value"
+        :disabled="!props.isAdd && props.showColumns.indexOf('value') === -1"
         :autosize="{ minRows: 5, maxRows: 20 }"
         :placeholder="t('configUser.value')"
         clearable
@@ -74,6 +77,9 @@ defineExpose({ getRef });
         <el-radio-button
           v-for="item in ifEnableOptions"
           :key="item.label"
+          :disabled="
+            !props.isAdd && props.showColumns.indexOf('is_active') === -1
+          "
           :label="item.value"
           >{{ item.label }}
         </el-radio-button>
@@ -82,6 +88,9 @@ defineExpose({ getRef });
     <el-form-item :label="t('labels.description')">
       <el-input
         v-model="newFormInline.description"
+        :disabled="
+          !props.isAdd && props.showColumns.indexOf('description') === -1
+        "
         :placeholder="t('labels.description')"
         type="textarea"
       />

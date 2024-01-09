@@ -40,6 +40,7 @@ export function useLoginLog(tableRef: Ref) {
   const manySelectCount = ref(0);
   const dataList = ref([]);
   const loading = ref(true);
+  const showColumns = ref([]);
   const pagination = reactive<PaginationProps>({
     total: 0,
     pageSize: 10,
@@ -65,39 +66,46 @@ export function useLoginLog(tableRef: Ref) {
         <el-link onClick={() => onGoDetail(row as any)}>
           {row.creator?.username ? row.creator?.username : "/"}
         </el-link>
-      )
+      ),
+      hide: () => showColumns.value.indexOf("creator") === -1
     },
     {
       label: t("logsLogin.address"),
       prop: "ipaddress",
-      minWidth: 150
+      minWidth: 150,
+      hide: () => showColumns.value.indexOf("ipaddress") === -1
     },
     {
       label: t("logsLogin.loginDisplay"),
       prop: "login_display",
-      minWidth: 150
+      minWidth: 150,
+      hide: () => showColumns.value.indexOf("login_display") === -1
     },
     {
       label: t("logsLogin.browser"),
       prop: "browser",
-      minWidth: 150
+      minWidth: 150,
+      hide: () => showColumns.value.indexOf("browser") === -1
     },
     {
       label: t("logsLogin.system"),
       prop: "system",
-      minWidth: 150
+      minWidth: 150,
+      hide: () => showColumns.value.indexOf("system") === -1
     },
     {
       label: t("logsLogin.agent"),
       prop: "agent",
-      minWidth: 150
+      minWidth: 150,
+      hide: () => showColumns.value.indexOf("agent") === -1
     },
     {
       label: t("sorts.createdDate"),
       minWidth: 180,
-      prop: "createTime",
+      prop: "created_time",
       formatter: ({ created_time }) =>
-        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
+        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss"),
+      hide: () => showColumns.value.indexOf("created_time") === -1
     },
     {
       label: t("labels.operations"),
@@ -176,6 +184,9 @@ export function useLoginLog(tableRef: Ref) {
     }
     loading.value = true;
     const { data, choices_dict } = await getLoginLogListApi(toRaw(form));
+    if (data.results.length > 0) {
+      showColumns.value = Object.keys(data.results[0]);
+    }
     dataList.value = data.results;
     pagination.total = data.total;
     choicesDict.value = choices_dict;

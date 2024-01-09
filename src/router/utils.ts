@@ -377,7 +377,7 @@ function getGlobalAuths(arr: any[]) {
 function hasGlobalAuth(value: string | Array<string>): boolean {
   if (!value) return false;
   /** 从当前路由的`meta`字段里获取按钮级别的所有自定义`code`值 */
-  const metaAuths = getGlobalAuths(usePermissionStoreHook().wholeMenus);
+  const metaAuths = getGlobalAuths(usePermissionStoreHook().routes);
   if (!metaAuths) return false;
   return isString(value)
     ? metaAuths.includes(value)

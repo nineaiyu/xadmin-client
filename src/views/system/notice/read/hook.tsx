@@ -58,6 +58,7 @@ export function useNoticeRead(tableRef: Ref) {
   const loading = ref(true);
   const noticeChoices = ref([]);
   const levelChoices = ref([]);
+  const showColumns = ref([]);
   const pagination = reactive<PaginationProps>({
     total: 0,
     pageSize: 10,
@@ -78,7 +79,7 @@ export function useNoticeRead(tableRef: Ref) {
     },
     {
       label: t("notice.title"),
-      prop: "title",
+      prop: "notice_info",
       minWidth: 120,
       cellRenderer: ({ row }) => (
         <el-link
@@ -87,7 +88,8 @@ export function useNoticeRead(tableRef: Ref) {
         >
           {row.notice_info.title}
         </el-link>
-      )
+      ),
+      hide: () => showColumns.value.indexOf("notice_info") === -1
     },
     {
       label: t("notice.type"),
@@ -95,35 +97,39 @@ export function useNoticeRead(tableRef: Ref) {
       minWidth: 100,
       cellRenderer: ({ row }) => (
         <el-text>{row.notice_info.notice_type_display}</el-text>
-      )
+      ),
+      hide: () => showColumns.value.indexOf("notice_info") === -1
     },
     {
       label: t("user.userId"),
-      prop: "owner",
+      prop: "owner_info",
       minWidth: 100,
-      cellRenderer: ({ row }) => <el-text>{row.owner_info?.pk}</el-text>
+      cellRenderer: ({ row }) => <el-text>{row.owner_info?.pk}</el-text>,
+      hide: () => showColumns.value.indexOf("owner_info") === -1
     },
     {
       label: t("user.userInfo"),
-      prop: "owner",
+      prop: "owner_info",
       minWidth: 100,
       cellRenderer: ({ row }) => (
         <el-link onClick={() => onGoUserDetail(row as any)}>
           {row.owner_info?.username ? row.owner_info?.username : "/"}
         </el-link>
-      )
+      ),
+      hide: () => showColumns.value.indexOf("owner_info") === -1
     },
     {
       label: t("notice.readDate"),
       minWidth: 180,
-      prop: "createTime",
+      prop: "updated_time",
       cellRenderer: ({ row }) => (
         <el-text>
           {!row.unread
             ? dayjs(row.updated_time).format("YYYY-MM-DD HH:mm:ss")
             : "/"}
         </el-text>
-      )
+      ),
+      hide: () => showColumns.value.indexOf("updated_time") === -1
     },
     {
       label: t("notice.haveRead"),
@@ -142,7 +148,8 @@ export function useNoticeRead(tableRef: Ref) {
           inline-prompt
           onChange={() => onChange(scope as any)}
         />
-      )
+      ),
+      hide: () => showColumns.value.indexOf("unread") === -1
     },
     {
       label: t("labels.operations"),
@@ -303,6 +310,9 @@ export function useNoticeRead(tableRef: Ref) {
     loading.value = true;
     getNoticeReadListApi(toRaw(form)).then(res => {
       if (res.code === 1000 && res.data) {
+        if (res.data.results.length > 0) {
+          showColumns.value = Object.keys(res.data.results[0]);
+        }
         dataList.value = res.data.results;
         pagination.total = res.data.total;
         noticeChoices.value = res.notice_type_choices;

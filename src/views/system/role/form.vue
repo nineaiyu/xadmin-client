@@ -19,6 +19,8 @@ import Reset from "@iconify-icons/ri/restart-line";
 import { MenuChoices } from "@/views/system/constants";
 
 const props = withDefaults(defineProps<FormProps>(), {
+  isAdd: () => true,
+  showColumns: () => [],
   menuTreeData: () => [],
   formInline: () => ({
     name: "",
@@ -125,7 +127,10 @@ function toggleSelectAll(status) {
 }
 
 function nodeClick(value, node) {
-  if (value.pk.toString().indexOf("-") > -1) {
+  if (
+    value.pk.toString().indexOf("-") > 0 &&
+    props.showColumns.indexOf("field") > -1
+  ) {
     node.checked = !node.checked;
   }
 }
@@ -147,6 +152,7 @@ function onReset() {
     <el-form-item :label="t('role.name')" prop="name">
       <el-input
         v-model="newFormInline.name"
+        :disabled="!props.isAdd && props.showColumns.indexOf('name') === -1"
         clearable
         :placeholder="t('role.verifyRoleName')"
       />
@@ -155,12 +161,18 @@ function onReset() {
     <el-form-item :label="t('role.code')" prop="code">
       <el-input
         v-model="newFormInline.code"
+        :disabled="!props.isAdd && props.showColumns.indexOf('code') === -1"
         clearable
         :placeholder="t('role.verifyRoleCode')"
       />
     </el-form-item>
     <el-form-item :label="t('labels.status')" prop="is_active">
-      <el-radio-group v-model="newFormInline.is_active">
+      <el-radio-group
+        v-model="newFormInline.is_active"
+        :disabled="
+          !props.isAdd && props.showColumns.indexOf('is_active') === -1
+        "
+      >
         <el-radio-button
           v-for="item in ifEnableOptions"
           :key="item.label"
@@ -172,6 +184,9 @@ function onReset() {
     <el-form-item :label="t('labels.description')">
       <el-input
         v-model="newFormInline.description"
+        :disabled="
+          !props.isAdd && props.showColumns.indexOf('description') === -1
+        "
         :placeholder="t('labels.verifyDescription')"
         type="textarea"
       />
@@ -265,7 +280,11 @@ function onReset() {
           class="w-full"
           :data="props.menuTreeData"
           :check-strictly="checkStrictly"
-          show-checkbox
+          :show-checkbox="
+            props.isAdd ||
+            (props.showColumns.indexOf('field') > -1 &&
+              props.showColumns.indexOf('menu') > -1)
+          "
           node-key="pk"
           highlight-current
           :default-expand-all="isExpand"

@@ -38,6 +38,8 @@ interface ListItem {
 
 interface FormProps {
   formInline: FormItemProps;
+  showColumns: any[];
+  isAdd?: boolean;
 }
 
 type InsertFnType = (url: string, alt?: string, href?: string) => void;

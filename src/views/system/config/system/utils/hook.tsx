@@ -46,6 +46,7 @@ export function useSystemConfig(tableRef: Ref) {
   const loading = ref(true);
   const switchLoadMap = ref({});
   const { switchStyle } = usePublicHooks();
+  const showColumns = ref([]);
   const pagination = reactive<PaginationProps>({
     total: 0,
     pageSize: 10,
@@ -67,13 +68,15 @@ export function useSystemConfig(tableRef: Ref) {
       label: t("configSystem.key"),
       prop: "key",
       minWidth: 120,
-      cellRenderer: ({ row }) => <span v-copy={row.key}>{row.key}</span>
+      cellRenderer: ({ row }) => <span v-copy={row.key}>{row.key}</span>,
+      hide: () => showColumns.value.indexOf("key") === -1
     },
     {
       label: t("configSystem.value"),
       prop: "value",
       minWidth: 150,
-      cellRenderer: ({ row }) => <span v-copy={row.value}>{row.value}</span>
+      cellRenderer: ({ row }) => <span v-copy={row.value}>{row.value}</span>,
+      hide: () => showColumns.value.indexOf("value") === -1
     },
     {
       label: t("configSystem.cacheValue"),
@@ -81,10 +84,12 @@ export function useSystemConfig(tableRef: Ref) {
       minWidth: 150,
       cellRenderer: ({ row }) => (
         <span v-copy={row.cache_value}>{row.cache_value}</span>
-      )
+      ),
+      hide: () => showColumns.value.indexOf("cache_value") === -1
     },
     {
       label: t("labels.status"),
+      prop: "is_active",
       minWidth: 130,
       cellRenderer: scope => (
         <el-switch
@@ -100,19 +105,22 @@ export function useSystemConfig(tableRef: Ref) {
           style={switchStyle.value}
           onChange={() => onChange(scope as any)}
         />
-      )
+      ),
+      hide: () => showColumns.value.indexOf("is_active") === -1
     },
     {
       label: t("labels.description"),
       prop: "description",
-      minWidth: 150
+      minWidth: 150,
+      hide: () => showColumns.value.indexOf("description") === -1
     },
     {
       label: t("sorts.createdDate"),
       minWidth: 180,
-      prop: "createTime",
+      prop: "created_time",
       formatter: ({ created_time }) =>
-        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
+        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss"),
+      hide: () => showColumns.value.indexOf("created_time") === -1
     },
     {
       label: t("labels.operations"),
@@ -227,6 +235,9 @@ export function useSystemConfig(tableRef: Ref) {
     }
     loading.value = true;
     const { data } = await getSystemConfigListApi(toRaw(form));
+    if (data.results.length > 0) {
+      showColumns.value = Object.keys(data.results[0]);
+    }
     dataList.value = data.results;
     pagination.total = data.total;
 
@@ -255,7 +266,9 @@ export function useSystemConfig(tableRef: Ref) {
           value: row?.value ?? "",
           is_active: row?.is_active ?? true,
           description: row?.description ?? ""
-        }
+        },
+        showColumns: showColumns.value,
+        isAdd: is_add
       },
       width: "40%",
       draggable: true,

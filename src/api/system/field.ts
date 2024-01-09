@@ -12,3 +12,9 @@ export const getModelLabelFieldLookupsListApi = (params?: object) => {
     params: params
   });
 };
+
+export const syncModelLabelFieldApi = (params?: object) => {
+  return http.request<Result>("get", "/api/system/field/sync", {
+    params: params
+  });
+};

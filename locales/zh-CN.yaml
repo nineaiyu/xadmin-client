@@ -169,6 +169,7 @@ menus:
   hsRole: 角色权限
   hsDataPermission: 数据权限
   hsLog: 日志管理
+  hsModelField: 字段管理
   hsOperationLog: 访问日志
   hsLoginLog: 登录日志
   permission: 权限管理
@@ -361,6 +362,9 @@ configUser:
 modelField:
   name: 模型/字段数值
   label: 模型/字段名称
+  parent: 上级节点
+  makeData: 重新生成字段数据
+  fieldType: 字段类型
 
 notice:
   notice: 通知公告

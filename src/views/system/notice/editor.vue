@@ -17,6 +17,8 @@ import { NoticeChoices } from "@/views/system/constants";
 import { hasGlobalAuth } from "@/router/utils";
 
 const props = withDefaults(defineProps<FormProps>(), {
+  isAdd: () => true,
+  showColumns: () => [],
   formInline: () => ({
     pk: 0,
     title: "",
@@ -67,6 +69,7 @@ const toolbarConfig: any = {
 };
 const editorConfig = {
   placeholder: t("notice.verifyContent"),
+  readOnly: !props.isAdd && props.showColumns.indexOf("message") === -1,
   MENU_CONF: {},
   hoverbarKeys: {
     attachment: {
@@ -158,6 +161,9 @@ const loading = ref(false);
             <el-form-item :label="t('notice.title')" prop="title">
               <el-input
                 v-model="newFormInline.title"
+                :disabled="
+                  !props.isAdd && props.showColumns.indexOf('title') === -1
+                "
                 clearable
                 :placeholder="t('notice.verifyTitle')"
               />
@@ -167,8 +173,8 @@ const loading = ref(false);
             <el-form-item :label="t('notice.type')" prop="level">
               <el-select
                 v-model="newFormInline.notice_type"
+                :disabled="!props.isAdd"
                 class="!w-[180px]"
-                :disabled="newFormInline.pk !== 0"
                 clearable
               >
                 <el-option
@@ -185,6 +191,9 @@ const loading = ref(false);
             <el-form-item :label="t('notice.level')" prop="level">
               <el-select
                 v-model="newFormInline.level"
+                :disabled="
+                  !props.isAdd && props.showColumns.indexOf('level') === -1
+                "
                 class="!w-[180px]"
                 clearable
               >
@@ -206,6 +215,9 @@ const loading = ref(false);
             <el-form-item :label="t('notice.publish')" prop="publish">
               <el-select
                 v-model="newFormInline.publish"
+                :disabled="
+                  !props.isAdd && props.showColumns.indexOf('publish') === -1
+                "
                 class="!w-[180px]"
                 clearable
               >
@@ -223,7 +235,13 @@ const loading = ref(false);
               :label="t('user.userId')"
               prop="notice_user"
             >
-              <search-users v-model="newFormInline.notice_user" />
+              <search-users
+                v-model="newFormInline.notice_user"
+                :disabled="
+                  !props.isAdd &&
+                  props.showColumns.indexOf('notice_user') === -1
+                "
+              />
             </el-form-item>
             <el-form-item
               v-if="
@@ -233,7 +251,13 @@ const loading = ref(false);
               :label="t('dept.dept')"
               prop="notice_dept"
             >
-              <search-depts v-model="newFormInline.notice_dept" />
+              <search-depts
+                v-model="newFormInline.notice_dept"
+                :disabled="
+                  !props.isAdd &&
+                  props.showColumns.indexOf('notice_dept') === -1
+                "
+              />
             </el-form-item>
             <el-form-item
               v-if="
@@ -243,7 +267,13 @@ const loading = ref(false);
               :label="t('role.role')"
               prop="notice_role"
             >
-              <search-roles v-model="newFormInline.notice_role" />
+              <search-roles
+                v-model="newFormInline.notice_role"
+                :disabled="
+                  !props.isAdd &&
+                  props.showColumns.indexOf('notice_role') === -1
+                "
+              />
             </el-form-item>
           </re-col>
         </el-row>

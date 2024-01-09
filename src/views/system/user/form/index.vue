@@ -7,10 +7,11 @@ import { usePublicHooks } from "@/views/system/hooks";
 import { useI18n } from "vue-i18n";
 
 const props = withDefaults(defineProps<FormProps>(), {
+  isAdd: () => true,
   treeData: () => [],
+  showColumns: () => [],
   choicesDict: () => [],
   formInline: () => ({
-    is_add: true,
     username: "",
     nickname: "",
     avatar: "",
@@ -48,6 +49,9 @@ defineExpose({ getRef });
         <el-form-item :label="t('user.username')" prop="username">
           <el-input
             v-model="newFormInline.username"
+            :disabled="
+              !props.isAdd && props.showColumns.indexOf('username') === -1
+            "
             clearable
             :placeholder="t('user.verifyUsername')"
           />
@@ -57,12 +61,15 @@ defineExpose({ getRef });
         <el-form-item :label="t('user.nickname')" prop="nickname">
           <el-input
             v-model="newFormInline.nickname"
+            :disabled="
+              !props.isAdd && props.showColumns.indexOf('nickname') === -1
+            "
             clearable
             :placeholder="t('user.verifyNickname')"
           />
         </el-form-item>
       </re-col>
-      <re-col v-if="newFormInline.is_add" :value="12" :xs="24" :sm="24">
+      <re-col v-if="props.isAdd" :sm="24" :value="12" :xs="24">
         <el-form-item :label="t('user.password')" prop="password">
           <el-input
             v-model="newFormInline.password"
@@ -75,6 +82,9 @@ defineExpose({ getRef });
         <el-form-item :label="t('user.mobile')" prop="mobile">
           <el-input
             v-model="newFormInline.mobile"
+            :disabled="
+              !props.isAdd && props.showColumns.indexOf('mobile') === -1
+            "
             clearable
             :placeholder="t('user.verifyMobile')"
           />
@@ -85,6 +95,9 @@ defineExpose({ getRef });
         <el-form-item :label="t('user.email')" prop="email">
           <el-input
             v-model="newFormInline.email"
+            :disabled="
+              !props.isAdd && props.showColumns.indexOf('email') === -1
+            "
             clearable
             :placeholder="t('user.verifyEmail')"
           />
@@ -92,7 +105,14 @@ defineExpose({ getRef });
       </re-col>
       <re-col :value="12" :xs="24" :sm="24">
         <el-form-item :label="t('user.gender')" prop="gender">
-          <el-select v-model="newFormInline.gender" class="w-full" clearable>
+          <el-select
+            v-model="newFormInline.gender"
+            :disabled="
+              !props.isAdd && props.showColumns.indexOf('gender') === -1
+            "
+            class="w-full"
+            clearable
+          >
             <el-option
               v-for="item in props.choicesDict"
               :key="item.key"
@@ -107,6 +127,9 @@ defineExpose({ getRef });
         <el-form-item :label="t('labels.status')" prop="is_active">
           <el-switch
             v-model="newFormInline.is_active"
+            :disabled="
+              !props.isAdd && props.showColumns.indexOf('is_active') === -1
+            "
             inline-prompt
             :active-value="true"
             :inactive-value="false"
@@ -120,6 +143,7 @@ defineExpose({ getRef });
         <el-form-item :label="t('user.dept')" prop="parent">
           <el-cascader
             v-model="newFormInline.dept"
+            :disabled="!props.isAdd && props.showColumns.indexOf('dept') === -1"
             class="w-full"
             :options="props.treeData"
             :props="{
@@ -143,6 +167,9 @@ defineExpose({ getRef });
         <el-form-item :label="t('labels.description')">
           <el-input
             v-model="newFormInline.description"
+            :disabled="
+              !props.isAdd && props.showColumns.indexOf('description') === -1
+            "
             :placeholder="t('labels.verifyDescription')"
             type="textarea"
             rows="3"

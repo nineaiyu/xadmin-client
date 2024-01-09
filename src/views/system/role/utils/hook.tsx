@@ -50,6 +50,7 @@ export function useRole(tableRef: Ref) {
   const loading = ref(true);
   const switchLoadMap = ref({});
   const { switchStyle } = usePublicHooks();
+  const showColumns = ref([]);
   const pagination = reactive<PaginationProps>({
     total: 0,
     pageSize: 10,
@@ -70,17 +71,20 @@ export function useRole(tableRef: Ref) {
     {
       label: t("role.name"),
       prop: "name",
-      minWidth: 120
+      minWidth: 120,
+      hide: () => showColumns.value.indexOf("name") === -1
     },
     {
       label: t("role.code"),
       prop: "code",
       minWidth: 150,
-      cellRenderer: ({ row }) => <span v-copy={row.code}>{row.code}</span>
+      cellRenderer: ({ row }) => <span v-copy={row.code}>{row.code}</span>,
+      hide: () => showColumns.value.indexOf("code") === -1
     },
     {
       label: t("labels.status"),
       minWidth: 130,
+      prop: "is_active",
       cellRenderer: scope => (
         <el-switch
           size={scope.props.size === "small" ? "small" : "default"}
@@ -95,19 +99,22 @@ export function useRole(tableRef: Ref) {
           style={switchStyle.value}
           onChange={() => onChange(scope as any)}
         />
-      )
+      ),
+      hide: () => showColumns.value.indexOf("is_active") === -1
     },
     {
       label: t("labels.description"),
       prop: "description",
-      minWidth: 150
+      minWidth: 150,
+      hide: () => showColumns.value.indexOf("description") === -1
     },
     {
       label: t("sorts.createdDate"),
       minWidth: 180,
-      prop: "createTime",
+      prop: "created_time",
       formatter: ({ created_time }) =>
-        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
+        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss"),
+      hide: () => showColumns.value.indexOf("created_time") === -1
     },
     {
       label: t("labels.operations"),
@@ -222,9 +229,11 @@ export function useRole(tableRef: Ref) {
     }
     loading.value = true;
     const { data } = await getRoleListApi(toRaw(form));
+    if (data.results.length > 0) {
+      showColumns.value = Object.keys(data.results[0]);
+    }
     dataList.value = data.results;
     pagination.total = data.total;
-
     delay(500).then(() => {
       loading.value = false;
     });
@@ -253,7 +262,9 @@ export function useRole(tableRef: Ref) {
           is_active: row?.is_active ?? true,
           description: row?.description ?? ""
         },
-        menuTreeData: menuTreeData.value
+        menuTreeData: menuTreeData.value,
+        showColumns: showColumns.value,
+        isAdd: is_add
       },
       width: "40%",
       draggable: true,
@@ -315,7 +326,7 @@ export function useRole(tableRef: Ref) {
           item.children = [];
           item.model.forEach(m => {
             let data = cloneDeep(fieldLookupsData.value[m]);
-            data.pk = `+${data.pk}`;
+            data.pk = -data.pk;
             data.children.forEach(x => {
               x.pk = `${item.pk}-${x.pk}`;
               x.parent = data.pk;
@@ -328,7 +339,7 @@ export function useRole(tableRef: Ref) {
       });
     }
 
-    deep(arr);
+    if (Object.keys(fieldLookupsData.value).length) deep(arr);
   }
 
   /** 菜单权限 */

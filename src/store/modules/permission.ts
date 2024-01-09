@@ -14,7 +14,8 @@ export const usePermissionStore = defineStore({
     // 整体路由生成的菜单（静态、动态）
     wholeMenus: [],
     // 缓存页面keepAlive
-    cachePageList: []
+    cachePageList: [],
+    routes: []
   }),
   actions: {
     /** 组装整体路由生成的菜单 */
@@ -22,6 +23,7 @@ export const usePermissionStore = defineStore({
       this.wholeMenus = filterNoPermissionTree(
         filterTree(ascending(this.constantMenus.concat(routes)))
       );
+      this.routes = this.constantMenus.concat(routes);
     },
     cacheOperate({ mode, name }: cacheType) {
       const delIndex = this.cachePageList.findIndex(v => v === name);

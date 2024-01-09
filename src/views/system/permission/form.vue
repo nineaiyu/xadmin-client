@@ -8,6 +8,8 @@ import filterForm from "./filter/index.vue";
 import { ModeChoices } from "@/views/system/constants";
 
 const props = withDefaults(defineProps<FormProps>(), {
+  isAdd: () => true,
+  showColumns: () => [],
   choicesDict: () => [],
   fieldLookupsData: () => [],
   valuesData: () => [],
@@ -46,13 +48,19 @@ defineExpose({ getRef });
     <el-form-item :label="t('permission.name')" prop="name">
       <el-input
         v-model="newFormInline.name"
+        :disabled="!props.isAdd && props.showColumns.indexOf('name') === -1"
         clearable
         :placeholder="t('permission.name')"
       />
     </el-form-item>
 
     <el-form-item :label="t('labels.status')" prop="is_active">
-      <el-radio-group v-model="newFormInline.is_active">
+      <el-radio-group
+        v-model="newFormInline.is_active"
+        :disabled="
+          !props.isAdd && props.showColumns.indexOf('is_active') === -1
+        "
+      >
         <el-radio-button
           v-for="item in ifEnableOptions"
           :key="item.label"
@@ -62,7 +70,14 @@ defineExpose({ getRef });
       </el-radio-group>
     </el-form-item>
     <el-form-item :label="t('permission.mode')" prop="mode_type">
-      <el-select v-model="newFormInline.mode_type" class="!w-[180px]" clearable>
+      <el-select
+        v-model="newFormInline.mode_type"
+        :disabled="
+          !props.isAdd && props.showColumns.indexOf('mode_type') === -1
+        "
+        class="!w-[180px]"
+        clearable
+      >
         <el-option
           v-for="item in props.choicesDict"
           :key="item.key"
@@ -75,12 +90,16 @@ defineExpose({ getRef });
     <el-form-item :label="t('labels.description')">
       <el-input
         v-model="newFormInline.description"
+        :disabled="
+          !props.isAdd && props.showColumns.indexOf('description') === -1
+        "
         :placeholder="t('labels.verifyDescription')"
         type="textarea"
       />
     </el-form-item>
     <filter-form
       v-model:data-list="newFormInline.rules"
+      :disabled="!props.isAdd && props.showColumns.indexOf('rules') === -1"
       :rule-list="props.fieldLookupsData"
       :values-data="props.valuesData"
     />
