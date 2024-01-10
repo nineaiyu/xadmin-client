@@ -11,8 +11,9 @@ import { useRouter } from "vue-router";
 import { delay, getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
+import { formatColumns } from "@/views/system/hooks";
 
-export function useOperationLog(tableRef: Ref) {
+export function useOperationLog(tableRef: Ref, tableBarRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -46,7 +47,7 @@ export function useOperationLog(tableRef: Ref) {
     pageSizes: [5, 10, 20, 50, 100],
     background: true
   });
-  const columns: TableColumnList = [
+  const columns = ref<TableColumnList>([
     {
       type: "selection",
       align: "left"
@@ -59,8 +60,7 @@ export function useOperationLog(tableRef: Ref) {
     {
       label: t("logsOperation.module"),
       prop: "module",
-      minWidth: 120,
-      hide: () => showColumns.value.indexOf("module") === -1
+      minWidth: 120
     },
     {
       label: t("user.user"),
@@ -70,14 +70,12 @@ export function useOperationLog(tableRef: Ref) {
         <el-link onClick={() => onGoDetail(row as any)}>
           {row.creator?.username ? row.creator?.username : "/"}
         </el-link>
-      ),
-      hide: () => showColumns.value.indexOf("creator") === -1
+      )
     },
     {
       label: t("logsOperation.address"),
       prop: "ipaddress",
-      minWidth: 150,
-      hide: () => showColumns.value.indexOf("ipaddress") === -1
+      minWidth: 150
     },
     {
       label: t("logsOperation.requestPath"),
@@ -87,46 +85,39 @@ export function useOperationLog(tableRef: Ref) {
         <span>
           {row.method}: {row.path}
         </span>
-      ),
-      hide: () => showColumns.value.indexOf("path") === -1
+      )
     },
     {
       label: t("logsOperation.parameters"),
       prop: "body",
-      minWidth: 150,
-      hide: () => showColumns.value.indexOf("body") === -1
+      minWidth: 150
     },
     {
       label: t("logsOperation.browser"),
       prop: "browser",
-      minWidth: 150,
-      hide: () => showColumns.value.indexOf("browser") === -1
+      minWidth: 150
     },
     {
       label: t("logsOperation.system"),
       prop: "system",
-      minWidth: 150,
-      hide: () => showColumns.value.indexOf("system") === -1
+      minWidth: 150
     },
     {
       label: t("logsOperation.statusCode"),
       prop: "response_code",
-      minWidth: 100,
-      hide: () => showColumns.value.indexOf("response_code") === -1
+      minWidth: 100
     },
     {
       label: t("logsOperation.response"),
       prop: "response_result",
-      minWidth: 150,
-      hide: () => showColumns.value.indexOf("response_result") === -1
+      minWidth: 150
     },
     {
       label: t("sorts.createdDate"),
       minWidth: 180,
       prop: "created_time",
       formatter: ({ created_time }) =>
-        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss"),
-      hide: () => showColumns.value.indexOf("created_time") === -1
+        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
     },
     {
       label: t("labels.operations"),
@@ -135,7 +126,7 @@ export function useOperationLog(tableRef: Ref) {
       slot: "operation",
       hide: !hasAuth("delete:systemOperationLog")
     }
-  ];
+  ]);
 
   function onGoDetail(row: any) {
     if (hasGlobalAuth("list:systemUser") && row.creator && row.creator?.pk) {
@@ -205,9 +196,7 @@ export function useOperationLog(tableRef: Ref) {
     }
     loading.value = true;
     const { data } = await getOperationLogListApi(toRaw(form));
-    if (data.results.length > 0) {
-      showColumns.value = Object.keys(data.results[0]);
-    }
+    formatColumns(data?.results, columns, showColumns, tableBarRef);
     dataList.value = data.results;
     pagination.total = data.total;
     delay(500).then(() => {

@@ -21,8 +21,9 @@ import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { NoticeChoices } from "@/views/system/constants";
+import { formatColumns } from "@/views/system/hooks";
 
-export function useNotice(tableRef: Ref) {
+export function useNotice(tableRef: Ref, tableBarRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -65,7 +66,7 @@ export function useNotice(tableRef: Ref) {
     pageSizes: [5, 10, 20, 50, 100],
     background: true
   });
-  const columns: TableColumnList = [
+  const columns = ref<TableColumnList>([
     {
       type: "selection",
       align: "left"
@@ -81,14 +82,12 @@ export function useNotice(tableRef: Ref) {
       minWidth: 120,
       cellRenderer: ({ row }) => (
         <el-text type={row?.level}>{row.title}</el-text>
-      ),
-      hide: () => showColumns.value.indexOf("title") === -1
+      )
     },
     {
       label: t("notice.type"),
       prop: "notice_type_display",
-      minWidth: 120,
-      hide: () => showColumns.value.indexOf("notice_type_display") === -1
+      minWidth: 120
     },
     {
       label: t("notice.receiveRead"),
@@ -104,8 +103,7 @@ export function useNotice(tableRef: Ref) {
             : row.user_count}
           /{row.read_user_count}
         </el-link>
-      ),
-      hide: () => showColumns.value.indexOf("user_count") === -1
+      )
     },
     {
       label: t("notice.publish"),
@@ -124,16 +122,14 @@ export function useNotice(tableRef: Ref) {
           inline-prompt
           onChange={() => onChange(scope as any)}
         />
-      ),
-      hide: () => showColumns.value.indexOf("publish") === -1
+      )
     },
     {
       label: t("sorts.createdDate"),
       minWidth: 180,
       prop: "created_time",
       formatter: ({ created_time }) =>
-        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss"),
-      hide: () => showColumns.value.indexOf("created_time") === -1
+        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
     },
     {
       label: t("labels.operations"),
@@ -141,7 +137,7 @@ export function useNotice(tableRef: Ref) {
       width: 200,
       slot: "operation"
     }
-  ];
+  ]);
 
   function onGoNoticeReadDetail(row: any) {
     if (hasGlobalAuth("list:systemNoticeRead") && row.pk) {
@@ -360,9 +356,7 @@ export function useNotice(tableRef: Ref) {
     loading.value = true;
     getNoticeListApi(toRaw(form)).then(res => {
       if (res.code === 1000 && res.data) {
-        if (res.data.results.length > 0) {
-          showColumns.value = Object.keys(res.data.results[0]);
-        }
+        formatColumns(res?.data?.results, columns, showColumns, tableBarRef);
         dataList.value = res.data.results;
         pagination.total = res.data.total;
         levelChoices.value = res.level_choices;

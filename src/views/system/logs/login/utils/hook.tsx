@@ -11,8 +11,9 @@ import { useRouter } from "vue-router";
 import { delay, getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
+import { formatColumns } from "@/views/system/hooks";
 
-export function useLoginLog(tableRef: Ref) {
+export function useLoginLog(tableRef: Ref, tableBarRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -48,7 +49,7 @@ export function useLoginLog(tableRef: Ref) {
     pageSizes: [5, 10, 20, 50, 100],
     background: true
   });
-  const columns: TableColumnList = [
+  const columns = ref<TableColumnList>([
     {
       type: "selection",
       align: "left"
@@ -66,46 +67,39 @@ export function useLoginLog(tableRef: Ref) {
         <el-link onClick={() => onGoDetail(row as any)}>
           {row.creator?.username ? row.creator?.username : "/"}
         </el-link>
-      ),
-      hide: () => showColumns.value.indexOf("creator") === -1
+      )
     },
     {
       label: t("logsLogin.address"),
       prop: "ipaddress",
-      minWidth: 150,
-      hide: () => showColumns.value.indexOf("ipaddress") === -1
+      minWidth: 150
     },
     {
       label: t("logsLogin.loginDisplay"),
       prop: "login_display",
-      minWidth: 150,
-      hide: () => showColumns.value.indexOf("login_display") === -1
+      minWidth: 150
     },
     {
       label: t("logsLogin.browser"),
       prop: "browser",
-      minWidth: 150,
-      hide: () => showColumns.value.indexOf("browser") === -1
+      minWidth: 150
     },
     {
       label: t("logsLogin.system"),
       prop: "system",
-      minWidth: 150,
-      hide: () => showColumns.value.indexOf("system") === -1
+      minWidth: 150
     },
     {
       label: t("logsLogin.agent"),
       prop: "agent",
-      minWidth: 150,
-      hide: () => showColumns.value.indexOf("agent") === -1
+      minWidth: 150
     },
     {
       label: t("sorts.createdDate"),
       minWidth: 180,
       prop: "created_time",
       formatter: ({ created_time }) =>
-        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss"),
-      hide: () => showColumns.value.indexOf("created_time") === -1
+        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
     },
     {
       label: t("labels.operations"),
@@ -114,7 +108,7 @@ export function useLoginLog(tableRef: Ref) {
       slot: "operation",
       hide: !hasAuth("delete:systemLoginLog")
     }
-  ];
+  ]);
 
   function onGoDetail(row: any) {
     if (hasGlobalAuth("list:systemUser") && row.creator && row.creator?.pk) {
@@ -184,9 +178,7 @@ export function useLoginLog(tableRef: Ref) {
     }
     loading.value = true;
     const { data, choices_dict } = await getLoginLogListApi(toRaw(form));
-    if (data.results.length > 0) {
-      showColumns.value = Object.keys(data.results[0]);
-    }
+    formatColumns(data?.results, columns, showColumns, tableBarRef);
     dataList.value = data.results;
     pagination.total = data.total;
     choicesDict.value = choices_dict;

@@ -18,6 +18,7 @@ defineOptions({
 
 const formRef = ref();
 const tableRef = ref();
+const tableBarRef = ref();
 const {
   t,
   form,
@@ -39,7 +40,7 @@ const {
   handleSizeChange,
   handleCurrentChange,
   handleSelectionChange
-} = useNotice(tableRef);
+} = useNotice(tableRef, tableBarRef);
 </script>
 
 <template>
@@ -150,6 +151,7 @@ const {
     </el-form>
 
     <PureTableBar
+      ref="tableBarRef"
       :title="t('notice.messageManage')"
       :columns="columns"
       @refresh="onSearch(true)"

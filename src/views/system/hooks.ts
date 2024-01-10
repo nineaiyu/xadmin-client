@@ -1,6 +1,6 @@
 // 抽离可公用的工具函数等用于系统管理页面逻辑
 import { computed } from "vue";
-import { useDark } from "@pureadmin/utils";
+import { cloneDeep, useDark } from "@pureadmin/utils";
 
 export function usePublicHooks() {
   const { isDark } = useDark();
@@ -49,4 +49,21 @@ export function formatHigherDeptOptions(treeList) {
     newTreeList.push(treeList[i]);
   }
   return newTreeList;
+}
+
+export function formatColumns(results, columns, showColumns, tableBarRef) {
+  if (results.length > 0) {
+    showColumns.value = Object.keys(results[0]);
+    cloneDeep(columns.value).forEach(column => {
+      if (column?.prop && showColumns.value.indexOf(column?.prop) === -1) {
+        columns.value.splice(
+          columns.value.findIndex(obj => {
+            return obj.label === column.label;
+          }),
+          1
+        );
+      }
+    });
+  }
+  tableBarRef.value.onReset();
 }

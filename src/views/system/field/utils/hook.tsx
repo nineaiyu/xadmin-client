@@ -4,12 +4,13 @@ import {
   syncModelLabelFieldApi
 } from "@/api/system/field";
 import type { PaginationProps } from "@pureadmin/table";
-import { onMounted, reactive, ref, toRaw } from "vue";
+import { onMounted, reactive, ref, type Ref, toRaw } from "vue";
 import { delay } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
+import { formatColumns } from "@/views/system/hooks";
 
-export function useModelField() {
+export function useModelField(tableBarRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -39,7 +40,7 @@ export function useModelField() {
     pageSizes: [5, 10, 20, 50, 100],
     background: true
   });
-  const columns: TableColumnList = [
+  const columns = ref<TableColumnList>([
     {
       type: "selection",
       align: "left"
@@ -53,46 +54,40 @@ export function useModelField() {
       label: t("modelField.name"),
       prop: "name",
       minWidth: 120,
-      cellRenderer: ({ row }) => <span v-copy={row.name}>{row.name}</span>,
-      hide: () => showColumns.value.indexOf("name") === -1
+      cellRenderer: ({ row }) => <span v-copy={row.name}>{row.name}</span>
     },
     {
       label: t("modelField.label"),
       prop: "label",
       minWidth: 150,
-      cellRenderer: ({ row }) => <span v-copy={row.label}>{row.label}</span>,
-      hide: () => showColumns.value.indexOf("label") === -1
+      cellRenderer: ({ row }) => <span v-copy={row.label}>{row.label}</span>
     },
     {
       label: t("modelField.parent"),
       prop: "parent",
       minWidth: 150,
-      cellRenderer: ({ row }) => <span v-copy={row.parent}>{row.parent}</span>,
-      hide: () => showColumns.value.indexOf("parent") === -1
+      cellRenderer: ({ row }) => <span v-copy={row.parent}>{row.parent}</span>
     },
     {
       label: t("modelField.fieldType"),
       prop: "field_type_display",
-      minWidth: 150,
-      hide: () => showColumns.value.indexOf("field_type_display") === -1
+      minWidth: 150
     },
     {
       label: t("sorts.createdDate"),
       minWidth: 180,
       prop: "created_time",
       formatter: ({ created_time }) =>
-        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss"),
-      hide: () => showColumns.value.indexOf("created_time") === -1
+        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
     },
     {
       label: t("sorts.updatedDate"),
       minWidth: 180,
       prop: "updated_time",
       formatter: ({ updated_time }) =>
-        dayjs(updated_time).format("YYYY-MM-DD HH:mm:ss"),
-      hide: () => showColumns.value.indexOf("updated_time") === -1
+        dayjs(updated_time).format("YYYY-MM-DD HH:mm:ss")
     }
-  ];
+  ]);
 
   async function handleSizeChange(val: number) {
     form.page = 1;
@@ -112,12 +107,9 @@ export function useModelField() {
     }
     loading.value = true;
     const { data } = await getModelLabelFieldListApi(toRaw(form));
-    if (data.results.length > 0) {
-      showColumns.value = Object.keys(data.results[0]);
-    }
+    formatColumns(data?.results, columns, showColumns, tableBarRef);
     dataList.value = data.results;
     pagination.total = data.total;
-
     delay(500).then(() => {
       loading.value = false;
     });

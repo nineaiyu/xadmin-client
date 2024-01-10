@@ -26,11 +26,15 @@ import { useRoute, useRouter } from "vue-router";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { handleTree } from "@/utils/tree";
-import { formatHigherDeptOptions, usePublicHooks } from "@/views/system/hooks";
+import {
+  formatColumns,
+  formatHigherDeptOptions,
+  usePublicHooks
+} from "@/views/system/hooks";
 import { getDataPermissionListApi } from "@/api/system/permission";
 import { ModeChoices } from "@/views/system/constants";
 
-export function useDept(tableRef: Ref) {
+export function useDept(tableRef: Ref, tableBarRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -76,7 +80,7 @@ export function useDept(tableRef: Ref) {
   const { switchStyle } = usePublicHooks();
   const manySelectCount = ref(0);
   const showColumns = ref([]);
-  const columns: TableColumnList = [
+  const columns = ref<TableColumnList>([
     {
       type: "selection",
       align: "left"
@@ -85,8 +89,7 @@ export function useDept(tableRef: Ref) {
       label: t("dept.name"),
       prop: "name",
       minWidth: 200,
-      cellRenderer: ({ row }) => <span v-copy={row.name}>{row.name}</span>,
-      hide: () => showColumns.value.indexOf("name") === -1
+      cellRenderer: ({ row }) => <span v-copy={row.name}>{row.name}</span>
     },
     {
       label: t("labels.id"),
@@ -98,8 +101,7 @@ export function useDept(tableRef: Ref) {
       label: t("dept.code"),
       prop: "code",
       minWidth: 100,
-      cellRenderer: ({ row }) => <span v-copy={row.code}>{row.code}</span>,
-      hide: () => showColumns.value.indexOf("code") === -1
+      cellRenderer: ({ row }) => <span v-copy={row.code}>{row.code}</span>
     },
     {
       label: t("dept.userCount"),
@@ -109,20 +111,17 @@ export function useDept(tableRef: Ref) {
         <el-link onClick={() => onGoDetail(row as any)}>
           {row.user_count}
         </el-link>
-      ),
-      hide: () => showColumns.value.indexOf("user_count") === -1
+      )
     },
     {
       label: t("sorts.rank"),
       prop: "rank",
-      minWidth: 90,
-      hide: () => showColumns.value.indexOf("rank") === -1
+      minWidth: 90
     },
     {
       label: t("permission.mode"),
       prop: "mode_display",
-      minWidth: 90,
-      hide: () => showColumns.value.indexOf("mode_display") === -1
+      minWidth: 90
     },
     {
       label: t("dept.autoBind"),
@@ -142,8 +141,7 @@ export function useDept(tableRef: Ref) {
           style={switchStyle.value}
           onChange={() => onChangeBind(scope as any)}
         />
-      ),
-      hide: () => showColumns.value.indexOf("auto_bind") === -1
+      )
     },
     {
       label: t("labels.status"),
@@ -163,38 +161,39 @@ export function useDept(tableRef: Ref) {
           style={switchStyle.value}
           onChange={() => onChange(scope as any)}
         />
-      ),
-      hide: () => showColumns.value.indexOf("is_active") === -1
+      )
     },
     {
       label: t("dept.roles"),
       prop: "roles_info",
       width: 160,
-      slot: "roles",
-      hide: () => showColumns.value.indexOf("roles_info") === -1
+      slot: "roles"
     },
     {
       label: t("dept.rules"),
       prop: "rules_info",
       width: 160,
-      slot: "rules",
-      hide: () => showColumns.value.indexOf("rules_info") === -1
+      slot: "rules"
     },
     {
       label: t("sorts.createdDate"),
       minWidth: 180,
       prop: "created_time",
       formatter: ({ created_time }) =>
-        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss"),
-      hide: () => showColumns.value.indexOf("created_time") === -1
+        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
     },
     {
       label: t("labels.operations"),
       fixed: "right",
       width: 180,
-      slot: "operation"
+      slot: "operation",
+      hide: !(
+        hasAuth("update:systemDept") ||
+        hasAuth("empower:systemDeptRole") ||
+        hasAuth("delete:systemDept")
+      )
     }
-  ];
+  ]);
 
   function onGoDetail(row: any) {
     if (hasGlobalAuth("list:systemUser") && row.user_count && row.pk) {
@@ -352,9 +351,7 @@ export function useDept(tableRef: Ref) {
   async function onSearch() {
     loading.value = true;
     const { data, choices_dict } = await getDeptListApi(toRaw(form));
-    if (data.results.length > 0) {
-      showColumns.value = Object.keys(data.results[0]);
-    }
+    formatColumns(data?.results, columns, showColumns, tableBarRef);
     choicesDict.value = choices_dict;
     dataList.value = handleTree(data.results);
     delay(500).then(() => {

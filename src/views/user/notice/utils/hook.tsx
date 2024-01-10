@@ -14,8 +14,9 @@ import { cloneDeep, getKeyList, isEmpty, isString } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog";
 import { useI18n } from "vue-i18n";
 import { useUserStoreHook } from "@/store/modules/user";
+import { formatColumns } from "@/views/system/hooks";
 
-export function useUserNotice(tableRef: Ref) {
+export function useUserNotice(tableRef: Ref, tableBarRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -55,7 +56,7 @@ export function useUserNotice(tableRef: Ref) {
     pageSizes: [5, 10, 20, 50, 100],
     background: true
   });
-  const columns: TableColumnList = [
+  const columns = ref<TableColumnList>([
     {
       type: "selection",
       align: "left"
@@ -69,10 +70,7 @@ export function useUserNotice(tableRef: Ref) {
       label: t("notice.title"),
       prop: "title",
       minWidth: 120,
-      cellRenderer: ({ row }) => (
-        <el-text type={row.level}>{row.title}</el-text>
-      ),
-      hide: () => showColumns.value.indexOf("title") === -1
+      cellRenderer: ({ row }) => <el-text type={row.level}>{row.title}</el-text>
     },
     {
       label: t("notice.haveRead"),
@@ -82,22 +80,19 @@ export function useUserNotice(tableRef: Ref) {
         <el-text type={row.unread ? "success" : "info"}>
           {row.unread ? t("labels.unread") : t("labels.read")}
         </el-text>
-      ),
-      hide: () => showColumns.value.indexOf("unread") === -1
+      )
     },
     {
       label: t("sorts.createdDate"),
       minWidth: 180,
       prop: "created_time",
       formatter: ({ created_time }) =>
-        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss"),
-      hide: () => showColumns.value.indexOf("created_time") === -1
+        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
     },
     {
       label: t("notice.type"),
       prop: "notice_type_display",
-      minWidth: 120,
-      hide: () => showColumns.value.indexOf("notice_type_display") === -1
+      minWidth: 120
     },
     {
       label: t("labels.operations"),
@@ -105,7 +100,7 @@ export function useUserNotice(tableRef: Ref) {
       width: 200,
       slot: "operation"
     }
-  ];
+  ]);
 
   function showDialog(row?: FormItemProps) {
     if (row.unread) {
@@ -202,9 +197,7 @@ export function useUserNotice(tableRef: Ref) {
     loading.value = true;
     getUserNoticeListApi(toRaw(form)).then(res => {
       if (res.code === 1000 && res.data) {
-        if (res.data.results.length > 0) {
-          showColumns.value = Object.keys(res.data.results[0]);
-        }
+        formatColumns(res?.data?.results, columns, showColumns, tableBarRef);
         dataList.value = res.data.results;
         pagination.total = res.data.total;
         levelChoices.value = res.level_choices;

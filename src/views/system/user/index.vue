@@ -25,6 +25,7 @@ defineOptions({
 const formRef = ref();
 const tableRef = ref();
 const treeRef = ref();
+const tableBarRef = ref();
 const {
   t,
   form,
@@ -53,7 +54,7 @@ const {
   handleSizeChange,
   handleCurrentChange,
   handleSelectionChange
-} = useUser(tableRef, treeRef);
+} = useUser(tableRef, treeRef, tableBarRef);
 </script>
 
 <template>
@@ -160,6 +161,7 @@ const {
       </el-form>
 
       <PureTableBar
+        ref="tableBarRef"
         :title="t('menus.hsUser')"
         :columns="columns"
         @refresh="onSearch(true)"

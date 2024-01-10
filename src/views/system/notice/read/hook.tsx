@@ -22,8 +22,9 @@ import { useRoute, useRouter } from "vue-router";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
+import { formatColumns } from "@/views/system/hooks";
 
-export function useNoticeRead(tableRef: Ref) {
+export function useNoticeRead(tableRef: Ref, tableBarRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -66,7 +67,7 @@ export function useNoticeRead(tableRef: Ref) {
     pageSizes: [5, 10, 20, 50, 100],
     background: true
   });
-  const columns: TableColumnList = [
+  const columns = ref<TableColumnList>([
     {
       type: "selection",
       align: "left"
@@ -74,8 +75,7 @@ export function useNoticeRead(tableRef: Ref) {
     {
       label: t("labels.id"),
       prop: "pk",
-      minWidth: 100,
-      cellRenderer: ({ row }) => <el-text>{row.notice_info.pk}</el-text>
+      minWidth: 100
     },
     {
       label: t("notice.title"),
@@ -88,8 +88,7 @@ export function useNoticeRead(tableRef: Ref) {
         >
           {row.notice_info.title}
         </el-link>
-      ),
-      hide: () => showColumns.value.indexOf("notice_info") === -1
+      )
     },
     {
       label: t("notice.type"),
@@ -97,15 +96,13 @@ export function useNoticeRead(tableRef: Ref) {
       minWidth: 100,
       cellRenderer: ({ row }) => (
         <el-text>{row.notice_info.notice_type_display}</el-text>
-      ),
-      hide: () => showColumns.value.indexOf("notice_info") === -1
+      )
     },
     {
       label: t("user.userId"),
       prop: "owner_info",
       minWidth: 100,
-      cellRenderer: ({ row }) => <el-text>{row.owner_info?.pk}</el-text>,
-      hide: () => showColumns.value.indexOf("owner_info") === -1
+      cellRenderer: ({ row }) => <el-text>{row.owner_info?.pk}</el-text>
     },
     {
       label: t("user.userInfo"),
@@ -115,8 +112,7 @@ export function useNoticeRead(tableRef: Ref) {
         <el-link onClick={() => onGoUserDetail(row as any)}>
           {row.owner_info?.username ? row.owner_info?.username : "/"}
         </el-link>
-      ),
-      hide: () => showColumns.value.indexOf("owner_info") === -1
+      )
     },
     {
       label: t("notice.readDate"),
@@ -128,8 +124,7 @@ export function useNoticeRead(tableRef: Ref) {
             ? dayjs(row.updated_time).format("YYYY-MM-DD HH:mm:ss")
             : "/"}
         </el-text>
-      ),
-      hide: () => showColumns.value.indexOf("updated_time") === -1
+      )
     },
     {
       label: t("notice.haveRead"),
@@ -148,8 +143,7 @@ export function useNoticeRead(tableRef: Ref) {
           inline-prompt
           onChange={() => onChange(scope as any)}
         />
-      ),
-      hide: () => showColumns.value.indexOf("unread") === -1
+      )
     },
     {
       label: t("labels.operations"),
@@ -157,7 +151,7 @@ export function useNoticeRead(tableRef: Ref) {
       width: 200,
       slot: "operation"
     }
-  ];
+  ]);
 
   function onChange({ row, index }) {
     const action = row.unread === false ? t("labels.read") : t("labels.unread");
@@ -310,9 +304,7 @@ export function useNoticeRead(tableRef: Ref) {
     loading.value = true;
     getNoticeReadListApi(toRaw(form)).then(res => {
       if (res.code === 1000 && res.data) {
-        if (res.data.results.length > 0) {
-          showColumns.value = Object.keys(res.data.results[0]);
-        }
+        formatColumns(res?.data?.results, columns, showColumns, tableBarRef);
         dataList.value = res.data.results;
         pagination.total = res.data.total;
         noticeChoices.value = res.notice_type_choices;

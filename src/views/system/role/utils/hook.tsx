@@ -8,7 +8,7 @@ import {
   updateRoleApi
 } from "@/api/system/role";
 import { ElMessageBox } from "element-plus";
-import { usePublicHooks } from "@/views/system/hooks";
+import { formatColumns, usePublicHooks } from "@/views/system/hooks";
 import { addDialog } from "@/components/ReDialog";
 import type { FormItemProps } from "./types";
 import editForm from "../form.vue";
@@ -22,7 +22,7 @@ import { useI18n } from "vue-i18n";
 import { getModelLabelFieldListApi } from "@/api/system/field";
 import { FieldChoices } from "@/views/system/constants";
 
-export function useRole(tableRef: Ref) {
+export function useRole(tableRef: Ref, tableBarRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -58,7 +58,7 @@ export function useRole(tableRef: Ref) {
     pageSizes: [5, 10, 20, 50, 100],
     background: true
   });
-  const columns: TableColumnList = [
+  const columns = ref<TableColumnList>([
     {
       type: "selection",
       align: "left"
@@ -71,15 +71,13 @@ export function useRole(tableRef: Ref) {
     {
       label: t("role.name"),
       prop: "name",
-      minWidth: 120,
-      hide: () => showColumns.value.indexOf("name") === -1
+      minWidth: 120
     },
     {
       label: t("role.code"),
       prop: "code",
       minWidth: 150,
-      cellRenderer: ({ row }) => <span v-copy={row.code}>{row.code}</span>,
-      hide: () => showColumns.value.indexOf("code") === -1
+      cellRenderer: ({ row }) => <span v-copy={row.code}>{row.code}</span>
     },
     {
       label: t("labels.status"),
@@ -99,22 +97,19 @@ export function useRole(tableRef: Ref) {
           style={switchStyle.value}
           onChange={() => onChange(scope as any)}
         />
-      ),
-      hide: () => showColumns.value.indexOf("is_active") === -1
+      )
     },
     {
       label: t("labels.description"),
       prop: "description",
-      minWidth: 150,
-      hide: () => showColumns.value.indexOf("description") === -1
+      minWidth: 150
     },
     {
       label: t("sorts.createdDate"),
       minWidth: 180,
       prop: "created_time",
       formatter: ({ created_time }) =>
-        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss"),
-      hide: () => showColumns.value.indexOf("created_time") === -1
+        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
     },
     {
       label: t("labels.operations"),
@@ -122,7 +117,7 @@ export function useRole(tableRef: Ref) {
       width: 160,
       slot: "operation"
     }
-  ];
+  ]);
 
   function onChange({ row, index }) {
     const action =
@@ -229,9 +224,7 @@ export function useRole(tableRef: Ref) {
     }
     loading.value = true;
     const { data } = await getRoleListApi(toRaw(form));
-    if (data.results.length > 0) {
-      showColumns.value = Object.keys(data.results[0]);
-    }
+    formatColumns(data?.results, columns, showColumns, tableBarRef);
     dataList.value = data.results;
     pagination.total = data.total;
     delay(500).then(() => {

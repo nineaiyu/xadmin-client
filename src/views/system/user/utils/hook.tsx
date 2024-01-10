@@ -51,11 +51,11 @@ import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { handleTree } from "@/utils/tree";
 import { getDeptListApi } from "@/api/system/dept";
-import { formatHigherDeptOptions } from "@/views/system/hooks";
+import { formatColumns, formatHigherDeptOptions } from "@/views/system/hooks";
 import { getDataPermissionListApi } from "@/api/system/permission";
 import { ModeChoices } from "@/views/system/constants";
 
-export function useUser(tableRef: Ref, treeRef: Ref) {
+export function useUser(tableRef: Ref, treeRef: Ref, tableBarRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -116,7 +116,7 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
     pageSizes: [5, 10, 20, 50, 100],
     background: true
   });
-  const columns: TableColumnList = [
+  const columns = ref<TableColumnList>([
     {
       type: "selection",
       prop: "pk",
@@ -140,8 +140,7 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
           preview-teleported={true}
           preview-src-list={Array.of(row.avatar)}
         />
-      ),
-      hide: () => showColumns.value.indexOf("avatar") === -1
+      )
     },
     {
       label: t("user.username"),
@@ -151,8 +150,7 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
         <span v-show={row?.username} v-copy={row?.username}>
           {row?.username}
         </span>
-      ),
-      hide: () => showColumns.value.indexOf("username") === -1
+      )
     },
     {
       label: t("user.nickname"),
@@ -162,8 +160,7 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
         <span v-show={row?.nickname} v-copy={row?.nickname}>
           {row?.nickname}
         </span>
-      ),
-      hide: () => showColumns.value.indexOf("nickname") === -1
+      )
     },
     {
       label: t("user.gender"),
@@ -177,8 +174,7 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
         >
           {row.gender_display}
         </el-tag>
-      ),
-      hide: () => showColumns.value.indexOf("gender") === -1
+      )
     },
 
     {
@@ -198,8 +194,7 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
           inline-prompt
           onChange={() => onChange(scope as any)}
         />
-      ),
-      hide: () => showColumns.value.indexOf("is_active") === -1
+      )
     },
 
     {
@@ -210,37 +205,32 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
         <span v-show={row?.dept_info?.name} v-copy={row?.dept_info?.name}>
           {row?.dept_info?.name}
         </span>
-      ),
-      hide: () => showColumns.value.indexOf("dept_info") === -1
+      )
     },
     {
       label: t("user.roles"),
       prop: "roles_info",
       width: 160,
-      slot: "roles",
-      hide: () => showColumns.value.indexOf("roles_info") === -1
+      slot: "roles"
     },
     {
       label: t("user.rules"),
       prop: "rules_info",
       width: 160,
-      slot: "rules",
-      hide: () => showColumns.value.indexOf("rules_info") === -1
+      slot: "rules"
     },
     {
       label: t("user.mobile"),
       prop: "mobile",
       minWidth: 90,
-      formatter: ({ mobile }) => hideTextAtIndex(mobile, { start: 3, end: 6 }),
-      hide: () => showColumns.value.indexOf("mobile") === -1
+      formatter: ({ mobile }) => hideTextAtIndex(mobile, { start: 3, end: 6 })
     },
     {
       label: t("user.registrationDate"),
       minWidth: 90,
       prop: "date_joined",
       formatter: ({ date_joined }) =>
-        dayjs(date_joined).format("YYYY-MM-DD HH:mm:ss"),
-      hide: () => showColumns.value.indexOf("date_joined") === -1
+        dayjs(date_joined).format("YYYY-MM-DD HH:mm:ss")
     },
     {
       label: t("labels.operations"),
@@ -248,7 +238,7 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
       width: 180,
       slot: "operation"
     }
-  ];
+  ]);
   const buttonClass = computed(() => {
     return [
       "!h-[20px]",
@@ -380,9 +370,7 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
     const { data, choices_dict, mode_choices } = await getUserListApi(
       toRaw(form)
     );
-    if (data.results.length > 0) {
-      showColumns.value = Object.keys(data.results[0]);
-    }
+    formatColumns(data?.results, columns, showColumns, tableBarRef);
     dataList.value = data.results;
     pagination.total = data.total;
     choicesDict.value = choices_dict;
@@ -489,7 +477,7 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
     const manySelectData = tableRef.value.getTableRef().getSelectionRows();
     const res: string[][] = manySelectData.map((item: FormItemProps) => {
       const arr = [];
-      columns.forEach((column: TableColumns | any) => {
+      columns.value.forEach((column: TableColumns | any) => {
         if (column.label) {
           arr.push(item[column.prop]);
         }
@@ -498,7 +486,7 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
     });
 
     const titleList: string[] = [];
-    columns.forEach((column: TableColumns) => {
+    columns.value.forEach((column: TableColumns) => {
       if (column.label) {
         titleList.push(column.label);
       }

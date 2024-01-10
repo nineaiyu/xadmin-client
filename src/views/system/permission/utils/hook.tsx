@@ -8,7 +8,7 @@ import {
   updateDataPermissionApi
 } from "@/api/system/permission";
 import { ElMessageBox } from "element-plus";
-import { usePublicHooks } from "@/views/system/hooks";
+import { formatColumns, usePublicHooks } from "@/views/system/hooks";
 import { addDialog } from "@/components/ReDialog";
 import type { FormItemProps } from "./types";
 import editForm from "../form.vue";
@@ -17,11 +17,11 @@ import { h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
 import { delay, getKeyList } from "@pureadmin/utils";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
-import { ModeChoices } from "@/views/system/constants";
+import { FieldChoices, ModeChoices } from "@/views/system/constants";
 import { handleTree } from "@/utils/tree";
 import { getModelLabelFieldListApi } from "@/api/system/field";
 
-export function useDataPermission(tableRef: Ref) {
+export function useDataPermission(tableRef: Ref, tableBarRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -59,7 +59,7 @@ export function useDataPermission(tableRef: Ref) {
     pageSizes: [5, 10, 20, 50, 100],
     background: true
   });
-  const columns: TableColumnList = [
+  const columns = ref<TableColumnList>([
     {
       type: "selection",
       align: "left"
@@ -72,14 +72,12 @@ export function useDataPermission(tableRef: Ref) {
     {
       label: t("permission.name"),
       prop: "name",
-      minWidth: 120,
-      hide: () => showColumns.value.indexOf("name") === -1
+      minWidth: 120
     },
     {
       label: t("permission.mode"),
       prop: "mode_display",
-      minWidth: 120,
-      hide: () => showColumns.value.indexOf("mode_display") === -1
+      minWidth: 120
     },
     {
       label: t("labels.status"),
@@ -99,22 +97,19 @@ export function useDataPermission(tableRef: Ref) {
           style={switchStyle.value}
           onChange={() => onChange(scope as any)}
         />
-      ),
-      hide: () => showColumns.value.indexOf("is_active") === -1
+      )
     },
     {
       label: t("labels.description"),
       prop: "description",
-      minWidth: 150,
-      hide: () => showColumns.value.indexOf("description") === -1
+      minWidth: 150
     },
     {
       label: t("sorts.createdDate"),
       minWidth: 180,
       prop: "created_time",
       formatter: ({ created_time }) =>
-        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss"),
-      hide: () => showColumns.value.indexOf("created_time") === -1
+        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
     },
     {
       label: t("labels.operations"),
@@ -122,7 +117,7 @@ export function useDataPermission(tableRef: Ref) {
       width: 160,
       slot: "operation"
     }
-  ];
+  ]);
 
   function onChange({ row, index }) {
     const action =
@@ -229,9 +224,7 @@ export function useDataPermission(tableRef: Ref) {
     }
     loading.value = true;
     const { data, choices_dict } = await getDataPermissionListApi(toRaw(form));
-    if (data.results.length > 0) {
-      showColumns.value = Object.keys(data.results[0]);
-    }
+    formatColumns(data?.results, columns, showColumns, tableBarRef);
     dataList.value = data.results;
     pagination.total = data.total;
     choicesDict.value = choices_dict;
@@ -322,7 +315,11 @@ export function useDataPermission(tableRef: Ref) {
   onMounted(() => {
     onSearch();
     if (hasGlobalAuth("list:systemModelField")) {
-      getModelLabelFieldListApi({ page: 1, size: 1000 }).then(res => {
+      getModelLabelFieldListApi({
+        page: 1,
+        size: 1000,
+        field_type: FieldChoices.DATA
+      }).then(res => {
         if (res.code === 1000) {
           fieldLookupsData.value = handleTree(res.data.results);
           valuesData.value = res.choices_dict;

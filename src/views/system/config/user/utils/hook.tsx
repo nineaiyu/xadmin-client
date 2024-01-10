@@ -9,7 +9,7 @@ import {
   updateUserConfigApi
 } from "@/api/system/config/user";
 import { ElMessageBox } from "element-plus";
-import { usePublicHooks } from "@/views/system/hooks";
+import { formatColumns, usePublicHooks } from "@/views/system/hooks";
 import { addDialog } from "@/components/ReDialog";
 import type { FormItemProps } from "./types";
 import editForm from "../form.vue";
@@ -20,7 +20,7 @@ import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 
-export function useUserConfig(tableRef: Ref) {
+export function useUserConfig(tableRef: Ref, tableBarRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -58,7 +58,7 @@ export function useUserConfig(tableRef: Ref) {
     pageSizes: [5, 10, 20, 50, 100],
     background: true
   });
-  const columns: TableColumnList = [
+  const columns = ref<TableColumnList>([
     {
       type: "selection",
       align: "left"
@@ -72,8 +72,7 @@ export function useUserConfig(tableRef: Ref) {
       label: t("user.userId"),
       prop: "owner_info",
       minWidth: 100,
-      cellRenderer: ({ row }) => <el-text>{row.owner_info?.pk}</el-text>,
-      hide: () => showColumns.value.indexOf("owner_info") === -1
+      cellRenderer: ({ row }) => <el-text>{row.owner_info?.pk}</el-text>
     },
     {
       label: t("user.userInfo"),
@@ -83,34 +82,33 @@ export function useUserConfig(tableRef: Ref) {
         <el-link onClick={() => onGoUserDetail(row as any)}>
           {row.owner_info?.username ? row.owner_info?.username : "/"}
         </el-link>
-      ),
-      hide: () => showColumns.value.indexOf("owner_info") === -1
+      )
     },
     {
       label: t("configUser.key"),
       prop: "key",
       minWidth: 120,
-      cellRenderer: ({ row }) => <span v-copy={row.key}>{row.key}</span>,
-      hide: () => showColumns.value.indexOf("key") === -1
+      cellRenderer: ({ row }) => <span v-copy={row.key}>{row.key}</span>
     },
     {
       label: t("configUser.value"),
       prop: "value",
       minWidth: 150,
-      cellRenderer: ({ row }) => <span v-copy={row.value}>{row.value}</span>,
-      hide: () => showColumns.value.indexOf("value") === -1
+      cellRenderer: ({ row }) => <span v-copy={row.value}>{row.value}</span>
     },
     {
       label: t("configUser.cacheValue"),
       prop: "cache_value",
       minWidth: 150,
       cellRenderer: ({ row }) => (
-        <span v-copy={row.cache_value}>{row.cache_value}</span>
-      ),
-      hide: () => showColumns.value.indexOf("cache_value") === -1
+        <span v-copy={row.cache_value.toString()}>
+          {row.cache_value.toString()}
+        </span>
+      )
     },
     {
       label: t("labels.status"),
+      prop: "is_active",
       minWidth: 130,
       cellRenderer: scope => (
         <el-switch
@@ -126,30 +124,32 @@ export function useUserConfig(tableRef: Ref) {
           style={switchStyle.value}
           onChange={() => onChange(scope as any)}
         />
-      ),
-      hide: () => showColumns.value.indexOf("is_active") === -1
+      )
     },
     {
       label: t("labels.description"),
       prop: "description",
-      minWidth: 150,
-      hide: () => showColumns.value.indexOf("description") === -1
+      minWidth: 150
     },
     {
       label: t("sorts.createdDate"),
       minWidth: 180,
       prop: "created_time",
       formatter: ({ created_time }) =>
-        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss"),
-      hide: () => showColumns.value.indexOf("created_time") === -1
+        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
     },
     {
       label: t("labels.operations"),
       fixed: "right",
       width: 260,
-      slot: "operation"
+      slot: "operation",
+      hide: !(
+        hasAuth("update:systemUserConfig") ||
+        hasAuth("invalid:systemUserConfig") ||
+        hasAuth("delete:systemUserConfig")
+      )
     }
-  ];
+  ]);
 
   function onGoUserDetail(row: any) {
     if (
@@ -268,9 +268,7 @@ export function useUserConfig(tableRef: Ref) {
     }
     loading.value = true;
     const { data } = await getUserConfigListApi(toRaw(form));
-    if (data.results.length > 0) {
-      showColumns.value = Object.keys(data.results[0]);
-    }
+    formatColumns(data?.results, columns, showColumns, tableBarRef);
     dataList.value = data.results;
     pagination.total = data.total;
     delay(500).then(() => {
