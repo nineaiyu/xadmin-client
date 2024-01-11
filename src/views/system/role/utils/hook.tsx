@@ -22,7 +22,7 @@ import { useI18n } from "vue-i18n";
 import { getModelLabelFieldListApi } from "@/api/system/field";
 import { FieldChoices } from "@/views/system/constants";
 
-export function useRole(tableRef: Ref, tableBarRef: Ref) {
+export function useRole(tableRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -224,7 +224,7 @@ export function useRole(tableRef: Ref, tableBarRef: Ref) {
     }
     loading.value = true;
     const { data } = await getRoleListApi(toRaw(form));
-    formatColumns(data?.results, columns, showColumns, tableBarRef);
+    formatColumns(data?.results, columns, showColumns);
     dataList.value = data.results;
     pagination.total = data.total;
     delay(500).then(() => {

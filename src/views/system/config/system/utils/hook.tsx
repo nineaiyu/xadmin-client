@@ -19,7 +19,7 @@ import { delay, getKeyList } from "@pureadmin/utils";
 import { hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 
-export function useSystemConfig(tableRef: Ref, tableBarRef: Ref) {
+export function useSystemConfig(tableRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -236,7 +236,7 @@ export function useSystemConfig(tableRef: Ref, tableBarRef: Ref) {
     }
     loading.value = true;
     const { data } = await getSystemConfigListApi(toRaw(form));
-    formatColumns(data?.results, columns, showColumns, tableBarRef);
+    formatColumns(data?.results, columns, showColumns);
     dataList.value = data.results;
     pagination.total = data.total;
     delay(500).then(() => {

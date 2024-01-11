@@ -24,7 +24,7 @@ import { ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { formatColumns } from "@/views/system/hooks";
 
-export function useNoticeRead(tableRef: Ref, tableBarRef: Ref) {
+export function useNoticeRead(tableRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -304,7 +304,7 @@ export function useNoticeRead(tableRef: Ref, tableBarRef: Ref) {
     loading.value = true;
     getNoticeReadListApi(toRaw(form)).then(res => {
       if (res.code === 1000 && res.data) {
-        formatColumns(res?.data?.results, columns, showColumns, tableBarRef);
+        formatColumns(res?.data?.results, columns, showColumns);
         dataList.value = res.data.results;
         pagination.total = res.data.total;
         noticeChoices.value = res.notice_type_choices;

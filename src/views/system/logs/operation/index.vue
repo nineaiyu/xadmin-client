@@ -14,7 +14,7 @@ defineOptions({
 
 const formRef = ref();
 const tableRef = ref();
-const tableBarRef = ref();
+
 const {
   t,
   form,
@@ -32,7 +32,7 @@ const {
   handleSizeChange,
   handleCurrentChange,
   handleSelectionChange
-} = useOperationLog(tableRef, tableBarRef);
+} = useOperationLog(tableRef);
 </script>
 
 <template>
@@ -119,7 +119,6 @@ const {
     </el-form>
 
     <PureTableBar
-      ref="tableBarRef"
       :title="t('menus.hsOperationLog')"
       :columns="columns"
       @refresh="onSearch(true)"

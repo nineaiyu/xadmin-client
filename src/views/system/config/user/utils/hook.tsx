@@ -20,7 +20,7 @@ import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 
-export function useUserConfig(tableRef: Ref, tableBarRef: Ref) {
+export function useUserConfig(tableRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -268,7 +268,7 @@ export function useUserConfig(tableRef: Ref, tableBarRef: Ref) {
     }
     loading.value = true;
     const { data } = await getUserConfigListApi(toRaw(form));
-    formatColumns(data?.results, columns, showColumns, tableBarRef);
+    formatColumns(data?.results, columns, showColumns);
     dataList.value = data.results;
     pagination.total = data.total;
     delay(500).then(() => {

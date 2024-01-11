@@ -55,7 +55,7 @@ import { formatColumns, formatHigherDeptOptions } from "@/views/system/hooks";
 import { getDataPermissionListApi } from "@/api/system/permission";
 import { ModeChoices } from "@/views/system/constants";
 
-export function useUser(tableRef: Ref, treeRef: Ref, tableBarRef: Ref) {
+export function useUser(tableRef: Ref, treeRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -370,7 +370,7 @@ export function useUser(tableRef: Ref, treeRef: Ref, tableBarRef: Ref) {
     const { data, choices_dict, mode_choices } = await getUserListApi(
       toRaw(form)
     );
-    formatColumns(data?.results, columns, showColumns, tableBarRef);
+    formatColumns(data?.results, columns, showColumns);
     dataList.value = data.results;
     pagination.total = data.total;
     choicesDict.value = choices_dict;

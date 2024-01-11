@@ -23,7 +23,7 @@ import { useI18n } from "vue-i18n";
 import { NoticeChoices } from "@/views/system/constants";
 import { formatColumns } from "@/views/system/hooks";
 
-export function useNotice(tableRef: Ref, tableBarRef: Ref) {
+export function useNotice(tableRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -356,7 +356,7 @@ export function useNotice(tableRef: Ref, tableBarRef: Ref) {
     loading.value = true;
     getNoticeListApi(toRaw(form)).then(res => {
       if (res.code === 1000 && res.data) {
-        formatColumns(res?.data?.results, columns, showColumns, tableBarRef);
+        formatColumns(res?.data?.results, columns, showColumns);
         dataList.value = res.data.results;
         pagination.total = res.data.total;
         levelChoices.value = res.level_choices;

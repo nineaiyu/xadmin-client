@@ -13,7 +13,7 @@ import { useI18n } from "vue-i18n";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { formatColumns } from "@/views/system/hooks";
 
-export function useLoginLog(tableRef: Ref, tableBarRef: Ref) {
+export function useLoginLog(tableRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -178,7 +178,7 @@ export function useLoginLog(tableRef: Ref, tableBarRef: Ref) {
     }
     loading.value = true;
     const { data, choices_dict } = await getLoginLogListApi(toRaw(form));
-    formatColumns(data?.results, columns, showColumns, tableBarRef);
+    formatColumns(data?.results, columns, showColumns);
     dataList.value = data.results;
     pagination.total = data.total;
     choicesDict.value = choices_dict;

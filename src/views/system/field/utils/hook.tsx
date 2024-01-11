@@ -4,13 +4,13 @@ import {
   syncModelLabelFieldApi
 } from "@/api/system/field";
 import type { PaginationProps } from "@pureadmin/table";
-import { onMounted, reactive, ref, type Ref, toRaw } from "vue";
+import { onMounted, reactive, ref, toRaw } from "vue";
 import { delay } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
 import { formatColumns } from "@/views/system/hooks";
 
-export function useModelField(tableBarRef: Ref) {
+export function useModelField() {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -107,7 +107,7 @@ export function useModelField(tableBarRef: Ref) {
     }
     loading.value = true;
     const { data } = await getModelLabelFieldListApi(toRaw(form));
-    formatColumns(data?.results, columns, showColumns, tableBarRef);
+    formatColumns(data?.results, columns, showColumns);
     dataList.value = data.results;
     pagination.total = data.total;
     delay(500).then(() => {

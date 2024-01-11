@@ -13,7 +13,7 @@ defineOptions({
 
 const formRef = ref();
 const tableRef = ref();
-const tableBarRef = ref();
+
 const {
   t,
   form,
@@ -27,7 +27,7 @@ const {
   handleSync,
   handleSizeChange,
   handleCurrentChange
-} = useModelField(tableBarRef);
+} = useModelField();
 </script>
 
 <template>
@@ -96,7 +96,6 @@ const {
     </el-form>
 
     <PureTableBar
-      ref="tableBarRef"
       :columns="columns"
       :title="t('menus.hsModelField')"
       @refresh="onSearch(true)"

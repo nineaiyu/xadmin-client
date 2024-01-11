@@ -20,7 +20,7 @@ defineOptions({
 
 const formRef = ref();
 const tableRef = ref();
-const tableBarRef = ref();
+
 const {
   t,
   form,
@@ -39,7 +39,7 @@ const {
   handleManyDelete,
   onSelectionCancel,
   handleSelectionChange
-} = useDept(tableRef, tableBarRef);
+} = useDept(tableRef);
 </script>
 
 <template>
@@ -158,7 +158,6 @@ const {
       </el-form>
 
       <PureTableBar
-        ref="tableBarRef"
         :title="t('menus.hsDept')"
         :columns="columns"
         @refresh="onSearch"

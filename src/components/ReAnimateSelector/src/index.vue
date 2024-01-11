@@ -73,6 +73,7 @@ function onMouseleave() {
 
 <template>
   <el-select
+    class="!w-[200px]"
     :model-value="inputValue"
     :placeholder="t('menu.verifyTransition')"
     clearable

@@ -34,7 +34,7 @@ import {
 import { getDataPermissionListApi } from "@/api/system/permission";
 import { ModeChoices } from "@/views/system/constants";
 
-export function useDept(tableRef: Ref, tableBarRef: Ref) {
+export function useDept(tableRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -351,7 +351,7 @@ export function useDept(tableRef: Ref, tableBarRef: Ref) {
   async function onSearch() {
     loading.value = true;
     const { data, choices_dict } = await getDeptListApi(toRaw(form));
-    formatColumns(data?.results, columns, showColumns, tableBarRef);
+    formatColumns(data?.results, columns, showColumns);
     choicesDict.value = choices_dict;
     dataList.value = handleTree(data.results);
     delay(500).then(() => {

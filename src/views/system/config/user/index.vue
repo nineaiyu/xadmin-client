@@ -18,7 +18,7 @@ defineOptions({
 
 const formRef = ref();
 const tableRef = ref();
-const tableBarRef = ref();
+
 const {
   t,
   form,
@@ -38,7 +38,7 @@ const {
   handleInvalidCache,
   handleCurrentChange,
   handleSelectionChange
-} = useUserConfig(tableRef, tableBarRef);
+} = useUserConfig(tableRef);
 </script>
 
 <template>
@@ -136,7 +136,6 @@ const {
     </el-form>
 
     <PureTableBar
-      ref="tableBarRef"
       :columns="columns"
       :title="t('menus.hsUserConfig')"
       @refresh="onSearch(true)"

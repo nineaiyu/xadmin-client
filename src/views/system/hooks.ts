@@ -51,7 +51,7 @@ export function formatHigherDeptOptions(treeList) {
   return newTreeList;
 }
 
-export function formatColumns(results, columns, showColumns, tableBarRef) {
+export function formatColumns(results, columns, showColumns) {
   if (results.length > 0) {
     showColumns.value = Object.keys(results[0]);
     cloneDeep(columns.value).forEach(column => {
@@ -65,5 +65,4 @@ export function formatColumns(results, columns, showColumns, tableBarRef) {
       }
     });
   }
-  tableBarRef.value.onReset();
 }

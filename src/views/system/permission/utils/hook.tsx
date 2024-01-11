@@ -21,7 +21,7 @@ import { FieldChoices, ModeChoices } from "@/views/system/constants";
 import { handleTree } from "@/utils/tree";
 import { getModelLabelFieldListApi } from "@/api/system/field";
 
-export function useDataPermission(tableRef: Ref, tableBarRef: Ref) {
+export function useDataPermission(tableRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -224,7 +224,7 @@ export function useDataPermission(tableRef: Ref, tableBarRef: Ref) {
     }
     loading.value = true;
     const { data, choices_dict } = await getDataPermissionListApi(toRaw(form));
-    formatColumns(data?.results, columns, showColumns, tableBarRef);
+    formatColumns(data?.results, columns, showColumns);
     dataList.value = data.results;
     pagination.total = data.total;
     choicesDict.value = choices_dict;

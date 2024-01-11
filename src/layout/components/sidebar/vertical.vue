@@ -98,11 +98,12 @@ onBeforeUnmount(() => {
         router
         unique-opened
         mode="vertical"
-        :popper-effect="tooltipEffect"
+        :default-active="defaultActive"
         class="outer-most select-none"
         :collapse="isCollapse"
-        :default-active="defaultActive"
         :collapse-transition="false"
+        :popper-effect="tooltipEffect"
+        popper-class="pure-scrollbar"
       >
         <sidebar-item
           v-for="routes in menuData"

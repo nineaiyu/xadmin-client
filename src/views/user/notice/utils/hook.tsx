@@ -16,7 +16,7 @@ import { useI18n } from "vue-i18n";
 import { useUserStoreHook } from "@/store/modules/user";
 import { formatColumns } from "@/views/system/hooks";
 
-export function useUserNotice(tableRef: Ref, tableBarRef: Ref) {
+export function useUserNotice(tableRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -197,7 +197,7 @@ export function useUserNotice(tableRef: Ref, tableBarRef: Ref) {
     loading.value = true;
     getUserNoticeListApi(toRaw(form)).then(res => {
       if (res.code === 1000 && res.data) {
-        formatColumns(res?.data?.results, columns, showColumns, tableBarRef);
+        formatColumns(res?.data?.results, columns, showColumns);
         dataList.value = res.data.results;
         pagination.total = res.data.total;
         levelChoices.value = res.level_choices;

@@ -17,7 +17,7 @@ defineOptions({
 
 const formRef = ref();
 const tableRef = ref();
-const tableBarRef = ref();
+
 const {
   t,
   form,
@@ -37,7 +37,7 @@ const {
   handleSizeChange,
   handleCurrentChange,
   handleSelectionChange
-} = useDataPermission(tableRef, tableBarRef);
+} = useDataPermission(tableRef);
 </script>
 
 <template>
@@ -115,7 +115,6 @@ const {
     </el-form>
 
     <PureTableBar
-      ref="tableBarRef"
       :title="t('menus.hsDataPermission')"
       :columns="columns"
       @refresh="onSearch(true)"

@@ -1,5 +1,12 @@
 import { useEpThemeStoreHook } from "@/store/modules/epTheme";
-import { computed, defineComponent, nextTick, type PropType, ref } from "vue";
+import {
+  computed,
+  defineComponent,
+  nextTick,
+  type PropType,
+  ref,
+  watch
+} from "vue";
 import {
   cloneDeep,
   delay,
@@ -37,7 +44,7 @@ export default defineComponent({
   name: "PureTableBar",
   props,
   emits: ["refresh"],
-  setup(props, { emit, slots, attrs, expose }) {
+  setup(props, { emit, slots, attrs }) {
     const buttonRef = ref();
     const size = ref("default");
     const isExpandAll = ref(true);
@@ -143,8 +150,8 @@ export default defineComponent({
       );
     }
 
-    expose({
-      onReset
+    watch(props?.columns, () => {
+      onReset();
     });
     const dropdown = {
       dropdown: () => (
@@ -207,9 +214,7 @@ export default defineComponent({
     };
 
     const isFixedColumn = (label: string) => {
-      return dynamicColumns.value.filter(item => item.label === label)[0].fixed
-        ? true
-        : false;
+      return dynamicColumns.value.filter(item => item.label === label)[0].fixed;
     };
 
     const reference = {
