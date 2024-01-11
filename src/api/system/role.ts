@@ -1,8 +1,12 @@
 import { http } from "@/utils/http";
-import type { Result } from "@/api/types";
+import type { Result, ResultDetail } from "@/api/types";
 
 export const getRoleListApi = (data?: object) => {
   return http.request<Result>("get", "/api/system/role", { params: data });
+};
+
+export const getRoleDetailApi = (pk?: number) => {
+  return http.request<ResultDetail>("get", `/api/system/role/${pk}`);
 };
 
 export const createRoleApi = (data?: object) => {

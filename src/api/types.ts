@@ -24,6 +24,8 @@ export type ResultDetail = {
   code: number;
   data?: {
     pk?: number;
+    menu?: any[];
+    field?: any[];
   };
 };
 

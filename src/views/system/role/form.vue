@@ -17,12 +17,15 @@ import { transformI18n } from "@/plugins/i18n";
 import More2Fill from "@iconify-icons/ri/more-2-fill";
 import Reset from "@iconify-icons/ri/restart-line";
 import { MenuChoices } from "@/views/system/constants";
+import { getRoleDetailApi } from "@/api/system/role";
+import { hasAuth } from "@/router/utils";
 
 const props = withDefaults(defineProps<FormProps>(), {
   isAdd: () => true,
   showColumns: () => [],
   menuTreeData: () => [],
   formInline: () => ({
+    pk: 0,
     name: "",
     code: "",
     description: "",
@@ -86,8 +89,19 @@ const initData = () => {
     );
   });
 };
+const getCheckedMenu = pk => {
+  if (pk && hasAuth("detail:systemRole")) {
+    getRoleDetailApi(pk).then(({ code, data }) => {
+      if (code === 1000) {
+        newFormInline.value.menu = data?.menu;
+        newFormInline.value.field = data?.field;
+        initData();
+      }
+    });
+  }
+};
 onMounted(() => {
-  initData();
+  getCheckedMenu(newFormInline.value.pk);
 });
 const buttonClass = computed(() => {
   return [
