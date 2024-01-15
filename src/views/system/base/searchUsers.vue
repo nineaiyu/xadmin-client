@@ -4,12 +4,13 @@ import dayjs from "dayjs";
 import { useI18n } from "vue-i18n";
 import { getUserListApi } from "@/api/system/user";
 import { ReTableSearch } from "@/components/ReTableSearch";
+import { ref } from "vue";
 
 const { t } = useI18n();
 
 const selectValue = defineModel({ type: Array<number> });
 
-const showColumns: TableColumnList = [
+const showColumns = ref<TableColumnList>([
   {
     label: "ID",
     prop: "pk",
@@ -51,7 +52,7 @@ const showColumns: TableColumnList = [
     formatter: ({ date_joined }) =>
       dayjs(date_joined).format("YYYY-MM-DD HH:mm:ss")
   }
-];
+]);
 
 const searchKeys = [
   {

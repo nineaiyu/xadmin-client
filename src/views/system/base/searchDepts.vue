@@ -3,12 +3,13 @@ import dayjs from "dayjs";
 import { useI18n } from "vue-i18n";
 import { ReTableSearch } from "@/components/ReTableSearch";
 import { getDeptListApi } from "@/api/system/dept";
+import { ref } from "vue";
 
 const { t } = useI18n();
 
 const selectValue = defineModel({ type: Array<number> });
 
-const showColumns: TableColumnList = [
+const showColumns = ref<TableColumnList>([
   {
     label: t("dept.name"),
     prop: "name",
@@ -45,7 +46,7 @@ const showColumns: TableColumnList = [
     formatter: ({ created_time }) =>
       dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
   }
-];
+]);
 
 const searchKeys = [
   {

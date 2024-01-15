@@ -6,8 +6,8 @@ import { useTags } from "../../hooks/useTag";
 import { routerArrays } from "@/layout/types";
 import { getTopMenu, handleAliveRoute } from "@/router/utils";
 import { useSettingStoreHook } from "@/store/modules/settings";
-import { onClickOutside, useFullscreen, useResizeObserver } from "@vueuse/core";
-import { debounce, isAllEmpty, isEqual } from "@pureadmin/utils";
+import { onClickOutside, useFullscreen } from "@vueuse/core";
+import { isAllEmpty, isEqual, useResizeObserver } from "@pureadmin/utils";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { nextTick, onBeforeUnmount, ref, toRaw, unref, watch } from "vue";
 
@@ -143,7 +143,7 @@ function dynamicRouteTag(value: string): void {
   function concatPath(arr: object[], value: string) {
     if (!hasValue) {
       arr.forEach((arrItem: any) => {
-        if (arrItem.path === value || arrItem.path === value) {
+        if (arrItem.path === value) {
           useMultiTagsStoreHook().handleTags("push", {
             path: value,
             meta: arrItem.meta,
@@ -504,10 +504,7 @@ onMounted(() => {
     });
   });
 
-  useResizeObserver(
-    scrollbarDom,
-    debounce(() => dynamicTagView())
-  );
+  useResizeObserver(scrollbarDom, dynamicTagView);
 });
 
 onBeforeUnmount(() => {

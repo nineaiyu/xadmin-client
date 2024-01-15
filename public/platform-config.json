@@ -1,5 +1,5 @@
 {
-  "Version": "1.3.3",
+  "Version": "1.3.5",
   "Title": "xAdmin",
   "FixedHeader": true,
   "HiddenSideBar": false,
@@ -9,6 +9,7 @@
   "Layout": "vertical",
   "Theme": "light",
   "DarkMode": false,
+  "OverallStyle": "light",
   "Grey": false,
   "Weak": false,
   "HideTabs": false,

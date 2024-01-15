@@ -24,6 +24,10 @@ import Dept from "@iconify-icons/ri/git-branch-line";
 import Search from "@iconify-icons/ri/search-line";
 import Lollipop from "@iconify-icons/ep/lollipop";
 import Monitor from "@iconify-icons/ep/monitor";
+import Tag from "@iconify-icons/ri/bookmark-2-line";
+import Table from "@iconify-icons/ri/table-line";
+import Info from "@iconify-icons/ri/file-info-line";
+import Artboard from "@iconify-icons/ri/artboard-line";
 
 addIcon("ubuntuFill", UbuntuFill);
 addIcon("menu", Menu);
@@ -45,3 +49,7 @@ addIcon("dept", Dept);
 addIcon("search", Search);
 addIcon("lollipop", Lollipop);
 addIcon("monitor", Monitor);
+addIcon("tag", Tag);
+addIcon("table", Table);
+addIcon("info", Info);
+addIcon("artboard", Artboard);

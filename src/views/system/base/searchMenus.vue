@@ -4,12 +4,13 @@ import { useI18n } from "vue-i18n";
 import { ReTableSearch } from "@/components/ReTableSearch";
 import { getMenuListApi } from "@/api/system/menu";
 import { transformI18n } from "@/plugins/i18n";
+import { ref } from "vue";
 
 const { t } = useI18n();
 
 const selectValue = defineModel({ type: Array<number> });
 
-const showColumns: TableColumnList = [
+const showColumns = ref<TableColumnList>([
   {
     label: t("menu.title"),
     prop: "title",
@@ -46,7 +47,7 @@ const showColumns: TableColumnList = [
     formatter: ({ created_time }) =>
       dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
   }
-];
+]);
 
 const searchKeys = [
   {

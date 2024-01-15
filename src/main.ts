@@ -1,11 +1,11 @@
 import App from "./App.vue";
 import router from "./router";
 import { setupStore } from "@/store";
-import ElementPlus from "element-plus";
 import { useI18n } from "@/plugins/i18n";
 import { getPlatformConfig } from "./config";
 import { createApp, type Directive } from "vue";
 import { MotionPlugin } from "@vueuse/motion";
+import { useElementPlus } from "@/plugins/elementPlus";
 // import { useEcharts } from "@/plugins/echarts";
 import { injectResponsiveStorage } from "@/utils/responsive";
 
@@ -61,7 +61,7 @@ getPlatformConfig(app).then(async config => {
   app.use(router);
   await router.isReady();
   injectResponsiveStorage(app, config);
-  app.use(MotionPlugin).use(useI18n).use(ElementPlus).use(Table);
+  app.use(MotionPlugin).use(useI18n).use(useElementPlus).use(Table);
   // .use(useEcharts);
   // .use(Table);
   // .use(PureDescriptions);

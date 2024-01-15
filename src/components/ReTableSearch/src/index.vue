@@ -59,7 +59,6 @@ onMounted(() => {
     columns.value.push(item);
   });
   onSearch();
-  console.log(props.isTree);
 });
 </script>
 

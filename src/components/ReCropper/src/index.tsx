@@ -12,9 +12,14 @@ import {
   ref,
   unref
 } from "vue";
-import { useResizeObserver } from "@vueuse/core";
 import { longpress } from "@/directives/longpress";
-import { debounce, delay, downloadByBase64, isArray } from "@pureadmin/utils";
+import {
+  debounce,
+  delay,
+  downloadByBase64,
+  isArray,
+  useResizeObserver
+} from "@pureadmin/utils";
 import {
   ArrowDown,
   ArrowH,
@@ -143,9 +148,7 @@ export default defineComponent({
       cropper.value?.destroy();
     });
 
-    useResizeObserver(tippyElRef, () => {
-      handCropper("reset");
-    });
+    useResizeObserver(tippyElRef, () => handCropper("reset"));
 
     async function init() {
       const imgEl = unref(imgElRef);

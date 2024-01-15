@@ -64,6 +64,12 @@ layout:
   clearCache: Clear Cache
   light: Light
   dark: Dark
+  auto: Auto
+  lightTip: Fresh start, light up the comfortable working interface
+  darkTip: Moonlight overture, drunk in the quiet and elegant night
+  autoTip: Synchronous time, interface with the morning and dusk natural echo
+  smartTip: Smart labels for fun and shine
+  cardTip: Card labels for efficient browsing
 
 error:
   error403: Sorry, you are not authorized to access this page

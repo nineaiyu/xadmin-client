@@ -3,6 +3,7 @@ import {
   computed,
   nextTick,
   onBeforeMount,
+  onUnmounted,
   reactive,
   ref,
   unref,
@@ -21,6 +22,7 @@ import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
 import Check from "@iconify-icons/ep/check";
 import dayIcon from "@/assets/svg/day.svg?component";
 import darkIcon from "@/assets/svg/dark.svg?component";
+import systemIcon from "@/assets/svg/system.svg?component";
 
 const { device, t } = useNav();
 const { isDark } = useDark();
@@ -32,6 +34,7 @@ const horizontalRef = ref();
 
 const {
   dataTheme,
+  overallStyle,
   layoutTheme,
   themeColors,
   toggleClass,
@@ -70,7 +73,7 @@ const getThemeColorStyle = computed(() => {
   };
 });
 
-/** 当网页为暗黑模式时不显示亮白色切换选项 */
+/** 当网页整体为暗色风格时不显示亮白色主题配色切换选项 */
 const showThemeColors = computed(() => {
   return themeColor => {
     return !(themeColor === "light" && isDark.value);
@@ -164,11 +167,22 @@ const themeOptions = computed<Array<OptionsType>>(() => {
     {
       label: t("layout.light"),
       icon: dayIcon,
+      theme: "light",
+      tip: t("layout.lightTip"),
       iconAttrs: { fill: isDark.value ? "#fff" : "#000" }
     },
     {
       label: t("layout.dark"),
       icon: darkIcon,
+      theme: "dark",
+      tip: t("layout.darkTip"),
+      iconAttrs: { fill: isDark.value ? "#fff" : "#000" }
+    },
+    {
+      label: t("layout.auto"),
+      icon: systemIcon,
+      theme: "system",
+      tip: t("layout.autoTip"),
       iconAttrs: { fill: isDark.value ? "#fff" : "#000" }
     }
   ];
@@ -177,10 +191,12 @@ const themeOptions = computed<Array<OptionsType>>(() => {
 const markOptions: Array<OptionsType> = [
   {
     label: t("layout.smart"),
+    tip: t("layout.smartTip"),
     value: "smart"
   },
   {
     label: t("layout.card"),
+    tip: t("layout.cardTip"),
     value: "card"
   }
 ];
@@ -195,7 +211,8 @@ function setLayoutModel(layout: string) {
     darkMode: $storage.layout?.darkMode,
     sidebarStatus: $storage.layout?.sidebarStatus,
     epThemeColor: $storage.layout?.epThemeColor,
-    themeColor: layoutTheme.value.theme
+    themeColor: $storage.layout?.themeColor,
+    overallStyle: $storage.layout?.overallStyle
   };
   useAppStoreHook().setLayout(layout);
 }
@@ -220,9 +237,30 @@ watch($storage, ({ layout }) => {
   }
 });
 
+const mediaQueryList = window.matchMedia("(prefers-color-scheme: dark)");
+
+/** 根据操作系统主题设置平台整体风格 */
+function updateTheme() {
+  if (overallStyle.value !== "system") return;
+  dataTheme.value = mediaQueryList.matches;
+  dataThemeChange(overallStyle.value);
+}
+
+function removeMatchMedia() {
+  mediaQueryList.removeEventListener("change", updateTheme);
+}
+
+/** 监听操作系统主题改变 */
+function watchSystemThemeChange() {
+  updateTheme();
+  removeMatchMedia();
+  mediaQueryList.addEventListener("change", updateTheme);
+}
+
 onBeforeMount(() => {
   /* 初始化项目配置 */
   nextTick(() => {
+    watchSystemThemeChange();
     settings.greyVal &&
       document.querySelector("html")?.setAttribute("class", "html-grey");
     settings.weakVal &&
@@ -231,6 +269,8 @@ onBeforeMount(() => {
     settings.hideFooter && hideFooterChange();
   });
 });
+
+onUnmounted(() => removeMatchMedia);
 </script>
 
 <template>
@@ -240,12 +280,17 @@ onBeforeMount(() => {
         {{ t("layout.theme") }}
       </p>
       <Segmented
-        :modelValue="dataTheme ? 1 : 0"
+        :modelValue="overallStyle === 'system' ? 2 : dataTheme ? 1 : 0"
+        class="select-none"
         :options="themeOptions"
         @change="
-          {
-            dataTheme = !dataTheme;
-            dataThemeChange();
+          theme => {
+            theme.index === 1 && theme.index !== 2
+              ? (dataTheme = true)
+              : (dataTheme = false);
+            overallStyle = theme.option.theme;
+            dataThemeChange(theme.option.theme);
+            theme.index === 2 && watchSystemThemeChange();
           }
         "
       />
@@ -319,6 +364,7 @@ onBeforeMount(() => {
         {{ t("layout.labelStyle") }}
       </p>
       <Segmented
+        class="select-none"
         :modelValue="markValue === 'smart' ? 0 : 1"
         :options="markOptions"
         @change="onChange"

@@ -1,16 +1,16 @@
 import type { App } from "vue";
 import * as echarts from "echarts/core";
+import { PieChart, BarChart, LineChart } from "echarts/charts";
 import { CanvasRenderer, SVGRenderer } from "echarts/renderers";
-import { BarChart, LineChart, PieChart } from "echarts/charts";
 import {
-  DataZoomComponent,
-  GraphicComponent,
   GridComponent,
-  LegendComponent,
-  PolarComponent,
   TitleComponent,
+  PolarComponent,
+  LegendComponent,
+  GraphicComponent,
   ToolboxComponent,
   TooltipComponent,
+  DataZoomComponent,
   VisualMapComponent
 } from "echarts/components";
 
