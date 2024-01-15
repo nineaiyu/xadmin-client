@@ -26,7 +26,7 @@ export function useFieldRule(
       });
     }
   });
-  const columns: TableColumnList = [
+  const columns = ref<TableColumnList>([
     {
       label: t("permission.table"),
       prop: "table",
@@ -63,7 +63,7 @@ export function useFieldRule(
       width: 100,
       slot: "operation"
     }
-  ];
+  ]);
 
   function handleDelete(row) {
     const key = `${row.table}__${row.field}__${row.match}`;

@@ -6,11 +6,13 @@ import { useI18n } from "vue-i18n";
 
 import filterForm from "./filter/index.vue";
 import { ModeChoices } from "@/views/system/constants";
+import { transformI18n } from "@/plugins/i18n";
 
 const props = withDefaults(defineProps<FormProps>(), {
   isAdd: () => true,
   showColumns: () => [],
   choicesDict: () => [],
+  menuPermissionData: () => [],
   fieldLookupsData: () => [],
   valuesData: () => [],
   formInline: () => ({
@@ -18,6 +20,7 @@ const props = withDefaults(defineProps<FormProps>(), {
     description: "",
     mode_type: ModeChoices.OR,
     rules: [],
+    menu: [],
     is_active: true
   })
 });
@@ -86,6 +89,29 @@ defineExpose({ getRef });
           :value="item.key"
         />
       </el-select>
+    </el-form-item>
+
+    <el-form-item :label="t('menu.menu')" prop="menu">
+      <el-cascader
+        v-model="newFormInline.menu"
+        :options="props.menuPermissionData"
+        :placeholder="t('menu.menu')"
+        :props="{
+          value: 'pk',
+          label: 'title',
+          emitPath: false,
+          checkStrictly: false,
+          multiple: true
+        }"
+        class="w-full"
+        clearable
+        filterable
+      >
+        <template #default="{ node, data }">
+          <span>{{ transformI18n(data?.title) }}</span>
+          <span v-if="!node.isLeaf"> ({{ data.children.length }}) </span>
+        </template>
+      </el-cascader>
     </el-form-item>
     <el-form-item :label="t('labels.description')">
       <el-input

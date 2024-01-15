@@ -20,6 +20,7 @@ import { useI18n } from "vue-i18n";
 import { FieldChoices, ModeChoices } from "@/views/system/constants";
 import { handleTree } from "@/utils/tree";
 import { getModelLabelFieldListApi } from "@/api/system/field";
+import { getMenuPermissionListApi } from "@/api/system/menu";
 
 export function useDataPermission(tableRef: Ref) {
   const { t } = useI18n();
@@ -46,6 +47,7 @@ export function useDataPermission(tableRef: Ref) {
   const manySelectCount = ref(0);
   const dataList = ref([]);
   const fieldLookupsData = ref([]);
+  const menuPermissionData = ref([]);
   const choicesDict = ref([]);
   const valuesData = ref([]);
   const loading = ref(true);
@@ -250,11 +252,13 @@ export function useDataPermission(tableRef: Ref) {
         formInline: {
           pk: row?.pk ?? "",
           name: row?.name ?? "",
+          menu: row?.menu ?? [],
           rules: row?.rules ?? [],
           mode_type: row?.mode_type ?? ModeChoices.OR,
           is_active: row?.is_active ?? true,
           description: row?.description ?? ""
         },
+        menuPermissionData: menuPermissionData.value,
         fieldLookupsData: fieldLookupsData.value,
         valuesData: valuesData.value,
         choicesDict: choicesDict.value,
@@ -323,6 +327,13 @@ export function useDataPermission(tableRef: Ref) {
         if (res.code === 1000) {
           fieldLookupsData.value = handleTree(res.data.results);
           valuesData.value = res.choices_dict;
+        }
+      });
+    }
+    if (hasGlobalAuth("list:systemMenuPermission")) {
+      getMenuPermissionListApi({ page: 1, size: 1000 }).then(res => {
+        if (res.code === 1000) {
+          menuPermissionData.value = handleTree(res.data.results);
         }
       });
     }

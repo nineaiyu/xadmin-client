@@ -69,14 +69,6 @@ Object.keys(devDependencies).forEach(key => {
     <el-card class="m-4 box-card" shadow="never">
       <template #header>
         <div class="card-header">
-          <span class="font-medium">平台信息</span>
-        </div>
-      </template>
-    </el-card>
-
-    <el-card class="m-4 box-card" shadow="never">
-      <template #header>
-        <div class="card-header">
           <span class="font-medium">生产环境依赖</span>
         </div>
       </template>

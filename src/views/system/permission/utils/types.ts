@@ -5,6 +5,7 @@ interface FormItemProps {
   mode_display?: string;
   mode_type: number;
   rules: Object[];
+  menu: number[];
   description: string;
   is_active: boolean;
 }
@@ -12,6 +13,7 @@ interface FormItemProps {
 interface FormProps {
   formInline: FormItemProps;
   fieldLookupsData?: any[];
+  menuPermissionData?: any[];
   valuesData?: any[];
   choicesDict?: any[];
   showColumns: any[];
