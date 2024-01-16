@@ -1,6 +1,5 @@
 import "./circled.css";
 import Cropper from "cropperjs";
-import { useTippy } from "vue-tippy";
 import { ElUpload } from "element-plus";
 import type { CSSProperties } from "vue";
 import {
@@ -13,6 +12,7 @@ import {
   unref
 } from "vue";
 import { longpress } from "@/directives/longpress";
+import { directive as tippy, useTippy } from "vue-tippy";
 import {
   debounce,
   delay,
@@ -286,6 +286,7 @@ export default defineComponent({
 
     const menuContent = defineComponent({
       directives: {
+        tippy,
         longpress
       },
       setup() {

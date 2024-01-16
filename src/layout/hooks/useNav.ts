@@ -3,7 +3,6 @@ import { getConfig } from "@/config";
 import { useRouter } from "vue-router";
 import { emitter } from "@/utils/mitt";
 import type { routeMetaType } from "../types";
-import userAvatar from "@/assets/user.jpg";
 import { getTopMenu } from "@/router/utils";
 import { useGlobal } from "@pureadmin/utils";
 import { transformI18n } from "@/plugins/i18n";
@@ -38,6 +37,10 @@ export function useNav() {
   /** 用户名 */
   const username = computed(() => {
     return useUserStoreHook()?.username;
+  });
+
+  const userAvatar = computed(() => {
+    return useUserStoreHook()?.avatar;
   });
 
   /** 设置国际化选中后的样式 */

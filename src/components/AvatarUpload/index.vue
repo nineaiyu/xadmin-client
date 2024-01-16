@@ -1,5 +1,5 @@
 <script setup lang="tsx">
-import { ref } from "vue";
+import { type PropType, ref } from "vue";
 import { formatBytes } from "@pureadmin/utils";
 import ReCropper from "@/components/ReCropper";
 import avatar from "./avatar.png";
@@ -18,6 +18,7 @@ const props = defineProps({
 const emit = defineEmits(["cropper"]);
 const { t } = useI18n();
 const infos = ref();
+const popoverRef = ref();
 const refCropper = ref();
 const showPopover = ref(false);
 const cropperImg = ref<string>("");
@@ -30,11 +31,21 @@ function onCropper({ base64, blob, info }) {
   // console.log(file);
   emit("cropper", { base64, blob, info });
 }
+function hidePopover() {
+  popoverRef.value.hide();
+}
+
+defineExpose({ hidePopover });
 </script>
 
 <template>
   <div v-loading="!showPopover" element-loading-background="transparent">
-    <el-popover :visible="showPopover" placement="right" width="18vw">
+    <el-popover
+      ref="popoverRef"
+      :visible="showPopover"
+      placement="right"
+      width="18vw"
+    >
       <template #reference>
         <div class="w-[18vw]">
           <ReCropper

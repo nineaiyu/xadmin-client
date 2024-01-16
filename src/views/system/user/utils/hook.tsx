@@ -88,6 +88,7 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
   });
 
   const formRef = ref();
+  const cropRef = ref();
   const router = useRouter();
   const route = useRoute();
   const getParameter = isEmpty(route.params) ? route.query : route.params;
@@ -510,8 +511,9 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
         h(croppingUpload, {
           imgSrc: row.avatar ?? "",
           onCropper: info => (avatarInfo.value = info),
-          circled: false,
-          quality: 0,
+          circled: true,
+          quality: 1,
+          ref: cropRef,
           canvasOption: { width: 512, height: 512 }
         }),
       beforeSure: done => {
@@ -531,7 +533,8 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
             done();
           }
         });
-      }
+      },
+      closeCallBack: () => cropRef.value.hidePopover()
     });
   }
 
