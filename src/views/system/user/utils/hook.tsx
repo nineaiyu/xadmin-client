@@ -51,7 +51,11 @@ import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { handleTree } from "@/utils/tree";
 import { getDeptListApi } from "@/api/system/dept";
-import { formatColumns, formatHigherDeptOptions } from "@/views/system/hooks";
+import {
+  formatColumns,
+  formatHigherDeptOptions,
+  picturePng
+} from "@/views/system/hooks";
 import { getDataPermissionListApi } from "@/api/system/permission";
 import { ModeChoices } from "@/views/system/constants";
 
@@ -509,7 +513,7 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
       closeOnClickModal: false,
       contentRenderer: () =>
         h(croppingUpload, {
-          imgSrc: row.avatar ?? "",
+          imgSrc: picturePng(row.avatar) ?? "",
           onCropper: info => (avatarInfo.value = info),
           circled: true,
           quality: 1,

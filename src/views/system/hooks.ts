@@ -51,6 +51,12 @@ export function formatHigherDeptOptions(treeList) {
   return newTreeList;
 }
 
+/**
+ * @description 将缩略图的地址转换为png地址
+ * @param results 后端返回的结果
+ * @param columns 定义好的字段
+ * @param showColumns 需要显示的字段
+ */
 export function formatColumns(results, columns, showColumns) {
   if (results.length > 0) {
     showColumns.value = Object.keys(results[0]);
@@ -65,4 +71,12 @@ export function formatColumns(results, columns, showColumns) {
       }
     });
   }
+}
+
+/**
+ * @description 将缩略图的地址转换为png地址
+ * @param url 图片资源链接
+ */
+export function picturePng(url: string) {
+  return url.replace(/_(\d).jpg/, ".png");
 }

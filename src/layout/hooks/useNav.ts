@@ -40,7 +40,7 @@ export function useNav() {
   });
 
   const userAvatar = computed(() => {
-    return useUserStoreHook()?.avatar;
+    return useUserStoreHook()?.avatar?.replace(".png", "_1.jpg");
   });
 
   /** 设置国际化选中后的样式 */

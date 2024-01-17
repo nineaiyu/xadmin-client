@@ -424,7 +424,7 @@ function openMenu(tag, e) {
   }
 
   currentSelect.value = tag;
-  const menuMinWidth = 105;
+  const menuMinWidth = 140;
   const offsetLeft = unref(containerDom).getBoundingClientRect().left;
   const offsetWidth = unref(containerDom).offsetWidth;
   const maxLeft = offsetWidth - menuMinWidth;
