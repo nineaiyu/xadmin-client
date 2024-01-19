@@ -1,11 +1,11 @@
 import dayjs from "dayjs";
 import { message } from "@/utils/message";
 import type { PaginationProps } from "@pureadmin/table";
-import { reactive, ref, h, onMounted, toRaw, type Ref } from "vue";
+import { h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
 import {
+  createNoticeApi,
   deleteNoticeApi,
   getNoticeListApi,
-  createNoticeApi,
   manyDeleteNoticeApi,
   updateNoticeApi,
   updateNoticePublishApi

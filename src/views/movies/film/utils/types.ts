@@ -7,9 +7,8 @@ interface FormItemProps {
   category?: string[];
   episodes?: string;
   region?: string;
+  douban?: string;
   language?: string;
-  subtitle?: string;
-  director?: string[];
   starring?: string[];
   times?: string;
   views?: string;
@@ -30,7 +29,6 @@ interface FormProps {
   channelData?: categoryProps[];
   regionData?: categoryProps[];
   languageData?: categoryProps[];
-  subtitleData?: categoryProps[];
 }
 
 export type { FormItemProps, FormProps, categoryProps };

@@ -2,24 +2,24 @@ import { defineStore } from "pinia";
 import { store } from "@/store";
 import type { userType } from "./types";
 import { routerArrays } from "@/layout/types";
-import { router, resetRouter } from "@/router";
+import { resetRouter, router } from "@/router";
 import { storageLocal } from "@pureadmin/utils";
+import type { TokenResult } from "@/api/auth";
 import {
   loginApi,
-  registerApi,
-  refreshTokenApi,
   logoutApi,
+  refreshTokenApi,
+  registerApi,
   type UserInfo,
   type UserInfoResult
 } from "@/api/auth";
-import type { TokenResult } from "@/api/auth";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import {
-  setToken,
-  removeToken,
-  userKey,
   getRefreshToken,
-  setUserInfo
+  removeToken,
+  setToken,
+  setUserInfo,
+  userKey
 } from "@/utils/auth";
 import { message } from "@/utils/message";
 import { getUserInfoApi } from "@/api/userinfo";

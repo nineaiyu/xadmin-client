@@ -402,8 +402,11 @@ MoviesFilm:
   films: Film
   film: Film Management
   language: Language
-  subtitle: Subtitles
-  director: Director
+  taskStatus: Task Status
+  taskRun: Running
+  taskOk: Ok
+  doubanAdd: Sync film from douban
+  doubanSearch: douban search
   starring: Starring
   name: Film Name
   title: Film Translation

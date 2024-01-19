@@ -402,8 +402,11 @@ MoviesFilm:
   films: 影视资源
   film: 影视管理
   language: 语言
-  subtitle: 字幕
-  director: 导演
+  taskStatus: 任务运行状态
+  taskRun: 任务运行中
+  taskOk: 任务完成
+  doubanAdd: 同步豆瓣电影
+  doubanSearch: 豆瓣搜索
   starring: 演员
   name: 影视名称
   title: 影视译名

@@ -1,4 +1,5 @@
 import { $t } from "@/plugins/i18n";
+
 const { VITE_HIDE_HOME } = import.meta.env;
 const Layout = () => import("@/layout/index.vue");
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { animates } from "./animate";
-import { ref, computed, toRef } from "vue";
+import { computed, ref, toRef } from "vue";
 import { cloneDeep } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 

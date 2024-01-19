@@ -1,4 +1,4 @@
-import type { CSSProperties, VNode, Component } from "vue";
+import type { Component, CSSProperties, VNode } from "vue";
 
 type DoneFn = (cancel?: boolean) => void;
 type EventType = "open" | "close" | "openAutoFocus" | "closeAutoFocus";

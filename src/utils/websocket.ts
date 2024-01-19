@@ -1,5 +1,6 @@
 import { ElMessage } from "element-plus";
 import { getUsedAccessToken } from "@/utils/token";
+
 const { VITE_WSS_DOMAIN } = import.meta.env;
 
 interface Socket {

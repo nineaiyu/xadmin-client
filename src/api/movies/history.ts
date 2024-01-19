@@ -1,6 +1,5 @@
 import { http } from "@/utils/http";
-import type { Result } from "@/api/types";
-import type { ResultDetail } from "@/api/types";
+import type { Result, ResultDetail } from "@/api/types";
 
 /** 获取电影播放记录 */
 export const getWatchHistoryListApi = (data?: object) => {

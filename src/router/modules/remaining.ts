@@ -1,4 +1,5 @@
 import { $t } from "@/plugins/i18n";
+
 const Layout = () => import("@/layout/index.vue");
 
 export default [

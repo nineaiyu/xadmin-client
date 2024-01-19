@@ -1,6 +1,5 @@
 import { http } from "@/utils/http";
-import type { Result } from "@/api/types";
-import type { ResultDetail } from "@/api/types";
+import type { Result, ResultDetail } from "@/api/types";
 
 /** 获取电影列表 */
 export const getFilmListApi = (data?: object) => {
@@ -33,4 +32,16 @@ export const manyDeleteFilmApi = (data?: object) => {
 
 export const uploadFilePosterApi = (pk?: string, data?: object) => {
   return http.upload<Result>(`/api/movies/film/${pk}/upload`, {}, data);
+};
+
+export const getFilmInfoByDoubanApi = (params?: object) => {
+  return http.request<Result>("get", `/api/movies/film/search_douban`, {
+    params
+  });
+};
+
+export const importFilmInfoByDoubanApi = (data?: object) => {
+  return http.request<Result>("post", `/api/movies/film/add_douban`, {
+    data
+  });
 };

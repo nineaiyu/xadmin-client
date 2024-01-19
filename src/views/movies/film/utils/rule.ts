@@ -32,13 +32,6 @@ export const formRules = reactive(<FormRules>{
       trigger: "blur"
     }
   ],
-  director: [
-    {
-      required: true,
-      message: transformI18n($t("MoviesFilm.director")),
-      trigger: "blur"
-    }
-  ],
   rate: [
     {
       required: true,
@@ -50,13 +43,6 @@ export const formRules = reactive(<FormRules>{
     {
       required: true,
       message: transformI18n($t("MoviesFilm.starring")),
-      trigger: "blur"
-    }
-  ],
-  subtitle: [
-    {
-      required: true,
-      message: transformI18n($t("MoviesFilm.subtitle")),
       trigger: "blur"
     }
   ],

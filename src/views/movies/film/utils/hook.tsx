@@ -2,10 +2,10 @@ import dayjs from "dayjs";
 import { message } from "@/utils/message";
 import { ElMessageBox } from "element-plus";
 import { addDialog } from "@/components/ReDialog";
-import type { FormItemProps } from "./types";
+import type { categoryProps, FormItemProps } from "./types";
 import editForm from "../form.vue";
 import type { PaginationProps } from "@pureadmin/table";
-import { reactive, computed, ref, onMounted, h, toRaw, type Ref } from "vue";
+import { computed, h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
 import { delay, getKeyList } from "@pureadmin/utils";
 import { hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
@@ -14,13 +14,14 @@ import {
   createFilmApi,
   deleteFilmApi,
   getFilmListApi,
+  importFilmInfoByDoubanApi,
   manyDeleteFilmApi,
   updateFilmApi,
   uploadFilePosterApi
 } from "@/api/movies/film";
 import croppingUpload from "@/components/AvatarUpload/index.vue";
-import type { categoryProps } from "./types";
 import { useRouter } from "vue-router";
+import createForm from "../create/index.vue";
 
 export function useMoviesFilm(tableRef: Ref) {
   const { t } = useI18n();
@@ -61,10 +62,8 @@ export function useMoviesFilm(tableRef: Ref) {
   const form = reactive({
     name: "",
     language: "",
-    subtitle: "",
     channel: "",
     region: "",
-    director: "",
     starring: "",
     description: "",
     release_date: "",
@@ -89,7 +88,6 @@ export function useMoviesFilm(tableRef: Ref) {
   const regionData = ref<categoryProps[]>([]);
   const channelData = ref<categoryProps[]>([]);
   const languageData = ref<categoryProps[]>([]);
-  const subtitleData = ref<categoryProps[]>([]);
   const buttonClass = computed(() => {
     return [
       "!h-[20px]",
@@ -157,10 +155,18 @@ export function useMoviesFilm(tableRef: Ref) {
       )
     },
     {
-      label: t("MoviesFilm.director"),
-      prop: "director",
-      minWidth: 170,
-      slot: "director"
+      label: t("MoviesFilm.taskStatus"),
+      prop: "running",
+      minWidth: 120,
+      cellRenderer: ({ row, props }) => (
+        <el-tag
+          size={props.size}
+          type={row.running ? "danger" : ""}
+          effect="plain"
+        >
+          {row.running ? t("MoviesFilm.taskRun") : t("MoviesFilm.taskOk")}
+        </el-tag>
+      )
     },
     {
       label: t("MoviesFilm.channel"),
@@ -201,7 +207,12 @@ export function useMoviesFilm(tableRef: Ref) {
       prop: "rate",
       minWidth: 180,
       cellRenderer: ({ row }) => (
-        <el-rate model-value={Number(row.rate)} disabled show-score></el-rate>
+        <el-rate
+          model-value={Number(row.rate)}
+          disabled
+          show-score
+          max={10}
+        ></el-rate>
       )
     },
     {
@@ -332,7 +343,7 @@ export function useMoviesFilm(tableRef: Ref) {
       query.min_release_date = "";
       query.max_release_date = "";
     }
-    const { data, category, channel, region, language, subtitle }: any =
+    const { data, category, channel, region, language }: any =
       await getFilmListApi(query);
     dataList.value = data.results;
     pagination.total = data.total;
@@ -340,7 +351,6 @@ export function useMoviesFilm(tableRef: Ref) {
     channelData.value = channel;
     regionData.value = region;
     languageData.value = language;
-    subtitleData.value = subtitle;
     delay(500).then(() => {
       loading.value = false;
     });
@@ -369,9 +379,7 @@ export function useMoviesFilm(tableRef: Ref) {
           episodes: row?.episodes ?? [],
           region: row?.region ?? "",
           language: row?.language ?? "",
-          subtitle: row?.subtitle ?? "",
           channel: row?.channel ?? "",
-          director: row?.director ?? [],
           release_date: row?.release_date ?? "",
           starring: row?.starring ?? [],
           description: row?.description ?? "",
@@ -384,7 +392,6 @@ export function useMoviesFilm(tableRef: Ref) {
         categoryData: categoryData,
         channelData: channelData,
         regionData: regionData,
-        subtitleData: subtitleData,
         languageData: languageData
       },
       width: "50%",
@@ -444,12 +451,6 @@ export function useMoviesFilm(tableRef: Ref) {
       query: { route: `/detail/${row.pk}`, is_add: "true", name: row.name }
     });
   }
-  function goActorDetail(pk) {
-    router.push({
-      name: "MoviesActor",
-      query: { pk: pk }
-    });
-  }
 
   function handleUpload(row) {
     addDialog({
@@ -488,10 +489,35 @@ export function useMoviesFilm(tableRef: Ref) {
     });
   }
 
+  function openImportFileDialog() {
+    addDialog({
+      title: "豆瓣搜索影片",
+      width: "60%",
+      draggable: true,
+      fullscreenIcon: true,
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      hideFooter: true,
+      contentRenderer: () => h(createForm)
+    });
+  }
   onMounted(() => {
     onSearch();
   });
 
+  function addDoubanFilm(row) {
+    loading.value = true;
+    importFilmInfoByDoubanApi({ movie: row.douban }).then(async res => {
+      if (res.code === 1000) {
+        message(t("results.success"), {
+          type: "success"
+        });
+      } else {
+        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+      }
+      loading.value = false;
+    });
+  }
   return {
     t,
     form,
@@ -504,7 +530,6 @@ export function useMoviesFilm(tableRef: Ref) {
     categoryData,
     channelData,
     languageData,
-    subtitleData,
     regionData,
     manySelectCount,
     onSelectionCancel,
@@ -513,12 +538,13 @@ export function useMoviesFilm(tableRef: Ref) {
     openDialog,
     handleUpload,
     handleDelete,
-    goActorDetail,
+    addDoubanFilm,
     handleAddSwipe,
     handleManyDelete,
     handleAddEpisode,
     handleSizeChange,
     handleCurrentChange,
+    openImportFileDialog,
     handleSelectionChange
   };
 }

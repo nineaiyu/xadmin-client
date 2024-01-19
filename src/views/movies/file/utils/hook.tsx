@@ -2,23 +2,23 @@ import dayjs from "dayjs";
 import { message } from "@/utils/message";
 import type { PaginationProps } from "@pureadmin/table";
 import {
-  reactive,
-  ref,
+  computed,
   h,
   onMounted,
-  toRaw,
+  reactive,
   type Ref,
-  computed,
+  ref,
+  toRaw,
   Transition
 } from "vue";
 import {
-  getFileListApi,
-  updateFileApi,
   deleteFileApi,
-  manyDeleteFileApi,
-  getFileDownloadUrlApi,
   directDownloadUrl,
-  syncFileInfoApi
+  getFileDownloadUrlApi,
+  getFileListApi,
+  manyDeleteFileApi,
+  syncFileInfoApi,
+  updateFileApi
 } from "@/api/movies/file";
 import { delay, formatBytes, getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
@@ -29,6 +29,7 @@ import EditPen from "@iconify-icons/ep/edit-pen";
 import Check from "@iconify-icons/ep/check";
 import previewForm from "../preview.vue";
 import uploadForm from "../upload/src/index.vue";
+
 export function useFile(tableRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [

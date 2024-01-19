@@ -1,6 +1,5 @@
 import { http } from "@/utils/http";
-import type { Result } from "@/api/types";
-import type { ResultDetail } from "@/api/types";
+import type { Result, ResultDetail } from "@/api/types";
 
 export const getActorListApi = (data?: object) => {
   return http.request<Result>("get", "/api/movies/actor", {

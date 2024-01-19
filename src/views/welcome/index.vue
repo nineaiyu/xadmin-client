@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import TypeIt from "@/components/ReTypeit";
+
 const { version } = __APP_INFO__.pkg;
 
 defineOptions({

@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import { message } from "@/utils/message";
-import { ref, onMounted, type Ref, reactive } from "vue";
+import { reactive, type Ref, ref } from "vue";
 
 import { delay, formatBytes, getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
@@ -13,7 +13,7 @@ export function useSearchFile(tableRef: Ref, pk: string) {
   const { t } = useI18n();
   const manySelectCount = ref(0);
   const dataList = ref([]);
-  const loading = ref(true);
+  const loading = ref(false);
   const form = reactive({
     pk: pk,
     file_id: ""
@@ -98,10 +98,6 @@ export function useSearchFile(tableRef: Ref, pk: string) {
     formEl.resetFields();
     onSearch();
   };
-
-  onMounted(() => {
-    onSearch();
-  });
 
   return {
     t,

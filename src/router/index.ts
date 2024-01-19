@@ -6,23 +6,23 @@ import { getRefreshToken, multipleTabsKey, removeToken } from "@/utils/auth";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import {
-  type Router,
   createRouter,
-  type RouteRecordRaw,
-  type RouteComponent
+  type RouteComponent,
+  type Router,
+  type RouteRecordRaw
 } from "vue-router";
 import {
   ascending,
-  getTopMenu,
-  initRouter,
-  getHistoryMode,
   findRouteByPath,
-  handleAliveRoute,
+  formatFlatteningRoutes,
   formatTwoStageRoutes,
-  formatFlatteningRoutes
+  getHistoryMode,
+  getTopMenu,
+  handleAliveRoute,
+  initRouter
 } from "./utils";
 import { buildHierarchyTree } from "@/utils/tree";
-import { isUrl, openLink, isAllEmpty } from "@pureadmin/utils";
+import { isAllEmpty, isUrl, openLink } from "@pureadmin/utils";
 
 import remainingRouter from "./modules/remaining";
 import Cookies from "js-cookie";

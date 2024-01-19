@@ -16,6 +16,7 @@ import { $t, transformI18n } from "@/plugins/i18n";
 import { useWatermark } from "@pureadmin/utils";
 import { Boot } from "@wangeditor/editor";
 import attachmentModule from "@wangeditor/plugin-upload-attachment";
+
 Boot.registerModule(attachmentModule);
 export default defineComponent({
   name: "app",

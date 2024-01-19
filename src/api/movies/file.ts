@@ -1,6 +1,5 @@
 import { http } from "@/utils/http";
-import type { Result } from "@/api/types";
-import type { ResultDetail } from "@/api/types";
+import type { Result, ResultDetail } from "@/api/types";
 
 /** 阿里云盘文件管理 */
 export const getFileListApi = (data?: object) => {

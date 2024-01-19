@@ -6,13 +6,13 @@ import type { FormItemProps } from "./types";
 import editForm from "../form.vue";
 import type { PaginationProps } from "@pureadmin/table";
 import {
+  h,
   nextTick,
+  onMounted,
   reactive,
   ref,
-  onMounted,
-  h,
-  toRaw,
   type Ref,
+  toRaw,
   watch
 } from "vue";
 import { delay, getKeyList } from "@pureadmin/utils";
@@ -20,12 +20,12 @@ import { hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { usePublicHooks } from "@/views/system/hooks";
 import {
+  actionRankCategoryApi,
   createCategoryApi,
   deleteCategoryApi,
   getCategoryListApi,
   manyDeleteCategoryApi,
-  updateCategoryApi,
-  actionRankCategoryApi
+  updateCategoryApi
 } from "@/api/movies/category";
 import Sortable from "sortablejs";
 

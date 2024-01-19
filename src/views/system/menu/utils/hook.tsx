@@ -7,7 +7,7 @@ import {
   manyDeleteMenuApi,
   updateMenuApi
 } from "@/api/system/menu";
-import { reactive, ref, computed, onMounted, h } from "vue";
+import { computed, h, onMounted, reactive, ref } from "vue";
 import { addDialog } from "@/components/ReDialog";
 import editForm from "../edit.vue";
 import type { FormItemProps } from "./types";

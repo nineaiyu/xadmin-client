@@ -18,9 +18,7 @@ const props = withDefaults(defineProps<FormProps>(), {
     episodes: "",
     region: "",
     language: "",
-    subtitle: "",
     release_date: "",
-    director: [],
     starring: [],
     times: "",
     views: "",
@@ -32,7 +30,6 @@ const props = withDefaults(defineProps<FormProps>(), {
   categoryData: () => [],
   channelData: () => [],
   regionData: () => [],
-  subtitleData: () => [],
   languageData: () => []
 });
 
@@ -53,7 +50,7 @@ const getActorData = (search: string, pks: string[], init = false) => {
     name: "",
     pks: "",
     page: 1,
-    size: 30,
+    size: 60,
     ordering: "-created_time",
     enable: true
   };
@@ -73,9 +70,13 @@ const getActorData = (search: string, pks: string[], init = false) => {
         const org_data = cloneDeep(actorData.value);
         res.data.results.forEach(item => {
           if (!checkExist(item, org_data)) {
+            let label = item.name;
+            if (item.foreign_name) {
+              label = `${label} -- ${item.foreign_name}`;
+            }
             actorData.value.push({
               value: item.pk,
-              label: `${item.name} -- ${item.foreign_name}`
+              label: label
             });
           }
         });
@@ -95,9 +96,8 @@ const checkExist = (val, list) => {
 };
 
 onMounted(() => {
-  let pks = [...newFormInline.value.director, ...newFormInline.value.starring];
-  if (pks && pks.length > 0) {
-    getActorData("", pks);
+  if (newFormInline.value.starring && newFormInline.value.starring.length > 0) {
+    getActorData("", newFormInline.value.starring);
   }
   delay(800).then(() => {
     getActorData("", null, true);
@@ -208,54 +208,6 @@ onMounted(() => {
         </el-form-item>
       </re-col>
       <re-col :value="24" :xs="24" :sm="24">
-        <el-form-item :label="t('MoviesFilm.subtitle')" prop="subtitle">
-          <el-select
-            v-model="newFormInline.subtitle"
-            filterable
-            multiple
-            clearable
-            :placeholder="t('MoviesFilm.subtitle')"
-            style="width: 100%"
-          >
-            <el-option
-              v-for="item in props.subtitleData"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
-        </el-form-item>
-      </re-col>
-
-      <re-col :value="24" :xs="24" :sm="24">
-        <el-form-item :label="t('MoviesFilm.director')" prop="director">
-          <el-select
-            v-model="newFormInline.director"
-            filterable
-            clearable
-            multiple
-            remote
-            reserve-keyword
-            :placeholder="t('MoviesFilm.director')"
-            remote-show-suffix
-            :remote-method="getActorData"
-            :loading="loading"
-            style="width: 80%"
-          >
-            <el-option
-              v-for="item in actorData"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
-          <el-button @click="getActorData('', null, true)">{{
-            t("buttons.hsreload")
-          }}</el-button>
-        </el-form-item>
-      </re-col>
-
-      <re-col :value="24" :xs="24" :sm="24">
         <el-form-item :label="t('MoviesFilm.starring')" prop="starring">
           <el-select
             v-model="newFormInline.starring"
@@ -317,7 +269,12 @@ onMounted(() => {
       </re-col>
       <re-col :value="12" :xs="24" :sm="24">
         <el-form-item :label="t('MoviesFilm.rate')" prop="rate">
-          <el-rate v-model="newFormInline.rate" allow-half show-score />
+          <el-rate
+            v-model="newFormInline.rate"
+            :max="10"
+            allow-half
+            show-score
+          />
         </el-form-item>
       </re-col>
       <re-col :value="12" :xs="24" :sm="24">

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import {
-  ref,
-  unref,
-  watch,
-  reactive,
   computed,
   nextTick,
-  onBeforeMount
+  onBeforeMount,
+  reactive,
+  ref,
+  unref,
+  watch
 } from "vue";
 import { getConfig } from "@/config";
 import { useRouter } from "vue-router";
@@ -20,7 +20,7 @@ import { useAppStoreHook } from "@/store/modules/app";
 import { toggleTheme } from "@pureadmin/theme/dist/browser-utils";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
-import { useDark, debounce, useGlobal, storageLocal } from "@pureadmin/utils";
+import { debounce, storageLocal, useDark, useGlobal } from "@pureadmin/utils";
 
 import dayIcon from "@/assets/svg/day.svg?component";
 import darkIcon from "@/assets/svg/dark.svg?component";

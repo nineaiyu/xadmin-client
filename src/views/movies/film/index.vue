@@ -14,6 +14,7 @@ import { hasAuth } from "@/router/utils";
 import { getIndexType } from "@/utils";
 import More from "@iconify-icons/ep/more-filled";
 import Picture from "@iconify-icons/ep/picture-filled";
+
 defineOptions({
   name: "MoviesFilm"
 });
@@ -32,7 +33,6 @@ const {
   categoryData,
   channelData,
   languageData,
-  subtitleData,
   regionData,
   manySelectCount,
   onSelectionCancel,
@@ -41,12 +41,13 @@ const {
   openDialog,
   handleUpload,
   handleDelete,
-  goActorDetail,
+  addDoubanFilm,
   handleAddSwipe,
   handleManyDelete,
   handleSizeChange,
   handleAddEpisode,
   handleCurrentChange,
+  openImportFileDialog,
   handleSelectionChange
 } = useMoviesFilm(tableRef);
 </script>
@@ -65,15 +66,6 @@ const {
           :placeholder="t('MoviesFilm.name')"
           clearable
           class="!w-[200px]"
-          @keyup.enter="onSearch(true)"
-        />
-      </el-form-item>
-      <el-form-item :label="t('MoviesFilm.director')" prop="director">
-        <el-input
-          v-model="form.director"
-          :placeholder="t('MoviesFilm.director')"
-          clearable
-          class="!w-[180px]"
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
@@ -131,23 +123,6 @@ const {
         >
           <el-option
             v-for="item in languageData"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item :label="t('MoviesFilm.subtitle')" prop="subtitle">
-        <el-select
-          v-model="form.subtitle"
-          filterable
-          clearable
-          :placeholder="t('MoviesFilm.subtitle')"
-          class="!w-[180px]"
-          @change="onSearch(true)"
-        >
-          <el-option
-            v-for="item in subtitleData"
             :key="item.value"
             :label="item.label"
             :value="item.value"
@@ -269,7 +244,14 @@ const {
               </template>
             </el-popconfirm>
           </div>
-
+          <el-button
+            v-if="hasAuth('search:MoviesDoubanFilm')"
+            :icon="useRenderIcon(AddFill)"
+            type="primary"
+            @click="openImportFileDialog"
+          >
+            {{ t("MoviesFilm.doubanSearch") }}
+          </el-button>
           <el-button
             v-if="hasAuth('create:MoviesFilm')"
             type="primary"
@@ -331,18 +313,6 @@ const {
                 v-for="(item, index) in row.channel_info"
                 :key="item.value"
                 :type="getIndexType(index + 1)"
-              >
-                {{ item.label }}
-              </el-tag>
-            </el-space>
-          </template>
-          <template #director="{ row }">
-            <el-space wrap>
-              <el-tag
-                v-for="(item, index) in row.director_info"
-                :key="item.value"
-                :type="getIndexType(index + 1)"
-                @click="goActorDetail(item.value)"
               >
                 {{ item.label }}
               </el-tag>
@@ -433,6 +403,18 @@ const {
                       @click="handleAddSwipe(row)"
                     >
                       {{ t("MoviesFilm.addSwipe") }}
+                    </el-button>
+                  </el-dropdown-item>
+                  <el-dropdown-item v-if="hasAuth('create:MoviesDoubanFilm')">
+                    <el-button
+                      :class="buttonClass"
+                      :icon="useRenderIcon(Refresh)"
+                      :size="size"
+                      link
+                      type="primary"
+                      @click="addDoubanFilm(row)"
+                    >
+                      {{ t("MoviesFilm.doubanAdd") }}
                     </el-button>
                   </el-dropdown-item>
                 </el-dropdown-menu>

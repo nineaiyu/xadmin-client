@@ -5,7 +5,7 @@ import { addDialog } from "@/components/ReDialog";
 import type { FormItemProps } from "./types";
 import editForm from "../form.vue";
 import type { PaginationProps } from "@pureadmin/table";
-import { nextTick, reactive, ref, onMounted, h, toRaw, type Ref } from "vue";
+import { h, nextTick, onMounted, reactive, ref, type Ref, toRaw } from "vue";
 import {
   cloneDeep,
   delay,

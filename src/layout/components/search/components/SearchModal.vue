@@ -6,9 +6,9 @@ import SearchResult from "./SearchResult.vue";
 import SearchFooter from "./SearchFooter.vue";
 import { useNav } from "@/layout/hooks/useNav";
 import { transformI18n } from "@/plugins/i18n";
-import { ref, computed, shallowRef } from "vue";
+import { computed, ref, shallowRef } from "vue";
 import { cloneDeep, isAllEmpty } from "@pureadmin/utils";
-import { useDebounceFn, onKeyStroke } from "@vueuse/core";
+import { onKeyStroke, useDebounceFn } from "@vueuse/core";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import Search from "@iconify-icons/ri/search-line";
 

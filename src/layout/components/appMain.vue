@@ -2,7 +2,7 @@
 import Footer from "./footer/index.vue";
 import { useGlobal } from "@pureadmin/utils";
 import backTop from "@/assets/svg/back_top.svg?component";
-import { h, computed, Transition, defineComponent } from "vue";
+import { computed, defineComponent, h, Transition } from "vue";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import { useI18n } from "vue-i18n";
 
