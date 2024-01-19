@@ -7,7 +7,12 @@ import { routerArrays } from "@/layout/types";
 import { getTopMenu, handleAliveRoute } from "@/router/utils";
 import { useSettingStoreHook } from "@/store/modules/settings";
 import { onClickOutside, useFullscreen } from "@vueuse/core";
-import { isAllEmpty, isEqual, useResizeObserver } from "@pureadmin/utils";
+import {
+  delay,
+  isAllEmpty,
+  isEqual,
+  useResizeObserver
+} from "@pureadmin/utils";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { nextTick, onBeforeUnmount, ref, toRaw, unref, watch } from "vue";
 
@@ -505,6 +510,7 @@ onMounted(() => {
   });
 
   useResizeObserver(scrollbarDom, dynamicTagView);
+  delay().then(() => dynamicTagView());
 });
 
 onBeforeUnmount(() => {
