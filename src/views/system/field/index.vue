@@ -8,7 +8,7 @@ import Refresh from "@iconify-icons/ep/refresh";
 import { hasAuth } from "@/router/utils";
 
 defineOptions({
-  name: "ModelField"
+  name: "SystemModelLabelField"
 });
 
 const formRef = ref();

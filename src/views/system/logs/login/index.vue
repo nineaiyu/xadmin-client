@@ -9,7 +9,7 @@ import Refresh from "@iconify-icons/ep/refresh";
 import { hasAuth } from "@/router/utils";
 
 defineOptions({
-  name: "UsesLoginLog"
+  name: "SystemUserLoginLog"
 });
 
 const formRef = ref();

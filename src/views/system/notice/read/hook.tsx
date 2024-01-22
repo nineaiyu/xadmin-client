@@ -204,7 +204,7 @@ export function useNoticeRead(tableRef: Ref) {
       row.owner_info?.pk
     ) {
       router.push({
-        name: "systemUser",
+        name: "SystemUser",
         query: { pk: row.owner_info.pk }
       });
     }
@@ -217,7 +217,7 @@ export function useNoticeRead(tableRef: Ref) {
       row.notice_info.pk
     ) {
       router.push({
-        name: "systemNotice",
+        name: "SystemNotice",
         query: { pk: row.notice_info.pk }
       });
     }

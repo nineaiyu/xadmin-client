@@ -34,7 +34,7 @@ const router = useRouter();
 
 const handleRead = (pk: number) => {
   router.push({
-    name: "userNotice",
+    name: "UserNotice",
     query: { pk: pk }
   });
   // updateUserNoticeReadApi({ pks: [pk] }).then(res => {

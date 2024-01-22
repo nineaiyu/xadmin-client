@@ -158,7 +158,7 @@ export function useUserConfig(tableRef: Ref) {
       row.owner_info?.pk
     ) {
       router.push({
-        name: "systemUser",
+        name: "SystemUser",
         query: { pk: row.owner_info.pk }
       });
     }

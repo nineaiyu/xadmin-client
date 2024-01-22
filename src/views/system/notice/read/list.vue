@@ -11,7 +11,7 @@ import { hasAuth } from "@/router/utils";
 import Eye from "@iconify-icons/ri/eye-fill";
 
 defineOptions({
-  name: "NoticeReadUser"
+  name: "SystemNoticeRead"
 });
 
 const formRef = ref();

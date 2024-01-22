@@ -13,7 +13,7 @@ import AddFill from "@iconify-icons/ri/add-circle-line";
 import Eye from "@iconify-icons/ri/eye-fill";
 
 defineOptions({
-  name: "Notice"
+  name: "SystemNotice"
 });
 
 const formRef = ref();

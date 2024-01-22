@@ -12,7 +12,7 @@ import AddFill from "@iconify-icons/ri/add-circle-line";
 import { hasAuth } from "@/router/utils";
 
 defineOptions({
-  name: "Role"
+  name: "SystemRole"
 });
 
 const formRef = ref();

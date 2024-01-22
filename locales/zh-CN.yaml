@@ -286,7 +286,7 @@ menu:
   cache: 缓存
   componentName: 组件名称
   componentPath: 组件路径
-  exampleComponentName: "如：`user`，如外网地址需内链访问则以`http(s)://`开头"
+  exampleComponentName: "如：`user`需要和前端定义的组件名称一致，如外网地址需内链访问则以`http(s)://`开头"
   exampleRoutePath: "访问的路由地址，如：`/user`, `/system/about`"
   exampleComponentPath: "访问的组件路径，如：`system/user/index`，默认在`views`目录下"
   exampleCache: "选择是则会被`keep-alive`缓存，需要匹配组件的`name`和地址保持一致"

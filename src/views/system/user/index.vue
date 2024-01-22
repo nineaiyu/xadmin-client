@@ -19,7 +19,7 @@ import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { getIndexType } from "@/utils";
 
 defineOptions({
-  name: "User"
+  name: "SystemUser"
 });
 
 const formRef = ref();

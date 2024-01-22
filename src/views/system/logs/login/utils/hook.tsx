@@ -113,7 +113,7 @@ export function useLoginLog(tableRef: Ref) {
   function onGoDetail(row: any) {
     if (hasGlobalAuth("list:systemUser") && row.creator && row.creator?.pk) {
       router.push({
-        name: "systemUser",
+        name: "SystemUser",
         query: { pk: row.creator.pk }
       });
     }

@@ -198,7 +198,7 @@ export function useDept(tableRef: Ref) {
   function onGoDetail(row: any) {
     if (hasGlobalAuth("list:systemUser") && row.user_count && row.pk) {
       router.push({
-        name: "systemUser",
+        name: "SystemUser",
         query: { dept: row.pk }
       });
     }

@@ -13,7 +13,7 @@ import CircleClose from "@iconify-icons/ep/circle-close";
 import { hasAuth } from "@/router/utils";
 
 defineOptions({
-  name: "UserConfig"
+  name: "SystemUserConfig"
 });
 
 const formRef = ref();

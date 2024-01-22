@@ -142,7 +142,7 @@ export function useNotice(tableRef: Ref) {
   function onGoNoticeReadDetail(row: any) {
     if (hasGlobalAuth("list:systemNoticeRead") && row.pk) {
       router.push({
-        name: "systemNoticeRead",
+        name: "SystemNoticeRead",
         query: { notice_id: row.pk }
       });
     }

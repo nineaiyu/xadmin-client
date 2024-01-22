@@ -15,7 +15,7 @@ import { hasAuth } from "@/router/utils";
 import { getIndexType } from "@/utils";
 
 defineOptions({
-  name: "Dept"
+  name: "SystemDept"
 });
 
 const formRef = ref();

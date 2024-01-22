@@ -388,7 +388,7 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
   function goNotice() {
     const manySelectData = tableRef.value.getTableRef().getSelectionRows();
     router.push({
-      name: "systemNotice",
+      name: "SystemNotice",
       query: { notice_user: JSON.stringify(getKeyList(manySelectData, "pk")) }
     });
   }

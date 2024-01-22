@@ -39,7 +39,7 @@ const router = useRouter();
 
 const goUserNotice = () => {
   router.push({
-    name: "userNotice"
+    name: "UserNotice"
   });
 };
 

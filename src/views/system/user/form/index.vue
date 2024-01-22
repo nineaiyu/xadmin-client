@@ -140,7 +140,7 @@ defineExpose({ getRef });
         </el-form-item>
       </re-col>
       <re-col :value="24" :xs="24" :sm="24">
-        <el-form-item :label="t('user.dept')" prop="parent">
+        <el-form-item :label="t('user.dept')" prop="dept">
           <el-cascader
             v-model="newFormInline.dept"
             :disabled="!props.isAdd && props.showColumns.indexOf('dept') === -1"
