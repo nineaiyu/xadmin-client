@@ -58,6 +58,7 @@ import {
 } from "@/views/system/hooks";
 import { getDataPermissionListApi } from "@/api/system/permission";
 import { ModeChoices } from "@/views/system/constants";
+import { REGEXP_PWD } from "@/views/login/utils/rule";
 
 export function useUser(tableRef: Ref, treeRef: Ref) {
   const { t } = useI18n();
@@ -642,7 +643,15 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
               rules={[
                 {
                   required: true,
-                  message: t("user.verifyPassword"),
+                  validator: (rule, value, callback) => {
+                    if (value === "") {
+                      callback(new Error(t("user.verifyPassword")));
+                    } else if (!REGEXP_PWD.test(value)) {
+                      callback(new Error(t("login.passwordRuleReg")));
+                    } else {
+                      callback();
+                    }
+                  },
                   trigger: "blur"
                 }
               ]}
