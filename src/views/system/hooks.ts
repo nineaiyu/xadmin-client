@@ -78,5 +78,5 @@ export function formatColumns(results, columns, showColumns) {
  * @param url 图片资源链接
  */
 export function picturePng(url: string) {
-  return url.replace(/_(\d).jpg/, ".png");
+  return url?.replace(/_(\d).jpg/, ".png");
 }

@@ -513,7 +513,7 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
       closeOnClickModal: false,
       contentRenderer: () =>
         h(croppingUpload, {
-          imgSrc: picturePng(row.avatar) ?? "",
+          imgSrc: picturePng(row?.avatar) ?? "",
           onCropper: info => (avatarInfo.value = info),
           circled: true,
           quality: 1,
