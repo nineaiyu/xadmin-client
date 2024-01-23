@@ -50,7 +50,8 @@ export function useOperationLog(tableRef: Ref) {
   const columns = ref<TableColumnList>([
     {
       type: "selection",
-      align: "left"
+      align: "left",
+      hide: !hasAuth("delete:systemOperationLog")
     },
     {
       label: t("labels.id"),

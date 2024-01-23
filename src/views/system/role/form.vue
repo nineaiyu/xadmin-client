@@ -63,7 +63,7 @@ const ruleFormRef = ref();
 const treeRoleRef = ref();
 const newFormInline = ref(props.formInline);
 const searchValue = ref("");
-
+const loading = ref(false);
 function getRef() {
   return ruleFormRef.value;
 }
@@ -91,12 +91,18 @@ const initData = () => {
 };
 const getCheckedMenu = pk => {
   if (pk && hasAuth("detail:systemRole")) {
+    loading.value = true;
     getRoleDetailApi(pk).then(({ code, data }) => {
       if (code === 1000) {
         newFormInline.value.menu = data?.menu;
-        newFormInline.value.field = data?.field;
+        Object.keys(data?.field).forEach(key => {
+          data?.field[key].forEach(val => {
+            newFormInline.value.field.push(`${key}+${val}`);
+          });
+        });
         initData();
       }
+      loading.value = false;
     });
   }
 };
@@ -124,7 +130,7 @@ function toggleRowExpansionAll(status) {
     if (
       status &&
       (nodes[i].data?.model?.length > 0 ||
-        nodes[i].data?.pk?.toString().indexOf("-") > -1)
+        nodes[i].data?.pk?.toString().indexOf("+") > -1)
     ) {
       continue;
     }
@@ -142,8 +148,10 @@ function toggleSelectAll(status) {
 
 function nodeClick(value, node) {
   if (
-    value.pk.toString().indexOf("-") > 0 &&
-    props.showColumns.indexOf("field") > -1
+    value.pk.toString().indexOf("+") > 0 &&
+    ((props.showColumns.length > 0 &&
+      props.showColumns.indexOf("field") > -1) ||
+      true)
   ) {
     node.checked = !node.checked;
   }
@@ -291,6 +299,7 @@ function onReset() {
       <div>
         <el-tree
           ref="treeRoleRef"
+          v-loading="loading"
           class="w-full"
           :data="props.menuTreeData"
           :check-strictly="checkStrictly"

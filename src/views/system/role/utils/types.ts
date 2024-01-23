@@ -14,7 +14,7 @@ interface FormItemProps {
   /** 菜单信息 */
   menu: number[];
   field?: string[];
-  fields?: string[];
+  fields?: object;
 }
 
 interface FormProps {

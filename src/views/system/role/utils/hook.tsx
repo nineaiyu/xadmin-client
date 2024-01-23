@@ -279,12 +279,26 @@ export function useRole(tableRef: Ref) {
           if (valid) {
             const menu = TreeRef!.getCheckedKeys(false);
             curData.menu = menu.filter(x => {
-              return x > 0;
+              return x.indexOf("+") === -1;
             });
-            curData.fields = menu.filter(x => {
-              return x.toString().indexOf("-") > -1;
+            menu.filter(x => {
+              return x.toString().indexOf("+") > -1;
             });
+            const fields = {};
+            menu.forEach(item => {
+              if (item.indexOf("+") > -1 && !item.startsWith("+")) {
+                let data = item.split("+");
+                let val = fields[data[0]];
+                if (!val) {
+                  fields[data[0]] = [data[1]];
+                } else {
+                  fields[data[0]].push(data[1]);
+                }
+              }
+            });
+            curData.fields = fields;
             delete curData.field;
+            loading.value = true;
             if (is_add) {
               createRoleApi(curData).then(async res => {
                 if (res.code === 1000) {
@@ -294,6 +308,7 @@ export function useRole(tableRef: Ref) {
                     type: "error"
                   });
                 }
+                loading.value = false;
               });
             } else {
               updateRoleApi(curData.pk, curData).then(async res => {
@@ -304,6 +319,7 @@ export function useRole(tableRef: Ref) {
                     type: "error"
                   });
                 }
+                loading.value = false;
               });
             }
           }
@@ -319,12 +335,11 @@ export function useRole(tableRef: Ref) {
           item.children = [];
           item.model.forEach(m => {
             let data = cloneDeep(fieldLookupsData.value[m]);
-            data.pk = -data.pk;
+            data.pk = `+${data.pk}`;
             data.children.forEach(x => {
-              x.pk = `${item.pk}-${x.pk}`;
+              x.pk = `${item.pk}+${x.pk}`;
               x.parent = data.pk;
             });
-            data.disabled = true;
             item.children.push(data);
           });
         }

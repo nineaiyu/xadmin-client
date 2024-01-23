@@ -42,10 +42,6 @@ export function useModelField() {
   });
   const columns = ref<TableColumnList>([
     {
-      type: "selection",
-      align: "left"
-    },
-    {
       label: t("labels.id"),
       prop: "pk",
       minWidth: 100
