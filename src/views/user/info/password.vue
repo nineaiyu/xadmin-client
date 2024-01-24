@@ -7,6 +7,8 @@ import { hasAuth } from "@/router/utils";
 import { isAllEmpty } from "@pureadmin/utils";
 import { zxcvbn } from "@zxcvbn-ts/core";
 import { useI18n } from "vue-i18n";
+import { $t, transformI18n } from "@/plugins/i18n";
+import { REGEXP_PWD } from "@/views/login/utils/rule";
 
 defineOptions({
   name: "editUserPassword"
@@ -40,7 +42,15 @@ const formPasswordRules = reactive<FormRules>({
   new_password: [
     {
       required: true,
-      message: t("userinfo.verifyNewPassword"),
+      validator: (rule, value, callback) => {
+        if (value === "") {
+          callback(new Error(transformI18n($t("userinfo.verifyNewPassword"))));
+        } else if (!REGEXP_PWD.test(value)) {
+          callback(new Error(transformI18n($t("login.passwordRuleReg"))));
+        } else {
+          callback();
+        }
+      },
       trigger: "blur"
     }
   ],

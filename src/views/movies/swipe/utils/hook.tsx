@@ -15,7 +15,7 @@ import {
 } from "@pureadmin/utils";
 import { hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
-import { usePublicHooks } from "@/views/system/hooks";
+import { formatColumns, usePublicHooks } from "@/views/system/hooks";
 import {
   actionRankSwipeApi,
   createSwipeApi,
@@ -68,6 +68,7 @@ export function useMoviesSwipe(tableRef: Ref) {
     isEmpty(route.params) ? route.query : route.params
   );
   const { switchStyle } = usePublicHooks();
+  const showColumns = ref([]);
   const pagination = reactive<PaginationProps>({
     total: 0,
     pageSize: 10,
@@ -75,7 +76,7 @@ export function useMoviesSwipe(tableRef: Ref) {
     pageSizes: [5, 10, 20, 50, 100],
     background: true
   });
-  const columns: TableColumnList = [
+  const columns = ref<TableColumnList>([
     {
       type: "selection",
       align: "left"
@@ -158,9 +159,14 @@ export function useMoviesSwipe(tableRef: Ref) {
       label: t("labels.operations"),
       fixed: "right",
       width: 260,
-      slot: "operation"
+      slot: "operation",
+      hide: !(
+        hasAuth("update:MoviesSwipe") ||
+        hasAuth("delete:MoviesSwipe") ||
+        hasAuth("upload:MoviesSwipePicture")
+      )
     }
-  ];
+  ]);
   const rowDrop = (event: { preventDefault: () => void }) => {
     event.preventDefault();
     nextTick(() => {
@@ -293,6 +299,7 @@ export function useMoviesSwipe(tableRef: Ref) {
     loading.value = true;
     const { data }: any = await getSwipeListApi(toRaw(form));
     dataList.value = data.results;
+    formatColumns(data?.results, columns, showColumns);
     pagination.total = data.total;
     delay(500).then(() => {
       loading.value = false;

@@ -9,7 +9,7 @@ import { computed, h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
 import { delay, getKeyList } from "@pureadmin/utils";
 import { hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
-import { usePublicHooks } from "@/views/system/hooks";
+import { formatColumns, usePublicHooks } from "@/views/system/hooks";
 import {
   createFilmApi,
   deleteFilmApi,
@@ -97,6 +97,7 @@ export function useMoviesFilm(tableRef: Ref) {
       "dark:hover:!text-primary"
     ];
   });
+  const showColumns = ref([]);
   const pagination = reactive<PaginationProps>({
     total: 0,
     pageSize: 10,
@@ -104,7 +105,7 @@ export function useMoviesFilm(tableRef: Ref) {
     pageSizes: [5, 10, 20, 50, 100],
     background: true
   });
-  const columns: TableColumnList = [
+  const columns = ref<TableColumnList>([
     {
       type: "selection",
       align: "left"
@@ -228,7 +229,7 @@ export function useMoviesFilm(tableRef: Ref) {
       width: 180,
       slot: "operation"
     }
-  ];
+  ]);
 
   function onChange({ row, index }) {
     const action =
@@ -346,6 +347,7 @@ export function useMoviesFilm(tableRef: Ref) {
     const { data, category, channel, region, language }: any =
       await getFilmListApi(query);
     dataList.value = data.results;
+    formatColumns(data?.results, columns, showColumns);
     pagination.total = data.total;
     categoryData.value = category;
     channelData.value = channel;

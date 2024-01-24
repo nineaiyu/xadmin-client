@@ -10,7 +10,6 @@ import { computed, ref, shallowRef } from "vue";
 import { cloneDeep, isAllEmpty } from "@pureadmin/utils";
 import { onKeyStroke, useDebounceFn } from "@vueuse/core";
 import { usePermissionStoreHook } from "@/store/modules/permission";
-import Search from "@iconify-icons/ri/search-line";
 
 interface Props {
   /** 弹窗显隐 */
@@ -52,12 +51,14 @@ const show = computed({
 /** 将菜单树形结构扁平化为一维数组，用于菜单查询 */
 function flatTree(arr) {
   const res = [];
+
   function deep(arr) {
     arr.forEach(item => {
       res.push(item);
       item.children && deep(item.children);
     });
   }
+
   deep(arr);
   return res;
 }
@@ -169,7 +170,7 @@ onKeyStroke("ArrowDown", handleDown);
     >
       <template #prefix>
         <IconifyIconOffline
-          :icon="Search"
+          icon="search"
           class="text-primary w-[24px] h-[24px]"
         />
       </template>

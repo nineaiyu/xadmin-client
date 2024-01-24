@@ -18,7 +18,7 @@ import {
 import { delay, getKeyList } from "@pureadmin/utils";
 import { hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
-import { usePublicHooks } from "@/views/system/hooks";
+import { formatColumns, usePublicHooks } from "@/views/system/hooks";
 import {
   actionRankCategoryApi,
   createCategoryApi,
@@ -65,6 +65,7 @@ export function useMoviesCategory(tableRef: Ref) {
   const switchLoadMap = ref({});
   const dictChoices = ref([]);
   const { switchStyle } = usePublicHooks();
+  const showColumns = ref([]);
   const pagination = reactive<PaginationProps>({
     total: 0,
     pageSize: 10,
@@ -72,7 +73,7 @@ export function useMoviesCategory(tableRef: Ref) {
     pageSizes: [5, 10, 20, 50, 100],
     background: true
   });
-  const columns: TableColumnList = [
+  const columns = ref<TableColumnList>([
     {
       type: "selection",
       align: "left"
@@ -145,9 +146,12 @@ export function useMoviesCategory(tableRef: Ref) {
       label: t("labels.operations"),
       fixed: "right",
       width: 180,
-      slot: "operation"
+      slot: "operation",
+      hide: !(
+        hasAuth("update:MoviesCategory") || hasAuth("delete:MoviesCategory")
+      )
     }
-  ];
+  ]);
   const rowDrop = (event: { preventDefault: () => void }) => {
     event.preventDefault();
     nextTick(() => {
@@ -282,6 +286,7 @@ export function useMoviesCategory(tableRef: Ref) {
     }
     loading.value = true;
     const { data, choices_dict }: any = await getCategoryListApi(toRaw(form));
+    formatColumns(data?.results, columns, showColumns);
     dataList.value = data.results;
     pagination.total = data.total;
     dictChoices.value = choices_dict;

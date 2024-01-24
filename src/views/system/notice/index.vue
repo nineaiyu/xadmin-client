@@ -5,7 +5,7 @@ import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 
 import Delete from "@iconify-icons/ep/delete";
-import Search from "@iconify-icons/ep/search";
+
 import Refresh from "@iconify-icons/ep/refresh";
 import { hasAuth } from "@/router/utils";
 import EditPen from "@iconify-icons/ep/edit-pen";
@@ -13,11 +13,12 @@ import AddFill from "@iconify-icons/ri/add-circle-line";
 import Eye from "@iconify-icons/ri/eye-fill";
 
 defineOptions({
-  name: "Notice"
+  name: "SystemNotice"
 });
 
 const formRef = ref();
 const tableRef = ref();
+
 const {
   t,
   form,
@@ -91,8 +92,7 @@ const {
       <el-form-item :label="t('notice.level')" prop="level">
         <el-select
           v-model="form.level"
-          class="filter-item"
-          style="width: 180px"
+          class="!w-[180px]"
           clearable
           @change="onSearch(true)"
         >
@@ -108,8 +108,7 @@ const {
       <el-form-item :label="t('notice.type')" prop="level">
         <el-select
           v-model="form.notice_type"
-          class="filter-item"
-          style="width: 180px"
+          class="!w-[180px]"
           clearable
           @change="onSearch(true)"
         >
@@ -117,7 +116,6 @@ const {
             v-for="item in noticeChoices"
             :key="item.key"
             :label="item.label"
-            :disabled="item.disabled"
             :value="item.key"
           />
         </el-select>
@@ -125,7 +123,7 @@ const {
       <el-form-item :label="t('labels.sort')">
         <el-select
           v-model="form.ordering"
-          style="width: 180px"
+          class="!w-[180px]"
           clearable
           @change="onSearch(true)"
         >
@@ -140,7 +138,7 @@ const {
       <el-form-item>
         <el-button
           type="primary"
-          :icon="useRenderIcon(Search)"
+          :icon="useRenderIcon('search')"
           :loading="loading"
           @click="onSearch(true)"
         >
@@ -248,7 +246,7 @@ const {
                 <el-button
                   class="reset-margin"
                   link
-                  type="primary"
+                  type="danger"
                   :size="size"
                   :icon="useRenderIcon(Delete)"
                 >
@@ -264,10 +262,6 @@ const {
 </template>
 
 <style scoped lang="scss">
-:deep(.el-dropdown-menu__item i) {
-  margin: 0;
-}
-
 .search-form {
   :deep(.el-form-item) {
     margin-bottom: 12px;

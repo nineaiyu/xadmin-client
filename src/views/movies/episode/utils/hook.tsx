@@ -25,7 +25,7 @@ import {
 } from "@pureadmin/utils";
 import { hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
-import { usePublicHooks } from "@/views/system/hooks";
+import { formatColumns, usePublicHooks } from "@/views/system/hooks";
 import {
   actionRankEpisodeApi,
   createEpisodeApi,
@@ -78,6 +78,7 @@ export function useMoviesEpisode(tableRef: Ref) {
   const getParameter = cloneDeep(
     isEmpty(route.params) ? route.query : route.params
   );
+  const showColumns = ref([]);
   const pagination = reactive<PaginationProps>({
     total: 0,
     pageSize: 10,
@@ -85,7 +86,7 @@ export function useMoviesEpisode(tableRef: Ref) {
     pageSizes: [5, 10, 20, 50, 100],
     background: true
   });
-  const columns: TableColumnList = [
+  const columns = ref<TableColumnList>([
     {
       type: "selection",
       align: "left"
@@ -179,9 +180,12 @@ export function useMoviesEpisode(tableRef: Ref) {
       label: t("labels.operations"),
       fixed: "right",
       width: 220,
-      slot: "operation"
+      slot: "operation",
+      hide: !(
+        hasAuth("update:MoviesEpisode") || hasAuth("delete:MoviesEpisode")
+      )
     }
-  ];
+  ]);
   const rowDrop = (event: { preventDefault: () => void }) => {
     event.preventDefault();
     nextTick(() => {
@@ -320,6 +324,7 @@ export function useMoviesEpisode(tableRef: Ref) {
     }
     loading.value = true;
     const { data } = await getEpisodeListApi(toRaw(form));
+    formatColumns(data?.results, columns, showColumns);
     dataList.value = data.results;
     pagination.total = data.total;
     delay(500).then(() => {

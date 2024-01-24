@@ -8,6 +8,7 @@ import {
   getFileInfoByDriveApi,
   importFileInfoByDriveApi
 } from "@/api/movies/drive";
+import { formatColumns } from "@/views/system/hooks";
 
 export function useSearchFile(tableRef: Ref, pk: string) {
   const { t } = useI18n();
@@ -18,7 +19,8 @@ export function useSearchFile(tableRef: Ref, pk: string) {
     pk: pk,
     file_id: ""
   });
-  const columns: TableColumnList = [
+  const showColumns = ref([]);
+  const columns = ref<TableColumnList>([
     {
       type: "selection",
       align: "left"
@@ -52,7 +54,7 @@ export function useSearchFile(tableRef: Ref, pk: string) {
       formatter: ({ created_time }) =>
         dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
     }
-  ];
+  ]);
 
   function handleSelectionChange(val) {
     manySelectCount.value = val.length;
@@ -88,6 +90,7 @@ export function useSearchFile(tableRef: Ref, pk: string) {
     const { data } = await getFileInfoByDriveApi(form.pk, {
       file_id: form.file_id
     });
+    formatColumns(data?.results, columns, showColumns);
     dataList.value = data.results;
     delay(500).then(() => {
       loading.value = false;

@@ -6,8 +6,8 @@ import { getUserNoticeUnreadListApi } from "@/api/system/notice";
 import { TabItem } from "@/layout/components/notice/data";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
+import { useUserStoreHook } from "@/store/modules/user";
 
-const noticesNum = ref(0);
 const { t } = useI18n();
 const notices = ref<TabItem[]>([
   {
@@ -26,7 +26,7 @@ const activeKey = ref();
 const getNoticeData = () => {
   getUserNoticeUnreadListApi().then(res => {
     if (res.code === 1000 && res.data) {
-      noticesNum.value = res.data.total;
+      useUserStoreHook().SET_NOTICECOUNT(res.data.total);
       notices.value = res.data.results;
       if (notices.value.length > 0) {
         activeKey.value = notices.value[0].key;
@@ -39,7 +39,7 @@ const router = useRouter();
 
 const goUserNotice = () => {
   router.push({
-    name: "userNotice"
+    name: "UserNotice"
   });
 };
 
@@ -61,7 +61,7 @@ onMounted(() => {
     @visibleChange="handleCommand"
   >
     <span class="dropdown-badge navbar-bg-hover select-none">
-      <el-badge :value="noticesNum" :max="99">
+      <el-badge :max="99" :value="useUserStoreHook().noticeCount">
         <span class="header-notice-icon">
           <IconifyIconOffline :icon="Bell" />
         </span>

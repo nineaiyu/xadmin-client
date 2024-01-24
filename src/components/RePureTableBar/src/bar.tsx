@@ -1,5 +1,12 @@
 import { useEpThemeStoreHook } from "@/store/modules/epTheme";
-import { computed, defineComponent, nextTick, type PropType, ref } from "vue";
+import {
+  computed,
+  defineComponent,
+  nextTick,
+  type PropType,
+  ref,
+  watch
+} from "vue";
 import {
   cloneDeep,
   delay,
@@ -44,13 +51,17 @@ export default defineComponent({
     const loading = ref(false);
     const checkAll = ref(true);
     const isIndeterminate = ref(false);
-    const filterColumns = cloneDeep(props?.columns).filter(column =>
-      isBoolean(column?.hide)
-        ? !column.hide
-        : !(isFunction(column?.hide) && column?.hide())
+    const filterColumns = ref(
+      cloneDeep(props?.columns).filter(column =>
+        isBoolean(column?.hide)
+          ? !column.hide
+          : !(isFunction(column?.hide) && column?.hide())
+      )
     );
-    let checkColumnList = getKeyList(cloneDeep(props?.columns), "label");
-    const checkedColumns = ref(getKeyList(cloneDeep(filterColumns), "label"));
+    const checkedColumns = ref(
+      getKeyList(cloneDeep(filterColumns.value), "label")
+    );
+    const checkColumnList = ref(getKeyList(cloneDeep(props?.columns), "label"));
     const dynamicColumns = ref(cloneDeep(props?.columns));
     const { t } = useI18n();
 
@@ -109,7 +120,7 @@ export default defineComponent({
     }
 
     function handleCheckAllChange(val: boolean) {
-      checkedColumns.value = val ? checkColumnList : [];
+      checkedColumns.value = val ? checkColumnList.value : [];
       isIndeterminate.value = false;
       dynamicColumns.value.map(column =>
         val ? (column.hide = false) : (column.hide = true)
@@ -118,9 +129,9 @@ export default defineComponent({
 
     function handleCheckedColumnsChange(value: string[]) {
       const checkedCount = value.length;
-      checkAll.value = checkedCount === checkColumnList.length;
+      checkAll.value = checkedCount === checkColumnList.value.length;
       isIndeterminate.value =
-        checkedCount > 0 && checkedCount < checkColumnList.length;
+        checkedCount > 0 && checkedCount < checkColumnList.value.length;
     }
 
     function handleCheckColumnListChange(val: boolean, label: string) {
@@ -131,11 +142,17 @@ export default defineComponent({
       checkAll.value = true;
       isIndeterminate.value = false;
       dynamicColumns.value = cloneDeep(props?.columns);
-      checkColumnList = [];
-      checkColumnList = getKeyList(cloneDeep(props?.columns), "label");
-      checkedColumns.value = getKeyList(cloneDeep(filterColumns), "label");
+      checkColumnList.value = [];
+      checkColumnList.value = getKeyList(cloneDeep(props?.columns), "label");
+      checkedColumns.value = getKeyList(
+        cloneDeep(filterColumns.value),
+        "label"
+      );
     }
 
+    watch(props?.columns, () => {
+      onReset();
+    });
     const dropdown = {
       dropdown: () => (
         <el-dropdown-menu class="translation">
@@ -197,9 +214,7 @@ export default defineComponent({
     };
 
     const isFixedColumn = (label: string) => {
-      return dynamicColumns.value.filter(item => item.label === label)[0].fixed
-        ? true
-        : false;
+      return dynamicColumns.value.filter(item => item.label === label)[0].fixed;
     };
 
     const reference = {
@@ -303,7 +318,7 @@ export default defineComponent({
                         alignment="flex-start"
                         size={0}
                       >
-                        {checkColumnList.map(item => {
+                        {checkColumnList.value.map(item => {
                           return (
                             <div class="flex items-center">
                               <DragIcon

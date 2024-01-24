@@ -11,6 +11,8 @@ import {
 } from "@/api/movies/history";
 import { useRouter } from "vue-router";
 import { formatTimes } from "../../util";
+import { formatColumns } from "@/views/system/hooks";
+import { hasAuth } from "@/router/utils";
 
 export function useMoviesWatchHistory(tableRef: Ref) {
   const { t } = useI18n();
@@ -35,6 +37,7 @@ export function useMoviesWatchHistory(tableRef: Ref) {
   const dataList = ref([]);
   const loading = ref(true);
   const router = useRouter();
+  const showColumns = ref([]);
   const pagination = reactive<PaginationProps>({
     total: 0,
     pageSize: 10,
@@ -49,7 +52,7 @@ export function useMoviesWatchHistory(tableRef: Ref) {
     { color: "#1989fa", percentage: 80 },
     { color: "#6f7ad3", percentage: 100 }
   ];
-  const columns: TableColumnList = [
+  const columns = ref<TableColumnList>([
     {
       type: "selection",
       align: "left"
@@ -115,9 +118,10 @@ export function useMoviesWatchHistory(tableRef: Ref) {
       label: t("labels.operations"),
       fixed: "right",
       width: 120,
-      slot: "operation"
+      slot: "operation",
+      hide: !hasAuth("delete:MoviesWatchHistory")
     }
-  ];
+  ]);
 
   function onGoDetail(row: any) {
     if (row.owner && row.owner.pk) {
@@ -195,6 +199,7 @@ export function useMoviesWatchHistory(tableRef: Ref) {
     loading.value = true;
     const { data }: any = await getWatchHistoryListApi(toRaw(form));
     dataList.value = data.results;
+    formatColumns(data?.results, columns, showColumns);
     pagination.total = data.total;
     delay(500).then(() => {
       loading.value = false;

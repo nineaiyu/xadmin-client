@@ -13,7 +13,12 @@ interface FormItemProps {
   /** 邮箱 */
   email?: string;
   /** 性别 */
-  sex?: number;
+  gender_display?: string;
+  dept_info?: {
+    name?: string;
+    pk?: number;
+  };
+  gender?: number;
   /** 角色 */
   roles_info?: any[];
   /** 密码 */
@@ -26,6 +31,7 @@ interface FormItemProps {
 
 interface FormProps {
   formInline: FormItemProps;
+  choicesDict: any[];
 }
 
 interface FormPasswordProps {

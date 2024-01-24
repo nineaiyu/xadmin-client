@@ -29,6 +29,7 @@ import EditPen from "@iconify-icons/ep/edit-pen";
 import Check from "@iconify-icons/ep/check";
 import previewForm from "../preview.vue";
 import uploadForm from "../upload/src/index.vue";
+import { formatColumns } from "@/views/system/hooks";
 
 export function useFile(tableRef: Ref) {
   const { t } = useI18n();
@@ -94,6 +95,7 @@ export function useFile(tableRef: Ref) {
   const manySelectCount = ref(0);
   const dataList = ref([]);
   const loading = ref(true);
+  const showColumns = ref([]);
   const pagination = reactive<PaginationProps>({
     total: 0,
     pageSize: 10,
@@ -127,7 +129,7 @@ export function useFile(tableRef: Ref) {
       ];
     };
   });
-  const columns: TableColumnList = [
+  const columns = ref<TableColumnList>([
     {
       type: "selection",
       align: "left"
@@ -208,7 +210,7 @@ export function useFile(tableRef: Ref) {
         dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
     },
     {
-      label: t("labels.remark"),
+      label: t("labels.description"),
       minWidth: 100,
       prop: "description",
       cellRenderer: ({ row, index }) => (
@@ -248,9 +250,15 @@ export function useFile(tableRef: Ref) {
       label: t("labels.operations"),
       fixed: "right",
       width: 180,
-      slot: "operation"
+      slot: "operation",
+      hide: !(
+        hasAuth("delete:MoviesFile") ||
+        hasAuth("get:MoviesFileDownloadUrl") ||
+        hasAuth("sync:MoviesFileInfo") ||
+        hasAuth("get:MoviesFilePreviewUrl")
+      )
     }
-  ];
+  ]);
 
   function onEdit({ description }, index) {
     inputValMap.value[index] = Object.assign({}, inputValMap.value[index], {
@@ -434,6 +442,7 @@ export function useFile(tableRef: Ref) {
     loading.value = true;
     const { data } = await getFileListApi(toRaw(form));
     dataList.value = data.results;
+    formatColumns(data?.results, columns, showColumns);
     pagination.total = data.total;
     delay(500).then(() => {
       loading.value = false;

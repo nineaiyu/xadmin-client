@@ -1,7 +1,6 @@
 export const getMenuOrderPk = (data: any, x = []) => {
   if (data instanceof Array && data.length > 0) {
     data.forEach(res => {
-      // @ts-expect-error
       x.push(res.pk);
       const children = res.children;
       if (children instanceof Array && children.length > 0) {

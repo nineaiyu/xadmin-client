@@ -61,6 +61,15 @@ layout:
   backTop: Back Top
   updateCheck: New version detected
   updateNow: Update now
+  clearCache: Clear Cache
+  light: Light
+  dark: Dark
+  auto: Auto
+  lightTip: Fresh start, light up the comfortable working interface
+  darkTip: Moonlight overture, drunk in the quiet and elegant night
+  autoTip: Synchronous time, interface with the morning and dusk natural echo
+  smartTip: Smart labels for fun and shine
+  cardTip: Card labels for efficient browsing
 
 error:
   error403: Sorry, you are not authorized to access this page
@@ -79,8 +88,8 @@ labels:
   id: ID
   status: Status
   verifyStatus: Please select status
-  remark: Remark
-  verifyRemark: Please enter remark
+  description: Description
+  verifyDescription: Please enter description
   sort: Sort
   active: Active
   inactive: Inactive
@@ -108,6 +117,8 @@ sorts:
   registrationDate: Registration Date
   loginDate: Login Date
   createdDate: Creation date
+  updatedDate: Updated date
+  rank: Rank
 
 buttons:
   hsLoginOut: LoginOut
@@ -122,6 +133,8 @@ buttons:
   hssearch: Search
   hsexpendAll: Expand All
   hscollapseAll: Collapse All
+  selectAll: Select All
+  unSelectAll: Cancel Select
   hssystemSet: Open ProjectConfig
   hsdelete: Delete
   hsreload: Reload
@@ -153,9 +166,18 @@ menus:
   hslogin: Login
   hssysManagement: System Manage
   hsUser: User Manage
-  hsRole: Role Manage
+  hsDept: Department Manage
   hsMenu: Menu Manage
+  hsPermission: Permission Manage
+  hsConfig: Config Manage
+  hsSystemConfig: System Config
+  hsUserConfig: User Config
+  hsRole: Role Permission
+  hsDataPermission: Data Permission
+  hsLog: Log Manage
+  hsModelField: Model Field Manage
   hsOperationLog: Operation Log Manage
+  hsLoginLog: Login Log Manage
   permission: Permission Manage
   hsabnormal: Abnormal Page
   hsfourZeroFour: "404"
@@ -201,19 +223,50 @@ user:
   batchSendNotice: Batch Send Notice
   editAvatar: Edit Avatar
   resetPassword: Reset Password
-  assignRoles: Assign Roles
+  assignRoles: Assign Roles Permissions
   verifyUserId: Please enter user id
   verifyUsername: Please enter username
   verifyPassword: Please enter password
   verifyNickname: Please enter nickname
   verifyMobile: Please enter mobile
-  verifyEmail: Please enter Email
-  verifySex: Please enter gender
+  verifyEmail: Please enter email
+  verifyGender: Please enter gender
   resetPasswd: Reset the password of user { user }
-  assignRole: Assign multiple roles to user { user }
+  assignRole: Assign multiple roles and permissions to user { user }
   updateAvatar: Upload and update avatar to { user }
   excelSheet: Registered user report
   excelName: Registered user data
+  deptId: Department ID
+  userId: User Id
+  userInfo: User Info
+  dept: Belonging Department
+  rules: Permissions
+
+dept:
+  name: Name
+  dept: Department
+  code: Code
+  roles: role
+  rules: Permissions
+  assignRoles: Assign Roles Permissions
+  assignRole: Assign multiple roles and permissions to department { dept }
+  userCount: User Count
+  autoBind: Auto Bind Department
+  autoBindDesc: If the value of the registration parameter channel is the same as the department code, the user will automatically bind to the department
+
+permission:
+  permission: Permissions
+  name: Name
+  mode: Mode
+  addName: Name
+  addValue: Value
+  addType: Mode
+  addExclude: Exclude
+  addMatch: Match
+  rules: rules
+  table: table
+  field: field
+  rulesFailed: The rules does not exist or is incorrect. Please enter the rules
 
 role:
   role: Role
@@ -222,8 +275,6 @@ role:
   verifyRoleName: Please enter role name
   verifyRoleCode: Please enter role code
   permissions: Permissions
-  autoBind: Auto Bind Role
-  autoBindDesc: If the value of the registration parameter channel is the same as the role code, the user will automatically bind to the role
 
 menu:
   menus: Menus
@@ -268,10 +319,13 @@ menu:
   directory: Directory
   menu: Menu
   permissions: Permissions
+  checkStrictly: Hierarchical association
+  checkUnStrictly: Hierarchical independence
+  associationModel: Association model
+  exampleAssociationModel: Model association is used with field permission control
 
-operation:
+logsOperation:
   module: Module
-  userId: User Id
   address: Ip Address
   system: Operating System
   browser: Browser
@@ -284,16 +338,48 @@ operation:
   verifyBrowser: Please enter browser
   verifyRequestPath: Please enter request path
 
+logsLogin:
+  address: Ip Address
+  system: Operating System
+  browser: Browser
+  agent: User-Agent
+  loginDisplay: Login Type
+  verifyAddress: Please enter ip address
+  verifySystem: Please enter operating system
+  verifyBrowser: Please enter browser
+  verifyAgent: Please enter User-Agent
+
+configSystem:
+  configSystem: System Config
+  key: Config Name
+  value: Config Value
+  cacheValue: Config Cache Value
+  invalidCache: Invalid Cache
+  confirmInvalid: Are you sure to invalid this cache?
+
+configUser:
+  configSystem: User Config
+  key: Config Name
+  value: Config Value
+  cacheValue: Config Cache Value
+  invalidCache: Invalid Cache
+  confirmInvalid: Are you sure to invalid this cache?
+
+modelField:
+  name: Model/field name
+  label: Model/field label
+  parent: Parent
+  makeData: Make Field Data
+  fieldType: Field Type
+
 notice:
   notice: Notice
-  userId: User Id
-  userInfo: User Info
   readDate: Read Date
   title: Title
   type: Type
   level: Level
   publish: Publish
-  content:  Content
+  content: Content
   haveRead: Have Read
   showSystemNotice: Check the system announcement
   verifyTitle: Please enter title
@@ -358,7 +444,7 @@ MoviesDrive:
   username: Drive Username
   userid: Drive UserID
   avatar: Drive User Avatar
-  remark: Remark
+  description: description
   verifyUsername: Please enter drive username
   verifyUserid: Please enter drive userid
   totalSize: Total Size

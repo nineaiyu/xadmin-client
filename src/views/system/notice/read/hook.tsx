@@ -1,10 +1,10 @@
 import dayjs from "dayjs";
 import { message } from "@/utils/message";
 import type { PaginationProps } from "@pureadmin/table";
-import { reactive, ref, h, onMounted, toRaw, type Ref } from "vue";
+import { h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
 import {
-  getNoticeReadListApi,
   deleteNoticeReadApi,
+  getNoticeReadListApi,
   manyDeleteNoticeReadApi,
   updateNoticeReadStateApi
 } from "@/api/system/notice";
@@ -19,9 +19,11 @@ import {
 } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog";
 import { useRoute, useRouter } from "vue-router";
-import { hasAuth } from "@/router/utils";
+import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
+import { formatColumns } from "@/views/system/hooks";
+
 export function useNoticeRead(tableRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
@@ -57,6 +59,7 @@ export function useNoticeRead(tableRef: Ref) {
   const loading = ref(true);
   const noticeChoices = ref([]);
   const levelChoices = ref([]);
+  const showColumns = ref([]);
   const pagination = reactive<PaginationProps>({
     total: 0,
     pageSize: 10,
@@ -64,7 +67,7 @@ export function useNoticeRead(tableRef: Ref) {
     pageSizes: [5, 10, 20, 50, 100],
     background: true
   });
-  const columns: TableColumnList = [
+  const columns = ref<TableColumnList>([
     {
       type: "selection",
       align: "left"
@@ -72,12 +75,11 @@ export function useNoticeRead(tableRef: Ref) {
     {
       label: t("labels.id"),
       prop: "pk",
-      minWidth: 100,
-      cellRenderer: ({ row }) => <el-text>{row.notice_info.pk}</el-text>
+      minWidth: 100
     },
     {
       label: t("notice.title"),
-      prop: "title",
+      prop: "notice_info",
       minWidth: 120,
       cellRenderer: ({ row }) => (
         <el-link
@@ -97,25 +99,25 @@ export function useNoticeRead(tableRef: Ref) {
       )
     },
     {
-      label: t("notice.userId"),
-      prop: "owner",
+      label: t("user.userId"),
+      prop: "owner_info",
       minWidth: 100,
-      cellRenderer: ({ row }) => <el-text>{row.owner_info.pk}</el-text>
+      cellRenderer: ({ row }) => <el-text>{row.owner_info?.pk}</el-text>
     },
     {
-      label: t("notice.userInfo"),
-      prop: "owner",
+      label: t("user.userInfo"),
+      prop: "owner_info",
       minWidth: 100,
       cellRenderer: ({ row }) => (
         <el-link onClick={() => onGoUserDetail(row as any)}>
-          {row.owner_info.username ? row.owner_info.username : "/"}
+          {row.owner_info?.username ? row.owner_info?.username : "/"}
         </el-link>
       )
     },
     {
       label: t("notice.readDate"),
       minWidth: 180,
-      prop: "createTime",
+      prop: "updated_time",
       cellRenderer: ({ row }) => (
         <el-text>
           {!row.unread
@@ -149,7 +151,8 @@ export function useNoticeRead(tableRef: Ref) {
       width: 200,
       slot: "operation"
     }
-  ];
+  ]);
+
   function onChange({ row, index }) {
     const action = row.unread === false ? t("labels.read") : t("labels.unread");
     ElMessageBox.confirm(
@@ -190,25 +193,36 @@ export function useNoticeRead(tableRef: Ref) {
         });
       })
       .catch(() => {
-        row.publish === false ? (row.publish = true) : (row.publish = false);
+        row.unread === false ? (row.unread = true) : (row.unread = false);
       });
   }
+
   function onGoUserDetail(row: any) {
-    if (row.owner_info && row.owner_info.pk) {
+    if (
+      hasGlobalAuth("list:systemUser") &&
+      row.owner_info &&
+      row.owner_info?.pk
+    ) {
       router.push({
-        name: "systemUser",
+        name: "SystemUser",
         query: { pk: row.owner_info.pk }
       });
     }
   }
+
   function onGoNoticeDetail(row: any) {
-    if (row.notice_info && row.notice_info.pk) {
+    if (
+      hasGlobalAuth("list:systemNotice") &&
+      row.notice_info &&
+      row.notice_info.pk
+    ) {
       router.push({
-        name: "systemNotice",
+        name: "SystemNotice",
         query: { pk: row.notice_info.pk }
       });
     }
   }
+
   function showDialog(row?: FormItemProps) {
     addDialog({
       title: t("notice.showSystemNotice"),
@@ -225,6 +239,7 @@ export function useNoticeRead(tableRef: Ref) {
       draggable: true,
       fullscreenIcon: true,
       closeOnClickModal: false,
+      hideFooter: true,
       contentRenderer: () => h(showForm, { ref: formRef })
     });
   }
@@ -254,11 +269,13 @@ export function useNoticeRead(tableRef: Ref) {
   function handleSelectionChange(val) {
     manySelectCount.value = val.length;
   }
+
   function onSelectionCancel() {
     manySelectCount.value = 0;
     // 用于多选表格，清空用户的选择
     tableRef.value.getTableRef().clearSelection();
   }
+
   function handleManyDelete() {
     if (manySelectCount.value === 0) {
       message(t("results.noSelectedData"), { type: "error" });
@@ -287,6 +304,7 @@ export function useNoticeRead(tableRef: Ref) {
     loading.value = true;
     getNoticeReadListApi(toRaw(form)).then(res => {
       if (res.code === 1000 && res.data) {
+        formatColumns(res?.data?.results, columns, showColumns);
         dataList.value = res.data.results;
         pagination.total = res.data.total;
         noticeChoices.value = res.notice_type_choices;

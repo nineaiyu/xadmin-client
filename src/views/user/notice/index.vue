@@ -4,7 +4,6 @@ import { useUserNotice } from "./utils/hook";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 
-import Search from "@iconify-icons/ep/search";
 import Refresh from "@iconify-icons/ep/refresh";
 import { hasAuth } from "@/router/utils";
 import Success from "@iconify-icons/ep/success-filled";
@@ -17,6 +16,7 @@ defineOptions({
 
 const formRef = ref();
 const tableRef = ref();
+
 const {
   t,
   form,
@@ -90,8 +90,7 @@ const {
       <el-form-item :label="t('notice.level')" prop="level">
         <el-select
           v-model="form.level"
-          class="filter-item"
-          style="width: 180px"
+          class="!w-[180px]"
           clearable
           @change="onSearch(true)"
         >
@@ -107,8 +106,7 @@ const {
       <el-form-item :label="t('notice.type')" prop="level">
         <el-select
           v-model="form.notice_type"
-          class="filter-item"
-          style="width: 180px"
+          class="!w-[180px]"
           clearable
           @change="onSearch(true)"
         >
@@ -124,7 +122,7 @@ const {
       <el-form-item :label="t('labels.sort')">
         <el-select
           v-model="form.ordering"
-          style="width: 180px"
+          class="!w-[180px]"
           clearable
           @change="onSearch(true)"
         >
@@ -139,7 +137,7 @@ const {
       <el-form-item>
         <el-button
           type="primary"
-          :icon="useRenderIcon(Search)"
+          :icon="useRenderIcon('search')"
           :loading="loading"
           @click="onSearch(true)"
         >
@@ -191,8 +189,8 @@ const {
             {{ t("notice.allRead") }}
           </el-button>
           <el-text v-if="unreadCount > 0" type="primary">
-            {{ t("notice.unreadMessage") }} {{ unreadCount }}</el-text
-          >
+            {{ t("notice.unreadMessage") }} {{ unreadCount }}
+          </el-text>
         </el-space>
       </template>
       <template v-slot="{ size, dynamicColumns }">

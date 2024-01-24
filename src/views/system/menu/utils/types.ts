@@ -39,6 +39,8 @@ interface FormItemProps {
   title?: string;
   /** 组件英文名称 */
   name: string;
+  /** 绑定的模型 */
+  model?: number[];
   /** 菜单顺序 */
   rank: number;
   /** 路由地址 */
@@ -50,11 +52,14 @@ interface FormItemProps {
   /** 是否是编辑模式 */
   meta?: FormMetaProps;
 }
+
 interface FormProps {
   formInline: FormItemProps;
   treeData: any[];
   choicesDict: any[];
+  menuChoices: any[];
   menuUrlList: any[];
+  modelList: any[];
 }
 
 interface TreeFormProps {

@@ -10,7 +10,7 @@ import Search from "@iconify-icons/ep/search";
 import Refresh from "@iconify-icons/ep/refresh";
 import AddFill from "@iconify-icons/ri/add-circle-line";
 import Eye from "@iconify-icons/ri/eye-line";
-import { hasAuth } from "@/router/utils";
+import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { getIndexType } from "@/utils";
 import More from "@iconify-icons/ep/more-filled";
 import Picture from "@iconify-icons/ep/picture-filled";
@@ -129,10 +129,10 @@ const {
           />
         </el-select>
       </el-form-item>
-      <el-form-item :label="t('labels.remark')" prop="description">
+      <el-form-item :label="t('labels.description')" prop="description">
         <el-input
           v-model="form.description"
-          :placeholder="t('labels.remark')"
+          :placeholder="t('labels.description')"
           clearable
           class="!w-[180px]"
           @keyup.enter="onSearch(true)"
@@ -371,6 +371,7 @@ const {
                   </el-dropdown-item>
                   <el-dropdown-item>
                     <el-button
+                      v-if="hasGlobalAuth('create:MoviesEpisode')"
                       :class="buttonClass"
                       link
                       type="primary"
@@ -383,6 +384,7 @@ const {
                   </el-dropdown-item>
                   <el-dropdown-item>
                     <el-button
+                      v-if="hasGlobalAuth('list:MoviesEpisode')"
                       :class="buttonClass"
                       link
                       type="primary"
@@ -395,6 +397,7 @@ const {
                   </el-dropdown-item>
                   <el-dropdown-item>
                     <el-button
+                      v-if="hasGlobalAuth('create:MoviesSwipe')"
                       :class="buttonClass"
                       link
                       type="primary"

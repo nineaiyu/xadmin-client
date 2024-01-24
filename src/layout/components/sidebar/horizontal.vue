@@ -3,7 +3,7 @@ import Search from "../search/index.vue";
 import Notice from "../notice/index.vue";
 import SidebarItem from "./sidebarItem.vue";
 import { isAllEmpty } from "@pureadmin/utils";
-import { ref, nextTick, computed } from "vue";
+import { computed, nextTick, ref } from "vue";
 import { useNav } from "@/layout/hooks/useNav";
 import { useTranslationLang } from "../../hooks/useTranslationLang";
 import { usePermissionStoreHook } from "@/store/modules/permission";
@@ -51,6 +51,7 @@ nextTick(() => {
       ref="menuRef"
       router
       mode="horizontal"
+      popper-class="pure-scrollbar"
       class="horizontal-header-menu"
       :default-active="defaultActive"
     >
@@ -63,7 +64,7 @@ nextTick(() => {
     </el-menu>
     <div class="horizontal-header-right">
       <!-- 菜单搜索 -->
-      <Search />
+      <Search id="header-search" />
       <!-- 通知 -->
       <Notice id="header-notice" />
       <!-- 国际化 -->

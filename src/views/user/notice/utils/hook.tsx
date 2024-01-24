@@ -13,6 +13,8 @@ import showForm from "../show.vue";
 import { cloneDeep, getKeyList, isEmpty, isString } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog";
 import { useI18n } from "vue-i18n";
+import { useUserStoreHook } from "@/store/modules/user";
+import { formatColumns } from "@/views/system/hooks";
 
 export function useUserNotice(tableRef: Ref) {
   const { t } = useI18n();
@@ -46,6 +48,7 @@ export function useUserNotice(tableRef: Ref) {
   const loading = ref(true);
   const levelChoices = ref([]);
   const noticeChoices = ref([]);
+  const showColumns = ref([]);
   const pagination = reactive<PaginationProps>({
     total: 0,
     pageSize: 10,
@@ -53,7 +56,7 @@ export function useUserNotice(tableRef: Ref) {
     pageSizes: [5, 10, 20, 50, 100],
     background: true
   });
-  const columns: TableColumnList = [
+  const columns = ref<TableColumnList>([
     {
       type: "selection",
       align: "left"
@@ -82,7 +85,7 @@ export function useUserNotice(tableRef: Ref) {
     {
       label: t("sorts.createdDate"),
       minWidth: 180,
-      prop: "createTime",
+      prop: "created_time",
       formatter: ({ created_time }) =>
         dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
     },
@@ -97,7 +100,7 @@ export function useUserNotice(tableRef: Ref) {
       width: 200,
       slot: "operation"
     }
-  ];
+  ]);
 
   function showDialog(row?: FormItemProps) {
     if (row.unread) {
@@ -119,6 +122,7 @@ export function useUserNotice(tableRef: Ref) {
       draggable: true,
       fullscreenIcon: true,
       closeOnClickModal: false,
+      hideFooter: true,
       contentRenderer: () => h(showForm, { ref: formRef }),
       closeCallBack: () => {
         if (getParameter.pk) {
@@ -155,6 +159,7 @@ export function useUserNotice(tableRef: Ref) {
 
   function handleReadAll() {
     updateUserNoticeReadAllApi().then(() => {
+      form.unread = "";
       onSearch();
     });
   }
@@ -192,11 +197,13 @@ export function useUserNotice(tableRef: Ref) {
     loading.value = true;
     getUserNoticeListApi(toRaw(form)).then(res => {
       if (res.code === 1000 && res.data) {
+        formatColumns(res?.data?.results, columns, showColumns);
         dataList.value = res.data.results;
         pagination.total = res.data.total;
         levelChoices.value = res.level_choices;
         noticeChoices.value = res.notice_type_choices;
         unreadCount.value = res.unread_count;
+        useUserStoreHook().SET_NOTICECOUNT(res.unread_count);
       } else {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }

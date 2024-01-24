@@ -35,8 +35,8 @@ function onCropper({ blob }) {
         <el-form-item :label="t('user.avatar')">
           <cropping-upload
             :img-src="props.avatar"
-            :circled="false"
-            :quality="0"
+            :circled="true"
+            :quality="1"
             :canvasOption="{ width: 512, height: 512 }"
             @cropper="onCropper"
           />

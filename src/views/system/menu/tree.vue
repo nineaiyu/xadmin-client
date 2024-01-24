@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { ref, computed, watch, getCurrentInstance, onMounted } from "vue";
+import { computed, getCurrentInstance, onMounted, ref, watch } from "vue";
 
 import DocumentAdd from "@iconify-icons/ep/document-add";
 import Delete from "@iconify-icons/ep/delete";
@@ -11,17 +11,21 @@ import { isAllEmpty } from "@pureadmin/utils";
 import { match } from "pinyin-pro";
 import { getMenuFromPk } from "@/utils";
 import Reset from "@iconify-icons/ri/restart-line";
-import Search from "@iconify-icons/ep/search";
+
+import Right from "@iconify-icons/ep/bottom-right";
+import Back from "@iconify-icons/ep/back";
 import More2Fill from "@iconify-icons/ri/more-2-fill";
 import ExpandIcon from "./svg/expand.svg?component";
 import UnExpandIcon from "./svg/unexpand.svg?component";
 import Refresh from "@iconify-icons/ep/refresh";
 import { useVModel } from "@vueuse/core";
 import { Tree, TreeFormProps } from "./utils/types";
+import { MenuChoices } from "@/views/system/constants";
 
 const treeRef = ref();
 
 const isExpand = ref(false);
+const checkStrictly = ref(true);
 const searchValue = ref("");
 const highlightMap = ref({});
 const { proxy } = getCurrentInstance();
@@ -34,7 +38,7 @@ const props = withDefaults(defineProps<TreeFormProps>(), {
   defaultData: () => ({}),
   parentIds: () => [],
   formInline: () => ({
-    menu_type: 0,
+    menu_type: MenuChoices.DIRECTORY,
     parent: "",
     name: "",
     path: "",
@@ -144,9 +148,9 @@ const customNodeClass = data => {
   if (!data.is_active) {
     return "is-disabled";
   }
-  if (data.menu_type === 0) {
+  if (data.menu_type === MenuChoices.DIRECTORY) {
     return "is-penultimate";
-  } else if (data.menu_type === 1) {
+  } else if (data.menu_type === MenuChoices.MENU) {
     return "is-permission";
   }
   return null;
@@ -167,7 +171,7 @@ const buttonClass = computed(() => {
 });
 
 const handleDragDrop = (node1, node2, type) => {
-  return !(type === "inner" && node2.data.menu_type === 2);
+  return !(type === "inner" && node2.data.menu_type === MenuChoices.PERMISSION);
 };
 
 watch(searchValue, val => {
@@ -196,8 +200,8 @@ onMounted(() => {
           size="small"
           class="ml-2"
           @click="emit('openDialog', 0)"
-          >{{ t("buttons.hsadd") }}</el-button
-        >
+          >{{ t("buttons.hsadd") }}
+        </el-button>
         <el-input
           v-model="searchValue"
           size="small"
@@ -209,7 +213,7 @@ onMounted(() => {
             <el-icon class="el-input__icon">
               <IconifyIconOffline
                 v-show="searchValue.length === 0"
-                :icon="Search"
+                icon="search"
               />
             </el-icon>
           </template>
@@ -234,6 +238,21 @@ onMounted(() => {
                     isExpand
                       ? t("buttons.hscollapseAll")
                       : t("buttons.hsexpendAll")
+                  }}
+                </el-button>
+              </el-dropdown-item>
+              <el-dropdown-item>
+                <el-button
+                  :class="buttonClass"
+                  :icon="useRenderIcon(checkStrictly ? Back : Right)"
+                  link
+                  type="primary"
+                  @click="checkStrictly = !checkStrictly"
+                >
+                  {{
+                    checkStrictly
+                      ? t("menu.checkUnStrictly")
+                      : t("menu.checkStrictly")
                   }}
                 </el-button>
               </el-dropdown-item>
@@ -291,7 +310,8 @@ onMounted(() => {
         size="small"
         :props="defaultProps"
         show-checkbox
-        check-strictly
+        :check-strictly="checkStrictly"
+        :default-expand-all="isExpand"
         :expand-on-click-node="false"
         :default-expanded-keys="parentIds"
         :filter-node-method="filterMenuNode"
@@ -325,7 +345,10 @@ onMounted(() => {
           </span>
           <span class="flex items-center">
             <el-tooltip
-              v-if="hasAuth('create:systemMenu') && data.menu_type !== 2"
+              v-if="
+                hasAuth('create:systemMenu') &&
+                data.menu_type !== MenuChoices.PERMISSION
+              "
               class="box-item"
               effect="dark"
               :content="t('buttons.hsadd')"
@@ -353,7 +376,7 @@ onMounted(() => {
               </template>
             </el-popconfirm>
             <el-text
-              v-if="data.menu_type === 2"
+              v-if="data.menu_type === MenuChoices.PERMISSION"
               v-copy="data.path"
               type="success"
               style="margin-left: 10px"

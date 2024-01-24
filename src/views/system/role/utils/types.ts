@@ -11,12 +11,17 @@ interface FormItemProps {
   description: string;
   /** 是否启用 */
   is_active: boolean;
-  auto_bind: boolean;
   /** 菜单信息 */
   menu: number[];
+  field?: string[];
+  fields?: object;
 }
+
 interface FormProps {
   formInline: FormItemProps;
+  menuTreeData: any[];
+  showColumns: any[];
+  isAdd?: boolean;
 }
 
 export type { FormItemProps, FormProps };

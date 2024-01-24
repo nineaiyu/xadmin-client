@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { animates } from "./animate";
-import { computed, ref, toRef } from "vue";
+import { computed, ref } from "vue";
 import { cloneDeep } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 
@@ -8,16 +8,9 @@ defineOptions({
   name: "ReAnimateSelector"
 });
 
-const props = defineProps({
-  modelValue: {
-    require: false,
-    type: String
-  }
-});
-const emit = defineEmits<{ (e: "update:modelValue", v: string) }>();
+const inputValue = defineModel({ type: String });
+const searchVal = ref();
 const { t } = useI18n();
-
-const inputValue = toRef(props, "modelValue");
 const animatesList = ref(animates);
 const copyAnimatesList = cloneDeep(animatesList);
 
@@ -49,14 +42,15 @@ const animateStyle = computed(
 );
 
 function onChangeIcon(animate: string) {
-  emit("update:modelValue", animate);
+  inputValue.value = animate;
 }
 
 function onClear() {
-  emit("update:modelValue", "");
+  inputValue.value = "";
 }
 
 function filterMethod(value: any) {
+  searchVal.value = value;
   animatesList.value = copyAnimatesList.value.filter((i: string | any[]) =>
     i.includes(value)
   );
@@ -79,10 +73,11 @@ function onMouseleave() {
 
 <template>
   <el-select
-    :model-value="inputValue"
-    :placeholder="t('menu.verifyTransition')"
     clearable
     filterable
+    :model-value="inputValue"
+    :placeholder="t('menu.verifyTransition')"
+    popper-class="pure-animate-popper"
     :filter-method="filterMethod"
     @clear="onClear"
   >
@@ -119,7 +114,7 @@ function onMouseleave() {
           </ul>
           <el-empty
             v-show="animatesList.length === 0"
-            :description="t('layout.noData')"
+            :description="`${searchVal} ${t('layout.noData')}`"
             :image-size="60"
           />
         </el-scrollbar>
@@ -127,3 +122,9 @@ function onMouseleave() {
     </template>
   </el-select>
 </template>
+
+<style>
+.pure-animate-popper {
+  min-width: 0 !important;
+}
+</style>

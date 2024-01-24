@@ -2,8 +2,8 @@ import { onMounted, ref } from "vue";
 import { getCaptchaApi } from "@/api/auth";
 import { useUserStoreHook } from "@/store/modules/user";
 
-export const useImageVerify = () => {
-  const imgCode = ref("");
+export const useImageVerify = imgCode => {
+  // const imgCode = ref("");
   const imgUrl = ref("");
 
   const apiDomain = res => {

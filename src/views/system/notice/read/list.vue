@@ -5,17 +5,18 @@ import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 
 import Delete from "@iconify-icons/ep/delete";
-import Search from "@iconify-icons/ep/search";
+
 import Refresh from "@iconify-icons/ep/refresh";
 import { hasAuth } from "@/router/utils";
 import Eye from "@iconify-icons/ri/eye-fill";
 
 defineOptions({
-  name: "NoticeReadUser"
+  name: "SystemNoticeRead"
 });
 
 const formRef = ref();
 const tableRef = ref();
+
 const {
   t,
   form,
@@ -47,7 +48,7 @@ const {
       :model="form"
       class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px]"
     >
-      <el-form-item :label="t('notice.userId')" prop="message">
+      <el-form-item :label="t('user.userId')" prop="message">
         <el-input
           v-model="form.owner_id"
           :placeholder="t('user.verifyUserId')"
@@ -95,8 +96,7 @@ const {
       <el-form-item :label="t('notice.level')" prop="level">
         <el-select
           v-model="form.level"
-          class="filter-item"
-          style="width: 180px"
+          class="!w-[180px]"
           clearable
           @change="onSearch(true)"
         >
@@ -112,8 +112,7 @@ const {
       <el-form-item :label="t('notice.type')" prop="level">
         <el-select
           v-model="form.notice_type"
-          class="filter-item"
-          style="width: 180px"
+          class="!w-[180px]"
           clearable
           @change="onSearch(true)"
         >
@@ -140,7 +139,7 @@ const {
       <el-form-item :label="t('labels.sort')">
         <el-select
           v-model="form.ordering"
-          style="width: 180px"
+          class="!w-[180px]"
           clearable
           @change="onSearch(true)"
         >
@@ -155,7 +154,7 @@ const {
       <el-form-item>
         <el-button
           type="primary"
-          :icon="useRenderIcon(Search)"
+          :icon="useRenderIcon('search')"
           :loading="loading"
           @click="onSearch(true)"
         >
@@ -244,7 +243,7 @@ const {
                 <el-button
                   class="reset-margin"
                   link
-                  type="primary"
+                  type="danger"
                   :size="size"
                   :icon="useRenderIcon(Delete)"
                 >

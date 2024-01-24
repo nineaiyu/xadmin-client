@@ -73,10 +73,10 @@ const {
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
-      <el-form-item :label="t('labels.remark')" prop="description">
+      <el-form-item :label="t('labels.description')" prop="description">
         <el-input
           v-model="form.description"
-          :placeholder="t('labels.remark')"
+          :placeholder="t('labels.description')"
           clearable
           class="!w-[200px]"
           @keyup.enter="onSearch(true)"

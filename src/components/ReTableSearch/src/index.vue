@@ -1,0 +1,161 @@
+<script lang="ts" setup>
+import { onMounted, ref } from "vue";
+import { useColumns } from "./hooks";
+import { FormItemProps } from "./types";
+import { ClickOutside as vClickOutside } from "element-plus";
+
+const props = withDefaults(defineProps<FormItemProps>(), {
+  showColumns: () => [],
+  sortOptions: () => [],
+  searchKeys: () => [],
+  isTree: () => false,
+  getListApi: Function
+});
+
+const selectValue = defineModel({ type: Array<number> });
+
+const columns = ref([
+  {
+    type: "selection",
+    align: "left"
+  }
+]);
+
+const selectRef = ref();
+const tableRef = ref();
+const {
+  t,
+  form,
+  loading,
+  dataList,
+  pagination,
+  sortOptions,
+  treeDataList,
+  selectVisible,
+  onClear,
+  onSure,
+  onSearch,
+  removeTag,
+  handleSizeChange,
+  handleClickOutSide,
+  handleCurrentChange,
+  handleSelectionChange
+} = useColumns(
+  selectRef,
+  tableRef,
+  props.getListApi,
+  props.isTree,
+  selectValue
+);
+
+onMounted(() => {
+  props.searchKeys.forEach((item: any) => {
+    form[item.key] = item.value ?? "";
+  });
+  props.sortOptions.forEach((item: any) => {
+    sortOptions.value.push(item);
+  });
+  props.showColumns.forEach(item => {
+    columns.value.push(item);
+  });
+  onSearch();
+});
+</script>
+
+<template>
+  <el-select
+    ref="selectRef"
+    v-model="selectValue"
+    v-click-outside="handleClickOutSide"
+    :max-collapse-tags="10"
+    class="w-full"
+    clearable
+    collapse-tags
+    collapse-tags-tooltip
+    multiple
+    value-key="pk"
+    @clear="onClear"
+    @visibleChange="val => (selectVisible = val)"
+    @remove-tag="removeTag"
+  >
+    <template #empty>
+      <div class="w-max[800px] m-4">
+        <el-form
+          ref="formRef"
+          :inline="true"
+          :model="form"
+          class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px]"
+        >
+          <el-form-item
+            v-for="item in props.searchKeys.filter(x => {
+              return !x.value;
+            })"
+            :key="item.key"
+            :label="item.label"
+            prop="pk"
+          >
+            <el-input
+              v-model="form[item.key]"
+              :placeholder="item.label"
+              class="!w-[160px]"
+              clearable
+              @keyup.enter="onSearch(true)"
+            />
+          </el-form-item>
+          <el-form-item v-if="sortOptions.length" :label="t('labels.sort')">
+            <el-select
+              v-model="form.ordering"
+              class="!w-[180px]"
+              clearable
+              @change="onSearch(true)"
+            >
+              <el-option
+                v-for="item in sortOptions"
+                :key="item.key"
+                :label="item.label"
+                :value="item.key"
+              />
+            </el-select>
+          </el-form-item>
+        </el-form>
+        <pure-table
+          ref="tableRef"
+          :columns="columns"
+          :data="props.isTree ? treeDataList : dataList"
+          :header-cell-style="{
+            background: 'var(--el-table-row-hover-bg-color)',
+            color: 'var(--el-text-color-primary)'
+          }"
+          :loading="loading"
+          :pagination="pagination"
+          align-whole="center"
+          border
+          default-expand-all
+          height="400"
+          row-key="pk"
+          showOverflowTooltip
+          table-layout="auto"
+          @selection-change="handleSelectionChange"
+          @page-size-change="handleSizeChange"
+          @page-current-change="handleCurrentChange"
+        />
+        <div class="absolute bottom-[17px]">
+          <el-space>
+            <el-button bg size="small" text type="primary" @click="onSure">
+              {{ t("labels.sure") }}
+            </el-button>
+            <el-button
+              bg
+              size="small"
+              text
+              type="success"
+              @click="onSearch(true)"
+            >
+              {{ t("buttons.hsreload") }}
+            </el-button>
+          </el-space>
+        </div>
+      </div>
+    </template>
+  </el-select>
+</template>

@@ -6,12 +6,15 @@ export function useBoolean(initValue = false) {
   function setBool(value: boolean) {
     bool.value = value;
   }
+
   function setTrue() {
     setBool(true);
   }
+
   function setFalse() {
     setBool(false);
   }
+
   function toggle() {
     setBool(!bool.value);
   }

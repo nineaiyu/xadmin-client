@@ -7,6 +7,7 @@ import {
   getFilmInfoByDoubanApi,
   importFilmInfoByDoubanApi
 } from "@/api/movies/film";
+import { formatColumns } from "@/views/system/hooks";
 
 export function useSearchFile() {
   const { t } = useI18n();
@@ -15,7 +16,8 @@ export function useSearchFile() {
   const form = reactive({
     key: ""
   });
-  const columns: TableColumnList = [
+  const showColumns = ref([]);
+  const columns = ref<TableColumnList>([
     {
       type: "selection",
       align: "left"
@@ -41,7 +43,7 @@ export function useSearchFile() {
       width: 120,
       slot: "operation"
     }
-  ];
+  ]);
 
   function addDoubanFilm(row) {
     loading.value = true;
@@ -60,6 +62,7 @@ export function useSearchFile() {
   async function onSearch() {
     loading.value = true;
     const { data } = await getFilmInfoByDoubanApi({ key: form.key });
+    formatColumns(data?.results, columns, showColumns);
     dataList.value = data.results;
     delay(500).then(() => {
       loading.value = false;

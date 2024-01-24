@@ -15,7 +15,7 @@ import {
 } from "@pureadmin/utils";
 import { hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
-import { usePublicHooks } from "@/views/system/hooks";
+import { formatColumns, usePublicHooks } from "@/views/system/hooks";
 import {
   createActorApi,
   deleteActorApi,
@@ -60,6 +60,7 @@ export function useMoviesActor(tableRef: Ref) {
   const loading = ref(true);
   const switchLoadMap = ref({});
   const { switchStyle } = usePublicHooks();
+  const showColumns = ref([]);
   const pagination = reactive<PaginationProps>({
     total: 0,
     pageSize: 10,
@@ -67,7 +68,7 @@ export function useMoviesActor(tableRef: Ref) {
     pageSizes: [5, 10, 20, 50, 100],
     background: true
   });
-  const columns: TableColumnList = [
+  const columns = ref<TableColumnList>([
     {
       type: "selection",
       align: "left"
@@ -146,9 +147,14 @@ export function useMoviesActor(tableRef: Ref) {
       label: t("labels.operations"),
       fixed: "right",
       width: 260,
-      slot: "operation"
+      slot: "operation",
+      hide: !(
+        hasAuth("upload:MoviesActorAvatar") ||
+        hasAuth("update:MoviesActor") ||
+        hasAuth("delete:MoviesActor")
+      )
     }
-  ];
+  ]);
   function onChange({ row, index }) {
     const action =
       row.enable === false ? t("labels.disable") : t("labels.enable");
@@ -250,6 +256,7 @@ export function useMoviesActor(tableRef: Ref) {
     }
     loading.value = true;
     const { data }: any = await getActorListApi(toRaw(form));
+    formatColumns(data?.results, columns, showColumns);
     dataList.value = data.results;
     pagination.total = data.total;
     delay(500).then(() => {

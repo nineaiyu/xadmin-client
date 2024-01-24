@@ -5,6 +5,7 @@ import { zxcvbn } from "@zxcvbn-ts/core";
 import {
   createUserApi,
   deleteUserApi,
+  empowerRoleApi,
   getUserListApi,
   manyDeleteUserApi,
   updateUserApi,
@@ -13,21 +14,21 @@ import {
 } from "@/api/system/user";
 import {
   ElForm,
-  ElInput,
   ElFormItem,
-  ElProgress,
-  ElMessageBox
+  ElInput,
+  ElMessageBox,
+  ElProgress
 } from "element-plus";
 import type { PaginationProps, TableColumns } from "@pureadmin/table";
 import { utils, writeFile } from "xlsx";
 import {
-  type Ref,
+  computed,
+  h,
+  onMounted,
   reactive,
   ref,
-  computed,
-  onMounted,
+  type Ref,
   toRaw,
-  h,
   watch
 } from "vue";
 import { addDialog } from "@/components/ReDialog";
@@ -35,7 +36,7 @@ import croppingUpload from "@/components/AvatarUpload/index.vue";
 import roleForm from "../form/role.vue";
 import editForm from "../form/index.vue";
 import type { FormItemProps, RoleFormItemProps } from "./types";
-import { empowerRoleApi, getRoleListApi } from "@/api/system/role";
+import { getRoleListApi } from "@/api/system/role";
 import {
   cloneDeep,
   delay,
@@ -46,10 +47,20 @@ import {
   isString
 } from "@pureadmin/utils";
 import { useRoute, useRouter } from "vue-router";
-import { hasAuth } from "@/router/utils";
+import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
+import { handleTree } from "@/utils/tree";
+import { getDeptListApi } from "@/api/system/dept";
+import {
+  formatColumns,
+  formatHigherDeptOptions,
+  picturePng
+} from "@/views/system/hooks";
+import { getDataPermissionListApi } from "@/api/system/permission";
+import { ModeChoices } from "@/views/system/constants";
+import { REGEXP_PWD } from "@/views/login/utils/rule";
 
-export function useUser(tableRef: Ref) {
+export function useUser(tableRef: Ref, treeRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -71,6 +82,8 @@ export function useUser(tableRef: Ref) {
   ];
   const form = reactive({
     pk: "",
+    dept: "",
+    mode_type: "",
     username: "",
     mobile: "",
     is_active: "",
@@ -80,12 +93,18 @@ export function useUser(tableRef: Ref) {
   });
 
   const formRef = ref();
+  const cropRef = ref();
   const router = useRouter();
   const route = useRoute();
   const getParameter = isEmpty(route.params) ? route.query : route.params;
   const dataList = ref([]);
-  const roleData = ref([]);
   const loading = ref(true);
+  const choicesDict = ref([]);
+  const modeChoicesDict = ref([]);
+  const treeData = ref([]);
+  const treeLoading = ref(true);
+  const rolesOptions = ref([]);
+  const rulesOptions = ref([]);
   const switchLoadMap = ref({});
   const currentAvatarData = reactive({
     file: "",
@@ -95,6 +114,7 @@ export function useUser(tableRef: Ref) {
   const manySelectCount = ref(0);
   const avatarInfo = ref();
   const ruleFormRef = ref();
+  const showColumns = ref([]);
   const pagination = reactive<PaginationProps>({
     total: 0,
     pageSize: 10,
@@ -102,9 +122,10 @@ export function useUser(tableRef: Ref) {
     pageSizes: [5, 10, 20, 50, 100],
     background: true
   });
-  const columns: TableColumnList = [
+  const columns = ref<TableColumnList>([
     {
       type: "selection",
+      prop: "pk",
       align: "left"
     },
     {
@@ -132,34 +153,36 @@ export function useUser(tableRef: Ref) {
       prop: "username",
       minWidth: 130,
       cellRenderer: ({ row }) => (
-        <span v-copy={row.username}>{row.username}</span>
+        <span v-show={row?.username} v-copy={row?.username}>
+          {row?.username}
+        </span>
       )
     },
     {
       label: t("user.nickname"),
       prop: "nickname",
-      minWidth: 130
+      minWidth: 130,
+      cellRenderer: ({ row }) => (
+        <span v-show={row?.nickname} v-copy={row?.nickname}>
+          {row?.nickname}
+        </span>
+      )
     },
     {
       label: t("user.gender"),
-      prop: "sex",
+      prop: "gender",
       minWidth: 90,
       cellRenderer: ({ row, props }) => (
         <el-tag
           size={props.size}
-          type={row.sex === 1 ? "danger" : ""}
+          type={row.gender === 2 ? "danger" : ""}
           effect="plain"
         >
-          {row.sex === 1 ? t("user.female") : t("user.male")}
+          {row.gender_display}
         </el-tag>
       )
     },
-    {
-      label: t("user.mobile"),
-      prop: "mobile",
-      minWidth: 90,
-      formatter: ({ mobile }) => hideTextAtIndex(mobile, { start: 3, end: 6 })
-    },
+
     {
       label: t("labels.status"),
       prop: "is_active",
@@ -179,11 +202,34 @@ export function useUser(tableRef: Ref) {
         />
       )
     },
+
+    {
+      label: t("user.dept"),
+      prop: "dept_info",
+      width: 100,
+      cellRenderer: ({ row }) => (
+        <span v-show={row?.dept_info?.name} v-copy={row?.dept_info?.name}>
+          {row?.dept_info?.name}
+        </span>
+      )
+    },
     {
       label: t("user.roles"),
-      prop: "roles",
+      prop: "roles_info",
       width: 160,
       slot: "roles"
+    },
+    {
+      label: t("user.rules"),
+      prop: "rules_info",
+      width: 160,
+      slot: "rules"
+    },
+    {
+      label: t("user.mobile"),
+      prop: "mobile",
+      minWidth: 90,
+      formatter: ({ mobile }) => hideTextAtIndex(mobile, { start: 3, end: 6 })
     },
     {
       label: t("user.registrationDate"),
@@ -198,7 +244,7 @@ export function useUser(tableRef: Ref) {
       width: 180,
       slot: "operation"
     }
-  ];
+  ]);
   const buttonClass = computed(() => {
     return [
       "!h-[20px]",
@@ -221,7 +267,6 @@ export function useUser(tableRef: Ref) {
   ];
   // 当前密码强度（0-4）
   const curScore = ref();
-  const roleOptions = ref([]);
 
   function onChange({ row, index }) {
     const action =
@@ -328,9 +373,14 @@ export function useUser(tableRef: Ref) {
       pagination.pageSize = form.size = 10;
     }
     loading.value = true;
-    const { data } = await getUserListApi(toRaw(form));
+    const { data, choices_dict, mode_choices } = await getUserListApi(
+      toRaw(form)
+    );
+    formatColumns(data?.results, columns, showColumns);
     dataList.value = data.results;
     pagination.total = data.total;
+    choicesDict.value = choices_dict;
+    modeChoicesDict.value = mode_choices;
     delay(500).then(() => {
       loading.value = false;
     });
@@ -339,8 +389,8 @@ export function useUser(tableRef: Ref) {
   function goNotice() {
     const manySelectData = tableRef.value.getTableRef().getSelectionRows();
     router.push({
-      name: "systemNotice",
-      query: { owners: JSON.stringify(getKeyList(manySelectData, "pk")) }
+      name: "SystemNotice",
+      query: { notice_user: JSON.stringify(getKeyList(manySelectData, "pk")) }
     });
   }
 
@@ -353,19 +403,23 @@ export function useUser(tableRef: Ref) {
       title: `${title} ${t("user.user")}`,
       props: {
         formInline: {
-          is_add: is_add ?? true,
           pk: row?.pk ?? "",
           username: row?.username ?? "",
           nickname: row?.nickname ?? "",
           avatar: row?.avatar ?? "",
+          dept: row?.dept ?? "",
           mobile: row?.mobile ?? "",
           email: row?.email ?? "",
-          sex: row?.sex ?? 0,
+          gender: row?.gender ?? 0,
           roles: row?.roles ?? [],
           password: row?.password ?? "",
           is_active: row?.is_active ?? true,
-          remark: row?.remark ?? ""
-        }
+          description: row?.description ?? ""
+        },
+        treeData: formatHigherDeptOptions(cloneDeep(treeData.value)),
+        choicesDict: choicesDict.value,
+        showColumns: showColumns.value,
+        isAdd: is_add
       },
       width: "46%",
       draggable: true,
@@ -415,6 +469,8 @@ export function useUser(tableRef: Ref) {
   const resetForm = async formEl => {
     if (!formEl) return;
     formEl.resetFields();
+    form.dept = "";
+    treeRef.value.onTreeReset();
     await onSearch();
   };
 
@@ -427,7 +483,7 @@ export function useUser(tableRef: Ref) {
     const manySelectData = tableRef.value.getTableRef().getSelectionRows();
     const res: string[][] = manySelectData.map((item: FormItemProps) => {
       const arr = [];
-      columns.forEach((column: TableColumns | any) => {
+      columns.value.forEach((column: TableColumns | any) => {
         if (column.label) {
           arr.push(item[column.prop]);
         }
@@ -436,7 +492,7 @@ export function useUser(tableRef: Ref) {
     });
 
     const titleList: string[] = [];
-    columns.forEach((column: TableColumns) => {
+    columns.value.forEach((column: TableColumns) => {
       if (column.label) {
         titleList.push(column.label);
       }
@@ -458,10 +514,11 @@ export function useUser(tableRef: Ref) {
       closeOnClickModal: false,
       contentRenderer: () =>
         h(croppingUpload, {
-          imgSrc: row.avatar ?? "",
+          imgSrc: picturePng(row?.avatar) ?? "",
           onCropper: info => (avatarInfo.value = info),
-          circled: false,
-          quality: 0,
+          circled: true,
+          quality: 1,
+          ref: cropRef,
           canvasOption: { width: 512, height: 512 }
         }),
       beforeSure: done => {
@@ -481,7 +538,8 @@ export function useUser(tableRef: Ref) {
             done();
           }
         });
-      }
+      },
+      closeCallBack: () => cropRef.value.hidePopover()
     });
   }
 
@@ -494,13 +552,33 @@ export function useUser(tableRef: Ref) {
         }
       });
       form.pk = parameter.pk;
+      form.dept = parameter.dept;
     }
     await onSearch();
     // 角色列表
-    roleOptions.value = (
-      await getRoleListApi({ page: 1, size: 1000 })
-    ).data.results;
+    if (hasGlobalAuth("list:systemRole")) {
+      rolesOptions.value = (
+        await getRoleListApi({ page: 1, size: 1000 })
+      ).data.results;
+    }
+    if (hasGlobalAuth("list:systemDataPermission")) {
+      rulesOptions.value = (
+        await getDataPermissionListApi({ page: 1, size: 1000 })
+      ).data.results;
+    }
+    // 部门列表
+    if (hasGlobalAuth("list:systemDept")) {
+      treeData.value = handleTree(
+        (await getDeptListApi({ page: 1, size: 1000 })).data.results
+      );
+    }
+    treeLoading.value = false;
   });
+
+  function onTreeSelect({ pk, selected }) {
+    form.dept = selected ? pk : "";
+    onSearch();
+  }
 
   watch(
     pwdForm,
@@ -516,26 +594,33 @@ export function useUser(tableRef: Ref) {
         formInline: {
           username: row?.username ?? "",
           nickname: row?.nickname ?? "",
-          roleOptions: roleOptions.value ?? [],
-          ids: row?.roles ?? []
+          mode_type: row?.mode_type ?? ModeChoices.AND,
+          rolesOptions: rolesOptions.value ?? [],
+          rulesOptions: rulesOptions.value ?? [],
+          choicesDict: modeChoicesDict.value ?? [],
+          ids: row?.roles ?? [],
+          pks: row?.rules ?? []
         }
       },
-      width: "400px",
+      width: "600px",
       draggable: true,
       fullscreenIcon: true,
       closeOnClickModal: false,
       contentRenderer: () => h(roleForm),
       beforeSure: (done, { options }) => {
         const curData = options.props.formInline as RoleFormItemProps;
-        empowerRoleApi({
-          uid: row.pk,
-          roles: curData.ids
+        empowerRoleApi(row.pk, {
+          roles: curData.ids,
+          rules: curData.pks,
+          mode_type: curData.mode_type
         }).then(async res => {
           if (res.code === 1000) {
             message(t("results.success"), { type: "success" });
             onSearch();
           } else {
-            message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+            message(`${t("results.failed")}，${res.detail}`, {
+              type: "error"
+            });
           }
           done(); // 关闭弹框
         });
@@ -558,7 +643,15 @@ export function useUser(tableRef: Ref) {
               rules={[
                 {
                   required: true,
-                  message: t("user.verifyPassword"),
+                  validator: (rule, value, callback) => {
+                    if (value === "") {
+                      callback(new Error(t("user.verifyPassword")));
+                    } else if (!REGEXP_PWD.test(value)) {
+                      callback(new Error(t("login.passwordRuleReg")));
+                    } else {
+                      callback();
+                    }
+                  },
                   trigger: "blur"
                 }
               ]}
@@ -602,19 +695,18 @@ export function useUser(tableRef: Ref) {
       beforeSure: done => {
         ruleFormRef.value.validate(valid => {
           if (valid) {
-            updateUserPasswordApi({
-              uid: row.pk,
-              password: pwdForm.newPwd
-            }).then(async res => {
-              if (res.code === 1000) {
-                message(t("results.success"), { type: "success" });
-              } else {
-                message(`${t("results.failed")}，${res.detail}`, {
-                  type: "error"
-                });
+            updateUserPasswordApi(row.pk, { password: pwdForm.newPwd }).then(
+              async res => {
+                if (res.code === 1000) {
+                  message(t("results.success"), { type: "success" });
+                } else {
+                  message(`${t("results.failed")}，${res.detail}`, {
+                    type: "error"
+                  });
+                }
+                done(); // 关闭弹框
               }
-              done(); // 关闭弹框
-            });
+            );
           }
         });
       }
@@ -630,9 +722,12 @@ export function useUser(tableRef: Ref) {
     pagination,
     buttonClass,
     sortOptions,
-    roleData,
+    treeData,
+    treeLoading,
+    modeChoicesDict,
     manySelectCount,
     currentAvatarData,
+    onTreeSelect,
     exportExcel,
     onSearch,
     openDialog,

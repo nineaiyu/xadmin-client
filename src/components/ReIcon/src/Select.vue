@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { IconJson } from "@/components/ReIcon/data";
 import { cloneDeep, isAllEmpty } from "@pureadmin/utils";
-import { computed, CSSProperties, ref, toRef, watch } from "vue";
-import Search from "@iconify-icons/ri/search-eye-line";
+import { computed, CSSProperties, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
 type ParameterCSSProperties = (item?: string) => CSSProperties | undefined;
@@ -11,15 +10,8 @@ defineOptions({
   name: "IconSelect"
 });
 
-const props = defineProps({
-  modelValue: {
-    require: false,
-    type: String
-  }
-});
-const emit = defineEmits<{ (e: "update:modelValue", v: string) }>();
+const inputValue = defineModel({ type: String });
 
-const inputValue = toRef(props, "modelValue");
 const iconList = ref(IconJson);
 const icon = ref();
 const currentActiveType = ref("ep:");
@@ -69,11 +61,11 @@ const iconItemStyle = computed((): ParameterCSSProperties => {
 });
 
 function setVal() {
-  currentActiveType.value = props.modelValue.substring(
+  currentActiveType.value = inputValue.value.substring(
     0,
-    props.modelValue.indexOf(":") + 1
+    inputValue.value.indexOf(":") + 1
   );
-  icon.value = props.modelValue.substring(props.modelValue.indexOf(":") + 1);
+  icon.value = inputValue.value.substring(inputValue.value.indexOf(":") + 1);
 }
 
 function onBeforeEnter() {
@@ -97,7 +89,7 @@ function handleClick({ props }) {
 
 function onChangeIcon(item) {
   icon.value = item;
-  emit("update:modelValue", currentActiveType.value + item);
+  inputValue.value = currentActiveType.value + item;
 }
 
 function onCurrentChange(page) {
@@ -106,7 +98,7 @@ function onCurrentChange(page) {
 
 function onClear() {
   icon.value = "";
-  emit("update:modelValue", "");
+  inputValue.value = "";
 }
 
 watch(
@@ -118,7 +110,7 @@ watch(
   { immediate: true }
 );
 watch(
-  () => props.modelValue,
+  () => inputValue.value,
   val => val && setVal(),
   { immediate: true }
 );
@@ -129,7 +121,7 @@ watch(
 </script>
 
 <template>
-  <div class="selector w-[350px]">
+  <div class="selector">
     <el-input v-model="inputValue" disabled>
       <template #append>
         <el-popover
@@ -146,7 +138,7 @@ watch(
             <div
               class="w-[40px] h-[32px] cursor-pointer flex justify-center items-center"
             >
-              <IconifyIconOffline v-if="!icon" :icon="Search" />
+              <IconifyIconOffline v-if="!icon" icon="search" />
               <IconifyIconOnline v-else :icon="inputValue" />
             </div>
           </template>
@@ -182,6 +174,11 @@ watch(
                     />
                   </li>
                 </ul>
+                <el-empty
+                  v-show="pageList.length === 0"
+                  :description="`${filterValue} ${t('layout.noData')}`"
+                  :image-size="60"
+                />
               </el-scrollbar>
             </el-tab-pane>
           </el-tabs>
@@ -208,7 +205,7 @@ watch(
               bg
               @click="onClear"
             >
-              清空
+              {{ t("buttons.unSelectAll") }}
             </el-button>
           </div>
         </el-popover>

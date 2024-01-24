@@ -5,22 +5,10 @@ export interface SelectOption<T> {
   label: string;
   value: T;
 }
+
 export interface SelectOptionMap<T> {
   [key: string | number]: T;
 }
-/**
- * 菜单类型
- */
-export const MenuTypeOptions: SelectOption<number>[] = [
-  { label: "目录", value: 0 },
-  { label: "菜单", value: 1 },
-  { label: "权限", value: 2 }
-];
-export const MenuTypeMap: SelectOptionMap<string> = {
-  0: "目录",
-  1: "菜单",
-  2: "权限"
-};
 
 /**
  * 状态

@@ -300,10 +300,10 @@ onMounted(() => {
         </el-form-item>
       </re-col>
       <re-col>
-        <el-form-item :label="t('labels.remark')">
+        <el-form-item :label="t('labels.description')">
           <el-input
             v-model="newFormInline.description"
-            :placeholder="t('labels.remark')"
+            :placeholder="t('labels.description')"
             type="textarea"
             rows="3"
           />

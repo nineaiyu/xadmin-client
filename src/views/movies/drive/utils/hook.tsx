@@ -1,15 +1,15 @@
 import dayjs from "dayjs";
 import { message } from "@/utils/message";
 import type { PaginationProps } from "@pureadmin/table";
-import { reactive, ref, h, onMounted, toRaw, type Ref, computed } from "vue";
+import { computed, h, onMounted, reactive, type Ref, ref, toRaw } from "vue";
 import {
-  getDriveQrcodeApi,
-  getDriveListApi,
-  deleteDriveApi,
   checkDriveQrcodeStatusApi,
-  updateDriveApi,
   cleanDriveApi,
-  manyDeleteDriveApi
+  deleteDriveApi,
+  getDriveListApi,
+  getDriveQrcodeApi,
+  manyDeleteDriveApi,
+  updateDriveApi
 } from "@/api/movies/drive";
 import editForm from "../edit.vue";
 import createForm from "../create/index.vue";
@@ -19,7 +19,7 @@ import { hasAuth } from "@/router/utils";
 import { ElMessageBox } from "element-plus";
 import type { FormItemProps } from "./types";
 import { addDialog } from "@/components/ReDialog";
-import { usePublicHooks } from "@/views/system/hooks";
+import { formatColumns, usePublicHooks } from "@/views/system/hooks";
 
 export function useDrive(tableRef: Ref) {
   const { t } = useI18n();
@@ -78,6 +78,7 @@ export function useDrive(tableRef: Ref) {
   const dataList = ref([]);
   const loading = ref(true);
   const { switchStyle } = usePublicHooks();
+  const showColumns = ref([]);
   const pagination = reactive<PaginationProps>({
     total: 0,
     pageSize: 10,
@@ -85,7 +86,7 @@ export function useDrive(tableRef: Ref) {
     pageSizes: [5, 10, 20, 50, 100],
     background: true
   });
-  const columns: TableColumnList = [
+  const columns = ref<TableColumnList>([
     {
       type: "selection",
       align: "left"
@@ -178,9 +179,16 @@ export function useDrive(tableRef: Ref) {
       label: t("labels.operations"),
       fixed: "right",
       width: 280,
-      slot: "operation"
+      slot: "operation",
+      hide: !(
+        hasAuth("update:MoviesDrive") ||
+        hasAuth("delete:MoviesDrive") ||
+        hasAuth("list:MoviesDriveByFileId") ||
+        hasAuth("clean:MoviesDrive") ||
+        hasAuth("get:MoviesDriveQrCode")
+      )
     }
-  ];
+  ]);
   const buttonClass = computed(() => {
     return [
       "!h-[20px]",
@@ -411,6 +419,7 @@ export function useDrive(tableRef: Ref) {
     }
     loading.value = true;
     const { data } = await getDriveListApi(toRaw(form));
+    formatColumns(data?.results, columns, showColumns);
     dataList.value = data.results;
     pagination.total = data.total;
 

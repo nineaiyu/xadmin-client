@@ -6,6 +6,11 @@ export const getMenuListApi = (data?: object) => {
     params: data
   });
 };
+export const getMenuPermissionListApi = (data?: object) => {
+  return http.request<MenuDataResult>("get", "/api/system/menu/permissions", {
+    params: data
+  });
+};
 
 export const createMenuApi = (data?: object) => {
   return http.request<Result>("post", "/api/system/menu", { data: data });

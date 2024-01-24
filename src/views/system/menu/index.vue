@@ -14,7 +14,9 @@ const {
   treeData,
   parentIds,
   choicesDict,
+  menuChoices,
   menuUrlList,
+  modelList,
   defaultData,
   openDialog,
   addNewMenu,
@@ -51,6 +53,8 @@ const {
             class="pt-10 pb-20"
             :form-inline="menuData"
             :choices-dict="choicesDict"
+            :menu-choices="menuChoices"
+            :model-list="modelList"
             :tree-data="treeData"
             :menu-url-list="menuUrlList"
             @handleConfirm="handleConfirm"

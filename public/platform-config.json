@@ -1,5 +1,5 @@
 {
-  "Version": "1.2.7",
+  "Version": "1.3.6",
   "Title": "xAdmin",
   "FixedHeader": true,
   "HiddenSideBar": false,
@@ -7,8 +7,9 @@
   "KeepAlive": true,
   "Locale": "zh",
   "Layout": "vertical",
-  "Theme": "default",
+  "Theme": "light",
   "DarkMode": false,
+  "OverallStyle": "light",
   "Grey": false,
   "Weak": false,
   "HideTabs": false,
@@ -17,7 +18,7 @@
   "EpThemeColor": "#409EFF",
   "ShowLogo": true,
   "ShowModel": "smart",
-  "MenuArrowIconNoTransition": true,
+  "MenuArrowIconNoTransition": false,
   "CachingAsyncRoutes": false,
   "TooltipEffect": "light",
   "ResponsiveStorageNameSpace": "responsive-"

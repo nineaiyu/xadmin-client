@@ -15,9 +15,8 @@ interface Owner {
 interface FormItemProps {
   pk?: number;
   owner_info?: Owner;
-  owner?: number;
   publish?: boolean;
-  level?: string;
+  level?: "primary" | "success" | "warning" | "danger" | "info";
   notice_type_display?: string;
   title?: string;
   message?: string;
@@ -27,7 +26,9 @@ interface FormItemProps {
   levelChoices?: any[];
   noticeChoices?: any[];
   files?: any[];
-  owners?: any[];
+  notice_user?: any[];
+  notice_dept?: any[];
+  notice_role?: any[];
 }
 
 interface ListItem {
@@ -37,6 +38,8 @@ interface ListItem {
 
 interface FormProps {
   formInline: FormItemProps;
+  showColumns: any[];
+  isAdd?: boolean;
 }
 
 type InsertFnType = (url: string, alt?: string, href?: string) => void;

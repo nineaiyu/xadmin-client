@@ -30,8 +30,14 @@ export const uploadUserAvatarApi = (pk?: number, data?: object) => {
   return http.upload<Result>(`/api/system/user/${pk}/upload`, {}, data);
 };
 
-export const updateUserPasswordApi = (data?: object) => {
-  return http.request<Result>("post", "/api/system/user/reset_password", {
+export const updateUserPasswordApi = (pk?: number, data?: object) => {
+  return http.request<Result>("post", `/api/system/user/${pk}/reset_password`, {
+    data: data
+  });
+};
+
+export const empowerRoleApi = (pk?: number, data?: object) => {
+  return http.request<Result>("post", `/api/system/user/${pk}/empower`, {
     data: data
   });
 };

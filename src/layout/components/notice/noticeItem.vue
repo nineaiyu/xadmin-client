@@ -29,11 +29,12 @@ function hoverTitle() {
       : (titleTooltip.value = false);
   });
 }
+
 const router = useRouter();
 
 const handleRead = (pk: number) => {
   router.push({
-    name: "userNotice",
+    name: "UserNotice",
     query: { pk: pk }
   });
   // updateUserNoticeReadApi({ pks: [pk] }).then(res => {
@@ -90,8 +91,8 @@ const handleRead = (pk: number) => {
             <el-text
               :type="props.noticeItem?.level"
               @click="handleRead(props.noticeItem.pk)"
-              >{{ props.noticeItem.title }}</el-text
-            >
+              >{{ props.noticeItem.title }}
+            </el-text>
           </div>
         </el-tooltip>
         <!--        <el-tag-->

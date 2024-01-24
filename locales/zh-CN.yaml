@@ -42,9 +42,9 @@ layout:
   searchPlaceholder: 搜索菜单（中文模式下支持拼音搜索）
   theme: 主题
   navigationMode: 导航栏模式
-  leftMode: 左侧模式
-  topMode: 顶部模式
-  mixedMode: 混合模式
+  leftMode: 左侧菜单，亲切熟悉
+  topMode: 顶部菜单，简洁概览
+  mixedMode: 混合菜单，灵活多变
   themeColor: 主题色
   display: 界面显示
   greyMode: 灰色模式
@@ -61,6 +61,15 @@ layout:
   backTop: 回到顶部
   updateCheck: 检测到新版本
   updateNow: 立即更新
+  clearCache: 清空缓存
+  light: 浅色
+  dark: 深色
+  auto: 自动
+  lightTip: 清新启航，点亮舒适的工作界面
+  darkTip: 月光序曲，沉醉于夜的静谧雅致
+  autoTip: 同步时光，界面随晨昏自然呼应
+  smartTip: 灵动标签，添趣生辉
+  cardTip: 卡片标签，高效浏览
 
 error:
   error403: 抱歉，你无权访问该页面
@@ -79,8 +88,8 @@ labels:
   id: ID
   status: 状态
   verifyStatus: 请选择状态
-  remark: 备注
-  verifyRemark: 请输入备注
+  description: 备注
+  verifyDescription: 请输入备注
   sort: 排序
   active: 激活
   inactive: 未激活
@@ -108,6 +117,8 @@ sorts:
   registrationDate: 注册时间
   loginDate: 登录时间
   createdDate: 创建时间
+  updatedDate: 更新时间
+  rank: 排序
 
 buttons:
   hsLoginOut: 退出系统
@@ -122,6 +133,8 @@ buttons:
   hssearch: 搜索
   hsexpendAll: 全部展开
   hscollapseAll: 全部折叠
+  selectAll: 选择全部
+  unSelectAll: 取消选择
   hssystemSet: 打开项目配置
   hsdelete: 删除
   hsreload: 重新加载
@@ -153,9 +166,18 @@ menus:
   hslogin: 登录
   hssysManagement: 系统管理
   hsUser: 用户管理
-  hsRole: 角色管理
+  hsDept: 部门管理
   hsMenu: 菜单管理
+  hsPermission: 权限管理
+  hsConfig: 配置管理
+  hsSystemConfig: 系统配置
+  hsUserConfig: 用户配置
+  hsRole: 角色权限
+  hsDataPermission: 数据权限
+  hsLog: 日志管理
+  hsModelField: 字段管理
   hsOperationLog: 访问日志
+  hsLoginLog: 登录日志
   permission: 权限管理
   hsabnormal: 异常页面
   hsfourZeroFour: "404"
@@ -201,19 +223,50 @@ user:
   batchSendNotice: 批量发送通知
   editAvatar: 修改头像
   resetPassword: 重置密码
-  assignRoles: 分配角色
+  assignRoles: 分配角色权限
   verifyUserId: 请输入用户ID
   verifyUsername: 请输入用户名
   verifyPassword: 请输入密码
   verifyNickname: 请输入昵称
   verifyMobile: 请输入手机号
   verifyEmail: 请输入邮箱
-  verifySex: 请选择性别
+  verifyGender: 请选择性别
   resetPasswd: 重置用户 { user } 的密码
-  assignRole: 分配用户 { user } 的角色
+  assignRole: 分配用户 { user } 的角色权限
   updateAvatar: 更新用户 { user } 的头像
   excelSheet: 用户注册信息
   excelName: 用户注册报表
+  deptId: 部门ID
+  userId: 用户ID
+  userInfo: 用户信息
+  dept: 所属部门
+  rules: 数据权限
+
+dept:
+  name: 部门名称
+  dept: 部门
+  code: 部门标识
+  roles: 角色
+  rules: 数据权限
+  assignRoles: 分配角色权限
+  assignRole: 分配部门 { dept } 的角色权限
+  userCount: 人员数量
+  autoBind: 自动绑定部门
+  autoBindDesc: 注册参数channel的值和该部门code一致，则该用户会自动和该部门绑定
+
+permission:
+  permission: 数据权限
+  name: 权限名称
+  mode: 权限模式
+  addName: 属性名
+  addValue: 属性值
+  addType: 值类型
+  addExclude: 排除
+  addMatch: 匹配
+  rules: 规则列表
+  table: 表名
+  field: 字段名
+  rulesFailed: 规则不存在或有误，请输入规则
 
 role:
   role: 角色
@@ -222,8 +275,6 @@ role:
   verifyRoleName: 请输入角色名称
   verifyRoleCode: 请输入角色标识
   permissions: 权限
-  autoBind: 自动绑定角色
-  autoBindDesc: 注册参数channel的值和该角色code一致，则该用户会自动和该角色绑定
 
 menu:
   menus: 菜单
@@ -235,7 +286,7 @@ menu:
   cache: 缓存
   componentName: 组件名称
   componentPath: 组件路径
-  exampleComponentName: "如：`user`，如外网地址需内链访问则以`http(s)://`开头"
+  exampleComponentName: "如：`user`需要和前端定义的组件名称一致，如外网地址需内链访问则以`http(s)://`开头"
   exampleRoutePath: "访问的路由地址，如：`/user`, `/system/about`"
   exampleComponentPath: "访问的组件路径，如：`system/user/index`，默认在`views`目录下"
   exampleCache: "选择是则会被`keep-alive`缓存，需要匹配组件的`name`和地址保持一致"
@@ -268,10 +319,13 @@ menu:
   directory: 目录
   menu: 菜单
   permissions: 权限
+  checkStrictly: 层级关联
+  checkUnStrictly: 层级独立
+  associationModel: 关联模型
+  exampleAssociationModel: 模型关联用与字段权限控制
 
-operation:
+logsOperation:
   module: 模块
-  userId: 用户ID
   address: Ip地址
   system: 操作系统
   browser: 浏览器
@@ -284,10 +338,42 @@ operation:
   verifyBrowser: 请输入浏览器
   verifyRequestPath: 请输入请求路径
 
+logsLogin:
+  address: Ip地址
+  system: 操作系统
+  browser: 浏览器
+  agent: 用户代理
+  loginDisplay: 登录方式
+  verifyAddress: 请输入Ip地址
+  verifySystem: 请输入操作系统
+  verifyBrowser: 请输入浏览器
+  verifyAgent: 请输入用户代理
+
+configSystem:
+  configSystem: 系统配置
+  key: 配置名称
+  value: 配置数值
+  cacheValue: 缓存数值
+  invalidCache: 缓存失效
+  confirmInvalid: 确定缓存失效该数据么？
+
+configUser:
+  configUser: 用户配置
+  key: 配置名称
+  value: 配置数值
+  cacheValue: 缓存数值
+  invalidCache: 缓存失效
+  confirmInvalid: 确定缓存失效该数据么？
+
+modelField:
+  name: 模型/字段数值
+  label: 模型/字段名称
+  parent: 上级节点
+  makeData: 重新生成字段数据
+  fieldType: 字段类型
+
 notice:
   notice: 通知公告
-  userId: 用户ID
-  userInfo: 用户信息
   readDate: 已读时间
   title: 标题
   type: 类型

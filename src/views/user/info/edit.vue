@@ -11,22 +11,18 @@ defineOptions({
 });
 
 const props = withDefaults(defineProps<FormProps>(), {
+  choicesDict: () => [],
   formInline: () => ({
     username: "",
     nickname: "",
     avatar: "",
     mobile: "",
     email: "",
-    sex: 0
+    gender: 0
   })
 });
 const { t } = useI18n();
 
-const sexOptions = [
-  { label: t("user.male"), value: 0 },
-  { label: t("user.female"), value: 1 },
-  { label: t("user.unknown"), value: 2 }
-];
 const ruleFormRef = ref();
 const newFormInline = ref(props.formInline);
 
@@ -89,18 +85,18 @@ const handleUpdate = row => {
         </el-form-item>
       </re-col>
       <re-col :value="12" :xs="24" :sm="24">
-        <el-form-item :label="t('user.gender')" prop="sex">
+        <el-form-item :label="t('user.gender')" prop="gender">
           <el-select
-            v-model="newFormInline.sex"
-            :placeholder="t('user.verifySex')"
+            v-model="newFormInline.gender"
+            :placeholder="t('user.verifyGender')"
             class="w-full"
             clearable
           >
             <el-option
-              v-for="item in sexOptions"
-              :key="item.value"
+              v-for="item in props.choicesDict"
+              :key="item.key"
               :label="item.label"
-              :value="item.value"
+              :value="item.key"
             />
           </el-select>
         </el-form-item>

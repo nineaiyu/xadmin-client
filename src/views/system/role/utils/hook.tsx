@@ -1,24 +1,26 @@
 import dayjs from "dayjs";
 import { message } from "@/utils/message";
-import { getRoleListApi } from "@/api/system/role";
+import {
+  createRoleApi,
+  deleteRoleApi,
+  getRoleListApi,
+  manyDeleteRoleApi,
+  updateRoleApi
+} from "@/api/system/role";
 import { ElMessageBox } from "element-plus";
-import { usePublicHooks } from "../../hooks";
+import { formatColumns, usePublicHooks } from "@/views/system/hooks";
 import { addDialog } from "@/components/ReDialog";
 import type { FormItemProps } from "./types";
 import editForm from "../form.vue";
 import type { PaginationProps } from "@pureadmin/table";
-import { reactive, ref, onMounted, h, toRaw, type Ref } from "vue";
-import {
-  createRoleApi,
-  deleteRoleApi,
-  manyDeleteRoleApi,
-  updateRoleApi
-} from "@/api/system/role";
+import { h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
 import { getMenuListApi } from "@/api/system/menu";
 import { handleTree } from "@/utils/tree";
-import { delay, getKeyList } from "@pureadmin/utils";
-import { hasAuth } from "@/router/utils";
+import { cloneDeep, delay, getKeyList } from "@pureadmin/utils";
+import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
+import { getModelLabelFieldListApi } from "@/api/system/field";
+import { FieldChoices } from "@/views/system/constants";
 
 export function useRole(tableRef: Ref) {
   const { t } = useI18n();
@@ -36,7 +38,6 @@ export function useRole(tableRef: Ref) {
     name: "",
     code: "",
     is_active: "",
-    auto_bind: "",
     ordering: sortOptions[0].key,
     page: 1,
     size: 10
@@ -45,9 +46,11 @@ export function useRole(tableRef: Ref) {
   const manySelectCount = ref(0);
   const dataList = ref([]);
   const menuTreeData = ref([]);
+  const fieldLookupsData = ref({});
   const loading = ref(true);
   const switchLoadMap = ref({});
   const { switchStyle } = usePublicHooks();
+  const showColumns = ref([]);
   const pagination = reactive<PaginationProps>({
     total: 0,
     pageSize: 10,
@@ -55,7 +58,7 @@ export function useRole(tableRef: Ref) {
     pageSizes: [5, 10, 20, 50, 100],
     background: true
   });
-  const columns: TableColumnList = [
+  const columns = ref<TableColumnList>([
     {
       type: "selection",
       align: "left"
@@ -71,25 +74,6 @@ export function useRole(tableRef: Ref) {
       minWidth: 120
     },
     {
-      label: t("role.autoBind"),
-      minWidth: 130,
-      cellRenderer: scope => (
-        <el-switch
-          size={scope.props.size === "small" ? "small" : "default"}
-          loading={switchLoadMap.value[scope.index]?.loading}
-          v-model={scope.row.auto_bind}
-          active-value={true}
-          inactive-value={false}
-          active-text={t("labels.enable")}
-          inactive-text={t("labels.disable")}
-          disabled={!hasAuth("update:systemRole")}
-          inline-prompt
-          style={switchStyle.value}
-          onChange={() => onChangeBind(scope as any)}
-        />
-      )
-    },
-    {
       label: t("role.code"),
       prop: "code",
       minWidth: 150,
@@ -98,6 +82,7 @@ export function useRole(tableRef: Ref) {
     {
       label: t("labels.status"),
       minWidth: 130,
+      prop: "is_active",
       cellRenderer: scope => (
         <el-switch
           size={scope.props.size === "small" ? "small" : "default"}
@@ -115,14 +100,14 @@ export function useRole(tableRef: Ref) {
       )
     },
     {
-      label: t("labels.remark"),
+      label: t("labels.description"),
       prop: "description",
       minWidth: 150
     },
     {
       label: t("sorts.createdDate"),
       minWidth: 180,
-      prop: "createTime",
+      prop: "created_time",
       formatter: ({ created_time }) =>
         dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
     },
@@ -132,53 +117,7 @@ export function useRole(tableRef: Ref) {
       width: 160,
       slot: "operation"
     }
-  ];
-
-  function onChangeBind({ row, index }) {
-    const action =
-      row.auto_bind === false ? t("labels.disable") : t("labels.enable");
-    ElMessageBox.confirm(
-      `${t("buttons.hsoperateconfirm", {
-        action: `<strong>${action}</strong>`,
-        message: `<strong style="color:var(--el-color-primary)">${row.name}</strong>`
-      })}`,
-      {
-        confirmButtonText: t("buttons.hssure"),
-        cancelButtonText: t("buttons.hscancel"),
-        type: "warning",
-        dangerouslyUseHTMLString: true,
-        draggable: true
-      }
-    )
-      .then(() => {
-        switchLoadMap.value[index] = Object.assign(
-          {},
-          switchLoadMap.value[index],
-          {
-            loading: true
-          }
-        );
-        updateRoleApi(row.pk, row).then(res => {
-          if (res.code === 1000) {
-            switchLoadMap.value[index] = Object.assign(
-              {},
-              switchLoadMap.value[index],
-              {
-                loading: false
-              }
-            );
-            message(t("results.success"), { type: "success" });
-          } else {
-            message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-          }
-        });
-      })
-      .catch(() => {
-        row.auto_bind === false
-          ? (row.auto_bind = true)
-          : (row.auto_bind = false);
-      });
-  }
+  ]);
 
   function onChange({ row, index }) {
     const action =
@@ -285,9 +224,9 @@ export function useRole(tableRef: Ref) {
     }
     loading.value = true;
     const { data } = await getRoleListApi(toRaw(form));
+    formatColumns(data?.results, columns, showColumns);
     dataList.value = data.results;
     pagination.total = data.total;
-
     delay(500).then(() => {
       loading.value = false;
     });
@@ -312,10 +251,13 @@ export function useRole(tableRef: Ref) {
           name: row?.name ?? "",
           code: row?.code ?? "",
           menu: row?.menu ?? [],
+          field: row?.field ?? [],
           is_active: row?.is_active ?? true,
-          auto_bind: row?.auto_bind ?? false,
           description: row?.description ?? ""
-        }
+        },
+        menuTreeData: menuTreeData.value,
+        showColumns: showColumns.value,
+        isAdd: is_add
       },
       width: "40%",
       draggable: true,
@@ -335,7 +277,28 @@ export function useRole(tableRef: Ref) {
 
         FormRef.validate(valid => {
           if (valid) {
-            curData.menu = TreeRef!.getCheckedKeys(false);
+            const menu = TreeRef!.getCheckedKeys(false);
+            curData.menu = menu.filter(x => {
+              return x.indexOf("+") === -1;
+            });
+            menu.filter(x => {
+              return x.toString().indexOf("+") > -1;
+            });
+            const fields = {};
+            menu.forEach(item => {
+              if (item.indexOf("+") > -1 && !item.startsWith("+")) {
+                let data = item.split("+");
+                let val = fields[data[0]];
+                if (!val) {
+                  fields[data[0]] = [data[1]];
+                } else {
+                  fields[data[0]].push(data[1]);
+                }
+              }
+            });
+            curData.fields = fields;
+            delete curData.field;
+            loading.value = true;
             if (is_add) {
               createRoleApi(curData).then(async res => {
                 if (res.code === 1000) {
@@ -345,6 +308,7 @@ export function useRole(tableRef: Ref) {
                     type: "error"
                   });
                 }
+                loading.value = false;
               });
             } else {
               updateRoleApi(curData.pk, curData).then(async res => {
@@ -355,6 +319,7 @@ export function useRole(tableRef: Ref) {
                     type: "error"
                   });
                 }
+                loading.value = false;
               });
             }
           }
@@ -363,15 +328,51 @@ export function useRole(tableRef: Ref) {
     });
   }
 
+  function autoFieldTree(arr) {
+    function deep(arr) {
+      arr.forEach(item => {
+        if (item.model && item.model.length > 0 && !item.children) {
+          item.children = [];
+          item.model.forEach(m => {
+            let data = cloneDeep(fieldLookupsData.value[m]);
+            data.pk = `+${data.pk}`;
+            data.children.forEach(x => {
+              x.pk = `${item.pk}+${x.pk}`;
+              x.parent = data.pk;
+            });
+            item.children.push(data);
+          });
+        }
+        item.children && deep(item.children);
+      });
+    }
+
+    if (Object.keys(fieldLookupsData.value).length) deep(arr);
+  }
+
   /** 菜单权限 */
 
   const getMenuData = () => {
     loading.value = true;
-    getMenuListApi({ page: 1, size: 500 }).then(res => {
+    getMenuListApi({ page: 1, size: 1000 }).then(res => {
       setTimeout(() => {
         loading.value = false;
         if (res.code === 1000) {
-          menuTreeData.value = handleTree(res.data.results);
+          if (hasGlobalAuth("list:systemModelField")) {
+            getModelLabelFieldListApi({
+              page: 1,
+              size: 1000,
+              field_type: FieldChoices.ROLE
+            }).then(result => {
+              if (result.code === 1000) {
+                handleTree(result.data.results).forEach(item => {
+                  fieldLookupsData.value[item.pk] = item;
+                });
+                menuTreeData.value = handleTree(res.data.results);
+                autoFieldTree(menuTreeData.value);
+              }
+            });
+          }
         }
       }, 300);
     });
@@ -379,6 +380,9 @@ export function useRole(tableRef: Ref) {
 
   onMounted(() => {
     onSearch();
+    if (hasGlobalAuth("list:systemMenu")) {
+      getMenuData();
+    }
   });
 
   return {
@@ -389,10 +393,8 @@ export function useRole(tableRef: Ref) {
     dataList,
     pagination,
     sortOptions,
-    menuTreeData,
     manySelectCount,
     onSelectionCancel,
-    getMenuData,
     onSearch,
     resetForm,
     openDialog,

@@ -39,6 +39,8 @@ import Check from "@iconify-icons/ep/check";
 import User from "@iconify-icons/ri/user-3-fill";
 import Info from "@iconify-icons/ri/information-line";
 import { getTempTokenApi } from "@/api/auth";
+import { debounce } from "@pureadmin/utils";
+import { useEventListener } from "@vueuse/core";
 
 defineOptions({
   name: "Login"
@@ -47,6 +49,7 @@ defineOptions({
 const router = useRouter();
 const loading = ref(false);
 const checked = ref(true);
+const disabled = ref(false);
 const loginDay = ref(1);
 const loginDayList = ref([1]);
 const ruleFormRef = ref<FormInstance>();
@@ -57,8 +60,8 @@ const currentPage = computed(() => {
 const { t } = useI18n();
 const { initStorage } = useLayout();
 initStorage();
-const { dataTheme, dataThemeChange } = useDataThemeChange();
-dataThemeChange();
+const { dataTheme, overallStyle, dataThemeChange } = useDataThemeChange();
+dataThemeChange(overallStyle.value);
 const { title, getDropdownItemStyle, getDropdownItemClass } = useNav();
 const { locale, translationCh, translationEn } = useTranslationLang();
 
@@ -96,18 +99,25 @@ const initToken = () => {
 };
 
 const onLogin = async (formEl: FormInstance | undefined) => {
-  loading.value = true;
   if (!formEl) return;
   await formEl.validate((valid, fields) => {
     if (valid) {
+      loading.value = true;
       useUserStoreHook()
         .loginByUsername(ruleForm)
         .then(() => {
-          message(transformI18n($t("login.loginSuccess")), {
-            type: "success"
-          });
           initRouter().then(() => {
-            router.push(getTopMenu(true).path);
+            disabled.value = true;
+            router
+              .push(getTopMenu(true).path)
+              .then(() => {
+                message(transformI18n($t("login.loginSuccess")), {
+                  type: "success"
+                });
+              })
+              .finally(() => {
+                disabled.value = false;
+              });
           });
           loading.value = false;
         })
@@ -126,6 +136,12 @@ const onLogin = async (formEl: FormInstance | undefined) => {
   });
 };
 
+const immediateDebounce: any = debounce(
+  formRef => onLogin(formRef),
+  1000,
+  true
+);
+
 /** 使用公共函数，避免`removeEventListener`失效 */
 function onkeypress({ code }: KeyboardEvent) {
   if (code === "Enter" || code === "NumpadEnter") {
@@ -139,7 +155,10 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  window.document.removeEventListener("keypress", onkeypress);
+  useEventListener(document, "keypress", ({ code }) => {
+    if (code === "Enter" && !disabled.value && !loading.value)
+      immediateDebounce(ruleFormRef.value);
+  });
 });
 watch(checked, bool => {
   useUserStoreHook().SET_ISREMEMBERED(bool);
@@ -255,7 +274,7 @@ watch(loginDay, value => {
                   :prefix-icon="useRenderIcon('ri:shield-keyhole-line')"
                 >
                   <template v-slot:append>
-                    <ReImageVerify v-model:code="ruleForm.captcha_key" />
+                    <ReImageVerify v-model="ruleForm.captcha_key" />
                   </template>
                 </el-input>
               </el-form-item>
@@ -306,6 +325,7 @@ watch(loginDay, value => {
                   class="w-full mt-4"
                   size="default"
                   type="primary"
+                  :disabled="disabled"
                   :loading="loading"
                   @click="onLogin(ruleFormRef)"
                 >

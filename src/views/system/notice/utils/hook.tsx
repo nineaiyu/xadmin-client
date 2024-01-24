@@ -3,6 +3,7 @@ import { message } from "@/utils/message";
 import type { PaginationProps } from "@pureadmin/table";
 import { h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
 import {
+  createAnnouncementApi,
   createNoticeApi,
   deleteNoticeApi,
   getNoticeListApi,
@@ -16,9 +17,11 @@ import editForm from "../editor.vue";
 import showForm from "../show.vue";
 import { cloneDeep, getKeyList, isEmpty, isString } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog";
-import { hasAuth } from "@/router/utils";
+import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
+import { NoticeChoices } from "@/views/system/constants";
+import { formatColumns } from "@/views/system/hooks";
 
 export function useNotice(tableRef: Ref) {
   const { t } = useI18n();
@@ -38,13 +41,14 @@ export function useNotice(tableRef: Ref) {
     message: "",
     level: "",
     notice_type: "",
-    owners: "",
+    notice_user: "",
     publish: "",
     ordering: sortOptions[0].key,
     page: 1,
     size: 10
   });
   const router = useRouter();
+  const defaultNoticeType = ref(NoticeChoices.NOTICE);
   const switchLoadMap = ref({});
   const route = useRoute();
   const getParameter = isEmpty(route.params) ? route.query : route.params;
@@ -54,6 +58,7 @@ export function useNotice(tableRef: Ref) {
   const loading = ref(true);
   const levelChoices = ref([]);
   const noticeChoices = ref([]);
+  const showColumns = ref([]);
   const pagination = reactive<PaginationProps>({
     total: 0,
     pageSize: 10,
@@ -61,7 +66,7 @@ export function useNotice(tableRef: Ref) {
     pageSizes: [5, 10, 20, 50, 100],
     background: true
   });
-  const columns: TableColumnList = [
+  const columns = ref<TableColumnList>([
     {
       type: "selection",
       align: "left"
@@ -75,7 +80,9 @@ export function useNotice(tableRef: Ref) {
       label: t("notice.title"),
       prop: "title",
       minWidth: 120,
-      cellRenderer: ({ row }) => <el-text type={row.level}>{row.title}</el-text>
+      cellRenderer: ({ row }) => (
+        <el-text type={row?.level}>{row.title}</el-text>
+      )
     },
     {
       label: t("notice.type"),
@@ -91,8 +98,10 @@ export function useNotice(tableRef: Ref) {
           type={row.level == "" ? "default" : row.level}
           onClick={() => onGoNoticeReadDetail(row as any)}
         >
-          {row.notice_type === 2 ? t("notice.allRead") : row.user_count}/
-          {row.read_user_count}
+          {row.notice_type === NoticeChoices.NOTICE
+            ? t("notice.allRead")
+            : row.user_count}
+          /{row.read_user_count}
         </el-link>
       )
     },
@@ -118,7 +127,7 @@ export function useNotice(tableRef: Ref) {
     {
       label: t("sorts.createdDate"),
       minWidth: 180,
-      prop: "createTime",
+      prop: "created_time",
       formatter: ({ created_time }) =>
         dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
     },
@@ -128,12 +137,12 @@ export function useNotice(tableRef: Ref) {
       width: 200,
       slot: "operation"
     }
-  ];
+  ]);
 
   function onGoNoticeReadDetail(row: any) {
-    if (row.pk) {
+    if (hasGlobalAuth("list:systemNoticeRead") && row.pk) {
       router.push({
-        name: "systemNoticeRead",
+        name: "SystemNoticeRead",
         query: { notice_id: row.pk }
       });
     }
@@ -154,23 +163,27 @@ export function useNotice(tableRef: Ref) {
           message: row?.message ?? "",
           level: row?.level ?? "",
           notice_type_display: row?.notice_type_display ?? "",
-          notice_type: row?.notice_type ?? 1,
+          notice_type: row?.notice_type ?? defaultNoticeType.value,
           levelChoices: levelChoices.value,
           noticeChoices: noticeChoices.value,
-          owners: row?.owner ?? []
-        }
+          notice_user: row?.notice_user ?? [],
+          notice_dept: row?.notice_dept ?? [],
+          notice_role: row?.notice_role ?? []
+        },
+        showColumns: showColumns.value,
+        isAdd: is_add
       },
       width: "60%",
       draggable: true,
       fullscreenIcon: true,
       closeOnClickModal: false,
+      top: "10vh",
       contentRenderer: () => h(editForm, { ref: formRef }),
       beforeSure: (done, { options }) => {
         const FormRef = formRef.value.getRef();
         const curData = options.props.formInline as FormItemProps;
         delete curData?.levelChoices;
         delete curData?.noticeChoices;
-        delete curData?.owner_info;
         curData.files = formRef.value.getUploadFiles();
 
         async function chores(detail) {
@@ -182,7 +195,14 @@ export function useNotice(tableRef: Ref) {
         FormRef.validate(valid => {
           if (valid) {
             if (is_add) {
-              createNoticeApi(curData).then(async res => {
+              let createApi = createNoticeApi;
+              if (
+                curData.notice_type == NoticeChoices.NOTICE &&
+                hasAuth("create:systemAnnouncement")
+              ) {
+                createApi = createAnnouncementApi;
+              }
+              createApi(curData).then(async res => {
                 if (res.code === 1000) {
                   await chores(res.detail);
                 } else {
@@ -220,7 +240,9 @@ export function useNotice(tableRef: Ref) {
           level: row?.level ?? "",
           levelChoices: levelChoices.value,
           noticeChoices: noticeChoices.value
-        }
+        },
+        isAdd: false,
+        showColumns: showColumns.value
       },
       width: "70%",
       draggable: true,
@@ -334,21 +356,36 @@ export function useNotice(tableRef: Ref) {
     loading.value = true;
     getNoticeListApi(toRaw(form)).then(res => {
       if (res.code === 1000 && res.data) {
+        formatColumns(res?.data?.results, columns, showColumns);
         dataList.value = res.data.results;
         pagination.total = res.data.total;
         levelChoices.value = res.level_choices;
         noticeChoices.value = res.notice_type_choices;
+        noticeChoices.value.forEach(item => {
+          if (item.key == NoticeChoices.NOTICE) {
+            if (!hasAuth("create:systemAnnouncement")) {
+              if (!item.disabled) {
+                item.disabled = true;
+                defaultNoticeType.value = NoticeChoices.USER;
+              }
+            }
+          }
+        });
       } else {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
       setTimeout(() => {
         loading.value = false;
-        if (getParameter.owners && form.owners && form.owners !== "") {
+        if (
+          getParameter.notice_user &&
+          form.notice_user &&
+          form.notice_user !== ""
+        ) {
           const parameter = {
-            owner: JSON.parse(getParameter.owners as string),
-            notice_type: 1
+            notice_user: JSON.parse(getParameter.notice_user as string),
+            notice_type: NoticeChoices.USER
           };
-          form.owners = "";
+          form.notice_user = "";
           openDialog(true, parameter);
         }
       }, 500);
@@ -370,7 +407,7 @@ export function useNotice(tableRef: Ref) {
         }
       });
       form.pk = parameter.pk;
-      form.owners = parameter.owners;
+      form.notice_user = parameter.notice_user;
     }
     onSearch(true);
   });

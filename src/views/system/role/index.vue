@@ -6,17 +6,18 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 
 import Delete from "@iconify-icons/ep/delete";
 import EditPen from "@iconify-icons/ep/edit-pen";
-import Search from "@iconify-icons/ep/search";
+
 import Refresh from "@iconify-icons/ep/refresh";
 import AddFill from "@iconify-icons/ri/add-circle-line";
 import { hasAuth } from "@/router/utils";
 
 defineOptions({
-  name: "Role"
+  name: "SystemRole"
 });
 
 const formRef = ref();
 const tableRef = ref();
+
 const {
   t,
   form,
@@ -75,21 +76,10 @@ const {
           <el-option :label="t('labels.disable')" value="0" />
         </el-select>
       </el-form-item>
-      <el-form-item :label="t('role.autoBind')" prop="auto_bind">
-        <el-select
-          v-model="form.auto_bind"
-          clearable
-          class="!w-[180px]"
-          @change="onSearch(true)"
-        >
-          <el-option :label="t('labels.enable')" value="1" />
-          <el-option :label="t('labels.disable')" value="0" />
-        </el-select>
-      </el-form-item>
       <el-form-item :label="t('labels.sort')">
         <el-select
           v-model="form.ordering"
-          style="width: 180px"
+          class="!w-[180px]"
           clearable
           @change="onSearch(true)"
         >
@@ -104,7 +94,7 @@ const {
       <el-form-item>
         <el-button
           type="primary"
-          :icon="useRenderIcon(Search)"
+          :icon="useRenderIcon('search')"
           :loading="loading"
           @click="onSearch(true)"
         >
@@ -202,7 +192,7 @@ const {
                 <el-button
                   class="reset-margin"
                   link
-                  type="primary"
+                  type="danger"
                   :size="size"
                   :icon="useRenderIcon(Delete)"
                 >

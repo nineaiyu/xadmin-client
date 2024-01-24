@@ -2,6 +2,7 @@ import { reactive } from "vue";
 import type { FormRules } from "element-plus";
 import { $t, transformI18n } from "@/plugins/i18n";
 import { isEmail, isPhone } from "@pureadmin/utils";
+import { REGEXP_PWD } from "@/views/login/utils/rule";
 
 /** 自定义表单规则校验 */
 export const formRules = reactive<FormRules>({
@@ -15,7 +16,15 @@ export const formRules = reactive<FormRules>({
   password: [
     {
       required: true,
-      message: transformI18n($t("user.verifyPassword")),
+      validator: (rule, value, callback) => {
+        if (value === "") {
+          callback(new Error(transformI18n($t("login.passwordReg"))));
+        } else if (!REGEXP_PWD.test(value)) {
+          callback(new Error(transformI18n($t("login.passwordRuleReg"))));
+        } else {
+          callback();
+        }
+      },
       trigger: "blur"
     }
   ],
@@ -26,10 +35,17 @@ export const formRules = reactive<FormRules>({
       trigger: "blur"
     }
   ],
-  sex: [
+  gender: [
     {
       required: true,
-      message: transformI18n($t("user.verifySex")),
+      message: transformI18n($t("user.verifyGender")),
+      trigger: "blur"
+    }
+  ],
+  dept: [
+    {
+      required: true,
+      message: transformI18n($t("user.dept")),
       trigger: "blur"
     }
   ],

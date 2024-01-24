@@ -13,14 +13,23 @@ export const createNoticeApi = (data?: object) => {
   });
 };
 
+export const createAnnouncementApi = (data?: object) => {
+  return http.request<Result>(
+    "post",
+    "/api/system/message/notice/announcement",
+    {
+      data: data
+    }
+  );
+};
+
 export const deleteNoticeApi = (pk?: number) => {
   return http.request<Result>("delete", `/api/system/message/notice/${pk}`);
 };
 
 export const updateNoticeApi = (pk?: number, data?: object) => {
   return http.request<Result>("put", `/api/system/message/notice/${pk}`, {
-    data: data,
-    params: { pk: pk }
+    data: data
   });
 };
 
@@ -39,8 +48,7 @@ export const updateNoticePublishApi = (pk?: number, data?: object) => {
     "put",
     `/api/system/message/notice/${pk}/publish`,
     {
-      data: data,
-      params: { pk: pk }
+      data: data
     }
   );
 };
@@ -54,8 +62,7 @@ export const getNoticeReadListApi = (data?: object) => {
 
 export const updateNoticeReadStateApi = (pk?: number, data?: object) => {
   return http.request<Result>("put", `/api/system/message/read/${pk}/state`, {
-    data: data,
-    params: { pk: pk }
+    data: data
   });
 };
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { FormProps } from "./utils/types";
 import FromQuestion from "@/components/FromQuestion/index.vue";
 import ReAnimateSelector from "@/components/ReAnimateSelector";
@@ -12,15 +12,19 @@ import { dirFormRules, menuFormRules, permissionFormRules } from "./utils/rule";
 import { hasAuth } from "@/router/utils";
 import { cloneDeep } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
+import { MenuChoices } from "@/views/system/constants";
+import Segmented, { type OptionsType } from "@/components/ReSegmented";
 
 const { t } = useI18n();
 const emit = defineEmits(["handleConfirm"]);
 const props = withDefaults(defineProps<FormProps>(), {
   treeData: () => [],
   choicesDict: () => [],
+  modelList: () => [],
+  menuChoices: () => [],
   menuUrlList: () => [],
   formInline: () => ({
-    menu_type: 0,
+    menu_type: MenuChoices.DIRECTORY,
     is_add: false,
     parent: "",
     parent_ids: [],
@@ -28,6 +32,7 @@ const props = withDefaults(defineProps<FormProps>(), {
     path: "",
     rank: 0,
     component: "",
+    model: [],
     is_active: true,
     meta: {
       title: "",
@@ -55,11 +60,11 @@ const ifEnableOptions: SelectOption<boolean>[] = [
   { label: t("labels.disable"), value: false }
 ];
 
-const MenuTypeOptions: SelectOption<number>[] = [
-  { label: t("menu.directory"), value: 0 },
-  { label: t("menu.menu"), value: 1 },
-  { label: t("menu.permissions"), value: 2 }
-];
+// const MenuTypeOptions: SelectOption<number>[] = [
+//   { label: t("menu.directory"), value: 0 },
+//   { label: t("menu.menu"), value: 1 },
+//   { label: t("menu.permissions"), value: 2 }
+// ];
 
 function getRef() {
   return ruleFormRef.value;
@@ -73,7 +78,12 @@ watch(
   }
 );
 
-const handleChangeMenuType = (val: number) => {
+const onChange = ({ option }) => {
+  const { key } = option;
+  handleChangeMenuType(key);
+};
+
+const handleChangeMenuType = menu_type => {
   setTimeout(function () {
     ruleFormRef.value!.clearValidate([
       "menu_type",
@@ -84,9 +94,9 @@ const handleChangeMenuType = (val: number) => {
     ]);
   }, 30);
 
-  if (val === 0) {
+  if (menu_type === MenuChoices.DIRECTORY) {
     formRules.value = dirFormRules;
-  } else if (val === 1) {
+  } else if (menu_type === MenuChoices.MENU) {
     formRules.value = menuFormRules;
   } else {
     formRules.value = permissionFormRules;
@@ -101,6 +111,21 @@ const getMinHeight = () => {
   }
   return "";
 };
+
+const menuOptions = computed<Array<OptionsType>>(() => {
+  const data = cloneDeep(props.menuChoices);
+  data.forEach(item => {
+    item.value = item.key;
+    if (!newFormInline.value.is_add) {
+      if (newFormInline.value.menu_type === MenuChoices.PERMISSION) {
+        item.disabled = item.key !== MenuChoices.PERMISSION;
+      } else {
+        item.disabled = item.key === MenuChoices.PERMISSION;
+      }
+    }
+  });
+  return data;
+});
 </script>
 
 <template>
@@ -117,22 +142,11 @@ const getMinHeight = () => {
       class="search-form bg-bg_color w-[90%] pl-8 pt-[12px]"
     >
       <el-form-item :label="t('menu.type')" prop="menu_type">
-        <el-radio-group
+        <Segmented
           v-model="newFormInline.menu_type"
-          @change="handleChangeMenuType"
-        >
-          <el-radio-button
-            v-for="(item, index) in MenuTypeOptions"
-            :key="index"
-            :label="item.value"
-            :disabled="
-              !newFormInline.is_add &&
-              ((newFormInline.menu_type === 2 && index !== 2) ||
-                (newFormInline.menu_type !== 2 && index === 2))
-            "
-            >{{ item.label }}</el-radio-button
-          >
-        </el-radio-group>
+          :options="menuOptions"
+          @change="onChange"
+        />
       </el-form-item>
       <el-form-item :label="t('menu.parentNode')" prop="parentId">
         <el-tree-select
@@ -142,7 +156,7 @@ const getMinHeight = () => {
           :props="{
             children: 'children',
             label: data => transformI18n(data.meta.title),
-            disabled: data => data.menu_type == 2
+            disabled: data => data.menu_type == MenuChoices.PERMISSION
           }"
           node-key="pk"
           accordion
@@ -172,7 +186,7 @@ const getMinHeight = () => {
           </template>
         </el-tree-select>
       </el-form-item>
-      <div v-if="newFormInline.menu_type !== 2">
+      <div v-if="newFormInline.menu_type !== MenuChoices.PERMISSION">
         <el-form-item :label="t('menu.title')" prop="title">
           <el-input
             v-model="newFormInline.title"
@@ -183,7 +197,7 @@ const getMinHeight = () => {
         <el-form-item :label="t('menu.icon')" prop="icon">
           <icon-select v-model="newFormInline.meta.icon" />
         </el-form-item>
-        <div v-if="newFormInline.menu_type === 1">
+        <div v-if="newFormInline.menu_type === MenuChoices.MENU">
           <el-form-item :label="t('menu.transitionEnter')" prop="icon">
             <ReAnimateSelector v-model="newFormInline.meta.transition_enter" />
           </el-form-item>
@@ -222,7 +236,7 @@ const getMinHeight = () => {
           />
         </el-form-item>
       </div>
-      <div v-if="newFormInline.menu_type === 1">
+      <div v-if="newFormInline.menu_type === MenuChoices.MENU">
         <el-form-item :label="t('menu.componentPath')" prop="component">
           <template #label>
             <from-question
@@ -250,8 +264,8 @@ const getMinHeight = () => {
               v-for="(item, index) in ifEnableOptions"
               :key="index"
               :label="item.value"
-              >{{ item.label }}</el-radio-button
-            >
+              >{{ item.label }}
+            </el-radio-button>
           </el-radio-group>
         </el-form-item>
         <el-form-item :label="t('menu.showParentMenu')" prop="showParent">
@@ -260,12 +274,12 @@ const getMinHeight = () => {
               v-for="(item, index) in ifEnableOptions"
               :key="index"
               :label="item.value"
-              >{{ item.label }}</el-radio-button
-            >
+              >{{ item.label }}
+            </el-radio-button>
           </el-radio-group>
         </el-form-item>
       </div>
-      <div v-if="newFormInline.menu_type !== 2">
+      <div v-if="newFormInline.menu_type !== MenuChoices.PERMISSION">
         <el-divider />
         <el-form-item :label="t('menu.showLink')" prop="showLink">
           <template #label>
@@ -279,8 +293,8 @@ const getMinHeight = () => {
               v-for="(item, index) in ifEnableOptions"
               :key="index"
               :label="item.value"
-              >{{ item.label }}</el-radio-button
-            >
+              >{{ item.label }}
+            </el-radio-button>
           </el-radio-group>
         </el-form-item>
 
@@ -296,8 +310,8 @@ const getMinHeight = () => {
               v-for="(item, index) in ifEnableOptions"
               :key="index"
               :label="item.value"
-              >{{ item.label }}</el-radio-button
-            >
+              >{{ item.label }}
+            </el-radio-button>
           </el-radio-group>
         </el-form-item>
 
@@ -327,12 +341,12 @@ const getMinHeight = () => {
               v-for="(item, index) in ifEnableOptions"
               :key="index"
               :label="item.value"
-              >{{ item.label }}</el-radio-button
-            >
+              >{{ item.label }}
+            </el-radio-button>
           </el-radio-group>
         </el-form-item>
       </div>
-      <div v-if="newFormInline.menu_type === 2">
+      <div v-if="newFormInline.menu_type === MenuChoices.PERMISSION">
         <el-form-item :label="t('menu.permissionName')" prop="title">
           <el-input
             v-model="newFormInline.title"
@@ -356,9 +370,8 @@ const getMinHeight = () => {
         <el-form-item :label="t('menu.permissionPath')" prop="path">
           <el-select
             v-model="newFormInline.path"
-            style="width: 100%"
+            class="w-full"
             clearable
-            placeholder="Select"
             filterable
           >
             <el-option
@@ -369,11 +382,33 @@ const getMinHeight = () => {
             />
           </el-select>
         </el-form-item>
+        <el-form-item :label="t('menu.associationModel')" prop="model">
+          <template #label>
+            <from-question
+              :description="t('menu.exampleAssociationModel')"
+              :label="t('menu.associationModel')"
+            />
+          </template>
+          <el-select
+            v-model="newFormInline.model"
+            class="w-full"
+            clearable
+            filterable
+            multiple
+          >
+            <el-option
+              v-for="item in props.modelList"
+              :key="item.pk"
+              :disabled="item.disabled || item.name === '*'"
+              :label="`${item.label}(${item.name})`"
+              :value="item.pk"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item :label="t('menu.requestMethod')" prop="component">
           <el-select
             v-model="newFormInline.component"
-            class="filter-item"
-            style="width: 180px"
+            class="!w-[180px]"
             clearable
           >
             <el-option
@@ -397,8 +432,8 @@ const getMinHeight = () => {
               v-for="(item, index) in ifEnableOptions"
               :key="index"
               :label="item.value"
-              >{{ item.label }}</el-radio-button
-            >
+              >{{ item.label }}
+            </el-radio-button>
           </el-radio-group>
         </el-form-item>
       </div>
@@ -419,8 +454,8 @@ const getMinHeight = () => {
               :disabled="newFormInline.is_add || !newFormInline.pk"
               plain
               type="danger"
-              >{{ t("buttons.hsupdate") }}</el-button
-            >
+              >{{ t("buttons.hsupdate") }}
+            </el-button>
           </template>
         </el-popconfirm>
       </el-form-item>

@@ -2,37 +2,45 @@
 import { onBeforeUnmount, ref, shallowRef } from "vue";
 import "@wangeditor/editor/dist/css/style.css";
 import { Editor, Toolbar } from "@wangeditor/editor-for-vue";
-import { FormProps, InsertFnType, ListItem } from "./utils/types";
+import { FormProps, InsertFnType } from "./utils/types";
 import { formRules } from "./utils/rule";
 import ReCol from "@/components/ReCol";
 import { UploadFileApi } from "@/api/system/upload";
 import { message } from "@/utils/message";
 import { UploadFileResult } from "@/api/types";
 import { getKeyList } from "@pureadmin/utils";
-import { getUserListApi } from "@/api/system/user";
 import { useI18n } from "vue-i18n";
+import SearchUsers from "@/views/system/base/searchUsers.vue";
+import SearchDepts from "@/views/system/base/searchDepts.vue";
+import SearchRoles from "@/views/system/base/searchRoles.vue";
+import { NoticeChoices } from "@/views/system/constants";
+import { hasGlobalAuth } from "@/router/utils";
 
 const props = withDefaults(defineProps<FormProps>(), {
+  isAdd: () => true,
+  showColumns: () => [],
   formInline: () => ({
     pk: 0,
     title: "",
     publish: false,
     message: "",
-    level: "",
+    level: "primary",
     notice_type_display: "",
-    notice_type: 1,
+    notice_type: NoticeChoices.NOTICE,
     noticeChoices: [],
     levelChoices: [],
-    owners: []
+    notice_dept: [],
+    notice_role: [],
+    notice_user: []
   })
 });
 const ruleFormRef = ref();
 const { t } = useI18n();
-
 const newFormInline = ref(props.formInline);
 newFormInline.value.noticeChoices[0].disabled = true;
 const editorRef = shallowRef();
 const mode = "default";
+
 function getRef() {
   return ruleFormRef.value;
 }
@@ -61,6 +69,7 @@ const toolbarConfig: any = {
 };
 const editorConfig = {
   placeholder: t("notice.verifyContent"),
+  readOnly: !props.isAdd && props.showColumns.indexOf("message") === -1,
   MENU_CONF: {},
   hoverbarKeys: {
     attachment: {
@@ -135,33 +144,7 @@ onBeforeUnmount(() => {
   if (editor == null) return;
   editor.destroy();
 });
-
-const options = ref<ListItem[]>([]);
 const loading = ref(false);
-
-const remoteMethod = (query: string) => {
-  if (query && !Number(query)) {
-    message(t("notice.verifyUserIds"), { type: "warning" });
-    return;
-  }
-  if (query) {
-    loading.value = true;
-    options.value = [];
-    getUserListApi({ pk: query }).then(res => {
-      if (res.code === 1000 && res?.data.total === 1) {
-        options.value = [
-          {
-            label: `${res.data.results[0].pk}---${res.data.results[0].username}`,
-            value: res.data.results[0].pk
-          }
-        ];
-      }
-      loading.value = false;
-    });
-  } else {
-    options.value = [];
-  }
-};
 </script>
 
 <template>
@@ -174,13 +157,24 @@ const remoteMethod = (query: string) => {
     <el-card shadow="never">
       <template #header>
         <el-row :gutter="30">
+          <re-col>
+            <el-form-item :label="t('notice.title')" prop="title">
+              <el-input
+                v-model="newFormInline.title"
+                :disabled="
+                  !props.isAdd && props.showColumns.indexOf('title') === -1
+                "
+                :placeholder="t('notice.verifyTitle')"
+                clearable
+              />
+            </el-form-item>
+          </re-col>
           <re-col :value="8" :xs="24" :sm="24">
             <el-form-item :label="t('notice.type')" prop="level">
               <el-select
                 v-model="newFormInline.notice_type"
-                class="filter-item"
-                style="width: 180px"
-                :disabled="newFormInline.pk !== 0"
+                :disabled="!props.isAdd"
+                class="!w-[180px]"
                 clearable
               >
                 <el-option
@@ -197,8 +191,10 @@ const remoteMethod = (query: string) => {
             <el-form-item :label="t('notice.level')" prop="level">
               <el-select
                 v-model="newFormInline.level"
-                class="filter-item"
-                style="width: 180px"
+                :disabled="
+                  !props.isAdd && props.showColumns.indexOf('level') === -1
+                "
+                class="!w-[180px]"
                 clearable
               >
                 <el-option
@@ -207,7 +203,11 @@ const remoteMethod = (query: string) => {
                   :label="item.label"
                   :disabled="item.disabled"
                   :value="item.key"
-                />
+                >
+                  <template #default>
+                    <el-text :type="item.key">{{ item.label }}</el-text>
+                  </template>
+                </el-option>
               </el-select>
             </el-form-item>
           </re-col>
@@ -215,8 +215,10 @@ const remoteMethod = (query: string) => {
             <el-form-item :label="t('notice.publish')" prop="publish">
               <el-select
                 v-model="newFormInline.publish"
-                class="filter-item"
-                style="width: 180px"
+                :disabled="
+                  !props.isAdd && props.showColumns.indexOf('publish') === -1
+                "
+                class="!w-[180px]"
                 clearable
               >
                 <el-option :label="t('labels.publish')" :value="true" />
@@ -226,49 +228,51 @@ const remoteMethod = (query: string) => {
           </re-col>
           <re-col>
             <el-form-item
-              v-if="newFormInline.notice_type === 1"
-              :label="t('notice.userId')"
-              prop="owner"
+              v-if="
+                newFormInline.notice_type === NoticeChoices.USER &&
+                hasGlobalAuth('list:systemUser')
+              "
+              :label="t('user.userId')"
+              prop="notice_user"
             >
-              <el-select
-                v-model="newFormInline.owners"
-                multiple
-                style="width: 100%"
-                filterable
-                default-first-option
-                :reserve-keyword="false"
-                :placeholder="t('notice.verifyInputUserIds')"
-                remote-show-suffix
-                :remote-method="remoteMethod"
-                :loading="loading"
-                remote
-              >
-                <el-option
-                  v-for="item in options"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value"
-                >
-                  <span style="float: left">{{ item.label }}</span>
-                  <span
-                    style="
-                      float: right;
-                      font-size: 13px;
-                      color: var(--el-text-color-secondary);
-                    "
-                    >{{ item.value }}</span
-                  >
-                </el-option>
-              </el-select>
+              <search-users
+                v-model="newFormInline.notice_user"
+                :disabled="
+                  !props.isAdd &&
+                  props.showColumns.indexOf('notice_user') === -1
+                "
+              />
             </el-form-item>
-          </re-col>
-
-          <re-col>
-            <el-form-item :label="t('notice.title')" prop="title">
-              <el-input
-                v-model="newFormInline.title"
-                clearable
-                :placeholder="t('notice.verifyTitle')"
+            <el-form-item
+              v-if="
+                newFormInline.notice_type === NoticeChoices.DEPT &&
+                hasGlobalAuth('list:systemDept')
+              "
+              :label="t('dept.dept')"
+              prop="notice_dept"
+            >
+              <search-depts
+                v-model="newFormInline.notice_dept"
+                :disabled="
+                  !props.isAdd &&
+                  props.showColumns.indexOf('notice_dept') === -1
+                "
+              />
+            </el-form-item>
+            <el-form-item
+              v-if="
+                newFormInline.notice_type === NoticeChoices.ROLE &&
+                hasGlobalAuth('list:systemRole')
+              "
+              :label="t('role.role')"
+              prop="notice_role"
+            >
+              <search-roles
+                v-model="newFormInline.notice_role"
+                :disabled="
+                  !props.isAdd &&
+                  props.showColumns.indexOf('notice_role') === -1
+                "
               />
             </el-form-item>
           </re-col>

@@ -62,6 +62,7 @@ export function setToken(data: TokenInfo) {
       : {}
   );
 }
+
 export function setUserInfo(data: UserInfo) {
   function setUserKey(username: string, roles: Array<number>) {
     useUserStoreHook().SET_USERNAME(username);

@@ -3,57 +3,71 @@ import { ref } from "vue";
 import { useUser } from "./utils/hook";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-
+import tree from "./tree.vue";
 import Password from "@iconify-icons/ri/lock-password-line";
 import Avatar from "@iconify-icons/ri/user-3-fill";
 import More from "@iconify-icons/ep/more-filled";
 import Delete from "@iconify-icons/ep/delete";
 import Role from "@iconify-icons/ri/admin-line";
 import EditPen from "@iconify-icons/ep/edit-pen";
-import Search from "@iconify-icons/ep/search";
+
 import Refresh from "@iconify-icons/ep/refresh";
 import AddFill from "@iconify-icons/ri/add-circle-line";
 import Download from "@iconify-icons/ri/download-line";
 import Message from "@iconify-icons/ri/message-fill";
-import { hasAuth } from "@/router/utils";
+import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { getIndexType } from "@/utils";
 
 defineOptions({
-  name: "User"
+  name: "SystemUser"
 });
 
 const formRef = ref();
 const tableRef = ref();
+const treeRef = ref();
+
 const {
   t,
   form,
   loading,
   columns,
   dataList,
+  treeData,
   pagination,
   buttonClass,
   sortOptions,
+  treeLoading,
+  modeChoicesDict,
   manySelectCount,
   onSearch,
   exportExcel,
   resetForm,
   openDialog,
   goNotice,
+  handleRole,
+  handleReset,
+  onTreeSelect,
+  handleUpload,
   handleDelete,
   handleManyDelete,
   onSelectionCancel,
   handleSizeChange,
-  handleUpload,
-  handleReset,
-  handleRole,
   handleCurrentChange,
   handleSelectionChange
-} = useUser(tableRef);
+} = useUser(tableRef, treeRef);
 </script>
 
 <template>
-  <div v-if="hasAuth('list:systemUser')" class="main">
-    <div class="float-left w-[99%]">
+  <div v-if="hasAuth('list:systemUser')" class="flex justify-between">
+    <tree
+      ref="treeRef"
+      :pk="form.dept?.toString()"
+      :treeData="treeData"
+      :treeLoading="treeLoading"
+      class="min-w-[250px] mr-2"
+      @tree-select="onTreeSelect"
+    />
+    <div class="w-[calc(100%-250px)]">
       <el-form
         ref="formRef"
         :inline="true"
@@ -99,10 +113,26 @@ const {
             <el-option :label="t('labels.inactive')" value="0" />
           </el-select>
         </el-form-item>
+        <el-form-item :label="t('permission.mode')" prop="mode">
+          <el-select
+            v-model="form.mode_type"
+            class="!w-[180px]"
+            clearable
+            @change="onSearch"
+          >
+            <el-option
+              v-for="item in modeChoicesDict"
+              :key="item.key"
+              :disabled="item.disabled"
+              :label="item.label"
+              :value="item.key"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item :label="t('labels.sort')">
           <el-select
             v-model="form.ordering"
-            style="width: 180px"
+            class="!w-[180px]"
             clearable
             @change="onSearch(true)"
           >
@@ -118,7 +148,7 @@ const {
         <el-form-item>
           <el-button
             type="primary"
-            :icon="useRenderIcon(Search)"
+            :icon="useRenderIcon('search')"
             :loading="loading"
             @click="onSearch(true)"
           >
@@ -162,7 +192,7 @@ const {
               </el-popconfirm>
             </div>
             <el-button
-              v-if="hasAuth('send:systemNotify') && manySelectCount > 0"
+              v-if="hasGlobalAuth('create:systemNotice') && manySelectCount > 0"
               type="primary"
               :icon="useRenderIcon(Message)"
               @click="goNotice()"
@@ -225,6 +255,17 @@ const {
                 </el-tag>
               </el-space>
             </template>
+            <template #rules="{ row }">
+              <el-space wrap>
+                <el-tag
+                  v-for="(role, index) in row.rules_info"
+                  :key="role.pk"
+                  :type="getIndexType(index + 1)"
+                >
+                  {{ role.name }}
+                </el-tag>
+              </el-space>
+            </template>
             <template #operation="{ row }">
               <el-button
                 v-if="hasAuth('update:systemUser')"
@@ -246,7 +287,7 @@ const {
                   <el-button
                     class="reset-margin"
                     link
-                    type="primary"
+                    type="danger"
                     :size="size"
                     :icon="useRenderIcon(Delete)"
                   >
@@ -289,7 +330,7 @@ const {
                         {{ t("user.resetPassword") }}
                       </el-button>
                     </el-dropdown-item>
-                    <el-dropdown-item v-if="hasAuth('empower:systemRole')">
+                    <el-dropdown-item v-if="hasAuth('empower:systemUserRole')">
                       <el-button
                         :class="buttonClass"
                         link

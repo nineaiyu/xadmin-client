@@ -15,14 +15,18 @@ import { handleTree } from "@/utils/tree";
 import { cloneDeep } from "@pureadmin/utils";
 import { getMenuFromPk, getMenuOrderPk } from "@/utils";
 import { useI18n } from "vue-i18n";
+import { FieldChoices, MenuChoices } from "@/views/system/constants";
+import { hasGlobalAuth } from "@/router/utils";
+import { getModelLabelFieldListApi } from "@/api/system/field";
 
 const defaultData: FormItemProps = {
-  menu_type: 0,
+  menu_type: MenuChoices.DIRECTORY,
   parent: "",
   name: "",
   path: "",
   rank: 0,
   component: "",
+  model: [],
   is_active: true,
   meta: {
     title: "",
@@ -42,31 +46,14 @@ const defaultData: FormItemProps = {
 
 export function useMenu() {
   const { t } = useI18n();
-  const sortOptions = [
-    {
-      label: `${t("sorts.createdDate")} ${t("labels.descending")}`,
-      key: "-created_time"
-    },
-    {
-      label: `${t("sorts.createdDate")} ${t("labels.ascending")}`,
-      key: "created_time"
-    }
-  ];
-
-  const form = reactive({
-    username: "",
-    mobile: "",
-    is_active: "",
-    ordering: sortOptions[0].key,
-    page: 1,
-    size: 10
-  });
   const formRef = ref();
   const treeData = ref([]);
   const dataList = ref([]);
   const parentIds = ref([]);
   const choicesDict = ref([]);
+  const menuChoices = ref([]);
   const menuUrlList = ref([]);
+  const modelList = ref([]);
   const menuData = reactive<FormItemProps>(cloneDeep(defaultData));
   const loading = ref(true);
 
@@ -82,11 +69,12 @@ export function useMenu() {
 
   const getMenuData = () => {
     loading.value = true;
-    getMenuListApi({ page: 1, size: 500 }).then(res => {
+    getMenuListApi({ page: 1, size: 1000 }).then(res => {
       if (res.code === 1000) {
         treeData.value = handleTree(res.data.results);
         choicesDict.value = res.choices_dict;
         menuUrlList.value = res.api_url_list;
+        menuChoices.value = res.menu_choices;
       }
       loading.value = false;
     });
@@ -102,6 +90,7 @@ export function useMenu() {
       }
     });
   }
+
   function handleManyDelete(val) {
     const manyPks = val!.getCheckedKeys(false);
     if (manyPks.length === 0) {
@@ -119,6 +108,7 @@ export function useMenu() {
       }
     });
   }
+
   const resetForm = formEl => {
     if (!formEl) return;
     formEl.resetFields();
@@ -143,6 +133,7 @@ export function useMenu() {
       }
     });
   };
+
   function addNewMenu(treeRef, data: FormItemProps) {
     const p_menus = getMenuFromPk(treeRef?.data, data.pk);
     const row = cloneDeep(defaultData);
@@ -153,14 +144,17 @@ export function useMenu() {
     } else {
       row.parent = "";
     }
-    openDialog(0, row);
+    openDialog(MenuChoices.DIRECTORY, row);
   }
+
   function openDialog(menu_type: number, row?: FormItemProps) {
     addDialog({
       title: t("buttons.hsadd"),
       props: {
         treeData: treeData,
         choicesDict: choicesDict,
+        menuChoices: menuChoices,
+        modelList: modelList,
         menuUrlList: menuUrlList,
         formInline: {
           pk: row?.pk ?? "",
@@ -172,6 +166,7 @@ export function useMenu() {
           path: row?.path ?? "",
           rank: row?.rank ?? 0,
           component: row?.component ?? "",
+          model: row?.model ?? [],
           is_active: row?.is_active ?? true,
           meta: {
             title: row?.meta.title ?? "",
@@ -197,11 +192,13 @@ export function useMenu() {
       beforeSure: (done, { options }) => {
         const FormRef = formRef.value.getRef();
         const curData = options.props.formInline as FormItemProps;
+
         async function chores(detail) {
           message(detail, { type: "success" });
           done(); // 关闭弹框
           getMenuData(); // 刷新表格数据
         }
+
         FormRef.validate(async valid => {
           if (valid) {
             curData.meta.title = curData.title;
@@ -219,6 +216,7 @@ export function useMenu() {
       }
     });
   }
+
   const handleDrag = (treeRef, node, node2, position) => {
     const u_menu = node.data;
     if (position === "inner") {
@@ -246,28 +244,40 @@ export function useMenu() {
   };
   onMounted(() => {
     getMenuData();
+    if (hasGlobalAuth("list:systemModelField")) {
+      getModelLabelFieldListApi({
+        page: 1,
+        size: 1000,
+        parent: 0,
+        field_type: FieldChoices.ROLE
+      }).then(res => {
+        if (res.code === 1000) {
+          modelList.value = res.data.results;
+        }
+      });
+    }
   });
 
   return {
     t,
-    form,
     loading,
     parentIds,
     dataList,
     treeData,
     menuData,
     choicesDict,
-    handleManyDelete,
+    menuChoices,
     menuUrlList,
+    modelList,
     addNewMenu,
     buttonClass,
-    sortOptions,
     defaultData,
     getMenuData,
     handleDrag,
     openDialog,
     resetForm,
     handleConfirm,
-    handleDelete
+    handleDelete,
+    handleManyDelete
   };
 }
