@@ -4,17 +4,17 @@ import { emitter } from "@/utils/mitt";
 import { RouteConfigs } from "../../types";
 import { useTags } from "../../hooks/useTag";
 import { routerArrays } from "@/layout/types";
+import { onClickOutside, useFullscreen } from "@vueuse/core";
 import { getTopMenu, handleAliveRoute } from "@/router/utils";
 import { useSettingStoreHook } from "@/store/modules/settings";
-import { onClickOutside, useFullscreen } from "@vueuse/core";
+import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
+import { nextTick, onBeforeUnmount, ref, toRaw, unref, watch } from "vue";
 import {
   delay,
   isAllEmpty,
   isEqual,
   useResizeObserver
 } from "@pureadmin/utils";
-import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
-import { nextTick, onBeforeUnmount, ref, toRaw, unref, watch } from "vue";
 
 import ExitFullscreen from "@iconify-icons/ri/fullscreen-exit-fill";
 import Fullscreen from "@iconify-icons/ri/fullscreen-fill";
@@ -38,6 +38,7 @@ const {
   pureSetting,
   activeIndex,
   getTabStyle,
+  isScrolling,
   iconIsActive,
   linkIsActive,
   currentSelect,
@@ -193,7 +194,6 @@ function dynamicRouteTag(value: string): void {
       });
     }
   }
-
   concatPath(router.options.routes as any, value);
 }
 
@@ -588,7 +588,7 @@ onBeforeUnmount(() => {
           >
             <IconifyIconOffline :icon="CloseBold" />
           </span>
-          <div
+          <span
             v-if="showModel !== 'card'"
             :ref="'schedule' + index"
             :class="[scheduleIsActive(item)]"
