@@ -11,6 +11,7 @@ import {
   ref,
   unref
 } from "vue";
+import { useEventListener } from "@vueuse/core";
 import { longpress } from "@/directives/longpress";
 import { directive as tippy, useTippy } from "vue-tippy";
 import {
@@ -73,6 +74,8 @@ const props = {
   type: { type: String, required: false, default: "image/png" },
   alt: { type: String },
   circled: { type: Boolean, default: false },
+  /** 是否可以通过点击裁剪区域关闭右键弹出的功能菜单，默认 `true` */
+  isClose: { type: Boolean, default: true },
   realTimePreview: { type: Boolean, default: true },
   height: { type: [String, Number], default: "360px" },
   crossorigin: {
@@ -94,10 +97,11 @@ export default defineComponent({
     const tippyElRef = ref<ElRef<HTMLImageElement>>();
     const imgElRef = ref<ElRef<HTMLImageElement>>();
     const cropper = ref<Nullable<Cropper>>();
-    const isReady = ref(false);
-    const imgBase64 = ref();
     const inCircled = ref(props.circled);
+    const isInClose = ref(props.isClose);
+    const isReady = ref(false);
     const inSrc = ref(props.src);
+    const imgBase64 = ref();
     let scaleX = 1;
     let scaleY = 1;
     const onImageError = () => {
@@ -420,7 +424,7 @@ export default defineComponent({
     function onContextmenu(event) {
       event.preventDefault();
 
-      const { show, setProps } = useTippy(tippyElRef, {
+      const { show, setProps, destroy, state } = useTippy(tippyElRef, {
         content: menuContent,
         arrow: false,
         theme: "light",
@@ -442,7 +446,10 @@ export default defineComponent({
           right: event.clientX
         })
       });
-
+      if (isInClose.value) {
+        if (!state.value.isShown && !state.value.isVisible) return;
+        useEventListener(tippyElRef, "click", destroy);
+      }
       show();
     }
 
