@@ -12,9 +12,12 @@ const { t } = useI18n();
 
 const iconClass = computed(() => {
   return [
+    "w-[22px]",
+    "h-[22px]",
+    "flex",
+    "justify-center",
+    "items-center",
     "outline-none",
-    "width-[20px]",
-    "height-[20px]",
     "rounded-[4px]",
     "cursor-pointer",
     "transition-colors",
@@ -60,10 +63,10 @@ onBeforeUnmount(() => {
           :class="iconClass"
         >
           <IconifyIconOffline
-            :icon="Close"
             class="dark:text-white"
-            height="20px"
-            width="20px"
+            :icon="Close"
+            height="18px"
+            width="18px"
             @click="show = !show"
           />
         </span>
