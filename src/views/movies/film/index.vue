@@ -9,6 +9,7 @@ import EditPen from "@iconify-icons/ep/edit-pen";
 import Search from "@iconify-icons/ep/search";
 import Refresh from "@iconify-icons/ep/refresh";
 import AddFill from "@iconify-icons/ri/add-circle-line";
+import AddFill1 from "@iconify-icons/ri/add-box-line";
 import Eye from "@iconify-icons/ri/eye-line";
 import { hasAuth } from "@/router/utils";
 import { getIndexType } from "@/utils";
@@ -48,6 +49,7 @@ const {
   handleAddEpisode,
   handleCurrentChange,
   openImportFileDialog,
+  handleBatchAddEpisode,
   handleSelectionChange
 } = useMoviesFilm(tableRef);
 </script>
@@ -379,6 +381,18 @@ const {
                       @click="handleAddEpisode(row, 'true')"
                     >
                       {{ t("MoviesFilm.addEpisode") }}
+                    </el-button>
+                  </el-dropdown-item>
+                  <el-dropdown-item v-if="hasAuth('batch:MoviesFileToFilm')">
+                    <el-button
+                      :class="buttonClass"
+                      :icon="useRenderIcon(AddFill1)"
+                      :size="size"
+                      link
+                      type="primary"
+                      @click="handleBatchAddEpisode(row)"
+                    >
+                      {{ t("MoviesFilm.batchAddEpisode") }}
                     </el-button>
                   </el-dropdown-item>
                   <el-dropdown-item>

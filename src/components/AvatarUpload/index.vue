@@ -4,7 +4,6 @@ import { formatBytes } from "@pureadmin/utils";
 import ReCropper from "@/components/ReCropper";
 import avatar from "./avatar.png";
 import { useI18n } from "vue-i18n";
-import { compressionFileAuto, fileToDataURL } from "@/views/movies/util";
 
 const props = defineProps({
   imgSrc: String,

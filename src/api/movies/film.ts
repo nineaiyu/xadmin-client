@@ -45,3 +45,9 @@ export const importFilmInfoByDoubanApi = (data?: object) => {
     data
   });
 };
+
+export const batchAddFileToFilmApi = (pk?: string, data?: object) => {
+  return http.request<Result>("post", `/api/movies/film/${pk}/batch/files`, {
+    data
+  });
+};

@@ -11,6 +11,7 @@ import { hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { usePublicHooks } from "@/views/system/hooks";
 import {
+  batchAddFileToFilmApi,
   createFilmApi,
   deleteFilmApi,
   getFilmListApi,
@@ -22,6 +23,7 @@ import {
 import croppingUpload from "@/components/AvatarUpload/index.vue";
 import { useRouter } from "vue-router";
 import createForm from "../create/index.vue";
+import SearchFiles from "../search/index.vue";
 
 export function useMoviesFilm(tableRef: Ref) {
   const { t } = useI18n();
@@ -81,6 +83,7 @@ export function useMoviesFilm(tableRef: Ref) {
   const avatarInfo = ref();
   const manySelectCount = ref(0);
   const dataList = ref([]);
+  const selectValue = ref([]);
   const loading = ref(true);
   const switchLoadMap = ref({});
   const { switchStyle } = usePublicHooks();
@@ -445,6 +448,35 @@ export function useMoviesFilm(tableRef: Ref) {
     });
   }
 
+  function handleBatchAddEpisode(row) {
+    addDialog({
+      title: t("MoviesFilm.batchAddEpisode"),
+      width: "40%",
+      draggable: true,
+      closeOnClickModal: false,
+      contentRenderer: () =>
+        h(SearchFiles, {
+          selectValue: selectValue.value
+        }),
+      beforeSure: done => {
+        batchAddFileToFilmApi(row.pk, { file_ids: selectValue.value }).then(
+          res => {
+            if (res.code === 1000) {
+              message(t("results.success"), { type: "success" });
+              onSearch();
+              done();
+            } else {
+              message(`${t("results.failed")}，${res.detail}`, {
+                type: "error"
+              });
+              done();
+            }
+          }
+        );
+      }
+    });
+  }
+
   function handleAddSwipe(row) {
     router.push({
       name: "MoviesSwipe",
@@ -545,6 +577,7 @@ export function useMoviesFilm(tableRef: Ref) {
     handleSizeChange,
     handleCurrentChange,
     openImportFileDialog,
+    handleBatchAddEpisode,
     handleSelectionChange
   };
 }
