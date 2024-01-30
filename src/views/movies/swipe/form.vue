@@ -59,6 +59,7 @@ defineExpose({ getRef });
           <el-input
             v-model="newFormInline.rank"
             clearable
+            type="number"
             :placeholder="t('MoviesSwipe.rank')"
           />
         </el-form-item>

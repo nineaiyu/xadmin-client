@@ -92,6 +92,16 @@ defineExpose({ getRef });
           />
         </el-form-item>
       </re-col>
+      <re-col :value="24" :xs="24" :sm="24">
+        <el-form-item :label="t('MoviesEpisode.rank')" prop="rank">
+          <el-input
+            v-model="newFormInline.rank"
+            type="number"
+            clearable
+            :placeholder="t('MoviesEpisode.rank')"
+          />
+        </el-form-item>
+      </re-col>
       <re-col>
         <el-form-item :label="t('MoviesEpisode.uploadVideo')" prop="file_id">
           <div class="w-[80%]">

@@ -11,6 +11,13 @@ export const formRules = reactive(<FormRules>{
       trigger: "blur"
     }
   ],
+  rank: [
+    {
+      required: true,
+      message: transformI18n($t("MoviesEpisode.rank")),
+      trigger: "blur"
+    }
+  ],
   file_id: [
     {
       required: true,
