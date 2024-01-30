@@ -48,6 +48,7 @@ const {
     ref="selectRef"
     v-model="selectValue"
     clearable
+    class="w-full"
     multiple
     collapse-tags
     :max-collapse-tags="10"
