@@ -19,8 +19,7 @@ import {
   ElMessageBox,
   ElProgress
 } from "element-plus";
-import type { PaginationProps, TableColumns } from "@pureadmin/table";
-import { utils, writeFile } from "xlsx";
+import type { PaginationProps } from "@pureadmin/table";
 import {
   computed,
   h,
@@ -481,28 +480,7 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
     }
     loading.value = true;
     const manySelectData = tableRef.value.getTableRef().getSelectionRows();
-    const res: string[][] = manySelectData.map((item: FormItemProps) => {
-      const arr = [];
-      columns.value.forEach((column: TableColumns | any) => {
-        if (column.label) {
-          arr.push(item[column.prop]);
-        }
-      });
-      return arr;
-    });
-
-    const titleList: string[] = [];
-    columns.value.forEach((column: TableColumns) => {
-      if (column.label) {
-        titleList.push(column.label);
-      }
-    });
-    res.unshift(titleList);
-    const workSheet = utils.aoa_to_sheet(res);
-    const workBook = utils.book_new();
-    utils.book_append_sheet(workBook, workSheet, t("user.excelSheet"));
-    writeFile(workBook, `${t("user.excelName")}.xlsx`);
-    loading.value = false;
+    console.log(manySelectData);
   };
 
   /** 上传头像 */

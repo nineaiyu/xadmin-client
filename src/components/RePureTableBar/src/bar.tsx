@@ -45,7 +45,6 @@ export default defineComponent({
   props,
   emits: ["refresh"],
   setup(props, { emit, slots, attrs }) {
-    const buttonRef = ref();
     const size = ref("default");
     const isExpandAll = ref(true);
     const loading = ref(false);
@@ -217,11 +216,22 @@ export default defineComponent({
       return dynamicColumns.value.filter(item => item.label === label)[0].fixed;
     };
 
+    const rendTippyProps = (content: string) => {
+      // https://vue-tippy.netlify.app/props
+      return {
+        content,
+        offset: [0, 18],
+        duration: [300, 0],
+        followCursor: true,
+        hideOnClick: "toggle"
+      };
+    };
+
     const reference = {
       reference: () => (
         <SettingIcon
           class={["w-[16px]", iconClass.value]}
-          onMouseover={e => (buttonRef.value = e.currentTarget)}
+          v-tippy={rendTippyProps(t("tableBar.columnSettings"))}
         />
       )
     };
@@ -241,50 +251,38 @@ export default defineComponent({
               ) : null}
               {props.tableRef?.size ? (
                 <>
-                  <el-tooltip
-                    effect="dark"
-                    content={
+                  <ExpandIcon
+                    class={["w-[16px]", iconClass.value]}
+                    style={{
+                      transform: isExpandAll.value ? "none" : "rotate(-90deg)"
+                    }}
+                    v-tippy={rendTippyProps(
                       isExpandAll.value
                         ? t("tableBar.fold")
                         : t("tableBar.unfold")
-                    }
-                    placement="top"
-                  >
-                    <ExpandIcon
-                      class={["w-[16px]", iconClass.value]}
-                      style={{
-                        transform: isExpandAll.value ? "none" : "rotate(-90deg)"
-                      }}
-                      onClick={() => onExpand()}
-                    />
-                  </el-tooltip>
+                    )}
+                    onClick={() => onExpand()}
+                  />
                   <el-divider direction="vertical" />
                 </>
               ) : null}
-              <el-tooltip
-                effect="dark"
-                content={t("tableBar.refresh")}
-                placement="top"
-              >
-                <RefreshIcon
-                  class={[
-                    "w-[16px]",
-                    iconClass.value,
-                    loading.value ? "animate-spin" : ""
-                  ]}
-                  onClick={() => onReFresh()}
-                />
-              </el-tooltip>
+              <RefreshIcon
+                class={[
+                  "w-[16px]",
+                  iconClass.value,
+                  loading.value ? "animate-spin" : ""
+                ]}
+                v-tippy={rendTippyProps(t("tableBar.refresh"))}
+                onClick={() => onReFresh()}
+              />
               <el-divider direction="vertical" />
-              <el-tooltip
-                effect="dark"
-                content={t("tableBar.density")}
-                placement="top"
+              <el-dropdown
+                v-slots={dropdown}
+                trigger="click"
+                v-tippy={rendTippyProps(t("tableBar.density"))}
               >
-                <el-dropdown v-slots={dropdown} trigger="click">
-                  <CollapseIcon class={["w-[16px]", iconClass.value]} />
-                </el-dropdown>
-              </el-tooltip>
+                <CollapseIcon class={["w-[16px]", iconClass.value]} />
+              </el-dropdown>
               <el-divider direction="vertical" />
 
               <el-popover
@@ -355,25 +353,6 @@ export default defineComponent({
                 </div>
               </el-popover>
             </div>
-
-            <el-tooltip
-              popper-options={{
-                modifiers: [
-                  {
-                    name: "computeStyles",
-                    options: {
-                      adaptive: false,
-                      enabled: false
-                    }
-                  }
-                ]
-              }}
-              placement="top"
-              virtual-ref={buttonRef.value}
-              virtual-triggering
-              trigger="hover"
-              content={t("tableBar.columnSettings")}
-            />
           </div>
           {slots.default({
             size: size.value,

@@ -200,7 +200,7 @@ const {
               {{ t("user.batchSendNotice") }}
             </el-button>
             <el-button
-              v-if="hasAuth('list:systemUser') && manySelectCount > 0"
+              v-if="false"
               v-optimize="{
                 event: 'click',
                 fn: exportExcel,
