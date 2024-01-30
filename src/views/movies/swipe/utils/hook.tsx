@@ -316,7 +316,7 @@ export function useMoviesSwipe(tableRef: Ref) {
         formInline: {
           pk: row?.pk ?? "",
           name: row?.name ?? "",
-          rank: row?.rank ?? 999,
+          rank: row?.rank ?? 1,
           route: row?.route ?? "",
           description: row?.description ?? "",
           enable: row?.enable ?? false
