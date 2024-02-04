@@ -8,7 +8,7 @@ import boxen, { type Options as boxenOptions } from "boxen";
 dayjs.extend(duration);
 
 const welcomeMessage = gradientString("cyan", "magenta").multiline(
-  `Hello! 欢迎使用 xadmin\n该项目是基于pure-admin二次开发\n二次开发贴心的保姆级文档\nhttps://yiming_chang.gitee.io/pure-admin-doc\nhttps://pure-admin-utils.netlify.app`
+  `Hello! 欢迎使用 xadmin`
 );
 
 const boxenOprions: boxenOptions = {
