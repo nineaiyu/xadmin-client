@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { computed, onMounted, onUnmounted, reactive, ref } from "vue";
 import { DynamicScroller, DynamicScrollerItem } from "vue-virtual-scroller";
 import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
@@ -78,7 +78,7 @@ const filteredItems = computed(() => {
 
 <template>
   <el-row :gutter="24">
-    <el-col :xs="24" :sm="24" :md="13" :lg="13" :xl="13">
+    <el-col :lg="13" :md="13" :sm="24" :xl="13" :xs="24">
       <el-card class="mb-4 box-card" shadow="never">
         <template #header>
           <div class="card-header">
@@ -90,19 +90,19 @@ const filteredItems = computed(() => {
             ref="scroller"
             :items="filteredItems"
             :min-item-size="20"
-            key-field="time"
             class="scroller"
+            key-field="time"
             @resize="scrollToBottom"
           >
             <template #default="{ item, index, active }">
               <DynamicScrollerItem
-                :item="item"
                 :active="active"
-                :size-dependencies="[item.text]"
-                :data-index="index"
-                :data-active="active"
-                :title="`${index} ${item.username}  ${item.uid}`"
                 :class="[userinfo.uid === item.uid ? 'message-me' : 'message']"
+                :data-active="active"
+                :data-index="index"
+                :item="item"
+                :size-dependencies="[item.text]"
+                :title="`${index} ${item.username}  ${item.uid}`"
               >
                 <div class="flex items-center">
                   <el-text type="info">{{ item.username }}：</el-text>

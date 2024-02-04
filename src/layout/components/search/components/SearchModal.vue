@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { match } from "pinyin-pro";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
@@ -148,30 +148,30 @@ onKeyStroke("ArrowDown", handleDown);
 <template>
   <el-dialog
     v-model="show"
-    top="5vh"
-    class="pure-search-dialog"
-    :show-close="false"
-    :width="device === 'mobile' ? '80vw' : '40vw'"
     :before-close="handleClose"
+    :show-close="false"
     :style="{
       borderRadius: '6px'
     }"
+    :width="device === 'mobile' ? '80vw' : '40vw'"
     append-to-body
-    @opened="inputRef.focus()"
+    class="pure-search-dialog"
+    top="5vh"
     @closed="inputRef.blur()"
+    @opened="inputRef.focus()"
   >
     <el-input
       ref="inputRef"
       v-model="keyword"
-      size="large"
-      clearable
       :placeholder="t('layout.searchPlaceholder')"
+      clearable
+      size="large"
       @input="handleSearch"
     >
       <template #prefix>
         <IconifyIconOffline
-          icon="search"
           class="text-primary w-[24px] h-[24px]"
+          icon="search"
         />
       </template>
     </el-input>

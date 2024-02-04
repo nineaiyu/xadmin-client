@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { computed, ref } from "vue";
 import { useGlobal } from "@pureadmin/utils";
 import { useNav } from "@/layout/hooks/useNav";
@@ -44,14 +44,14 @@ const toggleClick = () => {
 <template>
   <div class="collapse-container">
     <el-tooltip
-      placement="right"
-      :visible="visible"
-      :effect="tooltipEffect"
       :content="props.isActive ? t('layout.fold') : t('layout.unfold')"
+      :effect="tooltipEffect"
+      :visible="visible"
+      placement="right"
     >
       <IconifyIconOffline
-        :icon="MenuFold"
         :class="[iconClass, themeColor === 'light' ? '' : 'text-primary']"
+        :icon="MenuFold"
         :style="{ transform: props.isActive ? 'none' : 'rotateY(180deg)' }"
         @click="toggleClick"
         @mouseenter="visible = true"

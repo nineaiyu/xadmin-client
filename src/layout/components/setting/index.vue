@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import {
   computed,
   nextTick,
@@ -281,8 +281,8 @@ onUnmounted(() => removeMatchMedia);
       </p>
       <Segmented
         :modelValue="overallStyle === 'system' ? 2 : dataTheme ? 1 : 0"
-        class="select-none"
         :options="themeOptions"
+        class="select-none"
         @change="
           theme => {
             theme.index === 1 && theme.index !== 2
@@ -364,9 +364,9 @@ onUnmounted(() => removeMatchMedia);
         {{ t("layout.labelStyle") }}
       </p>
       <Segmented
-        class="select-none"
         :modelValue="markValue === 'smart' ? 0 : 1"
         :options="markOptions"
+        class="select-none"
         @change="onChange"
       />
 

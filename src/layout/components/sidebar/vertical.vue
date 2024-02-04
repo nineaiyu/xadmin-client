@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import Logo from "./logo.vue";
 import { useRoute } from "vue-router";
 import { emitter } from "@/utils/mitt";
@@ -91,25 +91,25 @@ onBeforeUnmount(() => {
   >
     <Logo v-if="showLogo" :collapse="isCollapse" />
     <el-scrollbar
-      wrap-class="scrollbar-wrapper"
       :class="[device === 'mobile' ? 'mobile' : 'pc']"
+      wrap-class="scrollbar-wrapper"
     >
       <el-menu
-        router
-        unique-opened
-        mode="vertical"
-        :default-active="defaultActive"
-        class="outer-most select-none"
         :collapse="isCollapse"
         :collapse-transition="false"
+        :default-active="defaultActive"
         :popper-effect="tooltipEffect"
+        class="outer-most select-none"
+        mode="vertical"
         popper-class="pure-scrollbar"
+        router
+        unique-opened
       >
         <sidebar-item
           v-for="routes in menuData"
           :key="routes.path"
-          :item="routes"
           :base-path="routes.path"
+          :item="routes"
           class="outer-most select-none"
         />
       </el-menu>

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { ref } from "vue";
 import { formRules } from "./utils/rule";
 import { FormProps } from "./utils/types";
@@ -52,8 +52,8 @@ defineExpose({ getRef });
       <el-input
         v-model="newFormInline.name"
         :disabled="!props.isAdd && props.showColumns.indexOf('name') === -1"
-        clearable
         :placeholder="t('permission.name')"
+        clearable
       />
     </el-form-item>
 
@@ -84,8 +84,8 @@ defineExpose({ getRef });
         <el-option
           v-for="item in props.choicesDict"
           :key="item.key"
-          :label="item.label"
           :disabled="item.disabled"
+          :label="item.label"
           :value="item.key"
         />
       </el-select>

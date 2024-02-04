@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { ref } from "vue";
 import ReCol from "@/components/ReCol";
 import { formRules } from "./utils/rule";
@@ -42,49 +42,49 @@ const handleUpdate = row => {
 <template>
   <el-form
     ref="ruleFormRef"
+    :disabled="!hasAuth('update:UserInfo')"
     :model="newFormInline"
     :rules="formRules"
     label-width="82px"
-    :disabled="!hasAuth('update:UserInfo')"
   >
     <el-row :gutter="30">
-      <re-col :value="12" :xs="24" :sm="24">
+      <re-col :sm="24" :value="12" :xs="24">
         <el-form-item :label="t('user.username')" prop="username">
           <el-input
             v-model="newFormInline.username"
-            clearable
             :placeholder="t('user.verifyUsername')"
+            clearable
           />
         </el-form-item>
       </re-col>
-      <re-col :value="12" :xs="24" :sm="24">
+      <re-col :sm="24" :value="12" :xs="24">
         <el-form-item :label="t('user.nickname')" prop="nickname">
           <el-input
             v-model="newFormInline.nickname"
-            clearable
             :placeholder="t('user.verifyNickname')"
+            clearable
           />
         </el-form-item>
       </re-col>
-      <re-col :value="12" :xs="24" :sm="24">
+      <re-col :sm="24" :value="12" :xs="24">
         <el-form-item :label="t('user.mobile')" prop="mobile">
           <el-input
             v-model="newFormInline.mobile"
-            clearable
             :placeholder="t('user.verifyMobile')"
+            clearable
           />
         </el-form-item>
       </re-col>
-      <re-col :value="12" :xs="24" :sm="24">
+      <re-col :sm="24" :value="12" :xs="24">
         <el-form-item :label="t('user.email')" prop="email">
           <el-input
             v-model="newFormInline.email"
-            clearable
             :placeholder="t('user.verifyEmail')"
+            clearable
           />
         </el-form-item>
       </re-col>
-      <re-col :value="12" :xs="24" :sm="24">
+      <re-col :sm="24" :value="12" :xs="24">
         <el-form-item :label="t('user.gender')" prop="gender">
           <el-select
             v-model="newFormInline.gender"

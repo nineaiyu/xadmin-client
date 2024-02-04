@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { onBeforeUnmount, ref, shallowRef } from "vue";
 import "@wangeditor/editor/dist/css/style.css";
 import { Editor, Toolbar } from "@wangeditor/editor-for-vue";
@@ -164,12 +164,12 @@ const loading = ref(false);
                 :disabled="
                   !props.isAdd && props.showColumns.indexOf('title') === -1
                 "
-                clearable
                 :placeholder="t('notice.verifyTitle')"
+                clearable
               />
             </el-form-item>
           </re-col>
-          <re-col :value="8" :xs="24" :sm="24">
+          <re-col :sm="24" :value="8" :xs="24">
             <el-form-item :label="t('notice.type')" prop="level">
               <el-select
                 v-model="newFormInline.notice_type"
@@ -180,14 +180,14 @@ const loading = ref(false);
                 <el-option
                   v-for="item in newFormInline.noticeChoices"
                   :key="item.key"
-                  :label="item.label"
                   :disabled="item.disabled"
+                  :label="item.label"
                   :value="item.key"
                 />
               </el-select>
             </el-form-item>
           </re-col>
-          <re-col :value="8" :xs="24" :sm="24">
+          <re-col :sm="24" :value="8" :xs="24">
             <el-form-item :label="t('notice.level')" prop="level">
               <el-select
                 v-model="newFormInline.level"
@@ -200,8 +200,8 @@ const loading = ref(false);
                 <el-option
                   v-for="item in newFormInline.levelChoices"
                   :key="item.key"
-                  :label="item.label"
                   :disabled="item.disabled"
+                  :label="item.label"
                   :value="item.key"
                 >
                   <template #default>
@@ -211,7 +211,7 @@ const loading = ref(false);
               </el-select>
             </el-form-item>
           </re-col>
-          <re-col :value="8" :xs="24" :sm="24">
+          <re-col :sm="24" :value="8" :xs="24">
             <el-form-item :label="t('notice.publish')" prop="publish">
               <el-select
                 v-model="newFormInline.publish"
@@ -280,8 +280,8 @@ const loading = ref(false);
       </template>
       <div class="wangeditor">
         <Toolbar
-          :editor="editorRef"
           :defaultConfig="toolbarConfig"
+          :editor="editorRef"
           :mode="mode"
           style="border-bottom: 1px solid #ccc"
         />

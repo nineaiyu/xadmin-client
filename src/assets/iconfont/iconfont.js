@@ -55,9 +55,11 @@
                 ((o.onreadystatechange = null), d());
             }));
     }
+
     function d() {
       a || ((a = !0), i());
     }
+
     function v() {
       try {
         o.documentElement.doScroll("left");

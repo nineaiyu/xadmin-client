@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { unref } from "vue";
 import { useRouter } from "vue-router";
 

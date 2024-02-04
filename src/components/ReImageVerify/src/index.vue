@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { useImageVerify } from "./hooks";
 
 defineOptions({
@@ -14,9 +14,9 @@ defineExpose({ getImgCode });
 
 <template>
   <el-image
-    style="width: 120px; height: 40px"
-    class="cursor-pointer"
     :src="imgUrl"
+    class="cursor-pointer"
+    style="width: 120px; height: 40px"
     @click="getImgCode"
   />
 </template>

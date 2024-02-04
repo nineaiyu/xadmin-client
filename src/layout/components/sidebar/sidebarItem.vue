@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import path from "path";
 import { getConfig } from "@/config";
 import { menuType } from "../../types";
@@ -187,14 +187,14 @@ function resolvePath(routePath) {
       hasOneShowingChild(props.item.children, props.item) &&
       (!onlyOneChild.children || onlyOneChild.noShowingChildren)
     "
-    :index="resolvePath(onlyOneChild.path)"
     :class="{ 'submenu-title-noDropdown': !isNest }"
+    :index="resolvePath(onlyOneChild.path)"
     :style="getNoDropdownStyle"
   >
     <div
       v-if="toRaw(props.item.meta.icon)"
-      class="sub-menu-icon"
       :style="getsubMenuIconStyle"
+      class="sub-menu-icon"
     >
       <component
         :is="
@@ -234,10 +234,10 @@ function resolvePath(routePath) {
         </span>
         <el-tooltip
           v-else
-          placement="top"
+          :disabled="!onlyOneChild.showTooltip"
           :effect="tooltipEffect"
           :offset="-10"
-          :disabled="!onlyOneChild.showTooltip"
+          placement="top"
         >
           <template #content>
             {{ transformI18n(onlyOneChild.meta.title) }}
@@ -257,8 +257,8 @@ function resolvePath(routePath) {
   <el-sub-menu
     v-else
     ref="subMenu"
-    teleported
     :index="resolvePath(props.item.path)"
+    teleported
     v-bind="expandCloseIcon"
   >
     <template #title>
@@ -286,10 +286,10 @@ function resolvePath(routePath) {
       >
         <el-tooltip
           v-if="layout !== 'horizontal'"
-          placement="top"
+          :disabled="!props.item.showTooltip"
           :effect="tooltipEffect"
           :offset="-10"
-          :disabled="!props.item.showTooltip"
+          placement="top"
         >
           <template #content>
             {{ transformI18n(props.item.meta.title) }}
@@ -311,9 +311,9 @@ function resolvePath(routePath) {
     <sidebar-item
       v-for="child in props.item.children"
       :key="child.path"
+      :base-path="resolvePath(child.path)"
       :is-nest="true"
       :item="child"
-      :base-path="resolvePath(child.path)"
       class="nest-menu"
     />
   </el-sub-menu>

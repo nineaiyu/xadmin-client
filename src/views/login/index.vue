@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import {
   computed,
   onBeforeUnmount,
@@ -170,14 +170,14 @@ watch(loginDay, value => {
 
 <template>
   <div class="select-none">
-    <img :src="bg" class="wave" alt="" />
+    <img :src="bg" alt="" class="wave" />
     <div class="flex-c absolute right-5 top-3">
       <!-- 主题 -->
       <el-switch
         v-model="dataTheme"
-        inline-prompt
         :active-icon="dayIcon"
         :inactive-icon="darkIcon"
+        inline-prompt
         @change="dataThemeChange"
       />
       <!-- 国际化 -->
@@ -188,20 +188,20 @@ watch(loginDay, value => {
         <template #dropdown>
           <el-dropdown-menu class="translation">
             <el-dropdown-item
-              :style="getDropdownItemStyle(locale, 'zh')"
               :class="['dark:!text-white', getDropdownItemClass(locale, 'zh')]"
+              :style="getDropdownItemStyle(locale, 'zh')"
               @click="translationCh"
             >
               <IconifyIconOffline
                 v-show="locale === 'zh'"
-                class="check-zh"
                 :icon="Check"
+                class="check-zh"
               />
               简体中文
             </el-dropdown-item>
             <el-dropdown-item
-              :style="getDropdownItemStyle(locale, 'en')"
               :class="['dark:!text-white', getDropdownItemClass(locale, 'en')]"
+              :style="getDropdownItemStyle(locale, 'en')"
               @click="translationEn"
             >
               <span v-show="locale === 'en'" class="check-en">
@@ -222,7 +222,7 @@ watch(loginDay, value => {
           <avatar class="avatar" />
           <Motion>
             <h2 class="outline-none">
-              <TypeIt :values="[title]" :cursor="false" :speed="150" />
+              <TypeIt :cursor="false" :speed="150" :values="[title]" />
             </h2>
           </Motion>
 
@@ -246,9 +246,9 @@ watch(loginDay, value => {
               >
                 <el-input
                   v-model="ruleForm.username"
-                  clearable
                   :placeholder="t('login.username')"
                   :prefix-icon="useRenderIcon(User)"
+                  clearable
                 />
               </el-form-item>
             </Motion>
@@ -257,10 +257,10 @@ watch(loginDay, value => {
               <el-form-item prop="password">
                 <el-input
                   v-model="ruleForm.password"
-                  clearable
-                  show-password
                   :placeholder="t('login.password')"
                   :prefix-icon="useRenderIcon(Lock)"
+                  clearable
+                  show-password
                 />
               </el-form-item>
             </Motion>
@@ -269,9 +269,9 @@ watch(loginDay, value => {
               <el-form-item prop="captcha_code">
                 <el-input
                   v-model="ruleForm.captcha_code"
-                  clearable
                   :placeholder="t('login.verifyCode')"
                   :prefix-icon="useRenderIcon('ri:shield-keyhole-line')"
+                  clearable
                 >
                   <template v-slot:append>
                     <ReImageVerify v-model="ruleForm.captcha_key" />
@@ -305,9 +305,9 @@ watch(loginDay, value => {
                       </select>
                       {{ t("login.remember") }}
                       <el-tooltip
+                        :content="t('login.rememberInfo')"
                         effect="dark"
                         placement="top"
-                        :content="t('login.rememberInfo')"
                       >
                         <IconifyIconOffline :icon="Info" class="ml-1" />
                       </el-tooltip>
@@ -322,11 +322,11 @@ watch(loginDay, value => {
                   </el-button>
                 </div>
                 <el-button
+                  :disabled="disabled"
+                  :loading="loading"
                   class="w-full mt-4"
                   size="default"
                   type="primary"
-                  :disabled="disabled"
-                  :loading="loading"
                   @click="onLogin(ruleFormRef)"
                 >
                   {{ t("login.login") }}
@@ -364,8 +364,8 @@ watch(loginDay, value => {
                 >
                   <IconifyIconOnline
                     :icon="`ri:${item.icon}-fill`"
-                    width="20"
                     class="cursor-pointer text-gray-500 hover:text-blue-400"
+                    width="20"
                   />
                 </span>
               </div>

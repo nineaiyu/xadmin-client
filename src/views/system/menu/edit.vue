@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { computed, ref, watch } from "vue";
 import { FormProps } from "./utils/types";
 import FromQuestion from "@/components/FromQuestion/index.vue";
@@ -130,16 +130,16 @@ const menuOptions = computed<Array<OptionsType>>(() => {
 
 <template>
   <div
-    class="h-full bg-bg_color overflow-auto"
     :style="{ minHeight: getMinHeight() }"
+    class="h-full bg-bg_color overflow-auto"
   >
     <el-form
       ref="ruleFormRef"
+      :disabled="!hasAuth('update:systemMenu')"
       :model="newFormInline"
       :rules="formRules"
-      label-width="160px"
-      :disabled="!hasAuth('update:systemMenu')"
       class="search-form bg-bg_color w-[90%] pl-8 pt-[12px]"
+      label-width="160px"
     >
       <el-form-item :label="t('menu.type')" prop="menu_type">
         <Segmented
@@ -153,19 +153,19 @@ const menuOptions = computed<Array<OptionsType>>(() => {
           ref="treeSelectRef"
           v-model="newFormInline.parent"
           :data="props.treeData"
+          :default-expanded-keys="newFormInline.parent_ids"
           :props="{
             children: 'children',
             label: data => transformI18n(data.meta.title),
             disabled: data => data.menu_type == MenuChoices.PERMISSION
           }"
-          node-key="pk"
           accordion
           auto-expand-parent
-          show-checkbox
-          :default-expanded-keys="newFormInline.parent_ids"
-          filterable
           check-strictly
           clearable
+          filterable
+          node-key="pk"
+          show-checkbox
           style="width: 100%"
         >
           <template #default="{ data }">
@@ -190,8 +190,8 @@ const menuOptions = computed<Array<OptionsType>>(() => {
         <el-form-item :label="t('menu.title')" prop="title">
           <el-input
             v-model="newFormInline.title"
-            clearable
             :placeholder="t('menu.verifyTitle')"
+            clearable
           />
         </el-form-item>
         <el-form-item :label="t('menu.icon')" prop="icon">
@@ -212,27 +212,27 @@ const menuOptions = computed<Array<OptionsType>>(() => {
         <el-form-item :label="t('menu.componentName')" prop="name">
           <template #label>
             <from-question
-              :label="t('menu.componentName')"
               :description="t('menu.exampleComponentName')"
+              :label="t('menu.componentName')"
             />
           </template>
           <el-input
             v-model="newFormInline.name"
-            clearable
             :placeholder="t('menu.componentName')"
+            clearable
           />
         </el-form-item>
         <el-form-item :label="t('menu.routePath')" prop="path">
           <template #label>
             <from-question
-              :label="t('menu.routePath')"
               :description="t('menu.exampleRoutePath')"
+              :label="t('menu.routePath')"
             />
           </template>
           <el-input
             v-model="newFormInline.path"
-            clearable
             :placeholder="t('menu.verifyPath')"
+            clearable
           />
         </el-form-item>
       </div>
@@ -240,14 +240,14 @@ const menuOptions = computed<Array<OptionsType>>(() => {
         <el-form-item :label="t('menu.componentPath')" prop="component">
           <template #label>
             <from-question
-              :label="t('menu.componentPath')"
               :description="t('menu.exampleComponentPath')"
+              :label="t('menu.componentPath')"
             />
           </template>
           <el-input
             v-model="newFormInline.component"
-            clearable
             :placeholder="t('menu.verifyComponentPath')"
+            clearable
           />
         </el-form-item>
 
@@ -255,8 +255,8 @@ const menuOptions = computed<Array<OptionsType>>(() => {
         <el-form-item :label="t('menu.cache')" prop="keepAlive">
           <template #label>
             <from-question
-              :label="t('menu.cache')"
               :description="t('menu.exampleCache')"
+              :label="t('menu.cache')"
             />
           </template>
           <el-radio-group v-model="newFormInline.meta.is_keepalive">
@@ -284,8 +284,8 @@ const menuOptions = computed<Array<OptionsType>>(() => {
         <el-form-item :label="t('menu.showLink')" prop="showLink">
           <template #label>
             <from-question
-              :label="t('menu.showLink')"
               :description="t('menu.exampleShowLink')"
+              :label="t('menu.showLink')"
             />
           </template>
           <el-radio-group v-model="newFormInline.meta.is_show_menu">
@@ -301,8 +301,8 @@ const menuOptions = computed<Array<OptionsType>>(() => {
         <el-form-item :label="t('labels.status')" prop="is_active">
           <template #label>
             <from-question
-              :label="t('labels.status')"
               :description="t('menu.exampleMenuStatus')"
+              :label="t('labels.status')"
             />
           </template>
           <el-radio-group v-model="newFormInline.is_active">
@@ -319,21 +319,21 @@ const menuOptions = computed<Array<OptionsType>>(() => {
         <el-form-item :label="t('menu.externalLink')" prop="isFrame">
           <template #label>
             <from-question
-              :label="t('menu.externalLink')"
               :description="t('menu.exampleExternalLink')"
+              :label="t('menu.externalLink')"
             />
           </template>
           <el-input
             v-model="newFormInline.meta.frame_url"
-            clearable
             :placeholder="t('menu.verifyExampleExternalLink')"
+            clearable
           />
         </el-form-item>
         <el-form-item :label="t('menu.animation')" prop="frameLoading">
           <template #label>
             <from-question
-              :label="t('menu.animation')"
               :description="t('menu.exampleAnimation')"
+              :label="t('menu.animation')"
             />
           </template>
           <el-radio-group v-model="newFormInline.meta.frame_loading">
@@ -350,21 +350,21 @@ const menuOptions = computed<Array<OptionsType>>(() => {
         <el-form-item :label="t('menu.permissionName')" prop="title">
           <el-input
             v-model="newFormInline.title"
-            clearable
             :placeholder="t('menu.verifyPermissionName')"
+            clearable
           />
         </el-form-item>
         <el-form-item :label="t('menu.permissionCode')" prop="name">
           <template #label>
             <from-question
-              :label="t('menu.permissionCode')"
               :description="t('menu.examplePermissionCode')"
+              :label="t('menu.permissionCode')"
             />
           </template>
           <el-input
             v-model="newFormInline.name"
-            clearable
             :placeholder="t('menu.verifyPermissionCode')"
+            clearable
           />
         </el-form-item>
         <el-form-item :label="t('menu.permissionPath')" prop="path">
@@ -414,8 +414,8 @@ const menuOptions = computed<Array<OptionsType>>(() => {
             <el-option
               v-for="item in props.choicesDict"
               :key="item.key"
-              :label="item.label"
               :disabled="item.disabled"
+              :label="item.label"
               :value="item.key"
             />
           </el-select>
@@ -423,8 +423,8 @@ const menuOptions = computed<Array<OptionsType>>(() => {
         <el-form-item :label="t('labels.status')" prop="is_active">
           <template #label>
             <from-question
-              :label="t('labels.status')"
               :description="t('menu.exampleRequestStatus')"
+              :label="t('labels.status')"
             />
           </template>
           <el-radio-group v-model="newFormInline.is_active">

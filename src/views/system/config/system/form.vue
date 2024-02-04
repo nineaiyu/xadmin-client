@@ -50,8 +50,8 @@ defineExpose({ getRef });
     <el-form-item :label="t('configSystem.value')" prop="value">
       <el-input
         v-model="newFormInline.value"
-        :disabled="!props.isAdd && props.showColumns.indexOf('value') === -1"
         :autosize="{ minRows: 5, maxRows: 20 }"
+        :disabled="!props.isAdd && props.showColumns.indexOf('value') === -1"
         :placeholder="t('configSystem.value')"
         clearable
         type="textarea"

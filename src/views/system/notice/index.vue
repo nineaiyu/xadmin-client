@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { ref } from "vue";
 import { useNotice } from "./utils/hook";
 import { PureTableBar } from "@/components/RePureTableBar";
@@ -55,8 +55,8 @@ const {
         <el-input
           v-model="form.pk"
           :placeholder="t('labels.id')"
-          clearable
           class="!w-[100px]"
+          clearable
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
@@ -64,8 +64,8 @@ const {
         <el-input
           v-model="form.title"
           :placeholder="t('notice.verifyTitle')"
-          clearable
           class="!w-[200px]"
+          clearable
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
@@ -73,16 +73,16 @@ const {
         <el-input
           v-model="form.message"
           :placeholder="t('notice.verifyContent')"
-          clearable
           class="!w-[180px]"
+          clearable
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
       <el-form-item :label="t('notice.publish')" prop="unread">
         <el-select
           v-model="form.publish"
-          clearable
           class="!w-[160px]"
+          clearable
           @change="onSearch(true)"
         >
           <el-option :label="t('labels.publish')" :value="true" />
@@ -99,8 +99,8 @@ const {
           <el-option
             v-for="item in levelChoices"
             :key="item.key"
-            :label="item.label"
             :disabled="item.disabled"
+            :label="item.label"
             :value="item.key"
           />
         </el-select>
@@ -137,9 +137,9 @@ const {
       </el-form-item>
       <el-form-item>
         <el-button
-          type="primary"
           :icon="useRenderIcon('search')"
           :loading="loading"
+          type="primary"
           @click="onSearch(true)"
         >
           {{ t("buttons.hssearch") }}
@@ -151,20 +151,20 @@ const {
     </el-form>
 
     <PureTableBar
-      :title="t('notice.messageManage')"
       :columns="columns"
+      :title="t('notice.messageManage')"
       @refresh="onSearch(true)"
     >
       <template #buttons>
         <el-space wrap>
           <div v-if="manySelectCount > 0" class="w-[360px]">
             <span
-              style="font-size: var(--el-font-size-base)"
               class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
+              style="font-size: var(--el-font-size-base)"
             >
               {{ t("buttons.hsselected", { count: manySelectCount }) }}
             </span>
-            <el-button type="primary" text @click="onSelectionCancel">
+            <el-button text type="primary" @click="onSelectionCancel">
               {{ t("buttons.hscancel") }}
             </el-button>
             <el-popconfirm
@@ -175,7 +175,7 @@ const {
               @confirm="handleManyDelete"
             >
               <template #reference>
-                <el-button type="danger" plain :icon="useRenderIcon(Delete)">
+                <el-button :icon="useRenderIcon(Delete)" plain type="danger">
                   {{ t("buttons.hsbatchdelete") }}
                 </el-button>
               </template>
@@ -183,8 +183,8 @@ const {
           </div>
           <el-button
             v-if="hasAuth('create:systemNotice')"
-            type="primary"
             :icon="useRenderIcon(AddFill)"
+            type="primary"
             @click="openDialog()"
           >
             {{ t("buttons.hsadd") }}
@@ -194,22 +194,22 @@ const {
       <template v-slot="{ size, dynamicColumns }">
         <pure-table
           ref="tableRef"
-          border
-          align-whole="center"
-          showOverflowTooltip
-          table-layout="auto"
-          :loading="loading"
-          :size="size"
-          adaptive
-          row-key="pk"
-          :data="dataList"
           :columns="dynamicColumns"
-          :pagination="pagination"
-          :paginationSmall="size === 'small'"
+          :data="dataList"
           :header-cell-style="{
             background: 'var(--el-table-row-hover-bg-color)',
             color: 'var(--el-text-color-primary)'
           }"
+          :loading="loading"
+          :pagination="pagination"
+          :paginationSmall="size === 'small'"
+          :size="size"
+          adaptive
+          align-whole="center"
+          border
+          row-key="pk"
+          showOverflowTooltip
+          table-layout="auto"
           @selection-change="handleSelectionChange"
           @page-size-change="handleSizeChange"
           @page-current-change="handleCurrentChange"
@@ -217,22 +217,22 @@ const {
           <template #operation="{ row }">
             <el-button
               v-if="hasAuth('list:systemNotice')"
+              :icon="useRenderIcon(Eye)"
+              :size="size"
               class="reset-margin"
               link
               type="primary"
-              :size="size"
-              :icon="useRenderIcon(Eye)"
               @click="showDialog(row)"
             >
               {{ t("buttons.hsdetail") }}
             </el-button>
             <el-button
               v-if="hasAuth('update:systemNotice')"
+              :icon="useRenderIcon(EditPen)"
+              :size="size"
               class="reset-margin"
               link
               type="primary"
-              :size="size"
-              :icon="useRenderIcon(EditPen)"
               @click="openDialog(false, row)"
             >
               {{ t("buttons.hsedit") }}
@@ -244,11 +244,11 @@ const {
             >
               <template #reference>
                 <el-button
+                  :icon="useRenderIcon(Delete)"
+                  :size="size"
                   class="reset-margin"
                   link
                   type="danger"
-                  :size="size"
-                  :icon="useRenderIcon(Delete)"
                 >
                   {{ t("buttons.hsdelete") }}
                 </el-button>
@@ -261,7 +261,7 @@ const {
   </div>
 </template>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .search-form {
   :deep(.el-form-item) {
     margin-bottom: 12px;

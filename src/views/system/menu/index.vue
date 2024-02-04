@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { useMenu } from "./utils/hook";
 
 import tree from "./tree.vue";
@@ -31,32 +31,32 @@ const {
 <template>
   <div class="menu-main">
     <el-row :gutter="24">
-      <el-col :xs="24" :sm="24" :md="13" :lg="13" :xl="13">
+      <el-col :lg="13" :md="13" :sm="24" :xl="13" :xs="24">
         <tree
           v-if="hasAuth('list:systemMenu')"
           v-model:form-inline="menuData"
           v-model:parent-ids="parentIds"
-          :tree-data="treeData"
           :default-data="defaultData"
-          @getMenuData="getMenuData"
-          @openDialog="openDialog"
-          @handleDelete="handleDelete"
+          :tree-data="treeData"
           @addNewMenu="addNewMenu"
+          @getMenuData="getMenuData"
+          @handleDelete="handleDelete"
           @handleDrag="handleDrag"
           @handleManyDelete="handleManyDelete"
+          @openDialog="openDialog"
         />
       </el-col>
-      <el-col :xs="24" :sm="24" :md="11" :lg="11" :xl="11">
-        <div class="overflow-y-auto" :style="{ height: `calc(100vh - 130px)` }">
+      <el-col :lg="11" :md="11" :sm="24" :xl="11" :xs="24">
+        <div :style="{ height: `calc(100vh - 130px)` }" class="overflow-y-auto">
           <edit
             v-if="hasAuth('list:systemMenu')"
-            class="pt-10 pb-20"
-            :form-inline="menuData"
             :choices-dict="choicesDict"
-            :model-list="modelList"
+            :form-inline="menuData"
             :menu-choices="menuChoices"
-            :tree-data="treeData"
             :menu-url-list="menuUrlList"
+            :model-list="modelList"
+            :tree-data="treeData"
+            class="pt-10 pb-20"
             @handleConfirm="handleConfirm"
           />
         </div>

@@ -74,10 +74,9 @@ interface LocalForageDriverSupportFunc {
 
 interface LocalForageDriver extends LocalForageDriverDbMethods {
   _driver: string;
+  _support?: boolean | LocalForageDriverSupportFunc;
 
   _initStorage(options: LocalForageOptions): void;
-
-  _support?: boolean | LocalForageDriverSupportFunc;
 }
 
 interface LocalForageSerializer {

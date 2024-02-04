@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { ref } from "vue";
 import { useUserInfo } from "./utils/hook";
 import editUserInfo from "./edit.vue";
@@ -24,7 +24,7 @@ const activeTab = ref("userinfo");
 
 <template>
   <el-row :gutter="24">
-    <el-col :xs="24" :sm="24" :md="8" :lg="8" :xl="8">
+    <el-col :lg="8" :md="8" :sm="24" :xl="8" :xs="24">
       <el-card>
         <template v-slot:header>
           <div class="clearfix">
@@ -34,9 +34,9 @@ const activeTab = ref("userinfo");
         <div>
           <div class="text-center">
             <el-image
-              class="h-[120px]"
-              :src="currentUserInfo.avatar"
               :preview-src-list="Array.of(currentUserInfo.avatar)"
+              :src="currentUserInfo.avatar"
+              class="h-[120px]"
               fit="cover"
             />
           </div>
@@ -97,7 +97,7 @@ const activeTab = ref("userinfo");
         </div>
       </el-card>
     </el-col>
-    <el-col :xs="24" :sm="24" :md="16" :lg="16" :xl="16">
+    <el-col :lg="16" :md="16" :sm="24" :xl="16" :xs="24">
       <el-card>
         <template v-slot:header>
           <div class="clearfix">
@@ -136,7 +136,7 @@ const activeTab = ref("userinfo");
   </el-row>
 </template>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 :deep(.el-button:focus-visible) {
   outline: none;
 }

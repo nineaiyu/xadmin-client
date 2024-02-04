@@ -379,7 +379,7 @@ notice:
   type: 类型
   level: 通知级别
   publish: 是否发布
-  content:  内容
+  content: 内容
   haveRead: 是否已读
   showSystemNotice: 查看系统公告
   verifyTitle: 请输入标题

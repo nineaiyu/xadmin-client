@@ -83,10 +83,10 @@ const sortOptions = [
 <template>
   <re-table-search
     v-model="selectValue"
-    :isTree="true"
     :getListApi="getMenuListApi"
-    :showColumns="showColumns"
+    :isTree="true"
     :searchKeys="searchKeys"
+    :showColumns="showColumns"
     :sortOptions="sortOptions"
   />
 </template>

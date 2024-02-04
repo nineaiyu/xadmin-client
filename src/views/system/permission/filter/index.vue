@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { ref, watch } from "vue";
 import { useFieldRule } from "./utils/hook";
 import { PureTableBar } from "@/components/RePureTableBar";
@@ -30,11 +30,11 @@ watch(ruleInfo.value, () => {
 
 <template>
   <div class="main">
-    <PureTableBar :title="t('permission.rules')" :columns="columns">
+    <PureTableBar :columns="columns" :title="t('permission.rules')">
       <template v-if="hasGlobalAuth('list:systemModelField')" #buttons>
         <el-button
-          type="primary"
           :icon="useRenderIcon(AddFill)"
+          type="primary"
           @click="
             openDialog({
               match: '',
@@ -49,29 +49,29 @@ watch(ruleInfo.value, () => {
       <template v-slot="{ size, dynamicColumns }">
         <pure-table
           ref="tableRef"
-          border
-          align-whole="center"
-          showOverflowTooltip
-          table-layout="auto"
-          :size="size"
-          adaptive
-          row-key="name"
-          :data="Object.values(ruleInfo)"
           :columns="dynamicColumns"
-          :paginationSmall="size === 'small'"
+          :data="Object.values(ruleInfo)"
           :header-cell-style="{
             background: 'var(--el-table-row-hover-bg-color)',
             color: 'var(--el-text-color-primary)'
           }"
+          :paginationSmall="size === 'small'"
+          :size="size"
+          adaptive
+          align-whole="center"
+          border
+          row-key="name"
+          showOverflowTooltip
+          table-layout="auto"
         >
           <template #operation="{ row }">
             <el-button
               v-if="hasGlobalAuth('list:systemModelField')"
+              :icon="useRenderIcon(EditPen)"
+              :size="size"
               class="reset-margin"
               link
               type="primary"
-              :size="size"
-              :icon="useRenderIcon(EditPen)"
               @click="openDialog(row)"
             />
             <el-popconfirm
@@ -80,11 +80,11 @@ watch(ruleInfo.value, () => {
             >
               <template #reference>
                 <el-button
+                  :icon="useRenderIcon(Delete)"
+                  :size="size"
                   class="reset-margin"
                   link
                   type="danger"
-                  :size="size"
-                  :icon="useRenderIcon(Delete)"
                 />
               </template>
             </el-popconfirm>

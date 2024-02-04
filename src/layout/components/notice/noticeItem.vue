@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { ListItem } from "./data";
 import { nextTick, PropType, ref } from "vue";
 import { useNav } from "@/layout/hooks/useNav";
@@ -76,12 +76,12 @@ const handleRead = (pk: number) => {
     <div class="notice-container-text">
       <div class="notice-text-title text-[#000000d9] dark:text-white">
         <el-tooltip
-          popper-class="notice-title-popper"
-          :effect="tooltipEffect"
-          :disabled="!titleTooltip"
           :content="props.noticeItem.title"
-          placement="top-start"
+          :disabled="!titleTooltip"
+          :effect="tooltipEffect"
           :enterable="!isMobile"
+          placement="top-start"
+          popper-class="notice-title-popper"
         >
           <div
             ref="titleRef"
@@ -134,7 +134,7 @@ const handleRead = (pk: number) => {
   max-width: 238px;
 }
 </style>
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .notice-container {
   display: flex;
   align-items: flex-start;

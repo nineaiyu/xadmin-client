@@ -40,22 +40,19 @@ const defaultConfig: AxiosRequestConfig = {
 };
 
 class PureHttp {
+  /** token过期后，暂存待执行的请求 */
+  private static requests = [];
+  /** 防止重复刷新token */
+  private static isRefreshing = false;
+  /** 初始化配置对象 */
+  private static initConfig: PureHttpRequestConfig = {};
+  /** 保存当前Axios实例对象 */
+  private static axiosInstance: AxiosInstance = Axios.create(defaultConfig);
+
   constructor() {
     this.httpInterceptorsRequest();
     this.httpInterceptorsResponse();
   }
-
-  /** token过期后，暂存待执行的请求 */
-  private static requests = [];
-
-  /** 防止重复刷新token */
-  private static isRefreshing = false;
-
-  /** 初始化配置对象 */
-  private static initConfig: PureHttpRequestConfig = {};
-
-  /** 保存当前Axios实例对象 */
-  private static axiosInstance: AxiosInstance = Axios.create(defaultConfig);
 
   /** 重连原始请求 */
   private static retryOriginalRequest(config: PureHttpRequestConfig) {
@@ -65,6 +62,93 @@ class PureHttp {
         resolve(config);
       });
     });
+  }
+
+  /** 通用请求工具函数 */
+  public request<T>(
+    method: RequestMethods,
+    url: string,
+    param?: AxiosRequestConfig,
+    axiosConfig?: PureHttpRequestConfig
+  ): Promise<T> {
+    const config = {
+      method,
+      url,
+      ...param,
+      ...axiosConfig
+    } as PureHttpRequestConfig;
+
+    // 单独处理自定义请求/响应回调
+    return new Promise((resolve, reject) => {
+      PureHttp.axiosInstance
+        .request(config)
+        .then((response: undefined) => {
+          resolve(response);
+        })
+        .catch(error => {
+          if (error.response && error.response.status) {
+            if (error.response.status === 401) {
+              ElMessage.error(error.response.data.detail);
+              removeToken();
+              window.location.reload();
+              // router.push({ name: "Login" })
+            } else if (error.response.status === 403) {
+              ElMessage.error(error.response.data.detail);
+              // router.push("/error/403");
+            } else if (error.response.status === 400) {
+              ElMessage.error(error.response.data.detail);
+              // router.push("/error/403");
+            } else if (error.response.status === 404) {
+              ElMessage.error(error.response.data.detail);
+              router.push("/error/404");
+            } else if (error.response.status === 500) {
+              ElMessage.error(error.response.data.detail);
+              router.push("/error/500");
+            }
+            reject(error.response.data);
+          } else {
+            ElMessage.error(error.message);
+            reject(error);
+          }
+        });
+    });
+  }
+
+  /** 单独抽离的post工具函数 */
+  public post<T, P>(
+    url: string,
+    params?: AxiosRequestConfig<T>,
+    config?: PureHttpRequestConfig
+  ): Promise<P> {
+    return this.request<P>("post", url, params, config);
+  }
+
+  /** 单独抽离的get工具函数 */
+  public get<T, P>(
+    url: string,
+    params?: AxiosRequestConfig<T>,
+    config?: PureHttpRequestConfig
+  ): Promise<P> {
+    return this.request<P>("get", url, params, config);
+  }
+
+  public upload<P>(
+    url: string,
+    params?: any,
+    data?: any,
+    config?: PureHttpRequestConfig
+  ): Promise<P> {
+    return this.request<P>(
+      "post",
+      url,
+      { data, params },
+      {
+        headers: {
+          "Content-Type": "multipart/form-data"
+        },
+        ...config
+      }
+    );
   }
 
   /** 请求拦截 */
@@ -153,93 +237,6 @@ class PureHttp {
         NProgress.done();
         // 所有的响应异常 区分来源为取消请求/非取消请求
         return Promise.reject($error);
-      }
-    );
-  }
-
-  /** 通用请求工具函数 */
-  public request<T>(
-    method: RequestMethods,
-    url: string,
-    param?: AxiosRequestConfig,
-    axiosConfig?: PureHttpRequestConfig
-  ): Promise<T> {
-    const config = {
-      method,
-      url,
-      ...param,
-      ...axiosConfig
-    } as PureHttpRequestConfig;
-
-    // 单独处理自定义请求/响应回调
-    return new Promise((resolve, reject) => {
-      PureHttp.axiosInstance
-        .request(config)
-        .then((response: undefined) => {
-          resolve(response);
-        })
-        .catch(error => {
-          if (error.response && error.response.status) {
-            if (error.response.status === 401) {
-              ElMessage.error(error.response.data.detail);
-              removeToken();
-              window.location.reload();
-              // router.push({ name: "Login" })
-            } else if (error.response.status === 403) {
-              ElMessage.error(error.response.data.detail);
-              // router.push("/error/403");
-            } else if (error.response.status === 400) {
-              ElMessage.error(error.response.data.detail);
-              // router.push("/error/403");
-            } else if (error.response.status === 404) {
-              ElMessage.error(error.response.data.detail);
-              router.push("/error/404");
-            } else if (error.response.status === 500) {
-              ElMessage.error(error.response.data.detail);
-              router.push("/error/500");
-            }
-            reject(error.response.data);
-          } else {
-            ElMessage.error(error.message);
-            reject(error);
-          }
-        });
-    });
-  }
-
-  /** 单独抽离的post工具函数 */
-  public post<T, P>(
-    url: string,
-    params?: AxiosRequestConfig<T>,
-    config?: PureHttpRequestConfig
-  ): Promise<P> {
-    return this.request<P>("post", url, params, config);
-  }
-
-  /** 单独抽离的get工具函数 */
-  public get<T, P>(
-    url: string,
-    params?: AxiosRequestConfig<T>,
-    config?: PureHttpRequestConfig
-  ): Promise<P> {
-    return this.request<P>("get", url, params, config);
-  }
-
-  public upload<P>(
-    url: string,
-    params?: any,
-    data?: any,
-    config?: PureHttpRequestConfig
-  ): Promise<P> {
-    return this.request<P>(
-      "post",
-      url,
-      { data, params },
-      {
-        headers: {
-          "Content-Type": "multipart/form-data"
-        },
-        ...config
       }
     );
   }

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { getConfig } from "@/config";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { type Component, shallowRef, watch, computed } from "vue";
@@ -67,9 +67,9 @@ watch(
   <template v-for="[fullPath, Comp] in compList" :key="fullPath">
     <div v-show="fullPath === props.currRoute.fullPath" class="w-full h-full">
       <slot
-        :fullPath="fullPath"
         :Comp="Comp"
         :frameInfo="{ frameSrc: currRoute.meta?.frameSrc, fullPath }"
+        :fullPath="fullPath"
       />
     </div>
   </template>

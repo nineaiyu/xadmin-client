@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { isEqual } from "@pureadmin/utils";
 import { transformI18n } from "@/plugins/i18n";
 import { useRoute, useRouter } from "vue-router";

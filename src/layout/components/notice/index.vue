@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { onMounted, ref } from "vue";
 import NoticeList from "./noticeList.vue";
 import Bell from "@iconify-icons/ep/bell";
@@ -56,8 +56,8 @@ onMounted(() => {
 
 <template>
   <el-dropdown
-    trigger="click"
     placement="bottom-end"
+    trigger="click"
     @visibleChange="handleCommand"
   >
     <span class="dropdown-badge navbar-bg-hover select-none">
@@ -73,8 +73,8 @@ onMounted(() => {
           v-model="activeKey"
           v-loading="loading"
           :stretch="true"
-          class="dropdown-tabs"
           :style="{ width: notices.length === 0 ? '200px' : '330px' }"
+          class="dropdown-tabs"
         >
           <el-empty
             v-if="notices.length === 0"

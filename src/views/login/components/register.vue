@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { useI18n } from "vue-i18n";
 import { onMounted, reactive, ref } from "vue";
 import Motion from "../utils/motion";
@@ -116,9 +116,9 @@ const initToken = () => {
       >
         <el-input
           v-model="ruleForm.username"
-          clearable
           :placeholder="t('login.username')"
           :prefix-icon="useRenderIcon(User)"
+          clearable
         />
       </el-form-item>
     </Motion>
@@ -162,10 +162,10 @@ const initToken = () => {
       <el-form-item prop="password">
         <el-input
           v-model="ruleForm.password"
-          clearable
-          show-password
           :placeholder="t('login.password')"
           :prefix-icon="useRenderIcon(Lock)"
+          clearable
+          show-password
         />
       </el-form-item>
     </Motion>
@@ -174,10 +174,10 @@ const initToken = () => {
       <el-form-item :rules="repeatPasswordRule" prop="repeatPassword">
         <el-input
           v-model="ruleForm.repeatPassword"
-          clearable
-          show-password
           :placeholder="t('login.sure')"
           :prefix-icon="useRenderIcon(Lock)"
+          clearable
+          show-password
         />
       </el-form-item>
     </Motion>
@@ -196,10 +196,10 @@ const initToken = () => {
     <Motion :delay="350">
       <el-form-item>
         <el-button
+          :loading="loading"
           class="w-full"
           size="default"
           type="primary"
-          :loading="loading"
           @click="onUpdate(ruleFormRef)"
         >
           {{ t("login.definite") }}

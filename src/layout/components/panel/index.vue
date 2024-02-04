@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { emitter } from "@/utils/mitt";
 import { onClickOutside } from "@vueuse/core";
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
@@ -63,8 +63,8 @@ onBeforeUnmount(() => {
           :class="iconClass"
         >
           <IconifyIconOffline
-            class="dark:text-white"
             :icon="Close"
+            class="dark:text-white"
             height="18px"
             width="18px"
             @click="show = !show"

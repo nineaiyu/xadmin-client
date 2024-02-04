@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { ref } from "vue";
 import ReCol from "@/components/ReCol";
 import { formRules } from "../utils/rule";
@@ -45,27 +45,27 @@ defineExpose({ getRef });
     label-width="82px"
   >
     <el-row :gutter="30">
-      <re-col :value="12" :xs="24" :sm="24">
+      <re-col :sm="24" :value="12" :xs="24">
         <el-form-item :label="t('user.username')" prop="username">
           <el-input
             v-model="newFormInline.username"
             :disabled="
               !props.isAdd && props.showColumns.indexOf('username') === -1
             "
-            clearable
             :placeholder="t('user.verifyUsername')"
+            clearable
           />
         </el-form-item>
       </re-col>
-      <re-col :value="12" :xs="24" :sm="24">
+      <re-col :sm="24" :value="12" :xs="24">
         <el-form-item :label="t('user.nickname')" prop="nickname">
           <el-input
             v-model="newFormInline.nickname"
             :disabled="
               !props.isAdd && props.showColumns.indexOf('nickname') === -1
             "
-            clearable
             :placeholder="t('user.verifyNickname')"
+            clearable
           />
         </el-form-item>
       </re-col>
@@ -73,37 +73,37 @@ defineExpose({ getRef });
         <el-form-item :label="t('user.password')" prop="password">
           <el-input
             v-model="newFormInline.password"
-            clearable
             :placeholder="t('user.verifyPassword')"
+            clearable
           />
         </el-form-item>
       </re-col>
-      <re-col :value="12" :xs="24" :sm="24">
+      <re-col :sm="24" :value="12" :xs="24">
         <el-form-item :label="t('user.mobile')" prop="mobile">
           <el-input
             v-model="newFormInline.mobile"
             :disabled="
               !props.isAdd && props.showColumns.indexOf('mobile') === -1
             "
-            clearable
             :placeholder="t('user.verifyMobile')"
+            clearable
           />
         </el-form-item>
       </re-col>
 
-      <re-col :value="12" :xs="24" :sm="24">
+      <re-col :sm="24" :value="12" :xs="24">
         <el-form-item :label="t('user.email')" prop="email">
           <el-input
             v-model="newFormInline.email"
             :disabled="
               !props.isAdd && props.showColumns.indexOf('email') === -1
             "
-            clearable
             :placeholder="t('user.verifyEmail')"
+            clearable
           />
         </el-form-item>
       </re-col>
-      <re-col :value="12" :xs="24" :sm="24">
+      <re-col :sm="24" :value="12" :xs="24">
         <el-form-item :label="t('user.gender')" prop="gender">
           <el-select
             v-model="newFormInline.gender"
@@ -116,45 +116,45 @@ defineExpose({ getRef });
             <el-option
               v-for="item in props.choicesDict"
               :key="item.key"
+              :disabled="item.disabled"
               :label="item.label"
               :value="item.key"
-              :disabled="item.disabled"
             />
           </el-select>
         </el-form-item>
       </re-col>
-      <re-col :value="12" :xs="24" :sm="24">
+      <re-col :sm="24" :value="12" :xs="24">
         <el-form-item :label="t('labels.status')" prop="is_active">
           <el-switch
             v-model="newFormInline.is_active"
+            :active-text="t('labels.active')"
+            :active-value="true"
             :disabled="
               !props.isAdd && props.showColumns.indexOf('is_active') === -1
             "
-            inline-prompt
-            :active-value="true"
-            :inactive-value="false"
-            :active-text="t('labels.active')"
             :inactive-text="t('labels.inactive')"
+            :inactive-value="false"
             :style="switchStyle"
+            inline-prompt
           />
         </el-form-item>
       </re-col>
-      <re-col :value="24" :xs="24" :sm="24">
+      <re-col :sm="24" :value="24" :xs="24">
         <el-form-item :label="t('user.dept')" prop="dept">
           <el-cascader
             v-model="newFormInline.dept"
             :disabled="!props.isAdd && props.showColumns.indexOf('dept') === -1"
-            class="w-full"
             :options="props.treeData"
+            :placeholder="t('menu.parentNode')"
             :props="{
               value: 'pk',
               label: 'name',
               emitPath: false,
               checkStrictly: true
             }"
+            class="w-full"
             clearable
             filterable
-            :placeholder="t('menu.parentNode')"
           >
             <template #default="{ node, data }">
               <span>{{ data.name }}</span>
@@ -171,8 +171,8 @@ defineExpose({ getRef });
               !props.isAdd && props.showColumns.indexOf('description') === -1
             "
             :placeholder="t('labels.verifyDescription')"
-            type="textarea"
             rows="3"
+            type="textarea"
           />
         </el-form-item>
       </re-col>

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { ref } from "vue";
 import ReCol from "@/components/ReCol";
 import { RoleFormProps } from "../utils/types";
@@ -72,8 +72,8 @@ const newFormInline = ref(props.formInline);
             <el-option
               v-for="item in newFormInline.choicesDict"
               :key="item.key"
-              :label="item.label"
               :disabled="item.disabled"
+              :label="item.label"
               :value="item.key"
             />
           </el-select>

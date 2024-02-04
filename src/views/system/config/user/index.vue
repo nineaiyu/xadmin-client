@@ -53,8 +53,8 @@ const {
         <el-input
           v-model="form.owner_id"
           :placeholder="t('user.verifyUserId')"
-          clearable
           class="!w-[120px]"
+          clearable
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
@@ -62,8 +62,8 @@ const {
         <el-input
           v-model="form.username"
           :placeholder="t('user.verifyUsername')"
-          clearable
           class="!w-[180px]"
+          clearable
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>

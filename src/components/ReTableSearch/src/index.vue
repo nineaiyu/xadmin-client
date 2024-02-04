@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { onMounted, ref } from "vue";
 import { useColumns } from "./hooks";
 import { FormItemProps } from "./types";
@@ -67,16 +67,16 @@ onMounted(() => {
     ref="selectRef"
     v-model="selectValue"
     v-click-outside="handleClickOutSide"
-    class="w-full"
-    value-key="pk"
-    clearable
-    multiple
-    collapse-tags
     :max-collapse-tags="10"
+    class="w-full"
+    clearable
+    collapse-tags
     collapse-tags-tooltip
+    multiple
+    value-key="pk"
+    @clear="onClear"
     @visibleChange="val => (selectVisible = val)"
     @remove-tag="removeTag"
-    @clear="onClear"
   >
     <template #empty>
       <div class="w-max[800px] m-4">
@@ -97,8 +97,8 @@ onMounted(() => {
             <el-input
               v-model="form[item.key]"
               :placeholder="item.label"
-              clearable
               class="!w-[160px]"
+              clearable
               @keyup.enter="onSearch(true)"
             />
           </el-form-item>
@@ -120,35 +120,35 @@ onMounted(() => {
         </el-form>
         <pure-table
           ref="tableRef"
-          border
-          height="400"
-          align-whole="center"
-          table-layout="auto"
-          showOverflowTooltip
-          default-expand-all
-          row-key="pk"
+          :columns="columns"
+          :data="props.isTree ? treeDataList : dataList"
           :header-cell-style="{
             background: 'var(--el-table-row-hover-bg-color)',
             color: 'var(--el-text-color-primary)'
           }"
-          :data="props.isTree ? treeDataList : dataList"
           :loading="loading"
-          :columns="columns"
           :pagination="pagination"
+          align-whole="center"
+          border
+          default-expand-all
+          height="400"
+          row-key="pk"
+          showOverflowTooltip
+          table-layout="auto"
           @selection-change="handleSelectionChange"
           @page-size-change="handleSizeChange"
           @page-current-change="handleCurrentChange"
         />
         <div class="absolute bottom-[17px]">
           <el-space>
-            <el-button type="primary" size="small" text bg @click="onSure">
+            <el-button bg size="small" text type="primary" @click="onSure">
               {{ t("labels.sure") }}
             </el-button>
             <el-button
-              type="success"
+              bg
               size="small"
               text
-              bg
+              type="success"
               @click="onSearch(true)"
             >
               {{ t("buttons.hsreload") }}

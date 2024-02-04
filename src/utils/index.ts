@@ -38,7 +38,7 @@ export const getIndexType = (index: number) => {
   } else if (index === 2) {
     return "warning";
   } else if (index === 3) {
-    return "";
+    return "primary";
   } else if (index === 4) {
     return "success";
   } else return "info";

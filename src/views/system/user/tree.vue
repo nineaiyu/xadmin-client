@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import {
   computed,
@@ -109,16 +109,16 @@ defineExpose({ onTreeReset });
 <template>
   <div
     v-loading="props.treeLoading"
-    class="h-full bg-bg_color overflow-auto"
     :style="{ minHeight: `calc(100vh - 133px)` }"
+    class="h-full bg-bg_color overflow-auto"
   >
     <div class="flex items-center h-[34px]">
       <el-input
         v-model="searchValue"
-        class="ml-2"
-        size="small"
         :placeholder="t('dept.name')"
+        class="ml-2"
         clearable
+        size="small"
       >
         <template #suffix>
           <el-icon class="el-input__icon">
@@ -131,18 +131,18 @@ defineExpose({ onTreeReset });
       </el-input>
       <el-dropdown :hide-on-click="false">
         <IconifyIconOffline
+          :icon="More2Fill"
           class="w-[28px] cursor-pointer"
           width="18px"
-          :icon="More2Fill"
         />
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item>
               <el-button
                 :class="buttonClass"
+                :icon="useRenderIcon(isExpand ? ExpandIcon : UnExpandIcon)"
                 link
                 type="primary"
-                :icon="useRenderIcon(isExpand ? ExpandIcon : UnExpandIcon)"
                 @click="toggleRowExpansionAll(!isExpand)"
               >
                 {{
@@ -160,11 +160,11 @@ defineExpose({ onTreeReset });
     <el-tree
       ref="treeRef"
       :data="props.treeData"
-      node-key="pk"
-      :props="defaultProps"
-      default-expand-all
       :expand-on-click-node="false"
       :filter-node-method="filterNode"
+      :props="defaultProps"
+      default-expand-all
+      node-key="pk"
       @node-click="nodeClick"
     >
       <template #default="{ node, data }">

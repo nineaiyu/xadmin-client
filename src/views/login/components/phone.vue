@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { useI18n } from "vue-i18n";
 import { reactive, ref } from "vue";
 import Motion from "../utils/motion";
@@ -50,9 +50,9 @@ function onBack() {
       <el-form-item prop="phone">
         <el-input
           v-model="ruleForm.phone"
-          clearable
           :placeholder="t('login.phone')"
           :prefix-icon="useRenderIcon(Iphone)"
+          clearable
         />
       </el-form-item>
     </Motion>
@@ -62,9 +62,9 @@ function onBack() {
         <div class="w-full flex justify-between">
           <el-input
             v-model="ruleForm.verifyCode"
-            clearable
             :placeholder="t('login.smsVerifyCode')"
             :prefix-icon="useRenderIcon('ri:shield-keyhole-line')"
+            clearable
           />
           <el-button
             :disabled="isDisabled"
@@ -84,10 +84,10 @@ function onBack() {
     <Motion :delay="150">
       <el-form-item>
         <el-button
+          :loading="loading"
           class="w-full"
           size="default"
           type="primary"
-          :loading="loading"
           @click="onLogin(ruleFormRef)"
         >
           {{ t("login.login") }}

@@ -17,7 +17,7 @@ services:
     image: "nginx:stable-alpine"
     volumes:
       - ./dist:/usr/share/nginx/html
-    command: ["nginx", "-g", "daemon off;"]
+    command: [ "nginx", "-g", "daemon off;" ]
     #depends_on:
     #   - xadmin-client-build
     ports:

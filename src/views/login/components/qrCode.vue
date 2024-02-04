@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { useI18n } from "vue-i18n";
 import Motion from "../utils/motion";
 import ReQrcode from "@/components/ReQrcode";

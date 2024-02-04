@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import {
   computed,
   getCurrentInstance,
@@ -64,6 +64,7 @@ const treeRoleRef = ref();
 const newFormInline = ref(props.formInline);
 const searchValue = ref("");
 const loading = ref(false);
+
 function getRef() {
   return ruleFormRef.value;
 }
@@ -175,8 +176,8 @@ function onReset() {
       <el-input
         v-model="newFormInline.name"
         :disabled="!props.isAdd && props.showColumns.indexOf('name') === -1"
-        clearable
         :placeholder="t('role.verifyRoleName')"
+        clearable
       />
     </el-form-item>
 
@@ -184,8 +185,8 @@ function onReset() {
       <el-input
         v-model="newFormInline.code"
         :disabled="!props.isAdd && props.showColumns.indexOf('code') === -1"
-        clearable
         :placeholder="t('role.verifyRoleCode')"
+        clearable
       />
     </el-form-item>
     <el-form-item :label="t('labels.status')" prop="is_active">
@@ -217,8 +218,8 @@ function onReset() {
       <div class="flex items-center h-[34px] w-full mb-2">
         <el-input
           v-model="searchValue"
-          class="flex-1"
           :placeholder="t('menu.verifyTitle')"
+          class="flex-1"
           clearable
         >
           <template #suffix>
@@ -232,9 +233,9 @@ function onReset() {
         </el-input>
         <el-dropdown :hide-on-click="false">
           <IconifyIconOffline
+            :icon="More2Fill"
             class="w-[28px] cursor-pointer"
             width="18px"
-            :icon="More2Fill"
           />
           <template #dropdown>
             <el-dropdown-menu>
@@ -283,9 +284,9 @@ function onReset() {
               <el-dropdown-item>
                 <el-button
                   :class="buttonClass"
+                  :icon="useRenderIcon(Reset)"
                   link
                   type="primary"
-                  :icon="useRenderIcon(Reset)"
                   @click="onReset"
                 >
                   {{ t("buttons.hsreset") }}
@@ -300,20 +301,20 @@ function onReset() {
         <el-tree
           ref="treeRoleRef"
           v-loading="loading"
-          class="w-full"
-          :data="props.menuTreeData"
           :check-strictly="checkStrictly"
+          :data="props.menuTreeData"
+          :default-expand-all="isExpand"
+          :expand-on-click-node="true"
+          :filter-node-method="filterMenuNode"
+          :props="{ class: customNodeClass }"
           :show-checkbox="
             props.isAdd ||
             (props.showColumns.indexOf('field') > -1 &&
               props.showColumns.indexOf('menu') > -1)
           "
-          node-key="pk"
+          class="w-full"
           highlight-current
-          :default-expand-all="isExpand"
-          :filter-node-method="filterMenuNode"
-          :expand-on-click-node="true"
-          :props="{ class: customNodeClass }"
+          node-key="pk"
           @node-click="nodeClick"
         >
           <template #default="{ data }">

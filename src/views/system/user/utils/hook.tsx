@@ -174,7 +174,7 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
       cellRenderer: ({ row, props }) => (
         <el-tag
           size={props.size}
-          type={row.gender === 2 ? "danger" : ""}
+          type={row.gender === 2 ? "danger" : "primary"}
           effect="plain"
         >
           {row.gender_display}

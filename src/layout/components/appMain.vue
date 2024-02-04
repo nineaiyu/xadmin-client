@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import Footer from "./footer/index.vue";
 import { useGlobal } from "@pureadmin/utils";
 import KeepAliveFrame from "./keepAliveFrame/index.vue";

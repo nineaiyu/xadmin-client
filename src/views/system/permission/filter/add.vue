@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { formRules } from "./utils/rule";

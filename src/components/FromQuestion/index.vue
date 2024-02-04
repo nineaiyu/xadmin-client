@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { useRenderIcon } from "../ReIcon/src/hooks";
 
 const props = defineProps({
@@ -18,10 +18,10 @@ defineOptions({ name: "FromQuestion" });
   <div class="flex justify-center items-center">
     <el-tooltip
       v-if="props.description"
-      trigger="hover"
       :content="props.description"
-      placement="top"
       effect="dark"
+      placement="top"
+      trigger="hover"
     >
       <component :is="useRenderIcon('ep:question-filled')" />
     </el-tooltip>

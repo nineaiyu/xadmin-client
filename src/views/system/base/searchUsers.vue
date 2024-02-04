@@ -70,7 +70,7 @@ const searchKeys = [
   <re-table-search
     v-model="selectValue"
     :getListApi="getUserListApi"
-    :showColumns="showColumns"
     :searchKeys="searchKeys"
+    :showColumns="showColumns"
   />
 </template>

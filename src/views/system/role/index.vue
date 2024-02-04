@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { ref } from "vue";
 import { useRole } from "./utils/hook";
 import { PureTableBar } from "@/components/RePureTableBar";
@@ -51,8 +51,8 @@ const {
         <el-input
           v-model="form.name"
           :placeholder="t('role.verifyRoleName')"
-          clearable
           class="!w-[200px]"
+          clearable
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
@@ -60,16 +60,16 @@ const {
         <el-input
           v-model="form.code"
           :placeholder="t('role.verifyRoleCode')"
-          clearable
           class="!w-[180px]"
+          clearable
           @keyup.enter="onSearch(true)"
         />
       </el-form-item>
       <el-form-item :label="t('labels.status')" prop="is_active">
         <el-select
           v-model="form.is_active"
-          clearable
           class="!w-[180px]"
+          clearable
           @change="onSearch(true)"
         >
           <el-option :label="t('labels.enable')" value="1" />
@@ -93,9 +93,9 @@ const {
       </el-form-item>
       <el-form-item>
         <el-button
-          type="primary"
           :icon="useRenderIcon('search')"
           :loading="loading"
+          type="primary"
           @click="onSearch(true)"
         >
           {{ t("buttons.hssearch") }}
@@ -107,20 +107,20 @@ const {
     </el-form>
 
     <PureTableBar
-      :title="t('menus.hsRole')"
       :columns="columns"
+      :title="t('menus.hsRole')"
       @refresh="onSearch(true)"
     >
       <template #buttons>
         <el-space wrap>
           <div v-if="manySelectCount > 0" class="w-[360px]">
             <span
-              style="font-size: var(--el-font-size-base)"
               class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
+              style="font-size: var(--el-font-size-base)"
             >
               {{ t("buttons.hsselected", { count: manySelectCount }) }}
             </span>
-            <el-button type="primary" text @click="onSelectionCancel">
+            <el-button text type="primary" @click="onSelectionCancel">
               {{ t("buttons.hscancel") }}
             </el-button>
             <el-popconfirm
@@ -131,7 +131,7 @@ const {
               @confirm="handleManyDelete"
             >
               <template #reference>
-                <el-button type="danger" plain :icon="useRenderIcon(Delete)">
+                <el-button :icon="useRenderIcon(Delete)" plain type="danger">
                   {{ t("buttons.hsbatchdelete") }}
                 </el-button>
               </template>
@@ -140,8 +140,8 @@ const {
 
           <el-button
             v-if="hasAuth('create:systemRole')"
-            type="primary"
             :icon="useRenderIcon(AddFill)"
+            type="primary"
             @click="openDialog()"
           >
             {{ t("buttons.hsadd") }}
@@ -151,22 +151,22 @@ const {
       <template v-slot="{ size, dynamicColumns }">
         <pure-table
           ref="tableRef"
-          border
-          align-whole="center"
-          showOverflowTooltip
-          table-layout="auto"
-          :loading="loading"
-          :size="size"
-          adaptive
-          row-key="pk"
-          :data="dataList"
           :columns="dynamicColumns"
-          :pagination="pagination"
-          :paginationSmall="size === 'small'"
+          :data="dataList"
           :header-cell-style="{
             background: 'var(--el-table-row-hover-bg-color)',
             color: 'var(--el-text-color-primary)'
           }"
+          :loading="loading"
+          :pagination="pagination"
+          :paginationSmall="size === 'small'"
+          :size="size"
+          adaptive
+          align-whole="center"
+          border
+          row-key="pk"
+          showOverflowTooltip
+          table-layout="auto"
           @selection-change="handleSelectionChange"
           @page-size-change="handleSizeChange"
           @page-current-change="handleCurrentChange"
@@ -174,11 +174,11 @@ const {
           <template #operation="{ row }">
             <el-button
               v-if="hasAuth('update:systemRole')"
+              :icon="useRenderIcon(EditPen)"
+              :size="size"
               class="reset-margin"
               link
               type="primary"
-              :size="size"
-              :icon="useRenderIcon(EditPen)"
               @click="openDialog(false, row)"
             >
               {{ t("buttons.hsedit") }}
@@ -190,11 +190,11 @@ const {
             >
               <template #reference>
                 <el-button
+                  :icon="useRenderIcon(Delete)"
+                  :size="size"
                   class="reset-margin"
                   link
                   type="danger"
-                  :size="size"
-                  :icon="useRenderIcon(Delete)"
                 >
                   {{ t("buttons.hsdelete") }}
                 </el-button>
@@ -207,7 +207,7 @@ const {
   </div>
 </template>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 :deep(.el-dropdown-menu__item i) {
   margin: 0;
 }

@@ -63,9 +63,9 @@ const searchKeys = [
 <template>
   <re-table-search
     v-model="selectValue"
-    :isTree="true"
     :getListApi="getDeptListApi"
-    :showColumns="showColumns"
+    :isTree="true"
     :searchKeys="searchKeys"
+    :showColumns="showColumns"
   />
 </template>

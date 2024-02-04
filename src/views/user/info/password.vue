@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { reactive, ref, watch } from "vue";
 import ReCol from "@/components/ReCol";
 import { FormPasswordProps } from "./utils/types";
@@ -97,45 +97,45 @@ watch(
     label-width="130px"
   >
     <el-row :gutter="30">
-      <re-col :value="24" :xs="24" :sm="24">
+      <re-col :sm="24" :value="24" :xs="24">
         <el-form-item :label="t('userinfo.oldPassword')" prop="old_password">
           <el-input
             v-model="password.old_password"
+            :placeholder="t('userinfo.verifyOldPassword')"
             clearable
             show-password
             type="password"
-            :placeholder="t('userinfo.verifyOldPassword')"
           />
         </el-form-item>
       </re-col>
-      <re-col :value="24" :xs="24" :sm="24">
+      <re-col :sm="24" :value="24" :xs="24">
         <el-form-item :label="t('userinfo.newPassword')" prop="new_password">
           <el-input
             v-model="password.new_password"
+            :placeholder="t('userinfo.verifyNewPassword')"
             clearable
             show-password
             type="password"
-            :placeholder="t('userinfo.verifyNewPassword')"
           />
           <div class="mt-4 flex w-full">
             <div
               v-for="(item, index) in pwdProgress"
               :key="index"
-              class="w-1/5"
               :style="{ marginLeft: index !== 0 ? '4px' : 0 }"
+              class="w-1/5"
             >
               <el-progress
-                striped
-                striped-flow
+                :color="item.color"
                 :duration="curScore === index ? 6 : 0"
                 :percentage="curScore >= index ? 100 : 0"
-                :color="item.color"
-                :stroke-width="10"
                 :show-text="false"
+                :stroke-width="10"
+                striped
+                striped-flow
               />
               <p
-                class="text-center"
                 :style="{ color: curScore === index ? item.color : '' }"
+                class="text-center"
               >
                 {{ item.text }}
               </p>
@@ -143,14 +143,14 @@ watch(
           </div>
         </el-form-item>
       </re-col>
-      <re-col :value="24" :xs="24" :sm="24">
+      <re-col :sm="24" :value="24" :xs="24">
         <el-form-item :label="t('userinfo.surePassword')" prop="sure_password">
           <el-input
             v-model="password.sure_password"
+            :placeholder="t('userinfo.verifyNewPassword')"
             clearable
             show-password
             type="password"
-            :placeholder="t('userinfo.verifyNewPassword')"
           />
         </el-form-item>
       </re-col>

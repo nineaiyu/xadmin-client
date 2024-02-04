@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { ref } from "vue";
 import ReCol from "@/components/ReCol";
 import { formRules } from "../utils/rule";
@@ -47,44 +47,44 @@ defineExpose({ getRef });
     label-width="140px"
   >
     <el-row :gutter="30">
-      <re-col :value="12" :xs="24" :sm="24">
+      <re-col :sm="24" :value="12" :xs="24">
         <el-form-item :label="t('dept.name')" prop="name">
           <el-input
             v-model="newFormInline.name"
             :disabled="!props.isAdd && props.showColumns.indexOf('name') === -1"
-            clearable
             :placeholder="t('dept.name')"
+            clearable
           />
         </el-form-item>
       </re-col>
-      <re-col :value="12" :xs="24" :sm="24">
+      <re-col :sm="24" :value="12" :xs="24">
         <el-form-item :label="t('dept.code')" prop="code">
           <el-input
             v-model="newFormInline.code"
             :disabled="!props.isAdd && props.showColumns.indexOf('code') === -1"
-            clearable
             :placeholder="t('dept.code')"
+            clearable
           />
         </el-form-item>
       </re-col>
-      <re-col :value="24" :xs="24" :sm="24">
+      <re-col :sm="24" :value="24" :xs="24">
         <el-form-item :label="t('menu.parentNode')" prop="parent">
           <el-cascader
             v-model="newFormInline.parent"
             :disabled="
               !props.isAdd && props.showColumns.indexOf('parent') === -1
             "
-            class="w-full"
             :options="props.treeData"
+            :placeholder="t('menu.parentNode')"
             :props="{
               value: 'pk',
               label: 'name',
               emitPath: false,
               checkStrictly: true
             }"
+            class="w-full"
             clearable
             filterable
-            :placeholder="t('menu.parentNode')"
           >
             <template #default="{ node, data }">
               <span>{{ data.name }}</span>
@@ -94,24 +94,24 @@ defineExpose({ getRef });
         </el-form-item>
       </re-col>
 
-      <re-col :value="12" :xs="24" :sm="24">
+      <re-col :sm="24" :value="12" :xs="24">
         <el-form-item :label="t('sorts.rank')" prop="rank">
           <el-input
             v-model="newFormInline.rank"
             :disabled="!props.isAdd && props.showColumns.indexOf('rank') === -1"
+            :placeholder="t('sorts.rank')"
             clearable
             type="number"
-            :placeholder="t('sorts.rank')"
           />
         </el-form-item>
       </re-col>
 
-      <re-col :value="12" :xs="24" :sm="24">
+      <re-col :sm="24" :value="12" :xs="24">
         <el-form-item :label="t('dept.autoBind')" prop="auto_bind">
           <template #label>
             <from-question
-              :label="t('dept.autoBind')"
               :description="t('dept.autoBindDesc')"
+              :label="t('dept.autoBind')"
             />
           </template>
           <el-radio-group v-model="newFormInline.auto_bind">
@@ -127,19 +127,19 @@ defineExpose({ getRef });
           </el-radio-group>
         </el-form-item>
       </re-col>
-      <re-col :value="12" :xs="24" :sm="24">
+      <re-col :sm="24" :value="12" :xs="24">
         <el-form-item :label="t('labels.status')" prop="is_active">
           <el-switch
             v-model="newFormInline.is_active"
+            :active-text="t('labels.active')"
+            :active-value="true"
             :disabled="
               !props.isAdd && props.showColumns.indexOf('is_active') === -1
             "
-            inline-prompt
-            :active-value="true"
-            :inactive-value="false"
-            :active-text="t('labels.active')"
             :inactive-text="t('labels.inactive')"
+            :inactive-value="false"
             :style="switchStyle"
+            inline-prompt
           />
         </el-form-item>
       </re-col>
@@ -151,8 +151,8 @@ defineExpose({ getRef });
               !props.isAdd && props.showColumns.indexOf('description') === -1
             "
             :placeholder="t('labels.verifyDescription')"
-            type="textarea"
             rows="3"
+            type="textarea"
           />
         </el-form-item>
       </re-col>

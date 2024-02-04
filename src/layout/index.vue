@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import "animate.css";
 // 引入 src/components/ReIcon/src/offlineIcon.ts 文件中所有使用addIcon添加过的本地图标
 import "@/components/ReIcon/src/offlineIcon";
@@ -184,8 +184,8 @@ const layoutHeader = defineComponent({
       </div>
       <el-scrollbar v-else>
         <el-backtop
-          title="回到顶部"
           target=".main-container .el-scrollbar__wrap"
+          title="回到顶部"
         >
           <backTop />
         </el-backtop>

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { computed, getCurrentInstance, onMounted, ref, watch } from "vue";
 
@@ -190,24 +190,24 @@ onMounted(() => {
     <el-card :body-style="{ padding: '8px' }">
       <div class="flex items-center h-[34px]">
         <p
-          class="flex-1 ml-2 font-bold text-base truncate"
           :title="t('menu.menus')"
+          class="flex-1 ml-2 font-bold text-base truncate"
         >
           {{ t("menu.menus") }}
         </p>
         <el-button
           v-if="hasAuth('create:systemMenu')"
-          size="small"
           class="ml-2"
+          size="small"
           @click="emit('openDialog', 0)"
           >{{ t("buttons.hsadd") }}
         </el-button>
         <el-input
           v-model="searchValue"
-          size="small"
-          class="flex-1"
           :placeholder="t('menu.verifyTitle')"
+          class="flex-1"
           clearable
+          size="small"
         >
           <template #suffix>
             <el-icon class="el-input__icon">
@@ -220,18 +220,18 @@ onMounted(() => {
         </el-input>
         <el-dropdown :hide-on-click="false">
           <IconifyIconOffline
+            :icon="More2Fill"
             class="w-[28px] cursor-pointer"
             width="18px"
-            :icon="More2Fill"
           />
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item>
                 <el-button
                   :class="buttonClass"
+                  :icon="useRenderIcon(isExpand ? ExpandIcon : UnExpandIcon)"
                   link
                   type="primary"
-                  :icon="useRenderIcon(isExpand ? ExpandIcon : UnExpandIcon)"
                   @click="toggleRowExpansionAll(!isExpand)"
                 >
                   {{
@@ -244,9 +244,9 @@ onMounted(() => {
               <el-dropdown-item>
                 <el-button
                   :class="buttonClass"
+                  :icon="useRenderIcon(checkStrictly ? Back : Right)"
                   link
                   type="primary"
-                  :icon="useRenderIcon(checkStrictly ? Back : Right)"
                   @click="checkStrictly = !checkStrictly"
                 >
                   {{
@@ -259,9 +259,9 @@ onMounted(() => {
               <el-dropdown-item>
                 <el-button
                   :class="buttonClass"
+                  :icon="useRenderIcon(Reset)"
                   link
                   type="primary"
-                  :icon="useRenderIcon(Reset)"
                   @click="onReset"
                 >
                   {{ t("buttons.hsreset") }}
@@ -270,9 +270,9 @@ onMounted(() => {
               <el-dropdown-item v-if="hasAuth('list:systemMenu')">
                 <el-button
                   :class="buttonClass"
+                  :icon="useRenderIcon(Refresh)"
                   link
                   type="primary"
-                  :icon="useRenderIcon(Refresh)"
                   @click="emit('getMenuData')"
                 >
                   {{ t("buttons.hsreload") }}
@@ -286,9 +286,9 @@ onMounted(() => {
                   <template #reference>
                     <el-button
                       :class="buttonClass"
+                      :icon="useRenderIcon(Delete)"
                       link
                       type="danger"
-                      :icon="useRenderIcon(Delete)"
                     >
                       {{ t("buttons.hsbatchdelete") }}
                     </el-button>
@@ -300,24 +300,24 @@ onMounted(() => {
         </el-dropdown>
       </div>
     </el-card>
-    <div class="overflow-y-auto" :style="{ height: `calc(100vh - 190px)` }">
+    <div :style="{ height: `calc(100vh - 190px)` }" class="overflow-y-auto">
       <el-tree
         ref="treeRef"
         v-loading="loading"
-        class="pb-5 pt-3"
-        :data="props.treeData"
-        node-key="pk"
-        size="small"
-        :props="defaultProps"
-        show-checkbox
-        :default-expand-all="isExpand"
-        :check-strictly="checkStrictly"
-        :expand-on-click-node="false"
-        :default-expanded-keys="parentIds"
-        :filter-node-method="filterMenuNode"
         :allow-drop="handleDragDrop"
-        highlight-current
+        :check-strictly="checkStrictly"
+        :data="props.treeData"
+        :default-expand-all="isExpand"
+        :default-expanded-keys="parentIds"
         :draggable="hasAuth('rank:systemMenu')"
+        :expand-on-click-node="false"
+        :filter-node-method="filterMenuNode"
+        :props="defaultProps"
+        class="pb-5 pt-3"
+        highlight-current
+        node-key="pk"
+        show-checkbox
+        size="small"
         @node-drag-end="handleDragEnd"
         @node-click="nodeClick"
       >
@@ -349,9 +349,9 @@ onMounted(() => {
                 hasAuth('create:systemMenu') &&
                 data.menu_type !== MenuChoices.PERMISSION
               "
+              :content="t('buttons.hsadd')"
               class="box-item"
               effect="dark"
-              :content="t('buttons.hsadd')"
               placement="top-start"
             >
               <IconifyIconOffline
@@ -378,8 +378,8 @@ onMounted(() => {
             <el-text
               v-if="data.menu_type === MenuChoices.PERMISSION"
               v-copy="data.path"
-              type="success"
               style="margin-left: 10px"
+              type="success"
             >
               {{ data.component }} {{ data.path }}
             </el-text>

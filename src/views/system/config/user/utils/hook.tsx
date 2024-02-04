@@ -163,6 +163,7 @@ export function useUserConfig(tableRef: Ref) {
       });
     }
   }
+
   function onChange({ row, index }) {
     const action =
       row.is_active === false ? t("labels.disable") : t("labels.enable");

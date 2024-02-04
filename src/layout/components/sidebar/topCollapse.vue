@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import MenuFold from "@iconify-icons/ri/menu-fold-fill";
 import MenuUnfold from "@iconify-icons/ri/menu-unfold-fill";
 import { useI18n } from "vue-i18n";
@@ -23,8 +23,8 @@ const { t } = useI18n();
 
 <template>
   <div
-    class="px-3 mr-1 navbar-bg-hover"
     :title="props.isActive ? t('layout.fold') : t('layout.unfold')"
+    class="px-3 mr-1 navbar-bg-hover"
     @click="toggleClick"
   >
     <IconifyIconOffline

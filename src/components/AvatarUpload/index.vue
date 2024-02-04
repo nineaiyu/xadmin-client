@@ -1,4 +1,4 @@
-<script setup lang="tsx">
+<script lang="tsx" setup>
 import { type PropType, ref } from "vue";
 import { formatBytes } from "@pureadmin/utils";
 import ReCropper from "@/components/ReCropper";
@@ -31,6 +31,7 @@ function onCropper({ base64, blob, info }) {
   // console.log(file);
   emit("cropper", { base64, blob, info });
 }
+
 function hidePopover() {
   popoverRef.value.hide();
 }
@@ -50,15 +51,15 @@ defineExpose({ hidePopover });
         <div class="w-[18vw]">
           <ReCropper
             ref="refCropper"
-            :src="props.imgSrc && props.imgSrc !== '' ? props.imgSrc : avatar"
+            :canvasOption="props.canvasOption"
+            :circled="props.circled"
             :errSrc="
               props.errSrc && props.errSrc !== '' ? props.errSrc : avatar
             "
-            :type="props.type"
-            :quality="props.quality"
-            :circled="props.circled"
             :options="props.options"
-            :canvasOption="props.canvasOption"
+            :quality="props.quality"
+            :src="props.imgSrc && props.imgSrc !== '' ? props.imgSrc : avatar"
+            :type="props.type"
             @cropper="onCropper"
             @readied="showPopover = true"
           />
@@ -70,8 +71,8 @@ defineExpose({ hidePopover });
       <div class="flex flex-wrap justify-center items-center text-center">
         <el-image
           v-if="cropperImg"
-          :src="cropperImg"
           :preview-src-list="Array.of(cropperImg)"
+          :src="cropperImg"
           fit="cover"
         />
         <div v-if="infos" class="mt-1">
