@@ -7,7 +7,6 @@ import { IconSelect } from "@/components/ReIcon";
 
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { transformI18n } from "@/plugins/i18n";
-import { SelectOption } from "@/constants/constants";
 import { dirFormRules, menuFormRules, permissionFormRules } from "./utils/rule";
 import { hasAuth } from "@/router/utils";
 import { cloneDeep } from "@pureadmin/utils";
@@ -55,16 +54,18 @@ const ruleFormRef = ref();
 const treeSelectRef = ref();
 const newFormInline = ref(props.formInline);
 
-const ifEnableOptions: SelectOption<boolean>[] = [
-  { label: t("labels.enable"), value: true },
-  { label: t("labels.disable"), value: false }
+const ifEnableOptions: Array<OptionsType> = [
+  {
+    label: t("labels.enable"),
+    tip: t("labels.enable"),
+    value: true
+  },
+  {
+    label: t("labels.disable"),
+    tip: t("labels.disable"),
+    value: false
+  }
 ];
-
-// const MenuTypeOptions: SelectOption<number>[] = [
-//   { label: t("menu.directory"), value: 0 },
-//   { label: t("menu.menu"), value: 1 },
-//   { label: t("menu.permissions"), value: 2 }
-// ];
 
 function getRef() {
   return ruleFormRef.value;
@@ -107,7 +108,7 @@ defineExpose({ getRef });
 
 const getMinHeight = () => {
   if (!newFormInline.value.is_add) {
-    return `calc(100vh - 133px)`;
+    return `calc(100vh - 145px)`;
   }
   return "";
 };
@@ -259,24 +260,26 @@ const menuOptions = computed<Array<OptionsType>>(() => {
               :label="t('menu.cache')"
             />
           </template>
-          <el-radio-group v-model="newFormInline.meta.is_keepalive">
-            <el-radio-button
-              v-for="(item, index) in ifEnableOptions"
-              :key="index"
-              :label="item.value"
-              >{{ item.label }}
-            </el-radio-button>
-          </el-radio-group>
+          <Segmented
+            :modelValue="newFormInline.meta.is_keepalive ? 0 : 1"
+            :options="ifEnableOptions"
+            @change="
+              ({ option: { value } }) => {
+                newFormInline.meta.is_keepalive = value;
+              }
+            "
+          />
         </el-form-item>
         <el-form-item :label="t('menu.showParentMenu')" prop="showParent">
-          <el-radio-group v-model="newFormInline.meta.is_show_parent">
-            <el-radio-button
-              v-for="(item, index) in ifEnableOptions"
-              :key="index"
-              :label="item.value"
-              >{{ item.label }}
-            </el-radio-button>
-          </el-radio-group>
+          <Segmented
+            :modelValue="newFormInline.meta.is_show_parent ? 0 : 1"
+            :options="ifEnableOptions"
+            @change="
+              ({ option: { value } }) => {
+                newFormInline.meta.is_show_parent = value;
+              }
+            "
+          />
         </el-form-item>
       </div>
       <div v-if="newFormInline.menu_type !== MenuChoices.PERMISSION">
@@ -288,14 +291,15 @@ const menuOptions = computed<Array<OptionsType>>(() => {
               :label="t('menu.showLink')"
             />
           </template>
-          <el-radio-group v-model="newFormInline.meta.is_show_menu">
-            <el-radio-button
-              v-for="(item, index) in ifEnableOptions"
-              :key="index"
-              :label="item.value"
-              >{{ item.label }}
-            </el-radio-button>
-          </el-radio-group>
+          <Segmented
+            :modelValue="newFormInline.meta.is_show_menu ? 0 : 1"
+            :options="ifEnableOptions"
+            @change="
+              ({ option: { value } }) => {
+                newFormInline.meta.is_show_menu = value;
+              }
+            "
+          />
         </el-form-item>
 
         <el-form-item :label="t('labels.status')" prop="is_active">
@@ -305,14 +309,15 @@ const menuOptions = computed<Array<OptionsType>>(() => {
               :label="t('labels.status')"
             />
           </template>
-          <el-radio-group v-model="newFormInline.is_active">
-            <el-radio-button
-              v-for="(item, index) in ifEnableOptions"
-              :key="index"
-              :label="item.value"
-              >{{ item.label }}
-            </el-radio-button>
-          </el-radio-group>
+          <Segmented
+            :modelValue="newFormInline.is_active ? 0 : 1"
+            :options="ifEnableOptions"
+            @change="
+              ({ option: { value } }) => {
+                newFormInline.is_active = value;
+              }
+            "
+          />
         </el-form-item>
 
         <el-divider />
@@ -336,14 +341,15 @@ const menuOptions = computed<Array<OptionsType>>(() => {
               :label="t('menu.animation')"
             />
           </template>
-          <el-radio-group v-model="newFormInline.meta.frame_loading">
-            <el-radio-button
-              v-for="(item, index) in ifEnableOptions"
-              :key="index"
-              :label="item.value"
-              >{{ item.label }}
-            </el-radio-button>
-          </el-radio-group>
+          <Segmented
+            :modelValue="newFormInline.meta.frame_loading ? 0 : 1"
+            :options="ifEnableOptions"
+            @change="
+              ({ option: { value } }) => {
+                newFormInline.meta.frame_loading = value;
+              }
+            "
+          />
         </el-form-item>
       </div>
       <div v-if="newFormInline.menu_type === MenuChoices.PERMISSION">
@@ -427,14 +433,15 @@ const menuOptions = computed<Array<OptionsType>>(() => {
               :label="t('labels.status')"
             />
           </template>
-          <el-radio-group v-model="newFormInline.is_active">
-            <el-radio-button
-              v-for="(item, index) in ifEnableOptions"
-              :key="index"
-              :label="item.value"
-              >{{ item.label }}
-            </el-radio-button>
-          </el-radio-group>
+          <Segmented
+            :modelValue="newFormInline.is_active ? 0 : 1"
+            :options="ifEnableOptions"
+            @change="
+              ({ option: { value } }) => {
+                newFormInline.is_active = value;
+              }
+            "
+          />
         </el-form-item>
       </div>
       <el-form-item

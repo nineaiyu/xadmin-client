@@ -109,7 +109,7 @@ defineExpose({ onTreeReset });
 <template>
   <div
     v-loading="props.treeLoading"
-    :style="{ minHeight: `calc(100vh - 133px)` }"
+    :style="{ minHeight: `calc(100vh - 145px)` }"
     class="h-full bg-bg_color overflow-auto"
   >
     <div class="flex items-center h-[34px]">

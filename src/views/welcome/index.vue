@@ -11,9 +11,11 @@ defineOptions({
 <template>
   <h1>
     <TypeIt
-      :cursor="false"
-      :speed="60"
-      :values="[`xAdmin（国际化版本v${version}）`]"
+      :options="{
+        strings: [`xAdmin（国际化版本v${version}）`],
+        cursor: false,
+        speed: 60
+      }"
     />
   </h1>
 </template>

@@ -2,6 +2,7 @@
 import { IconJson } from "@/components/ReIcon/data";
 import { cloneDeep, isAllEmpty } from "@pureadmin/utils";
 import { computed, CSSProperties, ref, watch } from "vue";
+import Search from "@iconify-icons/ri/search-eye-line";
 import { useI18n } from "vue-i18n";
 
 type ParameterCSSProperties = (item?: string) => CSSProperties | undefined;
@@ -125,12 +126,12 @@ watch(
     <el-input v-model="inputValue" disabled>
       <template #append>
         <el-popover
-          :popper-options="{
-            placement: 'auto'
-          }"
           :width="350"
           popper-class="pure-popper"
           trigger="click"
+          :popper-options="{
+            placement: 'auto'
+          }"
           @before-enter="onBeforeEnter"
           @after-leave="onAfterLeave"
         >
@@ -138,15 +139,15 @@ watch(
             <div
               class="w-[40px] h-[32px] cursor-pointer flex justify-center items-center"
             >
-              <IconifyIconOffline v-if="!icon" icon="search" />
+              <IconifyIconOffline v-if="!icon" :icon="Search" />
               <IconifyIconOnline v-else :icon="inputValue" />
             </div>
           </template>
 
           <el-input
             v-model="filterValue"
-            :placeholder="t('buttons.hssearch')"
             class="px-2 pt-2"
+            :placeholder="t('buttons.hssearch')"
             clearable
           />
 
@@ -162,15 +163,15 @@ watch(
                   <li
                     v-for="(item, key) in pageList"
                     :key="key"
-                    :style="iconItemStyle(item)"
                     :title="item"
                     class="icon-item p-2 cursor-pointer mr-2 mt-1 flex justify-center items-center border border-[#e5e7eb]"
+                    :style="iconItemStyle(item)"
                     @click="onChangeIcon(item)"
                   >
                     <IconifyIconOnline
                       :icon="currentActiveType + item"
-                      height="20px"
                       width="20px"
+                      height="20px"
                     />
                   </li>
                 </ul>
@@ -187,19 +188,19 @@ watch(
             class="w-full h-9 flex items-center overflow-auto border-t border-[#e5e7eb]"
           >
             <el-pagination
+              :total="totalPage"
+              class="flex-auto ml-2"
               :current-page="currentPage"
               :page-size="pageSize"
               :pager-count="5"
-              :total="totalPage"
-              background
-              class="flex-auto ml-2"
               layout="pager"
+              background
               small
               @current-change="onCurrentChange"
             />
             <el-button
-              bg
               class="justify-end mr-2 ml-2"
+              bg
               size="small"
               text
               type="danger"

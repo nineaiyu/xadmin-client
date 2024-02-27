@@ -141,12 +141,6 @@ const activeTab = ref("userinfo");
   outline: none;
 }
 
-.search-form {
-  :deep(.el-form-item) {
-    margin-bottom: 12px;
-  }
-}
-
 .main-content {
   margin: 20px 20px 0 !important;
 }

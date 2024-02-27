@@ -201,7 +201,7 @@ const {
         <template v-slot="{ size, dynamicColumns }">
           <pure-table
             ref="tableRef"
-            :adaptiveConfig="{ offsetBottom: 32 }"
+            :adaptiveConfig="{ offsetBottom: 45 }"
             :columns="dynamicColumns"
             :data="dataList"
             :header-cell-style="{
@@ -303,3 +303,18 @@ const {
     </div>
   </div>
 </template>
+<style lang="scss" scoped>
+:deep(.el-table__inner-wrapper::before) {
+  height: 0;
+}
+
+.main-content {
+  margin: 24px 24px 0 !important;
+}
+
+.search-form {
+  :deep(.el-form-item) {
+    margin-bottom: 12px;
+  }
+}
+</style>

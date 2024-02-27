@@ -47,7 +47,7 @@ const {
         />
       </el-col>
       <el-col :lg="11" :md="11" :sm="24" :xl="11" :xs="24">
-        <div :style="{ height: `calc(100vh - 130px)` }" class="overflow-y-auto">
+        <div :style="{ height: `calc(100vh - 145px)` }" class="overflow-y-auto">
           <edit
             v-if="hasAuth('list:systemMenu')"
             :choices-dict="choicesDict"
@@ -64,3 +64,8 @@ const {
     </el-row>
   </div>
 </template>
+<style lang="scss" scoped>
+.main-content {
+  margin: 24px 24px 0 !important;
+}
+</style>

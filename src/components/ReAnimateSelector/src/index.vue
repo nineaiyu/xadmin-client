@@ -2,15 +2,21 @@
 import { animates } from "./animate";
 import { computed, ref } from "vue";
 import { cloneDeep } from "@pureadmin/utils";
-import { useI18n } from "vue-i18n";
+import { $t, transformI18n } from "@/plugins/i18n";
 
 defineOptions({
   name: "ReAnimateSelector"
 });
 
+const props = defineProps({
+  placeholder: {
+    type: String,
+    default: transformI18n($t("menu.verifyTransition"))
+  }
+});
+
 const inputValue = defineModel({ type: String });
 const searchVal = ref();
-const { t } = useI18n();
 const animatesList = ref(animates);
 const copyAnimatesList = cloneDeep(animatesList);
 
@@ -77,7 +83,7 @@ function onMouseleave() {
   <el-select
     :filter-method="filterMethod"
     :model-value="inputValue"
-    :placeholder="t('menu.verifyTransition')"
+    :placeholder="props.placeholder"
     clearable
     filterable
     popper-class="pure-animate-popper"
@@ -116,7 +122,7 @@ function onMouseleave() {
           </ul>
           <el-empty
             v-show="animatesList.length === 0"
-            :description="`${searchVal} ${t('layout.noData')}`"
+            :description="`${searchVal} ${transformI18n($t('layout.noData'))}`"
             :image-size="60"
           />
         </el-scrollbar>
