@@ -1,4 +1,4 @@
-import typeIt from "./src/index";
+import typeIt from "./src/index.tsx";
 import type { TypeItOptions } from "typeit";
 
 const TypeIt = typeIt;
