@@ -2,9 +2,10 @@
 import { hideTextAtIndex } from "@pureadmin/utils";
 import dayjs from "dayjs";
 import { useI18n } from "vue-i18n";
-import { getUserListApi } from "@/api/system/user";
 import { ReTableSearch } from "@/components/ReTableSearch";
 import { ref } from "vue";
+import { hasGlobalAuth } from "@/router/utils";
+import { searchUserListApi } from "@/api/system/search";
 
 const { t } = useI18n();
 
@@ -68,8 +69,9 @@ const searchKeys = [
 
 <template>
   <re-table-search
+    v-if="hasGlobalAuth('list:systemSearchUsers')"
     v-model="selectValue"
-    :getListApi="getUserListApi"
+    :getListApi="searchUserListApi"
     :searchKeys="searchKeys"
     :showColumns="showColumns"
   />

@@ -1,19 +1,28 @@
 <script lang="ts" setup>
 import path from "path";
 import { getConfig } from "@/config";
+import LinkItem from "./linkItem.vue";
 import { menuType } from "../../types";
 import extraIcon from "./extraIcon.vue";
 import { ReText } from "@/components/ReText";
 import { useNav } from "@/layout/hooks/useNav";
 import { transformI18n } from "@/plugins/i18n";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { computed, type CSSProperties, type PropType, ref, toRaw } from "vue";
+import {
+  computed,
+  type CSSProperties,
+  type PropType,
+  ref,
+  toRaw,
+  useAttrs
+} from "vue";
 
 import ArrowUp from "@iconify-icons/ep/arrow-up-bold";
 import EpArrowDown from "@iconify-icons/ep/arrow-down-bold";
 import ArrowLeft from "@iconify-icons/ep/arrow-left-bold";
 import ArrowRight from "@iconify-icons/ep/arrow-right-bold";
 
+const attrs = useAttrs();
 const { layout, isCollapse, tooltipEffect, getDivStyle } = useNav();
 
 const props = defineProps({
@@ -32,6 +41,7 @@ const props = defineProps({
 
 const getNoDropdownStyle = computed((): CSSProperties => {
   return {
+    width: "100%",
     display: "flex",
     alignItems: "center"
   };
@@ -96,66 +106,71 @@ function resolvePath(routePath) {
 </script>
 
 <template>
-  <el-menu-item
+  <link-item
     v-if="
       hasOneShowingChild(props.item.children, props.item) &&
       (!onlyOneChild.children || onlyOneChild.noShowingChildren)
     "
-    :index="resolvePath(onlyOneChild.path)"
-    :class="{ 'submenu-title-noDropdown': !isNest }"
-    :style="getNoDropdownStyle"
+    :to="item"
   >
-    <div
-      v-if="toRaw(props.item.meta.icon)"
-      class="sub-menu-icon"
-      :style="getSubMenuIconStyle"
+    <el-menu-item
+      :class="{ 'submenu-title-noDropdown': !isNest }"
+      :index="resolvePath(onlyOneChild.path)"
+      :style="getNoDropdownStyle"
+      v-bind="attrs"
     >
-      <component
-        :is="
-          useRenderIcon(
-            toRaw(onlyOneChild.meta.icon) ||
-              (props.item.meta && toRaw(props.item.meta.icon))
-          )
-        "
-      />
-    </div>
-    <el-text
-      v-if="
-        (!props.item?.meta.icon &&
-          isCollapse &&
-          layout === 'vertical' &&
-          props.item?.pathList?.length === 1) ||
-        (!onlyOneChild.meta.icon &&
-          isCollapse &&
-          layout === 'mix' &&
-          props.item?.pathList?.length === 2)
-      "
-      class="!px-4 !text-inherit"
-      truncated
-    >
-      {{ transformI18n(onlyOneChild.meta.title) }}
-    </el-text>
-
-    <template #title>
-      <div :style="getDivStyle">
-        <ReText
-          :tippyProps="{
-            offset: [0, -10],
-            theme: tooltipEffect
-          }"
-          class="!text-inherit"
-        >
-          {{ transformI18n(onlyOneChild.meta.title) }}
-        </ReText>
-        <extraIcon :extraIcon="onlyOneChild.meta.extraIcon" />
+      <div
+        v-if="toRaw(props.item.meta.icon)"
+        :style="getSubMenuIconStyle"
+        class="sub-menu-icon"
+      >
+        <component
+          :is="
+            useRenderIcon(
+              toRaw(onlyOneChild.meta.icon) ||
+                (props.item.meta && toRaw(props.item.meta.icon))
+            )
+          "
+        />
       </div>
-    </template>
-  </el-menu-item>
+      <el-text
+        v-if="
+          (!props.item?.meta.icon &&
+            isCollapse &&
+            layout === 'vertical' &&
+            props.item?.pathList?.length === 1) ||
+          (!onlyOneChild.meta.icon &&
+            isCollapse &&
+            layout === 'mix' &&
+            props.item?.pathList?.length === 2)
+        "
+        class="!px-4 !text-inherit"
+        truncated
+      >
+        {{ transformI18n(onlyOneChild.meta.title) }}
+      </el-text>
+
+      <template #title>
+        <div :style="getDivStyle">
+          <ReText
+            :tippyProps="{
+              offset: [0, -10],
+              theme: tooltipEffect
+            }"
+            class="!text-inherit"
+          >
+            {{ transformI18n(onlyOneChild.meta.title) }}
+          </ReText>
+          <extraIcon :extraIcon="onlyOneChild.meta.extraIcon" />
+        </div>
+      </template>
+    </el-menu-item>
+  </link-item>
   <el-sub-menu
     v-else
     ref="subMenu"
-    teleported
     :index="resolvePath(props.item.path)"
+    teleported
     v-bind="expandCloseIcon"
   >
     <template #title>
@@ -198,9 +213,9 @@ function resolvePath(routePath) {
     <sidebar-item
       v-for="child in props.item.children"
       :key="child.path"
+      :base-path="resolvePath(child.path)"
       :is-nest="true"
       :item="child"
-      :base-path="resolvePath(child.path)"
       class="nest-menu"
     />
   </el-sub-menu>

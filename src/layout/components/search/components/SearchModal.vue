@@ -171,7 +171,7 @@ onKeyStroke("ArrowDown", handleDown);
       <template #prefix>
         <IconifyIconOffline
           class="text-primary w-[24px] h-[24px]"
-          icon="search"
+          icon="ri:search-line"
         />
       </template>
     </el-input>

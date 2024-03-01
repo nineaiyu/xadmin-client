@@ -187,7 +187,7 @@ defineExpose({ getRef });
         <el-form-item
           v-if="
             newFormInline.type === FieldKeyChoices.TABLE_USER &&
-            hasGlobalAuth('list:systemUser')
+            hasGlobalAuth('list:systemSearchUsers')
           "
           :label="t('user.userId')"
           prop="notice_user"
@@ -198,7 +198,7 @@ defineExpose({ getRef });
         <el-form-item
           v-if="
             newFormInline.type === FieldKeyChoices.TABLE_DEPT &&
-            hasGlobalAuth('list:systemDept')
+            hasGlobalAuth('list:systemSearchDepts')
           "
           :label="t('dept.dept')"
           prop="notice_dept"
@@ -208,7 +208,7 @@ defineExpose({ getRef });
         <el-form-item
           v-if="
             newFormInline.type === FieldKeyChoices.TABLE_ROLE &&
-            hasGlobalAuth('list:systemRole')
+            hasGlobalAuth('list:systemSearchRoles')
           "
           :label="t('role.role')"
           prop="notice_role"
@@ -219,7 +219,7 @@ defineExpose({ getRef });
         <el-form-item
           v-if="
             newFormInline.type === FieldKeyChoices.TABLE_MENU &&
-            hasGlobalAuth('list:systemMenu')
+            hasGlobalAuth('list:systemSearchMenus')
           "
           :label="t('menu.menus')"
           prop="notice_role"

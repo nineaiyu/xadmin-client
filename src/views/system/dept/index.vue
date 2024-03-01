@@ -144,7 +144,7 @@ const {
 
         <el-form-item>
           <el-button
-            :icon="useRenderIcon('search')"
+            :icon="useRenderIcon('ri:search-line')"
             :loading="loading"
             type="primary"
             @click="onSearch"

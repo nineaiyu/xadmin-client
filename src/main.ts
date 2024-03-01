@@ -22,7 +22,7 @@ import "element-plus/dist/index.css";
 import "./assets/iconfont/iconfont.js";
 import "./assets/iconfont/iconfont.css";
 
-import { addPreventDefault } from "@/utils/preventDefault";
+// import { addPreventDefault } from "@/utils/preventDefault";
 // 自定义指令
 import * as directives from "@/directives";
 // 全局注册`@iconify/vue`图标库
@@ -54,7 +54,7 @@ app.use(VueTippy, {
   defaultProps: { animation: "perspective" }
 });
 
-addPreventDefault();
+// addPreventDefault();
 
 getPlatformConfig(app).then(async config => {
   setupStore(app);

@@ -101,7 +101,7 @@ const {
       </el-form-item>
       <el-form-item>
         <el-button
-          :icon="useRenderIcon('search')"
+          :icon="useRenderIcon('ri:search-line')"
           :loading="loading"
           type="primary"
           @click="onSearch(true)"
@@ -159,6 +159,7 @@ const {
       <template v-slot="{ size, dynamicColumns }">
         <pure-table
           ref="tableRef"
+          :adaptiveConfig="{ offsetBottom: 108 }"
           :columns="dynamicColumns"
           :data="dataList"
           :header-cell-style="{
@@ -170,7 +171,6 @@ const {
           :paginationSmall="size === 'small'"
           :size="size"
           adaptive
-          :adaptiveConfig="{ offsetBottom: 108 }"
           align-whole="center"
           border
           row-key="pk"

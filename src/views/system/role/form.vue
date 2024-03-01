@@ -226,7 +226,7 @@ function onReset() {
             <el-icon class="el-input__icon">
               <IconifyIconOffline
                 v-show="searchValue.length === 0"
-                icon="search"
+                icon="ri:search-line"
               />
             </el-icon>
           </template>
@@ -332,7 +332,7 @@ function onReset() {
                 <component :is="useRenderIcon(data?.meta?.icon)" class="m-1" />
                 <template v-if="data.model">
                   {{ `${transformI18n(data?.meta?.title)}` }}
-                  <component :is="useRenderIcon('ep:reading')" class="m-1" />
+                  <!--                  <component :is="useRenderIcon('ep:reading')" class="m-1" />-->
                 </template>
                 <template v-else>
                   {{

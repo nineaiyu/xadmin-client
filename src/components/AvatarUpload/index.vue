@@ -1,5 +1,5 @@
 <script lang="tsx" setup>
-import { type PropType, ref } from "vue";
+import { ref } from "vue";
 import { formatBytes } from "@pureadmin/utils";
 import ReCropper from "@/components/ReCropper";
 import avatar from "./avatar.png";

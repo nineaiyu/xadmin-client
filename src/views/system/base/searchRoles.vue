@@ -2,8 +2,9 @@
 import dayjs from "dayjs";
 import { useI18n } from "vue-i18n";
 import { ReTableSearch } from "@/components/ReTableSearch";
-import { getRoleListApi } from "@/api/system/role";
 import { ref } from "vue";
+import { hasGlobalAuth } from "@/router/utils";
+import { searchRoleListApi } from "@/api/system/search";
 
 const { t } = useI18n();
 
@@ -51,8 +52,9 @@ const searchKeys = [
 
 <template>
   <re-table-search
+    v-if="hasGlobalAuth('list:systemSearchRoles')"
     v-model="selectValue"
-    :getListApi="getRoleListApi"
+    :getListApi="searchRoleListApi"
     :searchKeys="searchKeys"
     :showColumns="showColumns"
   />

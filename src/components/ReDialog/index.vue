@@ -92,8 +92,8 @@ function handleClose(
     :fullscreen="fullscreen ? true : options?.fullscreen ? true : false"
     class="pure-dialog"
     v-bind="options"
-    @closed="handleClose(options, index)"
     @closeAutoFocus="eventsCallBack('closeAutoFocus', options, index)"
+    @closed="handleClose(options, index)"
     @openAutoFocus="eventsCallBack('openAutoFocus', options, index)"
     @opened="eventsCallBack('open', options, index)"
   >

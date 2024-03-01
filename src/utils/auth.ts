@@ -64,21 +64,10 @@ export function setToken(data: TokenInfo) {
 }
 
 export function setUserInfo(data: UserInfo) {
-  function setUserKey(username: string, roles: Array<number>) {
-    useUserStoreHook().SET_USERNAME(username);
-    useUserStoreHook().SET_AVATAR(data.avatar);
-    useUserStoreHook().SET_ROLES(roles);
-    storageLocal().setItem(userKey, data);
-  }
-
-  if (data.username && data.roles) {
-    const { username, roles } = data;
-    setUserKey(username, roles);
-  } else {
-    const username = storageLocal().getItem<UserInfo>(userKey)?.username ?? "";
-    const roles = storageLocal().getItem<UserInfo>(userKey)?.roles ?? [];
-    setUserKey(username, roles);
-  }
+  useUserStoreHook().SET_USERNAME(data.username);
+  useUserStoreHook().SET_AVATAR(data.avatar);
+  useUserStoreHook().SET_ROLES(data.roles_info);
+  storageLocal().setItem(userKey, data);
 }
 
 /** 删除`token`以及key值为`user-info`的session信息 */

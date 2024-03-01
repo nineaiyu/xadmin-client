@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { h, onMounted, ref, useSlots } from "vue";
-import { useTippy, type TippyOptions } from "vue-tippy";
+import { type TippyOptions, useTippy } from "vue-tippy";
 
 const props = defineProps({
   // 行数
@@ -49,12 +49,12 @@ onMounted(() => {
 
 <template>
   <el-text
+    ref="textRef"
     v-bind="{
       truncated: !lineClamp,
       lineClamp,
       ...$attrs
     }"
-    ref="textRef"
     @mouseover.self="handleHover"
   >
     <slot />

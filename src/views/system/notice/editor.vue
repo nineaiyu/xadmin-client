@@ -230,7 +230,7 @@ const loading = ref(false);
             <el-form-item
               v-if="
                 newFormInline.notice_type === NoticeChoices.USER &&
-                hasGlobalAuth('list:systemUser')
+                hasGlobalAuth('list:systemSearchUsers')
               "
               :label="t('user.userId')"
               prop="notice_user"
@@ -246,7 +246,7 @@ const loading = ref(false);
             <el-form-item
               v-if="
                 newFormInline.notice_type === NoticeChoices.DEPT &&
-                hasGlobalAuth('list:systemDept')
+                hasGlobalAuth('list:systemSearchDepts')
               "
               :label="t('dept.dept')"
               prop="notice_dept"
@@ -262,7 +262,7 @@ const loading = ref(false);
             <el-form-item
               v-if="
                 newFormInline.notice_type === NoticeChoices.ROLE &&
-                hasGlobalAuth('list:systemRole')
+                hasGlobalAuth('list:systemSearchRoles')
               "
               :label="t('role.role')"
               prop="notice_role"

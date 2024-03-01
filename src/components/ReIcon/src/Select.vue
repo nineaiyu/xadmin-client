@@ -126,12 +126,12 @@ watch(
     <el-input v-model="inputValue" disabled>
       <template #append>
         <el-popover
-          :width="350"
-          popper-class="pure-popper"
-          trigger="click"
           :popper-options="{
             placement: 'auto'
           }"
+          :width="350"
+          popper-class="pure-popper"
+          trigger="click"
           @before-enter="onBeforeEnter"
           @after-leave="onAfterLeave"
         >
@@ -146,8 +146,8 @@ watch(
 
           <el-input
             v-model="filterValue"
-            class="px-2 pt-2"
             :placeholder="t('buttons.hssearch')"
+            class="px-2 pt-2"
             clearable
           />
 
@@ -163,15 +163,15 @@ watch(
                   <li
                     v-for="(item, key) in pageList"
                     :key="key"
+                    :style="iconItemStyle(item)"
                     :title="item"
                     class="icon-item p-2 cursor-pointer mr-2 mt-1 flex justify-center items-center border border-[#e5e7eb]"
-                    :style="iconItemStyle(item)"
                     @click="onChangeIcon(item)"
                   >
                     <IconifyIconOnline
                       :icon="currentActiveType + item"
-                      width="20px"
                       height="20px"
+                      width="20px"
                     />
                   </li>
                 </ul>
@@ -188,19 +188,19 @@ watch(
             class="w-full h-9 flex items-center overflow-auto border-t border-[#e5e7eb]"
           >
             <el-pagination
-              :total="totalPage"
-              class="flex-auto ml-2"
               :current-page="currentPage"
               :page-size="pageSize"
               :pager-count="5"
-              layout="pager"
+              :total="totalPage"
               background
+              class="flex-auto ml-2"
+              layout="pager"
               small
               @current-change="onCurrentChange"
             />
             <el-button
-              class="justify-end mr-2 ml-2"
               bg
+              class="justify-end mr-2 ml-2"
               size="small"
               text
               type="danger"

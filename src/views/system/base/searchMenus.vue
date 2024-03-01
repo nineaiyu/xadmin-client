@@ -2,9 +2,10 @@
 import dayjs from "dayjs";
 import { useI18n } from "vue-i18n";
 import { ReTableSearch } from "@/components/ReTableSearch";
-import { getMenuListApi } from "@/api/system/menu";
 import { transformI18n } from "@/plugins/i18n";
 import { ref } from "vue";
+import { hasGlobalAuth } from "@/router/utils";
+import { searchMenuListApi } from "@/api/system/search";
 
 const { t } = useI18n();
 
@@ -82,8 +83,9 @@ const sortOptions = [
 
 <template>
   <re-table-search
+    v-if="hasGlobalAuth('list:systemSearchMenus')"
     v-model="selectValue"
-    :getListApi="getMenuListApi"
+    :getListApi="searchMenuListApi"
     :isTree="true"
     :searchKeys="searchKeys"
     :showColumns="showColumns"
