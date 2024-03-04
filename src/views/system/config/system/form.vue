@@ -65,7 +65,7 @@ defineExpose({ getRef });
           :disabled="
             !props.isAdd && props.showColumns.indexOf('is_active') === -1
           "
-          :label="item.value"
+          :value="item.value"
           >{{ item.label }}
         </el-radio-button>
       </el-radio-group>

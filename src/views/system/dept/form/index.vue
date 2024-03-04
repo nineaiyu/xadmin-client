@@ -121,7 +121,7 @@ defineExpose({ getRef });
               :disabled="
                 !props.isAdd && props.showColumns.indexOf('auto_bind') === -1
               "
-              :label="item.value"
+              :value="item.value"
               >{{ item.label }}
             </el-radio-button>
           </el-radio-group>

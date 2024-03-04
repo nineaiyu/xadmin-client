@@ -432,7 +432,6 @@ export default defineComponent({
         interactive: true,
         appendTo: "parent",
         // hideOnClick: false,
-        animation: "perspective",
         placement: "bottom-end"
       });
 

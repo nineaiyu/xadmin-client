@@ -199,7 +199,7 @@ function onReset() {
         <el-radio-button
           v-for="item in ifEnableOptions"
           :key="item.label"
-          :label="item.value"
+          :value="item.value"
           >{{ item.label }}
         </el-radio-button>
       </el-radio-group>

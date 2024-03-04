@@ -96,6 +96,7 @@ declare global {
     CachingAsyncRoutes?: boolean;
     TooltipEffect?: Effect;
     ResponsiveStorageNameSpace?: string;
+    MenuSearchHistory?: number;
   }
 
   /**
@@ -123,6 +124,7 @@ declare global {
     overallStyle?: string;
     showLogo?: boolean;
     showModel?: string;
+    menuSearchHistory?: number;
     username?: string;
   }
 

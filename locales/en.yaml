@@ -70,6 +70,9 @@ layout:
   autoTip: Synchronous time, interface with the morning and dusk natural echo
   smartTip: Smart labels for fun and shine
   cardTip: Card labels for efficient browsing
+  favorite: Favorite
+  dragSort: (Drag the sorting)
+  searchHistory: Search History
 
 error:
   error403: Sorry, you are not authorized to access this page

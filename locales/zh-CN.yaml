@@ -70,6 +70,9 @@ layout:
   autoTip: 同步时光，界面随晨昏自然呼应
   smartTip: 灵动标签，添趣生辉
   cardTip: 卡片标签，高效浏览
+  favorite: 收藏
+  dragSort: （可拖拽排序）
+  searchHistory: 搜索历史
 
 error:
   error403: 抱歉，你无权访问该页面
