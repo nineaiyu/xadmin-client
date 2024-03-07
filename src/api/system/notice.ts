@@ -79,37 +79,3 @@ export const manyDeleteNoticeReadApi = (data?: object) => {
     }
   );
 };
-
-// 自己未读消息通知
-export const getUserNoticeUnreadListApi = (data?: object) => {
-  return http.request<Result>("get", "/api/system/notice/unread", {
-    params: data
-  });
-};
-
-export const updateUserNoticeReadApi = (data?: object) => {
-  return http.request<Result>("put", "/api/system/notice/read", {
-    data: data
-  });
-};
-
-export const updateUserNoticeReadAllApi = (data?: object) => {
-  return http.request<Result>("put", "/api/system/notice/read_all", {
-    data: data
-  });
-};
-
-export const getUserNoticeListApi = (data?: object) => {
-  return http.request<Result>("get", "/api/system/notice", {
-    params: data
-  });
-};
-
-export const deleteUserNoticeApi = (pk?: number) => {
-  return http.request<Result>("delete", `/api/system/notice/${pk}`);
-};
-export const manyDeleteUserNoticeApi = (data?: object) => {
-  return http.request<Result>("delete", `/api/system/notice/many-delete`, {
-    params: data
-  });
-};

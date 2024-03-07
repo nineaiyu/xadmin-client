@@ -2,7 +2,7 @@
 import { onMounted, ref } from "vue";
 import NoticeList from "./noticeList.vue";
 import Bell from "@iconify-icons/ep/bell";
-import { getUserNoticeUnreadListApi } from "@/api/system/notice";
+import { getUserNoticeUnreadListApi } from "@/api/user/notice";
 import { TabItem } from "@/layout/components/notice/data";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";

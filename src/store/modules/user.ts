@@ -22,7 +22,7 @@ import {
   userKey
 } from "@/utils/auth";
 import { message } from "@/utils/message";
-import { getUserInfoApi } from "@/api/userinfo";
+import { getUserInfoApi } from "@/api/user/userinfo";
 
 export const useUserStore = defineStore({
   id: "pure-user",

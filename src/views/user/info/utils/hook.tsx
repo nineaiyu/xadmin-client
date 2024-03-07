@@ -5,7 +5,7 @@ import {
   updateUserInfoApi,
   updateUserInfoPasswordApi,
   uploadUserInfoAvatarApi
-} from "@/api/userinfo";
+} from "@/api/user/userinfo";
 import { onMounted, reactive, ref } from "vue";
 import { useUserStoreHook } from "@/store/modules/user";
 import { useI18n } from "vue-i18n";

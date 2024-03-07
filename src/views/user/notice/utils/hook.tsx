@@ -6,7 +6,7 @@ import {
   getUserNoticeListApi,
   updateUserNoticeReadAllApi,
   updateUserNoticeReadApi
-} from "@/api/system/notice";
+} from "@/api/user/notice";
 import { useRoute } from "vue-router";
 import type { FormItemProps } from "./types";
 import showForm from "../show.vue";

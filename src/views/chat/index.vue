@@ -13,9 +13,8 @@ const chatMsg = ref("");
 const scroller = ref();
 const userinfo = reactive({
   username: "",
-  uid: ""
+  pk: ""
 });
-const username = ref("");
 
 const scrollToBottom = () => {
   scroller.value?.scrollToBottom();
@@ -26,10 +25,10 @@ const onMessage = (msg_event: { data: string }) => {
   if (json_data.time) {
     switch (json_data.action) {
       case "userinfo":
-        userinfo.username = json_data.data.username;
-        userinfo.uid = json_data.data.uid;
+        userinfo.username = json_data.data?.userinfo?.username;
+        userinfo.pk = json_data.data.pk;
         break;
-      case "message":
+      case "chat_message":
         msgData.value.push(json_data.data);
         scrollToBottom();
         break;
@@ -44,7 +43,7 @@ const onMessage = (msg_event: { data: string }) => {
 
 const chatHandle = () => {
   if (chatMsg.value) {
-    socket.send({ action: "message", data: { text: chatMsg.value } });
+    socket.send({ action: "chat_message", data: { text: chatMsg.value } });
     chatMsg.value = "";
   } else {
     message("消息不存在", { type: "warning" });
@@ -52,16 +51,16 @@ const chatHandle = () => {
 };
 const enter = ref(false);
 const enterRoomHandle = () => {
-  if (username.value) {
-    socket.init(username.value, onMessage, null, () => {
-      message("连接建立成功", { type: "success" });
-      enter.value = true;
-      socket.send({ action: "userinfo", data: {} });
-    });
-  }
+  socket.init("system_default_websocket", onMessage, null, () => {
+    message("连接建立成功", { type: "success" });
+    enter.value = true;
+    socket.send({ action: "userinfo", data: {} });
+  });
 };
 
-onMounted(async () => {});
+onMounted(() => {
+  enterRoomHandle();
+});
 
 onUnmounted(() => {
   if (socket && socket.socket_open) {
@@ -82,7 +81,7 @@ const filteredItems = computed(() => {
       <el-card class="mb-4 box-card" shadow="never">
         <template #header>
           <div class="card-header">
-            <span class="font-medium">聊天室 {{ username }}</span>
+            <span class="font-medium">公共聊天室</span>
           </div>
         </template>
         <div class="h-[500px]">
@@ -97,12 +96,12 @@ const filteredItems = computed(() => {
             <template #default="{ item, index, active }">
               <DynamicScrollerItem
                 :active="active"
-                :class="[userinfo.uid === item.uid ? 'message-me' : 'message']"
+                :class="[userinfo.pk === item.pk ? 'message-me' : 'message']"
                 :data-active="active"
                 :data-index="index"
                 :item="item"
                 :size-dependencies="[item.text]"
-                :title="`${index} ${item.username}  ${item.uid}`"
+                :title="`${index} ${item.username}  ${item.pk}`"
               >
                 <div class="flex items-center">
                   <el-text type="info">{{ item.username }}：</el-text>
@@ -115,17 +114,7 @@ const filteredItems = computed(() => {
       </el-card>
       <el-card>
         <el-form label-width="100">
-          <el-form-item v-if="!enter" label="昵称">
-            <div class="w-[60%]">
-              <el-input
-                v-model="username"
-                placeholder="请输入昵称"
-                @keyup.enter="enterRoomHandle"
-              />
-            </div>
-            <el-button @click="enterRoomHandle">加入房间</el-button>
-          </el-form-item>
-          <el-form-item v-else label="请输入：">
+          <el-form-item label="请输入：">
             <div class="w-[60%]">
               <el-input
                 v-model="chatMsg"

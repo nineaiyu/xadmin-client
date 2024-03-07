@@ -72,28 +72,30 @@ Object.keys(devDependencies).forEach(key => {
           <span class="font-medium">生产环境依赖</span>
         </div>
       </template>
-      <el-descriptions :column="6" border size="small">
-        <el-descriptions-item
-          v-for="(item, index) in schema"
-          :key="index"
-          :label="item.label"
-          :label-class-name="getMainLabel(item.label)"
-          class-name="pure-version"
-          label-align="right"
-        >
-          <a
-            :href="'https://www.npmjs.com/package/' + item.label"
-            target="_blank"
+      <el-scrollbar>
+        <el-descriptions :column="6" border size="small">
+          <el-descriptions-item
+            v-for="(item, index) in schema"
+            :key="index"
+            :label="item.label"
+            :label-class-name="getMainLabel(item.label)"
+            class-name="pure-version"
+            label-align="right"
           >
-            <span
-              :class="getMainLabel(item.label)"
-              style="color: var(--el-color-primary)"
+            <a
+              :href="'https://www.npmjs.com/package/' + item.label"
+              target="_blank"
             >
-              {{ item.field }}
-            </span>
-          </a>
-        </el-descriptions-item>
-      </el-descriptions>
+              <span
+                :class="getMainLabel(item.label)"
+                style="color: var(--el-color-primary)"
+              >
+                {{ item.field }}
+              </span>
+            </a>
+          </el-descriptions-item>
+        </el-descriptions>
+      </el-scrollbar>
     </el-card>
 
     <el-card class="m-4 box-card" shadow="never">
@@ -102,28 +104,30 @@ Object.keys(devDependencies).forEach(key => {
           <span class="font-medium">开发环境依赖</span>
         </div>
       </template>
-      <el-descriptions :column="5" border size="small">
-        <el-descriptions-item
-          v-for="(item, index) in devSchema"
-          :key="index"
-          :label="item.label"
-          :label-class-name="getMainLabel(item.label)"
-          class-name="pure-version"
-          label-align="right"
-        >
-          <a
-            :href="'https://www.npmjs.com/package/' + item.label"
-            target="_blank"
+      <el-scrollbar>
+        <el-descriptions :column="5" border size="small">
+          <el-descriptions-item
+            v-for="(item, index) in devSchema"
+            :key="index"
+            :label="item.label"
+            :label-class-name="getMainLabel(item.label)"
+            class-name="pure-version"
+            label-align="right"
           >
-            <span
-              :class="getMainLabel(item.label)"
-              style="color: var(--el-color-primary)"
+            <a
+              :href="'https://www.npmjs.com/package/' + item.label"
+              target="_blank"
             >
-              {{ item.field }}
-            </span>
-          </a>
-        </el-descriptions-item>
-      </el-descriptions>
+              <span
+                :class="getMainLabel(item.label)"
+                style="color: var(--el-color-primary)"
+              >
+                {{ item.field }}
+              </span>
+            </a>
+          </el-descriptions-item>
+        </el-descriptions>
+      </el-scrollbar>
     </el-card>
   </div>
 </template>

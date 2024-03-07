@@ -29,6 +29,7 @@ html.dark {
     background: #020409 !important;
   }
 
+  .logic-flow-view,
   .wangeditor {
     filter: invert(0.9) hue-rotate(180deg);
   }
@@ -66,15 +67,8 @@ html.dark {
     }
   }
 
-  /* element-plus */
-  .el-table__cell {
-    background: var(--el-bg-color);
-  }
-
   .el-card {
     --el-card-bg-color: var(--el-bg-color);
-
-    // border: none !important;
   }
 
   .el-backtop {
