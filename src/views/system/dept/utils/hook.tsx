@@ -350,7 +350,11 @@ export function useDept(tableRef: Ref) {
 
   async function onSearch() {
     loading.value = true;
-    const { data, choices_dict } = await getDeptListApi(toRaw(form));
+    const { data, choices_dict } = await getDeptListApi(toRaw(form)).catch(
+      () => {
+        loading.value = false;
+      }
+    );
     formatColumns(data?.results, columns, showColumns);
     choicesDict.value = choices_dict;
     dataList.value = handleTree(data.results);

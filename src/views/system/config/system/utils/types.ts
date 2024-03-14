@@ -6,6 +6,8 @@ interface FormItemProps {
   cache_value?: string;
   description?: string;
   is_active?: boolean;
+  inherit?: boolean;
+  access?: boolean;
 }
 
 interface FormProps {

@@ -88,7 +88,9 @@ export function useColumns(
       pagination.pageSize = form.size = isTree ? 1000 : 10;
     }
     loading.value = true;
-    const { data } = await getListApi(toRaw(form));
+    const { data } = await getListApi(toRaw(form)).catch(() => {
+      loading.value = false;
+    });
     if (isTree) {
       treeDataList.value = handleTree(data.results);
     }

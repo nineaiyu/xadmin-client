@@ -225,7 +225,11 @@ export function useDataPermission(tableRef: Ref) {
       pagination.pageSize = form.size = 10;
     }
     loading.value = true;
-    const { data, choices_dict } = await getDataPermissionListApi(toRaw(form));
+    const { data, choices_dict } = await getDataPermissionListApi(
+      toRaw(form)
+    ).catch(() => {
+      loading.value = false;
+    });
     formatColumns(data?.results, columns, showColumns);
     dataList.value = data.results;
     pagination.total = data.total;

@@ -23,6 +23,7 @@ import {
 } from "@/utils/auth";
 import { message } from "@/utils/message";
 import { getUserInfoApi } from "@/api/user/userinfo";
+import { getUserSiteConfigApi } from "@/api/config";
 
 export const useUserStore = defineStore({
   id: "pure-user",
@@ -99,6 +100,21 @@ export const useUserStore = defineStore({
           .then(res => {
             if (res.code === 1000) {
               setUserInfo(res.data);
+              resolve(res);
+            } else {
+              reject(res);
+            }
+          })
+          .catch(error => {
+            reject(error);
+          });
+      });
+    },
+    async getUserConfig() {
+      return new Promise<UserInfoResult>((resolve, reject) => {
+        getUserSiteConfigApi()
+          .then(res => {
+            if (res.code === 1000) {
               resolve(res);
             } else {
               reject(res);

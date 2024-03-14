@@ -302,20 +302,24 @@ export function useNoticeRead(tableRef: Ref) {
       pagination.pageSize = form.size = 10;
     }
     loading.value = true;
-    getNoticeReadListApi(toRaw(form)).then(res => {
-      if (res.code === 1000 && res.data) {
-        formatColumns(res?.data?.results, columns, showColumns);
-        dataList.value = res.data.results;
-        pagination.total = res.data.total;
-        noticeChoices.value = res.notice_type_choices;
-        levelChoices.value = res.level_choices;
-      } else {
-        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-      }
-      delay(500).then(() => {
+    getNoticeReadListApi(toRaw(form))
+      .then(res => {
+        if (res.code === 1000 && res.data) {
+          formatColumns(res?.data?.results, columns, showColumns);
+          dataList.value = res.data.results;
+          pagination.total = res.data.total;
+          noticeChoices.value = res.notice_type_choices;
+          levelChoices.value = res.level_choices;
+        } else {
+          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+        }
+        delay(500).then(() => {
+          loading.value = false;
+        });
+      })
+      .catch(() => {
         loading.value = false;
       });
-    });
   }
 
   const resetForm = formEl => {

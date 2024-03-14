@@ -26,6 +26,7 @@ export function useOperationLog(tableRef: Ref) {
     }
   ];
   const form = reactive({
+    loginTime: "",
     ipaddress: "",
     system: "",
     browser: "",
@@ -196,7 +197,13 @@ export function useOperationLog(tableRef: Ref) {
       pagination.pageSize = form.size = 10;
     }
     loading.value = true;
-    const { data } = await getOperationLogListApi(toRaw(form));
+    if (form.loginTime && form.loginTime.length === 2) {
+      form.created_time_after = form.loginTime[0];
+      form.created_time_before = form.loginTime[1];
+    }
+    const { data } = await getOperationLogListApi(toRaw(form)).catch(() => {
+      loading.value = false;
+    });
     formatColumns(data?.results, columns, showColumns);
     dataList.value = data.results;
     pagination.total = data.total;

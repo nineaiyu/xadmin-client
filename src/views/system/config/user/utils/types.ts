@@ -8,6 +8,7 @@ interface FormItemProps {
   cache_value?: string;
   description?: string;
   is_active?: boolean;
+  access?: boolean;
   is_add?: boolean;
   config_user?: number[];
 }

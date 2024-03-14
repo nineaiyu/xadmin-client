@@ -73,6 +73,11 @@ layout:
   favorite: 收藏
   dragSort: （可拖拽排序）
   searchHistory: 搜索历史
+  pageWidth: 页宽
+  fixed: 固定
+  fixedTip: 紧凑页面，轻松找到所需信息
+  customization: 自定义
+  customTip: 最小1280、最大1600
 
 error:
   error403: 抱歉，你无权访问该页面
@@ -107,6 +112,8 @@ labels:
   cancel: 取消
   descending: 降序
   ascending: 升序
+  success: 成功
+  failed: 失败
 
 results:
   success: 执行成功
@@ -359,6 +366,10 @@ configSystem:
   cacheValue: 缓存数值
   invalidCache: 缓存失效
   confirmInvalid: 确定缓存失效该数据么？
+  access: 接口访问
+  accessTip: 允许API接口访问该配置
+  inherit: 用户继承
+  inheritTip: 允许用户继承该配置
 
 configUser:
   configUser: 用户配置
@@ -441,3 +452,14 @@ login:
   passwordSureReg: 请输入确认密码
   passwordDifferentReg: 两次密码不一致!
   passwordUpdateReg: 修改密码成功
+
+welcome:
+  operateLog: 操作日志
+  userAnalysis: 用户分析概览
+  registerUser: 注册人数
+  activeUser: 活跃人数
+  today: 当天
+  days: 天内
+  requestNum: 当天接口请求次数
+  userNum: 用户人数
+  loginTimes: 登录次数

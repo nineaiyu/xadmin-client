@@ -33,7 +33,7 @@ export default defineComponent({
     const { setWatermark } = useWatermark();
     nextTick(() => {
       setWatermark("xadmin", {
-        globalAlpha: 0.25, // 值越低越透明
+        globalAlpha: 0.1, // 值越低越透明
         gradient: [
           { value: 0, color: "magenta" },
           { value: 0.5, color: "blue" },

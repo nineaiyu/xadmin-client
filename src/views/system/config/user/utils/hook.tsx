@@ -49,7 +49,7 @@ export function useUserConfig(tableRef: Ref) {
   const dataList = ref([]);
   const loading = ref(true);
   const switchLoadMap = ref({});
-  const { switchStyle } = usePublicHooks();
+  const { switchStyle, tagStyle } = usePublicHooks();
   const showColumns = ref([]);
   const pagination = reactive<PaginationProps>({
     total: 0,
@@ -124,6 +124,16 @@ export function useUserConfig(tableRef: Ref) {
           style={switchStyle.value}
           onChange={() => onChange(scope as any)}
         />
+      )
+    },
+    {
+      label: t("configSystem.access"),
+      prop: "access",
+      minWidth: 100,
+      cellRenderer: ({ row, props }) => (
+        <el-tag size={props.size} style={tagStyle.value(row.access)}>
+          {row.access ? t("labels.enable") : t("labels.disable")}
+        </el-tag>
       )
     },
     {
@@ -268,7 +278,9 @@ export function useUserConfig(tableRef: Ref) {
       pagination.pageSize = form.size = 10;
     }
     loading.value = true;
-    const { data } = await getUserConfigListApi(toRaw(form));
+    const { data } = await getUserConfigListApi(toRaw(form)).catch(() => {
+      loading.value = false;
+    });
     formatColumns(data?.results, columns, showColumns);
     dataList.value = data.results;
     pagination.total = data.total;
@@ -298,6 +310,7 @@ export function useUserConfig(tableRef: Ref) {
           owner: row?.owner ?? "",
           config_user: row?.owner ? [row?.owner] : [],
           is_active: row?.is_active ?? true,
+          access: row?.access ?? false,
           description: row?.description ?? ""
         },
         showColumns: showColumns.value,

@@ -27,13 +27,23 @@ const getConfig = (key?: string): PlatformConfigs => {
 };
 
 /** 获取项目动态全局配置 */
-export const getPlatformConfig = async (app: App): Promise<undefined> => {
+export const getPlatformConfig = async (
+  app: App,
+  url = null
+): Promise<undefined> => {
   app.config.globalProperties.$config = getConfig();
   return axios({
     method: "get",
-    url: `${VITE_PUBLIC_PATH}platform-config.json`
+    // url: `${VITE_PUBLIC_PATH}platform-config.json`
+    url: url ? url : `/api/system/configs/WEB_SITE_CONFIG`
   })
-    .then(({ data: config }) => {
+    .then(async ({ data: config }) => {
+      if (!config.Version && !config.ResponsiveStorageNameSpace) {
+        return await getPlatformConfig(
+          app,
+          `${VITE_PUBLIC_PATH}platform-config.json`
+        );
+      }
       let $config = app.config.globalProperties.$config;
       // 自动注入项目配置
       if (app && $config && typeof config === "object") {
@@ -44,8 +54,15 @@ export const getPlatformConfig = async (app: App): Promise<undefined> => {
       }
       return $config;
     })
-    .catch(() => {
-      throw "请在public文件夹下添加platform-config.json配置文件";
+    .catch(async () => {
+      if (url === null) {
+        return await getPlatformConfig(
+          app,
+          `${VITE_PUBLIC_PATH}platform-config.json`
+        );
+      } else {
+        throw "请在public文件夹下添加platform-config.json配置文件";
+      }
     });
 };
 

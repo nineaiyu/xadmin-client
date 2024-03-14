@@ -6,6 +6,7 @@ export type Result = {
   mode_choices?: any[];
   level_choices?: any[];
   notice_type_choices?: any[];
+  results?: Array<any>;
   data?: {
     /** 列表数据 */
     results: Array<any>;

@@ -45,7 +45,7 @@ export function useSystemConfig(tableRef: Ref) {
   const dataList = ref([]);
   const loading = ref(true);
   const switchLoadMap = ref({});
-  const { switchStyle } = usePublicHooks();
+  const { switchStyle, tagStyle } = usePublicHooks();
   const showColumns = ref([]);
   const pagination = reactive<PaginationProps>({
     total: 0,
@@ -104,6 +104,26 @@ export function useSystemConfig(tableRef: Ref) {
           style={switchStyle.value}
           onChange={() => onChange(scope as any)}
         />
+      )
+    },
+    {
+      label: t("configSystem.access"),
+      prop: "access",
+      minWidth: 100,
+      cellRenderer: ({ row, props }) => (
+        <el-tag size={props.size} style={tagStyle.value(row.access)}>
+          {row.access ? t("labels.enable") : t("labels.disable")}
+        </el-tag>
+      )
+    },
+    {
+      label: t("configSystem.inherit"),
+      prop: "inherit",
+      minWidth: 100,
+      cellRenderer: ({ row, props }) => (
+        <el-tag size={props.size} style={tagStyle.value(row.inherit)}>
+          {row.access ? t("labels.enable") : t("labels.disable")}
+        </el-tag>
       )
     },
     {
@@ -235,7 +255,9 @@ export function useSystemConfig(tableRef: Ref) {
       pagination.pageSize = form.size = 10;
     }
     loading.value = true;
-    const { data } = await getSystemConfigListApi(toRaw(form));
+    const { data } = await getSystemConfigListApi(toRaw(form)).catch(() => {
+      loading.value = false;
+    });
     formatColumns(data?.results, columns, showColumns);
     dataList.value = data.results;
     pagination.total = data.total;
@@ -263,6 +285,8 @@ export function useSystemConfig(tableRef: Ref) {
           key: row?.key ?? "",
           value: row?.value ?? "",
           is_active: row?.is_active ?? true,
+          inherit: row?.inherit ?? false,
+          access: row?.access ?? false,
           description: row?.description ?? ""
         },
         showColumns: showColumns.value,

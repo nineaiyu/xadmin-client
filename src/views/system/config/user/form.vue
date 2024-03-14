@@ -5,6 +5,8 @@ import { FormProps } from "./utils/types";
 import { useI18n } from "vue-i18n";
 import { hasGlobalAuth } from "@/router/utils";
 import SearchUsers from "@/views/system/base/searchUsers.vue";
+import ReCol from "@/components/ReCol";
+import FromQuestion from "@/components/FromQuestion/index.vue";
 
 const props = withDefaults(defineProps<FormProps>(), {
   isAdd: () => true,
@@ -15,7 +17,8 @@ const props = withDefaults(defineProps<FormProps>(), {
     owner: "",
     description: "",
     config_user: [],
-    is_active: true
+    is_active: true,
+    access: false
   })
 });
 
@@ -72,19 +75,44 @@ defineExpose({ getRef });
         type="textarea"
       />
     </el-form-item>
-    <el-form-item :label="t('labels.status')" prop="is_active">
-      <el-radio-group v-model="newFormInline.is_active">
-        <el-radio-button
-          v-for="item in ifEnableOptions"
-          :key="item.label"
-          :disabled="
-            !props.isAdd && props.showColumns.indexOf('is_active') === -1
-          "
-          :value="item.value"
-          >{{ item.label }}
-        </el-radio-button>
-      </el-radio-group>
-    </el-form-item>
+    <el-row :gutter="24">
+      <re-col :sm="24" :value="12" :xs="24">
+        <el-form-item :label="t('configSystem.access')" prop="access">
+          <template #label>
+            <from-question
+              :description="t('configSystem.accessTip')"
+              :label="t('configSystem.access')"
+            />
+          </template>
+          <el-radio-group v-model="newFormInline.access">
+            <el-radio-button
+              v-for="item in ifEnableOptions"
+              :key="item.label"
+              :disabled="
+                !props.isAdd && props.showColumns.indexOf('access') === -1
+              "
+              :value="item.value"
+              >{{ item.label }}
+            </el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+      </re-col>
+      <re-col :sm="24" :value="12" :xs="24">
+        <el-form-item :label="t('labels.status')" prop="is_active">
+          <el-radio-group v-model="newFormInline.is_active">
+            <el-radio-button
+              v-for="item in ifEnableOptions"
+              :key="item.label"
+              :disabled="
+                !props.isAdd && props.showColumns.indexOf('is_active') === -1
+              "
+              :value="item.value"
+              >{{ item.label }}
+            </el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+      </re-col>
+    </el-row>
     <el-form-item :label="t('labels.description')">
       <el-input
         v-model="newFormInline.description"

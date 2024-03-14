@@ -354,42 +354,46 @@ export function useNotice(tableRef: Ref) {
       pagination.pageSize = form.size = 10;
     }
     loading.value = true;
-    getNoticeListApi(toRaw(form)).then(res => {
-      if (res.code === 1000 && res.data) {
-        formatColumns(res?.data?.results, columns, showColumns);
-        dataList.value = res.data.results;
-        pagination.total = res.data.total;
-        levelChoices.value = res.level_choices;
-        noticeChoices.value = res.notice_type_choices;
-        noticeChoices.value.forEach(item => {
-          if (item.key == NoticeChoices.NOTICE) {
-            if (!hasAuth("create:systemAnnouncement")) {
-              if (!item.disabled) {
-                item.disabled = true;
-                defaultNoticeType.value = NoticeChoices.USER;
+    getNoticeListApi(toRaw(form))
+      .then(res => {
+        if (res.code === 1000 && res.data) {
+          formatColumns(res?.data?.results, columns, showColumns);
+          dataList.value = res.data.results;
+          pagination.total = res.data.total;
+          levelChoices.value = res.level_choices;
+          noticeChoices.value = res.notice_type_choices;
+          noticeChoices.value.forEach(item => {
+            if (item.key == NoticeChoices.NOTICE) {
+              if (!hasAuth("create:systemAnnouncement")) {
+                if (!item.disabled) {
+                  item.disabled = true;
+                  defaultNoticeType.value = NoticeChoices.USER;
+                }
               }
             }
-          }
-        });
-      } else {
-        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-      }
-      setTimeout(() => {
-        loading.value = false;
-        if (
-          getParameter.notice_user &&
-          form.notice_user &&
-          form.notice_user !== ""
-        ) {
-          const parameter = {
-            notice_user: JSON.parse(getParameter.notice_user as string),
-            notice_type: NoticeChoices.USER
-          };
-          form.notice_user = "";
-          openDialog(true, parameter);
+          });
+        } else {
+          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
         }
-      }, 500);
-    });
+        setTimeout(() => {
+          loading.value = false;
+          if (
+            getParameter.notice_user &&
+            form.notice_user &&
+            form.notice_user !== ""
+          ) {
+            const parameter = {
+              notice_user: JSON.parse(getParameter.notice_user as string),
+              notice_type: NoticeChoices.USER
+            };
+            form.notice_user = "";
+            openDialog(true, parameter);
+          }
+        }, 500);
+      })
+      .catch(() => {
+        loading.value = false;
+      });
   }
 
   const resetForm = formEl => {

@@ -13,13 +13,15 @@ import panel from "../panel/index.vue";
 import { emitter } from "@/utils/mitt";
 import { useNav } from "@/layout/hooks/useNav";
 import { useAppStoreHook } from "@/store/modules/app";
-import { debounce, useDark, useGlobal } from "@pureadmin/utils";
 import { toggleTheme } from "@pureadmin/theme/dist/browser-utils";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import Segmented, { type OptionsType } from "@/components/ReSegmented";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
+import { debounce, isNumber, useDark, useGlobal } from "@pureadmin/utils";
 
 import Check from "@iconify-icons/ep/check";
+import LeftArrow from "@iconify-icons/ri/arrow-left-s-line";
+import RightArrow from "@iconify-icons/ri/arrow-right-s-line";
 import dayIcon from "@/assets/svg/day.svg?component";
 import darkIcon from "@/assets/svg/dark.svg?component";
 import systemIcon from "@/assets/svg/system.svg?component";
@@ -141,6 +143,32 @@ function setFalse(Doms): any {
   });
 }
 
+/** 页宽 */
+const stretchTypeOptions: Array<OptionsType> = computed(() => {
+  return [
+    {
+      label: t("layout.fixed"),
+      tip: t("layout.fixedTip"),
+      value: "fixed"
+    },
+    {
+      label: t("layout.customization"),
+      tip: t("layout.customTip"),
+      value: "custom"
+    }
+  ];
+});
+
+const setStretch = value => {
+  settings.stretch = value;
+  storageConfigureChange("stretch", value);
+};
+
+const stretchTypeChange = ({ option }) => {
+  const { value } = option;
+  value === "custom" ? setStretch(1440) : setStretch(false);
+};
+
 /** 主题色 激活选择项 */
 const getThemeColor = computed(() => {
   return current => {
@@ -158,6 +186,10 @@ const getThemeColor = computed(() => {
       return "transparent";
     }
   };
+});
+
+const pClass = computed(() => {
+  return ["mb-[12px]", "font-medium", "text-sm", "dark:text-white"];
 });
 
 const themeOptions = computed<Array<OptionsType>>(() => {
@@ -186,18 +218,20 @@ const themeOptions = computed<Array<OptionsType>>(() => {
   ];
 });
 
-const markOptions: Array<OptionsType> = [
-  {
-    label: t("layout.smart"),
-    tip: t("layout.smartTip"),
-    value: "smart"
-  },
-  {
-    label: t("layout.card"),
-    tip: t("layout.cardTip"),
-    value: "card"
-  }
-];
+const markOptions: Array<OptionsType> = computed(() => {
+  return [
+    {
+      label: t("layout.smart"),
+      tip: t("layout.smartTip"),
+      value: "smart"
+    },
+    {
+      label: t("layout.card"),
+      tip: t("layout.cardTip"),
+      value: "card"
+    }
+  ];
+});
 
 /** 设置导航模式 */
 function setLayoutModel(layout: string) {
@@ -273,10 +307,8 @@ onUnmounted(() => removeMatchMedia);
 
 <template>
   <panel>
-    <div class="p-6">
-      <p class="mb-3 font-medium text-sm dark:text-white">
-        {{ t("layout.theme") }}
-      </p>
+    <div class="p-5">
+      <p :class="pClass">{{ t("layout.theme") }}</p>
       <Segmented
         :modelValue="overallStyle === 'system' ? 2 : dataTheme ? 1 : 0"
         :options="themeOptions"
@@ -293,9 +325,7 @@ onUnmounted(() => removeMatchMedia);
         "
       />
 
-      <p class="mt-5 mb-3 font-medium text-sm dark:text-white">
-        {{ t("layout.themeColor") }}
-      </p>
+      <p :class="['mt-5', pClass]">{{ t("layout.themeColor") }}</p>
       <ul class="theme-color">
         <li
           v-for="(item, index) in themeColors"
@@ -314,9 +344,7 @@ onUnmounted(() => removeMatchMedia);
         </li>
       </ul>
 
-      <p class="mt-5 mb-3 font-medium text-sm dark:text-white">
-        {{ t("layout.navigationMode") }}
-      </p>
+      <p :class="['mt-5', pClass]">{{ t("layout.navigationMode") }}</p>
       <ul class="pure-theme">
         <li
           ref="verticalRef"
@@ -358,9 +386,50 @@ onUnmounted(() => removeMatchMedia);
         </li>
       </ul>
 
-      <p class="mt-5 mb-3 font-medium text-base dark:text-white">
-        {{ t("layout.labelStyle") }}
-      </p>
+      <span v-if="device !== 'mobile'">
+        <p :class="['mt-5', pClass]">{{ t("layout.pageWidth") }}</p>
+        <Segmented
+          :modelValue="isNumber(settings.stretch) ? 1 : 0"
+          :options="stretchTypeOptions"
+          class="mb-2 select-none"
+          @change="stretchTypeChange"
+        />
+        <el-input-number
+          v-if="isNumber(settings.stretch)"
+          v-model="settings.stretch as number"
+          :max="1600"
+          :min="1280"
+          controls-position="right"
+          @change="value => setStretch(value)"
+        />
+        <button
+          v-else
+          v-ripple="{ class: 'text-gray-300' }"
+          class="bg-transparent flex-c w-full h-20 rounded-md border border-gray-100"
+          @click="setStretch(!settings.stretch)"
+        >
+          <div
+            :class="[settings.stretch ? 'w-[24%]' : 'w-[50%]']"
+            class="flex-bc transition-all duration-300"
+            style="color: var(--el-color-primary)"
+          >
+            <IconifyIconOffline
+              :icon="settings.stretch ? RightArrow : LeftArrow"
+              height="20"
+            />
+            <div
+              class="flex-grow border-b border-dashed"
+              style="border-color: var(--el-color-primary)"
+            />
+            <IconifyIconOffline
+              :icon="settings.stretch ? LeftArrow : RightArrow"
+              height="20"
+            />
+          </div>
+        </button>
+      </span>
+
+      <p :class="['mt-4', pClass]">{{ t("layout.labelStyle") }}</p>
       <Segmented
         :modelValue="markValue === 'smart' ? 0 : 1"
         :options="markOptions"
@@ -368,7 +437,7 @@ onUnmounted(() => removeMatchMedia);
         @change="onChange"
       />
 
-      <p class="mt-5 mb-1 font-medium text-sm dark:text-white">
+      <p class="mt-5 font-medium text-sm dark:text-white">
         {{ t("layout.display") }}
       </p>
       <ul class="setting">
@@ -551,7 +620,7 @@ onUnmounted(() => removeMatchMedia);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 4px 0;
+    padding: 3px 0;
     font-size: 14px;
   }
 }

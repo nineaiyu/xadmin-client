@@ -7,13 +7,14 @@ defineOptions({
 
 const imgCode = defineModel({ type: String });
 
-const { imgUrl, getImgCode } = useImageVerify(imgCode);
+const { imgUrl, loading, getImgCode } = useImageVerify(imgCode);
 
 defineExpose({ getImgCode });
 </script>
 
 <template>
   <el-image
+    v-loading="loading"
     :src="imgUrl"
     class="cursor-pointer"
     style="width: 120px; height: 40px"

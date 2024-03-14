@@ -73,6 +73,11 @@ layout:
   favorite: Favorite
   dragSort: (Drag the sorting)
   searchHistory: Search History
+  pageWidth: Page Width
+  fixed: Fixed
+  fixedTip: Compact page to easily find the information you need
+  customization: Customization
+  customTip: Minimum 1280, maximum 1600
 
 error:
   error403: Sorry, you are not authorized to access this page
@@ -107,6 +112,8 @@ labels:
   cancel: Cancel
   descending: Descending
   ascending: Ascending
+  success: Success
+  failed: Failed
 
 results:
   success: Executed successfully
@@ -359,6 +366,10 @@ configSystem:
   cacheValue: Config Cache Value
   invalidCache: Invalid Cache
   confirmInvalid: Are you sure to invalid this cache?
+  access: API Access
+  accessTip: Allow API interfaces to access this configuration
+  inherit: User Inherit
+  inheritTip: Allows users to inherit this configuration
 
 configUser:
   configSystem: User Config
@@ -441,3 +452,14 @@ login:
   passwordSureReg: Please enter confirm password
   passwordDifferentReg: The two passwords do not match!
   passwordUpdateReg: Password has been updated
+
+welcome:
+  operateLog: Log of operations
+  userAnalysis: Overview of user analysis
+  registerUser: Number of Registered Users
+  activeUser: Number of Active Users
+  today: Today
+  days: Days
+  requestNum: Number of interface requests for today
+  userNum: Number of Users
+  loginTimes: Number of Logins

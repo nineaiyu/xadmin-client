@@ -7,6 +7,7 @@ import Delete from "@iconify-icons/ep/delete";
 
 import Refresh from "@iconify-icons/ep/refresh";
 import { hasAuth } from "@/router/utils";
+import { getPickerShortcuts } from "../utils";
 
 defineOptions({
   name: "SystemUserLoginLog"
@@ -104,6 +105,15 @@ const {
             :value="item.key"
           />
         </el-select>
+      </el-form-item>
+      <el-form-item :label="t('sorts.loginDate')" prop="loginDate">
+        <el-date-picker
+          v-model="form.loginTime"
+          :shortcuts="getPickerShortcuts()"
+          type="datetimerange"
+          value-format="YYYY-MM-DD HH:mm:ss"
+          @change="onSearch"
+        />
       </el-form-item>
       <el-form-item :label="t('labels.sort')">
         <el-select

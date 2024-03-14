@@ -177,6 +177,7 @@ function handleAsyncRoutes(routeList) {
   }
   addPathMatch();
   useUserStoreHook().getUserInfo();
+  // useUserStoreHook().getUserConfig();
 }
 
 /** 初始化路由（`new Promise` 写法防止在异步请求中造成无限循环）*/

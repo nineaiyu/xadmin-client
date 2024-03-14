@@ -102,7 +102,9 @@ export function useModelField() {
       pagination.pageSize = form.size = 10;
     }
     loading.value = true;
-    const { data } = await getModelLabelFieldListApi(toRaw(form));
+    const { data } = await getModelLabelFieldListApi(toRaw(form)).catch(() => {
+      loading.value = false;
+    });
     formatColumns(data?.results, columns, showColumns);
     dataList.value = data.results;
     pagination.total = data.total;

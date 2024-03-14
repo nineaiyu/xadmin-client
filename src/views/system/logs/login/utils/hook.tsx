@@ -11,7 +11,7 @@ import { useRouter } from "vue-router";
 import { delay, getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
-import { formatColumns } from "@/views/system/hooks";
+import { formatColumns, usePublicHooks } from "@/views/system/hooks";
 
 export function useLoginLog(tableRef: Ref) {
   const { t } = useI18n();
@@ -27,6 +27,7 @@ export function useLoginLog(tableRef: Ref) {
   ];
   const form = reactive({
     ipaddress: "",
+    loginTime: "",
     system: "",
     browser: "",
     agent: "",
@@ -42,6 +43,8 @@ export function useLoginLog(tableRef: Ref) {
   const dataList = ref([]);
   const loading = ref(true);
   const showColumns = ref([]);
+  const { tagStyle } = usePublicHooks();
+
   const pagination = reactive<PaginationProps>({
     total: 0,
     pageSize: 10,
@@ -94,6 +97,16 @@ export function useLoginLog(tableRef: Ref) {
       label: t("logsLogin.agent"),
       prop: "agent",
       minWidth: 150
+    },
+    {
+      label: t("labels.status"),
+      prop: "status",
+      minWidth: 100,
+      cellRenderer: ({ row, props }) => (
+        <el-tag size={props.size} style={tagStyle.value(row.status)}>
+          {row.status ? t("labels.success") : t("labels.failed")}
+        </el-tag>
+      )
     },
     {
       label: t("sorts.createdDate"),
@@ -178,7 +191,15 @@ export function useLoginLog(tableRef: Ref) {
       pagination.pageSize = form.size = 10;
     }
     loading.value = true;
-    const { data, choices_dict } = await getLoginLogListApi(toRaw(form));
+    if (form.loginTime && form.loginTime.length === 2) {
+      form.created_time_after = form.loginTime[0];
+      form.created_time_before = form.loginTime[1];
+    }
+    const { data, choices_dict } = await getLoginLogListApi(toRaw(form)).catch(
+      () => {
+        loading.value = false;
+      }
+    );
     formatColumns(data?.results, columns, showColumns);
     dataList.value = data.results;
     pagination.total = data.total;
