@@ -114,6 +114,8 @@ labels:
   ascending: Ascending
   success: Success
   failed: Failed
+  checkColumn: CheckColumn
+  dClickCopy: Double-click to copy
 
 results:
   success: Executed successfully
@@ -249,7 +251,7 @@ user:
   deptId: Department ID
   userId: User Id
   userInfo: User Info
-  dept: Belonging Department
+  dept: Department
   rules: Permissions
 
 dept:
@@ -261,7 +263,7 @@ dept:
   assignRoles: Assign Roles Permissions
   assignRole: Assign multiple roles and permissions to department { dept }
   userCount: User Count
-  autoBind: Auto Bind Department
+  autoBind: Auto Bind
   autoBindDesc: If the value of the registration parameter channel is the same as the department code, the user will automatically bind to the department
 
 permission:
@@ -291,8 +293,8 @@ menu:
   type: Type
   title: Title
   icon: Icon
-  transitionLeave: Leave Animation
-  transitionEnter: Entry Animation
+  transitionLeave: LeaveAnimation
+  transitionEnter: EntryAnimation
   cache: Cache
   componentName: ComponentName
   componentPath: ComponentPath
@@ -331,7 +333,7 @@ menu:
   permissions: Permissions
   checkStrictly: Hierarchical association
   checkUnStrictly: Hierarchical independence
-  associationModel: Association model
+  associationModel: AssociationModel
   exampleAssociationModel: Model association is used with field permission control
 
 logsOperation:

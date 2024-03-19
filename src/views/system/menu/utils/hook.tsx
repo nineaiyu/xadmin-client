@@ -12,7 +12,7 @@ import { addDialog } from "@/components/ReDialog";
 import editForm from "../edit.vue";
 import type { FormItemProps } from "./types";
 import { handleTree } from "@/utils/tree";
-import { cloneDeep } from "@pureadmin/utils";
+import { cloneDeep, deviceDetection } from "@pureadmin/utils";
 import { getMenuFromPk, getMenuOrderPk } from "@/utils";
 import { useI18n } from "vue-i18n";
 import { FieldChoices, MenuChoices } from "@/views/system/constants";
@@ -186,6 +186,7 @@ export function useMenu() {
       },
       width: "40%",
       draggable: true,
+      fullscreen: deviceDetection(),
       fullscreenIcon: true,
       closeOnClickModal: false,
       contentRenderer: () => h(editForm, { ref: formRef }),

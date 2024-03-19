@@ -66,9 +66,10 @@ const fullscreenClass = computed(() => {
 function eventsCallBack(
   event: EventType,
   options: DialogOptions,
-  index: number
+  index: number,
+  isClickFullScreen = false
 ) {
-  fullscreen.value = options?.fullscreen ?? false;
+  if (!isClickFullScreen) fullscreen.value = options?.fullscreen ?? false;
   if (options?.[event] && isFunction(options?.[event])) {
     return options?.[event]({ options, index });
   }
@@ -92,8 +93,8 @@ function handleClose(
     :fullscreen="fullscreen ? true : options?.fullscreen ? true : false"
     class="pure-dialog"
     v-bind="options"
-    @closeAutoFocus="eventsCallBack('closeAutoFocus', options, index)"
     @closed="handleClose(options, index)"
+    @closeAutoFocus="eventsCallBack('closeAutoFocus', options, index)"
     @openAutoFocus="eventsCallBack('openAutoFocus', options, index)"
     @opened="eventsCallBack('open', options, index)"
   >
@@ -110,9 +111,20 @@ function handleClose(
         <i
           v-if="!options?.fullscreen"
           :class="fullscreenClass"
-          @click="fullscreen = !fullscreen"
+          @click="
+            () => {
+              fullscreen = !fullscreen;
+              eventsCallBack(
+                'fullscreenCallBack',
+                { ...options, fullscreen },
+                index,
+                true
+              );
+            }
+          "
         >
           <IconifyIconOffline
+            class="pure-dialog-svg"
             :icon="
               options?.fullscreen
                 ? ExitFullscreen
@@ -120,7 +132,6 @@ function handleClose(
                   ? ExitFullscreen
                   : Fullscreen
             "
-            class="pure-dialog-svg"
           />
         </i>
       </div>
@@ -130,8 +141,8 @@ function handleClose(
       />
     </template>
     <component
-      :is="options.contentRenderer({ options, index })"
       v-bind="options?.props"
+      :is="options.contentRenderer({ options, index })"
       @close="args => handleClose(options, index, args)"
     />
     <!-- footer -->

@@ -3,6 +3,7 @@ import type { FormItemProps } from "./types";
 import { addDialog } from "@/components/ReDialog/index";
 import { h, onMounted, ref } from "vue";
 import addForm from "../add.vue";
+import { deviceDetection } from "@pureadmin/utils";
 
 export function useFieldRule(
   fieldLookupsData: any[],
@@ -87,6 +88,7 @@ export function useFieldRule(
       },
       width: "40%",
       draggable: true,
+      fullscreen: deviceDetection(),
       fullscreenIcon: true,
       closeOnClickModal: false,
       top: "10vh",

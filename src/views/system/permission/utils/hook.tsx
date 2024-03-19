@@ -14,7 +14,7 @@ import type { FormItemProps } from "./types";
 import editForm from "../form.vue";
 import type { PaginationProps } from "@pureadmin/table";
 import { h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
-import { delay, getKeyList } from "@pureadmin/utils";
+import { delay, deviceDetection, getKeyList } from "@pureadmin/utils";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { FieldChoices, ModeChoices } from "@/views/system/constants";
@@ -63,8 +63,10 @@ export function useDataPermission(tableRef: Ref) {
   });
   const columns = ref<TableColumnList>([
     {
+      label: t("labels.checkColumn"),
       type: "selection",
-      align: "left"
+      fixed: "left",
+      reserveSelection: true
     },
     {
       label: t("labels.id"),
@@ -271,6 +273,7 @@ export function useDataPermission(tableRef: Ref) {
       },
       width: "50%",
       draggable: true,
+      fullscreen: deviceDetection(),
       fullscreenIcon: true,
       closeOnClickModal: false,
       top: "10vh",

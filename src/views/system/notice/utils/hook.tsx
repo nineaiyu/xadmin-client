@@ -15,7 +15,13 @@ import { useRoute, useRouter } from "vue-router";
 import type { FormItemProps } from "./types";
 import editForm from "../editor.vue";
 import showForm from "../show.vue";
-import { cloneDeep, getKeyList, isEmpty, isString } from "@pureadmin/utils";
+import {
+  cloneDeep,
+  deviceDetection,
+  getKeyList,
+  isEmpty,
+  isString
+} from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { ElMessageBox } from "element-plus";
@@ -68,8 +74,10 @@ export function useNotice(tableRef: Ref) {
   });
   const columns = ref<TableColumnList>([
     {
+      label: t("labels.checkColumn"),
       type: "selection",
-      align: "left"
+      fixed: "left",
+      reserveSelection: true
     },
     {
       label: t("labels.id"),
@@ -175,6 +183,7 @@ export function useNotice(tableRef: Ref) {
       },
       width: "60%",
       draggable: true,
+      fullscreen: deviceDetection(),
       fullscreenIcon: true,
       closeOnClickModal: false,
       top: "10vh",
@@ -246,6 +255,7 @@ export function useNotice(tableRef: Ref) {
       },
       width: "70%",
       draggable: true,
+      fullscreen: deviceDetection(),
       fullscreenIcon: true,
       closeOnClickModal: false,
       contentRenderer: () => h(showForm, { ref: formRef })

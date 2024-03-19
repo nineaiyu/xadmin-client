@@ -36,7 +36,7 @@ const {
       ref="formRef"
       :inline="true"
       :model="form"
-      class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px]"
+      class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px] overflow-auto"
     >
       <el-form-item :label="t('modelField.name')" prop="name">
         <el-input
@@ -128,7 +128,6 @@ const {
           :size="size"
           adaptive
           align-whole="center"
-          border
           row-key="pk"
           showOverflowTooltip
           table-layout="auto"

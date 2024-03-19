@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import ReCol from "@/components/ReCol";
 import { hasAuth } from "@/router/utils";
-import croppingUpload from "@/components/AvatarUpload/index.vue";
+import croppingUpload from "@/components/RePictureUpload/index.vue";
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 

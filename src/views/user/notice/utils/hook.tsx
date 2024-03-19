@@ -10,7 +10,13 @@ import {
 import { useRoute } from "vue-router";
 import type { FormItemProps } from "./types";
 import showForm from "../show.vue";
-import { cloneDeep, getKeyList, isEmpty, isString } from "@pureadmin/utils";
+import {
+  cloneDeep,
+  deviceDetection,
+  getKeyList,
+  isEmpty,
+  isString
+} from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog";
 import { useI18n } from "vue-i18n";
 import { useUserStoreHook } from "@/store/modules/user";
@@ -58,8 +64,10 @@ export function useUserNotice(tableRef: Ref) {
   });
   const columns = ref<TableColumnList>([
     {
+      label: t("labels.checkColumn"),
       type: "selection",
-      align: "left"
+      fixed: "left",
+      reserveSelection: true
     },
     {
       label: t("labels.id"),
@@ -120,6 +128,7 @@ export function useUserNotice(tableRef: Ref) {
       },
       width: "70%",
       draggable: true,
+      fullscreen: deviceDetection(),
       fullscreenIcon: true,
       closeOnClickModal: false,
       hideFooter: true,

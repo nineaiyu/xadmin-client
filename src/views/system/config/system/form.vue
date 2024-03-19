@@ -40,7 +40,7 @@ defineExpose({ getRef });
     ref="ruleFormRef"
     :model="newFormInline"
     :rules="formRules"
-    label-width="82px"
+    label-width="110px"
   >
     <el-form-item :label="t('configSystem.key')" prop="key">
       <el-input

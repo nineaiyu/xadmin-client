@@ -13,6 +13,7 @@ import showForm from "../show.vue";
 import {
   cloneDeep,
   delay,
+  deviceDetection,
   getKeyList,
   isEmpty,
   isString
@@ -69,8 +70,10 @@ export function useNoticeRead(tableRef: Ref) {
   });
   const columns = ref<TableColumnList>([
     {
+      label: t("labels.checkColumn"),
       type: "selection",
-      align: "left"
+      fixed: "left",
+      reserveSelection: true
     },
     {
       label: t("labels.id"),
@@ -237,6 +240,7 @@ export function useNoticeRead(tableRef: Ref) {
       },
       width: "70%",
       draggable: true,
+      fullscreen: deviceDetection(),
       fullscreenIcon: true,
       closeOnClickModal: false,
       hideFooter: true,

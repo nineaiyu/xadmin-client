@@ -59,7 +59,6 @@ watch(ruleInfo.value, () => {
           :size="size"
           adaptive
           align-whole="center"
-          border
           row-key="name"
           showOverflowTooltip
           table-layout="auto"

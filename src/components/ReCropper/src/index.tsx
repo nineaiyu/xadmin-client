@@ -99,9 +99,10 @@ export default defineComponent({
     const cropper = ref<Nullable<Cropper>>();
     const inCircled = ref(props.circled);
     const isInClose = ref(props.isClose);
-    const isReady = ref(false);
     const inSrc = ref(props.src);
+    const isReady = ref(false);
     const imgBase64 = ref();
+
     let scaleX = 1;
     let scaleY = 1;
     const onImageError = () => {
@@ -150,6 +151,11 @@ export default defineComponent({
 
     onUnmounted(() => {
       cropper.value?.destroy();
+      isReady.value = false;
+      cropper.value = null;
+      imgBase64.value = "";
+      scaleX = 1;
+      scaleY = 1;
     });
 
     useResizeObserver(tippyElRef, () => handCropper("reset"));
@@ -267,6 +273,7 @@ export default defineComponent({
       if (event === "scaleX") {
         scaleX = arg = scaleX === -1 ? 1 : -1;
       }
+
       if (event === "scaleY") {
         scaleY = arg = scaleY === -1 ? 1 : -1;
       }
@@ -445,11 +452,13 @@ export default defineComponent({
           right: event.clientX
         })
       });
+
+      show();
+
       if (isInClose.value) {
         if (!state.value.isShown && !state.value.isVisible) return;
         useEventListener(tippyElRef, "click", destroy);
       }
-      show();
     }
 
     return {

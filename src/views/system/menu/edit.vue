@@ -140,7 +140,7 @@ const menuOptions = computed<Array<OptionsType>>(() => {
       :model="newFormInline"
       :rules="formRules"
       class="search-form bg-bg_color w-[90%] pl-8 pt-[12px]"
-      label-width="160px"
+      label-width="120px"
     >
       <el-form-item :label="t('menu.type')" prop="menu_type">
         <Segmented

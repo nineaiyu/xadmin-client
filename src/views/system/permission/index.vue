@@ -46,7 +46,7 @@ const {
       ref="formRef"
       :inline="true"
       :model="form"
-      class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px]"
+      class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px] overflow-auto"
     >
       <el-form-item :label="t('permission.name')" prop="name">
         <el-input
@@ -121,7 +121,7 @@ const {
     >
       <template #buttons>
         <el-space wrap>
-          <div v-if="manySelectCount > 0" class="w-[360px]">
+          <div v-if="manySelectCount > 0" v-motion-fade class="w-[360px]">
             <span
               class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
               style="font-size: var(--el-font-size-base)"
@@ -172,7 +172,6 @@ const {
           :size="size"
           adaptive
           align-whole="center"
-          border
           row-key="pk"
           showOverflowTooltip
           table-layout="auto"

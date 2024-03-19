@@ -31,7 +31,7 @@ import {
   watch
 } from "vue";
 import { addDialog } from "@/components/ReDialog";
-import croppingUpload from "@/components/AvatarUpload/index.vue";
+import croppingUpload from "@/components/RePictureUpload/index.vue";
 import roleForm from "../form/role.vue";
 import editForm from "../form/index.vue";
 import type { FormItemProps, RoleFormItemProps } from "./types";
@@ -39,6 +39,7 @@ import { getRoleListApi } from "@/api/system/role";
 import {
   cloneDeep,
   delay,
+  deviceDetection,
   getKeyList,
   hideTextAtIndex,
   isAllEmpty,
@@ -58,6 +59,7 @@ import {
 import { getDataPermissionListApi } from "@/api/system/permission";
 import { ModeChoices } from "@/views/system/constants";
 import { REGEXP_PWD } from "@/views/login/utils/rule";
+import Info from "@iconify-icons/ri/question-line";
 
 export function useUser(tableRef: Ref, treeRef: Ref) {
   const { t } = useI18n();
@@ -123,9 +125,10 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
   });
   const columns = ref<TableColumnList>([
     {
+      label: t("labels.checkColumn"),
       type: "selection",
-      prop: "pk",
-      align: "left"
+      fixed: "left",
+      reserveSelection: true
     },
     {
       label: t("labels.id"),
@@ -138,8 +141,8 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
       minWidth: 160,
       cellRenderer: ({ row }) => (
         <el-image
-          class="w-[60px] h-[60px]"
-          fit={"contain"}
+          class="w-[36px] h-[36px] align-middle"
+          fit="cover"
           src={row.avatar}
           loading={"lazy"}
           preview-teleported={true}
@@ -154,6 +157,18 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
       cellRenderer: ({ row }) => (
         <span v-show={row?.username} v-copy={row?.username}>
           {row?.username}
+        </span>
+      ),
+      headerRenderer: () => (
+        <span class="flex-c">
+          {t("user.username")}
+          <iconifyIconOffline
+            icon={Info}
+            class="ml-1 cursor-help"
+            v-tippy={{
+              content: t("labels.dClickCopy")
+            }}
+          />
         </span>
       )
     },
@@ -213,18 +228,6 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
       )
     },
     {
-      label: t("user.roles"),
-      prop: "roles_info",
-      width: 160,
-      slot: "roles"
-    },
-    {
-      label: t("user.rules"),
-      prop: "rules_info",
-      width: 160,
-      slot: "rules"
-    },
-    {
       label: t("user.mobile"),
       prop: "mobile",
       minWidth: 90,
@@ -236,6 +239,18 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
       prop: "date_joined",
       formatter: ({ date_joined }) =>
         dayjs(date_joined).format("YYYY-MM-DD HH:mm:ss")
+    },
+    {
+      label: t("user.roles"),
+      prop: "roles_info",
+      width: 160,
+      slot: "roles"
+    },
+    {
+      label: t("user.rules"),
+      prop: "rules_info",
+      width: 160,
+      slot: "rules"
     },
     {
       label: t("labels.operations"),
@@ -422,6 +437,7 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
       },
       width: "46%",
       draggable: true,
+      fullscreen: deviceDetection(),
       fullscreenIcon: true,
       closeOnClickModal: false,
       contentRenderer: () => h(editForm, { ref: formRef }),
@@ -489,6 +505,7 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
       title: t("user.updateAvatar", { user: row.username }),
       width: "40%",
       draggable: true,
+      fullscreen: deviceDetection(),
       closeOnClickModal: false,
       contentRenderer: () =>
         h(croppingUpload, {
@@ -582,6 +599,7 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
       },
       width: "600px",
       draggable: true,
+      fullscreen: deviceDetection(),
       fullscreenIcon: true,
       closeOnClickModal: false,
       contentRenderer: () => h(roleForm),
@@ -612,6 +630,7 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
       title: t("user.resetPasswd", { user: row.username }),
       width: "30%",
       draggable: true,
+      fullscreen: deviceDetection(),
       closeOnClickModal: false,
       contentRenderer: () => (
         <>
@@ -705,6 +724,7 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
     modeChoicesDict,
     manySelectCount,
     currentAvatarData,
+    deviceDetection,
     onTreeSelect,
     exportExcel,
     onSearch,

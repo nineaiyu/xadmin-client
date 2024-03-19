@@ -43,7 +43,7 @@ defineExpose({ getRef });
     ref="ruleFormRef"
     :model="newFormInline"
     :rules="formRules"
-    label-width="82px"
+    label-width="110px"
   >
     <el-form-item
       v-if="hasGlobalAuth('list:systemUser')"

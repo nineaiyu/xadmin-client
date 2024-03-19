@@ -15,7 +15,7 @@ import type { FormItemProps } from "./types";
 import editForm from "../form.vue";
 import type { PaginationProps } from "@pureadmin/table";
 import { h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
-import { delay, getKeyList } from "@pureadmin/utils";
+import { delay, deviceDetection, getKeyList } from "@pureadmin/utils";
 import { hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 
@@ -56,8 +56,10 @@ export function useSystemConfig(tableRef: Ref) {
   });
   const columns = ref<TableColumnList>([
     {
+      label: t("labels.checkColumn"),
       type: "selection",
-      align: "left"
+      fixed: "left",
+      reserveSelection: true
     },
     {
       label: t("labels.id"),
@@ -294,6 +296,7 @@ export function useSystemConfig(tableRef: Ref) {
       },
       width: "40%",
       draggable: true,
+      fullscreen: deviceDetection(),
       fullscreenIcon: true,
       closeOnClickModal: false,
       contentRenderer: () => h(editForm, { ref: formRef }),

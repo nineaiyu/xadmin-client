@@ -42,7 +42,7 @@ defineExpose({ getRef });
     ref="ruleFormRef"
     :model="newFormInline"
     :rules="formRules"
-    label-width="82px"
+    label-width="100px"
   >
     <el-row :gutter="30">
       <re-col :sm="24" :value="12" :xs="24">

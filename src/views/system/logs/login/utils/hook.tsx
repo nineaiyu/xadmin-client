@@ -54,8 +54,10 @@ export function useLoginLog(tableRef: Ref) {
   });
   const columns = ref<TableColumnList>([
     {
+      label: t("labels.checkColumn"),
       type: "selection",
-      align: "left",
+      fixed: "left",
+      reserveSelection: true,
       hide: !hasAuth("delete:systemLoginLog")
     },
     {

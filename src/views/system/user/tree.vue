@@ -41,8 +41,9 @@ const defaultProps = {
 const buttonClass = computed(() => {
   return [
     "!h-[20px]",
+    "!text-sm",
     "reset-margin",
-    "!text-gray-500",
+    "!text-[var(--el-text-color-regular)]",
     "dark:!text-white",
     "dark:hover:!text-primary"
   ];
@@ -109,7 +110,7 @@ defineExpose({ onTreeReset });
 <template>
   <div
     v-loading="props.treeLoading"
-    :style="{ minHeight: `calc(100vh - 145px)` }"
+    :style="{ minHeight: `calc(100vh - 141px)` }"
     class="h-full bg-bg_color overflow-auto"
   >
     <div class="flex items-center h-[34px]">

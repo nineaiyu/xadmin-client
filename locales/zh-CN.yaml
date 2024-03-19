@@ -114,6 +114,8 @@ labels:
   ascending: 升序
   success: 成功
   failed: 失败
+  checkColumn: 勾选列
+  dClickCopy: 双击进行拷贝
 
 results:
   success: 执行成功

@@ -10,7 +10,7 @@ import {
 import { formRules } from "./utils/rule";
 import { FormProps } from "./utils/types";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { isAllEmpty } from "@pureadmin/utils";
+import { getKeyList, isAllEmpty } from "@pureadmin/utils";
 import { match } from "pinyin-pro";
 import { useI18n } from "vue-i18n";
 import { transformI18n } from "@/plugins/i18n";
@@ -139,14 +139,19 @@ function toggleRowExpansionAll(status) {
   }
 }
 
-function toggleSelectAll(status) {
+function toggleSelectAll(status, keys: Array<string> | null = null) {
   selectAll.value = status;
   const nodes = (proxy.$refs["treeRoleRef"] as any).store._getAllNodes();
   for (let i = 0; i < nodes.length; i++) {
-    nodes[i].checked = status;
+    if ((keys && keys.indexOf(nodes[i].key) > -1) || !keys) {
+      nodes[i].checked = status;
+    }
   }
 }
 
+function checkField(data, status = true) {
+  toggleSelectAll(true, getKeyList(data.children, "pk"));
+}
 function nodeClick(value, node) {
   if (
     value.pk.toString().indexOf("+") > 0 &&
@@ -170,7 +175,7 @@ function onReset() {
     ref="ruleFormRef"
     :model="newFormInline"
     :rules="formRules"
-    label-width="82px"
+    label-width="100px"
   >
     <el-form-item :label="t('role.name')" prop="name">
       <el-input
@@ -335,10 +340,37 @@ function onReset() {
                   <!--                  <component :is="useRenderIcon('ep:reading')" class="m-1" />-->
                 </template>
                 <template v-else>
-                  {{
-                    `${transformI18n(data?.meta?.title)}` ||
-                    `${data?.label} (${data?.name})`
-                  }}
+                  <template v-if="data?.label">
+                    {{ `${data?.label} (${data?.name})` }}
+                    <el-button-group>
+                      <el-button
+                        v-if="data.parent === null"
+                        plain
+                        text
+                        type="success"
+                        @click.stop="
+                          toggleSelectAll(true, getKeyList(data.children, 'pk'))
+                        "
+                        >全选</el-button
+                      >
+                      <el-button
+                        v-if="data.parent === null"
+                        plain
+                        text
+                        type="warning"
+                        @click.stop="
+                          toggleSelectAll(
+                            false,
+                            getKeyList(data.children, 'pk')
+                          )
+                        "
+                        >取消</el-button
+                      >
+                    </el-button-group>
+                  </template>
+                  <template v-else>
+                    `${transformI18n(data?.meta?.title)}`
+                  </template>
                 </template>
               </span>
             </div>

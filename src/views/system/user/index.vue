@@ -39,6 +39,7 @@ const {
   treeLoading,
   modeChoicesDict,
   manySelectCount,
+  deviceDetection,
   onSearch,
   exportExcel,
   resetForm,
@@ -58,21 +59,26 @@ const {
 </script>
 
 <template>
-  <div v-if="hasAuth('list:systemUser')" class="flex justify-between">
+  <div
+    v-if="hasAuth('list:systemUser')"
+    :class="['flex', 'justify-between', deviceDetection() && 'flex-wrap']"
+  >
     <tree
       ref="treeRef"
       :pk="form.dept?.toString()"
       :treeData="treeData"
       :treeLoading="treeLoading"
-      class="min-w-[250px] mr-2"
+      :class="['mr-2', deviceDetection() ? 'w-full' : 'min-w-[250px]']"
       @tree-select="onTreeSelect"
     />
-    <div class="w-[calc(100%-250px)]">
+    <div
+      :class="[deviceDetection() ? ['w-full', 'mt-2'] : 'w-[calc(100%-250px)]']"
+    >
       <el-form
         ref="formRef"
         :inline="true"
         :model="form"
-        class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px]"
+        class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px] overflow-auto"
       >
         <el-form-item :label="t('labels.id')" prop="pk">
           <el-input
@@ -167,7 +173,7 @@ const {
       >
         <template #buttons>
           <el-space wrap>
-            <div v-if="manySelectCount > 0" class="w-[360px]">
+            <div v-if="manySelectCount > 0" v-motion-fade class="w-[360px]">
               <span
                 class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
                 style="font-size: var(--el-font-size-base)"
@@ -238,7 +244,6 @@ const {
             :size="size"
             adaptive
             align-whole="center"
-            border
             row-key="pk"
             table-layout="auto"
             @selection-change="handleSelectionChange"
@@ -246,25 +251,25 @@ const {
             @page-current-change="handleCurrentChange"
           >
             <template #roles="{ row }">
-              <el-space wrap>
-                <el-tag
+              <el-space>
+                <el-text
                   v-for="(role, index) in row.roles_info"
                   :key="role.pk"
                   :type="getIndexType(index + 1)"
                 >
                   {{ role.name }}
-                </el-tag>
+                </el-text>
               </el-space>
             </template>
             <template #rules="{ row }">
-              <el-space wrap>
-                <el-tag
+              <el-space>
+                <el-text
                   v-for="(role, index) in row.rules_info"
                   :key="role.pk"
                   :type="getIndexType(index + 1)"
                 >
                   {{ role.name }}
-                </el-tag>
+                </el-text>
               </el-space>
             </template>
             <template #operation="{ row }">

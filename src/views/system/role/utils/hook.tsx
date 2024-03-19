@@ -16,7 +16,12 @@ import type { PaginationProps } from "@pureadmin/table";
 import { h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
 import { getMenuListApi } from "@/api/system/menu";
 import { handleTree } from "@/utils/tree";
-import { cloneDeep, delay, getKeyList } from "@pureadmin/utils";
+import {
+  cloneDeep,
+  delay,
+  deviceDetection,
+  getKeyList
+} from "@pureadmin/utils";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { getModelLabelFieldListApi } from "@/api/system/field";
@@ -60,8 +65,10 @@ export function useRole(tableRef: Ref) {
   });
   const columns = ref<TableColumnList>([
     {
+      label: t("labels.checkColumn"),
       type: "selection",
-      align: "left"
+      fixed: "left",
+      reserveSelection: true
     },
     {
       label: t("labels.id"),
@@ -263,6 +270,7 @@ export function useRole(tableRef: Ref) {
       },
       width: "40%",
       draggable: true,
+      fullscreen: deviceDetection(),
       fullscreenIcon: true,
       closeOnClickModal: false,
       contentRenderer: () => h(editForm, { ref: formRef }),

@@ -18,6 +18,7 @@ import { getRoleListApi } from "@/api/system/role";
 import {
   cloneDeep,
   delay,
+  deviceDetection,
   getKeyList,
   isEmpty,
   isString
@@ -82,8 +83,10 @@ export function useDept(tableRef: Ref) {
   const showColumns = ref([]);
   const columns = ref<TableColumnList>([
     {
+      label: t("labels.checkColumn"),
       type: "selection",
-      align: "left"
+      fixed: "left",
+      reserveSelection: true
     },
     {
       label: t("dept.name"),
@@ -388,6 +391,7 @@ export function useDept(tableRef: Ref) {
       },
       width: "46%",
       draggable: true,
+      fullscreen: deviceDetection(),
       fullscreenIcon: true,
       closeOnClickModal: false,
       contentRenderer: () => h(editForm, { ref: formRef }),
@@ -479,6 +483,7 @@ export function useDept(tableRef: Ref) {
       },
       width: "600px",
       draggable: true,
+      fullscreen: deviceDetection(),
       fullscreenIcon: true,
       closeOnClickModal: false,
       contentRenderer: () => h(roleForm),

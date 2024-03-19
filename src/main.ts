@@ -3,14 +3,15 @@ import router from "./router";
 import { setupStore } from "@/store";
 import { useI18n } from "@/plugins/i18n";
 import { getPlatformConfig } from "./config";
-import { createApp, type Directive } from "vue";
 import { MotionPlugin } from "@vueuse/motion";
-import { useElementPlus } from "@/plugins/elementPlus";
 import { useEcharts } from "@/plugins/echarts";
+import { createApp, type Directive } from "vue";
+import { useElementPlus } from "@/plugins/elementPlus";
 import { injectResponsiveStorage } from "@/utils/responsive";
 
 import Table from "@pureadmin/table";
-// import PureDescriptions from "@pureadmin/descriptions";
+import PureDescriptions from "@pureadmin/descriptions";
+
 // 引入重置样式
 import "./style/reset.scss";
 // 导入公共样式
@@ -21,11 +22,9 @@ import "element-plus/dist/index.css";
 // 导入字体图标
 import "./assets/iconfont/iconfont.js";
 import "./assets/iconfont/iconfont.css";
-
-// import { addPreventDefault } from "@/utils/preventDefault";
 // 自定义指令
 import * as directives from "@/directives";
-// 全局注册`@iconify/vue`图标库
+// 全局注册@iconify/vue图标库
 import {
   FontIcon,
   IconifyIconOffline,
@@ -33,9 +32,9 @@ import {
 } from "./components/ReIcon";
 // 全局注册按钮级别权限组件
 import { Auth } from "@/components/ReAuth";
-// 全局注册`vue-tippy`
+// 全局注册vue-tippy
 import "tippy.js/dist/tippy.css";
-import "tippy.js/animations/perspective.css";
+import "tippy.js/themes/light.css";
 import VueTippy from "vue-tippy";
 
 const app = createApp(App);
@@ -50,11 +49,7 @@ app.component("FontIcon", FontIcon);
 
 app.component("Auth", Auth);
 
-app.use(VueTippy, {
-  defaultProps: { animation: "perspective" }
-});
-
-// addPreventDefault();
+app.use(VueTippy);
 
 getPlatformConfig(app).then(async config => {
   setupStore(app);
@@ -65,8 +60,8 @@ getPlatformConfig(app).then(async config => {
     .use(MotionPlugin)
     .use(useI18n)
     .use(useElementPlus)
-    .use(useEcharts)
-    .use(Table);
-  // .use(PureDescriptions);
+    .use(Table)
+    .use(PureDescriptions)
+    .use(useEcharts);
   app.mount("#app");
 });
