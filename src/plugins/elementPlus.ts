@@ -7,6 +7,8 @@ import {
    * */
   ElAffix,
   ElAlert,
+  ElAnchor,
+  ElAnchorLink,
   ElAside,
   ElAutocomplete,
   ElAutoResizer,
@@ -123,6 +125,8 @@ const components = [
   ElAutocomplete,
   ElAutoResizer,
   ElAvatar,
+  ElAnchor,
+  ElAnchorLink,
   ElBacktop,
   ElBadge,
   ElBreadcrumb,

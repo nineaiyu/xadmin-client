@@ -2,8 +2,8 @@
 import { computed } from "vue";
 import { useGlobal } from "@pureadmin/utils";
 import { useNav } from "@/layout/hooks/useNav";
-import MenuFold from "@iconify-icons/ri/menu-fold-fill";
-import { useI18n } from "vue-i18n";
+
+import ArrowLeft from "@iconify-icons/ri/arrow-left-double-fill";
 
 interface Props {
   isActive: boolean;
@@ -16,21 +16,12 @@ const props = withDefaults(defineProps<Props>(), {
 const { tooltipEffect } = useNav();
 
 const iconClass = computed(() => {
-  return [
-    "ml-4",
-    "mb-1",
-    "w-[16px]",
-    "h-[16px]",
-    "inline-block",
-    "align-middle",
-    "cursor-pointer",
-    "duration-[100ms]"
-  ];
+  return ["w-[16px]", "h-[16px]"];
 });
 
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 const themeColor = computed(() => $storage.layout?.themeColor);
-const { t } = useI18n();
+
 const emit = defineEmits<{
   (e: "toggleClick"): void;
 }>();
@@ -41,29 +32,39 @@ const toggleClick = () => {
 </script>
 
 <template>
-  <div class="left-collapse">
+  <div
+    v-tippy="{
+      content: props.isActive ? '点击折叠' : '点击展开',
+      theme: tooltipEffect,
+      hideOnClick: 'toggle',
+      placement: 'right'
+    }"
+    class="center-collapse"
+    @click="toggleClick"
+  >
     <IconifyIconOffline
-      v-tippy="{
-        content: props.isActive ? t('layout.fold') : t('layout.unfold'),
-        theme: tooltipEffect,
-        hideOnClick: 'toggle',
-        placement: 'right'
-      }"
       :class="[iconClass, themeColor === 'light' ? '' : 'text-primary']"
-      :icon="MenuFold"
+      :icon="ArrowLeft"
       :style="{ transform: props.isActive ? 'none' : 'rotateY(180deg)' }"
-      @click="toggleClick"
     />
   </div>
 </template>
 
 <style lang="scss" scoped>
-.left-collapse {
+.center-collapse {
   position: absolute;
-  bottom: 0;
-  width: 100%;
-  height: 40px;
-  line-height: 40px;
-  box-shadow: 0 0 6px -3px var(--el-color-primary);
+  top: 50%;
+  right: 2px;
+  z-index: 1002;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 34px;
+  cursor: pointer;
+  background: var(--el-bg-color);
+  border: 1px solid var(--pure-border-color);
+  border-radius: 4px;
+  transform: translate(12px, -50%);
 }
 </style>

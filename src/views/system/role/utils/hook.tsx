@@ -48,7 +48,7 @@ export function useRole(tableRef: Ref) {
     size: 10
   });
   const formRef = ref();
-  const manySelectCount = ref(0);
+  const selectedNum = ref(0);
   const dataList = ref([]);
   const menuTreeData = ref([]);
   const fieldLookupsData = ref({});
@@ -195,17 +195,17 @@ export function useRole(tableRef: Ref) {
   }
 
   function handleSelectionChange(val) {
-    manySelectCount.value = val.length;
+    selectedNum.value = val.length;
   }
 
   function onSelectionCancel() {
-    manySelectCount.value = 0;
+    selectedNum.value = 0;
     // 用于多选表格，清空用户的选择
     tableRef.value.getTableRef().clearSelection();
   }
 
   function handleManyDelete() {
-    if (manySelectCount.value === 0) {
+    if (selectedNum.value === 0) {
       message(t("results.noSelectedData"), { type: "error" });
       return;
     }
@@ -214,7 +214,7 @@ export function useRole(tableRef: Ref) {
       pks: JSON.stringify(getKeyList(manySelectData, "pk"))
     }).then(async res => {
       if (res.code === 1000) {
-        message(t("results.batchDelete", { count: manySelectCount.value }), {
+        message(t("results.batchDelete", { count: selectedNum.value }), {
           type: "success"
         });
         await onSearch();
@@ -403,7 +403,7 @@ export function useRole(tableRef: Ref) {
     dataList,
     pagination,
     sortOptions,
-    manySelectCount,
+    selectedNum,
     onSelectionCancel,
     onSearch,
     resetForm,

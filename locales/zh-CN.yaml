@@ -169,7 +169,7 @@ buttons:
   hsbatchdelete: 批量删除
   hsbatchdeleteconfirm: 确定批量删除 { count } 条数据吗？
   hsoperateconfirm: 确定 { action } { message } ？
-  hsselected: "已选择 { count } 条数据"
+  hsselected: "已选 { count } 项"
   hsconfirmdelete: 确定删除该数据吗？
   hsconfirmdupdate: 确定更新该数据吗？
 

@@ -26,7 +26,7 @@ const {
   dataList,
   pagination,
   sortOptions,
-  manySelectCount,
+  selectedNum,
   onSelectionCancel,
   onSearch,
   resetForm,
@@ -108,27 +108,35 @@ const {
 
     <PureTableBar
       :columns="columns"
-      :title="t('menus.hsRole')"
       style="transition: width 220ms cubic-bezier(0.4, 0, 0.2, 1)"
       @refresh="onSearch(true)"
     >
-      <template #buttons>
-        <el-space wrap>
-          <div v-if="manySelectCount > 0" v-motion-fade class="w-[360px]">
+      <template #title>
+        <el-space>
+          <p class="font-bold truncate">{{ t("menus.hsRole") }}</p>
+          <div
+            v-if="selectedNum > 0"
+            v-motion-fade
+            class="bg-[var(--el-fill-color-light)] w-full h-[46px] m-2 pl-4 flex items-center rounded-md"
+          >
             <span
               class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
               style="font-size: var(--el-font-size-base)"
             >
-              {{ t("buttons.hsselected", { count: manySelectCount }) }}
+              {{ t("buttons.hsselected", { count: selectedNum }) }}
             </span>
             <el-button text type="primary" @click="onSelectionCancel">
               {{ t("buttons.hscancel") }}
             </el-button>
+          </div>
+        </el-space>
+      </template>
+      <template #buttons>
+        <el-space wrap>
+          <div v-if="selectedNum > 0" v-motion-fade>
             <el-popconfirm
               v-if="hasAuth('manyDelete:systemRole')"
-              :title="
-                t('buttons.hsbatchdeleteconfirm', { count: manySelectCount })
-              "
+              :title="t('buttons.hsbatchdeleteconfirm', { count: selectedNum })"
               @confirm="handleManyDelete"
             >
               <template #reference>

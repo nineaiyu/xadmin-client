@@ -25,7 +25,7 @@ const {
   dataList,
   pagination,
   sortOptions,
-  manySelectCount,
+  selectedNum,
   onSelectionCancel,
   onSearch,
   resetForm,
@@ -48,146 +48,158 @@ const {
       :model="form"
       class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px] overflow-auto"
     >
-      <el-form-item :label="t('user.userId')" prop="message">
-        <el-input
-          v-model="form.owner_id"
-          :placeholder="t('user.verifyUserId')"
-          class="!w-[120px]"
-          clearable
-          @keyup.enter="onSearch(true)"
-        />
-      </el-form-item>
-      <el-form-item :label="t('labels.id')" prop="message">
-        <el-input
-          v-model="form.notice_id"
-          class="!w-[120px]"
-          clearable
-          @keyup.enter="onSearch(true)"
-        />
-      </el-form-item>
-      <el-form-item :label="t('notice.title')" prop="title">
-        <el-input
-          v-model="form.title"
-          :placeholder="t('notice.verifyTitle')"
-          class="!w-[200px]"
-          clearable
-          @keyup.enter="onSearch(true)"
-        />
-      </el-form-item>
-      <el-form-item :label="t('notice.content')" prop="message">
-        <el-input
-          v-model="form.message"
-          :placeholder="t('notice.verifyContent')"
-          class="!w-[180px]"
-          clearable
-          @keyup.enter="onSearch(true)"
-        />
-      </el-form-item>
+      <el-collapse v-model="activeName" accordion>
+        <el-collapse-item>
+          <el-form-item :label="t('user.userId')" prop="message">
+            <el-input
+              v-model="form.owner_id"
+              :placeholder="t('user.verifyUserId')"
+              class="!w-[120px]"
+              clearable
+              @keyup.enter="onSearch(true)"
+            />
+          </el-form-item>
+          <el-form-item :label="t('labels.id')" prop="message">
+            <el-input
+              v-model="form.notice_id"
+              class="!w-[120px]"
+              clearable
+              @keyup.enter="onSearch(true)"
+            />
+          </el-form-item>
+          <el-form-item :label="t('notice.title')" prop="title">
+            <el-input
+              v-model="form.title"
+              :placeholder="t('notice.verifyTitle')"
+              class="!w-[200px]"
+              clearable
+              @keyup.enter="onSearch(true)"
+            />
+          </el-form-item>
+          <el-form-item :label="t('notice.content')" prop="message">
+            <el-input
+              v-model="form.message"
+              :placeholder="t('notice.verifyContent')"
+              class="!w-[180px]"
+              clearable
+              @keyup.enter="onSearch(true)"
+            />
+          </el-form-item>
 
-      <el-form-item :label="t('user.username')" prop="message">
-        <el-input
-          v-model="form.username"
-          :placeholder="t('user.verifyUsername')"
-          class="!w-[180px]"
-          clearable
-          @keyup.enter="onSearch(true)"
-        />
-      </el-form-item>
-      <el-form-item :label="t('notice.level')" prop="level">
-        <el-select
-          v-model="form.level"
-          class="!w-[180px]"
-          clearable
-          @change="onSearch(true)"
-        >
-          <el-option
-            v-for="item in levelChoices"
-            :key="item.key"
-            :disabled="item.disabled"
-            :label="item.label"
-            :value="item.key"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item :label="t('notice.type')" prop="level">
-        <el-select
-          v-model="form.notice_type"
-          class="!w-[180px]"
-          clearable
-          @change="onSearch(true)"
-        >
-          <el-option
-            v-for="item in noticeChoices"
-            :key="item.key"
-            :disabled="item.disabled"
-            :label="item.label"
-            :value="item.key"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item :label="t('notice.haveRead')" prop="unread">
-        <el-select
-          v-model="form.unread"
-          class="!w-[160px]"
-          clearable
-          @change="onSearch(true)"
-        >
-          <el-option :label="t('labels.read')" :value="false" />
-          <el-option :label="t('labels.unread')" :value="true" />
-        </el-select>
-      </el-form-item>
-      <el-form-item :label="t('labels.sort')">
-        <el-select
-          v-model="form.ordering"
-          class="!w-[180px]"
-          clearable
-          @change="onSearch(true)"
-        >
-          <el-option
-            v-for="item in sortOptions"
-            :key="item.key"
-            :label="item.label"
-            :value="item.key"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button
-          :icon="useRenderIcon('ri:search-line')"
-          :loading="loading"
-          type="primary"
-          @click="onSearch(true)"
-        >
-          {{ t("buttons.hssearch") }}
-        </el-button>
-        <el-button :icon="useRenderIcon(Refresh)" @click="resetForm(formRef)">
-          {{ t("buttons.hsreload") }}
-        </el-button>
-      </el-form-item>
+          <el-form-item :label="t('user.username')" prop="message">
+            <el-input
+              v-model="form.username"
+              :placeholder="t('user.verifyUsername')"
+              class="!w-[180px]"
+              clearable
+              @keyup.enter="onSearch(true)"
+            />
+          </el-form-item>
+          <el-form-item :label="t('notice.level')" prop="level">
+            <el-select
+              v-model="form.level"
+              class="!w-[180px]"
+              clearable
+              @change="onSearch(true)"
+            >
+              <el-option
+                v-for="item in levelChoices"
+                :key="item.key"
+                :disabled="item.disabled"
+                :label="item.label"
+                :value="item.key"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item :label="t('notice.type')" prop="level">
+            <el-select
+              v-model="form.notice_type"
+              class="!w-[180px]"
+              clearable
+              @change="onSearch(true)"
+            >
+              <el-option
+                v-for="item in noticeChoices"
+                :key="item.key"
+                :disabled="item.disabled"
+                :label="item.label"
+                :value="item.key"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item :label="t('notice.haveRead')" prop="unread">
+            <el-select
+              v-model="form.unread"
+              class="!w-[160px]"
+              clearable
+              @change="onSearch(true)"
+            >
+              <el-option :label="t('labels.read')" :value="false" />
+              <el-option :label="t('labels.unread')" :value="true" />
+            </el-select>
+          </el-form-item>
+          <el-form-item :label="t('labels.sort')">
+            <el-select
+              v-model="form.ordering"
+              class="!w-[180px]"
+              clearable
+              @change="onSearch(true)"
+            >
+              <el-option
+                v-for="item in sortOptions"
+                :key="item.key"
+                :label="item.label"
+                :value="item.key"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button
+              :icon="useRenderIcon('ri:search-line')"
+              :loading="loading"
+              type="primary"
+              @click="onSearch(true)"
+            >
+              {{ t("buttons.hssearch") }}
+            </el-button>
+            <el-button
+              :icon="useRenderIcon(Refresh)"
+              @click="resetForm(formRef)"
+            >
+              {{ t("buttons.hsreload") }}
+            </el-button>
+          </el-form-item>
+        </el-collapse-item>
+      </el-collapse>
     </el-form>
 
-    <PureTableBar
-      :columns="columns"
-      :title="t('notice.readManage')"
-      @refresh="onSearch(true)"
-    >
-      <template #buttons>
-        <el-space wrap>
-          <div v-if="manySelectCount > 0" v-motion-fade class="w-[360px]">
+    <PureTableBar :columns="columns" @refresh="onSearch(true)">
+      <template #title>
+        <el-space>
+          <p class="font-bold truncate">{{ t("notice.readManage") }}</p>
+          <div
+            v-if="selectedNum > 0"
+            v-motion-fade
+            class="bg-[var(--el-fill-color-light)] w-full h-[46px] m-2 pl-4 flex items-center rounded-md"
+          >
             <span
-              class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
               style="font-size: var(--el-font-size-base)"
+              class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
             >
-              {{ t("buttons.hsselected", { count: manySelectCount }) }}
+              {{ t("buttons.hsselected", { count: selectedNum }) }}
             </span>
             <el-button text type="primary" @click="onSelectionCancel">
               {{ t("buttons.hscancel") }}
             </el-button>
+          </div>
+        </el-space>
+      </template>
+      <template #buttons>
+        <el-space wrap>
+          <div v-if="selectedNum > 0" v-motion-fade>
             <el-popconfirm
               v-if="hasAuth('manyDelete:systemNoticeRead')"
-              :title="
-                t('buttons.hsbatchdeleteconfirm', { count: manySelectCount })
-              "
+              :title="t('buttons.hsbatchdeleteconfirm', { count: selectedNum })"
               @confirm="handleManyDelete"
             >
               <template #reference>

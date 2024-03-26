@@ -48,7 +48,7 @@ export function useUserNotice(tableRef: Ref) {
   const route = useRoute();
   const getParameter = isEmpty(route.params) ? route.query : route.params;
   const formRef = ref();
-  const manySelectCount = ref(0);
+  const selectedNum = ref(0);
   const unreadCount = ref(0);
   const dataList = ref([]);
   const loading = ref(true);
@@ -157,11 +157,11 @@ export function useUserNotice(tableRef: Ref) {
   }
 
   function handleSelectionChange(val) {
-    manySelectCount.value = val.length;
+    selectedNum.value = val.length;
   }
 
   function onSelectionCancel() {
-    manySelectCount.value = 0;
+    selectedNum.value = 0;
     // 用于多选表格，清空用户的选择
     tableRef.value.getTableRef().clearSelection();
   }
@@ -174,7 +174,7 @@ export function useUserNotice(tableRef: Ref) {
   }
 
   function handleManyRead() {
-    if (manySelectCount.value === 0) {
+    if (selectedNum.value === 0) {
       message(t("results.noSelectedData"), { type: "error" });
       return;
     }
@@ -188,7 +188,7 @@ export function useUserNotice(tableRef: Ref) {
       )
     }).then(async res => {
       if (res.code === 1000) {
-        message(t("results.batchRead", { count: manySelectCount.value }), {
+        message(t("results.batchRead", { count: selectedNum.value }), {
           type: "success"
         });
         onSearch();
@@ -262,7 +262,7 @@ export function useUserNotice(tableRef: Ref) {
     pagination,
     sortOptions,
     unreadCount,
-    manySelectCount,
+    selectedNum,
     levelChoices,
     noticeChoices,
     onSelectionCancel,

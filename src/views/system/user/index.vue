@@ -38,7 +38,7 @@ const {
   sortOptions,
   treeLoading,
   modeChoicesDict,
-  manySelectCount,
+  selectedNum,
   deviceDetection,
   onSearch,
   exportExcel,
@@ -171,22 +171,33 @@ const {
         :title="t('menus.hsUser')"
         @refresh="onSearch(true)"
       >
-        <template #buttons>
-          <el-space wrap>
-            <div v-if="manySelectCount > 0" v-motion-fade class="w-[360px]">
+        <template #title>
+          <el-space>
+            <p class="font-bold truncate">{{ t("menus.hsUser") }}</p>
+            <div
+              v-if="selectedNum > 0"
+              v-motion-fade
+              class="bg-[var(--el-fill-color-light)] w-full h-[46px] m-2 pl-4 flex items-center rounded-md"
+            >
               <span
                 class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
                 style="font-size: var(--el-font-size-base)"
               >
-                {{ t("buttons.hsselected", { count: manySelectCount }) }}
+                {{ t("buttons.hsselected", { count: selectedNum }) }}
               </span>
               <el-button text type="primary" @click="onSelectionCancel">
                 {{ t("buttons.hscancel") }}
               </el-button>
+            </div>
+          </el-space>
+        </template>
+        <template #buttons>
+          <el-space wrap>
+            <div v-if="selectedNum > 0" v-motion-fade>
               <el-popconfirm
                 v-if="hasAuth('manyDelete:systemUser')"
                 :title="
-                  t('buttons.hsbatchdeleteconfirm', { count: manySelectCount })
+                  t('buttons.hsbatchdeleteconfirm', { count: selectedNum })
                 "
                 @confirm="handleManyDelete"
               >
@@ -196,15 +207,16 @@ const {
                   </el-button>
                 </template>
               </el-popconfirm>
+              <el-button
+                v-if="hasGlobalAuth('create:systemNotice')"
+                :icon="useRenderIcon(Message)"
+                plain
+                type="primary"
+                @click="goNotice()"
+              >
+                {{ t("user.batchSendNotice") }}
+              </el-button>
             </div>
-            <el-button
-              v-if="hasGlobalAuth('create:systemNotice') && manySelectCount > 0"
-              :icon="useRenderIcon(Message)"
-              type="primary"
-              @click="goNotice()"
-            >
-              {{ t("user.batchSendNotice") }}
-            </el-button>
             <el-button
               v-if="false"
               v-optimize="{

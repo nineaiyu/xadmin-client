@@ -3,8 +3,9 @@ import Logo from "./logo.vue";
 import { useRoute } from "vue-router";
 import { emitter } from "@/utils/mitt";
 import SidebarItem from "./sidebarItem.vue";
-import leftCollapse from "./leftCollapse.vue";
+import LeftCollapse from "./leftCollapse.vue";
 import { useNav } from "@/layout/hooks/useNav";
+import CenterCollapse from "./centerCollapse.vue";
 import { responsiveStorageNameSpace } from "@/config";
 import { isAllEmpty, storageLocal } from "@pureadmin/utils";
 import { findRouteByPath, getParentPaths } from "@/router/utils";
@@ -12,6 +13,7 @@ import { usePermissionStoreHook } from "@/store/modules/permission";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 const route = useRoute();
+const isShow = ref(false);
 const showLogo = ref(
   storageLocal().getItem<StorageConfigs>(
     `${responsiveStorageNameSpace()}configure`
@@ -88,33 +90,40 @@ onBeforeUnmount(() => {
   <div
     v-loading="loading"
     :class="['sidebar-container', showLogo ? 'has-logo' : 'no-logo']"
+    @mouseenter.prevent="isShow = true"
+    @mouseleave.prevent="isShow = false"
   >
     <Logo v-if="showLogo" :collapse="isCollapse" />
     <el-scrollbar
-      :class="[device === 'mobile' ? 'mobile' : 'pc']"
       wrap-class="scrollbar-wrapper"
+      :class="[device === 'mobile' ? 'mobile' : 'pc']"
     >
       <el-menu
-        :collapse="isCollapse"
-        :collapse-transition="false"
         :default-active="defaultActive"
-        :popper-effect="tooltipEffect"
         class="outer-most select-none"
         mode="vertical"
         popper-class="pure-scrollbar"
         router
+        :collapse="isCollapse"
+        :collapse-transition="false"
+        :popper-effect="tooltipEffect"
         unique-opened
       >
         <sidebar-item
           v-for="routes in menuData"
           :key="routes.path"
-          :base-path="routes.path"
           :item="routes"
+          :base-path="routes.path"
           class="outer-most select-none"
         />
       </el-menu>
     </el-scrollbar>
-    <leftCollapse
+    <CenterCollapse
+      v-if="device !== 'mobile' && (isShow || isCollapse)"
+      :is-active="pureApp.sidebar.opened"
+      @toggleClick="toggleSideBar"
+    />
+    <LeftCollapse
       v-if="device !== 'mobile'"
       :is-active="pureApp.sidebar.opened"
       @toggleClick="toggleSideBar"

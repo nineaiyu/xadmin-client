@@ -19,11 +19,12 @@ export type appType = {
   };
   layout: string;
   device: string;
+  viewportSize: { width: number; height: number };
+  sortSwap: boolean;
 };
 
 export type multiType = {
   path: string;
-  parentPath: string;
   name: string;
   meta: any;
   query?: object;
