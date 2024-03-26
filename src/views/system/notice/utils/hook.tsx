@@ -156,9 +156,9 @@ export function useNotice(tableRef: Ref) {
     }
   }
 
-  function openDialog(is_add = true, row?: FormItemProps) {
+  function openDialog(isAdd = true, row?: FormItemProps) {
     let title = t("buttons.hsedit");
-    if (is_add) {
+    if (isAdd) {
       title = t("buttons.hsadd");
     }
     addDialog({
@@ -179,7 +179,7 @@ export function useNotice(tableRef: Ref) {
           notice_role: row?.notice_role ?? []
         },
         showColumns: showColumns.value,
-        isAdd: is_add
+        isAdd: isAdd
       },
       width: "60%",
       draggable: true,
@@ -203,7 +203,7 @@ export function useNotice(tableRef: Ref) {
 
         FormRef.validate(valid => {
           if (valid) {
-            if (is_add) {
+            if (isAdd) {
               let createApi = createNoticeApi;
               if (
                 curData.notice_type == NoticeChoices.NOTICE &&
@@ -351,6 +351,7 @@ export function useNotice(tableRef: Ref) {
         message(t("results.batchDelete", { count: selectedNum.value }), {
           type: "success"
         });
+        onSelectionCancel();
         onSearch();
       } else {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });

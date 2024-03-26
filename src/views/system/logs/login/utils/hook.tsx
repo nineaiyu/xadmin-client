@@ -180,6 +180,7 @@ export function useLoginLog(tableRef: Ref) {
         message(t("results.batchDelete", { count: selectedNum.value }), {
           type: "success"
         });
+        onSelectionCancel();
         await onSearch();
       } else {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });

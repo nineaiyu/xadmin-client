@@ -217,6 +217,7 @@ export function useRole(tableRef: Ref) {
         message(t("results.batchDelete", { count: selectedNum.value }), {
           type: "success"
         });
+        onSelectionCancel();
         await onSearch();
       } else {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
@@ -247,9 +248,9 @@ export function useRole(tableRef: Ref) {
     onSearch();
   };
 
-  function openDialog(is_add = true, row?: FormItemProps) {
+  function openDialog(isAdd = true, row?: FormItemProps) {
     let title = t("buttons.hsedit");
-    if (is_add) {
+    if (isAdd) {
       title = t("buttons.hsadd");
     }
     addDialog({
@@ -266,7 +267,7 @@ export function useRole(tableRef: Ref) {
         },
         menuTreeData: menuTreeData.value,
         showColumns: showColumns.value,
-        isAdd: is_add
+        isAdd: isAdd
       },
       width: "40%",
       draggable: true,
@@ -309,7 +310,7 @@ export function useRole(tableRef: Ref) {
             curData.fields = fields;
             delete curData.field;
             loading.value = true;
-            if (is_add) {
+            if (isAdd) {
               createRoleApi(curData).then(async res => {
                 if (res.code === 1000) {
                   await chores(res.detail);

@@ -31,7 +31,7 @@ interface FormItemProps {
   /** ID */
   pk?: number;
   menu_type?: number;
-  is_add?: boolean;
+  isAdd?: boolean;
   /** 父节点 */
   parent: string;
   parent_ids?: number[];

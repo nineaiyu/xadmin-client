@@ -8,7 +8,7 @@ import boxen, { type Options as boxenOptions } from "boxen";
 dayjs.extend(duration);
 
 const welcomeMessage = gradientString("cyan", "magenta").multiline(
-  `Hello! 欢迎使用 xadmin`
+  `Hello! 欢迎使用 Xadmin`
 );
 
 const boxenOprions: boxenOptions = {

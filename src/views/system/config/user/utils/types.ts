@@ -9,7 +9,7 @@ interface FormItemProps {
   description?: string;
   is_active?: boolean;
   access?: boolean;
-  is_add?: boolean;
+  isAdd?: boolean;
   config_user?: number[];
 }
 

@@ -343,6 +343,7 @@ export function useDept(tableRef: Ref) {
         message(t("results.batchDelete", { count: selectedNum.value }), {
           type: "success"
         });
+        onSelectionCancel();
         await onSearch();
       } else {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
@@ -366,9 +367,9 @@ export function useDept(tableRef: Ref) {
     });
   }
 
-  function openDialog(is_add = true, row?: FormItemProps) {
+  function openDialog(isAdd = true, row?: FormItemProps) {
     let title = t("buttons.hsedit");
-    if (is_add) {
+    if (isAdd) {
       title = t("buttons.hsadd");
     }
     addDialog({
@@ -387,7 +388,7 @@ export function useDept(tableRef: Ref) {
         },
         treeData: formatHigherDeptOptions(cloneDeep(dataList.value)),
         showColumns: showColumns.value,
-        isAdd: is_add
+        isAdd: isAdd
       },
       width: "46%",
       draggable: true,
@@ -408,7 +409,7 @@ export function useDept(tableRef: Ref) {
         FormRef.validate(valid => {
           if (valid) {
             // 表单规则校验通过
-            if (is_add) {
+            if (isAdd) {
               createDeptApi(curData).then(async res => {
                 if (res.code === 1000) {
                   await chores(res.detail);

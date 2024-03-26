@@ -214,6 +214,7 @@ export function useDataPermission(tableRef: Ref) {
         message(t("results.batchDelete", { count: selectedNum.value }), {
           type: "success"
         });
+        onSelectionCancel();
         await onSearch();
       } else {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
@@ -247,9 +248,9 @@ export function useDataPermission(tableRef: Ref) {
     onSearch();
   };
 
-  function openDialog(is_add = true, row?: FormItemProps) {
+  function openDialog(isAdd = true, row?: FormItemProps) {
     let title = t("buttons.hsedit");
-    if (is_add) {
+    if (isAdd) {
       title = t("buttons.hsadd");
     }
     addDialog({
@@ -269,7 +270,7 @@ export function useDataPermission(tableRef: Ref) {
         valuesData: valuesData.value,
         choicesDict: choicesDict.value,
         showColumns: showColumns.value,
-        isAdd: is_add
+        isAdd: isAdd
       },
       width: "50%",
       draggable: true,
@@ -296,7 +297,7 @@ export function useDataPermission(tableRef: Ref) {
               });
               return;
             }
-            if (is_add) {
+            if (isAdd) {
               createDataPermissionApi(curData).then(async res => {
                 if (res.code === 1000) {
                   await chores(res.detail);

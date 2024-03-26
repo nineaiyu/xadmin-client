@@ -261,6 +261,7 @@ export function useUserConfig(tableRef: Ref) {
         message(t("results.batchDelete", { count: selectedNum.value }), {
           type: "success"
         });
+        onSelectionCancel();
         await onSearch();
       } else {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
@@ -291,9 +292,9 @@ export function useUserConfig(tableRef: Ref) {
     onSearch();
   };
 
-  function openDialog(is_add = true, row?: FormItemProps) {
+  function openDialog(isAdd = true, row?: FormItemProps) {
     let title = t("buttons.hsedit");
-    if (is_add) {
+    if (isAdd) {
       title = t("buttons.hsadd");
     }
     addDialog({
@@ -310,7 +311,7 @@ export function useUserConfig(tableRef: Ref) {
           description: row?.description ?? ""
         },
         showColumns: showColumns.value,
-        isAdd: is_add
+        isAdd: isAdd
       },
       width: "40%",
       draggable: true,
@@ -330,7 +331,7 @@ export function useUserConfig(tableRef: Ref) {
 
         FormRef.validate(valid => {
           if (valid) {
-            if (is_add) {
+            if (isAdd) {
               createUserConfigApi(curData).then(async res => {
                 if (res.code === 1000) {
                   await chores(res.detail);

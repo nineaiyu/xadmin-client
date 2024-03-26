@@ -24,7 +24,7 @@ const props = withDefaults(defineProps<FormProps>(), {
   menuUrlList: () => [],
   formInline: () => ({
     menu_type: MenuChoices.DIRECTORY,
-    is_add: false,
+    isAdd: false,
     parent: "",
     parent_ids: [],
     name: "",
@@ -107,7 +107,7 @@ const handleChangeMenuType = menu_type => {
 defineExpose({ getRef });
 
 const getMinHeight = () => {
-  if (!newFormInline.value.is_add) {
+  if (!newFormInline.value.isAdd) {
     return `calc(100vh - 145px)`;
   }
   return "";
@@ -117,7 +117,7 @@ const menuOptions = computed<Array<OptionsType>>(() => {
   const data = cloneDeep(props.menuChoices);
   data.forEach(item => {
     item.value = item.key;
-    if (!newFormInline.value.is_add) {
+    if (!newFormInline.value.isAdd) {
       if (newFormInline.value.menu_type === MenuChoices.PERMISSION) {
         item.disabled = item.key !== MenuChoices.PERMISSION;
       } else {
@@ -447,7 +447,7 @@ const menuOptions = computed<Array<OptionsType>>(() => {
       <el-form-item
         v-if="
           hasAuth('update:systemMenu') &&
-          !newFormInline.is_add &&
+          !newFormInline.isAdd &&
           newFormInline.pk
         "
         class="flex float-right"
@@ -458,7 +458,7 @@ const menuOptions = computed<Array<OptionsType>>(() => {
         >
           <template #reference>
             <el-button
-              :disabled="newFormInline.is_add || !newFormInline.pk"
+              :disabled="newFormInline.isAdd || !newFormInline.pk"
               plain
               type="danger"
               >{{ t("buttons.hsupdate") }}

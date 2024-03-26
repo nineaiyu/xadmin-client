@@ -159,7 +159,7 @@ export function useMenu() {
         formInline: {
           pk: row?.pk ?? "",
           menu_type: menu_type,
-          is_add: true,
+          isAdd: true,
           parent: row?.parent ?? "",
           parent_ids: row?.parent_ids ?? [],
           name: row?.name ?? "",
