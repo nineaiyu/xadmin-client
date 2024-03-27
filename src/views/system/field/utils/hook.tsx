@@ -4,11 +4,12 @@ import {
   syncModelLabelFieldApi
 } from "@/api/system/field";
 import type { PaginationProps } from "@pureadmin/table";
-import { onMounted, reactive, ref, toRaw } from "vue";
+import { computed, onMounted, reactive, ref, toRaw } from "vue";
 import { delay } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
-import { formatColumns } from "@/views/system/hooks";
+import { formatColumns, formatOptions } from "@/views/system/hooks";
+import type { PlusColumn } from "plus-pro-components";
 
 export function useModelField() {
   const { t } = useI18n();
@@ -22,7 +23,7 @@ export function useModelField() {
       key: "created_time"
     }
   ];
-  const form = reactive({
+  const form = ref({
     name: "",
     label: "",
     parent: "",
@@ -85,39 +86,66 @@ export function useModelField() {
     }
   ]);
 
-  async function handleSizeChange(val: number) {
-    form.page = 1;
-    form.size = val;
-    await onSearch();
+  const searchColumns: PlusColumn[] = computed(() => {
+    return [
+      {
+        label: t("modelField.name"),
+        prop: "name",
+        valueType: "input"
+      },
+      {
+        label: t("modelField.label"),
+        prop: "label",
+        valueType: "input"
+      },
+      {
+        label: t("modelField.parent"),
+        prop: "parent",
+        valueType: "input"
+      },
+      {
+        label: t("labels.sort"),
+        prop: "ordering",
+        valueType: "select",
+        options: formatOptions(sortOptions)
+      }
+    ];
+  });
+
+  function handleSizeChange(val: number) {
+    form.value.page = 1;
+    form.value.size = val;
+    onSearch();
   }
 
-  async function handleCurrentChange(val: number) {
-    form.page = val;
-    await onSearch();
+  function handleCurrentChange(val: number) {
+    form.value.page = val;
+    onSearch();
   }
 
-  async function onSearch(init = false) {
+  function onSearch(init = false) {
     if (init) {
-      pagination.currentPage = form.page = 1;
-      pagination.pageSize = form.size = 10;
+      pagination.currentPage = form.value.page = 1;
+      pagination.pageSize = form.value.size = 10;
     }
     loading.value = true;
-    const { data } = await getModelLabelFieldListApi(toRaw(form)).catch(() => {
-      loading.value = false;
-    });
-    formatColumns(data?.results, columns, showColumns);
-    dataList.value = data.results;
-    pagination.total = data.total;
-    delay(500).then(() => {
-      loading.value = false;
-    });
+    getModelLabelFieldListApi(toRaw(form.value))
+      .then(res => {
+        if (res.code === 1000 && res.data) {
+          formatColumns(res.data?.results, columns, showColumns);
+          dataList.value = res.data.results;
+          pagination.total = res.data.total;
+        } else {
+          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+        }
+        delay(500).then(() => {
+          loading.value = false;
+        });
+      })
+      .catch(() => {
+        loading.value = false;
+      });
   }
-
-  const resetForm = formEl => {
-    if (!formEl) return;
-    formEl.resetFields();
-    onSearch();
-  };
 
   const handleSync = () => {
     syncModelLabelFieldApi().then(res => {
@@ -141,9 +169,8 @@ export function useModelField() {
     columns,
     dataList,
     pagination,
-    sortOptions,
+    searchColumns,
     onSearch,
-    resetForm,
     handleSync,
     handleSizeChange,
     handleCurrentChange

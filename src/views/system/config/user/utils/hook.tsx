@@ -9,16 +9,21 @@ import {
   updateUserConfigApi
 } from "@/api/system/config/user";
 import { ElMessageBox } from "element-plus";
-import { formatColumns, usePublicHooks } from "@/views/system/hooks";
+import {
+  formatColumns,
+  formatOptions,
+  usePublicHooks
+} from "@/views/system/hooks";
 import { addDialog } from "@/components/ReDialog";
 import type { FormItemProps } from "./types";
 import editForm from "../form.vue";
 import type { PaginationProps } from "@pureadmin/table";
-import { h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
+import { computed, h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
 import { delay, deviceDetection, getKeyList } from "@pureadmin/utils";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
+import type { PlusColumn } from "plus-pro-components";
 
 export function useUserConfig(tableRef: Ref) {
   const { t } = useI18n();
@@ -32,7 +37,7 @@ export function useUserConfig(tableRef: Ref) {
       key: "created_time"
     }
   ];
-  const form = reactive({
+  const form = ref({
     key: "",
     value: "",
     is_active: "",
@@ -156,6 +161,51 @@ export function useUserConfig(tableRef: Ref) {
       )
     }
   ]);
+  const searchColumns: PlusColumn[] = computed(() => {
+    return [
+      {
+        label: t("user.username"),
+        prop: "username",
+        valueType: "input"
+      },
+      {
+        label: t("configUser.key"),
+        prop: "key",
+        valueType: "input"
+      },
+      {
+        label: t("configUser.value"),
+        prop: "value",
+        valueType: "input"
+      },
+      {
+        label: t("labels.description"),
+        prop: "description",
+        valueType: "input"
+      },
+      {
+        label: t("labels.status"),
+        prop: "is_active",
+        valueType: "select",
+        options: [
+          {
+            label: t("labels.enable"),
+            value: true
+          },
+          {
+            label: t("labels.disable"),
+            value: false
+          }
+        ]
+      },
+      {
+        label: t("labels.sort"),
+        prop: "ordering",
+        valueType: "select",
+        options: formatOptions(sortOptions)
+      }
+    ];
+  });
 
   function onGoUserDetail(row: any) {
     if (
@@ -216,26 +266,26 @@ export function useUserConfig(tableRef: Ref) {
       });
   }
 
-  async function handleDelete(row) {
-    deleteUserConfigApi(row.pk).then(async res => {
+  function handleDelete(row) {
+    deleteUserConfigApi(row.pk).then(res => {
       if (res.code === 1000) {
         message(t("results.success"), { type: "success" });
-        await onSearch();
+        onSearch();
       } else {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
     });
   }
 
-  async function handleSizeChange(val: number) {
-    form.page = 1;
-    form.size = val;
-    await onSearch();
+  function handleSizeChange(val: number) {
+    form.value.page = 1;
+    form.value.size = val;
+    onSearch();
   }
 
-  async function handleCurrentChange(val: number) {
-    form.page = val;
-    await onSearch();
+  function handleCurrentChange(val: number) {
+    form.value.page = val;
+    onSearch();
   }
 
   function handleSelectionChange(val) {
@@ -256,41 +306,42 @@ export function useUserConfig(tableRef: Ref) {
     const manySelectData = tableRef.value.getTableRef().getSelectionRows();
     manyDeleteUserConfigApi({
       pks: JSON.stringify(getKeyList(manySelectData, "pk"))
-    }).then(async res => {
+    }).then(res => {
       if (res.code === 1000) {
         message(t("results.batchDelete", { count: selectedNum.value }), {
           type: "success"
         });
         onSelectionCancel();
-        await onSearch();
+        onSearch();
       } else {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
     });
   }
 
-  async function onSearch(init = false) {
+  function onSearch(init = false) {
     if (init) {
-      pagination.currentPage = form.page = 1;
-      pagination.pageSize = form.size = 10;
+      pagination.currentPage = form.value.page = 1;
+      pagination.pageSize = form.value.size = 10;
     }
     loading.value = true;
-    const { data } = await getUserConfigListApi(toRaw(form)).catch(() => {
-      loading.value = false;
-    });
-    formatColumns(data?.results, columns, showColumns);
-    dataList.value = data.results;
-    pagination.total = data.total;
-    delay(500).then(() => {
-      loading.value = false;
-    });
+    getUserConfigListApi(toRaw(form.value))
+      .then(res => {
+        if (res.code === 1000 && res.data) {
+          formatColumns(res.data?.results, columns, showColumns);
+          dataList.value = res.data.results;
+          pagination.total = res.data.total;
+        } else {
+          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+        }
+        delay(500).then(() => {
+          loading.value = false;
+        });
+      })
+      .catch(() => {
+        loading.value = false;
+      });
   }
-
-  const resetForm = formEl => {
-    if (!formEl) return;
-    formEl.resetFields();
-    onSearch();
-  };
 
   function openDialog(isAdd = true, row?: FormItemProps) {
     let title = t("buttons.hsedit");
@@ -323,18 +374,18 @@ export function useUserConfig(tableRef: Ref) {
         const FormRef = formRef.value.getRef();
         const curData = options.props.formInline as FormItemProps;
 
-        async function chores(detail) {
+        function chores(detail) {
           message(detail, { type: "success" });
           done(); // 关闭弹框
-          await onSearch(); // 刷新表格数据
+          onSearch(); // 刷新表格数据
         }
 
         FormRef.validate(valid => {
           if (valid) {
             if (isAdd) {
-              createUserConfigApi(curData).then(async res => {
+              createUserConfigApi(curData).then(res => {
                 if (res.code === 1000) {
-                  await chores(res.detail);
+                  chores(res.detail);
                 } else {
                   message(`${t("results.failed")}，${res.detail}`, {
                     type: "error"
@@ -342,9 +393,9 @@ export function useUserConfig(tableRef: Ref) {
                 }
               });
             } else {
-              updateUserConfigApi(curData.pk, curData).then(async res => {
+              updateUserConfigApi(curData.pk, curData).then(res => {
                 if (res.code === 1000) {
-                  await chores(res.detail);
+                  chores(res.detail);
                 } else {
                   message(`${t("results.failed")}，${res.detail}`, {
                     type: "error"
@@ -380,15 +431,14 @@ export function useUserConfig(tableRef: Ref) {
     columns,
     dataList,
     pagination,
-    sortOptions,
     selectedNum,
-    onSelectionCancel,
+    searchColumns,
     onSearch,
-    resetForm,
     openDialog,
     handleDelete,
     handleManyDelete,
     handleSizeChange,
+    onSelectionCancel,
     handleInvalidCache,
     handleCurrentChange,
     handleSelectionChange

@@ -16,6 +16,8 @@ import { $t, transformI18n } from "@/plugins/i18n";
 import { useWatermark } from "@pureadmin/utils";
 import { Boot } from "@wangeditor/editor";
 import attachmentModule from "@wangeditor/plugin-upload-attachment";
+import plusEn from "plus-pro-components/locale/en.mjs";
+import plusZhCn from "plus-pro-components/locale/zh-cn.mjs";
 
 Boot.registerModule(attachmentModule);
 export default defineComponent({
@@ -26,7 +28,9 @@ export default defineComponent({
   },
   computed: {
     currentLocale() {
-      return this.$storage.locale?.locale === "zh" ? zhCn : en;
+      return this.$storage.locale?.locale === "zh"
+        ? { ...zhCn, ...plusZhCn }
+        : { ...en, ...plusEn };
     }
   },
   mounted() {

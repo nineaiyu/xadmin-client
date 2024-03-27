@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import { message } from "@/utils/message";
 import type { PaginationProps } from "@pureadmin/table";
-import { h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
+import { computed, h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
 import {
   createAnnouncementApi,
   createNoticeApi,
@@ -27,7 +27,8 @@ import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { NoticeChoices } from "@/views/system/constants";
-import { formatColumns } from "@/views/system/hooks";
+import { formatColumns, formatOptions } from "@/views/system/hooks";
+import type { PlusColumn } from "plus-pro-components";
 
 export function useNotice(tableRef: Ref) {
   const { t } = useI18n();
@@ -41,7 +42,7 @@ export function useNotice(tableRef: Ref) {
       key: "created_time"
     }
   ];
-  const form = reactive({
+  const form = ref({
     pk: "",
     title: "",
     message: "",
@@ -147,6 +148,65 @@ export function useNotice(tableRef: Ref) {
     }
   ]);
 
+  const searchColumns: PlusColumn[] = computed(() => {
+    return [
+      {
+        label: t("labels.id"),
+        prop: "notice_id",
+        valueType: "input"
+      },
+      {
+        label: t("notice.title"),
+        prop: "title",
+        valueType: "input",
+        fieldProps: {
+          placeholder: t("notice.verifyTitle")
+        }
+      },
+      {
+        label: t("notice.content"),
+        prop: "message",
+        valueType: "input",
+        fieldProps: {
+          placeholder: t("notice.verifyContent")
+        }
+      },
+      {
+        label: t("notice.publish"),
+        prop: "publish",
+        valueType: "select",
+        options: [
+          {
+            label: t("labels.unPublish"),
+            value: false
+          },
+          {
+            label: t("labels.publish"),
+            value: true
+          }
+        ]
+      },
+      {
+        label: t("notice.level"),
+        prop: "level",
+        valueType: "select",
+        options: formatOptions(levelChoices.value)
+      },
+      {
+        label: t("notice.type"),
+        prop: "notice_type",
+        valueType: "select",
+        options: formatOptions(noticeChoices.value)
+      },
+      {
+        label: t("labels.sort"),
+        prop: "ordering",
+        valueType: "select",
+        options: formatOptions(sortOptions)
+      }
+    ];
+  });
+
   function onGoNoticeReadDetail(row: any) {
     if (hasGlobalAuth("list:systemNoticeRead") && row.pk) {
       router.push({
@@ -195,7 +255,7 @@ export function useNotice(tableRef: Ref) {
         delete curData?.noticeChoices;
         curData.files = formRef.value.getUploadFiles();
 
-        async function chores(detail) {
+        function chores(detail) {
           message(detail, { type: "success" });
           done(); // 关闭弹框
           onSearch(); // 刷新表格数据
@@ -211,9 +271,9 @@ export function useNotice(tableRef: Ref) {
               ) {
                 createApi = createAnnouncementApi;
               }
-              createApi(curData).then(async res => {
+              createApi(curData).then(res => {
                 if (res.code === 1000) {
-                  await chores(res.detail);
+                  chores(res.detail);
                 } else {
                   message(`${t("results.failed")}，${res.detail}`, {
                     type: "error"
@@ -221,9 +281,9 @@ export function useNotice(tableRef: Ref) {
                 }
               });
             } else {
-              updateNoticeApi(curData.pk, curData).then(async res => {
+              updateNoticeApi(curData.pk, curData).then(res => {
                 if (res.code === 1000) {
-                  await chores(res.detail);
+                  chores(res.detail);
                 } else {
                   message(`${t("results.failed")}，${res.detail}`, {
                     type: "error"
@@ -306,8 +366,8 @@ export function useNotice(tableRef: Ref) {
       });
   }
 
-  async function handleDelete(row) {
-    deleteNoticeApi(row.pk).then(async res => {
+  function handleDelete(row) {
+    deleteNoticeApi(row.pk).then(res => {
       if (res.code === 1000) {
         message(t("results.success"), { type: "success" });
         onSearch();
@@ -317,14 +377,14 @@ export function useNotice(tableRef: Ref) {
     });
   }
 
-  async function handleSizeChange(val: number) {
-    form.page = 1;
-    form.size = val;
+  function handleSizeChange(val: number) {
+    form.value.page = 1;
+    form.value.size = val;
     onSearch();
   }
 
-  async function handleCurrentChange(val: number) {
-    form.page = val;
+  function handleCurrentChange(val: number) {
+    form.value.page = val;
     onSearch();
   }
 
@@ -346,7 +406,7 @@ export function useNotice(tableRef: Ref) {
     const manySelectData = tableRef.value.getTableRef().getSelectionRows();
     manyDeleteNoticeApi({
       pks: JSON.stringify(getKeyList(manySelectData, "pk"))
-    }).then(async res => {
+    }).then(res => {
       if (res.code === 1000) {
         message(t("results.batchDelete", { count: selectedNum.value }), {
           type: "success"
@@ -361,11 +421,11 @@ export function useNotice(tableRef: Ref) {
 
   function onSearch(init = false) {
     if (init) {
-      pagination.currentPage = form.page = 1;
-      pagination.pageSize = form.size = 10;
+      pagination.currentPage = form.value.page = 1;
+      pagination.pageSize = form.value.size = 10;
     }
     loading.value = true;
-    getNoticeListApi(toRaw(form))
+    getNoticeListApi(toRaw(form.value))
       .then(res => {
         if (res.code === 1000 && res.data) {
           formatColumns(res?.data?.results, columns, showColumns);
@@ -390,14 +450,14 @@ export function useNotice(tableRef: Ref) {
           loading.value = false;
           if (
             getParameter.notice_user &&
-            form.notice_user &&
-            form.notice_user !== ""
+            form.value.notice_user &&
+            form.value.notice_user !== ""
           ) {
             const parameter = {
               notice_user: JSON.parse(getParameter.notice_user as string),
               notice_type: NoticeChoices.USER
             };
-            form.notice_user = "";
+            form.value.notice_user = "";
             openDialog(true, parameter);
           }
         }, 500);
@@ -407,12 +467,6 @@ export function useNotice(tableRef: Ref) {
       });
   }
 
-  const resetForm = formEl => {
-    if (!formEl) return;
-    formEl.resetFields();
-    onSearch();
-  };
-
   onMounted(() => {
     if (getParameter) {
       const parameter = cloneDeep(getParameter);
@@ -421,8 +475,8 @@ export function useNotice(tableRef: Ref) {
           parameter[param] = parameter[param].toString();
         }
       });
-      form.pk = parameter.pk;
-      form.notice_user = parameter.notice_user;
+      form.value.pk = parameter.pk;
+      form.value.notice_user = parameter.notice_user;
     }
     onSearch(true);
   });
@@ -434,18 +488,15 @@ export function useNotice(tableRef: Ref) {
     columns,
     dataList,
     pagination,
-    sortOptions,
     selectedNum,
-    levelChoices,
-    noticeChoices,
-    onSelectionCancel,
+    searchColumns,
     onSearch,
-    resetForm,
     openDialog,
     showDialog,
     handleDelete,
     handleManyDelete,
     handleSizeChange,
+    onSelectionCancel,
     handleCurrentChange,
     handleSelectionChange
   };

@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import { message } from "@/utils/message";
 import type { PaginationProps } from "@pureadmin/table";
-import { h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
+import { computed, h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
 import {
   deleteNoticeReadApi,
   getNoticeReadListApi,
@@ -23,7 +23,8 @@ import { useRoute, useRouter } from "vue-router";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { formatColumns } from "@/views/system/hooks";
+import { formatColumns, formatOptions } from "@/views/system/hooks";
+import type { PlusColumn } from "plus-pro-components";
 
 export function useNoticeRead(tableRef: Ref) {
   const { t } = useI18n();
@@ -37,7 +38,7 @@ export function useNoticeRead(tableRef: Ref) {
       key: "created_time"
     }
   ];
-  const form = reactive({
+  const form = ref({
     title: "",
     message: "",
     username: "",
@@ -156,6 +157,81 @@ export function useNoticeRead(tableRef: Ref) {
     }
   ]);
 
+  const searchColumns: PlusColumn[] = computed(() => {
+    return [
+      {
+        label: t("user.userId"),
+        prop: "owner_id",
+        valueType: "input",
+        fieldProps: {
+          placeholder: t("user.verifyUserId")
+        }
+      },
+      {
+        label: t("labels.id"),
+        prop: "notice_id",
+        valueType: "input"
+      },
+      {
+        label: t("notice.title"),
+        prop: "title",
+        valueType: "input",
+        fieldProps: {
+          placeholder: t("notice.verifyTitle")
+        }
+      },
+      {
+        label: t("notice.content"),
+        prop: "message",
+        valueType: "input",
+        fieldProps: {
+          placeholder: t("notice.verifyContent")
+        }
+      },
+      {
+        label: t("user.username"),
+        prop: "username",
+        valueType: "input",
+        fieldProps: {
+          placeholder: t("user.verifyUsername")
+        }
+      },
+      {
+        label: t("notice.level"),
+        prop: "level",
+        valueType: "select",
+        options: formatOptions(levelChoices.value)
+      },
+      {
+        label: t("notice.type"),
+        prop: "notice_type",
+        valueType: "select",
+        options: formatOptions(noticeChoices.value)
+      },
+      {
+        label: t("notice.haveRead"),
+        prop: "unread",
+        valueType: "select",
+        options: [
+          {
+            label: t("labels.read"),
+            value: false
+          },
+          {
+            label: t("labels.unread"),
+            value: true
+          }
+        ]
+      },
+      {
+        label: t("labels.sort"),
+        prop: "ordering",
+        valueType: "select",
+        options: formatOptions(sortOptions)
+      }
+    ];
+  });
+
   function onChange({ row, index }) {
     const action = row.unread === false ? t("labels.read") : t("labels.unread");
     ElMessageBox.confirm(
@@ -260,13 +336,13 @@ export function useNoticeRead(tableRef: Ref) {
   }
 
   async function handleSizeChange(val: number) {
-    form.page = 1;
-    form.size = val;
+    form.value.page = 1;
+    form.value.size = val;
     onSearch();
   }
 
   async function handleCurrentChange(val: number) {
-    form.page = val;
+    form.value.page = val;
     onSearch();
   }
 
@@ -303,11 +379,11 @@ export function useNoticeRead(tableRef: Ref) {
 
   function onSearch(init = false) {
     if (init) {
-      pagination.currentPage = form.page = 1;
-      pagination.pageSize = form.size = 10;
+      pagination.currentPage = form.value.page = 1;
+      pagination.pageSize = form.value.size = 10;
     }
     loading.value = true;
-    getNoticeReadListApi(toRaw(form))
+    getNoticeReadListApi(toRaw(form.value))
       .then(res => {
         if (res.code === 1000 && res.data) {
           formatColumns(res?.data?.results, columns, showColumns);
@@ -327,12 +403,6 @@ export function useNoticeRead(tableRef: Ref) {
       });
   }
 
-  const resetForm = formEl => {
-    if (!formEl) return;
-    formEl.resetFields();
-    onSearch();
-  };
-
   onMounted(() => {
     if (getParameter) {
       const parameter = cloneDeep(getParameter);
@@ -341,7 +411,7 @@ export function useNoticeRead(tableRef: Ref) {
           parameter[param] = parameter[param].toString();
         }
       });
-      form.notice_id = parameter.notice_id;
+      form.value.notice_id = parameter.notice_id;
     }
     onSearch();
   });
@@ -353,17 +423,16 @@ export function useNoticeRead(tableRef: Ref) {
     columns,
     dataList,
     pagination,
-    sortOptions,
     selectedNum,
-    noticeChoices,
     levelChoices,
-    onSelectionCancel,
+    searchColumns,
+    noticeChoices,
     onSearch,
-    resetForm,
     showDialog,
     handleDelete,
     handleManyDelete,
     handleSizeChange,
+    onSelectionCancel,
     handleCurrentChange,
     handleSelectionChange
   };

@@ -80,8 +80,8 @@ export function useMenu() {
     });
   };
 
-  async function handleDelete(row) {
-    deleteMenuApi(row.pk).then(async res => {
+  function handleDelete(row) {
+    deleteMenuApi(row.pk).then(res => {
       if (res.code === 1000) {
         message(t("results.success"), { type: "success" });
         getMenuData();
@@ -97,7 +97,7 @@ export function useMenu() {
       message(t("results.noSelectedData"), { type: "error" });
       return;
     }
-    manyDeleteMenuApi({ pks: JSON.stringify(manyPks) }).then(async res => {
+    manyDeleteMenuApi({ pks: JSON.stringify(manyPks) }).then(res => {
       if (res.code === 1000) {
         message(t("results.batchDelete", { count: manyPks.length }), {
           type: "success"
@@ -194,18 +194,18 @@ export function useMenu() {
         const FormRef = formRef.value.getRef();
         const curData = options.props.formInline as FormItemProps;
 
-        async function chores(detail) {
+        function chores(detail) {
           message(detail, { type: "success" });
           done(); // 关闭弹框
           getMenuData(); // 刷新表格数据
         }
 
-        FormRef.validate(async valid => {
+        FormRef.validate(valid => {
           if (valid) {
             curData.meta.title = curData.title;
-            createMenuApi(curData).then(async res => {
+            createMenuApi(curData).then(res => {
               if (res.code === 1000) {
-                await chores(res.detail);
+                chores(res.detail);
               } else {
                 message(`${t("results.failed")}，${res.detail}`, {
                   type: "error"

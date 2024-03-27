@@ -7,6 +7,7 @@ import { MotionPlugin } from "@vueuse/motion";
 import { useEcharts } from "@/plugins/echarts";
 import { createApp, type Directive } from "vue";
 import { useElementPlus } from "@/plugins/elementPlus";
+import { usePlusProComponents } from "@/plugins/plusProComponents";
 import { injectResponsiveStorage } from "@/utils/responsive";
 
 import Table from "@pureadmin/table";
@@ -19,6 +20,8 @@ import "./style/index.scss";
 // 一定要在main.ts中导入tailwind.css，防止vite每次hmr都会请求src/style/index.scss整体css文件导致热更新慢的问题
 import "./style/tailwind.css";
 import "element-plus/dist/index.css";
+// 导入plus-pro-components 及其样式
+import "plus-pro-components/index.css";
 // 导入字体图标
 import "./assets/iconfont/iconfont.js";
 import "./assets/iconfont/iconfont.css";
@@ -60,6 +63,7 @@ getPlatformConfig(app).then(async config => {
     .use(MotionPlugin)
     .use(useI18n)
     .use(useElementPlus)
+    .use(usePlusProComponents)
     .use(Table)
     .use(PureDescriptions)
     .use(useEcharts);

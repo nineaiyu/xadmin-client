@@ -6,16 +6,15 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 
 import Delete from "@iconify-icons/ep/delete";
 import EditPen from "@iconify-icons/ep/edit-pen";
-
-import Refresh from "@iconify-icons/ep/refresh";
 import AddFill from "@iconify-icons/ri/add-circle-line";
 import { hasAuth } from "@/router/utils";
+import { cloneDeep, deviceDetection } from "@pureadmin/utils";
+import { plusPorChange } from "@/views/system/hooks";
 
 defineOptions({
   name: "SystemDataPermission"
 });
 
-const formRef = ref();
 const tableRef = ref();
 
 const {
@@ -25,94 +24,51 @@ const {
   columns,
   dataList,
   pagination,
-  sortOptions,
-  choicesDict,
   selectedNum,
-  onSelectionCancel,
+  searchColumns,
   onSearch,
-  resetForm,
   openDialog,
   handleDelete,
   handleManyDelete,
   handleSizeChange,
+  onSelectionCancel,
   handleCurrentChange,
   handleSelectionChange
 } = useDataPermission(tableRef);
+
+const defaultValue = cloneDeep(form.value);
 </script>
 
 <template>
   <div v-if="hasAuth('list:systemDataPermission')" class="main">
-    <el-form
-      ref="formRef"
-      :inline="true"
-      :model="form"
-      class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px] overflow-auto"
-    >
-      <el-form-item :label="t('permission.name')" prop="name">
-        <el-input
-          v-model="form.name"
-          :placeholder="t('permission.name')"
-          class="!w-[200px]"
-          clearable
-          @keyup.enter="onSearch(true)"
-        />
-      </el-form-item>
-      <el-form-item :label="t('labels.status')" prop="is_active">
-        <el-select
-          v-model="form.is_active"
-          class="!w-[180px]"
-          clearable
-          @change="onSearch(true)"
-        >
-          <el-option :label="t('labels.enable')" value="1" />
-          <el-option :label="t('labels.disable')" value="0" />
-        </el-select>
-      </el-form-item>
-      <el-form-item :label="t('permission.mode')" prop="mode">
-        <el-select
-          v-model="form.mode_type"
-          class="!w-[180px]"
-          clearable
-          @change="onSearch(true)"
-        >
-          <el-option
-            v-for="item in choicesDict"
-            :key="item.key"
-            :disabled="item.disabled"
-            :label="item.label"
-            :value="item.key"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item :label="t('labels.sort')">
-        <el-select
-          v-model="form.ordering"
-          class="!w-[180px]"
-          clearable
-          @change="onSearch(true)"
-        >
-          <el-option
-            v-for="item in sortOptions"
-            :key="item.key"
-            :label="item.label"
-            :value="item.key"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button
-          :icon="useRenderIcon('ri:search-line')"
-          :loading="loading"
-          type="primary"
-          @click="onSearch(true)"
-        >
-          {{ t("buttons.hssearch") }}
-        </el-button>
-        <el-button :icon="useRenderIcon(Refresh)" @click="resetForm(formRef)">
-          {{ t("buttons.hsreload") }}
-        </el-button>
-      </el-form-item>
-    </el-form>
+    <div class="search-form bg-bg_color w-[99/100] pl-8 pr-8 pt-[12px]">
+      <PlusSearch
+        v-model="form"
+        :col-props="{
+          xs: 24,
+          sm: 12,
+          md: 6,
+          lg: 6,
+          xl: 6
+        }"
+        :columns="searchColumns"
+        :default-values="defaultValue"
+        :row-props="{
+          gutter: 24
+        }"
+        :search-loading="loading"
+        :show-number="deviceDetection() ? 1 : 3"
+        label-width="auto"
+        @change="
+          (values: any, column) => {
+            plusPorChange(column, onSearch, true);
+          }
+        "
+        @reset="onSearch"
+        @search="onSearch"
+        @keyup.enter="onSearch"
+      />
+    </div>
 
     <PureTableBar :columns="columns" @refresh="onSearch(true)">
       <template #title>

@@ -9,7 +9,7 @@ import {
   updateDeptApi
 } from "@/api/system/dept";
 import { ElMessageBox } from "element-plus";
-import { computed, h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
+import { computed, h, onMounted, ref, type Ref, toRaw } from "vue";
 import { addDialog } from "@/components/ReDialog";
 import roleForm from "../form/role.vue";
 import editForm from "../form/index.vue";
@@ -30,10 +30,12 @@ import { handleTree } from "@/utils/tree";
 import {
   formatColumns,
   formatHigherDeptOptions,
+  formatOptions,
   usePublicHooks
 } from "@/views/system/hooks";
 import { getDataPermissionListApi } from "@/api/system/permission";
 import { ModeChoices } from "@/views/system/constants";
+import type { PlusColumn } from "plus-pro-components";
 
 export function useDept(tableRef: Ref) {
   const { t } = useI18n();
@@ -55,7 +57,7 @@ export function useDept(tableRef: Ref) {
       key: "rank"
     }
   ];
-  const form = reactive({
+  const form = ref({
     pk: "",
     name: "",
     code: "",
@@ -197,6 +199,72 @@ export function useDept(tableRef: Ref) {
       )
     }
   ]);
+  const searchColumns: PlusColumn[] = computed(() => {
+    return [
+      {
+        label: t("labels.id"),
+        prop: "pk",
+        valueType: "input"
+      },
+      {
+        label: t("dept.name"),
+        prop: "name",
+        valueType: "input"
+      },
+      {
+        label: t("dept.code"),
+        prop: "code",
+        valueType: "input"
+      },
+      {
+        label: t("labels.description"),
+        prop: "description",
+        valueType: "input"
+      },
+      {
+        label: t("dept.autoBind"),
+        prop: "auto_bind",
+        valueType: "select",
+        options: [
+          {
+            label: t("labels.enable"),
+            value: true
+          },
+          {
+            label: t("labels.disable"),
+            value: false
+          }
+        ]
+      },
+      {
+        label: t("labels.status"),
+        prop: "is_active",
+        valueType: "select",
+        options: [
+          {
+            label: t("labels.enable"),
+            value: true
+          },
+          {
+            label: t("labels.disable"),
+            value: false
+          }
+        ]
+      },
+      {
+        label: t("permission.mode"),
+        prop: "mode_type",
+        valueType: "select",
+        options: formatOptions(choicesDict.value)
+      },
+      {
+        label: t("labels.sort"),
+        prop: "ordering",
+        valueType: "select",
+        options: formatOptions(sortOptions)
+      }
+    ];
+  });
 
   function onGoDetail(row: any) {
     if (hasGlobalAuth("list:systemUser") && row.user_count && row.pk) {
@@ -309,11 +377,11 @@ export function useDept(tableRef: Ref) {
       });
   }
 
-  async function handleDelete(row) {
-    deleteDeptApi(row.pk).then(async res => {
+  function handleDelete(row) {
+    deleteDeptApi(row.pk).then(res => {
       if (res.code === 1000) {
         message(t("results.success"), { type: "success" });
-        await onSearch();
+        onSearch();
       } else {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
@@ -338,13 +406,13 @@ export function useDept(tableRef: Ref) {
     const manySelectData = tableRef.value.getTableRef().getSelectionRows();
     manyDeleteDeptApi({
       pks: JSON.stringify(getKeyList(manySelectData, "pk"))
-    }).then(async res => {
+    }).then(res => {
       if (res.code === 1000) {
         message(t("results.batchDelete", { count: selectedNum.value }), {
           type: "success"
         });
         onSelectionCancel();
-        await onSearch();
+        onSearch();
       } else {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
@@ -352,19 +420,24 @@ export function useDept(tableRef: Ref) {
     });
   }
 
-  async function onSearch() {
+  function onSearch() {
     loading.value = true;
-    const { data, choices_dict } = await getDeptListApi(toRaw(form)).catch(
-      () => {
+    getDeptListApi(toRaw(form.value))
+      .then(res => {
+        if (res.code === 1000 && res.data) {
+          formatColumns(res.data?.results, columns, showColumns);
+          choicesDict.value = res.choices_dict;
+          dataList.value = handleTree(res.data.results);
+        } else {
+          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+        }
+        delay(500).then(() => {
+          loading.value = false;
+        });
+      })
+      .catch(() => {
         loading.value = false;
-      }
-    );
-    formatColumns(data?.results, columns, showColumns);
-    choicesDict.value = choices_dict;
-    dataList.value = handleTree(data.results);
-    delay(500).then(() => {
-      loading.value = false;
-    });
+      });
   }
 
   function openDialog(isAdd = true, row?: FormItemProps) {
@@ -400,19 +473,19 @@ export function useDept(tableRef: Ref) {
         const FormRef = formRef.value.getRef();
         const curData = options.props.formInline as FormItemProps;
 
-        async function chores(detail) {
+        function chores(detail) {
           message(detail, { type: "success" });
           done(); // 关闭弹框
-          await onSearch(); // 刷新表格数据
+          onSearch(); // 刷新表格数据
         }
 
         FormRef.validate(valid => {
           if (valid) {
             // 表单规则校验通过
             if (isAdd) {
-              createDeptApi(curData).then(async res => {
+              createDeptApi(curData).then(res => {
                 if (res.code === 1000) {
-                  await chores(res.detail);
+                  chores(res.detail);
                 } else {
                   message(`${t("results.failed")}，${res.detail}`, {
                     type: "error"
@@ -420,9 +493,9 @@ export function useDept(tableRef: Ref) {
                 }
               });
             } else {
-              updateDeptApi(curData.pk, curData).then(async res => {
+              updateDeptApi(curData.pk, curData).then(res => {
                 if (res.code === 1000) {
-                  await chores(res.detail);
+                  chores(res.detail);
                 } else {
                   message(`${t("results.failed")}，${res.detail}`, {
                     type: "error"
@@ -436,38 +509,8 @@ export function useDept(tableRef: Ref) {
     });
   }
 
-  const resetForm = async formEl => {
-    if (!formEl) return;
-    formEl.resetFields();
-    await onSearch();
-  };
-
-  onMounted(async () => {
-    if (getParameter) {
-      const parameter = cloneDeep(getParameter);
-      Object.keys(parameter).forEach(param => {
-        if (!isString(parameter[param])) {
-          parameter[param] = parameter[param].toString();
-        }
-      });
-      form.pk = parameter.pk;
-    }
-    await onSearch();
-
-    if (hasGlobalAuth("list:systemRole")) {
-      rolesOptions.value = (
-        await getRoleListApi({ page: 1, size: 1000 })
-      ).data.results;
-    }
-    if (hasGlobalAuth("list:systemDataPermission")) {
-      rulesOptions.value = (
-        await getDataPermissionListApi({ page: 1, size: 1000 })
-      ).data.results;
-    }
-  });
-
   /** 分配角色 */
-  async function handleRole(row) {
+  function handleRole(row) {
     addDialog({
       title: t("dept.assignRole", { dept: row.name }),
       props: {
@@ -494,7 +537,7 @@ export function useDept(tableRef: Ref) {
           roles: curData.ids,
           rules: curData.pks,
           mode_type: curData.mode_type
-        }).then(async res => {
+        }).then(res => {
           if (res.code === 1000) {
             message(t("results.success"), { type: "success" });
             onSearch();
@@ -507,6 +550,36 @@ export function useDept(tableRef: Ref) {
     });
   }
 
+  onMounted(() => {
+    if (getParameter) {
+      const parameter = cloneDeep(getParameter);
+      Object.keys(parameter).forEach(param => {
+        if (!isString(parameter[param])) {
+          parameter[param] = parameter[param].toString();
+        }
+      });
+      form.value.pk = parameter.pk;
+    }
+    onSearch();
+    if (hasGlobalAuth("list:systemRole")) {
+      getRoleListApi({ page: 1, size: 1000 }).then(res => {
+        if (res.code === 1000 && res.data) {
+          rolesOptions.value = res.data.results;
+        }
+      });
+    }
+    if (hasGlobalAuth("list:systemDataPermission")) {
+      getDataPermissionListApi({
+        page: 1,
+        size: 1000
+      }).then(res => {
+        if (res.code === 1000 && res.data) {
+          rulesOptions.value = res.data.results;
+        }
+      });
+    }
+  });
+
   return {
     t,
     form,
@@ -515,15 +588,14 @@ export function useDept(tableRef: Ref) {
     dataList,
     choicesDict,
     buttonClass,
-    sortOptions,
     selectedNum,
+    searchColumns,
     onSearch,
     openDialog,
-    onSelectionCancel,
-    resetForm,
     handleRole,
     handleDelete,
     handleManyDelete,
+    onSelectionCancel,
     handleSelectionChange
   };
 }

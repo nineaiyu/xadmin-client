@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import { message } from "@/utils/message";
 import type { PaginationProps } from "@pureadmin/table";
-import { h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
+import { computed, h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
 import {
   getUserNoticeListApi,
   updateUserNoticeReadAllApi,
@@ -20,7 +20,8 @@ import {
 import { addDialog } from "@/components/ReDialog";
 import { useI18n } from "vue-i18n";
 import { useUserStoreHook } from "@/store/modules/user";
-import { formatColumns } from "@/views/system/hooks";
+import { formatColumns, formatOptions } from "@/views/system/hooks";
+import type { PlusColumn } from "plus-pro-components";
 
 export function useUserNotice(tableRef: Ref) {
   const { t } = useI18n();
@@ -34,7 +35,7 @@ export function useUserNotice(tableRef: Ref) {
       key: "created_time"
     }
   ];
-  const form = reactive({
+  const form = ref({
     pk: "",
     title: "",
     message: "",
@@ -110,6 +111,65 @@ export function useUserNotice(tableRef: Ref) {
     }
   ]);
 
+  const searchColumns: PlusColumn[] = computed(() => {
+    return [
+      {
+        label: t("labels.id"),
+        prop: "pk",
+        valueType: "input"
+      },
+      {
+        label: t("notice.title"),
+        prop: "title",
+        valueType: "input",
+        fieldProps: {
+          placeholder: t("notice.verifyTitle")
+        }
+      },
+      {
+        label: t("notice.content"),
+        prop: "message",
+        valueType: "input",
+        fieldProps: {
+          placeholder: t("notice.verifyContent")
+        }
+      },
+      {
+        label: t("notice.haveRead"),
+        prop: "unread",
+        valueType: "select",
+        options: [
+          {
+            label: t("labels.read"),
+            value: false
+          },
+          {
+            label: t("labels.unread"),
+            value: true
+          }
+        ]
+      },
+      {
+        label: t("notice.level"),
+        prop: "level",
+        valueType: "select",
+        options: formatOptions(levelChoices.value)
+      },
+      {
+        label: t("notice.type"),
+        prop: "notice_type",
+        valueType: "select",
+        options: formatOptions(noticeChoices.value)
+      },
+      {
+        label: t("labels.sort"),
+        prop: "ordering",
+        valueType: "select",
+        options: formatOptions(sortOptions)
+      }
+    ];
+  });
+
   function showDialog(row?: FormItemProps) {
     if (row.unread) {
       updateUserNoticeReadApi({ pks: [row.pk] });
@@ -135,10 +195,10 @@ export function useUserNotice(tableRef: Ref) {
       contentRenderer: () => h(showForm, { ref: formRef }),
       closeCallBack: () => {
         if (getParameter.pk) {
-          form.pk = "";
+          form.value.pk = "";
         }
         if (row.unread) {
-          form.pk = "";
+          form.value.pk = "";
           onSearch();
         }
       }
@@ -146,13 +206,13 @@ export function useUserNotice(tableRef: Ref) {
   }
 
   async function handleSizeChange(val: number) {
-    form.page = 1;
-    form.size = val;
+    form.value.page = 1;
+    form.value.size = val;
     onSearch();
   }
 
   async function handleCurrentChange(val: number) {
-    form.page = val;
+    form.value.page = val;
     onSearch();
   }
 
@@ -168,7 +228,7 @@ export function useUserNotice(tableRef: Ref) {
 
   function handleReadAll() {
     updateUserNoticeReadAllApi().then(() => {
-      form.unread = "";
+      form.value.unread = "";
       onSearch();
     });
   }
@@ -200,11 +260,11 @@ export function useUserNotice(tableRef: Ref) {
 
   function onSearch(init = false) {
     if (init) {
-      pagination.currentPage = form.page = 1;
-      pagination.pageSize = form.size = 10;
+      pagination.currentPage = form.value.page = 1;
+      pagination.pageSize = form.value.size = 10;
     }
     loading.value = true;
-    getUserNoticeListApi(toRaw(form))
+    getUserNoticeListApi(toRaw(form.value))
       .then(res => {
         if (res.code === 1000 && res.data) {
           formatColumns(res?.data?.results, columns, showColumns);
@@ -221,7 +281,7 @@ export function useUserNotice(tableRef: Ref) {
           loading.value = false;
           if (
             getParameter.pk &&
-            getParameter.pk === form.pk &&
+            getParameter.pk === form.value.pk &&
             getParameter.pk !== "" &&
             dataList.value.length > 0
           ) {
@@ -234,12 +294,6 @@ export function useUserNotice(tableRef: Ref) {
       });
   }
 
-  const resetForm = formEl => {
-    if (!formEl) return;
-    formEl.resetFields();
-    onSearch();
-  };
-
   onMounted(() => {
     if (getParameter) {
       const parameter = cloneDeep(getParameter);
@@ -248,7 +302,7 @@ export function useUserNotice(tableRef: Ref) {
           parameter[param] = parameter[param].toString();
         }
       });
-      form.pk = parameter.pk;
+      form.value.pk = parameter.pk;
     }
     onSearch();
   });
@@ -260,18 +314,15 @@ export function useUserNotice(tableRef: Ref) {
     columns,
     dataList,
     pagination,
-    sortOptions,
-    unreadCount,
     selectedNum,
-    levelChoices,
-    noticeChoices,
-    onSelectionCancel,
+    unreadCount,
+    searchColumns,
     onSearch,
-    resetForm,
     showDialog,
-    handleManyRead,
     handleReadAll,
+    handleManyRead,
     handleSizeChange,
+    onSelectionCancel,
     handleCurrentChange,
     handleSelectionChange
   };

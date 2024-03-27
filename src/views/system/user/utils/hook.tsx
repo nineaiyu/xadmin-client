@@ -54,14 +54,16 @@ import { getDeptListApi } from "@/api/system/dept";
 import {
   formatColumns,
   formatHigherDeptOptions,
+  formatOptions,
   picturePng
 } from "@/views/system/hooks";
 import { getDataPermissionListApi } from "@/api/system/permission";
 import { ModeChoices } from "@/views/system/constants";
 import { REGEXP_PWD } from "@/views/login/utils/rule";
 import Info from "@iconify-icons/ri/question-line";
+import type { PlusColumn } from "plus-pro-components";
 
-export function useUser(tableRef: Ref, treeRef: Ref) {
+export function useUser(tableRef: Ref) {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -81,13 +83,14 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
       key: "last_login"
     }
   ];
-  const form = reactive({
+  const form = ref({
     pk: "",
     dept: "",
-    mode_type: "",
-    username: "",
     mobile: "",
+    username: "",
+    mode_type: "",
     is_active: "",
+    description: "",
     ordering: sortOptions[0].key,
     page: 1,
     size: 10
@@ -107,11 +110,6 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
   const rolesOptions = ref([]);
   const rulesOptions = ref([]);
   const switchLoadMap = ref({});
-  const currentAvatarData = reactive({
-    file: "",
-    img: "",
-    status: false
-  });
   const selectedNum = ref(0);
   const avatarInfo = ref();
   const ruleFormRef = ref();
@@ -259,6 +257,59 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
       slot: "operation"
     }
   ]);
+
+  const searchColumns: PlusColumn[] = computed(() => {
+    return [
+      {
+        label: t("labels.id"),
+        prop: "pk",
+        valueType: "input"
+      },
+      {
+        label: t("user.username"),
+        prop: "username",
+        valueType: "input"
+      },
+      {
+        label: t("user.mobile"),
+        prop: "mobile",
+        valueType: "input"
+      },
+      {
+        label: t("labels.status"),
+        prop: "is_active",
+        valueType: "select",
+        options: [
+          {
+            label: t("labels.enable"),
+            value: true
+          },
+          {
+            label: t("labels.disable"),
+            value: false
+          }
+        ]
+      },
+      {
+        label: t("permission.mode"),
+        prop: "mode_type",
+        valueType: "select",
+        options: formatOptions(modeChoicesDict.value)
+      },
+      {
+        label: t("labels.description"),
+        prop: "description",
+        valueType: "input"
+      },
+      {
+        label: t("labels.sort"),
+        prop: "ordering",
+        valueType: "select",
+        options: formatOptions(sortOptions)
+      }
+    ];
+  });
+
   const buttonClass = computed(() => {
     return [
       "!h-[20px]",
@@ -328,26 +379,26 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
       });
   }
 
-  async function handleDelete(row) {
-    deleteUserApi(row.pk).then(async res => {
+  function handleDelete(row) {
+    deleteUserApi(row.pk).then(res => {
       if (res.code === 1000) {
         message(t("results.success"), { type: "success" });
-        await onSearch();
+        onSearch();
       } else {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
     });
   }
 
-  async function handleSizeChange(val: number) {
-    form.page = 1;
-    form.size = val;
-    await onSearch();
+  function handleSizeChange(val: number) {
+    form.value.page = 1;
+    form.value.size = val;
+    onSearch();
   }
 
-  async function handleCurrentChange(val: number) {
-    form.page = val;
-    await onSearch();
+  function handleCurrentChange(val: number) {
+    form.value.page = val;
+    onSearch();
   }
 
   function handleSelectionChange(val) {
@@ -368,13 +419,13 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
     const manySelectData = tableRef.value.getTableRef().getSelectionRows();
     manyDeleteUserApi({
       pks: JSON.stringify(getKeyList(manySelectData, "pk"))
-    }).then(async res => {
+    }).then(res => {
       if (res.code === 1000) {
         message(t("results.batchDelete", { count: selectedNum.value }), {
           type: "success"
         });
         onSelectionCancel();
-        await onSearch();
+        onSearch();
       } else {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
@@ -382,22 +433,25 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
     });
   }
 
-  async function onSearch(init = false) {
+  function onSearch(init = false) {
     if (init) {
-      pagination.currentPage = form.page = 1;
-      pagination.pageSize = form.size = 10;
+      pagination.currentPage = form.value.page = 1;
+      pagination.pageSize = form.value.size = 10;
     }
     loading.value = true;
-    const { data, choices_dict, mode_choices } = await getUserListApi(
-      toRaw(form)
-    );
-    formatColumns(data?.results, columns, showColumns);
-    dataList.value = data.results;
-    pagination.total = data.total;
-    choicesDict.value = choices_dict;
-    modeChoicesDict.value = mode_choices;
-    delay(500).then(() => {
-      loading.value = false;
+    getUserListApi(toRaw(form.value)).then(res => {
+      if (res.code === 1000 && res.data) {
+        formatColumns(res.data?.results, columns, showColumns);
+        dataList.value = res.data.results;
+        pagination.total = res.data.total;
+        choicesDict.value = res.choices_dict;
+        modeChoicesDict.value = res.mode_choices;
+      } else {
+        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+      }
+      delay(500).then(() => {
+        loading.value = false;
+      });
     });
   }
 
@@ -446,19 +500,19 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
         const FormRef = formRef.value.getRef();
         const curData = options.props.formInline as FormItemProps;
 
-        async function chores(detail) {
+        function chores(detail) {
           message(detail, { type: "success" });
           done(); // 关闭弹框
-          await onSearch(); // 刷新表格数据
+          onSearch(); // 刷新表格数据
         }
 
         FormRef.validate(valid => {
           if (valid) {
             // 表单规则校验通过
             if (isAdd) {
-              createUserApi(curData).then(async res => {
+              createUserApi(curData).then(res => {
                 if (res.code === 1000) {
-                  await chores(res.detail);
+                  chores(res.detail);
                 } else {
                   message(`${t("results.failed")}，${res.detail}`, {
                     type: "error"
@@ -466,9 +520,9 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
                 }
               });
             } else {
-              updateUserApi(curData.pk, curData).then(async res => {
+              updateUserApi(curData.pk, curData).then(res => {
                 if (res.code === 1000) {
-                  await chores(res.detail);
+                  chores(res.detail);
                 } else {
                   message(`${t("results.failed")}，${res.detail}`, {
                     type: "error"
@@ -481,14 +535,6 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
       }
     });
   }
-
-  const resetForm = async formEl => {
-    if (!formEl) return;
-    formEl.resetFields();
-    form.dept = "";
-    treeRef.value.onTreeReset();
-    await onSearch();
-  };
 
   const exportExcel = () => {
     if (selectedNum.value === 0) {
@@ -539,51 +585,13 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
     });
   }
 
-  onMounted(async () => {
-    if (getParameter) {
-      const parameter = cloneDeep(getParameter);
-      Object.keys(parameter).forEach(param => {
-        if (!isString(parameter[param])) {
-          parameter[param] = parameter[param].toString();
-        }
-      });
-      form.pk = parameter.pk;
-      form.dept = parameter.dept;
-    }
-    await onSearch();
-    // 角色列表
-    if (hasGlobalAuth("list:systemRole")) {
-      rolesOptions.value = (
-        await getRoleListApi({ page: 1, size: 1000 })
-      ).data.results;
-    }
-    if (hasGlobalAuth("list:systemDataPermission")) {
-      rulesOptions.value = (
-        await getDataPermissionListApi({ page: 1, size: 1000 })
-      ).data.results;
-    }
-    // 部门列表
-    if (hasGlobalAuth("list:systemDept")) {
-      treeData.value = handleTree(
-        (await getDeptListApi({ page: 1, size: 1000 })).data.results
-      );
-    }
-    treeLoading.value = false;
-  });
-
   function onTreeSelect({ pk, selected }) {
-    form.dept = selected ? pk : "";
+    form.value.dept = selected ? pk : "";
     onSearch();
   }
 
-  watch(
-    pwdForm,
-    ({ newPwd }) =>
-      (curScore.value = isAllEmpty(newPwd) ? -1 : zxcvbn(newPwd).score)
-  );
-
   /** 分配角色 */
-  async function handleRole(row) {
+  function handleRole(row) {
     addDialog({
       title: t("user.assignRole", { user: row.username }),
       props: {
@@ -610,7 +618,7 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
           roles: curData.ids,
           rules: curData.pks,
           mode_type: curData.mode_type
-        }).then(async res => {
+        }).then(res => {
           if (res.code === 1000) {
             message(t("results.success"), { type: "success" });
             onSearch();
@@ -694,7 +702,7 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
         ruleFormRef.value.validate(valid => {
           if (valid) {
             updateUserPasswordApi(row.pk, { password: pwdForm.newPwd }).then(
-              async res => {
+              res => {
                 if (res.code === 1000) {
                   message(t("results.success"), { type: "success" });
                 } else {
@@ -711,34 +719,78 @@ export function useUser(tableRef: Ref, treeRef: Ref) {
     });
   }
 
+  onMounted(() => {
+    if (getParameter) {
+      const parameter = cloneDeep(getParameter);
+      Object.keys(parameter).forEach(param => {
+        if (!isString(parameter[param])) {
+          parameter[param] = parameter[param].toString();
+        }
+      });
+      form.value.pk = parameter.pk;
+      form.value.dept = parameter.dept;
+    }
+    onSearch();
+    // 角色列表
+    if (hasGlobalAuth("list:systemRole")) {
+      getRoleListApi({ page: 1, size: 1000 }).then(res => {
+        if (res.code === 1000 && res.data) {
+          rolesOptions.value = res.data.results;
+        }
+      });
+    }
+    if (hasGlobalAuth("list:systemDataPermission")) {
+      getDataPermissionListApi({
+        page: 1,
+        size: 1000
+      }).then(res => {
+        if (res.code === 1000 && res.data) {
+          rulesOptions.value = res.data.results;
+        }
+      });
+    }
+    // 部门列表
+    if (hasGlobalAuth("list:systemDept")) {
+      getDeptListApi({ page: 1, size: 1000 }).then(res => {
+        if (res.code === 1000 && res.data) {
+          treeData.value = handleTree(res.data.results);
+        }
+      });
+    }
+    treeLoading.value = false;
+  });
+
+  watch(
+    pwdForm,
+    ({ newPwd }) =>
+      (curScore.value = isAllEmpty(newPwd) ? -1 : zxcvbn(newPwd).score)
+  );
+
   return {
     t,
     form,
     loading,
     columns,
     dataList,
+    treeData,
     pagination,
     buttonClass,
-    sortOptions,
-    treeData,
     treeLoading,
-    modeChoicesDict,
     selectedNum,
-    currentAvatarData,
-    deviceDetection,
-    onTreeSelect,
-    exportExcel,
+    searchColumns,
     onSearch,
-    openDialog,
     goNotice,
-    onSelectionCancel,
-    resetForm,
     handleRole,
+    openDialog,
+    exportExcel,
     handleDelete,
+    onTreeSelect,
     handleUpload,
     handleReset,
+    deviceDetection,
     handleManyDelete,
     handleSizeChange,
+    onSelectionCancel,
     handleCurrentChange,
     handleSelectionChange
   };

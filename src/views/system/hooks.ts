@@ -80,3 +80,26 @@ export function formatColumns(results, columns, showColumns) {
 export function picturePng(url: string) {
   return url?.replace(/_(\d).jpg/, ".png");
 }
+
+/**
+ * @description 格式化后端输出
+ * @param data
+ */
+export const formatOptions = (data: Array<any>) => {
+  const result = [];
+  data?.forEach(item => {
+    result.push({
+      label: item?.label,
+      value: item?.key,
+      fieldItemProps: {
+        disabled: item?.disabled
+      }
+    });
+  });
+  return result;
+};
+
+export const plusPorChange = (column: any, func: Function, ...args) => {
+  const canChangeType = ["select", "date-picker", "time-picker", "time-select"];
+  canChangeType.indexOf(column.valueType) > -1 && func && func(...args);
+};

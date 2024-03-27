@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import { message } from "@/utils/message";
 import type { PaginationProps } from "@pureadmin/table";
-import { onMounted, reactive, ref, type Ref, toRaw } from "vue";
+import { computed, onMounted, reactive, ref, type Ref, toRaw } from "vue";
 import {
   deleteOperationLogApi,
   getOperationLogListApi,
@@ -11,7 +11,9 @@ import { useRouter } from "vue-router";
 import { delay, getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
-import { formatColumns } from "@/views/system/hooks";
+import { formatColumns, formatOptions } from "@/views/system/hooks";
+import type { PlusColumn } from "plus-pro-components";
+import { getPickerShortcuts } from "@/views/system/logs/utils";
 
 export function useOperationLog(tableRef: Ref) {
   const { t } = useI18n();
@@ -25,7 +27,7 @@ export function useOperationLog(tableRef: Ref) {
       key: "created_time"
     }
   ];
-  const form = reactive({
+  const form = ref({
     loginTime: "",
     ipaddress: "",
     system: "",
@@ -132,6 +134,73 @@ export function useOperationLog(tableRef: Ref) {
     }
   ]);
 
+  const searchColumns: PlusColumn[] = computed(() => {
+    return [
+      {
+        label: t("user.userId"),
+        prop: "owner_id",
+        valueType: "input",
+        fieldProps: {
+          placeholder: t("user.verifyUserId")
+        }
+      },
+      {
+        label: t("logsOperation.address"),
+        prop: "ipaddress",
+        valueType: "input",
+        fieldProps: {
+          placeholder: t("logsOperation.verifyAddress")
+        }
+      },
+      {
+        label: t("logsOperation.system"),
+        prop: "system",
+        valueType: "input",
+        fieldProps: {
+          placeholder: t("logsOperation.verifySystem")
+        }
+      },
+      {
+        label: t("logsOperation.browser"),
+        prop: "browser",
+        valueType: "input",
+        fieldProps: {
+          placeholder: t("logsOperation.verifyBrowser")
+        }
+      },
+      {
+        label: t("logsOperation.requestPath"),
+        prop: "path",
+        valueType: "input",
+        fieldProps: {
+          placeholder: t("logsOperation.verifyRequestPath")
+        }
+      },
+      {
+        label: t("sorts.createdDate"),
+        prop: "loginTime",
+        valueType: "date-picker",
+        colProps: {
+          xs: 24,
+          sm: 12,
+          md: 8,
+          lg: 8,
+          xl: 8
+        },
+        fieldProps: {
+          shortcuts: getPickerShortcuts(),
+          valueFormat: "YYYY-MM-DD HH:mm:ss",
+          type: "datetimerange"
+        }
+      },
+      {
+        label: t("labels.sort"),
+        prop: "ordering",
+        valueType: "select",
+        options: formatOptions(sortOptions)
+      }
+    ];
+  });
   function onGoDetail(row: any) {
     if (hasGlobalAuth("list:systemUser") && row.creator && row.creator?.pk) {
       router.push({
@@ -141,26 +210,26 @@ export function useOperationLog(tableRef: Ref) {
     }
   }
 
-  async function handleDelete(row) {
-    deleteOperationLogApi(row.pk).then(async res => {
+  function handleDelete(row) {
+    deleteOperationLogApi(row.pk).then(res => {
       if (res.code === 1000) {
         message(t("results.success"), { type: "success" });
-        await onSearch();
+        onSearch();
       } else {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
     });
   }
 
-  async function handleSizeChange(val: number) {
-    form.page = 1;
-    form.size = val;
-    await onSearch();
+  function handleSizeChange(val: number) {
+    form.value.page = 1;
+    form.value.size = val;
+    onSearch();
   }
 
-  async function handleCurrentChange(val: number) {
-    form.page = val;
-    await onSearch();
+  function handleCurrentChange(val: number) {
+    form.value.page = val;
+    onSearch();
   }
 
   function handleSelectionChange(val) {
@@ -181,45 +250,46 @@ export function useOperationLog(tableRef: Ref) {
     const manySelectData = tableRef.value.getTableRef().getSelectionRows();
     manyDeleteOperationLogApi({
       pks: JSON.stringify(getKeyList(manySelectData, "pk"))
-    }).then(async res => {
+    }).then(res => {
       if (res.code === 1000) {
         message(t("results.batchDelete", { count: selectedNum.value }), {
           type: "success"
         });
         onSelectionCancel();
-        await onSearch();
+        onSearch();
       } else {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
     });
   }
 
-  async function onSearch(init = false) {
+  function onSearch(init = false) {
     if (init) {
-      pagination.currentPage = form.page = 1;
-      pagination.pageSize = form.size = 10;
+      pagination.currentPage = form.value.page = 1;
+      pagination.pageSize = form.value.size = 10;
     }
     loading.value = true;
-    if (form.loginTime && form.loginTime.length === 2) {
-      form.created_time_after = form.loginTime[0];
-      form.created_time_before = form.loginTime[1];
+    if (form.value.loginTime && form.value.loginTime.length === 2) {
+      form.value.created_time_after = form.value.loginTime[0];
+      form.value.created_time_before = form.value.loginTime[1];
     }
-    const { data } = await getOperationLogListApi(toRaw(form)).catch(() => {
-      loading.value = false;
-    });
-    formatColumns(data?.results, columns, showColumns);
-    dataList.value = data.results;
-    pagination.total = data.total;
-    delay(500).then(() => {
-      loading.value = false;
-    });
+    getOperationLogListApi(toRaw(form.value))
+      .then(res => {
+        if (res.code === 1000 && res.data) {
+          formatColumns(res.data?.results, columns, showColumns);
+          dataList.value = res.data.results;
+          pagination.total = res.data.total;
+        } else {
+          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+        }
+        delay(500).then(() => {
+          loading.value = false;
+        });
+      })
+      .catch(() => {
+        loading.value = false;
+      });
   }
-
-  const resetForm = formEl => {
-    if (!formEl) return;
-    formEl.resetFields();
-    onSearch();
-  };
 
   onMounted(() => {
     onSearch();
@@ -232,14 +302,13 @@ export function useOperationLog(tableRef: Ref) {
     columns,
     dataList,
     pagination,
-    sortOptions,
     selectedNum,
-    onSelectionCancel,
+    searchColumns,
     onSearch,
-    resetForm,
     handleDelete,
     handleManyDelete,
     handleSizeChange,
+    onSelectionCancel,
     handleCurrentChange,
     handleSelectionChange
   };

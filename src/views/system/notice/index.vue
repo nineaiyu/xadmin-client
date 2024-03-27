@@ -5,18 +5,17 @@ import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 
 import Delete from "@iconify-icons/ep/delete";
-
-import Refresh from "@iconify-icons/ep/refresh";
 import { hasAuth } from "@/router/utils";
 import EditPen from "@iconify-icons/ep/edit-pen";
 import AddFill from "@iconify-icons/ri/add-circle-line";
 import Eye from "@iconify-icons/ri/eye-fill";
+import { cloneDeep, deviceDetection } from "@pureadmin/utils";
+import { plusPorChange } from "@/views/system/hooks";
 
 defineOptions({
   name: "SystemNotice"
 });
 
-const formRef = ref();
 const tableRef = ref();
 
 const {
@@ -26,129 +25,52 @@ const {
   columns,
   dataList,
   pagination,
-  sortOptions,
   selectedNum,
-  levelChoices,
-  noticeChoices,
-  onSelectionCancel,
+  searchColumns,
   onSearch,
-  resetForm,
   openDialog,
   showDialog,
   handleDelete,
   handleManyDelete,
   handleSizeChange,
+  onSelectionCancel,
   handleCurrentChange,
   handleSelectionChange
 } = useNotice(tableRef);
+
+const defaultValue = cloneDeep(form.value);
 </script>
 
 <template>
   <div v-if="hasAuth('list:systemNotice')" class="main">
-    <el-form
-      ref="formRef"
-      :inline="true"
-      :model="form"
-      class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px] overflow-auto"
-    >
-      <el-form-item :label="t('labels.id')" prop="pk">
-        <el-input
-          v-model="form.pk"
-          :placeholder="t('labels.id')"
-          class="!w-[100px]"
-          clearable
-          @keyup.enter="onSearch(true)"
-        />
-      </el-form-item>
-      <el-form-item :label="t('notice.title')" prop="title">
-        <el-input
-          v-model="form.title"
-          :placeholder="t('notice.verifyTitle')"
-          class="!w-[200px]"
-          clearable
-          @keyup.enter="onSearch(true)"
-        />
-      </el-form-item>
-      <el-form-item :label="t('notice.content')" prop="message">
-        <el-input
-          v-model="form.message"
-          :placeholder="t('notice.verifyContent')"
-          class="!w-[180px]"
-          clearable
-          @keyup.enter="onSearch(true)"
-        />
-      </el-form-item>
-      <el-form-item :label="t('notice.publish')" prop="unread">
-        <el-select
-          v-model="form.publish"
-          class="!w-[160px]"
-          clearable
-          @change="onSearch(true)"
-        >
-          <el-option :label="t('labels.publish')" :value="true" />
-          <el-option :label="t('labels.unPublish')" :value="false" />
-        </el-select>
-      </el-form-item>
-      <el-form-item :label="t('notice.level')" prop="level">
-        <el-select
-          v-model="form.level"
-          class="!w-[180px]"
-          clearable
-          @change="onSearch(true)"
-        >
-          <el-option
-            v-for="item in levelChoices"
-            :key="item.key"
-            :disabled="item.disabled"
-            :label="item.label"
-            :value="item.key"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item :label="t('notice.type')" prop="level">
-        <el-select
-          v-model="form.notice_type"
-          class="!w-[180px]"
-          clearable
-          @change="onSearch(true)"
-        >
-          <el-option
-            v-for="item in noticeChoices"
-            :key="item.key"
-            :label="item.label"
-            :value="item.key"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item :label="t('labels.sort')">
-        <el-select
-          v-model="form.ordering"
-          class="!w-[180px]"
-          clearable
-          @change="onSearch(true)"
-        >
-          <el-option
-            v-for="item in sortOptions"
-            :key="item.key"
-            :label="item.label"
-            :value="item.key"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button
-          :icon="useRenderIcon('ri:search-line')"
-          :loading="loading"
-          type="primary"
-          @click="onSearch(true)"
-        >
-          {{ t("buttons.hssearch") }}
-        </el-button>
-        <el-button :icon="useRenderIcon(Refresh)" @click="resetForm(formRef)">
-          {{ t("buttons.hsreload") }}
-        </el-button>
-      </el-form-item>
-    </el-form>
+    <div class="search-form bg-bg_color w-[99/100] pl-8 pr-8 pt-[12px]">
+      <PlusSearch
+        v-model="form"
+        :col-props="{
+          xs: 24,
+          sm: 12,
+          md: 6,
+          lg: 6,
+          xl: 6
+        }"
+        :columns="searchColumns"
+        :default-values="defaultValue"
+        :row-props="{
+          gutter: 24
+        }"
+        :search-loading="loading"
+        :show-number="deviceDetection() ? 1 : 3"
+        label-width="auto"
+        @change="
+          (values: any, column) => {
+            plusPorChange(column, onSearch, true);
+          }
+        "
+        @reset="onSearch"
+        @search="onSearch"
+        @keyup.enter="onSearch"
+      />
+    </div>
 
     <PureTableBar :columns="columns" @refresh="onSearch(true)">
       <template #title>
