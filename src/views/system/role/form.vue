@@ -266,9 +266,7 @@ function onReset() {
                   @click="toggleRowExpansionAll(!isExpand)"
                 >
                   {{
-                    isExpand
-                      ? t("buttons.hscollapseAll")
-                      : t("buttons.hsexpendAll")
+                    isExpand ? t("buttons.collapseAll") : t("buttons.expendAll")
                   }}
                 </el-button>
               </el-dropdown-item>
@@ -294,7 +292,7 @@ function onReset() {
                   type="primary"
                   @click="onReset"
                 >
-                  {{ t("buttons.hsreset") }}
+                  {{ t("buttons.reset") }}
                 </el-button>
               </el-dropdown-item>
             </el-dropdown-menu>

@@ -147,9 +147,7 @@ defineExpose({ onTreeReset });
                 @click="toggleRowExpansionAll(!isExpand)"
               >
                 {{
-                  isExpand
-                    ? t("buttons.hscollapseAll")
-                    : t("buttons.hsexpendAll")
+                  isExpand ? t("buttons.collapseAll") : t("buttons.expendAll")
                 }}
               </el-button>
             </el-dropdown-item>

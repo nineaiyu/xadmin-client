@@ -200,7 +200,7 @@ onMounted(() => {
           class="ml-2"
           size="small"
           @click="emit('openDialog', 0)"
-          >{{ t("buttons.hsadd") }}
+          >{{ t("buttons.add") }}
         </el-button>
         <el-input
           v-model="searchValue"
@@ -235,9 +235,7 @@ onMounted(() => {
                   @click="toggleRowExpansionAll(!isExpand)"
                 >
                   {{
-                    isExpand
-                      ? t("buttons.hscollapseAll")
-                      : t("buttons.hsexpendAll")
+                    isExpand ? t("buttons.collapseAll") : t("buttons.expendAll")
                   }}
                 </el-button>
               </el-dropdown-item>
@@ -264,7 +262,7 @@ onMounted(() => {
                   type="primary"
                   @click="onReset"
                 >
-                  {{ t("buttons.hsreset") }}
+                  {{ t("buttons.reset") }}
                 </el-button>
               </el-dropdown-item>
               <el-dropdown-item v-if="hasAuth('list:systemMenu')">
@@ -275,12 +273,12 @@ onMounted(() => {
                   type="primary"
                   @click="emit('getMenuData')"
                 >
-                  {{ t("buttons.hsreload") }}
+                  {{ t("buttons.reload") }}
                 </el-button>
               </el-dropdown-item>
               <el-dropdown-item v-if="hasAuth('manyDelete:systemMenu')">
                 <el-popconfirm
-                  :title="t('buttons.hsconfirmdelete')"
+                  :title="t('buttons.confirmDelete')"
                   @confirm="emit('handleManyDelete', treeRef)"
                 >
                   <template #reference>
@@ -290,7 +288,7 @@ onMounted(() => {
                       link
                       type="danger"
                     >
-                      {{ t("buttons.hsbatchdelete") }}
+                      {{ t("buttons.batchDelete") }}
                     </el-button>
                   </template>
                 </el-popconfirm>
@@ -349,7 +347,7 @@ onMounted(() => {
                 hasAuth('create:systemMenu') &&
                 data.menu_type !== MenuChoices.PERMISSION
               "
-              :content="t('buttons.hsadd')"
+              :content="t('buttons.add')"
               class="box-item"
               effect="dark"
               placement="top-start"
@@ -364,7 +362,7 @@ onMounted(() => {
 
             <el-popconfirm
               v-if="hasAuth('delete:systemMenu')"
-              :title="t('buttons.hsconfirmdelete')"
+              :title="t('buttons.confirmDelete')"
               @confirm.stop="emit('handleDelete', data)"
             >
               <template #reference>

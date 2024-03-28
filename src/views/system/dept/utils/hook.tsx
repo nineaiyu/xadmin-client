@@ -289,13 +289,13 @@ export function useDept(tableRef: Ref) {
     const action =
       row.auto_bind === false ? t("labels.disable") : t("labels.enable");
     ElMessageBox.confirm(
-      `${t("buttons.hsoperateconfirm", {
+      `${t("buttons.operateConfirm", {
         action: `<strong>${action}</strong>`,
         message: `<strong style="color:var(--el-color-primary)">${row.name}</strong>`
       })}`,
       {
-        confirmButtonText: t("buttons.hssure"),
-        cancelButtonText: t("buttons.hscancel"),
+        confirmButtonText: t("buttons.sure"),
+        cancelButtonText: t("buttons.cancel"),
         type: "warning",
         dangerouslyUseHTMLString: true,
         draggable: true
@@ -335,13 +335,13 @@ export function useDept(tableRef: Ref) {
     const action =
       row.is_active === false ? t("labels.disable") : t("labels.enable");
     ElMessageBox.confirm(
-      `${t("buttons.hsoperateconfirm", {
+      `${t("buttons.operateConfirm", {
         action: `<strong>${action}</strong>`,
         message: `<strong style="color:var(--el-color-primary)">${row.name}</strong>`
       })}`,
       {
-        confirmButtonText: t("buttons.hssure"),
-        cancelButtonText: t("buttons.hscancel"),
+        confirmButtonText: t("buttons.sure"),
+        cancelButtonText: t("buttons.cancel"),
         type: "warning",
         dangerouslyUseHTMLString: true,
         draggable: true
@@ -441,9 +441,9 @@ export function useDept(tableRef: Ref) {
   }
 
   function openDialog(isAdd = true, row?: FormItemProps) {
-    let title = t("buttons.hsedit");
+    let title = t("buttons.edit");
     if (isAdd) {
-      title = t("buttons.hsadd");
+      title = t("buttons.add");
     }
     addDialog({
       title: `${title} ${t("dept.dept")}`,

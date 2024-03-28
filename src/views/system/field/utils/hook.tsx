@@ -48,25 +48,25 @@ export function useModelField() {
       minWidth: 100
     },
     {
-      label: t("modelField.name"),
+      label: t("modelFieldManagement.name"),
       prop: "name",
       minWidth: 120,
       cellRenderer: ({ row }) => <span v-copy={row.name}>{row.name}</span>
     },
     {
-      label: t("modelField.label"),
+      label: t("modelFieldManagement.label"),
       prop: "label",
       minWidth: 150,
       cellRenderer: ({ row }) => <span v-copy={row.label}>{row.label}</span>
     },
     {
-      label: t("modelField.parent"),
+      label: t("modelFieldManagement.parent"),
       prop: "parent",
       minWidth: 150,
       cellRenderer: ({ row }) => <span v-copy={row.parent}>{row.parent}</span>
     },
     {
-      label: t("modelField.fieldType"),
+      label: t("modelFieldManagement.fieldType"),
       prop: "field_type_display",
       minWidth: 150
     },
@@ -89,17 +89,17 @@ export function useModelField() {
   const searchColumns: PlusColumn[] = computed(() => {
     return [
       {
-        label: t("modelField.name"),
+        label: t("modelFieldManagement.name"),
         prop: "name",
         valueType: "input"
       },
       {
-        label: t("modelField.label"),
+        label: t("modelFieldManagement.label"),
         prop: "label",
         valueType: "input"
       },
       {
-        label: t("modelField.parent"),
+        label: t("modelFieldManagement.parent"),
         prop: "parent",
         valueType: "input"
       },

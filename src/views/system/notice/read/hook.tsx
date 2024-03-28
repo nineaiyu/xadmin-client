@@ -235,13 +235,13 @@ export function useNoticeRead(tableRef: Ref) {
   function onChange({ row, index }) {
     const action = row.unread === false ? t("labels.read") : t("labels.unread");
     ElMessageBox.confirm(
-      `${t("buttons.hsoperateconfirm", {
+      `${t("buttons.operateConfirm", {
         action: `<strong>${action}</strong>`,
         message: `<strong style='color:var(--el-color-primary)'>${row.notice_info.title}</strong>`
       })}`,
       {
-        confirmButtonText: t("buttons.hssure"),
-        cancelButtonText: t("buttons.hscancel"),
+        confirmButtonText: t("buttons.sure"),
+        cancelButtonText: t("buttons.cancel"),
         type: "warning",
         dangerouslyUseHTMLString: true,
         draggable: true

@@ -453,7 +453,7 @@ const menuOptions = computed<Array<OptionsType>>(() => {
         class="flex float-right"
       >
         <el-popconfirm
-          :title="t('buttons.hsconfirmdupdate')"
+          :title="t('buttons.confirmUpdate')"
           @confirm="emit('handleConfirm', ruleFormRef, newFormInline)"
         >
           <template #reference>
@@ -461,7 +461,7 @@ const menuOptions = computed<Array<OptionsType>>(() => {
               :disabled="newFormInline.isAdd || !newFormInline.pk"
               plain
               type="danger"
-              >{{ t("buttons.hsupdate") }}
+              >{{ t("buttons.update") }}
             </el-button>
           </template>
         </el-popconfirm>

@@ -35,7 +35,7 @@ const footerButtons = computed(() => {
             }
           },
           {
-            label: t("buttons.hssave"),
+            label: t("buttons.save"),
             type: "primary",
             text: true,
             bg: true,

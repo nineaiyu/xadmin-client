@@ -62,7 +62,7 @@ const defaultValue = cloneDeep(form.value);
     </div>
     <PureTableBar
       :columns="columns"
-      :title="t('menus.hsModelField')"
+      :title="t('menus.modelFieldManagement')"
       @refresh="onSearch(true)"
     >
       <template #buttons>
@@ -73,7 +73,7 @@ const defaultValue = cloneDeep(form.value);
             type="primary"
             @click="handleSync"
           >
-            {{ t("modelField.makeData") }}
+            {{ t("modelFieldManagement.makeData") }}
           </el-button>
         </el-space>
       </template>

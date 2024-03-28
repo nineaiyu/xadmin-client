@@ -151,7 +151,7 @@ onMounted(() => {
               type="success"
               @click="onSearch(true)"
             >
-              {{ t("buttons.hsreload") }}
+              {{ t("buttons.reload") }}
             </el-button>
           </el-space>
         </div>

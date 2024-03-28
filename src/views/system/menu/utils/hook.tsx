@@ -149,7 +149,7 @@ export function useMenu() {
 
   function openDialog(menu_type: number, row?: FormItemProps) {
     addDialog({
-      title: t("buttons.hsadd"),
+      title: t("buttons.add"),
       props: {
         treeData: treeData,
         choicesDict: choicesDict,

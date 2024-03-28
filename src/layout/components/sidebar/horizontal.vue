@@ -113,13 +113,13 @@ nextTick(() => {
                 :icon="LogoutCircleRLine"
                 style="margin: 5px"
               />
-              {{ t("buttons.hsLoginOut") }}
+              {{ t("buttons.loginOut") }}
             </el-dropdown-item>
           </el-dropdown-menu>
         </template>
       </el-dropdown>
       <span
-        :title="t('buttons.hssystemSet')"
+        :title="t('buttons.systemSet')"
         class="set-icon navbar-bg-hover"
         @click="onPanel"
       >

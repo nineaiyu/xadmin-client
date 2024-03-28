@@ -74,7 +74,7 @@ export function useFieldRule(
 
   function openDialog(row) {
     addDialog({
-      title: `${t("buttons.hsadd")} ${t("permission.rules")}`,
+      title: `${t("buttons.add")} ${t("permission.rules")}`,
       props: {
         fieldLookupsData: fieldLookupsData,
         valuesData: valuesData,

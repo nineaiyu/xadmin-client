@@ -133,69 +133,62 @@ sorts:
   rank: Rank
 
 buttons:
-  hsLoginOut: LoginOut
-  hsfullscreen: FullScreen
-  hsexitfullscreen: ExitFullscreen
-  hsrefreshRoute: RefreshRoute
-  hslogin: Login
-  hsadd: Add
-  hsmark: Mark/Cancel
-  hssave: Save
-  hsupdate: Update
-  hssearch: Search
-  hsexpendAll: Expand All
-  hscollapseAll: Collapse All
+  loginOut: LoginOut
+  add: Add
+  save: Save
+  update: Update
+  search: Search
+  expendAll: Expand All
+  collapseAll: Collapse All
   selectAll: Select All
   unSelectAll: Cancel Select
-  hssystemSet: Open ProjectConfig
-  hsdelete: Delete
-  hsreload: Reload
-  hsreset: Reset
-  hscloseCurrentTab: Close CurrentTab
-  hscloseLeftTabs: Close LeftTabs
-  hscloseRightTabs: Close RightTabs
-  hscloseOtherTabs: Close OtherTabs
-  hscloseAllTabs: Close AllTabs
-  hswholeFullScreen: FullScreen
-  hswholeExitFullScreen: ExitFull
-  hscontentFullScreen: Content FullScreen
-  hscontentExitFullScreen: Content ExitFullScreen
-  hscancel: Cancel
-  hsclose: Close
-  hsswitch: Switch
-  hssure: Ok
-  hsedit: Edit
-  hsdetail: Detail
-  hsbatchdelete: BatchDelete
-  hsbatchdeleteconfirm: Are you sure to delete { count } pieces of items in batch?
-  hsoperateconfirm: Are you sure to { action } { message } ?
-  hsselected: "{ count } items are selected"
-  hsconfirmdelete: Are you sure to delete this?
-  hsconfirmdupdate: Are you sure to update this?
+  systemSet: Open ProjectConfig
+  delete: Delete
+  reload: Reload
+  reset: Reset
+  closeCurrentTab: Close CurrentTab
+  closeLeftTabs: Close LeftTabs
+  closeRightTabs: Close RightTabs
+  closeOtherTabs: Close OtherTabs
+  closeAllTabs: Close AllTabs
+  contentFullScreen: Content FullScreen
+  contentExitFullScreen: Content ExitFullScreen
+  cancel: Cancel
+  close: Close
+  switch: Switch
+  sure: Ok
+  edit: Edit
+  detail: Detail
+  batchDelete: BatchDelete
+  batchDeleteConfirm: Are you sure to delete { count } pieces of items in batch?
+  operateConfirm: Are you sure to { action } { message } ?
+  selected: "{ count } items are selected"
+  confirmDelete: Are you sure to delete this?
+  confirmUpdate: Are you sure to update this?
 
 menus:
-  hshome: Home
-  hslogin: Login
-  hssysManagement: System Manage
-  hsUser: User Manage
-  hsDept: Department Manage
-  hsMenu: Menu Manage
-  hsPermission: Permission Manage
-  hsConfig: Config Manage
-  hsSystemConfig: System Config
-  hsUserConfig: User Config
-  hsRole: Role Permission
-  hsDataPermission: Data Permission
-  hsLog: Log Manage
-  hsModelField: Model Field Manage
-  hsOperationLog: Operation Log Manage
-  hsLoginLog: Login Log Manage
+  home: Home
+  login: Login
+  sysManagement: System Manage
+  userManagement: User Manage
+  deptManagement: Department Manage
+  menuManagement: Menu Manage
+  permissionManagement: Permission Manage
+  configManagement: Config Manage
+  systemConfigManagement: System Config
+  userConfigManagement: User Config
+  roleManagement: Role Permission
+  dataPermissionManagement: Data Permission
+  logManagement: Log Manage
+  modelFieldManagement: Model Field Manage
+  operationLogManagement: Operation Log Manage
+  loginLogManagement: Login Log Manage
   permission: Permission Manage
-  hsabnormal: Abnormal Page
-  hsfourZeroFour: "404"
-  hsfourZeroOne: "403"
-  hsFive: "500"
-  hsAbout: About
+  abnormal: Abnormal Page
+  fourZeroFour: "404"
+  fourZeroThree: "403"
+  FiveZeroZero: "500"
+  about: About
   noticeAndAnnouncement: Notice Announcement
   newsAndAnnouncement: News Announcement
   readNotice: Read Notice
@@ -381,7 +374,7 @@ configUser:
   invalidCache: Invalid Cache
   confirmInvalid: Are you sure to invalid this cache?
 
-modelField:
+modelFieldManagement:
   name: Model/field name
   label: Model/field label
   parent: Parent

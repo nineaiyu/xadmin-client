@@ -43,7 +43,7 @@ watch(ruleInfo.value, () => {
             })
           "
         >
-          {{ t("buttons.hsadd") }}
+          {{ t("buttons.add") }}
         </el-button>
       </template>
       <template v-slot="{ size, dynamicColumns }">
@@ -74,7 +74,7 @@ watch(ruleInfo.value, () => {
               @click="openDialog(row)"
             />
             <el-popconfirm
-              :title="t('buttons.hsconfirmdelete')"
+              :title="t('buttons.confirmDelete')"
               @confirm="handleDelete(row)"
             >
               <template #reference>

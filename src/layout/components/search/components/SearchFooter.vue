@@ -16,16 +16,16 @@ const { device, t } = useNav();
   <div class="search-footer text-[#333] dark:text-white">
     <span class="search-footer-item">
       <enterOutlined class="icon" />
-      {{ t("buttons.hssure") }}
+      {{ t("buttons.sure") }}
     </span>
     <span class="search-footer-item">
       <IconifyIconOffline :icon="ArrowUpLine" class="icon" />
       <IconifyIconOffline :icon="ArrowDownLine" class="icon" />
-      {{ t("buttons.hsswitch") }}
+      {{ t("buttons.switch") }}
     </span>
     <span class="search-footer-item">
       <mdiKeyboardEsc class="icon" />
-      {{ t("buttons.hsclose") }}
+      {{ t("buttons.close") }}
     </span>
     <p
       v-if="device !== 'mobile' && props.total > 0"

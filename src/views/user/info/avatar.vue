@@ -46,11 +46,11 @@ function onCropper({ blob }) {
     <el-form-item>
       <el-popconfirm
         v-if="hasAuth('upload:UserInfoAvatar')"
-        :title="t('buttons.hsconfirmdupdate')"
+        :title="t('buttons.confirmUpdate')"
         @confirm="handleUpdate"
       >
         <template #reference>
-          <el-button>{{ t("buttons.hssave") }}</el-button>
+          <el-button>{{ t("buttons.save") }}</el-button>
         </template>
       </el-popconfirm>
     </el-form-item>

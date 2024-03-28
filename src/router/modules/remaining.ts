@@ -8,7 +8,7 @@ export default [
     name: "Login",
     component: () => import("@/views/login/index.vue"),
     meta: {
-      title: $t("menus.hslogin"),
+      title: $t("menus.login"),
       showLink: false,
       rank: 101
     }

@@ -56,7 +56,7 @@ onBeforeUnmount(() => {
         <h4 class="dark:text-white">{{ t("layout.settings") }}</h4>
         <span
           v-tippy="{
-            content: t('buttons.hsclose'),
+            content: t('buttons.close'),
             placement: 'bottom-start',
             zIndex: 41000
           }"

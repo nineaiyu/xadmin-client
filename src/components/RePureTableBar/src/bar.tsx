@@ -311,7 +311,7 @@ export default defineComponent({
                     onChange={value => handleCheckAllChange(value)}
                   />
                   <el-button type="primary" link onClick={() => onReset()}>
-                    {t("buttons.hsreset")}
+                    {t("buttons.reset")}
                   </el-button>
                 </div>
 

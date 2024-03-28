@@ -82,10 +82,10 @@ const defaultValue = cloneDeep(form.value);
               class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
               style="font-size: var(--el-font-size-base)"
             >
-              {{ t("buttons.hsselected", { count: selectedNum }) }}
+              {{ t("buttons.selected", { count: selectedNum }) }}
             </span>
             <el-button text type="primary" @click="onSelectionCancel">
-              {{ t("buttons.hscancel") }}
+              {{ t("buttons.cancel") }}
             </el-button>
           </div>
         </el-space>
@@ -95,7 +95,7 @@ const defaultValue = cloneDeep(form.value);
           <div v-if="selectedNum > 0" v-motion-fade>
             <el-popconfirm
               v-if="hasAuth('update:userNoticeRead')"
-              :title="t('buttons.hsbatchdeleteconfirm', { count: selectedNum })"
+              :title="t('buttons.batchDeleteConfirm', { count: selectedNum })"
               @confirm="handleManyRead"
             >
               <template #reference>
@@ -151,7 +151,7 @@ const defaultValue = cloneDeep(form.value);
               type="primary"
               @click="showDialog(row)"
             >
-              {{ t("buttons.hsdetail") }}
+              {{ t("buttons.detail") }}
             </el-button>
           </template>
         </pure-table>

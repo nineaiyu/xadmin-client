@@ -74,7 +74,9 @@ const defaultValue = cloneDeep(form.value);
     <PureTableBar :columns="columns" @refresh="onSearch(true)">
       <template #title>
         <el-space>
-          <p class="font-bold truncate">{{ t("menus.hsSystemConfig") }}</p>
+          <p class="font-bold truncate">
+            {{ t("menus.systemConfigManagement") }}
+          </p>
           <div
             v-if="selectedNum > 0"
             v-motion-fade
@@ -84,10 +86,10 @@ const defaultValue = cloneDeep(form.value);
               class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
               style="font-size: var(--el-font-size-base)"
             >
-              {{ t("buttons.hsselected", { count: selectedNum }) }}
+              {{ t("buttons.selected", { count: selectedNum }) }}
             </span>
             <el-button text type="primary" @click="onSelectionCancel">
-              {{ t("buttons.hscancel") }}
+              {{ t("buttons.cancel") }}
             </el-button>
           </div>
         </el-space>
@@ -97,12 +99,12 @@ const defaultValue = cloneDeep(form.value);
           <div v-if="selectedNum > 0" v-motion-fade>
             <el-popconfirm
               v-if="hasAuth('manyDelete:systemSystemConfig')"
-              :title="t('buttons.hsbatchdeleteconfirm', { count: selectedNum })"
+              :title="t('buttons.batchDeleteConfirm', { count: selectedNum })"
               @confirm="handleManyDelete"
             >
               <template #reference>
                 <el-button :icon="useRenderIcon(Delete)" plain type="danger">
-                  {{ t("buttons.hsbatchdelete") }}
+                  {{ t("buttons.batchDelete") }}
                 </el-button>
               </template>
             </el-popconfirm>
@@ -114,7 +116,7 @@ const defaultValue = cloneDeep(form.value);
             type="primary"
             @click="openDialog()"
           >
-            {{ t("buttons.hsadd") }}
+            {{ t("buttons.add") }}
           </el-button>
         </el-space>
       </template>
@@ -151,7 +153,7 @@ const defaultValue = cloneDeep(form.value);
               type="primary"
               @click="openDialog(false, row)"
             >
-              {{ t("buttons.hsedit") }}
+              {{ t("buttons.edit") }}
             </el-button>
             <el-popconfirm
               v-if="hasAuth('invalid:systemSystemConfig')"
@@ -172,7 +174,7 @@ const defaultValue = cloneDeep(form.value);
             </el-popconfirm>
             <el-popconfirm
               v-if="hasAuth('delete:systemSystemConfig')"
-              :title="t('buttons.hsconfirmdelete')"
+              :title="t('buttons.confirmDelete')"
               @confirm="handleDelete(row)"
             >
               <template #reference>
@@ -183,7 +185,7 @@ const defaultValue = cloneDeep(form.value);
                   link
                   type="danger"
                 >
-                  {{ t("buttons.hsdelete") }}
+                  {{ t("buttons.delete") }}
                 </el-button>
               </template>
             </el-popconfirm>
