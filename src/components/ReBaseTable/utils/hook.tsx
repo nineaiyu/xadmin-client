@@ -264,6 +264,7 @@ export function useBaseTable(
     searchForm,
     pagination,
     selectedNum,
+    showColumns,
     onChange,
     onSearch,
     openDialog,

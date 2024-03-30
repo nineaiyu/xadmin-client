@@ -1,5 +1,15 @@
 import dayjs from "dayjs";
-import { message } from "@/utils/message";
+import Form from "../form.vue";
+
+import {
+  computed,
+  h,
+  onMounted,
+  reactive,
+  ref,
+  type Ref,
+  shallowRef
+} from "vue";
 import {
   createRoleApi,
   deleteRoleApi,
@@ -7,30 +17,18 @@ import {
   manyDeleteRoleApi,
   updateRoleApi
 } from "@/api/system/role";
-import { ElMessageBox } from "element-plus";
-import {
-  formatColumns,
-  formatOptions,
-  usePublicHooks
-} from "@/views/system/hooks";
-import { addDialog } from "@/components/ReDialog";
-import type { FormItemProps } from "./types";
-import editForm from "../form.vue";
-import type { PaginationProps } from "@pureadmin/table";
-import { computed, h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
-import { getMenuListApi } from "@/api/system/menu";
-import { handleTree } from "@/utils/tree";
-import {
-  cloneDeep,
-  delay,
-  deviceDetection,
-  getKeyList
-} from "@pureadmin/utils";
-import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
-import { getModelLabelFieldListApi } from "@/api/system/field";
-import { FieldChoices } from "@/views/system/constants";
+import { message } from "@/utils/message";
+import { handleTree } from "@/utils/tree";
+import type { FormItemProps } from "./types";
+import { addDialog } from "@/components/ReDialog";
+import { getMenuListApi } from "@/api/system/menu";
 import type { PlusColumn } from "plus-pro-components";
+import { hasAuth, hasGlobalAuth } from "@/router/utils";
+import { FieldChoices } from "@/views/system/constants";
+import { cloneDeep, deviceDetection } from "@pureadmin/utils";
+import { getModelLabelFieldListApi } from "@/api/system/field";
+import { formatOptions, usePublicHooks } from "@/views/system/hooks";
 
 export function useRole(tableRef: Ref) {
   const { t } = useI18n();
@@ -44,7 +42,7 @@ export function useRole(tableRef: Ref) {
       key: "created_time"
     }
   ];
-  const form = ref({
+  const searchForm = ref({
     name: "",
     code: "",
     is_active: "",
@@ -52,22 +50,47 @@ export function useRole(tableRef: Ref) {
     page: 1,
     size: 10
   });
+
+  const defaultValue = cloneDeep(searchForm.value);
+
+  const api = reactive({
+    list: getRoleListApi,
+    create: createRoleApi,
+    delete: deleteRoleApi,
+    update: updateRoleApi,
+    batchDelete: manyDeleteRoleApi
+  });
+
+  const auth = reactive({
+    list: hasAuth("list:systemRole"),
+    create: hasAuth("create:systemRole"),
+    delete: hasAuth("delete:systemRole"),
+    update: hasAuth("update:systemRole"),
+    invalid: hasAuth("invalid:systemRole"),
+    batchDelete: hasAuth("manyDelete:systemRole")
+  });
+
+  const editForm = shallowRef({
+    form: Form,
+    row: {
+      is_active: row => {
+        return row?.is_active ?? true;
+      },
+      access: row => {
+        return row?.access ?? false;
+      },
+      inherit: row => {
+        return row?.inherit ?? false;
+      }
+    }
+  });
+
   const formRef = ref();
-  const selectedNum = ref(0);
-  const dataList = ref([]);
   const menuTreeData = ref([]);
   const fieldLookupsData = ref({});
   const loading = ref(true);
   const switchLoadMap = ref({});
   const { switchStyle } = usePublicHooks();
-  const showColumns = ref([]);
-  const pagination = reactive<PaginationProps>({
-    total: 0,
-    pageSize: 10,
-    currentPage: 1,
-    pageSizes: [5, 10, 20, 50, 100],
-    background: true
-  });
   const columns = ref<TableColumnList>([
     {
       label: t("labels.checkColumn"),
@@ -104,10 +127,12 @@ export function useRole(tableRef: Ref) {
           inactive-value={false}
           active-text={t("labels.active")}
           inactive-text={t("labels.inactive")}
-          disabled={!hasAuth("update:systemRole")}
+          disabled={!auth.update}
           inline-prompt
           style={switchStyle.value}
-          onChange={() => onChange(scope as any)}
+          onChange={() =>
+            tableRef.value.onChange(scope as any, "is_active", scope.row.name)
+          }
         />
       )
     },
@@ -173,129 +198,6 @@ export function useRole(tableRef: Ref) {
     ];
   });
 
-  function onChange({ row, index }) {
-    const action =
-      row.is_active === false ? t("labels.disable") : t("labels.enable");
-    ElMessageBox.confirm(
-      `${t("buttons.operateConfirm", {
-        action: `<strong>${action}</strong>`,
-        message: `<strong style="color:var(--el-color-primary)">${row.name}</strong>`
-      })}`,
-      {
-        confirmButtonText: t("buttons.sure"),
-        cancelButtonText: t("buttons.cancel"),
-        type: "warning",
-        dangerouslyUseHTMLString: true,
-        draggable: true
-      }
-    )
-      .then(() => {
-        switchLoadMap.value[index] = Object.assign(
-          {},
-          switchLoadMap.value[index],
-          {
-            loading: true
-          }
-        );
-        updateRoleApi(row.pk, row).then(res => {
-          if (res.code === 1000) {
-            switchLoadMap.value[index] = Object.assign(
-              {},
-              switchLoadMap.value[index],
-              {
-                loading: false
-              }
-            );
-            message(t("results.success"), { type: "success" });
-          } else {
-            message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-          }
-        });
-      })
-      .catch(() => {
-        row.is_active === false
-          ? (row.is_active = true)
-          : (row.is_active = false);
-      });
-  }
-
-  function handleDelete(row) {
-    deleteRoleApi(row.pk).then(res => {
-      if (res.code === 1000) {
-        message(t("results.success"), { type: "success" });
-        onSearch();
-      } else {
-        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-      }
-    });
-  }
-
-  function handleSizeChange(val: number) {
-    form.value.page = 1;
-    form.value.size = val;
-    onSearch();
-  }
-
-  function handleCurrentChange(val: number) {
-    form.value.page = val;
-    onSearch();
-  }
-
-  function handleSelectionChange(val) {
-    selectedNum.value = val.length;
-  }
-
-  function onSelectionCancel() {
-    selectedNum.value = 0;
-    // 用于多选表格，清空用户的选择
-    tableRef.value.getTableRef().clearSelection();
-  }
-
-  function handleManyDelete() {
-    if (selectedNum.value === 0) {
-      message(t("results.noSelectedData"), { type: "error" });
-      return;
-    }
-    const manySelectData = tableRef.value.getTableRef().getSelectionRows();
-    manyDeleteRoleApi({
-      pks: JSON.stringify(getKeyList(manySelectData, "pk"))
-    }).then(res => {
-      if (res.code === 1000) {
-        message(t("results.batchDelete", { count: selectedNum.value }), {
-          type: "success"
-        });
-        onSelectionCancel();
-        onSearch();
-      } else {
-        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-      }
-    });
-  }
-
-  function onSearch(init = false) {
-    if (init) {
-      pagination.currentPage = form.value.page = 1;
-      pagination.pageSize = form.value.size = 10;
-    }
-    loading.value = true;
-    getRoleListApi(toRaw(form.value))
-      .then(res => {
-        if (res.code === 1000 && res.data) {
-          formatColumns(res.data?.results, columns, showColumns);
-          dataList.value = res.data.results;
-          pagination.total = res.data.total;
-        } else {
-          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-        }
-        delay(500).then(() => {
-          loading.value = false;
-        });
-      })
-      .catch(() => {
-        loading.value = false;
-      });
-  }
-
   function openDialog(isAdd = true, row?: FormItemProps) {
     let title = t("buttons.edit");
     if (isAdd) {
@@ -314,7 +216,7 @@ export function useRole(tableRef: Ref) {
           description: row?.description ?? ""
         },
         menuTreeData: menuTreeData.value,
-        showColumns: showColumns.value,
+        showColumns: tableRef.value.showColumns,
         isAdd: isAdd
       },
       width: "40%",
@@ -322,7 +224,7 @@ export function useRole(tableRef: Ref) {
       fullscreen: deviceDetection(),
       fullscreenIcon: true,
       closeOnClickModal: false,
-      contentRenderer: () => h(editForm, { ref: formRef }),
+      contentRenderer: () => h(Form, { ref: formRef }),
       beforeSure: (done, { options }) => {
         const FormRef = formRef.value.getRef();
         const TreeRef = formRef.value.getTreeRef();
@@ -331,7 +233,7 @@ export function useRole(tableRef: Ref) {
         function chores(detail) {
           message(detail, { type: "success" });
           done(); // 关闭弹框
-          onSearch(); // 刷新表格数据
+          tableRef.value.onSearch(); // 刷新表格数据
         }
 
         FormRef.validate(valid => {
@@ -359,7 +261,7 @@ export function useRole(tableRef: Ref) {
             delete curData.field;
             loading.value = true;
             if (isAdd) {
-              createRoleApi(curData).then(res => {
+              api.create(curData).then(res => {
                 if (res.code === 1000) {
                   chores(res.detail);
                 } else {
@@ -370,7 +272,7 @@ export function useRole(tableRef: Ref) {
                 loading.value = false;
               });
             } else {
-              updateRoleApi(curData.pk, curData).then(res => {
+              api.update(curData.pk, curData).then(res => {
                 if (res.code === 1000) {
                   chores(res.detail);
                 } else {
@@ -438,7 +340,6 @@ export function useRole(tableRef: Ref) {
   };
 
   onMounted(() => {
-    onSearch();
     if (hasGlobalAuth("list:systemMenu")) {
       getMenuData();
     }
@@ -446,20 +347,13 @@ export function useRole(tableRef: Ref) {
 
   return {
     t,
-    form,
-    loading,
+    api,
+    auth,
     columns,
-    dataList,
-    pagination,
-    selectedNum,
+    editForm,
+    searchForm,
+    defaultValue,
     searchColumns,
-    onSearch,
-    openDialog,
-    handleDelete,
-    handleManyDelete,
-    handleSizeChange,
-    onSelectionCancel,
-    handleCurrentChange,
-    handleSelectionChange
+    openDialog
   };
 }

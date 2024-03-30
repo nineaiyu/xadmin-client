@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { computed, onMounted, reactive, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import {
   deleteLoginLogApi,
   getLoginLogDetailApi,
@@ -8,11 +8,11 @@ import {
 } from "@/api/system/logs/login";
 import { useRouter } from "vue-router";
 import { cloneDeep } from "@pureadmin/utils";
-import { useI18n } from "vue-i18n";
-import { hasAuth, hasGlobalAuth } from "@/router/utils";
-import { formatOptions, usePublicHooks } from "@/views/system/hooks";
+import { getPickerShortcuts } from "../../utils";
 import type { PlusColumn } from "plus-pro-components";
-import { getPickerShortcuts } from "@/views/system/logs/utils";
+import { hasAuth, hasGlobalAuth } from "@/router/utils";
+import { computed, onMounted, reactive, ref } from "vue";
+import { formatOptions, usePublicHooks } from "@/views/system/hooks";
 
 export function useLoginLog() {
   const { t } = useI18n();

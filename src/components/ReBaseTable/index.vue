@@ -61,6 +61,7 @@ const {
   searchForm,
   pagination,
   selectedNum,
+  showColumns,
   onChange,
   onSearch,
   openDialog,
@@ -87,13 +88,13 @@ function getTableRef() {
 
 const editOrAdd = (isAdd = true, row = {}) => {
   if (props.customAddOrEdit) {
-    emit("openDialog", { isAdd, row });
+    emit("openDialog", isAdd, row);
   } else {
     openDialog(isAdd, row);
   }
 };
 
-defineExpose({ getTableRef, getSelectPks, onSearch, onChange });
+defineExpose({ getTableRef, getSelectPks, onSearch, onChange, showColumns });
 </script>
 
 <template>

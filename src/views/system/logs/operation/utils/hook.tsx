@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { computed, reactive, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import {
   deleteOperationLogApi,
   getOperationLogListApi,
@@ -7,11 +7,11 @@ import {
 } from "@/api/system/logs/operation";
 import { useRouter } from "vue-router";
 import { cloneDeep } from "@pureadmin/utils";
-import { useI18n } from "vue-i18n";
-import { hasAuth, hasGlobalAuth } from "@/router/utils";
+import { getPickerShortcuts } from "../../utils";
+import { computed, reactive, ref } from "vue";
 import { formatOptions } from "@/views/system/hooks";
 import type { PlusColumn } from "plus-pro-components";
-import { getPickerShortcuts } from "@/views/system/logs/utils";
+import { hasAuth, hasGlobalAuth } from "@/router/utils";
 
 export function useOperationLog() {
   const { t } = useI18n();

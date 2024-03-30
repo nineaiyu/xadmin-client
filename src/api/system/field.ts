@@ -18,3 +18,12 @@ export const syncModelLabelFieldApi = (params?: object) => {
     params: params
   });
 };
+
+export const getModelLabelFieldDetailApi = (
+  pk?: number | string,
+  data?: object
+) => {
+  return http.request<Result>("get", `/api/system/field/${pk}`, {
+    params: data
+  });
+};

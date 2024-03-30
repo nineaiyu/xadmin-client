@@ -148,10 +148,6 @@ function toggleSelectAll(status, keys: Array<string> | null = null) {
     }
   }
 }
-
-function checkField(data, status = true) {
-  toggleSelectAll(true, getKeyList(data.children, "pk"));
-}
 function nodeClick(value, node) {
   if (
     value.pk.toString().indexOf("+") > 0 &&
@@ -299,7 +295,6 @@ function onReset() {
           </template>
         </el-dropdown>
       </div>
-      <!--      <div class="overflow-y-auto w-full h-[30vh]">-->
       <div>
         <el-tree
           ref="treeRoleRef"
@@ -362,7 +357,7 @@ function onReset() {
                             getKeyList(data.children, 'pk')
                           )
                         "
-                        >取消</el-button
+                        >{{ t("buttons.cancel") }}</el-button
                       >
                     </el-button-group>
                   </template>

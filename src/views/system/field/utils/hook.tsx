@@ -1,18 +1,20 @@
 import dayjs from "dayjs";
 import {
+  getModelLabelFieldDetailApi,
   getModelLabelFieldListApi,
   syncModelLabelFieldApi
 } from "@/api/system/field";
-import type { PaginationProps } from "@pureadmin/table";
-import { computed, onMounted, reactive, ref, toRaw } from "vue";
-import { delay } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
+import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
-import { formatColumns, formatOptions } from "@/views/system/hooks";
+import { cloneDeep } from "@pureadmin/utils";
+import { formatOptions } from "@/views/system/hooks";
 import type { PlusColumn } from "plus-pro-components";
+import { computed, onMounted, reactive, type Ref, ref } from "vue";
 
-export function useModelField() {
+export function useModelField(tableRef: Ref) {
   const { t } = useI18n();
+  const choicesDict = ref({});
   const sortOptions = [
     {
       label: `${t("sorts.createdDate")} ${t("labels.descending")}`,
@@ -23,7 +25,7 @@ export function useModelField() {
       key: "created_time"
     }
   ];
-  const form = ref({
+  const searchForm = ref({
     name: "",
     label: "",
     parent: "",
@@ -31,16 +33,19 @@ export function useModelField() {
     page: 1,
     size: 10
   });
-  const dataList = ref([]);
-  const loading = ref(true);
-  const showColumns = ref([]);
-  const pagination = reactive<PaginationProps>({
-    total: 0,
-    pageSize: 10,
-    currentPage: 1,
-    pageSizes: [5, 10, 20, 50, 100],
-    background: true
+
+  const defaultValue = cloneDeep(searchForm.value);
+  const api = reactive({
+    list: getModelLabelFieldListApi,
+    sync: syncModelLabelFieldApi,
+    detail: getModelLabelFieldDetailApi
   });
+
+  const auth = reactive({
+    list: hasAuth("list:systemModelField"),
+    sync: hasAuth("sync:systemModelField")
+  });
+
   const columns = ref<TableColumnList>([
     {
       label: t("labels.id"),
@@ -104,6 +109,12 @@ export function useModelField() {
         valueType: "input"
       },
       {
+        label: t("modelFieldManagement.fieldType"),
+        prop: "field_type",
+        valueType: "select",
+        options: formatOptions(choicesDict.value["field_type"])
+      },
+      {
         label: t("labels.sort"),
         prop: "ordering",
         valueType: "select",
@@ -112,67 +123,31 @@ export function useModelField() {
     ];
   });
 
-  function handleSizeChange(val: number) {
-    form.value.page = 1;
-    form.value.size = val;
-    onSearch();
-  }
-
-  function handleCurrentChange(val: number) {
-    form.value.page = val;
-    onSearch();
-  }
-
-  function onSearch(init = false) {
-    if (init) {
-      pagination.currentPage = form.value.page = 1;
-      pagination.pageSize = form.value.size = 10;
-    }
-    loading.value = true;
-    getModelLabelFieldListApi(toRaw(form.value))
-      .then(res => {
-        if (res.code === 1000 && res.data) {
-          formatColumns(res.data?.results, columns, showColumns);
-          dataList.value = res.data.results;
-          pagination.total = res.data.total;
-        } else {
-          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-        }
-        delay(500).then(() => {
-          loading.value = false;
-        });
-      })
-      .catch(() => {
-        loading.value = false;
-      });
-  }
-
   const handleSync = () => {
-    syncModelLabelFieldApi().then(res => {
+    api.sync().then(res => {
       if (res.code === 1000) {
         message(t("results.success"), { type: "success" });
-        onSearch();
+        tableRef.value.onSearch();
       } else {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
     });
   };
-
   onMounted(() => {
-    onSearch();
+    api.detail("choices").then(res => {
+      if (res.code === 1000) {
+        choicesDict.value = res.choices_dict;
+      }
+    });
   });
-
   return {
     t,
-    form,
-    loading,
+    api,
+    auth,
     columns,
-    dataList,
-    pagination,
+    searchForm,
+    defaultValue,
     searchColumns,
-    onSearch,
-    handleSync,
-    handleSizeChange,
-    handleCurrentChange
+    handleSync
   };
 }
