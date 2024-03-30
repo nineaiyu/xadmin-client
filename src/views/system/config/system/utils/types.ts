@@ -1,5 +1,4 @@
 interface FormItemProps {
-  /** ID */
   pk?: number;
   key: string;
   value: string;

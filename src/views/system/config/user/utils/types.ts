@@ -1,5 +1,4 @@
 interface FormItemProps {
-  /** ID */
   pk?: number;
   owner?: string;
   owner_info?: object;

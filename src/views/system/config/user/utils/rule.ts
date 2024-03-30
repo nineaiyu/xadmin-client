@@ -4,6 +4,13 @@ import { $t, transformI18n } from "@/plugins/i18n";
 
 /** 自定义表单规则校验 */
 export const formRules = reactive(<FormRules>{
+  config_user: [
+    {
+      required: true,
+      message: transformI18n($t("user.userId")),
+      trigger: "blur"
+    }
+  ],
   owner: [
     {
       required: true,

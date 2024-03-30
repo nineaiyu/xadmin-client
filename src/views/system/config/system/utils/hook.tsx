@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
-import { message } from "@/utils/message";
+import Form from "../form.vue";
+import { useI18n } from "vue-i18n";
 import {
   actionInvalidCacheApi,
   createSystemConfigApi,
@@ -8,21 +9,12 @@ import {
   manyDeleteSystemConfigApi,
   updateSystemConfigApi
 } from "@/api/system/config/system";
-import { ElMessageBox } from "element-plus";
-import {
-  formatColumns,
-  formatOptions,
-  usePublicHooks
-} from "@/views/system/hooks";
-import { addDialog } from "@/components/ReDialog";
-import type { FormItemProps } from "./types";
-import editForm from "../form.vue";
-import type { PaginationProps } from "@pureadmin/table";
-import { computed, h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
-import { delay, deviceDetection, getKeyList } from "@pureadmin/utils";
 import { hasAuth } from "@/router/utils";
-import { useI18n } from "vue-i18n";
+import { message } from "@/utils/message";
+import { cloneDeep } from "@pureadmin/utils";
 import type { PlusColumn } from "plus-pro-components";
+import { computed, reactive, ref, type Ref, shallowRef } from "vue";
+import { formatOptions, usePublicHooks } from "@/views/system/hooks";
 
 export function useSystemConfig(tableRef: Ref) {
   const { t } = useI18n();
@@ -36,7 +28,7 @@ export function useSystemConfig(tableRef: Ref) {
       key: "created_time"
     }
   ];
-  const form = ref({
+  const searchForm = ref({
     key: "",
     value: "",
     is_active: "",
@@ -45,20 +37,44 @@ export function useSystemConfig(tableRef: Ref) {
     page: 1,
     size: 10
   });
-  const formRef = ref();
-  const selectedNum = ref(0);
-  const dataList = ref([]);
-  const loading = ref(true);
+
+  const defaultValue = cloneDeep(searchForm.value);
+
+  const api = reactive({
+    list: getSystemConfigListApi,
+    create: createSystemConfigApi,
+    delete: deleteSystemConfigApi,
+    update: updateSystemConfigApi,
+    invalid: actionInvalidCacheApi,
+    batchDelete: manyDeleteSystemConfigApi
+  });
+
+  const auth = reactive({
+    list: hasAuth("list:systemSystemConfig"),
+    create: hasAuth("create:systemSystemConfig"),
+    delete: hasAuth("delete:systemSystemConfig"),
+    update: hasAuth("update:systemSystemConfig"),
+    invalid: hasAuth("invalid:systemSystemConfig"),
+    batchDelete: hasAuth("manyDelete:systemSystemConfig")
+  });
+
+  const editForm = shallowRef({
+    form: Form,
+    row: {
+      is_active: row => {
+        return row?.is_active ?? true;
+      },
+      access: row => {
+        return row?.access ?? false;
+      },
+      inherit: row => {
+        return row?.inherit ?? false;
+      }
+    }
+  });
+
   const switchLoadMap = ref({});
   const { switchStyle, tagStyle } = usePublicHooks();
-  const showColumns = ref([]);
-  const pagination = reactive<PaginationProps>({
-    total: 0,
-    pageSize: 10,
-    currentPage: 1,
-    pageSizes: [5, 10, 20, 50, 100],
-    background: true
-  });
   const columns = ref<TableColumnList>([
     {
       label: t("labels.checkColumn"),
@@ -106,10 +122,12 @@ export function useSystemConfig(tableRef: Ref) {
           inactive-value={false}
           active-text={t("labels.active")}
           inactive-text={t("labels.inactive")}
-          disabled={!hasAuth("update:systemSystemConfig")}
+          disabled={!auth.update}
           inline-prompt
           style={switchStyle.value}
-          onChange={() => onChange(scope as any)}
+          onChange={() =>
+            tableRef.value.onChange(scope as any, "is_active", scope.row.key)
+          }
         />
       )
     },
@@ -150,11 +168,7 @@ export function useSystemConfig(tableRef: Ref) {
       fixed: "right",
       width: 260,
       slot: "operation",
-      hide: !(
-        hasAuth("update:systemSystemConfig") ||
-        hasAuth("invalid:systemSystemConfig") ||
-        hasAuth("delete:systemSystemConfig")
-      )
+      hide: !(auth.update || auth.delete || auth.invalid)
     }
   ]);
 
@@ -199,226 +213,131 @@ export function useSystemConfig(tableRef: Ref) {
     ];
   });
 
-  function onChange({ row, index }) {
-    const action =
-      row.is_active === false ? t("labels.disable") : t("labels.enable");
-    ElMessageBox.confirm(
-      `${t("buttons.operateConfirm", {
-        action: `<strong>${action}</strong>`,
-        message: `<strong style="color:var(--el-color-primary)">${row.key}</strong>`
-      })}`,
-      {
-        confirmButtonText: t("buttons.sure"),
-        cancelButtonText: t("buttons.cancel"),
-        type: "warning",
-        dangerouslyUseHTMLString: true,
-        draggable: true
-      }
-    )
-      .then(() => {
-        switchLoadMap.value[index] = Object.assign(
-          {},
-          switchLoadMap.value[index],
-          {
-            loading: true
-          }
-        );
-        updateSystemConfigApi(row.pk, row).then(res => {
-          if (res.code === 1000) {
-            switchLoadMap.value[index] = Object.assign(
-              {},
-              switchLoadMap.value[index],
-              {
-                loading: false
-              }
-            );
-            message(t("results.success"), { type: "success" });
-          } else {
-            message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-          }
-        });
-      })
-      .catch(() => {
-        row.is_active === false
-          ? (row.is_active = true)
-          : (row.is_active = false);
-      });
-  }
-
-  function handleDelete(row) {
-    deleteSystemConfigApi(row.pk).then(res => {
-      if (res.code === 1000) {
-        message(t("results.success"), { type: "success" });
-        onSearch();
-      } else {
-        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-      }
-    });
-  }
-
-  function handleSizeChange(val: number) {
-    form.value.page = 1;
-    form.value.size = val;
-    onSearch();
-  }
-
-  function handleCurrentChange(val: number) {
-    form.value.page = val;
-    onSearch();
-  }
-
-  function handleSelectionChange(val) {
-    selectedNum.value = val.length;
-  }
-
-  function onSelectionCancel() {
-    selectedNum.value = 0;
-    // 用于多选表格，清空用户的选择
-    tableRef.value.getTableRef().clearSelection();
-  }
-
-  function handleManyDelete() {
-    if (selectedNum.value === 0) {
-      message(t("results.noSelectedData"), { type: "error" });
-      return;
-    }
-    const manySelectData = tableRef.value.getTableRef().getSelectionRows();
-    manyDeleteSystemConfigApi({
-      pks: JSON.stringify(getKeyList(manySelectData, "pk"))
-    }).then(res => {
-      if (res.code === 1000) {
-        message(t("results.batchDelete", { count: selectedNum.value }), {
-          type: "success"
-        });
-        onSelectionCancel();
-        onSearch();
-      } else {
-        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-      }
-    });
-  }
-
-  function onSearch(init = false) {
-    if (init) {
-      pagination.currentPage = form.value.page = 1;
-      pagination.pageSize = form.value.size = 10;
-    }
-    loading.value = true;
-    getSystemConfigListApi(toRaw(form.value))
-      .then(res => {
-        if (res.code === 1000 && res.data) {
-          formatColumns(res.data?.results, columns, showColumns);
-          dataList.value = res.data.results;
-          pagination.total = res.data.total;
-        } else {
-          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-        }
-        delay(500).then(() => {
-          loading.value = false;
-        });
-      })
-      .catch(() => {
-        loading.value = false;
-      });
-  }
-
-  function openDialog(isAdd = true, row?: FormItemProps) {
-    let title = t("buttons.edit");
-    if (isAdd) {
-      title = t("buttons.add");
-    }
-    addDialog({
-      title: `${title} ${t("configSystem.configSystem")}`,
-      props: {
-        formInline: {
-          pk: row?.pk ?? "",
-          key: row?.key ?? "",
-          value: row?.value ?? "",
-          is_active: row?.is_active ?? true,
-          inherit: row?.inherit ?? false,
-          access: row?.access ?? false,
-          description: row?.description ?? ""
-        },
-        showColumns: showColumns.value,
-        isAdd: isAdd
-      },
-      width: "40%",
-      draggable: true,
-      fullscreen: deviceDetection(),
-      fullscreenIcon: true,
-      closeOnClickModal: false,
-      contentRenderer: () => h(editForm, { ref: formRef }),
-      beforeSure: (done, { options }) => {
-        const FormRef = formRef.value.getRef();
-        const curData = options.props.formInline as FormItemProps;
-
-        function chores(detail) {
-          message(detail, { type: "success" });
-          done(); // 关闭弹框
-          onSearch(); // 刷新表格数据
-        }
-
-        FormRef.validate(valid => {
-          if (valid) {
-            if (isAdd) {
-              createSystemConfigApi(curData).then(async res => {
-                if (res.code === 1000) {
-                  chores(res.detail);
-                } else {
-                  message(`${t("results.failed")}，${res.detail}`, {
-                    type: "error"
-                  });
-                }
-              });
-            } else {
-              updateSystemConfigApi(curData.pk, curData).then(res => {
-                if (res.code === 1000) {
-                  chores(res.detail);
-                } else {
-                  message(`${t("results.failed")}，${res.detail}`, {
-                    type: "error"
-                  });
-                }
-              });
-            }
-          }
-        });
-      }
-    });
-  }
-
   const handleInvalidCache = row => {
-    actionInvalidCacheApi(row.pk).then(res => {
+    api.invalid(row.pk).then(res => {
       if (res.code === 1000) {
         message(t("results.success"), { type: "success" });
-        onSearch();
+        tableRef.value.onSearch();
       } else {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
     });
   };
 
-  onMounted(() => {
-    onSearch();
-  });
+  return {
+    t,
+    api,
+    auth,
+    columns,
+    editForm,
+    searchForm,
+    defaultValue,
+    searchColumns,
+    handleInvalidCache
+  };
+}
+
+export function useSystemConfigForm(props) {
+  const { t } = useI18n();
+  const columns: PlusColumn[] = [
+    {
+      label: t("configSystem.key"),
+      prop: "key",
+      valueType: "input",
+      fieldProps: {
+        disabled: !props?.isAdd && props?.showColumns.indexOf("key") === -1
+      }
+    },
+    {
+      label: t("configSystem.value"),
+      prop: "value",
+      valueType: "textarea",
+      fieldProps: {
+        autosize: { minRows: 5, maxRows: 20 },
+        disabled: !props?.isAdd && props?.showColumns.indexOf("value") === -1
+      }
+    },
+    {
+      label: t("configSystem.access"),
+      prop: "access",
+      valueType: "radio",
+      colProps: {
+        xs: 24,
+        sm: 24,
+        md: 24,
+        lg: 12,
+        xl: 12
+      },
+      tooltip: t("configSystem.accessTip"),
+      fieldProps: {
+        disabled: !props?.isAdd && props?.showColumns.indexOf("access") === -1
+      },
+      options: [
+        {
+          label: t("labels.enable"),
+          value: true
+        },
+        {
+          label: t("labels.disable"),
+          value: false
+        }
+      ]
+    },
+    {
+      label: t("configSystem.inherit"),
+      prop: "inherit",
+      valueType: "radio",
+      colProps: {
+        xs: 24,
+        sm: 24,
+        md: 24,
+        lg: 12,
+        xl: 12
+      },
+      tooltip: t("configSystem.inheritTip"),
+      fieldProps: {
+        disabled: !props?.isAdd && props?.showColumns.indexOf("inherit") === -1
+      },
+      options: [
+        {
+          label: t("labels.enable"),
+          value: true
+        },
+        {
+          label: t("labels.disable"),
+          value: false
+        }
+      ]
+    },
+    {
+      label: t("labels.status"),
+      prop: "is_active",
+      valueType: "radio",
+      tooltip: t("labels.status"),
+      options: [
+        {
+          label: t("labels.enable"),
+          value: true
+        },
+        {
+          label: t("labels.disable"),
+          value: false
+        }
+      ]
+    },
+    {
+      label: t("labels.description"),
+      prop: "description",
+      valueType: "textarea",
+      fieldProps: {
+        disabled:
+          !props?.isAdd && props?.showColumns.indexOf("description") === -1
+      }
+    }
+  ];
 
   return {
     t,
-    form,
-    loading,
-    columns,
-    dataList,
-    pagination,
-    selectedNum,
-    searchColumns,
-    onSearch,
-    openDialog,
-    handleDelete,
-    handleManyDelete,
-    handleSizeChange,
-    onSelectionCancel,
-    handleInvalidCache,
-    handleCurrentChange,
-    handleSelectionChange
+    columns
   };
 }

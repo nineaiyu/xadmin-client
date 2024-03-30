@@ -11,12 +11,8 @@ export interface attrsType {
 
 /**
  * 圆点、方形闪烁动画组件
- * @param width 可选 string 宽
- * @param height 可选 string 高
- * @param borderRadius 可选 number | string 传0为方形、传50%或者不传为圆形
- * @param background 可选 string 闪烁颜色
- * @param scale 可选 number | string 闪烁范围，默认2，值越大闪烁范围越大
  * @returns Component
+ * @param attrs
  */
 export function useRenderFlicker(attrs?: attrsType): Component {
   return defineComponent({

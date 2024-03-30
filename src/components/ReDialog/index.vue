@@ -1,12 +1,12 @@
-<script lang="ts" setup>
+<script setup lang="ts">
 import {
+  type EventType,
   type ButtonProps,
-  closeDialog,
   type DialogOptions,
-  dialogStore,
-  type EventType
+  closeDialog,
+  dialogStore
 } from "./index";
-import { computed, ref } from "vue";
+import { ref, computed } from "vue";
 import { isFunction } from "@pureadmin/utils";
 import Fullscreen from "@iconify-icons/ri/fullscreen-fill";
 import ExitFullscreen from "@iconify-icons/ri/fullscreen-exit-fill";
@@ -89,14 +89,14 @@ function handleClose(
   <el-dialog
     v-for="(options, index) in dialogStore"
     :key="index"
-    v-model="options.visible"
-    :fullscreen="fullscreen ? true : options?.fullscreen ? true : false"
-    class="pure-dialog"
     v-bind="options"
+    v-model="options.visible"
+    class="pure-dialog"
+    :fullscreen="fullscreen ? true : options?.fullscreen"
     @closed="handleClose(options, index)"
-    @closeAutoFocus="eventsCallBack('closeAutoFocus', options, index)"
-    @openAutoFocus="eventsCallBack('openAutoFocus', options, index)"
     @opened="eventsCallBack('open', options, index)"
+    @openAutoFocus="eventsCallBack('openAutoFocus', options, index)"
+    @closeAutoFocus="eventsCallBack('closeAutoFocus', options, index)"
   >
     <!-- header -->
     <template
