@@ -1,25 +1,20 @@
 import dayjs from "dayjs";
-import { message } from "@/utils/message";
-import type { PaginationProps } from "@pureadmin/table";
-import { computed, onMounted, reactive, ref, type Ref, toRaw } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import {
   deleteLoginLogApi,
+  getLoginLogDetailApi,
   getLoginLogListApi,
   manyDeleteLoginLogApi
 } from "@/api/system/logs/login";
 import { useRouter } from "vue-router";
-import { delay, getKeyList } from "@pureadmin/utils";
+import { cloneDeep } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
-import {
-  formatColumns,
-  formatOptions,
-  usePublicHooks
-} from "@/views/system/hooks";
+import { formatOptions, usePublicHooks } from "@/views/system/hooks";
 import type { PlusColumn } from "plus-pro-components";
 import { getPickerShortcuts } from "@/views/system/logs/utils";
 
-export function useLoginLog(tableRef: Ref) {
+export function useLoginLog() {
   const { t } = useI18n();
   const sortOptions = [
     {
@@ -31,33 +26,37 @@ export function useLoginLog(tableRef: Ref) {
       key: "created_time"
     }
   ];
-  const form = ref({
+  const searchForm = ref({
     ipaddress: "",
-    loginTime: "",
     system: "",
     browser: "",
     agent: "",
     creator_id: "",
     login_type: "",
+    created_time: "",
     ordering: sortOptions[0].key,
     page: 1,
     size: 10
   });
+
+  const defaultValue = cloneDeep(searchForm.value);
+  const api = reactive({
+    list: getLoginLogListApi,
+    delete: deleteLoginLogApi,
+    detail: getLoginLogDetailApi,
+    batchDelete: manyDeleteLoginLogApi
+  });
+
+  const auth = reactive({
+    list: hasAuth("list:systemLoginLog"),
+    delete: hasAuth("delete:systemLoginLog"),
+    batchDelete: hasAuth("manyDelete:systemLoginLog")
+  });
+
   const router = useRouter();
-  const choicesDict = ref([]);
-  const selectedNum = ref(0);
-  const dataList = ref([]);
-  const loading = ref(true);
-  const showColumns = ref([]);
+  const choicesDict = ref({});
   const { tagStyle } = usePublicHooks();
 
-  const pagination = reactive<PaginationProps>({
-    total: 0,
-    pageSize: 10,
-    currentPage: 1,
-    pageSizes: [5, 10, 20, 50, 100],
-    background: true
-  });
   const columns = ref<TableColumnList>([
     {
       label: t("labels.checkColumn"),
@@ -128,7 +127,7 @@ export function useLoginLog(tableRef: Ref) {
       fixed: "right",
       width: 100,
       slot: "operation",
-      hide: !hasAuth("delete:systemLoginLog")
+      hide: !auth.delete
     }
   ]);
 
@@ -178,15 +177,15 @@ export function useLoginLog(tableRef: Ref) {
         label: t("logsLogin.loginDisplay"),
         prop: "login_type",
         valueType: "select",
-        options: formatOptions(choicesDict.value)
+        options: formatOptions(choicesDict.value["login_type"])
       },
       {
         label: t("sorts.loginDate"),
-        prop: "loginTime",
+        prop: "created_time",
         valueType: "date-picker",
         colProps: {
           xs: 24,
-          sm: 12,
+          sm: 24,
           md: 12,
           lg: 12,
           xl: 12
@@ -215,108 +214,20 @@ export function useLoginLog(tableRef: Ref) {
     }
   }
 
-  function handleDelete(row) {
-    deleteLoginLogApi(row.pk).then(res => {
-      if (res.code === 1000) {
-        message(t("results.success"), { type: "success" });
-        onSearch();
-      } else {
-        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-      }
-    });
-  }
-
-  function handleSizeChange(val: number) {
-    form.value.page = 1;
-    form.value.size = val;
-    onSearch();
-  }
-
-  function handleCurrentChange(val: number) {
-    form.value.page = val;
-    onSearch();
-  }
-
-  function handleSelectionChange(val) {
-    selectedNum.value = val.length;
-  }
-
-  function onSelectionCancel() {
-    selectedNum.value = 0;
-    // 用于多选表格，清空用户的选择
-    tableRef.value.getTableRef().clearSelection();
-  }
-
-  function handleManyDelete() {
-    if (selectedNum.value === 0) {
-      message(t("results.noSelectedData"), { type: "error" });
-      return;
-    }
-    const manySelectData = tableRef.value.getTableRef().getSelectionRows();
-    manyDeleteLoginLogApi({
-      pks: JSON.stringify(getKeyList(manySelectData, "pk"))
-    }).then(res => {
-      if (res.code === 1000) {
-        message(t("results.batchDelete", { count: selectedNum.value }), {
-          type: "success"
-        });
-        onSelectionCancel();
-        onSearch();
-      } else {
-        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-      }
-    });
-  }
-
-  function onSearch(init = false) {
-    if (init) {
-      pagination.currentPage = form.value.page = 1;
-      pagination.pageSize = form.value.size = 10;
-    }
-    loading.value = true;
-    if (form.value.loginTime && form.value.loginTime.length === 2) {
-      form.value.created_time_after = form.value.loginTime[0];
-      form.value.created_time_before = form.value.loginTime[1];
-    }
-    getLoginLogListApi(toRaw(form.value))
-      .then(res => {
-        if (res.code === 1000 && res.data) {
-          formatColumns(res.data?.results, columns, showColumns);
-          dataList.value = res.data.results;
-          pagination.total = res.data.total;
-          choicesDict.value = res.choices_dict;
-        } else {
-          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-        }
-        delay(500).then(() => {
-          loading.value = false;
-        });
-      })
-      .catch(() => {
-        loading.value = false;
-      });
-  }
-
   onMounted(() => {
-    onSearch();
+    api.detail("choices").then(res => {
+      if (res.code === 1000) {
+        choicesDict.value = res.choices_dict;
+      }
+    });
   });
 
   return {
-    t,
-    form,
-    loading,
+    api,
+    auth,
     columns,
-    dataList,
-    pagination,
-    choicesDict,
-    selectedNum,
-    searchColumns,
-    onSearch,
-    handleDelete,
-    handleManyDelete,
-    handleSizeChange,
-    onSelectionCancel,
-    handleCurrentChange,
-    handleSelectionChange
+    searchForm,
+    defaultValue,
+    searchColumns
   };
 }

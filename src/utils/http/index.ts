@@ -1,8 +1,4 @@
-import Axios, {
-  type AxiosInstance,
-  type AxiosRequestConfig,
-  type CustomParamsSerializer
-} from "axios";
+import Axios, { type AxiosInstance, type AxiosRequestConfig } from "axios";
 import type {
   PureHttpError,
   PureHttpRequestConfig,
@@ -34,8 +30,9 @@ const defaultConfig: AxiosRequestConfig = {
     "X-Requested-With": "XMLHttpRequest"
   },
   // 数组格式参数序列化（https://github.com/axios/axios/issues/5142）
-  paramsSerializer: {
-    serialize: stringify as unknown as CustomParamsSerializer
+  // 自动转换为ids=1&ids=2&ids=3这种形式
+  paramsSerializer: params => {
+    return stringify(params, { arrayFormat: "repeat" });
   }
 };
 

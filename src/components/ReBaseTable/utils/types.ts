@@ -18,7 +18,7 @@ interface EditFormProps {
 interface FormProps {
   auth?: ApiAuthProps;
   api: ApiAuthProps;
-  editForm: EditFormProps;
+  editForm?: EditFormProps;
   pagination?: object | null;
   searchForm: object | null;
   searchColumns: any[];

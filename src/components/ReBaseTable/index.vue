@@ -2,7 +2,7 @@
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { FormProps } from "./utils/types";
-import { reactive, ref, watch } from "vue";
+import { ref } from "vue";
 import { cloneDeep, deviceDetection, getKeyList } from "@pureadmin/utils";
 import { useBaseTable } from "./utils/hook";
 import Delete from "@iconify-icons/ep/delete";
@@ -11,11 +11,11 @@ import AddFill from "@iconify-icons/ri/add-circle-line";
 
 const props = withDefaults(defineProps<FormProps>(), {
   auth: () => ({
-    list: true,
-    create: true,
-    delete: true,
-    update: true,
-    batchDelete: true
+    list: false,
+    create: false,
+    delete: false,
+    update: false,
+    batchDelete: false
   }),
   api: () => ({
     list: null,

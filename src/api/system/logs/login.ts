@@ -16,3 +16,9 @@ export const manyDeleteLoginLogApi = (data?: object) => {
     params: data
   });
 };
+
+export const getLoginLogDetailApi = (pk?: number | string, data?: object) => {
+  return http.request<Result>("get", `/api/system/logs/login/${pk}`, {
+    params: data
+  });
+};
