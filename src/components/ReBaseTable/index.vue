@@ -2,7 +2,7 @@
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { FormProps } from "./utils/types";
-import { ref } from "vue";
+import { reactive, ref, watch } from "vue";
 import { cloneDeep, deviceDetection, getKeyList } from "@pureadmin/utils";
 import { useBaseTable } from "./utils/hook";
 import Delete from "@iconify-icons/ep/delete";
@@ -77,9 +77,9 @@ const {
   props.editForm,
   props.tableColumns,
   props.pagination,
-  props.searchForm
+  ref(props.searchForm)
 );
-const defaultValue = cloneDeep(searchForm);
+const defaultValue = cloneDeep(searchForm.value);
 
 function getTableRef() {
   return tableRef.value;
@@ -122,16 +122,22 @@ defineExpose({ getTableRef, getSelectPks, onSearch, onChange });
           }
         "
         @reset="
-          onSearch(true);
-          emit('plusReset');
+          () => {
+            onSearch(true);
+            emit('plusReset');
+          }
         "
         @search="
-          onSearch(true);
-          emit('plusSearch');
+          () => {
+            onSearch(true);
+            emit('plusSearch');
+          }
         "
         @keyup.enter="
-          onSearch(true);
-          emit('plusSearch');
+          () => {
+            onSearch(true);
+            emit('plusSearch');
+          }
         "
       />
     </div>

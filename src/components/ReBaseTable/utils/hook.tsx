@@ -18,7 +18,7 @@ export function useBaseTable(
   editForm,
   tableColumns,
   pagination: PaginationProps | {},
-  searchForm
+  searchForm: Ref
 ) {
   const { t } = useI18n();
   const switchLoadMap = ref({});
@@ -51,13 +51,13 @@ export function useBaseTable(
   };
 
   const handleSizeChange = (val: number) => {
-    searchForm.page = 1;
-    searchForm.size = val;
+    searchForm.value.page = 1;
+    searchForm.value.size = val;
     onSearch();
   };
 
   const handleCurrentChange = (val: number) => {
-    searchForm.page = val;
+    searchForm.value.page = val;
     onSearch();
   };
 
@@ -116,12 +116,12 @@ export function useBaseTable(
 
   const onSearch = (init = false) => {
     if (init) {
-      pagination.currentPage = searchForm.page = 1;
-      pagination.pageSize = searchForm.size = 10;
+      pagination.currentPage = searchForm.value.page = 1;
+      pagination.pageSize = searchForm.value.size = 10;
     }
     loading.value = true;
     api
-      .list(toRaw(searchForm))
+      .list(toRaw(searchForm.value))
       .then(res => {
         if (res.code === 1000 && res.data) {
           formatColumns(res.data?.results, tableColumns);
