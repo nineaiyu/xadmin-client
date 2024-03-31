@@ -39,3 +39,9 @@ export const empowerDeptRoleApi = (pk?: number, data?: object) => {
     data: data
   });
 };
+
+export const getDeptDetailApi = (pk?: number | string, data?: object) => {
+  return http.request<Result>("get", `/api/system/dept/${pk}`, {
+    params: data
+  });
+};

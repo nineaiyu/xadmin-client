@@ -29,6 +29,7 @@ import { FieldChoices } from "@/views/system/constants";
 import { cloneDeep, deviceDetection } from "@pureadmin/utils";
 import { getModelLabelFieldListApi } from "@/api/system/field";
 import { formatOptions, usePublicHooks } from "@/views/system/hooks";
+import { selectOptions } from "@/views/system/render";
 
 export function useRole(tableRef: Ref) {
   const { t } = useI18n();
@@ -161,33 +162,18 @@ export function useRole(tableRef: Ref) {
       {
         label: t("role.name"),
         prop: "name",
-        valueType: "input",
-        fieldProps: {
-          placeholder: t("role.verifyRoleName")
-        }
+        valueType: "input"
       },
       {
         label: t("role.code"),
         prop: "code",
-        valueType: "input",
-        fieldProps: {
-          placeholder: t("role.verifyRoleCode")
-        }
+        valueType: "input"
       },
       {
         label: t("labels.status"),
         prop: "is_active",
         valueType: "select",
-        options: [
-          {
-            label: t("labels.disable"),
-            value: false
-          },
-          {
-            label: t("labels.enable"),
-            value: true
-          }
-        ]
+        options: selectOptions
       },
       {
         label: t("labels.sort"),

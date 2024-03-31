@@ -15,6 +15,12 @@ import { cloneDeep } from "@pureadmin/utils";
 import type { PlusColumn } from "plus-pro-components";
 import { computed, reactive, ref, type Ref, shallowRef } from "vue";
 import { formatOptions, usePublicHooks } from "@/views/system/hooks";
+import {
+  disableState,
+  renderOption,
+  renderSwitch,
+  selectOptions
+} from "@/views/system/render";
 
 export function useSystemConfig(tableRef: Ref) {
   const { t } = useI18n();
@@ -73,7 +79,6 @@ export function useSystemConfig(tableRef: Ref) {
     }
   });
 
-  const switchLoadMap = ref({});
   const { switchStyle, tagStyle } = usePublicHooks();
   const columns = ref<TableColumnList>([
     {
@@ -113,22 +118,14 @@ export function useSystemConfig(tableRef: Ref) {
       label: t("labels.status"),
       prop: "is_active",
       minWidth: 130,
-      cellRenderer: scope => (
-        <el-switch
-          size={scope.props.size === "small" ? "small" : "default"}
-          loading={switchLoadMap.value[scope.index]?.loading}
-          v-model={scope.row.is_active}
-          active-value={true}
-          inactive-value={false}
-          active-text={t("labels.active")}
-          inactive-text={t("labels.inactive")}
-          disabled={!auth.update}
-          inline-prompt
-          style={switchStyle.value}
-          onChange={() =>
-            tableRef.value.onChange(scope as any, "is_active", scope.row.key)
-          }
-        />
+      cellRenderer: renderSwitch(
+        auth,
+        tableRef,
+        switchStyle,
+        "is_active",
+        scope => {
+          return scope.row.key;
+        }
       )
     },
     {
@@ -193,16 +190,7 @@ export function useSystemConfig(tableRef: Ref) {
         label: t("labels.status"),
         prop: "is_active",
         valueType: "select",
-        options: [
-          {
-            label: t("labels.enable"),
-            value: true
-          },
-          {
-            label: t("labels.disable"),
-            value: false
-          }
-        ]
+        options: selectOptions
       },
       {
         label: t("labels.sort"),
@@ -245,7 +233,7 @@ export function useSystemConfigForm(props) {
       prop: "key",
       valueType: "input",
       fieldProps: {
-        disabled: !props?.isAdd && props?.showColumns.indexOf("key") === -1
+        disabled: disableState(props, "key")
       }
     },
     {
@@ -254,7 +242,7 @@ export function useSystemConfigForm(props) {
       valueType: "textarea",
       fieldProps: {
         autosize: { minRows: 5, maxRows: 20 },
-        disabled: !props?.isAdd && props?.showColumns.indexOf("value") === -1
+        disabled: disableState(props, "value")
       }
     },
     {
@@ -270,18 +258,9 @@ export function useSystemConfigForm(props) {
       },
       tooltip: t("configSystem.accessTip"),
       fieldProps: {
-        disabled: !props?.isAdd && props?.showColumns.indexOf("access") === -1
+        disabled: disableState(props, "access")
       },
-      options: [
-        {
-          label: t("labels.enable"),
-          value: true
-        },
-        {
-          label: t("labels.disable"),
-          value: false
-        }
-      ]
+      renderField: renderOption()
     },
     {
       label: t("configSystem.inherit"),
@@ -296,42 +275,23 @@ export function useSystemConfigForm(props) {
       },
       tooltip: t("configSystem.inheritTip"),
       fieldProps: {
-        disabled: !props?.isAdd && props?.showColumns.indexOf("inherit") === -1
+        disabled: disableState(props, "inherit")
       },
-      options: [
-        {
-          label: t("labels.enable"),
-          value: true
-        },
-        {
-          label: t("labels.disable"),
-          value: false
-        }
-      ]
+      renderField: renderOption()
     },
     {
       label: t("labels.status"),
       prop: "is_active",
       valueType: "radio",
       tooltip: t("labels.status"),
-      options: [
-        {
-          label: t("labels.enable"),
-          value: true
-        },
-        {
-          label: t("labels.disable"),
-          value: false
-        }
-      ]
+      renderField: renderOption()
     },
     {
       label: t("labels.description"),
       prop: "description",
       valueType: "textarea",
       fieldProps: {
-        disabled:
-          !props?.isAdd && props?.showColumns.indexOf("description") === -1
+        disabled: disableState(props, "description")
       }
     }
   ];

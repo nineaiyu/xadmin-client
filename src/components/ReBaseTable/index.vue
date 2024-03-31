@@ -35,7 +35,8 @@ const props = withDefaults(defineProps<FormProps>(), {
   pagination: {},
   searchForm: {},
   searchColumns: [],
-  tableColumns: [] // PlusColumn[]
+  tableColumns: [],
+  resultFormat: null
 });
 defineOptions({ name: "ReBaseTable" });
 const emit = defineEmits<{
@@ -78,7 +79,8 @@ const {
   props.editForm,
   props.tableColumns,
   props.pagination,
-  ref(props.searchForm)
+  ref(props.searchForm),
+  props.resultFormat
 );
 const defaultValue = cloneDeep(searchForm.value);
 
@@ -94,7 +96,14 @@ const editOrAdd = (isAdd = true, row = {}) => {
   }
 };
 
-defineExpose({ getTableRef, getSelectPks, onSearch, onChange, showColumns });
+defineExpose({
+  onSearch,
+  onChange,
+  getTableRef,
+  getSelectPks,
+  dataList,
+  showColumns
+});
 </script>
 
 <template>
@@ -209,6 +218,7 @@ defineExpose({ getTableRef, getSelectPks, onSearch, onChange, showColumns });
           align-whole="center"
           row-key="pk"
           showOverflowTooltip
+          default-expand-all
           table-layout="auto"
           @selection-change="handleSelectionChange"
           @page-size-change="handleSizeChange"

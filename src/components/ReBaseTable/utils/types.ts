@@ -24,6 +24,7 @@ interface FormProps {
   searchColumns: any[];
   tableColumns: any[];
   customAddOrEdit?: boolean;
+  resultFormat?: Function;
 }
 
 export type { ApiAuthProps, FormProps };

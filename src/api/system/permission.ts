@@ -29,3 +29,12 @@ export const manyDeleteDataPermissionApi = (data?: object) => {
     params: data
   });
 };
+
+export const getDataPermissionDetailApi = (
+  pk?: number | string,
+  data?: object
+) => {
+  return http.request<Result>("get", `/api/system/permission/${pk}`, {
+    params: data
+  });
+};

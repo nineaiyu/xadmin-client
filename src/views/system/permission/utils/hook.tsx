@@ -3,22 +3,16 @@ import { message } from "@/utils/message";
 import {
   createDataPermissionApi,
   deleteDataPermissionApi,
+  getDataPermissionDetailApi,
   getDataPermissionListApi,
   manyDeleteDataPermissionApi,
   updateDataPermissionApi
 } from "@/api/system/permission";
-import { ElMessageBox } from "element-plus";
-import {
-  formatColumns,
-  formatOptions,
-  usePublicHooks
-} from "@/views/system/hooks";
+import { formatOptions, usePublicHooks } from "@/views/system/hooks";
 import { addDialog } from "@/components/ReDialog";
 import type { FormItemProps } from "./types";
-import editForm from "../form.vue";
-import type { PaginationProps } from "@pureadmin/table";
-import { computed, h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
-import { delay, deviceDetection, getKeyList } from "@pureadmin/utils";
+import { computed, h, onMounted, reactive, ref, type Ref } from "vue";
+import { cloneDeep, deviceDetection } from "@pureadmin/utils";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { FieldChoices, ModeChoices } from "@/views/system/constants";
@@ -26,9 +20,15 @@ import { handleTree } from "@/utils/tree";
 import { getModelLabelFieldListApi } from "@/api/system/field";
 import { getMenuPermissionListApi } from "@/api/system/menu";
 import type { PlusColumn } from "plus-pro-components";
+import editForm from "../form.vue";
+import { renderSwitch, selectOptions } from "@/views/system/render";
 
 export function useDataPermission(tableRef: Ref) {
   const { t } = useI18n();
+  const fieldLookupsData = ref([]);
+  const menuPermissionData = ref([]);
+  const choicesDict = ref([]);
+  const valuesData = ref([]);
   const sortOptions = [
     {
       label: `${t("sorts.createdDate")} ${t("labels.descending")}`,
@@ -39,7 +39,7 @@ export function useDataPermission(tableRef: Ref) {
       key: "created_time"
     }
   ];
-  const form = ref({
+  const searchForm = ref({
     name: "",
     mode_type: "",
     is_active: "",
@@ -48,24 +48,31 @@ export function useDataPermission(tableRef: Ref) {
     page: 1,
     size: 10
   });
-  const formRef = ref();
-  const selectedNum = ref(0);
-  const dataList = ref([]);
-  const fieldLookupsData = ref([]);
-  const menuPermissionData = ref([]);
-  const choicesDict = ref([]);
-  const valuesData = ref([]);
-  const loading = ref(true);
-  const switchLoadMap = ref({});
-  const { switchStyle } = usePublicHooks();
-  const showColumns = ref([]);
-  const pagination = reactive<PaginationProps>({
-    total: 0,
-    pageSize: 10,
-    currentPage: 1,
-    pageSizes: [5, 10, 20, 50, 100],
-    background: true
+
+  const defaultValue = cloneDeep(searchForm.value);
+
+  const api = reactive({
+    list: getDataPermissionListApi,
+    create: createDataPermissionApi,
+    delete: deleteDataPermissionApi,
+    update: updateDataPermissionApi,
+    detail: getDataPermissionDetailApi,
+    batchDelete: manyDeleteDataPermissionApi
   });
+
+  const auth = reactive({
+    list: hasAuth("list:systemDataPermission"),
+    create: hasAuth("create:systemDataPermission"),
+    delete: hasAuth("delete:systemDataPermission"),
+    update: hasAuth("update:systemDataPermission"),
+    detail: hasAuth("detail:systemDataPermission"),
+    batchDelete: hasAuth("manyDelete:systemDataPermission")
+  });
+
+  const formRef = ref();
+
+  const { switchStyle } = usePublicHooks();
+
   const columns = ref<TableColumnList>([
     {
       label: t("labels.checkColumn"),
@@ -92,20 +99,14 @@ export function useDataPermission(tableRef: Ref) {
       label: t("labels.status"),
       minWidth: 130,
       prop: "is_active",
-      cellRenderer: scope => (
-        <el-switch
-          size={scope.props.size === "small" ? "small" : "default"}
-          loading={switchLoadMap.value[scope.index]?.loading}
-          v-model={scope.row.is_active}
-          active-value={true}
-          inactive-value={false}
-          active-text={t("labels.active")}
-          inactive-text={t("labels.inactive")}
-          disabled={!hasAuth("update:systemDataPermission")}
-          inline-prompt
-          style={switchStyle.value}
-          onChange={() => onChange(scope as any)}
-        />
+      cellRenderer: renderSwitch(
+        auth,
+        tableRef,
+        switchStyle,
+        "is_active",
+        scope => {
+          return scope.name;
+        }
       )
     },
     {
@@ -139,155 +140,22 @@ export function useDataPermission(tableRef: Ref) {
         label: t("labels.status"),
         prop: "is_active",
         valueType: "select",
-        options: [
-          {
-            label: t("labels.disable"),
-            value: false
-          },
-          {
-            label: t("labels.enable"),
-            value: true
-          }
-        ]
-      },
-      {
-        label: t("permission.mode"),
-        prop: "mode_type",
-        valueType: "select",
-        options: formatOptions(choicesDict.value)
+        options: selectOptions
       },
       {
         label: t("labels.sort"),
         prop: "ordering",
         valueType: "select",
         options: formatOptions(sortOptions)
+      },
+      {
+        label: t("permission.mode"),
+        prop: "mode_type",
+        valueType: "select",
+        options: formatOptions(choicesDict.value["mode_type"])
       }
     ];
   });
-
-  function onChange({ row, index }) {
-    const action =
-      row.is_active === false ? t("labels.disable") : t("labels.enable");
-    ElMessageBox.confirm(
-      `${t("buttons.operateConfirm", {
-        action: `<strong>${action}</strong>`,
-        message: `<strong style="color:var(--el-color-primary)">${row.name}</strong>`
-      })}`,
-      {
-        confirmButtonText: t("buttons.sure"),
-        cancelButtonText: t("buttons.cancel"),
-        type: "warning",
-        dangerouslyUseHTMLString: true,
-        draggable: true
-      }
-    )
-      .then(() => {
-        switchLoadMap.value[index] = Object.assign(
-          {},
-          switchLoadMap.value[index],
-          {
-            loading: true
-          }
-        );
-        updateDataPermissionApi(row.pk, row).then(res => {
-          if (res.code === 1000) {
-            switchLoadMap.value[index] = Object.assign(
-              {},
-              switchLoadMap.value[index],
-              {
-                loading: false
-              }
-            );
-            message(t("results.success"), { type: "success" });
-          } else {
-            message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-          }
-        });
-      })
-      .catch(() => {
-        row.is_active === false
-          ? (row.is_active = true)
-          : (row.is_active = false);
-      });
-  }
-
-  function handleDelete(row) {
-    deleteDataPermissionApi(row.pk).then(res => {
-      if (res.code === 1000) {
-        message(t("results.success"), { type: "success" });
-        onSearch();
-      } else {
-        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-      }
-    });
-  }
-
-  function handleSizeChange(val: number) {
-    form.value.page = 1;
-    form.value.size = val;
-    onSearch();
-  }
-
-  function handleCurrentChange(val: number) {
-    form.value.page = val;
-    onSearch();
-  }
-
-  function handleSelectionChange(val) {
-    selectedNum.value = val.length;
-  }
-
-  function onSelectionCancel() {
-    selectedNum.value = 0;
-    // 用于多选表格，清空用户的选择
-    tableRef.value.getTableRef().clearSelection();
-  }
-
-  function handleManyDelete() {
-    if (selectedNum.value === 0) {
-      message(t("results.noSelectedData"), { type: "error" });
-      return;
-    }
-    const manySelectData = tableRef.value.getTableRef().getSelectionRows();
-    manyDeleteDataPermissionApi({
-      pks: JSON.stringify(getKeyList(manySelectData, "pk"))
-    }).then(res => {
-      if (res.code === 1000) {
-        message(t("results.batchDelete", { count: selectedNum.value }), {
-          type: "success"
-        });
-        onSelectionCancel();
-        onSearch();
-      } else {
-        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-      }
-    });
-  }
-
-  function onSearch(init = false) {
-    if (init) {
-      pagination.currentPage = form.value.page = 1;
-      pagination.pageSize = form.value.size = 10;
-    }
-    loading.value = true;
-    getDataPermissionListApi(toRaw(form.value))
-      .then(res => {
-        if (res.code === 1000 && res.data) {
-          formatColumns(res?.data?.results, columns, showColumns);
-          dataList.value = res.data.results;
-          pagination.total = res.data.total;
-          choicesDict.value = res.choices_dict;
-        } else {
-          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-        }
-        delay(500).then(() => {
-          loading.value = false;
-        });
-      })
-      .catch(() => {
-        loading.value = false;
-      });
-  }
 
   function openDialog(isAdd = true, row?: FormItemProps) {
     let title = t("buttons.edit");
@@ -309,8 +177,8 @@ export function useDataPermission(tableRef: Ref) {
         menuPermissionData: menuPermissionData.value,
         fieldLookupsData: fieldLookupsData.value,
         valuesData: valuesData.value,
-        choicesDict: choicesDict.value,
-        showColumns: showColumns.value,
+        choicesDict: choicesDict.value["mode_type"],
+        showColumns: tableRef.value.showColumns,
         isAdd: isAdd
       },
       width: "50%",
@@ -327,9 +195,8 @@ export function useDataPermission(tableRef: Ref) {
         function chores(detail) {
           message(detail, { type: "success" });
           done(); // 关闭弹框
-          onSearch(); // 刷新表格数据
+          tableRef.value.onSearch(); // 刷新表格数据
         }
-
         FormRef.validate(valid => {
           if (valid) {
             if (curData.rules.length === 0) {
@@ -339,7 +206,7 @@ export function useDataPermission(tableRef: Ref) {
               return;
             }
             if (isAdd) {
-              createDataPermissionApi(curData).then(async res => {
+              api.create(curData).then(async res => {
                 if (res.code === 1000) {
                   chores(res.detail);
                 } else {
@@ -349,7 +216,7 @@ export function useDataPermission(tableRef: Ref) {
                 }
               });
             } else {
-              updateDataPermissionApi(curData.pk, curData).then(async res => {
+              api.update(curData.pk, curData).then(async res => {
                 if (res.code === 1000) {
                   chores(res.detail);
                 } else {
@@ -366,7 +233,12 @@ export function useDataPermission(tableRef: Ref) {
   }
 
   onMounted(() => {
-    onSearch();
+    api.detail("choices").then(res => {
+      if (res.code === 1000) {
+        choicesDict.value = res.choices_dict;
+      }
+    });
+
     if (hasGlobalAuth("list:systemModelField")) {
       getModelLabelFieldListApi({
         page: 1,
@@ -390,20 +262,12 @@ export function useDataPermission(tableRef: Ref) {
 
   return {
     t,
-    form,
-    loading,
+    api,
+    auth,
     columns,
-    dataList,
-    pagination,
-    selectedNum,
+    searchForm,
+    defaultValue,
     searchColumns,
-    onSearch,
-    openDialog,
-    handleDelete,
-    handleManyDelete,
-    handleSizeChange,
-    onSelectionCancel,
-    handleCurrentChange,
-    handleSelectionChange
+    openDialog
   };
 }

@@ -4,31 +4,22 @@ import {
   createDeptApi,
   deleteDeptApi,
   empowerDeptRoleApi,
+  getDeptDetailApi,
   getDeptListApi,
   manyDeleteDeptApi,
   updateDeptApi
 } from "@/api/system/dept";
-import { ElMessageBox } from "element-plus";
-import { computed, h, onMounted, ref, type Ref, toRaw } from "vue";
+import { computed, h, onMounted, reactive, ref, type Ref } from "vue";
 import { addDialog } from "@/components/ReDialog";
 import roleForm from "../form/role.vue";
 import editForm from "../form/index.vue";
 import type { FormItemProps, RoleFormItemProps } from "./types";
 import { getRoleListApi } from "@/api/system/role";
-import {
-  cloneDeep,
-  delay,
-  deviceDetection,
-  getKeyList,
-  isEmpty,
-  isString
-} from "@pureadmin/utils";
-import { useRoute, useRouter } from "vue-router";
+import { cloneDeep, deviceDetection } from "@pureadmin/utils";
+import { useRouter } from "vue-router";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
-import { handleTree } from "@/utils/tree";
 import {
-  formatColumns,
   formatHigherDeptOptions,
   formatOptions,
   usePublicHooks
@@ -36,6 +27,9 @@ import {
 import { getDataPermissionListApi } from "@/api/system/permission";
 import { ModeChoices } from "@/views/system/constants";
 import type { PlusColumn } from "plus-pro-components";
+
+import { renderSwitch, selectOptions } from "@/views/system/render";
+import { handleTree } from "@/utils/tree";
 
 export function useDept(tableRef: Ref) {
   const { t } = useI18n();
@@ -57,7 +51,7 @@ export function useDept(tableRef: Ref) {
       key: "rank"
     }
   ];
-  const form = ref({
+  const searchForm = ref({
     pk: "",
     name: "",
     code: "",
@@ -70,19 +64,34 @@ export function useDept(tableRef: Ref) {
     size: 1000
   });
 
+  const defaultValue = cloneDeep(searchForm.value);
+
+  const api = reactive({
+    list: getDeptListApi,
+    create: createDeptApi,
+    delete: deleteDeptApi,
+    update: updateDeptApi,
+    empower: empowerDeptRoleApi,
+    detail: getDeptDetailApi,
+    batchDelete: manyDeleteDeptApi
+  });
+
+  const auth = reactive({
+    list: hasAuth("list:systemDept"),
+    create: hasAuth("create:systemDept"),
+    delete: hasAuth("delete:systemDept"),
+    update: hasAuth("update:systemDept"),
+    empower: hasAuth("empower:systemDeptRole"),
+    detail: hasAuth("detail:systemDept"),
+    batchDelete: hasAuth("manyDelete:systemDept")
+  });
+
   const formRef = ref();
-  const route = useRoute();
   const router = useRouter();
-  const getParameter = isEmpty(route.params) ? route.query : route.params;
-  const dataList = ref([]);
   const rolesOptions = ref([]);
   const rulesOptions = ref([]);
   const choicesDict = ref([]);
-  const loading = ref(true);
-  const switchLoadMap = ref({});
   const { switchStyle } = usePublicHooks();
-  const selectedNum = ref(0);
-  const showColumns = ref([]);
   const columns = ref<TableColumnList>([
     {
       label: t("labels.checkColumn"),
@@ -132,40 +141,28 @@ export function useDept(tableRef: Ref) {
       label: t("dept.autoBind"),
       minWidth: 130,
       prop: "auto_bind",
-      cellRenderer: scope => (
-        <el-switch
-          size={scope.props.size === "small" ? "small" : "default"}
-          loading={switchLoadMap.value[scope.index]?.loading}
-          v-model={scope.row.auto_bind}
-          active-value={true}
-          inactive-value={false}
-          active-text={t("labels.enable")}
-          inactive-text={t("labels.disable")}
-          disabled={!hasAuth("update:systemDept")}
-          inline-prompt
-          style={switchStyle.value}
-          onChange={() => onChangeBind(scope as any)}
-        />
+      cellRenderer: renderSwitch(
+        auth,
+        tableRef,
+        switchStyle,
+        "auto_bind",
+        scope => {
+          return `${scope.row.name} ${t("dept.autoBind")}`;
+        }
       )
     },
     {
       label: t("labels.status"),
       prop: "is_active",
       minWidth: 90,
-      cellRenderer: scope => (
-        <el-switch
-          size={scope.props.size === "small" ? "small" : "default"}
-          loading={switchLoadMap.value[scope.index]?.loading}
-          v-model={scope.row.is_active}
-          active-value={true}
-          inactive-value={false}
-          active-text={t("labels.active")}
-          inactive-text={t("labels.inactive")}
-          disabled={!hasAuth("update:systemDept")}
-          inline-prompt
-          style={switchStyle.value}
-          onChange={() => onChange(scope as any)}
-        />
+      cellRenderer: renderSwitch(
+        auth,
+        tableRef,
+        switchStyle,
+        "is_active",
+        scope => {
+          return scope.row.name;
+        }
       )
     },
     {
@@ -225,37 +222,19 @@ export function useDept(tableRef: Ref) {
         label: t("dept.autoBind"),
         prop: "auto_bind",
         valueType: "select",
-        options: [
-          {
-            label: t("labels.enable"),
-            value: true
-          },
-          {
-            label: t("labels.disable"),
-            value: false
-          }
-        ]
+        options: selectOptions
       },
       {
         label: t("labels.status"),
         prop: "is_active",
         valueType: "select",
-        options: [
-          {
-            label: t("labels.enable"),
-            value: true
-          },
-          {
-            label: t("labels.disable"),
-            value: false
-          }
-        ]
+        options: selectOptions
       },
       {
         label: t("permission.mode"),
         prop: "mode_type",
         valueType: "select",
-        options: formatOptions(choicesDict.value)
+        options: formatOptions(choicesDict.value["mode_type"])
       },
       {
         label: t("labels.sort"),
@@ -285,161 +264,6 @@ export function useDept(tableRef: Ref) {
     ];
   });
 
-  function onChangeBind({ row, index }) {
-    const action =
-      row.auto_bind === false ? t("labels.disable") : t("labels.enable");
-    ElMessageBox.confirm(
-      `${t("buttons.operateConfirm", {
-        action: `<strong>${action}</strong>`,
-        message: `<strong style="color:var(--el-color-primary)">${row.name}</strong>`
-      })}`,
-      {
-        confirmButtonText: t("buttons.sure"),
-        cancelButtonText: t("buttons.cancel"),
-        type: "warning",
-        dangerouslyUseHTMLString: true,
-        draggable: true
-      }
-    )
-      .then(() => {
-        switchLoadMap.value[index] = Object.assign(
-          {},
-          switchLoadMap.value[index],
-          {
-            loading: true
-          }
-        );
-        updateDeptApi(row.pk, row).then(res => {
-          if (res.code === 1000) {
-            switchLoadMap.value[index] = Object.assign(
-              {},
-              switchLoadMap.value[index],
-              {
-                loading: false
-              }
-            );
-            message(t("results.success"), { type: "success" });
-          } else {
-            message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-          }
-        });
-      })
-      .catch(() => {
-        row.auto_bind === false
-          ? (row.auto_bind = true)
-          : (row.auto_bind = false);
-      });
-  }
-
-  function onChange({ row, index }) {
-    const action =
-      row.is_active === false ? t("labels.disable") : t("labels.enable");
-    ElMessageBox.confirm(
-      `${t("buttons.operateConfirm", {
-        action: `<strong>${action}</strong>`,
-        message: `<strong style="color:var(--el-color-primary)">${row.name}</strong>`
-      })}`,
-      {
-        confirmButtonText: t("buttons.sure"),
-        cancelButtonText: t("buttons.cancel"),
-        type: "warning",
-        dangerouslyUseHTMLString: true,
-        draggable: true
-      }
-    )
-      .then(() => {
-        switchLoadMap.value[index] = Object.assign(
-          {},
-          switchLoadMap.value[index],
-          {
-            loading: true
-          }
-        );
-        updateDeptApi(row.pk, row).then(res => {
-          if (res.code === 1000) {
-            switchLoadMap.value[index] = Object.assign(
-              {},
-              switchLoadMap.value[index],
-              {
-                loading: false
-              }
-            );
-            message(t("results.success"), { type: "success" });
-          } else {
-            message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-          }
-        });
-      })
-      .catch(() => {
-        row.is_active === false
-          ? (row.is_active = true)
-          : (row.is_active = false);
-      });
-  }
-
-  function handleDelete(row) {
-    deleteDeptApi(row.pk).then(res => {
-      if (res.code === 1000) {
-        message(t("results.success"), { type: "success" });
-        onSearch();
-      } else {
-        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-      }
-    });
-  }
-
-  function handleSelectionChange(val) {
-    selectedNum.value = val.length;
-  }
-
-  function onSelectionCancel() {
-    selectedNum.value = 0;
-    // 用于多选表格，清空用户的选择
-    tableRef.value.getTableRef().clearSelection();
-  }
-
-  function handleManyDelete() {
-    if (selectedNum.value === 0) {
-      message(t("results.noSelectedData"), { type: "error" });
-      return;
-    }
-    const manySelectData = tableRef.value.getTableRef().getSelectionRows();
-    manyDeleteDeptApi({
-      pks: JSON.stringify(getKeyList(manySelectData, "pk"))
-    }).then(res => {
-      if (res.code === 1000) {
-        message(t("results.batchDelete", { count: selectedNum.value }), {
-          type: "success"
-        });
-        onSelectionCancel();
-        onSearch();
-      } else {
-        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-      }
-      tableRef.value.getTableRef().clearSelection();
-    });
-  }
-
-  function onSearch() {
-    loading.value = true;
-    getDeptListApi(toRaw(form.value))
-      .then(res => {
-        if (res.code === 1000 && res.data) {
-          formatColumns(res.data?.results, columns, showColumns);
-          choicesDict.value = res.choices_dict;
-          dataList.value = handleTree(res.data.results);
-        } else {
-          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-        }
-        delay(500).then(() => {
-          loading.value = false;
-        });
-      })
-      .catch(() => {
-        loading.value = false;
-      });
-  }
-
   function openDialog(isAdd = true, row?: FormItemProps) {
     let title = t("buttons.edit");
     if (isAdd) {
@@ -459,8 +283,8 @@ export function useDept(tableRef: Ref) {
           auto_bind: row?.auto_bind ?? false,
           description: row?.description ?? ""
         },
-        treeData: formatHigherDeptOptions(cloneDeep(dataList.value)),
-        showColumns: showColumns.value,
+        treeData: formatHigherDeptOptions(cloneDeep(tableRef.value.dataList)),
+        showColumns: tableRef.value.showColumns,
         isAdd: isAdd
       },
       width: "46%",
@@ -476,7 +300,7 @@ export function useDept(tableRef: Ref) {
         function chores(detail) {
           message(detail, { type: "success" });
           done(); // 关闭弹框
-          onSearch(); // 刷新表格数据
+          tableRef.value.onSearch(); // 刷新表格数据
         }
 
         FormRef.validate(valid => {
@@ -520,7 +344,7 @@ export function useDept(tableRef: Ref) {
           mode_type: row?.mode_type ?? ModeChoices.AND,
           rolesOptions: rolesOptions.value ?? [],
           rulesOptions: rulesOptions.value ?? [],
-          choicesDict: choicesDict.value ?? [],
+          choicesDict: choicesDict.value["mode_type"] ?? [],
           ids: row?.roles ?? [],
           pks: row?.rules ?? []
         }
@@ -533,34 +357,34 @@ export function useDept(tableRef: Ref) {
       contentRenderer: () => h(roleForm),
       beforeSure: (done, { options }) => {
         const curData = options.props.formInline as RoleFormItemProps;
-        empowerDeptRoleApi(row.pk, {
-          roles: curData.ids,
-          rules: curData.pks,
-          mode_type: curData.mode_type
-        }).then(res => {
-          if (res.code === 1000) {
-            message(t("results.success"), { type: "success" });
-            onSearch();
-          } else {
-            message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-          }
-          done(); // 关闭弹框
-        });
+        api
+          .empower(row.pk, {
+            roles: curData.ids,
+            rules: curData.pks,
+            mode_type: curData.mode_type
+          })
+          .then(res => {
+            if (res.code === 1000) {
+              message(t("results.success"), { type: "success" });
+              tableRef.value.onSearch();
+            } else {
+              message(`${t("results.failed")}，${res.detail}`, {
+                type: "error"
+              });
+            }
+            done(); // 关闭弹框
+          });
       }
     });
   }
 
   onMounted(() => {
-    if (getParameter) {
-      const parameter = cloneDeep(getParameter);
-      Object.keys(parameter).forEach(param => {
-        if (!isString(parameter[param])) {
-          parameter[param] = parameter[param].toString();
-        }
-      });
-      form.value.pk = parameter.pk;
-    }
-    onSearch();
+    api.detail("choices").then(res => {
+      if (res.code === 1000) {
+        choicesDict.value = res.choices_dict;
+      }
+    });
+
     if (hasGlobalAuth("list:systemRole")) {
       getRoleListApi({ page: 1, size: 1000 }).then(res => {
         if (res.code === 1000 && res.data) {
@@ -580,22 +404,21 @@ export function useDept(tableRef: Ref) {
     }
   });
 
+  const formatResult = data => {
+    return handleTree(data);
+  };
+
   return {
     t,
-    form,
-    loading,
+    api,
+    auth,
     columns,
-    dataList,
-    choicesDict,
+    searchForm,
     buttonClass,
-    selectedNum,
+    defaultValue,
     searchColumns,
-    onSearch,
     openDialog,
     handleRole,
-    handleDelete,
-    handleManyDelete,
-    onSelectionCancel,
-    handleSelectionChange
+    formatResult
   };
 }

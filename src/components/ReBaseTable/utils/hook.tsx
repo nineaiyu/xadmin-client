@@ -7,10 +7,13 @@ import {
   cloneDeep,
   delay,
   deviceDetection,
-  getKeyList
+  getKeyList,
+  isEmpty,
+  isString
 } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
+import { useRoute } from "vue-router";
 
 export function useBaseTable(
   tableRef: Ref,
@@ -18,15 +21,18 @@ export function useBaseTable(
   editForm,
   tableColumns,
   pagination: PaginationProps | {},
-  searchForm: Ref
+  searchForm: Ref,
+  resultFormat: Function
 ) {
   const { t } = useI18n();
-  const switchLoadMap = ref({});
   const formRef = ref();
   const selectedNum = ref(0);
   const dataList = ref([]);
   const loading = ref(true);
   const showColumns = ref([]);
+  const route = useRoute();
+  const getParameter = isEmpty(route.params) ? route.query : route.params;
+
   const defaultPagination = {
     total: 0,
     pageSize: 10,
@@ -125,7 +131,11 @@ export function useBaseTable(
       .then(res => {
         if (res.code === 1000 && res.data) {
           formatColumns(res.data?.results, tableColumns);
-          dataList.value = res.data.results;
+          if (resultFormat && typeof resultFormat === "function") {
+            dataList.value = resultFormat(res.data.results);
+          } else {
+            dataList.value = res.data.results;
+          }
           pagination.total = res.data.total;
         } else {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
@@ -208,7 +218,13 @@ export function useBaseTable(
       ...editForm.options
     });
   };
-  const onChange = ({ row, index }, actKey, msg, actMsg = null) => {
+  const onChange = (
+    switchLoadMap,
+    { row, index },
+    actKey,
+    msg,
+    actMsg = null
+  ) => {
     if (!actMsg) {
       actMsg = row[actKey] === false ? t("labels.disable") : t("labels.enable");
     }
@@ -254,6 +270,14 @@ export function useBaseTable(
   };
 
   onMounted(() => {
+    if (getParameter) {
+      const parameter = cloneDeep(getParameter);
+      Object.keys(parameter).forEach(param => {
+        if (!isString(parameter[param])) {
+          searchForm.value[param] = parameter[param].toString();
+        }
+      });
+    }
     onSearch();
   });
 
