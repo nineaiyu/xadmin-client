@@ -19,11 +19,11 @@ const {
   api,
   auth,
   columns,
+  editForm,
   searchForm,
   buttonClass,
   defaultValue,
   searchColumns,
-  openDialog,
   handleRole,
   formatResult
 } = useDept(tableRef);
@@ -34,12 +34,11 @@ const {
     ref="tableRef"
     :api="api"
     :auth="auth"
-    :custom-add-or-edit="true"
+    :edit-form="editForm"
     :result-format="formatResult"
     :search-columns="searchColumns"
     :search-form="searchForm"
     :table-columns="columns"
-    @open-dialog="openDialog"
   >
     <template #extOperation="{ row, size }">
       <el-dropdown>

@@ -1,5 +1,4 @@
 import dayjs from "dayjs";
-import { message } from "@/utils/message";
 import {
   createDataPermissionApi,
   deleteDataPermissionApi,
@@ -9,10 +8,8 @@ import {
   updateDataPermissionApi
 } from "@/api/system/permission";
 import { formatOptions, usePublicHooks } from "@/views/system/hooks";
-import { addDialog } from "@/components/ReDialog";
-import type { FormItemProps } from "./types";
-import { computed, h, onMounted, reactive, ref, type Ref } from "vue";
-import { cloneDeep, deviceDetection } from "@pureadmin/utils";
+import { computed, onMounted, reactive, ref, type Ref, shallowRef } from "vue";
+import { cloneDeep } from "@pureadmin/utils";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { FieldChoices, ModeChoices } from "@/views/system/constants";
@@ -20,7 +17,7 @@ import { handleTree } from "@/utils/tree";
 import { getModelLabelFieldListApi } from "@/api/system/field";
 import { getMenuPermissionListApi } from "@/api/system/menu";
 import type { PlusColumn } from "plus-pro-components";
-import editForm from "../form.vue";
+import Form from "../form.vue";
 import { renderSwitch, selectOptions } from "@/views/system/render";
 
 export function useDataPermission(tableRef: Ref) {
@@ -69,7 +66,37 @@ export function useDataPermission(tableRef: Ref) {
     batchDelete: hasAuth("manyDelete:systemDataPermission")
   });
 
-  const formRef = ref();
+  const editForm = shallowRef({
+    form: Form,
+    row: {
+      menu: row => {
+        return row?.menu ?? [];
+      },
+      is_active: row => {
+        return row?.is_active ?? true;
+      },
+      rules: row => {
+        return row?.rules ?? [];
+      },
+      mode_type: row => {
+        return row?.mode_type ?? ModeChoices.OR;
+      }
+    },
+    props: {
+      menuPermissionData: () => {
+        return menuPermissionData.value;
+      },
+      fieldLookupsData: () => {
+        return fieldLookupsData.value;
+      },
+      valuesData: () => {
+        return valuesData.value;
+      },
+      choicesDict: () => {
+        return choicesDict.value["mode_type"];
+      }
+    }
+  });
 
   const { switchStyle } = usePublicHooks();
 
@@ -157,81 +184,6 @@ export function useDataPermission(tableRef: Ref) {
     ];
   });
 
-  function openDialog(isAdd = true, row?: FormItemProps) {
-    let title = t("buttons.edit");
-    if (isAdd) {
-      title = t("buttons.add");
-    }
-    addDialog({
-      title: `${title} ${t("permission.permission")}`,
-      props: {
-        formInline: {
-          pk: row?.pk ?? "",
-          name: row?.name ?? "",
-          menu: row?.menu ?? [],
-          rules: row?.rules ?? [],
-          mode_type: row?.mode_type ?? ModeChoices.OR,
-          is_active: row?.is_active ?? true,
-          description: row?.description ?? ""
-        },
-        menuPermissionData: menuPermissionData.value,
-        fieldLookupsData: fieldLookupsData.value,
-        valuesData: valuesData.value,
-        choicesDict: choicesDict.value["mode_type"],
-        showColumns: tableRef.value.showColumns,
-        isAdd: isAdd
-      },
-      width: "50%",
-      draggable: true,
-      fullscreen: deviceDetection(),
-      fullscreenIcon: true,
-      closeOnClickModal: false,
-      top: "10vh",
-      contentRenderer: () => h(editForm, { ref: formRef }),
-      beforeSure: (done, { options }) => {
-        const FormRef = formRef.value.getRef();
-        const curData = options.props.formInline as FormItemProps;
-
-        function chores(detail) {
-          message(detail, { type: "success" });
-          done(); // 关闭弹框
-          tableRef.value.onSearch(); // 刷新表格数据
-        }
-        FormRef.validate(valid => {
-          if (valid) {
-            if (curData.rules.length === 0) {
-              message(`${t("permission.rulesFailed")}`, {
-                type: "error"
-              });
-              return;
-            }
-            if (isAdd) {
-              api.create(curData).then(async res => {
-                if (res.code === 1000) {
-                  chores(res.detail);
-                } else {
-                  message(`${t("results.failed")}，${res.detail}`, {
-                    type: "error"
-                  });
-                }
-              });
-            } else {
-              api.update(curData.pk, curData).then(async res => {
-                if (res.code === 1000) {
-                  chores(res.detail);
-                } else {
-                  message(`${t("results.failed")}，${res.detail}`, {
-                    type: "error"
-                  });
-                }
-              });
-            }
-          }
-        });
-      }
-    });
-  }
-
   onMounted(() => {
     api.detail("choices").then(res => {
       if (res.code === 1000) {
@@ -265,9 +217,9 @@ export function useDataPermission(tableRef: Ref) {
     api,
     auth,
     columns,
+    editForm,
     searchForm,
     defaultValue,
-    searchColumns,
-    openDialog
+    searchColumns
   };
 }

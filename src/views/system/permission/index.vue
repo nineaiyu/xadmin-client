@@ -14,10 +14,10 @@ const {
   api,
   auth,
   columns,
+  editForm,
   searchForm,
   defaultValue,
-  searchColumns,
-  openDialog
+  searchColumns
 } = useDataPermission(tableRef);
 </script>
 <template>
@@ -25,10 +25,9 @@ const {
     ref="tableRef"
     :api="api"
     :auth="auth"
-    :custom-add-or-edit="true"
+    :edit-form="editForm"
     :search-columns="searchColumns"
     :search-form="searchForm"
     :table-columns="columns"
-    @open-dialog="openDialog"
   />
 </template>

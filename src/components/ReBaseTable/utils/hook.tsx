@@ -154,11 +154,18 @@ export function useBaseTable(
     if (isAdd) {
       title = t("buttons.add");
     }
-    const result = {};
+    const rowResult = {};
     Object.keys(editForm.row).forEach(key => {
       if (typeof editForm.row[key] === "function") {
         const getValue = editForm.row[key];
-        result[key] = getValue(row, isAdd);
+        rowResult[key] = getValue(row, isAdd, dataList.value);
+      }
+    });
+    const propsResult = {};
+    Object.keys(editForm.props).forEach(key => {
+      if (typeof editForm.props[key] === "function") {
+        const getValue = editForm.props[key];
+        propsResult[key] = getValue(row, isAdd, dataList.value);
       }
     });
     addDialog({
@@ -167,9 +174,10 @@ export function useBaseTable(
         formInline: {
           ...row,
           ...editForm.row,
-          ...result
+          ...rowResult
         },
         ...editForm.props,
+        ...propsResult,
         showColumns: showColumns.value,
         isAdd: isAdd
       },

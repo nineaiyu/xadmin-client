@@ -9,11 +9,19 @@ import {
   manyDeleteDeptApi,
   updateDeptApi
 } from "@/api/system/dept";
-import { computed, h, onMounted, reactive, ref, type Ref } from "vue";
+import {
+  computed,
+  h,
+  onMounted,
+  reactive,
+  ref,
+  type Ref,
+  shallowRef
+} from "vue";
 import { addDialog } from "@/components/ReDialog";
 import roleForm from "../form/role.vue";
-import editForm from "../form/index.vue";
-import type { FormItemProps, RoleFormItemProps } from "./types";
+import Form from "../form/index.vue";
+import type { RoleFormItemProps } from "./types";
 import { getRoleListApi } from "@/api/system/role";
 import { cloneDeep, deviceDetection } from "@pureadmin/utils";
 import { useRouter } from "vue-router";
@@ -86,7 +94,29 @@ export function useDept(tableRef: Ref) {
     batchDelete: hasAuth("manyDelete:systemDept")
   });
 
-  const formRef = ref();
+  const editForm = shallowRef({
+    form: Form,
+    row: {
+      roles: row => {
+        return row?.roles ?? [];
+      },
+      is_active: row => {
+        return row?.is_active ?? true;
+      },
+      auto_bind: row => {
+        return row?.auto_bind ?? false;
+      },
+      rank: row => {
+        return row?.rank ?? 99;
+      }
+    },
+    props: {
+      treeData: (row, isAdd, data) => {
+        return formatHigherDeptOptions(cloneDeep(data));
+      }
+    }
+  });
+
   const router = useRouter();
   const rolesOptions = ref([]);
   const rulesOptions = ref([]);
@@ -264,75 +294,6 @@ export function useDept(tableRef: Ref) {
     ];
   });
 
-  function openDialog(isAdd = true, row?: FormItemProps) {
-    let title = t("buttons.edit");
-    if (isAdd) {
-      title = t("buttons.add");
-    }
-    addDialog({
-      title: `${title} ${t("dept.dept")}`,
-      props: {
-        formInline: {
-          pk: row?.pk ?? "",
-          name: row?.name ?? "",
-          parent: row?.parent ?? "",
-          rank: row?.rank ?? 99,
-          code: row?.code ?? "",
-          roles: row?.roles ?? [],
-          is_active: row?.is_active ?? true,
-          auto_bind: row?.auto_bind ?? false,
-          description: row?.description ?? ""
-        },
-        treeData: formatHigherDeptOptions(cloneDeep(tableRef.value.dataList)),
-        showColumns: tableRef.value.showColumns,
-        isAdd: isAdd
-      },
-      width: "46%",
-      draggable: true,
-      fullscreen: deviceDetection(),
-      fullscreenIcon: true,
-      closeOnClickModal: false,
-      contentRenderer: () => h(editForm, { ref: formRef }),
-      beforeSure: (done, { options }) => {
-        const FormRef = formRef.value.getRef();
-        const curData = options.props.formInline as FormItemProps;
-
-        function chores(detail) {
-          message(detail, { type: "success" });
-          done(); // 关闭弹框
-          tableRef.value.onSearch(); // 刷新表格数据
-        }
-
-        FormRef.validate(valid => {
-          if (valid) {
-            // 表单规则校验通过
-            if (isAdd) {
-              createDeptApi(curData).then(res => {
-                if (res.code === 1000) {
-                  chores(res.detail);
-                } else {
-                  message(`${t("results.failed")}，${res.detail}`, {
-                    type: "error"
-                  });
-                }
-              });
-            } else {
-              updateDeptApi(curData.pk, curData).then(res => {
-                if (res.code === 1000) {
-                  chores(res.detail);
-                } else {
-                  message(`${t("results.failed")}，${res.detail}`, {
-                    type: "error"
-                  });
-                }
-              });
-            }
-          }
-        });
-      }
-    });
-  }
-
   /** 分配角色 */
   function handleRole(row) {
     addDialog({
@@ -413,11 +374,11 @@ export function useDept(tableRef: Ref) {
     api,
     auth,
     columns,
+    editForm,
     searchForm,
     buttonClass,
     defaultValue,
     searchColumns,
-    openDialog,
     handleRole,
     formatResult
   };
