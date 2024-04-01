@@ -36,7 +36,12 @@ import { getDataPermissionListApi } from "@/api/system/permission";
 import { ModeChoices } from "@/views/system/constants";
 import type { PlusColumn } from "plus-pro-components";
 
-import { renderSwitch, selectOptions } from "@/views/system/render";
+import {
+  disableState,
+  renderOption,
+  renderSwitch,
+  selectOptions
+} from "@/views/system/render";
 import { handleTree } from "@/utils/tree";
 
 export function useDept(tableRef: Ref) {
@@ -384,5 +389,107 @@ export function useDept(tableRef: Ref) {
     searchColumns,
     handleRole,
     formatResult
+  };
+}
+
+export function useDeptForm(props) {
+  const { t } = useI18n();
+  const columns: PlusColumn[] = [
+    {
+      label: t("dept.name"),
+      prop: "name",
+      valueType: "input",
+      fieldProps: {
+        disabled: disableState(props, "name")
+      },
+      colProps: {
+        xs: 24,
+        sm: 24,
+        md: 24,
+        lg: 12,
+        xl: 12
+      }
+    },
+    {
+      label: t("dept.code"),
+      prop: "code",
+      valueType: "input",
+      fieldProps: {
+        disabled: disableState(props, "code")
+      },
+      colProps: {
+        xs: 24,
+        sm: 24,
+        md: 24,
+        lg: 12,
+        xl: 12
+      }
+    },
+    {
+      label: t("menu.parentNode"),
+      prop: "parent",
+      valueType: "cascader",
+      fieldProps: {
+        disabled: disableState(props, "parent"),
+        props: {
+          value: "pk",
+          label: "name",
+          emitPath: false,
+          checkStrictly: true
+        }
+      },
+      options: props.treeData
+    },
+    {
+      label: t("sorts.rank"),
+      prop: "rank",
+      valueType: "input-number",
+      fieldProps: {
+        disabled: disableState(props, "rank")
+      },
+      colProps: {
+        xs: 24,
+        sm: 24,
+        md: 24,
+        lg: 12,
+        xl: 12
+      }
+    },
+    {
+      label: t("dept.autoBind"),
+      prop: "auto_bind",
+      valueType: "radio",
+      colProps: {
+        xs: 24,
+        sm: 24,
+        md: 24,
+        lg: 12,
+        xl: 12
+      },
+      tooltip: t("dept.autoBindDesc"),
+      fieldProps: {
+        disabled: disableState(props, "auto_bind")
+      },
+      renderField: renderOption()
+    },
+    {
+      label: t("labels.status"),
+      prop: "is_active",
+      valueType: "radio",
+      tooltip: t("labels.status"),
+      renderField: renderOption()
+    },
+    {
+      label: t("labels.description"),
+      prop: "description",
+      valueType: "textarea",
+      fieldProps: {
+        disabled: disableState(props, "description")
+      }
+    }
+  ];
+  return {
+    t,
+    columns
   };
 }
