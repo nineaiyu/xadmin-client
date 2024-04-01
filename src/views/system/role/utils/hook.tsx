@@ -72,6 +72,7 @@ export function useRole(tableRef: Ref) {
   });
 
   const editForm = shallowRef({
+    title: t("role.role"),
     form: Form,
     row: {
       is_active: row => {

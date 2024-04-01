@@ -69,6 +69,7 @@ export function useUserConfig(tableRef: Ref) {
   });
 
   const editForm = shallowRef({
+    title: t("configUser.configUser"),
     form: Form,
     row: {
       config_user: row => {

@@ -95,6 +95,7 @@ export function useDept(tableRef: Ref) {
   });
 
   const editForm = shallowRef({
+    title: t("dept.dept"),
     form: Form,
     row: {
       roles: row => {

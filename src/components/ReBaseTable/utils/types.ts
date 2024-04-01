@@ -11,6 +11,7 @@ interface ApiAuthProps {
 interface EditFormProps {
   form: Component;
   row?: object;
+  title?: string;
   props?: object;
   options?: object;
 }

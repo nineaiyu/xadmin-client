@@ -67,6 +67,7 @@ export function useDataPermission(tableRef: Ref) {
   });
 
   const editForm = shallowRef({
+    title: t("permission.permission"),
     form: Form,
     row: {
       menu: row => {
@@ -95,6 +96,9 @@ export function useDataPermission(tableRef: Ref) {
       choicesDict: () => {
         return choicesDict.value["mode_type"];
       }
+    },
+    options: {
+      top: "10vh"
     }
   });
 

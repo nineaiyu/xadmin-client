@@ -57,6 +57,7 @@ const tableRef = ref();
 
 const {
   t,
+  route,
   loading,
   dataList,
   searchForm,
@@ -155,7 +156,7 @@ defineExpose({
       <template #title>
         <el-space>
           <p class="font-bold truncate">
-            {{ t("menus.systemConfigManagement") }}
+            {{ t(route.meta.title) }}
           </p>
           <div
             v-if="selectedNum > 0"

@@ -65,6 +65,7 @@ export function useSystemConfig(tableRef: Ref) {
   });
 
   const editForm = shallowRef({
+    title: t("configSystem.configSystem"),
     form: Form,
     row: {
       is_active: row => {

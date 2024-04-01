@@ -155,28 +155,30 @@ export function useBaseTable(
       title = t("buttons.add");
     }
     const rowResult = {};
-    Object.keys(editForm.row).forEach(key => {
+    Object.keys(editForm?.row ?? {}).forEach(key => {
+      const getValue = editForm.row[key];
       if (typeof editForm.row[key] === "function") {
-        const getValue = editForm.row[key];
         rowResult[key] = getValue(row, isAdd, dataList.value);
+      } else {
+        rowResult[key] = getValue;
       }
     });
     const propsResult = {};
-    Object.keys(editForm.props).forEach(key => {
+    Object.keys(editForm?.props ?? {}).forEach(key => {
+      const getValue = editForm.props[key];
       if (typeof editForm.props[key] === "function") {
-        const getValue = editForm.props[key];
         propsResult[key] = getValue(row, isAdd, dataList.value);
+      } else {
+        propsResult[key] = getValue;
       }
     });
     addDialog({
-      title: `${title} ${t("configSystem.configSystem")}`,
+      title: `${title} ${editForm.title ?? ""}`,
       props: {
         formInline: {
           ...row,
-          ...editForm.row,
           ...rowResult
         },
-        ...editForm.props,
         ...propsResult,
         showColumns: showColumns.value,
         isAdd: isAdd
@@ -291,6 +293,7 @@ export function useBaseTable(
 
   return {
     t,
+    route,
     loading,
     dataList,
     searchForm,
