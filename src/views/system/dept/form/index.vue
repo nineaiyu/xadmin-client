@@ -1,13 +1,8 @@
 <script lang="ts" setup>
 import { ref } from "vue";
-import ReCol from "@/components/ReCol";
 import { formRules } from "../utils/rule";
 import { FormProps } from "../utils/types";
-import { usePublicHooks } from "@/views/system/hooks";
-import { useI18n } from "vue-i18n";
-import FromQuestion from "@/components/FromQuestion/index.vue";
-import type { PlusColumn } from "plus-pro-components";
-import { disableState, renderOption } from "@/views/system/render";
+import { disableState } from "@/views/system/render";
 import { useDeptForm } from "@/views/system/dept/utils/hook";
 
 const props = withDefaults(defineProps<FormProps>(), {
