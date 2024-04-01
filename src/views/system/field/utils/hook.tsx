@@ -112,7 +112,9 @@ export function useModelField(tableRef: Ref) {
         label: t("modelFieldManagement.fieldType"),
         prop: "field_type",
         valueType: "select",
-        options: formatOptions(choicesDict.value["field_type"])
+        options: computed(() => {
+          return formatOptions(choicesDict.value["field_type"]);
+        })
       },
       {
         label: t("labels.sort"),

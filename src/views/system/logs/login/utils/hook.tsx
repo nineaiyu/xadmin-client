@@ -177,7 +177,9 @@ export function useLoginLog() {
         label: t("logsLogin.loginDisplay"),
         prop: "login_type",
         valueType: "select",
-        options: formatOptions(choicesDict.value["login_type"])
+        options: computed(() => {
+          return formatOptions(choicesDict.value["login_type"]);
+        })
       },
       {
         label: t("sorts.loginDate"),

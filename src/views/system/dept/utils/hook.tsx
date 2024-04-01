@@ -264,7 +264,9 @@ export function useDept(tableRef: Ref) {
         label: t("permission.mode"),
         prop: "mode_type",
         valueType: "select",
-        options: formatOptions(choicesDict.value["mode_type"])
+        options: computed(() => {
+          return formatOptions(choicesDict.value["mode_type"]);
+        })
       },
       {
         label: t("labels.sort"),

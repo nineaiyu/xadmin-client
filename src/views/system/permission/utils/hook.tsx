@@ -170,16 +170,18 @@ export function useDataPermission(tableRef: Ref) {
         options: selectOptions
       },
       {
+        label: t("permission.mode"),
+        prop: "mode_type",
+        valueType: "select",
+        options: computed(() => {
+          return formatOptions(choicesDict.value["mode_type"]);
+        })
+      },
+      {
         label: t("labels.sort"),
         prop: "ordering",
         valueType: "select",
         options: formatOptions(sortOptions)
-      },
-      {
-        label: t("permission.mode"),
-        prop: "mode_type",
-        valueType: "select",
-        options: formatOptions(choicesDict.value["mode_type"])
       }
     ];
   });
