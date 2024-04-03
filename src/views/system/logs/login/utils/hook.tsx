@@ -26,7 +26,7 @@ export function useLoginLog() {
       key: "created_time"
     }
   ];
-  const searchForm = ref({
+  const searchField = ref({
     ipaddress: "",
     system: "",
     browser: "",
@@ -39,7 +39,7 @@ export function useLoginLog() {
     size: 10
   });
 
-  const defaultValue = cloneDeep(searchForm.value);
+  const defaultValue = cloneDeep(searchField.value);
   const api = reactive({
     list: getLoginLogListApi,
     delete: deleteLoginLogApi,
@@ -228,7 +228,7 @@ export function useLoginLog() {
     api,
     auth,
     columns,
-    searchForm,
+    searchField,
     defaultValue,
     searchColumns
   };

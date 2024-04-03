@@ -36,7 +36,7 @@ export function useUserConfig(tableRef: Ref) {
       key: "created_time"
     }
   ];
-  const searchForm = ref({
+  const searchField = ref({
     key: "",
     value: "",
     is_active: "",
@@ -48,7 +48,7 @@ export function useUserConfig(tableRef: Ref) {
     size: 10
   });
 
-  const defaultValue = cloneDeep(searchForm.value);
+  const defaultValue = cloneDeep(searchField.value);
 
   const api = reactive({
     list: getUserConfigListApi,
@@ -135,7 +135,8 @@ export function useUserConfig(tableRef: Ref) {
       label: t("labels.status"),
       prop: "is_active",
       minWidth: 130,
-      cellRenderer: renderSwitch(auth, tableRef, "is_active", scope => {
+      cellRenderer: renderSwitch(auth.update, tableRef, "is_active", scope => {
+        scope.row.config_user = [scope.row.owner];
         return scope.row.key;
       })
     },
@@ -236,7 +237,7 @@ export function useUserConfig(tableRef: Ref) {
     auth,
     columns,
     editForm,
-    searchForm,
+    searchField,
     defaultValue,
     searchColumns,
     handleInvalidCache

@@ -33,7 +33,7 @@ const props = withDefaults(defineProps<FormProps>(), {
   customAddOrEdit: false,
   editProps: {},
   pagination: {},
-  searchForm: {},
+  searchField: {},
   searchColumns: [],
   tableColumns: [],
   resultFormat: null
@@ -46,6 +46,7 @@ const emit = defineEmits<{
   (e: "pureRefresh", ...args: any[]): void;
   (e: "openDialog", ...args: any[]): void;
   (e: "searchEnd", ...args: any[]): void;
+  (e: "selectionChange", ...args: any[]): void;
 }>();
 
 const plusPorChange = (column: any, func: Function, ...args) => {
@@ -61,7 +62,7 @@ const {
   route,
   loading,
   dataList,
-  searchForm,
+  searchField,
   pagination,
   selectedNum,
   showColumns,
@@ -82,10 +83,10 @@ const {
   props.editForm,
   props.tableColumns,
   props.pagination,
-  ref(props.searchForm),
+  ref(props.searchField),
   props.resultFormat
 );
-const defaultValue = cloneDeep(searchForm.value);
+const defaultValue = cloneDeep(searchField.value);
 
 function getTableRef() {
   return tableRef.value;
@@ -114,7 +115,7 @@ defineExpose({
   <div v-if="props.auth.list" class="main">
     <div class="search-form bg-bg_color w-[99/100] pl-8 pr-8 pt-[12px]">
       <PlusSearch
-        v-model="searchForm"
+        v-model="searchField"
         :col-props="{
           xs: 24,
           sm: 12,

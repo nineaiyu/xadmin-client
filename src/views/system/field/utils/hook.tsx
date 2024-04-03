@@ -25,7 +25,7 @@ export function useModelField(tableRef: Ref) {
       key: "created_time"
     }
   ];
-  const searchForm = ref({
+  const searchField = ref({
     name: "",
     label: "",
     parent: "",
@@ -34,7 +34,7 @@ export function useModelField(tableRef: Ref) {
     size: 10
   });
 
-  const defaultValue = cloneDeep(searchForm.value);
+  const defaultValue = cloneDeep(searchField.value);
   const api = reactive({
     list: getModelLabelFieldListApi,
     sync: syncModelLabelFieldApi,
@@ -147,7 +147,7 @@ export function useModelField(tableRef: Ref) {
     api,
     auth,
     columns,
-    searchForm,
+    searchField,
     defaultValue,
     searchColumns,
     handleSync

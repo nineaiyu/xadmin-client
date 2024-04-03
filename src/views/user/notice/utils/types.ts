@@ -23,8 +23,6 @@ interface FormItemProps {
   notice_type?: number;
   user_count?: number;
   extra_json?: {};
-  levelChoices?: any[];
-  noticeChoices?: any[];
   files?: any[];
   owners?: any[];
 }
@@ -35,6 +33,8 @@ interface ListItem {
 }
 
 interface FormProps {
+  levelChoices?: any[];
+  noticeChoices?: any[];
   formInline: FormItemProps;
 }
 

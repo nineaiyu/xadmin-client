@@ -14,7 +14,7 @@ const {
   api,
   auth,
   columns,
-  searchForm,
+  searchField,
   defaultValue,
   searchColumns,
   handleSync
@@ -27,7 +27,7 @@ const {
     :api="api"
     :auth="auth"
     :search-columns="searchColumns"
-    :search-form="searchForm"
+    :search-field="searchField"
     :table-columns="columns"
   >
     <template #barButtons>

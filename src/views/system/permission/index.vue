@@ -15,7 +15,7 @@ const {
   auth,
   columns,
   editForm,
-  searchForm,
+  searchField,
   defaultValue,
   searchColumns
 } = useDataPermission(tableRef);
@@ -27,7 +27,7 @@ const {
     :auth="auth"
     :edit-form="editForm"
     :search-columns="searchColumns"
-    :search-form="searchForm"
+    :search-field="searchField"
     :table-columns="columns"
   />
 </template>

@@ -6,7 +6,7 @@ defineOptions({
   name: "SystemOperationLog"
 });
 
-const { api, auth, columns, searchForm, defaultValue, searchColumns } =
+const { api, auth, columns, searchField, defaultValue, searchColumns } =
   useOperationLog();
 </script>
 
@@ -15,7 +15,7 @@ const { api, auth, columns, searchForm, defaultValue, searchColumns } =
     :api="api"
     :auth="auth"
     :search-columns="searchColumns"
-    :search-form="searchForm"
+    :search-field="searchField"
     :table-columns="columns"
   />
 </template>

@@ -20,7 +20,7 @@ const {
   auth,
   columns,
   editForm,
-  searchForm,
+  searchField,
   buttonClass,
   defaultValue,
   searchColumns,
@@ -37,7 +37,7 @@ const {
     :edit-form="editForm"
     :result-format="formatResult"
     :search-columns="searchColumns"
-    :search-form="searchForm"
+    :search-field="searchField"
     :table-columns="columns"
   >
     <template #extOperation="{ row, size }">

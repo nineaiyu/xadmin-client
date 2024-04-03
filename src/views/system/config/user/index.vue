@@ -17,7 +17,7 @@ const {
   auth,
   columns,
   editForm,
-  searchForm,
+  searchField,
   defaultValue,
   searchColumns,
   handleInvalidCache
@@ -31,7 +31,7 @@ const {
     :auth="auth"
     :edit-form="editForm"
     :search-columns="searchColumns"
-    :search-form="searchForm"
+    :search-field="searchField"
     :table-columns="columns"
   >
     <template #extOperation="{ row, size }">

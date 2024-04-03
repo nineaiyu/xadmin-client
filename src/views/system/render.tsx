@@ -2,6 +2,7 @@ import Segmented from "@/components/ReSegmented";
 import { $t, transformI18n } from "@/plugins/i18n";
 import { ref } from "vue";
 import { usePublicHooks } from "@/views/system/hooks";
+import { isFunction } from "@pureadmin/utils";
 
 export const selectOptions = [
   {
@@ -31,7 +32,14 @@ export const disableState = (props, key) => {
   return !props?.isAdd && props?.showColumns.indexOf(key) === -1;
 };
 
-export const renderSwitch = (auth, tableRef, valueKey, msg) => {
+export const renderSwitch = (
+  apiAuth,
+  tableRef,
+  valueKey,
+  msg,
+  updateApi = null,
+  actMsg = null
+) => {
   const switchLoadMap = ref({});
   const { switchStyle } = usePublicHooks();
   return scope => (
@@ -43,17 +51,22 @@ export const renderSwitch = (auth, tableRef, valueKey, msg) => {
       inactive-value={false}
       active-text={transformI18n($t("labels.active"))}
       inactive-text={transformI18n($t("labels.inactive"))}
-      disabled={!auth.update}
+      disabled={!apiAuth}
       inline-prompt
       style={switchStyle.value}
-      onChange={() =>
+      onChange={() => {
+        if (isFunction(actMsg)) {
+          actMsg = actMsg(scope);
+        }
         tableRef.value.onChange(
           switchLoadMap,
           scope as any,
           valueKey,
-          msg(scope)
-        )
-      }
+          msg(scope),
+          updateApi,
+          actMsg
+        );
+      }}
     />
   );
 };

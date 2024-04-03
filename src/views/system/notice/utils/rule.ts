@@ -38,5 +38,12 @@ export const formRules = reactive<FormRules>({
       message: transformI18n($t("notice.verifyContent")),
       trigger: "blur"
     }
+  ],
+  notice_type: [
+    {
+      required: true,
+      message: transformI18n($t("notice.type")),
+      trigger: "blur"
+    }
   ]
 });

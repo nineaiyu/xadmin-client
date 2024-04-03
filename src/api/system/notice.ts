@@ -65,6 +65,11 @@ export const getNoticeReadListApi = (data?: object) => {
     params: data
   });
 };
+export const getNoticeReadDetailApi = (pk?: number | string, data?: object) => {
+  return http.request<Result>("get", `/api/system/message/read/${pk}`, {
+    params: data
+  });
+};
 
 export const updateNoticeReadStateApi = (pk?: number, data?: object) => {
   return http.request<Result>("put", `/api/system/message/read/${pk}/state`, {

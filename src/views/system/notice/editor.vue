@@ -4,17 +4,12 @@ import "@wangeditor/editor/dist/css/style.css";
 import { Editor, Toolbar } from "@wangeditor/editor-for-vue";
 import { FormProps, InsertFnType } from "./utils/types";
 import { formRules } from "./utils/rule";
-import ReCol from "@/components/ReCol";
 import { UploadFileApi } from "@/api/system/upload";
 import { message } from "@/utils/message";
 import { UploadFileResult } from "@/api/types";
 import { getKeyList } from "@pureadmin/utils";
-import { useI18n } from "vue-i18n";
-import SearchUsers from "@/views/system/base/searchUsers.vue";
-import SearchDepts from "@/views/system/base/searchDepts.vue";
-import SearchRoles from "@/views/system/base/searchRoles.vue";
 import { NoticeChoices } from "@/views/system/constants";
-import { hasGlobalAuth } from "@/router/utils";
+import { useNoticeForm } from "./utils/hook";
 
 const props = withDefaults(defineProps<FormProps>(), {
   isAdd: () => true,
@@ -34,15 +29,15 @@ const props = withDefaults(defineProps<FormProps>(), {
   noticeChoices: [],
   levelChoices: []
 });
-const ruleFormRef = ref();
-const { t } = useI18n();
+const formRef = ref();
 const newFormInline = ref(props.formInline);
 const editorRef = shallowRef();
 const mode = "default";
+const { columns, t } = useNoticeForm(props, newFormInline);
 
 function getRef() {
   newFormInline.value.files = getUploadFiles();
-  return ruleFormRef.value;
+  return formRef.value?.formInstance;
 }
 
 function getUploadFiles() {
@@ -148,152 +143,34 @@ const loading = ref(false);
 </script>
 
 <template>
-  <el-form
-    ref="ruleFormRef"
-    :model="newFormInline"
+  <PlusForm
+    ref="formRef"
+    v-model="newFormInline"
+    :columns="columns"
     :rules="formRules"
-    label-width="82px"
+    :hasFooter="false"
+    :row-props="{ gutter: 24 }"
+    label-width="120px"
   >
-    <el-card shadow="never">
-      <template #header>
-        <el-row :gutter="30">
-          <re-col>
-            <el-form-item :label="t('notice.title')" prop="title">
-              <el-input
-                v-model="newFormInline.title"
-                :disabled="
-                  !props.isAdd && props.showColumns.indexOf('title') === -1
-                "
-                :placeholder="t('notice.verifyTitle')"
-                clearable
-              />
-            </el-form-item>
-          </re-col>
-          <re-col :sm="24" :value="8" :xs="24">
-            <el-form-item :label="t('notice.type')" prop="level">
-              <el-select
-                v-model="newFormInline.notice_type"
-                :disabled="!props.isAdd"
-                class="!w-[180px]"
-                clearable
-              >
-                <el-option
-                  v-for="(item, index) in props.noticeChoices"
-                  :key="item.key"
-                  :disabled="item.disabled || index === 0"
-                  :label="item.label"
-                  :value="item.key"
-                />
-              </el-select>
-            </el-form-item>
-          </re-col>
-          <re-col :sm="24" :value="8" :xs="24">
-            <el-form-item :label="t('notice.level')" prop="level">
-              <el-select
-                v-model="newFormInline.level"
-                :disabled="
-                  !props.isAdd && props.showColumns.indexOf('level') === -1
-                "
-                class="!w-[180px]"
-                clearable
-              >
-                <el-option
-                  v-for="item in props.levelChoices"
-                  :key="item.key"
-                  :disabled="item.disabled"
-                  :label="item.label"
-                  :value="item.key"
-                >
-                  <template #default>
-                    <el-text :type="item.key">{{ item.label }}</el-text>
-                  </template>
-                </el-option>
-              </el-select>
-            </el-form-item>
-          </re-col>
-          <re-col :sm="24" :value="8" :xs="24">
-            <el-form-item :label="t('notice.publish')" prop="publish">
-              <el-select
-                v-model="newFormInline.publish"
-                :disabled="
-                  !props.isAdd && props.showColumns.indexOf('publish') === -1
-                "
-                class="!w-[180px]"
-                clearable
-              >
-                <el-option :label="t('labels.publish')" :value="true" />
-                <el-option :label="t('labels.unPublish')" :value="false" />
-              </el-select>
-            </el-form-item>
-          </re-col>
-          <re-col>
-            <el-form-item
-              v-if="
-                newFormInline.notice_type === NoticeChoices.USER &&
-                hasGlobalAuth('list:systemSearchUsers')
-              "
-              :label="t('user.userId')"
-              prop="notice_user"
-            >
-              <search-users
-                v-model="newFormInline.notice_user"
-                :disabled="
-                  !props.isAdd &&
-                  props.showColumns.indexOf('notice_user') === -1
-                "
-              />
-            </el-form-item>
-            <el-form-item
-              v-if="
-                newFormInline.notice_type === NoticeChoices.DEPT &&
-                hasGlobalAuth('list:systemSearchDepts')
-              "
-              :label="t('dept.dept')"
-              prop="notice_dept"
-            >
-              <search-depts
-                v-model="newFormInline.notice_dept"
-                :disabled="
-                  !props.isAdd &&
-                  props.showColumns.indexOf('notice_dept') === -1
-                "
-              />
-            </el-form-item>
-            <el-form-item
-              v-if="
-                newFormInline.notice_type === NoticeChoices.ROLE &&
-                hasGlobalAuth('list:systemSearchRoles')
-              "
-              :label="t('role.role')"
-              prop="notice_role"
-            >
-              <search-roles
-                v-model="newFormInline.notice_role"
-                :disabled="
-                  !props.isAdd &&
-                  props.showColumns.indexOf('notice_role') === -1
-                "
-              />
-            </el-form-item>
-          </re-col>
-        </el-row>
-      </template>
-      <div class="wangeditor">
-        <Toolbar
-          :defaultConfig="toolbarConfig"
-          :editor="editorRef"
-          :mode="mode"
-          style="border-bottom: 1px solid #ccc"
-        />
-        <Editor
-          v-model="newFormInline.message"
-          v-loading="loading"
-          :defaultConfig="editorConfig"
-          :mode="mode"
-          style="height: 400px; overflow-y: hidden"
-          @onCreated="handleCreated"
-        />
-      </div>
-    </el-card>
-  </el-form>
+    <template #plus-field-message>
+      <el-card shadow="never">
+        <div class="wangeditor">
+          <Toolbar
+            :defaultConfig="toolbarConfig"
+            :editor="editorRef"
+            :mode="mode"
+            style="border-bottom: 1px solid #ccc"
+          />
+          <Editor
+            v-model="newFormInline.message"
+            v-loading="loading"
+            :defaultConfig="editorConfig"
+            :mode="mode"
+            style="height: 400px; overflow-y: hidden"
+            @onCreated="handleCreated"
+          />
+        </div>
+      </el-card>
+    </template>
+  </PlusForm>
 </template>

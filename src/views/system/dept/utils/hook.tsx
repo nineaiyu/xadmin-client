@@ -60,7 +60,7 @@ export function useDept(tableRef: Ref) {
       key: "rank"
     }
   ];
-  const searchForm = ref({
+  const searchField = ref({
     pk: "",
     name: "",
     code: "",
@@ -73,7 +73,7 @@ export function useDept(tableRef: Ref) {
     size: 1000
   });
 
-  const defaultValue = cloneDeep(searchForm.value);
+  const defaultValue = cloneDeep(searchField.value);
 
   const api = reactive({
     list: getDeptListApi,
@@ -172,7 +172,7 @@ export function useDept(tableRef: Ref) {
       label: t("dept.autoBind"),
       minWidth: 130,
       prop: "auto_bind",
-      cellRenderer: renderSwitch(auth, tableRef, "auto_bind", scope => {
+      cellRenderer: renderSwitch(auth.update, tableRef, "auto_bind", scope => {
         return `${scope.row.name} ${t("dept.autoBind")}`;
       })
     },
@@ -180,7 +180,7 @@ export function useDept(tableRef: Ref) {
       label: t("labels.status"),
       prop: "is_active",
       minWidth: 90,
-      cellRenderer: renderSwitch(auth, tableRef, "is_active", scope => {
+      cellRenderer: renderSwitch(auth.update, tableRef, "is_active", scope => {
         return scope.row.name;
       })
     },
@@ -366,7 +366,7 @@ export function useDept(tableRef: Ref) {
     auth,
     columns,
     editForm,
-    searchForm,
+    searchField,
     buttonClass,
     defaultValue,
     searchColumns,

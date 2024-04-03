@@ -1,30 +1,22 @@
 import dayjs from "dayjs";
-import { message } from "@/utils/message";
-import type { PaginationProps } from "@pureadmin/table";
-import { computed, h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
+import { computed, h, onMounted, reactive, ref, type Ref } from "vue";
 import {
   deleteNoticeReadApi,
+  getNoticeReadDetailApi,
   getNoticeReadListApi,
   manyDeleteNoticeReadApi,
   updateNoticeReadStateApi
 } from "@/api/system/notice";
 import type { FormItemProps } from "../utils/types";
 import showForm from "../show.vue";
-import {
-  cloneDeep,
-  delay,
-  deviceDetection,
-  getKeyList,
-  isEmpty,
-  isString
-} from "@pureadmin/utils";
+import { cloneDeep, deviceDetection } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog";
-import { useRoute, useRouter } from "vue-router";
+import { useRouter } from "vue-router";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
-import { ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { formatColumns, formatOptions } from "@/views/system/hooks";
+import { formatOptions } from "@/views/system/hooks";
 import type { PlusColumn } from "plus-pro-components";
+import { renderSwitch } from "@/views/system/render";
 
 export function useNoticeRead(tableRef: Ref) {
   const { t } = useI18n();
@@ -38,7 +30,7 @@ export function useNoticeRead(tableRef: Ref) {
       key: "created_time"
     }
   ];
-  const form = ref({
+  const searchField = ref({
     title: "",
     message: "",
     username: "",
@@ -51,24 +43,29 @@ export function useNoticeRead(tableRef: Ref) {
     page: 1,
     size: 10
   });
+
+  const defaultValue = cloneDeep(searchField.value);
+
+  const api = reactive({
+    list: getNoticeReadListApi,
+    detail: getNoticeReadDetailApi,
+    delete: deleteNoticeReadApi,
+    readState: updateNoticeReadStateApi,
+    batchDelete: manyDeleteNoticeReadApi
+  });
+
+  const auth = reactive({
+    list: hasAuth("list:systemNoticeRead"),
+    detail: hasAuth("detail:systemNoticeRead"),
+    delete: hasAuth("delete:systemNoticeRead"),
+    readState: hasAuth("update:systemNoticeReadState"),
+    batchDelete: hasAuth("manyDelete:systemNoticeRead")
+  });
+
   const formRef = ref();
   const router = useRouter();
-  const switchLoadMap = ref({});
-  const route = useRoute();
-  const getParameter = isEmpty(route.params) ? route.query : route.params;
-  const selectedNum = ref(0);
-  const dataList = ref([]);
-  const loading = ref(true);
-  const noticeChoices = ref([]);
-  const levelChoices = ref([]);
-  const showColumns = ref([]);
-  const pagination = reactive<PaginationProps>({
-    total: 0,
-    pageSize: 10,
-    currentPage: 1,
-    pageSizes: [5, 10, 20, 50, 100],
-    background: true
-  });
+  const choicesDict = ref({});
+
   const columns = ref<TableColumnList>([
     {
       label: t("labels.checkColumn"),
@@ -134,19 +131,19 @@ export function useNoticeRead(tableRef: Ref) {
       label: t("notice.haveRead"),
       prop: "unread",
       minWidth: 90,
-      cellRenderer: scope => (
-        <el-switch
-          size={scope.props.size === "small" ? "small" : "default"}
-          loading={switchLoadMap.value[scope.index]?.loading}
-          v-model={scope.row.unread}
-          active-value={false}
-          inactive-value={true}
-          active-text={t("labels.read")}
-          inactive-text={t("labels.unread")}
-          disabled={!hasAuth("update:systemNoticeReadState")}
-          inline-prompt
-          onChange={() => onChange(scope as any)}
-        />
+      cellRenderer: renderSwitch(
+        auth.readState,
+        tableRef,
+        "unread",
+        scope => {
+          return scope.row.notice_info.title;
+        },
+        api.readState,
+        scope => {
+          return scope.row.unread === false
+            ? t("labels.read")
+            : t("labels.unread");
+        }
       )
     },
     {
@@ -200,13 +197,17 @@ export function useNoticeRead(tableRef: Ref) {
         label: t("notice.level"),
         prop: "level",
         valueType: "select",
-        options: formatOptions(levelChoices.value)
+        options: computed(() => {
+          return formatOptions(choicesDict.value["level"]);
+        })
       },
       {
         label: t("notice.type"),
         prop: "notice_type",
         valueType: "select",
-        options: formatOptions(noticeChoices.value)
+        options: computed(() => {
+          return formatOptions(choicesDict.value["notice_type"]);
+        })
       },
       {
         label: t("notice.haveRead"),
@@ -231,51 +232,6 @@ export function useNoticeRead(tableRef: Ref) {
       }
     ];
   });
-
-  function onChange({ row, index }) {
-    const action = row.unread === false ? t("labels.read") : t("labels.unread");
-    ElMessageBox.confirm(
-      `${t("buttons.operateConfirm", {
-        action: `<strong>${action}</strong>`,
-        message: `<strong style='color:var(--el-color-primary)'>${row.notice_info.title}</strong>`
-      })}`,
-      {
-        confirmButtonText: t("buttons.sure"),
-        cancelButtonText: t("buttons.cancel"),
-        type: "warning",
-        dangerouslyUseHTMLString: true,
-        draggable: true
-      }
-    )
-      .then(() => {
-        switchLoadMap.value[index] = Object.assign(
-          {},
-          switchLoadMap.value[index],
-          {
-            loading: true
-          }
-        );
-        updateNoticeReadStateApi(row.pk, { unread: row.unread }).then(res => {
-          if (res.code === 1000) {
-            switchLoadMap.value[index] = Object.assign(
-              {},
-              switchLoadMap.value[index],
-              {
-                loading: false
-              }
-            );
-            message(t("results.success"), { type: "success" });
-            onSearch();
-          } else {
-            message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-          }
-        });
-      })
-      .catch(() => {
-        row.unread === false ? (row.unread = true) : (row.unread = false);
-      });
-  }
-
   function onGoUserDetail(row: any) {
     if (
       hasGlobalAuth("list:systemUser") &&
@@ -324,116 +280,22 @@ export function useNoticeRead(tableRef: Ref) {
     });
   }
 
-  async function handleDelete(row) {
-    deleteNoticeReadApi(row.pk).then(async res => {
-      if (res.code === 1000) {
-        message(t("results.success"), { type: "success" });
-        onSearch();
-      } else {
-        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-      }
-    });
-  }
-
-  async function handleSizeChange(val: number) {
-    form.value.page = 1;
-    form.value.size = val;
-    onSearch();
-  }
-
-  async function handleCurrentChange(val: number) {
-    form.value.page = val;
-    onSearch();
-  }
-
-  function handleSelectionChange(val) {
-    selectedNum.value = val.length;
-  }
-
-  function onSelectionCancel() {
-    selectedNum.value = 0;
-    // 用于多选表格，清空用户的选择
-    tableRef.value.getTableRef().clearSelection();
-  }
-
-  function handleManyDelete() {
-    if (selectedNum.value === 0) {
-      message(t("results.noSelectedData"), { type: "error" });
-      return;
-    }
-    const manySelectData = tableRef.value.getTableRef().getSelectionRows();
-    manyDeleteNoticeReadApi({
-      pks: JSON.stringify(getKeyList(manySelectData, "pk"))
-    }).then(async res => {
-      if (res.code === 1000) {
-        message(t("results.batchDelete", { count: selectedNum.value }), {
-          type: "success"
-        });
-        onSelectionCancel();
-        onSearch();
-      } else {
-        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-      }
-    });
-  }
-
-  function onSearch(init = false) {
-    if (init) {
-      pagination.currentPage = form.value.page = 1;
-      pagination.pageSize = form.value.size = 10;
-    }
-    loading.value = true;
-    getNoticeReadListApi(toRaw(form.value))
-      .then(res => {
-        if (res.code === 1000 && res.data) {
-          formatColumns(res?.data?.results, columns, showColumns);
-          dataList.value = res.data.results;
-          pagination.total = res.data.total;
-          noticeChoices.value = res.notice_type_choices;
-          levelChoices.value = res.level_choices;
-        } else {
-          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-        }
-        delay(500).then(() => {
-          loading.value = false;
-        });
-      })
-      .catch(() => {
-        loading.value = false;
-      });
-  }
-
   onMounted(() => {
-    if (getParameter) {
-      const parameter = cloneDeep(getParameter);
-      Object.keys(parameter).forEach(param => {
-        if (!isString(parameter[param])) {
-          parameter[param] = parameter[param].toString();
-        }
-      });
-      form.value.notice_id = parameter.notice_id;
-    }
-    onSearch();
+    api.detail("choices").then(res => {
+      if (res.code === 1000) {
+        choicesDict.value = res.choices_dict;
+      }
+    });
   });
 
   return {
     t,
-    form,
-    loading,
+    api,
+    auth,
     columns,
-    dataList,
-    pagination,
-    selectedNum,
-    levelChoices,
+    searchField,
+    defaultValue,
     searchColumns,
-    noticeChoices,
-    onSearch,
-    showDialog,
-    handleDelete,
-    handleManyDelete,
-    handleSizeChange,
-    onSelectionCancel,
-    handleCurrentChange,
-    handleSelectionChange
+    showDialog
   };
 }

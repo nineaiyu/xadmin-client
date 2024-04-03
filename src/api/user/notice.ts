@@ -25,3 +25,9 @@ export const getUserNoticeListApi = (data?: object) => {
     params: data
   });
 };
+
+export const getUserNoticeDetailApi = (pk?: number | string, data?: object) => {
+  return http.request<Result>("get", `/api/system/user/notice/${pk}`, {
+    params: data
+  });
+};

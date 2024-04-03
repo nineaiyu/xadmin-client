@@ -15,7 +15,8 @@ import {
   getNoticeDetailApi,
   getNoticeListApi,
   manyDeleteNoticeApi,
-  updateNoticeApi
+  updateNoticeApi,
+  updateNoticePublishApi
 } from "@/api/system/notice";
 import { useRouter } from "vue-router";
 import type { FormItemProps } from "./types";
@@ -28,7 +29,31 @@ import { useI18n } from "vue-i18n";
 import { NoticeChoices } from "@/views/system/constants";
 import { formatOptions } from "@/views/system/hooks";
 import type { PlusColumn } from "plus-pro-components";
-import { renderSwitch } from "@/views/system/render";
+import {
+  disableState,
+  renderSwitch,
+  selectOptions
+} from "@/views/system/render";
+import SearchUsers from "@/views/system/base/searchUsers.vue";
+import SearchDepts from "@/views/system/base/searchDepts.vue";
+import SearchRoles from "@/views/system/base/searchRoles.vue";
+
+const customOptions = (data: Array<any>) => {
+  const result = [];
+  data?.forEach(item => {
+    result.push({
+      label: item?.label,
+      value: item?.key,
+      fieldItemProps: {
+        disabled: item?.disabled
+      },
+      fieldSlot: () => {
+        return <el-text type={item?.key}> {item?.label}</el-text>;
+      }
+    });
+  });
+  return result;
+};
 
 export function useNotice(tableRef: Ref) {
   const { t } = useI18n();
@@ -44,7 +69,7 @@ export function useNotice(tableRef: Ref) {
       key: "created_time"
     }
   ];
-  const searchForm = ref({
+  const searchField = ref({
     pk: "",
     title: "",
     message: "",
@@ -57,7 +82,7 @@ export function useNotice(tableRef: Ref) {
     size: 10
   });
 
-  const defaultValue = cloneDeep(searchForm.value);
+  const defaultValue = cloneDeep(searchField.value);
 
   const api = reactive({
     list: getNoticeListApi,
@@ -72,6 +97,7 @@ export function useNotice(tableRef: Ref) {
     },
     delete: deleteNoticeApi,
     update: updateNoticeApi,
+    publish: updateNoticePublishApi,
     detail: getNoticeDetailApi,
     batchDelete: manyDeleteNoticeApi
   });
@@ -81,6 +107,7 @@ export function useNotice(tableRef: Ref) {
     create: hasAuth("create:systemNotice"),
     delete: hasAuth("delete:systemNotice"),
     update: hasAuth("update:systemNotice"),
+    publish: hasAuth("update:systemNoticePublish"),
     detail: hasAuth("detail:systemNotice"),
     batchDelete: hasAuth("manyDelete:systemNotice")
   });
@@ -110,11 +137,14 @@ export function useNotice(tableRef: Ref) {
         return choicesDict.value["level"];
       },
       noticeChoices: () => {
-        return choicesDict.value["notice_type"];
+        const data = cloneDeep(choicesDict.value["notice_type"]);
+        data[0].disabled = true;
+        return data;
       }
     },
     options: {
-      top: "10vh"
+      top: "10vh",
+      width: "60vw"
     }
   });
 
@@ -167,9 +197,20 @@ export function useNotice(tableRef: Ref) {
       label: t("notice.publish"),
       prop: "publish",
       minWidth: 90,
-      cellRenderer: renderSwitch(auth, tableRef, "publish", scope => {
-        return scope.row.title;
-      })
+      cellRenderer: renderSwitch(
+        auth.publish,
+        tableRef,
+        "publish",
+        scope => {
+          return scope.row.title;
+        },
+        api.publish,
+        scope => {
+          return scope.row.publish === false
+            ? t("labels.unPublish")
+            : t("labels.publish");
+        }
+      )
     },
     {
       label: t("sorts.createdDate"),
@@ -213,23 +254,14 @@ export function useNotice(tableRef: Ref) {
         label: t("notice.publish"),
         prop: "publish",
         valueType: "select",
-        options: [
-          {
-            label: t("labels.unPublish"),
-            value: false
-          },
-          {
-            label: t("labels.publish"),
-            value: true
-          }
-        ]
+        options: selectOptions
       },
       {
         label: t("notice.level"),
         prop: "level",
         valueType: "select",
         options: computed(() => {
-          return formatOptions(choicesDict.value["level"]);
+          return customOptions(choicesDict.value["level"]);
         })
       },
       {
@@ -319,10 +351,146 @@ export function useNotice(tableRef: Ref) {
     auth,
     columns,
     editForm,
-    searchForm,
+    searchField,
     defaultValue,
     searchColumns,
     showDialog,
     searchEnd
+  };
+}
+
+export function useNoticeForm(props, newFormInline) {
+  const { t } = useI18n();
+  const columns: PlusColumn[] = [
+    {
+      label: t("notice.title"),
+      prop: "title",
+      valueType: "input",
+      fieldProps: {
+        disabled: disableState(props, "title")
+      },
+      colProps: {
+        xs: 24,
+        sm: 24,
+        md: 24,
+        lg: 16,
+        xl: 16
+      }
+    },
+    {
+      label: t("notice.publish"),
+      prop: "publish",
+      valueType: "select",
+      fieldProps: {
+        disabled: disableState(props, "publish")
+      },
+      colProps: {
+        xs: 24,
+        sm: 24,
+        md: 24,
+        lg: 8,
+        xl: 8
+      },
+      options: selectOptions
+    },
+    {
+      label: t("notice.type"),
+      prop: "notice_type",
+      valueType: "select",
+      fieldProps: {
+        disabled: disableState(props, "notice_type")
+      },
+      colProps: {
+        xs: 24,
+        sm: 24,
+        md: 24,
+        lg: 12,
+        xl: 12
+      },
+      options: formatOptions(props.noticeChoices)
+    },
+    {
+      label: t("notice.level"),
+      prop: "level",
+      valueType: "select",
+      fieldProps: {
+        disabled: disableState(props, "level")
+      },
+      colProps: {
+        xs: 24,
+        sm: 24,
+        md: 24,
+        lg: 12,
+        xl: 12
+      },
+      options: customOptions(props.levelChoices)
+    },
+
+    {
+      label: t("user.userId"),
+      prop: "notice_user",
+      hideInForm: computed(() => {
+        return !(
+          newFormInline.value.notice_type === NoticeChoices.USER &&
+          hasGlobalAuth("list:systemSearchUsers")
+        );
+      }),
+      fieldProps: {
+        disabled: disableState(props, "notice_user")
+      },
+      renderField: value => {
+        if (value === "") {
+          return;
+        }
+        return <SearchUsers modelValue={value} />;
+      }
+    },
+    {
+      label: t("dept.dept"),
+      prop: "notice_dept",
+      hideInForm: computed(() => {
+        return !(
+          newFormInline.value.notice_type === NoticeChoices.DEPT &&
+          hasGlobalAuth("list:systemSearchDepts")
+        );
+      }),
+      fieldProps: {
+        disabled: disableState(props, "notice_dept")
+      },
+      renderField: value => {
+        if (value === "") {
+          return;
+        }
+        return <SearchDepts modelValue={value} />;
+      }
+    },
+    {
+      label: t("role.role"),
+      prop: "notice_role",
+      hideInForm: computed(() => {
+        return !(
+          newFormInline.value.notice_type === NoticeChoices.ROLE &&
+          hasGlobalAuth("list:systemSearchRoles")
+        );
+      }),
+      fieldProps: {
+        disabled: disableState(props, "notice_role")
+      },
+      renderField: value => {
+        if (value === "") {
+          return;
+        }
+        return <SearchRoles modelValue={value} />;
+      }
+    },
+    {
+      label: t("notice.content"),
+      prop: "message"
+    }
+  ];
+
+  return {
+    t,
+    columns
   };
 }

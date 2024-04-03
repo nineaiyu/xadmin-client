@@ -21,7 +21,7 @@ interface FormProps {
   api: ApiAuthProps;
   editForm?: EditFormProps;
   pagination?: object | null;
-  searchForm: object | null;
+  searchField: object | null;
   searchColumns: any[];
   tableColumns: any[];
   customAddOrEdit?: boolean;

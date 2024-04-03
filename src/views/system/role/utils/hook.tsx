@@ -28,8 +28,8 @@ import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { FieldChoices } from "@/views/system/constants";
 import { cloneDeep, deviceDetection } from "@pureadmin/utils";
 import { getModelLabelFieldListApi } from "@/api/system/field";
-import { formatOptions, usePublicHooks } from "@/views/system/hooks";
-import { selectOptions } from "@/views/system/render";
+import { formatOptions } from "@/views/system/hooks";
+import { renderSwitch, selectOptions } from "@/views/system/render";
 
 export function useRole(tableRef: Ref) {
   const { t } = useI18n();
@@ -43,7 +43,7 @@ export function useRole(tableRef: Ref) {
       key: "created_time"
     }
   ];
-  const searchForm = ref({
+  const searchField = ref({
     name: "",
     code: "",
     is_active: "",
@@ -52,7 +52,7 @@ export function useRole(tableRef: Ref) {
     size: 10
   });
 
-  const defaultValue = cloneDeep(searchForm.value);
+  const defaultValue = cloneDeep(searchField.value);
 
   const api = reactive({
     list: getRoleListApi,
@@ -91,8 +91,6 @@ export function useRole(tableRef: Ref) {
   const menuTreeData = ref([]);
   const fieldLookupsData = ref({});
   const loading = ref(true);
-  const switchLoadMap = ref({});
-  const { switchStyle } = usePublicHooks();
   const columns = ref<TableColumnList>([
     {
       label: t("labels.checkColumn"),
@@ -120,23 +118,9 @@ export function useRole(tableRef: Ref) {
       label: t("labels.status"),
       minWidth: 130,
       prop: "is_active",
-      cellRenderer: scope => (
-        <el-switch
-          size={scope.props.size === "small" ? "small" : "default"}
-          loading={switchLoadMap.value[scope.index]?.loading}
-          v-model={scope.row.is_active}
-          active-value={true}
-          inactive-value={false}
-          active-text={t("labels.active")}
-          inactive-text={t("labels.inactive")}
-          disabled={!auth.update}
-          inline-prompt
-          style={switchStyle.value}
-          onChange={() =>
-            tableRef.value.onChange(scope as any, "is_active", scope.row.name)
-          }
-        />
-      )
+      cellRenderer: renderSwitch(auth.update, tableRef, "is_active", scope => {
+        return scope.row.name;
+      })
     },
     {
       label: t("labels.description"),
@@ -338,7 +322,7 @@ export function useRole(tableRef: Ref) {
     auth,
     columns,
     editForm,
-    searchForm,
+    searchField,
     defaultValue,
     searchColumns,
     openDialog

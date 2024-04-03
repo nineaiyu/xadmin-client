@@ -21,7 +21,7 @@ export function useBaseTable(
   editForm,
   tableColumns,
   pagination: PaginationProps | {},
-  searchForm: Ref,
+  searchField: Ref,
   resultFormat: Function
 ) {
   const { t } = useI18n();
@@ -57,18 +57,19 @@ export function useBaseTable(
   };
 
   const handleSizeChange = (val: number) => {
-    searchForm.value.page = 1;
-    searchForm.value.size = val;
+    searchField.value.page = 1;
+    searchField.value.size = val;
     onSearch();
   };
 
   const handleCurrentChange = (val: number) => {
-    searchForm.value.page = val;
+    searchField.value.page = val;
     onSearch();
   };
 
   const handleSelectionChange = val => {
     selectedNum.value = val.length;
+    emit("selectionChange", getSelectPks);
   };
 
   const onSelectionCancel = () => {
@@ -122,12 +123,12 @@ export function useBaseTable(
 
   const onSearch = (init = false) => {
     if (init) {
-      pagination.currentPage = searchForm.value.page = 1;
-      pagination.pageSize = searchForm.value.size = 10;
+      pagination.currentPage = searchField.value.page = 1;
+      pagination.pageSize = searchField.value.size = 10;
     }
     loading.value = true;
     api
-      .list(toRaw(searchForm.value))
+      .list(toRaw(searchField.value))
       .then(res => {
         if (res.code === 1000 && res.data) {
           formatColumns(res.data?.results, tableColumns);
@@ -140,7 +141,7 @@ export function useBaseTable(
         } else {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
         }
-        emit("searchEnd", getParameter, searchForm, dataList);
+        emit("searchEnd", getParameter, searchField, dataList, res);
         delay(500).then(() => {
           loading.value = false;
         });
@@ -242,6 +243,7 @@ export function useBaseTable(
     { row, index },
     actKey,
     msg,
+    updateApi = null,
     actMsg = null
   ) => {
     if (!actMsg) {
@@ -268,7 +270,10 @@ export function useBaseTable(
             loading: true
           }
         );
-        api.update(row.pk, row).then(res => {
+        if (!updateApi) {
+          updateApi = api.update;
+        }
+        updateApi(row.pk, row).then(res => {
           if (res.code === 1000) {
             switchLoadMap.value[index] = Object.assign(
               {},
@@ -292,7 +297,7 @@ export function useBaseTable(
     if (getParameter) {
       const parameter = cloneDeep(getParameter);
       Object.keys(parameter).forEach(param => {
-        searchForm.value[param] = parameter[param];
+        searchField.value[param] = parameter[param];
       });
     }
     onSearch();
@@ -303,7 +308,7 @@ export function useBaseTable(
     route,
     loading,
     dataList,
-    searchForm,
+    searchField,
     pagination,
     selectedNum,
     showColumns,

@@ -12,13 +12,13 @@ const props = withDefaults(defineProps<FormProps>(), {
     level: ""
   })
 });
-const ruleFormRef = ref();
+const formRef = ref();
 const newFormInline = ref(props.formInline);
 const editorRef = shallowRef();
 const mode = "default";
 
 function getRef() {
-  return ruleFormRef.value;
+  return formRef.value;
 }
 
 defineExpose({ getRef });
@@ -42,7 +42,7 @@ const loading = ref(false);
 </script>
 
 <template>
-  <el-form ref="ruleFormRef" :model="newFormInline" label-width="82px">
+  <el-form ref="formRef" :model="newFormInline" label-width="82px">
     <el-card shadow="never">
       <template #header>
         <el-text :type="newFormInline.level" size="large"

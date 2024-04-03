@@ -36,7 +36,7 @@ export function useDataPermission(tableRef: Ref) {
       key: "created_time"
     }
   ];
-  const searchForm = ref({
+  const searchField = ref({
     name: "",
     mode_type: "",
     is_active: "",
@@ -46,7 +46,7 @@ export function useDataPermission(tableRef: Ref) {
     size: 10
   });
 
-  const defaultValue = cloneDeep(searchForm.value);
+  const defaultValue = cloneDeep(searchField.value);
 
   const api = reactive({
     list: getDataPermissionListApi,
@@ -128,7 +128,7 @@ export function useDataPermission(tableRef: Ref) {
       label: t("labels.status"),
       minWidth: 130,
       prop: "is_active",
-      cellRenderer: renderSwitch(auth, tableRef, "is_active", scope => {
+      cellRenderer: renderSwitch(auth.update, tableRef, "is_active", scope => {
         return scope.name;
       })
     },
@@ -216,7 +216,7 @@ export function useDataPermission(tableRef: Ref) {
     auth,
     columns,
     editForm,
-    searchForm,
+    searchField,
     defaultValue,
     searchColumns
   };

@@ -1,8 +1,8 @@
 import dayjs from "dayjs";
 import { message } from "@/utils/message";
-import type { PaginationProps } from "@pureadmin/table";
-import { computed, h, onMounted, reactive, ref, type Ref, toRaw } from "vue";
+import { computed, h, onMounted, reactive, ref, type Ref } from "vue";
 import {
+  getUserNoticeDetailApi,
   getUserNoticeListApi,
   updateUserNoticeReadAllApi,
   updateUserNoticeReadApi
@@ -10,18 +10,15 @@ import {
 import { useRoute } from "vue-router";
 import type { FormItemProps } from "./types";
 import showForm from "../show.vue";
-import {
-  cloneDeep,
-  deviceDetection,
-  getKeyList,
-  isEmpty,
-  isString
-} from "@pureadmin/utils";
+import { cloneDeep, deviceDetection, isEmpty } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog";
 import { useI18n } from "vue-i18n";
 import { useUserStoreHook } from "@/store/modules/user";
-import { formatColumns, formatOptions } from "@/views/system/hooks";
+import { formatOptions } from "@/views/system/hooks";
 import type { PlusColumn } from "plus-pro-components";
+
+import { hasAuth } from "@/router/utils";
+import { selectOptions } from "@/views/system/render";
 
 export function useUserNotice(tableRef: Ref) {
   const { t } = useI18n();
@@ -35,7 +32,7 @@ export function useUserNotice(tableRef: Ref) {
       key: "created_time"
     }
   ];
-  const form = ref({
+  const searchField = ref({
     pk: "",
     title: "",
     message: "",
@@ -46,23 +43,31 @@ export function useUserNotice(tableRef: Ref) {
     page: 1,
     size: 10
   });
+
+  const defaultValue = cloneDeep(searchField.value);
+
+  const api = reactive({
+    list: getUserNoticeListApi,
+    detail: getUserNoticeDetailApi,
+    batchRead: updateUserNoticeReadApi,
+    allRead: updateUserNoticeReadAllApi
+  });
+
+  const auth = reactive({
+    list: hasAuth("list:userNotice"),
+    detail: hasAuth("detail:userNoticeRead"),
+    batchRead: hasAuth("update:userNoticeRead"),
+    allRead: hasAuth("update:userNoticeReadAll")
+  });
+
   const route = useRoute();
   const getParameter = isEmpty(route.params) ? route.query : route.params;
   const formRef = ref();
+  const choicesDict = ref({});
   const selectedNum = ref(0);
   const unreadCount = ref(0);
-  const dataList = ref([]);
-  const loading = ref(true);
-  const levelChoices = ref([]);
-  const noticeChoices = ref([]);
-  const showColumns = ref([]);
-  const pagination = reactive<PaginationProps>({
-    total: 0,
-    pageSize: 10,
-    currentPage: 1,
-    pageSizes: [5, 10, 20, 50, 100],
-    background: true
-  });
+  const manySelectData = ref([]);
+
   const columns = ref<TableColumnList>([
     {
       label: t("labels.checkColumn"),
@@ -138,28 +143,23 @@ export function useUserNotice(tableRef: Ref) {
         label: t("notice.haveRead"),
         prop: "unread",
         valueType: "select",
-        options: [
-          {
-            label: t("labels.read"),
-            value: false
-          },
-          {
-            label: t("labels.unread"),
-            value: true
-          }
-        ]
+        options: selectOptions
       },
       {
         label: t("notice.level"),
         prop: "level",
         valueType: "select",
-        options: formatOptions(levelChoices.value)
+        options: computed(() => {
+          return formatOptions(choicesDict.value["level"]);
+        })
       },
       {
         label: t("notice.type"),
         prop: "notice_type",
         valueType: "select",
-        options: formatOptions(noticeChoices.value)
+        options: computed(() => {
+          return formatOptions(choicesDict.value["notice_type"]);
+        })
       },
       {
         label: t("labels.sort"),
@@ -172,7 +172,7 @@ export function useUserNotice(tableRef: Ref) {
 
   function showDialog(row?: FormItemProps) {
     if (row.unread) {
-      updateUserNoticeReadApi({ pks: [row.pk] });
+      api.batchRead({ pks: [row.pk] });
     }
     addDialog({
       title: t("notice.showSystemNotice"),
@@ -181,9 +181,7 @@ export function useUserNotice(tableRef: Ref) {
           pk: row?.pk ?? "",
           title: row?.title ?? "",
           message: row?.message ?? "",
-          level: row?.level ?? "",
-          levelChoices: levelChoices.value,
-          noticeChoices: noticeChoices.value
+          level: row?.level ?? ""
         }
       },
       width: "70%",
@@ -195,41 +193,20 @@ export function useUserNotice(tableRef: Ref) {
       contentRenderer: () => h(showForm, { ref: formRef }),
       closeCallBack: () => {
         if (getParameter.pk) {
-          form.value.pk = "";
+          searchField.value.pk = "";
         }
         if (row.unread) {
-          form.value.pk = "";
-          onSearch();
+          searchField.value.pk = "";
+          tableRef.value.onSearch();
         }
       }
     });
   }
 
-  async function handleSizeChange(val: number) {
-    form.value.page = 1;
-    form.value.size = val;
-    onSearch();
-  }
-
-  async function handleCurrentChange(val: number) {
-    form.value.page = val;
-    onSearch();
-  }
-
-  function handleSelectionChange(val) {
-    selectedNum.value = val.length;
-  }
-
-  function onSelectionCancel() {
-    selectedNum.value = 0;
-    // 用于多选表格，清空用户的选择
-    tableRef.value.getTableRef().clearSelection();
-  }
-
   function handleReadAll() {
     updateUserNoticeReadAllApi().then(() => {
-      form.value.unread = "";
-      onSearch();
+      searchField.value.unread = "";
+      tableRef.value.onSearch();
     });
   }
 
@@ -238,92 +215,57 @@ export function useUserNotice(tableRef: Ref) {
       message(t("results.noSelectedData"), { type: "error" });
       return;
     }
-    const manySelectData = tableRef.value.getTableRef().getSelectionRows();
-    updateUserNoticeReadApi({
-      pks: getKeyList(
-        manySelectData.filter(r => {
-          return r.unread;
-        }),
-        "pk"
-      )
-    }).then(async res => {
+    api.batchRead({ pks: manySelectData.value }).then(async res => {
       if (res.code === 1000) {
         message(t("results.batchRead", { count: selectedNum.value }), {
           type: "success"
         });
-        onSearch();
+        tableRef.value.onSearch();
       } else {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
     });
   }
 
-  function onSearch(init = false) {
-    if (init) {
-      pagination.currentPage = form.value.page = 1;
-      pagination.pageSize = form.value.size = 10;
+  const searchEnd = (getParameter, form, dataList, res) => {
+    unreadCount.value = res.unread_count;
+    useUserStoreHook().SET_NOTICECOUNT(res.unread_count);
+    if (
+      getParameter.pk &&
+      getParameter.pk === form.value.pk &&
+      getParameter.pk !== "" &&
+      dataList.value.length > 0
+    ) {
+      showDialog(dataList.value[0]);
     }
-    loading.value = true;
-    getUserNoticeListApi(toRaw(form.value))
-      .then(res => {
-        if (res.code === 1000 && res.data) {
-          formatColumns(res?.data?.results, columns, showColumns);
-          dataList.value = res.data.results;
-          pagination.total = res.data.total;
-          levelChoices.value = res.level_choices;
-          noticeChoices.value = res.notice_type_choices;
-          unreadCount.value = res.unread_count;
-          useUserStoreHook().SET_NOTICECOUNT(res.unread_count);
-        } else {
-          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-        }
-        setTimeout(() => {
-          loading.value = false;
-          if (
-            getParameter.pk &&
-            getParameter.pk === form.value.pk &&
-            getParameter.pk !== "" &&
-            dataList.value.length > 0
-          ) {
-            showDialog(dataList.value[0]);
-          }
-        }, 500);
-      })
-      .catch(() => {
-        loading.value = false;
-      });
-  }
+  };
+  const selectionChange = func => {
+    manySelectData.value = func();
+    selectedNum.value = manySelectData.value.length ?? 0;
+  };
 
   onMounted(() => {
-    if (getParameter) {
-      const parameter = cloneDeep(getParameter);
-      Object.keys(parameter).forEach(param => {
-        if (!isString(parameter[param])) {
-          parameter[param] = parameter[param].toString();
-        }
-      });
-      form.value.pk = parameter.pk;
-    }
-    onSearch();
+    api.detail("choices").then(res => {
+      if (res.code === 1000) {
+        choicesDict.value = res.choices_dict;
+      }
+    });
   });
 
   return {
     t,
-    form,
-    loading,
+    api,
+    auth,
     columns,
-    dataList,
-    pagination,
     selectedNum,
     unreadCount,
+    searchField,
+    defaultValue,
     searchColumns,
-    onSearch,
     showDialog,
+    searchEnd,
     handleReadAll,
     handleManyRead,
-    handleSizeChange,
-    onSelectionCancel,
-    handleCurrentChange,
-    handleSelectionChange
+    selectionChange
   };
 }
