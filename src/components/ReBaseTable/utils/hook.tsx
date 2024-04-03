@@ -8,14 +8,14 @@ import {
   delay,
   deviceDetection,
   getKeyList,
-  isEmpty,
-  isString
+  isEmpty
 } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
 import { useRoute } from "vue-router";
 
 export function useBaseTable(
+  emit,
   tableRef: Ref,
   api,
   editForm,
@@ -140,6 +140,7 @@ export function useBaseTable(
         } else {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
         }
+        emit("searchEnd", getParameter, searchForm, dataList);
         delay(500).then(() => {
           loading.value = false;
         });
@@ -201,8 +202,16 @@ export function useBaseTable(
 
         FormRef.validate(valid => {
           if (valid) {
+            let apiCreate = api.create;
+            if (api.create.name === "create") {
+              apiCreate = apiCreate(row, isAdd, curData);
+            }
+            let apiUpdate = api.update;
+            if (api.update.name === "update") {
+              apiUpdate = apiUpdate(row, isAdd, curData);
+            }
             if (isAdd) {
-              api.create(curData).then(async res => {
+              apiCreate(curData).then(async res => {
                 if (res.code === 1000) {
                   chores(res.detail);
                 } else {
@@ -212,7 +221,7 @@ export function useBaseTable(
                 }
               });
             } else {
-              api.update(curData.pk, curData).then(res => {
+              apiUpdate(curData.pk, curData).then(res => {
                 if (res.code === 1000) {
                   chores(res.detail);
                 } else {
@@ -283,9 +292,7 @@ export function useBaseTable(
     if (getParameter) {
       const parameter = cloneDeep(getParameter);
       Object.keys(parameter).forEach(param => {
-        if (!isString(parameter[param])) {
-          searchForm.value[param] = parameter[param].toString();
-        }
+        searchForm.value[param] = parameter[param];
       });
     }
     onSearch();

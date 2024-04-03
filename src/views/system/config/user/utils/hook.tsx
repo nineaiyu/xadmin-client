@@ -85,7 +85,7 @@ export function useUserConfig(tableRef: Ref) {
   });
 
   const router = useRouter();
-  const { switchStyle, tagStyle } = usePublicHooks();
+  const { tagStyle } = usePublicHooks();
 
   const columns = ref<TableColumnList>([
     {
@@ -135,15 +135,9 @@ export function useUserConfig(tableRef: Ref) {
       label: t("labels.status"),
       prop: "is_active",
       minWidth: 130,
-      cellRenderer: renderSwitch(
-        auth,
-        tableRef,
-        switchStyle,
-        "is_active",
-        scope => {
-          return scope.row.key;
-        }
-      )
+      cellRenderer: renderSwitch(auth, tableRef, "is_active", scope => {
+        return scope.row.key;
+      })
     },
     {
       label: t("configSystem.access"),

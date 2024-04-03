@@ -7,7 +7,7 @@ import {
   manyDeleteDataPermissionApi,
   updateDataPermissionApi
 } from "@/api/system/permission";
-import { formatOptions, usePublicHooks } from "@/views/system/hooks";
+import { formatOptions } from "@/views/system/hooks";
 import { computed, onMounted, reactive, ref, type Ref, shallowRef } from "vue";
 import { cloneDeep } from "@pureadmin/utils";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
@@ -102,8 +102,6 @@ export function useDataPermission(tableRef: Ref) {
     }
   });
 
-  const { switchStyle } = usePublicHooks();
-
   const columns = ref<TableColumnList>([
     {
       label: t("labels.checkColumn"),
@@ -130,15 +128,9 @@ export function useDataPermission(tableRef: Ref) {
       label: t("labels.status"),
       minWidth: 130,
       prop: "is_active",
-      cellRenderer: renderSwitch(
-        auth,
-        tableRef,
-        switchStyle,
-        "is_active",
-        scope => {
-          return scope.name;
-        }
-      )
+      cellRenderer: renderSwitch(auth, tableRef, "is_active", scope => {
+        return scope.name;
+      })
     },
     {
       label: t("labels.description"),

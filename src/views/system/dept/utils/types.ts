@@ -33,10 +33,6 @@ interface RoleFormItemProps {
   code?: string;
   mode_type?: number;
   mode_display?: string;
-  /** 角色列表 */
-  rolesOptions: any[];
-  rulesOptions: any[] | itemProps[];
-  choicesDict: any[];
   /** 选中的角色列表 */
   ids: Record<number, unknown>[];
   pks: Record<number, unknown>[];
@@ -44,6 +40,10 @@ interface RoleFormItemProps {
 
 interface RoleFormProps {
   formInline: RoleFormItemProps;
+  /** 角色列表 */
+  rolesOptions: any[];
+  rulesOptions: any[] | itemProps[];
+  choicesDict: any[];
 }
 
 export type { FormItemProps, FormProps, RoleFormItemProps, RoleFormProps };

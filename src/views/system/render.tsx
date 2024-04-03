@@ -1,6 +1,7 @@
 import Segmented from "@/components/ReSegmented";
 import { $t, transformI18n } from "@/plugins/i18n";
 import { ref } from "vue";
+import { usePublicHooks } from "@/views/system/hooks";
 
 export const selectOptions = [
   {
@@ -30,8 +31,9 @@ export const disableState = (props, key) => {
   return !props?.isAdd && props?.showColumns.indexOf(key) === -1;
 };
 
-export const renderSwitch = (auth, tableRef, switchStyle, valueKey, msg) => {
+export const renderSwitch = (auth, tableRef, valueKey, msg) => {
   const switchLoadMap = ref({});
+  const { switchStyle } = usePublicHooks();
   return scope => (
     <el-switch
       size={scope.props.size === "small" ? "small" : "default"}

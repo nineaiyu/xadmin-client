@@ -27,21 +27,21 @@ const props = withDefaults(defineProps<FormProps>(), {
     level: "primary",
     notice_type_display: "",
     notice_type: NoticeChoices.NOTICE,
-    noticeChoices: [],
-    levelChoices: [],
     notice_dept: [],
     notice_role: [],
     notice_user: []
-  })
+  }),
+  noticeChoices: [],
+  levelChoices: []
 });
 const ruleFormRef = ref();
 const { t } = useI18n();
 const newFormInline = ref(props.formInline);
-newFormInline.value.noticeChoices[0].disabled = true;
 const editorRef = shallowRef();
 const mode = "default";
 
 function getRef() {
+  newFormInline.value.files = getUploadFiles();
   return ruleFormRef.value;
 }
 
@@ -178,9 +178,9 @@ const loading = ref(false);
                 clearable
               >
                 <el-option
-                  v-for="item in newFormInline.noticeChoices"
+                  v-for="(item, index) in props.noticeChoices"
                   :key="item.key"
-                  :disabled="item.disabled"
+                  :disabled="item.disabled || index === 0"
                   :label="item.label"
                   :value="item.key"
                 />
@@ -198,7 +198,7 @@ const loading = ref(false);
                 clearable
               >
                 <el-option
-                  v-for="item in newFormInline.levelChoices"
+                  v-for="item in props.levelChoices"
                   :key="item.key"
                   :disabled="item.disabled"
                   :label="item.label"

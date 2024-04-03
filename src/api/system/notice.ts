@@ -53,6 +53,12 @@ export const updateNoticePublishApi = (pk?: number, data?: object) => {
   );
 };
 
+export const getNoticeDetailApi = (pk?: number | string, data?: object) => {
+  return http.request<Result>("get", `/api/system/message/notice/${pk}`, {
+    params: data
+  });
+};
+
 // 用户已读公告查询
 export const getNoticeReadListApi = (data?: object) => {
   return http.request<Result>("get", "/api/system/message/read", {

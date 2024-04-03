@@ -45,6 +45,7 @@ const emit = defineEmits<{
   (e: "plusSearch", ...args: any[]): void;
   (e: "pureRefresh", ...args: any[]): void;
   (e: "openDialog", ...args: any[]): void;
+  (e: "searchEnd", ...args: any[]): void;
 }>();
 
 const plusPorChange = (column: any, func: Function, ...args) => {
@@ -75,6 +76,7 @@ const {
   handleCurrentChange,
   handleSelectionChange
 } = useBaseTable(
+  emit,
   tableRef,
   props.api,
   props.editForm,
@@ -100,6 +102,7 @@ const editOrAdd = (isAdd = true, row = {}) => {
 defineExpose({
   onSearch,
   onChange,
+  openDialog,
   getTableRef,
   getSelectPks,
   dataList,

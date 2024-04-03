@@ -27,11 +27,7 @@ import { cloneDeep, deviceDetection } from "@pureadmin/utils";
 import { useRouter } from "vue-router";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
-import {
-  formatHigherDeptOptions,
-  formatOptions,
-  usePublicHooks
-} from "@/views/system/hooks";
+import { formatHigherDeptOptions, formatOptions } from "@/views/system/hooks";
 import { getDataPermissionListApi } from "@/api/system/permission";
 import { ModeChoices } from "@/views/system/constants";
 import type { PlusColumn } from "plus-pro-components";
@@ -127,7 +123,6 @@ export function useDept(tableRef: Ref) {
   const rolesOptions = ref([]);
   const rulesOptions = ref([]);
   const choicesDict = ref([]);
-  const { switchStyle } = usePublicHooks();
   const columns = ref<TableColumnList>([
     {
       label: t("labels.checkColumn"),
@@ -177,29 +172,17 @@ export function useDept(tableRef: Ref) {
       label: t("dept.autoBind"),
       minWidth: 130,
       prop: "auto_bind",
-      cellRenderer: renderSwitch(
-        auth,
-        tableRef,
-        switchStyle,
-        "auto_bind",
-        scope => {
-          return `${scope.row.name} ${t("dept.autoBind")}`;
-        }
-      )
+      cellRenderer: renderSwitch(auth, tableRef, "auto_bind", scope => {
+        return `${scope.row.name} ${t("dept.autoBind")}`;
+      })
     },
     {
       label: t("labels.status"),
       prop: "is_active",
       minWidth: 90,
-      cellRenderer: renderSwitch(
-        auth,
-        tableRef,
-        switchStyle,
-        "is_active",
-        scope => {
-          return scope.row.name;
-        }
-      )
+      cellRenderer: renderSwitch(auth, tableRef, "is_active", scope => {
+        return scope.row.name;
+      })
     },
     {
       label: t("dept.roles"),
@@ -311,12 +294,12 @@ export function useDept(tableRef: Ref) {
           name: row?.name ?? "",
           code: row?.code ?? "",
           mode_type: row?.mode_type ?? ModeChoices.AND,
-          rolesOptions: rolesOptions.value ?? [],
-          rulesOptions: rulesOptions.value ?? [],
-          choicesDict: choicesDict.value["mode_type"] ?? [],
           ids: row?.roles ?? [],
           pks: row?.rules ?? []
-        }
+        },
+        rolesOptions: rolesOptions.value ?? [],
+        rulesOptions: rulesOptions.value ?? [],
+        choicesDict: choicesDict.value["mode_type"] ?? []
       },
       width: "600px",
       draggable: true,
@@ -486,6 +469,82 @@ export function useDeptForm(props) {
       fieldProps: {
         disabled: disableState(props, "description")
       }
+    }
+  ];
+  return {
+    t,
+    columns
+  };
+}
+
+export function useRoleForm(props) {
+  const { t } = useI18n();
+  const customOptions = (data: Array<any>) => {
+    const result = [];
+    data?.forEach(item => {
+      result.push({
+        label: item?.name,
+        value: item?.pk,
+        fieldSlot: () => {
+          return (
+            <>
+              <span style="float: left">{item.name}</span>
+              <span
+                style="
+                  float: right;
+                  font-size: 13px;
+                  color: var(--el-text-color-secondary);
+                "
+              >
+                {item.code ?? item.mode_display}
+              </span>
+            </>
+          );
+        }
+      });
+    });
+    return result;
+  };
+  const columns: PlusColumn[] = [
+    {
+      label: t("dept.name"),
+      prop: "name",
+      valueType: "input",
+      fieldProps: {
+        disabled: true
+      }
+    },
+    {
+      label: t("dept.code"),
+      prop: "code",
+      valueType: "input",
+      fieldProps: {
+        disabled: true
+      }
+    },
+    {
+      label: t("dept.roles"),
+      prop: "ids",
+      valueType: "select",
+      fieldProps: {
+        multiple: true
+      },
+      options: customOptions(props.rolesOptions)
+    },
+    {
+      label: t("permission.mode"),
+      prop: "mode_type",
+      valueType: "select",
+      options: formatOptions(props.choicesDict)
+    },
+    {
+      label: t("dept.rules"),
+      prop: "pks",
+      valueType: "select",
+      fieldProps: {
+        multiple: true
+      },
+      options: customOptions(props.rulesOptions)
     }
   ];
   return {
