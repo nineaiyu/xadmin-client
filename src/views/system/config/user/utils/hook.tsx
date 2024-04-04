@@ -257,9 +257,6 @@ export function useUserConfigForm(props) {
         multiple: true
       },
       renderField: value => {
-        if (value === "") {
-          return;
-        }
         return <SearchUsers modelValue={value} disabled={!props.isAdd} />;
       }
     },

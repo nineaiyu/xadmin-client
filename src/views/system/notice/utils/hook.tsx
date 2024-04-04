@@ -439,9 +439,6 @@ export function useNoticeForm(props, newFormInline) {
         disabled: disableState(props, "notice_user")
       },
       renderField: value => {
-        if (value === "") {
-          return;
-        }
         return <SearchUsers modelValue={value} />;
       }
     },
@@ -458,9 +455,6 @@ export function useNoticeForm(props, newFormInline) {
         disabled: disableState(props, "notice_dept")
       },
       renderField: value => {
-        if (value === "") {
-          return;
-        }
         return <SearchDepts modelValue={value} />;
       }
     },
@@ -477,9 +471,6 @@ export function useNoticeForm(props, newFormInline) {
         disabled: disableState(props, "notice_role")
       },
       renderField: value => {
-        if (value === "") {
-          return;
-        }
         return <SearchRoles modelValue={value} />;
       }
     },

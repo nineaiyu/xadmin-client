@@ -16,8 +16,8 @@ import { $t, transformI18n } from "@/plugins/i18n";
 import { useWatermark } from "@pureadmin/utils";
 import { Boot } from "@wangeditor/editor";
 import attachmentModule from "@wangeditor/plugin-upload-attachment";
-import plusEn from "plus-pro-components/locale/en.mjs";
-import plusZhCn from "plus-pro-components/locale/zh-cn.mjs";
+import plusEn from "plus-pro-components/es/locale/lang/en";
+import plusZhCn from "plus-pro-components/es/locale/lang/zh-cn";
 
 Boot.registerModule(attachmentModule);
 export default defineComponent({
