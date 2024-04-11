@@ -12,6 +12,7 @@ import {
   getRefreshToken,
   getToken,
   removeToken,
+  setApiLanguage,
   setToken
 } from "@/utils/auth";
 import { useUserStoreHook } from "@/store/modules/user";
@@ -152,6 +153,7 @@ class PureHttp {
   private httpInterceptorsRequest(): void {
     PureHttp.axiosInstance.interceptors.request.use(
       async (config: PureHttpRequestConfig): Promise<any> => {
+        setApiLanguage(config);
         // 开启进度条动画
         NProgress.start();
         // 优先判断post/get等方法是否传入回调，否则执行初始化设置等回调

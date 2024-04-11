@@ -11,18 +11,8 @@ defineOptions({
 
 const tableRef = ref();
 
-const {
-  t,
-  api,
-  auth,
-  columns,
-  editForm,
-  searchField,
-  defaultValue,
-  searchColumns,
-  showDialog,
-  searchEnd
-} = useNotice(tableRef);
+const { t, api, auth, columns, editForm, showDialog, searchEnd } =
+  useNotice(tableRef);
 </script>
 <template>
   <ReBaseTable
@@ -30,8 +20,7 @@ const {
     :api="api"
     :auth="auth"
     :edit-form="editForm"
-    :search-columns="searchColumns"
-    :search-field="searchField"
+    locale-name="systemNotice"
     :table-columns="columns"
     @searchEnd="searchEnd"
   >

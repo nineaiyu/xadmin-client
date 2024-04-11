@@ -2,24 +2,8 @@ import "./reset.css";
 import dayjs from "dayjs";
 import { message } from "@/utils/message";
 import { zxcvbn } from "@zxcvbn-ts/core";
-import {
-  createUserApi,
-  deleteUserApi,
-  empowerRoleApi,
-  getUserListApi,
-  manyDeleteUserApi,
-  updateUserApi,
-  updateUserPasswordApi,
-  uploadUserAvatarApi
-} from "@/api/system/user";
-import {
-  ElForm,
-  ElFormItem,
-  ElInput,
-  ElMessageBox,
-  ElProgress
-} from "element-plus";
-import type { PaginationProps } from "@pureadmin/table";
+import { userApi } from "@/api/system/user";
+import { ElForm, ElFormItem, ElInput, ElProgress } from "element-plus";
 import {
   computed,
   h,
@@ -27,131 +11,133 @@ import {
   reactive,
   ref,
   type Ref,
-  toRaw,
+  shallowRef,
   watch
 } from "vue";
 import { addDialog } from "@/components/ReDialog";
 import croppingUpload from "@/components/RePictureUpload/index.vue";
 import roleForm from "../form/role.vue";
-import editForm from "../form/index.vue";
+import Form from "../form/index.vue";
 import type { FormItemProps, RoleFormItemProps } from "./types";
-import { getRoleListApi } from "@/api/system/role";
+import { roleApi } from "@/api/system/role";
 import {
   cloneDeep,
-  delay,
   deviceDetection,
-  getKeyList,
   hideTextAtIndex,
-  isAllEmpty,
-  isEmpty,
-  isString
+  isAllEmpty
 } from "@pureadmin/utils";
-import { useRoute, useRouter } from "vue-router";
+import { useRouter } from "vue-router";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { handleTree } from "@/utils/tree";
-import { getDeptListApi } from "@/api/system/dept";
+import { deptApi } from "@/api/system/dept";
+import { dataPermissionApi } from "@/api/system/permission";
+import { ModeChoices } from "@/views/system/constants";
+import { REGEXP_PWD } from "@/views/login/utils/rule";
+import Info from "@iconify-icons/ri/question-line";
+import { renderOption, renderSwitch } from "@/views/system/render";
 import {
-  formatColumns,
+  formatFormColumns,
   formatHigherDeptOptions,
   formatOptions,
   picturePng
 } from "@/views/system/hooks";
-import { getDataPermissionListApi } from "@/api/system/permission";
-import { ModeChoices } from "@/views/system/constants";
-import { REGEXP_PWD } from "@/views/login/utils/rule";
-import Info from "@iconify-icons/ri/question-line";
 import type { PlusColumn } from "plus-pro-components";
 
 export function useUser(tableRef: Ref) {
   const { t } = useI18n();
-  const sortOptions = [
-    {
-      label: `${t("sorts.registrationDate")} ${t("labels.descending")}`,
-      key: "-date_joined"
-    },
-    {
-      label: `${t("sorts.registrationDate")} ${t("labels.ascending")}`,
-      key: "date_joined"
-    },
-    {
-      label: `${t("sorts.loginDate")} ${t("labels.descending")}`,
-      key: "-last_login"
-    },
-    {
-      label: `${t("sorts.loginDate")} ${t("labels.ascending")}`,
-      key: "last_login"
-    }
-  ];
-  const form = ref({
-    pk: "",
-    dept: "",
-    mobile: "",
-    username: "",
-    mode_type: "",
-    is_active: "",
-    description: "",
-    ordering: sortOptions[0].key,
-    page: 1,
-    size: 10
+
+  const api = reactive({
+    list: userApi.list,
+    create: userApi.create,
+    delete: userApi.delete,
+    update: userApi.update,
+    fields: userApi.fields,
+    reset: userApi.reset,
+    empower: userApi.empower,
+    choices: userApi.choices,
+    upload: userApi.upload,
+    batchDelete: userApi.batchDelete
   });
 
-  const formRef = ref();
+  const auth = reactive({
+    list: hasAuth("list:systemUser"),
+    create: hasAuth("create:systemUser"),
+    delete: hasAuth("delete:systemUser"),
+    update: hasAuth("update:systemUser"),
+    fields: hasAuth("fields:systemUser"),
+    reset: hasAuth("reset:systemUser"),
+    empower: hasAuth("empower:systemUser"),
+    upload: hasAuth("upload:systemUser"),
+    choices: hasAuth("choices:systemUser"),
+    batchDelete: hasAuth("batchDelete:systemUser")
+  });
+
+  const editForm = shallowRef({
+    title: t("systemUser.user"),
+    form: Form,
+    row: {
+      is_active: row => {
+        return row?.is_active ?? true;
+      },
+      gender: row => {
+        return row?.gender ?? 0;
+      },
+      roles: row => {
+        return row?.roles ?? [];
+      }
+    },
+    props: {
+      treeData: () => {
+        return formatHigherDeptOptions(cloneDeep(treeData.value));
+      },
+      genderChoices: () => {
+        return choicesDict.value["gender"];
+      }
+    }
+  });
+
   const cropRef = ref();
   const router = useRouter();
-  const route = useRoute();
-  const getParameter = isEmpty(route.params) ? route.query : route.params;
-  const dataList = ref([]);
-  const loading = ref(true);
-  const choicesDict = ref([]);
-  const modeChoicesDict = ref([]);
+  const choicesDict = ref({});
   const treeData = ref([]);
   const treeLoading = ref(true);
+
   const rolesOptions = ref([]);
   const rulesOptions = ref([]);
-  const switchLoadMap = ref({});
+
   const selectedNum = ref(0);
+  const manySelectData = ref([]);
   const avatarInfo = ref();
   const ruleFormRef = ref();
-  const showColumns = ref([]);
-  const pagination = reactive<PaginationProps>({
-    total: 0,
-    pageSize: 10,
-    currentPage: 1,
-    pageSizes: [5, 10, 20, 50, 100],
-    background: true
-  });
+
   const columns = ref<TableColumnList>([
     {
-      label: t("labels.checkColumn"),
       type: "selection",
       fixed: "left",
       reserveSelection: true
     },
     {
-      label: t("labels.id"),
       prop: "pk",
-      minWidth: 130
+      width: 50
     },
     {
-      label: t("user.avatar"),
       prop: "avatar",
-      minWidth: 160,
+      minWidth: 90,
       cellRenderer: ({ row }) => (
         <el-image
-          class="w-[36px] h-[36px] align-middle"
+          class={["w-[36px]", "h-[36px]", "align-middle"]}
           fit="cover"
           src={row.avatar}
-          loading={"lazy"}
-          preview-teleported={true}
+          loading="lazy"
+          preview-teleported
           preview-src-list={Array.of(row.avatar)}
         />
       )
     },
     {
-      label: t("user.username"),
       prop: "username",
-      minWidth: 130,
+      minWidth: 120,
       cellRenderer: ({ row }) => (
         <span v-show={row?.username} v-copy={row?.username}>
           {row?.username}
@@ -159,10 +145,10 @@ export function useUser(tableRef: Ref) {
       ),
       headerRenderer: () => (
         <span class="flex-c">
-          {t("user.username")}
+          {t("systemUser.username")}
           <iconifyIconOffline
             icon={Info}
-            class="ml-1 cursor-help"
+            class={["ml-1", "cursor-help"]}
             v-tippy={{
               content: t("labels.dClickCopy")
             }}
@@ -171,7 +157,6 @@ export function useUser(tableRef: Ref) {
       )
     },
     {
-      label: t("user.nickname"),
       prop: "nickname",
       minWidth: 130,
       cellRenderer: ({ row }) => (
@@ -181,7 +166,6 @@ export function useUser(tableRef: Ref) {
       )
     },
     {
-      label: t("user.gender"),
       prop: "gender",
       minWidth: 90,
       cellRenderer: ({ row, props }) => (
@@ -196,29 +180,16 @@ export function useUser(tableRef: Ref) {
     },
 
     {
-      label: t("labels.status"),
       prop: "is_active",
       minWidth: 90,
-      cellRenderer: scope => (
-        <el-switch
-          size={scope.props.size === "small" ? "small" : "default"}
-          loading={switchLoadMap.value[scope.index]?.loading}
-          v-model={scope.row.is_active}
-          active-value={true}
-          inactive-value={false}
-          active-text={t("labels.active")}
-          inactive-text={t("labels.inactive")}
-          disabled={!hasAuth("update:systemUser")}
-          inline-prompt
-          onChange={() => onChange(scope as any)}
-        />
-      )
+      cellRenderer: renderSwitch(auth.update, tableRef, "is_active", scope => {
+        return scope.row.username;
+      })
     },
 
     {
-      label: t("user.dept"),
       prop: "dept_info",
-      width: 100,
+      width: 140,
       cellRenderer: ({ row }) => (
         <span v-show={row?.dept_info?.name} v-copy={row?.dept_info?.name}>
           {row?.dept_info?.name}
@@ -226,89 +197,38 @@ export function useUser(tableRef: Ref) {
       )
     },
     {
-      label: t("user.mobile"),
       prop: "mobile",
-      minWidth: 90,
+      minWidth: 120,
       formatter: ({ mobile }) => hideTextAtIndex(mobile, { start: 3, end: 6 })
     },
     {
-      label: t("user.registrationDate"),
-      minWidth: 90,
+      minWidth: 160,
+      prop: "last_login",
+      formatter: ({ last_login }) =>
+        dayjs(last_login).format("YYYY-MM-DD HH:mm:ss")
+    },
+    {
+      minWidth: 160,
       prop: "date_joined",
       formatter: ({ date_joined }) =>
         dayjs(date_joined).format("YYYY-MM-DD HH:mm:ss")
     },
     {
-      label: t("user.roles"),
       prop: "roles_info",
       width: 160,
       slot: "roles"
     },
     {
-      label: t("user.rules"),
       prop: "rules_info",
       width: 160,
       slot: "rules"
     },
     {
-      label: t("labels.operations"),
       fixed: "right",
       width: 180,
       slot: "operation"
     }
   ]);
-
-  const searchColumns: PlusColumn[] = computed(() => {
-    return [
-      {
-        label: t("labels.id"),
-        prop: "pk",
-        valueType: "input"
-      },
-      {
-        label: t("user.username"),
-        prop: "username",
-        valueType: "input"
-      },
-      {
-        label: t("user.mobile"),
-        prop: "mobile",
-        valueType: "input"
-      },
-      {
-        label: t("labels.status"),
-        prop: "is_active",
-        valueType: "select",
-        options: [
-          {
-            label: t("labels.enable"),
-            value: true
-          },
-          {
-            label: t("labels.disable"),
-            value: false
-          }
-        ]
-      },
-      {
-        label: t("permission.mode"),
-        prop: "mode_type",
-        valueType: "select",
-        options: formatOptions(modeChoicesDict.value)
-      },
-      {
-        label: t("labels.description"),
-        prop: "description",
-        valueType: "input"
-      },
-      {
-        label: t("labels.sort"),
-        prop: "ordering",
-        valueType: "select",
-        options: formatOptions(sortOptions)
-      }
-    ];
-  });
 
   const buttonClass = computed(() => {
     return [
@@ -333,223 +253,17 @@ export function useUser(tableRef: Ref) {
   // 当前密码强度（0-4）
   const curScore = ref();
 
-  function onChange({ row, index }) {
-    const action =
-      row.is_active === false ? t("labels.disable") : t("labels.enable");
-    ElMessageBox.confirm(
-      `${t("buttons.operateConfirm", {
-        action: `<strong>${action}</strong>`,
-        message: `<strong style="color:var(--el-color-primary)">${row.username}</strong>`
-      })}`,
-      {
-        confirmButtonText: t("buttons.sure"),
-        cancelButtonText: t("buttons.cancel"),
-        type: "warning",
-        dangerouslyUseHTMLString: true,
-        draggable: true
-      }
-    )
-      .then(() => {
-        switchLoadMap.value[index] = Object.assign(
-          {},
-          switchLoadMap.value[index],
-          {
-            loading: true
-          }
-        );
-        updateUserApi(row.pk, row).then(res => {
-          if (res.code === 1000) {
-            switchLoadMap.value[index] = Object.assign(
-              {},
-              switchLoadMap.value[index],
-              {
-                loading: false
-              }
-            );
-            message(t("results.success"), { type: "success" });
-          } else {
-            message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-          }
-        });
-      })
-      .catch(() => {
-        row.is_active === false
-          ? (row.is_active = true)
-          : (row.is_active = false);
-      });
-  }
-
-  function handleDelete(row) {
-    deleteUserApi(row.pk).then(res => {
-      if (res.code === 1000) {
-        message(t("results.success"), { type: "success" });
-        onSearch();
-      } else {
-        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-      }
-    });
-  }
-
-  function handleSizeChange(val: number) {
-    form.value.page = 1;
-    form.value.size = val;
-    onSearch();
-  }
-
-  function handleCurrentChange(val: number) {
-    form.value.page = val;
-    onSearch();
-  }
-
-  function handleSelectionChange(val) {
-    selectedNum.value = val.length;
-  }
-
-  function onSelectionCancel() {
-    selectedNum.value = 0;
-    // 用于多选表格，清空用户的选择
-    tableRef.value.getTableRef().clearSelection();
-  }
-
-  function handleManyDelete() {
-    if (selectedNum.value === 0) {
-      message(t("results.noSelectedData"), { type: "error" });
-      return;
-    }
-    const manySelectData = tableRef.value.getTableRef().getSelectionRows();
-    manyDeleteUserApi({
-      pks: JSON.stringify(getKeyList(manySelectData, "pk"))
-    }).then(res => {
-      if (res.code === 1000) {
-        message(t("results.batchDelete", { count: selectedNum.value }), {
-          type: "success"
-        });
-        onSelectionCancel();
-        onSearch();
-      } else {
-        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-      }
-      tableRef.value.getTableRef().clearSelection();
-    });
-  }
-
-  function onSearch(init = false) {
-    if (init) {
-      pagination.currentPage = form.value.page = 1;
-      pagination.pageSize = form.value.size = 10;
-    }
-    loading.value = true;
-    getUserListApi(toRaw(form.value)).then(res => {
-      if (res.code === 1000 && res.data) {
-        formatColumns(res.data?.results, columns, showColumns);
-        dataList.value = res.data.results;
-        pagination.total = res.data.total;
-        choicesDict.value = res.choices_dict;
-        modeChoicesDict.value = res.mode_choices;
-      } else {
-        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-      }
-      delay(500).then(() => {
-        loading.value = false;
-      });
-    });
-  }
-
   function goNotice() {
-    const manySelectData = tableRef.value.getTableRef().getSelectionRows();
     router.push({
       name: "SystemNotice",
-      query: { notice_user: JSON.stringify(getKeyList(manySelectData, "pk")) }
+      query: { notice_user: JSON.stringify(manySelectData.value) }
     });
   }
-
-  function openDialog(isAdd = true, row?: FormItemProps) {
-    let title = t("buttons.edit");
-    if (isAdd) {
-      title = t("buttons.add");
-    }
-    addDialog({
-      title: `${title} ${t("user.user")}`,
-      props: {
-        formInline: {
-          pk: row?.pk ?? "",
-          username: row?.username ?? "",
-          nickname: row?.nickname ?? "",
-          avatar: row?.avatar ?? "",
-          dept: row?.dept ?? "",
-          mobile: row?.mobile ?? "",
-          email: row?.email ?? "",
-          gender: row?.gender ?? 0,
-          roles: row?.roles ?? [],
-          password: row?.password ?? "",
-          is_active: row?.is_active ?? true,
-          description: row?.description ?? ""
-        },
-        treeData: formatHigherDeptOptions(cloneDeep(treeData.value)),
-        choicesDict: choicesDict.value,
-        showColumns: showColumns.value,
-        isAdd: isAdd
-      },
-      width: "46%",
-      draggable: true,
-      fullscreen: deviceDetection(),
-      fullscreenIcon: true,
-      closeOnClickModal: false,
-      contentRenderer: () => h(editForm, { ref: formRef }),
-      beforeSure: (done, { options }) => {
-        const FormRef = formRef.value.getRef();
-        const curData = options.props.formInline as FormItemProps;
-
-        function chores(detail) {
-          message(detail, { type: "success" });
-          done(); // 关闭弹框
-          onSearch(); // 刷新表格数据
-        }
-
-        FormRef.validate(valid => {
-          if (valid) {
-            // 表单规则校验通过
-            if (isAdd) {
-              createUserApi(curData).then(res => {
-                if (res.code === 1000) {
-                  chores(res.detail);
-                } else {
-                  message(`${t("results.failed")}，${res.detail}`, {
-                    type: "error"
-                  });
-                }
-              });
-            } else {
-              updateUserApi(curData.pk, curData).then(res => {
-                if (res.code === 1000) {
-                  chores(res.detail);
-                } else {
-                  message(`${t("results.failed")}，${res.detail}`, {
-                    type: "error"
-                  });
-                }
-              });
-            }
-          }
-        });
-      }
-    });
-  }
-
-  const exportExcel = () => {
-    if (selectedNum.value === 0) {
-      message(t("results.noSelectedData"), { type: "error" });
-      return;
-    }
-    loading.value = true;
-    const manySelectData = tableRef.value.getTableRef().getSelectionRows();
-    console.log(manySelectData);
-  };
 
   /** 上传头像 */
-  function handleUpload(row) {
+  function handleUpload(row: FormItemProps) {
     addDialog({
-      title: t("user.updateAvatar", { user: row.username }),
+      title: t("systemUser.updateAvatar", { user: row.username }),
       width: "40%",
       draggable: true,
       fullscreen: deviceDetection(),
@@ -570,10 +284,10 @@ export function useUser(tableRef: Ref) {
         });
         const data = new FormData();
         data.append("file", avatarFile);
-        uploadUserAvatarApi(row.pk, data).then(res => {
+        api.upload(row.pk, data).then(res => {
           if (res.code === 1000) {
             message(t("results.success"), { type: "success" });
-            onSearch();
+            tableRef.value.onSearch();
             done();
           } else {
             message(`${t("results.failed")}，${res.detail}`, { type: "error" });
@@ -586,25 +300,25 @@ export function useUser(tableRef: Ref) {
   }
 
   function onTreeSelect({ pk, selected }) {
-    form.value.dept = selected ? pk : "";
-    onSearch();
+    tableRef.value.searchFields.dept = selected ? pk : "";
+    tableRef.value.onSearch();
   }
 
   /** 分配角色 */
-  function handleRole(row) {
+  function handleRole(row: FormItemProps) {
     addDialog({
-      title: t("user.assignRole", { user: row.username }),
+      title: t("systemUser.assignRole", { user: row.username }),
       props: {
         formInline: {
           username: row?.username ?? "",
           nickname: row?.nickname ?? "",
           mode_type: row?.mode_type ?? ModeChoices.AND,
-          rolesOptions: rolesOptions.value ?? [],
-          rulesOptions: rulesOptions.value ?? [],
-          choicesDict: modeChoicesDict.value ?? [],
-          ids: row?.roles ?? [],
-          pks: row?.rules ?? []
-        }
+          roles: row?.roles ?? [],
+          rules: row?.rules ?? []
+        },
+        rolesOptions: rolesOptions.value ?? [],
+        rulesOptions: rulesOptions.value ?? [],
+        modeChoices: choicesDict.value["mode_type"] ?? []
       },
       width: "600px",
       draggable: true,
@@ -614,29 +328,31 @@ export function useUser(tableRef: Ref) {
       contentRenderer: () => h(roleForm),
       beforeSure: (done, { options }) => {
         const curData = options.props.formInline as RoleFormItemProps;
-        empowerRoleApi(row.pk, {
-          roles: curData.ids,
-          rules: curData.pks,
-          mode_type: curData.mode_type
-        }).then(res => {
-          if (res.code === 1000) {
-            message(t("results.success"), { type: "success" });
-            onSearch();
-          } else {
-            message(`${t("results.failed")}，${res.detail}`, {
-              type: "error"
-            });
-          }
-          done(); // 关闭弹框
-        });
+        api
+          .empower(row.pk, {
+            roles: curData.roles,
+            rules: curData.rules,
+            mode_type: curData.mode_type
+          })
+          .then(res => {
+            if (res.code === 1000) {
+              message(t("results.success"), { type: "success" });
+              tableRef.value.onSearch();
+            } else {
+              message(`${t("results.failed")}，${res.detail}`, {
+                type: "error"
+              });
+            }
+            done(); // 关闭弹框
+          });
       }
     });
   }
 
   /** 重置密码 */
-  function handleReset(row) {
+  function handleReset(row: FormItemProps) {
     addDialog({
-      title: t("user.resetPasswd", { user: row.username }),
+      title: t("systemUser.resetPasswd", { user: row.username }),
       width: "30%",
       draggable: true,
       fullscreen: deviceDetection(),
@@ -651,7 +367,7 @@ export function useUser(tableRef: Ref) {
                   required: true,
                   validator: (rule, value, callback) => {
                     if (value === "") {
-                      callback(new Error(t("user.verifyPassword")));
+                      callback(new Error(t("systemUser.password")));
                     } else if (!REGEXP_PWD.test(value)) {
                       callback(new Error(t("login.passwordRuleReg")));
                     } else {
@@ -667,7 +383,7 @@ export function useUser(tableRef: Ref) {
                 show-password
                 type="password"
                 v-model={pwdForm.newPwd}
-                placeholder={t("user.verifyPassword")}
+                placeholder={t("systemUser.password")}
               />
             </ElFormItem>
           </ElForm>
@@ -701,18 +417,16 @@ export function useUser(tableRef: Ref) {
       beforeSure: done => {
         ruleFormRef.value.validate(valid => {
           if (valid) {
-            updateUserPasswordApi(row.pk, { password: pwdForm.newPwd }).then(
-              res => {
-                if (res.code === 1000) {
-                  message(t("results.success"), { type: "success" });
-                } else {
-                  message(`${t("results.failed")}，${res.detail}`, {
-                    type: "error"
-                  });
-                }
-                done(); // 关闭弹框
+            api.reset(row.pk, { password: pwdForm.newPwd }).then(res => {
+              if (res.code === 1000) {
+                message(t("results.success"), { type: "success" });
+              } else {
+                message(`${t("results.failed")}，${res.detail}`, {
+                  type: "error"
+                });
               }
-            );
+              done(); // 关闭弹框
+            });
           }
         });
       }
@@ -720,38 +434,35 @@ export function useUser(tableRef: Ref) {
   }
 
   onMounted(() => {
-    if (getParameter) {
-      const parameter = cloneDeep(getParameter);
-      Object.keys(parameter).forEach(param => {
-        if (!isString(parameter[param])) {
-          parameter[param] = parameter[param].toString();
-        }
-      });
-      form.value.pk = parameter.pk;
-      form.value.dept = parameter.dept;
-    }
-    onSearch();
-    // 角色列表
-    if (hasGlobalAuth("list:systemRole")) {
-      getRoleListApi({ page: 1, size: 1000 }).then(res => {
-        if (res.code === 1000 && res.data) {
-          rolesOptions.value = res.data.results;
-        }
-      });
-    }
-    if (hasGlobalAuth("list:systemDataPermission")) {
-      getDataPermissionListApi({
-        page: 1,
-        size: 1000
-      }).then(res => {
-        if (res.code === 1000 && res.data) {
-          rulesOptions.value = res.data.results;
-        }
-      });
+    api.choices().then(res => {
+      if (res.code === 1000) {
+        choicesDict.value = res.choices_dict;
+      }
+    });
+    if (auth.empower) {
+      if (hasGlobalAuth("list:systemRole")) {
+        roleApi.list({ page: 1, size: 1000 }).then(res => {
+          if (res.code === 1000 && res.data) {
+            rolesOptions.value = res.data.results;
+          }
+        });
+      }
+      if (hasGlobalAuth("list:systemDataPermission")) {
+        dataPermissionApi
+          .list({
+            page: 1,
+            size: 1000
+          })
+          .then(res => {
+            if (res.code === 1000 && res.data) {
+              rulesOptions.value = res.data.results;
+            }
+          });
+      }
     }
     // 部门列表
     if (hasGlobalAuth("list:systemDept")) {
-      getDeptListApi({ page: 1, size: 1000 }).then(res => {
+      deptApi.list({ page: 1, size: 1000 }).then(res => {
         if (res.code === 1000 && res.data) {
           treeData.value = handleTree(res.data.results);
         }
@@ -766,32 +477,163 @@ export function useUser(tableRef: Ref) {
       (curScore.value = isAllEmpty(newPwd) ? -1 : zxcvbn(newPwd).score)
   );
 
+  const selectionChange = func => {
+    manySelectData.value = func();
+    selectedNum.value = manySelectData.value.length ?? 0;
+  };
+
   return {
     t,
-    form,
-    loading,
+    api,
+    auth,
     columns,
-    dataList,
     treeData,
-    pagination,
+    editForm,
     buttonClass,
     treeLoading,
     selectedNum,
-    searchColumns,
-    onSearch,
     goNotice,
     handleRole,
-    openDialog,
-    exportExcel,
-    handleDelete,
+    handleReset,
     onTreeSelect,
     handleUpload,
-    handleReset,
-    deviceDetection,
-    handleManyDelete,
-    handleSizeChange,
-    onSelectionCancel,
-    handleCurrentChange,
-    handleSelectionChange
+    selectionChange,
+    deviceDetection
+  };
+}
+
+export function useSystemUserForm(props) {
+  const { t, te } = useI18n();
+  const columns: PlusColumn[] = [
+    {
+      prop: "username",
+      valueType: "input",
+      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
+    },
+    {
+      prop: "nickname",
+      valueType: "input",
+      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
+    },
+
+    {
+      prop: "mobile",
+      valueType: "input",
+      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
+    },
+    {
+      prop: "email",
+      valueType: "input",
+      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
+    },
+    {
+      prop: "gender",
+      valueType: "select",
+      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 },
+      options: formatOptions(props.genderChoices)
+    },
+    {
+      prop: "password",
+      valueType: "input",
+      hideInForm: !props.isAdd,
+      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
+    },
+    {
+      prop: "is_active",
+      valueType: "radio",
+      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 },
+      renderField: renderOption()
+    },
+    {
+      prop: "dept",
+      valueType: "cascader",
+      fieldProps: {
+        props: {
+          value: "pk",
+          label: "name",
+          emitPath: false,
+          checkStrictly: true
+        }
+      },
+      options: props.treeData
+    },
+    {
+      prop: "description",
+      valueType: "textarea"
+    }
+  ];
+  formatFormColumns(props, columns, t, te, "systemUser");
+  return {
+    t,
+    columns
+  };
+}
+
+export function useSystemUserRoleForm(props) {
+  const { t, te } = useI18n();
+  const customOptions = (data: Array<any>) => {
+    const result = [];
+    data?.forEach(item => {
+      result.push({
+        label: item?.name,
+        value: item?.pk,
+        fieldSlot: () => {
+          return (
+            <>
+              <span style="float: left">{item.name}</span>
+              <span
+                style="
+                  float: right;
+                  font-size: 13px;
+                  color: var(--el-text-color-secondary);
+                "
+              >
+                {item.code ?? item.mode_display}
+              </span>
+            </>
+          );
+        }
+      });
+    });
+    return result;
+  };
+  const columns: PlusColumn[] = [
+    {
+      prop: "username",
+      valueType: "input",
+      fieldProps: { disabled: true }
+    },
+    {
+      prop: "nickname",
+      valueType: "input",
+      fieldProps: { disabled: true }
+    },
+    {
+      prop: "roles",
+      valueType: "select",
+      fieldProps: {
+        multiple: true
+      },
+      options: customOptions(props.rolesOptions)
+    },
+    {
+      prop: "mode_type",
+      valueType: "select",
+      options: formatOptions(props.modeChoices)
+    },
+    {
+      prop: "rules",
+      valueType: "select",
+      fieldProps: {
+        multiple: true
+      },
+      options: customOptions(props.rulesOptions)
+    }
+  ];
+  formatFormColumns(props, columns, t, te, "systemUser");
+
+  return {
+    t,
+    columns
   };
 }

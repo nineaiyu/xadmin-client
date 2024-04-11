@@ -1,3 +1,17 @@
+commonLabels:
+  pk: ID
+  ordering: Sort
+  rank: Rank
+  status: Status
+  is_active: Status
+  description: Description
+  selection: Selection
+  operation: Operation
+  created_time: CreatedTime
+  updated_time: UpdatedTime
+  descending: Descending
+  ascending: Ascending
+
 tableBar:
   loose: Loose
   default: Default
@@ -209,60 +223,67 @@ userinfo:
   verifyOldPassword: Please enter old password
   verifyNewPassword: Please enter new password
   surePassword: Sure Password
-
-user:
-  user: User
-  avatar: Avatar
   username: Username
   nickname: Nickname
-  password: Password
+  mobile: Mobile
   email: Email
   gender: Gender
-  male: Male
-  female: Female
-  unknown: Unknown
+  dept: Department
   roles: Roles
-  registrationDate: Registration date
+  date_joined: Registration Date
+  last_login: Last Login Date
+  avatar: Avatar
+
+systemUser:
+  user: User
+  email: Email
+  username: Username
   mobile: Mobile
-  exportExcel: Export Excel
+  mode_type: Mode Type
+  dept: Department ID
+  avatar: Avatar
+  nickname: Nickname
+  gender: Gender
+  gender_display: Gender
+  dept_info: Department
+  date_joined: Registration Date
+  last_login: Last Login Date
+  roles_info: Roles
+  rules_info: Data Permissions
   batchSendNotice: Batch Send Notice
   editAvatar: Edit Avatar
   resetPassword: Reset Password
   assignRoles: Assign Roles Permissions
-  verifyUserId: Please enter user id
-  verifyUsername: Please enter username
-  verifyPassword: Please enter password
-  verifyNickname: Please enter nickname
-  verifyMobile: Please enter mobile
-  verifyEmail: Please enter email
-  verifyGender: Please enter gender
   resetPasswd: Reset the password of user { user }
   assignRole: Assign multiple roles and permissions to user { user }
   updateAvatar: Upload and update avatar to { user }
-  excelSheet: Registered user report
-  excelName: Registered user data
-  deptId: Department ID
-  userId: User Id
-  userInfo: User Info
-  dept: Department
-  rules: Permissions
+  password: Password
+  roles: Roles
+  rules: Data Permissions
 
-dept:
-  name: Name
+systemDept:
   dept: Department
+  name: Name
   code: Code
-  roles: role
-  rules: Permissions
+  auto_bind: Auto Bind
+  mode_type: Mode Type
+  user_count: User Count
+  mode_display: Mode Display
+  roles_info: Roles
+  rules_info: Data Permissions
   assignRoles: Assign Roles Permissions
   assignRole: Assign multiple roles and permissions to department { dept }
-  userCount: User Count
-  autoBind: Auto Bind
   autoBindDesc: If the value of the registration parameter channel is the same as the department code, the user will automatically bind to the department
+  parent: Department
+  roles: Roles
+  rules: Data Permissions
 
-permission:
+systemPermission:
   permission: Permissions
   name: Name
-  mode: Mode
+  mode_type: Mode Type
+  mode_display: Mode Display
+  menu: Menu
   addName: Name
   addValue: Value
   addType: Mode
@@ -272,14 +293,18 @@ permission:
   table: table
   field: field
   rulesFailed: The rules does not exist or is incorrect. Please enter the rules
+  notice_user: Users
+  notice_dept: Departments
+  notice_role: Roles
+  notice_menu: Menus
 
-role:
+systemRole:
   role: Role
   name: RoleName
   code: RoleCode
-  verifyRoleName: Please enter role name
-  verifyRoleCode: Please enter role code
   permissions: Permissions
+  menuTitle: Please enter menu title
+  menu: Menus
 
 menu:
   menus: Menus
@@ -330,77 +355,98 @@ menu:
   exampleAssociationModel: Model association is used with field permission control
 
 logsOperation:
+  creator_id: Creator Id
   module: Module
-  address: Ip Address
+  ipaddress: Ip Address
   system: Operating System
   browser: Browser
-  statusCode: Status Code
-  parameters: Parameters
-  response: Response
-  requestPath: Request Path
-  verifyAddress: Please enter ip address
-  verifySystem: Please enter operating system
-  verifyBrowser: Please enter browser
-  verifyRequestPath: Please enter request path
+  path: Request Path
+  creator: Creator
+  body: Response Body
+  response_code: Status Code
+  response_result: Response Result
 
 logsLogin:
-  address: Ip Address
+  creator_id: Creator ID
+  login_type: Login Type
+  ipaddress: Ip Address
   system: Operating System
   browser: Browser
   agent: User-Agent
-  loginDisplay: Login Type
-  verifyAddress: Please enter ip address
-  verifySystem: Please enter operating system
-  verifyBrowser: Please enter browser
-  verifyAgent: Please enter User-Agent
+  creator: Creator
+  login_display: Login Type
 
 configSystem:
   configSystem: System Config
   key: Config Name
   value: Config Value
-  cacheValue: Config Cache Value
+  inherit: User Inherit
+  access: API Access
+  cache_value: Config Cache Value
+  accessTip: Allow API interfaces to access this configuration
+  inheritTip: Allows users to inherit this configuration
   invalidCache: Invalid Cache
   confirmInvalid: Are you sure to invalid this cache?
-  access: API Access
-  accessTip: Allow API interfaces to access this configuration
-  inherit: User Inherit
-  inheritTip: Allows users to inherit this configuration
 
 configUser:
-  configSystem: User Config
+  configUser: User Config
   key: Config Name
   value: Config Value
-  cacheValue: Config Cache Value
+  username: Username
+  access: API Access
+  owner_id: User ID
+  config_user: User ID
+  owner_info: UserInfo
+  cache_value: Config Cache Value
   invalidCache: Invalid Cache
   confirmInvalid: Are you sure to invalid this cache?
 
 modelFieldManagement:
   name: Model/field name
   label: Model/field label
+  field_type: Field Type
   parent: Parent
+  field_type_display: Field Type
   makeData: Make Field Data
-  fieldType: Field Type
 
-notice:
+systemNotice:
   notice: Notice
-  readDate: Read Date
-  title: Title
-  type: Type
+  notice_type: Notice Type
+  notice_type_display: Notice Type
   level: Level
   publish: Publish
-  content: Content
-  haveRead: Have Read
-  showSystemNotice: Check the system announcement
-  verifyTitle: Please enter title
-  verifyContent: Please enter content
-  readManage: Read message announcement management
-  messageManage: Message announcement management
-  receiveRead: Receive/Read
+  message: Message
+  title: Title
+  read_user_count: Receive/Read
+  notice_user: Users
+  notice_dept: Departments
+  notice_role: Roles
   allRead: AllRead
-  verifyUserIds: The userId can only be a number
-  verifyInputUserIds: Enter the user ID. Multiple users need to be separated by press enter
+  showSystemNotice: Check the system announcement
+
+noticeRead:
+  owner_id: User ID
+  notice_id: Notice ID
+  message: Message
+  title: Title
+  username: Username
+  level: Level
+  notice_type: Notice Type
+  unread: Have Read
+  notice_info: Title
+  readDate: Read Date
+  showSystemNotice: Check the system announcement
+
+userNotice:
+  message: Message
+  title: Title
+  unread: Have Read
+  level: Level
+  notice_type: Notice Type
+  notice_type_display: Notice Type
   batchRead: BatchRead
   unreadMessage: Unread Message
+  allRead: AllRead
 
 status:
   hsLoad: Loading...

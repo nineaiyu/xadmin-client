@@ -1,62 +1,28 @@
 import dayjs from "dayjs";
 import Form from "../form.vue";
-import {
-  actionInvalidCacheApi,
-  createUserConfigApi,
-  deleteUserConfigApi,
-  getUserConfigListApi,
-  manyDeleteUserConfigApi,
-  updateUserConfigApi
-} from "@/api/system/config/user";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { message } from "@/utils/message";
-import { cloneDeep } from "@pureadmin/utils";
 import type { PlusColumn } from "plus-pro-components";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import SearchUsers from "@/views/system/base/searchUsers.vue";
-import { computed, reactive, ref, type Ref, shallowRef } from "vue";
-import { formatOptions, usePublicHooks } from "@/views/system/hooks";
-import {
-  disableState,
-  renderOption,
-  renderSwitch,
-  selectOptions
-} from "@/views/system/render";
+import { reactive, ref, type Ref, shallowRef } from "vue";
+import { formatFormColumns, usePublicHooks } from "@/views/system/hooks";
+import { userConfigApi } from "@/api/system/config/user";
+
+import { renderOption, renderSwitch } from "@/views/system/render";
 
 export function useUserConfig(tableRef: Ref) {
   const { t } = useI18n();
-  const sortOptions = [
-    {
-      label: `${t("sorts.createdDate")} ${t("labels.descending")}`,
-      key: "-created_time"
-    },
-    {
-      label: `${t("sorts.createdDate")} ${t("labels.ascending")}`,
-      key: "created_time"
-    }
-  ];
-  const searchField = ref({
-    key: "",
-    value: "",
-    is_active: "",
-    username: "",
-    owner_id: "",
-    description: "",
-    ordering: sortOptions[0].key,
-    page: 1,
-    size: 10
-  });
-
-  const defaultValue = cloneDeep(searchField.value);
 
   const api = reactive({
-    list: getUserConfigListApi,
-    create: createUserConfigApi,
-    delete: deleteUserConfigApi,
-    update: updateUserConfigApi,
-    invalid: actionInvalidCacheApi,
-    batchDelete: manyDeleteUserConfigApi
+    list: userConfigApi.list,
+    create: userConfigApi.create,
+    delete: userConfigApi.delete,
+    update: userConfigApi.patch,
+    invalid: userConfigApi.invalid,
+    fields: userConfigApi.fields,
+    batchDelete: userConfigApi.batchDelete
   });
 
   const auth = reactive({
@@ -65,7 +31,8 @@ export function useUserConfig(tableRef: Ref) {
     delete: hasAuth("delete:systemUserConfig"),
     update: hasAuth("update:systemUserConfig"),
     invalid: hasAuth("invalid:systemUserConfig"),
-    batchDelete: hasAuth("manyDelete:systemUserConfig")
+    fields: hasAuth("fields:systemUserConfig"),
+    batchDelete: hasAuth("batchDelete:systemUserConfig")
   });
 
   const editForm = shallowRef({
@@ -89,18 +56,15 @@ export function useUserConfig(tableRef: Ref) {
 
   const columns = ref<TableColumnList>([
     {
-      label: t("labels.checkColumn"),
       type: "selection",
       fixed: "left",
       reserveSelection: true
     },
     {
-      label: t("labels.id"),
       prop: "pk",
       minWidth: 100
     },
     {
-      label: t("user.userInfo"),
       prop: "owner_info",
       minWidth: 100,
       cellRenderer: ({ row }) => (
@@ -110,19 +74,16 @@ export function useUserConfig(tableRef: Ref) {
       )
     },
     {
-      label: t("configUser.key"),
       prop: "key",
       minWidth: 120,
       cellRenderer: ({ row }) => <span v-copy={row.key}>{row.key}</span>
     },
     {
-      label: t("configUser.value"),
       prop: "value",
       minWidth: 150,
       cellRenderer: ({ row }) => <span v-copy={row.value}>{row.value}</span>
     },
     {
-      label: t("configUser.cacheValue"),
       prop: "cache_value",
       minWidth: 150,
       cellRenderer: ({ row }) => (
@@ -132,7 +93,6 @@ export function useUserConfig(tableRef: Ref) {
       )
     },
     {
-      label: t("labels.status"),
       prop: "is_active",
       minWidth: 130,
       cellRenderer: renderSwitch(auth.update, tableRef, "is_active", scope => {
@@ -141,7 +101,6 @@ export function useUserConfig(tableRef: Ref) {
       })
     },
     {
-      label: t("configSystem.access"),
       prop: "access",
       minWidth: 100,
       cellRenderer: ({ row, props }) => (
@@ -151,61 +110,22 @@ export function useUserConfig(tableRef: Ref) {
       )
     },
     {
-      label: t("labels.description"),
       prop: "description",
       minWidth: 150
     },
     {
-      label: t("sorts.createdDate"),
       minWidth: 180,
       prop: "created_time",
       formatter: ({ created_time }) =>
         dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
     },
     {
-      label: t("labels.operations"),
       fixed: "right",
       width: 260,
       slot: "operation",
       hide: !(auth.update || auth.delete || auth.invalid)
     }
   ]);
-  const searchColumns: PlusColumn[] = computed(() => {
-    return [
-      {
-        label: t("user.username"),
-        prop: "username",
-        valueType: "input"
-      },
-      {
-        label: t("configUser.key"),
-        prop: "key",
-        valueType: "input"
-      },
-      {
-        label: t("configUser.value"),
-        prop: "value",
-        valueType: "input"
-      },
-      {
-        label: t("labels.description"),
-        prop: "description",
-        valueType: "input"
-      },
-      {
-        label: t("labels.status"),
-        prop: "is_active",
-        valueType: "select",
-        options: selectOptions
-      },
-      {
-        label: t("labels.sort"),
-        prop: "ordering",
-        valueType: "select",
-        options: formatOptions(sortOptions)
-      }
-    ];
-  });
 
   const onGoUserDetail = (row: any) => {
     if (
@@ -237,18 +157,14 @@ export function useUserConfig(tableRef: Ref) {
     auth,
     columns,
     editForm,
-    searchField,
-    defaultValue,
-    searchColumns,
     handleInvalidCache
   };
 }
 
 export function useUserConfigForm(props) {
-  const { t } = useI18n();
+  const { t, te } = useI18n();
   const columns: PlusColumn[] = [
     {
-      label: t("user.userId"),
       prop: "config_user",
       valueType: "select",
       hideInForm: !hasGlobalAuth("list:systemUser"),
@@ -261,63 +177,32 @@ export function useUserConfigForm(props) {
       }
     },
     {
-      label: t("configUser.key"),
       prop: "key",
-      valueType: "input",
-      fieldProps: {
-        disabled: disableState(props, "key")
-      }
+      valueType: "input"
     },
     {
-      label: t("configUser.value"),
       prop: "value",
-      valueType: "textarea",
-      fieldProps: {
-        autosize: { minRows: 5, maxRows: 20 },
-        disabled: disableState(props, "value")
-      }
+      valueType: "textarea"
     },
     {
-      label: t("configSystem.access"),
       prop: "access",
       valueType: "radio",
-      colProps: {
-        xs: 24,
-        sm: 24,
-        md: 24,
-        lg: 12,
-        xl: 12
-      },
-      tooltip: t("configSystem.accessTip"),
-      fieldProps: {
-        disabled: disableState(props, "access")
-      },
+      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 },
+      tooltip: t("configUser.accessTip"),
       renderField: renderOption()
     },
     {
-      label: t("labels.status"),
       prop: "is_active",
       valueType: "radio",
-      colProps: {
-        xs: 24,
-        sm: 24,
-        md: 24,
-        lg: 12,
-        xl: 12
-      },
-      tooltip: t("labels.status"),
+      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 },
       renderField: renderOption()
     },
     {
-      label: t("labels.description"),
       prop: "description",
-      valueType: "textarea",
-      fieldProps: {
-        disabled: disableState(props, "description")
-      }
+      valueType: "textarea"
     }
   ];
-
+  formatFormColumns(props, columns, t, te, "configUser");
   return {
     t,
     columns

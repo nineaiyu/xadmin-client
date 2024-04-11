@@ -11,13 +11,12 @@ import { useI18n } from "vue-i18n";
 import GroupLine from "@iconify-icons/ri/group-line";
 import LoginLine from "@iconify-icons/ep/lock";
 import LogLine from "@iconify-icons/ep/tickets";
-import { getOperationLogListApi } from "@/api/system/logs/operation";
-import type { OptionsType } from "@/components/ReSegmented";
+import { operationLogApi } from "@/api/system/logs/operation";
 import { getKeyList } from "@pureadmin/utils";
 
 export function useDashboard() {
   const { t } = useI18n();
-  const optionsBasis: Array<OptionsType> = computed(() => {
+  const optionsBasis = computed(() => {
     return [
       {
         label: t("login.register")
@@ -120,15 +119,17 @@ export function useDashboard() {
   };
 
   const getOperateLogList = () => {
-    getOperationLogListApi({
-      page: 1,
-      size: 20,
-      ordering: "-created_time"
-    }).then(res => {
-      if (res.code === 1000) {
-        operateLogList.value = res.data?.results;
-      }
-    });
+    operationLogApi
+      .list({
+        page: 1,
+        size: 20,
+        ordering: "-created_time"
+      })
+      .then(res => {
+        if (res.code === 1000) {
+          operateLogList.value = res.data?.results;
+        }
+      });
   };
 
   onMounted(() => {

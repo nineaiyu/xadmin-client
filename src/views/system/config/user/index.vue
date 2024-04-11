@@ -11,17 +11,8 @@ defineOptions({
 
 const tableRef = ref();
 
-const {
-  t,
-  api,
-  auth,
-  columns,
-  editForm,
-  searchField,
-  defaultValue,
-  searchColumns,
-  handleInvalidCache
-} = useUserConfig(tableRef);
+const { t, api, auth, columns, editForm, handleInvalidCache } =
+  useUserConfig(tableRef);
 </script>
 
 <template>
@@ -30,8 +21,7 @@ const {
     :api="api"
     :auth="auth"
     :edit-form="editForm"
-    :search-columns="searchColumns"
-    :search-field="searchField"
+    locale-name="configUser"
     :table-columns="columns"
   >
     <template #extOperation="{ row, size }">

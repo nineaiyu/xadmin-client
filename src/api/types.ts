@@ -17,6 +17,10 @@ export type Result = {
     size?: number;
     /** 当前页数 */
     page?: number;
+
+    pk?: number;
+    menu?: any[];
+    field?: any[];
   };
 };
 
@@ -58,4 +62,11 @@ export type UploadFileResult = {
   code: number;
   data?: FileInfo[];
   detail?: string;
+};
+
+export type DashBoardResult = {
+  code: number;
+  percent: number;
+  count: number;
+  results?: Array<any>;
 };

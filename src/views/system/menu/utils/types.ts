@@ -44,9 +44,10 @@ interface FormItemProps {
   /** 菜单顺序 */
   rank: number;
   /** 路由地址 */
-  path: string;
+  path?: string;
   /** 组件地址 */
   component: string;
+  method?: string;
   /** 是否启用该菜单 */
   is_active: boolean;
   /** 是否是编辑模式 */
@@ -56,7 +57,7 @@ interface FormItemProps {
 interface FormProps {
   formInline: FormItemProps;
   treeData: any[];
-  choicesDict: any[];
+  methodChoices: any[];
   menuChoices: any[];
   menuUrlList: any[];
   modelList: any[];

@@ -1,3 +1,17 @@
+commonLabels:
+  pk: ID
+  ordering: 排序
+  rank: 排序
+  status: 状态
+  is_active: 状态
+  description: 备注
+  selection: 勾选列
+  operation: 操作
+  created_time: 创建时间
+  updated_time: 更新时间
+  descending: 降序
+  ascending: 升序
+
 tableBar:
   loose: 宽松
   default: 默认
@@ -209,60 +223,67 @@ userinfo:
   verifyOldPassword: 请输入旧密码
   verifyNewPassword: 请输入新密码
   surePassword: 确认密码
-
-user:
-  user: 用户
-  avatar: 头像
   username: 用户名
   nickname: 昵称
-  password: 密码
+  mobile: 手机号
   email: 邮箱
   gender: 性别
-  male: 男
-  female: 女
-  unknown: 未知
+  dept: 部门
   roles: 角色
-  registrationDate: 注册时间
+  date_joined: 注册时间
+  last_login: 上次登录时间
+  avatar: 头像
+
+systemUser:
+  user: 用户
+  email: 邮箱
+  username: 用户名
   mobile: 手机号
-  exportExcel: 导出表格
+  mode_type: 权限模式
+  dept: 部门ID
+  avatar: 头像
+  nickname: 昵称
+  gender: 性别
+  gender_display: 性别
+  dept_info: 所属部门
+  date_joined: 注册时间
+  last_login: 上次登录时间
+  roles_info: 角色
+  rules_info: 数据权限
   batchSendNotice: 批量发送通知
   editAvatar: 修改头像
   resetPassword: 重置密码
   assignRoles: 分配角色权限
-  verifyUserId: 请输入用户ID
-  verifyUsername: 请输入用户名
-  verifyPassword: 请输入密码
-  verifyNickname: 请输入昵称
-  verifyMobile: 请输入手机号
-  verifyEmail: 请输入邮箱
-  verifyGender: 请选择性别
   resetPasswd: 重置用户 { user } 的密码
   assignRole: 分配用户 { user } 的角色权限
   updateAvatar: 更新用户 { user } 的头像
-  excelSheet: 用户注册信息
-  excelName: 用户注册报表
-  deptId: 部门ID
-  userId: 用户ID
-  userInfo: 用户信息
-  dept: 所属部门
-  rules: 数据权限
-
-dept:
-  name: 部门名称
-  dept: 部门
-  code: 部门标识
+  password: 密码
   roles: 角色
   rules: 数据权限
+
+systemDept:
+  dept: 部门
+  name: 部门名称
+  code: 部门标识
+  auto_bind: 自动绑定
+  mode_type: 权限模式
+  user_count: 人员数量
+  mode_display: 权限模式
+  roles_info: 角色
+  rules_info: 数据权限
   assignRoles: 分配角色权限
   assignRole: 分配部门 { dept } 的角色权限
-  userCount: 人员数量
-  autoBind: 自动绑定
   autoBindDesc: 注册参数channel的值和该部门code一致，则该用户会自动和该部门绑定
+  parent: 归属部门
+  roles: 角色
+  rules: 数据权限
 
-permission:
+systemPermission:
   permission: 数据权限
   name: 权限名称
-  mode: 权限模式
+  mode_type: 权限模式
+  mode_display: 权限模式
+  menu: 菜单
   addName: 属性名
   addValue: 属性值
   addType: 值类型
@@ -272,14 +293,18 @@ permission:
   table: 表名
   field: 字段名
   rulesFailed: 规则不存在或有误，请输入规则
+  notice_user: 用户
+  notice_dept: 部门
+  notice_role: 角色
+  notice_menu: 菜单
 
-role:
+systemRole:
   role: 角色
   name: 角色名称
   code: 角色标识
-  verifyRoleName: 请输入角色名称
-  verifyRoleCode: 请输入角色标识
   permissions: 权限
+  menuTitle: 请输入菜单标题
+  menu: 菜单权限
 
 menu:
   menus: 菜单
@@ -330,77 +355,98 @@ menu:
   exampleAssociationModel: 模型关联用与字段权限控制
 
 logsOperation:
+  creator_id: 用户ID
   module: 模块
-  address: Ip地址
+  ipaddress: IP地址
   system: 操作系统
   browser: 浏览器
-  statusCode: 状态码
-  parameters: 请求参数
-  response: 响应内容
-  requestPath: 请求路径
-  verifyAddress: 请输入Ip地址
-  verifySystem: 请输入操作系统
-  verifyBrowser: 请输入浏览器
-  verifyRequestPath: 请输入请求路径
+  path: 请求路径
+  creator: 用户
+  body: 请求体
+  response_code: 状态码
+  response_result: 响应内容
 
 logsLogin:
-  address: Ip地址
+  creator_id: 用户ID
+  login_type: 登录方式
+  ipaddress: IP地址
   system: 操作系统
   browser: 浏览器
   agent: 用户代理
-  loginDisplay: 登录方式
-  verifyAddress: 请输入Ip地址
-  verifySystem: 请输入操作系统
-  verifyBrowser: 请输入浏览器
-  verifyAgent: 请输入用户代理
+  creator: 用户
+  login_display: 登录方式
 
 configSystem:
   configSystem: 系统配置
   key: 配置名称
   value: 配置数值
-  cacheValue: 缓存数值
+  inherit: 用户继承
+  access: 接口访问
+  cache_value: 缓存数值
+  accessTip: 允许API接口访问该配置
+  inheritTip: 允许用户继承该配置
   invalidCache: 缓存失效
   confirmInvalid: 确定缓存失效该数据么？
-  access: 接口访问
-  accessTip: 允许API接口访问该配置
-  inherit: 用户继承
-  inheritTip: 允许用户继承该配置
 
 configUser:
   configUser: 用户配置
   key: 配置名称
   value: 配置数值
-  cacheValue: 缓存数值
+  username: 用户名
+  access: 接口访问
+  owner_id: 用户ID
+  config_user: 用户ID
+  owner_info: 用户信息
+  cache_value: 缓存数值
   invalidCache: 缓存失效
   confirmInvalid: 确定缓存失效该数据么？
 
 modelFieldManagement:
   name: 模型/字段数值
   label: 模型/字段名称
+  field_type: 字段类型
   parent: 上级节点
+  field_type_display: 字段类型
   makeData: 重新生成字段数据
-  fieldType: 字段类型
 
-notice:
+systemNotice:
   notice: 通知公告
-  readDate: 已读时间
-  title: 标题
-  type: 类型
+  notice_type: 通知类型
+  notice_type_display: 通知类型
   level: 通知级别
   publish: 是否发布
-  content: 内容
-  haveRead: 是否已读
-  showSystemNotice: 查看系统公告
-  verifyTitle: 请输入标题
-  verifyContent: 请输入内容
-  readManage: 用户已读消息公告管理
-  messageManage: 消息公告管理
-  receiveRead: 接收人数/已读人数
-  allRead: 全部已读
-  verifyUserIds: 用户ID必须全为数字
-  verifyInputUserIds: 请输入用户ID,多个用户需要通过回车进行分割
+  message: 内容
+  title: 标题
+  read_user_count: 接收人数/已读人数
+  notice_user: 用户
+  notice_dept: 部门
+  notice_role: 角色
+  allRead: 全部
+  showSystemNotice: 查看通知公告
+
+noticeRead:
+  owner_id: 用户ID
+  notice_id: 公告ID
+  message: 内容
+  title: 标题
+  username: 用户名
+  level: 通知级别
+  notice_type: 通知类型
+  unread: 是否已读
+  notice_info: 通知标题
+  readDate: 已读时间
+  showSystemNotice: 查看通知公告
+
+userNotice:
+  message: 内容
+  title: 标题
+  unread: 是否已读
+  level: 通知级别
+  notice_type: 通知类型
+  notice_type_display: 通知类型
   batchRead: 批量已读
   unreadMessage: 未读消息
+  allRead: 全部已读
 
 status:
   hsLoad: 加载中...

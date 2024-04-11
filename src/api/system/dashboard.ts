@@ -1,16 +1,24 @@
 import { http } from "@/utils/http";
-import type { Result } from "@/api/types";
+import type { DashBoardResult, Result } from "@/api/types";
 
 export const getDashBoardUserLoginTotalApi = (params?: object) => {
-  return http.request<Result>("get", "/api/system/dashboard/user-login-total", {
-    params: params
-  });
+  return http.request<DashBoardResult>(
+    "get",
+    "/api/system/dashboard/user-login-total",
+    {
+      params: params
+    }
+  );
 };
 
 export const getDashBoardUserTotalApi = (params?: object) => {
-  return http.request<Result>("get", "/api/system/dashboard/user-total", {
-    params: params
-  });
+  return http.request<DashBoardResult>(
+    "get",
+    "/api/system/dashboard/user-total",
+    {
+      params: params
+    }
+  );
 };
 
 export const getDashBoardUserRegisterTrendApi = (params?: object) => {
@@ -36,7 +44,7 @@ export const getDashBoardUserActiveApi = (params?: object) => {
 };
 
 export const getDashBoardTodayOperateTotalApi = (params?: object) => {
-  return http.request<Result>(
+  return http.request<DashBoardResult>(
     "get",
     "/api/system/dashboard/today-operate-total",
     {

@@ -6,16 +6,14 @@ defineOptions({
   name: "SystemOperationLog"
 });
 
-const { api, auth, columns, searchField, defaultValue, searchColumns } =
-  useOperationLog();
+const { api, auth, columns } = useOperationLog();
 </script>
 
 <template>
   <ReBaseTable
     :api="api"
     :auth="auth"
-    :search-columns="searchColumns"
-    :search-field="searchField"
+    locale-name="logsOperation"
     :table-columns="columns"
   />
 </template>

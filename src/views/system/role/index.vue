@@ -9,17 +9,7 @@ defineOptions({
 
 const tableRef = ref();
 
-const {
-  t,
-  api,
-  auth,
-  columns,
-  editForm,
-  searchField,
-  defaultValue,
-  searchColumns,
-  openDialog
-} = useRole(tableRef);
+const { api, auth, columns, editForm } = useRole(tableRef);
 </script>
 
 <template>
@@ -28,10 +18,7 @@ const {
     :api="api"
     :auth="auth"
     :edit-form="editForm"
-    :search-columns="searchColumns"
-    :search-field="searchField"
+    locale-name="systemRole"
     :table-columns="columns"
-    :custom-add-or-edit="true"
-    @open-dialog="openDialog"
   />
 </template>

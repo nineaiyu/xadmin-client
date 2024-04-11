@@ -1,33 +1,17 @@
-import { http } from "@/utils/http";
-import type { Result } from "@/api/types";
+import { BaseApi } from "@/api/base";
 
-// 自己未读消息通知
-export const getUserNoticeUnreadListApi = (data?: object) => {
-  return http.request<Result>("get", "/api/system/user/notice/unread", {
-    params: data
-  });
-};
+class UserNoticeReadApi extends BaseApi {
+  unread = (params?: object) => {
+    return this.request("get", params, {}, `${this.baseApi}/unread`);
+  };
+  allRead = (params?: object) => {
+    return this.request("put", params, {}, `${this.baseApi}/read-all`);
+  };
+  batchRead = (data?: object) => {
+    return this.request("put", {}, data, `${this.baseApi}/read`);
+  };
+}
 
-export const updateUserNoticeReadApi = (data?: object) => {
-  return http.request<Result>("put", "/api/system/user/notice/read", {
-    data: data
-  });
-};
-
-export const updateUserNoticeReadAllApi = (data?: object) => {
-  return http.request<Result>("put", "/api/system/user/notice/read_all", {
-    data: data
-  });
-};
-
-export const getUserNoticeListApi = (data?: object) => {
-  return http.request<Result>("get", "/api/system/user/notice", {
-    params: data
-  });
-};
-
-export const getUserNoticeDetailApi = (pk?: number | string, data?: object) => {
-  return http.request<Result>("get", `/api/system/user/notice/${pk}`, {
-    params: data
-  });
-};
+export const userNoticeReadApi = new UserNoticeReadApi(
+  "/api/system/user/notice"
+);

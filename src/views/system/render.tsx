@@ -28,15 +28,12 @@ export const renderOption = (options = null) => {
   };
 };
 
-export const disableState = (props, key) => {
-  return !props?.isAdd && props?.showColumns.indexOf(key) === -1;
-};
-
 export const renderSwitch = (
   apiAuth,
   tableRef,
   valueKey,
   msg,
+  reverse = false,
   updateApi = null,
   actMsg = null
 ) => {
@@ -47,8 +44,8 @@ export const renderSwitch = (
       size={scope.props.size === "small" ? "small" : "default"}
       loading={switchLoadMap.value[scope.index]?.loading}
       v-model={scope.row[valueKey]}
-      active-value={true}
-      inactive-value={false}
+      active-value={reverse ? false : true}
+      inactive-value={reverse ? true : false}
       active-text={transformI18n($t("labels.active"))}
       inactive-text={transformI18n($t("labels.inactive"))}
       disabled={!apiAuth}

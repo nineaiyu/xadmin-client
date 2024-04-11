@@ -1,24 +1,26 @@
 <script lang="ts" setup>
-import { computed, ref, watch } from "vue";
-import { FormProps } from "./utils/types";
-import FromQuestion from "@/components/FromQuestion/index.vue";
-import ReAnimateSelector from "@/components/ReAnimateSelector";
-import { IconSelect } from "@/components/ReIcon";
-
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { transformI18n } from "@/plugins/i18n";
-import { dirFormRules, menuFormRules, permissionFormRules } from "./utils/rule";
-import { hasAuth } from "@/router/utils";
-import { cloneDeep } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
+import { FormProps } from "./utils/types";
+import { useApiAuth } from "./utils/hook";
+import { computed, ref, watch } from "vue";
+import { cloneDeep } from "@pureadmin/utils";
+import { transformI18n } from "@/plugins/i18n";
+import { IconSelect } from "@/components/ReIcon";
 import { MenuChoices } from "@/views/system/constants";
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import ReAnimateSelector from "@/components/ReAnimateSelector";
+import FromQuestion from "@/components/FromQuestion/index.vue";
 import Segmented, { type OptionsType } from "@/components/ReSegmented";
+import { dirFormRules, menuFormRules, permissionFormRules } from "./utils/rule";
 
 const { t } = useI18n();
+const { auth } = useApiAuth();
+
 const emit = defineEmits(["handleConfirm"]);
+
 const props = withDefaults(defineProps<FormProps>(), {
   treeData: () => [],
-  choicesDict: () => [],
+  methodChoices: () => [],
   modelList: () => [],
   menuChoices: () => [],
   menuUrlList: () => [],
@@ -31,6 +33,7 @@ const props = withDefaults(defineProps<FormProps>(), {
     path: "",
     rank: 0,
     component: "",
+    method: "",
     model: [],
     is_active: true,
     meta: {
@@ -72,6 +75,7 @@ function getRef() {
 }
 
 const formRules = ref(cloneDeep(dirFormRules));
+
 watch(
   () => newFormInline.value.menu_type,
   () => {
@@ -104,8 +108,6 @@ const handleChangeMenuType = menu_type => {
   }
 };
 
-defineExpose({ getRef });
-
 const getMinHeight = () => {
   if (!newFormInline.value.isAdd) {
     return `calc(100vh - 145px)`;
@@ -127,6 +129,8 @@ const menuOptions = computed<Array<OptionsType>>(() => {
   });
   return data;
 });
+
+defineExpose({ getRef });
 </script>
 
 <template>
@@ -136,7 +140,7 @@ const menuOptions = computed<Array<OptionsType>>(() => {
   >
     <el-form
       ref="ruleFormRef"
-      :disabled="!hasAuth('update:systemMenu')"
+      :disabled="!auth.update"
       :model="newFormInline"
       :rules="formRules"
       class="search-form bg-bg_color w-[90%] pl-8 pt-[12px]"
@@ -411,14 +415,14 @@ const menuOptions = computed<Array<OptionsType>>(() => {
             />
           </el-select>
         </el-form-item>
-        <el-form-item :label="t('menu.requestMethod')" prop="component">
+        <el-form-item :label="t('menu.requestMethod')" prop="method">
           <el-select
-            v-model="newFormInline.component"
+            v-model="newFormInline.method"
             class="!w-[180px]"
             clearable
           >
             <el-option
-              v-for="item in props.choicesDict"
+              v-for="item in props.methodChoices"
               :key="item.key"
               :disabled="item.disabled"
               :label="item.label"
@@ -445,11 +449,7 @@ const menuOptions = computed<Array<OptionsType>>(() => {
         </el-form-item>
       </div>
       <el-form-item
-        v-if="
-          hasAuth('update:systemMenu') &&
-          !newFormInline.isAdd &&
-          newFormInline.pk
-        "
+        v-if="auth.update && !newFormInline.isAdd && newFormInline.pk"
         class="flex float-right"
       >
         <el-popconfirm

@@ -1,34 +1,9 @@
-import { http } from "@/utils/http";
-import type { Result } from "@/api/types";
+import { BaseApi } from "@/api/base";
 
-export const getUserConfigListApi = (data?: object) => {
-  return http.request<Result>("get", "/api/system/config/user", {
-    params: data
-  });
-};
+class UserConfigApi extends BaseApi {
+  invalid = (pk: number | string) => {
+    return this.request("post", {}, {}, `${this.baseApi}/${pk}/invalid`);
+  };
+}
 
-export const createUserConfigApi = (data?: object) => {
-  return http.request<Result>("post", "/api/system/config/user", {
-    data: data
-  });
-};
-
-export const deleteUserConfigApi = (pk?: number) => {
-  return http.request<Result>("delete", `/api/system/config/user/${pk}`);
-};
-
-export const updateUserConfigApi = (pk?: number, data?: object) => {
-  return http.request<Result>("put", `/api/system/config/user/${pk}`, {
-    data: data
-  });
-};
-
-export const manyDeleteUserConfigApi = (data?: object) => {
-  return http.request<Result>("delete", `/api/system/config/user/many-delete`, {
-    params: data
-  });
-};
-
-export const actionInvalidCacheApi = (pk?: number) => {
-  return http.request<Result>("post", `/api/system/config/user/${pk}/invalid`);
-};
+export const userConfigApi = new UserConfigApi("/api/system/config/user");

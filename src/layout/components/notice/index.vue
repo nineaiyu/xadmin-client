@@ -2,7 +2,7 @@
 import { onMounted, ref } from "vue";
 import NoticeList from "./noticeList.vue";
 import Bell from "@iconify-icons/ep/bell";
-import { getUserNoticeUnreadListApi } from "@/api/user/notice";
+import { userNoticeReadApi } from "@/api/user/notice";
 import { TabItem } from "@/layout/components/notice/data";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
@@ -24,7 +24,7 @@ const notices = ref<TabItem[]>([
 const activeKey = ref();
 
 const getNoticeData = () => {
-  getUserNoticeUnreadListApi().then(res => {
+  userNoticeReadApi.unread().then(res => {
     if (res.code === 1000 && res.data) {
       useUserStoreHook().SET_NOTICECOUNT(res.data.total);
       notices.value = res.data.results;

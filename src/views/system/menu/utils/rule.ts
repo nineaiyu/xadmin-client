@@ -1,6 +1,5 @@
 import { $t, transformI18n } from "@/plugins/i18n";
 
-/** 自定义表单规则校验 */
 export const dirFormRules = {
   menu_type: [
     {
@@ -96,7 +95,7 @@ export const permissionFormRules = {
       trigger: "blur"
     }
   ],
-  component: [
+  method: [
     {
       required: true,
       message: transformI18n($t("menu.verifyRequestMethod")),

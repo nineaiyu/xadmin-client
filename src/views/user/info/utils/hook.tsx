@@ -1,18 +1,36 @@
 import "./reset.css";
-import { message } from "@/utils/message";
-import type { FormItemProps } from "./types";
-import {
-  updateUserInfoApi,
-  updateUserInfoPasswordApi,
-  uploadUserInfoAvatarApi
-} from "@/api/user/userinfo";
-import { onMounted, reactive, ref } from "vue";
-import { useUserStoreHook } from "@/store/modules/user";
 import { useI18n } from "vue-i18n";
 import { delay } from "@pureadmin/utils";
+import { hasAuth } from "@/router/utils";
+import { message } from "@/utils/message";
+import type { FormItemProps } from "./types";
+import { onMounted, reactive, ref } from "vue";
+import { userInfoApi } from "@/api/user/userinfo";
+import { useUserStoreHook } from "@/store/modules/user";
+
+export function useApiAuth() {
+  const api = reactive({
+    self: userInfoApi.self,
+    update: userInfoApi.update,
+    reset: userInfoApi.reset,
+    upload: userInfoApi.upload
+  });
+
+  const auth = reactive({
+    upload: hasAuth("upload:UserInfo"),
+    update: hasAuth("update:UserInfo"),
+    reset: hasAuth("reset:UserInfo")
+  });
+  return {
+    api,
+    auth
+  };
+}
 
 export function useUserInfo() {
   const { t } = useI18n();
+  const { api, auth } = useApiAuth();
+
   const loading = ref(true);
   const choicesDict = ref([]);
 
@@ -24,7 +42,7 @@ export function useUserInfo() {
   });
 
   function handleUpdate(row) {
-    updateUserInfoApi(row).then(res => {
+    api.update("self", row).then(res => {
       if (res.code === 1000) {
         message(t("results.success"), { type: "success" });
         onSearch();
@@ -34,7 +52,7 @@ export function useUserInfo() {
     });
   }
 
-  async function onSearch() {
+  function onSearch() {
     loading.value = true;
     useUserStoreHook()
       .getUserInfo()
@@ -61,7 +79,7 @@ export function useUserInfo() {
     });
     const data = new FormData();
     data.append("file", avatarFile);
-    uploadUserInfoAvatarApi({}, data).then(res => {
+    api.upload("self", data).then(res => {
       if (res.code === 1000) {
         message(t("results.success"), { type: "success" });
         onSearch();
@@ -72,7 +90,7 @@ export function useUserInfo() {
   }
 
   function handleResetPassword(data) {
-    updateUserInfoPasswordApi(data).then(async res => {
+    api.reset(data).then(async res => {
       if (res.code === 1000) {
         message(t("results.success"), { type: "success" });
       } else {
@@ -87,6 +105,7 @@ export function useUserInfo() {
 
   return {
     t,
+    auth,
     choicesDict,
     currentUserInfo,
     handleUpload,

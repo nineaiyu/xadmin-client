@@ -20,10 +20,7 @@ const {
   auth,
   columns,
   editForm,
-  searchField,
   buttonClass,
-  defaultValue,
-  searchColumns,
   handleRole,
   formatResult
 } = useDept(tableRef);
@@ -35,9 +32,8 @@ const {
     :api="api"
     :auth="auth"
     :edit-form="editForm"
+    locale-name="systemDept"
     :result-format="formatResult"
-    :search-columns="searchColumns"
-    :search-field="searchField"
     :table-columns="columns"
   >
     <template #extOperation="{ row, size }">
@@ -60,7 +56,7 @@ const {
                 type="primary"
                 @click="handleRole(row)"
               >
-                {{ t("dept.assignRoles") }}
+                {{ t("systemDept.assignRoles") }}
               </el-button>
             </el-dropdown-item>
           </el-dropdown-menu>

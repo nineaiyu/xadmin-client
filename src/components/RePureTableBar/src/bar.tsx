@@ -55,13 +55,13 @@ export default defineComponent({
     const checkAll = ref(true);
     const isIndeterminate = ref(false);
     const isExpandAll = ref(props.isExpandAll);
-    const filterColumns = ref(
-      cloneDeep(props?.columns).filter(column =>
+    const filterColumns = computed(() => {
+      return cloneDeep(props?.columns).filter(column =>
         isBoolean(column?.hide)
           ? !column.hide
           : !(isFunction(column?.hide) && column?.hide())
-      )
-    );
+      );
+    });
     const checkedColumns = ref(
       getKeyList(cloneDeep(filterColumns.value), "label")
     );
@@ -149,7 +149,6 @@ export default defineComponent({
       checkAll.value = true;
       isIndeterminate.value = false;
       dynamicColumns.value = cloneDeep(props?.columns);
-      checkColumnList.value = [];
       checkColumnList.value = getKeyList(cloneDeep(props?.columns), "label");
       checkedColumns.value = getKeyList(
         cloneDeep(filterColumns.value),

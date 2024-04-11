@@ -7,42 +7,42 @@ export const formRules = reactive<FormRules>({
   notice_user: [
     {
       required: true,
-      message: transformI18n($t("user.verifyUserId")),
+      message: transformI18n($t("systemNotice.notice_user")),
       trigger: "blur"
     }
   ],
   notice_dept: [
     {
       required: true,
-      message: transformI18n($t("dept.dept")),
+      message: transformI18n($t("systemNotice.notice_dept")),
       trigger: "blur"
     }
   ],
   notice_role: [
     {
       required: true,
-      message: transformI18n($t("role.role")),
+      message: transformI18n($t("systemNotice.notice_role")),
       trigger: "blur"
     }
   ],
   title: [
     {
       required: true,
-      message: transformI18n($t("notice.verifyTitle")),
+      message: transformI18n($t("systemNotice.title")),
       trigger: "blur"
     }
   ],
   message: [
     {
       required: true,
-      message: transformI18n($t("notice.verifyContent")),
+      message: transformI18n($t("systemNotice.message")),
       trigger: "blur"
     }
   ],
   notice_type: [
     {
       required: true,
-      message: transformI18n($t("notice.type")),
+      message: transformI18n($t("systemNotice.notice_type")),
       trigger: "blur"
     }
   ]

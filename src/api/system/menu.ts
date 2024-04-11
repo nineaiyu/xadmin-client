@@ -1,37 +1,15 @@
-import { http } from "@/utils/http";
-import type { MenuDataResult, Result } from "@/api/types";
+import { BaseApi } from "@/api/base";
 
-export const getMenuListApi = (data?: object) => {
-  return http.request<MenuDataResult>("get", "/api/system/menu", {
-    params: data
-  });
-};
-export const getMenuPermissionListApi = (data?: object) => {
-  return http.request<MenuDataResult>("get", "/api/system/menu/permissions", {
-    params: data
-  });
-};
+class MenuApi extends BaseApi {
+  permissions = (params?: object) => {
+    return this.request("get", params, {}, `${this.baseApi}/permissions`);
+  };
+  rank = (data?: object) => {
+    return this.request("post", {}, data, `${this.baseApi}/rank`);
+  };
+  apiUrl = () => {
+    return this.request("get", {}, {}, `${this.baseApi}/api-url`);
+  };
+}
 
-export const createMenuApi = (data?: object) => {
-  return http.request<Result>("post", "/api/system/menu", { data: data });
-};
-
-export const deleteMenuApi = (pk?: number) => {
-  return http.request<Result>("delete", `/api/system/menu/${pk}`);
-};
-
-export const updateMenuApi = (pk?: number, data?: object) => {
-  return http.request<Result>("put", `/api/system/menu/${pk}`, { data: data });
-};
-
-export const manyDeleteMenuApi = (data?: object) => {
-  return http.request<Result>("delete", `/api/system/menu/many-delete`, {
-    params: data
-  });
-};
-
-export const actionRankMenuApi = (data?: object) => {
-  return http.request<Result>("post", `/api/system/menu/action_rank`, {
-    data: data
-  });
-};
+export const menuApi = new MenuApi("/api/system/menu");

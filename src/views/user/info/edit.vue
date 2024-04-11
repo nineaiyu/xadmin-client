@@ -3,8 +3,8 @@ import { ref } from "vue";
 import ReCol from "@/components/ReCol";
 import { formRules } from "./utils/rule";
 import { FormItemProps, FormProps } from "./utils/types";
-import { hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
+import { useApiAuth } from "./utils/hook";
 
 defineOptions({
   name: "editUserInfo"
@@ -22,6 +22,7 @@ const props = withDefaults(defineProps<FormProps>(), {
   })
 });
 const { t } = useI18n();
+const { auth } = useApiAuth();
 
 const ruleFormRef = ref();
 const newFormInline = ref(props.formInline);
@@ -42,53 +43,53 @@ const handleUpdate = row => {
 <template>
   <el-form
     ref="ruleFormRef"
-    :disabled="!hasAuth('update:UserInfo')"
+    :disabled="!auth.update"
     :model="newFormInline"
     :rules="formRules"
     label-width="82px"
   >
     <el-row :gutter="30">
       <re-col :sm="24" :value="12" :xs="24">
-        <el-form-item :label="t('user.username')" prop="username">
+        <el-form-item :label="t('userinfo.username')" prop="username">
           <el-input
             v-model="newFormInline.username"
-            :placeholder="t('user.verifyUsername')"
+            :placeholder="t('userinfo.username')"
             clearable
           />
         </el-form-item>
       </re-col>
       <re-col :sm="24" :value="12" :xs="24">
-        <el-form-item :label="t('user.nickname')" prop="nickname">
+        <el-form-item :label="t('userinfo.nickname')" prop="nickname">
           <el-input
             v-model="newFormInline.nickname"
-            :placeholder="t('user.verifyNickname')"
+            :placeholder="t('userinfo.nickname')"
             clearable
           />
         </el-form-item>
       </re-col>
       <re-col :sm="24" :value="12" :xs="24">
-        <el-form-item :label="t('user.mobile')" prop="mobile">
+        <el-form-item :label="t('userinfo.mobile')" prop="mobile">
           <el-input
             v-model="newFormInline.mobile"
-            :placeholder="t('user.verifyMobile')"
+            :placeholder="t('userinfo.mobile')"
             clearable
           />
         </el-form-item>
       </re-col>
       <re-col :sm="24" :value="12" :xs="24">
-        <el-form-item :label="t('user.email')" prop="email">
+        <el-form-item :label="t('userinfo.email')" prop="email">
           <el-input
             v-model="newFormInline.email"
-            :placeholder="t('user.verifyEmail')"
+            :placeholder="t('userinfo.email')"
             clearable
           />
         </el-form-item>
       </re-col>
       <re-col :sm="24" :value="12" :xs="24">
-        <el-form-item :label="t('user.gender')" prop="gender">
+        <el-form-item :label="t('userinfo.gender')" prop="gender">
           <el-select
             v-model="newFormInline.gender"
-            :placeholder="t('user.verifyGender')"
+            :placeholder="t('userinfo.gender')"
             class="w-full"
             clearable
           >
@@ -104,7 +105,7 @@ const handleUpdate = row => {
     </el-row>
     <el-form-item>
       <el-popconfirm
-        v-if="hasAuth('update:UserInfo')"
+        v-if="auth.update"
         :title="t('buttons.confirmUpdate')"
         @confirm="handleUpdate(newFormInline)"
       >

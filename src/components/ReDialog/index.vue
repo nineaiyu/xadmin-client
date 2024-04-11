@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import {
-  type EventType,
   type ButtonProps,
-  type DialogOptions,
   closeDialog,
-  dialogStore
+  type DialogOptions,
+  dialogStore,
+  type EventType
 } from "./index";
-import { ref, computed } from "vue";
+import { computed, ref } from "vue";
 import { isFunction } from "@pureadmin/utils";
 import Fullscreen from "@iconify-icons/ri/fullscreen-fill";
 import ExitFullscreen from "@iconify-icons/ri/fullscreen-exit-fill";
@@ -14,7 +14,6 @@ import { useI18n } from "vue-i18n";
 
 const fullscreen = ref(false);
 const { t } = useI18n();
-
 const footerButtons = computed(() => {
   return (options: DialogOptions) => {
     return options?.footerButtons?.length > 0
@@ -39,6 +38,7 @@ const footerButtons = computed(() => {
             type: "primary",
             text: true,
             bg: true,
+            popconfirm: options?.popconfirm,
             btnClick: ({ dialog: { options, index } }) => {
               const done = () =>
                 closeDialog(options, index, { command: "sure" });
@@ -151,19 +151,34 @@ function handleClose(
         <component :is="options?.footerRenderer({ options, index })" />
       </template>
       <span v-else>
-        <el-button
-          v-for="(btn, key) in footerButtons(options)"
-          :key="key"
-          v-bind="btn"
-          @click="
-            btn.btnClick({
-              dialog: { options, index },
-              button: { btn, index: key }
-            })
-          "
-        >
-          {{ btn?.label }}
-        </el-button>
+        <template v-for="(btn, key) in footerButtons(options)" :key="key">
+          <el-popconfirm
+            v-if="btn.popconfirm"
+            v-bind="btn.popconfirm"
+            @confirm="
+              btn.btnClick({
+                dialog: { options, index },
+                button: { btn, index: key }
+              })
+            "
+          >
+            <template #reference>
+              <el-button v-bind="btn">{{ btn?.label }}</el-button>
+            </template>
+          </el-popconfirm>
+          <el-button
+            v-else
+            v-bind="btn"
+            @click="
+              btn.btnClick({
+                dialog: { options, index },
+                button: { btn, index: key }
+              })
+            "
+          >
+            {{ btn?.label }}
+          </el-button>
+        </template>
       </span>
     </template>
   </el-dialog>

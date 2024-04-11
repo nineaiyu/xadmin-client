@@ -7,21 +7,21 @@ export const formRules = reactive(<FormRules>{
   name: [
     {
       required: true,
-      message: transformI18n($t("permission.name")),
+      message: transformI18n($t("systemPermission.name")),
       trigger: "blur"
     }
   ],
   mode_type: [
     {
       required: true,
-      message: transformI18n($t("permission.mode")),
+      message: transformI18n($t("systemPermission.mode")),
       trigger: "blur"
     }
   ],
   rules: [
     {
       required: true,
-      message: transformI18n($t("permission.rules")),
+      message: transformI18n($t("systemPermission.rules")),
       trigger: "blur"
     }
   ]

@@ -3,11 +3,13 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { FormProps } from "./utils/types";
 import { ref } from "vue";
-import { cloneDeep, deviceDetection, getKeyList } from "@pureadmin/utils";
+import { deviceDetection, getKeyList } from "@pureadmin/utils";
 import { useBaseTable } from "./utils/hook";
 import Delete from "@iconify-icons/ep/delete";
 import EditPen from "@iconify-icons/ep/edit-pen";
 import AddFill from "@iconify-icons/ri/add-circle-line";
+import { PlusSearch } from "plus-pro-components";
+import PureTable from "@pureadmin/table";
 
 const props = withDefaults(defineProps<FormProps>(), {
   auth: () => ({
@@ -15,6 +17,7 @@ const props = withDefaults(defineProps<FormProps>(), {
     create: false,
     delete: false,
     update: false,
+    fields: false,
     batchDelete: false
   }),
   api: () => ({
@@ -22,6 +25,7 @@ const props = withDefaults(defineProps<FormProps>(), {
     create: null,
     delete: null,
     update: null,
+    fields: null,
     batchDelete: null
   }),
   editForm: () => ({
@@ -32,11 +36,20 @@ const props = withDefaults(defineProps<FormProps>(), {
   }),
   customAddOrEdit: false,
   editProps: {},
-  pagination: {},
-  searchField: {},
-  searchColumns: [],
-  tableColumns: [],
-  resultFormat: null
+  pagination: () => {
+    return {
+      total: 0,
+      pageSize: 10,
+      currentPage: 1,
+      pageSizes: [5, 10, 20, 50, 100],
+      background: true
+    };
+  },
+  tableColumns: () => {
+    return [];
+  },
+  resultFormat: null,
+  localeName: ""
 });
 defineOptions({ name: "ReBaseTable" });
 const emit = defineEmits<{
@@ -62,10 +75,13 @@ const {
   route,
   loading,
   dataList,
-  searchField,
   pagination,
   selectedNum,
   showColumns,
+  defaultValue,
+  searchFields,
+  tableColumns,
+  searchColumns,
   onChange,
   onSearch,
   openDialog,
@@ -83,10 +99,9 @@ const {
   props.editForm,
   props.tableColumns,
   props.pagination,
-  ref(props.searchField),
-  props.resultFormat
+  props.resultFormat,
+  props.localeName
 );
-const defaultValue = cloneDeep(searchField.value);
 
 function getTableRef() {
   return tableRef.value;
@@ -107,7 +122,8 @@ defineExpose({
   getTableRef,
   getSelectPks,
   dataList,
-  showColumns
+  showColumns,
+  searchFields
 });
 </script>
 
@@ -115,7 +131,7 @@ defineExpose({
   <div v-if="props.auth.list" class="main">
     <div class="search-form bg-bg_color w-[99/100] pl-8 pr-8 pt-[12px]">
       <PlusSearch
-        v-model="searchField"
+        v-model="searchFields"
         :col-props="{
           xs: 24,
           sm: 12,
@@ -123,7 +139,7 @@ defineExpose({
           lg: 6,
           xl: 6
         }"
-        :columns="props.searchColumns"
+        :columns="searchColumns"
         :default-values="defaultValue"
         :row-props="{
           gutter: 24
@@ -156,7 +172,7 @@ defineExpose({
         "
       />
     </div>
-    <PureTableBar :columns="props.tableColumns" @refresh="onSearch">
+    <PureTableBar :columns="tableColumns" @refresh="onSearch">
       <template #title>
         <el-space>
           <p class="font-bold truncate">
@@ -261,7 +277,7 @@ defineExpose({
             <slot name="extOperation" v-bind="{ row, size }" />
           </template>
           <template
-            v-for="item in getKeyList(props.tableColumns, 'slot').filter(x => {
+            v-for="item in getKeyList(tableColumns, 'slot').filter(x => {
               return x !== 'operation';
             })"
             :key="item"

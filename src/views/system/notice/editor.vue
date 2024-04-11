@@ -26,8 +26,8 @@ const props = withDefaults(defineProps<FormProps>(), {
     notice_role: [],
     notice_user: []
   }),
-  noticeChoices: [],
-  levelChoices: []
+  noticeChoices: () => [],
+  levelChoices: () => []
 });
 const formRef = ref();
 const newFormInline = ref(props.formInline);
@@ -63,7 +63,7 @@ const toolbarConfig: any = {
   }
 };
 const editorConfig = {
-  placeholder: t("notice.verifyContent"),
+  placeholder: t("systemNotice.message"),
   readOnly: !props.isAdd && props.showColumns.indexOf("message") === -1,
   MENU_CONF: {},
   hoverbarKeys: {
@@ -146,6 +146,7 @@ const loading = ref(false);
   <PlusForm
     ref="formRef"
     v-model="newFormInline"
+    label-position="right"
     :columns="columns"
     :rules="formRules"
     :hasFooter="false"

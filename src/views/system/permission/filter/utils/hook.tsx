@@ -29,37 +29,36 @@ export function useFieldRule(
   });
   const columns = ref<TableColumnList>([
     {
-      label: t("permission.table"),
+      label: t("systemPermission.table"),
       prop: "table",
       minWidth: 100
     },
     {
-      label: t("permission.field"),
+      label: t("systemPermission.field"),
       prop: "field",
       minWidth: 100
     },
     {
-      label: t("permission.addMatch"),
+      label: t("systemPermission.addMatch"),
       prop: "match",
       minWidth: 100
     },
     {
-      label: t("permission.addExclude"),
+      label: t("systemPermission.addExclude"),
       prop: "exclude",
       minWidth: 100
     },
     {
-      label: t("permission.addType"),
+      label: t("systemPermission.addType"),
       prop: "type",
       minWidth: 100
     },
     {
-      label: t("permission.addValue"),
+      label: t("systemPermission.addValue"),
       prop: "value",
       minWidth: 100
     },
     {
-      label: t("labels.operations"),
       fixed: "right",
       width: 100,
       slot: "operation"
@@ -74,7 +73,7 @@ export function useFieldRule(
 
   function openDialog(row) {
     addDialog({
-      title: `${t("buttons.add")} ${t("permission.rules")}`,
+      title: `${t("buttons.add")} ${t("systemPermission.rules")}`,
       props: {
         fieldLookupsData: fieldLookupsData,
         valuesData: valuesData,

@@ -19,6 +19,7 @@ interface FormItemProps {
   gender_display?: string;
   /** 角色 */
   roles?: number[];
+  rules?: number[];
   /** 密码 */
   password?: string;
   /** 是否激活 */
@@ -32,7 +33,7 @@ interface FormItemProps {
 interface FormProps {
   formInline: FormItemProps;
   treeData: any[];
-  choicesDict: any[];
+  genderChoices: any[];
   showColumns: any[];
   isAdd?: boolean;
 }
@@ -42,17 +43,17 @@ interface RoleFormItemProps {
   nickname: string;
   mode_type?: number;
   mode_display?: string;
-  /** 角色列表 */
-  rolesOptions: any[];
-  rulesOptions: any[];
-  choicesDict: any[];
   /** 选中的角色列表 */
-  ids: Record<number, unknown>[];
-  pks: Record<number, unknown>[];
+  roles: Record<number, unknown>[];
+  rules: Record<number, unknown>[];
 }
 
 interface RoleFormProps {
   formInline: RoleFormItemProps;
+  /** 角色列表 */
+  rolesOptions: any[];
+  rulesOptions: any[];
+  modeChoices: any[];
 }
 
 export type { FormItemProps, FormProps, RoleFormItemProps, RoleFormProps };

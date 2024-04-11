@@ -1,10 +1,18 @@
 import type { Component } from "vue";
+import type { PaginationProps } from "@pureadmin/table";
+
+interface SearchFieldsProps {
+  page: number;
+  size: number;
+  ordering: string;
+}
 
 interface ApiAuthProps {
   list?: string | boolean | null;
   create?: string | boolean | null;
   delete?: string | boolean | null;
   update?: string | boolean | null;
+  fields?: string | boolean | null;
   batchDelete?: string | boolean | null;
 }
 
@@ -17,15 +25,14 @@ interface EditFormProps {
 }
 
 interface FormProps {
-  auth?: ApiAuthProps;
-  api: ApiAuthProps;
+  localeName: string;
+  auth?: ApiAuthProps | any;
+  api: ApiAuthProps | any;
   editForm?: EditFormProps;
-  pagination?: object | null;
-  searchField: object | null;
-  searchColumns: any[];
-  tableColumns: any[];
+  pagination?: PaginationProps | null;
+  tableColumns: TableColumnList;
   customAddOrEdit?: boolean;
   resultFormat?: Function;
 }
 
-export type { ApiAuthProps, FormProps };
+export type { ApiAuthProps, FormProps, SearchFieldsProps, EditFormProps };

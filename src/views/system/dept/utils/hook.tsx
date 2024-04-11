@@ -1,14 +1,6 @@
 import dayjs from "dayjs";
 import { message } from "@/utils/message";
-import {
-  createDeptApi,
-  deleteDeptApi,
-  empowerDeptRoleApi,
-  getDeptDetailApi,
-  getDeptListApi,
-  manyDeleteDeptApi,
-  updateDeptApi
-} from "@/api/system/dept";
+import { deptApi } from "@/api/system/dept";
 import {
   computed,
   h,
@@ -22,67 +14,35 @@ import { addDialog } from "@/components/ReDialog";
 import roleForm from "../form/role.vue";
 import Form from "../form/index.vue";
 import type { RoleFormItemProps } from "./types";
-import { getRoleListApi } from "@/api/system/role";
+import { roleApi } from "@/api/system/role";
 import { cloneDeep, deviceDetection } from "@pureadmin/utils";
 import { useRouter } from "vue-router";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
-import { formatHigherDeptOptions, formatOptions } from "@/views/system/hooks";
-import { getDataPermissionListApi } from "@/api/system/permission";
+import {
+  formatFormColumns,
+  formatHigherDeptOptions,
+  formatOptions
+} from "@/views/system/hooks";
+import { dataPermissionApi } from "@/api/system/permission";
 import { ModeChoices } from "@/views/system/constants";
 import type { PlusColumn } from "plus-pro-components";
 
-import {
-  disableState,
-  renderOption,
-  renderSwitch,
-  selectOptions
-} from "@/views/system/render";
+import { renderOption, renderSwitch } from "@/views/system/render";
 import { handleTree } from "@/utils/tree";
 
 export function useDept(tableRef: Ref) {
   const { t } = useI18n();
-  const sortOptions = [
-    {
-      label: `${t("sorts.createdDate")} ${t("labels.descending")}`,
-      key: "-created_time"
-    },
-    {
-      label: `${t("sorts.createdDate")} ${t("labels.ascending")}`,
-      key: "created_time"
-    },
-    {
-      label: `${t("sorts.rank")} ${t("labels.descending")}`,
-      key: "-rank"
-    },
-    {
-      label: `${t("sorts.rank")} ${t("labels.ascending")}`,
-      key: "rank"
-    }
-  ];
-  const searchField = ref({
-    pk: "",
-    name: "",
-    code: "",
-    mode_type: "",
-    auto_bind: "",
-    description: "",
-    is_active: "",
-    ordering: sortOptions[3].key,
-    page: 1,
-    size: 1000
-  });
-
-  const defaultValue = cloneDeep(searchField.value);
 
   const api = reactive({
-    list: getDeptListApi,
-    create: createDeptApi,
-    delete: deleteDeptApi,
-    update: updateDeptApi,
-    empower: empowerDeptRoleApi,
-    detail: getDeptDetailApi,
-    batchDelete: manyDeleteDeptApi
+    list: deptApi.list,
+    create: deptApi.create,
+    delete: deptApi.delete,
+    update: deptApi.update,
+    empower: deptApi.empower,
+    choices: deptApi.choices,
+    fields: deptApi.fields,
+    batchDelete: deptApi.batchDelete
   });
 
   const auth = reactive({
@@ -90,13 +50,14 @@ export function useDept(tableRef: Ref) {
     create: hasAuth("create:systemDept"),
     delete: hasAuth("delete:systemDept"),
     update: hasAuth("update:systemDept"),
-    empower: hasAuth("empower:systemDeptRole"),
-    detail: hasAuth("detail:systemDept"),
-    batchDelete: hasAuth("manyDelete:systemDept")
+    empower: hasAuth("empower:systemDept"),
+    choices: hasAuth("choices:systemDept"),
+    fields: hasAuth("fields:systemDept"),
+    batchDelete: hasAuth("batchDelete:systemDept")
   });
 
   const editForm = shallowRef({
-    title: t("dept.dept"),
+    title: t("systemDept.dept"),
     form: Form,
     row: {
       roles: row => {
@@ -125,31 +86,26 @@ export function useDept(tableRef: Ref) {
   const choicesDict = ref([]);
   const columns = ref<TableColumnList>([
     {
-      label: t("labels.checkColumn"),
       type: "selection",
       fixed: "left",
       reserveSelection: true
     },
     {
-      label: t("dept.name"),
       prop: "name",
       minWidth: 200,
       cellRenderer: ({ row }) => <span v-copy={row.name}>{row.name}</span>
     },
     {
-      label: t("labels.id"),
       prop: "pk",
       minWidth: 100,
       cellRenderer: ({ row }) => <span v-copy={row.pk}>{row.pk}</span>
     },
     {
-      label: t("dept.code"),
       prop: "code",
       minWidth: 100,
       cellRenderer: ({ row }) => <span v-copy={row.code}>{row.code}</span>
     },
     {
-      label: t("dept.userCount"),
       prop: "user_count",
       minWidth: 100,
       cellRenderer: ({ row }) => (
@@ -159,25 +115,21 @@ export function useDept(tableRef: Ref) {
       )
     },
     {
-      label: t("sorts.rank"),
       prop: "rank",
       minWidth: 90
     },
     {
-      label: t("permission.mode"),
       prop: "mode_display",
       minWidth: 90
     },
     {
-      label: t("dept.autoBind"),
       minWidth: 130,
       prop: "auto_bind",
       cellRenderer: renderSwitch(auth.update, tableRef, "auto_bind", scope => {
-        return `${scope.row.name} ${t("dept.autoBind")}`;
+        return `${scope.row.name} ${t("systemDept.auto_bind")}`;
       })
     },
     {
-      label: t("labels.status"),
       prop: "is_active",
       minWidth: 90,
       cellRenderer: renderSwitch(auth.update, tableRef, "is_active", scope => {
@@ -185,86 +137,28 @@ export function useDept(tableRef: Ref) {
       })
     },
     {
-      label: t("dept.roles"),
       prop: "roles_info",
       width: 160,
       slot: "roles"
     },
     {
-      label: t("dept.rules"),
       prop: "rules_info",
       width: 160,
       slot: "rules"
     },
     {
-      label: t("sorts.createdDate"),
       minWidth: 180,
       prop: "created_time",
       formatter: ({ created_time }) =>
         dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
     },
     {
-      label: t("labels.operations"),
       fixed: "right",
       width: 180,
       slot: "operation",
-      hide: !(
-        hasAuth("update:systemDept") ||
-        hasAuth("empower:systemDeptRole") ||
-        hasAuth("delete:systemDept")
-      )
+      hide: !(auth.update || auth.empower || auth.delete)
     }
   ]);
-  const searchColumns: PlusColumn[] = computed(() => {
-    return [
-      {
-        label: t("labels.id"),
-        prop: "pk",
-        valueType: "input"
-      },
-      {
-        label: t("dept.name"),
-        prop: "name",
-        valueType: "input"
-      },
-      {
-        label: t("dept.code"),
-        prop: "code",
-        valueType: "input"
-      },
-      {
-        label: t("labels.description"),
-        prop: "description",
-        valueType: "input"
-      },
-      {
-        label: t("dept.autoBind"),
-        prop: "auto_bind",
-        valueType: "select",
-        options: selectOptions
-      },
-      {
-        label: t("labels.status"),
-        prop: "is_active",
-        valueType: "select",
-        options: selectOptions
-      },
-      {
-        label: t("permission.mode"),
-        prop: "mode_type",
-        valueType: "select",
-        options: computed(() => {
-          return formatOptions(choicesDict.value["mode_type"]);
-        })
-      },
-      {
-        label: t("labels.sort"),
-        prop: "ordering",
-        valueType: "select",
-        options: formatOptions(sortOptions)
-      }
-    ];
-  });
 
   function onGoDetail(row: any) {
     if (hasGlobalAuth("list:systemUser") && row.user_count && row.pk) {
@@ -288,18 +182,18 @@ export function useDept(tableRef: Ref) {
   /** 分配角色 */
   function handleRole(row) {
     addDialog({
-      title: t("dept.assignRole", { dept: row.name }),
+      title: t("systemDept.assignRole", { dept: row.name }),
       props: {
         formInline: {
           name: row?.name ?? "",
           code: row?.code ?? "",
           mode_type: row?.mode_type ?? ModeChoices.AND,
-          ids: row?.roles ?? [],
-          pks: row?.rules ?? []
+          roles: row?.roles ?? [],
+          rules: row?.rules ?? []
         },
         rolesOptions: rolesOptions.value ?? [],
         rulesOptions: rulesOptions.value ?? [],
-        choicesDict: choicesDict.value["mode_type"] ?? []
+        modeChoices: choicesDict.value["mode_type"] ?? []
       },
       width: "600px",
       draggable: true,
@@ -311,8 +205,8 @@ export function useDept(tableRef: Ref) {
         const curData = options.props.formInline as RoleFormItemProps;
         api
           .empower(row.pk, {
-            roles: curData.ids,
-            rules: curData.pks,
+            roles: curData.roles,
+            rules: curData.rules,
             mode_type: curData.mode_type
           })
           .then(res => {
@@ -331,28 +225,30 @@ export function useDept(tableRef: Ref) {
   }
 
   onMounted(() => {
-    api.detail("choices").then(res => {
+    api.choices().then(res => {
       if (res.code === 1000) {
         choicesDict.value = res.choices_dict;
       }
     });
 
     if (hasGlobalAuth("list:systemRole")) {
-      getRoleListApi({ page: 1, size: 1000 }).then(res => {
+      roleApi.list({ page: 1, size: 1000 }).then(res => {
         if (res.code === 1000 && res.data) {
           rolesOptions.value = res.data.results;
         }
       });
     }
     if (hasGlobalAuth("list:systemDataPermission")) {
-      getDataPermissionListApi({
-        page: 1,
-        size: 1000
-      }).then(res => {
-        if (res.code === 1000 && res.data) {
-          rulesOptions.value = res.data.results;
-        }
-      });
+      dataPermissionApi
+        .list({
+          page: 1,
+          size: 1000
+        })
+        .then(res => {
+          if (res.code === 1000 && res.data) {
+            rulesOptions.value = res.data.results;
+          }
+        });
     }
   });
 
@@ -366,54 +262,29 @@ export function useDept(tableRef: Ref) {
     auth,
     columns,
     editForm,
-    searchField,
     buttonClass,
-    defaultValue,
-    searchColumns,
     handleRole,
     formatResult
   };
 }
 
 export function useDeptForm(props) {
-  const { t } = useI18n();
+  const { t, te } = useI18n();
   const columns: PlusColumn[] = [
     {
-      label: t("dept.name"),
       prop: "name",
       valueType: "input",
-      fieldProps: {
-        disabled: disableState(props, "name")
-      },
-      colProps: {
-        xs: 24,
-        sm: 24,
-        md: 24,
-        lg: 12,
-        xl: 12
-      }
+      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
     },
     {
-      label: t("dept.code"),
       prop: "code",
       valueType: "input",
-      fieldProps: {
-        disabled: disableState(props, "code")
-      },
-      colProps: {
-        xs: 24,
-        sm: 24,
-        md: 24,
-        lg: 12,
-        xl: 12
-      }
+      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
     },
     {
-      label: t("menu.parentNode"),
       prop: "parent",
       valueType: "cascader",
       fieldProps: {
-        disabled: disableState(props, "parent"),
         props: {
           value: "pk",
           label: "name",
@@ -424,61 +295,37 @@ export function useDeptForm(props) {
       options: props.treeData
     },
     {
-      label: t("sorts.rank"),
       prop: "rank",
       valueType: "input-number",
-      fieldProps: {
-        disabled: disableState(props, "rank")
-      },
-      colProps: {
-        xs: 24,
-        sm: 24,
-        md: 24,
-        lg: 12,
-        xl: 12
-      }
+      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
     },
     {
-      label: t("dept.autoBind"),
       prop: "auto_bind",
       valueType: "radio",
-      colProps: {
-        xs: 24,
-        sm: 24,
-        md: 24,
-        lg: 12,
-        xl: 12
-      },
-      tooltip: t("dept.autoBindDesc"),
-      fieldProps: {
-        disabled: disableState(props, "auto_bind")
-      },
+      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 },
+      tooltip: t("systemDept.autoBindDesc"),
+
       renderField: renderOption()
     },
     {
-      label: t("labels.status"),
       prop: "is_active",
       valueType: "radio",
-      tooltip: t("labels.status"),
       renderField: renderOption()
     },
     {
-      label: t("labels.description"),
       prop: "description",
-      valueType: "textarea",
-      fieldProps: {
-        disabled: disableState(props, "description")
-      }
+      valueType: "textarea"
     }
   ];
+  formatFormColumns(props, columns, t, te, "systemDept");
   return {
     t,
     columns
   };
 }
 
-export function useRoleForm(props) {
-  const { t } = useI18n();
+export function useDeptRoleForm(props) {
+  const { t, te } = useI18n();
   const customOptions = (data: Array<any>) => {
     const result = [];
     data?.forEach(item => {
@@ -507,7 +354,6 @@ export function useRoleForm(props) {
   };
   const columns: PlusColumn[] = [
     {
-      label: t("dept.name"),
       prop: "name",
       valueType: "input",
       fieldProps: {
@@ -515,7 +361,6 @@ export function useRoleForm(props) {
       }
     },
     {
-      label: t("dept.code"),
       prop: "code",
       valueType: "input",
       fieldProps: {
@@ -523,8 +368,7 @@ export function useRoleForm(props) {
       }
     },
     {
-      label: t("dept.roles"),
-      prop: "ids",
+      prop: "roles",
       valueType: "select",
       fieldProps: {
         multiple: true
@@ -532,14 +376,12 @@ export function useRoleForm(props) {
       options: customOptions(props.rolesOptions)
     },
     {
-      label: t("permission.mode"),
       prop: "mode_type",
       valueType: "select",
-      options: formatOptions(props.choicesDict)
+      options: formatOptions(props.modeChoices)
     },
     {
-      label: t("dept.rules"),
-      prop: "pks",
+      prop: "rules",
       valueType: "select",
       fieldProps: {
         multiple: true
@@ -547,6 +389,7 @@ export function useRoleForm(props) {
       options: customOptions(props.rulesOptions)
     }
   ];
+  formatFormColumns(props, columns, t, te, "systemDept");
   return {
     t,
     columns

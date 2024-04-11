@@ -30,7 +30,7 @@ watch(ruleInfo.value, () => {
 
 <template>
   <div class="main">
-    <PureTableBar :columns="columns" :title="t('permission.rules')">
+    <PureTableBar :columns="columns" :title="t('systemPermission.rules')">
       <template v-if="hasGlobalAuth('list:systemModelField')" #buttons>
         <el-button
           :icon="useRenderIcon(AddFill)"

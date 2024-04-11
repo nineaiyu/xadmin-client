@@ -11,17 +11,8 @@ defineOptions({
 
 const tableRef = ref();
 
-const {
-  t,
-  api,
-  auth,
-  columns,
-  editForm,
-  searchField,
-  defaultValue,
-  searchColumns,
-  handleInvalidCache
-} = useSystemConfig(tableRef);
+const { t, api, auth, columns, editForm, handleInvalidCache } =
+  useSystemConfig(tableRef);
 </script>
 
 <template>
@@ -30,14 +21,13 @@ const {
     :api="api"
     :auth="auth"
     :edit-form="editForm"
-    :search-columns="searchColumns"
-    :search-field="searchField"
+    locale-name="configSystem"
     :table-columns="columns"
   >
     <template #extOperation="{ row, size }">
       <el-popconfirm
         v-if="auth.invalid"
-        :title="t('configUser.confirmInvalid')"
+        :title="t('configSystem.confirmInvalid')"
         @confirm="handleInvalidCache(row)"
       >
         <template #reference>

@@ -15,7 +15,7 @@ interface FormProps {
   fieldLookupsData?: any[];
   menuPermissionData?: any[];
   valuesData?: any[];
-  choicesDict?: any[];
+  modeChoices?: any[];
   showColumns: any[];
   isAdd?: boolean;
 }

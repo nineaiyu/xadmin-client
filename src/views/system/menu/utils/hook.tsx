@@ -1,13 +1,6 @@
 import { message } from "@/utils/message";
-import {
-  actionRankMenuApi,
-  createMenuApi,
-  deleteMenuApi,
-  getMenuListApi,
-  manyDeleteMenuApi,
-  updateMenuApi
-} from "@/api/system/menu";
-import { computed, h, onMounted, reactive, ref } from "vue";
+import { menuApi } from "@/api/system/menu";
+import { h, onMounted, reactive, ref } from "vue";
 import { addDialog } from "@/components/ReDialog";
 import editForm from "../edit.vue";
 import type { FormItemProps } from "./types";
@@ -16,8 +9,8 @@ import { cloneDeep, deviceDetection } from "@pureadmin/utils";
 import { getMenuFromPk, getMenuOrderPk } from "@/utils";
 import { useI18n } from "vue-i18n";
 import { FieldChoices, MenuChoices } from "@/views/system/constants";
-import { hasGlobalAuth } from "@/router/utils";
-import { getModelLabelFieldListApi } from "@/api/system/field";
+import { hasAuth, hasGlobalAuth } from "@/router/utils";
+import { modelLabelFieldApi } from "@/api/system/field";
 
 const defaultData: FormItemProps = {
   menu_type: MenuChoices.DIRECTORY,
@@ -26,6 +19,7 @@ const defaultData: FormItemProps = {
   path: "",
   rank: 0,
   component: "",
+  method: "",
   model: [],
   is_active: true,
   meta: {
@@ -44,44 +38,78 @@ const defaultData: FormItemProps = {
   }
 };
 
+export function useApiAuth() {
+  const api = reactive({
+    list: menuApi.list,
+    rank: menuApi.rank,
+    create: menuApi.create,
+    delete: menuApi.delete,
+    update: menuApi.update,
+    apiUrl: menuApi.apiUrl,
+    choices: menuApi.choices,
+    fields: menuApi.fields,
+    permissions: menuApi.permissions,
+    batchDelete: menuApi.batchDelete
+  });
+
+  const auth = reactive({
+    list: hasAuth("list:systemMenu"),
+    rank: hasAuth("rank:systemMenu"),
+    create: hasAuth("create:systemMenu"),
+    delete: hasAuth("delete:systemMenu"),
+    update: hasAuth("update:systemMenu"),
+    permissions: hasAuth("permissions:systemMenu"),
+    choices: hasAuth("choices:systemMenu"),
+    fields: hasAuth("fields:systemMenu"),
+    apiUrl: hasAuth("apiUrl:systemMenu"),
+    batchDelete: hasAuth("batchDelete:systemMenu")
+  });
+  return {
+    api,
+    auth
+  };
+}
+
 export function useMenu() {
   const { t } = useI18n();
+  const { api, auth } = useApiAuth();
   const formRef = ref();
   const treeData = ref([]);
-  const dataList = ref([]);
   const parentIds = ref([]);
   const choicesDict = ref([]);
-  const menuChoices = ref([]);
   const menuUrlList = ref([]);
   const modelList = ref([]);
   const menuData = reactive<FormItemProps>(cloneDeep(defaultData));
   const loading = ref(true);
 
-  const buttonClass = computed(() => {
-    return [
-      "!h-[20px]",
-      "reset-margin",
-      "!text-gray-500",
-      "dark:!text-white",
-      "dark:hover:!text-primary"
-    ];
-  });
+  const getMenuApiList = () => {
+    if (auth.apiUrl) {
+      api.apiUrl().then(res => {
+        if (res.code === 1000) {
+          menuUrlList.value = res.results;
+        }
+      });
+    }
+
+    api.choices().then(res => {
+      if (res.code === 1000) {
+        choicesDict.value = res.choices_dict;
+      }
+    });
+  };
 
   const getMenuData = () => {
     loading.value = true;
-    getMenuListApi({ page: 1, size: 1000 }).then(res => {
+    api.list({ page: 1, size: 1000 }).then(res => {
       if (res.code === 1000) {
         treeData.value = handleTree(res.data.results);
-        choicesDict.value = res.choices_dict;
-        menuUrlList.value = res.api_url_list;
-        menuChoices.value = res.menu_choices;
       }
       loading.value = false;
     });
   };
 
   function handleDelete(row) {
-    deleteMenuApi(row.pk).then(res => {
+    api.delete(row.pk).then(res => {
       if (res.code === 1000) {
         message(t("results.success"), { type: "success" });
         getMenuData();
@@ -97,7 +125,7 @@ export function useMenu() {
       message(t("results.noSelectedData"), { type: "error" });
       return;
     }
-    manyDeleteMenuApi({ pks: JSON.stringify(manyPks) }).then(res => {
+    api.batchDelete(manyPks).then(res => {
       if (res.code === 1000) {
         message(t("results.batchDelete", { count: manyPks.length }), {
           type: "success"
@@ -109,17 +137,12 @@ export function useMenu() {
     });
   }
 
-  const resetForm = formEl => {
-    if (!formEl) return;
-    formEl.resetFields();
-  };
-
   const handleConfirm = (formRef, row) => {
     formRef!.validate((isValid: boolean) => {
       if (isValid) {
         row.meta.title = row.title;
         if (row.pk) {
-          updateMenuApi(row.pk, row).then(res => {
+          api.update(row.pk, row).then(res => {
             if (res.code === 1000) {
               message(res.detail, { type: "success" });
               getMenuData();
@@ -152,8 +175,8 @@ export function useMenu() {
       title: t("buttons.add"),
       props: {
         treeData: treeData,
-        choicesDict: choicesDict,
-        menuChoices: menuChoices,
+        methodChoices: choicesDict.value["method"],
+        menuChoices: choicesDict.value["menu_type"],
         modelList: modelList,
         menuUrlList: menuUrlList,
         formInline: {
@@ -164,6 +187,7 @@ export function useMenu() {
           parent_ids: row?.parent_ids ?? [],
           name: row?.name ?? "",
           path: row?.path ?? "",
+          method: row?.method ?? "",
           rank: row?.rank ?? 0,
           component: row?.component ?? "",
           model: row?.model ?? [],
@@ -171,11 +195,11 @@ export function useMenu() {
           meta: {
             title: row?.meta.title ?? "",
             icon: row?.meta.icon ?? "",
+            frame_url: row?.meta.frame_url ?? "",
             r_svg_name: row?.meta.r_svg_name ?? "",
             is_show_menu: row?.meta.is_show_menu ?? true,
             is_show_parent: row?.meta.is_show_parent ?? false,
             is_keepalive: row?.meta.is_keepalive ?? false,
-            frame_url: row?.meta.frame_url ?? "",
             frame_loading: row?.meta.frame_loading ?? false,
             transition_enter: row?.meta.transition_enter ?? "",
             transition_leave: row?.meta.transition_leave ?? "",
@@ -193,19 +217,14 @@ export function useMenu() {
       beforeSure: (done, { options }) => {
         const FormRef = formRef.value.getRef();
         const curData = options.props.formInline as FormItemProps;
-
-        function chores(detail) {
-          message(detail, { type: "success" });
-          done(); // 关闭弹框
-          getMenuData(); // 刷新表格数据
-        }
-
         FormRef.validate(valid => {
           if (valid) {
             curData.meta.title = curData.title;
-            createMenuApi(curData).then(res => {
+            api.create(curData).then(res => {
               if (res.code === 1000) {
-                chores(res.detail);
+                message(t("results.success"), { type: "success" });
+                done(); // 关闭弹框
+                getMenuData(); // 刷新表格数据
               } else {
                 message(`${t("results.failed")}，${res.detail}`, {
                   type: "error"
@@ -225,9 +244,10 @@ export function useMenu() {
     } else {
       u_menu.parent = node2.data.parent;
     }
-    updateMenuApi(u_menu.pk, u_menu).then((res: any) => {
+    api.update(u_menu.pk, u_menu).then((res: any) => {
       if (res.code === 1000) {
-        actionRankMenuApi({ pks: getMenuOrderPk(treeRef.value?.data) })
+        api
+          .rank({ pks: getMenuOrderPk(treeRef.value?.data) })
           .then((res: any) => {
             if (res.code === 1000) {
               message(res.detail, { type: "success" });
@@ -244,41 +264,39 @@ export function useMenu() {
     });
   };
   onMounted(() => {
+    getMenuApiList();
     getMenuData();
     if (hasGlobalAuth("list:systemModelField")) {
-      getModelLabelFieldListApi({
-        page: 1,
-        size: 1000,
-        parent: 0,
-        field_type: FieldChoices.ROLE
-      }).then(res => {
-        if (res.code === 1000) {
-          modelList.value = res.data.results;
-        }
-      });
+      modelLabelFieldApi
+        .list({
+          page: 1,
+          size: 1000,
+          parent: 0,
+          field_type: FieldChoices.ROLE
+        })
+        .then(res => {
+          if (res.code === 1000) {
+            modelList.value = res.data.results;
+          }
+        });
     }
   });
 
   return {
-    t,
-    loading,
-    parentIds,
-    dataList,
+    auth,
     treeData,
     menuData,
-    choicesDict,
-    menuChoices,
-    menuUrlList,
     modelList,
-    addNewMenu,
-    buttonClass,
+    parentIds,
+    choicesDict,
+    menuUrlList,
     defaultData,
-    getMenuData,
+    addNewMenu,
     handleDrag,
     openDialog,
-    resetForm,
-    handleConfirm,
+    getMenuData,
     handleDelete,
+    handleConfirm,
     handleManyDelete
   };
 }

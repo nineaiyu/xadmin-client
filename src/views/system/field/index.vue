@@ -9,16 +9,7 @@ defineOptions({
 });
 const tableRef = ref();
 
-const {
-  t,
-  api,
-  auth,
-  columns,
-  searchField,
-  defaultValue,
-  searchColumns,
-  handleSync
-} = useModelField(tableRef);
+const { t, api, auth, columns, handleSync } = useModelField(tableRef);
 </script>
 
 <template>
@@ -26,8 +17,7 @@ const {
     ref="tableRef"
     :api="api"
     :auth="auth"
-    :search-columns="searchColumns"
-    :search-field="searchField"
+    locale-name="modelFieldManagement"
     :table-columns="columns"
   >
     <template #barButtons>

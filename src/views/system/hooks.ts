@@ -1,6 +1,9 @@
 // 抽离可公用的工具函数等用于系统管理页面逻辑
-import { computed } from "vue";
-import { cloneDeep, useDark } from "@pureadmin/utils";
+import { computed, type Ref } from "vue";
+import { cloneDeep, isNullOrUnDef, useDark } from "@pureadmin/utils";
+import type { PlusColumn } from "plus-pro-components";
+import { getPickerShortcuts } from "@/views/system/logs/utils";
+import { useI18n } from "vue-i18n";
 
 export function usePublicHooks() {
   const { isDark } = useDark();
@@ -102,4 +105,188 @@ export const formatOptions = (data: Array<any>) => {
 export const plusPorChange = (column: any, func: Function, ...args) => {
   const canChangeType = ["select", "date-picker", "time-picker", "time-select"];
   canChangeType.indexOf(column.valueType) > -1 && func && func(...args);
+};
+
+export const formatPublicLabels = (
+  t: Function,
+  te: Function,
+  label: string,
+  localeName: string
+) => {
+  const formatLabel = `${localeName}.${label}`;
+  if (te(formatLabel)) {
+    return t(formatLabel);
+  }
+  if (
+    [
+      "pk",
+      "rank",
+      "description",
+      "ordering",
+      "is_active",
+      "selection",
+      "operation",
+      "created_time",
+      "updated_time",
+      "descending",
+      "ascending",
+      "status"
+    ].indexOf(label) > -1
+  ) {
+    return t(`commonLabels.${label}`);
+  }
+  return t(formatLabel);
+};
+
+interface SearchProp {
+  key: string;
+  choices: Array<number | string | any>;
+  input_type: string | any;
+}
+
+export const formatSearchColumns = (
+  item: SearchProp,
+  localeName?: string,
+  t?: Function,
+  te?: Function
+) => {
+  const column: PlusColumn = {
+    label: localeName
+      ? formatPublicLabels(t, te, item.key, localeName)
+      : item.key,
+    prop: item.key,
+    options: formatOptions(item.choices),
+    valueType: "input"
+  };
+  switch (item.input_type) {
+    case "text":
+      column.valueType = "input";
+      break;
+    case "datetime":
+      column.valueType = "date-picker";
+      column.fieldProps = {
+        valueFormat: "YYYY-MM-DD HH:mm:ss"
+      };
+      break;
+    case "datetimerange":
+      column.valueType = "date-picker";
+      column.fieldProps = {
+        shortcuts: getPickerShortcuts(),
+        valueFormat: "YYYY-MM-DD HH:mm:ss",
+        type: "datetimerange"
+      };
+      column.colProps = {
+        xs: 24,
+        sm: 24,
+        md: 12,
+        lg: 12,
+        xl: 12
+      };
+      break;
+    case "number":
+      column.valueType = "input";
+      column.rules = [
+        {
+          validator: (rule, value, callback) => {
+            if (value !== "" && !/^\d+$/.test(value)) {
+              callback(new Error("field must be a number"));
+            }
+          }
+        }
+      ];
+      break;
+    case "select-multiple":
+      column.valueType = "select";
+      column.fieldProps = {
+        multiple: true
+      };
+      break;
+    case "select-ordering":
+      column.valueType = "select";
+      const options = formatOptions(item.choices);
+      options?.forEach(option => {
+        const labels = option.label.split(" ");
+        option.label = `${formatPublicLabels(t, te, labels[0] as string, localeName)} ${formatPublicLabels(t, te, labels[1] as string, localeName)}`;
+      });
+      column.options = options;
+      break;
+    default:
+      column.valueType = item.input_type;
+  }
+  return column;
+};
+export const getFieldsData = (
+  fieldsApi: Function,
+  searchFields: Ref,
+  searchColumns: Ref,
+  localeName?: string,
+  page: number = 1,
+  size: number = 10,
+  ordering: string = "-created_time"
+) => {
+  return new Promise((resolve, reject) => {
+    const { t, te } = useI18n();
+    fieldsApi().then(
+      (res: { code: number; data: { results: Array<SearchProp> } }) => {
+        if (res.code === 1000) {
+          res.data.results.forEach(item => {
+            searchFields.value[item.key] = "";
+            searchColumns.value.push(
+              formatSearchColumns(item, localeName, t, te)
+            );
+          });
+          searchFields.value.page = page;
+          searchFields.value.size = size;
+          searchFields.value.ordering = ordering;
+          resolve(res);
+        } else {
+          reject(res);
+        }
+      }
+    );
+  });
+};
+
+export const disableState = (props, key) => {
+  return !props?.isAdd && props?.showColumns?.indexOf(key) === -1;
+};
+
+export const formatFormColumns = (
+  props: Record<string, any>,
+  tableColumns: Array<any>,
+  t: Function,
+  te: Function,
+  localeName: string,
+  disabled: boolean = false
+) => {
+  tableColumns.forEach(column => {
+    column.label =
+      column.label ??
+      formatPublicLabels(t, te, column.prop as string, localeName);
+    if (isNullOrUnDef(column.fieldProps?.disabled)) {
+      column.fieldProps = {
+        ...column.fieldProps,
+        disabled: disabled || disableState(props, column.prop)
+      };
+    }
+  });
+};
+
+export const formatColumnsLabel = (
+  tableColumns: TableColumnList,
+  t: Function,
+  te: Function,
+  localeName: string
+) => {
+  tableColumns.forEach(column => {
+    let key = column.prop;
+    if (column.type === "selection") {
+      key = column.type;
+    }
+    if (column.slot === "operation") {
+      key = column.slot;
+    }
+    column.label =
+      column.label ?? formatPublicLabels(t, te, key as string, localeName);
+  });
 };

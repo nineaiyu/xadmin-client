@@ -57,6 +57,7 @@ export const usePermissionStore = defineStore({
     clearAllCachePage() {
       this.wholeMenus = [];
       this.cachePageList = [];
+      this.routes = [];
     }
   }
 });

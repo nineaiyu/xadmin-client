@@ -2,33 +2,25 @@ import { reactive } from "vue";
 import type { FormRules } from "element-plus";
 import { $t, transformI18n } from "@/plugins/i18n";
 
-/** 自定义表单规则校验 */
 export const formRules = reactive<FormRules>({
   name: [
     {
       required: true,
-      message: transformI18n($t("dept.name")),
+      message: transformI18n($t("systemDept.name")),
       trigger: "blur"
     }
   ],
   code: [
     {
       required: true,
-      message: transformI18n($t("dept.code")),
+      message: transformI18n($t("systemDept.code")),
       trigger: "blur"
     }
   ],
   rank: [
     {
       required: true,
-      message: transformI18n($t("sorts.rank")),
-      trigger: "blur"
-    }
-  ],
-  is_active: [
-    {
-      required: true,
-      message: transformI18n($t("labels.verifyStatus")),
+      message: transformI18n($t("systemDept.rank")),
       trigger: "blur"
     }
   ]

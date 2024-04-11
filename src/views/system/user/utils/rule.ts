@@ -4,12 +4,11 @@ import { $t, transformI18n } from "@/plugins/i18n";
 import { isEmail, isPhone } from "@pureadmin/utils";
 import { REGEXP_PWD } from "@/views/login/utils/rule";
 
-/** 自定义表单规则校验 */
 export const formRules = reactive<FormRules>({
   username: [
     {
       required: true,
-      message: transformI18n($t("user.verifyUsername")),
+      message: transformI18n($t("systemUser.username")),
       trigger: "blur"
     }
   ],
@@ -31,21 +30,21 @@ export const formRules = reactive<FormRules>({
   nickname: [
     {
       required: true,
-      message: transformI18n($t("user.verifyNickname")),
+      message: transformI18n($t("systemUser.nickname")),
       trigger: "blur"
     }
   ],
   gender: [
     {
       required: true,
-      message: transformI18n($t("user.verifyGender")),
+      message: transformI18n($t("systemUser.gender")),
       trigger: "blur"
     }
   ],
   dept: [
     {
       required: true,
-      message: transformI18n($t("user.dept")),
+      message: transformI18n($t("systemUser.dept")),
       trigger: "blur"
     }
   ],
@@ -59,7 +58,7 @@ export const formRules = reactive<FormRules>({
   mobile: [
     {
       validator: (rule, value, callback) => {
-        if (value === "") {
+        if (value === "" || !value) {
           callback();
         } else if (!isPhone(value)) {
           callback(new Error(transformI18n($t("login.phoneCorrectReg"))));
@@ -73,7 +72,7 @@ export const formRules = reactive<FormRules>({
   email: [
     {
       validator: (rule, value, callback) => {
-        if (value === "") {
+        if (value === "" || !value) {
           callback();
         } else if (!isEmail(value)) {
           callback(new Error(transformI18n($t("login.emailCorrectReg"))));

@@ -2,21 +2,21 @@
 import { ref } from "vue";
 import { RoleFormProps } from "../utils/types";
 import { ModeChoices } from "@/views/system/constants";
-import { useRoleForm } from "../utils/hook";
+import { useDeptRoleForm } from "../utils/hook";
 
 const props = withDefaults(defineProps<RoleFormProps>(), {
   formInline: () => ({
     name: "",
     code: "",
     mode_type: ModeChoices.AND,
-    ids: [],
-    pks: []
+    roles: [],
+    rules: []
   }),
-  rolesOptions: [],
-  rulesOptions: [],
-  choicesDict: []
+  rolesOptions: () => [],
+  modeChoices: () => [],
+  rulesOptions: () => []
 });
-const { t, columns } = useRoleForm(props);
+const { columns } = useDeptRoleForm(props);
 
 const formRef = ref();
 const newFormInline = ref(props.formInline);
@@ -32,6 +32,7 @@ defineExpose({ getRef });
   <PlusForm
     ref="formRef"
     v-model="newFormInline"
+    label-position="right"
     :columns="columns"
     :hasFooter="false"
     :row-props="{ gutter: 24 }"

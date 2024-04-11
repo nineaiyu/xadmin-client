@@ -22,7 +22,7 @@ import {
   userKey
 } from "@/utils/auth";
 import { message } from "@/utils/message";
-import { getUserInfoApi } from "@/api/user/userinfo";
+import { userInfoApi } from "@/api/user/userinfo";
 import { getUserSiteConfigApi } from "@/api/config";
 
 export const useUserStore = defineStore({
@@ -96,7 +96,8 @@ export const useUserStore = defineStore({
     },
     async getUserInfo() {
       return new Promise<UserInfoResult>((resolve, reject) => {
-        getUserInfoApi()
+        userInfoApi
+          .self()
           .then(res => {
             if (res.code === 1000) {
               setUserInfo(res.data);

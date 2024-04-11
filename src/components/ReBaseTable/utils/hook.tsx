@@ -1,7 +1,6 @@
 import { message } from "@/utils/message";
 import { addDialog } from "@/components/ReDialog";
-import type { FormItemProps } from "./types";
-import type { PaginationProps } from "@pureadmin/table";
+import type { FormProps, SearchFieldsProps } from "./types";
 import { h, onMounted, ref, type Ref, toRaw } from "vue";
 import {
   cloneDeep,
@@ -13,38 +12,33 @@ import {
 import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
 import { useRoute } from "vue-router";
+import { formatColumnsLabel, getFieldsData } from "@/views/system/hooks";
 
 export function useBaseTable(
-  emit,
+  emit: any,
   tableRef: Ref,
-  api,
-  editForm,
-  tableColumns,
-  pagination: PaginationProps | {},
-  searchField: Ref,
-  resultFormat: Function
+  api: FormProps["api"],
+  editForm: FormProps["editForm"],
+  tableColumns: FormProps["tableColumns"],
+  pagination: FormProps["pagination"],
+  resultFormat: FormProps["resultFormat"],
+  localeName: FormProps["localeName"]
 ) {
-  const { t } = useI18n();
+  const { t, te } = useI18n();
   const formRef = ref();
+  const searchFields = ref<SearchFieldsProps>({
+    page: 1,
+    size: 10,
+    ordering: "-created_time"
+  });
+  const defaultValue = ref({});
+  const searchColumns = ref([]);
   const selectedNum = ref(0);
   const dataList = ref([]);
   const loading = ref(true);
   const showColumns = ref([]);
   const route = useRoute();
   const getParameter = isEmpty(route.params) ? route.query : route.params;
-
-  const defaultPagination = {
-    total: 0,
-    pageSize: 10,
-    currentPage: 1,
-    pageSizes: [5, 10, 20, 50, 100],
-    background: true
-  };
-
-  Object.keys(defaultPagination).forEach(key => {
-    pagination[key] || (pagination[key] = defaultPagination[key]);
-  });
-
   const handleDelete = row => {
     api.delete(row.pk).then(res => {
       if (res.code === 1000) {
@@ -57,13 +51,13 @@ export function useBaseTable(
   };
 
   const handleSizeChange = (val: number) => {
-    searchField.value.page = 1;
-    searchField.value.size = val;
+    searchFields.value.page = 1;
+    searchFields.value.size = val;
     onSearch();
   };
 
   const handleCurrentChange = (val: number) => {
-    searchField.value.page = val;
+    searchFields.value.page = val;
     onSearch();
   };
 
@@ -88,21 +82,17 @@ export function useBaseTable(
       message(t("results.noSelectedData"), { type: "error" });
       return;
     }
-    api
-      .batchDelete({
-        pks: JSON.stringify(getSelectPks("pk"))
-      })
-      .then(res => {
-        if (res.code === 1000) {
-          message(t("results.batchDelete", { count: selectedNum.value }), {
-            type: "success"
-          });
-          onSelectionCancel();
-          onSearch();
-        } else {
-          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-        }
-      });
+    api.batchDelete(getSelectPks("pk")).then(res => {
+      if (res.code === 1000) {
+        message(t("results.batchDelete", { count: selectedNum.value }), {
+          type: "success"
+        });
+        onSelectionCancel();
+        onSearch();
+      } else {
+        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+      }
+    });
   };
 
   const formatColumns = (results, columns) => {
@@ -123,12 +113,12 @@ export function useBaseTable(
 
   const onSearch = (init = false) => {
     if (init) {
-      pagination.currentPage = searchField.value.page = 1;
-      pagination.pageSize = searchField.value.size = 10;
+      pagination.currentPage = searchFields.value.page = 1;
+      pagination.pageSize = searchFields.value.size = 10;
     }
     loading.value = true;
     api
-      .list(toRaw(searchField.value))
+      .list(toRaw(searchFields.value))
       .then(res => {
         if (res.code === 1000 && res.data) {
           formatColumns(res.data?.results, tableColumns);
@@ -141,7 +131,7 @@ export function useBaseTable(
         } else {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
         }
-        emit("searchEnd", getParameter, searchField, dataList, res);
+        emit("searchEnd", getParameter, searchFields, dataList, res);
         delay(500).then(() => {
           loading.value = false;
         });
@@ -193,7 +183,7 @@ export function useBaseTable(
       contentRenderer: () => h(editForm.form, { ref: formRef }),
       beforeSure: (done, { options }) => {
         const FormRef = formRef.value.getRef();
-        const curData = options.props.formInline as FormItemProps;
+        const curData = options.props.formInline;
 
         const chores = detail => {
           message(detail, { type: "success" });
@@ -203,12 +193,13 @@ export function useBaseTable(
 
         FormRef.validate(valid => {
           if (valid) {
+            // todo 接口监测方法
             let apiCreate = api.create;
-            if (api.create.name === "create") {
+            if (api.create.length === 3) {
               apiCreate = apiCreate(row, isAdd, curData);
             }
             let apiUpdate = api.update;
-            if (api.update.name === "update") {
+            if (api.update.length === 3) {
               apiUpdate = apiUpdate(row, isAdd, curData);
             }
             if (isAdd) {
@@ -294,13 +285,19 @@ export function useBaseTable(
   };
 
   onMounted(() => {
-    if (getParameter) {
-      const parameter = cloneDeep(getParameter);
-      Object.keys(parameter).forEach(param => {
-        searchField.value[param] = parameter[param];
-      });
-    }
-    onSearch();
+    getFieldsData(api.fields, searchFields, searchColumns, localeName).then(
+      () => {
+        defaultValue.value = cloneDeep(searchFields.value);
+        if (getParameter) {
+          const parameter = cloneDeep(getParameter);
+          Object.keys(parameter).forEach(param => {
+            searchFields.value[param] = parameter[param];
+          });
+        }
+        formatColumnsLabel(tableColumns, t, te, localeName);
+        onSearch();
+      }
+    );
   });
 
   return {
@@ -308,10 +305,13 @@ export function useBaseTable(
     route,
     loading,
     dataList,
-    searchField,
     pagination,
     selectedNum,
     showColumns,
+    defaultValue,
+    searchFields,
+    tableColumns,
+    searchColumns,
     onChange,
     onSearch,
     openDialog,

@@ -19,9 +19,6 @@ const {
   columns,
   unreadCount,
   selectedNum,
-  searchField,
-  defaultValue,
-  searchColumns,
   searchEnd,
   showDialog,
   handleReadAll,
@@ -34,8 +31,7 @@ const {
     ref="tableRef"
     :api="api"
     :auth="auth"
-    :search-columns="searchColumns"
-    :search-field="searchField"
+    locale-name="userNotice"
     :table-columns="columns"
     @searchEnd="searchEnd"
     @selection-change="selectionChange"
@@ -48,7 +44,7 @@ const {
       >
         <template #reference>
           <el-button :icon="useRenderIcon(Success)" plain type="success">
-            {{ t("notice.batchRead") }}
+            {{ t("userNotice.batchRead") }}
           </el-button>
         </template>
       </el-popconfirm>
@@ -58,10 +54,10 @@ const {
         type="primary"
         @click="handleReadAll"
       >
-        {{ t("notice.allRead") }}
+        {{ t("userNotice.allRead") }}
       </el-button>
       <el-text v-if="unreadCount > 0" type="primary">
-        {{ t("notice.unreadMessage") }} {{ unreadCount }}
+        {{ t("userNotice.unreadMessage") }} {{ unreadCount }}
       </el-text>
     </template>
     <template #extOperation="{ row, size }">

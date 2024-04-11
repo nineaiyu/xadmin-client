@@ -1,24 +1,17 @@
 import dayjs from "dayjs";
-import {
-  createDataPermissionApi,
-  deleteDataPermissionApi,
-  getDataPermissionDetailApi,
-  getDataPermissionListApi,
-  manyDeleteDataPermissionApi,
-  updateDataPermissionApi
-} from "@/api/system/permission";
-import { formatOptions } from "@/views/system/hooks";
-import { computed, onMounted, reactive, ref, type Ref, shallowRef } from "vue";
-import { cloneDeep } from "@pureadmin/utils";
+import { dataPermissionApi } from "@/api/system/permission";
+import { onMounted, reactive, ref, type Ref, shallowRef } from "vue";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { FieldChoices, ModeChoices } from "@/views/system/constants";
 import { handleTree } from "@/utils/tree";
-import { getModelLabelFieldListApi } from "@/api/system/field";
-import { getMenuPermissionListApi } from "@/api/system/menu";
-import type { PlusColumn } from "plus-pro-components";
+import { modelLabelFieldApi } from "@/api/system/field";
+import { menuApi } from "@/api/system/menu";
 import Form from "../form.vue";
-import { renderSwitch, selectOptions } from "@/views/system/render";
+import { renderOption, renderSwitch } from "@/views/system/render";
+import type { PlusColumn } from "plus-pro-components";
+import { formatFormColumns, formatOptions } from "@/views/system/hooks";
+import { transformI18n } from "@/plugins/i18n";
 
 export function useDataPermission(tableRef: Ref) {
   const { t } = useI18n();
@@ -26,35 +19,15 @@ export function useDataPermission(tableRef: Ref) {
   const menuPermissionData = ref([]);
   const choicesDict = ref([]);
   const valuesData = ref([]);
-  const sortOptions = [
-    {
-      label: `${t("sorts.createdDate")} ${t("labels.descending")}`,
-      key: "-created_time"
-    },
-    {
-      label: `${t("sorts.createdDate")} ${t("labels.ascending")}`,
-      key: "created_time"
-    }
-  ];
-  const searchField = ref({
-    name: "",
-    mode_type: "",
-    is_active: "",
-    description: "",
-    ordering: sortOptions[0].key,
-    page: 1,
-    size: 10
-  });
-
-  const defaultValue = cloneDeep(searchField.value);
 
   const api = reactive({
-    list: getDataPermissionListApi,
-    create: createDataPermissionApi,
-    delete: deleteDataPermissionApi,
-    update: updateDataPermissionApi,
-    detail: getDataPermissionDetailApi,
-    batchDelete: manyDeleteDataPermissionApi
+    list: dataPermissionApi.list,
+    create: dataPermissionApi.create,
+    delete: dataPermissionApi.delete,
+    update: dataPermissionApi.update,
+    detail: dataPermissionApi.detail,
+    fields: dataPermissionApi.fields,
+    batchDelete: dataPermissionApi.batchDelete
   });
 
   const auth = reactive({
@@ -63,11 +36,12 @@ export function useDataPermission(tableRef: Ref) {
     delete: hasAuth("delete:systemDataPermission"),
     update: hasAuth("update:systemDataPermission"),
     detail: hasAuth("detail:systemDataPermission"),
-    batchDelete: hasAuth("manyDelete:systemDataPermission")
+    fields: hasAuth("fields:systemDataPermission"),
+    batchDelete: hasAuth("batchDelete:systemDataPermission")
   });
 
   const editForm = shallowRef({
-    title: t("permission.permission"),
+    title: t("systemPermission.permission"),
     form: Form,
     row: {
       menu: row => {
@@ -93,7 +67,7 @@ export function useDataPermission(tableRef: Ref) {
       valuesData: () => {
         return valuesData.value;
       },
-      choicesDict: () => {
+      modeChoices: () => {
         return choicesDict.value["mode_type"];
       }
     },
@@ -104,83 +78,45 @@ export function useDataPermission(tableRef: Ref) {
 
   const columns = ref<TableColumnList>([
     {
-      label: t("labels.checkColumn"),
       type: "selection",
       fixed: "left",
       reserveSelection: true
     },
     {
-      label: t("labels.id"),
       prop: "pk",
       minWidth: 100
     },
     {
-      label: t("permission.name"),
       prop: "name",
       minWidth: 120
     },
     {
-      label: t("permission.mode"),
       prop: "mode_display",
       minWidth: 120
     },
     {
-      label: t("labels.status"),
       minWidth: 130,
       prop: "is_active",
       cellRenderer: renderSwitch(auth.update, tableRef, "is_active", scope => {
-        return scope.name;
+        return scope.row.name;
       })
     },
     {
-      label: t("labels.description"),
       prop: "description",
       minWidth: 150
     },
     {
-      label: t("sorts.createdDate"),
       minWidth: 180,
       prop: "created_time",
       formatter: ({ created_time }) =>
         dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
     },
     {
-      label: t("labels.operations"),
       fixed: "right",
       width: 160,
       slot: "operation"
     }
   ]);
-
-  const searchColumns: PlusColumn[] = computed(() => {
-    return [
-      {
-        label: t("permission.name"),
-        prop: "name",
-        valueType: "input"
-      },
-      {
-        label: t("labels.status"),
-        prop: "is_active",
-        valueType: "select",
-        options: selectOptions
-      },
-      {
-        label: t("permission.mode"),
-        prop: "mode_type",
-        valueType: "select",
-        options: computed(() => {
-          return formatOptions(choicesDict.value["mode_type"]);
-        })
-      },
-      {
-        label: t("labels.sort"),
-        prop: "ordering",
-        valueType: "select",
-        options: formatOptions(sortOptions)
-      }
-    ];
-  });
 
   onMounted(() => {
     api.detail("choices").then(res => {
@@ -190,19 +126,21 @@ export function useDataPermission(tableRef: Ref) {
     });
 
     if (hasGlobalAuth("list:systemModelField")) {
-      getModelLabelFieldListApi({
-        page: 1,
-        size: 1000,
-        field_type: FieldChoices.DATA
-      }).then(res => {
-        if (res.code === 1000) {
-          fieldLookupsData.value = handleTree(res.data.results);
-          valuesData.value = res.choices_dict;
-        }
-      });
+      modelLabelFieldApi
+        .list({
+          page: 1,
+          size: 1000,
+          field_type: FieldChoices.DATA
+        })
+        .then(res => {
+          if (res.code === 1000) {
+            fieldLookupsData.value = handleTree(res.data.results);
+            valuesData.value = res.choices_dict;
+          }
+        });
     }
-    if (hasGlobalAuth("list:systemMenuPermission")) {
-      getMenuPermissionListApi({ page: 1, size: 1000 }).then(res => {
+    if (hasGlobalAuth("permissions:systemMenu")) {
+      menuApi.permissions({ page: 1, size: 1000 }).then(res => {
         if (res.code === 1000) {
           menuPermissionData.value = handleTree(res.data.results);
         }
@@ -215,9 +153,64 @@ export function useDataPermission(tableRef: Ref) {
     api,
     auth,
     columns,
-    editForm,
-    searchField,
-    defaultValue,
-    searchColumns
+    editForm
+  };
+}
+
+export function useDataPermissionForm(props) {
+  const { t, te } = useI18n();
+  const columns: PlusColumn[] = [
+    {
+      prop: "name",
+      valueType: "input"
+    },
+    {
+      prop: "is_active",
+      valueType: "radio",
+      renderField: renderOption()
+    },
+    {
+      prop: "mode_type",
+      valueType: "select",
+      options: formatOptions(props.modeChoices)
+    },
+    {
+      prop: "menu",
+      valueType: "cascader",
+      fieldProps: {
+        props: {
+          value: "pk",
+          label: "title",
+          emitPath: false,
+          checkStrictly: false,
+          multiple: true
+        }
+      },
+      fieldSlots: {
+        default: ({ node, data }) => {
+          data.title = transformI18n(data?.title);
+          return (
+            <>
+              <span>{data.title}</span>
+              <span v-show={!node.isLeaf}> ({data?.children?.length}) </span>
+            </>
+          );
+        }
+      },
+      options: props.menuPermissionData
+    },
+    {
+      prop: "description",
+      valueType: "textarea"
+    },
+    {
+      prop: "rules",
+      hasLabel: false
+    }
+  ];
+  formatFormColumns(props, columns, t, te, "systemPermission");
+  return {
+    t,
+    columns
   };
 }

@@ -12,7 +12,7 @@ import SearchDepts from "@/views/system/base/searchDepts.vue";
 import SearchRoles from "@/views/system/base/searchRoles.vue";
 import SearchMenus from "@/views/system/base/searchMenus.vue";
 import ReCol from "@/components/ReCol";
-import { getModelLabelFieldLookupsListApi } from "@/api/system/field";
+import { modelLabelFieldApi } from "@/api/system/field";
 
 const props = withDefaults(defineProps<FormProps>(), {
   valuesData: () => [],
@@ -42,8 +42,9 @@ const getMatchData = (value: any) => {
     return;
   }
   if (hasGlobalAuth("list:systemModelFieldLookups")) {
-    getModelLabelFieldLookupsListApi({ table: value[0], field: value[1] }).then(
-      res => {
+    modelLabelFieldApi
+      .lookups({ table: value[0], field: value[1] })
+      .then(res => {
         if (res.code === 1000) {
           matchList.value = res.data.results;
         } else {
@@ -51,14 +52,14 @@ const getMatchData = (value: any) => {
             type: "error"
           });
         }
-      }
-    );
+      });
   }
 };
 const { t } = useI18n();
 const showValueInput = ref(true);
 const valueTypeChange = value => {
   tableData.value = [];
+  newFormInline.value.value = "";
   props.valuesData.forEach(item => {
     if (item.key === value) {
       showValueInput.value = item.disabled;
@@ -107,11 +108,11 @@ defineExpose({ getRef });
   >
     <el-row :gutter="24">
       <re-col :sm="24" :value="24" :xs="24">
-        <el-form-item :label="t('permission.addName')" prop="name">
+        <el-form-item :label="t('systemPermission.addName')" prop="name">
           <el-cascader
             v-model="newFormInline.name"
             :options="props.fieldLookupsData"
-            :placeholder="t('permission.addName')"
+            :placeholder="t('systemPermission.addName')"
             :props="{
               value: 'name',
               label: 'label',
@@ -129,10 +130,10 @@ defineExpose({ getRef });
         </el-form-item>
       </re-col>
       <re-col :sm="24" :value="12" :xs="24">
-        <el-form-item :label="t('permission.addMatch')" prop="match">
+        <el-form-item :label="t('systemPermission.addMatch')" prop="match">
           <el-select
             v-model="newFormInline.match"
-            :placeholder="t('permission.addMatch')"
+            :placeholder="t('systemPermission.addMatch')"
             :reserve-keyword="false"
             allow-create
             class="w-full"
@@ -149,10 +150,10 @@ defineExpose({ getRef });
         </el-form-item>
       </re-col>
       <re-col :sm="24" :value="12" :xs="24">
-        <el-form-item :label="t('permission.addExclude')" prop="exclude">
+        <el-form-item :label="t('systemPermission.addExclude')" prop="exclude">
           <el-select
             v-model="newFormInline.exclude"
-            :placeholder="t('permission.addExclude')"
+            :placeholder="t('systemPermission.addExclude')"
             class="w-full"
             clearable
             filterable
@@ -163,10 +164,10 @@ defineExpose({ getRef });
         </el-form-item>
       </re-col>
       <re-col :sm="24" :value="24" :xs="24">
-        <el-form-item :label="t('permission.addType')" prop="type">
+        <el-form-item :label="t('systemPermission.addType')" prop="type">
           <el-select
             v-model="newFormInline.type"
-            :placeholder="t('permission.addType')"
+            :placeholder="t('systemPermission.addType')"
             :reserve-keyword="false"
             class="w-full"
             clearable
@@ -189,7 +190,7 @@ defineExpose({ getRef });
             newFormInline.type === FieldKeyChoices.TABLE_USER &&
             hasGlobalAuth('list:systemSearchUsers')
           "
-          :label="t('user.userId')"
+          :label="t('systemPermission.notice_user')"
           prop="notice_user"
         >
           <search-users v-model="tableData" />
@@ -200,7 +201,7 @@ defineExpose({ getRef });
             newFormInline.type === FieldKeyChoices.TABLE_DEPT &&
             hasGlobalAuth('list:systemSearchDepts')
           "
-          :label="t('dept.dept')"
+          :label="t('systemPermission.notice_dept')"
           prop="notice_dept"
         >
           <search-depts v-model="tableData" />
@@ -210,7 +211,7 @@ defineExpose({ getRef });
             newFormInline.type === FieldKeyChoices.TABLE_ROLE &&
             hasGlobalAuth('list:systemSearchRoles')
           "
-          :label="t('role.role')"
+          :label="t('systemPermission.notice_role')"
           prop="notice_role"
         >
           <search-roles v-model="tableData" />
@@ -221,8 +222,8 @@ defineExpose({ getRef });
             newFormInline.type === FieldKeyChoices.TABLE_MENU &&
             hasGlobalAuth('list:systemSearchMenus')
           "
-          :label="t('menu.menus')"
-          prop="notice_role"
+          :label="t('systemPermission.notice_menu')"
+          prop="notice_menu"
         >
           <search-menus v-model="tableData" />
         </el-form-item>
@@ -230,12 +231,12 @@ defineExpose({ getRef });
       <re-col :sm="24" :value="24" :xs="24">
         <el-form-item
           v-if="showValueInput"
-          :label="t('permission.addValue')"
+          :label="t('systemPermission.addValue')"
           prop="value"
         >
           <el-input
             v-model="newFormInline.value"
-            :placeholder="t('permission.addValue')"
+            :placeholder="t('systemPermission.addValue')"
             clearable
           />
         </el-form-item>

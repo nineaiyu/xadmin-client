@@ -1,13 +1,6 @@
 <script lang="ts" setup>
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import {
-  computed,
-  getCurrentInstance,
-  nextTick,
-  onMounted,
-  ref,
-  watch
-} from "vue";
+import { computed, getCurrentInstance, nextTick, ref, watch } from "vue";
 
 import More2Fill from "@iconify-icons/ri/more-2-fill";
 import ExpandIcon from "./svg/expand.svg?component";
@@ -96,13 +89,16 @@ const { t } = useI18n();
 watch(searchValue, val => {
   treeRef.value!.filter(val);
 });
-onMounted(() => {
-  nextTick(() => {
-    if (props.pk) {
-      highlightMap.value[props.pk] = { highlight: true };
-    }
-  });
-});
+watch(
+  () => props.pk,
+  () => {
+    nextTick(() => {
+      if (props.pk) {
+        highlightMap.value[props.pk] = { highlight: true };
+      }
+    });
+  }
+);
 
 defineExpose({ onTreeReset });
 </script>
@@ -116,7 +112,7 @@ defineExpose({ onTreeReset });
     <div class="flex items-center h-[34px]">
       <el-input
         v-model="searchValue"
-        :placeholder="t('dept.name')"
+        :placeholder="t('systemDept.name')"
         class="ml-2"
         clearable
         size="small"

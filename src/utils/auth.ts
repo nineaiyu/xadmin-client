@@ -2,6 +2,8 @@ import Cookies from "js-cookie";
 import { storageLocal } from "@pureadmin/utils";
 import { useUserStoreHook } from "@/store/modules/user";
 import type { TokenInfo, UserInfo } from "@/api/auth";
+import { responsiveStorageNameSpace } from "@/config";
+import Storage from "responsive-storage";
 
 export const userKey = "user-info";
 const TokenKey = "X-Token";
@@ -66,7 +68,7 @@ export function setToken(data: TokenInfo) {
 export function setUserInfo(data: UserInfo) {
   useUserStoreHook().SET_USERNAME(data.username);
   useUserStoreHook().SET_AVATAR(data.avatar);
-  useUserStoreHook().SET_ROLES(data.roles_info);
+  // useUserStoreHook().SET_ROLES(data?.roles_info);
   storageLocal().setItem(userKey, data);
 }
 
@@ -81,4 +83,10 @@ export function removeToken() {
 /** 格式化token（jwt格式） */
 export const formatToken = (token: string): string => {
   return "Bearer " + token;
+};
+
+export const setApiLanguage = config => {
+  const nameSpace = responsiveStorageNameSpace();
+  config.headers["Accept-Language"] =
+    Storage.getData("locale", nameSpace)?.locale ?? "zh";
 };

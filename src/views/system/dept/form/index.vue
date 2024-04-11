@@ -2,13 +2,9 @@
 import { ref } from "vue";
 import { formRules } from "../utils/rule";
 import { FormProps } from "../utils/types";
-import { disableState } from "@/views/system/render";
 import { useDeptForm } from "@/views/system/dept/utils/hook";
 
 const props = withDefaults(defineProps<FormProps>(), {
-  isAdd: () => true,
-  treeData: () => [],
-  showColumns: () => [],
   formInline: () => ({
     name: "",
     code: "",
@@ -18,7 +14,10 @@ const props = withDefaults(defineProps<FormProps>(), {
     description: "",
     is_active: true,
     auto_bind: true
-  })
+  }),
+  isAdd: () => true,
+  treeData: () => [],
+  showColumns: () => []
 });
 const { t, columns } = useDeptForm(props);
 
@@ -36,33 +35,11 @@ defineExpose({ getRef });
   <PlusForm
     ref="formRef"
     v-model="newFormInline"
+    label-position="right"
     :columns="columns"
     :rules="formRules"
     :hasFooter="false"
     :row-props="{ gutter: 24 }"
     label-width="120px"
-  >
-    <template #plus-field-parent>
-      <el-cascader
-        v-model="newFormInline.parent"
-        :options="props.treeData"
-        :disabled="disableState(props, 'parent')"
-        :placeholder="t('menu.parentNode')"
-        :props="{
-          value: 'pk',
-          label: 'name',
-          emitPath: false,
-          checkStrictly: true
-        }"
-        class="w-full"
-        clearable
-        filterable
-      >
-        <template #default="{ node, data }">
-          <span>{{ data.name }}</span>
-          <span v-if="!node.isLeaf"> ({{ data.children.length }}) </span>
-        </template>
-      </el-cascader>
-    </template>
-  </PlusForm>
+  />
 </template>

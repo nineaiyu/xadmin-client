@@ -11,16 +11,7 @@ defineOptions({
 
 const tableRef = ref();
 
-const {
-  t,
-  api,
-  auth,
-  columns,
-  searchField,
-  defaultValue,
-  searchColumns,
-  showDialog
-} = useNoticeRead(tableRef);
+const { t, api, auth, columns, showDialog } = useNoticeRead(tableRef);
 </script>
 
 <template>
@@ -28,8 +19,7 @@ const {
     ref="tableRef"
     :api="api"
     :auth="auth"
-    :search-columns="searchColumns"
-    :search-field="searchField"
+    locale-name="noticeRead"
     :table-columns="columns"
   >
     <template #extOperation="{ row, size }">
