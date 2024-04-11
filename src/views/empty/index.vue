@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useRouter } from "vue-router";
-import back from "@/assets/svg/back.svg?component";
+import back from "@/assets/svg/back_top.svg?component";
 
 defineOptions({
   name: "Empty"
