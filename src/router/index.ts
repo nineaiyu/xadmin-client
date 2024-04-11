@@ -1,16 +1,13 @@
-// import "@/utils/sso";
+import "@/utils/sso";
+import Cookies from "js-cookie";
 import { getConfig } from "@/config";
 import NProgress from "@/utils/progress";
 import { transformI18n } from "@/plugins/i18n";
-import { getRefreshToken, multipleTabsKey, removeToken } from "@/utils/auth";
+import { buildHierarchyTree } from "@/utils/tree";
+import remainingRouter from "./modules/remaining";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { usePermissionStoreHook } from "@/store/modules/permission";
-import {
-  createRouter,
-  type RouteComponent,
-  type Router,
-  type RouteRecordRaw
-} from "vue-router";
+import { isAllEmpty, isUrl, openLink } from "@pureadmin/utils";
 import {
   ascending,
   findRouteByPath,
@@ -21,11 +18,13 @@ import {
   handleAliveRoute,
   initRouter
 } from "./utils";
-import { buildHierarchyTree } from "@/utils/tree";
-import { isAllEmpty, isUrl, openLink } from "@pureadmin/utils";
-
-import remainingRouter from "./modules/remaining";
-import Cookies from "js-cookie";
+import {
+  createRouter,
+  type RouteComponent,
+  type Router,
+  type RouteRecordRaw
+} from "vue-router";
+import { getRefreshToken, multipleTabsKey, removeToken } from "@/utils/auth";
 
 /** 自动导入全部静态路由，无需再手动引入！匹配 src/router/modules 目录（任何嵌套级别）中具有 .ts 扩展名的所有文件，除了 remaining.ts 文件
  * 如何匹配所有文件请看：https://github.com/mrmlnc/fast-glob#basic-syntax
@@ -121,7 +120,6 @@ router.beforeEach((to: ToRouteType, _from, next) => {
       else document.title = transformI18n(item.meta.title);
     });
   }
-
   /** 如果已经登录并存在登录信息后不能跳转到路由白名单，而是继续保持在当前页面 */
   function toCorrectRoute() {
     whiteList.includes(to.fullPath) ? next(_from.fullPath) : next();

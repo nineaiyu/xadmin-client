@@ -17,15 +17,15 @@ import {
   storageLocal
 } from "@pureadmin/utils";
 import { getConfig } from "@/config";
-import { type menuType, routerArrays } from "@/layout/types";
 import { buildHierarchyTree } from "@/utils/tree";
 import { userKey } from "@/utils/auth";
+import { type menuType, routerArrays } from "@/layout/types";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 // 动态路由
 import { getAsyncRoutes } from "@/api/routes";
-import type { UserInfo } from "@/api/auth";
 import { useUserStoreHook } from "@/store/modules/user";
+import type { UserInfo } from "@/api/auth";
 
 const IFrame = () => import("@/layout/frameView.vue");
 // https://cn.vitejs.dev/guide/features.html#glob-import
@@ -35,7 +35,9 @@ function handRank(routeInfo: any) {
   const { name, path, parentId, meta } = routeInfo;
   return isAllEmpty(parentId)
     ? isAllEmpty(meta?.rank) ||
-        (meta?.rank === 0 && name !== "Home" && path !== "/")
+      (meta?.rank === 0 && name !== "Home" && path !== "/")
+      ? true
+      : false
     : false;
 }
 
@@ -73,13 +75,15 @@ function filterChildrenTree(data: RouteComponent[]) {
 }
 
 /** 判断两个数组彼此是否存在相同值 */
-function isOneOfArray(a: Array<string>, b: number[]) {
+function isOneOfArray(a: Array<string>, b: Array<string>) {
   return Array.isArray(a) && Array.isArray(b)
     ? intersection(a, b).length > 0
+      ? true
+      : false
     : true;
 }
 
-/** 从storageLocal里取出当前登陆用户的角色roles，过滤无权限的菜单 */
+/** 从localStorage里取出当前登陆用户的角色roles，过滤无权限的菜单 */
 function filterNoPermissionTree(data: RouteComponent[]) {
   const currentRoles = storageLocal().getItem<UserInfo>(userKey)?.roles ?? [];
   const newTree = cloneDeep(data).filter((v: any) =>
@@ -185,13 +189,12 @@ function handleAsyncRoutes(routeList) {
   }
   addPathMatch();
   useUserStoreHook().getUserInfo();
-  // useUserStoreHook().getUserConfig();
 }
 
 /** 初始化路由（`new Promise` 写法防止在异步请求中造成无限循环）*/
 function initRouter() {
   if (getConfig()?.CachingAsyncRoutes) {
-    // 开启动态路由缓存本地storageLocal
+    // 开启动态路由缓存本地localStorage
     const key = "async-routes";
     const asyncRouteList = storageLocal().getItem(key) as any;
     if (asyncRouteList && asyncRouteList?.length > 0) {
@@ -360,9 +363,10 @@ function hasAuth(value: string | Array<string>): boolean {
   /** 从当前路由的`meta`字段里获取按钮级别的所有自定义`code`值 */
   const metaAuths = getAuths();
   if (!metaAuths) return false;
-  return isString(value)
+  const isAuths = isString(value)
     ? metaAuths.includes(value)
     : isIncludeAllChildren(value, metaAuths);
+  return isAuths ? true : false;
 }
 
 function getGlobalAuths(arr: any[]) {

@@ -203,6 +203,7 @@ menus:
   fourZeroThree: "403"
   FiveZeroZero: "500"
   about: 关于
+  empty: 无Layout页
   noticeAndAnnouncement: 通知公告
   newsAndAnnouncement: 消息公告
   readNotice: 已读消息

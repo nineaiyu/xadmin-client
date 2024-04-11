@@ -28,7 +28,7 @@ export interface UserInfo {
   unread_message_count: number;
   mobile: string;
   is_active: boolean;
-  roles: number[];
+  roles: string[];
 }
 
 export type UserInfoResult = {
