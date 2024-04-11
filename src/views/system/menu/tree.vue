@@ -59,6 +59,7 @@ const props = withDefaults(defineProps<TreeFormProps>(), {
       transition_enter: "",
       transition_leave: "",
       is_hidden_tag: false,
+      fixed_tag: false,
       dynamic_level: 0
     }
   })

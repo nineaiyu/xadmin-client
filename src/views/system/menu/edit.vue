@@ -48,6 +48,7 @@ const props = withDefaults(defineProps<FormProps>(), {
       transition_enter: "",
       transition_leave: "",
       is_hidden_tag: false,
+      fixed_tag: false,
       dynamic_level: 0
     }
   })
@@ -323,7 +324,42 @@ defineExpose({ getRef });
             "
           />
         </el-form-item>
+        <el-divider />
+        <el-form-item :label="t('menu.fixedTag')" prop="fixedTag">
+          <template #label>
+            <from-question
+              :description="t('menu.fixedTagTip')"
+              :label="t('menu.fixedTag')"
+            />
+          </template>
+          <Segmented
+            :modelValue="newFormInline.meta.fixed_tag ? 0 : 1"
+            :options="ifEnableOptions"
+            @change="
+              ({ option: { value } }) => {
+                newFormInline.meta.fixed_tag = value;
+              }
+            "
+          />
+        </el-form-item>
 
+        <el-form-item :label="t('menu.hiddenTag')" prop="hiddenTag">
+          <template #label>
+            <from-question
+              :description="t('menu.hiddenTagTip')"
+              :label="t('menu.hiddenTag')"
+            />
+          </template>
+          <Segmented
+            :modelValue="newFormInline.meta.is_hidden_tag ? 0 : 1"
+            :options="ifEnableOptions"
+            @change="
+              ({ option: { value } }) => {
+                newFormInline.meta.is_hidden_tag = value;
+              }
+            "
+          />
+        </el-form-item>
         <el-divider />
         <el-form-item :label="t('menu.externalLink')" prop="isFrame">
           <template #label>

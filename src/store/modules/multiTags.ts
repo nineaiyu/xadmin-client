@@ -1,8 +1,9 @@
 import { defineStore } from "pinia";
 import { store } from "@/store";
 import { routerArrays } from "@/layout/types";
-import type { multiType, positionType } from "./types";
+import { usePermissionStoreHook } from "./permission";
 import { responsiveStorageNameSpace } from "@/config";
+import type { multiType, positionType } from "./types";
 import { isBoolean, isEqual, isUrl, storageLocal } from "@pureadmin/utils";
 
 export const useMultiTagsStore = defineStore({
@@ -15,7 +16,12 @@ export const useMultiTagsStore = defineStore({
       ? storageLocal().getItem<StorageConfigs>(
           `${responsiveStorageNameSpace()}tags`
         )
-      : [...routerArrays],
+      : [
+          ...routerArrays,
+          ...usePermissionStoreHook().flatteningRoutes.filter(
+            v => v?.meta?.fixedTag
+          )
+        ],
     multiTagsCache: storageLocal().getItem<StorageConfigs>(
       `${responsiveStorageNameSpace()}configure`
     )?.multiTagsCache

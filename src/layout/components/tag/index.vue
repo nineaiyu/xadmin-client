@@ -8,6 +8,7 @@ import { onClickOutside } from "@vueuse/core";
 import { getTopMenu, handleAliveRoute } from "@/router/utils";
 import { useSettingStoreHook } from "@/store/modules/settings";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
+import { usePermissionStoreHook } from "@/store/modules/permission";
 import { nextTick, onBeforeUnmount, ref, toRaw, unref, watch } from "vue";
 import {
   delay,
@@ -59,6 +60,10 @@ const contextmenuRef = ref();
 const isShowArrow = ref(false);
 const topPath = getTopMenu()?.path;
 const { VITE_HIDE_HOME } = import.meta.env;
+const fixedTags = [
+  ...routerArrays,
+  ...usePermissionStoreHook().flatteningRoutes.filter(v => v?.meta?.fixedTag)
+];
 
 const dynamicTagView = async () => {
   await nextTick();
@@ -194,7 +199,6 @@ function dynamicRouteTag(value: string): void {
       });
     }
   }
-
   concatPath(router.options.routes as any, value);
 }
 
@@ -229,10 +233,13 @@ function deleteDynamicTag(obj: any, current: any, tag?: string) {
     other?: boolean
   ): void => {
     if (other) {
-      useMultiTagsStoreHook().handleTags("equal", [
-        VITE_HIDE_HOME === "false" ? routerArrays[0] : toRaw(getTopMenu()),
-        obj
-      ]);
+      useMultiTagsStoreHook().handleTags(
+        "equal",
+        [
+          VITE_HIDE_HOME === "false" ? fixedTags : toRaw(getTopMenu()),
+          obj
+        ].flat()
+      );
     } else {
       useMultiTagsStoreHook().handleTags("splice", "", {
         startIndex,
@@ -245,7 +252,7 @@ function deleteDynamicTag(obj: any, current: any, tag?: string) {
   if (tag === "other") {
     spliceRoute(1, 1, true);
   } else if (tag === "left") {
-    spliceRoute(1, valueIndex - 1);
+    spliceRoute(fixedTags.length, valueIndex - 1, true);
   } else if (tag === "right") {
     spliceRoute(valueIndex + 1, multiTags.value.length);
   } else {
@@ -322,10 +329,11 @@ function onClickDrop(key, item, selectRoute?: RouteConfigs) {
     case 5:
       // 关闭全部标签页
       useMultiTagsStoreHook().handleTags("splice", "", {
-        startIndex: 1,
+        startIndex: fixedTags.length,
         length: multiTags.value.length
       });
       router.push(topPath);
+      // router.push(fixedTags[fixedTags.length - 1]?.path);
       handleAliveRoute(route as ToRouteType);
       break;
     case 6:
@@ -334,10 +342,10 @@ function onClickDrop(key, item, selectRoute?: RouteConfigs) {
       setTimeout(() => {
         if (pureSetting.hiddenSideBar) {
           tagsViews[6].icon = ExitFullscreen;
-          tagsViews[6].text = $t("buttons.contentExitFullScreen");
+          tagsViews[6].text = $t("buttons.pureContentExitFullScreen");
         } else {
           tagsViews[6].icon = Fullscreen;
-          tagsViews[6].text = $t("buttons.contentFullScreen");
+          tagsViews[6].text = $t("buttons.pureContentFullScreen");
         }
       }, 100);
       break;
@@ -364,10 +372,14 @@ function showMenus(value: boolean) {
   });
 }
 
-function disabledMenus(value: boolean) {
+function disabledMenus(value: boolean, fixedTag = false) {
   Array.of(1, 2, 3, 4, 5).forEach(v => {
     tagsViews[v].disabled = value;
   });
+  if (fixedTag) {
+    tagsViews[2].show = false;
+    tagsViews[2].disabled = true;
+  }
 }
 
 /** 检查当前右键的菜单两边是否存在别的菜单，如果左侧的菜单是顶级菜单，则不显示关闭左侧标签页，如果右侧没有菜单，则不显示关闭右侧标签页 */
@@ -383,6 +395,14 @@ function showMenuModel(
     currentIndex = allRoute.findIndex(v => v.path === currentPath);
   } else {
     currentIndex = allRoute.findIndex(v => isEqual(v.query, query));
+  }
+
+  function fixedTagDisabled() {
+    if (allRoute[currentIndex]?.meta?.fixedTag) {
+      Array.of(1, 2, 3, 4, 5).forEach(v => {
+        tagsViews[v].disabled = true;
+      });
+    }
   }
 
   showMenus(true);
@@ -402,6 +422,7 @@ function showMenuModel(
       tagsViews[v].disabled = false;
     });
     tagsViews[2].disabled = true;
+    fixedTagDisabled();
   } else if (currentIndex === 1 && routeLength === 2) {
     disabledMenus(false);
     // 左侧的菜单是顶级菜单，右侧不存在别的菜单
@@ -409,6 +430,7 @@ function showMenuModel(
       tagsViews[v].show = false;
       tagsViews[v].disabled = true;
     });
+    fixedTagDisabled();
   } else if (routeLength - 1 === currentIndex && currentIndex !== 0) {
     // 当前路由是所有路由中的最后一个
     tagsViews[3].show = false;
@@ -416,18 +438,24 @@ function showMenuModel(
       tagsViews[v].disabled = false;
     });
     tagsViews[3].disabled = true;
+    if (allRoute[currentIndex - 1]?.meta?.fixedTag) {
+      tagsViews[2].show = false;
+      tagsViews[2].disabled = true;
+    }
+    fixedTagDisabled();
   } else if (currentIndex === 0 || currentPath === `/redirect${topPath}`) {
     // 当前路由为顶级菜单
     disabledMenus(true);
   } else {
-    disabledMenus(false);
+    disabledMenus(false, allRoute[currentIndex - 1]?.meta?.fixedTag);
+    fixedTagDisabled();
   }
 }
 
 function openMenu(tag, e) {
   closeMenu();
-  if (tag.path === topPath) {
-    // 右键菜单为顶级菜单，只显示刷新
+  if (tag.path === topPath || tag?.meta?.fixedTag) {
+    // 右键菜单为顶级菜单或拥有 fixedTag 属性，只显示刷新
     showMenus(false);
     tagsViews[0].show = true;
   } else if (route.path !== tag.path && route.name !== tag.name) {
@@ -486,7 +514,6 @@ function tagOnClick(item) {
   } else {
     router.push({ path });
   }
-  // showMenuModel(item?.path, item?.query);
 }
 
 onClickOutside(contextmenuRef, closeMenu, {
@@ -548,13 +575,17 @@ onBeforeUnmount(() => {
       <div ref="tabDom" :style="getTabStyle" class="tab select-none">
         <div
           v-for="(item, index) in multiTags"
-          :key="index"
           :ref="'dynamic' + index"
-          :class="['scroll-item is-closable', linkIsActive(item)]"
-          @click="tagOnClick(item)"
+          :key="index"
+          :class="[
+            'scroll-item is-closable',
+            linkIsActive(item),
+            !isAllEmpty(item?.meta?.fixedTag) && 'fixed-tag'
+          ]"
           @contextmenu.prevent="openMenu(item, $event)"
           @mouseenter.prevent="onMouseenter(index)"
           @mouseleave.prevent="onMouseleave(index)"
+          @click="tagOnClick(item)"
         >
           <span
             class="tag-title dark:!text-text_color_primary dark:hover:!text-primary"
@@ -563,8 +594,10 @@ onBeforeUnmount(() => {
           </span>
           <span
             v-if="
-              iconIsActive(item, index) ||
-              (index === activeIndex && index !== 0)
+              isAllEmpty(item?.meta?.fixedTag)
+                ? iconIsActive(item, index) ||
+                  (index === activeIndex && index !== 0)
+                : false
             "
             class="el-icon-close"
             @click.stop="deleteMenu(item)"
@@ -586,8 +619,8 @@ onBeforeUnmount(() => {
     <transition name="el-zoom-in-top">
       <ul
         v-show="visible"
-        :key="Math.random()"
         ref="contextmenuRef"
+        :key="Math.random()"
         :style="getContextMenuStyle"
         class="contextmenu"
       >
@@ -605,8 +638,8 @@ onBeforeUnmount(() => {
     </transition>
     <!-- 右侧功能按钮 -->
     <el-dropdown
-      placement="bottom-end"
       trigger="click"
+      placement="bottom-end"
       @command="handleCommand"
     >
       <span class="arrow-down">
@@ -618,8 +651,8 @@ onBeforeUnmount(() => {
             v-for="(item, key) in tagsViews"
             :key="key"
             :command="{ key, item }"
-            :disabled="item.disabled"
             :divided="item.divided"
+            :disabled="item.disabled"
           >
             <IconifyIconOffline :icon="item.icon" />
             {{ transformI18n(item.text) }}

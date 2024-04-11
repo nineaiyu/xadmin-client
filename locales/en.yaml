@@ -353,6 +353,10 @@ menu:
   checkUnStrictly: Hierarchical independence
   associationModel: AssociationModel
   exampleAssociationModel: Model association is used with field permission control
+  fixedTag: Fixed Tag
+  fixedTagTip: Whether the current menu name is fixed to the TAB and cannot be closed
+  hiddenTag: Hidden Tag
+  hiddenTagTip: The current menu name or custom information is prohibited from being added to the TAB
 
 logsOperation:
   creator_id: Creator Id

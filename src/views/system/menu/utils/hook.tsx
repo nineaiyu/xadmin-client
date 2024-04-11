@@ -34,6 +34,7 @@ const defaultData: FormItemProps = {
     transition_enter: "",
     transition_leave: "",
     is_hidden_tag: false,
+    fixed_tag: false,
     dynamic_level: 0
   }
 };
@@ -204,6 +205,7 @@ export function useMenu() {
             transition_enter: row?.meta.transition_enter ?? "",
             transition_leave: row?.meta.transition_leave ?? "",
             is_hidden_tag: row?.meta.is_hidden_tag ?? false,
+            fixed_tag: row?.meta.fixed_tag ?? false,
             dynamic_level: row?.meta.dynamic_level ?? 0
           }
         }

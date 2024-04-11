@@ -353,6 +353,10 @@ menu:
   checkUnStrictly: 层级独立
   associationModel: 关联模型
   exampleAssociationModel: 模型关联用与字段权限控制
+  fixedTag: 固定标签页
+  fixedTagTip: 当前菜单名称是否固定显示在标签页且不可关闭
+  hiddenTag: 隐藏标签页
+  hiddenTagTip: 当前菜单名称或自定义信息禁止添加到标签页
 
 logsOperation:
   creator_id: 用户ID

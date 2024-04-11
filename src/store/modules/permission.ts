@@ -4,7 +4,12 @@ import type { cacheType } from "./types";
 import { constantMenus } from "@/router";
 import { debounce, getKeyList } from "@pureadmin/utils";
 import { useMultiTagsStoreHook } from "./multiTags";
-import { ascending, filterNoPermissionTree, filterTree } from "@/router/utils";
+import {
+  ascending,
+  filterNoPermissionTree,
+  filterTree,
+  formatFlatteningRoutes
+} from "@/router/utils";
 
 export const usePermissionStore = defineStore({
   id: "pure-permission",
@@ -13,6 +18,8 @@ export const usePermissionStore = defineStore({
     constantMenus,
     // 整体路由生成的菜单（静态、动态）
     wholeMenus: [],
+    // 整体路由（一维数组格式）
+    flatteningRoutes: [],
     // 缓存页面keepAlive
     cachePageList: [],
     routes: []
@@ -22,6 +29,9 @@ export const usePermissionStore = defineStore({
     handleWholeMenus(routes: any[]) {
       this.wholeMenus = filterNoPermissionTree(
         filterTree(ascending(this.constantMenus.concat(routes)))
+      );
+      this.flatteningRoutes = formatFlatteningRoutes(
+        this.constantMenus.concat(routes)
       );
       this.routes = this.constantMenus.concat(routes);
     },

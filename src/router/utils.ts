@@ -17,7 +17,7 @@ import {
   storageLocal
 } from "@pureadmin/utils";
 import { getConfig } from "@/config";
-import type { menuType } from "@/layout/types";
+import { type menuType, routerArrays } from "@/layout/types";
 import { buildHierarchyTree } from "@/utils/tree";
 import { userKey } from "@/utils/auth";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
@@ -174,6 +174,14 @@ function handleAsyncRoutes(routeList) {
       }
     );
     usePermissionStoreHook().handleWholeMenus(routeList);
+  }
+  if (!useMultiTagsStoreHook().getMultiTagsCache) {
+    useMultiTagsStoreHook().handleTags("equal", [
+      ...routerArrays,
+      ...usePermissionStoreHook().flatteningRoutes.filter(
+        v => v?.meta?.fixedTag
+      )
+    ]);
   }
   addPathMatch();
   useUserStoreHook().getUserInfo();

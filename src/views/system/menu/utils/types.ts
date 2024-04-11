@@ -23,6 +23,8 @@ interface FormMetaProps {
   transition_leave: string;
   /** 当前菜单名称或自定义信息禁止添加到标签页 */
   is_hidden_tag: boolean;
+  /** 固定标签页（当前菜单名称是否固定显示在标签页且不可关闭） */
+  fixed_tag: boolean;
   /** 显示标签页最大数量 */
   dynamic_level: number;
 }
