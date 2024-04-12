@@ -2,6 +2,7 @@ import { storeToRefs } from "pinia";
 import { getConfig } from "@/config";
 import { useRouter } from "vue-router";
 import { emitter } from "@/utils/mitt";
+import avatar from "@/assets/avatar.png";
 import type { routeMetaType } from "../types";
 import { getTopMenu } from "@/router/utils";
 import { useFullscreen } from "@vueuse/core";
@@ -44,7 +45,7 @@ export function useNav() {
   });
 
   const userAvatar = computed(() => {
-    return useUserStoreHook()?.avatar?.replace(".png", "_1.jpg");
+    return useUserStoreHook()?.avatar?.replace(".png", "_1.jpg") ?? avatar;
   });
 
   /** 设置国际化选中后的样式 */

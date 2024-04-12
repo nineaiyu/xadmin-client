@@ -2,7 +2,7 @@
 import { ref } from "vue";
 import { formatBytes } from "@pureadmin/utils";
 import ReCropper from "@/components/ReCropper";
-import avatar from "./avatar.png";
+import avatar from "@/assets/avatar.png";
 import { useI18n } from "vue-i18n";
 
 const props = defineProps({
