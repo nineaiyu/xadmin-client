@@ -117,6 +117,15 @@ export function useBaseTable(
       pagination.pageSize = searchFields.value.size = 10;
     }
     loading.value = true;
+    ["created_time", "updated_time"].forEach(key => {
+      if (searchFields.value[key]?.length === 2) {
+        searchFields.value[`${key}_after`] = searchFields.value[key][0];
+        searchFields.value[`${key}_before`] = searchFields.value[key][1];
+      } else {
+        searchFields.value[`${key}_after`] = "";
+        searchFields.value[`${key}_before`] = "";
+      }
+    });
     api
       .list(toRaw(searchFields.value))
       .then(res => {

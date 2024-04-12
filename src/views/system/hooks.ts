@@ -234,10 +234,13 @@ export const getFieldsData = (
             searchColumns.value.push(
               formatSearchColumns(item, localeName, t, te)
             );
+            if (item.key === "ordering" && item.choices.length > 0) {
+              searchFields.value[item.key] = item.choices[0].key;
+            }
           });
           searchFields.value.page = page;
           searchFields.value.size = size;
-          searchFields.value.ordering = ordering;
+          searchFields.value.ordering = searchFields.value.ordering ?? ordering;
           resolve(res);
         } else {
           reject(res);

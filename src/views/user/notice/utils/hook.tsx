@@ -84,7 +84,7 @@ export function useUserNotice(tableRef: Ref) {
       api.batchRead({ pks: [row.pk] });
     }
     addDialog({
-      title: t("notice.showSystemNotice"),
+      title: t("userNotice.showSystemNotice"),
       props: {
         formInline: {
           pk: row?.pk ?? "",

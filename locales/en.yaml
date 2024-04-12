@@ -452,6 +452,7 @@ userNotice:
   batchRead: BatchRead
   unreadMessage: Unread Message
   allRead: AllRead
+  showSystemNotice: Check the system announcement
 
 status:
   hsLoad: Loading...

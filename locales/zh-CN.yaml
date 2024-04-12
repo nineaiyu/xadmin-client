@@ -452,6 +452,7 @@ userNotice:
   batchRead: 批量已读
   unreadMessage: 未读消息
   allRead: 全部已读
+  showSystemNotice: 查看通知公告
 
 status:
   hsLoad: 加载中...

@@ -5,7 +5,7 @@ class NoticeApi extends BaseApi {
     return this.request("post", {}, data, `${this.baseApi}/announcement`);
   };
   publish = (pk: number | string, data?: object) => {
-    return this.request("post", {}, data, `${this.baseApi}/${pk}/publish`);
+    return this.request("put", {}, data, `${this.baseApi}/${pk}/publish`);
   };
 }
 
