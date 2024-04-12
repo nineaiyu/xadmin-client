@@ -127,7 +127,7 @@ function nodeClick(value) {
 
 function toggleRowExpansionAll(status) {
   isExpand.value = status;
-  const nodes = (proxy.$refs["treeRef"] as any).store._getAllNodes();
+  const nodes = (proxy.$refs["treeRef"] as any)?.store._getAllNodes();
   for (let i = 0; i < nodes.length; i++) {
     nodes[i].expanded = status;
   }

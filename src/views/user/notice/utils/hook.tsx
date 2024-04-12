@@ -90,7 +90,7 @@ export function useUserNotice(tableRef: Ref) {
           pk: row?.pk ?? "",
           title: row?.title ?? "",
           message: row?.message ?? "",
-          level: row?.level ?? ""
+          level: row?.level ?? "info"
         }
       },
       width: "70%",

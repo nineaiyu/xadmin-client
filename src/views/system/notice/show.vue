@@ -12,7 +12,7 @@ const props = withDefaults(defineProps<FormProps>(), {
     title: "",
     publish: false,
     message: "",
-    level: "primary"
+    level: "info"
   })
 });
 const { t } = useI18n();

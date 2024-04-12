@@ -13,6 +13,7 @@ import LoginLine from "@iconify-icons/ep/lock";
 import LogLine from "@iconify-icons/ep/tickets";
 import { operationLogApi } from "@/api/system/logs/operation";
 import { getKeyList } from "@pureadmin/utils";
+import { hasGlobalAuth } from "@/router/utils";
 
 export function useDashboard() {
   const { t } = useI18n();
@@ -136,7 +137,9 @@ export function useDashboard() {
     getUserTotal();
     getUserLoginList();
     getUserLoginTotal();
-    getOperateLogList();
+    if (hasGlobalAuth("list:systemOperationLog")) {
+      getOperateLogList();
+    }
     getUserActiveList();
     getUserRegisterList();
     getTodayOperateTotal();

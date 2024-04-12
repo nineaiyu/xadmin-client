@@ -48,7 +48,7 @@ export function useNoticeRead(tableRef: Ref) {
       minWidth: 120,
       cellRenderer: ({ row }) => (
         <el-link
-          type={row.notice_info.level == "" ? "default" : row.notice_info.level}
+          type={row.notice_info.level}
           onClick={() => onGoNoticeDetail(row as any)}
         >
           {row.notice_info.title}
@@ -152,7 +152,7 @@ export function useNoticeRead(tableRef: Ref) {
           title: row?.title ?? "",
           message: row?.message ?? "",
           publish: row?.publish ?? true,
-          level: row?.level ?? ""
+          level: row?.level ?? "info"
         }
       },
       width: "70%",

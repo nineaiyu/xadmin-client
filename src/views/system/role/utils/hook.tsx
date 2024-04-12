@@ -103,9 +103,9 @@ export function useRole(tableRef: Ref) {
     },
     {
       minWidth: 180,
-      prop: "created_time",
-      formatter: ({ created_time }) =>
-        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
+      prop: "updated_time",
+      formatter: ({ updated_time }) =>
+        dayjs(updated_time).format("YYYY-MM-DD HH:mm:ss")
     },
     {
       fixed: "right",

@@ -94,6 +94,9 @@ export function useNotice(tableRef: Ref) {
       },
       notice_type: row => {
         return row?.notice_type ?? defaultNoticeType.value;
+      },
+      level: row => {
+        return row?.level ?? "info";
       }
     },
     props: {
@@ -141,7 +144,7 @@ export function useNotice(tableRef: Ref) {
       minWidth: 140,
       cellRenderer: ({ row }) => (
         <el-link
-          type={row.level == "" ? "default" : row.level}
+          type={row.level}
           onClick={() => onGoNoticeReadDetail(row as any)}
         >
           {row.notice_type === NoticeChoices.NOTICE
@@ -201,7 +204,7 @@ export function useNotice(tableRef: Ref) {
           title: row?.title ?? "",
           publish: row?.publish ?? false,
           message: row?.message ?? "",
-          level: row?.level ?? ""
+          level: row?.level ?? "info"
         },
         isAdd: false
       },

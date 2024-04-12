@@ -9,7 +9,7 @@ const props = withDefaults(defineProps<FormProps>(), {
     pk: 0,
     title: "",
     message: "",
-    level: ""
+    level: "info"
   })
 });
 const formRef = ref();

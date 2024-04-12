@@ -194,8 +194,8 @@ export function useBaseTable(
         const FormRef = formRef.value.getRef();
         const curData = options.props.formInline;
 
-        const chores = detail => {
-          message(detail, { type: "success" });
+        const chores = () => {
+          message(t("results.success"), { type: "success" });
           done(); // 关闭弹框
           onSearch(); // 刷新表格数据
         };
@@ -214,7 +214,7 @@ export function useBaseTable(
             if (isAdd) {
               apiCreate(curData).then(async res => {
                 if (res.code === 1000) {
-                  chores(res.detail);
+                  chores();
                 } else {
                   message(`${t("results.failed")}，${res.detail}`, {
                     type: "error"
@@ -224,7 +224,7 @@ export function useBaseTable(
             } else {
               apiUpdate(curData.pk, curData).then(res => {
                 if (res.code === 1000) {
-                  chores(res.detail);
+                  chores();
                 } else {
                   message(`${t("results.failed")}，${res.detail}`, {
                     type: "error"
