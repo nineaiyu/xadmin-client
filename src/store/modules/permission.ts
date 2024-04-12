@@ -21,7 +21,8 @@ export const usePermissionStore = defineStore({
     // 整体路由（一维数组格式）
     flatteningRoutes: [],
     // 缓存页面keepAlive
-    cachePageList: []
+    cachePageList: [],
+    routes: []
   }),
   actions: {
     /** 组装整体路由生成的菜单 */
