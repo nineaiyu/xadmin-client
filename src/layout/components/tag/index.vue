@@ -342,10 +342,10 @@ function onClickDrop(key, item, selectRoute?: RouteConfigs) {
       setTimeout(() => {
         if (pureSetting.hiddenSideBar) {
           tagsViews[6].icon = ExitFullscreen;
-          tagsViews[6].text = $t("buttons.pureContentExitFullScreen");
+          tagsViews[6].text = $t("buttons.contentExitFullScreen");
         } else {
           tagsViews[6].icon = Fullscreen;
-          tagsViews[6].text = $t("buttons.pureContentFullScreen");
+          tagsViews[6].text = $t("buttons.contentFullScreen");
         }
       }, 100);
       break;
