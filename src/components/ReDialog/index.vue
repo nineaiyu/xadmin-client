@@ -12,6 +12,9 @@ import Fullscreen from "@iconify-icons/ri/fullscreen-fill";
 import ExitFullscreen from "@iconify-icons/ri/fullscreen-exit-fill";
 import { useI18n } from "vue-i18n";
 
+defineOptions({
+  name: "ReDialog"
+});
 const fullscreen = ref(false);
 const { t } = useI18n();
 const footerButtons = computed(() => {

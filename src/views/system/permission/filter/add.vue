@@ -59,7 +59,7 @@ const { t } = useI18n();
 const showValueInput = ref(true);
 const valueTypeChange = value => {
   tableData.value = [];
-  newFormInline.value.value = "";
+  // newFormInline.value.value = "";
   props.valuesData.forEach(item => {
     if (item.key === value) {
       showValueInput.value = item.disabled;

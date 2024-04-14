@@ -15,7 +15,7 @@ import {
   watch
 } from "vue";
 import { addDialog } from "@/components/ReDialog";
-import croppingUpload from "@/components/RePictureUpload/index.vue";
+import croppingUpload from "@/components/RePictureUpload";
 import roleForm from "../form/role.vue";
 import Form from "../form/index.vue";
 import type { FormItemProps, RoleFormItemProps } from "./types";

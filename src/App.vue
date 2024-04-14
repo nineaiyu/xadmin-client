@@ -9,15 +9,15 @@
 import { defineComponent, nextTick } from "vue";
 import { checkVersion } from "version-rocket";
 import { ElConfigProvider } from "element-plus";
-import en from "element-plus/dist/locale/en.mjs";
 import { ReDialog } from "@/components/ReDialog";
-import zhCn from "element-plus/dist/locale/zh-cn.mjs";
-import { $t, transformI18n } from "@/plugins/i18n";
-import { useWatermark } from "@pureadmin/utils";
-import { Boot } from "@wangeditor/editor";
-import attachmentModule from "@wangeditor/plugin-upload-attachment";
+import en from "element-plus/es/locale/lang/en";
+import zhCn from "element-plus/es/locale/lang/zh-cn";
 import plusEn from "plus-pro-components/es/locale/lang/en";
 import plusZhCn from "plus-pro-components/es/locale/lang/zh-cn";
+import { Boot } from "@wangeditor/editor";
+import attachmentModule from "@wangeditor/plugin-upload-attachment";
+import { useWatermark } from "@pureadmin/utils";
+import { $t, transformI18n } from "@/plugins/i18n";
 
 Boot.registerModule(attachmentModule);
 export default defineComponent({

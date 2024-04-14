@@ -8,7 +8,6 @@ import { useBaseTable } from "./utils/hook";
 import Delete from "@iconify-icons/ep/delete";
 import EditPen from "@iconify-icons/ep/edit-pen";
 import AddFill from "@iconify-icons/ri/add-circle-line";
-import { PlusSearch } from "plus-pro-components";
 import PureTable from "@pureadmin/table";
 
 const props = withDefaults(defineProps<FormProps>(), {

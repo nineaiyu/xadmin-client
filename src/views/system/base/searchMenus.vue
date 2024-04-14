@@ -7,6 +7,8 @@ import { ref } from "vue";
 import { hasGlobalAuth } from "@/router/utils";
 import { searchMenuListApi } from "@/api/system/search";
 
+defineOptions({ name: "searchMenus" });
+
 const { t } = useI18n();
 
 const selectValue = defineModel({ type: Array<number> });

@@ -2,7 +2,7 @@
 import { ref } from "vue";
 import { useUserConfig } from "./utils/hook";
 import CircleClose from "@iconify-icons/ep/circle-close";
-import ReBaseTable from "@/components/ReBaseTable/index.vue";
+import ReBaseTable from "@/components/ReBaseTable";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 
 defineOptions({

@@ -5,6 +5,10 @@ import ReCropper from "@/components/ReCropper";
 import avatar from "@/assets/avatar.png";
 import { useI18n } from "vue-i18n";
 
+defineOptions({
+  name: "RePictureUpload"
+});
+
 const props = defineProps({
   imgSrc: String,
   errSrc: String,

@@ -4,6 +4,10 @@ import { useColumns } from "./hooks";
 import { FormItemProps } from "./types";
 import { ClickOutside as vClickOutside } from "element-plus";
 
+defineOptions({
+  name: "ReTableSearch"
+});
+
 const props = withDefaults(defineProps<FormItemProps>(), {
   showColumns: () => [],
   sortOptions: () => [],

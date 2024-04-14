@@ -4,7 +4,7 @@ import { useUserNotice } from "./utils/hook";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Success from "@iconify-icons/ep/success-filled";
 import Eye from "@iconify-icons/ri/eye-fill";
-import ReBaseTable from "@/components/ReBaseTable/index.vue";
+import ReBaseTable from "@/components/ReBaseTable";
 
 defineOptions({
   name: "UserNotice"

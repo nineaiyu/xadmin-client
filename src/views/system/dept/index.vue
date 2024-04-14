@@ -6,7 +6,7 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import More from "@iconify-icons/ep/more-filled";
 import Role from "@iconify-icons/ri/admin-line";
 import { getIndexType } from "@/utils";
-import ReBaseTable from "@/components/ReBaseTable/index.vue";
+import ReBaseTable from "@/components/ReBaseTable";
 
 defineOptions({
   name: "SystemDept"

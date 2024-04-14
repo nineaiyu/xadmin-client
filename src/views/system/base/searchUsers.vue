@@ -8,6 +8,8 @@ import { hasGlobalAuth } from "@/router/utils";
 import { searchUserListApi } from "@/api/system/search";
 import { formatColumnsLabel } from "@/views/system/hooks";
 
+defineOptions({ name: "searchUsers" });
+
 const { t, te } = useI18n();
 
 const selectValue = defineModel({ type: Array<number> });

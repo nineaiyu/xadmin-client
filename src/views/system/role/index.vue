@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref } from "vue";
 import { useRole } from "./utils/hook";
-import ReBaseTable from "@/components/ReBaseTable/index.vue";
+import ReBaseTable from "@/components/ReBaseTable";
 
 defineOptions({
   name: "SystemRole"

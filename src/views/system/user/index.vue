@@ -4,7 +4,7 @@ import { computed, ref } from "vue";
 import { useUser } from "./utils/hook";
 import { getIndexType } from "@/utils";
 import { hasGlobalAuth } from "@/router/utils";
-import ReBaseTable from "@/components/ReBaseTable/index.vue";
+import ReBaseTable from "@/components/ReBaseTable";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 
 import Role from "@iconify-icons/ri/admin-line";

@@ -1,36 +1,58 @@
+// import type { App } from "vue";
+// import * as echarts from "echarts/core";
+// import { BarChart, LineChart, PieChart } from "echarts/charts";
+// import { CanvasRenderer, SVGRenderer } from "echarts/renderers";
+// import {
+//   DataZoomComponent,
+//   GraphicComponent,
+//   GridComponent,
+//   LegendComponent,
+//   PolarComponent,
+//   TitleComponent,
+//   ToolboxComponent,
+//   TooltipComponent,
+//   VisualMapComponent
+// } from "echarts/components";
+//
+// const { use } = echarts;
+//
+// use([
+//   PieChart,
+//   BarChart,
+//   LineChart,
+//   CanvasRenderer,
+//   SVGRenderer,
+//   GridComponent,
+//   TitleComponent,
+//   PolarComponent,
+//   LegendComponent,
+//   GraphicComponent,
+//   ToolboxComponent,
+//   TooltipComponent,
+//   DataZoomComponent,
+//   VisualMapComponent
+// ]);
+
 import type { App } from "vue";
 import * as echarts from "echarts/core";
-import { BarChart, LineChart, PieChart } from "echarts/charts";
-import { CanvasRenderer, SVGRenderer } from "echarts/renderers";
+import { LineChart } from "echarts/charts";
+import { SVGRenderer } from "echarts/renderers";
 import {
   DataZoomComponent,
-  GraphicComponent,
   GridComponent,
-  LegendComponent,
-  PolarComponent,
   TitleComponent,
-  ToolboxComponent,
-  TooltipComponent,
-  VisualMapComponent
+  TooltipComponent
 } from "echarts/components";
 
 const { use } = echarts;
 
 use([
-  PieChart,
-  BarChart,
   LineChart,
-  CanvasRenderer,
   SVGRenderer,
   GridComponent,
   TitleComponent,
-  PolarComponent,
-  LegendComponent,
-  GraphicComponent,
-  ToolboxComponent,
   TooltipComponent,
-  DataZoomComponent,
-  VisualMapComponent
+  DataZoomComponent
 ]);
 
 /**

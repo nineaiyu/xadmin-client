@@ -10,7 +10,3 @@ declare module "*.scss" {
 }
 
 declare module "vue-virtual-scroller";
-declare module "element-plus/dist/locale/en.mjs";
-declare module "element-plus/dist/locale/zh-cn.mjs";
-declare module "plus-pro-components/locale/en.mjs";
-declare module "plus-pro-components/locale/zh-cn.mjs";

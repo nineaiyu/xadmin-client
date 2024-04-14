@@ -3,7 +3,7 @@ import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import ReCol from "@/components/ReCol";
 import { useApiAuth } from "./utils/hook";
-import croppingUpload from "@/components/RePictureUpload/index.vue";
+import croppingUpload from "@/components/RePictureUpload";
 
 defineOptions({
   name: "editUserAvatar"

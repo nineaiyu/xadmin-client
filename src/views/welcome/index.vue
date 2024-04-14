@@ -4,7 +4,12 @@ import ReCol from "@/components/ReCol";
 import { randomGradient, useDark } from "@pureadmin/utils";
 import { ReNormalCountTo } from "@/components/ReCountTo";
 import { useRenderFlicker } from "@/components/ReFlicker";
-import { barChart, lineChart, roundChart } from "./components/chart";
+import {
+  barChart,
+  clockChart,
+  lineChart,
+  roundChart
+} from "./components/chart";
 import Segmented from "@/components/ReSegmented";
 import { useDashboard } from "@/views/welcome/hook";
 import dayjs from "dayjs";
@@ -46,7 +51,7 @@ let curWeek = ref(1);
         }"
         :md="12"
         :sm="12"
-        :value="8"
+        :value="6"
         :xs="24"
         class="mb-[18px]"
       >
@@ -86,6 +91,29 @@ let curWeek = ref(1);
             />
             <roundChart v-else class="!w-1/2" />
           </div>
+        </el-card>
+      </re-col>
+      <re-col
+        v-motion
+        :enter="{
+          opacity: 1,
+          y: 0,
+          transition: {
+            delay: 80 * 4
+          }
+        }"
+        :initial="{
+          opacity: 0,
+          y: 100
+        }"
+        :md="12"
+        :sm="12"
+        :value="6"
+        :xs="24"
+        class="mb-[18px]"
+      >
+        <el-card body-class="" class="line-card" shadow="never">
+          <clockChart />
         </el-card>
       </re-col>
       <re-col

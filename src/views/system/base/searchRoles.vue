@@ -7,6 +7,8 @@ import { hasGlobalAuth } from "@/router/utils";
 import { searchRoleListApi } from "@/api/system/search";
 import { formatColumnsLabel } from "@/views/system/hooks";
 
+defineOptions({ name: "searchRoles" });
+
 const { t, te } = useI18n();
 
 const selectValue = defineModel({ type: Array<number> });

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useModelField } from "./utils/hook";
-import ReBaseTable from "@/components/ReBaseTable/index.vue";
+import ReBaseTable from "@/components/ReBaseTable";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { ref } from "vue";
 

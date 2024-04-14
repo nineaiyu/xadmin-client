@@ -3,7 +3,7 @@ import { ref } from "vue";
 import { useNotice } from "./utils/hook";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Eye from "@iconify-icons/ri/eye-fill";
-import ReBaseTable from "@/components/ReBaseTable/index.vue";
+import ReBaseTable from "@/components/ReBaseTable";
 
 defineOptions({
   name: "SystemNotice"

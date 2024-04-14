@@ -7,6 +7,7 @@ import { ref } from "vue";
 import { hasGlobalAuth } from "@/router/utils";
 import { formatColumnsLabel } from "@/views/system/hooks";
 
+defineOptions({ name: "searchDepts" });
 const { t, te } = useI18n();
 
 const selectValue = defineModel({ type: Array<number> });

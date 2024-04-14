@@ -3,7 +3,7 @@ import { ref } from "vue";
 import { useSystemConfig } from "./utils/hook";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import CircleClose from "@iconify-icons/ep/circle-close";
-import ReBaseTable from "@/components/ReBaseTable/index.vue";
+import ReBaseTable from "@/components/ReBaseTable";
 
 defineOptions({
   name: "SystemConfig"
