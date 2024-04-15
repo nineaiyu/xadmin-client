@@ -4,9 +4,11 @@ import { useEpThemeStoreHook } from "@/store/modules/epTheme";
 import {
   computed,
   defineComponent,
+  getCurrentInstance,
   nextTick,
   type PropType,
   ref,
+  unref,
   watch
 } from "vue";
 import {
@@ -42,6 +44,10 @@ const props = {
   isExpandAll: {
     type: Boolean,
     default: true
+  },
+  tableKey: {
+    type: [String, Number] as PropType<string | number>,
+    default: "0"
   }
 };
 
@@ -54,6 +60,7 @@ export default defineComponent({
     const loading = ref(false);
     const checkAll = ref(true);
     const isIndeterminate = ref(false);
+    const instance = getCurrentInstance()!;
     const isExpandAll = ref(props.isExpandAll);
     const filterColumns = computed(() => {
       return cloneDeep(props?.columns).filter(column =>
@@ -188,9 +195,9 @@ export default defineComponent({
     const rowDrop = (event: { preventDefault: () => void }) => {
       event.preventDefault();
       nextTick(() => {
-        const wrapper: HTMLElement = document.querySelector(
-          ".el-checkbox-group>div"
-        );
+        const wrapper: HTMLElement = (
+          instance?.proxy?.$refs[`GroupRef${unref(props.tableKey)}`] as any
+        ).$el.firstElementChild;
         Sortable.create(wrapper, {
           animation: 300,
           handle: ".drag-btn",
@@ -317,6 +324,7 @@ export default defineComponent({
                 <div class="pt-[6px] pl-[11px]">
                   <el-scrollbar max-height="36vh">
                     <el-checkbox-group
+                      ref={`GroupRef${unref(props.tableKey)}`}
                       modelValue={checkedColumns.value}
                       onChange={value => handleCheckedColumnsChange(value)}
                     >

@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { onBeforeUnmount, ref } from "vue";
+import { useResizeObserver } from "@pureadmin/utils";
 
 defineOptions({ name: "clock" });
 const digit = [
@@ -137,17 +138,18 @@ const digit = [
   ] //:
 ];
 const canvasRef = ref(null);
+const divRef = ref(null);
 const timer = ref(null);
 
 const maxBallCount = ref(100);
 const storeTime = ref(new Date());
 const radius = ref(7);
-const winWidth = ref(390);
-const winHeight = ref(106);
+const winWidth = ref(0);
+const winHeight = ref(0);
 const balls = ref([]);
-const marginLeft = ref(2);
-const marginTop = ref(10);
-const distNumber = ref(14);
+const marginLeft = ref(10);
+const marginTop = ref(30);
+const distNumber = ref(15);
 const colors = ref([
   "red",
   "#33B5E5",
@@ -162,22 +164,20 @@ const colors = ref([
 ]);
 
 const initConfig = () => {
-  // let canvas = canvasRef.value;
-  // winWidth.value = canvas.width;
-  // winHeight.value = canvas.height;
-  let timeW = winWidth.value > 1000 ? 1000 : winWidth.value;
-  radius.value = Math.round((timeW * 4) / 5 / 98) - 1;
-  marginLeft.value = (winWidth.value - timeW) / 2;
+  winWidth.value = divRef.value?.offsetWidth;
+  winHeight.value = divRef.value?.offsetHeight;
+  radius.value = Math.round((winWidth.value * 3) / 4 / 98) - 1;
 };
 const initCanvas = () => {
-  let canvas = canvasRef.value;
-  let context = canvas.getContext("2d");
-  canvas.width = winWidth.value;
-  canvas.height = winHeight.value;
-  render(context); //初始启动绘画
-  timer.value = setInterval(() => {
-    render(context);
-  }, 50);
+  let context = canvasRef.value?.getContext("2d");
+  if (canvasRef.value) {
+    canvasRef.value.width = winWidth.value;
+    canvasRef.value.height = winHeight.value;
+    render(context); //初始启动绘画
+    timer.value = setInterval(() => {
+      render(context);
+    }, 50);
+  }
 };
 
 const renderBall = (
@@ -363,23 +363,9 @@ const renderDigit = (x, y, num, cxt) => {
     });
   });
 };
-const bindWindow = () => {
-  // window.onblur = () => {
-  //   clearInterval(timer.value);
-  // };
-  // window.onfocus = () => {
-  //   clearInterval(timer.value);
-  //   initCanvas();
-  // };
-  window.onresize = () => {
-    clearInterval(timer.value);
-    initConfig();
-    initCanvas();
-  };
-};
 
-onMounted(() => {
-  bindWindow(); //绑定win的移入移出事件
+useResizeObserver(divRef, () => {
+  clearInterval(timer.value);
   initConfig();
   initCanvas();
 });
@@ -393,5 +379,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <canvas ref="canvasRef" />
+  <div ref="divRef" class="h-full w-full">
+    <canvas ref="canvasRef" />
+  </div>
 </template>

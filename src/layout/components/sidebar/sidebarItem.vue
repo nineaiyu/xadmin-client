@@ -114,15 +114,15 @@ function resolvePath(routePath) {
     :to="item"
   >
     <el-menu-item
-      :class="{ 'submenu-title-noDropdown': !isNest }"
       :index="resolvePath(onlyOneChild.path)"
+      :class="{ 'submenu-title-noDropdown': !isNest }"
       :style="getNoDropdownStyle"
       v-bind="attrs"
     >
       <div
         v-if="toRaw(props.item.meta.icon)"
-        :style="getSubMenuIconStyle"
         class="sub-menu-icon"
+        :style="getSubMenuIconStyle"
       >
         <component
           :is="
@@ -144,8 +144,8 @@ function resolvePath(routePath) {
             layout === 'mix' &&
             props.item?.pathList?.length === 2)
         "
-        class="!px-4 !text-inherit"
         truncated
+        class="!w-full !px-4 !text-inherit"
       >
         {{ transformI18n(onlyOneChild.meta.title) }}
       </el-text>
@@ -157,7 +157,7 @@ function resolvePath(routePath) {
               offset: [0, -10],
               theme: tooltipEffect
             }"
-            class="!text-inherit"
+            class="!w-full !text-inherit"
           >
             {{ transformI18n(onlyOneChild.meta.title) }}
           </ReText>
@@ -169,8 +169,8 @@ function resolvePath(routePath) {
   <el-sub-menu
     v-else
     ref="subMenu"
-    :index="resolvePath(props.item.path)"
     teleported
+    :index="resolvePath(props.item.path)"
     v-bind="expandCloseIcon"
   >
     <template #title>
@@ -185,14 +185,17 @@ function resolvePath(routePath) {
       </div>
       <ReText
         v-if="
-          !(
-            layout === 'vertical' &&
-            isCollapse &&
-            toRaw(props.item.meta.icon) &&
-            props.item.parentId === null
-          )
+          layout === 'mix' && toRaw(props.item.meta.icon)
+            ? !isCollapse || props.item?.pathList?.length !== 2
+            : !(
+                layout === 'vertical' &&
+                isCollapse &&
+                toRaw(props.item.meta.icon) &&
+                props.item.parentId === null
+              )
         "
         :class="{
+          '!w-full': true,
           '!text-inherit': true,
           '!px-4':
             layout !== 'horizontal' &&
@@ -213,9 +216,9 @@ function resolvePath(routePath) {
     <sidebar-item
       v-for="child in props.item.children"
       :key="child.path"
-      :base-path="resolvePath(child.path)"
       :is-nest="true"
       :item="child"
+      :base-path="resolvePath(child.path)"
       class="nest-menu"
     />
   </el-sub-menu>

@@ -105,21 +105,23 @@ const onLogin = async (formEl: FormInstance | undefined) => {
       loading.value = true;
       useUserStoreHook()
         .loginByUsername(ruleForm)
-        .then(() => {
-          initRouter().then(() => {
-            disabled.value = true;
-            router
-              .push(getTopMenu(true).path)
-              .then(() => {
-                message(transformI18n($t("login.loginSuccess")), {
-                  type: "success"
-                });
-              })
-              .finally(() => {
+        .then(res => {
+          if (res.code === 1000) {
+            message(transformI18n($t("login.loginSuccess")), {
+              type: "success"
+            });
+            initRouter().then(() => {
+              disabled.value = true;
+              router.push(getTopMenu(true).path).finally(() => {
                 disabled.value = false;
               });
-          });
-          loading.value = false;
+            });
+            loading.value = false;
+          } else {
+            message(res.detail, {
+              type: "warning"
+            });
+          }
         })
         .catch(err => {
           message(err.detail, {

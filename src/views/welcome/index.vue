@@ -112,7 +112,11 @@ let curWeek = ref(1);
         :xs="24"
         class="mb-[18px]"
       >
-        <el-card body-class="" class="line-card" shadow="never">
+        <el-card
+          :body-style="{ padding: '0' }"
+          class="line-card"
+          shadow="never"
+        >
           <clockChart />
         </el-card>
       </re-col>
