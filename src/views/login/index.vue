@@ -154,6 +154,8 @@ function onkeypress({ code }: KeyboardEvent) {
 onMounted(() => {
   window.document.addEventListener("keypress", onkeypress);
   initToken();
+  useUserStoreHook().SET_ISREMEMBERED(checked.value);
+  useUserStoreHook().SET_LOGINDAY(loginDay.value);
 });
 
 onBeforeUnmount(() => {

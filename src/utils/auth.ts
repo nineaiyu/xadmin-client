@@ -68,7 +68,7 @@ export function setToken(data: TokenInfo) {
 export function setUserInfo(data: UserInfo) {
   useUserStoreHook().SET_USERNAME(data.username);
   useUserStoreHook().SET_AVATAR(data.avatar);
-  // useUserStoreHook().SET_ROLES(data?.roles_info);
+  useUserStoreHook().SET_ROLES(data?.roles_info);
   storageLocal().setItem(userKey, data);
 }
 

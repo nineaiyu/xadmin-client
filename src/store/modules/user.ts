@@ -1,9 +1,3 @@
-import { defineStore } from "pinia";
-import { store } from "@/store";
-import type { userType } from "./types";
-import { routerArrays } from "@/layout/types";
-import { resetRouter, router } from "@/router";
-import { storageLocal } from "@pureadmin/utils";
 import type { TokenResult } from "@/api/auth";
 import {
   loginApi,
@@ -13,7 +7,6 @@ import {
   type UserInfo,
   type UserInfoResult
 } from "@/api/auth";
-import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import {
   getRefreshToken,
   removeToken,
@@ -24,6 +17,18 @@ import {
 import { message } from "@/utils/message";
 import { userInfoApi } from "@/api/user/userinfo";
 import { getUserSiteConfigApi } from "@/api/config";
+
+import {
+  defineStore,
+  resetRouter,
+  router,
+  routerArrays,
+  storageLocal,
+  store,
+  type userType
+} from "../utils";
+
+import { useMultiTagsStoreHook } from "./multiTags";
 
 export const useUserStore = defineStore({
   id: "pure-user",

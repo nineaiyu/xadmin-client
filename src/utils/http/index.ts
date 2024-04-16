@@ -24,7 +24,7 @@ import { router } from "@/router";
 const defaultConfig: AxiosRequestConfig = {
   baseURL: import.meta.env.VITE_API_DOMAIN,
   // 请求超时时间
-  timeout: 10000,
+  timeout: 30000,
   headers: {
     Accept: "application/json, text/plain, */*",
     "Content-Type": "application/json",
@@ -38,13 +38,13 @@ const defaultConfig: AxiosRequestConfig = {
 };
 
 class PureHttp {
-  /** token过期后，暂存待执行的请求 */
+  /** `token`过期后，暂存待执行的请求 */
   private static requests = [];
-  /** 防止重复刷新token */
+  /** 防止重复刷新`token` */
   private static isRefreshing = false;
   /** 初始化配置对象 */
   private static initConfig: PureHttpRequestConfig = {};
-  /** 保存当前Axios实例对象 */
+  /** 保存当前`Axios`实例对象 */
   private static axiosInstance: AxiosInstance = Axios.create(defaultConfig);
 
   constructor() {
@@ -112,31 +112,31 @@ class PureHttp {
     });
   }
 
-  /** 单独抽离的post工具函数 */
+  /** 单独抽离的`post`工具函数 */
   public post<T, P>(
     url: string,
-    params?: AxiosRequestConfig<T>,
+    params?: AxiosRequestConfig<P>,
     config?: PureHttpRequestConfig
-  ): Promise<P> {
-    return this.request<P>("post", url, params, config);
+  ): Promise<T> {
+    return this.request<T>("post", url, params, config);
   }
 
-  /** 单独抽离的get工具函数 */
+  /** 单独抽离的`get`工具函数 */
   public get<T, P>(
     url: string,
-    params?: AxiosRequestConfig<T>,
+    params?: AxiosRequestConfig<P>,
     config?: PureHttpRequestConfig
-  ): Promise<P> {
-    return this.request<P>("get", url, params, config);
+  ): Promise<T> {
+    return this.request<T>("get", url, params, config);
   }
 
   public upload<P>(
     url: string,
-    params?: any,
-    data?: any,
+    params?: AxiosRequestConfig<P>,
+    data?: AxiosRequestConfig<P>,
     config?: PureHttpRequestConfig
-  ): Promise<P> {
-    return this.request<P>(
+  ): Promise<T> {
+    return this.request<T>(
       "post",
       url,
       { data, params },
@@ -165,7 +165,7 @@ class PureHttp {
           PureHttp.initConfig.beforeRequestCallback(config);
           return config;
         }
-        /** 请求白名单，放置一些不需要token的接口（通过设置请求白名单，防止token过期后再请求造成的死循环问题） */
+        /** 请求白名单，放置一些不需要`token`的接口（通过设置请求白名单，防止`token`过期后再请求造成的死循环问题） */
         const whiteList = ["/api/system/refresh", "/api/system/login"];
         return whiteList.some(url => config.url.endsWith(url))
           ? config
