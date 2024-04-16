@@ -369,28 +369,11 @@ function hasAuth(value: string | Array<string>): boolean {
   return isAuths ? true : false;
 }
 
-function getGlobalAuths(arr: any[]) {
-  let res = [];
-
-  function deep(arr: any[]) {
-    arr.forEach(item => {
-      let auths = item?.meta?.auths;
-      if (auths?.length > 0) {
-        res = res.concat(auths);
-      }
-      item.children && deep(item.children);
-    });
-  }
-
-  deep(arr);
-  return res;
-}
-
 /** 是否有按钮级别的权限 */
 function hasGlobalAuth(value: string | Array<string>): boolean {
   if (!value) return false;
   /** 从当前路由的`meta`字段里获取按钮级别的所有自定义`code`值 */
-  const metaAuths = getGlobalAuths(usePermissionStoreHook().routes);
+  const metaAuths = usePermissionStoreHook().metaAuths;
   if (!metaAuths) return false;
   return isString(value)
     ? metaAuths.includes(value)

@@ -12,6 +12,23 @@ import {
 } from "../utils";
 import { useMultiTagsStoreHook } from "./multiTags";
 
+function getGlobalAuths(arr: any[]) {
+  let res = [];
+
+  function deep(arr: any[]) {
+    arr.forEach(item => {
+      let auths = item?.meta?.auths;
+      if (auths?.length > 0) {
+        res = res.concat(auths);
+      }
+      item.children && deep(item.children);
+    });
+  }
+
+  deep(arr);
+  return res;
+}
+
 export const usePermissionStore = defineStore({
   id: "pure-permission",
   state: () => ({
@@ -23,7 +40,8 @@ export const usePermissionStore = defineStore({
     flatteningRoutes: [],
     // 缓存页面keepAlive
     cachePageList: [],
-    routes: []
+    // 全局的授权
+    metaAuths: []
   }),
   actions: {
     /** 组装整体路由生成的菜单 */
@@ -34,7 +52,7 @@ export const usePermissionStore = defineStore({
       this.flatteningRoutes = formatFlatteningRoutes(
         this.constantMenus.concat(routes)
       );
-      this.routes = this.constantMenus.concat(routes);
+      this.metaAuths = getGlobalAuths(this.constantMenus.concat(routes));
     },
     cacheOperate({ mode, name }: cacheType) {
       const delIndex = this.cachePageList.findIndex(v => v === name);
@@ -69,7 +87,7 @@ export const usePermissionStore = defineStore({
       this.wholeMenus = [];
       this.cachePageList = [];
       this.flatteningRoutes = [];
-      this.routes = [];
+      this.metaAuths = [];
     }
   }
 });
