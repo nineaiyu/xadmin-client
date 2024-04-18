@@ -30,12 +30,12 @@ const customOptions = (data: Array<any>) => {
   data?.forEach(item => {
     result.push({
       label: item?.label,
-      value: item?.key,
+      value: item?.value,
       fieldItemProps: {
         disabled: item?.disabled
       },
       fieldSlot: () => {
-        return <el-text type={item?.key}> {item?.label}</el-text>;
+        return <el-text type={item?.value}> {item?.label}</el-text>;
       }
     });
   });
@@ -136,7 +136,7 @@ export function useNotice(tableRef: Ref) {
       )
     },
     {
-      prop: "notice_type_display",
+      prop: "notice_type.label",
       minWidth: 120
     },
     {
@@ -222,7 +222,7 @@ export function useNotice(tableRef: Ref) {
       if (res.code === 1000) {
         choicesDict.value = res.choices_dict;
         choicesDict.value["notice_type"].forEach(item => {
-          if (item.key == NoticeChoices.NOTICE) {
+          if (item.value == NoticeChoices.NOTICE) {
             if (!hasAuth("create:systemAnnouncement")) {
               if (!item.disabled) {
                 item.disabled = true;

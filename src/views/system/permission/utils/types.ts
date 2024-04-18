@@ -2,8 +2,7 @@ interface FormItemProps {
   /** ID */
   pk?: number;
   name: string;
-  mode_display?: string;
-  mode_type: number;
+  mode_type: number | object;
   rules: Object[];
   menu: number[];
   description: string;

@@ -69,7 +69,7 @@ export function useUserNotice(tableRef: Ref) {
         dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
     },
     {
-      prop: "notice_type_display",
+      prop: "notice_type.label",
       minWidth: 120
     },
     {

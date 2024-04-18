@@ -8,8 +8,7 @@ interface FormItemProps {
   name?: string;
   code?: string;
   roles?: number[];
-  mode_display?: string;
-  mode_type?: number;
+  mode_type?: number | object;
   is_active?: boolean;
   auto_bind?: boolean;
   description?: string;
@@ -31,8 +30,7 @@ interface itemProps {
 interface RoleFormItemProps {
   name?: string;
   code?: string;
-  mode_type?: number;
-  mode_display?: string;
+  mode_type?: number | object;
   /** 选中的角色列表 */
   rules: Record<number, unknown>[];
   roles: Record<number, unknown>[];

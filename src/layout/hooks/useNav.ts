@@ -18,7 +18,8 @@ import ExitFullscreen from "@iconify-icons/ri/fullscreen-exit-fill";
 import Fullscreen from "@iconify-icons/ri/fullscreen-fill";
 import { useI18n } from "vue-i18n";
 
-const errorInfo = "当前路由配置不正确，请检查配置";
+const errorInfo =
+  "The current routing configuration is incorrect, please check the configuration";
 
 export function useNav() {
   const { t } = useI18n();

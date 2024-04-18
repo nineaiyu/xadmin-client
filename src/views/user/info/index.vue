@@ -12,7 +12,7 @@ defineOptions({
 
 const {
   auth,
-  choicesDict,
+  genderChoices,
   currentUserInfo,
   handleUpdate,
   handleUpload,
@@ -55,8 +55,14 @@ const activeTab = ref("userinfo");
               >{{ currentUserInfo.email }}
             </el-descriptions-item>
             <el-descriptions-item :label="t('userinfo.gender')">
-              <el-tag type="success">
-                {{ currentUserInfo.gender_display }}
+              <el-tag
+                :type="
+                  (currentUserInfo.gender as any)?.value === 2
+                    ? 'danger'
+                    : 'primary'
+                "
+              >
+                {{ (currentUserInfo.gender as any)?.label }}
               </el-tag>
             </el-descriptions-item>
             <el-descriptions-item
@@ -107,7 +113,7 @@ const activeTab = ref("userinfo");
         <el-tabs v-model="activeTab">
           <el-tab-pane :label="t('userinfo.basicInfo')" name="userinfo">
             <edit-user-info
-              :choices-dict="choicesDict"
+              :gender-choices="genderChoices"
               :form-inline="currentUserInfo"
               @handle-update="handleUpdate"
             />

@@ -45,7 +45,7 @@ export function useModelField(tableRef: Ref) {
       cellRenderer: ({ row }) => <span v-copy={row.parent}>{row.parent}</span>
     },
     {
-      prop: "field_type_display",
+      prop: "field_type.label",
       minWidth: 150
     },
     {

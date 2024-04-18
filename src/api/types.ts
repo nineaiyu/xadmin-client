@@ -2,7 +2,7 @@ export type Result = {
   detail: string;
   code: number;
   unread_count?: number;
-  choices_dict?: any[];
+  choices_dict?: Object | any;
   mode_choices?: any[];
   level_choices?: any[];
   notice_type_choices?: any[];

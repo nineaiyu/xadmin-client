@@ -93,7 +93,7 @@ export const formatOptions = (data: Array<any>) => {
   data?.forEach(item => {
     result.push({
       label: item?.label,
-      value: item?.key,
+      value: item?.value,
       fieldItemProps: {
         disabled: item?.disabled
       }
@@ -116,6 +116,11 @@ export const formatPublicLabels = (
   const formatLabel = `${localeName}.${label}`;
   if (te(formatLabel)) {
     return t(formatLabel);
+  }
+  if (label.split(".").length > 1) {
+    if (te(`${localeName}.${label.split(".")[0]}`)) {
+      return t(`${localeName}.${label.split(".")[0]}`);
+    }
   }
   if (
     [
@@ -235,7 +240,7 @@ export const getFieldsData = (
               formatSearchColumns(item, localeName, t, te)
             );
             if (item.key === "ordering" && item.choices.length > 0) {
-              searchFields.value[item.key] = item.choices[0].key;
+              searchFields.value[item.key] = item.choices[0].value;
             }
           });
           searchFields.value.page = page;

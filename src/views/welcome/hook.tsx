@@ -137,12 +137,12 @@ export function useDashboard() {
     getUserTotal();
     getUserLoginList();
     getUserLoginTotal();
-    getUserActiveList();
-    getUserRegisterList();
     getTodayOperateTotal();
     if (hasGlobalAuth("list:systemOperationLog")) {
       getOperateLogList();
     }
+    getUserActiveList();
+    getUserRegisterList();
   });
 
   return {

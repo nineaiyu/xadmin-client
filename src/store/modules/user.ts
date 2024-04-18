@@ -60,7 +60,7 @@ export const useUserStore = defineStore({
       this.avatar = avatar;
     },
     /** 存储角色 */
-    SET_ROLES(roles: Array<number>) {
+    SET_ROLES(roles: Array<string>) {
       this.roles = roles;
     },
     /** 存储前端生成的验证码 */

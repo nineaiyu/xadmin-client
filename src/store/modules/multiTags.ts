@@ -1,7 +1,9 @@
 import {
   defineStore,
+  getConfig,
   isBoolean,
   isEqual,
+  isNumber,
   isUrl,
   type multiType,
   type positionType,
@@ -112,6 +114,14 @@ export const useMultiTagsStore = defineStore({
             }
             this.multiTags.push(value);
             this.tagsCache(this.multiTags);
+            if (
+              getConfig()?.MaxTagsLevel &&
+              isNumber(getConfig().MaxTagsLevel)
+            ) {
+              if (this.multiTags.length > getConfig().MaxTagsLevel) {
+                this.multiTags.splice(1, 1);
+              }
+            }
           }
           break;
         case "splice":

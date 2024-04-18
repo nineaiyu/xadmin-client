@@ -5,11 +5,11 @@ import { randomGradient, useDark } from "@pureadmin/utils";
 import { ReNormalCountTo } from "@/components/ReCountTo";
 import { useRenderFlicker } from "@/components/ReFlicker";
 import {
-  barChart,
-  clockChart,
-  lineChart,
-  roundChart
-} from "./components/chart";
+  ChartBar,
+  ChartLine,
+  ChartRound,
+  ChartClock
+} from "./components/WelcomeCharts";
 import Segmented from "@/components/ReSegmented";
 import { useDashboard } from "@/views/welcome/hook";
 import dayjs from "dayjs";
@@ -83,13 +83,13 @@ let curWeek = ref(1);
               />
               <p class="font-medium text-green-500">{{ item.percent }}</p>
             </div>
-            <lineChart
+            <ChartLine
               v-if="item.data.length > 1"
               :color="item.color"
               :data="item.data"
               class="!w-1/2"
             />
-            <roundChart v-else class="!w-1/2" />
+            <ChartRound v-else class="!w-1/2" />
           </div>
         </el-card>
       </re-col>
@@ -117,7 +117,7 @@ let curWeek = ref(1);
           class="line-card"
           shadow="never"
         >
-          <clockChart />
+          <ChartClock />
         </el-card>
       </re-col>
       <re-col
@@ -197,7 +197,7 @@ let curWeek = ref(1);
             <Segmented v-model="curWeek" :options="optionsBasis" />
           </div>
           <div class="flex justify-between items-start mt-3">
-            <barChart
+            <ChartBar
               :showData="curWeek ? userLoginList : userRegisterList"
               :title="optionsBasis[curWeek].label"
             />

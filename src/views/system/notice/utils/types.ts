@@ -17,10 +17,9 @@ interface FormItemProps {
   owner_info?: Owner;
   publish?: boolean;
   level?: "primary" | "success" | "warning" | "danger" | "info";
-  notice_type_display?: string;
   title?: string;
   message?: string;
-  notice_type?: number;
+  notice_type?: number | object;
   user_count?: number;
   extra_json?: {};
   files?: any[];

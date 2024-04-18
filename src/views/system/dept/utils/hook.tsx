@@ -119,7 +119,7 @@ export function useDept(tableRef: Ref) {
       minWidth: 90
     },
     {
-      prop: "mode_display",
+      prop: "mode_type.label",
       minWidth: 90
     },
     {
@@ -343,7 +343,7 @@ export function useDeptRoleForm(props) {
                   color: var(--el-text-color-secondary);
                 "
               >
-                {item.code ?? item.mode_display}
+                {item.code ?? item.mode_type?.label}
               </span>
             </>
           );
