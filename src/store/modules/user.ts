@@ -16,7 +16,6 @@ import {
 } from "@/utils/auth";
 import { message } from "@/utils/message";
 import { userInfoApi } from "@/api/user/userinfo";
-import { getUserSiteConfigApi } from "@/api/config";
 
 import {
   defineStore,
@@ -33,10 +32,12 @@ import { useMultiTagsStoreHook } from "./multiTags";
 export const useUserStore = defineStore({
   id: "pure-user",
   state: (): userType => ({
-    // 用户名
-    username: storageLocal().getItem<UserInfo>(userKey)?.username ?? "",
     // 头像
     avatar: storageLocal().getItem<UserInfo>(userKey)?.avatar ?? "",
+    // 用户名
+    username: storageLocal().getItem<UserInfo>(userKey)?.username ?? "",
+    // 昵称
+    nickname: storageLocal().getItem<UserInfo>(userKey)?.nickname ?? "",
     // 页面级别权限
     roles: storageLocal().getItem<UserInfo>(userKey)?.roles ?? [],
     // 前端生成的验证码（按实际需求替换）
@@ -51,13 +52,16 @@ export const useUserStore = defineStore({
     noticeCount: 0
   }),
   actions: {
+    /** 存储用户头像 */
+    SET_AVATAR(avatar: string) {
+      this.avatar = avatar;
+    },
     /** 存储用户名 */
     SET_USERNAME(username: string) {
       this.username = username;
-    },
-    /** 存储用户名 */
-    SET_AVATAR(avatar: string) {
-      this.avatar = avatar;
+    } /** 存储用户昵称 */,
+    SET_NICKNAME(nickname: string) {
+      this.nickname = nickname;
     },
     /** 存储角色 */
     SET_ROLES(roles: Array<string>) {
@@ -106,21 +110,6 @@ export const useUserStore = defineStore({
           .then(res => {
             if (res.code === 1000) {
               setUserInfo(res.data);
-              resolve(res);
-            } else {
-              reject(res);
-            }
-          })
-          .catch(error => {
-            reject(error);
-          });
-      });
-    },
-    async getUserConfig() {
-      return new Promise<UserInfoResult>((resolve, reject) => {
-        getUserSiteConfigApi()
-          .then(res => {
-            if (res.code === 1000) {
               resolve(res);
             } else {
               reject(res);

@@ -38,6 +38,7 @@ export const getPlatformConfig = async (
     url: url ? url : `/api/system/configs/WEB_SITE_CONFIG`
   })
     .then(async ({ data: config }) => {
+      config = config?.config ?? config;
       if (!config.Version && !config.ResponsiveStorageNameSpace) {
         return await getPlatformConfig(
           app,

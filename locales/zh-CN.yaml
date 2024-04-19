@@ -92,6 +92,8 @@ layout:
   fixedTip: 紧凑页面，轻松找到所需信息
   customization: 自定义
   customTip: 最小1280、最大1600
+  saveConfig: 保存配置
+  saveConfigTip: 将当前配置保存到服务器
 
 error:
   error403: 抱歉，你无权访问该页面

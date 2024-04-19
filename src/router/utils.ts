@@ -26,6 +26,7 @@ import { usePermissionStoreHook } from "@/store/modules/permission";
 import { getAsyncRoutes } from "@/api/routes";
 import { useUserStoreHook } from "@/store/modules/user";
 import type { UserInfo } from "@/api/auth";
+import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
 
 const IFrame = () => import("@/layout/frameView.vue");
 // https://cn.vitejs.dev/guide/features.html#glob-import
@@ -188,11 +189,13 @@ function handleAsyncRoutes(routeList) {
     ]);
   }
   addPathMatch();
-  useUserStoreHook().getUserInfo();
 }
 
 /** 初始化路由（`new Promise` 写法防止在异步请求中造成无限循环）*/
 function initRouter() {
+  useSiteConfigStoreHook().getSiteConfig();
+  useUserStoreHook().getUserInfo();
+
   if (getConfig()?.CachingAsyncRoutes) {
     // 开启动态路由缓存本地localStorage
     const key = "async-routes";

@@ -99,7 +99,7 @@ export function useSystemConfig(tableRef: Ref) {
       minWidth: 100,
       cellRenderer: ({ row, props }) => (
         <el-tag size={props.size} style={tagStyle.value(row.inherit)}>
-          {row.access ? t("labels.enable") : t("labels.disable")}
+          {row.inherit ? t("labels.enable") : t("labels.disable")}
         </el-tag>
       )
     },
