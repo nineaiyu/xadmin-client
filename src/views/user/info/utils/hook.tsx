@@ -32,7 +32,7 @@ export function useUserInfo() {
   const { api, auth } = useApiAuth();
 
   const loading = ref(true);
-  const choicesDict = ref([]);
+  const genderChoices = ref([]);
 
   // 上传头像信息
   const currentUserInfo = reactive<FormItemProps>({
@@ -61,7 +61,7 @@ export function useUserInfo() {
           Object.keys(res.data).forEach(param => {
             currentUserInfo[param] = res.data[param];
           });
-          choicesDict.value = res.choices_dict;
+          genderChoices.value = res.choices_dict;
         } else {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
         }
@@ -106,7 +106,7 @@ export function useUserInfo() {
   return {
     t,
     auth,
-    choicesDict,
+    genderChoices,
     currentUserInfo,
     handleUpload,
     handleUpdate,

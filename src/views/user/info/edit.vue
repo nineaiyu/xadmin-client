@@ -11,7 +11,7 @@ defineOptions({
 });
 
 const props = withDefaults(defineProps<FormProps>(), {
-  choicesDict: () => [],
+  genderChoices: () => [],
   formInline: () => ({
     username: "",
     nickname: "",
@@ -94,10 +94,10 @@ const handleUpdate = row => {
             clearable
           >
             <el-option
-              v-for="item in props.choicesDict"
-              :key="item.key"
+              v-for="item in props.genderChoices"
+              :key="item.value"
               :label="item.label"
-              :value="item.key"
+              :value="item.value"
             />
           </el-select>
         </el-form-item>

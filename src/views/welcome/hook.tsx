@@ -55,6 +55,9 @@ export function useDashboard() {
 
   const getTodayOperateTotal = () => {
     getDashBoardTodayOperateTotalApi().then(res => {
+      if (hasGlobalAuth("list:systemOperationLog")) {
+        getOperateLogList();
+      }
       if (res.code === 1000) {
         chartData.value.push({
           icon: LogLine,
@@ -137,12 +140,9 @@ export function useDashboard() {
     getUserTotal();
     getUserLoginList();
     getUserLoginTotal();
+    getTodayOperateTotal();
     getUserActiveList();
     getUserRegisterList();
-    getTodayOperateTotal();
-    if (hasGlobalAuth("list:systemOperationLog")) {
-      getOperateLogList();
-    }
   });
 
   return {

@@ -5,6 +5,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
 import Close from "@iconify-icons/ep/close";
 import { useI18n } from "vue-i18n";
+import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
 
 const target = ref(null);
 const show = ref<Boolean>(false);
@@ -28,6 +29,8 @@ const iconClass = computed(() => {
 });
 
 const { onReset } = useDataThemeChange();
+
+const { saveSiteConfig } = useSiteConfigStoreHook();
 
 onClickOutside(target, (event: any) => {
   if (event.clientX > target.value.offsetLeft) return;
@@ -76,8 +79,21 @@ onBeforeUnmount(() => {
       </el-scrollbar>
 
       <div
-        class="flex justify-end p-3 border-t-[1px] border-solid border-[var(--pure-border-color)]"
+        class="flex justify-between p-3 border-t-[1px] border-solid border-[var(--pure-border-color)]"
       >
+        <el-button
+          v-tippy="{
+            content: t('layout.saveConfigTip'),
+            placement: 'left-start',
+            zIndex: 41000
+          }"
+          bg
+          text
+          type="success"
+          @click="saveSiteConfig"
+        >
+          {{ t("layout.saveConfig") }}
+        </el-button>
         <el-button
           v-tippy="{
             content: t('layout.cleanOut'),

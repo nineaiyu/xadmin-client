@@ -2,23 +2,24 @@ import { storeToRefs } from "pinia";
 import { getConfig } from "@/config";
 import { useRouter } from "vue-router";
 import { emitter } from "@/utils/mitt";
-import avatar from "@/assets/avatar.png";
-import type { routeMetaType } from "../types";
+import Avatar from "@/assets/avatar.png";
 import { getTopMenu } from "@/router/utils";
 import { useFullscreen } from "@vueuse/core";
-import { useGlobal } from "@pureadmin/utils";
+import type { routeMetaType } from "../types";
 import { transformI18n } from "@/plugins/i18n";
 import { remainingPaths, router } from "@/router";
 import { computed, type CSSProperties } from "vue";
 import { useAppStoreHook } from "@/store/modules/app";
 import { useUserStoreHook } from "@/store/modules/user";
+import { isAllEmpty, useGlobal } from "@pureadmin/utils";
 import { useEpThemeStoreHook } from "@/store/modules/epTheme";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import ExitFullscreen from "@iconify-icons/ri/fullscreen-exit-fill";
 import Fullscreen from "@iconify-icons/ri/fullscreen-fill";
 import { useI18n } from "vue-i18n";
 
-const errorInfo = "当前路由配置不正确，请检查配置";
+const errorInfo =
+  "The current routing configuration is incorrect, please check the configuration";
 
 export function useNav() {
   const { t } = useI18n();
@@ -39,13 +40,18 @@ export function useNav() {
     };
   });
 
-  /** 用户名 */
-  const username = computed(() => {
-    return useUserStoreHook()?.username;
+  /** 头像（如果头像为空则使用 src/assets/user.jpg ） */
+  const userAvatar = computed(() => {
+    return isAllEmpty(useUserStoreHook()?.avatar)
+      ? Avatar
+      : useUserStoreHook()?.avatar?.replace(".png", "_1.jpg");
   });
 
-  const userAvatar = computed(() => {
-    return useUserStoreHook()?.avatar?.replace(".png", "_1.jpg") ?? avatar;
+  /** 昵称（如果昵称为空则显示用户名） */
+  const username = computed(() => {
+    return isAllEmpty(useUserStoreHook()?.nickname)
+      ? useUserStoreHook()?.username
+      : useUserStoreHook()?.nickname;
   });
 
   /** 设置国际化选中后的样式 */

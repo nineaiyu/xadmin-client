@@ -92,6 +92,8 @@ layout:
   fixedTip: Compact page to easily find the information you need
   customization: Customization
   customTip: Minimum 1280, maximum 1600
+  saveConfig: Save Config
+  saveConfigTip: Save the current site configuration to the server
 
 error:
   error403: Sorry, you are not authorized to access this page
@@ -245,7 +247,6 @@ systemUser:
   avatar: Avatar
   nickname: Nickname
   gender: Gender
-  gender_display: Gender
   dept_info: Department
   date_joined: Registration Date
   last_login: Last Login Date
@@ -269,7 +270,6 @@ systemDept:
   auto_bind: Auto Bind
   mode_type: Mode Type
   user_count: User Count
-  mode_display: Mode Display
   roles_info: Roles
   rules_info: Data Permissions
   assignRoles: Assign Roles Permissions
@@ -283,7 +283,6 @@ systemPermission:
   permission: Permissions
   name: Name
   mode_type: Mode Type
-  mode_display: Mode Display
   menu: Menu
   addName: Name
   addValue: Value
@@ -379,7 +378,6 @@ logsLogin:
   browser: Browser
   agent: User-Agent
   creator: Creator
-  login_display: Login Type
 
 configSystem:
   configSystem: System Config
@@ -411,13 +409,11 @@ modelFieldManagement:
   label: Model/field label
   field_type: Field Type
   parent: Parent
-  field_type_display: Field Type
   makeData: Make Field Data
 
 systemNotice:
   notice: Notice
   notice_type: Notice Type
-  notice_type_display: Notice Type
   level: Level
   publish: Publish
   message: Message
@@ -448,7 +444,6 @@ userNotice:
   unread: Have Read
   level: Level
   notice_type: Notice Type
-  notice_type_display: Notice Type
   batchRead: BatchRead
   unreadMessage: Unread Message
   allRead: AllRead

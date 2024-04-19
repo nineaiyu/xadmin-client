@@ -166,7 +166,7 @@ export function useUser(tableRef: Ref) {
       )
     },
     {
-      prop: "gender",
+      prop: "gender.label",
       minWidth: 90,
       cellRenderer: ({ row, props }) => (
         <el-tag
@@ -174,7 +174,7 @@ export function useUser(tableRef: Ref) {
           type={row.gender === 2 ? "danger" : "primary"}
           effect="plain"
         >
-          {row.gender_display}
+          {row.gender.label}
         </el-tag>
       )
     },
@@ -588,7 +588,7 @@ export function useSystemUserRoleForm(props) {
                   color: var(--el-text-color-secondary);
                 "
               >
-                {item.code ?? item.mode_display}
+                {item.code ?? item.mode_type?.label}
               </span>
             </>
           );

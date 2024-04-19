@@ -20,7 +20,6 @@ const props = withDefaults(defineProps<FormProps>(), {
     publish: false,
     message: "",
     level: "primary",
-    notice_type_display: "",
     notice_type: NoticeChoices.NOTICE,
     notice_dept: [],
     notice_role: [],

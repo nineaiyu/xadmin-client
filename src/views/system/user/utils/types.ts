@@ -14,9 +14,8 @@ interface FormItemProps {
   /** 邮箱 */
   email?: string;
   /** 性别 */
-  gender?: number;
+  gender?: number | object;
   mode_type?: number;
-  gender_display?: string;
   /** 角色 */
   roles?: number[];
   rules?: number[];
@@ -41,8 +40,7 @@ interface FormProps {
 interface RoleFormItemProps {
   username: string;
   nickname: string;
-  mode_type?: number;
-  mode_display?: string;
+  mode_type?: number | object;
   /** 选中的角色列表 */
   roles: Record<number, unknown>[];
   rules: Record<number, unknown>[];

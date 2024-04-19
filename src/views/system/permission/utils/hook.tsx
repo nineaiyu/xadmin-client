@@ -91,7 +91,7 @@ export function useDataPermission(tableRef: Ref) {
       minWidth: 120
     },
     {
-      prop: "mode_display",
+      prop: "mode_type.label",
       minWidth: 120
     },
     {
@@ -135,10 +135,14 @@ export function useDataPermission(tableRef: Ref) {
         .then(res => {
           if (res.code === 1000) {
             fieldLookupsData.value = handleTree(res.data.results);
-            valuesData.value = res.choices_dict;
           }
         });
     }
+    modelLabelFieldApi.choices().then(res => {
+      if (res.code === 1000) {
+        valuesData.value = res.choices_dict?.choices;
+      }
+    });
     if (hasGlobalAuth("permissions:systemMenu")) {
       menuApi.permissions({ page: 1, size: 1000 }).then(res => {
         if (res.code === 1000) {

@@ -119,12 +119,11 @@ const getMinHeight = () => {
 const menuOptions = computed<Array<OptionsType>>(() => {
   const data = cloneDeep(props.menuChoices);
   data.forEach(item => {
-    item.value = item.key;
     if (!newFormInline.value.isAdd) {
       if (newFormInline.value.menu_type === MenuChoices.PERMISSION) {
-        item.disabled = item.key !== MenuChoices.PERMISSION;
+        item.disabled = item.value !== MenuChoices.PERMISSION;
       } else {
-        item.disabled = item.key === MenuChoices.PERMISSION;
+        item.disabled = item.value === MenuChoices.PERMISSION;
       }
     }
   });
@@ -459,10 +458,10 @@ defineExpose({ getRef });
           >
             <el-option
               v-for="item in props.methodChoices"
-              :key="item.key"
+              :key="item.value"
               :disabled="item.disabled"
               :label="item.label"
-              :value="item.key"
+              :value="item.value"
             />
           </el-select>
         </el-form-item>

@@ -99,7 +99,10 @@ export function useBaseTable(
     if (results.length > 0) {
       showColumns.value = Object.keys(results[0]);
       cloneDeep(columns).forEach(column => {
-        if (column?.prop && showColumns.value.indexOf(column?.prop) === -1) {
+        if (
+          column?.prop &&
+          showColumns.value.indexOf(column?.prop.split(".")[0]) === -1
+        ) {
           columns.splice(
             columns.findIndex(obj => {
               return obj.label === column.label;

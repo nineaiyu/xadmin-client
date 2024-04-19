@@ -26,6 +26,7 @@ import { usePermissionStoreHook } from "@/store/modules/permission";
 import { getAsyncRoutes } from "@/api/routes";
 import { useUserStoreHook } from "@/store/modules/user";
 import type { UserInfo } from "@/api/auth";
+import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
 
 const IFrame = () => import("@/layout/frameView.vue");
 // https://cn.vitejs.dev/guide/features.html#glob-import
@@ -83,7 +84,7 @@ function isOneOfArray(a: Array<string>, b: Array<string>) {
     : true;
 }
 
-/** 从localStorage里取出当前登陆用户的角色roles，过滤无权限的菜单 */
+/** 从localStorage里取出当前登录用户的角色roles，过滤无权限的菜单 */
 function filterNoPermissionTree(data: RouteComponent[]) {
   const currentRoles = storageLocal().getItem<UserInfo>(userKey)?.roles ?? [];
   const newTree = cloneDeep(data).filter((v: any) =>
@@ -188,11 +189,13 @@ function handleAsyncRoutes(routeList) {
     ]);
   }
   addPathMatch();
-  useUserStoreHook().getUserInfo();
 }
 
 /** 初始化路由（`new Promise` 写法防止在异步请求中造成无限循环）*/
 function initRouter() {
+  useSiteConfigStoreHook().getSiteConfig();
+  useUserStoreHook().getUserInfo();
+
   if (getConfig()?.CachingAsyncRoutes) {
     // 开启动态路由缓存本地localStorage
     const key = "async-routes";

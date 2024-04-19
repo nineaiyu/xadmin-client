@@ -92,6 +92,8 @@ layout:
   fixedTip: 紧凑页面，轻松找到所需信息
   customization: 自定义
   customTip: 最小1280、最大1600
+  saveConfig: 保存配置
+  saveConfigTip: 将当前配置保存到服务器
 
 error:
   error403: 抱歉，你无权访问该页面
@@ -245,7 +247,6 @@ systemUser:
   avatar: 头像
   nickname: 昵称
   gender: 性别
-  gender_display: 性别
   dept_info: 所属部门
   date_joined: 注册时间
   last_login: 上次登录时间
@@ -269,7 +270,6 @@ systemDept:
   auto_bind: 自动绑定
   mode_type: 权限模式
   user_count: 人员数量
-  mode_display: 权限模式
   roles_info: 角色
   rules_info: 数据权限
   assignRoles: 分配角色权限
@@ -283,7 +283,6 @@ systemPermission:
   permission: 数据权限
   name: 权限名称
   mode_type: 权限模式
-  mode_display: 权限模式
   menu: 菜单
   addName: 属性名
   addValue: 属性值
@@ -379,7 +378,6 @@ logsLogin:
   browser: 浏览器
   agent: 用户代理
   creator: 用户
-  login_display: 登录方式
 
 configSystem:
   configSystem: 系统配置
@@ -411,13 +409,11 @@ modelFieldManagement:
   label: 模型/字段名称
   field_type: 字段类型
   parent: 上级节点
-  field_type_display: 字段类型
   makeData: 重新生成字段数据
 
 systemNotice:
   notice: 通知公告
   notice_type: 通知类型
-  notice_type_display: 通知类型
   level: 通知级别
   publish: 是否发布
   message: 内容
@@ -448,7 +444,6 @@ userNotice:
   unread: 是否已读
   level: 通知级别
   notice_type: 通知类型
-  notice_type_display: 通知类型
   batchRead: 批量已读
   unreadMessage: 未读消息
   allRead: 全部已读

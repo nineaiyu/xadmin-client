@@ -61,7 +61,7 @@ const valueTypeChange = value => {
   tableData.value = [];
   // newFormInline.value.value = "";
   props.valuesData.forEach(item => {
-    if (item.key === value) {
+    if (item.value === value) {
       showValueInput.value = item.disabled;
     }
   });
@@ -177,9 +177,9 @@ defineExpose({ getRef });
           >
             <el-option
               v-for="item in valuesData"
-              :key="item.key"
+              :key="item.value"
               :label="item.label"
-              :value="item.key"
+              :value="item.value"
             />
           </el-select>
         </el-form-item>

@@ -50,7 +50,7 @@ export function useLoginLog() {
       minWidth: 150
     },
     {
-      prop: "login_display",
+      prop: "login_type.label",
       minWidth: 150
     },
     {

@@ -66,7 +66,8 @@ const settings = reactive({
   showLogo: $storage.configure.showLogo,
   showModel: $storage.configure.showModel,
   hideFooter: $storage.configure.hideFooter,
-  multiTagsCache: $storage.configure.multiTagsCache
+  multiTagsCache: $storage.configure.multiTagsCache,
+  stretch: $storage.configure.stretch
 });
 
 const getThemeColorStyle = computed(() => {
@@ -144,7 +145,7 @@ function setFalse(Doms): any {
 }
 
 /** 页宽 */
-const stretchTypeOptions: Array<OptionsType> = computed(() => {
+const stretchTypeOptions = computed<Array<OptionsType>>(() => {
   return [
     {
       label: t("layout.fixed"),
@@ -218,7 +219,7 @@ const themeOptions = computed<Array<OptionsType>>(() => {
   ];
 });
 
-const markOptions: Array<OptionsType> = computed(() => {
+const markOptions = computed<Array<OptionsType>>(() => {
   return [
     {
       label: t("layout.smart"),

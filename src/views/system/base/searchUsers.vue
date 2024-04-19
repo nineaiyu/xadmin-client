@@ -26,7 +26,7 @@ const showColumns = ref<TableColumnList>([
     prop: "nickname"
   },
   {
-    prop: "gender_display"
+    prop: "gender.label"
   },
   {
     prop: "is_active",
