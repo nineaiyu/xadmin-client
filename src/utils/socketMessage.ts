@@ -1,4 +1,3 @@
-import { message } from "@/utils/message";
 import socket from "@/utils/websocket";
 import { ElNotification } from "element-plus";
 import router from "@/router";
@@ -47,8 +46,6 @@ export function SocketMessage(username: string) {
           console.log(json_data);
           break;
       }
-    } else {
-      message(json_data.message, { type: "error" });
     }
   };
 
