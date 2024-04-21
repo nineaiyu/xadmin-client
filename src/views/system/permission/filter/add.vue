@@ -13,6 +13,10 @@ import SearchRoles from "@/views/system/base/searchRoles.vue";
 import SearchMenus from "@/views/system/base/searchMenus.vue";
 import ReCol from "@/components/ReCol";
 import { modelLabelFieldApi } from "@/api/system/field";
+import {
+  getDateTimePickerShortcuts,
+  getPickerShortcuts
+} from "@/views/system/utils";
 
 const props = withDefaults(defineProps<FormProps>(), {
   valuesData: () => [],
@@ -185,6 +189,30 @@ defineExpose({ getRef });
         </el-form-item>
       </re-col>
       <re-col :sm="24" :value="24" :xs="24">
+        <el-form-item
+          v-if="newFormInline.type === FieldKeyChoices.DATETIME"
+          :label="t('systemPermission.addValue')"
+          prop="value"
+        >
+          <el-date-picker
+            v-model="newFormInline.value"
+            type="datetime"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            :shortcuts="getDateTimePickerShortcuts()"
+          />
+        </el-form-item>
+        <el-form-item
+          v-if="newFormInline.type === FieldKeyChoices.DATETIME_RANGE"
+          :label="t('systemPermission.addValue')"
+          prop="value"
+        >
+          <el-date-picker
+            v-model="newFormInline.value"
+            type="datetimerange"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            :shortcuts="getPickerShortcuts()"
+          />
+        </el-form-item>
         <el-form-item
           v-if="
             newFormInline.type === FieldKeyChoices.TABLE_USER &&

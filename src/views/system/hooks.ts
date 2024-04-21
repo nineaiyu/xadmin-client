@@ -2,7 +2,7 @@
 import { computed, type Ref } from "vue";
 import { cloneDeep, isNullOrUnDef, useDark } from "@pureadmin/utils";
 import type { PlusColumn } from "plus-pro-components";
-import { getPickerShortcuts } from "@/views/system/logs/utils";
+import { getPickerShortcuts } from "@/views/system/utils";
 import { useI18n } from "vue-i18n";
 
 export function usePublicHooks() {
