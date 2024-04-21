@@ -176,11 +176,13 @@ export function useDataPermissionForm(props) {
     {
       prop: "mode_type",
       valueType: "select",
+      tooltip: t("systemPermission.modeTypeTip"),
       options: formatOptions(props.modeChoices)
     },
     {
       prop: "menu",
       valueType: "cascader",
+      tooltip: t("systemPermission.menuTip"),
       fieldProps: {
         props: {
           value: "pk",
