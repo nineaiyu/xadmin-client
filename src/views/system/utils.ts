@@ -127,3 +127,94 @@ export const getPickerShortcuts = (): Array<{
     }
   ];
 };
+
+export const getDateTimePickerShortcuts = (): Array<{
+  text: string;
+  value: Date | Function;
+}> => {
+  return [
+    {
+      text: "今天",
+      value: () => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return today;
+      }
+    },
+    {
+      text: "昨天",
+      value: () => {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        yesterday.setHours(0, 0, 0, 0);
+        return yesterday;
+      }
+    },
+    {
+      text: "前天",
+      value: () => {
+        const beforeYesterday = new Date();
+        beforeYesterday.setDate(beforeYesterday.getDate() - 2);
+        beforeYesterday.setHours(0, 0, 0, 0);
+        return beforeYesterday;
+      }
+    },
+    {
+      text: "本周",
+      value: () => {
+        const today = new Date();
+        const startOfWeek = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1)
+        );
+        startOfWeek.setHours(0, 0, 0, 0);
+        return startOfWeek;
+      }
+    },
+    {
+      text: "上周",
+      value: () => {
+        const today = new Date();
+        const startOfLastWeek = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate() - today.getDay() - 7 + (today.getDay() === 0 ? -6 : 1)
+        );
+        startOfLastWeek.setHours(0, 0, 0, 0);
+        return startOfLastWeek;
+      }
+    },
+    {
+      text: "本月",
+      value: () => {
+        const today = new Date();
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        startOfMonth.setHours(0, 0, 0, 0);
+        return startOfMonth;
+      }
+    },
+    {
+      text: "上个月",
+      value: () => {
+        const today = new Date();
+        const startOfLastMonth = new Date(
+          today.getFullYear(),
+          today.getMonth() - 1,
+          1
+        );
+        startOfLastMonth.setHours(0, 0, 0, 0);
+        return startOfLastMonth;
+      }
+    },
+    {
+      text: "本年",
+      value: () => {
+        const today = new Date();
+        const startOfYear = new Date(today.getFullYear(), 0, 1);
+        startOfYear.setHours(0, 0, 0, 0);
+        return startOfYear;
+      }
+    }
+  ];
+};

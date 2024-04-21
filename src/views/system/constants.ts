@@ -24,6 +24,8 @@ export const ModeChoices = {
 };
 
 export const FieldKeyChoices = {
+  DATETIME: "value.datetime",
+  DATETIME_RANGE: "value.datetime.range",
   TABLE_USER: "value.table.user.ids",
   TABLE_MENU: "value.table.menu.ids",
   TABLE_ROLE: "value.table.role.ids",
