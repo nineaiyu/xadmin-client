@@ -283,7 +283,9 @@ systemPermission:
   permission: Permissions
   name: Name
   mode_type: Mode Type
+  modeTypeTip: The permission mode indicates that the data must meet each rule in the rule list at the same time, or the mode can meet any rule
   menu: Menu
+  menuTip: If a menu permission exists, it only applies to the selected menu permission
   addName: Name
   addValue: Value
   addType: Mode

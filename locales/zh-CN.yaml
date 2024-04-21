@@ -283,7 +283,9 @@ systemPermission:
   permission: 数据权限
   name: 权限名称
   mode_type: 权限模式
-  menu: 菜单
+  modeTypeTip: 权限模式, 且模式表示数据需要同时满足规则列表中的每条规则，或模式即满足任意一条规则即可
+  menu: 菜单权限
+  menuTip: 若存在菜单权限，则该权限仅针对所选择的菜单权限生效
   addName: 属性名
   addValue: 属性值
   addType: 值类型

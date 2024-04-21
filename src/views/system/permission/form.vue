@@ -43,7 +43,7 @@ defineExpose({ getRef });
     :rules="formRules"
     :row-props="{ gutter: 24 }"
     label-position="right"
-    label-width="100px"
+    label-width="120px"
   >
     <template #plus-field-rules>
       <filter-form
