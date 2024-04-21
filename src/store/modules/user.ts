@@ -28,6 +28,7 @@ import {
 } from "../utils";
 
 import { useMultiTagsStoreHook } from "./multiTags";
+import { SocketMessage } from "@/utils/socketMessage";
 
 export const useUserStore = defineStore({
   id: "pure-user",
@@ -110,6 +111,7 @@ export const useUserStore = defineStore({
           .then(res => {
             if (res.code === 1000) {
               setUserInfo(res.data);
+              SocketMessage(res.data.username).enterRoomHandle();
               resolve(res);
             } else {
               reject(res);
