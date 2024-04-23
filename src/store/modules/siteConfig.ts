@@ -1,12 +1,11 @@
-import { getUserSiteConfigApi, updateUserSiteConfigApi } from "@/api/config";
-
-import { defineStore, responsiveStorageNameSpace, store } from "../utils";
-
+import { defineStore } from "pinia";
 import { setConfig } from "@/config";
 import Storage from "responsive-storage";
 import type { Result } from "@/api/types";
 import { message } from "@/utils/message";
 import { cloneDeep } from "@pureadmin/utils";
+import { responsiveStorageNameSpace, store } from "../utils";
+import { getUserSiteConfigApi, updateUserSiteConfigApi } from "@/api/config";
 
 export const useSiteConfigStore = defineStore({
   id: "pure-site-config",

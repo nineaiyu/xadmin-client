@@ -1,5 +1,5 @@
+import { defineStore } from "pinia";
 import {
-  defineStore,
   getConfig,
   responsiveStorageNameSpace,
   storageLocal,

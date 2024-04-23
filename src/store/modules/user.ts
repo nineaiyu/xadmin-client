@@ -1,3 +1,5 @@
+import { defineStore } from "pinia";
+import { message } from "@/utils/message";
 import type { TokenResult } from "@/api/auth";
 import {
   loginApi,
@@ -7,6 +9,7 @@ import {
   type UserInfo,
   type UserInfoResult
 } from "@/api/auth";
+import { userInfoApi } from "@/api/user/userinfo";
 import {
   getRefreshToken,
   removeToken,
@@ -14,11 +17,8 @@ import {
   setUserInfo,
   userKey
 } from "@/utils/auth";
-import { message } from "@/utils/message";
-import { userInfoApi } from "@/api/user/userinfo";
 
 import {
-  defineStore,
   resetRouter,
   router,
   routerArrays,
