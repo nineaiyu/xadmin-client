@@ -130,7 +130,7 @@ class PureHttp {
     return this.request<T>("get", url, params, config);
   }
 
-  public upload<P>(
+  public upload<T, P>(
     url: string,
     params?: AxiosRequestConfig<P>,
     data?: AxiosRequestConfig<P>,

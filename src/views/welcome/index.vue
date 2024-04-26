@@ -4,12 +4,7 @@ import ReCol from "@/components/ReCol";
 import { randomGradient, useDark } from "@pureadmin/utils";
 import { ReNormalCountTo } from "@/components/ReCountTo";
 import { useRenderFlicker } from "@/components/ReFlicker";
-import {
-  ChartBar,
-  ChartLine,
-  ChartRound,
-  ChartClock
-} from "./components/WelcomeCharts";
+import { ChartBar, ChartLine, ChartRound, ChartClock } from "./components";
 import Segmented from "@/components/ReSegmented";
 import { useDashboard } from "@/views/welcome/hook";
 import dayjs from "dayjs";

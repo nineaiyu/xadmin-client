@@ -1,20 +1,18 @@
-import { http } from "@/utils/http";
-import type { Result } from "@/api/types";
+import { BaseApi } from "@/api/base";
 
-const site = "WEB_SITE_CONFIG";
-// 站点配置信息
-export const getUserSiteConfigApi = (data?: object) => {
-  return http.request<{ config: PlatformConfigs }>(
-    "get",
-    `/api/system/configs/${site}`,
-    {
-      params: data
-    }
-  );
-};
+class ConfigApi extends BaseApi {
+  getConfig = (name: string) => {
+    return this.request("get", {}, {}, `${this.baseApi}/${name}`);
+  };
+  setConfig = (name: string, data: object) => {
+    return this.request("put", {}, data, `${this.baseApi}/${name}`);
+  };
+  getSiteConfig = () => {
+    return this.getConfig("WEB_SITE_CONFIG");
+  };
+  setSiteConfig = (data: object) => {
+    return this.setConfig("WEB_SITE_CONFIG", data);
+  };
+}
 
-export const updateUserSiteConfigApi = (data?: object) => {
-  return http.request<Result>("put", `/api/system/configs/${site}`, {
-    data: data
-  });
-};
+export const configApi = new ConfigApi("/api/system/configs");

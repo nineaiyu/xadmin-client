@@ -30,9 +30,6 @@ const cropperImg = ref<string>("");
 function onCropper({ base64, blob, info }) {
   infos.value = info;
   cropperImg.value = base64;
-  // const file = await compressionFileAuto(base64, blob.name, info.size);
-  // cropperImg.value = await fileToDataURL(file);
-  // console.log(file);
   emit("cropper", { base64, blob, info });
 }
 

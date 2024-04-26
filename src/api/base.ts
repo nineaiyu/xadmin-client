@@ -57,6 +57,6 @@ export class BaseApi extends BaseRequest {
     return this.request("post", {}, { pks }, `${this.baseApi}/batch-delete`);
   };
   upload = (pk: number | string, data?: object) => {
-    return http.upload<Result>(`${this.baseApi}/${pk}/upload`, {}, data);
+    return http.upload<Result, any>(`${this.baseApi}/${pk}/upload`, {}, data);
   };
 }
