@@ -7,6 +7,10 @@ export type Result = {
   level_choices?: any[];
   notice_type_choices?: any[];
   results?: Array<any>;
+  config?: {
+    value: any;
+    key: string;
+  };
   data?: {
     /** 列表数据 */
     results: Array<any>;

@@ -27,6 +27,7 @@ import { getAsyncRoutes } from "@/api/routes";
 import { useUserStoreHook } from "@/store/modules/user";
 import type { UserInfo } from "@/api/auth";
 import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
+import { SocketMessage } from "@/utils/socketMessage";
 
 const IFrame = () => import("@/layout/frameView.vue");
 // https://cn.vitejs.dev/guide/features.html#glob-import
@@ -194,7 +195,11 @@ function handleAsyncRoutes(routeList) {
 /** 初始化路由（`new Promise` 写法防止在异步请求中造成无限循环）*/
 function initRouter() {
   useSiteConfigStoreHook().getSiteConfig();
-  useUserStoreHook().getUserInfo();
+  useUserStoreHook()
+    .getUserInfo()
+    .then(res => {
+      SocketMessage(res.data.username).enterRoomHandle();
+    });
 
   if (getConfig()?.CachingAsyncRoutes) {
     // 开启动态路由缓存本地localStorage

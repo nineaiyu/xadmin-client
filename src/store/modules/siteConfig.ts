@@ -5,7 +5,7 @@ import type { Result } from "@/api/types";
 import { message } from "@/utils/message";
 import { cloneDeep } from "@pureadmin/utils";
 import { responsiveStorageNameSpace, store } from "../utils";
-import { getUserSiteConfigApi, updateUserSiteConfigApi } from "@/api/config";
+import { configApi } from "@/api/config";
 
 export const useSiteConfigStore = defineStore({
   id: "pure-site-config",
@@ -43,7 +43,8 @@ export const useSiteConfigStore = defineStore({
         };
         const newConfig = cloneDeep(this.config);
         Object.assign(newConfig, configObj);
-        updateUserSiteConfigApi(newConfig)
+        configApi
+          .setSiteConfig(newConfig)
           .then(res => {
             message("配置保存成功", { type: "success" });
             resolve(res);
@@ -55,8 +56,9 @@ export const useSiteConfigStore = defineStore({
     },
     async getSiteConfig() {
       return new Promise<PlatformConfigs>((resolve, reject) => {
-        getUserSiteConfigApi()
-          .then(({ config }) => {
+        configApi
+          .getSiteConfig()
+          .then(({ config }: any) => {
             if (config.Version && config.ResponsiveStorageNameSpace) {
               this.config = config;
               const configObj = {
