@@ -100,7 +100,9 @@ class PureHttp {
               ElMessage.error(error.response.data.detail);
               router.push("/error/404");
             } else if (error.response.status === 500) {
-              ElMessage.error(error.response.data.detail);
+              ElMessage.error(
+                error.response.data?.detail ?? error.response.statusText
+              );
               router.push("/error/500");
             }
             reject(error.response.data);

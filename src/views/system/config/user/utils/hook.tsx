@@ -182,7 +182,12 @@ export function useUserConfigForm(props) {
     },
     {
       prop: "value",
-      valueType: "textarea"
+      valueType: "textarea",
+      fieldProps: {
+        autosize: {
+          minRows: 8
+        }
+      }
     },
     {
       prop: "access",
