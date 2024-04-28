@@ -27,3 +27,23 @@ docker compose up xadmin-client-prod
 ```
 
 然后浏览器 http://localhost:8891 进行访问
+
+# 本地开发运行，记得在`vite.config.ts` 添加proxy代理，要不然无法访问api服务
+
+```ts
+      proxy: {
+        "/api": {
+          target: "http://127.0.0.1:8896",
+          changeOrigin: true,
+          rewrite: path => path
+        },
+        "/media": {
+          target: "http://127.0.0.1:8896",
+          changeOrigin: true,
+          rewrite: path => path
+        },
+        "/ws": {
+          target: "ws://127.0.0.1:8896"
+        }
+      },
+```
