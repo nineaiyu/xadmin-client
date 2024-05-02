@@ -9,7 +9,7 @@ defineOptions({
   name: "RePictureUpload"
 });
 
-const props = defineProps({
+defineProps({
   imgSrc: String,
   errSrc: String,
   type: String,
@@ -52,15 +52,13 @@ defineExpose({ hidePopover });
         <div class="w-[18vw]">
           <ReCropper
             ref="refCropper"
-            :canvasOption="props.canvasOption"
-            :circled="props.circled"
-            :errSrc="
-              props.errSrc && props.errSrc !== '' ? props.errSrc : avatar
-            "
-            :options="props.options"
-            :quality="props.quality"
-            :src="props.imgSrc && props.imgSrc !== '' ? props.imgSrc : avatar"
-            :type="props.type"
+            :canvasOption="canvasOption"
+            :circled="circled"
+            :errSrc="errSrc && errSrc !== '' ? errSrc : avatar"
+            :options="options"
+            :quality="quality"
+            :src="imgSrc && imgSrc !== '' ? imgSrc : avatar"
+            :type="type"
             @cropper="onCropper"
             @readied="showPopover = true"
           />

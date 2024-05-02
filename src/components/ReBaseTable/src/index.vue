@@ -127,7 +127,7 @@ defineExpose({
 </script>
 
 <template>
-  <div v-if="props.auth.list" class="main">
+  <div v-if="auth.list" class="main">
     <div class="search-form bg-bg_color w-[99/100] pl-8 pr-8 pt-[12px]">
       <PlusSearch
         v-model="searchFields"
@@ -198,7 +198,7 @@ defineExpose({
         <el-space wrap>
           <div v-if="selectedNum > 0" v-motion-fade>
             <el-popconfirm
-              v-if="props.auth.batchDelete"
+              v-if="auth.batchDelete"
               :title="t('buttons.batchDeleteConfirm', { count: selectedNum })"
               @confirm="handleManyDelete"
             >
@@ -210,7 +210,7 @@ defineExpose({
             </el-popconfirm>
           </div>
           <el-button
-            v-if="props.auth.create"
+            v-if="auth.create"
             :icon="useRenderIcon(AddFill)"
             type="primary"
             @click="editOrAdd(true, {})"
@@ -246,7 +246,7 @@ defineExpose({
         >
           <template #operation="{ row }">
             <el-button
-              v-if="props.auth.update"
+              v-if="auth.update"
               :icon="useRenderIcon(EditPen)"
               :size="size"
               class="reset-margin"
@@ -257,7 +257,7 @@ defineExpose({
               {{ t("buttons.edit") }}
             </el-button>
             <el-popconfirm
-              v-if="props.auth.delete"
+              v-if="auth.delete"
               :title="t('buttons.confirmDelete')"
               @confirm="handleDelete(row)"
             >
