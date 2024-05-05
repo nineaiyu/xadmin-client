@@ -213,6 +213,7 @@ menus:
   personalCenter: UserInfo
   messageCenter: Notice
   chat: Chat
+  apiDocs: Api Docs
 
 userinfo:
   userinfo: UserInfo

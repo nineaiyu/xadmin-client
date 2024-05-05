@@ -44,6 +44,11 @@ docker compose up xadmin-client-prod
         },
         "/ws": {
           target: "ws://127.0.0.1:8896"
+        },
+        "/api-docs": {
+          target: "http://127.0.0.1:8896",
+          changeOrigin: true,
+          rewrite: path => path
         }
       },
 ```
