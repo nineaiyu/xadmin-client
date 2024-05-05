@@ -1,6 +1,12 @@
 <script setup lang="ts">
-import type { CSSProperties, PropType } from "vue";
-import { computed, nextTick, ref, unref } from "vue";
+import {
+  computed,
+  type CSSProperties,
+  nextTick,
+  type PropType,
+  ref,
+  unref
+} from "vue";
 import {
   templateRef,
   tryOnMounted,
@@ -497,7 +503,7 @@ defineExpose({
 </script>
 
 <template>
-  <div :ref="'wrap' + props.classOption['key']">
+  <div :ref="'wrap' + classOption['key']">
     <div
       v-if="navigation"
       :style="leftSwitch"
@@ -515,7 +521,7 @@ defineExpose({
       <slot name="right-switch" />
     </div>
     <div
-      :ref="'realBox' + props.classOption['key']"
+      :ref="'realBox' + classOption['key']"
       :style="pos"
       @mouseenter="enter"
       @mouseleave="leave"
@@ -524,7 +530,7 @@ defineExpose({
       @touchend="touchEnd"
       @mousewheel.passive="wheel"
     >
-      <div :ref="'slotList' + props.classOption['key']" :style="float">
+      <div :ref="'slotList' + classOption['key']" :style="float">
         <slot />
       </div>
       <div :style="float" v-html="copyHtml" />

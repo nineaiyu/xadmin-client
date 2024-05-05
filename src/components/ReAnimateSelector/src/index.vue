@@ -8,7 +8,7 @@ defineOptions({
   name: "ReAnimateSelector"
 });
 
-const props = defineProps({
+defineProps({
   placeholder: {
     type: String,
     default: transformI18n($t("menu.verifyTransition"))
@@ -83,7 +83,7 @@ function onMouseleave() {
   <el-select
     :filter-method="filterMethod"
     :model-value="inputValue"
-    :placeholder="props.placeholder"
+    :placeholder="placeholder"
     clearable
     filterable
     popper-class="pure-animate-popper"

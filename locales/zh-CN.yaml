@@ -213,6 +213,7 @@ menus:
   personalCenter: 个人中心
   messageCenter: 消息中心
   chat: 聊天室
+  apiDocs: 接口文档
 
 userinfo:
   userinfo: 个人信息
