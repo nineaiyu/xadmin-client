@@ -19,7 +19,7 @@ export function useApiAuth() {
     list: roleApi.list,
     create: roleApi.create,
     delete: roleApi.delete,
-    update: roleApi.update,
+    update: roleApi.patch,
     fields: roleApi.fields,
     detail: roleApi.detail,
     batchDelete: roleApi.batchDelete

@@ -24,7 +24,7 @@ export function useDataPermission(tableRef: Ref) {
     list: dataPermissionApi.list,
     create: dataPermissionApi.create,
     delete: dataPermissionApi.delete,
-    update: dataPermissionApi.update,
+    update: dataPermissionApi.patch,
     detail: dataPermissionApi.detail,
     fields: dataPermissionApi.fields,
     batchDelete: dataPermissionApi.batchDelete

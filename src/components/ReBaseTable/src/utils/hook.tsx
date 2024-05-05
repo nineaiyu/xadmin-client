@@ -276,7 +276,9 @@ export function useBaseTable(
         if (!updateApi) {
           updateApi = api.update;
         }
-        updateApi(row.pk, row).then(res => {
+        const data = {};
+        data[actKey] = row[actKey];
+        updateApi(row.pk, data).then(res => {
           if (res.code === 1000) {
             switchLoadMap.value[index] = Object.assign(
               {},

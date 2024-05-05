@@ -45,7 +45,7 @@ export function useApiAuth() {
     rank: menuApi.rank,
     create: menuApi.create,
     delete: menuApi.delete,
-    update: menuApi.update,
+    update: menuApi.patch,
     apiUrl: menuApi.apiUrl,
     choices: menuApi.choices,
     fields: menuApi.fields,

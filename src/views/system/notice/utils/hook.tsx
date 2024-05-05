@@ -58,7 +58,7 @@ export function useNotice(tableRef: Ref) {
       return noticeApi.create;
     },
     delete: noticeApi.delete,
-    update: noticeApi.update,
+    update: noticeApi.patch,
     publish: noticeApi.publish,
     detail: noticeApi.detail,
     fields: noticeApi.fields,

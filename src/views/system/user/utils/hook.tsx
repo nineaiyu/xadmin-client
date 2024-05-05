@@ -51,7 +51,7 @@ export function useUser(tableRef: Ref) {
     list: userApi.list,
     create: userApi.create,
     delete: userApi.delete,
-    update: userApi.update,
+    update: userApi.patch,
     fields: userApi.fields,
     reset: userApi.reset,
     empower: userApi.empower,

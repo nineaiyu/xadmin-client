@@ -11,7 +11,7 @@ import { useUserStoreHook } from "@/store/modules/user";
 export function useApiAuth() {
   const api = reactive({
     self: userInfoApi.self,
-    update: userInfoApi.update,
+    update: userInfoApi.patch,
     reset: userInfoApi.reset,
     upload: userInfoApi.upload
   });

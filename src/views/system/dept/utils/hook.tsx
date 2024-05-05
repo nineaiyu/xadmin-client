@@ -38,7 +38,7 @@ export function useDept(tableRef: Ref) {
     list: deptApi.list,
     create: deptApi.create,
     delete: deptApi.delete,
-    update: deptApi.update,
+    update: deptApi.patch,
     empower: deptApi.empower,
     choices: deptApi.choices,
     fields: deptApi.fields,
