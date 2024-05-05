@@ -13,7 +13,7 @@ const { api, auth, columns } = useOperationLog();
   <ReBaseTable
     :api="api"
     :auth="auth"
-    locale-name="logsOperation"
     :table-columns="columns"
+    locale-name="logsOperation"
   />
 </template>

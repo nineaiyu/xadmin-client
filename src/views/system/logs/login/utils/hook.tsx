@@ -87,6 +87,7 @@ export function useLoginLog() {
       hide: !auth.delete
     }
   ]);
+
   function onGoDetail(row: any) {
     if (hasGlobalAuth("list:systemUser") && row?.creator && row?.creator?.pk) {
       router.push({

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import {
   computed,
   type CSSProperties,
@@ -506,16 +506,16 @@ defineExpose({
   <div :ref="'wrap' + classOption['key']">
     <div
       v-if="navigation"
-      :style="leftSwitch"
       :class="leftSwitchClass"
+      :style="leftSwitch"
       @click="leftSwitchClick"
     >
       <slot name="left-switch" />
     </div>
     <div
       v-if="navigation"
-      :style="rightSwitch"
       :class="rightSwitchClass"
+      :style="rightSwitch"
       @click="rightSwitchClick"
     >
       <slot name="right-switch" />
@@ -525,9 +525,9 @@ defineExpose({
       :style="pos"
       @mouseenter="enter"
       @mouseleave="leave"
+      @touchend="touchEnd"
       @touchstart.passive="touchStart"
       @touchmove.passive="touchMove"
-      @touchend="touchEnd"
       @mousewheel.passive="wheel"
     >
       <div :ref="'slotList' + classOption['key']" :style="float">

@@ -19,8 +19,8 @@ const { t, api, auth, columns, showDialog } = useNoticeRead(tableRef);
     ref="tableRef"
     :api="api"
     :auth="auth"
-    locale-name="noticeRead"
     :table-columns="columns"
+    locale-name="noticeRead"
   >
     <template #extOperation="{ row, size }">
       <el-button

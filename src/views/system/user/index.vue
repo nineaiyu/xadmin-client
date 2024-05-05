@@ -51,17 +51,17 @@ const {
   >
     <tree
       ref="treeRef"
+      :class="['mr-2', deviceDetection() ? 'w-full' : 'min-w-[250px]']"
       :pk="treePk"
       :treeData="treeData"
       :treeLoading="treeLoading"
-      :class="['mr-2', deviceDetection() ? 'w-full' : 'min-w-[250px]']"
       @tree-select="onTreeSelect"
     />
     <ReBaseTable
       ref="tableRef"
-      :class="[deviceDetection() ? ['w-full', 'mt-2'] : 'w-[calc(100%-250px)]']"
       :api="api"
       :auth="auth"
+      :class="[deviceDetection() ? ['w-full', 'mt-2'] : 'w-[calc(100%-250px)]']"
       :edit-form="editForm"
       :table-columns="columns"
       locale-name="systemUser"

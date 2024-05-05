@@ -20,8 +20,8 @@ const { t, api, auth, columns, editForm, showDialog, searchEnd } =
     :api="api"
     :auth="auth"
     :edit-form="editForm"
-    locale-name="systemNotice"
     :table-columns="columns"
+    locale-name="systemNotice"
     @searchEnd="searchEnd"
   >
     <template #extOperation="{ row, size }">

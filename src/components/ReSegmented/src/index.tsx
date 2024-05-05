@@ -29,7 +29,7 @@ const props = {
     require: false,
     default: "0"
   },
-  /** 将宽度调整为父元素宽度	 */
+  /** 将宽度调整为父元素宽度   */
   block: {
     type: Boolean,
     default: false

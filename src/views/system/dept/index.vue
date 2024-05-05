@@ -32,9 +32,9 @@ const {
     :api="api"
     :auth="auth"
     :edit-form="editForm"
-    locale-name="systemDept"
     :result-format="formatResult"
     :table-columns="columns"
+    locale-name="systemDept"
   >
     <template #extOperation="{ row, size }">
       <el-dropdown>

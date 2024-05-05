@@ -35,11 +35,11 @@ defineExpose({ getRef });
   <PlusForm
     ref="formRef"
     v-model="newFormInline"
-    label-position="right"
     :columns="columns"
-    :rules="formRules"
     :hasFooter="false"
     :row-props="{ gutter: 24 }"
+    :rules="formRules"
+    label-position="right"
     label-width="120px"
   />
 </template>

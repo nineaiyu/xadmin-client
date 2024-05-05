@@ -17,7 +17,7 @@ const { api, auth, columns, editForm } = useDataPermission(tableRef);
     :api="api"
     :auth="auth"
     :edit-form="editForm"
-    locale-name="systemPermission"
     :table-columns="columns"
+    locale-name="systemPermission"
   />
 </template>

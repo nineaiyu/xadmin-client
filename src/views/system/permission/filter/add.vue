@@ -196,9 +196,9 @@ defineExpose({ getRef });
         >
           <el-date-picker
             v-model="newFormInline.value"
+            :shortcuts="getDateTimePickerShortcuts()"
             type="datetime"
             value-format="YYYY-MM-DD HH:mm:ss"
-            :shortcuts="getDateTimePickerShortcuts()"
           />
         </el-form-item>
         <el-form-item
@@ -208,9 +208,9 @@ defineExpose({ getRef });
         >
           <el-date-picker
             v-model="newFormInline.value"
+            :shortcuts="getPickerShortcuts()"
             type="datetimerange"
             value-format="YYYY-MM-DD HH:mm:ss"
-            :shortcuts="getPickerShortcuts()"
           />
         </el-form-item>
         <el-form-item

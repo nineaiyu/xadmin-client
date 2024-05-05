@@ -18,7 +18,7 @@ const { api, auth, columns, editForm } = useRole(tableRef);
     :api="api"
     :auth="auth"
     :edit-form="editForm"
-    locale-name="systemRole"
     :table-columns="columns"
+    locale-name="systemRole"
   />
 </template>

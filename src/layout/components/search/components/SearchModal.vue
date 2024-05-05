@@ -279,16 +279,16 @@ onKeyStroke("ArrowDown", handleDown);
   <el-dialog
     v-model="show"
     :before-close="handleClose"
-    :width="device === 'mobile' ? '80vw' : '40vw'"
     :show-close="false"
-    class="pure-search-dialog"
-    top="5vh"
     :style="{
       borderRadius: '6px'
     }"
+    :width="device === 'mobile' ? '80vw' : '40vw'"
     append-to-body
-    @opened="inputRef.focus()"
+    class="pure-search-dialog"
+    top="5vh"
     @closed="inputRef.blur()"
+    @opened="inputRef.focus()"
   >
     <el-input
       ref="inputRef"

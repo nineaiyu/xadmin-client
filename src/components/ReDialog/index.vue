@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import {
   type ButtonProps,
   closeDialog,
@@ -92,14 +92,14 @@ function handleClose(
   <el-dialog
     v-for="(options, index) in dialogStore"
     :key="index"
-    v-bind="options"
     v-model="options.visible"
-    class="pure-dialog"
     :fullscreen="fullscreen ? true : options?.fullscreen"
-    @closed="handleClose(options, index)"
-    @opened="eventsCallBack('open', options, index)"
-    @openAutoFocus="eventsCallBack('openAutoFocus', options, index)"
+    class="pure-dialog"
+    v-bind="options"
     @closeAutoFocus="eventsCallBack('closeAutoFocus', options, index)"
+    @closed="handleClose(options, index)"
+    @openAutoFocus="eventsCallBack('openAutoFocus', options, index)"
+    @opened="eventsCallBack('open', options, index)"
   >
     <!-- header -->
     <template
@@ -127,7 +127,6 @@ function handleClose(
           "
         >
           <IconifyIconOffline
-            class="pure-dialog-svg"
             :icon="
               options?.fullscreen
                 ? ExitFullscreen
@@ -135,6 +134,7 @@ function handleClose(
                   ? ExitFullscreen
                   : Fullscreen
             "
+            class="pure-dialog-svg"
           />
         </i>
       </div>
@@ -144,8 +144,8 @@ function handleClose(
       />
     </template>
     <component
-      v-bind="options?.props"
       :is="options.contentRenderer({ options, index })"
+      v-bind="options?.props"
       @close="args => handleClose(options, index, args)"
     />
     <!-- footer -->

@@ -51,10 +51,10 @@ const {
           <edit
             v-if="auth.list"
             :auth="auth"
-            :menu-choices="choicesDict['menu_type']"
             :form-inline="menuData"
-            :method-choices="choicesDict['method']"
+            :menu-choices="choicesDict['menu_type']"
             :menu-url-list="menuUrlList"
+            :method-choices="choicesDict['method']"
             :model-list="modelList"
             :tree-data="treeData"
             class="pt-10 pb-20"

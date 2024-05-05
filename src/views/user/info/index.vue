@@ -113,8 +113,8 @@ const activeTab = ref("userinfo");
         <el-tabs v-model="activeTab">
           <el-tab-pane :label="t('userinfo.basicInfo')" name="userinfo">
             <edit-user-info
-              :gender-choices="genderChoices"
               :form-inline="currentUserInfo"
+              :gender-choices="genderChoices"
               @handle-update="handleUpdate"
             />
           </el-tab-pane>

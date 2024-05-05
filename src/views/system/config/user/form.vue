@@ -20,6 +20,7 @@ const props = withDefaults(defineProps<FormProps>(), {
 const formRef = ref();
 const { columns } = useUserConfigForm(props);
 const newFormInline = ref(props.formInline);
+
 function getRef() {
   return formRef.value?.formInstance;
 }
@@ -31,11 +32,11 @@ defineExpose({ getRef });
   <PlusForm
     ref="formRef"
     v-model="newFormInline"
-    label-position="right"
     :columns="columns"
-    :rules="formRules"
     :hasFooter="false"
     :row-props="{ gutter: 24 }"
+    :rules="formRules"
+    label-position="right"
     label-width="120px"
   />
 </template>

@@ -167,6 +167,7 @@ function toggleSelectAll(status, keys: Array<string> | null = null) {
     }
   }
 }
+
 function nodeClick(value, node) {
   if (
     value.pk.toString().indexOf("+") > 0 &&
@@ -193,8 +194,8 @@ defineExpose({ getRef });
     v-model="newFormInline"
     :columns="columns"
     :hasFooter="false"
-    :rules="formRules"
     :row-props="{ gutter: 24 }"
+    :rules="formRules"
     label-position="right"
     label-width="120px"
   >

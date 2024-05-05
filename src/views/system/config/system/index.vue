@@ -21,8 +21,8 @@ const { t, api, auth, columns, editForm, handleInvalidCache } =
     :api="api"
     :auth="auth"
     :edit-form="editForm"
-    locale-name="configSystem"
     :table-columns="columns"
+    locale-name="configSystem"
   >
     <template #extOperation="{ row, size }">
       <el-popconfirm

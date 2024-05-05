@@ -31,8 +31,8 @@ const {
     ref="tableRef"
     :api="api"
     :auth="auth"
-    locale-name="userNotice"
     :table-columns="columns"
+    locale-name="userNotice"
     @searchEnd="searchEnd"
     @selection-change="selectionChange"
   >

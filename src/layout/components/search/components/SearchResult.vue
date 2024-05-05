@@ -76,8 +76,8 @@ defineExpose({ handleScroll });
       v-for="(item, index) in options"
       :key="item.path"
       :ref="'resultItemRef' + index"
-      class="result-item dark:bg-[#1d1d1d]"
       :style="itemStyle(item)"
+      class="result-item dark:bg-[#1d1d1d]"
       @click="handleTo"
       @mouseenter="handleMouse(item)"
     >

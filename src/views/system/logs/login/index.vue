@@ -13,7 +13,7 @@ const { api, auth, columns } = useLoginLog();
   <ReBaseTable
     :api="api"
     :auth="auth"
-    locale-name="logsLogin"
     :table-columns="columns"
+    locale-name="logsLogin"
   />
 </template>

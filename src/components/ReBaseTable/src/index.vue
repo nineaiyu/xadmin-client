@@ -236,9 +236,9 @@ defineExpose({
           :size="size"
           adaptive
           align-whole="center"
+          default-expand-all
           row-key="pk"
           showOverflowTooltip
-          default-expand-all
           table-layout="auto"
           @selection-change="handleSelectionChange"
           @page-size-change="handleSizeChange"

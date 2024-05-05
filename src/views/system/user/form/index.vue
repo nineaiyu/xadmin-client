@@ -25,6 +25,7 @@ const props = withDefaults(defineProps<FormProps>(), {
 const formRef = ref();
 const { columns } = useSystemUserForm(props);
 const newFormInline = ref(props.formInline);
+
 function getRef() {
   return formRef.value?.formInstance;
 }
@@ -38,8 +39,8 @@ defineExpose({ getRef });
     v-model="newFormInline"
     :columns="columns"
     :hasFooter="false"
-    :rules="formRules"
     :row-props="{ gutter: 24 }"
+    :rules="formRules"
     label-position="right"
     label-width="100px"
   />

@@ -95,25 +95,25 @@ onBeforeUnmount(() => {
   >
     <Logo v-if="showLogo" :collapse="isCollapse" />
     <el-scrollbar
-      wrap-class="scrollbar-wrapper"
       :class="[device === 'mobile' ? 'mobile' : 'pc']"
+      wrap-class="scrollbar-wrapper"
     >
       <el-menu
+        :collapse="isCollapse"
+        :collapse-transition="false"
         :default-active="defaultActive"
+        :popper-effect="tooltipEffect"
         class="outer-most select-none"
         mode="vertical"
         popper-class="pure-scrollbar"
         router
-        :collapse="isCollapse"
-        :collapse-transition="false"
-        :popper-effect="tooltipEffect"
         unique-opened
       >
         <sidebar-item
           v-for="routes in menuData"
           :key="routes.path"
-          :item="routes"
           :base-path="routes.path"
+          :item="routes"
           class="outer-most select-none"
         />
       </el-menu>

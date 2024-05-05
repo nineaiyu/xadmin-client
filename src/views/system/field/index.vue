@@ -17,8 +17,8 @@ const { t, api, auth, columns, handleSync } = useModelField(tableRef);
     ref="tableRef"
     :api="api"
     :auth="auth"
-    locale-name="modelFieldManagement"
     :table-columns="columns"
+    locale-name="modelFieldManagement"
   >
     <template #barButtons>
       <el-button
