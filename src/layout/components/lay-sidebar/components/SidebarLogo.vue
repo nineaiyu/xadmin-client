@@ -16,8 +16,8 @@ const { title, getLogo } = useNav();
         v-if="collapse"
         key="collapse"
         :title="title"
-        class="sidebar-logo-link"
         :to="getTopMenu()?.path ?? '/'"
+        class="sidebar-logo-link"
       >
         <img :src="getLogo()" alt="logo" />
         <span class="sidebar-title">{{ title }}</span>
@@ -26,8 +26,8 @@ const { title, getLogo } = useNav();
         v-else
         key="expand"
         :title="title"
-        class="sidebar-logo-link"
         :to="getTopMenu()?.path ?? '/'"
+        class="sidebar-logo-link"
       >
         <img :src="getLogo()" alt="logo" />
         <span class="sidebar-title">{{ title }}</span>

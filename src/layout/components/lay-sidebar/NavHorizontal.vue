@@ -52,16 +52,16 @@ nextTick(() => {
     <el-menu
       ref="menuRef"
       :default-active="defaultActive"
+      class="horizontal-header-menu"
       mode="horizontal"
       popper-class="pure-scrollbar"
-      class="horizontal-header-menu"
       router
     >
       <LaySidebarItem
         v-for="route in usePermissionStoreHook().wholeMenus"
         :key="route.path"
-        :item="route"
         :base-path="route.path"
+        :item="route"
       />
     </el-menu>
     <div class="horizontal-header-right">
@@ -75,8 +75,8 @@ nextTick(() => {
         <template #dropdown>
           <el-dropdown-menu class="translation">
             <el-dropdown-item
-              :style="getDropdownItemStyle(locale, 'zh')"
               :class="['dark:!text-white', getDropdownItemClass(locale, 'zh')]"
+              :style="getDropdownItemStyle(locale, 'zh')"
               @click="translationCh"
             >
               <span v-show="locale === 'zh'" class="check-zh">
@@ -85,8 +85,8 @@ nextTick(() => {
               简体中文
             </el-dropdown-item>
             <el-dropdown-item
-              :style="getDropdownItemStyle(locale, 'en')"
               :class="['dark:!text-white', getDropdownItemClass(locale, 'en')]"
+              :style="getDropdownItemStyle(locale, 'en')"
               @click="translationEn"
             >
               <span v-show="locale === 'en'" class="check-en">
@@ -120,8 +120,8 @@ nextTick(() => {
         </template>
       </el-dropdown>
       <span
-        class="set-icon navbar-bg-hover"
         :title="t('buttons.systemSet')"
+        class="set-icon navbar-bg-hover"
         @click="onPanel"
       >
         <IconifyIconOffline :icon="Setting" />

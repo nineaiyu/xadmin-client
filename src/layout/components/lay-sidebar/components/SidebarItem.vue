@@ -114,15 +114,15 @@ function resolvePath(routePath) {
     :to="item"
   >
     <el-menu-item
-      :index="resolvePath(onlyOneChild.path)"
       :class="{ 'submenu-title-noDropdown': !isNest }"
+      :index="resolvePath(onlyOneChild.path)"
       :style="getNoDropdownStyle"
       v-bind="attrs"
     >
       <div
         v-if="toRaw(item.meta.icon)"
-        class="sub-menu-icon"
         :style="getSubMenuIconStyle"
+        class="sub-menu-icon"
       >
         <component
           :is="
@@ -144,8 +144,8 @@ function resolvePath(routePath) {
             layout === 'mix' &&
             item?.pathList?.length === 2)
         "
-        truncated
         class="!w-full !px-4 !text-inherit"
+        truncated
       >
         {{ transformI18n(onlyOneChild.meta.title) }}
       </el-text>
@@ -169,8 +169,8 @@ function resolvePath(routePath) {
   <el-sub-menu
     v-else
     ref="subMenu"
-    teleported
     :index="resolvePath(item.path)"
+    teleported
     v-bind="expandCloseIcon"
   >
     <template #title>
@@ -214,9 +214,9 @@ function resolvePath(routePath) {
     <sidebar-item
       v-for="child in item.children"
       :key="child.path"
+      :base-path="resolvePath(child.path)"
       :is-nest="true"
       :item="child"
-      :base-path="resolvePath(child.path)"
       class="nest-menu"
     />
   </el-sub-menu>

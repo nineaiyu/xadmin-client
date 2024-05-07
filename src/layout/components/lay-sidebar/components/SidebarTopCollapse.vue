@@ -24,8 +24,8 @@ const toggleClick = () => {
 
 <template>
   <div
-    class="px-3 mr-1 navbar-bg-hover"
     :title="isActive ? t('layout.fold') : t('layout.unfold')"
+    class="px-3 mr-1 navbar-bg-hover"
     @click="toggleClick"
   >
     <IconifyIconOffline
