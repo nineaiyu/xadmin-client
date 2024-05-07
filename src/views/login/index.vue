@@ -100,7 +100,7 @@ const initToken = () => {
 
 const onLogin = async (formEl: FormInstance | undefined) => {
   if (!formEl) return;
-  await formEl.validate((valid, fields) => {
+  await formEl.validate(valid => {
     if (valid) {
       loading.value = true;
       useUserStoreHook()
@@ -133,7 +133,6 @@ const onLogin = async (formEl: FormInstance | undefined) => {
         .finally(() => (loading.value = false));
     } else {
       loading.value = false;
-      return fields;
     }
   });
 };

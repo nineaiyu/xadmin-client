@@ -19,11 +19,11 @@ import {
   isFunction
 } from "@pureadmin/utils";
 
-import DragIcon from "./svg/drag.svg?component";
-import ExpandIcon from "./svg/expand.svg?component";
-import RefreshIcon from "./svg/refresh.svg?component";
-import SettingIcon from "./svg/settings.svg?component";
-import CollapseIcon from "./svg/collapse.svg?component";
+import DragIcon from "@/assets/table-bar/drag.svg?component";
+import ExpandIcon from "@/assets/table-bar/expand.svg?component";
+import RefreshIcon from "@/assets/table-bar/refresh.svg?component";
+import SettingIcon from "@/assets/table-bar/settings.svg?component";
+import CollapseIcon from "@/assets/table-bar/collapse.svg?component";
 import { useI18n } from "vue-i18n";
 
 const props = {
