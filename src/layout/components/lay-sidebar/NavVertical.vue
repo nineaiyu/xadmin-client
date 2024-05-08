@@ -106,7 +106,6 @@ onBeforeUnmount(() => {
         class="outer-most select-none"
         mode="vertical"
         popper-class="pure-scrollbar"
-        router
         unique-opened
       >
         <LaySidebarItem

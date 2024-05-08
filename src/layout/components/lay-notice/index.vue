@@ -12,12 +12,12 @@ const { t } = useI18n();
 const notices = ref<TabItem[]>([
   {
     key: "1",
-    name: t("layout.notice"),
+    name: "layout.notice",
     list: []
   },
   {
     key: "2",
-    name: t("layout.announcement"),
+    name: "layout.announcement",
     list: []
   }
 ]);

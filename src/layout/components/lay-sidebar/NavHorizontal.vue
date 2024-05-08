@@ -55,7 +55,6 @@ nextTick(() => {
       class="horizontal-header-menu"
       mode="horizontal"
       popper-class="pure-scrollbar"
-      router
     >
       <LaySidebarItem
         v-for="route in usePermissionStoreHook().wholeMenus"
