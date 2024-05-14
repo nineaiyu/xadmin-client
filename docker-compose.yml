@@ -6,10 +6,13 @@ services:
     image: "xadmin-client-build"
     volumes:
       - ./:/app
-      - /app/node_modules
     build:
       context: .
       dockerfile: Dockerfile.build
+    command:
+      - sh
+      - -c
+      - pnpm install --frozen-lockfile && pnpm build
 
   xadmin-client-prod:
     container_name: xadmin-client-prod
