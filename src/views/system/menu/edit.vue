@@ -288,77 +288,85 @@ defineExpose({ getRef });
       </div>
       <div v-if="newFormInline.menu_type !== MenuChoices.PERMISSION">
         <el-divider />
-        <el-form-item :label="t('menu.showLink')" prop="showLink">
-          <template #label>
-            <from-question
-              :description="t('menu.exampleShowLink')"
-              :label="t('menu.showLink')"
-            />
-          </template>
-          <Segmented
-            :modelValue="newFormInline.meta.is_show_menu ? 0 : 1"
-            :options="ifEnableOptions"
-            @change="
-              ({ option: { value } }) => {
-                newFormInline.meta.is_show_menu = value;
-              }
-            "
-          />
-        </el-form-item>
+        <el-row>
+          <el-col :span="12">
+            <el-form-item :label="t('menu.showLink')" prop="showLink">
+              <template #label>
+                <from-question
+                  :description="t('menu.exampleShowLink')"
+                  :label="t('menu.showLink')"
+                />
+              </template>
+              <Segmented
+                :modelValue="newFormInline.meta.is_show_menu ? 0 : 1"
+                :options="ifEnableOptions"
+                @change="
+                  ({ option: { value } }) => {
+                    newFormInline.meta.is_show_menu = value;
+                  }
+                "
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item :label="t('labels.status')" prop="is_active">
+              <template #label>
+                <from-question
+                  :description="t('menu.exampleMenuStatus')"
+                  :label="t('labels.status')"
+                />
+              </template>
+              <Segmented
+                :modelValue="newFormInline.is_active ? 0 : 1"
+                :options="ifEnableOptions"
+                @change="
+                  ({ option: { value } }) => {
+                    newFormInline.is_active = value;
+                  }
+                "
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item :label="t('menu.fixedTag')" prop="fixedTag">
+              <template #label>
+                <from-question
+                  :description="t('menu.fixedTagTip')"
+                  :label="t('menu.fixedTag')"
+                />
+              </template>
+              <Segmented
+                :modelValue="newFormInline.meta.fixed_tag ? 0 : 1"
+                :options="ifEnableOptions"
+                @change="
+                  ({ option: { value } }) => {
+                    newFormInline.meta.fixed_tag = value;
+                  }
+                "
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item :label="t('menu.hiddenTag')" prop="hiddenTag">
+              <template #label>
+                <from-question
+                  :description="t('menu.hiddenTagTip')"
+                  :label="t('menu.hiddenTag')"
+                />
+              </template>
+              <Segmented
+                :modelValue="newFormInline.meta.is_hidden_tag ? 0 : 1"
+                :options="ifEnableOptions"
+                @change="
+                  ({ option: { value } }) => {
+                    newFormInline.meta.is_hidden_tag = value;
+                  }
+                "
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
 
-        <el-form-item :label="t('labels.status')" prop="is_active">
-          <template #label>
-            <from-question
-              :description="t('menu.exampleMenuStatus')"
-              :label="t('labels.status')"
-            />
-          </template>
-          <Segmented
-            :modelValue="newFormInline.is_active ? 0 : 1"
-            :options="ifEnableOptions"
-            @change="
-              ({ option: { value } }) => {
-                newFormInline.is_active = value;
-              }
-            "
-          />
-        </el-form-item>
-        <el-divider />
-        <el-form-item :label="t('menu.fixedTag')" prop="fixedTag">
-          <template #label>
-            <from-question
-              :description="t('menu.fixedTagTip')"
-              :label="t('menu.fixedTag')"
-            />
-          </template>
-          <Segmented
-            :modelValue="newFormInline.meta.fixed_tag ? 0 : 1"
-            :options="ifEnableOptions"
-            @change="
-              ({ option: { value } }) => {
-                newFormInline.meta.fixed_tag = value;
-              }
-            "
-          />
-        </el-form-item>
-
-        <el-form-item :label="t('menu.hiddenTag')" prop="hiddenTag">
-          <template #label>
-            <from-question
-              :description="t('menu.hiddenTagTip')"
-              :label="t('menu.hiddenTag')"
-            />
-          </template>
-          <Segmented
-            :modelValue="newFormInline.meta.is_hidden_tag ? 0 : 1"
-            :options="ifEnableOptions"
-            @change="
-              ({ option: { value } }) => {
-                newFormInline.meta.is_hidden_tag = value;
-              }
-            "
-          />
-        </el-form-item>
         <el-divider />
         <el-form-item :label="t('menu.externalLink')" prop="isFrame">
           <template #label>
