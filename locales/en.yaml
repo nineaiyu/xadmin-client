@@ -211,6 +211,7 @@ menus:
   readNotice: Read Notice
   timingTask: Timing Task
   personalCenter: UserInfo
+  accountSettings: Account
   messageCenter: Notice
   chat: Chat
   apiDocs: Api Docs

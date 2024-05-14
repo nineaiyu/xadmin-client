@@ -211,6 +211,7 @@ menus:
   readNotice: 已读消息
   timingTask: 定时任务
   personalCenter: 个人中心
+  accountSettings: 账户设置
   messageCenter: 消息中心
   chat: 聊天室
   apiDocs: 接口文档
