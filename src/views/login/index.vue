@@ -39,7 +39,7 @@ import Check from "@iconify-icons/ep/check";
 import User from "@iconify-icons/ri/user-3-fill";
 import Info from "@iconify-icons/ri/information-line";
 import { getTempTokenApi } from "@/api/auth";
-import { debounce } from "@pureadmin/utils";
+import { cloneDeep, debounce } from "@pureadmin/utils";
 import { useEventListener } from "@vueuse/core";
 
 defineOptions({
@@ -104,7 +104,7 @@ const onLogin = async (formEl: FormInstance | undefined) => {
     if (valid) {
       loading.value = true;
       useUserStoreHook()
-        .loginByUsername(ruleForm)
+        .loginByUsername(cloneDeep(ruleForm))
         .then(res => {
           if (res.code === 1000) {
             message(transformI18n($t("login.loginSuccess")), {

@@ -28,6 +28,7 @@ import {
 } from "../utils";
 
 import { useMultiTagsStoreHook } from "./multiTags";
+import { AesEncrypted } from "@/utils/aes";
 
 export const useUserStore = defineStore({
   id: "pure-user",
@@ -89,6 +90,8 @@ export const useUserStore = defineStore({
     /** 登入 */
     async loginByUsername(data) {
       return new Promise<TokenResult>((resolve, reject) => {
+        data["password"] = AesEncrypted(data["token"], data["password"]);
+        data["username"] = AesEncrypted(data["token"], data["username"]);
         loginApi(data)
           .then(res => {
             if (res.code === 1000) {
@@ -123,6 +126,8 @@ export const useUserStore = defineStore({
     /** 注册 */
     async registerByUsername(data) {
       return new Promise<TokenResult>((resolve, reject) => {
+        data["password"] = AesEncrypted(data["token"], data["password"]);
+        data["username"] = AesEncrypted(data["token"], data["username"]);
         registerApi(data)
           .then(res => {
             if (res.code === 1000) {

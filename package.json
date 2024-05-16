@@ -58,6 +58,7 @@
     "animate.css": "^4.1.1",
     "axios": "^1.6.8",
     "cropperjs": "^1.6.2",
+    "crypto-js": "^4.2.0",
     "dayjs": "^1.11.11",
     "echarts": "^5.5.0",
     "element-plus": "^2.7.3",
@@ -93,9 +94,10 @@
     "@iconify/vue": "^4.1.2",
     "@intlify/unplugin-vue-i18n": "^4.0.0",
     "@pureadmin/theme": "^3.2.0",
+    "@types/crypto-js": "^4.2.2",
     "@types/gradient-string": "^1.1.6",
     "@types/js-cookie": "^3.0.6",
-    "@types/node": "^20.12.11",
+    "@types/node": "^20.12.12",
     "@types/nprogress": "0.2.3",
     "@types/qs": "^6.9.15",
     "@types/sortablejs": "^1.15.8",
@@ -138,7 +140,7 @@
     "vite-plugin-router-warn": "^1.0.0",
     "vite-svg-loader": "^5.1.0",
     "vue-eslint-parser": "^9.4.2",
-    "vue-tsc": "^2.0.17"
+    "vue-tsc": "^2.0.19"
   },
   "engines": {
     "node": "^18.18.0 || ^20.9.0 || >=21.1.0",

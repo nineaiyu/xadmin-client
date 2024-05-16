@@ -7,6 +7,7 @@ import type { FormItemProps } from "./types";
 import { onMounted, reactive, ref } from "vue";
 import { userInfoApi } from "@/api/user/userinfo";
 import { useUserStoreHook } from "@/store/modules/user";
+import { AesEncrypted } from "@/utils/aes";
 
 export function useApiAuth() {
   const api = reactive({
@@ -90,13 +91,21 @@ export function useUserInfo() {
   }
 
   function handleResetPassword(data) {
-    api.reset(data).then(async res => {
-      if (res.code === 1000) {
-        message(t("results.success"), { type: "success" });
-      } else {
-        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-      }
-    });
+    api
+      .reset({
+        old_password: AesEncrypted(currentUserInfo.username, data.old_password),
+        sure_password: AesEncrypted(
+          currentUserInfo.username,
+          data.sure_password
+        )
+      })
+      .then(async res => {
+        if (res.code === 1000) {
+          message(t("results.success"), { type: "success" });
+        } else {
+          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+        }
+      });
   }
 
   onMounted(() => {

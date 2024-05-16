@@ -43,13 +43,17 @@ import {
   picturePng
 } from "@/views/system/hooks";
 import type { PlusColumn } from "plus-pro-components";
+import { AesEncrypted } from "@/utils/aes";
 
 export function useUser(tableRef: Ref) {
   const { t } = useI18n();
 
   const api = reactive({
     list: userApi.list,
-    create: userApi.create,
+    create: (row, isAdd, curData) => {
+      curData["password"] = AesEncrypted(curData.username, curData.password);
+      return userApi.create;
+    },
     delete: userApi.delete,
     update: userApi.patch,
     fields: userApi.fields,
@@ -417,16 +421,20 @@ export function useUser(tableRef: Ref) {
       beforeSure: done => {
         ruleFormRef.value.validate(valid => {
           if (valid) {
-            api.reset(row.pk, { password: pwdForm.newPwd }).then(res => {
-              if (res.code === 1000) {
-                message(t("results.success"), { type: "success" });
-              } else {
-                message(`${t("results.failed")}，${res.detail}`, {
-                  type: "error"
-                });
-              }
-              done(); // 关闭弹框
-            });
+            api
+              .reset(row.pk, {
+                password: AesEncrypted(row.username, pwdForm.newPwd)
+              })
+              .then(res => {
+                if (res.code === 1000) {
+                  message(t("results.success"), { type: "success" });
+                } else {
+                  message(`${t("results.failed")}，${res.detail}`, {
+                    type: "error"
+                  });
+                }
+                done(); // 关闭弹框
+              });
           }
         });
       }

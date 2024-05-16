@@ -195,7 +195,7 @@ export function useBaseTable(
       contentRenderer: () => h(editForm.form, { ref: formRef }),
       beforeSure: (done, { options }) => {
         const FormRef = formRef.value.getRef();
-        const curData = options.props.formInline;
+        const curData = cloneDeep(options.props.formInline);
 
         const chores = () => {
           message(t("results.success"), { type: "success" });
@@ -205,16 +205,12 @@ export function useBaseTable(
 
         FormRef.validate(valid => {
           if (valid) {
-            // todo 接口监测方法
-            let apiCreate = api.create;
-            if (api.create.length === 3) {
-              apiCreate = apiCreate(row, isAdd, curData);
-            }
-            let apiUpdate = api.update;
-            if (api.update.length === 3) {
-              apiUpdate = apiUpdate(row, isAdd, curData);
-            }
             if (isAdd) {
+              // todo 接口监测方法
+              let apiCreate = api.create;
+              if (api.create.length === 3) {
+                apiCreate = apiCreate(row, isAdd, curData);
+              }
               apiCreate(curData).then(async res => {
                 if (res.code === 1000) {
                   chores();
@@ -225,6 +221,10 @@ export function useBaseTable(
                 }
               });
             } else {
+              let apiUpdate = api.update;
+              if (api.update.length === 3) {
+                apiUpdate = apiUpdate(row, isAdd, curData);
+              }
               apiUpdate(curData.pk, curData).then(res => {
                 if (res.code === 1000) {
                   chores();

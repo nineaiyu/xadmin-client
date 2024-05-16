@@ -15,6 +15,7 @@ import User from "@iconify-icons/ri/user-3-fill";
 import { getTempTokenApi } from "@/api/auth";
 import { getTopMenu, initRouter } from "@/router/utils";
 import { useRouter } from "vue-router";
+import { cloneDeep } from "@pureadmin/utils";
 
 const { t } = useI18n();
 const checked = ref(false);
@@ -48,7 +49,7 @@ const onUpdate = async (formEl: FormInstance | undefined) => {
     if (valid) {
       if (checked.value) {
         useUserStoreHook()
-          .registerByUsername(ruleForm)
+          .registerByUsername(cloneDeep(ruleForm))
           .then(() => {
             message(transformI18n($t("login.registerSuccess")), {
               type: "success"
