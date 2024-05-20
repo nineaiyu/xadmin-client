@@ -299,7 +299,8 @@ export function useNoticeForm(props, newFormInline) {
           hasGlobalAuth("list:systemSearchUsers")
         );
       }),
-      renderField: value => {
+      renderField: (value, onChange) => {
+        onChange(value);
         return <SearchUsers modelValue={value} />;
       }
     },
@@ -311,7 +312,8 @@ export function useNoticeForm(props, newFormInline) {
           hasGlobalAuth("list:systemSearchDepts")
         );
       }),
-      renderField: value => {
+      renderField: (value, onChange) => {
+        onChange(value);
         return <SearchDepts modelValue={value} />;
       }
     },
@@ -323,7 +325,8 @@ export function useNoticeForm(props, newFormInline) {
           hasGlobalAuth("list:systemSearchRoles")
         );
       }),
-      renderField: value => {
+      renderField: (value, onChange) => {
+        onChange(value);
         return <SearchRoles modelValue={value} />;
       }
     },

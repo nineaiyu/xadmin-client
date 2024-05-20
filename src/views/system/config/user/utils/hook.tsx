@@ -172,7 +172,8 @@ export function useUserConfigForm(props) {
         disabled: !props?.isAdd,
         multiple: true
       },
-      renderField: value => {
+      renderField: (value, onChange) => {
+        onChange(value);
         return <SearchUsers modelValue={value} disabled={!props.isAdd} />;
       }
     },
