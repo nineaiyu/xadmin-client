@@ -285,6 +285,7 @@ export function useDeptForm(props) {
       prop: "parent",
       valueType: "cascader",
       fieldProps: {
+        valueOnClear: "",
         props: {
           value: "pk",
           label: "name",
