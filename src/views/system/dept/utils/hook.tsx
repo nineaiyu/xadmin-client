@@ -12,8 +12,9 @@ import {
 } from "vue";
 import { addDialog } from "@/components/ReDialog";
 import roleForm from "../form/role.vue";
+import leaderForm from "../form/leader.vue";
 import Form from "../form/index.vue";
-import type { RoleFormItemProps } from "./types";
+import type { LeaderFormItemProps, RoleFormItemProps } from "./types";
 import { roleApi } from "@/api/system/role";
 import { cloneDeep, deviceDetection } from "@pureadmin/utils";
 import { useRouter } from "vue-router";
@@ -30,6 +31,7 @@ import type { PlusColumn } from "plus-pro-components";
 
 import { renderOption, renderSwitch } from "@/views/system/render";
 import { handleTree } from "@/utils/tree";
+import SearchUsers from "@/views/system/base/searchUsers.vue";
 
 export function useDept(tableRef: Ref) {
   const { t } = useI18n();
@@ -40,6 +42,7 @@ export function useDept(tableRef: Ref) {
     delete: deptApi.delete,
     update: deptApi.patch,
     empower: deptApi.empower,
+    leader: deptApi.leader,
     choices: deptApi.choices,
     fields: deptApi.fields,
     batchDelete: deptApi.batchDelete
@@ -51,6 +54,7 @@ export function useDept(tableRef: Ref) {
     delete: hasAuth("delete:systemDept"),
     update: hasAuth("update:systemDept"),
     empower: hasAuth("empower:systemDept"),
+    leader: hasAuth("leader:systemDept"),
     choices: hasAuth("choices:systemDept"),
     fields: hasAuth("fields:systemDept"),
     batchDelete: hasAuth("batchDelete:systemDept")
@@ -224,6 +228,44 @@ export function useDept(tableRef: Ref) {
     });
   }
 
+  /** 设置部门负责人 */
+  function handleLeader(row) {
+    addDialog({
+      title: t("systemDept.assignLeaders", { dept: row.name }),
+      props: {
+        formInline: {
+          name: row?.name ?? "",
+          code: row?.code ?? "",
+          leaders: row?.leaders ?? []
+        }
+      },
+      width: "600px",
+      draggable: true,
+      fullscreen: deviceDetection(),
+      fullscreenIcon: true,
+      closeOnClickModal: false,
+      contentRenderer: () => h(leaderForm),
+      beforeSure: (done, { options }) => {
+        const curData = options.props.formInline as LeaderFormItemProps;
+        api
+          .leader(row.pk, {
+            leaders: curData.leaders
+          })
+          .then(res => {
+            if (res.code === 1000) {
+              message(t("results.success"), { type: "success" });
+              tableRef.value.onSearch();
+            } else {
+              message(`${t("results.failed")}，${res.detail}`, {
+                type: "error"
+              });
+            }
+            done(); // 关闭弹框
+          });
+      }
+    });
+  }
+
   onMounted(() => {
     api.choices().then(res => {
       if (res.code === 1000) {
@@ -264,6 +306,7 @@ export function useDept(tableRef: Ref) {
     editForm,
     buttonClass,
     handleRole,
+    handleLeader,
     formatResult
   };
 }
@@ -305,7 +348,6 @@ export function useDeptForm(props) {
       valueType: "radio",
       colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 },
       tooltip: t("systemDept.autoBindDesc"),
-
       renderField: renderOption()
     },
     {
@@ -388,6 +430,46 @@ export function useDeptRoleForm(props) {
         multiple: true
       },
       options: customOptions(props.rulesOptions)
+    }
+  ];
+  formatFormColumns(props, columns, t, te, "systemDept");
+  return {
+    t,
+    columns
+  };
+}
+
+export function useDeptLeaderForm(props) {
+  const { t, te } = useI18n();
+
+  const columns: PlusColumn[] = [
+    {
+      prop: "name",
+      valueType: "input",
+      fieldProps: {
+        disabled: true
+      }
+    },
+    {
+      prop: "code",
+      valueType: "input",
+      fieldProps: {
+        disabled: true
+      }
+    },
+    {
+      prop: "leaders",
+      valueType: "select",
+      fieldProps: {
+        multiple: true
+      },
+      hideInForm: computed(() => {
+        return !hasGlobalAuth("list:systemSearchUsers");
+      }),
+      renderField: (value, onChange) => {
+        onChange(value);
+        return <SearchUsers v-model={value} />;
+      }
     }
   ];
   formatFormColumns(props, columns, t, te, "systemDept");

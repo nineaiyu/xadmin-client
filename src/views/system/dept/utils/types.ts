@@ -44,4 +44,21 @@ interface RoleFormProps {
   modeChoices: any[];
 }
 
-export type { FormItemProps, FormProps, RoleFormItemProps, RoleFormProps };
+interface LeaderFormItemProps {
+  name?: string;
+  code?: string;
+  leaders: Record<number, unknown>[];
+}
+
+interface LeaderFormProps {
+  formInline: LeaderFormItemProps;
+}
+
+export type {
+  FormItemProps,
+  FormProps,
+  RoleFormItemProps,
+  RoleFormProps,
+  LeaderFormItemProps,
+  LeaderFormProps
+};

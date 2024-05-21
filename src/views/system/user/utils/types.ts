@@ -27,6 +27,8 @@ interface FormItemProps {
   description?: string;
   /** 所属部门 */
   dept?: string;
+  /** 主要部门 */
+  main_dept?: string;
 }
 
 interface FormProps {

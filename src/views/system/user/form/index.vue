@@ -12,6 +12,7 @@ const props = withDefaults(defineProps<FormProps>(), {
     mobile: "",
     email: "",
     dept: "",
+    main_dept: "",
     gender: 0,
     roles: [],
     password: "",
@@ -23,12 +24,26 @@ const props = withDefaults(defineProps<FormProps>(), {
   genderChoices: () => []
 });
 const formRef = ref();
-const { columns } = useSystemUserForm(props);
 const newFormInline = ref(props.formInline);
+const { t, columns } = useSystemUserForm(props, newFormInline);
 
 function getRef() {
   return formRef.value?.formInstance;
 }
+
+formRules["main_dept"] = [
+  {
+    required: true,
+    validator: (rule, value, callback) => {
+      if (value === "" || newFormInline.value.dept.indexOf(value) === -1) {
+        callback(new Error(t("systemUser.main_dept")));
+      } else {
+        callback();
+      }
+    },
+    trigger: "blur"
+  }
+];
 
 defineExpose({ getRef });
 </script>

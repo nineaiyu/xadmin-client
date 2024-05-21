@@ -263,6 +263,7 @@ systemUser:
   password: 密码
   roles: 角色
   rules: 数据权限
+  main_dept: 默认部门
 
 systemDept:
   dept: 部门
@@ -279,6 +280,8 @@ systemDept:
   parent: 归属部门
   roles: 角色
   rules: 数据权限
+  assignLeaders: 设置部门负责人
+  leaders: 负责人
 
 systemPermission:
   permission: 数据权限

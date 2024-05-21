@@ -6,6 +6,8 @@ import More2Fill from "@iconify-icons/ri/more-2-fill";
 import ExpandIcon from "./svg/expand.svg?component";
 import UnExpandIcon from "./svg/unexpand.svg?component";
 import { useI18n } from "vue-i18n";
+import OfficeBuilding from "@iconify-icons/ep/office-building";
+import LocationCompany from "@iconify-icons/ep/place";
 
 interface Tree {
   id: number;
@@ -187,7 +189,14 @@ defineExpose({ onTreeReset });
               : 'transparent'
           }"
         >
-          {{ node.label }} {{ data.user_count ? data.user_count : "" }}
+          <IconifyIconOffline
+            :icon="
+              data.dept_type?.value === 1 ? LocationCompany : OfficeBuilding
+            "
+          />
+          <el-text :type="data.dept_type?.value === 1 ? 'success' : ''">
+            {{ node.label }} {{ data.user_count ? data.user_count : "" }}
+          </el-text>
         </span>
       </template>
     </el-tree>

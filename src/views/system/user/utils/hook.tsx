@@ -37,6 +37,7 @@ import { REGEXP_PWD } from "@/views/login/utils/rule";
 import Info from "@iconify-icons/ri/question-line";
 import { renderOption, renderSwitch } from "@/views/system/render";
 import {
+  disableState,
   formatFormColumns,
   formatHigherDeptOptions,
   formatOptions,
@@ -77,6 +78,16 @@ export function useUser(tableRef: Ref) {
     batchDelete: hasAuth("batchDelete:systemUser")
   });
 
+  const getMainDept = row => {
+    const dept = row?.dept_info?.filter(dep => {
+      return dep.is_master;
+    });
+    if (dept?.length === 1) {
+      return dept[0]?.pk;
+    }
+    return "";
+  };
+
   const editForm = shallowRef({
     title: t("systemUser.user"),
     form: Form,
@@ -89,6 +100,9 @@ export function useUser(tableRef: Ref) {
       },
       roles: row => {
         return row?.roles ?? [];
+      },
+      main_dept: row => {
+        return getMainDept(row);
       }
     },
     props: {
@@ -193,10 +207,15 @@ export function useUser(tableRef: Ref) {
 
     {
       prop: "dept_info",
+      label: t("systemUser.main_dept"),
       width: 140,
       cellRenderer: ({ row }) => (
-        <span v-show={row?.dept_info?.name} v-copy={row?.dept_info?.name}>
-          {row?.dept_info?.name}
+        <span v-show={row?.dept_info?.length}>
+          {
+            row?.dept_info?.filter(dep => {
+              return dep.is_master;
+            })[0]?.name
+          }
         </span>
       )
     },
@@ -510,8 +529,22 @@ export function useUser(tableRef: Ref) {
   };
 }
 
-export function useSystemUserForm(props) {
+export function useSystemUserForm(props, newFormInline) {
   const { t, te } = useI18n();
+  const filterTreeToList = (tree, filter, list = []) => {
+    tree?.forEach(item => {
+      if (filter?.indexOf(item.pk) > -1) {
+        list.push({
+          label: item?.name,
+          value: item?.pk
+        });
+      }
+      if (item?.children) {
+        filterTreeToList(item.children, filter, list);
+      }
+    });
+    return list;
+  };
   const columns: PlusColumn[] = [
     {
       prop: "username",
@@ -556,14 +589,34 @@ export function useSystemUserForm(props) {
       prop: "dept",
       valueType: "cascader",
       fieldProps: {
+        filterable: true,
         props: {
           value: "pk",
           label: "name",
           emitPath: false,
-          checkStrictly: true
+          checkStrictly: true,
+          multiple: true
         }
       },
+      fieldSlots: {
+        default: ({ node, data }) => (
+          <>
+            <span>{data.name}</span>
+            <span v-show={!node.isLeaf}> ({data?.children?.length}) </span>
+          </>
+        )
+      },
       options: props.treeData
+    },
+    {
+      prop: "main_dept",
+      valueType: "select",
+      options: computed(() => {
+        return filterTreeToList(props.treeData, newFormInline.value.dept);
+      }),
+      fieldProps: {
+        disabled: disableState(props, "dept")
+      }
     },
     {
       prop: "description",

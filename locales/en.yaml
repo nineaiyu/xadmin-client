@@ -263,6 +263,7 @@ systemUser:
   password: Password
   roles: Roles
   rules: Data Permissions
+  main_dept: Default Department
 
 systemDept:
   dept: Department
@@ -279,6 +280,8 @@ systemDept:
   parent: Department
   roles: Roles
   rules: Data Permissions
+  assignLeaders: Assign multiple leaders department { dept }
+  leaders: Leaders
 
 systemPermission:
   permission: Permissions

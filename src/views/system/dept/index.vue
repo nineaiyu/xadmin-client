@@ -22,6 +22,7 @@ const {
   editForm,
   buttonClass,
   handleRole,
+  handleLeader,
   formatResult
 } = useDept(tableRef);
 </script>
@@ -57,6 +58,18 @@ const {
                 @click="handleRole(row)"
               >
                 {{ t("systemDept.assignRoles") }}
+              </el-button>
+            </el-dropdown-item>
+            <el-dropdown-item v-if="auth.leader">
+              <el-button
+                :class="buttonClass"
+                :icon="useRenderIcon(Role)"
+                :size="size"
+                link
+                type="primary"
+                @click="handleLeader(row)"
+              >
+                {{ t("systemDept.assignLeaders") }}
               </el-button>
             </el-dropdown-item>
           </el-dropdown-menu>
