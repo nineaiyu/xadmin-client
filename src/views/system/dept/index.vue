@@ -20,6 +20,7 @@ const {
   auth,
   columns,
   editForm,
+  pagination,
   buttonClass,
   handleRole,
   formatResult
@@ -34,6 +35,7 @@ const {
     :edit-form="editForm"
     :result-format="formatResult"
     :table-columns="columns"
+    :pagination="pagination"
     locale-name="systemDept"
   >
     <template #extOperation="{ row, size }">

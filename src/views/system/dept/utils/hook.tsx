@@ -56,6 +56,14 @@ export function useDept(tableRef: Ref) {
     batchDelete: hasAuth("batchDelete:systemDept")
   });
 
+  const pagination = reactive({
+    total: 0,
+    pageSize: 1000,
+    currentPage: 1,
+    pageSizes: [20, 100, 1000],
+    background: true
+  });
+
   const editForm = shallowRef({
     title: t("systemDept.dept"),
     form: Form,
@@ -262,6 +270,7 @@ export function useDept(tableRef: Ref) {
     auth,
     columns,
     editForm,
+    pagination,
     buttonClass,
     handleRole,
     formatResult
