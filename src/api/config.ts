@@ -1,11 +1,23 @@
 import { BaseApi } from "@/api/base";
 
+type ConfigResult = {
+  detail: string;
+  code: number;
+  config: Object | Number | Boolean | String | any;
+  auth: string;
+};
+
 class ConfigApi extends BaseApi {
   getConfig = (name: string) => {
-    return this.request("get", {}, {}, `${this.baseApi}/${name}`);
+    return this.request<ConfigResult>("get", {}, {}, `${this.baseApi}/${name}`);
   };
   setConfig = (name: string, data: object) => {
-    return this.request("put", {}, data, `${this.baseApi}/${name}`);
+    return this.request<ConfigResult>(
+      "put",
+      {},
+      data,
+      `${this.baseApi}/${name}`
+    );
   };
   getSiteConfig = () => {
     return this.getConfig("WEB_SITE_CONFIG");

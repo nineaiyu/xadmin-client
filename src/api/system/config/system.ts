@@ -1,8 +1,14 @@
 import { BaseApi } from "@/api/base";
+import type { BaseResult } from "@/api/types";
 
 class SystemConfigApi extends BaseApi {
   invalid = (pk: number | string) => {
-    return this.request("post", {}, {}, `${this.baseApi}/${pk}/invalid`);
+    return this.request<BaseResult>(
+      "post",
+      {},
+      {},
+      `${this.baseApi}/${pk}/invalid`
+    );
   };
 }
 

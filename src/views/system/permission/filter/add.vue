@@ -50,7 +50,7 @@ const getMatchData = (value: any) => {
       .lookups({ table: value[0], field: value[1] })
       .then(res => {
         if (res.code === 1000) {
-          matchList.value = res.data.results;
+          matchList.value = res.data;
         } else {
           message(`${t("results.failed")}，${res.detail}`, {
             type: "error"

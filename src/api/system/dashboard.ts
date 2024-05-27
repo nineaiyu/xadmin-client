@@ -1,5 +1,13 @@
 import { http } from "@/utils/http";
-import type { DashBoardResult, Result } from "@/api/types";
+import type { DataListResult } from "@/api/types";
+
+type DashBoardResult = {
+  code: number;
+  detail: string;
+  percent: number;
+  count: number;
+  results?: Array<any>;
+};
 
 export const getDashBoardUserLoginTotalApi = (params?: object) => {
   return http.request<DashBoardResult>(
@@ -22,7 +30,7 @@ export const getDashBoardUserTotalApi = (params?: object) => {
 };
 
 export const getDashBoardUserRegisterTrendApi = (params?: object) => {
-  return http.request<Result>(
+  return http.request<DataListResult>(
     "get",
     "/api/system/dashboard/user-registered-trend",
     {
@@ -32,15 +40,23 @@ export const getDashBoardUserRegisterTrendApi = (params?: object) => {
 };
 
 export const getDashBoardUserLoginTrendApi = (params?: object) => {
-  return http.request<Result>("get", "/api/system/dashboard/user-login-trend", {
-    params: params
-  });
+  return http.request<DataListResult>(
+    "get",
+    "/api/system/dashboard/user-login-trend",
+    {
+      params: params
+    }
+  );
 };
 
 export const getDashBoardUserActiveApi = (params?: object) => {
-  return http.request<Result>("get", "/api/system/dashboard/user-active", {
-    params: params
-  });
+  return http.request<DataListResult>(
+    "get",
+    "/api/system/dashboard/user-active",
+    {
+      params: params
+    }
+  );
 };
 
 export const getDashBoardTodayOperateTotalApi = (params?: object) => {

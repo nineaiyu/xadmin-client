@@ -87,7 +87,7 @@ export function useMenu() {
     if (auth.apiUrl) {
       api.apiUrl().then(res => {
         if (res.code === 1000) {
-          menuUrlList.value = res.results;
+          menuUrlList.value = res.data;
         }
       });
     }
@@ -250,7 +250,7 @@ export function useMenu() {
       if (res.code === 1000) {
         api
           .rank({ pks: getMenuOrderPk(treeRef.value?.data) })
-          .then((res: any) => {
+          .then(res => {
             if (res.code === 1000) {
               message(res.detail, { type: "success" });
             } else {

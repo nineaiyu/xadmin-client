@@ -1,7 +1,6 @@
 import { defineStore } from "pinia";
 import { setConfig } from "@/config";
 import Storage from "responsive-storage";
-import type { Result } from "@/api/types";
 import { message } from "@/utils/message";
 import { cloneDeep } from "@pureadmin/utils";
 import { responsiveStorageNameSpace, store } from "../utils";
@@ -20,7 +19,7 @@ export const useSiteConfigStore = defineStore({
       });
     },
     async saveSiteConfig() {
-      return new Promise<Result>((resolve, reject) => {
+      return new Promise((resolve, reject) => {
         const locale = Storage.getData("locale", this.nameSpace);
         const layout = Storage.getData("layout", this.nameSpace);
         const configure = Storage.getData("configure", this.nameSpace);

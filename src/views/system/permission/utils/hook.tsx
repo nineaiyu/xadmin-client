@@ -27,6 +27,7 @@ export function useDataPermission(tableRef: Ref) {
     update: dataPermissionApi.patch,
     detail: dataPermissionApi.detail,
     fields: dataPermissionApi.fields,
+    choices: dataPermissionApi.choices,
     batchDelete: dataPermissionApi.batchDelete
   });
 
@@ -119,7 +120,7 @@ export function useDataPermission(tableRef: Ref) {
   ]);
 
   onMounted(() => {
-    api.detail("choices").then(res => {
+    api.choices().then(res => {
       if (res.code === 1000) {
         choicesDict.value = res.choices_dict;
       }

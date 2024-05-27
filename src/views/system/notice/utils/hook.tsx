@@ -60,6 +60,7 @@ export function useNotice(tableRef: Ref) {
     delete: noticeApi.delete,
     update: noticeApi.patch,
     publish: noticeApi.publish,
+    choices: noticeApi.choices,
     detail: noticeApi.detail,
     fields: noticeApi.fields,
     batchDelete: noticeApi.batchDelete
@@ -218,7 +219,7 @@ export function useNotice(tableRef: Ref) {
   }
 
   onMounted(() => {
-    api.detail("choices").then(res => {
+    api.choices().then(res => {
       if (res.code === 1000) {
         choicesDict.value = res.choices_dict;
         choicesDict.value["notice_type"].forEach(item => {

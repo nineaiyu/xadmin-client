@@ -1,14 +1,25 @@
 import { BaseApi } from "@/api/base";
+import type { BaseResult } from "@/api/types";
 
 class UserNoticeReadApi extends BaseApi {
   unread = (params?: object) => {
-    return this.request("get", params, {}, `${this.baseApi}/unread`);
+    return this.request<BaseResult>(
+      "get",
+      params,
+      {},
+      `${this.baseApi}/unread`
+    );
   };
   allRead = (params?: object) => {
-    return this.request("put", params, {}, `${this.baseApi}/read-all`);
+    return this.request<BaseResult>(
+      "put",
+      params,
+      {},
+      `${this.baseApi}/read-all`
+    );
   };
   batchRead = (data?: object) => {
-    return this.request("put", {}, data, `${this.baseApi}/read`);
+    return this.request<BaseResult>("put", {}, data, `${this.baseApi}/read`);
   };
 }
 

@@ -39,7 +39,7 @@ export function useDashboard() {
   const getUserActiveList = () => {
     getDashBoardUserActiveApi().then(res => {
       if (res.code === 1000) {
-        res.results.forEach(item => {
+        res.data.forEach(item => {
           userActiveList.value.push({
             name:
               item[0] === 1
@@ -109,7 +109,7 @@ export function useDashboard() {
   const getUserLoginList = () => {
     getDashBoardUserLoginTrendApi().then(res => {
       if (res.code === 1000) {
-        userLoginList.value = res.results;
+        userLoginList.value = res.data;
       }
     });
   };
@@ -117,7 +117,7 @@ export function useDashboard() {
   const getUserRegisterList = () => {
     getDashBoardUserRegisterTrendApi().then(res => {
       if (res.code === 1000) {
-        userRegisterList.value = res.results;
+        userRegisterList.value = res.data;
       }
     });
   };

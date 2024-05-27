@@ -4,6 +4,7 @@ import { cloneDeep, isNullOrUnDef, useDark } from "@pureadmin/utils";
 import type { PlusColumn } from "plus-pro-components";
 import { getPickerShortcuts } from "@/views/system/utils";
 import { useI18n } from "vue-i18n";
+import type { SearchFieldsResult } from "@/api/types";
 
 export function usePublicHooks() {
   const { isDark } = useDark();
@@ -143,14 +144,8 @@ export const formatPublicLabels = (
   return t(formatLabel);
 };
 
-interface SearchProp {
-  key: string;
-  choices: Array<number | string | any>;
-  input_type: string | any;
-}
-
 export const formatSearchColumns = (
-  item: SearchProp,
+  item: SearchFieldsResult["data"][0],
   localeName?: string,
   t?: Function,
   te?: Function
@@ -231,27 +226,25 @@ export const getFieldsData = (
 ) => {
   return new Promise((resolve, reject) => {
     const { t, te } = useI18n();
-    fieldsApi().then(
-      (res: { code: number; data: { results: Array<SearchProp> } }) => {
-        if (res.code === 1000) {
-          res.data.results.forEach(item => {
-            searchFields.value[item.key] = "";
-            searchColumns.value.push(
-              formatSearchColumns(item, localeName, t, te)
-            );
-            if (item.key === "ordering" && item.choices.length > 0) {
-              searchFields.value[item.key] = item.choices[0].value;
-            }
-          });
-          searchFields.value.page = page;
-          searchFields.value.size = size;
-          searchFields.value.ordering = searchFields.value.ordering ?? ordering;
-          resolve(res);
-        } else {
-          reject(res);
-        }
+    fieldsApi().then((res: SearchFieldsResult) => {
+      if (res.code === 1000) {
+        res.data.forEach(item => {
+          searchFields.value[item.key] = "";
+          searchColumns.value.push(
+            formatSearchColumns(item, localeName, t, te)
+          );
+          if (item.key === "ordering" && item.choices.length > 0) {
+            searchFields.value[item.key] = item.choices[0].value;
+          }
+        });
+        searchFields.value.page = page;
+        searchFields.value.size = size;
+        searchFields.value.ordering = searchFields.value.ordering ?? ordering;
+        resolve(res);
+      } else {
+        reject(res);
       }
-    );
+    });
   });
 };
 
