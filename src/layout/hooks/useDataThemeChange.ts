@@ -70,7 +70,9 @@ export function useDataThemeChange() {
     };
 
     if (theme === "default" || theme === "light") {
-      setEpThemeColor(getConfig().EpThemeColor);
+      // setEpThemeColor(getConfig().EpThemeColor);
+      // 当用户自定义主题色之后，保存服务器，默认的主题色会被覆盖，该操作可以修复默认的主题色
+      setEpThemeColor("#409EFF");
     } else {
       const colors = themeColors.value.find(v => v.themeColor === theme);
       setEpThemeColor(colors.color);
