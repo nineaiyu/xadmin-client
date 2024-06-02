@@ -1,6 +1,6 @@
 // 抽离可公用的工具函数等用于系统管理页面逻辑
 import { computed, type Ref } from "vue";
-import { cloneDeep, isNullOrUnDef, useDark } from "@pureadmin/utils";
+import { isNullOrUnDef, useDark } from "@pureadmin/utils";
 import type { PlusColumn } from "plus-pro-components";
 import { getPickerShortcuts } from "@/views/system/utils";
 import { useI18n } from "vue-i18n";
@@ -53,28 +53,6 @@ export function formatHigherDeptOptions(treeList) {
     newTreeList.push(treeList[i]);
   }
   return newTreeList;
-}
-
-/**
- * @description 将缩略图的地址转换为png地址
- * @param results 后端返回的结果
- * @param columns 定义好的字段
- * @param showColumns 需要显示的字段
- */
-export function formatColumns(results, columns, showColumns) {
-  if (results.length > 0) {
-    showColumns.value = Object.keys(results[0]);
-    cloneDeep(columns.value).forEach(column => {
-      if (column?.prop && showColumns.value.indexOf(column?.prop) === -1) {
-        columns.value.splice(
-          columns.value.findIndex(obj => {
-            return obj.label === column.label;
-          }),
-          1
-        );
-      }
-    });
-  }
 }
 
 /**

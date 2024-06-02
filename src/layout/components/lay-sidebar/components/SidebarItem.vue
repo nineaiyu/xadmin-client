@@ -144,7 +144,7 @@ function resolvePath(routePath) {
             layout === 'mix' &&
             item?.pathList?.length === 2)
         "
-        class="!w-full !px-4 !text-inherit"
+        class="!w-full !pl-4 !text-inherit"
         truncated
       >
         {{ transformI18n(onlyOneChild.meta.title) }}
@@ -195,7 +195,7 @@ function resolvePath(routePath) {
         :class="{
           '!w-full': true,
           '!text-inherit': true,
-          '!px-4':
+          '!pl-4':
             layout !== 'horizontal' &&
             isCollapse &&
             !toRaw(item.meta.icon) &&
