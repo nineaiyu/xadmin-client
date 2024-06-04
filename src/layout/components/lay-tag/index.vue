@@ -558,7 +558,7 @@ onBeforeUnmount(() => {
 });
 
 const fixedTag = item => {
-  return isAllEmpty(item?.meta?.fixedTag) || item?.meta?.fixedTag;
+  return item?.meta?.fixedTag === false || isAllEmpty(item?.meta?.fixedTag);
 };
 </script>
 
