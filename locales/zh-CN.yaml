@@ -68,8 +68,9 @@ layout:
   sidebarLogo: 侧边栏Logo
   labelPersistence: 标签页持久化
   labelStyle: 标签风格
-  card: 卡片
-  smart: 灵动
+  tagsStyleCard: 卡片
+  tagsStyleSmart: 灵动
+  tagsStyleChrome: 谷歌
   cleanOut: 清空缓存并返回登录页
   noticeTime: YYYY年MM月DD日 HH:mm:ss
   backTop: 回到顶部
@@ -82,8 +83,9 @@ layout:
   lightTip: 清新启航，点亮舒适的工作界面
   darkTip: 月光序曲，沉醉于夜的静谧雅致
   autoTip: 同步时光，界面随晨昏自然呼应
-  smartTip: 灵动标签，添趣生辉
-  cardTip: 卡片标签，高效浏览
+  tagsStyleSmartTip: 灵动标签，添趣生辉
+  tagsStyleCardTip: 卡片标签，高效浏览
+  tagsStyleChromeTip: 谷歌风格，经典美观
   favorite: 收藏
   dragSort: （可拖拽排序）
   searchHistory: 搜索历史

@@ -2,6 +2,7 @@
 import { useI18n } from "vue-i18n";
 import LayFrame from "../lay-frame/index.vue";
 import LayFooter from "../lay-footer/index.vue";
+import { useTags } from "@/layout/hooks/useTag";
 import { isNumber, useGlobal } from "@pureadmin/utils";
 import BackTopIcon from "@/assets/svg/back_top.svg?component";
 import { computed, defineComponent, h, Transition } from "vue";
@@ -12,6 +13,7 @@ const props = defineProps({
 });
 
 const { t } = useI18n();
+const { showModel } = useTags();
 const { $storage, $config } = useGlobal<GlobalPropertiesApi>();
 
 const isKeepAlive = computed(() => {
@@ -51,9 +53,17 @@ const getMainWidth = computed(() => {
 const getSectionStyle = computed(() => {
   return [
     hideTabs.value && layout ? "padding-top: 48px;" : "",
-    !hideTabs.value && layout ? "padding-top: 81px;" : "",
+    !hideTabs.value && layout
+      ? showModel.value == "chrome"
+        ? "padding-top: 85px;"
+        : "padding-top: 81px;"
+      : "",
     hideTabs.value && !layout.value ? "padding-top: 48px;" : "",
-    !hideTabs.value && !layout.value ? "padding-top: 81px;" : "",
+    !hideTabs.value && !layout.value
+      ? showModel.value == "chrome"
+        ? "padding-top: 85px;"
+        : "padding-top: 81px;"
+      : "",
     props.fixedHeader
       ? ""
       : `padding-top: 0;${
@@ -108,18 +118,18 @@ const transitionMain = defineComponent({
           <template #default="{ Comp, fullPath, frameInfo }">
             <el-scrollbar
               v-if="fixedHeader"
-              :view-style="{
-                display: 'flex',
-                flex: 'auto',
-                overflow: 'hidden',
-                'flex-direction': 'column'
-              }"
               :wrap-style="{
                 display: 'flex',
                 'flex-wrap': 'wrap',
                 'max-width': getMainWidth,
                 margin: '0 auto',
                 transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)'
+              }"
+              :view-style="{
+                display: 'flex',
+                flex: 'auto',
+                overflow: 'hidden',
+                'flex-direction': 'column'
               }"
             >
               <el-backtop

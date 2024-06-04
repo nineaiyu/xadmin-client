@@ -13,6 +13,7 @@ import { themePreprocessorPlugin } from "@pureadmin/theme";
 import VueI18nPlugin from "@intlify/unplugin-vue-i18n/vite";
 import { genScssMultipleScopeVars } from "../src/layout/theme";
 import { vitePluginFakeServer } from "vite-plugin-fake-server";
+import Inspector from "vite-plugin-vue-inspector";
 
 export function getPluginsList(
   VITE_CDN: boolean,
@@ -28,6 +29,12 @@ export function getPluginsList(
       include: [pathResolve("../locales/**")]
     }),
     viteBuildInfo(),
+    /**  Vue Inspector: Press Ctrl(^)+Shift(⇧) in App to toggle the Inspector
+     * launchEditor: 'appcode' | 'atom' | 'atom-beta' | 'brackets' | 'clion' | 'code' | 'code-insiders' | 'codium'
+     * | 'emacs' | 'idea' | 'notepad++' | 'pycharm' | 'phpstorm' | 'rubymine' | 'sublime' | 'vim' | 'visualstudio' | 'webstorm' | 'rider'
+     * https://github.com/webfansplz/vite-plugin-vue-inspector
+     */
+    Inspector({ launchEditor: "webstorm" }),
     /**
      * 开发环境下移除非必要的vue-router动态路由警告No match found for location with path
      * 非必要具体看 https://github.com/vuejs/router/issues/521 和 https://github.com/vuejs/router/issues/359

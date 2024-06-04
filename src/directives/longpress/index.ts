@@ -3,7 +3,7 @@ import type { Directive, DirectiveBinding } from "vue";
 import { isFunction, subAfter, subBefore } from "@pureadmin/utils";
 
 export const longpress: Directive = {
-  mounted(el: HTMLElement, binding: DirectiveBinding) {
+  mounted(el: HTMLElement, binding: DirectiveBinding<Function>) {
     const cb = binding.value;
     if (cb && isFunction(cb)) {
       let timer = null;

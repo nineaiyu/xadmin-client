@@ -222,14 +222,19 @@ const themeOptions = computed<Array<OptionsType>>(() => {
 const markOptions = computed<Array<OptionsType>>(() => {
   return [
     {
-      label: t("layout.smart"),
-      tip: t("layout.smartTip"),
+      label: t("layout.tagsStyleSmart"),
+      tip: t("layout.tagsStyleSmartTip"),
       value: "smart"
     },
     {
-      label: t("layout.card"),
-      tip: t("layout.cardTip"),
+      label: t("layout.tagsStyleCard"),
+      tip: t("layout.tagsStyleCardTip"),
       value: "card"
+    },
+    {
+      label: t("layout.tagsStyleChrome"),
+      tip: t("layout.tagsStyleChromeTip"),
+      value: "chrome"
     }
   ];
 });
@@ -432,7 +437,7 @@ onUnmounted(() => removeMatchMedia);
 
       <p :class="['mt-4', pClass]">{{ t("layout.labelStyle") }}</p>
       <Segmented
-        :modelValue="markValue === 'smart' ? 0 : 1"
+        :modelValue="markValue === 'smart' ? 0 : markValue === 'card' ? 1 : 2"
         :options="markOptions"
         class="select-none"
         @change="onChange"

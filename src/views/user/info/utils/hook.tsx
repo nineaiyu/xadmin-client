@@ -8,6 +8,7 @@ import { onMounted, reactive, ref } from "vue";
 import { userInfoApi } from "@/api/user/userinfo";
 import { useUserStoreHook } from "@/store/modules/user";
 import { AesEncrypted } from "@/utils/aes";
+import avatar from "@/assets/avatar.png";
 
 export function useApiAuth() {
   const api = reactive({
@@ -62,6 +63,9 @@ export function useUserInfo() {
           Object.keys(res.data).forEach(param => {
             currentUserInfo[param] = res.data[param];
           });
+          if (!currentUserInfo.avatar) {
+            currentUserInfo.avatar = avatar;
+          }
           genderChoices.value = res.choices_dict;
         } else {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });

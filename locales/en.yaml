@@ -68,8 +68,9 @@ layout:
   sidebarLogo: Sidebar Logo
   labelPersistence: Label persistence
   labelStyle: Label style
-  card: Card
-  smart: Smart
+  tagsStyleCard: Card
+  tagsStyleSmart: Smart
+  tagsStyleChrome: Chrome
   cleanOut: Clear the cache and return the login page
   noticeTime: YYYY-MM-DD HH:mm:ss
   backTop: Back Top
@@ -82,8 +83,9 @@ layout:
   lightTip: Fresh start, light up the comfortable working interface
   darkTip: Moonlight overture, drunk in the quiet and elegant night
   autoTip: Synchronous time, interface with the morning and dusk natural echo
-  smartTip: Smart labels for fun and shine
-  cardTip: Card labels for efficient browsing
+  tagsStyleSmartTip: Smart tags add fun and brilliance
+  tagsStyleCardTip: Card tags for efficient browsing
+  tagsStyleChromeTip: Chrome style is classic and elegant
   favorite: Favorite
   dragSort: (Drag the sorting)
   searchHistory: Search History
