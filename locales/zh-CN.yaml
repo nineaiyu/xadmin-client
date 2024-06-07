@@ -138,7 +138,7 @@ labels:
 exportImport:
   import: 导入
   export: 导出
-  format: 文件类型
+  type: 文件类型
   exportRange: 导出范围
   exportAll: 导出所有
   exportSelected: 导出选中项
@@ -261,15 +261,12 @@ systemUser:
   username: 用户名
   mobile: 手机号
   mode_type: 权限模式
-  dept: 部门ID
   avatar: 头像
   nickname: 昵称
   gender: 性别
-  dept_info: 所属部门
+  dept: 所属部门
   date_joined: 注册时间
   last_login: 上次登录时间
-  roles_info: 角色
-  rules_info: 数据权限
   batchSendNotice: 批量发送通知
   editAvatar: 修改头像
   resetPassword: 重置密码
@@ -288,8 +285,6 @@ systemDept:
   auto_bind: 自动绑定
   mode_type: 权限模式
   user_count: 人员数量
-  roles_info: 角色
-  rules_info: 数据权限
   assignRoles: 分配角色权限
   assignRole: 分配部门 { dept } 的角色权限
   autoBindDesc: 注册参数channel的值和该部门code一致，则该用户会自动和该部门绑定
@@ -419,7 +414,7 @@ configUser:
   access: 接口访问
   owner_id: 用户ID
   config_user: 用户ID
-  owner_info: 用户信息
+  owner: 用户信息
   cache_value: 缓存数值
   invalidCache: 缓存失效
   confirmInvalid: 确定缓存失效该数据么？

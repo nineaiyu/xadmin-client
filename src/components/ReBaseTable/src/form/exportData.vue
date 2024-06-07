@@ -9,7 +9,7 @@ const formRef = ref();
 defineOptions({ name: "exportData" });
 
 interface FormItemProps {
-  format: string;
+  type: string;
   range: string;
   pks: Array<number>;
 }
@@ -20,7 +20,7 @@ interface FormProps {
 
 const props = withDefaults(defineProps<FormProps>(), {
   formInline: () => ({
-    format: "xlsx",
+    type: "xlsx",
     range: "all",
     pks: []
   })
@@ -30,8 +30,8 @@ const { t } = useI18n();
 const state = ref<FormItemProps>(props.formInline);
 const columns: PlusColumn[] = [
   {
-    label: t("exportImport.format"),
-    prop: "format",
+    label: t("exportImport.type"),
+    prop: "type",
     valueType: "radio",
     options: FormatOptions
   },

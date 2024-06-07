@@ -4,7 +4,7 @@ interface FormItemProps {
   pk?: number;
   rank?: number;
   user_count?: number;
-  parent?: string;
+  parent?: string | object;
   name?: string;
   code?: string;
   roles?: number[];

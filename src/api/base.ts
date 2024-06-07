@@ -108,7 +108,7 @@ export class BaseApi extends BaseRequest {
     return http
       .request(
         "get",
-        this.baseApi,
+        `${this.baseApi}/export-data`,
         { params: this.formatParams(params) },
         {
           responseType: "blob"

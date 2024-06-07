@@ -9,6 +9,7 @@ export function useOperationLog() {
     list: operationLogApi.list,
     delete: operationLogApi.delete,
     fields: operationLogApi.fields,
+    export: operationLogApi.export,
     batchDelete: operationLogApi.batchDelete
   });
 
@@ -16,6 +17,7 @@ export function useOperationLog() {
     list: hasAuth("list:systemOperationLog"),
     delete: hasAuth("delete:systemOperationLog"),
     fields: hasAuth("fields:systemOperationLog"),
+    export: hasAuth("export:systemOperationLog"),
     batchDelete: hasAuth("batchDelete:systemOperationLog")
   });
 

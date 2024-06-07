@@ -82,7 +82,7 @@ const {
       <template #roles="{ row }">
         <el-space>
           <el-text
-            v-for="(role, index) in row.roles_info"
+            v-for="(role, index) in row.roles"
             :key="role.pk"
             :type="getIndexType(index + 1)"
           >
@@ -93,7 +93,7 @@ const {
       <template #rules="{ row }">
         <el-space>
           <el-text
-            v-for="(role, index) in row.rules_info"
+            v-for="(role, index) in row.rules"
             :key="role.pk"
             :type="getIndexType(index + 1)"
           >

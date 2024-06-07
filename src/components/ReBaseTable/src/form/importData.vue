@@ -58,13 +58,13 @@ function getRef() {
   return formRef.value?.formInstance;
 }
 
-const goDownloadXlsx = (format: string) => {
+const goDownloadXlsx = (type: string) => {
   let template = "import";
   if (state.value.action === "update") {
     template = "update";
   }
   state.value.api?.export({
-    format: format,
+    type: type,
     template: template,
     action: state.value.action
   });

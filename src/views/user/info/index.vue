@@ -66,25 +66,19 @@ const activeTab = ref("userinfo");
               </el-tag>
             </el-descriptions-item>
             <el-descriptions-item
-              v-if="
-                currentUserInfo?.dept_info && currentUserInfo?.dept_info?.name
-              "
+              v-if="currentUserInfo?.dept && currentUserInfo?.dept?.name"
               :label="t('userinfo.dept')"
             >
               <el-tag type="success">
-                {{ currentUserInfo.dept_info.name }}
+                {{ currentUserInfo.dept.name }}
               </el-tag>
             </el-descriptions-item>
             <el-descriptions-item
-              v-if="
-                currentUserInfo.roles_info && currentUserInfo.roles_info.length
-              "
+              v-if="currentUserInfo.roles && currentUserInfo.roles.length"
               :label="t('userinfo.roles')"
             >
               <el-space>
-                <el-tag
-                  v-for="item in currentUserInfo.roles_info"
-                  :key="item.pk"
+                <el-tag v-for="item in currentUserInfo.roles" :key="item.pk"
                   >{{ item.name }}
                 </el-tag>
               </el-space>

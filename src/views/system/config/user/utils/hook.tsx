@@ -22,6 +22,8 @@ export function useUserConfig(tableRef: Ref) {
     update: userConfigApi.patch,
     invalid: userConfigApi.invalid,
     fields: userConfigApi.fields,
+    import: userConfigApi.import,
+    export: userConfigApi.export,
     batchDelete: userConfigApi.batchDelete
   });
 
@@ -32,6 +34,8 @@ export function useUserConfig(tableRef: Ref) {
     update: hasAuth("update:systemUserConfig"),
     invalid: hasAuth("invalid:systemUserConfig"),
     fields: hasAuth("fields:systemUserConfig"),
+    import: hasAuth("import:systemUserConfig"),
+    export: hasAuth("export:systemUserConfig"),
     batchDelete: hasAuth("batchDelete:systemUserConfig")
   });
 
@@ -40,7 +44,7 @@ export function useUserConfig(tableRef: Ref) {
     form: Form,
     row: {
       config_user: row => {
-        return row?.owner ? [row?.owner] : [];
+        return row?.owner?.pk ? [row?.owner?.pk] : [];
       },
       is_active: row => {
         return row?.is_active ?? true;
@@ -65,11 +69,11 @@ export function useUserConfig(tableRef: Ref) {
       minWidth: 100
     },
     {
-      prop: "owner_info",
+      prop: "owner",
       minWidth: 100,
       cellRenderer: ({ row }) => (
         <el-link onClick={() => onGoUserDetail(row as any)}>
-          {row.owner_info?.username ? row.owner_info?.username : "/"}
+          {row.owner?.username ? row.owner?.username : "/"}
         </el-link>
       )
     },
@@ -128,14 +132,10 @@ export function useUserConfig(tableRef: Ref) {
   ]);
 
   const onGoUserDetail = (row: any) => {
-    if (
-      hasGlobalAuth("list:systemUser") &&
-      row.owner_info &&
-      row.owner_info?.pk
-    ) {
+    if (hasGlobalAuth("list:systemUser") && row.owner && row.owner?.pk) {
       router.push({
         name: "SystemUser",
-        query: { pk: row.owner_info.pk }
+        query: { pk: row.owner.pk }
       });
     }
   };

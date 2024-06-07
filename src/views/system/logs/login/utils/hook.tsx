@@ -12,6 +12,7 @@ export function useLoginLog() {
     list: loginLogApi.list,
     delete: loginLogApi.delete,
     fields: loginLogApi.fields,
+    export: loginLogApi.export,
     batchDelete: loginLogApi.batchDelete
   });
 
@@ -19,6 +20,7 @@ export function useLoginLog() {
     list: hasAuth("list:systemLoginLog"),
     delete: hasAuth("delete:systemLoginLog"),
     fields: hasAuth("fields:systemLoginLog"),
+    export: hasAuth("export:systemLoginLog"),
     batchDelete: hasAuth("batchDelete:systemLoginLog")
   });
 

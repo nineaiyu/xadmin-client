@@ -163,7 +163,7 @@ export function useBaseTable(
       title: t("exportImport.export"),
       props: {
         formInline: {
-          format: "xlsx",
+          type: "xlsx",
           range: pks.length > 0 ? "selected" : "all",
           pks: pks
         }
@@ -182,7 +182,7 @@ export function useBaseTable(
             if (curData.range === "all") {
               api.export(curData);
             } else if (curData.range === "search") {
-              searchFields.value["format"] = curData["format"];
+              searchFields.value["type"] = curData["type"];
               api.export(toRaw(searchFields.value));
             } else if (curData.range === "selected") {
               resourcesIDCacheApi(curData.pks).then(res => {

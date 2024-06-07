@@ -14,14 +14,14 @@ interface FormItemProps {
   mobile?: string;
   /** 邮箱 */
   email?: string;
-  dept_info?: {
+  dept?: {
     name?: string;
     pk?: number;
   };
   /** 性别 */
   gender?: number | ChoicesLabel;
   /** 角色 */
-  roles_info?: any[];
+  roles?: any[];
   /** 密码 */
   password?: string;
   /** 注册时间 */

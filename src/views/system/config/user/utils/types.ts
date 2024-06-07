@@ -1,7 +1,7 @@
 interface FormItemProps {
   pk?: number;
   owner?: string;
-  owner_info?: object;
+  owner?: object;
   key: string;
   value: string;
   cache_value?: string;

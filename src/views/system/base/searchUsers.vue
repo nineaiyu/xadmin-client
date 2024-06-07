@@ -34,9 +34,9 @@ const showColumns = ref<TableColumnList>([
       is_active ? t("labels.active") : t("labels.inactive")
   },
   {
-    prop: "dept_info",
-    formatter: ({ dept_info }) => {
-      return dept_info?.name;
+    prop: "dept",
+    formatter: ({ dept }) => {
+      return dept?.name;
     }
   },
   {
