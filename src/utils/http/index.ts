@@ -229,7 +229,12 @@ class PureHttp {
           PureHttp.initConfig.beforeResponseCallback(response);
           return response.data;
         }
-        return response.data;
+        // 下载文件
+        if (response.headers["content-type"] === "application/json") {
+          return response.data;
+        } else {
+          return response;
+        }
       },
       (error: PureHttpError) => {
         const $error = error;

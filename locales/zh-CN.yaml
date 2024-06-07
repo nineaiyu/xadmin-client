@@ -135,6 +135,21 @@ labels:
   checkColumn: 勾选列
   dClickCopy: 双击进行拷贝
 
+exportImport:
+  import: 导入
+  export: 导出
+  format: 文件类型
+  exportRange: 导出范围
+  exportAll: 导出所有
+  exportSelected: 导出选中项
+  exportFiltered: 仅导出搜素结果
+  create: 创建
+  update: 更新
+  upload: 上传
+  uploadRuleTip: 文件不能为空
+  uploadTip: 可点击或拖拽上传
+  downloadTip: 下载{ action }模板
+
 results:
   success: 执行成功
   failed: 执行失败

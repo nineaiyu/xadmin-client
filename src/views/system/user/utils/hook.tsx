@@ -61,6 +61,8 @@ export function useUser(tableRef: Ref) {
     empower: userApi.empower,
     choices: userApi.choices,
     upload: userApi.upload,
+    export: userApi.export,
+    import: userApi.import,
     batchDelete: userApi.batchDelete
   });
 
@@ -74,6 +76,8 @@ export function useUser(tableRef: Ref) {
     empower: hasAuth("empower:systemUser"),
     upload: hasAuth("upload:systemUser"),
     choices: hasAuth("choices:systemUser"),
+    export: hasAuth("export:systemUser"),
+    import: hasAuth("import:systemUser"),
     batchDelete: hasAuth("batchDelete:systemUser")
   });
 

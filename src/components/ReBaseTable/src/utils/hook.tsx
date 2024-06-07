@@ -13,6 +13,9 @@ import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
 import { useRoute } from "vue-router";
 import { formatColumnsLabel, getFieldsData } from "@/views/system/hooks";
+import exportDataForm from "../form/exportData.vue";
+import importDataForm from "../form/importData.vue";
+import { resourcesIDCacheApi } from "@/api/common";
 
 export function useBaseTable(
   emit: any,
@@ -152,6 +155,89 @@ export function useBaseTable(
         loading.value = false;
       });
   };
+
+  // 数据导出
+  function exportData() {
+    const pks = getSelectPks();
+    addDialog({
+      title: t("exportImport.export"),
+      props: {
+        formInline: {
+          format: "xlsx",
+          range: pks.length > 0 ? "selected" : "all",
+          pks: pks
+        }
+      },
+      width: "600px",
+      draggable: true,
+      fullscreen: deviceDetection(),
+      fullscreenIcon: true,
+      closeOnClickModal: false,
+      contentRenderer: () => h(exportDataForm, { ref: formRef }),
+      beforeSure: (done, { options }) => {
+        const FormRef = formRef.value.getRef();
+        const curData = cloneDeep(options.props.formInline);
+        FormRef.validate(valid => {
+          if (valid) {
+            if (curData.range === "all") {
+              api.export(curData);
+            } else if (curData.range === "search") {
+              searchFields.value["format"] = curData["format"];
+              api.export(toRaw(searchFields.value));
+            } else if (curData.range === "selected") {
+              resourcesIDCacheApi(curData.pks).then(res => {
+                curData["spm"] = res.spm;
+                delete curData.pks;
+                api.export(curData);
+              });
+            }
+            done();
+          }
+        });
+      }
+    });
+  }
+
+  // 数据导入
+  function importData() {
+    addDialog({
+      title: t("exportImport.import"),
+      props: {
+        formInline: {
+          action: "create",
+          api: api
+        }
+      },
+      width: "600px",
+      draggable: true,
+      fullscreen: deviceDetection(),
+      fullscreenIcon: true,
+      closeOnClickModal: false,
+      contentRenderer: () => h(importDataForm, { ref: formRef }),
+      beforeSure: (done, { options }) => {
+        const FormRef = formRef.value.getRef();
+        const curData = cloneDeep(options.props.formInline);
+        const chores = () => {
+          message(t("results.success"), { type: "success" });
+          done(); // 关闭弹框
+          onSearch(); // 刷新表格数据
+        };
+        FormRef.validate(valid => {
+          if (valid) {
+            api.import(curData.action, curData.upload[0].raw).then(res => {
+              if (res.code === 1000) {
+                chores();
+              } else {
+                message(`${t("results.failed")}，${res.detail}`, {
+                  type: "error"
+                });
+              }
+            });
+          }
+        });
+      }
+    });
+  }
 
   const openDialog = (isAdd = true, row = {}) => {
     let title = t("buttons.edit");
@@ -328,6 +414,8 @@ export function useBaseTable(
     searchColumns,
     onChange,
     onSearch,
+    exportData,
+    importData,
     openDialog,
     getSelectPks,
     handleDelete,

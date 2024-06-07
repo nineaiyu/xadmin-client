@@ -135,6 +135,21 @@ labels:
   checkColumn: CheckColumn
   dClickCopy: Double-click to copy
 
+exportImport:
+  import: Import
+  export: Export
+  format: File type
+  exportRange: Export range
+  exportAll: Export all
+  exportSelected: Export only selected items
+  exportFiltered: Export only filtered
+  create: Create
+  update: Update
+  upload: Upload
+  uploadRuleTip: upload file not exist
+  uploadTip: Drag file here or click here to upload
+  downloadTip: Download { action } template
+
 results:
   success: Executed successfully
   failed: Execution failure
