@@ -203,8 +203,8 @@ export function useDept(tableRef: Ref) {
           name: row?.name ?? "",
           code: row?.code ?? "",
           mode_type: row?.mode_type ?? ModeChoices.AND,
-          roles: getKeyList(row?.roles, "pk") ?? [],
-          rules: getKeyList(row?.rules, "pk") ?? []
+          roles: getKeyList(row?.roles ?? [], "pk") ?? [],
+          rules: getKeyList(row?.rules ?? [], "pk") ?? []
         },
         rolesOptions: rolesOptions.value ?? [],
         rulesOptions: rulesOptions.value ?? [],

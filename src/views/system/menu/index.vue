@@ -17,6 +17,8 @@ const {
   choicesDict,
   menuUrlList,
   defaultData,
+  exportData,
+  importData,
   addNewMenu,
   handleDrag,
   openDialog,
@@ -42,6 +44,8 @@ const {
           @getMenuData="getMenuData"
           @handleDelete="handleDelete"
           @handleDrag="handleDrag"
+          @exportData="exportData"
+          @importData="importData"
           @handleManyDelete="handleManyDelete"
           @openDialog="openDialog"
         />

@@ -70,9 +70,11 @@ export default defineComponent({
       );
     });
     const checkedColumns = ref(
-      getKeyList(cloneDeep(filterColumns.value), "label")
+      getKeyList(cloneDeep(filterColumns.value ?? []), "label")
     );
-    const checkColumnList = ref(getKeyList(cloneDeep(props?.columns), "label"));
+    const checkColumnList = ref(
+      getKeyList(cloneDeep(props?.columns ?? []), "label")
+    );
     const dynamicColumns = ref(cloneDeep(props?.columns));
     const { t } = useI18n();
 
@@ -156,7 +158,10 @@ export default defineComponent({
       checkAll.value = true;
       isIndeterminate.value = false;
       dynamicColumns.value = cloneDeep(props?.columns);
-      checkColumnList.value = getKeyList(cloneDeep(props?.columns), "label");
+      checkColumnList.value = getKeyList(
+        cloneDeep(props?.columns ?? []),
+        "label"
+      );
       checkedColumns.value = getKeyList(
         cloneDeep(filterColumns.value),
         "label"

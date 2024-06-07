@@ -20,6 +20,8 @@ import ExpandIcon from "./svg/expand.svg?component";
 import More2Fill from "@iconify-icons/ri/more-2-fill";
 import UnExpandIcon from "./svg/unexpand.svg?component";
 import DocumentAdd from "@iconify-icons/ep/document-add";
+import Download from "@iconify-icons/ep/download";
+import Upload from "@iconify-icons/ep/upload";
 
 const { t } = useI18n();
 const { locale } = useI18n();
@@ -74,7 +76,9 @@ const emit = defineEmits([
   "handleDelete",
   "addNewMenu",
   "handleDrag",
-  "handleManyDelete"
+  "handleManyDelete",
+  "exportData",
+  "importData"
 ]);
 
 const formInline = useVModel(props, "formInline", emit);
@@ -201,6 +205,33 @@ onMounted(() => {
         >
           {{ t("menu.menus") }}
         </p>
+
+        <el-tooltip
+          v-if="auth.export"
+          :content="t('exportImport.export')"
+          effect="dark"
+          placement="top-start"
+        >
+          <el-button
+            :icon="useRenderIcon(Download)"
+            plain
+            size="small"
+            @click="emit('exportData', treeRef)"
+          />
+        </el-tooltip>
+        <el-tooltip
+          v-if="auth.import"
+          :content="t('exportImport.import')"
+          effect="dark"
+          placement="top-start"
+        >
+          <el-button
+            :icon="useRenderIcon(Upload)"
+            plain
+            size="small"
+            @click="emit('importData')"
+          />
+        </el-tooltip>
         <el-button
           v-if="auth.create"
           class="ml-2"

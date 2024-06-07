@@ -325,8 +325,8 @@ export function useUser(tableRef: Ref) {
           username: row?.username ?? "",
           nickname: row?.nickname ?? "",
           mode_type: row?.mode_type ?? ModeChoices.AND,
-          roles: getKeyList(row?.roles, "pk") ?? [],
-          rules: getKeyList(row?.rules, "pk") ?? []
+          roles: getKeyList(row?.roles ?? [], "pk") ?? [],
+          rules: getKeyList(row?.rules ?? [], "pk") ?? []
         },
         rolesOptions: rolesOptions.value ?? [],
         rulesOptions: rulesOptions.value ?? [],

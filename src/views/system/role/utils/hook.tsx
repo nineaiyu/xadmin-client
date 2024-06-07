@@ -8,7 +8,7 @@ import { handleTree } from "@/utils/tree";
 import { menuApi } from "@/api/system/menu";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { FieldChoices } from "@/views/system/constants";
-import { cloneDeep } from "@pureadmin/utils";
+import { cloneDeep, getKeyList } from "@pureadmin/utils";
 import { modelLabelFieldApi } from "@/api/system/field";
 import { renderOption, renderSwitch } from "@/views/system/render";
 import type { PlusColumn } from "plus-pro-components";
@@ -21,6 +21,8 @@ export function useApiAuth() {
     delete: roleApi.delete,
     update: roleApi.patch,
     fields: roleApi.fields,
+    export: roleApi.export,
+    import: roleApi.import,
     detail: roleApi.detail,
     batchDelete: roleApi.batchDelete
   });
@@ -31,6 +33,8 @@ export function useApiAuth() {
     delete: hasAuth("delete:systemRole"),
     update: hasAuth("update:systemRole"),
     fields: hasAuth("fields:systemRole"),
+    export: hasAuth("export:systemRole"),
+    import: hasAuth("import:systemRole"),
     detail: hasAuth("detail:systemRole"),
     batchDelete: hasAuth("batchDelete:systemRole")
   });
@@ -55,7 +59,7 @@ export function useRole(tableRef: Ref) {
         return row?.field ?? [];
       },
       menu: row => {
-        return row?.menu ?? [];
+        return getKeyList(row?.menu ?? [], "pk") ?? [];
       }
     },
     props: {

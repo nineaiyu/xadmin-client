@@ -51,7 +51,7 @@ export function useDataPermission(tableRef: Ref) {
     form: Form,
     row: {
       menu: row => {
-        return getKeyList(row?.menu, "pk") ?? [];
+        return getKeyList(row?.menu ?? [], "pk") ?? [];
       },
       is_active: row => {
         return row?.is_active ?? true;

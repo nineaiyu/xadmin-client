@@ -114,7 +114,7 @@ export class BaseApi extends BaseRequest {
           responseType: "blob"
         }
       )
-      .then(({ data, headers }) => {
+      .then(({ data, headers }: any) => {
         const filenameRegex = /filename[^;=\n]*="((['"]).*?\2|[^;\n]*)"/;
         const matches = filenameRegex.exec(headers.get("content-disposition"));
         downloadByData(data, decodeURI(matches[1]));
@@ -122,7 +122,7 @@ export class BaseApi extends BaseRequest {
   };
 
   import = (action: string, data: object) => {
-    return http.upload(
+    return http.upload<BaseResult, {}>(
       `${this.baseApi}/import-data?action=${action}`,
       {},
       data,
