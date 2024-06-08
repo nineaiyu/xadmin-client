@@ -19,6 +19,8 @@ export function useSystemConfig(tableRef: Ref) {
     update: systemConfigApi.patch,
     invalid: systemConfigApi.invalid,
     fields: systemConfigApi.fields,
+    export: systemConfigApi.export,
+    import: systemConfigApi.import,
     batchDelete: systemConfigApi.batchDelete
   });
 
@@ -29,6 +31,8 @@ export function useSystemConfig(tableRef: Ref) {
     update: hasAuth("update:systemSystemConfig"),
     invalid: hasAuth("invalid:systemSystemConfig"),
     fields: hasAuth("fields:systemSystemConfig"),
+    export: hasAuth("export:systemSystemConfig"),
+    import: hasAuth("import:systemSystemConfig"),
     batchDelete: hasAuth("batchDelete:systemSystemConfig")
   });
 

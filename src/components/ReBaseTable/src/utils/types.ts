@@ -9,6 +9,8 @@ interface SearchFieldsProps {
 
 interface ApiAuthProps {
   list?: string | boolean | null;
+  import?: string | boolean | null;
+  export?: string | boolean | null;
   create?: string | boolean | null;
   delete?: string | boolean | null;
   update?: string | boolean | null;

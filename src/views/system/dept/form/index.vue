@@ -19,7 +19,7 @@ const props = withDefaults(defineProps<FormProps>(), {
   treeData: () => [],
   showColumns: () => []
 });
-const { t, columns } = useDeptForm(props);
+const { columns } = useDeptForm(props);
 
 const formRef = ref();
 const newFormInline = ref(props.formInline);

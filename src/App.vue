@@ -6,7 +6,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, nextTick } from "vue";
+import { defineComponent } from "vue";
 import { checkVersion } from "version-rocket";
 import { ElConfigProvider } from "element-plus";
 import { ReDialog } from "@/components/ReDialog";
@@ -16,10 +16,14 @@ import plusEn from "plus-pro-components/es/locale/lang/en";
 import plusZhCn from "plus-pro-components/es/locale/lang/zh-cn";
 import { Boot } from "@wangeditor/editor";
 import attachmentModule from "@wangeditor/plugin-upload-attachment";
-import { useWatermark } from "@pureadmin/utils";
 import { $t, transformI18n } from "@/plugins/i18n";
 
-Boot.registerModule(attachmentModule);
+try {
+  Boot.registerModule(attachmentModule);
+} catch (e) {
+  console.log(e);
+}
+
 export default defineComponent({
   name: "app",
   components: {
@@ -32,19 +36,6 @@ export default defineComponent({
         ? { ...zhCn, ...plusZhCn }
         : { ...en, ...plusEn };
     }
-  },
-  mounted() {
-    const { setWatermark } = useWatermark();
-    nextTick(() => {
-      setWatermark("xadmin", {
-        globalAlpha: 0.1, // 值越低越透明
-        gradient: [
-          { value: 0, color: "magenta" },
-          { value: 0.5, color: "blue" },
-          { value: 1.0, color: "red" }
-        ]
-      });
-    });
   },
   beforeCreate() {
     const { version, name: title } = __APP_INFO__.pkg;

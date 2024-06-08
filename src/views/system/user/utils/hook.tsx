@@ -23,6 +23,7 @@ import { roleApi } from "@/api/system/role";
 import {
   cloneDeep,
   deviceDetection,
+  getKeyList,
   hideTextAtIndex,
   isAllEmpty
 } from "@pureadmin/utils";
@@ -61,6 +62,8 @@ export function useUser(tableRef: Ref) {
     empower: userApi.empower,
     choices: userApi.choices,
     upload: userApi.upload,
+    export: userApi.export,
+    import: userApi.import,
     batchDelete: userApi.batchDelete
   });
 
@@ -74,6 +77,8 @@ export function useUser(tableRef: Ref) {
     empower: hasAuth("empower:systemUser"),
     upload: hasAuth("upload:systemUser"),
     choices: hasAuth("choices:systemUser"),
+    export: hasAuth("export:systemUser"),
+    import: hasAuth("import:systemUser"),
     batchDelete: hasAuth("batchDelete:systemUser")
   });
 
@@ -89,6 +94,9 @@ export function useUser(tableRef: Ref) {
       },
       roles: row => {
         return row?.roles ?? [];
+      },
+      dept: row => {
+        return row?.dept?.pk ?? "";
       }
     },
     props: {
@@ -192,11 +200,11 @@ export function useUser(tableRef: Ref) {
     },
 
     {
-      prop: "dept_info",
+      prop: "dept",
       width: 140,
       cellRenderer: ({ row }) => (
-        <span v-show={row?.dept_info?.name} v-copy={row?.dept_info?.name}>
-          {row?.dept_info?.name}
+        <span v-show={row?.dept?.name} v-copy={row?.dept?.name}>
+          {row?.dept?.name}
         </span>
       )
     },
@@ -218,12 +226,12 @@ export function useUser(tableRef: Ref) {
         dayjs(date_joined).format("YYYY-MM-DD HH:mm:ss")
     },
     {
-      prop: "roles_info",
+      prop: "roles",
       width: 160,
       slot: "roles"
     },
     {
-      prop: "rules_info",
+      prop: "rules",
       width: 160,
       slot: "rules"
     },
@@ -317,8 +325,8 @@ export function useUser(tableRef: Ref) {
           username: row?.username ?? "",
           nickname: row?.nickname ?? "",
           mode_type: row?.mode_type ?? ModeChoices.AND,
-          roles: row?.roles ?? [],
-          rules: row?.rules ?? []
+          roles: getKeyList(row?.roles ?? [], "pk") ?? [],
+          rules: getKeyList(row?.rules ?? [], "pk") ?? []
         },
         rolesOptions: rolesOptions.value ?? [],
         rulesOptions: rulesOptions.value ?? [],

@@ -12,6 +12,7 @@ import { renderOption, renderSwitch } from "@/views/system/render";
 import type { PlusColumn } from "plus-pro-components";
 import { formatFormColumns, formatOptions } from "@/views/system/hooks";
 import { transformI18n } from "@/plugins/i18n";
+import { getKeyList } from "@pureadmin/utils";
 
 export function useDataPermission(tableRef: Ref) {
   const { t } = useI18n();
@@ -28,6 +29,8 @@ export function useDataPermission(tableRef: Ref) {
     detail: dataPermissionApi.detail,
     fields: dataPermissionApi.fields,
     choices: dataPermissionApi.choices,
+    export: dataPermissionApi.export,
+    import: dataPermissionApi.import,
     batchDelete: dataPermissionApi.batchDelete
   });
 
@@ -38,6 +41,8 @@ export function useDataPermission(tableRef: Ref) {
     update: hasAuth("update:systemDataPermission"),
     detail: hasAuth("detail:systemDataPermission"),
     fields: hasAuth("fields:systemDataPermission"),
+    export: hasAuth("export:systemDataPermission"),
+    import: hasAuth("import:systemDataPermission"),
     batchDelete: hasAuth("batchDelete:systemDataPermission")
   });
 
@@ -46,7 +51,7 @@ export function useDataPermission(tableRef: Ref) {
     form: Form,
     row: {
       menu: row => {
-        return row?.menu ?? [];
+        return getKeyList(row?.menu ?? [], "pk") ?? [];
       },
       is_active: row => {
         return row?.is_active ?? true;

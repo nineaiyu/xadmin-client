@@ -94,7 +94,7 @@ export function useNotice(tableRef: Ref) {
         return row?.notice_role ?? [];
       },
       notice_type: row => {
-        return row?.notice_type ?? defaultNoticeType.value;
+        return row?.notice_type?.value ?? defaultNoticeType.value;
       },
       level: row => {
         return row?.level ?? "info";
@@ -148,7 +148,7 @@ export function useNotice(tableRef: Ref) {
           type={row.level}
           onClick={() => onGoNoticeReadDetail(row as any)}
         >
-          {row.notice_type === NoticeChoices.NOTICE
+          {row.notice_type?.value === NoticeChoices.NOTICE
             ? t("systemNotice.allRead")
             : row.user_count}
           /{row.read_user_count}

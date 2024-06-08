@@ -15,7 +15,8 @@ const selectValue = defineModel({ type: Array<number> });
 const showColumns = ref<TableColumnList>([
   {
     prop: "name",
-    align: "left"
+    align: "left",
+    minWidth: 200
   },
   {
     prop: "pk"
@@ -30,11 +31,6 @@ const showColumns = ref<TableColumnList>([
   },
   {
     prop: "user_count"
-  },
-  {
-    prop: "auto_bind",
-    formatter: ({ auto_bind }) =>
-      auto_bind ? t("labels.enable") : t("labels.disable")
   },
   {
     prop: "created_time",

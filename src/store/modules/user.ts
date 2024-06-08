@@ -29,6 +29,9 @@ import {
 
 import { useMultiTagsStoreHook } from "./multiTags";
 import { AesEncrypted } from "@/utils/aes";
+import { useWatermark } from "@pureadmin/utils";
+import { nextTick } from "vue";
+const { setWatermark, clear } = useWatermark();
 
 export const useUserStore = defineStore({
   id: "pure-user",
@@ -112,7 +115,21 @@ export const useUserStore = defineStore({
           .self()
           .then(res => {
             if (res.code === 1000) {
+              clear();
               setUserInfo(res.data);
+              nextTick(() => {
+                setWatermark(
+                  `${this.username}${this.nickname ? "-" + this.nickname : ""}`,
+                  {
+                    globalAlpha: 0.1, // 值越低越透明
+                    gradient: [
+                      { value: 0, color: "magenta" },
+                      { value: 0.5, color: "blue" },
+                      { value: 1.0, color: "red" }
+                    ]
+                  }
+                );
+              });
               resolve(res);
             } else {
               reject(res);

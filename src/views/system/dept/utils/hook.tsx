@@ -15,7 +15,7 @@ import roleForm from "../form/role.vue";
 import Form from "../form/index.vue";
 import type { RoleFormItemProps } from "./types";
 import { roleApi } from "@/api/system/role";
-import { cloneDeep, deviceDetection } from "@pureadmin/utils";
+import { cloneDeep, deviceDetection, getKeyList } from "@pureadmin/utils";
 import { useRouter } from "vue-router";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
@@ -42,6 +42,8 @@ export function useDept(tableRef: Ref) {
     empower: deptApi.empower,
     choices: deptApi.choices,
     fields: deptApi.fields,
+    import: deptApi.import,
+    export: deptApi.export,
     batchDelete: deptApi.batchDelete
   });
 
@@ -53,6 +55,8 @@ export function useDept(tableRef: Ref) {
     empower: hasAuth("empower:systemDept"),
     choices: hasAuth("choices:systemDept"),
     fields: hasAuth("fields:systemDept"),
+    import: hasAuth("import:systemDept"),
+    export: hasAuth("export:systemDept"),
     batchDelete: hasAuth("batchDelete:systemDept")
   });
 
@@ -79,6 +83,9 @@ export function useDept(tableRef: Ref) {
       },
       rank: row => {
         return row?.rank ?? 99;
+      },
+      parent: row => {
+        return row?.parent?.pk ?? "";
       }
     },
     props: {
@@ -145,12 +152,12 @@ export function useDept(tableRef: Ref) {
       })
     },
     {
-      prop: "roles_info",
+      prop: "roles",
       width: 160,
       slot: "roles"
     },
     {
-      prop: "rules_info",
+      prop: "rules",
       width: 160,
       slot: "rules"
     },
@@ -196,8 +203,8 @@ export function useDept(tableRef: Ref) {
           name: row?.name ?? "",
           code: row?.code ?? "",
           mode_type: row?.mode_type ?? ModeChoices.AND,
-          roles: row?.roles ?? [],
-          rules: row?.rules ?? []
+          roles: getKeyList(row?.roles ?? [], "pk") ?? [],
+          rules: getKeyList(row?.rules ?? [], "pk") ?? []
         },
         rolesOptions: rolesOptions.value ?? [],
         rulesOptions: rulesOptions.value ?? [],

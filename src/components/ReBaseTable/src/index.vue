@@ -8,6 +8,8 @@ import { useBaseTable } from "./utils/hook";
 import Delete from "@iconify-icons/ep/delete";
 import EditPen from "@iconify-icons/ep/edit-pen";
 import AddFill from "@iconify-icons/ri/add-circle-line";
+import Download from "@iconify-icons/ep/download";
+import Upload from "@iconify-icons/ep/upload";
 import PureTable from "@pureadmin/table";
 
 const props = withDefaults(defineProps<FormProps>(), {
@@ -83,6 +85,8 @@ const {
   searchColumns,
   onChange,
   onSearch,
+  exportData,
+  importData,
   openDialog,
   getSelectPks,
   handleDelete,
@@ -217,6 +221,33 @@ defineExpose({
           >
             {{ t("buttons.add") }}
           </el-button>
+          <el-tooltip
+            v-if="auth.export"
+            :content="t('exportImport.export')"
+            effect="dark"
+            placement="top-start"
+          >
+            <el-button
+              :icon="useRenderIcon(Download)"
+              plain
+              type="primary"
+              @click="exportData"
+            />
+          </el-tooltip>
+          <el-tooltip
+            v-if="auth.import"
+            :content="t('exportImport.import')"
+            effect="dark"
+            placement="top-start"
+          >
+            <el-button
+              :icon="useRenderIcon(Upload)"
+              plain
+              type="primary"
+              @click="importData"
+            />
+          </el-tooltip>
+
           <slot name="barButtons" />
         </el-space>
       </template>

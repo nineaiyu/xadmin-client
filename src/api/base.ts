@@ -7,6 +7,7 @@ import type {
   ListResult,
   SearchFieldsResult
 } from "@/api/types";
+import { downloadByData } from "@pureadmin/utils";
 
 export class BaseRequest {
   baseApi = "";
@@ -15,20 +16,24 @@ export class BaseRequest {
     this.baseApi = baseApi;
   }
 
-  request<T>(
-    method: RequestMethods,
-    params?: object,
-    data?: object,
-    url: string = null
-  ) {
+  formatParams = (params?: object) => {
     const notNullParams = {};
     Object.keys(params ?? {}).forEach(item => {
       if (params[item] !== "") {
         notNullParams[item] = params[item];
       }
     });
+    return notNullParams;
+  };
+
+  request<T>(
+    method: RequestMethods,
+    params?: object,
+    data?: object,
+    url: string = null
+  ) {
     return http.request<T>(method, url ?? this.baseApi, {
-      params: notNullParams,
+      params: this.formatParams(params),
       data: data
     });
   }
@@ -92,11 +97,40 @@ export class BaseApi extends BaseRequest {
       `${this.baseApi}/batch-delete`
     );
   };
-  upload = (pk: number | string, data?: object) => {
+  upload = (pk: number | string, data?: object, action?: string) => {
     return http.upload<BaseResult, any>(
-      `${this.baseApi}/${pk}/upload`,
+      `${this.baseApi}/${pk}/${action ?? "upload"}`,
       {},
       data
+    );
+  };
+  export = async (params: object) => {
+    return http
+      .request(
+        "get",
+        `${this.baseApi}/export-data`,
+        { params: this.formatParams(params) },
+        {
+          responseType: "blob"
+        }
+      )
+      .then(({ data, headers }: any) => {
+        const filenameRegex = /filename[^;=\n]*="((['"]).*?\2|[^;\n]*)"/;
+        const matches = filenameRegex.exec(headers.get("content-disposition"));
+        downloadByData(data, decodeURI(matches[1]));
+      });
+  };
+
+  import = (action: string, data: object) => {
+    return http.upload<BaseResult, {}>(
+      `${this.baseApi}/import-data?action=${action}`,
+      {},
+      data,
+      {
+        headers: {
+          "Content-Type": "text/xlsx"
+        }
+      }
     );
   };
 }

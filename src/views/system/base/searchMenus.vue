@@ -29,7 +29,7 @@ const showColumns = ref<TableColumnList>([
   },
   {
     label: t("menu.type"),
-    prop: "menu_type_display",
+    prop: "menu_type.label",
     width: 90
   },
   {

@@ -50,9 +50,9 @@ function getRef() {
 }
 
 const customNodeClass = data => {
-  if (data?.menu_type === MenuChoices.DIRECTORY) {
+  if (data?.menu_type?.value === MenuChoices.DIRECTORY) {
     return "is-penultimate";
-  } else if (data?.menu_type === MenuChoices.MENU) {
+  } else if (data?.menu_type?.value === MenuChoices.MENU) {
     return "is-permission";
   }
   return null;
@@ -114,7 +114,7 @@ const getCheckedMenu = pk => {
     loading.value = true;
     api.detail(pk).then(({ code, data }) => {
       if (code === 1000) {
-        newFormInline.value.menu = data?.menu;
+        newFormInline.value.menu = getKeyList(data?.menu ?? [], "pk");
         Object.keys(data?.field).forEach(key => {
           data?.field[key].forEach(val => {
             newFormInline.value.field.push(`${key}+${val}`);
@@ -338,7 +338,7 @@ defineExpose({ getRef });
                         @click.stop="
                           toggleSelectAll(
                             false,
-                            getKeyList(data.children, 'pk')
+                            getKeyList(data.children ?? [], 'pk')
                           )
                         "
                         >{{ t("buttons.cancel") }}</el-button

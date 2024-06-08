@@ -26,7 +26,7 @@ interface FormItemProps {
   /** 备注 */
   description?: string;
   /** 所属部门 */
-  dept?: string;
+  dept?: string | object;
 }
 
 interface FormProps {

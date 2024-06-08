@@ -5,12 +5,15 @@ import { addDialog } from "@/components/ReDialog";
 import editForm from "../edit.vue";
 import type { FormItemProps } from "./types";
 import { handleTree } from "@/utils/tree";
-import { cloneDeep, deviceDetection } from "@pureadmin/utils";
+import { cloneDeep, deviceDetection, getKeyList } from "@pureadmin/utils";
 import { getMenuFromPk, getMenuOrderPk } from "@/utils";
 import { useI18n } from "vue-i18n";
 import { FieldChoices, MenuChoices } from "@/views/system/constants";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { modelLabelFieldApi } from "@/api/system/field";
+import exportDataForm from "@/components/ReBaseTable/src/form/exportData.vue";
+import { resourcesIDCacheApi } from "@/api/common";
+import importDataForm from "@/components/ReBaseTable/src/form/importData.vue";
 
 const defaultData: FormItemProps = {
   menu_type: MenuChoices.DIRECTORY,
@@ -49,6 +52,8 @@ export function useApiAuth() {
     apiUrl: menuApi.apiUrl,
     choices: menuApi.choices,
     fields: menuApi.fields,
+    export: menuApi.export,
+    import: menuApi.import,
     permissions: menuApi.permissions,
     batchDelete: menuApi.batchDelete
   });
@@ -62,6 +67,8 @@ export function useApiAuth() {
     permissions: hasAuth("permissions:systemMenu"),
     choices: hasAuth("choices:systemMenu"),
     fields: hasAuth("fields:systemMenu"),
+    export: hasAuth("export:systemMenu"),
+    import: hasAuth("import:systemMenu"),
     apiUrl: hasAuth("apiUrl:systemMenu"),
     batchDelete: hasAuth("batchDelete:systemMenu")
   });
@@ -103,7 +110,12 @@ export function useMenu() {
     loading.value = true;
     api.list({ page: 1, size: 1000 }).then(res => {
       if (res.code === 1000) {
-        treeData.value = handleTree(res.data.results);
+        const results = res.data.results;
+        results.forEach(item => {
+          item.menu_type = item.menu_type?.value ?? item.menu_type;
+          item.parent = item.parent?.pk ?? item.parent;
+        });
+        treeData.value = handleTree(results);
       }
       loading.value = false;
     });
@@ -191,7 +203,7 @@ export function useMenu() {
           method: row?.method ?? "",
           rank: row?.rank ?? 0,
           component: row?.component ?? "",
-          model: row?.model ?? [],
+          model: getKeyList(row?.model ?? [], "pk") ?? [],
           is_active: row?.is_active ?? true,
           meta: {
             title: row?.meta.title ?? "",
@@ -265,6 +277,86 @@ export function useMenu() {
       }
     });
   };
+
+  function exportData(val) {
+    const pks = val!.getCheckedKeys(false);
+    addDialog({
+      title: t("exportImport.export"),
+      props: {
+        formInline: {
+          type: "xlsx",
+          range: pks.length > 0 ? "selected" : "all",
+          pks: pks
+        }
+      },
+      width: "600px",
+      draggable: true,
+      fullscreen: deviceDetection(),
+      fullscreenIcon: true,
+      closeOnClickModal: false,
+      contentRenderer: () => h(exportDataForm, { ref: formRef }),
+      beforeSure: (done, { options }) => {
+        const FormRef = formRef.value.getRef();
+        const curData = cloneDeep(options.props.formInline);
+        FormRef.validate(valid => {
+          if (valid) {
+            if (curData.range === "selected") {
+              resourcesIDCacheApi(curData.pks).then(res => {
+                curData["spm"] = res.spm;
+                delete curData.pks;
+                api.export(curData);
+              });
+            } else {
+              api.export(curData);
+            }
+            done();
+          }
+        });
+      }
+    });
+  }
+
+  // 数据导入
+  function importData() {
+    addDialog({
+      title: t("exportImport.import"),
+      props: {
+        formInline: {
+          action: "create",
+          api: api
+        }
+      },
+      width: "600px",
+      draggable: true,
+      fullscreen: deviceDetection(),
+      fullscreenIcon: true,
+      closeOnClickModal: false,
+      contentRenderer: () => h(importDataForm, { ref: formRef }),
+      beforeSure: (done, { options }) => {
+        const FormRef = formRef.value.getRef();
+        const curData = cloneDeep(options.props.formInline);
+        const chores = () => {
+          message(t("results.success"), { type: "success" });
+          done(); // 关闭弹框
+          getMenuData(); // 刷新表格数据
+        };
+        FormRef.validate(valid => {
+          if (valid) {
+            api.import(curData.action, curData.upload[0].raw).then(res => {
+              if (res.code === 1000) {
+                chores();
+              } else {
+                message(`${t("results.failed")}，${res.detail}`, {
+                  type: "error"
+                });
+              }
+            });
+          }
+        });
+      }
+    });
+  }
+
   onMounted(() => {
     getMenuApiList();
     getMenuData();
@@ -294,6 +386,8 @@ export function useMenu() {
     menuUrlList,
     defaultData,
     addNewMenu,
+    exportData,
+    importData,
     handleDrag,
     openDialog,
     getMenuData,

@@ -135,6 +135,21 @@ labels:
   checkColumn: CheckColumn
   dClickCopy: Double-click to copy
 
+exportImport:
+  import: Import
+  export: Export
+  type: File type
+  exportRange: Export range
+  exportAll: Export all
+  exportSelected: Export only selected items
+  exportFiltered: Export only filtered
+  create: Create
+  update: Update
+  upload: Upload
+  uploadRuleTip: upload file not exist
+  uploadTip: Drag file here or click here to upload
+  downloadTip: Download { action } template
+
 results:
   success: Executed successfully
   failed: Execution failure
@@ -246,15 +261,12 @@ systemUser:
   username: Username
   mobile: Mobile
   mode_type: Mode Type
-  dept: Department ID
   avatar: Avatar
   nickname: Nickname
   gender: Gender
-  dept_info: Department
+  dept: Department
   date_joined: Registration Date
   last_login: Last Login Date
-  roles_info: Roles
-  rules_info: Data Permissions
   batchSendNotice: Batch Send Notice
   editAvatar: Edit Avatar
   resetPassword: Reset Password
@@ -273,8 +285,6 @@ systemDept:
   auto_bind: Auto Bind
   mode_type: Mode Type
   user_count: User Count
-  roles_info: Roles
-  rules_info: Data Permissions
   assignRoles: Assign Roles Permissions
   assignRole: Assign multiple roles and permissions to department { dept }
   autoBindDesc: If the value of the registration parameter channel is the same as the department code, the user will automatically bind to the department
@@ -404,7 +414,7 @@ configUser:
   access: API Access
   owner_id: User ID
   config_user: User ID
-  owner_info: UserInfo
+  owner: UserInfo
   cache_value: Config Cache Value
   invalidCache: Invalid Cache
   confirmInvalid: Are you sure to invalid this cache?
