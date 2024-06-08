@@ -19,7 +19,7 @@ import {
 import { useUserStoreHook } from "@/store/modules/user";
 import { message } from "@/utils/message";
 import { ElMessage } from "element-plus";
-import { router } from "@/router";
+// import { router } from "@/router";
 
 // 相关配置请参考：www.axios-js.com/zh-cn/docs/#axios-request-config-1
 const defaultConfig: AxiosRequestConfig = {
@@ -90,7 +90,8 @@ class PureHttp {
               if (error.response.data.code === 40001) {
                 remoteAccessToken();
                 resolve(PureHttp.axiosInstance.request(config));
-              } else if (error.response.data.code === 40002) {
+                // } else if (error.response.data.code === 40002) {
+              } else {
                 ElMessage.error(error.response.data.detail);
                 removeToken();
                 window.location.reload();
@@ -104,12 +105,12 @@ class PureHttp {
               // router.push("/error/403");
             } else if (error.response.status === 404) {
               ElMessage.error(error.response.data.detail);
-              router.push("/error/404");
+              // router.push("/error/404");
             } else if (error.response.status === 500) {
               ElMessage.error(
                 error.response.data?.detail ?? error.response.statusText
               );
-              router.push("/error/500");
+              // router.push("/error/500");
             }
             reject(error.response.data);
           } else {
