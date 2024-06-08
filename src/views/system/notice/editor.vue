@@ -6,7 +6,6 @@ import { FormProps, InsertFnType } from "./utils/types";
 import { formRules } from "./utils/rule";
 import { UploadFileApi } from "@/api/system/upload";
 import { message } from "@/utils/message";
-import { UploadFileResult } from "@/api/types";
 import { getKeyList } from "@pureadmin/utils";
 import { NoticeChoices } from "@/views/system/constants";
 import { useNoticeForm } from "./utils/hook";
@@ -78,7 +77,7 @@ editorConfig.MENU_CONF["uploadImage"] = {
     loading.value = true;
     const data = new FormData();
     data.append("file", file);
-    UploadFileApi({}, data).then((res: UploadFileResult) => {
+    UploadFileApi({}, data).then(res => {
       if (res.code === 1000) {
         insertFn(
           res.data[0]?.filepath,
@@ -99,7 +98,7 @@ editorConfig.MENU_CONF["uploadVideo"] = {
     loading.value = true;
     const data = new FormData();
     data.append("file", file);
-    UploadFileApi({}, data).then((res: UploadFileResult) => {
+    UploadFileApi({}, data).then(res => {
       if (res.code === 1000) {
         insertFn(res.data[0]?.filepath, "");
       } else {
@@ -116,7 +115,7 @@ editorConfig.MENU_CONF["uploadAttachment"] = {
     loading.value = true;
     const data = new FormData();
     data.append("file", file);
-    UploadFileApi({}, data).then((res: UploadFileResult) => {
+    UploadFileApi({}, data).then(res => {
       if (res.code === 1000) {
         insertFn(res.data[0]?.filename, res.data[0]?.filepath);
       } else {

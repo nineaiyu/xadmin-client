@@ -70,5 +70,9 @@ const searchKeys = [
     :getListApi="searchUserListApi"
     :searchKeys="searchKeys"
     :showColumns="showColumns"
+    :valueProps="{
+      value: 'pk',
+      label: 'username'
+    }"
   />
 </template>

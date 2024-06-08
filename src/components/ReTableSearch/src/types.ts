@@ -9,6 +9,10 @@ interface FormItemProps {
     value?: string;
   }[];
   getListApi?: Function;
+  valueProps?: {
+    label?: string;
+    value?: string;
+  };
 }
 
 interface FormItemEmits {

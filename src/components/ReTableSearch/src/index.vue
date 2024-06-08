@@ -13,10 +13,14 @@ const props = withDefaults(defineProps<FormItemProps>(), {
   sortOptions: () => [],
   searchKeys: () => [],
   isTree: () => false,
-  getListApi: Function
+  getListApi: Function,
+  valueProps: () => ({
+    value: "pk",
+    label: "name"
+  })
 });
 
-const selectValue = defineModel({ type: Array<number> });
+const selectValue = defineModel({ type: Array<object> });
 
 const columns = ref([
   {
@@ -49,6 +53,7 @@ const {
   tableRef,
   props.getListApi,
   props.isTree,
+  props.valueProps,
   selectValue
 );
 
@@ -77,18 +82,21 @@ onMounted(() => {
     collapse-tags
     collapse-tags-tooltip
     multiple
-    value-key="pk"
+    :value-key="props.valueProps.value"
     @clear="onClear"
     @visibleChange="val => (selectVisible = val)"
     @remove-tag="removeTag"
   >
+    <template #label="{ value }">
+      <el-tag type="primary">{{ value[props.valueProps.label] }}</el-tag>
+    </template>
     <template #empty>
-      <div class="w-max[800px] m-4">
+      <div class="max-w-[1000px] m-4 min-w-[800px]">
         <el-form
           ref="formRef"
           :inline="true"
           :model="form"
-          class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px] overflow-auto"
+          class="search-form bg-bg_color pl-8 pt-[12px] overflow-auto"
         >
           <el-form-item
             v-for="item in searchKeys.filter(x => {

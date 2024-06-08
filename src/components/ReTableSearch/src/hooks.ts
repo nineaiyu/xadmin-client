@@ -3,13 +3,15 @@ import type { PaginationProps } from "@pureadmin/table";
 import { delay, getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { handleTree } from "@/utils/tree";
+import type { FormItemProps } from "./types";
 
 export function useColumns(
   selectRef: Ref,
   tableRef: Ref,
   getListApi: Function,
   isTree: Boolean,
-  selectValue: ModelRef<number[], string>
+  valueProps: FormItemProps["valueProps"],
+  selectValue: ModelRef<Array<object>, string>
 ) {
   const dataList = ref([]);
   const { t } = useI18n();
@@ -46,22 +48,28 @@ export function useColumns(
     background: true
   });
 
+  const getSelectPks = () => {
+    return getKeyList(selectValue.value ?? [], valueProps.value ?? "pk");
+  };
+
   const handleSelectionChange = val => {
     nextTick(() => {
       // add
+      const selectPks = getSelectPks();
       val.forEach(row => {
-        if (selectValue.value.indexOf(row.pk) == -1) {
-          selectValue.value.push(row.pk);
+        if (selectPks.indexOf(row.pk) == -1) {
+          const item = {};
+          Object.values(valueProps).forEach(x => {
+            item[x] = row[x];
+          });
+          selectValue.value.push(item);
         }
       });
       // del
       const valPks = getKeyList(val, "pk");
       dataList.value.forEach(row => {
-        if (
-          selectValue.value.indexOf(row.pk) > -1 &&
-          valPks.indexOf(row.pk) === -1
-        ) {
-          selectValue.value.splice(selectValue.value.indexOf(row.pk), 1);
+        if (selectPks.indexOf(row.pk) > -1 && valPks.indexOf(row.pk) === -1) {
+          selectValue.value.splice(selectPks.indexOf(row.pk), 1);
         }
       });
     });
@@ -98,8 +106,9 @@ export function useColumns(
     pagination.total = data.total;
     nextTick(() => {
       const { toggleRowSelection } = tableRef.value.getTableRef();
+      const selectPks = getSelectPks();
       dataList.value.forEach(item => {
-        if (selectValue.value.indexOf(item.pk) > -1) {
+        if (selectPks.indexOf(item.pk) > -1) {
           toggleRowSelection(item, undefined);
         }
       });
