@@ -11,6 +11,7 @@ import {
   formatToken,
   getRefreshToken,
   getToken,
+  remoteAccessToken,
   removeToken,
   setApiLanguage,
   setToken
@@ -86,9 +87,14 @@ class PureHttp {
         .catch(error => {
           if (error.response && error.response.status) {
             if (error.response.status === 401) {
-              ElMessage.error(error.response.data.detail);
-              removeToken();
-              window.location.reload();
+              if (error.response.data.code === 40001) {
+                remoteAccessToken();
+                resolve(PureHttp.axiosInstance.request(config));
+              } else if (error.response.data.code === 40002) {
+                ElMessage.error(error.response.data.detail);
+                removeToken();
+                window.location.reload();
+              }
               // router.push({ name: "Login" })
             } else if (error.response.status === 403) {
               ElMessage.error(error.response.data.detail);

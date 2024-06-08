@@ -364,8 +364,15 @@ export function useBaseTable(
         }
         const data = {};
         data[actKey] = row[actKey];
-        updateApi(row.pk, data).then(res => {
-          if (res.code === 1000) {
+        updateApi(row.pk, data)
+          .then(res => {
+            if (res.code === 1000) {
+              message(t("results.success"), { type: "success" });
+            } else {
+              message(`${t("results.failed")}，${res.detail}`, {
+                type: "error"
+              });
+            }
             switchLoadMap.value[index] = Object.assign(
               {},
               switchLoadMap.value[index],
@@ -373,11 +380,20 @@ export function useBaseTable(
                 loading: false
               }
             );
-            message(t("results.success"), { type: "success" });
-          } else {
-            message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-          }
-        });
+          })
+          .catch(e => {
+            row[actKey] === false
+              ? (row[actKey] = true)
+              : (row[actKey] = false);
+            switchLoadMap.value[index] = Object.assign(
+              {},
+              switchLoadMap.value[index],
+              {
+                loading: false
+              }
+            );
+            throw e;
+          });
       })
       .catch(() => {
         row[actKey] === false ? (row[actKey] = true) : (row[actKey] = false);

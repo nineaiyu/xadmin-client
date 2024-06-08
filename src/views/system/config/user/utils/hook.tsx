@@ -194,7 +194,7 @@ export function useUserConfigForm(props) {
       prop: "access",
       valueType: "radio",
       colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 },
-      tooltip: t("configUser.accessTip"),
+      tooltip: t("configSystem.accessTip"),
       renderField: renderOption()
     },
     {
