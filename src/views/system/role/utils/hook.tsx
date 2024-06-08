@@ -124,7 +124,7 @@ export function useRole(tableRef: Ref) {
         if (item.model && item.model.length > 0 && !item.children) {
           item.children = [];
           item.model.forEach(m => {
-            let data = cloneDeep(fieldLookupsData.value[m]);
+            let data = cloneDeep(fieldLookupsData.value[m?.pk ?? m]);
             data.pk = `+${data.pk}`;
             data.children.forEach(x => {
               x.pk = `${item.pk}+${x.pk}`;

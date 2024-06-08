@@ -5,7 +5,7 @@ import { addDialog } from "@/components/ReDialog";
 import editForm from "../edit.vue";
 import type { FormItemProps } from "./types";
 import { handleTree } from "@/utils/tree";
-import { cloneDeep, deviceDetection } from "@pureadmin/utils";
+import { cloneDeep, deviceDetection, getKeyList } from "@pureadmin/utils";
 import { getMenuFromPk, getMenuOrderPk } from "@/utils";
 import { useI18n } from "vue-i18n";
 import { FieldChoices, MenuChoices } from "@/views/system/constants";
@@ -113,6 +113,7 @@ export function useMenu() {
         const results = res.data.results;
         results.forEach(item => {
           item.menu_type = item.menu_type?.value ?? item.menu_type;
+          item.parent = item.parent?.pk ?? item.parent;
         });
         treeData.value = handleTree(results);
       }
@@ -202,7 +203,7 @@ export function useMenu() {
           method: row?.method ?? "",
           rank: row?.rank ?? 0,
           component: row?.component ?? "",
-          model: row?.model ?? [],
+          model: getKeyList(row?.model ?? [], "pk") ?? [],
           is_active: row?.is_active ?? true,
           meta: {
             title: row?.meta.title ?? "",

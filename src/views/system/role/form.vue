@@ -50,9 +50,9 @@ function getRef() {
 }
 
 const customNodeClass = data => {
-  if (data?.menu_type === MenuChoices.DIRECTORY) {
+  if (data?.menu_type?.value === MenuChoices.DIRECTORY) {
     return "is-penultimate";
-  } else if (data?.menu_type === MenuChoices.MENU) {
+  } else if (data?.menu_type?.value === MenuChoices.MENU) {
     return "is-permission";
   }
   return null;

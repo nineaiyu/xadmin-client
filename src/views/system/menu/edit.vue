@@ -447,6 +447,7 @@ defineExpose({ getRef });
             class="w-full"
             clearable
             filterable
+            value-key="pk"
             multiple
           >
             <el-option
@@ -454,7 +455,7 @@ defineExpose({ getRef });
               :key="item.pk"
               :disabled="item.disabled || item.name === '*'"
               :label="`${item.label}(${item.name})`"
-              :value="item.pk"
+              :value="{ pk: item.pk, name: item.name }"
             />
           </el-select>
         </el-form-item>
