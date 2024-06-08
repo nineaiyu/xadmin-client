@@ -86,6 +86,7 @@ import {
   ElResult,
   ElRow,
   ElScrollbar,
+  ElSegmented,
   ElSelect,
   ElSelectV2,
   ElSkeleton,
@@ -221,7 +222,8 @@ const components = [
   ElUpload,
   ElWatermark,
   ElTour,
-  ElTourStep
+  ElTourStep,
+  ElSegmented
 ];
 
 const plugins = [
