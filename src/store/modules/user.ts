@@ -31,6 +31,7 @@ import { useMultiTagsStoreHook } from "./multiTags";
 import { AesEncrypted } from "@/utils/aes";
 import { useWatermark } from "@pureadmin/utils";
 import { nextTick } from "vue";
+
 const { setWatermark, clear } = useWatermark();
 
 export const useUserStore = defineStore({
@@ -89,6 +90,9 @@ export const useUserStore = defineStore({
     } /** 设置未读消息数量 */,
     SET_NOTICECOUNT(value: number) {
       this.noticeCount = Number(value);
+    },
+    INCR_NOTICECOUNT(value: number = 1) {
+      this.noticeCount += Number(value);
     },
     /** 登入 */
     async loginByUsername(data) {

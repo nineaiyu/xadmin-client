@@ -2,6 +2,7 @@ import socket from "@/utils/websocket";
 import { ElNotification } from "element-plus";
 import router from "@/router";
 import { h } from "vue";
+import { useUserStoreHook } from "@/store/modules/user";
 
 export function SocketMessage(username: string) {
   const onMessage = (msg_event: { data: string }) => {
@@ -29,6 +30,7 @@ export function SocketMessage(username: string) {
               });
             }
           });
+          useUserStoreHook().INCR_NOTICECOUNT();
           break;
         case "chat_message":
           ElNotification({

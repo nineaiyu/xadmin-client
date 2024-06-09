@@ -1,5 +1,3 @@
-version: "3.2"
-
 services:
   xadmin-client-build:
     container_name: xadmin-client-build
