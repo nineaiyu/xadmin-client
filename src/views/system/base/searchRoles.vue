@@ -9,6 +9,10 @@ import { formatColumnsLabel } from "@/views/system/hooks";
 
 defineOptions({ name: "searchRoles" });
 
+const emit = defineEmits<{
+  (e: "change", ...args: any[]): void;
+}>();
+
 const { t, te } = useI18n();
 
 const selectValue = defineModel({ type: Array<number> });
@@ -56,5 +60,10 @@ const searchKeys = [
     :getListApi="searchRoleListApi"
     :searchKeys="searchKeys"
     :showColumns="showColumns"
+    @change="
+      value => {
+        emit('change', value);
+      }
+    "
   />
 </template>

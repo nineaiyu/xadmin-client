@@ -234,6 +234,8 @@ export function useMenu() {
         FormRef.validate(valid => {
           if (valid) {
             curData.meta.title = curData.title;
+            // 当后端pk 不设置可读时，需要删除pk，否则后端会提示 pk 不对
+            delete curData.pk;
             api.create(curData).then(res => {
               if (res.code === 1000) {
                 message(t("results.success"), { type: "success" });

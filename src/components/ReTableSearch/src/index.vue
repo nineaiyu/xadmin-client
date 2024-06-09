@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { useColumns } from "./hooks";
 import { FormItemProps } from "./types";
 import { ClickOutside as vClickOutside } from "element-plus";
@@ -21,7 +21,9 @@ const props = withDefaults(defineProps<FormItemProps>(), {
 });
 
 const selectValue = defineModel({ type: Array<object> });
-
+const emit = defineEmits<{
+  (e: "change", ...args: any[]): void;
+}>();
 const columns = ref([
   {
     type: "selection",
@@ -67,8 +69,19 @@ onMounted(() => {
   props.showColumns.forEach(item => {
     columns.value.push(item);
   });
-  onSearch();
+  // onSearch();
 });
+
+watch(
+  () => selectValue.value,
+  () => {
+    emit("change", selectValue.value);
+  },
+  {
+    deep: true,
+    immediate: true
+  }
+);
 </script>
 
 <template>
@@ -83,6 +96,11 @@ onMounted(() => {
     collapse-tags-tooltip
     multiple
     :value-key="props.valueProps.value"
+    @visible-change="
+      vs => {
+        if (vs) onSearch();
+      }
+    "
     @clear="onClear"
     @visibleChange="val => (selectVisible = val)"
     @remove-tag="removeTag"

@@ -3,7 +3,7 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { FormProps } from "./utils/types";
 import { ref } from "vue";
-import { deviceDetection, getKeyList } from "@pureadmin/utils";
+import { cloneDeep, deviceDetection, getKeyList } from "@pureadmin/utils";
 import { useBaseTable } from "./utils/hook";
 import Delete from "@iconify-icons/ep/delete";
 import EditPen from "@iconify-icons/ep/edit-pen";
@@ -143,7 +143,7 @@ defineExpose({
           xl: 6
         }"
         :columns="searchColumns"
-        :default-values="defaultValue"
+        :default-values="cloneDeep(defaultValue)"
         :row-props="{
           gutter: 24
         }"
@@ -184,7 +184,7 @@ defineExpose({
           <div
             v-if="selectedNum > 0"
             v-motion-fade
-            class="bg-[var(--el-fill-color-light)] w-full h-[46px] m-2 pl-4 flex items-center rounded-md"
+            class="bg-[var(--el-fill-color-light)] w-[140px] h-[46px] m-2 pl-4 flex items-center rounded-md"
           >
             <span
               class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
@@ -199,7 +199,7 @@ defineExpose({
         </el-space>
       </template>
       <template #buttons>
-        <el-space wrap>
+        <el-space>
           <div v-if="selectedNum > 0" v-motion-fade>
             <el-popconfirm
               v-if="auth.batchDelete"
@@ -247,7 +247,6 @@ defineExpose({
               @click="importData"
             />
           </el-tooltip>
-
           <slot name="barButtons" />
         </el-space>
       </template>

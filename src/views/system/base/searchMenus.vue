@@ -9,6 +9,10 @@ import { searchMenuListApi } from "@/api/system/search";
 
 defineOptions({ name: "searchMenus" });
 
+const emit = defineEmits<{
+  (e: "change", ...args: any[]): void;
+}>();
+
 const { t } = useI18n();
 
 const selectValue = defineModel({ type: Array<number> });
@@ -92,5 +96,10 @@ const sortOptions = [
     :searchKeys="searchKeys"
     :showColumns="showColumns"
     :sortOptions="sortOptions"
+    @change="
+      value => {
+        emit('change', value);
+      }
+    "
   />
 </template>

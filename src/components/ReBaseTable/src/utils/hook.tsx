@@ -7,15 +7,17 @@ import {
   delay,
   deviceDetection,
   getKeyList,
+  isArray,
   isEmpty
 } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
 import { useRoute } from "vue-router";
-import { formatColumnsLabel, getFieldsData } from "@/views/system/hooks";
+import { formatColumnsLabel } from "@/views/system/hooks";
 import exportDataForm from "../form/exportData.vue";
 import importDataForm from "../form/importData.vue";
 import { resourcesIDCacheApi } from "@/api/common";
+import { getFieldsData } from "./index";
 
 export function useBaseTable(
   emit: any,
@@ -117,6 +119,23 @@ export function useBaseTable(
     }
   };
 
+  const formatSearchPks = params => {
+    Object.keys(params).forEach(key => {
+      const value = params[key];
+      const pks = [];
+      if (isArray(value)) {
+        value.forEach(item => {
+          if (item.pk) {
+            pks.push(item.pk);
+          }
+        });
+        if (pks.length > 0) {
+          params[key] = pks;
+        }
+      }
+    });
+  };
+
   const onSearch = (init = false) => {
     if (init) {
       pagination.currentPage = searchFields.value.page = 1;
@@ -132,8 +151,12 @@ export function useBaseTable(
         searchFields.value[`${key}_before`] = "";
       }
     });
+    const params = cloneDeep(toRaw(searchFields.value));
+    // 该方法为了支持pk多选操作将如下格式 [{pk:1},{pk:2}] 转换为 [1,2]
+    formatSearchPks(params);
+
     api
-      .list(toRaw(searchFields.value))
+      .list(params)
       .then(res => {
         if (res.code === 1000 && res.data) {
           formatColumns(res.data?.results, tableColumns);

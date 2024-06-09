@@ -8,6 +8,11 @@ import { hasGlobalAuth } from "@/router/utils";
 import { formatColumnsLabel } from "@/views/system/hooks";
 
 defineOptions({ name: "searchDepts" });
+
+const emit = defineEmits<{
+  (e: "change", ...args: any[]): void;
+}>();
+
 const { t, te } = useI18n();
 
 const selectValue = defineModel({ type: Array<number> });
@@ -60,5 +65,10 @@ const searchKeys = [
     :isTree="true"
     :searchKeys="searchKeys"
     :showColumns="showColumns"
+    @change="
+      value => {
+        emit('change', value);
+      }
+    "
   />
 </template>

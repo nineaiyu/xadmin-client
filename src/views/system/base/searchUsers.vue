@@ -10,6 +10,10 @@ import { formatColumnsLabel } from "@/views/system/hooks";
 
 defineOptions({ name: "searchUsers" });
 
+const emit = defineEmits<{
+  (e: "change", ...args: any[]): void;
+}>();
+
 const { t, te } = useI18n();
 
 const selectValue = defineModel({ type: Array<number> });
@@ -74,5 +78,10 @@ const searchKeys = [
       value: 'pk',
       label: 'username'
     }"
+    @change="
+      value => {
+        emit('change', value);
+      }
+    "
   />
 </template>

@@ -51,13 +51,12 @@ export function useColumns(
   const getSelectPks = () => {
     return getKeyList(selectValue.value ?? [], valueProps.value ?? "pk");
   };
-
+  // table表格的树节点有问题，待后期修复，目前element-plus暂不支持
   const handleSelectionChange = val => {
     nextTick(() => {
       // add
-      const selectPks = getSelectPks();
       val.forEach(row => {
-        if (selectPks.indexOf(row.pk) == -1) {
+        if (getSelectPks().indexOf(row.pk) == -1) {
           const item = {};
           Object.values(valueProps).forEach(x => {
             item[x] = row[x];
@@ -68,8 +67,11 @@ export function useColumns(
       // del
       const valPks = getKeyList(val, "pk");
       dataList.value.forEach(row => {
-        if (selectPks.indexOf(row.pk) > -1 && valPks.indexOf(row.pk) === -1) {
-          selectValue.value.splice(selectPks.indexOf(row.pk), 1);
+        if (
+          getSelectPks().indexOf(row.pk) > -1 &&
+          valPks.indexOf(row.pk) === -1
+        ) {
+          selectValue.value.splice(getSelectPks().indexOf(row.pk), 1);
         }
       });
     });
@@ -77,7 +79,7 @@ export function useColumns(
 
   const removeTag = val => {
     const { toggleRowSelection } = tableRef.value.getTableRef();
-    toggleRowSelection(dataList.value.filter(v => v.pk === val)[0], false);
+    toggleRowSelection(dataList.value.filter(v => v.pk === val?.pk)[0], false);
   };
 
   const onClear = () => {
