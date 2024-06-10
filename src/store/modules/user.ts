@@ -30,7 +30,9 @@ import {
 import { useMultiTagsStoreHook } from "./multiTags";
 import { AesEncrypted } from "@/utils/aes";
 import { useWatermark } from "@pureadmin/utils";
-import { nextTick } from "vue";
+import { h, nextTick } from "vue";
+import { PureWebSocket } from "@/utils/websocket";
+import { ElNotification } from "element-plus";
 
 const { setWatermark, clear } = useWatermark();
 
@@ -54,7 +56,9 @@ export const useUserStore = defineStore({
     // 登录页的免登录存储几天，默认7天
     loginDay: 7,
     // 未读消息数量
-    noticeCount: 0
+    noticeCount: 0,
+    // 消息通知websocket
+    websocket: null
   }),
   actions: {
     /** 存储用户头像 */
@@ -174,6 +178,7 @@ export const useUserStore = defineStore({
           }
         })
         .finally(() => {
+          this.websocket?.close();
           removeToken();
           useMultiTagsStoreHook().handleTags("equal", [...routerArrays]);
           resetRouter();
@@ -195,6 +200,59 @@ export const useUserStore = defineStore({
           .catch(error => {
             reject(error);
           });
+      });
+    },
+    messageHandler() {
+      const onMessage = json_data => {
+        if (json_data.time && json_data.action === "push_message") {
+          const data = JSON.parse(json_data.data);
+          let message = data?.message;
+          switch (data.message_type) {
+            case "notify_message":
+              if (data?.notice_type?.value === 0) {
+                message = h("i", { style: "color: teal" }, data?.message);
+              }
+              ElNotification({
+                title: `${data?.notice_type?.label}-${data?.title}`,
+                message: message,
+                duration: 5000,
+                dangerouslyUseHTMLString: true,
+                type: data?.level
+                  ?.replace("primary", "")
+                  ?.replace("danger", "warning"),
+                onClick: () => {
+                  router.push({
+                    name: "UserNotice",
+                    query: { pk: data?.pk }
+                  });
+                }
+              });
+              this.INCR_NOTICECOUNT();
+              break;
+            case "chat_message":
+              ElNotification({
+                title: `${data?.notice_type?.label}-${data?.title}`,
+                message: h("i", { style: "color: teal" }, message),
+                duration: 3000,
+                onClick: () => {
+                  router.push({
+                    name: "Chat"
+                  });
+                }
+              });
+              break;
+            case "error":
+              console.log(json_data);
+              break;
+          }
+        }
+      };
+      this.websocket = new PureWebSocket(this.username, "xadmin", {
+        openCallback: () => {
+          this.websocket.onMessage(data => {
+            onMessage(data);
+          });
+        }
       });
     }
   }

@@ -27,7 +27,6 @@ import { getAsyncRoutes } from "@/api/routes";
 import { useUserStoreHook } from "@/store/modules/user";
 import type { UserInfo } from "@/api/auth";
 import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
-import { SocketMessage } from "@/utils/socketMessage";
 
 const IFrame = () => import("@/layout/frame.vue");
 // https://cn.vitejs.dev/guide/features.html#glob-import
@@ -197,8 +196,8 @@ function initRouter() {
   useSiteConfigStoreHook().getSiteConfig();
   useUserStoreHook()
     .getUserInfo()
-    .then(res => {
-      SocketMessage(res.data.username).enterRoomHandle();
+    .then(() => {
+      useUserStoreHook().messageHandler();
     });
 
   if (getConfig()?.CachingAsyncRoutes) {

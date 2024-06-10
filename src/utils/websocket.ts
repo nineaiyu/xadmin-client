@@ -1,208 +1,252 @@
-import { ElMessage } from "element-plus";
-import { getUsedAccessToken } from "@/utils/token";
+import qs from "qs";
+
+/**
+ * setTimeout 类型
+ */
+type Timeout = ReturnType<typeof setTimeout>;
+
+/**
+ * setInterval 类型
+ */
+type Interval = ReturnType<typeof setInterval>;
+
+/**
+ * 允许null的泛型
+ */
+type Nullable<T> = T | null;
+
+/**
+ * 默认重连次数
+ */
+const reconnectMaxCount = 10;
+/**
+ * 默认心跳信息
+ */
+const message = "ping";
+/**
+ * 默认心跳间隔
+ */
+const interval = 3000;
+
+/**
+ * 默认延时时间
+ */
+const timeout = 1000;
+
+type AutoReconnect = {
+  /**
+   *重连尝试次数 默认 3
+   */
+  reconnectMaxCount?: number;
+};
+
+type Heartbeat = {
+  /**
+   * 心跳信息 默认`ping`
+   */
+  message: string;
+  /**
+   * 心跳间隔时间 默认 `3000` 毫秒
+   */
+  interval: number;
+};
+
+export interface WSOptions {
+  /**
+   * 是否自动重连 默认`true`
+   */
+  autoReconnect?: boolean | AutoReconnect;
+  /**
+   * 心跳 默认`false`
+   */
+  heartbeat?: boolean | Heartbeat;
+  /**
+   * url 携带的参数
+   */
+  query?: Record<string, string>;
+  /**
+   * 建立连接成功回调
+   */
+  openCallback?: (socket: WebSocket) => void;
+  /**
+   * 关闭连接回调
+   */
+  closeCallback?: (socket: WebSocket) => void;
+  /**
+   * 连接异常回调
+   */
+  errorCallback?: (socket: WebSocket) => void;
+}
+
+class WS {
+  url: string;
+  socketOpen: boolean = false;
+  socket: WebSocket | null = null;
+  reconnectCount = 0;
+  delay: Nullable<Timeout> = null;
+  timer: Nullable<Interval> = null;
+  autoReconnect: WSOptions["autoReconnect"];
+  heartbeat: WSOptions["heartbeat"];
+  query: WSOptions["query"];
+  openCallback: WSOptions["openCallback"];
+  closeCallback: WSOptions["closeCallback"];
+  errorCallback: WSOptions["errorCallback"];
+
+  constructor(url?: string, options?: WSOptions) {
+    const {
+      autoReconnect = true,
+      query = {},
+      heartbeat = false,
+      openCallback = null,
+      closeCallback = null,
+      errorCallback = null
+    } = options || {};
+    this.autoReconnect = autoReconnect;
+    this.heartbeat = heartbeat;
+    this.query = query;
+    this.openCallback = openCallback;
+    this.closeCallback = closeCallback;
+    this.errorCallback = errorCallback;
+
+    this.url =
+      `${url}` + qs.stringify({ ...this.query }, { addQueryPrefix: true });
+
+    // 开启连接
+    this.connect();
+  }
+
+  /**
+   * 连接
+   */
+  connect(): void {
+    this.close();
+    this.socket = new WebSocket(this.url);
+    this.socketOpen = true;
+    this.onError();
+    this.onOpen();
+  }
+
+  /**
+   * 监听连接
+   */
+  onOpen(): void {
+    if (this.socket) {
+      this.socket.onopen = () => {
+        this.reconnectCount = 0;
+        if (this.openCallback) {
+          this.openCallback(this.socket);
+        }
+        // this.send("ping");
+        // 开启心跳
+        this.heartbeat && this.startHeartbeat();
+      };
+    }
+  }
+
+  /**
+   * 开启心跳
+   */
+  startHeartbeat(): void {
+    const msg = (this.heartbeat as Heartbeat)?.message || message;
+    const int = (this.heartbeat as Heartbeat)?.interval || interval;
+    this.timer = setInterval(() => {
+      this.send(msg);
+    }, int);
+  }
+
+  reconnectHandle(): void {
+    if (this.socketOpen) {
+      this.socketOpen = false;
+      const count =
+        (this.autoReconnect as AutoReconnect)?.reconnectMaxCount ||
+        reconnectMaxCount;
+      if (this.autoReconnect && this.reconnectCount < count) {
+        this.reconnectCount++;
+        this.connect();
+      }
+    }
+  }
+
+  /**
+   * 监听错误
+   */
+  onError(): void {
+    if (this.socket) {
+      this.socket.onerror = () => {
+        if (this.errorCallback) {
+          this.errorCallback(this.socket);
+        }
+      };
+      this.socket.onclose = () => {
+        if (this.closeCallback) {
+          this.closeCallback(this.socket);
+        }
+        this.delay = setTimeout(() => {
+          this.reconnectHandle();
+        }, timeout);
+      };
+    }
+  }
+
+  /**
+   * 关闭连接
+   */
+  close(): void {
+    this.socketOpen = false;
+    this.socket && this.socket.close();
+    this.delay && clearTimeout(this.delay);
+    this.timer && clearInterval(this.timer);
+    this.socket = null;
+  }
+
+  /**
+   *  监听消息
+   * @param callback
+   */
+  onMessage(callback: (...data: any[]) => any): void {
+    if (this.socket) {
+      this.socket.onmessage = data => {
+        try {
+          const res = JSON.parse(data.data);
+          callback(res);
+        } catch (err) {
+          callback(data);
+        }
+      };
+    }
+  }
+
+  /**
+   * 发送消息
+   * @param data
+   */
+  send(data: string | ArrayBufferLike | Blob | ArrayBufferView): void {
+    if (!this.socket) return;
+    // 状态为 `1-开启状态` 直接发送
+    if (this.socket.readyState === this.socket.OPEN) {
+      this.socket.send(data);
+      // 状态为 `0-开启状态` 则延后调用
+    } else if (this.socket.readyState === this.socket.CONNECTING) {
+      this.delay = setTimeout(() => {
+        this.socket?.send(data);
+      }, timeout);
+      // 状态为 `2-关闭中 3-关闭状态` 则重新连接
+    } else {
+      this.connect();
+      this.delay = setTimeout(() => {
+        this.socket?.send(data);
+      }, timeout);
+    }
+  }
+}
 
 const { VITE_WSS_DOMAIN } = import.meta.env;
 
-interface Socket {
-  close_callback: Function | null;
-  open_callback: Function | null;
-  receiveMessage: Function | null;
-  websocket: any;
-  username: string | string[];
-  connectURL: string;
-  socket_open: boolean;
-  heart_beat_timer: any;
-  heart_beat_interval: number;
-  is_reconnect: boolean;
-  reconnect_count: number;
-  reconnect_current: number;
-  reconnect_number: number;
-  reconnect_timer: any;
-  reconnect_interval: number;
-  init: (
-    username: string | string[],
-    receiveMessage: Function | null,
-    close_callback: Function | null,
-    open_callback: Function | null
-  ) => any;
-  receive: (message: any) => void;
-  heartbeat: () => void;
-  send: (data: any, callback?: any) => void;
-  close: () => void;
-  reconnect: () => void;
+class PureWebSocket extends WS {
+  constructor(username: string, group: string = "xadmin", options?: WSOptions) {
+    const url = `${VITE_WSS_DOMAIN}/ws/message/${group}/${username}`;
+    super(url, options);
+  }
 }
 
-const socket: Socket = {
-  receiveMessage: null,
-  username: "",
-  websocket: null,
-  open_callback: null,
-  close_callback: null,
-  connectURL: "",
-  // 开启标识
-  socket_open: false,
-  // 心跳timer
-  heart_beat_timer: null,
-  // 心跳发送频率
-  heart_beat_interval: 45000,
-  // 是否自动重连
-  is_reconnect: true,
-  // 重连次数
-  reconnect_count: 3,
-  // 已发起重连次数
-  reconnect_current: 1,
-  // 网络错误提示此时
-  reconnect_number: 0,
-  // 重连timer
-  reconnect_timer: null,
-  // 重连频率
-  reconnect_interval: 5000,
-
-  init: async (
-    username: string | string[],
-    receiveMessage: Function | null,
-    close_callback: Function | null,
-    open_callback: Function | null
-  ) => {
-    socket.connectURL = `${VITE_WSS_DOMAIN}/ws/message`;
-    socket.username = username;
-    socket.receiveMessage = receiveMessage;
-    socket.close_callback = close_callback;
-    socket.open_callback = open_callback;
-    if (!("WebSocket" in window)) {
-      ElMessage.warning("浏览器不支持WebSocket");
-      return null;
-    }
-    // 已经创建过连接不再重复创建
-    // if (socket.websocket) {
-    //   return socket.websocket
-    // }
-
-    // const res: any = await websocketToken({ username });
-    // let websocket_url = "";
-    // if (res.code === 1000) {
-    //   websocket_url = `${socket.connectURL}/${username}/${res.data.token}`;
-    // } else {
-    //   ElMessage.error(res.msg);
-    //   return;
-    // }
-    const group_name = "xadmin";
-    const websocket_url = `${socket.connectURL}/${group_name}/${username}`;
-    await getUsedAccessToken();
-    socket.websocket = new WebSocket(websocket_url);
-    socket.websocket.onmessage = (e: any) => {
-      if (receiveMessage) {
-        receiveMessage(e);
-      }
-    };
-
-    socket.websocket.onclose = (e: any) => {
-      console.log(e);
-      if (close_callback) {
-        close_callback(e);
-      }
-      clearInterval(socket.heart_beat_interval);
-      socket.socket_open = false;
-
-      // 需要重新连接
-      if (socket.is_reconnect) {
-        socket.reconnect_timer = setTimeout(() => {
-          // 超过重连次数
-          if (socket.reconnect_current > socket.reconnect_count) {
-            clearTimeout(socket.reconnect_timer);
-            socket.is_reconnect = false;
-            return;
-          }
-
-          // 记录重连次数
-          socket.reconnect_current++;
-          socket.reconnect();
-        }, socket.reconnect_interval);
-      }
-    };
-
-    // 连接成功
-    socket.websocket.onopen = function () {
-      socket.socket_open = true;
-      socket.is_reconnect = true;
-      console.log("socket connect success");
-      if (open_callback) {
-        open_callback(socket);
-      }
-      // 开启心跳
-      // socket.heartbeat();
-    };
-
-    // 连接发生错误
-    socket.websocket.onerror = function () {
-      console.log("socket connect failed");
-      socket.socket_open = false;
-    };
-  },
-
-  send: (data, callback = null) => {
-    // 开启状态直接发送
-    if (socket.websocket.readyState === socket.websocket.OPEN) {
-      socket.websocket.send(JSON.stringify(data));
-      if (callback) {
-        callback();
-      }
-
-      // 正在开启状态，则等待1s后重新调用
-    } else {
-      clearInterval(socket.heart_beat_timer);
-      if (socket.reconnect_number < 1) {
-        ElMessage({
-          type: "error",
-          message: "socket 连接中，请耐心等待",
-          duration: 3000
-        });
-      }
-      socket.reconnect_number++;
-    }
-  },
-
-  receive: (message: any) => {
-    return JSON.parse(message.data).data;
-  },
-
-  heartbeat: () => {
-    if (socket.heart_beat_timer) {
-      clearInterval(socket.heart_beat_timer);
-    }
-
-    socket.heart_beat_timer = setInterval(() => {
-      const data = {
-        authToken: "token",
-        content: "ping"
-      };
-      socket.send(JSON.stringify(data));
-    }, socket.heart_beat_interval);
-  },
-
-  close: () => {
-    clearInterval(socket.heart_beat_interval);
-    socket.is_reconnect = false;
-    socket.socket_open = false;
-    if (socket.websocket) {
-      socket.websocket.close();
-    }
-  },
-
-  /**
-   * 重新连接
-   */
-  reconnect: () => {
-    if (socket.websocket && !socket.is_reconnect) {
-      socket.close();
-    }
-    socket.init(
-      socket.username,
-      socket.receiveMessage,
-      socket.close_callback,
-      socket.open_callback
-    );
-  }
-};
-
-export default socket;
+export { WS, PureWebSocket };

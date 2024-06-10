@@ -1,4 +1,5 @@
 import type { RouteRecordName } from "vue-router";
+import type { WS } from "@/utils/websocket";
 
 export type cacheType = {
   mode: string;
@@ -47,4 +48,5 @@ export type userType = {
   isRemembered?: boolean;
   loginDay?: number;
   noticeCount?: number;
+  websocket?: WS | null;
 };

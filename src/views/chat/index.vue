@@ -2,8 +2,8 @@
 import { computed, onMounted, onUnmounted, reactive, ref } from "vue";
 import { DynamicScroller, DynamicScrollerItem } from "vue-virtual-scroller";
 import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
-import socket from "@/utils/websocket";
 import { message } from "@/utils/message";
+import { PureWebSocket, WS } from "@/utils/websocket";
 
 defineOptions({
   name: "Chat"
@@ -15,13 +15,25 @@ const userinfo = reactive({
   username: "",
   pk: ""
 });
+const ws = ref<WS>();
 
 const scrollToBottom = () => {
   scroller.value?.scrollToBottom();
 };
 
-const onMessage = (msg_event: { data: string }) => {
-  const json_data = JSON.parse(msg_event.data);
+interface MessageProps {
+  time: string;
+  action: string;
+  message: string;
+  data: {
+    pk: string;
+    userinfo: {
+      username: string;
+    };
+  };
+}
+
+const onMessage = (json_data: MessageProps) => {
   if (json_data.time) {
     switch (json_data.action) {
       case "userinfo":
@@ -43,29 +55,36 @@ const onMessage = (msg_event: { data: string }) => {
 
 const chatHandle = () => {
   if (chatMsg.value) {
-    socket.send({ action: "chat_message", data: { text: chatMsg.value } });
+    ws.value.send(
+      JSON.stringify({ action: "chat_message", data: { text: chatMsg.value } })
+    );
     chatMsg.value = "";
   } else {
     message("消息不存在", { type: "warning" });
   }
 };
 const enter = ref(false);
-const enterRoomHandle = () => {
-  socket.init("system_default_websocket", onMessage, null, () => {
-    message("连接建立成功", { type: "success" });
-    enter.value = true;
-    socket.send({ action: "userinfo", data: {} });
-  });
-};
 
 onMounted(() => {
-  enterRoomHandle();
+  ws.value = new PureWebSocket("system_default_websocket", "xadmin", {
+    openCallback: () => {
+      message("连接建立成功", { type: "success" });
+      enter.value = true;
+      ws.value.send(JSON.stringify({ action: "userinfo", data: {} }));
+      ws.value.onMessage(data => {
+        onMessage(data);
+      });
+    },
+    errorCallback() {
+      message(`连接已断开，正在进行第${ws.value.reconnectCount}次重试`, {
+        type: "warning"
+      });
+    }
+  });
 });
 
 onUnmounted(() => {
-  if (socket && socket.socket_open) {
-    socket.close();
-  }
+  if (ws.value) ws.value.close();
 });
 const search = ref("");
 const filteredItems = computed(() => {
