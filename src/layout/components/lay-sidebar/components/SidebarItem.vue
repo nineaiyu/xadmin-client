@@ -111,7 +111,7 @@ function resolvePath(routePath) {
       hasOneShowingChild(item.children, item) &&
       (!onlyOneChild.children || onlyOneChild.noShowingChildren)
     "
-    :to="item"
+    :to="onlyOneChild"
   >
     <el-menu-item
       :class="{ 'submenu-title-noDropdown': !isNest }"

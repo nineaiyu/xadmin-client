@@ -37,6 +37,7 @@ const {
   buttonLeft,
   showModel,
   translateX,
+  isFixedTag,
   pureSetting,
   activeIndex,
   getTabStyle,
@@ -556,10 +557,6 @@ onBeforeUnmount(() => {
   emitter.off("tagViewsShowModel");
   emitter.off("changLayoutRoute");
 });
-
-const fixedTag = item => {
-  return item?.meta?.fixedTag === false || isAllEmpty(item?.meta?.fixedTag);
-};
 </script>
 
 <template>
@@ -582,7 +579,7 @@ const fixedTag = item => {
             'scroll-item is-closable',
             linkIsActive(item),
             showModel === 'chrome' && 'chrome-item',
-            !fixedTag(item) && 'fixed-tag'
+            isFixedTag(item) && 'fixed-tag'
           ]"
           @contextmenu.prevent="openMenu(item, $event)"
           @mouseenter.prevent="onMouseenter(index)"
@@ -596,12 +593,7 @@ const fixedTag = item => {
               {{ transformI18n(item.meta.title) }}
             </span>
             <span
-              v-if="
-                fixedTag(item)
-                  ? iconIsActive(item, index) ||
-                    (index === activeIndex && index !== 0)
-                  : false
-              "
+              v-if="isFixedTag(item) ? false : index !== 0"
               class="el-icon-close"
               @click.stop="deleteMenu(item)"
             >
@@ -621,7 +613,7 @@ const fixedTag = item => {
               {{ transformI18n(item.meta.title) }}
             </span>
             <span
-              v-if="fixedTag(item) ? index !== 0 : false"
+              v-if="isFixedTag(item) ? false : index !== 0"
               class="chrome-close-btn"
               @click.stop="deleteMenu(item)"
             >
