@@ -16,7 +16,6 @@ export function useOperationLog() {
   const auth = reactive({
     list: hasAuth("list:systemOperationLog"),
     delete: hasAuth("delete:systemOperationLog"),
-    fields: hasAuth("fields:systemOperationLog"),
     export: hasAuth("export:systemOperationLog"),
     batchDelete: hasAuth("batchDelete:systemOperationLog")
   });

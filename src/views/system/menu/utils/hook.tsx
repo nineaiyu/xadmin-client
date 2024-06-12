@@ -66,7 +66,6 @@ export function useApiAuth() {
     update: hasAuth("update:systemMenu"),
     permissions: hasAuth("permissions:systemMenu"),
     choices: hasAuth("choices:systemMenu"),
-    fields: hasAuth("fields:systemMenu"),
     export: hasAuth("export:systemMenu"),
     import: hasAuth("import:systemMenu"),
     apiUrl: hasAuth("apiUrl:systemMenu"),

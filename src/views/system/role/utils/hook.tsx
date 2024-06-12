@@ -32,7 +32,6 @@ export function useApiAuth() {
     create: hasAuth("create:systemRole"),
     delete: hasAuth("delete:systemRole"),
     update: hasAuth("update:systemRole"),
-    fields: hasAuth("fields:systemRole"),
     export: hasAuth("export:systemRole"),
     import: hasAuth("import:systemRole"),
     detail: hasAuth("detail:systemRole"),

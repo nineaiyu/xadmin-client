@@ -72,7 +72,6 @@ export function useUser(tableRef: Ref) {
     create: hasAuth("create:systemUser"),
     delete: hasAuth("delete:systemUser"),
     update: hasAuth("update:systemUser"),
-    fields: hasAuth("fields:systemUser"),
     reset: hasAuth("reset:systemUser"),
     empower: hasAuth("empower:systemUser"),
     upload: hasAuth("upload:systemUser"),

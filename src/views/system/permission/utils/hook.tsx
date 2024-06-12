@@ -40,7 +40,6 @@ export function useDataPermission(tableRef: Ref) {
     delete: hasAuth("delete:systemDataPermission"),
     update: hasAuth("update:systemDataPermission"),
     detail: hasAuth("detail:systemDataPermission"),
-    fields: hasAuth("fields:systemDataPermission"),
     export: hasAuth("export:systemDataPermission"),
     import: hasAuth("import:systemDataPermission"),
     batchDelete: hasAuth("batchDelete:systemDataPermission")

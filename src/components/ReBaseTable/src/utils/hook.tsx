@@ -136,6 +136,13 @@ export function useBaseTable(
     });
   };
 
+  const getFormatLabel = label => {
+    if (te(label)) {
+      return t(label);
+    }
+    return label;
+  };
+
   const onSearch = (init = false) => {
     if (init) {
       pagination.currentPage = searchFields.value.page = 1;
@@ -458,6 +465,7 @@ export function useBaseTable(
     openDialog,
     getSelectPks,
     handleDelete,
+    getFormatLabel,
     handleManyDelete,
     handleSizeChange,
     onSelectionCancel,

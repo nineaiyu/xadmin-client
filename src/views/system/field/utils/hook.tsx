@@ -20,7 +20,6 @@ export function useModelField(tableRef: Ref) {
     list: hasAuth("list:systemModelField"),
     sync: hasAuth("sync:systemModelField"),
     detail: hasAuth("detail:systemModelField"),
-    fields: hasAuth("fields:systemModelField"),
     lookups: hasAuth("lookups:systemModelField")
   });
 

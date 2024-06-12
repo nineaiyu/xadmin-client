@@ -27,7 +27,6 @@ export function useUserNotice(tableRef: Ref) {
     list: hasAuth("list:userNotice"),
     detail: hasAuth("detail:userNoticeRead"),
     batchRead: hasAuth("update:userNoticeRead"),
-    fields: hasAuth("fields:userNoticeRead"),
     allRead: hasAuth("update:userNoticeReadAll")
   });
 

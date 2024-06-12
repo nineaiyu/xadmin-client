@@ -73,7 +73,6 @@ export function useNotice(tableRef: Ref) {
     update: hasAuth("update:systemNotice"),
     publish: hasAuth("update:systemNoticePublish"),
     detail: hasAuth("detail:systemNotice"),
-    fields: hasAuth("fields:systemNotice"),
     batchDelete: hasAuth("batchDelete:systemNotice")
   });
 

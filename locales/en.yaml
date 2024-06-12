@@ -520,3 +520,13 @@ welcome:
   requestNum: Number of interface requests for today
   userNum: Number of Users
   loginTimes: Number of Logins
+
+demoBook:
+  book: Book
+  name: Name
+  isbn: ISBN
+  author: Author
+  publisher: Publisher
+  publication_date: Publication date
+  price: Price
+  is_active: Active

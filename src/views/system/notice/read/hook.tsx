@@ -26,7 +26,6 @@ export function useNoticeRead(tableRef: Ref) {
     list: hasAuth("list:systemNoticeRead"),
     detail: hasAuth("detail:systemNoticeRead"),
     delete: hasAuth("delete:systemNoticeRead"),
-    fields: hasAuth("fields:systemNoticeRead"),
     state: hasAuth("update:systemNoticeReadState"),
     batchDelete: hasAuth("batchDelete:systemNoticeRead")
   });

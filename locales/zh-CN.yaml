@@ -520,3 +520,13 @@ welcome:
   requestNum: 当天接口请求次数
   userNum: 用户人数
   loginTimes: 登录次数
+
+demoBook:
+  book: 书籍
+  name: 书籍名称
+  isbn: ISBN书号
+  author: 作者
+  publisher: 出版社
+  publication_date: 出版日期
+  price: 售价
+  is_active: 是否启用

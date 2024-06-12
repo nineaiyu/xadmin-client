@@ -30,7 +30,6 @@ export function useSystemConfig(tableRef: Ref) {
     delete: hasAuth("delete:systemSystemConfig"),
     update: hasAuth("update:systemSystemConfig"),
     invalid: hasAuth("invalid:systemSystemConfig"),
-    fields: hasAuth("fields:systemSystemConfig"),
     export: hasAuth("export:systemSystemConfig"),
     import: hasAuth("import:systemSystemConfig"),
     batchDelete: hasAuth("batchDelete:systemSystemConfig")

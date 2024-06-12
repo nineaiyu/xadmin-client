@@ -19,7 +19,6 @@ export function useLoginLog() {
   const auth = reactive({
     list: hasAuth("list:systemLoginLog"),
     delete: hasAuth("delete:systemLoginLog"),
-    fields: hasAuth("fields:systemLoginLog"),
     export: hasAuth("export:systemLoginLog"),
     batchDelete: hasAuth("batchDelete:systemLoginLog")
   });

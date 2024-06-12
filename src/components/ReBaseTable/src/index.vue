@@ -90,6 +90,7 @@ const {
   openDialog,
   getSelectPks,
   handleDelete,
+  getFormatLabel,
   handleManyDelete,
   handleSizeChange,
   onSelectionCancel,
@@ -179,7 +180,7 @@ defineExpose({
       <template #title>
         <el-space>
           <p class="font-bold truncate">
-            {{ t(route.meta.title) }}
+            {{ getFormatLabel(route.meta.title) }}
           </p>
           <div
             v-if="selectedNum > 0"

@@ -54,7 +54,6 @@ export function useDept(tableRef: Ref) {
     update: hasAuth("update:systemDept"),
     empower: hasAuth("empower:systemDept"),
     choices: hasAuth("choices:systemDept"),
-    fields: hasAuth("fields:systemDept"),
     import: hasAuth("import:systemDept"),
     export: hasAuth("export:systemDept"),
     batchDelete: hasAuth("batchDelete:systemDept")

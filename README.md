@@ -12,6 +12,10 @@ Django 做后端服务
 [https://xadmin.dvcloud.xin/](https://xadmin.dvcloud.xin/)
 账号密码：admin/admin123
 
+## 开发文档
+
+[https://docs.dvcloud.xin/](https://docs.dvcloud.xin/)
+
 ## docker 构建
 
 修改 api 配置文件`.env.production`，将 api 域名修改为自己服务器，然后进行构建

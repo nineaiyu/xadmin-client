@@ -33,7 +33,6 @@ export function useUserConfig(tableRef: Ref) {
     delete: hasAuth("delete:systemUserConfig"),
     update: hasAuth("update:systemUserConfig"),
     invalid: hasAuth("invalid:systemUserConfig"),
-    fields: hasAuth("fields:systemUserConfig"),
     import: hasAuth("import:systemUserConfig"),
     export: hasAuth("export:systemUserConfig"),
     batchDelete: hasAuth("batchDelete:systemUserConfig")
