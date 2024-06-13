@@ -90,19 +90,19 @@ watch(
     v-model="selectValue"
     v-click-outside="handleClickOutSide"
     :max-collapse-tags="10"
+    :value-key="props.valueProps.value"
     class="w-full"
     clearable
     collapse-tags
     collapse-tags-tooltip
     multiple
-    :value-key="props.valueProps.value"
+    @clear="onClear"
+    @visibleChange="val => (selectVisible = val)"
     @visible-change="
       vs => {
         if (vs) onSearch();
       }
     "
-    @clear="onClear"
-    @visibleChange="val => (selectVisible = val)"
     @remove-tag="removeTag"
   >
     <template #label="{ value }">

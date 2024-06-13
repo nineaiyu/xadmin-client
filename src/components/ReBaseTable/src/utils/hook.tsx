@@ -45,7 +45,7 @@ export function useBaseTable(
   const route = useRoute();
   const getParameter = isEmpty(route.params) ? route.query : route.params;
   const handleDelete = row => {
-    api.delete(row.pk).then(res => {
+    api.delete(row.pk ?? row.id).then(res => {
       if (res.code === 1000) {
         message(t("results.success"), { type: "success" });
         onSearch();

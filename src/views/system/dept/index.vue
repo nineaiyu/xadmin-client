@@ -33,9 +33,9 @@ const {
     :api="api"
     :auth="auth"
     :edit-form="editForm"
+    :pagination="pagination"
     :result-format="formatResult"
     :table-columns="columns"
-    :pagination="pagination"
     locale-name="systemDept"
   >
     <template #extOperation="{ row, size }">

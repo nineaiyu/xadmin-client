@@ -447,8 +447,8 @@ defineExpose({ getRef });
             class="w-full"
             clearable
             filterable
-            value-key="pk"
             multiple
+            value-key="pk"
           >
             <el-option
               v-for="item in props.modelList"

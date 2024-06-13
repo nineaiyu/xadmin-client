@@ -201,6 +201,7 @@ function dynamicRouteTag(value: string): void {
       });
     }
   }
+
   concatPath(router.options.routes as any, value);
 }
 
@@ -398,6 +399,7 @@ function showMenuModel(
   } else {
     currentIndex = allRoute.findIndex(v => isEqual(v.query, query));
   }
+
   function fixedTagDisabled() {
     if (allRoute[currentIndex]?.meta?.fixedTag) {
       Array.of(1, 2, 3, 4, 5).forEach(v => {
@@ -566,25 +568,25 @@ onBeforeUnmount(() => {
     </span>
     <div
       ref="scrollbarDom"
-      class="scroll-container"
       :class="showModel === 'chrome' && 'chrome-scroll-container'"
+      class="scroll-container"
       @wheel.prevent="handleWheel"
     >
       <div ref="tabDom" :style="getTabStyle" class="tab select-none">
         <div
           v-for="(item, index) in multiTags"
-          :ref="'dynamic' + index"
           :key="index"
+          :ref="'dynamic' + index"
           :class="[
             'scroll-item is-closable',
             linkIsActive(item),
             showModel === 'chrome' && 'chrome-item',
             isFixedTag(item) && 'fixed-tag'
           ]"
+          @click="tagOnClick(item)"
           @contextmenu.prevent="openMenu(item, $event)"
           @mouseenter.prevent="onMouseenter(index)"
           @mouseleave.prevent="onMouseleave(index)"
-          @click="tagOnClick(item)"
         >
           <template v-if="showModel !== 'chrome'">
             <span
@@ -631,8 +633,8 @@ onBeforeUnmount(() => {
     <transition name="el-zoom-in-top">
       <ul
         v-show="visible"
-        ref="contextmenuRef"
         :key="Math.random()"
+        ref="contextmenuRef"
         :style="getContextMenuStyle"
         class="contextmenu"
       >
@@ -650,8 +652,8 @@ onBeforeUnmount(() => {
     </transition>
     <!-- 右侧功能按钮 -->
     <el-dropdown
-      trigger="click"
       placement="bottom-end"
+      trigger="click"
       @command="handleCommand"
     >
       <span class="arrow-down">
@@ -663,8 +665,8 @@ onBeforeUnmount(() => {
             v-for="(item, key) in tagsViews"
             :key="key"
             :command="{ key, item }"
-            :divided="item.divided"
             :disabled="item.disabled"
+            :divided="item.divided"
           >
             <IconifyIconOffline :icon="item.icon" />
             {{ transformI18n(item.text) }}

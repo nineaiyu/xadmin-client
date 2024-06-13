@@ -41,12 +41,12 @@ const {
           :default-data="defaultData"
           :tree-data="treeData"
           @addNewMenu="addNewMenu"
+          @exportData="exportData"
           @getMenuData="getMenuData"
           @handleDelete="handleDelete"
           @handleDrag="handleDrag"
-          @exportData="exportData"
-          @importData="importData"
           @handleManyDelete="handleManyDelete"
+          @importData="importData"
           @openDialog="openDialog"
         />
       </el-col>
