@@ -13,9 +13,10 @@ import {
 import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
 import { useRoute } from "vue-router";
-import { formatColumnsLabel } from "@/views/system/hooks";
+import { formatColumnsLabel, formatFormColumns } from "@/views/system/hooks";
 import exportDataForm from "../form/exportData.vue";
 import importDataForm from "../form/importData.vue";
+import addOrEdit from "../form/addOrEdit.vue";
 import { resourcesIDCacheApi } from "@/api/common";
 import { getFieldsData } from "./index";
 
@@ -292,6 +293,16 @@ export function useBaseTable(
         propsResult[key] = getValue;
       }
     });
+    if (typeof editForm?.columns === "function") {
+      editForm.columns = editForm.columns({ row, isAdd, data: dataList.value });
+    }
+    formatFormColumns(
+      { isAdd, showColumns: showColumns.value },
+      editForm?.columns as Array<any>,
+      t,
+      te,
+      localeName
+    );
     addDialog({
       title: `${title} ${editForm.title ?? ""}`,
       props: {
@@ -301,6 +312,8 @@ export function useBaseTable(
         },
         ...propsResult,
         showColumns: showColumns.value,
+        columns: editForm?.columns ?? [],
+        formProps: editForm?.formProps ?? {},
         isAdd: isAdd
       },
       width: "40%",
@@ -308,7 +321,7 @@ export function useBaseTable(
       fullscreen: deviceDetection(),
       fullscreenIcon: true,
       closeOnClickModal: false,
-      contentRenderer: () => h(editForm.form, { ref: formRef }),
+      contentRenderer: () => h(editForm.form ?? addOrEdit, { ref: formRef }),
       beforeSure: (done, { options }) => {
         const FormRef = formRef.value.getRef();
         const curData = cloneDeep(options.props.formInline);

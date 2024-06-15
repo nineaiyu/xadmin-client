@@ -1,13 +1,11 @@
 import dayjs from "dayjs";
-import Form from "../form.vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { message } from "@/utils/message";
-import type { PlusColumn } from "plus-pro-components";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import SearchUsers from "@/views/system/base/searchUsers.vue";
 import { reactive, ref, type Ref, shallowRef } from "vue";
-import { formatFormColumns, usePublicHooks } from "@/views/system/hooks";
+import { usePublicHooks } from "@/views/system/hooks";
 import { userConfigApi } from "@/api/system/config/user";
 
 import { renderOption, renderSwitch } from "@/views/system/render";
@@ -40,10 +38,9 @@ export function useUserConfig(tableRef: Ref) {
 
   const editForm = shallowRef({
     title: t("configUser.configUser"),
-    form: Form,
     row: {
       config_user: row => {
-        return row?.owner?.pk ? [row?.owner?.pk] : [];
+        return row?.owner ? [row?.owner] : [];
       },
       is_active: row => {
         return row?.is_active ?? true;
@@ -51,6 +48,84 @@ export function useUserConfig(tableRef: Ref) {
       access: row => {
         return row?.access ?? false;
       }
+    },
+    formProps: {
+      rules: {
+        config_user: [
+          {
+            required: true,
+            message: t("configUser.config_user"),
+            trigger: "blur"
+          }
+        ],
+        key: [
+          {
+            required: true,
+            message: t("configUser.key"),
+            trigger: "blur"
+          }
+        ],
+        value: [
+          {
+            required: true,
+            message: t("configUser.value"),
+            trigger: "blur"
+          }
+        ]
+      }
+    },
+    columns: ({ isAdd }) => {
+      return [
+        {
+          prop: "config_user",
+          valueType: "select",
+          hideInForm: !hasGlobalAuth("list:systemUser"),
+          fieldProps: {
+            disabled: !isAdd,
+            multiple: true
+          },
+          renderField: (value, onChange) => {
+            console.log(111111, value, isAdd);
+            return (
+              <SearchUsers
+                modelValue={value}
+                disabled={!isAdd}
+                onChange={onChange}
+              />
+            );
+          }
+        },
+        {
+          prop: "key",
+          valueType: "input"
+        },
+        {
+          prop: "value",
+          valueType: "textarea",
+          fieldProps: {
+            autosize: {
+              minRows: 8
+            }
+          }
+        },
+        {
+          prop: "access",
+          valueType: "radio",
+          colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 },
+          tooltip: t("configSystem.accessTip"),
+          renderField: renderOption()
+        },
+        {
+          prop: "is_active",
+          valueType: "radio",
+          colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 },
+          renderField: renderOption()
+        },
+        {
+          prop: "description",
+          valueType: "textarea"
+        }
+      ];
     }
   });
 
@@ -157,59 +232,5 @@ export function useUserConfig(tableRef: Ref) {
     columns,
     editForm,
     handleInvalidCache
-  };
-}
-
-export function useUserConfigForm(props) {
-  const { t, te } = useI18n();
-  const columns: PlusColumn[] = [
-    {
-      prop: "config_user",
-      valueType: "select",
-      hideInForm: !hasGlobalAuth("list:systemUser"),
-      fieldProps: {
-        disabled: !props?.isAdd,
-        multiple: true
-      },
-      renderField: (value, onChange) => {
-        onChange(value);
-        return <SearchUsers modelValue={value} disabled={!props.isAdd} />;
-      }
-    },
-    {
-      prop: "key",
-      valueType: "input"
-    },
-    {
-      prop: "value",
-      valueType: "textarea",
-      fieldProps: {
-        autosize: {
-          minRows: 8
-        }
-      }
-    },
-    {
-      prop: "access",
-      valueType: "radio",
-      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 },
-      tooltip: t("configSystem.accessTip"),
-      renderField: renderOption()
-    },
-    {
-      prop: "is_active",
-      valueType: "radio",
-      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 },
-      renderField: renderOption()
-    },
-    {
-      prop: "description",
-      valueType: "textarea"
-    }
-  ];
-  formatFormColumns(props, columns, t, te, "configUser");
-  return {
-    t,
-    columns
   };
 }

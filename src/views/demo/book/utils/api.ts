@@ -1,3 +1,5 @@
 import { BaseApi } from "@/api/base";
 
-export const bookApi = new BaseApi("/api/demo/book");
+const bookApi = new BaseApi("/api/demo/book");
+bookApi.update = bookApi.patch;
+export { bookApi };

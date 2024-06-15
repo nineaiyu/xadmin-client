@@ -9,8 +9,7 @@ import { modelLabelFieldApi } from "@/api/system/field";
 import { menuApi } from "@/api/system/menu";
 import Form from "../form.vue";
 import { renderOption, renderSwitch } from "@/views/system/render";
-import type { PlusColumn } from "plus-pro-components";
-import { formatFormColumns, formatOptions } from "@/views/system/hooks";
+import { formatOptions } from "@/views/system/hooks";
 import { transformI18n } from "@/plugins/i18n";
 import { getKeyList } from "@pureadmin/utils";
 
@@ -63,21 +62,71 @@ export function useDataPermission(tableRef: Ref) {
       }
     },
     props: {
-      menuPermissionData: () => {
-        return menuPermissionData.value;
-      },
       fieldLookupsData: () => {
         return fieldLookupsData.value;
       },
       valuesData: () => {
         return valuesData.value;
-      },
-      modeChoices: () => {
-        return choicesDict.value["mode_type"];
       }
     },
     options: {
       top: "10vh"
+    },
+    columns: () => {
+      return [
+        {
+          prop: "name",
+          valueType: "input"
+        },
+        {
+          prop: "is_active",
+          valueType: "radio",
+          renderField: renderOption()
+        },
+        {
+          prop: "mode_type",
+          valueType: "select",
+          tooltip: t("systemPermission.modeTypeTip"),
+          options: formatOptions(choicesDict.value["mode_type"])
+        },
+        {
+          prop: "menu",
+          valueType: "cascader",
+          tooltip: t("systemPermission.menuTip"),
+          fieldProps: {
+            props: {
+              value: "pk",
+              label: "title",
+              emitPath: false,
+              checkStrictly: false,
+              multiple: true
+            }
+          },
+          fieldSlots: {
+            default: ({ node, data }) => {
+              data.title = transformI18n(data?.title);
+              return (
+                <>
+                  <span>{data.title}</span>
+                  <span v-show={!node.isLeaf}>
+                    {" "}
+                    ({data?.children?.length}){" "}
+                  </span>
+                </>
+              );
+            }
+          },
+          options: menuPermissionData.value
+        },
+        {
+          prop: "description",
+          valueType: "textarea"
+        },
+        {
+          prop: "rules",
+          hasLabel: false
+        }
+      ];
     }
   });
 
@@ -163,65 +212,5 @@ export function useDataPermission(tableRef: Ref) {
     auth,
     columns,
     editForm
-  };
-}
-
-export function useDataPermissionForm(props) {
-  const { t, te } = useI18n();
-  const columns: PlusColumn[] = [
-    {
-      prop: "name",
-      valueType: "input"
-    },
-    {
-      prop: "is_active",
-      valueType: "radio",
-      renderField: renderOption()
-    },
-    {
-      prop: "mode_type",
-      valueType: "select",
-      tooltip: t("systemPermission.modeTypeTip"),
-      options: formatOptions(props.modeChoices)
-    },
-    {
-      prop: "menu",
-      valueType: "cascader",
-      tooltip: t("systemPermission.menuTip"),
-      fieldProps: {
-        props: {
-          value: "pk",
-          label: "title",
-          emitPath: false,
-          checkStrictly: false,
-          multiple: true
-        }
-      },
-      fieldSlots: {
-        default: ({ node, data }) => {
-          data.title = transformI18n(data?.title);
-          return (
-            <>
-              <span>{data.title}</span>
-              <span v-show={!node.isLeaf}> ({data?.children?.length}) </span>
-            </>
-          );
-        }
-      },
-      options: props.menuPermissionData
-    },
-    {
-      prop: "description",
-      valueType: "textarea"
-    },
-    {
-      prop: "rules",
-      hasLabel: false
-    }
-  ];
-  formatFormColumns(props, columns, t, te, "systemPermission");
-  return {
-    t,
-    columns
   };
 }

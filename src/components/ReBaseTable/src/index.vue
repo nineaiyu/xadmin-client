@@ -29,12 +29,7 @@ const props = withDefaults(defineProps<FormProps>(), {
     fields: null,
     batchDelete: null
   }),
-  editForm: () => ({
-    form: null,
-    row: {},
-    props: {},
-    options: {}
-  }),
+  editForm: () => ({}),
   customAddOrEdit: false,
   editProps: {},
   pagination: () => {

@@ -11,8 +11,6 @@ import { FieldChoices } from "@/views/system/constants";
 import { cloneDeep, getKeyList } from "@pureadmin/utils";
 import { modelLabelFieldApi } from "@/api/system/field";
 import { renderOption, renderSwitch } from "@/views/system/render";
-import type { PlusColumn } from "plus-pro-components";
-import { formatFormColumns } from "@/views/system/hooks";
 
 export function useApiAuth() {
   const api = reactive({
@@ -68,6 +66,31 @@ export function useRole(tableRef: Ref) {
     },
     options: {
       width: "700px"
+    },
+    columns: () => {
+      return [
+        {
+          prop: "name",
+          valueType: "input"
+        },
+        {
+          prop: "code",
+          valueType: "input"
+        },
+        {
+          prop: "is_active",
+          valueType: "radio",
+          renderField: renderOption()
+        },
+        {
+          prop: "description",
+          valueType: "textarea"
+        },
+        {
+          prop: "menu",
+          valueType: "input"
+        }
+      ];
     }
   });
 
@@ -181,37 +204,5 @@ export function useRole(tableRef: Ref) {
     auth,
     columns,
     editForm
-  };
-}
-
-export function useSystemRoleForm(props) {
-  const { t, te } = useI18n();
-  const columns: PlusColumn[] = [
-    {
-      prop: "name",
-      valueType: "input"
-    },
-    {
-      prop: "code",
-      valueType: "input"
-    },
-    {
-      prop: "is_active",
-      valueType: "radio",
-      renderField: renderOption()
-    },
-    {
-      prop: "description",
-      valueType: "textarea"
-    },
-    {
-      prop: "menu",
-      valueType: "input"
-    }
-  ];
-  formatFormColumns(props, columns, t, te, "systemRole");
-  return {
-    t,
-    columns
   };
 }
