@@ -16,13 +16,14 @@ import Reset from "@iconify-icons/ri/restart-line";
 import More2Fill from "@iconify-icons/ri/more-2-fill";
 import { MenuChoices } from "@/views/system/constants";
 import { getKeyList, isAllEmpty } from "@pureadmin/utils";
-import { useApiAuth, useSystemRoleForm } from "./utils/hook";
+import { useApiAuth } from "./utils/hook";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 
 const props = withDefaults(defineProps<FormProps>(), {
   isAdd: () => true,
   showColumns: () => [],
   menuTreeData: () => [],
+  columns: () => [],
   formInline: () => ({
     pk: 0,
     name: "",
@@ -34,9 +35,8 @@ const props = withDefaults(defineProps<FormProps>(), {
   })
 });
 
-const { locale } = useI18n();
+const { locale, t } = useI18n();
 const { api, auth } = useApiAuth();
-const { t, columns } = useSystemRoleForm(props);
 
 const formRef = ref();
 const treeRoleRef = ref();

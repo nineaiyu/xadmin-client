@@ -1,16 +1,16 @@
 <script lang="ts" setup>
 import { ref } from "vue";
-import { FormProps } from "./utils/types";
-import { useDemoBookForm } from "./utils/hook";
+import { AddOrEditFormProps } from "../utils/types";
 
-const props = withDefaults(defineProps<FormProps>(), {
+const props = withDefaults(defineProps<AddOrEditFormProps>(), {
   isAdd: () => true,
   showColumns: () => [],
-  formInline: () => ({})
+  formInline: () => ({}),
+  formProps: () => ({}),
+  columns: () => []
 });
 
 const formRef = ref();
-const { columns } = useDemoBookForm(props);
 const newFormInline = ref(props.formInline);
 
 function getRef() {
@@ -29,5 +29,6 @@ defineExpose({ getRef });
     :row-props="{ gutter: 24 }"
     label-position="right"
     label-width="120px"
+    v-bind="formProps"
   />
 </template>

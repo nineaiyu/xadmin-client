@@ -13,6 +13,7 @@ import { useNoticeForm } from "./utils/hook";
 const props = withDefaults(defineProps<FormProps>(), {
   isAdd: () => true,
   showColumns: () => [],
+  columns: () => [],
   formInline: () => ({
     pk: 0,
     title: "",

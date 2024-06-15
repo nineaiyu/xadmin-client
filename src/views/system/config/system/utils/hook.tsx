@@ -1,12 +1,10 @@
 import dayjs from "dayjs";
-import Form from "../form.vue";
 import { useI18n } from "vue-i18n";
 import { systemConfigApi } from "@/api/system/config/system";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
-import type { PlusColumn } from "plus-pro-components";
 import { reactive, ref, type Ref, shallowRef } from "vue";
-import { formatFormColumns, usePublicHooks } from "@/views/system/hooks";
+import { usePublicHooks } from "@/views/system/hooks";
 import { renderOption, renderSwitch } from "@/views/system/render";
 
 export function useSystemConfig(tableRef: Ref) {
@@ -37,7 +35,6 @@ export function useSystemConfig(tableRef: Ref) {
 
   const editForm = shallowRef({
     title: t("configSystem.configSystem"),
-    form: Form,
     row: {
       is_active: row => {
         return row?.is_active ?? true;
@@ -48,6 +45,64 @@ export function useSystemConfig(tableRef: Ref) {
       inherit: row => {
         return row?.inherit ?? false;
       }
+    },
+    formProps: {
+      rules: {
+        key: [
+          {
+            required: true,
+            message: t("configSystem.key"),
+            trigger: "blur"
+          }
+        ],
+        value: [
+          {
+            required: true,
+            message: t("configSystem.value"),
+            trigger: "blur"
+          }
+        ]
+      }
+    },
+    columns: () => {
+      return [
+        {
+          prop: "key",
+          valueType: "input"
+        },
+        {
+          prop: "value",
+          valueType: "textarea",
+          fieldProps: {
+            autosize: {
+              minRows: 8
+            }
+          }
+        },
+        {
+          prop: "access",
+          valueType: "radio",
+          colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 },
+          tooltip: t("configSystem.accessTip"),
+          renderField: renderOption()
+        },
+        {
+          prop: "inherit",
+          valueType: "radio",
+          colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 },
+          tooltip: t("configSystem.inheritTip"),
+          renderField: renderOption()
+        },
+        {
+          prop: "is_active",
+          valueType: "radio",
+          renderField: renderOption()
+        },
+        {
+          prop: "description",
+          valueType: "textarea"
+        }
+      ];
     }
   });
 
@@ -142,52 +197,5 @@ export function useSystemConfig(tableRef: Ref) {
     columns,
     editForm,
     handleInvalidCache
-  };
-}
-
-export function useSystemConfigForm(props) {
-  const { t, te } = useI18n();
-  const columns: PlusColumn[] = [
-    {
-      prop: "key",
-      valueType: "input"
-    },
-    {
-      prop: "value",
-      valueType: "textarea",
-      fieldProps: {
-        autosize: {
-          minRows: 8
-        }
-      }
-    },
-    {
-      prop: "access",
-      valueType: "radio",
-      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 },
-      tooltip: t("configSystem.accessTip"),
-      renderField: renderOption()
-    },
-    {
-      prop: "inherit",
-      valueType: "radio",
-      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 },
-      tooltip: t("configSystem.inheritTip"),
-      renderField: renderOption()
-    },
-    {
-      prop: "is_active",
-      valueType: "radio",
-      renderField: renderOption()
-    },
-    {
-      prop: "description",
-      valueType: "textarea"
-    }
-  ];
-  formatFormColumns(props, columns, t, te, "configSystem");
-  return {
-    t,
-    columns
   };
 }

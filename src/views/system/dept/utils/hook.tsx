@@ -11,28 +11,26 @@ import {
   shallowRef
 } from "vue";
 import { addDialog } from "@/components/ReDialog";
-import roleForm from "../form/role.vue";
-import Form from "../form/index.vue";
-import type { RoleFormItemProps } from "./types";
 import { roleApi } from "@/api/system/role";
 import { cloneDeep, deviceDetection, getKeyList } from "@pureadmin/utils";
 import { useRouter } from "vue-router";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import {
+  customRolePermissionOptions,
   formatFormColumns,
   formatHigherDeptOptions,
   formatOptions
 } from "@/views/system/hooks";
 import { dataPermissionApi } from "@/api/system/permission";
 import { ModeChoices } from "@/views/system/constants";
-import type { PlusColumn } from "plus-pro-components";
 
 import { renderOption, renderSwitch } from "@/views/system/render";
 import { handleTree } from "@/utils/tree";
+import addOrEdit from "@/components/ReBaseTable/src/form/addOrEdit.vue";
 
 export function useDept(tableRef: Ref) {
-  const { t } = useI18n();
+  const { t, te } = useI18n();
 
   const api = reactive({
     list: deptApi.list,
@@ -69,7 +67,6 @@ export function useDept(tableRef: Ref) {
 
   const editForm = shallowRef({
     title: t("systemDept.dept"),
-    form: Form,
     row: {
       roles: row => {
         return row?.roles ?? [];
@@ -87,10 +84,80 @@ export function useDept(tableRef: Ref) {
         return row?.parent?.pk ?? "";
       }
     },
-    props: {
-      treeData: (row, isAdd, data) => {
-        return formatHigherDeptOptions(cloneDeep(data));
+    formProps: {
+      rules: {
+        name: [
+          {
+            required: true,
+            message: t("systemDept.name"),
+            trigger: "blur"
+          }
+        ],
+        code: [
+          {
+            required: true,
+            message: t("systemDept.code"),
+            trigger: "blur"
+          }
+        ],
+        rank: [
+          {
+            required: true,
+            message: t("commonLabels.rank"),
+            trigger: "blur"
+          }
+        ]
       }
+    },
+    columns: ({ data }) => {
+      return [
+        {
+          prop: "name",
+          valueType: "input",
+          colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
+        },
+        {
+          prop: "code",
+          valueType: "input",
+          colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
+        },
+        {
+          prop: "parent",
+          valueType: "cascader",
+          fieldProps: {
+            valueOnClear: "",
+            props: {
+              value: "pk",
+              label: "name",
+              emitPath: false,
+              checkStrictly: true
+            }
+          },
+          options: formatHigherDeptOptions(cloneDeep(data))
+        },
+        {
+          prop: "rank",
+          valueType: "input-number",
+          colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
+        },
+        {
+          prop: "auto_bind",
+          valueType: "radio",
+          colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 },
+          tooltip: t("systemDept.autoBindDesc"),
+
+          renderField: renderOption()
+        },
+        {
+          prop: "is_active",
+          valueType: "radio",
+          renderField: renderOption()
+        },
+        {
+          prop: "description",
+          valueType: "textarea"
+        }
+      ];
     }
   });
 
@@ -195,6 +262,53 @@ export function useDept(tableRef: Ref) {
 
   /** 分配角色 */
   function handleRole(row) {
+    const assignRoles = reactive({
+      columns: [
+        {
+          prop: "name",
+          valueType: "input",
+          fieldProps: {
+            disabled: true
+          }
+        },
+        {
+          prop: "code",
+          valueType: "input",
+          fieldProps: {
+            disabled: true
+          }
+        },
+        {
+          prop: "roles",
+          valueType: "select",
+          fieldProps: {
+            multiple: true
+          },
+          options: customRolePermissionOptions(rolesOptions.value ?? [])
+        },
+        {
+          prop: "mode_type",
+          valueType: "select",
+          options: formatOptions(choicesDict.value["mode_type"] ?? [])
+        },
+        {
+          prop: "rules",
+          valueType: "select",
+          fieldProps: {
+            multiple: true
+          },
+          options: customRolePermissionOptions(rulesOptions.value ?? [])
+        }
+      ]
+    });
+    formatFormColumns(
+      { isAdd: true, showColumns: [] },
+      assignRoles?.columns as Array<any>,
+      t,
+      te,
+      "systemDept"
+    );
+
     addDialog({
       title: t("systemDept.assignRole", { dept: row.name }),
       props: {
@@ -205,18 +319,16 @@ export function useDept(tableRef: Ref) {
           roles: getKeyList(row?.roles ?? [], "pk") ?? [],
           rules: getKeyList(row?.rules ?? [], "pk") ?? []
         },
-        rolesOptions: rolesOptions.value ?? [],
-        rulesOptions: rulesOptions.value ?? [],
-        modeChoices: choicesDict.value["mode_type"] ?? []
+        ...assignRoles
       },
       width: "600px",
       draggable: true,
       fullscreen: deviceDetection(),
       fullscreenIcon: true,
       closeOnClickModal: false,
-      contentRenderer: () => h(roleForm),
+      contentRenderer: () => h(addOrEdit),
       beforeSure: (done, { options }) => {
-        const curData = options.props.formInline as RoleFormItemProps;
+        const curData = options.props.formInline;
         api
           .empower(row.pk, {
             roles: curData.roles,
@@ -280,134 +392,5 @@ export function useDept(tableRef: Ref) {
     buttonClass,
     handleRole,
     formatResult
-  };
-}
-
-export function useDeptForm(props) {
-  const { t, te } = useI18n();
-  const columns: PlusColumn[] = [
-    {
-      prop: "name",
-      valueType: "input",
-      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
-    },
-    {
-      prop: "code",
-      valueType: "input",
-      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
-    },
-    {
-      prop: "parent",
-      valueType: "cascader",
-      fieldProps: {
-        valueOnClear: "",
-        props: {
-          value: "pk",
-          label: "name",
-          emitPath: false,
-          checkStrictly: true
-        }
-      },
-      options: props.treeData
-    },
-    {
-      prop: "rank",
-      valueType: "input-number",
-      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
-    },
-    {
-      prop: "auto_bind",
-      valueType: "radio",
-      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 },
-      tooltip: t("systemDept.autoBindDesc"),
-
-      renderField: renderOption()
-    },
-    {
-      prop: "is_active",
-      valueType: "radio",
-      renderField: renderOption()
-    },
-    {
-      prop: "description",
-      valueType: "textarea"
-    }
-  ];
-  formatFormColumns(props, columns, t, te, "systemDept");
-  return {
-    t,
-    columns
-  };
-}
-
-export function useDeptRoleForm(props) {
-  const { t, te } = useI18n();
-  const customOptions = (data: Array<any>) => {
-    const result = [];
-    data?.forEach(item => {
-      result.push({
-        label: item?.name,
-        value: item?.pk,
-        fieldSlot: () => {
-          return (
-            <>
-              <span style="float: left">{item.name}</span>
-              <span
-                style="
-                  float: right;
-                  font-size: 13px;
-                  color: var(--el-text-color-secondary);
-                "
-              >
-                {item.code ?? item.mode_type?.label}
-              </span>
-            </>
-          );
-        }
-      });
-    });
-    return result;
-  };
-  const columns: PlusColumn[] = [
-    {
-      prop: "name",
-      valueType: "input",
-      fieldProps: {
-        disabled: true
-      }
-    },
-    {
-      prop: "code",
-      valueType: "input",
-      fieldProps: {
-        disabled: true
-      }
-    },
-    {
-      prop: "roles",
-      valueType: "select",
-      fieldProps: {
-        multiple: true
-      },
-      options: customOptions(props.rolesOptions)
-    },
-    {
-      prop: "mode_type",
-      valueType: "select",
-      options: formatOptions(props.modeChoices)
-    },
-    {
-      prop: "rules",
-      valueType: "select",
-      fieldProps: {
-        multiple: true
-      },
-      options: customOptions(props.rulesOptions)
-    }
-  ];
-  formatFormColumns(props, columns, t, te, "systemDept");
-  return {
-    t,
-    columns
   };
 }

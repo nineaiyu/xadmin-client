@@ -12,9 +12,8 @@ interface FormItemProps {
 interface FormProps {
   formInline: FormItemProps;
   fieldLookupsData?: any[];
-  menuPermissionData?: any[];
+  columns?: any[];
   valuesData?: any[];
-  modeChoices?: any[];
   showColumns: any[];
   isAdd?: boolean;
 }

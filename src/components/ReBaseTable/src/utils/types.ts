@@ -19,7 +19,9 @@ interface ApiAuthProps {
 }
 
 interface EditFormProps {
-  form: Component;
+  form?: Component;
+  formProps?: object;
+  columns?: any[] | Function;
   row?: object;
   title?: string;
   props?: object;
@@ -37,4 +39,21 @@ interface FormProps {
   resultFormat?: Function;
 }
 
-export type { ApiAuthProps, FormProps, SearchFieldsProps, EditFormProps };
+interface FormItemProps {}
+
+interface AddOrEditFormProps {
+  formInline: FormItemProps;
+  formProps?: object;
+  showColumns?: any[];
+  columns?: any[];
+  isAdd?: boolean;
+}
+
+export type {
+  FormProps,
+  ApiAuthProps,
+  FormItemProps,
+  AddOrEditFormProps,
+  SearchFieldsProps,
+  EditFormProps
+};

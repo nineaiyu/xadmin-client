@@ -1,11 +1,8 @@
 import dayjs from "dayjs";
-import Form from "../form.vue";
 import { useI18n } from "vue-i18n";
 import { bookApi } from "./api";
 import { hasAuth } from "@/router/utils";
-import type { PlusColumn } from "plus-pro-components";
 import { reactive, ref, type Ref, shallowRef } from "vue";
-import { formatFormColumns } from "@/views/system/hooks";
 import { renderOption, renderSwitch } from "@/views/system/render";
 
 export function useDemoBook(tableRef: Ref) {
@@ -27,11 +24,58 @@ export function useDemoBook(tableRef: Ref) {
   // 新增或更新的form表单
   const editForm = shallowRef({
     title: t("demoBook.book"),
-    form: Form,
+    formProps: {
+      rules: {
+        name: [
+          {
+            required: true,
+            message: t("demoBook.name"),
+            trigger: "blur"
+          }
+        ]
+      }
+    },
     row: {
       is_active: row => {
         return row?.is_active ?? true;
       }
+    },
+    columns: () => {
+      return [
+        {
+          prop: "name",
+          valueType: "input"
+        },
+        {
+          prop: "isbn",
+          valueType: "input"
+        },
+        {
+          prop: "author",
+          valueType: "input"
+        },
+        {
+          prop: "publisher",
+          valueType: "input"
+        },
+        {
+          prop: "price",
+          valueType: "input-number"
+        },
+        {
+          prop: "publication_date",
+          valueType: "date-picker"
+        },
+        {
+          prop: "is_active",
+          valueType: "radio",
+          renderField: renderOption()
+        },
+        {
+          prop: "description",
+          valueType: "textarea"
+        }
+      ];
     }
   });
   //用于前端table字段展示，前两个，selection是固定的，用与控制多选
@@ -59,7 +103,7 @@ export function useDemoBook(tableRef: Ref) {
       prop: "is_active",
       minWidth: 130,
       cellRenderer: renderSwitch(auth.update, tableRef, "is_active", scope => {
-        return scope.row.key;
+        return scope.row.name;
       })
     },
     {
@@ -104,51 +148,5 @@ export function useDemoBook(tableRef: Ref) {
     auth,
     columns,
     editForm
-  };
-}
-
-export function useDemoBookForm(props) {
-  const { t, te } = useI18n();
-  //用于新增和更新的form表单字段配置
-  const columns: PlusColumn[] = [
-    {
-      prop: "name",
-      valueType: "input"
-    },
-    {
-      prop: "isbn",
-      valueType: "input"
-    },
-    {
-      prop: "author",
-      valueType: "input"
-    },
-    {
-      prop: "publisher",
-      valueType: "input"
-    },
-    {
-      prop: "price",
-      valueType: "input-number"
-    },
-    {
-      prop: "publication_date",
-      valueType: "date-picker"
-    },
-    {
-      prop: "is_active",
-      valueType: "radio",
-      renderField: renderOption()
-    },
-    {
-      prop: "description",
-      valueType: "textarea"
-    }
-  ];
-  // 自动格式化字段名称
-  formatFormColumns(props, columns, t, te, "demoBook");
-  return {
-    t,
-    columns
   };
 }

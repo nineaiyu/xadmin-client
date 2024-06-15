@@ -21,6 +21,7 @@ interface FormProps {
   formInline: FormItemProps;
   menuTreeData: any[];
   showColumns: any[];
+  columns: any[];
   isAdd?: boolean;
 }
 

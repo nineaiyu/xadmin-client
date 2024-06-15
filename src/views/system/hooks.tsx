@@ -125,7 +125,7 @@ export const formatFormColumns = (
   localeName: string,
   disabled: boolean = false
 ) => {
-  tableColumns.forEach(column => {
+  tableColumns?.forEach(column => {
     column.label =
       column.label ??
       formatPublicLabels(t, te, column.prop as string, localeName);
@@ -155,4 +155,31 @@ export const formatColumnsLabel = (
     column.label =
       column.label ?? formatPublicLabels(t, te, key as string, localeName);
   });
+};
+
+export const customRolePermissionOptions = (data: Array<any>) => {
+  const result = [];
+  data?.forEach(item => {
+    result.push({
+      label: item?.name,
+      value: item?.pk,
+      fieldSlot: () => {
+        return (
+          <>
+            <span style="float: left">{item.name}</span>
+            <span
+              style="
+                  float: right;
+                  font-size: 13px;
+                  color: var(--el-text-color-secondary);
+                "
+            >
+              {item.code ?? item.mode_type?.label}
+            </span>
+          </>
+        );
+      }
+    });
+  });
+  return result;
 };

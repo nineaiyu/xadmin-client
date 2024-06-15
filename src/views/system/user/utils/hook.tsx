@@ -16,16 +16,15 @@ import {
 } from "vue";
 import { addDialog } from "@/components/ReDialog";
 import croppingUpload from "@/components/RePictureUpload";
-import roleForm from "../form/role.vue";
-import Form from "../form/index.vue";
-import type { FormItemProps, RoleFormItemProps } from "./types";
 import { roleApi } from "@/api/system/role";
 import {
   cloneDeep,
   deviceDetection,
   getKeyList,
   hideTextAtIndex,
-  isAllEmpty
+  isAllEmpty,
+  isEmail,
+  isPhone
 } from "@pureadmin/utils";
 import { useRouter } from "vue-router";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
@@ -38,16 +37,17 @@ import { REGEXP_PWD } from "@/views/login/utils/rule";
 import Info from "@iconify-icons/ri/question-line";
 import { renderOption, renderSwitch } from "@/views/system/render";
 import {
+  customRolePermissionOptions,
   formatFormColumns,
   formatHigherDeptOptions,
   formatOptions,
   picturePng
 } from "@/views/system/hooks";
-import type { PlusColumn } from "plus-pro-components";
 import { AesEncrypted } from "@/utils/aes";
+import addOrEdit from "@/components/ReBaseTable/src/form/addOrEdit.vue";
 
 export function useUser(tableRef: Ref) {
-  const { t } = useI18n();
+  const { t, te } = useI18n();
 
   const api = reactive({
     list: userApi.list,
@@ -83,7 +83,6 @@ export function useUser(tableRef: Ref) {
 
   const editForm = shallowRef({
     title: t("systemUser.user"),
-    form: Form,
     row: {
       is_active: row => {
         return row?.is_active ?? true;
@@ -98,13 +97,148 @@ export function useUser(tableRef: Ref) {
         return row?.dept?.pk ?? "";
       }
     },
-    props: {
-      treeData: () => {
-        return formatHigherDeptOptions(cloneDeep(treeData.value));
-      },
-      genderChoices: () => {
-        return choicesDict.value["gender"];
+    formProps: {
+      labelWidth: "100px",
+      rules: {
+        username: [
+          {
+            required: true,
+            message: t("systemUser.username"),
+            trigger: "blur"
+          }
+        ],
+        password: [
+          {
+            required: true,
+            validator: (rule, value, callback) => {
+              if (value === "") {
+                callback(new Error(t("login.passwordReg")));
+              } else if (!REGEXP_PWD.test(value)) {
+                callback(new Error(t("login.passwordRuleReg")));
+              } else {
+                callback();
+              }
+            },
+            trigger: "blur"
+          }
+        ],
+        nickname: [
+          {
+            required: true,
+            message: t("systemUser.nickname"),
+            trigger: "blur"
+          }
+        ],
+        gender: [
+          {
+            required: true,
+            message: t("systemUser.gender"),
+            trigger: "blur"
+          }
+        ],
+        dept: [
+          {
+            required: true,
+            message: t("systemUser.dept"),
+            trigger: "blur"
+          }
+        ],
+        is_active: [
+          {
+            required: true,
+            message: t("labels.verifyStatus"),
+            trigger: "blur"
+          }
+        ],
+        mobile: [
+          {
+            validator: (rule, value, callback) => {
+              if (value === "" || !value) {
+                callback();
+              } else if (!isPhone(value)) {
+                callback(new Error(t("login.phoneCorrectReg")));
+              } else {
+                callback();
+              }
+            },
+            trigger: "blur"
+          }
+        ],
+        email: [
+          {
+            validator: (rule, value, callback) => {
+              if (value === "" || !value) {
+                callback();
+              } else if (!isEmail(value)) {
+                callback(new Error(t("login.emailCorrectReg")));
+              } else {
+                callback();
+              }
+            },
+            trigger: "blur"
+          }
+        ]
       }
+    },
+    columns: ({ isAdd }) => {
+      return [
+        {
+          prop: "username",
+          valueType: "input",
+          colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
+        },
+        {
+          prop: "nickname",
+          valueType: "input",
+          colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
+        },
+
+        {
+          prop: "mobile",
+          valueType: "input",
+          colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
+        },
+        {
+          prop: "email",
+          valueType: "input",
+          colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
+        },
+        {
+          prop: "gender",
+          valueType: "select",
+          colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 },
+          options: formatOptions(choicesDict.value["gender"])
+        },
+        {
+          prop: "password",
+          valueType: "input",
+          hideInForm: !isAdd,
+          colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
+        },
+        {
+          prop: "is_active",
+          valueType: "radio",
+          colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 },
+          renderField: renderOption()
+        },
+        {
+          prop: "dept",
+          valueType: "cascader",
+          fieldProps: {
+            props: {
+              value: "pk",
+              label: "name",
+              emitPath: false,
+              checkStrictly: true
+            }
+          },
+          options: formatHigherDeptOptions(cloneDeep(treeData.value))
+        },
+        {
+          prop: "description",
+          valueType: "textarea"
+        }
+      ];
     }
   });
 
@@ -272,7 +406,7 @@ export function useUser(tableRef: Ref) {
   }
 
   /** 上传头像 */
-  function handleUpload(row: FormItemProps) {
+  function handleUpload(row) {
     addDialog({
       title: t("systemUser.updateAvatar", { user: row.username }),
       width: "40%",
@@ -316,7 +450,49 @@ export function useUser(tableRef: Ref) {
   }
 
   /** 分配角色 */
-  function handleRole(row: FormItemProps) {
+  function handleRole(row) {
+    const assignRoles = reactive({
+      columns: [
+        {
+          prop: "username",
+          valueType: "input",
+          fieldProps: { disabled: true }
+        },
+        {
+          prop: "nickname",
+          valueType: "input",
+          fieldProps: { disabled: true }
+        },
+        {
+          prop: "roles",
+          valueType: "select",
+          fieldProps: {
+            multiple: true
+          },
+          options: customRolePermissionOptions(rolesOptions.value ?? [])
+        },
+        {
+          prop: "mode_type",
+          valueType: "select",
+          options: formatOptions(choicesDict.value["mode_type"] ?? [])
+        },
+        {
+          prop: "rules",
+          valueType: "select",
+          fieldProps: {
+            multiple: true
+          },
+          options: customRolePermissionOptions(rulesOptions.value ?? [])
+        }
+      ]
+    });
+    formatFormColumns(
+      { isAdd: true, showColumns: [] },
+      assignRoles?.columns as Array<any>,
+      t,
+      te,
+      "systemUser"
+    );
     addDialog({
       title: t("systemUser.assignRole", { user: row.username }),
       props: {
@@ -327,18 +503,16 @@ export function useUser(tableRef: Ref) {
           roles: getKeyList(row?.roles ?? [], "pk") ?? [],
           rules: getKeyList(row?.rules ?? [], "pk") ?? []
         },
-        rolesOptions: rolesOptions.value ?? [],
-        rulesOptions: rulesOptions.value ?? [],
-        modeChoices: choicesDict.value["mode_type"] ?? []
+        ...assignRoles
       },
       width: "600px",
       draggable: true,
       fullscreen: deviceDetection(),
       fullscreenIcon: true,
       closeOnClickModal: false,
-      contentRenderer: () => h(roleForm),
+      contentRenderer: () => h(addOrEdit),
       beforeSure: (done, { options }) => {
-        const curData = options.props.formInline as RoleFormItemProps;
+        const curData = options.props.formInline;
         api
           .empower(row.pk, {
             roles: curData.roles,
@@ -361,7 +535,7 @@ export function useUser(tableRef: Ref) {
   }
 
   /** 重置密码 */
-  function handleReset(row: FormItemProps) {
+  function handleReset(row) {
     addDialog({
       title: t("systemUser.resetPasswd", { user: row.username }),
       width: "30%",
@@ -514,141 +688,5 @@ export function useUser(tableRef: Ref) {
     handleUpload,
     selectionChange,
     deviceDetection
-  };
-}
-
-export function useSystemUserForm(props) {
-  const { t, te } = useI18n();
-  const columns: PlusColumn[] = [
-    {
-      prop: "username",
-      valueType: "input",
-      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
-    },
-    {
-      prop: "nickname",
-      valueType: "input",
-      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
-    },
-
-    {
-      prop: "mobile",
-      valueType: "input",
-      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
-    },
-    {
-      prop: "email",
-      valueType: "input",
-      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
-    },
-    {
-      prop: "gender",
-      valueType: "select",
-      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 },
-      options: formatOptions(props.genderChoices)
-    },
-    {
-      prop: "password",
-      valueType: "input",
-      hideInForm: !props.isAdd,
-      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
-    },
-    {
-      prop: "is_active",
-      valueType: "radio",
-      colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 },
-      renderField: renderOption()
-    },
-    {
-      prop: "dept",
-      valueType: "cascader",
-      fieldProps: {
-        props: {
-          value: "pk",
-          label: "name",
-          emitPath: false,
-          checkStrictly: true
-        }
-      },
-      options: props.treeData
-    },
-    {
-      prop: "description",
-      valueType: "textarea"
-    }
-  ];
-  formatFormColumns(props, columns, t, te, "systemUser");
-  return {
-    t,
-    columns
-  };
-}
-
-export function useSystemUserRoleForm(props) {
-  const { t, te } = useI18n();
-  const customOptions = (data: Array<any>) => {
-    const result = [];
-    data?.forEach(item => {
-      result.push({
-        label: item?.name,
-        value: item?.pk,
-        fieldSlot: () => {
-          return (
-            <>
-              <span style="float: left">{item.name}</span>
-              <span
-                style="
-                  float: right;
-                  font-size: 13px;
-                  color: var(--el-text-color-secondary);
-                "
-              >
-                {item.code ?? item.mode_type?.label}
-              </span>
-            </>
-          );
-        }
-      });
-    });
-    return result;
-  };
-  const columns: PlusColumn[] = [
-    {
-      prop: "username",
-      valueType: "input",
-      fieldProps: { disabled: true }
-    },
-    {
-      prop: "nickname",
-      valueType: "input",
-      fieldProps: { disabled: true }
-    },
-    {
-      prop: "roles",
-      valueType: "select",
-      fieldProps: {
-        multiple: true
-      },
-      options: customOptions(props.rolesOptions)
-    },
-    {
-      prop: "mode_type",
-      valueType: "select",
-      options: formatOptions(props.modeChoices)
-    },
-    {
-      prop: "rules",
-      valueType: "select",
-      fieldProps: {
-        multiple: true
-      },
-      options: customOptions(props.rulesOptions)
-    }
-  ];
-  formatFormColumns(props, columns, t, te, "systemUser");
-
-  return {
-    t,
-    columns
   };
 }

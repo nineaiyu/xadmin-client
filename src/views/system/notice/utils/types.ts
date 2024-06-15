@@ -37,7 +37,8 @@ interface FormProps {
   formInline: FormItemProps;
   levelChoices?: any[];
   noticeChoices?: any[];
-  showColumns: any[];
+  showColumns?: any[];
+  columns?: any[];
   isAdd?: boolean;
 }
 
