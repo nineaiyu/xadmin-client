@@ -13,7 +13,7 @@ withDefaults(defineProps<Props>(), {
   isActive: false
 });
 
-const { tooltipEffect } = useNav();
+const { tooltipEffect, t } = useNav();
 
 const iconClass = computed(() => {
   return ["w-[16px]", "h-[16px]"];
@@ -34,7 +34,7 @@ const toggleClick = () => {
 <template>
   <div
     v-tippy="{
-      content: isActive ? '点击折叠' : '点击展开',
+      content: isActive ? t('layout.fold') : t('layout.unfold'),
       theme: tooltipEffect,
       hideOnClick: 'toggle',
       placement: 'right'
