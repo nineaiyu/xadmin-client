@@ -5,6 +5,7 @@ import type {
   ChoicesResult,
   DetailResult,
   ListResult,
+  SearchColumnsResult,
   SearchFieldsResult
 } from "@/api/types";
 import { downloadByData } from "@pureadmin/utils";
@@ -54,6 +55,14 @@ export class BaseApi extends BaseRequest {
       {},
       {},
       `${this.baseApi}/search-fields`
+    );
+  };
+  columns = () => {
+    return this.request<SearchColumnsResult>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/search-columns`
     );
   };
   list = (params?: object) => {

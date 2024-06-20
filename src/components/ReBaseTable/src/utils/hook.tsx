@@ -296,6 +296,16 @@ export function useBaseTable(
     if (typeof editForm?.columns === "function") {
       editForm.columns = editForm.columns({ row, isAdd, data: dataList.value });
     }
+    const formPropsResult = {};
+
+    Object.keys(editForm?.formProps ?? {}).forEach(key => {
+      const getValue = editForm?.formProps[key];
+      if (typeof editForm?.formProps[key] === "function") {
+        formPropsResult[key] = getValue(row, isAdd, dataList.value);
+      } else {
+        formPropsResult[key] = getValue;
+      }
+    });
     formatFormColumns(
       { isAdd, showColumns: showColumns.value },
       editForm?.columns as Array<any>,
@@ -313,7 +323,7 @@ export function useBaseTable(
         ...propsResult,
         showColumns: showColumns.value,
         columns: editForm?.columns ?? [],
-        formProps: editForm?.formProps ?? {},
+        formProps: formPropsResult ?? {},
         isAdd: isAdd
       },
       width: "40%",
