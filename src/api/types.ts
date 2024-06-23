@@ -16,8 +16,6 @@ export type SearchFieldsResult = {
     key: string;
     choices?: Array<number | string | any>;
     input_type: string | any;
-    max_length?: number | any;
-    multiple?: boolean;
     label: string;
   }>;
 };
@@ -27,12 +25,15 @@ export type SearchColumnsResult = {
   code: number;
   data: Array<{
     key: string;
-    choices?: Array<number | string | any>;
+    label: string;
     input_type: string | any;
     required: boolean;
     read_only: boolean;
     write_only: boolean;
-    label: string;
+    max_length?: number | any;
+    multiple?: boolean;
+    help_text?: string;
+    choices?: Array<number | string | any>;
   }>;
 };
 

@@ -35,7 +35,8 @@ const defaultConfig: AxiosRequestConfig = {
   // 自动转换为ids=1&ids=2&ids=3这种形式
   paramsSerializer: params => {
     return stringify(params, { arrayFormat: "repeat" });
-  }
+  },
+  formSerializer: { indexes: null }
 };
 
 class PureHttp {
