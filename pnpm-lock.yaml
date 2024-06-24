@@ -262,7 +262,7 @@ importers:
         specifier: 5.4.5
         version: 5.4.5
       vite:
-        specifier: ^5.3.1
+        specifier: ^5.2.13
         version: 5.3.1(@types/node@20.14.2)(sass@1.77.5)
       vite-plugin-cdn-import:
         specifier: ^1.0.1
