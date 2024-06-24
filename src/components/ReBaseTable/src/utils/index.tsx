@@ -116,7 +116,7 @@ export const getFieldsData = (
     fieldsApi().then((res: SearchFieldsResult) => {
       if (res.code === 1000) {
         res.data.forEach(item => {
-          if (item.input_type.startsWith("search")) {
+          if (item.input_type.startsWith("api-")) {
             searchFields.value[item.key] = [];
           } else {
             searchFields.value[item.key] = "";
