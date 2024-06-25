@@ -21,7 +21,13 @@ export function useOperationLog() {
   });
 
   const router = useRouter();
-
+  const pagination = reactive({
+    total: 0,
+    pageSize: 20,
+    currentPage: 1,
+    pageSizes: [20, 30, 100, 200],
+    background: true
+  });
   const columns = ref<TableColumnList>([
     {
       type: "selection",
@@ -105,6 +111,7 @@ export function useOperationLog() {
   return {
     api,
     auth,
-    columns
+    columns,
+    pagination
   };
 }

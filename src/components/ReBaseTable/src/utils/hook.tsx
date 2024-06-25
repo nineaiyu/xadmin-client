@@ -37,7 +37,10 @@ export function useBaseTable(
     size: 10,
     ordering: "-created_time"
   });
-  const defaultValue = ref({});
+  const defaultValue = ref({
+    page: searchFields.value.page,
+    size: searchFields.value.size
+  });
   const searchColumns = ref([]);
   const selectedNum = ref(0);
   const dataList = ref([]);
@@ -146,8 +149,10 @@ export function useBaseTable(
 
   const onSearch = (init = false) => {
     if (init) {
-      pagination.currentPage = searchFields.value.page = 1;
-      pagination.pageSize = searchFields.value.size = 10;
+      pagination.currentPage = searchFields.value.page =
+        defaultValue.value?.page ?? 1;
+      pagination.pageSize = searchFields.value.size =
+        defaultValue.value?.size ?? 10;
     }
     loading.value = true;
     ["created_time", "updated_time"].forEach(key => {
@@ -444,19 +449,24 @@ export function useBaseTable(
   };
 
   onMounted(() => {
-    getFieldsData(api.fields, searchFields, searchColumns, localeName).then(
-      () => {
-        defaultValue.value = cloneDeep(searchFields.value);
-        if (getParameter) {
-          const parameter = cloneDeep(getParameter);
-          Object.keys(parameter).forEach(param => {
-            searchFields.value[param] = parameter[param];
-          });
-        }
-        formatColumnsLabel(tableColumns, t, te, localeName);
-        onSearch();
+    getFieldsData(
+      api.fields,
+      searchFields,
+      searchColumns,
+      localeName,
+      pagination.currentPage,
+      pagination.pageSize
+    ).then(() => {
+      defaultValue.value = cloneDeep(searchFields.value);
+      if (getParameter) {
+        const parameter = cloneDeep(getParameter);
+        Object.keys(parameter).forEach(param => {
+          searchFields.value[param] = parameter[param];
+        });
       }
-    );
+      formatColumnsLabel(tableColumns, t, te, localeName);
+      onSearch();
+    });
   });
 
   return {

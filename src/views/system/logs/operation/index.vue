@@ -6,7 +6,7 @@ defineOptions({
   name: "SystemOperationLog"
 });
 
-const { api, auth, columns } = useOperationLog();
+const { api, auth, columns, pagination } = useOperationLog();
 </script>
 
 <template>
@@ -15,5 +15,6 @@ const { api, auth, columns } = useOperationLog();
     :auth="auth"
     :table-columns="columns"
     locale-name="logsOperation"
+    :pagination="pagination"
   />
 </template>
