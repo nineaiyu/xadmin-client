@@ -1,8 +1,19 @@
 <script lang="ts" setup>
-import { computed, reactive, toRefs, ref, onMounted } from "vue";
+import {
+  computed,
+  reactive,
+  toRefs,
+  ref,
+  onMounted,
+  watch,
+  nextTick,
+  unref,
+  getCurrentInstance,
+  onBeforeUnmount
+} from "vue";
 import type { FormRules } from "element-plus";
+import { set } from "lodash-es";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Plus, Delete } from "@element-plus/icons-vue";
 import {
   ButtonsCallBackParams,
   PlusPageInstance,
@@ -12,17 +23,17 @@ import {
   PlusDescriptions
 } from "plus-pro-components";
 import { useTable } from "plus-pro-components";
-import { useDemoBook } from "@/views/demo/book/utils/hook";
-
-interface TableRow {
-  id: number;
-  groupName: string | null;
-  createBy: string | null;
-  createTime: string | null;
-  updateBy: string | null;
-  updateTime: string | null;
-  code: string | null;
-}
+import { useBaseColumns } from "@/components/RePlusProCRUD/src/utils/columns";
+import { bookApi } from "@/views/demo/book/utils/api";
+import { hasGlobalAuth } from "@/router/utils";
+import { debounce, deviceDetection } from "@pureadmin/utils";
+import { useI18n } from "vue-i18n";
+import { useRoute } from "vue-router";
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import EditPen from "@iconify-icons/ep/edit-pen";
+import Delete from "@iconify-icons/ep/delete";
+import View from "@iconify-icons/ep/view";
+import AddFill from "@iconify-icons/ri/add-circle-line";
 
 interface State {
   /**
@@ -32,7 +43,7 @@ interface State {
   /**
    * 当前选择的行数据
    */
-  currentRow: Partial<TableRow>;
+  currentRow: object;
   /**
    * 表单弹窗是否可见
    */
@@ -60,60 +71,47 @@ interface State {
   /**
    * 表单
    */
-  form: {
-    groupName: string;
-    remark: string;
-    userGroupId?: number;
-  };
+  form: {};
   /**
    * 校验
    */
   rules: FormRules;
 }
+const plusPageInstance = ref<PlusPageInstance | null>(null);
 
 const {
-  t,
-  api,
-  auth,
   listColumns,
+  searchColumns,
+  getColumnData,
   addOrEditRules,
   addOrEditColumns,
-  addOrEditDefaultValue,
-  searchColumns
-} = useDemoBook();
+  searchDefaultValue,
+  addOrEditDefaultValue
+} = useBaseColumns();
 
-/**
- * API
- */
-const GroupServe = {
-  async getList(query: Record<string, any>) {
-    const { data } = await api.list(query);
-    const { page = 1, pageSize = 10 } = query;
-    const list = (data.results as TableRow[]).filter(
-      (_, index) => index < pageSize * page && index >= pageSize * (page - 1)
-    );
-    return { data: list, total: data.total };
-  },
-  async create(data: Record<string, any>) {
-    api.create(data).then(() => {
-      refresh();
-    });
-    return data;
-  },
-  async update(data: Record<string, any>) {
-    api.update(data.pk, data).then(() => {
-      refresh();
-    });
-    return data;
-  },
-  async delete(ids: number[]) {
-    return ids;
-  }
-};
+const api = reactive(bookApi);
+const { t, te } = useI18n();
+const route = useRoute();
 
-const plusPageInstance = ref<PlusPageInstance | null>(null);
+// 权限判断，用于判断是否有该权限
+const auth = reactive({
+  list: hasGlobalAuth("list:demoBook"),
+  create: hasGlobalAuth("create:demoBook"),
+  delete: hasGlobalAuth("delete:demoBook"),
+  update: hasGlobalAuth("update:demoBook"),
+  export: hasGlobalAuth("export:demoBook"),
+  import: hasGlobalAuth("import:demoBook"),
+  batchDelete: hasGlobalAuth("batchDelete:demoBook")
+});
+
+onMounted(() => {
+  getColumnData(api, () => {
+    plusPageInstance.value.plusSearchInstance.handleReset();
+  });
+});
+
 const state = reactive<State>({
-  query: { groupName: "" },
+  query: searchDefaultValue.value,
   currentRow: {},
   visible: false,
   detailsVisible: false,
@@ -121,27 +119,15 @@ const state = reactive<State>({
   isCreate: true,
   isBatch: false,
   selectedIds: [],
-  form: {
-    groupName: "",
-    remark: "",
-    userGroupId: undefined
-  },
-  rules: {
-    groupName: [
-      {
-        required: true,
-        message: "请输入",
-        trigger: "blur"
-      }
-    ]
-  }
+  form: {},
+  rules: addOrEditRules.value
 });
 
 const dialogTitle = computed(() => (state.isCreate ? "新增" : "编辑"));
 const { buttons } = useTable();
 
 const columns = computed(() => {
-  return listColumns.value;
+  return [...listColumns.value, ...searchColumns.value];
 });
 
 // 按钮
@@ -149,20 +135,67 @@ buttons.value = [
   {
     text: "编辑",
     code: "update",
-    props: { type: "success" }
+    props: {
+      type: "primary",
+      icon: useRenderIcon(EditPen),
+      link: true,
+      size: "large"
+    },
+    show: auth?.update
   },
   {
     text: "删除",
     code: "delete",
     confirm: true,
-    props: { type: "warning" }
+    props: {
+      type: "danger",
+      icon: useRenderIcon(Delete),
+      link: true,
+      size: "large"
+    },
+    show: auth?.delete
   },
   {
-    text: "查看",
+    text: "",
     code: "view",
-    props: { type: "info" }
+    props: {
+      type: "info",
+      icon: useRenderIcon(View),
+      link: true,
+      size: "large"
+    },
+    show: auth?.list
   }
 ];
+
+/**
+ * API
+ */
+const GroupServe = {
+  async getList(query: Record<string, any>) {
+    const { data } = await api.list(query);
+    tableData.value = data.results;
+    return { data: tableData.value, total: data.total };
+  },
+  async create(data: Record<string, any>) {
+    return api.create(data);
+  },
+  async update(data: Record<string, any>) {
+    return api.update(data.pk, data);
+  },
+  async delete(pk: string | number) {
+    api.delete(pk).then(() => {
+      ElMessage.success("删除成功");
+      refresh();
+    });
+  },
+  async batchDelete(pks: Array<Number | String>) {
+    api.batchDelete(pks).then(() => {
+      ElMessage.success("删除成功");
+      refresh();
+    });
+  }
+};
 
 // 按钮操作
 const handleTableOption = ({ row, buttonRow }: ButtonsCallBackParams): void => {
@@ -175,8 +208,7 @@ const handleTableOption = ({ row, buttonRow }: ButtonsCallBackParams): void => {
       break;
     case "delete":
       state.isBatch = false;
-      api.delete(row.pk);
-      refresh();
+      GroupServe.delete(row.pk);
       break;
     case "view":
       state.detailsVisible = true;
@@ -189,18 +221,6 @@ const refresh = () => {
   plusPageInstance.value?.getList();
 };
 
-// 删除
-const handleDelete = async (): Promise<void> => {
-  try {
-    const params = state.isBatch
-      ? state.selectedIds
-      : [state.currentRow.id as number];
-    await GroupServe.delete(params);
-    ElMessage.success("删除成功");
-    refresh();
-  } catch (error) {}
-};
-
 // 批量删除
 const handleBatchDelete = async () => {
   if (!state.selectedIds.length) {
@@ -210,7 +230,7 @@ const handleBatchDelete = async () => {
   try {
     await ElMessageBox.confirm("确定删除所选数据", "提示");
     state.isBatch = true;
-    handleDelete();
+    await GroupServe.batchDelete(state.selectedIds);
   } catch (error) {
     console.log(error);
   }
@@ -218,17 +238,13 @@ const handleBatchDelete = async () => {
 
 // 选择
 const handleSelect = (data: any) => {
-  state.selectedIds = [...data].map(item => item.id);
+  state.selectedIds = [...data].map(item => item.pk ?? item.id);
 };
 
 // 创建
 const handleCreate = (): void => {
   state.currentRow = {};
-  state.form = {
-    groupName: "",
-    remark: "",
-    userGroupId: undefined
-  };
+  state.form = addOrEditDefaultValue.value;
   state.isCreate = true;
   state.visible = true;
 };
@@ -238,28 +254,116 @@ const handleCancel = () => {
   state.visible = false;
 };
 
+const getFormatLabel = label => {
+  if (te(label)) {
+    return t(label);
+  }
+  return label;
+};
+
 // 提交表单成功
 const handleSubmit = async () => {
   try {
     state.confirmLoading = true;
-    const params = { ...state.form, remark: state.form.remark || "" };
+    const params = { ...state.form };
     if (state.isCreate) {
-      await GroupServe.create(params);
-      ElMessage.success("创建成功");
+      await GroupServe.create(params).then(res => {
+        if (res.code === 1000) {
+          ElMessage.success("创建成功");
+          // 应该设置page=1，刷新页面到第一页
+          refresh();
+          handleCancel();
+        } else {
+          ElMessage.error("创建失败");
+        }
+      });
     } else {
-      await GroupServe.update(params);
-      ElMessage.success("更新成功");
+      await GroupServe.update(params).then(res => {
+        if (res.code === 1000) {
+          ElMessage.success("更新成功");
+          refresh();
+          handleCancel();
+        } else {
+          ElMessage.error("更新失败");
+        }
+      });
     }
-    handleCancel();
-    refresh();
   } catch (error) {}
   state.confirmLoading = false;
+};
+const { tableData } = useTable();
+const handleChange = ({ index, value, prop, row }) => {
+  api.update(row.pk, { [prop]: value }).then(res => {
+    if (res.code === 1000) {
+      ElMessage.success("更新成功");
+      set(tableData.value[index], prop, value);
+    } else {
+      ElMessage.error("更新失败");
+    }
+  });
 };
 
 const { form, confirmLoading, rules, currentRow, visible, detailsVisible } =
   toRefs(state);
-</script>
 
+export type AdaptiveConfig = {
+  /** 表格距离页面底部的偏移量，默认值为 `96` */
+  offsetBottom?: number;
+  /** 是否固定表头，默认值为 `true` */
+  fixHeader?: boolean;
+  /** 页面 `resize` 时的防抖时间，默认值为 `60` ms */
+  timeout?: number;
+  /** 表头的 `z-index`，默认值为  `3` */
+  zIndex?: number;
+};
+const adaptiveConfig = ref<AdaptiveConfig>({
+  offsetBottom: 115,
+  fixHeader: true,
+  timeout: 60,
+  zIndex: 3
+});
+
+const getTableRef = () =>
+  plusPageInstance.value?.plusTableInstance?.tableInstance;
+
+const getTableDoms = () => (getTableRef() as any).$refs;
+
+const setAdaptive = async () => {
+  await nextTick();
+  const tableWrapper = getTableDoms().tableWrapper;
+  const offsetBottom = unref(adaptiveConfig).offsetBottom ?? 96;
+  tableWrapper.style.height = `${
+    window.innerHeight - tableWrapper.getBoundingClientRect().top - offsetBottom
+  }px`;
+};
+
+const debounceSetAdaptive = debounce(
+  setAdaptive,
+  unref(adaptiveConfig).timeout ?? 60
+);
+
+const setHeaderSticky = async (zIndex = 3) => {
+  await nextTick();
+  const headerStyle = getTableDoms().tableHeaderRef.$el.style;
+  headerStyle.position = "sticky";
+  headerStyle.top = 0;
+  headerStyle.zIndex = zIndex;
+};
+
+onMounted(() => {
+  setAdaptive();
+  window.addEventListener("resize", debounceSetAdaptive);
+  const hasFixHeader = Reflect.has(unref(adaptiveConfig), "fixHeader");
+  if (hasFixHeader && !unref(adaptiveConfig).fixHeader) {
+    return;
+  } else {
+    setHeaderSticky(unref(adaptiveConfig).zIndex ?? 3);
+  }
+});
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", debounceSetAdaptive);
+});
+</script>
 <template>
   <div class="main">
     <div class="w-full">
@@ -267,21 +371,66 @@ const { form, confirmLoading, rules, currentRow, visible, detailsVisible } =
         ref="plusPageInstance"
         :request="GroupServe.getList"
         :columns="columns"
-        :params="state.query"
-        :search="{ labelWidth: '100px', colProps: { span: 8 } }"
+        :page-info-map="{ page: 'page', pageSize: 'size' }"
+        :immediate="false"
+        :search-card-props="{ shadow: 'never' }"
+        :table-card-props="{ shadow: 'never' }"
+        :search="{
+          rules: addOrEditRules,
+          labelWidth: 'auto',
+          colProps: { xs: 24, sm: 12, md: 6, lg: 6, xl: 6 },
+          showNumber: deviceDetection() ? 1 : 3,
+          defaultValues: searchDefaultValue,
+          onChange: (_, column) => {
+            const canChangeType = [
+              'select',
+              'date-picker',
+              'time-picker',
+              'time-select'
+            ];
+            canChangeType.indexOf(column.valueType) > -1 &&
+              plusPageInstance.getList();
+          }
+        }"
         :table="{
           isSelection: true,
-          actionBar: { buttons, width: 200 },
+          headerCellStyle: {
+            'text-align': 'center',
+            background: 'var(--el-table-row-hover-bg-color)',
+            color: 'var(--el-text-color-primary)'
+          },
+          cellStyle: { 'text-align': 'center' },
+          actionBar: {
+            type: 'button',
+            buttons,
+            fixed: 'right',
+            actionBarTableColumnProps: { align: 'center' }
+          },
+          rowKey: 'pk',
+          border: false,
+          showOverflowTooltip: true,
+          tableLayout: 'auto',
+          defaultExpandAll: true,
           onClickAction: handleTableOption,
-          onSelectionChange: handleSelect
+          onSelectionChange: handleSelect,
+          onFormChange: handleChange
         }"
       >
+        <template #table-title>
+          <p class="font-bold truncate">
+            {{ getFormatLabel(route.meta.title) }}
+          </p>
+        </template>
         <template #table-toolbar>
-          <el-button type="primary" :icon="Plus" @click="handleCreate">
-            添加
+          <el-button
+            type="primary"
+            :icon="useRenderIcon(AddFill)"
+            @click="handleCreate"
+          >
+            新增
           </el-button>
           <el-button
-            :icon="Delete"
+            :icon="useRenderIcon(Delete)"
             type="danger"
             plain
             @click="handleBatchDelete"
@@ -299,7 +448,7 @@ const { form, confirmLoading, rules, currentRow, visible, detailsVisible } =
       :form="{
         columns: addOrEditColumns,
         labelPosition: 'right',
-        rules: addOrEditRules,
+        rules: rules,
         labelWidth: 120
       }"
       :dialog="{
@@ -307,7 +456,8 @@ const { form, confirmLoading, rules, currentRow, visible, detailsVisible } =
         width: '540px',
         top: '12vh',
         destroyOnClose: true,
-        confirmLoading
+        confirmLoading,
+        draggable: true
       }"
       @confirm="handleSubmit"
       @cancel="handleCancel"
@@ -320,8 +470,9 @@ const { form, confirmLoading, rules, currentRow, visible, detailsVisible } =
       title="用户组详情"
       top="26vh"
       :has-footer="false"
+      :draggable="true"
     >
-      <PlusDescriptions :column="2" :columns="columns" :data="currentRow" />
+      <PlusDescriptions :column="2" :columns="listColumns" :data="currentRow" />
     </PlusDialog>
   </div>
 </template>
@@ -331,9 +482,7 @@ const { form, confirmLoading, rules, currentRow, visible, detailsVisible } =
   margin: 24px 24px 0 !important;
 }
 
-.search-form {
-  :deep(.el-form-item) {
-    margin-bottom: 12px;
-  }
+:deep(.plus-page__table_wrapper) {
+  margin-top: 0.2rem !important;
 }
 </style>

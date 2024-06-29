@@ -14,9 +14,11 @@ export type SearchFieldsResult = {
   code: number;
   data: Array<{
     key: string;
-    choices?: Array<number | string | any>;
-    input_type: string | any;
     label: string;
+    input_type: string | any;
+    help_text?: string;
+    default?: string | number | any;
+    choices?: Array<number | string | any>;
   }>;
 };
 
@@ -33,6 +35,7 @@ export type SearchColumnsResult = {
     max_length?: number | any;
     multiple?: boolean;
     help_text?: string;
+    default?: string | number | any;
     choices?: Array<number | string | any>;
   }>;
 };

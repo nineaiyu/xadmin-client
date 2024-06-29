@@ -36,7 +36,7 @@ const defaultConfig: AxiosRequestConfig = {
   paramsSerializer: params => {
     return stringify(params, { arrayFormat: "repeat" });
   },
-  formSerializer: { indexes: null }
+  formSerializer: { indexes: null, dots: true }
 };
 
 class PureHttp {
