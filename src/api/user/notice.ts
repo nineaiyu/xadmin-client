@@ -1,9 +1,9 @@
 import { BaseApi } from "@/api/base";
-import type { BaseResult } from "@/api/types";
+import type { BaseResult, DetailResult } from "@/api/types";
 
 class UserNoticeReadApi extends BaseApi {
   unread = (params?: object) => {
-    return this.request<BaseResult>(
+    return this.request<DetailResult>(
       "get",
       params,
       {},

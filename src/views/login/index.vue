@@ -159,7 +159,11 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   useEventListener(document, "keypress", ({ code }) => {
-    if (code === "Enter" && !disabled.value && !loading.value)
+    if (
+      ["Enter", "NumpadEnter"].includes(code) &&
+      !disabled.value &&
+      !loading.value
+    )
       immediateDebounce(ruleFormRef.value);
   });
 });

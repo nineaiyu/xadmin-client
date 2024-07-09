@@ -1,29 +1,27 @@
 <script lang="ts" setup>
 import {
   computed,
-  reactive,
-  toRefs,
-  ref,
-  onMounted,
-  watch,
   nextTick,
-  unref,
-  getCurrentInstance,
-  onBeforeUnmount
+  onBeforeUnmount,
+  onMounted,
+  reactive,
+  ref,
+  toRefs,
+  unref
 } from "vue";
 import type { FormRules } from "element-plus";
-import { set } from "lodash-es";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { set } from "lodash-es";
 import {
   ButtonsCallBackParams,
-  PlusPageInstance,
-  PlusPage,
-  PlusDialogForm,
+  PlusDescriptions,
   PlusDialog,
-  PlusDescriptions
+  PlusDialogForm,
+  PlusPage,
+  PlusPageInstance,
+  useTable
 } from "plus-pro-components";
-import { useTable } from "plus-pro-components";
-import { useBaseColumns } from "@/components/RePlusProCRUD/src/utils/columns";
+import { useBaseColumns } from "@/components/RePlusCRUD/src/utils/columns";
 import { bookApi } from "@/views/demo/book/utils/api";
 import { hasGlobalAuth } from "@/router/utils";
 import { debounce, deviceDetection } from "@pureadmin/utils";
@@ -81,6 +79,7 @@ const plusPageInstance = ref<PlusPageInstance | null>(null);
 
 const {
   listColumns,
+  showColumns,
   searchColumns,
   getColumnData,
   addOrEditRules,
@@ -317,7 +316,7 @@ export type AdaptiveConfig = {
   zIndex?: number;
 };
 const adaptiveConfig = ref<AdaptiveConfig>({
-  offsetBottom: 115,
+  offsetBottom: 120,
   fixHeader: true,
   timeout: 60,
   zIndex: 3
@@ -371,7 +370,10 @@ onBeforeUnmount(() => {
         ref="plusPageInstance"
         :request="GroupServe.getList"
         :columns="columns"
+        :default-page-size-list="[10, 20, 50, 100]"
+        :default-page-info="{ page: 1, pageSize: 20 }"
         :page-info-map="{ page: 'page', pageSize: 'size' }"
+        :pagination="{ background: true } as any"
         :immediate="false"
         :search-card-props="{ shadow: 'never' }"
         :table-card-props="{ shadow: 'never' }"
@@ -472,7 +474,7 @@ onBeforeUnmount(() => {
       :has-footer="false"
       :draggable="true"
     >
-      <PlusDescriptions :column="2" :columns="listColumns" :data="currentRow" />
+      <PlusDescriptions :column="2" :columns="showColumns" :data="currentRow" />
     </PlusDialog>
   </div>
 </template>

@@ -38,6 +38,7 @@ export function useBaseColumns() {
   const searchColumns = ref([]);
   const searchDefaultValue = ref({});
   const listColumns = ref([]);
+  const showColumns = ref([]);
 
   const formatSearchColumns = (columns: SearchFieldsResult["data"]) => {
     columns.forEach(column => {
@@ -280,7 +281,10 @@ export function useBaseColumns() {
             item["editable"] = true;
             break;
         }
-        listColumns.value.push(cloneDeep(item));
+        showColumns.value.push(cloneDeep(item));
+        if (column.table_show) {
+          listColumns.value.push(cloneDeep(item));
+        }
       }
     });
   };
@@ -300,6 +304,7 @@ export function useBaseColumns() {
 
   return {
     listColumns,
+    showColumns,
     searchColumns,
     getColumnData,
     addOrEditRules,

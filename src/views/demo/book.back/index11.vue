@@ -12,7 +12,7 @@ const tableRef = ref();
 const { api, auth, columns, editForm } = useDemoBook(tableRef);
 const pagination = reactive({
   total: 0,
-  pageSize: 20,
+  pageSize: 100,
   currentPage: 1,
   pageSizes: [20, 100, 200, 300, 800],
   background: true

@@ -85,7 +85,6 @@ export function useUserConfig(tableRef: Ref) {
             multiple: true
           },
           renderField: (value, onChange) => {
-            console.log(111111, value, isAdd);
             return (
               <SearchUsers
                 modelValue={value}

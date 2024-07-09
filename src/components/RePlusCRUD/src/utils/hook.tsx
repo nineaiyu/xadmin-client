@@ -13,12 +13,11 @@ import {
 import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
 import { useRoute } from "vue-router";
-import { formatColumnsLabel, formatFormColumns } from "@/views/system/hooks";
-import exportDataForm from "../form/exportData.vue";
-import importDataForm from "../form/importData.vue";
-import addOrEdit from "../form/addOrEdit.vue";
+import { formatFormColumns } from "@/views/system/hooks";
+import exportDataForm from "../components/exportData.vue";
+import importDataForm from "../components/importData.vue";
+import addOrEdit from "../components/addOrEdit.vue";
 import { resourcesIDCacheApi } from "@/api/common";
-import { getFieldsData } from "./index";
 
 export function useBaseTable(
   emit: any,
@@ -298,11 +297,8 @@ export function useBaseTable(
         propsResult[key] = getValue;
       }
     });
-    let editColumns = {};
     if (typeof editForm?.columns === "function") {
-      editColumns = editForm.columns({ row, isAdd, data: dataList.value });
-    } else {
-      editColumns = { ...editForm.columns };
+      editForm.columns = editForm.columns({ row, isAdd, data: dataList.value });
     }
     const formPropsResult = {};
 
@@ -316,7 +312,7 @@ export function useBaseTable(
     });
     formatFormColumns(
       { isAdd, showColumns: showColumns.value },
-      editColumns as Array<any>,
+      editForm?.columns as Array<any>,
       t,
       te,
       localeName
@@ -330,7 +326,7 @@ export function useBaseTable(
         },
         ...propsResult,
         showColumns: showColumns.value,
-        columns: editColumns ?? [],
+        columns: editForm?.columns ?? [],
         formProps: formPropsResult ?? {},
         isAdd: isAdd
       },
@@ -462,24 +458,24 @@ export function useBaseTable(
   };
 
   onMounted(() => {
-    getFieldsData(
-      api.fields,
-      searchFields,
-      searchColumns,
-      localeName,
-      pagination.currentPage,
-      pagination.pageSize
-    ).then(() => {
-      defaultValue.value = cloneDeep(searchFields.value);
-      if (getParameter) {
-        const parameter = cloneDeep(getParameter);
-        Object.keys(parameter).forEach(param => {
-          searchFields.value[param] = parameter[param];
-        });
-      }
-      formatColumnsLabel(tableColumns, t, te, localeName);
-      onSearch();
-    });
+    // getFieldsData(
+    //   api.fields,
+    //   searchFields,
+    //   searchColumns,
+    //   localeName,
+    //   pagination.currentPage,
+    //   pagination.pageSize
+    // ).then(() => {
+    //   defaultValue.value = cloneDeep(searchFields.value);
+    //   if (getParameter) {
+    //     const parameter = cloneDeep(getParameter);
+    //     Object.keys(parameter).forEach(param => {
+    //       searchFields.value[param] = parameter[param];
+    //     });
+    //   }
+    //   formatColumnsLabel(tableColumns, t, te, localeName);
+    //   onSearch();
+    // });
   });
 
   return {
