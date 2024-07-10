@@ -1,206 +1,293 @@
-import { message } from "@/utils/message";
-import { addDialog } from "@/components/ReDialog";
-import type { FormProps, SearchFieldsProps } from "./types";
-import { h, onMounted, ref, type Ref, toRaw } from "vue";
-import {
-  cloneDeep,
-  delay,
-  deviceDetection,
-  getKeyList,
-  isArray,
-  isEmpty
-} from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
-import { ElMessageBox } from "element-plus";
+import { computed, h, onMounted, reactive, ref } from "vue";
+import { ElMessage, ElMessageBox, type FormRules } from "element-plus";
+import {
+  type ButtonsCallBackParams,
+  type PlusPageInstance,
+  useTable
+} from "plus-pro-components";
+import { useBaseColumns } from "./columns";
 import { useRoute } from "vue-router";
-import { formatFormColumns } from "@/views/system/hooks";
-import exportDataForm from "../components/exportData.vue";
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import EditPen from "@iconify-icons/ep/edit-pen";
+import Delete from "@iconify-icons/ep/delete";
+import View from "@iconify-icons/ep/view";
+import { cloneDeep, set } from "lodash-es";
+import { addDialog } from "@/components/ReDialog/index";
+import { deviceDetection } from "@pureadmin/utils";
 import importDataForm from "../components/importData.vue";
-import addOrEdit from "../components/addOrEdit.vue";
+import exportDataForm from "../components/exportData.vue";
 import { resourcesIDCacheApi } from "@/api/common";
-
-export function useBaseTable(
-  emit: any,
-  tableRef: Ref,
-  api: FormProps["api"],
-  editForm: FormProps["editForm"],
-  tableColumns: FormProps["tableColumns"],
-  pagination: FormProps["pagination"],
-  resultFormat: FormProps["resultFormat"],
-  localeName: FormProps["localeName"]
-) {
+import { message } from "@/utils/message";
+export function usePlusCRUDBase(api, auth) {
   const { t, te } = useI18n();
-  const formRef = ref();
-  const searchFields = ref<SearchFieldsProps>({
-    page: 1,
-    size: 10,
-    ordering: "-created_time"
-  });
-  const defaultValue = ref({
-    page: searchFields.value.page,
-    size: searchFields.value.size
-  });
-  const searchColumns = ref([]);
-  const selectedNum = ref(0);
-  const dataList = ref([]);
-  const loading = ref(true);
-  const showColumns = ref([]);
   const route = useRoute();
-  const getParameter = isEmpty(route.params) ? route.query : route.params;
-  const handleDelete = row => {
-    api.delete(row.pk ?? row.id).then(res => {
-      if (res.code === 1000) {
-        message(t("results.success"), { type: "success" });
-        onSearch();
-      } else {
-        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-      }
+
+  interface State {
+    /**
+     * 检索数据
+     */
+    query?: any;
+    /**
+     * 当前选择的行数据
+     */
+    currentRow: object;
+    /**
+     * 表单弹窗是否可见
+     */
+    visible: boolean;
+    /**
+     * 详情弹窗是否可见
+     */
+    detailsVisible: boolean;
+    /**
+     * 当前选择多行的id集合
+     */
+    selectedIds: number[];
+    /**
+     *  提交loading
+     */
+    confirmLoading: boolean;
+    /**
+     * 是否是创建
+     */
+    isCreate: boolean;
+    /**
+     * 是否批量
+     */
+    isBatch: boolean;
+    /**
+     * 表单
+     */
+    form: {};
+    /**
+     * 校验
+     */
+    rules: FormRules;
+  }
+  const plusPageInstance = ref<PlusPageInstance | null>(null);
+  const formRef = ref();
+  const {
+    listColumns,
+    showColumns,
+    searchColumns,
+    getColumnData,
+    addOrEditRules,
+    addOrEditColumns,
+    searchDefaultValue,
+    addOrEditDefaultValue
+  } = useBaseColumns();
+
+  onMounted(() => {
+    getColumnData(api, () => {
+      plusPageInstance.value.plusSearchInstance.handleReset();
     });
+  });
+
+  const state = reactive<State>({
+    query: searchDefaultValue.value,
+    currentRow: {},
+    visible: false,
+    detailsVisible: false,
+    confirmLoading: false,
+    isCreate: true,
+    isBatch: false,
+    selectedIds: [],
+    form: {},
+    rules: addOrEditRules.value
+  });
+
+  const dialogTitle = computed(() => (state.isCreate ? "新增" : "编辑"));
+  const title = computed(() => {
+    if (te(route.meta.title)) {
+      return t(route.meta.title);
+    }
+    return route.meta.title;
+  });
+  const { buttons } = useTable();
+
+  const columns = computed(() => {
+    return [...listColumns.value, ...searchColumns.value];
+  });
+
+  // 按钮
+  buttons.value = [
+    {
+      text: "编辑",
+      code: "update",
+      props: {
+        type: "primary",
+        icon: useRenderIcon(EditPen),
+        link: true,
+        size: "large"
+      },
+      show: auth?.update
+    },
+    {
+      text: "删除",
+      code: "delete",
+      confirm: true,
+      props: {
+        type: "danger",
+        icon: useRenderIcon(Delete),
+        link: true,
+        size: "large"
+      },
+      show: auth?.delete
+    },
+    {
+      text: "",
+      code: "view",
+      props: {
+        type: "info",
+        icon: useRenderIcon(View),
+        link: true,
+        size: "large"
+      },
+      show: auth?.list
+    }
+  ];
+
+  /**
+   * API
+   */
+  const GroupServe = {
+    async getList(query: Record<string, any>) {
+      const { data } = await api.list(query);
+      tableData.value = data.results;
+      return { data: tableData.value, total: data.total };
+    },
+    async create(data: Record<string, any>) {
+      return api.create(data);
+    },
+    async update(data: Record<string, any>) {
+      return api.update(data.pk, data);
+    },
+    async delete(pk: string | number) {
+      api.delete(pk).then(() => {
+        ElMessage.success("删除成功");
+        refresh();
+      });
+    },
+    async batchDelete(pks: Array<Number | String>) {
+      api.batchDelete(pks).then(() => {
+        ElMessage.success("删除成功");
+        refresh();
+      });
+    }
   };
 
-  const handleSizeChange = (val: number) => {
-    searchFields.value.page = 1;
-    searchFields.value.size = val;
-    onSearch();
+  // 按钮操作
+  const handleTableOption = ({
+    row,
+    buttonRow
+  }: ButtonsCallBackParams): void => {
+    state.currentRow = { ...row };
+    switch (buttonRow.code) {
+      case "update":
+        state.form = { ...row } as any;
+        state.isCreate = false;
+        state.visible = true;
+        break;
+      case "delete":
+        state.isBatch = false;
+        GroupServe.delete(row.pk);
+        break;
+      case "view":
+        state.detailsVisible = true;
+        break;
+    }
   };
 
-  const handleCurrentChange = (val: number) => {
-    searchFields.value.page = val;
-    onSearch();
+  // 重新请求列表接口
+  const refresh = () => {
+    plusPageInstance.value?.getList();
   };
 
-  const handleSelectionChange = val => {
-    selectedNum.value = val.length;
-    emit("selectionChange", getSelectPks);
-  };
-
-  const onSelectionCancel = () => {
-    selectedNum.value = 0;
-    // 用于多选表格，清空用户的选择
-    tableRef.value.getTableRef().clearSelection();
-  };
-
-  const getSelectPks = (key = "pk") => {
-    const manySelectData = tableRef.value.getTableRef().getSelectionRows();
-    return getKeyList(manySelectData, key);
-  };
-
-  const handleManyDelete = () => {
-    if (selectedNum.value === 0) {
-      message(t("results.noSelectedData"), { type: "error" });
+  // 批量删除
+  const handleBatchDelete = async () => {
+    if (!state.selectedIds.length) {
+      ElMessage.warning("请选择数据！");
       return;
     }
-    api.batchDelete(getSelectPks("pk")).then(res => {
-      if (res.code === 1000) {
-        message(t("results.batchDelete", { count: selectedNum.value }), {
-          type: "success"
-        });
-        onSelectionCancel();
-        onSearch();
-      } else {
-        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-      }
-    });
-  };
-
-  const formatColumns = (results, columns) => {
-    if (results.length > 0) {
-      showColumns.value = Object.keys(results[0]);
-      cloneDeep(columns).forEach(column => {
-        if (
-          column?.prop &&
-          showColumns.value.indexOf(column?.prop.split(".")[0]) === -1
-        ) {
-          columns.splice(
-            columns.findIndex(obj => {
-              return obj.label === column.label;
-            }),
-            1
-          );
-        }
-      });
+    try {
+      await ElMessageBox.confirm("确定删除所选数据", "提示");
+      state.isBatch = true;
+      await GroupServe.batchDelete(state.selectedIds);
+    } catch (error) {
+      console.log(error);
     }
   };
 
-  const formatSearchPks = params => {
-    Object.keys(params).forEach(key => {
-      const value = params[key];
-      const pks = [];
-      if (isArray(value)) {
-        value.forEach(item => {
-          if (item.pk) {
-            pks.push(item.pk);
-          }
-        });
-        if (pks.length > 0) {
-          params[key] = pks;
-        }
-      }
-    });
+  // 选择
+  const handleSelect = (data: any) => {
+    state.selectedIds = [...data].map(item => item.pk ?? item.id);
   };
 
-  const getFormatLabel = label => {
-    if (te(label)) {
-      return t(label);
-    }
-    return label;
+  // 创建
+  const handleCreate = (): void => {
+    state.currentRow = {};
+    state.form = addOrEditDefaultValue.value;
+    state.isCreate = true;
+    state.visible = true;
   };
 
-  const onSearch = (init = false) => {
-    if (init) {
-      pagination.currentPage = searchFields.value.page =
-        defaultValue.value?.page ?? 1;
-      pagination.pageSize = searchFields.value.size =
-        defaultValue.value?.size ?? 10;
-    }
-    loading.value = true;
-    ["created_time", "updated_time"].forEach(key => {
-      if (searchFields.value[key]?.length === 2) {
-        searchFields.value[`${key}_after`] = searchFields.value[key][0];
-        searchFields.value[`${key}_before`] = searchFields.value[key][1];
-      } else {
-        searchFields.value[`${key}_after`] = "";
-        searchFields.value[`${key}_before`] = "";
-      }
-    });
-    const params = cloneDeep(toRaw(searchFields.value));
-    // 该方法为了支持pk多选操作将如下格式 [{pk:1},{pk:2}] 转换为 [1,2]
-    formatSearchPks(params);
+  // 取消
+  const handleCancel = () => {
+    state.visible = false;
+  };
 
-    api
-      .list(params)
-      .then(res => {
-        if (res.code === 1000 && res.data) {
-          formatColumns(res.data?.results, tableColumns);
-          if (resultFormat && typeof resultFormat === "function") {
-            dataList.value = resultFormat(res.data.results);
+  // 提交表单成功
+  const handleSubmit = async () => {
+    try {
+      state.confirmLoading = true;
+      const params = { ...state.form };
+      if (state.isCreate) {
+        await GroupServe.create(params).then(res => {
+          if (res.code === 1000) {
+            ElMessage.success("创建成功");
+            // 应该设置page=1，刷新页面到第一页
+            refresh();
+            handleCancel();
           } else {
-            dataList.value = res.data.results;
+            ElMessage.error("创建失败");
           }
-          pagination.total = res.data.total;
-        } else {
-          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-        }
-        emit("searchEnd", getParameter, searchFields, dataList, res);
-        delay(500).then(() => {
-          loading.value = false;
         });
-      })
-      .catch(() => {
-        loading.value = false;
-      });
+      } else {
+        await GroupServe.update(params).then(res => {
+          if (res.code === 1000) {
+            ElMessage.success("更新成功");
+            refresh();
+            handleCancel();
+          } else {
+            ElMessage.error("更新失败");
+          }
+        });
+      }
+    } catch (error) {}
+    state.confirmLoading = false;
+  };
+  const { tableData } = useTable();
+  const handleChange = ({ index, value, prop, row }) => {
+    api.update(row.pk, { [prop]: value }).then(res => {
+      if (res.code === 1000) {
+        ElMessage.success("更新成功");
+        set(tableData.value[index], prop, value);
+      } else {
+        ElMessage.error("更新失败");
+      }
+    });
   };
 
   // 数据导出
   function exportData() {
-    const pks = getSelectPks();
     addDialog({
       title: t("exportImport.export"),
       props: {
         formInline: {
           type: "xlsx",
-          range: pks.length > 0 ? "selected" : "all",
-          pks: pks
+          range: state.selectedIds.length > 0 ? "selected" : "all",
+          pks: state.selectedIds
         }
       },
       width: "600px",
@@ -217,8 +304,9 @@ export function useBaseTable(
             if (curData.range === "all") {
               api.export(curData);
             } else if (curData.range === "search") {
-              searchFields.value["type"] = curData["type"];
-              api.export(toRaw(searchFields.value));
+              // 暂时不支持查询导出
+              // searchFields.value["type"] = curData["type"];
+              // api.export(toRaw(searchFields.value));
             } else if (curData.range === "selected") {
               resourcesIDCacheApi(curData.pks).then(res => {
                 curData["spm"] = res.spm;
@@ -255,7 +343,7 @@ export function useBaseTable(
         const chores = () => {
           message(t("results.success"), { type: "success" });
           done(); // 关闭弹框
-          onSearch(); // 刷新表格数据
+          refresh(); // 刷新表格数据
         };
         FormRef.validate(valid => {
           if (valid) {
@@ -274,234 +362,29 @@ export function useBaseTable(
     });
   }
 
-  const openDialog = (isAdd = true, row = {}) => {
-    let title = t("buttons.edit");
-    if (isAdd) {
-      title = t("buttons.add");
-    }
-    const rowResult = {};
-    Object.keys(editForm?.row ?? {}).forEach(key => {
-      const getValue = editForm.row[key];
-      if (typeof editForm.row[key] === "function") {
-        rowResult[key] = getValue(row, isAdd, dataList.value);
-      } else {
-        rowResult[key] = getValue;
-      }
-    });
-    const propsResult = {};
-    Object.keys(editForm?.props ?? {}).forEach(key => {
-      const getValue = editForm.props[key];
-      if (typeof editForm.props[key] === "function") {
-        propsResult[key] = getValue(row, isAdd, dataList.value);
-      } else {
-        propsResult[key] = getValue;
-      }
-    });
-    if (typeof editForm?.columns === "function") {
-      editForm.columns = editForm.columns({ row, isAdd, data: dataList.value });
-    }
-    const formPropsResult = {};
-
-    Object.keys(editForm?.formProps ?? {}).forEach(key => {
-      const getValue = editForm?.formProps[key];
-      if (typeof editForm?.formProps[key] === "function") {
-        formPropsResult[key] = getValue(row, isAdd, dataList.value);
-      } else {
-        formPropsResult[key] = getValue;
-      }
-    });
-    formatFormColumns(
-      { isAdd, showColumns: showColumns.value },
-      editForm?.columns as Array<any>,
-      t,
-      te,
-      localeName
-    );
-    addDialog({
-      title: `${title} ${editForm.title ?? ""}`,
-      props: {
-        formInline: {
-          ...row,
-          ...rowResult
-        },
-        ...propsResult,
-        showColumns: showColumns.value,
-        columns: editForm?.columns ?? [],
-        formProps: formPropsResult ?? {},
-        isAdd: isAdd
-      },
-      width: "40%",
-      draggable: true,
-      fullscreen: deviceDetection(),
-      fullscreenIcon: true,
-      closeOnClickModal: false,
-      contentRenderer: () => h(editForm.form ?? addOrEdit, { ref: formRef }),
-      beforeSure: (done, { options }) => {
-        const FormRef = formRef.value.getRef();
-        const curData = cloneDeep(options.props.formInline);
-
-        const chores = () => {
-          message(t("results.success"), { type: "success" });
-          done(); // 关闭弹框
-          onSearch(); // 刷新表格数据
-        };
-
-        FormRef.validate(valid => {
-          if (valid) {
-            if (isAdd) {
-              // todo 接口监测方法
-              let apiCreate = api.create;
-              if (api.create.length === 3) {
-                apiCreate = apiCreate(row, isAdd, curData);
-              }
-              apiCreate(curData).then(async res => {
-                if (res.code === 1000) {
-                  chores();
-                } else {
-                  message(`${t("results.failed")}，${res.detail}`, {
-                    type: "error"
-                  });
-                }
-              });
-            } else {
-              let apiUpdate = api.update;
-              if (api.update.length === 3) {
-                apiUpdate = apiUpdate(row, isAdd, curData);
-              }
-              apiUpdate(curData.pk, curData).then(res => {
-                if (res.code === 1000) {
-                  chores();
-                } else {
-                  message(`${t("results.failed")}，${res.detail}`, {
-                    type: "error"
-                  });
-                }
-              });
-            }
-          }
-        });
-      },
-      ...editForm.options
-    });
-  };
-  const onChange = (
-    switchLoadMap,
-    { row, index },
-    actKey,
-    msg,
-    updateApi = null,
-    actMsg = null
-  ) => {
-    if (!actMsg) {
-      actMsg = row[actKey] === false ? t("labels.disable") : t("labels.enable");
-    }
-    ElMessageBox.confirm(
-      `${t("buttons.operateConfirm", {
-        action: `<strong>${actMsg}</strong>`,
-        message: `<strong style="color:var(--el-color-primary)">${msg}</strong>`
-      })}`,
-      {
-        confirmButtonText: t("buttons.sure"),
-        cancelButtonText: t("buttons.cancel"),
-        type: "warning",
-        dangerouslyUseHTMLString: true,
-        draggable: true
-      }
-    )
-      .then(() => {
-        switchLoadMap.value[index] = Object.assign(
-          {},
-          switchLoadMap.value[index],
-          {
-            loading: true
-          }
-        );
-        if (!updateApi) {
-          updateApi = api.update;
-        }
-        const data = {};
-        data[actKey] = row[actKey];
-        updateApi(row.pk, data)
-          .then(res => {
-            if (res.code === 1000) {
-              message(t("results.success"), { type: "success" });
-            } else {
-              message(`${t("results.failed")}，${res.detail}`, {
-                type: "error"
-              });
-            }
-            switchLoadMap.value[index] = Object.assign(
-              {},
-              switchLoadMap.value[index],
-              {
-                loading: false
-              }
-            );
-          })
-          .catch(e => {
-            row[actKey] === false
-              ? (row[actKey] = true)
-              : (row[actKey] = false);
-            switchLoadMap.value[index] = Object.assign(
-              {},
-              switchLoadMap.value[index],
-              {
-                loading: false
-              }
-            );
-            throw e;
-          });
-      })
-      .catch(() => {
-        row[actKey] === false ? (row[actKey] = true) : (row[actKey] = false);
-      });
-  };
-
-  onMounted(() => {
-    // getFieldsData(
-    //   api.fields,
-    //   searchFields,
-    //   searchColumns,
-    //   localeName,
-    //   pagination.currentPage,
-    //   pagination.pageSize
-    // ).then(() => {
-    //   defaultValue.value = cloneDeep(searchFields.value);
-    //   if (getParameter) {
-    //     const parameter = cloneDeep(getParameter);
-    //     Object.keys(parameter).forEach(param => {
-    //       searchFields.value[param] = parameter[param];
-    //     });
-    //   }
-    //   formatColumnsLabel(tableColumns, t, te, localeName);
-    //   onSearch();
-    // });
-  });
-
   return {
     t,
-    route,
-    loading,
-    dataList,
-    pagination,
-    selectedNum,
+    api,
+    auth,
+    state,
+    title,
+    columns,
+    buttons,
+    GroupServe,
     showColumns,
-    defaultValue,
-    searchFields,
-    tableColumns,
-    searchColumns,
-    onChange,
-    onSearch,
-    exportData,
+    dialogTitle,
+    addOrEditRules,
+    addOrEditColumns,
+    plusPageInstance,
+    searchDefaultValue,
     importData,
-    openDialog,
-    getSelectPks,
-    handleDelete,
-    getFormatLabel,
-    handleManyDelete,
-    handleSizeChange,
-    onSelectionCancel,
-    handleCurrentChange,
-    handleSelectionChange
+    exportData,
+    handleChange,
+    handleSubmit,
+    handleCreate,
+    handleSelect,
+    handleCancel,
+    handleBatchDelete,
+    handleTableOption
   };
 }

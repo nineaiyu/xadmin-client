@@ -1,5 +1,4 @@
 import type { Component } from "vue";
-import type { PaginationProps } from "@pureadmin/table";
 
 interface SearchFieldsProps {
   page: number;
@@ -29,14 +28,9 @@ interface EditFormProps {
 }
 
 interface FormProps {
-  localeName: string;
+  localeName?: string;
   auth?: ApiAuthProps | any;
   api: ApiAuthProps | any;
-  editForm?: EditFormProps;
-  pagination?: PaginationProps | null;
-  tableColumns: TableColumnList;
-  customAddOrEdit?: boolean;
-  resultFormat?: Function;
 }
 
 interface FormItemProps {}
