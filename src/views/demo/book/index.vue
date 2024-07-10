@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref } from "vue";
+import { reactive, ref } from "vue";
 import { useDemoBook } from "./utils/hook";
 import ReBaseTable from "@/components/ReBaseTable";
 
@@ -10,6 +10,13 @@ defineOptions({
 const tableRef = ref();
 
 const { api, auth, columns, editForm } = useDemoBook(tableRef);
+const pagination = reactive({
+  total: 0,
+  pageSize: 20,
+  currentPage: 1,
+  pageSizes: [20, 100, 200, 300, 800],
+  background: true
+});
 </script>
 
 <template>
@@ -19,6 +26,7 @@ const { api, auth, columns, editForm } = useDemoBook(tableRef);
     :auth="auth"
     :edit-form="editForm"
     :table-columns="columns"
+    :pagination="pagination"
     locale-name="demoBook"
   />
 </template>

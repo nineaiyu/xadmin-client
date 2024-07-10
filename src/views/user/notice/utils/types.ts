@@ -17,7 +17,7 @@ interface FormItemProps {
   owner_info?: Owner;
   owner?: number;
   unread?: boolean;
-  level: string;
+  level: "" | "info" | "success" | "warning" | "primary" | "danger";
   title: string;
   message: string;
   notice_type?: number;

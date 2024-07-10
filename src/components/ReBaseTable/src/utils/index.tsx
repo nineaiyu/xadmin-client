@@ -9,10 +9,10 @@ import SearchUsers from "@/views/system/base/searchUsers.vue";
 import { formatOptions, formatPublicLabels } from "@/views/system/hooks";
 
 // 定义自定义搜索模板
-const searchComponents = {
-  "search-depts": SearchDepts,
-  "search-roles": SearchRoles,
-  "search-users": SearchUsers
+const apiSearchComponents = {
+  "api-search-depts": SearchDepts,
+  "api-search-roles": SearchRoles,
+  "api-search-users": SearchUsers
 };
 
 export const formatSearchColumns = (
@@ -82,9 +82,9 @@ export const formatSearchColumns = (
       column.options = options;
       break;
     default:
-      if (item.input_type.startsWith("search")) {
+      if (item.input_type.startsWith("api-")) {
         column.renderField = (value, onChange) => {
-          return h(searchComponents[item.input_type], {
+          return h(apiSearchComponents[item.input_type], {
             modelValue: value,
             onChange
           });
@@ -101,6 +101,7 @@ export const formatSearchColumns = (
   }
   return column;
 };
+
 export const getFieldsData = (
   fieldsApi: Function,
   searchFields: Ref,
@@ -115,7 +116,7 @@ export const getFieldsData = (
     fieldsApi().then((res: SearchFieldsResult) => {
       if (res.code === 1000) {
         res.data.forEach(item => {
-          if (item.input_type.startsWith("search")) {
+          if (item.input_type.startsWith("api-")) {
             searchFields.value[item.key] = [];
           } else {
             searchFields.value[item.key] = "";

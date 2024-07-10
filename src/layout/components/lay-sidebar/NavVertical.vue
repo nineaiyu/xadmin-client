@@ -1,14 +1,14 @@
-<script lang="ts" setup>
+<script setup lang="ts">
 import { useRoute } from "vue-router";
 import { emitter } from "@/utils/mitt";
 import { useNav } from "@/layout/hooks/useNav";
 import { responsiveStorageNameSpace } from "@/config";
-import { isAllEmpty, storageLocal } from "@pureadmin/utils";
+import { storageLocal, isAllEmpty } from "@pureadmin/utils";
 import { findRouteByPath, getParentPaths } from "@/router/utils";
 import { usePermissionStoreHook } from "@/store/modules/permission";
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
 import LaySidebarLogo from "../lay-sidebar/components/SidebarLogo.vue";
-import LaySidebarItem from "./components/SidebarItem.vue";
+import LaySidebarItem from "../lay-sidebar/components/SidebarItem.vue";
 import LaySidebarLeftCollapse from "../lay-sidebar/components/SidebarLeftCollapse.vue";
 import LaySidebarCenterCollapse from "../lay-sidebar/components/SidebarCenterCollapse.vue";
 
@@ -95,24 +95,24 @@ onBeforeUnmount(() => {
   >
     <LaySidebarLogo v-if="showLogo" :collapse="isCollapse" />
     <el-scrollbar
-      :class="[device === 'mobile' ? 'mobile' : 'pc']"
       wrap-class="scrollbar-wrapper"
+      :class="[device === 'mobile' ? 'mobile' : 'pc']"
     >
       <el-menu
-        :collapse="isCollapse"
-        :collapse-transition="false"
-        :default-active="defaultActive"
-        :popper-effect="tooltipEffect"
-        class="outer-most select-none"
+        unique-opened
         mode="vertical"
         popper-class="pure-scrollbar"
-        unique-opened
+        class="outer-most select-none"
+        :collapse="isCollapse"
+        :collapse-transition="false"
+        :popper-effect="tooltipEffect"
+        :default-active="defaultActive"
       >
         <LaySidebarItem
           v-for="routes in menuData"
           :key="routes.path"
-          :base-path="routes.path"
           :item="routes"
+          :base-path="routes.path"
           class="outer-most select-none"
         />
       </el-menu>

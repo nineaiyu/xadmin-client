@@ -1,10 +1,11 @@
 import { http } from "@/utils/http";
-import type { RequestMethods } from "@/utils/http/types";
+import type { PureHttpRequestConfig, RequestMethods } from "@/utils/http/types";
 import type {
   BaseResult,
   ChoicesResult,
   DetailResult,
   ListResult,
+  SearchColumnsResult,
   SearchFieldsResult
 } from "@/api/types";
 import { downloadByData } from "@pureadmin/utils";
@@ -26,16 +27,46 @@ export class BaseRequest {
     return notNullParams;
   };
 
+  /*
+   *判断是否有文件类型数据，如果 有的话，使用form-data 上传
+   */
+  hasFileObject = (data?: object) => {
+    for (const item of Object.values(data)) {
+      if (File.prototype.isPrototypeOf(item)) return true;
+      if (item instanceof Array) {
+        for (const i of item) {
+          if (File.prototype.isPrototypeOf(i)) return true;
+        }
+      }
+    }
+  };
+
   request<T>(
     method: RequestMethods,
     params?: object,
     data?: object,
-    url: string = null
+    url: string = null,
+    axiosConfig: PureHttpRequestConfig = {}
   ) {
-    return http.request<T>(method, url ?? this.baseApi, {
-      params: this.formatParams(params),
-      data: data
-    });
+    if (this.hasFileObject(data)) {
+      axiosConfig = {
+        ...axiosConfig,
+        ...{
+          headers: {
+            "Content-Type": "multipart/form-data"
+          }
+        }
+      };
+    }
+    return http.request<T>(
+      method,
+      url ?? this.baseApi,
+      {
+        params: this.formatParams(params),
+        data: data
+      },
+      axiosConfig
+    );
   }
 }
 
@@ -54,6 +85,14 @@ export class BaseApi extends BaseRequest {
       {},
       {},
       `${this.baseApi}/search-fields`
+    );
+  };
+  columns = () => {
+    return this.request<SearchColumnsResult>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/search-columns`
     );
   };
   list = (params?: object) => {

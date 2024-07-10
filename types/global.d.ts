@@ -1,4 +1,4 @@
-import type { ECharts } from "echarts";
+import type { ECharts, graphic } from "echarts";
 import type { TableColumns } from "@pureadmin/table";
 
 /**
@@ -169,10 +169,18 @@ declare global {
   }
 
   /**
+   * 扩展 `echarts`
+   */
+
+  interface EChartsType extends ECharts {
+    graphic: graphic;
+  }
+
+  /**
    * 平台里所有组件实例都能访问到的全局属性对象的类型声明
    */
   interface GlobalPropertiesApi {
-    $echarts: ECharts;
+    $echarts: EChartsType;
     $storage: ResponsiveStorage;
     $config: PlatformConfigs;
   }

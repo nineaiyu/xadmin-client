@@ -4,6 +4,7 @@ import { pathResolve } from "./utils";
 import { viteBuildInfo } from "./info";
 import svgLoader from "vite-svg-loader";
 import type { PluginOption } from "vite";
+import checker from "vite-plugin-checker";
 import vueJsx from "@vitejs/plugin-vue-jsx";
 import { configCompressPlugin } from "./compress";
 import removeNoMatch from "vite-plugin-router-warn";
@@ -14,6 +15,7 @@ import VueI18nPlugin from "@intlify/unplugin-vue-i18n/vite";
 import { genScssMultipleScopeVars } from "../src/layout/theme";
 import { vitePluginFakeServer } from "vite-plugin-fake-server";
 import Inspector from "vite-plugin-vue-inspector";
+// import vueDevTools from "vite-plugin-vue-devtools";
 
 export function getPluginsList(
   VITE_CDN: boolean,
@@ -24,11 +26,21 @@ export function getPluginsList(
     vue(),
     // jsx、tsx语法支持
     vueJsx(),
+    // vueDevTools(),
     VueI18nPlugin({
       jitCompilation: false,
       include: [pathResolve("../locales/**")]
     }),
-    viteBuildInfo(),
+    checker({
+      typescript: true,
+      vueTsc: true,
+      eslint: {
+        lintCommand: `eslint ${pathResolve("../{src,mock,build}/**/*.{vue,js,ts,tsx}")}`,
+        useFlatConfig: true
+      },
+      terminal: false,
+      enableBuild: false
+    }),
     /**  Vue Inspector: Press Ctrl(^)+Shift(⇧) in App to toggle the Inspector
      *   按下Command(⌘)+Shift(⇧)，然后点击页面元素会自动打开本地IDE并跳转到对应的代码位置
      * launchEditor: 'appcode' | 'atom' | 'atom-beta' | 'brackets' | 'clion' | 'code' | 'code-insiders' | 'codium'
@@ -36,6 +48,7 @@ export function getPluginsList(
      * https://github.com/webfansplz/vite-plugin-vue-inspector
      */
     Inspector({ launchEditor: "webstorm" }),
+    viteBuildInfo(),
     /**
      * 开发环境下移除非必要的vue-router动态路由警告No match found for location with path
      * 非必要具体看 https://github.com/vuejs/router/issues/521 和 https://github.com/vuejs/router/issues/359

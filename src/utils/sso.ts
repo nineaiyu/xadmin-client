@@ -41,8 +41,8 @@ import type { TokenInfo } from "@/api/auth";
     setToken(params);
 
     // 删除不需要显示在 url 的参数
-    delete params.roles;
-    delete params.accessToken;
+    delete params.refresh;
+    delete params.access;
 
     const newUrl = `${location.origin}${location.pathname}${subBefore(
       location.hash,

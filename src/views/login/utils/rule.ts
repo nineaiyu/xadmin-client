@@ -91,6 +91,20 @@ const updateRules = reactive<FormRules>({
       trigger: "blur"
     }
   ],
+  captcha_code: [
+    {
+      validator: (rule, value, callback) => {
+        if (value === "") {
+          callback(new Error(transformI18n($t("login.verifyCodeReg"))));
+        } else if (useUserStoreHook().verifyCodeLength !== value.length) {
+          callback(new Error(transformI18n($t("login.verifyCodeCorrectReg"))));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur"
+    }
+  ],
   verifyCode: [
     {
       validator: (rule, value, callback) => {

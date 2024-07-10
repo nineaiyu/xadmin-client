@@ -99,10 +99,12 @@ export const useUserStore = defineStore({
       this.noticeCount += Number(value);
     },
     /** 登入 */
-    async loginByUsername(data) {
+    async loginByUsername(data, encrypted) {
       return new Promise<TokenResult>((resolve, reject) => {
-        data["password"] = AesEncrypted(data["token"], data["password"]);
-        data["username"] = AesEncrypted(data["token"], data["username"]);
+        if (encrypted) {
+          data["password"] = AesEncrypted(data["token"], data["password"]);
+          data["username"] = AesEncrypted(data["token"], data["username"]);
+        }
         loginApi(data)
           .then(res => {
             if (res.code === 1000) {
@@ -149,10 +151,13 @@ export const useUserStore = defineStore({
       });
     },
     /** 注册 */
-    async registerByUsername(data) {
+    async registerByUsername(data, encrypted) {
       return new Promise<TokenResult>((resolve, reject) => {
-        data["password"] = AesEncrypted(data["token"], data["password"]);
-        data["username"] = AesEncrypted(data["token"], data["username"]);
+        if (encrypted) {
+          data["password"] = AesEncrypted(data["token"], data["password"]);
+          data["username"] = AesEncrypted(data["token"], data["username"]);
+        }
+        delete data["repeatPassword"];
         registerApi(data)
           .then(res => {
             if (res.code === 1000) {

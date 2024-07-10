@@ -53,9 +53,25 @@ export type CaptchaResult = {
   length: number;
 };
 
+export type AuthInfoResult = {
+  code: number;
+  detail: string;
+  data: {
+    access: boolean;
+    captcha: boolean;
+    token: boolean;
+    encrypted: boolean;
+    lifetime?: number;
+  };
+};
+
 /** 登录 */
 export const loginApi = (data?: object) => {
   return http.request<TokenResult>("post", "/api/system/login", { data });
+};
+
+export const loginAuthApi = (data?: object) => {
+  return http.request<AuthInfoResult>("get", "/api/system/login", { data });
 };
 
 export const getTempTokenApi = () => {
@@ -72,6 +88,9 @@ export const refreshTokenApi = (data?: object) => {
 
 export const registerApi = (data?: object) => {
   return http.request<TokenResult>("post", "/api/system/register", { data });
+};
+export const registerAuthApi = (data?: object) => {
+  return http.request<AuthInfoResult>("get", "/api/system/register", { data });
 };
 
 export const logoutApi = (data?: object) => {

@@ -1,4 +1,5 @@
 import qs from "qs";
+import { getUsedAccessToken } from "@/utils/token";
 
 /**
  * setTimeout 类型
@@ -181,7 +182,8 @@ class WS {
         if (this.closeCallback) {
           this.closeCallback(this.socket);
         }
-        this.delay = setTimeout(() => {
+        this.delay = setTimeout(async () => {
+          await getUsedAccessToken();
           this.reconnectHandle();
         }, timeout);
       };

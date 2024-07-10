@@ -298,12 +298,25 @@ export function useBaseTable(
         propsResult[key] = getValue;
       }
     });
+    let editColumns = {};
     if (typeof editForm?.columns === "function") {
-      editForm.columns = editForm.columns({ row, isAdd, data: dataList.value });
+      editColumns = editForm.columns({ row, isAdd, data: dataList.value });
+    } else {
+      editColumns = { ...editForm.columns };
     }
+    const formPropsResult = {};
+
+    Object.keys(editForm?.formProps ?? {}).forEach(key => {
+      const getValue = editForm?.formProps[key];
+      if (typeof editForm?.formProps[key] === "function") {
+        formPropsResult[key] = getValue(row, isAdd, dataList.value);
+      } else {
+        formPropsResult[key] = getValue;
+      }
+    });
     formatFormColumns(
       { isAdd, showColumns: showColumns.value },
-      editForm?.columns as Array<any>,
+      editColumns as Array<any>,
       t,
       te,
       localeName
@@ -317,8 +330,8 @@ export function useBaseTable(
         },
         ...propsResult,
         showColumns: showColumns.value,
-        columns: editForm?.columns ?? [],
-        formProps: editForm?.formProps ?? {},
+        columns: editColumns ?? [],
+        formProps: formPropsResult ?? {},
         isAdd: isAdd
       },
       width: "40%",
