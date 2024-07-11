@@ -1,22 +1,26 @@
 <script lang="ts" setup>
 import { ref } from "vue";
-import { AddOrEditFormProps } from "../utils/types";
+import { FieldValues, PlusColumn, PlusForm } from "plus-pro-components";
+
+interface AddOrEditFormProps {
+  formInline: FieldValues;
+  formProps?: object;
+  columns: PlusColumn[];
+}
 
 const props = withDefaults(defineProps<AddOrEditFormProps>(), {
-  isAdd: () => true,
-  showColumns: () => [],
   formInline: () => ({}),
   formProps: () => ({}),
   columns: () => []
 });
 
 const formRef = ref();
-const newFormInline = ref(props.formInline);
+const newFormInline = ref<FieldValues>(props.formInline);
 
 function getRef() {
   return formRef.value?.formInstance;
 }
-
+defineOptions({ name: "addOrEditForm" });
 defineExpose({ getRef });
 </script>
 

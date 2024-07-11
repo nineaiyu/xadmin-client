@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref, watch } from "vue";
 import { PlusColumn, PlusForm } from "plus-pro-components";
-import { FormatOptions } from "../utils/constants";
+import { ExportImportFormatOptions } from "../utils/constants";
 import UploadIcon from "@iconify-icons/ri/upload-2-line";
 import { useI18n } from "vue-i18n";
 
@@ -17,6 +17,8 @@ interface FormItemProps {
 
 interface FormProps {
   formInline: FormItemProps;
+  formProps?: object;
+  columns?: PlusColumn[];
 }
 
 const props = withDefaults(defineProps<FormProps>(), {
@@ -31,7 +33,7 @@ const props = withDefaults(defineProps<FormProps>(), {
 const { t } = useI18n();
 
 const state = ref<FormItemProps>(props.formInline);
-const columns: PlusColumn[] = [
+const formColumns: PlusColumn[] = [
   {
     label: t("exportImport.import"),
     prop: "action",
@@ -85,7 +87,7 @@ defineExpose({ getRef });
   <PlusForm
     ref="formRef"
     v-model="state"
-    :columns="columns"
+    :columns="formColumns"
     :hasFooter="false"
     :row-props="{ gutter: 24 }"
     class="m-5"
@@ -103,7 +105,7 @@ defineExpose({ getRef });
           })
         }}
         <el-link
-          v-for="item in FormatOptions"
+          v-for="item in ExportImportFormatOptions"
           :key="item.label"
           class="ml-2"
           type="primary"
