@@ -1,14 +1,20 @@
 <script lang="ts" setup>
-import { ref } from "vue";
-import { FieldValues, PlusColumn, PlusForm } from "plus-pro-components";
+import { computed, ref } from "vue";
+import {
+  FieldValues,
+  PlusColumn,
+  PlusDescriptions,
+  PlusForm
+} from "plus-pro-components";
+import { deviceDetection } from "@pureadmin/utils";
 
-interface AddOrEditFormProps {
+interface DetailFormProps {
   formInline: FieldValues;
   formProps?: object;
   columns: PlusColumn[];
 }
 
-const props = withDefaults(defineProps<AddOrEditFormProps>(), {
+const props = withDefaults(defineProps<DetailFormProps>(), {
   formInline: () => ({}),
   formProps: () => ({}),
   columns: () => []
@@ -20,19 +26,17 @@ const newFormInline = ref<FieldValues>(props.formInline);
 function getRef() {
   return formRef.value?.formInstance;
 }
-defineOptions({ name: "AddOrEditForm" });
+defineOptions({ name: "DetailData" });
 defineExpose({ getRef });
+const column = computed(() => (deviceDetection() ? 1 : 2));
 </script>
 
 <template>
-  <PlusForm
+  <PlusDescriptions
     ref="formRef"
-    v-model="newFormInline"
+    :column="column"
     :columns="columns"
-    :hasFooter="false"
-    :row-props="{ gutter: 24 }"
-    label-position="right"
-    label-width="120px"
+    :data="newFormInline"
     v-bind="formProps"
   />
 </template>

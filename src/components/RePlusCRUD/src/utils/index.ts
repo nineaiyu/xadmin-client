@@ -162,3 +162,31 @@ export const getColourTypeByIndex = (index: number) => {
     return "success";
   } else return "info";
 };
+/**
+ * 获取国际化label值
+ */
+export const formatPublicLabels = (
+  t: Function,
+  te: Function,
+  label: string,
+  localeName: string
+): string => {
+  const formatLabel = `${localeName}.${label}`;
+  if (te(formatLabel)) {
+    return t(formatLabel);
+  }
+  if (
+    [
+      "pk",
+      "id",
+      "ordering",
+      "selection",
+      "operation",
+      "descending",
+      "ascending"
+    ].indexOf(label) > -1
+  ) {
+    return t(`commonLabels.${label}`);
+  }
+  return;
+};

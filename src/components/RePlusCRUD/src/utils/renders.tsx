@@ -1,15 +1,5 @@
 import Segmented from "@/components/ReSegmented";
-import { $t, transformI18n } from "@/plugins/i18n";
-export const selectBooleanOptions = [
-  {
-    label: transformI18n($t("labels.enable")),
-    value: true
-  },
-  {
-    label: transformI18n($t("labels.disable")),
-    value: false
-  }
-];
+import { selectBooleanOptions } from "./constants";
 export const renderSegmentedOption = (options = null) => {
   return (value, onChange) => {
     return (

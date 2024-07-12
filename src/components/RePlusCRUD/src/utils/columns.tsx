@@ -1,15 +1,18 @@
 import { computed, h, ref } from "vue";
 import { cloneDeep } from "lodash-es";
+import dayjs from "dayjs";
+import { useI18n } from "vue-i18n";
 import type { PlusColumn } from "plus-pro-components";
 import type { BaseApi } from "@/api/base";
 import type { SearchColumnsResult, SearchFieldsResult } from "@/api/types";
 
+import { renderSegmentedOption, formatAddOrEditOptions } from "./renders";
+import { selectBooleanOptions } from "./constants";
 import {
-  renderSegmentedOption,
-  selectBooleanOptions,
-  formatAddOrEditOptions
-} from "./renders";
-import { getPickerShortcuts, getColourTypeByIndex } from "./index";
+  getPickerShortcuts,
+  getColourTypeByIndex,
+  formatPublicLabels
+} from "./index";
 
 import SearchDepts from "@/views/system/base/searchDepts.vue";
 import SearchRoles from "@/views/system/base/searchRoles.vue";
@@ -17,6 +20,7 @@ import SearchUsers from "@/views/system/base/searchUsers.vue";
 import uploadFile from "../components/uploadFile.vue";
 import { ElIcon, ElLink } from "element-plus";
 import { Link } from "@element-plus/icons-vue";
+import Info from "@iconify-icons/ri/question-line";
 
 /**
  * @description 定义自定义搜索模板
@@ -29,7 +33,7 @@ const apiSearchComponents = {
 /**
  * @description 用与通过api接口，获取对应的column, 进行前端渲染
  */
-export function useBaseColumns() {
+export function useBaseColumns(localeName: string) {
   const addOrEditRules = ref({});
   const addOrEditColumns = ref([]);
   const addOrEditDefaultValue = ref({});
@@ -37,11 +41,13 @@ export function useBaseColumns() {
   const searchDefaultValue = ref({});
   const listColumns = ref([]);
   const showColumns = ref([]);
+  const { t, te } = useI18n();
 
   const formatSearchColumns = (columns: SearchFieldsResult["data"]) => {
     columns.forEach(column => {
       const item: PlusColumn = {
-        label: column.label,
+        label:
+          formatPublicLabels(t, te, column.key, localeName) ?? column.label,
         prop: column.key,
         tooltip: column?.help_text,
         options: computed(() => formatAddOrEditOptions(column.choices)),
@@ -94,12 +100,12 @@ export function useBaseColumns() {
           break;
         case "select-ordering":
           item.valueType = "select";
-          // const options = formatAddOrEditOptions(column.choices);
-          // options?.forEach(option => {
-          //   const labels = option.label.split(" ");
-          //   option.label = `${formatPublicLabels(t, te, labels[0] as string, localeName)} ${formatPublicLabels(t, te, labels[1] as string, localeName)}`;
-          // });
-          item.options = computed(() => formatAddOrEditOptions(column.choices));
+          const options = formatAddOrEditOptions(column.choices);
+          options?.forEach(option => {
+            const labels = option.label.split(" ");
+            option.label = `${formatPublicLabels(t, te, labels[0] as string, localeName)} ${formatPublicLabels(t, te, labels[1] as string, localeName)}`;
+          });
+          // item.options = computed(() => formatAddOrEditOptions(column.choices));
           break;
         default:
           if (column.input_type.startsWith("api-")) {
@@ -129,7 +135,8 @@ export function useBaseColumns() {
       addOrEditRules.value[column.key] = [
         {
           required: column.required,
-          message: column.label ?? column.key,
+          message:
+            formatPublicLabels(t, te, column.key, localeName) ?? column.label,
           trigger: "blur"
         }
       ];
@@ -142,7 +149,8 @@ export function useBaseColumns() {
 
       const item: PlusColumn = {
         prop: column.key,
-        label: column.label,
+        label:
+          formatPublicLabels(t, te, column.key, localeName) ?? column.label,
         tooltip: column?.help_text,
         minWidth: 120,
         fieldProps: {
@@ -151,14 +159,35 @@ export function useBaseColumns() {
           multiple: column?.multiple
         },
         hideInSearch: true,
-        hideInTable: false
+        hideInTable: false,
+        // pure-table
+        cellRenderer: ({ row }) => (
+          <span v-copy={row[column.key]}>{row[column.key]}</span>
+        )
       };
+      // pure-table
+      if (column?.help_text) {
+        item["headerRenderer"] = () => (
+          <span class="flex-c">
+            {item.label}
+            <iconifyIconOffline
+              icon={Info}
+              class={["ml-1"]}
+              v-tippy={{
+                content: column?.help_text
+              }}
+            />
+          </span>
+        );
+      }
       switch (column.input_type) {
         case "integer":
         case "float":
           item["valueType"] = "input-number";
           item["fieldProps"]["controlsPosition"] = "right";
           // item["fieldProps"]["controls"] = false;
+          // pure-table ******
+          delete item["cellRenderer"];
           break;
         case "string":
           item["valueType"] = "input";
@@ -169,6 +198,12 @@ export function useBaseColumns() {
           item["fieldProps"]["type"] = column.input_type;
           item["fieldProps"]["valueFormat"] = "YYYY-MM-DD HH:mm:ss";
           item["width"] = 160;
+          // pure-table ******
+          item["cellRenderer"] = ({ row }) => (
+            <span v-copy={row[column.key]}>
+              {dayjs(row[column.key]).format("YYYY-MM-DD HH:mm:ss")}
+            </span>
+          );
           break;
         case "boolean":
           item["valueType"] = "radio";
@@ -276,7 +311,7 @@ export function useBaseColumns() {
             item["options"] = computed(() => selectBooleanOptions);
             item["valueType"] = "switch";
             delete item["renderField"];
-            item["editable"] = true;
+            // item["editable"] = true;
             break;
         }
         showColumns.value.push(cloneDeep(item));
@@ -290,13 +325,18 @@ export function useBaseColumns() {
   /**
    * 该方法用于页面onMount内调用，用于第一次渲染页面
    */
-  const getColumnData = (api: BaseApi, callback = null) => {
+  const getColumnData = (
+    api: BaseApi,
+    columnsCallback = null,
+    fieldsCallback = null
+  ) => {
     api.columns().then(res => {
       formatAddOrEditColumns(res.data);
+      columnsCallback && columnsCallback();
     });
     api.fields().then(res => {
       formatSearchColumns(res.data);
-      callback && callback();
+      fieldsCallback && fieldsCallback();
     });
   };
 

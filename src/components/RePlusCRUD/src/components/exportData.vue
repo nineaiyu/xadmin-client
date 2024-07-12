@@ -6,7 +6,7 @@ import { useI18n } from "vue-i18n";
 
 const formRef = ref();
 
-defineOptions({ name: "exportData" });
+defineOptions({ name: "ExportData" });
 
 interface FormItemProps {
   type: string;
