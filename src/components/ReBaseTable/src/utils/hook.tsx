@@ -302,7 +302,7 @@ export function useBaseTable(
     if (typeof editForm?.columns === "function") {
       editColumns = editForm.columns({ row, isAdd, data: dataList.value });
     } else {
-      editColumns = { ...editForm.columns };
+      editColumns = [...(editForm?.columns ?? [])];
     }
     const formPropsResult = {};
 

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, ref } from "vue";
 import { PlusColumn, PlusForm } from "plus-pro-components";
-import { FormatOptions } from "../utils/constants";
+import { ExportImportFormatOptions } from "../utils/constants";
 import { useI18n } from "vue-i18n";
 
 const formRef = ref();
@@ -16,6 +16,8 @@ interface FormItemProps {
 
 interface FormProps {
   formInline: FormItemProps;
+  formProps?: object;
+  columns?: PlusColumn[];
 }
 
 const props = withDefaults(defineProps<FormProps>(), {
@@ -28,12 +30,12 @@ const props = withDefaults(defineProps<FormProps>(), {
 const { t } = useI18n();
 
 const state = ref<FormItemProps>(props.formInline);
-const columns: PlusColumn[] = [
+const formColumns: PlusColumn[] = [
   {
     label: t("exportImport.type"),
     prop: "type",
     valueType: "radio",
-    options: FormatOptions
+    options: ExportImportFormatOptions
   },
   {
     label: t("exportImport.exportRange"),
@@ -66,7 +68,7 @@ defineExpose({ getRef });
   <PlusForm
     ref="formRef"
     v-model="state"
-    :columns="columns"
+    :columns="formColumns"
     :hasFooter="false"
     :row-props="{ gutter: 24 }"
     class="m-5"

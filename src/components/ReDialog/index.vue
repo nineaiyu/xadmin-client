@@ -24,7 +24,7 @@ const footerButtons = computed(() => {
       ? options.footerButtons
       : ([
           {
-            label: t("labels.cancel"),
+            label: t("buttons.cancel"),
             text: true,
             bg: true,
             btnClick: ({ dialog: { options, index } }) => {

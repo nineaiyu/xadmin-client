@@ -1,5 +1,5 @@
 import { useI18n } from "vue-i18n";
-import { computed, h, onMounted, reactive, ref } from "vue";
+import { computed, nextTick, onMounted, reactive, ref } from "vue";
 import { ElMessage, ElMessageBox, type FormRules } from "element-plus";
 import {
   type ButtonsCallBackParams,
@@ -12,13 +12,11 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import EditPen from "@iconify-icons/ep/edit-pen";
 import Delete from "@iconify-icons/ep/delete";
 import View from "@iconify-icons/ep/view";
-import { cloneDeep, set } from "lodash-es";
-import { addDialog } from "@/components/ReDialog/index";
-import { deviceDetection } from "@pureadmin/utils";
+import { set } from "lodash-es";
 import importDataForm from "../components/importData.vue";
 import exportDataForm from "../components/exportData.vue";
 import { resourcesIDCacheApi } from "@/api/common";
-import { message } from "@/utils/message";
+import { openDialog } from "./handle";
 export function usePlusCRUDBase(api, auth) {
   const { t, te } = useI18n();
   const route = useRoute();
@@ -66,7 +64,6 @@ export function usePlusCRUDBase(api, auth) {
     rules: FormRules;
   }
   const plusPageInstance = ref<PlusPageInstance | null>(null);
-  const formRef = ref();
   const {
     listColumns,
     showColumns,
@@ -80,7 +77,9 @@ export function usePlusCRUDBase(api, auth) {
 
   onMounted(() => {
     getColumnData(api, () => {
-      plusPageInstance.value.plusSearchInstance.handleReset();
+      nextTick(() => {
+        plusPageInstance.value?.plusSearchInstance.handleReset();
+      });
     });
   });
 
@@ -281,81 +280,51 @@ export function usePlusCRUDBase(api, auth) {
 
   // 数据导出
   function exportData() {
-    addDialog({
+    openDialog({
       title: t("exportImport.export"),
-      props: {
-        formInline: {
-          type: "xlsx",
-          range: state.selectedIds.length > 0 ? "selected" : "all",
-          pks: state.selectedIds
-        }
+      row: {
+        type: "xlsx",
+        range: state.selectedIds.length > 0 ? "selected" : "all",
+        pks: state.selectedIds
       },
-      width: "600px",
-      draggable: true,
-      fullscreen: deviceDetection(),
-      fullscreenIcon: true,
-      closeOnClickModal: false,
-      contentRenderer: () => h(exportDataForm, { ref: formRef }),
-      beforeSure: (done, { options }) => {
-        const FormRef = formRef.value.getRef();
-        const curData = cloneDeep(options.props.formInline);
-        FormRef.validate(valid => {
-          if (valid) {
-            if (curData.range === "all") {
-              api.export(curData);
-            } else if (curData.range === "search") {
-              // 暂时不支持查询导出
-              // searchFields.value["type"] = curData["type"];
-              // api.export(toRaw(searchFields.value));
-            } else if (curData.range === "selected") {
-              resourcesIDCacheApi(curData.pks).then(res => {
-                curData["spm"] = res.spm;
-                delete curData.pks;
-                api.export(curData);
-              });
-            }
-            done();
-          }
-        });
+      dialogOptions: { width: "600px" },
+      form: exportDataForm,
+      saveCallback: ({ formData, done }) => {
+        if (formData.range === "all") {
+          api.export(formData);
+        } else if (formData.range === "search") {
+          // 暂时不支持查询导出
+          // searchFields.value["type"] = curData["type"];
+          // api.export(toRaw(searchFields.value));
+        } else if (formData.range === "selected") {
+          resourcesIDCacheApi(formData.pks).then(res => {
+            formData["spm"] = res.spm;
+            delete formData.pks;
+            api.export(formData);
+          });
+        }
+        done();
       }
     });
   }
 
   // 数据导入
   function importData() {
-    addDialog({
+    openDialog({
       title: t("exportImport.import"),
-      props: {
-        formInline: {
-          action: "create",
-          api: api
-        }
+      row: {
+        action: "create",
+        api: api
       },
-      width: "600px",
-      draggable: true,
-      fullscreen: deviceDetection(),
-      fullscreenIcon: true,
-      closeOnClickModal: false,
-      contentRenderer: () => h(importDataForm, { ref: formRef }),
-      beforeSure: (done, { options }) => {
-        const FormRef = formRef.value.getRef();
-        const curData = cloneDeep(options.props.formInline);
-        const chores = () => {
-          message(t("results.success"), { type: "success" });
-          done(); // 关闭弹框
-          refresh(); // 刷新表格数据
-        };
-        FormRef.validate(valid => {
-          if (valid) {
-            api.import(curData.action, curData.upload[0].raw).then(res => {
-              if (res.code === 1000) {
-                chores();
-              } else {
-                message(`${t("results.failed")}，${res.detail}`, {
-                  type: "error"
-                });
-              }
-            });
+      dialogOptions: { width: "600px" },
+      form: importDataForm,
+      saveCallback: ({ formData, success, failed }) => {
+        api.import(formData.action, formData.upload[0].raw).then(res => {
+          if (res.code === 1000) {
+            refresh(); // 刷新表格数据
+            success();
+          } else {
+            failed(res.detail);
           }
         });
       }

@@ -14,7 +14,6 @@ import { getPickerShortcuts, getColourTypeByIndex } from "./index";
 import SearchDepts from "@/views/system/base/searchDepts.vue";
 import SearchRoles from "@/views/system/base/searchRoles.vue";
 import SearchUsers from "@/views/system/base/searchUsers.vue";
-import UploadFiles from "@/views/system/base/uploadFiles.vue";
 import uploadFile from "../components/uploadFile.vue";
 import { ElIcon, ElLink } from "element-plus";
 import { Link } from "@element-plus/icons-vue";
@@ -25,8 +24,7 @@ import { Link } from "@element-plus/icons-vue";
 const apiSearchComponents = {
   "api-search-depts": SearchDepts,
   "api-search-roles": SearchRoles,
-  "api-search-users": SearchUsers,
-  "api-upload-files": UploadFiles
+  "api-search-users": SearchUsers
 };
 /**
  * @description 用与通过api接口，获取对应的column, 进行前端渲染

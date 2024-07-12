@@ -33,21 +33,4 @@ interface FormProps {
   api: ApiAuthProps | any;
 }
 
-interface FormItemProps {}
-
-interface AddOrEditFormProps {
-  formInline: FormItemProps;
-  formProps?: object;
-  showColumns?: any[];
-  columns?: any[];
-  isAdd?: boolean;
-}
-
-export type {
-  FormProps,
-  ApiAuthProps,
-  FormItemProps,
-  AddOrEditFormProps,
-  SearchFieldsProps,
-  EditFormProps
-};
+export type { FormProps, ApiAuthProps, SearchFieldsProps, EditFormProps };
