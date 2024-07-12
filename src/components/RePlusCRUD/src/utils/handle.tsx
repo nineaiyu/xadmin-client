@@ -22,6 +22,7 @@ interface formDialogOptions {
   t: Function;
   row: Function | Object; //  默认数据或者更新的书籍
   title: string; // 弹窗的的title
+  minWidth?: string; // 弹窗的的最小宽度
   columns?: Function | PlusColumn[] | Array<any>; // 表单字段
   form?: Component | any; // 挂载的form组件，默认是addOrEdit组件
   props?: Function | Object; //  内容区组件的 props，可通过 defineProps 接收
@@ -75,7 +76,15 @@ const openFormDialog = (formOptions: formDialogOptions) => {
       formPropsResult[key] = getValue;
     }
   });
-
+  const clientWidth = document.documentElement.clientWidth;
+  const minWidth = Number((formOptions.minWidth ?? "600px").replace("px", ""));
+  const width = formOptions?.dialogOptions?.width ?? "40%";
+  let numberWidth = 0;
+  if (width.endsWith("%")) {
+    numberWidth = (clientWidth * Number(width.replace("%", ""))) / 100;
+  } else {
+    numberWidth = Number(width.replace("px", ""));
+  }
   addDialog({
     title: formOptions.title,
     props: {
@@ -87,7 +96,7 @@ const openFormDialog = (formOptions: formDialogOptions) => {
       columns: editColumns ?? [],
       formProps: formPropsResult ?? {}
     },
-    width: "40%",
+    width: `${minWidth > numberWidth ? minWidth : numberWidth}px`,
     draggable: true,
     fullscreen: deviceDetection(),
     fullscreenIcon: true,

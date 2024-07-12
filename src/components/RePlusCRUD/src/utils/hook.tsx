@@ -13,7 +13,6 @@ import { useRoute } from "vue-router";
 import exportDataForm from "../components/exportData.vue";
 import importDataForm from "../components/importData.vue";
 import detailDataForm from "../components/detailData.vue";
-import type { OperationButtonsRow } from "../components/tableOperation.vue";
 import { resourcesIDCacheApi } from "@/api/common";
 import { useBaseColumns } from "./columns";
 import {
@@ -28,6 +27,10 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import EditPen from "@iconify-icons/ep/edit-pen";
 import Delete from "@iconify-icons/ep/delete";
 import View from "@iconify-icons/ep/view";
+import type { OperationButtonsRow } from "../components/buttonOperation/types";
+import AddFill from "@iconify-icons/ri/add-circle-line";
+import Download from "@iconify-icons/ep/download";
+import Upload from "@iconify-icons/ep/upload";
 
 export function useBaseTable(
   emit: any,
@@ -72,6 +75,7 @@ export function useBaseTable(
     return route.meta.title;
   });
 
+  // 默认操作按钮
   const operationButtons = shallowRef<OperationButtonsRow[]>([]);
   operationButtons.value = [
     {
@@ -90,9 +94,7 @@ export function useBaseTable(
     {
       text: t("buttons.delete"),
       code: "delete",
-      confirm: {
-        title: t("buttons.confirmDelete")
-      },
+      confirm: { title: t("buttons.confirmDelete") },
       props: {
         type: "danger",
         icon: useRenderIcon(Delete),
@@ -104,7 +106,6 @@ export function useBaseTable(
       show: true
     },
     {
-      text: "",
       code: "detail",
       props: {
         type: "primary",
@@ -114,6 +115,51 @@ export function useBaseTable(
       onClick: ({ row }) => {
         handleDetail(row);
       },
+      tooltip: { content: t("buttons.detail") },
+      show: true
+    }
+  ];
+
+  // 默认tableBar按钮
+  const tableBarButtons = shallowRef<OperationButtonsRow[]>([]);
+
+  tableBarButtons.value = [
+    {
+      text: t("buttons.add"),
+      code: "create",
+      props: {
+        type: "primary",
+        icon: useRenderIcon(AddFill)
+      },
+      onClick: ({ row }) => {
+        handleAddOrEdit(true, row);
+      },
+      show: true
+    },
+    {
+      code: "export",
+      props: {
+        type: "primary",
+        icon: useRenderIcon(Download),
+        plain: true
+      },
+      onClick: () => {
+        exportData();
+      },
+      tooltip: { content: t("exportImport.export") },
+      show: true
+    },
+    {
+      code: "import",
+      props: {
+        type: "primary",
+        icon: useRenderIcon(Upload),
+        plain: true
+      },
+      onClick: () => {
+        importData();
+      },
+      tooltip: { content: t("exportImport.import") },
       show: true
     }
   ];
@@ -422,16 +468,12 @@ export function useBaseTable(
     defaultValue,
     searchFields,
     searchColumns,
+    tableBarButtons,
     operationButtons,
-    exportData,
-    importData,
     handleReset,
     handleSearch,
     getSelectPks,
-    handleDelete,
-    handleDetail,
     handleGetData,
-    handleAddOrEdit,
     handleManyDelete,
     handleSizeChange,
     onSelectionCancel,

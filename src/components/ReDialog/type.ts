@@ -26,7 +26,7 @@ type DialogProps = {
   /** `Dialog` 的标题 */
   title?: string;
   /** `Dialog` 的宽度，默认 `50%` */
-  width?: string | number;
+  width?: string;
   /** 是否为全屏 `Dialog`（会一直处于全屏状态，除非弹框关闭），默认 `false`，`fullscreen` 和 `fullscreenIcon` 都传时只有 `fullscreen` 会生效 */
   fullscreen?: boolean;
   /** 是否显示全屏操作图标，默认 `false`，`fullscreen` 和 `fullscreenIcon` 都传时只有 `fullscreen` 会生效 */

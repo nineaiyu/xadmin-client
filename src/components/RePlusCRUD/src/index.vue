@@ -2,18 +2,13 @@
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { PlusPageProps } from "./utils/types";
-import { ref, shallowRef } from "vue";
+import { ref } from "vue";
 import { cloneDeep, deviceDetection, getKeyList } from "@pureadmin/utils";
 import { useBaseTable } from "./utils/hook";
 import Delete from "@iconify-icons/ep/delete";
-import AddFill from "@iconify-icons/ri/add-circle-line";
-import Download from "@iconify-icons/ep/download";
-import Upload from "@iconify-icons/ep/upload";
 import PureTable from "@pureadmin/table";
 import { PlusSearch } from "plus-pro-components";
-import TableOperation, {
-  OperationButtonsRow
-} from "@/components/RePlusCRUD/src/components/tableOperation.vue";
+import ButtonOperation from "./components/buttonOperation/index.vue";
 
 const props = withDefaults(defineProps<PlusPageProps>(), {
   auth: () => ({
@@ -60,14 +55,12 @@ const {
   defaultValue,
   searchFields,
   searchColumns,
+  tableBarButtons,
   operationButtons,
-  exportData,
-  importData,
   handleReset,
   handleSearch,
   getSelectPks,
   handleGetData,
-  handleAddOrEdit,
   handleManyDelete,
   handleSizeChange,
   onSelectionCancel,
@@ -171,40 +164,7 @@ defineExpose({
               </template>
             </el-popconfirm>
           </div>
-          <el-button
-            v-if="auth.create"
-            :icon="useRenderIcon(AddFill)"
-            type="primary"
-            @click="handleAddOrEdit(true, {})"
-          >
-            {{ t("buttons.add") }}
-          </el-button>
-          <el-tooltip
-            v-if="auth.export"
-            :content="t('exportImport.export')"
-            effect="dark"
-            placement="top-start"
-          >
-            <el-button
-              :icon="useRenderIcon(Download)"
-              plain
-              type="primary"
-              @click="exportData"
-            />
-          </el-tooltip>
-          <el-tooltip
-            v-if="auth.import"
-            :content="t('exportImport.import')"
-            effect="dark"
-            placement="top-start"
-          >
-            <el-button
-              :icon="useRenderIcon(Upload)"
-              plain
-              type="primary"
-              @click="importData"
-            />
-          </el-tooltip>
+          <button-operation :buttons="tableBarButtons" :show-number="99" />
           <slot name="barButtons" />
         </el-space>
       </template>
@@ -233,7 +193,7 @@ defineExpose({
           @page-current-change="handleCurrentChange"
         >
           <template #operation="{ row }">
-            <tableOperation
+            <button-operation
               :buttons="operationButtons"
               :row="row"
               :size="size"

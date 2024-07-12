@@ -39,7 +39,7 @@ interface FormProps {
 
 interface PlusPageProps {
   api: BaseApi;
-  auth: ApiAuthProps;
+  auth: ApiAuthProps | any;
   localeName?: string;
   /**
    * PlusSearchProps

@@ -33,13 +33,7 @@
 <script lang="ts" setup>
 import type { Component, VNode } from "vue";
 import { h, unref } from "vue";
-import {
-  ButtonProps,
-  ElMessageBoxOptions,
-  ElPopconfirm,
-  IconProps,
-  LinkProps
-} from "element-plus";
+import { ElPopconfirm, ElTooltip } from "element-plus";
 import {
   ElButton,
   ElDropdown,
@@ -50,50 +44,16 @@ import { RecordType } from "plus-pro-components";
 import { isFunction } from "@pureadmin/utils";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import More from "@iconify-icons/ep/more-filled";
-import { Mutable } from "element-plus/es/utils";
+import { OperationButtonsRow, OperationEmits, OperationProps } from "./types";
 
-export interface OperationButtonsRow {
-  text: string;
-  code?: string | number;
-  icon?: Component;
-  props?: Partial<
-    Mutable<
-      ButtonProps &
-        LinkProps &
-        IconProps & {
-          [index: string]: any;
-        }
-    >
-  >;
-  show?: boolean;
-  confirm?: {
-    title?: string;
-    props?: ElMessageBoxOptions;
-  };
-  onClick?: (params: ButtonsCallBackParams) => void;
-}
-interface ButtonsCallBackParams {
-  buttonRow: OperationButtonsRow;
-  row: object;
-  e: MouseEvent;
-}
-interface OperationProps {
-  size: "" | "default" | "small" | "large";
-  row: object;
-  showNumber?: number;
-  buttons?: OperationButtonsRow[];
-}
-
-interface OperationEmits {
-  (e: "clickAction", data: ButtonsCallBackParams): void;
-}
 const emit = defineEmits<OperationEmits>();
 
 defineOptions({
-  name: "tableOperation"
+  name: "buttonOperation"
 });
 
 const props = withDefaults(defineProps<OperationProps>(), {
+  text: undefined,
   size: "default",
   row: () => ({}),
   buttons: () => [],
@@ -101,7 +61,7 @@ const props = withDefaults(defineProps<OperationProps>(), {
 });
 
 const getSubButtons = () => {
-  const data = props.buttons.filter(item => {
+  const data = props.buttons.filter((item: OperationButtonsRow) => {
     return unref(item.show) !== false;
   });
   // 获取'更多'之前的按钮组
@@ -128,13 +88,15 @@ const render = (row: RecordType, buttonRow: OperationButtonsRow): VNode => {
         ? undefined
         : (event: MouseEvent) => handleClickAction(row, buttonRow, event)
     },
-    () => {
-      return unref(buttonRow.text);
-    }
+    buttonRow?.text
+      ? () => {
+          return unref(buttonRow.text);
+        }
+      : {}
   );
   if (buttonRow.confirm?.title) {
     return h(
-      ElPopconfirm,
+      ElPopconfirm as Component,
       {
         title: buttonRow.confirm?.title,
         onConfirm: (event: MouseEvent) =>
@@ -143,9 +105,19 @@ const render = (row: RecordType, buttonRow: OperationButtonsRow): VNode => {
       },
       { reference: () => buttonComponent }
     );
-  } else {
-    return buttonComponent;
   }
+  if (buttonRow.tooltip?.content) {
+    return h(
+      ElTooltip,
+      {
+        placement: "top",
+        content: buttonRow.tooltip?.content,
+        ...buttonRow.tooltip?.props
+      },
+      () => buttonComponent
+    );
+  }
+  return buttonComponent;
 };
 
 // 分发按钮事件
