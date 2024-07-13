@@ -19,7 +19,7 @@ import {
   type operationOptions
 } from "./handle";
 import { usePublicHooks } from "@/views/system/hooks";
-import { formatPublicLabels } from "@/components/RePlusCRUD";
+import { formatPublicLabels, uniqueArrayObj } from "@/components/RePlusCRUD";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import type { OperationButtonsRow } from "@/components/RePlusCRUD";
 import exportDataForm from "../components/exportData.vue";
@@ -382,7 +382,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
     listColumns.value.forEach(column => {
       switch (column.valueType) {
         case "switch":
-          // pure-table ******
+          // pure-table ****** start
           column["cellRenderer"] = renderSwitch({
             t,
             updateApi: api.patch,
@@ -391,6 +391,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
             field: column.prop
           });
           break;
+        // pure-table ****** end
       }
     });
     props.selection &&
@@ -399,7 +400,11 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
         fixed: "left",
         reserveSelection: true
       });
+    const hasOperations = uniqueArrayObj(operationButtons.value, "code").filter(
+      (item: OperationButtonsRow) => item?.show
+    );
     props.operation &&
+      hasOperations.length > 0 &&
       listColumns.value.push({
         label: formatPublicLabels(t, te, "operation", localeName),
         fixed: "right",

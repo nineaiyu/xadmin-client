@@ -259,6 +259,7 @@ export function useBaseColumns(localeName: string) {
               formatAddOrEditOptions(column?.choices)
             );
             // pure-table ****** start
+            item["prop"] = column.key;
             item["cellRenderer"] = ({ row }) => (
               <span v-copy={get(row, `${column.key}.label`)}>
                 {get(row, `${column.key}.label`)}
@@ -272,6 +273,7 @@ export function useBaseColumns(localeName: string) {
               formatAddOrEditOptions(column?.choices)
             );
             // pure-table ****** start
+            item["prop"] = column.key;
             item["cellRenderer"] = ({ row }) => (
               <span v-copy={get(row, `${column.key}.label`)}>
                 {get(row, `${column.key}.label`)}
