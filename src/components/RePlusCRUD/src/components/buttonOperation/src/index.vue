@@ -45,6 +45,7 @@ import { isFunction } from "@pureadmin/utils";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import More from "@iconify-icons/ep/more-filled";
 import { OperationButtonsRow, OperationEmits, OperationProps } from "./types";
+import { uniqueArrayObj } from "@/components/RePlusCRUD";
 
 const emit = defineEmits<OperationEmits>();
 
@@ -60,16 +61,10 @@ const props = withDefaults(defineProps<OperationProps>(), {
   showNumber: 3
 });
 
-const uniqueButtons = computed<Array<OperationButtonsRow>>(() => {
-  const b = {};
-  props.buttons.forEach(item => {
-    b[item.code] = item;
-  });
-  return Object.values(b);
-});
+const uniqueButtons = computed(() => uniqueArrayObj(props.buttons, "code"));
 
 const getSubButtons = () => {
-  const data: OperationButtonsRow[] = uniqueButtons.value.filter(
+  const data = (uniqueButtons.value as OperationButtonsRow[]).filter(
     (item: OperationButtonsRow) => {
       return unref(item.show) !== false;
     }

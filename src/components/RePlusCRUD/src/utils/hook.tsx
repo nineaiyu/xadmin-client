@@ -275,8 +275,8 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
     openFormDialog({
       t,
       title: t("buttons.detail"),
-      row: { ...row },
-      columns: showColumns.value,
+      rawRow: { ...row },
+      rawColumns: showColumns.value,
       dialogOptions: { width: "600px", hideFooter: true },
       form: detailDataForm
     });
@@ -289,7 +289,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
     openFormDialog({
       t,
       title: t("exportImport.export"),
-      row: {
+      rawRow: {
         type: "xlsx",
         range: pks.length > 0 ? "selected" : "all",
         pks: pks
@@ -320,7 +320,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
     openFormDialog({
       t,
       title: t("exportImport.import"),
-      row: {
+      rawRow: {
         action: "create",
         api: api
       },
@@ -347,10 +347,11 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
     }
     openFormDialog({
       t,
+      isAdd,
       title: `${title} ${addOrEditOptions?.title ?? pageTitle.value}`,
-      row: isAdd ? { ...addOrEditDefaultValue.value } : { ...row },
+      rawRow: isAdd ? { ...addOrEditDefaultValue.value } : { ...row },
       form: addOrEditOptions?.form,
-      columns: addOrEditColumns.value,
+      rawColumns: addOrEditColumns.value,
       formProps: {
         rules: addOrEditRules.value
       },

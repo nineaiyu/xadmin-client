@@ -41,8 +41,8 @@ interface FormProps {
 interface RePlusPageProps {
   api: BaseApi;
   auth: ApiAuthProps | any;
-  selection: boolean;
-  operation: boolean;
+  selection?: boolean;
+  operation?: boolean;
   localeName?: string;
   /**
    * PlusSearchProps
@@ -65,7 +65,7 @@ interface RePlusPageProps {
   pagination?: Partial<PaginationProps>;
   addOrEditOptions?: {
     title?: "";
-    props?: formDialogOptions;
+    props?: Partial<formDialogOptions>;
     form?: undefined;
   };
   operationButtonsProps?: Partial<OperationProps>;

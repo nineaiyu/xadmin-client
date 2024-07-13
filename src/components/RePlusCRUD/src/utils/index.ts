@@ -192,3 +192,11 @@ export const formatPublicLabels = (
   }
   return;
 };
+
+export const uniqueArrayObj = (array, key) => {
+  const b = {};
+  array.forEach(item => {
+    b[item[key]] = item;
+  });
+  return Object.values(b);
+};

@@ -8,6 +8,7 @@ import type { PlusColumn, PlusFormProps } from "plus-pro-components";
 import { ElMessageBox, type FormInstance } from "element-plus";
 import type { BaseApi } from "@/api/base";
 import type { BaseResult } from "@/api/types";
+import { uniqueArrayObj } from "@/components/RePlusCRUD";
 
 interface callBackArgs {
   formData: Object | any;
@@ -20,10 +21,13 @@ interface callBackArgs {
 
 interface formDialogOptions {
   t: Function;
-  row: Function | Object; //  默认数据或者更新的书籍
+  isAdd?: boolean;
+  row?: Function | Object; //  外部处理方法
   title: string; // 弹窗的的title
+  rawRow: Object; //  默认数据或者更新的书籍
   minWidth?: string; // 弹窗的的最小宽度
   columns?: Function | PlusColumn[] | Array<any>; // 表单字段
+  rawColumns?: PlusColumn[] | Array<any>; // 表单字段
   form?: Component | any; // 挂载的form组件，默认是addOrEdit组件
   props?: Function | Object; //  内容区组件的 props，可通过 defineProps 接收
   formProps?: Function | PlusFormProps; //  plus form 的props
@@ -45,7 +49,7 @@ const openFormDialog = (formOptions: formDialogOptions) => {
   Object.keys(formOptions?.row ?? {}).forEach(key => {
     const getValue = formOptions.row[key];
     if (typeof formOptions.row[key] === "function") {
-      rowResult[key] = getValue(formOptions);
+      rowResult[key] = getValue(cloneDeep(formOptions));
     } else {
       rowResult[key] = getValue;
     }
@@ -54,14 +58,14 @@ const openFormDialog = (formOptions: formDialogOptions) => {
   Object.keys(formOptions?.props ?? {}).forEach(key => {
     const getValue = formOptions.props[key];
     if (typeof formOptions.props[key] === "function") {
-      propsResult[key] = getValue(formOptions);
+      propsResult[key] = getValue(cloneDeep(formOptions));
     } else {
       propsResult[key] = getValue;
     }
   });
   let editColumns = [];
   if (typeof formOptions?.columns === "function") {
-    editColumns = formOptions.columns(formOptions);
+    editColumns = formOptions.columns(cloneDeep(formOptions));
   } else {
     editColumns = [...(formOptions?.columns ?? [])];
   }
@@ -71,7 +75,7 @@ const openFormDialog = (formOptions: formDialogOptions) => {
   Object.keys(formOptions?.formProps ?? {}).forEach(key => {
     const getValue = formOptions?.formProps[key];
     if (typeof formOptions?.formProps[key] === "function") {
-      formPropsResult[key] = getValue(formOptions);
+      formPropsResult[key] = getValue(cloneDeep(formOptions));
     } else {
       formPropsResult[key] = getValue;
     }
@@ -89,11 +93,14 @@ const openFormDialog = (formOptions: formDialogOptions) => {
     title: formOptions.title,
     props: {
       formInline: {
-        ...(formOptions?.row ?? {}),
+        ...(formOptions?.rawRow ?? {}),
         ...rowResult
       },
       ...propsResult,
-      columns: editColumns ?? [],
+      columns: uniqueArrayObj(
+        [...formOptions?.rawColumns, ...(editColumns ?? [])],
+        "prop"
+      ),
       formProps: formPropsResult ?? {}
     },
     width: `${minWidth > numberWidth ? minWidth : numberWidth}px`,

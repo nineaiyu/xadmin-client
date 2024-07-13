@@ -5,7 +5,7 @@ import { useI18n } from "vue-i18n";
 import type { PlusColumn } from "plus-pro-components";
 import type { BaseApi } from "@/api/base";
 import type { SearchColumnsResult, SearchFieldsResult } from "@/api/types";
-
+import { get } from "lodash-es";
 import { renderSegmentedOption, formatAddOrEditOptions } from "./renders";
 import { selectBooleanOptions } from "./constants";
 import {
@@ -18,7 +18,7 @@ import SearchDepts from "@/views/system/base/searchDepts.vue";
 import SearchRoles from "@/views/system/base/searchRoles.vue";
 import SearchUsers from "@/views/system/base/searchUsers.vue";
 import uploadFile from "../components/uploadFile.vue";
-import { ElIcon, ElLink } from "element-plus";
+import { ElIcon, ElImage, ElLink } from "element-plus";
 import { Link } from "@element-plus/icons-vue";
 import Info from "@iconify-icons/ri/question-line";
 
@@ -150,12 +150,13 @@ export function useBaseColumns(localeName: string) {
         },
         hideInSearch: true,
         hideInTable: false,
-        // pure-table
+        // pure-table ****** start
         cellRenderer: ({ row }) => (
           <span v-copy={row[column.key]}>{row[column.key]}</span>
         )
+        // pure-table ****** end
       };
-      // pure-table
+      // pure-table ****** start
       if (column?.help_text) {
         item["headerRenderer"] = () => (
           <span class="flex-c">
@@ -170,6 +171,7 @@ export function useBaseColumns(localeName: string) {
           </span>
         );
       }
+      // pure-table ****** end
       switch (column.input_type) {
         case "integer":
         case "float":
@@ -177,7 +179,7 @@ export function useBaseColumns(localeName: string) {
           item["fieldProps"]["controlsPosition"] = "right";
           // item["fieldProps"]["controls"] = false;
           // pure-table ******
-          delete item["cellRenderer"];
+          // delete item["cellRenderer"];
           break;
         case "string":
         case "field":
@@ -189,12 +191,13 @@ export function useBaseColumns(localeName: string) {
           item["fieldProps"]["type"] = column.input_type;
           item["fieldProps"]["valueFormat"] = "YYYY-MM-DD HH:mm:ss";
           item["width"] = 160;
-          // pure-table ******
+          // pure-table ****** start
           item["cellRenderer"] = ({ row }) => (
             <span v-copy={row[column.key]}>
               {dayjs(row[column.key]).format("YYYY-MM-DD HH:mm:ss")}
             </span>
           );
+          // pure-table ****** end
           break;
         case "boolean":
           item["valueType"] = "radio";
@@ -255,12 +258,26 @@ export function useBaseColumns(localeName: string) {
             item["options"] = computed(() =>
               formatAddOrEditOptions(column?.choices)
             );
+            // pure-table ****** start
+            item["cellRenderer"] = ({ row }) => (
+              <span v-copy={get(row, `${column.key}.label`)}>
+                {get(row, `${column.key}.label`)}
+              </span>
+            );
+            // pure-table ****** end
             break;
           case "object_related_field":
             item["prop"] = `${column.key}.pk`;
             item["options"] = computed(() =>
               formatAddOrEditOptions(column?.choices)
             );
+            // pure-table ****** start
+            item["cellRenderer"] = ({ row }) => (
+              <span v-copy={get(row, `${column.key}.label`)}>
+                {get(row, `${column.key}.label`)}
+              </span>
+            );
+            // pure-table ****** end
             break;
           case "m2m_related_field":
             item["render"] = (value: Array<any>) => {
@@ -283,9 +300,37 @@ export function useBaseColumns(localeName: string) {
                 );
               } else return <></>;
             };
+            // pure-table ****** start
+            item["cellRenderer"] = ({ row }) => (
+              <>
+                <el-space>
+                  {row[column.key]?.map((item, index) => {
+                    return (
+                      <el-text
+                        key={item.pk}
+                        type={getColourTypeByIndex(index + 1)}
+                      >
+                        {item.label}
+                      </el-text>
+                    );
+                  })}
+                </el-space>
+              </>
+            );
+            // pure-table ****** end
             break;
           case "image upload":
             item["valueType"] = "img";
+            // pure-table ****** start
+            item["cellRenderer"] = ({ row }) =>
+              h(ElImage, {
+                lazy: true,
+                src: row[column.key],
+                alt: row[column.key],
+                previewSrcList: [row[column.key]],
+                previewTeleported: true
+              });
+            // pure-table ****** end
             break;
           case "file upload":
             // item["valueType"] = "copy";
@@ -303,6 +348,21 @@ export function useBaseColumns(localeName: string) {
                 }
               );
             };
+            // pure-table ****** start
+            item["cellRenderer"] = ({ row }) =>
+              h(
+                ElLink,
+                {
+                  type: "success",
+                  href: row[column.key],
+                  target: "_blank"
+                },
+                {
+                  icon: () => h(ElIcon, null, () => h(Link)),
+                  default: () => "文件连接"
+                }
+              );
+            // pure-table ****** end
             break;
           case "boolean":
             item["options"] = computed(() => selectBooleanOptions);
