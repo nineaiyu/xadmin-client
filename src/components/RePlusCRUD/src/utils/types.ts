@@ -51,20 +51,23 @@ interface RePlusPageProps {
    * 对通过 request 获取的数据进行处理
    * @param data
    */
-  resultFormat?: <T = RecordType[]>(data: T[]) => T[];
+  searchResultFormat?: <T = RecordType[]>(data: T[]) => T[];
+  listColumnsFormat?: <T = RecordType[]>(columns: T[]) => T[];
+  showColumnsFormat?: <T = RecordType[]>(columns: T[]) => T[];
+  searchColumnsFormat?: <T = RecordType[]>(columns: T[]) => T[];
   /**
    * 搜索之前进行一些修改
    * @param params
    */
   beforeSearchSubmit?: <T = RecordType>(params: T) => T;
-  pagination?: PaginationProps;
+  pagination?: Partial<PaginationProps>;
   addOrEditOptions?: {
     title?: "";
     props?: formDialogOptions;
     form?: undefined;
   };
-  operationButtonsProps?: OperationProps;
-  tableBarButtonsProps?: OperationProps;
+  operationButtonsProps?: Partial<OperationProps>;
+  tableBarButtonsProps?: Partial<OperationProps>;
 }
 
 export type {

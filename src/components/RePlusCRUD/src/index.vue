@@ -15,7 +15,10 @@ import ButtonOperation, {
 const props = withDefaults(defineProps<RePlusPageProps>(), {
   localeName: "",
   api: undefined,
-  resultFormat: undefined,
+  searchResultFormat: undefined,
+  listColumnsFormat: undefined,
+  showColumnsFormat: undefined,
+  searchColumnsFormat: undefined,
   beforeSearchSubmit: undefined,
   auth: () => ({
     list: false,
@@ -28,19 +31,11 @@ const props = withDefaults(defineProps<RePlusPageProps>(), {
     import: false
   }),
   addOrEditOptions: () => ({}),
-  pagination: () => {
-    return {
-      total: 0,
-      pageSize: 10,
-      currentPage: 1,
-      pageSizes: [5, 10, 20, 50, 100],
-      background: true
-    };
-  },
+  pagination: () => ({}),
   pureTableProps: () => ({}),
   plusSearchProps: () => ({}),
-  operationButtonsProps: () => ({ showNumber: 3, buttons: [] }),
-  tableBarButtonsProps: () => ({ showNumber: 99, buttons: [] })
+  operationButtonsProps: () => ({}),
+  tableBarButtonsProps: () => ({})
 });
 defineOptions({ name: "RePlusCRUD" });
 const emit = defineEmits<{
@@ -57,12 +52,12 @@ const {
   loading,
   dataList,
   pageTitle,
-  pagination,
   listColumns,
   selectedNum,
   defaultValue,
   searchFields,
   searchColumns,
+  tablePagination,
   tableBarButtons,
   operationButtons,
   handleReset,
@@ -188,7 +183,7 @@ defineExpose({
             color: 'var(--el-text-color-primary)'
           }"
           :loading="loading"
-          :pagination="pagination"
+          :pagination="tablePagination"
           :paginationSmall="size === 'small'"
           :size="size"
           adaptive

@@ -36,13 +36,17 @@ import AddFill from "@iconify-icons/ri/add-circle-line";
 export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
   const {
     api,
+    auth,
     pagination,
     localeName,
-    resultFormat,
     addOrEditOptions,
-    beforeSearchSubmit,
     operationButtonsProps,
-    tableBarButtonsProps
+    tableBarButtonsProps,
+    searchResultFormat,
+    listColumnsFormat,
+    showColumnsFormat,
+    searchColumnsFormat,
+    beforeSearchSubmit
   } = props;
 
   const route = useRoute();
@@ -54,7 +58,17 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
   const switchLoadMap = ref({});
   const { switchStyle } = usePublicHooks();
   const getParameter = isEmpty(route.params) ? route.query : route.params;
-
+  const defaultPagination = {
+    total: 0,
+    pageSize: 10,
+    currentPage: 1,
+    pageSizes: [5, 10, 20, 50, 100],
+    background: true
+  };
+  const tablePagination = ref<RePlusPageProps["pagination"]>({
+    ...defaultPagination,
+    ...pagination
+  });
   const {
     listColumns,
     showColumns,
@@ -67,8 +81,8 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
   } = useBaseColumns(localeName);
 
   const searchFields = ref({
-    size: pagination.pageSize,
-    page: pagination.currentPage
+    size: tablePagination.value.pageSize,
+    page: tablePagination.value.currentPage
   });
 
   const pageTitle = computed(() => {
@@ -92,7 +106,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
       onClick: ({ row }) => {
         handleAddOrEdit(false, row);
       },
-      show: true
+      show: auth.patch || auth.update
     },
     {
       text: t("buttons.delete"),
@@ -106,7 +120,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
       onClick: ({ row }) => {
         handleDelete(row);
       },
-      show: true
+      show: auth.delete
     },
     {
       code: "detail",
@@ -119,12 +133,15 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
         handleDetail(row);
       },
       tooltip: { content: t("buttons.detail") },
-      show: true
+      show: auth.list || auth.detail
     }
   ];
 
   const operationButtons = computed(() => {
-    return [...defaultOperationButtons.value, ...operationButtonsProps.buttons];
+    return [
+      ...defaultOperationButtons.value,
+      ...(operationButtonsProps?.buttons ?? [])
+    ];
   });
   // 默认tableBar按钮
   const defaultTableBarButtons = shallowRef<OperationButtonsRow[]>([]);
@@ -140,7 +157,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
       onClick: ({ row }) => {
         handleAddOrEdit(true, row);
       },
-      show: true
+      show: auth.create
     },
     {
       code: "export",
@@ -153,7 +170,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
         exportData();
       },
       tooltip: { content: t("exportImport.export") },
-      show: true
+      show: auth.export
     },
     {
       code: "import",
@@ -166,18 +183,21 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
         importData();
       },
       tooltip: { content: t("exportImport.import") },
-      show: true
+      show: auth.import
     }
   ];
 
   const tableBarButtons = computed(() => {
-    return [...defaultTableBarButtons.value, ...tableBarButtonsProps.buttons];
+    return [
+      ...defaultTableBarButtons.value,
+      ...(tableBarButtonsProps?.buttons ?? [])
+    ];
   });
 
   const initSearchFields = () => {
     searchFields.value = cloneDeep(defaultValue.value);
-    pagination.pageSize = searchFields.value.size;
-    pagination.currentPage = searchFields.value.page;
+    tablePagination.value.pageSize = searchFields.value.size;
+    tablePagination.value.currentPage = searchFields.value.page;
   };
 
   const handleReset = () => {
@@ -186,7 +206,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
   };
 
   const handleSearch = () => {
-    searchFields.value.page = pagination.currentPage = 1;
+    searchFields.value.page = tablePagination.value.currentPage = 1;
     handleGetData();
   };
 
@@ -234,15 +254,18 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
       message(t("results.noSelectedData"), { type: "error" });
       return;
     }
-    api.batchDelete(getSelectPks("pk")).then(res => {
-      if (res.code === 1000) {
+
+    handleOperation({
+      t,
+      row: getSelectPks("pk") as object,
+      apiUrl: api.batchDelete,
+      showSuccessMsg: false,
+      success() {
         message(t("results.batchDelete", { count: selectedNum.value }), {
           type: "success"
         });
         onSelectionCancel();
         handleGetData();
-      } else {
-        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
     });
   };
@@ -377,9 +400,18 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
     listColumns.value.push({
       label: formatPublicLabels(t, te, "operation", localeName),
       fixed: "right",
-      width: 200,
+      width: operationButtonsProps?.width ?? 200,
       slot: "operation"
     });
+    listColumns.value =
+      (listColumnsFormat && listColumnsFormat(listColumns.value)) ||
+      listColumns.value;
+    showColumns.value =
+      (showColumnsFormat && showColumnsFormat(showColumns.value)) ||
+      showColumns.value;
+    searchColumns.value =
+      (searchColumnsFormat && searchColumnsFormat(searchColumns.value)) ||
+      searchColumns.value;
   };
 
   // 数据获取
@@ -420,12 +452,12 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
       .list(data)
       .then(res => {
         if (res.code === 1000 && res.data) {
-          if (resultFormat && typeof resultFormat === "function") {
-            dataList.value = resultFormat(res.data.results);
+          if (searchResultFormat && typeof searchResultFormat === "function") {
+            dataList.value = searchResultFormat(res.data.results);
           } else {
             dataList.value = res.data.results;
           }
-          pagination.total = res.data.total;
+          tablePagination.value.total = res.data.total;
         } else {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
         }
@@ -448,8 +480,8 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
       () => {
         defaultValue.value = {
           ...{
-            page: pagination.currentPage,
-            size: pagination.pageSize,
+            page: tablePagination.value.currentPage,
+            size: tablePagination.value.pageSize,
             ordering: "-created_time"
           },
           ...searchDefaultValue.value
@@ -472,12 +504,12 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
     loading,
     dataList,
     pageTitle,
-    pagination,
     listColumns,
     selectedNum,
     defaultValue,
     searchFields,
     searchColumns,
+    tablePagination,
     tableBarButtons,
     operationButtons,
     handleReset,

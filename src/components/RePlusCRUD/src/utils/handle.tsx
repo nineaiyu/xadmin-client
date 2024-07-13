@@ -144,14 +144,23 @@ interface operationOptions {
     pk?: string | number;
     id?: string | number;
   };
+  showSuccessMsg?: boolean;
+  showFailedMsg?: boolean;
   success?: (res?: BaseResult) => void;
   failed?: (res?: BaseResult) => void;
 }
 
 const handleOperation = (options: operationOptions) => {
   let req = null;
-
-  const { t, apiUrl, row, success, failed } = options;
+  const {
+    t,
+    row,
+    apiUrl,
+    showSuccessMsg = true,
+    showFailedMsg = true,
+    success,
+    failed
+  } = options;
   switch (apiUrl.name) {
     case "create":
       req = apiUrl(row);
@@ -162,6 +171,9 @@ const handleOperation = (options: operationOptions) => {
     case "patch":
       req = apiUrl(row?.pk ?? row?.id, row);
       break;
+    case "batchDelete":
+      req = apiUrl(row);
+      break;
     default:
       req = apiUrl(row?.pk ?? row?.id);
       break;
@@ -170,10 +182,11 @@ const handleOperation = (options: operationOptions) => {
   req &&
     req.then((res: BaseResult) => {
       if (res.code === 1000) {
-        message(t("results.success"), { type: "success" });
+        showSuccessMsg && message(t("results.success"), { type: "success" });
         success && success(res);
       } else {
-        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+        showFailedMsg &&
+          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
         failed && failed(res);
       }
     });

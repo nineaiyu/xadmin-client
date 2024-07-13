@@ -8,7 +8,7 @@ import type { Mutable } from "@vueuse/core";
 
 export interface OperationButtonsRow {
   text?: string;
-  code?: string | number;
+  code: string | number;
   icon?: Component;
   props?: Partial<Mutable<ButtonProps & { [index: string]: any }>>;
   show?: boolean;
@@ -28,6 +28,7 @@ export interface ButtonsCallBackParams {
   e: MouseEvent;
 }
 export interface OperationProps {
+  width?: number;
   size?: "" | "default" | "small" | "large";
   row?: object;
   showNumber?: number;

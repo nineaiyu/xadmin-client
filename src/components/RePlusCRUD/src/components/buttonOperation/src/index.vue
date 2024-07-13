@@ -60,7 +60,7 @@ const props = withDefaults(defineProps<OperationProps>(), {
   showNumber: 3
 });
 
-const uniqueButtons = computed(() => {
+const uniqueButtons = computed<Array<OperationButtonsRow>>(() => {
   const b = {};
   props.buttons.forEach(item => {
     b[item.code] = item;
