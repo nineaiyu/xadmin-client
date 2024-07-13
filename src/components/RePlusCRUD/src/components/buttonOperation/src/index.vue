@@ -32,7 +32,7 @@
 
 <script lang="ts" setup>
 import type { Component, VNode } from "vue";
-import { h, unref } from "vue";
+import { h, unref, computed } from "vue";
 import { ElPopconfirm, ElTooltip } from "element-plus";
 import {
   ElButton,
@@ -60,10 +60,20 @@ const props = withDefaults(defineProps<OperationProps>(), {
   showNumber: 3
 });
 
-const getSubButtons = () => {
-  const data = props.buttons.filter((item: OperationButtonsRow) => {
-    return unref(item.show) !== false;
+const uniqueButtons = computed(() => {
+  const b = {};
+  props.buttons.forEach(item => {
+    b[item.code] = item;
   });
+  return Object.values(b);
+});
+
+const getSubButtons = () => {
+  const data: OperationButtonsRow[] = uniqueButtons.value.filter(
+    (item: OperationButtonsRow) => {
+      return unref(item.show) !== false;
+    }
+  );
   // 获取'更多'之前的按钮组
   const preButtons = data.slice(0, props.showNumber);
   // 获取'更多'之后的按钮组

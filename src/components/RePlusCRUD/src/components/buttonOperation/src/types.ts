@@ -22,7 +22,7 @@ export interface OperationButtonsRow {
   };
   onClick?: (params: ButtonsCallBackParams) => void;
 }
-interface ButtonsCallBackParams {
+export interface ButtonsCallBackParams {
   buttonRow: OperationButtonsRow;
   row: object;
   e: MouseEvent;

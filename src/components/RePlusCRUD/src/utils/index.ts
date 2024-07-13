@@ -182,6 +182,8 @@ export const formatPublicLabels = (
       "ordering",
       "selection",
       "operation",
+      "created_time",
+      "updated_time",
       "descending",
       "ascending"
     ].indexOf(label) > -1

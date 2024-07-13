@@ -100,12 +100,14 @@ export function useBaseColumns(localeName: string) {
           break;
         case "select-ordering":
           item.valueType = "select";
-          const options = formatAddOrEditOptions(column.choices);
-          options?.forEach(option => {
-            const labels = option.label.split(" ");
-            option.label = `${formatPublicLabels(t, te, labels[0] as string, localeName)} ${formatPublicLabels(t, te, labels[1] as string, localeName)}`;
+          item.options = computed(() => {
+            const options = formatAddOrEditOptions(column.choices);
+            options?.forEach(option => {
+              const labels = option.label.split(" ");
+              option.label = `${formatPublicLabels(t, te, labels[0] as string, localeName)} ${formatPublicLabels(t, te, labels[1] as string, localeName)}`;
+            });
+            return options;
           });
-          // item.options = computed(() => formatAddOrEditOptions(column.choices));
           break;
         default:
           if (column.input_type.startsWith("api-")) {

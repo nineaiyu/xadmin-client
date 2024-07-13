@@ -1,5 +1,5 @@
 import { message } from "@/utils/message";
-import type { PlusPageProps } from "./types";
+import type { RePlusPageProps } from "./types";
 import { computed, onMounted, ref, type Ref, shallowRef, toRaw } from "vue";
 import {
   cloneDeep,
@@ -10,9 +10,6 @@ import {
 } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
-import exportDataForm from "../components/exportData.vue";
-import importDataForm from "../components/importData.vue";
-import detailDataForm from "../components/detailData.vue";
 import { resourcesIDCacheApi } from "@/api/common";
 import { useBaseColumns } from "./columns";
 import {
@@ -24,27 +21,39 @@ import {
 import { usePublicHooks } from "@/views/system/hooks";
 import { formatPublicLabels } from "@/components/RePlusCRUD";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import EditPen from "@iconify-icons/ep/edit-pen";
-import Delete from "@iconify-icons/ep/delete";
-import View from "@iconify-icons/ep/view";
-import type { OperationButtonsRow } from "../components/buttonOperation/types";
-import AddFill from "@iconify-icons/ri/add-circle-line";
-import Download from "@iconify-icons/ep/download";
-import Upload from "@iconify-icons/ep/upload";
+import type { OperationButtonsRow } from "@/components/RePlusCRUD";
+import exportDataForm from "../components/exportData.vue";
+import importDataForm from "../components/importData.vue";
+import detailDataForm from "../components/detailData.vue";
 
-export function useBaseTable(
-  emit: any,
-  tableRef: Ref,
-  api: PlusPageProps["api"],
-  pagination: PlusPageProps["pagination"],
-  localeName: PlusPageProps["localeName"],
-  resultFormat: PlusPageProps["resultFormat"],
-  addOrEditOptions: PlusPageProps["addOrEditOptions"],
-  beforeSearchSubmit: PlusPageProps["beforeSearchSubmit"]
-) {
+import View from "@iconify-icons/ep/view";
+import Delete from "@iconify-icons/ep/delete";
+import Upload from "@iconify-icons/ep/upload";
+import Download from "@iconify-icons/ep/download";
+import EditPen from "@iconify-icons/ep/edit-pen";
+import AddFill from "@iconify-icons/ri/add-circle-line";
+
+export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
+  const {
+    api,
+    pagination,
+    localeName,
+    resultFormat,
+    addOrEditOptions,
+    beforeSearchSubmit,
+    operationButtonsProps,
+    tableBarButtonsProps
+  } = props;
+
+  const route = useRoute();
   const { t, te } = useI18n();
+  const dataList = ref([]);
+  const loading = ref(true);
+  const selectedNum = ref(0);
+  const defaultValue = ref({});
   const switchLoadMap = ref({});
   const { switchStyle } = usePublicHooks();
+  const getParameter = isEmpty(route.params) ? route.query : route.params;
 
   const {
     listColumns,
@@ -61,12 +70,6 @@ export function useBaseTable(
     size: pagination.pageSize,
     page: pagination.currentPage
   });
-  const defaultValue = ref({});
-  const selectedNum = ref(0);
-  const dataList = ref([]);
-  const loading = ref(true);
-  const route = useRoute();
-  const getParameter = isEmpty(route.params) ? route.query : route.params;
 
   const pageTitle = computed(() => {
     if (te(route.meta.title)) {
@@ -76,8 +79,8 @@ export function useBaseTable(
   });
 
   // 默认操作按钮
-  const operationButtons = shallowRef<OperationButtonsRow[]>([]);
-  operationButtons.value = [
+  const defaultOperationButtons = shallowRef<OperationButtonsRow[]>([]);
+  defaultOperationButtons.value = [
     {
       text: t("buttons.edit"),
       code: "update",
@@ -120,10 +123,13 @@ export function useBaseTable(
     }
   ];
 
+  const operationButtons = computed(() => {
+    return [...defaultOperationButtons.value, ...operationButtonsProps.buttons];
+  });
   // 默认tableBar按钮
-  const tableBarButtons = shallowRef<OperationButtonsRow[]>([]);
+  const defaultTableBarButtons = shallowRef<OperationButtonsRow[]>([]);
 
-  tableBarButtons.value = [
+  defaultTableBarButtons.value = [
     {
       text: t("buttons.add"),
       code: "create",
@@ -164,6 +170,10 @@ export function useBaseTable(
     }
   ];
 
+  const tableBarButtons = computed(() => {
+    return [...defaultTableBarButtons.value, ...tableBarButtonsProps.buttons];
+  });
+
   const initSearchFields = () => {
     searchFields.value = cloneDeep(defaultValue.value);
     pagination.pageSize = searchFields.value.size;
@@ -173,63 +183,6 @@ export function useBaseTable(
   const handleReset = () => {
     initSearchFields();
     handleGetData();
-  };
-
-  // 数据获取
-  const handleGetData = () => {
-    loading.value = true;
-
-    ["created_time", "updated_time"].forEach(key => {
-      if (searchFields.value[key]?.length === 2) {
-        searchFields.value[`${key}_after`] = searchFields.value[key][0];
-        searchFields.value[`${key}_before`] = searchFields.value[key][1];
-      } else {
-        searchFields.value[`${key}_after`] = "";
-        searchFields.value[`${key}_before`] = "";
-      }
-    });
-
-    const params = cloneDeep(toRaw(searchFields.value));
-
-    // 该方法为了支持pk多选操作将如下格式 [{pk:1},{pk:2}] 转换为 [1,2]
-    Object.keys(params).forEach(key => {
-      const value = params[key];
-      const pks = [];
-      if (isArray(value)) {
-        value.forEach(item => {
-          if (item.pk) {
-            pks.push(item.pk);
-          }
-        });
-        if (pks.length > 0) {
-          params[key] = pks;
-        }
-      }
-    });
-
-    const data = (beforeSearchSubmit && beforeSearchSubmit(params)) || params;
-
-    api
-      .list(data)
-      .then(res => {
-        if (res.code === 1000 && res.data) {
-          if (resultFormat && typeof resultFormat === "function") {
-            dataList.value = resultFormat(res.data.results);
-          } else {
-            dataList.value = res.data.results;
-          }
-          pagination.total = res.data.total;
-        } else {
-          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-        }
-        emit("searchComplete", getParameter, searchFields, dataList, res);
-        delay(500).then(() => {
-          loading.value = false;
-        });
-      })
-      .catch(() => {
-        loading.value = false;
-      });
   };
 
   const handleSearch = () => {
@@ -427,6 +380,63 @@ export function useBaseTable(
       width: 200,
       slot: "operation"
     });
+  };
+
+  // 数据获取
+  const handleGetData = () => {
+    loading.value = true;
+
+    ["created_time", "updated_time"].forEach(key => {
+      if (searchFields.value[key]?.length === 2) {
+        searchFields.value[`${key}_after`] = searchFields.value[key][0];
+        searchFields.value[`${key}_before`] = searchFields.value[key][1];
+      } else {
+        searchFields.value[`${key}_after`] = "";
+        searchFields.value[`${key}_before`] = "";
+      }
+    });
+
+    const params = cloneDeep(toRaw(searchFields.value));
+
+    // 该方法为了支持pk多选操作将如下格式 [{pk:1},{pk:2}] 转换为 [1,2]
+    Object.keys(params).forEach(key => {
+      const value = params[key];
+      const pks = [];
+      if (isArray(value)) {
+        value.forEach(item => {
+          if (item.pk) {
+            pks.push(item.pk);
+          }
+        });
+        if (pks.length > 0) {
+          params[key] = pks;
+        }
+      }
+    });
+
+    const data = (beforeSearchSubmit && beforeSearchSubmit(params)) || params;
+
+    api
+      .list(data)
+      .then(res => {
+        if (res.code === 1000 && res.data) {
+          if (resultFormat && typeof resultFormat === "function") {
+            dataList.value = resultFormat(res.data.results);
+          } else {
+            dataList.value = res.data.results;
+          }
+          pagination.total = res.data.total;
+        } else {
+          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+        }
+        emit("searchComplete", getParameter, searchFields, dataList, res);
+        delay(500).then(() => {
+          loading.value = false;
+        });
+      })
+      .catch(() => {
+        loading.value = false;
+      });
   };
 
   onMounted(() => {

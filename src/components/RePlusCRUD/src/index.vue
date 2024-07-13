@@ -1,16 +1,22 @@
 <script lang="ts" setup>
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { PureTableBar } from "@/components/RePureTableBar";
-import { PlusPageProps } from "./utils/types";
 import { ref } from "vue";
-import { cloneDeep, deviceDetection, getKeyList } from "@pureadmin/utils";
-import { useBaseTable } from "./utils/hook";
-import Delete from "@iconify-icons/ep/delete";
 import PureTable from "@pureadmin/table";
+import { useBaseTable } from "./utils/hook";
+import { RePlusPageProps } from "./utils/types";
+import { PureTableBar } from "@/components/RePureTableBar";
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import { cloneDeep, deviceDetection, getKeyList } from "@pureadmin/utils";
+import Delete from "@iconify-icons/ep/delete";
 import { PlusSearch } from "plus-pro-components";
-import ButtonOperation from "./components/buttonOperation/index.vue";
+import ButtonOperation, {
+  ButtonsCallBackParams
+} from "./components/buttonOperation";
 
-const props = withDefaults(defineProps<PlusPageProps>(), {
+const props = withDefaults(defineProps<RePlusPageProps>(), {
+  localeName: "",
+  api: undefined,
+  resultFormat: undefined,
+  beforeSearchSubmit: undefined,
   auth: () => ({
     list: false,
     batchDelete: false,
@@ -21,9 +27,6 @@ const props = withDefaults(defineProps<PlusPageProps>(), {
     export: false,
     import: false
   }),
-  api: undefined,
-  resultFormat: undefined,
-  beforeSearchSubmit: undefined,
   addOrEditOptions: () => ({}),
   pagination: () => {
     return {
@@ -34,12 +37,17 @@ const props = withDefaults(defineProps<PlusPageProps>(), {
       background: true
     };
   },
-  localeName: ""
+  pureTableProps: () => ({}),
+  plusSearchProps: () => ({}),
+  operationButtonsProps: () => ({ showNumber: 3, buttons: [] }),
+  tableBarButtonsProps: () => ({ showNumber: 99, buttons: [] })
 });
 defineOptions({ name: "RePlusCRUD" });
 const emit = defineEmits<{
   (e: "searchComplete", ...args: any[]): void;
   (e: "selectionChange", ...args: any[]): void;
+  (e: "tableBarClickAction", data: ButtonsCallBackParams): void;
+  (e: "operationClickAction", data: ButtonsCallBackParams): void;
 }>();
 
 const tableRef = ref();
@@ -66,27 +74,18 @@ const {
   onSelectionCancel,
   handleCurrentChange,
   handleSelectionChange
-} = useBaseTable(
-  emit,
-  tableRef,
-  props.api,
-  props.pagination,
-  props.localeName,
-  props.resultFormat,
-  props.addOrEditOptions,
-  props.beforeSearchSubmit
-);
+} = useBaseTable(emit, tableRef, props);
 
 function getTableRef() {
   return tableRef.value;
 }
 
 defineExpose({
+  dataList,
+  searchFields,
   handleGetData,
   getTableRef,
-  getSelectPks,
-  dataList,
-  searchFields
+  getSelectPks
 });
 </script>
 
@@ -110,6 +109,7 @@ defineExpose({
         :search-loading="loading"
         :show-number="deviceDetection() ? 1 : 3"
         label-width="auto"
+        v-bind="plusSearchProps"
         @change="
           (_, column) => {
             const canChangeType = [
@@ -164,7 +164,16 @@ defineExpose({
               </template>
             </el-popconfirm>
           </div>
-          <button-operation :buttons="tableBarButtons" :show-number="99" />
+          <button-operation
+            :show-number="99"
+            v-bind="tableBarButtonsProps"
+            :buttons="tableBarButtons"
+            @clickAction="
+              data => {
+                emit('tableBarClickAction', data);
+              }
+            "
+          />
           <slot name="barButtons" />
         </el-space>
       </template>
@@ -188,15 +197,22 @@ defineExpose({
           row-key="pk"
           showOverflowTooltip
           table-layout="auto"
+          v-bind="pureTableProps"
           @selection-change="handleSelectionChange"
           @page-size-change="handleSizeChange"
           @page-current-change="handleCurrentChange"
         >
           <template #operation="{ row }">
             <button-operation
-              :buttons="operationButtons"
               :row="row"
               :size="size"
+              v-bind="operationButtonsProps"
+              :buttons="operationButtons"
+              @clickAction="
+                data => {
+                  emit('operationClickAction', data);
+                }
+              "
             />
             <slot name="extOperation" v-bind="{ row, size }" />
           </template>
@@ -205,9 +221,9 @@ defineExpose({
               return x !== 'operation';
             })"
             :key="item"
-            #[item]="{ row }"
+            #[item]="{ row, size }"
           >
-            <slot :key="item" :name="item" v-bind="{ row }" />
+            <slot :key="item" :name="item" v-bind="{ row, size }" />
           </template>
         </pure-table>
       </template>

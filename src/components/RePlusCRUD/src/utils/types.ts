@@ -1,8 +1,9 @@
 import type { Component } from "vue";
 import type { PlusSearchProps, RecordType } from "plus-pro-components";
-import type { PaginationProps } from "@pureadmin/table";
+import type { PaginationProps, PureTableProps } from "@pureadmin/table";
 import type { BaseApi } from "@/api/base";
 import type { formDialogOptions } from "./handle";
+import type { OperationProps } from "@/components/RePlusCRUD";
 
 interface SearchFieldsProps {
   page: number;
@@ -37,14 +38,15 @@ interface FormProps {
   api: ApiAuthProps | any;
 }
 
-interface PlusPageProps {
+interface RePlusPageProps {
   api: BaseApi;
   auth: ApiAuthProps | any;
   localeName?: string;
   /**
    * PlusSearchProps
    */
-  search?: Partial<PlusSearchProps>;
+  plusSearchProps?: Partial<PlusSearchProps>;
+  pureTableProps?: Partial<PureTableProps>;
   /**
    * 对通过 request 获取的数据进行处理
    * @param data
@@ -61,6 +63,8 @@ interface PlusPageProps {
     props?: formDialogOptions;
     form?: undefined;
   };
+  operationButtonsProps?: OperationProps;
+  tableBarButtonsProps?: OperationProps;
 }
 
 export type {
@@ -68,5 +72,5 @@ export type {
   ApiAuthProps,
   SearchFieldsProps,
   EditFormProps,
-  PlusPageProps
+  RePlusPageProps
 };

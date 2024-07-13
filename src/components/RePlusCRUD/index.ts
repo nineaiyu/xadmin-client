@@ -9,6 +9,6 @@ export const RePlusCRUD = withInstall(rePlusCRUD);
 export * from "./src/utils/index";
 export * from "./src/utils/columns";
 export * from "./src/utils/renders";
-export * from "./src/components/buttonOperation/types";
+export * from "./src/components/buttonOperation";
 
 export default RePlusCRUD;
