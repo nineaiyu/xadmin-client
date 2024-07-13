@@ -112,6 +112,10 @@ export function useBaseColumns(localeName: string) {
               });
             };
             item.colProps = { xs: 24, sm: 24, md: 12, lg: 12, xl: 12 };
+            // 搜索的时候，如果是api接口返回，则默认值为[]
+            if (column?.default === "") {
+              column.default = [];
+            }
           }
           item.valueType = column.input_type;
       }
