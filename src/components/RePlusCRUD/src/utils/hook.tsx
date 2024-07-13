@@ -60,9 +60,9 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
   const getParameter = isEmpty(route.params) ? route.query : route.params;
   const defaultPagination = {
     total: 0,
-    pageSize: 10,
+    pageSize: 15,
     currentPage: 1,
-    pageSizes: [5, 10, 20, 50, 100],
+    pageSizes: [5, 10, 15, 30, 50, 100],
     background: true
   };
   const tablePagination = ref<RePlusPageProps["pagination"]>({
@@ -392,17 +392,19 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
           break;
       }
     });
-    listColumns.value.unshift({
-      type: "selection",
-      fixed: "left",
-      reserveSelection: true
-    });
-    listColumns.value.push({
-      label: formatPublicLabels(t, te, "operation", localeName),
-      fixed: "right",
-      width: operationButtonsProps?.width ?? 200,
-      slot: "operation"
-    });
+    props.selection &&
+      listColumns.value.unshift({
+        type: "selection",
+        fixed: "left",
+        reserveSelection: true
+      });
+    props.operation &&
+      listColumns.value.push({
+        label: formatPublicLabels(t, te, "operation", localeName),
+        fixed: "right",
+        width: operationButtonsProps?.width ?? 200,
+        slot: "operation"
+      });
     listColumns.value =
       (listColumnsFormat && listColumnsFormat(listColumns.value)) ||
       listColumns.value;

@@ -41,6 +41,8 @@ interface FormProps {
 interface RePlusPageProps {
   api: BaseApi;
   auth: ApiAuthProps | any;
+  selection: boolean;
+  operation: boolean;
   localeName?: string;
   /**
    * PlusSearchProps

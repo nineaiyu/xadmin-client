@@ -72,13 +72,7 @@ export function useBaseColumns(localeName: string) {
             valueFormat: "YYYY-MM-DD HH:mm:ss",
             type: "datetimerange"
           };
-          item.colProps = {
-            xs: 24,
-            sm: 24,
-            md: 12,
-            lg: 12,
-            xl: 12
-          };
+          item.colProps = { xs: 24, sm: 24, md: 12, lg: 12, xl: 12 };
           break;
         case "number":
           item.valueType = "input";
@@ -117,13 +111,7 @@ export function useBaseColumns(localeName: string) {
                 onChange
               });
             };
-            item.colProps = {
-              xs: 24,
-              sm: 24,
-              md: 12,
-              lg: 12,
-              xl: 12
-            };
+            item.colProps = { xs: 24, sm: 24, md: 12, lg: 12, xl: 12 };
           }
           item.valueType = column.input_type;
       }
@@ -192,6 +180,7 @@ export function useBaseColumns(localeName: string) {
           delete item["cellRenderer"];
           break;
         case "string":
+        case "field":
           item["valueType"] = "input";
           break;
         case "datetime":
@@ -210,10 +199,12 @@ export function useBaseColumns(localeName: string) {
         case "boolean":
           item["valueType"] = "radio";
           item["renderField"] = renderSegmentedOption();
-          item["width"] = 80;
+          item["width"] = 120;
+          item["colProps"] = { xs: 24, sm: 24, md: 12, lg: 12, xl: 12 };
           break;
         case "textarea":
           item["valueType"] = "textarea";
+          item["fieldProps"] = { autosize: { minRows: 8 } };
           break;
         case "labeled_choice":
         case "object_related_field":
@@ -249,6 +240,10 @@ export function useBaseColumns(localeName: string) {
               });
             };
           }
+      }
+      if (column.key === "description") {
+        item.valueType = "textarea";
+        item["fieldProps"] = { autosize: { minRows: 3 } };
       }
       if (!column.read_only) {
         addOrEditColumns.value.push(cloneDeep(item));

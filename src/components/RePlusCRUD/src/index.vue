@@ -13,8 +13,10 @@ import ButtonOperation, {
 } from "./components/buttonOperation";
 
 const props = withDefaults(defineProps<RePlusPageProps>(), {
-  localeName: "",
   api: undefined,
+  localeName: "",
+  selection: true,
+  operation: true,
   searchResultFormat: undefined,
   listColumnsFormat: undefined,
   showColumnsFormat: undefined,
