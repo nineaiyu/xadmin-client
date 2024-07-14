@@ -29,6 +29,11 @@ const props = {
     require: false,
     default: "0"
   },
+  defaultValue: {
+    type: undefined,
+    require: false,
+    default: "0"
+  },
   /** 将宽度调整为父元素宽度   */
   block: {
     type: Boolean,
@@ -64,7 +69,9 @@ export default defineComponent({
     const instance = getCurrentInstance()!;
     const curIndex = isNumber(props.modelValue)
       ? toRef(props, "modelValue")
-      : ref(0);
+      : isNumber(props.defaultValue)
+        ? ref(props.defaultValue)
+        : ref(0);
 
     function handleChange({ option, index }, event: Event) {
       if (props.disabled || option.disabled) return;

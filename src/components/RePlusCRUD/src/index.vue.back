@@ -43,7 +43,7 @@ const {
   columns,
   buttons,
   GroupServe,
-  showColumns,
+  detailColumns,
   dialogTitle,
   addOrEditRules,
   addOrEditColumns,
@@ -260,7 +260,7 @@ onBeforeUnmount(() => {
       :has-footer="false"
       :draggable="true"
     >
-      <PlusDescriptions :column="2" :columns="showColumns" :data="currentRow" />
+      <PlusDescriptions :column="2" :columns="detailColumns" :data="currentRow" />
     </PlusDialog>
   </div>
 </template>

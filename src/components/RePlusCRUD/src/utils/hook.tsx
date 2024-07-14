@@ -44,7 +44,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
     tableBarButtonsProps,
     searchResultFormat,
     listColumnsFormat,
-    showColumnsFormat,
+    detailColumnsFormat,
     searchColumnsFormat,
     beforeSearchSubmit
   } = props;
@@ -71,7 +71,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
   });
   const {
     listColumns,
-    showColumns,
+    detailColumns,
     searchColumns,
     getColumnData,
     addOrEditRules,
@@ -276,7 +276,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
       t,
       title: t("buttons.detail"),
       rawRow: { ...row },
-      rawColumns: showColumns.value,
+      rawColumns: detailColumns.value,
       dialogOptions: { width: "600px", hideFooter: true },
       form: detailDataForm
     });
@@ -414,9 +414,9 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
     listColumns.value =
       (listColumnsFormat && listColumnsFormat(listColumns.value)) ||
       listColumns.value;
-    showColumns.value =
-      (showColumnsFormat && showColumnsFormat(showColumns.value)) ||
-      showColumns.value;
+    detailColumns.value =
+      (detailColumnsFormat && detailColumnsFormat(detailColumns.value)) ||
+      detailColumns.value;
     searchColumns.value =
       (searchColumnsFormat && searchColumnsFormat(searchColumns.value)) ||
       searchColumns.value;

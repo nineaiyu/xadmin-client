@@ -6,7 +6,10 @@ import type { PlusColumn } from "plus-pro-components";
 import type { BaseApi } from "@/api/base";
 import type { SearchColumnsResult, SearchFieldsResult } from "@/api/types";
 import { get } from "lodash-es";
-import { renderSegmentedOption, formatAddOrEditOptions } from "./renders";
+import {
+  formatAddOrEditOptions,
+  renderBooleanSegmentedOption
+} from "./renders";
 import { selectBooleanOptions } from "./constants";
 import {
   getPickerShortcuts,
@@ -40,7 +43,7 @@ export function useBaseColumns(localeName: string) {
   const searchColumns = ref([]);
   const searchDefaultValue = ref({});
   const listColumns = ref([]);
-  const showColumns = ref([]);
+  const detailColumns = ref([]);
   const { t, te } = useI18n();
 
   const formatSearchColumns = (columns: SearchFieldsResult["data"]) => {
@@ -143,6 +146,7 @@ export function useBaseColumns(localeName: string) {
 
       const item: PlusColumn = {
         prop: column.key,
+        key: column.key,
         label:
           formatPublicLabels(t, te, column.key, localeName) ?? column.label,
         tooltip: column?.help_text,
@@ -205,7 +209,7 @@ export function useBaseColumns(localeName: string) {
           break;
         case "boolean":
           item["valueType"] = "radio";
-          item["renderField"] = renderSegmentedOption();
+          item["renderField"] = renderBooleanSegmentedOption();
           item["width"] = 120;
           item["colProps"] = { xs: 24, sm: 24, md: 12, lg: 12, xl: 12 };
           break;
@@ -263,7 +267,6 @@ export function useBaseColumns(localeName: string) {
               formatAddOrEditOptions(column?.choices)
             );
             // pure-table ****** start
-            item["prop"] = column.key;
             item["cellRenderer"] = ({ row }) => (
               <span v-copy={get(row, `${column.key}.label`)}>
                 {get(row, `${column.key}.label`)}
@@ -277,7 +280,6 @@ export function useBaseColumns(localeName: string) {
               formatAddOrEditOptions(column?.choices)
             );
             // pure-table ****** start
-            item["prop"] = column.key;
             item["cellRenderer"] = ({ row }) => (
               <span v-copy={get(row, `${column.key}.label`)}>
                 {get(row, `${column.key}.label`)}
@@ -372,12 +374,12 @@ export function useBaseColumns(localeName: string) {
             break;
           case "boolean":
             item["options"] = computed(() => selectBooleanOptions);
-            item["valueType"] = "switch";
+            // item["valueType"] = "switch";
             delete item["renderField"];
             // item["editable"] = true;
             break;
         }
-        showColumns.value.push(cloneDeep(item));
+        detailColumns.value.push(cloneDeep(item));
         if (column.table_show) {
           listColumns.value.push(cloneDeep(item));
         }
@@ -405,7 +407,7 @@ export function useBaseColumns(localeName: string) {
 
   return {
     listColumns,
-    showColumns,
+    detailColumns,
     searchColumns,
     getColumnData,
     addOrEditRules,

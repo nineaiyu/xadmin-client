@@ -55,7 +55,7 @@ interface RePlusPageProps {
    */
   searchResultFormat?: <T = RecordType[]>(data: T[]) => T[];
   listColumnsFormat?: <T = RecordType[]>(columns: T[]) => T[];
-  showColumnsFormat?: <T = RecordType[]>(columns: T[]) => T[];
+  detailColumnsFormat?: <T = RecordType[]>(columns: T[]) => T[];
   searchColumnsFormat?: <T = RecordType[]>(columns: T[]) => T[];
   /**
    * 搜索之前进行一些修改

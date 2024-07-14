@@ -133,6 +133,7 @@
     transform 0.5s cubic-bezier(0.645, 0.045, 0.355, 1),
     width 0.5s cubic-bezier(0.645, 0.045, 0.355, 1);
   will-change: transform, width;
+  border: 2px solid var(--el-color-primary);
 }
 
 .pure-segmented-item > input {

@@ -1,10 +1,10 @@
 import Segmented from "@/components/ReSegmented";
 import { selectBooleanOptions } from "./constants";
-export const renderSegmentedOption = (options = null) => {
+export const renderBooleanSegmentedOption = (options = null) => {
   return (value, onChange) => {
     return (
       <Segmented
-        modelValue={value ? 0 : 1}
+        defaultValue={value ? 0 : 1}
         options={options ?? selectBooleanOptions}
         onChange={({ option }) => {
           onChange(option?.value);
@@ -13,6 +13,7 @@ export const renderSegmentedOption = (options = null) => {
     );
   };
 };
+
 /**
  * 格式化后端选择列表，如果是obj的数据，isObjValue为true
  */

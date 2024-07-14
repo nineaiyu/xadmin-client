@@ -26,7 +26,7 @@ interface formDialogOptions {
   title: string; // 弹窗的的title
   rawRow: Object; //  默认数据或者更新的书籍
   minWidth?: string; // 弹窗的的最小宽度
-  columns?: Function | PlusColumn[] | Array<any>; // 表单字段
+  columns?: Function | Object; // 表单字段
   rawColumns?: PlusColumn[] | Array<any>; // 表单字段
   form?: Component | any; // 挂载的form组件，默认是addOrEdit组件
   props?: Function | Object; //  内容区组件的 props，可通过 defineProps 接收
@@ -63,12 +63,28 @@ const openFormDialog = (formOptions: formDialogOptions) => {
       propsResult[key] = getValue;
     }
   });
-  let editColumns = [];
-  if (typeof formOptions?.columns === "function") {
-    editColumns = formOptions.columns(cloneDeep(formOptions));
-  } else {
-    editColumns = [...(formOptions?.columns ?? [])];
-  }
+
+  // let editColumns = [];
+  // if (typeof formOptions?.columns === "function") {
+  //   editColumns = formOptions.columns(cloneDeep(formOptions));
+  // } else {
+  //   editColumns = [...(formOptions?.columns ?? [])];
+  // }
+  const rawColumns = {};
+  formOptions?.rawColumns.forEach(column => {
+    rawColumns[column.key ?? column.prop] = column;
+  });
+  let editColumns = {};
+  Object.keys(formOptions?.columns ?? {}).forEach(key => {
+    const getValue = formOptions.columns[key];
+    if (typeof formOptions.columns[key] === "function") {
+      editColumns[key] = getValue(
+        cloneDeep({ ...formOptions, column: rawColumns[key] })
+      );
+    } else {
+      editColumns[key] = getValue;
+    }
+  });
 
   const formPropsResult = {};
 
@@ -98,7 +114,7 @@ const openFormDialog = (formOptions: formDialogOptions) => {
       },
       ...propsResult,
       columns: uniqueArrayObj(
-        [...formOptions?.rawColumns, ...(editColumns ?? [])],
+        [...formOptions?.rawColumns, ...(Object.values(editColumns) ?? [])],
         "prop"
       ),
       formProps: formPropsResult ?? {}
