@@ -42,6 +42,7 @@ const footerButtons = computed(() => {
             type: "primary",
             text: true,
             bg: true,
+            loading: options.confirmLoading,
             popconfirm: options?.popconfirm,
             btnClick: ({ dialog: { options, index } }) => {
               const done = () =>

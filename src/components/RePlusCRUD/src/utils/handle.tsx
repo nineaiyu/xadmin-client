@@ -14,6 +14,7 @@ interface callBackArgs {
   formData: Object | any;
   formRef: FormInstance;
   formOptions: formDialogOptions;
+  dialogOptions: DialogOptions;
   success: (close?: boolean) => void;
   failed: (detail: string, close?: boolean) => void;
   done: Function;
@@ -36,6 +37,7 @@ interface formDialogOptions {
     formData,
     formRef,
     formOptions,
+    dialogOptions,
     success,
     failed,
     done
@@ -72,7 +74,7 @@ const openFormDialog = (formOptions: formDialogOptions) => {
   // }
   const rawColumns = {};
   formOptions?.rawColumns.forEach(column => {
-    rawColumns[column.key ?? column.prop] = column;
+    rawColumns[column._column?.key ?? column.prop] = column;
   });
   let editColumns = {};
   Object.keys(formOptions?.columns ?? {}).forEach(key => {
@@ -126,13 +128,14 @@ const openFormDialog = (formOptions: formDialogOptions) => {
     closeOnClickModal: false,
     contentRenderer: () => h(formOptions?.form ?? addOrEdit, { ref: formRef }),
     beforeSure: async (done, { options }) => {
+      options.confirmLoading = true;
       const FormRef: FormInstance = formRef.value.getRef();
       const formData = cloneDeep(options.props.formInline);
-
       const success = (close = true) => {
         message(formOptions?.t("results.success"), {
           type: "success"
         });
+        options.confirmLoading = false;
         close && done(); // 关闭弹框
       };
 
@@ -140,6 +143,7 @@ const openFormDialog = (formOptions: formDialogOptions) => {
         message(`${formOptions?.t("results.failed")}，${detail}`, {
           type: "error"
         });
+        options.confirmLoading = false;
         close && done(); // 关闭弹框
       };
 
@@ -148,6 +152,7 @@ const openFormDialog = (formOptions: formDialogOptions) => {
           formOptions?.saveCallback({
             formData,
             formRef: FormRef,
+            dialogOptions: options,
             formOptions,
             success,
             failed,
@@ -171,6 +176,7 @@ interface operationOptions {
   showFailedMsg?: boolean;
   success?: (res?: BaseResult) => void;
   failed?: (res?: BaseResult) => void;
+  requestEnd?: (res?: BaseResult) => void;
 }
 
 const handleOperation = (options: operationOptions) => {
@@ -182,7 +188,8 @@ const handleOperation = (options: operationOptions) => {
     showSuccessMsg = true,
     showFailedMsg = true,
     success,
-    failed
+    failed,
+    requestEnd
   } = options;
   switch (apiUrl.name) {
     case "create":
@@ -203,16 +210,21 @@ const handleOperation = (options: operationOptions) => {
   }
 
   req &&
-    req.then((res: BaseResult) => {
-      if (res.code === 1000) {
-        showSuccessMsg && message(t("results.success"), { type: "success" });
-        success && success(res);
-      } else {
-        showFailedMsg &&
-          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-        failed && failed(res);
-      }
-    });
+    req
+      .then((res: BaseResult) => {
+        if (res.code === 1000) {
+          showSuccessMsg && message(t("results.success"), { type: "success" });
+          success && success(res);
+        } else {
+          showFailedMsg &&
+            message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+          failed && failed(res);
+        }
+        requestEnd && requestEnd(res);
+      })
+      .catch(err => {
+        requestEnd && requestEnd(err);
+      });
 };
 
 interface changeOptions {
@@ -305,6 +317,7 @@ interface switchOptions {
   field: string; // 更新的字段
   actionMap?: object; // msg映射 {true:'发布',false:'未发布'}
   msg?: string;
+  disabled?: boolean;
 }
 
 const renderSwitch = (switchOptions: switchOptions) => {
@@ -315,7 +328,8 @@ const renderSwitch = (switchOptions: switchOptions) => {
     updateApi,
     field,
     actionMap,
-    msg = ""
+    msg = "",
+    disabled = true
   } = switchOptions;
 
   const defaultActionMap = {
@@ -334,6 +348,7 @@ const renderSwitch = (switchOptions: switchOptions) => {
       active-text={defaultActionMap["true"]}
       inactive-text={defaultActionMap["false"]}
       inline-prompt
+      disabled={disabled}
       style={switchStyle.value}
       onChange={() =>
         onSwitchChange({

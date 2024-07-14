@@ -51,7 +51,6 @@ const tableRef = ref();
 
 const {
   t,
-  loading,
   dataList,
   pageTitle,
   listColumns,
@@ -59,6 +58,7 @@ const {
   defaultValue,
   searchFields,
   searchColumns,
+  loadingStatus,
   tablePagination,
   tableBarButtons,
   operationButtons,
@@ -103,7 +103,7 @@ defineExpose({
         :row-props="{
           gutter: 24
         }"
-        :search-loading="loading"
+        :search-loading="loadingStatus"
         :show-number="deviceDetection() ? 1 : 3"
         label-width="auto"
         v-bind="plusSearchProps"
@@ -184,7 +184,7 @@ defineExpose({
             background: 'var(--el-table-row-hover-bg-color)',
             color: 'var(--el-text-color-primary)'
           }"
-          :loading="loading"
+          :loading="loadingStatus"
           :pagination="tablePagination"
           :paginationSmall="size === 'small'"
           :size="size"

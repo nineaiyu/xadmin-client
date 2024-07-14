@@ -49,6 +49,7 @@ export function useBaseColumns(localeName: string) {
   const formatSearchColumns = (columns: SearchFieldsResult["data"]) => {
     columns.forEach(column => {
       const item: PlusColumn = {
+        _column: column,
         label:
           formatPublicLabels(t, te, column.key, localeName) ?? column.label,
         prop: column.key,
@@ -145,8 +146,8 @@ export function useBaseColumns(localeName: string) {
       }
 
       const item: PlusColumn = {
+        _column: column,
         prop: column.key,
-        key: column.key,
         label:
           formatPublicLabels(t, te, column.key, localeName) ?? column.label,
         tooltip: column?.help_text,

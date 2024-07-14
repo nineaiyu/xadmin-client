@@ -160,6 +160,8 @@ interface DialogOptions extends DialogProps {
   props?: any;
   /** 是否隐藏 `Dialog` 按钮操作区的内容 */
   hideFooter?: boolean;
+  /** 确认按钮加载 */
+  confirmLoading?: boolean;
   /** 确认按钮的 `Popconfirm` 气泡确认框相关配置 */
   popconfirm?: Popconfirm;
   /**

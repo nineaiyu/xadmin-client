@@ -32,7 +32,7 @@
 
 <script lang="ts" setup>
 import type { Component, VNode } from "vue";
-import { h, unref, computed } from "vue";
+import { h, unref, computed, ref } from "vue";
 import { ElPopconfirm, ElTooltip } from "element-plus";
 import {
   ElButton,
@@ -82,12 +82,15 @@ const getSubButtons = () => {
   };
 };
 
+const buttonLoadings = ref({});
+
 // 渲染
 const render = (row: RecordType, buttonRow: OperationButtonsRow): VNode => {
   const buttonComponent = h(
     ElButton,
     {
       size: props.size,
+      loading: buttonLoadings.value[buttonRow.code],
       ...buttonRow.props,
       onClick: buttonRow.confirm?.title
         ? undefined
@@ -125,6 +128,25 @@ const render = (row: RecordType, buttonRow: OperationButtonsRow): VNode => {
   return buttonComponent;
 };
 
+class Loading {
+  private readonly code = undefined;
+  private readonly loadings = undefined;
+
+  constructor(code, loadings) {
+    this.code = code;
+    this.loadings = loadings;
+  }
+  //get 的用法
+  get value(): boolean {
+    return this.loadings[this.code];
+  }
+
+  // set 的用法
+  set value(loading: boolean) {
+    this.loadings[this.code] = loading;
+  }
+}
+
 // 分发按钮事件
 const handleClickAction = (
   row: RecordType,
@@ -132,11 +154,11 @@ const handleClickAction = (
   e: MouseEvent
 ) => {
   const callbackParams = {
+    e,
     row,
     buttonRow,
-    e
+    loading: new Loading(buttonRow.code, buttonLoadings.value)
   };
-
   if (buttonRow.onClick && isFunction(buttonRow.onClick)) {
     buttonRow.onClick(callbackParams);
   }

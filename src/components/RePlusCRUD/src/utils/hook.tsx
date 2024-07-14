@@ -52,7 +52,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
   const route = useRoute();
   const { t, te } = useI18n();
   const dataList = ref([]);
-  const loading = ref(true);
+  const loadingStatus = ref(true);
   const selectedNum = ref(0);
   const defaultValue = ref({});
   const switchLoadMap = ref({});
@@ -117,8 +117,11 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
         icon: useRenderIcon(Delete),
         link: true
       },
-      onClick: ({ row }) => {
-        handleDelete(row);
+      onClick: ({ row, loading }) => {
+        loading.value = true;
+        handleDelete(row, () => {
+          loading.value = false;
+        });
       },
       show: auth.delete
     },
@@ -237,14 +240,15 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
   };
 
   // 删除
-  const handleDelete = (row: operationOptions["row"]) => {
+  const handleDelete = (row: operationOptions["row"], requestEnd) => {
     handleOperation({
       t,
       row,
       apiUrl: api.delete,
       success() {
         handleGetData();
-      }
+      },
+      requestEnd
     });
   };
 
@@ -355,7 +359,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
       formProps: {
         rules: addOrEditRules.value
       },
-      saveCallback: ({ formData, done }) => {
+      saveCallback: ({ formData, done, dialogOptions }) => {
         let apiUrl: any = api.update;
         if (isAdd) {
           apiUrl = api.create;
@@ -370,6 +374,9 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
           success() {
             done();
             handleGetData();
+          },
+          requestEnd() {
+            dialogOptions.confirmLoading = false;
           }
         });
       },
@@ -380,15 +387,16 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
   // 表格字段自定义渲染
   const formatColumnsRender = () => {
     listColumns.value.forEach(column => {
-      switch (column.valueType) {
-        case "switch":
+      switch (column._column?.input_type) {
+        case "boolean":
           // pure-table ****** start
           column["cellRenderer"] = renderSwitch({
             t,
             updateApi: api.patch,
             switchLoadMap,
             switchStyle,
-            field: column.prop
+            field: column.prop,
+            disabled: !(auth.patch || auth.update)
           });
           break;
         // pure-table ****** end
@@ -424,7 +432,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
 
   // 数据获取
   const handleGetData = () => {
-    loading.value = true;
+    loadingStatus.value = true;
 
     ["created_time", "updated_time"].forEach(key => {
       if (searchFields.value[key]?.length === 2) {
@@ -471,11 +479,11 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
         }
         emit("searchComplete", getParameter, searchFields, dataList, res);
         delay(500).then(() => {
-          loading.value = false;
+          loadingStatus.value = false;
         });
       })
       .catch(() => {
-        loading.value = false;
+        loadingStatus.value = false;
       });
   };
 
@@ -509,7 +517,6 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
 
   return {
     t,
-    loading,
     dataList,
     pageTitle,
     listColumns,
@@ -517,6 +524,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
     defaultValue,
     searchFields,
     searchColumns,
+    loadingStatus,
     tablePagination,
     tableBarButtons,
     operationButtons,

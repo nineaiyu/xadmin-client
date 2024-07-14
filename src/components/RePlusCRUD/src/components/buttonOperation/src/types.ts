@@ -12,6 +12,7 @@ export interface OperationButtonsRow {
   icon?: Component;
   props?: Partial<Mutable<ButtonProps & { [index: string]: any }>>;
   show?: boolean;
+  loading?: boolean;
   confirm?: {
     title?: string;
     props?: ElMessageBoxOptions;
@@ -23,9 +24,10 @@ export interface OperationButtonsRow {
   onClick?: (params: ButtonsCallBackParams) => void;
 }
 export interface ButtonsCallBackParams {
-  buttonRow: OperationButtonsRow;
-  row: object;
   e: MouseEvent;
+  row: object;
+  loading: { value: boolean };
+  buttonRow: OperationButtonsRow;
 }
 export interface OperationProps {
   width?: number;
