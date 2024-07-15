@@ -35,15 +35,17 @@ export function useDept(tableRef: Ref) {
 
   const listColumnsFormat = (columns: CRUDColumn[]) => {
     columns.forEach(column => {
-      if (column?._column?.key === "user_count") {
-        column["cellRenderer"] = ({ row }) => (
-          <el-link onClick={() => onGoDetail(row as any)}>
-            {row.user_count}
-          </el-link>
-        );
-      }
-      if (column?._column?.key === "name") {
-        column["minWidth"] = 200;
+      switch (column._column?.key) {
+        case "user_count":
+          column["cellRenderer"] = ({ row }) => (
+            <el-link onClick={() => onGoDetail(row as any)}>
+              {row.user_count}
+            </el-link>
+          );
+          break;
+        case "name":
+          column["minWidth"] = 200;
+          break;
       }
     });
     return columns;

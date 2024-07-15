@@ -1,4 +1,4 @@
-import { computed, h, ref } from "vue";
+import { computed, h, ref, type VNode } from "vue";
 import { cloneDeep } from "lodash-es";
 import dayjs from "dayjs";
 import { useI18n } from "vue-i18n";
@@ -25,6 +25,7 @@ import { ElIcon, ElImage, ElLink } from "element-plus";
 import { Link } from "@element-plus/icons-vue";
 import Info from "@iconify-icons/ri/question-line";
 import type { Mutable } from "@vueuse/core";
+import type { TableColumnRenderer } from "@pureadmin/table";
 
 /**
  * @description 定义自定义搜索模板
@@ -35,7 +36,22 @@ const apiSearchComponents = {
   "api-search-users": SearchUsers
 };
 
-export interface CRUDColumn extends PlusColumn {
+interface TableColumns {
+  /** 是否隐藏 */
+  hide?: boolean | CallableFunction;
+  /** 自定义列的内容插槽 */
+  slot?: string;
+  /** 自定义表头的内容插槽 */
+  headerSlot?: string;
+  /** 多级表头，内部实现原理：嵌套 `el-table-column` */
+  children?: Array<TableColumns>;
+  /** 自定义单元格渲染器（`jsx`语法） */
+  cellRenderer?: (data: TableColumnRenderer) => VNode | string;
+  /** 自定义头部渲染器（`jsx`语法） */
+  headerRenderer?: (data: TableColumnRenderer) => VNode | string;
+}
+
+export interface CRUDColumn extends PlusColumn, TableColumns {
   // columns: Partial<Mutable<TableColumn> & { _column: object }>[]
   _column: Partial<
     Mutable<SearchFieldsResult["data"][0]> &

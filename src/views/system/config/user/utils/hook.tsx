@@ -5,13 +5,13 @@ import { reactive, type Ref, shallowRef } from "vue";
 import { userConfigApi } from "@/api/system/config/user";
 
 import {
+  type CRUDColumn,
   handleOperation,
   type OperationProps,
   type RePlusPageProps
 } from "@/components/RePlusCRUD";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import CircleClose from "@iconify-icons/ep/circle-close";
-import type { TableColumn } from "@pureadmin/table";
 
 export function useUserConfig(tableRef: Ref) {
   const { t } = useI18n();
@@ -47,14 +47,16 @@ export function useUserConfig(tableRef: Ref) {
     }
   });
 
-  const listColumnsFormat = (columns: TableColumn[]) => {
+  const listColumnsFormat = (columns: CRUDColumn[]) => {
     columns.forEach(column => {
-      if (column.prop === "owner") {
-        column["cellRenderer"] = ({ row }) => (
-          <el-link onClick={() => onGoUserDetail(row as any)}>
-            {row.owner?.username ? row.owner?.username : "/"}
-          </el-link>
-        );
+      switch (column._column?.key) {
+        case "owner":
+          column["cellRenderer"] = ({ row }) => (
+            <el-link onClick={() => onGoUserDetail(row as any)}>
+              {row.owner?.username ? row.owner?.username : "/"}
+            </el-link>
+          );
+          break;
       }
     });
     return columns;

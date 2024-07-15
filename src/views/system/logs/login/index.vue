@@ -1,19 +1,21 @@
 <script lang="ts" setup>
 import { useLoginLog } from "./utils/hook";
-import ReBaseTable from "@/components/ReBaseTable";
+import RePlusCRUD from "@/components/RePlusCRUD";
 
 defineOptions({
   name: "SystemUserLoginLog"
 });
 
-const { api, auth, columns } = useLoginLog();
+const { api, auth, listColumnsFormat, operationButtonsProps } = useLoginLog();
 </script>
 
 <template>
-  <ReBaseTable
+  <RePlusCRUD
+    ref="tableRef"
     :api="api"
     :auth="auth"
-    :table-columns="columns"
     locale-name="logsLogin"
+    :listColumnsFormat="listColumnsFormat"
+    :operationButtonsProps="operationButtonsProps"
   />
 </template>

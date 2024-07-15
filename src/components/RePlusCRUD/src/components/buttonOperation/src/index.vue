@@ -66,7 +66,7 @@ const uniqueButtons = computed(() => uniqueArrayObj(props.buttons, "code"));
 const getSubButtons = () => {
   const data = (uniqueButtons.value as OperationButtonsRow[]).filter(
     (item: OperationButtonsRow) => {
-      return unref(item.show) !== false;
+      return unref(item.show) === true;
     }
   );
   // 获取'更多'之前的按钮组
