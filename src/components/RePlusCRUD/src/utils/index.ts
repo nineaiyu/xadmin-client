@@ -179,6 +179,7 @@ export const formatPublicLabels = (
     [
       "pk",
       "id",
+      "rank",
       "ordering",
       "selection",
       "operation",

@@ -112,7 +112,7 @@ export function useBaseColumns(localeName: string) {
             const options = formatAddOrEditOptions(column.choices);
             options?.forEach(option => {
               const labels = option.label.split(" ");
-              option.label = `${formatPublicLabels(t, te, labels[0] as string, localeName)} ${formatPublicLabels(t, te, labels[1] as string, localeName)}`;
+              option.label = `${formatPublicLabels(t, te, labels[0] as string, localeName) ?? labels[0]} ${formatPublicLabels(t, te, labels[1] as string, localeName) ?? labels[1]}`;
             });
             return options;
           });

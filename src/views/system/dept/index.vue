@@ -32,6 +32,6 @@ const {
     :operationButtonsProps="operationButtonsProps"
     :pagination="{ pageSize: 1000, pageSizes: [100, 500, 1000] }"
     :searchResultFormat="data => handleTree(data)"
-    locale-name="configUser"
+    locale-name="systemDept"
   />
 </template>
