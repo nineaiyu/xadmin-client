@@ -386,6 +386,9 @@ export function useBaseColumns(localeName: string) {
         }
       }
     });
+    listColumns.value = listColumns.value.sort(
+      (a, b) => a._column.table_show - b._column.table_show
+    );
   };
 
   /**

@@ -34,7 +34,7 @@ export type SearchColumnsResult = {
     write_only: boolean;
     max_length?: number | any;
     multiple?: boolean;
-    table_show?: boolean;
+    table_show?: number;
     help_text?: string;
     default?: string | number | any;
     choices?: Array<number | string | any>;
