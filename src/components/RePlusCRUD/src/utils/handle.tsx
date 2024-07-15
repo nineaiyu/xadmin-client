@@ -328,7 +328,7 @@ const renderSwitch = (switchOptions: switchOptions) => {
     updateApi,
     field,
     actionMap,
-    msg = "",
+    msg = undefined,
     disabled = true
   } = switchOptions;
 
@@ -350,18 +350,18 @@ const renderSwitch = (switchOptions: switchOptions) => {
       inline-prompt
       disabled={disabled}
       style={switchStyle.value}
-      onChange={() =>
+      onChange={() => {
         onSwitchChange({
           t,
-          msg,
+          msg: msg ?? scope.column.label,
           field,
           updateApi,
           switchLoadMap,
           row: scope.row,
           index: scope.index,
           actionMap: defaultActionMap
-        })
-      }
+        });
+      }}
     />
   );
 };

@@ -1,6 +1,14 @@
 import type { Component } from "vue";
-import type { PlusSearchProps, RecordType } from "plus-pro-components";
-import type { PaginationProps, PureTableProps } from "@pureadmin/table";
+import type {
+  PlusColumn,
+  PlusSearchProps,
+  RecordType
+} from "plus-pro-components";
+import type {
+  PaginationProps,
+  PureTableProps,
+  TableColumn
+} from "@pureadmin/table";
 import type { BaseApi } from "@/api/base";
 import type { formDialogOptions } from "./handle";
 import type { OperationProps } from "@/components/RePlusCRUD";
@@ -54,9 +62,11 @@ interface RePlusPageProps {
    * @param data
    */
   searchResultFormat?: <T = RecordType[]>(data: T[]) => T[];
-  listColumnsFormat?: <T = RecordType[]>(columns: T[]) => T[];
-  detailColumnsFormat?: <T = RecordType[]>(columns: T[]) => T[];
-  searchColumnsFormat?: <T = RecordType[]>(columns: T[]) => T[];
+  listColumnsFormat?: (
+    columns: PlusColumn[] | TableColumn[]
+  ) => PlusColumn[] | TableColumn[];
+  detailColumnsFormat?: (columns: PlusColumn[]) => PlusColumn[];
+  searchColumnsFormat?: (columns: PlusColumn[]) => PlusColumn[];
   /**
    * 搜索之前进行一些修改
    * @param params
