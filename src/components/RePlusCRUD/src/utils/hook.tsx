@@ -46,7 +46,8 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
     listColumnsFormat,
     detailColumnsFormat,
     searchColumnsFormat,
-    beforeSearchSubmit
+    beforeSearchSubmit,
+    baseColumnsFormat
   } = props;
 
   const route = useRoute();
@@ -79,7 +80,6 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
     searchDefaultValue,
     addOrEditDefaultValue
   } = useBaseColumns(localeName);
-
   const searchFields = ref({
     size: tablePagination.value.pageSize,
     page: tablePagination.value.currentPage
@@ -404,6 +404,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
     });
     props.selection &&
       listColumns.value.unshift({
+        _column: { key: "selection" },
         type: "selection",
         fixed: "left",
         reserveSelection: true
@@ -414,6 +415,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
     props.operation &&
       hasOperations.length > 0 &&
       listColumns.value.push({
+        _column: { key: "operation" },
         label: formatPublicLabels(t, te, "operation", localeName),
         fixed: "right",
         width: operationButtonsProps?.width ?? 200,
@@ -428,6 +430,17 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
     searchColumns.value =
       (searchColumnsFormat && searchColumnsFormat(searchColumns.value)) ||
       searchColumns.value;
+
+    baseColumnsFormat &&
+      baseColumnsFormat({
+        listColumns,
+        detailColumns,
+        searchColumns,
+        addOrEditRules,
+        addOrEditColumns,
+        searchDefaultValue,
+        addOrEditDefaultValue
+      });
   };
 
   // 数据获取

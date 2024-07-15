@@ -73,7 +73,7 @@ const openFormDialog = (formOptions: formDialogOptions) => {
   //   editColumns = [...(formOptions?.columns ?? [])];
   // }
   const rawColumns = {};
-  formOptions?.rawColumns.forEach(column => {
+  formOptions?.rawColumns?.forEach(column => {
     rawColumns[column._column?.key ?? column.prop] = column;
   });
   let editColumns = {};
@@ -116,7 +116,10 @@ const openFormDialog = (formOptions: formDialogOptions) => {
       },
       ...propsResult,
       columns: uniqueArrayObj(
-        [...formOptions?.rawColumns, ...(Object.values(editColumns) ?? [])],
+        [
+          ...(formOptions?.rawColumns ?? []),
+          ...(Object.values(editColumns) ?? [])
+        ],
         "prop"
       ),
       formProps: formPropsResult ?? {}
@@ -167,7 +170,8 @@ const openFormDialog = (formOptions: formDialogOptions) => {
 
 interface operationOptions {
   t: Function;
-  apiUrl: BaseApi | any;
+  req?: Promise<any>;
+  apiUrl?: BaseApi | any;
   row: {
     pk?: string | number;
     id?: string | number;
@@ -180,9 +184,9 @@ interface operationOptions {
 }
 
 const handleOperation = (options: operationOptions) => {
-  let req = null;
-  const {
+  let {
     t,
+    req = undefined,
     row,
     apiUrl,
     showSuccessMsg = true,
@@ -191,23 +195,24 @@ const handleOperation = (options: operationOptions) => {
     failed,
     requestEnd
   } = options;
-  switch (apiUrl.name) {
-    case "create":
-      req = apiUrl(row);
-      break;
-    case "update":
-      req = apiUrl(row?.pk ?? row?.id, row);
-      break;
-    case "patch":
-      req = apiUrl(row?.pk ?? row?.id, row);
-      break;
-    case "batchDelete":
-      req = apiUrl(row);
-      break;
-    default:
-      req = apiUrl(row?.pk ?? row?.id);
-      break;
-  }
+  if (!req)
+    switch (apiUrl.name) {
+      case "create":
+        req = apiUrl(row);
+        break;
+      case "update":
+        req = apiUrl(row?.pk ?? row?.id, row);
+        break;
+      case "patch":
+        req = apiUrl(row?.pk ?? row?.id, row);
+        break;
+      case "batchDelete":
+        req = apiUrl(row);
+        break;
+      default:
+        req = apiUrl(row?.pk ?? row?.id);
+        break;
+    }
 
   req &&
     req

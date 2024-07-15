@@ -20,6 +20,7 @@ const props = withDefaults(defineProps<RePlusPageProps>(), {
   searchResultFormat: undefined,
   listColumnsFormat: undefined,
   detailColumnsFormat: undefined,
+  baseColumnsFormat: undefined,
   searchColumnsFormat: undefined,
   beforeSearchSubmit: undefined,
   auth: () => ({

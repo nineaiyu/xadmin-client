@@ -174,7 +174,7 @@ export const customRolePermissionOptions = (data: Array<any>) => {
                   color: var(--el-text-color-secondary);
                 "
             >
-              {item.code ?? item.mode_type?.label}
+              {item.code ?? item.get_mode_type_display}
             </span>
           </>
         );

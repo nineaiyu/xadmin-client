@@ -24,6 +24,7 @@ import uploadFile from "../components/uploadFile.vue";
 import { ElIcon, ElImage, ElLink } from "element-plus";
 import { Link } from "@element-plus/icons-vue";
 import Info from "@iconify-icons/ri/question-line";
+import type { Mutable } from "@vueuse/core";
 
 /**
  * @description 定义自定义搜索模板
@@ -33,6 +34,15 @@ const apiSearchComponents = {
   "api-search-roles": SearchRoles,
   "api-search-users": SearchUsers
 };
+
+export interface CRUDColumn extends PlusColumn {
+  // columns: Partial<Mutable<TableColumn> & { _column: object }>[]
+  _column: Partial<
+    Mutable<SearchFieldsResult["data"][0]> &
+      Mutable<SearchColumnsResult["data"][0]>
+  >;
+}
+
 /**
  * @description 用与通过api接口，获取对应的column, 进行前端渲染
  */
@@ -48,7 +58,7 @@ export function useBaseColumns(localeName: string) {
 
   const formatSearchColumns = (columns: SearchFieldsResult["data"]) => {
     columns.forEach(column => {
-      const item: PlusColumn = {
+      const item: CRUDColumn = {
         _column: column,
         label:
           formatPublicLabels(t, te, column.key, localeName) ?? column.label,
@@ -145,7 +155,7 @@ export function useBaseColumns(localeName: string) {
         }
       }
 
-      const item: PlusColumn = {
+      const item: CRUDColumn = {
         _column: column,
         prop: column.key,
         label:
@@ -186,6 +196,7 @@ export function useBaseColumns(localeName: string) {
         case "float":
           item["valueType"] = "input-number";
           item["fieldProps"]["controlsPosition"] = "right";
+          item["colProps"] = { xs: 24, sm: 24, md: 12, lg: 12, xl: 12 };
           // item["fieldProps"]["controls"] = false;
           // pure-table ******
           // delete item["cellRenderer"];

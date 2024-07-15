@@ -67,6 +67,15 @@ interface RePlusPageProps {
   ) => PlusColumn[] | TableColumn[];
   detailColumnsFormat?: (columns: PlusColumn[]) => PlusColumn[];
   searchColumnsFormat?: (columns: PlusColumn[]) => PlusColumn[];
+  baseColumnsFormat?: ({
+    listColumns,
+    detailColumns,
+    searchColumns,
+    addOrEditRules,
+    addOrEditColumns,
+    searchDefaultValue,
+    addOrEditDefaultValue
+  }) => void;
   /**
    * 搜索之前进行一些修改
    * @param params
