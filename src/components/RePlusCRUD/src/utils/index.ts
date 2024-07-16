@@ -194,10 +194,16 @@ export const formatPublicLabels = (
   return;
 };
 
-export const uniqueArrayObj = (array, key) => {
+export const uniqueArrayObj = (array, key, update = false) => {
   const b = {};
   array.forEach(item => {
-    b[item[key]] = item;
+    if (typeof item === "object") {
+      if (item?.update ?? update) {
+        b[item[key]] = { ...(b[item[key]] ?? {}), ...item };
+      } else {
+        b[item[key]] = item;
+      }
+    }
   });
   return Object.values(b);
 };

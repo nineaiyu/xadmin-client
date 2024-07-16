@@ -61,7 +61,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
   const defaultValue = ref({});
   const switchLoadMap = ref({});
   const { switchStyle } = usePublicHooks();
-  const getParameter = isEmpty(route.params) ? route.query : route.params;
+  const routeParams = isEmpty(route.params) ? route.query : route.params;
   const defaultPagination = {
     total: 0,
     pageSize: 15,
@@ -356,7 +356,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
       t,
       isAdd,
       title: `${title} ${addOrEditOptions?.title ?? pageTitle.value}`,
-      rawRow: isAdd ? { ...addOrEditDefaultValue.value } : { ...row },
+      rawRow: isAdd ? { ...addOrEditDefaultValue.value, ...row } : { ...row },
       form: addOrEditOptions?.form,
       rawColumns: addOrEditColumns.value,
       formProps: {
@@ -493,7 +493,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
         } else {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
         }
-        emit("searchComplete", getParameter, searchFields, dataList, res);
+        emit("searchComplete", routeParams, searchFields, dataList, res);
         delay(500).then(() => {
           loadingStatus.value = false;
         });
@@ -520,8 +520,8 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
         };
         searchFields.value = cloneDeep(defaultValue.value);
 
-        if (getParameter) {
-          const parameter = cloneDeep(getParameter);
+        if (routeParams) {
+          const parameter = cloneDeep(routeParams);
           Object.keys(parameter).forEach(param => {
             searchFields.value[param] = parameter[param];
           });
@@ -548,6 +548,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
     handleSearch,
     getSelectPks,
     handleGetData,
+    handleAddOrEdit,
     handleManyDelete,
     handleSizeChange,
     onSelectionCancel,

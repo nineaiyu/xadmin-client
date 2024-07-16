@@ -25,6 +25,7 @@ interface formDialogOptions {
   isAdd?: boolean;
   row?: Function | Object; //  外部处理方法
   title: string; // 弹窗的的title
+  formValue?: Ref; // 弹窗的的title
   rawRow: Object; //  默认数据或者更新的书籍
   minWidth?: string; // 弹窗的的最小宽度
   columns?: Function | Object; // 表单字段
@@ -33,6 +34,15 @@ interface formDialogOptions {
   props?: Function | Object; //  内容区组件的 props，可通过 defineProps 接收
   formProps?: Function | PlusFormProps; //  plus form 的props
   dialogOptions?: DialogOptions; // dialog options
+  beforeSubmit?: ({
+    formData,
+    formRef,
+    formOptions
+  }: {
+    formData: object | any;
+    formRef: Ref;
+    formOptions: formDialogOptions;
+  }) => object | any;
   saveCallback?: ({
     formData,
     formRef,
@@ -46,7 +56,6 @@ interface formDialogOptions {
 
 const openFormDialog = (formOptions: formDialogOptions) => {
   const formRef = ref();
-
   const rowResult = {};
   Object.keys(formOptions?.row ?? {}).forEach(key => {
     const getValue = formOptions.row[key];
@@ -56,6 +65,14 @@ const openFormDialog = (formOptions: formDialogOptions) => {
       rowResult[key] = getValue;
     }
   });
+
+  const formInline = {
+    ...(formOptions?.rawRow ?? {}),
+    ...rowResult
+  };
+
+  formOptions.formValue = formOptions.formValue ?? ref(cloneDeep(formInline));
+
   const propsResult = {};
   Object.keys(formOptions?.props ?? {}).forEach(key => {
     const getValue = formOptions.props[key];
@@ -80,9 +97,10 @@ const openFormDialog = (formOptions: formDialogOptions) => {
   Object.keys(formOptions?.columns ?? {}).forEach(key => {
     const getValue = formOptions.columns[key];
     if (typeof formOptions.columns[key] === "function") {
-      editColumns[key] = getValue(
-        cloneDeep({ ...formOptions, column: rawColumns[key] })
-      );
+      editColumns[key] = getValue({
+        ...cloneDeep({ ...formOptions, column: rawColumns[key] }),
+        formValue: formOptions.formValue
+      });
     } else {
       editColumns[key] = getValue;
     }
@@ -102,18 +120,16 @@ const openFormDialog = (formOptions: formDialogOptions) => {
   const minWidth = Number((formOptions.minWidth ?? "600px").replace("px", ""));
   const width = formOptions?.dialogOptions?.width ?? "40%";
   let numberWidth = 0;
-  if (width.endsWith("%")) {
-    numberWidth = (clientWidth * Number(width.replace("%", ""))) / 100;
+  if (width.endsWith("%") || width.endsWith("vw")) {
+    numberWidth =
+      (clientWidth * Number(width.replace("%", "").replace("vw", ""))) / 100;
   } else {
     numberWidth = Number(width.replace("px", ""));
   }
   addDialog({
     title: formOptions.title,
     props: {
-      formInline: {
-        ...(formOptions?.rawRow ?? {}),
-        ...rowResult
-      },
+      formInline,
       ...propsResult,
       columns: uniqueArrayObj(
         [
@@ -124,7 +140,6 @@ const openFormDialog = (formOptions: formDialogOptions) => {
       ),
       formProps: formPropsResult ?? {}
     },
-    width: `${minWidth > numberWidth ? minWidth : numberWidth}px`,
     draggable: true,
     fullscreen: deviceDetection(),
     fullscreenIcon: true,
@@ -133,7 +148,15 @@ const openFormDialog = (formOptions: formDialogOptions) => {
     beforeSure: async (done, { options }) => {
       options.confirmLoading = true;
       const FormRef: FormInstance = formRef.value.getRef();
-      const formData = cloneDeep(options.props.formInline);
+      const formInlineData = cloneDeep(options.props.formInline);
+      const formData =
+        (formOptions?.beforeSubmit &&
+          formOptions?.beforeSubmit({
+            formData: formInlineData,
+            formRef: formRef,
+            formOptions
+          })) ||
+        formInlineData;
       const success = (close = true) => {
         message(formOptions?.t("results.success"), {
           type: "success"
@@ -164,7 +187,15 @@ const openFormDialog = (formOptions: formDialogOptions) => {
         }
       });
     },
-    ...formOptions?.dialogOptions
+    ...formOptions?.dialogOptions,
+    width: `${minWidth > numberWidth ? minWidth : numberWidth}px`,
+    onChange(data) {
+      if (data?.values) {
+        formOptions.formValue.value = data?.values?.values;
+      }
+      formOptions?.dialogOptions?.onChange &&
+        formOptions?.dialogOptions?.onChange(data);
+    }
   });
 };
 
@@ -180,7 +211,8 @@ interface operationOptions {
   showFailedMsg?: boolean;
   success?: (res?: BaseResult) => void;
   failed?: (res?: BaseResult) => void;
-  requestEnd?: (res?: BaseResult) => void;
+  exception?: (res?: BaseResult) => void;
+  requestEnd?: (options?: operationOptions) => void;
 }
 
 const handleOperation = (options: operationOptions) => {
@@ -193,6 +225,7 @@ const handleOperation = (options: operationOptions) => {
     showFailedMsg = true,
     success,
     failed,
+    exception,
     requestEnd
   } = options;
   if (!req)
@@ -225,10 +258,12 @@ const handleOperation = (options: operationOptions) => {
             message(`${t("results.failed")}，${res.detail}`, { type: "error" });
           failed && failed(res);
         }
-        requestEnd && requestEnd(res);
       })
       .catch(err => {
-        requestEnd && requestEnd(err);
+        exception && exception(err);
+      })
+      .finally(() => {
+        requestEnd && requestEnd(options);
       });
 };
 
@@ -242,8 +277,11 @@ interface changeOptions {
     id?: string | number;
   }; // 更新的表单数据
   field: string; // 更新的字段
-  actionMap: object; // msg映射 {true:'发布',false:'未发布'}
+  actionMsg: string;
   msg?: string;
+  success?: (res?: BaseResult) => void;
+  failed?: (res?: BaseResult) => void;
+  requestEnd?: (options?: operationOptions) => void;
 }
 
 const onSwitchChange = (changeOptions: changeOptions) => {
@@ -254,12 +292,15 @@ const onSwitchChange = (changeOptions: changeOptions) => {
     index,
     row,
     field,
-    actionMap,
-    msg = ""
+    actionMsg,
+    msg = "",
+    success,
+    failed,
+    requestEnd
   } = changeOptions;
   ElMessageBox.confirm(
     `${t("buttons.operateConfirm", {
-      action: `<strong>${actionMap[row[field]]}</strong>`,
+      action: `<strong>${actionMsg}</strong>`,
       message: `<strong style="color:var(--el-color-primary)">${msg}</strong>`
     })}`,
     {
@@ -280,15 +321,11 @@ const onSwitchChange = (changeOptions: changeOptions) => {
       );
       const updateData = {};
       updateData[field] = row[field];
-      updateApi(row?.pk ?? row?.id, updateData)
-        .then((res: BaseResult) => {
-          if (res.code === 1000) {
-            message(t("results.success"), { type: "success" });
-          } else {
-            message(`${t("results.failed")}，${res.detail}`, {
-              type: "error"
-            });
-          }
+      handleOperation({
+        t,
+        req: updateApi(row?.pk ?? row?.id, updateData),
+        row,
+        requestEnd(options) {
           switchLoadMap.value[index] = Object.assign(
             {},
             switchLoadMap.value[index],
@@ -296,18 +333,14 @@ const onSwitchChange = (changeOptions: changeOptions) => {
               loading: false
             }
           );
-        })
-        .catch(e => {
+          requestEnd && requestEnd(options);
+        },
+        success,
+        failed,
+        exception() {
           row[field] === false ? (row[field] = true) : (row[field] = false);
-          switchLoadMap.value[index] = Object.assign(
-            {},
-            switchLoadMap.value[index],
-            {
-              loading: false
-            }
-          );
-          throw e;
-        });
+        }
+      });
     })
     .catch(() => {
       row[field] === false ? (row[field] = true) : (row[field] = false);
@@ -321,8 +354,13 @@ interface switchOptions {
   switchStyle: Ref;
   field: string; // 更新的字段
   actionMap?: object; // msg映射 {true:'发布',false:'未发布'}
+  activeMap?: object; // active映射 {true:'发布',false:'未发布'}
   msg?: string;
+  actionMsg?: string;
   disabled?: boolean;
+  success?: (res?: BaseResult) => void;
+  failed?: (res?: BaseResult) => void;
+  requestEnd?: (options?: operationOptions) => void;
 }
 
 const renderSwitch = (switchOptions: switchOptions) => {
@@ -333,23 +371,33 @@ const renderSwitch = (switchOptions: switchOptions) => {
     updateApi,
     field,
     actionMap,
+    activeMap,
+    success,
+    failed,
+    requestEnd,
     msg = undefined,
+    actionMsg = undefined,
     disabled = true
   } = switchOptions;
 
   const defaultActionMap = {
     true: t("labels.enable"),
     false: t("labels.disable"),
-    ...actionMap
+    ...(actionMap ?? {})
   };
 
+  const defaultActiveMap = {
+    true: true,
+    false: false,
+    ...(activeMap ?? {})
+  };
   return scope => (
     <el-switch
       size={scope.props.size === "small" ? "small" : "default"}
       loading={switchLoadMap.value[scope.index]?.loading}
       v-model={scope.row[field]}
-      active-value={true}
-      inactive-value={false}
+      active-value={defaultActiveMap["true"]}
+      inactive-value={defaultActiveMap["false"]}
       active-text={defaultActionMap["true"]}
       inactive-text={defaultActionMap["false"]}
       inline-prompt
@@ -364,7 +412,11 @@ const renderSwitch = (switchOptions: switchOptions) => {
           switchLoadMap,
           row: scope.row,
           index: scope.index,
-          actionMap: defaultActionMap
+          actionMsg:
+            actionMsg ?? defaultActionMap[defaultActiveMap[scope.row[field]]],
+          success,
+          failed,
+          requestEnd
         });
       }}
     />

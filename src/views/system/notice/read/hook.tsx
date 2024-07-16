@@ -1,26 +1,18 @@
-import dayjs from "dayjs";
-import { h, reactive, ref, type Ref } from "vue";
+import { h, reactive, ref, type Ref, shallowRef } from "vue";
 import { noticeReadApi } from "@/api/system/notice";
-import type { FormItemProps } from "../utils/types";
 import showForm from "../show.vue";
 import { deviceDetection } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog";
 import { useRouter } from "vue-router";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
-import { renderSwitch } from "@/views/system/render";
+import type { CRUDColumn, OperationProps } from "@/components/RePlusCRUD";
+import { renderSwitch, usePublicHooks } from "@/components/RePlusCRUD";
 
 export function useNoticeRead(tableRef: Ref) {
   const { t } = useI18n();
 
-  const api = reactive({
-    list: noticeReadApi.list,
-    detail: noticeReadApi.detail,
-    delete: noticeReadApi.delete,
-    state: noticeReadApi.state,
-    fields: noticeReadApi.fields,
-    batchDelete: noticeReadApi.batchDelete
-  });
+  const api = reactive(noticeReadApi);
 
   const auth = reactive({
     list: hasAuth("list:systemNoticeRead"),
@@ -29,88 +21,79 @@ export function useNoticeRead(tableRef: Ref) {
     state: hasAuth("update:systemNoticeReadState"),
     batchDelete: hasAuth("batchDelete:systemNoticeRead")
   });
+  const switchLoadMap = ref({});
+  const { switchStyle } = usePublicHooks();
 
-  const router = useRouter();
-
-  const columns = ref<TableColumnList>([
-    {
-      type: "selection",
-      fixed: "left",
-      reserveSelection: true
-    },
-    {
-      prop: "pk",
-      minWidth: 100
-    },
-    {
-      prop: "notice_info",
-      minWidth: 120,
-      cellRenderer: ({ row }) => (
-        <el-link
-          type={row.notice_info.level}
-          onClick={() => onGoNoticeDetail(row as any)}
-        >
-          {row.notice_info.title}
-        </el-link>
-      )
-    },
-    {
-      label: t("noticeRead.notice_type"),
-      prop: "notice_info.notice_type.label",
-      minWidth: 100
-    },
-    {
-      label: t("noticeRead.owner_id"),
-      prop: "owner_info.pk",
-      minWidth: 100
-    },
-    {
-      label: t("noticeRead.username"),
-      prop: "owner_info",
-      minWidth: 100,
-      cellRenderer: ({ row }) => (
-        <el-link onClick={() => onGoUserDetail(row as any)}>
-          {row.owner_info?.username ? row.owner_info?.username : "/"}
-        </el-link>
-      )
-    },
-    {
-      label: t("noticeRead.readDate"),
-      minWidth: 180,
-      prop: "updated_time",
-      cellRenderer: ({ row }) => (
-        <el-text>
-          {!row.unread
-            ? dayjs(row.updated_time).format("YYYY-MM-DD HH:mm:ss")
-            : "/"}
-        </el-text>
-      )
-    },
-    {
-      prop: "unread",
-      minWidth: 90,
-      cellRenderer: renderSwitch(
-        auth.state,
-        tableRef,
-        "unread",
-        scope => {
-          return scope.row.notice_info.title;
+  const operationButtonsProps = shallowRef<OperationProps>({
+    width: 140,
+    buttons: [
+      {
+        code: "detail",
+        onClick({ row: { notice_info } }) {
+          addDialog({
+            title: t("noticeRead.showSystemNotice"),
+            props: {
+              formInline: { ...notice_info }
+            },
+            width: "70%",
+            draggable: true,
+            fullscreen: deviceDetection(),
+            fullscreenIcon: true,
+            closeOnClickModal: false,
+            hideFooter: true,
+            contentRenderer: () => h(showForm)
+          });
         },
-        true,
-        api.state,
-        scope => {
-          return scope.row.unread === false
-            ? t("labels.read")
-            : t("labels.unread");
-        }
-      )
-    },
-    {
-      fixed: "right",
-      width: 200,
-      slot: "operation"
-    }
-  ]);
+        update: true
+      }
+    ]
+  });
+  const listColumnsFormat = (columns: CRUDColumn[]) => {
+    columns.forEach(column => {
+      switch (column._column?.key) {
+        case "notice_info":
+          column["cellRenderer"] = ({ row }) => (
+            <el-link
+              type={row.notice_info?.level?.value}
+              onClick={() => onGoNoticeDetail(row as any)}
+            >
+              {row.notice_info.title}
+            </el-link>
+          );
+          break;
+        case "owner_info":
+          column["cellRenderer"] = ({ row }) => (
+            <el-link onClick={() => onGoUserDetail(row as any)}>
+              {row.owner_info?.username ? row.owner_info?.username : "/"}
+            </el-link>
+          );
+          break;
+        case "unread":
+          column["cellRenderer"] = renderSwitch({
+            t,
+            updateApi: api.state,
+            switchLoadMap,
+            switchStyle,
+            field: column.prop,
+            disabled: !auth.state,
+            success() {
+              tableRef.value.handleGetData();
+            },
+            actionMap: {
+              true: t("labels.read"),
+              false: t("labels.unread")
+            },
+            activeMap: {
+              false: true,
+              true: false
+            }
+          });
+          break;
+      }
+    });
+    return columns;
+  };
+  const router = useRouter();
 
   function onGoUserDetail(row: any) {
     if (
@@ -138,33 +121,10 @@ export function useNoticeRead(tableRef: Ref) {
     }
   }
 
-  function showDialog(row?: FormItemProps) {
-    addDialog({
-      title: t("noticeRead.showSystemNotice"),
-      props: {
-        formInline: {
-          pk: row?.pk ?? "",
-          title: row?.title ?? "",
-          message: row?.message ?? "",
-          publish: row?.publish ?? true,
-          level: row?.level ?? "info"
-        }
-      },
-      width: "70%",
-      draggable: true,
-      fullscreen: deviceDetection(),
-      fullscreenIcon: true,
-      closeOnClickModal: false,
-      hideFooter: true,
-      contentRenderer: () => h(showForm)
-    });
-  }
-
   return {
-    t,
     api,
     auth,
-    columns,
-    showDialog
+    listColumnsFormat,
+    operationButtonsProps
   };
 }

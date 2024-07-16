@@ -12,6 +12,7 @@ export interface OperationButtonsRow {
   icon?: Component;
   props?: Partial<Mutable<ButtonProps & { [index: string]: any }>>;
   show?: boolean;
+  update?: boolean; // 用于判断是否是更新该按钮信息
   loading?: boolean;
   confirm?: {
     title?: string;
@@ -25,7 +26,7 @@ export interface OperationButtonsRow {
 }
 export interface ButtonsCallBackParams {
   e: MouseEvent;
-  row: object;
+  row: object | any;
   loading: { value: boolean };
   buttonRow: OperationButtonsRow;
 }

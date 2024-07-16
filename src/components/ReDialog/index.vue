@@ -88,6 +88,10 @@ function handleClose(
   closeDialog(options, index, args);
   eventsCallBack("close", options, index);
 }
+
+function handleChange(options: DialogOptions, index: number, values: any) {
+  options?.onChange && options.onChange({ options, index, values });
+}
 </script>
 
 <template>
@@ -148,6 +152,7 @@ function handleClose(
     <component
       :is="options.contentRenderer({ options, index })"
       v-bind="options?.props"
+      @change="values => handleChange(options, index, values)"
       @close="args => handleClose(options, index, args)"
     />
     <!-- footer -->

@@ -164,13 +164,6 @@ export function useBaseColumns(localeName: string) {
           trigger: "blur"
         }
       ];
-      if (column.hasOwnProperty("default")) {
-        addOrEditDefaultValue.value[column.key] = column?.default;
-        if (column.input_type === "labeled_choice") {
-          addOrEditDefaultValue.value[column.key] = { value: column?.default };
-        }
-      }
-
       const item: CRUDColumn = {
         _column: column,
         prop: column.key,
@@ -271,6 +264,9 @@ export function useBaseColumns(localeName: string) {
           break;
         default:
           if (column.input_type.startsWith("api-")) {
+            if (!column.hasOwnProperty("default") && column?.multiple) {
+              column.default = [];
+            }
             item["renderField"] = (value, onChange) => {
               return h(apiSearchComponents[column.input_type], {
                 modelValue: value,
@@ -287,6 +283,14 @@ export function useBaseColumns(localeName: string) {
       if (!column.read_only) {
         addOrEditColumns.value.push(cloneDeep(item));
       }
+
+      if (column.hasOwnProperty("default")) {
+        addOrEditDefaultValue.value[column.key] = column?.default;
+        if (column.input_type === "labeled_choice") {
+          addOrEditDefaultValue.value[column.key] = { value: column?.default };
+        }
+      }
+
       if (!column.write_only) {
         switch (column.input_type) {
           case "labeled_choice":

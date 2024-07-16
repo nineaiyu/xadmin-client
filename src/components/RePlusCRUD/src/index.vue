@@ -67,6 +67,7 @@ const {
   handleSearch,
   getSelectPks,
   handleGetData,
+  handleAddOrEdit,
   handleManyDelete,
   handleSizeChange,
   onSelectionCancel,
@@ -81,9 +82,10 @@ function getTableRef() {
 defineExpose({
   dataList,
   searchFields,
-  handleGetData,
   getTableRef,
-  getSelectPks
+  getSelectPks,
+  handleGetData,
+  handleAddOrEdit
 });
 </script>
 

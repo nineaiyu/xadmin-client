@@ -12,7 +12,7 @@ const props = withDefaults(defineProps<FormProps>(), {
     title: "",
     publish: false,
     message: "",
-    level: "info"
+    level: { value: "info" }
   })
 });
 const { t } = useI18n();
@@ -50,7 +50,7 @@ const loading = ref(false);
   <el-form ref="formRef" :model="newFormInline" label-width="82px">
     <el-card shadow="never">
       <template #header>
-        <el-text :type="newFormInline.level" size="large"
+        <el-text :type="newFormInline.level?.value" size="large"
           >{{ newFormInline.title }}
         </el-text>
         <el-tag
