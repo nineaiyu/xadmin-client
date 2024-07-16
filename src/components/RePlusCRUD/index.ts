@@ -12,5 +12,6 @@ export * from "./src/utils/renders";
 export * from "./src/utils/handle";
 export * from "./src/components/buttonOperation";
 export * from "./src/utils/types";
+export * from "./src/utils/public";
 
 export default RePlusCRUD;

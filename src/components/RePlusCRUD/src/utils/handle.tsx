@@ -371,7 +371,39 @@ const renderSwitch = (switchOptions: switchOptions) => {
   );
 };
 
-export { openFormDialog, handleOperation, onSwitchChange, renderSwitch };
+interface booleanTagOptions {
+  t: Function;
+  tagStyle: Ref;
+  field: string; // 字段
+  actionMap?: object; // msg映射 {true:'发布',false:'未发布'}
+  disabled?: boolean;
+}
+
+const renderBooleanTag = (booleanTagOptions: booleanTagOptions) => {
+  const { t, tagStyle, field, disabled, actionMap } = booleanTagOptions;
+  const defaultActionMap = {
+    true: t("labels.enable"),
+    false: t("labels.disable"),
+    ...actionMap
+  };
+  return scope => (
+    <el-tag
+      size={scope.props.size}
+      style={tagStyle.value(scope.row[field])}
+      disabled={disabled}
+    >
+      {defaultActionMap[scope.row[field]]}
+    </el-tag>
+  );
+};
+
+export {
+  openFormDialog,
+  handleOperation,
+  onSwitchChange,
+  renderSwitch,
+  renderBooleanTag
+};
 export type {
   operationOptions,
   changeOptions,

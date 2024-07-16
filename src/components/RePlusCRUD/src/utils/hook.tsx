@@ -11,15 +11,18 @@ import {
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { resourcesIDCacheApi } from "@/api/common";
-import { useBaseColumns } from "./columns";
+import { type CRUDColumn, useBaseColumns } from "./columns";
 import {
   renderSwitch,
   handleOperation,
   openFormDialog,
   type operationOptions
 } from "./handle";
-import { usePublicHooks } from "@/views/system/hooks";
-import { formatPublicLabels, uniqueArrayObj } from "@/components/RePlusCRUD";
+import {
+  formatPublicLabels,
+  uniqueArrayObj,
+  usePublicHooks
+} from "@/components/RePlusCRUD";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import type { OperationButtonsRow } from "@/components/RePlusCRUD";
 import exportDataForm from "../components/exportData.vue";
@@ -386,7 +389,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
 
   // 表格字段自定义渲染
   const formatColumnsRender = () => {
-    listColumns.value.forEach(column => {
+    listColumns.value.forEach((column: CRUDColumn) => {
       switch (column._column?.input_type) {
         case "boolean":
           // pure-table ****** start

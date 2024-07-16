@@ -4,7 +4,11 @@ import { useRouter } from "vue-router";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { reactive, shallowRef } from "vue";
 import { usePublicHooks } from "@/views/system/hooks";
-import type { CRUDColumn, OperationProps } from "@/components/RePlusCRUD";
+import {
+  type CRUDColumn,
+  type OperationProps,
+  renderBooleanTag
+} from "@/components/RePlusCRUD";
 
 export function useLoginLog() {
   const { t } = useI18n();
@@ -34,11 +38,11 @@ export function useLoginLog() {
           );
           break;
         case "status":
-          column["cellRenderer"] = ({ row, props }) => (
-            <el-tag size={props.size} style={tagStyle.value(row.status)}>
-              {row.status ? t("labels.success") : t("labels.failed")}
-            </el-tag>
-          );
+          column["cellRenderer"] = renderBooleanTag({
+            t,
+            tagStyle,
+            field: column.prop
+          });
           break;
       }
     });
