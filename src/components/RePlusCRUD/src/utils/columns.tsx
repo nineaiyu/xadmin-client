@@ -26,6 +26,7 @@ import { Link } from "@element-plus/icons-vue";
 import Info from "@iconify-icons/ri/question-line";
 import type { Mutable } from "@vueuse/core";
 import type { TableColumnRenderer } from "@pureadmin/table";
+import { isEmail, isNumber } from "@pureadmin/utils";
 
 /**
  * @description 定义自定义搜索模板
@@ -154,16 +155,56 @@ export function useBaseColumns(localeName: string) {
     });
   };
 
+  const formatAddOrEditRules = (column: SearchColumnsResult["data"][0]) => {
+    const message =
+      formatPublicLabels(t, te, column.key, localeName) ?? column.label;
+    switch (column.input_type) {
+      case "email":
+        addOrEditRules.value[column.key] = [
+          {
+            required: column.required,
+            validator: (rule, value, callback) => {
+              if (value === "" || !value) {
+                callback();
+              } else if (!isEmail(value)) {
+                callback(new Error(message));
+              } else {
+                callback();
+              }
+            },
+            trigger: "blur"
+          }
+        ];
+        break;
+      case "integer":
+        addOrEditRules.value[column.key] = [
+          {
+            required: column.required,
+            validator: (rule, value, callback) => {
+              if (value && !isNumber(value)) {
+                callback(new Error("field must be a number"));
+              } else {
+                callback();
+              }
+            },
+            trigger: "blur"
+          }
+        ];
+        break;
+      default:
+        addOrEditRules.value[column.key] = [
+          {
+            required: column.required,
+            message: message,
+            trigger: "blur"
+          }
+        ];
+    }
+  };
+
   const formatAddOrEditColumns = (columns: SearchColumnsResult["data"]) => {
     columns.forEach(column => {
-      addOrEditRules.value[column.key] = [
-        {
-          required: column.required,
-          message:
-            formatPublicLabels(t, te, column.key, localeName) ?? column.label,
-          trigger: "blur"
-        }
-      ];
+      formatAddOrEditRules(column);
       const item: CRUDColumn = {
         _column: column,
         prop: column.key,

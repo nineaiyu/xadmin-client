@@ -32,7 +32,8 @@ interface formDialogOptions {
   rawColumns?: PlusColumn[] | Array<any>; // 表单字段
   form?: Component | any; // 挂载的form组件，默认是addOrEdit组件
   props?: Function | Object; //  内容区组件的 props，可通过 defineProps 接收
-  formProps?: Function | PlusFormProps; //  plus form 的props
+  formProps?: Function | Object; //  plus form 的props
+  rawFormProps?: PlusFormProps; //  plus form 的props
   dialogOptions?: DialogOptions; // dialog options
   beforeSubmit?: ({
     formData,
@@ -97,10 +98,14 @@ const openFormDialog = (formOptions: formDialogOptions) => {
   Object.keys(formOptions?.columns ?? {}).forEach(key => {
     const getValue = formOptions.columns[key];
     if (typeof formOptions.columns[key] === "function") {
-      editColumns[key] = getValue({
-        ...cloneDeep({ ...formOptions, column: rawColumns[key] }),
-        formValue: formOptions.formValue
-      });
+      try {
+        editColumns[key] = getValue({
+          ...cloneDeep({ ...formOptions, column: rawColumns[key] }),
+          formValue: formOptions.formValue
+        });
+      } catch (err) {
+        console.warn(err);
+      }
     } else {
       editColumns[key] = getValue;
     }
@@ -138,7 +143,7 @@ const openFormDialog = (formOptions: formDialogOptions) => {
         ],
         "prop"
       ),
-      formProps: formPropsResult ?? {}
+      formProps: { ...formOptions?.rawFormProps, ...(formPropsResult ?? {}) }
     },
     draggable: true,
     fullscreen: deviceDetection(),

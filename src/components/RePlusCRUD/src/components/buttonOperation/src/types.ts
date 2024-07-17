@@ -1,4 +1,4 @@
-import type { Component } from "vue";
+import type { Component, ComputedRef, Ref } from "vue";
 import type {
   ButtonProps,
   ElMessageBoxOptions,
@@ -11,7 +11,13 @@ export interface OperationButtonsRow {
   code: string | number;
   icon?: Component;
   props?: Partial<Mutable<ButtonProps & { [index: string]: any }>>;
-  show?: boolean;
+  show?:
+    | boolean
+    | Ref<boolean>
+    | ComputedRef<boolean>
+    | ((
+        button: OperationButtonsRow
+      ) => boolean | Ref<boolean> | ComputedRef<boolean>);
   update?: boolean; // 用于判断是否是更新该按钮信息
   loading?: boolean;
   confirm?: {

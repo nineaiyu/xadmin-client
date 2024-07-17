@@ -114,12 +114,7 @@ export function useDataPermission() {
 
   const operationButtonsProps = shallowRef<OperationProps>({
     width: 160,
-    buttons: [
-      {
-        code: "detail",
-        show: false
-      }
-    ]
+    buttons: [{ code: "detail", show: false }]
   });
   return {
     api,

@@ -134,7 +134,7 @@ export function useDept(tableRef: Ref) {
       title: t("systemDept.assignRole", { dept: row.name }),
       rawRow: { ...row },
       rawColumns: roleRulesColumns.value,
-      formProps: {
+      rawFormProps: {
         rules: roleRules.value
       },
       saveCallback: ({ formData, done, dialogOptions }) => {

@@ -1,29 +1,16 @@
 import "./reset.css";
-import dayjs from "dayjs";
 import { message } from "@/utils/message";
 import { zxcvbn } from "@zxcvbn-ts/core";
 import { userApi } from "@/api/system/user";
-import { ElForm, ElFormItem, ElInput, ElProgress } from "element-plus";
-import {
-  computed,
-  h,
-  onMounted,
-  reactive,
-  ref,
-  type Ref,
-  shallowRef,
-  watch
-} from "vue";
+import { ElForm, ElFormItem, ElImage, ElInput, ElProgress } from "element-plus";
+import { h, onMounted, reactive, ref, type Ref, shallowRef, watch } from "vue";
 import { addDialog } from "@/components/ReDialog";
 import croppingUpload from "@/components/RePictureUpload";
 import { roleApi } from "@/api/system/role";
 import {
   cloneDeep,
   deviceDetection,
-  getKeyList,
-  hideTextAtIndex,
   isAllEmpty,
-  isEmail,
   isPhone
 } from "@pureadmin/utils";
 import { useRouter } from "vue-router";
@@ -32,40 +19,27 @@ import { useI18n } from "vue-i18n";
 import { handleTree } from "@/utils/tree";
 import { deptApi } from "@/api/system/dept";
 import { dataPermissionApi } from "@/api/system/permission";
-import { ModeChoices } from "@/views/system/constants";
 import { REGEXP_PWD } from "@/views/login/utils/rule";
-import Info from "@iconify-icons/ri/question-line";
-import { renderOption, renderSwitch } from "@/views/system/render";
-import {
-  customRolePermissionOptions,
-  formatFormColumns,
-  formatHigherDeptOptions,
-  formatOptions,
-  picturePng
-} from "@/views/system/hooks";
+import { customRolePermissionOptions, picturePng } from "@/views/system/hooks";
 import { AesEncrypted } from "@/utils/aes";
-import addOrEdit from "@/components/ReBaseTable/src/form/addOrEdit.vue";
+import {
+  type CRUDColumn,
+  handleOperation,
+  openFormDialog,
+  type OperationProps,
+  type RePlusPageProps
+} from "@/components/RePlusCRUD";
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import Role from "@iconify-icons/ri/admin-line";
+import Avatar from "@iconify-icons/ri/user-3-fill";
+import Password from "@iconify-icons/ri/lock-password-line";
+import Message from "@iconify-icons/ri/message-fill";
 
 export function useUser(tableRef: Ref) {
-  const { t, te } = useI18n();
+  const { t } = useI18n();
 
-  const api = reactive({
-    list: userApi.list,
-    create: (row, isAdd, curData) => {
-      curData["password"] = AesEncrypted(curData.username, curData.password);
-      return userApi.create;
-    },
-    delete: userApi.delete,
-    update: userApi.patch,
-    fields: userApi.fields,
-    reset: userApi.reset,
-    empower: userApi.empower,
-    choices: userApi.choices,
-    upload: userApi.upload,
-    export: userApi.export,
-    import: userApi.import,
-    batchDelete: userApi.batchDelete
-  });
+  const api = reactive(userApi);
+  api.update = api.patch;
 
   const auth = reactive({
     list: hasAuth("list:systemUser"),
@@ -79,167 +53,6 @@ export function useUser(tableRef: Ref) {
     export: hasAuth("export:systemUser"),
     import: hasAuth("import:systemUser"),
     batchDelete: hasAuth("batchDelete:systemUser")
-  });
-
-  const editForm = shallowRef({
-    title: t("systemUser.user"),
-    row: {
-      is_active: row => {
-        return row?.is_active ?? true;
-      },
-      gender: row => {
-        return row?.gender ?? 0;
-      },
-      roles: row => {
-        return row?.roles ?? [];
-      },
-      dept: row => {
-        return row?.dept?.pk ?? "";
-      }
-    },
-    formProps: {
-      labelWidth: "100px",
-      rules: {
-        username: [
-          {
-            required: true,
-            message: t("systemUser.username"),
-            trigger: "blur"
-          }
-        ],
-        password: [
-          {
-            required: true,
-            validator: (rule, value, callback) => {
-              if (value === "") {
-                callback(new Error(t("login.passwordReg")));
-              } else if (!REGEXP_PWD.test(value)) {
-                callback(new Error(t("login.passwordRuleReg")));
-              } else {
-                callback();
-              }
-            },
-            trigger: "blur"
-          }
-        ],
-        nickname: [
-          {
-            required: true,
-            message: t("systemUser.nickname"),
-            trigger: "blur"
-          }
-        ],
-        gender: [
-          {
-            required: true,
-            message: t("systemUser.gender"),
-            trigger: "blur"
-          }
-        ],
-        dept: [
-          {
-            required: true,
-            message: t("systemUser.dept"),
-            trigger: "blur"
-          }
-        ],
-        is_active: [
-          {
-            required: true,
-            message: t("labels.verifyStatus"),
-            trigger: "blur"
-          }
-        ],
-        mobile: [
-          {
-            validator: (rule, value, callback) => {
-              if (value === "" || !value) {
-                callback();
-              } else if (!isPhone(value)) {
-                callback(new Error(t("login.phoneCorrectReg")));
-              } else {
-                callback();
-              }
-            },
-            trigger: "blur"
-          }
-        ],
-        email: [
-          {
-            validator: (rule, value, callback) => {
-              if (value === "" || !value) {
-                callback();
-              } else if (!isEmail(value)) {
-                callback(new Error(t("login.emailCorrectReg")));
-              } else {
-                callback();
-              }
-            },
-            trigger: "blur"
-          }
-        ]
-      }
-    },
-    columns: ({ isAdd }) => {
-      return [
-        {
-          prop: "username",
-          valueType: "input",
-          colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
-        },
-        {
-          prop: "nickname",
-          valueType: "input",
-          colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
-        },
-
-        {
-          prop: "mobile",
-          valueType: "input",
-          colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
-        },
-        {
-          prop: "email",
-          valueType: "input",
-          colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
-        },
-        {
-          prop: "gender",
-          valueType: "select",
-          colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 },
-          options: formatOptions(choicesDict.value["gender"])
-        },
-        {
-          prop: "password",
-          valueType: "input",
-          hideInForm: !isAdd,
-          colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 }
-        },
-        {
-          prop: "is_active",
-          valueType: "radio",
-          colProps: { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 },
-          renderField: renderOption()
-        },
-        {
-          prop: "dept",
-          valueType: "cascader",
-          fieldProps: {
-            props: {
-              value: "pk",
-              label: "name",
-              emitPath: false,
-              checkStrictly: true
-            }
-          },
-          options: formatHigherDeptOptions(cloneDeep(treeData.value))
-        },
-        {
-          prop: "description",
-          valueType: "textarea"
-        }
-      ];
-    }
   });
 
   const cropRef = ref();
@@ -256,134 +69,6 @@ export function useUser(tableRef: Ref) {
   const avatarInfo = ref();
   const ruleFormRef = ref();
 
-  const columns = ref<TableColumnList>([
-    {
-      type: "selection",
-      fixed: "left",
-      reserveSelection: true
-    },
-    {
-      prop: "pk",
-      width: 50
-    },
-    {
-      prop: "avatar",
-      minWidth: 90,
-      cellRenderer: ({ row }) => (
-        <el-image
-          class={["w-[36px]", "h-[36px]", "align-middle"]}
-          fit="cover"
-          src={row.avatar}
-          loading="lazy"
-          preview-teleported
-          preview-src-list={Array.of(row.avatar)}
-        />
-      )
-    },
-    {
-      prop: "username",
-      minWidth: 120,
-      cellRenderer: ({ row }) => (
-        <span v-show={row?.username} v-copy={row?.username}>
-          {row?.username}
-        </span>
-      ),
-      headerRenderer: () => (
-        <span class="flex-c">
-          {t("systemUser.username")}
-          <iconifyIconOffline
-            icon={Info}
-            class={["ml-1", "cursor-help"]}
-            v-tippy={{
-              content: t("labels.dClickCopy")
-            }}
-          />
-        </span>
-      )
-    },
-    {
-      prop: "nickname",
-      minWidth: 130,
-      cellRenderer: ({ row }) => (
-        <span v-show={row?.nickname} v-copy={row?.nickname}>
-          {row?.nickname}
-        </span>
-      )
-    },
-    {
-      prop: "gender.label",
-      minWidth: 90,
-      cellRenderer: ({ row, props }) => (
-        <el-tag
-          size={props.size}
-          type={row.gender === 2 ? "danger" : "primary"}
-          effect="plain"
-        >
-          {row.gender.label}
-        </el-tag>
-      )
-    },
-
-    {
-      prop: "is_active",
-      minWidth: 90,
-      cellRenderer: renderSwitch(auth.update, tableRef, "is_active", scope => {
-        return scope.row.username;
-      })
-    },
-
-    {
-      prop: "dept",
-      width: 140,
-      cellRenderer: ({ row }) => (
-        <span v-show={row?.dept?.name} v-copy={row?.dept?.name}>
-          {row?.dept?.name}
-        </span>
-      )
-    },
-    {
-      prop: "mobile",
-      minWidth: 120,
-      formatter: ({ mobile }) => hideTextAtIndex(mobile, { start: 3, end: 6 })
-    },
-    {
-      minWidth: 160,
-      prop: "last_login",
-      formatter: ({ last_login }) =>
-        dayjs(last_login).format("YYYY-MM-DD HH:mm:ss")
-    },
-    {
-      minWidth: 160,
-      prop: "date_joined",
-      formatter: ({ date_joined }) =>
-        dayjs(date_joined).format("YYYY-MM-DD HH:mm:ss")
-    },
-    {
-      prop: "roles",
-      width: 160,
-      slot: "roles"
-    },
-    {
-      prop: "rules",
-      width: 160,
-      slot: "rules"
-    },
-    {
-      fixed: "right",
-      width: 180,
-      slot: "operation"
-    }
-  ]);
-
-  const buttonClass = computed(() => {
-    return [
-      "!h-[20px]",
-      "reset-margin",
-      "!text-gray-500",
-      "dark:!text-white",
-      "dark:hover:!text-primary"
-    ];
-  });
   // reset password
   const pwdForm = reactive({
     newPwd: ""
@@ -399,9 +84,16 @@ export function useUser(tableRef: Ref) {
   const curScore = ref();
 
   function goNotice() {
+    const users = [];
+    manySelectData.value.forEach(user => {
+      users.push({
+        pk: user.pk,
+        username: user.username
+      });
+    });
     router.push({
       name: "SystemNotice",
-      query: { notice_user: JSON.stringify(manySelectData.value) }
+      query: { notice_user: JSON.stringify(users) }
     });
   }
 
@@ -445,93 +137,8 @@ export function useUser(tableRef: Ref) {
   }
 
   function onTreeSelect({ pk, selected }) {
-    tableRef.value.searchFields.dept = selected ? pk : "";
-    tableRef.value.onSearch();
-  }
-
-  /** 分配角色 */
-  function handleRole(row) {
-    const assignRoles = reactive({
-      columns: [
-        {
-          prop: "username",
-          valueType: "input",
-          fieldProps: { disabled: true }
-        },
-        {
-          prop: "nickname",
-          valueType: "input",
-          fieldProps: { disabled: true }
-        },
-        {
-          prop: "roles",
-          valueType: "select",
-          fieldProps: {
-            multiple: true
-          },
-          options: customRolePermissionOptions(rolesOptions.value ?? [])
-        },
-        {
-          prop: "mode_type",
-          valueType: "select",
-          options: formatOptions(choicesDict.value["mode_type"] ?? [])
-        },
-        {
-          prop: "rules",
-          valueType: "select",
-          fieldProps: {
-            multiple: true
-          },
-          options: customRolePermissionOptions(rulesOptions.value ?? [])
-        }
-      ]
-    });
-    formatFormColumns(
-      { isAdd: true, showColumns: [] },
-      assignRoles?.columns as Array<any>,
-      t,
-      te,
-      "systemUser"
-    );
-    addDialog({
-      title: t("systemUser.assignRole", { user: row.username }),
-      props: {
-        formInline: {
-          username: row?.username ?? "",
-          nickname: row?.nickname ?? "",
-          mode_type: row?.mode_type ?? ModeChoices.AND,
-          roles: getKeyList(row?.roles ?? [], "pk") ?? [],
-          rules: getKeyList(row?.rules ?? [], "pk") ?? []
-        },
-        ...assignRoles
-      },
-      width: "600px",
-      draggable: true,
-      fullscreen: deviceDetection(),
-      fullscreenIcon: true,
-      closeOnClickModal: false,
-      contentRenderer: () => h(addOrEdit),
-      beforeSure: (done, { options }) => {
-        const curData = options.props.formInline;
-        api
-          .empower(row.pk, {
-            roles: curData.roles,
-            rules: curData.rules,
-            mode_type: curData.mode_type
-          })
-          .then(res => {
-            if (res.code === 1000) {
-              message(t("results.success"), { type: "success" });
-              tableRef.value.onSearch();
-            } else {
-              message(`${t("results.failed")}，${res.detail}`, {
-                type: "error"
-              });
-            }
-            done(); // 关闭弹框
-          });
-      }
-    });
+    searchParams.value.dept = selected ? pk : "";
+    tableRef.value.handleGetData();
   }
 
   /** 重置密码 */
@@ -666,27 +273,273 @@ export function useUser(tableRef: Ref) {
       (curScore.value = isAllEmpty(newPwd) ? -1 : zxcvbn(newPwd).score)
   );
 
-  const selectionChange = func => {
-    manySelectData.value = func();
+  const selectionChange = data => {
+    manySelectData.value = data;
     selectedNum.value = manySelectData.value.length ?? 0;
   };
 
+  const searchParams = ref({ dept: "" });
+
+  const beforeSearchSubmit = params => {
+    return { ...params, ...searchParams.value };
+  };
+
+  const listColumnsFormat = (columns: CRUDColumn[]) => {
+    columns.forEach(column => {
+      switch (column._column?.key) {
+        case "avatar":
+          column["cellRenderer"] = ({ row }) =>
+            h(ElImage, {
+              lazy: true,
+              src: row[column._column?.key],
+              alt: row[column._column?.key],
+              class: ["w-[36px]", "h-[36px]", "align-middle"],
+              previewSrcList: [row[column._column?.key]],
+              previewTeleported: true
+            });
+          break;
+      }
+    });
+    return columns;
+  };
+
+  const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
+    props: {
+      row: {
+        dept: ({ rawRow }) => {
+          return rawRow?.dept?.pk ?? "";
+        }
+      },
+      columns: {
+        password: ({ column, isAdd }) => {
+          if (!isAdd) {
+            column["hideInForm"] = true;
+          }
+          return column;
+        },
+        dept: ({ column }) => {
+          column["valueType"] = "cascader";
+          column["fieldProps"] = {
+            ...column["fieldProps"],
+            ...{
+              valueOnClear: "",
+              props: {
+                value: "pk",
+                label: "name",
+                emitPath: false,
+                checkStrictly: true
+              }
+            }
+          };
+          column["options"] = handleTree(
+            column._column.choices,
+            "pk",
+            "parent_id"
+          );
+          return column;
+        }
+      },
+      formProps: {
+        rules: ({ rawFormProps: { rules } }) => {
+          rules["password"] = [
+            {
+              required: true,
+              validator: (rule, value, callback) => {
+                if (value === "") {
+                  callback(new Error(t("login.passwordReg")));
+                } else if (!REGEXP_PWD.test(value)) {
+                  callback(new Error(t("login.passwordRuleReg")));
+                } else {
+                  callback();
+                }
+              },
+              trigger: "blur"
+            }
+          ];
+          rules["mobile"] = [
+            {
+              validator: (rule, value, callback) => {
+                if (value === "" || !value) {
+                  callback();
+                } else if (!isPhone(value)) {
+                  callback(new Error(t("login.phoneCorrectReg")));
+                } else {
+                  callback();
+                }
+              },
+              trigger: "blur"
+            }
+          ];
+          return rules;
+        }
+      },
+      beforeSubmit: ({ formData, formOptions: { isAdd } }) => {
+        if (isAdd) {
+          formData["password"] = AesEncrypted(
+            formData.username,
+            formData.password
+          );
+        }
+        return formData;
+      }
+    }
+  });
+
+  const roleRulesColumns = ref([]);
+  const roleRules = ref({});
+  const baseColumnsFormat = ({ addOrEditColumns, addOrEditRules }) => {
+    roleRules.value = addOrEditRules.value;
+    roleRulesColumns.value = cloneDeep(addOrEditColumns.value);
+    roleRulesColumns.value.forEach(column => {
+      if (
+        ["username", "nickname", "roles", "rules", "mode_type"].indexOf(
+          column._column.key
+        ) === -1
+      ) {
+        column.hideInForm = true;
+      }
+      if (["username", "nickname"].indexOf(column._column.key) > -1) {
+        column["fieldProps"]["disabled"] = true;
+      }
+      if (["roles", "rules"].indexOf(column._column.key) > -1) {
+        column.options = customRolePermissionOptions(
+          column._column.choices ?? []
+        );
+      }
+    });
+    /* "pk", "roles", "rules", "mode_type" 这些字段在编辑和新增隐藏 */
+    addOrEditColumns.value.forEach(column => {
+      if (
+        ["pk", "roles", "rules", "mode_type"].indexOf(column._column.key) > -1
+      ) {
+        column.hideInForm = true;
+      }
+      if (
+        [
+          "username",
+          "nickname",
+          "mobile",
+          "email",
+          "gender",
+          "password"
+        ].indexOf(column._column.key) > -1
+      ) {
+        column["colProps"] = { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 };
+      }
+    });
+  };
+
+  function handleRoleRules(row: any) {
+    openFormDialog({
+      t,
+      isAdd: false,
+      title: t("systemUser.assignRole", { user: row.username }),
+      rawRow: { ...row },
+      rawColumns: roleRulesColumns.value,
+      rawFormProps: {
+        rules: roleRules.value
+      },
+      saveCallback: ({ formData, done, dialogOptions }) => {
+        handleOperation({
+          t,
+          req: api.empower(row.pk, {
+            roles: formData.roles,
+            rules: formData.rules,
+            mode_type: formData.mode_type
+          }),
+          row: formData,
+          success() {
+            done();
+            tableRef.value.handleGetData();
+          },
+          requestEnd() {
+            dialogOptions.confirmLoading = false;
+          }
+        });
+      }
+    });
+  }
+
+  const tableBarButtonsProps = shallowRef<OperationProps>({
+    buttons: [
+      {
+        text: t("systemUser.batchSendNotice"),
+        code: "batchSendNotice",
+        props: {
+          type: "primary",
+          icon: useRenderIcon(Message),
+          plain: true
+        },
+        onClick: () => {
+          goNotice();
+        },
+        show: () => {
+          return Boolean(
+            hasGlobalAuth("create:systemNotice") && selectedNum.value
+          );
+        }
+      }
+    ]
+  });
+
+  const operationButtonsProps = shallowRef<OperationProps>({
+    width: 260,
+    buttons: [
+      {
+        text: t("systemUser.editAvatar"),
+        code: "upload",
+        props: {
+          type: "primary",
+          icon: useRenderIcon(Avatar),
+          link: true
+        },
+        onClick: ({ row }) => {
+          handleUpload(row);
+        },
+        show: auth.upload
+      },
+      {
+        text: t("systemUser.resetPassword"),
+        code: "reset",
+        props: {
+          type: "primary",
+          icon: useRenderIcon(Password),
+          link: true
+        },
+        onClick: ({ row }) => {
+          handleReset(row);
+        },
+        show: auth.reset
+      },
+      {
+        text: t("systemUser.assignRoles"),
+        code: "empower",
+        props: {
+          type: "primary",
+          icon: useRenderIcon(Role),
+          link: true
+        },
+        onClick: ({ row }) => {
+          handleRoleRules(row);
+        },
+        show: auth.empower
+      }
+    ]
+  });
+
   return {
-    t,
     api,
     auth,
-    columns,
     treeData,
-    editForm,
-    buttonClass,
     treeLoading,
-    selectedNum,
-    goNotice,
-    handleRole,
-    handleReset,
+    addOrEditOptions,
+    tableBarButtonsProps,
+    operationButtonsProps,
     onTreeSelect,
-    handleUpload,
     selectionChange,
-    deviceDetection
+    deviceDetection,
+    listColumnsFormat,
+    baseColumnsFormat,
+    beforeSearchSubmit
   };
 }

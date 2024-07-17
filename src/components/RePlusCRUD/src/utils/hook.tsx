@@ -229,7 +229,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
 
   const handleSelectionChange = val => {
     selectedNum.value = val.length;
-    emit("selectionChange", getSelectPks);
+    emit("selectionChange", tableRef.value.getTableRef().getSelectionRows());
   };
 
   const onSelectionCancel = () => {
@@ -359,7 +359,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
       rawRow: isAdd ? { ...addOrEditDefaultValue.value, ...row } : { ...row },
       form: addOrEditOptions?.form,
       rawColumns: addOrEditColumns.value,
-      formProps: {
+      rawFormProps: {
         rules: addOrEditRules.value
       },
       saveCallback: ({ formData, done, dialogOptions }) => {

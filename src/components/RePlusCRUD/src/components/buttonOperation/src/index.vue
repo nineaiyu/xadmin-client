@@ -31,7 +31,7 @@
 </template>
 
 <script lang="ts" setup>
-import type { Component, VNode } from "vue";
+import type { Component, VNode, Ref, ComputedRef } from "vue";
 import { h, unref, computed, ref } from "vue";
 import { ElPopconfirm, ElTooltip } from "element-plus";
 import {
@@ -66,7 +66,14 @@ const uniqueButtons = computed(() => uniqueArrayObj(props.buttons, "code"));
 const getSubButtons = () => {
   const data = (uniqueButtons.value as OperationButtonsRow[]).filter(
     (item: OperationButtonsRow) => {
-      return unref(item.show) === true;
+      if (typeof item.show === "function") {
+        const tempFunction = item.show as (
+          button: OperationButtonsRow
+        ) => boolean | Ref<boolean> | ComputedRef<boolean>;
+        const isShow = tempFunction(item);
+        return Boolean(unref(isShow)) === true;
+      }
+      return Boolean(unref(item.show)) === true;
     }
   );
   // 获取'更多'之前的按钮组
