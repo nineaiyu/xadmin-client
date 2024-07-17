@@ -146,7 +146,6 @@ const openFormDialog = (formOptions: formDialogOptions) => {
     closeOnClickModal: false,
     contentRenderer: () => h(formOptions?.form ?? addOrEdit, { ref: formRef }),
     beforeSure: async (done, { options }) => {
-      options.confirmLoading = true;
       const FormRef: FormInstance = formRef.value.getRef();
       const formInlineData = cloneDeep(options.props.formInline);
       const formData =
@@ -175,6 +174,7 @@ const openFormDialog = (formOptions: formDialogOptions) => {
 
       await FormRef.validate(valid => {
         if (valid) {
+          options.confirmLoading = true;
           formOptions?.saveCallback({
             formData,
             formRef: FormRef,

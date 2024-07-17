@@ -15,7 +15,7 @@ const props = withDefaults(defineProps<FormProps>(), {
   ruleList: () => []
 });
 
-const emit = defineEmits<{ (e: "update:dataList", v: Array<object>) }>();
+const emit = defineEmits<{ (e: "change", v: Array<object>) }>();
 const tableRef = ref();
 const { t, columns, openDialog, handleDelete, ruleInfo } = useFieldRule(
   props.ruleList,
@@ -24,7 +24,7 @@ const { t, columns, openDialog, handleDelete, ruleInfo } = useFieldRule(
 );
 
 watch(ruleInfo.value, () => {
-  emit("update:dataList", Object.values(ruleInfo.value));
+  emit("change", Object.values(ruleInfo.value));
 });
 </script>
 
