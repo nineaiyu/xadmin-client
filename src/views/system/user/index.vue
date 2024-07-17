@@ -27,8 +27,7 @@ const {
   selectionChange,
   deviceDetection,
   listColumnsFormat,
-  baseColumnsFormat,
-  beforeSearchSubmit
+  baseColumnsFormat
 } = useUser(tableRef);
 </script>
 
@@ -52,7 +51,6 @@ const {
       :class="[deviceDetection() ? ['w-full', 'mt-2'] : 'w-[calc(100%-250px)]']"
       :addOrEditOptions="addOrEditOptions"
       :baseColumnsFormat="baseColumnsFormat"
-      :beforeSearchSubmit="beforeSearchSubmit"
       :listColumnsFormat="listColumnsFormat"
       locale-name="systemUser"
       :operationButtonsProps="operationButtonsProps"

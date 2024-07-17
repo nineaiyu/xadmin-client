@@ -137,8 +137,7 @@ export function useUser(tableRef: Ref) {
   }
 
   function onTreeSelect({ pk, selected }) {
-    searchParams.value.dept = selected ? pk : "";
-    tableRef.value.handleGetData();
+    tableRef.value.handleGetData({ dept: selected ? pk : "" });
   }
 
   /** 重置密码 */
@@ -276,12 +275,6 @@ export function useUser(tableRef: Ref) {
   const selectionChange = data => {
     manySelectData.value = data;
     selectedNum.value = manySelectData.value.length ?? 0;
-  };
-
-  const searchParams = ref({ dept: "" });
-
-  const beforeSearchSubmit = params => {
-    return { ...params, ...searchParams.value };
   };
 
   const listColumnsFormat = (columns: CRUDColumn[]) => {
@@ -539,7 +532,6 @@ export function useUser(tableRef: Ref) {
     selectionChange,
     deviceDetection,
     listColumnsFormat,
-    baseColumnsFormat,
-    beforeSearchSubmit
+    baseColumnsFormat
   };
 }

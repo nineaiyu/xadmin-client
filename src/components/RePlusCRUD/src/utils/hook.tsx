@@ -447,7 +447,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
   };
 
   // 数据获取
-  const handleGetData = () => {
+  const handleGetData = (queryParams = {}) => {
     loadingStatus.value = true;
 
     ["created_time", "updated_time"].forEach(key => {
@@ -460,7 +460,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
       }
     });
 
-    const params = cloneDeep(toRaw(searchFields.value));
+    const params = cloneDeep(toRaw({ ...searchFields.value, ...queryParams }));
 
     // 该方法为了支持pk多选操作将如下格式 [{pk:1},{pk:2}] 转换为 [1,2]
     Object.keys(params).forEach(key => {
