@@ -20,6 +20,7 @@ export function useDept(tableRef: Ref) {
   const { t } = useI18n();
 
   const api = reactive(deptApi);
+  api.update = api.patch;
 
   const auth = reactive({
     list: hasAuth("list:systemDept"),
@@ -140,7 +141,7 @@ export function useDept(tableRef: Ref) {
       saveCallback: ({ formData, done, dialogOptions }) => {
         handleOperation({
           t,
-          req: api.empower(row.pk, {
+          apiReq: api.empower(row.pk, {
             roles: formData.roles,
             rules: formData.rules,
             mode_type: formData.mode_type

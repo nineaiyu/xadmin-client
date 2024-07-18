@@ -64,18 +64,23 @@ const props = withDefaults(defineProps<OperationProps>(), {
 const uniqueButtons = computed(() => uniqueArrayObj(props.buttons, "code"));
 
 const getSubButtons = () => {
-  const data = (uniqueButtons.value as OperationButtonsRow[]).filter(
-    (item: OperationButtonsRow) => {
+  const data = (uniqueButtons.value as OperationButtonsRow[])
+    .filter((item: OperationButtonsRow) => {
       if (typeof item.show === "function") {
         const tempFunction = item.show as (
           button: OperationButtonsRow
-        ) => boolean | Ref<boolean> | ComputedRef<boolean>;
-        const isShow = tempFunction(item);
-        return Boolean(unref(isShow)) === true;
+        ) =>
+          | number
+          | boolean
+          | Ref<number | boolean>
+          | ComputedRef<number | boolean>;
+        item.index = Number(unref(tempFunction(item)));
+        return Boolean(item.index) === true;
       }
-      return Boolean(unref(item.show)) === true;
-    }
-  );
+      item.index = Number(unref(item.show));
+      return Boolean(item.index) === true;
+    })
+    .sort((a, b) => a.index - b.index);
   // 获取'更多'之前的按钮组
   const preButtons = data.slice(0, props.showNumber);
   // 获取'更多'之后的按钮组
@@ -87,6 +92,21 @@ const getSubButtons = () => {
     preButtons,
     nextButtons
   };
+};
+
+const renderString = (
+  str: OperationButtonsRow["text"],
+  buttonRow: OperationButtonsRow
+) => {
+  if (typeof str === "function") {
+    const tempFunction = str as (
+      button: OperationButtonsRow
+    ) => string | Ref<string> | ComputedRef<string>;
+    const text = tempFunction(buttonRow);
+    return unref(text);
+  } else {
+    return unref(str);
+  }
 };
 
 const buttonLoadings = ref({});
@@ -105,7 +125,7 @@ const render = (row: RecordType, buttonRow: OperationButtonsRow): VNode => {
     },
     buttonRow?.text
       ? () => {
-          return unref(buttonRow.text);
+          return renderString(buttonRow.text, buttonRow);
         }
       : {}
   );
@@ -113,7 +133,7 @@ const render = (row: RecordType, buttonRow: OperationButtonsRow): VNode => {
     return h(
       ElPopconfirm as Component,
       {
-        title: buttonRow.confirm?.title,
+        title: renderString(buttonRow.confirm?.title, buttonRow),
         onConfirm: (event: MouseEvent) =>
           handleClickAction(row, buttonRow, event),
         ...buttonRow.confirm?.props
@@ -126,7 +146,7 @@ const render = (row: RecordType, buttonRow: OperationButtonsRow): VNode => {
       ElTooltip,
       {
         placement: "top",
-        content: buttonRow.tooltip?.content,
+        content: renderString(buttonRow.tooltip?.content, buttonRow),
         ...buttonRow.tooltip?.props
       },
       () => buttonComponent

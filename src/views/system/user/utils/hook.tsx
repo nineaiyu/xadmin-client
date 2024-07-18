@@ -435,7 +435,7 @@ export function useUser(tableRef: Ref) {
       saveCallback: ({ formData, done, dialogOptions }) => {
         handleOperation({
           t,
-          req: api.empower(row.pk, {
+          apiReq: api.empower(row.pk, {
             roles: formData.roles,
             rules: formData.rules,
             mode_type: formData.mode_type
@@ -484,6 +484,7 @@ export function useUser(tableRef: Ref) {
         props: {
           type: "primary",
           icon: useRenderIcon(Avatar),
+          plain: true,
           link: true
         },
         onClick: ({ row }) => {

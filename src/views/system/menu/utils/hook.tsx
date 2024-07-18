@@ -11,9 +11,7 @@ import { useI18n } from "vue-i18n";
 import { FieldChoices, MenuChoices } from "@/views/system/constants";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { modelLabelFieldApi } from "@/api/system/field";
-import exportDataForm from "@/components/ReBaseTable/src/form/exportData.vue";
-import { resourcesIDCacheApi } from "@/api/common";
-import importDataForm from "@/components/ReBaseTable/src/form/importData.vue";
+import { handleExportData, handleImportData } from "@/components/RePlusCRUD";
 
 const defaultData: FormItemProps = {
   menu_type: MenuChoices.DIRECTORY,
@@ -43,20 +41,8 @@ const defaultData: FormItemProps = {
 };
 
 export function useApiAuth() {
-  const api = reactive({
-    list: menuApi.list,
-    rank: menuApi.rank,
-    create: menuApi.create,
-    delete: menuApi.delete,
-    update: menuApi.patch,
-    apiUrl: menuApi.apiUrl,
-    choices: menuApi.choices,
-    fields: menuApi.fields,
-    export: menuApi.export,
-    import: menuApi.import,
-    permissions: menuApi.permissions,
-    batchDelete: menuApi.batchDelete
-  });
+  const api = reactive(menuApi);
+  api.update = api.patch;
 
   const auth = reactive({
     list: hasAuth("list:systemMenu"),
@@ -281,79 +267,16 @@ export function useMenu() {
 
   function exportData(val) {
     const pks = val!.getCheckedKeys(false);
-    addDialog({
-      title: t("exportImport.export"),
-      props: {
-        formInline: {
-          type: "xlsx",
-          range: pks.length > 0 ? "selected" : "all",
-          pks: pks
-        }
-      },
-      width: "600px",
-      draggable: true,
-      fullscreen: deviceDetection(),
-      fullscreenIcon: true,
-      closeOnClickModal: false,
-      contentRenderer: () => h(exportDataForm, { ref: formRef }),
-      beforeSure: (done, { options }) => {
-        const FormRef = formRef.value.getRef();
-        const curData = cloneDeep(options.props.formInline);
-        FormRef.validate(valid => {
-          if (valid) {
-            if (curData.range === "selected") {
-              resourcesIDCacheApi(curData.pks).then(res => {
-                curData["spm"] = res.spm;
-                delete curData.pks;
-                api.export(curData);
-              });
-            } else {
-              api.export(curData);
-            }
-            done();
-          }
-        });
-      }
-    });
+    handleExportData({ t, pks, api, allowTypes: ["selected", "all"] });
   }
 
   // 数据导入
   function importData() {
-    addDialog({
-      title: t("exportImport.import"),
-      props: {
-        formInline: {
-          action: "create",
-          api: api
-        }
-      },
-      width: "600px",
-      draggable: true,
-      fullscreen: deviceDetection(),
-      fullscreenIcon: true,
-      closeOnClickModal: false,
-      contentRenderer: () => h(importDataForm, { ref: formRef }),
-      beforeSure: (done, { options }) => {
-        const FormRef = formRef.value.getRef();
-        const curData = cloneDeep(options.props.formInline);
-        const chores = () => {
-          message(t("results.success"), { type: "success" });
-          done(); // 关闭弹框
-          getMenuData(); // 刷新表格数据
-        };
-        FormRef.validate(valid => {
-          if (valid) {
-            api.import(curData.action, curData.upload[0].raw).then(res => {
-              if (res.code === 1000) {
-                chores();
-              } else {
-                message(`${t("results.failed")}，${res.detail}`, {
-                  type: "error"
-                });
-              }
-            });
-          }
-        });
+    handleImportData({
+      t,
+      api,
+      success: () => {
+        getMenuData();
       }
     });
   }

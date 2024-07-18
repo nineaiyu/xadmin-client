@@ -11,6 +11,7 @@ export function useDemoBook(tableRef: Ref) {
   const { t } = useI18n();
 
   const api = reactive(bookApi);
+  api.update = api.patch;
 
   // 权限判断，用于判断是否有该权限
   const auth = reactive({

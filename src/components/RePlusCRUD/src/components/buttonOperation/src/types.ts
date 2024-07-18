@@ -7,25 +7,49 @@ import type {
 import type { Mutable } from "@vueuse/core";
 
 export interface OperationButtonsRow {
-  text?: string;
+  text?:
+    | string
+    | Ref<string>
+    | ComputedRef<string>
+    | ((
+        button: OperationButtonsRow
+      ) => string | Ref<string> | ComputedRef<string>);
   code: string | number;
+  index?: number;
   icon?: Component;
   props?: Partial<Mutable<ButtonProps & { [index: string]: any }>>;
   show?:
+    | number
     | boolean
-    | Ref<boolean>
-    | ComputedRef<boolean>
+    | Ref<number | boolean>
+    | ComputedRef<number | boolean>
     | ((
         button: OperationButtonsRow
-      ) => boolean | Ref<boolean> | ComputedRef<boolean>);
+      ) =>
+        | number
+        | boolean
+        | Ref<number | boolean>
+        | ComputedRef<number | boolean>);
   update?: boolean; // 用于判断是否是更新该按钮信息
   loading?: boolean;
   confirm?: {
-    title?: string;
+    title?:
+      | string
+      | Ref<string>
+      | ComputedRef<string>
+      | ((
+          button: OperationButtonsRow
+        ) => string | Ref<string> | ComputedRef<string>);
     props?: ElMessageBoxOptions;
   };
   tooltip?: {
-    content?: string;
+    content?:
+      | string
+      | Ref<string>
+      | ComputedRef<string>
+      | ((
+          button: OperationButtonsRow
+        ) => string | Ref<string> | ComputedRef<string>);
     props?: ElTooltipProps;
   };
   onClick?: (params: ButtonsCallBackParams) => void;

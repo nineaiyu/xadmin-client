@@ -1,6 +1,6 @@
 import { addDialog, type DialogOptions } from "@/components/ReDialog/index";
 import { deviceDetection } from "@pureadmin/utils";
-import { type Component, h, type Ref, ref } from "vue";
+import { type Component, h, type Ref, ref, toRaw } from "vue";
 import { cloneDeep } from "lodash-es";
 import { message } from "@/utils/message";
 import addOrEdit from "../components/addOrEdit.vue";
@@ -9,6 +9,9 @@ import { ElMessageBox, type FormInstance } from "element-plus";
 import type { BaseApi } from "@/api/base";
 import type { BaseResult } from "@/api/types";
 import { uniqueArrayObj } from "@/components/RePlusCRUD";
+import exportDataForm from "@/components/RePlusCRUD/src/components/exportData.vue";
+import { resourcesIDCacheApi } from "@/api/common";
+import importDataForm from "@/components/RePlusCRUD/src/components/importData.vue";
 
 interface callBackArgs {
   formData: Object | any;
@@ -68,7 +71,7 @@ const openFormDialog = (formOptions: formDialogOptions) => {
   });
 
   const formInline = {
-    ...(formOptions?.rawRow ?? {}),
+    ...(cloneDeep(formOptions?.rawRow) ?? {}),
     ...rowResult
   };
 
@@ -91,7 +94,7 @@ const openFormDialog = (formOptions: formDialogOptions) => {
   //   editColumns = [...(formOptions?.columns ?? [])];
   // }
   const rawColumns = {};
-  formOptions?.rawColumns?.forEach(column => {
+  cloneDeep(formOptions?.rawColumns ?? []).forEach(column => {
     rawColumns[column._column?.key ?? column.prop] = column;
   });
   let editColumns = {};
@@ -206,7 +209,7 @@ const openFormDialog = (formOptions: formDialogOptions) => {
 
 interface operationOptions {
   t: Function;
-  req?: Promise<any>;
+  apiReq?: Promise<any>;
   apiUrl?: BaseApi | any;
   row: {
     pk?: string | number;
@@ -223,7 +226,7 @@ interface operationOptions {
 const handleOperation = (options: operationOptions) => {
   let {
     t,
-    req = undefined,
+    apiReq = undefined,
     row,
     apiUrl,
     showSuccessMsg = true,
@@ -233,27 +236,27 @@ const handleOperation = (options: operationOptions) => {
     exception,
     requestEnd
   } = options;
-  if (!req)
+  if (!apiReq)
     switch (apiUrl.name) {
       case "create":
-        req = apiUrl(row);
+        apiReq = apiUrl(row);
         break;
       case "update":
-        req = apiUrl(row?.pk ?? row?.id, row);
+        apiReq = apiUrl(row?.pk ?? row?.id, row);
         break;
       case "patch":
-        req = apiUrl(row?.pk ?? row?.id, row);
+        apiReq = apiUrl(row?.pk ?? row?.id, row);
         break;
       case "batchDelete":
-        req = apiUrl(row);
+        apiReq = apiUrl(row);
         break;
       default:
-        req = apiUrl(row?.pk ?? row?.id);
+        apiReq = apiUrl(row?.pk ?? row?.id);
         break;
     }
 
-  req &&
-    req
+  apiReq &&
+    apiReq
       .then((res: BaseResult) => {
         if (res.code === 1000) {
           showSuccessMsg && message(t("results.success"), { type: "success" });
@@ -328,7 +331,7 @@ const onSwitchChange = (changeOptions: changeOptions) => {
       updateData[field] = row[field];
       handleOperation({
         t,
-        req: updateApi(row?.pk ?? row?.id, updateData),
+        apiReq: updateApi(row?.pk ?? row?.id, updateData),
         row,
         requestEnd(options) {
           switchLoadMap.value[index] = Object.assign(
@@ -454,16 +457,101 @@ const renderBooleanTag = (booleanTagOptions: booleanTagOptions) => {
   );
 };
 
+interface exportDataOptions {
+  t: Function;
+  api: BaseApi;
+  pks: Array<string | number>;
+  allowTypes?: Array<string>;
+  searchFields?: Ref;
+}
+
+// 数据导出
+const handleExportData = (options: exportDataOptions) => {
+  const {
+    t,
+    api,
+    pks,
+    allowTypes = ["all", "search", "selected"],
+    searchFields = undefined
+  } = options;
+
+  openFormDialog({
+    t,
+    title: t("exportImport.export"),
+    rawRow: {
+      type: "xlsx",
+      range: pks.length > 0 ? "selected" : "all",
+      pks: pks
+    },
+    props: {
+      allowTypes
+    },
+    dialogOptions: { width: "600px" },
+    form: exportDataForm,
+    saveCallback: async ({ formData, done }) => {
+      if (formData.range === "all") {
+        await api.export(formData);
+      } else if (formData.range === "search" && searchFields) {
+        searchFields.value["type"] = formData["type"];
+        await api.export(toRaw(searchFields.value));
+      } else if (formData.range === "selected") {
+        resourcesIDCacheApi(formData.pks).then(async res => {
+          formData["spm"] = res.spm;
+          delete formData.pks;
+          await api.export(formData);
+        });
+      }
+      done();
+    }
+  });
+};
+
+interface importDataOptions {
+  t: Function;
+  api: BaseApi;
+  success?: (res?: BaseResult) => void;
+}
+
+// 数据导入
+const handleImportData = (options: importDataOptions) => {
+  const { t, api } = options;
+
+  openFormDialog({
+    t,
+    title: t("exportImport.import"),
+    rawRow: {
+      action: "create",
+      api: api
+    },
+    dialogOptions: { width: "600px" },
+    form: importDataForm,
+    saveCallback: ({ formData, success, failed }) => {
+      api.import(formData.action, formData.upload[0].raw).then(res => {
+        if (res.code === 1000) {
+          options?.success && options?.success(res);
+          success();
+        } else {
+          failed(res.detail, false);
+        }
+      });
+    }
+  });
+};
+
 export {
   openFormDialog,
   handleOperation,
   onSwitchChange,
   renderSwitch,
-  renderBooleanTag
+  renderBooleanTag,
+  handleExportData,
+  handleImportData
 };
 export type {
   operationOptions,
   changeOptions,
   switchOptions,
-  formDialogOptions
+  formDialogOptions,
+  exportDataOptions,
+  importDataOptions
 };

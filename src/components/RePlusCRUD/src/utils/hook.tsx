@@ -10,13 +10,14 @@ import {
 } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
-import { resourcesIDCacheApi } from "@/api/common";
 import { type CRUDColumn, useBaseColumns } from "./columns";
 import {
   renderSwitch,
   handleOperation,
   openFormDialog,
-  type operationOptions
+  type operationOptions,
+  handleExportData,
+  handleImportData
 } from "./handle";
 import {
   formatPublicLabels,
@@ -25,8 +26,6 @@ import {
 } from "@/components/RePlusCRUD";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import type { OperationButtonsRow } from "@/components/RePlusCRUD";
-import exportDataForm from "../components/exportData.vue";
-import importDataForm from "../components/importData.vue";
 import detailDataForm from "../components/detailData.vue";
 
 import View from "@iconify-icons/ep/view";
@@ -109,7 +108,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
       onClick: ({ row }) => {
         handleAddOrEdit(false, row);
       },
-      show: auth.patch || auth.update
+      show: (auth.patch || auth.update) && -30
     },
     {
       text: t("buttons.delete"),
@@ -126,7 +125,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
           loading.value = false;
         });
       },
-      show: auth.delete
+      show: auth.delete && -20
     },
     {
       code: "detail",
@@ -139,7 +138,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
         handleDetail(row);
       },
       tooltip: { content: t("buttons.detail") },
-      show: auth.list || auth.detail
+      show: (auth.list || auth.detail) && -10
     }
   ];
 
@@ -163,7 +162,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
       onClick: ({ row }) => {
         handleAddOrEdit(true, row);
       },
-      show: auth.create
+      show: auth.create && -30
     },
     {
       code: "export",
@@ -173,10 +172,11 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
         plain: true
       },
       onClick: () => {
-        exportData();
+        const pks = getSelectPks();
+        handleExportData({ t, pks, api, searchFields });
       },
       tooltip: { content: t("exportImport.export") },
-      show: auth.export
+      show: auth.export && -20
     },
     {
       code: "import",
@@ -186,10 +186,16 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
         plain: true
       },
       onClick: () => {
-        importData();
+        handleImportData({
+          t,
+          api,
+          success: () => {
+            handleGetData();
+          }
+        });
       },
       tooltip: { content: t("exportImport.import") },
-      show: auth.import
+      show: auth.import && -10
     }
   ];
 
@@ -289,63 +295,6 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
     });
   };
 
-  // 数据导出
-  function exportData() {
-    const pks = getSelectPks();
-
-    openFormDialog({
-      t,
-      title: t("exportImport.export"),
-      rawRow: {
-        type: "xlsx",
-        range: pks.length > 0 ? "selected" : "all",
-        pks: pks
-      },
-      dialogOptions: { width: "600px" },
-      form: exportDataForm,
-      saveCallback: async ({ formData, done }) => {
-        if (formData.range === "all") {
-          await api.export(formData);
-        } else if (formData.range === "search") {
-          // 暂时不支持查询导出
-          searchFields.value["type"] = formData["type"];
-          await api.export(toRaw(searchFields.value));
-        } else if (formData.range === "selected") {
-          resourcesIDCacheApi(formData.pks).then(async res => {
-            formData["spm"] = res.spm;
-            delete formData.pks;
-            await api.export(formData);
-          });
-        }
-        done();
-      }
-    });
-  }
-
-  // 数据导入
-  function importData() {
-    openFormDialog({
-      t,
-      title: t("exportImport.import"),
-      rawRow: {
-        action: "create",
-        api: api
-      },
-      dialogOptions: { width: "600px" },
-      form: importDataForm,
-      saveCallback: ({ formData, success, failed }) => {
-        api.import(formData.action, formData.upload[0].raw).then(res => {
-          if (res.code === 1000) {
-            handleGetData(); // 刷新表格数据
-            success();
-          } else {
-            failed(res.detail, false);
-          }
-        });
-      }
-    });
-  }
-
   //新增或编辑
   const handleAddOrEdit = (isAdd = true, row = {}) => {
     let title = t("buttons.edit");
@@ -362,7 +311,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
       rawFormProps: {
         rules: addOrEditRules.value
       },
-      saveCallback: ({ formData, done, dialogOptions }) => {
+      saveCallback: ({ formData, done, dialogOptions, formOptions }) => {
         let apiUrl: any = api.update;
         if (isAdd) {
           apiUrl = api.create;
@@ -372,8 +321,11 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
         }
         handleOperation({
           t,
-          apiUrl,
+          apiReq:
+            addOrEditOptions?.apiReq &&
+            addOrEditOptions?.apiReq({ ...formOptions, formData }),
           row: formData,
+          apiUrl,
           success() {
             done();
             handleGetData();
@@ -493,7 +445,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
         } else {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
         }
-        emit("searchComplete", routeParams, searchFields, dataList, res);
+        emit("searchComplete", { routeParams, searchFields, dataList, res });
         delay(500).then(() => {
           loadingStatus.value = false;
         });

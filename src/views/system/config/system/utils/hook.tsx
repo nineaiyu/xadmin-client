@@ -10,6 +10,7 @@ export function useSystemConfig(tableRef: Ref) {
   const { t } = useI18n();
 
   const api = reactive(systemConfigApi);
+  api.update = api.patch;
 
   const auth = reactive({
     list: hasAuth("list:systemSystemConfig"),
@@ -48,7 +49,7 @@ export function useSystemConfig(tableRef: Ref) {
             }
           });
         },
-        show: auth.invalid
+        show: auth.invalid && 3
       },
       {
         code: "detail",

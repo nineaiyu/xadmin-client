@@ -14,6 +14,7 @@ export function useDataPermission() {
   const valuesData = ref([]);
 
   const api = reactive(dataPermissionApi);
+  api.update = api.patch;
 
   const auth = reactive({
     list: hasAuth("list:systemDataPermission"),

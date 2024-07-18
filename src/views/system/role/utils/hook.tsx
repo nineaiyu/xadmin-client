@@ -16,6 +16,7 @@ import type {
 
 export function useApiAuth() {
   const api = reactive(roleApi);
+  api.update = api.patch;
 
   const auth = reactive({
     list: hasAuth("list:systemRole"),

@@ -1,7 +1,6 @@
 import { computed, h, reactive, type Ref, shallowRef } from "vue";
 import { noticeApi } from "@/api/system/notice";
 import { useRouter } from "vue-router";
-import showForm from "../show.vue";
 import { deviceDetection } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
@@ -12,13 +11,14 @@ import type {
   OperationProps,
   RePlusPageProps
 } from "@/components/RePlusCRUD";
-
+import noticeShowForm from "@/views/publicComponents/noticeShow.vue";
 import wangEditor from "@/components/RePlusCRUD/src/components/wangEditor.vue";
 
 export function useNotice(tableRef: Ref) {
   const { t } = useI18n();
 
   const api = reactive(noticeApi);
+  api.update = api.patch;
 
   const auth = reactive({
     list: hasAuth("list:systemNotice"),
@@ -39,7 +39,8 @@ export function useNotice(tableRef: Ref) {
           addDialog({
             title: t("systemNotice.showSystemNotice"),
             props: {
-              formInline: { ...row }
+              formInline: { ...row },
+              hasPublish: true
             },
             width: "60%",
             draggable: true,
@@ -47,7 +48,7 @@ export function useNotice(tableRef: Ref) {
             fullscreenIcon: true,
             closeOnClickModal: false,
             hideFooter: true,
-            contentRenderer: () => h(showForm)
+            contentRenderer: () => h(noticeShowForm)
           });
         },
         update: true
@@ -160,6 +161,16 @@ export function useNotice(tableRef: Ref) {
         top: "10vh",
         width: "60vw"
       }
+    },
+    apiReq: ({ isAdd, formData }) => {
+      if (isAdd) {
+        if (
+          formData?.notice_type?.value === NoticeChoices.NOTICE &&
+          hasAuth("create:systemAnnouncement")
+        ) {
+          return api.announcement(formData);
+        }
+      }
     }
   });
 
@@ -174,7 +185,7 @@ export function useNotice(tableRef: Ref) {
     }
   }
 
-  const searchComplete = (routeParams, searchFields) => {
+  const searchComplete = ({ routeParams, searchFields }) => {
     if (
       routeParams.notice_user &&
       searchFields.value.notice_user &&

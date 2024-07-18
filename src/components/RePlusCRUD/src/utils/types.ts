@@ -1,4 +1,3 @@
-import type { Component } from "vue";
 import type {
   PlusColumn,
   PlusSearchProps,
@@ -13,12 +12,6 @@ import type { BaseApi } from "@/api/base";
 import type { formDialogOptions } from "./handle";
 import type { OperationProps } from "@/components/RePlusCRUD";
 
-interface SearchFieldsProps {
-  page: number;
-  size: number;
-  ordering: string;
-}
-
 interface ApiAuthProps {
   list?: string | boolean | null | Function;
   import?: string | boolean | null | Function;
@@ -28,22 +21,6 @@ interface ApiAuthProps {
   update?: string | boolean | null | Function;
   fields?: string | boolean | null | Function;
   batchDelete?: string | boolean | null | Function;
-}
-
-interface EditFormProps {
-  form?: Component;
-  formProps?: object;
-  columns?: any[] | Function;
-  row?: object;
-  title?: string;
-  props?: object;
-  options?: object;
-}
-
-interface FormProps {
-  localeName?: string;
-  auth?: ApiAuthProps | any;
-  api: ApiAuthProps | any;
 }
 
 interface RePlusPageProps {
@@ -86,15 +63,12 @@ interface RePlusPageProps {
     title?: "";
     props?: Partial<formDialogOptions>;
     form?: undefined;
+    apiReq?: (
+      formOptions: Partial<formDialogOptions> & { formData: RecordType }
+    ) => BaseApi | any;
   };
   operationButtonsProps?: Partial<OperationProps>;
   tableBarButtonsProps?: Partial<OperationProps>;
 }
 
-export type {
-  FormProps,
-  ApiAuthProps,
-  SearchFieldsProps,
-  EditFormProps,
-  RePlusPageProps
-};
+export type { ApiAuthProps, RePlusPageProps };

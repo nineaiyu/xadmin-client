@@ -1,6 +1,5 @@
 import { h, reactive, ref, type Ref, shallowRef } from "vue";
 import { noticeReadApi } from "@/api/system/notice";
-import showForm from "../show.vue";
 import { deviceDetection } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog";
 import { useRouter } from "vue-router";
@@ -8,11 +7,12 @@ import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import type { CRUDColumn, OperationProps } from "@/components/RePlusCRUD";
 import { renderSwitch, usePublicHooks } from "@/components/RePlusCRUD";
-
+import noticeShowForm from "@/views/publicComponents/noticeShow.vue";
 export function useNoticeRead(tableRef: Ref) {
   const { t } = useI18n();
 
   const api = reactive(noticeReadApi);
+  api.update = api.patch;
 
   const auth = reactive({
     list: hasAuth("list:systemNoticeRead"),
@@ -33,7 +33,8 @@ export function useNoticeRead(tableRef: Ref) {
           addDialog({
             title: t("noticeRead.showSystemNotice"),
             props: {
-              formInline: { ...notice_info }
+              formInline: { ...notice_info },
+              hasPublish: false
             },
             width: "70%",
             draggable: true,
@@ -41,7 +42,7 @@ export function useNoticeRead(tableRef: Ref) {
             fullscreenIcon: true,
             closeOnClickModal: false,
             hideFooter: true,
-            contentRenderer: () => h(showForm)
+            contentRenderer: () => h(noticeShowForm)
           });
         },
         update: true

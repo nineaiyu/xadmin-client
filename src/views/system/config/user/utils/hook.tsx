@@ -17,6 +17,7 @@ export function useUserConfig(tableRef: Ref) {
   const { t } = useI18n();
 
   const api = reactive(userConfigApi);
+  api.update = api.patch;
 
   const auth = reactive({
     list: hasAuth("list:systemUserConfig"),
@@ -99,7 +100,7 @@ export function useUserConfig(tableRef: Ref) {
             }
           });
         },
-        show: auth.invalid
+        show: auth.invalid && 3
       },
       {
         code: "detail",
