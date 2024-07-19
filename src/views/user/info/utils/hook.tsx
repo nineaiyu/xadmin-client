@@ -47,14 +47,14 @@ export function useUserInfo() {
     api.update("self", row).then(res => {
       if (res.code === 1000) {
         message(t("results.success"), { type: "success" });
-        onSearch();
+        getUserInfo();
       } else {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
     });
   }
 
-  function onSearch() {
+  function getUserInfo() {
     loading.value = true;
     useUserStoreHook()
       .getUserInfo()
@@ -87,7 +87,7 @@ export function useUserInfo() {
     api.upload("self", data).then(res => {
       if (res.code === 1000) {
         message(t("results.success"), { type: "success" });
-        onSearch();
+        getUserInfo();
       } else {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
@@ -113,7 +113,7 @@ export function useUserInfo() {
   }
 
   onMounted(() => {
-    onSearch();
+    getUserInfo();
   });
 
   return {

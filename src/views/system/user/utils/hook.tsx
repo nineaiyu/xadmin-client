@@ -124,7 +124,7 @@ export function useUser(tableRef: Ref) {
         api.upload(row.pk, data).then(res => {
           if (res.code === 1000) {
             message(t("results.success"), { type: "success" });
-            tableRef.value.onSearch();
+            tableRef.value.handleGetData();
             done();
           } else {
             message(`${t("results.failed")}，${res.detail}`, { type: "error" });

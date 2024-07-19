@@ -31,7 +31,7 @@ export function useUserNotice(tableRef: Ref) {
 
   function handleReadAll() {
     api.allRead().then(() => {
-      tableRef.value.onSearch();
+      tableRef.value.handleGetData();
     });
   }
 
@@ -47,7 +47,7 @@ export function useUserNotice(tableRef: Ref) {
           message(t("results.batchRead", { count: selectedNum.value }), {
             type: "success"
           });
-          tableRef.value.onSearch();
+          tableRef.value.handleGetData();
         } else {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
         }

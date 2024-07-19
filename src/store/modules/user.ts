@@ -222,7 +222,7 @@ export const useUserStore = defineStore({
                 message: message,
                 duration: 5000,
                 dangerouslyUseHTMLString: true,
-                type: data?.level
+                type: data?.level?.value
                   ?.replace("primary", "")
                   ?.replace("danger", "warning"),
                 onClick: () => {
