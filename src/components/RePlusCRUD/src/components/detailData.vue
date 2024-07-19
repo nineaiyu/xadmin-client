@@ -1,11 +1,6 @@
 <script lang="ts" setup>
 import { computed, ref } from "vue";
-import {
-  FieldValues,
-  PlusColumn,
-  PlusDescriptions,
-  PlusForm
-} from "plus-pro-components";
+import { FieldValues, PlusColumn, PlusDescriptions } from "plus-pro-components";
 import { deviceDetection } from "@pureadmin/utils";
 
 interface DetailFormProps {

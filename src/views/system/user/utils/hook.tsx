@@ -291,6 +291,17 @@ export function useUser(tableRef: Ref) {
               previewTeleported: true
             });
           break;
+        case "gender":
+          column["cellRenderer"] = ({ row, props }) => (
+            <el-tag
+              size={props.size}
+              type={row.gender === 2 ? "danger" : "primary"}
+              effect="plain"
+            >
+              {row.gender.label}
+            </el-tag>
+          );
+          break;
       }
     });
     return columns;
@@ -408,14 +419,9 @@ export function useUser(tableRef: Ref) {
         column.hideInForm = true;
       }
       if (
-        [
-          "username",
-          "nickname",
-          "mobile",
-          "email",
-          "gender",
-          "password"
-        ].indexOf(column._column.key) > -1
+        ["username", "nickname", "mobile", "email", "gender"].indexOf(
+          column._column.key
+        ) > -1
       ) {
         column["colProps"] = { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 };
       }

@@ -24,6 +24,7 @@ export function useModelField(tableRef: Ref) {
         code: "sync",
         props: {
           type: "primary",
+          plain: true,
           icon: useRenderIcon("ep:money")
         },
         onClick: ({ row, loading }) => {

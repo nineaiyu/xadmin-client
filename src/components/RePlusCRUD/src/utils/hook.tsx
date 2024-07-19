@@ -290,7 +290,8 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
       title: t("buttons.detail"),
       rawRow: { ...row },
       rawColumns: detailColumns.value,
-      dialogOptions: { width: "600px", hideFooter: true },
+      dialogOptions: { width: "60vw", hideFooter: true },
+      minWidth: "600px",
       form: detailDataForm
     });
   };

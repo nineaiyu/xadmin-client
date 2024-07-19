@@ -126,7 +126,7 @@ const openFormDialog = (formOptions: formDialogOptions) => {
   });
   const clientWidth = document.documentElement.clientWidth;
   const minWidth = Number((formOptions.minWidth ?? "600px").replace("px", ""));
-  const width = formOptions?.dialogOptions?.width ?? "40%";
+  const width = formOptions?.dialogOptions?.width ?? "50%";
   let numberWidth = 0;
   if (width.endsWith("%") || width.endsWith("vw")) {
     numberWidth =

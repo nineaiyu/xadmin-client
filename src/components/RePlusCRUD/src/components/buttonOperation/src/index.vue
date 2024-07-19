@@ -7,7 +7,7 @@
   </template>
 
   <!-- 隐藏的按钮 -->
-  <el-dropdown v-if="getSubButtons().showMore" trigger="click">
+  <el-dropdown v-if="getSubButtons().showMore">
     <el-button
       :icon="useRenderIcon(More)"
       :size="size"
@@ -23,7 +23,7 @@
           v-for="buttonRow in getSubButtons().nextButtons"
           :key="unref(buttonRow.code) as string"
         >
-          <component :is="() => render(row, buttonRow)" />
+          <component :is="() => render(row, buttonRow)" :class="buttonClass" />
         </el-dropdown-item>
       </el-dropdown-menu>
     </template>
@@ -108,6 +108,16 @@ const renderString = (
     return unref(str);
   }
 };
+
+const buttonClass = computed(() => {
+  return [
+    "!h-[20px]",
+    "reset-margin",
+    "!text-gray-500",
+    "dark:!text-white",
+    "dark:hover:!text-primary"
+  ];
+});
 
 const buttonLoadings = ref({});
 
