@@ -1,5 +1,6 @@
 import type {
   PlusColumn,
+  PlusDescriptionsProps,
   PlusSearchProps,
   RecordType
 } from "plus-pro-components";
@@ -34,6 +35,7 @@ interface RePlusPageProps {
    */
   plusSearchProps?: Partial<PlusSearchProps>;
   pureTableProps?: Partial<PureTableProps>;
+  plusDescriptionsProps?: Partial<PlusDescriptionsProps>;
   /**
    * 对通过 request 获取的数据进行处理
    * @param data
