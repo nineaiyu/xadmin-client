@@ -78,6 +78,7 @@
     "version-rocket": "^1.7.1",
     "vue": "^3.4.32",
     "vue-i18n": "^9.13.1",
+    "vue-json-pretty": "^2.4.0",
     "vue-router": "^4.4.0",
     "vue-tippy": "^6.4.4",
     "vue-types": "^5.1.3",

@@ -20,6 +20,7 @@ const include = [
   "pinyin-pro",
   "sortablejs",
   "@vueuse/core",
+  "vue-json-pretty",
   "@pureadmin/utils",
   "@wangeditor/editor",
   "responsive-storage",
