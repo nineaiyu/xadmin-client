@@ -35,7 +35,11 @@ import Download from "@iconify-icons/ep/download";
 import EditPen from "@iconify-icons/ep/edit-pen";
 import AddFill from "@iconify-icons/ri/add-circle-line";
 
-export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
+export function usePlusCRUDPage(
+  emit: any,
+  tableRef: Ref,
+  props: RePlusPageProps
+) {
   const {
     api,
     auth,
@@ -44,6 +48,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
     addOrEditOptions,
     operationButtonsProps,
     tableBarButtonsProps,
+    plusDescriptionsProps,
     searchResultFormat,
     listColumnsFormat,
     detailColumnsFormat,
@@ -292,6 +297,7 @@ export function useBaseTable(emit: any, tableRef: Ref, props: RePlusPageProps) {
       rawColumns: detailColumns.value,
       dialogOptions: { width: "60vw", hideFooter: true },
       minWidth: "600px",
+      formProps: { ...plusDescriptionsProps },
       form: detailDataForm
     });
   };

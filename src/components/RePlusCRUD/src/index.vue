@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref } from "vue";
 import PureTable from "@pureadmin/table";
-import { useBaseTable } from "./utils/hook";
+import { usePlusCRUDPage } from "./utils/hook";
 import { RePlusPageProps } from "./utils/types";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
@@ -37,6 +37,7 @@ const props = withDefaults(defineProps<RePlusPageProps>(), {
   pagination: () => ({}),
   pureTableProps: () => ({}),
   plusSearchProps: () => ({}),
+  plusDescriptionsProps: () => ({}),
   operationButtonsProps: () => ({}),
   tableBarButtonsProps: () => ({})
 });
@@ -73,7 +74,7 @@ const {
   onSelectionCancel,
   handleCurrentChange,
   handleSelectionChange
-} = useBaseTable(emit, tableRef, props);
+} = usePlusCRUDPage(emit, tableRef, props);
 
 function getTableRef() {
   return tableRef.value;
