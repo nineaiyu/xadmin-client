@@ -162,7 +162,7 @@ export const customRolePermissionOptions = (data: Array<any>) => {
   data?.forEach(item => {
     result.push({
       label: item?.name,
-      value: item?.pk,
+      value: { pk: item.pk, name: item?.name },
       fieldSlot: () => {
         return (
           <>
