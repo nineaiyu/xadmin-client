@@ -15,7 +15,7 @@ const props = withDefaults(defineProps<FormProps>(), {
   ruleList: () => []
 });
 
-const emit = defineEmits<{ (e: "update:dataList", v: Array<object>) }>();
+const emit = defineEmits<{ (e: "change", v: Array<object>) }>();
 const tableRef = ref();
 const { t, columns, openDialog, handleDelete, ruleInfo } = useFieldRule(
   props.ruleList,
@@ -24,12 +24,12 @@ const { t, columns, openDialog, handleDelete, ruleInfo } = useFieldRule(
 );
 
 watch(ruleInfo.value, () => {
-  emit("update:dataList", Object.values(ruleInfo.value));
+  emit("change", Object.values(ruleInfo.value));
 });
 </script>
 
 <template>
-  <div class="main">
+  <div class="w-full">
     <PureTableBar :columns="columns" :title="t('systemPermission.rules')">
       <template v-if="hasGlobalAuth('list:systemModelField')" #buttons>
         <el-button

@@ -1,27 +1,22 @@
-import dayjs from "dayjs";
 import { message } from "@/utils/message";
-import { h, reactive, ref, type Ref } from "vue";
+import { h, reactive, ref, type Ref, shallowRef } from "vue";
 import { userNoticeReadApi } from "@/api/user/notice";
-import { useRoute } from "vue-router";
-import type { FormItemProps } from "./types";
-import showForm from "../show.vue";
-import { deviceDetection, isEmpty } from "@pureadmin/utils";
+import { deviceDetection, getKeyList } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog";
 import { useI18n } from "vue-i18n";
 import { useUserStoreHook } from "@/store/modules/user";
 
 import { hasAuth } from "@/router/utils";
+import type { CRUDColumn, OperationProps } from "@/components/RePlusCRUD";
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import noticeShowForm from "@/views/publicComponents/noticeShow.vue";
+
+import Success from "@iconify-icons/ep/success-filled";
 
 export function useUserNotice(tableRef: Ref) {
   const { t } = useI18n();
 
-  const api = reactive({
-    list: userNoticeReadApi.list,
-    detail: userNoticeReadApi.detail,
-    batchRead: userNoticeReadApi.batchRead,
-    fields: userNoticeReadApi.fields,
-    allRead: userNoticeReadApi.allRead
-  });
+  const api = reactive(userNoticeReadApi);
 
   const auth = reactive({
     list: hasAuth("list:userNotice"),
@@ -30,90 +25,13 @@ export function useUserNotice(tableRef: Ref) {
     allRead: hasAuth("update:userNoticeReadAll")
   });
 
-  const route = useRoute();
-  const getParameter = isEmpty(route.params) ? route.query : route.params;
-  const formRef = ref();
   const selectedNum = ref(0);
   const unreadCount = ref(0);
   const manySelectData = ref([]);
 
-  const columns = ref<TableColumnList>([
-    {
-      type: "selection",
-      fixed: "left",
-      reserveSelection: true
-    },
-    {
-      prop: "pk",
-      minWidth: 100
-    },
-    {
-      prop: "title",
-      minWidth: 120,
-      cellRenderer: ({ row }) => <el-text type={row.level}>{row.title}</el-text>
-    },
-    {
-      prop: "unread",
-      minWidth: 120,
-      cellRenderer: ({ row }) => (
-        <el-text type={row.unread ? "success" : "info"}>
-          {row.unread ? t("labels.unread") : t("labels.read")}
-        </el-text>
-      )
-    },
-    {
-      minWidth: 180,
-      prop: "created_time",
-      formatter: ({ created_time }) =>
-        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
-    },
-    {
-      prop: "notice_type.label",
-      minWidth: 120
-    },
-    {
-      fixed: "right",
-      width: 200,
-      slot: "operation"
-    }
-  ]);
-
-  function showDialog(row?: FormItemProps) {
-    if (row.unread) {
-      api.batchRead({ pks: [row.pk] });
-    }
-    addDialog({
-      title: t("userNotice.showSystemNotice"),
-      props: {
-        formInline: {
-          pk: row?.pk ?? "",
-          title: row?.title ?? "",
-          message: row?.message ?? "",
-          level: row?.level ?? "info"
-        }
-      },
-      width: "70%",
-      draggable: true,
-      fullscreen: deviceDetection(),
-      fullscreenIcon: true,
-      closeOnClickModal: false,
-      hideFooter: true,
-      contentRenderer: () => h(showForm, { ref: formRef }),
-      closeCallBack: () => {
-        if (getParameter.pk) {
-          tableRef.value.searchFields.pk = "";
-        }
-        if (row.unread) {
-          tableRef.value.searchFields.pk = "";
-          tableRef.value.onSearch();
-        }
-      }
-    });
-  }
-
   function handleReadAll() {
     api.allRead().then(() => {
-      tableRef.value.onSearch();
+      tableRef.value.handleGetData();
     });
   }
 
@@ -122,46 +40,148 @@ export function useUserNotice(tableRef: Ref) {
       message(t("results.noSelectedData"), { type: "error" });
       return;
     }
-    api.batchRead({ pks: manySelectData.value }).then(async res => {
-      if (res.code === 1000) {
-        message(t("results.batchRead", { count: selectedNum.value }), {
-          type: "success"
-        });
-        tableRef.value.onSearch();
-      } else {
-        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-      }
-    });
+    api
+      .batchRead({ pks: getKeyList(manySelectData.value, "pk") })
+      .then(async res => {
+        if (res.code === 1000) {
+          message(t("results.batchRead", { count: selectedNum.value }), {
+            type: "success"
+          });
+          tableRef.value.handleGetData();
+        } else {
+          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+        }
+      });
   }
 
-  const searchEnd = (getParameter, form, dataList, res) => {
+  const showDialog = (row, routeParams = null, searchFields = null) => {
+    if (row.unread) {
+      api.batchRead({ pks: [row.pk] });
+    }
+    addDialog({
+      title: t("userNotice.showSystemNotice"),
+      props: {
+        formInline: { ...row },
+        hasPublish: false
+      },
+      width: "70%",
+      draggable: true,
+      fullscreen: deviceDetection(),
+      fullscreenIcon: true,
+      closeOnClickModal: false,
+      hideFooter: true,
+      contentRenderer: () => h(noticeShowForm),
+      closeCallBack: () => {
+        if (routeParams?.pk) {
+          searchFields.value.pk = "";
+        }
+        if (row.unread) {
+          if (searchFields) {
+            searchFields.value.pk = "";
+          }
+          tableRef.value.handleGetData();
+        }
+      }
+    });
+  };
+
+  const searchComplete = ({ routeParams, searchFields, dataList, res }) => {
     unreadCount.value = res.unread_count;
     useUserStoreHook().SET_NOTICECOUNT(res.unread_count);
     if (
-      getParameter.pk &&
-      getParameter.pk === form.value.pk &&
-      getParameter.pk !== "" &&
+      routeParams.pk &&
+      routeParams.pk === searchFields.value.pk &&
+      routeParams.pk !== "" &&
       dataList.value.length > 0
     ) {
-      showDialog(dataList.value[0]);
+      showDialog(dataList.value[0], routeParams, searchFields);
     }
   };
-  const selectionChange = func => {
-    manySelectData.value = func();
+
+  const selectionChange = data => {
+    manySelectData.value = data;
     selectedNum.value = manySelectData.value.length ?? 0;
   };
+  const listColumnsFormat = (columns: CRUDColumn[]) => {
+    columns.forEach(column => {
+      switch (column._column?.key) {
+        case "title":
+          column["cellRenderer"] = ({ row }) => (
+            <el-text type={row.level}>{row.title}</el-text>
+          );
+          break;
+        case "unread":
+          column["cellRenderer"] = ({ row }) => (
+            <el-text type={row.unread ? "success" : "info"}>
+              {row.unread ? t("labels.unread") : t("labels.read")}
+            </el-text>
+          );
+          break;
+      }
+    });
+    return columns;
+  };
 
+  const tableBarButtonsProps = shallowRef<OperationProps>({
+    buttons: [
+      {
+        text: t("userNotice.batchRead"),
+        code: "batchRead",
+        props: {
+          type: "success",
+          icon: useRenderIcon(Success),
+          plain: true
+        },
+        onClick: () => {
+          handleManyRead();
+        },
+        confirm: {
+          title: () => {
+            return t("buttons.batchDeleteConfirm", {
+              count: selectedNum.value
+            });
+          }
+        },
+        show: () => {
+          return Boolean(auth.batchRead && selectedNum.value);
+        }
+      },
+      {
+        text: t("userNotice.allRead"),
+        code: "allRead",
+        props: {
+          type: "primary"
+        },
+        onClick: () => {
+          handleReadAll();
+        },
+        show: () => {
+          return Boolean(auth.allRead && unreadCount.value > 0);
+        }
+      }
+    ]
+  });
+
+  const operationButtonsProps = shallowRef<OperationProps>({
+    width: 100,
+    buttons: [
+      {
+        code: "detail",
+        text: t("buttons.detail"),
+        onClick({ row }) {
+          showDialog(row);
+        },
+        update: true
+      }
+    ]
+  });
   return {
-    t,
     api,
     auth,
-    columns,
-    selectedNum,
-    unreadCount,
-    showDialog,
-    searchEnd,
-    handleReadAll,
-    handleManyRead,
-    selectionChange
+    listColumnsFormat,
+    operationButtonsProps,
+    tableBarButtonsProps,
+    selectionChange,
+    searchComplete
   };
 }

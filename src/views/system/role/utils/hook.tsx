@@ -1,29 +1,22 @@
-import dayjs from "dayjs";
-import Form from "../form.vue";
+import menuFieldForm from "../form.vue";
 
-import { onMounted, reactive, ref, type Ref, shallowRef } from "vue";
+import { h, onMounted, reactive, ref, shallowRef } from "vue";
 import { roleApi } from "@/api/system/role";
-import { useI18n } from "vue-i18n";
 import { handleTree } from "@/utils/tree";
 import { menuApi } from "@/api/system/menu";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { FieldChoices } from "@/views/system/constants";
 import { cloneDeep, getKeyList } from "@pureadmin/utils";
 import { modelLabelFieldApi } from "@/api/system/field";
-import { renderOption, renderSwitch } from "@/views/system/render";
+import type {
+  CRUDColumn,
+  OperationProps,
+  RePlusPageProps
+} from "@/components/RePlusCRUD";
 
 export function useApiAuth() {
-  const api = reactive({
-    list: roleApi.list,
-    create: roleApi.create,
-    delete: roleApi.delete,
-    update: roleApi.patch,
-    fields: roleApi.fields,
-    export: roleApi.export,
-    import: roleApi.import,
-    detail: roleApi.detail,
-    batchDelete: roleApi.batchDelete
-  });
+  const api = reactive(roleApi);
+  api.update = api.patch;
 
   const auth = reactive({
     list: hasAuth("list:systemRole"),
@@ -41,104 +34,11 @@ export function useApiAuth() {
   };
 }
 
-export function useRole(tableRef: Ref) {
-  const { t } = useI18n();
+export function useRole() {
   const { api, auth } = useApiAuth();
-
-  const editForm = shallowRef({
-    title: t("systemRole.role"),
-    form: Form,
-    row: {
-      is_active: row => {
-        return row?.is_active ?? true;
-      },
-      field: row => {
-        return row?.field ?? [];
-      },
-      menu: row => {
-        return getKeyList(row?.menu ?? [], "pk") ?? [];
-      }
-    },
-    props: {
-      menuTreeData: () => {
-        return menuTreeData.value;
-      }
-    },
-    options: {
-      width: "700px"
-    },
-    columns: () => {
-      return [
-        {
-          prop: "name",
-          valueType: "input"
-        },
-        {
-          prop: "code",
-          valueType: "input"
-        },
-        {
-          prop: "is_active",
-          valueType: "radio",
-          renderField: renderOption()
-        },
-        {
-          prop: "description",
-          valueType: "textarea"
-        },
-        {
-          prop: "menu",
-          valueType: "input"
-        }
-      ];
-    }
-  });
 
   const menuTreeData = ref([]);
   const fieldLookupsData = ref({});
-  const loading = ref(true);
-  const columns = ref<TableColumnList>([
-    {
-      type: "selection",
-      fixed: "left",
-      reserveSelection: true
-    },
-    {
-      prop: "pk",
-      minWidth: 100
-    },
-    {
-      prop: "name",
-      minWidth: 120
-    },
-    {
-      prop: "code",
-      minWidth: 150,
-      cellRenderer: ({ row }) => <span v-copy={row.code}>{row.code}</span>
-    },
-    {
-      minWidth: 130,
-      prop: "is_active",
-      cellRenderer: renderSwitch(auth.update, tableRef, "is_active", scope => {
-        return scope.row.name;
-      })
-    },
-    {
-      prop: "description",
-      minWidth: 150
-    },
-    {
-      minWidth: 180,
-      prop: "updated_time",
-      formatter: ({ updated_time }) =>
-        dayjs(updated_time).format("YYYY-MM-DD HH:mm:ss")
-    },
-    {
-      fixed: "right",
-      width: 160,
-      slot: "operation"
-    }
-  ]);
 
   function autoFieldTree(arr) {
     function deep(arr) {
@@ -165,10 +65,8 @@ export function useRole(tableRef: Ref) {
   /** 菜单权限 */
 
   const getMenuData = () => {
-    loading.value = true;
     menuApi.list({ page: 1, size: 1000 }).then(res => {
       setTimeout(() => {
-        loading.value = false;
         if (res.code === 1000) {
           if (hasGlobalAuth("list:systemModelField")) {
             modelLabelFieldApi
@@ -198,11 +96,58 @@ export function useRole(tableRef: Ref) {
     }
   });
 
+  const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
+    props: {
+      row: {
+        field: ({ rawRow }) => {
+          return rawRow?.field ?? [];
+        },
+        menu: ({ rawRow }) => {
+          return getKeyList(rawRow?.menu ?? [], "pk") ?? [];
+        }
+      },
+      columns: {
+        fields: ({ column }) => {
+          column["hideInForm"] = true;
+          return column;
+        },
+        menu: ({ column, formValue }) => {
+          column["fieldProps"] = {};
+          column["renderField"] = (value, onChange) => {
+            return h(menuFieldForm, {
+              pk: formValue.value?.pk,
+              modelValue: value,
+              field: formValue.value?.field,
+              menuTreeData: menuTreeData.value,
+              onChange: ({ fields, menu }) => {
+                formValue.value.fields = fields;
+                onChange(menu);
+              }
+            });
+          };
+          return column;
+        }
+      },
+      minWidth: "700px",
+      dialogOptions: {
+        width: "60vw"
+      }
+    }
+  });
+
+  const listColumnsFormat = (columns: CRUDColumn[]) => {
+    return columns;
+  };
+
+  const operationButtonsProps = shallowRef<OperationProps>({
+    width: 160,
+    buttons: [{ code: "detail", show: false }]
+  });
   return {
-    t,
     api,
     auth,
-    columns,
-    editForm
+    addOrEditOptions,
+    listColumnsFormat,
+    operationButtonsProps
   };
 }

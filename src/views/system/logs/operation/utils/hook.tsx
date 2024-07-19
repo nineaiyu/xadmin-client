@@ -1,17 +1,13 @@
-import dayjs from "dayjs";
 import { operationLogApi } from "@/api/system/logs/operation";
 import { useRouter } from "vue-router";
-import { reactive, ref } from "vue";
+import { reactive, shallowRef } from "vue";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
+import type { CRUDColumn, OperationProps } from "@/components/RePlusCRUD";
+import VueJsonPretty from "vue-json-pretty";
+import "vue-json-pretty/lib/styles.css";
 
 export function useOperationLog() {
-  const api = reactive({
-    list: operationLogApi.list,
-    delete: operationLogApi.delete,
-    fields: operationLogApi.fields,
-    export: operationLogApi.export,
-    batchDelete: operationLogApi.batchDelete
-  });
+  const api = reactive(operationLogApi);
 
   const auth = reactive({
     list: hasAuth("list:systemOperationLog"),
@@ -20,84 +16,62 @@ export function useOperationLog() {
     batchDelete: hasAuth("batchDelete:systemOperationLog")
   });
 
-  const router = useRouter();
-  const pagination = reactive({
-    total: 0,
-    pageSize: 20,
-    currentPage: 1,
-    pageSizes: [20, 30, 100, 200],
-    background: true
+  const operationButtonsProps = shallowRef<OperationProps>({
+    width: 140
   });
-  const columns = ref<TableColumnList>([
-    {
-      type: "selection",
-      fixed: "left",
-      reserveSelection: true,
-      hide: !auth.delete
-    },
-    {
-      prop: "pk",
-      minWidth: 100
-    },
-    {
-      prop: "module",
-      minWidth: 120
-    },
-    {
-      prop: "creator",
-      minWidth: 100,
-      cellRenderer: ({ row }) => (
-        <el-link onClick={() => onGoDetail(row as any)}>
-          {row.creator?.username ? row.creator?.username : "/"}
-        </el-link>
-      )
-    },
-    {
-      prop: "ipaddress",
-      minWidth: 150
-    },
-    {
-      prop: "path",
-      minWidth: 150,
-      cellRenderer: ({ row }) => (
-        <span>
-          {row.method}: {row.path}
-        </span>
-      )
-    },
-    {
-      prop: "body",
-      minWidth: 150
-    },
-    {
-      prop: "browser",
-      minWidth: 150
-    },
-    {
-      prop: "system",
-      minWidth: 150
-    },
-    {
-      prop: "response_code",
-      minWidth: 100
-    },
-    {
-      prop: "response_result",
-      minWidth: 150
-    },
-    {
-      minWidth: 180,
-      prop: "created_time",
-      formatter: ({ created_time }) =>
-        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
-    },
-    {
-      fixed: "right",
-      width: 100,
-      slot: "operation",
-      hide: !auth.delete
-    }
-  ]);
+  const listColumnsFormat = (columns: CRUDColumn[]) => {
+    columns.forEach(column => {
+      switch (column._column?.key) {
+        case "creator":
+          column["cellRenderer"] = ({ row }) => (
+            <el-link onClick={() => onGoDetail(row as any)}>
+              {row.creator?.username ? row.creator?.username : "/"}
+            </el-link>
+          );
+          break;
+        case "path":
+          column["cellRenderer"] = ({ row }) => (
+            <span>
+              {row.method}: {row.path}
+            </span>
+          );
+          break;
+        case "method":
+          column.hide = true;
+          break;
+        case "status_code":
+          column["minWidth"] = 100;
+          break;
+      }
+    });
+    return columns;
+  };
+  const detailColumnsFormat = (columns: CRUDColumn[]) => {
+    columns.forEach(column => {
+      switch (column._column?.key) {
+        case "response_result":
+        case "body":
+          column["descriptionsItemProps"] = {
+            span: 2
+          };
+          column["renderDescriptionsItem"] = ({ row }) => {
+            let data = row[column._column?.key];
+            try {
+              data = JSON.parse(data);
+            } catch {}
+            return (
+              <el-scrollbar max-height="calc(100vh - 240px)">
+                <VueJsonPretty data={data} v-copy={row[column._column?.key]} />
+              </el-scrollbar>
+            );
+          };
+          break;
+      }
+    });
+    return columns;
+  };
+
+  const router = useRouter();
 
   function onGoDetail(row: any) {
     if (hasGlobalAuth("list:systemUser") && row?.creator && row?.creator?.pk) {
@@ -111,7 +85,8 @@ export function useOperationLog() {
   return {
     api,
     auth,
-    columns,
-    pagination
+    listColumnsFormat,
+    detailColumnsFormat,
+    operationButtonsProps
   };
 }

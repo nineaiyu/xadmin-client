@@ -2,17 +2,30 @@
 import { onBeforeUnmount, ref, shallowRef } from "vue";
 import "@wangeditor/editor/dist/css/style.css";
 import { Editor } from "@wangeditor/editor-for-vue";
-import { FormProps } from "./utils/types";
 import { useI18n } from "vue-i18n";
 
+interface FormItemProps {
+  pk?: number;
+  publish?: boolean;
+  level?: { value: "primary" | "success" | "warning" | "danger" | "info" };
+  title?: string;
+  message?: string;
+  notice_type?: number | object;
+}
+
+interface FormProps {
+  formInline: FormItemProps;
+  hasPublish?: boolean;
+}
+
 const props = withDefaults(defineProps<FormProps>(), {
-  isAdd: () => false,
+  hasPublish: () => false,
   formInline: () => ({
     pk: 0,
     title: "",
     publish: false,
     message: "",
-    level: "info"
+    level: { value: "info" }
   })
 });
 const { t } = useI18n();
@@ -50,10 +63,11 @@ const loading = ref(false);
   <el-form ref="formRef" :model="newFormInline" label-width="82px">
     <el-card shadow="never">
       <template #header>
-        <el-text :type="newFormInline.level" size="large"
+        <el-text :type="newFormInline.level?.value" size="large"
           >{{ newFormInline.title }}
         </el-text>
         <el-tag
+          v-if="hasPublish"
           :type="newFormInline.publish ? 'success' : 'warning'"
           style="float: right"
           >{{

@@ -44,7 +44,6 @@ export function useColumns(
     pageSize: isTree ? 1000 : 10,
     currentPage: 1,
     pageSizes: [5, 10, 20, 50, 100],
-    small: true,
     background: true
   });
 

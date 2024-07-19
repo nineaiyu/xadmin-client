@@ -1,20 +1,18 @@
-import dayjs from "dayjs";
 import { useI18n } from "vue-i18n";
 import { loginLogApi } from "@/api/system/logs/login";
 import { useRouter } from "vue-router";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
-import { reactive, ref } from "vue";
+import { reactive, shallowRef } from "vue";
 import { usePublicHooks } from "@/views/system/hooks";
+import {
+  type CRUDColumn,
+  type OperationProps,
+  renderBooleanTag
+} from "@/components/RePlusCRUD";
 
 export function useLoginLog() {
   const { t } = useI18n();
-  const api = reactive({
-    list: loginLogApi.list,
-    delete: loginLogApi.delete,
-    fields: loginLogApi.fields,
-    export: loginLogApi.export,
-    batchDelete: loginLogApi.batchDelete
-  });
+  const api = reactive(loginLogApi);
 
   const auth = reactive({
     list: hasAuth("list:systemLoginLog"),
@@ -26,68 +24,30 @@ export function useLoginLog() {
   const router = useRouter();
   const { tagStyle } = usePublicHooks();
 
-  const columns = ref<TableColumnList>([
-    {
-      type: "selection",
-      fixed: "left",
-      reserveSelection: true,
-      hide: !auth.delete
-    },
-    {
-      prop: "pk",
-      minWidth: 100
-    },
-    {
-      prop: "creator",
-      minWidth: 100,
-      cellRenderer: ({ row }) => (
-        <el-link onClick={() => onGoDetail(row as any)}>
-          {row.creator?.username ? row.creator?.username : "/"}
-        </el-link>
-      )
-    },
-    {
-      prop: "ipaddress",
-      minWidth: 150
-    },
-    {
-      prop: "login_type.label",
-      minWidth: 150
-    },
-    {
-      prop: "browser",
-      minWidth: 150
-    },
-    {
-      prop: "system",
-      minWidth: 150
-    },
-    {
-      prop: "agent",
-      minWidth: 150
-    },
-    {
-      prop: "status",
-      minWidth: 100,
-      cellRenderer: ({ row, props }) => (
-        <el-tag size={props.size} style={tagStyle.value(row.status)}>
-          {row.status ? t("labels.success") : t("labels.failed")}
-        </el-tag>
-      )
-    },
-    {
-      minWidth: 180,
-      prop: "created_time",
-      formatter: ({ created_time }) =>
-        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
-    },
-    {
-      fixed: "right",
-      width: 100,
-      slot: "operation",
-      hide: !auth.delete
-    }
-  ]);
+  const operationButtonsProps = shallowRef<OperationProps>({
+    width: 140
+  });
+  const listColumnsFormat = (columns: CRUDColumn[]) => {
+    columns.forEach(column => {
+      switch (column._column?.key) {
+        case "creator":
+          column["cellRenderer"] = ({ row }) => (
+            <el-link onClick={() => onGoDetail(row as any)}>
+              {row.creator?.username ? row.creator?.username : "/"}
+            </el-link>
+          );
+          break;
+        case "status":
+          column["cellRenderer"] = renderBooleanTag({
+            t,
+            tagStyle,
+            field: column.prop
+          });
+          break;
+      }
+    });
+    return columns;
+  };
 
   function onGoDetail(row: any) {
     if (hasGlobalAuth("list:systemUser") && row?.creator && row?.creator?.pk) {
@@ -101,6 +61,7 @@ export function useLoginLog() {
   return {
     api,
     auth,
-    columns
+    listColumnsFormat,
+    operationButtonsProps
   };
 }

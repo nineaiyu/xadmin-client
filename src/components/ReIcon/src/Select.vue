@@ -195,7 +195,7 @@ watch(
               background
               class="flex-auto ml-2"
               layout="pager"
-              small
+              size="small"
               @current-change="onCurrentChange"
             />
             <el-button

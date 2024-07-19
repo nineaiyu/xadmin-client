@@ -1,32 +1,24 @@
 <script lang="ts" setup>
-import { reactive, ref } from "vue";
-import { useDemoBook } from "./utils/hook";
-import ReBaseTable from "@/components/ReBaseTable";
+import RePlusCRUD from "@/components/RePlusCRUD";
+import { reactive } from "vue";
+import { hasAuth } from "@/router/utils";
 
-defineOptions({
-  name: "DemoBook"
-});
+import { BaseApi } from "@/api/base";
 
-const tableRef = ref();
+const bookApi = new BaseApi("/api/demo/book");
+bookApi.update = bookApi.patch;
 
-const { api, auth, columns, editForm } = useDemoBook(tableRef);
-const pagination = reactive({
-  total: 0,
-  pageSize: 20,
-  currentPage: 1,
-  pageSizes: [20, 100, 200, 300, 800],
-  background: true
+// 权限判断，用于判断是否有该权限
+const auth = reactive({
+  list: hasAuth("list:demoBook"),
+  create: hasAuth("create:demoBook"),
+  delete: hasAuth("delete:demoBook"),
+  update: hasAuth("update:demoBook"),
+  export: hasAuth("export:demoBook"),
+  import: hasAuth("import:demoBook"),
+  batchDelete: hasAuth("batchDelete:demoBook")
 });
 </script>
-
 <template>
-  <ReBaseTable
-    ref="tableRef"
-    :api="api"
-    :auth="auth"
-    :edit-form="editForm"
-    :table-columns="columns"
-    :pagination="pagination"
-    locale-name="demoBook"
-  />
+  <RePlusCRUD :api="bookApi" :auth="auth" />
 </template>

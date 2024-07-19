@@ -1,22 +1,32 @@
-import { computed, h, ref } from "vue";
+import { computed, h, ref, type VNode } from "vue";
 import { cloneDeep } from "lodash-es";
+import dayjs from "dayjs";
+import { useI18n } from "vue-i18n";
 import type { PlusColumn } from "plus-pro-components";
 import type { BaseApi } from "@/api/base";
 import type { SearchColumnsResult, SearchFieldsResult } from "@/api/types";
-
+import { get } from "lodash-es";
 import {
-  renderSegmentedOption,
-  selectBooleanOptions,
-  formatAddOrEditOptions
+  formatAddOrEditOptions,
+  renderBooleanSegmentedOption
 } from "./renders";
-import { getPickerShortcuts, getColourTypeByIndex } from "./index";
+import { selectBooleanOptions } from "./constants";
+import {
+  getPickerShortcuts,
+  getColourTypeByIndex,
+  formatPublicLabels
+} from "./index";
 
 import SearchDepts from "@/views/system/base/searchDepts.vue";
 import SearchRoles from "@/views/system/base/searchRoles.vue";
 import SearchUsers from "@/views/system/base/searchUsers.vue";
 import uploadFile from "../components/uploadFile.vue";
-import { ElIcon, ElLink } from "element-plus";
+import { ElIcon, ElImage, ElLink } from "element-plus";
 import { Link } from "@element-plus/icons-vue";
+import Info from "@iconify-icons/ri/question-line";
+import type { Mutable } from "@vueuse/core";
+import type { TableColumnRenderer } from "@pureadmin/table";
+import { isEmail, isNumber } from "@pureadmin/utils";
 
 /**
  * @description 定义自定义搜索模板
@@ -26,22 +36,49 @@ const apiSearchComponents = {
   "api-search-roles": SearchRoles,
   "api-search-users": SearchUsers
 };
+
+interface TableColumns {
+  /** 是否隐藏 */
+  hide?: boolean | CallableFunction;
+  /** 自定义列的内容插槽 */
+  slot?: string;
+  /** 自定义表头的内容插槽 */
+  headerSlot?: string;
+  /** 多级表头，内部实现原理：嵌套 `el-table-column` */
+  children?: Array<TableColumns>;
+  /** 自定义单元格渲染器（`jsx`语法） */
+  cellRenderer?: (data: TableColumnRenderer) => VNode | string;
+  /** 自定义头部渲染器（`jsx`语法） */
+  headerRenderer?: (data: TableColumnRenderer) => VNode | string;
+}
+
+export interface CRUDColumn extends PlusColumn, TableColumns {
+  // columns: Partial<Mutable<TableColumn> & { _column: object }>[]
+  _column: Partial<
+    Mutable<SearchFieldsResult["data"][0]> &
+      Mutable<SearchColumnsResult["data"][0]>
+  >;
+}
+
 /**
  * @description 用与通过api接口，获取对应的column, 进行前端渲染
  */
-export function useBaseColumns() {
+export function useBaseColumns(localeName: string) {
   const addOrEditRules = ref({});
   const addOrEditColumns = ref([]);
   const addOrEditDefaultValue = ref({});
   const searchColumns = ref([]);
   const searchDefaultValue = ref({});
   const listColumns = ref([]);
-  const showColumns = ref([]);
+  const detailColumns = ref([]);
+  const { t, te } = useI18n();
 
   const formatSearchColumns = (columns: SearchFieldsResult["data"]) => {
     columns.forEach(column => {
-      const item: PlusColumn = {
-        label: column.label,
+      const item: CRUDColumn = {
+        _column: column,
+        label:
+          formatPublicLabels(t, te, column.key, localeName) ?? column.label,
         prop: column.key,
         tooltip: column?.help_text,
         options: computed(() => formatAddOrEditOptions(column.choices)),
@@ -66,13 +103,7 @@ export function useBaseColumns() {
             valueFormat: "YYYY-MM-DD HH:mm:ss",
             type: "datetimerange"
           };
-          item.colProps = {
-            xs: 24,
-            sm: 24,
-            md: 12,
-            lg: 12,
-            xl: 12
-          };
+          item.colProps = { xs: 24, sm: 24, md: 12, lg: 12, xl: 12 };
           break;
         case "number":
           item.valueType = "input";
@@ -94,12 +125,14 @@ export function useBaseColumns() {
           break;
         case "select-ordering":
           item.valueType = "select";
-          // const options = formatAddOrEditOptions(column.choices);
-          // options?.forEach(option => {
-          //   const labels = option.label.split(" ");
-          //   option.label = `${formatPublicLabels(t, te, labels[0] as string, localeName)} ${formatPublicLabels(t, te, labels[1] as string, localeName)}`;
-          // });
-          item.options = computed(() => formatAddOrEditOptions(column.choices));
+          item.options = computed(() => {
+            const options = formatAddOrEditOptions(column.choices);
+            options?.forEach(option => {
+              const labels = option.label.split(" ");
+              option.label = `${formatPublicLabels(t, te, labels[0] as string, localeName) ?? labels[0]} ${formatPublicLabels(t, te, labels[1] as string, localeName) ?? labels[1]}`;
+            });
+            return options;
+          });
           break;
         default:
           if (column.input_type.startsWith("api-")) {
@@ -109,13 +142,11 @@ export function useBaseColumns() {
                 onChange
               });
             };
-            item.colProps = {
-              xs: 24,
-              sm: 24,
-              md: 12,
-              lg: 12,
-              xl: 12
-            };
+            item.colProps = { xs: 24, sm: 24, md: 12, lg: 12, xl: 12 };
+            // 搜索的时候，如果是api接口返回，则默认值为[]
+            if (column?.default === "") {
+              column.default = [];
+            }
           }
           item.valueType = column.input_type;
       }
@@ -124,25 +155,61 @@ export function useBaseColumns() {
     });
   };
 
+  const formatAddOrEditRules = (column: SearchColumnsResult["data"][0]) => {
+    const message =
+      formatPublicLabels(t, te, column.key, localeName) ?? column.label;
+    switch (column.input_type) {
+      case "email":
+        addOrEditRules.value[column.key] = [
+          {
+            required: column.required,
+            validator: (rule, value, callback) => {
+              if (value === "" || !value) {
+                callback();
+              } else if (!isEmail(value)) {
+                callback(new Error(message));
+              } else {
+                callback();
+              }
+            },
+            trigger: "blur"
+          }
+        ];
+        break;
+      case "integer":
+        addOrEditRules.value[column.key] = [
+          {
+            required: column.required,
+            validator: (rule, value, callback) => {
+              if (value && !isNumber(value)) {
+                callback(new Error("field must be a number"));
+              } else {
+                callback();
+              }
+            },
+            trigger: "blur"
+          }
+        ];
+        break;
+      default:
+        addOrEditRules.value[column.key] = [
+          {
+            required: column.required,
+            message: message,
+            trigger: "blur"
+          }
+        ];
+    }
+  };
+
   const formatAddOrEditColumns = (columns: SearchColumnsResult["data"]) => {
     columns.forEach(column => {
-      addOrEditRules.value[column.key] = [
-        {
-          required: column.required,
-          message: column.label ?? column.key,
-          trigger: "blur"
-        }
-      ];
-      if (column.hasOwnProperty("default")) {
-        addOrEditDefaultValue.value[column.key] = column?.default;
-        if (column.input_type === "labeled_choice") {
-          addOrEditDefaultValue.value[column.key] = { value: column?.default };
-        }
-      }
-
-      const item: PlusColumn = {
+      formatAddOrEditRules(column);
+      const item: CRUDColumn = {
+        _column: column,
         prop: column.key,
-        label: column.label,
+        label:
+          formatPublicLabels(t, te, column.key, localeName) ?? column.label,
         tooltip: column?.help_text,
         minWidth: 120,
         fieldProps: {
@@ -151,16 +218,41 @@ export function useBaseColumns() {
           multiple: column?.multiple
         },
         hideInSearch: true,
-        hideInTable: false
+        hideInTable: false,
+        // pure-table ****** start
+        cellRenderer: ({ row }) => (
+          <span v-copy={row[column.key]}>{row[column.key]}</span>
+        )
+        // pure-table ****** end
       };
+      // pure-table ****** start
+      if (column?.help_text) {
+        item["headerRenderer"] = () => (
+          <span class="flex-c">
+            {item.label}
+            <iconifyIconOffline
+              icon={Info}
+              class={["ml-1"]}
+              v-tippy={{
+                content: column?.help_text
+              }}
+            />
+          </span>
+        );
+      }
+      // pure-table ****** end
       switch (column.input_type) {
         case "integer":
         case "float":
           item["valueType"] = "input-number";
           item["fieldProps"]["controlsPosition"] = "right";
+          item["colProps"] = { xs: 24, sm: 24, md: 12, lg: 12, xl: 12 };
           // item["fieldProps"]["controls"] = false;
+          // pure-table ******
+          // delete item["cellRenderer"];
           break;
         case "string":
+        case "field":
           item["valueType"] = "input";
           break;
         case "datetime":
@@ -169,14 +261,23 @@ export function useBaseColumns() {
           item["fieldProps"]["type"] = column.input_type;
           item["fieldProps"]["valueFormat"] = "YYYY-MM-DD HH:mm:ss";
           item["width"] = 160;
+          // pure-table ****** start
+          item["cellRenderer"] = ({ row }) => (
+            <span v-copy={row[column.key]}>
+              {dayjs(row[column.key]).format("YYYY-MM-DD HH:mm:ss")}
+            </span>
+          );
+          // pure-table ****** end
           break;
         case "boolean":
           item["valueType"] = "radio";
-          item["renderField"] = renderSegmentedOption();
-          item["width"] = 80;
+          item["renderField"] = renderBooleanSegmentedOption();
+          item["width"] = 120;
+          item["colProps"] = { xs: 24, sm: 24, md: 12, lg: 12, xl: 12 };
           break;
         case "textarea":
           item["valueType"] = "textarea";
+          item["fieldProps"] = { autosize: { minRows: 8 } };
           break;
         case "labeled_choice":
         case "object_related_field":
@@ -204,6 +305,9 @@ export function useBaseColumns() {
           break;
         default:
           if (column.input_type.startsWith("api-")) {
+            if (!column.hasOwnProperty("default") && column?.multiple) {
+              column.default = [];
+            }
             item["renderField"] = (value, onChange) => {
               return h(apiSearchComponents[column.input_type], {
                 modelValue: value,
@@ -213,9 +317,21 @@ export function useBaseColumns() {
             };
           }
       }
+      if (column.key === "description") {
+        item.valueType = "textarea";
+        item["fieldProps"] = { autosize: { minRows: 3 } };
+      }
       if (!column.read_only) {
         addOrEditColumns.value.push(cloneDeep(item));
       }
+
+      if (column.hasOwnProperty("default")) {
+        addOrEditDefaultValue.value[column.key] = column?.default;
+        if (column.input_type === "labeled_choice") {
+          addOrEditDefaultValue.value[column.key] = { value: column?.default };
+        }
+      }
+
       if (!column.write_only) {
         switch (column.input_type) {
           case "labeled_choice":
@@ -223,12 +339,26 @@ export function useBaseColumns() {
             item["options"] = computed(() =>
               formatAddOrEditOptions(column?.choices)
             );
+            // pure-table ****** start
+            item["cellRenderer"] = ({ row }) => (
+              <span v-copy={get(row, `${column.key}.label`)}>
+                {get(row, `${column.key}.label`)}
+              </span>
+            );
+            // pure-table ****** end
             break;
           case "object_related_field":
             item["prop"] = `${column.key}.pk`;
             item["options"] = computed(() =>
               formatAddOrEditOptions(column?.choices)
             );
+            // pure-table ****** start
+            item["cellRenderer"] = ({ row }) => (
+              <span v-copy={get(row, `${column.key}.label`)}>
+                {get(row, `${column.key}.label`)}
+              </span>
+            );
+            // pure-table ****** end
             break;
           case "m2m_related_field":
             item["render"] = (value: Array<any>) => {
@@ -251,9 +381,37 @@ export function useBaseColumns() {
                 );
               } else return <></>;
             };
+            // pure-table ****** start
+            item["cellRenderer"] = ({ row }) => (
+              <>
+                <el-space>
+                  {row[column.key]?.map((item, index) => {
+                    return (
+                      <el-text
+                        key={item.pk}
+                        type={getColourTypeByIndex(index + 1)}
+                      >
+                        {item.label}
+                      </el-text>
+                    );
+                  })}
+                </el-space>
+              </>
+            );
+            // pure-table ****** end
             break;
           case "image upload":
             item["valueType"] = "img";
+            // pure-table ****** start
+            item["cellRenderer"] = ({ row }) =>
+              h(ElImage, {
+                lazy: true,
+                src: row[column.key],
+                alt: row[column.key],
+                previewSrcList: [row[column.key]],
+                previewTeleported: true
+              });
+            // pure-table ****** end
             break;
           case "file upload":
             // item["valueType"] = "copy";
@@ -271,38 +429,61 @@ export function useBaseColumns() {
                 }
               );
             };
+            // pure-table ****** start
+            item["cellRenderer"] = ({ row }) =>
+              h(
+                ElLink,
+                {
+                  type: "success",
+                  href: row[column.key],
+                  target: "_blank"
+                },
+                {
+                  icon: () => h(ElIcon, null, () => h(Link)),
+                  default: () => "文件连接"
+                }
+              );
+            // pure-table ****** end
             break;
           case "boolean":
             item["options"] = computed(() => selectBooleanOptions);
-            item["valueType"] = "switch";
+            // item["valueType"] = "switch";
             delete item["renderField"];
-            item["editable"] = true;
+            // item["editable"] = true;
             break;
         }
-        showColumns.value.push(cloneDeep(item));
+        detailColumns.value.push(cloneDeep(item));
         if (column.table_show) {
           listColumns.value.push(cloneDeep(item));
         }
       }
     });
+    listColumns.value = listColumns.value.sort(
+      (a, b) => a._column.table_show - b._column.table_show
+    );
   };
 
   /**
    * 该方法用于页面onMount内调用，用于第一次渲染页面
    */
-  const getColumnData = (api: BaseApi, callback = null) => {
+  const getColumnData = (
+    api: BaseApi,
+    columnsCallback = null,
+    fieldsCallback = null
+  ) => {
     api.columns().then(res => {
       formatAddOrEditColumns(res.data);
+      columnsCallback && columnsCallback();
     });
     api.fields().then(res => {
       formatSearchColumns(res.data);
-      callback && callback();
+      fieldsCallback && fieldsCallback();
     });
   };
 
   return {
     listColumns,
-    showColumns,
+    detailColumns,
     searchColumns,
     getColumnData,
     addOrEditRules,

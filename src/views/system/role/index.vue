@@ -1,24 +1,27 @@
 <script lang="ts" setup>
-import { ref } from "vue";
 import { useRole } from "./utils/hook";
-import ReBaseTable from "@/components/ReBaseTable";
+import RePlusCRUD from "@/components/RePlusCRUD";
 
 defineOptions({
   name: "SystemRole"
 });
 
-const tableRef = ref();
-
-const { api, auth, columns, editForm } = useRole(tableRef);
+const {
+  api,
+  auth,
+  addOrEditOptions,
+  listColumnsFormat,
+  operationButtonsProps
+} = useRole();
 </script>
 
 <template>
-  <ReBaseTable
-    ref="tableRef"
+  <RePlusCRUD
     :api="api"
     :auth="auth"
-    :edit-form="editForm"
-    :table-columns="columns"
     locale-name="systemRole"
+    :addOrEditOptions="addOrEditOptions"
+    :listColumnsFormat="listColumnsFormat"
+    :operationButtonsProps="operationButtonsProps"
   />
 </template>

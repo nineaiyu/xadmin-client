@@ -2,40 +2,30 @@
 import { onBeforeUnmount, ref, shallowRef } from "vue";
 import "@wangeditor/editor/dist/css/style.css";
 import { Editor, Toolbar } from "@wangeditor/editor-for-vue";
-import { FormProps, InsertFnType } from "./utils/types";
-import { formRules } from "./utils/rule";
 import { UploadFileApi } from "@/api/system/upload";
 import { message } from "@/utils/message";
 import { getKeyList } from "@pureadmin/utils";
-import { NoticeChoices } from "@/views/system/constants";
-import { useNoticeForm } from "./utils/hook";
+import { useI18n } from "vue-i18n";
+import { IEditorConfig } from "@wangeditor/editor";
 
-const props = withDefaults(defineProps<FormProps>(), {
-  isAdd: () => true,
-  showColumns: () => [],
-  columns: () => [],
-  formInline: () => ({
-    pk: 0,
-    title: "",
-    publish: false,
-    message: "",
-    level: "primary",
-    notice_type: NoticeChoices.NOTICE,
-    notice_dept: [],
-    notice_role: [],
-    notice_user: []
-  }),
-  noticeChoices: () => [],
-  levelChoices: () => []
-});
+const messages = defineModel<string | object | any>();
+
 const formRef = ref();
-const newFormInline = ref(props.formInline);
 const editorRef = shallowRef();
 const mode = "default";
-const { columns, t } = useNoticeForm(props, newFormInline);
+const { t } = useI18n();
+
+type InsertFnType = (url: string, alt?: string, href?: string) => void;
+
+const emit = defineEmits<{
+  (e: "change", values: any): void;
+}>();
+
+const handleChange = () => {
+  emit("change", { messages, files: getUploadFiles() });
+};
 
 function getRef() {
-  newFormInline.value.files = getUploadFiles();
   return formRef.value?.formInstance;
 }
 
@@ -47,7 +37,7 @@ function getUploadFiles() {
   ];
 }
 
-defineExpose({ getRef, getUploadFiles });
+defineExpose({ getUploadFiles });
 
 // 注册。要在创建编辑器之前注册，且只能注册一次，不可重复注册。
 // created(() => {
@@ -61,9 +51,8 @@ const toolbarConfig: any = {
     keys: ["uploadAttachment"] // “上传附件”菜单
   }
 };
-const editorConfig = {
-  placeholder: t("systemNotice.message"),
-  readOnly: !props.isAdd && props.showColumns.indexOf("message") === -1,
+const editorConfig: Partial<IEditorConfig> = {
+  readOnly: false,
   MENU_CONF: {},
   hoverbarKeys: {
     attachment: {
@@ -142,35 +131,23 @@ const loading = ref(false);
 </script>
 
 <template>
-  <PlusForm
-    ref="formRef"
-    v-model="newFormInline"
-    :columns="columns"
-    :hasFooter="false"
-    :row-props="{ gutter: 24 }"
-    :rules="formRules"
-    label-position="right"
-    label-width="120px"
-  >
-    <template #plus-field-message>
-      <el-card shadow="never">
-        <div class="wangeditor">
-          <Toolbar
-            :defaultConfig="toolbarConfig"
-            :editor="editorRef"
-            :mode="mode"
-            style="border-bottom: 1px solid #ccc"
-          />
-          <Editor
-            v-model="newFormInline.message"
-            v-loading="loading"
-            :defaultConfig="editorConfig"
-            :mode="mode"
-            style="height: 400px; overflow-y: hidden"
-            @onCreated="handleCreated"
-          />
-        </div>
-      </el-card>
-    </template>
-  </PlusForm>
+  <el-card shadow="never">
+    <div class="wangeditor">
+      <Toolbar
+        :defaultConfig="toolbarConfig"
+        :editor="editorRef"
+        :mode="mode"
+        style="border-bottom: 1px solid #ccc"
+      />
+      <Editor
+        v-model="messages"
+        v-loading="loading"
+        :defaultConfig="editorConfig"
+        :mode="mode"
+        style="height: 400px; overflow-y: hidden"
+        @onChange="handleChange"
+        @onCreated="handleCreated"
+      />
+    </div>
+  </el-card>
 </template>

@@ -1,9 +1,7 @@
 <script lang="ts" setup>
 import { ref } from "vue";
 import { useSystemConfig } from "./utils/hook";
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import CircleClose from "@iconify-icons/ep/circle-close";
-import ReBaseTable from "@/components/ReBaseTable";
+import RePlusCRUD from "@/components/RePlusCRUD";
 
 defineOptions({
   name: "SystemConfig"
@@ -11,37 +9,15 @@ defineOptions({
 
 const tableRef = ref();
 
-const { t, api, auth, columns, editForm, handleInvalidCache } =
-  useSystemConfig(tableRef);
+const { api, auth, operationButtonsProps } = useSystemConfig(tableRef);
 </script>
 
 <template>
-  <ReBaseTable
+  <RePlusCRUD
     ref="tableRef"
     :api="api"
     :auth="auth"
-    :edit-form="editForm"
-    :table-columns="columns"
     locale-name="configSystem"
-  >
-    <template #extOperation="{ row, size }">
-      <el-popconfirm
-        v-if="auth.invalid"
-        :title="t('configSystem.confirmInvalid')"
-        @confirm="handleInvalidCache(row)"
-      >
-        <template #reference>
-          <el-button
-            :icon="useRenderIcon(CircleClose)"
-            :size="size"
-            class="reset-margin"
-            link
-            type="primary"
-          >
-            {{ t("configSystem.invalidCache") }}
-          </el-button>
-        </template>
-      </el-popconfirm>
-    </template>
-  </ReBaseTable>
+    :operationButtonsProps="operationButtonsProps"
+  />
 </template>

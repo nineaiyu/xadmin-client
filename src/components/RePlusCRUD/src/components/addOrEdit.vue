@@ -20,8 +20,12 @@ const newFormInline = ref<FieldValues>(props.formInline);
 function getRef() {
   return formRef.value?.formInstance;
 }
-defineOptions({ name: "addOrEditForm" });
+defineOptions({ name: "AddOrEditForm" });
 defineExpose({ getRef });
+
+const emit = defineEmits<{
+  (e: "change", values: any): void;
+}>();
 </script>
 
 <template>
@@ -34,5 +38,10 @@ defineExpose({ getRef });
     label-position="right"
     label-width="120px"
     v-bind="formProps"
+    @change="
+      (values, column) => {
+        emit('change', { values, column });
+      }
+    "
   />
 </template>

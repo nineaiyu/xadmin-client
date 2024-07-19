@@ -1,20 +1,28 @@
 <script lang="ts" setup>
 import { useOperationLog } from "./utils/hook";
-import ReBaseTable from "@/components/ReBaseTable";
+import RePlusCRUD from "@/components/RePlusCRUD";
 
 defineOptions({
   name: "SystemOperationLog"
 });
 
-const { api, auth, columns, pagination } = useOperationLog();
+const {
+  api,
+  auth,
+  listColumnsFormat,
+  detailColumnsFormat,
+  operationButtonsProps
+} = useOperationLog();
 </script>
 
 <template>
-  <ReBaseTable
+  <RePlusCRUD
+    ref="tableRef"
     :api="api"
     :auth="auth"
-    :table-columns="columns"
     locale-name="logsOperation"
-    :pagination="pagination"
+    :listColumnsFormat="listColumnsFormat"
+    :detailColumnsFormat="detailColumnsFormat"
+    :operationButtonsProps="operationButtonsProps"
   />
 </template>

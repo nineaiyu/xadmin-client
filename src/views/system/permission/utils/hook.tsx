@@ -1,37 +1,20 @@
-import dayjs from "dayjs";
 import { dataPermissionApi } from "@/api/system/permission";
-import { onMounted, reactive, ref, type Ref, shallowRef } from "vue";
+import { h, onMounted, reactive, ref, shallowRef } from "vue";
 import { hasAuth, hasGlobalAuth } from "@/router/utils";
-import { useI18n } from "vue-i18n";
-import { FieldChoices, ModeChoices } from "@/views/system/constants";
+import { FieldChoices } from "@/views/system/constants";
 import { handleTree } from "@/utils/tree";
 import { modelLabelFieldApi } from "@/api/system/field";
-import { menuApi } from "@/api/system/menu";
-import Form from "../form.vue";
-import { renderOption, renderSwitch } from "@/views/system/render";
-import { formatOptions } from "@/views/system/hooks";
 import { transformI18n } from "@/plugins/i18n";
 import { getKeyList } from "@pureadmin/utils";
+import type { OperationProps, RePlusPageProps } from "@/components/RePlusCRUD";
+import filterForm from "../filter/index.vue";
 
-export function useDataPermission(tableRef: Ref) {
-  const { t } = useI18n();
+export function useDataPermission() {
   const fieldLookupsData = ref([]);
-  const menuPermissionData = ref([]);
-  const choicesDict = ref([]);
   const valuesData = ref([]);
 
-  const api = reactive({
-    list: dataPermissionApi.list,
-    create: dataPermissionApi.create,
-    delete: dataPermissionApi.delete,
-    update: dataPermissionApi.patch,
-    detail: dataPermissionApi.detail,
-    fields: dataPermissionApi.fields,
-    choices: dataPermissionApi.choices,
-    export: dataPermissionApi.export,
-    import: dataPermissionApi.import,
-    batchDelete: dataPermissionApi.batchDelete
-  });
+  const api = reactive(dataPermissionApi);
+  api.update = api.patch;
 
   const auth = reactive({
     list: hasAuth("list:systemDataPermission"),
@@ -44,141 +27,7 @@ export function useDataPermission(tableRef: Ref) {
     batchDelete: hasAuth("batchDelete:systemDataPermission")
   });
 
-  const editForm = shallowRef({
-    title: t("systemPermission.permission"),
-    form: Form,
-    row: {
-      menu: row => {
-        return getKeyList(row?.menu ?? [], "pk") ?? [];
-      },
-      is_active: row => {
-        return row?.is_active ?? true;
-      },
-      rules: row => {
-        return row?.rules ?? [];
-      },
-      mode_type: row => {
-        return row?.mode_type ?? ModeChoices.OR;
-      }
-    },
-    props: {
-      fieldLookupsData: () => {
-        return fieldLookupsData.value;
-      },
-      valuesData: () => {
-        return valuesData.value;
-      }
-    },
-    options: {
-      top: "10vh"
-    },
-    columns: () => {
-      return [
-        {
-          prop: "name",
-          valueType: "input"
-        },
-        {
-          prop: "is_active",
-          valueType: "radio",
-          renderField: renderOption()
-        },
-        {
-          prop: "mode_type",
-          valueType: "select",
-          tooltip: t("systemPermission.modeTypeTip"),
-          options: formatOptions(choicesDict.value["mode_type"])
-        },
-        {
-          prop: "menu",
-          valueType: "cascader",
-          tooltip: t("systemPermission.menuTip"),
-          fieldProps: {
-            props: {
-              value: "pk",
-              label: "title",
-              emitPath: false,
-              checkStrictly: false,
-              multiple: true
-            }
-          },
-          fieldSlots: {
-            default: ({ node, data }) => {
-              data.title = transformI18n(data?.title);
-              return (
-                <>
-                  <span>{data.title}</span>
-                  <span v-show={!node.isLeaf}>
-                    {" "}
-                    ({data?.children?.length}){" "}
-                  </span>
-                </>
-              );
-            }
-          },
-          options: menuPermissionData.value
-        },
-        {
-          prop: "description",
-          valueType: "textarea"
-        },
-        {
-          prop: "rules",
-          hasLabel: false
-        }
-      ];
-    }
-  });
-
-  const columns = ref<TableColumnList>([
-    {
-      type: "selection",
-      fixed: "left",
-      reserveSelection: true
-    },
-    {
-      prop: "pk",
-      minWidth: 100
-    },
-    {
-      prop: "name",
-      minWidth: 120
-    },
-    {
-      prop: "mode_type.label",
-      minWidth: 120
-    },
-    {
-      minWidth: 130,
-      prop: "is_active",
-      cellRenderer: renderSwitch(auth.update, tableRef, "is_active", scope => {
-        return scope.row.name;
-      })
-    },
-    {
-      prop: "description",
-      minWidth: 150
-    },
-    {
-      minWidth: 180,
-      prop: "created_time",
-      formatter: ({ created_time }) =>
-        dayjs(created_time).format("YYYY-MM-DD HH:mm:ss")
-    },
-    {
-      fixed: "right",
-      width: 160,
-      slot: "operation"
-    }
-  ]);
-
   onMounted(() => {
-    api.choices().then(res => {
-      if (res.code === 1000) {
-        choicesDict.value = res.choices_dict;
-      }
-    });
-
     if (hasGlobalAuth("list:systemModelField")) {
       modelLabelFieldApi
         .list({
@@ -197,20 +46,81 @@ export function useDataPermission(tableRef: Ref) {
         valuesData.value = res.choices_dict?.choices;
       }
     });
-    if (hasGlobalAuth("permissions:systemMenu")) {
-      menuApi.permissions({ page: 1, size: 1000 }).then(res => {
-        if (res.code === 1000) {
-          menuPermissionData.value = handleTree(res.data.results);
+  });
+
+  const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
+    props: {
+      row: {
+        menu: ({ rawRow }) => {
+          return getKeyList(rawRow?.menu ?? [], "pk") ?? [];
+        },
+        rules: ({ rawRow }) => {
+          return rawRow?.rules ?? [];
         }
-      });
+      },
+      columns: {
+        pk: ({ column }) => {
+          column["hideInForm"] = true;
+          return column;
+        },
+        menu: ({ column }) => {
+          column["options"] = handleTree(
+            column._column.choices,
+            "pk",
+            "parent_id"
+          );
+          column["valueType"] = "cascader";
+          column["fieldProps"]["props"] = {
+            ...column["fieldProps"]["props"],
+            ...{
+              value: "pk",
+              label: "title",
+              emitPath: false,
+              checkStrictly: false,
+              multiple: true
+            }
+          };
+          column["fieldSlots"] = {
+            default: ({ node, data }) => {
+              data.title = transformI18n(data?.meta__title);
+              return (
+                <>
+                  <span>{data.title}</span>
+                  <span v-show={!node.isLeaf}>
+                    {" "}
+                    ({data?.children?.length}){" "}
+                  </span>
+                </>
+              );
+            }
+          };
+          return column;
+        },
+        rules: ({ column }) => {
+          column["hasLabel"] = false;
+          column["renderField"] = (value, onChange) => {
+            return h(filterForm, {
+              class: ["overflow-auto"],
+              dataList: value,
+              valuesData: valuesData.value,
+              ruleList: fieldLookupsData.value,
+              onChange
+            });
+          };
+          return column;
+        }
+      }
     }
   });
 
+  const operationButtonsProps = shallowRef<OperationProps>({
+    width: 160,
+    buttons: [{ code: "detail", show: false }]
+  });
   return {
-    t,
     api,
     auth,
-    columns,
-    editForm
+    addOrEditOptions,
+    operationButtonsProps
   };
 }

@@ -1,23 +1,20 @@
 <script lang="ts" setup>
-import { ref } from "vue";
 import { useDataPermission } from "./utils/hook";
-import ReBaseTable from "@/components/ReBaseTable";
+import RePlusCRUD from "@/components/RePlusCRUD";
 
 defineOptions({
   name: "SystemDataPermission"
 });
 
-const tableRef = ref();
-
-const { api, auth, columns, editForm } = useDataPermission(tableRef);
+const { api, auth, addOrEditOptions, operationButtonsProps } =
+  useDataPermission();
 </script>
 <template>
-  <ReBaseTable
-    ref="tableRef"
+  <RePlusCRUD
     :api="api"
     :auth="auth"
-    :edit-form="editForm"
-    :table-columns="columns"
     locale-name="systemPermission"
+    :addOrEditOptions="addOrEditOptions"
+    :operationButtonsProps="operationButtonsProps"
   />
 </template>

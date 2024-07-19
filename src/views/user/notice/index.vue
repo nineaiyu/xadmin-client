@@ -1,10 +1,7 @@
 <script lang="ts" setup>
 import { ref } from "vue";
 import { useUserNotice } from "./utils/hook";
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import Success from "@iconify-icons/ep/success-filled";
-import Eye from "@iconify-icons/ri/eye-fill";
-import ReBaseTable from "@/components/ReBaseTable";
+import RePlusCRUD from "@/components/RePlusCRUD";
 
 defineOptions({
   name: "UserNotice"
@@ -13,65 +10,26 @@ defineOptions({
 const tableRef = ref();
 
 const {
-  t,
   api,
   auth,
-  columns,
-  unreadCount,
-  selectedNum,
-  searchEnd,
-  showDialog,
-  handleReadAll,
-  handleManyRead,
-  selectionChange
+  listColumnsFormat,
+  operationButtonsProps,
+  tableBarButtonsProps,
+  selectionChange,
+  searchComplete
 } = useUserNotice(tableRef);
 </script>
+
 <template>
-  <ReBaseTable
+  <RePlusCRUD
     ref="tableRef"
     :api="api"
     :auth="auth"
-    :table-columns="columns"
     locale-name="userNotice"
-    @searchEnd="searchEnd"
-    @selection-change="selectionChange"
-  >
-    <template #barButtons>
-      <el-popconfirm
-        v-if="auth.batchRead && selectedNum"
-        :title="t('buttons.batchDeleteConfirm', { count: selectedNum })"
-        @confirm="handleManyRead"
-      >
-        <template #reference>
-          <el-button :icon="useRenderIcon(Success)" plain type="success">
-            {{ t("userNotice.batchRead") }}
-          </el-button>
-        </template>
-      </el-popconfirm>
-      <el-button
-        v-if="auth.allRead && unreadCount > 0"
-        class="mr-2"
-        type="primary"
-        @click="handleReadAll"
-      >
-        {{ t("userNotice.allRead") }}
-      </el-button>
-      <el-text v-if="unreadCount > 0" type="primary">
-        {{ t("userNotice.unreadMessage") }} {{ unreadCount }}
-      </el-text>
-    </template>
-    <template #extOperation="{ row, size }">
-      <el-button
-        v-if="auth.list"
-        :icon="useRenderIcon(Eye)"
-        :size="size"
-        class="reset-margin"
-        link
-        type="primary"
-        @click="showDialog(row)"
-      >
-        {{ t("buttons.detail") }}
-      </el-button>
-    </template>
-  </ReBaseTable>
+    :listColumnsFormat="listColumnsFormat"
+    :operationButtonsProps="operationButtonsProps"
+    :tableBarButtonsProps="tableBarButtonsProps"
+    @searchComplete="searchComplete"
+    @selectionChange="selectionChange"
+  />
 </template>

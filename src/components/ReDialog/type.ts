@@ -26,7 +26,7 @@ type DialogProps = {
   /** `Dialog` 的标题 */
   title?: string;
   /** `Dialog` 的宽度，默认 `50%` */
-  width?: string | number;
+  width?: string;
   /** 是否为全屏 `Dialog`（会一直处于全屏状态，除非弹框关闭），默认 `false`，`fullscreen` 和 `fullscreenIcon` 都传时只有 `fullscreen` 会生效 */
   fullscreen?: boolean;
   /** 是否显示全屏操作图标，默认 `false`，`fullscreen` 和 `fullscreenIcon` 都传时只有 `fullscreen` 会生效 */
@@ -160,6 +160,8 @@ interface DialogOptions extends DialogProps {
   props?: any;
   /** 是否隐藏 `Dialog` 按钮操作区的内容 */
   hideFooter?: boolean;
+  /** 确认按钮加载 */
+  confirmLoading?: boolean;
   /** 确认按钮的 `Popconfirm` 气泡确认框相关配置 */
   popconfirm?: Popconfirm;
   /**
@@ -243,6 +245,7 @@ interface DialogOptions extends DialogProps {
     options: DialogOptions;
     index: number;
   }) => void;
+  onChange?: (data: any) => void;
   /** 点击底部取消按钮的回调，会暂停 `Dialog` 的关闭. 回调函数内执行 `done` 参数方法的时候才是真正关闭对话框的时候 */
   beforeCancel?: (
     done: Function,

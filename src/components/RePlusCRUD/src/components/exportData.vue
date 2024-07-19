@@ -6,7 +6,7 @@ import { useI18n } from "vue-i18n";
 
 const formRef = ref();
 
-defineOptions({ name: "exportData" });
+defineOptions({ name: "ExportData" });
 
 interface FormItemProps {
   type: string;
@@ -18,9 +18,11 @@ interface FormProps {
   formInline: FormItemProps;
   formProps?: object;
   columns?: PlusColumn[];
+  allowTypes?: string[];
 }
 
 const props = withDefaults(defineProps<FormProps>(), {
+  allowTypes: () => ["all", "search", "selected"],
   formInline: () => ({
     type: "xlsx",
     range: "all",
@@ -41,19 +43,21 @@ const formColumns: PlusColumn[] = [
     label: t("exportImport.exportRange"),
     prop: "range",
     valueType: "radio",
-    options: [
-      { label: t("exportImport.exportAll"), value: "all" },
-      {
-        label: t("exportImport.exportSelected"),
-        value: "selected",
-        fieldItemProps: {
-          disabled: computed(() => {
-            return state.value.pks?.length == 0;
-          })
-        }
-      },
-      { label: t("exportImport.exportFiltered"), value: "search" }
-    ]
+    options: computed(() => {
+      return [
+        { label: t("exportImport.exportAll"), value: "all" },
+        {
+          label: t("exportImport.exportSelected"),
+          value: "selected",
+          fieldItemProps: {
+            disabled: computed(() => {
+              return state.value.pks?.length == 0;
+            })
+          }
+        },
+        { label: t("exportImport.exportFiltered"), value: "search" }
+      ].filter(item => props.allowTypes.indexOf(item.value) > -1);
+    })
   }
 ];
 

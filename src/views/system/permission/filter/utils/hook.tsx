@@ -59,6 +59,7 @@ export function useFieldRule(
       minWidth: 100
     },
     {
+      label: t("commonLabels.operation"),
       fixed: "right",
       width: 100,
       slot: "operation"
