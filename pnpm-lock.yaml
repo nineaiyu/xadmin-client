@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@pureadmin/descriptions':
-        specifier: ^1.2.1
-        version: 1.2.1(echarts@5.5.1)(element-plus@2.7.7(vue@3.4.32(typescript@5.5.3)))(typescript@5.5.3)
       '@pureadmin/table':
         specifier: ^3.1.2
         version: 3.1.2(element-plus@2.7.7(vue@3.4.32(typescript@5.5.3)))(typescript@5.5.3)
@@ -1021,11 +1018,6 @@ packages:
 
   '@popperjs/core@2.11.8':
     resolution: {integrity: sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==}
-
-  '@pureadmin/descriptions@1.2.1':
-    resolution: {integrity: sha512-7jDJuqz8xnhcmwXdWQnBzOYeX2WK27TRFaVgs9AdiRr+DnKb9W+krHByJwQtxo5lg4qyRh4/IWQGEMfhC2ljeQ==}
-    peerDependencies:
-      element-plus: ^2.0.0
 
   '@pureadmin/table@3.1.2':
     resolution: {integrity: sha512-6GrZCjBDFn/kKjn/HGkx0BH9RiArg5QktPN2u5PNpzHBhZZXWMoFcKCkysWLfDdWfpCowQWgnOpr0KjTPEgT0A==}
@@ -5219,16 +5211,6 @@ snapshots:
   '@polka/url@1.0.0-next.25': {}
 
   '@popperjs/core@2.11.8': {}
-
-  '@pureadmin/descriptions@1.2.1(echarts@5.5.1)(element-plus@2.7.7(vue@3.4.32(typescript@5.5.3)))(typescript@5.5.3)':
-    dependencies:
-      '@element-plus/icons-vue': 2.3.1(vue@3.4.32(typescript@5.5.3))
-      '@pureadmin/utils': 2.4.7(echarts@5.5.1)(vue@3.4.32(typescript@5.5.3))
-      element-plus: 2.7.7(vue@3.4.32(typescript@5.5.3))
-      vue: 3.4.32(typescript@5.5.3)
-    transitivePeerDependencies:
-      - echarts
-      - typescript
 
   '@pureadmin/table@3.1.2(element-plus@2.7.7(vue@3.4.32(typescript@5.5.3)))(typescript@5.5.3)':
     dependencies:

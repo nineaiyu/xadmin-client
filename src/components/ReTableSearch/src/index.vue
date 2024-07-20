@@ -114,7 +114,7 @@ watch(
           ref="formRef"
           :inline="true"
           :model="form"
-          class="search-form bg-bg_color pl-8 pt-[12px] overflow-auto"
+          class="search-form bg-bg_color pl-8 pt-[12px]"
         >
           <el-form-item
             v-for="item in searchKeys.filter(x => {
@@ -137,6 +137,7 @@ watch(
               v-model="form.ordering"
               class="!w-[180px]"
               clearable
+              :teleported="false"
               @change="onSearch(true)"
             >
               <el-option
