@@ -41,9 +41,11 @@ export function useColumns(
   /** 分页配置 */
   const pagination = reactive<PaginationProps>({
     total: 0,
-    pageSize: isTree ? 1000 : 10,
+    pageSize: isTree ? 1000 : 20,
     currentPage: 1,
-    pageSizes: [5, 10, 20, 50, 100],
+    pageSizes: [isTree ? 1000 : 20],
+    layout: isTree ? "total" : "prev, pager, next, jumper, total",
+    size: "small",
     background: true
   });
 
