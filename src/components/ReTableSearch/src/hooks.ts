@@ -39,7 +39,7 @@ export function useColumns(
   });
 
   /** 分页配置 */
-  const pagination = reactive<PaginationProps>({
+  const pagination = reactive<Partial<PaginationProps> & { size?: string }>({
     total: 0,
     pageSize: isTree ? 1000 : 20,
     currentPage: 1,
