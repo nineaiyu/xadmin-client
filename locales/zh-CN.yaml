@@ -198,6 +198,8 @@ buttons:
   selected: "已选 { count } 项"
   confirmDelete: 确定删除该数据吗？
   confirmUpdate: 确定更新该数据吗？
+  checkStrictly: 层级关联
+  checkUnStrictly: 层级独立
 
 menus:
   home: 首页
@@ -364,8 +366,6 @@ menu:
   directory: 目录
   menu: 菜单
   permissions: 权限
-  checkStrictly: 层级关联
-  checkUnStrictly: 层级独立
   associationModel: 关联模型
   exampleAssociationModel: 模型关联用与字段权限控制
   fixedTag: 固定标签页

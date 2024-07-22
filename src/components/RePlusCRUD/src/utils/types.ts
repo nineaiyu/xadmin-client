@@ -29,6 +29,7 @@ interface RePlusPageProps {
   auth: ApiAuthProps | any;
   selection?: boolean;
   operation?: boolean;
+  isTree?: boolean;
   localeName?: string;
   /**
    * PlusSearchProps

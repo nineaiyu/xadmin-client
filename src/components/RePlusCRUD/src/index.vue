@@ -17,6 +17,7 @@ const props = withDefaults(defineProps<RePlusPageProps>(), {
   localeName: "",
   selection: true,
   operation: true,
+  isTree: false,
   searchResultFormat: undefined,
   listColumnsFormat: undefined,
   detailColumnsFormat: undefined,
@@ -55,6 +56,7 @@ const {
   t,
   dataList,
   pageTitle,
+  treeProps,
   listColumns,
   selectedNum,
   defaultValue,
@@ -192,6 +194,7 @@ defineExpose({
           :pagination="tablePagination"
           :paginationSmall="size === 'small'"
           :size="size"
+          :tree-props="treeProps"
           adaptive
           align-whole="center"
           default-expand-all

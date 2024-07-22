@@ -159,6 +159,11 @@ watch(
           }"
           :loading="loading"
           :pagination="pagination"
+          :tree-props="
+            {
+              checkStrictly: true
+            } as any
+          "
           align-whole="center"
           border
           default-expand-all

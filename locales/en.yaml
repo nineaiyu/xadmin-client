@@ -198,6 +198,8 @@ buttons:
   selected: "{ count } items are selected"
   confirmDelete: Are you sure to delete this?
   confirmUpdate: Are you sure to update this?
+  checkStrictly: Hierarchical association
+  checkUnStrictly: Hierarchical independence
 
 menus:
   home: Home
@@ -364,8 +366,6 @@ menu:
   directory: Directory
   menu: Menu
   permissions: Permissions
-  checkStrictly: Hierarchical association
-  checkUnStrictly: Hierarchical independence
   associationModel: AssociationModel
   exampleAssociationModel: Model association is used with field permission control
   fixedTag: Fixed Tag

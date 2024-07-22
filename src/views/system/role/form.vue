@@ -241,8 +241,8 @@ function onReset() {
             >
               {{
                 checkStrictly
-                  ? t("menu.checkUnStrictly")
-                  : t("menu.checkStrictly")
+                  ? t("buttons.checkUnStrictly")
+                  : t("buttons.checkStrictly")
               }}
             </el-button>
           </el-dropdown-item>
