@@ -237,6 +237,9 @@ const handleOperation = (options: operationOptions) => {
     requestEnd
   } = options;
   console.log(2222222222, options);
+  console.log(333333333, apiReq);
+  console.log(4444444444, apiUrl);
+  console.log(5555555555555, row);
   if (!apiReq)
     switch (apiUrl.name) {
       case "create":
