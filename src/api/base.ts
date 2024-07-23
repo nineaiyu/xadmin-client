@@ -31,7 +31,7 @@ export class BaseRequest {
    *判断是否有文件类型数据，如果 有的话，使用form-data 上传
    */
   hasFileObject = (data?: object) => {
-    for (const item of Object.values(data)) {
+    for (const item of Object.values(data ?? {})) {
       if (File.prototype.isPrototypeOf(item)) return true;
       if (item instanceof Array) {
         for (const i of item) {
