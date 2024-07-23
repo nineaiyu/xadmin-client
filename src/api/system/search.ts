@@ -1,23 +1,6 @@
-import { http } from "@/utils/http";
-import type { ListResult } from "@/api/types";
+import { BaseApi } from "@/api/base";
 
-export const searchDeptListApi = (data?: object) => {
-  return http.request<ListResult>("get", "/api/system/search/depts", {
-    params: data
-  });
-};
-export const searchUserListApi = (data?: object) => {
-  return http.request<ListResult>("get", "/api/system/search/users", {
-    params: data
-  });
-};
-export const searchRoleListApi = (data?: object) => {
-  return http.request<ListResult>("get", "/api/system/search/roles", {
-    params: data
-  });
-};
-export const searchMenuListApi = (data?: object) => {
-  return http.request<ListResult>("get", "/api/system/search/menus", {
-    params: data
-  });
-};
+export const searchDeptApi = new BaseApi("/api/system/search/dept");
+export const searchUserApi = new BaseApi("/api/system/search/user");
+export const searchRoleApi = new BaseApi("/api/system/search/role");
+export const searchMenuApi = new BaseApi("/api/system/search/menu");

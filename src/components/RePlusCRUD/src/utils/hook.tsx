@@ -45,6 +45,7 @@ export function usePlusCRUDPage(
     api,
     auth,
     isTree,
+    immediate,
     pagination,
     localeName,
     addOrEditOptions,
@@ -62,7 +63,7 @@ export function usePlusCRUDPage(
   const route = useRoute();
   const { t, te } = useI18n();
   const dataList = ref([]);
-  const loadingStatus = ref(true);
+  const loadingStatus = ref(false);
   const treeProps = ref({
     hasChildren: "hasChildren",
     children: "children",
@@ -78,7 +79,8 @@ export function usePlusCRUDPage(
     pageSize: 15,
     currentPage: 1,
     pageSizes: [5, 10, 15, 30, 50, 100],
-    background: true
+    background: true,
+    size: "default"
   };
   if (isTree) {
     defaultPagination.pageSize = 1000;
@@ -108,6 +110,11 @@ export function usePlusCRUDPage(
       return t(route.meta.title);
     }
     return route.meta.title;
+  });
+
+  const tableBarData = ref({
+    size: "default",
+    dynamicColumns: listColumns.value
   });
 
   // 默认操作按钮
@@ -242,6 +249,12 @@ export function usePlusCRUDPage(
     searchFields.value = cloneDeep(defaultValue.value);
     tablePagination.value.pageSize = searchFields.value.size;
     tablePagination.value.currentPage = searchFields.value.page;
+  };
+
+  const handleTableBarChange = ({ dynamicColumns, size }) => {
+    tableBarData.value.dynamicColumns = dynamicColumns;
+    tableBarData.value.size = size;
+    tablePagination.value.size = size;
   };
 
   const handleReset = () => {
@@ -514,7 +527,9 @@ export function usePlusCRUDPage(
             searchFields.value[param] = parameter[param];
           });
         }
-        handleGetData();
+        if (immediate) {
+          handleGetData();
+        }
       }
     );
   });
@@ -527,6 +542,7 @@ export function usePlusCRUDPage(
     listColumns,
     selectedNum,
     defaultValue,
+    tableBarData,
     searchFields,
     searchColumns,
     loadingStatus,
@@ -542,6 +558,7 @@ export function usePlusCRUDPage(
     handleSizeChange,
     onSelectionCancel,
     handleCurrentChange,
+    handleTableBarChange,
     handleSelectionChange
   };
 }

@@ -28,8 +28,10 @@ interface RePlusPageProps {
   api: BaseApi;
   auth: ApiAuthProps | any;
   selection?: boolean;
+  immediate?: boolean;
   operation?: boolean;
   isTree?: boolean;
+  tableBar?: boolean;
   localeName?: string;
   /**
    * PlusSearchProps
@@ -61,7 +63,9 @@ interface RePlusPageProps {
    * @param params
    */
   beforeSearchSubmit?: <T = RecordType>(params: T) => T;
-  pagination?: Partial<PaginationProps>;
+  pagination?: Partial<PaginationProps> & {
+    size?: string;
+  };
   addOrEditOptions?: {
     title?: "";
     props?: Partial<formDialogOptions>;

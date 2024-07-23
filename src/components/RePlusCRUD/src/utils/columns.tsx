@@ -17,9 +17,9 @@ import {
   formatPublicLabels
 } from "./index";
 
-import SearchDepts from "@/views/system/base/searchDepts.vue";
-import SearchRoles from "@/views/system/base/searchRoles.vue";
-import SearchUsers from "@/views/system/base/searchUsers.vue";
+import SearchUser from "@/views/system/components/searchUser.vue";
+import SearchDept from "@/views/system/components/searchDept.vue";
+import SearchRole from "@/views/system/components/searchRole.vue";
 import uploadFile from "../components/uploadFile.vue";
 import { ElIcon, ElImage, ElLink } from "element-plus";
 import { Link } from "@element-plus/icons-vue";
@@ -27,15 +27,6 @@ import Info from "@iconify-icons/ri/question-line";
 import type { Mutable } from "@vueuse/core";
 import type { TableColumnRenderer } from "@pureadmin/table";
 import { isEmail, isNumber } from "@pureadmin/utils";
-
-/**
- * @description 定义自定义搜索模板
- */
-const apiSearchComponents = {
-  "api-search-depts": SearchDepts,
-  "api-search-roles": SearchRoles,
-  "api-search-users": SearchUsers
-};
 
 interface TableColumns {
   /** 是否隐藏 */
@@ -64,6 +55,15 @@ export interface CRUDColumn extends PlusColumn, TableColumns {
  * @description 用与通过api接口，获取对应的column, 进行前端渲染
  */
 export function useBaseColumns(localeName: string) {
+  /**
+   * @description 定义自定义搜索模板
+   */
+  const apiSearchComponents = {
+    "api-search-dept": SearchDept,
+    "api-search-role": SearchRole,
+    "api-search-user": SearchUser
+  };
+
   const addOrEditRules = ref({});
   const addOrEditColumns = ref([]);
   const addOrEditDefaultValue = ref({});
@@ -117,14 +117,24 @@ export function useBaseColumns(localeName: string) {
             }
           ];
           break;
+        case "select":
+          item.valueType = column.input_type;
+          item.fieldProps = {
+            teleported: false
+          };
+          break;
         case "select-multiple":
           item.valueType = "select";
           item.fieldProps = {
-            multiple: true
+            multiple: true,
+            teleported: false
           };
           break;
         case "select-ordering":
           item.valueType = "select";
+          item.fieldProps = {
+            teleported: false
+          };
           item.options = computed(() => {
             const options = formatAddOrEditOptions(column.choices);
             options?.forEach(option => {

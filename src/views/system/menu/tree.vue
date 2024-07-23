@@ -200,10 +200,10 @@ onMounted(() => {
     <el-card :body-style="{ padding: '8px' }">
       <div class="flex items-center h-[34px]">
         <p
-          :title="t('menu.menus')"
+          :title="t('systemMenu.menus')"
           class="flex-1 ml-2 font-bold text-base truncate"
         >
-          {{ t("menu.menus") }}
+          {{ t("systemMenu.menus") }}
         </p>
 
         <el-tooltip
@@ -241,7 +241,7 @@ onMounted(() => {
         </el-button>
         <el-input
           v-model="searchValue"
-          :placeholder="t('menu.verifyTitle')"
+          :placeholder="t('systemMenu.verifyTitle')"
           class="flex-1"
           clearable
           size="small"

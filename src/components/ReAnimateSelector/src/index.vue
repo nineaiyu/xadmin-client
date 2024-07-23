@@ -11,7 +11,7 @@ defineOptions({
 defineProps({
   placeholder: {
     type: String,
-    default: transformI18n($t("menu.verifyTransition"))
+    default: transformI18n($t("systemMenu.verifyTransition"))
   }
 });
 

@@ -54,7 +54,7 @@ const props = {
 export default defineComponent({
   name: "PureTableBar",
   props,
-  emits: ["refresh"],
+  emits: ["refresh", "change"],
   setup(props, { emit, slots, attrs }) {
     const size = ref("default");
     const loading = ref(false);
@@ -171,24 +171,44 @@ export default defineComponent({
     watch(props?.columns, () => {
       onReset();
     });
+
+    watch(
+      () => dynamicColumns.value,
+      () => {
+        emit("change", {
+          dynamicColumns: dynamicColumns.value,
+          size: size.value
+        });
+      },
+      { deep: true, immediate: true }
+    );
+
+    const sizeChange = (event, val) => {
+      event.stopPropagation();
+      size.value = val;
+      emit("change", {
+        dynamicColumns: dynamicColumns.value,
+        size: size.value
+      });
+    };
     const dropdown = {
       dropdown: () => (
-        <el-dropdown-menu class="translation">
+        <el-dropdown-menu class="translation" teleported={false}>
           <el-dropdown-item
             style={getDropdownItemStyle.value("large")}
-            onClick={() => (size.value = "large")}
+            onClick={event => sizeChange(event, "large")}
           >
             {t("tableBar.loose")}
           </el-dropdown-item>
           <el-dropdown-item
             style={getDropdownItemStyle.value("default")}
-            onClick={() => (size.value = "default")}
+            onClick={event => sizeChange(event, "default")}
           >
             {t("tableBar.default")}
           </el-dropdown-item>
           <el-dropdown-item
             style={getDropdownItemStyle.value("small")}
-            onClick={() => (size.value = "small")}
+            onClick={event => sizeChange(event, "small")}
           >
             {t("tableBar.compact")}
           </el-dropdown-item>
@@ -257,9 +277,17 @@ export default defineComponent({
       )
     };
 
+    const renderClass = computed(() => {
+      if (slots?.default) {
+        return ["w-[99/100]", "mt-2", "px-2", "pb-2", "bg-bg_color"];
+      } else {
+        return ["w-[99/100]", "mt-2", "px-2", "bg-bg_color"];
+      }
+    });
+
     return () => (
       <>
-        <div {...attrs} class="w-[99/100] mt-2 px-2 pb-2 bg-bg_color">
+        <div {...attrs} class={renderClass.value}>
           <div class="flex justify-between w-full h-[60px] p-4">
             {slots?.title ? (
               slots.title()
@@ -377,10 +405,11 @@ export default defineComponent({
               </el-popover>
             </div>
           </div>
-          {slots.default({
-            size: size.value,
-            dynamicColumns: dynamicColumns.value
-          })}
+          {slots?.default &&
+            slots?.default({
+              size: size.value,
+              dynamicColumns: dynamicColumns.value
+            })}
         </div>
       </>
     );

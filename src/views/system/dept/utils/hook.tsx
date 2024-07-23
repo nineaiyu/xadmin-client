@@ -46,6 +46,7 @@ export function useDept(tableRef: Ref) {
           break;
         case "name":
           column["minWidth"] = 200;
+          column["align"] = "left";
           break;
       }
     });
