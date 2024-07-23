@@ -39,6 +39,7 @@ export class BaseRequest {
         }
       }
     }
+    return false;
   };
 
   request<T>(
@@ -48,7 +49,9 @@ export class BaseRequest {
     url: string = null,
     axiosConfig: PureHttpRequestConfig = {}
   ) {
-    if (this.hasFileObject(data)) {
+    const hasFile = this.hasFileObject(data);
+    console.log(1111111111, hasFile, data);
+    if (hasFile) {
       axiosConfig = {
         ...axiosConfig,
         ...{
