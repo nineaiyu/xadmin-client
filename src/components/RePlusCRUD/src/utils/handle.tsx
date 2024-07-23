@@ -236,6 +236,7 @@ const handleOperation = (options: operationOptions) => {
     exception,
     requestEnd
   } = options;
+  console.log(2222222222, options);
   if (!apiReq)
     switch (apiUrl.name) {
       case "create":
@@ -255,24 +256,23 @@ const handleOperation = (options: operationOptions) => {
         break;
     }
 
-  apiReq &&
-    apiReq
-      .then((res: BaseResult) => {
-        if (res.code === 1000) {
-          showSuccessMsg && message(t("results.success"), { type: "success" });
-          success && success(res);
-        } else {
-          showFailedMsg &&
-            message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-          failed && failed(res);
-        }
-      })
-      .catch(err => {
-        exception && exception(err);
-      })
-      .finally(() => {
-        requestEnd && requestEnd(options);
-      });
+  apiReq
+    .then((res: BaseResult) => {
+      if (res.code === 1000) {
+        showSuccessMsg && message(t("results.success"), { type: "success" });
+        success && success(res);
+      } else {
+        showFailedMsg &&
+          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+        failed && failed(res);
+      }
+    })
+    .catch(err => {
+      exception && exception(err);
+    })
+    .finally(() => {
+      requestEnd && requestEnd(options);
+    });
 };
 
 interface changeOptions {
