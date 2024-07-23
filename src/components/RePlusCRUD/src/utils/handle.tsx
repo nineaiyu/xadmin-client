@@ -241,6 +241,7 @@ const handleOperation = (options: operationOptions) => {
   console.log(4444444444, apiUrl);
   console.log(5555555555555, row);
   console.log(66666666666, apiUrl?.name);
+  window.apiUrl = apiUrl;
   if (!apiReq)
     switch (apiUrl?.name) {
       case "create":
