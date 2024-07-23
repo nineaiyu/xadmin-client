@@ -209,12 +209,7 @@ const openFormDialog = (formOptions: formDialogOptions) => {
 
 interface operationOptions {
   t: Function;
-  apiReq?: Promise<any>;
-  apiUrl?: BaseApi | any;
-  row: {
-    pk?: string | number;
-    id?: string | number;
-  };
+  apiReq: Promise<any>;
   showSuccessMsg?: boolean;
   showFailedMsg?: boolean;
   success?: (res?: BaseResult) => void;
@@ -227,8 +222,6 @@ const handleOperation = (options: operationOptions) => {
   let {
     t,
     apiReq = undefined,
-    row,
-    apiUrl,
     showSuccessMsg = true,
     showFailedMsg = true,
     success,
@@ -236,34 +229,9 @@ const handleOperation = (options: operationOptions) => {
     exception,
     requestEnd
   } = options;
-  console.log(2222222222, options);
-  console.log(333333333, apiReq);
-  console.log(4444444444, apiUrl);
-  console.log(5555555555555, row);
-  console.log(66666666666, apiUrl?.name);
-  window.apiUrl = apiUrl;
-  if (!apiReq)
-    switch (apiUrl?.name) {
-      case "create":
-        apiReq = apiUrl(row);
-        break;
-      case "update":
-        apiReq = apiUrl(row?.pk ?? row?.id, row);
-        break;
-      case "patch":
-        apiReq = apiUrl(row?.pk ?? row?.id, row);
-        break;
-      case "batchDelete":
-        apiReq = apiUrl(row);
-        break;
-      default:
-        apiReq = apiUrl(row?.pk ?? row?.id);
-        break;
-    }
-  console.log(7777777777, apiReq);
 
   apiReq
-    .then((res: BaseResult) => {
+    ?.then((res: BaseResult) => {
       if (res.code === 1000) {
         showSuccessMsg && message(t("results.success"), { type: "success" });
         success && success(res);
@@ -338,7 +306,6 @@ const onSwitchChange = (changeOptions: changeOptions) => {
       handleOperation({
         t,
         apiReq: updateApi(row?.pk ?? row?.id, updateData),
-        row,
         requestEnd(options) {
           switchLoadMap.value[index] = Object.assign(
             {},

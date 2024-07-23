@@ -15,7 +15,6 @@ import {
   renderSwitch,
   handleOperation,
   openFormDialog,
-  type operationOptions,
   handleExportData,
   handleImportData
 } from "./handle";
@@ -294,11 +293,10 @@ export function usePlusCRUDPage(
   };
 
   // 删除
-  const handleDelete = (row: operationOptions["row"], requestEnd) => {
+  const handleDelete = (row, requestEnd) => {
     handleOperation({
       t,
-      row,
-      apiUrl: api.delete,
+      apiReq: api.delete(row?.pk ?? row?.id),
       success() {
         handleGetData();
       },
@@ -315,8 +313,7 @@ export function usePlusCRUDPage(
 
     handleOperation({
       t,
-      row: getSelectPks("pk") as object,
-      apiUrl: api.batchDelete,
+      apiReq: api.batchDelete(getSelectPks("pk")),
       showSuccessMsg: false,
       success() {
         message(t("results.batchDelete", { count: selectedNum.value }), {
@@ -359,20 +356,18 @@ export function usePlusCRUDPage(
         rules: addOrEditRules.value
       },
       saveCallback: ({ formData, done, dialogOptions, formOptions }) => {
-        let apiUrl: any = api.update;
+        let apiReq = undefined;
         if (isAdd) {
-          apiUrl = api.create;
-        }
-        if (apiUrl.length === 3) {
-          apiUrl = apiUrl(row, isAdd, formData);
+          apiReq = api.create(formData);
+        } else {
+          apiReq = api.update(formData?.pk ?? formData?.id, formData);
         }
         handleOperation({
           t,
           apiReq:
-            addOrEditOptions?.apiReq &&
-            addOrEditOptions?.apiReq({ ...formOptions, formData }),
-          row: formData,
-          apiUrl,
+            (addOrEditOptions?.apiReq &&
+              addOrEditOptions?.apiReq({ ...formOptions, formData })) ||
+            apiReq,
           success() {
             done();
             handleGetData();

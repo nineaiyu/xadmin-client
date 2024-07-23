@@ -147,7 +147,6 @@ export function useDept(tableRef: Ref) {
             rules: formData.rules,
             mode_type: formData.mode_type
           }),
-          row: formData,
           success() {
             done();
             tableRef.value.handleGetData();
