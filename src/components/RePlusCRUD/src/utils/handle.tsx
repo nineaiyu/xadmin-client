@@ -209,12 +209,7 @@ const openFormDialog = (formOptions: formDialogOptions) => {
 
 interface operationOptions {
   t: Function;
-  apiReq?: Promise<any>;
-  apiUrl?: BaseApi | any;
-  row: {
-    pk?: string | number;
-    id?: string | number;
-  };
+  apiReq: Promise<any>;
   showSuccessMsg?: boolean;
   showFailedMsg?: boolean;
   success?: (res?: BaseResult) => void;
@@ -227,8 +222,6 @@ const handleOperation = (options: operationOptions) => {
   let {
     t,
     apiReq = undefined,
-    row,
-    apiUrl,
     showSuccessMsg = true,
     showFailedMsg = true,
     success,
@@ -236,43 +229,24 @@ const handleOperation = (options: operationOptions) => {
     exception,
     requestEnd
   } = options;
-  if (!apiReq)
-    switch (apiUrl.name) {
-      case "create":
-        apiReq = apiUrl(row);
-        break;
-      case "update":
-        apiReq = apiUrl(row?.pk ?? row?.id, row);
-        break;
-      case "patch":
-        apiReq = apiUrl(row?.pk ?? row?.id, row);
-        break;
-      case "batchDelete":
-        apiReq = apiUrl(row);
-        break;
-      default:
-        apiReq = apiUrl(row?.pk ?? row?.id);
-        break;
-    }
 
-  apiReq &&
-    apiReq
-      .then((res: BaseResult) => {
-        if (res.code === 1000) {
-          showSuccessMsg && message(t("results.success"), { type: "success" });
-          success && success(res);
-        } else {
-          showFailedMsg &&
-            message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-          failed && failed(res);
-        }
-      })
-      .catch(err => {
-        exception && exception(err);
-      })
-      .finally(() => {
-        requestEnd && requestEnd(options);
-      });
+  apiReq
+    ?.then((res: BaseResult) => {
+      if (res.code === 1000) {
+        showSuccessMsg && message(t("results.success"), { type: "success" });
+        success && success(res);
+      } else {
+        showFailedMsg &&
+          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+        failed && failed(res);
+      }
+    })
+    .catch(err => {
+      exception && exception(err);
+    })
+    .finally(() => {
+      requestEnd && requestEnd(options);
+    });
 };
 
 interface changeOptions {
@@ -332,7 +306,6 @@ const onSwitchChange = (changeOptions: changeOptions) => {
       handleOperation({
         t,
         apiReq: updateApi(row?.pk ?? row?.id, updateData),
-        row,
         requestEnd(options) {
           switchLoadMap.value[index] = Object.assign(
             {},

@@ -27,12 +27,11 @@ export function useModelField(tableRef: Ref) {
           plain: true,
           icon: useRenderIcon("ep:money")
         },
-        onClick: ({ row, loading }) => {
+        onClick: ({ loading }) => {
           loading.value = true;
           handleOperation({
             t,
-            row,
-            apiUrl: api.sync,
+            apiReq: api.sync(),
             success() {
               tableRef.value.handleGetData();
             },

@@ -39,8 +39,7 @@ export function useSystemConfig(tableRef: Ref) {
           loading.value = true;
           handleOperation({
             t,
-            row,
-            apiUrl: api.invalid,
+            apiReq: api.invalid(row?.pk ?? row?.id),
             success() {
               tableRef.value.handleGetData();
             },

@@ -39,6 +39,7 @@ export class BaseRequest {
         }
       }
     }
+    return false;
   };
 
   request<T>(
