@@ -1,6 +1,6 @@
 {
   "name": "xadmin",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -46,7 +46,6 @@
     "url": "https://github.com/nineaiyu/"
   },
   "dependencies": {
-    "@pureadmin/descriptions": "^1.2.1",
     "@pureadmin/table": "^3.1.2",
     "@pureadmin/utils": "^2.4.7",
     "@vueuse/core": "^10.11.0",
@@ -61,7 +60,7 @@
     "crypto-js": "^4.2.0",
     "dayjs": "^1.11.12",
     "echarts": "^5.5.1",
-    "element-plus": "^2.7.7",
+    "element-plus": "http://qiniu.cdn.xadmin.dvcloud.xin/element-plus-2.7.7.tar.gz",
     "js-cookie": "^3.0.5",
     "localforage": "^1.10.0",
     "mitt": "^3.0.1",
@@ -76,7 +75,7 @@
     "sortablejs": "^1.15.2",
     "typeit": "^8.8.3",
     "version-rocket": "^1.7.1",
-    "vue": "^3.4.32",
+    "vue": "^3.4.33",
     "vue-i18n": "^9.13.1",
     "vue-json-pretty": "^2.4.0",
     "vue-router": "^4.4.0",
@@ -102,8 +101,8 @@
     "@types/nprogress": "0.2.3",
     "@types/qs": "^6.9.15",
     "@types/sortablejs": "^1.15.8",
-    "@typescript-eslint/eslint-plugin": "^7.16.1",
-    "@typescript-eslint/parser": "^7.16.1",
+    "@typescript-eslint/eslint-plugin": "^7.17.0",
+    "@typescript-eslint/parser": "^7.17.0",
     "@vitejs/plugin-vue": "^5.0.5",
     "@vitejs/plugin-vue-jsx": "^4.0.0",
     "autoprefixer": "^10.4.19",
@@ -132,7 +131,7 @@
     "stylelint-prettier": "^5.0.2",
     "svgo": "^3.3.2",
     "tailwindcss": "^3.4.6",
-    "typescript": "5.5.3",
+    "typescript": "5.5.4",
     "vite": "^5.3.4",
     "vite-plugin-cdn-import": "^1.0.1",
     "vite-plugin-checker": "^0.7.2",
@@ -144,7 +143,7 @@
     "vite-plugin-vue-inspector": "^5.1.2",
     "vite-svg-loader": "^5.1.0",
     "vue-eslint-parser": "^9.4.3",
-    "vue-tsc": "^2.0.26"
+    "vue-tsc": "^2.0.28"
   },
   "engines": {
     "node": "^18.18.0 || ^20.9.0 || >=21.1.0",

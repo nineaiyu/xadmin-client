@@ -26,12 +26,11 @@ const {
     ref="tableRef"
     :api="api"
     :auth="auth"
+    :isTree="true"
     :addOrEditOptions="addOrEditOptions"
     :baseColumnsFormat="baseColumnsFormat"
     :listColumnsFormat="listColumnsFormat"
     :operationButtonsProps="operationButtonsProps"
-    :pagination="{ pageSize: 1000, pageSizes: [100, 500, 1000] }"
-    :searchResultFormat="data => handleTree(data)"
     locale-name="systemDept"
   />
 </template>

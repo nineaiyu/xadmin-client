@@ -54,6 +54,7 @@ export function useOperationLog() {
           column["descriptionsItemProps"] = {
             span: 2
           };
+          // column["valueType"] = "copy";
           column["renderDescriptionsItem"] = ({ row }) => {
             let data = row[column._column?.key];
             try {

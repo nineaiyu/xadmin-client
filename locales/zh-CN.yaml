@@ -198,6 +198,8 @@ buttons:
   selected: "已选 { count } 项"
   confirmDelete: 确定删除该数据吗？
   confirmUpdate: 确定更新该数据吗？
+  checkStrictly: 层级关联
+  checkUnStrictly: 层级独立
 
 menus:
   home: 首页
@@ -321,7 +323,7 @@ systemRole:
   menuTitle: 请输入菜单标题
   menu: 菜单权限
 
-menu:
+systemMenu:
   menus: 菜单
   type: 类型
   title: 名称
@@ -342,7 +344,7 @@ menu:
   verifyExampleExternalLink: "默认为空，除非有外链"
   exampleAnimation: "内嵌的iframe页面开启首次加载动画"
   examplePermissionCode: "控制器中定义的权限字符，如：PreAuthorize(`permission.hashPermission('menu:query')`)"
-  routePath: 路由地址
+  path: 路由地址
   verifyType: 请选择菜单类型
   verifyTitle: 请输入菜单标题
   verifyPath: 请输入路由地址
@@ -364,8 +366,6 @@ menu:
   directory: 目录
   menu: 菜单
   permissions: 权限
-  checkStrictly: 层级关联
-  checkUnStrictly: 层级独立
   associationModel: 关联模型
   exampleAssociationModel: 模型关联用与字段权限控制
   fixedTag: 固定标签页

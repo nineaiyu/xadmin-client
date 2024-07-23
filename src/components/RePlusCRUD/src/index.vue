@@ -14,8 +14,11 @@ import ButtonOperation, {
 
 const props = withDefaults(defineProps<RePlusPageProps>(), {
   api: undefined,
+  isTree: false,
+  tableBar: true,
   localeName: "",
   selection: true,
+  immediate: true,
   operation: true,
   searchResultFormat: undefined,
   listColumnsFormat: undefined,
@@ -55,9 +58,11 @@ const {
   t,
   dataList,
   pageTitle,
+  treeProps,
   listColumns,
   selectedNum,
   defaultValue,
+  tableBarData,
   searchFields,
   searchColumns,
   loadingStatus,
@@ -73,6 +78,7 @@ const {
   handleSizeChange,
   onSelectionCancel,
   handleCurrentChange,
+  handleTableBarChange,
   handleSelectionChange
 } = usePlusCRUDPage(emit, tableRef, props);
 
@@ -92,7 +98,7 @@ defineExpose({
 
 <template>
   <div v-if="auth?.list" class="main">
-    <div class="search-form bg-bg_color w-[99/100] pl-8 pr-8 pt-[12px]">
+    <div class="bg-bg_color w-[99/100] pl-8 pr-8 pt-[12px] search-form">
       <PlusSearch
         v-model="searchFields"
         :col-props="{
@@ -127,7 +133,12 @@ defineExpose({
         @keyup.enter="handleSearch"
       />
     </div>
-    <PureTableBar :columns="listColumns" @refresh="handleGetData">
+    <PureTableBar
+      v-if="tableBar"
+      :columns="listColumns"
+      @refresh="handleGetData"
+      @change="handleTableBarChange"
+    >
       <template #title>
         <el-space>
           <p class="font-bold truncate">
@@ -178,57 +189,56 @@ defineExpose({
           <slot name="barButtons" />
         </el-space>
       </template>
-      <template v-slot="{ size, dynamicColumns }">
-        <pure-table
-          ref="tableRef"
-          :adaptiveConfig="{ offsetBottom: 108 }"
-          :columns="dynamicColumns"
-          :data="dataList"
-          :header-cell-style="{
-            background: 'var(--el-table-row-hover-bg-color)',
-            color: 'var(--el-text-color-primary)'
-          }"
-          :loading="loadingStatus"
-          :pagination="tablePagination"
-          :paginationSmall="size === 'small'"
-          :size="size"
-          adaptive
-          align-whole="center"
-          default-expand-all
-          row-key="pk"
-          showOverflowTooltip
-          table-layout="auto"
-          v-bind="pureTableProps"
-          @selection-change="handleSelectionChange"
-          @page-size-change="handleSizeChange"
-          @page-current-change="handleCurrentChange"
-        >
-          <template #operation="{ row }">
-            <button-operation
-              :row="row"
-              :size="size"
-              v-bind="operationButtonsProps"
-              :buttons="operationButtons"
-              @clickAction="
-                data => {
-                  emit('operationClickAction', data);
-                }
-              "
-            />
-            <slot name="extOperation" v-bind="{ row, size }" />
-          </template>
-          <template
-            v-for="item in getKeyList(listColumns, 'slot').filter(x => {
-              return x !== 'operation';
-            })"
-            :key="item"
-            #[item]="{ row, size }"
-          >
-            <slot :key="item" :name="item" v-bind="{ row, size }" />
-          </template>
-        </pure-table>
-      </template>
     </PureTableBar>
+    <pure-table
+      ref="tableRef"
+      class="w-[99/100] px-2 pb-2 bg-bg_color"
+      :adaptiveConfig="{ offsetBottom: 110 }"
+      :columns="tableBarData.dynamicColumns"
+      :data="dataList"
+      :header-cell-style="{
+        background: 'var(--el-table-row-hover-bg-color)',
+        color: 'var(--el-text-color-primary)'
+      }"
+      :loading="loadingStatus"
+      :pagination="tablePagination"
+      :size="tableBarData.size as any"
+      :tree-props="treeProps"
+      adaptive
+      align-whole="center"
+      default-expand-all
+      row-key="pk"
+      showOverflowTooltip
+      table-layout="auto"
+      v-bind="pureTableProps"
+      @selection-change="handleSelectionChange"
+      @page-size-change="handleSizeChange"
+      @page-current-change="handleCurrentChange"
+    >
+      <template #operation="{ row }">
+        <button-operation
+          :row="row"
+          :size="tableBarData.size as any"
+          v-bind="operationButtonsProps"
+          :buttons="operationButtons"
+          @clickAction="
+            data => {
+              emit('operationClickAction', data);
+            }
+          "
+        />
+        <slot name="extOperation" v-bind="{ row, size: tableBarData.size }" />
+      </template>
+      <template
+        v-for="item in getKeyList(listColumns, 'slot').filter(x => {
+          return x !== 'operation';
+        })"
+        :key="item"
+        #[item]="{ row, size }"
+      >
+        <slot :key="item" :name="item" v-bind="{ row, size }" />
+      </template>
+    </pure-table>
   </div>
 </template>
 

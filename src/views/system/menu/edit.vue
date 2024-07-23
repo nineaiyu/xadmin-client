@@ -146,14 +146,14 @@ defineExpose({ getRef });
       class="search-form bg-bg_color w-[90%] pl-8 pt-[12px]"
       label-width="120px"
     >
-      <el-form-item :label="t('menu.type')" prop="menu_type">
+      <el-form-item :label="t('systemMenu.type')" prop="menu_type">
         <Segmented
           v-model="newFormInline.menu_type"
           :options="menuOptions"
           @change="onChange"
         />
       </el-form-item>
-      <el-form-item :label="t('menu.parentNode')" prop="parentId">
+      <el-form-item :label="t('systemMenu.parentNode')" prop="parentId">
         <el-tree-select
           ref="treeSelectRef"
           v-model="newFormInline.parent"
@@ -192,76 +192,76 @@ defineExpose({ getRef });
         </el-tree-select>
       </el-form-item>
       <div v-if="newFormInline.menu_type !== MenuChoices.PERMISSION">
-        <el-form-item :label="t('menu.title')" prop="title">
+        <el-form-item :label="t('systemMenu.title')" prop="title">
           <el-input
             v-model="newFormInline.title"
-            :placeholder="t('menu.verifyTitle')"
+            :placeholder="t('systemMenu.verifyTitle')"
             clearable
           />
         </el-form-item>
-        <el-form-item :label="t('menu.icon')" prop="icon">
+        <el-form-item :label="t('systemMenu.icon')" prop="icon">
           <icon-select v-model="newFormInline.meta.icon" />
         </el-form-item>
         <div v-if="newFormInline.menu_type === MenuChoices.MENU">
-          <el-form-item :label="t('menu.transitionEnter')" prop="icon">
+          <el-form-item :label="t('systemMenu.transitionEnter')" prop="icon">
             <ReAnimateSelector v-model="newFormInline.meta.transition_enter" />
           </el-form-item>
 
-          <el-form-item :label="t('menu.transitionLeave')" prop="icon">
+          <el-form-item :label="t('systemMenu.transitionLeave')" prop="icon">
             <ReAnimateSelector
               v-model="newFormInline.meta.transition_leave"
               :disabled="!newFormInline.meta.transition_enter"
             />
           </el-form-item>
         </div>
-        <el-form-item :label="t('menu.componentName')" prop="name">
+        <el-form-item :label="t('systemMenu.componentName')" prop="name">
           <template #label>
             <from-question
-              :description="t('menu.exampleComponentName')"
-              :label="t('menu.componentName')"
+              :description="t('systemMenu.exampleComponentName')"
+              :label="t('systemMenu.componentName')"
             />
           </template>
           <el-input
             v-model="newFormInline.name"
-            :placeholder="t('menu.componentName')"
+            :placeholder="t('systemMenu.componentName')"
             clearable
           />
         </el-form-item>
-        <el-form-item :label="t('menu.routePath')" prop="path">
+        <el-form-item :label="t('systemMenu.path')" prop="path">
           <template #label>
             <from-question
-              :description="t('menu.exampleRoutePath')"
-              :label="t('menu.routePath')"
+              :description="t('systemMenu.exampleRoutePath')"
+              :label="t('systemMenu.path')"
             />
           </template>
           <el-input
             v-model="newFormInline.path"
-            :placeholder="t('menu.verifyPath')"
+            :placeholder="t('systemMenu.verifyPath')"
             clearable
           />
         </el-form-item>
       </div>
       <div v-if="newFormInline.menu_type === MenuChoices.MENU">
-        <el-form-item :label="t('menu.componentPath')" prop="component">
+        <el-form-item :label="t('systemMenu.componentPath')" prop="component">
           <template #label>
             <from-question
-              :description="t('menu.exampleComponentPath')"
-              :label="t('menu.componentPath')"
+              :description="t('systemMenu.exampleComponentPath')"
+              :label="t('systemMenu.componentPath')"
             />
           </template>
           <el-input
             v-model="newFormInline.component"
-            :placeholder="t('menu.verifyComponentPath')"
+            :placeholder="t('systemMenu.verifyComponentPath')"
             clearable
           />
         </el-form-item>
 
         <el-divider />
-        <el-form-item :label="t('menu.cache')" prop="keepAlive">
+        <el-form-item :label="t('systemMenu.cache')" prop="keepAlive">
           <template #label>
             <from-question
-              :description="t('menu.exampleCache')"
-              :label="t('menu.cache')"
+              :description="t('systemMenu.exampleCache')"
+              :label="t('systemMenu.cache')"
             />
           </template>
           <Segmented
@@ -274,7 +274,7 @@ defineExpose({ getRef });
             "
           />
         </el-form-item>
-        <el-form-item :label="t('menu.showParentMenu')" prop="showParent">
+        <el-form-item :label="t('systemMenu.showParentMenu')" prop="showParent">
           <Segmented
             :modelValue="newFormInline.meta.is_show_parent ? 0 : 1"
             :options="ifEnableOptions"
@@ -290,11 +290,11 @@ defineExpose({ getRef });
         <el-divider />
         <el-row>
           <el-col :span="12">
-            <el-form-item :label="t('menu.showLink')" prop="showLink">
+            <el-form-item :label="t('systemMenu.showLink')" prop="showLink">
               <template #label>
                 <from-question
-                  :description="t('menu.exampleShowLink')"
-                  :label="t('menu.showLink')"
+                  :description="t('systemMenu.exampleShowLink')"
+                  :label="t('systemMenu.showLink')"
                 />
               </template>
               <Segmented
@@ -312,7 +312,7 @@ defineExpose({ getRef });
             <el-form-item :label="t('labels.status')" prop="is_active">
               <template #label>
                 <from-question
-                  :description="t('menu.exampleMenuStatus')"
+                  :description="t('systemMenu.exampleMenuStatus')"
                   :label="t('labels.status')"
                 />
               </template>
@@ -328,11 +328,11 @@ defineExpose({ getRef });
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item :label="t('menu.fixedTag')" prop="fixedTag">
+            <el-form-item :label="t('systemMenu.fixedTag')" prop="fixedTag">
               <template #label>
                 <from-question
-                  :description="t('menu.fixedTagTip')"
-                  :label="t('menu.fixedTag')"
+                  :description="t('systemMenu.fixedTagTip')"
+                  :label="t('systemMenu.fixedTag')"
                 />
               </template>
               <Segmented
@@ -347,11 +347,11 @@ defineExpose({ getRef });
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item :label="t('menu.hiddenTag')" prop="hiddenTag">
+            <el-form-item :label="t('systemMenu.hiddenTag')" prop="hiddenTag">
               <template #label>
                 <from-question
-                  :description="t('menu.hiddenTagTip')"
-                  :label="t('menu.hiddenTag')"
+                  :description="t('systemMenu.hiddenTagTip')"
+                  :label="t('systemMenu.hiddenTag')"
                 />
               </template>
               <Segmented
@@ -368,24 +368,24 @@ defineExpose({ getRef });
         </el-row>
 
         <el-divider />
-        <el-form-item :label="t('menu.externalLink')" prop="isFrame">
+        <el-form-item :label="t('systemMenu.externalLink')" prop="isFrame">
           <template #label>
             <from-question
-              :description="t('menu.exampleExternalLink')"
-              :label="t('menu.externalLink')"
+              :description="t('systemMenu.exampleExternalLink')"
+              :label="t('systemMenu.externalLink')"
             />
           </template>
           <el-input
             v-model="newFormInline.meta.frame_url"
-            :placeholder="t('menu.verifyExampleExternalLink')"
+            :placeholder="t('systemMenu.verifyExampleExternalLink')"
             clearable
           />
         </el-form-item>
-        <el-form-item :label="t('menu.animation')" prop="frameLoading">
+        <el-form-item :label="t('systemMenu.animation')" prop="frameLoading">
           <template #label>
             <from-question
-              :description="t('menu.exampleAnimation')"
-              :label="t('menu.animation')"
+              :description="t('systemMenu.exampleAnimation')"
+              :label="t('systemMenu.animation')"
             />
           </template>
           <Segmented
@@ -400,27 +400,27 @@ defineExpose({ getRef });
         </el-form-item>
       </div>
       <div v-if="newFormInline.menu_type === MenuChoices.PERMISSION">
-        <el-form-item :label="t('menu.permissionName')" prop="title">
+        <el-form-item :label="t('systemMenu.permissionName')" prop="title">
           <el-input
             v-model="newFormInline.title"
-            :placeholder="t('menu.verifyPermissionName')"
+            :placeholder="t('systemMenu.verifyPermissionName')"
             clearable
           />
         </el-form-item>
-        <el-form-item :label="t('menu.permissionCode')" prop="name">
+        <el-form-item :label="t('systemMenu.permissionCode')" prop="name">
           <template #label>
             <from-question
-              :description="t('menu.examplePermissionCode')"
-              :label="t('menu.permissionCode')"
+              :description="t('systemMenu.examplePermissionCode')"
+              :label="t('systemMenu.permissionCode')"
             />
           </template>
           <el-input
             v-model="newFormInline.name"
-            :placeholder="t('menu.verifyPermissionCode')"
+            :placeholder="t('systemMenu.verifyPermissionCode')"
             clearable
           />
         </el-form-item>
-        <el-form-item :label="t('menu.permissionPath')" prop="path">
+        <el-form-item :label="t('systemMenu.permissionPath')" prop="path">
           <el-select
             v-model="newFormInline.path"
             class="w-full"
@@ -435,11 +435,11 @@ defineExpose({ getRef });
             />
           </el-select>
         </el-form-item>
-        <el-form-item :label="t('menu.associationModel')" prop="model">
+        <el-form-item :label="t('systemMenu.associationModel')" prop="model">
           <template #label>
             <from-question
-              :description="t('menu.exampleAssociationModel')"
-              :label="t('menu.associationModel')"
+              :description="t('systemMenu.exampleAssociationModel')"
+              :label="t('systemMenu.associationModel')"
             />
           </template>
           <el-select
@@ -459,7 +459,7 @@ defineExpose({ getRef });
             />
           </el-select>
         </el-form-item>
-        <el-form-item :label="t('menu.requestMethod')" prop="method">
+        <el-form-item :label="t('systemMenu.requestMethod')" prop="method">
           <el-select
             v-model="newFormInline.method"
             class="!w-[180px]"
@@ -477,7 +477,7 @@ defineExpose({ getRef });
         <el-form-item :label="t('labels.status')" prop="is_active">
           <template #label>
             <from-question
-              :description="t('menu.exampleRequestStatus')"
+              :description="t('systemMenu.exampleRequestStatus')"
               :label="t('labels.status')"
             />
           </template>

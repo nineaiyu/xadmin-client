@@ -6,17 +6,17 @@ import { FormProps } from "./utils/types";
 import { message } from "@/utils/message";
 import { FieldKeyChoices } from "@/views/system/constants";
 import { hasGlobalAuth } from "@/router/utils";
-import SearchUsers from "@/views/system/base/searchUsers.vue";
 import { watchDeep } from "@vueuse/core";
-import SearchDepts from "@/views/system/base/searchDepts.vue";
-import SearchRoles from "@/views/system/base/searchRoles.vue";
-import SearchMenus from "@/views/system/base/searchMenus.vue";
 import ReCol from "@/components/ReCol";
 import { modelLabelFieldApi } from "@/api/system/field";
 import {
   getDateTimePickerShortcuts,
   getPickerShortcuts
 } from "@/views/system/utils";
+import SearchUser from "@/views/system/components/searchUser.vue";
+import SearchDept from "@/views/system/components/searchDept.vue";
+import SearchRole from "@/views/system/components/searchRole.vue";
+import SearchMenu from "@/views/system/components/searchMenu.vue";
 
 const props = withDefaults(defineProps<FormProps>(), {
   valuesData: () => [],
@@ -216,44 +216,44 @@ defineExpose({ getRef });
         <el-form-item
           v-if="
             newFormInline.type === FieldKeyChoices.TABLE_USER &&
-            hasGlobalAuth('list:systemSearchUsers')
+            hasGlobalAuth('list:systemSearchUser')
           "
           :label="t('systemPermission.notice_user')"
           prop="notice_user"
         >
-          <search-users v-model="tableData" />
+          <SearchUser v-model="tableData" />
         </el-form-item>
 
         <el-form-item
           v-if="
             newFormInline.type === FieldKeyChoices.TABLE_DEPT &&
-            hasGlobalAuth('list:systemSearchDepts')
+            hasGlobalAuth('list:systemSearchDept')
           "
           :label="t('systemPermission.notice_dept')"
           prop="notice_dept"
         >
-          <search-depts v-model="tableData" />
+          <SearchDept v-model="tableData" />
         </el-form-item>
         <el-form-item
           v-if="
             newFormInline.type === FieldKeyChoices.TABLE_ROLE &&
-            hasGlobalAuth('list:systemSearchRoles')
+            hasGlobalAuth('list:systemSearchRole')
           "
           :label="t('systemPermission.notice_role')"
           prop="notice_role"
         >
-          <search-roles v-model="tableData" />
+          <SearchRole v-model="tableData" />
         </el-form-item>
 
         <el-form-item
           v-if="
             newFormInline.type === FieldKeyChoices.TABLE_MENU &&
-            hasGlobalAuth('list:systemSearchMenus')
+            hasGlobalAuth('list:systemSearchMenu')
           "
           :label="t('systemPermission.notice_menu')"
           prop="notice_menu"
         >
-          <search-menus v-model="tableData" />
+          <SearchMenu v-model="tableData" />
         </el-form-item>
       </re-col>
       <re-col :sm="24" :value="24" :xs="24">

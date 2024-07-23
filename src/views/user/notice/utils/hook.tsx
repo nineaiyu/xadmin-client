@@ -9,7 +9,7 @@ import { useUserStoreHook } from "@/store/modules/user";
 import { hasAuth } from "@/router/utils";
 import type { CRUDColumn, OperationProps } from "@/components/RePlusCRUD";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import noticeShowForm from "@/views/publicComponents/noticeShow.vue";
+import noticeShowForm from "@/views/system/components/noticeShow.vue";
 
 import Success from "@iconify-icons/ep/success-filled";
 

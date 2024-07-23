@@ -132,7 +132,7 @@ function nodeClick(value) {
 function toggleRowExpansionAll(status) {
   isExpand.value = status;
   const nodes = (proxy.$refs["treeRef"] as any)?.store._getAllNodes();
-  for (let i = 0; i < nodes.length; i++) {
+  for (let i = 0; i < nodes?.length; i++) {
     nodes[i].expanded = status;
   }
 }
@@ -200,10 +200,10 @@ onMounted(() => {
     <el-card :body-style="{ padding: '8px' }">
       <div class="flex items-center h-[34px]">
         <p
-          :title="t('menu.menus')"
+          :title="t('systemMenu.menus')"
           class="flex-1 ml-2 font-bold text-base truncate"
         >
-          {{ t("menu.menus") }}
+          {{ t("systemMenu.menus") }}
         </p>
 
         <el-tooltip
@@ -241,7 +241,7 @@ onMounted(() => {
         </el-button>
         <el-input
           v-model="searchValue"
-          :placeholder="t('menu.verifyTitle')"
+          :placeholder="t('systemMenu.verifyTitle')"
           class="flex-1"
           clearable
           size="small"
@@ -286,8 +286,8 @@ onMounted(() => {
                 >
                   {{
                     checkStrictly
-                      ? t("menu.checkUnStrictly")
-                      : t("menu.checkStrictly")
+                      ? t("buttons.checkUnStrictly")
+                      : t("buttons.checkStrictly")
                   }}
                 </el-button>
               </el-dropdown-item>

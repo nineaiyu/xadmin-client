@@ -34,6 +34,7 @@ import Upload from "@iconify-icons/ep/upload";
 import Download from "@iconify-icons/ep/download";
 import EditPen from "@iconify-icons/ep/edit-pen";
 import AddFill from "@iconify-icons/ri/add-circle-line";
+import { handleTree } from "@/utils/tree";
 
 export function usePlusCRUDPage(
   emit: any,
@@ -43,6 +44,8 @@ export function usePlusCRUDPage(
   const {
     api,
     auth,
+    isTree,
+    immediate,
     pagination,
     localeName,
     addOrEditOptions,
@@ -60,7 +63,12 @@ export function usePlusCRUDPage(
   const route = useRoute();
   const { t, te } = useI18n();
   const dataList = ref([]);
-  const loadingStatus = ref(true);
+  const loadingStatus = ref(false);
+  const treeProps = ref({
+    hasChildren: "hasChildren",
+    children: "children",
+    checkStrictly: isTree
+  });
   const selectedNum = ref(0);
   const defaultValue = ref({});
   const switchLoadMap = ref({});
@@ -71,8 +79,13 @@ export function usePlusCRUDPage(
     pageSize: 15,
     currentPage: 1,
     pageSizes: [5, 10, 15, 30, 50, 100],
-    background: true
+    background: true,
+    size: "default"
   };
+  if (isTree) {
+    defaultPagination.pageSize = 1000;
+    defaultPagination.pageSizes = [100, 500, 1000];
+  }
   const tablePagination = ref<RePlusPageProps["pagination"]>({
     ...defaultPagination,
     ...pagination
@@ -97,6 +110,11 @@ export function usePlusCRUDPage(
       return t(route.meta.title);
     }
     return route.meta.title;
+  });
+
+  const tableBarData = ref({
+    size: "default",
+    dynamicColumns: listColumns.value
   });
 
   // 默认操作按钮
@@ -158,6 +176,22 @@ export function usePlusCRUDPage(
 
   defaultTableBarButtons.value = [
     {
+      text: computed(() =>
+        treeProps.value.checkStrictly
+          ? t("buttons.checkUnStrictly")
+          : t("buttons.checkStrictly")
+      ),
+      code: "checkStrictly",
+      props: {
+        type: "success",
+        plain: true
+      },
+      onClick: () => {
+        treeProps.value.checkStrictly = !treeProps.value.checkStrictly;
+      },
+      show: isTree && -30
+    },
+    {
       text: t("buttons.add"),
       code: "create",
       props: {
@@ -215,6 +249,12 @@ export function usePlusCRUDPage(
     searchFields.value = cloneDeep(defaultValue.value);
     tablePagination.value.pageSize = searchFields.value.size;
     tablePagination.value.currentPage = searchFields.value.page;
+  };
+
+  const handleTableBarChange = ({ dynamicColumns, size }) => {
+    tableBarData.value.dynamicColumns = dynamicColumns;
+    tableBarData.value.size = size;
+    tablePagination.value.size = size;
   };
 
   const handleReset = () => {
@@ -446,7 +486,9 @@ export function usePlusCRUDPage(
           if (searchResultFormat && typeof searchResultFormat === "function") {
             dataList.value = searchResultFormat(res.data.results);
           } else {
-            dataList.value = res.data.results;
+            dataList.value = isTree
+              ? handleTree(res.data.results)
+              : res.data.results;
           }
           tablePagination.value.total = res.data.total;
         } else {
@@ -485,7 +527,9 @@ export function usePlusCRUDPage(
             searchFields.value[param] = parameter[param];
           });
         }
-        handleGetData();
+        if (immediate) {
+          handleGetData();
+        }
       }
     );
   });
@@ -494,9 +538,11 @@ export function usePlusCRUDPage(
     t,
     dataList,
     pageTitle,
+    treeProps,
     listColumns,
     selectedNum,
     defaultValue,
+    tableBarData,
     searchFields,
     searchColumns,
     loadingStatus,
@@ -512,6 +558,7 @@ export function usePlusCRUDPage(
     handleSizeChange,
     onSelectionCancel,
     handleCurrentChange,
+    handleTableBarChange,
     handleSelectionChange
   };
 }

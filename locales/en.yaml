@@ -198,6 +198,8 @@ buttons:
   selected: "{ count } items are selected"
   confirmDelete: Are you sure to delete this?
   confirmUpdate: Are you sure to update this?
+  checkStrictly: Hierarchical association
+  checkUnStrictly: Hierarchical independence
 
 menus:
   home: Home
@@ -321,7 +323,7 @@ systemRole:
   menuTitle: Please enter menu title
   menu: Menus
 
-menu:
+systemMenu:
   menus: Menus
   type: Type
   title: Title
@@ -342,7 +344,7 @@ menu:
   verifyExampleExternalLink: "Default is empty unless there is an external link"
   exampleAnimation: "The embedded iframe page loads the animation for the first time"
   examplePermissionCode: "Controller the permissions defined in character, such as: PreAuthorize(`permission.HashPermission('menu: query)`)"
-  routePath: RoutePath
+  path: RoutePath
   verifyType: Please choice menu type
   verifyTitle: Please enter menu title
   verifyPath: Please enter routing path
@@ -364,8 +366,6 @@ menu:
   directory: Directory
   menu: Menu
   permissions: Permissions
-  checkStrictly: Hierarchical association
-  checkUnStrictly: Hierarchical independence
   associationModel: AssociationModel
   exampleAssociationModel: Model association is used with field permission control
   fixedTag: Fixed Tag

@@ -7,7 +7,7 @@ import { hasAuth, hasGlobalAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import type { CRUDColumn, OperationProps } from "@/components/RePlusCRUD";
 import { renderSwitch, usePublicHooks } from "@/components/RePlusCRUD";
-import noticeShowForm from "@/views/publicComponents/noticeShow.vue";
+import noticeShowForm from "@/views/system/components/noticeShow.vue";
 export function useNoticeRead(tableRef: Ref) {
   const { t } = useI18n();
 

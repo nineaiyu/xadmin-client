@@ -11,7 +11,7 @@ import type {
   OperationProps,
   RePlusPageProps
 } from "@/components/RePlusCRUD";
-import noticeShowForm from "@/views/publicComponents/noticeShow.vue";
+import noticeShowForm from "@/views/system/components/noticeShow.vue";
 import wangEditor from "@/components/RePlusCRUD/src/components/wangEditor.vue";
 
 export function useNotice(tableRef: Ref) {
@@ -119,7 +119,7 @@ export function useNotice(tableRef: Ref) {
           column["hideInForm"] = computed(() => {
             return !(
               formValue.value?.notice_type?.value === NoticeChoices.USER &&
-              hasGlobalAuth("list:systemSearchUsers")
+              hasGlobalAuth("list:systemSearchUser")
             );
           });
           return column;
@@ -128,7 +128,7 @@ export function useNotice(tableRef: Ref) {
           column["hideInForm"] = computed(() => {
             return !(
               formValue.value?.notice_type?.value === NoticeChoices.DEPT &&
-              hasGlobalAuth("list:systemSearchDepts")
+              hasGlobalAuth("list:systemSearchDept")
             );
           });
           return column;
@@ -137,7 +137,7 @@ export function useNotice(tableRef: Ref) {
           column["hideInForm"] = computed(() => {
             return !(
               formValue.value?.notice_type?.value === NoticeChoices.ROLE &&
-              hasGlobalAuth("list:systemSearchRoles")
+              hasGlobalAuth("list:systemSearchRole")
             );
           });
           return column;

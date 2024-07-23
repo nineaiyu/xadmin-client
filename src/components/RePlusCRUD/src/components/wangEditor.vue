@@ -10,7 +10,6 @@ import { IEditorConfig } from "@wangeditor/editor";
 
 const messages = defineModel<string | object | any>();
 
-const formRef = ref();
 const editorRef = shallowRef();
 const mode = "default";
 const { t } = useI18n();
@@ -24,10 +23,6 @@ const emit = defineEmits<{
 const handleChange = () => {
   emit("change", { messages, files: getUploadFiles() });
 };
-
-function getRef() {
-  return formRef.value?.formInstance;
-}
 
 function getUploadFiles() {
   return [
