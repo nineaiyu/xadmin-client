@@ -240,8 +240,9 @@ const handleOperation = (options: operationOptions) => {
   console.log(333333333, apiReq);
   console.log(4444444444, apiUrl);
   console.log(5555555555555, row);
+  console.log(66666666666, apiUrl?.name);
   if (!apiReq)
-    switch (apiUrl.name) {
+    switch (apiUrl?.name) {
       case "create":
         apiReq = apiUrl(row);
         break;
@@ -258,6 +259,7 @@ const handleOperation = (options: operationOptions) => {
         apiReq = apiUrl(row?.pk ?? row?.id);
         break;
     }
+  console.log(7777777777, apiReq);
 
   apiReq
     .then((res: BaseResult) => {
