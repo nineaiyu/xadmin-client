@@ -356,18 +356,14 @@ export function usePlusCRUDPage(
         rules: addOrEditRules.value
       },
       saveCallback: ({ formData, done, dialogOptions, formOptions }) => {
-        let apiReq = undefined;
-        if (isAdd) {
-          apiReq = api.create(formData);
-        } else {
-          apiReq = api.update(formData?.pk ?? formData?.id, formData);
-        }
         handleOperation({
           t,
           apiReq:
             (addOrEditOptions?.apiReq &&
               addOrEditOptions?.apiReq({ ...formOptions, formData })) ||
-            apiReq,
+            (isAdd
+              ? api.create(formData)
+              : api.update(formData?.pk ?? formData?.id, formData)),
           success() {
             done();
             handleGetData();
