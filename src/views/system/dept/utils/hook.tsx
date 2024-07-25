@@ -86,7 +86,7 @@ export function useDept(tableRef: Ref) {
       dialogOptions: {
         closeCallBack: ({ options, args }) => {
           if (!options?.props?.formInline?.pk && args?.command === "sure") {
-            tableRef.value.getPageColumn(false);
+            tableRef.value?.getPageColumn(false);
           }
         }
       }
