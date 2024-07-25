@@ -72,6 +72,7 @@ const {
   handleReset,
   handleSearch,
   getSelectPks,
+  getPageColumn,
   handleGetData,
   handleAddOrEdit,
   handleManyDelete,
@@ -91,6 +92,7 @@ defineExpose({
   searchFields,
   getTableRef,
   getSelectPks,
+  getPageColumn,
   handleGetData,
   handleAddOrEdit
 });
