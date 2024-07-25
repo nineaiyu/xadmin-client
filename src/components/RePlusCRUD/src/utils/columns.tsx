@@ -482,10 +482,17 @@ export function useBaseColumns(localeName: string) {
     fieldsCallback = null
   ) => {
     api.columns().then(res => {
+      detailColumns.value.splice(0, detailColumns.value.length);
+      addOrEditColumns.value.splice(0, addOrEditColumns.value.length);
+      listColumns.value.splice(0, listColumns.value.length);
+      // addOrEditDefaultValue.value = {};
+      // addOrEditRules.value = {};
       formatAddOrEditColumns(res.data);
       columnsCallback && columnsCallback();
     });
     api.fields().then(res => {
+      // searchDefaultValue.value = {};
+      searchColumns.value.splice(0, searchColumns.value.length);
       formatSearchColumns(res.data);
       fieldsCallback && fieldsCallback();
     });

@@ -82,6 +82,13 @@ export function useDept(tableRef: Ref) {
           );
           return column;
         }
+      },
+      dialogOptions: {
+        closeCallBack: ({ options, args }) => {
+          if (!options?.props?.formInline?.pk && args?.command === "sure") {
+            tableRef.value.getPageColumn(false);
+          }
+        }
       }
     }
   });

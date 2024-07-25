@@ -495,7 +495,7 @@ export function usePlusCRUDPage(
       });
   };
 
-  onMounted(() => {
+  const getPageColumn = (immediate: boolean) => {
     getColumnData(
       api,
       () => {
@@ -523,6 +523,9 @@ export function usePlusCRUDPage(
         }
       }
     );
+  };
+  onMounted(() => {
+    getPageColumn(immediate);
   });
 
   return {
@@ -543,6 +546,7 @@ export function usePlusCRUDPage(
     handleReset,
     handleSearch,
     getSelectPks,
+    getPageColumn,
     handleGetData,
     handleAddOrEdit,
     handleManyDelete,
