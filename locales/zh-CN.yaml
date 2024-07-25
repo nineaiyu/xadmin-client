@@ -218,6 +218,7 @@ menus:
   modelFieldManagement: 字段管理
   operationLogManagement: 访问日志
   loginLogManagement: 登录日志
+  uploadFileManagement: 文件管理
   permission: 权限管理
   abnormal: 异常页面
   fourZeroFour: "404"
@@ -463,6 +464,13 @@ userNotice:
   unreadMessage: 未读消息
   allRead: 全部已读
   showSystemNotice: 查看通知公告
+
+systemUploadFile:
+  upload: 上传
+  fileLink: 文件连接
+  clickUpload: 点击上传
+  dropFile: 拖拽文件到这里或
+  uploadTip: 上传文件大小需要小于
 
 status:
   hsLoad: 加载中...

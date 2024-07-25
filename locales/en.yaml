@@ -218,6 +218,7 @@ menus:
   modelFieldManagement: Model Field Manage
   operationLogManagement: Operation Log Manage
   loginLogManagement: Login Log Manage
+  uploadFileManagement: Upload File Manage
   permission: Permission Manage
   abnormal: Abnormal Page
   fourZeroFour: "404"
@@ -463,6 +464,13 @@ userNotice:
   unreadMessage: Unread Message
   allRead: AllRead
   showSystemNotice: Check the system announcement
+
+systemUploadFile:
+  upload: Upload
+  fileLink: File Link
+  clickUpload: click to upload
+  dropFile: Drop file here or
+  uploadTip: Files with a size less than
 
 status:
   hsLoad: Loading...

@@ -98,16 +98,7 @@ class PureHttp {
                 window.location.reload();
               }
               // router.push({ name: "Login" })
-            } else if (error.response.status === 403) {
-              ElMessage.error(error.response.data.detail);
-              // router.push("/error/403");
-            } else if (error.response.status === 400) {
-              ElMessage.error(error.response.data.detail);
-              // router.push("/error/403");
-            } else if (error.response.status === 404) {
-              ElMessage.error(error.response.data.detail);
-              // router.push("/error/404");
-            } else if (error.response.status === 500) {
+            } else {
               ElMessage.error(
                 error.response.data?.detail ?? error.response.statusText
               );
