@@ -1,16 +1,35 @@
 import { http } from "@/utils/http";
+import type { PureHttpRequestConfig } from "@/utils/http/types";
+import type { DetailResult } from "@/api/types";
 
 type UploadFileResult = {
   code: number;
   data?: Array<{
     pk: number | string;
     filename: string;
-    filepath: string;
+    access_url: string;
     filesize: number;
   }>;
   detail?: string;
 };
 
-export const UploadFileApi = (params?: object, data?: object) => {
-  return http.upload<UploadFileResult, any>("/api/system/upload", params, data);
-};
+class UploadFileApi {
+  baseApi = "";
+
+  constructor(baseApi: string) {
+    this.baseApi = baseApi;
+  }
+  upload = (params?: object, data?: object, config?: PureHttpRequestConfig) => {
+    return http.upload<UploadFileResult, any>(
+      this.baseApi,
+      params,
+      data,
+      config
+    );
+  };
+  config = (params?: object, config?: PureHttpRequestConfig) => {
+    return http.get<DetailResult, {}>(this.baseApi, params, config);
+  };
+}
+
+export const uploadFileApi = new UploadFileApi("/api/system/upload");

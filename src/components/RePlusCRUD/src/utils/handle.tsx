@@ -28,7 +28,7 @@ interface formDialogOptions {
   isAdd?: boolean;
   row?: Function | Object; //  外部处理方法
   title: string; // 弹窗的的title
-  formValue?: Ref; // 弹窗的的title
+  formValue?: Ref; // 表单值
   rawRow: Object; //  默认数据或者更新的书籍
   minWidth?: string; // 弹窗的的最小宽度
   columns?: Function | Object; // 表单字段
