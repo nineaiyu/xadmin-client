@@ -461,18 +461,28 @@ const handleExportData = (options: exportDataOptions) => {
     },
     dialogOptions: { width: "600px" },
     form: exportDataForm,
-    saveCallback: async ({ formData, done }) => {
+    saveCallback: async ({ formData, done, dialogOptions }) => {
       if (formData.range === "all") {
-        await api.export(formData);
+        await api.export(formData).finally(() => {
+          dialogOptions.confirmLoading = false;
+        });
       } else if (formData.range === "search" && searchFields) {
         searchFields.value["type"] = formData["type"];
-        await api.export(toRaw(searchFields.value));
-      } else if (formData.range === "selected") {
-        resourcesIDCacheApi(formData.pks).then(async res => {
-          formData["spm"] = res.spm;
-          delete formData.pks;
-          await api.export(formData);
+        await api.export(toRaw(searchFields.value)).finally(() => {
+          dialogOptions.confirmLoading = false;
         });
+      } else if (formData.range === "selected") {
+        resourcesIDCacheApi(formData.pks)
+          .then(async res => {
+            formData["spm"] = res.spm;
+            delete formData.pks;
+            await api.export(formData).finally(() => {
+              dialogOptions.confirmLoading = false;
+            });
+          })
+          .finally(() => {
+            dialogOptions.confirmLoading = false;
+          });
       }
       done();
     }
@@ -498,15 +508,20 @@ const handleImportData = (options: importDataOptions) => {
     },
     dialogOptions: { width: "600px" },
     form: importDataForm,
-    saveCallback: ({ formData, success, failed }) => {
-      api.import(formData.action, formData.upload[0].raw).then(res => {
-        if (res.code === 1000) {
-          options?.success && options?.success(res);
-          success();
-        } else {
-          failed(res.detail, false);
-        }
-      });
+    saveCallback: ({ formData, success, failed, dialogOptions }) => {
+      api
+        .import(formData.action, formData.upload[0].raw)
+        .then(res => {
+          if (res.code === 1000) {
+            options?.success && options?.success(res);
+            success();
+          } else {
+            failed(res.detail, false);
+          }
+        })
+        .finally(() => {
+          dialogOptions.confirmLoading = false;
+        });
     }
   });
 };
