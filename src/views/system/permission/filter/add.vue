@@ -17,6 +17,7 @@ import SearchUser from "@/views/system/components/searchUser.vue";
 import SearchDept from "@/views/system/components/searchDept.vue";
 import SearchRole from "@/views/system/components/searchRole.vue";
 import SearchMenu from "@/views/system/components/searchMenu.vue";
+import FromQuestion from "@/components/FromQuestion/index.vue";
 
 const props = withDefaults(defineProps<FormProps>(), {
   valuesData: () => [],
@@ -135,6 +136,12 @@ defineExpose({ getRef });
       </re-col>
       <re-col :sm="24" :value="12" :xs="24">
         <el-form-item :label="t('systemPermission.addMatch')" prop="match">
+          <template #label>
+            <from-question
+              description="https://docs.djangoproject.com/zh-hans/5.0/ref/models/querysets/#field-lookups"
+              :label="t('systemPermission.addMatch')"
+            />
+          </template>
           <el-select
             v-model="newFormInline.match"
             :placeholder="t('systemPermission.addMatch')"
