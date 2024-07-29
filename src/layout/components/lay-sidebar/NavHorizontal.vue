@@ -1,12 +1,14 @@
-<script lang="ts" setup>
-import { isAllEmpty } from "@pureadmin/utils";
-import { computed, nextTick, ref } from "vue";
+<script setup lang="ts">
+import { emitter } from "@/utils/mitt";
 import { useNav } from "@/layout/hooks/useNav";
 import LaySearch from "../lay-search/index.vue";
 import LayNotice from "../lay-notice/index.vue";
+import { responsiveStorageNameSpace } from "@/config";
+import { ref, nextTick, computed, onMounted } from "vue";
+import { storageLocal, isAllEmpty } from "@pureadmin/utils";
 import { useTranslationLang } from "../../hooks/useTranslationLang";
 import { usePermissionStoreHook } from "@/store/modules/permission";
-import LaySidebarItem from "./components/SidebarItem.vue";
+import LaySidebarItem from "../lay-sidebar/components/SidebarItem.vue";
 import LaySidebarFullScreen from "../lay-sidebar/components/SidebarFullScreen.vue";
 
 import GlobalizationIcon from "@/assets/svg/globalization.svg?component";
@@ -15,6 +17,11 @@ import Setting from "@iconify-icons/ri/settings-3-line";
 import Check from "@iconify-icons/ep/check";
 
 const menuRef = ref();
+const showLogo = ref(
+  storageLocal().getItem<StorageConfigs>(
+    `${responsiveStorageNameSpace()}configure`
+  )?.showLogo ?? true
+);
 
 const { t, route, locale, translationCh, translationEn } =
   useTranslationLang(menuRef);
@@ -38,6 +45,12 @@ const defaultActive = computed(() =>
 nextTick(() => {
   menuRef.value?.handleResize();
 });
+
+onMounted(() => {
+  emitter.on("logoChange", key => {
+    showLogo.value = key;
+  });
+});
 </script>
 
 <template>
@@ -45,22 +58,22 @@ nextTick(() => {
     v-loading="usePermissionStoreHook().wholeMenus.length === 0"
     class="horizontal-header"
   >
-    <div class="horizontal-header-left" @click="backTopMenu">
+    <div v-if="showLogo" class="horizontal-header-left" @click="backTopMenu">
       <img :src="getLogo()" alt="logo" />
       <span>{{ title }}</span>
     </div>
     <el-menu
       ref="menuRef"
-      :default-active="defaultActive"
-      class="horizontal-header-menu"
       mode="horizontal"
       popper-class="pure-scrollbar"
+      class="horizontal-header-menu"
+      :default-active="defaultActive"
     >
       <LaySidebarItem
         v-for="route in usePermissionStoreHook().wholeMenus"
         :key="route.path"
-        :base-path="route.path"
         :item="route"
+        :base-path="route.path"
       />
     </el-menu>
     <div class="horizontal-header-right">
@@ -74,8 +87,8 @@ nextTick(() => {
         <template #dropdown>
           <el-dropdown-menu class="translation">
             <el-dropdown-item
-              :class="['dark:!text-white', getDropdownItemClass(locale, 'zh')]"
               :style="getDropdownItemStyle(locale, 'zh')"
+              :class="['dark:!text-white', getDropdownItemClass(locale, 'zh')]"
               @click="translationCh"
             >
               <span v-show="locale === 'zh'" class="check-zh">
@@ -84,8 +97,8 @@ nextTick(() => {
               简体中文
             </el-dropdown-item>
             <el-dropdown-item
-              :class="['dark:!text-white', getDropdownItemClass(locale, 'en')]"
               :style="getDropdownItemStyle(locale, 'en')"
+              :class="['dark:!text-white', getDropdownItemClass(locale, 'en')]"
               @click="translationEn"
             >
               <span v-show="locale === 'en'" class="check-en">
@@ -119,8 +132,8 @@ nextTick(() => {
         </template>
       </el-dropdown>
       <span
-        :title="t('buttons.systemSet')"
         class="set-icon navbar-bg-hover"
+        :title="t('buttons.systemSet')"
         @click="onPanel"
       >
         <IconifyIconOffline :icon="Setting" />
