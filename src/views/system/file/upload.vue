@@ -78,13 +78,13 @@ const beforeUpload = (rawFile: UploadRawFile) => {
 </script>
 
 <template>
-  <el-scrollbar>
+  <el-scrollbar max-height="600px">
     <el-upload
       v-model:file-list="fileList"
       :http-request="uploadRequest"
       :on-success="uploadSuccess"
       :before-upload="beforeUpload"
-      class="max-h-[600px]"
+      class="p-2"
       drag
       multiple
     >
