@@ -64,6 +64,9 @@ export function useDataPermission() {
           return column;
         },
         menu: ({ column }) => {
+          column._column.choices.forEach(item => {
+            item.title = transformI18n(item?.meta__title);
+          });
           column["options"] = handleTree(
             column._column.choices,
             "pk",
@@ -81,18 +84,12 @@ export function useDataPermission() {
             }
           };
           column["fieldSlots"] = {
-            default: ({ node, data }) => {
-              data.title = transformI18n(data?.meta__title);
-              return (
-                <>
-                  <span>{data.title}</span>
-                  <span v-show={!node.isLeaf}>
-                    {" "}
-                    ({data?.children?.length}){" "}
-                  </span>
-                </>
-              );
-            }
+            default: ({ node, data }) => (
+              <>
+                <span>{data.title}</span>
+                <span v-show={!node.isLeaf}> ({data?.children?.length}) </span>
+              </>
+            )
           };
           return column;
         },
