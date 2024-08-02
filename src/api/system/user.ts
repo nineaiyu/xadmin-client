@@ -19,6 +19,14 @@ class UserApi extends BaseApi {
       `${this.baseApi}/${pk}/empower`
     );
   };
+  unBlock = (pk: number | string, data?: object) => {
+    return this.request<BaseResult>(
+      "post",
+      {},
+      data,
+      `${this.baseApi}/${pk}/unblock`
+    );
+  };
 }
 
 export const userApi = new UserApi("/api/system/user");

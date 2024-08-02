@@ -27,7 +27,9 @@ import {
   handleOperation,
   openFormDialog,
   type OperationProps,
-  type RePlusPageProps
+  renderSwitch,
+  type RePlusPageProps,
+  usePublicHooks
 } from "@/components/RePlusCRUD";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Role from "@iconify-icons/ri/admin-line";
@@ -52,6 +54,7 @@ export function useUser(tableRef: Ref) {
     choices: hasAuth("choices:systemUser"),
     export: hasAuth("export:systemUser"),
     import: hasAuth("import:systemUser"),
+    unBlock: hasAuth("unBlock:systemUser"),
     batchDelete: hasAuth("batchDelete:systemUser")
   });
 
@@ -68,7 +71,8 @@ export function useUser(tableRef: Ref) {
   const manySelectData = ref([]);
   const avatarInfo = ref();
   const ruleFormRef = ref();
-
+  const switchLoadMap = ref({});
+  const { switchStyle } = usePublicHooks();
   // reset password
   const pwdForm = reactive({
     newPwd: ""
@@ -301,6 +305,16 @@ export function useUser(tableRef: Ref) {
               {row.gender.label}
             </el-tag>
           );
+          break;
+        case "block":
+          column["cellRenderer"] = renderSwitch({
+            t,
+            updateApi: api.unBlock,
+            switchLoadMap,
+            switchStyle,
+            field: column.prop,
+            disabled: row => !auth.unBlock || !row.block
+          });
           break;
       }
     });

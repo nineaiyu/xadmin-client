@@ -76,7 +76,7 @@ export function useNoticeRead(tableRef: Ref) {
             switchLoadMap,
             switchStyle,
             field: column.prop,
-            disabled: !auth.state,
+            disabled: () => !auth.state,
             success() {
               tableRef.value.handleGetData();
             },

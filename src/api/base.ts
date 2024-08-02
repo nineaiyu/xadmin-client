@@ -162,7 +162,7 @@ export class BaseApi extends BaseRequest {
   };
 
   import = (action: string, data: object) => {
-    return http.upload<BaseResult, {}>(
+    return http.upload<DetailResult, {}>(
       `${this.baseApi}/import-data?action=${action}`,
       {},
       data,
@@ -172,5 +172,28 @@ export class BaseApi extends BaseRequest {
         }
       }
     );
+  };
+}
+
+export class ViewBaseApi extends BaseRequest {
+  columns = () => {
+    return this.request<SearchColumnsResult>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/search-columns`
+    );
+  };
+  create = (data?: object) => {
+    return this.request<DetailResult>("post", {}, data);
+  };
+  detail = (params?: object) => {
+    return this.request<DetailResult>("get", params, {}, `${this.baseApi}`);
+  };
+  update = (data?: object) => {
+    return this.request<DetailResult>("put", {}, data, `${this.baseApi}`);
+  };
+  patch = (data?: object) => {
+    return this.request<DetailResult>("patch", {}, data, `${this.baseApi}`);
   };
 }

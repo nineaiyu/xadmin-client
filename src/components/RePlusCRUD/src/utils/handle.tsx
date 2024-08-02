@@ -7,7 +7,7 @@ import addOrEdit from "../components/addOrEdit.vue";
 import type { PlusColumn, PlusFormProps } from "plus-pro-components";
 import { ElMessageBox, type FormInstance } from "element-plus";
 import type { BaseApi } from "@/api/base";
-import type { BaseResult } from "@/api/types";
+import type { DetailResult } from "@/api/types";
 import { uniqueArrayObj } from "@/components/RePlusCRUD";
 import exportDataForm from "@/components/RePlusCRUD/src/components/exportData.vue";
 import { resourcesIDCacheApi } from "@/api/common";
@@ -212,9 +212,9 @@ interface operationOptions {
   apiReq: Promise<any>;
   showSuccessMsg?: boolean;
   showFailedMsg?: boolean;
-  success?: (res?: BaseResult) => void;
-  failed?: (res?: BaseResult) => void;
-  exception?: (res?: BaseResult) => void;
+  success?: (res?: DetailResult) => void;
+  failed?: (res?: DetailResult) => void;
+  exception?: (res?: DetailResult) => void;
   requestEnd?: (options?: operationOptions) => void;
 }
 
@@ -231,9 +231,10 @@ const handleOperation = (options: operationOptions) => {
   } = options;
 
   apiReq
-    ?.then((res: BaseResult) => {
+    ?.then((res: DetailResult) => {
       if (res.code === 1000) {
-        showSuccessMsg && message(t("results.success"), { type: "success" });
+        showSuccessMsg &&
+          message(res.detail ?? t("results.success"), { type: "success" });
         success && success(res);
       } else {
         showFailedMsg &&
@@ -261,8 +262,8 @@ interface changeOptions {
   field: string; // 更新的字段
   actionMsg: string;
   msg?: string;
-  success?: (res?: BaseResult) => void;
-  failed?: (res?: BaseResult) => void;
+  success?: (res?: DetailResult) => void;
+  failed?: (res?: DetailResult) => void;
   requestEnd?: (options?: operationOptions) => void;
 }
 
@@ -338,9 +339,9 @@ interface switchOptions {
   activeMap?: object; // active映射 {true:'发布',false:'未发布'}
   msg?: string;
   actionMsg?: string;
-  disabled?: boolean;
-  success?: (res?: BaseResult) => void;
-  failed?: (res?: BaseResult) => void;
+  disabled?: (row?: any) => boolean;
+  success?: (res?: DetailResult) => void;
+  failed?: (res?: DetailResult) => void;
   requestEnd?: (options?: operationOptions) => void;
 }
 
@@ -358,7 +359,7 @@ const renderSwitch = (switchOptions: switchOptions) => {
     requestEnd,
     msg = undefined,
     actionMsg = undefined,
-    disabled = true
+    disabled
   } = switchOptions;
 
   const defaultActionMap = {
@@ -382,7 +383,7 @@ const renderSwitch = (switchOptions: switchOptions) => {
       active-text={defaultActionMap["true"]}
       inactive-text={defaultActionMap["false"]}
       inline-prompt
-      disabled={disabled}
+      disabled={disabled && disabled(scope.row)}
       style={switchStyle.value}
       onChange={() => {
         onSwitchChange({
@@ -492,7 +493,7 @@ const handleExportData = (options: exportDataOptions) => {
 interface importDataOptions {
   t: Function;
   api: BaseApi;
-  success?: (res?: BaseResult) => void;
+  success?: (res?: DetailResult) => void;
 }
 
 // 数据导入

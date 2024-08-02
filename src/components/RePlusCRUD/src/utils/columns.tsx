@@ -21,6 +21,7 @@ import SearchUser from "@/views/system/components/searchUser.vue";
 import SearchDept from "@/views/system/components/searchDept.vue";
 import SearchRole from "@/views/system/components/searchRole.vue";
 import uploadFile from "../components/uploadFile.vue";
+import tagInput from "../components/tagInput.vue";
 import { ElIcon, ElImage, ElLink } from "element-plus";
 import { Link } from "@element-plus/icons-vue";
 import Info from "@iconify-icons/ri/question-line";
@@ -313,6 +314,18 @@ export function useBaseColumns(localeName: string) {
             });
           };
           break;
+        case "list":
+          item["valueType"] = "select";
+          item["renderField"] = (value: Array<any>, onChange) => {
+            return h(tagInput, {
+              modelValue: value,
+              onChange: x => {
+                onChange(x);
+              }
+            });
+          };
+
+          break;
         default:
           if (column.input_type.startsWith("api-")) {
             if (!column.hasOwnProperty("default") && column?.multiple) {
@@ -477,25 +490,32 @@ export function useBaseColumns(localeName: string) {
    * 该方法用于页面onMount内调用，用于第一次渲染页面
    */
   const getColumnData = (
-    api: BaseApi,
+    apiColumns: BaseApi["columns"],
+    apiFields: BaseApi["fields"],
     columnsCallback = null,
     fieldsCallback = null
   ) => {
-    api.columns().then(res => {
-      detailColumns.value.splice(0, detailColumns.value.length);
-      addOrEditColumns.value.splice(0, addOrEditColumns.value.length);
-      listColumns.value.splice(0, listColumns.value.length);
-      // addOrEditDefaultValue.value = {};
-      // addOrEditRules.value = {};
-      formatAddOrEditColumns(res.data);
-      columnsCallback && columnsCallback();
-    });
-    api.fields().then(res => {
-      // searchDefaultValue.value = {};
-      searchColumns.value.splice(0, searchColumns.value.length);
-      formatSearchColumns(res.data);
-      fieldsCallback && fieldsCallback();
-    });
+    apiColumns &&
+      apiColumns().then(res => {
+        detailColumns.value.splice(0, detailColumns.value.length);
+        addOrEditColumns.value.splice(0, addOrEditColumns.value.length);
+        listColumns.value.splice(0, listColumns.value.length);
+        formatAddOrEditColumns(res.data);
+        columnsCallback &&
+          columnsCallback({
+            listColumns,
+            detailColumns,
+            addOrEditRules,
+            addOrEditColumns,
+            addOrEditDefaultValue
+          });
+      });
+    apiFields &&
+      apiFields().then(res => {
+        searchColumns.value.splice(0, searchColumns.value.length);
+        formatSearchColumns(res.data);
+        fieldsCallback && fieldsCallback({ searchDefaultValue, searchColumns });
+      });
   };
 
   return {

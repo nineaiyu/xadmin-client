@@ -28,6 +28,9 @@ avatarUpload:
   imageSize: 图像大小：{ x } x { y } 像素
   fileSize: 文件大小：{ x } （{ y } 字节）
 
+tagInput:
+  placeholder: 按下 Enter 继续输入
+
 cropper:
   upload: 上传
   download: 下载
@@ -205,6 +208,12 @@ menus:
   home: 首页
   login: 登录
   sysManagement: 系统管理
+  systemSettings: 系统设置
+  basicSettings: 基本设置
+  emailSettings: 邮件设置
+  passwordSettings: 密码设置
+  registerSettings: 注册设置
+  loginSettings: 登录设置
   userManagement: 用户管理
   deptManagement: 部门管理
   menuManagement: 菜单管理
@@ -528,6 +537,23 @@ welcome:
   requestNum: 当天接口请求次数
   userNum: 用户人数
   loginTimes: 登录次数
+
+settingBasic:
+  title: 基本设置
+
+settingEmail:
+  title: 邮件服务器
+  test: 邮件测试
+
+settingPassword:
+  title: 密码规则配置
+
+settingLogin:
+  title: 登录安全配置
+  limit: 登录限制配置
+
+settingRegister:
+  title: 注册安全配置
 
 demoBook:
   book: 书籍

@@ -389,7 +389,7 @@ export function usePlusCRUDPage(
             switchLoadMap,
             switchStyle,
             field: column.prop,
-            disabled: !(auth.patch || auth.update)
+            disabled: () => !(auth.patch || auth.update)
           });
           break;
         // pure-table ****** end
@@ -497,7 +497,8 @@ export function usePlusCRUDPage(
 
   const getPageColumn = (immediate: boolean) => {
     getColumnData(
-      api,
+      api.columns,
+      api.fields,
       () => {
         formatColumnsRender();
       },

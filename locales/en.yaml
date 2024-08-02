@@ -28,6 +28,9 @@ avatarUpload:
   imageSize: "Image size: { x } x { y } pixels"
   fileSize: "File size: { x } ({ y } bytes)"
 
+tagInput:
+  placeholder: Enter to continue
+
 cropper:
   upload: Upload
   download: Download
@@ -205,6 +208,12 @@ menus:
   home: Home
   login: Login
   sysManagement: System Manage
+  systemSettings: System Settings
+  basicSettings: Basic Settings
+  emailSettings: Email Settings
+  passwordSettings: Password Settings
+  registerSettings: Register Settings
+  loginSettings: Login Settings
   userManagement: User Manage
   deptManagement: Department Manage
   menuManagement: Menu Manage
@@ -528,6 +537,23 @@ welcome:
   requestNum: Number of interface requests for today
   userNum: Number of Users
   loginTimes: Number of Logins
+
+settingBasic:
+  title: Basic Settings
+
+settingEmail:
+  title: Email Server
+  test: Email Send Test
+
+settingPassword:
+  title: Password Rules
+
+settingLogin:
+  title: Login Safe
+  limit: Login Limit
+
+settingRegister:
+  title: Register Safe
 
 demoBook:
   book: Book
