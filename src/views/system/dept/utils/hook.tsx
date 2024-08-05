@@ -146,7 +146,7 @@ export function useDept(tableRef: Ref) {
       rawFormProps: {
         rules: roleRules.value
       },
-      saveCallback: ({ formData, done, dialogOptions }) => {
+      saveCallback: ({ formData, done, closeLoading }) => {
         handleOperation({
           t,
           apiReq: api.empower(row.pk, {
@@ -159,7 +159,7 @@ export function useDept(tableRef: Ref) {
             tableRef.value.handleGetData();
           },
           requestEnd() {
-            dialogOptions.confirmLoading = false;
+            closeLoading();
           }
         });
       }

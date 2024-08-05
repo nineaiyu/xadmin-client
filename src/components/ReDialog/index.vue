@@ -1,12 +1,12 @@
-<script lang="ts" setup>
+<script setup lang="ts">
 import {
+  type EventType,
   type ButtonProps,
-  closeDialog,
   type DialogOptions,
-  dialogStore,
-  type EventType
+  closeDialog,
+  dialogStore
 } from "./index";
-import { computed, ref } from "vue";
+import { ref, computed } from "vue";
 import { isFunction } from "@pureadmin/utils";
 import Fullscreen from "@iconify-icons/ri/fullscreen-fill";
 import ExitFullscreen from "@iconify-icons/ri/fullscreen-exit-fill";
@@ -16,6 +16,7 @@ defineOptions({
   name: "ReDialog"
 });
 
+const sureBtnMap = ref({});
 const fullscreen = ref(false);
 const { t } = useI18n();
 const footerButtons = computed(() => {
@@ -29,7 +30,7 @@ const footerButtons = computed(() => {
             bg: true,
             btnClick: ({ dialog: { options, index } }) => {
               const done = () =>
-                closeDialog(options, index, { command: "cancel" });
+                handleCloseDialog(options, index, { command: "cancel" });
               if (options?.beforeCancel && isFunction(options?.beforeCancel)) {
                 options.beforeCancel(done, { options, index });
               } else {
@@ -42,13 +43,27 @@ const footerButtons = computed(() => {
             type: "primary",
             text: true,
             bg: true,
-            loading: options.confirmLoading,
             popconfirm: options?.popconfirm,
             btnClick: ({ dialog: { options, index } }) => {
-              const done = () =>
-                closeDialog(options, index, { command: "sure" });
+              if (options?.sureBtnLoading) {
+                sureBtnMap.value[index] = Object.assign(
+                  {},
+                  sureBtnMap.value[index],
+                  {
+                    loading: true
+                  }
+                );
+              }
+              const closeLoading = () => {
+                if (options?.sureBtnLoading) {
+                  sureBtnMap.value[index].loading = false;
+                }
+              };
+              const done = () => {
+                handleCloseDialog(options, index, { command: "sure" });
+              };
               if (options?.beforeSure && isFunction(options?.beforeSure)) {
-                options.beforeSure(done, { options, index });
+                options.beforeSure(done, { options, index, closeLoading });
               } else {
                 done();
               }
@@ -80,12 +95,19 @@ function eventsCallBack(
   }
 }
 
+function handleCloseDialog(options: DialogOptions, index: number, args: any) {
+  if (options?.sureBtnLoading && sureBtnMap.value[index]?.loading) {
+    sureBtnMap.value[index].loading = false;
+  }
+  closeDialog(options, index, args);
+}
+
 function handleClose(
   options: DialogOptions,
   index: number,
   args = { command: "close" }
 ) {
-  closeDialog(options, index, args);
+  handleCloseDialog(options, index, args);
   eventsCallBack("close", options, index);
 }
 
@@ -100,12 +122,12 @@ function handleChange(options: DialogOptions, index: number, values: any) {
     :key="index"
     v-bind="options"
     v-model="options.visible"
-    :fullscreen="fullscreen ? true : options?.fullscreen"
     class="pure-dialog"
-    @closeAutoFocus="eventsCallBack('closeAutoFocus', options, index)"
+    :fullscreen="fullscreen ? true : options?.fullscreen ? true : false"
     @closed="handleClose(options, index)"
-    @openAutoFocus="eventsCallBack('openAutoFocus', options, index)"
     @opened="eventsCallBack('open', options, index)"
+    @openAutoFocus="eventsCallBack('openAutoFocus', options, index)"
+    @closeAutoFocus="eventsCallBack('closeAutoFocus', options, index)"
   >
     <!-- header -->
     <template
@@ -133,6 +155,7 @@ function handleChange(options: DialogOptions, index: number, values: any) {
           "
         >
           <IconifyIconOffline
+            class="pure-dialog-svg"
             :icon="
               options?.fullscreen
                 ? ExitFullscreen
@@ -140,7 +163,6 @@ function handleChange(options: DialogOptions, index: number, values: any) {
                   ? ExitFullscreen
                   : Fullscreen
             "
-            class="pure-dialog-svg"
           />
         </i>
       </div>
@@ -150,8 +172,8 @@ function handleChange(options: DialogOptions, index: number, values: any) {
       />
     </template>
     <component
-      :is="options.contentRenderer({ options, index })"
       v-bind="options?.props"
+      :is="options.contentRenderer({ options, index })"
       @change="values => handleChange(options, index, values)"
       @close="args => handleClose(options, index, args)"
     />
@@ -179,6 +201,7 @@ function handleChange(options: DialogOptions, index: number, values: any) {
           <el-button
             v-else
             v-bind="btn"
+            :loading="key === 1 && sureBtnMap[index]?.loading"
             @click="
               btn.btnClick({
                 dialog: { options, index },

@@ -357,7 +357,7 @@ export function usePlusCRUDPage(
       rawFormProps: {
         rules: addOrEditRules.value
       },
-      saveCallback: ({ formData, done, dialogOptions, formOptions }) => {
+      saveCallback: ({ formData, done, closeLoading, formOptions }) => {
         handleOperation({
           t,
           apiReq:
@@ -371,7 +371,7 @@ export function usePlusCRUDPage(
             handleGetData();
           },
           requestEnd() {
-            dialogOptions.confirmLoading = false;
+            closeLoading();
           }
         });
       },

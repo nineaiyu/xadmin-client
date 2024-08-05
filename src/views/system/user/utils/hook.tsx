@@ -452,7 +452,7 @@ export function useUser(tableRef: Ref) {
       rawFormProps: {
         rules: roleRules.value
       },
-      saveCallback: ({ formData, done, dialogOptions }) => {
+      saveCallback: ({ formData, done, closeLoading }) => {
         handleOperation({
           t,
           apiReq: api.empower(row.pk, {
@@ -465,7 +465,7 @@ export function useUser(tableRef: Ref) {
             tableRef.value.handleGetData();
           },
           requestEnd() {
-            dialogOptions.confirmLoading = false;
+            closeLoading();
           }
         });
       }

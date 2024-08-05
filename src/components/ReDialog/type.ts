@@ -1,4 +1,4 @@
-import type { Component, CSSProperties, VNode } from "vue";
+import type { CSSProperties, VNode, Component } from "vue";
 
 type DoneFn = (cancel?: boolean) => void;
 type EventType =
@@ -69,11 +69,11 @@ type DialogProps = {
 type Popconfirm = {
   /** 标题 */
   title?: string;
-  /** 确认按钮文字 */
+  /** 确定按钮文字 */
   confirmButtonText?: string;
   /** 取消按钮文字 */
   cancelButtonText?: string;
-  /** 确认按钮类型，默认 `primary` */
+  /** 确定按钮类型，默认 `primary` */
   confirmButtonType?: ButtonType;
   /** 取消按钮类型，默认 `text` */
   cancelButtonType?: ButtonType;
@@ -121,7 +121,7 @@ type ButtonProps = {
   round?: boolean;
   /** 是否为圆形按钮，默认 `false` */
   circle?: boolean;
-  /** 确认按钮的 `Popconfirm` 气泡确认框相关配置 */
+  /** 确定按钮的 `Popconfirm` 气泡确认框相关配置 */
   popconfirm?: Popconfirm;
   /** 是否为加载中状态，默认 `false` */
   loading?: boolean;
@@ -160,10 +160,10 @@ interface DialogOptions extends DialogProps {
   props?: any;
   /** 是否隐藏 `Dialog` 按钮操作区的内容 */
   hideFooter?: boolean;
-  /** 确认按钮加载 */
-  confirmLoading?: boolean;
-  /** 确认按钮的 `Popconfirm` 气泡确认框相关配置 */
+  /** 确定按钮的 `Popconfirm` 气泡确认框相关配置 */
   popconfirm?: Popconfirm;
+  /** 点击确定按钮后是否开启 `loading` 加载动画 */
+  sureBtnLoading?: boolean;
   /**
    * @description 自定义对话框标题的内容渲染器
    * @see {@link https://element-plus.org/zh-CN/component/dialog.html#%E8%87%AA%E5%AE%9A%E4%B9%89%E5%A4%B4%E9%83%A8}
@@ -262,10 +262,13 @@ interface DialogOptions extends DialogProps {
     done: Function,
     {
       options,
-      index
+      index,
+      closeLoading
     }: {
       options: DialogOptions;
       index: number;
+      /** 关闭确定按钮的 `loading` 加载动画 */
+      closeLoading: Function;
     }
   ) => void;
 }

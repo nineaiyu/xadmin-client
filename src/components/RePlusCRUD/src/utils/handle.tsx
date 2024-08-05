@@ -17,7 +17,7 @@ interface callBackArgs {
   formData: Object | any;
   formRef: FormInstance;
   formOptions: formDialogOptions;
-  dialogOptions: DialogOptions;
+  closeLoading: Function;
   success: (close?: boolean) => void;
   failed: (detail: string, close?: boolean) => void;
   done: Function;
@@ -51,7 +51,7 @@ interface formDialogOptions {
     formData,
     formRef,
     formOptions,
-    dialogOptions,
+    closeLoading,
     success,
     failed,
     done
@@ -149,26 +149,21 @@ const openFormDialog = (formOptions: formDialogOptions) => {
       formProps: { ...formOptions?.rawFormProps, ...(formPropsResult ?? {}) }
     },
     draggable: true,
+    sureBtnLoading: true,
     fullscreen: deviceDetection(),
+    destroyOnClose: true,
     fullscreenIcon: true,
     closeOnClickModal: false,
     contentRenderer: () => h(formOptions?.form ?? addOrEdit, { ref: formRef }),
-    beforeSure: async (done, { options }) => {
+    beforeSure: async (done, { options, closeLoading }) => {
       const FormRef: FormInstance = formRef.value.getRef();
       const formInlineData = cloneDeep(options.props.formInline);
-      const formData =
-        (formOptions?.beforeSubmit &&
-          formOptions?.beforeSubmit({
-            formData: formInlineData,
-            formRef: formRef,
-            formOptions
-          })) ||
-        formInlineData;
+
       const success = (close = true) => {
         message(formOptions?.t("results.success"), {
           type: "success"
         });
-        options.confirmLoading = false;
+        closeLoading();
         close && done(); // 关闭弹框
       };
 
@@ -176,22 +171,31 @@ const openFormDialog = (formOptions: formDialogOptions) => {
         message(`${formOptions?.t("results.failed")}，${detail}`, {
           type: "error"
         });
-        options.confirmLoading = false;
+        closeLoading();
         close && done(); // 关闭弹框
       };
 
       await FormRef.validate(valid => {
         if (valid) {
-          options.confirmLoading = true;
+          const formData =
+            (formOptions?.beforeSubmit &&
+              formOptions?.beforeSubmit({
+                formData: formInlineData,
+                formRef: formRef,
+                formOptions
+              })) ||
+            formInlineData;
           formOptions?.saveCallback({
             formData,
             formRef: FormRef,
-            dialogOptions: options,
+            closeLoading,
             formOptions,
             success,
             failed,
             done
           });
+        } else {
+          closeLoading();
         }
       });
     },
@@ -462,15 +466,15 @@ const handleExportData = (options: exportDataOptions) => {
     },
     dialogOptions: { width: "600px" },
     form: exportDataForm,
-    saveCallback: async ({ formData, done, dialogOptions }) => {
+    saveCallback: async ({ formData, done, closeLoading }) => {
       if (formData.range === "all") {
         await api.export(formData).finally(() => {
-          dialogOptions.confirmLoading = false;
+          closeLoading();
         });
       } else if (formData.range === "search" && searchFields) {
         searchFields.value["type"] = formData["type"];
         await api.export(toRaw(searchFields.value)).finally(() => {
-          dialogOptions.confirmLoading = false;
+          closeLoading();
         });
       } else if (formData.range === "selected") {
         resourcesIDCacheApi(formData.pks)
@@ -478,11 +482,11 @@ const handleExportData = (options: exportDataOptions) => {
             formData["spm"] = res.spm;
             delete formData.pks;
             await api.export(formData).finally(() => {
-              dialogOptions.confirmLoading = false;
+              closeLoading();
             });
           })
           .finally(() => {
-            dialogOptions.confirmLoading = false;
+            closeLoading();
           });
       }
       done();
@@ -509,7 +513,7 @@ const handleImportData = (options: importDataOptions) => {
     },
     dialogOptions: { width: "600px" },
     form: importDataForm,
-    saveCallback: ({ formData, success, failed, dialogOptions }) => {
+    saveCallback: ({ formData, success, failed, closeLoading }) => {
       api
         .import(formData.action, formData.upload[0].raw)
         .then(res => {
@@ -521,7 +525,7 @@ const handleImportData = (options: importDataOptions) => {
           }
         })
         .finally(() => {
-          dialogOptions.confirmLoading = false;
+          closeLoading();
         });
     }
   });
