@@ -135,112 +135,113 @@ defineExpose({
         @keyup.enter="handleSearch"
       />
     </div>
-    <PureTableBar
-      v-if="tableBar"
-      :columns="listColumns"
-      @refresh="handleGetData"
-      @change="handleTableBarChange"
-    >
-      <template #title>
-        <el-space>
-          <p class="font-bold truncate">
-            {{ pageTitle }}
-          </p>
-          <div
-            v-if="selectedNum > 0"
-            v-motion-fade
-            class="bg-[var(--el-fill-color-light)] w-[160px] h-[46px] m-2 pl-4 flex items-center rounded-md"
-          >
-            <span
-              class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
-              style="font-size: var(--el-font-size-base)"
+    <div :class="tableBarData.renderClass">
+      <PureTableBar
+        v-if="tableBar"
+        :columns="listColumns"
+        @refresh="handleGetData"
+        @change="handleTableBarChange"
+      >
+        <template #title>
+          <el-space>
+            <p class="font-bold truncate">
+              {{ pageTitle }}
+            </p>
+            <div
+              v-if="selectedNum > 0"
+              v-motion-fade
+              class="bg-[var(--el-fill-color-light)] w-[160px] h-[46px] m-2 pl-4 flex items-center rounded-md"
             >
-              {{ t("buttons.selected", { count: selectedNum }) }}
-            </span>
-            <el-button text type="primary" @click="onSelectionCancel">
-              {{ t("buttons.cancel") }}
-            </el-button>
-          </div>
-        </el-space>
-      </template>
-      <template #buttons>
-        <el-space>
-          <div v-if="selectedNum > 0" v-motion-fade>
-            <el-popconfirm
-              v-if="auth.batchDelete"
-              :title="t('buttons.batchDeleteConfirm', { count: selectedNum })"
-              @confirm="handleManyDelete"
-            >
-              <template #reference>
-                <el-button :icon="useRenderIcon(Delete)" plain type="danger">
-                  {{ t("buttons.batchDelete") }}
-                </el-button>
-              </template>
-            </el-popconfirm>
-          </div>
+              <span
+                class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
+                style="font-size: var(--el-font-size-base)"
+              >
+                {{ t("buttons.selected", { count: selectedNum }) }}
+              </span>
+              <el-button text type="primary" @click="onSelectionCancel">
+                {{ t("buttons.cancel") }}
+              </el-button>
+            </div>
+          </el-space>
+        </template>
+        <template #buttons>
+          <el-space>
+            <div v-if="selectedNum > 0" v-motion-fade>
+              <el-popconfirm
+                v-if="auth.batchDelete"
+                :title="t('buttons.batchDeleteConfirm', { count: selectedNum })"
+                @confirm="handleManyDelete"
+              >
+                <template #reference>
+                  <el-button :icon="useRenderIcon(Delete)" plain type="danger">
+                    {{ t("buttons.batchDelete") }}
+                  </el-button>
+                </template>
+              </el-popconfirm>
+            </div>
+            <button-operation
+              :show-number="99"
+              v-bind="tableBarButtonsProps"
+              :buttons="tableBarButtons"
+              @clickAction="
+                data => {
+                  emit('tableBarClickAction', data);
+                }
+              "
+            />
+            <slot name="barButtons" />
+          </el-space>
+        </template>
+      </PureTableBar>
+      <pure-table
+        ref="tableRef"
+        :adaptiveConfig="{ offsetBottom: 110 }"
+        :columns="tableBarData.dynamicColumns"
+        :data="dataList"
+        :header-cell-style="{
+          background: 'var(--el-table-row-hover-bg-color)',
+          color: 'var(--el-text-color-primary)'
+        }"
+        :loading="loadingStatus"
+        :pagination="tablePagination"
+        :size="tableBarData.size as any"
+        :tree-props="treeProps"
+        adaptive
+        align-whole="center"
+        default-expand-all
+        row-key="pk"
+        showOverflowTooltip
+        table-layout="auto"
+        v-bind="pureTableProps"
+        @selection-change="handleSelectionChange"
+        @page-size-change="handleSizeChange"
+        @page-current-change="handleCurrentChange"
+      >
+        <template #operation="{ row }">
           <button-operation
-            :show-number="99"
-            v-bind="tableBarButtonsProps"
-            :buttons="tableBarButtons"
+            :row="row"
+            :size="tableBarData.size as any"
+            v-bind="operationButtonsProps"
+            :buttons="operationButtons"
             @clickAction="
               data => {
-                emit('tableBarClickAction', data);
+                emit('operationClickAction', data);
               }
             "
           />
-          <slot name="barButtons" />
-        </el-space>
-      </template>
-    </PureTableBar>
-    <pure-table
-      ref="tableRef"
-      class="w-[99/100] px-2 pb-2 bg-bg_color"
-      :adaptiveConfig="{ offsetBottom: 110 }"
-      :columns="tableBarData.dynamicColumns"
-      :data="dataList"
-      :header-cell-style="{
-        background: 'var(--el-table-row-hover-bg-color)',
-        color: 'var(--el-text-color-primary)'
-      }"
-      :loading="loadingStatus"
-      :pagination="tablePagination"
-      :size="tableBarData.size as any"
-      :tree-props="treeProps"
-      adaptive
-      align-whole="center"
-      default-expand-all
-      row-key="pk"
-      showOverflowTooltip
-      table-layout="auto"
-      v-bind="pureTableProps"
-      @selection-change="handleSelectionChange"
-      @page-size-change="handleSizeChange"
-      @page-current-change="handleCurrentChange"
-    >
-      <template #operation="{ row }">
-        <button-operation
-          :row="row"
-          :size="tableBarData.size as any"
-          v-bind="operationButtonsProps"
-          :buttons="operationButtons"
-          @clickAction="
-            data => {
-              emit('operationClickAction', data);
-            }
-          "
-        />
-        <slot name="extOperation" v-bind="{ row, size: tableBarData.size }" />
-      </template>
-      <template
-        v-for="item in getKeyList(listColumns, 'slot').filter(x => {
-          return x !== 'operation';
-        })"
-        :key="item"
-        #[item]="{ row, size }"
-      >
-        <slot :key="item" :name="item" v-bind="{ row, size }" />
-      </template>
-    </pure-table>
+          <slot name="extOperation" v-bind="{ row, size: tableBarData.size }" />
+        </template>
+        <template
+          v-for="item in getKeyList(listColumns, 'slot').filter(x => {
+            return x !== 'operation';
+          })"
+          :key="item"
+          #[item]="{ row, size }"
+        >
+          <slot :key="item" :name="item" v-bind="{ row, size }" />
+        </template>
+      </pure-table>
+    </div>
   </div>
 </template>
 

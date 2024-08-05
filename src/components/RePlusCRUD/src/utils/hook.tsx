@@ -113,7 +113,8 @@ export function usePlusCRUDPage(
 
   const tableBarData = ref({
     size: "default",
-    dynamicColumns: listColumns.value
+    dynamicColumns: listColumns.value,
+    renderClass: []
   });
 
   // 默认操作按钮
@@ -250,9 +251,10 @@ export function usePlusCRUDPage(
     tablePagination.value.currentPage = searchFields.value.page;
   };
 
-  const handleTableBarChange = ({ dynamicColumns, size }) => {
+  const handleTableBarChange = ({ dynamicColumns, size, renderClass }) => {
     tableBarData.value.dynamicColumns = dynamicColumns;
     tableBarData.value.size = size;
+    tableBarData.value.renderClass = renderClass;
     tablePagination.value.size = size;
   };
 

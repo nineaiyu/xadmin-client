@@ -19,6 +19,8 @@ import {
   isFunction
 } from "@pureadmin/utils";
 
+import Fullscreen from "@iconify-icons/ri/fullscreen-fill";
+import ExitFullscreen from "@iconify-icons/ri/fullscreen-exit-fill";
 import DragIcon from "@/assets/table-bar/drag.svg?component";
 import ExpandIcon from "@/assets/table-bar/expand.svg?component";
 import RefreshIcon from "@/assets/table-bar/refresh.svg?component";
@@ -59,6 +61,7 @@ export default defineComponent({
     const size = ref("default");
     const loading = ref(false);
     const checkAll = ref(true);
+    const isFullscreen = ref(false);
     const isIndeterminate = ref(false);
     const instance = getCurrentInstance()!;
     const isExpandAll = ref(props.isExpandAll);
@@ -109,6 +112,18 @@ export default defineComponent({
         "border-solid",
         "border-[#dcdfe6]",
         "dark:border-[#303030]"
+      ];
+    });
+
+    const renderClass = computed(() => {
+      return [
+        "w-[99/100]",
+        "px-2",
+        "pb-2",
+        "bg-bg_color",
+        isFullscreen.value
+          ? ["!w-full", "!h-full", "z-[2002]", "fixed", "inset-0"]
+          : "mt-2"
       ];
     });
 
@@ -168,17 +183,22 @@ export default defineComponent({
       );
     }
 
+    const handleChange = () => {
+      emit("change", {
+        dynamicColumns: dynamicColumns.value,
+        size: size.value,
+        renderClass: slots?.default ? "" : renderClass.value
+      });
+    };
+
     watch(props?.columns, () => {
       onReset();
     });
 
     watch(
-      () => dynamicColumns.value,
+      () => [dynamicColumns.value, renderClass.value],
       () => {
-        emit("change", {
-          dynamicColumns: dynamicColumns.value,
-          size: size.value
-        });
+        handleChange();
       },
       { deep: true, immediate: true }
     );
@@ -186,10 +206,7 @@ export default defineComponent({
     const sizeChange = (event, val) => {
       event.stopPropagation();
       size.value = val;
-      emit("change", {
-        dynamicColumns: dynamicColumns.value,
-        size: size.value
-      });
+      handleChange();
     };
     const dropdown = {
       dropdown: () => (
@@ -277,17 +294,9 @@ export default defineComponent({
       )
     };
 
-    const renderClass = computed(() => {
-      if (slots?.default) {
-        return ["w-[99/100]", "mt-2", "px-2", "pb-2", "bg-bg_color"];
-      } else {
-        return ["w-[99/100]", "mt-2", "px-2", "bg-bg_color"];
-      }
-    });
-
     return () => (
       <>
-        <div {...attrs} class={renderClass.value}>
+        <div {...attrs} class={[slots?.default ? renderClass.value : ""]}>
           <div class="flex justify-between w-full h-[60px] p-4">
             {slots?.title ? (
               slots.title()
@@ -403,6 +412,18 @@ export default defineComponent({
                   </el-scrollbar>
                 </div>
               </el-popover>
+              <el-divider direction="vertical" />
+
+              <iconifyIconOffline
+                class={["w-[16px]", iconClass.value]}
+                icon={isFullscreen.value ? ExitFullscreen : Fullscreen}
+                v-tippy={
+                  isFullscreen.value
+                    ? t("tableBar.exitFullscreen")
+                    : t("tableBar.fullscreen")
+                }
+                onClick={() => (isFullscreen.value = !isFullscreen.value)}
+              />
             </div>
           </div>
           {slots?.default &&

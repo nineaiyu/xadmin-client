@@ -22,6 +22,8 @@ tableBar:
   columnSettings: Column Settings
   fold: Fold
   unfold: Unfold
+  fullscreen: Fullscreen
+  exitFullscreen: Exit Fullscreen
 
 avatarUpload:
   tips: 'Tips: Right-click the cropping area can open the function menu'
