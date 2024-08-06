@@ -184,6 +184,7 @@ buttons:
   delete: 删除
   reload: 重新加载
   reset: 重置
+  test: 测试
   closeCurrentTab: 关闭当前标签页
   closeLeftTabs: 关闭左侧标签页
   closeRightTabs: 关闭右侧标签页
@@ -213,6 +214,7 @@ menus:
   systemSettings: 系统设置
   basicSettings: 基本设置
   emailSettings: 邮件设置
+  smsSettings: 短信设置
   passwordSettings: 密码设置
   registerSettings: 注册设置
   loginSettings: 登录设置
@@ -556,6 +558,9 @@ settingLogin:
 
 settingRegister:
   title: 注册安全配置
+
+settingSms:
+  title: 短信设置
 
 demoBook:
   book: 书籍

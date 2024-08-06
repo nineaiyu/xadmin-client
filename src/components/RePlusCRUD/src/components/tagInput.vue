@@ -40,6 +40,7 @@ interface TagInputProps {
   placeholder?: string;
   inputType?: string;
 }
+defineOptions({ name: "TagInput" });
 
 const value = defineModel<Array<any>>({ default: [] });
 

@@ -37,3 +37,14 @@ export const settingsEmailTestApi = new SettingsEmailApi(
 export const settingsRegisterAuthApi = new ViewBaseApi(
   "/api/settings/register/auth"
 );
+
+// 短信
+export const settingsSmsServerApi = new SettingsEmailApi("/api/settings/sms");
+
+export const settingsSmsBackendsApi = new SettingsEmailApi(
+  "/api/settings/sms/backend"
+);
+
+export const settingsSmsConfigApi = new SettingsEmailApi(
+  "/api/settings/sms/config"
+);

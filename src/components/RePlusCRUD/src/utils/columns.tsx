@@ -22,6 +22,7 @@ import SearchDept from "@/views/system/components/searchDept.vue";
 import SearchRole from "@/views/system/components/searchRole.vue";
 import uploadFile from "../components/uploadFile.vue";
 import tagInput from "../components/tagInput.vue";
+import phoneInput from "../components/phoneInput.vue";
 import { ElIcon, ElImage, ElLink } from "element-plus";
 import { Link } from "@element-plus/icons-vue";
 import Info from "@iconify-icons/ri/question-line";
@@ -324,7 +325,17 @@ export function useBaseColumns(localeName: string) {
               }
             });
           };
-
+          break;
+        case "phone":
+          column.default = { name: "China", code: "+86" };
+          item["renderField"] = (value: any, onChange) => {
+            return h(phoneInput, {
+              modelValue: value,
+              onChange: x => {
+                onChange(x);
+              }
+            });
+          };
           break;
         default:
           if (column.input_type.startsWith("api-")) {
@@ -493,10 +504,12 @@ export function useBaseColumns(localeName: string) {
     apiColumns: BaseApi["columns"],
     apiFields: BaseApi["fields"],
     columnsCallback = null,
-    fieldsCallback = null
+    fieldsCallback = null,
+    columnsParams = {},
+    fieldsParams = {}
   ) => {
     apiColumns &&
-      apiColumns().then(res => {
+      apiColumns(columnsParams).then(res => {
         detailColumns.value.splice(0, detailColumns.value.length);
         addOrEditColumns.value.splice(0, addOrEditColumns.value.length);
         listColumns.value.splice(0, listColumns.value.length);
@@ -511,7 +524,7 @@ export function useBaseColumns(localeName: string) {
           });
       });
     apiFields &&
-      apiFields().then(res => {
+      apiFields(fieldsParams).then(res => {
         searchColumns.value.splice(0, searchColumns.value.length);
         formatSearchColumns(res.data);
         fieldsCallback && fieldsCallback({ searchDefaultValue, searchColumns });

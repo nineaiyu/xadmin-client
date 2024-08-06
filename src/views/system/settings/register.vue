@@ -1,31 +1,26 @@
 <script lang="ts" setup>
 import { settingsRegisterAuthApi } from "@/api/settings/settings";
-import SettingBase from "@/views/system/components/settingBase.vue";
-import { reactive } from "vue";
+import { computed } from "vue";
 import { hasAuth } from "@/router/utils";
+import { settingItemProps } from "@/views/system/components/settings/types";
+import Setting from "@/views/system/components/settings/index.vue";
 
 defineOptions({
   name: "SettingRegister"
 });
-const auth = reactive({
-  update: hasAuth("update:SettingRegisterAuth"),
-  detail: hasAuth("detail:SettingRegisterAuth")
-});
+
+const settingData = computed<Array<settingItemProps>>(() => [
+  {
+    auth: {
+      update: hasAuth("update:SettingRegisterAuth"),
+      detail: hasAuth("detail:SettingRegisterAuth")
+    },
+    api: settingsRegisterAuthApi,
+    localeName: "settingRegister"
+  }
+]);
 </script>
 
 <template>
-  <el-row :gutter="24" class="main-content">
-    <el-col :lg="8" :md="8" :sm="24" :xl="8" :xs="24">
-      <setting-base
-        :api="settingsRegisterAuthApi"
-        locale-name="settingRegister"
-        :auth="auth"
-      />
-    </el-col>
-  </el-row>
+  <setting :model-value="settingData" />
 </template>
-<style scoped>
-.main-content {
-  margin: 24px 24px 0 !important;
-}
-</style>

@@ -184,6 +184,7 @@ buttons:
   delete: Delete
   reload: Reload
   reset: Reset
+  test: Test
   closeCurrentTab: Close CurrentTab
   closeLeftTabs: Close LeftTabs
   closeRightTabs: Close RightTabs
@@ -213,6 +214,7 @@ menus:
   systemSettings: System Settings
   basicSettings: Basic Settings
   emailSettings: Email Settings
+  smsSettings: SMS Settings
   passwordSettings: Password Settings
   registerSettings: Register Settings
   loginSettings: Login Settings
@@ -556,6 +558,9 @@ settingLogin:
 
 settingRegister:
   title: Register Safe
+
+settingSms:
+  title: SMS Setting
 
 demoBook:
   book: Book

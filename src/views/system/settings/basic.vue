@@ -1,31 +1,29 @@
 <script lang="ts" setup>
-import { settingsBasicApi } from "@/api/settings/settings";
-import SettingBase from "@/views/system/components/settingBase.vue";
-import { reactive } from "vue";
+import {
+  settingsBasicApi,
+  settingsLoginAuthApi
+} from "@/api/settings/settings";
+import { computed } from "vue";
 import { hasAuth } from "@/router/utils";
+import Setting from "@/views/system/components/settings/index.vue";
+import { settingItemProps } from "@/views/system/components/settings/types";
 
 defineOptions({
   name: "SettingBasic"
 });
-const auth = reactive({
-  update: hasAuth("update:SettingBasic"),
-  detail: hasAuth("detail:SettingBasic")
-});
+
+const settingData = computed<Array<settingItemProps>>(() => [
+  {
+    auth: {
+      update: hasAuth("update:SettingBasic"),
+      detail: hasAuth("detail:SettingBasic")
+    },
+    api: settingsBasicApi,
+    localeName: "settingBasic"
+  }
+]);
 </script>
 
 <template>
-  <el-row :gutter="24" class="main-content">
-    <el-col :lg="16" :md="16" :sm="24" :xl="16" :xs="24">
-      <setting-base
-        :auth="auth"
-        :api="settingsBasicApi"
-        locale-name="settingBasic"
-      />
-    </el-col>
-  </el-row>
+  <setting :model-value="settingData" />
 </template>
-<style scoped>
-.main-content {
-  margin: 24px 24px 0 !important;
-}
-</style>
