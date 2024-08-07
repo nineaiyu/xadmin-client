@@ -1,5 +1,5 @@
 import { reactive } from "vue";
-import { isPhone } from "@pureadmin/utils";
+import { isEmail, isPhone } from "@pureadmin/utils";
 import type { FormRules } from "element-plus";
 import { $t, transformI18n } from "@/plugins/i18n";
 import { useUserStoreHook } from "@/store/modules/user";
@@ -13,13 +13,18 @@ export const REGEXP_PWD =
 
 /** 登录校验 */
 const loginRules = reactive<FormRules>({
+  username: [
+    {
+      required: true,
+      message: transformI18n($t("login.usernameReg")),
+      trigger: "blur"
+    }
+  ],
   password: [
     {
       validator: (rule, value, callback) => {
         if (value === "") {
           callback(new Error(transformI18n($t("login.passwordReg"))));
-        } else if (!REGEXP_PWD.test(value)) {
-          callback(new Error(transformI18n($t("login.passwordRuleReg"))));
         } else {
           callback();
         }
@@ -84,6 +89,20 @@ const updateRules = reactive<FormRules>({
           callback(new Error(transformI18n($t("login.phoneReg"))));
         } else if (!isPhone(value)) {
           callback(new Error(transformI18n($t("login.phoneCorrectReg"))));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur"
+    }
+  ],
+  email: [
+    {
+      validator: (rule, value, callback) => {
+        if (value === "") {
+          callback(new Error(transformI18n($t("login.emailReg"))));
+        } else if (!isEmail(value)) {
+          callback(new Error(transformI18n($t("login.emailCorrectReg"))));
         } else {
           callback();
         }

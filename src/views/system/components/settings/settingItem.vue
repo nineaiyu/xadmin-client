@@ -118,7 +118,7 @@ const handleTest = () => {
     :row-props="{ gutter: 24 }"
     class="mr-12 ml-12 m-5"
     label-position="left"
-    label-width="200px"
+    label-width="300px"
     :has-footer="auth.update"
     v-bind="formProps"
     @submit="handleSubmitSettings"

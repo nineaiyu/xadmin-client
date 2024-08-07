@@ -109,10 +109,8 @@ export const useUserStore = defineStore({
           .then(res => {
             if (res.code === 1000) {
               setToken(res.data);
-              resolve(res);
-            } else {
-              reject(res);
             }
+            resolve(res);
           })
           .catch(error => {
             reject(error);

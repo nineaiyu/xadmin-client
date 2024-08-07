@@ -1,8 +1,5 @@
 <script lang="ts" setup>
-import {
-  settingsBasicApi,
-  settingsLoginAuthApi
-} from "@/api/settings/settings";
+import { settingsBasicApi } from "@/api/system/settings";
 import { computed } from "vue";
 import { hasAuth } from "@/router/utils";
 import Setting from "@/views/system/components/settings/index.vue";

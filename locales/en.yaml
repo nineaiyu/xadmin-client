@@ -218,6 +218,8 @@ menus:
   passwordSettings: Password Settings
   registerSettings: Register Settings
   loginSettings: Login Settings
+  verifySettings: Verify Code Settings
+  resetSettings: Reset Password Settings
   userManagement: User Manage
   deptManagement: Department Manage
   menuManagement: Menu Manage
@@ -506,6 +508,7 @@ login:
   qqLogin: QQ Login
   weiboLogin: Weibo Login
   phone: Phone
+  email: Email
   smsVerifyCode: SMS VerifyCode
   back: Back
   test: Mock Test
@@ -525,11 +528,14 @@ login:
   verifyCodeSixReg: Please enter a 6-digit verify code
   phoneReg: Please enter the phone
   phoneCorrectReg: Please enter the correct phone number format
+  emailReg: Please enter the email
   emailCorrectReg: Please enter the correct email format
   passwordRuleReg: The password format should be any combination of 8-18 digits
   passwordSureReg: Please enter confirm password
   passwordDifferentReg: The two passwords do not match!
   passwordUpdateReg: Password has been updated
+  emailVerify: Send Email Code
+  smsVerify: Send SMS Code
 
 welcome:
   operateLog: Log of operations
@@ -551,6 +557,12 @@ settingEmail:
 
 settingPassword:
   title: Password Rules
+  tips: Password should be
+  minLength: Min Length ｛length｝
+  upperCase: Upper Case
+  lowerCase: Lower Case
+  number: Number
+  specialChar: Special Char
 
 settingLogin:
   title: Login Safe
@@ -561,6 +573,12 @@ settingRegister:
 
 settingSms:
   title: SMS Setting
+
+settingVerify:
+  title: Verify Code
+
+settingReset:
+  title: Reset Password
 
 demoBook:
   book: Book

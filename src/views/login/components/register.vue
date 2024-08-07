@@ -3,8 +3,7 @@ import { useI18n } from "vue-i18n";
 import { onMounted, reactive, ref } from "vue";
 import Motion from "../utils/motion";
 import { message } from "@/utils/message";
-import { updateRules } from "../utils/rule";
-import type { FormInstance } from "element-plus";
+import type { FormInstance, FormRules } from "element-plus";
 import { useVerifyCode } from "../utils/verifyCode";
 import { $t, transformI18n } from "@/plugins/i18n";
 import { useUserStoreHook } from "@/store/modules/user";
@@ -17,6 +16,7 @@ import { getTopMenu, initRouter } from "@/router/utils";
 import { useRouter } from "vue-router";
 import { cloneDeep } from "@pureadmin/utils";
 import ReImageVerify from "@/components/ReImageVerify/src/index.vue";
+import { passwordRulesCheck } from "@/utils";
 
 const { t } = useI18n();
 const checked = ref(false);
@@ -25,7 +25,8 @@ const authInfo = reactive<AuthInfoResult["data"]>({
   access: false,
   captcha: false,
   token: false,
-  encrypted: false
+  encrypted: false,
+  password: []
 });
 const ruleForm = reactive({
   username: "",
@@ -36,20 +37,7 @@ const ruleForm = reactive({
   captcha_code: ""
 });
 const ruleFormRef = ref<FormInstance>();
-const repeatPasswordRule = [
-  {
-    validator: (rule, value, callback) => {
-      if (value === "") {
-        callback(new Error(transformI18n($t("login.passwordSureReg"))));
-      } else if (ruleForm.password !== value) {
-        callback(new Error(transformI18n($t("login.passwordDifferentReg"))));
-      } else {
-        callback();
-      }
-    },
-    trigger: "blur"
-  }
-];
+
 const router = useRouter();
 const onRegister = async (formEl: FormInstance | undefined) => {
   loading.value = true;
@@ -112,6 +100,59 @@ const initToken = () => {
     });
   }
 };
+
+const formRules = reactive<FormRules>({
+  username: [
+    {
+      required: true,
+      message: transformI18n($t("login.usernameReg")),
+      trigger: "blur"
+    }
+  ],
+  password: [
+    {
+      required: true,
+      validator: (rule, value, callback) => {
+        const { result, msg } = passwordRulesCheck(value, authInfo.password, t);
+        if (result) {
+          callback();
+        } else {
+          callback(new Error(msg));
+        }
+      },
+      trigger: "blur"
+    }
+  ],
+  repeatPassword: [
+    {
+      required: true,
+      validator: (rule, value, callback) => {
+        if (value === "") {
+          callback(new Error(transformI18n($t("login.passwordSureReg"))));
+        } else if (ruleForm.password !== value) {
+          callback(new Error(transformI18n($t("login.passwordDifferentReg"))));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur"
+    }
+  ],
+  captcha_code: [
+    {
+      validator: (rule, value, callback) => {
+        if (value === "") {
+          callback(new Error(transformI18n($t("login.verifyCodeReg"))));
+        } else if (useUserStoreHook().verifyCodeLength !== value.length) {
+          callback(new Error(transformI18n($t("login.verifyCodeCorrectReg"))));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur"
+    }
+  ]
+});
 </script>
 
 <template>
@@ -120,20 +161,11 @@ const initToken = () => {
       v-if="authInfo.access"
       ref="ruleFormRef"
       :model="ruleForm"
-      :rules="updateRules"
+      :rules="formRules"
       size="large"
     >
       <Motion>
-        <el-form-item
-          :rules="[
-            {
-              required: true,
-              message: transformI18n($t('login.usernameReg')),
-              trigger: 'blur'
-            }
-          ]"
-          prop="username"
-        >
+        <el-form-item prop="username">
           <el-input
             v-model="ruleForm.username"
             :placeholder="t('login.username')"
@@ -142,41 +174,6 @@ const initToken = () => {
           />
         </el-form-item>
       </Motion>
-
-      <!--    <Motion :delay="100">-->
-      <!--      <el-form-item prop="phone">-->
-      <!--        <el-input-->
-      <!--          clearable-->
-      <!--          v-model="ruleForm.phone"-->
-      <!--          :placeholder="t('login.phone')"-->
-      <!--          :prefix-icon="useRenderIcon(Iphone)"-->
-      <!--        />-->
-      <!--      </el-form-item>-->
-      <!--    </Motion>-->
-
-      <!--    <Motion :delay="150">-->
-      <!--      <el-form-item prop="verifyCode">-->
-      <!--        <div class="w-full flex justify-between">-->
-      <!--          <el-input-->
-      <!--            clearable-->
-      <!--            v-model="ruleForm.verifyCode"-->
-      <!--            :placeholder="t('login.smsVerifyCode')"-->
-      <!--            :prefix-icon="useRenderIcon('ri:shield-keyhole-line')"-->
-      <!--          />-->
-      <!--          <el-button-->
-      <!--            :disabled="isDisabled"-->
-      <!--            class="ml-2"-->
-      <!--            @click="useVerifyCode().start(ruleFormRef, 'phone')"-->
-      <!--          >-->
-      <!--            {{-->
-      <!--              text.length > 0-->
-      <!--                ? text + t("login.info")-->
-      <!--                : t("login.getVerifyCode")-->
-      <!--            }}-->
-      <!--          </el-button>-->
-      <!--        </div>-->
-      <!--      </el-form-item>-->
-      <!--    </Motion>-->
 
       <Motion :delay="200">
         <el-form-item prop="password">
@@ -191,7 +188,7 @@ const initToken = () => {
       </Motion>
 
       <Motion :delay="250">
-        <el-form-item :rules="repeatPasswordRule" prop="repeatPassword">
+        <el-form-item prop="repeatPassword">
           <el-input
             v-model="ruleForm.repeatPassword"
             :placeholder="t('login.sure')"

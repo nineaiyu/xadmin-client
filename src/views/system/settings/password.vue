@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { settingsPasswordApi } from "@/api/settings/settings";
+import { settingsPasswordApi } from "@/api/system/settings";
 
 import { hasAuth } from "@/router/utils";
 import { computed } from "vue";

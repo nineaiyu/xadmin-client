@@ -3,7 +3,7 @@ import {
   settingsSmsBackendsApi,
   settingsSmsConfigApi,
   settingsSmsServerApi
-} from "@/api/settings/settings";
+} from "@/api/system/settings";
 import { computed, onMounted, ref } from "vue";
 import { hasAuth } from "@/router/utils";
 import { settingItemProps } from "@/views/system/components/settings/types";

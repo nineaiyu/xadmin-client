@@ -2,7 +2,7 @@
 import {
   settingsLoginAuthApi,
   settingsLoginLimitApi
-} from "@/api/settings/settings";
+} from "@/api/system/settings";
 import { computed } from "vue";
 import { hasAuth } from "@/router/utils";
 import Setting from "@/views/system/components/settings/index.vue";
@@ -28,10 +28,7 @@ const settingData = computed<Array<settingItemProps>>(() => [
     },
     api: settingsLoginLimitApi,
     localeName: "settingLogin",
-    title: "limit",
-    formProps: {
-      labelWidth: "300px"
-    }
+    title: "limit"
   }
 ]);
 </script>

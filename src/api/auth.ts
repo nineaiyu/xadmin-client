@@ -36,6 +36,7 @@ export type UserInfoResult = {
   detail: string;
   data: UserInfo;
   choices_dict?: any[];
+  password_rule?: any[];
 };
 
 export type TempTokenResult = {
@@ -62,6 +63,8 @@ export type AuthInfoResult = {
     token: boolean;
     encrypted: boolean;
     lifetime?: number;
+    reset?: boolean;
+    password?: Array<any>;
   };
 };
 
@@ -97,4 +100,8 @@ export const logoutApi = (data?: object) => {
   return http.request<TokenResult>("post", "/api/system/logout", {
     data: data
   });
+};
+
+export const rulesPasswordApi = () => {
+  return http.request<TokenResult>("get", "/api/system/rules/password");
 };

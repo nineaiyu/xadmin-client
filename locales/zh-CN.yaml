@@ -218,6 +218,8 @@ menus:
   passwordSettings: 密码设置
   registerSettings: 注册设置
   loginSettings: 登录设置
+  verifySettings: 验证码设置
+  resetSettings: 重置密码
   userManagement: 用户管理
   deptManagement: 部门管理
   menuManagement: 菜单管理
@@ -506,6 +508,7 @@ login:
   qqLogin: QQ登录
   weiboLogin: 微博登录
   phone: 手机号码
+  email: 邮箱地址
   smsVerifyCode: 短信验证码
   back: 返回
   test: 模拟测试
@@ -525,11 +528,14 @@ login:
   verifyCodeSixReg: 请输入6位数字验证码
   phoneReg: 请输入手机号码
   phoneCorrectReg: 请输入正确的手机号码格式
+  emailReg: 请输入邮箱地址
   emailCorrectReg: 请输入正确的邮箱地址格式
   passwordRuleReg: 密码格式应为8-18位数字、字母、符号的任意两种组合
   passwordSureReg: 请输入确认密码
   passwordDifferentReg: 两次密码不一致!
   passwordUpdateReg: 修改密码成功
+  emailVerify: 邮件验证
+  smsVerify: 短信验证
 
 welcome:
   operateLog: 操作日志
@@ -551,6 +557,12 @@ settingEmail:
 
 settingPassword:
   title: 密码规则配置
+  tips: 密码需要满足
+  minLength: 最小长度{length}位
+  upperCase: 大写字母
+  lowerCase: 小写字母
+  number: 数字字符
+  specialChar: 特殊字符
 
 settingLogin:
   title: 登录安全配置
@@ -561,6 +573,12 @@ settingRegister:
 
 settingSms:
   title: 短信设置
+
+settingVerify:
+  title: 验证码安全配置
+
+settingReset:
+  title: 忘记密码设置
 
 demoBook:
   book: 书籍

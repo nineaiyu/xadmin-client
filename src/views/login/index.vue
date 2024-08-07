@@ -5,7 +5,7 @@ import phone from "./components/phone.vue";
 import TypeIt from "@/components/ReTypeit";
 import qrCode from "./components/qrCode.vue";
 import register from "./components/register.vue";
-import update from "./components/update.vue";
+import update from "./components/resetPassword.vue";
 import login from "./components/login.vue";
 import { useNav } from "@/layout/hooks/useNav";
 import { useLayout } from "@/layout/hooks/useLayout";

@@ -1,23 +1,22 @@
 <script lang="ts" setup>
-import { settingsEmailApi } from "@/api/system/settings";
+import { settingsVerifyCodeApi } from "@/api/system/settings";
 import { computed } from "vue";
 import { hasAuth } from "@/router/utils";
-import { settingItemProps } from "@/views/system/components/settings/types";
 import Setting from "@/views/system/components/settings/index.vue";
+import { settingItemProps } from "@/views/system/components/settings/types";
 
 defineOptions({
-  name: "SettingEmail"
+  name: "SettingVerify"
 });
 
 const settingData = computed<Array<settingItemProps>>(() => [
   {
     auth: {
-      update: hasAuth("update:SettingEmail"),
-      detail: hasAuth("detail:SettingEmail"),
-      test: hasAuth("test:SettingEmail")
+      update: hasAuth("update:SettingVerify"),
+      detail: hasAuth("detail:SettingVerify")
     },
-    api: settingsEmailApi,
-    localeName: "settingEmail"
+    api: settingsVerifyCodeApi,
+    localeName: "settingVerify"
   }
 ]);
 </script>

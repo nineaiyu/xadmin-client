@@ -19,7 +19,6 @@ import { useI18n } from "vue-i18n";
 import { handleTree } from "@/utils/tree";
 import { deptApi } from "@/api/system/dept";
 import { dataPermissionApi } from "@/api/system/permission";
-import { REGEXP_PWD } from "@/views/login/utils/rule";
 import { customRolePermissionOptions, picturePng } from "@/views/system/hooks";
 import { AesEncrypted } from "@/utils/aes";
 import {
@@ -36,6 +35,8 @@ import Role from "@iconify-icons/ri/admin-line";
 import Avatar from "@iconify-icons/ri/user-3-fill";
 import Password from "@iconify-icons/ri/lock-password-line";
 import Message from "@iconify-icons/ri/message-fill";
+import { rulesPasswordApi } from "@/api/auth";
+import { passwordRulesCheck } from "@/utils";
 
 export function useUser(tableRef: Ref) {
   const { t } = useI18n();
@@ -161,12 +162,15 @@ export function useUser(tableRef: Ref) {
                 {
                   required: true,
                   validator: (rule, value, callback) => {
-                    if (value === "") {
-                      callback(new Error(t("systemUser.password")));
-                    } else if (!REGEXP_PWD.test(value)) {
-                      callback(new Error(t("login.passwordRuleReg")));
-                    } else {
+                    const { result, msg } = passwordRulesCheck(
+                      value,
+                      passwordRules.value,
+                      t
+                    );
+                    if (result) {
                       callback();
+                    } else {
+                      callback(new Error(msg));
                     }
                   },
                   trigger: "blur"
@@ -363,12 +367,15 @@ export function useUser(tableRef: Ref) {
             {
               required: true,
               validator: (rule, value, callback) => {
-                if (value === "") {
-                  callback(new Error(t("login.passwordReg")));
-                } else if (!REGEXP_PWD.test(value)) {
-                  callback(new Error(t("login.passwordRuleReg")));
-                } else {
+                const { result, msg } = passwordRulesCheck(
+                  value,
+                  passwordRules.value,
+                  t
+                );
+                if (result) {
                   callback();
+                } else {
+                  callback(new Error(msg));
                 }
               },
               trigger: "blur"
@@ -404,6 +411,7 @@ export function useUser(tableRef: Ref) {
   });
 
   const roleRulesColumns = ref([]);
+  const passwordRules = ref([]);
   const roleRules = ref({});
   const baseColumnsFormat = ({ addOrEditColumns, addOrEditRules }) => {
     roleRules.value = addOrEditRules.value;
@@ -538,6 +546,17 @@ export function useUser(tableRef: Ref) {
         show: auth.empower
       }
     ]
+  });
+
+  onMounted(() => {
+    handleOperation({
+      t,
+      apiReq: rulesPasswordApi(),
+      success({ data: { password_rules } }) {
+        passwordRules.value = password_rules;
+      },
+      showSuccessMsg: false
+    });
   });
 
   return {

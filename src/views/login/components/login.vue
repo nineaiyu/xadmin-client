@@ -38,7 +38,8 @@ const authInfo = reactive<AuthInfoResult["data"]>({
   captcha: false,
   token: false,
   encrypted: false,
-  lifetime: 1
+  lifetime: 1,
+  reset: false
 });
 
 const ruleForm = reactive({
@@ -99,14 +100,10 @@ const onLogin = async (formEl: FormInstance | undefined) => {
             });
           }
         })
-        .catch(err => {
-          message(err.detail, {
-            type: "warning"
-          });
+        .finally(() => {
           loading.value = false;
           initToken();
-        })
-        .finally(() => (loading.value = false));
+        });
     } else {
       loading.value = false;
     }
@@ -170,16 +167,7 @@ watch(loginDay, value => {
       size="large"
     >
       <Motion :delay="100">
-        <el-form-item
-          :rules="[
-            {
-              required: true,
-              message: transformI18n($t('login.usernameReg')),
-              trigger: 'blur'
-            }
-          ]"
-          prop="username"
-        >
+        <el-form-item prop="username">
           <el-input
             v-model="ruleForm.username"
             :placeholder="t('login.username')"
@@ -250,6 +238,7 @@ watch(loginDay, value => {
               </span>
             </el-checkbox>
             <el-button
+              v-if="authInfo.reset"
               link
               type="primary"
               @click="useUserStoreHook().SET_CURRENT_PAGE(4)"

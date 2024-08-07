@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { settingsRegisterAuthApi } from "@/api/settings/settings";
+import { settingsRegisterAuthApi } from "@/api/system/settings";
 import { computed } from "vue";
 import { hasAuth } from "@/router/utils";
 import { settingItemProps } from "@/views/system/components/settings/types";
