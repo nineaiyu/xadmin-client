@@ -65,16 +65,26 @@ export type AuthInfoResult = {
     lifetime?: number;
     reset?: boolean;
     password?: Array<any>;
+    email?: boolean;
+    sms?: boolean;
+    basic?: boolean;
+    rate?: number;
   };
 };
 
 /** 登录 */
-export const loginApi = (data?: object) => {
-  return http.request<TokenResult>("post", "/api/system/login", { data });
+export const loginBasicApi = (data?: object) => {
+  return http.request<TokenResult>("post", "/api/system/login/basic", { data });
+};
+
+export const loginVerifyCodeApi = (data?: object) => {
+  return http.request<TokenResult>("post", "/api/system/login/code", { data });
 };
 
 export const loginAuthApi = (data?: object) => {
-  return http.request<AuthInfoResult>("get", "/api/system/login", { data });
+  return http.request<AuthInfoResult>("get", "/api/system/login/basic", {
+    data
+  });
 };
 
 export const getTempTokenApi = () => {
@@ -104,4 +114,22 @@ export const logoutApi = (data?: object) => {
 
 export const rulesPasswordApi = () => {
   return http.request<TokenResult>("get", "/api/system/rules/password");
+};
+
+export const resetPasswordApi = (data?: object) => {
+  return http.request<TokenResult>("post", "/api/system/auth/reset", {
+    data: data
+  });
+};
+
+export const verifyCodeConfigApi = (params?: object) => {
+  return http.request<AuthInfoResult>("get", "/api/system/auth/verify", {
+    params
+  });
+};
+export const verifyCodeSendApi = (params?: object, data?: object) => {
+  return http.request<TokenResult>("post", "/api/system/auth/verify", {
+    params,
+    data
+  });
 };

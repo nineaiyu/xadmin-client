@@ -40,6 +40,7 @@ function getRef() {
 
 const matchList = ref([]);
 const getMatchData = (value: any) => {
+  if (!value) return;
   if (value[0] === "*" && value[1] === "*") {
     matchList.value = ["*"];
     newFormInline.value.match = "*";

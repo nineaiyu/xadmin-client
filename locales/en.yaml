@@ -500,7 +500,7 @@ login:
   forget: Forget Password?
   login: Login
   thirdLogin: Third Login
-  phoneLogin: Phone Login
+  verifyCodeLogin: Verify Code Login
   qRCodeLogin: QRCode Login
   register: Register
   weChatLogin: WeChat Login

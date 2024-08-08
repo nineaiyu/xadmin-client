@@ -38,6 +38,7 @@ const authInfo = reactive<AuthInfoResult["data"]>({
   captcha: false,
   token: false,
   encrypted: false,
+  basic: false,
   lifetime: 1,
   reset: false
 });
@@ -166,44 +167,45 @@ watch(loginDay, value => {
       :rules="loginRules"
       size="large"
     >
-      <Motion :delay="100">
-        <el-form-item prop="username">
-          <el-input
-            v-model="ruleForm.username"
-            :placeholder="t('login.username')"
-            :prefix-icon="useRenderIcon(User)"
-            clearable
-          />
-        </el-form-item>
-      </Motion>
+      <div v-if="authInfo.basic">
+        <Motion :delay="100">
+          <el-form-item prop="username">
+            <el-input
+              v-model="ruleForm.username"
+              :placeholder="t('login.username')"
+              :prefix-icon="useRenderIcon(User)"
+              clearable
+            />
+          </el-form-item>
+        </Motion>
 
-      <Motion :delay="150">
-        <el-form-item prop="password">
-          <el-input
-            v-model="ruleForm.password"
-            :placeholder="t('login.password')"
-            :prefix-icon="useRenderIcon(Lock)"
-            clearable
-            show-password
-          />
-        </el-form-item>
-      </Motion>
+        <Motion :delay="150">
+          <el-form-item prop="password">
+            <el-input
+              v-model="ruleForm.password"
+              :placeholder="t('login.password')"
+              :prefix-icon="useRenderIcon(Lock)"
+              clearable
+              show-password
+            />
+          </el-form-item>
+        </Motion>
 
-      <Motion v-if="authInfo.access && authInfo.captcha" :delay="200">
-        <el-form-item prop="captcha_code">
-          <el-input
-            v-model="ruleForm.captcha_code"
-            :placeholder="t('login.verifyCode')"
-            :prefix-icon="useRenderIcon('ri:shield-keyhole-line')"
-            clearable
-          >
-            <template v-slot:append>
-              <ReImageVerify v-model="ruleForm.captcha_key" />
-            </template>
-          </el-input>
-        </el-form-item>
-      </Motion>
-
+        <Motion v-if="authInfo.access && authInfo.captcha" :delay="200">
+          <el-form-item prop="captcha_code">
+            <el-input
+              v-model="ruleForm.captcha_code"
+              :placeholder="t('login.verifyCode')"
+              :prefix-icon="useRenderIcon('ri:shield-keyhole-line')"
+              clearable
+            >
+              <template v-slot:append>
+                <ReImageVerify v-model="ruleForm.captcha_key" />
+              </template>
+            </el-input>
+          </el-form-item>
+        </Motion>
+      </div>
       <Motion :delay="250">
         <el-form-item>
           <div class="w-full h-[20px] flex justify-between items-center">

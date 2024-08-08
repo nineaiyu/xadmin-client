@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, toRaw } from "vue";
 import Motion from "./utils/motion";
-import phone from "./components/phone.vue";
+import verifyCode from "./components/verifyCode.vue";
 import TypeIt from "@/components/ReTypeit";
 import qrCode from "./components/qrCode.vue";
 import register from "./components/register.vue";
@@ -98,8 +98,8 @@ const { locale, translationCh, translationEn } = useTranslationLang();
 
           <login v-if="currentPage === 0" />
 
-          <!-- 手机号登录 -->
-          <phone v-if="currentPage === 1" />
+          <!-- 验证码登录 -->
+          <verifyCode v-if="currentPage === 1" />
           <!-- 二维码登录 -->
           <qrCode v-if="currentPage === 2" />
           <!-- 注册 -->

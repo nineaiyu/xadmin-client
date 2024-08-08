@@ -500,7 +500,7 @@ login:
   forget: 忘记密码?
   login: 登录
   thirdLogin: 第三方登录
-  phoneLogin: 手机登录
+  verifyCodeLogin: 验证码登录
   qRCodeLogin: 二维码登录
   register: 注册
   weChatLogin: 微信登录

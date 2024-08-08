@@ -35,3 +35,6 @@ export const settingsVerifyCodeApi = new ViewBaseApi("/api/settings/verify");
 export const settingsResetPasswordCodeApi = new ViewBaseApi(
   "/api/settings/reset/auth"
 );
+
+// 图片验证码设置
+export const settingsCaptchaApi = new ViewBaseApi("/api/settings/captcha");

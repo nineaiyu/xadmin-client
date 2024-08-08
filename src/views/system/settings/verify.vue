@@ -1,5 +1,8 @@
 <script lang="ts" setup>
-import { settingsVerifyCodeApi } from "@/api/system/settings";
+import {
+  settingsCaptchaApi,
+  settingsVerifyCodeApi
+} from "@/api/system/settings";
 import { computed } from "vue";
 import { hasAuth } from "@/router/utils";
 import Setting from "@/views/system/components/settings/index.vue";
@@ -16,6 +19,14 @@ const settingData = computed<Array<settingItemProps>>(() => [
       detail: hasAuth("detail:SettingVerify")
     },
     api: settingsVerifyCodeApi,
+    localeName: "settingVerify"
+  },
+  {
+    auth: {
+      update: hasAuth("update:SettingVerify"),
+      detail: hasAuth("detail:SettingVerify")
+    },
+    api: settingsCaptchaApi,
     localeName: "settingVerify"
   }
 ]);

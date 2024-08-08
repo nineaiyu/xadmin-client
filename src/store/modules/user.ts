@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { message } from "@/utils/message";
 import type { TokenResult } from "@/api/auth";
 import {
-  loginApi,
+  loginBasicApi,
   logoutApi,
   refreshTokenApi,
   registerApi,
@@ -105,7 +105,7 @@ export const useUserStore = defineStore({
           data["password"] = AesEncrypted(data["token"], data["password"]);
           data["username"] = AesEncrypted(data["token"], data["username"]);
         }
-        loginApi(data)
+        loginBasicApi(data)
           .then(res => {
             if (res.code === 1000) {
               setToken(res.data);
@@ -149,13 +149,8 @@ export const useUserStore = defineStore({
       });
     },
     /** 注册 */
-    async registerByUsername(data, encrypted) {
+    async registerByUsername(data) {
       return new Promise<TokenResult>((resolve, reject) => {
-        if (encrypted) {
-          data["password"] = AesEncrypted(data["token"], data["password"]);
-          data["username"] = AesEncrypted(data["token"], data["username"]);
-        }
-        delete data["repeatPassword"];
         registerApi(data)
           .then(res => {
             if (res.code === 1000) {

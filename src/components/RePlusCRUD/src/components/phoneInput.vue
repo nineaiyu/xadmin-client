@@ -1,24 +1,27 @@
 <template>
-  <div>
+  <div class="w-full">
     <el-input v-model="value.phone" required @input="onInputChange">
       <template v-slot:prepend>
         <el-select
+          v-model="phoneCode"
           filterable
-          :model-value="value.code"
           style="width: 160px"
+          value-key="value"
+          default-first-option
           @change="onChange"
         >
           <el-option
             v-for="country in countries"
             :key="country.name"
-            :label="country.value"
-            :value="country.value"
+            :label="JSON.stringify(country)"
+            :value="country"
           >
             <span class="country-name">{{ country.name }}</span>
             <span style="float: right; font-size: 13px">{{
               country.value
             }}</span>
           </el-option>
+          <template #label>{{ phoneCode.name }} {{ phoneCode.value }}</template>
         </el-select>
       </template>
     </el-input>
@@ -26,7 +29,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { countriesApi } from "@/api/common";
 
 defineOptions({ name: "PhoneInput" });
@@ -38,31 +41,29 @@ const value = defineModel<PhoneInputProps>({
   default: { code: "+86", phone: "" }
 });
 
-const countries = ref([{ name: "China", value: "+86" }]);
+const phoneCode = ref({ name: "China", value: "+86" });
+
+const countries = ref([phoneCode.value]);
 
 const emit = defineEmits<{
   (e: "change", values: any): void;
 }>();
 
-const fullPhone = computed(() => {
-  if (!value.value.phone) {
-    return "";
-  }
-  return `${value.value.code}${value.value.phone}`;
-});
-
 onMounted(() => {
   countriesApi().then(res => {
     if (res.code === 1000) {
       countries.value = res.data.map(item => {
+        if (value.value.code === item.phone_code) {
+          phoneCode.value.name = `${item.flag} ${item.name}`;
+        }
         return { name: `${item.flag} ${item.name}`, value: item.phone_code };
       });
     }
   });
 });
 
-const onChange = countryCode => {
-  value.value.code = countryCode;
+const onChange = country => {
+  value.value.code = country.value;
   onInputChange();
 };
 const onInputChange = () => {
