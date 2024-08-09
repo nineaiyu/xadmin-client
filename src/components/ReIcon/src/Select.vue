@@ -195,7 +195,7 @@ watch(
               :pager-count="5"
               layout="pager"
               background
-              small
+              size="small"
               @current-change="onCurrentChange"
             />
             <el-button
