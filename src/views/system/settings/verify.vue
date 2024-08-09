@@ -23,10 +23,11 @@ const settingData = computed<Array<settingItemProps>>(() => [
   },
   {
     auth: {
-      update: hasAuth("update:SettingVerify"),
-      detail: hasAuth("detail:SettingVerify")
+      update: hasAuth("update:settingCaptcha"),
+      detail: hasAuth("detail:settingCaptcha")
     },
     api: settingsCaptchaApi,
+    title: "captcha",
     localeName: "settingVerify"
   }
 ]);

@@ -267,6 +267,21 @@ export function useBaseColumns(localeName: string) {
         case "field":
           item["valueType"] = "input";
           break;
+        case "color":
+          item["valueType"] = "color-picker";
+          item["fieldProps"]["showAlpha"] = true;
+          item["fieldProps"]["predefine"] = [
+            "#001100",
+            "#ffffff",
+            "#ff4500",
+            "#ff8c00",
+            "#ffd700",
+            "#90ee90",
+            "#00ced1",
+            "#1e90ff",
+            "#c71585"
+          ];
+          break;
         case "datetime":
         case "date":
           item["valueType"] = "date-picker";
@@ -292,14 +307,22 @@ export function useBaseColumns(localeName: string) {
           item["fieldProps"] = { autosize: { minRows: 8 } };
           break;
         case "labeled_choice":
+        case "labeled_multiple_choice":
         case "object_related_field":
         case "m2m_related_field":
           item["valueType"] = "select";
           item["options"] = computed(() =>
             formatAddOrEditOptions(column?.choices, true)
           );
-          if (column.input_type !== "labeled_choice") {
+          if (
+            ["labeled_choice", "labeled_multiple_choice"].indexOf(
+              column.input_type
+            ) === -1
+          ) {
             item["fieldProps"]["valueKey"] = "pk";
+          }
+          if (column.input_type === "labeled_multiple_choice") {
+            item["fieldProps"]["multiple"] = true;
           }
           break;
         case "image upload":
@@ -364,6 +387,11 @@ export function useBaseColumns(localeName: string) {
         if (column.input_type === "labeled_choice") {
           addOrEditDefaultValue.value[column.key] = { value: column?.default };
         }
+        if (column.input_type === "labeled_multiple_choice") {
+          addOrEditDefaultValue.value[column.key] = [
+            { value: column?.default }
+          ];
+        }
       }
 
       if (!column.write_only) {
@@ -395,6 +423,7 @@ export function useBaseColumns(localeName: string) {
             // pure-table ****** end
             break;
           case "m2m_related_field":
+          case "labeled_multiple_choice":
             item["render"] = (value: Array<any>) => {
               if (value instanceof Array) {
                 return (
@@ -403,7 +432,7 @@ export function useBaseColumns(localeName: string) {
                       {value?.map((item, index) => {
                         return (
                           <el-text
-                            key={item.pk}
+                            key={item.pk ?? item.value}
                             type={getColourTypeByIndex(index + 1)}
                           >
                             {item.label}

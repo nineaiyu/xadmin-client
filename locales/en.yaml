@@ -576,6 +576,7 @@ settingSms:
 
 settingVerify:
   title: Verify Code
+  captcha: Captcha Code
 
 settingReset:
   title: Reset Password

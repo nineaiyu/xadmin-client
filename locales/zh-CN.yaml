@@ -576,6 +576,7 @@ settingSms:
 
 settingVerify:
   title: 验证码安全配置
+  captcha: 图片验证码配置
 
 settingReset:
   title: 忘记密码设置
