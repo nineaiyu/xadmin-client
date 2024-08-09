@@ -48,8 +48,8 @@ const activeTab = ref("userinfo");
             <el-descriptions-item :label="t('userinfo.nickname')"
               >{{ currentUserInfo.nickname }}
             </el-descriptions-item>
-            <el-descriptions-item :label="t('userinfo.mobile')"
-              >{{ currentUserInfo.mobile }}
+            <el-descriptions-item :label="t('userinfo.phone')"
+              >{{ currentUserInfo.phone }}
             </el-descriptions-item>
             <el-descriptions-item :label="t('userinfo.email')"
               >{{ currentUserInfo.email }}

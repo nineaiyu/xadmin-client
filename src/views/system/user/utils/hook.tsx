@@ -381,7 +381,7 @@ export function useUser(tableRef: Ref) {
               trigger: "blur"
             }
           ];
-          rules["mobile"] = [
+          rules["phone"] = [
             {
               validator: (rule, value, callback) => {
                 if (value === "" || !value) {
@@ -441,7 +441,7 @@ export function useUser(tableRef: Ref) {
         column.hideInForm = true;
       }
       if (
-        ["username", "nickname", "mobile", "email", "gender"].indexOf(
+        ["username", "nickname", "phone", "email", "gender"].indexOf(
           column._column.key
         ) > -1
       ) {

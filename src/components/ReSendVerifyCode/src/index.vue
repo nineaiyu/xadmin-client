@@ -2,7 +2,7 @@
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Iphone from "@iconify-icons/ep/iphone";
 import Email from "@iconify-icons/ep/message";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import type { FormInstance } from "element-plus";
 import Motion from "@/views/login/utils/motion";
 import ReImageVerify from "@/components/ReImageVerify/src/index.vue";
@@ -36,14 +36,16 @@ const {
   verifyCodeConfig,
   handleSendCode
 } = useSendVerifyCode(formDataRef, props, emit);
+
+const access = computed(
+  () =>
+    verifyCodeConfig.access && (verifyCodeConfig.sms || verifyCodeConfig.email)
+);
 </script>
 
 <template>
   <el-form
-    v-if="
-      verifyCodeConfig.access &&
-      (verifyCodeConfig.sms || verifyCodeConfig.email)
-    "
+    v-if="access"
     ref="formDataRef"
     :model="formData"
     :rules="formRules"

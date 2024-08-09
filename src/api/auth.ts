@@ -26,7 +26,7 @@ export interface UserInfo {
   date_joined: string;
   pk: number;
   unread_message_count: number;
-  mobile: string;
+  phone: string;
   is_active: boolean;
   roles: string[];
 }

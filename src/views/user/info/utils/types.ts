@@ -11,7 +11,7 @@ interface FormItemProps {
   /** 头像 */
   avatar: string;
   /** 手机号码 */
-  mobile?: string;
+  phone?: string;
   /** 邮箱 */
   email?: string;
   dept?: {

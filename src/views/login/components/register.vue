@@ -36,11 +36,11 @@ const verifyCodeRef = ref();
 
 const router = useRouter();
 const onRegister = (formEl: FormInstance | undefined) => {
-  loading.value = true;
   if (!formEl) return;
-  verifyCodeRef.value.getRef().validate(isValid => {
+  verifyCodeRef.value?.getRef()?.validate(isValid => {
     if (isValid) {
       formEl.validate(valid => {
+        loading.value = true;
         if (valid) {
           if (checked.value) {
             const data = {

@@ -264,7 +264,7 @@ userinfo:
   surePassword: Sure Password
   username: Username
   nickname: Nickname
-  mobile: Mobile
+  phone: Mobile
   email: Email
   gender: Gender
   dept: Department
@@ -277,7 +277,7 @@ systemUser:
   user: User
   email: Email
   username: Username
-  mobile: Mobile
+  phone: Mobile
   mode_type: Mode Type
   avatar: Avatar
   nickname: Nickname
