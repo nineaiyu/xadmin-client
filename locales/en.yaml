@@ -500,7 +500,7 @@ login:
   forget: Forget Password?
   login: Login
   thirdLogin: Third Login
-  verifyCodeLogin: Verify Code Login
+  basicLogin: Basic Login
   qRCodeLogin: QRCode Login
   register: Register
   weChatLogin: WeChat Login
@@ -534,8 +534,9 @@ login:
   passwordSureReg: Please enter confirm password
   passwordDifferentReg: The two passwords do not match!
   passwordUpdateReg: Password has been updated
-  emailVerify: Send Email Code
-  smsVerify: Send SMS Code
+  emailVerify: Email Auth
+  smsVerify: SMS Auth
+  basic: Username Auth
 
 welcome:
   operateLog: Log of operations

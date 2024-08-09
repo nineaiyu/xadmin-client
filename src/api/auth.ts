@@ -59,9 +59,9 @@ export type AuthInfoResult = {
   detail: string;
   data: {
     access: boolean;
-    captcha: boolean;
-    token: boolean;
-    encrypted: boolean;
+    captcha?: boolean;
+    token?: boolean;
+    encrypted?: boolean;
     lifetime?: number;
     reset?: boolean;
     password?: Array<any>;

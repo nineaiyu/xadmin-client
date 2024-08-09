@@ -1,11 +1,11 @@
-import { onMounted, reactive, watch } from "vue";
+import { onMounted, reactive } from "vue";
 import {
   getTempTokenApi,
   verifyCodeConfigApi,
   verifyCodeSendApi
 } from "@/api/auth";
 import { useUserStoreHook } from "@/store/modules/user";
-import { isEmail, isPhone } from "@pureadmin/utils";
+import { isEmail, isEmpty, isPhone } from "@pureadmin/utils";
 import { useVerifyCode } from "./verifyCode";
 import type { FormRules } from "element-plus";
 import { $t, transformI18n } from "@/plugins/i18n";
@@ -13,12 +13,12 @@ import { AesEncrypted } from "@/utils/aes";
 import { handleOperation } from "@/components/RePlusCRUD";
 import { useI18n } from "vue-i18n";
 
-export const useSendVerifyCode = (formDataRef, props, emit) => {
+export const useSendVerifyCode = (formDataRef, formData, props, emit) => {
   const { isDisabled, text } = useVerifyCode();
   const { t } = useI18n();
 
-  const formData = reactive({
-    form_type: "email",
+  const defaultValue = {
+    form_type: "",
     token: "",
     phone: "",
     email: "",
@@ -27,7 +27,9 @@ export const useSendVerifyCode = (formDataRef, props, emit) => {
     captcha_code: "",
     verify_code: "",
     verify_token: undefined
-  });
+  };
+
+  formData.value = Object.assign(formData.value, defaultValue);
 
   const verifyCodeConfig = reactive({
     access: false,
@@ -43,26 +45,11 @@ export const useSendVerifyCode = (formDataRef, props, emit) => {
     if (verifyCodeConfig.access && verifyCodeConfig.token) {
       getTempTokenApi().then(res => {
         if (res.code === 1000) {
-          formData.token = res.token;
+          formData.value.token = res.token;
         }
       });
     }
   };
-
-  watch(
-    () => [formData, verifyCodeConfig],
-    () => {
-      emit("change", {
-        formData: {
-          ...formatSendData(),
-          verify_token: formData.verify_token,
-          verify_code: formData.verify_code
-        },
-        verifyCodeConfig
-      });
-    },
-    { deep: true }
-  );
 
   const formRules = reactive<FormRules>({
     phone: [
@@ -132,19 +119,19 @@ export const useSendVerifyCode = (formDataRef, props, emit) => {
 
   const formatSendData = () => {
     return {
-      form_type: formData.form_type,
-      token: formData.token,
-      target: formData[formData.form_type],
-      captcha_key: formData.captcha_key,
-      captcha_code: formData.captcha_code
+      form_type: formData.value.form_type,
+      token: formData.value.token,
+      target: formData.value[formData.value.form_type],
+      captcha_key: formData.value.captcha_key,
+      captcha_code: formData.value.captcha_code
     };
   };
 
-  const handleSendCode = () => {
+  const handleSendCode = callback => {
     formData.verify_token = undefined;
     useVerifyCode().start(
       formDataRef.value,
-      [formData.form_type, "captcha_code"],
+      [formData.value.form_type, "captcha_code"],
       verifyCodeConfig.rate,
       interval => {
         const data = formatSendData();
@@ -155,9 +142,11 @@ export const useSendVerifyCode = (formDataRef, props, emit) => {
           t,
           apiReq: verifyCodeSendApi({ category: props.category }, data),
           success(res) {
-            formData.verify_token = res.data.verify_token;
+            formData.value.verify_token = res.data.verify_token;
             interval(verifyCodeConfig.rate);
+            callback && callback(res.data);
           },
+          showSuccessMsg: ["email", "phone"].includes(formData.value.form_type),
           requestEnd() {
             initToken();
           }
@@ -172,6 +161,15 @@ export const useSendVerifyCode = (formDataRef, props, emit) => {
         Object.keys(res.data).forEach(key => {
           verifyCodeConfig[key] = res.data[key];
         });
+        emit("change", { formData: formData.value, verifyCodeConfig });
+        if (isEmpty(formData.value.form_type)) {
+          if (verifyCodeConfig.sms) {
+            formData.value.form_type = "phone";
+          }
+          if (verifyCodeConfig.email) {
+            formData.value.form_type = "email";
+          }
+        }
         initToken();
       }
     });

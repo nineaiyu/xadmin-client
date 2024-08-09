@@ -3,7 +3,6 @@ import { useI18n } from "vue-i18n";
 import { reactive, ref } from "vue";
 import Motion from "../utils/motion";
 import type { FormInstance, FormRules } from "element-plus";
-import { useVerifyCode } from "../utils/verifyCode";
 import { $t, transformI18n } from "@/plugins/i18n";
 import { useUserStoreHook } from "@/store/modules/user";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
@@ -16,7 +15,7 @@ import ReSendVerifyCode from "@/components/ReSendVerifyCode";
 
 const { t } = useI18n();
 const loading = ref(false);
-const ruleForm = ref({
+const formData = ref({
   password: "",
   repeatPassword: "",
   verify_code: "",
@@ -29,19 +28,19 @@ const authInfo = ref({
   password: []
 });
 
-const ruleFormRef = ref<FormInstance>();
+const formDataRef = ref<FormInstance>();
 const verifyCodeRef = ref();
 
 const handleSubmit = () => {
   verifyCodeRef.value.getRef().validate(isValid => {
     if (isValid) {
-      ruleFormRef.value.validate(valid => {
+      formDataRef.value.validate(valid => {
         if (valid) {
           loading.value = true;
           const data = {
-            verify_token: ruleForm.value.verify_token,
-            password: ruleForm.value.password,
-            verify_code: ruleForm.value.verify_code
+            verify_token: formData.value.verify_token,
+            password: formData.value.password,
+            verify_code: formData.value.verify_code
           };
           if (authInfo.value.encrypted) {
             data["password"] = AesEncrypted(
@@ -67,7 +66,6 @@ const handleSubmit = () => {
 };
 
 function onBack() {
-  useVerifyCode().end();
   useUserStoreHook().SET_CURRENT_PAGE(0);
 }
 
@@ -96,7 +94,7 @@ const formRules = reactive<FormRules>({
       validator: (rule, value, callback) => {
         if (value === "") {
           callback(new Error(transformI18n($t("login.passwordSureReg"))));
-        } else if (ruleForm.value.password !== value) {
+        } else if (formData.value.password !== value) {
           callback(new Error(transformI18n($t("login.passwordDifferentReg"))));
         } else {
           callback();
@@ -106,8 +104,7 @@ const formRules = reactive<FormRules>({
     }
   ]
 });
-const handleChange = ({ formData, verifyCodeConfig }) => {
-  ruleForm.value = Object.assign(ruleForm.value, formData);
+const handleChange = ({ verifyCodeConfig }) => {
   authInfo.value = Object.assign(authInfo.value, verifyCodeConfig);
 };
 </script>
@@ -116,21 +113,22 @@ const handleChange = ({ formData, verifyCodeConfig }) => {
   <div>
     <ReSendVerifyCode
       ref="verifyCodeRef"
+      v-model="formData"
       category="reset"
       @change="handleChange"
     />
     <el-form
       v-if="authInfo.access"
-      ref="ruleFormRef"
-      :model="ruleForm"
+      ref="formDataRef"
+      :model="formData"
       :rules="formRules"
       size="large"
     >
-      <div v-if="ruleForm.verify_token">
+      <div v-if="formData.verify_token">
         <Motion :delay="150">
           <el-form-item prop="password">
             <el-input
-              v-model="ruleForm.password"
+              v-model="formData.password"
               :placeholder="t('login.password')"
               :prefix-icon="useRenderIcon(Lock)"
               clearable
@@ -142,7 +140,7 @@ const handleChange = ({ formData, verifyCodeConfig }) => {
         <Motion :delay="200">
           <el-form-item prop="repeatPassword">
             <el-input
-              v-model="ruleForm.repeatPassword"
+              v-model="formData.repeatPassword"
               :placeholder="t('login.sure')"
               :prefix-icon="useRenderIcon(Lock)"
               clearable

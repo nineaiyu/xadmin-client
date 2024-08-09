@@ -2,7 +2,7 @@
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Iphone from "@iconify-icons/ep/iphone";
 import Email from "@iconify-icons/ep/message";
-import { computed, ref } from "vue";
+import { computed, reactive, ref, useSlots } from "vue";
 import type { FormInstance } from "element-plus";
 import Motion from "@/views/login/utils/motion";
 import ReImageVerify from "@/components/ReImageVerify/src/index.vue";
@@ -17,6 +17,12 @@ interface SendVerifyProps {
 const props = withDefaults(defineProps<SendVerifyProps>(), {
   category: ""
 });
+
+const formData = defineModel({
+  type: Object,
+  default: {}
+});
+
 const emit = defineEmits<{
   (e: "change", ...args: any[]): void;
 }>();
@@ -25,21 +31,17 @@ const formDataRef = ref<FormInstance>();
 function getRef() {
   return formDataRef.value;
 }
-defineExpose({ getRef });
 
-const {
-  t,
-  text,
-  formRules,
-  formData,
-  isDisabled,
-  verifyCodeConfig,
-  handleSendCode
-} = useSendVerifyCode(formDataRef, props, emit);
+const { t, text, formRules, isDisabled, verifyCodeConfig, handleSendCode } =
+  useSendVerifyCode(formDataRef, formData, props, emit);
+
+const $slots = useSlots();
+defineExpose({ getRef, handleSendCode });
 
 const access = computed(
   () =>
-    verifyCodeConfig.access && (verifyCodeConfig.sms || verifyCodeConfig.email)
+    verifyCodeConfig.access &&
+    (verifyCodeConfig.sms || verifyCodeConfig.email || $slots.default)
 );
 </script>
 
@@ -83,6 +85,7 @@ const access = computed(
             />
           </el-form-item>
         </el-tab-pane>
+        <slot />
       </el-tabs>
     </Motion>
 
@@ -104,7 +107,7 @@ const access = computed(
       </el-form-item>
     </Motion>
 
-    <Motion :delay="100">
+    <Motion v-if="['email', 'phone'].includes(formData.form_type)" :delay="100">
       <el-form-item prop="verify_code">
         <div class="w-full flex justify-between">
           <el-input

@@ -6,8 +6,6 @@ import type { FormRules } from "element-plus";
 import { isAllEmpty } from "@pureadmin/utils";
 import { zxcvbn } from "@zxcvbn-ts/core";
 import { useI18n } from "vue-i18n";
-import { $t, transformI18n } from "@/plugins/i18n";
-import { REGEXP_PWD } from "@/views/login/utils/rule";
 import { useApiAuth } from "./utils/hook";
 import { passwordRulesCheck } from "@/utils";
 import { rulesPasswordApi } from "@/api/auth";
