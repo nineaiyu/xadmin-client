@@ -7,7 +7,7 @@ import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
 import LaySidebarFullScreen from "../lay-sidebar/components/SidebarFullScreen.vue";
 import LaySidebarBreadCrumb from "../lay-sidebar/components/SidebarBreadCrumb.vue";
 import LaySidebarTopCollapse from "../lay-sidebar/components/SidebarTopCollapse.vue";
-
+import AccountSettingsIcon from "@iconify-icons/ri/user-settings-line";
 import GlobalizationIcon from "@/assets/svg/globalization.svg?component";
 import LogoutCircleRLine from "@iconify-icons/ri/logout-circle-r-line";
 import Setting from "@iconify-icons/ri/settings-3-line";
@@ -23,6 +23,7 @@ const {
   userAvatar,
   avatarsStyle,
   toggleSideBar,
+  toAccountSettings,
   getDropdownItemStyle,
   getDropdownItemClass
 } = useNav();
@@ -93,6 +94,13 @@ const { t, locale, translationCh, translationEn } = useTranslationLang();
         </span>
         <template #dropdown>
           <el-dropdown-menu class="logout">
+            <el-dropdown-item @click="toAccountSettings">
+              <IconifyIconOffline
+                :icon="AccountSettingsIcon"
+                style="margin: 5px"
+              />
+              {{ t("menus.accountSettings") }}
+            </el-dropdown-item>
             <el-dropdown-item @click="logout">
               <IconifyIconOffline
                 :icon="LogoutCircleRLine"
@@ -179,7 +187,7 @@ const { t, locale, translationCh, translationEn } = useTranslationLang();
 }
 
 .logout {
-  max-width: 120px;
+  width: 120px;
 
   ::v-deep(.el-dropdown-menu__item) {
     display: inline-flex;
