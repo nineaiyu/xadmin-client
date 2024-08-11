@@ -14,7 +14,7 @@ const list = computed(() => [
   {
     name: "password",
     title: t("account.password"),
-    button: t("buttons.update")
+    button: hasGlobalAuth("reset:UserInfo") && t("buttons.update")
   },
   {
     name: "phone",

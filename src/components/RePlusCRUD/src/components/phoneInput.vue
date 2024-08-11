@@ -1,9 +1,16 @@
 <template>
   <div class="w-full">
-    <el-input v-model="value.phone" required clearable @input="onInputChange">
+    <el-input
+      v-model="value.phone"
+      required
+      clearable
+      :disabled="disabled"
+      @input="onInputChange"
+    >
       <template v-slot:prepend>
         <el-select
           v-model="phoneCode"
+          :disabled="disabled"
           filterable
           style="width: 160px"
           value-key="value"
@@ -29,7 +36,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, watch } from "vue";
+import { onMounted, ref } from "vue";
 import { countriesApi } from "@/api/common";
 
 defineOptions({ name: "PhoneInput" });
@@ -40,7 +47,11 @@ interface PhoneInputProps {
 const value = defineModel<PhoneInputProps>({
   default: { code: "+86", phone: "" }
 });
-
+defineProps({
+  disabled: {
+    type: Boolean
+  }
+});
 const phoneCode = ref({ name: "China", value: "+86" });
 
 const countries = ref([phoneCode.value]);
