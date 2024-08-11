@@ -1,6 +1,6 @@
 <template>
   <div class="w-full">
-    <el-input v-model="value.phone" required @input="onInputChange">
+    <el-input v-model="value.phone" required clearable @input="onInputChange">
       <template v-slot:prepend>
         <el-select
           v-model="phoneCode"

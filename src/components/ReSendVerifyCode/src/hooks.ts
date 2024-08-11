@@ -5,7 +5,7 @@ import {
   verifyCodeSendApi
 } from "@/api/auth";
 import { useUserStoreHook } from "@/store/modules/user";
-import { isEmail, isEmpty, isPhone } from "@pureadmin/utils";
+import { isEmail, isEmpty } from "@pureadmin/utils";
 import { useVerifyCode } from "./verifyCode";
 import type { FormRules } from "element-plus";
 import { $t, transformI18n } from "@/plugins/i18n";
@@ -64,8 +64,8 @@ export const useSendVerifyCode = (
         validator: (rule, value, callback) => {
           if (value === "") {
             callback(new Error(transformI18n($t("login.phoneReg"))));
-          } else if (!isPhone(value)) {
-            callback(new Error(transformI18n($t("login.phoneCorrectReg"))));
+            // } else if (!isPhone(value)) {
+            //   callback(new Error(transformI18n($t("login.phoneCorrectReg"))));
           } else {
             callback();
           }

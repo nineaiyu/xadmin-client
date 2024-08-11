@@ -7,6 +7,7 @@ import type { FormInstance } from "element-plus";
 import Motion from "@/views/login/utils/motion";
 import ReImageVerify from "@/components/ReImageVerify/src/index.vue";
 import { useSendVerifyCode } from "./hooks";
+import PhoneInput from "@/components/RePlusCRUD/src/components/phoneInput.vue";
 
 defineOptions({ name: "ReSendVerifyCode" });
 
@@ -52,6 +53,10 @@ const access = computed(
     verifyCodeConfig.access &&
     (verifyCodeConfig.sms || verifyCodeConfig.email || $slots.default)
 );
+const updatePhone = phone => {
+  formData.value.phone = `${phone.code}${phone.phone}`;
+};
+const phone = ref({ code: "+86", phone: "" });
 </script>
 
 <template>
@@ -70,13 +75,18 @@ const access = computed(
           name="phone"
         >
           <el-form-item v-if="formData.form_type === 'phone'" prop="phone">
-            <el-input
-              v-model="formData.phone"
+            <PhoneInput
+              v-model="phone"
               :disabled="Boolean(formData.verify_token)"
-              :placeholder="t('login.phone')"
-              :prefix-icon="useRenderIcon(Iphone)"
-              clearable
+              @change="updatePhone"
             />
+            <!--            <el-input-->
+            <!--              v-model="formData.phone"-->
+            <!--              :disabled="Boolean(formData.verify_token)"-->
+            <!--              :placeholder="t('login.phone')"-->
+            <!--              :prefix-icon="useRenderIcon(Iphone)"-->
+            <!--              clearable-->
+            <!--            />-->
           </el-form-item>
         </el-tab-pane>
         <el-tab-pane
