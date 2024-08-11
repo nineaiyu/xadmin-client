@@ -1,7 +1,7 @@
-<script lang="ts" setup>
+<script setup lang="ts">
 import { IconJson } from "@/components/ReIcon/data";
 import { cloneDeep, isAllEmpty } from "@pureadmin/utils";
-import { computed, CSSProperties, ref, watch } from "vue";
+import { ref, computed, CSSProperties, watch } from "vue";
 import Search from "@iconify-icons/ri/search-eye-line";
 import { useI18n } from "vue-i18n";
 
@@ -126,12 +126,12 @@ watch(
     <el-input v-model="inputValue" disabled>
       <template #append>
         <el-popover
+          :width="350"
+          trigger="click"
+          popper-class="pure-popper"
           :popper-options="{
             placement: 'auto'
           }"
-          :width="350"
-          popper-class="pure-popper"
-          trigger="click"
           @before-enter="onBeforeEnter"
           @after-leave="onAfterLeave"
         >
@@ -146,8 +146,8 @@ watch(
 
           <el-input
             v-model="filterValue"
-            :placeholder="t('buttons.search')"
             class="px-2 pt-2"
+            :placeholder="t('buttons.search')"
             clearable
           />
 
@@ -163,15 +163,15 @@ watch(
                   <li
                     v-for="(item, key) in pageList"
                     :key="key"
-                    :style="iconItemStyle(item)"
                     :title="item"
                     class="icon-item p-2 cursor-pointer mr-2 mt-1 flex justify-center items-center border border-[#e5e7eb]"
+                    :style="iconItemStyle(item)"
                     @click="onChangeIcon(item)"
                   >
                     <IconifyIconOnline
                       :icon="currentActiveType + item"
-                      height="20px"
                       width="20px"
+                      height="20px"
                     />
                   </li>
                 </ul>
@@ -188,22 +188,22 @@ watch(
             class="w-full h-9 flex items-center overflow-auto border-t border-[#e5e7eb]"
           >
             <el-pagination
+              class="flex-auto ml-2"
+              :total="totalPage"
               :current-page="currentPage"
               :page-size="pageSize"
               :pager-count="5"
-              :total="totalPage"
-              background
-              class="flex-auto ml-2"
               layout="pager"
+              background
               size="small"
               @current-change="onCurrentChange"
             />
             <el-button
-              bg
               class="justify-end mr-2 ml-2"
+              type="danger"
               size="small"
               text
-              type="danger"
+              bg
               @click="onClear"
             >
               {{ t("buttons.unSelectAll") }}

@@ -1,23 +1,22 @@
 <script lang="ts" setup>
-import { onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import Motion from "../utils/motion";
 import { useRouter } from "vue-router";
-import { message } from "@/utils/message";
-import { loginRules } from "../utils/rule";
-import type { FormInstance } from "element-plus";
-import { $t, transformI18n } from "@/plugins/i18n";
 import { operates, thirdParty } from "../utils/enums";
 import { useUserStoreHook } from "@/store/modules/user";
 import { getTopMenu, initRouter } from "@/router/utils";
-import { ReImageVerify } from "@/components/ReImageVerify";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Lock from "@iconify-icons/ri/lock-fill";
 import User from "@iconify-icons/ri/user-3-fill";
 import Info from "@iconify-icons/ri/information-line";
-import { AuthInfoResult, getTempTokenApi, loginAuthApi } from "@/api/auth";
-import { cloneDeep, debounce } from "@pureadmin/utils";
+import { loginVerifyCodeApi } from "@/api/auth";
+import { debounce, delay } from "@pureadmin/utils";
 import { useEventListener } from "@vueuse/core";
+import ReSendVerifyCode from "@/components/ReSendVerifyCode";
+import { AesEncrypted } from "@/utils/aes";
+import { handleOperation } from "@/components/RePlusCRUD";
+import { setToken } from "@/utils/auth";
 
 defineOptions({
   name: "Login"
@@ -29,24 +28,24 @@ const checked = ref(true);
 const disabled = ref(false);
 const loginDay = ref(1);
 const loginDayList = ref([1]);
-const ruleFormRef = ref<FormInstance>();
+const verifyCodeRef = ref();
 
 const { t } = useI18n();
 
-const authInfo = reactive<AuthInfoResult["data"]>({
+const authInfo = ref({
   access: false,
-  captcha: false,
-  token: false,
   encrypted: false,
-  lifetime: 1
+  basic: false,
+  lifetime: 1,
+  reset: false
 });
 
-const ruleForm = reactive({
+const formData = ref({
   username: "",
   password: "",
-  token: "",
-  captcha_key: "",
-  captcha_code: ""
+  form_type: "",
+  verify_code: "",
+  verify_token: undefined
 });
 
 const formatLoginDayList = () => {
@@ -64,82 +63,47 @@ const formatLoginDayList = () => {
   }
 };
 
-const initToken = () => {
-  if (authInfo.access && authInfo.token) {
-    getTempTokenApi().then(res => {
-      if (res.code === 1000) {
-        ruleForm.token = res.token;
-      }
-    });
+const onLogin = () => {
+  loading.value = true;
+  const data = {
+    verify_token: formData.value.verify_token,
+    password: formData.value.password,
+    verify_code: formData.value.verify_code
+  };
+  if (authInfo.value.encrypted) {
+    data["password"] = AesEncrypted(data["verify_token"], data["password"]);
+    data["target"] = AesEncrypted(data["verify_token"], data["target"]);
   }
-};
 
-const onLogin = async (formEl: FormInstance | undefined) => {
-  if (!formEl) return;
-  await formEl.validate(valid => {
-    if (valid) {
-      loading.value = true;
-      useUserStoreHook()
-        .loginByUsername(cloneDeep(ruleForm), authInfo.encrypted)
-        .then(res => {
-          if (res.code === 1000) {
-            message(transformI18n($t("login.loginSuccess")), {
-              type: "success"
-            });
-            initRouter().then(() => {
-              disabled.value = true;
-              router.push(getTopMenu(true).path).finally(() => {
-                disabled.value = false;
-              });
-            });
-            loading.value = false;
-          } else {
-            message(res.detail, {
-              type: "warning"
-            });
-          }
-        })
-        .catch(err => {
-          message(err.detail, {
-            type: "warning"
-          });
-          loading.value = false;
-          initToken();
-        })
-        .finally(() => (loading.value = false));
-    } else {
+  handleOperation({
+    t,
+    apiReq: loginVerifyCodeApi(data),
+    success(res) {
+      setToken(res.data);
+      initRouter().then(() => {
+        disabled.value = true;
+        router.push(getTopMenu(true).path).finally(() => {
+          disabled.value = false;
+        });
+      });
+    },
+    requestEnd() {
       loading.value = false;
     }
   });
 };
 
-const immediateDebounce: any = debounce(
-  formRef => onLogin(formRef),
-  1000,
-  true
-);
+const immediateDebounce: any = debounce(() => handleLogin(), 1000, true);
 
 /** 使用公共函数，避免`removeEventListener`失效 */
 function onkeypress({ code }: KeyboardEvent) {
   if (code === "Enter" || code === "NumpadEnter") {
-    onLogin(ruleFormRef.value);
+    handleLogin();
   }
 }
 
 onMounted(() => {
   window.document.addEventListener("keypress", onkeypress);
-  loginAuthApi().then(res => {
-    if (res.code === 1000) {
-      Object.keys(res.data).forEach(key => {
-        authInfo[key] = res.data[key];
-      });
-      initToken();
-      loginDay.value = authInfo.lifetime;
-      formatLoginDayList();
-      useUserStoreHook().SET_ISREMEMBERED(checked.value);
-      useUserStoreHook().SET_LOGINDAY(loginDay.value);
-    }
-  });
 });
 
 onBeforeUnmount(() => {
@@ -149,7 +113,7 @@ onBeforeUnmount(() => {
       !disabled.value &&
       !loading.value
     )
-      immediateDebounce(ruleFormRef.value);
+      immediateDebounce();
   });
 });
 watch(checked, bool => {
@@ -158,64 +122,91 @@ watch(checked, bool => {
 watch(loginDay, value => {
   useUserStoreHook().SET_LOGINDAY(value);
 });
+
+const configReqSuccess = verifyCodeConfig => {
+  authInfo.value = Object.assign(authInfo.value, verifyCodeConfig);
+
+  loginDay.value = authInfo.value.lifetime;
+  formatLoginDayList();
+  useUserStoreHook().SET_ISREMEMBERED(checked.value);
+  useUserStoreHook().SET_LOGINDAY(loginDay.value);
+
+  formData.value.form_type = authInfo.value.basic ? "username" : "";
+};
+
+const isUsername = computed(() => formData.value.form_type === "username");
+
+const handleLogin = () => {
+  verifyCodeRef.value?.getRef()?.validate(isValid => {
+    if (isValid) {
+      if (isUsername.value) {
+        verifyCodeRef.value?.handleSendCode(({ verify_code, verify_token }) => {
+          formData.value.verify_code = verify_code;
+          formData.value.verify_token = verify_token;
+          delay().then(() => onLogin());
+        });
+      } else {
+        onLogin();
+      }
+    }
+  });
+};
 </script>
 
 <template>
   <div>
-    <el-form
-      v-if="authInfo.access"
-      ref="ruleFormRef"
-      :model="ruleForm"
-      :rules="loginRules"
-      size="large"
+    <ReSendVerifyCode
+      ref="verifyCodeRef"
+      v-model="formData"
+      category="login"
+      @configReqSuccess="configReqSuccess"
     >
-      <Motion :delay="100">
-        <el-form-item
-          :rules="[
-            {
-              required: true,
-              message: transformI18n($t('login.usernameReg')),
-              trigger: 'blur'
-            }
-          ]"
-          prop="username"
-        >
-          <el-input
-            v-model="ruleForm.username"
-            :placeholder="t('login.username')"
-            :prefix-icon="useRenderIcon(User)"
-            clearable
-          />
-        </el-form-item>
-      </Motion>
-
-      <Motion :delay="150">
-        <el-form-item prop="password">
-          <el-input
-            v-model="ruleForm.password"
-            :placeholder="t('login.password')"
-            :prefix-icon="useRenderIcon(Lock)"
-            clearable
-            show-password
-          />
-        </el-form-item>
-      </Motion>
-
-      <Motion v-if="authInfo.access && authInfo.captcha" :delay="200">
-        <el-form-item prop="captcha_code">
-          <el-input
-            v-model="ruleForm.captcha_code"
-            :placeholder="t('login.verifyCode')"
-            :prefix-icon="useRenderIcon('ri:shield-keyhole-line')"
-            clearable
+      <el-tab-pane
+        v-if="authInfo.basic"
+        :label="t('login.basic')"
+        name="username"
+      >
+        <Motion v-if="isUsername" :delay="150">
+          <el-form-item
+            :rules="[
+              {
+                required: true,
+                message: t('login.usernameReg'),
+                trigger: 'blur'
+              }
+            ]"
+            prop="username"
           >
-            <template v-slot:append>
-              <ReImageVerify v-model="ruleForm.captcha_key" />
-            </template>
-          </el-input>
-        </el-form-item>
-      </Motion>
+            <el-input
+              v-model="formData.username"
+              :placeholder="t('login.username')"
+              :prefix-icon="useRenderIcon(User)"
+              clearable
+            />
+          </el-form-item>
+          <el-form-item
+            :rules="[
+              {
+                required: true,
+                message: t('login.passwordReg'),
+                trigger: 'blur'
+              }
+            ]"
+            prop="password"
+          >
+            <el-input
+              v-model="formData.password"
+              :placeholder="t('login.password')"
+              :prefix-icon="useRenderIcon(Lock)"
+              clearable
+              show-password
+            />
+          </el-form-item>
+        </Motion>
+      </el-tab-pane>
+    </ReSendVerifyCode>
 
+    <el-form v-if="authInfo.access" :model="formData" size="large">
       <Motion :delay="250">
         <el-form-item>
           <div class="w-full h-[20px] flex justify-between items-center">
@@ -250,6 +241,7 @@ watch(loginDay, value => {
               </span>
             </el-checkbox>
             <el-button
+              v-if="authInfo.reset"
               link
               type="primary"
               @click="useUserStoreHook().SET_CURRENT_PAGE(4)"
@@ -263,7 +255,7 @@ watch(loginDay, value => {
             class="w-full mt-4"
             size="default"
             type="primary"
-            @click="onLogin(ruleFormRef)"
+            @click="handleLogin"
           >
             {{ t("login.login") }}
           </el-button>

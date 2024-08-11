@@ -22,11 +22,16 @@ tableBar:
   columnSettings: 列设置
   fold: 折叠
   unfold: 展开
+  fullscreen: 全屏
+  exitFullscreen: 退出全屏
 
 avatarUpload:
   tips: 温馨提示：右键上方裁剪区可开启功能菜单
   imageSize: 图像大小：{ x } x { y } 像素
   fileSize: 文件大小：{ x } （{ y } 字节）
+
+tagInput:
+  placeholder: 按下 Enter 继续输入
 
 cropper:
   upload: 上传
@@ -179,6 +184,7 @@ buttons:
   delete: 删除
   reload: 重新加载
   reset: 重置
+  test: 测试
   closeCurrentTab: 关闭当前标签页
   closeLeftTabs: 关闭左侧标签页
   closeRightTabs: 关闭右侧标签页
@@ -205,6 +211,16 @@ menus:
   home: 首页
   login: 登录
   sysManagement: 系统管理
+  systemSettings: 系统设置
+  basicSettings: 基本设置
+  emailSettings: 邮件设置
+  smsSettings: 短信设置
+  passwordSettings: 密码设置
+  registerSettings: 注册设置
+  loginSettings: 登录设置
+  verifySettings: 验证码设置
+  resetSettings: 重置密码
+  bindSettings: 绑定设置
   userManagement: 用户管理
   deptManagement: 部门管理
   menuManagement: 菜单管理
@@ -231,6 +247,7 @@ menus:
   readNotice: 已读消息
   timingTask: 定时任务
   personalCenter: 个人中心
+  accountSettings: 账户设置
   messageCenter: 消息中心
   chat: 聊天室
   apiDocs: 接口文档
@@ -249,7 +266,7 @@ userinfo:
   surePassword: 确认密码
   username: 用户名
   nickname: 昵称
-  mobile: 手机号
+  phone: 手机
   email: 邮箱
   gender: 性别
   dept: 部门
@@ -257,12 +274,32 @@ userinfo:
   date_joined: 注册时间
   last_login: 上次登录时间
   avatar: 头像
+  bindEmail: 绑定邮箱
+  bindPhone: 绑定手机
+  existInfo: 已存在的绑定信息！！！
+  unbind: 解绑
+  continueBind: 继续绑定将会自动
+  bindInfo: 的绑定信息
+
+account:
+  profile: 个人信息
+  preference: 偏好设置
+  securityLog: 安全日志
+  accountManagement: 账户管理
+  back: 返回
+  messagePush: 消息公告推送
+  messagePushTips: 消息公告将在右上角实时推送通知
+  chatPush: "聊天室{'@'}推送"
+  chatPushTips: "聊天{'@'}消息将在右上角实时推送通知"
+  password: 密码
+  bind: 已绑定
+  unbound: 暂未绑定
 
 systemUser:
   user: 用户
   email: 邮箱
   username: 用户名
-  mobile: 手机号
+  phone: 手机号
   mode_type: 权限模式
   avatar: 头像
   nickname: 昵称
@@ -485,7 +522,7 @@ login:
   forget: 忘记密码?
   login: 登录
   thirdLogin: 第三方登录
-  phoneLogin: 手机登录
+  basicLogin: 普通登录
   qRCodeLogin: 二维码登录
   register: 注册
   weChatLogin: 微信登录
@@ -493,6 +530,7 @@ login:
   qqLogin: QQ登录
   weiboLogin: 微博登录
   phone: 手机号码
+  email: 邮箱地址
   smsVerifyCode: 短信验证码
   back: 返回
   test: 模拟测试
@@ -512,11 +550,15 @@ login:
   verifyCodeSixReg: 请输入6位数字验证码
   phoneReg: 请输入手机号码
   phoneCorrectReg: 请输入正确的手机号码格式
+  emailReg: 请输入邮箱地址
   emailCorrectReg: 请输入正确的邮箱地址格式
   passwordRuleReg: 密码格式应为8-18位数字、字母、符号的任意两种组合
   passwordSureReg: 请输入确认密码
   passwordDifferentReg: 两次密码不一致!
   passwordUpdateReg: 修改密码成功
+  emailVerify: 邮件验证
+  smsVerify: 短信验证
+  basic: 账户密码
 
 welcome:
   operateLog: 操作日志
@@ -528,6 +570,43 @@ welcome:
   requestNum: 当天接口请求次数
   userNum: 用户人数
   loginTimes: 登录次数
+
+settingBasic:
+  title: 基本设置
+
+settingEmail:
+  title: 邮件服务器
+  test: 邮件测试
+
+settingPassword:
+  title: 密码规则配置
+  tips: 密码需要满足
+  minLength: 最小长度{length}位
+  upperCase: 大写字母
+  lowerCase: 小写字母
+  number: 数字字符
+  specialChar: 特殊字符
+
+settingLogin:
+  title: 登录安全配置
+  limit: 登录限制配置
+
+settingRegister:
+  title: 注册安全配置
+
+settingSms:
+  title: 短信设置
+
+settingVerify:
+  title: 验证码安全配置
+  captcha: 图片验证码配置
+
+settingReset:
+  title: 忘记密码设置
+
+settingBind:
+  title: 绑定邮箱配置
+  bindPhone: 绑定手机配置
 
 demoBook:
   book: 书籍

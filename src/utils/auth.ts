@@ -69,6 +69,8 @@ export function setUserInfo(data: UserInfo) {
   useUserStoreHook().SET_AVATAR(data.avatar);
   useUserStoreHook().SET_USERNAME(data.username);
   useUserStoreHook().SET_NICKNAME(data.nickname);
+  useUserStoreHook().SET_EMAIL(data.email);
+  useUserStoreHook().SET_PHONE(data.phone);
   useUserStoreHook().SET_ROLES(data?.roles);
   storageLocal().setItem(userKey, data);
 }

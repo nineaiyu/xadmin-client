@@ -8,6 +8,7 @@ import {
   useResizeObserver
 } from "@pureadmin/utils";
 import {
+  computed,
   defineComponent,
   getCurrentInstance,
   h,
@@ -70,7 +71,7 @@ export default defineComponent({
     const curIndex = isNumber(props.modelValue)
       ? toRef(props, "modelValue")
       : isNumber(props.defaultValue)
-        ? ref(props.defaultValue)
+        ? ref(computed(() => props.defaultValue))
         : ref(0);
 
     function handleChange({ option, index }, event: Event) {

@@ -22,11 +22,16 @@ tableBar:
   columnSettings: Column Settings
   fold: Fold
   unfold: Unfold
+  fullscreen: Fullscreen
+  exitFullscreen: Exit Fullscreen
 
 avatarUpload:
   tips: 'Tips: Right-click the cropping area can open the function menu'
   imageSize: "Image size: { x } x { y } pixels"
   fileSize: "File size: { x } ({ y } bytes)"
+
+tagInput:
+  placeholder: Enter to continue
 
 cropper:
   upload: Upload
@@ -179,6 +184,7 @@ buttons:
   delete: Delete
   reload: Reload
   reset: Reset
+  test: Test
   closeCurrentTab: Close CurrentTab
   closeLeftTabs: Close LeftTabs
   closeRightTabs: Close RightTabs
@@ -205,6 +211,16 @@ menus:
   home: Home
   login: Login
   sysManagement: System Manage
+  systemSettings: System Settings
+  basicSettings: Basic Settings
+  emailSettings: Email Settings
+  smsSettings: SMS Settings
+  passwordSettings: Password Settings
+  registerSettings: Register Settings
+  loginSettings: Login Settings
+  verifySettings: Verify Code Settings
+  resetSettings: Reset Password Settings
+  bindSettings: Bind Settings
   userManagement: User Manage
   deptManagement: Department Manage
   menuManagement: Menu Manage
@@ -231,6 +247,7 @@ menus:
   readNotice: Read Notice
   timingTask: Timing Task
   personalCenter: UserInfo
+  accountSettings: Account
   messageCenter: Notice
   chat: Chat
   apiDocs: Api Docs
@@ -249,7 +266,7 @@ userinfo:
   surePassword: Sure Password
   username: Username
   nickname: Nickname
-  mobile: Mobile
+  phone: Mobile
   email: Email
   gender: Gender
   dept: Department
@@ -257,12 +274,32 @@ userinfo:
   date_joined: Registration Date
   last_login: Last Login Date
   avatar: Avatar
+  bindEmail: Bind Email
+  bindPhone: Bind Phone
+  existInfo: The existing binding information !!!
+  unbind: Unbind
+  continueBind: Continuing the binding will be automatic
+  bindInfo: binding information
+
+account:
+  profile: Profile
+  preference: Preference
+  securityLog: Security Log
+  accountManagement: Account Management
+  back: Back
+  messagePush: Site Message Push
+  messagePushTips: The announcement will be a real-time push notification in the upper right corner
+  chatPush: "Chat room {'@'} push"
+  chatPushTips: "Chat {'@'} messages will be a live push notification in the top right corner"
+  password: Password
+  bind: Bind
+  unbound: Unbound
 
 systemUser:
   user: User
   email: Email
   username: Username
-  mobile: Mobile
+  phone: Mobile
   mode_type: Mode Type
   avatar: Avatar
   nickname: Nickname
@@ -485,7 +522,7 @@ login:
   forget: Forget Password?
   login: Login
   thirdLogin: Third Login
-  phoneLogin: Phone Login
+  basicLogin: Basic Login
   qRCodeLogin: QRCode Login
   register: Register
   weChatLogin: WeChat Login
@@ -493,6 +530,7 @@ login:
   qqLogin: QQ Login
   weiboLogin: Weibo Login
   phone: Phone
+  email: Email
   smsVerifyCode: SMS VerifyCode
   back: Back
   test: Mock Test
@@ -512,11 +550,15 @@ login:
   verifyCodeSixReg: Please enter a 6-digit verify code
   phoneReg: Please enter the phone
   phoneCorrectReg: Please enter the correct phone number format
+  emailReg: Please enter the email
   emailCorrectReg: Please enter the correct email format
   passwordRuleReg: The password format should be any combination of 8-18 digits
   passwordSureReg: Please enter confirm password
   passwordDifferentReg: The two passwords do not match!
   passwordUpdateReg: Password has been updated
+  emailVerify: Email Auth
+  smsVerify: SMS Auth
+  basic: Username Auth
 
 welcome:
   operateLog: Log of operations
@@ -528,6 +570,43 @@ welcome:
   requestNum: Number of interface requests for today
   userNum: Number of Users
   loginTimes: Number of Logins
+
+settingBasic:
+  title: Basic Settings
+
+settingEmail:
+  title: Email Server
+  test: Email Send Test
+
+settingPassword:
+  title: Password Rules
+  tips: Password should be
+  minLength: Min Length ｛length｝
+  upperCase: Upper Case
+  lowerCase: Lower Case
+  number: Number
+  specialChar: Special Char
+
+settingLogin:
+  title: Login Safe
+  limit: Login Limit
+
+settingRegister:
+  title: Register Safe
+
+settingSms:
+  title: SMS Setting
+
+settingVerify:
+  title: Verify Code
+  captcha: Captcha Code
+
+settingReset:
+  title: Reset Password
+
+settingBind:
+  title: Bind Email
+  bindPhone: Bind Phone
 
 demoBook:
   book: Book

@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import { computed, toRaw } from "vue";
 import Motion from "./utils/motion";
-import phone from "./components/phone.vue";
+import basic from "./components/basic.vue";
 import TypeIt from "@/components/ReTypeit";
 import qrCode from "./components/qrCode.vue";
 import register from "./components/register.vue";
-import update from "./components/update.vue";
+import update from "./components/resetPassword.vue";
 import login from "./components/login.vue";
 import { useNav } from "@/layout/hooks/useNav";
 import { useLayout } from "@/layout/hooks/useLayout";
@@ -98,8 +98,8 @@ const { locale, translationCh, translationEn } = useTranslationLang();
 
           <login v-if="currentPage === 0" />
 
-          <!-- 手机号登录 -->
-          <phone v-if="currentPage === 1" />
+          <!-- 验证码登录 -->
+          <basic v-if="currentPage === 1" />
           <!-- 二维码登录 -->
           <qrCode v-if="currentPage === 2" />
           <!-- 注册 -->

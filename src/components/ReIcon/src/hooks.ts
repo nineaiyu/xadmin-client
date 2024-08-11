@@ -1,10 +1,11 @@
 import type { iconType } from "./types";
-import { type Component, defineComponent, h } from "vue";
-import { FontIcon, IconifyIconOffline, IconifyIconOnline } from "../index";
+import { h, defineComponent, type Component } from "vue";
+import { IconifyIconOnline, IconifyIconOffline, FontIcon } from "../index";
 
 /**
  * 支持 `iconfont`、自定义 `svg` 以及 `iconify` 中所有的图标
- * @see 点击查看文档图标篇 {@link https://pure-admin.github.io/pure-admin-doc/pages/icon/} * @param icon 必传 图标
+ * @see 点击查看文档图标篇 {@link https://pure-admin.github.io/pure-admin-doc/pages/icon/}
+ * @param icon 必传 图标
  * @param attrs 可选 iconType 属性
  * @returns Component
  */

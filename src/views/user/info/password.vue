@@ -1,14 +1,15 @@
 <script lang="ts" setup>
-import { reactive, ref, watch } from "vue";
+import { onMounted, reactive, ref, watch } from "vue";
 import ReCol from "@/components/ReCol";
 import { FormPasswordProps } from "./utils/types";
 import type { FormRules } from "element-plus";
 import { isAllEmpty } from "@pureadmin/utils";
 import { zxcvbn } from "@zxcvbn-ts/core";
 import { useI18n } from "vue-i18n";
-import { $t, transformI18n } from "@/plugins/i18n";
-import { REGEXP_PWD } from "@/views/login/utils/rule";
 import { useApiAuth } from "./utils/hook";
+import { passwordRulesCheck } from "@/utils";
+import { rulesPasswordApi } from "@/api/auth";
+import { handleOperation } from "@/components/RePlusCRUD";
 
 defineOptions({
   name: "editUserPassword"
@@ -30,6 +31,8 @@ const password = reactive<FormPasswordProps>({
   sure_password: ""
 });
 
+const passwordRules = ref([]);
+
 const ruleFormRef = ref();
 const curScore = ref();
 const formPasswordRules = reactive<FormRules>({
@@ -44,12 +47,15 @@ const formPasswordRules = reactive<FormRules>({
     {
       required: true,
       validator: (rule, value, callback) => {
-        if (value === "") {
-          callback(new Error(transformI18n($t("userinfo.verifyNewPassword"))));
-        } else if (!REGEXP_PWD.test(value)) {
-          callback(new Error(transformI18n($t("login.passwordRuleReg"))));
-        } else {
+        const { result, msg } = passwordRulesCheck(
+          value,
+          passwordRules.value,
+          t
+        );
+        if (result) {
           callback();
+        } else {
+          callback(new Error(msg));
         }
       },
       trigger: "blur"
@@ -88,6 +94,16 @@ watch(
       ? -1
       : zxcvbn(new_password).score)
 );
+onMounted(() => {
+  handleOperation({
+    t,
+    apiReq: rulesPasswordApi(),
+    success({ data: { password_rules } }) {
+      passwordRules.value = password_rules;
+    },
+    showSuccessMsg: false
+  });
+});
 </script>
 
 <template>

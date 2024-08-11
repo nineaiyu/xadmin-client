@@ -7,7 +7,7 @@ import addOrEdit from "../components/addOrEdit.vue";
 import type { PlusColumn, PlusFormProps } from "plus-pro-components";
 import { ElMessageBox, type FormInstance } from "element-plus";
 import type { BaseApi } from "@/api/base";
-import type { BaseResult } from "@/api/types";
+import type { DetailResult } from "@/api/types";
 import { uniqueArrayObj } from "@/components/RePlusCRUD";
 import exportDataForm from "@/components/RePlusCRUD/src/components/exportData.vue";
 import { resourcesIDCacheApi } from "@/api/common";
@@ -17,7 +17,7 @@ interface callBackArgs {
   formData: Object | any;
   formRef: FormInstance;
   formOptions: formDialogOptions;
-  dialogOptions: DialogOptions;
+  closeLoading: Function;
   success: (close?: boolean) => void;
   failed: (detail: string, close?: boolean) => void;
   done: Function;
@@ -51,7 +51,7 @@ interface formDialogOptions {
     formData,
     formRef,
     formOptions,
-    dialogOptions,
+    closeLoading,
     success,
     failed,
     done
@@ -149,26 +149,21 @@ const openFormDialog = (formOptions: formDialogOptions) => {
       formProps: { ...formOptions?.rawFormProps, ...(formPropsResult ?? {}) }
     },
     draggable: true,
+    sureBtnLoading: true,
     fullscreen: deviceDetection(),
+    destroyOnClose: true,
     fullscreenIcon: true,
     closeOnClickModal: false,
     contentRenderer: () => h(formOptions?.form ?? addOrEdit, { ref: formRef }),
-    beforeSure: async (done, { options }) => {
+    beforeSure: async (done, { options, closeLoading }) => {
       const FormRef: FormInstance = formRef.value.getRef();
       const formInlineData = cloneDeep(options.props.formInline);
-      const formData =
-        (formOptions?.beforeSubmit &&
-          formOptions?.beforeSubmit({
-            formData: formInlineData,
-            formRef: formRef,
-            formOptions
-          })) ||
-        formInlineData;
+
       const success = (close = true) => {
         message(formOptions?.t("results.success"), {
           type: "success"
         });
-        options.confirmLoading = false;
+        closeLoading();
         close && done(); // 关闭弹框
       };
 
@@ -176,22 +171,31 @@ const openFormDialog = (formOptions: formDialogOptions) => {
         message(`${formOptions?.t("results.failed")}，${detail}`, {
           type: "error"
         });
-        options.confirmLoading = false;
+        closeLoading();
         close && done(); // 关闭弹框
       };
 
-      await FormRef.validate(valid => {
+      await FormRef?.validate(valid => {
         if (valid) {
-          options.confirmLoading = true;
+          const formData =
+            (formOptions?.beforeSubmit &&
+              formOptions?.beforeSubmit({
+                formData: formInlineData,
+                formRef: formRef,
+                formOptions
+              })) ||
+            formInlineData;
           formOptions?.saveCallback({
             formData,
             formRef: FormRef,
-            dialogOptions: options,
+            closeLoading,
             formOptions,
             success,
             failed,
             done
           });
+        } else {
+          closeLoading();
         }
       });
     },
@@ -212,9 +216,9 @@ interface operationOptions {
   apiReq: Promise<any>;
   showSuccessMsg?: boolean;
   showFailedMsg?: boolean;
-  success?: (res?: BaseResult) => void;
-  failed?: (res?: BaseResult) => void;
-  exception?: (res?: BaseResult) => void;
+  success?: (res?: DetailResult) => void;
+  failed?: (res?: DetailResult) => void;
+  exception?: (res?: DetailResult) => void;
   requestEnd?: (options?: operationOptions) => void;
 }
 
@@ -231,9 +235,10 @@ const handleOperation = (options: operationOptions) => {
   } = options;
 
   apiReq
-    ?.then((res: BaseResult) => {
+    ?.then((res: DetailResult) => {
       if (res.code === 1000) {
-        showSuccessMsg && message(t("results.success"), { type: "success" });
+        showSuccessMsg &&
+          message(res.detail ?? t("results.success"), { type: "success" });
         success && success(res);
       } else {
         showFailedMsg &&
@@ -261,8 +266,8 @@ interface changeOptions {
   field: string; // 更新的字段
   actionMsg: string;
   msg?: string;
-  success?: (res?: BaseResult) => void;
-  failed?: (res?: BaseResult) => void;
+  success?: (res?: DetailResult) => void;
+  failed?: (res?: DetailResult) => void;
   requestEnd?: (options?: operationOptions) => void;
 }
 
@@ -338,9 +343,9 @@ interface switchOptions {
   activeMap?: object; // active映射 {true:'发布',false:'未发布'}
   msg?: string;
   actionMsg?: string;
-  disabled?: boolean;
-  success?: (res?: BaseResult) => void;
-  failed?: (res?: BaseResult) => void;
+  disabled?: (row?: any) => boolean;
+  success?: (res?: DetailResult) => void;
+  failed?: (res?: DetailResult) => void;
   requestEnd?: (options?: operationOptions) => void;
 }
 
@@ -358,7 +363,7 @@ const renderSwitch = (switchOptions: switchOptions) => {
     requestEnd,
     msg = undefined,
     actionMsg = undefined,
-    disabled = true
+    disabled
   } = switchOptions;
 
   const defaultActionMap = {
@@ -382,7 +387,7 @@ const renderSwitch = (switchOptions: switchOptions) => {
       active-text={defaultActionMap["true"]}
       inactive-text={defaultActionMap["false"]}
       inline-prompt
-      disabled={disabled}
+      disabled={disabled && disabled(scope.row)}
       style={switchStyle.value}
       onChange={() => {
         onSwitchChange({
@@ -461,15 +466,15 @@ const handleExportData = (options: exportDataOptions) => {
     },
     dialogOptions: { width: "600px" },
     form: exportDataForm,
-    saveCallback: async ({ formData, done, dialogOptions }) => {
+    saveCallback: async ({ formData, done, closeLoading }) => {
       if (formData.range === "all") {
         await api.export(formData).finally(() => {
-          dialogOptions.confirmLoading = false;
+          closeLoading();
         });
       } else if (formData.range === "search" && searchFields) {
         searchFields.value["type"] = formData["type"];
         await api.export(toRaw(searchFields.value)).finally(() => {
-          dialogOptions.confirmLoading = false;
+          closeLoading();
         });
       } else if (formData.range === "selected") {
         resourcesIDCacheApi(formData.pks)
@@ -477,11 +482,11 @@ const handleExportData = (options: exportDataOptions) => {
             formData["spm"] = res.spm;
             delete formData.pks;
             await api.export(formData).finally(() => {
-              dialogOptions.confirmLoading = false;
+              closeLoading();
             });
           })
           .finally(() => {
-            dialogOptions.confirmLoading = false;
+            closeLoading();
           });
       }
       done();
@@ -492,7 +497,7 @@ const handleExportData = (options: exportDataOptions) => {
 interface importDataOptions {
   t: Function;
   api: BaseApi;
-  success?: (res?: BaseResult) => void;
+  success?: (res?: DetailResult) => void;
 }
 
 // 数据导入
@@ -508,7 +513,7 @@ const handleImportData = (options: importDataOptions) => {
     },
     dialogOptions: { width: "600px" },
     form: importDataForm,
-    saveCallback: ({ formData, success, failed, dialogOptions }) => {
+    saveCallback: ({ formData, success, failed, closeLoading }) => {
       api
         .import(formData.action, formData.upload[0].raw)
         .then(res => {
@@ -520,7 +525,7 @@ const handleImportData = (options: importDataOptions) => {
           }
         })
         .finally(() => {
-          dialogOptions.confirmLoading = false;
+          closeLoading();
         });
     }
   });

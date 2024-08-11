@@ -2,7 +2,7 @@ import { $t } from "@/plugins/i18n";
 
 const operates = [
   {
-    title: $t("login.phoneLogin")
+    title: $t("login.basicLogin")
   },
   {
     title: $t("login.qRCodeLogin")

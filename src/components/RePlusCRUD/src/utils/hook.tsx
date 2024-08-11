@@ -113,7 +113,8 @@ export function usePlusCRUDPage(
 
   const tableBarData = ref({
     size: "default",
-    dynamicColumns: listColumns.value
+    dynamicColumns: listColumns.value,
+    renderClass: []
   });
 
   // 默认操作按钮
@@ -250,9 +251,10 @@ export function usePlusCRUDPage(
     tablePagination.value.currentPage = searchFields.value.page;
   };
 
-  const handleTableBarChange = ({ dynamicColumns, size }) => {
+  const handleTableBarChange = ({ dynamicColumns, size, renderClass }) => {
     tableBarData.value.dynamicColumns = dynamicColumns;
     tableBarData.value.size = size;
+    tableBarData.value.renderClass = renderClass;
     tablePagination.value.size = size;
   };
 
@@ -355,7 +357,7 @@ export function usePlusCRUDPage(
       rawFormProps: {
         rules: addOrEditRules.value
       },
-      saveCallback: ({ formData, done, dialogOptions, formOptions }) => {
+      saveCallback: ({ formData, done, closeLoading, formOptions }) => {
         handleOperation({
           t,
           apiReq:
@@ -369,7 +371,7 @@ export function usePlusCRUDPage(
             handleGetData();
           },
           requestEnd() {
-            dialogOptions.confirmLoading = false;
+            closeLoading();
           }
         });
       },
@@ -389,7 +391,7 @@ export function usePlusCRUDPage(
             switchLoadMap,
             switchStyle,
             field: column.prop,
-            disabled: !(auth.patch || auth.update)
+            disabled: () => !(auth.patch || auth.update)
           });
           break;
         // pure-table ****** end
@@ -497,7 +499,8 @@ export function usePlusCRUDPage(
 
   const getPageColumn = (immediate: boolean) => {
     getColumnData(
-      api,
+      api.columns,
+      api.fields,
       () => {
         formatColumnsRender();
       },

@@ -80,18 +80,18 @@ export class BaseApi extends BaseRequest {
       `${this.baseApi}/choices`
     );
   };
-  fields = () => {
+  fields = (params?: object) => {
     return this.request<SearchFieldsResult>(
       "get",
-      {},
+      params,
       {},
       `${this.baseApi}/search-fields`
     );
   };
-  columns = () => {
+  columns = (params?: object) => {
     return this.request<SearchColumnsResult>(
       "get",
-      {},
+      params,
       {},
       `${this.baseApi}/search-columns`
     );
@@ -162,7 +162,7 @@ export class BaseApi extends BaseRequest {
   };
 
   import = (action: string, data: object) => {
-    return http.upload<BaseResult, {}>(
+    return http.upload<DetailResult, {}>(
       `${this.baseApi}/import-data?action=${action}`,
       {},
       data,
@@ -172,5 +172,28 @@ export class BaseApi extends BaseRequest {
         }
       }
     );
+  };
+}
+
+export class ViewBaseApi extends BaseRequest {
+  columns = (params?: object) => {
+    return this.request<SearchColumnsResult>(
+      "get",
+      params,
+      {},
+      `${this.baseApi}/search-columns`
+    );
+  };
+  create = (params?: object, data?: object) => {
+    return this.request<DetailResult>("post", params, data);
+  };
+  detail = (params?: object) => {
+    return this.request<DetailResult>("get", params, {}, `${this.baseApi}`);
+  };
+  update = (params?: object, data?: object) => {
+    return this.request<DetailResult>("put", params, data, `${this.baseApi}`);
+  };
+  patch = (params?: object, data?: object) => {
+    return this.request<DetailResult>("patch", params, data, `${this.baseApi}`);
   };
 }

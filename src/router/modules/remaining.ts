@@ -39,5 +39,15 @@ export default [
       showLink: false,
       rank: 10103
     }
+  },
+  {
+    path: "/account-settings",
+    name: "AccountSettings",
+    component: () => import("@/views/account/index.vue"),
+    meta: {
+      title: $t("menus.accountSettings"),
+      showLink: false,
+      rank: 104
+    }
   }
 ] satisfies Array<RouteConfigsTable>;
