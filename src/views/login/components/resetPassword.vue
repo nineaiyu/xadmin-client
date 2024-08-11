@@ -104,7 +104,7 @@ const formRules = reactive<FormRules>({
     }
   ]
 });
-const handleChange = ({ verifyCodeConfig }) => {
+const configReqSuccess = verifyCodeConfig => {
   authInfo.value = Object.assign(authInfo.value, verifyCodeConfig);
 };
 </script>
@@ -115,7 +115,7 @@ const handleChange = ({ verifyCodeConfig }) => {
       ref="verifyCodeRef"
       v-model="formData"
       category="reset"
-      @change="handleChange"
+      @configReqSuccess="configReqSuccess"
     />
     <el-form
       v-if="authInfo.access"

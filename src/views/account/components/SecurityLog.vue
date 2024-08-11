@@ -1,12 +1,12 @@
 <script lang="ts" setup>
 import { deviceDetection } from "@pureadmin/utils";
-import { useUserLoginLog } from "@/views/account-settings/utils/hook";
+import { useUserLoginLog } from "@/views/account/utils/hook";
 
 defineOptions({
   name: "SecurityLog"
 });
 
-const { auth, columns, loading, dataList, pagination, onSearch } =
+const { t, auth, columns, loading, dataList, pagination, onSearch } =
   useUserLoginLog();
 </script>
 
@@ -17,7 +17,7 @@ const { auth, columns, loading, dataList, pagination, onSearch } =
       deviceDetection() ? 'max-w-[100%]' : 'max-w-[70%]'
     ]"
   >
-    <h3 class="my-8">安全日志</h3>
+    <h3 class="my-8">{{ t("account.securityLog") }}</h3>
     <pure-table
       v-if="auth.list"
       :columns="columns"

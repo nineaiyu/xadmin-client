@@ -42,6 +42,8 @@ export type userType = {
   avatar?: string;
   username?: string;
   nickname?: string;
+  email?: string;
+  phone?: string;
   roles?: Array<string>;
   verifyCodeLength?: number;
   currentPage?: number;

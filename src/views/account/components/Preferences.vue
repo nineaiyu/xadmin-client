@@ -1,34 +1,41 @@
 <script lang="ts" setup>
 import { onMounted, ref } from "vue";
-import { message } from "@/utils/message";
 import { deviceDetection } from "@pureadmin/utils";
 import { configApi } from "@/api/config";
+import { handleOperation } from "@/components/RePlusCRUD";
+import { useI18n } from "vue-i18n";
 
 defineOptions({
   name: "Preferences"
 });
 const loading = ref(true);
+const { t } = useI18n();
+
 const list = ref([
   {
     name: "PUSH_MESSAGE_NOTICE",
-    title: "消息公告推送",
-    illustrate: "消息公告将在右上角实时推送通知",
+    title: t("account.messagePush"),
+    illustrate: t("account.messagePushTips"),
     checked: false
   },
   {
     name: "PUSH_CHAT_MESSAGE",
-    title: "聊天室@ 推送",
-    illustrate: "聊天@ 消息将在右上角实时推送通知",
+    title: t("account.chatPush"),
+    illustrate: t("account.chatPushTips"),
     checked: false
   }
 ]);
 
 function onChange(val, item) {
   loading.value = true;
-  configApi.setConfig(item.name, val).finally(() => {
-    loading.value = false;
+
+  handleOperation({
+    t,
+    apiReq: configApi.setConfig(item.name, val),
+    requestEnd() {
+      loading.value = false;
+    }
   });
-  message(`${item.title}设置成功`, { type: "success" });
 }
 
 onMounted(() => {
@@ -51,7 +58,7 @@ onMounted(() => {
       deviceDetection() ? 'max-w-[100%]' : 'max-w-[70%]'
     ]"
   >
-    <h3 class="my-8">偏好设置</h3>
+    <h3 class="my-8">{{ t("account.preference") }}</h3>
     <div v-for="(item, index) in list" :key="index">
       <div class="flex items-center">
         <div class="flex-1">
@@ -65,8 +72,8 @@ onMounted(() => {
         <el-switch
           v-model="item.checked"
           :loading="loading"
-          active-text="是"
-          inactive-text="否"
+          :active-text="t('labels.enable')"
+          :inactive-text="t('labels.disable')"
           inline-prompt
           @change="val => onChange(val, item)"
         />

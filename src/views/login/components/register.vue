@@ -137,7 +137,7 @@ const formRules = reactive<FormRules>({
   ]
 });
 
-const handleChange = ({ verifyCodeConfig }) => {
+const configReqSuccess = verifyCodeConfig => {
   authInfo.value = Object.assign(authInfo.value, verifyCodeConfig);
   formData.value.form_type = authInfo.value.basic ? "username" : "";
 };
@@ -151,11 +151,11 @@ const isUsername = computed(() => formData.value.form_type === "username");
       ref="verifyCodeRef"
       v-model="formData"
       category="register"
-      @change="handleChange"
+      @configReqSuccess="configReqSuccess"
     >
       <el-tab-pane
         v-if="authInfo.basic"
-        :label="t('login.username')"
+        :label="t('login.basic')"
         name="username"
       >
         <el-form-item

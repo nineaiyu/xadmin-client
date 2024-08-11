@@ -13,6 +13,10 @@ class UserInfoApi extends BaseApi {
     );
   };
 
+  bind = (data?: object) => {
+    return this.request<BaseResult>("post", {}, data, `${this.baseApi}/bind`);
+  };
+
   self = (pk: string = "self") => {
     return this.request<UserInfoResult>("get", {}, {}, `${this.baseApi}/${pk}`);
   };

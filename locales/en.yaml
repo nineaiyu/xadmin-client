@@ -273,6 +273,26 @@ userinfo:
   date_joined: Registration Date
   last_login: Last Login Date
   avatar: Avatar
+  bindEmail: Bind Email
+  bindPhone: Bind Phone
+  existInfo: The existing binding information !!!
+  unbind: Unbind
+  continueBind: Continuing the binding will be automatic
+  bindInfo: binding information
+
+account:
+  profile: Profile
+  preference: Preference
+  securityLog: Security Log
+  accountManagement: Account Management
+  back: Back
+  messagePush: Site Message Push
+  messagePushTips: The announcement will be a real-time push notification in the upper right corner
+  chatPush: "Chat room {'@'} push"
+  chatPushTips: "Chat {'@'} messages will be a live push notification in the top right corner"
+  password: Password
+  bind: Bind
+  unbound: Unbound
 
 systemUser:
   user: User

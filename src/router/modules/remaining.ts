@@ -43,7 +43,7 @@ export default [
   {
     path: "/account-settings",
     name: "AccountSettings",
-    component: () => import("@/views/account-settings/index.vue"),
+    component: () => import("@/views/account/index.vue"),
     meta: {
       title: $t("menus.accountSettings"),
       showLink: false,

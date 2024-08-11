@@ -175,7 +175,7 @@ const openFormDialog = (formOptions: formDialogOptions) => {
         close && done(); // 关闭弹框
       };
 
-      await FormRef.validate(valid => {
+      await FormRef?.validate(valid => {
         if (valid) {
           const formData =
             (formOptions?.beforeSubmit &&

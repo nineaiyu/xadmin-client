@@ -3,7 +3,6 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import Motion from "../utils/motion";
 import { useRouter } from "vue-router";
-import type { FormInstance } from "element-plus";
 import { operates, thirdParty } from "../utils/enums";
 import { useUserStoreHook } from "@/store/modules/user";
 import { getTopMenu, initRouter } from "@/router/utils";
@@ -124,7 +123,7 @@ watch(loginDay, value => {
   useUserStoreHook().SET_LOGINDAY(value);
 });
 
-const handleChange = ({ verifyCodeConfig }) => {
+const configReqSuccess = verifyCodeConfig => {
   authInfo.value = Object.assign(authInfo.value, verifyCodeConfig);
 
   loginDay.value = authInfo.value.lifetime;
@@ -160,7 +159,7 @@ const handleLogin = () => {
       ref="verifyCodeRef"
       v-model="formData"
       category="login"
-      @change="handleChange"
+      @configReqSuccess="configReqSuccess"
     >
       <el-tab-pane
         v-if="authInfo.basic"

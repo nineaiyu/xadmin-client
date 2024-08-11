@@ -16,9 +16,10 @@ import PreferencesIcon from "@iconify-icons/ri/settings-3-line";
 import SecurityLogIcon from "@iconify-icons/ri/window-line";
 import AccountManagementIcon from "@iconify-icons/ri/profile-line";
 import { useUserStoreHook } from "@/store/modules/user";
+import { useI18n } from "vue-i18n";
 
 defineOptions({
-  name: "AccountSettings"
+  name: "Account"
 });
 
 const router = useRouter();
@@ -28,29 +29,30 @@ const { $storage } = useGlobal<GlobalPropertiesApi>();
 onBeforeMount(() => {
   useDataThemeChange().dataThemeChange($storage.layout?.overallStyle);
 });
+const { t } = useI18n();
 
 const panes = [
   {
     key: "profile",
-    label: "个人信息",
+    label: t("account.profile"),
     icon: ProfileIcon,
     component: Profile
   },
   {
     key: "preferences",
-    label: "偏好设置",
+    label: t("account.preference"),
     icon: PreferencesIcon,
     component: Preferences
   },
   {
     key: "securityLog",
-    label: "安全日志",
+    label: t("account.securityLog"),
     icon: SecurityLogIcon,
     component: SecurityLog
   },
   {
     key: "accountManagement",
-    label: "账户管理",
+    label: t("account.accountManagement"),
     icon: AccountManagementIcon,
     component: AccountManagement
   }
@@ -72,12 +74,12 @@ const witchPane = ref("profile");
         >
           <div class="flex items-center">
             <IconifyIconOffline :icon="leftLine" />
-            <span class="ml-2">返回</span>
+            <span class="ml-2">{{ t("account.back") }}</span>
           </div>
         </el-menu-item>
         <div class="flex items-center ml-8 mt-4 mb-4">
           <el-avatar :size="48" :src="userinfoStore.avatar ?? avatar" />
-          <div class="ml-4 flex flex-col max-w-[130px]">
+          <div class="ml-4 flex flex-col max-w-[100px]">
             <ReText class="font-bold !self-baseline">
               {{ userinfoStore.nickname }}
             </ReText>

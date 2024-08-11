@@ -9,6 +9,7 @@ import croppingUpload from "@/components/RePictureUpload";
 import { roleApi } from "@/api/system/role";
 import {
   cloneDeep,
+  createFormData,
   deviceDetection,
   isAllEmpty,
   isPhone
@@ -119,21 +120,22 @@ export function useUser(tableRef: Ref) {
           ref: cropRef,
           canvasOption: { width: 512, height: 512 }
         }),
-      beforeSure: done => {
-        const avatarFile = new File([avatarInfo.value.blob], "avatar.png", {
-          type: avatarInfo.value.blob.type,
-          lastModified: Date.now()
+      beforeSure: (done, { closeLoading }) => {
+        const formData = createFormData({
+          file: new File([avatarInfo.value.blob], "avatar.png", {
+            type: avatarInfo.value.blob.type,
+            lastModified: Date.now()
+          })
         });
-        const data = new FormData();
-        data.append("file", avatarFile);
-        api.upload(row.pk, data).then(res => {
-          if (res.code === 1000) {
-            message(t("results.success"), { type: "success" });
+        handleOperation({
+          t,
+          apiReq: api.upload(row.pk, formData),
+          success() {
             tableRef.value.handleGetData();
             done();
-          } else {
-            message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-            done();
+          },
+          requestEnd() {
+            closeLoading();
           }
         });
       },

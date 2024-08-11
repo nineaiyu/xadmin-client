@@ -45,6 +45,8 @@ export const useUserStore = defineStore({
     username: storageLocal().getItem<UserInfo>(userKey)?.username ?? "",
     // 昵称
     nickname: storageLocal().getItem<UserInfo>(userKey)?.nickname ?? "",
+    email: storageLocal().getItem<UserInfo>(userKey)?.email ?? "",
+    phone: storageLocal().getItem<UserInfo>(userKey)?.phone ?? "",
     // 页面级别权限
     roles: storageLocal().getItem<UserInfo>(userKey)?.roles ?? [],
     // 前端生成的验证码（按实际需求替换）
@@ -71,6 +73,12 @@ export const useUserStore = defineStore({
     } /** 存储用户昵称 */,
     SET_NICKNAME(nickname: string) {
       this.nickname = nickname;
+    },
+    SET_EMAIL(email: string) {
+      this.email = email;
+    },
+    SET_PHONE(phone: string) {
+      this.phone = phone;
     },
     /** 存储角色 */
     SET_ROLES(roles: Array<string>) {

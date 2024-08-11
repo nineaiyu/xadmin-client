@@ -31,7 +31,7 @@ const {
       deviceDetection() ? 'max-w-[100%]' : 'max-w-[70%]'
     ]"
   >
-    <h3 class="my-8">个人信息</h3>
+    <h3 class="my-8">{{ t("account.profile") }}</h3>
     <PlusForm
       ref="formRef"
       v-model="userInfo"
@@ -50,15 +50,17 @@ const {
         </el-button>
       </template>
       <template #plus-field-operation>
-        <el-popconfirm
-          v-if="auth.update"
-          :title="t('buttons.confirmUpdate')"
-          @confirm="handleUpdate(userInfo)"
-        >
-          <template #reference>
-            <el-button>{{ t("buttons.save") }}</el-button>
-          </template>
-        </el-popconfirm>
+        <div class="mt-3">
+          <el-popconfirm
+            v-if="auth.update"
+            :title="t('buttons.confirmUpdate')"
+            @confirm="handleUpdate(userInfo)"
+          >
+            <template #reference>
+              <el-button>{{ t("buttons.save") }}</el-button>
+            </template>
+          </el-popconfirm>
+        </div>
       </template>
     </PlusForm>
   </div>

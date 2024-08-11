@@ -24,16 +24,25 @@ const formData = defineModel({
 });
 
 const emit = defineEmits<{
-  (e: "change", ...args: any[]): void;
+  (e: "configReqSuccess", ...args: any[]): void;
+  (e: "sendCodeReqSuccess", ...args: any[]): void;
 }>();
 const formDataRef = ref<FormInstance>();
+const captchaRef = ref();
 
 function getRef() {
   return formDataRef.value;
 }
 
-const { t, text, formRules, isDisabled, verifyCodeConfig, handleSendCode } =
-  useSendVerifyCode(formDataRef, formData, props, emit);
+const {
+  t,
+  text,
+  formRules,
+  isDisabled,
+  verifyCodeConfig,
+  handleSendCode,
+  fetchSuggestions
+} = useSendVerifyCode(formDataRef, captchaRef, formData, props, emit);
 
 const $slots = useSlots();
 defineExpose({ getRef, handleSendCode });
@@ -76,12 +85,14 @@ const access = computed(
           name="email"
         >
           <el-form-item v-if="formData.form_type === 'email'" prop="email">
-            <el-input
+            <el-autocomplete
               v-model="formData.email"
               :disabled="Boolean(formData.verify_token)"
               :placeholder="t('login.email')"
               :prefix-icon="useRenderIcon(Email)"
               clearable
+              :trigger-on-focus="false"
+              :fetch-suggestions="fetchSuggestions"
             />
           </el-form-item>
         </el-tab-pane>
@@ -101,7 +112,7 @@ const access = computed(
           clearable
         >
           <template #append>
-            <ReImageVerify v-model="formData.captcha_key" />
+            <ReImageVerify ref="captchaRef" v-model="formData.captcha_key" />
           </template>
         </el-input>
       </el-form-item>
@@ -119,7 +130,7 @@ const access = computed(
           <el-button
             :disabled="isDisabled"
             class="ml-2"
-            @click="handleSendCode"
+            @click="handleSendCode(null)"
           >
             {{
               text.length > 0

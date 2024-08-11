@@ -3,21 +3,11 @@ import {
   cloneDeep,
   createFormData,
   delay,
-  deviceDetection,
-  isAllEmpty
+  deviceDetection
 } from "@pureadmin/utils";
 import { hasGlobalAuth } from "@/router/utils";
 import { message } from "@/utils/message";
-import {
-  computed,
-  h,
-  onMounted,
-  reactive,
-  type Ref,
-  ref,
-  toRaw,
-  watch
-} from "vue";
+import { computed, h, onMounted, reactive, type Ref, ref, toRaw } from "vue";
 import { userInfoApi } from "@/api/user/userinfo";
 import { useUserStoreHook } from "@/store/modules/user";
 import type { PlusColumn } from "plus-pro-components";
@@ -30,24 +20,19 @@ import {
 } from "@/views/system/hooks";
 import { addDialog } from "@/components/ReDialog/index";
 import croppingUpload from "@/components/RePictureUpload";
-import { loginLogApi } from "@/api/system/logs/login";
+import { userLoginLogApi } from "@/api/user/logs";
 import dayjs from "dayjs";
 import type { PaginationProps } from "@pureadmin/table";
-import {
-  ElForm,
-  ElFormItem,
-  ElInput,
-  ElProgress,
-  type FormRules
-} from "element-plus";
-import { REGEXP_PWD } from "@/views/login/utils/rule";
-import { $t, transformI18n } from "@/plugins/i18n";
-import { zxcvbn } from "@zxcvbn-ts/core";
+import { handleOperation, openFormDialog } from "@/components/RePlusCRUD";
+import BindEmailOrPhone from "../components/BindEmailOrPhone.vue";
+import ChangePassword from "../components/ChangePassword.vue";
+import { AesEncrypted } from "@/utils/aes";
 
 export function useApiAuth() {
   const api = reactive({
     self: userInfoApi.self,
-    update: userInfoApi.update,
+    bind: userInfoApi.bind,
+    update: userInfoApi.patch,
     reset: userInfoApi.reset,
     upload: userInfoApi.upload,
     choices: userInfoApi.choices
@@ -56,6 +41,7 @@ export function useApiAuth() {
   const auth = reactive({
     upload: hasGlobalAuth("upload:UserInfo"),
     update: hasGlobalAuth("update:UserInfo"),
+    bind: hasGlobalAuth("bind:UserInfo"),
     reset: hasGlobalAuth("reset:UserInfo")
   });
   return {
@@ -75,7 +61,7 @@ export function useUserProfileForm(formRef: Ref) {
     username: "",
     nickname: "",
     avatar: "",
-    mobile: "",
+    phone: "",
     email: "",
     gender: 0
   });
@@ -102,39 +88,6 @@ export function useUserProfileForm(formRef: Ref) {
       })
     },
     {
-      prop: "mobile",
-      valueType: "input"
-    },
-    {
-      prop: "email",
-      valueType: "autocomplete",
-      fieldProps: {
-        fetchSuggestions(queryString, callback) {
-          const emailList = [
-            { value: "@qq.com" },
-            { value: "@126.com" },
-            { value: "@163.com" }
-          ];
-          let results = [];
-          let queryList = [];
-          emailList.map(item =>
-            queryList.push({ value: queryString.split("@")[0] + item.value })
-          );
-          results = queryString
-            ? queryList.filter(
-                item =>
-                  item.value
-                    .toLowerCase()
-                    .indexOf(queryString.toLowerCase()) === 0
-              )
-            : queryList;
-          callback(results);
-        },
-        triggerOnFocus: false
-      }
-    },
-
-    {
       prop: "operation",
       valueType: "input",
       hasLabel: false
@@ -145,11 +98,15 @@ export function useUserProfileForm(formRef: Ref) {
   const handleUpdate = row => {
     formRef.value?.formInstance?.validate(valid => {
       if (valid) {
-        api.update("self", row).then(res => {
-          if (res.code === 1000) {
-            message(t("results.success"), { type: "success" });
-          } else {
-            message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+        handleOperation({
+          t,
+          apiReq: api.update("self", {
+            username: row.username,
+            nickname: row.nickname,
+            gender: row.gender
+          }),
+          success() {
+            getUserInfo();
           }
         });
       }
@@ -173,21 +130,22 @@ export function useUserProfileForm(formRef: Ref) {
           ref: cropRef,
           canvasOption: { width: 512, height: 512 }
         }),
-      beforeSure: done => {
+      beforeSure: (done, { closeLoading }) => {
         const formData = createFormData({
           file: new File([avatarInfo.value.blob], "avatar.png", {
             type: avatarInfo.value.blob.type,
             lastModified: Date.now()
           })
         });
-        api.upload(row.pk, formData).then(res => {
-          if (res.code === 1000) {
-            message(t("results.success"), { type: "success" });
+        handleOperation({
+          t,
+          apiReq: api.upload(row.pk, formData),
+          success() {
             getUserInfo();
             done();
-          } else {
-            message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-            done();
+          },
+          requestEnd() {
+            closeLoading();
           }
         });
       },
@@ -229,11 +187,11 @@ export function useUserProfileForm(formRef: Ref) {
 export function useUserLoginLog() {
   const { t, te } = useI18n();
   const api = reactive({
-    list: loginLogApi.list
+    list: userLoginLogApi.list
   });
 
   const auth = reactive({
-    list: hasGlobalAuth("list:systemLoginLog")
+    list: hasGlobalAuth("list:userLoginLog")
   });
 
   const { tagStyle } = usePublicHooks();
@@ -341,6 +299,7 @@ export function useUserLoginLog() {
   });
 
   return {
+    t,
     api,
     auth,
     columns,
@@ -354,157 +313,102 @@ export function useUserLoginLog() {
 export function useAccountManage() {
   const { t } = useI18n();
   const { api, auth } = useApiAuth();
+  const userinfoStore = useUserStoreHook();
 
-  const ruleFormRef = ref();
-  const pwdForm = reactive({
-    old_password: "",
-    new_password: "",
-    sure_password: ""
-  });
-  const pwdProgress = [
-    { color: "#e74242", text: t("password.veryWeak") },
-    { color: "#EFBD47", text: t("password.weak") },
-    { color: "#ffa500", text: t("password.average") },
-    { color: "#1bbf1b", text: t("password.strong") },
-    { color: "#008000", text: t("password.veryStrong") }
-  ];
-  // 当前密码强度（0-4）
-  const curScore = ref();
-  const formPasswordRules = reactive<FormRules>({
-    old_password: [
-      {
-        required: true,
-        message: t("userinfo.verifyOldPassword"),
-        trigger: "blur"
-      }
-    ],
-    new_password: [
-      {
-        required: true,
-        validator: (rule, value, callback) => {
-          if (value === "") {
-            callback(
-              new Error(transformI18n($t("userinfo.verifyNewPassword")))
-            );
-          } else if (!REGEXP_PWD.test(value)) {
-            callback(new Error(transformI18n($t("login.passwordRuleReg"))));
-          } else {
-            callback();
-          }
+  function handleBindEmailOrPhone(category: string) {
+    openFormDialog({
+      t,
+      isAdd: false,
+      title:
+        category === "bind_email"
+          ? t("userinfo.bindEmail")
+          : t("userinfo.bindPhone"),
+      rawRow: {
+        form_type: category === "bind_email" ? "email" : "phone",
+        verify_code: "",
+        verify_token: undefined
+      },
+      rawColumns: [
+        {
+          label: t("userinfo.avatar"),
+          prop: "avatar",
+          valueType: "avatar"
         },
-        trigger: "blur"
-      }
-    ],
-    sure_password: [
-      {
-        validator: (rule, value, callback) => {
-          if (value !== pwdForm.new_password) {
-            callback(new Error(t("login.passwordDifferentReg")));
-          } else {
-            callback();
-          }
+        {
+          label: t("userinfo.username"),
+          prop: "username",
+          valueType: "input"
         },
-        trigger: "blur"
-      }
-    ]
-  });
-
-  /** 重置密码 */
-  function handleReset() {
-    addDialog({
-      title: t("userinfo.changePassword"),
-      width: "40%",
-      draggable: true,
-      fullscreen: deviceDetection(),
-      closeOnClickModal: false,
-      contentRenderer: () => (
-        <>
-          <ElForm ref={ruleFormRef} model={pwdForm} rules={formPasswordRules}>
-            <ElFormItem prop="old_password" label={t("userinfo.oldPassword")}>
-              <ElInput
-                clearable
-                show-password
-                type="password"
-                v-model={pwdForm.old_password}
-                placeholder={t("userinfo.verifyOldPassword")}
-              />
-            </ElFormItem>
-            <ElFormItem prop="new_password" label={t("userinfo.newPassword")}>
-              <ElInput
-                clearable
-                show-password
-                type="password"
-                v-model={pwdForm.new_password}
-                placeholder={t("userinfo.verifyNewPassword")}
-              />
-            </ElFormItem>
-            <div class="mt-4 flex">
-              {pwdProgress.map(({ color, text }, idx) => (
-                <div
-                  class="w-[19vw]"
-                  style={{ marginLeft: idx !== 0 ? "4px" : 0 }}
-                >
-                  <ElProgress
-                    striped
-                    striped-flow
-                    duration={curScore.value === idx ? 6 : 0}
-                    percentage={curScore.value >= idx ? 100 : 0}
-                    color={color}
-                    stroke-width={10}
-                    show-text={false}
-                  />
-                  <p
-                    class="text-center"
-                    style={{ color: curScore.value === idx ? color : "" }}
-                  >
-                    {text}
-                  </p>
-                </div>
-              ))}
-            </div>
-            <ElFormItem prop="sure_password" label={t("userinfo.surePassword")}>
-              <ElInput
-                clearable
-                show-password
-                type="password"
-                v-model={pwdForm.sure_password}
-                placeholder={t("userinfo.verifyNewPassword")}
-              />
-            </ElFormItem>
-          </ElForm>
-        </>
-      ),
-      closeCallBack: () => (pwdForm.new_password = ""),
-      beforeSure: done => {
-        ruleFormRef.value.validate(valid => {
-          if (valid) {
-            api.reset(pwdForm).then(res => {
-              if (res.code === 1000) {
-                message(t("results.success"), { type: "success" });
-                done(); // 关闭弹框
-              } else {
-                message(`${t("results.failed")}，${res.detail}`, {
-                  type: "error"
-                });
-              }
-            });
+        {
+          label: t("userinfo.nickname"),
+          prop: "nickname",
+          valueType: "input"
+        }
+      ],
+      props: { category },
+      form: BindEmailOrPhone,
+      saveCallback: ({ formData, done, closeLoading }) => {
+        const rawData = {
+          verify_token: formData.verify_token,
+          verify_code: formData.verify_code
+        };
+        handleOperation({
+          t,
+          apiReq: api.bind(rawData),
+          success() {
+            userinfoStore.getUserInfo();
+            done();
+          },
+          requestEnd() {
+            closeLoading();
           }
         });
       }
     });
   }
 
-  watch(
-    pwdForm,
-    ({ new_password }) =>
-      (curScore.value = isAllEmpty(new_password)
-        ? -1
-        : zxcvbn(new_password).score)
-  );
+  function handleChangePassword() {
+    openFormDialog({
+      t,
+      isAdd: false,
+      title: t("userinfo.changePassword"),
+      rawRow: {
+        old_password: "",
+        new_password: "",
+        sure_password: ""
+      },
+      form: ChangePassword,
+      saveCallback: ({ formData, done, closeLoading }) => {
+        const rowData = {
+          old_password: AesEncrypted(
+            userinfoStore.username,
+            formData.old_password
+          ),
+          sure_password: AesEncrypted(
+            userinfoStore.username,
+            formData.sure_password
+          )
+        };
+        handleOperation({
+          t,
+          apiReq: api.reset(rowData),
+          success() {
+            done();
+          },
+          requestEnd() {
+            closeLoading();
+          }
+        });
+      }
+    });
+  }
 
   return {
+    t,
     api,
     auth,
-    handleReset
+    userinfoStore,
+    handleChangePassword,
+    handleBindEmailOrPhone
   };
 }

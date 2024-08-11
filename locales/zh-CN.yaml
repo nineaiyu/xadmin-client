@@ -265,7 +265,7 @@ userinfo:
   surePassword: 确认密码
   username: 用户名
   nickname: 昵称
-  phone: 手机号
+  phone: 手机
   email: 邮箱
   gender: 性别
   dept: 部门
@@ -273,6 +273,26 @@ userinfo:
   date_joined: 注册时间
   last_login: 上次登录时间
   avatar: 头像
+  bindEmail: 绑定邮箱
+  bindPhone: 绑定手机
+  existInfo: 已存在的绑定信息！！！
+  unbind: 解绑
+  continueBind: 继续绑定将会自动
+  bindInfo: 的绑定信息
+
+account:
+  profile: 个人信息
+  preference: 偏好设置
+  securityLog: 安全日志
+  accountManagement: 账户管理
+  back: 返回
+  messagePush: 消息公告推送
+  messagePushTips: 消息公告将在右上角实时推送通知
+  chatPush: "聊天室{'@'}推送"
+  chatPushTips: "聊天{'@'}消息将在右上角实时推送通知"
+  password: 密码
+  bind: 已绑定
+  unbound: 暂未绑定
 
 systemUser:
   user: 用户
