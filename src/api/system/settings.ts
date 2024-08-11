@@ -38,3 +38,7 @@ export const settingsResetPasswordCodeApi = new ViewBaseApi(
 
 // 图片验证码设置
 export const settingsCaptchaApi = new ViewBaseApi("/api/settings/captcha");
+
+// 绑定邮箱手机设置
+export const settingsBindEmailApi = new ViewBaseApi("/api/settings/bind/email");
+export const settingsBindPhoneApi = new ViewBaseApi("/api/settings/bind/phone");

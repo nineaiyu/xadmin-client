@@ -220,6 +220,7 @@ menus:
   loginSettings: 登录设置
   verifySettings: 验证码设置
   resetSettings: 重置密码
+  bindSettings: 绑定设置
   userManagement: 用户管理
   deptManagement: 部门管理
   menuManagement: 菜单管理
@@ -602,6 +603,10 @@ settingVerify:
 
 settingReset:
   title: 忘记密码设置
+
+settingBind:
+  title: 绑定邮箱配置
+  bindPhone: 绑定手机配置
 
 demoBook:
   book: 书籍

@@ -220,6 +220,7 @@ menus:
   loginSettings: Login Settings
   verifySettings: Verify Code Settings
   resetSettings: Reset Password Settings
+  bindSettings: Bind Settings
   userManagement: User Manage
   deptManagement: Department Manage
   menuManagement: Menu Manage
@@ -602,6 +603,10 @@ settingVerify:
 
 settingReset:
   title: Reset Password
+
+settingBind:
+  title: Bind Email
+  bindPhone: Bind Phone
 
 demoBook:
   book: Book
