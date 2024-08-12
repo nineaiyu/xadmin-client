@@ -55,7 +55,6 @@ watch(ruleInfo.value, () => {
             background: 'var(--el-table-row-hover-bg-color)',
             color: 'var(--el-text-color-primary)'
           }"
-          :paginationSmall="size === 'small'"
           :size="size"
           adaptive
           align-whole="center"
