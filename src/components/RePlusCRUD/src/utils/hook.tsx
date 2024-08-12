@@ -73,7 +73,7 @@ export function usePlusCRUDPage(
   const switchLoadMap = ref({});
   const { switchStyle } = usePublicHooks();
   const routeParams = isEmpty(route.params) ? route.query : route.params;
-  const defaultPagination = {
+  const defaultPagination: RePlusPageProps["pagination"] = {
     total: 0,
     pageSize: 15,
     currentPage: 1,

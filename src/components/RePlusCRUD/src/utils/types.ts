@@ -63,9 +63,7 @@ interface RePlusPageProps {
    * @param params
    */
   beforeSearchSubmit?: <T = RecordType>(params: T) => T;
-  pagination?: Partial<PaginationProps> & {
-    size?: string;
-  };
+  pagination?: Partial<PaginationProps>;
   addOrEditOptions?: {
     title?: "";
     props?: Partial<formDialogOptions>;

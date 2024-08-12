@@ -17,9 +17,7 @@ export function usePlusSearch(
   const selectVisible = ref(false);
 
   /** 分页配置 */
-  const defaultPagination = reactive<
-    Partial<PaginationProps> & { size?: string }
-  >({
+  const defaultPagination = reactive<PaginationProps>({
     total: 0,
     pageSize: isTree ? 1000 : 10,
     currentPage: 1,

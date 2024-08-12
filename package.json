@@ -46,7 +46,7 @@
     "url": "https://github.com/nineaiyu/"
   },
   "dependencies": {
-    "@pureadmin/table": "^3.1.2",
+    "@pureadmin/table": "^3.2.0",
     "@pureadmin/utils": "^2.4.8",
     "@vueuse/core": "^10.11.1",
     "@vueuse/motion": "^2.2.3",
@@ -106,7 +106,7 @@
     "@vitejs/plugin-vue": "^5.1.2",
     "@vitejs/plugin-vue-jsx": "^4.0.0",
     "autoprefixer": "^10.4.20",
-    "boxen": "^7.1.1",
+    "boxen": "^8.0.1",
     "cssnano": "^7.0.5",
     "eslint": "^9.9.0",
     "eslint-config-prettier": "^9.1.0",
