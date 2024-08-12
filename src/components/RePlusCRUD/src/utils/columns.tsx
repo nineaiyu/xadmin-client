@@ -306,6 +306,16 @@ export function useBaseColumns(localeName: string) {
           item["valueType"] = "textarea";
           item["fieldProps"] = { autosize: { minRows: 8 } };
           break;
+        case "choice":
+        case "multiple choice":
+          item["valueType"] = "select";
+          item["options"] = computed(() =>
+            formatAddOrEditOptions(column?.choices, false)
+          );
+          if (column.input_type === "multiple choice") {
+            item["fieldProps"]["multiple"] = true;
+          }
+          break;
         case "labeled_choice":
         case "labeled_multiple_choice":
         case "object_related_field":
@@ -391,6 +401,9 @@ export function useBaseColumns(localeName: string) {
           addOrEditDefaultValue.value[column.key] = [
             { value: column?.default }
           ];
+        }
+        if (column.input_type === "multiple choice") {
+          addOrEditDefaultValue.value[column.key] = [column?.default];
         }
       }
 
