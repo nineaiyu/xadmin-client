@@ -77,9 +77,11 @@ export default defineComponent({
     function handleChange({ option, index }, event: Event) {
       if (props.disabled || option.disabled) return;
       event.preventDefault();
-      isNumber(props.modelValue)
-        ? emit("update:modelValue", index)
-        : (curIndex.value = index);
+      if (isNumber(props.modelValue)) {
+        emit("update:modelValue", index);
+      } else {
+        curIndex.value = index;
+      }
       segmentedItembg.value = "";
       emit("change", { index, option });
     }
@@ -121,7 +123,9 @@ export default defineComponent({
       });
     }
 
-    (props.block || props.resize) && handleResizeInit();
+    if (props.block || props.resize) {
+      handleResizeInit();
+    }
 
     watch(
       () => curIndex.value,

@@ -21,7 +21,9 @@ function getGlobalAuths(arr: any[]) {
       if (auths?.length > 0) {
         res = res.concat(auths);
       }
-      item.children && deep(item.children);
+      if (item.children) {
+        deep(item.children);
+      }
     });
   }
 
@@ -64,7 +66,9 @@ export const usePermissionStore = defineStore({
           this.cachePageList.push(name);
           break;
         case "delete":
-          delIndex !== -1 && this.cachePageList.splice(delIndex, 1);
+          if (delIndex !== -1) {
+            this.cachePageList.splice(delIndex, 1);
+          }
           break;
       }
       /** 监听缓存页面是否存在于标签页，不存在则删除 */
@@ -72,12 +76,16 @@ export const usePermissionStore = defineStore({
         let cacheLength = this.cachePageList.length;
         const nameList = getKeyList(useMultiTagsStoreHook().multiTags, "name");
         while (cacheLength > 0) {
-          nameList.findIndex(v => v === this.cachePageList[cacheLength - 1]) ===
-            -1 &&
+          if (
+            nameList.findIndex(
+              v => v === this.cachePageList[cacheLength - 1]
+            ) === -1
+          ) {
             this.cachePageList.splice(
               this.cachePageList.indexOf(this.cachePageList[cacheLength - 1]),
               1
             );
+          }
           cacheLength--;
         }
       })();

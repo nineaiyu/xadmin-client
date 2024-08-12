@@ -196,9 +196,11 @@ export function useTags() {
   }
 
   function onContentFullScreen() {
-    pureSetting.hiddenSideBar
-      ? pureSetting.changeSetting({ key: "hiddenSideBar", value: false })
-      : pureSetting.changeSetting({ key: "hiddenSideBar", value: true });
+    if (pureSetting.hiddenSideBar) {
+      pureSetting.changeSetting({ key: "hiddenSideBar", value: false });
+    } else {
+      pureSetting.changeSetting({ key: "hiddenSideBar", value: true });
+    }
   }
 
   onMounted(() => {

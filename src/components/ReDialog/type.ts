@@ -173,7 +173,7 @@ interface DialogOptions extends DialogProps {
     titleId,
     titleClass
   }: {
-    close: Function;
+    close: () => void;
     titleId: string;
     titleClass: string;
   }) => VNode | Component;
@@ -248,7 +248,7 @@ interface DialogOptions extends DialogProps {
   onChange?: (data: any) => void;
   /** 点击底部取消按钮的回调，会暂停 `Dialog` 的关闭. 回调函数内执行 `done` 参数方法的时候才是真正关闭对话框的时候 */
   beforeCancel?: (
-    done: Function,
+    done: () => void,
     {
       options,
       index
@@ -259,7 +259,7 @@ interface DialogOptions extends DialogProps {
   ) => void;
   /** 点击底部确定按钮的回调，会暂停 `Dialog` 的关闭. 回调函数内执行 `done` 参数方法的时候才是真正关闭对话框的时候 */
   beforeSure?: (
-    done: Function,
+    done: () => void,
     {
       options,
       index,
@@ -268,7 +268,7 @@ interface DialogOptions extends DialogProps {
       options: DialogOptions;
       index: number;
       /** 关闭确定按钮的 `loading` 加载动画 */
-      closeLoading: Function;
+      closeLoading: () => void;
     }
   ) => void;
 }

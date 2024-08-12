@@ -28,7 +28,9 @@ const addDialog = (options: DialogOptions) => {
 /** 关闭弹框 */
 const closeDialog = (options: DialogOptions, index: number, args?: any) => {
   dialogStore.value[index].visible = false;
-  options.closeCallBack && options.closeCallBack({ options, index, args });
+  if (options.closeCallBack) {
+    options.closeCallBack({ options, index, args });
+  }
 
   const closeDelay = options?.closeDelay ?? 200;
   useTimeoutFn(() => {

@@ -178,7 +178,9 @@ export const useSendVerifyCode = (
             formData.value.verify_token = res.data.verify_token;
             emit("sendCodeReqSuccess", res.data);
             interval(verifyCodeConfig.rate);
-            callback && callback(res.data);
+            if (callback) {
+              callback(res.data);
+            }
           },
           showSuccessMsg: ["email", "phone"].includes(formData.value.form_type),
           exception() {

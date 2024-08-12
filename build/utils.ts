@@ -86,8 +86,9 @@ const getPackageSize = options => {
     if (err) throw err;
     let count = 0;
     const checkEnd = () => {
-      ++count == files.length &&
+      if (++count == files.length) {
         callback(format ? formatBytes(sum(fileListTotal)) : sum(fileListTotal));
+      }
     };
     files.forEach((item: string) => {
       stat(`${folder}/${item}`, async (err, stats) => {
@@ -103,7 +104,9 @@ const getPackageSize = options => {
         }
       });
     });
-    files.length === 0 && callback(0);
+    if (files.length === 0) {
+      callback(0);
+    }
   });
 };
 

@@ -1,7 +1,7 @@
 export type ChoicesResult = {
   detail: string;
   code: number;
-  choices_dict: Object | any;
+  choices_dict: object | any;
 };
 export type DataListResult = {
   detail: string;
@@ -55,7 +55,7 @@ export type ListResult = {
 export type DetailResult = {
   detail: string;
   code: number;
-  data: Object | any;
+  data: object | any;
 };
 
 export type BaseResult = {

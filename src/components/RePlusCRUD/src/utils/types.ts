@@ -14,14 +14,14 @@ import type { formDialogOptions } from "./handle";
 import type { OperationProps } from "@/components/RePlusCRUD";
 
 interface ApiAuthProps {
-  list?: string | boolean | null | Function;
-  import?: string | boolean | null | Function;
-  export?: string | boolean | null | Function;
-  create?: string | boolean | null | Function;
-  delete?: string | boolean | null | Function;
-  update?: string | boolean | null | Function;
-  fields?: string | boolean | null | Function;
-  batchDelete?: string | boolean | null | Function;
+  list?: string | boolean | null | BaseApi["list"];
+  import?: string | boolean | null | BaseApi["import"];
+  export?: string | boolean | null | BaseApi["export"];
+  create?: string | boolean | null | BaseApi["create"];
+  delete?: string | boolean | null | BaseApi["delete"];
+  update?: string | boolean | null | BaseApi["update"];
+  fields?: string | boolean | null | BaseApi["fields"];
+  batchDelete?: string | boolean | null | BaseApi["batchDelete"];
 }
 
 interface RePlusPageProps {

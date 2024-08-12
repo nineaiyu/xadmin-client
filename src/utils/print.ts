@@ -1,8 +1,8 @@
 interface PrintFunction {
-  extendOptions: Function;
-  getStyle: Function;
-  setDomHeight: Function;
-  toPrint: Function;
+  extendOptions: <T>(obj, obj2: T) => T;
+  getStyle: () => string;
+  setDomHeight: (value: any[]) => void;
+  toPrint: (w: Document | Window) => void;
 }
 
 const Print = function (dom, options?: object): PrintFunction {
@@ -172,7 +172,7 @@ Print.prototype = {
           if (!frameWindow.document.execCommand("print", false, null)) {
             frameWindow.print();
           }
-        } catch (e) {
+        } catch {
           frameWindow.print();
         }
         frameWindow.close();

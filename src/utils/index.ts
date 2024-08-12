@@ -62,7 +62,7 @@ export const wordSpecialChar = (word: string) => {
 export const passwordRulesCheck = (
   word: string,
   rules: Array<{ value: number; key: string }>,
-  t: Function
+  t: (arg0: string, arg1?: object) => string
 ) => {
   let result = true;
   let msg = t("settingPassword.tips");

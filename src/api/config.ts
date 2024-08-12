@@ -3,7 +3,7 @@ import { BaseApi } from "@/api/base";
 type ConfigResult = {
   detail: string;
   code: number;
-  config: Object | Number | Boolean | String | any;
+  config: object | number | boolean | string | any;
   auth: string;
 };
 

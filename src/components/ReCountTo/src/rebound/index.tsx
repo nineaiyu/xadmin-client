@@ -21,8 +21,8 @@ export default defineComponent({
       const isSafari = testUA(/safari/g) && !testUA(/chrome/g);
 
       // Safari浏览器的兼容代码
-      isSafari &&
-        (timer.value = setTimeout(() => {
+      if (isSafari) {
+        timer.value = setTimeout(() => {
           ulRef.value.setAttribute(
             "style",
             `
@@ -30,7 +30,8 @@ export default defineComponent({
         transform: translateY(calc(var(--i) * -9.09%))
       `
           );
-        }, props.delay * 1000));
+        }, props.delay * 1000);
+      }
     });
 
     onBeforeUnmount(() => {

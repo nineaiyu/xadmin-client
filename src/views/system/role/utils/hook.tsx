@@ -55,7 +55,9 @@ export function useRole() {
             item.children.push(data);
           });
         }
-        item.children && deep(item.children);
+        if (item.children) {
+          deep(item.children);
+        }
       });
     }
 

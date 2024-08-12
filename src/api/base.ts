@@ -129,7 +129,7 @@ export class BaseApi extends BaseRequest {
       `${this.baseApi}/${pk}`
     );
   };
-  batchDelete = (pks: Array<Number | String>) => {
+  batchDelete = (pks: Array<number | string>) => {
     return this.request<BaseResult>(
       "post",
       {},
@@ -162,7 +162,7 @@ export class BaseApi extends BaseRequest {
   };
 
   import = (action: string, data: object) => {
-    return http.upload<DetailResult, {}>(
+    return http.upload<DetailResult, any>(
       `${this.baseApi}/import-data?action=${action}`,
       {},
       data,

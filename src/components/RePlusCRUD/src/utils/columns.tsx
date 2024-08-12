@@ -537,13 +537,13 @@ export function useBaseColumns(localeName: string) {
     columnsParams = {},
     fieldsParams = {}
   ) => {
-    apiColumns &&
+    if (apiColumns) {
       apiColumns(columnsParams).then(res => {
         detailColumns.value.splice(0, detailColumns.value.length);
         addOrEditColumns.value.splice(0, addOrEditColumns.value.length);
         listColumns.value.splice(0, listColumns.value.length);
         formatAddOrEditColumns(res.data);
-        columnsCallback &&
+        if (columnsCallback) {
           columnsCallback({
             listColumns,
             detailColumns,
@@ -551,13 +551,18 @@ export function useBaseColumns(localeName: string) {
             addOrEditColumns,
             addOrEditDefaultValue
           });
+        }
       });
-    apiFields &&
+    }
+    if (apiFields) {
       apiFields(fieldsParams).then(res => {
         searchColumns.value.splice(0, searchColumns.value.length);
         formatSearchColumns(res.data);
-        fieldsCallback && fieldsCallback({ searchDefaultValue, searchColumns });
+        if (fieldsCallback) {
+          fieldsCallback({ searchDefaultValue, searchColumns });
+        }
       });
+    }
   };
 
   return {

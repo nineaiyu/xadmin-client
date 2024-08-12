@@ -78,8 +78,8 @@ export const formatOptions = (data: Array<any>) => {
 };
 
 export const formatPublicLabels = (
-  t: Function,
-  te: Function,
+  t: (arg0: string, arg1?: object) => string,
+  te: (arg0: string, arg1?: string) => boolean,
   label: string,
   localeName: string
 ) => {
@@ -120,8 +120,8 @@ export const disableState = (props, key) => {
 export const formatFormColumns = (
   props: Record<string, any>,
   tableColumns: Array<any>,
-  t: Function,
-  te: Function,
+  t: (arg0: string, arg1?: object) => string,
+  te: (arg0: string, arg1?: string) => boolean,
   localeName: string,
   disabled: boolean = false
 ) => {
@@ -140,8 +140,8 @@ export const formatFormColumns = (
 
 export const formatColumnsLabel = (
   tableColumns: TableColumnList,
-  t: Function,
-  te: Function,
+  t: (arg0: string, arg1?: object) => string,
+  te: (arg0: string, arg1?: string) => boolean,
   localeName: string
 ) => {
   tableColumns.forEach(column => {

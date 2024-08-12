@@ -22,7 +22,7 @@ export function isUrl(url: string) {
  */
 export const getPickerShortcuts = (): Array<{
   text: string;
-  value: Date | Function;
+  value: Date | (() => Date[]);
 }> => {
   return [
     {
@@ -166,8 +166,8 @@ export const getColourTypeByIndex = (index: number) => {
  * 获取国际化label值
  */
 export const formatPublicLabels = (
-  t: Function,
-  te: Function,
+  t: (arg0: string, arg1?: object) => string,
+  te: (arg0: string, arg1?: string) => boolean,
   label: string,
   localeName: string
 ): string => {

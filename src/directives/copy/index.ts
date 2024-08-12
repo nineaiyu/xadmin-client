@@ -16,10 +16,11 @@ export const copy: Directive = {
       const arg = binding.arg ?? "dblclick";
       // Register using addEventListener on mounted, and removeEventListener automatically on unmounted
       useEventListener(el, arg, () => {
-        const success = copyTextToClipboard(el.copyValue);
-        success
-          ? message("复制成功", { type: "success" })
-          : message("复制失败", { type: "error" });
+        if (copyTextToClipboard(el.copyValue)) {
+          message("复制成功", { type: "success" });
+        } else {
+          message("复制失败", { type: "error" });
+        }
       });
     } else {
       // throw new Error(

@@ -1,7 +1,7 @@
 /** 日期、时间选择器快捷选项，常搭配 [DatePicker](https://element-plus.org/zh-CN/component/date-picker.html) 和 [DateTimePicker](https://element-plus.org/zh-CN/component/datetime-picker.html) 的`shortcuts`属性使用 */
 export const getPickerShortcuts = (): Array<{
   text: string;
-  value: Date | Function;
+  value: Date | (() => Date[]);
 }> => {
   return [
     {
@@ -130,7 +130,7 @@ export const getPickerShortcuts = (): Array<{
 
 export const getDateTimePickerShortcuts = (): Array<{
   text: string;
-  value: Date | Function;
+  value: Date | (() => Date);
 }> => {
   return [
     {

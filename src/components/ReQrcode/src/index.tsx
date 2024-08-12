@@ -179,7 +179,11 @@ export default defineComponent({
       // 将 logo绘制到 canvas上
       return new Promise((resolve: any) => {
         image.onload = () => {
-          logoRadius ? drawLogoWithCanvas(image) : drawLogoWithImage(image);
+          if (logoRadius) {
+            drawLogoWithCanvas(image);
+          } else {
+            drawLogoWithImage(image);
+          }
           resolve(canvasRef.toDataURL());
         };
       });
@@ -247,8 +251,8 @@ export default defineComponent({
                 <iconify-icon-offline
                   class="cursor-pointer"
                   icon={RefreshRight}
-                  width="30"
-                  color="var(--el-color-primary)"
+                  width={30}
+                  color={"var(--el-color-primary)"}
                 />
                 <div>{props.disabledText}</div>
               </div>

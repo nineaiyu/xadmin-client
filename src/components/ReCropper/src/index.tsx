@@ -184,7 +184,9 @@ export default defineComponent({
     }
 
     function realTimeCroppered() {
-      props.realTimePreview && croppered();
+      if (props.realTimePreview) {
+        croppered();
+      }
     }
 
     function croppered() {
@@ -277,9 +279,11 @@ export default defineComponent({
       if (event === "scaleY") {
         scaleY = arg = scaleY === -1 ? 1 : -1;
       }
-      arg && isArray(arg)
-        ? cropper.value?.[event]?.(...arg)
-        : cropper.value?.[event]?.(arg);
+      if (arg && isArray(arg)) {
+        cropper.value?.[event]?.(...arg);
+      } else {
+        cropper.value?.[event]?.(arg);
+      }
     }
 
     function beforeUpload(file) {

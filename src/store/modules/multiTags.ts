@@ -52,11 +52,12 @@ export const useMultiTagsStore = defineStore({
       }
     },
     tagsCache(multiTags) {
-      this.getMultiTagsCache &&
+      if (this.getMultiTagsCache) {
         storageLocal().setItem(
           `${responsiveStorageNameSpace()}tags`,
           multiTags
         );
+      }
     },
     handleTags<T>(
       mode: string,
@@ -109,7 +110,9 @@ export const useMultiTagsStore = defineStore({
                 const index = this.multiTags.findIndex(
                   item => item?.path === tagPath
                 );
-                index !== -1 && this.multiTags.splice(index, 1);
+                if (index !== -1) {
+                  this.multiTags.splice(index, 1);
+                }
               }
             }
             this.multiTags.push(value);

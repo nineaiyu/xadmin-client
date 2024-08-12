@@ -44,9 +44,14 @@ class StorageProxy implements ProxyStorage {
       this.storage
         .getItem(k)
         .then((value: ExpiresData<T>) => {
-          value && (value.expires > new Date().getTime() || value.expires === 0)
-            ? resolve(value.data)
-            : resolve(null);
+          if (
+            value &&
+            (value.expires > new Date().getTime() || value.expires === 0)
+          ) {
+            resolve(value.data);
+          } else {
+            resolve(null);
+          }
         })
         .catch(err => {
           reject(err);

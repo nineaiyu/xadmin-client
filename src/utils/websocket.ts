@@ -139,7 +139,9 @@ class WS {
         }
         // this.send("ping");
         // 开启心跳
-        this.heartbeat && this.startHeartbeat();
+        if (this.heartbeat) {
+          this.startHeartbeat();
+        }
       };
     }
   }
@@ -195,9 +197,15 @@ class WS {
    */
   close(): void {
     this.socketOpen = false;
-    this.socket && this.socket.close();
-    this.delay && clearTimeout(this.delay);
-    this.timer && clearInterval(this.timer);
+    if (this.socket) {
+      this.socket.close();
+    }
+    if (this.delay) {
+      clearTimeout(this.delay);
+    }
+    if (this.timer) {
+      clearInterval(this.timer);
+    }
     this.socket = null;
   }
 
@@ -211,7 +219,7 @@ class WS {
         try {
           const res = JSON.parse(data.data);
           callback(res);
-        } catch (err) {
+        } catch {
           callback(data);
         }
       };

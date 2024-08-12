@@ -28,7 +28,7 @@ class UploadFileApi {
     );
   };
   config = (params?: object, config?: PureHttpRequestConfig) => {
-    return http.get<DetailResult, {}>(this.baseApi, params, config);
+    return http.get<DetailResult, any>(this.baseApi, params, config);
   };
 }
 

@@ -14,28 +14,28 @@ import { resourcesIDCacheApi } from "@/api/common";
 import importDataForm from "@/components/RePlusCRUD/src/components/importData.vue";
 
 interface callBackArgs {
-  formData: Object | any;
+  formData: object | any;
   formRef: FormInstance;
   formOptions: formDialogOptions;
-  closeLoading: Function;
+  closeLoading: () => void;
   success: (close?: boolean) => void;
   failed: (detail: string, close?: boolean) => void;
-  done: Function;
+  done: () => void;
 }
 
 interface formDialogOptions {
-  t: Function;
+  t: (arg0: string, arg1?: object) => string;
   isAdd?: boolean;
-  row?: Function | Object; //  外部处理方法
+  row?: ((formOptions: formDialogOptions) => object) | object; //  外部处理方法
   title: string; // 弹窗的的title
   formValue?: Ref; // 表单值
-  rawRow: Object; //  默认数据或者更新的书籍
+  rawRow: object; //  默认数据或者更新的书籍
   minWidth?: string; // 弹窗的的最小宽度
-  columns?: Function | Object; // 表单字段
+  columns?: ((formOptions: formDialogOptions) => object) | object; // 表单字段
   rawColumns?: PlusColumn[] | Array<any>; // 表单字段
   form?: Component | any; // 挂载的form组件，默认是addOrEdit组件
-  props?: Function | Object; //  内容区组件的 props，可通过 defineProps 接收
-  formProps?: Function | Object; //  plus form 的props
+  props?: ((formOptions: formDialogOptions) => object) | object; //  内容区组件的 props，可通过 defineProps 接收
+  formProps?: ((formOptions: formDialogOptions) => object) | object; //  plus form 的props
   rawFormProps?: PlusFormProps; //  plus form 的props
   dialogOptions?: DialogOptions; // dialog options
   beforeSubmit?: ({
@@ -164,7 +164,9 @@ const openFormDialog = (formOptions: formDialogOptions) => {
           type: "success"
         });
         closeLoading();
-        close && done(); // 关闭弹框
+        if (close) {
+          done();
+        }
       };
 
       const failed = (detail: string, close = false) => {
@@ -172,7 +174,9 @@ const openFormDialog = (formOptions: formDialogOptions) => {
           type: "error"
         });
         closeLoading();
-        close && done(); // 关闭弹框
+        if (close) {
+          done();
+        }
       };
 
       await FormRef?.validate(valid => {
@@ -205,14 +209,15 @@ const openFormDialog = (formOptions: formDialogOptions) => {
       if (data?.values) {
         formOptions.formValue.value = data?.values?.values;
       }
-      formOptions?.dialogOptions?.onChange &&
+      if (formOptions?.dialogOptions?.onChange) {
         formOptions?.dialogOptions?.onChange(data);
+      }
     }
   });
 };
 
 interface operationOptions {
-  t: Function;
+  t: (arg0: string, arg1?: object) => string;
   apiReq: Promise<any>;
   showSuccessMsg?: boolean;
   showFailedMsg?: boolean;
@@ -237,26 +242,36 @@ const handleOperation = (options: operationOptions) => {
   apiReq
     ?.then((res: DetailResult) => {
       if (res.code === 1000) {
-        showSuccessMsg &&
+        if (showSuccessMsg) {
           message(res.detail ?? t("results.success"), { type: "success" });
-        success && success(res);
+        }
+        if (success) {
+          success(res);
+        }
       } else {
-        showFailedMsg &&
+        if (showFailedMsg) {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-        failed && failed(res);
+        }
+        if (failed) {
+          failed(res);
+        }
       }
     })
     .catch(err => {
-      exception && exception(err);
+      if (exception) {
+        exception(err);
+      }
     })
     .finally(() => {
-      requestEnd && requestEnd(options);
+      if (requestEnd) {
+        requestEnd(options);
+      }
     });
 };
 
 interface changeOptions {
-  t: Function;
-  updateApi: Function; // 更新方法
+  t: (arg0: string, arg1?: object) => string;
+  updateApi: (pk: string | number, data: object) => Promise<any>; // 更新方法
   switchLoadMap: Ref;
   index: number; // 更新行索引
   row: {
@@ -319,23 +334,25 @@ const onSwitchChange = (changeOptions: changeOptions) => {
               loading: false
             }
           );
-          requestEnd && requestEnd(options);
+          if (requestEnd) {
+            requestEnd(options);
+          }
         },
         success,
         failed,
         exception() {
-          row[field] === false ? (row[field] = true) : (row[field] = false);
+          row[field] = row[field] === false;
         }
       });
     })
     .catch(() => {
-      row[field] === false ? (row[field] = true) : (row[field] = false);
+      row[field] = row[field] === false;
     });
 };
 
 interface switchOptions {
-  t: Function;
-  updateApi: Function; // 更新方法
+  t: (arg0: string, arg1?: object) => string;
+  updateApi: (pk: string | number, data: object) => Promise<any>; // 更新方法
   switchLoadMap: Ref;
   switchStyle: Ref;
   field: string; // 更新的字段
@@ -410,7 +427,7 @@ const renderSwitch = (switchOptions: switchOptions) => {
 };
 
 interface booleanTagOptions {
-  t: Function;
+  t: (arg0: string, arg1?: object) => string;
   tagStyle: Ref;
   field: string; // 字段
   actionMap?: object; // msg映射 {true:'发布',false:'未发布'}
@@ -436,7 +453,7 @@ const renderBooleanTag = (booleanTagOptions: booleanTagOptions) => {
 };
 
 interface exportDataOptions {
-  t: Function;
+  t: (arg0: string, arg1?: object) => string;
   api: BaseApi;
   pks: Array<string | number>;
   allowTypes?: Array<string>;
@@ -495,7 +512,7 @@ const handleExportData = (options: exportDataOptions) => {
 };
 
 interface importDataOptions {
-  t: Function;
+  t: (arg0: string, arg1?: object) => string;
   api: BaseApi;
   success?: (res?: DetailResult) => void;
 }
@@ -518,7 +535,9 @@ const handleImportData = (options: importDataOptions) => {
         .import(formData.action, formData.upload[0].raw)
         .then(res => {
           if (res.code === 1000) {
-            options?.success && options?.success(res);
+            if (options?.success) {
+              options?.success(res);
+            }
             success();
           } else {
             failed(res.detail, false);

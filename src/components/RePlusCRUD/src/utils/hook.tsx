@@ -397,18 +397,18 @@ export function usePlusCRUDPage(
         // pure-table ****** end
       }
     });
-    props.selection &&
+    if (props.selection) {
       listColumns.value.unshift({
         _column: { key: "selection" },
         type: "selection",
         fixed: "left",
         reserveSelection: true
       });
+    }
     const hasOperations = uniqueArrayObj(operationButtons.value, "code").filter(
       (item: OperationButtonsRow) => item?.show
     );
-    props.operation &&
-      hasOperations.length > 0 &&
+    if (props.operation && hasOperations.length > 0) {
       listColumns.value.push({
         _column: { key: "operation" },
         label: formatPublicLabels(t, te, "operation", localeName),
@@ -416,6 +416,7 @@ export function usePlusCRUDPage(
         width: operationButtonsProps?.width ?? 200,
         slot: "operation"
       });
+    }
     listColumns.value =
       (listColumnsFormat && listColumnsFormat(listColumns.value)) ||
       listColumns.value;
@@ -426,7 +427,7 @@ export function usePlusCRUDPage(
       (searchColumnsFormat && searchColumnsFormat(searchColumns.value)) ||
       searchColumns.value;
 
-    baseColumnsFormat &&
+    if (baseColumnsFormat) {
       baseColumnsFormat({
         listColumns,
         detailColumns,
@@ -436,6 +437,7 @@ export function usePlusCRUDPage(
         searchDefaultValue,
         addOrEditDefaultValue
       });
+    }
   };
 
   // 数据获取

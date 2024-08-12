@@ -11,13 +11,17 @@ export function useTranslationLang(ref?: Ref) {
   function translationCh() {
     $storage.locale = { locale: "zh" };
     locale.value = "zh";
-    ref && handleResize(ref.value);
+    if (ref) {
+      handleResize(ref.value);
+    }
   }
 
   function translationEn() {
     $storage.locale = { locale: "en" };
     locale.value = "en";
-    ref && handleResize(ref.value);
+    if (ref) {
+      handleResize(ref.value);
+    }
   }
 
   watch(
