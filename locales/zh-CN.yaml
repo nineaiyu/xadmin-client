@@ -588,8 +588,9 @@ settingPassword:
   specialChar: 特殊字符
 
 settingLogin:
-  title: 登录安全配置
+  login: 登录安全配置
   limit: 登录限制配置
+  title: 安全拦截IP
 
 settingRegister:
   title: 注册安全配置

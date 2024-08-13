@@ -178,7 +178,6 @@ export const formatPublicLabels = (
   if (
     [
       "pk",
-      "id",
       "rank",
       "ordering",
       "selection",

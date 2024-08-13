@@ -5,7 +5,7 @@ import { addDialog } from "@/components/ReDialog";
 import editForm from "../edit.vue";
 import type { FormItemProps } from "./types";
 import { handleTree } from "@/utils/tree";
-import { cloneDeep, deviceDetection, getKeyList } from "@pureadmin/utils";
+import { cloneDeep, deviceDetection } from "@pureadmin/utils";
 import { getMenuFromPk, getMenuOrderPk } from "@/utils";
 import { useI18n } from "vue-i18n";
 import { FieldChoices, MenuChoices } from "@/views/system/constants";
@@ -72,7 +72,7 @@ export function useMenu() {
   const choicesDict = ref([]);
   const menuUrlList = ref([]);
   const modelList = ref([]);
-  const menuData = reactive<FormItemProps>(cloneDeep(defaultData));
+  const menuData = ref<FormItemProps>(cloneDeep(defaultData));
   const loading = ref(true);
 
   const getMenuApiList = () => {
@@ -188,7 +188,7 @@ export function useMenu() {
           method: row?.method ?? "",
           rank: row?.rank ?? 0,
           component: row?.component ?? "",
-          model: getKeyList(row?.model ?? [], "pk") ?? [],
+          model: row?.model ?? [],
           is_active: row?.is_active ?? true,
           meta: {
             title: row?.meta.title ?? "",

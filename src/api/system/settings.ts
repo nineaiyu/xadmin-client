@@ -1,4 +1,4 @@
-import { ViewBaseApi } from "@/api/base";
+import { BaseApi, ViewBaseApi } from "@/api/base";
 
 // 基本配置
 export const settingsBasicApi = new ViewBaseApi("/api/settings/basic");
@@ -42,3 +42,6 @@ export const settingsCaptchaApi = new ViewBaseApi("/api/settings/captcha");
 // 绑定邮箱手机设置
 export const settingsBindEmailApi = new ViewBaseApi("/api/settings/bind/email");
 export const settingsBindPhoneApi = new ViewBaseApi("/api/settings/bind/phone");
+
+// ip黑名单
+export const settingsBlockIpApi = new BaseApi("/api/settings/ip/block");

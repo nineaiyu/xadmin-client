@@ -505,6 +505,9 @@ export function usePlusCRUDPage(
       api.fields,
       () => {
         formatColumnsRender();
+        if (!api.fields && immediate) {
+          handleGetData();
+        }
       },
       () => {
         defaultValue.value = {

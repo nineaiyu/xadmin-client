@@ -14,6 +14,7 @@ import ButtonOperation, {
 
 const props = withDefaults(defineProps<RePlusPageProps>(), {
   api: undefined,
+  title: "",
   isTree: false,
   tableBar: true,
   localeName: "",
@@ -100,7 +101,10 @@ defineExpose({
 
 <template>
   <div v-if="auth?.list" class="main">
-    <div class="bg-bg_color w-[99/100] pl-8 pr-8 pt-[12px] search-form">
+    <div
+      v-if="api?.fields"
+      class="bg-bg_color w-[99/100] pl-8 pr-8 pt-[12px] search-form"
+    >
       <PlusSearch
         v-model="searchFields"
         :col-props="{
@@ -145,7 +149,7 @@ defineExpose({
         <template #title>
           <el-space>
             <p class="font-bold truncate">
-              {{ pageTitle }}
+              {{ title ?? pageTitle }}
             </p>
             <div
               v-if="selectedNum > 0"
@@ -154,7 +158,7 @@ defineExpose({
             >
               <span
                 class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
-                style="font-size: var(--el-font-size-base)"
+                style="font-size: 14px"
               >
                 {{ t("buttons.selected", { count: selectedNum }) }}
               </span>

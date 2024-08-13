@@ -21,5 +21,6 @@ const { t } = useI18n();
     >
       <setting-item v-bind="item" />
     </el-tab-pane>
+    <slot />
   </el-tabs>
 </template>

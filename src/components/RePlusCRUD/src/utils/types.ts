@@ -26,6 +26,7 @@ interface ApiAuthProps {
 
 interface RePlusPageProps {
   api: BaseApi;
+  title?: string;
   auth: ApiAuthProps | any;
   selection?: boolean;
   immediate?: boolean;

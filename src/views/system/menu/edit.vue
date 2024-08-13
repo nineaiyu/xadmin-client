@@ -428,7 +428,7 @@ defineExpose({ getRef });
             filterable
           >
             <el-option
-              v-for="item in props.menuUrlList"
+              v-for="item in menuUrlList"
               :key="item.name"
               :label="`${item.name}----${item.url}`"
               :value="item.url"
@@ -448,14 +448,13 @@ defineExpose({ getRef });
             clearable
             filterable
             multiple
-            value-key="pk"
           >
             <el-option
-              v-for="item in props.modelList"
+              v-for="item in modelList"
               :key="item.pk"
               :disabled="item.disabled || item.name === '*'"
               :label="`${item.label}(${item.name})`"
-              :value="{ pk: item.pk, name: item.name }"
+              :value="item.pk"
             />
           </el-select>
         </el-form-item>
@@ -466,7 +465,7 @@ defineExpose({ getRef });
             clearable
           >
             <el-option
-              v-for="item in props.methodChoices"
+              v-for="item in methodChoices"
               :key="item.value"
               :disabled="item.disabled"
               :label="item.label"

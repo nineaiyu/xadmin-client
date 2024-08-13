@@ -588,8 +588,9 @@ settingPassword:
   specialChar: Special Char
 
 settingLogin:
-  title: Login Safe
+  login: Login Safe
   limit: Login Limit
+  title: Block Ip
 
 settingRegister:
   title: Register Safe

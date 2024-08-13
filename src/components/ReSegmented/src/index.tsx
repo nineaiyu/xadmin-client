@@ -79,8 +79,6 @@ export default defineComponent({
       event.preventDefault();
       if (isNumber(props.modelValue)) {
         emit("update:modelValue", index);
-      } else {
-        curIndex.value = index;
       }
       segmentedItembg.value = "";
       emit("change", { index, option });
