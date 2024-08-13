@@ -47,7 +47,7 @@ const { t } = useI18n();
 
 <template>
   <setting :model-value="settingData">
-    <el-tab-pane :label="t('settingLogin.title')" :lazy="true">
+    <el-tab-pane v-if="auth.list" :label="t('settingLogin.title')" :lazy="true">
       <RePlusCRUD
         ref="tableRef"
         :title="t('settingLogin.title')"
