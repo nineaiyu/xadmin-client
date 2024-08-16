@@ -294,7 +294,9 @@ export function useMenu() {
         })
         .then(res => {
           if (res.code === 1000) {
-            modelList.value = res.data.results;
+            modelList.value = res.data.results.map(item => {
+              return { pk: item.pk, name: item.name, label: item.label };
+            });
           }
         });
     }

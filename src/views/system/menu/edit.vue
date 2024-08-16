@@ -448,13 +448,14 @@ defineExpose({ getRef });
             clearable
             filterable
             multiple
+            value-key="pk"
           >
             <el-option
               v-for="item in modelList"
               :key="item.pk"
               :disabled="item.disabled || item.name === '*'"
               :label="`${item.label}(${item.name})`"
-              :value="item.pk"
+              :value="item"
             />
           </el-select>
         </el-form-item>
