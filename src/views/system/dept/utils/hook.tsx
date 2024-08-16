@@ -2,7 +2,7 @@ import { deptApi } from "@/api/system/dept";
 import { reactive, ref, type Ref, shallowRef } from "vue";
 import { cloneDeep } from "@pureadmin/utils";
 import { useRouter } from "vue-router";
-import { hasAuth, hasGlobalAuth } from "@/router/utils";
+import { hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { customRolePermissionOptions } from "@/views/system/hooks";
 import { handleTree } from "@/utils/tree";
@@ -96,7 +96,7 @@ export function useDept(tableRef: Ref) {
   const router = useRouter();
 
   function onGoDetail(row: any) {
-    if (hasGlobalAuth("list:systemUser") && row.user_count && row.pk) {
+    if (hasAuth("list:systemUser") && row.user_count && row.pk) {
       router.push({
         name: "SystemUser",
         query: { dept: row.pk }

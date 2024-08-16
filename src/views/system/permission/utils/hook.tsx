@@ -1,6 +1,6 @@
 import { dataPermissionApi } from "@/api/system/permission";
 import { h, onMounted, reactive, ref, shallowRef } from "vue";
-import { hasAuth, hasGlobalAuth } from "@/router/utils";
+import { hasAuth } from "@/router/utils";
 import { FieldChoices } from "@/views/system/constants";
 import { handleTree } from "@/utils/tree";
 import { modelLabelFieldApi } from "@/api/system/field";
@@ -28,7 +28,7 @@ export function useDataPermission() {
   });
 
   onMounted(() => {
-    if (hasGlobalAuth("list:systemModelField")) {
+    if (hasAuth("list:systemModelField")) {
       modelLabelFieldApi
         .list({
           page: 1,

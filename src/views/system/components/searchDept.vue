@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { h, reactive } from "vue";
-import { hasGlobalAuth } from "@/router/utils";
+import { hasAuth } from "@/router/utils";
 import { searchDeptApi } from "@/api/system/search";
 import RePlusSearch from "@/components/RePlusSearch";
 import { ElImage } from "element-plus";
@@ -32,7 +32,7 @@ const baseColumnsFormat = ({ listColumns }) => {
 
 <template>
   <RePlusSearch
-    v-if="hasGlobalAuth('list:systemSearchDept')"
+    v-if="hasAuth('list:systemSearchDept')"
     v-model="selectValue"
     locale-name="systemDept"
     :baseColumnsFormat="baseColumnsFormat"

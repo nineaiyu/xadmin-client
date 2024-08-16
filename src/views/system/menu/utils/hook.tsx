@@ -9,7 +9,7 @@ import { cloneDeep, deviceDetection } from "@pureadmin/utils";
 import { getMenuFromPk, getMenuOrderPk } from "@/utils";
 import { useI18n } from "vue-i18n";
 import { FieldChoices, MenuChoices } from "@/views/system/constants";
-import { hasAuth, hasGlobalAuth } from "@/router/utils";
+import { hasAuth } from "@/router/utils";
 import { modelLabelFieldApi } from "@/api/system/field";
 import { handleExportData, handleImportData } from "@/components/RePlusCRUD";
 
@@ -284,7 +284,7 @@ export function useMenu() {
   onMounted(() => {
     getMenuApiList();
     getMenuData();
-    if (hasGlobalAuth("list:systemModelField")) {
+    if (hasAuth("list:systemModelField")) {
       modelLabelFieldApi
         .list({
           page: 1,

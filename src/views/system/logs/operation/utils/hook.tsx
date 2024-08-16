@@ -1,7 +1,7 @@
 import { operationLogApi } from "@/api/system/logs/operation";
 import { useRouter } from "vue-router";
 import { reactive, shallowRef } from "vue";
-import { hasAuth, hasGlobalAuth } from "@/router/utils";
+import { hasAuth } from "@/router/utils";
 import type { CRUDColumn, OperationProps } from "@/components/RePlusCRUD";
 import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
@@ -75,7 +75,7 @@ export function useOperationLog() {
   const router = useRouter();
 
   function onGoDetail(row: any) {
-    if (hasGlobalAuth("list:systemUser") && row?.creator && row?.creator?.pk) {
+    if (hasAuth("list:systemUser") && row?.creator && row?.creator?.pk) {
       router.push({
         name: "SystemUser",
         query: { pk: row.creator.pk }

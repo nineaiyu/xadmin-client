@@ -1,7 +1,7 @@
 import { useI18n } from "vue-i18n";
 import { loginLogApi } from "@/api/system/logs/login";
 import { useRouter } from "vue-router";
-import { hasAuth, hasGlobalAuth } from "@/router/utils";
+import { hasAuth } from "@/router/utils";
 import { reactive, shallowRef } from "vue";
 import { usePublicHooks } from "@/views/system/hooks";
 import {
@@ -50,7 +50,7 @@ export function useLoginLog() {
   };
 
   function onGoDetail(row: any) {
-    if (hasGlobalAuth("list:systemUser") && row?.creator && row?.creator?.pk) {
+    if (hasAuth("list:systemUser") && row?.creator && row?.creator?.pk) {
       router.push({
         name: "SystemUser",
         query: { pk: row.creator.pk }

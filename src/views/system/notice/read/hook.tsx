@@ -3,7 +3,7 @@ import { noticeReadApi } from "@/api/system/notice";
 import { deviceDetection } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog";
 import { useRouter } from "vue-router";
-import { hasAuth, hasGlobalAuth } from "@/router/utils";
+import { hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import type { CRUDColumn, OperationProps } from "@/components/RePlusCRUD";
 import { renderSwitch, usePublicHooks } from "@/components/RePlusCRUD";
@@ -97,11 +97,7 @@ export function useNoticeRead(tableRef: Ref) {
   const router = useRouter();
 
   function onGoUserDetail(row: any) {
-    if (
-      hasGlobalAuth("list:systemUser") &&
-      row.owner_info &&
-      row.owner_info?.pk
-    ) {
+    if (hasAuth("list:systemUser") && row.owner_info && row.owner_info?.pk) {
       router.push({
         name: "SystemUser",
         query: { pk: row.owner_info.pk }
@@ -111,7 +107,7 @@ export function useNoticeRead(tableRef: Ref) {
 
   function onGoNoticeDetail(row: any) {
     if (
-      hasGlobalAuth("list:systemNotice") &&
+      hasAuth("list:systemNotice") &&
       row?.notice_info &&
       row.notice_info?.pk
     ) {

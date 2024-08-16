@@ -4,7 +4,7 @@ import { h, onMounted, reactive, ref, shallowRef } from "vue";
 import { roleApi } from "@/api/system/role";
 import { handleTree } from "@/utils/tree";
 import { menuApi } from "@/api/system/menu";
-import { hasAuth, hasGlobalAuth } from "@/router/utils";
+import { hasAuth } from "@/router/utils";
 import { FieldChoices } from "@/views/system/constants";
 import { cloneDeep, getKeyList } from "@pureadmin/utils";
 import { modelLabelFieldApi } from "@/api/system/field";
@@ -70,7 +70,7 @@ export function useRole() {
     menuApi.list({ page: 1, size: 1000 }).then(res => {
       setTimeout(() => {
         if (res.code === 1000) {
-          if (hasGlobalAuth("list:systemModelField")) {
+          if (hasAuth("list:systemModelField")) {
             modelLabelFieldApi
               .list({
                 page: 1,
@@ -93,7 +93,7 @@ export function useRole() {
   };
 
   onMounted(() => {
-    if (hasGlobalAuth("list:systemMenu")) {
+    if (hasAuth("list:systemMenu")) {
       getMenuData();
     }
   });

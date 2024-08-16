@@ -12,8 +12,6 @@ import {
   cloneDeep,
   intersection,
   isAllEmpty,
-  isIncludeAllChildren,
-  isString,
   storageLocal
 } from "@pureadmin/utils";
 import { getConfig } from "@/config";
@@ -152,7 +150,8 @@ function addPathMatch() {
 }
 
 /** 处理动态路由（后端返回的路由） */
-function handleAsyncRoutes(routeList) {
+function handleAsyncRoutes(routeList, authList) {
+  usePermissionStoreHook().handleWholeAuths(authList);
   if (routeList.length === 0) {
     usePermissionStoreHook().handleWholeMenus(routeList);
   } else {
@@ -203,25 +202,28 @@ function initRouter() {
   if (getConfig()?.CachingAsyncRoutes) {
     // 开启动态路由缓存本地localStorage
     const key = "async-routes";
+    const authKey = "async-auths";
     const asyncRouteList = storageLocal().getItem(key) as any;
+    const asyncAuthList = storageLocal().getItem(authKey) as any;
     if (asyncRouteList && asyncRouteList?.length > 0) {
       return new Promise(resolve => {
-        handleAsyncRoutes(asyncRouteList);
+        handleAsyncRoutes(asyncRouteList, asyncAuthList);
         resolve(router);
       });
     } else {
       return new Promise(resolve => {
-        getAsyncRoutes().then(({ data }) => {
-          handleAsyncRoutes(cloneDeep(data));
+        getAsyncRoutes().then(({ data, auths }) => {
+          handleAsyncRoutes(cloneDeep(data), auths);
           storageLocal().setItem(key, data);
+          storageLocal().setItem(authKey, auths);
           resolve(router);
         });
       });
     }
   } else {
     return new Promise(resolve => {
-      getAsyncRoutes().then(({ data }) => {
-        handleAsyncRoutes(cloneDeep(data));
+      getAsyncRoutes().then(({ data, auths }) => {
+        handleAsyncRoutes(cloneDeep(data), auths);
         resolve(router);
       });
     });
@@ -365,26 +367,24 @@ function getAuths(): Array<string> {
 }
 
 /** 是否有按钮级别的权限 */
-function hasAuth(value: string | Array<string>): boolean {
-  if (!value) return false;
-  /** 从当前路由的`meta`字段里获取按钮级别的所有自定义`code`值 */
-  const metaAuths = getAuths();
-  if (!metaAuths) return false;
-  const isAuths = isString(value)
-    ? metaAuths.includes(value)
-    : isIncludeAllChildren(value, metaAuths);
-  return isAuths ? true : false;
-}
+// function hasAuth(value: string | Array<string>): boolean {
+//   if (!value) return false;
+//   /** 从当前路由的`meta`字段里获取按钮级别的所有自定义`code`值 */
+//   const metaAuths = getAuths();
+//   if (!metaAuths) return false;
+//   const isAuths = isString(value)
+//     ? metaAuths.includes(value)
+//     : isIncludeAllChildren(value, metaAuths);
+//   return isAuths ? true : false;
+// }
 
 /** 是否有按钮级别的权限 */
-function hasGlobalAuth(value: string | Array<string>): boolean {
+function hasAuth(value: string): boolean {
   if (!value) return false;
   /** 从当前路由的`meta`字段里获取按钮级别的所有自定义`code`值 */
-  const metaAuths = usePermissionStoreHook().metaAuths;
-  if (!metaAuths) return false;
-  return isString(value)
-    ? metaAuths.includes(value)
-    : isIncludeAllChildren(value, metaAuths);
+  const permissionAuths = usePermissionStoreHook().permissionAuths;
+  if (!permissionAuths) return false;
+  return permissionAuths[value];
 }
 
 /** 获取所有菜单中的第一个菜单（顶级菜单）*/
@@ -420,7 +420,6 @@ export {
   getTopMenu,
   addPathMatch,
   isOneOfArray,
-  hasGlobalAuth,
   getHistoryMode,
   addAsyncRoutes,
   getParentPaths,

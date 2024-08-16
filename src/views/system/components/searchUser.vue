@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { h, reactive } from "vue";
-import { hasGlobalAuth } from "@/router/utils";
+import { hasAuth } from "@/router/utils";
 import { searchUserApi } from "@/api/system/search";
 import RePlusSearch from "@/components/RePlusSearch";
 import { cloneDeep } from "@pureadmin/utils";
@@ -42,7 +42,7 @@ const baseColumnsFormat = ({ listColumns }) => {
 
 <template>
   <RePlusSearch
-    v-if="hasGlobalAuth('list:systemSearchUser')"
+    v-if="hasAuth('list:systemSearchUser')"
     v-model="selectValue"
     locale-name="systemUser"
     :baseColumnsFormat="baseColumnsFormat"

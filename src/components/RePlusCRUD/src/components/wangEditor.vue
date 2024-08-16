@@ -7,7 +7,7 @@ import { message } from "@/utils/message";
 import { formatBytes, getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { IEditorConfig } from "@wangeditor/editor";
-import { hasAuth, hasGlobalAuth } from "@/router/utils";
+import { hasAuth } from "@/router/utils";
 
 const messages = defineModel<string | object | any>();
 const editorRef = shallowRef();
@@ -62,10 +62,7 @@ const editorConfig: Partial<IEditorConfig> = {
     attachment: { menuKeys: [] }
   }
 };
-if (
-  hasGlobalAuth("config:systemUploadFile") &&
-  hasGlobalAuth("upload:systemUploadFile")
-) {
+if (hasAuth("config:systemUploadFile") && hasAuth("upload:systemUploadFile")) {
   toolbarConfig.insertKeys.keys = ["uploadAttachment"]; // “上传附件”菜单
   editorConfig.hoverbarKeys.attachment = {
     menuKeys: ["downloadAttachment"] // “下载附件”菜单

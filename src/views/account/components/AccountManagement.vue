@@ -2,7 +2,7 @@
 import { computed } from "vue";
 import { deviceDetection } from "@pureadmin/utils";
 import { useAccountManage } from "../utils/hook";
-import { hasGlobalAuth } from "@/router/utils";
+import { hasAuth } from "@/router/utils";
 
 defineOptions({
   name: "AccountManagement"
@@ -14,7 +14,7 @@ const list = computed(() => [
   {
     name: "password",
     title: t("account.password"),
-    button: hasGlobalAuth("reset:UserInfo") && t("buttons.update")
+    button: hasAuth("reset:UserInfo") && t("buttons.update")
   },
   {
     name: "phone",
@@ -22,7 +22,7 @@ const list = computed(() => [
     illustrate: userinfoStore.email
       ? `${t("account.bind")}：${userinfoStore.phone}`
       : t("account.unbound"),
-    button: hasGlobalAuth("bind:UserInfo") && t("buttons.update")
+    button: hasAuth("bind:UserInfo") && t("buttons.update")
   },
   {
     name: "email",
@@ -30,7 +30,7 @@ const list = computed(() => [
     illustrate: userinfoStore.email
       ? `${t("account.bind")}：${userinfoStore.email}`
       : t("account.unbound"),
-    button: hasGlobalAuth("bind:UserInfo") && t("buttons.update")
+    button: hasAuth("bind:UserInfo") && t("buttons.update")
   }
 ]);
 

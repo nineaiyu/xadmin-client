@@ -1,6 +1,6 @@
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
-import { hasAuth, hasGlobalAuth } from "@/router/utils";
+import { hasAuth } from "@/router/utils";
 import { reactive, type Ref, shallowRef } from "vue";
 import { userConfigApi } from "@/api/system/config/user";
 
@@ -66,7 +66,7 @@ export function useUserConfig(tableRef: Ref) {
   const router = useRouter();
 
   const onGoUserDetail = (row: any) => {
-    if (hasGlobalAuth("list:systemUser") && row.owner && row.owner?.pk) {
+    if (hasAuth("list:systemUser") && row.owner && row.owner?.pk) {
       router.push({
         name: "SystemUser",
         query: { pk: row.owner.pk }

@@ -3,7 +3,7 @@ import { noticeApi } from "@/api/system/notice";
 import { useRouter } from "vue-router";
 import { deviceDetection } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog";
-import { hasAuth, hasGlobalAuth } from "@/router/utils";
+import { hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { NoticeChoices } from "@/views/system/constants";
 import type {
@@ -119,7 +119,7 @@ export function useNotice(tableRef: Ref) {
           column["hideInForm"] = computed(() => {
             return !(
               formValue.value?.notice_type?.value === NoticeChoices.USER &&
-              hasGlobalAuth("list:systemSearchUser")
+              hasAuth("list:systemSearchUser")
             );
           });
           return column;
@@ -128,7 +128,7 @@ export function useNotice(tableRef: Ref) {
           column["hideInForm"] = computed(() => {
             return !(
               formValue.value?.notice_type?.value === NoticeChoices.DEPT &&
-              hasGlobalAuth("list:systemSearchDept")
+              hasAuth("list:systemSearchDept")
             );
           });
           return column;
@@ -137,7 +137,7 @@ export function useNotice(tableRef: Ref) {
           column["hideInForm"] = computed(() => {
             return !(
               formValue.value?.notice_type?.value === NoticeChoices.ROLE &&
-              hasGlobalAuth("list:systemSearchRole")
+              hasAuth("list:systemSearchRole")
             );
           });
           return column;
@@ -177,7 +177,7 @@ export function useNotice(tableRef: Ref) {
   const router = useRouter();
 
   function onGoNoticeReadDetail(row: any) {
-    if (hasGlobalAuth("list:systemNoticeRead") && row.pk) {
+    if (hasAuth("list:systemNoticeRead") && row.pk) {
       router.push({
         name: "SystemNoticeRead",
         query: { notice_id: row.pk }

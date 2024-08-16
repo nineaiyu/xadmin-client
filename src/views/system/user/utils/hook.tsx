@@ -15,7 +15,7 @@ import {
   isPhone
 } from "@pureadmin/utils";
 import { useRouter } from "vue-router";
-import { hasAuth, hasGlobalAuth } from "@/router/utils";
+import { hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { handleTree } from "@/utils/tree";
 import { deptApi } from "@/api/system/dept";
@@ -245,14 +245,14 @@ export function useUser(tableRef: Ref) {
       }
     });
     if (auth.empower) {
-      if (hasGlobalAuth("list:systemRole")) {
+      if (hasAuth("list:systemRole")) {
         roleApi.list({ page: 1, size: 1000 }).then(res => {
           if (res.code === 1000 && res.data) {
             rolesOptions.value = res.data.results;
           }
         });
       }
-      if (hasGlobalAuth("list:systemDataPermission")) {
+      if (hasAuth("list:systemDataPermission")) {
         dataPermissionApi
           .list({
             page: 1,
@@ -266,7 +266,7 @@ export function useUser(tableRef: Ref) {
       }
     }
     // 部门列表
-    if (hasGlobalAuth("list:systemDept")) {
+    if (hasAuth("list:systemDept")) {
       deptApi.list({ page: 1, size: 1000 }).then(res => {
         if (res.code === 1000 && res.data) {
           treeData.value = handleTree(res.data.results);
@@ -496,9 +496,7 @@ export function useUser(tableRef: Ref) {
           goNotice();
         },
         show: () => {
-          return Boolean(
-            hasGlobalAuth("create:systemNotice") && selectedNum.value
-          );
+          return Boolean(hasAuth("create:systemNotice") && selectedNum.value);
         }
       }
     ]

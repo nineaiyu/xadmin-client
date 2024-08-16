@@ -5,7 +5,7 @@ import { formRules } from "./utils/rule";
 import { FormProps } from "./utils/types";
 import { message } from "@/utils/message";
 import { FieldKeyChoices } from "@/views/system/constants";
-import { hasGlobalAuth } from "@/router/utils";
+import { hasAuth } from "@/router/utils";
 import { watchDeep } from "@vueuse/core";
 import ReCol from "@/components/ReCol";
 import { modelLabelFieldApi } from "@/api/system/field";
@@ -47,7 +47,7 @@ const getMatchData = (value: any) => {
     newFormInline.value.value = "*";
     return;
   }
-  if (hasGlobalAuth("list:systemModelFieldLookups")) {
+  if (hasAuth("list:systemModelFieldLookups")) {
     modelLabelFieldApi
       .lookups({ table: value[0], field: value[1] })
       .then(res => {
@@ -224,7 +224,7 @@ defineExpose({ getRef });
         <el-form-item
           v-if="
             newFormInline.type === FieldKeyChoices.TABLE_USER &&
-            hasGlobalAuth('list:systemSearchUser')
+            hasAuth('list:systemSearchUser')
           "
           :label="t('systemPermission.notice_user')"
           prop="notice_user"
@@ -235,7 +235,7 @@ defineExpose({ getRef });
         <el-form-item
           v-if="
             newFormInline.type === FieldKeyChoices.TABLE_DEPT &&
-            hasGlobalAuth('list:systemSearchDept')
+            hasAuth('list:systemSearchDept')
           "
           :label="t('systemPermission.notice_dept')"
           prop="notice_dept"
@@ -245,7 +245,7 @@ defineExpose({ getRef });
         <el-form-item
           v-if="
             newFormInline.type === FieldKeyChoices.TABLE_ROLE &&
-            hasGlobalAuth('list:systemSearchRole')
+            hasAuth('list:systemSearchRole')
           "
           :label="t('systemPermission.notice_role')"
           prop="notice_role"
@@ -256,7 +256,7 @@ defineExpose({ getRef });
         <el-form-item
           v-if="
             newFormInline.type === FieldKeyChoices.TABLE_MENU &&
-            hasGlobalAuth('list:systemSearchMenu')
+            hasAuth('list:systemSearchMenu')
           "
           :label="t('systemPermission.notice_menu')"
           prop="notice_menu"

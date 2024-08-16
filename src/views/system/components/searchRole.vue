@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { reactive } from "vue";
-import { hasGlobalAuth } from "@/router/utils";
+import { hasAuth } from "@/router/utils";
 import { searchRoleApi } from "@/api/system/search";
 import RePlusSearch from "@/components/RePlusSearch";
 
@@ -17,7 +17,7 @@ const api = reactive(searchRoleApi);
 
 <template>
   <RePlusSearch
-    v-if="hasGlobalAuth('list:systemSearchRole')"
+    v-if="hasAuth('list:systemSearchRole')"
     v-model="selectValue"
     locale-name="systemRole"
     :api="api"

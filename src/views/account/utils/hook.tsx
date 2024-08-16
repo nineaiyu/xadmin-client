@@ -5,7 +5,7 @@ import {
   delay,
   deviceDetection
 } from "@pureadmin/utils";
-import { hasGlobalAuth } from "@/router/utils";
+import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { computed, h, onMounted, reactive, type Ref, ref, toRaw } from "vue";
 import { userInfoApi } from "@/api/user/userinfo";
@@ -39,10 +39,10 @@ export function useApiAuth() {
   });
 
   const auth = reactive({
-    upload: hasGlobalAuth("upload:UserInfo"),
-    update: hasGlobalAuth("update:UserInfo"),
-    bind: hasGlobalAuth("bind:UserInfo"),
-    reset: hasGlobalAuth("reset:UserInfo")
+    upload: hasAuth("upload:UserInfo"),
+    update: hasAuth("update:UserInfo"),
+    bind: hasAuth("bind:UserInfo"),
+    reset: hasAuth("reset:UserInfo")
   });
   return {
     api,
@@ -191,7 +191,7 @@ export function useUserLoginLog() {
   });
 
   const auth = reactive({
-    list: hasGlobalAuth("list:userLoginLog")
+    list: hasAuth("list:userLoginLog")
   });
 
   const { tagStyle } = usePublicHooks();
