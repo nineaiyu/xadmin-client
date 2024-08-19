@@ -8,7 +8,7 @@ import type {
   SearchColumnsResult,
   SearchFieldsResult
 } from "@/api/types";
-import { downloadByData } from "@pureadmin/utils";
+import { buildUUID, downloadByData } from "@pureadmin/utils";
 
 export class BaseRequest {
   baseApi = "";
@@ -157,7 +157,12 @@ export class BaseApi extends BaseRequest {
       .then(({ data, headers }: any) => {
         const filenameRegex = /filename[^;=\n]*="((['"]).*?\2|[^;\n]*)"/;
         const matches = filenameRegex.exec(headers.get("content-disposition"));
-        downloadByData(data, decodeURI(matches[1]));
+        downloadByData(
+          data,
+          decodeURI(
+            matches ? matches[1] : `${buildUUID()}.${(params as any)?.type}`
+          )
+        );
       });
   };
 
