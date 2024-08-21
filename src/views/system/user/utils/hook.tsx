@@ -62,7 +62,6 @@ export function useUser(tableRef: Ref) {
 
   const cropRef = ref();
   const router = useRouter();
-  const choicesDict = ref({});
   const treeData = ref([]);
   const treeLoading = ref(true);
 
@@ -239,11 +238,6 @@ export function useUser(tableRef: Ref) {
   }
 
   onMounted(() => {
-    api.choices().then(res => {
-      if (res.code === 1000) {
-        choicesDict.value = res.choices_dict;
-      }
-    });
     if (auth.empower) {
       if (hasAuth("list:systemRole")) {
         roleApi.list({ page: 1, size: 1000 }).then(res => {

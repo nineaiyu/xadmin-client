@@ -1,4 +1,4 @@
-import { onMounted, reactive } from "vue";
+import { computed, onMounted, reactive, useSlots } from "vue";
 import {
   getTempTokenApi,
   verifyCodeConfigApi,
@@ -22,7 +22,12 @@ export const useSendVerifyCode = (
 ) => {
   const { isDisabled, text } = useVerifyCode();
   const { t } = useI18n();
-
+  const $slots = useSlots();
+  const access = computed(
+    () =>
+      verifyCodeConfig.access &&
+      (verifyCodeConfig.sms || verifyCodeConfig.email || $slots.default)
+  );
   const defaultValue = {
     form_type: "",
     token: "",
@@ -48,7 +53,7 @@ export const useSendVerifyCode = (
   });
 
   const initToken = () => {
-    if (verifyCodeConfig.access && verifyCodeConfig.token) {
+    if (access.value && verifyCodeConfig.token) {
       getTempTokenApi().then(res => {
         if (res.code === 1000) {
           formData.value.token = res.token;
@@ -219,6 +224,7 @@ export const useSendVerifyCode = (
   return {
     t,
     text,
+    access,
     formRules,
     isDisabled,
     verifyCodeConfig,

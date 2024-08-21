@@ -30,7 +30,7 @@ import { AesEncrypted } from "@/utils/aes";
 
 export function useApiAuth() {
   const api = reactive({
-    self: userInfoApi.self,
+    detail: userInfoApi.detail,
     bind: userInfoApi.bind,
     update: userInfoApi.patch,
     reset: userInfoApi.reset,
@@ -100,11 +100,14 @@ export function useUserProfileForm(formRef: Ref) {
       if (valid) {
         handleOperation({
           t,
-          apiReq: api.update("self", {
-            username: row.username,
-            nickname: row.nickname,
-            gender: row.gender
-          }),
+          apiReq: api.update(
+            {},
+            {
+              username: row.username,
+              nickname: row.nickname,
+              gender: row.gender
+            }
+          ),
           success() {
             getUserInfo();
           }
@@ -139,7 +142,7 @@ export function useUserProfileForm(formRef: Ref) {
         });
         handleOperation({
           t,
-          apiReq: api.upload(row.pk, formData),
+          apiReq: api.upload(formData),
           success() {
             getUserInfo();
             done();

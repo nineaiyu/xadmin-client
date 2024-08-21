@@ -128,7 +128,7 @@ export const useUserStore = defineStore({
     async getUserInfo() {
       return new Promise<UserInfoResult>((resolve, reject) => {
         userInfoApi
-          .self()
+          .detail()
           .then(res => {
             if (res.code === 1000) {
               clear();

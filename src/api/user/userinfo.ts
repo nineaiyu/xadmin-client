@@ -1,9 +1,19 @@
-import type { UserInfoResult } from "@/api/auth";
+import { ViewBaseApi } from "@/api/base";
+import type { BaseResult, ChoicesResult } from "@/api/types";
+import { http } from "@/utils/http";
 
-import { BaseApi } from "@/api/base";
-import type { BaseResult } from "@/api/types";
-
-class UserInfoApi extends BaseApi {
+class UserInfoApi extends ViewBaseApi {
+  upload = (data?: object) => {
+    return http.upload<BaseResult, any>(`${this.baseApi}/upload`, {}, data);
+  };
+  choices = () => {
+    return this.request<ChoicesResult>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/choices`
+    );
+  };
   reset = (data?: object) => {
     return this.request<BaseResult>(
       "post",
@@ -15,10 +25,6 @@ class UserInfoApi extends BaseApi {
 
   bind = (data?: object) => {
     return this.request<BaseResult>("post", {}, data, `${this.baseApi}/bind`);
-  };
-
-  self = (pk: string = "self") => {
-    return this.request<UserInfoResult>("get", {}, {}, `${this.baseApi}/${pk}`);
   };
 }
 

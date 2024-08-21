@@ -1,6 +1,6 @@
 import "./reset.css";
 import { useI18n } from "vue-i18n";
-import { delay } from "@pureadmin/utils";
+import { createFormData, delay } from "@pureadmin/utils";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import type { FormItemProps } from "./types";
@@ -12,7 +12,7 @@ import avatar from "@/assets/avatar.png";
 
 export function useApiAuth() {
   const api = reactive({
-    self: userInfoApi.self,
+    detail: userInfoApi.detail,
     update: userInfoApi.patch,
     reset: userInfoApi.reset,
     upload: userInfoApi.upload
@@ -44,7 +44,7 @@ export function useUserInfo() {
   });
 
   function handleUpdate(row) {
-    api.update("self", row).then(res => {
+    api.update({}, row).then(res => {
       if (res.code === 1000) {
         message(t("results.success"), { type: "success" });
         getUserInfo();
@@ -78,13 +78,13 @@ export function useUserInfo() {
 
   /** 上传头像 */
   function handleUpload(info) {
-    const avatarFile = new File([info], "avatar.png", {
-      type: info.type,
-      lastModified: Date.now()
+    const formData = createFormData({
+      file: new File([info], "avatar.png", {
+        type: info.type,
+        lastModified: Date.now()
+      })
     });
-    const data = new FormData();
-    data.append("file", avatarFile);
-    api.upload("self", data).then(res => {
+    api.upload(formData).then(res => {
       if (res.code === 1000) {
         message(t("results.success"), { type: "success" });
         getUserInfo();

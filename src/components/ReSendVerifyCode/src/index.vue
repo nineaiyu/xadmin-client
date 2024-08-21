@@ -38,6 +38,7 @@ function getRef() {
 const {
   t,
   text,
+  access,
   formRules,
   isDisabled,
   verifyCodeConfig,
@@ -45,14 +46,8 @@ const {
   fetchSuggestions
 } = useSendVerifyCode(formDataRef, captchaRef, formData, props, emit);
 
-const $slots = useSlots();
 defineExpose({ getRef, handleSendCode });
 
-const access = computed(
-  () =>
-    verifyCodeConfig.access &&
-    (verifyCodeConfig.sms || verifyCodeConfig.email || $slots.default)
-);
 const updatePhone = phone => {
   formData.value.phone = `${phone.code}${phone.phone}`;
 };
