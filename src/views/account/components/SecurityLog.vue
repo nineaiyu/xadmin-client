@@ -26,6 +26,8 @@ const { t, auth, columns, loading, dataList, pagination, onSearch } =
       :pagination="pagination"
       row-key="pk"
       table-layout="auto"
+      align-whole="center"
+      showOverflowTooltip
       @page-current-change="onSearch"
     />
   </div>

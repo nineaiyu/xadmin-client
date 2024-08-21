@@ -221,7 +221,7 @@ export function useUserLoginLog() {
     },
     {
       prop: "login_type.label",
-      minWidth: 180
+      minWidth: 150
     },
     {
       prop: "browser",
