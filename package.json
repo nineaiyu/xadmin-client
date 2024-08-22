@@ -48,7 +48,7 @@
   "dependencies": {
     "@pureadmin/table": "^3.2.0",
     "@pureadmin/utils": "^2.4.8",
-    "@vueuse/core": "^11.0.0",
+    "@vueuse/core": "^11.0.1",
     "@vueuse/motion": "^2.2.3",
     "@wangeditor/editor": "^5.1.23",
     "@wangeditor/editor-for-vue": "^5.1.12",
@@ -58,7 +58,7 @@
     "axios": "^1.7.4",
     "cropperjs": "^1.6.2",
     "crypto-js": "^4.2.0",
-    "dayjs": "^1.11.12",
+    "dayjs": "^1.11.13",
     "echarts": "^5.5.1",
     "element-plus": "^2.8.0",
     "js-cookie": "^3.0.5",
