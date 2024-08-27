@@ -41,7 +41,8 @@ export function useLoginLog() {
           column["cellRenderer"] = renderBooleanTag({
             t,
             tagStyle,
-            field: column.prop
+            field: column.prop,
+            actionMap: { true: t("labels.success"), false: t("labels.failed") }
           });
           break;
       }
