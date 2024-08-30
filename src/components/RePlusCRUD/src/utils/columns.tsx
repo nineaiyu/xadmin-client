@@ -109,15 +109,20 @@ export function useBaseColumns(localeName: string) {
           break;
         case "number":
           item.valueType = "input";
-          item.rules = [
-            {
-              validator: (rule, value, callback) => {
-                if (value && !/^\d+$/.test(value)) {
-                  callback(new Error("field must be a number"));
-                }
-              }
-            }
-          ];
+          item.fieldProps = {
+            type: "number"
+          };
+          // item.rules = [
+          //   {
+          //     validator: (rule, value, callback) => {
+          //       if (value && !/^\d+$/.test(value)) {
+          //         callback(new Error("field must be a number"));
+          //       } else {
+          //         callback();
+          //       }
+          //     }
+          //   }
+          // ];
           break;
         case "select":
           item.valueType = column.input_type;

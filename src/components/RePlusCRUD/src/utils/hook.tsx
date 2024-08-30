@@ -12,19 +12,19 @@ import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { type CRUDColumn, useBaseColumns } from "./columns";
 import {
-  renderSwitch,
+  handleExportData,
+  handleImportData,
   handleOperation,
   openFormDialog,
-  handleExportData,
-  handleImportData
+  renderSwitch
 } from "./handle";
+import type { OperationButtonsRow } from "@/components/RePlusCRUD";
 import {
   formatPublicLabels,
   uniqueArrayObj,
   usePublicHooks
 } from "@/components/RePlusCRUD";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import type { OperationButtonsRow } from "@/components/RePlusCRUD";
 import detailDataForm from "../components/detailData.vue";
 
 import View from "@iconify-icons/ep/view";
@@ -38,6 +38,7 @@ import { handleTree } from "@/utils/tree";
 export function usePlusCRUDPage(
   emit: any,
   tableRef: Ref,
+  searchRef: Ref,
   props: RePlusPageProps
 ) {
   const {
@@ -263,9 +264,13 @@ export function usePlusCRUDPage(
     handleGetData();
   };
 
-  const handleSearch = () => {
-    searchFields.value.page = tablePagination.value.currentPage = 1;
-    handleGetData();
+  const handleSearch = async () => {
+    searchRef.value?.plusFormInstance?.formInstance?.validate(valid => {
+      if (valid) {
+        searchFields.value.page = tablePagination.value.currentPage = 1;
+        handleGetData();
+      }
+    });
   };
 
   const handleSizeChange = (val: number) => {

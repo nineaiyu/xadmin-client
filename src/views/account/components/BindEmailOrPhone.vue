@@ -15,6 +15,7 @@ defineOptions({
 const { t } = useI18n();
 
 const verifyCodeRef = ref();
+
 function getRef() {
   return verifyCodeRef.value?.getRef();
 }
@@ -65,19 +66,19 @@ const sendCodeReqSuccess = ({ extra }) => {
       >
         <template #title>
           <div class="mb-2">
-            <el-text type="danger" size="large">{{
-              t("userinfo.existInfo")
-            }}</el-text>
+            <el-text type="danger" size="large"
+              >{{ t("userinfo.existInfo") }}
+            </el-text>
           </div>
           <el-text type="warning" size="default"
-            >{{ t("userinfo.continueBind")
-            }}<el-text type="danger" size="large">{{
-              t("userinfo.unbind")
-            }}</el-text
-            >{{ t("userinfo.username")
-            }}<el-text type="success" size="large">{{ data.username }}</el-text
-            >{{ t("userinfo.bindInfo") }}</el-text
-          >
+            >{{ t("userinfo.continueBind") }}
+            <el-text type="danger" size="large"
+              >{{ t("userinfo.unbind") }}
+            </el-text>
+            {{ t("userinfo.username") }}
+            <el-text type="success" size="large">{{ data.username }} </el-text>
+            {{ t("userinfo.bindInfo") }}
+          </el-text>
         </template>
       </plus-descriptions>
     </div>

@@ -40,10 +40,12 @@ import { onMounted, ref } from "vue";
 import { countriesApi } from "@/api/common";
 
 defineOptions({ name: "PhoneInput" });
+
 interface PhoneInputProps {
   code: string;
   phone: string;
 }
+
 const value = defineModel<PhoneInputProps>({
   default: { code: "+86", phone: "" }
 });

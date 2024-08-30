@@ -173,6 +173,7 @@ class Loading {
     this.code = code;
     this.loadings = loadings;
   }
+
   //get 的用法
   get value(): boolean {
     return this.loadings[this.code];

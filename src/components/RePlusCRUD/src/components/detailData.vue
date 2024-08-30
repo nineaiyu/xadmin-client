@@ -21,6 +21,7 @@ const newFormInline = ref<FieldValues>(props.formInline);
 function getRef() {
   return formRef.value?.formInstance;
 }
+
 defineOptions({ name: "DetailData" });
 defineExpose({ getRef });
 const column = computed(() => (deviceDetection() ? 1 : 2));

@@ -54,12 +54,14 @@ export interface OperationButtonsRow {
   };
   onClick?: (params: ButtonsCallBackParams) => void;
 }
+
 export interface ButtonsCallBackParams {
   e: MouseEvent;
   row: object | any;
   loading: { value: boolean };
   buttonRow: OperationButtonsRow;
 }
+
 export interface OperationProps {
   width?: number;
   size?: "" | "default" | "small" | "large";

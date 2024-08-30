@@ -3,6 +3,7 @@ import { ref, watch } from "vue";
 import { Plus } from "@element-plus/icons-vue";
 import type { UploadProps, UploadUserFile } from "element-plus";
 import defaultFile from "../assets/defaultFile.png";
+
 defineOptions({ name: "UploadFile" });
 const value = defineModel<string | object | any>();
 const props = defineProps({

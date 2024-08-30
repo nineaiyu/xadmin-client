@@ -4,11 +4,11 @@ import { hasAuth } from "@/router/utils";
 import { h, reactive, type Ref, shallowRef } from "vue";
 import {
   type CRUDColumn,
+  isUrl,
   openFormDialog,
   type OperationProps,
   renderBooleanTag,
-  type RePlusPageProps,
-  isUrl
+  type RePlusPageProps
 } from "@/components/RePlusCRUD";
 import uploadForm from "../upload.vue";
 import { usePublicHooks } from "@/views/system/hooks";

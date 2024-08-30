@@ -11,6 +11,7 @@ import Monitor from "@iconify-icons/ep/monitor";
 import Lollipop from "@iconify-icons/ep/lollipop";
 import Histogram from "@iconify-icons/ep/histogram";
 import HomeFilled from "@iconify-icons/ep/home-filled";
+
 addIcon("ep:menu", Menu);
 addIcon("ep:edit", Edit);
 addIcon("ep:set-up", SetUp);
@@ -44,6 +45,7 @@ import OperationLog from "@iconify-icons/ri/history-fill";
 import InformationLine from "@iconify-icons/ri/information-line";
 import TerminalWindowLine from "@iconify-icons/ri/terminal-window-line";
 import CheckboxCircleLine from "@iconify-icons/ri/checkbox-circle-line";
+
 addIcon("ri:bookmark-2-line", Tag);
 addIcon("ri:file-ppt-2-line", Ppt);
 addIcon("ri:bank-card-line", Card);

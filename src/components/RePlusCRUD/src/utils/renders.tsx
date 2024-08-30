@@ -1,5 +1,6 @@
 import Segmented from "@/components/ReSegmented";
 import { selectBooleanOptions } from "./constants";
+
 export const renderBooleanSegmentedOption = (options = null) => {
   return (value, onChange) => {
     return (
