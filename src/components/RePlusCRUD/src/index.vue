@@ -54,7 +54,6 @@ const emit = defineEmits<{
 }>();
 
 const tableRef = ref();
-const searchRef = ref();
 
 const {
   t,
@@ -83,7 +82,7 @@ const {
   handleCurrentChange,
   handleTableBarChange,
   handleSelectionChange
-} = usePlusCRUDPage(emit, tableRef, searchRef, props);
+} = usePlusCRUDPage(emit, tableRef, props);
 
 function getTableRef() {
   return tableRef.value;
@@ -107,7 +106,6 @@ defineExpose({
       class="bg-bg_color w-[99/100] pl-8 pr-8 pt-[12px] search-form"
     >
       <PlusSearch
-        ref="searchRef"
         v-model="searchFields"
         :col-props="{
           xs: 24,
@@ -123,6 +121,7 @@ defineExpose({
         }"
         :search-loading="loadingStatus"
         :show-number="deviceDetection() ? 1 : 3"
+        :needValidate="true"
         label-width="auto"
         v-bind="plusSearchProps"
         @change="

@@ -38,7 +38,6 @@ import { handleTree } from "@/utils/tree";
 export function usePlusCRUDPage(
   emit: any,
   tableRef: Ref,
-  searchRef: Ref,
   props: RePlusPageProps
 ) {
   const {
@@ -265,12 +264,8 @@ export function usePlusCRUDPage(
   };
 
   const handleSearch = async () => {
-    searchRef.value?.plusFormInstance?.formInstance?.validate(valid => {
-      if (valid) {
-        searchFields.value.page = tablePagination.value.currentPage = 1;
-        handleGetData();
-      }
-    });
+    searchFields.value.page = tablePagination.value.currentPage = 1;
+    handleGetData();
   };
 
   const handleSizeChange = (val: number) => {
