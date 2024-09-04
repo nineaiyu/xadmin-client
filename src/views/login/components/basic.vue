@@ -25,6 +25,7 @@ defineOptions({
 
 const router = useRouter();
 const loading = ref(false);
+const configLoading = ref(false);
 const checked = ref(true);
 const disabled = ref(false);
 const loginDay = ref(1);
@@ -126,18 +127,21 @@ function onkeypress({ code }: KeyboardEvent) {
 
 onMounted(() => {
   window.document.addEventListener("keypress", onkeypress);
-  loginAuthApi().then(res => {
-    if (res.code === 1000) {
-      Object.keys(res.data).forEach(key => {
-        authInfo[key] = res.data[key];
-      });
-      initToken();
-      loginDay.value = authInfo.lifetime;
-      formatLoginDayList();
-      useUserStoreHook().SET_ISREMEMBERED(checked.value);
-      useUserStoreHook().SET_LOGINDAY(loginDay.value);
-    }
-  });
+  configLoading.value = true;
+  loginAuthApi()
+    .then(res => {
+      if (res.code === 1000) {
+        Object.keys(res.data).forEach(key => {
+          authInfo[key] = res.data[key];
+        });
+        initToken();
+        loginDay.value = authInfo.lifetime;
+        formatLoginDayList();
+        useUserStoreHook().SET_ISREMEMBERED(checked.value);
+        useUserStoreHook().SET_LOGINDAY(loginDay.value);
+      }
+    })
+    .finally(() => (configLoading.value = false));
 });
 
 onBeforeUnmount(() => {
@@ -163,7 +167,7 @@ function onBack() {
 </script>
 
 <template>
-  <div>
+  <div v-loading="configLoading">
     <el-form
       v-if="authInfo.access"
       ref="ruleFormRef"
@@ -176,6 +180,7 @@ function onBack() {
           <el-form-item prop="username">
             <el-input
               v-model="ruleForm.username"
+              tabindex="100"
               :placeholder="t('login.username')"
               :prefix-icon="useRenderIcon(User)"
               clearable
@@ -187,6 +192,7 @@ function onBack() {
           <el-form-item prop="password">
             <el-input
               v-model="ruleForm.password"
+              tabindex="100"
               :placeholder="t('login.password')"
               :prefix-icon="useRenderIcon(Lock)"
               clearable
@@ -199,6 +205,7 @@ function onBack() {
           <el-form-item prop="captcha_code">
             <el-input
               v-model="ruleForm.captcha_code"
+              tabindex="100"
               :placeholder="t('login.verifyCode')"
               :prefix-icon="useRenderIcon('ri:shield-keyhole-line')"
               clearable
@@ -213,7 +220,7 @@ function onBack() {
       <Motion :delay="250">
         <el-form-item>
           <div class="w-full h-[20px] flex justify-between items-center">
-            <el-checkbox v-model="checked">
+            <el-checkbox v-model="checked" tabindex="100">
               <span class="flex">
                 <select
                   v-model="loginDay"
@@ -258,6 +265,7 @@ function onBack() {
             class="w-full mt-4"
             size="default"
             type="primary"
+            tabindex="100"
             @click="onLogin(ruleFormRef)"
           >
             {{ t("login.login") }}
@@ -290,7 +298,7 @@ function onBack() {
     </Motion>
     <Motion :delay="400">
       <el-form-item>
-        <el-button class="w-full" size="default" @click="onBack">
+        <el-button class="w-full" size="default" tabindex="100" @click="onBack">
           {{ t("login.back") }}
         </el-button>
       </el-form-item>

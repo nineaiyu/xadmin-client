@@ -24,6 +24,7 @@ defineOptions({
 
 const router = useRouter();
 const loading = ref(false);
+const configLoading = ref(false);
 const checked = ref(true);
 const disabled = ref(false);
 const loginDay = ref(1);
@@ -103,6 +104,7 @@ function onkeypress({ code }: KeyboardEvent) {
 }
 
 onMounted(() => {
+  configLoading.value = true;
   window.document.addEventListener("keypress", onkeypress);
 });
 
@@ -154,12 +156,13 @@ const handleLogin = () => {
 </script>
 
 <template>
-  <div>
+  <div v-loading="configLoading">
     <ReSendVerifyCode
       ref="verifyCodeRef"
       v-model="formData"
       category="login"
       @configReqSuccess="configReqSuccess"
+      @configReqEnd="configLoading = false"
     >
       <el-tab-pane
         v-if="authInfo.basic"
@@ -182,6 +185,7 @@ const handleLogin = () => {
               :placeholder="t('login.username')"
               :prefix-icon="useRenderIcon(User)"
               clearable
+              tabindex="100"
             />
           </el-form-item>
           <el-form-item
@@ -200,6 +204,7 @@ const handleLogin = () => {
               :prefix-icon="useRenderIcon(Lock)"
               clearable
               show-password
+              tabindex="100"
             />
           </el-form-item>
         </Motion>
@@ -210,7 +215,7 @@ const handleLogin = () => {
       <Motion :delay="250">
         <el-form-item>
           <div class="w-full h-[20px] flex justify-between items-center">
-            <el-checkbox v-model="checked">
+            <el-checkbox v-model="checked" tabindex="800">
               <span class="flex">
                 <select
                   v-model="loginDay"
@@ -255,6 +260,7 @@ const handleLogin = () => {
             class="w-full mt-4"
             size="default"
             type="primary"
+            tabindex="1000"
             @click="handleLogin"
           >
             {{ t("login.login") }}

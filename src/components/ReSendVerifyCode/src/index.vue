@@ -1,8 +1,7 @@
 <script lang="ts" setup>
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import Iphone from "@iconify-icons/ep/iphone";
 import Email from "@iconify-icons/ep/message";
-import { computed, reactive, ref, useSlots } from "vue";
+import { ref } from "vue";
 import type { FormInstance } from "element-plus";
 import Motion from "@/views/login/utils/motion";
 import ReImageVerify from "@/components/ReImageVerify/src/index.vue";
@@ -26,6 +25,7 @@ const formData = defineModel({
 
 const emit = defineEmits<{
   (e: "configReqSuccess", ...args: any[]): void;
+  (e: "configReqEnd", ...args: any[]): void;
   (e: "sendCodeReqSuccess", ...args: any[]): void;
 }>();
 const formDataRef = ref<FormInstance>();
@@ -75,13 +75,6 @@ const phone = ref({ code: "+86", phone: "" });
               :disabled="Boolean(formData.verify_token)"
               @change="updatePhone"
             />
-            <!--            <el-input-->
-            <!--              v-model="formData.phone"-->
-            <!--              :disabled="Boolean(formData.verify_token)"-->
-            <!--              :placeholder="t('login.phone')"-->
-            <!--              :prefix-icon="useRenderIcon(Iphone)"-->
-            <!--              clearable-->
-            <!--            />-->
           </el-form-item>
         </el-tab-pane>
         <el-tab-pane
@@ -98,6 +91,7 @@ const phone = ref({ code: "+86", phone: "" });
               clearable
               :trigger-on-focus="false"
               :fetch-suggestions="fetchSuggestions"
+              tabindex="100"
             />
           </el-form-item>
         </el-tab-pane>
@@ -115,6 +109,7 @@ const phone = ref({ code: "+86", phone: "" });
           :placeholder="t('login.verifyCode')"
           :prefix-icon="useRenderIcon('ri:shield-keyhole-line')"
           clearable
+          tabindex="100"
         >
           <template #append>
             <ReImageVerify ref="captchaRef" v-model="formData.captcha_key" />
@@ -131,8 +126,10 @@ const phone = ref({ code: "+86", phone: "" });
             :placeholder="t('login.verifyCode')"
             :prefix-icon="useRenderIcon('ri:shield-keyhole-line')"
             clearable
+            tabindex="200"
           />
           <el-button
+            tabindex="100"
             :disabled="isDisabled"
             class="ml-2"
             @click="handleSendCode(null)"

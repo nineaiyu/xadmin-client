@@ -202,23 +202,27 @@ export const useSendVerifyCode = (
   };
 
   onMounted(() => {
-    verifyCodeConfigApi({ category: props.category }).then(res => {
-      if (res.code === 1000) {
-        Object.keys(res.data).forEach(key => {
-          verifyCodeConfig[key] = res.data[key];
-        });
-        emit("configReqSuccess", verifyCodeConfig);
-        if (isEmpty(formData.value.form_type)) {
-          if (verifyCodeConfig.sms) {
-            formData.value.form_type = "phone";
+    verifyCodeConfigApi({ category: props.category })
+      .then(res => {
+        if (res.code === 1000) {
+          Object.keys(res.data).forEach(key => {
+            verifyCodeConfig[key] = res.data[key];
+          });
+          emit("configReqSuccess", verifyCodeConfig);
+          if (isEmpty(formData.value.form_type)) {
+            if (verifyCodeConfig.sms) {
+              formData.value.form_type = "phone";
+            }
+            if (verifyCodeConfig.email) {
+              formData.value.form_type = "email";
+            }
           }
-          if (verifyCodeConfig.email) {
-            formData.value.form_type = "email";
-          }
+          initToken();
         }
-        initToken();
-      }
-    });
+      })
+      .finally(() => {
+        emit("configReqEnd");
+      });
   });
 
   return {
