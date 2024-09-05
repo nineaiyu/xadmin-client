@@ -23,6 +23,7 @@ import SearchRole from "@/views/system/components/searchRole.vue";
 import uploadFile from "../components/uploadFile.vue";
 import tagInput from "../components/tagInput.vue";
 import phoneInput from "../components/phoneInput.vue";
+import jsonInput from "../components/jsonInput.vue";
 import { ElIcon, ElImage, ElLink } from "element-plus";
 import { Link } from "@element-plus/icons-vue";
 import Info from "@iconify-icons/ri/question-line";
@@ -375,6 +376,16 @@ export function useBaseColumns(localeName: string) {
             });
           };
           break;
+        case "json":
+          item["renderField"] = (value: any, onChange) => {
+            return h(jsonInput, {
+              modelValue: value,
+              onChange: x => {
+                onChange(x);
+              }
+            });
+          };
+          break;
         default:
           if (column.input_type.startsWith("api-")) {
             if (!column.hasOwnProperty("default") && column?.multiple) {
@@ -478,6 +489,13 @@ export function useBaseColumns(localeName: string) {
                   })}
                 </el-space>
               </>
+            );
+            // pure-table ****** end
+            break;
+          case "json":
+            // pure-table ****** start
+            item["cellRenderer"] = ({ row }) => (
+              <span>{JSON.stringify(row[column.key])}</span>
             );
             // pure-table ****** end
             break;

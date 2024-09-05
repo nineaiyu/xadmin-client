@@ -21,6 +21,7 @@ const include = [
   "sortablejs",
   "@vueuse/core",
   "vue-json-pretty",
+  "vue3-ts-jsoneditor",
   "@pureadmin/utils",
   "@wangeditor/editor",
   "responsive-storage",
