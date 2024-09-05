@@ -3,9 +3,6 @@ import { h, reactive } from "vue";
 import { hasAuth } from "@/router/utils";
 import { searchUserApi } from "@/api/system/search";
 import RePlusSearch from "@/components/RePlusSearch";
-import { cloneDeep } from "@pureadmin/utils";
-import { customRolePermissionOptions } from "@/views/system/hooks";
-import type { CRUDColumn } from "@/components/RePlusCRUD";
 import { ElImage } from "element-plus";
 
 defineOptions({ name: "searchUser" });
@@ -14,7 +11,7 @@ const emit = defineEmits<{
   (e: "change", ...args: any[]): void;
 }>();
 
-const selectValue = defineModel({ type: Array<number> });
+const selectValue = defineModel({ type: Array<object> });
 
 const api = reactive(searchUserApi);
 

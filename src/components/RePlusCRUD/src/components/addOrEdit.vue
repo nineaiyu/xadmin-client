@@ -20,6 +20,7 @@ const newFormInline = ref<FieldValues>(props.formInline);
 function getRef() {
   return formRef.value?.formInstance;
 }
+
 defineOptions({ name: "AddOrEditForm" });
 defineExpose({ getRef });
 

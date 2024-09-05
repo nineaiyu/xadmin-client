@@ -10,7 +10,7 @@ const emit = defineEmits<{
   (e: "change", ...args: any[]): void;
 }>();
 
-const selectValue = defineModel({ type: Array<number> });
+const selectValue = defineModel({ type: Array<object> });
 
 const api = reactive(searchRoleApi);
 </script>

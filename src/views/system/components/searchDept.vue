@@ -1,9 +1,8 @@
 <script lang="ts" setup>
-import { h, reactive } from "vue";
+import { reactive } from "vue";
 import { hasAuth } from "@/router/utils";
 import { searchDeptApi } from "@/api/system/search";
 import RePlusSearch from "@/components/RePlusSearch";
-import { ElImage } from "element-plus";
 
 defineOptions({ name: "searchDept" });
 
@@ -11,7 +10,7 @@ const emit = defineEmits<{
   (e: "change", ...args: any[]): void;
 }>();
 
-const selectValue = defineModel({ type: Array<number> });
+const selectValue = defineModel({ type: Array<object> });
 
 const api = reactive(searchDeptApi);
 

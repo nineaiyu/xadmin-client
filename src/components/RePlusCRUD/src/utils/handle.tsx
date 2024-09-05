@@ -29,7 +29,7 @@ interface formDialogOptions {
   row?: ((formOptions: formDialogOptions) => object) | object; //  外部处理方法
   title: string; // 弹窗的的title
   formValue?: Ref; // 表单值
-  rawRow: object; //  默认数据或者更新的书籍
+  rawRow: object; //  默认数据或者更新的数据
   minWidth?: string; // 弹窗的的最小宽度
   columns?: ((formOptions: formDialogOptions) => object) | object; // 表单字段
   rawColumns?: PlusColumn[] | Array<any>; // 表单字段

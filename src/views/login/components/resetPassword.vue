@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
-import { reactive, ref } from "vue";
+import { onMounted, reactive, ref } from "vue";
 import Motion from "../utils/motion";
 import type { FormInstance, FormRules } from "element-plus";
 import { $t, transformI18n } from "@/plugins/i18n";
@@ -15,6 +15,7 @@ import ReSendVerifyCode from "@/components/ReSendVerifyCode";
 
 const { t } = useI18n();
 const loading = ref(false);
+const configLoading = ref(false);
 const formData = ref({
   password: "",
   repeatPassword: "",
@@ -107,15 +108,17 @@ const formRules = reactive<FormRules>({
 const configReqSuccess = verifyCodeConfig => {
   authInfo.value = Object.assign(authInfo.value, verifyCodeConfig);
 };
+onMounted(() => (configLoading.value = true));
 </script>
 
 <template>
-  <div>
+  <div v-loading="configLoading">
     <ReSendVerifyCode
       ref="verifyCodeRef"
       v-model="formData"
       category="reset"
       @configReqSuccess="configReqSuccess"
+      @configReqEnd="configLoading = false"
     />
     <el-form
       v-if="authInfo.access"
@@ -129,6 +132,7 @@ const configReqSuccess = verifyCodeConfig => {
           <el-form-item prop="password">
             <el-input
               v-model="formData.password"
+              tabindex="300"
               :placeholder="t('login.password')"
               :prefix-icon="useRenderIcon(Lock)"
               clearable
@@ -141,6 +145,7 @@ const configReqSuccess = verifyCodeConfig => {
           <el-form-item prop="repeatPassword">
             <el-input
               v-model="formData.repeatPassword"
+              tabindex="300"
               :placeholder="t('login.sure')"
               :prefix-icon="useRenderIcon(Lock)"
               clearable
@@ -155,6 +160,7 @@ const configReqSuccess = verifyCodeConfig => {
               class="w-full"
               size="default"
               type="primary"
+              tabindex="1000"
               @click="handleSubmit"
             >
               {{ t("login.definite") }}
@@ -164,7 +170,12 @@ const configReqSuccess = verifyCodeConfig => {
       </div>
       <Motion :delay="300">
         <el-form-item>
-          <el-button class="w-full" size="default" @click="onBack">
+          <el-button
+            class="w-full"
+            size="default"
+            tabindex="1000"
+            @click="onBack"
+          >
             {{ t("login.back") }}
           </el-button>
         </el-form-item>

@@ -125,24 +125,24 @@ const handleTest = () => {
   >
     <template #footer="{ handleSubmit, handleReset }">
       <div style="justify-content: flex-start">
-        <el-button v-if="auth.update" @click="handleReset">{{
-          t("buttons.reset")
-        }}</el-button>
+        <el-button v-if="auth.update" @click="handleReset"
+          >{{ t("buttons.reset") }}
+        </el-button>
 
         <el-button
           v-if="auth.update"
           type="primary"
           :loading="submitLoading"
           @click="handleSubmit"
-          >{{ t("buttons.save") }}</el-button
-        >
+          >{{ t("buttons.save") }}
+        </el-button>
         <el-button
           v-if="auth.test"
           type="success"
           :loading="testLoading"
           @click="handleTest"
-          >{{ t("buttons.test") }}</el-button
-        >
+          >{{ t("buttons.test") }}
+        </el-button>
       </div>
     </template>
   </PlusForm>

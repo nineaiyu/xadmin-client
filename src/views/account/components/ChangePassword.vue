@@ -25,6 +25,7 @@ interface FormPasswordProps {
   new_password: string;
   sure_password?: string;
 }
+
 interface AddOrEditFormProps {
   formInline?: FormPasswordProps;
   formProps?: object;

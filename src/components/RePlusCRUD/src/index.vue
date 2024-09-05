@@ -121,6 +121,7 @@ defineExpose({
         }"
         :search-loading="loadingStatus"
         :show-number="deviceDetection() ? 1 : 3"
+        :needValidate="true"
         label-width="auto"
         v-bind="plusSearchProps"
         @change="

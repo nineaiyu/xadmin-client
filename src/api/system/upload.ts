@@ -19,6 +19,7 @@ class UploadFileApi {
   constructor(baseApi: string) {
     this.baseApi = baseApi;
   }
+
   upload = (params?: object, data?: object, config?: PureHttpRequestConfig) => {
     return http.upload<UploadFileResult, any>(
       this.baseApi,

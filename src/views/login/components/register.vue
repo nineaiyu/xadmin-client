@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
-import { computed, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import Motion from "../utils/motion";
 import { message } from "@/utils/message";
 import type { FormInstance, FormRules } from "element-plus";
@@ -19,6 +19,7 @@ import { delay } from "@pureadmin/utils";
 const { t } = useI18n();
 const checked = ref(false);
 const loading = ref(false);
+const configLoading = ref(false);
 const authInfo = ref({
   basic: false,
   access: false,
@@ -143,15 +144,17 @@ const configReqSuccess = verifyCodeConfig => {
 };
 
 const isUsername = computed(() => formData.value.form_type === "username");
+onMounted(() => (configLoading.value = true));
 </script>
 
 <template>
-  <div>
+  <div v-loading="configLoading">
     <ReSendVerifyCode
       ref="verifyCodeRef"
       v-model="formData"
       category="register"
       @configReqSuccess="configReqSuccess"
+      @configReqEnd="configLoading = false"
     >
       <el-tab-pane
         v-if="authInfo.basic"
@@ -171,6 +174,7 @@ const isUsername = computed(() => formData.value.form_type === "username");
         >
           <el-input
             v-model="formData.username"
+            tabindex="100"
             :placeholder="t('login.username')"
             :prefix-icon="useRenderIcon(User)"
             clearable
@@ -191,6 +195,7 @@ const isUsername = computed(() => formData.value.form_type === "username");
           <el-form-item prop="password">
             <el-input
               v-model="formData.password"
+              tabindex="100"
               :placeholder="t('login.password')"
               :prefix-icon="useRenderIcon(Lock)"
               clearable
@@ -203,6 +208,7 @@ const isUsername = computed(() => formData.value.form_type === "username");
           <el-form-item prop="repeatPassword">
             <el-input
               v-model="formData.repeatPassword"
+              tabindex="100"
               :placeholder="t('login.sure')"
               :prefix-icon="useRenderIcon(Lock)"
               clearable
@@ -213,7 +219,7 @@ const isUsername = computed(() => formData.value.form_type === "username");
       </div>
       <Motion :delay="300">
         <el-form-item>
-          <el-checkbox v-model="checked">
+          <el-checkbox v-model="checked" tabindex="800">
             {{ t("login.readAccept") }}
           </el-checkbox>
           <el-button link type="primary">
@@ -229,6 +235,7 @@ const isUsername = computed(() => formData.value.form_type === "username");
             class="w-full"
             size="default"
             type="primary"
+            tabindex="1000"
             @click="handleRegister"
           >
             {{ t("login.definite") }}
@@ -241,7 +248,12 @@ const isUsername = computed(() => formData.value.form_type === "username");
     </Motion>
     <Motion :delay="400">
       <el-form-item>
-        <el-button class="w-full" size="default" @click="onBack">
+        <el-button
+          class="w-full"
+          size="default"
+          tabindex="1000"
+          @click="onBack"
+        >
           {{ t("login.back") }}
         </el-button>
       </el-form-item>

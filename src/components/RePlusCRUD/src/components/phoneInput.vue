@@ -5,6 +5,7 @@
       required
       clearable
       :disabled="disabled"
+      tabindex="100"
       @input="onInputChange"
     >
       <template v-slot:prepend>
@@ -40,10 +41,12 @@ import { onMounted, ref } from "vue";
 import { countriesApi } from "@/api/common";
 
 defineOptions({ name: "PhoneInput" });
+
 interface PhoneInputProps {
   code: string;
   phone: string;
 }
+
 const value = defineModel<PhoneInputProps>({
   default: { code: "+86", phone: "" }
 });

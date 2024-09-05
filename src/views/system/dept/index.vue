@@ -2,7 +2,6 @@
 import { ref } from "vue";
 import { useDept } from "./utils/hook";
 import RePlusCRUD from "@/components/RePlusCRUD";
-import { handleTree } from "@/utils/tree";
 
 defineOptions({
   name: "SystemDept"
