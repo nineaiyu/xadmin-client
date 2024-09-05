@@ -11,15 +11,6 @@ import Monitor from "@iconify-icons/ep/monitor";
 import Lollipop from "@iconify-icons/ep/lollipop";
 import Histogram from "@iconify-icons/ep/histogram";
 import HomeFilled from "@iconify-icons/ep/home-filled";
-
-addIcon("ep:menu", Menu);
-addIcon("ep:edit", Edit);
-addIcon("ep:set-up", SetUp);
-addIcon("ep:guide", Guide);
-addIcon("ep:monitor", Monitor);
-addIcon("ep:lollipop", Lollipop);
-addIcon("ep:histogram", Histogram);
-addIcon("ep:home-filled", HomeFilled);
 // @iconify-icons/ri
 import Tag from "@iconify-icons/ri/bookmark-2-line";
 import Ppt from "@iconify-icons/ri/file-ppt-2-line";
@@ -45,6 +36,15 @@ import OperationLog from "@iconify-icons/ri/history-fill";
 import InformationLine from "@iconify-icons/ri/information-line";
 import TerminalWindowLine from "@iconify-icons/ri/terminal-window-line";
 import CheckboxCircleLine from "@iconify-icons/ri/checkbox-circle-line";
+
+addIcon("ep:menu", Menu);
+addIcon("ep:edit", Edit);
+addIcon("ep:set-up", SetUp);
+addIcon("ep:guide", Guide);
+addIcon("ep:monitor", Monitor);
+addIcon("ep:lollipop", Lollipop);
+addIcon("ep:histogram", Histogram);
+addIcon("ep:home-filled", HomeFilled);
 
 addIcon("ri:bookmark-2-line", Tag);
 addIcon("ri:file-ppt-2-line", Ppt);

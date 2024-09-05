@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { deviceDetection } from "@pureadmin/utils";
 import { useUserLoginLog } from "@/views/account/utils/hook";
-import RePlusCRUD from "@/components/RePlusCRUD/src/index.vue";
+import RePlusCRUD from "@/components/RePlusCRUD";
 
 defineOptions({
   name: "SecurityLog"
