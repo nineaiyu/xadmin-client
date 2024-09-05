@@ -4,6 +4,7 @@
     v-model:json="value"
     :navigationBar="false"
     :onRenderMenu="handleRenderMenu"
+    :fullWidthButton="false"
     height="400"
     mode="text"
     style="width: 100%; text-align: left"
