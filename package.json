@@ -1,6 +1,6 @@
 {
   "name": "xadmin",
-  "version": "3.3.1",
+  "version": "3.3.5",
   "private": true,
   "type": "module",
   "scripts": {
@@ -46,7 +46,7 @@
     "url": "https://github.com/nineaiyu/"
   },
   "dependencies": {
-    "@pureadmin/table": "^3.2.0",
+    "@pureadmin/table": "^3.2.1",
     "@pureadmin/utils": "^2.4.8",
     "@vueuse/core": "^11.0.3",
     "@vueuse/motion": "^2.2.3",
@@ -55,7 +55,7 @@
     "@wangeditor/plugin-upload-attachment": "^1.1.0",
     "@zxcvbn-ts/core": "^3.0.4",
     "animate.css": "^4.1.1",
-    "axios": "^1.7.5",
+    "axios": "^1.7.7",
     "cropperjs": "^1.6.2",
     "crypto-js": "^4.2.0",
     "dayjs": "^1.11.13",
@@ -72,7 +72,7 @@
     "qrcode": "^1.5.4",
     "qs": "^6.13.0",
     "responsive-storage": "^2.2.0",
-    "sortablejs": "^1.15.2",
+    "sortablejs": "^1.15.3",
     "typeit": "^8.8.4",
     "version-rocket": "^1.7.2",
     "vue": "^3.4.38",

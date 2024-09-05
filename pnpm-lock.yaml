@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@pureadmin/table':
-        specifier: ^3.2.0
-        version: 3.2.0(element-plus@2.8.1(vue@3.4.38(typescript@5.5.4)))(typescript@5.5.4)
+        specifier: ^3.2.1
+        version: 3.2.1(element-plus@2.8.1(vue@3.4.38(typescript@5.5.4)))(typescript@5.5.4)
       '@pureadmin/utils':
         specifier: ^2.4.8
         version: 2.4.8(echarts@5.5.1)(vue@3.4.38(typescript@5.5.4))
@@ -36,8 +36,8 @@ importers:
         specifier: ^4.1.1
         version: 4.1.1
       axios:
-        specifier: ^1.7.5
-        version: 1.7.5
+        specifier: ^1.7.7
+        version: 1.7.7
       cropperjs:
         specifier: ^1.6.2
         version: 1.6.2
@@ -87,8 +87,8 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0
       sortablejs:
-        specifier: ^1.15.2
-        version: 1.15.2
+        specifier: ^1.15.3
+        version: 1.15.3
       typeit:
         specifier: ^8.8.4
         version: 8.8.4
@@ -1067,8 +1067,8 @@ packages:
   '@popperjs/core@2.11.8':
     resolution: {integrity: sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==}
 
-  '@pureadmin/table@3.2.0':
-    resolution: {integrity: sha512-5H09KrQDeGpxVxOKCISi65WcT7mSuyhGTHiDcHUcaZFXMkB874ZikDBuNFMUp4ccqyztoD6AAo9Tk/cqCMhbuQ==}
+  '@pureadmin/table@3.2.1':
+    resolution: {integrity: sha512-sqkAQWRDx6X0dADUgrYHvA7QfocF+VB5rPe1yFQWjh7tcHNasthFRDCS5Fmw7JQ0R3h6S7aBK450ye2/TLv4JQ==}
     peerDependencies:
       element-plus: ^2.0.0
 
@@ -1657,8 +1657,8 @@ packages:
     peerDependencies:
       postcss: ^8.1.0
 
-  axios@1.7.5:
-    resolution: {integrity: sha512-fZu86yCo+svH3uqJ/yTdQ0QHpQu5oL+/QE+QPSv6BZSkDAoky9vytxp7u5qk83OJFS3kEBcesWni9WTZAv3tSw==}
+  axios@1.7.7:
+    resolution: {integrity: sha512-S4kL7XrjgBmvdGut0sN3yJxqYzrDOnivkBiN0OFs6hLiUam3UPvswUo0kqGyhqUZGEOytHyumEdXsAkgCOUf3Q==}
 
   axobject-query@4.1.0:
     resolution: {integrity: sha512-qIj0G9wZbMGNLjLmg1PT6v2mE9AH2zlnADJD/2tC6E00hgmhUOfEB6greHPAfLRSufHqROIUTkw6E+M3lH0PTQ==}
@@ -3947,8 +3947,8 @@ packages:
     resolution: {integrity: sha512-ig5qOnCDbugFntKi6c7Xlib8bA6xiJVk8O+WdFrV3wxbMqeHO0hXFQC4nAhPVWfZfi8255lcZkNhtIBINCc4+Q==}
     engines: {node: '>=12.17.0'}
 
-  sortablejs@1.15.2:
-    resolution: {integrity: sha512-FJF5jgdfvoKn1MAKSdGs33bIqLi3LmsgVTliuX6iITj834F+JRQZN90Z93yql8h0K2t0RwDPBmxwlbZfDcxNZA==}
+  sortablejs@1.15.3:
+    resolution: {integrity: sha512-zdK3/kwwAK1cJgy1rwl1YtNTbRmc8qW/+vgXf75A7NHag5of4pyI6uK86ktmQETyWRH7IGaE73uZOOBcGxgqZg==}
 
   source-map-js@1.2.0:
     resolution: {integrity: sha512-itJW8lvSA0TXEphiRoawsCksnlf8SyvmFzIhltqAHluXd88pkCd+cXJVHTDwdCr0IzwptSm035IHQktUu1QUMg==}
@@ -5441,7 +5441,7 @@ snapshots:
 
   '@popperjs/core@2.11.8': {}
 
-  '@pureadmin/table@3.2.0(element-plus@2.8.1(vue@3.4.38(typescript@5.5.4)))(typescript@5.5.4)':
+  '@pureadmin/table@3.2.1(element-plus@2.8.1(vue@3.4.38(typescript@5.5.4)))(typescript@5.5.4)':
     dependencies:
       element-plus: 2.8.1(vue@3.4.38(typescript@5.5.4))
       vue: 3.4.38(typescript@5.5.4)
@@ -6162,7 +6162,7 @@ snapshots:
       postcss: 8.4.41
       postcss-value-parser: 4.2.0
 
-  axios@1.7.5:
+  axios@1.7.7:
     dependencies:
       follow-redirects: 1.15.6
       form-data: 4.0.0
@@ -7875,7 +7875,7 @@ snapshots:
       '@element-plus/icons-vue': 2.3.1(vue@3.4.38(typescript@5.5.4))
       element-plus: 2.8.1(vue@3.4.38(typescript@5.5.4))
       lodash-es: 4.17.21
-      sortablejs: 1.15.2
+      sortablejs: 1.15.3
       vue: 3.4.38(typescript@5.5.4)
 
   pngjs@5.0.0: {}
@@ -8474,7 +8474,7 @@ snapshots:
 
   snabbdom@3.6.2: {}
 
-  sortablejs@1.15.2: {}
+  sortablejs@1.15.3: {}
 
   source-map-js@1.2.0: {}
 
@@ -8964,7 +8964,7 @@ snapshots:
 
   version-rocket@1.7.2:
     dependencies:
-      axios: 1.7.5
+      axios: 1.7.7
       dayjs: 1.11.13
     transitivePeerDependencies:
       - debug
