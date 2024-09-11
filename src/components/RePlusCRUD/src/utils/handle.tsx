@@ -3,15 +3,15 @@ import { deviceDetection } from "@pureadmin/utils";
 import { type Component, h, type Ref, ref, toRaw } from "vue";
 import { cloneDeep } from "lodash-es";
 import { message } from "@/utils/message";
-import addOrEdit from "../components/addOrEdit.vue";
 import type { PlusColumn, PlusFormProps } from "plus-pro-components";
 import { ElMessageBox, type FormInstance } from "element-plus";
 import type { BaseApi } from "@/api/base";
 import type { DetailResult } from "@/api/types";
 import { uniqueArrayObj } from "@/components/RePlusCRUD";
-import exportDataForm from "@/components/RePlusCRUD/src/components/exportData.vue";
 import { resourcesIDCacheApi } from "@/api/common";
-import importDataForm from "@/components/RePlusCRUD/src/components/importData.vue";
+import AddOrEdit from "../components/AddOrEdit.vue";
+import ExportData from "../components/ExportData.vue";
+import ImportData from "../components/ImportData.vue";
 
 interface callBackArgs {
   formData: object | any;
@@ -33,7 +33,7 @@ interface formDialogOptions {
   minWidth?: string; // 弹窗的的最小宽度
   columns?: ((formOptions: formDialogOptions) => object) | object; // 表单字段
   rawColumns?: PlusColumn[] | Array<any>; // 表单字段
-  form?: Component | any; // 挂载的form组件，默认是addOrEdit组件
+  form?: Component | any; // 挂载的form组件，默认是AddOrEdit组件
   props?: ((formOptions: formDialogOptions) => object) | object; //  内容区组件的 props，可通过 defineProps 接收
   formProps?: ((formOptions: formDialogOptions) => object) | object; //  plus form 的props
   rawFormProps?: PlusFormProps; //  plus form 的props
@@ -154,7 +154,7 @@ const openFormDialog = (formOptions: formDialogOptions) => {
     destroyOnClose: true,
     fullscreenIcon: true,
     closeOnClickModal: false,
-    contentRenderer: () => h(formOptions?.form ?? addOrEdit, { ref: formRef }),
+    contentRenderer: () => h(formOptions?.form ?? AddOrEdit, { ref: formRef }),
     beforeSure: async (done, { options, closeLoading }) => {
       const FormRef: FormInstance = formRef.value.getRef();
       const formInlineData = cloneDeep(options.props.formInline);
@@ -482,7 +482,7 @@ const handleExportData = (options: exportDataOptions) => {
       allowTypes
     },
     dialogOptions: { width: "600px" },
-    form: exportDataForm,
+    form: ExportData,
     saveCallback: async ({ formData, done, closeLoading }) => {
       if (formData.range === "all") {
         await api.export(formData).finally(() => {
@@ -529,7 +529,7 @@ const handleImportData = (options: importDataOptions) => {
       api: api
     },
     dialogOptions: { width: "600px" },
-    form: importDataForm,
+    form: ImportData,
     saveCallback: ({ formData, success, failed, closeLoading }) => {
       api
         .import(formData.action, formData.upload[0].raw)

@@ -11,8 +11,8 @@ import type {
   OperationProps,
   RePlusPageProps
 } from "@/components/RePlusCRUD";
-import noticeShowForm from "@/views/system/components/noticeShow.vue";
-import wangEditor from "@/components/RePlusCRUD/src/components/wangEditor.vue";
+import NoticeShowForm from "@/views/system/components/NoticeShow.vue";
+import WangEditor from "@/components/RePlusCRUD/src/components/WangEditor.vue";
 
 export function useNotice(tableRef: Ref) {
   const { t } = useI18n();
@@ -48,7 +48,7 @@ export function useNotice(tableRef: Ref) {
             fullscreenIcon: true,
             closeOnClickModal: false,
             hideFooter: true,
-            contentRenderer: () => h(noticeShowForm)
+            contentRenderer: () => h(NoticeShowForm)
           });
         },
         update: true
@@ -145,7 +145,7 @@ export function useNotice(tableRef: Ref) {
         message: ({ column, formValue }) => {
           column["hasLabel"] = false;
           column["renderField"] = (value, onChange) => {
-            return h(wangEditor, {
+            return h(WangEditor, {
               modelValue: value,
               onChange: ({ messages, files }) => {
                 onChange(messages);

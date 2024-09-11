@@ -5,7 +5,7 @@ import { searchMenuApi } from "@/api/system/search";
 import RePlusSearch from "@/components/RePlusSearch";
 import { transformI18n } from "@/plugins/i18n";
 
-defineOptions({ name: "searchMenu" });
+defineOptions({ name: "SearchMenu" });
 
 const emit = defineEmits<{
   (e: "change", ...args: any[]): void;

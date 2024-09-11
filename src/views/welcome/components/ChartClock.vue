@@ -2,7 +2,7 @@
 import { onBeforeUnmount, ref } from "vue";
 import { useResizeObserver } from "@pureadmin/utils";
 
-defineOptions({ name: "clock" });
+defineOptions({ name: "Clock" });
 const digit = [
   [
     [0, 0, 1, 1, 1, 0, 0],

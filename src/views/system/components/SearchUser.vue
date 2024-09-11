@@ -5,7 +5,7 @@ import { searchUserApi } from "@/api/system/search";
 import RePlusSearch from "@/components/RePlusSearch";
 import { ElImage } from "element-plus";
 
-defineOptions({ name: "searchUser" });
+defineOptions({ name: "SearchUser" });
 
 const emit = defineEmits<{
   (e: "change", ...args: any[]): void;

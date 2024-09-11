@@ -17,19 +17,20 @@ import {
   formatPublicLabels
 } from "./index";
 
-import SearchUser from "@/views/system/components/searchUser.vue";
-import SearchDept from "@/views/system/components/searchDept.vue";
-import SearchRole from "@/views/system/components/searchRole.vue";
-import uploadFile from "../components/uploadFile.vue";
-import tagInput from "../components/tagInput.vue";
-import phoneInput from "../components/phoneInput.vue";
-import jsonInput from "../components/jsonInput.vue";
 import { ElIcon, ElImage, ElLink } from "element-plus";
 import { Link } from "@element-plus/icons-vue";
 import Info from "@iconify-icons/ri/question-line";
 import type { Mutable } from "@vueuse/core";
 import type { TableColumnRenderer } from "@pureadmin/table";
 import { isEmail, isNumber } from "@pureadmin/utils";
+
+import SearchUser from "@/views/system/components/SearchUser.vue";
+import SearchDept from "@/views/system/components/SearchDept.vue";
+import SearchRole from "@/views/system/components/SearchRole.vue";
+import TagInput from "../components/TagInput.vue";
+import JsonInput from "../components/JsonInput.vue";
+import UploadFile from "../components/UploadFile.vue";
+import PhoneInput from "../components/PhoneInput.vue";
 
 interface TableColumns {
   /** 是否隐藏 */
@@ -345,7 +346,7 @@ export function useBaseColumns(localeName: string) {
         case "file upload":
           delete item["fieldProps"];
           item["renderField"] = (value, onChange) => {
-            return h(uploadFile, {
+            return h(UploadFile, {
               modelValue: value,
               isFile: column.input_type === "file upload",
               onChange: x => {
@@ -357,7 +358,7 @@ export function useBaseColumns(localeName: string) {
         case "list":
           item["valueType"] = "select";
           item["renderField"] = (value: Array<any>, onChange) => {
-            return h(tagInput, {
+            return h(TagInput, {
               modelValue: value,
               onChange: x => {
                 onChange(x);
@@ -368,7 +369,7 @@ export function useBaseColumns(localeName: string) {
         case "phone":
           column.default = { name: "China", code: "+86" };
           item["renderField"] = (value: any, onChange) => {
-            return h(phoneInput, {
+            return h(PhoneInput, {
               modelValue: value,
               onChange: x => {
                 onChange(x);
@@ -378,7 +379,7 @@ export function useBaseColumns(localeName: string) {
           break;
         case "json":
           item["renderField"] = (value: any, onChange) => {
-            return h(jsonInput, {
+            return h(JsonInput, {
               modelValue: value,
               onChange: x => {
                 onChange(x);

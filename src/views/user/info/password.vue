@@ -12,7 +12,7 @@ import { rulesPasswordApi } from "@/api/auth";
 import { handleOperation } from "@/components/RePlusCRUD";
 
 defineOptions({
-  name: "editUserPassword"
+  name: "EditUserPassword"
 });
 const { t } = useI18n();
 const { auth } = useApiAuth();

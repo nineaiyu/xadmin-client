@@ -4,7 +4,7 @@ import { hasAuth } from "@/router/utils";
 import { searchRoleApi } from "@/api/system/search";
 import RePlusSearch from "@/components/RePlusSearch";
 
-defineOptions({ name: "searchRole" });
+defineOptions({ name: "SearchRole" });
 
 const emit = defineEmits<{
   (e: "change", ...args: any[]): void;

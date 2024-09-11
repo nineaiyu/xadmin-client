@@ -25,7 +25,7 @@ import {
   usePublicHooks
 } from "@/components/RePlusCRUD";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import detailDataForm from "../components/detailData.vue";
+import DetailDataForm from "../components/DetailData.vue";
 
 import View from "@iconify-icons/ep/view";
 import Delete from "@iconify-icons/ep/delete";
@@ -337,7 +337,7 @@ export function usePlusCRUDPage(
       dialogOptions: { width: "60vw", hideFooter: true },
       minWidth: "600px",
       formProps: { ...plusDescriptionsProps },
-      form: detailDataForm
+      form: DetailDataForm
     });
   };
 

@@ -7,7 +7,7 @@ import { hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import type { CRUDColumn, OperationProps } from "@/components/RePlusCRUD";
 import { renderSwitch, usePublicHooks } from "@/components/RePlusCRUD";
-import noticeShowForm from "@/views/system/components/noticeShow.vue";
+import NoticeShowForm from "@/views/system/components/NoticeShow.vue";
 
 export function useNoticeRead(tableRef: Ref) {
   const { t } = useI18n();
@@ -43,7 +43,7 @@ export function useNoticeRead(tableRef: Ref) {
             fullscreenIcon: true,
             closeOnClickModal: false,
             hideFooter: true,
-            contentRenderer: () => h(noticeShowForm)
+            contentRenderer: () => h(NoticeShowForm)
           });
         },
         update: true

@@ -13,10 +13,10 @@ import {
   getDateTimePickerShortcuts,
   getPickerShortcuts
 } from "@/views/system/utils";
-import SearchUser from "@/views/system/components/searchUser.vue";
-import SearchDept from "@/views/system/components/searchDept.vue";
-import SearchRole from "@/views/system/components/searchRole.vue";
-import SearchMenu from "@/views/system/components/searchMenu.vue";
+import SearchUser from "@/views/system/components/SearchUser.vue";
+import SearchDept from "@/views/system/components/SearchDept.vue";
+import SearchRole from "@/views/system/components/SearchRole.vue";
+import SearchMenu from "@/views/system/components/SearchMenu.vue";
 import FromQuestion from "@/components/FromQuestion/index.vue";
 
 const props = withDefaults(defineProps<FormProps>(), {

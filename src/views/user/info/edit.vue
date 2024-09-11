@@ -7,7 +7,7 @@ import { useI18n } from "vue-i18n";
 import { useApiAuth } from "./utils/hook";
 
 defineOptions({
-  name: "editUserInfo"
+  name: "EditUserInfo"
 });
 
 const props = withDefaults(defineProps<FormProps>(), {

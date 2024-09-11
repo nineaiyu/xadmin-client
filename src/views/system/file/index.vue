@@ -4,7 +4,7 @@ import { useSystemUploadFile } from "./utils/hook";
 import RePlusCRUD from "@/components/RePlusCRUD";
 
 defineOptions({
-  name: "systemUploadFile"
+  name: "SystemUploadFile"
 });
 
 const tableRef = ref();

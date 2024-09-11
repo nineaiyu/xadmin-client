@@ -6,7 +6,7 @@ import { useApiAuth } from "./utils/hook";
 import croppingUpload from "@/components/RePictureUpload";
 
 defineOptions({
-  name: "editUserAvatar"
+  name: "EditUserAvatar"
 });
 
 const props = defineProps({

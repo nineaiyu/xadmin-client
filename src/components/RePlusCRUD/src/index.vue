@@ -10,7 +10,7 @@ import Delete from "@iconify-icons/ep/delete";
 import { PlusSearch } from "plus-pro-components";
 import ButtonOperation, {
   ButtonsCallBackParams
-} from "./components/buttonOperation";
+} from "./components/ButtonOperation";
 
 const props = withDefaults(defineProps<RePlusPageProps>(), {
   api: undefined,

@@ -50,7 +50,7 @@ import { uniqueArrayObj } from "@/components/RePlusCRUD";
 const emit = defineEmits<OperationEmits>();
 
 defineOptions({
-  name: "buttonOperation"
+  name: "ButtonOperation"
 });
 
 const props = withDefaults(defineProps<OperationProps>(), {
