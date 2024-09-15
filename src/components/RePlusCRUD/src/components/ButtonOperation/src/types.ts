@@ -6,6 +6,10 @@ import type {
 } from "element-plus";
 import type { Mutable } from "@vueuse/core";
 
+export type ButtonRowProps = Partial<
+  Mutable<ButtonProps & { [index: string]: any }>
+>;
+
 export interface OperationButtonsRow {
   text?:
     | string
@@ -17,7 +21,10 @@ export interface OperationButtonsRow {
   code: string | number;
   index?: number;
   icon?: Component;
-  props?: Partial<Mutable<ButtonProps & { [index: string]: any }>>;
+  props?:
+    | ButtonRowProps
+    | ((row: any, button: OperationButtonsRow) => ButtonRowProps)
+    | ComputedRef<ButtonRowProps>;
   show?:
     | number
     | boolean
@@ -53,6 +60,7 @@ export interface OperationButtonsRow {
     props?: ElTooltipProps;
   };
   onClick?: (params: ButtonsCallBackParams) => void;
+  _?: OperationButtonsRow;
 }
 
 export interface ButtonsCallBackParams {

@@ -216,7 +216,13 @@ export const useUserStore = defineStore({
           switch (data.message_type) {
             case "notify_message":
               if (data?.notice_type?.value === 0) {
-                message = h("i", { style: "color: teal" }, data?.message);
+                const isHtml =
+                  /<(?=.*? .*?\/ ?>|br|hr|input|!--|wbr)[a-z]+.*?>|<([a-z]+).*?<\/\1>/i.test(
+                    message
+                  );
+                if (!isHtml) {
+                  message = h("i", { style: "color: teal" }, data?.message);
+                }
               }
               ElNotification({
                 title: `${data?.notice_type?.label}-${data?.title}`,

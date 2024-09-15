@@ -198,7 +198,7 @@ export const uniqueArrayObj = (array, key, update = false) => {
   array.forEach(item => {
     if (typeof item === "object") {
       if (item?.update ?? update) {
-        b[item[key]] = { ...(b[item[key]] ?? {}), ...item };
+        b[item[key]] = { ...(b[item[key]] ?? {}), ...item, _: b[item[key]] };
       } else {
         b[item[key]] = item;
       }

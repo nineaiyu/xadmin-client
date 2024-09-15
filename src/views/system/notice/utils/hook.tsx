@@ -34,6 +34,17 @@ export function useNotice(tableRef: Ref) {
     width: 200,
     buttons: [
       {
+        code: "update",
+        update: true, // update:true 意味着我要更新这个按钮部分信息到默认的按钮信息，只更新props这个信息
+        props: (row, button) => {
+          const disabled = row?.notice_type?.value === NoticeChoices.SYSTEM;
+          return {
+            ...(button?._?.props ?? {}), // button?._ 这个表示之前老的按钮信息
+            ...{ disabled, type: disabled ? "default" : "primary" }
+          };
+        }
+      },
+      {
         code: "detail",
         onClick({ row }) {
           addDialog({

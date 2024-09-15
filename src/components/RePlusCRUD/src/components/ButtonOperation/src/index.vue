@@ -123,12 +123,16 @@ const buttonLoadings = ref({});
 
 // 渲染
 const render = (row: RecordType, buttonRow: OperationButtonsRow): VNode => {
+  const buttonRowProps = isFunction(buttonRow.props)
+    ? buttonRow.props(row, buttonRow)
+    : unref(buttonRow.props);
+
   const buttonComponent = h(
     ElButton,
     {
       size: props.size,
       loading: buttonLoadings.value[buttonRow.code],
-      ...buttonRow.props,
+      ...buttonRowProps,
       onClick: buttonRow.confirm?.title
         ? undefined
         : (event: MouseEvent) => handleClickAction(row, buttonRow, event)
