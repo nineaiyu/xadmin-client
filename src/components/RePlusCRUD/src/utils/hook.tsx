@@ -501,7 +501,7 @@ export function usePlusCRUDPage(
 
   const getPageColumn = (immediate: boolean) => {
     getColumnData(
-      api.columns,
+      auth.list && api.columns,
       api.fields,
       () => {
         formatColumnsRender();
