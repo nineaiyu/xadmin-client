@@ -42,7 +42,7 @@ const props = withDefaults(defineProps<FormProps>(), {
       r_svg_name: "",
       is_show_menu: true,
       is_show_parent: false,
-      is_keepalive: false,
+      is_keepalive: true,
       frame_url: "",
       frame_loading: false,
       transition_enter: "",
