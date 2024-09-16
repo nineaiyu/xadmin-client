@@ -64,6 +64,9 @@ const loading = ref(false);
   <el-form ref="formRef" :model="newFormInline" label-width="82px">
     <el-card shadow="never">
       <template #header>
+        <h2 class="inline-block mr-6">
+          {{ newFormInline?.notice_type?.label }}
+        </h2>
         <el-text :type="newFormInline.level?.value" size="large"
           >{{ newFormInline.title }}
         </el-text>
@@ -86,7 +89,7 @@ const loading = ref(false);
           v-loading="loading"
           :defaultConfig="editorConfig"
           :mode="mode"
-          style="height: 500px; overflow-y: hidden"
+          style="min-height: 500px; overflow-y: hidden"
           @onCreated="handleCreated"
         />
       </div>

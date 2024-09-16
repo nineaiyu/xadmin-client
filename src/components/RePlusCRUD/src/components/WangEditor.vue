@@ -164,7 +164,7 @@ const beforeUpload = (rawFile: File) => {
         v-loading="loading"
         :defaultConfig="editorConfig"
         :mode="mode"
-        style="height: 400px; overflow-y: hidden"
+        style="min-height: 400px; overflow-y: hidden"
         @onChange="handleChange"
         @onCreated="handleCreated"
       />

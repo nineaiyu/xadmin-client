@@ -107,7 +107,7 @@ export function useUserNotice(tableRef: Ref) {
       switch (column._column?.key) {
         case "title":
           column["cellRenderer"] = ({ row }) => (
-            <el-text type={row.level}>{row.title}</el-text>
+            <el-text type={row.level?.value}>{row.title}</el-text>
           );
           break;
         case "unread":

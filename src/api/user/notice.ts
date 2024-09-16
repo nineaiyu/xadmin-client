@@ -24,5 +24,5 @@ class UserNoticeReadApi extends BaseApi {
 }
 
 export const userNoticeReadApi = new UserNoticeReadApi(
-  "/api/system/user/notice"
+  "/api/notifications/site-messages"
 );
