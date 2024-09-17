@@ -23,7 +23,7 @@ export const settingsRegisterAuthApi = new ViewBaseApi(
 export const settingsSmsServerApi = new ViewBaseApi("/api/settings/sms");
 
 export const settingsSmsBackendsApi = new ViewBaseApi(
-  "/api/settings/sms/backend"
+  "/api/settings/sms/backends"
 );
 
 export const settingsSmsConfigApi = new ViewBaseApi("/api/settings/sms/config");

@@ -66,8 +66,13 @@ export function usePlusSearch(
   };
 
   const removeTag = val => {
-    const { toggleRowSelection } = tableRef.value.getTableRef().getTableRef();
-    toggleRowSelection(dataList.value.filter(v => v.pk === val?.pk)[0], false);
+    if (dataList.value?.length > 0) {
+      const { toggleRowSelection } = tableRef.value.getTableRef().getTableRef();
+      toggleRowSelection(
+        dataList.value.filter(v => v.pk === val?.pk)[0],
+        false
+      );
+    }
   };
 
   const onClear = () => {
