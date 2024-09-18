@@ -442,22 +442,26 @@ defineExpose({ getRef });
               :label="t('systemMenu.associationModel')"
             />
           </template>
-          <el-select
+          <el-cascader
             v-model="newFormInline.model"
+            :options="modelList"
+            :props="{
+              multiple: true,
+              emitPath: false,
+              checkStrictly: false
+            }"
             class="w-full"
             clearable
             filterable
-            multiple
-            value-key="pk"
           >
-            <el-option
-              v-for="item in modelList"
-              :key="item.pk"
-              :disabled="item.disabled || item.name === '*'"
-              :label="`${item.label}(${item.name})`"
-              :value="item"
-            />
-          </el-select>
+            <template #default="{ node, data }">
+              <span>{{ data.label }}</span>
+              <span v-show="data.parent">({{ data.name }})</span>
+              <span v-show="!node.isLeaf">
+                ({{ data?.children?.length }})
+              </span>
+            </template>
+          </el-cascader>
         </el-form-item>
         <el-form-item :label="t('systemMenu.requestMethod')" prop="method">
           <el-select

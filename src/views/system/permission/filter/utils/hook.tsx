@@ -79,7 +79,7 @@ export function useFieldRule(
         fieldLookupsData: fieldLookupsData,
         valuesData: valuesData,
         formInline: {
-          name: [row?.table, row?.field] ?? [],
+          name: [row?.table?.split(".")[0], row?.table, row?.field] ?? [],
           match: row?.match ?? "",
           exclude: row?.exclude ?? false,
           value: row?.value ?? "",
@@ -98,10 +98,10 @@ export function useFieldRule(
         const FormRef = formRef.value.getRef();
         FormRef.validate(valid => {
           if (valid) {
-            ruleInfo.value[`${data.name[0]}__${data.name[1]}__${data.match}`] =
+            ruleInfo.value[`${data.name[1]}__${data.name[2]}__${data.match}`] =
               {
-                table: data.name[0],
-                field: data.name[1],
+                table: data.name[1],
+                field: data.name[2],
                 match: data.match,
                 exclude: data.exclude,
                 type: data.type,

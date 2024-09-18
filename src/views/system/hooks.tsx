@@ -183,3 +183,22 @@ export const customRolePermissionOptions = (data: Array<any>) => {
   });
   return result;
 };
+
+export const formatFiledAppParent = results => {
+  const app = {};
+  results.forEach(item => {
+    if (!item.parent && item.name !== "*") {
+      const appName = item.name.split(".")[0];
+      item.parent = appName;
+      app[appName] = {
+        pk: appName,
+        name: appName,
+        label: appName,
+        parent: null
+      };
+    }
+  });
+  Object.values(app).forEach(item => {
+    results.push(item);
+  });
+};

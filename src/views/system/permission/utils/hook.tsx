@@ -8,6 +8,7 @@ import { transformI18n } from "@/plugins/i18n";
 import { getKeyList } from "@pureadmin/utils";
 import type { OperationProps, RePlusPageProps } from "@/components/RePlusCRUD";
 import filterForm from "../filter/index.vue";
+import { formatFiledAppParent } from "@/views/system/hooks";
 
 export function useDataPermission() {
   const fieldLookupsData = ref([]);
@@ -37,6 +38,7 @@ export function useDataPermission() {
         })
         .then(res => {
           if (res.code === 1000) {
+            formatFiledAppParent(res.data.results);
             fieldLookupsData.value = handleTree(res.data.results);
           }
         });

@@ -12,6 +12,7 @@ import { FieldChoices, MenuChoices } from "@/views/system/constants";
 import { hasAuth } from "@/router/utils";
 import { modelLabelFieldApi } from "@/api/system/field";
 import { handleExportData, handleImportData } from "@/components/RePlusCRUD";
+import { formatFiledAppParent } from "@/views/system/hooks";
 
 const defaultData: FormItemProps = {
   menu_type: MenuChoices.DIRECTORY,
@@ -294,9 +295,13 @@ export function useMenu() {
         })
         .then(res => {
           if (res.code === 1000) {
-            modelList.value = res.data.results.map(item => {
-              return { pk: item.pk, name: item.name, label: item.label };
+            const results = [];
+            res.data.results.forEach(item => {
+              const value = { pk: item.pk, name: item.name, label: item.label };
+              results.push({ ...value, value });
             });
+            formatFiledAppParent(results);
+            modelList.value = handleTree(results);
           }
         });
     }

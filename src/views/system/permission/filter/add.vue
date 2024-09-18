@@ -49,7 +49,7 @@ const getMatchData = (value: any) => {
   }
   if (hasAuth("list:systemModelFieldLookups")) {
     modelLabelFieldApi
-      .lookups({ table: value[0], field: value[1] })
+      .lookups({ table: value[1], field: value[2] })
       .then(res => {
         if (res.code === 1000) {
           matchList.value = res.data;
@@ -77,7 +77,7 @@ const tableData = ref([]);
 
 onMounted(() => {
   valueTypeChange(newFormInline.value.type);
-  if (newFormInline.value?.name[0]) {
+  if (newFormInline.value?.name[1]) {
     getMatchData(newFormInline.value.name);
   }
   try {
@@ -129,8 +129,12 @@ defineExpose({ getRef });
             filterable
             @change="getMatchData"
           >
-            <template #default="{ data }">
-              <span>{{ data.label }}-{{ data.name }}</span>
+            <template #default="{ node, data }">
+              <span>{{ data.label }}</span>
+              <span v-show="data.parent">({{ data.name }})</span>
+              <span v-show="!node.isLeaf">
+                ({{ data?.children?.length }})
+              </span>
             </template>
           </el-cascader>
         </el-form-item>
