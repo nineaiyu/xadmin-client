@@ -155,6 +155,12 @@ exportImport:
   uploadTip: Drag file here or click here to upload
   downloadTip: Download { action } template
 
+messageNotifications:
+  messageType: Message type
+  receivers: Receivers
+  editRecipient: Edit recipient
+  editRecipientTitle: Edit { title } recipient
+
 results:
   success: Executed successfully
   failed: Execution failure
@@ -213,6 +219,7 @@ menus:
   sysManagement: System Manage
   systemSettings: System Settings
   basicSettings: Basic Settings
+  messageSettings: Message Settings
   emailSettings: Email Settings
   smsSettings: SMS Settings
   passwordSettings: Password Settings
@@ -286,6 +293,7 @@ account:
   preference: Preference
   securityLog: Security Log
   accountManagement: Account Management
+  notifications: Notifications
   back: Back
   messagePush: Site Message Push
   messagePushTips: The announcement will be a real-time push notification in the upper right corner
@@ -574,9 +582,9 @@ welcome:
 settingBasic:
   title: Basic Settings
 
-settingEmail:
-  title: Email Server
-  test: Email Send Test
+settingMessage:
+  mailTitle: Email Server
+  messageTitle: Message Notifications
 
 settingPassword:
   title: Password Rules

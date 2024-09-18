@@ -1,10 +1,11 @@
 <script lang="ts" setup>
 import { useRouter } from "vue-router";
-import { onBeforeMount, ref } from "vue";
+import { computed, onBeforeMount, ref } from "vue";
 import { ReText } from "@/components/ReText";
 import Profile from "./components/Profile.vue";
 import Preferences from "./components/Preferences.vue";
 import SecurityLog from "./components/SecurityLog.vue";
+import Notifications from "./components/Notifications.vue";
 import { deviceDetection, useGlobal } from "@pureadmin/utils";
 import AccountManagement from "./components/AccountManagement.vue";
 import TopCollapse from "@/layout/components/lay-sidebar/components/SidebarTopCollapse.vue";
@@ -14,9 +15,11 @@ import leftLine from "@iconify-icons/ri/arrow-left-s-line";
 import ProfileIcon from "@iconify-icons/ri/user-3-line";
 import PreferencesIcon from "@iconify-icons/ri/settings-3-line";
 import SecurityLogIcon from "@iconify-icons/ri/window-line";
+import MessageIcon from "@iconify-icons/ep/message";
 import AccountManagementIcon from "@iconify-icons/ri/profile-line";
 import { useUserStoreHook } from "@/store/modules/user";
 import { useI18n } from "vue-i18n";
+import { hasAuth } from "@/router/utils";
 
 defineOptions({
   name: "Account"
@@ -31,32 +34,43 @@ onBeforeMount(() => {
 });
 const { t } = useI18n();
 
-const panes = [
+const panes = computed(() => [
   {
     key: "profile",
     label: t("account.profile"),
     icon: ProfileIcon,
-    component: Profile
-  },
-  {
-    key: "preferences",
-    label: t("account.preference"),
-    icon: PreferencesIcon,
-    component: Preferences
-  },
-  {
-    key: "securityLog",
-    label: t("account.securityLog"),
-    icon: SecurityLogIcon,
-    component: SecurityLog
+    component: Profile,
+    auth: true
   },
   {
     key: "accountManagement",
     label: t("account.accountManagement"),
     icon: AccountManagementIcon,
-    component: AccountManagement
+    component: AccountManagement,
+    auth: hasAuth("reset:UserInfo") || hasAuth("bind:UserInfo")
+  },
+  {
+    key: "preferences",
+    label: t("account.preference"),
+    icon: PreferencesIcon,
+    component: Preferences,
+    auth: true
+  },
+  {
+    key: "Notifications",
+    label: t("account.notifications"),
+    icon: MessageIcon,
+    component: Notifications,
+    auth: hasAuth("list:UserNotifications")
+  },
+  {
+    key: "securityLog",
+    label: t("account.securityLog"),
+    icon: SecurityLogIcon,
+    component: SecurityLog,
+    auth: hasAuth("list:userLoginLog")
   }
-];
+]);
 const witchPane = ref("profile");
 </script>
 
@@ -89,7 +103,7 @@ const witchPane = ref("profile");
           </div>
         </div>
         <el-menu-item
-          v-for="item in panes"
+          v-for="item in panes.filter(item => item.auth)"
           :key="item.key"
           :index="item.key"
           @click="

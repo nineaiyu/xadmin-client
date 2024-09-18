@@ -1,17 +1,42 @@
 <script lang="ts" setup>
 import { onMounted, ref } from "vue";
 
-import { systemMsgSubscriptionApi } from "@/api/system/notifications";
+import { SystemMsgSubscriptionApi } from "@/api/system/notifications";
 import { handleOperation, openFormDialog } from "@/components/RePlusCRUD";
 import { useI18n } from "vue-i18n";
 import SearchDialog from "@/views/system/components/SearchDialog.vue";
 
 defineOptions({
-  name: "SettingNotifications"
+  name: "MessageNotifications"
 });
+
+interface NotificationsProps {
+  api: SystemMsgSubscriptionApi;
+  auth: {
+    list: boolean;
+    update: boolean;
+    backends: boolean;
+  };
+  hasReceivers?: boolean;
+  hasOperations?: boolean;
+}
+
+const props = withDefaults(defineProps<NotificationsProps>(), {
+  api: undefined,
+  auth: () => ({
+    list: false,
+    update: false,
+    backends: false
+  }),
+  hasReceivers: false,
+  hasOperations: false
+});
+
 const { t } = useI18n();
 const tableData = ref([]);
 const receiveBackends = ref([]);
+const loading = ref(false);
+
 const formatCategory = subscriptions => {
   tableData.value = [];
   for (const category of subscriptions) {
@@ -42,12 +67,18 @@ const formatCategory = subscriptions => {
 };
 
 const getInitData = () => {
-  systemMsgSubscriptionApi.list().then(res => {
-    formatCategory(res.data);
-  });
-  systemMsgSubscriptionApi.backends().then(res => {
-    receiveBackends.value = res.data;
-  });
+  if (props.auth.backends) {
+    props.api.backends().then(res => {
+      receiveBackends.value = res.data;
+    });
+  }
+  if (props.auth.list) {
+    loading.value = true;
+    props.api.list().then(res => {
+      formatCategory(res.data);
+      loading.value = false;
+    });
+  }
 };
 
 onMounted(() => {
@@ -63,7 +94,7 @@ const onCheckReceiveBackend = row => {
   }
   handleOperation({
     t,
-    apiReq: systemMsgSubscriptionApi.patch(row.pk, {
+    apiReq: props.api.patch(row.pk, {
       receive_backends: backends
     })
   });
@@ -72,7 +103,7 @@ const onCheckReceiveBackend = row => {
 const handleSaveReceivers = row => {
   openFormDialog({
     t,
-    title: `修改 ${row.value} 的消息接收人`,
+    title: t("messageNotifications.editRecipientTitle", { title: row.value }),
     rawRow: {
       component: "SearchUser",
       data: row.receivers
@@ -82,7 +113,7 @@ const handleSaveReceivers = row => {
     saveCallback: ({ formData, done, closeLoading }) => {
       handleOperation({
         t,
-        apiReq: systemMsgSubscriptionApi.patch(row.pk, {
+        apiReq: props.api.patch(row.pk, {
           users: formData.data.map(r => r.pk)
         }),
         success({ data }) {
@@ -106,8 +137,17 @@ const handleSaveReceivers = row => {
 </script>
 
 <template>
-  <el-table :data="tableData" :stripe="true" default-expand-all row-key="pk">
-    <el-table-column label="消息类型" width="230">
+  <el-table
+    v-loading="loading"
+    :data="tableData"
+    :stripe="true"
+    default-expand-all
+    row-key="pk"
+  >
+    <el-table-column
+      :label="t('messageNotifications.messageType')"
+      min-width="200"
+    >
       <template #default="{ row }">
         <span>{{ row.value }}</span>
       </template>
@@ -123,27 +163,32 @@ const handleSaveReceivers = row => {
           <el-checkbox
             v-if="header.value !== 'site_msg'"
             v-model="row.receiveBackends[header.value]"
+            :disabled="!auth.update"
             @change="onCheckReceiveBackend(row)"
           />
           <el-checkbox v-else :disabled="true" :model-value="true" />
         </span>
       </template>
     </el-table-column>
-    <el-table-column label="接收人" show-overflow-tooltip>
+    <el-table-column
+      v-if="hasReceivers"
+      :label="t('messageNotifications.receivers')"
+      show-overflow-tooltip
+    >
       <template #default="{ row }">
         <span v-if="!row.children">
-          {{
-            row.receivers
-              .map(item => `${item.nickname}(${item.label})`)
-              .join(", ")
-          }}
+          {{ row.receivers.map(item => item.label).join(", ") }}
         </span>
       </template>
     </el-table-column>
-    <el-table-column label="操作" width="200">
+    <el-table-column
+      v-if="auth.update && hasOperations"
+      :label="t('commonLabels.operation')"
+      width="200"
+    >
       <template v-slot="{ row }">
         <el-button v-if="!row.children" @click="handleSaveReceivers(row)">
-          修改消息接收人
+          {{ t("messageNotifications.editRecipient") }}
         </el-button>
       </template>
     </el-table-column>

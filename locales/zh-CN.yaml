@@ -155,6 +155,12 @@ exportImport:
   uploadTip: 可点击或拖拽上传
   downloadTip: 下载{ action }模板
 
+messageNotifications:
+  messageType: 消息类型
+  receivers: 接收人
+  editRecipient: 修改消息接收人
+  editRecipientTitle: 修改 { title } 的消息接收人
+
 results:
   success: 执行成功
   failed: 执行失败
@@ -213,6 +219,7 @@ menus:
   sysManagement: 系统管理
   systemSettings: 系统设置
   basicSettings: 基本设置
+  messageSettings: 消息通知
   emailSettings: 邮件设置
   smsSettings: 短信设置
   passwordSettings: 密码设置
@@ -285,6 +292,7 @@ account:
   profile: 个人信息
   preference: 偏好设置
   securityLog: 安全日志
+  notifications: 消息订阅
   accountManagement: 账户管理
   back: 返回
   messagePush: 消息公告推送
@@ -574,9 +582,9 @@ welcome:
 settingBasic:
   title: 基本设置
 
-settingEmail:
-  title: 邮件服务器
-  test: 邮件测试
+settingMessage:
+  mailTitle: 邮件服务器
+  messageTitle: 系统消息订阅
 
 settingPassword:
   title: 密码规则配置
