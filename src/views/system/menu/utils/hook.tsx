@@ -136,8 +136,8 @@ export function useMenu() {
     });
   }
 
-  const handleConfirm = (formRef, row) => {
-    formRef!.validate((isValid: boolean) => {
+  const handleConfirm = (instance, row) => {
+    instance!.validate((isValid: boolean) => {
       if (isValid) {
         row.meta.title = row.title;
         if (row.pk) {
@@ -215,9 +215,9 @@ export function useMenu() {
       closeOnClickModal: false,
       contentRenderer: () => h(editForm, { ref: formRef }),
       beforeSure: (done, { options }) => {
-        const FormRef = formRef.value.getRef();
+        const FormRef = formRef.value?.getRef();
         const curData = options.props.formInline as FormItemProps;
-        FormRef.validate(valid => {
+        FormRef?.validate(valid => {
           if (valid) {
             curData.meta.title = curData.title;
             // 当后端pk 不设置可读时，需要删除pk，否则后端会提示 pk 不对

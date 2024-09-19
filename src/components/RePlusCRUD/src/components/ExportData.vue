@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { computed, ref } from "vue";
-import { PlusColumn, PlusForm } from "plus-pro-components";
+import { FieldValues, PlusColumn, PlusForm } from "plus-pro-components";
 import { ExportImportFormatOptions } from "../utils/constants";
 import { useI18n } from "vue-i18n";
 
@@ -15,7 +15,7 @@ interface FormItemProps {
 }
 
 interface FormProps {
-  formInline: FormItemProps;
+  formInline: Partial<FieldValues & FormItemProps>;
   formProps?: object;
   columns?: PlusColumn[];
   allowTypes?: string[];
@@ -31,7 +31,7 @@ const props = withDefaults(defineProps<FormProps>(), {
 });
 const { t } = useI18n();
 
-const state = ref<FormItemProps>(props.formInline);
+const state = ref<FormProps["formInline"]>(props.formInline);
 const formColumns: PlusColumn[] = [
   {
     label: t("exportImport.type"),

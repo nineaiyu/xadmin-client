@@ -43,7 +43,7 @@ interface TagInputProps {
 
 defineOptions({ name: "TagInput" });
 
-const value = defineModel<Array<any>>({ default: [] });
+const filterTags = defineModel<Array<any>>({ default: [] });
 
 const props = withDefaults(defineProps<TagInputProps>(), {
   tagType: () => "info",
@@ -58,7 +58,6 @@ const emit = defineEmits<{
 const SearchInput = ref(null);
 const { t } = useI18n();
 
-const filterTags = ref(computed(() => value.value));
 const focus = ref(false);
 const filterValue = ref("");
 const component = ref(

@@ -57,12 +57,12 @@ interface FormItemProps {
 }
 
 interface FormProps {
-  formInline: FormItemProps;
-  treeData: any[];
-  methodChoices: any[];
-  menuChoices: any[];
-  menuUrlList: any[];
-  modelList: any[];
+  formInline?: FormItemProps;
+  treeData?: any[];
+  methodChoices?: any[];
+  menuChoices?: any[];
+  menuUrlList?: any[];
+  modelList?: any[];
 }
 
 interface TreeFormProps {
