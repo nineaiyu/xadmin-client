@@ -210,7 +210,7 @@ defineExpose({
         :loading="loadingStatus"
         :pagination="tablePagination"
         :size="tableBarData.size as any"
-        :tree-props="treeProps"
+        :tree-props="treeProps as any"
         adaptive
         align-whole="center"
         default-expand-all

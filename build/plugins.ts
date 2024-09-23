@@ -28,7 +28,6 @@ export function getPluginsList(
     vueJsx(),
     // vueDevTools(),
     VueI18nPlugin({
-      jitCompilation: false,
       include: [pathResolve("../locales/**")]
     }),
     checker({
