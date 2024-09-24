@@ -151,7 +151,7 @@ const beforeUpload = (rawFile: File) => {
 </script>
 
 <template>
-  <el-card shadow="never">
+  <el-card shadow="never" class="w-full">
     <div class="wangeditor">
       <Toolbar
         :defaultConfig="toolbarConfig"

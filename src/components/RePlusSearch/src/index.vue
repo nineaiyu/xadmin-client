@@ -82,7 +82,7 @@ watch(
       <el-tag type="primary">{{ value?.label }}</el-tag>
     </template>
     <template #empty>
-      <div class="max-w-[1000px] min-w-[800px]">
+      <div class="max-w-[100vw] min-w-[800px]">
         <RePlusCRUD
           ref="tableRef"
           :api="api"

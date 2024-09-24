@@ -80,8 +80,10 @@ export function usePlusSearch(
     clearSelection();
   };
 
-  const onSure = () => {
+  const onSure = async () => {
     selectVisible.value = false;
+    selectRef.value.expanded = false;
+    await nextTick();
     selectRef.value.blur();
   };
 

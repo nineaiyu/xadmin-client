@@ -89,7 +89,7 @@ const handleRead = (pk: number) => {
             @mouseover="hoverTitle"
           >
             <el-text
-              :type="noticeItem?.level"
+              :type="noticeItem?.level?.value"
               @click="handleRead(noticeItem.pk)"
               >{{ noticeItem.title }}
             </el-text>

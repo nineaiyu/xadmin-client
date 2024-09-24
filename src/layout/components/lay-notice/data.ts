@@ -5,7 +5,7 @@ export interface ListItem {
   created_time?: string;
   notice_type: number;
   message: string;
-  level?: "success" | "warning" | "info" | "danger" | "primary" | "";
+  level?: { value: "success" | "warning" | "info" | "danger" | "primary" | "" };
   extra?: string;
 }
 

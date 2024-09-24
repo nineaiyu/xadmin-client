@@ -54,8 +54,7 @@ onMounted(() => {
 });
 
 const getLabel = computed(
-  () => item =>
-    t(item.name) + (item.list.length > 0 ? `(${item.list.length})` : "")
+  () => item => t(item.name) + (item.total > 0 ? `(${item.total})` : "")
 );
 </script>
 
