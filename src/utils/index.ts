@@ -34,17 +34,17 @@ export const getMenuFromPk = (data: any[] | any, id: number) => {
 
 // 最小长度
 export const wordMinLength = (word: string, minLength: number) => {
-  return word.match(new RegExp("^(.{" + minLength + ",})$"));
+  return word?.match(new RegExp("^(.{" + minLength + ",})$"));
 };
 
 // 大写字母
 export const wordUpperCase = (word: string) => {
-  return word.match(/([A-Z]+)/);
+  return word?.match(/([A-Z]+)/);
 };
 
 // 小写字母
 export const wordLowerCase = (word: string) => {
-  return word.match(/([a-z]+)/);
+  return word?.match(/([a-z]+)/);
 };
 
 // 数字字符
@@ -54,7 +54,7 @@ export const wordNumber = (word: string) => {
 
 // 特殊字符
 export const wordSpecialChar = (word: string) => {
-  return word.match(
+  return word?.match(
     /[`,~,!,@,#,\$,%,\^,&,\*,\(,\),\-,_,=,\+,\{,\},\[,\],\|,\\,;,',:,",\,,\.,<,>,\/,\?]+/
   );
 };
