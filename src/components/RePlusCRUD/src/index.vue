@@ -78,6 +78,7 @@ const {
   handleAddOrEdit,
   handleManyDelete,
   handleSizeChange,
+  handleFullscreen,
   onSelectionCancel,
   handleCurrentChange,
   handleTableBarChange,
@@ -146,6 +147,7 @@ defineExpose({
         :columns="listColumns"
         @refresh="handleGetData"
         @change="handleTableBarChange"
+        @fullscreen="handleFullscreen"
       >
         <template #title>
           <el-space>

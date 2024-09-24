@@ -106,8 +106,8 @@ defineExpose({ onTreeReset });
 <template>
   <div
     v-loading="props.treeLoading"
-    :style="{ minHeight: `calc(100vh - 141px)` }"
-    class="h-full bg-bg_color overflow-auto"
+    :style="{ minHeight: `calc(100vh - 160px)` }"
+    class="h-full bg-bg_color overflow-hidden relative"
   >
     <div class="flex items-center h-[34px]">
       <el-input
@@ -152,45 +152,47 @@ defineExpose({ onTreeReset });
       </el-dropdown>
     </div>
     <el-divider />
-    <el-tree
-      ref="treeRef"
-      :data="props.treeData"
-      :expand-on-click-node="false"
-      :filter-node-method="filterNode"
-      :props="defaultProps"
-      default-expand-all
-      node-key="pk"
-      @node-click="nodeClick"
-    >
-      <template #default="{ node, data }">
-        <span
-          :class="[
-            'pl-1',
-            'w-full',
-            'pr-1',
-            'rounded',
-            'flex',
-            'items-center',
-            'select-none',
-            'hover:text-primary',
-            searchValue.trim().length > 0 &&
-              node.label.includes(searchValue) &&
-              'text-red-500',
-            highlightMap[data.pk]?.highlight ? 'dark:text-primary' : ''
-          ]"
-          :style="{
-            color: highlightMap[data.pk]?.highlight
-              ? 'var(--el-color-primary)'
-              : '',
-            background: highlightMap[data.pk]?.highlight
-              ? 'var(--el-color-primary-light-7)'
-              : 'transparent'
-          }"
-        >
-          {{ node.label }} {{ data.user_count ? data.user_count : "" }}
-        </span>
-      </template>
-    </el-tree>
+    <el-scrollbar height="calc(90vh - 160px)">
+      <el-tree
+        ref="treeRef"
+        :data="props.treeData"
+        :expand-on-click-node="false"
+        :filter-node-method="filterNode"
+        :props="defaultProps"
+        default-expand-all
+        node-key="pk"
+        @node-click="nodeClick"
+      >
+        <template #default="{ node, data }">
+          <span
+            :class="[
+              'pl-1',
+              'w-full',
+              'pr-1',
+              'rounded',
+              'flex',
+              'items-center',
+              'select-none',
+              'hover:text-primary',
+              searchValue.trim().length > 0 &&
+                node.label.includes(searchValue) &&
+                'text-red-500',
+              highlightMap[data.pk]?.highlight ? 'dark:text-primary' : ''
+            ]"
+            :style="{
+              color: highlightMap[data.pk]?.highlight
+                ? 'var(--el-color-primary)'
+                : '',
+              background: highlightMap[data.pk]?.highlight
+                ? 'var(--el-color-primary-light-7)'
+                : 'transparent'
+            }"
+          >
+            {{ node.label }} {{ data.user_count ? data.user_count : "" }}
+          </span>
+        </template>
+      </el-tree>
+    </el-scrollbar>
   </div>
 </template>
 

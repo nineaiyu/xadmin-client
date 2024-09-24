@@ -56,7 +56,7 @@ const props = {
 export default defineComponent({
   name: "PureTableBar",
   props,
-  emits: ["refresh", "change"],
+  emits: ["refresh", "fullscreen", "change"],
   setup(props, { emit, slots, attrs }) {
     const size = ref("default");
     const loading = ref(false);
@@ -136,6 +136,11 @@ export default defineComponent({
     function onExpand() {
       isExpandAll.value = !isExpandAll.value;
       toggleRowExpansionAll(props.tableRef.data, isExpandAll.value);
+    }
+
+    function onFullscreen() {
+      isFullscreen.value = !isFullscreen.value;
+      emit("fullscreen", isFullscreen.value);
     }
 
     function toggleRowExpansionAll(data, isExpansion) {
@@ -422,7 +427,7 @@ export default defineComponent({
                     ? t("tableBar.exitFullscreen")
                     : t("tableBar.fullscreen")
                 }
-                onClick={() => (isFullscreen.value = !isFullscreen.value)}
+                onClick={() => onFullscreen()}
               />
             </div>
           </div>

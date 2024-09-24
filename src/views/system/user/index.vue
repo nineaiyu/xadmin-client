@@ -55,6 +55,7 @@ const {
       locale-name="systemUser"
       :operationButtonsProps="operationButtonsProps"
       :tableBarButtonsProps="tableBarButtonsProps"
+      :pureTableProps="{ adaptiveConfig: { offsetBottom: 130 } }"
       @selectionChange="selectionChange"
     />
   </div>

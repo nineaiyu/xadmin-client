@@ -274,6 +274,10 @@ export function usePlusCRUDPage(
     handleGetData();
   };
 
+  const handleFullscreen = () => {
+    tableRef.value.setAdaptive();
+  };
+
   const handleCurrentChange = (val: number) => {
     searchFields.value.page = val;
     handleGetData();
@@ -559,6 +563,7 @@ export function usePlusCRUDPage(
     handleAddOrEdit,
     handleManyDelete,
     handleSizeChange,
+    handleFullscreen,
     onSelectionCancel,
     handleCurrentChange,
     handleTableBarChange,
