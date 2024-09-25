@@ -14,7 +14,7 @@ import ButtonOperation, {
 
 const props = withDefaults(defineProps<RePlusPageProps>(), {
   api: undefined,
-  title: "",
+  title: undefined,
   isTree: false,
   tableBar: true,
   localeName: "",
@@ -142,64 +142,72 @@ defineExpose({
       />
     </div>
     <div :class="tableBarData.renderClass">
-      <PureTableBar
-        v-if="tableBar"
-        :columns="listColumns"
-        @refresh="handleGetData"
-        @change="handleTableBarChange"
-        @fullscreen="handleFullscreen"
-      >
-        <template #title>
-          <el-space>
-            <p class="font-bold truncate">
-              {{ title ?? pageTitle }}
-            </p>
-            <div
-              v-if="selectedNum > 0"
-              v-motion-fade
-              class="bg-[var(--el-fill-color-light)] w-[160px] h-[46px] m-2 pl-4 flex items-center rounded-md"
-            >
-              <span
-                class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
-                style="font-size: 14px"
+      <el-scrollbar>
+        <PureTableBar
+          v-if="tableBar"
+          :columns="listColumns"
+          @refresh="handleGetData"
+          @change="handleTableBarChange"
+          @fullscreen="handleFullscreen"
+        >
+          <template #title>
+            <el-space>
+              <p class="font-bold truncate mr-3">
+                {{ title ?? pageTitle }}
+              </p>
+              <div
+                v-if="selectedNum > 0"
+                v-motion-fade
+                class="bg-[var(--el-fill-color-light)] w-[160px] h-[40px] m-2 pl-4 flex items-center rounded-md"
               >
-                {{ t("buttons.selected", { count: selectedNum }) }}
-              </span>
-              <el-button text type="primary" @click="onSelectionCancel">
-                {{ t("buttons.cancel") }}
-              </el-button>
+                <span
+                  class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
+                  style="font-size: 14px"
+                >
+                  {{ t("buttons.selected", { count: selectedNum }) }}
+                </span>
+                <el-button text type="primary" @click="onSelectionCancel">
+                  {{ t("buttons.cancel") }}
+                </el-button>
+              </div>
+            </el-space>
+          </template>
+          <template #buttons>
+            <div class="flex">
+              <div v-if="selectedNum > 0" v-motion-fade class="mr-3 flex">
+                <el-popconfirm
+                  v-if="auth.batchDelete"
+                  :title="
+                    t('buttons.batchDeleteConfirm', { count: selectedNum })
+                  "
+                  @confirm="handleManyDelete"
+                >
+                  <template #reference>
+                    <el-button
+                      :icon="useRenderIcon(Delete)"
+                      plain
+                      type="danger"
+                    >
+                      {{ t("buttons.batchDelete") }}
+                    </el-button>
+                  </template>
+                </el-popconfirm>
+              </div>
+              <button-operation
+                :show-number="99"
+                v-bind="tableBarButtonsProps"
+                :buttons="tableBarButtons"
+                @clickAction="
+                  data => {
+                    emit('tableBarClickAction', data);
+                  }
+                "
+              />
+              <slot name="barButtons" />
             </div>
-          </el-space>
-        </template>
-        <template #buttons>
-          <el-space>
-            <div v-if="selectedNum > 0" v-motion-fade>
-              <el-popconfirm
-                v-if="auth.batchDelete"
-                :title="t('buttons.batchDeleteConfirm', { count: selectedNum })"
-                @confirm="handleManyDelete"
-              >
-                <template #reference>
-                  <el-button :icon="useRenderIcon(Delete)" plain type="danger">
-                    {{ t("buttons.batchDelete") }}
-                  </el-button>
-                </template>
-              </el-popconfirm>
-            </div>
-            <button-operation
-              :show-number="99"
-              v-bind="tableBarButtonsProps"
-              :buttons="tableBarButtons"
-              @clickAction="
-                data => {
-                  emit('tableBarClickAction', data);
-                }
-              "
-            />
-            <slot name="barButtons" />
-          </el-space>
-        </template>
-      </PureTableBar>
+          </template>
+        </PureTableBar>
+      </el-scrollbar>
       <pure-table
         ref="tableRef"
         :adaptiveConfig="{ offsetBottom: 110 }"

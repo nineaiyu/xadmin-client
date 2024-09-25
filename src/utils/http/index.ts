@@ -25,7 +25,7 @@ import { ElMessage } from "element-plus";
 const defaultConfig: AxiosRequestConfig = {
   baseURL: import.meta.env.VITE_API_DOMAIN,
   // 请求超时时间
-  timeout: 30000,
+  timeout: 60000,
   headers: {
     Accept: "application/json, text/plain, */*",
     "Content-Type": "application/json",
