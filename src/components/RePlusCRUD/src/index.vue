@@ -142,7 +142,7 @@ defineExpose({
       />
     </div>
     <div :class="tableBarData.renderClass">
-      <el-scrollbar>
+      <el-scrollbar class="!max-h-[60px]">
         <PureTableBar
           v-if="tableBar"
           :columns="listColumns"
