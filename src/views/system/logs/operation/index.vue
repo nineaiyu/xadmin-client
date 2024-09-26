@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useOperationLog } from "./utils/hook";
-import RePlusCRUD from "@/components/RePlusCRUD";
+import { RePlusPage } from "@/components/RePlusPage";
 
 defineOptions({
   name: "SystemOperationLog"
@@ -16,7 +16,7 @@ const {
 </script>
 
 <template>
-  <RePlusCRUD
+  <RePlusPage
     ref="tableRef"
     :api="api"
     :auth="auth"

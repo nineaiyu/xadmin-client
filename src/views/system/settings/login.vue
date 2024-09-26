@@ -8,7 +8,7 @@ import { computed, ref } from "vue";
 import { hasAuth } from "@/router/utils";
 import Setting from "@/views/system/components/settings/index.vue";
 import { settingItemProps } from "@/views/system/components/settings/types";
-import RePlusCRUD from "@/components/RePlusCRUD";
+import { RePlusPage } from "@/components/RePlusPage";
 import { useI18n } from "vue-i18n";
 
 defineOptions({
@@ -48,7 +48,7 @@ const { t } = useI18n();
 <template>
   <setting :model-value="settingData">
     <el-tab-pane v-if="auth.list" :label="t('settingLogin.title')" :lazy="true">
-      <RePlusCRUD
+      <RePlusPage
         ref="tableRef"
         :title="t('settingLogin.title')"
         :api="api"

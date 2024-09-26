@@ -8,7 +8,7 @@ import {
   handleOperation,
   type OperationProps,
   type RePlusPageProps
-} from "@/components/RePlusCRUD";
+} from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import CircleClose from "@iconify-icons/ep/circle-close";
 

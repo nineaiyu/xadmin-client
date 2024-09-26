@@ -7,7 +7,7 @@ import { zxcvbn } from "@zxcvbn-ts/core";
 import { useI18n } from "vue-i18n";
 import { passwordRulesCheck } from "@/utils";
 import { rulesPasswordApi } from "@/api/auth";
-import { handleOperation } from "@/components/RePlusCRUD";
+import { handleOperation } from "@/components/RePlusPage";
 import { type PlusColumn } from "plus-pro-components";
 
 defineOptions({

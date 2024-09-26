@@ -8,7 +8,7 @@ import { useUserStoreHook } from "@/store/modules/user";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Lock from "@iconify-icons/ri/lock-fill";
 import { resetPasswordApi } from "@/api/auth";
-import { handleOperation } from "@/components/RePlusCRUD";
+import { handleOperation } from "@/components/RePlusPage";
 import { AesEncrypted } from "@/utils/aes";
 import { passwordRulesCheck } from "@/utils";
 import ReSendVerifyCode from "@/components/ReSendVerifyCode";

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { onMounted, ref } from "vue";
-import { handleOperation, useBaseColumns } from "@/components/RePlusCRUD";
+import { handleOperation, useBaseColumns } from "@/components/RePlusPage";
 import { PlusForm } from "plus-pro-components";
 import { cloneDeep } from "lodash-es";
 import { useI18n } from "vue-i18n";

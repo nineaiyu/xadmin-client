@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref } from "vue";
 import { useDept } from "./utils/hook";
-import RePlusCRUD from "@/components/RePlusCRUD";
+import { RePlusPage } from "@/components/RePlusPage";
 
 defineOptions({
   name: "SystemDept"
@@ -10,7 +10,6 @@ defineOptions({
 const tableRef = ref();
 
 const {
-  t,
   api,
   auth,
   listColumnsFormat,
@@ -21,7 +20,7 @@ const {
 </script>
 
 <template>
-  <RePlusCRUD
+  <RePlusPage
     ref="tableRef"
     :api="api"
     :auth="auth"

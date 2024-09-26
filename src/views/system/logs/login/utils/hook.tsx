@@ -8,7 +8,7 @@ import {
   type CRUDColumn,
   type OperationProps,
   renderBooleanTag
-} from "@/components/RePlusCRUD";
+} from "@/components/RePlusPage";
 
 export function useLoginLog() {
   const { t } = useI18n();

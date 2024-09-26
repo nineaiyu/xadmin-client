@@ -10,7 +10,7 @@ import { useVerifyCode } from "./verifyCode";
 import type { FormRules } from "element-plus";
 import { $t, transformI18n } from "@/plugins/i18n";
 import { AesEncrypted } from "@/utils/aes";
-import { handleOperation } from "@/components/RePlusCRUD";
+import { handleOperation } from "@/components/RePlusPage";
 import { useI18n } from "vue-i18n";
 
 export const useSendVerifyCode = (

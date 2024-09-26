@@ -9,7 +9,7 @@ import { useI18n } from "vue-i18n";
 import { useApiAuth } from "./utils/hook";
 import { passwordRulesCheck } from "@/utils";
 import { rulesPasswordApi } from "@/api/auth";
-import { handleOperation } from "@/components/RePlusCRUD";
+import { handleOperation } from "@/components/RePlusPage";
 
 defineOptions({
   name: "EditUserPassword"

@@ -15,7 +15,7 @@ import { debounce, delay } from "@pureadmin/utils";
 import { useEventListener } from "@vueuse/core";
 import ReSendVerifyCode from "@/components/ReSendVerifyCode";
 import { AesEncrypted } from "@/utils/aes";
-import { handleOperation } from "@/components/RePlusCRUD";
+import { handleOperation } from "@/components/RePlusPage";
 import { setToken } from "@/utils/auth";
 
 defineOptions({

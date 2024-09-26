@@ -11,7 +11,8 @@ import type {
 } from "@pureadmin/table";
 import type { BaseApi } from "@/api/base";
 import type { formDialogOptions } from "./handle";
-import type { OperationProps } from "@/components/RePlusCRUD";
+import type { OperationProps } from "@/components/RePlusPage";
+import type { PureTableBarProps } from "@/components/RePureTableBar";
 
 interface ApiAuthProps {
   list?: string | boolean | null | BaseApi["list"];
@@ -39,6 +40,7 @@ interface RePlusPageProps {
    */
   plusSearchProps?: Partial<PlusSearchProps>;
   pureTableProps?: Partial<PureTableProps>;
+  pureTableBarProps?: Partial<PureTableBarProps>;
   plusDescriptionsProps?: Partial<PlusDescriptionsProps>;
   /**
    * 对通过 request 获取的数据进行处理

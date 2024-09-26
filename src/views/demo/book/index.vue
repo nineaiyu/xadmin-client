@@ -1,9 +1,9 @@
 <script lang="ts" setup>
-import RePlusCRUD from "@/components/RePlusCRUD";
+import { RePlusPage } from "@/components/RePlusPage";
 import { useDemoBook } from "./utils/hook";
 
 const { api, auth } = useDemoBook();
 </script>
 <template>
-  <RePlusCRUD :api="api" :auth="auth" locale-name="demoBook" />
+  <RePlusPage :api="api" :auth="auth" locale-name="demoBook" />
 </template>

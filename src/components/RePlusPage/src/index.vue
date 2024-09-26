@@ -12,6 +12,8 @@ import ButtonOperation, {
   ButtonsCallBackParams
 } from "./components/ButtonOperation";
 
+defineOptions({ name: "RePlusPage" });
+
 const props = withDefaults(defineProps<RePlusPageProps>(), {
   api: undefined,
   title: undefined,
@@ -40,12 +42,12 @@ const props = withDefaults(defineProps<RePlusPageProps>(), {
   addOrEditOptions: () => ({}),
   pagination: () => ({}),
   pureTableProps: () => ({}),
+  pureTableBarProps: () => ({}),
   plusSearchProps: () => ({}),
   plusDescriptionsProps: () => ({}),
   operationButtonsProps: () => ({}),
   tableBarButtonsProps: () => ({})
 });
-defineOptions({ name: "RePlusCRUD" });
 const emit = defineEmits<{
   (e: "searchComplete", ...args: any[]): void;
   (e: "selectionChange", ...args: any[]): void;
@@ -146,6 +148,7 @@ defineExpose({
         <PureTableBar
           v-if="tableBar"
           :columns="listColumns"
+          v-bind="pureTableBarProps"
           @refresh="handleGetData"
           @change="handleTableBarChange"
           @fullscreen="handleFullscreen"

@@ -18,12 +18,12 @@ import {
   openFormDialog,
   renderSwitch
 } from "./handle";
-import type { OperationButtonsRow } from "@/components/RePlusCRUD";
+import type { OperationButtonsRow } from "@/components/RePlusPage";
 import {
   formatPublicLabels,
   uniqueArrayObj,
   usePublicHooks
-} from "@/components/RePlusCRUD";
+} from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import DetailDataForm from "../components/DetailData.vue";
 

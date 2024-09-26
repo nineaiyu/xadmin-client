@@ -12,7 +12,7 @@ import {
   openFormDialog,
   type OperationProps,
   type RePlusPageProps
-} from "@/components/RePlusCRUD";
+} from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Role from "@iconify-icons/ri/admin-line";
 

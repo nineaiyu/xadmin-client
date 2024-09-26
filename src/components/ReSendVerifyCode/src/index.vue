@@ -6,7 +6,7 @@ import type { FormInstance } from "element-plus";
 import Motion from "@/views/login/utils/motion";
 import ReImageVerify from "@/components/ReImageVerify/src/index.vue";
 import { useSendVerifyCode } from "./hooks";
-import PhoneInput from "@/components/RePlusCRUD/src/components/PhoneInput.vue";
+import PhoneInput from "@/components/RePlusPage/src/components/PhoneInput.vue";
 
 defineOptions({ name: "ReSendVerifyCode" });
 

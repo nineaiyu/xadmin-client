@@ -2,7 +2,7 @@
 import { onMounted, ref } from "vue";
 import { deviceDetection } from "@pureadmin/utils";
 import { configApi } from "@/api/config";
-import { handleOperation } from "@/components/RePlusCRUD";
+import { handleOperation } from "@/components/RePlusPage";
 import { useI18n } from "vue-i18n";
 
 defineOptions({

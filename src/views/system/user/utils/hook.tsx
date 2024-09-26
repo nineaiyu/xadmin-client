@@ -30,7 +30,7 @@ import {
   renderSwitch,
   type RePlusPageProps,
   usePublicHooks
-} from "@/components/RePlusCRUD";
+} from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Role from "@iconify-icons/ri/admin-line";
 import Avatar from "@iconify-icons/ri/user-3-fill";

@@ -106,7 +106,7 @@ defineExpose({ onTreeReset });
 <template>
   <div
     v-loading="props.treeLoading"
-    :style="{ minHeight: `calc(100vh - 160px)` }"
+    :style="{ minHeight: `calc(100vh - 141px)` }"
     class="h-full bg-bg_color overflow-hidden relative"
   >
     <div class="flex items-center h-[34px]">
@@ -152,7 +152,7 @@ defineExpose({ onTreeReset });
       </el-dropdown>
     </div>
     <el-divider />
-    <el-scrollbar height="calc(90vh - 160px)">
+    <el-scrollbar height="calc(90vh - 108px)">
       <el-tree
         ref="treeRef"
         :data="props.treeData"
@@ -166,10 +166,9 @@ defineExpose({ onTreeReset });
         <template #default="{ node, data }">
           <span
             :class="[
-              'pl-1',
-              'w-full',
-              'pr-1',
               'rounded',
+              '!w-[170px]',
+              '!truncate',
               'flex',
               'items-center',
               'select-none',

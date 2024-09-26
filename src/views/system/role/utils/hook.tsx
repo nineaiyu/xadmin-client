@@ -12,7 +12,7 @@ import type {
   CRUDColumn,
   OperationProps,
   RePlusPageProps
-} from "@/components/RePlusCRUD";
+} from "@/components/RePlusPage";
 
 export function useApiAuth() {
   const api = reactive(roleApi);

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref } from "vue";
 import { useNotice } from "./utils/hook";
-import RePlusCRUD from "@/components/RePlusCRUD";
+import { RePlusPage } from "@/components/RePlusPage";
 
 defineOptions({
   name: "SystemNotice"
@@ -19,7 +19,7 @@ const {
 } = useNotice(tableRef);
 </script>
 <template>
-  <RePlusCRUD
+  <RePlusPage
     ref="tableRef"
     :api="api"
     :auth="auth"

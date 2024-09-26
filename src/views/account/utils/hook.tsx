@@ -20,7 +20,7 @@ import {
   handleOperation,
   openFormDialog,
   renderBooleanTag
-} from "@/components/RePlusCRUD";
+} from "@/components/RePlusPage";
 import BindEmailOrPhone from "../components/BindEmailOrPhone.vue";
 import ChangePassword from "../components/ChangePassword.vue";
 import { AesEncrypted } from "@/utils/aes";

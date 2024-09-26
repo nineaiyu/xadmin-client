@@ -7,7 +7,7 @@ import { useI18n } from "vue-i18n";
 import { useUserStoreHook } from "@/store/modules/user";
 
 import { hasAuth } from "@/router/utils";
-import type { CRUDColumn, OperationProps } from "@/components/RePlusCRUD";
+import type { CRUDColumn, OperationProps } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import NoticeShowForm from "@/views/system/components/NoticeShow.vue";
 

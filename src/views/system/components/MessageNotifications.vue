@@ -2,7 +2,7 @@
 import { onMounted, ref } from "vue";
 
 import { SystemMsgSubscriptionApi } from "@/api/system/notifications";
-import { handleOperation, openFormDialog } from "@/components/RePlusCRUD";
+import { handleOperation, openFormDialog } from "@/components/RePlusPage";
 import { useI18n } from "vue-i18n";
 import SearchDialog from "@/views/system/components/SearchDialog.vue";
 

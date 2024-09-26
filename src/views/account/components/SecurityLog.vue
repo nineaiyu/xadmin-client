@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { deviceDetection } from "@pureadmin/utils";
 import { useUserLoginLog } from "@/views/account/utils/hook";
-import RePlusCRUD from "@/components/RePlusCRUD";
+import { RePlusPage } from "@/components/RePlusPage";
 
 defineOptions({
   name: "SecurityLog"
@@ -18,7 +18,7 @@ const { t, api, auth, pagination, listColumnsFormat } = useUserLoginLog();
     ]"
   >
     <h3 class="my-8">{{ t("account.securityLog") }}</h3>
-    <RePlusCRUD
+    <RePlusPage
       ref="tableRef"
       :api="api"
       :auth="auth"

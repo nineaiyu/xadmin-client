@@ -11,7 +11,7 @@ import { useI18n } from "vue-i18n";
 import { FieldChoices, MenuChoices } from "@/views/system/constants";
 import { hasAuth } from "@/router/utils";
 import { modelLabelFieldApi } from "@/api/system/field";
-import { handleExportData, handleImportData } from "@/components/RePlusCRUD";
+import { handleExportData, handleImportData } from "@/components/RePlusPage";
 import { formatFiledAppParent } from "@/views/system/hooks";
 
 const defaultData: FormItemProps = {

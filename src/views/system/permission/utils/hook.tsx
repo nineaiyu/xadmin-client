@@ -6,7 +6,7 @@ import { handleTree } from "@/utils/tree";
 import { modelLabelFieldApi } from "@/api/system/field";
 import { transformI18n } from "@/plugins/i18n";
 import { getKeyList } from "@pureadmin/utils";
-import type { OperationProps, RePlusPageProps } from "@/components/RePlusCRUD";
+import type { OperationProps, RePlusPageProps } from "@/components/RePlusPage";
 import filterForm from "../filter/index.vue";
 import { formatFiledAppParent } from "@/views/system/hooks";
 

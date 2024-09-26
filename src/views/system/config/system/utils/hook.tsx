@@ -2,7 +2,7 @@ import { useI18n } from "vue-i18n";
 import { systemConfigApi } from "@/api/system/config/system";
 import { hasAuth } from "@/router/utils";
 import { reactive, type Ref, shallowRef } from "vue";
-import { handleOperation, type OperationProps } from "@/components/RePlusCRUD";
+import { handleOperation, type OperationProps } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import CircleClose from "@iconify-icons/ep/circle-close";
 

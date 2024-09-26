@@ -7,7 +7,7 @@ import type { PlusColumn, PlusFormProps } from "plus-pro-components";
 import { ElMessageBox, type FormInstance } from "element-plus";
 import type { BaseApi } from "@/api/base";
 import type { DetailResult } from "@/api/types";
-import { uniqueArrayObj } from "@/components/RePlusCRUD";
+import { uniqueArrayObj } from "@/components/RePlusPage";
 import { resourcesIDCacheApi } from "@/api/common";
 import AddOrEdit from "../components/AddOrEdit.vue";
 import ExportData from "../components/ExportData.vue";

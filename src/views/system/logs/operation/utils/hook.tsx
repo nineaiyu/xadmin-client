@@ -2,7 +2,7 @@ import { operationLogApi } from "@/api/system/logs/operation";
 import { useRouter } from "vue-router";
 import { reactive, shallowRef } from "vue";
 import { hasAuth } from "@/router/utils";
-import type { CRUDColumn, OperationProps } from "@/components/RePlusCRUD";
+import type { CRUDColumn, OperationProps } from "@/components/RePlusPage";
 import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
 

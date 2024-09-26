@@ -9,7 +9,7 @@ import {
   type OperationProps,
   renderBooleanTag,
   type RePlusPageProps
-} from "@/components/RePlusCRUD";
+} from "@/components/RePlusPage";
 import uploadForm from "../upload.vue";
 import { usePublicHooks } from "@/views/system/hooks";
 import { ElIcon, ElLink, ElText } from "element-plus";

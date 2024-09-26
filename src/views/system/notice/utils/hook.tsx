@@ -10,9 +10,9 @@ import type {
   CRUDColumn,
   OperationProps,
   RePlusPageProps
-} from "@/components/RePlusCRUD";
+} from "@/components/RePlusPage";
 import NoticeShowForm from "@/views/system/components/NoticeShow.vue";
-import WangEditor from "@/components/RePlusCRUD/src/components/WangEditor.vue";
+import WangEditor from "@/components/RePlusPage/src/components/WangEditor.vue";
 
 export function useNotice(tableRef: Ref) {
   const { t } = useI18n();
