@@ -7,7 +7,7 @@ import { message } from "@/utils/message";
 import { loginRules } from "../utils/rule";
 import type { FormInstance } from "element-plus";
 import { $t, transformI18n } from "@/plugins/i18n";
-import { thirdParty } from "../utils/enums";
+import { operates, thirdParty } from "../utils/enums";
 import { useUserStoreHook } from "@/store/modules/user";
 import { getTopMenu, initRouter } from "@/router/utils";
 import { ReImageVerify } from "@/components/ReImageVerify";
@@ -89,13 +89,14 @@ const onLogin = async (formEl: FormInstance | undefined) => {
             message(transformI18n($t("login.loginSuccess")), {
               type: "success"
             });
-            initRouter().then(() => {
-              disabled.value = true;
-              router.push(getTopMenu(true).path).finally(() => {
-                disabled.value = false;
-              });
-            });
-            loading.value = false;
+            initRouter()
+              .then(() => {
+                disabled.value = true;
+                router.push(getTopMenu(true).path).finally(() => {
+                  disabled.value = false;
+                });
+              })
+              .finally(() => (loading.value = false));
           } else {
             message(res.detail, {
               type: "warning"
@@ -160,10 +161,6 @@ watch(checked, bool => {
 watch(loginDay, value => {
   useUserStoreHook().SET_LOGINDAY(value);
 });
-
-function onBack() {
-  useUserStoreHook().SET_CURRENT_PAGE(0);
-}
 </script>
 
 <template>
@@ -296,11 +293,19 @@ function onBack() {
     <Motion v-else :delay="300">
       <el-result icon="error" title="当前服务器不允许登录" />
     </Motion>
-    <Motion :delay="400">
+    <Motion :delay="300">
       <el-form-item>
-        <el-button class="w-full" size="default" tabindex="100" @click="onBack">
-          {{ t("login.back") }}
-        </el-button>
+        <div class="w-full h-[20px] flex justify-between items-center">
+          <el-button
+            v-for="(item, index) in operates"
+            :key="index"
+            class="w-full mt-4"
+            size="default"
+            @click="useUserStoreHook().SET_CURRENT_PAGE(index + 1)"
+          >
+            {{ t(item.title) }}
+          </el-button>
+        </div>
       </el-form-item>
     </Motion>
   </div>

@@ -531,6 +531,7 @@ login:
   login: Login
   thirdLogin: Third Login
   basicLogin: Basic Login
+  verifyCodeLogin: Verify Code Login
   qRCodeLogin: QRCode Login
   register: Register
   weChatLogin: WeChat Login

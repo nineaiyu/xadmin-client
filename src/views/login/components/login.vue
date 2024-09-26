@@ -3,7 +3,6 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import Motion from "../utils/motion";
 import { useRouter } from "vue-router";
-import { operates, thirdParty } from "../utils/enums";
 import { useUserStoreHook } from "@/store/modules/user";
 import { getTopMenu, initRouter } from "@/router/utils";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
@@ -153,6 +152,10 @@ const handleLogin = () => {
     }
   });
 };
+
+function onBack() {
+  useUserStoreHook().SET_CURRENT_PAGE(0);
+}
 </script>
 
 <template>
@@ -267,43 +270,15 @@ const handleLogin = () => {
           </el-button>
         </el-form-item>
       </Motion>
-      <Motion :delay="350">
-        <el-form-item>
-          <el-divider>
-            <p class="text-gray-500 text-xs">{{ t("login.thirdLogin") }}</p>
-          </el-divider>
-          <div class="w-full flex justify-evenly">
-            <span
-              v-for="(item, index) in thirdParty"
-              :key="index"
-              :title="t(item.title)"
-            >
-              <IconifyIconOnline
-                :icon="`ri:${item.icon}-fill`"
-                class="cursor-pointer text-gray-500 hover:text-blue-400"
-                width="20"
-              />
-            </span>
-          </div>
-        </el-form-item>
-      </Motion>
     </el-form>
     <Motion v-else :delay="300">
       <el-result icon="error" title="当前服务器不允许登录" />
     </Motion>
-    <Motion :delay="300">
+    <Motion :delay="400">
       <el-form-item>
-        <div class="w-full h-[20px] flex justify-between items-center">
-          <el-button
-            v-for="(item, index) in operates"
-            :key="index"
-            class="w-full mt-4"
-            size="default"
-            @click="useUserStoreHook().SET_CURRENT_PAGE(index + 1)"
-          >
-            {{ t(item.title) }}
-          </el-button>
-        </div>
+        <el-button class="w-full" size="default" tabindex="100" @click="onBack">
+          {{ t("login.back") }}
+        </el-button>
       </el-form-item>
     </Motion>
   </div>

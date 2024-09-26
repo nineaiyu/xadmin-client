@@ -95,11 +95,11 @@ const { locale, translationCh, translationEn } = useTranslationLang();
               />
             </h2>
           </Motion>
-
-          <login v-if="currentPage === 0" />
+          <!-- 账户密码登录 -->
+          <basic v-if="currentPage === 0" />
 
           <!-- 验证码登录 -->
-          <basic v-if="currentPage === 1" />
+          <login v-if="currentPage === 1" />
           <!-- 二维码登录 -->
           <qrCode v-if="currentPage === 2" />
           <!-- 注册 -->
