@@ -12,6 +12,7 @@ import { useI18n } from "vue-i18n";
 import { UploadFilled } from "@element-plus/icons-vue";
 import { FieldValues, PlusColumn } from "plus-pro-components";
 import { formatBytes, throttle } from "@pureadmin/utils";
+import { hasAuth } from "@/router/utils";
 
 interface AddOrEditFormProps {
   formInline: FieldValues;
@@ -34,11 +35,13 @@ const fileList = ref([]);
 const uploadConfig = ref({ file_upload_size: 1048576 });
 
 onMounted(() => {
-  uploadFileApi.config().then(res => {
-    if (res.code === 1000) {
-      uploadConfig.value = res.data;
-    }
-  });
+  if (hasAuth("config:systemUploadFile")) {
+    uploadFileApi.config().then(res => {
+      if (res.code === 1000) {
+        uploadConfig.value = res.data;
+      }
+    });
+  }
 });
 
 const uploadRequest = (option: UploadRequestOptions) => {

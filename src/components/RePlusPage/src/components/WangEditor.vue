@@ -22,11 +22,13 @@ const emit = defineEmits<{
 }>();
 
 onMounted(() => {
-  uploadFileApi.config().then(res => {
-    if (res.code === 1000) {
-      uploadConfig.value = res.data;
-    }
-  });
+  if (hasAuth("config:systemUploadFile")) {
+    uploadFileApi.config().then(res => {
+      if (res.code === 1000) {
+        uploadConfig.value = res.data;
+      }
+    });
+  }
 });
 
 const handleChange = () => {
