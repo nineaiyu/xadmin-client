@@ -25,6 +25,7 @@ defineOptions({
 
 const router = useRouter();
 const loading = ref(false);
+const captchaRef = ref();
 const configLoading = ref(false);
 const checked = ref(true);
 const disabled = ref(false);
@@ -106,6 +107,7 @@ const onLogin = async (formEl: FormInstance | undefined) => {
         .finally(() => {
           loading.value = false;
           initToken();
+          captchaRef.value?.getImgCode();
         });
     } else {
       loading.value = false;
@@ -208,7 +210,10 @@ watch(loginDay, value => {
               clearable
             >
               <template v-slot:append>
-                <ReImageVerify v-model="ruleForm.captcha_key" />
+                <ReImageVerify
+                  ref="captchaRef"
+                  v-model="ruleForm.captcha_key"
+                />
               </template>
             </el-input>
           </el-form-item>
