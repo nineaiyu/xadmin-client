@@ -1,16 +1,20 @@
 <script lang="ts" setup>
 import { ListItem } from "../data";
-import { nextTick, PropType, ref } from "vue";
+import { computed, nextTick, PropType, ref } from "vue";
 import { useNav } from "@/layout/hooks/useNav";
 import { deviceDetection } from "@pureadmin/utils";
 import dayjs from "dayjs";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 
-defineProps({
+const props = defineProps({
   noticeItem: {
     type: Object as PropType<ListItem>,
     default: () => {}
+  },
+  index: {
+    type: Number,
+    default: 0
   }
 });
 
@@ -37,36 +41,21 @@ const handleRead = (pk: number) => {
     name: "UserNotice",
     query: { pk: pk }
   });
-  // updateUserNoticeReadApi({ pks: [pk] }).then(res => {
-  //   console.log(res);
-  // });
 };
 
-// function hoverDescription(event, description) {
-//   // currentWidth 为文本在页面中所占的宽度，创建标签，加入到页面，获取currentWidth ,最后在移除
-//   const tempTag = document.createElement("span");
-//   tempTag.innerText = description;
-//   tempTag.className = "getDescriptionWidth";
-//   document.querySelector("body").appendChild(tempTag);
-//   const currentWidth = (
-//     document.querySelector(".getDescriptionWidth") as HTMLSpanElement
-//   ).offsetWidth;
-//   document.querySelector(".getDescriptionWidth").remove();
-//
-//   // cellWidth为容器的宽度
-//   const cellWidth = event.target.offsetWidth;
-//
-//   // 当文本宽度大于容器宽度两倍时，代表文本显示超过两行
-//   currentWidth > 2 * cellWidth
-//     ? (descriptionTooltip.value = true)
-//     : (descriptionTooltip.value = false);
-// }
+const divClass = computed(() => {
+  return [
+    "notice-container",
+    props.index === 0 ? "" : "border-t-[1px]",
+    "border-solid",
+    "border-[#f0f0f0]",
+    "dark:border-[#303030]"
+  ];
+});
 </script>
 
 <template>
-  <div
-    class="notice-container border-b-[1px] border-solid border-[#f0f0f0] dark:border-[#303030]"
-  >
+  <div :class="divClass">
     <el-avatar
       v-if="noticeItem.avatar"
       :size="30"
@@ -95,31 +84,7 @@ const handleRead = (pk: number) => {
             </el-text>
           </div>
         </el-tooltip>
-        <!--        <el-tag-->
-        <!--          v-if="noticeItem?.extra"-->
-        <!--          :type="noticeItem?.level"-->
-        <!--          size="small"-->
-        <!--          class="notice-title-extra"-->
-        <!--        >-->
-        <!--          {{ noticeItem?.extra }}-->
-        <!--        </el-tag>-->
       </div>
-
-      <!--      <el-tooltip-->
-      <!--        popper-class="notice-title-popper"-->
-      <!--        :effect="tooltipEffect"-->
-      <!--        :disabled="!descriptionTooltip"-->
-      <!--        :content="noticeItem.message"-->
-      <!--        placement="top-start"-->
-      <!--      >-->
-      <!--        <div-->
-      <!--          ref="descriptionRef"-->
-      <!--          class="notice-text-description"-->
-      <!--          @mouseover="hoverDescription($event, noticeItem.message)"-->
-      <!--        >-->
-      <!--          {{ noticeItem.message }}-->
-      <!--        </div>-->
-      <!--      </el-tooltip>-->
       <div class="notice-text-datetime text-[#00000073] dark:text-white">
         {{ dayjs(noticeItem.created_time).format(t("layout.noticeTime")) }}
       </div>

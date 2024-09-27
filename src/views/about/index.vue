@@ -1,5 +1,7 @@
 <script lang="ts" setup>
 import { computed } from "vue";
+import { useColumns } from "./columns";
+import { PlusDescriptions } from "plus-pro-components";
 
 export interface schemaItem {
   field: string;
@@ -15,6 +17,8 @@ const { dependencies, devDependencies } = pkg;
 
 const schema: schemaItem[] = [];
 const devSchema: schemaItem[] = [];
+
+const { columns } = useColumns();
 
 const words = [
   "@pureadmin/descriptions",
@@ -64,6 +68,17 @@ Object.keys(devDependencies).forEach(key => {
         Vue3、Vite、Element-Plus、TypeScript、Pinia、Tailwindcss
         等主流技术开发。
       </span>
+    </el-card>
+
+    <el-card class="m-4 box-card" shadow="never">
+      <template #header>
+        <div class="card-header">
+          <span class="font-medium">平台信息</span>
+        </div>
+      </template>
+      <el-scrollbar>
+        <PlusDescriptions border :columns="columns" :column="4" />
+      </el-scrollbar>
     </el-card>
 
     <el-card class="m-4 box-card" shadow="never">

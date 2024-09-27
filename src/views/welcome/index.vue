@@ -245,7 +245,7 @@ let curWeek = ref(1);
               >
                 <p class="text-text_color_regular text-sm">
                   {{
-                    `${item?.creator?.username} ${item.method} ${item.module} ${item.system} ${item?.browser}`
+                    `${item?.creator?.username ?? ""} ${item.method} ${item.module} ${item.system} ${item?.browser}`
                   }}
                 </p>
               </el-timeline-item>

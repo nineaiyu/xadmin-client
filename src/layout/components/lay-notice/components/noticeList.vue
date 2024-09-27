@@ -18,7 +18,12 @@ defineProps({
 
 <template>
   <div v-if="list.length">
-    <NoticeItem v-for="(item, index) in list" :key="index" :noticeItem="item" />
+    <NoticeItem
+      v-for="(item, index) in list"
+      :key="index"
+      :noticeItem="item"
+      :index="index"
+    />
   </div>
-  <el-empty v-else :description="transformI18n(emptyText)" />
+  <el-empty v-else :image-size="100" :description="transformI18n(emptyText)" />
 </template>

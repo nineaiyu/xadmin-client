@@ -10,6 +10,9 @@ import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
 const target = ref(null);
 const show = ref<Boolean>(false);
 const { t } = useI18n();
+const {
+  pkg: { version }
+} = __APP_INFO__;
 
 const iconClass = computed(() => {
   return [
@@ -56,7 +59,14 @@ onBeforeUnmount(() => {
       <div
         class="project-configuration border-b-[1px] border-solid border-[var(--pure-border-color)]"
       >
-        <h4 class="dark:text-white">{{ t("layout.settings") }}</h4>
+        <el-badge
+          :value="version"
+          class="item"
+          :offset="[12, 5]"
+          type="primary"
+        >
+          <h4 class="dark:text-white">{{ t("layout.settings") }}</h4>
+        </el-badge>
         <span
           v-tippy="{
             content: t('buttons.close'),
