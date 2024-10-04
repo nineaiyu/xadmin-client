@@ -16,7 +16,7 @@ import croppingUpload from "@/components/RePictureUpload";
 import { userLoginLogApi } from "@/api/user/logs";
 import type { PaginationProps } from "@pureadmin/table";
 import {
-  type CRUDColumn,
+  type PageColumnList,
   handleOperation,
   openFormDialog,
   renderBooleanTag
@@ -203,7 +203,7 @@ export function useUserLoginLog() {
     layout: "prev, pager, next"
   });
 
-  const listColumnsFormat = (columns: CRUDColumn[]) => {
+  const listColumnsFormat = (columns: PageColumnList[]) => {
     columns.forEach(column => {
       switch (column._column?.key) {
         case "status":

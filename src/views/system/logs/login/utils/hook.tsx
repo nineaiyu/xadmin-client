@@ -5,7 +5,7 @@ import { hasAuth } from "@/router/utils";
 import { reactive, shallowRef } from "vue";
 import { usePublicHooks } from "@/views/system/hooks";
 import {
-  type CRUDColumn,
+  type PageColumnList,
   type OperationProps,
   renderBooleanTag
 } from "@/components/RePlusPage";
@@ -27,7 +27,7 @@ export function useLoginLog() {
   const operationButtonsProps = shallowRef<OperationProps>({
     width: 140
   });
-  const listColumnsFormat = (columns: CRUDColumn[]) => {
+  const listColumnsFormat = (columns: PageColumnList[]) => {
     columns.forEach(column => {
       switch (column._column?.key) {
         case "creator":

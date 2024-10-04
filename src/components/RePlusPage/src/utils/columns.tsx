@@ -21,7 +21,7 @@ import { ElIcon, ElImage, ElLink } from "element-plus";
 import { Link } from "@element-plus/icons-vue";
 import Info from "@iconify-icons/ri/question-line";
 import type { Mutable } from "@vueuse/core";
-import type { TableColumnRenderer } from "@pureadmin/table";
+import type { TableColumns, TableColumnRenderer } from "@pureadmin/table";
 import { isEmail, isNumber } from "@pureadmin/utils";
 
 import SearchUser from "@/views/system/components/SearchUser.vue";
@@ -32,7 +32,7 @@ import JsonInput from "../components/JsonInput.vue";
 import UploadFile from "../components/UploadFile.vue";
 import PhoneInput from "../components/PhoneInput.vue";
 
-interface TableColumns {
+interface TableColumn {
   /** 是否隐藏 */
   hide?: boolean | CallableFunction;
   /** 自定义列的内容插槽 */
@@ -40,15 +40,23 @@ interface TableColumns {
   /** 自定义表头的内容插槽 */
   headerSlot?: string;
   /** 多级表头，内部实现原理：嵌套 `el-table-column` */
-  children?: Array<TableColumns>;
+  children?: Array<TableColumn>;
   /** 自定义单元格渲染器（`jsx`语法） */
   cellRenderer?: (data: TableColumnRenderer) => VNode | string;
   /** 自定义头部渲染器（`jsx`语法） */
   headerRenderer?: (data: TableColumnRenderer) => VNode | string;
 }
 
-export interface CRUDColumn extends PlusColumn, TableColumns {
+export interface PageColumn extends PlusColumn, TableColumn {
   // columns: Partial<Mutable<TableColumn> & { _column: object }>[]
+  _column: Partial<
+    Mutable<SearchFieldsResult["data"][0]> &
+      Mutable<SearchColumnsResult["data"][0]>
+  >;
+}
+
+export interface PageColumnList extends TableColumns {
+  prop?: string;
   _column: Partial<
     Mutable<SearchFieldsResult["data"][0]> &
       Mutable<SearchColumnsResult["data"][0]>
@@ -79,7 +87,7 @@ export function useBaseColumns(localeName: string) {
 
   const formatSearchColumns = (columns: SearchFieldsResult["data"]) => {
     columns.forEach(column => {
-      const item: CRUDColumn = {
+      const item: PageColumn = {
         _column: column,
         label:
           formatPublicLabels(t, te, column.key, localeName) ?? column.label,
@@ -224,7 +232,7 @@ export function useBaseColumns(localeName: string) {
   const formatAddOrEditColumns = (columns: SearchColumnsResult["data"]) => {
     columns.forEach(column => {
       formatAddOrEditRules(column);
-      const item: CRUDColumn = {
+      const item: PageColumn = {
         _column: column,
         prop: column.key,
         label:

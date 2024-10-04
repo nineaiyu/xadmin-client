@@ -4,7 +4,7 @@ import { hasAuth } from "@/router/utils";
 import { reactive, type Ref, shallowRef } from "vue";
 import { userConfigApi } from "@/api/system/config/user";
 import {
-  type CRUDColumn,
+  type PageColumnList,
   handleOperation,
   type OperationProps,
   type RePlusPageProps
@@ -47,7 +47,7 @@ export function useUserConfig(tableRef: Ref) {
     }
   });
 
-  const listColumnsFormat = (columns: CRUDColumn[]) => {
+  const listColumnsFormat = (columns: PageColumnList[]) => {
     columns.forEach(column => {
       switch (column._column?.key) {
         case "owner":

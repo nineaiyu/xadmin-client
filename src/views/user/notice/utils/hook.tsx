@@ -7,7 +7,7 @@ import { useI18n } from "vue-i18n";
 import { useUserStoreHook } from "@/store/modules/user";
 
 import { hasAuth } from "@/router/utils";
-import type { CRUDColumn, OperationProps } from "@/components/RePlusPage";
+import type { PageColumnList, OperationProps } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import NoticeShowForm from "@/views/system/components/NoticeShow.vue";
 
@@ -102,7 +102,7 @@ export function useUserNotice(tableRef: Ref) {
     manySelectData.value = data;
     selectedNum.value = manySelectData.value.length ?? 0;
   };
-  const listColumnsFormat = (columns: CRUDColumn[]) => {
+  const listColumnsFormat = (columns: PageColumnList[]) => {
     columns.forEach(column => {
       switch (column._column?.key) {
         case "title":
