@@ -1,5 +1,5 @@
 import { message } from "@/utils/message";
-import type { RePlusPageProps } from "./types";
+import type { PageColumn, RePlusPageProps } from "./types";
 import { computed, onMounted, ref, type Ref, shallowRef, toRaw } from "vue";
 import {
   cloneDeep,
@@ -10,7 +10,7 @@ import {
 } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
-import { type PageColumn, useBaseColumns } from "./columns";
+import { useBaseColumns } from "./columns";
 import {
   handleExportData,
   handleImportData,
