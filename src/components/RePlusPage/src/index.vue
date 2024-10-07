@@ -228,7 +228,6 @@ defineExpose({
         align-whole="center"
         default-expand-all
         row-key="pk"
-        showOverflowTooltip
         table-layout="auto"
         v-bind="pureTableProps"
         @selection-change="handleSelectionChange"

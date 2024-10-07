@@ -216,6 +216,7 @@ export function useBaseColumns(localeName: string) {
         hideInSearch: true,
         hideInTable: false,
         // pure-table ****** start
+        showOverflowTooltip: true,
         cellRenderer: ({ row }) => (
           <span v-copy={row[column.key]}>{row[column.key]}</span>
         )
