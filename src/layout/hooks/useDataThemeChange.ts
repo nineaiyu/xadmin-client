@@ -132,6 +132,7 @@ export function useDataThemeChange() {
     router.push("/login");
     useMultiTagsStoreHook().handleTags("equal", [...routerArrays]);
     resetRouter();
+    useUserStoreHook().clear();
   }
 
   return {
