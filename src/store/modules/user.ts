@@ -131,21 +131,23 @@ export const useUserStore = defineStore({
           .detail()
           .then(res => {
             if (res.code === 1000) {
-              clear();
               setUserInfo(res.data);
-              nextTick(() => {
-                setWatermark(
-                  `${this.username}${this.nickname ? "-" + this.nickname : ""}`,
-                  {
-                    globalAlpha: 0.1, // 值越低越透明
-                    gradient: [
-                      { value: 0, color: "magenta" },
-                      { value: 0.5, color: "blue" },
-                      { value: 1.0, color: "red" }
-                    ]
-                  }
-                );
-              });
+              if (res.config.FRONT_END_WEB_WATERMARK_ENABLED) {
+                clear();
+                nextTick(() => {
+                  setWatermark(
+                    `${this.username}${this.nickname ? "-" + this.nickname : ""}`,
+                    {
+                      globalAlpha: 0.1, // 值越低越透明
+                      gradient: [
+                        { value: 0, color: "magenta" },
+                        { value: 0.5, color: "blue" },
+                        { value: 1.0, color: "red" }
+                      ]
+                    }
+                  );
+                });
+              }
               resolve(res);
             } else {
               reject(res);

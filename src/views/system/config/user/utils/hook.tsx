@@ -74,7 +74,7 @@ export function useUserConfig(tableRef: Ref) {
   };
 
   const operationButtonsProps = shallowRef<OperationProps>({
-    width: 260,
+    width: 240,
     buttons: [
       {
         text: t("configUser.invalidCache"),

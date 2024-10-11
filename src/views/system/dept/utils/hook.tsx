@@ -167,7 +167,7 @@ export function useDept(tableRef: Ref) {
   }
 
   const operationButtonsProps = shallowRef<OperationProps>({
-    width: 260,
+    width: 210,
     buttons: [
       {
         text: t("systemDept.assignRoles"),
