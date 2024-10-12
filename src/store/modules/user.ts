@@ -133,8 +133,8 @@ export const useUserStore = defineStore({
           .then(res => {
             if (res.code === 1000) {
               setUserInfo(res.data);
+              this.clear = clear;
               if (res.config.FRONT_END_WEB_WATERMARK_ENABLED) {
-                this.clear = clear;
                 this.clear();
                 nextTick(() => {
                   setWatermark(
