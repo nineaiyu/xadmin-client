@@ -2,6 +2,8 @@ services:
   xadmin-client-build:
     container_name: xadmin-client-build
     image: "xadmin-client-build"
+    environment:
+      - TZ=Asia/Shanghai
     volumes:
       - ./:/app
     build:
@@ -18,6 +20,8 @@ services:
     image: "nginx:stable-alpine"
     volumes:
       - ./dist:/usr/share/nginx/html
+    environment:
+      - TZ=Asia/Shanghai
     command: [ "nginx", "-g", "daemon off;" ]
     #depends_on:
     #   - xadmin-client-build
