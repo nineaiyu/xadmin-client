@@ -16,7 +16,7 @@ import Lock from "@iconify-icons/ri/lock-fill";
 import User from "@iconify-icons/ri/user-3-fill";
 import Info from "@iconify-icons/ri/information-line";
 import { AuthInfoResult, getTempTokenApi, loginAuthApi } from "@/api/auth";
-import { cloneDeep, debounce, isEmpty } from "@pureadmin/utils";
+import { cloneDeep, debounce } from "@pureadmin/utils";
 import { useEventListener } from "@vueuse/core";
 
 defineOptions({
@@ -93,13 +93,13 @@ const onLogin = async (formEl: FormInstance | undefined) => {
             initRouter()
               .then(() => {
                 disabled.value = true;
-                if (!isEmpty(route.query?.redirect)) {
-                  router.push(route.query.redirect);
-                } else {
-                  router.push(getTopMenu(true).path).finally(() => {
+                router
+                  .push(
+                    (route.query?.redirect as string) ?? getTopMenu(true).path
+                  )
+                  .finally(() => {
                     disabled.value = false;
                   });
-                }
               })
               .finally(() => (loading.value = false));
           } else {

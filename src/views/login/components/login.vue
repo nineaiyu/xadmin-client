@@ -10,7 +10,7 @@ import Lock from "@iconify-icons/ri/lock-fill";
 import User from "@iconify-icons/ri/user-3-fill";
 import Info from "@iconify-icons/ri/information-line";
 import { loginVerifyCodeApi } from "@/api/auth";
-import { debounce, delay, isEmpty } from "@pureadmin/utils";
+import { debounce, delay } from "@pureadmin/utils";
 import { useEventListener } from "@vueuse/core";
 import ReSendVerifyCode from "@/components/ReSendVerifyCode";
 import { AesEncrypted } from "@/utils/aes";
@@ -82,13 +82,11 @@ const onLogin = () => {
       setToken(res.data);
       initRouter().then(() => {
         disabled.value = true;
-        if (!isEmpty(route.query?.redirect)) {
-          router.push(route.query.redirect);
-        } else {
-          router.push(getTopMenu(true).path).finally(() => {
+        router
+          .push((route.query?.redirect as string) ?? getTopMenu(true).path)
+          .finally(() => {
             disabled.value = false;
           });
-        }
       });
     },
     requestEnd() {
