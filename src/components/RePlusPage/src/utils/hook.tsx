@@ -1,5 +1,5 @@
 import { message } from "@/utils/message";
-import type { RePlusPageProps } from "./types";
+import type { PageColumn, RePlusPageProps } from "./types";
 import { computed, onMounted, ref, type Ref, shallowRef, toRaw } from "vue";
 import {
   cloneDeep,
@@ -10,7 +10,7 @@ import {
 } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
-import { type CRUDColumn, useBaseColumns } from "./columns";
+import { useBaseColumns } from "./columns";
 import {
   handleExportData,
   handleImportData,
@@ -35,11 +35,7 @@ import EditPen from "@iconify-icons/ep/edit-pen";
 import AddFill from "@iconify-icons/ri/add-circle-line";
 import { handleTree } from "@/utils/tree";
 
-export function usePlusCRUDPage(
-  emit: any,
-  tableRef: Ref,
-  props: RePlusPageProps
-) {
+export function usePlusPage(emit: any, tableRef: Ref, props: RePlusPageProps) {
   const {
     api,
     auth,
@@ -385,7 +381,7 @@ export function usePlusCRUDPage(
 
   // 表格字段自定义渲染
   const formatColumnsRender = () => {
-    listColumns.value.forEach((column: CRUDColumn) => {
+    listColumns.value.forEach((column: PageColumn) => {
       switch (column._column?.input_type) {
         case "boolean":
           // pure-table ****** start

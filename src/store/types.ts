@@ -51,4 +51,5 @@ export type userType = {
   loginDay?: number;
   noticeCount?: number;
   websocket?: WS | null;
+  clear?: any;
 };

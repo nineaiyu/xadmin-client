@@ -37,6 +37,7 @@ export type UserInfoResult = {
   data: UserInfo;
   choices_dict?: any[];
   password_rule?: any[];
+  config?: { FRONT_END_WEB_WATERMARK_ENABLED: boolean };
 };
 
 export type TempTokenResult = {

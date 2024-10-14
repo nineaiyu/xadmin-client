@@ -23,13 +23,13 @@ import { dataPermissionApi } from "@/api/system/permission";
 import { customRolePermissionOptions, picturePng } from "@/views/system/hooks";
 import { AesEncrypted } from "@/utils/aes";
 import {
-  type CRUDColumn,
   handleOperation,
   openFormDialog,
   type OperationProps,
   renderSwitch,
   type RePlusPageProps,
-  usePublicHooks
+  usePublicHooks,
+  type PageColumnList
 } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Role from "@iconify-icons/ri/admin-line";
@@ -281,7 +281,7 @@ export function useUser(tableRef: Ref) {
     selectedNum.value = manySelectData.value.length ?? 0;
   };
 
-  const listColumnsFormat = (columns: CRUDColumn[]) => {
+  const listColumnsFormat = (columns: PageColumnList[]) => {
     columns.forEach(column => {
       switch (column._column?.key) {
         case "avatar":
@@ -497,7 +497,7 @@ export function useUser(tableRef: Ref) {
   });
 
   const operationButtonsProps = shallowRef<OperationProps>({
-    width: 260,
+    width: 210,
     buttons: [
       {
         text: t("systemUser.editAvatar"),

@@ -99,8 +99,10 @@ layout:
   fixedTip: 紧凑页面，轻松找到所需信息
   customization: 自定义
   customTip: 最小1280、最大1600
-  saveConfig: 保存配置
-  saveConfigTip: 将当前配置保存到服务器
+  saveConfig: 保存
+  saveConfigTip: 将当前项目配置保存到服务器
+  resetConfig: 重置
+  resetConfigTip: 重置为默认项目配置并刷新页面
 
 error:
   error403: 抱歉，你无权访问该页面

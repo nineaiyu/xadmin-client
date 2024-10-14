@@ -9,7 +9,7 @@ import { FieldChoices } from "@/views/system/constants";
 import { cloneDeep, getKeyList } from "@pureadmin/utils";
 import { modelLabelFieldApi } from "@/api/system/field";
 import type {
-  CRUDColumn,
+  PageColumnList,
   OperationProps,
   RePlusPageProps
 } from "@/components/RePlusPage";
@@ -137,7 +137,7 @@ export function useRole() {
     }
   });
 
-  const listColumnsFormat = (columns: CRUDColumn[]) => {
+  const listColumnsFormat = (columns: PageColumnList[]) => {
     return columns;
   };
 

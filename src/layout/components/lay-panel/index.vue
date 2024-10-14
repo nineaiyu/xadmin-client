@@ -33,7 +33,7 @@ const iconClass = computed(() => {
 
 const { onReset } = useDataThemeChange();
 
-const { saveSiteConfig } = useSiteConfigStoreHook();
+const { saveSiteConfig, resetSiteConfig } = useSiteConfigStoreHook();
 
 onClickOutside(target, (event: any) => {
   if (event.clientX > target.value.offsetLeft) return;
@@ -94,7 +94,7 @@ onBeforeUnmount(() => {
         <el-button
           v-tippy="{
             content: t('layout.saveConfigTip'),
-            placement: 'left-start',
+            placement: 'top-start',
             zIndex: 41000
           }"
           bg
@@ -106,8 +106,21 @@ onBeforeUnmount(() => {
         </el-button>
         <el-button
           v-tippy="{
+            content: t('layout.resetConfigTip'),
+            placement: 'top-start',
+            zIndex: 41000
+          }"
+          bg
+          text
+          type="primary"
+          @click="resetSiteConfig"
+        >
+          {{ t("layout.resetConfig") }}
+        </el-button>
+        <el-button
+          v-tippy="{
             content: t('layout.cleanOut'),
-            placement: 'left-start',
+            placement: 'top-start',
             zIndex: 41000
           }"
           bg

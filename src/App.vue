@@ -55,7 +55,8 @@ export default defineComponent({
         {
           title,
           description: transformI18n($t("layout.updateCheck")),
-          buttonText: transformI18n($t("layout.updateNow"))
+          buttonText: transformI18n($t("layout.updateNow")),
+          primaryColor: "#758bfd"
         }
       );
     }

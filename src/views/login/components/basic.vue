@@ -2,7 +2,7 @@
 import { onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import Motion from "../utils/motion";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { message } from "@/utils/message";
 import { loginRules } from "../utils/rule";
 import type { FormInstance } from "element-plus";
@@ -32,7 +32,7 @@ const disabled = ref(false);
 const loginDay = ref(1);
 const loginDayList = ref([1]);
 const ruleFormRef = ref<FormInstance>();
-
+const route = useRoute();
 const { t } = useI18n();
 
 const authInfo = reactive<AuthInfoResult["data"]>({
@@ -93,9 +93,13 @@ const onLogin = async (formEl: FormInstance | undefined) => {
             initRouter()
               .then(() => {
                 disabled.value = true;
-                router.push(getTopMenu(true).path).finally(() => {
-                  disabled.value = false;
-                });
+                router
+                  .push(
+                    (route.query?.redirect as string) ?? getTopMenu(true).path
+                  )
+                  .finally(() => {
+                    disabled.value = false;
+                  });
               })
               .finally(() => (loading.value = false));
           } else {

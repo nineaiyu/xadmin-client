@@ -60,7 +60,8 @@ export const useUserStore = defineStore({
     // 未读消息数量
     noticeCount: 0,
     // 消息通知websocket
-    websocket: null
+    websocket: null,
+    clear: null
   }),
   actions: {
     /** 存储用户头像 */
@@ -131,21 +132,24 @@ export const useUserStore = defineStore({
           .detail()
           .then(res => {
             if (res.code === 1000) {
-              clear();
               setUserInfo(res.data);
-              nextTick(() => {
-                setWatermark(
-                  `${this.username}${this.nickname ? "-" + this.nickname : ""}`,
-                  {
-                    globalAlpha: 0.1, // 值越低越透明
-                    gradient: [
-                      { value: 0, color: "magenta" },
-                      { value: 0.5, color: "blue" },
-                      { value: 1.0, color: "red" }
-                    ]
-                  }
-                );
-              });
+              this.clear = clear;
+              if (res.config.FRONT_END_WEB_WATERMARK_ENABLED) {
+                this.clear();
+                nextTick(() => {
+                  setWatermark(
+                    `${this.username}${this.nickname ? "-" + this.nickname : ""}`,
+                    {
+                      globalAlpha: 0.1, // 值越低越透明
+                      gradient: [
+                        { value: 0, color: "magenta" },
+                        { value: 0.5, color: "blue" },
+                        { value: 1.0, color: "red" }
+                      ]
+                    }
+                  );
+                });
+              }
               resolve(res);
             } else {
               reject(res);
@@ -188,6 +192,7 @@ export const useUserStore = defineStore({
           removeToken();
           useMultiTagsStoreHook().handleTags("equal", [...routerArrays]);
           resetRouter();
+          this.clear();
           router.push("/login");
         });
     },

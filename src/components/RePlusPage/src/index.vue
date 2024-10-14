@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref } from "vue";
 import PureTable from "@pureadmin/table";
-import { usePlusCRUDPage } from "./utils/hook";
+import { usePlusPage } from "./utils/hook";
 import { RePlusPageProps } from "./utils/types";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
@@ -85,7 +85,7 @@ const {
   handleCurrentChange,
   handleTableBarChange,
   handleSelectionChange
-} = usePlusCRUDPage(emit, tableRef, props);
+} = usePlusPage(emit, tableRef, props);
 
 function getTableRef() {
   return tableRef.value;
@@ -228,7 +228,6 @@ defineExpose({
         align-whole="center"
         default-expand-all
         row-key="pk"
-        showOverflowTooltip
         table-layout="auto"
         v-bind="pureTableProps"
         @selection-change="handleSelectionChange"

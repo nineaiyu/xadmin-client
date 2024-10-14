@@ -7,7 +7,7 @@ import { useI18n } from "vue-i18n";
 import { customRolePermissionOptions } from "@/views/system/hooks";
 import { handleTree } from "@/utils/tree";
 import {
-  type CRUDColumn,
+  type PageColumnList,
   handleOperation,
   openFormDialog,
   type OperationProps,
@@ -34,7 +34,7 @@ export function useDept(tableRef: Ref) {
     batchDelete: hasAuth("batchDelete:systemDept")
   });
 
-  const listColumnsFormat = (columns: CRUDColumn[]) => {
+  const listColumnsFormat = (columns: PageColumnList[]) => {
     columns.forEach(column => {
       switch (column._column?.key) {
         case "user_count":
@@ -167,7 +167,7 @@ export function useDept(tableRef: Ref) {
   }
 
   const operationButtonsProps = shallowRef<OperationProps>({
-    width: 260,
+    width: 210,
     buttons: [
       {
         text: t("systemDept.assignRoles"),

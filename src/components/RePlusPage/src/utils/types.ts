@@ -7,12 +7,47 @@ import type {
 import type {
   PaginationProps,
   PureTableProps,
-  TableColumn
+  TableColumnRenderer,
+  TableColumns
 } from "@pureadmin/table";
 import type { BaseApi } from "@/api/base";
 import type { formDialogOptions } from "./handle";
 import type { OperationProps } from "@/components/RePlusPage";
 import type { PureTableBarProps } from "@/components/RePureTableBar";
+import type { VNode } from "vue";
+import type { Mutable } from "@vueuse/core";
+import type { SearchColumnsResult, SearchFieldsResult } from "@/api/types";
+
+interface TableColumn {
+  /** 是否隐藏 */
+  hide?: boolean | CallableFunction;
+  /** 自定义列的内容插槽 */
+  slot?: string;
+  /** 自定义表头的内容插槽 */
+  headerSlot?: string;
+  /** 多级表头，内部实现原理：嵌套 `el-table-column` */
+  children?: Array<TableColumn>;
+  /** 自定义单元格渲染器（`jsx`语法） */
+  cellRenderer?: (data: TableColumnRenderer) => VNode | string;
+  /** 自定义头部渲染器（`jsx`语法） */
+  headerRenderer?: (data: TableColumnRenderer) => VNode | string;
+}
+
+interface PageColumn extends PlusColumn, TableColumn {
+  // columns: Partial<Mutable<TableColumn> & { _column: object }>[]
+  _column: Partial<
+    Mutable<SearchFieldsResult["data"][0]> &
+      Mutable<SearchColumnsResult["data"][0]>
+  >;
+}
+
+interface PageColumnList extends TableColumns {
+  prop?: string;
+  _column: Partial<
+    Mutable<SearchFieldsResult["data"][0]> &
+      Mutable<SearchColumnsResult["data"][0]>
+  >;
+}
 
 interface ApiAuthProps {
   list?: string | boolean | null | BaseApi["list"];
@@ -47,11 +82,12 @@ interface RePlusPageProps {
    * @param data
    */
   searchResultFormat?: <T = RecordType[]>(data: T[]) => T[];
-  listColumnsFormat?: (
-    columns: PlusColumn[] | TableColumn[]
-  ) => PlusColumn[] | TableColumn[];
-  detailColumnsFormat?: (columns: PlusColumn[]) => PlusColumn[];
-  searchColumnsFormat?: (columns: PlusColumn[]) => PlusColumn[];
+  // listColumnsFormat?: (
+  //   columns: PlusColumn[] | TableColumns[] | PageColumnList[]
+  // ) => PlusColumn[] | TableColumns[] | PageColumnList[];
+  listColumnsFormat?: (columns: PageColumnList[]) => PageColumnList[];
+  detailColumnsFormat?: (columns: PageColumn[]) => PageColumn[];
+  searchColumnsFormat?: (columns: PageColumn[]) => PageColumn[];
   baseColumnsFormat?: ({
     listColumns,
     detailColumns,
@@ -79,4 +115,4 @@ interface RePlusPageProps {
   tableBarButtonsProps?: Partial<OperationProps>;
 }
 
-export type { ApiAuthProps, RePlusPageProps };
+export type { ApiAuthProps, RePlusPageProps, PageColumn, PageColumnList };

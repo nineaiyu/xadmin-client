@@ -6,10 +6,7 @@ export default defineFakeRoute([
     url: "/version.json",
     method: "get",
     response: () => {
-      return {
-        success: true,
-        data: { version: "1.2.2", external: "" }
-      };
+      return { version: "4.1.0", external: "" };
     }
   }
 ]);

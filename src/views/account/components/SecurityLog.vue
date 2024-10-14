@@ -26,6 +26,7 @@ const { t, api, auth, pagination, listColumnsFormat } = useUserLoginLog();
       :selection="false"
       :pagination="pagination"
       :listColumnsFormat="listColumnsFormat"
+      title=""
       locale-name="logsLogin"
     />
   </div>

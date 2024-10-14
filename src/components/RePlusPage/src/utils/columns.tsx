@@ -1,8 +1,7 @@
-import { computed, h, ref, type VNode } from "vue";
+import { computed, h, ref } from "vue";
 import { cloneDeep } from "lodash-es";
 import dayjs from "dayjs";
 import { useI18n } from "vue-i18n";
-import type { PlusColumn } from "plus-pro-components";
 import type { BaseApi } from "@/api/base";
 import type { SearchColumnsResult, SearchFieldsResult } from "@/api/types";
 import { get } from "lodash-es";
@@ -11,6 +10,8 @@ import {
   renderBooleanSegmentedOption
 } from "./renders";
 import { selectBooleanOptions } from "./constants";
+import type { PageColumn } from "./types";
+
 import {
   getPickerShortcuts,
   getColourTypeByIndex,
@@ -20,8 +21,7 @@ import {
 import { ElIcon, ElImage, ElLink } from "element-plus";
 import { Link } from "@element-plus/icons-vue";
 import Info from "@iconify-icons/ri/question-line";
-import type { Mutable } from "@vueuse/core";
-import type { TableColumnRenderer } from "@pureadmin/table";
+
 import { isEmail, isNumber } from "@pureadmin/utils";
 
 import SearchUser from "@/views/system/components/SearchUser.vue";
@@ -31,29 +31,6 @@ import TagInput from "../components/TagInput.vue";
 import JsonInput from "../components/JsonInput.vue";
 import UploadFile from "../components/UploadFile.vue";
 import PhoneInput from "../components/PhoneInput.vue";
-
-interface TableColumns {
-  /** 是否隐藏 */
-  hide?: boolean | CallableFunction;
-  /** 自定义列的内容插槽 */
-  slot?: string;
-  /** 自定义表头的内容插槽 */
-  headerSlot?: string;
-  /** 多级表头，内部实现原理：嵌套 `el-table-column` */
-  children?: Array<TableColumns>;
-  /** 自定义单元格渲染器（`jsx`语法） */
-  cellRenderer?: (data: TableColumnRenderer) => VNode | string;
-  /** 自定义头部渲染器（`jsx`语法） */
-  headerRenderer?: (data: TableColumnRenderer) => VNode | string;
-}
-
-export interface CRUDColumn extends PlusColumn, TableColumns {
-  // columns: Partial<Mutable<TableColumn> & { _column: object }>[]
-  _column: Partial<
-    Mutable<SearchFieldsResult["data"][0]> &
-      Mutable<SearchColumnsResult["data"][0]>
-  >;
-}
 
 /**
  * @description 用与通过api接口，获取对应的column, 进行前端渲染
@@ -79,7 +56,7 @@ export function useBaseColumns(localeName: string) {
 
   const formatSearchColumns = (columns: SearchFieldsResult["data"]) => {
     columns.forEach(column => {
-      const item: CRUDColumn = {
+      const item: PageColumn = {
         _column: column,
         label:
           formatPublicLabels(t, te, column.key, localeName) ?? column.label,
@@ -224,7 +201,7 @@ export function useBaseColumns(localeName: string) {
   const formatAddOrEditColumns = (columns: SearchColumnsResult["data"]) => {
     columns.forEach(column => {
       formatAddOrEditRules(column);
-      const item: CRUDColumn = {
+      const item: PageColumn = {
         _column: column,
         prop: column.key,
         label:
@@ -239,6 +216,7 @@ export function useBaseColumns(localeName: string) {
         hideInSearch: true,
         hideInTable: false,
         // pure-table ****** start
+        showOverflowTooltip: true,
         cellRenderer: ({ row }) => (
           <span v-copy={row[column.key]}>{row[column.key]}</span>
         )

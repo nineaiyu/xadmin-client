@@ -18,6 +18,12 @@ export const useSiteConfigStore = defineStore({
         Storage.set(`${this.nameSpace}${key}`, config[key]);
       });
     },
+    async resetSiteConfig() {
+      configApi.resetSiteConfig().then(() => {
+        message("项目配置重置成功", { type: "success" });
+        window.location.reload();
+      });
+    },
     async saveSiteConfig() {
       return new Promise((resolve, reject) => {
         const locale = Storage.getData("locale", this.nameSpace);
@@ -45,7 +51,7 @@ export const useSiteConfigStore = defineStore({
         configApi
           .setSiteConfig(newConfig)
           .then(res => {
-            message("配置保存成功", { type: "success" });
+            message("项目配置保存成功", { type: "success" });
             resolve(res);
           })
           .catch(error => {
@@ -58,7 +64,7 @@ export const useSiteConfigStore = defineStore({
         configApi
           .getSiteConfig()
           .then(({ config }: any) => {
-            if (config.Version && config.ResponsiveStorageNameSpace) {
+            if (config.Locale) {
               this.config = config;
               const configObj = {
                 // 国际化 默认中文zh
