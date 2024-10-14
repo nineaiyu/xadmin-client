@@ -31,7 +31,7 @@ function onChange(val, item) {
 
   handleOperation({
     t,
-    apiReq: configApi.setConfig(item.name, val),
+    apiReq: configApi.setConfig(item.name, val, "put"),
     requestEnd() {
       loading.value = false;
     }

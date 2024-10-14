@@ -99,8 +99,10 @@ layout:
   fixedTip: Compact page to easily find the information you need
   customization: Customization
   customTip: Minimum 1280, maximum 1600
-  saveConfig: Save Config
+  saveConfig: Save
   saveConfigTip: Save the current site configuration to the server
+  resetConfig: Reset
+  resetConfigTip: Reset to the default project configuration and reload
 
 error:
   error403: Sorry, you are not authorized to access this page

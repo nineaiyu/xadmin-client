@@ -1,4 +1,5 @@
 import { BaseApi } from "@/api/base";
+import type { RequestMethods } from "@/utils/http/types";
 
 type ConfigResult = {
   detail: string;
@@ -11,9 +12,9 @@ class ConfigApi extends BaseApi {
   getConfig = (name: string) => {
     return this.request<ConfigResult>("get", {}, {}, `${this.baseApi}/${name}`);
   };
-  setConfig = (name: string, data: object) => {
+  setConfig = (name: string, data: object, method: RequestMethods) => {
     return this.request<ConfigResult>(
-      "put",
+      method,
       {},
       data,
       `${this.baseApi}/${name}`
@@ -23,7 +24,10 @@ class ConfigApi extends BaseApi {
     return this.getConfig("WEB_SITE_CONFIG");
   };
   setSiteConfig = (data: object) => {
-    return this.setConfig("WEB_SITE_CONFIG", data);
+    return this.setConfig("WEB_SITE_CONFIG", data, "put");
+  };
+  resetSiteConfig = () => {
+    return this.setConfig("WEB_SITE_CONFIG", {}, "delete");
   };
 }
 

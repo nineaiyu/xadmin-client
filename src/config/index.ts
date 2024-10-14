@@ -34,8 +34,8 @@ export const getPlatformConfig = async (
   app.config.globalProperties.$config = getConfig();
   return axios({
     method: "get",
-    // url: `${VITE_PUBLIC_PATH}platform-config.json`
-    url: url ? url : `/api/system/configs/WEB_SITE_CONFIG`
+    url: `${VITE_PUBLIC_PATH}platform-config.json`
+    // url: url ? url : `/api/system/configs/WEB_SITE_CONFIG`
   })
     .then(async ({ data: config }) => {
       config = config?.config ?? config;
