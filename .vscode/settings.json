@@ -25,7 +25,7 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
+    "source.fixAll.eslint": "explicit"
   },
   "i18n-ally.localesPaths": "locales",
   "i18n-ally.keystyle": "nested",
@@ -42,5 +42,23 @@
   ],
   "iconify.excludes": [
     "el"
-  ]
+  ],
+  "vsmqtt.brokerProfiles": [
+    {
+      "name": "broker.emqx.io",
+      "host": "broker.emqx.io/mqtt",
+      "port": 1883,
+      "clientId": "vsmqtt_client_db34"
+    }
+  ],
+  "vscodeCustomCodeColor.highlightValue": [
+    "v-loading",
+    "v-auth",
+    "v-copy",
+    "v-longpress",
+    "v-optimize",
+    "v-perms",
+    "v-ripple"
+  ],
+  "vscodeCustomCodeColor.highlightValueColor": "#b392f0",
 }
