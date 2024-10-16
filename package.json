@@ -82,7 +82,7 @@
     "vue-tippy": "^6.4.4",
     "vue-types": "^5.1.3",
     "vue-virtual-scroller": "2.0.0-beta.8",
-    "vue3-ts-jsoneditor": "^2.11.2"
+    "vue3-ts-jsoneditor": "^2.11.3"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.5.0",

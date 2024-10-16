@@ -117,8 +117,8 @@ importers:
         specifier: 2.0.0-beta.8
         version: 2.0.0-beta.8(vue@3.5.12(typescript@5.5.4))
       vue3-ts-jsoneditor:
-        specifier: ^2.11.2
-        version: 2.11.2(@lezer/common@1.2.2)(typescript@5.5.4)
+        specifier: ^2.11.3
+        version: 2.11.3(@lezer/common@1.2.2)(typescript@5.5.4)
     devDependencies:
       '@commitlint/cli':
         specifier: ^19.5.0
@@ -4663,8 +4663,8 @@ packages:
     peerDependencies:
       vue: ^3.2.0
 
-  vue3-ts-jsoneditor@2.11.2:
-    resolution: {integrity: sha512-jb4Gt+NmJe8hQJYdfzs9JF+7ZF7Ncgipy6D4g6AqQv7457Yor6zh0PuM+6Ph7UKafkVVIbkg5WMmdB2SOSFDfA==}
+  vue3-ts-jsoneditor@2.11.3:
+    resolution: {integrity: sha512-opGO2eYh6839GbCwxUU1gkt9/IeCC0VHOscHCyljo29iJKcLKNR+P6mdAZFVbF8WRZKv/KFpf1kekQQpR5+wlg==}
 
   vue@3.5.12:
     resolution: {integrity: sha512-CLVZtXtn2ItBIi/zHZ0Sg1Xkb7+PU32bJJ8Bmy7ts3jxXTcbfsEfBivFYYWz1Hur+lalqGAh65Coin0r+HRUfg==}
@@ -9390,7 +9390,7 @@ snapshots:
       vue-observe-visibility: 2.0.0-alpha.1(vue@3.5.12(typescript@5.5.4))
       vue-resize: 2.0.0-alpha.1(vue@3.5.12(typescript@5.5.4))
 
-  vue3-ts-jsoneditor@2.11.2(@lezer/common@1.2.2)(typescript@5.5.4):
+  vue3-ts-jsoneditor@2.11.3(@lezer/common@1.2.2)(typescript@5.5.4):
     dependencies:
       immutable-json-patch: 6.0.1
       vanilla-jsoneditor: 0.21.6(@lezer/common@1.2.2)
