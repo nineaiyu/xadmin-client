@@ -166,14 +166,14 @@ export class BaseApi extends BaseRequest {
       });
   };
 
-  import = (action: string, data: object) => {
+  import = (action: string, data: File) => {
     return http.upload<DetailResult, any>(
       `${this.baseApi}/import-data?action=${action}`,
       {},
-      data,
+      data as any,
       {
         headers: {
-          "Content-Type": "text/xlsx"
+          "Content-Type": data.type === "text/csv" ? "text/csv" : "text/xlsx"
         }
       }
     );
