@@ -44,7 +44,12 @@ const {
     >
       <template #plus-field-avatar>
         <el-avatar :size="80" :src="userinfoStore.avatar ?? avatar" />
-        <el-button class="ml-4" plain @click="handleUpload(userInfo)">
+        <el-button
+          v-if="auth.upload"
+          class="ml-4"
+          plain
+          @click="handleUpload(userInfo)"
+        >
           <IconifyIconOffline :icon="uploadLine" />
           <span class="ml-2">{{ t("userinfo.updateAvatar") }}</span>
         </el-button>
