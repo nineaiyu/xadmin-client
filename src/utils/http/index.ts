@@ -86,6 +86,7 @@ class PureHttp {
           resolve(response);
         })
         .catch(error => {
+          const data = error.response?.data;
           if (error.response && error.response.status) {
             if (error.response.status === 401) {
               if (error.response.data.code === 40001) {
@@ -93,15 +94,13 @@ class PureHttp {
                 resolve(PureHttp.axiosInstance.request(config));
                 // } else if (error.response.data.code === 40002) {
               } else {
-                ElMessage.error(error.response.data.detail);
+                ElMessage.error(data?.detail);
                 removeToken();
                 window.location.reload();
               }
               // router.push({ name: "Login" })
             } else {
-              ElMessage.error(
-                error.response.data?.detail ?? error.response.statusText
-              );
+              ElMessage.error(data?.detail ?? error.response.statusText);
               // router.push("/error/500");
             }
             reject(error.response.data);
