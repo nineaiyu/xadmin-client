@@ -12,9 +12,7 @@ export function useModelField(tableRef: Ref) {
 
   const auth = reactive({
     list: hasAuth("list:systemModelField"),
-    sync: hasAuth("sync:systemModelField"),
-    detail: hasAuth("detail:systemModelField"),
-    lookups: hasAuth("lookups:systemModelField")
+    sync: hasAuth("sync:systemModelField")
   });
 
   const tableBarButtonsProps = shallowRef<OperationProps>({

@@ -35,12 +35,12 @@ export function useApiAuth() {
     choices: userInfoApi.choices
   });
 
-  const auth = reactive({
+  const auth = computed(() => ({
     upload: hasAuth("upload:UserInfo"),
     update: hasAuth("update:UserInfo"),
     bind: hasAuth("bind:UserInfo"),
     reset: hasAuth("reset:UserInfo")
-  });
+  }));
   return {
     api,
     auth

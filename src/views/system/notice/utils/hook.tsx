@@ -26,7 +26,6 @@ export function useNotice(tableRef: Ref) {
     delete: hasAuth("delete:systemNotice"),
     update: hasAuth("update:systemNotice"),
     publish: hasAuth("update:systemNoticePublish"),
-    detail: hasAuth("detail:systemNotice"),
     batchDelete: hasAuth("batchDelete:systemNotice")
   });
 

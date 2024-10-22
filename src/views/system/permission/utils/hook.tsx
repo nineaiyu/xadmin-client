@@ -22,7 +22,6 @@ export function useDataPermission() {
     create: hasAuth("create:systemDataPermission"),
     delete: hasAuth("delete:systemDataPermission"),
     update: hasAuth("update:systemDataPermission"),
-    detail: hasAuth("detail:systemDataPermission"),
     export: hasAuth("export:systemDataPermission"),
     import: hasAuth("import:systemDataPermission"),
     batchDelete: hasAuth("batchDelete:systemDataPermission")
