@@ -46,6 +46,9 @@ export function useOperationLog() {
         case "status_code":
           column["minWidth"] = 100;
           break;
+        case "module":
+          column["minWidth"] = 200;
+          break;
       }
     });
     return columns;

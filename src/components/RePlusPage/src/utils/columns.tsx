@@ -244,6 +244,9 @@ export function useBaseColumns(localeName: string) {
           item["valueType"] = "input-number";
           item["fieldProps"]["controlsPosition"] = "right";
           item["colProps"] = { xs: 24, sm: 24, md: 12, lg: 12, xl: 12 };
+          if (column.key === "pk") {
+            item["minWidth"] = 80;
+          }
           // item["fieldProps"]["controls"] = false;
           // pure-table ******
           // delete item["cellRenderer"];
