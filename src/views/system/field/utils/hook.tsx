@@ -12,7 +12,11 @@ export function useModelField(tableRef: Ref) {
 
   const auth = reactive({
     list: hasAuth("list:systemModelField"),
-    sync: hasAuth("sync:systemModelField")
+    sync: hasAuth("sync:systemModelField"),
+    delete: hasAuth("delete:systemModelField"),
+    export: hasAuth("export:systemModelField"),
+    import: hasAuth("import:systemModelField"),
+    batchDelete: hasAuth("batchDelete:systemModelField")
   });
 
   const tableBarButtonsProps = shallowRef<OperationProps>({

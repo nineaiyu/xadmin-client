@@ -17,7 +17,6 @@ const { api, auth, tableBarButtonsProps } = useModelField(tableRef);
     :api="api"
     :auth="auth"
     :operation="false"
-    :selection="false"
     :tableBarButtonsProps="tableBarButtonsProps"
     locale-name="modelFieldManagement"
   />
