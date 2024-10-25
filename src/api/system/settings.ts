@@ -1,4 +1,6 @@
 import { BaseApi, ViewBaseApi } from "@/api/base";
+//系统设置
+export const settingsApi = new BaseApi("/api/settings/setting");
 
 // 基本配置
 export const settingsBasicApi = new ViewBaseApi("/api/settings/basic");

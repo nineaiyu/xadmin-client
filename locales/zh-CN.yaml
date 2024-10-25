@@ -156,6 +156,7 @@ exportImport:
   uploadRuleTip: 文件不能为空
   uploadTip: 可点击或拖拽上传
   downloadTip: 下载{ action }模板
+  ignoreError: 忽略错误
 
 messageNotifications:
   messageType: 消息类型

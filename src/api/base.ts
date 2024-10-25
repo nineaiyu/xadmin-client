@@ -166,10 +166,10 @@ export class BaseApi extends BaseRequest {
       });
   };
 
-  import = (action: string, data: File) => {
+  import = (params: object, data: File) => {
     return http.upload<DetailResult, any>(
-      `${this.baseApi}/import-data?action=${action}`,
-      {},
+      `${this.baseApi}/import-data`,
+      params,
       data as any,
       {
         headers: {
