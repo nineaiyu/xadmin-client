@@ -12,8 +12,8 @@ for image in ${images};do
   fi
 done
 
-# clean old build docker
-docker rm -f xadmin-client-build
 
 # build web
 docker compose up xadmin-client-build
+# clean old build docker
+docker rm -f xadmin-client-build
