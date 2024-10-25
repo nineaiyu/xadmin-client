@@ -53,7 +53,6 @@ export function useUser(tableRef: Ref) {
     reset: hasAuth("reset:systemUser"),
     empower: hasAuth("empower:systemUser"),
     upload: hasAuth("upload:systemUser"),
-    choices: hasAuth("choices:systemUser"),
     export: hasAuth("export:systemUser"),
     import: hasAuth("import:systemUser"),
     unBlock: hasAuth("unBlock:systemUser"),

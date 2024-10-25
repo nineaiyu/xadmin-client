@@ -17,7 +17,6 @@ export function useNoticeRead(tableRef: Ref) {
 
   const auth = reactive({
     list: hasAuth("list:systemNoticeRead"),
-    detail: hasAuth("detail:systemNoticeRead"),
     delete: hasAuth("delete:systemNoticeRead"),
     state: hasAuth("update:systemNoticeReadState"),
     batchDelete: hasAuth("batchDelete:systemNoticeRead")

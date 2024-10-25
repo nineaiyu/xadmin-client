@@ -4,6 +4,7 @@ import { FieldValues, PlusColumn, PlusForm } from "plus-pro-components";
 import { ExportImportFormatOptions } from "../utils/constants";
 import UploadIcon from "@iconify-icons/ri/upload-2-line";
 import { useI18n } from "vue-i18n";
+import { renderBooleanSegmentedOption } from "@/components/RePlusPage";
 
 const formRef = ref();
 
@@ -11,6 +12,7 @@ defineOptions({ name: "ImportData" });
 
 interface FormItemProps {
   action: string;
+  ignore_error: boolean;
   upload: any[];
   api: { export: Function };
 }
@@ -24,6 +26,7 @@ interface FormProps {
 const props = withDefaults(defineProps<FormProps>(), {
   formInline: () => ({
     action: "create",
+    ignore_error: false,
     upload: [],
     api: {
       export: null
@@ -42,6 +45,11 @@ const formColumns: PlusColumn[] = [
       { label: t("exportImport.create"), value: "create" },
       { label: t("exportImport.update"), value: "update" }
     ]
+  },
+  {
+    label: t("exportImport.ignoreError"),
+    prop: "ignore_error",
+    renderField: renderBooleanSegmentedOption()
   },
   {
     prop: "tips",
@@ -68,7 +76,8 @@ const goDownloadXlsx = (type: string) => {
   state.value.api?.export({
     type: type,
     template: template,
-    action: state.value.action
+    action: state.value.action,
+    ignore_error: state.value.ignore_error
   });
 };
 watch(

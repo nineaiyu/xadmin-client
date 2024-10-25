@@ -20,7 +20,6 @@ export function useUserNotice(tableRef: Ref) {
 
   const auth = reactive({
     list: hasAuth("list:userNotice"),
-    detail: hasAuth("detail:userNoticeRead"),
     batchRead: hasAuth("update:userNoticeRead"),
     allRead: hasAuth("update:userNoticeReadAll")
   });

@@ -18,7 +18,7 @@ interface callBackArgs {
   formRef: FormInstance;
   formOptions: formDialogOptions;
   closeLoading: () => void;
-  success: (close?: boolean) => void;
+  success: (detail: string, close?: boolean) => void;
   failed: (detail: string, close?: boolean) => void;
   done: () => void;
 }
@@ -159,8 +159,8 @@ const openFormDialog = (formOptions: formDialogOptions) => {
       const FormRef: FormInstance = formRef.value.getRef();
       const formInlineData = cloneDeep(options.props.formInline);
 
-      const success = (close = true) => {
-        message(formOptions?.t("results.success"), {
+      const success = (detail = undefined, close = true) => {
+        message(detail ?? formOptions?.t("results.success"), {
           type: "success"
         });
         closeLoading();
@@ -526,19 +526,23 @@ const handleImportData = (options: importDataOptions) => {
     title: t("exportImport.import"),
     rawRow: {
       action: "create",
+      ignore_error: false,
       api: api
     },
     dialogOptions: { width: "600px" },
     form: ImportData,
     saveCallback: ({ formData, success, failed, closeLoading }) => {
       api
-        .import(formData.action, formData.upload[0].raw)
+        .import(
+          { action: formData.action, ignore_error: formData.ignore_error },
+          formData.upload[0].raw
+        )
         .then(res => {
           if (res.code === 1000) {
             if (options?.success) {
               options?.success(res);
             }
-            success();
+            success(res.detail);
           } else {
             failed(res.detail, false);
           }

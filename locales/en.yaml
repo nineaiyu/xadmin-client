@@ -156,6 +156,7 @@ exportImport:
   uploadRuleTip: upload file not exist
   uploadTip: Drag file here or click here to upload
   downloadTip: Download { action } template
+  ignoreError: Ignore error
 
 messageNotifications:
   messageType: Message type
