@@ -62,10 +62,10 @@ export function useNoticeRead(tableRef: Ref) {
             </el-link>
           );
           break;
-        case "owner_info":
+        case "owner":
           column["cellRenderer"] = ({ row }) => (
             <el-link onClick={() => onGoUserDetail(row as any)}>
-              {row.owner_info?.username ? row.owner_info?.username : "/"}
+              {row.owner?.username ? row.owner?.username : "/"}
             </el-link>
           );
           break;
@@ -97,10 +97,10 @@ export function useNoticeRead(tableRef: Ref) {
   const router = useRouter();
 
   function onGoUserDetail(row: any) {
-    if (hasAuth("list:systemUser") && row.owner_info && row.owner_info?.pk) {
+    if (hasAuth("list:systemUser") && row.owner && row.owner?.pk) {
       router.push({
         name: "SystemUser",
-        query: { pk: row.owner_info.pk }
+        query: { pk: row.owner.pk }
       });
     }
   }
