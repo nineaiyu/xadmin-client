@@ -468,13 +468,14 @@ defineExpose({ getRef });
             v-model="newFormInline.method"
             class="!w-[180px]"
             clearable
+            value-key="value"
           >
             <el-option
               v-for="item in methodChoices"
               :key="item.value"
               :disabled="item.disabled"
               :label="item.label"
-              :value="item.value"
+              :value="item"
             />
           </el-select>
         </el-form-item>

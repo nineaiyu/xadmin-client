@@ -413,7 +413,7 @@ onMounted(() => {
               style="margin-left: 10px"
               type="success"
             >
-              {{ data.method }} {{ data.path }}
+              {{ data.method?.value }} {{ data.path }}
             </el-text>
           </span>
         </template>
