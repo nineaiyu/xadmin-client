@@ -4,6 +4,7 @@ import { usePlusSearch } from "./hooks";
 import { ClickOutside as vClickOutside } from "element-plus";
 import { RePlusPage } from "@/components/RePlusPage";
 import type { PlusSearchProps } from "./types";
+import { deviceDetection } from "@pureadmin/utils";
 
 defineOptions({
   name: "RePlusSearch"
@@ -82,7 +83,7 @@ watch(
       <el-tag type="primary">{{ value?.label }}</el-tag>
     </template>
     <template #empty>
-      <div class="max-w-[100vw] min-w-[800px]">
+      <div :class="['p-4', deviceDetection() ? 'w-[100vw]' : 'w-[1200px]']">
         <RePlusPage
           ref="tableRef"
           :api="api"
