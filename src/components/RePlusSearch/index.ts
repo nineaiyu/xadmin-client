@@ -4,3 +4,5 @@ import { withInstall } from "@pureadmin/utils";
 export const RePlusSearch = withInstall(rePlusSearch);
 
 export default RePlusSearch;
+
+export * from "./src/types";

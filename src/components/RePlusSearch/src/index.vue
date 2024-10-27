@@ -13,6 +13,7 @@ defineOptions({
 const props = withDefaults(defineProps<PlusSearchProps>(), {
   api: undefined,
   isTree: false,
+  multiple: true,
   localeName: "",
   listColumnsFormat: undefined,
   searchColumnsFormat: undefined,
@@ -24,8 +25,6 @@ const props = withDefaults(defineProps<PlusSearchProps>(), {
   })
 });
 
-const selectValue = defineModel({ type: Array<object> });
-
 const emit = defineEmits<{
   (e: "change", ...args: any[]): void;
 }>();
@@ -34,15 +33,18 @@ const selectRef = ref();
 const tableRef = ref();
 const {
   t,
+  selectValue,
   selectVisible,
   defaultPagination,
-  onClear,
   onSure,
+  onClear,
+  rowStyle,
   removeTag,
   searchComplete,
+  handleRowClick,
   handleClickOutSide,
   handleSelectionChange
-} = usePlusSearch(selectRef, tableRef, selectValue, props);
+} = usePlusSearch(selectRef, tableRef, props);
 
 watch(
   () => selectValue.value,
@@ -67,7 +69,7 @@ watch(
     clearable
     collapse-tags
     collapse-tags-tooltip
-    multiple
+    :multiple="multiple"
     @clear="onClear"
     @visibleChange="val => (selectVisible = val)"
     @visible-change="
@@ -93,15 +95,18 @@ watch(
           :operation="false"
           :pagination="defaultPagination"
           :pureTableProps="{
-            adaptiveConfig: { offsetBottom: 550 }
+            adaptiveConfig: { offsetBottom: 550 },
+            rowStyle: rowStyle
           }"
           :tableBar="false"
           :locale-name="localeName"
+          :selection="multiple"
           :listColumnsFormat="listColumnsFormat"
           :baseColumnsFormat="baseColumnsFormat"
           :searchColumnsFormat="searchColumnsFormat"
           @searchComplete="searchComplete"
           @selectionChange="handleSelectionChange"
+          @rowClick="handleRowClick"
         />
       </div>
 

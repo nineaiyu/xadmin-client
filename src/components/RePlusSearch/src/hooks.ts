@@ -1,4 +1,4 @@
-import { type ModelRef, nextTick, reactive, type Ref, ref } from "vue";
+import { computed, nextTick, reactive, type Ref, ref } from "vue";
 import type { PaginationProps } from "@pureadmin/table";
 import { getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
@@ -7,11 +7,12 @@ import type { PlusSearchProps } from "./types";
 export function usePlusSearch(
   selectRef: Ref,
   tableRef: Ref,
-  selectValue: ModelRef<Array<object>, string>,
   props: PlusSearchProps
 ) {
   const { pagination, valueProps, isTree } = props;
-
+  const selectValue = ref<PlusSearchProps["selectValue"]>(
+    computed(() => props.selectValue)
+  );
   const dataList = ref([]);
   const { t } = useI18n();
   const selectVisible = ref(false);
@@ -39,7 +40,6 @@ export function usePlusSearch(
     return getKeyList(selectValue.value ?? [], valueProps.value ?? "pk");
   };
 
-  // table表格的树节点有问题，待后期修复，目前element-plus暂不支持
   const handleSelectionChange = val => {
     nextTick(() => {
       // add
@@ -49,7 +49,7 @@ export function usePlusSearch(
             pk: row.pk,
             label: formatValue(row, valueProps.label)
           };
-          selectValue.value.push(item);
+          (selectValue.value as any[]).push(item);
         }
       });
       // del
@@ -59,7 +59,10 @@ export function usePlusSearch(
           getSelectPks().indexOf(row.pk) > -1 &&
           valPks.indexOf(row.pk) === -1
         ) {
-          selectValue.value.splice(getSelectPks().indexOf(row.pk), 1);
+          (selectValue.value as any[]).splice(
+            getSelectPks().indexOf(row.pk),
+            1
+          );
         }
       });
     });
@@ -97,23 +100,45 @@ export function usePlusSearch(
     dataList.value = data?.results;
     nextTick(() => {
       const { toggleRowSelection } = tableRef.value.getTableRef().getTableRef();
-      const selectPks = getSelectPks();
-      dataList.value.forEach(item => {
-        if (selectPks.indexOf(item.pk) > -1) {
-          toggleRowSelection(item, true);
-        }
-      });
+      if (props.multiple) {
+        const selectPks = getSelectPks();
+        dataList.value.forEach(item => {
+          if (selectPks.indexOf(item.pk) > -1) {
+            toggleRowSelection(item, true);
+          }
+        });
+      }
     });
+  };
+
+  const rowStyle = ({ row: { pk } }) => {
+    return {
+      cursor: "pointer",
+      background:
+        pk === (selectValue.value as any)?.pk
+          ? "var(--el-fill-color-light)"
+          : ""
+    };
+  };
+
+  const handleRowClick = row => {
+    selectValue.value = {
+      pk: row.pk,
+      label: formatValue(row, valueProps.label)
+    };
   };
 
   return {
     t,
+    selectValue,
     selectVisible,
     defaultPagination,
-    onClear,
     onSure,
+    onClear,
+    rowStyle,
     removeTag,
     searchComplete,
+    handleRowClick,
     handleClickOutSide,
     handleSelectionChange
   };

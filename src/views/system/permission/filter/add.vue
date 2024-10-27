@@ -48,8 +48,12 @@ const getMatchData = (value: any) => {
     return;
   }
   if (hasAuth("list:systemModelFieldLookups")) {
+    let index = 1;
+    if (value[0] === "*") {
+      index = 0;
+    }
     modelLabelFieldApi
-      .lookups({ table: value[1], field: value[2] })
+      .lookups({ table: value[index], field: value[index + 1] })
       .then(res => {
         if (res.code === 1000) {
           matchList.value = res.data;

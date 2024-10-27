@@ -7,7 +7,9 @@ import type { PageColumn } from "@/components/RePlusPage";
 
 interface PlusSearchProps {
   api: BaseApi;
+  selectValue: object | object[];
   isTree?: boolean;
+  multiple?: boolean;
   localeName?: string;
   searchColumnsFormat?: (columns: PageColumn[]) => PageColumn[];
   listColumnsFormat?: (columns: PageColumnList[]) => PageColumnList[];
@@ -33,4 +35,9 @@ interface PlusSearchProps {
   };
 }
 
-export type { PlusSearchProps };
+interface SearchProps {
+  multiple?: boolean;
+  modelValue: PlusSearchProps["selectValue"];
+}
+
+export type { PlusSearchProps, SearchProps };

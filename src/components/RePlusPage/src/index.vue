@@ -51,6 +51,7 @@ const props = withDefaults(defineProps<RePlusPageProps>(), {
 const emit = defineEmits<{
   (e: "searchComplete", ...args: any[]): void;
   (e: "selectionChange", ...args: any[]): void;
+  (e: "rowClick", row: any): void;
   (e: "tableBarClickAction", data: ButtonsCallBackParams): void;
   (e: "operationClickAction", data: ButtonsCallBackParams): void;
 }>();
@@ -231,6 +232,7 @@ defineExpose({
         table-layout="auto"
         v-bind="pureTableProps"
         @selection-change="handleSelectionChange"
+        @row-click="row => emit('rowClick', row)"
         @page-size-change="handleSizeChange"
         @page-current-change="handleCurrentChange"
       >
