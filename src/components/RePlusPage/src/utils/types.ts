@@ -64,29 +64,65 @@ interface RePlusPageProps {
   api: BaseApi;
   title?: string;
   auth: ApiAuthProps | any;
+  /**
+   * 是否有多选框， 一般为第一列
+   */
   selection?: boolean;
+  /**
+   * 加载组件是否同时加载数据
+   */
   immediate?: boolean;
+  /**
+   * 是否有 操作列， 一般为最后一列
+   */
   operation?: boolean;
+  /**
+   * 是否是 树 表格
+   */
   isTree?: boolean;
+  /**
+   * 是否有 工具栏
+   */
   tableBar?: boolean;
+  /**
+   * 国际化，对应 locales 中
+   */
   localeName?: string;
   /**
-   * PlusSearchProps
+   * PlusSearchProps， 参考文档：https://plus-pro-components.com/components/search.html#search-attributes
    */
   plusSearchProps?: Partial<PlusSearchProps>;
+  /**
+   * pureTableProps， 参考源码：https://github.com/pure-admin/pure-admin-table
+   */
   pureTableProps?: Partial<PureTableProps>;
+  /**
+   * pureTableBarProps
+   */
   pureTableBarProps?: Partial<PureTableBarProps>;
+  /**
+   * plusDescriptionsProps， 参考文档：https://plus-pro-components.com/components/descriptions.html
+   */
   plusDescriptionsProps?: Partial<PlusDescriptionsProps>;
   /**
    * 对通过 request 获取的数据进行处理
    * @param data
    */
   searchResultFormat?: <T = RecordType[]>(data: T[]) => T[];
-  // listColumnsFormat?: (
-  //   columns: PlusColumn[] | TableColumns[] | PageColumnList[]
-  // ) => PlusColumn[] | TableColumns[] | PageColumnList[];
+  /**
+   * pure table 的 columns, 并返回
+   * @param columns
+   */
   listColumnsFormat?: (columns: PageColumnList[]) => PageColumnList[];
+  /**
+   * plus pro descriptions 的 columns, 并返回
+   * @param columns
+   */
   detailColumnsFormat?: (columns: PageColumn[]) => PageColumn[];
+  /**
+   * plus pro search 的 columns, 并返回
+   * @param columns
+   */
   searchColumnsFormat?: (columns: PageColumn[]) => PageColumn[];
   baseColumnsFormat?: ({
     listColumns,
@@ -102,7 +138,13 @@ interface RePlusPageProps {
    * @param params
    */
   beforeSearchSubmit?: <T = RecordType>(params: T) => T;
+  /**
+   * 分页组件
+   */
   pagination?: Partial<PaginationProps>;
+  /**
+   * 默认的添加，更新 方法
+   */
   addOrEditOptions?: {
     title?: "";
     props?: Partial<formDialogOptions>;
@@ -111,7 +153,13 @@ interface RePlusPageProps {
       formOptions: Partial<formDialogOptions> & { formData: RecordType }
     ) => BaseApi | any;
   };
+  /**
+   * 操作栏 按钮组方法
+   */
   operationButtonsProps?: Partial<OperationProps>;
+  /**
+   * 工具栏 按钮组方法
+   */
   tableBarButtonsProps?: Partial<OperationProps>;
 }
 
