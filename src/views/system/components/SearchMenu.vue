@@ -2,7 +2,7 @@
 import { h, reactive, watch } from "vue";
 import { hasAuth } from "@/router/utils";
 import { searchMenuApi } from "@/api/system/search";
-import RePlusSearch, { SearchProps } from "@/components/RePlusSearch";
+import RePlusSearch from "@/components/RePlusSearch";
 import { transformI18n } from "@/plugins/i18n";
 
 defineOptions({ name: "SearchMenu" });
@@ -11,7 +11,8 @@ const emit = defineEmits<{
   (e: "change", ...args: any[]): void;
 }>();
 
-const { multiple = true, modelValue } = defineProps<SearchProps>();
+const selectValue = defineModel<object | object[] | string>();
+const { multiple = true } = defineProps<{ multiple?: boolean }>();
 
 const api = reactive(searchMenuApi);
 const baseColumnsFormat = ({ listColumns }) => {
@@ -33,8 +34,8 @@ const baseColumnsFormat = ({ listColumns }) => {
 <template>
   <RePlusSearch
     v-if="hasAuth('list:systemSearchMenu')"
+    v-model="selectValue"
     :multiple="multiple"
-    :selectValue="modelValue"
     locale-name="systemMenu"
     :baseColumnsFormat="baseColumnsFormat"
     :api="api"

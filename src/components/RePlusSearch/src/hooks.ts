@@ -1,18 +1,16 @@
-import { computed, nextTick, reactive, type Ref, ref } from "vue";
+import { nextTick, reactive, type Ref, ref } from "vue";
 import type { PaginationProps } from "@pureadmin/table";
-import { getKeyList } from "@pureadmin/utils";
+import { getKeyList, isArray } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import type { PlusSearchProps } from "./types";
 
 export function usePlusSearch(
   selectRef: Ref,
   tableRef: Ref,
+  selectValue: Ref,
   props: PlusSearchProps
 ) {
   const { pagination, valueProps, isTree } = props;
-  const selectValue = ref<PlusSearchProps["selectValue"]>(
-    computed(() => props.selectValue)
-  );
   const dataList = ref([]);
   const { t } = useI18n();
   const selectVisible = ref(false);
@@ -37,6 +35,9 @@ export function usePlusSearch(
     }
   };
   const getSelectPks = () => {
+    if (!isArray(selectValue.value)) {
+      return [];
+    }
     return getKeyList(selectValue.value ?? [], valueProps.value ?? "pk");
   };
 
@@ -81,6 +82,7 @@ export function usePlusSearch(
   const onClear = () => {
     const { clearSelection } = tableRef.value.getTableRef().getTableRef();
     clearSelection();
+    selectValue.value = props.multiple ? [] : undefined;
   };
 
   const onSure = async () => {

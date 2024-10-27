@@ -4,7 +4,7 @@ import { usePlusSearch } from "./hooks";
 import { ClickOutside as vClickOutside } from "element-plus";
 import { RePlusPage } from "@/components/RePlusPage";
 import type { PlusSearchProps } from "./types";
-import { deviceDetection } from "@pureadmin/utils";
+import { deviceDetection, isEmpty } from "@pureadmin/utils";
 
 defineOptions({
   name: "RePlusSearch"
@@ -25,6 +25,8 @@ const props = withDefaults(defineProps<PlusSearchProps>(), {
   })
 });
 
+const selectValue = defineModel<object | object[] | string>();
+
 const emit = defineEmits<{
   (e: "change", ...args: any[]): void;
 }>();
@@ -33,7 +35,6 @@ const selectRef = ref();
 const tableRef = ref();
 const {
   t,
-  selectValue,
   selectVisible,
   defaultPagination,
   onSure,
@@ -44,7 +45,7 @@ const {
   handleRowClick,
   handleClickOutSide,
   handleSelectionChange
-} = usePlusSearch(selectRef, tableRef, props);
+} = usePlusSearch(selectRef, tableRef, selectValue, props);
 
 watch(
   () => selectValue.value,

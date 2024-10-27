@@ -2,7 +2,7 @@
 import { reactive } from "vue";
 import { hasAuth } from "@/router/utils";
 import { searchRoleApi } from "@/api/system/search";
-import RePlusSearch, { SearchProps } from "@/components/RePlusSearch";
+import RePlusSearch from "@/components/RePlusSearch";
 
 defineOptions({ name: "SearchRole" });
 
@@ -10,7 +10,8 @@ const emit = defineEmits<{
   (e: "change", ...args: any[]): void;
 }>();
 
-const { multiple = true, modelValue } = defineProps<SearchProps>();
+const selectValue = defineModel<object | object[] | string>();
+const { multiple = true } = defineProps<{ multiple?: boolean }>();
 
 const api = reactive(searchRoleApi);
 </script>
@@ -18,8 +19,8 @@ const api = reactive(searchRoleApi);
 <template>
   <RePlusSearch
     v-if="hasAuth('list:systemSearchRole')"
+    v-model="selectValue"
     :multiple="multiple"
-    :selectValue="modelValue"
     locale-name="systemRole"
     :api="api"
     :valueProps="{

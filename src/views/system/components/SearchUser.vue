@@ -2,7 +2,7 @@
 import { h, reactive } from "vue";
 import { hasAuth } from "@/router/utils";
 import { searchUserApi } from "@/api/system/search";
-import RePlusSearch, { SearchProps } from "@/components/RePlusSearch";
+import RePlusSearch from "@/components/RePlusSearch";
 import { ElImage } from "element-plus";
 
 defineOptions({ name: "SearchUser" });
@@ -11,7 +11,8 @@ const emit = defineEmits<{
   (e: "change", ...args: any[]): void;
 }>();
 
-const { multiple = true, modelValue } = defineProps<SearchProps>();
+const selectValue = defineModel<object | object[] | string>();
+const { multiple = true } = defineProps<{ multiple?: boolean }>();
 
 const api = reactive(searchUserApi);
 
@@ -40,8 +41,8 @@ const baseColumnsFormat = ({ listColumns }) => {
 <template>
   <RePlusSearch
     v-if="hasAuth('list:systemSearchUser')"
+    v-model="selectValue"
     :multiple="multiple"
-    :selectValue="modelValue"
     locale-name="systemUser"
     :baseColumnsFormat="baseColumnsFormat"
     :api="api"

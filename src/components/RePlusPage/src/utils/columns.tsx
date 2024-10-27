@@ -370,8 +370,8 @@ export function useBaseColumns(localeName: string) {
           break;
         default:
           if (column.input_type.startsWith("api-")) {
-            if (!column.hasOwnProperty("default") && column?.multiple) {
-              column.default = [];
+            if (!column.hasOwnProperty("default")) {
+              column.default = column?.multiple ? [] : undefined;
             }
             item["renderField"] = (value, onChange) => {
               return h(apiSearchComponents[column.input_type], {
