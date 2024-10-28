@@ -12,6 +12,7 @@ const {
   auth,
   treeData,
   menuData,
+  viewList,
   modelList,
   parentIds,
   choicesDict,
@@ -60,6 +61,7 @@ const {
             :menu-url-list="menuUrlList"
             :method-choices="choicesDict['method']"
             :model-list="modelList"
+            :view-list="viewList"
             :tree-data="treeData"
             class="pt-10 pb-20"
             @handleConfirm="handleConfirm"

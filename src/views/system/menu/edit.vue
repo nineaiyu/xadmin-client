@@ -3,7 +3,7 @@ import { useI18n } from "vue-i18n";
 import { FormProps } from "./utils/types";
 import { useApiAuth } from "./utils/hook";
 import { computed, ref, watch } from "vue";
-import { cloneDeep } from "@pureadmin/utils";
+import { cloneDeep, isEmpty } from "@pureadmin/utils";
 import { transformI18n } from "@/plugins/i18n";
 import { IconSelect } from "@/components/ReIcon";
 import { MenuChoices } from "@/views/system/constants";
@@ -24,6 +24,7 @@ const props = withDefaults(defineProps<FormProps>(), {
   modelList: () => [],
   menuChoices: () => [],
   menuUrlList: () => [],
+  viewList: () => [],
   formInline: () => ({
     menu_type: MenuChoices.DIRECTORY,
     isAdd: false,
@@ -129,6 +130,12 @@ const menuOptions = computed<Array<OptionsType>>(() => {
   });
   return data;
 });
+
+const handleComponentChange = value => {
+  if (isEmpty(newFormInline.value.path)) {
+    newFormInline.value.path = `/${value}`;
+  }
+};
 
 defineExpose({ getRef });
 </script>
@@ -249,11 +256,22 @@ defineExpose({ getRef });
               :label="t('systemMenu.componentPath')"
             />
           </template>
-          <el-input
+          <el-select
             v-model="newFormInline.component"
+            class="w-full"
             :placeholder="t('systemMenu.verifyComponentPath')"
             clearable
-          />
+            filterable
+            allow-create
+            @change="handleComponentChange"
+          >
+            <el-option
+              v-for="item in viewList"
+              :key="item"
+              :label="item"
+              :value="item"
+            />
+          </el-select>
         </el-form-item>
 
         <el-divider />

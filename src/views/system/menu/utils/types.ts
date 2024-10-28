@@ -63,6 +63,7 @@ interface FormProps {
   menuChoices?: any[];
   menuUrlList?: any[];
   modelList?: any[];
+  viewList?: any[];
 }
 
 interface TreeFormProps {

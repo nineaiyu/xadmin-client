@@ -71,6 +71,7 @@ export function useMenu() {
   const parentIds = ref([]);
   const choicesDict = ref([]);
   const menuUrlList = ref([]);
+  const viewList = ref([]);
   const modelList = ref([]);
   const menuData = ref<FormItemProps>(cloneDeep(defaultData));
   const loading = ref(true);
@@ -106,7 +107,7 @@ export function useMenu() {
     });
   };
 
-  function handleDelete(row) {
+  const handleDelete = row => {
     api.delete(row.pk).then(res => {
       if (res.code === 1000) {
         message(t("results.success"), { type: "success" });
@@ -115,9 +116,9 @@ export function useMenu() {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
     });
-  }
+  };
 
-  function handleManyDelete(val) {
+  const handleManyDelete = val => {
     const manyPks = val!.getCheckedKeys(false);
     if (manyPks.length === 0) {
       message(t("results.noSelectedData"), { type: "error" });
@@ -133,7 +134,7 @@ export function useMenu() {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
     });
-  }
+  };
 
   const handleConfirm = (instance, row) => {
     instance!.validate((isValid: boolean) => {
@@ -155,7 +156,7 @@ export function useMenu() {
     });
   };
 
-  function addNewMenu(treeRef, data: FormItemProps) {
+  const addNewMenu = (treeRef, data: FormItemProps) => {
     const p_menus = getMenuFromPk(treeRef?.data, data.pk);
     const row = cloneDeep(defaultData);
     if (p_menus.length > 0) {
@@ -166,9 +167,9 @@ export function useMenu() {
       row.parent = "";
     }
     openDialog(MenuChoices.DIRECTORY, row);
-  }
+  };
 
-  function openDialog(menu_type: number, row?: FormItemProps) {
+  const openDialog = (menu_type: number, row?: FormItemProps) => {
     addDialog({
       title: t("buttons.add"),
       props: {
@@ -177,6 +178,7 @@ export function useMenu() {
         menuChoices: choicesDict.value["menu_type"],
         modelList: modelList,
         menuUrlList: menuUrlList,
+        viewList: viewList,
         formInline: {
           pk: row?.pk ?? "",
           menu_type: menu_type,
@@ -236,7 +238,7 @@ export function useMenu() {
         });
       }
     });
-  }
+  };
 
   const handleDrag = (treeRef, node, node2, position) => {
     const u_menu = node.data;
@@ -265,13 +267,13 @@ export function useMenu() {
     });
   };
 
-  function exportData(val) {
+  const exportData = val => {
     const pks = val!.getCheckedKeys(false);
     handleExportData({ t, pks, api, allowTypes: ["selected", "all"] });
-  }
+  };
 
   // 数据导入
-  function importData() {
+  const importData = () => {
     handleImportData({
       t,
       api,
@@ -279,11 +281,23 @@ export function useMenu() {
         getMenuData();
       }
     });
-  }
+  };
 
+  const getViews = () => {
+    const files: any = import.meta.glob("@/views/**/*.vue");
+    Object.keys(files).forEach((file: string) => {
+      // 忽略 components 目录的文件，规定该目录下的文件为依赖组件，而不是页面组件
+      if (!/\/components\//.test(file)) {
+        viewList.value.push(
+          file.replace(/(\.\/|\.vue)/g, "").replace("/src/views/", "")
+        );
+      }
+    });
+  };
   onMounted(() => {
     getMenuApiList();
     getMenuData();
+    getViews();
     if (hasAuth("list:systemModelField")) {
       modelLabelFieldApi
         .list({
@@ -310,6 +324,7 @@ export function useMenu() {
     auth,
     treeData,
     menuData,
+    viewList,
     modelList,
     parentIds,
     choicesDict,
