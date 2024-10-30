@@ -3,7 +3,7 @@ import { useI18n } from "vue-i18n";
 import { FormProps } from "./utils/types";
 import { useApiAuth } from "./utils/hook";
 import { computed, ref, watch } from "vue";
-import { cloneDeep, isEmpty } from "@pureadmin/utils";
+import { cloneDeep, isEmpty, isNullOrUnDef } from "@pureadmin/utils";
 import { transformI18n } from "@/plugins/i18n";
 import { IconSelect } from "@/components/ReIcon";
 import { MenuChoices } from "@/views/system/constants";
@@ -24,7 +24,7 @@ const props = withDefaults(defineProps<FormProps>(), {
   modelList: () => [],
   menuChoices: () => [],
   menuUrlList: () => [],
-  viewList: () => [],
+  viewList: () => ({}),
   formInline: () => ({
     menu_type: MenuChoices.DIRECTORY,
     isAdd: false,
@@ -132,9 +132,11 @@ const menuOptions = computed<Array<OptionsType>>(() => {
 });
 
 const handleComponentChange = value => {
-  if (isEmpty(newFormInline.value.path)) {
-    newFormInline.value.path = `/${value}`;
+  if (isEmpty(value) || isNullOrUnDef(value)) {
+    return;
   }
+  newFormInline.value.path = `/${value}`;
+  newFormInline.value.name = props.viewList[value];
 };
 
 defineExpose({ getRef });
@@ -220,6 +222,39 @@ defineExpose({ getRef });
               :disabled="!newFormInline.meta.transition_enter"
             />
           </el-form-item>
+          <el-form-item :label="t('systemMenu.componentPath')" prop="component">
+            <template #label>
+              <from-question
+                :description="t('systemMenu.exampleComponentPath')"
+                :label="t('systemMenu.componentPath')"
+              />
+            </template>
+            <el-select
+              v-model="newFormInline.component"
+              class="w-full"
+              :placeholder="t('systemMenu.verifyComponentPath')"
+              clearable
+              filterable
+              @change="handleComponentChange"
+            >
+              <el-option
+                v-for="item in Object.keys(viewList)"
+                :key="item"
+                :value="item"
+              >
+                <span style="float: left">{{ item }}</span>
+                <span
+                  style="
+                    float: right;
+                    font-size: 13px;
+                    color: var(--el-text-color-secondary);
+                  "
+                >
+                  {{ viewList[item] }}
+                </span>
+              </el-option>
+            </el-select>
+          </el-form-item>
         </div>
         <el-form-item :label="t('systemMenu.componentName')" prop="name">
           <template #label>
@@ -230,6 +265,7 @@ defineExpose({ getRef });
           </template>
           <el-input
             v-model="newFormInline.name"
+            :disabled="newFormInline.menu_type === MenuChoices.MENU"
             :placeholder="t('systemMenu.componentName')"
             clearable
           />
@@ -249,31 +285,6 @@ defineExpose({ getRef });
         </el-form-item>
       </div>
       <div v-if="newFormInline.menu_type === MenuChoices.MENU">
-        <el-form-item :label="t('systemMenu.componentPath')" prop="component">
-          <template #label>
-            <from-question
-              :description="t('systemMenu.exampleComponentPath')"
-              :label="t('systemMenu.componentPath')"
-            />
-          </template>
-          <el-select
-            v-model="newFormInline.component"
-            class="w-full"
-            :placeholder="t('systemMenu.verifyComponentPath')"
-            clearable
-            filterable
-            allow-create
-            @change="handleComponentChange"
-          >
-            <el-option
-              v-for="item in viewList"
-              :key="item"
-              :label="item"
-              :value="item"
-            />
-          </el-select>
-        </el-form-item>
-
         <el-divider />
         <el-form-item :label="t('systemMenu.cache')" prop="keepAlive">
           <template #label>

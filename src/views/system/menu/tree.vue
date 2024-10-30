@@ -22,6 +22,7 @@ import UnExpandIcon from "./svg/unexpand.svg?component";
 import DocumentAdd from "@iconify-icons/ep/document-add";
 import Download from "@iconify-icons/ep/download";
 import Upload from "@iconify-icons/ep/upload";
+import MenuAdd from "@iconify-icons/ri/menu-add-fill";
 
 const { t } = useI18n();
 const { locale } = useI18n();
@@ -76,9 +77,10 @@ const emit = defineEmits([
   "handleDelete",
   "addNewMenu",
   "handleDrag",
-  "handleManyDelete",
   "exportData",
-  "importData"
+  "importData",
+  "handleManyDelete",
+  "handleAddPermissions"
 ]);
 
 const formInline = useVModel(props, "formInline", emit);
@@ -415,6 +417,20 @@ onMounted(() => {
             >
               {{ data.method?.value }} {{ data.path }}
             </el-text>
+            <el-tooltip
+              v-if="auth.permissions && data.menu_type === MenuChoices.MENU"
+              :content="t('systemMenu.addPermissions')"
+              class="box-item"
+              effect="dark"
+              placement="top-start"
+            >
+              <IconifyIconOffline
+                :icon="MenuAdd"
+                class="set-icon"
+                style="width: 26px; height: 20px; margin-left: 8px"
+                @click.stop="emit('handleAddPermissions', data)"
+              />
+            </el-tooltip>
           </span>
         </template>
       </el-tree>

@@ -26,7 +26,8 @@ const {
   getMenuData,
   handleDelete,
   handleConfirm,
-  handleManyDelete
+  handleManyDelete,
+  handleAddPermissions
 } = useMenu();
 </script>
 
@@ -47,6 +48,7 @@ const {
           @handleDelete="handleDelete"
           @handleDrag="handleDrag"
           @handleManyDelete="handleManyDelete"
+          @handleAddPermissions="handleAddPermissions"
           @importData="importData"
           @openDialog="openDialog"
         />

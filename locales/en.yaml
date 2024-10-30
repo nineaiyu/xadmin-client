@@ -421,6 +421,10 @@ systemMenu:
   fixedTagTip: Whether the current menu name is fixed to the TAB and cannot be closed
   hiddenTag: Hidden Tag
   hiddenTagTip: The current menu name or custom information is prohibited from being added to the TAB
+  addPermissions: Automatic batch add permissions
+  codeSuffix: Permission identity suffix
+  codeSuffixTip: The default is the component name, which can be modified by yourself
+  menuView: Back-end view name
 
 logsOperation:
   creator_id: Creator Id

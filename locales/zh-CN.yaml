@@ -421,6 +421,10 @@ systemMenu:
   fixedTagTip: 当前菜单名称是否固定显示在标签页且不可关闭
   hiddenTag: 隐藏标签页
   hiddenTagTip: 当前菜单名称或自定义信息禁止添加到标签页
+  addPermissions: 自动批量添加权限
+  codeSuffix: 权限标识后缀
+  codeSuffixTip: 一般默认为组件名称，可自行修改
+  menuView: 后端视图名称
 
 logsOperation:
   creator_id: 用户ID

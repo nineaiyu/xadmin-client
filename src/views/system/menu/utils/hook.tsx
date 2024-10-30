@@ -1,18 +1,30 @@
 import { message } from "@/utils/message";
 import { menuApi } from "@/api/system/menu";
-import { h, onMounted, reactive, ref } from "vue";
+import { computed, h, onMounted, reactive, ref } from "vue";
 import { addDialog } from "@/components/ReDialog";
 import editForm from "../edit.vue";
 import type { FormItemProps } from "./types";
 import { handleTree } from "@/utils/tree";
-import { cloneDeep, deviceDetection } from "@pureadmin/utils";
+import {
+  cloneDeep,
+  deviceDetection,
+  isEmpty,
+  isNullOrUnDef
+} from "@pureadmin/utils";
 import { getMenuFromPk, getMenuOrderPk } from "@/utils";
 import { useI18n } from "vue-i18n";
 import { FieldChoices, MenuChoices } from "@/views/system/constants";
 import { hasAuth } from "@/router/utils";
 import { modelLabelFieldApi } from "@/api/system/field";
-import { handleExportData, handleImportData } from "@/components/RePlusPage";
+import {
+  handleExportData,
+  handleImportData,
+  handleOperation,
+  openFormDialog
+} from "@/components/RePlusPage";
 import { formatFiledAppParent } from "@/views/system/hooks";
+import type { PlusColumn } from "plus-pro-components";
+import { ElInput } from "element-plus";
 
 const defaultData: FormItemProps = {
   menu_type: MenuChoices.DIRECTORY,
@@ -71,7 +83,7 @@ export function useMenu() {
   const parentIds = ref([]);
   const choicesDict = ref([]);
   const menuUrlList = ref([]);
-  const viewList = ref([]);
+  const viewList = ref({});
   const modelList = ref([]);
   const menuData = ref<FormItemProps>(cloneDeep(defaultData));
   const loading = ref(true);
@@ -288,12 +300,99 @@ export function useMenu() {
     Object.keys(files).forEach((file: string) => {
       // 忽略 components 目录的文件，规定该目录下的文件为依赖组件，而不是页面组件
       if (!/\/components\//.test(file)) {
-        viewList.value.push(
-          file.replace(/(\.\/|\.vue)/g, "").replace("/src/views/", "")
-        );
+        files[file]().then(data => {
+          if (
+            isEmpty(data?.default?.name) ||
+            isNullOrUnDef(data?.default?.name)
+          ) {
+            return;
+          }
+          viewList.value[
+            file.replace(/(\.\/|\.vue)/g, "").replace("/src/views/", "")
+          ] = data?.default?.name;
+        });
       }
     });
   };
+
+  const handleAddPermissions = row => {
+    console.log("handleAddPermissions", row);
+    const columns = ref<PlusColumn[]>([
+      {
+        label: t("systemMenu.menu"),
+        prop: "meta.title",
+        renderField: value => {
+          return h(ElInput, {
+            disabled: true,
+            modelValue: t(value as string)
+          });
+        }
+      },
+      {
+        label: t("systemMenu.codeSuffix"),
+        prop: "name",
+        tooltip: t("systemMenu.codeSuffixTip")
+      },
+      {
+        label: t("systemMenu.menuView"),
+        prop: "method",
+        valueType: "select",
+        fieldProps: {
+          filterable: true,
+          clearable: true
+        },
+        options: computed(() => {
+          const result = {};
+
+          menuUrlList.value?.forEach(item => {
+            if (item.name !== "#") {
+              result[item?.view] = {
+                label: item?.view.split(".").pop(),
+                value: item?.view
+              };
+            }
+          });
+          return Object.values(result);
+        })
+      }
+    ]);
+
+    openFormDialog({
+      t,
+      isAdd: false,
+      title: t("systemMenu.addPermissions"),
+      rawRow: { ...row },
+      rawColumns: columns.value,
+      rawFormProps: {
+        rules: {
+          method: [
+            {
+              required: true,
+              message: t("systemMenu.menuView"),
+              trigger: "blur"
+            }
+          ]
+        }
+      },
+      saveCallback: ({ formData, done, closeLoading }) => {
+        handleOperation({
+          t,
+          apiReq: api.permissions(row.pk, {
+            view_string: formData.method,
+            component: formData.name
+          }),
+          success() {
+            getMenuData();
+            done();
+          },
+          requestEnd() {
+            closeLoading();
+          }
+        });
+      }
+    });
+  };
+
   onMounted(() => {
     getMenuApiList();
     getMenuData();
@@ -338,6 +437,7 @@ export function useMenu() {
     getMenuData,
     handleDelete,
     handleConfirm,
-    handleManyDelete
+    handleManyDelete,
+    handleAddPermissions
   };
 }
