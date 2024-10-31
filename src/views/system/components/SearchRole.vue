@@ -18,7 +18,7 @@ const api = reactive(searchRoleApi);
 
 <template>
   <RePlusSearch
-    v-if="hasAuth('list:SearchRoleData')"
+    v-if="hasAuth('list:SearchRole')"
     v-model="selectValue"
     :multiple="multiple"
     locale-name="systemRole"

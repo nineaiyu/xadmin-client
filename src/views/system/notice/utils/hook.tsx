@@ -131,7 +131,7 @@ export function useNotice(tableRef: Ref) {
           column["hideInForm"] = computed(() => {
             return !(
               formValue.value?.notice_type?.value === NoticeChoices.USER &&
-              hasAuth("list:SearchUserData")
+              hasAuth("list:SearchUser")
             );
           });
           return column;
@@ -140,7 +140,7 @@ export function useNotice(tableRef: Ref) {
           column["hideInForm"] = computed(() => {
             return !(
               formValue.value?.notice_type?.value === NoticeChoices.DEPT &&
-              hasAuth("list:SearchDeptData")
+              hasAuth("list:SearchDept")
             );
           });
           return column;
@@ -149,7 +149,7 @@ export function useNotice(tableRef: Ref) {
           column["hideInForm"] = computed(() => {
             return !(
               formValue.value?.notice_type?.value === NoticeChoices.ROLE &&
-              hasAuth("list:SearchRoleData")
+              hasAuth("list:SearchRole")
             );
           });
           return column;

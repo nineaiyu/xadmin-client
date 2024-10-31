@@ -232,7 +232,7 @@ defineExpose({ getRef });
         <el-form-item
           v-if="
             newFormInline.type === FieldKeyChoices.TABLE_USER &&
-            hasAuth('list:SearchUserData')
+            hasAuth('list:SearchUser')
           "
           :label="t('systemPermission.notice_user')"
           prop="notice_user"
@@ -243,7 +243,7 @@ defineExpose({ getRef });
         <el-form-item
           v-if="
             newFormInline.type === FieldKeyChoices.TABLE_DEPT &&
-            hasAuth('list:SearchDeptData')
+            hasAuth('list:SearchDept')
           "
           :label="t('systemPermission.notice_dept')"
           prop="notice_dept"
@@ -253,7 +253,7 @@ defineExpose({ getRef });
         <el-form-item
           v-if="
             newFormInline.type === FieldKeyChoices.TABLE_ROLE &&
-            hasAuth('list:SearchRoleData')
+            hasAuth('list:SearchRole')
           "
           :label="t('systemPermission.notice_role')"
           prop="notice_role"
@@ -264,7 +264,7 @@ defineExpose({ getRef });
         <el-form-item
           v-if="
             newFormInline.type === FieldKeyChoices.TABLE_MENU &&
-            hasAuth('list:SearchMenuData')
+            hasAuth('list:SearchMenu')
           "
           :label="t('systemPermission.notice_menu')"
           prop="notice_menu"
