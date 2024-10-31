@@ -6,7 +6,7 @@ import type {
   UploadRawFile,
   UploadRequestOptions
 } from "element-plus";
-import { uploadFileApi } from "@/api/system/upload";
+import { systemUploadFileApi } from "@/api/system/file";
 import { message } from "@/utils/message";
 import { useI18n } from "vue-i18n";
 import { UploadFilled } from "@element-plus/icons-vue";
@@ -35,8 +35,8 @@ const fileList = ref([]);
 const uploadConfig = ref({ file_upload_size: 1048576 });
 
 onMounted(() => {
-  if (hasAuth("retrieve:SystemUploadFile")) {
-    uploadFileApi.config().then(res => {
+  if (hasAuth("config:SystemUploadFile")) {
+    systemUploadFileApi.config().then(res => {
       if (res.code === 1000) {
         uploadConfig.value = res.data;
       }
@@ -47,7 +47,7 @@ onMounted(() => {
 const uploadRequest = (option: UploadRequestOptions) => {
   const data = new FormData();
   data.append("file", option.file);
-  return uploadFileApi.upload({}, data, {
+  return systemUploadFileApi.upload(data, {
     onUploadProgress: (event: any) => {
       const progressEvt = event as UploadProgressEvent;
       progressEvt.percent =

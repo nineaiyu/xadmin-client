@@ -137,13 +137,6 @@ export class BaseApi extends BaseRequest {
       `${this.baseApi}/batch-destroy`
     );
   };
-  upload = (pk: number | string, data?: object, action?: string) => {
-    return http.upload<BaseResult, any>(
-      `${this.baseApi}/${pk}/${action ?? "upload"}`,
-      {},
-      data
-    );
-  };
   exportData = async (params: object) => {
     return http
       .request(

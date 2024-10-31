@@ -425,6 +425,7 @@ systemMenu:
   codeSuffix: Permission identity suffix
   codeSuffixTip: The default is the component name, which can be modified by yourself
   menuView: Back-end view name
+  skipExistingData: Skip existing data
 
 logsOperation:
   creator_id: Creator Id

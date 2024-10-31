@@ -2,7 +2,7 @@
 import { onBeforeUnmount, onMounted, ref, shallowRef } from "vue";
 import "@wangeditor/editor/dist/css/style.css";
 import { Editor, Toolbar } from "@wangeditor/editor-for-vue";
-import { uploadFileApi } from "@/api/system/upload";
+import { systemUploadFileApi } from "@/api/system/file";
 import { message } from "@/utils/message";
 import { formatBytes, getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
@@ -22,8 +22,8 @@ const emit = defineEmits<{
 }>();
 
 onMounted(() => {
-  if (hasAuth("retrieve:SystemUploadFile")) {
-    uploadFileApi.config().then(res => {
+  if (hasAuth("config:SystemUploadFile")) {
+    systemUploadFileApi.config().then(res => {
       if (res.code === 1000) {
         uploadConfig.value = res.data;
       }
@@ -79,7 +79,7 @@ if (
       loading.value = true;
       const data = new FormData();
       data.append("file", file);
-      uploadFileApi.upload({}, data).then(res => {
+      systemUploadFileApi.upload(data).then(res => {
         if (res.code === 1000) {
           insertFn(
             res.data[0]?.access_url,
@@ -101,7 +101,7 @@ if (
       loading.value = true;
       const data = new FormData();
       data.append("file", file);
-      uploadFileApi.upload({}, data).then(res => {
+      systemUploadFileApi.upload(data).then(res => {
         if (res.code === 1000) {
           insertFn(res.data[0]?.access_url, "");
         } else {
@@ -119,7 +119,7 @@ if (
       loading.value = true;
       const data = new FormData();
       data.append("file", file);
-      uploadFileApi.upload({}, data).then(res => {
+      systemUploadFileApi.upload(data).then(res => {
         if (res.code === 1000) {
           insertFn(res.data[0]?.filename, res.data[0]?.access_url);
         } else {

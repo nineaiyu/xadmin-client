@@ -21,7 +21,8 @@ import {
   handleExportData,
   handleImportData,
   handleOperation,
-  openFormDialog
+  openFormDialog,
+  renderBooleanSegmentedOption
 } from "@/components/RePlusPage";
 import { formatFiledAppParent } from "@/views/system/hooks";
 import type { PlusColumn } from "plus-pro-components";
@@ -301,6 +302,7 @@ export function useMenu() {
   };
 
   const handleAddPermissions = row => {
+    row.skip_existing = false;
     const columns = ref<PlusColumn[]>([
       {
         label: t("systemMenu.menu"),
@@ -338,6 +340,12 @@ export function useMenu() {
           });
           return Object.values(result);
         })
+      },
+      {
+        label: t("systemMenu.skipExistingData"),
+        prop: "skip_existing",
+        valueType: "radio",
+        renderField: renderBooleanSegmentedOption()
       }
     ]);
 
@@ -383,6 +391,7 @@ export function useMenu() {
           t,
           apiReq: api.permissions(row.pk, {
             views: formData.method,
+            skip_existing: formData.skip_existing,
             component: formData.name
           }),
           success() {

@@ -425,6 +425,7 @@ systemMenu:
   codeSuffix: 权限标识后缀
   codeSuffixTip: 一般默认为组件名称，可自行修改
   menuView: 后端视图名称
+  skipExistingData: 跳过已存在数据
 
 logsOperation:
   creator_id: 用户ID
