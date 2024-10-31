@@ -1,7 +1,7 @@
 import { operationLogApi } from "@/api/system/logs/operation";
 import { useRouter } from "vue-router";
-import { reactive, shallowRef } from "vue";
-import { hasAuth } from "@/router/utils";
+import { getCurrentInstance, reactive, shallowRef } from "vue";
+import { getDefaultAuths, hasAuth } from "@/router/utils";
 import type {
   PageColumn,
   OperationProps,
@@ -14,10 +14,7 @@ export function useOperationLog() {
   const api = reactive(operationLogApi);
 
   const auth = reactive({
-    list: hasAuth("list:systemOperationLog"),
-    delete: hasAuth("delete:systemOperationLog"),
-    export: hasAuth("export:systemOperationLog"),
-    batchDelete: hasAuth("batchDelete:systemOperationLog")
+    ...getDefaultAuths(getCurrentInstance())
   });
 
   const operationButtonsProps = shallowRef<OperationProps>({
@@ -82,7 +79,7 @@ export function useOperationLog() {
   const router = useRouter();
 
   function onGoDetail(row: any) {
-    if (hasAuth("list:systemUser") && row?.creator && row?.creator?.pk) {
+    if (hasAuth("list:SystemUser") && row?.creator && row?.creator?.pk) {
       router.push({
         name: "SystemUser",
         query: { pk: row.creator.pk }

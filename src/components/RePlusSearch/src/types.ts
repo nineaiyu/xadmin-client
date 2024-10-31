@@ -6,7 +6,7 @@ import type { PageColumnList } from "@/components/RePlusPage";
 import type { PageColumn } from "@/components/RePlusPage";
 
 interface PlusSearchProps {
-  api: BaseApi;
+  api: Partial<BaseApi>;
   isTree?: boolean;
   multiple?: boolean;
   localeName?: string;

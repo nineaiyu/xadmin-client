@@ -16,8 +16,8 @@ const { t } = useI18n();
 const settingData = computed<Array<settingItemProps>>(() => [
   {
     auth: {
-      update: hasAuth("update:SettingEmail"),
-      detail: hasAuth("detail:SettingEmail"),
+      partialUpdate: hasAuth("partialUpdate:SettingEmail"),
+      retrieve: hasAuth("retrieve:SettingEmail"),
       test: hasAuth("test:SettingEmail")
     },
     api: settingsEmailApi,
@@ -27,7 +27,7 @@ const settingData = computed<Array<settingItemProps>>(() => [
 ]);
 
 const auth = ref({
-  update: hasAuth("update:SettingNotifications"),
+  partialUpdate: hasAuth("partialUpdate:SettingNotifications"),
   list: hasAuth("list:SettingNotifications"),
   backends: hasAuth("backends:SettingNotifications")
 });

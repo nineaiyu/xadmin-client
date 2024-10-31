@@ -35,7 +35,7 @@ const fileList = ref([]);
 const uploadConfig = ref({ file_upload_size: 1048576 });
 
 onMounted(() => {
-  if (hasAuth("config:systemUploadFile")) {
+  if (hasAuth("retrieve:SystemUploadFile")) {
     uploadFileApi.config().then(res => {
       if (res.code === 1000) {
         uploadConfig.value = res.data;

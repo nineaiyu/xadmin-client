@@ -57,7 +57,7 @@ const {
       <template #plus-field-operation>
         <div class="mt-3">
           <el-popconfirm
-            v-if="auth.update"
+            v-if="auth.partialUpdate"
             :title="t('buttons.confirmUpdate')"
             @confirm="handleUpdate(userInfo)"
           >

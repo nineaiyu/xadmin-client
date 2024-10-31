@@ -1,20 +1,21 @@
 import { message } from "@/utils/message";
 import { menuApi } from "@/api/system/menu";
-import { computed, h, onMounted, reactive, ref } from "vue";
+import { computed, getCurrentInstance, h, onMounted, reactive, ref } from "vue";
 import { addDialog } from "@/components/ReDialog";
-import editForm from "../edit.vue";
+import editForm from "../components/edit.vue";
 import type { FormItemProps } from "./types";
 import { handleTree } from "@/utils/tree";
 import {
   cloneDeep,
   deviceDetection,
   isEmpty,
-  isNullOrUnDef
+  isNullOrUnDef,
+  isObject
 } from "@pureadmin/utils";
 import { getMenuFromPk, getMenuOrderPk } from "@/utils";
 import { useI18n } from "vue-i18n";
 import { FieldChoices, MenuChoices } from "@/views/system/constants";
-import { hasAuth } from "@/router/utils";
+import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { modelLabelFieldApi } from "@/api/system/field";
 import {
   handleExportData,
@@ -53,31 +54,15 @@ const defaultData: FormItemProps = {
   }
 };
 
-export function useApiAuth() {
-  const api = reactive(menuApi);
-  api.update = api.patch;
-
-  const auth = reactive({
-    list: hasAuth("list:systemMenu"),
-    rank: hasAuth("rank:systemMenu"),
-    create: hasAuth("create:systemMenu"),
-    delete: hasAuth("delete:systemMenu"),
-    update: hasAuth("update:systemMenu"),
-    permissions: hasAuth("permissions:systemMenu"),
-    export: hasAuth("export:systemMenu"),
-    import: hasAuth("import:systemMenu"),
-    apiUrl: hasAuth("apiUrl:systemMenu"),
-    batchDelete: hasAuth("batchDelete:systemMenu")
-  });
-  return {
-    api,
-    auth
-  };
-}
-
 export function useMenu() {
   const { t } = useI18n();
-  const { api, auth } = useApiAuth();
+  const api = reactive(menuApi);
+  const auth = reactive({
+    rank: false,
+    permissions: false,
+    apiUrl: false,
+    ...getDefaultAuths(getCurrentInstance(), ["rank", "permissions", "apiUrl"])
+  });
   const formRef = ref();
   const treeData = ref([]);
   const parentIds = ref([]);
@@ -120,7 +105,7 @@ export function useMenu() {
   };
 
   const handleDelete = row => {
-    api.delete(row.pk).then(res => {
+    api.destroy(row.pk).then(res => {
       if (res.code === 1000) {
         message(t("results.success"), { type: "success" });
         getMenuData();
@@ -136,9 +121,9 @@ export function useMenu() {
       message(t("results.noSelectedData"), { type: "error" });
       return;
     }
-    api.batchDelete(manyPks).then(res => {
+    api.batchDestroy(manyPks).then(res => {
       if (res.code === 1000) {
-        message(t("results.batchDelete", { count: manyPks.length }), {
+        message(t("results.batchDestroy", { count: manyPks.length }), {
           type: "success"
         });
         getMenuData();
@@ -153,7 +138,7 @@ export function useMenu() {
       if (isValid) {
         row.meta.title = row.title;
         if (row.pk) {
-          api.update(row.pk, row).then(res => {
+          api.partialUpdate(row.pk, row).then(res => {
             if (res.code === 1000) {
               message(res.detail, { type: "success" });
               getMenuData();
@@ -259,7 +244,7 @@ export function useMenu() {
     } else {
       u_menu.parent = node2.data.parent;
     }
-    api.update(u_menu.pk, u_menu).then((res: any) => {
+    api.partialUpdate(u_menu.pk, u_menu).then((res: any) => {
       if (res.code === 1000) {
         api
           .rank({ pks: getMenuOrderPk(treeRef.value?.data) })
@@ -316,7 +301,6 @@ export function useMenu() {
   };
 
   const handleAddPermissions = row => {
-    console.log("handleAddPermissions", row);
     const columns = ref<PlusColumn[]>([
       {
         label: t("systemMenu.menu"),
@@ -339,11 +323,11 @@ export function useMenu() {
         valueType: "select",
         fieldProps: {
           filterable: true,
-          clearable: true
+          clearable: true,
+          multiple: true
         },
         options: computed(() => {
           const result = {};
-
           menuUrlList.value?.forEach(item => {
             if (item.name !== "#") {
               result[item?.view] = {
@@ -374,11 +358,31 @@ export function useMenu() {
           ]
         }
       },
+      dialogOptions: {
+        onChange: data => {
+          const values = data?.values?.values;
+          if (isObject(values) && data?.values?.column?.prop === "method") {
+            if (values.method?.length > 1) {
+              values.name = values.method
+                .map(item => {
+                  return item
+                    .split(".")
+                    .pop()
+                    .replace("ViewSet", "")
+                    .replace("APIView", "");
+                })
+                .join(" | ");
+            } else {
+              values.name = row.name;
+            }
+          }
+        }
+      },
       saveCallback: ({ formData, done, closeLoading }) => {
         handleOperation({
           t,
           apiReq: api.permissions(row.pk, {
-            view_string: formData.method,
+            views: formData.method,
             component: formData.name
           }),
           success() {
@@ -397,7 +401,7 @@ export function useMenu() {
     getMenuApiList();
     getMenuData();
     getViews();
-    if (hasAuth("list:systemModelField")) {
+    if (hasAuth("list:SystemModelLabelField")) {
       modelLabelFieldApi
         .list({
           page: 1,

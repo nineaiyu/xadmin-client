@@ -22,7 +22,7 @@ const emit = defineEmits<{
 }>();
 
 onMounted(() => {
-  if (hasAuth("config:systemUploadFile")) {
+  if (hasAuth("retrieve:SystemUploadFile")) {
     uploadFileApi.config().then(res => {
       if (res.code === 1000) {
         uploadConfig.value = res.data;
@@ -64,7 +64,10 @@ const editorConfig: Partial<IEditorConfig> = {
     attachment: { menuKeys: [] }
   }
 };
-if (hasAuth("config:systemUploadFile") && hasAuth("upload:systemUploadFile")) {
+if (
+  hasAuth("retrieve:SystemUploadFile") &&
+  hasAuth("create:SystemUploadFile")
+) {
   toolbarConfig.insertKeys.keys = ["uploadAttachment"]; // “上传附件”菜单
   editorConfig.hoverbarKeys.attachment = {
     menuKeys: ["downloadAttachment"] // “下载附件”菜单

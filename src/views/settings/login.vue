@@ -18,8 +18,8 @@ defineOptions({
 const settingData = computed<Array<settingItemProps>>(() => [
   {
     auth: {
-      update: hasAuth("update:SettingLoginAuth"),
-      detail: hasAuth("detail:SettingLoginAuth")
+      partialUpdate: hasAuth("partialUpdate:SettingLoginAuth"),
+      retrieve: hasAuth("retrieve:SettingLoginAuth")
     },
     api: settingsLoginAuthApi,
     localeName: "settingLogin",
@@ -27,8 +27,8 @@ const settingData = computed<Array<settingItemProps>>(() => [
   },
   {
     auth: {
-      update: hasAuth("update:SettingLoginLimit"),
-      detail: hasAuth("detail:SettingLoginLimit")
+      partialUpdate: hasAuth("partialUpdate:SettingLoginLimit"),
+      retrieve: hasAuth("retrieve:SettingLoginLimit")
     },
     api: settingsLoginLimitApi,
     localeName: "settingLogin",
@@ -38,7 +38,7 @@ const settingData = computed<Array<settingItemProps>>(() => [
 const auth = ref({
   list: hasAuth("list:SettingBlockIp"),
   delete: hasAuth("delete:SettingBlockIp"),
-  batchDelete: hasAuth("batchDelete:SettingBlockIp")
+  batchDestroy: hasAuth("batchDestroy:SettingBlockIp")
 });
 const api = ref(settingsBlockIpApi);
 api.value.fields = undefined;

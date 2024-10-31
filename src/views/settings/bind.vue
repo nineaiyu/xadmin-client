@@ -15,16 +15,16 @@ defineOptions({
 const settingData = computed<Array<settingItemProps>>(() => [
   {
     auth: {
-      update: hasAuth("update:SettingBindEmail"),
-      detail: hasAuth("detail:SettingBindEmail")
+      partialUpdate: hasAuth("partialUpdate:SettingBindEmail"),
+      retrieve: hasAuth("retrieve:SettingBindEmail")
     },
     api: settingsBindEmailApi,
     localeName: "settingBind"
   },
   {
     auth: {
-      update: hasAuth("update:SettingBindPhone"),
-      detail: hasAuth("detail:SettingBindPhone")
+      partialUpdate: hasAuth("partialUpdate:SettingBindPhone"),
+      retrieve: hasAuth("retrieve:SettingBindPhone")
     },
     api: settingsBindPhoneApi,
     localeName: "settingBind",

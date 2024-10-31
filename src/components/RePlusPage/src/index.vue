@@ -29,16 +29,7 @@ const props = withDefaults(defineProps<RePlusPageProps>(), {
   baseColumnsFormat: undefined,
   searchColumnsFormat: undefined,
   beforeSearchSubmit: undefined,
-  auth: () => ({
-    list: false,
-    batchDelete: false,
-    create: false,
-    delete: false,
-    update: false,
-    patch: false,
-    export: false,
-    import: false
-  }),
+  auth: () => ({}),
   addOrEditOptions: () => ({}),
   pagination: () => ({}),
   pureTableProps: () => ({}),
@@ -180,7 +171,7 @@ defineExpose({
             <div class="flex">
               <div v-if="selectedNum > 0" v-motion-fade class="mr-3 flex">
                 <el-popconfirm
-                  v-if="auth.batchDelete"
+                  v-if="auth.batchDestroy"
                   :title="
                     t('buttons.batchDeleteConfirm', { count: selectedNum })
                   "
@@ -192,7 +183,7 @@ defineExpose({
                       plain
                       type="danger"
                     >
-                      {{ t("buttons.batchDelete") }}
+                      {{ t("buttons.batchDestroy") }}
                     </el-button>
                   </template>
                 </el-popconfirm>

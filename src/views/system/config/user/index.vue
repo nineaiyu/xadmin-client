@@ -4,7 +4,7 @@ import { useUserConfig } from "./utils/hook";
 import { RePlusPage } from "@/components/RePlusPage";
 
 defineOptions({
-  name: "SystemUserConfig"
+  name: "UserConfig"
 });
 
 const tableRef = ref();

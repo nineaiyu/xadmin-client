@@ -129,7 +129,7 @@ export const useUserStore = defineStore({
     async getUserInfo() {
       return new Promise<UserInfoResult>((resolve, reject) => {
         userInfoApi
-          .detail()
+          .retrieve()
           .then(res => {
             if (res.code === 1000) {
               setUserInfo(res.data);

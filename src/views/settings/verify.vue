@@ -15,16 +15,16 @@ defineOptions({
 const settingData = computed<Array<settingItemProps>>(() => [
   {
     auth: {
-      update: hasAuth("update:SettingVerify"),
-      detail: hasAuth("detail:SettingVerify")
+      partialUpdate: hasAuth("partialUpdate:SettingVerify"),
+      retrieve: hasAuth("retrieve:SettingVerify")
     },
     api: settingsVerifyCodeApi,
     localeName: "settingVerify"
   },
   {
     auth: {
-      update: hasAuth("update:settingCaptcha"),
-      detail: hasAuth("detail:settingCaptcha")
+      partialUpdate: hasAuth("partialUpdate:settingCaptcha"),
+      retrieve: hasAuth("retrieve:settingCaptcha")
     },
     api: settingsCaptchaApi,
     title: "captcha",

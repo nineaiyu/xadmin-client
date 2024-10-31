@@ -127,7 +127,7 @@ export function usePlusPage(emit: any, tableRef: Ref, props: RePlusPageProps) {
       onClick: ({ row }) => {
         handleAddOrEdit(false, row);
       },
-      show: (auth.patch || auth.update) && -30
+      show: (auth.partialUpdate || auth.update) && -30
     },
     {
       text: t("buttons.delete"),
@@ -144,7 +144,7 @@ export function usePlusPage(emit: any, tableRef: Ref, props: RePlusPageProps) {
           loading.value = false;
         });
       },
-      show: auth.delete && -20
+      show: auth.destroy && -20
     },
     {
       code: "detail",
@@ -157,7 +157,7 @@ export function usePlusPage(emit: any, tableRef: Ref, props: RePlusPageProps) {
         handleDetail(row);
       },
       tooltip: { content: t("buttons.detail") },
-      show: (auth.list || auth.detail) && -10
+      show: (auth.list || auth.retrieve) && -10
     }
   ];
 
@@ -211,7 +211,7 @@ export function usePlusPage(emit: any, tableRef: Ref, props: RePlusPageProps) {
         handleExportData({ t, pks, api, searchFields });
       },
       tooltip: { content: t("exportImport.export") },
-      show: auth.export && -20
+      show: auth.exportData && -20
     },
     {
       code: "import",
@@ -230,7 +230,7 @@ export function usePlusPage(emit: any, tableRef: Ref, props: RePlusPageProps) {
         });
       },
       tooltip: { content: t("exportImport.import") },
-      show: auth.import && -10
+      show: auth.importData && -10
     }
   ];
 
@@ -298,7 +298,7 @@ export function usePlusPage(emit: any, tableRef: Ref, props: RePlusPageProps) {
   const handleDelete = (row, requestEnd) => {
     handleOperation({
       t,
-      apiReq: api.delete(row?.pk ?? row?.id),
+      apiReq: api.destroy(row?.pk ?? row?.id),
       success() {
         handleGetData();
       },
@@ -315,10 +315,10 @@ export function usePlusPage(emit: any, tableRef: Ref, props: RePlusPageProps) {
 
     handleOperation({
       t,
-      apiReq: api.batchDelete(getSelectPks("pk")),
+      apiReq: api.batchDestroy(getSelectPks("pk")),
       showSuccessMsg: false,
       success() {
-        message(t("results.batchDelete", { count: selectedNum.value }), {
+        message(t("results.batchDestroy", { count: selectedNum.value }), {
           type: "success"
         });
         onSelectionCancel();
@@ -365,7 +365,7 @@ export function usePlusPage(emit: any, tableRef: Ref, props: RePlusPageProps) {
               addOrEditOptions?.apiReq({ ...formOptions, formData })) ||
             (isAdd
               ? api.create(formData)
-              : api.update(formData?.pk ?? formData?.id, formData)),
+              : api.partialUpdate(formData?.pk ?? formData?.id, formData)),
           success() {
             done();
             handleGetData();
@@ -387,11 +387,11 @@ export function usePlusPage(emit: any, tableRef: Ref, props: RePlusPageProps) {
           // pure-table ****** start
           column["cellRenderer"] = renderSwitch({
             t,
-            updateApi: api.patch,
+            updateApi: api.partialUpdate,
             switchLoadMap,
             switchStyle,
             field: column.prop,
-            disabled: () => !(auth.patch || auth.update)
+            disabled: () => !(auth.partialUpdate || auth.update)
           });
           break;
         // pure-table ****** end

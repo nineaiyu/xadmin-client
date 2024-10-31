@@ -12,7 +12,7 @@ class NoticeApi extends BaseApi {
   };
   publish = (pk: number | string, data?: object) => {
     return this.request<BaseResult>(
-      "put",
+      "patch",
       {},
       data,
       `${this.baseApi}/${pk}/publish`
@@ -26,7 +26,7 @@ export const noticeApi = new NoticeApi("/api/notifications/notice-messages");
 class NoticeReadApi extends BaseApi {
   state = (pk: number | string, data?: object) => {
     return this.request<BaseResult>(
-      "put",
+      "patch",
       {},
       data,
       `${this.baseApi}/${pk}/state`

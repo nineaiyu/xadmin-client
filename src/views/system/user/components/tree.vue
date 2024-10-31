@@ -3,8 +3,8 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { computed, getCurrentInstance, nextTick, ref, watch } from "vue";
 
 import More2Fill from "@iconify-icons/ri/more-2-fill";
-import ExpandIcon from "./svg/expand.svg?component";
-import UnExpandIcon from "./svg/unexpand.svg?component";
+import ExpandIcon from "../svg/expand.svg?component";
+import UnExpandIcon from "../svg/unexpand.svg?component";
 import { useI18n } from "vue-i18n";
 
 interface Tree {

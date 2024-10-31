@@ -1,7 +1,7 @@
 import { modelLabelFieldApi } from "@/api/system/field";
 import { useI18n } from "vue-i18n";
-import { hasAuth } from "@/router/utils";
-import { reactive, type Ref, shallowRef } from "vue";
+import { getDefaultAuths } from "@/router/utils";
+import { getCurrentInstance, reactive, type Ref, shallowRef } from "vue";
 import { handleOperation, type OperationProps } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 
@@ -11,12 +11,8 @@ export function useModelField(tableRef: Ref) {
   const api = reactive(modelLabelFieldApi);
 
   const auth = reactive({
-    list: hasAuth("list:systemModelField"),
-    sync: hasAuth("sync:systemModelField"),
-    delete: hasAuth("delete:systemModelField"),
-    export: hasAuth("export:systemModelField"),
-    import: hasAuth("import:systemModelField"),
-    batchDelete: hasAuth("batchDelete:systemModelField")
+    sync: false,
+    ...getDefaultAuths(getCurrentInstance(), ["sync"])
   });
 
   const tableBarButtonsProps = shallowRef<OperationProps>({

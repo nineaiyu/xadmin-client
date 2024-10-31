@@ -27,19 +27,19 @@ import { AesEncrypted } from "@/utils/aes";
 
 export function useApiAuth() {
   const api = reactive({
-    detail: userInfoApi.detail,
+    retrieve: userInfoApi.retrieve,
     bind: userInfoApi.bind,
-    update: userInfoApi.patch,
-    reset: userInfoApi.reset,
+    partialUpdate: userInfoApi.partialUpdate,
+    resetPassword: userInfoApi.resetPassword,
     upload: userInfoApi.upload,
     choices: userInfoApi.choices
   });
 
   const auth = computed(() => ({
     upload: hasAuth("upload:UserInfo"),
-    update: hasAuth("update:UserInfo"),
+    partialUpdate: hasAuth("partialUpdate:UserInfo"),
     bind: hasAuth("bind:UserInfo"),
-    reset: hasAuth("reset:UserInfo")
+    resetPassword: hasAuth("resetPassword:UserInfo")
   }));
   return {
     api,
@@ -97,7 +97,7 @@ export function useUserProfileForm(formRef: Ref) {
       if (valid) {
         handleOperation({
           t,
-          apiReq: api.update(
+          apiReq: api.partialUpdate(
             {},
             {
               username: row.username,
@@ -190,7 +190,7 @@ export function useUserLoginLog() {
   api.fields = undefined;
 
   const auth = reactive({
-    list: hasAuth("list:userLoginLog")
+    list: hasAuth("list:UserLoginLog")
   });
 
   const { tagStyle } = usePublicHooks();
@@ -309,7 +309,7 @@ export function useAccountManage() {
         };
         handleOperation({
           t,
-          apiReq: api.reset(rowData),
+          apiReq: api.resetPassword(rowData),
           success() {
             done();
           },

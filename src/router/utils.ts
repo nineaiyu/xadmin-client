@@ -6,12 +6,13 @@ import {
   type RouterHistory
 } from "vue-router";
 import { router } from "./index";
-import { isProxy, toRaw } from "vue";
+import { type ComponentInternalInstance, isProxy, toRaw } from "vue";
 import { useTimeoutFn } from "@vueuse/core";
 import {
   cloneDeep,
   intersection,
   isAllEmpty,
+  isObject,
   storageLocal
 } from "@pureadmin/utils";
 import { getConfig } from "@/config";
@@ -387,6 +388,48 @@ function hasAuth(value: string): boolean {
   return permissionAuths[value];
 }
 
+type Auths = {
+  [key: string]: boolean;
+  list?: boolean;
+  create?: boolean;
+  update?: boolean;
+  upload?: boolean;
+  destroy?: boolean;
+  retrieve?: boolean;
+  exportData?: boolean;
+  importData?: boolean;
+  batchDestroy?: boolean;
+  partialUpdate?: boolean;
+};
+
+function getDefaultAuths(
+  suffix: ComponentInternalInstance | string,
+  auth: string[] = []
+): Auths {
+  if (isObject(suffix)) {
+    suffix = suffix?.type?.name;
+  }
+  const actions = [
+    "list",
+    "create",
+    "update",
+    "upload",
+    "destroy",
+    "retrieve",
+    "exportData",
+    "importData",
+    "batchDestroy",
+    "partialUpdate",
+    ...auth
+  ];
+  const auths = {};
+  actions.forEach(key => {
+    auths[key] = hasAuth(`${key}:${suffix}`);
+  });
+
+  return auths;
+}
+
 /** 获取所有菜单中的第一个菜单（顶级菜单）*/
 function handleTopMenu(route) {
   if (route?.children && route.children.length > 1) {
@@ -412,6 +455,7 @@ function getTopMenu(tag = false): menuType {
 }
 
 export {
+  type Auths,
   hasAuth,
   getAuths,
   ascending,
@@ -423,6 +467,7 @@ export {
   getHistoryMode,
   addAsyncRoutes,
   getParentPaths,
+  getDefaultAuths,
   findRouteByPath,
   handleAliveRoute,
   formatTwoStageRoutes,

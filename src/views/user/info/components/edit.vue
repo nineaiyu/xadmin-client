@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 import { ref } from "vue";
 import ReCol from "@/components/ReCol";
-import { formRules } from "./utils/rule";
-import { FormItemProps, FormProps } from "./utils/types";
+import { formRules } from "../utils/rule";
+import { FormItemProps, FormProps } from "../utils/types";
 import { useI18n } from "vue-i18n";
-import { useApiAuth } from "./utils/hook";
+import { useApiAuth } from "../utils/hook";
 
 defineOptions({
   name: "EditUserInfo"
@@ -43,7 +43,7 @@ const handleUpdate = row => {
 <template>
   <el-form
     ref="ruleFormRef"
-    :disabled="!auth.update"
+    :disabled="!auth.partialUpdate"
     :model="newFormInline"
     :rules="formRules"
     label-width="82px"
@@ -105,7 +105,7 @@ const handleUpdate = row => {
     </el-row>
     <el-form-item>
       <el-popconfirm
-        v-if="auth.update"
+        v-if="auth.partialUpdate"
         :title="t('buttons.confirmUpdate')"
         @confirm="handleUpdate(newFormInline)"
       >

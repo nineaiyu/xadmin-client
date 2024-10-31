@@ -15,7 +15,7 @@ class UserInfoApi extends ViewBaseApi {
       `${this.baseApi}/choices`
     );
   };
-  reset = (data?: object) => {
+  resetPassword = (data?: object) => {
     return this.request<BaseResult>(
       "post",
       {},
@@ -28,7 +28,7 @@ class UserInfoApi extends ViewBaseApi {
     return this.request<BaseResult>("post", {}, data, `${this.baseApi}/bind`);
   };
 
-  detail = (params?: object) => {
+  retrieve = (params?: object) => {
     return this.request<UserInfoResult>("get", params, {}, `${this.baseApi}`);
   };
 }

@@ -14,7 +14,7 @@ const list = computed(() => [
   {
     name: "password",
     title: t("account.password"),
-    button: hasAuth("reset:UserInfo") && t("buttons.update")
+    button: hasAuth("resetPassword:UserInfo") && t("buttons.update")
   },
   {
     name: "phone",

@@ -12,8 +12,8 @@ defineOptions({
 const settingData = computed<Array<settingItemProps>>(() => [
   {
     auth: {
-      update: hasAuth("update:SettingReset"),
-      detail: hasAuth("detail:SettingReset")
+      partialUpdate: hasAuth("partialUpdate:SettingReset"),
+      retrieve: hasAuth("retrieve:SettingReset")
     },
     api: settingsResetPasswordCodeApi,
     localeName: "settingReset"

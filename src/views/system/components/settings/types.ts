@@ -9,8 +9,8 @@ export interface settingItemProps {
   formProps?: object;
   queryParams?: object;
   auth?: {
-    update?: boolean;
-    detail: boolean;
+    partialUpdate?: boolean;
+    retrieve: boolean;
     test?: boolean;
   };
 }

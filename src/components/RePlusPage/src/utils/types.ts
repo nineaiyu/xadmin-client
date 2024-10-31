@@ -51,19 +51,21 @@ interface PageColumnList extends TableColumns {
 
 interface ApiAuthProps {
   list?: string | boolean | null | BaseApi["list"];
-  import?: string | boolean | null | BaseApi["import"];
-  export?: string | boolean | null | BaseApi["export"];
+  importData?: string | boolean | null | BaseApi["importData"];
+  exportData?: string | boolean | null | BaseApi["exportData"];
   create?: string | boolean | null | BaseApi["create"];
-  delete?: string | boolean | null | BaseApi["delete"];
+  destroy?: string | boolean | null | BaseApi["destroy"];
   update?: string | boolean | null | BaseApi["update"];
+  retrieve?: string | boolean | null | BaseApi["retrieve"];
+  partialUpdate?: string | boolean | null | BaseApi["partialUpdate"];
   fields?: string | boolean | null | BaseApi["fields"];
-  batchDelete?: string | boolean | null | BaseApi["batchDelete"];
+  batchDestroy?: string | boolean | null | BaseApi["batchDestroy"];
 }
 
 interface RePlusPageProps {
-  api: BaseApi;
+  api: Partial<BaseApi>;
   title?: string;
-  auth: ApiAuthProps | any;
+  auth: Partial<ApiAuthProps>;
   /**
    * 是否有多选框， 一般为第一列
    */

@@ -2,7 +2,7 @@ import { BaseApi } from "@/api/base";
 import type { BaseResult } from "@/api/types";
 
 class UserApi extends BaseApi {
-  reset = (pk: number | string, data?: object) => {
+  resetPassword = (pk: number | string, data?: object) => {
     return this.request<BaseResult>(
       "post",
       {},
@@ -19,7 +19,7 @@ class UserApi extends BaseApi {
       `${this.baseApi}/${pk}/empower`
     );
   };
-  unBlock = (pk: number | string, data?: object) => {
+  unblock = (pk: number | string, data?: object) => {
     return this.request<BaseResult>(
       "post",
       {},

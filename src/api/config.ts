@@ -24,7 +24,7 @@ class ConfigApi extends BaseApi {
     return this.getConfig("WEB_SITE_CONFIG");
   };
   setSiteConfig = (data: object) => {
-    return this.setConfig("WEB_SITE_CONFIG", data, "put");
+    return this.setConfig("WEB_SITE_CONFIG", data, "patch");
   };
   resetSiteConfig = () => {
     return this.setConfig("WEB_SITE_CONFIG", {}, "delete");

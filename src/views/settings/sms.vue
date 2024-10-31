@@ -19,8 +19,8 @@ const settingData = computed<Array<settingItemProps>>(() => {
     ...[
       {
         auth: {
-          update: hasAuth("update:SettingSms"),
-          detail: hasAuth("detail:SettingSms")
+          partialUpdate: hasAuth("partialUpdate:SettingSms"),
+          retrieve: hasAuth("retrieve:SettingSms")
         },
         api: settingsSmsServerApi,
         localeName: "settingSms"
@@ -32,14 +32,14 @@ const settingData = computed<Array<settingItemProps>>(() => {
 
 onMounted(() => {
   hasAuth("list:SettingSmsBackends") &&
-    settingsSmsBackendsApi.detail().then(res => {
+    settingsSmsBackendsApi.retrieve().then(res => {
       if (res.code === 1000) {
         smsBackends.value = [];
         res.data.forEach(item => {
           smsBackends.value.push({
             auth: {
-              update: hasAuth("update:SettingSmsConfig"),
-              detail: hasAuth("detail:SettingSmsConfig"),
+              partialUpdate: hasAuth("partialUpdate:SettingSmsConfig"),
+              retrieve: hasAuth("retrieve:SettingSmsConfig"),
               test: hasAuth("test:SettingSmsConfig")
             },
             api: settingsSmsConfigApi,

@@ -40,7 +40,7 @@ const baseColumnsFormat = ({ listColumns }) => {
 
 <template>
   <RePlusSearch
-    v-if="hasAuth('list:systemSearchUser')"
+    v-if="hasAuth('list:SearchUserData')"
     v-model="selectValue"
     :multiple="multiple"
     locale-name="systemUser"

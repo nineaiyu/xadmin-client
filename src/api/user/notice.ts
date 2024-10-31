@@ -12,14 +12,19 @@ class UserNoticeReadApi extends BaseApi {
   };
   allRead = (params?: object) => {
     return this.request<BaseResult>(
-      "put",
+      "patch",
       params,
       {},
-      `${this.baseApi}/read-all`
+      `${this.baseApi}/all-read`
     );
   };
   batchRead = (data?: object) => {
-    return this.request<BaseResult>("put", {}, data, `${this.baseApi}/read`);
+    return this.request<BaseResult>(
+      "patch",
+      {},
+      data,
+      `${this.baseApi}/batch-read`
+    );
   };
 }
 

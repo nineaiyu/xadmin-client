@@ -167,7 +167,7 @@ messageNotifications:
 results:
   success: Executed successfully
   failed: Execution failure
-  batchDelete: Batch deletes the { count } items
+  batchDestroy: Batch deletes the { count } items
   batchRead: Batch read the { count } items
   noSelectedData: Data not selected
   formValidationFailed: Form validation failed
@@ -207,7 +207,7 @@ buttons:
   sure: Ok
   edit: Edit
   detail: Detail
-  batchDelete: BatchDelete
+  batchDestroy: BatchDelete
   batchDeleteConfirm: Are you sure to delete { count } pieces of items in batch?
   operateConfirm: Are you sure to { action } { message } ?
   selected: "{ count } items are selected"

@@ -12,8 +12,8 @@ defineOptions({
 const settingData = computed<Array<settingItemProps>>(() => [
   {
     auth: {
-      update: hasAuth("update:SettingRegisterAuth"),
-      detail: hasAuth("detail:SettingRegisterAuth")
+      partialUpdate: hasAuth("partialUpdate:SettingRegisterAuth"),
+      retrieve: hasAuth("retrieve:SettingRegisterAuth")
     },
     api: settingsRegisterAuthApi,
     localeName: "settingRegister"

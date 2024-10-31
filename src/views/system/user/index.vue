@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import tree from "./tree.vue";
+import tree from "./components/tree.vue";
 import { computed, ref } from "vue";
 import { useUser } from "./utils/hook";
 import { RePlusPage } from "@/components/RePlusPage";

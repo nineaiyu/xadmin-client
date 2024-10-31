@@ -30,7 +30,7 @@ export class BaseRequest {
   /*
    *判断是否有文件类型数据，如果 有的话，使用form-data 上传
    */
-  hasFileObject = (data?: object) => {
+  private hasFileObject = (data?: object) => {
     for (const item of Object.values(data ?? {})) {
       if (File.prototype.isPrototypeOf(item)) return true;
       if (item instanceof Array) {
@@ -102,7 +102,7 @@ export class BaseApi extends BaseRequest {
   create = (data?: object) => {
     return this.request<DetailResult>("post", {}, data);
   };
-  detail = (pk: number | string, params?: object) => {
+  retrieve = (pk: number | string, params?: object) => {
     return this.request<DetailResult>(
       "get",
       params,
@@ -113,7 +113,7 @@ export class BaseApi extends BaseRequest {
   update = (pk: number | string, data?: object) => {
     return this.request<DetailResult>("put", {}, data, `${this.baseApi}/${pk}`);
   };
-  patch = (pk: number | string, data?: object) => {
+  partialUpdate = (pk: number | string, data?: object) => {
     return this.request<DetailResult>(
       "patch",
       {},
@@ -121,7 +121,7 @@ export class BaseApi extends BaseRequest {
       `${this.baseApi}/${pk}`
     );
   };
-  delete = (pk: number | string, params?: object) => {
+  destroy = (pk: number | string, params?: object) => {
     return this.request<BaseResult>(
       "delete",
       params,
@@ -129,12 +129,12 @@ export class BaseApi extends BaseRequest {
       `${this.baseApi}/${pk}`
     );
   };
-  batchDelete = (pks: Array<number | string>) => {
+  batchDestroy = (pks: Array<number | string>) => {
     return this.request<BaseResult>(
       "post",
       {},
       { pks },
-      `${this.baseApi}/batch-delete`
+      `${this.baseApi}/batch-destroy`
     );
   };
   upload = (pk: number | string, data?: object, action?: string) => {
@@ -144,7 +144,7 @@ export class BaseApi extends BaseRequest {
       data
     );
   };
-  export = async (params: object) => {
+  exportData = async (params: object) => {
     return http
       .request(
         "get",
@@ -166,7 +166,7 @@ export class BaseApi extends BaseRequest {
       });
   };
 
-  import = (params: object, data: File) => {
+  importData = (params: object, data: File) => {
     return http.upload<DetailResult, any>(
       `${this.baseApi}/import-data`,
       params,
@@ -192,13 +192,13 @@ export class ViewBaseApi extends BaseRequest {
   create = (params?: object, data?: object) => {
     return this.request<DetailResult>("post", params, data);
   };
-  detail = (params?: object) => {
+  retrieve = (params?: object) => {
     return this.request<DetailResult>("get", params, {}, `${this.baseApi}`);
   };
   update = (params?: object, data?: object) => {
     return this.request<DetailResult>("put", params, data, `${this.baseApi}`);
   };
-  patch = (params?: object, data?: object) => {
+  partialUpdate = (params?: object, data?: object) => {
     return this.request<DetailResult>("patch", params, data, `${this.baseApi}`);
   };
 }

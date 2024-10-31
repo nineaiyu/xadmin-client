@@ -167,7 +167,7 @@ messageNotifications:
 results:
   success: 执行成功
   failed: 执行失败
-  batchDelete: 批量删除 { count } 条数据
+  batchDestroy: 批量删除 { count } 条数据
   batchRead: 批量已读 { count } 条数据
   noSelectedData: 数据未选择
   formValidationFailed: 表单校验失败
@@ -207,7 +207,7 @@ buttons:
   sure: 确定
   edit: 编辑
   detail: 查看
-  batchDelete: 批量删除
+  batchDestroy: 批量删除
   batchDeleteConfirm: 确定批量删除 { count } 条数据吗？
   operateConfirm: 确定 { action } { message } ？
   selected: "已选 { count } 项"

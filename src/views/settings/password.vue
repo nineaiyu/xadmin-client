@@ -13,8 +13,8 @@ defineOptions({
 const settingData = computed<Array<settingItemProps>>(() => [
   {
     auth: {
-      update: hasAuth("update:SettingPassword"),
-      detail: hasAuth("detail:SettingPassword")
+      partialUpdate: hasAuth("partialUpdate:SettingPassword"),
+      retrieve: hasAuth("retrieve:SettingPassword")
     },
     api: settingsPasswordApi,
     localeName: "settingPassword"

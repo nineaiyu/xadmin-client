@@ -31,7 +31,7 @@ watch(ruleInfo.value, () => {
 <template>
   <div class="w-full">
     <PureTableBar :columns="columns" :title="t('systemPermission.rules')">
-      <template v-if="hasAuth('list:systemModelField')" #buttons>
+      <template v-if="hasAuth('list:SystemModelLabelField')" #buttons>
         <el-button
           :icon="useRenderIcon(AddFill)"
           type="primary"
@@ -64,7 +64,7 @@ watch(ruleInfo.value, () => {
         >
           <template #operation="{ row }">
             <el-button
-              v-if="hasAuth('list:systemModelField')"
+              v-if="hasAuth('list:SystemModelLabelField')"
               :icon="useRenderIcon(EditPen)"
               :size="size"
               class="reset-margin"

@@ -12,8 +12,8 @@ defineOptions({
 const settingData = computed<Array<settingItemProps>>(() => [
   {
     auth: {
-      update: hasAuth("update:SettingBasic"),
-      detail: hasAuth("detail:SettingBasic")
+      partialUpdate: hasAuth("partialUpdate:SettingBasic"),
+      retrieve: hasAuth("retrieve:SettingBasic")
     },
     api: settingsBasicApi,
     localeName: "settingBasic"

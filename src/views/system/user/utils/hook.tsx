@@ -3,7 +3,16 @@ import { message } from "@/utils/message";
 import { zxcvbn } from "@zxcvbn-ts/core";
 import { userApi } from "@/api/system/user";
 import { ElForm, ElFormItem, ElImage, ElInput, ElProgress } from "element-plus";
-import { h, onMounted, reactive, ref, type Ref, shallowRef, watch } from "vue";
+import {
+  getCurrentInstance,
+  h,
+  onMounted,
+  reactive,
+  ref,
+  type Ref,
+  shallowRef,
+  watch
+} from "vue";
 import { addDialog } from "@/components/ReDialog";
 import croppingUpload from "@/components/RePictureUpload";
 import { roleApi } from "@/api/system/role";
@@ -15,7 +24,7 @@ import {
   isPhone
 } from "@pureadmin/utils";
 import { useRouter } from "vue-router";
-import { hasAuth } from "@/router/utils";
+import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { handleTree } from "@/utils/tree";
 import { deptApi } from "@/api/system/dept";
@@ -43,22 +52,17 @@ export function useUser(tableRef: Ref) {
   const { t } = useI18n();
 
   const api = reactive(userApi);
-  api.update = api.patch;
 
   const auth = reactive({
-    list: hasAuth("list:systemUser"),
-    create: hasAuth("create:systemUser"),
-    delete: hasAuth("delete:systemUser"),
-    update: hasAuth("update:systemUser"),
-    reset: hasAuth("reset:systemUser"),
-    empower: hasAuth("empower:systemUser"),
-    upload: hasAuth("upload:systemUser"),
-    export: hasAuth("export:systemUser"),
-    import: hasAuth("import:systemUser"),
-    unBlock: hasAuth("unBlock:systemUser"),
-    batchDelete: hasAuth("batchDelete:systemUser")
+    unblock: false,
+    empower: false,
+    resetPassword: false,
+    ...getDefaultAuths(getCurrentInstance(), [
+      "resetPassword",
+      "empower",
+      "unblock"
+    ])
   });
-
   const cropRef = ref();
   const router = useRouter();
   const treeData = ref([]);
@@ -217,7 +221,7 @@ export function useUser(tableRef: Ref) {
         ruleFormRef.value.validate(valid => {
           if (valid) {
             api
-              .reset(row.pk, {
+              .resetPassword(row.pk, {
                 password: AesEncrypted(row.username, pwdForm.newPwd)
               })
               .then(res => {
@@ -238,14 +242,14 @@ export function useUser(tableRef: Ref) {
 
   onMounted(() => {
     if (auth.empower) {
-      if (hasAuth("list:systemRole")) {
+      if (hasAuth("list:SystemRole")) {
         roleApi.list({ page: 1, size: 1000 }).then(res => {
           if (res.code === 1000 && res.data) {
             rolesOptions.value = res.data.results;
           }
         });
       }
-      if (hasAuth("list:systemDataPermission")) {
+      if (hasAuth("list:SystemDataPermission")) {
         dataPermissionApi
           .list({
             page: 1,
@@ -259,7 +263,7 @@ export function useUser(tableRef: Ref) {
       }
     }
     // 部门列表
-    if (hasAuth("list:systemDept")) {
+    if (hasAuth("list:SystemDept")) {
       deptApi.list({ page: 1, size: 1000 }).then(res => {
         if (res.code === 1000 && res.data) {
           treeData.value = handleTree(res.data.results);
@@ -308,11 +312,11 @@ export function useUser(tableRef: Ref) {
         case "block":
           column["cellRenderer"] = renderSwitch({
             t,
-            updateApi: api.unBlock,
+            updateApi: api.unblock,
             switchLoadMap,
             switchStyle,
             field: column.prop,
-            disabled: row => !auth.unBlock || !row.block
+            disabled: row => !auth.unblock || !row.block
           });
           break;
       }
@@ -489,7 +493,7 @@ export function useUser(tableRef: Ref) {
           goNotice();
         },
         show: () => {
-          return Boolean(hasAuth("create:systemNotice") && selectedNum.value);
+          return Boolean(hasAuth("create:SystemNotice") && selectedNum.value);
         }
       }
     ]
@@ -514,7 +518,7 @@ export function useUser(tableRef: Ref) {
       },
       {
         text: t("systemUser.resetPassword"),
-        code: "reset",
+        code: "resetPassword",
         props: {
           type: "primary",
           icon: useRenderIcon(Password),
@@ -523,7 +527,7 @@ export function useUser(tableRef: Ref) {
         onClick: ({ row }) => {
           handleReset(row);
         },
-        show: auth.reset
+        show: auth.resetPassword
       },
       {
         text: t("systemUser.assignRoles"),

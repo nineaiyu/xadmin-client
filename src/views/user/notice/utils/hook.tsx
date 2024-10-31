@@ -19,9 +19,9 @@ export function useUserNotice(tableRef: Ref) {
   const api = reactive(userNoticeReadApi);
 
   const auth = reactive({
-    list: hasAuth("list:userNotice"),
-    batchRead: hasAuth("update:userNoticeRead"),
-    allRead: hasAuth("update:userNoticeReadAll")
+    list: hasAuth("list:UserNotice"),
+    batchRead: hasAuth("batchRead:UserNotice"),
+    allRead: hasAuth("allRead:UserNotice")
   });
 
   const selectedNum = ref(0);

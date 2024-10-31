@@ -14,7 +14,7 @@ interface NotificationsProps {
   api: SystemMsgSubscriptionApi;
   auth: {
     list: boolean;
-    update: boolean;
+    partialUpdate: boolean;
     backends: boolean;
   };
   hasReceivers?: boolean;
@@ -25,7 +25,7 @@ const props = withDefaults(defineProps<NotificationsProps>(), {
   api: undefined,
   auth: () => ({
     list: false,
-    update: false,
+    partialUpdate: false,
     backends: false
   }),
   hasReceivers: false,
@@ -94,7 +94,7 @@ const onCheckReceiveBackend = row => {
   }
   handleOperation({
     t,
-    apiReq: props.api.patch(row.pk, {
+    apiReq: props.api.partialUpdate(row.pk, {
       receive_backends: backends
     })
   });
@@ -113,7 +113,7 @@ const handleSaveReceivers = row => {
     saveCallback: ({ formData, done, closeLoading }) => {
       handleOperation({
         t,
-        apiReq: props.api.patch(row.pk, {
+        apiReq: props.api.partialUpdate(row.pk, {
           users: formData.data.map(r => r.pk)
         }),
         success({ data }) {
@@ -163,7 +163,7 @@ const handleSaveReceivers = row => {
           <el-checkbox
             v-if="header.value !== 'site_msg'"
             v-model="row.receiveBackends[header.value]"
-            :disabled="!auth.update"
+            :disabled="!auth.partialUpdate"
             @change="onCheckReceiveBackend(row)"
           />
           <el-checkbox v-else :disabled="true" :model-value="true" />
@@ -182,7 +182,7 @@ const handleSaveReceivers = row => {
       </template>
     </el-table-column>
     <el-table-column
-      v-if="auth.update && hasOperations"
+      v-if="auth.partialUpdate && hasOperations"
       :label="t('commonLabels.operation')"
       width="200"
     >

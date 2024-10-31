@@ -454,7 +454,7 @@ const renderBooleanTag = (booleanTagOptions: booleanTagOptions) => {
 
 interface exportDataOptions {
   t: (arg0: string, arg1?: object) => string;
-  api: BaseApi;
+  api: Partial<BaseApi>;
   pks: Array<string | number>;
   allowTypes?: Array<string>;
   searchFields?: Ref;
@@ -485,12 +485,12 @@ const handleExportData = (options: exportDataOptions) => {
     form: ExportData,
     saveCallback: async ({ formData, done, closeLoading }) => {
       if (formData.range === "all") {
-        await api.export(formData).finally(() => {
+        await api.exportData(formData).finally(() => {
           closeLoading();
         });
       } else if (formData.range === "search" && searchFields) {
         searchFields.value["type"] = formData["type"];
-        await api.export(toRaw(searchFields.value)).finally(() => {
+        await api.exportData(toRaw(searchFields.value)).finally(() => {
           closeLoading();
         });
       } else if (formData.range === "selected") {
@@ -498,7 +498,7 @@ const handleExportData = (options: exportDataOptions) => {
           .then(async res => {
             formData["spm"] = res.spm;
             delete formData.pks;
-            await api.export(formData).finally(() => {
+            await api.exportData(formData).finally(() => {
               closeLoading();
             });
           })
@@ -513,7 +513,7 @@ const handleExportData = (options: exportDataOptions) => {
 
 interface importDataOptions {
   t: (arg0: string, arg1?: object) => string;
-  api: BaseApi;
+  api: Partial<BaseApi>;
   success?: (res?: DetailResult) => void;
 }
 
@@ -533,7 +533,7 @@ const handleImportData = (options: importDataOptions) => {
     form: ImportData,
     saveCallback: ({ formData, success, failed, closeLoading }) => {
       api
-        .import(
+        .importData(
           { action: formData.action, ignore_error: formData.ignore_error },
           formData.upload[0].raw
         )

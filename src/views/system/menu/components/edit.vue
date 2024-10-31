@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
-import { FormProps } from "./utils/types";
-import { useApiAuth } from "./utils/hook";
+import { FormProps } from "../utils/types";
 import { computed, ref, watch } from "vue";
 import { cloneDeep, isEmpty, isNullOrUnDef } from "@pureadmin/utils";
 import { transformI18n } from "@/plugins/i18n";
@@ -11,10 +10,13 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import ReAnimateSelector from "@/components/ReAnimateSelector";
 import FromQuestion from "@/components/FromQuestion/index.vue";
 import Segmented, { type OptionsType } from "@/components/ReSegmented";
-import { dirFormRules, menuFormRules, permissionFormRules } from "./utils/rule";
+import {
+  dirFormRules,
+  menuFormRules,
+  permissionFormRules
+} from "../utils/rule";
 
 const { t } = useI18n();
-const { auth } = useApiAuth();
 
 const emit = defineEmits(["handleConfirm"]);
 
@@ -25,6 +27,7 @@ const props = withDefaults(defineProps<FormProps>(), {
   menuChoices: () => [],
   menuUrlList: () => [],
   viewList: () => ({}),
+  auth: () => ({}),
   formInline: () => ({
     menu_type: MenuChoices.DIRECTORY,
     isAdd: false,
@@ -149,7 +152,7 @@ defineExpose({ getRef });
   >
     <el-form
       ref="ruleFormRef"
-      :disabled="!auth.update"
+      :disabled="!auth.partialUpdate"
       :model="newFormInline"
       :rules="formRules"
       class="search-form bg-bg_color w-[90%] pl-8 pt-[12px]"
@@ -527,7 +530,7 @@ defineExpose({ getRef });
         </el-form-item>
       </div>
       <el-form-item
-        v-if="auth.update && !newFormInline.isAdd && newFormInline.pk"
+        v-if="auth.partialUpdate && !newFormInline.isAdd && newFormInline.pk"
         class="flex float-right"
       >
         <el-popconfirm
