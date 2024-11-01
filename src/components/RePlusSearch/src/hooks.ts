@@ -124,6 +124,9 @@ export function usePlusSearch(
   };
 
   const handleRowClick = row => {
+    if (props.multiple) {
+      return;
+    }
     selectValue.value = {
       pk: row.pk,
       label: formatValue(row, valueProps.label)

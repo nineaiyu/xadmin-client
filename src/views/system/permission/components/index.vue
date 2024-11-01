@@ -50,6 +50,7 @@ watch(ruleInfo.value, () => {
         <pure-table
           ref="tableRef"
           :columns="dynamicColumns"
+          class="min-h-60"
           :data="Object.values(ruleInfo)"
           :header-cell-style="{
             background: 'var(--el-table-row-hover-bg-color)',

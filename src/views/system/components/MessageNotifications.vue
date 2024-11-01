@@ -1,7 +1,10 @@
 <script lang="ts" setup>
 import { onMounted, ref } from "vue";
 
-import { SystemMsgSubscriptionApi } from "@/api/system/notifications";
+import {
+  systemMsgSubscriptionApi,
+  SystemMsgSubscriptionApi
+} from "@/api/system/notifications";
 import { handleOperation, openFormDialog } from "@/components/RePlusPage";
 import { useI18n } from "vue-i18n";
 import SearchDialog from "@/views/system/components/SearchDialog.vue";
@@ -68,7 +71,7 @@ const formatCategory = subscriptions => {
 
 const getInitData = () => {
   if (props.auth.backends) {
-    props.api.backends().then(res => {
+    systemMsgSubscriptionApi.backends().then(res => {
       receiveBackends.value = res.data;
     });
   }

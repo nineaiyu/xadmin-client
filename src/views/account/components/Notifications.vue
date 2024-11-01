@@ -15,7 +15,7 @@ const { t } = useI18n();
 const auth = ref({
   partialUpdate: hasAuth("partialUpdate:UserMsgSubscription"),
   list: hasAuth("list:UserMsgSubscription"),
-  backends: hasAuth("retrieve:NotificationsBackend")
+  backends: hasAuth("backends:SystemMsgSubscription")
 });
 </script>
 

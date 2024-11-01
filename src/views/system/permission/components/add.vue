@@ -23,7 +23,7 @@ const props = withDefaults(defineProps<FormProps>(), {
   valuesData: () => [],
   fieldLookupsData: () => [],
   formInline: () => ({
-    name: "",
+    name: [],
     match: "",
     exclude: false,
     type: "",

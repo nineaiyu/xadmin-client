@@ -302,7 +302,7 @@ export function useMenu() {
   };
 
   const handleAddPermissions = row => {
-    row.skip_existing = false;
+    row.skip_existing = true;
     const columns = ref<PlusColumn[]>([
       {
         label: t("systemMenu.menu"),

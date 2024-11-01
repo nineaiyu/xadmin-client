@@ -73,13 +73,17 @@ export function useFieldRule(
   }
 
   function openDialog(row) {
+    const name = [row?.table, row?.field];
+    if (row?.table !== "*") {
+      name.unshift(row?.table?.split(".")[0]);
+    }
     addDialog({
       title: `${t("buttons.add")} ${t("systemPermission.rules")}`,
       props: {
         fieldLookupsData: fieldLookupsData,
         valuesData: valuesData,
         formInline: {
-          name: [row?.table?.split(".")[0], row?.table, row?.field],
+          name,
           match: row?.match ?? "",
           exclude: row?.exclude ?? false,
           value: row?.value ?? "",
@@ -95,6 +99,9 @@ export function useFieldRule(
       contentRenderer: () => h(addForm, { ref: formRef }),
       beforeSure: (done, { options }) => {
         const data = options.props.formInline as FormItemProps;
+        if (data.name?.length === 2) {
+          data.name.unshift("*");
+        }
         const FormRef = formRef.value.getRef();
         FormRef.validate(valid => {
           if (valid) {
