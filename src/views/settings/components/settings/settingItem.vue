@@ -40,7 +40,7 @@ const addOrEditData = ref({
   formData: {}
 });
 
-onMounted(() => {
+const getData = () => {
   if (props.auth.retrieve) {
     loading.value = true;
     getColumnData(
@@ -75,6 +75,10 @@ onMounted(() => {
       props.queryParams
     );
   }
+};
+
+onMounted(() => {
+  getData();
 });
 
 const handleSubmitSettings = data => {
@@ -123,9 +127,9 @@ const handleTest = () => {
     v-bind="formProps"
     @submit="handleSubmitSettings"
   >
-    <template #footer="{ handleSubmit, handleReset }">
+    <template #footer="{ handleSubmit }">
       <div style="justify-content: flex-start">
-        <el-button v-if="auth.partialUpdate" @click="handleReset"
+        <el-button v-if="auth.partialUpdate" @click="getData"
           >{{ t("buttons.reset") }}
         </el-button>
 

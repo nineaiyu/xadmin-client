@@ -2,8 +2,8 @@
 import { settingsBasicApi } from "@/api/system/settings";
 import { computed } from "vue";
 import { hasAuth } from "@/router/utils";
-import Setting from "@/views/system/components/settings/index.vue";
-import { settingItemProps } from "@/views/system/components/settings/types";
+import Setting from "@/views/settings/components/settings/index.vue";
+import { settingItemProps } from "@/views/settings/components/settings/types";
 
 defineOptions({
   name: "SettingBasic"

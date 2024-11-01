@@ -8,7 +8,7 @@ export class SystemMsgSubscriptionApi extends BaseRequest {
       "get",
       {},
       {},
-      `/api/notifications/backends`
+      `${this.baseApi}/backends`
     );
   };
 

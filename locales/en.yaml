@@ -595,8 +595,19 @@ settingMessage:
   mailTitle: Email Server
   messageTitle: Message Notifications
 
+settingSecurity:
+  code: Verify Code
+  captcha: Captcha Code
+  login: Login Safe
+  limit: Login Limit
+  register: Register Safe
+  resetPassword: Reset Password
+  passwordRule: Password Rules
+  bingEmail: Bind Email
+  bindPhone: Bind Phone
+  blockIp: Block Ip
+
 settingPassword:
-  title: Password Rules
   tips: Password should be
   minLength: Min Length ｛length｝
   upperCase: Upper Case
@@ -604,27 +615,8 @@ settingPassword:
   number: Number
   specialChar: Special Char
 
-settingLogin:
-  login: Login Safe
-  limit: Login Limit
-  title: Block Ip
-
-settingRegister:
-  title: Register Safe
-
 settingSms:
   title: SMS Setting
-
-settingVerify:
-  title: Verify Code
-  captcha: Captcha Code
-
-settingReset:
-  title: Reset Password
-
-settingBind:
-  title: Bind Email
-  bindPhone: Bind Phone
 
 demoBook:
   book: Book

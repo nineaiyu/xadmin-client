@@ -595,8 +595,19 @@ settingMessage:
   mailTitle: 邮件服务器
   messageTitle: 系统消息订阅
 
+settingSecurity:
+  code: 验证码安全配置
+  captcha: 图片验证码配置
+  login: 登录安全配置
+  limit: 登录限制配置
+  register: 注册安全配置
+  resetPassword: 重置密码配置
+  passwordRule: 密码规则配置
+  bingEmail: 绑定邮箱配置
+  bindPhone: 绑定手机配置
+  blockIp: 安全拦截IP
+
 settingPassword:
-  title: 密码规则配置
   tips: 密码需要满足
   minLength: 最小长度{length}位
   upperCase: 大写字母
@@ -604,27 +615,8 @@ settingPassword:
   number: 数字字符
   specialChar: 特殊字符
 
-settingLogin:
-  login: 登录安全配置
-  limit: 登录限制配置
-  title: 安全拦截IP
-
-settingRegister:
-  title: 注册安全配置
-
 settingSms:
   title: 短信设置
-
-settingVerify:
-  title: 验证码安全配置
-  captcha: 图片验证码配置
-
-settingReset:
-  title: 忘记密码设置
-
-settingBind:
-  title: 绑定邮箱配置
-  bindPhone: 绑定手机配置
 
 demoBook:
   book: 书籍

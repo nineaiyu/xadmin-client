@@ -1,13 +1,12 @@
 <script lang="ts" setup>
 import {
-  settingsSmsBackendsApi,
   settingsSmsConfigApi,
   settingsSmsServerApi
 } from "@/api/system/settings";
 import { computed, onMounted, ref } from "vue";
 import { hasAuth } from "@/router/utils";
-import { settingItemProps } from "@/views/system/components/settings/types";
-import Setting from "@/views/system/components/settings/index.vue";
+import { settingItemProps } from "@/views/settings/components/settings/types";
+import Setting from "@/views/settings/components/settings/index.vue";
 
 defineOptions({
   name: "SettingSms"
@@ -19,8 +18,8 @@ const settingData = computed<Array<settingItemProps>>(() => {
     ...[
       {
         auth: {
-          partialUpdate: hasAuth("partialUpdate:SettingSms"),
-          retrieve: hasAuth("retrieve:SettingSms")
+          partialUpdate: hasAuth("partialUpdate:SmsSetting"),
+          retrieve: hasAuth("retrieve:SmsSetting")
         },
         api: settingsSmsServerApi,
         localeName: "settingSms"
@@ -31,16 +30,16 @@ const settingData = computed<Array<settingItemProps>>(() => {
 });
 
 onMounted(() => {
-  hasAuth("list:SettingSmsBackends") &&
-    settingsSmsBackendsApi.retrieve().then(res => {
+  hasAuth("backends:SmsSetting") &&
+    settingsSmsServerApi.backends().then(res => {
       if (res.code === 1000) {
         smsBackends.value = [];
         res.data.forEach(item => {
           smsBackends.value.push({
             auth: {
-              partialUpdate: hasAuth("partialUpdate:SettingSmsConfig"),
-              retrieve: hasAuth("retrieve:SettingSmsConfig"),
-              test: hasAuth("test:SettingSmsConfig")
+              partialUpdate: hasAuth("partialUpdate:SmsConfig"),
+              retrieve: hasAuth("retrieve:SmsConfig"),
+              test: hasAuth("create:SmsConfig")
             },
             api: settingsSmsConfigApi,
             queryParams: { category: item.value },
