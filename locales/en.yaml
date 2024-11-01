@@ -223,14 +223,8 @@ menus:
   systemSettings: System Settings
   basicSettings: Basic Settings
   messageSettings: Message Settings
-  emailSettings: Email Settings
   smsSettings: SMS Settings
-  passwordSettings: Password Settings
-  registerSettings: Register Settings
-  loginSettings: Login Settings
-  verifySettings: Verify Code Settings
-  resetSettings: Reset Password Settings
-  bindSettings: Bind Settings
+  securitySettings: Security Settings
   userManagement: User Manage
   deptManagement: Department Manage
   menuManagement: Menu Manage

@@ -223,14 +223,8 @@ menus:
   systemSettings: 系统设置
   basicSettings: 基本设置
   messageSettings: 消息通知
-  emailSettings: 邮件设置
   smsSettings: 短信设置
-  passwordSettings: 密码设置
-  registerSettings: 注册设置
-  loginSettings: 登录设置
-  verifySettings: 验证码设置
-  resetSettings: 重置密码
-  bindSettings: 绑定设置
+  securitySettings: 安全设置
   userManagement: 用户管理
   deptManagement: 部门管理
   menuManagement: 菜单管理
