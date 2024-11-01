@@ -177,6 +177,7 @@ export function useMenu() {
         modelList: modelList,
         menuUrlList: menuUrlList,
         viewList: viewList,
+        auth: auth,
         formInline: {
           pk: row?.pk ?? "",
           menu_type: menu_type,
