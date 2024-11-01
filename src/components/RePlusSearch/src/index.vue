@@ -66,7 +66,6 @@ watch(
     v-click-outside="handleClickOutSide"
     :max-collapse-tags="10"
     :value-key="props.valueProps.value"
-    class="w-full"
     clearable
     collapse-tags
     collapse-tags-tooltip
