@@ -404,9 +404,16 @@ export function useBaseColumns(localeName: string) {
           addOrEditDefaultValue.value[column.key] = [column?.default];
         }
       }
-
       if (!column.write_only) {
-        switch (column.input_type) {
+        let input_type = column.input_type;
+        if (input_type.startsWith("api-search-")) {
+          // 详情渲染自定义api-search
+          input_type = "object_related_field";
+          if (column.multiple) {
+            input_type = "m2m_related_field";
+          }
+        }
+        switch (input_type) {
           case "labeled_choice":
             item["prop"] = `${column.key}.value`;
             item["options"] = computed(() =>
