@@ -334,7 +334,19 @@ export function useMenu() {
             if (item.name !== "#") {
               result[item?.view] = {
                 label: item?.view.split(".").pop(),
-                value: item?.view
+                value: item?.view,
+                fieldSlot: () => {
+                  return (
+                    <>
+                      <span style="float: left">
+                        {result[item?.view]?.label}
+                      </span>
+                      <span style=" float: right; font-size: 13px; color: var(--el-text-color-secondary); ">
+                        {item.label}
+                      </span>
+                    </>
+                  );
+                }
               };
             }
           });
