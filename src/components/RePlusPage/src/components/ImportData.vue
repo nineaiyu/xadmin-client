@@ -14,7 +14,7 @@ interface FormItemProps {
   action: string;
   ignore_error: boolean;
   upload: any[];
-  api: { export: Function };
+  api: { exportData: Function };
 }
 
 interface FormProps {
@@ -29,7 +29,7 @@ const props = withDefaults(defineProps<FormProps>(), {
     ignore_error: false,
     upload: [],
     api: {
-      export: null
+      exportData: null
     }
   })
 });
@@ -73,7 +73,7 @@ const goDownloadXlsx = (type: string) => {
   if (state.value.action === "update") {
     template = "update";
   }
-  state.value.api?.export({
+  state.value.api?.exportData({
     type: type,
     template: template,
     action: state.value.action,

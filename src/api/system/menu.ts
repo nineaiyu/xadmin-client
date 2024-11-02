@@ -1,13 +1,13 @@
 import { BaseApi } from "@/api/base";
-import type { BaseResult, DataListResult, ListResult } from "@/api/types";
+import type { BaseResult, DataListResult } from "@/api/types";
 
 class MenuApi extends BaseApi {
-  permissions = (params?: object) => {
-    return this.request<ListResult>(
-      "get",
-      params,
+  permissions = (pk: string, data: object) => {
+    return this.request<BaseResult>(
+      "post",
       {},
-      `${this.baseApi}/permissions`
+      data,
+      `${this.baseApi}/${pk}/permissions`
     );
   };
   rank = (data?: object) => {

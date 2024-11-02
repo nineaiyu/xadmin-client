@@ -5,7 +5,7 @@ import basic from "./components/basic.vue";
 import TypeIt from "@/components/ReTypeit";
 import qrCode from "./components/qrCode.vue";
 import register from "./components/register.vue";
-import update from "./components/resetPassword.vue";
+import resetPassword from "./components/resetPassword.vue";
 import login from "./components/login.vue";
 import { useNav } from "@/layout/hooks/useNav";
 import { useLayout } from "@/layout/hooks/useLayout";
@@ -105,7 +105,7 @@ const { locale, translationCh, translationEn } = useTranslationLang();
           <!-- 注册 -->
           <register v-if="currentPage === 3" />
           <!-- 忘记密码 -->
-          <update v-if="currentPage === 4" />
+          <resetPassword v-if="currentPage === 4" />
         </div>
       </div>
     </div>

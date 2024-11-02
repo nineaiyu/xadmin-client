@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 import dayjs from "dayjs";
 import { ref } from "vue";
-import editUserInfo from "./edit.vue";
-import editUserAvatar from "./avatar.vue";
+import editUserInfo from "./components/edit.vue";
+import editUserAvatar from "./components/avatar.vue";
 import { useUserInfo } from "./utils/hook";
-import editUserPassword from "./password.vue";
+import editUserPassword from "./components/password.vue";
 
 defineOptions({
   name: "UserInfo"
@@ -109,11 +109,11 @@ const activeTab = ref("userinfo");
             <edit-user-info
               :form-inline="currentUserInfo"
               :gender-choices="genderChoices"
-              @handle-update="handleUpdate"
+              @handle-partialUpdate="handleUpdate"
             />
           </el-tab-pane>
           <el-tab-pane
-            v-if="auth.reset"
+            v-if="auth.resetPassword"
             :label="t('userinfo.changePassword')"
             name="resetPwd"
           >

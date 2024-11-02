@@ -1,12 +1,12 @@
 <script lang="ts" setup>
 import { onMounted, reactive, ref, watch } from "vue";
 import ReCol from "@/components/ReCol";
-import { FormPasswordProps } from "./utils/types";
+import { FormPasswordProps } from "../utils/types";
 import type { FormRules } from "element-plus";
 import { isAllEmpty } from "@pureadmin/utils";
 import { zxcvbn } from "@zxcvbn-ts/core";
 import { useI18n } from "vue-i18n";
-import { useApiAuth } from "./utils/hook";
+import { useApiAuth } from "../utils/hook";
 import { passwordRulesCheck } from "@/utils";
 import { rulesPasswordApi } from "@/api/auth";
 import { handleOperation } from "@/components/RePlusPage";
@@ -174,7 +174,7 @@ onMounted(() => {
     </el-row>
     <el-form-item>
       <el-popconfirm
-        v-if="auth.reset"
+        v-if="auth.resetPassword"
         :title="t('buttons.confirmUpdate')"
         @confirm="handleUpdate(password)"
       >

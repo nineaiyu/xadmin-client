@@ -13,9 +13,9 @@ defineOptions({
 const { t } = useI18n();
 
 const auth = ref({
-  update: hasAuth("update:UserNotifications"),
-  list: hasAuth("list:UserNotifications"),
-  backends: hasAuth("backends:UserNotifications")
+  partialUpdate: hasAuth("partialUpdate:UserMsgSubscription"),
+  list: hasAuth("list:UserMsgSubscription"),
+  backends: hasAuth("backends:SystemMsgSubscription")
 });
 </script>
 

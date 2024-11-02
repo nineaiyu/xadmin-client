@@ -1,8 +1,23 @@
 import { BaseApi } from "@/api/base";
 import type { BaseResult } from "@/api/types";
+import type { PureHttpRequestConfig } from "@/utils/http/types";
+import { http } from "@/utils/http";
 
 class UserApi extends BaseApi {
-  reset = (pk: number | string, data?: object) => {
+  upload = (
+    pk?: number | string,
+    data?: object,
+    action?: string,
+    config?: PureHttpRequestConfig
+  ) => {
+    return http.upload<BaseResult | any, any>(
+      `${this.baseApi}/${pk}/${action ?? "upload"}`,
+      {},
+      data,
+      config
+    );
+  };
+  resetPassword = (pk: number | string, data?: object) => {
     return this.request<BaseResult>(
       "post",
       {},
@@ -19,7 +34,7 @@ class UserApi extends BaseApi {
       `${this.baseApi}/${pk}/empower`
     );
   };
-  unBlock = (pk: number | string, data?: object) => {
+  unblock = (pk: number | string, data?: object) => {
     return this.request<BaseResult>(
       "post",
       {},

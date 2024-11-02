@@ -167,7 +167,7 @@ messageNotifications:
 results:
   success: Executed successfully
   failed: Execution failure
-  batchDelete: Batch deletes the { count } items
+  batchDestroy: Batch deletes the { count } items
   batchRead: Batch read the { count } items
   noSelectedData: Data not selected
   formValidationFailed: Form validation failed
@@ -207,7 +207,7 @@ buttons:
   sure: Ok
   edit: Edit
   detail: Detail
-  batchDelete: BatchDelete
+  batchDestroy: BatchDelete
   batchDeleteConfirm: Are you sure to delete { count } pieces of items in batch?
   operateConfirm: Are you sure to { action } { message } ?
   selected: "{ count } items are selected"
@@ -223,14 +223,8 @@ menus:
   systemSettings: System Settings
   basicSettings: Basic Settings
   messageSettings: Message Settings
-  emailSettings: Email Settings
   smsSettings: SMS Settings
-  passwordSettings: Password Settings
-  registerSettings: Register Settings
-  loginSettings: Login Settings
-  verifySettings: Verify Code Settings
-  resetSettings: Reset Password Settings
-  bindSettings: Bind Settings
+  securitySettings: Security Settings
   userManagement: User Manage
   deptManagement: Department Manage
   menuManagement: Menu Manage
@@ -421,6 +415,11 @@ systemMenu:
   fixedTagTip: Whether the current menu name is fixed to the TAB and cannot be closed
   hiddenTag: Hidden Tag
   hiddenTagTip: The current menu name or custom information is prohibited from being added to the TAB
+  addPermissions: Automatic batch add permissions
+  codeSuffix: Permission identity suffix
+  codeSuffixTip: The default is the component name, which can be modified by yourself
+  menuView: Back-end view name
+  skipExistingData: Skip existing data
 
 logsOperation:
   creator_id: Creator Id
@@ -590,8 +589,19 @@ settingMessage:
   mailTitle: Email Server
   messageTitle: Message Notifications
 
+settingSecurity:
+  code: Verify Code
+  captcha: Captcha Code
+  login: Login Safe
+  limit: Login Limit
+  register: Register Safe
+  resetPassword: Reset Password
+  passwordRule: Password Rules
+  bingEmail: Bind Email
+  bindPhone: Bind Phone
+  blockIp: Block Ip
+
 settingPassword:
-  title: Password Rules
   tips: Password should be
   minLength: Min Length ｛length｝
   upperCase: Upper Case
@@ -599,27 +609,8 @@ settingPassword:
   number: Number
   specialChar: Special Char
 
-settingLogin:
-  login: Login Safe
-  limit: Login Limit
-  title: Block Ip
-
-settingRegister:
-  title: Register Safe
-
 settingSms:
   title: SMS Setting
-
-settingVerify:
-  title: Verify Code
-  captcha: Captcha Code
-
-settingReset:
-  title: Reset Password
-
-settingBind:
-  title: Bind Email
-  bindPhone: Bind Phone
 
 demoBook:
   book: Book

@@ -47,7 +47,7 @@ const panes = computed(() => [
     label: t("account.accountManagement"),
     icon: AccountManagementIcon,
     component: AccountManagement,
-    auth: hasAuth("reset:UserInfo") || hasAuth("bind:UserInfo")
+    auth: hasAuth("resetPassword:UserInfo") || hasAuth("bind:UserInfo")
   },
   {
     key: "preferences",
@@ -61,14 +61,14 @@ const panes = computed(() => [
     label: t("account.notifications"),
     icon: MessageIcon,
     component: Notifications,
-    auth: hasAuth("list:UserNotifications")
+    auth: hasAuth("list:UserMsgSubscription")
   },
   {
     key: "securityLog",
     label: t("account.securityLog"),
     icon: SecurityLogIcon,
     component: SecurityLog,
-    auth: hasAuth("list:userLoginLog")
+    auth: hasAuth("list:UserLoginLog")
   }
 ]);
 const witchPane = ref("profile");

@@ -1,7 +1,7 @@
 import { useI18n } from "vue-i18n";
 import { systemUploadFileApi } from "@/api/system/file";
-import { hasAuth } from "@/router/utils";
-import { h, reactive, type Ref, shallowRef } from "vue";
+import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { getCurrentInstance, h, reactive, type Ref, shallowRef } from "vue";
 import {
   type PageColumnList,
   isUrl,
@@ -10,7 +10,7 @@ import {
   renderBooleanTag,
   type RePlusPageProps
 } from "@/components/RePlusPage";
-import uploadForm from "../upload.vue";
+import uploadForm from "../components/upload.vue";
 import { usePublicHooks } from "@/views/system/hooks";
 import { ElIcon, ElLink, ElText } from "element-plus";
 import { Link } from "@element-plus/icons-vue";
@@ -22,17 +22,13 @@ export function useSystemUploadFile(tableRef: Ref) {
   const { t } = useI18n();
 
   const api = reactive(systemUploadFileApi);
-  api.update = api.patch;
+
   const { tagStyle } = usePublicHooks();
 
   const auth = reactive({
-    list: hasAuth("list:systemUploadFile"),
-    create: hasAuth("create:systemUploadFile"),
-    delete: hasAuth("delete:systemUploadFile"),
-    update: hasAuth("update:systemUploadFile"),
-    upload: hasAuth("upload:systemUploadFile"),
-    config: hasAuth("config:systemUploadFile"),
-    batchDelete: hasAuth("batchDelete:systemUploadFile")
+    ...getDefaultAuths(getCurrentInstance()),
+    upload: hasAuth("create:SystemUploadFile"),
+    config: hasAuth("retrieve:SystemUploadFile")
   });
 
   const operationButtonsProps = shallowRef<OperationProps>({});

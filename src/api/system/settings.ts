@@ -1,4 +1,5 @@
 import { BaseApi, ViewBaseApi } from "@/api/base";
+import type { DetailResult } from "@/api/types";
 //系统设置
 export const settingsApi = new BaseApi("/api/settings/setting");
 
@@ -22,10 +23,18 @@ export const settingsRegisterAuthApi = new ViewBaseApi(
 );
 
 // 短信
-export const settingsSmsServerApi = new ViewBaseApi("/api/settings/sms");
-
-export const settingsSmsBackendsApi = new ViewBaseApi(
-  "/api/settings/sms/backends"
+class SettingsSmsServerApi extends ViewBaseApi {
+  backends = (params?: object) => {
+    return this.request<DetailResult>(
+      "get",
+      params,
+      {},
+      `${this.baseApi}/backends`
+    );
+  };
+}
+export const settingsSmsServerApi = new SettingsSmsServerApi(
+  "/api/settings/sms"
 );
 
 export const settingsSmsConfigApi = new ViewBaseApi("/api/settings/sms/config");

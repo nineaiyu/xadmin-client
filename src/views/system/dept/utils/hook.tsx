@@ -1,8 +1,8 @@
 import { deptApi } from "@/api/system/dept";
-import { reactive, ref, type Ref, shallowRef } from "vue";
+import { getCurrentInstance, reactive, ref, type Ref, shallowRef } from "vue";
 import { cloneDeep } from "@pureadmin/utils";
 import { useRouter } from "vue-router";
-import { hasAuth } from "@/router/utils";
+import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { customRolePermissionOptions } from "@/views/system/hooks";
 import { handleTree } from "@/utils/tree";
@@ -20,17 +20,10 @@ export function useDept(tableRef: Ref) {
   const { t } = useI18n();
 
   const api = reactive(deptApi);
-  api.update = api.patch;
 
   const auth = reactive({
-    list: hasAuth("list:systemDept"),
-    create: hasAuth("create:systemDept"),
-    delete: hasAuth("delete:systemDept"),
-    update: hasAuth("update:systemDept"),
-    empower: hasAuth("empower:systemDept"),
-    import: hasAuth("import:systemDept"),
-    export: hasAuth("export:systemDept"),
-    batchDelete: hasAuth("batchDelete:systemDept")
+    empower: false,
+    ...getDefaultAuths(getCurrentInstance(), ["empower"])
   });
 
   const listColumnsFormat = (columns: PageColumnList[]) => {
@@ -95,7 +88,7 @@ export function useDept(tableRef: Ref) {
   const router = useRouter();
 
   function onGoDetail(row: any) {
-    if (hasAuth("list:systemUser") && row.user_count && row.pk) {
+    if (hasAuth("list:SystemUser") && row.user_count && row.pk) {
       router.push({
         name: "SystemUser",
         query: { dept: row.pk }

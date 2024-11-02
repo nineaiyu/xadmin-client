@@ -1,8 +1,8 @@
 import { useI18n } from "vue-i18n";
 import { loginLogApi } from "@/api/system/logs/login";
 import { useRouter } from "vue-router";
-import { hasAuth } from "@/router/utils";
-import { reactive, shallowRef } from "vue";
+import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { getCurrentInstance, reactive, shallowRef } from "vue";
 import { usePublicHooks } from "@/views/system/hooks";
 import {
   type PageColumnList,
@@ -15,10 +15,7 @@ export function useLoginLog() {
   const api = reactive(loginLogApi);
 
   const auth = reactive({
-    list: hasAuth("list:systemLoginLog"),
-    delete: hasAuth("delete:systemLoginLog"),
-    export: hasAuth("export:systemLoginLog"),
-    batchDelete: hasAuth("batchDelete:systemLoginLog")
+    ...getDefaultAuths(getCurrentInstance())
   });
 
   const router = useRouter();
@@ -51,7 +48,7 @@ export function useLoginLog() {
   };
 
   function onGoDetail(row: any) {
-    if (hasAuth("list:systemUser") && row?.creator && row?.creator?.pk) {
+    if (hasAuth("list:SystemUser") && row?.creator && row?.creator?.pk) {
       router.push({
         name: "SystemUser",
         query: { pk: row.creator.pk }

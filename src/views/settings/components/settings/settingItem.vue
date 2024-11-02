@@ -22,8 +22,8 @@ const props = withDefaults(defineProps<settingItemProps>(), {
   formProps: () => ({}),
   queryParams: () => ({}),
   auth: () => ({
-    update: false,
-    detail: false,
+    partialUpdate: false,
+    retrieve: false,
     test: false
   })
 });
@@ -40,8 +40,8 @@ const addOrEditData = ref({
   formData: {}
 });
 
-onMounted(() => {
-  if (props.auth.detail) {
+const getData = () => {
+  if (props.auth.retrieve) {
     loading.value = true;
     getColumnData(
       props.api.columns,
@@ -53,12 +53,12 @@ onMounted(() => {
         );
         addOrEditData.value.addOrEditColumns.forEach(column => {
           column["colProps"] = {};
-          column["fieldProps"]["disabled"] = !props.auth.update;
+          column["fieldProps"]["disabled"] = !props.auth.partialUpdate;
         });
         addOrEditData.value.formData = cloneDeep(addOrEditDefaultValue.value);
 
         props.api
-          .detail(props.queryParams)
+          .retrieve(props.queryParams)
           .then(res => {
             if (res.code === 1000) {
               addOrEditData.value.formData = res.data;
@@ -75,6 +75,10 @@ onMounted(() => {
       props.queryParams
     );
   }
+};
+
+onMounted(() => {
+  getData();
 });
 
 const handleSubmitSettings = data => {
@@ -83,7 +87,7 @@ const handleSubmitSettings = data => {
     submitLoading.value = true;
     handleOperation({
       t,
-      apiReq: props.api.patch(props.queryParams, data),
+      apiReq: props.api.partialUpdate(props.queryParams, data),
       success: ({ data }) => {
         addOrEditData.value.defaultData = data;
       },
@@ -119,18 +123,18 @@ const handleTest = () => {
     class="mr-12 ml-12 m-5"
     label-position="left"
     label-width="300px"
-    :has-footer="auth.update"
+    :has-footer="auth.partialUpdate"
     v-bind="formProps"
     @submit="handleSubmitSettings"
   >
-    <template #footer="{ handleSubmit, handleReset }">
+    <template #footer="{ handleSubmit }">
       <div style="justify-content: flex-start">
-        <el-button v-if="auth.update" @click="handleReset"
+        <el-button v-if="auth.partialUpdate" @click="getData"
           >{{ t("buttons.reset") }}
         </el-button>
 
         <el-button
-          v-if="auth.update"
+          v-if="auth.partialUpdate"
           type="primary"
           :loading="submitLoading"
           @click="handleSubmit"

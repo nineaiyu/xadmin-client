@@ -10,15 +10,17 @@ const emit = defineEmits<{
   (e: "change", ...args: any[]): void;
 }>();
 
-const selectValue = defineModel({ type: Array<object> });
+const selectValue = defineModel<object | object[] | string>();
+const { multiple = true } = defineProps<{ multiple?: boolean }>();
 
 const api = reactive(searchRoleApi);
 </script>
 
 <template>
   <RePlusSearch
-    v-if="hasAuth('list:systemSearchRole')"
+    v-if="hasAuth('list:SearchRole')"
     v-model="selectValue"
+    :multiple="multiple"
     locale-name="systemRole"
     :api="api"
     :valueProps="{

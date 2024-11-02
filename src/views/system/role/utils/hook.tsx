@@ -1,10 +1,17 @@
-import menuFieldForm from "../form.vue";
+import menuFieldForm from "../components/form.vue";
 
-import { h, onMounted, reactive, ref, shallowRef } from "vue";
+import {
+  getCurrentInstance,
+  h,
+  onMounted,
+  reactive,
+  ref,
+  shallowRef
+} from "vue";
 import { roleApi } from "@/api/system/role";
 import { handleTree } from "@/utils/tree";
 import { menuApi } from "@/api/system/menu";
-import { hasAuth } from "@/router/utils";
+import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { FieldChoices } from "@/views/system/constants";
 import { cloneDeep, getKeyList } from "@pureadmin/utils";
 import { modelLabelFieldApi } from "@/api/system/field";
@@ -14,28 +21,12 @@ import type {
   RePlusPageProps
 } from "@/components/RePlusPage";
 
-export function useApiAuth() {
+export function useRole() {
   const api = reactive(roleApi);
-  api.update = api.patch;
 
   const auth = reactive({
-    list: hasAuth("list:systemRole"),
-    create: hasAuth("create:systemRole"),
-    delete: hasAuth("delete:systemRole"),
-    update: hasAuth("update:systemRole"),
-    export: hasAuth("export:systemRole"),
-    import: hasAuth("import:systemRole"),
-    detail: hasAuth("detail:systemRole"),
-    batchDelete: hasAuth("batchDelete:systemRole")
+    ...getDefaultAuths(getCurrentInstance())
   });
-  return {
-    api,
-    auth
-  };
-}
-
-export function useRole() {
-  const { api, auth } = useApiAuth();
 
   const menuTreeData = ref([]);
   const fieldLookupsData = ref({});
@@ -70,7 +61,7 @@ export function useRole() {
     menuApi.list({ page: 1, size: 1000 }).then(res => {
       setTimeout(() => {
         if (res.code === 1000) {
-          if (hasAuth("list:systemModelField")) {
+          if (hasAuth("list:SystemModelLabelField")) {
             modelLabelFieldApi
               .list({
                 page: 1,
@@ -93,7 +84,7 @@ export function useRole() {
   };
 
   onMounted(() => {
-    if (hasAuth("list:systemMenu")) {
+    if (hasAuth("list:SystemMenu")) {
       getMenuData();
     }
   });
@@ -117,6 +108,8 @@ export function useRole() {
           column["fieldProps"] = {};
           column["renderField"] = (value, onChange) => {
             return h(menuFieldForm, {
+              api,
+              auth,
               pk: formValue.value?.pk,
               modelValue: value,
               field: formValue.value?.field,

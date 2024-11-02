@@ -167,7 +167,7 @@ messageNotifications:
 results:
   success: 执行成功
   failed: 执行失败
-  batchDelete: 批量删除 { count } 条数据
+  batchDestroy: 批量删除 { count } 条数据
   batchRead: 批量已读 { count } 条数据
   noSelectedData: 数据未选择
   formValidationFailed: 表单校验失败
@@ -207,7 +207,7 @@ buttons:
   sure: 确定
   edit: 编辑
   detail: 查看
-  batchDelete: 批量删除
+  batchDestroy: 批量删除
   batchDeleteConfirm: 确定批量删除 { count } 条数据吗？
   operateConfirm: 确定 { action } { message } ？
   selected: "已选 { count } 项"
@@ -223,14 +223,8 @@ menus:
   systemSettings: 系统设置
   basicSettings: 基本设置
   messageSettings: 消息通知
-  emailSettings: 邮件设置
   smsSettings: 短信设置
-  passwordSettings: 密码设置
-  registerSettings: 注册设置
-  loginSettings: 登录设置
-  verifySettings: 验证码设置
-  resetSettings: 重置密码
-  bindSettings: 绑定设置
+  securitySettings: 安全设置
   userManagement: 用户管理
   deptManagement: 部门管理
   menuManagement: 菜单管理
@@ -421,6 +415,11 @@ systemMenu:
   fixedTagTip: 当前菜单名称是否固定显示在标签页且不可关闭
   hiddenTag: 隐藏标签页
   hiddenTagTip: 当前菜单名称或自定义信息禁止添加到标签页
+  addPermissions: 自动批量添加权限
+  codeSuffix: 权限标识后缀
+  codeSuffixTip: 一般默认为组件名称，可自行修改
+  menuView: 后端视图名称
+  skipExistingData: 跳过已存在数据
 
 logsOperation:
   creator_id: 用户ID
@@ -590,8 +589,19 @@ settingMessage:
   mailTitle: 邮件服务器
   messageTitle: 系统消息订阅
 
+settingSecurity:
+  code: 验证码安全配置
+  captcha: 图片验证码配置
+  login: 登录安全配置
+  limit: 登录限制配置
+  register: 注册安全配置
+  resetPassword: 重置密码配置
+  passwordRule: 密码规则配置
+  bingEmail: 绑定邮箱配置
+  bindPhone: 绑定手机配置
+  blockIp: 安全拦截IP
+
 settingPassword:
-  title: 密码规则配置
   tips: 密码需要满足
   minLength: 最小长度{length}位
   upperCase: 大写字母
@@ -599,27 +609,8 @@ settingPassword:
   number: 数字字符
   specialChar: 特殊字符
 
-settingLogin:
-  login: 登录安全配置
-  limit: 登录限制配置
-  title: 安全拦截IP
-
-settingRegister:
-  title: 注册安全配置
-
 settingSms:
   title: 短信设置
-
-settingVerify:
-  title: 验证码安全配置
-  captcha: 图片验证码配置
-
-settingReset:
-  title: 忘记密码设置
-
-settingBind:
-  title: 绑定邮箱配置
-  bindPhone: 绑定手机配置
 
 demoBook:
   book: 书籍

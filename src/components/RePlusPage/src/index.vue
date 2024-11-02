@@ -29,16 +29,7 @@ const props = withDefaults(defineProps<RePlusPageProps>(), {
   baseColumnsFormat: undefined,
   searchColumnsFormat: undefined,
   beforeSearchSubmit: undefined,
-  auth: () => ({
-    list: false,
-    batchDelete: false,
-    create: false,
-    delete: false,
-    update: false,
-    patch: false,
-    export: false,
-    import: false
-  }),
+  auth: () => ({}),
   addOrEditOptions: () => ({}),
   pagination: () => ({}),
   pureTableProps: () => ({}),
@@ -51,6 +42,7 @@ const props = withDefaults(defineProps<RePlusPageProps>(), {
 const emit = defineEmits<{
   (e: "searchComplete", ...args: any[]): void;
   (e: "selectionChange", ...args: any[]): void;
+  (e: "rowClick", row: any): void;
   (e: "tableBarClickAction", data: ButtonsCallBackParams): void;
   (e: "operationClickAction", data: ButtonsCallBackParams): void;
 }>();
@@ -125,7 +117,7 @@ defineExpose({
         :search-loading="loadingStatus"
         :show-number="deviceDetection() ? 1 : 3"
         :needValidate="true"
-        label-width="auto"
+        label-width="100px"
         v-bind="plusSearchProps"
         @change="
           (_, column) => {
@@ -179,7 +171,7 @@ defineExpose({
             <div class="flex">
               <div v-if="selectedNum > 0" v-motion-fade class="mr-3 flex">
                 <el-popconfirm
-                  v-if="auth.batchDelete"
+                  v-if="auth.batchDestroy"
                   :title="
                     t('buttons.batchDeleteConfirm', { count: selectedNum })
                   "
@@ -191,7 +183,7 @@ defineExpose({
                       plain
                       type="danger"
                     >
-                      {{ t("buttons.batchDelete") }}
+                      {{ t("buttons.batchDestroy") }}
                     </el-button>
                   </template>
                 </el-popconfirm>
@@ -231,6 +223,7 @@ defineExpose({
         table-layout="auto"
         v-bind="pureTableProps"
         @selection-change="handleSelectionChange"
+        @row-click="row => emit('rowClick', row)"
         @page-size-change="handleSizeChange"
         @page-current-change="handleCurrentChange"
       >

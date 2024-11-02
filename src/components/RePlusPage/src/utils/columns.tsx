@@ -22,7 +22,7 @@ import { ElIcon, ElImage, ElLink } from "element-plus";
 import { Link } from "@element-plus/icons-vue";
 import Info from "@iconify-icons/ri/question-line";
 
-import { isEmail, isNumber } from "@pureadmin/utils";
+import { isEmail, isEmpty, isNumber } from "@pureadmin/utils";
 
 import SearchUser from "@/views/system/components/SearchUser.vue";
 import SearchDept from "@/views/system/components/SearchDept.vue";
@@ -370,8 +370,8 @@ export function useBaseColumns(localeName: string) {
           break;
         default:
           if (column.input_type.startsWith("api-")) {
-            if (!column.hasOwnProperty("default") && column?.multiple) {
-              column.default = [];
+            if (!column.hasOwnProperty("default")) {
+              column.default = column?.multiple ? [] : undefined;
             }
             item["renderField"] = (value, onChange) => {
               return h(apiSearchComponents[column.input_type], {
@@ -404,9 +404,16 @@ export function useBaseColumns(localeName: string) {
           addOrEditDefaultValue.value[column.key] = [column?.default];
         }
       }
-
       if (!column.write_only) {
-        switch (column.input_type) {
+        let input_type = column.input_type;
+        if (input_type.startsWith("api-search-")) {
+          // 详情渲染自定义api-search
+          input_type = "object_related_field";
+          if (column.multiple) {
+            input_type = "m2m_related_field";
+          }
+        }
+        switch (input_type) {
           case "labeled_choice":
             item["prop"] = `${column.key}.value`;
             item["options"] = computed(() =>
@@ -421,10 +428,15 @@ export function useBaseColumns(localeName: string) {
             // pure-table ****** end
             break;
           case "object_related_field":
-            item["prop"] = `${column.key}.pk`;
-            item["options"] = computed(() =>
-              formatAddOrEditOptions(column?.choices)
-            );
+            if (!isEmpty(column?.choices)) {
+              item["prop"] = `${column.key}.pk`;
+              item["options"] = computed(() =>
+                formatAddOrEditOptions(column?.choices)
+              );
+            } else {
+              item["valueType"] = "text";
+              item["prop"] = `${column.key}.label`;
+            }
             // pure-table ****** start
             item["cellRenderer"] = ({ row }) => (
               <span v-copy={get(row, `${column.key}.label`)}>

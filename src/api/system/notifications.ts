@@ -8,7 +8,7 @@ export class SystemMsgSubscriptionApi extends BaseRequest {
       "get",
       {},
       {},
-      `/api/notifications/backends`
+      `${this.baseApi}/backends`
     );
   };
 
@@ -19,7 +19,7 @@ export class SystemMsgSubscriptionApi extends BaseRequest {
   update = (pk: number | string, data?: object) => {
     return this.request<DetailResult>("put", {}, data, `${this.baseApi}/${pk}`);
   };
-  patch = (pk: number | string, data?: object) => {
+  partialUpdate = (pk: number | string, data?: object) => {
     return this.request<DetailResult>(
       "patch",
       {},

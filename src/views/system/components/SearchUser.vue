@@ -11,7 +11,8 @@ const emit = defineEmits<{
   (e: "change", ...args: any[]): void;
 }>();
 
-const selectValue = defineModel({ type: Array<object> });
+const selectValue = defineModel<object | object[] | string>();
+const { multiple = true } = defineProps<{ multiple?: boolean }>();
 
 const api = reactive(searchUserApi);
 
@@ -39,8 +40,9 @@ const baseColumnsFormat = ({ listColumns }) => {
 
 <template>
   <RePlusSearch
-    v-if="hasAuth('list:systemSearchUser')"
+    v-if="hasAuth('list:SearchUser')"
     v-model="selectValue"
+    :multiple="multiple"
     locale-name="systemUser"
     :baseColumnsFormat="baseColumnsFormat"
     :api="api"

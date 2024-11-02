@@ -2,8 +2,8 @@
 import { settingsEmailApi } from "@/api/system/settings";
 import { computed, ref } from "vue";
 import { hasAuth } from "@/router/utils";
-import { settingItemProps } from "@/views/system/components/settings/types";
-import Setting from "@/views/system/components/settings/index.vue";
+import { settingItemProps } from "@/views/settings/components/settings/types";
+import Setting from "@/views/settings/components/settings/index.vue";
 import { systemMsgSubscriptionApi } from "@/api/system/notifications";
 import MessageNotifications from "@/views/system/components/MessageNotifications.vue";
 import { useI18n } from "vue-i18n";
@@ -16,9 +16,9 @@ const { t } = useI18n();
 const settingData = computed<Array<settingItemProps>>(() => [
   {
     auth: {
-      update: hasAuth("update:SettingEmail"),
-      detail: hasAuth("detail:SettingEmail"),
-      test: hasAuth("test:SettingEmail")
+      partialUpdate: hasAuth("partialUpdate:EmailServerSetting"),
+      retrieve: hasAuth("retrieve:EmailServerSetting"),
+      test: hasAuth("create:EmailServerSetting")
     },
     api: settingsEmailApi,
     localeName: "settingMessage",
@@ -27,9 +27,9 @@ const settingData = computed<Array<settingItemProps>>(() => [
 ]);
 
 const auth = ref({
-  update: hasAuth("update:SettingNotifications"),
-  list: hasAuth("list:SettingNotifications"),
-  backends: hasAuth("backends:SettingNotifications")
+  partialUpdate: hasAuth("partialUpdate:SystemMsgSubscription"),
+  list: hasAuth("list:SystemMsgSubscription"),
+  backends: hasAuth("backends:SystemMsgSubscription")
 });
 </script>
 

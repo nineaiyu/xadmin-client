@@ -2,8 +2,8 @@
 import { settingsBasicApi } from "@/api/system/settings";
 import { computed } from "vue";
 import { hasAuth } from "@/router/utils";
-import Setting from "@/views/system/components/settings/index.vue";
-import { settingItemProps } from "@/views/system/components/settings/types";
+import Setting from "@/views/settings/components/settings/index.vue";
+import { settingItemProps } from "@/views/settings/components/settings/types";
 
 defineOptions({
   name: "SettingBasic"
@@ -12,8 +12,8 @@ defineOptions({
 const settingData = computed<Array<settingItemProps>>(() => [
   {
     auth: {
-      update: hasAuth("update:SettingBasic"),
-      detail: hasAuth("detail:SettingBasic")
+      partialUpdate: hasAuth("partialUpdate:SettingBasic"),
+      retrieve: hasAuth("retrieve:SettingBasic")
     },
     api: settingsBasicApi,
     localeName: "settingBasic"

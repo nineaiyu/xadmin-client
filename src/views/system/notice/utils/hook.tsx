@@ -1,9 +1,16 @@
-import { computed, h, reactive, type Ref, shallowRef } from "vue";
+import {
+  computed,
+  getCurrentInstance,
+  h,
+  reactive,
+  type Ref,
+  shallowRef
+} from "vue";
 import { noticeApi } from "@/api/system/notice";
 import { useRouter } from "vue-router";
 import { deviceDetection } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog";
-import { hasAuth } from "@/router/utils";
+import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { NoticeChoices } from "@/views/system/constants";
 import type {
@@ -18,15 +25,10 @@ export function useNotice(tableRef: Ref) {
   const { t } = useI18n();
 
   const api = reactive(noticeApi);
-  api.update = api.patch;
 
   const auth = reactive({
-    list: hasAuth("list:systemNotice"),
-    create: hasAuth("create:systemNotice"),
-    delete: hasAuth("delete:systemNotice"),
-    update: hasAuth("update:systemNotice"),
-    publish: hasAuth("update:systemNoticePublish"),
-    batchDelete: hasAuth("batchDelete:systemNotice")
+    publish: false,
+    ...getDefaultAuths(getCurrentInstance(), ["publish"])
   });
 
   const operationButtonsProps = shallowRef<OperationProps>({
@@ -118,7 +120,7 @@ export function useNotice(tableRef: Ref) {
               option.fieldItemProps.disabled = true;
             }
             if (option.value?.value == NoticeChoices.NOTICE) {
-              if (!hasAuth("create:systemAnnouncement")) {
+              if (!hasAuth("announcement:SystemNotice")) {
                 option.fieldItemProps.disabled = true;
               }
             }
@@ -129,7 +131,7 @@ export function useNotice(tableRef: Ref) {
           column["hideInForm"] = computed(() => {
             return !(
               formValue.value?.notice_type?.value === NoticeChoices.USER &&
-              hasAuth("list:systemSearchUser")
+              hasAuth("list:SearchUser")
             );
           });
           return column;
@@ -138,7 +140,7 @@ export function useNotice(tableRef: Ref) {
           column["hideInForm"] = computed(() => {
             return !(
               formValue.value?.notice_type?.value === NoticeChoices.DEPT &&
-              hasAuth("list:systemSearchDept")
+              hasAuth("list:SearchDept")
             );
           });
           return column;
@@ -147,7 +149,7 @@ export function useNotice(tableRef: Ref) {
           column["hideInForm"] = computed(() => {
             return !(
               formValue.value?.notice_type?.value === NoticeChoices.ROLE &&
-              hasAuth("list:systemSearchRole")
+              hasAuth("list:SearchRole")
             );
           });
           return column;
@@ -176,7 +178,7 @@ export function useNotice(tableRef: Ref) {
       if (isAdd) {
         if (
           formData?.notice_type?.value === NoticeChoices.NOTICE &&
-          hasAuth("create:systemAnnouncement")
+          hasAuth("announcement:SystemNotice")
         ) {
           return api.announcement(formData);
         }
@@ -187,7 +189,7 @@ export function useNotice(tableRef: Ref) {
   const router = useRouter();
 
   function onGoNoticeReadDetail(row: any) {
-    if (hasAuth("list:systemNoticeRead") && row.pk) {
+    if (hasAuth("list:SystemNoticeRead") && row.pk) {
       router.push({
         name: "SystemNoticeRead",
         query: { notice_id: row.pk }

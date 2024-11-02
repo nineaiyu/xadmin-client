@@ -64,6 +64,13 @@ export const menuFormRules = {
       },
       trigger: "blur"
     }
+  ],
+  component: [
+    {
+      required: true,
+      message: transformI18n($t("systemMenu.verifyComponentPath")),
+      trigger: "blur"
+    }
   ]
 };
 export const permissionFormRules = {

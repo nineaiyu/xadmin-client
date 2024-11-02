@@ -12,16 +12,16 @@ import avatar from "@/assets/avatar.png";
 
 export function useApiAuth() {
   const api = reactive({
-    detail: userInfoApi.detail,
-    update: userInfoApi.patch,
-    reset: userInfoApi.reset,
+    retrieve: userInfoApi.retrieve,
+    partialUpdate: userInfoApi.partialUpdate,
+    resetPassword: userInfoApi.resetPassword,
     upload: userInfoApi.upload
   });
 
   const auth = reactive({
     upload: hasAuth("upload:UserInfo"),
-    update: hasAuth("update:UserInfo"),
-    reset: hasAuth("reset:UserInfo")
+    partialUpdate: hasAuth("partialUpdate:UserInfo"),
+    resetPassword: hasAuth("resetPassword:UserInfo")
   });
   return {
     api,
@@ -44,7 +44,7 @@ export function useUserInfo() {
   });
 
   function handleUpdate(row) {
-    api.update({}, row).then(res => {
+    api.partialUpdate({}, row).then(res => {
       if (res.code === 1000) {
         message(t("results.success"), { type: "success" });
         getUserInfo();
@@ -96,7 +96,7 @@ export function useUserInfo() {
 
   function handleResetPassword(data) {
     api
-      .reset({
+      .resetPassword({
         old_password: AesEncrypted(currentUserInfo.username, data.old_password),
         sure_password: AesEncrypted(
           currentUserInfo.username,

@@ -55,7 +55,7 @@ export function useDashboard() {
 
   const getTodayOperateTotal = () => {
     getDashBoardTodayOperateTotalApi().then(res => {
-      if (hasAuth("list:systemOperationLog")) {
+      if (hasAuth("list:SystemOperationLog")) {
         getOperateLogList();
       }
       if (res.code === 1000) {

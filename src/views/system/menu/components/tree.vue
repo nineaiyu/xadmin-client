@@ -3,10 +3,9 @@ import { useI18n } from "vue-i18n";
 import { match } from "pinyin-pro";
 import { getMenuFromPk } from "@/utils";
 import { useVModel } from "@vueuse/core";
-import { useApiAuth } from "./utils/hook";
 import { isAllEmpty } from "@pureadmin/utils";
 import { transformI18n } from "@/plugins/i18n";
-import { Tree, TreeFormProps } from "./utils/types";
+import { Tree, TreeFormProps } from "../utils/types";
 import { MenuChoices } from "@/views/system/constants";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { computed, getCurrentInstance, onMounted, ref, watch } from "vue";
@@ -16,16 +15,16 @@ import Delete from "@iconify-icons/ep/delete";
 import Refresh from "@iconify-icons/ep/refresh";
 import Reset from "@iconify-icons/ri/restart-line";
 import Right from "@iconify-icons/ep/bottom-right";
-import ExpandIcon from "./svg/expand.svg?component";
+import ExpandIcon from "../svg/expand.svg?component";
 import More2Fill from "@iconify-icons/ri/more-2-fill";
-import UnExpandIcon from "./svg/unexpand.svg?component";
+import UnExpandIcon from "../svg/unexpand.svg?component";
 import DocumentAdd from "@iconify-icons/ep/document-add";
 import Download from "@iconify-icons/ep/download";
 import Upload from "@iconify-icons/ep/upload";
+import MenuAdd from "@iconify-icons/ri/menu-add-fill";
 
 const { t } = useI18n();
 const { locale } = useI18n();
-const { auth } = useApiAuth();
 const { proxy } = getCurrentInstance();
 
 const treeRef = ref();
@@ -41,6 +40,7 @@ const props = withDefaults(defineProps<TreeFormProps>(), {
   treeData: () => [],
   defaultData: () => ({}),
   parentIds: () => [],
+  auth: () => ({}),
   formInline: () => ({
     menu_type: MenuChoices.DIRECTORY,
     parent: "",
@@ -76,9 +76,10 @@ const emit = defineEmits([
   "handleDelete",
   "addNewMenu",
   "handleDrag",
-  "handleManyDelete",
   "exportData",
-  "importData"
+  "importData",
+  "handleManyDelete",
+  "handleAddPermissions"
 ]);
 
 const formInline = useVModel(props, "formInline", emit);
@@ -207,7 +208,7 @@ onMounted(() => {
         </p>
 
         <el-tooltip
-          v-if="auth.export"
+          v-if="auth.exportData"
           :content="t('exportImport.export')"
           effect="dark"
           placement="top-start"
@@ -220,7 +221,7 @@ onMounted(() => {
           />
         </el-tooltip>
         <el-tooltip
-          v-if="auth.import"
+          v-if="auth.importData"
           :content="t('exportImport.import')"
           effect="dark"
           placement="top-start"
@@ -313,7 +314,7 @@ onMounted(() => {
                   {{ t("buttons.reload") }}
                 </el-button>
               </el-dropdown-item>
-              <el-dropdown-item v-if="auth.batchDelete">
+              <el-dropdown-item v-if="auth.batchDestroy">
                 <el-popconfirm
                   :title="t('buttons.confirmDelete')"
                   @confirm="emit('handleManyDelete', treeRef)"
@@ -325,7 +326,7 @@ onMounted(() => {
                       link
                       type="danger"
                     >
-                      {{ t("buttons.batchDelete") }}
+                      {{ t("buttons.batchDestroy") }}
                     </el-button>
                   </template>
                 </el-popconfirm>
@@ -395,7 +396,7 @@ onMounted(() => {
             </el-tooltip>
 
             <el-popconfirm
-              v-if="auth.delete"
+              v-if="auth.destroy"
               :title="t('buttons.confirmDelete')"
               @confirm.stop="emit('handleDelete', data)"
             >
@@ -413,8 +414,24 @@ onMounted(() => {
               style="margin-left: 10px"
               type="success"
             >
-              {{ data.method }} {{ data.path }}
+              {{ data.method?.value }} {{ data.path }}
             </el-text>
+            <el-tooltip
+              v-if="
+                auth.permissions && data.menu_type !== MenuChoices.PERMISSION
+              "
+              :content="t('systemMenu.addPermissions')"
+              class="box-item"
+              effect="dark"
+              placement="top-start"
+            >
+              <IconifyIconOffline
+                :icon="MenuAdd"
+                class="set-icon"
+                style="width: 26px; height: 20px; color: #0004fc"
+                @click.stop="emit('handleAddPermissions', data)"
+              />
+            </el-tooltip>
           </span>
         </template>
       </el-tree>

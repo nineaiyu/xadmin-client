@@ -1,9 +1,8 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
-import { FormProps } from "./utils/types";
-import { useApiAuth } from "./utils/hook";
+import { FormProps } from "../utils/types";
 import { computed, ref, watch } from "vue";
-import { cloneDeep } from "@pureadmin/utils";
+import { cloneDeep, isEmpty, isNullOrUnDef } from "@pureadmin/utils";
 import { transformI18n } from "@/plugins/i18n";
 import { IconSelect } from "@/components/ReIcon";
 import { MenuChoices } from "@/views/system/constants";
@@ -11,10 +10,13 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import ReAnimateSelector from "@/components/ReAnimateSelector";
 import FromQuestion from "@/components/FromQuestion/index.vue";
 import Segmented, { type OptionsType } from "@/components/ReSegmented";
-import { dirFormRules, menuFormRules, permissionFormRules } from "./utils/rule";
+import {
+  dirFormRules,
+  menuFormRules,
+  permissionFormRules
+} from "../utils/rule";
 
 const { t } = useI18n();
-const { auth } = useApiAuth();
 
 const emit = defineEmits(["handleConfirm"]);
 
@@ -24,6 +26,8 @@ const props = withDefaults(defineProps<FormProps>(), {
   modelList: () => [],
   menuChoices: () => [],
   menuUrlList: () => [],
+  viewList: () => ({}),
+  auth: () => ({}),
   formInline: () => ({
     menu_type: MenuChoices.DIRECTORY,
     isAdd: false,
@@ -130,6 +134,14 @@ const menuOptions = computed<Array<OptionsType>>(() => {
   return data;
 });
 
+const handleComponentChange = value => {
+  if (isEmpty(value) || isNullOrUnDef(value)) {
+    return;
+  }
+  newFormInline.value.path = `/${value}`;
+  newFormInline.value.name = props.viewList[value];
+};
+
 defineExpose({ getRef });
 </script>
 
@@ -140,7 +152,7 @@ defineExpose({ getRef });
   >
     <el-form
       ref="ruleFormRef"
-      :disabled="!auth.update"
+      :disabled="!auth.partialUpdate"
       :model="newFormInline"
       :rules="formRules"
       class="search-form bg-bg_color w-[90%] pl-8 pt-[12px]"
@@ -213,6 +225,39 @@ defineExpose({ getRef });
               :disabled="!newFormInline.meta.transition_enter"
             />
           </el-form-item>
+          <el-form-item :label="t('systemMenu.componentPath')" prop="component">
+            <template #label>
+              <from-question
+                :description="t('systemMenu.exampleComponentPath')"
+                :label="t('systemMenu.componentPath')"
+              />
+            </template>
+            <el-select
+              v-model="newFormInline.component"
+              class="w-full"
+              :placeholder="t('systemMenu.verifyComponentPath')"
+              clearable
+              filterable
+              @change="handleComponentChange"
+            >
+              <el-option
+                v-for="item in Object.keys(viewList)"
+                :key="item"
+                :value="item"
+              >
+                <span style="float: left">{{ item }}</span>
+                <span
+                  style="
+                    float: right;
+                    font-size: 13px;
+                    color: var(--el-text-color-secondary);
+                  "
+                >
+                  {{ viewList[item] }}
+                </span>
+              </el-option>
+            </el-select>
+          </el-form-item>
         </div>
         <el-form-item :label="t('systemMenu.componentName')" prop="name">
           <template #label>
@@ -223,6 +268,7 @@ defineExpose({ getRef });
           </template>
           <el-input
             v-model="newFormInline.name"
+            :disabled="newFormInline.menu_type === MenuChoices.MENU"
             :placeholder="t('systemMenu.componentName')"
             clearable
           />
@@ -242,20 +288,6 @@ defineExpose({ getRef });
         </el-form-item>
       </div>
       <div v-if="newFormInline.menu_type === MenuChoices.MENU">
-        <el-form-item :label="t('systemMenu.componentPath')" prop="component">
-          <template #label>
-            <from-question
-              :description="t('systemMenu.exampleComponentPath')"
-              :label="t('systemMenu.componentPath')"
-            />
-          </template>
-          <el-input
-            v-model="newFormInline.component"
-            :placeholder="t('systemMenu.verifyComponentPath')"
-            clearable
-          />
-        </el-form-item>
-
         <el-divider />
         <el-form-item :label="t('systemMenu.cache')" prop="keepAlive">
           <template #label>
@@ -468,13 +500,14 @@ defineExpose({ getRef });
             v-model="newFormInline.method"
             class="!w-[180px]"
             clearable
+            value-key="value"
           >
             <el-option
               v-for="item in methodChoices"
               :key="item.value"
               :disabled="item.disabled"
               :label="item.label"
-              :value="item.value"
+              :value="item"
             />
           </el-select>
         </el-form-item>
@@ -497,7 +530,7 @@ defineExpose({ getRef });
         </el-form-item>
       </div>
       <el-form-item
-        v-if="auth.update && !newFormInline.isAdd && newFormInline.pk"
+        v-if="auth.partialUpdate && !newFormInline.isAdd && newFormInline.pk"
         class="flex float-right"
       >
         <el-popconfirm

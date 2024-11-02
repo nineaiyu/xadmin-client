@@ -14,13 +14,16 @@ import Reset from "@iconify-icons/ri/restart-line";
 import More2Fill from "@iconify-icons/ri/more-2-fill";
 import { MenuChoices } from "@/views/system/constants";
 import { getKeyList, isAllEmpty } from "@pureadmin/utils";
-import { useApiAuth } from "./utils/hook";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import { Auths } from "@/router/utils";
+import type { BaseApi } from "@/api/base";
 
 interface FormProps {
   pk?: string;
   field: any[];
   fields?: object;
+  api: Partial<BaseApi>;
+  auth: Auths;
   menuTreeData: any[];
 }
 
@@ -28,14 +31,14 @@ const props = withDefaults(defineProps<FormProps>(), {
   menuTreeData: () => [],
   pk: undefined,
   fields: () => ({}),
+  api: () => ({}),
+  auth: () => ({}),
   field: () => []
 });
 
 const menu = defineModel({ type: Array<any> });
 
 const { locale, t } = useI18n();
-const { api, auth } = useApiAuth();
-
 const treeRoleRef = ref();
 const searchValue = ref("");
 const loading = ref(false);
@@ -113,9 +116,9 @@ const initData = () => {
   });
 };
 const getCheckedMenu = pk => {
-  if (pk && auth.detail) {
+  if (pk && props.auth.retrieve) {
     loading.value = true;
-    api.detail(pk).then(({ code, data }) => {
+    props.api.retrieve(pk).then(({ code, data }) => {
       if (code === 1000) {
         formData.value.menu = getKeyList(data?.menu ?? [], "pk");
         Object.keys(data?.field).forEach(key => {
@@ -266,7 +269,7 @@ function onReset() {
       ref="treeRoleRef"
       v-loading="loading"
       :check-strictly="checkStrictly"
-      :data="props.menuTreeData"
+      :data="menuTreeData"
       :default-expand-all="isExpand"
       :expand-on-click-node="true"
       :filter-node-method="filterMenuNode"

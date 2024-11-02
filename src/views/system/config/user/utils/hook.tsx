@@ -1,7 +1,7 @@
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
-import { hasAuth } from "@/router/utils";
-import { reactive, type Ref, shallowRef } from "vue";
+import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { getCurrentInstance, reactive, type Ref, shallowRef } from "vue";
 import { userConfigApi } from "@/api/system/config/user";
 import {
   type PageColumnList,
@@ -16,17 +16,10 @@ export function useUserConfig(tableRef: Ref) {
   const { t } = useI18n();
 
   const api = reactive(userConfigApi);
-  api.update = api.patch;
 
   const auth = reactive({
-    list: hasAuth("list:systemUserConfig"),
-    create: hasAuth("create:systemUserConfig"),
-    delete: hasAuth("delete:systemUserConfig"),
-    update: hasAuth("update:systemUserConfig"),
-    invalid: hasAuth("invalid:systemUserConfig"),
-    import: hasAuth("import:systemUserConfig"),
-    export: hasAuth("export:systemUserConfig"),
-    batchDelete: hasAuth("batchDelete:systemUserConfig")
+    ...getDefaultAuths(getCurrentInstance()),
+    invalid: hasAuth("invalid:UserConfig")
   });
 
   const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
@@ -65,7 +58,7 @@ export function useUserConfig(tableRef: Ref) {
   const router = useRouter();
 
   const onGoUserDetail = (row: any) => {
-    if (hasAuth("list:systemUser") && row.owner && row.owner?.pk) {
+    if (hasAuth("list:SystemUser") && row.owner && row.owner?.pk) {
       router.push({
         name: "SystemUser",
         query: { pk: row.owner.pk }
