@@ -71,7 +71,7 @@ const formatCategory = subscriptions => {
 
 const getInitData = () => {
   if (props.auth.backends) {
-    systemMsgSubscriptionApi.backends().then(res => {
+    props.api.backends().then(res => {
       receiveBackends.value = res.data;
     });
   }
