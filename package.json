@@ -150,7 +150,7 @@
     "node": ">=21.1.0",
     "pnpm": ">=9"
   },
-  "packageManager": "pnpm@9.12.2",
+  "packageManager": "pnpm@9.12.3",
   "pnpm": {
     "allowedDeprecatedVersions": {
       "sourcemap-codec": "*",
