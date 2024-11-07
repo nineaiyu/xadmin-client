@@ -417,7 +417,7 @@ systemMenu:
   hiddenTagTip: The current menu name or custom information is prohibited from being added to the TAB
   addPermissions: Automatic batch add permissions
   codeSuffix: Permission identity suffix
-  codeSuffixTip: The default is the component name, which can be modified by yourself
+  codeSuffixTip: It is by default the component name. If it is empty, it will be by default the name of the back-end view, and it can be modified by yourself.
   menuView: Back-end view name
   skipExistingData: Skip existing data
 
