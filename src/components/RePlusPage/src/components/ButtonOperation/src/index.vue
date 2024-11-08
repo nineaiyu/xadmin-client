@@ -68,13 +68,14 @@ const getSubButtons = () => {
     .filter((item: OperationButtonsRow) => {
       if (typeof item.show === "function") {
         const tempFunction = item.show as (
+          row: RecordType,
           button: OperationButtonsRow
         ) =>
           | number
           | boolean
           | Ref<number | boolean>
           | ComputedRef<number | boolean>;
-        item.index = Number(unref(tempFunction(item)));
+        item.index = Number(unref(tempFunction(props.row, item)));
         return Boolean(item.index) === true;
       }
       item.index = Number(unref(item.show));
@@ -96,13 +97,15 @@ const getSubButtons = () => {
 
 const renderString = (
   str: OperationButtonsRow["text"],
+  row: RecordType,
   buttonRow: OperationButtonsRow
 ) => {
   if (typeof str === "function") {
     const tempFunction = str as (
+      row: RecordType,
       button: OperationButtonsRow
     ) => string | Ref<string> | ComputedRef<string>;
-    const text = tempFunction(buttonRow);
+    const text = tempFunction(row, buttonRow);
     return unref(text);
   } else {
     return unref(str);
@@ -139,7 +142,7 @@ const render = (row: RecordType, buttonRow: OperationButtonsRow): VNode => {
     },
     buttonRow?.text
       ? () => {
-          return renderString(buttonRow.text, buttonRow);
+          return renderString(buttonRow.text, row, buttonRow);
         }
       : {}
   );
@@ -147,7 +150,7 @@ const render = (row: RecordType, buttonRow: OperationButtonsRow): VNode => {
     return h(
       ElPopconfirm as Component,
       {
-        title: renderString(buttonRow.confirm?.title, buttonRow),
+        title: renderString(buttonRow.confirm?.title, row, buttonRow),
         onConfirm: (event: MouseEvent) =>
           handleClickAction(row, buttonRow, event),
         ...buttonRow.confirm?.props
@@ -160,7 +163,7 @@ const render = (row: RecordType, buttonRow: OperationButtonsRow): VNode => {
       ElTooltip,
       {
         placement: "top",
-        content: renderString(buttonRow.tooltip?.content, buttonRow),
+        content: renderString(buttonRow.tooltip?.content, row, buttonRow),
         ...buttonRow.tooltip?.props
       },
       () => buttonComponent

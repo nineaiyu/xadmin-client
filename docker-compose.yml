@@ -1,7 +1,7 @@
 services:
   xadmin-client-build:
     container_name: xadmin-client-build
-    image: xadmin-node:22.10.0-alpine
+    image: xadmin-node:22.11.0-slim
     environment:
       - TZ=Asia/Shanghai
     volumes:

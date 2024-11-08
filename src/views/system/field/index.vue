@@ -18,6 +18,7 @@ const { api, auth, tableBarButtonsProps } = useModelField(tableRef);
     :auth="auth"
     :operation="false"
     :tableBarButtonsProps="tableBarButtonsProps"
+    :plusSearchProps="{ labelWidth: 110 }"
     locale-name="modelFieldManagement"
   />
 </template>

@@ -417,7 +417,7 @@ systemMenu:
   hiddenTagTip: 当前菜单名称或自定义信息禁止添加到标签页
   addPermissions: 自动批量添加权限
   codeSuffix: 权限标识后缀
-  codeSuffixTip: 一般默认为组件名称，可自行修改
+  codeSuffixTip: 默认为组件名称，若为空，则默认为后端视图名称，可自行修改
   menuView: 后端视图名称
   skipExistingData: 跳过已存在数据
 
@@ -621,3 +621,5 @@ demoBook:
   publication_date: 出版日期
   price: 售价
   is_active: 是否启用
+  pushBook: 推送书籍
+  confirmPushBook: 确定将该书籍 {name} 推送到推荐服务？
