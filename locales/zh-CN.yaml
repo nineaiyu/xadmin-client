@@ -621,3 +621,5 @@ demoBook:
   publication_date: 出版日期
   price: 售价
   is_active: 是否启用
+  pushBook: 推送书籍
+  confirmPushBook: 确定将该书籍 {name} 推送到推荐服务？

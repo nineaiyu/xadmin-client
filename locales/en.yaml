@@ -621,3 +621,5 @@ demoBook:
   publication_date: Publication date
   price: Price
   is_active: Active
+  pushBook: Push book
+  confirmPushBook: Are you sure to push {name} book?

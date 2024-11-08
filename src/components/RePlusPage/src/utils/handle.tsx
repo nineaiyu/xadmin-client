@@ -227,6 +227,10 @@ interface operationOptions {
   requestEnd?: (options?: operationOptions) => void;
 }
 
+/**
+ * 请求接口封装
+ * @param options
+ */
 const handleOperation = (options: operationOptions) => {
   let {
     t,
