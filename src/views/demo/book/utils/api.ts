@@ -1,9 +1,9 @@
 import { BaseApi } from "@/api/base";
-import type { ChoicesResult } from "@/api/types";
+import type { BaseResult } from "@/api/types";
 
 class BookApi extends BaseApi {
   push = (pk: number | string) => {
-    return this.request<ChoicesResult>(
+    return this.request<BaseResult>(
       "post",
       {},
       {},
