@@ -1,8 +1,10 @@
 import type { App } from "vue";
 import axios from "axios";
+import Cookies from "js-cookie";
 
 let config: object = {};
 const { VITE_PUBLIC_PATH } = import.meta.env;
+const defaultConfigUrl = `${VITE_PUBLIC_PATH}platform-config.json`;
 
 const setConfig = (cfg?: unknown) => {
   config = Object.assign(config, cfg);
@@ -34,16 +36,16 @@ export const getPlatformConfig = async (
   app.config.globalProperties.$config = getConfig();
   return axios({
     method: "get",
-    url: `${VITE_PUBLIC_PATH}platform-config.json`
-    // url: url ? url : `/api/system/configs/WEB_SITE_CONFIG`
+    url: url
+      ? url
+      : Cookies.get("X-Token")
+        ? "/api/system/configs/WEB_SITE_CONFIG"
+        : defaultConfigUrl
   })
     .then(async ({ data: config }) => {
       config = config?.config ?? config;
-      if (!config.Version && !config.ResponsiveStorageNameSpace) {
-        return await getPlatformConfig(
-          app,
-          `${VITE_PUBLIC_PATH}platform-config.json`
-        );
+      if (!config.Locale) {
+        return await getPlatformConfig(app, defaultConfigUrl);
       }
       let $config = app.config.globalProperties.$config;
       // 自动注入项目配置
@@ -57,10 +59,7 @@ export const getPlatformConfig = async (
     })
     .catch(async () => {
       if (url === null) {
-        return await getPlatformConfig(
-          app,
-          `${VITE_PUBLIC_PATH}platform-config.json`
-        );
+        return await getPlatformConfig(app, defaultConfigUrl);
       } else {
         throw "请在public文件夹下添加platform-config.json配置文件";
       }
