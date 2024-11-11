@@ -1,6 +1,5 @@
 import type { App } from "vue";
 import axios from "axios";
-import Cookies from "js-cookie";
 
 let config: object = {};
 const { VITE_PUBLIC_PATH } = import.meta.env;
@@ -36,11 +35,7 @@ export const getPlatformConfig = async (
   app.config.globalProperties.$config = getConfig();
   return axios({
     method: "get",
-    url: url
-      ? url
-      : Cookies.get("X-Token")
-        ? "/api/system/configs/WEB_SITE_CONFIG"
-        : defaultConfigUrl
+    url: url ? url : defaultConfigUrl
   })
     .then(async ({ data: config }) => {
       config = config?.config ?? config;

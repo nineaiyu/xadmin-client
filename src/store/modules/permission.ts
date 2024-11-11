@@ -81,7 +81,6 @@ export const usePermissionStore = defineStore({
       this.wholeMenus = [];
       this.cachePageList = [];
       this.flatteningRoutes = [];
-      this.metaAuths = [];
     }
   }
 });
