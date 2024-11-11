@@ -21,9 +21,9 @@ export const useMultiTagsStore = defineStore({
     multiTags: storageLocal().getItem<StorageConfigs>(
       `${responsiveStorageNameSpace()}configure`
     )?.multiTagsCache
-      ? storageLocal().getItem<StorageConfigs>(
+      ? (storageLocal().getItem<StorageConfigs>(
           `${responsiveStorageNameSpace()}tags`
-        )
+        ) ?? [])
       : [
           ...routerArrays,
           ...usePermissionStoreHook().flatteningRoutes.filter(
