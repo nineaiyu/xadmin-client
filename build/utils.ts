@@ -110,4 +110,36 @@ const getPackageSize = options => {
   });
 };
 
-export { root, pathResolve, alias, __APP_INFO__, wrapperEnv, getPackageSize };
+const createProxyConfig = (configs: { [key: string]: string[] }) => {
+  const proxyConfig = {};
+  Object.keys(configs).forEach(target => {
+    if (target.startsWith("http")) {
+      configs[target].forEach(path => {
+        proxyConfig[path] = {
+          target: target,
+          changeOrigin: true,
+          xfwd: true
+        };
+      });
+    } else if (target.startsWith("ws")) {
+      configs[target].forEach(path => {
+        proxyConfig[path] = {
+          target: target,
+          ws: true,
+          rewriteWsOrigin: true
+        };
+      });
+    }
+  });
+  return proxyConfig;
+};
+
+export {
+  root,
+  pathResolve,
+  alias,
+  __APP_INFO__,
+  wrapperEnv,
+  getPackageSize,
+  createProxyConfig
+};
