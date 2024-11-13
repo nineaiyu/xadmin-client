@@ -1,0 +1,66 @@
+name: Create Release And Upload assets
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Get version
+        id: get_version
+        run: |
+          TAG=$(basename ${GITHUB_REF})
+          echo "::set-output name=TAG::$TAG"
+      - name: Create Release
+        id: create_release
+        uses: release-drafter/release-drafter@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          config-name: release-config.yml
+          version: ${{ steps.get_version.outputs.TAG }}
+          tag: ${{ steps.get_version.outputs.TAG }}
+
+      - name: Extract repository name
+        run: echo "REPO=$(basename ${{ github.repository }})" >> $GITHUB_ENV
+      - name: Remove 'v' prefix from tag
+        run: echo "TAG=$(echo ${{ steps.get_version.outputs.TAG }} | sed 's/^v//')" >> $GITHUB_ENV
+      - name: Install Nodejs
+        uses: actions/setup-node@v2
+        with:
+          node-version: 22
+      - uses: pnpm/action-setup@v3
+        name: Install pnpm
+        id: pnpm-install
+        with:
+          version: 9
+          run_install: false
+      - name: Build web
+        run: |
+          sed -i "s@\"Version\": .*@\"Version\": \"${{ env.TAG }}\",@" public/platform-config.json
+          sed -i "s@\"version\": .*@\"version\": \"${{ env.TAG }}\",@" package.json
+          pnpm install --frozen-lockfile
+          pnpm build
+      - name: Create Upload Assets
+        run: |
+          mv dist ${{ env.REPO }}-${{ steps.get_version.outputs.TAG }}
+          tar -czf ${{ env.REPO }}-${{ steps.get_version.outputs.TAG }}.tar.gz ${{ env.REPO }}-${{ steps.get_version.outputs.TAG }}
+          echo $(md5sum ${{ env.REPO }}-${{ steps.get_version.outputs.TAG }}.tar.gz | awk '{print $1}') > ${{ env.REPO }}-${{ steps.get_version.outputs.TAG }}.tar.gz.md5
+      - name: Release Upload Assets
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          draft: true
+          files: |
+            ${{ env.REPO }}-${{ steps.get_version.outputs.TAG }}.tar.gz
+            ${{ env.REPO }}-${{ steps.get_version.outputs.TAG }}.tar.gz.md5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

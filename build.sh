@@ -1,19 +1,5 @@
 #!/bin/bash
 
-DOCKER_IMAGE_PREFIX="swr.cn-north-4.myhuaweicloud.com/nineaiyu"
+docker run --rm -it -v ./:/app -e TZ=Asia/Shanghai \
+  nineaiyu/xadmin-client-base:20241113_101728 sh -c 'pnpm install --frozen-lockfile && pnpm build'
 
-images="xadmin-node:22.11.0-slim"
-for image in ${images};do
-  if ! docker images --format "{{.Repository}}:{{.Tag}}" |grep "^${image}" &>/dev/null;then
-    full_image_path="${DOCKER_IMAGE_PREFIX}/${image}"
-    docker pull  "${full_image_path}"
-    docker tag "${full_image_path}" "${image}"
-    docker rmi -f "${full_image_path}"
-  fi
-done
-
-
-# build web
-docker compose up xadmin-client-build
-# clean old build docker
-docker rm -f xadmin-client-build
