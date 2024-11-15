@@ -18,7 +18,7 @@ jobs:
         run: |
           sed -i "s@\"Version\": .*@\"Version\": \"${{ env.TAG }}\",@" public/platform-config.json
           sed -i "s@\"version\": .*@\"version\": \"${{ env.TAG }}\",@" package.json
-          
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
