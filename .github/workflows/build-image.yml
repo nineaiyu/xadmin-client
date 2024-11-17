@@ -16,8 +16,10 @@ jobs:
 
       - name: Update Version
         run: |
-          sed -i "s@\"Version\": .*@\"Version\": \"${{ env.TAG }}\",@" public/platform-config.json
-          sed -i "s@\"version\": .*@\"version\": \"${{ env.TAG }}\",@" package.json
+          TAG=$(basename ${GITHUB_REF})
+          VERSION=${TAG/v/}
+          sed -i "s@\"Version\": .*@\"Version\": \"${VERSION}\",@" public/platform-config.json
+          sed -i "s@\"version\": .*@\"version\": \"${VERSION}\",@" package.json
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
