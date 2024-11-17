@@ -18,7 +18,8 @@ jobs:
         id: get_version
         run: |
           TAG=$(basename ${GITHUB_REF})
-          echo "{TAG}={$TAG}" >> $GITHUB_OUTPUT
+          echo "TAG=$TAG" >> $GITHUB_OUTPUT
+          echo "VERSION=${TAG/v/}" >> $GITHUB_OUTPUT
       - name: Create Release
         id: create_release
         uses: release-drafter/release-drafter@v6
@@ -45,8 +46,8 @@ jobs:
           run_install: false
       - name: Build web
         run: |
-          sed -i "s@\"Version\": .*@\"Version\": \"${{ env.TAG }}\",@" public/platform-config.json
-          sed -i "s@\"version\": .*@\"version\": \"${{ env.TAG }}\",@" package.json
+          sed -i "s@\"Version\": .*@\"Version\": \"${{ steps.get_version.outputs.VERSION }}\",@" public/platform-config.json
+          sed -i "s@\"version\": .*@\"version\": \"${{ steps.get_version.outputs.VERSION }}\",@" package.json
           pnpm install --frozen-lockfile
           pnpm build
       - name: Create Upload Assets
