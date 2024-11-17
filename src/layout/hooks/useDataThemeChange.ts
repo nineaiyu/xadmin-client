@@ -3,7 +3,7 @@ import { getConfig } from "@/config";
 import { useLayout } from "./useLayout";
 import { removeToken } from "@/utils/auth";
 import { routerArrays } from "@/layout/types";
-import { resetRouter, router } from "@/router";
+import { resetRouter } from "@/router";
 import type { themeColorsType } from "../types";
 import { useAppStoreHook } from "@/store/modules/app";
 import { storageLocal, useGlobal } from "@pureadmin/utils";
@@ -129,10 +129,11 @@ export function useDataThemeChange() {
     useMultiTagsStoreHook().multiTagsCacheChange(MultiTagsCache);
     toggleClass(Grey, "html-grey", document.querySelector("html"));
     toggleClass(Weak, "html-weakness", document.querySelector("html"));
-    router.push("/login");
+    // router.push("/login");
     useMultiTagsStoreHook().handleTags("equal", [...routerArrays]);
     resetRouter();
     useUserStoreHook().clear();
+    window.location.reload();
   }
 
   return {

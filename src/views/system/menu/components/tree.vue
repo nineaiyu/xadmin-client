@@ -8,7 +8,14 @@ import { transformI18n } from "@/plugins/i18n";
 import { Tree, TreeFormProps } from "../utils/types";
 import { MenuChoices } from "@/views/system/constants";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { computed, getCurrentInstance, onMounted, ref, watch } from "vue";
+import {
+  computed,
+  getCurrentInstance,
+  nextTick,
+  onMounted,
+  ref,
+  watch
+} from "vue";
 
 import Back from "@iconify-icons/ep/back";
 import Delete from "@iconify-icons/ep/delete";
@@ -130,11 +137,16 @@ function nodeClick(value) {
   initMenuData(value);
 }
 
-function toggleRowExpansionAll(status) {
+function toggleRowExpansionAll(status: boolean, all = false) {
   isExpand.value = status;
+  let changeType = MenuChoices.MENU;
+  if (status) changeType = MenuChoices.DIRECTORY;
+
   const nodes = (proxy.$refs["treeRef"] as any)?.store._getAllNodes();
   for (let i = 0; i < nodes?.length; i++) {
-    nodes[i].expanded = status;
+    if (nodes[i].data?.menu_type === changeType || all) {
+      nodes[i].expanded = status;
+    }
   }
 }
 
@@ -146,7 +158,7 @@ const handleDragEnd = (node, node2, position) => {
 function onReset() {
   highlightMap.value = {};
   searchValue.value = "";
-  toggleRowExpansionAll(false);
+  toggleRowExpansionAll(!isExpand.value);
   parentIds.value = [];
   Object.keys(formInline.value).forEach(param => {
     formInline.value[param] = props.defaultData[param];
@@ -189,10 +201,12 @@ watch(searchValue, val => {
 });
 
 onMounted(() => {
-  setTimeout(() => {
-    toggleRowExpansionAll(true);
-    loading.value = false;
-  }, 500);
+  nextTick(() => {
+    setTimeout(() => {
+      toggleRowExpansionAll(true);
+      loading.value = false;
+    }, 500);
+  });
 });
 </script>
 
@@ -270,7 +284,7 @@ onMounted(() => {
                   :icon="useRenderIcon(isExpand ? ExpandIcon : UnExpandIcon)"
                   link
                   type="primary"
-                  @click="toggleRowExpansionAll(!isExpand)"
+                  @click="toggleRowExpansionAll(!isExpand, true)"
                 >
                   {{
                     isExpand ? t("buttons.collapseAll") : t("buttons.expendAll")

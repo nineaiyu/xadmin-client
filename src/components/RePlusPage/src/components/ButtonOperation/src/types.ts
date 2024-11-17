@@ -96,10 +96,25 @@ export interface ButtonsCallBackParams {
 }
 
 export interface OperationProps {
+  /**
+   * 表格操作栏 el-table-column 的其width
+   */
   width?: number;
+  /**
+   * 按钮大小
+   */
   size?: "" | "default" | "small" | "large";
+  /**
+   * 表格行数据
+   */
   row?: object;
+  /**
+   * 显示出来的按钮个数  默认值为 `3`
+   */
   showNumber?: number;
+  /**
+   * 操作按钮集合   默认值为 `[]`
+   */
   buttons?: OperationButtonsRow[];
 }
 

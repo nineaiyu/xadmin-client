@@ -7,21 +7,13 @@ export const useImageVerify = imgCode => {
   // const imgCode = ref("");
   const imgUrl = ref("");
   const loading = ref(false);
-  const apiDomain = res => {
-    const httpReg = /^http(s?):\/\//;
-    const api_domain = import.meta.env.VITE_API_DOMAIN;
-    if (api_domain && httpReg.test(api_domain)) {
-      return `${api_domain}${res.captcha_image}`;
-    }
-    return res.captcha_image;
-  };
 
   function getImgCode() {
     loading.value = true;
     getCaptchaApi()
       .then(res => {
         if (res.code === 1000) {
-          imgUrl.value = apiDomain(res);
+          imgUrl.value = res.captcha_image;
           imgCode.value = res.captcha_key;
           useUserStoreHook().SET_VERIFY_CODE_LENGTH(res.length);
         }

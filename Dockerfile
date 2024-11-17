@@ -1,10 +1,8 @@
-FROM node:22.11.0-slim
+FROM nineaiyu/xadmin-client-base:20241113_102850 AS stage-build
 
-WORKDIR /app
-RUN corepack enable
-RUN corepack prepare pnpm@9.12.3 --activate
+COPY . .
+RUN pnpm build
 
-RUN npm config set registry https://registry.npmmirror.com
-
-#COPY .npmrc package.json pnpm-lock.yaml ./
-#RUN pnpm install --frozen-lockfile
+FROM nginx:1.24-bullseye
+COPY --from=stage-build /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
