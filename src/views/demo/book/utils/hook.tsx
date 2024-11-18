@@ -1,7 +1,7 @@
 import { bookApi } from "./api";
 import { getCurrentInstance, reactive, type Ref, shallowRef } from "vue";
 import { getDefaultAuths } from "@/router/utils";
-import type { OperationProps } from "@/components/RePlusPage";
+import type { OperationProps, RePlusPageProps } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import CircleClose from "@iconify-icons/ep/circle-close";
 import { handleOperation } from "@/components/RePlusPage";
@@ -53,9 +53,47 @@ export function useDemoBook(tableRef: Ref) {
       }
     ]
   });
+
+  const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
+    props: {
+      columns: {
+        /**
+         * 重写 publisher 组件，可参考 https://plus-pro-components.com/components/config.html
+         * @param column
+         */
+        publisher: ({ column }) => {
+          column.valueType = "autocomplete";
+          column["fieldProps"]["fetchSuggestions"] = (
+            queryString: string,
+            cb: any
+          ) => {
+            const queryList = [
+              { value: "人民出版社" },
+              { value: "中华书局" },
+              { value: "科学出版社" }
+            ];
+
+            let results = [];
+            results = queryString
+              ? queryList.filter(
+                  item =>
+                    item.value
+                      .toLowerCase()
+                      .indexOf(queryString.toLowerCase()) === 0
+                )
+              : queryList;
+            cb(results);
+          };
+          return column;
+        }
+      }
+    }
+  });
+
   return {
     api,
     auth,
+    addOrEditOptions,
     operationButtonsProps
   };
 }
