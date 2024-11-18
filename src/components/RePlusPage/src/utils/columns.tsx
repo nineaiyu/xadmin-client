@@ -64,6 +64,7 @@ export function useBaseColumns(localeName: string) {
         tooltip: column?.help_text,
         options: computed(() => formatAddOrEditOptions(column.choices)),
         valueType: "input",
+        fieldProps: {},
         hideInForm: true,
         hideInTable: true
       };

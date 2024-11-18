@@ -106,7 +106,7 @@ export function useRole() {
         },
         menu: ({ column, formValue }) => {
           column["fieldProps"] = {};
-          column["renderField"] = (value, onChange) => {
+          column["renderField"] = (value: any, onChange) => {
             return h(menuFieldForm, {
               api,
               auth,
