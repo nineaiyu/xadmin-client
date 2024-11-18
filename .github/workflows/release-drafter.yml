@@ -26,6 +26,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          publish: true
           config-name: release-config.yml
           version: ${{ steps.get_version.outputs.TAG }}
           tag: ${{ steps.get_version.outputs.TAG }}
@@ -59,7 +60,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          draft: true
           files: |
             ${{ env.REPO }}-${{ steps.get_version.outputs.TAG }}.tar.gz
             ${{ env.REPO }}-${{ steps.get_version.outputs.TAG }}.tar.gz.md5
