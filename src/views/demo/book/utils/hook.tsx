@@ -1,11 +1,17 @@
 import { bookApi } from "./api";
 import { getCurrentInstance, reactive, type Ref, shallowRef } from "vue";
 import { getDefaultAuths } from "@/router/utils";
-import type { OperationProps } from "@/components/RePlusPage";
+import type {
+  OperationProps,
+  PageColumn,
+  RePlusPageProps
+} from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import CircleClose from "@iconify-icons/ep/circle-close";
 import { handleOperation } from "@/components/RePlusPage";
 import { useI18n } from "vue-i18n";
+import Success from "@iconify-icons/ep/success-filled";
+import { message } from "@/utils/message";
 
 export function useDemoBook(tableRef: Ref) {
   // 权限判断，用于判断是否有该权限
@@ -53,9 +59,116 @@ export function useDemoBook(tableRef: Ref) {
       }
     ]
   });
+
+  /**
+   * 新增表格标题栏按钮
+   */
+  const tableBarButtonsProps = shallowRef<OperationProps>({
+    buttons: [
+      {
+        text: "全部推送",
+        code: "batchPush",
+        props: {
+          type: "success",
+          icon: useRenderIcon(Success),
+          plain: true
+        },
+        onClick: () => {
+          // 这里写处理逻辑
+          message("操作成功");
+        },
+        confirm: {
+          title: "确定操作？"
+        },
+        show: auth.push
+      }
+    ]
+  });
+
+  /**
+   * 自定义新增或编辑
+   */
+  const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
+    props: {
+      columns: {
+        /**
+         * 重写 publisher 组件，可参考 https://plus-pro-components.com/components/config.html
+         * @param column
+         */
+        publisher: ({ column }) => {
+          column.valueType = "autocomplete";
+          column["fieldProps"]["fetchSuggestions"] = (
+            queryString: string,
+            cb: any
+          ) => {
+            const queryList = [
+              { value: "人民出版社" },
+              { value: "中华书局" },
+              { value: "科学出版社" }
+            ];
+
+            let results = [];
+            results = queryString
+              ? queryList.filter(
+                  item =>
+                    item.value
+                      .toLowerCase()
+                      .indexOf(queryString.toLowerCase()) === 0
+                )
+              : queryList;
+            cb(results);
+          };
+          return column;
+        }
+      }
+    }
+  });
+
+  /**
+   * 自定义搜索
+   * @param columns
+   */
+  const searchColumnsFormat = (columns: PageColumn[]) => {
+    columns.forEach(column => {
+      switch (column._column?.key) {
+        case "publisher":
+          /**
+           * 重写 publisher 组件，可参考 https://plus-pro-components.com/components/config.html
+           */
+          column.valueType = "autocomplete";
+          column["fieldProps"]["fetchSuggestions"] = (
+            queryString: string,
+            cb: any
+          ) => {
+            const queryList = [
+              { value: "人民出版社" },
+              { value: "中华书局" },
+              { value: "科学出版社" }
+            ];
+
+            let results = [];
+            results = queryString
+              ? queryList.filter(
+                  item =>
+                    item.value
+                      .toLowerCase()
+                      .indexOf(queryString.toLowerCase()) === 0
+                )
+              : queryList;
+            cb(results);
+          };
+          break;
+      }
+    });
+    return columns;
+  };
+
   return {
     api,
     auth,
+    addOrEditOptions,
+    searchColumnsFormat,
+    tableBarButtonsProps,
     operationButtonsProps
   };
 }

@@ -99,7 +99,7 @@ export function useDataPermission() {
           column["renderField"] = (value, onChange) => {
             return h(filterForm, {
               class: ["overflow-auto"],
-              dataList: value,
+              dataList: value as any,
               valuesData: valuesData.value,
               ruleList: fieldLookupsData.value,
               onChange

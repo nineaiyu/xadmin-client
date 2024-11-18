@@ -98,7 +98,7 @@ export function useNotice(tableRef: Ref) {
     props: {
       columns: {
         level: ({ column }) => {
-          column?.options.forEach(option => {
+          (column?.options as Array<any>).forEach(option => {
             option["fieldSlot"] = () => {
               return (
                 <el-text type={option.value?.value}> {option.label}</el-text>
@@ -115,7 +115,7 @@ export function useNotice(tableRef: Ref) {
           if (!isAdd) {
             column["fieldProps"]["disabled"] = true;
           }
-          column?.options.forEach(option => {
+          (column?.options as Array<any>).forEach(option => {
             if (option.value?.value == NoticeChoices.SYSTEM) {
               option.fieldItemProps.disabled = true;
             }

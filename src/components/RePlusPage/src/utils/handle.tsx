@@ -3,11 +3,11 @@ import { deviceDetection } from "@pureadmin/utils";
 import { type Component, h, type Ref, ref, toRaw } from "vue";
 import { cloneDeep } from "lodash-es";
 import { message } from "@/utils/message";
-import type { PlusColumn, PlusFormProps } from "plus-pro-components";
+import type { PlusFormProps } from "plus-pro-components";
 import { ElMessageBox, type FormInstance } from "element-plus";
 import type { BaseApi } from "@/api/base";
 import type { DetailResult } from "@/api/types";
-import { uniqueArrayObj } from "@/components/RePlusPage";
+import { type PageColumn, uniqueArrayObj } from "@/components/RePlusPage";
 import { resourcesIDCacheApi } from "@/api/common";
 import AddOrEdit from "../components/AddOrEdit.vue";
 import ExportData from "../components/ExportData.vue";
@@ -26,16 +26,30 @@ interface callBackArgs {
 interface formDialogOptions {
   t: (arg0: string, arg1?: object) => string;
   isAdd?: boolean;
-  row?: ((formOptions: formDialogOptions) => object) | object; //  外部处理方法
+  row?:
+    | object
+    | {
+        [key: string]: (formOptions: Partial<formDialogOptions>) => any;
+      }; //  外部处理方法
   title: string; // 弹窗的的title
   formValue?: Ref; // 表单值
-  rawRow: object; //  默认数据或者更新的数据
+  rawRow: { [key: string]: any }; //  默认数据或者更新的数据
   minWidth?: string; // 弹窗的的最小宽度
-  columns?: ((formOptions: formDialogOptions) => object) | object; // 表单字段
-  rawColumns?: PlusColumn[] | Array<any>; // 表单字段
+  columns?:
+    | object
+    | {
+        [key: string]: (
+          formOptions: Partial<formDialogOptions> & { column: PageColumn }
+        ) => object;
+      }; // 表单字段
+  rawColumns?: PageColumn[] | Array<any>; // 表单字段
   form?: Component | any; // 挂载的form组件，默认是AddOrEdit组件
   props?: ((formOptions: formDialogOptions) => object) | object; //  内容区组件的 props，可通过 defineProps 接收
-  formProps?: ((formOptions: formDialogOptions) => object) | object; //  plus form 的props
+  formProps?:
+    | object
+    | {
+        [key: string]: (formOptions: Partial<formDialogOptions>) => any;
+      }; //  plus form 的props
   rawFormProps?: PlusFormProps; //  plus form 的props
   dialogOptions?: DialogOptions; // dialog options
   beforeSubmit?: ({
