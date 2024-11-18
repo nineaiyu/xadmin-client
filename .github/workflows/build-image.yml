@@ -14,13 +14,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Update Version
-        run: |
-          TAG=$(basename ${GITHUB_REF})
-          VERSION=${TAG/v/}
-          sed -i "s@\"Version\": .*@\"Version\": \"${VERSION}\",@" public/platform-config.json
-          sed -i "s@\"version\": .*@\"version\": \"${VERSION}\",@" package.json
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -48,6 +41,7 @@ jobs:
       - name: Build and push multi-arch image
         uses: docker/build-push-action@v6
         with:
+          build-args: VERSION=${{ steps.meta.outputs.version }}
           platforms: linux/amd64,linux/arm64
           push: true
           file: Dockerfile
