@@ -2,7 +2,7 @@ import type { BaseApi } from "@/api/base";
 import type { RecordType } from "plus-pro-components";
 import type { PaginationProps } from "@pureadmin/table";
 import type { ComputedRef, Ref } from "vue";
-import type { PageColumnList } from "@/components/RePlusPage";
+import type { PageTableColumn } from "@/components/RePlusPage";
 import type { PageColumn } from "@/components/RePlusPage";
 
 interface PlusSearchProps {
@@ -11,7 +11,7 @@ interface PlusSearchProps {
   multiple?: boolean;
   localeName?: string;
   searchColumnsFormat?: (columns: PageColumn[]) => PageColumn[];
-  listColumnsFormat?: (columns: PageColumnList[]) => PageColumnList[];
+  listColumnsFormat?: (columns: PageTableColumn[]) => PageTableColumn[];
   baseColumnsFormat?: ({
     listColumns,
     detailColumns,

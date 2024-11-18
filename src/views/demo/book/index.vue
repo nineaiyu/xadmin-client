@@ -11,6 +11,7 @@ const {
   api,
   auth,
   addOrEditOptions,
+  listColumnsFormat,
   searchColumnsFormat,
   tableBarButtonsProps,
   operationButtonsProps
@@ -24,6 +25,7 @@ const {
     locale-name="demoBook"
     :search-columns-format="searchColumnsFormat"
     :add-or-edit-options="addOrEditOptions"
+    :list-columns-format="listColumnsFormat"
     :tableBarButtonsProps="tableBarButtonsProps"
     :operationButtonsProps="operationButtonsProps"
   />

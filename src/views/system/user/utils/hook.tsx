@@ -38,7 +38,7 @@ import {
   renderSwitch,
   type RePlusPageProps,
   usePublicHooks,
-  type PageColumnList
+  type PageTableColumn
 } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Role from "@iconify-icons/ri/admin-line";
@@ -284,7 +284,7 @@ export function useUser(tableRef: Ref) {
     selectedNum.value = manySelectData.value.length ?? 0;
   };
 
-  const listColumnsFormat = (columns: PageColumnList[]) => {
+  const listColumnsFormat = (columns: PageTableColumn[]) => {
     columns.forEach(column => {
       switch (column._column?.key) {
         case "avatar":

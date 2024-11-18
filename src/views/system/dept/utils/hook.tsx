@@ -7,7 +7,7 @@ import { useI18n } from "vue-i18n";
 import { customRolePermissionOptions } from "@/views/system/hooks";
 import { handleTree } from "@/utils/tree";
 import {
-  type PageColumnList,
+  type PageTableColumn,
   handleOperation,
   openFormDialog,
   type OperationProps,
@@ -26,7 +26,7 @@ export function useDept(tableRef: Ref) {
     ...getDefaultAuths(getCurrentInstance(), ["empower"])
   });
 
-  const listColumnsFormat = (columns: PageColumnList[]) => {
+  const listColumnsFormat = (columns: PageTableColumn[]) => {
     columns.forEach(column => {
       switch (column._column?.key) {
         case "user_count":

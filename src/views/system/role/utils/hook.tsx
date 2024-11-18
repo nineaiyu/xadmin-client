@@ -16,7 +16,7 @@ import { FieldChoices } from "@/views/system/constants";
 import { cloneDeep, getKeyList } from "@pureadmin/utils";
 import { modelLabelFieldApi } from "@/api/system/field";
 import type {
-  PageColumnList,
+  PageTableColumn,
   OperationProps,
   RePlusPageProps
 } from "@/components/RePlusPage";
@@ -130,7 +130,7 @@ export function useRole() {
     }
   });
 
-  const listColumnsFormat = (columns: PageColumnList[]) => {
+  const listColumnsFormat = (columns: PageTableColumn[]) => {
     return columns;
   };
 

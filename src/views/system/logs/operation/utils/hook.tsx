@@ -5,7 +5,7 @@ import { getDefaultAuths, hasAuth } from "@/router/utils";
 import type {
   PageColumn,
   OperationProps,
-  PageColumnList
+  PageTableColumn
 } from "@/components/RePlusPage";
 import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
@@ -20,7 +20,7 @@ export function useOperationLog() {
   const operationButtonsProps = shallowRef<OperationProps>({
     width: 140
   });
-  const listColumnsFormat = (columns: PageColumnList[]) => {
+  const listColumnsFormat = (columns: PageTableColumn[]) => {
     columns.forEach(column => {
       switch (column._column?.key) {
         case "creator":

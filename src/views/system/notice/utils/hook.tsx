@@ -14,7 +14,7 @@ import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { NoticeChoices } from "@/views/system/constants";
 import type {
-  PageColumnList,
+  PageTableColumn,
   OperationProps,
   RePlusPageProps
 } from "@/components/RePlusPage";
@@ -67,7 +67,7 @@ export function useNotice(tableRef: Ref) {
       }
     ]
   });
-  const listColumnsFormat = (columns: PageColumnList[]) => {
+  const listColumnsFormat = (columns: PageTableColumn[]) => {
     columns.forEach(column => {
       switch (column._column?.key) {
         case "title":

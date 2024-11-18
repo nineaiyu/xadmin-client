@@ -3,7 +3,7 @@ import { systemUploadFileApi } from "@/api/system/file";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { getCurrentInstance, h, reactive, type Ref, shallowRef } from "vue";
 import {
-  type PageColumnList,
+  type PageTableColumn,
   isUrl,
   openFormDialog,
   type OperationProps,
@@ -88,7 +88,7 @@ export function useSystemUploadFile(tableRef: Ref) {
     }
   });
 
-  const listColumnsFormat = (columns: PageColumnList[]) => {
+  const listColumnsFormat = (columns: PageTableColumn[]) => {
     columns.forEach(column => {
       switch (column._column?.key) {
         case "access_url":

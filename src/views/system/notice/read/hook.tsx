@@ -12,7 +12,7 @@ import { addDialog } from "@/components/ReDialog";
 import { useRouter } from "vue-router";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
-import type { PageColumnList, OperationProps } from "@/components/RePlusPage";
+import type { PageTableColumn, OperationProps } from "@/components/RePlusPage";
 import { renderSwitch, usePublicHooks } from "@/components/RePlusPage";
 import NoticeShowForm from "@/views/system/components/NoticeShow.vue";
 
@@ -53,7 +53,7 @@ export function useNoticeRead(tableRef: Ref) {
       }
     ]
   });
-  const listColumnsFormat = (columns: PageColumnList[]) => {
+  const listColumnsFormat = (columns: PageTableColumn[]) => {
     columns.forEach(column => {
       switch (column._column?.key) {
         case "notice_info":

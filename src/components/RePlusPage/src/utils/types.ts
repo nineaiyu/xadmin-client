@@ -41,7 +41,7 @@ interface PageColumn extends PlusColumn, TableColumn {
   >;
 }
 
-interface PageColumnList extends TableColumns {
+interface PageTableColumn extends TableColumns {
   prop?: string;
   _column: Partial<
     Mutable<SearchFieldsResult["data"][0]> &
@@ -115,7 +115,7 @@ interface RePlusPageProps {
    * pure table 的 columns, 并返回
    * @param columns
    */
-  listColumnsFormat?: (columns: PageColumnList[]) => PageColumnList[];
+  listColumnsFormat?: (columns: PageTableColumn[]) => PageTableColumn[];
   /**
    * plus pro descriptions 的 columns, 并返回
    * @param columns
@@ -165,4 +165,4 @@ interface RePlusPageProps {
   tableBarButtonsProps?: Partial<OperationProps>;
 }
 
-export type { ApiAuthProps, RePlusPageProps, PageColumn, PageColumnList };
+export type { ApiAuthProps, RePlusPageProps, PageColumn, PageTableColumn };
