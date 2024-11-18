@@ -55,7 +55,6 @@ jobs:
       - name: Update Dockerfile
         run: |
           sed -i 's@nineaiyu/.* AS stage-build@nineaiyu/${{ env.REPO }}-base:${{ env.IMAGE_TAG }} AS stage-build@' Dockerfile
-          sed -i 's@nineaiyu/.* sh@nineaiyu/${{ env.REPO }}-base:${{ env.IMAGE_TAG }} sh@' build.sh
 
       - name: Commit changes
         run: |
