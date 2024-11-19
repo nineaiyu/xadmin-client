@@ -160,10 +160,16 @@ defineExpose({ getRef });
             clearable
             filterable
           >
+            <template #label="{ label, value }">
+              <span style=" margin-right: 20px;font-weight: bold">{{
+                value
+              }}</span>
+              <el-text type="info">{{ label }}</el-text>
+            </template>
             <el-option
               v-for="item in matchList"
               :key="item.value"
-              :label="`${item.value}  ${item.label}`"
+              :label="item.label"
               :value="item.value"
             >
               <span style="float: left; padding-right: 20px">
