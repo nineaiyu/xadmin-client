@@ -161,9 +161,9 @@ defineExpose({ getRef });
             filterable
           >
             <template #label="{ label, value }">
-              <span style=" margin-right: 20px;font-weight: bold">{{
-                value
-              }}</span>
+              <span style="margin-right: 20px; font-weight: bold">
+                {{ value }}
+              </span>
               <el-text type="info">{{ label }}</el-text>
             </template>
             <el-option
