@@ -143,7 +143,7 @@ defineExpose({ getRef });
           </el-cascader>
         </el-form-item>
       </re-col>
-      <re-col :sm="24" :value="12" :xs="24">
+      <re-col :sm="24" :value="24" :xs="24">
         <el-form-item :label="t('systemPermission.addMatch')" prop="match">
           <template #label>
             <from-question
@@ -162,15 +162,34 @@ defineExpose({ getRef });
           >
             <el-option
               v-for="item in matchList"
-              :key="item"
-              :label="item"
-              :value="item"
-            />
+              :key="item.value"
+              :label="`${item.value}  ${item.label}`"
+              :value="item.value"
+            >
+              <span style="float: left; padding-right: 20px">
+                {{ item.value }}
+              </span>
+              <span
+                style="
+                  float: right;
+                  font-size: 13px;
+                  color: var(--el-text-color-secondary);
+                "
+              >
+                {{ item.label }}
+              </span>
+            </el-option>
           </el-select>
         </el-form-item>
       </re-col>
-      <re-col :sm="24" :value="12" :xs="24">
+      <re-col :sm="24" :value="24" :xs="24">
         <el-form-item :label="t('systemPermission.addExclude')" prop="exclude">
+          <template #label>
+            <from-question
+              :description="t('systemPermission.addExcludeTip')"
+              :label="t('systemPermission.addExclude')"
+            />
+          </template>
           <el-select
             v-model="newFormInline.exclude"
             :placeholder="t('systemPermission.addExclude')"
