@@ -348,6 +348,7 @@ systemPermission:
   addValue: Value
   addType: Mode
   addExclude: Exclude
+  addExcludeTip: Returns data that do not match the given lookup parameters.
   addMatch: Match
   rules: rules
   table: table

@@ -348,6 +348,7 @@ systemPermission:
   addValue: 属性值
   addType: 值类型
   addExclude: 排除
+  addExcludeTip: 返回查找参数不匹配的数据
   addMatch: 匹配
   rules: 规则列表
   table: 表名
