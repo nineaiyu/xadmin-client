@@ -133,7 +133,7 @@ export class BaseApi extends BaseRequest {
     return this.request<BaseResult>(
       "post",
       {},
-      { pks },
+      [...pks],
       `${this.baseApi}/batch-destroy`
     );
   };

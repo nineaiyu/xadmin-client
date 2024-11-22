@@ -316,11 +316,7 @@ export function usePlusPage(emit: any, tableRef: Ref, props: RePlusPageProps) {
     handleOperation({
       t,
       apiReq: api.batchDestroy(getSelectPks("pk")),
-      showSuccessMsg: false,
       success() {
-        message(t("results.batchDestroy", { count: selectedNum.value }), {
-          type: "success"
-        });
         onSelectionCancel();
         handleGetData();
       }
