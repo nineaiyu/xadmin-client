@@ -6,15 +6,10 @@ import { routerArrays } from "@/layout/types";
 import { resetRouter } from "@/router";
 import type { themeColorsType } from "../types";
 import { useAppStoreHook } from "@/store/modules/app";
-import { storageLocal, useGlobal } from "@pureadmin/utils";
 import { useEpThemeStoreHook } from "@/store/modules/epTheme";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
-import {
-  darken,
-  lighten,
-  toggleTheme
-} from "@pureadmin/theme/dist/browser-utils";
 import { useUserStoreHook } from "@/store/modules/user";
+import { darken, lighten, useGlobal, storageLocal } from "@pureadmin/utils";
 
 export function useDataThemeChange() {
   const { layoutTheme, layout } = useLayout();
@@ -55,9 +50,7 @@ export function useDataThemeChange() {
     isClick = true
   ) {
     layoutTheme.value.theme = theme;
-    toggleTheme({
-      scopeName: `layout-theme-${theme}`
-    });
+    document.documentElement.setAttribute("data-theme", theme);
     // 如果非isClick，保留之前的themeColor
     const storageThemeColor = $storage.layout.themeColor;
     $storage.layout = {
