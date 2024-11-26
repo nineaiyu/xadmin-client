@@ -7,7 +7,7 @@ node_images="registry.cn-beijing.aliyuncs.com/nineaiyu/node:22.11.0-slim"
 
 npm_mirror="https://registry.npmmirror.com"
 
-cmd='corepack enable && corepack prepare pnpm@9.12.3 --activate \
+cmd='corepack enable && corepack prepare pnpm@9.14.2 --activate \
     && cd /app && pnpm install --frozen-lockfile && pnpm build'
 
 if [[ -n ${VERSION} ]]; then
