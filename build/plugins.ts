@@ -4,18 +4,14 @@ import { pathResolve } from "./utils";
 import { viteBuildInfo } from "./info";
 import svgLoader from "vite-svg-loader";
 import type { PluginOption } from "vite";
-import checker from "vite-plugin-checker";
 import vueJsx from "@vitejs/plugin-vue-jsx";
 import { configCompressPlugin } from "./compress";
 import removeNoMatch from "vite-plugin-router-warn";
 import { visualizer } from "rollup-plugin-visualizer";
 import removeConsole from "vite-plugin-remove-console";
-import { themePreprocessorPlugin } from "@pureadmin/theme";
 import VueI18nPlugin from "@intlify/unplugin-vue-i18n/vite";
-import { genScssMultipleScopeVars } from "../src/layout/theme";
 import { vitePluginFakeServer } from "vite-plugin-fake-server";
 import { codeInspectorPlugin } from "code-inspector-plugin";
-// import vueDevTools from "vite-plugin-vue-devtools";
 
 export function getPluginsList(
   VITE_CDN: boolean,
@@ -26,19 +22,8 @@ export function getPluginsList(
     vue(),
     // jsx、tsx语法支持
     vueJsx(),
-    // vueDevTools(),
     VueI18nPlugin({
       include: [pathResolve("../locales/**")]
-    }),
-    checker({
-      typescript: true,
-      vueTsc: true,
-      eslint: {
-        lintCommand: `eslint ${pathResolve("../{src,mock,build}/**/*.{vue,js,ts,tsx}")}`,
-        useFlatConfig: true
-      },
-      terminal: false,
-      enableBuild: false
     }),
     /**
      * 在页面上按住组合键时，鼠标在页面移动即会在 DOM 上出现遮罩层并显示相关信息，点击一下将自动打开 IDE 并将光标定位到元素对应的代码位置
@@ -63,13 +48,6 @@ export function getPluginsList(
       include: "mock",
       infixName: false,
       enableProd: true
-    }),
-    // 自定义主题
-    themePreprocessorPlugin({
-      scss: {
-        multipleScopeVars: genScssMultipleScopeVars(),
-        extract: true
-      }
     }),
     // svg组件化支持
     svgLoader(),

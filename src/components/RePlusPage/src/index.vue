@@ -220,7 +220,7 @@ defineExpose({
         align-whole="center"
         default-expand-all
         row-key="pk"
-        table-layout="auto"
+        table-layout="fixed"
         v-bind="pureTableProps"
         @selection-change="handleSelectionChange"
         @row-click="row => emit('rowClick', row)"
