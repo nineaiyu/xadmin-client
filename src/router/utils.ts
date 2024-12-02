@@ -35,9 +35,7 @@ function handRank(routeInfo: any) {
   const { name, path, parentId, meta } = routeInfo;
   return isAllEmpty(parentId)
     ? isAllEmpty(meta?.rank) ||
-      (meta?.rank === 0 && name !== "Home" && path !== "/")
-      ? true
-      : false
+        (meta?.rank === 0 && name !== "Home" && path !== "/")
     : false;
 }
 
@@ -78,8 +76,6 @@ function filterChildrenTree(data: RouteComponent[]) {
 function isOneOfArray(a: Array<string>, b: Array<string>) {
   return Array.isArray(a) && Array.isArray(b)
     ? intersection(a, b).length > 0
-      ? true
-      : false
     : true;
 }
 

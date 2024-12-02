@@ -36,8 +36,7 @@ import { ElNotification } from "element-plus";
 
 const { setWatermark, clear } = useWatermark();
 
-export const useUserStore = defineStore({
-  id: "pure-user",
+export const useUserStore = defineStore("pure-user", {
   state: (): userType => ({
     // 头像
     avatar: storageLocal().getItem<UserInfo>(userKey)?.avatar ?? "",

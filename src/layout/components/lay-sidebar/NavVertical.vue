@@ -46,8 +46,7 @@ const defaultActive = computed(() =>
 );
 
 function getSubMenuData() {
-  let path = "";
-  path = defaultActive.value;
+  let path = defaultActive.value;
   subMenuData.value = [];
   // path的上级路由组成的数组
   const parentPathArr = getParentPaths(

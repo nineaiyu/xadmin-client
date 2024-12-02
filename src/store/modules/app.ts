@@ -8,8 +8,7 @@ import {
   store
 } from "../utils";
 
-export const useAppStore = defineStore({
-  id: "pure-app",
+export const useAppStore = defineStore("pure-app", {
   state: (): appType => ({
     sidebar: {
       opened:

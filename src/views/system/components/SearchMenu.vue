@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { h, reactive, watch } from "vue";
+import { h, reactive } from "vue";
 import { hasAuth } from "@/router/utils";
 import { searchMenuApi } from "@/api/system/search";
 import RePlusSearch from "@/components/RePlusSearch";

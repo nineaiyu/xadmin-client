@@ -6,8 +6,7 @@ import { cloneDeep } from "@pureadmin/utils";
 import { responsiveStorageNameSpace, store } from "../utils";
 import { configApi } from "@/api/config";
 
-export const useSiteConfigStore = defineStore({
-  id: "pure-site-config",
+export const useSiteConfigStore = defineStore("pure-site-config", {
   state: () => ({
     config: {},
     nameSpace: responsiveStorageNameSpace()

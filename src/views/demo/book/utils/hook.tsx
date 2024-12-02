@@ -109,8 +109,7 @@ export function useDemoBook(tableRef: Ref) {
               { value: "科学出版社" }
             ];
 
-            let results = [];
-            results = queryString
+            const results = queryString
               ? queryList.filter(
                   item =>
                     item.value
@@ -148,8 +147,7 @@ export function useDemoBook(tableRef: Ref) {
               { value: "科学出版社" }
             ];
 
-            let results = [];
-            results = queryString
+            const results = queryString
               ? queryList.filter(
                   item =>
                     item.value

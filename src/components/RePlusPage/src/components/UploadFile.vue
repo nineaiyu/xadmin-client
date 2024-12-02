@@ -45,7 +45,7 @@ watch(
 const dialogImageUrl = ref("");
 const dialogVisible = ref(false);
 
-const handleRemove: UploadProps["onRemove"] = (uploadFile, uploadFiles) => {
+const handleRemove: UploadProps["onRemove"] = () => {
   // emit("change", ""); //form-data 需要设置 ""
   emit("change", null); // json 需要设置null
 };
@@ -54,7 +54,7 @@ const handlePictureCardPreview: UploadProps["onPreview"] = uploadFile => {
   dialogImageUrl.value = uploadFile.url!;
   dialogVisible.value = true;
 };
-const handleChange: UploadProps["onChange"] = (uploadFile, uploadFiles) => {
+const handleChange: UploadProps["onChange"] = uploadFile => {
   if (props.isFile) {
     uploadFile.url = defaultFile;
   }
