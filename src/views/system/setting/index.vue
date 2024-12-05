@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import { useSystemSetting } from "./utils/hook";
-import { ref } from "vue";
 import { RePlusPage } from "@/components/RePlusPage";
 
 defineOptions({

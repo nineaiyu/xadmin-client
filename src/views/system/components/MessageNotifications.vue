@@ -1,10 +1,7 @@
 <script lang="ts" setup>
 import { onMounted, ref } from "vue";
 
-import {
-  systemMsgSubscriptionApi,
-  SystemMsgSubscriptionApi
-} from "@/api/system/notifications";
+import { SystemMsgSubscriptionApi } from "@/api/system/notifications";
 import { handleOperation, openFormDialog } from "@/components/RePlusPage";
 import { useI18n } from "vue-i18n";
 import SearchDialog from "@/views/system/components/SearchDialog.vue";

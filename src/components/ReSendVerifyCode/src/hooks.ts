@@ -128,7 +128,7 @@ export const useSendVerifyCode = (
     ]
   });
 
-  const fetchSuggestions = (queryString, callback) => {
+  const fetchSuggestions = (queryString: string, callback: any) => {
     const emailList = [
       { value: "@qq.com" },
       { value: "@126.com" },
@@ -141,12 +141,11 @@ export const useSendVerifyCode = (
       { value: "@ask.com" },
       { value: "@live.com" }
     ];
-    let results = [];
     let queryList = [];
     emailList.map(item =>
       queryList.push({ value: queryString.split("@")[0] + item.value })
     );
-    results = queryString
+    const results = queryString
       ? queryList.filter(
           item =>
             item.value.toLowerCase().indexOf(queryString.toLowerCase()) === 0

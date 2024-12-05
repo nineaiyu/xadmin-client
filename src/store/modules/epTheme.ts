@@ -6,8 +6,7 @@ import {
   store
 } from "../utils";
 
-export const useEpThemeStore = defineStore({
-  id: "pure-epTheme",
+export const useEpThemeStore = defineStore("pure-epTheme", {
   state: () => ({
     epThemeColor:
       storageLocal().getItem<StorageConfigs>(
