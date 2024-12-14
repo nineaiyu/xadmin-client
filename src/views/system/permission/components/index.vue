@@ -8,6 +8,7 @@ import { FormProps } from "./utils/types";
 import EditPen from "@iconify-icons/ep/edit-pen";
 import Delete from "@iconify-icons/ep/delete";
 import { hasAuth } from "@/router/utils";
+import PureTable from "@pureadmin/table";
 
 const props = withDefaults(defineProps<FormProps>(), {
   valuesData: () => [],
