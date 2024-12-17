@@ -33,7 +33,8 @@
     "types": [
       "node",
       "vite/client",
-      "element-plus/global"
+      "element-plus/global",
+      "@pureadmin/table/volar"
     ]
   },
   "include": [
