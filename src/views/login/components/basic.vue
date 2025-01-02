@@ -133,7 +133,7 @@ function onkeypress({ code }: KeyboardEvent) {
 }
 
 onMounted(() => {
-  window.document.addEventListener("keypress", onkeypress);
+  window.document.addEventListener("keydown", onkeypress);
   configLoading.value = true;
   loginAuthApi()
     .then(res => {
@@ -152,7 +152,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  useEventListener(document, "keypress", ({ code }) => {
+  useEventListener(document, "keydown", ({ code }) => {
     if (
       ["Enter", "NumpadEnter"].includes(code) &&
       !disabled.value &&

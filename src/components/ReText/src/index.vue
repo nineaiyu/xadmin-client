@@ -33,7 +33,7 @@ const isTextEllipsis = (el: HTMLElement) => {
 };
 
 const getTippyProps = () => ({
-  content: h($slots.content || $slots.default),
+  content: h($slots.default),
   ...props.tippyProps
 });
 
