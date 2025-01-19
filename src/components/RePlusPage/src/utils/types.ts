@@ -26,7 +26,7 @@ interface TableColumn {
   /** 自定义表头的内容插槽 */
   headerSlot?: string;
   /** 多级表头，内部实现原理：嵌套 `el-table-column` */
-  children?: Array<TableColumn>;
+  // children?: Array<TableColumn>;
   /** 自定义单元格渲染器（`jsx`语法） */
   cellRenderer?: (data: TableColumnRenderer) => VNode | string;
   /** 自定义头部渲染器（`jsx`语法） */
