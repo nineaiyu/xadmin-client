@@ -3,7 +3,7 @@
 
 VERSION=$1
 
-node_images="registry.cn-beijing.aliyuncs.com/nineaiyu/node:22.11.0-slim"
+node_images="registry.cn-beijing.aliyuncs.com/nineaiyu/node:22.14.0-slim"
 
 npm_mirror="https://registry.npmmirror.com"
 
