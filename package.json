@@ -60,7 +60,7 @@
     "crypto-js": "^4.2.0",
     "dayjs": "^1.11.13",
     "echarts": "^5.6.0",
-    "element-plus": "^2.9.4",
+    "element-plus": "^2.9.5",
     "js-cookie": "^3.0.5",
     "localforage": "^1.10.0",
     "mitt": "^3.0.1",
@@ -117,7 +117,7 @@
     "gradient-string": "^3.0.0",
     "husky": "^9.1.7",
     "lint-staged": "^15.4.3",
-    "postcss": "^8.5.2",
+    "postcss": "^8.5.3",
     "postcss-html": "^1.8.0",
     "postcss-import": "^16.1.0",
     "postcss-scss": "^4.0.9",
@@ -133,7 +133,7 @@
     "svgo": "^3.3.2",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.3",
-    "vite": "^6.1.0",
+    "vite": "^6.1.1",
     "vite-plugin-cdn-import": "^1.0.1",
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-fake-server": "^2.2.0",
@@ -147,7 +147,7 @@
     "node": ">=22.0.0",
     "pnpm": ">=9"
   },
-  "packageManager": "pnpm@9.14.2",
+  "packageManager": "pnpm@10.4.1",
   "pnpm": {
     "allowedDeprecatedVersions": {
       "sourcemap-codec": "*",
