@@ -3,11 +3,11 @@
 
 VERSION=$1
 
-node_images="registry.cn-beijing.aliyuncs.com/nineaiyu/node:22.11.0-slim"
+node_images="registry.cn-beijing.aliyuncs.com/nineaiyu/node:22.14.0-slim"
 
 npm_mirror="https://registry.npmmirror.com"
 
-cmd='corepack enable && corepack prepare pnpm@9.14.2 --activate \
+cmd='corepack enable && corepack prepare pnpm@10.4.1 --activate \
     && cd /app && pnpm install --frozen-lockfile && pnpm build'
 
 if [[ -n ${VERSION} ]]; then

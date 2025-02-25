@@ -106,11 +106,11 @@ function onkeypress({ code }: KeyboardEvent) {
 
 onMounted(() => {
   configLoading.value = true;
-  window.document.addEventListener("keypress", onkeypress);
+  window.document.addEventListener("keydown", onkeypress);
 });
 
 onBeforeUnmount(() => {
-  useEventListener(document, "keypress", ({ code }) => {
+  useEventListener(document, "keydown", ({ code }) => {
     if (
       ["Enter", "NumpadEnter"].includes(code) &&
       !disabled.value &&

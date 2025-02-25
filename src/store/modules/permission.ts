@@ -23,7 +23,7 @@ export const usePermissionStore = defineStore("pure-permission", {
     // 缓存页面keepAlive
     cachePageList: [],
     // 全局的授权
-    permissionAuths: []
+    permissionAuths: {}
   }),
   actions: {
     handleWholeAuths(auths: any[]) {
@@ -38,7 +38,7 @@ export const usePermissionStore = defineStore("pure-permission", {
         filterTree(ascending(this.constantMenus.concat(routes)))
       );
       this.flatteningRoutes = formatFlatteningRoutes(
-        this.constantMenus.concat(routes)
+        this.constantMenus.concat(routes) as any
       );
     },
     cacheOperate({ mode, name }: cacheType) {

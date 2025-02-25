@@ -146,7 +146,7 @@ export function useUser(tableRef: Ref) {
   }
 
   function onTreeSelect({ pk, selected }) {
-    tableRef.value.handleGetData({ dept: selected ? pk : "" });
+    tableRef.value.handleGetData({ dept: selected ? pk : "", page: 1 });
   }
 
   /** 重置密码 */

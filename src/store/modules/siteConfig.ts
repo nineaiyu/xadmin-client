@@ -91,7 +91,7 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
                   multiTagsCache: config.MultiTagsCache ?? false,
                   stretch: config.Stretch ?? false
                 }
-              };
+              } as PlatformConfigs;
               setConfig(config);
               this.setSiteConfig(configObj);
               resolve(config);

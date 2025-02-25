@@ -513,6 +513,7 @@ function tagOnClick(item) {
   } else {
     router.push({ path });
   }
+  emitter.emit("tagOnClick", item);
 }
 
 onClickOutside(contextmenuRef, closeMenu, {

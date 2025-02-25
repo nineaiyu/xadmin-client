@@ -80,7 +80,7 @@ const props = {
   height: { type: [String, Number], default: "360px" },
   crossorigin: {
     type: String as PropType<"" | "anonymous" | "use-credentials" | undefined>,
-    default: undefined
+    default: "anonymous"
   },
   imageStyle: { type: Object as PropType<CSSProperties>, default: () => ({}) },
   options: { type: Object as PropType<Options>, default: () => ({}) },

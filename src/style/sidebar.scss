@@ -1,7 +1,5 @@
 /* $sideBarWidth: vertical 模式下主体内容距离网页文档左侧的距离 */
 @mixin merge-style($sideBarWidth) {
-  $menuActiveText: #7a80b4;
-
   @media screen and (width >= 150px) and (width <= 420px) {
     .app-main-nofixed-header {
       overflow-y: hidden;

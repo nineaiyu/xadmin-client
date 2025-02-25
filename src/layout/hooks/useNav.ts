@@ -44,7 +44,7 @@ export function useNav() {
   const userAvatar = computed(() => {
     return isAllEmpty(useUserStoreHook()?.avatar)
       ? Avatar
-      : useUserStoreHook()?.avatar?.replace(".png", "_1.jpg");
+      : useUserStoreHook()?.avatar;
   });
 
   /** 昵称（如果昵称为空则显示用户名） */
