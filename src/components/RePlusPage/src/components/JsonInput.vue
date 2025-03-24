@@ -32,7 +32,7 @@ const handleChange = (content: TextContent) => {
   try {
     emit("change", JSON.parse(content.text));
   } catch (e) {
-    emit("change", value);
+    emit("change", value.value);
   }
 };
 

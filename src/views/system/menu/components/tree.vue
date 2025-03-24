@@ -151,7 +151,7 @@ function toggleRowExpansionAll(status: boolean, all = false) {
 }
 
 const handleDragEnd = (node, node2, position) => {
-  emit("handleDrag", treeRef, node, node2, position);
+  emit("handleDrag", treeRef.value, node, node2, position);
 };
 
 /** 重置状态（选中状态、搜索框值、树初始化） */
