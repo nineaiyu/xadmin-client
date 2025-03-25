@@ -440,8 +440,12 @@ export function useBaseColumns(localeName: string) {
             }
             // pure-table ****** start
             item["cellRenderer"] = ({ row }) => (
-              <span v-copy={get(row, `${column.key}.label`)}>
-                {get(row, `${column.key}.label`)}
+              <span
+                v-copy={
+                  get(row, `${column.key}.label`) ?? get(row, `${column.key}`)
+                }
+              >
+                {get(row, `${column.key}.label`) ?? get(row, `${column.key}`)}
               </span>
             );
             // pure-table ****** end
