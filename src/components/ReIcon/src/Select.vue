@@ -70,7 +70,7 @@ function setVal() {
 }
 
 function onBeforeEnter() {
-  if (isAllEmpty(icon.value)) return;
+  if (isAllEmpty(icon.value) || isAllEmpty(inputValue.value)) return;
   setVal();
   // 寻找当前图标在第几页
   const curIconIndex = copyIconList[currentActiveType.value].findIndex(
