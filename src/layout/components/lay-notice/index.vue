@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from "vue";
 import NoticeList from "./components/noticeList.vue";
-import BellIcon from "@iconify-icons/ep/bell";
+import BellIcon from "~icons/ep/bell";
 import { userNoticeReadApi } from "@/api/user/notice";
 import { TabItem } from "@/layout/components/lay-notice/data";
 import { useRouter } from "vue-router";

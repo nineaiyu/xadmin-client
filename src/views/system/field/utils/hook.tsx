@@ -1,9 +1,10 @@
-import { modelLabelFieldApi } from "@/api/system/field";
 import { useI18n } from "vue-i18n";
+import Money from "~icons/ep/money";
 import { getDefaultAuths } from "@/router/utils";
+import { modelLabelFieldApi } from "@/api/system/field";
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { getCurrentInstance, reactive, type Ref, shallowRef } from "vue";
 import { handleOperation, type OperationProps } from "@/components/RePlusPage";
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 
 export function useModelField(tableRef: Ref) {
   const { t } = useI18n();
@@ -23,7 +24,7 @@ export function useModelField(tableRef: Ref) {
         props: {
           type: "primary",
           plain: true,
-          icon: useRenderIcon("ep:money")
+          icon: useRenderIcon(Money)
         },
         onClick: ({ loading }) => {
           loading.value = true;

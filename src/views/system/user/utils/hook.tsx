@@ -41,10 +41,10 @@ import {
   type PageTableColumn
 } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import Role from "@iconify-icons/ri/admin-line";
-import Avatar from "@iconify-icons/ri/user-3-fill";
-import Password from "@iconify-icons/ri/lock-password-line";
-import Message from "@iconify-icons/ri/message-fill";
+import Role from "~icons/ri/admin-line";
+import Avatar from "~icons/ri/user-3-fill";
+import Password from "~icons/ri/lock-password-line";
+import Message from "~icons/ri/message-fill";
 import { rulesPasswordApi } from "@/api/auth";
 import { passwordRulesCheck } from "@/utils";
 

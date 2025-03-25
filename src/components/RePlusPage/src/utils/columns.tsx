@@ -20,7 +20,7 @@ import {
 
 import { ElIcon, ElImage, ElLink } from "element-plus";
 import { Link } from "@element-plus/icons-vue";
-import Info from "@iconify-icons/ri/question-line";
+import Info from "~icons/ri/question-line";
 
 import { isEmail, isEmpty, isNumber } from "@pureadmin/utils";
 

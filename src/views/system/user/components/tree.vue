@@ -1,11 +1,10 @@
 <script lang="ts" setup>
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { computed, getCurrentInstance, nextTick, ref, watch } from "vue";
-
-import More2Fill from "@iconify-icons/ri/more-2-fill";
+import { useI18n } from "vue-i18n";
+import More2Fill from "~icons/ri/more-2-fill";
 import ExpandIcon from "../svg/expand.svg?component";
 import UnExpandIcon from "../svg/unexpand.svg?component";
-import { useI18n } from "vue-i18n";
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import { computed, getCurrentInstance, nextTick, ref, watch } from "vue";
 
 interface Tree {
   id: number;
@@ -121,7 +120,7 @@ defineExpose({ onTreeReset });
           <el-icon class="el-input__icon">
             <IconifyIconOffline
               v-show="searchValue.length === 0"
-              icon="ri:search-line"
+              icon="ri/search-line"
             />
           </el-icon>
         </template>

@@ -27,12 +27,12 @@ import {
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import DetailDataForm from "../components/DetailData.vue";
 
-import View from "@iconify-icons/ep/view";
-import Delete from "@iconify-icons/ep/delete";
-import Upload from "@iconify-icons/ep/upload";
-import Download from "@iconify-icons/ep/download";
-import EditPen from "@iconify-icons/ep/edit-pen";
-import AddFill from "@iconify-icons/ri/add-circle-line";
+import View from "~icons/ep/view";
+import Delete from "~icons/ep/delete";
+import Upload from "~icons/ep/upload";
+import Download from "~icons/ep/download";
+import EditPen from "~icons/ep/edit-pen";
+import AddFill from "~icons/ri/add-circle-line";
 import { handleTree } from "@/utils/tree";
 
 export function usePlusPage(emit: any, tableRef: Ref, props: RePlusPageProps) {

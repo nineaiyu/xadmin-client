@@ -3,10 +3,10 @@ import { ref, watch } from "vue";
 import { useFieldRule } from "./utils/hook";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import AddFill from "@iconify-icons/ri/add-circle-line";
+import AddFill from "~icons/ri/add-circle-line";
 import { FormProps } from "./utils/types";
-import EditPen from "@iconify-icons/ep/edit-pen";
-import Delete from "@iconify-icons/ep/delete";
+import EditPen from "~icons/ep/edit-pen";
+import Delete from "~icons/ep/delete";
 import { hasAuth } from "@/router/utils";
 import PureTable from "@pureadmin/table";
 

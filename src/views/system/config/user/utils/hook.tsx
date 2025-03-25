@@ -10,7 +10,7 @@ import {
   type RePlusPageProps
 } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import CircleClose from "@iconify-icons/ep/circle-close";
+import CircleClose from "~icons/ep/circle-close";
 
 export function useUserConfig(tableRef: Ref) {
   const { t } = useI18n();

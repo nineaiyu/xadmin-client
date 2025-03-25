@@ -18,7 +18,7 @@ import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
 import dayIcon from "@/assets/svg/day.svg?component";
 import darkIcon from "@/assets/svg/dark.svg?component";
 import globalization from "@/assets/svg/globalization.svg?component";
-import Check from "@iconify-icons/ep/check";
+import Check from "~icons/ep/check";
 
 defineOptions({
   name: "LoginIndex"

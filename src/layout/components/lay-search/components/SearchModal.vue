@@ -13,7 +13,7 @@ import { computed, ref, shallowRef, watch } from "vue";
 import { onKeyStroke, useDebounceFn } from "@vueuse/core";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import { cloneDeep, isAllEmpty, storageLocal } from "@pureadmin/utils";
-import SearchIcon from "@iconify-icons/ri/search-line";
+import SearchIcon from "~icons/ri/search-line";
 
 interface Props {
   /** 弹窗显隐 */

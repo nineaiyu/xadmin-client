@@ -7,11 +7,11 @@ import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
 import LaySidebarFullScreen from "../lay-sidebar/components/SidebarFullScreen.vue";
 import LaySidebarBreadCrumb from "../lay-sidebar/components/SidebarBreadCrumb.vue";
 import LaySidebarTopCollapse from "../lay-sidebar/components/SidebarTopCollapse.vue";
-import AccountSettingsIcon from "@iconify-icons/ri/user-settings-line";
 import GlobalizationIcon from "@/assets/svg/globalization.svg?component";
-import LogoutCircleRLine from "@iconify-icons/ri/logout-circle-r-line";
-import Setting from "@iconify-icons/ri/settings-3-line";
-import Check from "@iconify-icons/ep/check";
+import AccountSettingsIcon from "~icons/ri/user-settings-line";
+import LogoutCircleRLine from "~icons/ri/logout-circle-r-line";
+import Setting from "~icons/ri/settings-3-line";
+import Check from "~icons/ep/check";
 
 const {
   layout,

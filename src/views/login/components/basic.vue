@@ -12,9 +12,10 @@ import { useUserStoreHook } from "@/store/modules/user";
 import { getTopMenu, initRouter } from "@/router/utils";
 import { ReImageVerify } from "@/components/ReImageVerify";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import Lock from "@iconify-icons/ri/lock-fill";
-import User from "@iconify-icons/ri/user-3-fill";
-import Info from "@iconify-icons/ri/information-line";
+import Lock from "~icons/ri/lock-fill";
+import User from "~icons/ri/user-3-fill";
+import Info from "~icons/ri/information-line";
+import Keyhole from "~icons/ri/shield-keyhole-line";
 import { AuthInfoResult, getTempTokenApi, loginAuthApi } from "@/api/auth";
 import { cloneDeep, debounce } from "@pureadmin/utils";
 import { useEventListener } from "@vueuse/core";
@@ -210,7 +211,7 @@ watch(loginDay, value => {
               v-model="ruleForm.captcha_code"
               tabindex="100"
               :placeholder="t('login.verifyCode')"
-              :prefix-icon="useRenderIcon('ri:shield-keyhole-line')"
+              :prefix-icon="useRenderIcon(Keyhole)"
               clearable
             >
               <template v-slot:append>

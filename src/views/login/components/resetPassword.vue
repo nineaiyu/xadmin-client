@@ -6,7 +6,7 @@ import type { FormInstance, FormRules } from "element-plus";
 import { $t, transformI18n } from "@/plugins/i18n";
 import { useUserStoreHook } from "@/store/modules/user";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import Lock from "@iconify-icons/ri/lock-fill";
+import Lock from "~icons/ri/lock-fill";
 import { resetPasswordApi } from "@/api/auth";
 import { handleOperation } from "@/components/RePlusPage";
 import { AesEncrypted } from "@/utils/aes";

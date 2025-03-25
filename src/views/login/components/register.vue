@@ -1,20 +1,20 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
-import { computed, onMounted, reactive, ref } from "vue";
-import Motion from "../utils/motion";
-import { message } from "@/utils/message";
-import type { FormInstance, FormRules } from "element-plus";
-import { $t, transformI18n } from "@/plugins/i18n";
-import { useUserStoreHook } from "@/store/modules/user";
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import Lock from "@iconify-icons/ri/lock-fill";
-import { getTopMenu, initRouter } from "@/router/utils";
 import { useRouter } from "vue-router";
-import { passwordRulesCheck } from "@/utils";
-import ReSendVerifyCode from "@/components/ReSendVerifyCode";
-import { AesEncrypted } from "@/utils/aes";
-import User from "@iconify-icons/ri/user-3-fill";
+import Motion from "../utils/motion";
 import { delay } from "@pureadmin/utils";
+import { message } from "@/utils/message";
+import { AesEncrypted } from "@/utils/aes";
+import { passwordRulesCheck } from "@/utils";
+import { $t, transformI18n } from "@/plugins/i18n";
+import { getTopMenu, initRouter } from "@/router/utils";
+import { useUserStoreHook } from "@/store/modules/user";
+import { computed, onMounted, reactive, ref } from "vue";
+import type { FormInstance, FormRules } from "element-plus";
+import ReSendVerifyCode from "@/components/ReSendVerifyCode";
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import User from "~icons/ri/user-3-fill";
+import Lock from "~icons/ri/lock-fill";
 
 const { t } = useI18n();
 const checked = ref(false);

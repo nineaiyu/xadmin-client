@@ -6,7 +6,7 @@ import { RePlusPageProps } from "./utils/types";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { cloneDeep, deviceDetection, getKeyList } from "@pureadmin/utils";
-import Delete from "@iconify-icons/ep/delete";
+import Delete from "~icons/ep/delete";
 import { PlusSearch } from "plus-pro-components";
 import ButtonOperation, {
   ButtonsCallBackParams

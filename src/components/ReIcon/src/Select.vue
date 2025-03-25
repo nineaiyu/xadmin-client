@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { IconJson } from "@/components/ReIcon/data";
 import { cloneDeep, isAllEmpty } from "@pureadmin/utils";
-import { computed, CSSProperties, ref, watch } from "vue";
-import Search from "@iconify-icons/ri/search-eye-line";
+import { ref, computed, CSSProperties, watch } from "vue";
+import Search from "~icons/ri/search-eye-line";
 import { useI18n } from "vue-i18n";
 
 type ParameterCSSProperties = (item?: string) => CSSProperties | undefined;
