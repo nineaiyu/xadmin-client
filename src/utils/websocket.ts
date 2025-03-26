@@ -19,20 +19,20 @@ type Nullable<T> = T | null;
 /**
  * 默认重连次数
  */
-const reconnectMaxCount = 10;
+const reconnectMaxCount = 1000;
 /**
  * 默认心跳信息
  */
-const message = "ping";
+const message = { action: "ping" };
 /**
  * 默认心跳间隔
  */
-const interval = 3000;
+const interval = 10000;
 
 /**
  * 默认延时时间
  */
-const timeout = 1000;
+const timeout = 3000;
 
 type AutoReconnect = {
   /**
@@ -97,7 +97,7 @@ class WS {
     const {
       autoReconnect = true,
       query = {},
-      heartbeat = false,
+      heartbeat = true,
       openCallback = null,
       closeCallback = null,
       errorCallback = null
@@ -150,8 +150,10 @@ class WS {
    * 开启心跳
    */
   startHeartbeat(): void {
-    const msg = (this.heartbeat as Heartbeat)?.message || message;
+    const msg =
+      (this.heartbeat as Heartbeat)?.message || JSON.stringify(message);
     const int = (this.heartbeat as Heartbeat)?.interval || interval;
+    this.send(msg);
     this.timer = setInterval(() => {
       this.send(msg);
     }, int);

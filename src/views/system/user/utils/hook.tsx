@@ -45,6 +45,8 @@ import Role from "~icons/ri/admin-line";
 import Avatar from "~icons/ri/user-3-fill";
 import Password from "~icons/ri/lock-password-line";
 import Message from "~icons/ri/message-fill";
+import Logout from "~icons/ri/logout-circle-r-line";
+
 import { rulesPasswordApi } from "@/api/auth";
 import { passwordRulesCheck } from "@/utils";
 
@@ -56,10 +58,12 @@ export function useUser(tableRef: Ref) {
   const auth = reactive({
     unblock: false,
     empower: false,
+    logout: false,
     resetPassword: false,
     ...getDefaultAuths(getCurrentInstance(), [
       "resetPassword",
       "empower",
+      "logout",
       "unblock"
     ])
   });
@@ -502,6 +506,26 @@ export function useUser(tableRef: Ref) {
   const operationButtonsProps = shallowRef<OperationProps>({
     width: 210,
     buttons: [
+      {
+        text: t("systemUser.logout"),
+        code: "logout",
+        props: {
+          type: "warning",
+          icon: useRenderIcon(Logout),
+          plain: true,
+          link: true
+        },
+        onClick: ({ row }) => {
+          handleOperation({
+            t,
+            apiReq: api.logout(row.pk, {}),
+            success() {
+              tableRef.value.handleGetData();
+            }
+          });
+        },
+        show: auth.logout
+      },
       {
         text: t("systemUser.editAvatar"),
         code: "upload",

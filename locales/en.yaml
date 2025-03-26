@@ -322,6 +322,7 @@ systemUser:
   password: Password
   roles: Roles
   rules: Data Permissions
+  logout: Logout
 
 systemDept:
   dept: Department

@@ -322,6 +322,7 @@ systemUser:
   password: 密码
   roles: 角色
   rules: 数据权限
+  logout: 登出
 
 systemDept:
   dept: 部门

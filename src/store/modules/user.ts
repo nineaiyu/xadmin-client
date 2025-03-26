@@ -258,6 +258,9 @@ export const useUserStore = defineStore("pure-user", {
                 }
               });
               break;
+            case "logout":
+              this.logOut();
+              break;
             case "error":
               console.log(json_data);
               break;
