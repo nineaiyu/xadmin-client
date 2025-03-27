@@ -509,11 +509,15 @@ export function useUser(tableRef: Ref) {
       {
         text: t("systemUser.logout"),
         code: "logout",
-        props: {
-          type: "warning",
-          icon: useRenderIcon(Logout),
-          plain: true,
-          link: true
+        props: (row, button) => {
+          const disabled = row?.online_count === 0;
+          return {
+            ...(button?._?.props ?? {
+              icon: useRenderIcon(Logout),
+              link: true
+            }),
+            ...{ disabled, type: disabled ? "default" : "danger" }
+          };
         },
         onClick: ({ row }) => {
           handleOperation({

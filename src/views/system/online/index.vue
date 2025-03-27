@@ -1,15 +1,12 @@
 <script lang="ts" setup>
-import { useLoginLog } from "./utils/hook";
+import { useUserOnline } from "./utils/hook";
 import { RePlusPage } from "@/components/RePlusPage";
-import { ref } from "vue";
 
 defineOptions({
-  name: "SystemUserLoginLog"
+  name: "SystemUserOnline"
 });
-const tableRef = ref();
 
-const { api, auth, listColumnsFormat, operationButtonsProps } =
-  useLoginLog(tableRef);
+const { api, auth, listColumnsFormat, operationButtonsProps } = useUserOnline();
 </script>
 
 <template>
@@ -17,7 +14,7 @@ const { api, auth, listColumnsFormat, operationButtonsProps } =
     ref="tableRef"
     :api="api"
     :auth="auth"
-    locale-name="logsLogin"
+    locale-name="userOnline"
     :listColumnsFormat="listColumnsFormat"
     :operationButtonsProps="operationButtonsProps"
   />
