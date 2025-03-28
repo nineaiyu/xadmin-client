@@ -1,10 +1,9 @@
 import { computed, h, ref } from "vue";
-import { cloneDeep } from "lodash-es";
+import { cloneDeep, get } from "lodash-es";
 import dayjs from "dayjs";
 import { useI18n } from "vue-i18n";
 import type { BaseApi } from "@/api/base";
 import type { SearchColumnsResult, SearchFieldsResult } from "@/api/types";
-import { get } from "lodash-es";
 import {
   formatAddOrEditOptions,
   renderBooleanSegmentedOption
@@ -13,9 +12,9 @@ import { selectBooleanOptions } from "./constants";
 import type { PageColumn } from "./types";
 
 import {
-  getPickerShortcuts,
+  formatPublicLabels,
   getColourTypeByIndex,
-  formatPublicLabels
+  getPickerShortcuts
 } from "./index";
 
 import { ElIcon, ElImage, ElLink } from "element-plus";
@@ -272,7 +271,6 @@ export function useBaseColumns(localeName: string) {
           ];
           break;
         case "datetime":
-        case "date":
           item["valueType"] = "date-picker";
           item["fieldProps"]["type"] = column.input_type;
           item["fieldProps"]["valueFormat"] = "YYYY-MM-DD HH:mm:ss";
@@ -281,6 +279,19 @@ export function useBaseColumns(localeName: string) {
           item["cellRenderer"] = ({ row }) => (
             <span v-copy={row[column.key]}>
               {dayjs(row[column.key]).format("YYYY-MM-DD HH:mm:ss")}
+            </span>
+          );
+          // pure-table ****** end
+          break;
+        case "date":
+          item["valueType"] = "date-picker";
+          item["fieldProps"]["type"] = column.input_type;
+          item["fieldProps"]["valueFormat"] = "YYYY-MM-DD";
+          item["width"] = 140;
+          // pure-table ****** start
+          item["cellRenderer"] = ({ row }) => (
+            <span v-copy={row[column.key]}>
+              {dayjs(row[column.key]).format("YYYY-MM-DD")}
             </span>
           );
           // pure-table ****** end
