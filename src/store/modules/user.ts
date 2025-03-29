@@ -215,7 +215,6 @@ export const useUserStore = defineStore("pure-user", {
     },
     messageHandler() {
       const onMessage = json_data => {
-        console.log(json_data);
         if (json_data.action === "push_message") {
           const data = json_data?.data;
           let message = data?.message;
