@@ -249,7 +249,7 @@ export function useMenu() {
     api.partialUpdate(u_menu.pk, u_menu).then((res: any) => {
       if (res.code === 1000) {
         api
-          .rank(getMenuOrderPk(treeRef.value?.data))
+          .rank(getMenuOrderPk(treeRef?.data))
           .then(res => {
             if (res.code === 1000) {
               message(res.detail, { type: "success" });
