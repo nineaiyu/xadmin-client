@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { useRenderIcon } from "../ReIcon/src/hooks";
+import Question from "~icons/ep/question-filled";
 
 defineProps({
   label: {
@@ -23,7 +24,7 @@ defineOptions({ name: "FromQuestion" });
       placement="top"
       trigger="hover"
     >
-      <component :is="useRenderIcon('ep:question-filled')" />
+      <component :is="useRenderIcon(Question)" />
     </el-tooltip>
     {{ label }}
   </div>

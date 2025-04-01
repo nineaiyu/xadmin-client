@@ -141,6 +141,8 @@ labels:
   failed: 失败
   checkColumn: 勾选列
   dClickCopy: 双击进行拷贝
+  online: 在线
+  offline: 下线
 
 exportImport:
   import: 导入
@@ -322,6 +324,7 @@ systemUser:
   password: 密码
   roles: 角色
   rules: 数据权限
+  logout: 登出
 
 systemDept:
   dept: 部门

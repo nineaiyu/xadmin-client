@@ -3,21 +3,21 @@ import pluginVue from "eslint-plugin-vue";
 import * as parserVue from "vue-eslint-parser";
 import configPrettier from "eslint-config-prettier";
 import pluginPrettier from "eslint-plugin-prettier";
-import { defineFlatConfig } from "eslint-define-config";
+import { defineConfig, globalIgnores } from "eslint/config";
 import * as parserTypeScript from "@typescript-eslint/parser";
 import pluginTypeScript from "@typescript-eslint/eslint-plugin";
 
-export default defineFlatConfig([
+export default defineConfig([
+  globalIgnores([
+    "**/.*",
+    "dist/*",
+    "*.d.ts",
+    "public/*",
+    "src/assets/**",
+    "src/**/iconfont/**"
+  ]),
   {
     ...js.configs.recommended,
-    ignores: [
-      "**/.*",
-      "dist/*",
-      "*.d.ts",
-      "public/*",
-      "src/assets/**",
-      "src/**/iconfont/**"
-    ],
     languageOptions: {
       globals: {
         // index.d.ts
@@ -78,7 +78,8 @@ export default defineFlatConfig([
     languageOptions: {
       parser: parserTypeScript,
       parserOptions: {
-        sourceType: "module"
+        sourceType: "module",
+        warnOnUnsupportedTypeScriptVersion: false
       }
     },
     plugins: {
@@ -93,6 +94,8 @@ export default defineFlatConfig([
       "@typescript-eslint/prefer-as-const": "warn",
       "@typescript-eslint/no-empty-function": "off",
       "@typescript-eslint/no-non-null-assertion": "off",
+      "@typescript-eslint/no-unused-expressions": "off",
+      "@typescript-eslint/no-unsafe-function-type": "off",
       "@typescript-eslint/no-import-type-side-effects": "error",
       "@typescript-eslint/explicit-module-boundary-types": "off",
       "@typescript-eslint/consistent-type-imports": [

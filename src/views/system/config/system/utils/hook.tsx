@@ -4,7 +4,7 @@ import { getDefaultAuths } from "@/router/utils";
 import { getCurrentInstance, reactive, type Ref, shallowRef } from "vue";
 import { handleOperation, type OperationProps } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import CircleClose from "@iconify-icons/ep/circle-close";
+import CircleClose from "~icons/ep/circle-close";
 
 export function useSystemConfig(tableRef: Ref) {
   const { t } = useI18n();

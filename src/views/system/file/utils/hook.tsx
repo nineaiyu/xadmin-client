@@ -15,7 +15,7 @@ import { usePublicHooks } from "@/views/system/hooks";
 import { ElIcon, ElLink, ElText } from "element-plus";
 import { Link } from "@element-plus/icons-vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import Upload from "@iconify-icons/ep/upload";
+import Upload from "~icons/ep/upload";
 import { formatBytes } from "@pureadmin/utils";
 
 export function useSystemUploadFile(tableRef: Ref) {

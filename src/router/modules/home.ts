@@ -9,7 +9,7 @@ export default {
   component: Layout,
   redirect: "/welcome",
   meta: {
-    icon: "ep:home-filled",
+    icon: "ep/home-filled",
     title: $t("menus.home"),
     rank: 0
   },
@@ -20,7 +20,7 @@ export default {
       component: () => import("@/views/welcome/index.vue"),
       meta: {
         title: $t("menus.home"),
-        showLink: VITE_HIDE_HOME === "true" ? false : true
+        showLink: VITE_HIDE_HOME !== "true"
       }
     }
   ]

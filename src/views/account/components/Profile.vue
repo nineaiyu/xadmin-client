@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref } from "vue";
 import { deviceDetection } from "@pureadmin/utils";
-import uploadLine from "@iconify-icons/ri/upload-line";
+import uploadLine from "~icons/ri/upload-line";
 import { PlusForm } from "plus-pro-components";
 import { formRules } from "../utils/rule";
 import { useUserProfileForm } from "../utils/hook";

@@ -1,12 +1,15 @@
 <script lang="ts" setup>
 import { useLoginLog } from "./utils/hook";
 import { RePlusPage } from "@/components/RePlusPage";
+import { ref } from "vue";
 
 defineOptions({
   name: "SystemUserLoginLog"
 });
+const tableRef = ref();
 
-const { api, auth, listColumnsFormat, operationButtonsProps } = useLoginLog();
+const { api, auth, listColumnsFormat, operationButtonsProps } =
+  useLoginLog(tableRef);
 </script>
 
 <template>

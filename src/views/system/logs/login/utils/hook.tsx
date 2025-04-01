@@ -7,22 +7,53 @@ import { usePublicHooks } from "@/views/system/hooks";
 import {
   type PageTableColumn,
   type OperationProps,
-  renderBooleanTag
+  renderBooleanTag,
+  handleOperation
 } from "@/components/RePlusPage";
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import Logout from "~icons/ri/logout-circle-r-line";
 
-export function useLoginLog() {
+export function useLoginLog(tableRef) {
   const { t } = useI18n();
   const api = reactive(loginLogApi);
 
   const auth = reactive({
-    ...getDefaultAuths(getCurrentInstance())
+    logout: false,
+    ...getDefaultAuths(getCurrentInstance(), ["logout"])
   });
 
   const router = useRouter();
   const { tagStyle } = usePublicHooks();
 
   const operationButtonsProps = shallowRef<OperationProps>({
-    width: 140
+    width: 180,
+    buttons: [
+      {
+        text: t("systemUser.logout"),
+        code: "logout",
+        props: (row, button) => {
+          const disabled = row?.online !== true;
+          return {
+            ...(button?._?.props ?? {
+              icon: useRenderIcon(Logout),
+              plain: true,
+              link: true
+            }), // button?._ 这个表示之前老的按钮信息
+            ...{ disabled, type: disabled ? "default" : "danger" }
+          };
+        },
+        onClick: ({ row }) => {
+          handleOperation({
+            t,
+            apiReq: api.logout(row.pk, {}),
+            success() {
+              tableRef.value.handleGetData();
+            }
+          });
+        },
+        show: auth.logout
+      }
+    ]
   });
   const listColumnsFormat = (columns: PageTableColumn[]) => {
     columns.forEach(column => {
@@ -40,6 +71,18 @@ export function useLoginLog() {
             tagStyle,
             field: column.prop,
             actionMap: { true: t("labels.success"), false: t("labels.failed") }
+          });
+          break;
+        case "online":
+          column["cellRenderer"] = renderBooleanTag({
+            t,
+            tagStyle,
+            field: column.prop,
+            actionMap: {
+              true: t("labels.online"),
+              false: t("labels.offline"),
+              "-1": "/"
+            }
           });
           break;
       }

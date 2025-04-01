@@ -141,6 +141,8 @@ labels:
   failed: Failed
   checkColumn: CheckColumn
   dClickCopy: Double-click to copy
+  online: Online
+  offline: Offline
 
 exportImport:
   import: Import
@@ -322,6 +324,7 @@ systemUser:
   password: Password
   roles: Roles
   rules: Data Permissions
+  logout: Logout
 
 systemDept:
   dept: Department

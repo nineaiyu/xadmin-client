@@ -17,18 +17,18 @@ import {
   watch
 } from "vue";
 
-import Back from "@iconify-icons/ep/back";
-import Delete from "@iconify-icons/ep/delete";
-import Refresh from "@iconify-icons/ep/refresh";
-import Reset from "@iconify-icons/ri/restart-line";
-import Right from "@iconify-icons/ep/bottom-right";
+import Back from "~icons/ep/back";
+import Upload from "~icons/ep/upload";
+import Delete from "~icons/ep/delete";
+import Refresh from "~icons/ep/refresh";
+import Download from "~icons/ep/download";
+import Reset from "~icons/ri/restart-line";
+import Right from "~icons/ep/bottom-right";
+import MenuAdd from "~icons/ri/menu-add-fill";
+import More2Fill from "~icons/ri/more-2-fill";
+import DocumentAdd from "~icons/ep/document-add";
 import ExpandIcon from "../svg/expand.svg?component";
-import More2Fill from "@iconify-icons/ri/more-2-fill";
 import UnExpandIcon from "../svg/unexpand.svg?component";
-import DocumentAdd from "@iconify-icons/ep/document-add";
-import Download from "@iconify-icons/ep/download";
-import Upload from "@iconify-icons/ep/upload";
-import MenuAdd from "@iconify-icons/ri/menu-add-fill";
 
 const { t } = useI18n();
 const { locale } = useI18n();
@@ -151,7 +151,7 @@ function toggleRowExpansionAll(status: boolean, all = false) {
 }
 
 const handleDragEnd = (node, node2, position) => {
-  emit("handleDrag", treeRef, node, node2, position);
+  emit("handleDrag", treeRef.value, node, node2, position);
 };
 
 /** 重置状态（选中状态、搜索框值、树初始化） */
@@ -265,7 +265,7 @@ onMounted(() => {
             <el-icon class="el-input__icon">
               <IconifyIconOffline
                 v-show="searchValue.length === 0"
-                icon="ri:search-line"
+                icon="ri/search-line"
               />
             </el-icon>
           </template>

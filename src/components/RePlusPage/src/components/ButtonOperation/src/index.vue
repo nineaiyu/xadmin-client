@@ -43,7 +43,7 @@ import {
 import { RecordType } from "plus-pro-components";
 import { isFunction } from "@pureadmin/utils";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import More from "@iconify-icons/ep/more-filled";
+import More from "~icons/ep/more-filled";
 import { OperationButtonsRow, OperationEmits, OperationProps } from "./types";
 import { uniqueArrayObj } from "@/components/RePlusPage";
 

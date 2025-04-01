@@ -1,12 +1,13 @@
 <script lang="ts" setup>
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import Email from "@iconify-icons/ep/message";
 import { ref } from "vue";
-import type { FormInstance } from "element-plus";
-import Motion from "@/views/login/utils/motion";
-import ReImageVerify from "@/components/ReImageVerify/src/index.vue";
 import { useSendVerifyCode } from "./hooks";
+import Motion from "@/views/login/utils/motion";
+import type { FormInstance } from "element-plus";
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import ReImageVerify from "@/components/ReImageVerify/src/index.vue";
 import PhoneInput from "@/components/RePlusPage/src/components/PhoneInput.vue";
+import Email from "~icons/ep/message";
+import Keyhole from "~icons/ri/shield-keyhole-line";
 
 defineOptions({ name: "ReSendVerifyCode" });
 
@@ -107,7 +108,7 @@ const phone = ref({ code: "+86", phone: "" });
         <el-input
           v-model="formData.captcha_code"
           :placeholder="t('login.verifyCode')"
-          :prefix-icon="useRenderIcon('ri:shield-keyhole-line')"
+          :prefix-icon="useRenderIcon(Keyhole)"
           clearable
           tabindex="100"
         >
@@ -124,7 +125,7 @@ const phone = ref({ code: "+86", phone: "" });
           <el-input
             v-model="formData.verify_code"
             :placeholder="t('login.verifyCode')"
-            :prefix-icon="useRenderIcon('ri:shield-keyhole-line')"
+            :prefix-icon="useRenderIcon(Keyhole)"
             clearable
             tabindex="200"
           />

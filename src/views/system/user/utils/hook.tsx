@@ -41,10 +41,12 @@ import {
   type PageTableColumn
 } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import Role from "@iconify-icons/ri/admin-line";
-import Avatar from "@iconify-icons/ri/user-3-fill";
-import Password from "@iconify-icons/ri/lock-password-line";
-import Message from "@iconify-icons/ri/message-fill";
+import Role from "~icons/ri/admin-line";
+import Avatar from "~icons/ri/user-3-fill";
+import Password from "~icons/ri/lock-password-line";
+import Message from "~icons/ri/message-fill";
+import Logout from "~icons/ri/logout-circle-r-line";
+
 import { rulesPasswordApi } from "@/api/auth";
 import { passwordRulesCheck } from "@/utils";
 
@@ -56,10 +58,12 @@ export function useUser(tableRef: Ref) {
   const auth = reactive({
     unblock: false,
     empower: false,
+    logout: false,
     resetPassword: false,
     ...getDefaultAuths(getCurrentInstance(), [
       "resetPassword",
       "empower",
+      "logout",
       "unblock"
     ])
   });
@@ -502,6 +506,30 @@ export function useUser(tableRef: Ref) {
   const operationButtonsProps = shallowRef<OperationProps>({
     width: 210,
     buttons: [
+      {
+        text: t("systemUser.logout"),
+        code: "logout",
+        props: (row, button) => {
+          const disabled = row?.online_count === 0;
+          return {
+            ...(button?._?.props ?? {
+              icon: useRenderIcon(Logout),
+              link: true
+            }),
+            ...{ disabled, type: disabled ? "default" : "danger" }
+          };
+        },
+        onClick: ({ row }) => {
+          handleOperation({
+            t,
+            apiReq: api.logout(row.pk, {}),
+            success() {
+              tableRef.value.handleGetData();
+            }
+          });
+        },
+        show: auth.logout
+      },
       {
         text: t("systemUser.editAvatar"),
         code: "upload",

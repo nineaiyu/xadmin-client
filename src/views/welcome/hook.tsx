@@ -1,19 +1,19 @@
-import { computed, onMounted, ref } from "vue";
 import {
-  getDashBoardTodayOperateTotalApi,
+  getDashBoardUserTotalApi,
   getDashBoardUserActiveApi,
   getDashBoardUserLoginTotalApi,
   getDashBoardUserLoginTrendApi,
   getDashBoardUserRegisterTrendApi,
-  getDashBoardUserTotalApi
+  getDashBoardTodayOperateTotalApi
 } from "@/api/system/dashboard";
 import { useI18n } from "vue-i18n";
-import GroupLine from "@iconify-icons/ri/group-line";
-import LoginLine from "@iconify-icons/ep/lock";
-import LogLine from "@iconify-icons/ep/tickets";
-import { operationLogApi } from "@/api/system/logs/operation";
-import { getKeyList } from "@pureadmin/utils";
+import LoginLine from "~icons/ep/lock";
+import LogLine from "~icons/ep/tickets";
 import { hasAuth } from "@/router/utils";
+import GroupLine from "~icons/ri/group-line";
+import { getKeyList } from "@pureadmin/utils";
+import { computed, onMounted, ref } from "vue";
+import { operationLogApi } from "@/api/system/logs/operation";
 
 export function useDashboard() {
   const { t } = useI18n();

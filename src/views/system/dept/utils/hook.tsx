@@ -14,7 +14,7 @@ import {
   type RePlusPageProps
 } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import Role from "@iconify-icons/ri/admin-line";
+import Role from "~icons/ri/admin-line";
 
 export function useDept(tableRef: Ref) {
   const { t } = useI18n();

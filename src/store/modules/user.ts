@@ -215,10 +215,10 @@ export const useUserStore = defineStore("pure-user", {
     },
     messageHandler() {
       const onMessage = json_data => {
-        if (json_data.time && json_data.action === "push_message") {
-          const data = JSON.parse(json_data.data);
+        if (json_data.action === "push_message") {
+          const data = json_data?.data;
           let message = data?.message;
-          switch (data.message_type) {
+          switch (data?.message_type) {
             case "notify_message":
               if (data?.notice_type?.value === 0) {
                 const isHtml =
@@ -257,6 +257,9 @@ export const useUserStore = defineStore("pure-user", {
                   });
                 }
               });
+              break;
+            case "logout":
+              this.logOut();
               break;
             case "error":
               console.log(json_data);

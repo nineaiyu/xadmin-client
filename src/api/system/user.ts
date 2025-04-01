@@ -42,6 +42,14 @@ class UserApi extends BaseApi {
       `${this.baseApi}/${pk}/unblock`
     );
   };
+  logout = (pk: number | string, data?: object) => {
+    return this.request<BaseResult>(
+      "post",
+      {},
+      data,
+      `${this.baseApi}/${pk}/logout`
+    );
+  };
 }
 
 export const userApi = new UserApi("/api/system/user");

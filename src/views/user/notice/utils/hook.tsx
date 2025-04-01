@@ -1,17 +1,16 @@
-import { message } from "@/utils/message";
-import { h, reactive, ref, type Ref, shallowRef } from "vue";
-import { userNoticeReadApi } from "@/api/user/notice";
-import { deviceDetection, getKeyList } from "@pureadmin/utils";
-import { addDialog } from "@/components/ReDialog";
 import { useI18n } from "vue-i18n";
-import { useUserStoreHook } from "@/store/modules/user";
-
 import { hasAuth } from "@/router/utils";
-import type { PageTableColumn, OperationProps } from "@/components/RePlusPage";
+import { message } from "@/utils/message";
+import { addDialog } from "@/components/ReDialog";
+import { userNoticeReadApi } from "@/api/user/notice";
+import { useUserStoreHook } from "@/store/modules/user";
+import { h, reactive, ref, type Ref, shallowRef } from "vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import { deviceDetection, getKeyList } from "@pureadmin/utils";
 import NoticeShowForm from "@/views/system/components/NoticeShow.vue";
+import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
 
-import Success from "@iconify-icons/ep/success-filled";
+import Success from "~icons/ep/success-filled";
 
 export function useUserNotice(tableRef: Ref) {
   const { t } = useI18n();

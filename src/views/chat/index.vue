@@ -22,9 +22,9 @@ const scrollToBottom = () => {
 };
 
 interface MessageProps {
-  time: string;
+  timestamp: string;
   action: string;
-  message: string;
+  status: string;
   data: {
     pk: string;
     userinfo: {
@@ -34,22 +34,18 @@ interface MessageProps {
 }
 
 const onMessage = (json_data: MessageProps) => {
-  if (json_data.time) {
-    switch (json_data.action) {
-      case "userinfo":
-        userinfo.username = json_data.data?.userinfo?.username;
-        userinfo.pk = json_data.data.pk;
-        break;
-      case "chat_message":
-        msgData.value.push(json_data.data);
-        scrollToBottom();
-        break;
-      case "error":
-        console.log(json_data);
-        break;
-    }
-  } else {
-    message(json_data.message, { type: "error" });
+  switch (json_data?.action) {
+    case "userinfo":
+      userinfo.username = json_data.data?.userinfo?.username;
+      userinfo.pk = json_data.data.pk;
+      break;
+    case "chat_message":
+      msgData.value.push({ ...json_data.data, timestamp: json_data.timestamp });
+      scrollToBottom();
+      break;
+    case "error":
+      console.log(json_data);
+      break;
   }
 };
 
@@ -70,7 +66,7 @@ onMounted(() => {
     openCallback: () => {
       message("连接建立成功", { type: "success" });
       enter.value = true;
-      ws.value.send(JSON.stringify({ action: "userinfo", data: {} }));
+      ws.value.send(JSON.stringify({ action: "userinfo" }));
       ws.value.onMessage(data => {
         onMessage(data);
       });
@@ -109,7 +105,7 @@ const filteredItems = computed(() => {
             :items="filteredItems"
             :min-item-size="20"
             class="scroller"
-            key-field="time"
+            key-field="timestamp"
             @resize="scrollToBottom"
           >
             <template #default="{ item, index, active }">
