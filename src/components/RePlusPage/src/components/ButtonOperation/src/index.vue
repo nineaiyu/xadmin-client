@@ -68,8 +68,8 @@ const getSubButtons = () => {
     .filter((item: OperationButtonsRow) => {
       if (typeof item.show === "function") {
         const tempFunction = item.show as (
-          row: RecordType,
-          button: OperationButtonsRow
+          _row: RecordType,
+          _button: OperationButtonsRow
         ) =>
           | number
           | boolean
@@ -102,8 +102,8 @@ const renderString = (
 ) => {
   if (typeof str === "function") {
     const tempFunction = str as (
-      row: RecordType,
-      button: OperationButtonsRow
+      _row: RecordType,
+      _button: OperationButtonsRow
     ) => string | Ref<string> | ComputedRef<string>;
     const text = tempFunction(row, buttonRow);
     return unref(text);

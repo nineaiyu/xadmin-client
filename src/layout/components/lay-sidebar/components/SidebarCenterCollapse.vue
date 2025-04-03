@@ -23,7 +23,7 @@ const { $storage } = useGlobal<GlobalPropertiesApi>();
 const themeColor = computed(() => $storage.layout?.themeColor);
 
 const emit = defineEmits<{
-  (e: "toggleClick"): void;
+  toggleClick: [];
 }>();
 
 const toggleClick = () => {

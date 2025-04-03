@@ -28,7 +28,7 @@ const ruleFormRef = ref();
 const newFormInline = ref(props.formInline);
 
 const emit = defineEmits<{
-  (e: "handleUpdate", v: FormItemProps): void;
+  handleUpdate: [values: FormItemProps];
 }>();
 
 const handleUpdate = row => {

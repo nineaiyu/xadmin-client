@@ -28,7 +28,7 @@ const props = withDefaults(defineProps<PlusSearchProps>(), {
 const selectValue = defineModel<object | object[] | string>();
 
 const emit = defineEmits<{
-  (e: "change", ...args: any[]): void;
+  change: [...args: any[]];
 }>();
 
 const selectRef = ref();

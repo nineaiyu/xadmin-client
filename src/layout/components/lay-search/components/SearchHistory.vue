@@ -7,24 +7,18 @@ import { delay, isArray, useResizeObserver } from "@pureadmin/utils";
 import { computed, getCurrentInstance, nextTick, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
-interface Emits {
-  (e: "update:value", val: string): void;
-
-  (e: "enter"): void;
-
-  (e: "collect", val: optionsItem): void;
-
-  (e: "delete", val: optionsItem): void;
-
-  (e: "drag", val: dragItem): void;
-}
-
 const historyRef = ref();
 const innerHeight = ref();
 /** 判断是否停止鼠标移入事件处理 */
 const stopMouseEvent = ref(false);
 const { t } = useI18n();
-const emit = defineEmits<Emits>();
+const emit = defineEmits<{
+  enter: [];
+  drag: [val: dragItem];
+  delete: [val: optionsItem];
+  collect: [val: optionsItem];
+  "update:value": [val: string];
+}>();
 const instance = getCurrentInstance()!;
 const props = withDefaults(defineProps<Props>(), {});
 

@@ -11,7 +11,7 @@ const props = defineProps({
   isFile: Boolean
 });
 const emit = defineEmits<{
-  (e: "change", ...args: any): void;
+  change: [...args: any];
 }>();
 
 const fileList = ref<UploadUserFile[]>([]);

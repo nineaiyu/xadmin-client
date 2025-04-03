@@ -8,7 +8,7 @@ import { transformI18n } from "@/plugins/i18n";
 defineOptions({ name: "SearchMenu" });
 
 const emit = defineEmits<{
-  (e: "change", ...args: any[]): void;
+  change: [...args: any[]];
 }>();
 
 const selectValue = defineModel<object | object[] | string>();

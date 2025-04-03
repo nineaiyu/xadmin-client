@@ -5,7 +5,7 @@ import { ref, computed, CSSProperties, watch } from "vue";
 import Search from "~icons/ri/search-eye-line";
 import { useI18n } from "vue-i18n";
 
-type ParameterCSSProperties = (item?: string) => CSSProperties | undefined;
+type ParameterCSSProperties = (_item?: string) => CSSProperties | undefined;
 
 defineOptions({
   name: "IconSelect"

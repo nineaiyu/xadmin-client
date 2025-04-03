@@ -8,7 +8,7 @@ import { ElImage } from "element-plus";
 defineOptions({ name: "SearchUser" });
 
 const emit = defineEmits<{
-  (e: "change", ...args: any[]): void;
+  change: [...args: any[]];
 }>();
 
 const selectValue = defineModel<object | object[] | string>();

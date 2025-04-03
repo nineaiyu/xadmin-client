@@ -49,7 +49,9 @@ const formData = ref({
   field: props.field
 });
 
-const emit = defineEmits<{ (e: "change", v: { fields; menu }) }>();
+const emit = defineEmits<{
+  change: [values: { fields: FormProps["fields"]; menu: any[] }];
+}>();
 
 const handleChange = () => {
   formatMenuFields();

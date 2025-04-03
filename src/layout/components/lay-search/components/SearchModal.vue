@@ -20,12 +20,10 @@ interface Props {
   value: boolean;
 }
 
-interface Emits {
-  (e: "update:value", val: boolean): void;
-}
-
 const { device, t } = useNav();
-const emit = defineEmits<Emits>();
+const emit = defineEmits<{
+  "update:value": [val: boolean];
+}>();
 const props = withDefaults(defineProps<Props>(), {});
 
 const router = useRouter();

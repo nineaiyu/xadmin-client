@@ -11,7 +11,7 @@ defineOptions({
 });
 
 const emit = defineEmits<{
-  (e: "submit", ...args: any[]): void;
+  submit: [...args: any[]];
 }>();
 
 const props = withDefaults(defineProps<settingItemProps>(), {

@@ -266,7 +266,7 @@ const addBalls = (x, y, num) => {
   });
 };
 const updateBalls = () => {
-  balls.value.forEach((ball, index) => {
+  balls.value.forEach(ball => {
     ball.x += ball.vx;
     ball.y += ball.vy;
     ball.vy += ball.g;
@@ -276,7 +276,7 @@ const updateBalls = () => {
     }
 
     let cnt = 0;
-    balls.value.forEach((item, index) => {
+    balls.value.forEach(item => {
       if (item.x + radius.value > 0 && item.x - radius.value < winWidth.value)
         balls.value[cnt++] = item;
     }); //在这个屏幕内的小球
@@ -339,7 +339,7 @@ const renderTime = (hours, minutes, seconds, cxt) => {
     cxt
   );
 
-  balls.value.forEach((ball, index) => {
+  balls.value.forEach(ball => {
     cxt.fillStyle = ball.color;
     cxt.beginPath();
     cxt.arc(ball.x, ball.y, radius.value, 0, 2 * Math.PI, true);

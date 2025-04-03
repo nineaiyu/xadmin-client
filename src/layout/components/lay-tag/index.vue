@@ -42,7 +42,6 @@ const {
   activeIndex,
   getTabStyle,
   isScrolling,
-  iconIsActive,
   linkIsActive,
   currentSelect,
   scheduleIsActive,

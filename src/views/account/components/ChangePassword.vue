@@ -98,18 +98,6 @@ const formPasswordRules = reactive<FormRules>({
   ]
 });
 
-const emit = defineEmits<{
-  (e: "handleUpdate", v: FormPasswordProps): void;
-}>();
-
-const handleUpdate = row => {
-  ruleFormRef.value.validate(valid => {
-    if (valid) {
-      emit("handleUpdate", row);
-    }
-  });
-};
-
 watch(
   password.value,
   ({ new_password }) =>

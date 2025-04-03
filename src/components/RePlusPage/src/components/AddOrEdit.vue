@@ -25,7 +25,7 @@ defineOptions({ name: "AddOrEditForm" });
 defineExpose({ getRef });
 
 const emit = defineEmits<{
-  (e: "change", values: any): void;
+  change: [values: any];
 }>();
 </script>
 

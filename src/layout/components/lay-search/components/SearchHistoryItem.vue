@@ -8,14 +8,10 @@ import CloseIcon from "~icons/ep/close";
 interface Props {
   item: optionsItem;
 }
-
-interface Emits {
-  (e: "collectItem", val: optionsItem): void;
-
-  (e: "deleteItem", val: optionsItem): void;
-}
-
-const emit = defineEmits<Emits>();
+const emit = defineEmits<{
+  collectItem: [val: optionsItem];
+  deleteItem: [val: optionsItem];
+}>();
 withDefaults(defineProps<Props>(), {});
 
 function handleCollect(item) {

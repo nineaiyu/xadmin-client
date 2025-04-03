@@ -15,10 +15,10 @@ const mode = "default";
 const { t } = useI18n();
 const loading = ref(false);
 const uploadConfig = ref({ file_upload_size: 1048576 });
-type InsertFnType = (url: string, alt?: string, href?: string) => void;
+type InsertFnType = (_url: string, _alt?: string, _href?: string) => void;
 
 const emit = defineEmits<{
-  (e: "change", values: any): void;
+  change: [values: any];
 }>();
 
 onMounted(() => {

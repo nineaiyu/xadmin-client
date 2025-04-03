@@ -76,7 +76,7 @@ const formPasswordRules = reactive<FormRules>({
 });
 
 const emit = defineEmits<{
-  (e: "handleUpdate", v: FormPasswordProps): void;
+  handleUpdate: [values: FormPasswordProps];
 }>();
 
 const handleUpdate = row => {

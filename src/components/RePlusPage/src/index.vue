@@ -40,11 +40,11 @@ const props = withDefaults(defineProps<RePlusPageProps>(), {
   tableBarButtonsProps: () => ({})
 });
 const emit = defineEmits<{
-  (e: "searchComplete", ...args: any[]): void;
-  (e: "selectionChange", ...args: any[]): void;
-  (e: "rowClick", row: any): void;
-  (e: "tableBarClickAction", data: ButtonsCallBackParams): void;
-  (e: "operationClickAction", data: ButtonsCallBackParams): void;
+  rowClick: [row: any];
+  searchComplete: [...args: any[]];
+  selectionChange: [...args: any[]];
+  tableBarClickAction: [data: ButtonsCallBackParams];
+  operationClickAction: [data: ButtonsCallBackParams];
 }>();
 
 const tableRef = ref();
