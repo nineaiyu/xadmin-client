@@ -148,6 +148,7 @@
     "node": ">=22.0.0",
     "pnpm": ">=9"
   },
+  "packageManager": "pnpm@10.4.1",
   "pnpm": {
     "allowedDeprecatedVersions": {
       "are-we-there-yet": "*",
