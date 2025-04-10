@@ -141,7 +141,7 @@ export const useSendVerifyCode = (
       { value: "@ask.com" },
       { value: "@live.com" }
     ];
-    let queryList = [];
+    const queryList = [];
     emailList.map(item =>
       queryList.push({ value: queryString.split("@")[0] + item.value })
     );

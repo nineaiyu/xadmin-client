@@ -3,7 +3,7 @@ import { useI18n } from "vue-i18n";
 import MenuFold from "~icons/ri/menu-fold-fill";
 import MenuUnfold from "~icons/ri/menu-unfold-fill";
 
-withDefaults(defineProps<{ isActive: boolean }>(), {
+withDefaults(defineProps<{ isActive?: boolean }>(), {
   isActive: false
 });
 

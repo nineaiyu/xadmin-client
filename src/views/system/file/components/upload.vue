@@ -15,9 +15,9 @@ import { formatBytes, throttle } from "@pureadmin/utils";
 import { hasAuth } from "@/router/utils";
 
 interface AddOrEditFormProps {
-  formInline: FieldValues;
+  formInline?: FieldValues;
   formProps?: object;
-  columns: PlusColumn[];
+  columns?: PlusColumn[];
   tableRef?: any;
 }
 

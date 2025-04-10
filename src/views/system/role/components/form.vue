@@ -20,11 +20,11 @@ import type { BaseApi } from "@/api/base";
 
 interface FormProps {
   pk?: string;
-  field: any[];
+  field?: any[];
   fields?: object;
-  api: Partial<BaseApi>;
-  auth: Auths;
-  menuTreeData: any[];
+  api?: Partial<BaseApi>;
+  auth?: Auths;
+  menuTreeData?: any[];
 }
 
 const props = withDefaults(defineProps<FormProps>(), {

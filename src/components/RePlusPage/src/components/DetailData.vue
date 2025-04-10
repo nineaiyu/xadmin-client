@@ -4,9 +4,9 @@ import { FieldValues, PlusColumn, PlusDescriptions } from "plus-pro-components";
 import { deviceDetection } from "@pureadmin/utils";
 
 interface DetailFormProps {
-  formInline: FieldValues;
+  formInline?: FieldValues;
   formProps?: object;
-  columns: PlusColumn[];
+  columns?: PlusColumn[];
 }
 
 const props = withDefaults(defineProps<DetailFormProps>(), {

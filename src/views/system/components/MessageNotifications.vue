@@ -11,8 +11,8 @@ defineOptions({
 });
 
 interface NotificationsProps {
-  api: SystemMsgSubscriptionApi;
-  auth: {
+  api?: SystemMsgSubscriptionApi;
+  auth?: {
     list: boolean;
     partialUpdate: boolean;
     backends: boolean;

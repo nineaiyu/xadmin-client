@@ -68,7 +68,7 @@ export function useFieldRule(
 
   function handleDelete(row) {
     const key = `${row.table}__${row.field}__${row.match}`;
-    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+
     delete ruleInfo.value[key];
   }
 

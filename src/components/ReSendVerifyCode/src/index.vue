@@ -11,7 +11,7 @@ import Keyhole from "~icons/ri/shield-keyhole-line";
 
 defineOptions({ name: "ReSendVerifyCode" });
 
-const props = withDefaults(defineProps<{ category: string }>(), {
+const props = withDefaults(defineProps<{ category?: string }>(), {
   category: ""
 });
 

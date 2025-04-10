@@ -3,9 +3,9 @@ import { ref } from "vue";
 import { FieldValues, PlusColumn, PlusForm } from "plus-pro-components";
 
 interface AddOrEditFormProps {
-  formInline: FieldValues;
+  formInline?: FieldValues;
   formProps?: object;
-  columns: PlusColumn[];
+  columns?: PlusColumn[];
 }
 
 const props = withDefaults(defineProps<AddOrEditFormProps>(), {

@@ -111,7 +111,7 @@ const openFormDialog = (formOptions: formDialogOptions) => {
   cloneDeep(formOptions?.rawColumns ?? []).forEach(column => {
     rawColumns[column._column?.key ?? column.prop] = column;
   });
-  let editColumns = {};
+  const editColumns = {};
   Object.keys(formOptions?.columns ?? {}).forEach(key => {
     const getValue = formOptions.columns[key];
     if (typeof formOptions.columns[key] === "function") {
@@ -246,7 +246,7 @@ interface operationOptions {
  * @param options
  */
 const handleOperation = (options: operationOptions) => {
-  let {
+  const {
     t,
     apiReq = undefined,
     showSuccessMsg = true,
