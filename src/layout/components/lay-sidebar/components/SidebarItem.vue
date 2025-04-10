@@ -144,7 +144,7 @@ function resolvePath(routePath) {
             layout === 'mix' &&
             item?.pathList?.length === 2)
         "
-        class="!w-full !pl-4 !text-inherit"
+        class="w-full! pl-4! text-inherit!"
         truncated
       >
         {{ transformI18n(onlyOneChild.meta.title) }}
@@ -157,7 +157,7 @@ function resolvePath(routePath) {
               offset: [0, -10],
               theme: tooltipEffect
             }"
-            class="!w-full !text-inherit"
+            class="w-full! text-inherit!"
           >
             {{ transformI18n(onlyOneChild.meta.title) }}
           </ReText>
@@ -193,9 +193,9 @@ function resolvePath(routePath) {
               )
         "
         :class="{
-          '!w-full': true,
-          '!text-inherit': true,
-          '!pl-4':
+          'w-full!': true,
+          'text-inherit!': true,
+          'pl-4!':
             layout !== 'horizontal' &&
             isCollapse &&
             !toRaw(item.meta.icon) &&

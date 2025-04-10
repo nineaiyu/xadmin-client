@@ -98,7 +98,7 @@ defineExpose({
   <div v-if="auth?.list" class="main">
     <div
       v-if="api?.fields"
-      class="bg-bg_color w-[99/100] pl-8 pr-8 pt-[12px] search-form"
+      class="bg-bg_color w-99/100 pl-8 pr-8 pt-[12px] search-form"
     >
       <PlusSearch
         v-model="searchFields"
@@ -136,7 +136,7 @@ defineExpose({
       />
     </div>
     <div :class="tableBarData.renderClass">
-      <el-scrollbar class="!max-h-[60px]">
+      <el-scrollbar class="max-h-[60px]!">
         <PureTableBar
           v-if="tableBar"
           :columns="listColumns"

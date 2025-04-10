@@ -21,7 +21,7 @@ const iconClass = computed(() => {
     "flex",
     "justify-center",
     "items-center",
-    "outline-none",
+    "outline-hidden",
     "rounded-[4px]",
     "cursor-pointer",
     "transition-colors",

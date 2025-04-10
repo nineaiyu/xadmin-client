@@ -139,11 +139,11 @@ onMounted(() => {
 });
 const buttonClass = computed(() => {
   return [
-    "!h-[20px]",
+    "h-[20px]!",
     "reset-margin",
-    "!text-gray-500",
-    "dark:!text-white",
-    "dark:hover:!text-primary"
+    "text-gray-500!",
+    "dark:text-white!",
+    "dark:hover:text-primary!"
   ];
 });
 const isExpand = ref(false);
@@ -288,7 +288,7 @@ function onReset() {
           <span
             :class="[
               'pr-1',
-              'rounded',
+              'rounded-sm',
               'flex',
               'items-center',
               'select-none',

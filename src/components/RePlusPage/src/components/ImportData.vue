@@ -130,7 +130,7 @@ defineExpose({ getRef });
         :auto-upload="false"
         accept=".xls,.xlsx,.csv"
         action="#"
-        class="!w-[300px]"
+        class="w-[300px]!"
         drag
       >
         <div class="el-upload__text">
