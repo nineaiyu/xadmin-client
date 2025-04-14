@@ -11,7 +11,7 @@
     <el-button
       :icon="useRenderIcon(More)"
       :size="size"
-      class="ml-3 mt-[2px]"
+      class="ml-3! mt-[2px]"
       link
       type="primary"
     />

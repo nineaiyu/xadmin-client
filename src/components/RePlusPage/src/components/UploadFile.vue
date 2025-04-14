@@ -81,6 +81,6 @@ const handleChange: UploadProps["onChange"] = uploadFile => {
   </el-upload>
 
   <el-dialog v-model="dialogVisible">
-    <img :src="dialogImageUrl" alt="Preview Image" class="max-w-[100%]" />
+    <img :src="dialogImageUrl" alt="Preview Image" class="max-w-full" />
   </el-dialog>
 </template>

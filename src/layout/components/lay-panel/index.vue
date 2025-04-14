@@ -57,7 +57,7 @@ onBeforeUnmount(() => {
     <div class="right-panel-background" />
     <div ref="target" class="right-panel bg-bg_color">
       <div
-        class="project-configuration border-b-[1px] border-solid border-[var(--pure-border-color)]"
+        class="project-configuration border-0 border-b-[1px] border-solid border-[var(--pure-border-color)]"
       >
         <el-badge
           :value="version"
@@ -89,7 +89,7 @@ onBeforeUnmount(() => {
       </el-scrollbar>
 
       <div
-        class="flex justify-between p-3 border-t-[1px] border-solid border-[var(--pure-border-color)]"
+        class="flex justify-end p-3 border-0 border-t-[1px] border-solid border-[var(--pure-border-color)]"
       >
         <el-button
           v-tippy="{

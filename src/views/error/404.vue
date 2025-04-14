@@ -27,7 +27,7 @@ const { t } = useI18n();
           opacity: 0,
           y: 100
         }"
-        class="font-medium text-4xl mb-4 dark:text-white"
+        class="font-medium text-4xl mb-4! dark:text-white"
       >
         404
       </p>
@@ -44,7 +44,7 @@ const { t } = useI18n();
           opacity: 0,
           y: 100
         }"
-        class="mb-4 text-gray-500"
+        class="mb-4! text-gray-500"
       >
         {{ t("error.error404") }}
       </p>

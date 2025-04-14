@@ -236,7 +236,8 @@ watch(loginDay, value => {
                     width: loginDay < 10 ? '10px' : '16px',
                     outline: 'none',
                     background: 'none',
-                    appearance: 'none'
+                    appearance: 'none',
+                    border: 'none'
                   }"
                 >
                   <option
@@ -269,7 +270,7 @@ watch(loginDay, value => {
           <el-button
             :disabled="disabled"
             :loading="loading"
-            class="w-full mt-4"
+            class="w-full mt-4!"
             size="default"
             type="primary"
             tabindex="100"
@@ -309,7 +310,7 @@ watch(loginDay, value => {
           <el-button
             v-for="(item, index) in operates"
             :key="index"
-            class="w-full mt-4"
+            class="w-full mt-4!"
             size="default"
             @click="useUserStoreHook().SET_CURRENT_PAGE(index + 1)"
           >
