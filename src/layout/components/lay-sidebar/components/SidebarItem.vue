@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import path from "path";
 import { getConfig } from "@/config";
+import { posix } from "path-browserify";
 import { menuType } from "@/layout/types";
 import { ReText } from "@/components/ReText";
 import { useNav } from "@/layout/hooks/useNav";
@@ -61,6 +61,21 @@ const getSubMenuIconStyle = computed((): CSSProperties => {
   };
 });
 
+const textClass = computed(() => {
+  const item = props.item;
+  const baseClass = "w-full! text-inherit!";
+  if (
+    layout.value !== "horizontal" &&
+    isCollapse.value &&
+    !toRaw(item.meta.icon) &&
+    ((layout.value === "vertical" && item.parentId === null) ||
+      (layout.value === "mix" && item.parentId !== 0))
+  ) {
+    return `${baseClass} min-w-[54px]! text-center! px-3!`;
+  }
+  return baseClass;
+});
+
 const expandCloseIcon = computed(() => {
   if (!getConfig()?.MenuArrowIconNoTransition) return "";
   return {
@@ -99,8 +114,7 @@ function resolvePath(routePath) {
   if (httpReg.test(routePath) || httpReg.test(props.basePath)) {
     return routePath || props.basePath;
   } else {
-    // 使用path.posix.resolve替代path.resolve 避免windows环境下使用electron出现盘符问题
-    return path.posix.resolve(props.basePath, routePath);
+    return posix.resolve(props.basePath, routePath);
   }
 }
 </script>
@@ -111,18 +125,18 @@ function resolvePath(routePath) {
       hasOneShowingChild(item.children, item) &&
       (!onlyOneChild.children || onlyOneChild.noShowingChildren)
     "
-    :to="onlyOneChild"
+    :to="item"
   >
     <el-menu-item
-      :class="{ 'submenu-title-noDropdown': !isNest }"
       :index="resolvePath(onlyOneChild.path)"
+      :class="{ 'submenu-title-noDropdown': !isNest }"
       :style="getNoDropdownStyle"
       v-bind="attrs"
     >
       <div
         v-if="toRaw(item.meta.icon)"
-        :style="getSubMenuIconStyle"
         class="sub-menu-icon"
+        :style="getSubMenuIconStyle"
       >
         <component
           :is="
@@ -144,8 +158,8 @@ function resolvePath(routePath) {
             layout === 'mix' &&
             item?.pathList?.length === 2)
         "
-        class="w-full! pl-4! text-inherit!"
         truncated
+        class="w-full! px-3! min-w-[54px]! text-center! text-inherit!"
       >
         {{ transformI18n(onlyOneChild.meta.title) }}
       </el-text>
@@ -192,19 +206,11 @@ function resolvePath(routePath) {
                 item.parentId === null
               )
         "
-        :class="{
-          'w-full!': true,
-          'text-inherit!': true,
-          'pl-4!':
-            layout !== 'horizontal' &&
-            isCollapse &&
-            !toRaw(item.meta.icon) &&
-            item.parentId === null
-        }"
         :tippyProps="{
           offset: [0, -10],
           theme: tooltipEffect
         }"
+        :class="textClass"
       >
         {{ transformI18n(item.meta.title) }}
       </ReText>
@@ -214,9 +220,9 @@ function resolvePath(routePath) {
     <sidebar-item
       v-for="child in item.children"
       :key="child.path"
-      :base-path="resolvePath(child.path)"
       :is-nest="true"
       :item="child"
+      :base-path="resolvePath(child.path)"
       class="nest-menu"
     />
   </el-sub-menu>

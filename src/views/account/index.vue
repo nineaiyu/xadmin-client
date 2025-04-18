@@ -168,8 +168,8 @@ const witchPane = ref("profile");
       &::before {
         position: absolute;
         inset: 0;
-        margin: 4px 0;
         clear: both;
+        margin: 4px 0;
         content: "";
         background: var(--el-color-primary);
         border-radius: 3px;
