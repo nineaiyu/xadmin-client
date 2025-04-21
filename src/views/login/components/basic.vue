@@ -107,12 +107,15 @@ const onLogin = async (formEl: FormInstance | undefined) => {
             message(res.detail, {
               type: "warning"
             });
+            throw res.detail;
           }
+        })
+        .catch(() => {
+          initToken();
+          captchaRef.value?.getImgCode();
         })
         .finally(() => {
           loading.value = false;
-          initToken();
-          captchaRef.value?.getImgCode();
         });
     } else {
       loading.value = false;
