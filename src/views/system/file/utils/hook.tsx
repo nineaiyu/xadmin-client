@@ -27,8 +27,8 @@ export function useSystemUploadFile(tableRef: Ref) {
 
   const auth = reactive({
     ...getDefaultAuths(getCurrentInstance()),
-    upload: hasAuth("create:SystemUploadFile"),
-    config: hasAuth("retrieve:SystemUploadFile")
+    upload: hasAuth("upload:SystemUploadFile"),
+    config: hasAuth("config:SystemUploadFile")
   });
 
   const operationButtonsProps = shallowRef<OperationProps>({});
