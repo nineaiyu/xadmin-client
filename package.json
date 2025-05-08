@@ -150,7 +150,7 @@
     "node": ">=22.0.0",
     "pnpm": ">=9"
   },
-  "packageManager": "pnpm@10.8.1",
+  "packageManager": "pnpm@10.10.0",
   "pnpm": {
     "allowedDeprecatedVersions": {
       "are-we-there-yet": "*",
