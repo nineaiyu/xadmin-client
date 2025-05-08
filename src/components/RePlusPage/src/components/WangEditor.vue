@@ -64,10 +64,7 @@ const editorConfig: Partial<IEditorConfig> = {
     attachment: { menuKeys: [] }
   }
 };
-if (
-  hasAuth("retrieve:SystemUploadFile") &&
-  hasAuth("create:SystemUploadFile")
-) {
+if (hasAuth("config:SystemUploadFile") && hasAuth("upload:SystemUploadFile")) {
   toolbarConfig.insertKeys.keys = ["uploadAttachment"]; // “上传附件”菜单
   editorConfig.hoverbarKeys.attachment = {
     menuKeys: ["downloadAttachment"] // “下载附件”菜单
