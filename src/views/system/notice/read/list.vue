@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { ref } from "vue";
 import { useNoticeRead } from "./hook";
-import { RePlusPage } from "@/components/RePlusPage";
 
 defineOptions({
   name: "SystemNoticeRead"

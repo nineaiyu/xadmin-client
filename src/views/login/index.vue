@@ -114,7 +114,7 @@ const { locale, translationCh, translationEn } = useTranslationLang();
     >
       Copyright © 2023-present
       <a
-        class="hover:text-primary"
+        class="hover:text-primary!"
         href="https://github.com/nineaiyu/"
         target="_blank"
       >

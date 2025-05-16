@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { RePlusPage } from "@/components/RePlusPage";
 import { useDemoBook } from "./utils/hook";
 import { ref } from "vue";
 

@@ -10,7 +10,7 @@ const TITLE = getConfig("Title");
   >
     Copyright © 2023-present
     <a
-      class="hover:text-primary"
+      class="hover:text-primary!"
       href="https://github.com/nineaiyu"
       target="_blank"
     >

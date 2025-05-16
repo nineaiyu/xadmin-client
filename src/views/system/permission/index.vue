@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import { useDataPermission } from "./utils/hook";
-import { RePlusPage } from "@/components/RePlusPage";
 
 defineOptions({
   name: "SystemDataPermission"

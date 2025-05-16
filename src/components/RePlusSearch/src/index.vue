@@ -2,7 +2,6 @@
 import { ref, watch } from "vue";
 import { usePlusSearch } from "./hooks";
 import { ClickOutside as vClickOutside } from "element-plus";
-import { RePlusPage } from "@/components/RePlusPage";
 import type { PlusSearchProps } from "./types";
 import { deviceDetection } from "@pureadmin/utils";
 

@@ -6,6 +6,7 @@ import { getPlatformConfig } from "./config";
 import { MotionPlugin } from "@vueuse/motion";
 import { useEcharts } from "@/plugins/echarts";
 import { createApp, type Directive } from "vue";
+import { RePlusPage } from "@/components/RePlusPage";
 import { useElementPlus } from "@/plugins/elementPlus";
 import { usePlusProComponents } from "@/plugins/plusProComponents";
 import { injectResponsiveStorage } from "@/utils/responsive";
@@ -50,6 +51,7 @@ app.component("IconifyIconOnline", IconifyIconOnline);
 app.component("FontIcon", FontIcon);
 
 app.component("Auth", Auth);
+app.component("RePlusPage", RePlusPage);
 
 app.use(VueTippy);
 
