@@ -96,10 +96,7 @@ defineExpose({
 
 <template>
   <div v-if="auth?.list" class="main">
-    <div
-      v-if="api?.fields"
-      class="bg-bg_color w-99/100 pl-8 pr-8 pt-[12px] search-form"
-    >
+    <div v-if="api?.fields" class="bg-bg_color w-99/100 pl-6 pr-6 pt-3 pb-3">
       <PlusSearch
         v-model="searchFields"
         :col-props="{
@@ -258,11 +255,5 @@ defineExpose({
 <style lang="scss" scoped>
 .main-content {
   margin: 24px 24px 0 !important;
-}
-
-.search-form {
-  :deep(.el-form-item) {
-    margin-bottom: 12px;
-  }
 }
 </style>
