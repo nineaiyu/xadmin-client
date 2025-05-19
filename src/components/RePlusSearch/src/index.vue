@@ -84,7 +84,13 @@ watch(
       <el-tag type="primary">{{ value?.label }}</el-tag>
     </template>
     <template #empty>
-      <div :class="['p-4', deviceDetection() ? 'w-[100vw]' : 'w-[1200px]']">
+      <div
+        :class="[
+          'pr-4',
+          'pl-4',
+          deviceDetection() ? 'w-[100vw]' : 'w-[1200px]'
+        ]"
+      >
         <RePlusPage
           ref="tableRef"
           :api="api"
