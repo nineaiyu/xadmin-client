@@ -48,6 +48,7 @@ const divClass = computed(() => {
     "notice-container",
     props.index === 0 ? "" : "border-t-[1px]",
     "border-solid",
+    "border-0",
     "border-[#f0f0f0]",
     "dark:border-[#303030]"
   ];

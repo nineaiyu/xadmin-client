@@ -3,18 +3,14 @@ import { useI18n } from "vue-i18n";
 import MenuFold from "~icons/ri/menu-fold-fill";
 import MenuUnfold from "~icons/ri/menu-unfold-fill";
 
-interface Props {
-  isActive: boolean;
-}
-
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<{ isActive?: boolean }>(), {
   isActive: false
 });
 
 const { t } = useI18n();
 
 const emit = defineEmits<{
-  (e: "toggleClick"): void;
+  toggleClick: [];
 }>();
 
 const toggleClick = () => {
@@ -30,7 +26,7 @@ const toggleClick = () => {
   >
     <IconifyIconOffline
       :icon="isActive ? MenuFold : MenuUnfold"
-      class="inline-block align-middle hover:text-primary dark:hover:!text-white"
+      class="inline-block! align-middle hover:text-primary dark:hover:text-white!"
     />
   </div>
 </template>

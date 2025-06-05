@@ -229,7 +229,8 @@ function onBack() {
                     width: loginDay < 10 ? '10px' : '16px',
                     outline: 'none',
                     background: 'none',
-                    appearance: 'none'
+                    appearance: 'none',
+                    border: 'none'
                   }"
                 >
                   <option
@@ -262,7 +263,7 @@ function onBack() {
           <el-button
             :disabled="disabled"
             :loading="loading"
-            class="w-full mt-4"
+            class="w-full mt-4!"
             size="default"
             type="primary"
             tabindex="1000"

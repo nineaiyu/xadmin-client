@@ -2,7 +2,6 @@
 import { ref, watch } from "vue";
 import { usePlusSearch } from "./hooks";
 import { ClickOutside as vClickOutside } from "element-plus";
-import { RePlusPage } from "@/components/RePlusPage";
 import type { PlusSearchProps } from "./types";
 import { deviceDetection } from "@pureadmin/utils";
 
@@ -28,7 +27,7 @@ const props = withDefaults(defineProps<PlusSearchProps>(), {
 const selectValue = defineModel<object | object[] | string>();
 
 const emit = defineEmits<{
-  (e: "change", ...args: any[]): void;
+  change: [...args: any[]];
 }>();
 
 const selectRef = ref();
@@ -85,7 +84,13 @@ watch(
       <el-tag type="primary">{{ value?.label }}</el-tag>
     </template>
     <template #empty>
-      <div :class="['p-4', deviceDetection() ? 'w-[100vw]' : 'w-[1200px]']">
+      <div
+        :class="[
+          'pr-4',
+          'pl-4',
+          deviceDetection() ? 'w-[100vw]' : 'w-[1200px]'
+        ]"
+      >
         <RePlusPage
           ref="tableRef"
           :api="api"

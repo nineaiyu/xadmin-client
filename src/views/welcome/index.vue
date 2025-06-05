@@ -65,6 +65,7 @@ let curWeek = ref(1);
                 :color="item.color"
                 :icon="item.icon"
                 width="18"
+                height="18"
               />
             </div>
           </div>
@@ -82,9 +83,9 @@ let curWeek = ref(1);
               v-if="item.data.length > 1"
               :color="item.color"
               :data="item.data"
-              class="!w-1/2"
+              class="w-1/2!"
             />
-            <ChartRound v-else class="!w-1/2" />
+            <ChartRound v-else class="w-1/2!" />
           </div>
         </el-card>
       </re-col>

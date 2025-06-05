@@ -20,11 +20,11 @@ import type { BaseApi } from "@/api/base";
 
 interface FormProps {
   pk?: string;
-  field: any[];
+  field?: any[];
   fields?: object;
-  api: Partial<BaseApi>;
-  auth: Auths;
-  menuTreeData: any[];
+  api?: Partial<BaseApi>;
+  auth?: Auths;
+  menuTreeData?: any[];
 }
 
 const props = withDefaults(defineProps<FormProps>(), {
@@ -49,7 +49,9 @@ const formData = ref({
   field: props.field
 });
 
-const emit = defineEmits<{ (e: "change", v: { fields; menu }) }>();
+const emit = defineEmits<{
+  change: [values: { fields: FormProps["fields"]; menu: any[] }];
+}>();
 
 const handleChange = () => {
   formatMenuFields();
@@ -137,11 +139,11 @@ onMounted(() => {
 });
 const buttonClass = computed(() => {
   return [
-    "!h-[20px]",
+    "h-[20px]!",
     "reset-margin",
-    "!text-gray-500",
-    "dark:!text-white",
-    "dark:hover:!text-primary"
+    "text-gray-500!",
+    "dark:text-white!",
+    "dark:hover:text-primary!"
   ];
 });
 const isExpand = ref(false);
@@ -286,7 +288,7 @@ function onReset() {
           <span
             :class="[
               'pr-1',
-              'rounded',
+              'rounded-sm',
               'flex',
               'items-center',
               'select-none',

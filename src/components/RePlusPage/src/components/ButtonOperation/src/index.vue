@@ -11,7 +11,7 @@
     <el-button
       :icon="useRenderIcon(More)"
       :size="size"
-      class="ml-3 mt-[2px]"
+      class="ml-3! mt-[2px]"
       link
       type="primary"
     />
@@ -68,8 +68,8 @@ const getSubButtons = () => {
     .filter((item: OperationButtonsRow) => {
       if (typeof item.show === "function") {
         const tempFunction = item.show as (
-          row: RecordType,
-          button: OperationButtonsRow
+          _row: RecordType,
+          _button: OperationButtonsRow
         ) =>
           | number
           | boolean
@@ -102,8 +102,8 @@ const renderString = (
 ) => {
   if (typeof str === "function") {
     const tempFunction = str as (
-      row: RecordType,
-      button: OperationButtonsRow
+      _row: RecordType,
+      _button: OperationButtonsRow
     ) => string | Ref<string> | ComputedRef<string>;
     const text = tempFunction(row, buttonRow);
     return unref(text);
@@ -114,11 +114,11 @@ const renderString = (
 
 const buttonClass = computed(() => {
   return [
-    "!h-[20px]",
+    "h-[20px]!",
     "reset-margin",
-    "!text-gray-500",
-    "dark:!text-white",
-    "dark:hover:!text-primary"
+    "text-gray-500!",
+    "dark:text-white!",
+    "dark:hover:text-primary!"
   ];
 });
 

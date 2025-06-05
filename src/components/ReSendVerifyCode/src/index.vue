@@ -11,11 +11,7 @@ import Keyhole from "~icons/ri/shield-keyhole-line";
 
 defineOptions({ name: "ReSendVerifyCode" });
 
-interface SendVerifyProps {
-  category: string;
-}
-
-const props = withDefaults(defineProps<SendVerifyProps>(), {
+const props = withDefaults(defineProps<{ category?: string }>(), {
   category: ""
 });
 
@@ -25,9 +21,9 @@ const formData = defineModel({
 });
 
 const emit = defineEmits<{
-  (e: "configReqSuccess", ...args: any[]): void;
-  (e: "configReqEnd", ...args: any[]): void;
-  (e: "sendCodeReqSuccess", ...args: any[]): void;
+  configReqSuccess: [...args: any[]];
+  sendCodeReqSuccess: [...args: any[]];
+  configReqEnd: [...args: any[]];
 }>();
 const formDataRef = ref<FormInstance>();
 const captchaRef = ref();

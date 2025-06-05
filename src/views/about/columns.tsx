@@ -10,7 +10,7 @@ export function useColumns() {
       minWidth: 100,
       renderDescriptionsItem: () => {
         return (
-          <el-tag size="large" class="!text-base">
+          <el-tag size="large" class="text-base!">
             {version}
           </el-tag>
         );
@@ -22,7 +22,7 @@ export function useColumns() {
       minWidth: 120,
       renderDescriptionsItem: () => {
         return (
-          <el-tag size="large" class="!text-base">
+          <el-tag size="large" class="text-base!">
             {lastBuildTime}
           </el-tag>
         );
@@ -34,7 +34,7 @@ export function useColumns() {
       minWidth: 140,
       renderDescriptionsItem: () => {
         return (
-          <el-tag size="large" class="!text-base">
+          <el-tag size="large" class="text-base!">
             {engines.node}
           </el-tag>
         );
@@ -46,7 +46,7 @@ export function useColumns() {
       minWidth: 140,
       renderDescriptionsItem: () => {
         return (
-          <el-tag size="large" class="!text-base">
+          <el-tag size="large" class="text-base!">
             {engines.pnpm}
           </el-tag>
         );

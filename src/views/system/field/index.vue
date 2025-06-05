@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { useModelField } from "./utils/hook";
 import { ref } from "vue";
-import { RePlusPage } from "@/components/RePlusPage";
 
 defineOptions({
   name: "SystemModelLabelField"

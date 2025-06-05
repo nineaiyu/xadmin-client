@@ -14,7 +14,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits<{
-  (e: "handleUpdate", v: object): void;
+  handleUpdate: [values: object];
 }>();
 
 const handleUpdate = () => {

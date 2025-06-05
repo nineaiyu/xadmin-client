@@ -26,7 +26,7 @@ interface AddOrEditFormProps {
   formInline?: FieldValues;
   formProps?: object;
   columns?: PlusColumn[];
-  category: string;
+  category?: string;
 }
 
 const props = withDefaults(defineProps<AddOrEditFormProps>(), {

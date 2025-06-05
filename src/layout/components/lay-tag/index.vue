@@ -42,7 +42,6 @@ const {
   activeIndex,
   getTabStyle,
   isScrolling,
-  iconIsActive,
   linkIsActive,
   currentSelect,
   scheduleIsActive,
@@ -591,7 +590,7 @@ onBeforeUnmount(() => {
         >
           <template v-if="showModel !== 'chrome'">
             <span
-              class="tag-title dark:!text-text_color_primary dark:hover:!text-primary"
+              class="tag-title dark:text-text_color_primary! dark:hover:text-primary!"
             >
               {{ transformI18n(item.meta.title) }}
             </span>

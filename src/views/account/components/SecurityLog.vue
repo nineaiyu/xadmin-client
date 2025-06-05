@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { deviceDetection } from "@pureadmin/utils";
 import { useUserLoginLog } from "@/views/account/utils/hook";
-import { RePlusPage } from "@/components/RePlusPage";
 
 defineOptions({
   name: "SecurityLog"

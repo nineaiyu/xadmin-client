@@ -79,11 +79,11 @@ const witchPane = ref("profile");
     <el-aside
       v-if="isOpen"
       :width="deviceDetection() ? '180px' : '210px'"
-      class="pure-account-settings overflow-hidden px-2 dark:!bg-[var(--el-bg-color)] border-r-[1px] border-[var(--pure-border-color)]"
+      class="pure-account-settings overflow-hidden px-2 dark:bg-(--el-bg-color)! border-r-[1px] border-[var(--pure-border-color)]"
     >
       <el-menu :default-active="witchPane" class="pure-account-settings-menu">
         <el-menu-item
-          class="hover:!transition-all hover:!duration-200 hover:!text-base !h-[50px]"
+          class="hover:transition-all! hover:duration-200! hover:text-base! h-[50px]!"
           @click="router.go(-1)"
         >
           <div class="flex items-center">
@@ -94,10 +94,10 @@ const witchPane = ref("profile");
         <div class="flex items-center ml-8 mt-4 mb-4">
           <el-avatar :size="48" :src="userinfoStore.avatar ?? avatar" />
           <div class="ml-4 flex flex-col max-w-[100px]">
-            <ReText class="font-bold !self-baseline">
+            <ReText class="font-bold self-baseline!">
               {{ userinfoStore.nickname }}
             </ReText>
-            <ReText class="!self-baseline" type="info">
+            <ReText class="self-baseline!" type="info">
               {{ userinfoStore.username }}
             </ReText>
           </div>
@@ -168,8 +168,8 @@ const witchPane = ref("profile");
       &::before {
         position: absolute;
         inset: 0;
-        margin: 4px 0;
         clear: both;
+        margin: 4px 0;
         content: "";
         background: var(--el-color-primary);
         border-radius: 3px;

@@ -190,7 +190,7 @@ defineExpose({ getRef });
               <span
                 :class="[
                   'pr-1',
-                  'rounded',
+                  'rounded-sm',
                   'flex',
                   'items-center',
                   'select-none'
@@ -498,7 +498,7 @@ defineExpose({ getRef });
         <el-form-item :label="t('systemMenu.requestMethod')" prop="method">
           <el-select
             v-model="newFormInline.method"
-            class="!w-[180px]"
+            class="w-[180px]!"
             clearable
             value-key="value"
           >

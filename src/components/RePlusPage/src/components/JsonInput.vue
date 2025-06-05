@@ -25,13 +25,13 @@ const { isDark } = useDark();
 const value = defineModel<any>({ default: {} });
 const attr = useAttrs();
 const emit = defineEmits<{
-  (e: "change", values: any): void;
+  change: [values: any];
 }>();
 
 const handleChange = (content: TextContent) => {
   try {
     emit("change", JSON.parse(content.text));
-  } catch (e) {
+  } catch {
     emit("change", value.value);
   }
 };

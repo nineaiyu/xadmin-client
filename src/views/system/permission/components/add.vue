@@ -86,7 +86,7 @@ onMounted(() => {
   }
   try {
     tableData.value = JSON.parse(newFormInline.value.value);
-  } catch (e) {
+  } catch {
     tableData.value = [];
   }
 });

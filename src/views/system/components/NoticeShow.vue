@@ -15,7 +15,7 @@ interface FormItemProps {
 }
 
 interface FormProps {
-  formInline: FormItemProps;
+  formInline?: FormItemProps;
   hasPublish?: boolean;
 }
 

@@ -3,10 +3,10 @@ import { systemUploadFileApi } from "@/api/system/file";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { getCurrentInstance, h, reactive, type Ref, shallowRef } from "vue";
 import {
-  type PageTableColumn,
   isUrl,
   openFormDialog,
   type OperationProps,
+  type PageTableColumn,
   renderBooleanTag,
   type RePlusPageProps
 } from "@/components/RePlusPage";
@@ -27,8 +27,8 @@ export function useSystemUploadFile(tableRef: Ref) {
 
   const auth = reactive({
     ...getDefaultAuths(getCurrentInstance()),
-    upload: hasAuth("create:SystemUploadFile"),
-    config: hasAuth("retrieve:SystemUploadFile")
+    upload: hasAuth("upload:SystemUploadFile"),
+    config: hasAuth("config:SystemUploadFile")
   });
 
   const operationButtonsProps = shallowRef<OperationProps>({});
@@ -107,10 +107,12 @@ export function useSystemUploadFile(tableRef: Ref) {
             );
           break;
         case "is_upload":
+        case "is_tmp":
           column["cellRenderer"] = renderBooleanTag({
             t,
             tagStyle,
-            field: column.prop
+            field: column.prop,
+            actionMap: { true: t("labels.yes"), false: t("labels.no") }
           });
           break;
         case "filesize":

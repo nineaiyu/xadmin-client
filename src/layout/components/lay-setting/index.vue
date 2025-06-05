@@ -19,11 +19,11 @@ import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
 import { debounce, isNumber, useDark, useGlobal } from "@pureadmin/utils";
 
 import Check from "~icons/ep/check";
-import LeftArrow from "~icons/ri/arrow-left-s-line";
-import RightArrow from "~icons/ri/arrow-right-s-line";
 import DayIcon from "@/assets/svg/day.svg?component";
 import DarkIcon from "@/assets/svg/dark.svg?component";
 import SystemIcon from "@/assets/svg/system.svg?component";
+import LeftArrow from "~icons/ri/arrow-left-s-line?width=20&height=20";
+import RightArrow from "~icons/ri/arrow-right-s-line?width=20&height=20";
 
 const { device, t } = useNav();
 const { isDark } = useDark();
@@ -187,7 +187,7 @@ const getThemeColor = computed(() => {
 });
 
 const pClass = computed(() => {
-  return ["mb-[12px]", "font-medium", "text-sm", "dark:text-white"];
+  return ["mb-[12px]!", "font-medium", "text-sm", "dark:text-white"];
 });
 
 const themeOptions = computed<Array<OptionsType>>(() => {
@@ -328,7 +328,7 @@ onUnmounted(() => removeMatchMedia);
         "
       />
 
-      <p :class="['mt-5', pClass]">{{ t("layout.themeColor") }}</p>
+      <p :class="['mt-5!', pClass]">{{ t("layout.themeColor") }}</p>
       <ul class="theme-color">
         <li
           v-for="(item, index) in themeColors"
@@ -347,7 +347,7 @@ onUnmounted(() => removeMatchMedia);
         </li>
       </ul>
 
-      <p :class="['mt-5', pClass]">{{ t("layout.navigationMode") }}</p>
+      <p :class="['mt-5!', pClass]">{{ t("layout.navigationMode") }}</p>
       <ul class="pure-theme">
         <li
           ref="verticalRef"
@@ -390,7 +390,7 @@ onUnmounted(() => removeMatchMedia);
       </ul>
 
       <span v-if="useAppStoreHook().getViewportWidth > 1280">
-        <p :class="['mt-5', pClass]">{{ t("layout.pageWidth") }}</p>
+        <p :class="['mt-5!', pClass]">{{ t("layout.pageWidth") }}</p>
         <Segmented
           :modelValue="isNumber(settings.stretch) ? 1 : 0"
           :options="stretchTypeOptions"
@@ -418,21 +418,19 @@ onUnmounted(() => removeMatchMedia);
           >
             <IconifyIconOffline
               :icon="settings.stretch ? RightArrow : LeftArrow"
-              height="20"
             />
             <div
-              class="flex-grow border-b border-dashed"
+              class="grow border-0 border-b border-dashed"
               style="border-color: var(--el-color-primary)"
             />
             <IconifyIconOffline
               :icon="settings.stretch ? LeftArrow : RightArrow"
-              height="20"
             />
           </div>
         </button>
       </span>
 
-      <p :class="['mt-4', pClass]">{{ t("layout.labelStyle") }}</p>
+      <p :class="['mt-4!', pClass]">{{ t("layout.labelStyle") }}</p>
       <Segmented
         :modelValue="markValue === 'smart' ? 0 : markValue === 'card' ? 1 : 2"
         :options="markOptions"
@@ -440,7 +438,7 @@ onUnmounted(() => removeMatchMedia);
         @change="onChange"
       />
 
-      <p class="mt-5 font-medium text-sm dark:text-white">
+      <p class="mt-5! font-medium text-sm dark:text-white">
         {{ t("layout.display") }}
       </p>
       <ul class="setting">

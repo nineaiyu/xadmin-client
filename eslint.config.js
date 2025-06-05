@@ -1,11 +1,10 @@
 import js from "@eslint/js";
+import tseslint from "typescript-eslint";
 import pluginVue from "eslint-plugin-vue";
 import * as parserVue from "vue-eslint-parser";
 import configPrettier from "eslint-config-prettier";
 import pluginPrettier from "eslint-plugin-prettier";
 import { defineConfig, globalIgnores } from "eslint/config";
-import * as parserTypeScript from "@typescript-eslint/parser";
-import pluginTypeScript from "@typescript-eslint/eslint-plugin";
 
 export default defineConfig([
   globalIgnores([
@@ -20,7 +19,7 @@ export default defineConfig([
     ...js.configs.recommended,
     languageOptions: {
       globals: {
-        // index.d.ts
+        // types/index.d.ts
         RefType: "readonly",
         EmitType: "readonly",
         TargetContext: "readonly",
@@ -73,29 +72,18 @@ export default defineConfig([
       ]
     }
   },
-  {
+  ...tseslint.config({
+    extends: [...tseslint.configs.recommended],
     files: ["**/*.?([cm])ts", "**/*.?([cm])tsx"],
-    languageOptions: {
-      parser: parserTypeScript,
-      parserOptions: {
-        sourceType: "module",
-        warnOnUnsupportedTypeScriptVersion: false
-      }
-    },
-    plugins: {
-      "@typescript-eslint": pluginTypeScript
-    },
     rules: {
-      ...pluginTypeScript.configs.strict.rules,
-      "@typescript-eslint/ban-types": "off",
       "@typescript-eslint/no-redeclare": "error",
       "@typescript-eslint/ban-ts-comment": "off",
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/prefer-as-const": "warn",
-      "@typescript-eslint/no-empty-function": "off",
+      "@typescript-eslint/no-empty-function": "error",
       "@typescript-eslint/no-non-null-assertion": "off",
-      "@typescript-eslint/no-unused-expressions": "off",
-      "@typescript-eslint/no-unsafe-function-type": "off",
+      "@typescript-eslint/no-unused-expressions": "error",
+      "@typescript-eslint/no-unsafe-function-type": "error",
       "@typescript-eslint/no-import-type-side-effects": "error",
       "@typescript-eslint/explicit-module-boundary-types": "off",
       "@typescript-eslint/consistent-type-imports": [
@@ -114,20 +102,20 @@ export default defineConfig([
         }
       ]
     }
-  },
+  }),
   {
     files: ["**/*.d.ts"],
     rules: {
       "eslint-comments/no-unlimited-disable": "off",
       "import/no-duplicates": "off",
+      "no-restricted-syntax": "off",
       "unused-imports/no-unused-vars": "off"
     }
   },
   {
     files: ["**/*.?([cm])js"],
     rules: {
-      "@typescript-eslint/no-require-imports": "off",
-      "@typescript-eslint/no-var-requires": "off"
+      "@typescript-eslint/no-require-imports": "off"
     }
   },
   {
@@ -148,20 +136,21 @@ export default defineConfig([
           jsx: true
         },
         extraFileExtensions: [".vue"],
-        parser: "@typescript-eslint/parser",
+        parser: tseslint.parser,
         sourceType: "module"
       }
     },
     plugins: {
+      "@typescript-eslint": tseslint.plugin,
       vue: pluginVue
     },
     processor: pluginVue.processors[".vue"],
     rules: {
       ...pluginVue.configs.base.rules,
-      ...pluginVue.configs["vue3-essential"].rules,
-      ...pluginVue.configs["vue3-recommended"].rules,
+      ...pluginVue.configs.essential.rules,
+      ...pluginVue.configs.recommended.rules,
       "no-undef": "off",
-      "no-unused-vars": "off",
+      "no-unused-vars": "warn",
       "vue/no-v-html": "off",
       "vue/require-default-prop": "off",
       "vue/require-explicit-emits": "off",

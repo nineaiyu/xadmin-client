@@ -32,7 +32,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits<{
-  (e: "scrollEnd"): void;
+  scrollEnd: [];
 }>();
 
 const xPos = ref<number>(0);

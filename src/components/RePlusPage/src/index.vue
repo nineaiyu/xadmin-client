@@ -40,11 +40,11 @@ const props = withDefaults(defineProps<RePlusPageProps>(), {
   tableBarButtonsProps: () => ({})
 });
 const emit = defineEmits<{
-  (e: "searchComplete", ...args: any[]): void;
-  (e: "selectionChange", ...args: any[]): void;
-  (e: "rowClick", row: any): void;
-  (e: "tableBarClickAction", data: ButtonsCallBackParams): void;
-  (e: "operationClickAction", data: ButtonsCallBackParams): void;
+  rowClick: [row: any];
+  searchComplete: [...args: any[]];
+  selectionChange: [...args: any[]];
+  tableBarClickAction: [data: ButtonsCallBackParams];
+  operationClickAction: [data: ButtonsCallBackParams];
 }>();
 
 const tableRef = ref();
@@ -96,10 +96,7 @@ defineExpose({
 
 <template>
   <div v-if="auth?.list" class="main">
-    <div
-      v-if="api?.fields"
-      class="bg-bg_color w-[99/100] pl-8 pr-8 pt-[12px] search-form"
-    >
+    <div v-if="api?.fields" class="bg-bg_color w-99/100 pl-6 pr-6 pt-3 pb-3">
       <PlusSearch
         v-model="searchFields"
         :col-props="{
@@ -136,7 +133,7 @@ defineExpose({
       />
     </div>
     <div :class="tableBarData.renderClass">
-      <el-scrollbar class="!max-h-[60px]">
+      <el-scrollbar class="max-h-[60px]!">
         <PureTableBar
           v-if="tableBar"
           :columns="listColumns"
@@ -258,11 +255,5 @@ defineExpose({
 <style lang="scss" scoped>
 .main-content {
   margin: 24px 24px 0 !important;
-}
-
-.search-form {
-  :deep(.el-form-item) {
-    margin-bottom: 12px;
-  }
 }
 </style>

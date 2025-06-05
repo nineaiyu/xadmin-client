@@ -118,7 +118,7 @@ const getLabel = computed(
             <el-divider />
             <el-row style="height: 30px; text-align: center">
               <el-col :span="24">
-                <el-link :underline="false" @click="goUserNotice">{{
+                <el-link underline="never" @click="goUserNotice">{{
                   t("layout.more")
                 }}</el-link>
               </el-col>

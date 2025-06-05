@@ -15,7 +15,7 @@ import { computed, ref } from "vue";
 import { hasAuth } from "@/router/utils";
 import Setting from "@/views/settings/components/settings/index.vue";
 import { settingItemProps } from "@/views/settings/components/settings/types";
-import { RePlusPage } from "@/components/RePlusPage";
+
 import { useI18n } from "vue-i18n";
 
 defineOptions({

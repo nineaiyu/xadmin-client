@@ -15,10 +15,10 @@ const mode = "default";
 const { t } = useI18n();
 const loading = ref(false);
 const uploadConfig = ref({ file_upload_size: 1048576 });
-type InsertFnType = (url: string, alt?: string, href?: string) => void;
+type InsertFnType = (_url: string, _alt?: string, _href?: string) => void;
 
 const emit = defineEmits<{
-  (e: "change", values: any): void;
+  change: [values: any];
 }>();
 
 onMounted(() => {
@@ -64,10 +64,7 @@ const editorConfig: Partial<IEditorConfig> = {
     attachment: { menuKeys: [] }
   }
 };
-if (
-  hasAuth("retrieve:SystemUploadFile") &&
-  hasAuth("create:SystemUploadFile")
-) {
+if (hasAuth("config:SystemUploadFile") && hasAuth("upload:SystemUploadFile")) {
   toolbarConfig.insertKeys.keys = ["uploadAttachment"]; // “上传附件”菜单
   editorConfig.hoverbarKeys.attachment = {
     menuKeys: ["downloadAttachment"] // “下载附件”菜单

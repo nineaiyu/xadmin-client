@@ -172,4 +172,8 @@ Object.keys(devDependencies).forEach(key => {
 .main-content {
   margin: 0 !important;
 }
+
+:deep(.el-descriptions__header) {
+  margin: 0 !important;
+}
 </style>

@@ -7,15 +7,12 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { computed, getCurrentInstance, onMounted, ref } from "vue";
 import EnterOutlined from "@/assets/svg/enter_outlined.svg?component";
 
-interface Emits {
-  (e: "update:value", val: string): void;
-
-  (e: "enter"): void;
-}
-
 const resultRef = ref();
 const innerHeight = ref();
-const emit = defineEmits<Emits>();
+const emit = defineEmits<{
+  "update:value": [val: string];
+  enter: [];
+}>();
 const instance = getCurrentInstance()!;
 const props = withDefaults(defineProps<Props>(), {});
 

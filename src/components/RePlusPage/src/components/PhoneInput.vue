@@ -60,7 +60,7 @@ const phoneCode = ref({ name: "China", value: "+86" });
 const countries = ref([phoneCode.value]);
 
 const emit = defineEmits<{
-  (e: "change", values: any): void;
+  change: [values: any];
 }>();
 
 onMounted(() => {

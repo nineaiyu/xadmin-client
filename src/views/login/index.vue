@@ -51,12 +51,12 @@ const { locale, translationCh, translationEn } = useTranslationLang();
       <!-- 国际化 -->
       <el-dropdown trigger="click">
         <globalization
-          class="hover:text-primary hover:!bg-[transparent] w-[20px] h-[20px] ml-1.5 cursor-pointer outline-none duration-300"
+          class="hover:text-primary hover:bg-[transparent]! w-[20px] h-[20px] ml-1.5 cursor-pointer outline-hidden duration-300"
         />
         <template #dropdown>
           <el-dropdown-menu class="translation">
             <el-dropdown-item
-              :class="['dark:!text-white', getDropdownItemClass(locale, 'zh')]"
+              :class="['dark:text-white!', getDropdownItemClass(locale, 'zh')]"
               :style="getDropdownItemStyle(locale, 'zh')"
               @click="translationCh"
             >
@@ -68,7 +68,7 @@ const { locale, translationCh, translationEn } = useTranslationLang();
               简体中文
             </el-dropdown-item>
             <el-dropdown-item
-              :class="['dark:!text-white', getDropdownItemClass(locale, 'en')]"
+              :class="['dark:text-white!', getDropdownItemClass(locale, 'en')]"
               :style="getDropdownItemStyle(locale, 'en')"
               @click="translationEn"
             >
@@ -89,7 +89,7 @@ const { locale, translationCh, translationEn } = useTranslationLang();
         <div class="login-form">
           <avatar class="avatar" />
           <Motion>
-            <h2 class="outline-none">
+            <h2 class="outline-hidden">
               <TypeIt
                 :options="{ strings: [title], cursor: false, speed: 100 }"
               />
@@ -114,7 +114,7 @@ const { locale, translationCh, translationEn } = useTranslationLang();
     >
       Copyright © 2023-present
       <a
-        class="hover:text-primary"
+        class="hover:text-primary!"
         href="https://github.com/nineaiyu/"
         target="_blank"
       >

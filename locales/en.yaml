@@ -143,6 +143,8 @@ labels:
   dClickCopy: Double-click to copy
   online: Online
   offline: Offline
+  yes: Yes
+  no: No
 
 exportImport:
   import: Import

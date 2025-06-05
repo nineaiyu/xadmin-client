@@ -6,11 +6,7 @@ import { useNav } from "@/layout/hooks/useNav";
 
 import MenuFold from "~icons/ri/menu-fold-fill";
 
-interface Props {
-  isActive: boolean;
-}
-
-withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<{ isActive?: boolean }>(), {
   isActive: false
 });
 
@@ -23,7 +19,7 @@ const iconClass = computed(() => {
     "mb-1",
     "w-[16px]",
     "h-[16px]",
-    "inline-block",
+    "inline-block!",
     "align-middle",
     "cursor-pointer",
     "duration-[100ms]"
@@ -34,7 +30,7 @@ const { $storage } = useGlobal<GlobalPropertiesApi>();
 const themeColor = computed(() => $storage.layout?.themeColor);
 
 const emit = defineEmits<{
-  (e: "toggleClick"): void;
+  toggleClick: [];
 }>();
 
 const toggleClick = () => {

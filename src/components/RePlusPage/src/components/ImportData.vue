@@ -18,7 +18,7 @@ interface FormItemProps {
 }
 
 interface FormProps {
-  formInline: Partial<FieldValues & FormItemProps>;
+  formInline?: Partial<FieldValues & FormItemProps>;
   formProps?: object;
   columns?: PlusColumn[];
 }
@@ -130,7 +130,7 @@ defineExpose({ getRef });
         :auto-upload="false"
         accept=".xls,.xlsx,.csv"
         action="#"
-        class="!w-[300px]"
+        class="w-[300px]!"
         drag
       >
         <div class="el-upload__text">

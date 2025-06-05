@@ -143,6 +143,8 @@ labels:
   dClickCopy: 双击进行拷贝
   online: 在线
   offline: 下线
+  yes: 是
+  no: 否
 
 exportImport:
   import: 导入

@@ -7,7 +7,7 @@ import RePlusSearch from "@/components/RePlusSearch";
 defineOptions({ name: "SearchDept" });
 
 const emit = defineEmits<{
-  (e: "change", ...args: any[]): void;
+  change: [...args: any[]];
 }>();
 
 const selectValue = defineModel<object | object[] | string>();

@@ -15,7 +15,7 @@ interface FormItemProps {
 }
 
 interface FormProps {
-  formInline: FormItemProps;
+  formInline?: FormItemProps;
   formProps?: object;
   columns?: PlusColumn[];
   allowTypes?: string[];

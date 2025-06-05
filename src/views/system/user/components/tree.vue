@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
-import More2Fill from "~icons/ri/more-2-fill";
 import ExpandIcon from "../svg/expand.svg?component";
 import UnExpandIcon from "../svg/unexpand.svg?component";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import More2Fill from "~icons/ri/more-2-fill?width=18&height=18";
 import { computed, getCurrentInstance, nextTick, ref, watch } from "vue";
 
 interface Tree {
@@ -32,12 +32,12 @@ const defaultProps = {
 };
 const buttonClass = computed(() => {
   return [
-    "!h-[20px]",
-    "!text-sm",
+    "h-[20px]!",
+    "text-sm!",
     "reset-margin",
-    "!text-[var(--el-text-color-regular)]",
-    "dark:!text-white",
-    "dark:hover:!text-primary"
+    "text-(--el-text-color-regular)!",
+    "dark:text-white!",
+    "dark:hover:text-primary!"
   ];
 });
 
@@ -126,11 +126,7 @@ defineExpose({ onTreeReset });
         </template>
       </el-input>
       <el-dropdown :hide-on-click="false">
-        <IconifyIconOffline
-          :icon="More2Fill"
-          class="w-[28px] cursor-pointer"
-          width="18px"
-        />
+        <IconifyIconOffline :icon="More2Fill" class="w-[28px] cursor-pointer" />
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item>
@@ -165,9 +161,9 @@ defineExpose({ onTreeReset });
         <template #default="{ node, data }">
           <span
             :class="[
-              'rounded',
-              '!w-[170px]',
-              '!truncate',
+              'rounded-sm',
+              'w-[170px]!',
+              'truncate!',
               'flex',
               'items-center',
               'select-none',

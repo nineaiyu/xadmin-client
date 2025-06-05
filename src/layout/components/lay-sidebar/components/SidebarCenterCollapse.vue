@@ -5,11 +5,7 @@ import { useNav } from "@/layout/hooks/useNav";
 
 import ArrowLeft from "~icons/ri/arrow-left-double-fill";
 
-interface Props {
-  isActive: boolean;
-}
-
-withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<{ isActive?: boolean }>(), {
   isActive: false
 });
 
@@ -23,7 +19,7 @@ const { $storage } = useGlobal<GlobalPropertiesApi>();
 const themeColor = computed(() => $storage.layout?.themeColor);
 
 const emit = defineEmits<{
-  (e: "toggleClick"): void;
+  toggleClick: [];
 }>();
 
 const toggleClick = () => {
