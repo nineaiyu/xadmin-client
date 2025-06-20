@@ -106,20 +106,23 @@ export function useBaseColumns(localeName: string) {
         case "select":
           item.valueType = column.input_type;
           item.fieldProps = {
-            teleported: false
+            teleported: false,
+            filterable: true
           };
           break;
         case "select-multiple":
           item.valueType = "select";
           item.fieldProps = {
             multiple: true,
-            teleported: false
+            teleported: false,
+            filterable: true
           };
           break;
         case "select-ordering":
           item.valueType = "select";
           item.fieldProps = {
-            teleported: false
+            teleported: false,
+            filterable: true
           };
           item.options = computed(() => {
             const options = formatAddOrEditOptions(column.choices);
