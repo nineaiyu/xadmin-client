@@ -12,6 +12,7 @@ import { useI18n } from "vue-i18n";
 import { transformI18n } from "@/plugins/i18n";
 import Reset from "~icons/ri/restart-line";
 import More2Fill from "~icons/ri/more-2-fill";
+import SearchIcon from "~icons/ri/search-line";
 import { MenuChoices } from "@/views/system/constants";
 import { getKeyList, isAllEmpty } from "@pureadmin/utils";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
@@ -202,7 +203,7 @@ function onReset() {
         <el-icon class="el-input__icon">
           <IconifyIconOffline
             v-show="searchValue.length === 0"
-            icon="ri/search-line"
+            :icon="SearchIcon"
           />
         </el-icon>
       </template>
@@ -295,7 +296,11 @@ function onReset() {
               'w-full'
             ]"
           >
-            <component :is="useRenderIcon(data?.meta?.icon)" class="m-1" />
+            <component
+              :is="useRenderIcon(data?.meta?.icon)"
+              v-if="data?.meta?.icon"
+              class="m-1"
+            />
             <template v-if="data.model">
               {{ `${transformI18n(data?.meta?.title)}` }}
               <!--                  <component :is="useRenderIcon('ep:reading')" class="m-1" />-->
