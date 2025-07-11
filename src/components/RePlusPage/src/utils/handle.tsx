@@ -171,6 +171,7 @@ const openFormDialog = (formOptions: formDialogOptions) => {
     contentRenderer: () => h(formOptions?.form ?? AddOrEdit, { ref: formRef }),
     beforeSure: async (done, { options, closeLoading }) => {
       const FormRef: FormInstance = formRef.value.getRef();
+      const allFormInstances = (FormRef as any)?._allInstances ?? [FormRef]; // 获取所有 PlusForm 实例
       const formInlineData = cloneDeep(options.props.formInline);
 
       const success = (detail = undefined, close = true) => {
@@ -193,28 +194,33 @@ const openFormDialog = (formOptions: formDialogOptions) => {
         }
       };
 
-      await FormRef?.validate(valid => {
-        if (valid) {
-          const formData =
-            (formOptions?.beforeSubmit &&
-              formOptions?.beforeSubmit({
-                formData: formInlineData,
-                formRef: formRef,
-                formOptions
-              })) ||
-            formInlineData;
-          formOptions?.saveCallback({
-            formData,
-            formRef: FormRef,
-            closeLoading,
-            formOptions,
-            success,
-            failed,
-            done
-          });
-        } else {
-          closeLoading();
+      for (let i = 0; i < allFormInstances.length; i++) {
+        const valid = await allFormInstances[i]?.validate(valid => {
+          if (!valid) {
+            formRef.value.setActiveName(i);
+            closeLoading();
+          }
+        });
+        if (!valid) {
+          return;
         }
+      }
+      const formData =
+        (formOptions?.beforeSubmit &&
+          formOptions?.beforeSubmit({
+            formData: formInlineData,
+            formRef: formRef,
+            formOptions
+          })) ||
+        formInlineData;
+      formOptions?.saveCallback({
+        formData,
+        formRef: FormRef,
+        closeLoading,
+        formOptions,
+        success,
+        failed,
+        done
       });
     },
     ...formOptions?.dialogOptions,

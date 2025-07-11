@@ -27,9 +27,9 @@ if (value.value) {
 }
 const fileAccept = () => {
   if (props.isImageFile) {
-    return "";
+    return "image/*";
   }
-  return "image/*";
+  return "";
 };
 watch(
   () => fileList.value,

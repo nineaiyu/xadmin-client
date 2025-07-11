@@ -343,6 +343,9 @@ export function useBaseColumns(localeName: string) {
         case "object_related_field_file":
         case "m2m_related_field_image":
         case "object_related_field_image":
+          if (column.input_type.startsWith("object_related_field_")) {
+            item["colProps"] = { xs: 24, sm: 24, md: 12, lg: 12, xl: 12 };
+          }
           item["renderField"] = (value, onChange) => {
             return h(UploadFiles, {
               modelValue: value,
@@ -357,6 +360,7 @@ export function useBaseColumns(localeName: string) {
         case "image upload":
         case "file upload":
           delete item["fieldProps"];
+          item["colProps"] = { xs: 24, sm: 24, md: 12, lg: 12, xl: 12 };
           item["renderField"] = (value, onChange) => {
             return h(UploadFile, {
               modelValue: value,
