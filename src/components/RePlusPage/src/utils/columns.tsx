@@ -29,6 +29,7 @@ import SearchRole from "@/views/system/components/SearchRole.vue";
 import TagInput from "../components/TagInput.vue";
 import JsonInput from "../components/JsonInput.vue";
 import UploadFile from "../components/UploadFile.vue";
+import UploadFiles from "../components/UploadFiles.vue";
 import PhoneInput from "../components/PhoneInput.vue";
 
 /**
@@ -338,13 +339,21 @@ export function useBaseColumns(localeName: string) {
             item["fieldProps"]["multiple"] = true;
           }
           break;
+        case "m2m_related_field_file":
+        case "object_related_field_file":
+          column.is_file = true;
+          break;
+        case "m2m_related_field_image":
+        case "object_related_field_image":
+          column.is_file = false;
+          break;
         case "image upload":
         case "file upload":
           delete item["fieldProps"];
           item["renderField"] = (value, onChange) => {
             return h(UploadFile, {
               modelValue: value,
-              isFile: column.input_type === "file upload",
+              isBinaryFile: column.input_type === "file upload",
               onChange: x => {
                 onChange(x);
               }
@@ -397,6 +406,20 @@ export function useBaseColumns(localeName: string) {
             };
           }
       }
+
+      if (column.is_file !== undefined) {
+        item["renderField"] = (value, onChange) => {
+          return h(UploadFiles, {
+            modelValue: value,
+            isBinaryFile: column.is_file,
+            multiple: column.multiple,
+            onChange: x => {
+              onChange(x);
+            }
+          });
+        };
+      }
+
       if (column.key === "description") {
         item.valueType = "textarea";
         item["fieldProps"] = { autosize: { minRows: 3 } };

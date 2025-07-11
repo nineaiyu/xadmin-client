@@ -1,14 +1,15 @@
 <script lang="ts" setup>
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { Plus } from "@element-plus/icons-vue";
 import type { UploadProps, UploadUserFile } from "element-plus";
 import defaultFile from "../assets/defaultFile.png";
+import { formatBytes } from "@pureadmin/utils";
 
 defineOptions({ name: "UploadFile" });
 const value = defineModel<string | object | any>();
 const props = defineProps({
   disabled: Boolean,
-  isFile: Boolean
+  isBinaryFile: Boolean
 });
 const emit = defineEmits<{
   change: [...args: any];
@@ -19,13 +20,13 @@ if (value.value) {
   fileList.value = [
     {
       name: value.value,
-      url: props.isFile ? defaultFile : value.value
+      url: props.isBinaryFile ? defaultFile : value.value
     }
   ];
   emit("change", undefined);
 }
 const fileAccept = () => {
-  if (props.isFile) {
+  if (props.isBinaryFile) {
     return "";
   }
   return "image/*";
@@ -42,7 +43,7 @@ watch(
   }
 );
 
-const dialogImageUrl = ref("");
+const dialogFile = ref();
 const dialogVisible = ref(false);
 
 const handleRemove: UploadProps["onRemove"] = () => {
@@ -51,36 +52,53 @@ const handleRemove: UploadProps["onRemove"] = () => {
 };
 
 const handlePictureCardPreview: UploadProps["onPreview"] = uploadFile => {
-  dialogImageUrl.value = uploadFile.url!;
+  dialogFile.value = uploadFile;
   dialogVisible.value = true;
 };
 const handleChange: UploadProps["onChange"] = uploadFile => {
-  if (props.isFile) {
+  if (props.isBinaryFile) {
     uploadFile.url = defaultFile;
   }
 };
+const disableShowAdd = computed(() => {
+  return fileList.value.length > 0;
+});
 </script>
 
 <template>
-  <el-upload
-    v-model:file-list="fileList"
-    :disabled="disabled"
-    action="#"
-    :limit="2"
-    :show-file-list="true"
-    list-type="picture-card"
-    :on-preview="handlePictureCardPreview"
-    :on-remove="handleRemove"
-    :on-change="handleChange"
-    :auto-upload="false"
-    :accept="fileAccept()"
-  >
-    <el-icon>
-      <Plus />
-    </el-icon>
-  </el-upload>
+  <div>
+    <el-upload
+      v-model:file-list="fileList"
+      :accept="fileAccept()"
+      :auto-upload="false"
+      :class="{ hideUploadBtn: disableShowAdd }"
+      :disabled="disabled"
+      :limit="1"
+      :on-change="handleChange"
+      :on-preview="handlePictureCardPreview"
+      :on-remove="handleRemove"
+      :show-file-list="true"
+      action="#"
+      list-type="picture-card"
+    >
+      <el-icon>
+        <Plus />
+      </el-icon>
+    </el-upload>
 
-  <el-dialog v-model="dialogVisible">
-    <img :src="dialogImageUrl" alt="Preview Image" class="max-w-full" />
-  </el-dialog>
+    <el-dialog v-model="dialogVisible">
+      <div class="flex flex-col items-center justify-center">
+        <img :src="dialogFile.url" alt="Preview Image" class="max-w-full" />
+        <div v-if="dialogFile?.size">{{ formatBytes(dialogFile.size) }}</div>
+        <div v-if="dialogFile?.name" class="truncate">
+          {{ dialogFile.name }}
+        </div>
+      </div>
+    </el-dialog>
+  </div>
 </template>
+<style lang="scss" scoped>
+:deep(.hideUploadBtn .el-upload--picture-card) {
+  display: none !important;
+}
+</style>
