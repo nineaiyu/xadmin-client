@@ -21,7 +21,7 @@ const value = defineModel<string | object | any>();
 const props = defineProps({
   disabled: Boolean,
   multiple: Boolean,
-  isBinaryFile: Boolean
+  isImageFile: Boolean
 });
 const emit = defineEmits<{
   change: [...args: any];
@@ -46,7 +46,7 @@ if (value.value) {
         name: item.filename ?? item.label,
         size: item.filesize,
         pk: item.pk,
-        url: props.isBinaryFile ? defaultFile : item.filepath
+        url: props.isImageFile ? item.filepath : defaultFile
       };
     });
   } else {
@@ -55,16 +55,16 @@ if (value.value) {
         name: value.value.filename ?? value.value.label,
         size: value.value.filesize,
         pk: value.value.pk,
-        url: props.isBinaryFile ? defaultFile : value.value.filepath
+        url: props.isImageFile ? value.value.filepath : defaultFile
       }
     ];
   }
 }
 const fileAccept = () => {
-  if (props.isBinaryFile) {
-    return "";
+  if (props.isImageFile) {
+    return "image/*";
   }
-  return "image/*";
+  return "";
 };
 
 const dialogFile = ref();
@@ -79,7 +79,7 @@ const handlePictureCardPreview: UploadProps["onPreview"] = uploadFile => {
   dialogVisible.value = true;
 };
 const handleChange: UploadProps["onChange"] = uploadFile => {
-  if (props.isBinaryFile) {
+  if (!props.isImageFile) {
     uploadFile.url = defaultFile;
   }
 };

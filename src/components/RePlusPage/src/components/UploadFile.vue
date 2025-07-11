@@ -9,7 +9,7 @@ defineOptions({ name: "UploadFile" });
 const value = defineModel<string | object | any>();
 const props = defineProps({
   disabled: Boolean,
-  isBinaryFile: Boolean
+  isImageFile: Boolean
 });
 const emit = defineEmits<{
   change: [...args: any];
@@ -20,13 +20,13 @@ if (value.value) {
   fileList.value = [
     {
       name: value.value,
-      url: props.isBinaryFile ? defaultFile : value.value
+      url: props.isImageFile ? defaultFile : value.value
     }
   ];
   emit("change", undefined);
 }
 const fileAccept = () => {
-  if (props.isBinaryFile) {
+  if (props.isImageFile) {
     return "";
   }
   return "image/*";
@@ -56,7 +56,7 @@ const handlePictureCardPreview: UploadProps["onPreview"] = uploadFile => {
   dialogVisible.value = true;
 };
 const handleChange: UploadProps["onChange"] = uploadFile => {
-  if (props.isBinaryFile) {
+  if (!props.isImageFile) {
     uploadFile.url = defaultFile;
   }
 };

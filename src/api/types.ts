@@ -32,7 +32,6 @@ export type SearchColumnsResult = {
     required: boolean;
     read_only: boolean;
     write_only: boolean;
-    is_file: boolean;
     max_length?: number | any;
     multiple?: boolean;
     table_show?: number;

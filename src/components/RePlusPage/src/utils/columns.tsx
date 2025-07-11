@@ -341,11 +341,18 @@ export function useBaseColumns(localeName: string) {
           break;
         case "m2m_related_field_file":
         case "object_related_field_file":
-          column.is_file = true;
-          break;
         case "m2m_related_field_image":
         case "object_related_field_image":
-          column.is_file = false;
+          item["renderField"] = (value, onChange) => {
+            return h(UploadFiles, {
+              modelValue: value,
+              isImageFile: column.input_type.endsWith("_related_field_image"),
+              multiple: column.multiple,
+              onChange: x => {
+                onChange(x);
+              }
+            });
+          };
           break;
         case "image upload":
         case "file upload":
@@ -353,7 +360,7 @@ export function useBaseColumns(localeName: string) {
           item["renderField"] = (value, onChange) => {
             return h(UploadFile, {
               modelValue: value,
-              isBinaryFile: column.input_type === "file upload",
+              isImageFile: column.input_type === "image upload",
               onChange: x => {
                 onChange(x);
               }
@@ -405,19 +412,6 @@ export function useBaseColumns(localeName: string) {
               });
             };
           }
-      }
-
-      if (column.is_file !== undefined) {
-        item["renderField"] = (value, onChange) => {
-          return h(UploadFiles, {
-            modelValue: value,
-            isBinaryFile: column.is_file,
-            multiple: column.multiple,
-            onChange: x => {
-              onChange(x);
-            }
-          });
-        };
       }
 
       if (column.key === "description") {
