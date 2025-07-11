@@ -114,7 +114,7 @@ watch(
   () => fileList,
   () => {
     const pks = fileList.value.map(item => {
-      return item.pk;
+      return { pk: item.pk };
     });
     if (props.multiple) {
       emit("change", pks);
