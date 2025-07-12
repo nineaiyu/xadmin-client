@@ -30,7 +30,7 @@ const emit = defineEmits<{
 const isTabs = computed(() => {
   return (
     props.columns.length > 0 &&
-    props.columns[0]._column.tabs_index !== undefined
+    props.columns[0]._column?.tabs_index !== undefined
   );
 });
 
