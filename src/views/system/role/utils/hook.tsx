@@ -124,7 +124,7 @@ export function useRole() {
         }
       },
       minWidth: "700px",
-      dialogOptions: {
+      dialogDrawerOptions: {
         width: "60vw"
       }
     }

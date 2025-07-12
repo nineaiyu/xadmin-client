@@ -33,7 +33,7 @@ import { customRolePermissionOptions, picturePng } from "@/views/system/hooks";
 import { AesEncrypted } from "@/utils/aes";
 import {
   handleOperation,
-  openFormDialog,
+  openDialogDrawer,
   type OperationProps,
   renderSwitch,
   type RePlusPageProps,
@@ -454,7 +454,7 @@ export function useUser(tableRef: Ref) {
   };
 
   function handleRoleRules(row: any) {
-    openFormDialog({
+    openDialogDrawer({
       t,
       isAdd: false,
       title: t("systemUser.assignRole", { user: row.username }),

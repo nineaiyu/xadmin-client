@@ -4,7 +4,7 @@ import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { getCurrentInstance, h, reactive, type Ref, shallowRef } from "vue";
 import {
   isUrl,
-  openFormDialog,
+  openDialogDrawer,
   type OperationProps,
   type PageTableColumn,
   renderBooleanTag,
@@ -42,12 +42,12 @@ export function useSystemUploadFile(tableRef: Ref) {
           icon: useRenderIcon(Upload)
         },
         onClick: () => {
-          openFormDialog({
+          openDialogDrawer({
             t,
             title: t("systemUploadFile.upload"),
             rawRow: {},
             rawColumns: [],
-            dialogOptions: { width: "600px", hideFooter: true },
+            dialogDrawerOptions: { width: "600px", hideFooter: true },
             minWidth: "600px",
             form: uploadForm,
             props: {

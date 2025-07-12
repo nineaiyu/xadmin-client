@@ -2,7 +2,7 @@
 import { onMounted, ref } from "vue";
 
 import { SystemMsgSubscriptionApi } from "@/api/system/notifications";
-import { handleOperation, openFormDialog } from "@/components/RePlusPage";
+import { handleOperation, openDialogDrawer } from "@/components/RePlusPage";
 import { useI18n } from "vue-i18n";
 import SearchDialog from "@/views/system/components/SearchDialog.vue";
 
@@ -101,14 +101,14 @@ const onCheckReceiveBackend = row => {
 };
 
 const handleSaveReceivers = row => {
-  openFormDialog({
+  openDialogDrawer({
     t,
     title: t("messageNotifications.editRecipientTitle", { title: row.value }),
     rawRow: {
       component: "SearchUser",
       data: row.receivers
     },
-    dialogOptions: { width: "600px" },
+    dialogDrawerOptions: { width: "600px" },
     form: SearchDialog,
     saveCallback: ({ formData, done, closeLoading }) => {
       handleOperation({

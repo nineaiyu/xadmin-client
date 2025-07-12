@@ -11,7 +11,7 @@ import type {
   TableColumns
 } from "@pureadmin/table";
 import type { BaseApi } from "@/api/base";
-import type { formDialogOptions } from "./handle";
+import type { formDialogDrawerOptions } from "./handle";
 import type { OperationProps } from "@/components/RePlusPage";
 import type { PureTableBarProps } from "@/components/RePureTableBar";
 import type { VNode } from "vue";
@@ -149,10 +149,10 @@ interface RePlusPageProps {
    */
   addOrEditOptions?: {
     title?: "";
-    props?: Partial<formDialogOptions>;
+    props?: Partial<formDialogDrawerOptions>;
     form?: undefined;
     apiReq?: (
-      formOptions: Partial<formDialogOptions> & { formData: RecordType }
+      formOptions: Partial<formDialogDrawerOptions> & { formData: RecordType }
     ) => BaseApi | any;
   };
   /**
