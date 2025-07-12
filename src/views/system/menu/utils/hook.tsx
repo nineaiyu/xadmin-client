@@ -21,7 +21,7 @@ import {
   handleExportData,
   handleImportData,
   handleOperation,
-  openFormDialog,
+  openDialogDrawer,
   renderBooleanSegmentedOption
 } from "@/components/RePlusPage";
 import { formatFiledAppParent } from "@/views/system/hooks";
@@ -362,7 +362,7 @@ export function useMenu() {
       }
     ]);
 
-    openFormDialog({
+    openDialogDrawer({
       t,
       isAdd: false,
       title: t("systemMenu.addPermissions"),
@@ -379,7 +379,7 @@ export function useMenu() {
           ]
         }
       },
-      dialogOptions: {
+      dialogDrawerOptions: {
         onChange: data => {
           const values = data?.values?.values;
           if (isObject(values) && data?.values?.column?.prop === "method") {

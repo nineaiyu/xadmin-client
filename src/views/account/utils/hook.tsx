@@ -18,7 +18,7 @@ import type { PaginationProps } from "@pureadmin/table";
 import {
   type PageTableColumn,
   handleOperation,
-  openFormDialog,
+  openDialogDrawer,
   renderBooleanTag
 } from "@/components/RePlusPage";
 import BindEmailOrPhone from "../components/BindEmailOrPhone.vue";
@@ -234,7 +234,7 @@ export function useAccountManage() {
   const userinfoStore = useUserStoreHook();
 
   function handleBindEmailOrPhone(category: string) {
-    openFormDialog({
+    openDialogDrawer({
       t,
       isAdd: false,
       title:
@@ -286,7 +286,7 @@ export function useAccountManage() {
   }
 
   function handleChangePassword() {
-    openFormDialog({
+    openDialogDrawer({
       t,
       isAdd: false,
       title: t("userinfo.changePassword"),

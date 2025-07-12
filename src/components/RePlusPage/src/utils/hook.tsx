@@ -15,7 +15,7 @@ import {
   handleExportData,
   handleImportData,
   handleOperation,
-  openFormDialog,
+  openDialogDrawer,
   renderSwitch
 } from "./handle";
 import type { OperationButtonsRow } from "@/components/RePlusPage";
@@ -325,12 +325,12 @@ export function usePlusPage(emit: any, tableRef: Ref, props: RePlusPageProps) {
 
   // 查看详情
   const handleDetail = row => {
-    openFormDialog({
+    openDialogDrawer({
       t,
       title: t("buttons.detail"),
       rawRow: { ...row },
       rawColumns: detailColumns.value,
-      dialogOptions: { width: "60vw", hideFooter: true },
+      dialogDrawerOptions: { width: "60vw", hideFooter: true },
       minWidth: "600px",
       formProps: { ...plusDescriptionsProps },
       form: DetailDataForm
@@ -343,7 +343,7 @@ export function usePlusPage(emit: any, tableRef: Ref, props: RePlusPageProps) {
     if (isAdd) {
       title = t("buttons.add");
     }
-    openFormDialog({
+    openDialogDrawer({
       t,
       isAdd,
       title: `${title} ${addOrEditOptions?.title ?? pageTitle.value}`,

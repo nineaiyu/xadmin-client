@@ -12,24 +12,35 @@ import { resourcesIDCacheApi } from "@/api/common";
 import AddOrEdit from "../components/AddOrEdit.vue";
 import ExportData from "../components/ExportData.vue";
 import ImportData from "../components/ImportData.vue";
+import { addDrawer, type DrawerOptions } from "@/components/ReDrawer/index";
+
+const modeFuncMap = {
+  drawer: addDrawer,
+  dialog: addDialog
+} satisfies {
+  [key in "dialog" | "drawer"]: (
+    options: Partial<DrawerOptions & DialogOptions>
+  ) => any;
+};
 
 interface callBackArgs {
   formData: object | any;
   formRef: FormInstance;
-  formOptions: formDialogOptions;
+  formOptions: formDialogDrawerOptions;
   closeLoading: () => void;
   success: (detail: string, close?: boolean) => void;
   failed: (detail: string, close?: boolean) => void;
   done: () => void;
 }
 
-interface formDialogOptions {
+interface formDialogDrawerOptions {
+  mode?: "dialog" | "drawer";
   t: (arg0: string, arg1?: object) => string;
   isAdd?: boolean;
   row?:
     | object
     | {
-        [key: string]: (formOptions: Partial<formDialogOptions>) => any;
+        [key: string]: (formOptions: Partial<formDialogDrawerOptions>) => any;
       }; //  外部处理方法
   title: string; // 弹窗的的title
   formValue?: Ref; // 表单值
@@ -39,24 +50,24 @@ interface formDialogOptions {
     | object
     | {
         [key: string]: (
-          formOptions: Partial<formDialogOptions> & { column: PageColumn }
+          formOptions: Partial<formDialogDrawerOptions> & { column: PageColumn }
         ) => object;
       }; // 表单字段
   rawColumns?: PageColumn[] | Array<any>; // 表单字段
   form?: Component | any; // 挂载的form组件，默认是AddOrEdit组件
-  props?: ((formOptions: formDialogOptions) => object) | object; //  内容区组件的 props，可通过 defineProps 接收
+  props?: ((formOptions: formDialogDrawerOptions) => object) | object; //  内容区组件的 props，可通过 defineProps 接收
   formProps?:
     | object
     | {
-        [key: string]: (formOptions: Partial<formDialogOptions>) => any;
+        [key: string]: (formOptions: Partial<formDialogDrawerOptions>) => any;
       }; //  plus form 的props
   tabsProps?:
     | Partial<TabsProps>
     | {
-        [key: string]: (formOptions: Partial<formDialogOptions>) => any;
+        [key: string]: (formOptions: Partial<formDialogDrawerOptions>) => any;
       };
   rawFormProps?: PlusFormProps; //  plus form 的props
-  dialogOptions?: DialogOptions; // dialog options
+  dialogDrawerOptions?: Partial<DrawerOptions & DialogOptions>; // dialog options
   beforeSubmit?: ({
     formData,
     formRef,
@@ -64,7 +75,7 @@ interface formDialogOptions {
   }: {
     formData: object | any;
     formRef: Ref;
-    formOptions: formDialogOptions;
+    formOptions: formDialogDrawerOptions;
   }) => object | any;
   saveCallback?: ({
     formData,
@@ -77,7 +88,7 @@ interface formDialogOptions {
   }: callBackArgs) => void; // 点击保存回调
 }
 
-const openFormDialog = (formOptions: formDialogOptions) => {
+const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
   const formRef = ref();
   const rowResult = {};
   Object.keys(formOptions?.row ?? {}).forEach(key => {
@@ -157,7 +168,7 @@ const openFormDialog = (formOptions: formDialogOptions) => {
 
   const clientWidth = document.documentElement.clientWidth;
   const minWidth = Number((formOptions.minWidth ?? "600px").replace("px", ""));
-  const width = formOptions?.dialogOptions?.width ?? "50%";
+  const width = formOptions?.dialogDrawerOptions?.width ?? "50%";
   let numberWidth: number;
   if (width.endsWith("%") || width.endsWith("vw")) {
     numberWidth =
@@ -165,7 +176,8 @@ const openFormDialog = (formOptions: formDialogOptions) => {
   } else {
     numberWidth = Number(width.replace("px", ""));
   }
-  addDialog({
+  const func = modeFuncMap[formOptions.mode ?? "dialog"] ?? addDialog;
+  func({
     title: formOptions.title,
     props: {
       formInline,
@@ -241,17 +253,18 @@ const openFormDialog = (formOptions: formDialogOptions) => {
         done
       });
     },
-    ...formOptions?.dialogOptions,
+    ...formOptions?.dialogDrawerOptions,
     width: `${minWidth > numberWidth ? minWidth : numberWidth}px`,
+    size: `${minWidth > numberWidth ? minWidth : numberWidth}`,
     onChange(data) {
       if (data?.values) {
         formOptions.formValue.value = data?.values?.values;
       }
-      if (formOptions?.dialogOptions?.onChange) {
-        formOptions?.dialogOptions?.onChange(data);
+      if (formOptions?.dialogDrawerOptions?.onChange) {
+        formOptions?.dialogDrawerOptions?.onChange(data);
       }
     }
-  });
+  } as Partial<DrawerOptions & DialogOptions>);
 };
 
 interface operationOptions {
@@ -495,6 +508,7 @@ const renderBooleanTag = (booleanTagOptions: booleanTagOptions) => {
 };
 
 interface exportDataOptions {
+  mode?: "dialog" | "drawer";
   t: (arg0: string, arg1?: object) => string;
   api: Partial<BaseApi>;
   pks: Array<string | number>;
@@ -506,14 +520,16 @@ interface exportDataOptions {
 const handleExportData = (options: exportDataOptions) => {
   const {
     t,
+    mode,
     api,
     pks,
     allowTypes = ["all", "search", "selected"],
     searchFields = undefined
   } = options;
 
-  openFormDialog({
+  openDialogDrawer({
     t,
+    mode,
     title: t("exportImport.export"),
     rawRow: {
       type: "xlsx",
@@ -523,7 +539,7 @@ const handleExportData = (options: exportDataOptions) => {
     props: {
       allowTypes
     },
-    dialogOptions: { width: "600px" },
+    dialogDrawerOptions: { width: "600px" },
     form: ExportData,
     saveCallback: async ({ formData, done, closeLoading }) => {
       if (formData.range === "all") {
@@ -554,6 +570,7 @@ const handleExportData = (options: exportDataOptions) => {
 };
 
 interface importDataOptions {
+  mode?: "dialog" | "drawer";
   t: (arg0: string, arg1?: object) => string;
   api: Partial<BaseApi>;
   success?: (res?: DetailResult) => void;
@@ -561,17 +578,18 @@ interface importDataOptions {
 
 // 数据导入
 const handleImportData = (options: importDataOptions) => {
-  const { t, api } = options;
+  const { t, api, mode } = options;
 
-  openFormDialog({
+  openDialogDrawer({
     t,
+    mode,
     title: t("exportImport.import"),
     rawRow: {
       action: "create",
       ignore_error: false,
       api: api
     },
-    dialogOptions: { width: "600px" },
+    dialogDrawerOptions: { width: "600px" },
     form: ImportData,
     saveCallback: ({ formData, success, failed, closeLoading }) => {
       api
@@ -597,19 +615,19 @@ const handleImportData = (options: importDataOptions) => {
 };
 
 export {
-  openFormDialog,
-  handleOperation,
-  onSwitchChange,
   renderSwitch,
+  onSwitchChange,
+  handleOperation,
+  openDialogDrawer,
   renderBooleanTag,
   handleExportData,
   handleImportData
 };
 export type {
-  operationOptions,
   changeOptions,
   switchOptions,
-  formDialogOptions,
+  operationOptions,
   exportDataOptions,
-  importDataOptions
+  importDataOptions,
+  formDialogDrawerOptions
 };

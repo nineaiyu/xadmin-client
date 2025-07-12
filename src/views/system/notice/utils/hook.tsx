@@ -169,7 +169,7 @@ export function useNotice(tableRef: Ref) {
         }
       },
       minWidth: "600px",
-      dialogOptions: {
+      dialogDrawerOptions: {
         top: "10vh",
         width: "60vw"
       }

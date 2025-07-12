@@ -9,7 +9,7 @@ import { handleTree } from "@/utils/tree";
 import {
   type PageTableColumn,
   handleOperation,
-  openFormDialog,
+  openDialogDrawer,
   type OperationProps,
   type RePlusPageProps
 } from "@/components/RePlusPage";
@@ -75,7 +75,7 @@ export function useDept(tableRef: Ref) {
           return column;
         }
       },
-      dialogOptions: {
+      dialogDrawerOptions: {
         closeCallBack: ({ options, args }) => {
           if (!options?.props?.formInline?.pk && args?.command === "sure") {
             tableRef.value?.getPageColumn(false);
@@ -129,7 +129,7 @@ export function useDept(tableRef: Ref) {
   };
 
   function handleRoleRules(row: any) {
-    openFormDialog({
+    openDialogDrawer({
       t,
       isAdd: false,
       title: t("systemDept.assignRole", { dept: row.name }),
