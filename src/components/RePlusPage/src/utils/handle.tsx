@@ -4,7 +4,7 @@ import { type Component, h, type Ref, ref, toRaw } from "vue";
 import { cloneDeep } from "lodash-es";
 import { message } from "@/utils/message";
 import type { PlusFormProps } from "plus-pro-components";
-import { ElMessageBox, type FormInstance } from "element-plus";
+import { ElMessageBox, type FormInstance, type TabsProps } from "element-plus";
 import type { BaseApi } from "@/api/base";
 import type { DetailResult } from "@/api/types";
 import { type PageColumn, uniqueArrayObj } from "@/components/RePlusPage";
@@ -50,6 +50,11 @@ interface formDialogOptions {
     | {
         [key: string]: (formOptions: Partial<formDialogOptions>) => any;
       }; //  plus form 的props
+  tabsProps?:
+    | Partial<TabsProps>
+    | {
+        [key: string]: (formOptions: Partial<formDialogOptions>) => any;
+      };
   rawFormProps?: PlusFormProps; //  plus form 的props
   dialogOptions?: DialogOptions; // dialog options
   beforeSubmit?: ({
@@ -138,6 +143,18 @@ const openFormDialog = (formOptions: formDialogOptions) => {
       formPropsResult[key] = getValue;
     }
   });
+
+  const tabsPropsResult = {};
+
+  Object.keys(formOptions?.tabsProps ?? {}).forEach(key => {
+    const getValue = formOptions?.tabsProps[key];
+    if (typeof formOptions?.tabsProps[key] === "function") {
+      tabsPropsResult[key] = getValue(cloneDeep(formOptions));
+    } else {
+      tabsPropsResult[key] = getValue;
+    }
+  });
+
   const clientWidth = document.documentElement.clientWidth;
   const minWidth = Number((formOptions.minWidth ?? "600px").replace("px", ""));
   const width = formOptions?.dialogOptions?.width ?? "50%";
@@ -160,7 +177,8 @@ const openFormDialog = (formOptions: formDialogOptions) => {
         ],
         "prop"
       ),
-      formProps: { ...formOptions?.rawFormProps, ...(formPropsResult ?? {}) }
+      formProps: { ...formOptions?.rawFormProps, ...(formPropsResult ?? {}) },
+      tabsProps: { ...(tabsPropsResult ?? {}) }
     },
     draggable: true,
     sureBtnLoading: true,

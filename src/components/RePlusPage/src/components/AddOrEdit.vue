@@ -7,12 +7,14 @@ defineOptions({ name: "AddOrEditForm" });
 interface AddOrEditFormProps {
   formInline?: FieldValues;
   formProps?: object;
+  tabsProps?: object;
   columns?: PlusColumn[];
 }
 
 const props = withDefaults(defineProps<AddOrEditFormProps>(), {
   formInline: () => ({}),
   formProps: () => ({}),
+  tabsProps: () => ({}),
   columns: () => []
 });
 
@@ -84,7 +86,7 @@ defineExpose({ getRef, setActiveName });
 
 <template>
   <div>
-    <el-tabs v-if="isTabs" v-model="activeName">
+    <el-tabs v-if="isTabs" v-model="activeName" v-bind="tabsProps">
       <el-tab-pane
         v-for="tabs in tabsColumns"
         :key="tabs.index"

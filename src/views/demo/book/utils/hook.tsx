@@ -121,6 +121,9 @@ export function useDemoBook(tableRef: Ref) {
           };
           return column;
         }
+      },
+      tabsProps: {
+        type: ""
       }
     }
   });
