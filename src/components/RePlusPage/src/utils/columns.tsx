@@ -533,6 +533,53 @@ export function useBaseColumns(localeName: string) {
             );
             // pure-table ****** end
             break;
+          case "object_related_field_image":
+            item["valueType"] = "img";
+            item["formatter"] = ({ filepath }) => {
+              return filepath;
+            };
+            // pure-table ****** start
+            item["cellRenderer"] = ({ row }) =>
+              h(ElImage, {
+                lazy: true,
+                src: row[column.key]?.filepath,
+                alt: row[column.key]?.filename,
+                previewSrcList: [row[column.key]?.filepath],
+                previewTeleported: true
+              });
+            // pure-table ****** end
+            break;
+          case "object_related_field_file":
+            item["render"] = ({ filepath, filename }) => {
+              return h(
+                ElLink,
+                {
+                  type: "success",
+                  href: filepath,
+                  target: "_blank"
+                },
+                {
+                  icon: () => h(ElIcon, null, () => h(Link)),
+                  default: () => filename ?? "文件连接"
+                }
+              );
+            };
+            // pure-table ****** start
+            item["cellRenderer"] = ({ row }) =>
+              h(
+                ElLink,
+                {
+                  type: "success",
+                  href: row[column.key]?.filepath,
+                  target: "_blank"
+                },
+                {
+                  icon: () => h(ElIcon, null, () => h(Link)),
+                  default: () => row[column.key]?.filename ?? "文件连接"
+                }
+              );
+            // pure-table ****** end
+            break;
           case "image upload":
             item["valueType"] = "img";
             // pure-table ****** start
