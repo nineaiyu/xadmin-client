@@ -20,7 +20,7 @@ if (value.value) {
   fileList.value = [
     {
       name: value.value,
-      url: props.isImageFile ? defaultFile : value.value
+      url: props.isImageFile ? value.value : defaultFile
     }
   ];
   emit("change", undefined);
