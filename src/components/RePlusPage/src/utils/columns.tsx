@@ -340,8 +340,8 @@ export function useBaseColumns(localeName: string) {
           }
           break;
         case "m2m_related_field_file":
-        case "object_related_field_file":
         case "m2m_related_field_image":
+        case "object_related_field_file":
         case "object_related_field_image":
           if (column.input_type.startsWith("object_related_field_")) {
             item["colProps"] = { xs: 24, sm: 24, md: 12, lg: 12, xl: 12 };
@@ -542,6 +542,7 @@ export function useBaseColumns(localeName: string) {
             item["cellRenderer"] = ({ row }) =>
               h(ElImage, {
                 lazy: true,
+                class: "plus-display-item__image",
                 src: row[column.key]?.filepath,
                 alt: row[column.key]?.filename,
                 previewSrcList: [row[column.key]?.filepath],
@@ -580,12 +581,106 @@ export function useBaseColumns(localeName: string) {
               );
             // pure-table ****** end
             break;
+          case "m2m_related_field_file":
+            item["render"] = (
+              value: Array<{ pk: number; filepath: string; filename: string }>
+            ) => {
+              if (value instanceof Array) {
+                return (
+                  <>
+                    <el-space>
+                      {value?.map(item => {
+                        return h(
+                          ElLink,
+                          {
+                            type: "success",
+                            href: item.filepath,
+                            target: "_blank"
+                          },
+                          {
+                            icon: () => h(ElIcon, null, () => h(Link)),
+                            default: () => item.filename ?? "文件连接"
+                          }
+                        );
+                      })}
+                    </el-space>
+                  </>
+                );
+              } else return <></>;
+            };
+            // pure-table ****** start
+            item["cellRenderer"] = ({ row }) => (
+              <>
+                <el-space>
+                  {row[column.key]?.map(item => {
+                    return h(
+                      ElLink,
+                      {
+                        type: "success",
+                        href: item.filepath,
+                        target: "_blank"
+                      },
+                      {
+                        icon: () => h(ElIcon, null, () => h(Link)),
+                        default: () => item.filename ?? "文件连接"
+                      }
+                    );
+                  })}
+                </el-space>
+              </>
+            );
+            // pure-table ****** end
+            break;
+
+          case "m2m_related_field_image":
+            item["render"] = (
+              value: Array<{ pk: number; filepath: string; filename: string }>
+            ) => {
+              if (value instanceof Array) {
+                return (
+                  <>
+                    <el-space>
+                      {value?.map(item => {
+                        return h(ElImage, {
+                          lazy: true,
+                          class: "plus-display-item__image",
+                          src: item.filepath,
+                          alt: item.filename,
+                          previewSrcList: [item.filepath],
+                          previewTeleported: true
+                        });
+                      })}
+                    </el-space>
+                  </>
+                );
+              } else return <></>;
+            };
+            // pure-table ****** start
+            item["cellRenderer"] = ({ row }) => (
+              <>
+                <el-space>
+                  {row[column.key]?.map(item => {
+                    return h(ElImage, {
+                      lazy: true,
+                      class: "plus-display-item__image",
+                      src: item.filepath,
+                      alt: item.filename,
+                      previewSrcList: [item.filepath],
+                      previewTeleported: true
+                    });
+                  })}
+                </el-space>
+              </>
+            );
+            // pure-table ****** end
+            break;
           case "image upload":
             item["valueType"] = "img";
             // pure-table ****** start
             item["cellRenderer"] = ({ row }) =>
               h(ElImage, {
                 lazy: true,
+                class: "plus-display-item__image",
                 src: row[column.key],
                 alt: row[column.key],
                 previewSrcList: [row[column.key]],
