@@ -491,18 +491,20 @@ export function useBaseColumns(localeName: string) {
               if (value instanceof Array) {
                 return (
                   <>
-                    <el-space>
-                      {value?.map((item, index) => {
-                        return (
-                          <el-text
-                            key={item.pk ?? item.value}
-                            type={getColourTypeByIndex(index + 1)}
-                          >
-                            {item.label}
-                          </el-text>
-                        );
-                      })}
-                    </el-space>
+                    <el-scrollbar>
+                      <el-space>
+                        {value?.map((item, index) => {
+                          return (
+                            <el-text
+                              key={item.pk ?? item.value}
+                              type={getColourTypeByIndex(index + 1)}
+                            >
+                              {item.label}
+                            </el-text>
+                          );
+                        })}
+                      </el-space>
+                    </el-scrollbar>
                   </>
                 );
               } else return <></>;
@@ -510,18 +512,20 @@ export function useBaseColumns(localeName: string) {
             // pure-table ****** start
             item["cellRenderer"] = ({ row }) => (
               <>
-                <el-space>
-                  {row[column.key]?.map((item, index) => {
-                    return (
-                      <el-text
-                        key={item.pk}
-                        type={getColourTypeByIndex(index + 1)}
-                      >
-                        {item.label}
-                      </el-text>
-                    );
-                  })}
-                </el-space>
+                <el-scrollbar>
+                  <el-space>
+                    {row[column.key]?.map((item, index) => {
+                      return (
+                        <el-text
+                          key={item.pk}
+                          type={getColourTypeByIndex(index + 1)}
+                        >
+                          {item.label}
+                        </el-text>
+                      );
+                    })}
+                  </el-space>
+                </el-scrollbar>
               </>
             );
             // pure-table ****** end
@@ -588,22 +592,24 @@ export function useBaseColumns(localeName: string) {
               if (value instanceof Array) {
                 return (
                   <>
-                    <el-space>
-                      {value?.map(item => {
-                        return h(
-                          ElLink,
-                          {
-                            type: "success",
-                            href: item.filepath,
-                            target: "_blank"
-                          },
-                          {
-                            icon: () => h(ElIcon, null, () => h(Link)),
-                            default: () => item.filename ?? "文件连接"
-                          }
-                        );
-                      })}
-                    </el-space>
+                    <el-scrollbar>
+                      <el-space>
+                        {value?.map(item => {
+                          return h(
+                            ElLink,
+                            {
+                              type: "success",
+                              href: item.filepath,
+                              target: "_blank"
+                            },
+                            {
+                              icon: () => h(ElIcon, null, () => h(Link)),
+                              default: () => item.filename ?? "文件连接"
+                            }
+                          );
+                        })}
+                      </el-space>
+                    </el-scrollbar>
                   </>
                 );
               } else return <></>;
@@ -611,22 +617,24 @@ export function useBaseColumns(localeName: string) {
             // pure-table ****** start
             item["cellRenderer"] = ({ row }) => (
               <>
-                <el-space>
-                  {row[column.key]?.map(item => {
-                    return h(
-                      ElLink,
-                      {
-                        type: "success",
-                        href: item.filepath,
-                        target: "_blank"
-                      },
-                      {
-                        icon: () => h(ElIcon, null, () => h(Link)),
-                        default: () => item.filename ?? "文件连接"
-                      }
-                    );
-                  })}
-                </el-space>
+                <el-scrollbar>
+                  <el-space>
+                    {row[column.key]?.map(item => {
+                      return h(
+                        ElLink,
+                        {
+                          type: "success",
+                          href: item.filepath,
+                          target: "_blank"
+                        },
+                        {
+                          icon: () => h(ElIcon, null, () => h(Link)),
+                          default: () => item.filename ?? "文件连接"
+                        }
+                      );
+                    })}
+                  </el-space>
+                </el-scrollbar>
               </>
             );
             // pure-table ****** end
@@ -639,18 +647,20 @@ export function useBaseColumns(localeName: string) {
               if (value instanceof Array) {
                 return (
                   <>
-                    <el-space>
-                      {value?.map(item => {
-                        return h(ElImage, {
-                          lazy: true,
-                          class: "plus-display-item__image",
-                          src: item.filepath,
-                          alt: item.filename,
-                          previewSrcList: [item.filepath],
-                          previewTeleported: true
-                        });
-                      })}
-                    </el-space>
+                    <el-scrollbar>
+                      <el-space>
+                        {value?.map(item => {
+                          return h(ElImage, {
+                            lazy: true,
+                            class: "plus-display-item__image",
+                            src: item.filepath,
+                            alt: item.filename,
+                            previewSrcList: [item.filepath],
+                            previewTeleported: true
+                          });
+                        })}
+                      </el-space>
+                    </el-scrollbar>
                   </>
                 );
               } else return <></>;
@@ -658,18 +668,20 @@ export function useBaseColumns(localeName: string) {
             // pure-table ****** start
             item["cellRenderer"] = ({ row }) => (
               <>
-                <el-space>
-                  {row[column.key]?.map(item => {
-                    return h(ElImage, {
-                      lazy: true,
-                      class: "plus-display-item__image",
-                      src: item.filepath,
-                      alt: item.filename,
-                      previewSrcList: [item.filepath],
-                      previewTeleported: true
-                    });
-                  })}
-                </el-space>
+                <el-scrollbar>
+                  <el-space>
+                    {row[column.key]?.map(item => {
+                      return h(ElImage, {
+                        lazy: true,
+                        class: "plus-display-item__image",
+                        src: item.filepath,
+                        alt: item.filename,
+                        previewSrcList: [item.filepath],
+                        previewTeleported: true
+                      });
+                    })}
+                  </el-space>
+                </el-scrollbar>
               </>
             );
             // pure-table ****** end
