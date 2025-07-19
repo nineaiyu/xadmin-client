@@ -1,6 +1,11 @@
 <script lang="ts" setup>
 import { computed, ref } from "vue";
-import { FieldValues, PlusColumn, PlusDescriptions } from "plus-pro-components";
+import {
+  FieldValues,
+  PlusColumn,
+  PlusDescriptions,
+  PlusForm
+} from "plus-pro-components";
 import { deviceDetection } from "@pureadmin/utils";
 
 defineOptions({ name: "DetailData" });
@@ -20,13 +25,10 @@ const props = withDefaults(defineProps<DetailFormProps>(), {
 });
 
 const formRef = ref();
-const newFormInline = ref<FieldValues>(props.formInline);
-
-function getRef() {
-  return formRef.value?.formInstance;
-}
-
 const activeName = ref(0);
+const newFormInline = ref<FieldValues>(props.formInline);
+const column = computed(() => (deviceDetection() ? 1 : 2));
+const formRefs = ref<Record<number, InstanceType<typeof PlusForm>>>({});
 
 const isTabs = computed(() => {
   return (
@@ -58,8 +60,30 @@ const tabsColumns = computed(() => {
   return result;
 });
 
-defineExpose({ getRef });
-const column = computed(() => (deviceDetection() ? 1 : 2));
+const setFormRef = (el: any, index: number) => {
+  if (el) {
+    formRefs.value[index] = el;
+  }
+};
+const setActiveName = (index: number) => {
+  activeName.value = index;
+};
+
+function getRef() {
+  if (isTabs.value) {
+    const instance = formRefs.value[activeName.value]?.formInstance;
+
+    (instance as any)._allInstances = Object.keys(formRefs.value)
+      .map(Number)
+      .sort((a, b) => a - b)
+      .map(key => formRefs.value[key]?.formInstance);
+    return instance;
+  }
+
+  return formRef.value?.formInstance;
+}
+
+defineExpose({ getRef, setActiveName });
 </script>
 
 <template>
@@ -72,7 +96,7 @@ const column = computed(() => (deviceDetection() ? 1 : 2));
         :name="tabs.index"
       >
         <PlusDescriptions
-          ref="formRef"
+          :ref="el => setFormRef(el, tabs.index)"
           :column="column"
           :columns="tabs.columns"
           :data="newFormInline"
