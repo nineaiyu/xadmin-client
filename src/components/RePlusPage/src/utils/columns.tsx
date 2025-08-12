@@ -740,6 +740,25 @@ export function useBaseColumns(localeName: string) {
             delete item["renderField"];
             // item["editable"] = true;
             break;
+          case "list":
+            item["render"] = (value: any) => {
+              try {
+                value = JSON.stringify(value);
+              } catch (e) {
+                console.warn(e);
+              }
+              return value;
+            };
+            // pure-table ****** start
+            item["cellRenderer"] = ({ row }) => {
+              let value = row[column.key];
+              try {
+                value = JSON.stringify(value);
+              } catch (e) {
+                console.warn(e);
+              }
+              return value;
+            };
         }
         detailColumns.value.push(cloneDeep(item));
         if (column.table_show) {
