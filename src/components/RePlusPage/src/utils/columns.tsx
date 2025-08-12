@@ -313,6 +313,7 @@ export function useBaseColumns(localeName: string) {
         case "choice":
         case "multiple choice":
           item["valueType"] = "select";
+          item["fieldProps"]["filterable"] = true;
           item["options"] = computed(() =>
             formatAddOrEditOptions(column?.choices, false)
           );
@@ -325,6 +326,7 @@ export function useBaseColumns(localeName: string) {
         case "object_related_field":
         case "m2m_related_field":
           item["valueType"] = "select";
+          item["fieldProps"]["filterable"] = true;
           item["options"] = computed(() =>
             formatAddOrEditOptions(column?.choices, true)
           );
