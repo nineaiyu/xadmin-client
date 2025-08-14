@@ -53,7 +53,7 @@ const props = withDefaults(defineProps<TagInputProps>(), {
   inputType: "text"
 });
 const emit = defineEmits<{
-  (e: "change", values: any): void;
+  change: [values: any];
 }>();
 
 const SearchInput = ref(null);
