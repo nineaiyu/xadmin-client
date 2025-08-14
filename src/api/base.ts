@@ -137,9 +137,11 @@ export class BaseApi extends BaseRequest {
     );
   };
   exportData = (params: object) => {
-    return http.autoDownload(`${this.baseApi}/export-data`, null, {
-      params: this.formatParams(params)
-    });
+    return http.autoDownload(
+      `${this.baseApi}/export-data`,
+      null,
+      this.formatParams(params)
+    );
   };
 
   importData = (params: object, data: File) => {
