@@ -182,20 +182,37 @@ class PureHttp {
               headers.get("content-disposition") ||
               headers["content-disposition"];
             if (contentDisposition) {
-              // 处理不同的content-disposition格式
-              const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-              const matches = filenameRegex.exec(contentDisposition);
-
-              if (matches && matches[1]) {
-                // 移除引号并解码
-                let extractedFilename = matches[1].replace(/['"]/g, "");
+              // 优先处理UTF-8编码的文件名 (RFC 5987)
+              const utf8FilenameRegex = /filename\*=?UTF-8''([^;]+)/i;
+              const utf8Matches = utf8FilenameRegex.exec(contentDisposition);
+              if (utf8Matches && utf8Matches[1]) {
                 try {
-                  // 尝试解码UTF-8编码的文件名
-                  extractedFilename = decodeURIComponent(extractedFilename);
+                  // 解码UTF-8编码的文件名
+                  finalFilename = decodeURIComponent(utf8Matches[1]);
                 } catch (e) {
                   console.error("Failed to decode UTF-8 filename.", e);
+                  // 如果解码失败，回退到普通文件名提取
+                  extractNormalFilename(contentDisposition);
                 }
-                finalFilename = extractedFilename;
+              } else {
+                // 处理普通ASCII文件名
+                extractNormalFilename(contentDisposition);
+              }
+              function extractNormalFilename(disposition: string) {
+                const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                const matches = filenameRegex.exec(disposition);
+
+                if (matches && matches[1]) {
+                  // 移除引号并解码
+                  let extractedFilename = matches[1].replace(/['"]/g, "");
+                  try {
+                    // 尝试解码URL编码的文件名
+                    extractedFilename = decodeURIComponent(extractedFilename);
+                  } catch (e) {
+                    console.error("Failed to decode filename.", e);
+                  }
+                  finalFilename = extractedFilename;
+                }
               }
             } else if ((params as any)?.type) {
               finalFilename = `${finalFilename}.${(params as any)?.type}`;
