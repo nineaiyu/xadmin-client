@@ -1,11 +1,5 @@
-import type {
-  PageColumn,
-  OperationProps,
-  PageTableColumn
-} from "@/components/RePlusPage";
+import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
 import { useRouter } from "vue-router";
-import "vue-json-pretty/lib/styles.css";
-import VueJsonPretty from "vue-json-pretty";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { operationLogApi } from "@/api/system/logs/operation";
 import { getCurrentInstance, reactive, shallowRef } from "vue";
@@ -50,31 +44,6 @@ export function useOperationLog() {
     });
     return columns;
   };
-  const detailColumnsFormat = (columns: PageColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "response_result":
-        case "body":
-          column["descriptionsItemProps"] = {
-            span: 2
-          };
-          // column["valueType"] = "copy";
-          column["renderDescriptionsItem"] = ({ row }) => {
-            let data = row[column._column?.key];
-            try {
-              data = JSON.parse(data);
-            } catch {}
-            return (
-              <el-scrollbar max-height="calc(100vh - 240px)">
-                <VueJsonPretty data={data} v-copy={row[column._column?.key]} />
-              </el-scrollbar>
-            );
-          };
-          break;
-      }
-    });
-    return columns;
-  };
 
   const router = useRouter();
 
@@ -91,7 +60,6 @@ export function useOperationLog() {
     api,
     auth,
     listColumnsFormat,
-    detailColumnsFormat,
     operationButtonsProps
   };
 }
