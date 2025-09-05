@@ -810,7 +810,7 @@ export function useBaseColumns(localeName: string) {
   /**
    * 该方法用于页面onMount内调用，用于第一次渲染页面
    */
-  const getColumnData = (
+  const getColumnData = async (
     apiColumns: BaseApi["columns"],
     apiFields: BaseApi["fields"],
     columnsCallback = null,
@@ -818,6 +818,14 @@ export function useBaseColumns(localeName: string) {
     columnsParams = {},
     fieldsParams = {}
   ) => {
+    if (apiFields) {
+      const res = await apiFields(fieldsParams);
+      searchColumns.value.splice(0, searchColumns.value.length);
+      formatSearchColumns(res.data);
+      if (fieldsCallback) {
+        fieldsCallback({ searchDefaultValue, searchColumns });
+      }
+    }
     if (apiColumns) {
       apiColumns(columnsParams).then(res => {
         detailColumns.value.splice(0, detailColumns.value.length);
@@ -832,15 +840,6 @@ export function useBaseColumns(localeName: string) {
             addOrEditColumns,
             addOrEditDefaultValue
           });
-        }
-      });
-    }
-    if (apiFields) {
-      apiFields(fieldsParams).then(res => {
-        searchColumns.value.splice(0, searchColumns.value.length);
-        formatSearchColumns(res.data);
-        if (fieldsCallback) {
-          fieldsCallback({ searchDefaultValue, searchColumns });
         }
       });
     }
