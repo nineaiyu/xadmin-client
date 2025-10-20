@@ -1,16 +1,16 @@
 import { defineStore } from "pinia";
 import {
-  getConfig,
-  isBoolean,
-  isEqual,
-  isNumber,
-  isUrl,
   type multiType,
   type positionType,
-  responsiveStorageNameSpace,
+  store,
+  isUrl,
+  isEqual,
+  isNumber,
+  isBoolean,
+  getConfig,
   routerArrays,
   storageLocal,
-  store
+  responsiveStorageNameSpace
 } from "../utils";
 import { usePermissionStoreHook } from "./permission";
 
@@ -81,22 +81,15 @@ export const useMultiTagsStore = defineStore("pure-multiTags", {
             if (isBoolean(tagVal?.meta?.showLink) && !tagVal?.meta?.showLink)
               return;
             const tagPath = tagVal.path;
-            // 判断tag是否已存在
             const tagHasExits = this.multiTags.some(tag => {
-              return tag.path === tagPath;
+              return (
+                tag.path === tagPath &&
+                isEqual(tag?.query, tagVal?.query) &&
+                isEqual(tag?.params, tagVal?.params)
+              );
             });
 
-            // 判断tag中的query键值是否相等
-            const tagQueryHasExits = this.multiTags.some(tag => {
-              return isEqual(tag?.query, tagVal?.query);
-            });
-
-            // 判断tag中的params键值是否相等
-            const tagParamsHasExits = this.multiTags.some(tag => {
-              return isEqual(tag?.params, tagVal?.params);
-            });
-
-            if (tagHasExits && tagQueryHasExits && tagParamsHasExits) return;
+            if (tagHasExits) return;
 
             // 动态路由可打开的最大数量
             const dynamicLevel = tagVal?.meta?.dynamicLevel ?? -1;
