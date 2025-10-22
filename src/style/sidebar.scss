@@ -172,10 +172,6 @@
     .is-active > .el-sub-menu__title,
     .is-active.submenu-title-noDropdown {
       color: var(--pure-theme-sub-menu-active-text) !important;
-
-      i {
-        color: var(--pure-theme-sub-menu-active-text) !important;
-      }
     }
 
     .is-active {
@@ -270,10 +266,6 @@
     .is-active > .el-sub-menu__title,
     .is-active.submenu-title-noDropdown {
       color: var(--pure-theme-sub-menu-active-text) !important;
-
-      i {
-        color: var(--pure-theme-sub-menu-active-text) !important;
-      }
     }
 
     /* 子菜单中还有子菜单 */
@@ -374,10 +366,6 @@
     .is-active > .el-sub-menu__title,
     .is-active.submenu-title-noDropdown {
       color: var(--pure-theme-sub-menu-active-text) !important;
-
-      i {
-        color: var(--pure-theme-sub-menu-active-text) !important;
-      }
     }
 
     .nest-menu .el-sub-menu > .el-sub-menu__title,
@@ -460,15 +448,15 @@
 
       /* 搜索 */
       .search-container,
-      /* 国际化 */
+        /* 国际化 */
       .globalization,
-      /* 全屏 */
+        /* 全屏 */
       .fullscreen-icon,
-      /* 消息通知 */
+        /* 消息通知 */
       .dropdown-badge,
-      /* 用户名 */
+        /* 用户名 */
       .el-dropdown-link,
-      /* 设置 */
+        /* 设置 */
       .set-icon {
         &:hover {
           background: var(--pure-theme-menu-hover);
@@ -541,10 +529,6 @@
     .is-active > .el-sub-menu__title,
     .is-active.submenu-title-noDropdown {
       color: var(--pure-theme-sub-menu-active-text) !important;
-
-      i {
-        color: var(--pure-theme-sub-menu-active-text) !important;
-      }
     }
 
     .is-active {
@@ -645,15 +629,15 @@ body[layout="vertical"] {
 
   /* 搜索 */
   .search-container,
-  /* 国际化 */
+    /* 国际化 */
   .globalization,
-  /* 全屏 */
+    /* 全屏 */
   .fullscreen-icon,
-  /* 消息通知 */
+    /* 消息通知 */
   .dropdown-badge,
-  /* 用户名 */
+    /* 用户名 */
   .el-dropdown-link,
-  /* 设置 */
+    /* 设置 */
   .set-icon {
     &:hover {
       background: #f6f6f6;
