@@ -20,8 +20,9 @@ import {
 import { ElIcon, ElImage, ElLink } from "element-plus";
 import { Link } from "@element-plus/icons-vue";
 import Info from "~icons/ri/question-line";
-
-import { isEmail, isEmpty, isNumber } from "@pureadmin/utils";
+import "vue-json-pretty/lib/styles.css";
+import VueJsonPretty from "vue-json-pretty";
+import { isEmail, isEmpty, isNumber, isString } from "@pureadmin/utils";
 
 import SearchUser from "@/views/system/components/SearchUser.vue";
 import SearchDept from "@/views/system/components/SearchDept.vue";
@@ -313,6 +314,7 @@ export function useBaseColumns(localeName: string) {
         case "choice":
         case "multiple choice":
           item["valueType"] = "select";
+          item["fieldProps"]["filterable"] = true;
           item["options"] = computed(() =>
             formatAddOrEditOptions(column?.choices, false)
           );
@@ -325,6 +327,7 @@ export function useBaseColumns(localeName: string) {
         case "object_related_field":
         case "m2m_related_field":
           item["valueType"] = "select";
+          item["fieldProps"]["filterable"] = true;
           item["options"] = computed(() =>
             formatAddOrEditOptions(column?.choices, true)
           );
@@ -531,6 +534,41 @@ export function useBaseColumns(localeName: string) {
             // pure-table ****** end
             break;
           case "json":
+            item["descriptionsItemProps"] = {
+              span: 2
+            };
+            item["render"] = value => {
+              let jsonValue = value;
+              let stringValue = "";
+              if (isString(value)) {
+                stringValue = value;
+                try {
+                  jsonValue = JSON.parse(value);
+                } catch {
+                  try {
+                    stringValue = JSON.stringify(value);
+                  } catch {
+                    console.error("Cannot convert value to JSON string", value);
+                    stringValue = String(value);
+                  }
+                }
+              } else {
+                try {
+                  stringValue = JSON.stringify(value);
+                  if (typeof jsonValue !== "object") {
+                    jsonValue = value;
+                  }
+                } catch (error) {
+                  console.error("JSON.stringify error", error);
+                  stringValue = String(value);
+                }
+              }
+              return (
+                <el-scrollbar max-height="calc(100vh - 240px)">
+                  <VueJsonPretty data={jsonValue} v-copy={stringValue} />
+                </el-scrollbar>
+              );
+            };
             // pure-table ****** start
             item["cellRenderer"] = ({ row }) => (
               <span>{JSON.stringify(row[column.key])}</span>
@@ -738,6 +776,25 @@ export function useBaseColumns(localeName: string) {
             delete item["renderField"];
             // item["editable"] = true;
             break;
+          case "list":
+            item["render"] = (value: any) => {
+              try {
+                value = JSON.stringify(value);
+              } catch (e) {
+                console.warn(e);
+              }
+              return value;
+            };
+            // pure-table ****** start
+            item["cellRenderer"] = ({ row }) => {
+              let value = row[column.key];
+              try {
+                value = JSON.stringify(value);
+              } catch (e) {
+                console.warn(e);
+              }
+              return value;
+            };
         }
         detailColumns.value.push(cloneDeep(item));
         if (column.table_show) {
@@ -753,7 +810,7 @@ export function useBaseColumns(localeName: string) {
   /**
    * 该方法用于页面onMount内调用，用于第一次渲染页面
    */
-  const getColumnData = (
+  const getColumnData = async (
     apiColumns: BaseApi["columns"],
     apiFields: BaseApi["fields"],
     columnsCallback = null,
@@ -761,6 +818,14 @@ export function useBaseColumns(localeName: string) {
     columnsParams = {},
     fieldsParams = {}
   ) => {
+    if (apiFields) {
+      const res = await apiFields(fieldsParams);
+      searchColumns.value.splice(0, searchColumns.value.length);
+      formatSearchColumns(res.data);
+      if (fieldsCallback) {
+        fieldsCallback({ searchDefaultValue, searchColumns });
+      }
+    }
     if (apiColumns) {
       apiColumns(columnsParams).then(res => {
         detailColumns.value.splice(0, detailColumns.value.length);
@@ -775,15 +840,6 @@ export function useBaseColumns(localeName: string) {
             addOrEditColumns,
             addOrEditDefaultValue
           });
-        }
-      });
-    }
-    if (apiFields) {
-      apiFields(fieldsParams).then(res => {
-        searchColumns.value.splice(0, searchColumns.value.length);
-        formatSearchColumns(res.data);
-        if (fieldsCallback) {
-          fieldsCallback({ searchDefaultValue, searchColumns });
         }
       });
     }

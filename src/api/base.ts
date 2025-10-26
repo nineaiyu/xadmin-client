@@ -8,7 +8,6 @@ import type {
   SearchColumnsResult,
   SearchFieldsResult
 } from "@/api/types";
-import { buildUUID, downloadByData } from "@pureadmin/utils";
 
 export class BaseRequest {
   baseApi = "";
@@ -137,26 +136,12 @@ export class BaseApi extends BaseRequest {
       `${this.baseApi}/batch-destroy`
     );
   };
-  exportData = async (params: object) => {
-    return http
-      .request(
-        "get",
-        `${this.baseApi}/export-data`,
-        { params: this.formatParams(params) },
-        {
-          responseType: "blob"
-        }
-      )
-      .then(({ data, headers }: any) => {
-        const filenameRegex = /filename[^;=\n]*="((['"]).*?\2|[^;\n]*)"/;
-        const matches = filenameRegex.exec(headers.get("content-disposition"));
-        downloadByData(
-          data,
-          decodeURI(
-            matches ? matches[1] : `${buildUUID()}.${(params as any)?.type}`
-          )
-        );
-      });
+  exportData = (params: object) => {
+    return http.autoDownload(
+      `${this.baseApi}/export-data`,
+      null,
+      this.formatParams(params)
+    );
   };
 
   importData = (params: object, data: File) => {

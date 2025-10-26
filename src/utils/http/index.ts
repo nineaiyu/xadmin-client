@@ -19,6 +19,7 @@ import {
 import { useUserStoreHook } from "@/store/modules/user";
 import { message } from "@/utils/message";
 import { ElMessage } from "element-plus";
+import { buildUUID, downloadByData } from "@pureadmin/utils";
 // import { router } from "@/router";
 
 // 相关配置请参考：www.axios-js.com/zh-cn/docs/#axios-request-config-1
@@ -147,6 +148,83 @@ class PureHttp {
         ...config
       }
     );
+  }
+
+  public download<T, P>(
+    url: string,
+    params?: AxiosRequestConfig<P>,
+    config?: PureHttpRequestConfig
+  ): Promise<T> {
+    return this.request<T>(
+      "get",
+      url,
+      { params },
+      {
+        responseType: "blob",
+        ...config
+      }
+    );
+  }
+
+  public autoDownload<T, P>(
+    url: string,
+    filename?: string,
+    params?: AxiosRequestConfig<P>,
+    config?: PureHttpRequestConfig
+  ): Promise<T> {
+    return new Promise((resolve, reject) => {
+      this.download<Blob, P>(url, params, config)
+        .then((response: any) => {
+          try {
+            const { data, headers } = response;
+            let finalFilename = `${buildUUID()}`;
+            const contentDisposition =
+              headers.get("content-disposition") ||
+              headers["content-disposition"];
+            if (contentDisposition) {
+              // 优先处理UTF-8编码的文件名 (RFC 5987)
+              const utf8FilenameRegex = /filename\*=?UTF-8''([^;]+)/i;
+              const utf8Matches = utf8FilenameRegex.exec(contentDisposition);
+              if (utf8Matches && utf8Matches[1]) {
+                try {
+                  // 解码UTF-8编码的文件名
+                  finalFilename = decodeURIComponent(utf8Matches[1]);
+                } catch (e) {
+                  console.error("Failed to decode UTF-8 filename.", e);
+                  // 如果解码失败，回退到普通文件名提取
+                  extractNormalFilename(contentDisposition);
+                }
+              } else {
+                // 处理普通ASCII文件名
+                extractNormalFilename(contentDisposition);
+              }
+              function extractNormalFilename(disposition: string) {
+                const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                const matches = filenameRegex.exec(disposition);
+
+                if (matches && matches[1]) {
+                  // 移除引号并解码
+                  let extractedFilename = matches[1].replace(/['"]/g, "");
+                  try {
+                    // 尝试解码URL编码的文件名
+                    extractedFilename = decodeURIComponent(extractedFilename);
+                  } catch (e) {
+                    console.error("Failed to decode filename.", e);
+                  }
+                  finalFilename = extractedFilename;
+                }
+              }
+            } else if ((params as any)?.type) {
+              finalFilename = `${finalFilename}.${(params as any)?.type}`;
+            }
+            downloadByData(data, filename ?? finalFilename);
+            resolve(response);
+          } catch (err) {
+            reject(err);
+          }
+        })
+        .catch(err => reject(err));
+    });
   }
 
   /** 请求拦截 */

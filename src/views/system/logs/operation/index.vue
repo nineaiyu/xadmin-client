@@ -5,13 +5,8 @@ defineOptions({
   name: "SystemOperationLog"
 });
 
-const {
-  api,
-  auth,
-  listColumnsFormat,
-  detailColumnsFormat,
-  operationButtonsProps
-} = useOperationLog();
+const { api, auth, listColumnsFormat, operationButtonsProps } =
+  useOperationLog();
 </script>
 
 <template>
@@ -21,7 +16,6 @@ const {
     :auth="auth"
     locale-name="logsOperation"
     :listColumnsFormat="listColumnsFormat"
-    :detailColumnsFormat="detailColumnsFormat"
     :operationButtonsProps="operationButtonsProps"
   />
 </template>

@@ -458,8 +458,8 @@ export function usePlusPage(emit: any, tableRef: Ref, props: RePlusPageProps) {
       const pks = [];
       if (isArray(value)) {
         value.forEach(item => {
-          if (item.pk) {
-            pks.push(item.pk);
+          if (item.pk ?? item.id) {
+            pks.push(item.pk ?? item.id);
           }
         });
         if (pks.length > 0) {

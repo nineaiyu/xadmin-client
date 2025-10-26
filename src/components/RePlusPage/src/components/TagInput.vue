@@ -7,8 +7,9 @@
       :type="tagType(v)"
       closable
       size="default"
+      :class="{ 'tag-editing': editingIndex === k }"
       @click="handleTagClick(v, k)"
-      @close="handleTagClose(v)"
+      @close="handleTagClose(v, k)"
     >
       {{ v }}
     </el-tag>
@@ -66,34 +67,70 @@ const component = ref(
 const iPlaceholder = computed(
   () => props.placeholder ?? t("tagInput.placeholder")
 );
-const handleTagClose = tag => {
-  filterTags.value.splice(filterTags.value.indexOf(tag), 1);
+
+// 当前正在编辑的标签索引
+const editingIndex = ref(-1);
+
+// 处理标签关闭
+const handleTagClose = (tag, index) => {
+  filterTags.value.splice(index, 1);
+  // 如果正在编辑的标签被删除，重置编辑状态
+  if (editingIndex.value === index) {
+    editingIndex.value = -1;
+    filterValue.value = "";
+  }
+  // 更新后续标签的索引
+  else if (editingIndex.value > index) {
+    editingIndex.value--;
+  }
   emit("change", filterTags.value);
 };
 
+// 处理自动完成选择
 const handleSelect = item => {
   filterTags.value = item.value;
   handleConfirm();
 };
 
+// 确认添加或修改标签
 const handleConfirm = () => {
   if (filterValue.value === "") return;
-  if (!filterTags.value.includes(filterValue.value)) {
+
+  // 如果正在编辑某个标签
+  if (editingIndex.value >= 0) {
+    // 如果新值与旧值不同，且不与其他标签重复
+    if (
+      filterTags.value[editingIndex.value] !== filterValue.value &&
+      !filterTags.value.includes(filterValue.value)
+    ) {
+      filterTags.value[editingIndex.value] = filterValue.value;
+      emit("change", filterTags.value);
+    }
+  }
+  // 否则是添加新标签
+  else if (!filterTags.value.includes(filterValue.value)) {
     filterTags.value.push(filterValue.value);
-    filterValue.value = "";
     emit("change", filterTags.value);
   }
+
+  // 重置状态
+  filterValue.value = "";
+  editingIndex.value = -1;
   SearchInput.value.focus();
 };
 
+// 处理输入变化
 const handleChange = debounce(() => {
   handleConfirm();
 }, 200);
 
-const handleTagClick = (v, k) => {
-  filterTags.value.splice(k, 1);
-  handleConfirm();
-  filterValue.value = v;
+// 处理标签点击 - 进入编辑模式
+const handleTagClick = (value, index) => {
+  // 设置正在编辑的标签索引
+  editingIndex.value = index;
+  // 将标签值放入输入框
+  filterValue.value = value;
+  // 聚焦到输入框
   SearchInput.value.focus();
 };
 </script>
@@ -116,6 +153,7 @@ const handleTagClick = (v, k) => {
   & ::v-deep(.el-tag) {
     margin-top: 1px;
     font-family: sans-serif !important;
+    cursor: pointer;
   }
 
   & ::v-deep(.el-autocomplete) {
@@ -145,5 +183,11 @@ const handleTagClick = (v, k) => {
 
 .filter-field ::v-deep(.el-input__inner) {
   height: 28px;
+}
+
+.tag-editing {
+  color: var(--el-color-primary) !important;
+  background-color: var(--el-color-primary-light-8) !important;
+  border-color: var(--el-color-primary) !important;
 }
 </style>
