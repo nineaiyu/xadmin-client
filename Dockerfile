@@ -1,6 +1,5 @@
 FROM nineaiyu/xadmin-client-base:20250801_134813 AS stage-build
 
-
 ARG VERSION
 
 COPY . .
