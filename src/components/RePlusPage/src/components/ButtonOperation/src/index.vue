@@ -21,7 +21,7 @@
       <el-dropdown-menu>
         <el-dropdown-item
           v-for="buttonRow in getSubButtons().nextButtons"
-          :key="unref(buttonRow.code) as string"
+          :key="unref(buttonRow.code)"
         >
           <component :is="() => render(row, buttonRow)" :class="buttonClass" />
         </el-dropdown-item>
