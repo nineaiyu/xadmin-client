@@ -59,8 +59,8 @@ layout:
   fold: 点击折叠
   unfold: 点击展开
   searchPlaceholder: 搜索菜单（中文模式下支持拼音搜索）
-  theme: 主题
-  navigationMode: 导航栏模式
+  theme: 主题模式
+  menuLayout: 菜单布局
   leftMode: 左侧菜单，亲切熟悉
   topMode: 顶部菜单，简洁概览
   mixedMode: 混合菜单，灵活多变

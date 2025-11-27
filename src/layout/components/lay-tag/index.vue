@@ -573,25 +573,25 @@ onBeforeUnmount(() => {
     </span>
     <div
       ref="scrollbarDom"
-      :class="showModel === 'chrome' && 'chrome-scroll-container'"
       class="scroll-container"
+      :class="showModel === 'chrome' && 'chrome-scroll-container'"
       @wheel.prevent="handleWheel"
     >
-      <div ref="tabDom" :style="getTabStyle" class="tab select-none">
+      <div ref="tabDom" class="tab select-none" :style="getTabStyle">
         <div
           v-for="(item, index) in multiTags"
-          :key="index"
           :ref="'dynamic' + index"
+          :key="index"
           :class="[
             'scroll-item is-closable',
             linkIsActive(item),
             showModel === 'chrome' && 'chrome-item',
             isFixedTag(item) && 'fixed-tag'
           ]"
-          @click="tagOnClick(item)"
           @contextmenu.prevent="openMenu(item, $event)"
           @mouseenter.prevent="onMouseenter(index)"
           @mouseleave.prevent="onMouseleave(index)"
+          @click="tagOnClick(item)"
         >
           <template v-if="showModel !== 'chrome'">
             <span
@@ -618,6 +618,10 @@ onBeforeUnmount(() => {
             />
           </template>
           <div v-else class="chrome-tab">
+            <span
+              v-if="index !== 0 && index !== activeIndex"
+              class="chrome-tab-divider bg-[#e2e2e2] dark:bg-[#2d2d2d]"
+            />
             <div class="chrome-tab__bg">
               <TagChrome />
             </div>
@@ -631,7 +635,6 @@ onBeforeUnmount(() => {
             >
               <IconifyIconOffline :icon="Close" />
             </span>
-            <span class="chrome-tab-divider" />
           </div>
         </div>
       </div>
@@ -643,8 +646,8 @@ onBeforeUnmount(() => {
     <transition name="el-zoom-in-top">
       <ul
         v-show="visible"
-        :key="Math.random()"
         ref="contextmenuRef"
+        :key="Math.random()"
         :style="getContextMenuStyle"
         class="contextmenu"
       >
@@ -662,8 +665,8 @@ onBeforeUnmount(() => {
     </transition>
     <!-- 右侧功能按钮 -->
     <el-dropdown
-      placement="bottom-end"
       trigger="click"
+      placement="bottom-end"
       @command="handleCommand"
     >
       <span class="arrow-down">
@@ -675,8 +678,8 @@ onBeforeUnmount(() => {
             v-for="(item, key) in tagsViews"
             :key="key"
             :command="{ key, item }"
-            :disabled="item.disabled"
             :divided="item.divided"
+            :disabled="item.disabled"
           >
             <IconifyIconOffline :icon="item.icon" />
             {{ transformI18n(item.text) }}

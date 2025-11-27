@@ -30,7 +30,7 @@ const isOpen = ref(!deviceDetection());
 const userinfoStore = useUserStoreHook();
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 onBeforeMount(() => {
-  useDataThemeChange().dataThemeChange($storage.layout?.overallStyle);
+  useDataThemeChange().dataThemeChange($storage.layout?.themeMode);
 });
 const { t } = useI18n();
 

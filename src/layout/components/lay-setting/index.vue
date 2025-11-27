@@ -35,7 +35,7 @@ const horizontalRef = ref();
 
 const {
   dataTheme,
-  overallStyle,
+  themeMode,
   layoutTheme,
   themeColors,
   toggleClass,
@@ -48,7 +48,7 @@ if (unref(layoutTheme)) {
   const layout = unref(layoutTheme).layout;
   const theme = unref(layoutTheme).theme;
   document.documentElement.setAttribute("data-theme", theme);
-  setLayoutModel(layout);
+  setMenuLayout(layout);
 }
 
 /** 默认灵动模式 */
@@ -237,7 +237,7 @@ const markOptions = computed<Array<OptionsType>>(() => {
 });
 
 /** 设置导航模式 */
-function setLayoutModel(layout: string) {
+function setMenuLayout(layout: string) {
   layoutTheme.value.layout = layout;
   window.document.body.setAttribute("layout", layout);
   $storage.layout = {
@@ -247,7 +247,7 @@ function setLayoutModel(layout: string) {
     sidebarStatus: $storage.layout?.sidebarStatus,
     epThemeColor: $storage.layout?.epThemeColor,
     themeColor: $storage.layout?.themeColor,
-    overallStyle: $storage.layout?.overallStyle
+    themeMode: $storage.layout?.themeMode
   };
   useAppStoreHook().setLayout(layout);
 }
@@ -276,9 +276,9 @@ const mediaQueryList = window.matchMedia("(prefers-color-scheme: dark)");
 
 /** 根据操作系统主题设置平台整体风格 */
 function updateTheme() {
-  if (overallStyle.value !== "system") return;
+  if (themeMode.value !== "system") return;
   dataTheme.value = mediaQueryList.matches;
-  dataThemeChange(overallStyle.value);
+  dataThemeChange(themeMode.value);
 }
 
 function removeMatchMedia() {
@@ -313,7 +313,7 @@ onUnmounted(() => removeMatchMedia);
     <div class="p-5">
       <p :class="pClass">{{ t("layout.theme") }}</p>
       <Segmented
-        :modelValue="overallStyle === 'system' ? 2 : dataTheme ? 1 : 0"
+        :modelValue="themeMode === 'system' ? 2 : dataTheme ? 1 : 0"
         :options="themeOptions"
         class="select-none"
         @change="
@@ -321,7 +321,7 @@ onUnmounted(() => removeMatchMedia);
             theme.index === 1 && theme.index !== 2
               ? (dataTheme = true)
               : (dataTheme = false);
-            overallStyle = theme.option.theme;
+            themeMode = theme.option.theme;
             dataThemeChange(theme.option.theme);
             theme.index === 2 && watchSystemThemeChange();
           }
@@ -347,7 +347,7 @@ onUnmounted(() => removeMatchMedia);
         </li>
       </ul>
 
-      <p :class="['mt-5!', pClass]">{{ t("layout.navigationMode") }}</p>
+      <p :class="['mt-5!', pClass]">{{ t("layout.menuLayout") }}</p>
       <ul class="pure-theme">
         <li
           ref="verticalRef"
@@ -356,7 +356,7 @@ onUnmounted(() => removeMatchMedia);
             zIndex: 41000
           }"
           :class="layoutTheme.layout === 'vertical' ? 'is-select' : ''"
-          @click="setLayoutModel('vertical')"
+          @click="setMenuLayout('vertical')"
         >
           <div />
           <div />
@@ -369,7 +369,7 @@ onUnmounted(() => removeMatchMedia);
             zIndex: 41000
           }"
           :class="layoutTheme.layout === 'horizontal' ? 'is-select' : ''"
-          @click="setLayoutModel('horizontal')"
+          @click="setMenuLayout('horizontal')"
         >
           <div />
           <div />
@@ -382,7 +382,7 @@ onUnmounted(() => removeMatchMedia);
             zIndex: 41000
           }"
           :class="layoutTheme.layout === 'mix' ? 'is-select' : ''"
-          @click="setLayoutModel('mix')"
+          @click="setMenuLayout('mix')"
         >
           <div />
           <div />
