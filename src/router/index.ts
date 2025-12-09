@@ -24,7 +24,12 @@ import {
   type RouteComponent,
   createRouter
 } from "vue-router";
-import { removeToken, multipleTabsKey, getRefreshToken } from "@/utils/auth";
+import {
+  removeToken,
+  multipleTabsKey,
+  getRefreshToken,
+  getToken
+} from "@/utils/auth";
 
 /** 自动导入全部静态路由，无需再手动引入！匹配 src/router/modules 目录（任何嵌套级别）中具有 .ts 扩展名的所有文件，除了 remaining.ts 文件
  * 如何匹配所有文件请看：https://github.com/mrmlnc/fast-glob#basic-syntax
@@ -136,6 +141,9 @@ router.beforeEach((to: ToRouteType, _from, next) => {
 
   /** 如果已经登录并存在登录信息后不能跳转到路由白名单，而是继续保持在当前页面 */
   function toCorrectRoute() {
+    if (to.path === "/login" && getToken()) {
+      return next((to?.query?.redirect as string) ?? "/");
+    }
     return whiteList.includes(to.fullPath) ? next(_from.fullPath) : next();
   }
 
