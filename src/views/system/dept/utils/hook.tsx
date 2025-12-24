@@ -58,7 +58,6 @@ export function useDept(tableRef: Ref) {
           column["fieldProps"] = {
             ...column["fieldProps"],
             ...{
-              valueOnClear: "",
               props: {
                 value: "pk",
                 label: "name",
