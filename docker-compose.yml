@@ -1,0 +1,30 @@
+networks:
+  net:
+    name: xadmin-server_net  # 使用 xadmin-server-api 的网络
+    external: true
+
+
+services:
+  nginx-web:
+    image: xadmin-web
+    container_name: xadmin-web
+    hostname: xadmin-web
+    build:
+      context: .
+      dockerfile: Dockerfile-web
+    restart: always
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+#      DOMAIN: ${DOMAIN:-xadmin.dvcloud.xin}  # 如果要使用ssl，并且使用acme.sh自动申请证书，请取消注释，并将 xadmin.dvcloud.xin 填写自己的域名！！！
+#      EMAIL: ${EMAIL:-xadmin@dvcloud.xin}   # 如果要使用ssl，并且使用acme.sh自动申请证书，请取消注释，并将 xadmin@dvcloud.xin 填写自己的邮件！！！
+    volumes:
+      - ./web/acme.sh:/web/acme.sh
+      - ./web/data/dist:/web/dist
+      - ./web/data/.acme.sh:/root/.acme.sh
+      - ./web/data/cert:/web/cert
+      - ./web/data/logs:/var/log/nginx
+    ports:
+#      - "443:443"  # 如果要使用ssl，请取消注释
+      - "80:80"
+    networks:
+      - net

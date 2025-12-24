@@ -92,7 +92,7 @@ declare global {
     Layout?: string;
     Theme?: string;
     DarkMode?: boolean;
-    OverallStyle?: string;
+    ThemeMode?: string;
     Grey?: boolean;
     Weak?: boolean;
     HideTabs?: boolean;
@@ -131,7 +131,7 @@ declare global {
     sidebarStatus?: boolean;
     epThemeColor?: string;
     themeColor?: string;
-    overallStyle?: string;
+    themeMode?: string;
     showLogo?: boolean;
     showModel?: string;
     menuSearchHistory?: number;
@@ -152,7 +152,7 @@ declare global {
       sidebarStatus?: boolean;
       epThemeColor?: string;
       themeColor?: string;
-      overallStyle?: string;
+      themeMode?: string;
     };
     configure: {
       grey?: boolean;

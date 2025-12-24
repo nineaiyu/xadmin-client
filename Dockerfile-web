@@ -1,0 +1,33 @@
+FROM registry.cn-beijing.aliyuncs.com/nineaiyu/nginx:1.24-bullseye
+
+ARG APT_MIRROR=http://mirrors.tuna.tsinghua.edu.cn
+
+# Install APT dependencies
+ARG DEPENDENCIES="                    \
+        curl                          \
+        socat                         \
+        cron                          \
+        ca-certificates"
+
+RUN set -ex \
+    && rm -f /etc/apt/apt.conf.d/docker-clean \
+    && sed -i "s@http://.*.debian.org@${APT_MIRROR}@g" /etc/apt/sources.list \
+    && apt-get update > /dev/null \
+    && apt-get -y install --no-install-recommends ${DEPENDENCIES} \
+    && echo "no" | dpkg-reconfigure dash
+
+
+RUN mkdir -p /var/www/acme-challenge
+
+COPY web/conf/nginx.conf /etc/nginx/nginx.conf
+COPY web/conf/xadmin-api-conf /etc/nginx/conf.d/xadmin-api-conf
+
+COPY entrypoint.sh /entrypoint.sh
+
+RUN chmod +x /entrypoint.sh
+
+EXPOSE 80 443
+
+ENTRYPOINT ["/bin/bash", "entrypoint.sh"]
+
+STOPSIGNAL SIGQUIT

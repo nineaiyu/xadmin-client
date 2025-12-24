@@ -34,7 +34,7 @@ export function useDataThemeChange() {
 
   const { $storage } = useGlobal<GlobalPropertiesApi>();
   const dataTheme = ref<boolean>($storage?.layout?.darkMode);
-  const overallStyle = ref<string>($storage?.layout?.overallStyle);
+  const themeMode = ref<string>($storage?.layout?.themeMode);
   const body = document.documentElement as HTMLElement;
 
   function toggleClass(flag: boolean, clsName: string, target?: HTMLElement) {
@@ -60,7 +60,7 @@ export function useDataThemeChange() {
       sidebarStatus: $storage.layout?.sidebarStatus,
       epThemeColor: $storage.layout?.epThemeColor,
       themeColor: isClick ? theme : storageThemeColor,
-      overallStyle: overallStyle.value
+      themeMode: themeMode.value
     };
 
     if (theme === "default" || theme === "light") {
@@ -94,7 +94,7 @@ export function useDataThemeChange() {
 
   /** 浅色、深色整体风格切换 */
   function dataThemeChange(overall?: string) {
-    overallStyle.value = overall;
+    themeMode.value = overall;
     if (useEpThemeStoreHook().epTheme === "light" && dataTheme.value) {
       setLayoutThemeColor("default", false);
     } else {
@@ -132,7 +132,7 @@ export function useDataThemeChange() {
   return {
     body,
     dataTheme,
-    overallStyle,
+    themeMode,
     layoutTheme,
     themeColors,
     onReset,

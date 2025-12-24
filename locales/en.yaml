@@ -59,8 +59,8 @@ layout:
   fold: Fold
   unfold: Unfold
   searchPlaceholder: Search menu (Pinyin search is supported)
-  theme: Theme
-  navigationMode: NavigationMode
+  theme: Theme Mode
+  menuLayout: Menu Layout
   leftMode: Left mode
   topMode: Top mode
   mixedMode: Mixed mode
