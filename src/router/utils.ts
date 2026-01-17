@@ -191,8 +191,10 @@ function handleAsyncRoutes(routeList, authList) {
 }
 
 /** 初始化路由（`new Promise` 写法防止在异步请求中造成无限循环）*/
-function initRouter() {
-  useSiteConfigStoreHook().getSiteConfig();
+function initRouter(loadConfig: boolean = false) {
+  if (loadConfig) {
+    useSiteConfigStoreHook().getSiteConfig();
+  }
   useUserStoreHook()
     .getUserInfo()
     .then(() => {

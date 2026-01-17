@@ -54,11 +54,20 @@ app.component("RePlusPage", RePlusPage);
 import "tippy.js/dist/tippy.css";
 import "tippy.js/themes/light.css";
 import VueTippy from "vue-tippy";
+import { getToken } from "@/utils/auth";
+import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
 app.use(VueTippy);
 
 getPlatformConfig(app).then(async config => {
   injectResponsiveStorage(app, config);
   setupStore(app);
+  if (getToken()) {
+    try {
+      await useSiteConfigStoreHook().getSiteConfig();
+    } catch (error) {
+      console.warn("Failed to fetch site config, using default config:", error);
+    }
+  }
   app.use(router);
   await router.isReady();
   app

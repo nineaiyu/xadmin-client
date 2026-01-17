@@ -80,7 +80,7 @@ const onLogin = () => {
     apiReq: loginVerifyCodeApi(data),
     success(res) {
       setToken(res.data);
-      initRouter().then(() => {
+      initRouter(true).then(() => {
         disabled.value = true;
         router
           .push((route.query?.redirect as string) ?? getTopMenu(true).path)

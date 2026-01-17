@@ -91,7 +91,7 @@ const onLogin = async (formEl: FormInstance | undefined) => {
             message(transformI18n($t("login.loginSuccess")), {
               type: "success"
             });
-            initRouter()
+            initRouter(true)
               .then(() => {
                 disabled.value = true;
                 router

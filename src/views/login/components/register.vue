@@ -85,7 +85,7 @@ const onRegister = () => {
         type: "success"
       });
       // 获取后端路由
-      initRouter().then(() => {
+      initRouter(true).then(() => {
         router.push(getTopMenu(true).path);
       });
       loading.value = false;
