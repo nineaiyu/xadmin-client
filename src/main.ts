@@ -57,10 +57,10 @@ import VueTippy from "vue-tippy";
 app.use(VueTippy);
 
 getPlatformConfig(app).then(async config => {
+  injectResponsiveStorage(app, config);
   setupStore(app);
   app.use(router);
   await router.isReady();
-  injectResponsiveStorage(app, config);
   app
     .use(MotionPlugin)
     .use(useI18n)
