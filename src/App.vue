@@ -11,8 +11,8 @@ import { useGlobal } from "@pureadmin/utils";
 import { defineComponent, computed } from "vue";
 import { checkVersion } from "version-rocket";
 import { ElConfigProvider } from "element-plus";
-import { ReDialog } from "@/components/ReDialog";
-import { ReDrawer } from "@/components/ReDrawer";
+import { closeAllDialog, ReDialog } from "@/components/ReDialog";
+import { closeAllDrawer, ReDrawer } from "@/components/ReDrawer";
 import en from "element-plus/es/locale/lang/en";
 import zhCn from "element-plus/es/locale/lang/zh-cn";
 import plusEn from "plus-pro-components/es/locale/lang/en";
@@ -20,6 +20,7 @@ import plusZhCn from "plus-pro-components/es/locale/lang/zh-cn";
 import { Boot } from "@wangeditor/editor";
 import attachmentModule from "@wangeditor/plugin-upload-attachment";
 import { $t, transformI18n } from "@/plugins/i18n";
+import { useRouter } from "vue-router";
 
 try {
   Boot.registerModule(attachmentModule);
@@ -35,11 +36,16 @@ export default defineComponent({
     ReDrawer
   },
   setup() {
+    const router = useRouter();
     const { $storage } = useGlobal<GlobalPropertiesApi>();
     const currentLocale = computed(() => {
       return $storage.locale?.locale === "zh"
         ? { ...zhCn, ...plusZhCn }
         : { ...en, ...plusEn };
+    });
+    router.beforeEach(() => {
+      closeAllDialog();
+      closeAllDrawer();
     });
     return {
       currentLocale
