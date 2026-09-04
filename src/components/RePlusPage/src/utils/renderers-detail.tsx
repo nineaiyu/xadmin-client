@@ -8,7 +8,7 @@ import VueJsonPretty from "vue-json-pretty";
 import { selectBooleanOptions } from "./constants";
 import { formatAddOrEditOptions } from "./renders";
 import { getColourTypeByIndex } from "./index";
-import type { PlusColumnRegistry } from "./types";
+import type { ChoiceOptionItem, PlusColumnRegistry } from "./types";
 
 /**
  * 详情/表格列内置渲染器：input_type -> 对 PageColumn 就地配置
@@ -278,13 +278,14 @@ export const builtinDetailRenderers: PlusColumnRegistry = {
     delete item["renderField"];
   },
   list: (item, { column }) => {
-    item["render"] = (value: any) => {
+    item["render"] = (value: unknown) => {
       try {
-        value = JSON.stringify(value);
+        return JSON.stringify(value);
       } catch (e) {
+        // 循环引用等无法序列化的值退化为字符串展示（与文本插值效果一致）
         console.warn(e);
+        return String(value);
       }
-      return value;
     };
     // pure-table ******
     item["cellRenderer"] = ({ row }) => {
@@ -301,7 +302,7 @@ export const builtinDetailRenderers: PlusColumnRegistry = {
 
 /** m2m_related_field / labeled_multiple_choice 共用 */
 function multipleListDetailRenderer(item, { column }) {
-  item["render"] = (value: Array<any>) => {
+  item["render"] = (value: ChoiceOptionItem[]) => {
     if (value instanceof Array) {
       return (
         <>

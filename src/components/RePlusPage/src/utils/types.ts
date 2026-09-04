@@ -81,6 +81,17 @@ export type PlusRenderField = (
 type PlusColumnMeta = SearchFieldsResult["data"][0] &
   Partial<SearchColumnsResult["data"][0]>;
 
+/**
+ * 选择型字段渲染值中的选项条目（m2m_related_field / labeled_multiple_choice 等）：
+ * `label` 用于展示，`pk` / `value` 用作列表 key
+ */
+type ChoiceOptionItem = {
+  pk?: number | string;
+  value?: number | string;
+  label?: string;
+  [key: string]: unknown;
+};
+
 /** 列渲染器上下文：提供当前列元数据与 i18n / 自定义搜索组件依赖 */
 interface PlusColumnContext {
   column: PlusColumnMeta;
@@ -232,5 +243,6 @@ export type {
   PlusColumnMeta,
   PlusColumnContext,
   PlusColumnHandler,
-  PlusColumnRegistry
+  PlusColumnRegistry,
+  ChoiceOptionItem
 };
