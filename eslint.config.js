@@ -81,7 +81,7 @@ export default defineConfig([
     rules: {
       "@typescript-eslint/no-redeclare": "error",
       "@typescript-eslint/ban-ts-comment": "off",
-      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/prefer-as-const": "warn",
       "@typescript-eslint/no-empty-function": "error",
       "@typescript-eslint/no-non-null-assertion": "off",
