@@ -65,14 +65,9 @@ export function setToken(data: TokenInfo) {
   );
 }
 
+/** 用户信息统一经 user store 写入（state + 持久化副本一并更新） */
 export function setUserInfo(data: UserInfo) {
-  useUserStoreHook().SET_AVATAR(data.avatar);
-  useUserStoreHook().SET_USERNAME(data.username);
-  useUserStoreHook().SET_NICKNAME(data.nickname);
-  useUserStoreHook().SET_EMAIL(data.email);
-  useUserStoreHook().SET_PHONE(data.phone);
-  useUserStoreHook().SET_ROLES(data?.roles);
-  storageLocal().setItem(userKey, data);
+  useUserStoreHook().updateUserInfo(data);
 }
 
 /** 删除`token`以及key值为`user-info`的session信息 */

@@ -18,14 +18,12 @@ import {
 } from "@pureadmin/utils";
 import { getConfig } from "@/config";
 import { buildHierarchyTree } from "@/utils/tree";
-import { userKey } from "@/utils/auth";
 import { type menuType, routerArrays } from "@/layout/types";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 // 动态路由
 import { getAsyncRoutes } from "@/api/routes";
 import { useUserStoreHook } from "@/store/modules/user";
-import type { UserInfo } from "@/api/auth";
 import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
 
 const IFrame = () => import("@/layout/frame.vue");
@@ -80,9 +78,9 @@ function isOneOfArray(a: Array<string>, b: Array<string>) {
     : true;
 }
 
-/** 从localStorage里取出当前登录用户的角色roles，过滤无权限的菜单 */
+/** 从用户 store 读取当前登录用户的角色，过滤无权限的菜单 */
 function filterNoPermissionTree(data: RouteComponent[]) {
-  const currentRoles = storageLocal().getItem<UserInfo>(userKey)?.roles ?? [];
+  const currentRoles = useUserStoreHook().roles ?? [];
   const newTree = cloneDeep(data).filter((v: any) =>
     isOneOfArray(v.meta?.roles, currentRoles)
   );
