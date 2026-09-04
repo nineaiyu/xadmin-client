@@ -14,7 +14,7 @@ import type { BaseApi } from "@/api/base";
 import type { formDialogDrawerOptions } from "./handle";
 import type { OperationProps } from "@/components/RePlusPage";
 import type { PureTableBarProps } from "@/components/RePureTableBar";
-import type { VNode } from "vue";
+import type { VNode, Component } from "vue";
 import type { Mutable } from "@vueuse/core";
 import type { SearchColumnsResult, SearchFieldsResult } from "@/api/types";
 
@@ -40,6 +40,29 @@ interface PageColumn extends PlusColumn, TableColumn {
       Mutable<SearchColumnsResult["data"][0]>
   >;
 }
+
+/** 列元数据，同时兼容 search-fields 与 search-columns 接口返回 */
+type PlusColumnMeta = SearchFieldsResult["data"][0] &
+  Partial<SearchColumnsResult["data"][0]>;
+
+/** 列渲染器上下文：提供当前列元数据与 i18n / 自定义搜索组件依赖 */
+interface PlusColumnContext {
+  column: PlusColumnMeta;
+  t: (arg0: string, arg1?: object) => string;
+  te: (arg0: string, arg1?: string) => boolean;
+  localeName: string;
+  /** `api-search-*` 自定义搜索组件映射 */
+  apiSearchComponents: Record<string, Component>;
+}
+
+/**
+ * 列渲染处理器：对 PageColumn 就地配置（valueType / fieldProps / renderField /
+ * cellRenderer 等），与原 switch-case 的 mutation 行为保持一致
+ */
+type PlusColumnHandler = (item: PageColumn, ctx: PlusColumnContext) => void;
+
+/** input_type -> 处理器 的渲染器注册表 */
+type PlusColumnRegistry = Record<string, PlusColumnHandler>;
 
 interface PageTableColumn extends TableColumns {
   prop?: string;
@@ -165,4 +188,13 @@ interface RePlusPageProps {
   tableBarButtonsProps?: Partial<OperationProps>;
 }
 
-export type { ApiAuthProps, RePlusPageProps, PageColumn, PageTableColumn };
+export type {
+  ApiAuthProps,
+  RePlusPageProps,
+  PageColumn,
+  PageTableColumn,
+  PlusColumnMeta,
+  PlusColumnContext,
+  PlusColumnHandler,
+  PlusColumnRegistry
+};
