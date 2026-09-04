@@ -6,6 +6,7 @@ export * from "./src/utils/index";
 export * from "./src/utils/columns";
 export * from "./src/utils/renders";
 export * from "./src/utils/handle";
+export * from "./src/utils/registry";
 export * from "./src/components/ButtonOperation";
 export * from "./src/utils/types";
 export * from "./src/utils/public";

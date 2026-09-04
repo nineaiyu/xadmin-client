@@ -6,12 +6,18 @@ dist-ssr
 .eslintcache
 report.html
 vite.config.*.timestamp*
+coverage
 
 yarn.lock
 npm-debug.log*
 .pnpm-error.log*
 .pnpm-debug.log
 tests/**/coverage/
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
 
 # Editor directories and files
 .idea

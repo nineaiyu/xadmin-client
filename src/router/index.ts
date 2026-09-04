@@ -7,6 +7,7 @@ import { buildHierarchyTree } from "@/utils/tree";
 import remainingRouter from "./modules/remaining";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { usePermissionStoreHook } from "@/store/modules/permission";
+import { useUserStoreHook } from "@/store/modules/user";
 import { isUrl, openLink, cloneDeep, isAllEmpty } from "@pureadmin/utils";
 import {
   ascending,
@@ -16,7 +17,8 @@ import {
   findRouteByPath,
   handleAliveRoute,
   formatTwoStageRoutes,
-  formatFlatteningRoutes
+  formatFlatteningRoutes,
+  isOneOfArray
 } from "./utils";
 import {
   type Router,
@@ -148,10 +150,14 @@ router.beforeEach((to: ToRouteType, _from, next) => {
   }
 
   if (Cookies.get(multipleTabsKey) && refresh) {
-    // // 无权限跳转403页面
-    // if (to.meta?.roles && !isOneOfArray(to.meta?.roles, userInfo?.roles)) {
-    //   next({ path: "/error/403" });
-    // }
+    // 无权限跳转403页面（meta.roles 配置的路由需与当前用户角色有交集）
+    if (
+      to.meta?.roles &&
+      !isOneOfArray(to.meta?.roles, useUserStoreHook().roles)
+    ) {
+      next({ path: "/error/403" });
+      return;
+    }
     // 开启隐藏首页后在浏览器地址栏手动输入首页welcome路由则跳转到404页面
     if (VITE_HIDE_HOME === "true" && to.fullPath === "/welcome") {
       next({ path: "/error/404" });

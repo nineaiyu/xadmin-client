@@ -37,32 +37,50 @@ import { ElNotification } from "element-plus";
 const { setWatermark, clear } = useWatermark();
 
 export const useUserStore = defineStore("pure-user", {
-  state: (): userType => ({
-    // 头像
-    avatar: storageLocal().getItem<UserInfo>(userKey)?.avatar ?? "",
-    // 用户名
-    username: storageLocal().getItem<UserInfo>(userKey)?.username ?? "",
-    // 昵称
-    nickname: storageLocal().getItem<UserInfo>(userKey)?.nickname ?? "",
-    email: storageLocal().getItem<UserInfo>(userKey)?.email ?? "",
-    phone: storageLocal().getItem<UserInfo>(userKey)?.phone ?? "",
-    // 页面级别权限
-    roles: storageLocal().getItem<UserInfo>(userKey)?.roles ?? [],
-    // 前端生成的验证码（按实际需求替换）
-    verifyCodeLength: 0,
-    // 判断登录页面显示哪个组件（0：登录（默认）、1：手机登录、2：二维码登录、3：注册、4：忘记密码）
-    currentPage: 0,
-    // 是否勾选了登录页的免登录
-    isRemembered: false,
-    // 登录页的免登录存储几天，默认7天
-    loginDay: 7,
-    // 未读消息数量
-    noticeCount: 0,
-    // 消息通知websocket
-    websocket: null,
-    clear: null
-  }),
+  state: (): userType => {
+    // 用户信息唯一持久化副本，仅在下方 updateUserInfo 写入、removeToken 清除；
+    // 其余代码读取用户信息一律走本 store，禁止直接读 storage
+    const userInfo = storageLocal().getItem<UserInfo>(userKey);
+    return {
+      // 头像
+      avatar: userInfo?.avatar ?? "",
+      // 用户名
+      username: userInfo?.username ?? "",
+      // 昵称
+      nickname: userInfo?.nickname ?? "",
+      email: userInfo?.email ?? "",
+      phone: userInfo?.phone ?? "",
+      // 页面级别权限
+      roles: userInfo?.roles ?? [],
+      // 前端生成的验证码（按实际需求替换）
+      verifyCodeLength: 0,
+      // 判断登录页面显示哪个组件（0：登录（默认）、1：手机登录、2：二维码登录、3：注册、4：忘记密码）
+      currentPage: 0,
+      // 是否勾选了登录页的免登录
+      isRemembered: false,
+      // 登录页的免登录存储几天，默认7天
+      loginDay: 7,
+      // 未读消息数量
+      noticeCount: 0,
+      // 消息通知websocket
+      websocket: null,
+      clear: null
+    };
+  },
   actions: {
+    /**
+     * 更新用户信息并写穿持久化副本（storage）。
+     * 用户信息以此 action 为唯一写入入口，读取一律走本 store state
+     */
+    updateUserInfo(data: UserInfo) {
+      this.avatar = data.avatar;
+      this.username = data.username;
+      this.nickname = data.nickname;
+      this.email = data.email;
+      this.phone = data.phone;
+      this.roles = data?.roles;
+      storageLocal().setItem(userKey, data);
+    },
     /** 存储用户头像 */
     SET_AVATAR(avatar: string) {
       this.avatar = avatar;
