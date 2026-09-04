@@ -16,6 +16,8 @@ declare global {
     title: string;
     /** 菜单图标 `可选` */
     icon?: string | FunctionalComponent;
+    /** 菜单升序排序，值越高排的越后（缺省时由 `ascending` 按顺序自动补齐）`可选` */
+    rank?: number;
     /** 菜单名称右侧的额外图标 */
     extraIcon?: string | FunctionalComponent;
     /** 是否在菜单中显示（默认`true`）`可选` */

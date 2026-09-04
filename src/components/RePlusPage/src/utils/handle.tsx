@@ -1,12 +1,20 @@
 import { addDialog, type DialogOptions } from "@/components/ReDialog/index";
 import { deviceDetection } from "@pureadmin/utils";
-import { type Component, h, type Ref, ref, toRaw } from "vue";
+import {
+  type Component,
+  type CSSProperties,
+  h,
+  type Ref,
+  ref,
+  toRaw
+} from "vue";
 import { cloneDeep } from "lodash-es";
 import { message } from "@/utils/message";
-import type { PlusFormProps } from "plus-pro-components";
-import { ElMessageBox, type FormInstance, type TabsProps } from "element-plus";
+import type { PlusFormProps, RecordType } from "plus-pro-components";
+import { ElMessageBox, type FormInstance } from "element-plus";
 import type { BaseApi } from "@/api/base";
 import type { DetailResult } from "@/api/types";
+import type { TableColumnRenderer } from "@pureadmin/table";
 import { type PageColumn, uniqueArrayObj } from "@/components/RePlusPage";
 import { resourcesIDCacheApi } from "@/api/common";
 import AddOrEdit from "../components/AddOrEdit.vue";
@@ -20,11 +28,19 @@ const modeFuncMap = {
 } satisfies {
   [key in "dialog" | "drawer"]: (
     options: Partial<DrawerOptions & DialogOptions>
-  ) => any;
+  ) => void;
+};
+
+/**
+ * 动态属性表：每个键的值可以是静态值，也可以是接收表单上下文求值的解析器。
+ * openDialogDrawer 打开弹层前会统一解析（函数值会以表单上下文的深拷贝调用）。
+ */
+type DynamicSpec<TCtx = Partial<formDialogDrawerOptions>> = {
+  [key: string]: unknown | ((formOptions: TCtx) => unknown);
 };
 
 interface callBackArgs {
-  formData: object | any;
+  formData: RecordType;
   formRef: FormInstance;
   formOptions: formDialogDrawerOptions;
   closeLoading: () => void;
@@ -37,68 +53,78 @@ interface formDialogDrawerOptions {
   mode?: "dialog" | "drawer";
   t: (arg0: string, arg1?: object) => string;
   isAdd?: boolean;
-  row?:
-    | object
-    | {
-        [key: string]: (formOptions: Partial<formDialogDrawerOptions>) => any;
-      }; //  外部处理方法
-  title: string; // 弹窗的的title
-  formValue?: Ref; // 表单值
-  rawRow: { [key: string]: any }; //  默认数据或者更新的数据
-  minWidth?: string; // 弹窗的的最小宽度
-  columns?:
-    | object
-    | {
-        [key: string]: (
+  /** 外部处理方法：键值可为静态值或按表单上下文求值的解析器 */
+  row?: DynamicSpec;
+  /** 弹窗的title */
+  title: string;
+  /** 表单值（未传时由 `rawRow`/`row` 的解析结果初始化） */
+  formValue?: Ref;
+  /** 默认数据或者更新的数据 */
+  rawRow: RecordType;
+  /** 弹窗的的最小宽度 */
+  minWidth?: string;
+  /** 表单字段：键值可为静态列对象或解析器（解析器上下文附带当前列 `column`） */
+  columns?: {
+    [key: string]:
+      | object
+      | ((
           formOptions: Partial<formDialogDrawerOptions> & { column: PageColumn }
-        ) => object;
-      }; // 表单字段
-  rawColumns?: PageColumn[] | Array<any>; // 表单字段
-  form?: Component | any; // 挂载的form组件，默认是AddOrEdit组件
-  props?: ((formOptions: formDialogDrawerOptions) => object) | object; //  内容区组件的 props，可通过 defineProps 接收
-  formProps?:
-    | object
-    | {
-        [key: string]: (formOptions: Partial<formDialogDrawerOptions>) => any;
-      }; //  plus form 的props
-  tabsProps?:
-    | Partial<TabsProps>
-    | {
-        [key: string]: (formOptions: Partial<formDialogDrawerOptions>) => any;
-      };
-  rawFormProps?: PlusFormProps; //  plus form 的props
-  dialogDrawerOptions?: Partial<DrawerOptions & DialogOptions>; // dialog options
+        ) => object);
+  };
+  /** 表单字段 */
+  rawColumns?: PageColumn[];
+  /** 挂载的form组件，默认是AddOrEdit组件 */
+  form?: Component;
+  /** 内容区组件的 props，可通过 defineProps 接收 */
+  props?: DynamicSpec;
+  /** plus form 的props */
+  formProps?: DynamicSpec;
+  /** plus form 所在 tabs 的props */
+  tabsProps?: DynamicSpec;
+  /** plus form 的props */
+  rawFormProps?: PlusFormProps;
+  /** dialog options */
+  dialogDrawerOptions?: Partial<DrawerOptions & DialogOptions>;
   beforeSubmit?: ({
     formData,
     formRef,
     formOptions
   }: {
-    formData: object | any;
-    formRef: Ref;
+    formData: RecordType;
+    formRef: Ref<DialogFormInstance | undefined>;
     formOptions: formDialogDrawerOptions;
-  }) => object | any;
-  saveCallback?: ({
-    formData,
-    formRef,
-    formOptions,
-    closeLoading,
-    success,
-    failed,
-    done
-  }: callBackArgs) => void; // 点击保存回调
+  }) => RecordType | undefined;
+  /** 点击保存回调 */
+  saveCallback?: (args: callBackArgs) => void;
+}
+
+/** 挂载在弹层内的表单组件需暴露的实例契约（AddOrEdit / ExportData / ImportData 均实现） */
+interface DialogFormInstance {
+  /** 分页签场景会在当前页实例上挂载 `_allInstances`，供外部统一校验全部表单 */
+  getRef: () => (FormInstance & { _allInstances?: FormInstance[] }) | undefined;
+  setActiveName?: (index: number) => void;
+}
+
+/** 将动态属性表解析为静态属性表（函数值以表单上下文的深拷贝调用，与既有行为一致） */
+function resolveSpec(
+  spec: DynamicSpec | undefined,
+  ctx: formDialogDrawerOptions
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  Object.keys(spec ?? {}).forEach(key => {
+    const value = spec?.[key];
+    if (typeof value === "function") {
+      result[key] = (value as (ctx: unknown) => unknown)(cloneDeep(ctx));
+    } else {
+      result[key] = value;
+    }
+  });
+  return result;
 }
 
 const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
-  const formRef = ref();
-  const rowResult = {};
-  Object.keys(formOptions?.row ?? {}).forEach(key => {
-    const getValue = formOptions.row[key];
-    if (typeof formOptions.row[key] === "function") {
-      rowResult[key] = getValue(cloneDeep(formOptions));
-    } else {
-      rowResult[key] = getValue;
-    }
-  });
+  const formRef = ref<DialogFormInstance>();
+  const rowResult = resolveSpec(formOptions.row, formOptions);
 
   const formInline = {
     ...(cloneDeep(formOptions?.rawRow) ?? {}),
@@ -107,33 +133,19 @@ const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
 
   formOptions.formValue = formOptions.formValue ?? ref(cloneDeep(formInline));
 
-  const propsResult = {};
-  Object.keys(formOptions?.props ?? {}).forEach(key => {
-    const getValue = formOptions.props[key];
-    if (typeof formOptions.props[key] === "function") {
-      propsResult[key] = getValue(cloneDeep(formOptions));
-    } else {
-      propsResult[key] = getValue;
-    }
-  });
+  const propsResult = resolveSpec(formOptions.props, formOptions);
 
-  // let editColumns = [];
-  // if (typeof formOptions?.columns === "function") {
-  //   editColumns = formOptions.columns(cloneDeep(formOptions));
-  // } else {
-  //   editColumns = [...(formOptions?.columns ?? [])];
-  // }
-  const rawColumns = {};
+  const rawColumnsMap: Record<string, PageColumn> = {};
   cloneDeep(formOptions?.rawColumns ?? []).forEach(column => {
-    rawColumns[column._column?.key ?? column.prop] = column;
+    rawColumnsMap[column._column?.key ?? column.prop] = column;
   });
-  const editColumns = {};
+  const editColumns: Record<string, object> = {};
   Object.keys(formOptions?.columns ?? {}).forEach(key => {
-    const getValue = formOptions.columns[key];
-    if (typeof formOptions.columns[key] === "function") {
+    const getValue = formOptions.columns?.[key];
+    if (typeof getValue === "function") {
       try {
         editColumns[key] = getValue({
-          ...cloneDeep({ ...formOptions, column: rawColumns[key] }),
+          ...cloneDeep({ ...formOptions, column: rawColumnsMap[key] }),
           formValue: formOptions.formValue
         });
       } catch (err) {
@@ -144,27 +156,8 @@ const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
     }
   });
 
-  const formPropsResult = {};
-
-  Object.keys(formOptions?.formProps ?? {}).forEach(key => {
-    const getValue = formOptions?.formProps[key];
-    if (typeof formOptions?.formProps[key] === "function") {
-      formPropsResult[key] = getValue(cloneDeep(formOptions));
-    } else {
-      formPropsResult[key] = getValue;
-    }
-  });
-
-  const tabsPropsResult = {};
-
-  Object.keys(formOptions?.tabsProps ?? {}).forEach(key => {
-    const getValue = formOptions?.tabsProps[key];
-    if (typeof formOptions?.tabsProps[key] === "function") {
-      tabsPropsResult[key] = getValue(cloneDeep(formOptions));
-    } else {
-      tabsPropsResult[key] = getValue;
-    }
-  });
+  const formPropsResult = resolveSpec(formOptions.formProps, formOptions);
+  const tabsPropsResult = resolveSpec(formOptions.tabsProps, formOptions);
 
   const clientWidth = document.documentElement.clientWidth;
   const minWidth = Number((formOptions.minWidth ?? "600px").replace("px", ""));
@@ -183,14 +176,11 @@ const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
       formInline,
       ...propsResult,
       columns: uniqueArrayObj(
-        [
-          ...(formOptions?.rawColumns ?? []),
-          ...(Object.values(editColumns) ?? [])
-        ],
+        [...(formOptions?.rawColumns ?? []), ...Object.values(editColumns)],
         "prop"
       ),
-      formProps: { ...formOptions?.rawFormProps, ...(formPropsResult ?? {}) },
-      tabsProps: { ...(tabsPropsResult ?? {}) }
+      formProps: { ...formOptions?.rawFormProps, ...formPropsResult },
+      tabsProps: { ...tabsPropsResult }
     },
     draggable: true,
     sureBtnLoading: true,
@@ -200,8 +190,8 @@ const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
     closeOnClickModal: false,
     contentRenderer: () => h(formOptions?.form ?? AddOrEdit, { ref: formRef }),
     beforeSure: async (done, { options, closeLoading }) => {
-      const FormRef: FormInstance = formRef.value.getRef();
-      const allFormInstances = (FormRef as any)?._allInstances ?? [FormRef]; // 获取所有 PlusForm 实例
+      const FormRef = formRef.value.getRef();
+      const allFormInstances = FormRef?._allInstances ?? [FormRef]; // 获取所有 PlusForm 实例
       const formInlineData = cloneDeep(options.props.formInline);
 
       const success = (detail = undefined, close = true) => {
@@ -269,7 +259,8 @@ const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
 
 interface operationOptions {
   t: (arg0: string, arg1?: object) => string;
-  apiReq: Promise<any>;
+  /** 标准接口请求（`create`/`update` 返回 `DetailResult`，`destroy` 类返回 `BaseResult`，读取仅依赖 `code`/`detail`） */
+  apiReq?: Promise<DetailResult>;
   showSuccessMsg?: boolean;
   showFailedMsg?: boolean;
   success?: (res?: DetailResult) => void;
@@ -326,7 +317,7 @@ const handleOperation = (options: operationOptions) => {
 
 interface changeOptions {
   t: (arg0: string, arg1?: object) => string;
-  updateApi: (pk: string | number, data: object) => Promise<any>; // 更新方法
+  updateApi: (pk: string | number, data: object) => Promise<DetailResult>; // 更新方法
   switchLoadMap: Ref;
   index: number; // 更新行索引
   row: {
@@ -407,15 +398,15 @@ const onSwitchChange = (changeOptions: changeOptions) => {
 
 interface switchOptions {
   t: (arg0: string, arg1?: object) => string;
-  updateApi: (pk: string | number, data: object) => Promise<any>; // 更新方法
+  updateApi: (pk: string | number, data: object) => Promise<DetailResult>; // 更新方法
   switchLoadMap: Ref;
-  switchStyle: Ref;
+  switchStyle: Ref<CSSProperties>;
   field: string; // 更新的字段
   actionMap?: object; // msg映射 {true:'发布',false:'未发布'}
   activeMap?: object; // active映射 {true:'发布',false:'未发布'}
   msg?: string;
   actionMsg?: string;
-  disabled?: (row?: any) => boolean;
+  disabled?: (row?: RecordType) => boolean;
   success?: (res?: DetailResult) => void;
   failed?: (res?: DetailResult) => void;
   requestEnd?: (options?: operationOptions) => void;
@@ -449,7 +440,7 @@ const renderSwitch = (switchOptions: switchOptions) => {
     false: false,
     ...(activeMap ?? {})
   };
-  return scope => (
+  return (scope: TableColumnRenderer) => (
     <el-switch
       size={scope.props.size === "small" ? "small" : "default"}
       loading={switchLoadMap.value[scope.index]?.loading}
@@ -483,7 +474,7 @@ const renderSwitch = (switchOptions: switchOptions) => {
 
 interface booleanTagOptions {
   t: (arg0: string, arg1?: object) => string;
-  tagStyle: Ref;
+  tagStyle: Ref<(status: boolean) => CSSProperties>;
   field: string; // 字段
   actionMap?: object; // msg映射 {true:'发布',false:'未发布'}
   disabled?: boolean;
@@ -496,7 +487,7 @@ const renderBooleanTag = (booleanTagOptions: booleanTagOptions) => {
     false: t("labels.disable"),
     ...actionMap
   };
-  return scope => (
+  return (scope: TableColumnRenderer) => (
     <el-tag size={scope.props.size} style={tagStyle.value(scope.row[field])}>
       {defaultActionMap[scope.row[field]]}
     </el-tag>

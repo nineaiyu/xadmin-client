@@ -1,7 +1,7 @@
 import {
   createWebHashHistory,
   createWebHistory,
-  type RouteComponent,
+  type RouteRecordName,
   type RouteRecordRaw,
   type RouterHistory
 } from "vue-router";
@@ -30,7 +30,15 @@ const IFrame = () => import("@/layout/frame.vue");
 // https://cn.vitejs.dev/guide/features.html#glob-import
 const modulesRoutes = import.meta.glob("/src/views/**/*.{vue,tsx}");
 
-function handRank(routeInfo: any) {
+/** 可参与 rank 排序/层级补齐的路由节点（parentId 由 buildHierarchyTree 运行时挂载） */
+type RankableRoute = {
+  name?: RouteRecordName;
+  path?: string;
+  parentId?: number | string | null;
+  meta?: CustomizeRouteMeta;
+};
+
+function handRank(routeInfo: RankableRoute) {
   const { name, path, parentId, meta } = routeInfo;
   return isAllEmpty(parentId)
     ? isAllEmpty(meta?.rank) ||
@@ -39,35 +47,27 @@ function handRank(routeInfo: any) {
 }
 
 /** 按照路由中meta下的rank等级升序来排序路由 */
-function ascending(arr: any[]) {
+function ascending<T extends RankableRoute>(arr: T[]): T[] {
   arr.forEach((v, index) => {
     // 当rank不存在时，根据顺序自动创建，首页路由永远在第一位
-    if (handRank(v)) v.meta.rank = index + 2;
-  });
-  return arr.sort(
-    (a: { meta: { rank: number } }, b: { meta: { rank: number } }) => {
-      return a?.meta.rank - b?.meta.rank;
+    if (handRank(v)) {
+      if (v.meta) v.meta.rank = index + 2;
     }
-  );
+  });
+  return arr.sort((a, b) => (a.meta?.rank ?? 0) - (b.meta?.rank ?? 0));
 }
 
 /** 过滤meta中showLink为false的菜单 */
-function filterTree(data: RouteComponent[]) {
-  const newTree = cloneDeep(data).filter(
-    (v: { meta: { showLink: boolean } }) => v.meta?.showLink !== false
-  );
-  newTree.forEach(
-    (v: { children }) => v.children && (v.children = filterTree(v.children))
-  );
+function filterTree(data: RouteRecordRaw[]) {
+  const newTree = cloneDeep(data).filter(v => v.meta?.showLink !== false);
+  newTree.forEach(v => v.children && (v.children = filterTree(v.children)));
   return newTree;
 }
 
 /** 过滤children长度为0的的目录，当目录下没有菜单时，会过滤此目录，目录没有赋予roles权限，当目录下只要有一个菜单有显示权限，那么此目录就会显示 */
-function filterChildrenTree(data: RouteComponent[]) {
-  const newTree = cloneDeep(data).filter((v: any) => v?.children?.length !== 0);
-  newTree.forEach(
-    (v: { children }) => v.children && (v.children = filterTree(v.children))
-  );
+function filterChildrenTree(data: RouteRecordRaw[]) {
+  const newTree = cloneDeep(data).filter(v => v?.children?.length !== 0);
+  newTree.forEach(v => v.children && (v.children = filterTree(v.children)));
   return newTree;
 }
 
@@ -79,13 +79,13 @@ function isOneOfArray(a: Array<string>, b: Array<string>) {
 }
 
 /** 从用户 store 读取当前登录用户的角色，过滤无权限的菜单 */
-function filterNoPermissionTree(data: RouteComponent[]) {
+function filterNoPermissionTree(data: RouteRecordRaw[]) {
   const currentRoles = useUserStoreHook().roles ?? [];
-  const newTree = cloneDeep(data).filter((v: any) =>
+  const newTree = cloneDeep(data).filter(v =>
     isOneOfArray(v.meta?.roles, currentRoles)
   );
   newTree.forEach(
-    (v: any) => v.children && (v.children = filterNoPermissionTree(v.children))
+    v => v.children && (v.children = filterNoPermissionTree(v.children))
   );
   return filterChildrenTree(newTree);
 }
@@ -166,12 +166,12 @@ function handleAsyncRoutes(routeList, authList) {
           // 最终路由进行升序
           ascending(router.options.routes[0].children);
           if (!router.hasRoute(v?.name)) router.addRoute(v);
-          const flattenRouters: any = router
-            .getRoutes()
-            .find(n => n.path === "/");
+          const flattenRouters = router.getRoutes().find(n => n.path === "/");
           // 保持router.options.routes[0].children与path为"/"的children一致，防止数据不一致导致异常
-          flattenRouters.children = router.options.routes[0].children;
-          router.addRoute(flattenRouters);
+          if (flattenRouters) {
+            flattenRouters.children = router.options.routes[0].children;
+            router.addRoute(flattenRouters);
+          }
         }
       }
     );
@@ -203,8 +203,8 @@ function initRouter(loadConfig: boolean = false) {
     // 开启动态路由缓存本地localStorage
     const key = "async-routes";
     const authKey = "async-auths";
-    const asyncRouteList = storageLocal().getItem(key) as any;
-    const asyncAuthList = storageLocal().getItem(authKey) as any;
+    const asyncRouteList = storageLocal().getItem<RouteRecordRaw[]>(key);
+    const asyncAuthList = storageLocal().getItem<string[]>(authKey);
     if (asyncRouteList && asyncRouteList?.length > 0) {
       return new Promise(resolve => {
         handleAsyncRoutes(asyncRouteList, asyncAuthList);
@@ -333,7 +333,11 @@ function addAsyncRoutes(arrRoutes: Array<RouteRecordRaw>) {
     } else {
       // 对后端传component组件路径和不传做兼容（如果后端传component组件路径，那么path可以随便写，如果不传，component组件路径会跟path保持一致）
       const index = v?.component
-        ? modulesRoutesKeys.findIndex(ev => ev.includes(v.component as any))
+        ? typeof v.component === "string"
+          ? modulesRoutesKeys.findIndex(ev =>
+              ev.includes(v.component as string)
+            )
+          : modulesRoutesKeys.findIndex(ev => ev.includes(v.path))
         : modulesRoutesKeys.findIndex(ev => ev.includes(v.path));
       v.component = modulesRoutes[modulesRoutesKeys[index]];
     }

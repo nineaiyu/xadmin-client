@@ -62,3 +62,9 @@ export type BaseResult = {
   detail: string;
   code: number;
 };
+
+/**
+ * 标准操作结果：`create`/`update` 类接口返回 `DetailResult`（带 `data`），
+ * 其余写操作返回 `BaseResult`；调用方仅依赖 `code`/`detail` 时使用本联合类型
+ */
+export type ApiResult = BaseResult | DetailResult;

@@ -11,12 +11,26 @@ import type {
   TableColumns
 } from "@pureadmin/table";
 import type { BaseApi } from "@/api/base";
+import type {
+  ApiResult,
+  SearchColumnsResult,
+  SearchFieldsResult
+} from "@/api/types";
+import type { FormInstance } from "element-plus";
 import type { formDialogDrawerOptions } from "./handle";
 import type { OperationProps } from "@/components/RePlusPage";
 import type { PureTableBarProps } from "@/components/RePureTableBar";
 import type { VNode, Component } from "vue";
 import type { Mutable } from "@vueuse/core";
-import type { SearchColumnsResult, SearchFieldsResult } from "@/api/types";
+
+/**
+ * 弹层表单实例契约：仅依赖 `validate`；分页签场景会在当前页实例上挂载
+ * `_allInstances`，供 openDialogDrawer 统一校验全部表单（AddOrEdit 等组件实现）
+ */
+export type ExposedFormInstance = {
+  validate: FormInstance["validate"];
+  _allInstances?: ExposedFormInstance[];
+};
 
 interface TableColumn {
   /** 是否隐藏 */
@@ -197,7 +211,7 @@ interface RePlusPageProps {
     form?: undefined;
     apiReq?: (
       formOptions: Partial<formDialogDrawerOptions> & { formData: RecordType }
-    ) => Promise<unknown>;
+    ) => Promise<ApiResult>;
   };
   /**
    * 操作栏 按钮组方法
