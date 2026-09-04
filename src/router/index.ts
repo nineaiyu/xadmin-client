@@ -20,12 +20,7 @@ import {
   formatFlatteningRoutes,
   isOneOfArray
 } from "./utils";
-import {
-  type Router,
-  type RouteRecordRaw,
-  type RouteComponent,
-  createRouter
-} from "vue-router";
+import { type Router, type RouteRecordRaw, createRouter } from "vue-router";
 import {
   removeToken,
   multipleTabsKey,
@@ -60,7 +55,7 @@ export const constantRoutes: Array<RouteRecordRaw> = formatTwoStageRoutes(
 const initConstantRoutes: Array<RouteRecordRaw> = cloneDeep(constantRoutes);
 
 /** 用于渲染菜单，保持原始层级 */
-export const constantMenus: Array<RouteComponent> = ascending(
+export const constantMenus: Array<RouteRecordRaw> = ascending(
   routes.flat(Infinity)
 ).concat(...remainingRouter);
 

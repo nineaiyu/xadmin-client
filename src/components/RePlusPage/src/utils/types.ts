@@ -67,13 +67,14 @@ export interface PhoneInputProps {
 }
 
 /**
- * 自定义表单字段渲染器。
- * value 为动态表单字段值（形态由列的 valueType / input_type 决定），
+ * 自定义表单字段渲染器（与 plus-pro-components 的 `renderField` 调用契约一致：
+ * `value` 为动态表单字段值、`props` 为当前列，形态由列的 valueType / input_type 决定，
  * 组件侧在各自边界收窄为具体类型。
  */
 export type PlusRenderField = (
   value: unknown,
-  onChange: (value: unknown) => void
+  onChange: (value: unknown) => void,
+  props: PlusColumn
 ) => VNode | Component;
 
 /** 列元数据，同时兼容 search-fields 与 search-columns 接口返回 */

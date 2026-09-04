@@ -11,11 +11,19 @@ import {
 import { cloneDeep } from "lodash-es";
 import { message } from "@/utils/message";
 import type { PlusFormProps, RecordType } from "plus-pro-components";
-import { ElMessageBox, type FormInstance } from "element-plus";
+import { ElMessageBox } from "element-plus";
 import type { BaseApi } from "@/api/base";
-import type { DetailResult } from "@/api/types";
+import type {
+  ApiResult,
+  DetailResult,
+  SearchColumnsResult,
+  SearchFieldsResult
+} from "@/api/types";
 import type { TableColumnRenderer } from "@pureadmin/table";
-import { type PageColumn, uniqueArrayObj } from "@/components/RePlusPage";
+import {
+  type ExposedFormInstance,
+  uniqueArrayObj
+} from "@/components/RePlusPage";
 import { resourcesIDCacheApi } from "@/api/common";
 import AddOrEdit from "../components/AddOrEdit.vue";
 import ExportData from "../components/ExportData.vue";
@@ -41,13 +49,50 @@ type DynamicSpec<TCtx = Partial<formDialogDrawerOptions>> = {
 
 interface callBackArgs {
   formData: RecordType;
-  formRef: FormInstance;
+  formRef: ExposedFormInstance | undefined;
   formOptions: formDialogDrawerOptions;
   closeLoading: () => void;
   success: (detail: string, close?: boolean) => void;
   failed: (detail: string, close?: boolean) => void;
   done: () => void;
 }
+
+/**
+ * 弹层表单列的公共结构：运行时仅以 `prop` / `_column.key` 作为去重键，
+ * 其余字段（含 plus-pro 的函数态 `fieldProps`）原样透传给弹层表单组件
+ */
+type ColumnBase = {
+  prop?: string;
+  _column?: Partial<
+    SearchFieldsResult["data"][0] & SearchColumnsResult["data"][0]
+  >;
+  [key: string]: unknown;
+};
+
+type RawColumn = ColumnBase;
+
+/**
+ * 解析器上下文中的列：在公共结构之上保证 `fieldProps` 可就地增量配置
+ * （传入 `rawColumns` 时 `fieldProps` 的对象形态由各视图自行保证）
+ */
+type EditableColumn = ColumnBase & {
+  fieldProps?: {
+    props?: object;
+    disabled?: boolean;
+    [key: string]: unknown;
+  };
+};
+
+/** 表单列属性表：键值可为静态列对象或解析器（解析器上下文附带当前列 `column`） */
+type ColumnSpec = {
+  [key: string]:
+    | RawColumn
+    | ((
+        formOptions: Partial<formDialogDrawerOptions> & {
+          column: EditableColumn;
+        }
+      ) => RawColumn);
+};
 
 interface formDialogDrawerOptions {
   mode?: "dialog" | "drawer";
@@ -64,15 +109,9 @@ interface formDialogDrawerOptions {
   /** 弹窗的的最小宽度 */
   minWidth?: string;
   /** 表单字段：键值可为静态列对象或解析器（解析器上下文附带当前列 `column`） */
-  columns?: {
-    [key: string]:
-      | object
-      | ((
-          formOptions: Partial<formDialogDrawerOptions> & { column: PageColumn }
-        ) => object);
-  };
+  columns?: ColumnSpec;
   /** 表单字段 */
-  rawColumns?: PageColumn[];
+  rawColumns?: RawColumn[];
   /** 挂载的form组件，默认是AddOrEdit组件 */
   form?: Component;
   /** 内容区组件的 props，可通过 defineProps 接收 */
@@ -101,7 +140,7 @@ interface formDialogDrawerOptions {
 /** 挂载在弹层内的表单组件需暴露的实例契约（AddOrEdit / ExportData / ImportData 均实现） */
 interface DialogFormInstance {
   /** 分页签场景会在当前页实例上挂载 `_allInstances`，供外部统一校验全部表单 */
-  getRef: () => (FormInstance & { _allInstances?: FormInstance[] }) | undefined;
+  getRef: () => ExposedFormInstance | undefined;
   setActiveName?: (index: number) => void;
 }
 
@@ -135,17 +174,20 @@ const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
 
   const propsResult = resolveSpec(formOptions.props, formOptions);
 
-  const rawColumnsMap: Record<string, PageColumn> = {};
+  const rawColumnsMap: Record<string, RawColumn> = {};
   cloneDeep(formOptions?.rawColumns ?? []).forEach(column => {
     rawColumnsMap[column._column?.key ?? column.prop] = column;
   });
-  const editColumns: Record<string, object> = {};
+  const editColumns: Record<string, RawColumn> = {};
   Object.keys(formOptions?.columns ?? {}).forEach(key => {
     const getValue = formOptions.columns?.[key];
     if (typeof getValue === "function") {
       try {
         editColumns[key] = getValue({
-          ...cloneDeep({ ...formOptions, column: rawColumnsMap[key] }),
+          ...cloneDeep({
+            ...formOptions,
+            column: rawColumnsMap[key] as EditableColumn
+          }),
           formValue: formOptions.formValue
         });
       } catch (err) {
@@ -259,8 +301,8 @@ const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
 
 interface operationOptions {
   t: (arg0: string, arg1?: object) => string;
-  /** 标准接口请求（`create`/`update` 返回 `DetailResult`，`destroy` 类返回 `BaseResult`，读取仅依赖 `code`/`detail`） */
-  apiReq?: Promise<DetailResult>;
+  /** 标准接口请求（`create`/`update` 返回 `DetailResult`，其余写操作返回 `BaseResult`，读取仅依赖 `code`/`detail`） */
+  apiReq?: Promise<ApiResult>;
   showSuccessMsg?: boolean;
   showFailedMsg?: boolean;
   success?: (res?: DetailResult) => void;
@@ -317,7 +359,7 @@ const handleOperation = (options: operationOptions) => {
 
 interface changeOptions {
   t: (arg0: string, arg1?: object) => string;
-  updateApi: (pk: string | number, data: object) => Promise<DetailResult>; // 更新方法
+  updateApi: (pk: string | number, data: object) => Promise<ApiResult>; // 更新方法
   switchLoadMap: Ref;
   index: number; // 更新行索引
   row: {
@@ -398,7 +440,7 @@ const onSwitchChange = (changeOptions: changeOptions) => {
 
 interface switchOptions {
   t: (arg0: string, arg1?: object) => string;
-  updateApi: (pk: string | number, data: object) => Promise<DetailResult>; // 更新方法
+  updateApi: (pk: string | number, data: object) => Promise<ApiResult>; // 更新方法
   switchLoadMap: Ref;
   switchStyle: Ref<CSSProperties>;
   field: string; // 更新的字段

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, ref } from "vue";
-import type { FormInstance } from "element-plus";
 import { FieldValues, PlusColumn, PlusForm } from "plus-pro-components";
+import type { ExposedFormInstance } from "../utils/types";
 
 defineOptions({ name: "AddOrEditForm" });
 
@@ -58,8 +58,8 @@ const tabsColumns = computed(() => {
   return result;
 });
 
-/** `getRef` 返回的表单实例：分页签时会在当前页实例上挂载 `_allInstances`，供外部统一校验全部表单 */
-type ExposedFormInstance = FormInstance & { _allInstances?: FormInstance[] };
+/** `getRef` 返回的表单实例契约（见 `utils/types.ts` 的 `ExposedFormInstance`） */
+type GetRefResult = ExposedFormInstance | undefined;
 
 const setFormRef = (el: unknown, index: number) => {
   if (el) {
@@ -71,10 +71,10 @@ const setActiveName = (index: number) => {
   activeName.value = index;
 };
 
-function getRef(): ExposedFormInstance | undefined {
+function getRef(): GetRefResult {
   if (isTabs.value) {
     const instance = formRefs.value[activeName.value]?.formInstance as
-      ExposedFormInstance | undefined;
+      GetRefResult | undefined;
     if (instance) {
       instance._allInstances = Object.keys(formRefs.value)
         .map(Number)

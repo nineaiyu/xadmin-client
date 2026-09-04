@@ -332,11 +332,11 @@ function addAsyncRoutes(arrRoutes: Array<RouteRecordRaw>) {
       v.component = IFrame;
     } else {
       // 对后端传component组件路径和不传做兼容（如果后端传component组件路径，那么path可以随便写，如果不传，component组件路径会跟path保持一致）
-      const index = v?.component
-        ? typeof v.component === "string"
-          ? modulesRoutesKeys.findIndex(ev =>
-              ev.includes(v.component as string)
-            )
+      // 后端下发的 `component` 实际是组件路径字符串，先退化为 `unknown` 再按类型收窄
+      const rawComponent = v.component as unknown;
+      const index = rawComponent
+        ? typeof rawComponent === "string"
+          ? modulesRoutesKeys.findIndex(ev => ev.includes(rawComponent))
           : modulesRoutesKeys.findIndex(ev => ev.includes(v.path))
         : modulesRoutesKeys.findIndex(ev => ev.includes(v.path));
       v.component = modulesRoutes[modulesRoutesKeys[index]];
