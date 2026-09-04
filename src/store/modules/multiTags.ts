@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
+import type { RouteConfigs } from "@/layout/types";
 import {
-  type multiType,
   type positionType,
   store,
   isUrl,
@@ -20,15 +20,15 @@ export const useMultiTagsStore = defineStore("pure-multiTags", {
     multiTags: storageLocal().getItem<StorageConfigs>(
       `${responsiveStorageNameSpace()}configure`
     )?.multiTagsCache
-      ? (storageLocal().getItem<StorageConfigs>(
+      ? (storageLocal().getItem<RouteConfigs[]>(
           `${responsiveStorageNameSpace()}tags`
         ) ?? [])
-      : ([
+      : [
           ...routerArrays,
           ...usePermissionStoreHook().flatteningRoutes.filter(
             v => v?.meta?.fixedTag
           )
-        ] as any),
+        ],
     multiTagsCache: storageLocal().getItem<StorageConfigs>(
       `${responsiveStorageNameSpace()}configure`
     )?.multiTagsCache
@@ -58,25 +58,29 @@ export const useMultiTagsStore = defineStore("pure-multiTags", {
         );
       }
     },
-    handleTags<T>(
+    handleTags(
       mode: string,
-      value?: T | multiType,
+      value?: RouteConfigs | RouteConfigs[] | string,
       position?: positionType
-    ): T {
+    ): RouteConfigs[] {
       switch (mode) {
         case "equal":
-          this.multiTags = value;
+          if (Array.isArray(value)) {
+            this.multiTags = value;
+          } else if (value) {
+            this.multiTags = [value];
+          }
           this.tagsCache(this.multiTags);
           break;
         case "push":
           {
-            const tagVal = value as multiType;
+            const tagVal = value as RouteConfigs;
             // 不添加到标签页
             if (tagVal?.meta?.hiddenTag) return;
             // 如果是外链无需添加信息到标签页
             if (isUrl(tagVal?.name)) return;
             // 如果title为空拒绝添加空信息到标签页
-            if (tagVal?.meta?.title.length === 0) return;
+            if (tagVal?.meta?.title?.length === 0) return;
             // showLink:false 不添加到标签页
             if (isBoolean(tagVal?.meta?.showLink) && !tagVal?.meta?.showLink)
               return;
@@ -107,7 +111,7 @@ export const useMultiTagsStore = defineStore("pure-multiTags", {
                 }
               }
             }
-            this.multiTags.push(value);
+            this.multiTags.push(tagVal);
             this.tagsCache(this.multiTags);
             if (
               getConfig()?.MaxTagsLevel &&

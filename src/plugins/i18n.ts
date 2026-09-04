@@ -1,6 +1,6 @@
 // 多组件库的国际化和本地项目国际化兼容
 import { createI18n, type I18n } from "vue-i18n";
-import type { App, WritableComputedRef } from "vue";
+import type { App } from "vue";
 import { responsiveStorageNameSpace } from "@/config";
 import { isObject, storageLocal } from "@pureadmin/utils";
 
@@ -13,7 +13,7 @@ const siphonI18n = (function () {
   const cache = Object.fromEntries(
     Object.entries(
       import.meta.glob("../../locales/*.{yaml,yml}", { eager: true })
-    ).map(([key, value]: any) => {
+    ).map(([key, value]: [string, { default: Record<string, string> }]) => {
       const matched = key.match(/([A-Za-z0-9-_]+)\./i)[1];
       return [matched, value.default];
     })
@@ -74,16 +74,16 @@ const flatI18n = (prefix = "zh-CN") => {
  * @param message message
  * @returns 转化后的message
  */
-export function transformI18n(message: any = "") {
+export function transformI18n(message: string | Record<string, string> = "") {
   if (!message) {
     return "";
   }
 
   // 处理存储动态路由的title,格式 {zh:"",en:""}
   if (typeof message === "object") {
-    const locale: string | WritableComputedRef<string> | any =
-      i18n.global.locale;
-    return message[locale?.value];
+    const locale = i18n.global.locale;
+    const current = typeof locale === "string" ? locale : locale.value;
+    return message[current];
   }
 
   const key = message.match(/(\S*)\./)?.input;

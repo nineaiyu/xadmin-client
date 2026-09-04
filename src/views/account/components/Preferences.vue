@@ -43,7 +43,7 @@ onMounted(() => {
   list.value.forEach(config => {
     configApi.getConfig(config.name).then(res => {
       if (res.code === 1000) {
-        config.checked = res.config.value;
+        config.checked = res.config.value as boolean;
       }
     });
   });

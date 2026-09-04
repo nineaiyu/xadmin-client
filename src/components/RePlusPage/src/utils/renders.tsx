@@ -19,7 +19,12 @@ export const renderBooleanSegmentedOption = (options = null) => {
  * 格式化后端选择列表，如果是obj的数据，isObjValue为true
  */
 export const formatAddOrEditOptions = (
-  data: Array<any>,
+  data: Array<{
+    value: unknown;
+    label?: unknown;
+    disabled?: boolean;
+    [key: string]: unknown;
+  }>,
   isObjValue = false
 ) => {
   const result = [];

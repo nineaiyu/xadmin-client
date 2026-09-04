@@ -57,7 +57,7 @@ export const renderSwitch = (
         }
         tableRef.value.onChange(
           switchLoadMap,
-          scope as any,
+          scope,
           valueKey,
           msg(scope),
           updateApi,

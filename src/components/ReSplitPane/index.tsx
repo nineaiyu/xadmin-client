@@ -60,32 +60,33 @@ export default defineComponent({
       active.value = false;
     };
 
-    const onMouseMove = (e: any): void => {
+    const onMouseMove = (e: MouseEvent): void => {
       if (e.buttons === 0 || e.which === 0) {
         active.value = false;
       }
 
       if (active.value) {
         let offset = 0;
-        let target = e.currentTarget;
+        let target = e.currentTarget as HTMLElement | null;
         if (props.splitSet?.split === "vertical") {
           while (target) {
             offset += target.offsetLeft;
-            target = target.offsetParent;
+            target = target.offsetParent as HTMLElement | null;
           }
         } else {
           while (target) {
             offset += target.offsetTop;
-            target = target.offsetParent;
+            target = target.offsetParent as HTMLElement | null;
           }
         }
 
         const currentPage =
           props.splitSet?.split === "vertical" ? e.pageX : e.pageY;
+        const splitTarget = e.currentTarget as HTMLElement;
         const targetOffset =
           props.splitSet?.split === "vertical"
-            ? e.currentTarget.offsetWidth
-            : e.currentTarget.offsetHeight;
+            ? splitTarget.offsetWidth
+            : splitTarget.offsetHeight;
         const percents =
           Math.floor(((currentPage - offset) / targetOffset) * 10000) / 100;
 
@@ -108,7 +109,7 @@ export default defineComponent({
           class="vue-splitter-container clearfix"
           style={unref(cursor)}
           onMouseup={() => onMouseUp()}
-          onMousemove={() => onMouseMove(event)}
+          onMousemove={e => onMouseMove(e)}
         >
           <div
             class={unref(leftClass)}

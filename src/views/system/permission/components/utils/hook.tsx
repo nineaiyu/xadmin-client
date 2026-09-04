@@ -1,14 +1,19 @@
 import { useI18n } from "vue-i18n";
-import type { FormItemProps } from "./types";
+import type {
+  FieldLookupItem,
+  FieldLookupNode,
+  FieldRuleRow,
+  FormItemProps
+} from "./types";
 import { addDialog } from "@/components/ReDialog/index";
 import { h, onMounted, ref } from "vue";
 import addForm from "../add.vue";
 import { deviceDetection } from "@pureadmin/utils";
 
 export function useFieldRule(
-  fieldLookupsData: any[],
-  dataList: any[],
-  valuesData: any[]
+  fieldLookupsData: FieldLookupNode[],
+  dataList: FieldRuleRow[],
+  valuesData: FieldLookupItem[]
 ) {
   const { t } = useI18n();
   const formRef = ref();

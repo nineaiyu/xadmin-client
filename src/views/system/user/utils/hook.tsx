@@ -455,7 +455,7 @@ export function useUser(tableRef: Ref) {
     });
   };
 
-  function handleRoleRules(row: any) {
+  function handleRoleRules(row: { username: string; [key: string]: unknown }) {
     openDialogDrawer({
       t,
       isAdd: false,
@@ -468,7 +468,7 @@ export function useUser(tableRef: Ref) {
       saveCallback: ({ formData, done, closeLoading }) => {
         handleOperation({
           t,
-          apiReq: api.empower(row.pk, {
+          apiReq: api.empower(row.pk as string | number, {
             roles: formData.roles,
             rules: formData.rules,
             mode_type: formData.mode_type

@@ -145,10 +145,10 @@ export class BaseApi extends BaseRequest {
   };
 
   importData = (params: object, data: File) => {
-    return http.upload<DetailResult, any>(
+    return http.upload<DetailResult, File>(
       `${this.baseApi}/import-data`,
       params,
-      data as any,
+      data,
       {
         headers: {
           "Content-Type": data.type === "text/csv" ? "text/csv" : "text/xlsx"

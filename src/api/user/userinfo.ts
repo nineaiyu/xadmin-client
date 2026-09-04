@@ -5,7 +5,7 @@ import type { UserInfoResult } from "@/api/auth";
 
 class UserInfoApi extends ViewBaseApi {
   upload = (data?: object) => {
-    return http.upload<BaseResult, any>(`${this.baseApi}/upload`, {}, data);
+    return http.upload<BaseResult, object>(`${this.baseApi}/upload`, {}, data);
   };
   choices = () => {
     return this.request<ChoicesResult>(

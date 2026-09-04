@@ -39,13 +39,8 @@
 <script lang="ts" setup>
 import { onMounted, ref } from "vue";
 import { countriesApi } from "@/api/common";
-
+import type { PhoneInputProps } from "../utils/types";
 defineOptions({ name: "PhoneInput" });
-
-interface PhoneInputProps {
-  code: string;
-  phone: string;
-}
 
 const value = defineModel<PhoneInputProps>({
   default: () => ({ code: "+86", phone: "" })

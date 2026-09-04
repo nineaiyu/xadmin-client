@@ -64,9 +64,9 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
       return new Promise<PlatformConfigs>((resolve, reject) => {
         configApi
           .getSiteConfig()
-          .then(({ config }: any) => {
+          .then(({ config }) => {
             if (config.Locale) {
-              this.config = config;
+              this.config = config as PlatformConfigs;
               const configObj = {
                 // 国际化 默认中文zh
                 locale: {
@@ -96,9 +96,9 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
                   watermarkText: config.WatermarkText ?? ""
                 }
               } as PlatformConfigs;
-              setConfig(config);
+              setConfig(config as PlatformConfigs);
               this.setSiteConfig(configObj);
-              resolve(config);
+              resolve(config as PlatformConfigs);
             } else {
               reject(config);
             }

@@ -85,7 +85,7 @@ const props = {
   imageStyle: { type: Object as PropType<CSSProperties>, default: () => ({}) },
   options: { type: Object as PropType<Options>, default: () => ({}) },
   canvasOption: {
-    type: Object as PropType<GetCroppedCanvasOptions> | any,
+    type: Object as PropType<GetCroppedCanvasOptions>,
     default: () => ({ maxHeight: 1280, maxWidth: 960 })
   }
 };

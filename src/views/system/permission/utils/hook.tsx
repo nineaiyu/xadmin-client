@@ -14,6 +14,7 @@ import { modelLabelFieldApi } from "@/api/system/field";
 import { transformI18n } from "@/plugins/i18n";
 import { getKeyList } from "@pureadmin/utils";
 import type { OperationProps, RePlusPageProps } from "@/components/RePlusPage";
+import type { FieldRuleRow } from "../components/utils/types";
 import filterForm from "../components/index.vue";
 import { formatFiledAppParent } from "@/views/system/hooks";
 
@@ -99,7 +100,7 @@ export function useDataPermission() {
           column["renderField"] = (value, onChange) => {
             return h(filterForm, {
               class: ["overflow-auto"],
-              dataList: value as any,
+              dataList: value as FieldRuleRow[],
               valuesData: valuesData.value,
               ruleList: fieldLookupsData.value,
               onChange

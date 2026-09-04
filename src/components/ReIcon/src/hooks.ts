@@ -10,11 +10,14 @@ const imgReg = /^(https?:\/\/|\/\/|data:image\/)/;
 /**
  * 支持 `iconfont`、`SVG` 字符串、`SVG` 函数组件、图片 `URL` 以及 `iconify` 中所有的图标
  * @see 点击查看文档图标篇 {@link https://pure-admin.cn/pages/icon/}
- * @param icon 必传 图标
+ * @param icon 必传 图标（字符串 / 组件 / 图标数据对象）
  * @param attrs 可选 iconType 属性
  * @returns Component
  */
-export function useRenderIcon(icon: any, attrs?: iconType): Component {
+export function useRenderIcon(
+  icon: string | Component | Record<string, unknown>,
+  attrs?: iconType
+): Component {
   if (typeof icon === "string" && svgReg.test(icon)) {
     // SVG 字符串
     let cleanedSvg = svgCache.get(icon);
@@ -51,7 +54,7 @@ export function useRenderIcon(icon: any, attrs?: iconType): Component {
           ...attrs
         })
     });
-  } else if (ifReg.test(icon)) {
+  } else if (typeof icon === "string" && ifReg.test(icon)) {
     // iconfont
     const name = icon.split(ifReg)[1];
     const spaceIdx = name.indexOf(" ");
@@ -67,9 +70,13 @@ export function useRenderIcon(icon: any, attrs?: iconType): Component {
         });
       }
     });
-  } else if (typeof icon === "function" || typeof icon?.render === "function") {
+  } else if (
+    typeof icon === "function" ||
+    typeof (icon as { render?: unknown }).render === "function"
+  ) {
     // SVG 函数组件
-    return attrs ? h(icon, { ...attrs }) : icon;
+    const comp = icon as Component;
+    return attrs ? h(comp, { ...attrs }) : comp;
   } else if (typeof icon === "object") {
     return defineComponent({
       name: "OfflineIcon",

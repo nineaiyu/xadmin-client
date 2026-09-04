@@ -11,7 +11,7 @@ export interface OptionsType {
   /** 图标属性、样式配置 */
   iconAttrs?: iconType;
   /** 值 */
-  value?: any;
+  value?: unknown;
   /** 是否禁用 */
   disabled?: boolean;
   /** `tooltip` 提示 */

@@ -1,4 +1,4 @@
-import type { VNode } from "vue";
+import type { Component, VNode } from "vue";
 import { isFunction } from "@pureadmin/utils";
 import { type MessageHandler, ElMessage } from "element-plus";
 
@@ -13,7 +13,7 @@ interface MessageParams {
   /** 是否纯色，默认 `false` */
   plain?: boolean;
   /** 自定义图标，该属性会覆盖 `type` 的图标 */
-  icon?: any;
+  icon?: string | Component;
   /** 是否将 `message` 属性作为 `HTML` 片段处理，默认 `false` */
   dangerouslyUseHTMLString?: boolean;
   /** 消息风格，可选 `el` 、`antd` ，默认 `antd` */

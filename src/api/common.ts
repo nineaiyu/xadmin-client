@@ -12,7 +12,7 @@ export type CountriesResult = {
   data: Array<{
     name: string;
     phone_code: string;
-    flag: string | any;
+    flag: string;
     code: string;
   }>;
 };

@@ -9,7 +9,11 @@ import JsonInput from "../components/JsonInput.vue";
 import UploadFile from "../components/UploadFile.vue";
 import UploadFiles from "../components/UploadFiles.vue";
 import PhoneInput from "../components/PhoneInput.vue";
-import type { PlusColumnHandler, PlusColumnRegistry } from "./types";
+import type {
+  PhoneInputProps,
+  PlusColumnHandler,
+  PlusColumnRegistry
+} from "./types";
 
 /**
  * 表单列（新增/编辑）内置渲染器：input_type -> 对 PageColumn 就地配置
@@ -87,9 +91,9 @@ export const builtinFormRenderers: PlusColumnRegistry = {
   "file upload": uploadFormRenderer,
   list: item => {
     item["valueType"] = "select";
-    item["renderField"] = (value: Array<any>, onChange) => {
+    item["renderField"] = (value, onChange) => {
       return h(TagInput, {
-        modelValue: value,
+        modelValue: value as Array<string>,
         onChange: x => {
           onChange(x);
         }
@@ -98,9 +102,9 @@ export const builtinFormRenderers: PlusColumnRegistry = {
   },
   phone: (item, { column }) => {
     column.default = { name: "China", code: "+86" };
-    item["renderField"] = (value: any, onChange) => {
+    item["renderField"] = (value, onChange) => {
       return h(PhoneInput, {
-        modelValue: value,
+        modelValue: value as PhoneInputProps,
         onChange: x => {
           onChange(x);
         }
@@ -108,9 +112,9 @@ export const builtinFormRenderers: PlusColumnRegistry = {
     };
   },
   json: item => {
-    item["renderField"] = (value: any, onChange) => {
+    item["renderField"] = (value, onChange) => {
       return h(JsonInput, {
-        modelValue: value,
+        modelValue: value as string | Record<string, unknown>,
         onChange: x => {
           onChange(x);
         }

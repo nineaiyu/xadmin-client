@@ -3,6 +3,8 @@ import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { formRules } from "./utils/rule";
 import { FormProps } from "./utils/types";
+import type { CascaderOption } from "element-plus";
+import { computed } from "vue";
 import { message } from "@/utils/message";
 import { FieldKeyChoices } from "@/views/system/constants";
 import { hasAuth } from "@/router/utils";
@@ -30,6 +32,11 @@ const props = withDefaults(defineProps<FormProps>(), {
     value: ""
   })
 });
+
+// el-cascader 的 options 类型要求 CascaderOption[]，但数据以 name 作为取值键（见下方 :props 映射）
+const cascaderOptions = computed(
+  () => props.fieldLookupsData as unknown as CascaderOption[]
+);
 
 const ruleFormRef = ref();
 const newFormInline = ref(props.formInline);
@@ -72,7 +79,7 @@ const valueTypeChange = value => {
   // newFormInline.value.value = "";
   props.valuesData.forEach(item => {
     if (item.value === value) {
-      showValueInput.value = item.disabled;
+      showValueInput.value = Boolean(item.disabled);
     }
   });
 };
@@ -121,7 +128,7 @@ defineExpose({ getRef });
         <el-form-item :label="t('systemPermission.addName')" prop="name">
           <el-cascader
             v-model="newFormInline.name"
-            :options="props.fieldLookupsData"
+            :options="cascaderOptions"
             :placeholder="t('systemPermission.addName')"
             :props="{
               value: 'name',

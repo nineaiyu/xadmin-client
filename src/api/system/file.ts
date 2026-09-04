@@ -16,7 +16,7 @@ type UploadFileResult = {
 
 class SystemUploadFileApi extends BaseApi {
   upload = (data?: object, config?: PureHttpRequestConfig) => {
-    return http.upload<UploadFileResult, any>(
+    return http.upload<UploadFileResult, object>(
       `${this.baseApi}/upload`,
       {},
       data,

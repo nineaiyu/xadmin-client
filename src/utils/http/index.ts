@@ -1,4 +1,9 @@
-import Axios, { type AxiosInstance, type AxiosRequestConfig } from "axios";
+import Axios, {
+  type AxiosInstance,
+  type AxiosRequestConfig,
+  type AxiosResponse,
+  type InternalAxiosRequestConfig
+} from "axios";
 import type {
   PureHttpError,
   PureHttpRequestConfig,
@@ -134,7 +139,7 @@ class PureHttp {
   public upload<T, P>(
     url: string,
     params?: AxiosRequestConfig<P>,
-    data?: AxiosRequestConfig<P>,
+    data?: P,
     config?: PureHttpRequestConfig
   ): Promise<T> {
     return this.request<T>(
@@ -166,21 +171,29 @@ class PureHttp {
     );
   }
 
-  public autoDownload<T, P>(
+  public autoDownload<P>(
     url: string,
     filename?: string,
     params?: AxiosRequestConfig<P>,
     config?: PureHttpRequestConfig
-  ): Promise<T> {
+  ): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.download<Blob, P>(url, params, config)
-        .then((response: any) => {
+      this.download<AxiosResponse<Blob>, P>(url, params, config)
+        .then((response: AxiosResponse<Blob>) => {
           try {
             const { data, headers } = response;
             let finalFilename = `${buildUUID()}`;
+            const headerValue =
+              headers["content-disposition"] ??
+              (typeof headers.get === "function"
+                ? headers.get("content-disposition")
+                : undefined);
             const contentDisposition =
-              headers.get("content-disposition") ||
-              headers["content-disposition"];
+              headerValue == null
+                ? undefined
+                : Array.isArray(headerValue)
+                  ? headerValue.join("; ")
+                  : String(headerValue);
             if (contentDisposition) {
               // 优先处理UTF-8编码的文件名 (RFC 5987)
               const utf8FilenameRegex = /filename\*=?UTF-8''([^;]+)/i;
@@ -214,11 +227,14 @@ class PureHttp {
                   finalFilename = extractedFilename;
                 }
               }
-            } else if ((params as any)?.type) {
-              finalFilename = `${finalFilename}.${(params as any)?.type}`;
+            } else {
+              const paramType = (params as { type?: string } | undefined)?.type;
+              if (paramType) {
+                finalFilename = `${finalFilename}.${paramType}`;
+              }
             }
             downloadByData(data, filename ?? finalFilename);
-            resolve(response);
+            resolve();
           } catch (err) {
             reject(err);
           }
@@ -230,28 +246,30 @@ class PureHttp {
   /** 请求拦截 */
   private httpInterceptorsRequest(): void {
     PureHttp.axiosInstance.interceptors.request.use(
-      async (config: PureHttpRequestConfig): Promise<any> => {
+      async (
+        config: PureHttpRequestConfig
+      ): Promise<InternalAxiosRequestConfig> => {
         setApiLanguage(config);
         // 开启进度条动画
         NProgress.start();
         // 优先判断post/get等方法是否传入回调，否则执行初始化设置等回调
         if (typeof config.beforeRequestCallback === "function") {
           config.beforeRequestCallback(config);
-          return config;
+          return config as InternalAxiosRequestConfig;
         }
         if (PureHttp.initConfig.beforeRequestCallback) {
           PureHttp.initConfig.beforeRequestCallback(config);
-          return config;
+          return config as InternalAxiosRequestConfig;
         }
         /** 请求白名单，放置一些不需要`token`的接口（通过设置请求白名单，防止`token`过期后再请求造成的死循环问题） */
         const whiteList = ["/api/system/refresh", "/api/system/login"];
         return whiteList.some(url => config.url.endsWith(url))
-          ? config
+          ? (config as InternalAxiosRequestConfig)
           : new Promise(resolve => {
               const token = getToken();
               if (token) {
                 config.headers["Authorization"] = formatToken(token);
-                resolve(config);
+                resolve(config as InternalAxiosRequestConfig);
               } else {
                 const refresh_token = getRefreshToken();
                 if (refresh_token) {
@@ -275,9 +293,13 @@ class PureHttp {
                         PureHttp.isRefreshing = false;
                       });
                   }
-                  resolve(PureHttp.retryOriginalRequest(config));
+                  resolve(
+                    PureHttp.retryOriginalRequest(
+                      config
+                    ) as Promise<InternalAxiosRequestConfig>
+                  );
                 } else {
-                  resolve(config);
+                  resolve(config as InternalAxiosRequestConfig);
                 }
               }
             });

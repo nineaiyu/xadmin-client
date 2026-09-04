@@ -22,7 +22,7 @@ export default defineComponent({
       localDuration: number | null;
       startTime: number | null;
       timestamp: number | null;
-      rAF: any;
+      rAF: number | null;
       remaining: number | null;
       color: string;
       fontSize: string;
@@ -73,7 +73,7 @@ export default defineComponent({
     }
 
     function pause() {
-      cancelAnimationFrame(state.rAF);
+      if (state.rAF) cancelAnimationFrame(state.rAF);
     }
 
     function resume() {
@@ -86,7 +86,7 @@ export default defineComponent({
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     function reset() {
       state.startTime = null;
-      cancelAnimationFrame(state.rAF);
+      if (state.rAF) cancelAnimationFrame(state.rAF);
       state.displayValue = formatNumber(props.startVal);
     }
 

@@ -1,4 +1,4 @@
-import type { RouteRecordName } from "vue-router";
+import type { RouteMeta, RouteRecordName } from "vue-router";
 import type { WS } from "@/utils/websocket";
 
 export type cacheType = {
@@ -27,7 +27,7 @@ export type appType = {
 export type multiType = {
   path: string;
   name: string;
-  meta: any;
+  meta: RouteMeta & Record<string, unknown>;
   query?: object;
   params?: object;
 };
@@ -51,5 +51,5 @@ export type userType = {
   loginDay?: number;
   noticeCount?: number;
   websocket?: WS | null;
-  clear?: any;
+  clear?: (() => void) | null;
 };

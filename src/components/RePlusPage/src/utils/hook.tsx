@@ -35,7 +35,11 @@ import EditPen from "~icons/ep/edit-pen";
 import AddFill from "~icons/ri/add-circle-line";
 import { handleTree } from "@/utils/tree";
 
-export function usePlusPage(emit: any, tableRef: Ref, props: RePlusPageProps) {
+export function usePlusPage(
+  emit: (event: string, ...args: unknown[]) => void,
+  tableRef: Ref,
+  props: RePlusPageProps
+) {
   const {
     api,
     auth,

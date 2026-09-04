@@ -1,4 +1,5 @@
 import type { FunctionalComponent } from "vue";
+import type { LocationQueryRaw, RouteParamsRaw } from "vue-router";
 const { VITE_HIDE_HOME } = import.meta.env;
 
 export const routerArrays: Array<RouteConfigs> =
@@ -21,12 +22,16 @@ export type routeMetaType = {
   showLink?: boolean;
   savedPosition?: boolean;
   auths?: Array<string>;
+  /** 不参与标签页（多标签场景下隐藏） */
+  hiddenTag?: boolean;
+  /** 动态路由可打开的最大数量 */
+  dynamicLevel?: number;
 };
 
 export type RouteConfigs = {
   path?: string;
-  query?: object;
-  params?: object;
+  query?: LocationQueryRaw;
+  params?: RouteParamsRaw;
   meta?: routeMetaType;
   children?: RouteConfigs[];
   name?: string;

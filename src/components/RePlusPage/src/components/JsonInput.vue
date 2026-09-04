@@ -22,7 +22,9 @@ import { useDark } from "@pureadmin/utils";
 
 defineOptions({ name: "JsonInput" });
 const { isDark } = useDark();
-const value = defineModel<any>({ default: {} });
+const value = defineModel<string | Record<string, unknown>>({
+  default: () => ({})
+});
 const attr = useAttrs();
 const emit = defineEmits<{
   change: [values: any];

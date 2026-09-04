@@ -21,11 +21,11 @@ import type { BaseApi } from "@/api/base";
 
 interface FormProps {
   pk?: string;
-  field?: any[];
+  field?: Array<string | number>;
   fields?: object;
   api?: Partial<BaseApi>;
   auth?: Auths;
-  menuTreeData?: any[];
+  menuTreeData?: Array<Record<string, unknown>>;
 }
 
 const props = withDefaults(defineProps<FormProps>(), {
@@ -37,7 +37,7 @@ const props = withDefaults(defineProps<FormProps>(), {
   field: () => []
 });
 
-const menu = defineModel({ type: Array<any> });
+const menu = defineModel<Array<string | number>>({ default: () => [] });
 
 const { locale, t } = useI18n();
 const treeRoleRef = ref();
@@ -51,7 +51,9 @@ const formData = ref({
 });
 
 const emit = defineEmits<{
-  change: [values: { fields: FormProps["fields"]; menu: any[] }];
+  change: [
+    values: { fields: FormProps["fields"]; menu: Array<string | number> }
+  ];
 }>();
 
 const handleChange = () => {

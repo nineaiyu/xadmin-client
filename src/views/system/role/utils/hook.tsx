@@ -106,12 +106,12 @@ export function useRole() {
         },
         menu: ({ column, formValue }) => {
           column["fieldProps"] = {};
-          column["renderField"] = (value: any, onChange) => {
+          column["renderField"] = (value, onChange) => {
             return h(menuFieldForm, {
               api,
               auth,
               pk: formValue.value?.pk,
-              modelValue: value,
+              modelValue: value as Array<string | number>,
               field: formValue.value?.field,
               menuTreeData: menuTreeData.value,
               onChange: ({ fields, menu }) => {

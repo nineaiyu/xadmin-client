@@ -34,12 +34,33 @@ interface TableColumn {
 }
 
 interface PageColumn extends PlusColumn, TableColumn {
+  /**
+   * 自定义表单字段渲染器（对 plus-pro-components 的 any 签名做强类型收窄）。
+   * value 的具体形态由列的 valueType / input_type 决定
+   */
+  renderField?: PlusRenderField;
   // columns: Partial<Mutable<TableColumn> & { _column: object }>[]
   _column: Partial<
     Mutable<SearchFieldsResult["data"][0]> &
       Mutable<SearchColumnsResult["data"][0]>
   >;
 }
+
+/** 手机号输入组件的模型（区号 + 号码），PhoneInput.vue 与渲染器共用 */
+export interface PhoneInputProps {
+  code: string;
+  phone: string;
+}
+
+/**
+ * 自定义表单字段渲染器。
+ * value 为动态表单字段值（形态由列的 valueType / input_type 决定），
+ * 组件侧在各自边界收窄为具体类型。
+ */
+export type PlusRenderField = (
+  value: unknown,
+  onChange: (value: unknown) => void
+) => VNode | Component;
 
 /** 列元数据，同时兼容 search-fields 与 search-columns 接口返回 */
 type PlusColumnMeta = SearchFieldsResult["data"][0] &
@@ -176,7 +197,7 @@ interface RePlusPageProps {
     form?: undefined;
     apiReq?: (
       formOptions: Partial<formDialogDrawerOptions> & { formData: RecordType }
-    ) => BaseApi | any;
+    ) => Promise<unknown>;
   };
   /**
    * 操作栏 按钮组方法

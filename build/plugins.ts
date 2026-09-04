@@ -63,8 +63,8 @@ export async function getPluginsList(
     // 线上环境删除console
     removeConsole({ external: ["src/assets/iconfont/iconfont.js"] }),
     // 打包分析
-    lifecycle === "report"
-      ? visualizer({ open: true, brotliSize: true, filename: "report.html" })
-      : (null as any)
+    ...(lifecycle === "report"
+      ? [visualizer({ open: true, brotliSize: true, filename: "report.html" })]
+      : [])
   ];
 }

@@ -128,7 +128,10 @@ export const useSendVerifyCode = (
     ]
   });
 
-  const fetchSuggestions = (queryString: string, callback: any) => {
+  const fetchSuggestions = (
+    queryString: string,
+    callback: (data: Array<{ value: string }>) => void
+  ) => {
     const emailList = [
       { value: "@qq.com" },
       { value: "@126.com" },

@@ -10,7 +10,7 @@ class UserApi extends BaseApi {
     action?: string,
     config?: PureHttpRequestConfig
   ) => {
-    return http.upload<BaseResult | any, any>(
+    return http.upload<BaseResult, object>(
       `${this.baseApi}/${pk}/${action ?? "upload"}`,
       {},
       data,

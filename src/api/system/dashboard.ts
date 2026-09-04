@@ -1,12 +1,18 @@
 import { http } from "@/utils/http";
 import type { DataListResult } from "@/api/types";
 
+export interface DashboardTrendItem {
+  day?: string;
+  count?: number;
+  [key: string]: unknown;
+}
+
 type DashBoardResult = {
   code: number;
   detail: string;
   percent: number;
   count: number;
-  results?: Array<any>;
+  results?: Array<DashboardTrendItem>;
 };
 
 export const getDashBoardUserLoginTotalApi = (params?: object) => {

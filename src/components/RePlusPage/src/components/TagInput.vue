@@ -44,7 +44,7 @@ interface TagInputProps {
 
 defineOptions({ name: "TagInput" });
 
-const filterTags = defineModel<Array<any>>({ default: () => [] });
+const filterTags = defineModel<Array<string>>({ default: () => [] });
 
 const props = withDefaults(defineProps<TagInputProps>(), {
   tagType: () => "info",
