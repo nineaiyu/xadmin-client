@@ -31,6 +31,19 @@ import SettingIcon from "@/assets/table-bar/settings.svg?component";
 import CollapseIcon from "@/assets/table-bar/collapse.svg?component";
 import { useI18n } from "vue-i18n";
 
+/** 树形表格行：展开/折叠按 `children` 递归 */
+type TableRowLike = Record<string, unknown> & { children?: TableRowLike[] };
+
+/**
+ * 树形表格实例契约：传入 pure-table 的 ref 以启用展开/折叠功能。
+ * 仅声明本组件依赖的成员（`data` 行集合、`toggleRowExpansion`、`size` 门控展开图标）
+ */
+interface ExpandableTableInstance {
+  data?: TableRowLike[];
+  toggleRowExpansion?: (row: TableRowLike, expanded?: boolean) => void;
+  size?: unknown;
+}
+
 const props = {
   /** 头部最左边的标题 */
   title: {
@@ -39,7 +52,7 @@ const props = {
   },
   /** 对于树形表格，如果想启用展开和折叠功能，传入当前表格的ref即可 */
   tableRef: {
-    type: Object as PropType<any>
+    type: Object as PropType<ExpandableTableInstance>
   },
   /** 需要展示的列 */
   columns: {
@@ -85,7 +98,7 @@ export default defineComponent({
     const { t } = useI18n();
 
     const getDropdownItemStyle = computed(() => {
-      return s => {
+      return (s: string) => {
         return {
           background:
             s === size.value ? useEpThemeStoreHook().epThemeColor : "",
@@ -146,7 +159,7 @@ export default defineComponent({
       emit("fullscreen", isFullscreen.value);
     }
 
-    function toggleRowExpansionAll(data, isExpansion) {
+    function toggleRowExpansionAll(data: TableRowLike[], isExpansion: boolean) {
       data.forEach(item => {
         props.tableRef.toggleRowExpansion(item, isExpansion);
         if (item.children !== undefined && item.children !== null) {
@@ -223,7 +236,7 @@ export default defineComponent({
       { deep: true, immediate: true }
     );
 
-    const sizeChange = (event, val) => {
+    const sizeChange = (event: MouseEvent, val: string) => {
       event.stopPropagation();
       size.value = val;
       handleChange();
@@ -258,8 +271,10 @@ export default defineComponent({
       event.preventDefault();
       nextTick(() => {
         const wrapper: HTMLElement = (
-          instance?.proxy?.$refs[`GroupRef${unref(props.tableKey)}`] as any
-        ).$el.firstElementChild;
+          instance?.proxy?.$refs[`GroupRef${unref(props.tableKey)}`] as {
+            $el: HTMLElement;
+          }
+        ).$el.firstElementChild as HTMLElement;
         Sortable.create(wrapper, {
           animation: 300,
           handle: ".drag-btn",
