@@ -11,7 +11,7 @@ const { t } = useI18n();
 </script>
 
 <template>
-  <div class="flex justify-center items-center h-[640px]">
+  <div class="flex-c h-160">
     <noExist />
     <div class="ml-12">
       <p

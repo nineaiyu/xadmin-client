@@ -8,12 +8,7 @@ type ArgsType = {
 };
 
 type ButtonType =
-  | "primary"
-  | "success"
-  | "warning"
-  | "danger"
-  | "info"
-  | "text";
+  "primary" | "success" | "warning" | "danger" | "info" | "text";
 
 type DrawerProps = {
   /** `Drawer` 的显示与隐藏 */

@@ -70,10 +70,10 @@ watch(
     collapse-tags-tooltip
     :multiple="multiple"
     @clear="onClear"
-    @visibleChange="val => (selectVisible = val)"
     @visible-change="
-      vs => {
-        if (vs) {
+      val => {
+        selectVisible = val;
+        if (val) {
           tableRef?.handleGetData();
         }
       }
@@ -84,13 +84,7 @@ watch(
       <el-tag type="primary">{{ value?.label }}</el-tag>
     </template>
     <template #empty>
-      <div
-        :class="[
-          'pr-4',
-          'pl-4',
-          deviceDetection() ? 'w-[100vw]' : 'w-[1200px]'
-        ]"
-      >
+      <div :class="['pr-4', 'pl-4', deviceDetection() ? 'w-screen' : 'w-300']">
         <RePlusPage
           ref="tableRef"
           :api="api"
@@ -115,7 +109,7 @@ watch(
         />
       </div>
 
-      <div class="absolute bottom-[25px] left-[25px]">
+      <div class="absolute bottom-6.25 left-6.25">
         <el-space>
           <el-button bg size="small" text type="primary" @click="onSure">
             {{ t("labels.sure") }}

@@ -94,10 +94,17 @@ function setStorageItem(key, value) {
 function flatTree(arr) {
   const res = [];
 
-  function deep(arr) {
+  function deep(arr, parentIcon?) {
     arr.forEach(item => {
-      res.push(item);
-      item.children && deep(item.children);
+      if (!item.children || item.children.length === 0) {
+        const menuItem =
+          !item.meta?.icon && parentIcon
+            ? { ...item, meta: { ...item.meta, icon: parentIcon } }
+            : item;
+        res.push(menuItem);
+      } else {
+        deep(item.children, item.meta?.icon);
+      }
     });
   }
 
@@ -297,10 +304,7 @@ onKeyStroke("ArrowDown", handleDown);
       @input="handleSearch"
     >
       <template #prefix>
-        <IconifyIconOffline
-          :icon="SearchIcon"
-          class="text-primary w-[24px] h-[24px]"
-        />
+        <IconifyIconOffline :icon="SearchIcon" class="text-primary size-6" />
       </template>
     </el-input>
     <div class="search-content">

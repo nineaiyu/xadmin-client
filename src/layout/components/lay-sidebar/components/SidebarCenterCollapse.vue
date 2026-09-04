@@ -12,7 +12,7 @@ withDefaults(defineProps<{ isActive?: boolean }>(), {
 const { tooltipEffect, t } = useNav();
 
 const iconClass = computed(() => {
-  return ["w-[16px]", "h-[16px]"];
+  return ["size-4"];
 });
 
 const { $storage } = useGlobal<GlobalPropertiesApi>();

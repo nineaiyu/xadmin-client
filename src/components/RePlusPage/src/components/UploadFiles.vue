@@ -183,8 +183,8 @@ const disableShowAdd = computed(() => {
         </div>
       </template>
       <template #file="{ file }">
-        <div class="w-[100%] flex flex-col items-center justify-center">
-          <div class="h-[50%] w-[50%]">
+        <div class="w-full flex-c flex-col">
+          <div class="size-[50%]">
             <div v-if="file.status === 'uploading'">
               <el-progress
                 :color="colors"
@@ -216,7 +216,7 @@ const disableShowAdd = computed(() => {
     </el-upload>
 
     <el-dialog v-model="dialogVisible">
-      <div class="flex flex-col items-center justify-center">
+      <div class="flex-c flex-col">
         <img :src="dialogFile.url" alt="Preview Image" class="max-w-full" />
         <div v-if="dialogFile?.size">{{ formatBytes(dialogFile.size) }}</div>
         <div v-if="dialogFile?.name" class="truncate">

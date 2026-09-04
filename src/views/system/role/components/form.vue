@@ -192,7 +192,7 @@ function onReset() {
 </script>
 
 <template>
-  <div class="flex items-center h-[34px] w-full mb-2">
+  <div class="flex items-center h-8.5 w-full mb-2">
     <el-input
       v-model="searchValue"
       :placeholder="t('systemRole.menuTitle')"
@@ -211,7 +211,7 @@ function onReset() {
     <el-dropdown :hide-on-click="false">
       <IconifyIconOffline
         :icon="More2Fill"
-        class="w-[28px] cursor-pointer"
+        class="w-7 cursor-pointer"
         width="18px"
       />
       <template #dropdown>

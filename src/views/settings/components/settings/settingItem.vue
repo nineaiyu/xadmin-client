@@ -120,7 +120,7 @@ const handleTest = () => {
     :rules="addOrEditData.addOrEditRules"
     :default-values="cloneDeep(addOrEditData.defaultData)"
     :row-props="{ gutter: 24 }"
-    class="mr-12 ml-12 m-5"
+    class="mx-12 m-5"
     label-position="left"
     label-width="300px"
     :has-footer="auth.partialUpdate"

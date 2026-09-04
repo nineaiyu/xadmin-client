@@ -1,6 +1,6 @@
-import { getPluginsList } from "./build/plugins";
-import { exclude, include } from "./build/optimize";
-import { type ConfigEnv, loadEnv, type UserConfigExport } from "vite";
+import { getPluginsList } from "./build/plugins.ts";
+import { include, exclude } from "./build/optimize.ts";
+import { type UserConfigExport, type ConfigEnv, loadEnv } from "vite";
 import {
   __APP_INFO__,
   alias,
@@ -8,9 +8,9 @@ import {
   root,
   wrapperEnv,
   createProxyConfig
-} from "./build/utils";
+} from "./build/utils.ts";
 
-export default ({ mode }: ConfigEnv): UserConfigExport => {
+export default async ({ mode }: ConfigEnv): Promise<UserConfigExport> => {
   const { VITE_CDN, VITE_PORT, VITE_COMPRESSION, VITE_PUBLIC_PATH } =
     wrapperEnv(loadEnv(mode, root));
   return {
@@ -34,11 +34,19 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
         clientFiles: ["./index.html", "./src/{views,components}/*"]
       }
     },
-    plugins: getPluginsList(VITE_CDN, VITE_COMPRESSION),
-    // https://cn.vitejs.dev/config/dep-optimization-options.html#dep-optimization-options
+    plugins: await getPluginsList(VITE_CDN, VITE_COMPRESSION),
+    // https://cn.vitejs.cn/config/dep-optimization-options.html#dep-optimization-options
     optimizeDeps: {
       include,
-      exclude
+      exclude,
+      rolldownOptions: {
+        transform: {
+          jsx: {
+            runtime: "automatic",
+            importSource: "vue"
+          }
+        }
+      }
     },
     build: {
       // https://cn.vitejs.dev/guide/build.html#browser-compatibility
@@ -46,7 +54,7 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
       sourcemap: false,
       // 消除打包大小超过500kb警告
       chunkSizeWarningLimit: 4000,
-      rollupOptions: {
+      rolldownOptions: {
         input: {
           index: pathResolve("./index.html", import.meta.url)
         },
@@ -55,6 +63,10 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
           chunkFileNames: "static/js/[name]-[hash].js",
           entryFileNames: "static/js/[name]-[hash].js",
           assetFileNames: "static/[ext]/[name]-[hash].[ext]"
+        },
+        checks: {
+          pluginTimings: false,
+          toleratedTransform: false
         }
       }
     },

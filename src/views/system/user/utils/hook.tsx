@@ -1,6 +1,6 @@
 import "./reset.css";
 import { message } from "@/utils/message";
-import { zxcvbn } from "@zxcvbn-ts/core";
+import { ZxcvbnFactory } from "@zxcvbn-ts/core";
 import { userApi } from "@/api/system/user";
 import { ElForm, ElFormItem, ElImage, ElInput, ElProgress } from "element-plus";
 import {
@@ -94,6 +94,7 @@ export function useUser(tableRef: Ref) {
   ];
   // 当前密码强度（0-4）
   const curScore = ref();
+  const zxcvbnFactory = new ZxcvbnFactory();
 
   function goNotice() {
     const users = [];
@@ -280,7 +281,9 @@ export function useUser(tableRef: Ref) {
   watch(
     pwdForm,
     ({ newPwd }) =>
-      (curScore.value = isAllEmpty(newPwd) ? -1 : zxcvbn(newPwd).score)
+      (curScore.value = isAllEmpty(newPwd)
+        ? -1
+        : zxcvbnFactory.check(newPwd).score)
   );
 
   const selectionChange = data => {

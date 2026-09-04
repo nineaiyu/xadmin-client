@@ -41,9 +41,11 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
           HideTabs: configure.hideTabs,
           HideFooter: configure.hideFooter,
           ShowLogo: configure.showLogo,
-          ShowModel: configure.showModel,
+          TagsStyle: configure.tagsStyle,
           MultiTagsCache: configure.multiTagsCache,
-          Stretch: configure.stretch
+          Stretch: configure.stretch,
+          Watermark: configure.watermark,
+          WatermarkText: configure.watermarkText
         };
         const newConfig = cloneDeep(this.config);
         Object.assign(newConfig, configObj);
@@ -87,9 +89,11 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
                   hideTabs: config.HideTabs ?? false,
                   hideFooter: config.HideFooter ?? true,
                   showLogo: config.ShowLogo ?? true,
-                  showModel: config.ShowModel ?? "smart",
+                  tagsStyle: config.TagsStyle ?? "chrome",
                   multiTagsCache: config.MultiTagsCache ?? false,
-                  stretch: config.Stretch ?? false
+                  stretch: config.Stretch ?? false,
+                  watermark: config.Watermark ?? false,
+                  watermarkText: config.WatermarkText ?? ""
                 }
               } as PlatformConfigs;
               setConfig(config);

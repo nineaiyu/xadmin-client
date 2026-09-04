@@ -1,0 +1,30 @@
+shellEmulator: true
+shamefullyHoist: true
+enablePrePostScripts: false
+strictPeerDependencies: false
+minimumReleaseAge: 0
+
+allowedDeprecatedVersions:
+  are-we-there-yet: '*'
+  sourcemap-codec: '*'
+  lodash.isequal: '*'
+  domexception: '*'
+  w3c-hr-time: '*'
+  inflight: '*'
+  npmlog: '*'
+  rimraf: '*'
+  stable: '*'
+  gauge: '*'
+  abab: '*'
+  glob: '*'
+  ini: '*'
+
+allowBuilds:
+  '@tailwindcss/oxide': false
+  '@parcel/watcher': true
+  vue-demi: true
+  esbuild: true
+  es5-ext: true
+  core-js: true
+  typeit: true
+  node-pty: false

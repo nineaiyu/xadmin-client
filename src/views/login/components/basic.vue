@@ -229,7 +229,7 @@ watch(loginDay, value => {
       </div>
       <Motion :delay="250">
         <el-form-item>
-          <div class="w-full h-[20px] flex justify-between items-center">
+          <div class="w-full h-5 flex-bc">
             <el-checkbox v-model="checked" tabindex="100">
               <span class="flex">
                 <select
@@ -309,7 +309,7 @@ watch(loginDay, value => {
     </Motion>
     <Motion :delay="300">
       <el-form-item>
-        <div class="w-full h-[20px] flex justify-between items-center">
+        <div class="w-full h-5 flex-bc">
           <el-button
             v-for="(item, index) in operates"
             :key="index"

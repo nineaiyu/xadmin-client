@@ -4,7 +4,7 @@ import ReCol from "@/components/ReCol";
 import { FormPasswordProps } from "../utils/types";
 import type { FormRules } from "element-plus";
 import { isAllEmpty } from "@pureadmin/utils";
-import { zxcvbn } from "@zxcvbn-ts/core";
+import { ZxcvbnFactory } from "@zxcvbn-ts/core";
 import { useI18n } from "vue-i18n";
 import { useApiAuth } from "../utils/hook";
 import { passwordRulesCheck } from "@/utils";
@@ -35,6 +35,7 @@ const passwordRules = ref([]);
 
 const ruleFormRef = ref();
 const curScore = ref();
+const zxcvbnFactory = new ZxcvbnFactory();
 const formPasswordRules = reactive<FormRules>({
   old_password: [
     {
@@ -92,7 +93,7 @@ watch(
   ({ new_password }) =>
     (curScore.value = isAllEmpty(new_password)
       ? -1
-      : zxcvbn(new_password).score)
+      : zxcvbnFactory.check(new_password).score)
 );
 onMounted(() => {
   handleOperation({

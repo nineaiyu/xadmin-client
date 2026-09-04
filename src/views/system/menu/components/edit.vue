@@ -155,7 +155,7 @@ defineExpose({ getRef });
       :disabled="!auth.partialUpdate"
       :model="newFormInline"
       :rules="formRules"
-      class="search-form bg-bg_color w-[90%] pl-8 pt-[12px]"
+      class="search-form bg-bg_color w-[90%] pl-8 pt-3"
       label-width="120px"
     >
       <el-form-item :label="t('systemMenu.type')" prop="menu_type">
@@ -498,7 +498,7 @@ defineExpose({ getRef });
         <el-form-item :label="t('systemMenu.requestMethod')" prop="method">
           <el-select
             v-model="newFormInline.method"
-            class="w-[180px]!"
+            class="w-45!"
             clearable
             value-key="value"
           >

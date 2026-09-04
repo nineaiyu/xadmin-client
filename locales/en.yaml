@@ -24,6 +24,15 @@ tableBar:
   unfold: Unfold
   fullscreen: Fullscreen
   exitFullscreen: Exit Fullscreen
+  pinLeft: Pin Left
+  pinRight: Pin Right
+  unpin: Unpin
+
+panel:
+  fullScreenWatermark: FullScreen Watermark
+  enableWatermark: Watermark
+  watermarkText: Text
+  watermarkTextPlaceholder: Please enter text
 
 avatarUpload:
   tips: 'Tips: Right-click the cropping area can open the function menu'

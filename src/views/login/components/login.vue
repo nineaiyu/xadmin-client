@@ -219,7 +219,7 @@ function onBack() {
     <el-form v-if="authInfo.access" :model="formData" size="large">
       <Motion :delay="250">
         <el-form-item>
-          <div class="w-full h-[20px] flex justify-between items-center">
+          <div class="w-full h-5 flex-bc">
             <el-checkbox v-model="checked" tabindex="800">
               <span class="flex">
                 <select

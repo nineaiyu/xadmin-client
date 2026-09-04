@@ -37,7 +37,7 @@ const {
   >
     <tree
       ref="treeRef"
-      :class="['mr-2', deviceDetection() ? 'w-full' : 'min-w-[250px]']"
+      :class="['mr-2', deviceDetection() ? 'w-full' : 'min-w-62.5']"
       :pk="treePk"
       :treeData="treeData"
       :treeLoading="treeLoading"

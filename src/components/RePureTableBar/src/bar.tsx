@@ -1,5 +1,6 @@
 import Sortable from "sortablejs";
-import { transformI18n } from "@/plugins/i18n";
+import { $t, transformI18n } from "@/plugins/i18n";
+import type { CheckboxValueType } from "element-plus";
 import { useEpThemeStoreHook } from "@/store/modules/epTheme";
 import {
   computed,
@@ -19,7 +20,9 @@ import {
   isFunction
 } from "@pureadmin/utils";
 
+import PinAngle from "~icons/bi/pin-angle";
 import Fullscreen from "~icons/ri/fullscreen-fill";
+import PinAngleFill from "~icons/bi/pin-angle-fill";
 import ExitFullscreen from "~icons/ri/fullscreen-exit-fill";
 import DragIcon from "@/assets/table-bar/drag.svg?component";
 import ExpandIcon from "@/assets/table-bar/expand.svg?component";
@@ -106,9 +109,9 @@ export default defineComponent({
       return [
         "flex",
         "justify-between",
-        "pt-[3px]",
-        "px-[11px]",
-        "border-b-[1px]",
+        "pt-0.75",
+        "px-2.75",
+        "border-b",
         "border-b-solid",
         "border-[#dcdfe6]",
         "dark:border-[#303030]"
@@ -152,7 +155,7 @@ export default defineComponent({
       });
     }
 
-    function handleCheckAllChange(val: boolean) {
+    function handleCheckAllChange(val: CheckboxValueType) {
       checkedColumns.value = val ? checkColumnList.value : [];
       isIndeterminate.value = false;
       dynamicColumns.value.map(column =>
@@ -160,7 +163,7 @@ export default defineComponent({
       );
     }
 
-    function handleCheckedColumnsChange(value: string[]) {
+    function handleCheckedColumnsChange(value: CheckboxValueType[]) {
       checkedColumns.value = value;
       const checkedCount = value.length;
       checkAll.value = checkedCount === checkColumnList.value.length;
@@ -168,10 +171,22 @@ export default defineComponent({
         checkedCount > 0 && checkedCount < checkColumnList.value.length;
     }
 
-    function handleCheckColumnListChange(val: boolean, label: string) {
+    function handleCheckColumnListChange(
+      val: CheckboxValueType,
+      label: string
+    ) {
       dynamicColumns.value.filter(
         item => transformI18n(item.label) === transformI18n(label)
       )[0].hide = !val;
+    }
+
+    function handleToggleColumnFixed(fixed, label: string) {
+      const column = dynamicColumns.value.find(
+        item => transformI18n(item.label) === transformI18n(label)
+      );
+      if (column) {
+        column.fixed = fixed;
+      }
     }
 
     async function onReset() {
@@ -215,7 +230,7 @@ export default defineComponent({
     };
     const dropdown = {
       dropdown: () => (
-        <el-dropdown-menu class="translation" teleported={false}>
+        <el-dropdown-menu class="translation">
           <el-dropdown-item
             style={getDropdownItemStyle.value("large")}
             onClick={event => sizeChange(event, "large")}
@@ -274,9 +289,13 @@ export default defineComponent({
     };
 
     const isFixedColumn = (label: string) => {
-      return dynamicColumns.value.filter(
+      const column = dynamicColumns.value.find(
         item => transformI18n(item.label) === transformI18n(label)
-      )[0].fixed;
+      );
+      const fixedOption = column?.fixed;
+      const left = fixedOption === "left";
+      const right = fixedOption === true || fixedOption === "right";
+      return { fixed: left || right, left, right };
     };
 
     const rendTippyProps = (content: string) => {
@@ -293,7 +312,7 @@ export default defineComponent({
     const reference = {
       reference: () => (
         <SettingIcon
-          class={["w-[16px]", iconClass.value]}
+          class={["w-4", iconClass.value]}
           v-tippy={rendTippyProps(t("tableBar.columnSettings"))}
         />
       )
@@ -302,20 +321,20 @@ export default defineComponent({
     return () => (
       <>
         <div {...attrs} class={[slots?.default ? renderClass.value : ""]}>
-          <div class="flex justify-between w-full h-[60px] p-4">
+          <div class="flex justify-between w-full h-15 p-4">
             {slots?.title ? (
               slots.title()
             ) : (
               <p class="font-bold truncate">{props.title}</p>
             )}
-            <div class="flex items-center justify-around">
+            <div class="flex-ac">
               {slots?.buttons ? (
                 <div class="flex mr-4">{slots.buttons()}</div>
               ) : null}
               {props.tableRef?.size ? (
                 <>
                   <ExpandIcon
-                    class={["w-[16px]", iconClass.value]}
+                    class={["w-4", iconClass.value]}
                     style={{
                       transform: isExpandAll.value ? "none" : "rotate(-90deg)"
                     }}
@@ -331,7 +350,7 @@ export default defineComponent({
               ) : null}
               <RefreshIcon
                 class={[
-                  "w-[16px]",
+                  "w-4",
                   iconClass.value,
                   loading.value ? "animate-spin" : ""
                 ]}
@@ -344,7 +363,7 @@ export default defineComponent({
                 trigger="click"
                 v-tippy={rendTippyProps(t("tableBar.density"))}
               >
-                <CollapseIcon class={["w-[16px]", iconClass.value]} />
+                <CollapseIcon class={["w-4", iconClass.value]} />
               </el-dropdown>
               <el-divider direction="vertical" />
 
@@ -352,7 +371,7 @@ export default defineComponent({
                 v-slots={reference}
                 placement="bottom-start"
                 popper-style={{ padding: 0 }}
-                width="200"
+                width="245"
                 trigger="click"
               >
                 <div class={[topClass.value]}>
@@ -368,7 +387,7 @@ export default defineComponent({
                   </el-button>
                 </div>
 
-                <div class="pt-[6px] pl-[11px]">
+                <div class="pt-1.5 pl-2.75">
                   <el-scrollbar max-height="36vh">
                     <el-checkbox-group
                       ref={`GroupRef${unref(props.tableKey)}`}
@@ -381,14 +400,13 @@ export default defineComponent({
                         size={0}
                       >
                         {checkColumnList.value.map((item, index) => {
+                          const { fixed, left, right } = isFixedColumn(item);
                           return (
                             <div class="flex items-center">
                               <DragIcon
                                 class={[
-                                  "drag-btn w-[16px] mr-2",
-                                  isFixedColumn(item)
-                                    ? "cursor-no-drop!"
-                                    : "cursor-grab!"
+                                  "drag-btn w-4 mr-2",
+                                  fixed ? "cursor-no-drop!" : "cursor-grab!"
                                 ]}
                                 onMouseenter={(event: {
                                   preventDefault: () => void;
@@ -404,11 +422,54 @@ export default defineComponent({
                               >
                                 <span
                                   title={transformI18n(item)}
-                                  class="inline-block w-[120px] truncate hover:text-text_color_primary"
+                                  class="inline-block w-30 truncate hover:text-text_color_primary"
                                 >
                                   {transformI18n(item)}
                                 </span>
                               </el-checkbox>
+                              <iconify-icon-offline
+                                class={[
+                                  "ml-2",
+                                  "size-4",
+                                  "hover:text-primary",
+                                  "cursor-pointer",
+                                  left ? "text-primary" : ""
+                                ]}
+                                icon={left ? PinAngleFill : PinAngle}
+                                v-tippy={
+                                  left
+                                    ? transformI18n($t("tableBar.unpin"))
+                                    : transformI18n($t("tableBar.pinLeft"))
+                                }
+                                onClick={() =>
+                                  handleToggleColumnFixed(
+                                    left ? false : "left",
+                                    item
+                                  )
+                                }
+                              />
+                              <iconify-icon-offline
+                                class={[
+                                  "ml-2",
+                                  "size-4",
+                                  "hover:text-primary",
+                                  "scale-x-[-1]",
+                                  "cursor-pointer",
+                                  right ? "text-primary" : ""
+                                ]}
+                                icon={right ? PinAngleFill : PinAngle}
+                                v-tippy={
+                                  right
+                                    ? transformI18n($t("tableBar.unpin"))
+                                    : transformI18n($t("tableBar.pinRight"))
+                                }
+                                onClick={() =>
+                                  handleToggleColumnFixed(
+                                    right ? false : "right",
+                                    item
+                                  )
+                                }
+                              />
                             </div>
                           );
                         })}
@@ -419,8 +480,8 @@ export default defineComponent({
               </el-popover>
               <el-divider direction="vertical" />
 
-              <iconifyIconOffline
-                class={["w-[16px]", iconClass.value]}
+              <iconify-icon-offline
+                class={["w-4", iconClass.value]}
                 icon={isFullscreen.value ? ExitFullscreen : Fullscreen}
                 v-tippy={
                   isFullscreen.value

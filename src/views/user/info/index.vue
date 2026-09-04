@@ -36,7 +36,7 @@ const activeTab = ref("userinfo");
             <el-image
               :preview-src-list="Array.of(currentUserInfo.avatar)"
               :src="currentUserInfo.avatar"
-              class="h-[120px]"
+              class="h-30"
               fit="cover"
             />
           </div>

@@ -5,12 +5,7 @@ import { type MessageHandler, ElMessage } from "element-plus";
 type messageStyle = "el" | "antd";
 type messageTypes = "info" | "success" | "warning" | "error";
 type messagePlacement =
-  | "top"
-  | "top-left"
-  | "top-right"
-  | "bottom"
-  | "bottom-left"
-  | "bottom-right";
+  "top" | "top-left" | "top-right" | "bottom" | "bottom-left" | "bottom-right";
 
 interface MessageParams {
   /** 消息类型，可选 `info` 、`success` 、`warning` 、`error` ，默认 `info` */

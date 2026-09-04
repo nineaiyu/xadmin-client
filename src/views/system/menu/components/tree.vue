@@ -213,7 +213,7 @@ onMounted(() => {
 <template>
   <div class="h-full bg-bg_color">
     <el-card :body-style="{ padding: '8px' }">
-      <div class="flex items-center h-[34px]">
+      <div class="flex items-center h-8.5">
         <p
           :title="t('systemMenu.menus')"
           class="flex-1 ml-2 font-bold text-base truncate"
@@ -273,7 +273,7 @@ onMounted(() => {
         <el-dropdown :hide-on-click="false">
           <IconifyIconOffline
             :icon="More2Fill"
-            class="w-[28px] cursor-pointer"
+            class="w-7 cursor-pointer"
             width="18px"
           />
           <template #dropdown>

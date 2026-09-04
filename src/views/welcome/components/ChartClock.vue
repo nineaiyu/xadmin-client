@@ -379,7 +379,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="divRef" class="h-full w-full">
+  <div ref="divRef" class="size-full">
     <canvas ref="canvasRef" />
   </div>
 </template>

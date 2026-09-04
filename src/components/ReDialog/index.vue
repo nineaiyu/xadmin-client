@@ -134,10 +134,7 @@ function handleChange(options: DialogOptions, index: number, values: any) {
       v-if="options?.fullscreenIcon || options?.headerRenderer"
       #header="{ close, titleId, titleClass }"
     >
-      <div
-        v-if="options?.fullscreenIcon"
-        class="flex items-center justify-between"
-      >
+      <div v-if="options?.fullscreenIcon" class="flex-bc">
         <span :id="titleId" :class="titleClass">{{ options?.title }}</span>
         <i
           v-if="!options?.fullscreen"

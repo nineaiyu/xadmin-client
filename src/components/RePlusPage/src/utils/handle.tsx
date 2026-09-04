@@ -490,18 +490,14 @@ interface booleanTagOptions {
 }
 
 const renderBooleanTag = (booleanTagOptions: booleanTagOptions) => {
-  const { t, tagStyle, field, disabled, actionMap } = booleanTagOptions;
+  const { t, tagStyle, field, actionMap } = booleanTagOptions;
   const defaultActionMap = {
     true: t("labels.enable"),
     false: t("labels.disable"),
     ...actionMap
   };
   return scope => (
-    <el-tag
-      size={scope.props.size}
-      style={tagStyle.value(scope.row[field])}
-      disabled={disabled}
-    >
+    <el-tag size={scope.props.size} style={tagStyle.value(scope.row[field])}>
       {defaultActionMap[scope.row[field]]}
     </el-tag>
   );

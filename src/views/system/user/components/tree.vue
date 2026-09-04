@@ -108,7 +108,7 @@ defineExpose({ onTreeReset });
     :style="{ minHeight: `calc(100vh - 141px)` }"
     class="bg-bg_color overflow-hidden relative"
   >
-    <div class="flex items-center h-[34px]">
+    <div class="flex items-center h-8.5">
       <el-input
         v-model="searchValue"
         :placeholder="t('systemDept.name')"
@@ -126,7 +126,7 @@ defineExpose({ onTreeReset });
         </template>
       </el-input>
       <el-dropdown :hide-on-click="false">
-        <IconifyIconOffline :icon="More2Fill" class="w-[28px] cursor-pointer" />
+        <IconifyIconOffline :icon="More2Fill" class="w-7 cursor-pointer" />
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item>
@@ -162,7 +162,7 @@ defineExpose({ onTreeReset });
           <span
             :class="[
               'rounded-sm',
-              'w-[170px]!',
+              'w-42.5!',
               'truncate!',
               'flex',
               'items-center',

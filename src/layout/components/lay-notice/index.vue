@@ -72,7 +72,7 @@ const getLabel = computed(
         'dropdown-badge',
         'navbar-bg-hover',
         'select-none',
-        useUserStoreHook().noticeCount !== 0 && 'mr-[10px]'
+        useUserStoreHook().noticeCount !== 0 && 'mr-2.5'
       ]"
     >
       <el-badge

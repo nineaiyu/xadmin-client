@@ -46,9 +46,7 @@ function onClick(item) {
 </script>
 
 <template>
-  <div
-    :class="['min-w-[180px]', deviceDetection() ? 'max-w-full' : 'max-w-[70%]']"
-  >
+  <div :class="['min-w-45', deviceDetection() ? 'max-w-full' : 'max-w-[70%]']">
     <h3 class="my-8!">{{ t("account.accountManagement") }}</h3>
     <div v-for="(item, index) in list" :key="index">
       <div class="flex items-center">

@@ -48,7 +48,7 @@ interface PhoneInputProps {
 }
 
 const value = defineModel<PhoneInputProps>({
-  default: { code: "+86", phone: "" }
+  default: () => ({ code: "+86", phone: "" })
 });
 defineProps({
   disabled: {

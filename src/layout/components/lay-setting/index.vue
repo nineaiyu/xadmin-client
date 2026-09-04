@@ -51,17 +51,22 @@ if (unref(layoutTheme)) {
   setMenuLayout(layout);
 }
 
-/** 默认灵动模式 */
-const markValue = ref($storage.configure?.showModel ?? "smart");
+/** 页签风格默认为谷歌风格 */
+const tagsStyleValue = ref($storage.configure?.tagsStyle ?? "chrome");
 
 const logoVal = ref($storage.configure?.showLogo ?? true);
+
+const watermarkConfigs = reactive({
+  enable: $storage.configure.watermark,
+  text: $storage.configure.watermarkText
+});
 
 const settings = reactive({
   greyVal: $storage.configure.grey,
   weakVal: $storage.configure.weak,
   tabsVal: $storage.configure.hideTabs,
   showLogo: $storage.configure.showLogo,
-  showModel: $storage.configure.showModel,
+  tagsStyle: $storage.configure.tagsStyle,
   hideFooter: $storage.configure.hideFooter,
   multiTagsCache: $storage.configure.multiTagsCache,
   stretch: $storage.configure.stretch
@@ -122,9 +127,17 @@ const multiTagsCacheChange = () => {
 
 function onChange({ option }) {
   const { value } = option;
-  markValue.value = value;
-  storageConfigureChange("showModel", value);
-  emitter.emit("tagViewsShowModel", value);
+  tagsStyleValue.value = value;
+  storageConfigureChange("tagsStyle", value);
+  emitter.emit("tagViewsTagsStyle", value);
+}
+
+function onWatermarkSwitchChange(value) {
+  storageConfigureChange("watermark", value);
+}
+
+function onWatermarkInputChange(text) {
+  storageConfigureChange("watermarkText", text);
 }
 
 /** 侧边栏Logo */
@@ -187,7 +200,7 @@ const getThemeColor = computed(() => {
 });
 
 const pClass = computed(() => {
-  return ["mb-[12px]!", "font-medium", "text-sm", "dark:text-white"];
+  return ["mb-3!", "font-medium", "text-sm", "dark:text-white"];
 });
 
 const themeOptions = computed<Array<OptionsType>>(() => {
@@ -408,7 +421,7 @@ onUnmounted(() => removeMatchMedia);
         <button
           v-else
           v-ripple="{ class: 'text-gray-300' }"
-          class="bg-transparent flex-c w-full h-20 rounded-md border border-[var(--pure-border-color)]"
+          class="bg-transparent flex-c w-full h-20 rounded-md border border-(--pure-border-color)"
           @click="setStretch(!settings.stretch)"
         >
           <div
@@ -432,7 +445,9 @@ onUnmounted(() => removeMatchMedia);
 
       <p :class="['mt-4!', pClass]">{{ t("layout.labelStyle") }}</p>
       <Segmented
-        :modelValue="markValue === 'smart' ? 0 : markValue === 'card' ? 1 : 2"
+        :modelValue="
+          tagsStyleValue === 'smart' ? 0 : tagsStyleValue === 'card' ? 1 : 2
+        "
         :options="markOptions"
         class="select-none"
         @change="onChange"
@@ -504,6 +519,36 @@ onUnmounted(() => removeMatchMedia);
             :inactive-text="t('labels.inactive')"
             inline-prompt
             @change="multiTagsCacheChange"
+          />
+        </li>
+      </ul>
+
+      <p class="mt-5! font-medium text-sm dark:text-white">
+        {{ t("panel.fullScreenWatermark") }}
+      </p>
+      <ul class="setting">
+        <li>
+          <span class="dark:text-white">
+            {{ t("panel.enableWatermark") }}
+          </span>
+          <el-switch
+            v-model="watermarkConfigs.enable"
+            :active-text="t('labels.active')"
+            :inactive-text="t('labels.inactive')"
+            inline-prompt
+            @change="onWatermarkSwitchChange"
+          />
+        </li>
+        <li v-if="watermarkConfigs.enable" v-motion-fade>
+          <span class="dark:text-white">
+            {{ t("panel.watermarkText") }}
+          </span>
+          <el-input
+            v-model="watermarkConfigs.text"
+            class="w-32!"
+            clearable
+            :placeholder="t('panel.watermarkTextPlaceholder')"
+            @input="onWatermarkInputChange"
           />
         </li>
       </ul>

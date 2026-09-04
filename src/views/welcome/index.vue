@@ -48,7 +48,7 @@ let curWeek = ref(1);
         :sm="12"
         :value="6"
         :xs="24"
-        class="mb-[18px]"
+        class="mb-4.5"
       >
         <el-card class="line-card" shadow="never">
           <div class="flex justify-between">
@@ -59,7 +59,7 @@ let curWeek = ref(1);
               :style="{
                 backgroundColor: isDark ? 'transparent' : item.bgColor
               }"
-              class="w-8 h-8 flex justify-center items-center rounded-md"
+              class="size-8 flex-c rounded-md"
             >
               <IconifyIconOffline
                 :color="item.color"
@@ -106,7 +106,7 @@ let curWeek = ref(1);
         :sm="12"
         :value="6"
         :xs="24"
-        class="mb-[18px]"
+        class="mb-4.5"
       >
         <el-card
           :body-style="{ padding: '0' }"
@@ -135,7 +135,7 @@ let curWeek = ref(1);
         :sm="12"
         :value="6"
         :xs="24"
-        class="mb-[18px]"
+        class="mb-4.5"
       >
         <el-card class="line-card" shadow="never">
           <div class="flex justify-between">
@@ -183,7 +183,7 @@ let curWeek = ref(1);
         }"
         :value="16"
         :xs="24"
-        class="mb-[18px]"
+        class="mb-4.5"
       >
         <el-card class="bar-card" shadow="never">
           <div class="flex justify-between">
@@ -216,7 +216,7 @@ let curWeek = ref(1);
         }"
         :value="8"
         :xs="24"
-        class="mb-[18px]"
+        class="mb-4.5"
       >
         <el-card shadow="never">
           <div class="flex justify-between">

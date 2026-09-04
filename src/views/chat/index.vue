@@ -99,7 +99,7 @@ const filteredItems = computed(() => {
             <span class="font-medium">公共聊天室</span>
           </div>
         </template>
-        <div class="h-[500px]">
+        <div class="h-125">
           <DynamicScroller
             ref="scroller"
             :items="filteredItems"

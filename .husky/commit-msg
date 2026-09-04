@@ -1,5 +1,1 @@
-#!/bin/sh
-
-PATH="/usr/local/bin:$PATH"
-
-pnpm dlx commitlint --edit "$1"
+pnpm exec commitlint --edit $1

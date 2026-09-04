@@ -232,7 +232,7 @@ class WS {
    * 发送消息
    * @param data
    */
-  send(data: string | ArrayBufferLike | Blob | ArrayBufferView): void {
+  send(data: string | Blob | BufferSource): void {
     if (!this.socket) return;
     // 状态为 `1-开启状态` 直接发送
     if (this.socket.readyState === this.socket.OPEN) {

@@ -20,9 +20,7 @@ const auth = ref({
 </script>
 
 <template>
-  <div
-    :class="['min-w-[180px]', deviceDetection() ? 'max-w-full' : 'max-w-[70%]']"
-  >
+  <div :class="['min-w-45', deviceDetection() ? 'max-w-full' : 'max-w-[70%]']">
     <h3 class="my-8!">{{ t("account.notifications") }}</h3>
     <MessageNotifications :api="userMsgSubscriptionApi" :auth="auth" />
   </div>

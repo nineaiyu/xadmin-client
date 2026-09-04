@@ -7,12 +7,13 @@
 </template>
 
 <script lang="ts">
-import { useGlobal } from "@pureadmin/utils";
-import { defineComponent, computed } from "vue";
 import { checkVersion } from "version-rocket";
 import { ElConfigProvider } from "element-plus";
-import { closeAllDialog, ReDialog } from "@/components/ReDialog";
-import { closeAllDrawer, ReDrawer } from "@/components/ReDrawer";
+import { useRouter, useRoute } from "vue-router";
+import { useGlobal, useWatermark } from "@pureadmin/utils";
+import { defineComponent, computed, watch, nextTick } from "vue";
+import { ReDialog, closeAllDialog } from "@/components/ReDialog";
+import { ReDrawer, closeAllDrawer } from "@/components/ReDrawer";
 import en from "element-plus/es/locale/lang/en";
 import zhCn from "element-plus/es/locale/lang/zh-cn";
 import plusEn from "plus-pro-components/es/locale/lang/en";
@@ -20,7 +21,6 @@ import plusZhCn from "plus-pro-components/es/locale/lang/zh-cn";
 import { Boot } from "@wangeditor/editor";
 import attachmentModule from "@wangeditor/plugin-upload-attachment";
 import { $t, transformI18n } from "@/plugins/i18n";
-import { useRouter } from "vue-router";
 
 try {
   Boot.registerModule(attachmentModule);
@@ -36,8 +36,12 @@ export default defineComponent({
     ReDrawer
   },
   setup() {
+    const route = useRoute();
     const router = useRouter();
+    const { setWatermark, clear } = useWatermark();
     const { $storage } = useGlobal<GlobalPropertiesApi>();
+    const watermarkEnable = computed(() => $storage.configure?.watermark);
+    const watermarkText = computed(() => $storage.configure?.watermarkText);
     const currentLocale = computed(() => {
       return $storage.locale?.locale === "zh"
         ? { ...zhCn, ...plusZhCn }
@@ -47,6 +51,25 @@ export default defineComponent({
       closeAllDialog();
       closeAllDrawer();
     });
+
+    watch(
+      [watermarkEnable, watermarkText, () => route.name],
+      async ([enable, text, name], prev) => {
+        await nextTick();
+        // 兼容登录接口下发的用户名水印（`FRONT_END_WEB_WATERMARK_ENABLED`）：
+        // 仅在用户主动关闭本水印或进入登录页时清除，避免误清用户名水印
+        const prevEnable = prev?.[0];
+        if (enable && name !== "Login") {
+          setWatermark(text, { verticalOffset: 170 });
+        } else if (prevEnable === true || name === "Login") {
+          clear();
+        }
+      },
+      {
+        immediate: true
+      }
+    );
+
     return {
       currentLocale
     };
