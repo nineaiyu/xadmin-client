@@ -1,6 +1,6 @@
-// 元数据接口契约类型：由 xadmin-server/docs/schema/*.schema.json 生成（T2.3）。
-// 禁止手改；重新生成：pnpm gen:metadata-types
-// Schema 变更属破坏性契约变更，需与后端一同评审。
+// 元数据接口契约类型：由 contract/schema/*.schema.json 生成（T2.3）。
+// 该目录镜像自 xadmin-server/docs/schema（服务端为契约源）；禁止手改。
+// 重新生成：pnpm gen:metadata-types；Schema 变更属破坏性契约变更，需与后端一同评审。
 
 /**
  * GET /api/<resource>/search-columns 响应中 data 字段的载荷（展示字段元数据）。T2.3 契约固化；服务端由 tests/unit/common/test_metadata_schema.py 持续校验。

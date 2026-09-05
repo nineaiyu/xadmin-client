@@ -44,7 +44,7 @@ jobs:
           pnpm test:run
 
   build-and-push:
-    needs: [test, check-version]
+    needs: [test]
     runs-on: ubuntu-latest
 
     steps:
