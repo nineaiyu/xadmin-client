@@ -32,7 +32,7 @@ import {
  * 如何匹配所有文件请看：https://github.com/mrmlnc/fast-glob#basic-syntax
  * 如何排除文件请看：https://cn.vitejs.dev/guide/features.html#negative-patterns
  */
-const modules: Record<string, any> = import.meta.glob(
+const modules = import.meta.glob<{ default: RouteConfigsTable }>(
   ["./modules/**/*.ts", "!./modules/**/remaining.ts"],
   {
     eager: true
@@ -67,7 +67,9 @@ export const remainingPaths = Object.keys(remainingRouter).map(v => {
 /** 创建路由实例 */
 export const router: Router = createRouter({
   history: getHistoryMode(import.meta.env.VITE_ROUTER_HISTORY),
-  routes: constantRoutes.concat(...(remainingRouter as any)),
+  // vue-router 5 的 RouteRecordRaw 联合判定不认宽松的 RouteConfigsTable 接口（redirect 可选性），
+  // 运行时 remainingRoutes 即合法路由，此处按原始路由边界收窄
+  routes: constantRoutes.concat(...(remainingRouter as RouteRecordRaw[])),
   strict: true,
   scrollBehavior(to, from, savedPosition) {
     return new Promise(resolve => {
@@ -95,7 +97,9 @@ export function resetLoadedPaths() {
 /** 重置路由 */
 export function resetRouter() {
   router.clearRoutes();
-  for (const route of initConstantRoutes.concat(...(remainingRouter as any))) {
+  for (const route of initConstantRoutes.concat(
+    ...(remainingRouter as RouteRecordRaw[])
+  )) {
     router.addRoute(route);
   }
   router.options.routes = formatTwoStageRoutes(

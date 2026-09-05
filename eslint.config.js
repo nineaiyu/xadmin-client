@@ -176,7 +176,6 @@ export default defineConfig([
     // 治理策略：新增代码不允许 any（默认 warn + max-warnings 0 强制）；
     // 存量文件每清零一个，就从本清单移除一行，最终删除本块。
     files: [
-      "src/api/auth.ts",
       "src/api/types.ts",
       "src/components/ReDialog/index.ts",
       "src/components/ReDialog/type.ts",
@@ -185,7 +184,6 @@ export default defineConfig([
       "src/components/RePlusPage/src/components/ButtonOperation/src/types.ts",
       "src/components/ReQrcode/src/index.tsx",
       "src/components/ReSeamlessScroll/src/utils.ts",
-      "src/router/index.ts",
       "src/router/utils.ts",
       "src/store/modules/permission.ts",
       "src/utils/http/index.spec.ts",

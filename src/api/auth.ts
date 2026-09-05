@@ -16,6 +16,19 @@ export type TokenResult = {
   data: TokenInfo;
 };
 
+/** 密码安全规则：`key` 为规则名，`value` 为阈值/开关 */
+export type PasswordRule = {
+  value: number;
+  key: string;
+};
+
+/** choices 接口下发的选项条目（userinfo 等接口的 `choices_dict` 数组项） */
+export type ChoiceEntry = {
+  value: unknown;
+  label?: string;
+  disabled?: boolean;
+};
+
 export interface UserInfo {
   username: string;
   avatar: string;
@@ -35,8 +48,8 @@ export type UserInfoResult = {
   code: number;
   detail: string;
   data: UserInfo;
-  choices_dict?: any[];
-  password_rule?: any[];
+  choices_dict?: ChoiceEntry[];
+  password_rule?: PasswordRule[];
   config?: { FRONT_END_WEB_WATERMARK_ENABLED: boolean };
 };
 
@@ -65,7 +78,7 @@ export type AuthInfoResult = {
     encrypted?: boolean;
     lifetime?: number;
     reset?: boolean;
-    password?: Array<any>;
+    password?: PasswordRule[];
     email?: boolean;
     sms?: boolean;
     basic?: boolean;

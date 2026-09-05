@@ -2,7 +2,7 @@ import { $t } from "@/plugins/i18n";
 
 const Layout = () => import("@/layout/index.vue");
 
-export default [
+const remainingRoutes: Array<RouteConfigsTable> = [
   {
     path: "/login",
     name: "Login",
@@ -50,4 +50,6 @@ export default [
       rank: 104
     }
   }
-] satisfies Array<RouteConfigsTable>;
+];
+
+export default remainingRoutes;
