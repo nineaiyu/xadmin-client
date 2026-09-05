@@ -568,7 +568,8 @@ export function useUser(tableRef: Ref) {
           link: true
         },
         onClick: ({ row }) => {
-          handleRoleRules(row);
+          // 表格行动态边界：按 handleRoleRules 所需契约收窄
+          handleRoleRules(row as { username: string; [key: string]: unknown });
         },
         show: auth.empower
       }

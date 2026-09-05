@@ -175,15 +175,7 @@ export default defineConfig([
     // any 存量豁免清单：这些文件暂时关闭 no-explicit-any（CI lint 带 --max-warnings 0）。
     // 治理策略：新增代码不允许 any（默认 warn + max-warnings 0 强制）；
     // 存量文件每清零一个，就从本清单移除一行，最终删除本块。
-    files: [
-      "src/api/types.ts",
-      "src/components/RePlusPage/src/components/ButtonOperation/src/types.ts",
-      "src/components/ReQrcode/src/index.tsx",
-      "src/components/ReSeamlessScroll/src/utils.ts",
-      "src/router/utils.ts",
-      "src/store/modules/permission.ts",
-      "src/utils/http/index.spec.ts"
-    ],
+    files: ["src/api/types.ts"],
     rules: {
       "@typescript-eslint/no-explicit-any": "off"
     }

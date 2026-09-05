@@ -138,7 +138,8 @@ class PureHttp {
 
   public upload<T, P>(
     url: string,
-    params?: AxiosRequestConfig<P>,
+    /** 查询参数袋，运行时直接展开为请求的 `params` */
+    params?: object,
     data?: P,
     config?: PureHttpRequestConfig
   ): Promise<T> {
@@ -155,9 +156,10 @@ class PureHttp {
     );
   }
 
-  public download<T, P>(
+  public download<T>(
     url: string,
-    params?: AxiosRequestConfig<P>,
+    /** 查询参数袋，运行时直接展开为请求的 `params` */
+    params?: object,
     config?: PureHttpRequestConfig
   ): Promise<T> {
     return this.request<T>(
@@ -171,14 +173,15 @@ class PureHttp {
     );
   }
 
-  public autoDownload<P>(
+  public autoDownload(
     url: string,
     filename?: string,
-    params?: AxiosRequestConfig<P>,
+    /** 查询参数袋，运行时直接展开为请求的 `params` */
+    params?: object,
     config?: PureHttpRequestConfig
   ): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.download<AxiosResponse<Blob>, P>(url, params, config)
+      this.download<AxiosResponse<Blob>>(url, params, config)
         .then((response: AxiosResponse<Blob>) => {
           try {
             const { data, headers } = response;

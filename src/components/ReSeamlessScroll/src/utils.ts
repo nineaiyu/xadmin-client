@@ -34,7 +34,7 @@ export const animationFrame = () => {
  * @param arr1
  * @param arr2
  */
-export const arrayEqual = (arr1: Array<any>, arr2: Array<any>) => {
+export const arrayEqual = (arr1: Array<unknown>, arr2: Array<unknown>) => {
   if (arr1 === arr2) return true;
   if (arr1.length !== arr2.length) return false;
   for (let i = 0; i < arr1.length; ++i) {

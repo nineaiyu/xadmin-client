@@ -1,14 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { AxiosInstance } from "axios";
 
 const { instanceMock, downloadByDataMock, buildUUIDMock } = vi.hoisted(() => {
   const request = vi.fn();
-  const instance: any = {
+  // axios 实例的测试替身：http 层仅触达 interceptors 与 request
+  const instance = {
     interceptors: {
       request: { use: vi.fn() },
       response: { use: vi.fn() }
     },
     request
-  };
+  } as unknown as AxiosInstance;
   return {
     instanceMock: { instance, request },
     downloadByDataMock: vi.fn(),
@@ -85,11 +87,7 @@ describe("PureHttp 请求分发", () => {
   });
 
   it("upload 强制 multipart Content-Type", async () => {
-    await http.upload(
-      "/api/system/upload",
-      { dir: "img" } as any,
-      { file: "x" } as any
-    );
+    await http.upload("/api/system/upload", { dir: "img" }, { file: "x" });
     expect(instanceMock.request).toHaveBeenCalledWith(
       expect.objectContaining({
         method: "post",
@@ -102,7 +100,7 @@ describe("PureHttp 请求分发", () => {
   });
 
   it("download 设置 responseType=blob", async () => {
-    await http.download("/api/system/export", { type: "xlsx" } as any);
+    await http.download("/api/system/export", { type: "xlsx" });
     expect(instanceMock.request).toHaveBeenCalledWith(
       expect.objectContaining({
         method: "get",

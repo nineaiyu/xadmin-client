@@ -77,7 +77,7 @@ export default defineComponent({
         const _width: number = await getOriginWidth(unref(renderText), options);
         options.scale =
           props.width === 0 ? undefined : (props.width / _width) * 4;
-        const canvasRef: any = await toCanvas(
+        const canvasRef = await toCanvas(
           unref(wrapRef) as HTMLCanvasElement,
           unref(renderText),
           options
@@ -96,7 +96,7 @@ export default defineComponent({
           width: props.width,
           ...options
         });
-        (unref(wrapRef) as any).src = url;
+        (unref(wrapRef) as HTMLImageElement).src = url;
         emit("done", url);
         loading.value = false;
       }
@@ -155,7 +155,10 @@ export default defineComponent({
       if (crossOrigin || logoRadius) {
         image.setAttribute("crossOrigin", crossOrigin);
       }
-      (image as any).src = logoSrc;
+      // src 为空时浏览器不会触发 onload，与原 `src=undefined` 行为一致
+      if (logoSrc !== undefined) {
+        image.src = logoSrc;
+      }
       // 使用image绘制可以避免某些跨域情况
       const drawLogoWithImage = (image: HTMLImageElement) => {
         ctx.drawImage(image, logoXY, logoXY, logoWidth, logoWidth);
@@ -177,7 +180,7 @@ export default defineComponent({
         }
       };
       // 将 logo绘制到 canvas上
-      return new Promise((resolve: any) => {
+      return new Promise<string>(resolve => {
         image.onload = () => {
           if (logoRadius) {
             drawLogoWithCanvas(image);

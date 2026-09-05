@@ -4,10 +4,11 @@ import type {
   ElMessageBoxOptions,
   ElTooltipProps
 } from "element-plus";
+import type { RecordType } from "plus-pro-components";
 import type { Mutable } from "@vueuse/core";
 
 export type ButtonRowProps = Partial<
-  Mutable<ButtonProps & { [index: string]: any }>
+  Mutable<ButtonProps & { [index: string]: unknown }>
 >;
 
 export interface OperationButtonsRow {
@@ -19,7 +20,7 @@ export interface OperationButtonsRow {
     | Ref<string>
     | ComputedRef<string>
     | ((
-        row: any,
+        row: RecordType,
         button: OperationButtonsRow
       ) => string | Ref<string> | ComputedRef<string>);
   /**
@@ -39,7 +40,7 @@ export interface OperationButtonsRow {
    */
   props?:
     | ButtonRowProps
-    | ((row: any, button: OperationButtonsRow) => ButtonRowProps)
+    | ((row: RecordType, button: OperationButtonsRow) => ButtonRowProps)
     | ComputedRef<ButtonRowProps>;
   /**
    * 用于判断按钮是否显示
@@ -50,7 +51,7 @@ export interface OperationButtonsRow {
     | Ref<number | boolean>
     | ComputedRef<number | boolean>
     | ((
-        row: any,
+        row: RecordType,
         button: OperationButtonsRow
       ) =>
         | number
@@ -68,7 +69,7 @@ export interface OperationButtonsRow {
       | Ref<string>
       | ComputedRef<string>
       | ((
-          row: any,
+          row: RecordType,
           button: OperationButtonsRow
         ) => string | Ref<string> | ComputedRef<string>);
     props?: ElMessageBoxOptions;
@@ -79,7 +80,7 @@ export interface OperationButtonsRow {
       | Ref<string>
       | ComputedRef<string>
       | ((
-          row: any,
+          row: RecordType,
           button: OperationButtonsRow
         ) => string | Ref<string> | ComputedRef<string>);
     props?: ElTooltipProps;
@@ -90,7 +91,7 @@ export interface OperationButtonsRow {
 
 export interface ButtonsCallBackParams {
   e: MouseEvent;
-  row: object | any;
+  row: RecordType;
   loading: { value: boolean };
   buttonRow: OperationButtonsRow;
 }

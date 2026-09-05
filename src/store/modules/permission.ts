@@ -23,17 +23,17 @@ export const usePermissionStore = defineStore("pure-permission", {
     // 缓存页面keepAlive
     cachePageList: [],
     // 全局的授权
-    permissionAuths: {}
+    permissionAuths: {} as Record<string, boolean>
   }),
   actions: {
-    handleWholeAuths(auths: any[]) {
+    handleWholeAuths(auths: string[]) {
       this.permissionAuths = {};
       auths.forEach(auth => {
         this.permissionAuths[auth] = true;
       });
     },
     /** 组装整体路由生成的菜单 */
-    handleWholeMenus(routes: any[]) {
+    handleWholeMenus(routes: RouteRecordRaw[]) {
       this.wholeMenus = filterNoPermissionTree(
         // Pinia 会对 state 做 UnwrapRef 映射，路由联合类型经映射后与 RouteRecordRaw 失去直接可赋值性，需在边界断言
         filterTree(
@@ -41,7 +41,8 @@ export const usePermissionStore = defineStore("pure-permission", {
         )
       );
       this.flatteningRoutes = formatFlatteningRoutes(
-        this.constantMenus.concat(routes) as any
+        // 同上：UnwrapRef 映射后需在边界断言
+        this.constantMenus.concat(routes) as RouteRecordRaw[]
       );
     },
     /** 监听缓存页面是否存在于标签页，不存在则删除 */
