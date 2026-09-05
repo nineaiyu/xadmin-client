@@ -191,20 +191,12 @@ export default defineConfig([
       "src/utils/http/index.spec.ts",
       "src/utils/index.ts",
       "src/utils/websocket.ts",
-      "src/views/demo/book/utils/hook.tsx",
-      "src/views/system/config/user/utils/hook.tsx",
       "src/views/system/dept/utils/hook.tsx",
       "src/views/system/hooks.tsx",
-      "src/views/system/logs/login/utils/hook.tsx",
-      "src/views/system/logs/operation/utils/hook.tsx",
       "src/views/system/menu/utils/hook.tsx",
       "src/views/system/menu/utils/types.ts",
       "src/views/system/notice/read/hook.tsx",
-      "src/views/system/notice/utils/hook.tsx",
-      "src/views/system/online/utils/hook.tsx",
-      "src/views/system/permission/components/utils/hook.tsx",
-      "src/views/system/permission/components/utils/types.ts",
-      "src/views/user/info/utils/types.ts"
+      "src/views/system/notice/utils/hook.tsx"
     ],
     rules: {
       "@typescript-eslint/no-explicit-any": "off"

@@ -45,7 +45,7 @@ export function useUserConfig(tableRef: Ref) {
       switch (column._column?.key) {
         case "owner":
           column["cellRenderer"] = ({ row }) => (
-            <el-link onClick={() => onGoUserDetail(row as any)}>
+            <el-link onClick={() => onGoUserDetail(row)}>
               {row.owner?.username ? row.owner?.username : "/"}
             </el-link>
           );
@@ -57,7 +57,12 @@ export function useUserConfig(tableRef: Ref) {
 
   const router = useRouter();
 
-  const onGoUserDetail = (row: any) => {
+  /** 行内 `owner` 嵌套字段（点击跳转 SystemUser 详情） */
+  type OwnerRow = {
+    owner?: { username?: string; pk?: number | string };
+  };
+
+  const onGoUserDetail = (row: OwnerRow) => {
     if (hasAuth("list:SystemUser") && row.owner && row.owner?.pk) {
       router.push({
         name: "SystemUser",

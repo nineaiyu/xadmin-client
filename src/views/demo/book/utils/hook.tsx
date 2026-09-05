@@ -101,7 +101,7 @@ export function useDemoBook(tableRef: Ref) {
           column.valueType = "autocomplete";
           column["fieldProps"]["fetchSuggestions"] = (
             queryString: string,
-            cb: any
+            cb: (results: Array<{ value: string }>) => void
           ) => {
             const queryList = [
               { value: "人民出版社" },
@@ -142,7 +142,7 @@ export function useDemoBook(tableRef: Ref) {
           column.valueType = "autocomplete";
           column["fieldProps"]["fetchSuggestions"] = (
             queryString: string,
-            cb: any
+            cb: (results: Array<{ value: string }>) => void
           ) => {
             const queryList = [
               { value: "人民出版社" },

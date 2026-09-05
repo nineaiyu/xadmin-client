@@ -38,7 +38,7 @@ export function useUserOnline() {
       switch (column._column?.key) {
         case "creator":
           column["cellRenderer"] = ({ row }) => (
-            <el-link onClick={() => onGoDetail(row as any)}>
+            <el-link onClick={() => onGoDetail(row)}>
               {row.creator?.username ? row.creator?.username : "/"}
             </el-link>
           );
@@ -48,7 +48,12 @@ export function useUserOnline() {
     return columns;
   };
 
-  function onGoDetail(row: any) {
+  /** 行内 `creator` 嵌套字段（点击跳转 SystemUser 详情） */
+  type CreatorRow = {
+    creator?: { username?: string; pk?: number | string };
+  };
+
+  function onGoDetail(row: CreatorRow) {
     if (hasAuth("list:SystemUser") && row?.creator && row?.creator?.pk) {
       router.push({
         name: "SystemUser",
