@@ -11,7 +11,14 @@ describe("aes 加解密", () => {
 
   it("不同密钥无法解密出原文", () => {
     const encrypted = AesEncrypted("key-a", "payload");
-    expect(AesDecrypted("key-b", encrypted)).not.toBe("payload");
+    // 错误密钥下结果随随机盐波动：可能得到乱码，也可能因 Malformed UTF-8 直接抛错——两者都满足"解不出原文"
+    let wrongKeyResult: string | undefined;
+    try {
+      wrongKeyResult = AesDecrypted("key-b", encrypted);
+    } catch {
+      return;
+    }
+    expect(wrongKeyResult).not.toBe("payload");
   });
 
   it("同一明文每次密文不同（随机盐）", () => {
