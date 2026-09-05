@@ -2,7 +2,11 @@ import { nextTick, reactive, type Ref, ref } from "vue";
 import type { PaginationProps } from "@pureadmin/table";
 import { getKeyList, isArray } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
+import type { DetailResult } from "@/api/types";
 import type { PlusSearchProps } from "./types";
+
+/** 表格选择行：选中集合以 `pk` 为唯一键 */
+type SelectionRow = { pk?: number | string } & Record<string, unknown>;
 
 export function usePlusSearch(
   selectRef: Ref,
@@ -41,7 +45,7 @@ export function usePlusSearch(
     return getKeyList(selectValue.value ?? [], valueProps.value ?? "pk");
   };
 
-  const handleSelectionChange = val => {
+  const handleSelectionChange = (val: SelectionRow[]) => {
     nextTick(() => {
       // add
       val.forEach(row => {
@@ -50,7 +54,9 @@ export function usePlusSearch(
             pk: row.pk,
             label: formatValue(row, valueProps.label)
           };
-          (selectValue.value as any[]).push(item);
+          if (isArray(selectValue.value)) {
+            selectValue.value.push(item);
+          }
         }
       });
       // del
@@ -60,16 +66,15 @@ export function usePlusSearch(
           getSelectPks().indexOf(row.pk) > -1 &&
           valPks.indexOf(row.pk) === -1
         ) {
-          (selectValue.value as any[]).splice(
-            getSelectPks().indexOf(row.pk),
-            1
-          );
+          if (isArray(selectValue.value)) {
+            selectValue.value.splice(getSelectPks().indexOf(row.pk), 1);
+          }
         }
       });
     });
   };
 
-  const removeTag = val => {
+  const removeTag = (val?: SelectionRow) => {
     if (dataList.value?.length > 0) {
       const { toggleRowSelection } = tableRef.value.getTableRef().getTableRef();
       toggleRowSelection(
@@ -98,7 +103,7 @@ export function usePlusSearch(
     }
   }
 
-  const searchComplete = ({ res: { data } }) => {
+  const searchComplete = ({ res: { data } }: { res: DetailResult }) => {
     dataList.value = data?.results;
     nextTick(() => {
       const { toggleRowSelection } = tableRef.value.getTableRef().getTableRef();
@@ -113,17 +118,19 @@ export function usePlusSearch(
     });
   };
 
-  const rowStyle = ({ row: { pk } }) => {
+  const rowStyle = ({ row: { pk } }: { row: SelectionRow }) => {
+    const selected = selectValue.value;
+    const selectedPk =
+      selected && typeof selected === "object" && "pk" in selected
+        ? selected.pk
+        : undefined;
     return {
       cursor: "pointer",
-      background:
-        pk === (selectValue.value as any)?.pk
-          ? "var(--el-fill-color-light)"
-          : ""
+      background: pk === selectedPk ? "var(--el-fill-color-light)" : ""
     };
   };
 
-  const handleRowClick = row => {
+  const handleRowClick = (row: SelectionRow) => {
     if (props.multiple) {
       return;
     }

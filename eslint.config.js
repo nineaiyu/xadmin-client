@@ -183,7 +183,6 @@ export default defineConfig([
       "src/components/ReDrawer/index.ts",
       "src/components/ReDrawer/type.ts",
       "src/components/RePlusPage/src/components/ButtonOperation/src/types.ts",
-      "src/components/RePlusSearch/src/hooks.ts",
       "src/components/ReQrcode/src/index.tsx",
       "src/components/ReSeamlessScroll/src/utils.ts",
       "src/router/index.ts",
