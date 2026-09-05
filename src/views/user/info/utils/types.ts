@@ -1,4 +1,4 @@
-type ChoicesLabel = {
+export type ChoicesLabel = {
   label?: string;
   /** 选项值（choices 接口下发） */
   pk?: number;

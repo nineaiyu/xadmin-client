@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import dayjs from "dayjs";
-import { ref } from "vue";
+import { computed, ref } from "vue";
+import type { ChoicesLabel } from "./utils/types";
 import editUserInfo from "./components/edit.vue";
 import editUserAvatar from "./components/avatar.vue";
 import { useUserInfo } from "./utils/hook";
@@ -20,6 +21,12 @@ const {
   t
 } = useUserInfo();
 const activeTab = ref("userinfo");
+/** gender 在 choices 下发后为选项对象；数字形态（未下发）时无 label/value */
+const genderInfo = computed<ChoicesLabel | undefined>(() =>
+  typeof currentUserInfo.gender === "object"
+    ? currentUserInfo.gender
+    : undefined
+);
 </script>
 
 <template>
@@ -55,14 +62,8 @@ const activeTab = ref("userinfo");
               >{{ currentUserInfo.email }}
             </el-descriptions-item>
             <el-descriptions-item :label="t('userinfo.gender')">
-              <el-tag
-                :type="
-                  (currentUserInfo.gender as any)?.value === 2
-                    ? 'danger'
-                    : 'primary'
-                "
-              >
-                {{ (currentUserInfo.gender as any)?.label }}
+              <el-tag :type="genderInfo?.value === 2 ? 'danger' : 'primary'">
+                {{ genderInfo?.label }}
               </el-tag>
             </el-descriptions-item>
             <el-descriptions-item
