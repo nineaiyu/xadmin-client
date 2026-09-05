@@ -190,11 +190,7 @@ export default defineConfig([
       "src/store/modules/permission.ts",
       "src/utils/http/index.spec.ts",
       "src/utils/index.ts",
-      "src/utils/websocket.ts",
-      "src/views/system/menu/utils/hook.tsx",
-      "src/views/system/menu/utils/types.ts",
-      "src/views/system/notice/read/hook.tsx",
-      "src/views/system/notice/utils/hook.tsx"
+      "src/utils/websocket.ts"
     ],
     rules: {
       "@typescript-eslint/no-explicit-any": "off"

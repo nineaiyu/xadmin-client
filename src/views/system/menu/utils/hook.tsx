@@ -246,7 +246,7 @@ export function useMenu() {
     } else {
       u_menu.parent = node2.data.parent;
     }
-    api.partialUpdate(u_menu.pk, u_menu).then((res: any) => {
+    api.partialUpdate(u_menu.pk, u_menu).then(res => {
       if (res.code === 1000) {
         api
           .rank(getMenuOrderPk(treeRef?.data))
@@ -283,7 +283,9 @@ export function useMenu() {
   };
 
   const getViews = () => {
-    const files: any = import.meta.glob("@/views/**/*.vue");
+    const files = import.meta.glob<{ default: { name?: string } }>(
+      "@/views/**/*.vue"
+    );
     Object.keys(files).forEach((file: string) => {
       // 忽略 components 目录的文件，规定该目录下的文件为依赖组件，而不是页面组件
       if (!/\/components\//.test(file)) {

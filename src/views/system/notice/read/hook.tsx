@@ -60,7 +60,7 @@ export function useNoticeRead(tableRef: Ref) {
           column["cellRenderer"] = ({ row }) => (
             <el-link
               type={row.notice_info?.level?.value}
-              onClick={() => onGoNoticeDetail(row as any)}
+              onClick={() => onGoNoticeDetail(row)}
             >
               {row.notice_info.title}
             </el-link>
@@ -68,7 +68,7 @@ export function useNoticeRead(tableRef: Ref) {
           break;
         case "owner":
           column["cellRenderer"] = ({ row }) => (
-            <el-link onClick={() => onGoUserDetail(row as any)}>
+            <el-link onClick={() => onGoUserDetail(row)}>
               {row.owner?.username ? row.owner?.username : "/"}
             </el-link>
           );
@@ -100,7 +100,12 @@ export function useNoticeRead(tableRef: Ref) {
   };
   const router = useRouter();
 
-  function onGoUserDetail(row: any) {
+  /** 行内 `owner` 嵌套字段（点击跳转 SystemUser 详情） */
+  type OwnerRow = {
+    owner?: { username?: string; pk?: number | string };
+  };
+
+  function onGoUserDetail(row: OwnerRow) {
     if (hasAuth("list:SystemUser") && row.owner && row.owner?.pk) {
       router.push({
         name: "SystemUser",
@@ -109,7 +114,10 @@ export function useNoticeRead(tableRef: Ref) {
     }
   }
 
-  function onGoNoticeDetail(row: any) {
+  /** 行内 `notice_info` 嵌套字段（点击跳转 SystemNotice 详情） */
+  type NoticeRow = { notice_info?: { pk?: number | string } };
+
+  function onGoNoticeDetail(row: NoticeRow) {
     if (
       hasAuth("list:SystemNotice") &&
       row?.notice_info &&

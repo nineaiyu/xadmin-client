@@ -4,7 +4,8 @@ import {
   h,
   reactive,
   type Ref,
-  shallowRef
+  shallowRef,
+  type VNode
 } from "vue";
 import { noticeApi } from "@/api/system/notice";
 import { useRouter } from "vue-router";
@@ -79,7 +80,7 @@ export function useNotice(tableRef: Ref) {
           column["cellRenderer"] = ({ row }) => (
             <el-link
               type={row.level?.value}
-              onClick={() => onGoNoticeReadDetail(row as any)}
+              onClick={() => onGoNoticeReadDetail(row)}
             >
               {row.notice_type?.value === NoticeChoices.NOTICE
                 ? t("systemNotice.allRead")
@@ -98,10 +99,13 @@ export function useNotice(tableRef: Ref) {
     props: {
       columns: {
         level: ({ column }) => {
-          (column?.options as Array<any>).forEach(option => {
+          (column?.options as SelectOption[]).forEach(option => {
             option["fieldSlot"] = () => {
               return (
-                <el-text type={option.value?.value}> {option.label}</el-text>
+                // 后端 level choices 的 value.value 即 el-text 的 type 色值
+                <el-text type={option.value?.value as ElTextType}>
+                  {option.label}
+                </el-text>
               );
             };
           });
@@ -115,7 +119,7 @@ export function useNotice(tableRef: Ref) {
           if (!isAdd) {
             column["fieldProps"]["disabled"] = true;
           }
-          (column?.options as Array<any>).forEach(option => {
+          (column?.options as SelectOption[]).forEach(option => {
             if (option.value?.value == NoticeChoices.SYSTEM) {
               option.fieldItemProps.disabled = true;
             }
@@ -186,9 +190,21 @@ export function useNotice(tableRef: Ref) {
     }
   });
 
+  /** plus-pro select 选项条目（value 为对象形态，供 fieldSlot 展示与禁用判定） */
+  type ElTextType = "" | "primary" | "success" | "warning" | "info" | "danger";
+  type SelectOption = {
+    label?: string;
+    value?: { value?: string | number };
+    fieldItemProps?: { disabled?: boolean };
+    fieldSlot?: () => VNode;
+  };
+
   const router = useRouter();
 
-  function onGoNoticeReadDetail(row: any) {
+  /** 公告阅读行（pk 用于跳转阅读详情） */
+  type NoticeReadRow = { pk?: number | string };
+
+  function onGoNoticeReadDetail(row: NoticeReadRow) {
     if (hasAuth("list:SystemNoticeRead") && row.pk) {
       router.push({
         name: "SystemNoticeRead",

@@ -58,22 +58,44 @@ interface FormItemProps {
   meta?: FormMetaProps;
 }
 
+/** choices 接口下发的通用选项（value + 展示 label） */
+interface ChoicesOptionItem {
+  value?: number | string;
+  label?: string;
+  disabled?: boolean;
+}
+
+/** 菜单 URL 选项（component 路径候选） */
+interface MenuUrlItem {
+  name: string;
+  url: string;
+}
+
+/** 关联模型级联选项 */
+interface ModelTreeItem {
+  label?: string;
+  name?: string;
+  parent?: unknown;
+  children?: ModelTreeItem[];
+  [key: string]: unknown;
+}
+
 interface FormProps {
   formInline?: FormItemProps;
-  treeData?: any[];
-  methodChoices?: any[];
-  menuChoices?: any[];
-  menuUrlList?: any[];
-  modelList?: any[];
+  treeData?: Tree[];
+  methodChoices?: ChoicesOptionItem[];
+  menuChoices?: ChoicesOptionItem[];
+  menuUrlList?: MenuUrlItem[];
+  modelList?: ModelTreeItem[];
   viewList?: object;
   auth?: Auths;
 }
 
 interface TreeFormProps {
   formInline: FormItemProps;
-  treeData: any[];
+  treeData: Tree[];
   defaultData: object;
-  parentIds: any[];
+  parentIds: number[];
   auth?: Auths;
 }
 
@@ -84,4 +106,12 @@ interface Tree {
   children?: Tree[];
 }
 
-export type { FormItemProps, FormProps, Tree, TreeFormProps };
+export type {
+  FormItemProps,
+  FormProps,
+  Tree,
+  TreeFormProps,
+  ChoicesOptionItem,
+  MenuUrlItem,
+  ModelTreeItem
+};
