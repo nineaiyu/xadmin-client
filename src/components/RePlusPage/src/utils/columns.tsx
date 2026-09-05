@@ -230,9 +230,20 @@ export function useBaseColumns(localeName: string) {
     columnsCallback = null,
     fieldsCallback = null,
     columnsParams = {},
-    fieldsParams = {}
+    fieldsParams = {},
+    /** T3.2：with_meta=1 内联载荷，存在时跳过对应分离请求 */
+    inlineMeta?: {
+      search_columns?: SearchColumnsResult["data"];
+      search_fields?: SearchFieldsResult["data"];
+    }
   ) => {
-    if (apiFields) {
+    if (inlineMeta?.search_fields) {
+      searchColumns.value.splice(0, searchColumns.value.length);
+      formatSearchColumns(inlineMeta.search_fields);
+      if (fieldsCallback) {
+        fieldsCallback({ searchDefaultValue, searchColumns });
+      }
+    } else if (apiFields) {
       const res = await apiFields(fieldsParams);
       searchColumns.value.splice(0, searchColumns.value.length);
       formatSearchColumns(res.data);
@@ -240,7 +251,21 @@ export function useBaseColumns(localeName: string) {
         fieldsCallback({ searchDefaultValue, searchColumns });
       }
     }
-    if (apiColumns) {
+    if (inlineMeta?.search_columns) {
+      detailColumns.value.splice(0, detailColumns.value.length);
+      addOrEditColumns.value.splice(0, addOrEditColumns.value.length);
+      listColumns.value.splice(0, listColumns.value.length);
+      formatAddOrEditColumns(inlineMeta.search_columns);
+      if (columnsCallback) {
+        columnsCallback({
+          listColumns,
+          detailColumns,
+          addOrEditRules,
+          addOrEditColumns,
+          addOrEditDefaultValue
+        });
+      }
+    } else if (apiColumns) {
       apiColumns(columnsParams).then(res => {
         detailColumns.value.splice(0, detailColumns.value.length);
         addOrEditColumns.value.splice(0, addOrEditColumns.value.length);

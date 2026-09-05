@@ -446,7 +446,15 @@ export function usePlusPage(
   };
 
   // 数据获取
-  const handleGetData = (queryParams = {}) => {
+  const handleGetData = (
+    queryParams = {},
+    options: {
+      /** T3.2：首开内联元数据消费（with_meta=1 响应中的 search_columns/search_fields） */
+      inline?: boolean;
+      /** 内联响应缺元数据键时的一次性回退（旧后端/无元数据 Action 视图集） */
+      onInlineMetaMissing?: () => void;
+    } = {}
+  ) => {
     loadingStatus.value = true;
 
     ["created_time", "updated_time"].forEach(key => {
@@ -491,6 +499,25 @@ export function usePlusPage(
               : res.data.results;
           }
           tablePagination.value.total = res.data.total;
+          if (options.inline) {
+            if (res.data.search_columns || res.data.search_fields) {
+              getColumnData(
+                undefined,
+                undefined,
+                columnsInitCallback,
+                fieldsInitCallback,
+                {},
+                {},
+                {
+                  search_columns: res.data.search_columns,
+                  search_fields: res.data.search_fields
+                }
+              );
+            } else {
+              // 旧后端/未混入元数据 Action：回退分离请求
+              options.onInlineMetaMissing?.();
+            }
+          }
         } else {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
         }
@@ -504,33 +531,71 @@ export function usePlusPage(
       });
   };
 
+  /** 搜索表单默认值装配（fieldsCallback 与 T3.2 内联首开共用） */
+  const fieldsInitCallback = () => {
+    defaultValue.value = {
+      ...{
+        page: tablePagination.value.currentPage,
+        size: tablePagination.value.pageSize,
+        ordering: "-created_time"
+      },
+      ...searchDefaultValue.value
+    };
+    searchFields.value = cloneDeep(defaultValue.value);
+
+    if (routeParams) {
+      const parameter = cloneDeep(routeParams);
+      Object.keys(parameter).forEach(param => {
+        searchFields.value[param] = parameter[param];
+      });
+    }
+  };
+
+  /** 元数据格式化（columnsCallback 载荷） */
+  const columnsInitCallback = () => {
+    formatColumnsRender();
+  };
+
   const getPageColumn = (immediate: boolean) => {
+    if (immediate && auth.list && api.list) {
+      // T3.2：首开以 with_meta=1 合并 list/search-columns/search-fields 三个请求；
+      // 响应缺元数据键（旧后端/无元数据 Action）时回退分离请求
+      handleGetData(
+        { with_meta: 1 },
+        {
+          inline: true,
+          onInlineMetaMissing: () =>
+            getColumnData(
+              auth.list && api.columns,
+              api.fields,
+              () => {
+                columnsInitCallback();
+                if (!api.fields && immediate) {
+                  handleGetData();
+                }
+              },
+              () => {
+                fieldsInitCallback();
+                if (immediate) {
+                  handleGetData();
+                }
+              }
+            )
+        }
+      );
+      return;
+    }
     getColumnData(
       auth.list && api.columns,
       api.fields,
       () => {
-        formatColumnsRender();
+        columnsInitCallback();
         if (!api.fields && immediate) {
           handleGetData();
         }
       },
       () => {
-        defaultValue.value = {
-          ...{
-            page: tablePagination.value.currentPage,
-            size: tablePagination.value.pageSize,
-            ordering: "-created_time"
-          },
-          ...searchDefaultValue.value
-        };
-        searchFields.value = cloneDeep(defaultValue.value);
-
-        if (routeParams) {
-          const parameter = cloneDeep(routeParams);
-          Object.keys(parameter).forEach(param => {
-            searchFields.value[param] = parameter[param];
-          });
-        }
+        fieldsInitCallback();
         if (immediate) {
           handleGetData();
         }

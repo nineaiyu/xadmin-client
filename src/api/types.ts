@@ -72,6 +72,10 @@ export type ListResult<T = RecordType> = {
     results: Array<T>;
     /** 总条目数 */
     total?: number;
+    /** T3.2：`?with_meta=1` 时内联的展示字段元数据（同 search-columns 载荷） */
+    search_columns?: SearchColumnsResult["data"];
+    /** T3.2：`?with_meta=1` 时内联的查询字段元数据（同 search-fields 载荷） */
+    search_fields?: SearchFieldsResult["data"];
   };
 };
 
