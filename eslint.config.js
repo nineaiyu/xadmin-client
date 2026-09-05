@@ -172,7 +172,18 @@ export default defineConfig([
     }
   },
   // any 存量豁免清单已于 any 治理四期（ReDialog/ReDrawer/RePlusPage/http 等）全部清零并摘除。
-  // 治理策略：新增代码不允许 any（warn + max-warnings 0 强制）。
+  // 治理策略：新增代码不允许 any（warn + max-warnings 0 强制），*.ts/tsx 与 *.vue 同等约束（TD-23）。
+  {
+    files: ["**/*.vue"],
+    plugins: {
+      "@typescript-eslint": tseslint.plugin
+    },
+    rules: {
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-unsafe-function-type": "error",
+      "@typescript-eslint/prefer-as-const": "warn"
+    }
+  },
   {
     files: ["**/*.vue", "**/*.tsx"],
     plugins: {
