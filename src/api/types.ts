@@ -19,6 +19,8 @@ export type SearchFieldsResult = {
     help_text?: string;
     default?: string | number | any;
     choices?: Array<number | string | any>;
+    /** 关联列选项超过 SEARCH_CHOICES_MAX_COUNT 被截断，应降级为远程搜索 */
+    choices_truncated?: boolean;
   }>;
 };
 
@@ -38,6 +40,8 @@ export type SearchColumnsResult = {
     help_text?: string;
     default?: string | number | any;
     choices?: Array<number | string | any>;
+    /** 关联列选项超过 SEARCH_CHOICES_MAX_COUNT 被截断，应降级为远程搜索 */
+    choices_truncated?: boolean;
   }>;
 };
 

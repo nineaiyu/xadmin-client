@@ -51,6 +51,22 @@ export function useBaseColumns(localeName: string) {
     apiSearchComponents
   });
 
+  /**
+   * PERF-07 降级处理：后端关联列的 choices 超过 SEARCH_CHOICES_MAX_COUNT 时会被截断，
+   * 并带出 choices_truncated 标记。此时下拉必须开启本地过滤，并在开发环境提示
+   * 开发者将该字段改为 api-search-* 远程搜索组件（SearchUser/SearchDept/SearchRole 模式）。
+   */
+  const applyChoicesTruncated = (column: PlusColumnMeta, item: PageColumn) => {
+    if (!column?.choices_truncated) return;
+    item.fieldProps = { ...(item.fieldProps ?? {}), filterable: true };
+    if (import.meta.env.DEV) {
+      console.warn(
+        `[RePlusPage] 字段 "${column.key}" 的 choices 已被后端截断，` +
+          `请为其自定义 input_type="api-search-*" 以启用远程搜索`
+      );
+    }
+  };
+
   const formatSearchColumns = (columns: SearchFieldsResult["data"]) => {
     columns.forEach(column => {
       const item: PageColumn = {
@@ -66,6 +82,7 @@ export function useBaseColumns(localeName: string) {
         hideInTable: true
       };
       getSearchRenderer(column.input_type)(item, buildContext(column));
+      applyChoicesTruncated(column, item);
       searchDefaultValue.value[column.key] = column?.default;
       searchColumns.value.push(item);
     });
@@ -159,6 +176,7 @@ export function useBaseColumns(localeName: string) {
       }
       // pure-table ****** end
       getFormRenderer(column.input_type)(item, buildContext(column));
+      applyChoicesTruncated(column, item);
 
       if (column.key === "description") {
         item.valueType = "textarea";
