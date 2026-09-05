@@ -1,66 +1,34 @@
-// import type { App } from "vue";
-// import * as echarts from "echarts/core";
-// import { BarChart, LineChart, PieChart } from "echarts/charts";
-// import { CanvasRenderer, SVGRenderer } from "echarts/renderers";
-// import {
-//   DataZoomComponent,
-//   GraphicComponent,
-//   GridComponent,
-//   LegendComponent,
-//   PolarComponent,
-//   TitleComponent,
-//   ToolboxComponent,
-//   TooltipComponent,
-//   VisualMapComponent
-// } from "echarts/components";
-//
-// const { use } = echarts;
-//
-// use([
-//   PieChart,
-//   BarChart,
-//   LineChart,
-//   CanvasRenderer,
-//   SVGRenderer,
-//   GridComponent,
-//   TitleComponent,
-//   PolarComponent,
-//   LegendComponent,
-//   GraphicComponent,
-//   ToolboxComponent,
-//   TooltipComponent,
-//   DataZoomComponent,
-//   VisualMapComponent
-// ]);
-
 import type { App } from "vue";
-import * as echarts from "echarts/core";
-import { LineChart } from "echarts/charts";
-import { SVGRenderer } from "echarts/renderers";
-import {
-  DataZoomComponent,
-  GridComponent,
-  TitleComponent,
-  TooltipComponent
-} from "echarts/components";
 
-const { use } = echarts;
+let echartsPromise: Promise<typeof import("echarts/core")> | null = null;
 
-use([
-  LineChart,
-  SVGRenderer,
-  GridComponent,
-  TitleComponent,
-  TooltipComponent,
-  DataZoomComponent
-]);
-
-/**
- * @description 按需引入echarts，具体看 https://echarts.apache.org/handbook/zh/basics/import/#%E5%9C%A8-typescript-%E4%B8%AD%E6%8C%89%E9%9C%80%E5%BC%95%E5%85%A5
- * @see 温馨提示：必须将 `$echarts` 添加到全局 `globalProperties` ，具体看 https://pure-admin-utils.netlify.app/hooks/useECharts/useECharts#%E4%BD%BF%E7%94%A8%E5%89%8D%E6%8F%90
- */
-export function useEcharts(app: App) {
-  app.config.globalProperties.$echarts = echarts;
+/** 按需异步加载 echarts 并挂到全局属性（T3.4：首屏延迟约 180KB gzip，仅仪表盘图表消费） */
+export function loadEcharts(app?: App) {
+  echartsPromise ??= Promise.all([
+    import("echarts/core"),
+    import("echarts/charts"),
+    import("echarts/renderers"),
+    import("echarts/components")
+  ]).then(([core, charts, renderers, components]) => {
+    core.use([
+      charts.LineChart,
+      renderers.SVGRenderer,
+      components.GridComponent,
+      components.TitleComponent,
+      components.TooltipComponent,
+      components.DataZoomComponent
+    ]);
+    if (app) {
+      // @pureadmin/utils 的 useECharts 在 hook 初始化时同步读取 $echarts，
+      // 消费方（welcome 图表组件）须在 echartsReady 后渲染，见 welcome/index.vue
+      app.config.globalProperties.$echarts = core;
+    }
+    return core;
+  });
+  return echartsPromise;
 }
 
-export default echarts;
+/** Vue 插件：启动即预热 echarts chunk（与登录页资源并行加载），不阻塞首屏挂载 */
+export function useEcharts(app: App) {
+  loadEcharts(app);
+}

@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import { markRaw, ref } from "vue";
+import { markRaw, onMounted, ref } from "vue";
+import { loadEcharts } from "@/plugins/echarts";
 import ReCol from "@/components/ReCol";
 import { randomGradient, useDark } from "@pureadmin/utils";
 import { ReNormalCountTo } from "@/components/ReCountTo";
@@ -7,6 +8,13 @@ import { useRenderFlicker } from "@/components/ReFlicker";
 import { ChartBar, ChartClock, ChartLine, ChartRound } from "./components";
 import Segmented from "@/components/ReSegmented";
 import { useDashboard } from "@/views/welcome/hook";
+
+/** echarts 懒加载就绪后再渲染图表组件（useECharts 在初始化时同步读取 $echarts） */
+const echartsReady = ref(false);
+onMounted(async () => {
+  await loadEcharts();
+  echartsReady.value = true;
+});
 import dayjs from "dayjs";
 
 defineOptions({
@@ -80,12 +88,12 @@ let curWeek = ref(1);
               <p class="font-medium text-green-500">{{ item.percent }}</p>
             </div>
             <ChartLine
-              v-if="item.data.length > 1"
+              v-if="echartsReady && item.data.length > 1"
               :color="item.color"
               :data="item.data"
               class="w-1/2!"
             />
-            <ChartRound v-else class="w-1/2!" />
+            <ChartRound v-else-if="echartsReady" class="w-1/2!" />
           </div>
         </el-card>
       </re-col>
@@ -194,6 +202,7 @@ let curWeek = ref(1);
           </div>
           <div class="flex justify-between items-start mt-3">
             <ChartBar
+              v-if="echartsReady"
               :showData="curWeek ? userLoginList : userRegisterList"
               :title="optionsBasis[curWeek].label"
             />

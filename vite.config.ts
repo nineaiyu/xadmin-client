@@ -52,8 +52,9 @@ export default async ({ mode }: ConfigEnv): Promise<UserConfigExport> => {
       // https://cn.vitejs.dev/guide/build.html#browser-compatibility
       target: "es2015",
       sourcemap: false,
-      // 消除打包大小超过500kb警告
-      chunkSizeWarningLimit: 4000,
+      // 分包后主 chunk 已回归正常体量；vanilla-jsoneditor（懒加载 JSON 编辑器，
+      // 约 1.2MB）为已知懒加载大件，不再用 4000KB 阈值掩盖其他包体膨胀
+      chunkSizeWarningLimit: 1000,
       rolldownOptions: {
         input: {
           index: pathResolve("./index.html", import.meta.url)
@@ -62,7 +63,30 @@ export default async ({ mode }: ConfigEnv): Promise<UserConfigExport> => {
         output: {
           chunkFileNames: "static/js/[name]-[hash].js",
           entryFileNames: "static/js/[name]-[hash].js",
-          assetFileNames: "static/[ext]/[name]-[hash].[ext]"
+          assetFileNames: "static/[ext]/[name]-[hash].[ext]",
+          // 第三方 vendor 分包（T3.4）：首屏并行加载 + 长缓存，主 chunk 只保留应用代码。
+          // 注意：不要加"兜底 node_modules"组——它会把仅被懒加载视图使用的库
+          // 提升进急加载依赖图（实测首屏 gzip 699KB→1203KB 的回退）。
+          advancedChunks: {
+            groups: [
+              {
+                name: "vue-core",
+                test: /node_modules[\\/](vue|@vue|vue-router|pinia|vue-demi|@intlify|vue-i18n|@vueuse|@vueuse\/motion)[\\/]/
+              },
+              {
+                name: "element-plus",
+                test: /node_modules[\\/](element-plus|@element-plus)[\\/]/
+              },
+              {
+                name: "plus-pro",
+                test: /node_modules[\\/]plus-pro-components[\\/]/
+              },
+              {
+                name: "echarts",
+                test: /node_modules[\\/](echarts|zrender)[\\/]/
+              }
+            ]
+          }
         },
         checks: {
           pluginTimings: false,
