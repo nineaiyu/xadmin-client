@@ -215,7 +215,7 @@ class WS {
    *  监听消息
    * @param callback
    */
-  onMessage(callback: (...data: any[]) => any): void {
+  onMessage(callback: (data: unknown) => void): void {
     if (this.socket) {
       this.socket.onmessage = data => {
         try {

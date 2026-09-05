@@ -186,9 +186,7 @@ export default defineConfig([
       "src/components/ReSeamlessScroll/src/utils.ts",
       "src/router/utils.ts",
       "src/store/modules/permission.ts",
-      "src/utils/http/index.spec.ts",
-      "src/utils/index.ts",
-      "src/utils/websocket.ts"
+      "src/utils/http/index.spec.ts"
     ],
     rules: {
       "@typescript-eslint/no-explicit-any": "off"

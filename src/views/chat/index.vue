@@ -68,7 +68,8 @@ onMounted(() => {
       enter.value = true;
       ws.value.send(JSON.stringify({ action: "userinfo" }));
       ws.value.onMessage(data => {
-        onMessage(data);
+        // 服务端消息形状由 chat 侧 MessageProps 契约定义，传输层仅透传 unknown
+        onMessage(data as MessageProps);
       });
     },
     errorCallback() {

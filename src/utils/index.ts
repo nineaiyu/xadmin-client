@@ -1,6 +1,17 @@
-export const getMenuOrderPk = (data: any, x = []) => {
+/** 菜单树行：`pk` 唯一标识，`parent` 指向父级 pk，`children` 为子树 */
+export type MenuTreeNode = {
+  pk: number;
+  parent?: number;
+  children?: MenuTreeNode[];
+} & Record<string, unknown>;
+
+/** 前序遍历收集树中全部节点 pk（非数组入参原样返回累计数组） */
+export const getMenuOrderPk = (
+  data: unknown,
+  x: Array<number | string> = []
+): Array<number | string> => {
   if (data instanceof Array && data.length > 0) {
-    data.forEach(res => {
+    data.forEach((res: MenuTreeNode) => {
       x.push(res.pk);
       const children = res.children;
       if (children instanceof Array && children.length > 0) {
@@ -12,9 +23,12 @@ export const getMenuOrderPk = (data: any, x = []) => {
 };
 
 //查找父节点
-export const getMenuFromPk = (data: any[] | any, id: number) => {
-  const temp: any[] = [];
-  const forFn = (arr: any, pk: number) => {
+export const getMenuFromPk = (
+  data: MenuTreeNode[],
+  id: number
+): MenuTreeNode[] => {
+  const temp: MenuTreeNode[] = [];
+  const forFn = (arr: MenuTreeNode[], pk: number) => {
     for (let i = 0; i < arr.length; i++) {
       const item = arr[i];
       if (item.pk === pk) {
