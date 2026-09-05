@@ -155,9 +155,19 @@ type ButtonProps = {
   }) => void;
 };
 
+/**
+ * 内容组件 `change` 事件转发载荷：框架只透传，`values` 的形态由
+ * `contentRenderer` 指定的内容组件决定（AddOrEdit 约定为 `{ values, column }`）
+ */
+type DrawerChangeData = {
+  options: DrawerOptions;
+  index: number;
+  values: unknown;
+};
+
 interface DrawerOptions extends DrawerProps {
   /** 内容区组件的 `props`，可通过 `defineProps` 接收 */
-  props?: any;
+  props?: Record<string, unknown>;
   /** 是否隐藏 `Drawer` 按钮操作区的内容 */
   hideFooter?: boolean;
   /** 确认按钮的 `PopConfirm` 气泡确认框相关配置 */
@@ -219,7 +229,7 @@ interface DrawerOptions extends DrawerProps {
   }: {
     options: DrawerOptions;
     index: number;
-    args: any;
+    args?: ArgsType;
   }) => void;
   /** 输入焦点聚焦在 `Drawer` 内容时的回调 */
   openAutoFocus?: ({
@@ -237,7 +247,7 @@ interface DrawerOptions extends DrawerProps {
     options: DrawerOptions;
     index: number;
   }) => void;
-  onChange?: (data: any) => void;
+  onChange?: (data: DrawerChangeData) => void;
   /** 点击底部取消按钮的回调，会暂停 `Drawer` 的关闭. 回调函数内执行 `done` 参数方法的时候才是真正关闭对话框的时候 */
   beforeCancel?: (
     done: () => void,

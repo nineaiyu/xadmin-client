@@ -1,4 +1,8 @@
-import { addDialog, type DialogOptions } from "@/components/ReDialog/index";
+import {
+  addDialog,
+  type ArgsType,
+  type DialogOptions
+} from "@/components/ReDialog/index";
 import { deviceDetection } from "@pureadmin/utils";
 import {
   type Component,
@@ -94,6 +98,25 @@ type ColumnSpec = {
       ) => RawColumn);
 };
 
+/**
+ * dialog/drawer 共用回调契约：显式声明而非依赖 `DrawerOptions & DialogOptions`
+ * 的同名回调交叉（交叉会产生重载签名，导致业务侧 lambda 上下文推断失败）。
+ */
+type DialogDrawerCallbacks = {
+  /** 关闭回调，`args.command` 解析同 DialogOptions.closeCallBack */
+  closeCallBack?: (data: {
+    options: DialogOptions | DrawerOptions;
+    index: number;
+    args?: ArgsType;
+  }) => void;
+  /** 内容组件 `change` 事件透传载荷，`values` 形态由内容组件决定 */
+  onChange?: (data: {
+    options: DialogOptions | DrawerOptions;
+    index: number;
+    values: unknown;
+  }) => void;
+};
+
 interface formDialogDrawerOptions {
   mode?: "dialog" | "drawer";
   t: (arg0: string, arg1?: object) => string;
@@ -123,7 +146,10 @@ interface formDialogDrawerOptions {
   /** plus form 的props */
   rawFormProps?: PlusFormProps;
   /** dialog options */
-  dialogDrawerOptions?: Partial<DrawerOptions & DialogOptions>;
+  dialogDrawerOptions?: Partial<
+    Omit<DrawerOptions & DialogOptions, "closeCallBack" | "onChange">
+  > &
+    DialogDrawerCallbacks;
   beforeSubmit?: ({
     formData,
     formRef,
@@ -289,8 +315,11 @@ const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
     width: `${minWidth > numberWidth ? minWidth : numberWidth}px`,
     size: `${minWidth > numberWidth ? minWidth : numberWidth}`,
     onChange(data) {
-      if (data?.values) {
-        formOptions.formValue.value = data?.values?.values;
+      // 内容组件 change 透传：AddOrEdit 载荷为 { values, column }
+      const payload = data?.values as
+        { values?: RecordType; column?: unknown } | undefined;
+      if (payload) {
+        formOptions.formValue.value = payload.values;
       }
       if (formOptions?.dialogDrawerOptions?.onChange) {
         formOptions?.dialogDrawerOptions?.onChange(data);

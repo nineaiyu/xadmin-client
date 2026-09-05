@@ -4,7 +4,8 @@ import {
   closeDrawer,
   type DrawerOptions,
   drawerStore,
-  type EventType
+  type EventType,
+  type ArgsType
 } from "./index";
 import { computed, ref } from "vue";
 import { isFunction } from "@pureadmin/utils";
@@ -81,7 +82,11 @@ function eventsCallBack(
   }
 }
 
-function handleCloseDrawer(options: DrawerOptions, index: number, args: any) {
+function handleCloseDrawer(
+  options: DrawerOptions,
+  index: number,
+  args?: ArgsType
+) {
   if (options?.sureBtnLoading && sureBtnMap.value[index]?.loading) {
     sureBtnMap.value[index].loading = false;
   }
@@ -91,13 +96,13 @@ function handleCloseDrawer(options: DrawerOptions, index: number, args: any) {
 function handleClose(
   options: DrawerOptions,
   index: number,
-  args = { command: "close" }
+  args: ArgsType = { command: "close" }
 ) {
   handleCloseDrawer(options, index, args);
   eventsCallBack("close", options, index);
 }
 
-function handleChange(options: DrawerOptions, index: number, values: any) {
+function handleChange(options: DrawerOptions, index: number, values: unknown) {
   options?.onChange && options.onChange({ options, index, values });
 }
 </script>

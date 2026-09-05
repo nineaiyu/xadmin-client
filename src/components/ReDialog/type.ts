@@ -168,9 +168,19 @@ type ButtonProps = {
   }) => void;
 };
 
+/**
+ * 内容组件 `change` 事件转发载荷：框架只透传，`values` 的形态由
+ * `contentRenderer` 指定的内容组件决定（AddOrEdit 约定为 `{ values, column }`）
+ */
+type DialogChangeData = {
+  options: DialogOptions;
+  index: number;
+  values: unknown;
+};
+
 interface DialogOptions extends DialogProps {
   /** 内容区组件的 `props`，可通过 `defineProps` 接收 */
-  props?: any;
+  props?: Record<string, unknown>;
   /** 是否隐藏 `Dialog` 按钮操作区的内容 */
   hideFooter?: boolean;
   /** 确定按钮的 `Popconfirm` 气泡确认框相关配置 */
@@ -232,7 +242,7 @@ interface DialogOptions extends DialogProps {
   }: {
     options: DialogOptions;
     index: number;
-    args: any;
+    args?: ArgsType;
   }) => void;
   /** 点击全屏按钮时的回调 */
   fullscreenCallBack?: ({
@@ -258,7 +268,7 @@ interface DialogOptions extends DialogProps {
     options: DialogOptions;
     index: number;
   }) => void;
-  onChange?: (data: any) => void;
+  onChange?: (data: DialogChangeData) => void;
   /** 点击底部取消按钮的回调，会暂停 `Dialog` 的关闭. 回调函数内执行 `done` 参数方法的时候才是真正关闭对话框的时候 */
   beforeCancel?: (
     done: () => void,

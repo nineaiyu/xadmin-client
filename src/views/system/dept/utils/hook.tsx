@@ -74,7 +74,9 @@ export function useDept(tableRef: Ref) {
       },
       dialogDrawerOptions: {
         closeCallBack: ({ options, args }) => {
-          if (!options?.props?.formInline?.pk && args?.command === "sure") {
+          const formInline = options?.props?.formInline as
+            { pk?: number | string } | undefined;
+          if (!formInline?.pk && args?.command === "sure") {
             tableRef.value?.getPageColumn(false);
           }
         }

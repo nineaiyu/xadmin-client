@@ -177,10 +177,6 @@ export default defineConfig([
     // 存量文件每清零一个，就从本清单移除一行，最终删除本块。
     files: [
       "src/api/types.ts",
-      "src/components/ReDialog/index.ts",
-      "src/components/ReDialog/type.ts",
-      "src/components/ReDrawer/index.ts",
-      "src/components/ReDrawer/type.ts",
       "src/components/RePlusPage/src/components/ButtonOperation/src/types.ts",
       "src/components/ReQrcode/src/index.tsx",
       "src/components/ReSeamlessScroll/src/utils.ts",

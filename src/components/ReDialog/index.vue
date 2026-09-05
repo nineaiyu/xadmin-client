@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
   type EventType,
+  type ArgsType,
   type ButtonProps,
   type DialogOptions,
   closeDialog,
@@ -95,7 +96,11 @@ function eventsCallBack(
   }
 }
 
-function handleCloseDialog(options: DialogOptions, index: number, args: any) {
+function handleCloseDialog(
+  options: DialogOptions,
+  index: number,
+  args?: ArgsType
+) {
   if (options?.sureBtnLoading && sureBtnMap.value[index]?.loading) {
     sureBtnMap.value[index].loading = false;
   }
@@ -105,13 +110,13 @@ function handleCloseDialog(options: DialogOptions, index: number, args: any) {
 function handleClose(
   options: DialogOptions,
   index: number,
-  args = { command: "close" }
+  args: ArgsType = { command: "close" }
 ) {
   handleCloseDialog(options, index, args);
   eventsCallBack("close", options, index);
 }
 
-function handleChange(options: DialogOptions, index: number, values: any) {
+function handleChange(options: DialogOptions, index: number, values: unknown) {
   options?.onChange && options.onChange({ options, index, values });
 }
 </script>

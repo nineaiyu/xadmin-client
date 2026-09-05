@@ -383,8 +383,15 @@ export function useMenu() {
       },
       dialogDrawerOptions: {
         onChange: data => {
-          const values = data?.values?.values;
-          if (isObject(values) && data?.values?.column?.prop === "method") {
+          // AddOrEdit 内容组件的 change 载荷：{ values, column }
+          const payload = data?.values as
+            | {
+                values?: { method?: string[]; name?: string };
+                column?: { prop?: string };
+              }
+            | undefined;
+          const values = payload?.values;
+          if (isObject(values) && payload?.column?.prop === "method") {
             if (values.method?.length > 1) {
               values.name = values.method
                 .map(item => {

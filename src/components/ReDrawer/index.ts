@@ -26,7 +26,11 @@ const addDrawer = (options: DrawerOptions) => {
 };
 
 /** 关闭抽屉 */
-const closeDrawer = (options: DrawerOptions, index: number, args?: any) => {
+const closeDrawer = (
+  options: DrawerOptions,
+  index: number,
+  args?: ArgsType
+) => {
   drawerStore.value[index].visible = false;
   if (options.closeCallBack) {
     options.closeCallBack({ options, index, args });
@@ -40,10 +44,14 @@ const closeDrawer = (options: DrawerOptions, index: number, args?: any) => {
 /**
  * @description 更改抽屉自身属性值
  * @param value 属性值
- * @param key 属性，默认`title`
+ * @param key 抽屉属性名
  * @param index 弹框索引（默认`0`，代表只有一个弹框，对于嵌套弹框要改哪个弹框的属性值就把该弹框索引赋给`index`）
  */
-const updateDrawer = (value: any, key = "title", index = 0) => {
+const updateDrawer = <K extends keyof DrawerOptions>(
+  value: DrawerOptions[K],
+  key: K,
+  index = 0
+) => {
   drawerStore.value[index][key] = value;
 };
 
