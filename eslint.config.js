@@ -191,8 +191,6 @@ export default defineConfig([
       "src/utils/http/index.spec.ts",
       "src/utils/index.ts",
       "src/utils/websocket.ts",
-      "src/views/system/dept/utils/hook.tsx",
-      "src/views/system/hooks.tsx",
       "src/views/system/menu/utils/hook.tsx",
       "src/views/system/menu/utils/types.ts",
       "src/views/system/notice/read/hook.tsx",

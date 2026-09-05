@@ -31,9 +31,7 @@ export function useDept(tableRef: Ref) {
       switch (column._column?.key) {
         case "user_count":
           column["cellRenderer"] = ({ row }) => (
-            <el-link onClick={() => onGoDetail(row as any)}>
-              {row.user_count}
-            </el-link>
+            <el-link onClick={() => onGoDetail(row)}>{row.user_count}</el-link>
           );
           break;
         case "name":
@@ -86,7 +84,14 @@ export function useDept(tableRef: Ref) {
 
   const router = useRouter();
 
-  function onGoDetail(row: any) {
+  /** 部门行：跳转详情与授权弹层所需字段 */
+  type DeptRow = {
+    name?: string;
+    user_count?: number;
+    pk?: number | string;
+  } & Record<string, unknown>;
+
+  function onGoDetail(row: DeptRow) {
     if (hasAuth("list:SystemUser") && row.user_count && row.pk) {
       router.push({
         name: "SystemUser",
@@ -127,7 +132,7 @@ export function useDept(tableRef: Ref) {
     });
   };
 
-  function handleRoleRules(row: any) {
+  function handleRoleRules(row: DeptRow) {
     openDialogDrawer({
       t,
       isAdd: false,

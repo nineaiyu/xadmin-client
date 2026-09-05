@@ -2,6 +2,27 @@
 import { computed } from "vue";
 import { isNullOrUnDef, useDark } from "@pureadmin/utils";
 
+/** 通用选项条目（choices 接口下发） */
+type OptionsItem = {
+  label?: unknown;
+  value?: unknown;
+  disabled?: boolean;
+};
+
+/** 表单列禁用态的依赖形状（isAdd/showColumns 由弹层表单上下文提供） */
+type FormStateProps = {
+  isAdd?: boolean;
+  showColumns?: Array<string>;
+};
+
+/** 角色权限选项条目（权限管理接口下发） */
+type RolePermissionItem = {
+  name?: string;
+  pk?: number | string;
+  code?: string;
+  get_mode_type_display?: string;
+};
+
 export const usePublicHooks = () => {
   const { isDark } = useDark();
 
@@ -63,7 +84,7 @@ export function picturePng(url: string) {
  * @description 格式化后端输出
  * @param data
  */
-export const formatOptions = (data: Array<any>) => {
+export const formatOptions = (data: Array<OptionsItem>) => {
   const result = [];
   data?.forEach(item => {
     result.push({
@@ -118,14 +139,21 @@ export const disableState = (props, key) => {
 };
 
 export const formatFormColumns = (
-  props: Record<string, any>,
-  tableColumns: Array<any>,
+  props: FormStateProps,
+  tableColumns: Array<object>,
   t: (arg0: string, arg1?: object) => string,
   te: (arg0: string, arg1?: string) => boolean,
   localeName: string,
   disabled: boolean = false
 ) => {
-  tableColumns?.forEach(column => {
+  tableColumns?.forEach(_column => {
+    // plus-pro 的 fieldProps 为宽松联合（对象/函数/ComputedRef），
+    // 此处仅需就地读写 disabled，按实际依赖形状收窄
+    const column = _column as {
+      label?: unknown;
+      prop?: string;
+      fieldProps?: { disabled?: boolean } | undefined;
+    };
     column.label =
       column.label ??
       formatPublicLabels(t, te, column.prop as string, localeName);
@@ -157,7 +185,9 @@ export const formatColumnsLabel = (
   });
 };
 
-export const customRolePermissionOptions = (data: Array<any>) => {
+export const customRolePermissionOptions = (
+  data: Array<RolePermissionItem>
+) => {
   const result = [];
   data?.forEach(item => {
     result.push({
