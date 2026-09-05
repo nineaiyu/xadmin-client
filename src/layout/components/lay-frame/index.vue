@@ -23,7 +23,7 @@ const keep = computed(() => {
 // 避免重新渲染 LayFrame
 const normalComp = computed(() => !keep.value && props.currComp);
 
-watch(useMultiTagsStoreHook().multiTags, (tags: any) => {
+watch(useMultiTagsStoreHook().multiTags, (tags: RouteRecordRaw[]) => {
   if (!Array.isArray(tags) || !keep.value) {
     return;
   }

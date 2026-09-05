@@ -2,6 +2,7 @@
 import { onMounted, ref } from "vue";
 import { handleOperation, useBaseColumns } from "@/components/RePlusPage";
 import { PlusForm } from "plus-pro-components";
+import type { FieldValues } from "plus-pro-components";
 import { cloneDeep } from "lodash-es";
 import { useI18n } from "vue-i18n";
 import { settingItemProps } from "./types";
@@ -11,7 +12,8 @@ defineOptions({
 });
 
 const emit = defineEmits<{
-  submit: [...args: any[]];
+  /** 透传 PlusForm 的 submit 事件载荷 */
+  submit: [values: FieldValues];
 }>();
 
 const props = withDefaults(defineProps<settingItemProps>(), {
@@ -81,7 +83,7 @@ onMounted(() => {
   getData();
 });
 
-const handleSubmitSettings = data => {
+const handleSubmitSettings = (data: FieldValues) => {
   emit("submit", data);
   if (props.autoSubmit) {
     submitLoading.value = true;

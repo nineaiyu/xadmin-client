@@ -43,17 +43,17 @@ defineExpose({ getRef });
       <SearchUser
         v-if="newFormInline.component === 'SearchUser'"
         :modelValue="newFormInline.data"
-        @change="data => (newFormInline.data = data)"
+        @change="data => (newFormInline.data = data as Array<object>)"
       />
       <SearchDept
         v-if="newFormInline.component === 'SearchDept'"
         :modelValue="newFormInline.data"
-        @change="data => (newFormInline.data = data)"
+        @change="data => (newFormInline.data = data as Array<object>)"
       />
       <SearchRole
         v-if="newFormInline.component === 'SearchRole'"
         :modelValue="newFormInline.data"
-        @change="data => (newFormInline.data = data)"
+        @change="data => (newFormInline.data = data as Array<object>)"
       />
     </el-form-item>
   </el-form>

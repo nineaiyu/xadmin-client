@@ -7,6 +7,7 @@ import {
   PlusForm
 } from "plus-pro-components";
 import { deviceDetection } from "@pureadmin/utils";
+import type { ExposedFormInstance } from "../utils/types";
 
 defineOptions({ name: "DetailData" });
 
@@ -60,9 +61,9 @@ const tabsColumns = computed(() => {
   return result;
 });
 
-const setFormRef = (el: any, index: number) => {
+const setFormRef = (el: unknown, index: number) => {
   if (el) {
-    formRefs.value[index] = el;
+    formRefs.value[index] = el as InstanceType<typeof PlusForm>;
   }
 };
 const setActiveName = (index: number) => {
@@ -71,9 +72,10 @@ const setActiveName = (index: number) => {
 
 function getRef() {
   if (isTabs.value) {
-    const instance = formRefs.value[activeName.value]?.formInstance;
+    const instance = formRefs.value[activeName.value]?.formInstance as
+      ExposedFormInstance | undefined;
 
-    (instance as any)._allInstances = Object.keys(formRefs.value)
+    instance._allInstances = Object.keys(formRefs.value)
       .map(Number)
       .sort((a, b) => a - b)
       .map(key => formRefs.value[key]?.formInstance);

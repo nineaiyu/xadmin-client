@@ -18,6 +18,7 @@ import { getKeyList, isAllEmpty } from "@pureadmin/utils";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { Auths } from "@/router/utils";
 import type { BaseApi } from "@/api/base";
+import type { TreeInstance, TreeNodeData, TreeKey } from "element-plus";
 
 interface FormProps {
   pk?: string;
@@ -70,7 +71,7 @@ const customNodeClass = data => {
   return null;
 };
 
-const filterMenuNode = (value: string, data: any) => {
+const filterMenuNode = (value: string, data: TreeNodeData) => {
   if (!value) return true;
   return value
     ? transformI18n(data?.meta?.title)
@@ -156,7 +157,9 @@ const { proxy } = getCurrentInstance();
 
 function toggleRowExpansionAll(status) {
   isExpand.value = status;
-  const nodes = (proxy.$refs["treeRoleRef"] as any).store._getAllNodes();
+  const nodes = (
+    proxy.$refs["treeRoleRef"] as TreeInstance
+  ).store._getAllNodes();
   for (let i = 0; i < nodes.length; i++) {
     if (
       status &&
@@ -169,9 +172,11 @@ function toggleRowExpansionAll(status) {
   }
 }
 
-function toggleSelectAll(status, keys: Array<string> | null = null) {
+function toggleSelectAll(status, keys: Array<TreeKey> | null = null) {
   selectAll.value = status;
-  const nodes = (proxy.$refs["treeRoleRef"] as any).store._getAllNodes();
+  const nodes = (
+    proxy.$refs["treeRoleRef"] as TreeInstance
+  ).store._getAllNodes();
   for (let i = 0; i < nodes.length; i++) {
     if ((keys && keys.indexOf(nodes[i].key) > -1) || !keys) {
       nodes[i].checked = status;

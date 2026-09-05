@@ -1,26 +1,26 @@
 <script lang="ts" setup>
 import { computed, ref, watch } from "vue";
 import { Plus } from "@element-plus/icons-vue";
-import type { UploadProps, UploadUserFile } from "element-plus";
+import type { UploadProps, UploadRawFile, UploadUserFile } from "element-plus";
 import defaultFile from "../assets/defaultFile.png";
 import { formatBytes } from "@pureadmin/utils";
 
 defineOptions({ name: "UploadFile" });
-const value = defineModel<string | object | any>();
+const value = defineModel<unknown>();
 const props = defineProps({
   disabled: Boolean,
   isImageFile: Boolean
 });
 const emit = defineEmits<{
-  change: [...args: any];
+  change: [file: UploadRawFile | null | undefined];
 }>();
 
 const fileList = ref<UploadUserFile[]>([]);
 if (value.value) {
   fileList.value = [
     {
-      name: value.value,
-      url: props.isImageFile ? value.value : defaultFile
+      name: value.value as string,
+      url: props.isImageFile ? (value.value as string) : defaultFile
     }
   ];
   emit("change", undefined);

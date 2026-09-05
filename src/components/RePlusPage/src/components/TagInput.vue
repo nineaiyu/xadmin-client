@@ -35,8 +35,11 @@ import { computed, ref } from "vue";
 import { debounce } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 
+/** el-tag 的 type 联合（primary/success/warning/info/danger） */
+type TagType = "primary" | "success" | "warning" | "info" | "danger";
+
 interface TagInputProps {
-  tagType?: Function;
+  tagType?: (_v: unknown) => TagType;
   autocomplete?: boolean;
   placeholder?: string;
   inputType?: string;
@@ -47,13 +50,13 @@ defineOptions({ name: "TagInput" });
 const filterTags = defineModel<Array<string>>({ default: () => [] });
 
 const props = withDefaults(defineProps<TagInputProps>(), {
-  tagType: () => "info",
+  tagType: () => "info" as TagType,
   autocomplete: false,
   placeholder: undefined,
   inputType: "text"
 });
 const emit = defineEmits<{
-  change: [values: any];
+  change: [values: string[]];
 }>();
 
 const SearchInput = ref(null);

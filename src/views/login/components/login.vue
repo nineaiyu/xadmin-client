@@ -96,7 +96,7 @@ const onLogin = () => {
   });
 };
 
-const immediateDebounce: any = debounce(() => handleLogin(), 1000, true);
+const immediateDebounce = debounce(() => handleLogin(), 1000, true);
 
 /** 使用公共函数，避免`removeEventListener`失效 */
 function onkeypress({ code }: KeyboardEvent) {

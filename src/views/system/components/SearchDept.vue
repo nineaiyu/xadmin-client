@@ -7,7 +7,8 @@ import RePlusSearch from "@/components/RePlusSearch";
 defineOptions({ name: "SearchDept" });
 
 const emit = defineEmits<{
-  change: [...args: any[]];
+  /** 透传 RePlusSearch 的 change 事件载荷 */
+  change: [value: object | object[] | string | undefined];
 }>();
 
 const selectValue = defineModel<object | object[] | string>();

@@ -2,7 +2,7 @@
 import { $t } from "@/plugins/i18n";
 import { emitter } from "@/utils/mitt";
 import NProgress from "@/utils/progress";
-import { RouteConfigs } from "../../types";
+import { type RouteConfigs, type tagsViewsType } from "../../types";
 import { useTags } from "../../hooks/useTag";
 import { routerArrays } from "@/layout/types";
 import { onClickOutside } from "@vueuse/core";
@@ -11,7 +11,15 @@ import { handleAliveRoute, getTopMenu } from "@/router/utils";
 import { useSettingStoreHook } from "@/store/modules/settings";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { usePermissionStoreHook } from "@/store/modules/permission";
-import { ref, watch, unref, toRaw, nextTick, onBeforeUnmount } from "vue";
+import {
+  ref,
+  watch,
+  unref,
+  toRaw,
+  nextTick,
+  onBeforeUnmount,
+  type Ref
+} from "vue";
 import {
   delay,
   isEqual,
@@ -185,9 +193,9 @@ function dynamicRouteTag(value: string): void {
     return item.path === value;
   });
 
-  function concatPath(arr: object[], value: string) {
+  function concatPath(arr: RouteConfigs[], value: string) {
     if (!hasValue) {
-      arr.forEach((arrItem: any) => {
+      arr.forEach(arrItem => {
         if (arrItem.path === value) {
           useMultiTagsStoreHook().handleTags("push", {
             path: value,
@@ -202,7 +210,8 @@ function dynamicRouteTag(value: string): void {
       });
     }
   }
-  concatPath(router.options.routes as any, value);
+  // options.routes 为 readonly 路由树，本项目路由项均符合 RouteConfigs 契约（name 恒为 string）
+  concatPath(router.options.routes as RouteConfigs[], value);
 }
 
 /** 刷新路由 */
@@ -217,8 +226,8 @@ function onFresh() {
   NProgress.done();
 }
 
-function deleteDynamicTag(obj: any, current: any, tag?: string) {
-  const valueIndex: number = multiTags.value.findIndex((item: any) => {
+function deleteDynamicTag(obj: RouteConfigs, current: string, tag?: string) {
+  const valueIndex: number = multiTags.value.findIndex(item => {
     if (item.query) {
       if (item.path === obj.path) {
         return item.query === obj.query;
@@ -249,7 +258,7 @@ function deleteDynamicTag(obj: any, current: any, tag?: string) {
       useMultiTagsStoreHook().handleTags("splice", "", {
         startIndex,
         length
-      }) as any;
+      });
     }
     dynamicTagView();
   };
@@ -360,7 +369,13 @@ function onClickDrop(key, item, selectRoute?: RouteConfigs) {
   });
 }
 
-function handleCommand(command: any) {
+/** el-dropdown 命令载荷：菜单索引 + 菜单项 */
+type TagCommand = {
+  key: number;
+  item: tagsViewsType;
+};
+
+function handleCommand(command: TagCommand) {
   const { key, item } = command;
   onClickDrop(key, item);
 }
@@ -536,9 +551,10 @@ onMounted(() => {
   showMenuModel(route.fullPath);
 
   // 触发隐藏标签页
-  emitter.on("tagViewsChange", (key: any) => {
-    if (unref(showTags as any) === key) return;
-    (showTags as any).value = key;
+  emitter.on("tagViewsChange", (key: string | boolean) => {
+    // 载荷实际为布尔开关（emit 侧经 string 通道传出），showTags 运行时为布尔 ref
+    if (unref(showTags as Ref<boolean>) === key) return;
+    (showTags as Ref<boolean>).value = key as boolean;
   });
 
   // 改变标签风格

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { isEqual } from "@pureadmin/utils";
 import { transformI18n } from "@/plugins/i18n";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute, useRouter, type RouteRecordRaw } from "vue-router";
 import { onMounted, ref, toRaw, watch } from "vue";
 import { findRouteByPath, getParentPaths } from "@/router/utils";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
@@ -9,8 +9,9 @@ import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 const route = useRoute();
 const levelList = ref([]);
 const router = useRouter();
-const routes: any = router.options.routes;
-const multiTags: any = useMultiTagsStoreHook().multiTags;
+// options.routes 为 readonly，去除 readonly 以复用 findRouteByPath / getParentPaths 的签名
+const routes = router.options.routes as RouteRecordRaw[];
+const multiTags = useMultiTagsStoreHook().multiTags;
 
 const getBreadcrumb = (): void => {
   // 当前路由信息
@@ -67,7 +68,7 @@ const getBreadcrumb = (): void => {
 const handleLink = item => {
   const { redirect, name, path } = item;
   if (redirect) {
-    router.push(redirect as any);
+    router.push(redirect);
   } else {
     if (name) {
       if (item.query) {

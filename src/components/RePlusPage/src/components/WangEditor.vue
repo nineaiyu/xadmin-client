@@ -1,15 +1,15 @@
 <script lang="ts" setup>
-import { onBeforeUnmount, onMounted, ref, shallowRef } from "vue";
+import { onBeforeUnmount, onMounted, ref, shallowRef, type Ref } from "vue";
 import "@wangeditor/editor/dist/css/style.css";
 import { Editor, Toolbar } from "@wangeditor/editor-for-vue";
 import { systemUploadFileApi } from "@/api/system/file";
 import { message } from "@/utils/message";
 import { formatBytes, getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
-import { IEditorConfig } from "@wangeditor/editor";
+import type { IEditorConfig, IToolbarConfig } from "@wangeditor/editor";
 import { hasAuth } from "@/router/utils";
 
-const messages = defineModel<string | object | any>();
+const messages = defineModel<string>();
 const editorRef = shallowRef();
 const mode = "default";
 const { t } = useI18n();
@@ -18,7 +18,14 @@ const uploadConfig = ref({ file_upload_size: 1048576 });
 type InsertFnType = (_url: string, _alt?: string, _href?: string) => void;
 
 const emit = defineEmits<{
-  change: [values: any];
+  change: [
+    payload: {
+      /** 编辑器内容模型引用（消费侧原样取用） */
+      messages: Ref<string | undefined>;
+      /** 编辑器内已上传的附件/图片/视频链接 */
+      files: string[];
+    }
+  ];
 }>();
 
 onMounted(() => {
@@ -51,7 +58,15 @@ defineExpose({ getUploadFiles });
 //   Boot.registerModule(attachmentModule);
 // });
 
-const toolbarConfig: any = {
+/**
+ * 工具栏配置。官方 IToolbarConfig 将 excludeKeys 声明为 string[]，但运行时仅以
+ * `includes` 消费、同样兼容 string（此处传 "fullScreen"），故单独放宽该字段，
+ * 并在模板绑定时以窄断言 `as IToolbarConfig` 对齐组件 prop 类型。
+ */
+type ToolbarConfig = Partial<Omit<IToolbarConfig, "excludeKeys">> & {
+  excludeKeys: string | string[];
+};
+const toolbarConfig: ToolbarConfig = {
   excludeKeys: "fullScreen",
   insertKeys: {
     index: -1, // 自定义插入的位置
@@ -157,7 +172,7 @@ const beforeUpload = (rawFile: File) => {
   <el-card shadow="never" class="w-full">
     <div class="wangeditor">
       <Toolbar
-        :defaultConfig="toolbarConfig"
+        :defaultConfig="toolbarConfig as IToolbarConfig"
         :editor="editorRef"
         :mode="mode"
         style="border-bottom: 1px solid #ccc"

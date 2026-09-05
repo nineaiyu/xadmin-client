@@ -5,7 +5,7 @@ import { getMenuFromPk } from "@/utils";
 import { useVModel } from "@vueuse/core";
 import { isAllEmpty } from "@pureadmin/utils";
 import { transformI18n } from "@/plugins/i18n";
-import { Tree, TreeFormProps } from "../utils/types";
+import { FormItemProps, Tree, TreeFormProps } from "../utils/types";
 import { MenuChoices } from "@/views/system/constants";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import {
@@ -16,6 +16,7 @@ import {
   ref,
   watch
 } from "vue";
+import type { TreeInstance, TreeNodeData } from "element-plus";
 
 import Back from "~icons/ep/back";
 import Upload from "~icons/ep/upload";
@@ -92,7 +93,7 @@ const emit = defineEmits([
 const formInline = useVModel(props, "formInline", emit);
 const parentIds = useVModel(props, "parentIds", emit);
 
-const filterMenuNode = (value: string, data: any) => {
+const filterMenuNode = (value: string, data: TreeNodeData) => {
   if (!value) return true;
   return value
     ? transformI18n(data.meta?.title)
@@ -110,7 +111,9 @@ const filterMenuNode = (value: string, data: any) => {
 
 const initMenuData = value => {
   Object.keys(value).forEach(key => {
-    (formInline as any).value[key] = value[key];
+    // 树节点数据按键值整体回填表单，经索引签名逐键写入
+    (formInline.value as FormItemProps & Record<string, unknown>)[key] =
+      value[key];
   });
   formInline.value.title = formInline.value.meta.title;
   const p_menus = getMenuFromPk(treeRef.value.data, value.pk);
@@ -142,7 +145,9 @@ function toggleRowExpansionAll(status: boolean, all = false) {
   let changeType = MenuChoices.MENU;
   if (status) changeType = MenuChoices.DIRECTORY;
 
-  const nodes = (proxy.$refs["treeRef"] as any)?.store._getAllNodes();
+  const nodes = (
+    proxy.$refs["treeRef"] as TreeInstance | undefined
+  )?.store._getAllNodes();
   for (let i = 0; i < nodes?.length; i++) {
     if (nodes[i].data?.menu_type === changeType || all) {
       nodes[i].expanded = status;

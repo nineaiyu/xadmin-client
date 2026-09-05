@@ -11,6 +11,24 @@ import Keyhole from "~icons/ri/shield-keyhole-line";
 
 defineOptions({ name: "ReSendVerifyCode" });
 
+/** 验证码配置（hooks.ts 内 verifyCodeConfig 的响应式形状） */
+interface VerifyCodeConfig {
+  access: boolean;
+  captcha: boolean;
+  token: boolean;
+  encrypted: boolean;
+  email: boolean;
+  sms: boolean;
+  rate: number;
+}
+
+/** 发送验证码接口返回的 data 载荷（verify_token / extra 由后端按需下发） */
+interface SendCodeResultData {
+  verify_token?: string;
+  extra?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
 const props = withDefaults(defineProps<{ category?: string }>(), {
   category: ""
 });
@@ -21,9 +39,9 @@ const formData = defineModel({
 });
 
 const emit = defineEmits<{
-  configReqSuccess: [...args: any[]];
-  sendCodeReqSuccess: [...args: any[]];
-  configReqEnd: [...args: any[]];
+  configReqSuccess: [config: VerifyCodeConfig];
+  sendCodeReqSuccess: [data: SendCodeResultData];
+  configReqEnd: [];
 }>();
 const formDataRef = ref<FormInstance>();
 const captchaRef = ref();

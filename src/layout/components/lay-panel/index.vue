@@ -32,7 +32,7 @@ const { onReset } = useDataThemeChange();
 
 const { saveSiteConfig, resetSiteConfig } = useSiteConfigStoreHook();
 
-onClickOutside(target, (event: any) => {
+onClickOutside(target, event => {
   if (event.clientX > target.value.offsetLeft) return;
   show.value = false;
 });

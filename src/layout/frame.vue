@@ -37,11 +37,16 @@ function hideLoading() {
   clearFallbackTimer();
 }
 
+/** 兼容旧版 IE 的 iframe 事件挂载边界（现代浏览器走 onload 赋值分支） */
+type FrameHostElement = HTMLElement & {
+  attachEvent?: (_type: string, _listener: () => void) => boolean;
+};
+
 function init() {
   nextTick(() => {
     const iframe = unref(frameRef);
     if (!iframe) return;
-    const _frame = iframe as any;
+    const _frame = iframe as FrameHostElement;
     if (_frame.attachEvent) {
       _frame.attachEvent("onload", hideLoading);
     } else {

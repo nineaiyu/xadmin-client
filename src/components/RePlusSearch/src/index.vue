@@ -27,7 +27,8 @@ const props = withDefaults(defineProps<PlusSearchProps>(), {
 const selectValue = defineModel<object | object[] | string>();
 
 const emit = defineEmits<{
-  change: [...args: any[]];
+  /** 选中值变化：透传 defineModel 的当前值 */
+  change: [value: object | object[] | string | undefined];
 }>();
 
 const selectRef = ref();

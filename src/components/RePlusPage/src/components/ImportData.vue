@@ -5,6 +5,7 @@ import { ExportImportFormatOptions } from "../utils/constants";
 import UploadIcon from "~icons/ri/upload-2-line";
 import { useI18n } from "vue-i18n";
 import { renderBooleanSegmentedOption } from "@/components/RePlusPage";
+import type { UploadUserFile } from "element-plus";
 
 const formRef = ref();
 
@@ -13,8 +14,8 @@ defineOptions({ name: "ImportData" });
 interface FormItemProps {
   action: string;
   ignore_error: boolean;
-  upload: any[];
-  api: { exportData: Function };
+  upload: UploadUserFile[];
+  api: { exportData: (_params: object) => unknown };
 }
 
 interface FormProps {

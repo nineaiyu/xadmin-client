@@ -6,6 +6,7 @@ import type {
   UploadRawFile,
   UploadRequestOptions
 } from "element-plus";
+import type { AxiosProgressEvent } from "axios";
 import { systemUploadFileApi } from "@/api/system/file";
 import { message } from "@/utils/message";
 import { useI18n } from "vue-i18n";
@@ -14,11 +15,20 @@ import { FieldValues, PlusColumn } from "plus-pro-components";
 import { formatBytes, throttle } from "@pureadmin/utils";
 import { hasAuth } from "@/router/utils";
 
+/** el-upload on-success 响应体（systemUploadFileApi.upload 返回结构，仅消费 code/detail） */
+interface UploadResult {
+  code: number;
+  detail?: string;
+}
+
 interface AddOrEditFormProps {
   formInline?: FieldValues;
   formProps?: object;
   columns?: PlusColumn[];
-  tableRef?: any;
+  /** RePlusPage 组件实例（defineExpose 暴露的列表刷新方法） */
+  tableRef?: {
+    handleGetData: () => void;
+  };
 }
 
 const props = withDefaults(defineProps<AddOrEditFormProps>(), {
@@ -49,7 +59,7 @@ const uploadRequest = (option: UploadRequestOptions) => {
   const data = new FormData();
   data.append("file", option.file);
   return systemUploadFileApi.upload(data, {
-    onUploadProgress: (event: any) => {
+    onUploadProgress: (event: AxiosProgressEvent | UploadProgressEvent) => {
       const progressEvt = event as UploadProgressEvent;
       progressEvt.percent =
         event.total > 0 ? (event.loaded / event.total) * 100 : 0;
@@ -58,7 +68,7 @@ const uploadRequest = (option: UploadRequestOptions) => {
   });
 };
 const refreshData = throttle(props.tableRef?.handleGetData, 2000);
-const uploadSuccess = (response: any, uploadFile: UploadFile) => {
+const uploadSuccess = (response: UploadResult, uploadFile: UploadFile) => {
   if (response.code === 1000) {
     refreshData();
     message(`${uploadFile.name} ${t("results.success")}`, { type: "success" });

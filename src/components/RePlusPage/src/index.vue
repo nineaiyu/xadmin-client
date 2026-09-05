@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref } from "vue";
+import { ref, type Ref } from "vue";
 import PureTable from "@pureadmin/table";
 import { usePlusPage } from "./utils/hook";
 import { RePlusPageProps } from "./utils/types";
@@ -7,7 +7,9 @@ import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { cloneDeep, deviceDetection, getKeyList } from "@pureadmin/utils";
 import Delete from "~icons/ep/delete";
-import { PlusSearch } from "plus-pro-components";
+import { PlusSearch, type RecordType } from "plus-pro-components";
+import type { ComponentSize } from "element-plus";
+
 import ButtonOperation, {
   ButtonsCallBackParams
 } from "./components/ButtonOperation";
@@ -40,9 +42,23 @@ const props = withDefaults(defineProps<RePlusPageProps>(), {
   tableBarButtonsProps: () => ({})
 });
 const emit = defineEmits<{
-  rowClick: [row: any];
-  searchComplete: [...args: any[]];
-  selectionChange: [...args: any[]];
+  /** 行点击：row 为动态接口数据行 */
+  rowClick: [row: RecordType];
+  /** 搜索完成：usePlusPage 内 handleGetData 发出的载荷 */
+  searchComplete: [
+    payload: {
+      /** 路由参数（route.params / route.query） */
+      routeParams: RecordType;
+      /** 搜索字段响应式引用 */
+      searchFields: Ref<RecordType>;
+      /** 列表数据响应式引用 */
+      dataList: Ref<RecordType[]>;
+      /** 列表接口响应 */
+      res: RecordType;
+    }
+  ];
+  /** 多选变化：选中的数据行集合 */
+  selectionChange: [rows: RecordType[]];
   tableBarClickAction: [data: ButtonsCallBackParams];
   operationClickAction: [data: ButtonsCallBackParams];
 }>();
@@ -78,6 +94,14 @@ const {
   handleTableBarChange,
   handleSelectionChange
 } = usePlusPage(emit, tableRef, props);
+
+/**
+ * pure-table 的 treeProps 期望三字段全必填的形状（其 default 字面量类型），
+ * 模板层对 setup ref 的类型展开会丢失 checkStrictly，经由此处显式签名传递。
+ */
+function getTreeProps() {
+  return treeProps.value;
+}
 
 function getTableRef() {
   return tableRef.value;
@@ -211,14 +235,13 @@ defineExpose({
         }"
         :loading="loadingStatus"
         :pagination="tablePagination"
-        :size="tableBarData.size as any"
-        :tree-props="treeProps as any"
+        :size="tableBarData.size as ComponentSize"
         adaptive
         align-whole="center"
         default-expand-all
         row-key="pk"
         table-layout="fixed"
-        v-bind="pureTableProps"
+        v-bind="{ ...pureTableProps, treeProps: getTreeProps() }"
         @selection-change="handleSelectionChange"
         @row-click="row => emit('rowClick', row)"
         @page-size-change="handleSizeChange"
@@ -227,7 +250,7 @@ defineExpose({
         <template #operation="{ row }">
           <button-operation
             :row="row"
-            :size="tableBarData.size as any"
+            :size="tableBarData.size as ComponentSize"
             v-bind="operationButtonsProps"
             :buttons="operationButtons"
             @clickAction="

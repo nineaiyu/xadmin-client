@@ -42,9 +42,9 @@ const data = ref({
   username: ""
 });
 
-const sendCodeReqSuccess = ({ extra }) => {
+const sendCodeReqSuccess = ({ extra }: { extra?: Record<string, unknown> }) => {
   if (extra?.username) {
-    data.value = Object.assign({}, extra);
+    data.value = Object.assign({}, extra) as { username: string };
   }
 };
 </script>

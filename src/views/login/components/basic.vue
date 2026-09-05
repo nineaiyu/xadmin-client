@@ -123,11 +123,8 @@ const onLogin = async (formEl: FormInstance | undefined) => {
   });
 };
 
-const immediateDebounce: any = debounce(
-  formRef => onLogin(formRef),
-  1000,
-  true
-);
+const immediateDebounce: (_formRef?: FormInstance | undefined) => void =
+  debounce((formRef: FormInstance | undefined) => onLogin(formRef), 1000, true);
 
 /** 使用公共函数，避免`removeEventListener`失效 */
 function onkeypress({ code }: KeyboardEvent) {

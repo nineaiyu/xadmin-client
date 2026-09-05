@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { h, onMounted, ref } from "vue";
+import { h, onMounted, ref, type VNodeChild } from "vue";
 import { type TippyContent, type TippyOptions, useTippy } from "vue-tippy";
 
 defineOptions({
@@ -19,7 +19,7 @@ const props = defineProps({
 
 const slots = defineSlots<{
   content: () => TippyContent;
-  default: () => any;
+  default: () => VNodeChild;
 }>();
 
 const textRef = ref();

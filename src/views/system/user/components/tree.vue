@@ -5,6 +5,7 @@ import UnExpandIcon from "../svg/unexpand.svg?component";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import More2Fill from "~icons/ri/more-2-fill?width=18&height=18";
 import { computed, getCurrentInstance, nextTick, ref, watch } from "vue";
+import type { TreeInstance } from "element-plus";
 
 interface Tree {
   id: number;
@@ -70,7 +71,7 @@ function nodeClick(value) {
 
 function toggleRowExpansionAll(status) {
   isExpand.value = status;
-  const nodes = (proxy.$refs["treeRef"] as any).store._getAllNodes();
+  const nodes = (proxy.$refs["treeRef"] as TreeInstance).store._getAllNodes();
   for (let i = 0; i < nodes.length; i++) {
     nodes[i].expanded = status;
   }

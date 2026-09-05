@@ -63,10 +63,15 @@ export function usePlusPage(
   const { t, te } = useI18n();
   const dataList = ref([]);
   const loadingStatus = ref(false);
-  const treeProps = ref({
+  // 显式对齐 @pureadmin/table 的 treeProps 期望形状（其 default 字面量类型三字段全必填）
+  const treeProps = ref<{
+    hasChildren: string;
+    children: string;
+    checkStrictly: boolean;
+  }>({
     hasChildren: "hasChildren",
     children: "children",
-    checkStrictly: isTree
+    checkStrictly: isTree ?? false
   });
   const selectedNum = ref(0);
   const defaultValue = ref({});

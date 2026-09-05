@@ -53,9 +53,9 @@ function onClear() {
   inputValue.value = "";
 }
 
-function filterMethod(value: any) {
+function filterMethod(value: string) {
   searchVal.value = value;
-  animatesList.value = copyAnimatesList.value.filter((i: string | any[]) =>
+  animatesList.value = copyAnimatesList.value.filter((i: string) =>
     i.includes(value)
   );
 }

@@ -25,7 +25,8 @@ const activeName = ref(0);
 const formRefs = ref<Record<number, InstanceType<typeof PlusForm>>>({});
 
 const emit = defineEmits<{
-  change: [values: any];
+  /** PlusForm change 透传载荷 */
+  change: [payload: { values: FieldValues; column: PlusColumn }];
 }>();
 
 const isTabs = computed(() => {

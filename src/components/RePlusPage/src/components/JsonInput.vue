@@ -8,7 +8,7 @@
     height="400"
     mode="text"
     style="width: 100%; text-align: left"
-    :readOnly="attr?.disabled as any"
+    :readOnly="attr?.disabled as boolean"
     :dark-theme="isDark"
     @change="handleChange"
   />
@@ -27,7 +27,7 @@ const value = defineModel<string | Record<string, unknown>>({
 });
 const attr = useAttrs();
 const emit = defineEmits<{
-  change: [values: any];
+  change: [values: unknown];
 }>();
 
 const handleChange = (content: TextContent) => {

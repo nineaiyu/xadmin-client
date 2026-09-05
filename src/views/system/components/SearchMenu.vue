@@ -8,7 +8,8 @@ import { transformI18n } from "@/plugins/i18n";
 defineOptions({ name: "SearchMenu" });
 
 const emit = defineEmits<{
-  change: [...args: any[]];
+  /** 透传 RePlusSearch 的 change 事件载荷 */
+  change: [value: object | object[] | string | undefined];
 }>();
 
 const selectValue = defineModel<object | object[] | string>();

@@ -9,6 +9,7 @@ import type {
   UploadRequestOptions,
   UploadUserFile as ElEUploadUserFile
 } from "element-plus";
+import type { AxiosProgressEvent } from "axios";
 import defaultFile from "../assets/defaultFile.png";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
@@ -17,18 +18,32 @@ import { message } from "@/utils/message";
 import { formatBytes } from "@pureadmin/utils";
 
 defineOptions({ name: "UploadFiles" });
-const value = defineModel<string | object | any>();
+/** 模型文件条目：与上传接口返回字段及 change 事件回传的 { pk } 对象对齐 */
+interface FileItem {
+  pk?: number | string;
+  filename?: string;
+  label?: string;
+  filesize?: number;
+  filepath?: string;
+}
+/** 上传接口响应（systemUploadFileApi.upload 的 UploadFileResult 未导出，按需收窄） */
+interface UploadResponse {
+  code: number;
+  data?: Array<{ pk: number | string }>;
+  detail?: string;
+}
+const value = defineModel<unknown>();
 const props = defineProps({
   disabled: Boolean,
   multiple: Boolean,
   isImageFile: Boolean
 });
 const emit = defineEmits<{
-  change: [...args: any];
+  change: [pks: FileItem[] | FileItem | null];
 }>();
 
 interface UploadUserFile extends ElEUploadUserFile {
-  pk?: number;
+  pk?: number | string;
 }
 
 const fileList = ref<UploadUserFile[]>([]);
@@ -41,7 +56,7 @@ const colors = [
 ];
 if (value.value) {
   if (props.multiple) {
-    fileList.value = value.value.map(item => {
+    fileList.value = (value.value as FileItem[]).map(item => {
       return {
         name: item.filename ?? item.label,
         size: item.filesize,
@@ -50,12 +65,13 @@ if (value.value) {
       };
     });
   } else {
+    const file = value.value as FileItem;
     fileList.value = [
       {
-        name: value.value.filename ?? value.value.label,
-        size: value.value.filesize,
-        pk: value.value.pk,
-        url: props.isImageFile ? value.value.filepath : defaultFile
+        name: file.filename ?? file.label,
+        size: file.filesize,
+        pk: file.pk,
+        url: props.isImageFile ? file.filepath : defaultFile
       }
     ];
   }
@@ -102,8 +118,9 @@ const uploadRequest = (option: UploadRequestOptions) => {
   const data = new FormData();
   data.append("file", option.file);
   return systemUploadFileApi.upload(data, {
-    onUploadProgress: (event: any) => {
-      const progressEvt = event as UploadProgressEvent;
+    onUploadProgress: (event: AxiosProgressEvent) => {
+      // axios 进度事件与 element-plus UploadProgressEvent 运行时同形，percent 由本处回填
+      const progressEvt = event as AxiosProgressEvent & UploadProgressEvent;
       progressEvt.percent =
         event.total > 0 ? (event.loaded / event.total) * 100 : 0;
       option.onProgress(progressEvt);
@@ -128,7 +145,10 @@ watch(
   }
 );
 
-const uploadSuccess = (response: any, uploadFile: UploadUserFile) => {
+const uploadSuccess = (
+  response: UploadResponse,
+  uploadFile: UploadUserFile
+) => {
   if (response.code === 1000 && response?.data.length == 1) {
     const data = response.data[0];
     uploadFile.pk = data.pk;

@@ -6,6 +6,7 @@ import {
   onUnmounted,
   reactive,
   ref,
+  type Ref,
   unref,
   watch
 } from "vue";
@@ -148,10 +149,12 @@ function logoChange() {
   emitter.emit("logoChange", unref(logoVal));
 }
 
-function setFalse(Doms): any {
+function setFalse(Doms: Ref<HTMLElement | undefined>[]): () => void {
   Doms.forEach(v => {
     toggleClass(false, "is-select", unref(v));
   });
+  // 既有 `debounce(setFalse([...]), 50)` 调用要求传入函数（其包装器实际被丢弃），补空函数以满足签名
+  return () => {};
 }
 
 /** 页宽 */

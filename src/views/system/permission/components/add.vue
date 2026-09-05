@@ -2,7 +2,7 @@
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { formRules } from "./utils/rule";
-import { FormProps } from "./utils/types";
+import { FormItemProps, FormProps } from "./utils/types";
 import type { CascaderOption } from "element-plus";
 import { computed } from "vue";
 import { message } from "@/utils/message";
@@ -46,7 +46,7 @@ function getRef() {
 }
 
 const matchList = ref([]);
-const getMatchData = (value: any) => {
+const getMatchData = (value: FormItemProps["name"]) => {
   if (!value) return;
   if (value[0] === "*" && value[1] === "*") {
     matchList.value = ["*"];

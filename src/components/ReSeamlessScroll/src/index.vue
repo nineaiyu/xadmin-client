@@ -167,7 +167,7 @@ const autoPlay = computed(() => {
 
 const scrollSwitch = computed(() => {
   // 从 props 解构出来的 属性 不再具有响应性.
-  return (props.data as any).length >= unref(options).limitMoveNum;
+  return (props.data as unknown[]).length >= unref(options).limitMoveNum;
 });
 
 const hoverStopSwitch = computed(() => {
@@ -301,7 +301,7 @@ function touchMove(e) {
 function touchEnd() {
   if (!unref(canTouchScroll)) return;
 
-  let timer: any;
+  let timer: ReturnType<typeof setTimeout> | undefined;
   const direction = unref(options).direction;
   delay.value = 50;
   if (direction === "top") {
