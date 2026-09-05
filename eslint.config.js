@@ -82,8 +82,8 @@ export default defineConfig([
     rules: {
       "@typescript-eslint/no-redeclare": "error",
       "@typescript-eslint/ban-ts-comment": "off",
-      "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/prefer-as-const": "warn",
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/prefer-as-const": "error",
       "@typescript-eslint/no-empty-function": "error",
       "@typescript-eslint/no-non-null-assertion": "off",
       "@typescript-eslint/no-unused-expressions": "error",
@@ -171,17 +171,18 @@ export default defineConfig([
       ]
     }
   },
-  // any 存量豁免清单已于 any 治理四期（ReDialog/ReDrawer/RePlusPage/http 等）全部清零并摘除。
-  // 治理策略：新增代码不允许 any（warn + max-warnings 0 强制），*.ts/tsx 与 *.vue 同等约束（TD-23）。
+  // any 治理已于 T4.6 验收收官：存量清零（226→0），豁免清单已删除，
+  // no-explicit-any / prefer-as-const 对 *.ts/tsx 与 *.vue 均为 error 级。
   {
     files: ["**/*.vue"],
     plugins: {
       "@typescript-eslint": tseslint.plugin
     },
     rules: {
-      "@typescript-eslint/no-explicit-any": "warn",
+      // T4.6 any 清零验收：*.ts/tsx 与 *.vue 同等 error 级约束
+      "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-unsafe-function-type": "error",
-      "@typescript-eslint/prefer-as-const": "warn"
+      "@typescript-eslint/prefer-as-const": "error"
     }
   },
   {
