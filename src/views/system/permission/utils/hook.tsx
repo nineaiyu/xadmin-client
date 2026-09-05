@@ -67,7 +67,8 @@ export function useDataPermission() {
         },
         menu: ({ column }) => {
           column._column.choices.forEach(item => {
-            item.title = transformI18n(item?.meta__title);
+            // 菜单选项条目带 attrs 扩展字段，meta__title 为字符串
+            item.title = transformI18n(item?.meta__title as string);
           });
           column["options"] = handleTree(
             column._column.choices,

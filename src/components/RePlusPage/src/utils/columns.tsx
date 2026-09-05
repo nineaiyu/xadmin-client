@@ -35,9 +35,9 @@ export function useBaseColumns(localeName: string) {
 
   const addOrEditRules = ref({});
   const addOrEditColumns = ref([]);
-  const addOrEditDefaultValue = ref({});
+  const addOrEditDefaultValue = ref<Record<string, unknown>>({});
   const searchColumns = ref([]);
-  const searchDefaultValue = ref({});
+  const searchDefaultValue = ref<Record<string, unknown>>({});
   const listColumns = ref([]);
   const detailColumns = ref([]);
   const { t, te } = useI18n();

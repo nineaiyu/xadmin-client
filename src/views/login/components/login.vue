@@ -9,7 +9,7 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Lock from "~icons/ri/lock-fill";
 import User from "~icons/ri/user-3-fill";
 import Info from "~icons/ri/information-line";
-import { loginVerifyCodeApi } from "@/api/auth";
+import { loginVerifyCodeApi, type TokenInfo } from "@/api/auth";
 import { debounce, delay } from "@pureadmin/utils";
 import { useEventListener } from "@vueuse/core";
 import ReSendVerifyCode from "@/components/ReSendVerifyCode";
@@ -79,7 +79,8 @@ const onLogin = () => {
     t,
     apiReq: loginVerifyCodeApi(data),
     success(res) {
-      setToken(res.data);
+      // 登录接口详情数据即 TokenInfo
+      setToken(res.data as TokenInfo);
       initRouter(true).then(() => {
         disabled.value = true;
         router

@@ -25,7 +25,8 @@ onMounted(() => {
   if (hasAuth("config:SystemUploadFile")) {
     systemUploadFileApi.config().then(res => {
       if (res.code === 1000) {
-        uploadConfig.value = res.data;
+        // 文件上传配置详情数据，消费侧仅依赖 file_upload_size
+        uploadConfig.value = res.data as { file_upload_size: number };
       }
     });
   }

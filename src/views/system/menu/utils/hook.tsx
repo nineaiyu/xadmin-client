@@ -25,7 +25,7 @@ import {
   renderBooleanSegmentedOption
 } from "@/components/RePlusPage";
 import { formatFiledAppParent } from "@/views/system/hooks";
-import type { PlusColumn } from "plus-pro-components";
+import type { PlusColumn, RecordType } from "plus-pro-components";
 import { ElInput } from "element-plus";
 
 const defaultData: FormItemProps = {
@@ -67,7 +67,8 @@ export function useMenu() {
   const formRef = ref();
   const treeData = ref([]);
   const parentIds = ref([]);
-  const choicesDict = ref([]);
+  // menu choices 接口为字典形态：{ method: [...], menu_type: [...] }
+  const choicesDict = ref<RecordType>({});
   const menuUrlList = ref([]);
   const viewList = ref({});
   const modelList = ref([]);

@@ -1,7 +1,11 @@
 import { computed, h } from "vue";
 import { formatAddOrEditOptions } from "./renders";
 import { formatPublicLabels, getPickerShortcuts } from "./index";
-import type { PlusColumnHandler, PlusColumnRegistry } from "./types";
+import type {
+  PageColumn,
+  PlusColumnHandler,
+  PlusColumnRegistry
+} from "./types";
 
 /**
  * 搜索列内置渲染器：input_type -> 对 PageColumn 就地配置
@@ -33,7 +37,7 @@ export const builtinSearchRenderers: PlusColumnRegistry = {
     };
   },
   select: (item, { column }) => {
-    item.valueType = column.input_type;
+    item.valueType = column.input_type as PageColumn["valueType"];
     item.fieldProps = {
       teleported: false,
       filterable: true
@@ -80,5 +84,5 @@ export const searchFallbackRenderer: PlusColumnHandler = (item, ctx) => {
       column.default = [];
     }
   }
-  item.valueType = column.input_type;
+  item.valueType = column.input_type as PageColumn["valueType"];
 };
