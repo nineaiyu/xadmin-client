@@ -54,7 +54,15 @@ function ascending<T extends RankableRoute>(arr: T[]): T[] {
       if (v.meta) v.meta.rank = index + 2;
     }
   });
-  return arr.sort((a, b) => (a.meta?.rank ?? 0) - (b.meta?.rank ?? 0));
+  // 缺 rank 的记录返回 0（而非旧实现的 NaN），保持稳定排序下的原有插入顺序；
+  // 后端菜单子级无 rank，若按 0 参与比较会把它们整体排到父级目录之前，
+  // 使 findRouteByPath/getParentPaths 先命中拍平记录，面包屑层级回退
+  return arr.sort((a, b) => {
+    const ra = a.meta?.rank;
+    const rb = b.meta?.rank;
+    if (ra == null || rb == null) return 0;
+    return ra - rb;
+  });
 }
 
 /** 过滤meta中showLink为false的菜单 */
@@ -165,11 +173,21 @@ function handleAsyncRoutes(routeList, authList) {
           router.options.routes[0].children.push(v);
           // 最终路由进行升序
           ascending(router.options.routes[0].children);
-          if (!router.hasRoute(v?.name)) router.addRoute(v);
+          // 后端目录型路由（含 children、子级为绝对 path）若连同 children 一起注册，
+          // 会与拍平后的同级子记录产生同 path 的嵌套/扁平双 matcher，最终命中哪条
+          // 取决于注册顺序；目录被命中时其组件无 <router-view>，子路由渲染被整体
+          // 遮蔽（页面白屏）。matcher 只注册拍平记录，目录访问由 redirect 兜底；
+          // options.routes 中保留完整父子树供面包屑/菜单查找。
+          const matcherRecord: RouteRecordRaw =
+            v.children?.length > 0 ? { ...v, children: undefined } : v;
+          if (!router.hasRoute(matcherRecord?.name))
+            router.addRoute(matcherRecord);
           const flattenRouters = router.getRoutes().find(n => n.path === "/");
           // 保持router.options.routes[0].children与path为"/"的children一致，防止数据不一致导致异常
           if (flattenRouters) {
-            flattenRouters.children = router.options.routes[0].children;
+            flattenRouters.children = router.options.routes[0].children.map(
+              c => (c.children?.length > 0 ? { ...c, children: undefined } : c)
+            );
             router.addRoute(flattenRouters);
           }
         }
