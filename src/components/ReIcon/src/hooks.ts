@@ -18,6 +18,14 @@ export function useRenderIcon(
   icon: string | Component | Record<string, unknown>,
   attrs?: iconType
 ): Component {
+  // 后端菜单未配置图标时 icon 可能为 null/undefined（如按钮型菜单节点），
+  // 空值直接按无图标渲染，避免下方 render 探测读取 null 属性报错
+  if (!icon) {
+    return defineComponent({
+      name: "EmptyIcon",
+      render: () => null
+    });
+  }
   if (typeof icon === "string" && svgReg.test(icon)) {
     // SVG 字符串
     let cleanedSvg = svgCache.get(icon);
