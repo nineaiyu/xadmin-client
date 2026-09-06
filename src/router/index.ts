@@ -21,6 +21,7 @@ import {
   isOneOfArray
 } from "./utils";
 import { type Router, type RouteRecordRaw, createRouter } from "vue-router";
+import { defineComponent } from "vue";
 import {
   removeToken,
   multipleTabsKey,
@@ -64,12 +65,32 @@ export const remainingPaths = Object.keys(remainingRouter).map(v => {
   return remainingRouter[v].path;
 });
 
+/**
+ * 顶层兜底路由（无 redirect、无组件），必须在创建路由实例时就注册：
+ * 强制刷新动态路由页面（如 /system/field/index）时，首次导航发生在 initRouter
+ * 注册异步路由之前，若无兜底匹配会触发 [VUE_ROUTER_R0004] No match found 警告。
+ * 此处仅让首次导航命中以消除警告，to.fullPath 仍为原路径，待 initRouter 完成后
+ * 由守卫重新 push；动态路由就绪后 utils.ts 的 addPathMatch() 会用 redirect 到
+ * /error/404 的同名路由替换本记录，恢复未匹配路径跳 404 的行为。
+ */
+const pathMatchRoute: RouteRecordRaw = {
+  path: "/:pathMatch(.*)",
+  name: "pathMatch",
+  // 必须是组件对象而非普通箭头函数：vue-router 会把不带 render 的函数当懒加载器
+  // 调用，返回 null 会在 extractComponentsGuards 中报 'catch' in null，
+  // 导致首次导航失败、router.isReady() 永不结束、应用无法挂载（黑屏）
+  component: defineComponent({ name: "PathMatchEmpty", render: () => null })
+};
+
 /** 创建路由实例 */
 export const router: Router = createRouter({
   history: getHistoryMode(import.meta.env.VITE_ROUTER_HISTORY),
   // vue-router 5 的 RouteRecordRaw 联合判定不认宽松的 RouteConfigsTable 接口（redirect 可选性），
   // 运行时 remainingRoutes 即合法路由，此处按原始路由边界收窄
-  routes: constantRoutes.concat(...(remainingRouter as RouteRecordRaw[])),
+  routes: constantRoutes.concat(
+    ...(remainingRouter as RouteRecordRaw[]),
+    pathMatchRoute
+  ),
   strict: true,
   scrollBehavior(to, from, savedPosition) {
     return new Promise(resolve => {
@@ -102,6 +123,7 @@ export function resetRouter() {
   )) {
     router.addRoute(route);
   }
+  router.addRoute(pathMatchRoute);
   router.options.routes = formatTwoStageRoutes(
     formatFlatteningRoutes(buildHierarchyTree(ascending(routes.flat(Infinity))))
   );
@@ -204,7 +226,9 @@ router.beforeEach((to: ToRouteType, _from) => {
             }
           }
           // 确保动态路由完全加入路由列表并且不影响静态路由（注意：动态路由刷新时router.beforeEach可能会触发两次，第一次触发动态路由还未完全添加，第二次动态路由才完全添加到路由列表，如果需要在router.beforeEach做一些判断可以在to.name存在的条件下去判断，这样就只会触发一次）
-          if (isAllEmpty(to.name)) router.push(to.fullPath);
+          // to.name 为 "pathMatch" 时说明首次导航被顶层兜底路由接住（如强制刷新动态路由页），路由注册完成后同样需要重新跳转
+          if (isAllEmpty(to.name) || to.name === "pathMatch")
+            router.push(to.fullPath);
         });
       }
       return toCorrectRoute();

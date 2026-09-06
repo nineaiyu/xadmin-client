@@ -144,13 +144,13 @@ function findRouteByPath(path: string, routes: RouteRecordRaw[]) {
 }
 
 function addPathMatch() {
-  if (!router.hasRoute("pathMatch")) {
-    router.addRoute({
-      path: "/:pathMatch(.*)",
-      name: "pathMatch",
-      redirect: "/error/404"
-    });
-  }
+  // 动态路由就绪后，用 redirect 版本替换 router/index.ts 中预注册的无组件兜底
+  // （同名 addRoute 会替换旧记录），保证未匹配路径仍能跳转 404 页
+  router.addRoute({
+    path: "/:pathMatch(.*)",
+    name: "pathMatch",
+    redirect: "/error/404"
+  });
 }
 
 /** 处理动态路由（后端返回的路由） */
