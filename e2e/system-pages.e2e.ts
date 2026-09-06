@@ -1,31 +1,48 @@
 import { expect, test } from "@playwright/test";
 
-import { ADMIN, login, logout, openMenu } from "./helpers";
+import {
+  ADMIN,
+  login,
+  logout,
+  openMenuPath,
+  waitAppWebSocket
+} from "./helpers";
 
 /**
  * 系统页面渲染与业务流 E2E（T4.3 扩展）：
  * 菜单/在线用户/日志/通知等页面渲染、用户 CRUD、WebSocket 连接、登出。
+ *
+ * 菜单层级以种子库实际数据为准（system/models Menu）：系统管理 → {日志管理 →
+ * 在线用户/访问日志/登录日志}、{通知公告 → 消息公告}、{配置管理 → 用户配置}。
+ * 日志与通知均为三级，二级直接取会命中失败。
  */
 
-test("菜单管理：列表与搜索区渲染", async ({ page }) => {
+test("菜单管理：菜单树与表单区渲染", async ({ page }) => {
   await login(page);
-  await openMenu(page, "系统管理", "菜单管理");
-  const table = page.locator(".el-table");
-  await expect(table).toBeVisible();
+  await openMenuPath(page, ["系统管理"], "/system/menu/index");
+  // 菜单管理为「左侧菜单树 + 右侧表单」布局，不是列表页
+  const tree = page.locator(".el-tree").first();
+  await expect(tree).toBeVisible({ timeout: 15_000 });
   // 初始数据含「系统管理」根菜单
-  await expect(table.getByText("系统管理").first()).toBeVisible();
+  await expect(tree.getByText("系统管理").first()).toBeVisible();
 });
 
 test("在线用户：页面渲染", async ({ page }) => {
   await login(page);
-  await openMenu(page, "系统管理", "在线用户");
+  await openMenuPath(page, ["系统管理", "日志管理"], "/system/online/index");
   // 当前管理员自身应出现在在线列表（WebSocket 会话）
-  await expect(page.locator(".el-table, .pure-table").first()).toBeVisible();
+  await expect(page.locator(".el-table, .pure-table").first()).toBeVisible({
+    timeout: 15_000
+  });
 });
 
 test("登录日志：存在当前登录记录", async ({ page }) => {
   await login(page);
-  await openMenu(page, "系统管理", "登录日志");
+  await openMenuPath(
+    page,
+    ["系统管理", "日志管理"],
+    "/system/logs/login/index"
+  );
   await expect(page.locator(".el-table")).toBeVisible({ timeout: 15_000 });
   // 刚刚的登录应已落库
   await expect(
@@ -33,15 +50,19 @@ test("登录日志：存在当前登录记录", async ({ page }) => {
   ).toBeVisible({ timeout: 15_000 });
 });
 
-test("操作日志：页面可打开且有记录", async ({ page }) => {
+test("访问日志：页面可打开且有记录", async ({ page }) => {
   await login(page);
-  await openMenu(page, "系统管理", "操作日志");
+  await openMenuPath(
+    page,
+    ["系统管理", "日志管理"],
+    "/system/logs/operation/index"
+  );
   await expect(page.locator(".el-table")).toBeVisible({ timeout: 15_000 });
 });
 
-test("通知中心：页面可打开", async ({ page }) => {
+test("消息公告：页面可打开", async ({ page }) => {
   await login(page);
-  await openMenu(page, "系统管理", "通知管理");
+  await openMenuPath(page, ["系统管理", "通知公告"], "/system/notice/index");
   await expect(page.locator(".el-table, .el-empty").first()).toBeVisible({
     timeout: 15_000
   });
@@ -59,7 +80,7 @@ test("账户设置：头像下拉可进入个人信息页", async ({ page }) => 
 test("用户管理：新增 → 搜索可见 → 删除", async ({ page }) => {
   const username = `e2e_u_${Date.now()}`;
   await login(page);
-  await openMenu(page, "系统管理", "用户管理");
+  await openMenuPath(page, ["系统管理"], "/system/user/index");
   const table = page.locator(".el-table");
   await expect(table).toBeVisible();
 
@@ -102,11 +123,11 @@ test("用户管理：新增 → 搜索可见 → 删除", async ({ page }) => {
   ).toHaveCount(0, { timeout: 15_000 });
 });
 
-test("WebSocket：登录后建立 /ws 连接", async ({ page }) => {
-  const wsOpened = page.waitForEvent("websocket", { timeout: 20_000 });
+test("WebSocket：登录后建立应用 ws 连接", async ({ page }) => {
+  const wsOpened = waitAppWebSocket(page);
   await login(page);
   const ws = await wsOpened;
-  expect(ws.url()).toMatch(/\/ws/);
+  expect(ws.url()).toMatch(/\/ws\/message\//);
 });
 
 test("登出后回到登录页", async ({ page }) => {

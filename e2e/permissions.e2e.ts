@@ -2,9 +2,9 @@ import { expect, test } from "@playwright/test";
 
 import {
   ADMIN,
-  BACKEND_URL,
   DP_USER,
   FP_USER,
+  FRONT_URL,
   getAccessToken,
   login
 } from "./helpers";
@@ -14,18 +14,30 @@ import {
  * 种子见 scripts/e2e_seed.py：
  * - e2e_dp 携带 DataPermission「E2E-仅本人用户数据」（table=system.userinfo, type=value.user.id）
  * - e2e_fp 的角色在用户列表菜单配置了 FieldPermission 白名单（email 被剔除）
+ *
+ * 列表接口断言走同源 FRONT_URL：这两个账号仅靠会话 Cookie 鉴权，
+ * 跨域直连后端不带 Cookie 会直接 401。
  */
 
-const USER_LIST_API = `${BACKEND_URL}/api/system/user?page=1&limit=10`;
+const USER_LIST_API = `${FRONT_URL}/api/system/user?page=1&limit=10`;
 
 async function openUserManagement(page: import("@playwright/test").Page) {
-  await page.getByRole("menuitem", { name: "系统管理" }).first().click();
-  const item = page.getByRole("menuitem", { name: "用户管理" }).first();
-  await item.waitFor({ state: "visible" });
-  await item.click();
-  await expect(page.locator(".el-table").first()).toBeVisible({
-    timeout: 15_000
-  });
+  // 两种菜单形态（快照实证）：
+  // - 管理员：顶级 menubar 中「系统管理」为 el-sub-menu（无 href），需点开目录
+  //   后再点 /system/user/index 链接
+  // - 受限用户（e2e_dp/e2e_fp）：仅授权的单页被提升为顶级真链接（href=#/system，
+  //   文案「用户管理」），点击直接落到用户管理页
+  const dir = page
+    .locator(".el-sub-menu__title", { hasText: "系统管理" })
+    .first();
+  const table = page.locator(".el-table").first();
+  if (await dir.isVisible().catch(() => false)) {
+    await dir.click();
+    await page.locator(`a[href="#/system/user/index"]`).first().click();
+  } else {
+    await page.locator(`a[href="#/system"]`).first().click();
+  }
+  await expect(table).toBeVisible({ timeout: 15_000 });
 }
 
 test.describe("数据权限", () => {
@@ -62,24 +74,23 @@ test.describe("数据权限", () => {
 });
 
 test.describe("字段权限", () => {
-  test("受限角色：用户列表表头不出现邮件列", async ({ page }) => {
+  // 场景字段选 phone 而非 email：UserInfo 序列化器 table_fields 不含 email
+  // （该列默认不渲染，表头断言无从谈起）；phone 在默认表格列中
+  test("受限角色：用户列表表头不出现手机列", async ({ page }) => {
     await login(page, FP_USER);
     await openUserManagement(page);
     const header = page.locator(".el-table__header");
     await expect(header).toBeVisible({ timeout: 15_000 });
-    await expect(header).not.toContainText(/邮件|邮箱/);
-    // 序列化层裁剪：数据行同样不应出现 email 值
-    await expect(page.locator(".el-table__body")).not.toContainText(
-      /@e2e\.local/
-    );
+    await expect(header).toContainText(/用户名/);
+    await expect(header).not.toContainText(/手机/);
   });
 
-  test("对照：管理员用户列表保留邮件列", async ({ page }) => {
+  test("对照：管理员用户列表保留手机列", async ({ page }) => {
     await login(page);
     await openUserManagement(page);
     const header = page.locator(".el-table__header");
     await expect(header).toBeVisible({ timeout: 15_000 });
-    await expect(header).toContainText(/邮件|邮箱/);
+    await expect(header).toContainText(/手机/);
   });
 
   test("受限角色：携带合法 token 调用列表接口，响应字段被裁剪", async ({
@@ -87,7 +98,7 @@ test.describe("字段权限", () => {
   }) => {
     await login(page, FP_USER);
     const response = await page.request.get(
-      `${BACKEND_URL}/api/system/user?page=1&limit=10`,
+      `${FRONT_URL}/api/system/user?page=1&limit=10`,
       {
         headers: {
           Authorization: `Bearer ${await getAccessToken(page)}`,
@@ -100,6 +111,7 @@ test.describe("字段权限", () => {
     const first = (payload?.data?.results ?? [])[0] as
       Record<string, unknown> | undefined;
     expect(first).toBeDefined();
-    expect(first).not.toHaveProperty("email");
+    expect(first).not.toHaveProperty("phone");
+    expect(first).toHaveProperty("username");
   });
 });

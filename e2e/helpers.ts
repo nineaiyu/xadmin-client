@@ -10,6 +10,24 @@ export const BACKEND_URL =
   process.env.E2E_API_URL ??
   `http://127.0.0.1:${process.env.E2E_API_PORT ?? "8896"}`;
 
+/**
+ * 前端同源地址（携带浏览器 Cookie 的 API 断言必须走同源）。
+ * 跨域直连 BACKEND_URL 不会带 Cookie，无 Authorization 头的请求一律 401，
+ * 越权断言另见 BACKEND_URL（显式带 Bearer token）。
+ */
+export const FRONT_URL =
+  process.env.E2E_BASE_URL ??
+  `http://localhost:${process.env.E2E_FRONT_PORT ?? "8848"}`;
+
+/** 应用 WebSocket 路径（vite dev 的 HMR 也会建 ws，断言前需按此前缀过滤） */
+const APP_WS_PATTERN = /\/ws\/message\//;
+
+/**
+ * E2E 统一 User-Agent：后端限流与临时 Token 的 request ident 均含 UA，
+ * 同一链路内必须保持一致，否则会被判为不同客户端。
+ */
+export const E2E_USER_AGENT = "e2e-test";
+
 export const ADMIN = { username: "xadmin", password: "E2E-Admin-2026!" };
 export const PLAIN_USER = { username: "e2e_user", password: "E2E-User-2026!" };
 export const SCOPED_USER = {
@@ -52,6 +70,58 @@ export async function logout(page: Page) {
     await confirm.click();
   }
   await expect(page).toHaveURL(/#\/login/, { timeout: 15_000 });
+}
+
+/**
+ * 菜单导航：先逐级展开目录（el-sub-menu 标题），再点击目标页面链接。
+ *
+ * 用链接 href 精确定位而非菜单名文本，原因有二：一是父级 menuitem 的
+ * accessible name 会拼接全部子项文本，按名字子串匹配极易命中父级；二是
+ * 受限角色仅授权单个页面时，pure-admin 会把该页面提升为顶级菜单（无目录可展开），
+ * 此时 dirs 传空数组即可命中。
+ */
+export async function openMenuPath(page: Page, dirs: string[], path: string) {
+  for (const dir of dirs) {
+    const title = page.locator(".el-sub-menu__title", { hasText: dir }).first();
+    if (await title.isVisible().catch(() => false)) {
+      if ((await title.getAttribute("aria-expanded")) !== "true") {
+        await title.click();
+      }
+    }
+  }
+  const link = page.locator(`a[href="#${path}"]`).first();
+  await link.waitFor({ state: "visible", timeout: 15_000 });
+  await link.click();
+}
+
+/**
+ * 等待应用 WebSocket 建立（过滤 vite HMR 的 ws）。
+ * 应用 ws 地址：/ws/message/{group}/{username}，见 src/utils/websocket.ts。
+ */
+export function waitAppWebSocket(page: Page, timeout = 20_000) {
+  return page.waitForEvent("websocket", {
+    predicate: ws => APP_WS_PATTERN.test(ws.url()),
+    timeout
+  });
+}
+
+/**
+ * 登录握手用的一次性临时 Token（后端校验见 system/utils/auth.py::check_tmp_token）。
+ *
+ * 必须与后续登录请求保持同一 User-Agent：临时 Token 绑定
+ * get_request_ident(request)（IP + UA 等），两端 UA 不一致会命中
+ * 「临时Token校验失败」，登录请求根本走不到失败计数逻辑。
+ */
+export async function fetchTempToken(page: Page): Promise<string> {
+  const response = await page.request.get(
+    `${FRONT_URL}/api/system/auth/token`,
+    {
+      headers: { "User-Agent": E2E_USER_AGENT }
+    }
+  );
+  expect(response.status()).toBe(200);
+  const payload = await response.json();
+  return String(payload?.token ?? payload?.data?.token ?? "");
 }
 
 /** 从 cookie 读取 access token，供 page.request 越权断言使用（utils/auth.ts 口径） */

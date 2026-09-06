@@ -50,13 +50,15 @@ export default defineConfig({
   ],
   webServer: [
     {
-      // 种子先行：重置 sqlite 库并写入基础数据（E2E_SEED=0 可跳过），随后拉起后端
+      // 种子先行：重置 sqlite 库并写入基础数据（E2E_SEED=0 可跳过），随后拉起后端。
+      // 必须用 daphne 以 ASGI 承载：manage.py runserver（channels 未入 INSTALLED_APPS）
+      // 是纯 WSGI，/ws/message/* 升级请求一律 404，站内信实时推送用例无法工作
       command:
         `PYTHON=${process.env.E2E_PYTHON ?? `${serverDir}/.venv/bin/python`}; ` +
         `ADMIN='${process.env.E2E_ADMIN_PASSWORD ?? "E2E-Admin-2026!"}'; ` +
         `export DJANGO_SETTINGS_MODULE=tests.settings_e2e XADMIN_ADMIN_PASSWORD="$ADMIN"; ` +
         `${process.env.E2E_SEED !== "0" ? `$PYTHON scripts/e2e_seed.py && ` : ""}` +
-        `$PYTHON manage.py runserver 127.0.0.1:${apiPort} --noreload`,
+        `$PYTHON -m daphne -b 127.0.0.1 -p ${apiPort} server.asgi:application`,
       cwd: serverDir,
       url: `${apiURL}/api/common/api/health`,
       reuseExistingServer: !process.env.CI,
