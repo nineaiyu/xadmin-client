@@ -82,8 +82,15 @@ class PureHttp {
       url,
       ...param,
       ...axiosConfig
-    } as PureHttpRequestConfig;
+    } as PureHttpRequestConfig & { _mfaRetried?: boolean };
 
+    return this.send<T>(config);
+  }
+
+  /** 请求执行与统一错误处理（412 重发时复用同一 config 以防递归弹窗） */
+  private send<T>(
+    config: PureHttpRequestConfig & { _mfaRetried?: boolean }
+  ): Promise<T> {
     // 单独处理自定义请求/响应回调
     return new Promise((resolve, reject) => {
       PureHttp.axiosInstance
@@ -105,6 +112,26 @@ class PureHttp {
                 window.location.reload();
               }
               // router.push({ name: "Login" })
+            } else if (
+              error.response.status === 412 &&
+              data?.type === "user_confirm_required"
+            ) {
+              /** 敏感操作二次验证（MFA）：弹验证窗，通过后自动重发原请求 */
+              if (config._mfaRetried) {
+                // 重发后仍未通过（如确认过期），不再递归弹窗
+                ElMessage.error(data?.detail);
+                reject(error.response.data);
+              } else {
+                config._mfaRetried = true;
+                // 动态引入避免与验证组件产生模块循环依赖
+                import("@/components/ReMfaConfirm")
+                  .then(({ confirmMfa }) => confirmMfa(data?.confirm_type))
+                  .then(() => resolve(this.send<T>(config)))
+                  .catch(() => {
+                    reject(error.response.data);
+                  });
+              }
+              return;
             } else {
               ElMessage.error(data?.detail ?? error.response.statusText);
               // router.push("/error/500");

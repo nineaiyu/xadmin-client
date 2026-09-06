@@ -4,6 +4,7 @@ import { computed, ref } from "vue";
 import type { ChoicesLabel } from "./utils/types";
 import editUserInfo from "./components/edit.vue";
 import editUserAvatar from "./components/avatar.vue";
+import editUserMfa from "./components/mfa.vue";
 import { useUserInfo } from "./utils/hook";
 import editUserPassword from "./components/password.vue";
 
@@ -119,6 +120,9 @@ const genderInfo = computed<ChoicesLabel | undefined>(() =>
             name="resetPwd"
           >
             <edit-user-password @handle-update="handleResetPassword" />
+          </el-tab-pane>
+          <el-tab-pane :label="t('mfa.tabTitle')" name="mfa">
+            <edit-user-mfa v-if="activeTab === 'mfa'" />
           </el-tab-pane>
           <el-tab-pane
             v-if="auth.upload"

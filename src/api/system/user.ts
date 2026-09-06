@@ -42,6 +42,14 @@ class UserApi extends BaseApi {
       `${this.baseApi}/${pk}/unblock`
     );
   };
+  resetMfa = (pk: number | string, data?: object) => {
+    return this.request<BaseResult>(
+      "post",
+      {},
+      data,
+      `${this.baseApi}/${pk}/reset-mfa`
+    );
+  };
   logout = (pk: number | string, data?: object) => {
     return this.request<BaseResult>(
       "post",

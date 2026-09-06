@@ -298,6 +298,39 @@ userinfo:
   continueBind: 继续绑定将会自动
   bindInfo: 的绑定信息
 
+# MFA / 敏感操作二次验证
+mfa:
+  tabTitle: MFA 安全
+  confirmTitle: 敏感操作确认
+  confirmTip: 该操作需要先完成身份二次验证，请选择验证方式
+  method: 验证方式
+  code: 验证码
+  codePlaceholder: 请输入验证码
+  codeRequired: 请输入验证码
+  sendCode: 发送验证码
+  resendAfter: "{seconds} 秒后可重新发送"
+  codeSent: 验证码已发送
+  noAvailableMethod: 暂无可用的验证方式，请联系管理员
+  cancel: 取消
+  verify: 确认验证
+  verifySuccess: 验证通过
+  loginVerifyTip: 检测到您的账号已开启登录二次验证，请完成验证后进入系统
+  loginVerify: 验证并登录
+  backToLogin: 返回重新登录
+  otpStatus: 登录二次验证
+  otpEnabled: 已开启
+  otpDisabled: 未开启
+  otpEnabledTip: 登录时需要输入动态验证码进行二次验证
+  otpDisabledTip: 绑定 OTP 后，登录时需输入动态验证码二次验证，可有效防止密码泄露导致的账号盗用
+  startBind: 绑定 OTP
+  scanTip: 扫码绑定
+  manualEntry: 无法扫码时，可手动输入密钥
+  confirmBind: 确认绑定
+  cancelBind: 取消绑定
+  bindSuccess: OTP 绑定成功
+  disableBind: 解绑 OTP
+  disableConfirmTip: 解绑后登录将不再需要动态验证码，确定解绑？
+
 account:
   profile: 个人信息
   preference: 偏好设置
@@ -315,6 +348,7 @@ account:
 
 systemUser:
   user: 用户
+  resetMfa: 重置MFA
   email: 邮箱
   username: 用户名
   phone: 手机号
@@ -614,6 +648,7 @@ settingSecurity:
   passwordRule: 密码规则配置
   bingEmail: 绑定邮箱配置
   bindPhone: 绑定手机配置
+  mfa: MFA 二次验证配置
   blockIp: 安全拦截IP
 
 settingPassword:

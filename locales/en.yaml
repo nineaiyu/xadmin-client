@@ -298,6 +298,39 @@ userinfo:
   continueBind: Continuing the binding will be automatic
   bindInfo: binding information
 
+# MFA / Sensitive operation re-verification
+mfa:
+  tabTitle: MFA Security
+  confirmTitle: Sensitive Operation Confirmation
+  confirmTip: This operation requires identity re-verification, please select a verification method
+  method: Method
+  code: Verification code
+  codePlaceholder: Please enter the verification code
+  codeRequired: Please enter the verification code
+  sendCode: Send code
+  resendAfter: "Resend in {seconds}s"
+  codeSent: The verification code has been sent
+  noAvailableMethod: No available verification method, please contact the administrator
+  cancel: Cancel
+  verify: Confirm
+  verifySuccess: Verification successful
+  loginVerifyTip: Login MFA is enabled for your account, please verify before entering the system
+  loginVerify: Verify and Login
+  backToLogin: Back to Login
+  otpStatus: Login MFA
+  otpEnabled: Enabled
+  otpDisabled: Disabled
+  otpEnabledTip: A dynamic verification code is required at login
+  otpDisabledTip: After binding OTP, a dynamic verification code is required at login, which effectively prevents account theft caused by password leakage
+  startBind: Bind OTP
+  scanTip: Scan to bind
+  manualEntry: If you cannot scan, enter the key manually
+  confirmBind: Confirm Binding
+  cancelBind: Cancel Binding
+  bindSuccess: OTP binding successful
+  disableBind: Unbind OTP
+  disableConfirmTip: Login will no longer require a dynamic verification code after unbinding. Are you sure?
+
 account:
   profile: Profile
   preference: Preference
@@ -315,6 +348,7 @@ account:
 
 systemUser:
   user: User
+  resetMfa: Reset MFA
   email: Email
   username: Username
   phone: Mobile
@@ -614,6 +648,7 @@ settingSecurity:
   passwordRule: Password Rules
   bingEmail: Bind Email
   bindPhone: Bind Phone
+  mfa: MFA Verification Settings
   blockIp: Block Ip
 
 settingPassword:

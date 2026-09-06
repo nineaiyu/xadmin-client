@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { message } from "@/utils/message";
-import type { TokenResult } from "@/api/auth";
+import type { LoginResult, TokenResult } from "@/api/auth";
 import {
   loginBasicApi,
   logoutApi,
@@ -126,14 +126,15 @@ export const useUserStore = defineStore("pure-user", {
     },
     /** 登入 */
     async loginByUsername(data, encrypted) {
-      return new Promise<TokenResult>((resolve, reject) => {
+      return new Promise<LoginResult>((resolve, reject) => {
         if (encrypted) {
           data["password"] = AesEncrypted(data["token"], data["password"]);
           data["username"] = AesEncrypted(data["token"], data["username"]);
         }
         loginBasicApi(data)
           .then(res => {
-            if (res.code === 1000) {
+            // mfa_required 时后端未签发 token（data 中无 access），不能写入
+            if (res.code === 1000 && "access" in res.data) {
               setToken(res.data);
             }
             resolve(res);

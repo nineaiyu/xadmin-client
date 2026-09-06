@@ -1,4 +1,5 @@
 import { http } from "@/utils/http";
+import type { LoginMfaRequired } from "@/api/mfa";
 
 export interface TokenInfo {
   /** token */
@@ -14,6 +15,15 @@ export type TokenResult = {
   code: number;
   detail: string;
   data: TokenInfo;
+};
+
+/** 登录接口载荷：正常登录为 TokenInfo；开启登录 MFA 的用户为 mfa_required 引导信息（此时不签发 token） */
+export type LoginResultData = TokenInfo | LoginMfaRequired;
+
+export type LoginResult = {
+  code: number;
+  detail: string;
+  data: LoginResultData;
 };
 
 /** 密码安全规则：`key` 为规则名，`value` 为阈值/开关 */
@@ -88,11 +98,11 @@ export type AuthInfoResult = {
 
 /** 登录 */
 export const loginBasicApi = (data?: object) => {
-  return http.request<TokenResult>("post", "/api/system/login/basic", { data });
+  return http.request<LoginResult>("post", "/api/system/login/basic", { data });
 };
 
 export const loginVerifyCodeApi = (data?: object) => {
-  return http.request<TokenResult>("post", "/api/system/login/code", { data });
+  return http.request<LoginResult>("post", "/api/system/login/code", { data });
 };
 
 export const loginAuthApi = (data?: object) => {

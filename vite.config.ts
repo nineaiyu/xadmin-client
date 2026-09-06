@@ -1,6 +1,11 @@
 import { getPluginsList } from "./build/plugins.ts";
 import { include, exclude } from "./build/optimize.ts";
-import { type UserConfigExport, type ConfigEnv, loadEnv } from "vite";
+import {
+  type UserConfigExport,
+  type ConfigEnv,
+  loadEnv,
+  transformWithOxc
+} from "vite";
 import {
   __APP_INFO__,
   alias,
@@ -48,7 +53,32 @@ export default async ({ mode }: ConfigEnv): Promise<UserConfigExport> => {
             runtime: "automatic",
             importSource: "vue"
           }
-        }
+        },
+        // rolldown 依赖扫描器（dev 启动时为预打包收集 import）解析 .tsx 时未启用
+        // JSX 语法，任何含 JSX 的 .tsx 都会让整次扫描以 PARSE_ERROR 中断、预打包
+        // 被跳过（如 system/menu/utils/hook.tsx）。这里仅在扫描阶段先把 JSX 降级为
+        // vue/jsx-runtime 调用，不影响正常 dev/build 转换链路。
+        plugins: [
+          {
+            name: "xadmin:dep-scan-lower-jsx",
+            transform: {
+              filter: { id: /\.[jt]sx$/ },
+              async handler(code: string, id: string) {
+                if (id.includes("node_modules")) return;
+                const result = await transformWithOxc(code, id, {
+                  lang: id.endsWith(".tsx") ? "tsx" : "jsx",
+                  jsx: {
+                    runtime: "automatic",
+                    importSource: "vue",
+                    development: true
+                  },
+                  tsconfig: false
+                });
+                return { code: result.code, moduleType: "js" };
+              }
+            }
+          }
+        ]
       }
     },
     build: {

@@ -33,11 +33,13 @@ export function useUser(tableRef: Ref) {
     empower: false,
     logout: false,
     resetPassword: false,
+    resetMfa: false,
     ...getDefaultAuths(getCurrentInstance(), [
       "resetPassword",
       "empower",
       "logout",
-      "unblock"
+      "unblock",
+      "resetMfa"
     ])
   });
   const switchLoadMap = ref({});

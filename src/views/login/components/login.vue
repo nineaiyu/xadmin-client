@@ -9,13 +9,19 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Lock from "~icons/ri/lock-fill";
 import User from "~icons/ri/user-3-fill";
 import Info from "~icons/ri/information-line";
-import { loginVerifyCodeApi, type TokenInfo } from "@/api/auth";
+import {
+  loginVerifyCodeApi,
+  type LoginResultData,
+  type TokenInfo
+} from "@/api/auth";
+import type { LoginMfaRequired } from "@/api/mfa";
 import { debounce, delay } from "@pureadmin/utils";
 import { useEventListener } from "@vueuse/core";
 import ReSendVerifyCode from "@/components/ReSendVerifyCode";
 import { AesEncrypted } from "@/utils/aes";
 import { handleOperation } from "@/components/RePlusPage";
 import { setToken } from "@/utils/auth";
+import LoginMfa from "./mfa.vue";
 
 defineOptions({
   name: "Login"
@@ -48,6 +54,31 @@ const formData = ref({
   verify_token: undefined
 });
 
+/** 登录 MFA 二次验证载荷：非空时登录页切换为动态码验证步骤 */
+const loginMfaInfo = ref<LoginMfaRequired | null>(null);
+
+/** 登录完成（直接登录成功或 MFA 验证通过）：初始化路由并跳转 */
+const handleLoginSuccess = () => {
+  initRouter(true).then(() => {
+    disabled.value = true;
+    router
+      .push((route.query?.redirect as string) ?? getTopMenu(true).path)
+      .finally(() => {
+        disabled.value = false;
+      });
+  });
+};
+
+/** 登录 MFA 验证通过：写入正式 token 并进入系统 */
+const handleMfaSuccess = (data: TokenInfo) => {
+  setToken(data);
+  handleLoginSuccess();
+};
+
+const handleMfaBack = () => {
+  loginMfaInfo.value = null;
+};
+
 const formatLoginDayList = () => {
   const start = 1;
   const middle = Math.ceil(loginDay.value / 2);
@@ -79,16 +110,16 @@ const onLogin = () => {
     t,
     apiReq: loginVerifyCodeApi(data),
     success(res) {
+      // 登录载荷：正常登录为 TokenInfo；开启登录 MFA 时为 mfa_required 引导信息
+      const result = res.data as LoginResultData;
+      if ("mfa_required" in result && result.mfa_required) {
+        // 密码阶段通过，切换到登录 MFA 动态码验证步骤
+        loginMfaInfo.value = result;
+        return;
+      }
       // 登录接口详情数据即 TokenInfo
-      setToken(res.data as TokenInfo);
-      initRouter(true).then(() => {
-        disabled.value = true;
-        router
-          .push((route.query?.redirect as string) ?? getTopMenu(true).path)
-          .finally(() => {
-            disabled.value = false;
-          });
-      });
+      setToken(result as TokenInfo);
+      handleLoginSuccess();
     },
     requestEnd() {
       loading.value = false;
@@ -163,127 +194,140 @@ function onBack() {
 
 <template>
   <div v-loading="configLoading">
-    <ReSendVerifyCode
-      ref="verifyCodeRef"
-      v-model="formData"
-      category="login"
-      @configReqSuccess="configReqSuccess"
-      @configReqEnd="configLoading = false"
-    >
-      <el-tab-pane
-        v-if="authInfo.basic"
-        :label="t('login.basic')"
-        name="username"
+    <LoginMfa
+      v-if="loginMfaInfo"
+      :mfa-info="loginMfaInfo"
+      @success="handleMfaSuccess"
+      @back="handleMfaBack"
+    />
+    <template v-else>
+      <ReSendVerifyCode
+        ref="verifyCodeRef"
+        v-model="formData"
+        category="login"
+        @configReqSuccess="configReqSuccess"
+        @configReqEnd="configLoading = false"
       >
-        <Motion v-if="isUsername" :delay="150">
-          <el-form-item
-            :rules="[
-              {
-                required: true,
-                message: t('login.usernameReg'),
-                trigger: 'blur'
-              }
-            ]"
-            prop="username"
-          >
-            <el-input
-              v-model="formData.username"
-              :placeholder="t('login.username')"
-              :prefix-icon="useRenderIcon(User)"
-              clearable
-              tabindex="100"
-            />
-          </el-form-item>
-          <el-form-item
-            :rules="[
-              {
-                required: true,
-                message: t('login.passwordReg'),
-                trigger: 'blur'
-              }
-            ]"
-            prop="password"
-          >
-            <el-input
-              v-model="formData.password"
-              :placeholder="t('login.password')"
-              :prefix-icon="useRenderIcon(Lock)"
-              clearable
-              show-password
-              tabindex="100"
-            />
+        <el-tab-pane
+          v-if="authInfo.basic"
+          :label="t('login.basic')"
+          name="username"
+        >
+          <Motion v-if="isUsername" :delay="150">
+            <el-form-item
+              :rules="[
+                {
+                  required: true,
+                  message: t('login.usernameReg'),
+                  trigger: 'blur'
+                }
+              ]"
+              prop="username"
+            >
+              <el-input
+                v-model="formData.username"
+                :placeholder="t('login.username')"
+                :prefix-icon="useRenderIcon(User)"
+                clearable
+                tabindex="100"
+              />
+            </el-form-item>
+            <el-form-item
+              :rules="[
+                {
+                  required: true,
+                  message: t('login.passwordReg'),
+                  trigger: 'blur'
+                }
+              ]"
+              prop="password"
+            >
+              <el-input
+                v-model="formData.password"
+                :placeholder="t('login.password')"
+                :prefix-icon="useRenderIcon(Lock)"
+                clearable
+                show-password
+                tabindex="100"
+              />
+            </el-form-item>
+          </Motion>
+        </el-tab-pane>
+      </ReSendVerifyCode>
+
+      <el-form v-if="authInfo.access" :model="formData" size="large">
+        <Motion :delay="250">
+          <el-form-item>
+            <div class="w-full h-5 flex-bc">
+              <el-checkbox v-model="checked" tabindex="800">
+                <span class="flex">
+                  <select
+                    v-model="loginDay"
+                    :disabled="loginDayList.length < 2"
+                    :style="{
+                      width: loginDay < 10 ? '10px' : '16px',
+                      outline: 'none',
+                      background: 'none',
+                      appearance: 'none',
+                      border: 'none'
+                    }"
+                  >
+                    <option
+                      v-for="item in loginDayList"
+                      :key="item"
+                      :value="item"
+                    >
+                      {{ item }}
+                    </option>
+                  </select>
+                  {{ t("login.remember") }}
+                  <el-tooltip
+                    :content="t('login.rememberInfo')"
+                    effect="dark"
+                    placement="top"
+                  >
+                    <IconifyIconOffline :icon="Info" class="ml-1" />
+                  </el-tooltip>
+                </span>
+              </el-checkbox>
+              <el-button
+                v-if="authInfo.reset"
+                link
+                type="primary"
+                @click="useUserStoreHook().SET_CURRENT_PAGE(4)"
+              >
+                {{ t("login.forget") }}
+              </el-button>
+            </div>
+            <el-button
+              :disabled="disabled"
+              :loading="loading"
+              class="w-full mt-4!"
+              size="default"
+              type="primary"
+              tabindex="1000"
+              @click="handleLogin"
+            >
+              {{ t("login.login") }}
+            </el-button>
           </el-form-item>
         </Motion>
-      </el-tab-pane>
-    </ReSendVerifyCode>
-
-    <el-form v-if="authInfo.access" :model="formData" size="large">
-      <Motion :delay="250">
+      </el-form>
+      <Motion v-else :delay="300">
+        <el-result icon="error" title="当前服务器不允许登录" />
+      </Motion>
+      <Motion :delay="400">
         <el-form-item>
-          <div class="w-full h-5 flex-bc">
-            <el-checkbox v-model="checked" tabindex="800">
-              <span class="flex">
-                <select
-                  v-model="loginDay"
-                  :disabled="loginDayList.length < 2"
-                  :style="{
-                    width: loginDay < 10 ? '10px' : '16px',
-                    outline: 'none',
-                    background: 'none',
-                    appearance: 'none',
-                    border: 'none'
-                  }"
-                >
-                  <option
-                    v-for="item in loginDayList"
-                    :key="item"
-                    :value="item"
-                  >
-                    {{ item }}
-                  </option>
-                </select>
-                {{ t("login.remember") }}
-                <el-tooltip
-                  :content="t('login.rememberInfo')"
-                  effect="dark"
-                  placement="top"
-                >
-                  <IconifyIconOffline :icon="Info" class="ml-1" />
-                </el-tooltip>
-              </span>
-            </el-checkbox>
-            <el-button
-              v-if="authInfo.reset"
-              link
-              type="primary"
-              @click="useUserStoreHook().SET_CURRENT_PAGE(4)"
-            >
-              {{ t("login.forget") }}
-            </el-button>
-          </div>
           <el-button
-            :disabled="disabled"
-            :loading="loading"
-            class="w-full mt-4!"
+            class="w-full"
             size="default"
-            type="primary"
-            tabindex="1000"
-            @click="handleLogin"
+            tabindex="100"
+            @click="onBack"
           >
-            {{ t("login.login") }}
+            {{ t("login.back") }}
           </el-button>
         </el-form-item>
       </Motion>
-    </el-form>
-    <Motion v-else :delay="300">
-      <el-result icon="error" title="当前服务器不允许登录" />
-    </Motion>
-    <Motion :delay="400">
-      <el-form-item>
-        <el-button class="w-full" size="default" tabindex="100" @click="onBack">
-          {{ t("login.back") }}
-        </el-button>
-      </el-form-item>
-    </Motion>
+    </template>
   </div>
 </template>

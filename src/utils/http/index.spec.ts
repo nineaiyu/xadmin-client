@@ -1,7 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AxiosInstance } from "axios";
 
-const { instanceMock, downloadByDataMock, buildUUIDMock } = vi.hoisted(() => {
+const {
+  instanceMock,
+  downloadByDataMock,
+  buildUUIDMock,
+  confirmMfaMock,
+  elMessageMock
+} = vi.hoisted(() => {
   const request = vi.fn();
   // axios 实例的测试替身：http 层仅触达 interceptors 与 request
   const instance = {
@@ -14,7 +20,9 @@ const { instanceMock, downloadByDataMock, buildUUIDMock } = vi.hoisted(() => {
   return {
     instanceMock: { instance, request },
     downloadByDataMock: vi.fn(),
-    buildUUIDMock: vi.fn(() => "uuid-123")
+    buildUUIDMock: vi.fn(() => "uuid-123"),
+    confirmMfaMock: vi.fn(),
+    elMessageMock: vi.fn()
   };
 });
 
@@ -44,7 +52,11 @@ vi.mock("@/utils/message", () => ({
 }));
 
 vi.mock("element-plus", () => ({
-  ElMessage: { error: vi.fn() }
+  ElMessage: { error: elMessageMock }
+}));
+
+vi.mock("@/components/ReMfaConfirm", () => ({
+  confirmMfa: confirmMfaMock
 }));
 
 vi.mock("../progress", () => ({
@@ -144,5 +156,86 @@ describe("PureHttp.autoDownload", () => {
       expect.any(Blob),
       "uuid-123"
     );
+  });
+});
+
+describe("PureHttp 412 敏感操作二次验证拦截", () => {
+  beforeEach(() => {
+    instanceMock.request.mockReset();
+    confirmMfaMock.mockReset();
+    elMessageMock.mockClear();
+    confirmMfaMock.mockResolvedValue({ expire_at: 123456 });
+  });
+
+  const make412Error = () =>
+    Object.assign(new Error("Request failed with status code 412"), {
+      response: {
+        status: 412,
+        statusText: "Precondition Required",
+        data: {
+          code: 412,
+          type: "user_confirm_required",
+          confirm_type: "mfa",
+          detail: "该操作需要进行身份二次验证"
+        }
+      }
+    });
+
+  it("412 时唤起验证并自动重发原请求", async () => {
+    instanceMock.request
+      .mockRejectedValueOnce(make412Error())
+      .mockResolvedValueOnce({ data: { code: 1000, detail: "ok" } });
+
+    const result = await http.post("/api/mfa/otp/disable", { data: {} });
+
+    expect(confirmMfaMock).toHaveBeenCalledWith("mfa");
+    // 原始请求 + 验证通过后的重发（测试环境拦截器被 mock，返回完整 axios 响应）
+    expect(instanceMock.request).toHaveBeenCalledTimes(2);
+    expect(result).toEqual({ data: { code: 1000, detail: "ok" } });
+  });
+
+  it("验证弹窗被取消时原请求 reject，不重发", async () => {
+    confirmMfaMock.mockRejectedValue(new Error("mfa-confirm-cancelled"));
+    instanceMock.request.mockRejectedValueOnce(make412Error());
+
+    await expect(
+      http.post("/api/mfa/otp/disable", { data: {} })
+    ).rejects.toMatchObject({ code: 412 });
+
+    expect(instanceMock.request).toHaveBeenCalledTimes(1);
+  });
+
+  it("重发后仍返回 412（确认过期）时不再递归弹窗", async () => {
+    instanceMock.request
+      .mockRejectedValueOnce(make412Error())
+      .mockRejectedValueOnce(make412Error());
+
+    await expect(
+      http.post("/api/mfa/otp/disable", { data: {} })
+    ).rejects.toMatchObject({ code: 412 });
+
+    // 仅弹一次验证窗
+    expect(confirmMfaMock).toHaveBeenCalledTimes(1);
+    expect(instanceMock.request).toHaveBeenCalledTimes(2);
+    expect(elMessageMock).toHaveBeenCalled();
+  });
+
+  it("非 mfa 的 412 响应不走验证流程", async () => {
+    instanceMock.request.mockRejectedValueOnce(
+      Object.assign(new Error("412"), {
+        response: {
+          status: 412,
+          statusText: "",
+          data: { code: 412, detail: "x" }
+        }
+      })
+    );
+
+    await expect(
+      http.post("/api/mfa/otp/disable", { data: {} })
+    ).rejects.toMatchObject({ code: 412 });
+
+    expect(confirmMfaMock).not.toHaveBeenCalled();
+    expect(instanceMock.request).toHaveBeenCalledTimes(1);
   });
 });

@@ -42,6 +42,9 @@ export const settingsSmsConfigApi = new ViewBaseApi("/api/settings/sms/config");
 // 验证码设置
 export const settingsVerifyCodeApi = new ViewBaseApi("/api/settings/verify");
 
+// MFA 二次验证配置
+export const settingsMfaApi = new ViewBaseApi("/api/settings/mfa/auth");
+
 // 忘记密码设置
 export const settingsResetPasswordCodeApi = new ViewBaseApi(
   "/api/settings/reset/auth"

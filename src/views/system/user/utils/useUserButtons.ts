@@ -9,6 +9,7 @@ import type { RecordType } from "plus-pro-components";
 import Role from "~icons/ri/admin-line";
 import Avatar from "~icons/ri/user-3-fill";
 import Password from "~icons/ri/lock-password-line";
+import ShieldKeyhole from "~icons/ri/shield-keyhole-line";
 import Message from "~icons/ri/message-fill";
 import Logout from "~icons/ri/logout-circle-r-line";
 
@@ -35,6 +36,7 @@ export function useUserButtons({
     upload?: boolean;
     resetPassword?: boolean;
     empower?: boolean;
+    resetMfa?: boolean;
   };
   tableRef: Ref;
   selectedNum: Ref<number>;
@@ -85,7 +87,7 @@ export function useUserButtons({
   });
 
   const operationButtonsProps = shallowRef<OperationProps>({
-    width: 210,
+    width: 260,
     buttons: [
       {
         text: t("systemUser.logout"),
@@ -151,6 +153,25 @@ export function useUserButtons({
           handleRoleRules(row as { username: string; [key: string]: unknown });
         },
         show: auth.empower
+      },
+      {
+        text: t("systemUser.resetMfa"),
+        code: "resetMfa",
+        props: {
+          type: "danger",
+          icon: useRenderIcon(ShieldKeyhole),
+          link: true
+        },
+        onClick: ({ row }) => {
+          handleOperation({
+            t,
+            apiReq: api.resetMfa(row.pk),
+            success() {
+              tableRef.value.handleGetData();
+            }
+          });
+        },
+        show: auth.resetMfa
       }
     ]
   });
