@@ -51,7 +51,7 @@ describe("user store", () => {
     store.SET_VERIFY_CODE_LENGTH(6);
     store.SET_CURRENT_PAGE(3);
     store.SET_ISREMEMBERED(true);
-    store.SET_LOGINDAY("14");
+    store.SET_LOGINDAY(14);
     store.SET_NOTICECOUNT(2);
     store.INCR_NOTICECOUNT();
     expect(store.verifyCodeLength).toBe(6);

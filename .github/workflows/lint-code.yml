@@ -54,8 +54,9 @@ jobs:
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run Unit Tests
-        run: pnpm test:run
+      - name: Run Unit Tests (coverage gate)
+        # T4.2：vitest 覆盖率阈值（statements/branches/functions/lines）在 CI 强制生效
+        run: pnpm test:coverage
 
       - name: Metadata contract types are up to date (T2.3)
         run: |
