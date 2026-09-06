@@ -51,12 +51,13 @@ jobs:
           cache-dependency-path: xadmin-server/requirements.txt
 
       - name: Install backend dependencies
-        # 测试环境使用 sqlite3，无需编译 mysqlclient
+        # 测试环境使用 sqlite3，无需编译 mysqlclient；E2E 的 FakeRedis 缓存后端
+        # 依赖 fakeredis（requirements-dev.txt 中的测试专用依赖）
         run: |
           cd xadmin-server
           python -m pip install --upgrade pip
           grep -v '^mysqlclient' requirements.txt > /tmp/requirements-e2e.txt
-          pip install -r /tmp/requirements-e2e.txt
+          pip install -r /tmp/requirements-e2e.txt "fakeredis[lua]>=2.23"
 
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
