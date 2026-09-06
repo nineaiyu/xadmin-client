@@ -41,7 +41,11 @@ export default defineConfig({
     baseURL,
     locale: "zh-CN",
     screenshot: "only-on-failure",
-    actionTimeout: 10_000
+    actionTimeout: 10_000,
+    // CI 无 vite 预打包缓存（rolldown 扫描器对 tsconfig jsx:preserve 的 .tsx
+    // 报 PARSE_ERROR，跳过预打包后模块按需冷转换），首次页面加载可能超过
+    // 默认 30s 导航超时
+    navigationTimeout: 120_000
   },
   projects: [
     { name: "chromium", use: { browserName: "chromium" } },
