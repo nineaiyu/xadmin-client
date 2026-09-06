@@ -13,6 +13,9 @@ import {
 export default async ({ mode }: ConfigEnv): Promise<UserConfigExport> => {
   const { VITE_CDN, VITE_PORT, VITE_COMPRESSION, VITE_PUBLIC_PATH } =
     wrapperEnv(loadEnv(mode, root));
+  // E2E 专用：playwright 以 E2E_API_PORT 拉起独立后端（见 playwright.config.ts），
+  // 默认仍指向 8896，不影响常规开发
+  const apiPort = process.env.E2E_API_PORT ?? "8896";
   return {
     base: VITE_PUBLIC_PATH,
     root,
@@ -26,8 +29,8 @@ export default async ({ mode }: ConfigEnv): Promise<UserConfigExport> => {
       host: "0.0.0.0",
       // 本地跨域代理 https://cn.vitejs.dev/config/server-options.html#server-proxy
       proxy: createProxyConfig({
-        "http://127.0.0.1:8896": ["/api", "/media", "/api-docs"],
-        "ws://127.0.0.1:8896": ["/ws"]
+        [`http://127.0.0.1:${apiPort}`]: ["/api", "/media", "/api-docs"],
+        [`ws://127.0.0.1:${apiPort}`]: ["/ws"]
       }),
       // 预热文件以提前转换和缓存结果，降低启动期间的初始页面加载时长并防止转换瀑布
       warmup: {

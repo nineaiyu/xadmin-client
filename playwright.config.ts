@@ -1,13 +1,30 @@
 import { defineConfig } from "@playwright/test";
 
 /**
- * E2E 冒烟测试配置
+ * xadmin E2E 配置（T4.4 环境固化后支持单命令 `pnpm test:e2e` 从零拉起）。
  *
- * 运行前提：
- * 1. 后端：xadmin-server 本地 config.yml（sqlite + 关闭验证码）+ `python manage.py runserver 127.0.0.1:8896`
- * 2. 前端：`pnpm dev`（vite 代理 /api -> 8896）
- * 可通过 E2E_BASE_URL 覆盖前端地址
+ * 架构：
+ * - 后端：xadmin-server 以 tests.settings_e2e 运行（sqlite 文件库 tmp/e2e.sqlite3 +
+ *   进程内 FakeRedis + 关验证码/加密），不触碰本机 config.yml（见规划风险措施 4）
+ * - 前端：vite dev server（代理 /api /media /ws → 后端端口，见 vite.config.ts）
+ * - 种子：scripts/e2e_seed.py 一键重置（migrate + init_data + E2E 用户）
+ *
+ * 环境变量：
+ * - E2E_SERVER_DIR      xadmin-server 仓库路径（默认 ../xadmin-server；CI 中检出为 ./xadmin-server）
+ * - E2E_API_PORT        后端端口（默认 8896；本机 8896 被占用时换端口即可并行开发）
+ * - E2E_FRONT_PORT      前端 dev server 端口（默认 8848）
+ * - E2E_BASE_URL        覆盖前端地址（默认 http://localhost:${E2E_FRONT_PORT}）
+ * - E2E_PYTHON          后端解释器（默认 ${E2E_SERVER_DIR}/.venv/bin/python）
+ * - E2E_ADMIN_PASSWORD  超管密码（默认 E2E-Admin-2026!）
+ * - E2E_SEED=0          跳过种子重置（复用既有库）
+ * - CI=1                失败重试 2 次 + reuseExistingServer 关闭
  */
+const serverDir = process.env.E2E_SERVER_DIR ?? "../xadmin-server";
+const apiPort = process.env.E2E_API_PORT ?? "8896";
+const frontPort = process.env.E2E_FRONT_PORT ?? "8848";
+const apiURL = `http://127.0.0.1:${apiPort}`;
+const baseURL = process.env.E2E_BASE_URL ?? `http://localhost:${frontPort}`;
+
 export default defineConfig({
   testDir: "./e2e",
   testMatch: /.*\.e2e\.ts/,
@@ -15,13 +32,41 @@ export default defineConfig({
   workers: 1,
   timeout: 60_000,
   expect: { timeout: 10_000 },
-  retries: 0,
-  reporter: [["list"]],
+  retries: process.env.CI ? 2 : 1,
+  reporter: process.env.CI
+    ? [["list"], ["html", { open: "never" }]]
+    : [["list"]],
   outputDir: "./test-results",
   use: {
-    baseURL: process.env.E2E_BASE_URL ?? "http://localhost:8848",
+    baseURL,
     locale: "zh-CN",
     screenshot: "only-on-failure",
     actionTimeout: 10_000
-  }
+  },
+  projects: [
+    { name: "chromium", use: { browserName: "chromium" } },
+    // T4.3 验收：双浏览器。本机未安装 webkit 时可用 --project=chromium 运行
+    { name: "webkit", use: { browserName: "webkit" } }
+  ],
+  webServer: [
+    {
+      // 种子先行：重置 sqlite 库并写入基础数据（E2E_SEED=0 可跳过），随后拉起后端
+      command:
+        `PYTHON=${process.env.E2E_PYTHON ?? `${serverDir}/.venv/bin/python`}; ` +
+        `ADMIN='${process.env.E2E_ADMIN_PASSWORD ?? "E2E-Admin-2026!"}'; ` +
+        `export DJANGO_SETTINGS_MODULE=tests.settings_e2e XADMIN_ADMIN_PASSWORD="$ADMIN"; ` +
+        `${process.env.E2E_SEED !== "0" ? `$PYTHON scripts/e2e_seed.py && ` : ""}` +
+        `$PYTHON manage.py runserver 127.0.0.1:${apiPort} --noreload`,
+      cwd: serverDir,
+      url: `${apiURL}/api/common/api/health`,
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000
+    },
+    {
+      command: `pnpm dev --port ${frontPort} --strictPort`,
+      url: baseURL,
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000
+    }
+  ]
 });

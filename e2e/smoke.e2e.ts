@@ -1,27 +1,12 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+
+import { login, logout, openMenu } from "./helpers";
 
 /**
  * xadmin E2E 冒烟：登录 → 菜单 → 部门 CRUD → 用户列表 → 登出
- * 依赖后端 config.yml 关闭登录验证码与加密（SECURITY_LOGIN_CAPTCHA_ENABLED=false）
+ * 后端由 playwright.config.ts 的 webServer 自动拉起（tests.settings_e2e，
+ * sqlite + 关验证码/加密），凭据见 e2e/helpers.ts（种子：scripts/e2e_seed.py）
  */
-const USERNAME = "xadmin";
-const PASSWORD = "xAdminPwd!";
-
-async function login(page: Page) {
-  await page.goto("/#/login");
-  await page.getByPlaceholder("账号").fill(USERNAME);
-  await page.getByPlaceholder("密码").fill(PASSWORD);
-  await page.getByRole("button", { name: "登录", exact: true }).click();
-  // hash 路由：登录成功后离开 #/login
-  await expect(page).not.toHaveURL(/#\/login/, { timeout: 15_000 });
-}
-
-async function openMenu(page: Page, parent: string, child: string) {
-  await page.getByRole("menuitem", { name: parent }).first().click();
-  const item = page.getByRole("menuitem", { name: child }).first();
-  await item.waitFor({ state: "visible" });
-  await item.click();
-}
 
 test("登录成功并渲染侧边菜单", async ({ page }) => {
   await login(page);
@@ -99,16 +84,5 @@ test("角色权限：列表与搜索区渲染", async ({ page }) => {
 
 test("登出后回到登录页", async ({ page }) => {
   await login(page);
-  // 头像下拉为 click 触发
-  await page.locator(".el-dropdown-link").first().click();
-  await page.getByText("退出系统").first().click();
-  // 若有确认弹窗则确认
-  const confirm = page
-    .locator(".el-popconfirm, .el-popper, .el-message-box")
-    .getByRole("button", { name: "确定" })
-    .first();
-  if (await confirm.isVisible().catch(() => false)) {
-    await confirm.click();
-  }
-  await expect(page).toHaveURL(/#\/login/, { timeout: 15_000 });
+  await logout(page);
 });
