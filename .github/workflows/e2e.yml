@@ -59,6 +59,13 @@ jobs:
           grep -v '^mysqlclient' requirements.txt > /tmp/requirements-e2e.txt
           pip install -r /tmp/requirements-e2e.txt "fakeredis[lua]>=2.23"
 
+      - name: Compile backend translations
+        # locale/*.mo 被 gitignore，全新检出没有编译翻译；USE_I18N=True 时缺 .mo
+        # 会回退英文源串，用例断言的中文文案（锁定提示等）全部落空
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq gettext > /dev/null
+          cd xadmin-server && django-admin compilemessages -l zh
+
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
