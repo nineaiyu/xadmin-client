@@ -29,17 +29,19 @@ jobs:
           path: xadmin-server
           ref: dev
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 11
+          run_install: false
+
       - name: Set up Node
+        # cache: pnpm 需要 pnpm 二进制先就位（计算 lockfile hash），故
+        # pnpm/action-setup 必须前置，否则报 "Unable to locate executable file: pnpm"
         uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: pnpm
-
-      - uses: pnpm/action-setup@v3
-        name: Install pnpm
-        with:
-          version: 11
-          run_install: false
 
       - name: Set up Python (backend under test)
         uses: actions/setup-python@v5
