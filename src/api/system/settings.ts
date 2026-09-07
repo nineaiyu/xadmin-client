@@ -45,6 +45,9 @@ export const settingsVerifyCodeApi = new ViewBaseApi("/api/settings/verify");
 // MFA 二次验证配置
 export const settingsMfaApi = new ViewBaseApi("/api/settings/mfa/auth");
 
+// 资源告警阈值配置
+export const settingsMonitorApi = new ViewBaseApi("/api/settings/monitor/auth");
+
 // 忘记密码设置
 export const settingsResetPasswordCodeApi = new ViewBaseApi(
   "/api/settings/reset/auth"

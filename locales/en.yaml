@@ -717,6 +717,7 @@ settingSecurity:
   bingEmail: Bind Email
   bindPhone: Bind Phone
   mfa: MFA Verification Settings
+  monitor: Resource Alert
   blockIp: Block Ip
 
 settingPassword:

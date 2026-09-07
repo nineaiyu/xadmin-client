@@ -89,8 +89,19 @@ export const builtinFormRenderers: PlusColumnRegistry = {
   object_related_field_image: relatedFieldFileFormRenderer,
   "image upload": uploadFormRenderer,
   "file upload": uploadFormRenderer,
-  list: item => {
+  list: (item, { column }) => {
     item["valueType"] = "select";
+    // ListField(child=ChoiceField) 会下发候选值（child.choices），渲染多选下拉；
+    // 无候选值的自由列表保持 TagInput 手动输入
+    const childChoices = column?.child?.choices;
+    if (childChoices?.length) {
+      item["fieldProps"]["multiple"] = true;
+      item["fieldProps"]["filterable"] = true;
+      item["options"] = computed(() =>
+        formatAddOrEditOptions(childChoices, false)
+      );
+      return;
+    }
     item["renderField"] = (value, onChange) => {
       return h(TagInput, {
         modelValue: value as Array<string>,

@@ -718,6 +718,7 @@ settingSecurity:
   bingEmail: 绑定邮箱配置
   bindPhone: 绑定手机配置
   mfa: MFA 二次验证配置
+  monitor: 资源告警
   blockIp: 安全拦截IP
 
 settingPassword:

@@ -7,6 +7,7 @@ import {
   settingsLoginAuthApi,
   settingsLoginLimitApi,
   settingsMfaApi,
+  settingsMonitorApi,
   settingsPasswordApi,
   settingsRegisterAuthApi,
   settingsResetPasswordCodeApi,
@@ -68,6 +69,15 @@ const settingData = computed<Array<settingItemProps>>(() => [
     api: settingsMfaApi,
     localeName: "settingSecurity",
     title: "mfa"
+  },
+  {
+    auth: {
+      partialUpdate: hasAuth("partialUpdate:SecurityMonitor"),
+      retrieve: hasAuth("retrieve:SecurityMonitor")
+    },
+    api: settingsMonitorApi,
+    localeName: "settingSecurity",
+    title: "monitor"
   },
   {
     auth: {

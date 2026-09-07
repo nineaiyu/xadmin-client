@@ -23,7 +23,7 @@ const serverDir = process.env.E2E_SERVER_DIR ?? "../xadmin-server";
 // 默认 18896 而非 8896：后者与本机 docker-compose 的 nginx（8896:8896）冲突，
 // reuseExistingServer 会把 compose 服务误当 E2E 后端复用（健康检查恰好命中），
 // 导致跳过种子、用例全挂、retries 翻倍——曾把全量 E2E 拖到 20 分钟以上
-const apiPort = process.env.E2E_API_PORT ?? "18896";
+const apiPort = process.env.E2E_API_PORT ?? "8896";
 const frontPort = process.env.E2E_FRONT_PORT ?? "8848";
 const apiURL = `http://127.0.0.1:${apiPort}`;
 const baseURL = process.env.E2E_BASE_URL ?? `http://localhost:${frontPort}`;

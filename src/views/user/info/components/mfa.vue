@@ -2,6 +2,8 @@
 /**
  * 个人 MFA 安全管理：OTP(TOTP) 绑定 / 解绑。
  * 解绑为敏感操作：未二次验证时后端返回 412，由 http 层全局验证弹窗接管后自动重发。
+ * 排版对齐同页「基本资料 / 修改密码」tab：固定 label-width 的普通 el-form，
+ * 操作按钮置于无 label 的尾部 form-item（与保存按钮列对齐）。
  */
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
@@ -89,29 +91,24 @@ onMounted(loadStatus);
 
 <template>
   <div v-loading="statusLoading">
-    <el-form label-width="auto" size="large">
+    <el-form label-width="110px">
       <el-form-item :label="$t('mfa.otpStatus')">
-        <el-tag :type="status.enabled ? 'success' : 'info'">
-          {{ status.enabled ? $t("mfa.otpEnabled") : $t("mfa.otpDisabled") }}
-        </el-tag>
-      </el-form-item>
-      <el-form-item v-if="status.enabled" :label="' '">
-        <el-alert
-          :title="$t('mfa.otpEnabledTip')"
-          type="info"
-          :closable="false"
-          show-icon
-          class="w-full!"
-        />
-      </el-form-item>
-      <el-form-item v-else-if="!bindInfo" :label="' '">
-        <el-alert
-          :title="$t('mfa.otpDisabledTip')"
-          type="warning"
-          :closable="false"
-          show-icon
-          class="w-full!"
-        />
+        <div class="w-full">
+          <el-tag :type="status.enabled ? 'success' : 'info'">
+            {{ status.enabled ? $t("mfa.otpEnabled") : $t("mfa.otpDisabled") }}
+          </el-tag>
+          <el-alert
+            :title="
+              status.enabled
+                ? $t('mfa.otpEnabledTip')
+                : $t('mfa.otpDisabledTip')
+            "
+            :type="status.enabled ? 'info' : 'warning'"
+            :closable="false"
+            show-icon
+            class="mt-2! w-full!"
+          />
+        </div>
       </el-form-item>
 
       <!-- 未绑定：发起绑定 → 扫码 → 输码确认 -->
@@ -127,8 +124,8 @@ onMounted(loadStatus);
         </el-form-item>
         <template v-else>
           <el-form-item :label="$t('mfa.scanTip')">
-            <div class="flex flex-col items-center gap-2">
-              <ReQrcode :text="bindInfo.uri" :width="180" />
+            <div class="flex flex-col gap-1">
+              <ReQrcode :text="bindInfo.uri" :width="160" />
               <span class="text-xs text-gray-400">
                 {{ $t("mfa.manualEntry") }}：{{ bindInfo.secret }}
               </span>
@@ -137,6 +134,7 @@ onMounted(loadStatus);
           <el-form-item :label="$t('mfa.code')">
             <el-input
               v-model="code"
+              class="w-55!"
               :placeholder="$t('mfa.codePlaceholder')"
               clearable
               @keyup.enter="handleConfirmBind"
@@ -158,7 +156,7 @@ onMounted(loadStatus);
       </template>
 
       <!-- 已绑定：解绑（敏感操作，未验证时走全局验证弹窗） -->
-      <el-form-item v-if="status.enabled">
+      <el-form-item v-else>
         <el-popconfirm
           :title="$t('mfa.disableConfirmTip')"
           width="260"

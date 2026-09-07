@@ -17,6 +17,8 @@ import PreferencesIcon from "~icons/ri/settings-3-line";
 import SecurityLogIcon from "~icons/ri/window-line";
 import MessageIcon from "~icons/ep/message";
 import AccountManagementIcon from "~icons/ri/profile-line";
+import ShieldKeyholeIcon from "~icons/ri/shield-keyhole-line";
+import MfaSecurity from "./components/MfaSecurity.vue";
 import { useUserStoreHook } from "@/store/modules/user";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
@@ -48,6 +50,13 @@ const panes = computed(() => [
     icon: AccountManagementIcon,
     component: AccountManagement,
     auth: hasAuth("resetPassword:UserInfo") || hasAuth("bind:UserInfo")
+  },
+  {
+    key: "mfa",
+    label: t("mfa.tabTitle"),
+    icon: ShieldKeyholeIcon,
+    component: MfaSecurity,
+    auth: true
   },
   {
     key: "preferences",
