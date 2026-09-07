@@ -51,7 +51,9 @@ export const builtinFormRenderers: PlusColumnRegistry = {
     // pure-table ******
     item["cellRenderer"] = ({ row }) => (
       <span v-copy={row[column.key]}>
-        {dayjs(row[column.key]).format("YYYY-MM-DD HH:mm:ss")}
+        {row[column.key]
+          ? dayjs(row[column.key]).format("YYYY-MM-DD HH:mm:ss")
+          : ""}
       </span>
     );
   },
@@ -63,7 +65,7 @@ export const builtinFormRenderers: PlusColumnRegistry = {
     // pure-table ******
     item["cellRenderer"] = ({ row }) => (
       <span v-copy={row[column.key]}>
-        {dayjs(row[column.key]).format("YYYY-MM-DD")}
+        {row[column.key] ? dayjs(row[column.key]).format("YYYY-MM-DD") : ""}
       </span>
     );
   },

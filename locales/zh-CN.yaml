@@ -264,6 +264,7 @@ menus:
   newsAndAnnouncement: 消息公告
   readNotice: 已读消息
   timingTask: 定时任务
+  taskMonitor: 任务监控
   personalCenter: 个人中心
   accountSettings: 账户设置
   messageCenter: 消息中心
@@ -744,8 +745,6 @@ demoBook:
   pushBook: 推送书籍
   confirmPushBook: 确定将该书籍 {name} 推送到推荐服务？
 
-systemTaskCrontab: Cron 表达式
-
 systemTask:
   name: 任务名称
   task: 任务路径
@@ -765,7 +764,7 @@ systemTask:
   priority: 优先级
   enable: 启用/停用
 
-systemTaskCrontabSchedule:
+systemTaskCrontab:
   minute: 分钟
   hour: 小时
   day_of_week: 星期

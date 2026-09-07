@@ -11,14 +11,14 @@ export function useTaskCrontab() {
   const formatWeekday = (value: unknown): string => {
     const text = String(value ?? "").trim();
     if (!text) return "";
-    if (text === "*") return t("systemTaskCrontabSchedule.cronEveryWeek");
+    if (text === "*") return t("systemTaskCrontab.cronEveryWeek");
     const tokens = text.split(",");
     if (!tokens.every(token => /^\d$/.test(token.trim()))) return text;
     const joiner = locale.value === "zh" ? "、" : ", ";
     return tokens
       .map(token => {
         const weekday = Number(token.trim()) % 7;
-        return t(`systemTaskCrontabSchedule.cronWeekday${weekday}`);
+        return t(`systemTaskCrontab.cronWeekday${weekday}`);
       })
       .join(joiner);
   };

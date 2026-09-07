@@ -264,6 +264,7 @@ menus:
   newsAndAnnouncement: News Announcement
   readNotice: Read Notice
   timingTask: Timing Task
+  taskMonitor: Task Monitor
   personalCenter: UserInfo
   accountSettings: Account
   messageCenter: Notice
@@ -743,8 +744,6 @@ demoBook:
   pushBook: Push book
   confirmPushBook: Are you sure to push {name} book?
 
-systemTaskCrontab: Crontab Schedules
-
 systemTask:
   name: Task Name
   task: Task Path
@@ -764,7 +763,7 @@ systemTask:
   priority: Priority
   enable: Enable/Disable
 
-systemTaskCrontabSchedule:
+systemTaskCrontab:
   minute: Minute
   hour: Hour
   day_of_week: Day of Week

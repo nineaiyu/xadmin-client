@@ -4,7 +4,7 @@ enablePrePostScripts: false
 strictPeerDependencies: false
 minimumReleaseAge: 0
 
-# T5.1 供应链治理：传递依赖已知漏洞版本强制升到修复线（官方源 pnpm audit 驱动，2026-09-07）
+# 供应链治理：传递依赖已知漏洞版本强制升到修复线（官方源 pnpm audit 驱动，2026-09-07）
 # 原则：仅范围内最小跳版；上游发布包含修复后应删除对应条目
 overrides:
   'preact@<10.28.2': '>=10.28.2'
