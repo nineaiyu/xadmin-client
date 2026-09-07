@@ -10,7 +10,7 @@ import {
 } from "./helpers";
 
 /**
- * 登录锁定路径 E2E（T4.3）：连续失败达到 SECURITY_LOGIN_LIMIT_COUNT（E2E 环境=50）
+ * 登录锁定路径 E2E：连续失败达到 SECURITY_LOGIN_LIMIT_COUNT（E2E 环境=50）
  * 后账号被锁，正确密码也被拒绝。
  * settings_e2e 已将 IP 限流放宽，避免本机 IP 被连带封禁影响其他用例。
  */

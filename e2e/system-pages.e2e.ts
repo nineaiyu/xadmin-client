@@ -9,7 +9,7 @@ import {
 } from "./helpers";
 
 /**
- * 系统页面渲染与业务流 E2E（T4.3 扩展）：
+ * 系统页面渲染与业务流 E2E（扩展）：
  * 菜单/在线用户/日志/通知等页面渲染、用户 CRUD、WebSocket 连接、登出。
  *
  * 菜单层级以种子库实际数据为准（system/models Menu）：系统管理 → {日志管理 →
@@ -98,7 +98,7 @@ test("用户管理：新增 → 搜索可见 → 删除", async ({ page }) => {
     .first();
   await userInput.fill(username);
   // 密码框为普通 input（无 password 渲染器，type 非 password），
-  // 须按 placeholder 定位；FEAT-3 收紧后前端会按下发规则校验，须填合规密码
+  // 须按 placeholder 定位；密码规则收紧后前端会按下发规则校验，须填合规密码
   const passwordInput = dialog.getByPlaceholder("请输入密码").first();
   await passwordInput.fill("E2E-New-User-2026!");
   await dialog.getByRole("button", { name: "保存" }).click();

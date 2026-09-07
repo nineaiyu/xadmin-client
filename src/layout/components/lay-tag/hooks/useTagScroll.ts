@@ -8,7 +8,7 @@ type TagScrollContext = Pick<
   "route" | "multiTags" | "instance" | "translateX" | "isScrolling"
 >;
 
-/** 标签页导航的滚动与可视区域定位逻辑（T2.5 拆分自 lay-tag/index.vue） */
+/** 标签页导航的滚动与可视区域定位逻辑（拆分自 lay-tag/index.vue） */
 export function useTagScroll(ctx: TagScrollContext) {
   const { route, multiTags, instance, translateX, isScrolling } = ctx;
 

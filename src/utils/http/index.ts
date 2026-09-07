@@ -61,7 +61,7 @@ class PureHttp {
     this.httpInterceptorsResponse();
   }
 
-  /** UX-3：为请求挂载路由级 AbortController（blob 下载与登录/刷新白名单豁免） */
+  /** 为请求挂载路由级 AbortController（blob 下载与登录/刷新白名单豁免） */
   private static attachRouteController(
     config: PureHttpRequestConfig
   ): AbortController | null {
@@ -124,7 +124,7 @@ class PureHttp {
           resolve(response);
         })
         .catch(error => {
-          // UX-3：路由切换主动取消的请求静默失败，不打扰用户
+          // 路由切换主动取消的请求静默失败，不打扰用户
           if (Axios.isCancel(error) || error.code === "ERR_CANCELED") {
             reject(error);
             return;
@@ -134,7 +134,7 @@ class PureHttp {
             if (error.response.status === 401) {
               if (error.response.data.code === 40001) {
                 if (config._tokenRetried) {
-                  // UX-1：重试后仍 40001（如刷新失败），跳登录防止死循环
+                  // 重试后仍 40001（如刷新失败），跳登录防止死循环
                   ElMessage.error(data?.detail);
                   removeToken();
                   redirectToLogin();
@@ -153,7 +153,7 @@ class PureHttp {
               } else {
                 ElMessage.error(data?.detail);
                 removeToken();
-                // UX-1：跳转登录页并携带回跳地址，替代整页 reload（保留路由上下文）
+                // 跳转登录页并携带回跳地址，替代整页 reload（保留路由上下文）
                 redirectToLogin();
               }
             } else if (
@@ -420,7 +420,7 @@ class PureHttp {
   }
 }
 
-/** UX-1：登录态失效时跳转登录页并携带回跳地址（动态引入避免与路由模块循环依赖） */
+/** 登录态失效时跳转登录页并携带回跳地址（动态引入避免与路由模块循环依赖） */
 export function redirectToLogin() {
   import("@/router")
     .then(({ router }) => {

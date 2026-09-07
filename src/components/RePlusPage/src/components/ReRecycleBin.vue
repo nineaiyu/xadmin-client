@@ -45,7 +45,7 @@ const CellContent = (props: {
 };
 
 /**
- * FEAT-2：通用回收站抽屉。
+ * 通用回收站抽屉。
  *
  * 消费 BaseApi 的 recycleList/recycleRestore/recyclePurge 三方法（对应后端
  * RecycleBinAction）。通常由 RePlusPage 依据 recycleBin prop 内建渲染并接线

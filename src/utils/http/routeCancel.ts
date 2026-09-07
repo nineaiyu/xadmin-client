@@ -1,5 +1,5 @@
 /**
- * UX-3：路由级在途请求登记与取消。
+ * 路由级在途请求登记与取消。
  *
  * 独立为零依赖模块：router/index 只需本模块（不引入 axios 实例模块），
  * 避免 router ↔ http 循环导入导致 vitest/SSR 下的 TDZ 崩溃。

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { sanitizeHtml } from "./sanitize";
 
-describe("sanitizeHtml（SEC-3 前端兜底）", () => {
+describe("sanitizeHtml（前端兜底）", () => {
   it("剥离 script 标签与事件属性", () => {
     const cleaned = sanitizeHtml(
       '<p onclick="steal()">a<script>alert(1)</script></p>'

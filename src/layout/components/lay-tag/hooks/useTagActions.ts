@@ -36,7 +36,7 @@ type TagActionsContext = Pick<
   containerDom: Ref;
 };
 
-/** 标签页增删与右键/下拉菜单逻辑（T2.5 拆分自 lay-tag/index.vue） */
+/** 标签页增删与右键/下拉菜单逻辑（拆分自 lay-tag/index.vue） */
 export function useTagActions(ctx: TagActionsContext) {
   const {
     route,

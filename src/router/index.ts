@@ -254,7 +254,7 @@ router.beforeEach((to: ToRouteType, _from) => {
 router.afterEach((to, from) => {
   loadedPaths.add(to.path);
   NProgress.done();
-  // UX-3：路由切换时取消来源页面的在途请求（登记见 utils/http/routeCancel）。
+  // 路由切换时取消来源页面的在途请求（登记见 utils/http/routeCancel）。
   // from.matched 为空表示首次导航（强刷/新开标签）而非"离开某页"——守卫链内
   // 发出的 boot 请求（getAsyncRoutes 等）此刻仍归属初始路径，误取消会白屏
   if (to.fullPath !== from.fullPath && from.matched.length > 0) {

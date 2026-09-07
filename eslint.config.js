@@ -171,7 +171,7 @@ export default defineConfig([
       ]
     }
   },
-  // any 治理已于 T4.6 验收收官：存量清零（226→0），豁免清单已删除，
+  // any 治理已验收收官：存量清零（226→0），豁免清单已删除，
   // no-explicit-any / prefer-as-const 对 *.ts/tsx 与 *.vue 均为 error 级。
   {
     files: ["**/*.vue"],
@@ -179,7 +179,7 @@ export default defineConfig([
       "@typescript-eslint": tseslint.plugin
     },
     rules: {
-      // T4.6 any 清零验收：*.ts/tsx 与 *.vue 同等 error 级约束
+      // any 清零验收：*.ts/tsx 与 *.vue 同等 error 级约束
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-unsafe-function-type": "error",
       "@typescript-eslint/prefer-as-const": "error"

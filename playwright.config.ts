@@ -1,7 +1,7 @@
 import { defineConfig } from "@playwright/test";
 
 /**
- * xadmin E2E 配置（T4.4 环境固化后支持单命令 `pnpm test:e2e` 从零拉起）。
+ * xadmin E2E 配置（环境固化后支持单命令 `pnpm test:e2e` 从零拉起）。
  *
  * 架构：
  * - 后端：xadmin-server 以 tests.settings_e2e 运行（sqlite 文件库 tmp/e2e.sqlite3 +
@@ -51,7 +51,7 @@ export default defineConfig({
   },
   projects: [
     { name: "chromium", use: { browserName: "chromium" } },
-    // T4.3 验收：双浏览器。本机未安装 webkit 时可用 --project=chromium 运行
+    // 验收：双浏览器。本机未安装 webkit 时可用 --project=chromium 运行
     { name: "webkit", use: { browserName: "webkit" } }
   ],
   webServer: [

@@ -383,11 +383,11 @@ export function usePlusPage(
             handleGetData();
           },
           failed: res => {
-            // UX-2：业务失败（HTTP 200 + code!=1000）携带的 errors 内联到表单项
+            // 业务失败（HTTP 200 + code!=1000）携带的 errors 内联到表单项
             applyServerErrors(formRef, res?.errors);
           },
           exception: err => {
-            // UX-2：校验失败（HTTP 400，http 层 reject 响应体）携带的 errors 内联到表单项
+            // 校验失败（HTTP 400，http 层 reject 响应体）携带的 errors 内联到表单项
             applyServerErrors(formRef, err?.errors);
           },
           requestEnd() {
@@ -464,7 +464,7 @@ export function usePlusPage(
   const handleGetData = (
     queryParams = {},
     options: {
-      /** T3.2：首开内联元数据消费（with_meta=1 响应中的 search_columns/search_fields） */
+      /** 首开内联元数据消费（with_meta=1 响应中的 search_columns/search_fields） */
       inline?: boolean;
       /** 内联响应缺元数据键时的一次性回退（旧后端/无元数据 Action 视图集） */
       onInlineMetaMissing?: () => void;
@@ -546,7 +546,7 @@ export function usePlusPage(
       });
   };
 
-  /** 搜索表单默认值装配（fieldsCallback 与 T3.2 内联首开共用） */
+  /** 搜索表单默认值装配（fieldsCallback 与 内联首开共用） */
   const fieldsInitCallback = () => {
     defaultValue.value = {
       ...{
@@ -573,7 +573,7 @@ export function usePlusPage(
 
   const getPageColumn = (immediate: boolean) => {
     if (immediate && auth.list && api.list) {
-      // T3.2：首开以 with_meta=1 合并 list/search-columns/search-fields 三个请求；
+      // 首开以 with_meta=1 合并 list/search-columns/search-fields 三个请求；
       // 响应缺元数据键（旧后端/无元数据 Action）时回退分离请求
       handleGetData(
         { with_meta: 1 },

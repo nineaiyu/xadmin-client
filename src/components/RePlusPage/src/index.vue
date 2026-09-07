@@ -110,7 +110,7 @@ function getTableRef() {
 }
 
 /**
- * FEAT-2：内建回收站入口。recycleBin prop 开启且具备 recycleList 权限时
+ * 内建回收站入口。recycleBin prop 开启且具备 recycleList 权限时
  * 渲染通用回收站抽屉，数据变动直接联动本组件的 handleGetData，
  * 调用方无需再经 barButtons 插槽自行接线。
  */

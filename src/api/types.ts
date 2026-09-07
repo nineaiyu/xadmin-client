@@ -74,9 +74,9 @@ export type ListResult<T = RecordType> = {
     results: Array<T>;
     /** 总条目数 */
     total?: number;
-    /** T3.2：`?with_meta=1` 时内联的展示字段元数据（同 search-columns 载荷） */
+    /** `?with_meta=1` 时内联的展示字段元数据（同 search-columns 载荷） */
     search_columns?: SearchColumnsResult["data"];
-    /** T3.2：`?with_meta=1` 时内联的查询字段元数据（同 search-fields 载荷） */
+    /** `?with_meta=1` 时内联的查询字段元数据（同 search-fields 载荷） */
     search_fields?: SearchFieldsResult["data"];
   };
 };
@@ -86,11 +86,11 @@ export type DetailResult = {
   code: number;
   /** 详情数据：单行动态对象，字段由具体接口决定 */
   data: RecordType;
-  /** UX-2：服务端字段级校验错误（校验失败场景），RePlusPage 表单消费后内联展示 */
+  /** 服务端字段级校验错误（校验失败场景），RePlusPage 表单消费后内联展示 */
   errors?: ServerErrors;
 };
 
-/** UX-2：服务端字段级校验错误（common/core/exception.py 封装），field → 错误消息(列表) */
+/** 服务端字段级校验错误（common/core/exception.py 封装），field → 错误消息(列表) */
 export type ServerErrors = Record<string, string[] | string>;
 
 export type BaseResult = {

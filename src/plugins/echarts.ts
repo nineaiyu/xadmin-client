@@ -2,7 +2,7 @@ import type { App } from "vue";
 
 let echartsPromise: Promise<typeof import("echarts/core")> | null = null;
 
-/** 按需异步加载 echarts 并挂到全局属性（T3.4：首屏延迟约 180KB gzip，仅仪表盘图表消费） */
+/** 按需异步加载 echarts 并挂到全局属性（首屏延迟约 180KB gzip，仅仪表盘图表消费） */
 export function loadEcharts(app?: App) {
   echartsPromise ??= Promise.all([
     import("echarts/core"),

@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { login, openMenuPath, waitAppWebSocket } from "./helpers";
 
 /**
- * WebSocket 实时消息推送 E2E（T4.3）：登录建立 WS 连接后，聊天室发送
+ * WebSocket 实时消息推送 E2E：登录建立 WS 连接后，聊天室发送
  * @提及 消息触发站内信（notify_at_user_msg → async_push_message），
  * 后端经 channel layer 以 {type: "push_message"} 推送到用户分组，
  * 断言浏览器侧真实收到该帧（data.message_type=chat_message）。

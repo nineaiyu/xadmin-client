@@ -137,7 +137,7 @@ export class BaseApi extends BaseRequest {
     );
   };
 
-  /** FEAT-2：回收站列表（软删除数据，仅混入 RecycleBinAction 的视图集可用） */
+  /** 回收站列表（软删除数据，仅混入 RecycleBinAction 的视图集可用） */
   recycleList = (params?: object) => {
     return this.request<ListResult>(
       "get",
@@ -146,7 +146,7 @@ export class BaseApi extends BaseRequest {
       `${this.baseApi}/recycle`
     );
   };
-  /** FEAT-2：从回收站恢复数据 */
+  /** 从回收站恢复数据 */
   recycleRestore = (pks: Array<string | number>) => {
     return this.request<BaseResult>(
       "patch",
@@ -155,7 +155,7 @@ export class BaseApi extends BaseRequest {
       `${this.baseApi}/recycle/restore`
     );
   };
-  /** FEAT-2：物理清除回收站数据（不传 pks 时清除全部超过保留期的数据） */
+  /** 物理清除回收站数据（不传 pks 时清除全部超过保留期的数据） */
   recyclePurge = (pks?: Array<string | number>) => {
     return this.request<BaseResult>(
       "delete",

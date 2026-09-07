@@ -48,14 +48,14 @@ export default defineConfig({
         "src/api/**",
         "src/utils/**",
         "src/store/modules/**",
-        // T4.2：注册表（input_type -> 渲染器）纳入覆盖统计
+        // 注册表（input_type -> 渲染器）纳入覆盖统计
         "src/components/RePlusPage/src/utils/registry.ts",
         "src/components/RePlusPage/src/utils/renders.tsx"
       ],
       exclude: ["src/**/*.spec.ts", "src/**/types.d.ts", "src/**/types"],
       reporter: ["text", "html"],
       thresholds: {
-        // T4.2：覆盖率门禁（含 api/utils/store 三域），实测基线打平后随补测逐步上调
+        // 覆盖率门禁（含 api/utils/store 三域），实测基线打平后随补测逐步上调
         statements: 50,
         branches: 42,
         functions: 38,

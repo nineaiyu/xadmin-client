@@ -4,7 +4,7 @@ import { statSync } from "node:fs";
 import { FRONT_URL, login, openMenuPath } from "./helpers";
 
 /**
- * 导入导出全流程 E2E（T4.3）：导出文件下载 + 导入建数据（用户管理，ImportExportDataAction）。
+ * 导入导出全流程 E2E：导出文件下载 + 导入建数据（用户管理，ImportExportDataAction）。
  * 工具栏按钮为图标按钮（ElTooltip 包裹），顺序固定：新增(-30) / 导出(-20) / 导入(-10)。
  *
  * 接口类断言走同源 FRONT_URL：会话 Cookie 不会随跨域请求发送。

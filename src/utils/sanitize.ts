@@ -1,7 +1,7 @@
 import DOMPurify from "dompurify";
 
 /**
- * SEC-3：富文本 HTML 净化（前端兜底）。
+ * 富文本 HTML 净化（前端兜底）。
  *
  * 公告/站内信等内容以 v-html 渲染，服务端入库前已做 bleach 白名单净化；
  * 本函数作为展示层兜底，剥离脚本、事件属性与危险协议，防止存储型 XSS。

@@ -16,7 +16,7 @@ import { useUserColumnFormats } from "./useUserColumnFormats";
 import { useUserButtons } from "./useUserButtons";
 
 /**
- * 用户视图组装入口（T2.5 拆分自 604 行单体）：
+ * 用户视图组装入口（拆分自 604 行单体）：
  * - useUserOptions        部门树/角色/数据权限选项
  * - useUserAvatarUpload   头像裁剪上传
  * - useUserResetPassword  重置密码 + 强度评分

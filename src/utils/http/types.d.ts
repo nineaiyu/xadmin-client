@@ -25,7 +25,7 @@ export interface PureHttpResponse extends AxiosResponse {
 export interface PureHttpRequestConfig extends AxiosRequestConfig {
   beforeRequestCallback?: (request: PureHttpRequestConfig) => void;
   beforeResponseCallback?: (response: PureHttpResponse) => void;
-  /** UX-3：为 true 时豁免"路由切换取消在途请求”（长任务/后台同步场景使用） */
+  /** 为 true 时豁免"路由切换取消在途请求”（长任务/后台同步场景使用） */
   skipRouteCancel?: boolean;
 }
 

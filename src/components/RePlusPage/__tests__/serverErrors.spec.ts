@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { applyServerErrors } from "../src/utils/serverErrors";
 
-describe("applyServerErrors（UX-2 服务端错误内联）", () => {
+describe("applyServerErrors（服务端错误内联）", () => {
   const makeForm = (props: (string | undefined)[]) => ({
     fields: props.map(prop => ({
       prop,

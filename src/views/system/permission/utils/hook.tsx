@@ -30,7 +30,7 @@ export function useDataPermission() {
     ...getDefaultAuths(getCurrentInstance())
   });
 
-  /** 全量菜单行（PERF-07：后端 menu 字段 choices 已截断，改由菜单列表接口取全量） */
+  /** 全量菜单行（后端 menu 字段 choices 已截断，改由菜单列表接口取全量） */
   type MenuRow = {
     pk: string;
     parent: { pk: string } | string | null;
@@ -125,7 +125,7 @@ export function useDataPermission() {
           return column;
         },
         menu: ({ column }) => {
-          // 后端 menu choices 已被截断（PERF-07），清掉 api-search 表单回退渲染器，
+          // 后端 menu choices 已被截断，清掉 api-search 表单回退渲染器，
           // 改用全量菜单树构建级联选项（computed，菜单数据就绪后自动重算）
           delete column["renderField"];
           column["options"] = buildMenuOptions;

@@ -10,7 +10,7 @@ type TagMenuStateContext = Pick<
   topPath: string | undefined;
 };
 
-/** 右键/下拉菜单的显示与禁用状态机（T2.5 拆分自 lay-tag/index.vue） */
+/** 右键/下拉菜单的显示与禁用状态机（拆分自 lay-tag/index.vue） */
 export function useTagMenuState(ctx: TagMenuStateContext) {
   const { tagsViews, multiTags, topPath } = ctx;
 

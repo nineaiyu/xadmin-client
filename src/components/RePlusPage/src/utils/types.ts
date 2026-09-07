@@ -252,7 +252,7 @@ interface RePlusPageProps {
    */
   tableBarButtonsProps?: Partial<OperationProps>;
   /**
-   * 回收站入口（FEAT-2 软删除模型专用，按钮按 auth.recycleList 显隐）：
+   * 回收站入口（软删除模型专用，按钮按 auth.recycleList 显隐）：
    * - true：仅展示主键与删除时间
    * - 数组：附加业务标识列（label 缺省按 localeName 自动翻译）
    */

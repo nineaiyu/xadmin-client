@@ -27,7 +27,7 @@ export function getRefreshToken() {
   return Cookies.get(RefreshTokenKey);
 }
 
-/** SEC-2：认证 Cookie 统一附带 SameSite/Secure 属性，防跨站自动携带与明文传输 */
+/** 认证 Cookie 统一附带 SameSite/Secure 属性，防跨站自动携带与明文传输 */
 function cookieSecureOptions() {
   return {
     sameSite: "Lax",

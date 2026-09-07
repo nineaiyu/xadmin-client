@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { login, openMenuPath } from "./helpers";
 
 /**
- * 站点配置持久化 E2E（T4.3）：用户配置页新增配置项 → 刷新页面后仍然存在。
+ * 站点配置持久化 E2E：用户配置页新增配置项 → 刷新页面后仍然存在。
  * 用户配置页为 RePlusPage CRUD（key/value 行数据），新增行落库即验证持久化链路
  * （SysConfig/UserConfig 写库 + 缓存失效 + 列表回读）。
  */

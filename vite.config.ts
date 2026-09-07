@@ -97,7 +97,7 @@ export default async ({ mode }: ConfigEnv): Promise<UserConfigExport> => {
           chunkFileNames: "static/js/[name]-[hash].js",
           entryFileNames: "static/js/[name]-[hash].js",
           assetFileNames: "static/[ext]/[name]-[hash].[ext]",
-          // 第三方 vendor 分包（T3.4）：首屏并行加载 + 长缓存，主 chunk 只保留应用代码。
+          // 第三方 vendor 分包：首屏并行加载 + 长缓存，主 chunk 只保留应用代码。
           // 注意：不要加"兜底 node_modules"组——它会把仅被懒加载视图使用的库
           // 提升进急加载依赖图（实测首屏 gzip 699KB→1203KB 的回退）。
           advancedChunks: {

@@ -60,7 +60,7 @@ onBeforeUnmount(() => {
 
 const loading = ref(false);
 
-/** SEC-3：系统通知内容以 v-html 渲染，展示前经 DOMPurify 净化（服务端 bleach 净化的兜底） */
+/** 系统通知内容以 v-html 渲染，展示前经 DOMPurify 净化（服务端 bleach 净化的兜底） */
 const sanitizedMessage = computed(() =>
   sanitizeHtml(newFormInline.value?.message)
 );

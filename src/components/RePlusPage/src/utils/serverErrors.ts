@@ -1,5 +1,5 @@
 /**
- * UX-2：服务端字段级校验错误内联展示。
+ * 服务端字段级校验错误内联展示。
  *
  * 后端全局异常处理器将 DRF 校验错误封装为 `errors: {field: [msgs]}`（见
  * common/core/exception.py），本模块把命中的字段错误直接写入 el-form-item

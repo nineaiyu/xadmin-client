@@ -10,7 +10,7 @@ import {
 } from "./helpers";
 
 /**
- * 三层权限 E2E（T4.3）：数据权限越权验证 + 字段权限列隐藏。
+ * 三层权限 E2E：数据权限越权验证 + 字段权限列隐藏。
  * 种子见 scripts/e2e_seed.py：
  * - e2e_dp 携带 DataPermission「E2E-仅本人用户数据」（table=system.userinfo, type=value.user.id）
  * - e2e_fp 的角色在用户列表菜单配置了 FieldPermission 白名单（email 被剔除）

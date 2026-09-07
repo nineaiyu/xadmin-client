@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { login, openMenuPath } from "./helpers";
 
 /**
- * FEAT-1：定时任务管理页 E2E（业务侧 celery beat CRUD）。
+ * 定时任务管理页 E2E（业务侧 celery beat CRUD）。
  * 演示任务由 scripts/e2e_seed.py 种入（E2E-演示清理任务，默认停用）。
  * 验收口径：页面渲染 + 一次启停循环（开关经 PATCH partialUpdate 落库）。
  */

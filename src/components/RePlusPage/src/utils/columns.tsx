@@ -54,7 +54,7 @@ export function useBaseColumns(localeName: string) {
   });
 
   /**
-   * PERF-07 降级处理：后端关联列的 choices 超过 SEARCH_CHOICES_MAX_COUNT 时会被截断，
+   * 降级处理：后端关联列的 choices 超过 SEARCH_CHOICES_MAX_COUNT 时会被截断，
    * 并带出 choices_truncated 标记。此时下拉必须开启本地过滤，并在开发环境提示
    * 开发者将该字段改为 api-search-* 远程搜索组件（SearchUser/SearchDept/SearchRole 模式）。
    */
@@ -233,7 +233,7 @@ export function useBaseColumns(localeName: string) {
     fieldsCallback = null,
     columnsParams = {},
     fieldsParams = {},
-    /** T3.2：with_meta=1 内联载荷，存在时跳过对应分离请求 */
+    /** with_meta=1 内联载荷，存在时跳过对应分离请求 */
     inlineMeta?: {
       search_columns?: SearchColumnsResult["data"];
       search_fields?: SearchFieldsResult["data"];

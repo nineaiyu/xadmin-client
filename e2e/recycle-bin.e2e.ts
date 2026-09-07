@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { BACKEND_URL, getAccessToken, login } from "./helpers";
 
 /**
- * FEAT-2 回收站 E2E（遗留收口）：角色删除 → 回收站可见 → 恢复 → 列表重现。
+ * 回收站 E2E（遗留收口）：角色删除 → 回收站可见 → 恢复 → 列表重现。
  * 覆盖 RePlusPage barButtons 入口、ReRecycleBin 抽屉与 recycle/restore 链路。
  */
 
