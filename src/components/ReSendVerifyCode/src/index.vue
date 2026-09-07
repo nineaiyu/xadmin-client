@@ -35,7 +35,7 @@ const props = withDefaults(defineProps<{ category?: string }>(), {
 
 const formData = defineModel({
   type: Object,
-  default: {}
+  default: () => ({})
 });
 
 const emit = defineEmits<{
