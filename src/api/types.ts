@@ -84,11 +84,18 @@ export type DetailResult = {
   code: number;
   /** 详情数据：单行动态对象，字段由具体接口决定 */
   data: RecordType;
+  /** UX-2：服务端字段级校验错误（校验失败场景），RePlusPage 表单消费后内联展示 */
+  errors?: ServerErrors;
 };
+
+/** UX-2：服务端字段级校验错误（common/core/exception.py 封装），field → 错误消息(列表) */
+export type ServerErrors = Record<string, string[] | string>;
 
 export type BaseResult = {
   detail: string;
   code: number;
+  /** 校验错误时携带；RePlusPage 表单消费后内联展示 */
+  errors?: ServerErrors;
 };
 
 /**

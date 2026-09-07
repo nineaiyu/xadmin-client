@@ -25,6 +25,7 @@ import { useUserStoreHook } from "@/store/modules/user";
 import { message } from "@/utils/message";
 import { ElMessage } from "element-plus";
 import { buildUUID, downloadByData } from "@pureadmin/utils";
+import { registerPending, unregisterPending } from "./routeCancel";
 // import { router } from "@/router";
 
 // 相关配置请参考：www.axios-js.com/zh-cn/docs/#axios-request-config-1
@@ -60,6 +61,24 @@ class PureHttp {
     this.httpInterceptorsResponse();
   }
 
+  /** UX-3：为请求挂载路由级 AbortController（blob 下载与登录/刷新白名单豁免） */
+  private static attachRouteController(
+    config: PureHttpRequestConfig
+  ): AbortController | null {
+    if (config.skipRouteCancel || config.responseType === "blob") return null;
+    if (
+      ["/api/system/refresh", "/api/system/login"].some(url =>
+        (config.url ?? "").endsWith(url)
+      )
+    ) {
+      return null;
+    }
+    const controller = new AbortController();
+    config.signal = controller.signal;
+    registerPending(controller);
+    return controller;
+  }
+
   /** 重连原始请求 */
   private static retryOriginalRequest(config: PureHttpRequestConfig) {
     return new Promise(resolve => {
@@ -82,14 +101,20 @@ class PureHttp {
       url,
       ...param,
       ...axiosConfig
-    } as PureHttpRequestConfig & { _mfaRetried?: boolean };
-
-    return this.send<T>(config);
+    } as PureHttpRequestConfig & {
+      _mfaRetried?: boolean;
+      _tokenRetried?: boolean;
+    };
+    const controller = PureHttp.attachRouteController(config);
+    return this.send<T>(config).finally(() => unregisterPending(controller));
   }
 
   /** 请求执行与统一错误处理（412 重发时复用同一 config 以防递归弹窗） */
   private send<T>(
-    config: PureHttpRequestConfig & { _mfaRetried?: boolean }
+    config: PureHttpRequestConfig & {
+      _mfaRetried?: boolean;
+      _tokenRetried?: boolean;
+    }
   ): Promise<T> {
     // 单独处理自定义请求/响应回调
     return new Promise((resolve, reject) => {
@@ -99,19 +124,38 @@ class PureHttp {
           resolve(response);
         })
         .catch(error => {
+          // UX-3：路由切换主动取消的请求静默失败，不打扰用户
+          if (Axios.isCancel(error) || error.code === "ERR_CANCELED") {
+            reject(error);
+            return;
+          }
           const data = error.response?.data;
           if (error.response && error.response.status) {
             if (error.response.status === 401) {
               if (error.response.data.code === 40001) {
-                remoteAccessToken();
-                resolve(PureHttp.axiosInstance.request(config));
+                if (config._tokenRetried) {
+                  // UX-1：重试后仍 40001（如刷新失败），跳登录防止死循环
+                  ElMessage.error(data?.detail);
+                  removeToken();
+                  redirectToLogin();
+                  reject(error.response.data);
+                } else {
+                  config._tokenRetried = true;
+                  remoteAccessToken();
+                  // axios 1.20 收紧了 request 泛型签名；此处复用 send 的统一错误处理，结果经响应拦截器已是业务数据
+                  resolve(
+                    PureHttp.axiosInstance.request(
+                      config
+                    ) as unknown as Promise<T>
+                  );
+                }
                 // } else if (error.response.data.code === 40002) {
               } else {
                 ElMessage.error(data?.detail);
                 removeToken();
-                window.location.reload();
+                // UX-1：跳转登录页并携带回跳地址，替代整页 reload（保留路由上下文）
+                redirectToLogin();
               }
-              // router.push({ name: "Login" })
             } else if (
               error.response.status === 412 &&
               data?.type === "user_confirm_required"
@@ -374,6 +418,20 @@ class PureHttp {
       }
     );
   }
+}
+
+/** UX-1：登录态失效时跳转登录页并携带回跳地址（动态引入避免与路由模块循环依赖） */
+export function redirectToLogin() {
+  import("@/router")
+    .then(({ router }) => {
+      router.push({
+        name: "Login",
+        query: { redirect: router.currentRoute.value.fullPath }
+      });
+    })
+    .catch(() => {
+      window.location.href = "/#/login";
+    });
 }
 
 export const http = new PureHttp();

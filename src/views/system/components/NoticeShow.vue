@@ -1,9 +1,10 @@
 <script lang="ts" setup>
-import { onBeforeUnmount, ref, shallowRef } from "vue";
+import { computed, onBeforeUnmount, ref, shallowRef } from "vue";
 import "@wangeditor/editor/dist/css/style.css";
 import { Editor } from "@wangeditor/editor-for-vue";
 import { useI18n } from "vue-i18n";
 import { NoticeChoices } from "@/views/system/constants";
+import { sanitizeHtml } from "@/utils/sanitize";
 
 interface FormItemProps {
   pk?: number;
@@ -58,6 +59,11 @@ onBeforeUnmount(() => {
 });
 
 const loading = ref(false);
+
+/** SEC-3：系统通知内容以 v-html 渲染，展示前经 DOMPurify 净化（服务端 bleach 净化的兜底） */
+const sanitizedMessage = computed(() =>
+  sanitizeHtml(newFormInline.value?.message)
+);
 </script>
 
 <template>
@@ -81,7 +87,7 @@ const loading = ref(false);
       </template>
       <div
         v-if="newFormInline?.notice_type?.value === NoticeChoices.SYSTEM"
-        v-html="newFormInline.message"
+        v-html="sanitizedMessage"
       />
       <div v-else class="wangeditor">
         <Editor

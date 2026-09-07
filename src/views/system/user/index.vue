@@ -54,6 +54,7 @@ const {
       locale-name="systemUser"
       :operationButtonsProps="operationButtonsProps"
       :tableBarButtonsProps="tableBarButtonsProps"
+      :recycleBin="[{ prop: 'username' }]"
       @selectionChange="selectionChange"
     />
   </div>

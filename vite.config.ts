@@ -19,8 +19,8 @@ export default async ({ mode }: ConfigEnv): Promise<UserConfigExport> => {
   const { VITE_CDN, VITE_PORT, VITE_COMPRESSION, VITE_PUBLIC_PATH } =
     wrapperEnv(loadEnv(mode, root));
   // E2E 专用：playwright 以 E2E_API_PORT 拉起独立后端（见 playwright.config.ts），
-  // 默认仍指向 8896，不影响常规开发
-  const apiPort = process.env.E2E_API_PORT ?? "8896";
+  // 默认与 E2E 后端端口一致（18896，勿用 8896——与本机 compose nginx 冲突），不影响常规开发
+  const apiPort = process.env.E2E_API_PORT ?? "18896";
   return {
     base: VITE_PUBLIC_PATH,
     root,

@@ -248,6 +248,7 @@ menus:
   roleManagement: Role Permission
   dataPermissionManagement: Data Permission
   logManagement: Log Manage
+  systemTaskCrontab: Periodic Tasks
   modelFieldManagement: Model Field Manage
   operationLogManagement: Operation Log Manage
   loginLogManagement: Login Log Manage
@@ -564,6 +565,7 @@ userNotice:
 systemUploadFile:
   upload: Upload
   fileLink: File Link
+  filename: File Name
   clickUpload: click to upload
   dropFile: Drop file here or
   uploadTip: Files with a size less than
@@ -673,3 +675,47 @@ demoBook:
   is_active: Active
   pushBook: Push book
   confirmPushBook: Are you sure to push {name} book?
+
+systemTaskCrontab: Crontab Schedules
+
+systemTask:
+  name: Task Name
+  task: Task Path
+  crontab: Crontab
+  interval: Interval Schedule
+  args: Positional Args
+  kwargs: Keyword Args
+  queue: Queue
+  enabled: Enabled
+  one_off: One-off
+  start_time: Start Time
+  expires: Expires At
+  last_run_at: Last Run At
+  total_run_count: Total Runs
+  date_changed: Changed At
+  description: Description
+  priority: Priority
+  enable: Enable/Disable
+
+systemTaskCrontabSchedule:
+  minute: Minute
+  hour: Hour
+  day_of_week: Day of Week
+  day_of_month: Day of Month
+  month_of_year: Month
+  timezone: Timezone
+
+recycleBin:
+  title: Recycle Bin
+  restore: Restore
+  purge: Purge
+  purgeExpired: Purge Expired
+  deletedAt: Deleted At
+  actions: Actions
+  empty: Recycle bin is empty
+  restoreConfirm: Restore the selected { count } item(s)?
+  restoreOneConfirm: Restore this item?
+  purgeConfirm: Purged data cannot be recovered. Purge the selected { count } item(s)?
+  purgeExpiredConfirm: Purge ALL recycle bin data beyond the retention period (30 days by default)?
+  restoreDone: Restored
+  purgeDone: Purged

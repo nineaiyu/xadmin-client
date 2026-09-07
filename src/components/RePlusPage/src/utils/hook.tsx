@@ -18,6 +18,7 @@ import {
   openDialogDrawer,
   renderSwitch
 } from "./handle";
+import { applyServerErrors } from "./serverErrors";
 import type { OperationButtonsRow } from "@/components/RePlusPage";
 import {
   formatPublicLabels,
@@ -362,7 +363,13 @@ export function usePlusPage(
       rawFormProps: {
         rules: addOrEditRules.value
       },
-      saveCallback: ({ formData, done, closeLoading, formOptions }) => {
+      saveCallback: ({
+        formData,
+        done,
+        closeLoading,
+        formRef,
+        formOptions
+      }) => {
         handleOperation({
           t,
           apiReq:
@@ -374,6 +381,14 @@ export function usePlusPage(
           success() {
             done();
             handleGetData();
+          },
+          failed: res => {
+            // UX-2：业务失败（HTTP 200 + code!=1000）携带的 errors 内联到表单项
+            applyServerErrors(formRef, res?.errors);
+          },
+          exception: err => {
+            // UX-2：校验失败（HTTP 400，http 层 reject 响应体）携带的 errors 内联到表单项
+            applyServerErrors(formRef, err?.errors);
           },
           requestEnd() {
             closeLoading();

@@ -130,6 +130,17 @@ interface ApiAuthProps {
   partialUpdate?: string | boolean | null | BaseApi["partialUpdate"];
   fields?: string | boolean | null | BaseApi["fields"];
   batchDestroy?: string | boolean | null | BaseApi["batchDestroy"];
+  recycleList?: string | boolean | null | BaseApi["recycleList"];
+}
+
+/** 回收站抽屉的附加业务列（删除时间列内建，无需声明） */
+interface RecycleBinColumn {
+  /** 业务标识字段（如 username / name / filename / title） */
+  prop: string;
+  /** 表头文案；缺省时按 `${localeName}.${prop}` 自动翻译 */
+  label?: string;
+  /** 单元格格式化（row 为动态接口数据行） */
+  formatter?: (row: RecordType) => string;
 }
 
 interface RePlusPageProps {
@@ -233,11 +244,18 @@ interface RePlusPageProps {
    * 工具栏 按钮组方法
    */
   tableBarButtonsProps?: Partial<OperationProps>;
+  /**
+   * 回收站入口（FEAT-2 软删除模型专用，按钮按 auth.recycleList 显隐）：
+   * - true：仅展示主键与删除时间
+   * - 数组：附加业务标识列（label 缺省按 localeName 自动翻译）
+   */
+  recycleBin?: boolean | RecycleBinColumn[];
 }
 
 export type {
   ApiAuthProps,
   RePlusPageProps,
+  RecycleBinColumn,
   PageColumn,
   PageTableColumn,
   PlusColumnMeta,

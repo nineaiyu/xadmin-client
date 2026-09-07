@@ -86,7 +86,8 @@ test("用户管理：新增 → 搜索可见 → 删除", async ({ page }) => {
 
   // RePlusPage 弹层新增：必填项（昵称/用户名/密码等）以实际表单为准
   await page.getByRole("button", { name: "新增" }).first().click();
-  const dialog = page.locator(".el-dialog, .el-drawer").first();
+  // :visible 过滤：用户页内建的回收站抽屉常驻 DOM（隐藏态），不能用裸 first() 定位
+  const dialog = page.locator(".el-dialog:visible, .el-drawer:visible").first();
   await expect(dialog).toBeVisible();
   const nickname = dialog
     .locator(".el-form-item:has-text('昵称') input")
@@ -96,12 +97,10 @@ test("用户管理：新增 → 搜索可见 → 删除", async ({ page }) => {
     .locator(".el-form-item:has-text('用户名') input")
     .first();
   await userInput.fill(username);
-  const passwordInput = dialog
-    .locator(".el-form-item:has-text('密码') input[type='password']")
-    .first();
-  if (await passwordInput.isVisible().catch(() => false)) {
-    await passwordInput.fill("E2E-New-User-2026!");
-  }
+  // 密码框为普通 input（无 password 渲染器，type 非 password），
+  // 须按 placeholder 定位；FEAT-3 收紧后前端会按下发规则校验，须填合规密码
+  const passwordInput = dialog.getByPlaceholder("请输入密码").first();
+  await passwordInput.fill("E2E-New-User-2026!");
   await dialog.getByRole("button", { name: "保存" }).click();
   await expect(dialog).not.toBeVisible({ timeout: 15_000 });
 

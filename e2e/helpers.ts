@@ -8,7 +8,7 @@ import { expect, type Page } from "@playwright/test";
 /** 后端直连地址（page.request 越权断言用）；与 playwright.config.ts 的 E2E_API_PORT 对齐 */
 export const BACKEND_URL =
   process.env.E2E_API_URL ??
-  `http://127.0.0.1:${process.env.E2E_API_PORT ?? "8896"}`;
+  `http://127.0.0.1:${process.env.E2E_API_PORT ?? "18896"}`;
 
 /**
  * 前端同源地址（携带浏览器 Cookie 的 API 断言必须走同源）。

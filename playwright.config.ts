@@ -11,7 +11,7 @@ import { defineConfig } from "@playwright/test";
  *
  * 环境变量：
  * - E2E_SERVER_DIR      xadmin-server 仓库路径（默认 ../xadmin-server；CI 中检出为 ./xadmin-server）
- * - E2E_API_PORT        后端端口（默认 8896；本机 8896 被占用时换端口即可并行开发）
+ * - E2E_API_PORT        后端端口（默认 18896；注意勿用 8896——与本机 compose nginx 冲突）
  * - E2E_FRONT_PORT      前端 dev server 端口（默认 8848）
  * - E2E_BASE_URL        覆盖前端地址（默认 http://localhost:${E2E_FRONT_PORT}）
  * - E2E_PYTHON          后端解释器（默认 ${E2E_SERVER_DIR}/.venv/bin/python）
@@ -20,7 +20,10 @@ import { defineConfig } from "@playwright/test";
  * - CI=1                失败重试 2 次 + reuseExistingServer 关闭
  */
 const serverDir = process.env.E2E_SERVER_DIR ?? "../xadmin-server";
-const apiPort = process.env.E2E_API_PORT ?? "8896";
+// 默认 18896 而非 8896：后者与本机 docker-compose 的 nginx（8896:8896）冲突，
+// reuseExistingServer 会把 compose 服务误当 E2E 后端复用（健康检查恰好命中），
+// 导致跳过种子、用例全挂、retries 翻倍——曾把全量 E2E 拖到 20 分钟以上
+const apiPort = process.env.E2E_API_PORT ?? "18896";
 const frontPort = process.env.E2E_FRONT_PORT ?? "8848";
 const apiURL = `http://127.0.0.1:${apiPort}`;
 const baseURL = process.env.E2E_BASE_URL ?? `http://localhost:${frontPort}`;

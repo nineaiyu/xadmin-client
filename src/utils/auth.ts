@@ -27,16 +27,26 @@ export function getRefreshToken() {
   return Cookies.get(RefreshTokenKey);
 }
 
+/** SEC-2：认证 Cookie 统一附带 SameSite/Secure 属性，防跨站自动携带与明文传输 */
+function cookieSecureOptions() {
+  return {
+    sameSite: "Lax",
+    ...(import.meta.env.PROD ? { secure: true } : {})
+  } as Cookies.CookieAttributes;
+}
+
 export function setAccessToken(token: string, expires = 864e3) {
   Cookies.remove(TokenKey);
   return Cookies.set(TokenKey, token, {
-    expires: new Date(Date.now() + 1000 * expires)
+    expires: new Date(Date.now() + 1000 * expires),
+    ...cookieSecureOptions()
   });
 }
 
 export function setRefreshToken(token: string, expires = 864e3) {
   return Cookies.set(RefreshTokenKey, token, {
-    expires: new Date(Date.now() + 1000 * expires)
+    expires: new Date(Date.now() + 1000 * expires),
+    ...cookieSecureOptions()
   });
 }
 

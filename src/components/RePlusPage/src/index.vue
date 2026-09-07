@@ -1,14 +1,16 @@
 <script lang="ts" setup>
-import { ref, type Ref } from "vue";
+import { computed, ref, type Ref } from "vue";
 import PureTable from "@pureadmin/table";
 import { usePlusPage } from "./utils/hook";
 import { RePlusPageProps } from "./utils/types";
+import ReRecycleBin from "./components/ReRecycleBin.vue";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { cloneDeep, deviceDetection, getKeyList } from "@pureadmin/utils";
 import Delete from "~icons/ep/delete";
 import { PlusSearch, type RecordType } from "plus-pro-components";
 import type { ComponentSize } from "element-plus";
+import type { BaseApi } from "@/api/base";
 
 import ButtonOperation, {
   ButtonsCallBackParams
@@ -106,6 +108,21 @@ function getTreeProps() {
 function getTableRef() {
   return tableRef.value;
 }
+
+/**
+ * FEAT-2：内建回收站入口。recycleBin prop 开启且具备 recycleList 权限时
+ * 渲染通用回收站抽屉，数据变动直接联动本组件的 handleGetData，
+ * 调用方无需再经 barButtons 插槽自行接线。
+ */
+const recycleBinEnabled = computed(
+  () => !!props.recycleBin && !!props.auth?.recycleList
+);
+const recycleBinColumns = computed(() =>
+  Array.isArray(props.recycleBin) ? props.recycleBin : []
+);
+// recycleBin 仅应配置在完整 BaseApi（含 recycle 三方法）的页面；
+// api prop 声明为 Partial<BaseApi> 以宽容各类页面，在此边界收窄
+const recycleBinApi = computed(() => props.api as BaseApi);
 
 defineExpose({
   dataList,
@@ -218,6 +235,13 @@ defineExpose({
                     emit('tableBarClickAction', data);
                   }
                 "
+              />
+              <re-recycle-bin
+                v-if="recycleBinEnabled"
+                :api="recycleBinApi"
+                :locale-name="localeName"
+                :columns="recycleBinColumns"
+                @changed="handleGetData"
               />
               <slot name="barButtons" />
             </div>

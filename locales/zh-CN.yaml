@@ -248,6 +248,7 @@ menus:
   roleManagement: 角色权限
   dataPermissionManagement: 数据权限
   logManagement: 日志管理
+  systemTaskCrontab: 周期任务
   modelFieldManagement: 字段管理
   operationLogManagement: 访问日志
   loginLogManagement: 登录日志
@@ -564,6 +565,7 @@ userNotice:
 systemUploadFile:
   upload: 上传
   fileLink: 文件连接
+  filename: 文件名
   clickUpload: 点击上传
   dropFile: 拖拽文件到这里或
   uploadTip: 上传文件大小需要小于
@@ -673,3 +675,47 @@ demoBook:
   is_active: 是否启用
   pushBook: 推送书籍
   confirmPushBook: 确定将该书籍 {name} 推送到推荐服务？
+
+systemTaskCrontab: Cron 表达式
+
+systemTask:
+  name: 任务名称
+  task: 任务路径
+  crontab: cron 表达式
+  interval: 间隔调度
+  args: 位置参数 (args)
+  kwargs: 关键字参数 (kwargs)
+  queue: 队列
+  enabled: 启用状态
+  one_off: 单次执行
+  start_time: 开始时间
+  expires: 过期时间
+  last_run_at: 上次执行时间
+  total_run_count: 累计执行次数
+  date_changed: 变更时间
+  description: 任务描述
+  priority: 优先级
+  enable: 启用/停用
+
+systemTaskCrontabSchedule:
+  minute: 分钟
+  hour: 小时
+  day_of_week: 星期
+  day_of_month: 日
+  month_of_year: 月
+  timezone: 时区
+
+recycleBin:
+  title: 回收站
+  restore: 恢复
+  purge: 彻底清除
+  purgeExpired: 清空过期数据
+  deletedAt: 删除时间
+  actions: 操作
+  empty: 回收站为空
+  restoreConfirm: 确定恢复选中的 { count } 条数据？
+  restoreOneConfirm: 确定恢复该条数据？
+  purgeConfirm: 彻底清除后不可恢复，确定清除选中的 { count } 条数据？
+  purgeExpiredConfirm: 确定清空全部超过保留期（默认 30 天）的回收站数据？
+  restoreDone: 恢复成功
+  purgeDone: 清除完成

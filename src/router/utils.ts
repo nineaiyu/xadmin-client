@@ -415,6 +415,7 @@ type Auths = {
   importData?: boolean;
   batchDestroy?: boolean;
   partialUpdate?: boolean;
+  recycleList?: boolean;
 };
 
 function getDefaultAuths(
@@ -435,6 +436,7 @@ function getDefaultAuths(
     "importData",
     "batchDestroy",
     "partialUpdate",
+    "recycleList",
     ...auth
   ];
   const auths = {};

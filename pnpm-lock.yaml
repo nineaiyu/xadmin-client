@@ -36,8 +36,8 @@ importers:
         specifier: ^4.1.1
         version: 4.1.1
       axios:
-        specifier: 1.18.1
-        version: 1.18.1(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)
+        specifier: 1.20.0
+        version: 1.20.0(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)
       cropperjs:
         specifier: ^1.6.2
         version: 1.6.2
@@ -47,6 +47,9 @@ importers:
       dayjs:
         specifier: ^1.11.23
         version: 1.11.23
+      dompurify:
+        specifier: ^3.4.15
+        version: 3.4.15
       echarts:
         specifier: ^6.1.0
         version: 6.1.0
@@ -1939,6 +1942,9 @@ packages:
   '@types/tinycolor2@1.4.6':
     resolution: {integrity: sha512-iEN8J0BoMnsWBqjVbWH/c0G0Hh7O21lpR2/+PrvAVgWdzL7eexIFm4JN/Wn10PTcmNdtS6U67r499mlWMXOxNw==}
 
+  '@types/trusted-types@2.0.7':
+    resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
+
   '@types/web-animations-js@2.2.16':
     resolution: {integrity: sha512-ATELeWMFwj8eQiH0KmvsCl1V2lu/qx/CjOBmv4ADSZS5u8r4reMyjCXtxG7khqyiwH3IOMNdrON/Ugn94OUcRA==}
 
@@ -2428,8 +2434,8 @@ packages:
   asynckit@0.4.0:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
 
-  axios@1.18.1:
-    resolution: {integrity: sha512-3nTvFlvpn9Zu/RkHUqtc7/+al4UpRW5az71ap5zccp6e8RAYEzhMTecX8Dz1wWDYrPpUoB1HAQEGEAEvUr7S9g==}
+  axios@1.20.0:
+    resolution: {integrity: sha512-r8aOh8j9cGKpgQAqpzrUHnSIc6a59Y3Xf/cv8sy1DrHCkZHzQGEuoq1tARk6qSyDdtQGSDgpb9kFlruzPvrgwg==}
 
   axobject-query@4.1.0:
     resolution: {integrity: sha512-qIj0G9wZbMGNLjLmg1PT6v2mE9AH2zlnADJD/2tC6E00hgmhUOfEB6greHPAfLRSufHqROIUTkw6E+M3lH0PTQ==}
@@ -2819,6 +2825,9 @@ packages:
     resolution: {integrity: sha512-cgwlv/1iFQiFnU96XXgROh8xTeetsnJiDsTc7TYCLFd9+/WNkIqPTxiM/8pSd8VIrhXGTf1Ny1q1hquVqDJB5w==}
     engines: {node: '>= 4'}
 
+  dompurify@3.4.15:
+    resolution: {integrity: sha512-EUBjM+B+lkDE41iE82DDSCfkoPGfXx8IxFxPMjNzm/Uk4xDet77rTN9wqlxlVg71kK7XGuUMv6wUxJUwwv+Xyw==}
+
   domutils@3.2.2:
     resolution: {integrity: sha512-6kZKyUajlDuqlHKVX1w7gyslj9MPIXzIFiz/rGu35uC1wMi+kMhQwGhl4lt9unC9Vb9INnY9Z3/ZA3+FhASLaw==}
 
@@ -3176,8 +3185,8 @@ packages:
       debug:
         optional: true
 
-  form-data@4.0.5:
-    resolution: {integrity: sha512-8RipRLol37bNs2bhoV67fiTEvdTrbMUYcFTiy3+wuuOnUog2QBHCZWXDRijWQfAkhBj2Uf5UnVaiWwA5vdd82w==}
+  form-data@4.0.6:
+    resolution: {integrity: sha512-vKatAh4SlVfgbv+YtmhiRjhEMJsYpsG1Y2rMQtR+SVSbytsSD1YGzDIcrAJmdFec88u/+VoGmxnl+80gL1tRCQ==}
     engines: {node: '>= 6'}
 
   framesync@6.1.2:
@@ -3295,6 +3304,10 @@ packages:
 
   hasown@2.0.2:
     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
+    engines: {node: '>= 0.4'}
+
+  hasown@2.0.4:
+    resolution: {integrity: sha512-T2UbfbBEF32wiepXIsMlTW9+dDYC6wMh/t/vYA4tuOMKqWz/n3vr1NFSxQiyP+zk2mXsoMA/i/7qV6LKut1t1A==}
     engines: {node: '>= 0.4'}
 
   hey-listen@1.0.8:
@@ -6716,6 +6729,9 @@ snapshots:
 
   '@types/tinycolor2@1.4.6': {}
 
+  '@types/trusted-types@2.0.7':
+    optional: true
+
   '@types/web-animations-js@2.2.16': {}
 
   '@types/web-bluetooth@0.0.21': {}
@@ -7348,10 +7364,10 @@ snapshots:
 
   asynckit@0.4.0: {}
 
-  axios@1.18.1(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2):
+  axios@1.20.0(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2):
     dependencies:
       follow-redirects: 1.16.0(debug@4.4.3(supports-color@10.2.2))
-      form-data: 4.0.5
+      form-data: 4.0.6
       https-proxy-agent: 5.0.1(supports-color@10.2.2)
       proxy-from-env: 2.1.0
     transitivePeerDependencies:
@@ -7774,6 +7790,10 @@ snapshots:
   domhandler@5.0.3:
     dependencies:
       domelementtype: 2.3.0
+
+  dompurify@3.4.15:
+    optionalDependencies:
+      '@types/trusted-types': 2.0.7
 
   domutils@3.2.2:
     dependencies:
@@ -8230,12 +8250,12 @@ snapshots:
     optionalDependencies:
       debug: 4.4.3(supports-color@10.2.2)
 
-  form-data@4.0.5:
+  form-data@4.0.6:
     dependencies:
       asynckit: 0.4.0
       combined-stream: 1.0.8
       es-set-tostringtag: 2.1.0
-      hasown: 2.0.2
+      hasown: 2.0.4
       mime-types: 2.1.35
 
   framesync@6.1.2:
@@ -8360,6 +8380,10 @@ snapshots:
       hookified: 1.15.1
 
   hasown@2.0.2:
+    dependencies:
+      function-bind: 1.1.2
+
+  hasown@2.0.4:
     dependencies:
       function-bind: 1.1.2
 
@@ -9992,7 +10016,7 @@ snapshots:
 
   version-rocket@1.7.4(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2):
     dependencies:
-      axios: 1.18.1(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)
+      axios: 1.20.0(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)
       dayjs: 1.11.23
     transitivePeerDependencies:
       - debug

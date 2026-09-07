@@ -4,6 +4,10 @@ import { getConfig } from "@/config";
 import NProgress from "@/utils/progress";
 import { transformI18n } from "@/plugins/i18n";
 import { buildHierarchyTree } from "@/utils/tree";
+import {
+  cancelRoutePending,
+  setCurrentRoutePath
+} from "@/utils/http/routeCancel";
 import remainingRouter from "./modules/remaining";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { usePermissionStoreHook } from "@/store/modules/permission";
@@ -247,9 +251,16 @@ router.beforeEach((to: ToRouteType, _from) => {
   }
 });
 
-router.afterEach(to => {
+router.afterEach((to, from) => {
   loadedPaths.add(to.path);
   NProgress.done();
+  // UX-3：路由切换时取消来源页面的在途请求（登记见 utils/http/routeCancel）。
+  // from.matched 为空表示首次导航（强刷/新开标签）而非"离开某页"——守卫链内
+  // 发出的 boot 请求（getAsyncRoutes 等）此刻仍归属初始路径，误取消会白屏
+  if (to.fullPath !== from.fullPath && from.matched.length > 0) {
+    cancelRoutePending(from.fullPath);
+  }
+  setCurrentRoutePath(to.fullPath);
 });
 
 export default router;

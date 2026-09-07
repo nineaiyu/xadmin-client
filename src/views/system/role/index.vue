@@ -15,6 +15,7 @@ const {
 </script>
 
 <template>
+  <!-- FEAT-2：回收站入口（auth.recycleList 显隐），列 label 按 localeName 自动翻译 -->
   <RePlusPage
     :api="api"
     :auth="auth"
@@ -22,5 +23,6 @@ const {
     :addOrEditOptions="addOrEditOptions"
     :listColumnsFormat="listColumnsFormat"
     :operationButtonsProps="operationButtonsProps"
+    :recycleBin="[{ prop: 'name' }, { prop: 'code' }]"
   />
 </template>
