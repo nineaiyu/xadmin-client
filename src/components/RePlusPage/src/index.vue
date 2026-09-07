@@ -2,7 +2,7 @@
 import { computed, ref, type Ref } from "vue";
 import PureTable from "@pureadmin/table";
 import { usePlusPage } from "./utils/hook";
-import { RePlusPageProps } from "./utils/types";
+import { RePlusPageProps, type RecycleBinColumn } from "./utils/types";
 import ReRecycleBin from "./components/ReRecycleBin.vue";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
@@ -117,9 +117,26 @@ function getTableRef() {
 const recycleBinEnabled = computed(
   () => !!props.recycleBin && !!props.auth?.recycleList
 );
-const recycleBinColumns = computed(() =>
-  Array.isArray(props.recycleBin) ? props.recycleBin : []
-);
+/**
+ * recycleBin 传数组 = 自定义列；传 true = 与主列表同字段展示
+ * （回收站接口与 list 同口径序列化，剔除多选/操作列、透传 cellRenderer）
+ */
+const recycleBinColumns = computed<RecycleBinColumn[]>(() => {
+  if (Array.isArray(props.recycleBin)) return props.recycleBin;
+  if (props.recycleBin !== true) return [];
+  return listColumns.value
+    .filter(
+      column =>
+        column.prop &&
+        !["selection", "operation"].includes(column._column?.key ?? "")
+    )
+    .map(column => ({
+      prop: column.prop,
+      label: column.label,
+      cellRenderer: column.cellRenderer as unknown as
+        RecycleBinColumn["cellRenderer"] | undefined
+    }));
+});
 // recycleBin 仅应配置在完整 BaseApi（含 recycle 三方法）的页面；
 // api prop 声明为 Partial<BaseApi> 以宽容各类页面，在此边界收窄
 const recycleBinApi = computed(() => props.api as BaseApi);

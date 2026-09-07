@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, ref, watch } from "vue";
+import { computed, h, isVNode, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import dayjs from "dayjs";
 import type { BaseApi } from "@/api/base";
@@ -15,6 +15,30 @@ type RecycleBinApi = Pick<
   BaseApi,
   "recycleList" | "recycleRestore" | "recyclePurge"
 >;
+
+/** 自定义单元格：cellRenderer 返回 VNode 直接渲染，文本/空值回退到行字段。
+ * 渲染器约定 pure-table 的参数形状（handle.tsx 的 el-switch/el-tag 读
+ * scope.props.size），这里补齐最小参数集，缺了会整表渲染崩溃。 */
+const CellContent = (props: {
+  column: RecycleBinColumn;
+  row: Record<string, unknown>;
+  index: number;
+}) => {
+  const rendered = props.column.cellRenderer?.({
+    row: props.row,
+    index: props.index,
+    size: "default",
+    props: { size: "default" }
+  });
+  if (isVNode(rendered)) return rendered;
+  if (rendered != null && rendered !== "") return h("span", String(rendered));
+  return h(
+    "span",
+    props.row[props.column.prop] != null
+      ? String(props.row[props.column.prop])
+      : ""
+  );
+};
 
 /**
  * FEAT-2：通用回收站抽屉。
@@ -69,7 +93,8 @@ const tableColumns = computed(() => [
     // el-table 的 formatter 签名为 (row, column, cellValue, index)，直接收行
     formatter: column.formatter
       ? (row: Record<string, unknown>) => column.formatter?.(row) ?? ""
-      : undefined
+      : undefined,
+    cellRenderer: column.cellRenderer
   })),
   {
     prop: "deleted_at",
@@ -77,7 +102,8 @@ const tableColumns = computed(() => [
     formatter: (row: Record<string, unknown>) =>
       row.deleted_at
         ? dayjs(String(row.deleted_at)).format("YYYY-MM-DD HH:mm:ss")
-        : ""
+        : "",
+    cellRenderer: undefined
   }
 ]);
 
@@ -215,7 +241,11 @@ defineExpose({ open });
         :label="column.label"
         :formatter="column.formatter"
         show-overflow-tooltip
-      />
+      >
+        <template v-if="column.cellRenderer" #default="{ row, $index }">
+          <cell-content :column="column" :row="row" :index="$index" />
+        </template>
+      </el-table-column>
       <el-table-column
         :label="t('recycleBin.actions')"
         width="90"
@@ -249,8 +279,8 @@ defineExpose({ open });
       :page-size="pagination.pageSize"
       :total="pagination.total"
       layout="total, prev, pager, next"
+      size="small"
       class="mt-3 justify-end"
-      small
     />
   </el-drawer>
 </template>

@@ -26,7 +26,7 @@ const {
     :addOrEditOptions="addOrEditOptions"
     :listColumnsFormat="listColumnsFormat"
     :operationButtonsProps="operationButtonsProps"
-    :recycleBin="[{ prop: 'title' }]"
+    recycleBin
     @searchComplete="searchComplete"
   />
 </template>

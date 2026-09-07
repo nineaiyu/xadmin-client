@@ -770,6 +770,14 @@ systemTaskCrontabSchedule:
   day_of_month: Day of Month
   month_of_year: Month
   timezone: Timezone
+  cronEveryWeek: Every week
+  cronWeekday0: Sunday
+  cronWeekday1: Monday
+  cronWeekday2: Tuesday
+  cronWeekday3: Wednesday
+  cronWeekday4: Thursday
+  cronWeekday5: Friday
+  cronWeekday6: Saturday
 
 recycleBin:
   title: Recycle Bin

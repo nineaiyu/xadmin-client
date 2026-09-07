@@ -771,6 +771,14 @@ systemTaskCrontabSchedule:
   day_of_month: 日
   month_of_year: 月
   timezone: 时区
+  cronEveryWeek: 每周
+  cronWeekday0: 周日
+  cronWeekday1: 周一
+  cronWeekday2: 周二
+  cronWeekday3: 周三
+  cronWeekday4: 周四
+  cronWeekday5: 周五
+  cronWeekday6: 周六
 
 recycleBin:
   title: 回收站

@@ -56,7 +56,7 @@ const {
       locale-name="systemUser"
       :operationButtonsProps="operationButtonsProps"
       :tableBarButtonsProps="tableBarButtonsProps"
-      :recycleBin="[{ prop: 'username' }]"
+      recycleBin
       @selectionChange="selectionChange"
     />
     <!-- 权限可视化：三层权限只读预览 + 数据权限试算（auth.preview 门控按钮） -->

@@ -26,7 +26,7 @@ const {
       :addOrEditOptions="addOrEditOptions"
       :listColumnsFormat="listColumnsFormat"
       :operationButtonsProps="operationButtonsProps"
-      :recycleBin="[{ prop: 'name' }, { prop: 'code' }]"
+      recycleBin
     />
     <RolePermissionPreview ref="previewRef" />
   </div>

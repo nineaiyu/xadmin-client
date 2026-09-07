@@ -141,6 +141,13 @@ interface RecycleBinColumn {
   label?: string;
   /** 单元格格式化（row 为动态接口数据行） */
   formatter?: (row: RecordType) => string;
+  /** 自定义单元格渲染（与主列表 cellRenderer 同形，返回 VNode 或文本） */
+  cellRenderer?: (data: {
+    row: RecordType;
+    index: number;
+    size?: string;
+    props?: { size?: string };
+  }) => unknown;
 }
 
 interface RePlusPageProps {

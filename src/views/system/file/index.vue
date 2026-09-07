@@ -28,6 +28,6 @@ const {
     :addOrEditOptions="addOrEditOptions"
     :operationButtonsProps="operationButtonsProps"
     :tableBarButtonsProps="tableBarButtonsProps"
-    :recycleBin="[{ prop: 'filename' }]"
+    recycleBin
   />
 </template>
