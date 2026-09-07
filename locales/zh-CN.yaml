@@ -370,6 +370,7 @@ systemUser:
   password: 密码
   roles: 角色
   rules: 数据权限
+  preview: 权限预览
   logout: 登出
 
 systemDept:
@@ -385,6 +386,7 @@ systemDept:
   parent: 归属部门
   roles: 角色
   rules: 数据权限
+
 
 systemPermission:
   permission: 数据权限
@@ -407,6 +409,7 @@ systemPermission:
   notice_dept: 部门
   notice_role: 角色
   notice_menu: 菜单
+  preview: 权限预览
 
 systemRole:
   role: 角色
@@ -415,6 +418,70 @@ systemRole:
   permissions: 权限
   menuTitle: 请输入菜单标题
   menu: 菜单权限
+  preview: 授权预览
+
+permissionPreview:
+  userTitle: 用户权限预览
+  roleTitle: 角色授权预览
+  basicInfo: 基本信息
+  menuTree: 可见菜单树
+  apiCodes: API 权限码
+  dataPermission: 数据权限
+  fieldPermission: 字段权限
+  trial: 数据权限试算
+  superuser: 超级管理员
+  superuserBypass: 超级管理员：三层权限全部旁路
+  dept: 部门
+  roles: 角色
+  status: 状态
+  enabled: 启用
+  disabled: 停用
+  yes: 是
+  no: 否
+  personal: 个人授权
+  deptChain: 部门链授权
+  relation_self: 本部门
+  relation_ancestor: 上级部门
+  noGrant: 无任何数据权限授权，默认不可见
+  noGrantAtLevel: 该部门层无授权
+  dataDisabled: 数据权限未启用，过滤不生效
+  boundMenus: 绑定菜单
+  generalGrant: 通用授权（未绑定菜单）
+  modeOr: 或模式
+  modeAnd: 且模式
+  colTable: 表
+  colField: 字段
+  colType: 类型
+  colMatch: 匹配
+  colValue: 值
+  colExclude: 排除
+  excludeYes: 排除
+  colCode: 权限码
+  colMethod: 方法
+  colTitle: 描述
+  colPath: 路径
+  colMenu: 菜单
+  colRole: 角色
+  colModel: 模型
+  colFields: 字段白名单
+  filterPlaceholder: 输入关键字过滤
+  emptyMenus: 无可见菜单
+  emptyApis: 无 API 权限码
+  fieldDisabled: 字段权限未启用，裁剪不生效
+  fieldBlank: 未配置字段白名单 = 不限制
+  codeTag: 权限码
+  roleMenus: 该角色授权的菜单
+  roleFields: 字段授权
+  sql: SQL
+  users: 持有该角色的用户
+  emptyUsers: 暂无持有该角色的用户（或不在你的数据权限范围内）
+  sampleTruncated: 仅显示前 { limit } 个，共 { total } 个
+  model: 试算模型
+  menuContext: 菜单上下文
+  hasRules: 有规则
+  run: 试算
+  hitCount: 命中行数
+  noModels: 数据权限注册表为空，请先执行 sync_model_field
 
 systemMenu:
   menus: 菜单

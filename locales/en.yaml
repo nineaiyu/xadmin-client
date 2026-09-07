@@ -370,6 +370,7 @@ systemUser:
   password: Password
   roles: Roles
   rules: Data Permissions
+  preview: Permission Preview
   logout: Logout
 
 systemDept:
@@ -407,6 +408,7 @@ systemPermission:
   notice_dept: Departments
   notice_role: Roles
   notice_menu: Menus
+  preview: Permission Preview
 
 systemRole:
   role: Role
@@ -415,6 +417,70 @@ systemRole:
   permissions: Permissions
   menuTitle: Please enter menu title
   menu: Menus
+  preview: Grant Preview
+
+permissionPreview:
+  userTitle: User Permission Preview
+  roleTitle: Role Grant Preview
+  basicInfo: Basic Info
+  menuTree: Visible Menu Tree
+  apiCodes: API Permissions
+  dataPermission: Data Permission
+  fieldPermission: Field Permission
+  trial: Data Permission Trial
+  superuser: Superuser
+  superuserBypass: Superuser bypasses all three permission layers
+  dept: Department
+  roles: Roles
+  status: Status
+  enabled: Enabled
+  disabled: Disabled
+  yes: "Yes"
+  no: "No"
+  personal: Personal Grants
+  deptChain: Department-chain Grants
+  relation_self: This department
+  relation_ancestor: Ancestor department
+  noGrant: No data permission grant at all, invisible by default
+  noGrantAtLevel: No grant at this department level
+  dataDisabled: Data permission disabled, filtering inactive
+  boundMenus: Bound menus
+  generalGrant: General grant (no menu bound)
+  modeOr: OR mode
+  modeAnd: AND mode
+  colTable: Table
+  colField: Field
+  colType: Type
+  colMatch: Match
+  colValue: Value
+  colExclude: Exclude
+  excludeYes: Excluded
+  colCode: Code
+  colMethod: Method
+  colTitle: Description
+  colPath: Path
+  colMenu: Menu
+  colRole: Role
+  colModel: Model
+  colFields: Field whitelist
+  filterPlaceholder: Type to filter
+  emptyMenus: No visible menus
+  emptyApis: No API permissions
+  fieldDisabled: Field permission disabled, cropping inactive
+  fieldBlank: No field whitelist configured = unrestricted
+  codeTag: Code
+  roleMenus: Menus Granted to Role
+  roleFields: Field Grants
+  sql: SQL
+  users: Users with this role
+  emptyUsers: No users hold this role (or they are outside your data scope)
+  sampleTruncated: Showing first { limit } of { total } users
+  model: Trial model
+  menuContext: Menu context
+  hasRules: Has rules
+  run: Run
+  hitCount: Matched rows
+  noModels: Data permission registry is empty, run sync_model_field first
 
 systemMenu:
   menus: Menus

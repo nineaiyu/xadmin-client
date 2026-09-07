@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import tree from "./components/tree.vue";
+import PermissionPreview from "./components/PermissionPreview.vue";
 import { computed, ref } from "vue";
 import { useUser } from "./utils/hook";
 
@@ -26,7 +27,8 @@ const {
   selectionChange,
   deviceDetection,
   listColumnsFormat,
-  baseColumnsFormat
+  baseColumnsFormat,
+  previewRef
 } = useUser(tableRef);
 </script>
 
@@ -57,6 +59,8 @@ const {
       :recycleBin="[{ prop: 'username' }]"
       @selectionChange="selectionChange"
     />
+    <!-- 权限可视化：三层权限只读预览 + 数据权限试算（auth.preview 门控按钮） -->
+    <PermissionPreview ref="previewRef" />
   </div>
 </template>
 

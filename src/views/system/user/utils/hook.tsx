@@ -7,6 +7,7 @@ import { handleOperation, usePublicHooks } from "@/components/RePlusPage";
 import { deviceDetection } from "@pureadmin/utils";
 import { rulesPasswordApi } from "@/api/auth";
 import type { PasswordRule } from "@/api/auth";
+import type { RecordType } from "plus-pro-components";
 
 import { useUserOptions } from "./useUserOptions";
 import { useUserAvatarUpload } from "./useUserAvatarUpload";
@@ -34,12 +35,14 @@ export function useUser(tableRef: Ref) {
     logout: false,
     resetPassword: false,
     resetMfa: false,
+    preview: false,
     ...getDefaultAuths(getCurrentInstance(), [
       "resetPassword",
       "empower",
       "logout",
       "unblock",
-      "resetMfa"
+      "resetMfa",
+      "preview"
     ])
   });
   const switchLoadMap = ref({});
@@ -68,6 +71,8 @@ export function useUser(tableRef: Ref) {
     passwordRules,
     tableRef
   });
+  const previewRef = ref<{ open: (row: RecordType) => void } | null>(null);
+
   const { selectionChange, tableBarButtonsProps, operationButtonsProps } =
     useUserButtons({
       t,
@@ -78,7 +83,8 @@ export function useUser(tableRef: Ref) {
       manySelectData,
       handleUpload,
       handleReset,
-      handleRoleRules
+      handleRoleRules,
+      handlePreview: row => previewRef.value?.open(row)
     });
 
   // 全局密码规则（重置密码与新增/编辑表单校验共用）
@@ -105,6 +111,7 @@ export function useUser(tableRef: Ref) {
     selectionChange,
     deviceDetection,
     listColumnsFormat,
-    baseColumnsFormat
+    baseColumnsFormat,
+    previewRef
   };
 }

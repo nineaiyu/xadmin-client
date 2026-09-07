@@ -12,6 +12,7 @@ import Password from "~icons/ri/lock-password-line";
 import ShieldKeyhole from "~icons/ri/shield-keyhole-line";
 import Message from "~icons/ri/message-fill";
 import Logout from "~icons/ri/logout-circle-r-line";
+import View from "~icons/ep/view";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
@@ -27,7 +28,8 @@ export function useUserButtons({
   manySelectData,
   handleUpload,
   handleReset,
-  handleRoleRules
+  handleRoleRules,
+  handlePreview
 }: {
   t: TFunction;
   api: UnwrapNestedRefs<typeof userApi>;
@@ -37,6 +39,7 @@ export function useUserButtons({
     resetPassword?: boolean;
     empower?: boolean;
     resetMfa?: boolean;
+    preview?: boolean;
   };
   tableRef: Ref;
   selectedNum: Ref<number>;
@@ -44,6 +47,7 @@ export function useUserButtons({
   handleUpload: (row: Row) => void;
   handleReset: (row: Row) => void;
   handleRoleRules: (row: RecordType) => void;
+  handlePreview: (row: RecordType) => void;
 }) {
   const router = useRouter();
 
@@ -153,6 +157,19 @@ export function useUserButtons({
           handleRoleRules(row as { username: string; [key: string]: unknown });
         },
         show: auth.empower
+      },
+      {
+        text: t("systemUser.preview"),
+        code: "preview",
+        props: {
+          type: "primary",
+          icon: useRenderIcon(View),
+          link: true
+        },
+        onClick: ({ row }) => {
+          handlePreview(row);
+        },
+        show: auth.preview
       },
       {
         text: t("systemUser.resetMfa"),

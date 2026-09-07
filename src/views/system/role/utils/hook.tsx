@@ -8,6 +8,7 @@ import {
   ref,
   shallowRef
 } from "vue";
+import { useI18n } from "vue-i18n";
 import { roleApi } from "@/api/system/role";
 import { handleTree } from "@/utils/tree";
 import { menuApi } from "@/api/system/menu";
@@ -15,6 +16,9 @@ import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { FieldChoices } from "@/views/system/constants";
 import { cloneDeep, getKeyList } from "@pureadmin/utils";
 import { modelLabelFieldApi } from "@/api/system/field";
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import View from "~icons/ep/view";
+import type { RecordType } from "plus-pro-components";
 import type {
   PageTableColumn,
   OperationProps,
@@ -22,11 +26,15 @@ import type {
 } from "@/components/RePlusPage";
 
 export function useRole() {
+  const { t } = useI18n();
   const api = reactive(roleApi);
 
   const auth = reactive({
-    ...getDefaultAuths(getCurrentInstance())
+    preview: false,
+    ...getDefaultAuths(getCurrentInstance(), ["preview"])
   });
+
+  const previewRef = ref<{ open: (row: RecordType) => void } | null>(null);
 
   const menuTreeData = ref([]);
   const fieldLookupsData = ref({});
@@ -136,13 +144,29 @@ export function useRole() {
 
   const operationButtonsProps = shallowRef<OperationProps>({
     width: 160,
-    buttons: [{ code: "detail", show: false }]
+    buttons: [
+      { code: "detail", show: false },
+      {
+        text: t("systemRole.preview"),
+        code: "preview",
+        props: {
+          type: "primary",
+          icon: useRenderIcon(View),
+          link: true
+        },
+        onClick: ({ row }) => {
+          previewRef.value?.open(row);
+        },
+        show: auth.preview
+      }
+    ]
   });
   return {
     api,
     auth,
     addOrEditOptions,
     listColumnsFormat,
-    operationButtonsProps
+    operationButtonsProps,
+    previewRef
   };
 }
