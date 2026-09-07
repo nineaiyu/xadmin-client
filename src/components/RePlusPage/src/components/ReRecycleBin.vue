@@ -17,13 +17,17 @@ type RecycleBinApi = Pick<
 >;
 
 /** 自定义单元格：cellRenderer 返回 VNode 直接渲染，文本/空值回退到行字段。
- * 渲染器约定 pure-table 的参数形状（handle.tsx 的 el-switch/el-tag 读
- * scope.props.size），这里补齐最小参数集，缺了会整表渲染崩溃。 */
+ * 两个关键点：
+ * 1. 渲染器约定 pure-table 的参数形状（handle.tsx 的 el-switch/el-tag 读
+ *    scope.props.size），这里补齐最小参数集；
+ * 2. el-table-column 注册阶段会用空 row 调用一次插槽，而回收行必有 pk，
+ *    据此跳过真实渲染，否则业务渲染器（如 row.gender.label）会崩整表。 */
 const CellContent = (props: {
   column: RecycleBinColumn;
   row: Record<string, unknown>;
   index: number;
 }) => {
+  if (!props.row?.pk) return h("span");
   const rendered = props.column.cellRenderer?.({
     row: props.row,
     index: props.index,

@@ -62,7 +62,7 @@ export function useUserColumnFormats({
               type={row.gender === 2 ? "danger" : "primary"}
               effect="plain"
             >
-              {row.gender.label}
+              {row.gender?.label ?? ""}
             </el-tag>
           );
           break;
