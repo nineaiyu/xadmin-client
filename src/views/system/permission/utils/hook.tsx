@@ -1,5 +1,6 @@
 import { dataPermissionApi } from "@/api/system/permission";
 import {
+  computed,
   getCurrentInstance,
   h,
   onMounted,
@@ -8,7 +9,8 @@ import {
   shallowRef
 } from "vue";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
-import { FieldChoices } from "@/views/system/constants";
+import { FieldChoices, MenuChoices } from "@/views/system/constants";
+import { menuApi } from "@/api/system/menu";
 import { handleTree } from "@/utils/tree";
 import { modelLabelFieldApi } from "@/api/system/field";
 import { transformI18n } from "@/plugins/i18n";
@@ -28,7 +30,64 @@ export function useDataPermission() {
     ...getDefaultAuths(getCurrentInstance())
   });
 
+  /** 全量菜单行（PERF-07：后端 menu 字段 choices 已截断，改由菜单列表接口取全量） */
+  type MenuRow = {
+    pk: string;
+    parent: { pk: string } | string | null;
+    menu_type: { value: number } | number;
+    meta: { title?: string } | null;
+  };
+  const menuTreeData = ref<MenuRow[]>([]);
+
+  const menuTypeOf = (item: MenuRow): number =>
+    typeof item.menu_type === "number"
+      ? item.menu_type
+      : (item.menu_type?.value ?? -1);
+
+  const parentIdOf = (item: MenuRow): string | null =>
+    item.parent
+      ? typeof item.parent === "string"
+        ? item.parent
+        : item.parent.pk
+      : null;
+
+  /** 可选菜单 = 权限节点及其祖先链（与后端 get_menu_queryset 口径一致） */
+  const buildMenuOptions = computed(() => {
+    const rows = menuTreeData.value;
+    const permissionPks = new Set(
+      rows
+        .filter(item => menuTypeOf(item) === MenuChoices.PERMISSION)
+        .map(item => item.pk)
+    );
+    const selectable = rows.filter(item => {
+      if (permissionPks.has(item.pk)) return true;
+      let current = parentIdOf(item);
+      while (current) {
+        if (permissionPks.has(current)) return true;
+        const parent = rows.find(row => row.pk === current);
+        current = parent ? parentIdOf(parent) : null;
+      }
+      return false;
+    });
+    return handleTree(
+      selectable.map(item => ({
+        pk: item.pk,
+        parent_id: parentIdOf(item),
+        title: transformI18n(item.meta?.title)
+      })),
+      "pk",
+      "parent_id"
+    );
+  });
+
   onMounted(() => {
+    if (hasAuth("list:SystemMenu")) {
+      menuApi.list({ page: 1, size: 1000 }).then(res => {
+        if (res.code === 1000) {
+          menuTreeData.value = res.data.results as MenuRow[];
+        }
+      });
+    }
     if (hasAuth("list:SystemModelLabelField")) {
       modelLabelFieldApi
         .list({
@@ -66,15 +125,10 @@ export function useDataPermission() {
           return column;
         },
         menu: ({ column }) => {
-          column._column.choices.forEach(item => {
-            // 菜单选项条目带 attrs 扩展字段，meta__title 为字符串
-            item.title = transformI18n(item?.meta__title as string);
-          });
-          column["options"] = handleTree(
-            column._column.choices,
-            "pk",
-            "parent_id"
-          );
+          // 后端 menu choices 已被截断（PERF-07），清掉 api-search 表单回退渲染器，
+          // 改用全量菜单树构建级联选项（computed，菜单数据就绪后自动重算）
+          delete column["renderField"];
+          column["options"] = buildMenuOptions;
           column["valueType"] = "cascader";
           column["fieldProps"]["props"] = {
             ...column["fieldProps"]["props"],

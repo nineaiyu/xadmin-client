@@ -1,6 +1,7 @@
 import { createApp } from "vue";
 import { withInstall } from "@pureadmin/utils";
 import { i18n } from "@/plugins/i18n";
+import { useElementPlus } from "@/plugins/elementPlus";
 import reMfaConfirm from "./src/index.vue";
 import type { MfaConfirmMethodResult } from "@/api/mfa";
 
@@ -46,8 +47,10 @@ export function confirmMfa(confirmType = "mfa"): Promise<MfaConfirmResult> {
       },
       destroy
     });
-    // 命令式挂载不在组件树内，手动安装 i18n 插件保证模板内 $t 可用
+    // 命令式挂载不在主应用组件树内，需手动安装 i18n 与 Element Plus，
+    // 否则模板内 el-* 组件与 v-loading 指令全部解析失败（console 告警 + 弹窗渲染异常）
     app.use(i18n);
+    useElementPlus(app);
     app.mount(container);
   }).finally(() => {
     pendingConfirm = null;

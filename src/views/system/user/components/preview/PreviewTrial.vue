@@ -22,7 +22,8 @@ const props = defineProps<{
 const { t } = useI18n();
 
 const model = ref<string>("");
-const menuContext = ref<string | null>(null);
+/** "" 表示通用授权（不限定菜单上下文），避免给 el-option 传 null 触发 prop 类型告警 */
+const menuContext = ref<string>("");
 const loading = ref(false);
 const result = ref<TrialResult | null>(null);
 
@@ -49,7 +50,7 @@ async function runTrial() {
   try {
     const res = await userApi.previewTrial(props.pk, {
       model: model.value,
-      menu: menuContext.value
+      menu: menuContext.value ? menuContext.value : null
     });
     result.value = res.data;
   } finally {
@@ -97,10 +98,7 @@ async function runTrial() {
           clearable
           filterable
         >
-          <el-option
-            :label="t('permissionPreview.generalGrant')"
-            :value="null"
-          />
+          <el-option :label="t('permissionPreview.generalGrant')" :value="''" />
           <el-option
             v-for="option in menuOptions"
             :key="option.value"

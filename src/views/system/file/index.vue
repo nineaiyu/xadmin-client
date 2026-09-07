@@ -29,7 +29,5 @@ const {
     :operationButtonsProps="operationButtonsProps"
     :tableBarButtonsProps="tableBarButtonsProps"
     :recycleBin="[{ prop: 'filename' }]"
-  >
-    <!-- FEAT-2：回收站入口（auth.recycleList 显隐），列 label 按 localeName 自动翻译 -->
-  </RePlusPage>
+  />
 </template>

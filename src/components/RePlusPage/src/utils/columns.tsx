@@ -19,6 +19,7 @@ import Info from "~icons/ri/question-line";
 import SearchUser from "@/views/system/components/SearchUser.vue";
 import SearchDept from "@/views/system/components/SearchDept.vue";
 import SearchRole from "@/views/system/components/SearchRole.vue";
+import SearchMenu from "@/views/system/components/SearchMenu.vue";
 
 /**
  * @description 用与通过api接口，获取对应的column, 进行前端渲染
@@ -30,7 +31,8 @@ export function useBaseColumns(localeName: string) {
   const apiSearchComponents = {
     "api-search-dept": SearchDept,
     "api-search-role": SearchRole,
-    "api-search-user": SearchUser
+    "api-search-user": SearchUser,
+    "api-search-menu": SearchMenu
   };
 
   const addOrEditRules = ref({});
