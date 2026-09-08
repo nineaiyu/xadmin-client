@@ -1,19 +1,31 @@
-import { computed, h } from "vue";
+import { computed, defineAsyncComponent, h } from "vue";
 import dayjs from "dayjs";
 import {
   formatAddOrEditOptions,
   renderBooleanSegmentedOption
 } from "./renders";
-import TagInput from "../components/TagInput.vue";
-import JsonInput from "../components/JsonInput.vue";
-import UploadFile from "../components/UploadFile.vue";
-import UploadFiles from "../components/UploadFiles.vue";
-import PhoneInput from "../components/PhoneInput.vue";
 import type {
   PhoneInputProps,
   PlusColumnHandler,
   PlusColumnRegistry
 } from "./types";
+// 表单编辑器组件仅在新增/编辑弹窗出现，全部懒加载：jsoneditor/wangeditor 等
+// 重依赖不进首屏主包（TD-27 主包体积专项）
+const TagInput = defineAsyncComponent(
+  () => import("../components/TagInput.vue")
+);
+const JsonInput = defineAsyncComponent(
+  () => import("../components/JsonInput.vue")
+);
+const UploadFile = defineAsyncComponent(
+  () => import("../components/UploadFile.vue")
+);
+const UploadFiles = defineAsyncComponent(
+  () => import("../components/UploadFiles.vue")
+);
+const PhoneInput = defineAsyncComponent(
+  () => import("../components/PhoneInput.vue")
+);
 
 /**
  * 表单列（新增/编辑）内置渲染器：input_type -> 对 PageColumn 就地配置
