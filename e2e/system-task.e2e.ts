@@ -124,7 +124,11 @@ test("执行历史：手动执行产生记录，状态成功、触发人可见",
   await runTask(page, token, periodicPk);
 
   // 执行历史页：新执行记录（任务路径为名），状态「成功」、触发人 xadmin
-  await openMenuPath(page, ["任务管理"], "/system/celery/logs/index");
+  await openMenuPath(
+    page,
+    ["系统管理", "任务管理"],
+    "/system/celery/logs/index"
+  );
   const row = page.locator(".el-table__row", { hasText: TASK_PATH }).first();
   await expect(row).toBeVisible({ timeout: 15_000 });
   await expect(row).toContainText("成功");
@@ -138,6 +142,55 @@ test("执行历史：手动执行产生记录，状态成功、触发人可见",
     timeout: 20_000
   });
   await dialog.getByRole("button", { name: "关闭" }).first().click();
+});
+
+test("定时任务：批量执行 → 执行历史产生多条成功记录", async ({ page }) => {
+  const names = [`e2e-batch-${Date.now()}-a`, `e2e-batch-${Date.now()}-b`];
+  await login(page);
+  const token = await getAccessToken(page);
+
+  const crontabPk = await createCrontab(page, token);
+  for (const name of names) {
+    await createPeriodicTask(page, token, name, crontabPk);
+  }
+
+  // 定时任务页：逐行勾选 → 表头「批量执行」→ 确认
+  await openMenuPath(
+    page,
+    ["系统管理", "任务管理"],
+    "/system/celery/task/index"
+  );
+  const table = page.locator(".el-table");
+  await expect(table).toBeVisible({ timeout: 15_000 });
+  for (const name of names) {
+    // 主表体行（避开 el-table fixed 列的 DOM 副本），点击 label 触发勾选
+    const bodyRow = page
+      .locator(".el-table__body-wrapper .el-table__row", { hasText: name })
+      .first();
+    await expect(bodyRow).toBeVisible({ timeout: 15_000 });
+    const checkboxLabel = bodyRow.locator(".el-checkbox").first();
+    await checkboxLabel.click();
+    await expect(checkboxLabel).toHaveClass(/is-checked/);
+  }
+  await page.getByRole("button", { name: "批量执行" }).click();
+  await page
+    .locator(".el-popconfirm, .el-popper, .el-message-box")
+    .getByRole("button", { name: "确定" })
+    .first()
+    .click();
+  await expect(page.locator(".el-message--success")).toBeVisible();
+
+  // 执行历史页：两条新记录均「成功」（所属定时任务列显示任务名）
+  await openMenuPath(
+    page,
+    ["系统管理", "任务管理"],
+    "/system/celery/logs/index"
+  );
+  for (const name of names) {
+    const row = page.locator(".el-table__row", { hasText: name }).first();
+    await expect(row).toBeVisible({ timeout: 15_000 });
+    await expect(row).toContainText("成功");
+  }
 });
 
 test("定时表达式页：crontab 列表渲染", async ({ page }) => {
