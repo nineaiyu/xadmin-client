@@ -4,13 +4,14 @@ import { login } from "./helpers";
 
 /**
  * MFA 功能入口回归：
- * 1. 系统设置→安全设置：MFA tab 与资源告警 tab 正常渲染（menu.json 缺失对应
- *    权限码时二者为空白页的回归），且 MFA「验证方式」渲染为带候选值的多选下拉
- *    （ListField child.choices，而非 TagInput 手动输入）
- * 2. 右上角账户设置页（/account-settings）包含「MFA 安全」面板（复用个人中心
+ * 1. 系统设置→安全设置：MFA tab 正常渲染（menu.json 缺失对应权限码时空白页的
+ *    回归），且 MFA「验证方式」渲染为带候选值的多选下拉（ListField
+ *    child.choices，而非 TagInput 手动输入）
+ * 2. 系统设置→基本设置：资源告警 tab 渲染阈值字段（资源告警已从安全设置迁移）
+ * 3. 右上角账户设置页（/account-settings）包含「MFA 安全」面板（复用个人中心
  *    OTP 绑定组件）
- * 3. 个人中心包含「MFA 安全」tab，可进入 OTP 绑定
- * 4. 用户管理行操作「…」下拉包含「重置MFA」（缺失 resetMfa:SystemUser 权限码
+ * 4. 个人中心包含「MFA 安全」tab，可进入 OTP 绑定
+ * 5. 用户管理行操作「…」下拉包含「重置MFA」（缺失 resetMfa:SystemUser 权限码
  *    时按钮隐藏的回归）
  *
  * 注意：安全设置页的 el-tabs 为 border-card 类型，以此与右上角 lay-notice
@@ -18,9 +19,7 @@ import { login } from "./helpers";
  */
 
 test.describe("MFA 功能入口", () => {
-  test("安全设置：MFA/资源告警 tab 渲染且验证方式为多选下拉", async ({
-    page
-  }) => {
+  test("安全设置：MFA tab 渲染且验证方式为多选下拉", async ({ page }) => {
     await login(page);
     await page.goto("/#/settings/security/index");
 
@@ -46,12 +45,17 @@ test.describe("MFA 功能入口", () => {
       visibleDropdown.getByText("登录密码", { exact: true })
     ).toBeVisible();
     await page.keyboard.press("Escape");
+  });
 
-    // 资源告警 tab：阈值字段渲染（中文标签经后端 gettext 下发）
-    const monitorTab = tabs.getByRole("tab", { name: "资源告警" });
-    await expect(monitorTab).toBeVisible();
+  test("基本设置：资源告警 tab 渲染阈值字段", async ({ page }) => {
+    await login(page);
+    // 基本设置菜单路径为 /settings/basic（无 /index 后缀，见 loadjson menu.json）
+    await page.goto("/#/settings/basic");
+
+    const monitorTab = page.getByRole("tab", { name: "资源告警" });
+    await expect(monitorTab).toBeVisible({ timeout: 15_000 });
     await monitorTab.click();
-    const monitorPane = tabs.getByRole("tabpanel", { name: "资源告警" });
+    const monitorPane = page.getByRole("tabpanel", { name: "资源告警" });
     await expect(monitorPane.getByText("磁盘使用率阈值（%）")).toBeVisible();
     await expect(monitorPane.getByText("CPU 负载阈值（单核）")).toBeVisible();
     await expect(
