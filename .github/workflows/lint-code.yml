@@ -44,6 +44,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
+      - name: Prettier format check
+        run: pnpm lint:prettier:check
+
       - name: Start Lint Code
         run: |
           pnpm install --no-frozen-lockfile
