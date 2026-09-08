@@ -1,34 +1,27 @@
 <script lang="ts" setup>
+import { useTask } from "./utils/hook";
 import { ref } from "vue";
-import { useTask } from "./utils/hook.ts";
-import TaskLogDialog from "../../components/TaskLogDialog.vue";
 
 defineOptions({
-  name: "SystemTask"
+  name: "SystemTask" // 必须定义，用于菜单自动匹配组件
 });
-
 const tableRef = ref();
 const {
   api,
   auth,
-  operationButtonsProps,
-  tableBarButtonsProps,
   baseColumnsFormat,
-  logDialogRef
+  tableBarButtonsProps,
+  operationButtonsProps
 } = useTask(tableRef);
 </script>
 <template>
-  <div>
-    <RePlusPage
-      ref="tableRef"
-      :api="api"
-      :auth="auth"
-      locale-name="systemTask"
-      :operationButtonsProps="operationButtonsProps"
-      :tableBarButtonsProps="tableBarButtonsProps"
-      :baseColumnsFormat="baseColumnsFormat"
-    />
-    <!-- 实时执行日志弹窗（与执行历史页共用，WebSocket 增量推送） -->
-    <TaskLogDialog ref="logDialogRef" />
-  </div>
+  <RePlusPage
+    ref="tableRef"
+    :api="api"
+    :auth="auth"
+    locale-name="systemTask"
+    :base-columns-format="baseColumnsFormat"
+    :tableBarButtonsProps="tableBarButtonsProps"
+    :operationButtonsProps="operationButtonsProps"
+  />
 </template>

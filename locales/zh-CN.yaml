@@ -264,6 +264,7 @@ menus:
   newsAndAnnouncement: 消息公告
   readNotice: 已读消息
   timingTask: 定时任务
+  taskManage: 任务管理
   taskMonitor: 任务监控
   taskExecution: 任务日志
   personalCenter: 个人中心
@@ -770,13 +771,21 @@ systemTask:
   date_changed: 变更时间
   description: 任务描述
   priority: 优先级
+  exchange: 交换机
+  routing_key: 路由键
+  headers: 消息头
+  expire_seconds: 过期秒数
+  solar: 太阳历调度
+  clocked: 定时时刻调度
   enable: 启用/停用
   runNow: 立即执行
-  runConfirm: 确认立即执行该任务？
+  runConfirm: 确认立即执行任务 {name}？
   batchRun: 批量执行
   batchRunConfirm: 确认批量立即执行选中的任务？
   latestLog: 实时日志
   noExecution: 该任务暂无执行记录
+  logTitle: 日志
+  noLogOutput: 暂无日志输出
 
 systemTaskExecution:
   name: 任务名称

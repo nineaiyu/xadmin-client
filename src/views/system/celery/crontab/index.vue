@@ -1,24 +1,16 @@
 <script lang="ts" setup>
-import { getCurrentInstance, reactive, ref } from "vue";
-import { crontabScheduleApi } from "@/api/system/task.ts";
-import { getDefaultAuths } from "@/router/utils.ts";
-import { useTaskCrontab } from "./utils/hook.ts";
+import { useTaskCrontab } from "./utils/hook";
 
 defineOptions({
-  name: "SystemTaskCrontab"
+  name: "SystemTaskCrontab" // 必须定义，用于菜单自动匹配组件
 });
-
-const tableRef = ref();
-const api = reactive(crontabScheduleApi);
-const auth = reactive({ ...getDefaultAuths(getCurrentInstance()) });
-const { listColumnsFormat } = useTaskCrontab();
+const { api, auth, listColumnsFormat } = useTaskCrontab();
 </script>
 <template>
   <RePlusPage
-    ref="tableRef"
     :api="api"
     :auth="auth"
     locale-name="systemTaskCrontab"
-    :listColumnsFormat="listColumnsFormat"
+    :list-columns-format="listColumnsFormat"
   />
 </template>

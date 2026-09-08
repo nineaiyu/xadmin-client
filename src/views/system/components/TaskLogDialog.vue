@@ -1,19 +1,18 @@
-<script lang="ts">
-/** 供父组件 ref 调用的实例契约 */
-export type TaskLogDialogInstance = {
-  open: (_row: { pk: string | number; name: string }) => Promise<void>;
-};
-</script>
 <script lang="ts" setup>
-import { nextTick, onUnmounted, reactive, ref } from "vue";
-import { WS } from "@/utils/websocket.ts";
+import { nextTick, onMounted, onUnmounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
+import { WS } from "@/utils/websocket";
 
 defineOptions({ name: "TaskLogDialog" });
 
-const visible = ref(false);
+const props = defineProps<{ pk: string | number }>();
+const emit = defineEmits<{ close: [] }>();
+
+const { t } = useI18n();
+
 const content = ref("");
-const running = ref(false);
-const state = reactive({ taskName: "", ws: null as WS | null });
+const running = ref(true);
+const ws = ref<WS | null>(null);
 const contentRef = ref<HTMLElement>();
 
 const scrollToBottom = async () => {
@@ -22,26 +21,21 @@ const scrollToBottom = async () => {
 };
 
 const stopWs = () => {
-  state.ws?.close();
-  state.ws = null;
+  ws.value?.close();
+  ws.value = null;
 };
 
-const open = async (row: { pk: string | number; name: string }) => {
-  content.value = "";
-  state.taskName = row.name;
-  visible.value = true;
-  running.value = true;
-  stopWs();
+onMounted(() => {
   // 服务端固定从 0 增量推送、推完主动断开，禁止自动重连以免内容重复；
   // VITE_WSS_DOMAIN 为空串，WebSocket 构造器不接受相对路径，按页面协议拼绝对地址
   const protocol = location.protocol === "https:" ? "wss:" : "ws:";
-  state.ws = new WS(`${protocol}//${location.host}/ws/tasks/log/${row.pk}`, {
+  ws.value = new WS(`${protocol}//${location.host}/ws/tasks/log/${props.pk}`, {
     autoReconnect: false,
     closeCallback: () => {
       running.value = false;
     }
   });
-  state.ws.onMessage((res: unknown) => {
+  ws.value.onMessage((res: unknown) => {
     const data = (
       res as {
         action?: string;
@@ -58,29 +52,23 @@ const open = async (row: { pk: string | number; name: string }) => {
       running.value = false;
     }
   });
-};
+});
 
 onUnmounted(stopWs);
-
-defineExpose({ open });
 </script>
 <template>
-  <el-dialog
-    v-model="visible"
-    :title="`${state.taskName} 日志`"
-    width="860px"
-    destroy-on-close
-    @closed="stopWs"
-  >
+  <div>
     <div v-loading="running && !content" class="task-log">
       <pre ref="contentRef" class="task-log__pre">{{
-        content || "暂无日志输出"
+        content || t("systemTask.noLogOutput")
       }}</pre>
     </div>
-    <template #footer>
-      <el-button @click="visible = false">关闭</el-button>
-    </template>
-  </el-dialog>
+    <div class="task-log__footer">
+      <el-button type="primary" plain @click="emit('close')">
+        {{ t("buttons.close") }}
+      </el-button>
+    </div>
+  </div>
 </template>
 <style scoped lang="scss">
 .task-log {
@@ -95,6 +83,11 @@ defineExpose({ open });
     line-height: 1.6;
     word-break: break-all;
     white-space: pre-wrap;
+  }
+
+  &__footer {
+    margin-top: 12px;
+    text-align: right;
   }
 }
 </style>

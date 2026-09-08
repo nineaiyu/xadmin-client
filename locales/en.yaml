@@ -262,8 +262,9 @@ menus:
   empty: Empty Page
   noticeAndAnnouncement: Notice Announcement
   newsAndAnnouncement: News Announcement
-  readNotice: Read Notice
+  readNotice: Read Notices
   timingTask: Timing Task
+  taskManage: Task Management
   taskMonitor: Task Monitor
   taskExecution: Execution History
   personalCenter: UserInfo
@@ -769,13 +770,21 @@ systemTask:
   date_changed: Changed At
   description: Description
   priority: Priority
+  exchange: Exchange
+  routing_key: Routing Key
+  headers: Message Headers
+  expire_seconds: Expire (seconds)
+  solar: Solar Schedule
+  clocked: Clocked Schedule
   enable: Enable/Disable
   runNow: Run Now
-  runConfirm: Run this celery immediately?
+  runConfirm: Run the celery task {name} immediately?
   batchRun: Batch Run
   batchRunConfirm: Run the selected tasks immediately?
   latestLog: Live Log
   noExecution: No execution records for this celery
+  logTitle: Log
+  noLogOutput: No log output yet
 
 systemTaskExecution:
   name: Task Name

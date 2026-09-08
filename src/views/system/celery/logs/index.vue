@@ -1,27 +1,18 @@
 <script lang="ts" setup>
-import { ref } from "vue";
-import { useTaskExecution } from "./utils/hook.tsx";
-import TaskLogDialog from "../../components/TaskLogDialog.vue";
+import { useTaskExecution } from "./utils/hook";
 
 defineOptions({
-  name: "SystemTaskExecution"
+  name: "SystemTaskExecution" // 必须定义，用于菜单自动匹配组件
 });
-
-const tableRef = ref();
-const { api, auth, listColumnsFormat, operationButtonsProps, logDialogRef } =
+const { api, auth, listColumnsFormat, operationButtonsProps } =
   useTaskExecution();
 </script>
 <template>
-  <!-- 单根节点：pure-admin 路由外层要求单根；不加 class，避免与 RePlusPage 自身 .main 的 padding 叠加 -->
-  <div>
-    <RePlusPage
-      ref="tableRef"
-      :api="api"
-      :auth="auth"
-      locale-name="systemTaskExecution"
-      :listColumnsFormat="listColumnsFormat"
-      :operationButtonsProps="operationButtonsProps"
-    />
-    <TaskLogDialog ref="logDialogRef" />
-  </div>
+  <RePlusPage
+    :api="api"
+    :auth="auth"
+    locale-name="systemTaskExecution"
+    :list-columns-format="listColumnsFormat"
+    :operationButtonsProps="operationButtonsProps"
+  />
 </template>
