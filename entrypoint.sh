@@ -63,7 +63,7 @@ ensure_directories() {
 check_dependencies() {
     local deps=("nginx" "openssl")
     if [[ -n "$DOMAIN" ]]; then
-        deps+=("cron")
+        deps+=("crond")
     fi
 
     for dep in "${deps[@]}"; do
@@ -129,7 +129,8 @@ addHttpsConf() {
     cat > /etc/nginx/conf.d/https-xadmin.conf <<EOF
 server {
     listen 80;
-    listen 443 ssl http2;
+    listen 443 ssl;
+    http2 on;
     server_name ${DOMAIN};
 
     root /web/dist/;
@@ -353,7 +354,7 @@ main() {
 
     # 启动cron服务
     log_info "Starting cron service"
-    cron
+    crond
 
     # 启动nginx
     log_info "Starting nginx server"

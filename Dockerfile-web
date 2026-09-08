@@ -1,20 +1,19 @@
-FROM registry.cn-beijing.aliyuncs.com/nineaiyu/nginx:1.24-bullseye
+FROM registry.cn-beijing.aliyuncs.com/nineaiyu/nginx:1.31.5-alpine
 
-ARG APT_MIRROR=http://mirrors.tuna.tsinghua.edu.cn
+ARG ALPINE_MIRROR=mirrors.tuna.tsinghua.edu.cn
 
-# Install APT dependencies
+# Install APK dependencies (Alpine)
 ARG DEPENDENCIES="                    \
+        bash                          \
         curl                          \
         socat                         \
-        cron                          \
+        coreutils                     \
+        openssl                       \
         ca-certificates"
 
 RUN set -ex \
-    && rm -f /etc/apt/apt.conf.d/docker-clean \
-    && sed -i "s@http://.*.debian.org@${APT_MIRROR}@g" /etc/apt/sources.list \
-    && apt-get update > /dev/null \
-    && apt-get -y install --no-install-recommends ${DEPENDENCIES} \
-    && echo "no" | dpkg-reconfigure dash
+    && sed -i "s@dl-cdn.alpinelinux.org@${ALPINE_MIRROR}@g" /etc/apk/repositories \
+    && apk add --no-cache ${DEPENDENCIES}
 
 
 RUN mkdir -p /var/www/acme-challenge

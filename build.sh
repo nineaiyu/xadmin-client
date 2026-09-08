@@ -3,11 +3,11 @@
 
 VERSION=$1
 
-node_images="registry.cn-beijing.aliyuncs.com/nineaiyu/node:23.11.0-slim"
+node_images="registry.cn-beijing.aliyuncs.com/nineaiyu/node:24.20.0-slim"
 
 npm_mirror="https://registry.npmmirror.com"
 
-cmd='corepack enable && corepack prepare pnpm@10.10.0 --activate \
+cmd='corepack enable && corepack prepare pnpm@11.25.0 --activate \
     && cd /app && pnpm install --frozen-lockfile && pnpm build && rm -rf web/data/dist && cp -a dist web/data/dist'
 
 if [[ -n ${VERSION} ]]; then

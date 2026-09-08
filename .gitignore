@@ -26,3 +26,4 @@ blob-report/
 *.njsproj
 *.sln
 tsconfig.tsbuildinfo
+.pnpm-store
