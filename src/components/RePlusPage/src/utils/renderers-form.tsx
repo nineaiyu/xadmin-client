@@ -10,7 +10,7 @@ import type {
   PlusColumnRegistry
 } from "./types";
 // 表单编辑器组件仅在新增/编辑弹窗出现，全部懒加载：jsoneditor/wangeditor 等
-// 重依赖不进首屏主包（TD-27 主包体积专项）
+// 重依赖不进首屏主包
 const TagInput = defineAsyncComponent(
   () => import("../components/TagInput.vue")
 );

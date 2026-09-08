@@ -1,11 +1,8 @@
 import { expect, test } from "@playwright/test";
-import CryptoJS from "crypto-js";
+
+import { AesEncrypted } from "../src/utils/aes";
 
 import { BACKEND_URL, getAccessToken, login } from "./helpers";
-
-/** 与 src/utils/aes.ts 的 AesEncrypted(key, msg) 同实现（openssl 口令派生格式） */
-const aesEncrypted = (key: string, msg: string): string =>
-  CryptoJS.AES.encrypt(msg, key).toString();
 
 /**
  * 用户回收站 E2E：删除 → 抽屉可见 → 恢复 → 列表重现。
@@ -29,7 +26,7 @@ test("用户回收站：删除 → 回收站恢复 → 列表重现", async ({ p
     data: {
       username,
       nickname: username,
-      password: aesEncrypted(username, "E2E-Recycle-2026!")
+      password: AesEncrypted(username, "E2E-Recycle-2026!")
     }
   });
   expect(created.ok(), await created.text()).toBeTruthy();

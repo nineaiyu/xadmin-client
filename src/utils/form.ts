@@ -1,5 +1,5 @@
 /**
- * FormData 上传协议 v1 序列化（ADR-007，协议文档见 xadmin-docs
+ * FormData 上传协议 v1 序列化（协议文档见 xadmin-docs
  * `advanced/form-data-upload.md`）。
  *
  * 把嵌套对象展开为点分键 FormData（`.` 分层、数字段 = 数组下标），

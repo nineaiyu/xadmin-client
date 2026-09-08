@@ -1,5 +1,5 @@
 /**
- * WebSocket 消息协议类型（与 server message/protocol.py 对齐，ADR-003）。
+ * WebSocket 消息协议类型（与 server message/protocol.py 对齐）。
  *
  * 上行/下行帧均为 JSON：
  * ```json
