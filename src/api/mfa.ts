@@ -34,7 +34,10 @@ export interface MfaConfirmResult {
 }
 
 export interface OtpStatus {
+  /** 登录二次验证开关是否打开（mfa_level=ENABLED 且已绑定密钥） */
   enabled: boolean;
+  /** 是否已绑定 OTP 密钥（关闭开关后密钥保留，bound 仍为 true） */
+  bound: boolean;
   phone: string;
   email: string;
 }
@@ -107,7 +110,33 @@ export const otpConfirmApi = (data?: object) => {
   );
 };
 
-/** 解绑 OTP（敏感操作：需先通过二次验证，未验证时返回 412 走全局验证弹窗） */
+/** 关闭登录二次验证（敏感操作：保留密钥，重新开启无需重新扫码；未二次验证时返回 412 走全局验证弹窗） */
+export const otpCloseApi = () => {
+  return http.request<{ code: number; detail: string }>(
+    "post",
+    "/api/mfa/otp/close"
+  );
+};
+
+/** 重新开启登录二次验证（已绑定密钥时校验一次动态码即可，无需重新扫码） */
+export const otpOpenApi = (data?: object) => {
+  return http.request<{ code: number; detail: string }>(
+    "post",
+    "/api/mfa/otp/open",
+    { data }
+  );
+};
+
+/** 校验已绑定密钥的动态码是否正确（不改变任何状态，失败计入防爆破锁定） */
+export const otpTestApi = (data?: object) => {
+  return http.request<{ code: number; detail: string }>(
+    "post",
+    "/api/mfa/otp/test",
+    { data }
+  );
+};
+
+/** 解绑 OTP（敏感操作：需先通过二次验证，未验证时返回 412 走全局验证弹窗；密钥将被清除，重新开启需重新扫码） */
 export const otpDisableApi = () => {
   return http.request<{ code: number; detail: string }>(
     "post",
