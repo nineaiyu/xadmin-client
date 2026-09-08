@@ -18,6 +18,7 @@ import { defineConfig } from "@playwright/test";
  * - E2E_PYTHON          后端解释器（默认 ${E2E_SERVER_DIR}/.venv/bin/python）
  * - E2E_ADMIN_PASSWORD  超管密码（默认 E2E-Admin-2026!）
  * - E2E_SEED=0          跳过种子重置（复用既有库）
+ * - E2E_SMOKE=1         只跑 @smoke 且只用 chromium（快速反馈，见 pnpm test:e2e:smoke）
  * - CI=1                失败重试 2 次 + reuseExistingServer 关闭
  */
 const serverDir = process.env.E2E_SERVER_DIR ?? "../xadmin-server";
@@ -31,11 +32,16 @@ const frontPort = process.env.E2E_FRONT_PORT ?? "8848";
 const apiURL = `http://127.0.0.1:${apiPort}`;
 const baseURL = process.env.E2E_BASE_URL ?? `http://localhost:${frontPort}`;
 
+// smoke 档 = 只跑 @smoke 用例 + 只跑 chromium，把 dev push 的反馈从 ~9min 压到 ~3min；
+// 全量档（PR / main / 夜间 / 手动）保持 40 unique × 双浏览器
+const smokeOnly = process.env.E2E_SMOKE === "1";
+
 export default defineConfig({
   testDir: "./e2e",
   testMatch: /.*\.e2e\.ts/,
   fullyParallel: false,
   workers: 1,
+  grep: smokeOnly ? /@smoke/ : undefined,
   timeout: 60_000,
   expect: { timeout: 10_000 },
   retries: process.env.CI ? 2 : 1,
@@ -52,11 +58,13 @@ export default defineConfig({
     // 首次页面加载可能超过默认 30s 导航超时
     navigationTimeout: 120_000
   },
-  projects: [
-    { name: "chromium", use: { browserName: "chromium" } },
-    // 验收：双浏览器。本机未安装 webkit 时可用 --project=chromium 运行
-    { name: "webkit", use: { browserName: "webkit" } }
-  ],
+  projects: smokeOnly
+    ? [{ name: "chromium", use: { browserName: "chromium" } }]
+    : [
+        { name: "chromium", use: { browserName: "chromium" } },
+        // 验收：双浏览器。本机未安装 webkit 时可用 --project=chromium 运行
+        { name: "webkit", use: { browserName: "webkit" } }
+      ],
   webServer: [
     {
       // 种子先行：重置 sqlite 库并写入基础数据（E2E_SEED=0 可跳过），随后拉起后端。

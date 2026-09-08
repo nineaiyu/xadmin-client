@@ -1,6 +1,11 @@
 name: E2E Tests
 
+# 拆成两档，把日常提交的反馈时间从 ~9min 压到 ~3min
+#   smoke —— 任何 push/PR 都跑：chromium + 仅 @smoke 用例（e2e/smoke.e2e.ts 等）
+#   full  —— 仅 PR / main / 夜间定时 / 手动触发：40 unique × chromium+webkit 全量
 on:
+  schedule:
+    - cron: '0 18 * * *'
   workflow_dispatch:
   push:
     branches: [main, dev]
@@ -8,8 +13,8 @@ on:
     branches: [main, dev]
 
 jobs:
-  e2e:
-    name: Playwright (chromium + webkit)
+  smoke:
+    name: Smoke (chromium, @smoke)
     runs-on: ubuntu-latest
     env:
       # 后端解释器：CI 直接用系统 python（sqlite + FakeRedis 零外部依赖），
@@ -22,73 +27,53 @@ jobs:
       - name: Checkout client repository
         uses: actions/checkout@v4
 
-      - name: Checkout server repository
-        uses: actions/checkout@v4
-        with:
-          repository: nineaiyu/xadmin-server
-          path: xadmin-server
-          ref: dev
+      - name: Setup E2E environment
+        uses: ./.github/actions/e2e-setup
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 11
-          run_install: false
-
-      - name: Set up Node
-        # cache: pnpm 需要 pnpm 二进制先就位（计算 lockfile hash），故
-        # pnpm/action-setup 必须前置，否则报 "Unable to locate executable file: pnpm"
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - name: Set up Python (backend under test)
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-          cache: pip
-          cache-dependency-path: xadmin-server/requirements.txt
-
-      - name: Install backend dependencies
-        # 测试环境使用 sqlite3，无需编译 mysqlclient；E2E 的 FakeRedis 缓存后端
-        # 依赖 fakeredis（requirements-dev.txt 中的测试专用依赖）
-        run: |
-          cd xadmin-server
-          python -m pip install --upgrade pip
-          grep -v '^mysqlclient' requirements.txt > /tmp/requirements-e2e.txt
-          pip install -r /tmp/requirements-e2e.txt "fakeredis[lua]>=2.23"
-
-      - name: Compile backend translations
-        # locale/*.mo 被 gitignore，全新检出没有编译翻译；USE_I18N=True 时缺 .mo
-        # 会回退英文源串，用例断言的中文文案（锁定提示等）全部落空
-        run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq gettext > /dev/null
-          cd xadmin-server && django-admin compilemessages -l zh
-
-      - name: Install frontend dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Cache Playwright browsers
-        id: playwright-cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
-
-      - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps chromium webkit
-
-      - name: Run E2E tests
+      - name: Run smoke E2E
         # playwright.config.ts 的 webServer 会自动：种子重置（e2e_seed.py）→
         # 拉起 tests.settings_e2e 后端（sqlite + FakeRedis，零外部依赖）→ vite dev
+        run: pnpm test:e2e:smoke
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        name: Upload smoke report
+        with:
+          name: playwright-report-smoke
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  e2e:
+    name: Full (chromium + webkit)
+    needs: smoke
+    # dev push 只吃 smoke 反馈；全量留给 PR、main、夜间与手动，避免 ~9min 阻塞日常提交
+    if: >-
+      github.event_name == 'pull_request' ||
+      github.ref == 'refs/heads/main' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    env:
+      E2E_PYTHON: python3
+      E2E_SERVER_DIR: xadmin-server
+      CI: "1"
+    steps:
+      - name: Checkout client repository
+        uses: actions/checkout@v4
+
+      - name: Setup E2E environment
+        uses: ./.github/actions/e2e-setup
+
+      - name: Run full E2E
         run: pnpm test:e2e
 
       - uses: actions/upload-artifact@v4
         if: always()
-        name: Upload Playwright report
+        name: Upload full report
         with:
-          name: playwright-report
+          name: playwright-report-full
           path: |
             playwright-report/
             test-results/

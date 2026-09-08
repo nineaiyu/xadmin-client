@@ -6,9 +6,12 @@ import { login, logout, openMenu } from "./helpers";
  * xadmin E2E 冒烟：登录 → 菜单 → 部门 CRUD → 用户列表 → 登出
  * 后端由 playwright.config.ts 的 webServer 自动拉起（tests.settings_e2e，
  * sqlite + 关验证码/加密），凭据见 e2e/helpers.ts（种子：scripts/e2e_seed.py）
+ *
+ * 全部用例带 `@smoke` 标签：`E2E_SMOKE=1`（pnpm test:e2e:smoke）只跑本文件的
+ * 用例 + chromium，供 dev push 快速反馈；全量档（PR/main/夜间）跑全部用例 × 双浏览器。
  */
 
-test("登录成功并渲染侧边菜单", async ({ page }) => {
+test("登录成功并渲染侧边菜单 @smoke", async ({ page }) => {
   await login(page);
   await expect(page.getByRole("menuitem", { name: "系统管理" })).toBeVisible();
   // 子菜单需展开后渲染
@@ -16,7 +19,7 @@ test("登录成功并渲染侧边菜单", async ({ page }) => {
   await expect(page.locator(".el-table")).toBeVisible();
 });
 
-test("部门管理：新增 → 列表可见 → 删除 → 列表消失", async ({ page }) => {
+test("部门管理：新增 → 列表可见 → 删除 → 列表消失 @smoke", async ({ page }) => {
   const deptName = `E2E测试部门-${Date.now()}`;
   await login(page);
   await openMenu(page, "系统管理", "部门管理");
@@ -51,7 +54,7 @@ test("部门管理：新增 → 列表可见 → 删除 → 列表消失", async
   await expect(page.getByText(deptName)).toHaveCount(0);
 });
 
-test("用户管理：列表加载数据", async ({ page }) => {
+test("用户管理：列表加载数据 @smoke", async ({ page }) => {
   await login(page);
   await openMenu(page, "系统管理", "用户管理");
   const table = page.locator(".el-table");
@@ -59,7 +62,7 @@ test("用户管理：列表加载数据", async ({ page }) => {
   await expect(table.getByText("xadmin").first()).toBeVisible();
 });
 
-test("角色权限：列表与搜索区渲染", async ({ page }) => {
+test("角色权限：列表与搜索区渲染 @smoke", async ({ page }) => {
   await login(page);
   // 角色权限位于 系统管理 → 权限管理 二级目录下
   await page.getByRole("menuitem", { name: "系统管理" }).first().click();
@@ -82,7 +85,7 @@ test("角色权限：列表与搜索区渲染", async ({ page }) => {
   ).toBeVisible();
 });
 
-test("登出后回到登录页", async ({ page }) => {
+test("登出后回到登录页 @smoke", async ({ page }) => {
   await login(page);
   await logout(page);
 });

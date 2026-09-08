@@ -1,0 +1,79 @@
+name: E2E setup
+description: >
+  准备 E2E 运行环境：检出 xadmin-server 到工作区、安装前后端依赖与 Playwright 浏览器。
+  后端以 sqlite + FakeRedis 运行，零外部依赖；本 action 被 e2e.yml 的 smoke 与 full 两个 job 复用，
+  避免同一份安装步骤复制两遍（smoke 与全量两个 job 都要装同一套环境）。
+
+inputs:
+  server-dir:
+    description: xadmin-server 检出路径（playwright webServer 的 cwd）
+    required: false
+    default: xadmin-server
+  server-ref:
+    description: xadmin-server 检出分支
+    required: false
+    default: dev
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout server repository
+      uses: actions/checkout@v4
+      with:
+        repository: nineaiyu/xadmin-server
+        path: ${{ inputs.server-dir }}
+        ref: ${{ inputs.server-ref }}
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v3
+      with:
+        version: 11
+        run_install: false
+
+    - name: Set up Node
+      # cache: pnpm 需要 pnpm 二进制先就位（计算 lockfile hash），故
+      # pnpm/action-setup 必须前置，否则报 "Unable to locate executable file: pnpm"
+      uses: actions/setup-node@v4
+      with:
+        node-version: 24
+        cache: pnpm
+
+    - name: Set up Python (backend under test)
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.13"
+        cache: pip
+        cache-dependency-path: ${{ inputs.server-dir }}/requirements.txt
+
+    - name: Install backend dependencies
+      # 测试环境使用 sqlite3，无需编译 mysqlclient；E2E 的 FakeRedis 缓存后端
+      # 依赖 fakeredis（requirements-dev.txt 中的测试专用依赖）
+      shell: bash
+      run: |
+        cd ${{ inputs.server-dir }}
+        python -m pip install --upgrade pip
+        grep -v '^mysqlclient' requirements.txt > /tmp/requirements-e2e.txt
+        pip install -r /tmp/requirements-e2e.txt "fakeredis[lua]>=2.23"
+
+    - name: Compile backend translations
+      # locale/*.mo 被 gitignore，全新检出没有编译翻译；USE_I18N=True 时缺 .mo
+      # 会回退英文源串，用例断言的中文文案（锁定提示等）全部落空
+      shell: bash
+      run: |
+        sudo apt-get update -qq && sudo apt-get install -y -qq gettext > /dev/null
+        cd ${{ inputs.server-dir }} && django-admin compilemessages -l zh
+
+    - name: Install frontend dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile
+
+    - name: Cache Playwright browsers
+      id: playwright-cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
+
+    - name: Install Playwright browsers
+      shell: bash
+      run: pnpm exec playwright install --with-deps chromium webkit

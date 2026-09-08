@@ -24,6 +24,7 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "E2E_API_PORT=18896 playwright test",
+    "test:e2e:smoke": "E2E_API_PORT=18896 E2E_SMOKE=1 playwright test",
     "prepare": "husky",
     "preinstall": "npx only-allow pnpm"
   },

@@ -24,7 +24,9 @@ async function expectLoginError(page: Page, message: RegExp) {
   await expect(page).toHaveURL(/#\/login/);
 }
 
-test("登录失败：账号不存在时提示错误并停留在登录页", async ({ page }) => {
+test("登录失败：账号不存在时提示错误并停留在登录页 @smoke", async ({
+  page
+}) => {
   await expectLoginError(page, /用户不存在|账号|密码/);
 });
 
@@ -84,7 +86,7 @@ test("普通用户 API 越权：携带合法 token 直接调用用户管理接�
   expect([401, 403]).toContain(response.status());
 });
 
-test("管理员合法调用同一接口返回 200", async ({ page }) => {
+test("管理员合法调用同一接口返回 200 @smoke", async ({ page }) => {
   await login(page, ADMIN);
   const response = await page.request.get(
     `${BACKEND_URL}/api/system/role?page=1&limit=10`,
