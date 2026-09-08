@@ -20,7 +20,8 @@ const IMPACT_BLOCKING = new Set(["critical", "serious"]);
  * - aria-required-children / aria-required-parent：Element Plus el-menu 在垂直模式
  *   生成的 ARIA 结构不完整，属组件库内部实现，仓库侧不覆盖其 DOM；
  * - color-contrast：主题色（--el-color-primary #409EFF）白字对比度不足，
- *   修复需换全局主题色，影响面大，另行决策；
+ *   命中形态为 el-button / el-link（两者同源取主题色），修复需换全局主题色，
+ *   影响面大，另行决策；
  * - button-name：RePlusPage 工具栏 el-tooltip 包裹的图标按钮（刷新/列设置/密度），
  *   缺可访问名称，待 RePlusPage 统一补 aria-label 后移出；
  * - scrollable-region-focusable：EP 表格内嵌 el-scrollbar 滚动区不可键盘聚焦，组件库行为；
@@ -36,6 +37,7 @@ const ALLOWED_VIOLATIONS: Record<string, RegExp[]> = {
   ],
   "color-contrast": [
     /el-button/,
+    /el-link/,
     /plus-form-item__label/,
     /(^|\s)p($|\s|\.)/,
     /^#el-id-/

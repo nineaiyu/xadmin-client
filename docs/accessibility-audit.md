@@ -36,3 +36,16 @@
 | 3   | 焦点管理          | 弹窗关闭后焦点返回触发器依赖 EP 默认行为，未逐项验证                                                                                                                                                                                                                              |
 | 4   | 自动化门禁        | **✅ 2026-09-08 完成**：`e2e/a11y.e2e.ts`（axe-core，登录页 + 用户管理页，wcag2a/2aa 的 critical/serious 阻断）。豁免登记见该文件 `ALLOWED_VIOLATIONS`（EP 菜单 ARIA 结构、主题色对比度、RePlusPage 图标工具按钮、Iconify 装饰图标等第三方/框架级问题），扩大白名单须同步登记本表 |
 | 5   | 豁免项消化        | 白名单中的可自治项：RePlusPage 工具栏图标按钮补 aria-label、Iconify 渲染层统一 aria-hidden——消化后从 `ALLOWED_VIOLATIONS` 移除                                                                                                                                                    |
+
+### 豁免登记明细（`ALLOWED_VIOLATIONS`）
+
+| 规则 id                                       | 豁免形态                                                       | 性质                                                       |
+| --------------------------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------- |
+| `color-contrast`                              | `el-button` / `el-link` / `plus-form-item__label` / EP 动态 id | 框架级：主题色 `--el-color-primary` 对比度，换色需产品决策 |
+| `aria-required-*`                             | `.el-menu--vertical` / `.submenu-title-noDropdown` 等          | 框架级：EP 菜单垂直模式 ARIA 结构不完整                    |
+| `button-name` / `aria-command-name` / `label` | `el-tooltip__trigger` / `#el-id-*`                             | 可自治：RePlusPage 图标按钮与 EP 动态 id 关联缺失          |
+| `scrollable-region-focusable`                 | `el-scrollbar__wrap`                                           | 框架级：EP 表格内嵌滚动区不可键盘聚焦                      |
+| `svg-img-alt`                                 | `[role="img"]`                                                 | 可自治：Iconify 装饰图标渲染层统一 `aria-hidden` 后可摘    |
+| `aria-roles`                                  | `.bar`（仓库源码无此元素，疑似第三方注入）                     | 待查                                                       |
+
+> 2026-09-08：`color-contrast` 增补 `el-link`（与 `el-button` 同取主题色，首次双浏览器运行时命中 `.el-link--primary`）。
