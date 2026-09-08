@@ -771,11 +771,11 @@ systemTask:
   priority: Priority
   enable: Enable/Disable
   runNow: Run Now
-  runConfirm: Run this task immediately?
+  runConfirm: Run this celery immediately?
   batchRun: Batch Run
   batchRunConfirm: Run the selected tasks immediately?
   latestLog: Live Log
-  noExecution: No execution records for this task
+  noExecution: No execution records for this celery
 
 systemTaskExecution:
   name: Task Name

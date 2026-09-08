@@ -1,9 +1,9 @@
 import { getCurrentInstance, reactive, shallowRef, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { taskExecutionApi } from "@/api/system/task";
-import { getDefaultAuths } from "@/router/utils";
+import { taskExecutionApi } from "@/api/system/task.ts";
+import { getDefaultAuths } from "@/router/utils.ts";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
-import type { TaskLogDialogInstance } from "../TaskLogDialog.vue";
+import type { TaskLogDialogInstance } from "../../../components/TaskLogDialog.vue";
 
 type TagType = "primary" | "success" | "warning" | "info" | "danger";
 

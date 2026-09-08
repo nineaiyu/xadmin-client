@@ -265,7 +265,7 @@ menus:
   readNotice: 已读消息
   timingTask: 定时任务
   taskMonitor: 任务监控
-  taskExecution: 执行历史
+  taskExecution: 任务日志
   personalCenter: 个人中心
   accountSettings: 账户设置
   messageCenter: 消息中心

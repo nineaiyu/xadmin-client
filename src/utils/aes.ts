@@ -1,5 +1,4 @@
-import AES from "crypto-js/aes";
-import Utf8 from "crypto-js/enc-utf8";
+import { AES, Utf8 } from "crypto-es";
 
 export function AesEncrypted(key: string, msg: string): string {
   return AES.encrypt(msg, key).toString();

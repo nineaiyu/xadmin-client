@@ -9,7 +9,7 @@ import tailwindcss from "@tailwindcss/vite";
 import removeNoMatch from "vite-plugin-router-warn";
 import { configCompressPlugin } from "./compress.ts";
 import { visualizer } from "rollup-plugin-visualizer";
-import removeConsole from "vite-plugin-remove-console";
+import viteRemove from "unplugin-remove/vite";
 import VueI18nPlugin from "@intlify/unplugin-vue-i18n/vite";
 import { codeInspectorPlugin } from "code-inspector-plugin";
 import { vitePluginFakeServer } from "vite-plugin-fake-server";
@@ -60,8 +60,11 @@ export async function getPluginsList(
     }),
     VITE_CDN ? (await import("./cdn.ts")).cdn : null,
     configCompressPlugin(VITE_COMPRESSION),
-    // 线上环境删除console
-    removeConsole({ external: ["src/assets/iconfont/iconfont.js"] }),
+    // 线上环境删除 console（unplugin-remove 自带 apply:'build'，仅打包时生效；dev 不受影响）
+    viteRemove({
+      external: ["src/assets/iconfont/iconfont.js"],
+      consoleType: ["log", "warn", "error", "info", "debug"]
+    }),
     // 打包分析
     ...(lifecycle === "report"
       ? [visualizer({ open: true, brotliSize: true, filename: "report.html" })]

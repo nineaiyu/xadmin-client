@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref } from "vue";
-import { useTask } from "./utils/hook";
-import TaskLogDialog from "../task-execution/TaskLogDialog.vue";
+import { useTask } from "./utils/hook.ts";
+import TaskLogDialog from "../../components/TaskLogDialog.vue";
 
 defineOptions({
   name: "SystemTask"

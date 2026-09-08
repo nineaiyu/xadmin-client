@@ -38,5 +38,5 @@ export const periodicTaskApi = new PeriodicTaskApi(
 export const crontabScheduleApi = new BaseApi("/api/system/tasks/crontab");
 export const intervalScheduleApi = new BaseApi("/api/system/tasks/interval");
 
-/** 任务执行历史（日志走 WebSocket 推送，见 task-execution/TaskLogDialog.vue） */
+/** 任务执行历史（日志走 WebSocket 推送，见 celery-execution/TaskLogDialog.vue） */
 export const taskExecutionApi = new BaseApi("/api/system/tasks/executions");

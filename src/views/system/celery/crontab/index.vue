@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { getCurrentInstance, reactive, ref } from "vue";
-import { crontabScheduleApi } from "@/api/system/task";
-import { getDefaultAuths } from "@/router/utils";
-import { useTaskCrontab } from "./utils/hook";
+import { crontabScheduleApi } from "@/api/system/task.ts";
+import { getDefaultAuths } from "@/router/utils.ts";
+import { useTaskCrontab } from "./utils/hook.ts";
 
 defineOptions({
   name: "SystemTaskCrontab"

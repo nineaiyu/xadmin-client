@@ -6,7 +6,7 @@ export type TaskLogDialogInstance = {
 </script>
 <script lang="ts" setup>
 import { nextTick, onUnmounted, reactive, ref } from "vue";
-import { WS } from "@/utils/websocket";
+import { WS } from "@/utils/websocket.ts";
 
 defineOptions({ name: "TaskLogDialog" });
 

@@ -11,7 +11,7 @@ const SEED_TASK = "E2E-演示清理任务";
 
 test("定时任务：列表渲染与启停开关循环", async ({ page }) => {
   await login(page);
-  await openMenuPath(page, ["系统管理"], "/system/task/index");
+  await openMenuPath(page, ["系统管理"], "/system/celery/index");
   const table = page.locator(".el-table");
   await expect(table).toBeVisible({ timeout: 15_000 });
 
@@ -43,7 +43,7 @@ test("定时任务：列表渲染与启停开关循环", async ({ page }) => {
 
 test("Cron 表达式：页面渲染", async ({ page }) => {
   await login(page);
-  await openMenuPath(page, ["系统管理"], "/system/task-crontab/index");
+  await openMenuPath(page, ["系统管理"], "/system/celery-crontab/index");
   await expect(page.locator(".el-table, .el-empty").first()).toBeVisible({
     timeout: 15_000
   });

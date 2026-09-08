@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref } from "vue";
-import { useTaskExecution } from "./utils/hook";
-import TaskLogDialog from "./TaskLogDialog.vue";
+import { useTaskExecution } from "./utils/hook.tsx";
+import TaskLogDialog from "../../components/TaskLogDialog.vue";
 
 defineOptions({
   name: "SystemTaskExecution"

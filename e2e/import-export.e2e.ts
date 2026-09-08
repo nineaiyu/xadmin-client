@@ -80,7 +80,9 @@ test("导入：上传 CSV 建用户并在列表可见", async ({ page }) => {
   ).toBeVisible({ timeout: 30_000 });
 });
 
-test("导入：API 同步链路（task=false）返回成功且数据落库", async ({ page }) => {
+test("导入：API 同步链路（celery=false）返回成功且数据落库", async ({
+  page
+}) => {
   await login(page);
   const username = `e2e_sync_${Date.now()}`;
   const response = await page.request.post(

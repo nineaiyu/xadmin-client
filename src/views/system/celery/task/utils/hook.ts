@@ -8,15 +8,15 @@ import {
   type Ref
 } from "vue";
 import { useI18n } from "vue-i18n";
-import { message } from "@/utils/message";
-import { periodicTaskApi, taskExecutionApi } from "@/api/system/task";
-import { getDefaultAuths } from "@/router/utils";
+import { message } from "@/utils/message.ts";
+import { periodicTaskApi, taskExecutionApi } from "@/api/system/task.ts";
+import { getDefaultAuths } from "@/router/utils.ts";
 import {
   handleOperation,
   type OperationProps,
   type PageColumn
 } from "@/components/RePlusPage";
-import type { TaskLogDialogInstance } from "../../task-execution/TaskLogDialog.vue";
+import type { TaskLogDialogInstance } from "../../../components/TaskLogDialog.vue";
 
 /** 定时任务页：手动/批量执行 + 实时日志（run/log 权限经菜单按钮下发） */
 export function useTask(tableRef: Ref) {
