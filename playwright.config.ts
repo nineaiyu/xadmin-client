@@ -11,7 +11,8 @@ import { defineConfig } from "@playwright/test";
  *
  * 环境变量：
  * - E2E_SERVER_DIR      xadmin-server 仓库路径（默认 ../xadmin-server；CI 中检出为 ./xadmin-server）
- * - E2E_API_PORT        后端端口（默认 18896；注意勿用 8896——与本机 compose nginx 冲突）
+ * - E2E_API_PORT        后端端口（默认 8896 为无注入直跑兜底，与 vite proxy 默认一致；
+ *                       pnpm test:e2e 会注入 18896 避开本机 compose nginx 8896）
  * - E2E_FRONT_PORT      前端 dev server 端口（默认 8848）
  * - E2E_BASE_URL        覆盖前端地址（默认 http://localhost:${E2E_FRONT_PORT}）
  * - E2E_PYTHON          后端解释器（默认 ${E2E_SERVER_DIR}/.venv/bin/python）
@@ -20,9 +21,11 @@ import { defineConfig } from "@playwright/test";
  * - CI=1                失败重试 2 次 + reuseExistingServer 关闭
  */
 const serverDir = process.env.E2E_SERVER_DIR ?? "../xadmin-server";
-// 默认 18896 而非 8896：后者与本机 docker-compose 的 nginx（8896:8896）冲突，
-// reuseExistingServer 会把 compose 服务误当 E2E 后端复用（健康检查恰好命中），
-// 导致跳过种子、用例全挂、retries 翻倍——曾把全量 E2E 拖到 20 分钟以上
+// 默认 8896 仅是无注入直跑（npx playwright test）时的兜底，与 vite proxy 默认一致；
+// 正式入口 pnpm test:e2e 注入 E2E_API_PORT=18896：8896 与本机 docker-compose 的
+// nginx（8896:8896）冲突，reuseExistingServer 会把 compose 服务误当 E2E 后端复用
+// （健康检查恰好命中），导致跳过种子、用例全挂、retries 翻倍——曾把全量 E2E
+// 拖到 20 分钟以上。dev 态（pnpm dev）不带该变量时 proxy 指向 8896 容器后端，不受影响
 const apiPort = process.env.E2E_API_PORT ?? "8896";
 const frontPort = process.env.E2E_FRONT_PORT ?? "8848";
 const apiURL = `http://127.0.0.1:${apiPort}`;
