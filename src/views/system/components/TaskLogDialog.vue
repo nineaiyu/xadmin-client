@@ -2,6 +2,11 @@
 import { nextTick, onMounted, onUnmounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { WS } from "@/utils/websocket";
+import {
+  MessageAction,
+  isOutboundMessage,
+  type TaskLogPayload
+} from "@/utils/websocket/protocol";
 
 defineOptions({ name: "TaskLogDialog" });
 
@@ -36,13 +41,10 @@ onMounted(() => {
     }
   });
   ws.value.onMessage((res: unknown) => {
-    const data = (
-      res as {
-        action?: string;
-        data?: { content?: string; finished?: boolean };
-      }
-    )?.data;
-    if (typeof data !== "object" || data === null) return;
+    // 协议帧：{action: task_log, data: {offset, content, finished}}（protocol.ts）
+    if (!isOutboundMessage<TaskLogPayload>(res, MessageAction.TASK_LOG)) return;
+    const data = res.data;
+    if (!data) return;
     if (data.content) {
       content.value += data.content;
       void scrollToBottom();

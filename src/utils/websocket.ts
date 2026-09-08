@@ -1,5 +1,6 @@
 import qs from "qs";
 import { getUsedAccessToken } from "@/utils/token";
+import { MessageAction } from "@/utils/websocket/protocol";
 
 /**
  * setTimeout 类型
@@ -23,7 +24,7 @@ const reconnectMaxCount = 1000;
 /**
  * 默认心跳信息
  */
-const message = { action: "ping" };
+const message = { action: MessageAction.PING };
 /**
  * 默认心跳间隔
  */

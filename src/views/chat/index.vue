@@ -4,6 +4,12 @@ import { DynamicScroller, DynamicScrollerItem } from "vue-virtual-scroller";
 import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
 import { message } from "@/utils/message";
 import { PureWebSocket, WS } from "@/utils/websocket";
+import {
+  MessageAction,
+  isOutboundMessage,
+  type ChatMessagePayload,
+  type UserinfoPayload
+} from "@/utils/websocket/protocol";
 
 defineOptions({
   name: "Chat"
@@ -21,38 +27,26 @@ const scrollToBottom = () => {
   scroller.value?.scrollToBottom();
 };
 
-interface MessageProps {
-  timestamp: string;
-  action: string;
-  status: string;
-  data: {
-    pk: string;
-    userinfo: {
-      username: string;
-    };
-  };
-}
-
-const onMessage = (json_data: MessageProps) => {
-  switch (json_data?.action) {
-    case "userinfo":
-      userinfo.username = json_data.data?.userinfo?.username;
-      userinfo.pk = json_data.data.pk;
-      break;
-    case "chat_message":
-      msgData.value.push({ ...json_data.data, timestamp: json_data.timestamp });
-      scrollToBottom();
-      break;
-    case "error":
-      console.log(json_data);
-      break;
+const onMessage = (raw: unknown) => {
+  // 协议帧分派（protocol.ts）：userinfo / chat_message，其余忽略
+  if (isOutboundMessage<UserinfoPayload>(raw, MessageAction.USERINFO)) {
+    userinfo.username = raw.data?.userinfo?.username ?? "";
+    userinfo.pk = String(raw.data?.pk ?? "");
+  } else if (
+    isOutboundMessage<ChatMessagePayload>(raw, MessageAction.CHAT_MESSAGE)
+  ) {
+    msgData.value.push({ ...raw.data, timestamp: raw.timestamp });
+    scrollToBottom();
   }
 };
 
 const chatHandle = () => {
   if (chatMsg.value) {
     ws.value.send(
-      JSON.stringify({ action: "chat_message", data: { text: chatMsg.value } })
+      JSON.stringify({
+        action: MessageAction.CHAT_MESSAGE,
+        data: { text: chatMsg.value }
+      })
     );
     chatMsg.value = "";
   } else {
@@ -66,10 +60,9 @@ onMounted(() => {
     openCallback: () => {
       message("连接建立成功", { type: "success" });
       enter.value = true;
-      ws.value.send(JSON.stringify({ action: "userinfo" }));
+      ws.value.send(JSON.stringify({ action: MessageAction.USERINFO }));
       ws.value.onMessage(data => {
-        // 服务端消息形状由 chat 侧 MessageProps 契约定义，传输层仅透传 unknown
-        onMessage(data as MessageProps);
+        onMessage(data);
       });
     },
     errorCallback() {

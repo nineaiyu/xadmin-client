@@ -30,9 +30,18 @@ import {
 import { useMultiTagsStoreHook } from "./multiTags";
 import { AesEncrypted } from "@/utils/aes";
 import { useWatermark } from "@pureadmin/utils";
-import { h, nextTick } from "vue";
+import { h, nextTick, type VNode } from "vue";
 import { PureWebSocket } from "@/utils/websocket";
-import { ElNotification } from "element-plus";
+import {
+  MessageAction,
+  isOutboundMessage,
+  type PushMessagePayload
+} from "@/utils/websocket/protocol";
+import {
+  ElNotification,
+  type NotificationOptions,
+  type NotificationType
+} from "element-plus";
 
 const { setWatermark, clear } = useWatermark();
 
@@ -233,10 +242,13 @@ export const useUserStore = defineStore("pure-user", {
       });
     },
     messageHandler() {
-      const onMessage = json_data => {
-        if (json_data.action === "push_message") {
-          const data = json_data?.data;
-          let message = data?.message;
+      const onMessage = (raw: unknown) => {
+        // 协议帧分派（protocol.ts）：仅处理 push_message 通知推送
+        if (
+          isOutboundMessage<PushMessagePayload>(raw, MessageAction.PUSH_MESSAGE)
+        ) {
+          const data = raw.data ?? {};
+          let message: string | VNode | undefined = data?.message;
           switch (data?.message_type) {
             case "notify_message":
               if (data?.notice_type?.value === 0) {
@@ -248,21 +260,23 @@ export const useUserStore = defineStore("pure-user", {
                   message = h("i", { style: "color: teal" }, data?.message);
                 }
               }
-              ElNotification({
+              const options: Partial<NotificationOptions> = {
                 title: `${data?.notice_type?.label}-${data?.title}`,
-                message: message,
+                message: message ?? "",
                 duration: 5000,
                 dangerouslyUseHTMLString: true,
-                type: data?.level?.value
+                type: (data?.level?.value
                   ?.replace("primary", "")
-                  ?.replace("danger", "warning"),
+                  ?.replace("danger", "warning") ?? undefined) as
+                  NotificationType | undefined,
                 onClick: () => {
                   router.push({
                     name: "UserNotice",
                     query: { pk: data?.pk }
                   });
                 }
-              });
+              };
+              ElNotification(options);
               this.INCR_NOTICECOUNT();
               break;
             case "chat_message":
@@ -281,7 +295,7 @@ export const useUserStore = defineStore("pure-user", {
               this.logOut();
               break;
             case "error":
-              console.log(json_data);
+              console.log(raw);
               break;
           }
         }
