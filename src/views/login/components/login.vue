@@ -227,6 +227,7 @@ function onBack() {
               <el-input
                 v-model="formData.username"
                 :placeholder="t('login.username')"
+                :aria-label="t('login.username')"
                 :prefix-icon="useRenderIcon(User)"
                 clearable
                 tabindex="100"
@@ -245,6 +246,7 @@ function onBack() {
               <el-input
                 v-model="formData.password"
                 :placeholder="t('login.password')"
+                :aria-label="t('login.password')"
                 :prefix-icon="useRenderIcon(Lock)"
                 clearable
                 show-password

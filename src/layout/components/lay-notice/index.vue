@@ -74,6 +74,8 @@ const getLabel = computed(
         'select-none',
         useUserStoreHook().noticeCount !== 0 && 'mr-2.5'
       ]"
+      role="button"
+      :aria-label="t('layout.notice')"
     >
       <el-badge
         :max="99"

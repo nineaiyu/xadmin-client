@@ -214,6 +214,9 @@ buttons:
   closeAllTabs: Close AllTabs
   contentFullScreen: Content FullScreen
   contentExitFullScreen: Content ExitFullScreen
+  fullScreenToggle: Toggle full screen
+  language: Switch language
+  userMenu: User menu
   cancel: Cancel
   close: Close
   switch: Switch

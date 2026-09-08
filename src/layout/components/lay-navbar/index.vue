@@ -54,6 +54,9 @@ const { t, locale, translationCh, translationEn } = useTranslationLang();
       <el-dropdown id="header-translation" trigger="click">
         <div
           class="globalization-icon navbar-bg-hover hover:[&>svg]:animate-scale-bounce"
+          role="button"
+          tabindex="0"
+          :aria-label="t('buttons.language')"
         >
           <IconifyIconOffline :icon="GlobalizationIcon" />
         </div>
@@ -90,8 +93,12 @@ const { t, locale, translationCh, translationEn } = useTranslationLang();
       <LayNotice id="header-notice" />
       <!-- 退出登录 -->
       <el-dropdown trigger="click">
-        <span class="el-dropdown-link navbar-bg-hover select-none">
-          <img :src="userAvatar" :style="avatarsStyle" />
+        <span
+          class="el-dropdown-link navbar-bg-hover select-none"
+          role="button"
+          :aria-label="t('buttons.userMenu')"
+        >
+          <img :src="userAvatar" :alt="username" :style="avatarsStyle" />
           <p v-if="username" class="dark:text-white">{{ username }}</p>
         </span>
         <template #dropdown>
@@ -116,7 +123,12 @@ const { t, locale, translationCh, translationEn } = useTranslationLang();
       <span
         class="set-icon navbar-bg-hover hover:[&>svg]:animate-scale-bounce"
         :title="t('buttons.systemSet')"
+        role="button"
+        tabindex="0"
+        :aria-label="t('buttons.systemSet')"
         @click="onPanel"
+        @keydown.enter.prevent="onPanel"
+        @keydown.space.prevent="onPanel"
       >
         <IconifyIconOffline :icon="Setting" />
       </span>
