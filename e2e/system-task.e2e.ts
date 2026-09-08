@@ -249,6 +249,110 @@ test("执行历史：行删除与批量删除后记录消失", async ({ page }) 
   }
 });
 
+test("定时任务：克隆 → 生成停用副本", async ({ page }) => {
+  const taskName = `e2e-clone-${Date.now()}`;
+  await login(page);
+  const token = await getAccessToken(page);
+
+  const crontabPk = await createCrontab(page, token);
+  await createPeriodicTask(page, token, taskName, crontabPk);
+
+  await openMenuPath(
+    page,
+    ["系统管理", "任务管理"],
+    "/system/celery/task/index"
+  );
+  const row = page
+    .locator(".el-table__body-wrapper .el-table__row", {
+      hasText: taskName
+    })
+    .first();
+  await expect(row).toBeVisible({ timeout: 15_000 });
+
+  // 行内「克隆」→ popconfirm 确认 → 列表出现停用的 -copy 副本
+  await row.getByRole("button", { name: "克隆" }).first().click();
+  await page
+    .locator(".el-popconfirm, .el-popper, .el-message-box")
+    .getByRole("button", { name: "确定" })
+    .first()
+    .click();
+  await expect(page.locator(".el-message--success")).toBeVisible();
+
+  const cloneRow = page
+    .locator(".el-table__body-wrapper .el-table__row", {
+      hasText: `${taskName}-copy`
+    })
+    .first();
+  await expect(cloneRow).toBeVisible({ timeout: 15_000 });
+  await expect(cloneRow).toContainText("禁用");
+});
+
+test("定时任务：批量停用 → 批量启用", async ({ page }) => {
+  const suffix = Date.now();
+  const names = [`e2e-batchen-${suffix}-a`, `e2e-batchen-${suffix}-b`];
+  await login(page);
+  const token = await getAccessToken(page);
+
+  const crontabPk = await createCrontab(page, token);
+  for (const name of names) {
+    await createPeriodicTask(page, token, name, crontabPk);
+  }
+
+  await openMenuPath(
+    page,
+    ["系统管理", "任务管理"],
+    "/system/celery/task/index"
+  );
+  const bodyRow = (name: string) =>
+    page
+      .locator(".el-table__body-wrapper .el-table__row", { hasText: name })
+      .first();
+
+  /** 勾选行（表格刷新会重建 DOM，点击可能落在被替换的节点上，重试兜底） */
+  const selectRow = async (name: string) => {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const checkbox = bodyRow(name).locator(".el-checkbox").first();
+      await checkbox.click();
+      try {
+        await expect(checkbox).toHaveClass(/is-checked/, { timeout: 2_000 });
+        return;
+      } catch {
+        /* DOM 重建吞掉了点击，重试 */
+      }
+    }
+    throw new Error(`勾选行失败: ${name}`);
+  };
+
+  // 勾选两条 → 批量停用 → 确认
+  for (const name of names) {
+    const row = bodyRow(name);
+    await expect(row).toBeVisible({ timeout: 15_000 });
+    await selectRow(name);
+  }
+  await page.getByRole("button", { name: "批量停用" }).click();
+  await page
+    .locator(".el-popconfirm, .el-popper, .el-message-box")
+    .getByRole("button", { name: "确定" })
+    .first()
+    .click();
+  await expect(page.locator(".el-message--success")).toBeVisible();
+  for (const name of names) {
+    await expect(bodyRow(name)).toContainText("禁用", { timeout: 15_000 });
+  }
+
+  // 批量启用 → 状态回到启用
+  for (const name of names) {
+    await selectRow(name);
+  }
+  await page.getByRole("button", { name: "批量启用" }).click();
+  await page
+    .locator(".el-popconfirm, .el-popper, .el-message-box")
+    .getByRole("button", { name: "确定" })
+    .first()
+    .click();
+  await expect(page.locator(".el-message--success")).toBeVisible();
+});
+
 test("定时表达式页：crontab 列表渲染", async ({ page }) => {
   await login(page);
   const token = await getAccessToken(page);

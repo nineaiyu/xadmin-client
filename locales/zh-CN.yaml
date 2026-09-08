@@ -785,6 +785,12 @@ systemTask:
   runConfirm: 确认立即执行任务 {name}？
   batchRun: 批量执行
   batchRunConfirm: 确认批量立即执行选中的任务？
+  batchEnable: 批量启用
+  batchDisable: 批量停用
+  batchEnableConfirm: 确认批量启用选中的任务？
+  batchDisableConfirm: 确认批量停用选中的任务？
+  clone: 克隆
+  cloneConfirm: 确认克隆任务 {name}？（克隆体默认停用）
   latestLog: 实时日志
   noExecution: 该任务暂无执行记录
   logTitle: 日志

@@ -27,6 +27,24 @@ class PeriodicTaskApi extends BaseApi {
       `${this.baseApi}/batch-run`
     );
   };
+  /** 批量启用/停用任务（enabled 省略时按各任务当前状态取反） */
+  batchEnable = (pks: Array<number | string>, enabled?: boolean) => {
+    return this.request<BaseResult>(
+      "post",
+      {},
+      { pks: [...pks], enabled },
+      `${this.baseApi}/batch-enable`
+    );
+  };
+  /** 克隆任务（复制计划与参数，克隆体默认停用） */
+  clone = (pk: number | string) => {
+    return this.request<DetailResult>(
+      "post",
+      {},
+      {},
+      `${this.baseApi}/${pk}/clone`
+    );
+  };
   /** 已注册任务列表（任务路径下拉数据源） */
   registered = () => {
     return this.request<DataListResult<RegisteredTask>>(

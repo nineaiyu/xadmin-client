@@ -23,6 +23,9 @@ import TaskLogDialog from "@/views/system/components/TaskLogDialog.vue";
 import VideoPlay from "~icons/ep/video-play";
 import FileList from "~icons/ri/file-list-3-line";
 import PlayList from "~icons/ri/play-list-2-line";
+import FileCopy from "~icons/ri/file-copy-line";
+import VideoPause from "~icons/ep/video-pause";
+import CircleCheck from "~icons/ep/circle-check";
 
 /** 定时任务行（run/log 按钮行内使用的字段） */
 type TaskRow = {
@@ -35,7 +38,14 @@ export function useTask(tableRef: Ref) {
   // 权限判断，用于判断是否有该权限
   const api = reactive(periodicTaskApi);
   const auth = reactive({
-    ...getDefaultAuths(getCurrentInstance(), ["run", "log", "batchRun"])
+    ...getDefaultAuths(getCurrentInstance(), [
+      "run",
+      "log",
+      "batchRun",
+      "batchEnable",
+      "batchDisable",
+      "clone"
+    ])
   });
   const { t } = useI18n();
 
@@ -76,8 +86,8 @@ export function useTask(tableRef: Ref) {
    * 新增一个"立即执行"和"实时日志"的行内操作按钮
    */
   const operationButtonsProps = shallowRef<OperationProps>({
-    width: 260,
-    showNumber: 5,
+    width: 340,
+    showNumber: 6,
     buttons: [
       {
         text: t("systemTask.runNow"),
@@ -121,6 +131,32 @@ export function useTask(tableRef: Ref) {
           void openLatestLog(row);
         },
         show: auth.log && 5
+      },
+      {
+        text: t("systemTask.clone"),
+        code: "clone",
+        confirm: {
+          title: row => t("systemTask.cloneConfirm", { name: row.name })
+        },
+        props: {
+          type: "warning",
+          icon: useRenderIcon(FileCopy),
+          link: true
+        },
+        onClick: ({ row, loading }) => {
+          loading.value = true;
+          handleOperation({
+            t,
+            apiReq: api.clone(row?.pk ?? row?.id),
+            success() {
+              tableRef.value.handleGetData();
+            },
+            requestEnd() {
+              loading.value = false;
+            }
+          });
+        },
+        show: auth.clone && 6
       }
     ]
   });
@@ -160,6 +196,68 @@ export function useTask(tableRef: Ref) {
           });
         },
         show: auth.batchRun
+      },
+      {
+        text: t("systemTask.batchEnable"),
+        code: "batchEnable",
+        confirm: {
+          title: t("systemTask.batchEnableConfirm")
+        },
+        props: {
+          type: "primary",
+          icon: useRenderIcon(CircleCheck),
+          plain: true
+        },
+        onClick: ({ loading }) => {
+          const pks = tableRef.value?.getSelectPks("pk") ?? [];
+          if (!pks.length) {
+            message(t("results.noSelectedData"), { type: "error" });
+            return;
+          }
+          loading.value = true;
+          handleOperation({
+            t,
+            apiReq: api.batchEnable(pks, true),
+            success() {
+              tableRef.value?.handleGetData();
+            },
+            requestEnd() {
+              loading.value = false;
+            }
+          });
+        },
+        show: auth.batchEnable
+      },
+      {
+        text: t("systemTask.batchDisable"),
+        code: "batchDisable",
+        confirm: {
+          title: t("systemTask.batchDisableConfirm")
+        },
+        props: {
+          type: "warning",
+          icon: useRenderIcon(VideoPause),
+          plain: true
+        },
+        onClick: ({ loading }) => {
+          const pks = tableRef.value?.getSelectPks("pk") ?? [];
+          if (!pks.length) {
+            message(t("results.noSelectedData"), { type: "error" });
+            return;
+          }
+          loading.value = true;
+          handleOperation({
+            t,
+            apiReq: api.batchEnable(pks, false),
+            success() {
+              tableRef.value?.handleGetData();
+            },
+            requestEnd() {
+              loading.value = false;
+            }
+          });
+        },
+        show: auth.batchEnable
       }
     ]
   });
