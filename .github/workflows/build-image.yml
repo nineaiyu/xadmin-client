@@ -64,7 +64,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # 依赖高危门禁：待 T5.1 依赖升级窗口清零存量后，将 pnpm audit --audit-level high 追加为阻断步骤
+      # 依赖高危门禁：官方源存量已于 2026-09-07 清零（59→0），正式从告警切为阻断。
+      # 该步骤发现 high/critical 即非零退出，阻断后续 build-and-push。
+      # 显式指定官方源：镜像源（如 npmmirror）不实现 security/advisories 端点，
+      # 会让 audit 以 ERR_PNPM_AUDIT_ENDPOINT_NOT_EXISTS 报错退出（假红）
+      - name: Dependency audit (blocking)
+        run: pnpm audit --audit-level high --registry=https://registry.npmjs.org
+
       - name: Generate SBOM (CycloneDX)
         run: pnpm sbom --sbom-format cyclonedx --out sbom/sbom-client.cdx.json
 

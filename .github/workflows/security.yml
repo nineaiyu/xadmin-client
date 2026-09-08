@@ -18,4 +18,6 @@ jobs:
           version: 10
 
       - name: Run pnpm audit
-        run: pnpm audit --audit-level high
+        # 显式官方源：镜像源不实现 security/advisories 端点，会让 audit 报
+        # ERR_PNPM_AUDIT_ENDPOINT_NOT_EXISTS（与真实漏洞无关的假红）
+        run: pnpm audit --audit-level high --registry=https://registry.npmjs.org
