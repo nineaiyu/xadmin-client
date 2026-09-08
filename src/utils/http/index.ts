@@ -29,6 +29,18 @@ import { registerPending, unregisterPending } from "./routeCancel";
 // import { router } from "@/router";
 
 // 相关配置请参考：www.axios-js.com/zh-cn/docs/#axios-request-config-1
+
+/**
+ * multipart/form-data 对象展开序列化（FormData 上传协议 v1 唯一收敛点）。
+ *
+ * 嵌套对象按点分键拆分成表单字段（a.0.b → a[0][b] 语义），后端
+ * AxiosMultiPartParser（server common/drf/parsers/axios_form_data.py）
+ * 按同一规则还原。协议细节与示例见 xadmin-docs
+ * `advanced/form-data-upload.md`（ADR-007）；换用/手写 FormData 时
+ * 必须保持此键格式，否则含文件表单的服务端解析会错位。
+ */
+const FORM_SERIALIZER = { indexes: null, dots: true };
+
 const defaultConfig: AxiosRequestConfig = {
   baseURL: import.meta.env.VITE_API_DOMAIN,
   // 请求超时时间
@@ -43,7 +55,7 @@ const defaultConfig: AxiosRequestConfig = {
   paramsSerializer: params => {
     return stringify(params, { arrayFormat: "repeat" });
   },
-  formSerializer: { indexes: null, dots: true }
+  formSerializer: FORM_SERIALIZER
 };
 
 class PureHttp {
