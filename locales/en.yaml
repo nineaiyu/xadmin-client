@@ -248,7 +248,7 @@ menus:
   roleManagement: Role Permission
   dataPermissionManagement: Data Permission
   logManagement: Log Manage
-  systemTaskCrontab: Periodic Tasks
+  systemTaskCrontab: Crontab Schedule
   modelFieldManagement: Model Field Manage
   operationLogManagement: Operation Log Manage
   loginLogManagement: Login Log Manage
@@ -265,6 +265,7 @@ menus:
   readNotice: Read Notice
   timingTask: Timing Task
   taskMonitor: Task Monitor
+  taskExecution: Execution History
   personalCenter: UserInfo
   accountSettings: Account
   messageCenter: Notice
@@ -321,8 +322,10 @@ mfa:
   backToLogin: Back to Login
   otpStatus: Login MFA
   otpEnabled: Enabled
-  otpDisabled: Disabled
+  otpClosed: Closed
+  otpDisabled: Not Bound
   otpEnabledTip: A dynamic verification code is required at login
+  otpClosedTip: Login MFA is closed and your key is kept. Enter a dynamic code to re-enable it (no re-scan needed)
   otpDisabledTip: After binding OTP, a dynamic verification code is required at login, which effectively prevents account theft caused by password leakage
   startBind: Bind OTP
   scanTip: Scan to bind
@@ -330,8 +333,13 @@ mfa:
   confirmBind: Confirm Binding
   cancelBind: Cancel Binding
   bindSuccess: OTP binding successful
+  closeMfa: Close
+  closeConfirmTip: Login will no longer require a dynamic code. The key is kept and can be re-enabled without re-scanning. Close it?
+  openMfa: Re-enable
+  testKey: Verify Key
+  testSuccess: Code verified, the key is usable
   disableBind: Unbind OTP
-  disableConfirmTip: Login will no longer require a dynamic verification code after unbinding. Are you sure?
+  disableConfirmTip: Unbinding clears the key and requires re-scanning to enable again. Are you sure?
 
 account:
   profile: Profile
@@ -762,6 +770,27 @@ systemTask:
   description: Description
   priority: Priority
   enable: Enable/Disable
+  runNow: Run Now
+  runConfirm: Run this task immediately?
+  batchRun: Batch Run
+  batchRunConfirm: Run the selected tasks immediately?
+  latestLog: Live Log
+  noExecution: No execution records for this task
+
+systemTaskExecution:
+  name: Task Name
+  periodic_task: Periodic Task
+  status: Status
+  statusPENDING: Pending
+  statusRUNNING: Running
+  statusSUCCESS: Success
+  statusFAILURE: Failure
+  statusREVOKED: Revoked
+  creator: Triggered By
+  time_cost: Cost (s)
+  date_start: Start Time
+  date_finished: Finish Time
+  log: Log
 
 systemTaskCrontab:
   minute: Minute

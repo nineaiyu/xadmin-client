@@ -1,16 +1,34 @@
 <script lang="ts" setup>
-import { getCurrentInstance, reactive, ref } from "vue";
-import { periodicTaskApi } from "@/api/system/task";
-import { getDefaultAuths } from "@/router/utils";
+import { ref } from "vue";
+import { useTask } from "./utils/hook";
+import TaskLogDialog from "../task-execution/TaskLogDialog.vue";
 
 defineOptions({
   name: "SystemTask"
 });
 
 const tableRef = ref();
-const api = reactive(periodicTaskApi);
-const auth = reactive({ ...getDefaultAuths(getCurrentInstance()) });
+const {
+  api,
+  auth,
+  operationButtonsProps,
+  tableBarButtonsProps,
+  baseColumnsFormat,
+  logDialogRef
+} = useTask(tableRef);
 </script>
 <template>
-  <RePlusPage ref="tableRef" :api="api" :auth="auth" locale-name="systemTask" />
+  <div>
+    <RePlusPage
+      ref="tableRef"
+      :api="api"
+      :auth="auth"
+      locale-name="systemTask"
+      :operationButtonsProps="operationButtonsProps"
+      :tableBarButtonsProps="tableBarButtonsProps"
+      :baseColumnsFormat="baseColumnsFormat"
+    />
+    <!-- 实时执行日志弹窗（与执行历史页共用，WebSocket 增量推送） -->
+    <TaskLogDialog ref="logDialogRef" />
+  </div>
 </template>

@@ -248,7 +248,7 @@ menus:
   roleManagement: 角色权限
   dataPermissionManagement: 数据权限
   logManagement: 日志管理
-  systemTaskCrontab: 周期任务
+  systemTaskCrontab: 定时表达式
   modelFieldManagement: 字段管理
   operationLogManagement: 访问日志
   loginLogManagement: 登录日志
@@ -265,6 +265,7 @@ menus:
   readNotice: 已读消息
   timingTask: 定时任务
   taskMonitor: 任务监控
+  taskExecution: 执行历史
   personalCenter: 个人中心
   accountSettings: 账户设置
   messageCenter: 消息中心
@@ -321,8 +322,10 @@ mfa:
   backToLogin: 返回重新登录
   otpStatus: 登录二次验证
   otpEnabled: 已开启
+  otpClosed: 已关闭
   otpDisabled: 未开启
   otpEnabledTip: 登录时需要输入动态验证码进行二次验证
+  otpClosedTip: 登录二次验证已关闭，密钥保留中，输入动态码即可重新开启（无需重新扫码）
   otpDisabledTip: 绑定 OTP 后，登录时需输入动态验证码二次验证，可有效防止密码泄露导致的账号盗用
   startBind: 绑定 OTP
   scanTip: 扫码绑定
@@ -330,8 +333,13 @@ mfa:
   confirmBind: 确认绑定
   cancelBind: 取消绑定
   bindSuccess: OTP 绑定成功
+  closeMfa: 关闭
+  closeConfirmTip: 关闭后登录不再需要动态验证码，密钥保留，可随时免扫码重新开启，确定关闭？
+  openMfa: 重新开启
+  testKey: 校验密钥
+  testSuccess: 动态码校验通过，密钥可用
   disableBind: 解绑 OTP
-  disableConfirmTip: 解绑后登录将不再需要动态验证码，确定解绑？
+  disableConfirmTip: 解绑将清除密钥，重新开启需重新扫码绑定，确定解绑？
 
 account:
   profile: 个人信息
@@ -763,6 +771,27 @@ systemTask:
   description: 任务描述
   priority: 优先级
   enable: 启用/停用
+  runNow: 立即执行
+  runConfirm: 确认立即执行该任务？
+  batchRun: 批量执行
+  batchRunConfirm: 确认批量立即执行选中的任务？
+  latestLog: 实时日志
+  noExecution: 该任务暂无执行记录
+
+systemTaskExecution:
+  name: 任务名称
+  periodic_task: 所属定时任务
+  status: 执行状态
+  statusPENDING: 等待中
+  statusRUNNING: 执行中
+  statusSUCCESS: 成功
+  statusFAILURE: 失败
+  statusREVOKED: 已撤销
+  creator: 触发人
+  time_cost: 耗时(秒)
+  date_start: 开始时间
+  date_finished: 结束时间
+  log: 日志
 
 systemTaskCrontab:
   minute: 分钟
