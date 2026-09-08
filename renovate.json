@@ -7,10 +7,21 @@
     ":semanticCommitTypeAll(chore)",
     "helpers:pinGitHubActionDigests"
   ],
+  "timezone": "Asia/Shanghai",
   "schedule": ["before 6am on monday"],
   "labels": ["dependencies"],
   "rangeStrategy": "pin",
   "separateMajorMinor": true,
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "rebaseWhen": "behind-base-branch",
+  "automergeSchedule": ["at any time"],
+  "postUpdateOptions": ["pnpmDedupe"],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["dependencies", "security"]
+  },
+  "osvVulnerabilityAlerts": true,
   "lockFileMaintenance": {
     "enabled": true,
     "schedule": ["before 6am on the first day of the month"]
@@ -24,16 +35,25 @@
       "platformAutomerge": true
     },
     {
-      "description": "Django 大版本升级不自动升，走 ADR-004 评估流程",
-      "matchPackageNames": ["django"],
-      "matchUpdateTypes": ["major", "minor"],
+      "description": "vite / vue / element-plus 等大版本单独评审，走独立分支 + 全量门禁",
+      "matchPackageNames": [
+        "vite",
+        "vue",
+        "element-plus",
+        "typescript",
+        "vitest"
+      ],
+      "matchUpdateTypes": ["major"],
       "automerge": false,
       "labels": ["dependencies", "adr-required"]
     },
     {
-      "description": "openpyxl 仅允许稳定版（历史曾固定 beta，TD-18）",
-      "matchPackageNames": ["openpyxl"],
-      "ignoreUnstable": true
+      "description": "GitHub Actions 汇总为一个 PR，降低噪声",
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions",
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
     }
   ]
 }
