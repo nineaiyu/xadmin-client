@@ -49,7 +49,8 @@ export function useUserColumnFormats({
             h(ElImage, {
               lazy: true,
               src: row[column._column?.key],
-              alt: row[column._column?.key],
+              // 无头像用户 alt 为空串（装饰图）；非空才用图片地址，避免 alt 缺失
+              alt: row[column._column?.key] || "用户头像",
               class: ["w-[36px]", "h-[36px]", "align-middle"],
               previewSrcList: [row[column._column?.key]],
               previewTeleported: true

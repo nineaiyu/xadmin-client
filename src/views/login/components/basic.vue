@@ -270,6 +270,7 @@ watch(loginDay, value => {
                 <span class="flex">
                   <select
                     v-model="loginDay"
+                    :aria-label="t('login.remember')"
                     :disabled="loginDayList.length < 2"
                     :style="{
                       width: loginDay < 10 ? '10px' : '16px',
@@ -334,6 +335,7 @@ watch(loginDay, value => {
                   :icon="`ri:${item.icon}-fill`"
                   class="cursor-pointer text-gray-500 hover:text-blue-400"
                   width="20"
+                  aria-hidden="true"
                 />
               </span>
             </div>
