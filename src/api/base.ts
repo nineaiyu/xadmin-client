@@ -1,4 +1,5 @@
 import { http } from "@/utils/http";
+import { dataToFormData } from "@/utils/form";
 import type { PureHttpRequestConfig, RequestMethods } from "@/utils/http/types";
 import type {
   BaseResult,
@@ -49,14 +50,18 @@ export class BaseRequest {
     axiosConfig: PureHttpRequestConfig = {}
   ) {
     if (this.hasFileObject(data)) {
-      axiosConfig = {
-        ...axiosConfig,
-        ...{
-          headers: {
-            "Content-Type": "multipart/form-data"
-          }
-        }
-      };
+      // 含文件表单显式按 FormData 协议 v1（component utils/form.ts）展开，
+      // 不再依赖 axios formSerializer 隐式序列化；content-type 交由 axios
+      // 对 FormData 自动设置（含 multipart boundary）
+      return http.request<T>(
+        method,
+        url ?? this.baseApi,
+        {
+          params: this.formatParams(params),
+          data: dataToFormData(data)
+        },
+        axiosConfig
+      );
     }
     return http.request<T>(
       method,

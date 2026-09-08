@@ -141,18 +141,24 @@ describe("BaseApi 文件上传分支", () => {
     requestMock.mockReset();
   });
 
-  it("data 含单个 File 时设置 multipart/form-data", () => {
+  it("data 含 File 时按协议 v1 展开为 FormData（含普通字段）", () => {
     const file = new File(["x"], "a.png", { type: "image/png" });
-    api.create({ file });
-    const [, , , config] = requestMock.mock.calls[0];
-    expect(config.headers["Content-Type"]).toBe("multipart/form-data");
+    api.create({ name: "书", file });
+    const [, , options, config] = requestMock.mock.calls[0];
+    const data = options.data as FormData;
+    expect(data).toBeInstanceOf(FormData);
+    expect(String(data.get("name"))).toBe("书");
+    expect(data.get("file")).toBe(file);
+    // content-type 交由 axios 对 FormData 自动设置（含 boundary），不再显式声明
+    expect(config.headers).toBeUndefined();
   });
 
-  it("data 含 File 数组时设置 multipart/form-data", () => {
+  it("data 含 File 数组时展开数组下标键", () => {
     const file = new File(["x"], "a.png", { type: "image/png" });
     api.create({ files: [file] });
-    const [, , , config] = requestMock.mock.calls[0];
-    expect(config.headers["Content-Type"]).toBe("multipart/form-data");
+    const [, , options] = requestMock.mock.calls[0];
+    const data = options.data as FormData;
+    expect(data.get("files.0")).toBe(file);
   });
 
   it("无文件时不强制 multipart", () => {
