@@ -193,6 +193,62 @@ test("定时任务：批量执行 → 执行历史产生多条成功记录", asy
   }
 });
 
+test("执行历史：行删除与批量删除后记录消失", async ({ page }) => {
+  const suffix = Date.now();
+  const names = [
+    `e2e-logdel-${suffix}-1`,
+    `e2e-logdel-${suffix}-2`,
+    `e2e-logdel-${suffix}-3`
+  ];
+  await login(page);
+  const token = await getAccessToken(page);
+
+  const crontabPk = await createCrontab(page, token);
+  for (const name of names) {
+    const periodicPk = await createPeriodicTask(page, token, name, crontabPk);
+    await runTask(page, token, periodicPk);
+  }
+
+  await openMenuPath(
+    page,
+    ["系统管理", "任务管理"],
+    "/system/celery/logs/index"
+  );
+  // 限定可见表格：keep-alive 缓存了定时任务页 DOM，避免跨页 hasText 串扰
+  const visibleRow = (name: string) =>
+    page.locator(".el-table:visible .el-table__row", { hasText: name }).first();
+
+  // 行删除：第 1 条 → popconfirm 确认 → 行消失
+  const firstRow = visibleRow(names[0]);
+  await expect(firstRow).toBeVisible({ timeout: 15_000 });
+  await firstRow.getByRole("button", { name: "删除" }).first().click();
+  await page
+    .locator(".el-popconfirm")
+    .getByRole("button", { name: "确定" })
+    .first()
+    .click();
+  await expect(page.locator(".el-message--success")).toBeVisible();
+  await expect(visibleRow(names[0])).toBeHidden();
+
+  // 批量删除：勾选剩余两条 → 表头「批量删除」→ popconfirm 确认 → 行消失
+  for (const name of names.slice(1)) {
+    const row = visibleRow(name);
+    const checkboxLabel = row.locator(".el-checkbox").first();
+    await checkboxLabel.click();
+    await expect(checkboxLabel).toHaveClass(/is-checked/);
+  }
+  await page.getByRole("button", { name: "批量删除" }).click();
+  await page
+    .locator(".el-popconfirm")
+    .getByRole("button", { name: "确定" })
+    .first()
+    .click();
+  await expect(page.locator(".el-message--success")).toBeVisible();
+  for (const name of names.slice(1)) {
+    await expect(visibleRow(name)).toBeHidden();
+  }
+});
+
 test("定时表达式页：crontab 列表渲染", async ({ page }) => {
   await login(page);
   const token = await getAccessToken(page);
