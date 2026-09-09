@@ -44,6 +44,9 @@ const modeFuncMap = {
   ) => void;
 };
 
+/** 导入/导出弹窗统一宽度（两弹窗视觉对称） */
+const EXPORT_IMPORT_DIALOG_WIDTH = "600px";
+
 /**
  * 动态属性表：每个键的值可以是静态值，也可以是接收表单上下文求值的解析器。
  * openDialogDrawer 打开弹层前会统一解析（函数值会以表单上下文的深拷贝调用）。
@@ -602,19 +605,21 @@ const handleExportData = (options: exportDataOptions) => {
       allowTypes,
       allowAsync
     },
-    dialogDrawerOptions: { width: "600px" },
+    dialogDrawerOptions: { width: EXPORT_IMPORT_DIALOG_WIDTH },
     form: ExportData,
-    saveCallback: async ({ formData, done, closeLoading }) => {
-      // 同步导出直接触发浏览器下载；异步导出提交后台任务，提示去下载中心取件
+    saveCallback: async ({ formData, done, closeLoading, success, failed }) => {
+      // 同步导出直接触发浏览器下载；异步导出提交后台任务，提示去下载中心取件。
+      // 失败保持弹窗打开可重试（与导入失败策略对齐），仅成功/提交成功后关闭
+      let ok = true;
       const exportBy = async (params: object) => {
         if (formData.async) {
           const res = await api.exportAsync(params);
           if (res?.code === 1000) {
-            message(t("exportImport.asyncSubmitted"), { type: "success" });
+            success(t("exportImport.asyncSubmitted"));
           } else {
-            // 200 + 业务码非 1000 时全局拦截器不提示，这里必须显式报错，
-            // 否则弹层静默关闭、用户误以为提交成功
-            message(res?.detail ?? t("results.failed"), { type: "error" });
+            // 200 + 业务码非 1000 时全局拦截器不提示，这里必须显式报错
+            ok = false;
+            failed(res?.detail ?? t("results.failed"));
           }
         } else {
           await api.exportData(params);
@@ -632,10 +637,15 @@ const handleExportData = (options: exportDataOptions) => {
           delete formData.pks;
           await exportBy(formData);
         }
+      } catch {
+        // HTTP 异常（拦截器已 toast）：视为失败，保持弹窗可重试
+        ok = false;
       } finally {
         closeLoading();
       }
-      done();
+      if (ok) {
+        done();
+      }
     }
   });
 };
@@ -656,13 +666,14 @@ const handleImportData = (options: importDataOptions) => {
     mode,
     title: t("exportImport.import"),
     rawRow: {
+      type: "xlsx",
       action: "create",
       ignore_error: false,
       mode: "import",
       async: false,
       api: api
     },
-    dialogDrawerOptions: { width: "600px" },
+    dialogDrawerOptions: { width: EXPORT_IMPORT_DIALOG_WIDTH },
     form: ImportData,
     saveCallback: async ({ formData, success, failed, closeLoading }) => {
       const file = formData.upload[0].raw;
@@ -694,15 +705,15 @@ const handleImportData = (options: importDataOptions) => {
           success(t("exportImport.validateDone"), false);
           return;
         }
-        // 异步导入：提交后台任务，进度与错误报告在下载中心获取
+        // 异步导入：提交后台任务，进度与错误报告在下载中心「导入记录」获取
         if (formData.async) {
           const res = await api.importAsync({ action: formData.action }, file);
           if (res.code === 1000) {
-            message(t("exportImport.asyncSubmitted"), { type: "success" });
             if (options?.success) {
               options?.success(res);
             }
-            success(t("exportImport.asyncSubmitted"), true);
+            // 提交成功即关闭（success 统一 toast，勿重复弹提示）
+            success(t("exportImport.importSubmitted"), true);
           } else {
             failed(res.detail, false);
           }

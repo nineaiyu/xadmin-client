@@ -169,6 +169,7 @@ exportImport:
   uploadRuleTip: 文件不能为空
   uploadTip: 可点击或拖拽上传
   downloadTip: 下载{ action }模板
+  downloadTemplate: 下载模板
   ignoreError: 忽略错误
   ignoreErrorAsyncTip: 异步导入无需此选项：失败行逐行隔离并生成错误报告
   asyncExport: 异步导出

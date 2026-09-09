@@ -96,6 +96,6 @@ defineExpose({ getRef });
     :row-props="{ gutter: 24 }"
     class="m-5"
     label-position="left"
-    label-width="140"
+    label-width="140px"
   />
 </template>

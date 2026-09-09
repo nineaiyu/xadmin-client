@@ -12,6 +12,8 @@ const formRef = ref();
 defineOptions({ name: "ImportData" });
 
 interface FormItemProps {
+  /** 模板格式（与导出弹窗的文件类型同源选项，仅用于下载模板） */
+  type: string;
   action: string;
   ignore_error: boolean;
   /** 执行方式：导入（含异步）/ 仅校验 */
@@ -29,6 +31,7 @@ interface FormProps {
 
 const props = withDefaults(defineProps<FormProps>(), {
   formInline: () => ({
+    type: "xlsx",
     action: "create",
     ignore_error: false,
     mode: "import",
@@ -43,6 +46,13 @@ const { t } = useI18n();
 
 const state = ref<FormProps["formInline"]>(props.formInline);
 const formColumns: PlusColumn[] = [
+  {
+    // 模板格式与导出弹窗的「文件类型」同构（ExportImportFormatOptions 同源）
+    label: t("exportImport.type"),
+    prop: "type",
+    valueType: "radio",
+    options: ExportImportFormatOptions
+  },
   {
     label: t("exportImport.import"),
     prop: "action",
@@ -107,6 +117,8 @@ const goDownloadXlsx = (type: string) => {
     ignore_error: state.value.ignore_error
   });
 };
+/** 按所选格式下载模板（与导出弹窗的格式 radio 联动） */
+const goDownloadTemplate = () => goDownloadXlsx(state.value.type);
 watch(
   () => state.value.upload,
   () => {
@@ -131,23 +143,20 @@ defineExpose({ getRef });
     label-width="140px"
   >
     <template #plus-field-tips>
-      <el-col :offset="6" :span="12">
-        {{
-          t("exportImport.downloadTip", {
-            action:
-              state.action == "create"
-                ? t("exportImport.create")
-                : t("exportImport.update")
-          })
-        }}
-        <el-link
-          v-for="item in ExportImportFormatOptions"
-          :key="item.label"
-          class="ml-2"
-          type="primary"
-          @click="goDownloadXlsx(item.value)"
-          >{{ item.label }}
-        </el-link>
+      <el-col :span="24">
+        <div class="ml-35">
+          {{
+            t("exportImport.downloadTip", {
+              action:
+                state.action == "create"
+                  ? t("exportImport.create")
+                  : t("exportImport.update")
+            })
+          }}
+          <el-link class="ml-2" type="primary" @click="goDownloadTemplate">
+            {{ t("exportImport.downloadTemplate") }}
+          </el-link>
+        </div>
       </el-col>
     </template>
     <template #plus-field-upload>

@@ -1,110 +1,15 @@
-import { h, reactive, shallowRef } from "vue";
-import { useI18n } from "vue-i18n";
-import { ElTag } from "element-plus";
 import { exportRecordApi } from "@/api/system/export";
-import { getDefaultAuths } from "@/router/utils";
-import { statusTagProps } from "@/utils/dict";
-import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { addDialog } from "@/components/ReDialog";
-import TaskLogDialog from "@/views/system/components/TaskLogDialog.vue";
-import ArrowDown from "~icons/ri/arrow-down-line";
-import FileList from "~icons/ri/file-list-3-line";
+import { useRecordCenter } from "./recordCenter";
 
-/** 字节数人类可读（与上传文件大小展示口径一致：1024 进制） */
-function formatBytes(size: number): string {
-  if (!size) return "0 B";
-  const units = ["B", "KB", "MB", "GB"];
-  let value = size;
-  let index = 0;
-  while (value >= 1024 && index < units.length - 1) {
-    value /= 1024;
-    index += 1;
-  }
-  return `${value.toFixed(index === 0 ? 0 : 1)} ${units[index]}`;
-}
-
+/**
+ * 导出记录页签：权限码挂页面组件名 SystemExportRecord（页签化后组件为
+ * ExportRecordPanel），列表装配与导入记录共用 useRecordCenter。
+ */
 export function useExportRecord() {
-  const api = reactive(exportRecordApi);
-  const auth = reactive({
-    // 页签化后组件拆为 ExportRecordPanel，权限码仍挂页面组件名 SystemExportRecord
-    ...getDefaultAuths("SystemExportRecord", ["download", "log"])
+  return useRecordCenter({
+    localePrefix: "systemExportRecord",
+    componentName: "SystemExportRecord",
+    api: exportRecordApi,
+    sizeKey: "filesize"
   });
-  const { t } = useI18n();
-
-  /** 打开导出任务日志弹窗（复用任务执行日志的 WS 增量消费组件） */
-  const openLog = (pk: string | number, name: string) => {
-    addDialog({
-      title: `${name} ${t("systemExportRecord.logTitle")}`,
-      width: "860px",
-      destroyOnClose: true,
-      closeOnClickModal: false,
-      hideFooter: true,
-      props: { pk },
-      contentRenderer: () => h(TaskLogDialog)
-    });
-  };
-
-  const operationButtonsProps = shallowRef<OperationProps>({
-    showNumber: 4,
-    buttons: [
-      {
-        text: t("systemExportRecord.download"),
-        code: "download",
-        props: {
-          type: "primary",
-          icon: useRenderIcon(ArrowDown),
-          link: true
-        },
-        onClick: ({ row }) => {
-          api.download(row?.pk ?? row?.id);
-        },
-        show: auth.download && 4
-      },
-      {
-        text: t("systemExportRecord.log"),
-        code: "log",
-        props: {
-          type: "info",
-          icon: useRenderIcon(FileList),
-          link: true
-        },
-        onClick: ({ row }) => {
-          openLog(row?.pk ?? row?.id, row.name);
-        },
-        show: auth.log && 5
-      }
-    ]
-  });
-
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "status":
-          // 字典驱动（DictChoiceField）：颜色/文案管理员可在数据字典 export_status
-          // 维护；字典未配置回退枚举时无 color，由 statusTagProps 走本地映射兜底
-          column.cellRenderer = ({ row }) => {
-            const statusValue = row.status?.value ?? row.status;
-            return h(ElTag, statusTagProps(row.status), () =>
-              row.status?.label ?? t(`systemExportRecord.status${statusValue}`)
-            );
-          };
-          break;
-        case "filesize":
-          column.cellRenderer = ({ row }) =>
-            row.filesize === null || row.filesize === undefined
-              ? h("span", "—")
-              : h("span", formatBytes(row.filesize));
-          break;
-      }
-    });
-    return columns;
-  };
-
-  return {
-    api,
-    auth,
-    listColumnsFormat,
-    operationButtonsProps
-  };
 }

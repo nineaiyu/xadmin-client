@@ -169,6 +169,7 @@ exportImport:
   uploadRuleTip: upload file not exist
   uploadTip: Drag file here or click here to upload
   downloadTip: Download { action } template
+  downloadTemplate: Download template
   ignoreError: Ignore error
   ignoreErrorAsyncTip: Not needed for async imports — failed rows are isolated per-row and captured in the error report
   asyncExport: Async export
