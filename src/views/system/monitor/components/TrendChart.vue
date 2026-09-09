@@ -2,6 +2,7 @@
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useDark, useECharts } from "@pureadmin/utils";
+import type { UtilsEChartsOption } from "@pureadmin/utils";
 import type { MonitorOverview } from "@/api/system/monitor";
 
 defineOptions({ name: "MonitorTrendChart" });
@@ -25,7 +26,7 @@ const SERIES = [
   { key: "disk_used", nameKey: "systemMonitor.disk", color: "#e6a23c" }
 ] as const;
 
-const buildOptions = () => ({
+const buildOptions = (): UtilsEChartsOption => ({
   tooltip: { trigger: "axis" },
   legend: {
     top: 0,
