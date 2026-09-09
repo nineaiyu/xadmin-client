@@ -924,6 +924,7 @@ systemOnline:
 dataDict:
   dictType: 字典类型
   parent: 所属类型
+  parent_code: 类型编码
   code: 字典编码
   label: 显示名称
   label_en: 英文名称
@@ -931,4 +932,16 @@ dataDict:
   sort: 排序
   color: 标签颜色
   is_active: 是否启用
+  is_locked: 系统内置
+  children_count: 字典项数量
   items: 字典项
+  locked: 内置
+  moveUp: 上移
+  moveDown: 下移
+  batchActive: 批量启用
+  batchActiveConfirm: 确认启用选中的字典类型/字典项？
+  batchInactive: 批量停用
+  batchInactiveConfirm: 确认停用选中的字典类型/字典项？停用后该类型不参与下拉与消费接口
+  refreshCache: 刷新缓存
+  addType: 新增字典类型
+  addChild: 新增子项

@@ -923,6 +923,7 @@ systemOnline:
 dataDict:
   dictType: Dict type
   parent: Parent type
+  parent_code: Type code
   code: Dict code
   label: Label
   label_en: Label (EN)
@@ -930,4 +931,16 @@ dataDict:
   sort: Sort
   color: Tag color
   is_active: Active
+  is_locked: Built-in
+  children_count: Item count
   items: Dict items
+  locked: Built-in
+  moveUp: Move up
+  moveDown: Move down
+  batchActive: Batch enable
+  batchActiveConfirm: Enable the selected dict types/items?
+  batchInactive: Batch disable
+  batchInactiveConfirm: Disable the selected dict types/items? Disabled types are excluded from dropdowns and the items API
+  refreshCache: Refresh cache
+  addType: Add dict type
+  addChild: Add child item

@@ -30,6 +30,7 @@ import {
   ElCheckboxButton,
   ElCheckboxGroup,
   ElCol,
+  ElColorPicker,
   ElCollapse,
   ElCollapseItem,
   ElConfigProvider,
@@ -115,6 +116,7 @@ import "element-plus/es/components/cascader/style/css";
 import "element-plus/es/components/checkbox/style/css";
 import "element-plus/es/components/checkbox-button/style/css";
 import "element-plus/es/components/checkbox-group/style/css";
+import "element-plus/es/components/color-picker/style/css";
 import "element-plus/es/components/col/style/css";
 import "element-plus/es/components/collapse/style/css";
 import "element-plus/es/components/collapse-item/style/css";
@@ -196,6 +198,7 @@ const components = [
   ElCheckboxButton,
   ElCheckboxGroup,
   ElCol,
+  ElColorPicker,
   ElCollapse,
   ElCollapseItem,
   ElConfigProvider,
