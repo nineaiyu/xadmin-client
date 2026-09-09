@@ -31,9 +31,10 @@
 
 ## 历史教训速查
 
-| 教训                                                                    | 处置                                                                       |
-| ----------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| 8896 与本机 compose nginx 端口冲突 → reuseExistingServer 误复用容器服务 | 统一用 `test:e2e` 注入的 18896 隔离端口                                    |
-| 改后端代码后复用旧进程 → 假失败                                         | `test:e2e:fresh` / `test:e2e:smoke:fresh`                                  |
-| eager celery 下 `send_task` 不流转执行状态                              | dispatch 层走 `apply`（见 `system/views/task.py::_dispatch_periodic_run`） |
-| sqlite 并发 database is locked                                          | settings_e2e 已开 WAL + busy_timeout + IMMEDIATE                           |
+| 教训                                                                    | 处置                                                                                                                                                       |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 8896 与本机 compose nginx 端口冲突 → reuseExistingServer 误复用容器服务 | 统一用 `test:e2e` 注入的 18896 隔离端口                                                                                                                    |
+| 改后端代码后复用旧进程 → 假失败                                         | `test:e2e:fresh` / `test:e2e:smoke:fresh`                                                                                                                  |
+| eager celery 下 `send_task` 不流转执行状态                              | dispatch 层走 `apply`（见 `system/views/task.py::_dispatch_periodic_run`）                                                                                 |
+| sqlite 并发 database is locked                                          | settings_e2e 已开 WAL + busy_timeout + IMMEDIATE                                                                                                           |
+| 敏感操作告警 WS 弹窗盖住抽屉按钮 → 点击持续 `element is not stable`     | e2e_seed 用哨兵值关闭（`SENSITIVE_OPERATION_METHODS=["__E2E_DISABLED__"]`；**空清单=不按方法过滤=全告警**，且该配置走 SysConfig DB 值，settings 覆盖无效） |

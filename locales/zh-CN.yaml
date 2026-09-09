@@ -170,9 +170,23 @@ exportImport:
   uploadTip: 可点击或拖拽上传
   downloadTip: 下载{ action }模板
   ignoreError: 忽略错误
+  ignoreErrorAsyncTip: 异步导入无需此选项：失败行逐行隔离并生成错误报告
   asyncExport: 异步导出
   asyncTip: 数据量大时开启：提交后台任务，完成后在「系统管理 - 下载中心」下载
   asyncSubmitted: 导出任务已提交，请稍后在下载中心查看
+  mode: 执行方式
+  modeImport: 导入
+  modeValidate: 仅校验
+  async: 异步导入
+  asyncImportTip: 数据量大时开启：提交后台任务，进度与错误报告在「下载中心 - 导入记录」查看
+  validateResult: 导入校验结果
+  validateDone: 校验完成
+  validateSummary: 共 { total } 行，通过 { valid } 行，失败 { invalid } 行
+  validateTruncated: 错误明细已截断
+  validateRow: 数据行
+  validateField: 字段
+  validateError: 错误信息
+  importSubmitted: 导入任务已提交，请稍后在下载中心查看进度与错误报告
 
 messageNotifications:
   messageType: 消息类型
@@ -234,6 +248,7 @@ buttons:
   confirmUpdate: 确定更新该数据吗？
   checkStrictly: 层级关联
   checkUnStrictly: 层级独立
+  changeHistory: 变更历史
 
 menus:
   home: 首页
@@ -279,6 +294,7 @@ menus:
   chat: 聊天室
   apiDocs: 接口文档
   exportCenter: 下载中心
+  importCenter: 导入记录
   systemMonitor: 系统监控
   dataDict: 数据字典
 
@@ -845,6 +861,55 @@ systemExportRecord:
   download: 下载
   log: 日志
   logTitle: 导出日志
+
+systemImportRecord:
+  name: 文件名称
+  module: 目标模块
+  action: 导入动作
+  actioncreate: 新增
+  actionupdate: 更新
+  status: 导入状态
+  statusPENDING: 等待中
+  statusRUNNING: 导入中
+  statusSUCCESS: 成功
+  statusFAILURE: 失败
+  total: 总行数
+  success_rows: 成功行数
+  failed_rows: 失败行数
+  report_filesize: 报告大小
+  error_report: 错误报告
+  source_file: 源文件
+  creator: 触发人
+  error: 错误信息
+  created_time: 创建时间
+  download: 错误报告
+  log: 日志
+  logTitle: 导入日志
+
+changeHistory:
+  time: 操作时间
+  operator: 操作人
+  method: 方法
+  statusCode: 状态码
+  changes: 变更明细
+
+accessToken:
+  title: 访问令牌
+  tip: 个人访问令牌用于第三方系统/脚本调用本系统 API，权限与你的账号一致，可随时吊销。令牌仅在创建时展示一次，请妥善保存。
+  name: 令牌名称
+  nameRule: 用于识别令牌用途，如 jenkins-同步
+  prefix: 令牌前缀
+  active: 状态
+  expiredAt: 过期时间
+  neverExpire: 留空表示永不过期
+  lastUsed: 最后使用
+  createdTime: 创建时间
+  create: 创建令牌
+  createdTitle: 令牌创建成功
+  onceTip: 这是令牌明文唯一一次展示机会，关闭后无法再次查看
+  copy: 复制令牌
+  copied: 已复制到剪贴板
+  revoke: 吊销
 
 systemTaskCrontab:
   minute: 分钟

@@ -42,7 +42,8 @@ export function useUser(tableRef: Ref) {
       "logout",
       "unblock",
       "resetMfa",
-      "preview"
+      "preview",
+      "changeHistory"
     ])
   });
   const switchLoadMap = ref({});

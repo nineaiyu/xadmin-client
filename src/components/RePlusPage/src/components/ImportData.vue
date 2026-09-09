@@ -14,6 +14,9 @@ defineOptions({ name: "ImportData" });
 interface FormItemProps {
   action: string;
   ignore_error: boolean;
+  /** 执行方式：导入（含异步）/ 仅校验 */
+  mode: "import" | "validate";
+  async: boolean;
   upload: UploadUserFile[];
   api: { exportData: (_params: object) => unknown };
 }
@@ -28,6 +31,8 @@ const props = withDefaults(defineProps<FormProps>(), {
   formInline: () => ({
     action: "create",
     ignore_error: false,
+    mode: "import",
+    async: false,
     upload: [],
     api: {
       exportData: null
@@ -48,9 +53,30 @@ const formColumns: PlusColumn[] = [
     ]
   },
   {
+    label: t("exportImport.mode"),
+    prop: "mode",
+    valueType: "radio",
+    options: [
+      { label: t("exportImport.modeImport"), value: "import" },
+      { label: t("exportImport.modeValidate"), value: "validate" }
+    ]
+  },
+  {
+    label: t("exportImport.async"),
+    prop: "async",
+    valueType: "switch",
+    tooltip: t("exportImport.asyncImportTip"),
+    // 仅校验不落库，无异步一说（saveCallback 在校验分支忽略该值）
+    fieldProps: {
+      activeValue: true,
+      inactiveValue: false
+    }
+  },
+  {
     label: t("exportImport.ignoreError"),
     prop: "ignore_error",
-    renderField: renderBooleanSegmentedOption()
+    renderField: renderBooleanSegmentedOption(),
+    tooltip: t("exportImport.ignoreErrorAsyncTip")
   },
   {
     prop: "tips",

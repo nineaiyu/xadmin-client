@@ -131,6 +131,8 @@ interface ApiAuthProps {
   fields?: string | boolean | null | BaseApi["fields"];
   batchDestroy?: string | boolean | null | BaseApi["batchDestroy"];
   recycleList?: string | boolean | null | BaseApi["recycleList"];
+  /** 行级「变更历史」：页面在 getDefaultAuths 声明 + 菜单授权后显示 */
+  changeHistory?: string | boolean | null;
 }
 
 /** 回收站抽屉的附加业务列（删除时间列内建，无需声明） */

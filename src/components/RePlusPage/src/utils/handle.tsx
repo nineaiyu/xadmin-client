@@ -32,6 +32,7 @@ import { resourcesIDCacheApi } from "@/api/common";
 import AddOrEdit from "../components/AddOrEdit.vue";
 import ExportData from "../components/ExportData.vue";
 import ImportData from "../components/ImportData.vue";
+import ImportValidateResult from "../components/ImportValidateResult.vue";
 import { addDrawer, type DrawerOptions } from "@/components/ReDrawer/index";
 
 const modeFuncMap = {
@@ -657,29 +658,72 @@ const handleImportData = (options: importDataOptions) => {
     rawRow: {
       action: "create",
       ignore_error: false,
+      mode: "import",
+      async: false,
       api: api
     },
     dialogDrawerOptions: { width: "600px" },
     form: ImportData,
-    saveCallback: ({ formData, success, failed, closeLoading }) => {
-      api
-        .importData(
-          { action: formData.action, ignore_error: formData.ignore_error },
-          formData.upload[0].raw
-        )
-        .then(res => {
+    saveCallback: async ({ formData, success, failed, closeLoading }) => {
+      const file = formData.upload[0].raw;
+      try {
+        // 仅校验：逐行校验不落库，弹窗展示错误行定位
+        if (formData.mode === "validate") {
+          const res = await api.importValidate(
+            { action: formData.action },
+            file
+          );
+          if (res.code !== 1000) {
+            failed(res.detail, false);
+            return;
+          }
+          addDialog({
+            title: t("exportImport.validateResult"),
+            width: "640px",
+            hideFooter: true,
+            destroyOnClose: true,
+            props: {
+              total: res.data.total,
+              validCount: res.data.valid_count,
+              invalidCount: res.data.invalid_count,
+              errorsTruncated: res.data.errors_truncated,
+              errors: res.data.errors
+            },
+            contentRenderer: () => h(ImportValidateResult)
+          });
+          success(t("exportImport.validateDone"), false);
+          return;
+        }
+        // 异步导入：提交后台任务，进度与错误报告在下载中心获取
+        if (formData.async) {
+          const res = await api.importAsync({ action: formData.action }, file);
           if (res.code === 1000) {
+            message(t("exportImport.asyncSubmitted"), { type: "success" });
             if (options?.success) {
               options?.success(res);
             }
-            success(res.detail);
+            success(t("exportImport.asyncSubmitted"), true);
           } else {
             failed(res.detail, false);
           }
-        })
-        .finally(() => {
-          closeLoading();
-        });
+          return;
+        }
+        // 同步导入（原有行为不变）
+        const res = await api.importData(
+          { action: formData.action, ignore_error: formData.ignore_error },
+          file
+        );
+        if (res.code === 1000) {
+          if (options?.success) {
+            options?.success(res);
+          }
+          success(res.detail);
+        } else {
+          failed(res.detail, false);
+        }
+      } finally {
+        closeLoading();
+      }
     }
   });
 };

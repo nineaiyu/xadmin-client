@@ -18,6 +18,7 @@ import {
   openDialogDrawer,
   renderSwitch
 } from "./handle";
+import { handleShowChangeHistory } from "./handle-history";
 import { applyServerErrors } from "./serverErrors";
 import type { OperationButtonsRow } from "@/components/RePlusPage";
 import {
@@ -34,6 +35,7 @@ import Upload from "~icons/ep/upload";
 import Download from "~icons/ep/download";
 import EditPen from "~icons/ep/edit-pen";
 import AddFill from "~icons/ri/add-circle-line";
+import FileList from "~icons/ri/file-list-3-line";
 import { handleTree } from "@/utils/tree";
 
 export function usePlusPage(
@@ -139,6 +141,22 @@ export function usePlusPage(
         handleAddOrEdit(false, row);
       },
       show: (auth.partialUpdate || auth.update) && -30
+    },
+    {
+      text: t("buttons.changeHistory"),
+      code: "changeHistory",
+      props: {
+        type: "info",
+        icon: useRenderIcon(FileList),
+        link: true
+      },
+      onClick: ({ row }) => {
+        handleShowChangeHistory({ t, api, row });
+      },
+      tooltip: { content: t("buttons.changeHistory") },
+      // 页面在 getDefaultAuths 中声明 changeHistory 且菜单授予
+      // changeHistory:<ComponentName> 权限码时显示（用户管理页已开启示范）
+      show: auth.changeHistory && -25
     },
     {
       text: t("buttons.delete"),

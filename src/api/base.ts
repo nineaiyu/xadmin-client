@@ -199,6 +199,34 @@ export class BaseApi extends BaseRequest {
       }
     );
   };
+
+  /** 导入前校验（逐行校验不落库，返回错误行定位）：协议与 import-data 同源（原始文件 body） */
+  importValidate = (params: object, data: File) => {
+    return http.upload<DetailResult, File>(
+      `${this.baseApi}/import-validate`,
+      params,
+      data,
+      {
+        headers: {
+          "Content-Type": data.type === "text/csv" ? "text/csv" : "text/xlsx"
+        }
+      }
+    );
+  };
+
+  /** 异步导入（大数据量）：提交后台任务，进度与错误报告在「下载中心」获取 */
+  importAsync = (params: object, data: File) => {
+    return http.upload<DetailResult, File>(
+      `${this.baseApi}/import-async`,
+      params,
+      data,
+      {
+        headers: {
+          "Content-Type": data.type === "text/csv" ? "text/csv" : "text/xlsx"
+        }
+      }
+    );
+  };
 }
 
 export class ViewBaseApi extends BaseRequest {

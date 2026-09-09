@@ -75,15 +75,19 @@ export function useDataDict(tableRef: Ref) {
     });
   };
 
-  /** 行内「新增子项」：仅类型行可用，复用 CRUD 弹窗并预填所属类型 */
+  /** 行内「新增子项」：仅类型行可用，复用 CRUD 弹窗并预填所属类型。
+   * 预填值必须是与编辑态一致的 {pk,label} 对象（列表行 parent 即此形态），
+   * 传字符串 pk 时下拉回显会裸显 uuid 而匹配不到类型选项 */
   const onAddChild = (row: DictRow) =>
-    tableRef.value?.handleAddOrEdit(true, { parent: row?.pk });
+    tableRef.value?.handleAddOrEdit(true, {
+      parent: row?.pk ? { pk: row.pk, label: row.label } : undefined
+    });
 
   /** 行内操作：新增子项（-40，类型行专属）+ 上移/下移（编辑/删除/详情为框架内建）
    * showNumber 与 width 放大到 6 / 380，保证六个按钮全部平铺不进「更多」 */
   const operationButtonsProps = shallowRef<OperationProps>({
     showNumber: 6,
-    width: 380,
+    width: 420,
     buttons: [
       {
         text: t("dataDict.addChild"),
@@ -203,13 +207,14 @@ export function useDataDict(tableRef: Ref) {
           }
           return column;
         },
-        parent: ({ column, rawRow }) => {
+        parent: ({ column, rawRow, isAdd }) => {
           // 类型行没有「所属类型」概念（新建时留空即创建类型层）
           if (isTypeRow(rawRow)) {
             column["hideInForm"] = true;
             return column;
           }
-          if (rawRow?.is_locked) {
+          // 内置字典锁死所属类型；新增子项时所属类型由父行决定，也不可改
+          if (rawRow?.is_locked || (isAdd && rawRow?.parent)) {
             column["fieldProps"] = { ...column["fieldProps"], disabled: true };
           }
           return column;

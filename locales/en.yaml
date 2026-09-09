@@ -170,9 +170,23 @@ exportImport:
   uploadTip: Drag file here or click here to upload
   downloadTip: Download { action } template
   ignoreError: Ignore error
+  ignoreErrorAsyncTip: Not needed for async imports — failed rows are isolated per-row and captured in the error report
   asyncExport: Async export
   asyncTip: 'Enable for large datasets: submit a background task and download it later in "System - Download Center"'
   asyncSubmitted: Export task submitted, check the download center later
+  mode: Execution mode
+  modeImport: Import
+  modeValidate: Validate only
+  async: Async import
+  asyncImportTip: 'Enable for large datasets: submit a background task; track progress and error reports in "Download Center - Import Records"'
+  validateResult: Import validation result
+  validateDone: Validation finished
+  validateSummary: '{total} rows in total, {valid} valid, {invalid} invalid'
+  validateTruncated: Error details truncated
+  validateRow: Row
+  validateField: Field
+  validateError: Error message
+  importSubmitted: Import task submitted, track progress and error report in the download center
 
 messageNotifications:
   messageType: Message type
@@ -234,6 +248,7 @@ buttons:
   confirmUpdate: Are you sure to update this?
   checkStrictly: Hierarchical association
   checkUnStrictly: Hierarchical independence
+  changeHistory: Change history
 
 menus:
   home: Home
@@ -279,6 +294,7 @@ menus:
   chat: Chat
   apiDocs: Api Docs
   exportCenter: Download Center
+  importCenter: Import Records
   systemMonitor: System Monitor
   dataDict: Data Dictionary
 
@@ -844,6 +860,55 @@ systemExportRecord:
   download: Download
   log: Log
   logTitle: Export log
+
+systemImportRecord:
+  name: File name
+  module: Target module
+  action: Import action
+  actioncreate: Create
+  actionupdate: Update
+  status: Import status
+  statusPENDING: Pending
+  statusRUNNING: Running
+  statusSUCCESS: Success
+  statusFAILURE: Failure
+  total: Total rows
+  success_rows: Success rows
+  failed_rows: Failed rows
+  report_filesize: Report size
+  error_report: Error report
+  source_file: Source file
+  creator: Triggered by
+  error: Error message
+  created_time: Created time
+  download: Error report
+  log: Log
+  logTitle: Import log
+
+changeHistory:
+  time: Time
+  operator: Operator
+  method: Method
+  statusCode: Status code
+  changes: Changes
+
+accessToken:
+  title: Access Tokens
+  tip: Personal access tokens let third-party systems or scripts call the API with your account's permissions and can be revoked anytime. The token is shown only once at creation — store it safely.
+  name: Token name
+  nameRule: e.g. jenkins-sync
+  prefix: Prefix
+  active: Status
+  expiredAt: Expires at
+  neverExpire: Leave empty for never expiring
+  lastUsed: Last used
+  createdTime: Created time
+  create: Create token
+  createdTitle: Token created
+  onceTip: This is the only time the plain token is shown. It cannot be retrieved after closing.
+  copy: Copy token
+  copied: Copied to clipboard
+  revoke: Revoke
 
 systemTaskCrontab:
   minute: Minute

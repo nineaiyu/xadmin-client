@@ -18,7 +18,9 @@ import SecurityLogIcon from "~icons/ri/window-line";
 import MessageIcon from "~icons/ep/message";
 import AccountManagementIcon from "~icons/ri/profile-line";
 import ShieldKeyholeIcon from "~icons/ri/shield-keyhole-line";
+import KeyIcon from "~icons/ri/key-2-line";
 import MfaSecurity from "./components/MfaSecurity.vue";
+import AccessToken from "./components/AccessToken.vue";
 import { useUserStoreHook } from "@/store/modules/user";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
@@ -56,6 +58,13 @@ const panes = computed(() => [
     label: t("mfa.tabTitle"),
     icon: ShieldKeyholeIcon,
     component: MfaSecurity,
+    auth: true
+  },
+  {
+    key: "accessToken",
+    label: t("accessToken.title"),
+    icon: KeyIcon,
+    component: AccessToken,
     auth: true
   },
   {
