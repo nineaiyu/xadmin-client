@@ -170,6 +170,9 @@ exportImport:
   uploadTip: Drag file here or click here to upload
   downloadTip: Download { action } template
   ignoreError: Ignore error
+  asyncExport: Async export
+  asyncTip: 'Enable for large datasets: submit a background task and download it later in "System - Download Center"'
+  asyncSubmitted: Export task submitted, check the download center later
 
 messageNotifications:
   messageType: Message type
@@ -275,6 +278,9 @@ menus:
   messageCenter: Notice
   chat: Chat
   apiDocs: Api Docs
+  exportCenter: Download Center
+  systemMonitor: System Monitor
+  dataDict: Data Dictionary
 
 userinfo:
   userinfo: UserInfo
@@ -561,6 +567,16 @@ logsOperation:
   body: Response Body
   response_code: Status Code
   response_result: Response Result
+  method: Method
+  exec_time: Cost (s)
+  exec_time_min: Cost from (s)
+  exec_time_max: Cost to (s)
+  has_changes: Has field changes
+  changes: Changed fields
+  changesField: Field
+  changesOld: Old Value
+  changesNew: New Value
+  request_uuid: Request ID
 
 logsLogin:
   creator_id: Creator ID
@@ -810,6 +826,25 @@ systemTaskExecution:
   date_finished: Finish Time
   log: Log
 
+systemExportRecord:
+  name: File name
+  module: Source module
+  file_format: File format
+  status: Export status
+  statusPENDING: Pending
+  statusRUNNING: Running
+  statusSUCCESS: Success
+  statusFAILURE: Failure
+  rows: Rows
+  filesize: Size
+  file: Export file
+  creator: Triggered by
+  error: Error message
+  created_time: Created time
+  download: Download
+  log: Log
+  logTitle: Export log
+
 systemTaskCrontab:
   minute: Minute
   hour: Hour
@@ -840,3 +875,59 @@ recycleBin:
   purgeExpiredConfirm: Purge ALL recycle bin data beyond the retention period (30 days by default)?
   restoreDone: Restored
   purgeDone: Purged
+
+systemMonitor:
+  cpu: CPU usage
+  memory: Memory usage
+  disk: Disk usage
+  load: CPU load
+  trend: Host resource trend (last 60 samples)
+  cores: CPU cores
+  processes: Processes
+  swap: Swap usage
+  netIo: Network I/O (total)
+  db: Database
+  redis: Redis
+  celery: Celery
+  serviceHealth: Service health
+  healthy: Healthy
+  unhealthy: Unhealthy
+  uptime: Uptime
+  version: Version
+  usedMemory: Used memory
+  hitRate: Cache hit rate
+  clients: Connected clients
+  concurrency: Concurrency
+  celerySkipped: Celery probing is disabled in this environment
+  noWorker: No online worker
+  slowRequests: Slow requests Top 20
+  module: Module
+  path: Request path
+  cost: Cost
+  statusCode: Status code
+  creator: Creator
+  time: Time
+  noSlowRequest: No slow request in the window
+  autoRefresh: Auto refresh
+  refresh: Refresh
+  wsLive: Live (WebSocket)
+  wsFallback: Polling
+
+systemOnline:
+  forceLogout: Force offline
+  forceLogoutConfirm: Force { name } offline? All sessions will be revoked immediately
+  forceLogoutNoUser: Missing user info on this row; cannot force offline
+  batchForceLogout: Batch force offline
+  batchForceLogoutConfirm: Force selected users offline? All their sessions will be revoked immediately
+
+dataDict:
+  dictType: Dict type
+  parent: Parent type
+  code: Dict code
+  label: Label
+  label_en: Label (EN)
+  value: Dict value
+  sort: Sort
+  color: Tag color
+  is_active: Active
+  items: Dict items

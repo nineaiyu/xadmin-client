@@ -57,7 +57,8 @@ export function usePlusPage(
     detailColumnsFormat,
     searchColumnsFormat,
     beforeSearchSubmit,
-    baseColumnsFormat
+    baseColumnsFormat,
+    allowAsyncExport
   } = props;
 
   const route = useRoute();
@@ -218,7 +219,15 @@ export function usePlusPage(
       },
       onClick: () => {
         const pks = getSelectPks();
-        handleExportData({ t, pks, api, searchFields });
+        handleExportData({
+          t,
+          pks,
+          api,
+          searchFields,
+          // 未显式设置时按页面导出权限自动显示异步开关（与导出按钮同源判定），
+          // 保证所有支持导出的页面都提供大数据量异步导出入口
+          allowAsync: allowAsyncExport ?? Boolean(auth.exportData)
+        });
       },
       tooltip: { content: t("exportImport.export") },
       show: auth.exportData && -20

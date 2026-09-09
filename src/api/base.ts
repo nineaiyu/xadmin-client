@@ -177,6 +177,16 @@ export class BaseApi extends BaseRequest {
     );
   };
 
+  /** 异步导出（大数据量）：提交后台任务，产物在「下载中心」获取 */
+  exportAsync = (data?: object) => {
+    return this.request<BaseResult>(
+      "post",
+      {},
+      data ?? {},
+      `${this.baseApi}/export-async`
+    );
+  };
+
   importData = (params: object, data: File) => {
     return http.upload<DetailResult, File>(
       `${this.baseApi}/import-data`,

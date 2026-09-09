@@ -81,17 +81,35 @@ export async function logout(page: Page) {
  * 此时 dirs 传空数组即可命中。
  */
 export async function openMenuPath(page: Page, dirs: string[], path: string) {
-  for (const dir of dirs) {
-    const title = page.locator(".el-sub-menu__title", { hasText: dir }).first();
-    if (await title.isVisible().catch(() => false)) {
-      if ((await title.getAttribute("aria-expanded")) !== "true") {
-        await title.click();
+  const link = page.locator(`a[href="#${path}"]`).first();
+  // 逐级展开目录：每级展开动画稳定后再进下一级，避免链路后半段元素
+  // 未稳定/被遮挡导致 webkit 下点击偶发失败（intercepts pointer events）
+  const openDirs = async () => {
+    for (const dir of dirs) {
+      const title = page
+        .locator(".el-sub-menu__title", { hasText: dir })
+        .first();
+      await title.scrollIntoViewIfNeeded().catch(() => undefined);
+      if (await title.isVisible().catch(() => false)) {
+        if ((await title.getAttribute("aria-expanded")) !== "true") {
+          await title.click({ timeout: 8_000 });
+        }
+      }
+      // 等本目录子菜单完成展开，再继续（纯-admin 菜单展开动画 ~300ms）
+      if (await title.isVisible().catch(() => false)) {
+        await page.waitForTimeout(300);
       }
     }
+  };
+  await openDirs();
+  await link.scrollIntoViewIfNeeded().catch(() => undefined);
+  // 目标链接最终仍不可见（某级展开被遮挡失败）时，整段重开一次
+  for (let i = 0; i < 3 && !(await link.isVisible().catch(() => false)); i++) {
+    await page.waitForTimeout(300);
+    await openDirs();
+    await link.scrollIntoViewIfNeeded().catch(() => undefined);
   }
-  const link = page.locator(`a[href="#${path}"]`).first();
-  await link.waitFor({ state: "visible", timeout: 15_000 });
-  await link.click();
+  await link.click({ timeout: 10_000 });
 }
 
 /**

@@ -75,6 +75,21 @@ async function runTask(
   return String(body?.data?.task_id ?? "");
 }
 
+/**
+ * 在定时任务页按名称前缀检索，把目标行收敛到第一页。
+ * 列表按任务名称倒序排列且每页 15 行，历史运行（双浏览器两波 + 失败重试）堆积的
+ * e2e-* 任务会让新任务排在全量列表末尾，可能落在第 2 页，直接按名字找行会超时。
+ */
+async function searchTaskByName(
+  page: import("@playwright/test").Page,
+  prefix: string
+) {
+  const nameInput = page.getByPlaceholder("请输入任务名称");
+  await expect(nameInput).toBeVisible({ timeout: 15_000 });
+  await nameInput.fill(prefix);
+  await page.getByRole("button", { name: "搜索" }).click();
+}
+
 test("定时任务：立即执行 → 实时日志弹窗 → 执行历史闭环", async ({ page }) => {
   const taskName = `e2e-periodic-${Date.now()}`;
   await login(page);
@@ -91,6 +106,8 @@ test("定时任务：立即执行 → 实时日志弹窗 → 执行历史闭环"
   );
   const table = page.locator(".el-table");
   await expect(table).toBeVisible({ timeout: 15_000 });
+  // 列表按名称倒序且堆积后可能多页：先按唯一名称检索，收敛目标行到第一页
+  await searchTaskByName(page, taskName);
   const row = page.locator(".el-table__row", { hasText: taskName }).first();
   await expect(row).toBeVisible({ timeout: 15_000 });
 
@@ -145,7 +162,8 @@ test("执行历史：手动执行产生记录，状态成功、触发人可见",
 });
 
 test("定时任务：批量执行 → 执行历史产生多条成功记录", async ({ page }) => {
-  const names = [`e2e-batch-${Date.now()}-a`, `e2e-batch-${Date.now()}-b`];
+  const suffix = Date.now();
+  const names = [`e2e-batch-${suffix}-a`, `e2e-batch-${suffix}-b`];
   await login(page);
   const token = await getAccessToken(page);
 
@@ -162,6 +180,8 @@ test("定时任务：批量执行 → 执行历史产生多条成功记录", asy
   );
   const table = page.locator(".el-table");
   await expect(table).toBeVisible({ timeout: 15_000 });
+  // 全量列表按名称倒序且可能多页：先按唯一前缀检索，把两条任务收敛到第一页
+  await searchTaskByName(page, `e2e-batch-${suffix}`);
   for (const name of names) {
     // 主表体行（避开 el-table fixed 列的 DOM 副本），点击 label 触发勾选
     const bodyRow = page
@@ -262,6 +282,9 @@ test("定时任务：克隆 → 生成停用副本", async ({ page }) => {
     ["系统管理", "任务管理"],
     "/system/celery/task/index"
   );
+  // 列表按名称倒序且堆积后可能多页：先按唯一名称检索，收敛目标行到第一页。
+  // 克隆生成的 -copy 副本前缀相同（icontains 命中），刷新后仍在同一页。
+  await searchTaskByName(page, taskName);
   const row = page
     .locator(".el-table__body-wrapper .el-table__row", {
       hasText: taskName
@@ -303,6 +326,10 @@ test("定时任务：批量停用 → 批量启用", async ({ page }) => {
     ["系统管理", "任务管理"],
     "/system/celery/task/index"
   );
+  // 列表按任务名称倒序排列：任务名是 e2e-batchen-<时间戳>-a/-b，时间戳最大，
+  // 反而排在全量列表最末尾，双浏览器两波 + 失败重试会把表格堆积到多页，
+  // 两条目标任务可能分处两页导致勾选超时。先按唯一前缀检索再操作。
+  await searchTaskByName(page, `e2e-batchen-${suffix}`);
   const bodyRow = (name: string) =>
     page
       .locator(".el-table__body-wrapper .el-table__row", { hasText: name })

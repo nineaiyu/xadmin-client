@@ -20,11 +20,29 @@ export const builtinDetailRenderers: PlusColumnRegistry = {
     item["prop"] = `${column.key}.value`;
     item["options"] = computed(() => formatAddOrEditOptions(column?.choices));
     // pure-table ******
-    item["cellRenderer"] = ({ row }) => (
-      <span v-copy={get(row, `${column.key}.label`)}>
-        {get(row, `${column.key}.label`)}
-      </span>
-    );
+    item["cellRenderer"] = ({ row }) => {
+      const label = get(row, `${column.key}.label`);
+      // 数据字典驱动选项（DictChoiceField）携带 color：渲染彩色 tag（列表数据
+      // 与元数据 choices 均可能带 color，行内优先）；无 color 保持纯文本
+      const color =
+        get(row, `${column.key}.color`) ??
+        (
+          column?.choices as { value?: unknown; color?: string }[] | undefined
+        )?.find?.(option => option?.value === get(row, `${column.key}.value`))
+          ?.color;
+      if (color) {
+        return (
+          <el-tag
+            color={color as string}
+            style={{ border: "none", color: "#fff" }}
+            v-copy={label}
+          >
+            {label}
+          </el-tag>
+        );
+      }
+      return <span v-copy={label}>{label}</span>;
+    };
   },
   object_related_field: (item, { column }) => {
     if (!isEmpty(column?.choices)) {

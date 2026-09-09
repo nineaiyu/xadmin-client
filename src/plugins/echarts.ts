@@ -16,7 +16,8 @@ export function loadEcharts(app?: App) {
       components.GridComponent,
       components.TitleComponent,
       components.TooltipComponent,
-      components.DataZoomComponent
+      components.DataZoomComponent,
+      components.LegendComponent
     ]);
     if (app) {
       // @pureadmin/utils 的 useECharts 在 hook 初始化时同步读取 $echarts，

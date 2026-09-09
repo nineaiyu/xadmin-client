@@ -16,7 +16,7 @@ defineOptions({ name: "FromQuestion" });
 </script>
 
 <template>
-  <div class="flex justify-center items-center">
+  <div class="flex-c">
     <el-tooltip
       v-if="description"
       :content="description"

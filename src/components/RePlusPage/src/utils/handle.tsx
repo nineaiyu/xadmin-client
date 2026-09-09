@@ -572,6 +572,8 @@ interface exportDataOptions {
   pks: Array<string | number>;
   allowTypes?: Array<string>;
   searchFields?: Ref;
+  /** 是否提供「异步导出」开关（大数据量场景，产物在下载中心获取） */
+  allowAsync?: boolean;
 }
 
 // 数据导出
@@ -582,7 +584,8 @@ const handleExportData = (options: exportDataOptions) => {
     api,
     pks,
     allowTypes = ["all", "search", "selected"],
-    searchFields = undefined
+    searchFields = undefined,
+    allowAsync = false
   } = options;
 
   openDialogDrawer({
@@ -595,32 +598,41 @@ const handleExportData = (options: exportDataOptions) => {
       pks: pks
     },
     props: {
-      allowTypes
+      allowTypes,
+      allowAsync
     },
     dialogDrawerOptions: { width: "600px" },
     form: ExportData,
     saveCallback: async ({ formData, done, closeLoading }) => {
-      if (formData.range === "all") {
-        await api.exportData(formData).finally(() => {
-          closeLoading();
-        });
-      } else if (formData.range === "search" && searchFields) {
-        searchFields.value["type"] = formData["type"];
-        await api.exportData(toRaw(searchFields.value)).finally(() => {
-          closeLoading();
-        });
-      } else if (formData.range === "selected") {
-        resourcesIDCacheApi(formData.pks)
-          .then(async res => {
-            formData["spm"] = res.spm;
-            delete formData.pks;
-            await api.exportData(formData).finally(() => {
-              closeLoading();
-            });
-          })
-          .finally(() => {
-            closeLoading();
-          });
+      // 同步导出直接触发浏览器下载；异步导出提交后台任务，提示去下载中心取件
+      const exportBy = async (params: object) => {
+        if (formData.async) {
+          const res = await api.exportAsync(params);
+          if (res?.code === 1000) {
+            message(t("exportImport.asyncSubmitted"), { type: "success" });
+          } else {
+            // 200 + 业务码非 1000 时全局拦截器不提示，这里必须显式报错，
+            // 否则弹层静默关闭、用户误以为提交成功
+            message(res?.detail ?? t("results.failed"), { type: "error" });
+          }
+        } else {
+          await api.exportData(params);
+        }
+      };
+      try {
+        if (formData.range === "all") {
+          await exportBy(formData);
+        } else if (formData.range === "search" && searchFields) {
+          searchFields.value["type"] = formData["type"];
+          await exportBy(toRaw(searchFields.value));
+        } else if (formData.range === "selected") {
+          const res = await resourcesIDCacheApi(formData.pks);
+          formData["spm"] = res.spm;
+          delete formData.pks;
+          await exportBy(formData);
+        }
+      } finally {
+        closeLoading();
       }
       done();
     }

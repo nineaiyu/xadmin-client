@@ -257,6 +257,11 @@ interface RePlusPageProps {
    * - 数组：附加业务标识列（label 缺省按 localeName 自动翻译）
    */
   recycleBin?: boolean | RecycleBinColumn[];
+  /**
+   * 导出弹层是否提供「异步导出」开关（大数据量导出）。
+   * 未设置（undefined）时按页面导出权限 auth.exportData 自动显示，false 显式关闭。
+   */
+  allowAsyncExport?: boolean;
 }
 
 export type {

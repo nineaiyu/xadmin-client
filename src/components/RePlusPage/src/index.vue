@@ -41,7 +41,9 @@ const props = withDefaults(defineProps<RePlusPageProps>(), {
   plusSearchProps: () => ({}),
   plusDescriptionsProps: () => ({}),
   operationButtonsProps: () => ({}),
-  tableBarButtonsProps: () => ({})
+  tableBarButtonsProps: () => ({}),
+  // undefined 时由 hook 按页面导出权限（auth.exportData）自动显示异步开关，false 可显式关闭
+  allowAsyncExport: undefined
 });
 const emit = defineEmits<{
   /** 行点击：row 为动态接口数据行 */

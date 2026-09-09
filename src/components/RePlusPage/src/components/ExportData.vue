@@ -12,6 +12,8 @@ interface FormItemProps {
   type: string;
   range: string;
   pks: Array<number>;
+  /** 大数据量异步导出：提交后台任务，产物在下载中心下载 */
+  async?: boolean;
 }
 
 interface FormProps {
@@ -19,14 +21,17 @@ interface FormProps {
   formProps?: object;
   columns?: PlusColumn[];
   allowTypes?: string[];
+  allowAsync?: boolean;
 }
 
 const props = withDefaults(defineProps<FormProps>(), {
   allowTypes: () => ["all", "search", "selected"],
+  allowAsync: false,
   formInline: () => ({
     type: "xlsx",
     range: "all",
-    pks: []
+    pks: [],
+    async: false
   })
 });
 const { t } = useI18n();
@@ -60,6 +65,20 @@ const formColumns: PlusColumn[] = [
     })
   }
 ];
+
+if (props.allowAsync) {
+  formColumns.push({
+    label: t("exportImport.asyncExport"),
+    prop: "async",
+    valueType: "switch",
+    tooltip: t("exportImport.asyncTip"),
+    // 显式声明开关值域，避免 ElSwitch 因缺 inactive-value 发出开发态警告
+    fieldProps: {
+      activeValue: true,
+      inactiveValue: false
+    }
+  });
+}
 
 function getRef() {
   return formRef.value?.formInstance;

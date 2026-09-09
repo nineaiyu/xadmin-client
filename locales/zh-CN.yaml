@@ -170,6 +170,9 @@ exportImport:
   uploadTip: 可点击或拖拽上传
   downloadTip: 下载{ action }模板
   ignoreError: 忽略错误
+  asyncExport: 异步导出
+  asyncTip: 数据量大时开启：提交后台任务，完成后在「系统管理 - 下载中心」下载
+  asyncSubmitted: 导出任务已提交，请稍后在下载中心查看
 
 messageNotifications:
   messageType: 消息类型
@@ -275,6 +278,9 @@ menus:
   messageCenter: 消息中心
   chat: 聊天室
   apiDocs: 接口文档
+  exportCenter: 下载中心
+  systemMonitor: 系统监控
+  dataDict: 数据字典
 
 userinfo:
   userinfo: 个人信息
@@ -562,6 +568,16 @@ logsOperation:
   body: 请求体
   response_code: 状态码
   response_result: 响应内容
+  method: 请求方法
+  exec_time: 耗时(秒)
+  exec_time_min: 耗时不小于(秒)
+  exec_time_max: 耗时不大于(秒)
+  has_changes: 含字段变更
+  changes: 变更字段
+  changesField: 字段
+  changesOld: 原值
+  changesNew: 新值
+  request_uuid: 请求ID
 
 logsLogin:
   creator_id: 用户ID
@@ -811,6 +827,25 @@ systemTaskExecution:
   date_finished: 结束时间
   log: 日志
 
+systemExportRecord:
+  name: 文件名称
+  module: 来源模块
+  file_format: 文件格式
+  status: 导出状态
+  statusPENDING: 等待中
+  statusRUNNING: 导出中
+  statusSUCCESS: 成功
+  statusFAILURE: 失败
+  rows: 数据行数
+  filesize: 文件大小
+  file: 导出文件
+  creator: 触发人
+  error: 错误信息
+  created_time: 创建时间
+  download: 下载
+  log: 日志
+  logTitle: 导出日志
+
 systemTaskCrontab:
   minute: 分钟
   hour: 小时
@@ -841,3 +876,59 @@ recycleBin:
   purgeExpiredConfirm: 确定清空全部超过保留期（默认 30 天）的回收站数据？
   restoreDone: 恢复成功
   purgeDone: 清除完成
+
+systemMonitor:
+  cpu: CPU 使用率
+  memory: 内存使用率
+  disk: 磁盘使用率
+  load: CPU 负载
+  trend: 主机资源趋势（最近 60 个采样点）
+  cores: CPU 核数
+  processes: 进程数
+  swap: Swap 使用率
+  netIo: 网络 I/O（累计）
+  db: 数据库
+  redis: Redis
+  celery: Celery
+  serviceHealth: 服务健康
+  healthy: 正常
+  unhealthy: 异常
+  uptime: 运行时长
+  version: 版本
+  usedMemory: 内存占用
+  hitRate: 缓存命中率
+  clients: 客户端连接
+  concurrency: 并发
+  celerySkipped: 当前环境未启用 Celery 探测
+  noWorker: 暂无在线 worker
+  slowRequests: 慢请求 Top 20
+  module: 模块
+  path: 请求路径
+  cost: 耗时
+  statusCode: 状态码
+  creator: 触发人
+  time: 时间
+  noSlowRequest: 窗口内无慢请求
+  autoRefresh: 自动刷新
+  refresh: 刷新
+  wsLive: 实时推送
+  wsFallback: 轮询模式
+
+systemOnline:
+  forceLogout: 强制下线
+  forceLogoutConfirm: 确认强制 { name } 下线？该用户全部会话将立即失效
+  forceLogoutNoUser: 该行缺少用户信息，无法执行强制下线
+  batchForceLogout: 批量强制下线
+  batchForceLogoutConfirm: 确认对选中用户执行强制下线？其全部会话将立即失效
+
+dataDict:
+  dictType: 字典类型
+  parent: 所属类型
+  code: 字典编码
+  label: 显示名称
+  label_en: 英文名称
+  value: 字典值
+  sort: 排序
+  color: 标签颜色
+  is_active: 是否启用
+  items: 字典项

@@ -1,3 +1,12 @@
+import type {
+  MonitorCelery,
+  MonitorLive,
+  MonitorOverview,
+  MonitorRedisInfo,
+  MonitorServices,
+  MonitorSlow
+} from "@/api/system/monitor";
+
 /**
  * WebSocket 消息协议类型（与 server message/protocol.py 对齐）。
  *
@@ -23,7 +32,9 @@ export const MessageAction = {
   /** 聊天室消息（双向） */
   CHAT_MESSAGE: "chat_message",
   /** 任务执行日志增量推送 */
-  TASK_LOG: "task_log"
+  TASK_LOG: "task_log",
+  /** 监控面板指标推送（system/ws_monitor.py） */
+  MONITOR: "monitor"
 } as const;
 
 export type MessageActionValue =
@@ -49,6 +60,18 @@ export interface TaskLogPayload {
   offset: number;
   content: string;
   finished: boolean;
+}
+
+/** 监控指标推送帧（monitor；section 区分 live 高频 / panel 低频，与 ws_monitor.py 对齐）。
+ * 载荷类型复用监控 API 的强类型定义，保证 WS 与 HTTP 两路数据形状一致 */
+export interface MonitorPushPayload {
+  section: "live" | "panel";
+  live?: MonitorLive;
+  services?: MonitorServices;
+  redis?: MonitorRedisInfo;
+  celery?: MonitorCelery;
+  slow?: MonitorSlow;
+  trend?: MonitorOverview["trend"];
 }
 
 /** 通知推送载荷（push_message；message_type 语义见 message/notifications） */
