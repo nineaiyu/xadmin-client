@@ -2,22 +2,13 @@ import { getCurrentInstance, h, reactive, shallowRef } from "vue";
 import { useI18n } from "vue-i18n";
 import { taskExecutionApi } from "@/api/system/task";
 import { getDefaultAuths } from "@/router/utils";
+import { statusTagProps } from "@/utils/dict";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { addDialog } from "@/components/ReDialog";
 import TaskLogDialog from "@/views/system/components/TaskLogDialog.vue";
 import { ElTag } from "element-plus";
 import FileList from "~icons/ri/file-list-3-line";
-
-type TagType = "primary" | "success" | "warning" | "info" | "danger";
-
-const STATUS_TYPE: Record<string, TagType> = {
-  SUCCESS: "success",
-  FAILURE: "danger",
-  RUNNING: "primary",
-  PENDING: "info",
-  REVOKED: "warning"
-};
 
 export function useTaskExecution() {
   // 权限判断，用于判断是否有该权限
@@ -72,11 +63,16 @@ export function useTaskExecution() {
     columns.forEach(column => {
       switch (column._column?.key) {
         case "status":
-          // API 返回 LabeledChoiceField 形状 {value,label}，兼容旧的纯字符串状态
+          // 字典驱动（DictChoiceField）：颜色/文案管理员可在数据字典 task_status
+          // 维护；字典未配置回退枚举时无 color，由 statusTagProps 走本地映射兜底
           column.cellRenderer = ({ row }) => {
             const statusValue = row.status?.value ?? row.status;
-            return h(ElTag, { type: STATUS_TYPE[statusValue] ?? "info" }, () =>
-              t(`systemTaskExecution.status${statusValue}`)
+            return h(
+              ElTag,
+              statusTagProps(row.status),
+              () =>
+                row.status?.label ??
+                t(`systemTaskExecution.status${statusValue}`)
             );
           };
           break;

@@ -57,15 +57,24 @@ export function useUserColumnFormats({
             });
           break;
         case "gender":
-          column["cellRenderer"] = ({ row, props }) => (
-            <el-tag
-              size={props.size}
-              type={row.gender === 2 ? "danger" : "primary"}
-              effect="plain"
-            >
-              {row.gender?.label ?? ""}
-            </el-tag>
-          );
+          // 字典驱动（user_gender）：字典色优先彩色 tag；无色回退枚举映射（女=2 danger）
+          column["cellRenderer"] = ({ row, props }) => {
+            const gender = row.gender;
+            const tagType: "danger" | "primary" =
+              String(gender?.value ?? gender) === "2" ? "danger" : "primary";
+            const tagProps = gender?.color
+              ? { color: gender.color }
+              : { type: tagType };
+            return (
+              <el-tag
+                size={props.size}
+                {...tagProps}
+                effect={gender?.color ? undefined : "plain"}
+              >
+                {gender?.label ?? ""}
+              </el-tag>
+            );
+          };
           break;
         case "block":
           column["cellRenderer"] = renderSwitch({

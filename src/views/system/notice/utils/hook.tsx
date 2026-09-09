@@ -72,14 +72,22 @@ export function useNotice(tableRef: Ref) {
     columns.forEach(column => {
       switch (column._column?.key) {
         case "title":
+          // 字典驱动（notice_level）：字典色优先（el-text style），无色回退
+          // 枚举值即 el-text 类型的契约
           column["cellRenderer"] = ({ row }) => (
-            <el-text type={row.level?.value}>{row.title}</el-text>
+            <el-text
+              type={row.level?.value}
+              style={row.level?.color ? { color: row.level.color } : undefined}
+            >
+              {row.title}
+            </el-text>
           );
           break;
         case "read_user_count":
           column["cellRenderer"] = ({ row }) => (
             <el-link
               type={row.level?.value}
+              style={row.level?.color ? { color: row.level.color } : undefined}
               onClick={() => onGoNoticeReadDetail(row)}
             >
               {row.notice_type?.value === NoticeChoices.NOTICE
@@ -102,8 +110,16 @@ export function useNotice(tableRef: Ref) {
           (column?.options as SelectOption[]).forEach(option => {
             option["fieldSlot"] = () => {
               return (
-                // 后端 level choices 的 value.value 即 el-text 的 type 色值
-                <el-text type={option.value?.value as ElTextType}>
+                // 字典驱动（notice_level）：选项色字典 color 优先（style），
+                // 无色回退「value 即 el-text 类型色」契约
+                <el-text
+                  type={option.value?.value as ElTextType}
+                  style={
+                    option.value?.color
+                      ? { color: option.value.color }
+                      : undefined
+                  }
+                >
                   {option.label}
                 </el-text>
               );
@@ -194,7 +210,7 @@ export function useNotice(tableRef: Ref) {
   type ElTextType = "" | "primary" | "success" | "warning" | "info" | "danger";
   type SelectOption = {
     label?: string;
-    value?: { value?: string | number };
+    value?: { value?: string | number; color?: string | null };
     fieldItemProps?: { disabled?: boolean };
     fieldSlot?: () => VNode;
   };

@@ -104,8 +104,15 @@ export function useUserNotice(tableRef: Ref) {
     columns.forEach(column => {
       switch (column._column?.key) {
         case "title":
+          // 字典驱动（notice_level）：字典色优先（el-text style），无色回退
+          // 枚举值即 el-text 类型的契约
           column["cellRenderer"] = ({ row }) => (
-            <el-text type={row.level?.value}>{row.title}</el-text>
+            <el-text
+              type={row.level?.value}
+              style={row.level?.color ? { color: row.level.color } : undefined}
+            >
+              {row.title}
+            </el-text>
           );
           break;
         case "unread":
