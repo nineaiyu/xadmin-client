@@ -21,6 +21,7 @@ const {
     :api="api"
     :auth="auth"
     locale-name="approval"
+    :selection="true"
     :list-columns-format="listColumnsFormat"
     :operationButtonsProps="operationButtonsProps"
     :tableBarButtonsProps="tableBarButtonsProps"

@@ -74,6 +74,7 @@ import {
   ElSpace,
   ElSplitter,
   ElSplitterPanel,
+  ElStatistic,
   ElSubMenu,
   ElSwitch,
   ElTabPane,
@@ -166,6 +167,7 @@ import "element-plus/es/components/select/style/css";
 import "element-plus/es/components/space/style/css";
 import "element-plus/es/components/splitter/style/css";
 import "element-plus/es/components/splitter-panel/style/css";
+import "element-plus/es/components/statistic/style/css";
 import "element-plus/es/components/sub-menu/style/css";
 import "element-plus/es/components/switch/style/css";
 import "element-plus/es/components/tab-pane/style/css";
@@ -242,6 +244,7 @@ const components = [
   ElSpace,
   ElSplitter,
   ElSplitterPanel,
+  ElStatistic,
   ElSubMenu,
   ElSwitch,
   ElTabPane,

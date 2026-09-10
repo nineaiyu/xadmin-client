@@ -42,6 +42,31 @@ class ApprovalApi extends BaseApi {
       `${this.baseApi}/batch-approve`
     );
   };
+
+  /** 批量驳回（原因必填） */
+  batchReject = (pks: Array<string | number>, reason: string) => {
+    return this.request<BaseResult>(
+      "post",
+      {},
+      { pks, reason },
+      `${this.baseApi}/batch-reject`
+    );
+  };
+
+  /** 待我审批数（轻量接口：顶栏铃铛/页签角标轮询，服务端 10s 短缓存） */
+  pendingCount = () => {
+    return this.request<DetailResult>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/pending-count`
+    );
+  };
+
+  /** 审批统计（近 30 天：我提交 / 我通过 / 我驳回 / 平均审批时长 / 我的待办） */
+  stats = () => {
+    return this.request<DetailResult>("get", {}, {}, `${this.baseApi}/stats`);
+  };
 }
 
 export const approvalApi = new ApprovalApi("/api/system/approvals");

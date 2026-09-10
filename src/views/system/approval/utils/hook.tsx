@@ -2,18 +2,22 @@ import { h, reactive, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElForm, ElFormItem, ElInput, ElTag } from "element-plus";
 import { addDialog } from "@/components/ReDialog";
-import { getDefaultAuths } from "@/router/utils";
+import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { approvalApi } from "@/api/system/approval";
 import {
   handleOperation,
+  type OperationButtonsRow,
   type OperationProps,
   type PageTableColumn
 } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";
+import { refreshApprovalBadge } from "@/utils/approvalBadge";
+import ApprovalLogsDialog from "../components/ApprovalLogsDialog.vue";
 import Check from "~icons/ep/check";
 import Close from "~icons/ep/close";
+import Document from "~icons/ep/document";
 import RefreshLeft from "~icons/ep/refresh-left";
 
 export type ApprovalScope = "pending" | "mine";
@@ -38,10 +42,14 @@ export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
       "approve",
       "reject",
       "cancel",
-      "batchApprove"
+      "batchApprove",
+      "batchReject"
     ])
   );
   const { t } = useI18n();
+
+  /** 互跳抽屉要读操作日志：无该菜单权限时按钮不展示（否则必然 403） */
+  const canReadOperationLog = hasAuth("list:SystemOperationLog");
 
   // 作用域隔离：列表请求按页签追加 scope 参数（后端 ApprovalScopeFilter 收口取值域）
   const api = reactive(
@@ -51,7 +59,11 @@ export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
     })
   );
 
-  const refresh = () => tableRef.value?.handleGetData();
+  /** 列表刷新 + 待办角标即时刷新（审批动作都会改变待办数，不能等下一次轮询） */
+  const refresh = () => {
+    tableRef.value?.handleGetData();
+    refreshApprovalBadge();
+  };
 
   /** 驳回弹窗：原因必填（hook 内联表单，走 addDialog 标准范式） */
   const rejectForm = reactive({ reason: "" });
@@ -109,6 +121,109 @@ export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
     });
   };
 
+  /** 互跳：查看该审批单对应的操作日志（近似口径，弹窗内已标注） */
+  const openRelatedLogs = row => {
+    addDialog({
+      title: `${t("approval.relatedLogs")} - ${String(row.pk).slice(0, 8).toUpperCase()}`,
+      width: "860px",
+      draggable: true,
+      destroyOnClose: true,
+      closeOnClickModal: false,
+      hideFooter: true,
+      props: {
+        path: row.path,
+        objectPk: row.object_pk,
+        creatorPk: row.creator?.pk
+      },
+      contentRenderer: () => h(ApprovalLogsDialog)
+    });
+  };
+
+  /** 批量驳回弹窗：原因必填，逐单校验由服务端收口（部分失败明细逐条提示） */
+  const batchRejectForm = reactive({ reason: "" });
+  const openBatchReject = () => {
+    const pks = tableRef.value?.getSelectPks("pk") ?? [];
+    if (!pks.length) {
+      message(t("results.noSelectedData"), { type: "error" });
+      return;
+    }
+    addDialog({
+      title: t("approval.batchRejectTitle", { n: pks.length }),
+      width: "440px",
+      draggable: true,
+      closeOnClickModal: false,
+      contentRenderer: () => (
+        <ElForm model={batchRejectForm}>
+          <ElFormItem
+            prop="reason"
+            rules={[
+              {
+                required: true,
+                message: t("approval.rejectReasonRequired"),
+                trigger: "blur"
+              }
+            ]}
+          >
+            <ElInput
+              type="textarea"
+              rows={3}
+              maxlength={200}
+              show-word-limit
+              v-model={batchRejectForm.reason}
+              placeholder={t("approval.reasonPlaceholder")}
+            />
+          </ElFormItem>
+        </ElForm>
+      ),
+      closeCallBack: () => (batchRejectForm.reason = ""),
+      beforeSure: (done, { closeLoading }) => {
+        const reason = batchRejectForm.reason.trim();
+        // ReDialog 不触发表单校验：原因必填同样在此显式收口
+        if (!reason) {
+          message(t("approval.rejectReasonRequired"), { type: "error" });
+          return;
+        }
+        handleOperation({
+          t,
+          apiReq: approvalApi.batchReject(pks, reason),
+          success: res => {
+            done();
+            const failed =
+              (res?.data as { failed?: Array<{ no: string; reason: string }> })
+                ?.failed ?? [];
+            if (failed.length) {
+              message(
+                t("approval.batchRejectPartial", {
+                  n: failed.length,
+                  detail: failed
+                    .map(item => `${item.no}: ${item.reason}`)
+                    .join("；")
+                }),
+                { type: "warning" }
+              );
+            }
+            refresh();
+          },
+          requestEnd: closeLoading
+        });
+      }
+    });
+  };
+
+  /** 互跳按钮：两个页签共用（无操作日志读权限时不展示） */
+  const relatedLogsButton: OperationButtonsRow = {
+    text: t("approval.relatedLogs"),
+    code: "relatedLogs",
+    props: {
+      type: "info",
+      icon: useRenderIcon(Document),
+      link: true
+    },
+    tooltip: { content: t("approval.relatedLogs") },
+    onClick: ({ row }) => openRelatedLogs(row),
+    show: canReadOperationLog && 6
+  };
+
   /** 行内按钮：待我审批页签 = 通过/驳回；我发起的页签 = 撤回（仅 PENDING） */
   const operationButtonsProps = shallowRef<OperationProps>({
     showNumber: 3,
@@ -151,7 +266,8 @@ export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
               },
               onClick: ({ row }) => openReject(row),
               show: auth.reject && 5
-            }
+            },
+            relatedLogsButton
           ]
         : [
             {
@@ -179,7 +295,8 @@ export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
               },
               show: row =>
                 auth.cancel && (row.status?.value ?? row.status) === "PENDING"
-            }
+            },
+            relatedLogsButton
           ]
   });
 
@@ -212,6 +329,18 @@ export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
           });
         },
         show: auth.batchApprove
+      },
+      {
+        text: t("approval.batchReject"),
+        code: "batchReject",
+        props: {
+          type: "danger",
+          icon: useRenderIcon(Close),
+          plain: true
+        },
+        tooltip: { content: t("approval.batchReject") },
+        onClick: () => openBatchReject(),
+        show: auth.batchReject
       }
     ]
   });

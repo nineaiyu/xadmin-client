@@ -7,8 +7,22 @@ import { TabItem } from "@/layout/components/lay-notice/data";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useUserStoreHook } from "@/store/modules/user";
+import { useApprovalBadge } from "@/utils/approvalBadge";
 
 const { t } = useI18n();
+
+/**
+ * 顶栏铃铛角标 = 未读站内信 + 待我审批数。
+ *
+ * 审批计数走轻量接口（60s 轮询 + 服务端 10s 短缓存），无 pendingCount 权限码的
+ * 用户不发起请求、计数恒为 0（见 utils/approvalBadge）。
+ */
+const { pendingCount } = useApprovalBadge();
+const badgeCount = computed(
+  () =>
+    Number(useUserStoreHook().noticeCount || 0) +
+    Number(pendingCount.value || 0)
+);
 const notices = ref<TabItem[]>([
   {
     key: "1",
@@ -72,19 +86,12 @@ const getLabel = computed(
         'dropdown-badge',
         'navbar-bg-hover',
         'select-none',
-        useUserStoreHook().noticeCount !== 0 && 'mr-2.5'
+        badgeCount !== 0 && 'mr-2.5'
       ]"
       role="button"
       :aria-label="t('layout.notice')"
     >
-      <el-badge
-        :max="99"
-        :value="
-          useUserStoreHook().noticeCount === 0
-            ? ''
-            : useUserStoreHook().noticeCount
-        "
-      >
+      <el-badge :max="99" :value="badgeCount === 0 ? '' : badgeCount">
         <span class="header-notice-icon">
           <IconifyIconOffline :icon="BellIcon" />
         </span>

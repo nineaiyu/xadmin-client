@@ -309,6 +309,17 @@ approval:
   reject: 驳回
   cancel: 撤回
   batchApprove: 批量通过
+  batchReject: 批量驳回
+  batchRejectTitle: 批量驳回 {n} 条审批单
+  batchRejectPartial: "{n} 条未处理：{detail}"
+  statsTip: "统计口径：最近 {n} 天"
+  statsSubmitted: 我提交
+  statsApproved: 我通过
+  statsRejected: 我驳回
+  statsPending: 待我审批
+  statsAvgDuration: 平均审批时长
+  relatedLogs: 相关日志
+  relatedLogsTip: 按「同请求路径 + 同对象 + 同申请人」回溯该审批单对应的操作痕迹（近似口径，不含审批动作本身）
   approveConfirm: 确定通过审批单 {no} 吗？
   cancelConfirm: 确定撤回审批单 {no} 吗？
   batchApproveConfirm: 确定批量通过选中的审批单吗？
@@ -615,6 +626,7 @@ logsOperation:
   body: 请求体
   response_code: 状态码
   status_code: 业务码
+  created_time: 操作时间
   response_result: 响应内容
   method: 请求方法
   exec_time: 耗时(秒)

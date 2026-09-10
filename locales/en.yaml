@@ -309,6 +309,17 @@ approval:
   reject: Reject
   cancel: Cancel
   batchApprove: Batch Approve
+  batchReject: Batch Reject
+  batchRejectTitle: Reject {n} approval requests
+  batchRejectPartial: "{n} not processed: {detail}"
+  statsTip: "Stats window: last {n} days"
+  statsSubmitted: Submitted
+  statsApproved: Approved
+  statsRejected: Rejected
+  statsPending: Pending my approval
+  statsAvgDuration: Avg approval time
+  relatedLogs: Related logs
+  relatedLogsTip: Traces the operation logs matching the same path, object and applicant (approximate; the approval action itself is excluded)
   approveConfirm: Approve request {no}?
   cancelConfirm: Cancel request {no}?
   batchApproveConfirm: Batch approve the selected requests?
@@ -615,6 +626,7 @@ logsOperation:
   body: Response Body
   response_code: Status Code
   status_code: Business Code
+  created_time: Created time
   response_result: Response Result
   method: Method
   exec_time: Cost (s)
