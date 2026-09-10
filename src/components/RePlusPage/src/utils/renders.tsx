@@ -29,12 +29,13 @@ export const formatAddOrEditOptions = (
 ) => {
   const result = [];
   data?.forEach(item => {
-    item.pk = item.value;
+    // 不就地改写入参（后端元数据对象会被多处渲染复用）：需要 pk 时构造副本
+    const normalized = { ...item, pk: item.value };
     result.push({
-      label: item?.label,
-      value: isObjValue ? item : item.value,
+      label: normalized?.label,
+      value: isObjValue ? normalized : normalized.value,
       fieldItemProps: {
-        disabled: item?.disabled
+        disabled: normalized?.disabled
       }
     });
   });

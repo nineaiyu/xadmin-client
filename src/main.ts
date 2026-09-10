@@ -15,6 +15,8 @@ import { MotionPlugin } from "@vueuse/motion";
 import { useEcharts } from "@/plugins/echarts";
 import { createApp, type Directive } from "vue";
 import { RePlusPage } from "@/components/RePlusPage";
+// 注册 `api-search-*` 元数据搜索组件（框架层不反向依赖业务页面，改由业务侧注入）
+import "@/views/system/apiSearch";
 import { useElementPlus } from "@/plugins/elementPlus";
 import { usePlusProComponents } from "@/plugins/plusProComponents";
 import { injectResponsiveStorage } from "@/utils/responsive";

@@ -4,8 +4,11 @@ import {
   formatAddOrEditOptions,
   renderBooleanSegmentedOption
 } from "./renders";
+import { getApiSearchComponent } from "./apiSearch";
 import type {
+  PageColumn,
   PhoneInputProps,
+  PlusColumnContext,
   PlusColumnHandler,
   PlusColumnRegistry
 } from "./types";
@@ -116,10 +119,13 @@ export const builtinFormRenderers: PlusColumnRegistry = {
       );
       return;
     }
-    item["renderField"] = (value, onChange) => {
+    item["renderField"] = (
+      value: unknown,
+      onChange: (val: unknown) => void
+    ) => {
       return h(TagInput, {
         modelValue: value as Array<string>,
-        onChange: x => {
+        onChange: (x: unknown) => {
           onChange(x);
         }
       });
@@ -127,20 +133,26 @@ export const builtinFormRenderers: PlusColumnRegistry = {
   },
   phone: (item, { column }) => {
     column.default = { name: "China", code: "+86" };
-    item["renderField"] = (value, onChange) => {
+    item["renderField"] = (
+      value: unknown,
+      onChange: (val: unknown) => void
+    ) => {
       return h(PhoneInput, {
         modelValue: value as PhoneInputProps,
-        onChange: x => {
+        onChange: (x: unknown) => {
           onChange(x);
         }
       });
     };
   },
   json: item => {
-    item["renderField"] = (value, onChange) => {
+    item["renderField"] = (
+      value: unknown,
+      onChange: (val: unknown) => void
+    ) => {
       return h(JsonInput, {
         modelValue: value as string | Record<string, unknown>,
-        onChange: x => {
+        onChange: (x: unknown) => {
           onChange(x);
         }
       });
@@ -150,13 +162,16 @@ export const builtinFormRenderers: PlusColumnRegistry = {
 
 /** 表单列回退渲染器：对应原 default 分支（api-* 自定义搜索组件） */
 export const formFallbackRenderer: PlusColumnHandler = (item, ctx) => {
-  const { column, apiSearchComponents } = ctx;
+  const { column } = ctx;
   if (column.input_type.startsWith("api-")) {
     if (!column.hasOwnProperty("default")) {
       column.default = column?.multiple ? [] : undefined;
     }
-    item["renderField"] = (value, onChange) => {
-      return h(apiSearchComponents[column.input_type], {
+    item["renderField"] = (
+      value: unknown,
+      onChange: (val: unknown) => void
+    ) => {
+      return h(getApiSearchComponent(column.input_type), {
         modelValue: value,
         multiple: column?.multiple ?? false,
         onChange
@@ -166,7 +181,7 @@ export const formFallbackRenderer: PlusColumnHandler = (item, ctx) => {
 };
 
 /** integer / float 共用 */
-function numberFormRenderer(item, { column }) {
+function numberFormRenderer(item: PageColumn, { column }: PlusColumnContext) {
   item["valueType"] = "input-number";
   item["fieldProps"]["controlsPosition"] = "right";
   item["colProps"] = { xs: 24, sm: 24, md: 12, lg: 12, xl: 12 };
@@ -176,7 +191,7 @@ function numberFormRenderer(item, { column }) {
 }
 
 /** choice / multiple choice 共用 */
-function choiceFormRenderer(item, { column }) {
+function choiceFormRenderer(item: PageColumn, { column }: PlusColumnContext) {
   item["valueType"] = "select";
   item["fieldProps"]["filterable"] = true;
   item["options"] = computed(() =>
@@ -188,7 +203,10 @@ function choiceFormRenderer(item, { column }) {
 }
 
 /** labeled_choice / labeled_multiple_choice / object_related_field / m2m_related_field 共用 */
-function labeledChoiceFormRenderer(item, { column }) {
+function labeledChoiceFormRenderer(
+  item: PageColumn,
+  { column }: PlusColumnContext
+) {
   item["valueType"] = "select";
   item["fieldProps"]["filterable"] = true;
   item["options"] = computed(() =>
@@ -206,16 +224,19 @@ function labeledChoiceFormRenderer(item, { column }) {
 }
 
 /** *_related_field_file / *_related_field_image 共用 */
-function relatedFieldFileFormRenderer(item, { column }) {
+function relatedFieldFileFormRenderer(
+  item: PageColumn,
+  { column }: PlusColumnContext
+) {
   if (column.input_type.startsWith("object_related_field_")) {
     item["colProps"] = { xs: 24, sm: 24, md: 12, lg: 12, xl: 12 };
   }
-  item["renderField"] = (value, onChange) => {
+  item["renderField"] = (value: unknown, onChange: (val: unknown) => void) => {
     return h(UploadFiles, {
       modelValue: value,
       isImageFile: column.input_type.endsWith("_related_field_image"),
       multiple: column.multiple,
-      onChange: x => {
+      onChange: (x: unknown) => {
         onChange(x);
       }
     });
@@ -223,14 +244,14 @@ function relatedFieldFileFormRenderer(item, { column }) {
 }
 
 /** image upload / file upload 共用 */
-function uploadFormRenderer(item, { column }) {
+function uploadFormRenderer(item: PageColumn, { column }: PlusColumnContext) {
   delete item["fieldProps"];
   item["colProps"] = { xs: 24, sm: 24, md: 12, lg: 12, xl: 12 };
-  item["renderField"] = (value, onChange) => {
+  item["renderField"] = (value: unknown, onChange: (val: unknown) => void) => {
     return h(UploadFile, {
       modelValue: value,
       isImageFile: column.input_type === "image upload",
-      onChange: x => {
+      onChange: (x: unknown) => {
         onChange(x);
       }
     });

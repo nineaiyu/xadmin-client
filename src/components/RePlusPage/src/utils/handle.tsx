@@ -14,6 +14,7 @@ import {
 } from "vue";
 import { cloneDeep } from "lodash-es";
 import { message } from "@/utils/message";
+import { invalidateMetaCache } from "@/utils/metaCache";
 import type { PlusFormProps, RecordType } from "plus-pro-components";
 import { ElMessageBox } from "element-plus";
 import type { BaseApi } from "@/api/base";
@@ -368,6 +369,9 @@ const handleOperation = (options: operationOptions) => {
   apiReq
     ?.then((res: DetailResult) => {
       if (res.code === 1000) {
+        // 写操作成功即失效共享元数据缓存（菜单等全量列表）：避免「刚保存的改动
+        // 在其它页面的树/下拉里看不到」。命中缓存的下次读取会重新拉取。
+        invalidateMetaCache();
         if (showSuccessMsg) {
           message(res.detail ?? t("results.success"), { type: "success" });
         }

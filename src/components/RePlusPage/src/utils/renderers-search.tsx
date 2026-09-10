@@ -1,5 +1,6 @@
 import { computed, h } from "vue";
 import { formatAddOrEditOptions } from "./renders";
+import { getApiSearchComponent } from "./apiSearch";
 import { formatPublicLabels, getPickerShortcuts } from "./index";
 import type {
   PageColumn,
@@ -70,10 +71,10 @@ export const builtinSearchRenderers: PlusColumnRegistry = {
 
 /** 搜索列回退渲染器：对应原 default 分支（含 api-* 自定义搜索组件） */
 export const searchFallbackRenderer: PlusColumnHandler = (item, ctx) => {
-  const { column, apiSearchComponents } = ctx;
+  const { column } = ctx;
   if (column.input_type.startsWith("api-")) {
     item.renderField = (value, onChange) => {
-      return h(apiSearchComponents[column.input_type], {
+      return h(getApiSearchComponent(column.input_type), {
         modelValue: value,
         onChange
       });

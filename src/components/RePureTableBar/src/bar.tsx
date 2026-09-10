@@ -267,6 +267,9 @@ export default defineComponent({
     };
 
     /** 列展示拖拽排序 */
+    // 复用同一 Sortable 实例：rowDrop 会在每次 hover 拖拽按钮时触发，
+    // 重复 create 会在同一 wrapper 上叠加监听，需先销毁旧实例
+    let sortableInstance: ReturnType<typeof Sortable.create> | null = null;
     const rowDrop = (event: { preventDefault: () => void }) => {
       event.preventDefault();
       nextTick(() => {
@@ -275,7 +278,8 @@ export default defineComponent({
             $el: HTMLElement;
           }
         ).$el.firstElementChild as HTMLElement;
-        Sortable.create(wrapper, {
+        sortableInstance?.destroy();
+        sortableInstance = Sortable.create(wrapper, {
           animation: 300,
           handle: ".drag-btn",
           onEnd: ({ newIndex, oldIndex, item }) => {

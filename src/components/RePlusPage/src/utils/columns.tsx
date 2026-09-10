@@ -12,30 +12,24 @@ import type { PageColumn, PlusColumnContext, PlusColumnMeta } from "./types";
 
 import { formatPublicLabels } from "./index";
 import { formatAddOrEditOptions } from "./renders";
+import { getApiSearchComponents } from "./apiSearch";
 import { isEmail, isNumber } from "@pureadmin/utils";
 
 import Info from "~icons/ri/question-line";
-
-import SearchUser from "@/views/system/components/SearchUser.vue";
-import SearchDept from "@/views/system/components/SearchDept.vue";
-import SearchRole from "@/views/system/components/SearchRole.vue";
-import SearchMenu from "@/views/system/components/SearchMenu.vue";
 
 /**
  * @description 用与通过api接口，获取对应的column, 进行前端渲染
  */
 export function useBaseColumns(localeName: string) {
   /**
-   * @description 定义自定义搜索模板
+   * @description 自定义搜索模板（`api-search-*`）
+   *
+   * 组件由业务侧在应用启动时注册（见 `@/views/system/apiSearch`），
+   * 框架层不再反向 import 业务页面组件。
    */
-  const apiSearchComponents = {
-    "api-search-dept": SearchDept,
-    "api-search-role": SearchRole,
-    "api-search-user": SearchUser,
-    "api-search-menu": SearchMenu
-  };
+  const apiSearchComponents = getApiSearchComponents();
 
-  const addOrEditRules = ref({});
+  const addOrEditRules = ref<Record<string, unknown>>({});
   const addOrEditColumns = ref([]);
   const addOrEditDefaultValue = ref<Record<string, unknown>>({});
   const searchColumns = ref([]);
@@ -98,10 +92,14 @@ export function useBaseColumns(localeName: string) {
         addOrEditRules.value[column.key] = [
           {
             required: column.required,
-            validator: (rule, value, callback) => {
+            validator: (
+              rule: unknown,
+              value: unknown,
+              callback: (error?: Error) => void
+            ) => {
               if (value === "" || !value) {
                 callback();
-              } else if (!isEmail(value)) {
+              } else if (!isEmail(value as string)) {
                 callback(new Error(message));
               } else {
                 callback();
@@ -115,7 +113,11 @@ export function useBaseColumns(localeName: string) {
         addOrEditRules.value[column.key] = [
           {
             required: column.required,
-            validator: (rule, value, callback) => {
+            validator: (
+              rule: unknown,
+              value: unknown,
+              callback: (error?: Error) => void
+            ) => {
               if (value && !isNumber(value)) {
                 callback(new Error("field must be a number"));
               } else {
@@ -218,8 +220,9 @@ export function useBaseColumns(localeName: string) {
         }
       }
     });
+    // table_show 可能缺失：兜底 0，避免 NaN 参与相减导致排序结果不稳定
     listColumns.value = listColumns.value.sort(
-      (a, b) => a._column.table_show - b._column.table_show
+      (a, b) => (a._column.table_show ?? 0) - (b._column.table_show ?? 0)
     );
   };
 
@@ -231,8 +234,8 @@ export function useBaseColumns(localeName: string) {
     apiFields: BaseApi["fields"],
     columnsCallback = null,
     fieldsCallback = null,
-    columnsParams = {},
-    fieldsParams = {},
+    columnsParams: object = {},
+    fieldsParams: object = {},
     /** with_meta=1 内联载荷，存在时跳过对应分离请求 */
     inlineMeta?: {
       search_columns?: SearchColumnsResult["data"];

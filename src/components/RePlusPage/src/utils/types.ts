@@ -47,12 +47,18 @@ interface TableColumn {
   headerRenderer?: (data: TableColumnRenderer) => VNode | string;
 }
 
-interface PageColumn extends PlusColumn, TableColumn {
+interface PageColumn extends Omit<PlusColumn, "fieldProps">, TableColumn {
   /**
    * 自定义表单字段渲染器（对 plus-pro-components 的 any 签名做强类型收窄）。
    * value 的具体形态由列的 valueType / input_type 决定
    */
   renderField?: PlusRenderField;
+  /**
+   * 组件透传 props：plus-pro-components 原类型为「对象 | 工厂函数」联合，
+   * 无法按键索引。渲染器需要逐项改写（showAlpha / type / valueFormat / multiple…），
+   * 故在此收窄为可索引对象。
+   */
+  fieldProps?: Record<string, unknown>;
   // columns: Partial<Mutable<TableColumn> & { _column: object }>[]
   _column: Partial<
     Mutable<SearchFieldsResult["data"][0]> &
