@@ -28,9 +28,12 @@ test("定时任务：列表渲染与启停开关循环", async ({ page }) => {
   // 该版本 el-switch 不在根节点写 aria-checked，用 is-checked class 判定
   const toggle = row.locator(".el-switch").first();
   await expect(toggle).toBeVisible();
+  // 二次确认弹窗在关闭动画期间可能仍残留在 DOM：收敛到第一个，
+  // 避免两次开关操作间命中 2 个元素触发 strict mode violation
   const confirmButton = page
     .locator(".el-message-box")
-    .getByRole("button", { name: "确定" });
+    .getByRole("button", { name: "确定" })
+    .first();
   const isChecked = () =>
     toggle.evaluate(el => el.classList.contains("is-checked"));
   const initial = await isChecked();

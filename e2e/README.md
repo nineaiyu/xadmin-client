@@ -55,6 +55,26 @@ RePlusPage 列表**固定发 `ordering=-created_time` 且默认 `pageSize=15`**�
 3. 弹层内选择器（`api-search-user`）同理：等目标行渲染后按需退化到首行，并等
    `.el-loading-mask` 等浮层消失再点击（否则点击被 `intercepts pointer events` 拦截）。
 
+## ⚠️ 禁止固定延时：一律用 web-first 断言（`waitForTimeout` 已清零）
+
+`page.waitForTimeout(ms)` 是**盲等**：快机器白等、慢机器照样挂，且掩盖真实原因。
+除下表的例外外，所有「等一会儿再看」都必须换成 Playwright 的自动重试断言：
+
+| 场景                       | 不要用                               | 改用                                                                                   |
+| -------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------- |
+| 等元素出现 / 下拉展开      | `waitForTimeout(800)`                | `await expect(locator).toBeVisible({ timeout })`                                       |
+| 等元素消失 / 弹层关闭      | `waitForTimeout(300)`                | `await locator.waitFor({ state: "hidden" })`                                           |
+| 等折叠菜单展开             | `waitForTimeout(300)`                | 等**下一级子元素可见**（`el-menu` 无 `aria-expanded`，但折叠时子级不可见）             |
+| 等路由切换                 | `waitForTimeout(300)`                | `await page.waitForURL(...)`（或重试点击后以此断言）                                   |
+| 等异步结果变为可接受       | `waitForTimeout(1100)`               | `await expect.poll(async () => …, { intervals }).toBe(期望值)`                         |
+| 等保存 / 校验路径稳定      | `waitForTimeout(1500)`               | 竞速「弹层关闭」与「校验报错出现」，**只在真被拦下时**补点一次                         |
+| 等瞬时消息（`el-message`） | 裸 `locator(".el-message--success")` | 加 `.last()` 收敛到最新一条（上一条还在淡出时会命中 2 个元素 → strict mode violation） |
+
+**唯一例外（服务端时间域约束）**：`online.e2e.ts` 的强制下线恢复用例。服务端按
+`float(iat) <= float(revoked_at)` 判定被踢（`common/core/auth.py`），新签发 token 的
+`iat` 必须跨过失效秒 —— 这不是 UI 状态，任何 DOM 断言都无法表达，故用
+`expect.poll` 轮询「签发 → 以新 token 访问 userinfo」代替盲等（既拿到确定性，也不白等）。
+
 ## 历史教训速查
 
 | 教训                                                                                  | 处置                                                                                                                                                       |
@@ -67,3 +87,4 @@ RePlusPage 列表**固定发 `ordering=-created_time` 且默认 `pageSize=15`**�
 | 断言目标行在「第一页」→ 全量跑越到后面越失败（只在 webkit 暴露，曾误判 flaky）        | 用 `openList` 真实触发搜索过滤 / 断言「已加载出数据行」；详见上节「列表断言陷阱」                                                                          |
 | 菜单点击后 hash 未生效（页面停在 welcome）→ 后续 `expect(table)` 报 element not found | `openMenuPath` 点击后校验 hash，未生效则重开目录重试一次（见 helpers.ts 实现注释）                                                                         |
 | 机器负载高（IDE 满载 / 多浏览器并发）→ 10s 断言超时被击穿，基础用例也失败             | 先看 `uptime`；失败行落在 login/导航/渲染等待处时按环境假失败处理，隔离重跑复核                                                                            |
+| `waitForTimeout` 盲等（快机器白等、慢机器仍超时，掩盖真实原因）                       | 全量改 web-first 断言（`toBeVisible` / `waitFor` 状态 / `expect.poll` 轮询结果）；仅服务端时间域约束（强制下线 iat）用 `expect.poll`（详见上节）           |

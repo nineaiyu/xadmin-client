@@ -37,7 +37,7 @@ async function clickRowButton(page: Page, row: Locator, buttonText: string) {
   }
   const dropdownTrigger = opCell.locator(".el-dropdown").first();
   await dropdownTrigger.hover();
-  await page.waitForTimeout(800);
+  // 下拉展开由下方 toBeVisible 自动等待（web-first），无需固定延时
   const item = page
     .locator(".el-dropdown-menu__item")
     .filter({ hasText: buttonText })

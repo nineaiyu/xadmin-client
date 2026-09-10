@@ -71,13 +71,31 @@ test("用户配置：新增配置项 → 刷新后仍存在", async ({ page }) =
   await valueEditor.click();
   await page.keyboard.press("ControlOrMeta+a");
   await page.keyboard.type('"e2e-value-1"');
-  // 等编辑器 onChange → 表单模型同步完成（冷启动编译时同步可能延迟），
-  // 否则保存被前端校验拦下且弹层 loading 永不复位
-  await page.waitForTimeout(1_500);
-  await dialog
-    .getByRole("button", { name: /保存|确定/ })
-    .first()
-    .click();
+  // 编辑器 onChange → 表单模型同步存在延迟（冷启动编译更明显）；未同步时点保存会被前端
+  // 校验拦下（出现 is-error 行内报错）且弹层 loading 不复位。
+  // 不以固定 1.5s 延时等待，改为两个真实状态竞速（web-first）：
+  // 「保存成功 → 弹层关闭」与「被校验拦下 → 行内报错出现」；仅后者才补点，成功路径不会重复提交。
+  const saveBtn = dialog.getByRole("button", { name: /保存|确定/ }).first();
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await saveBtn.click();
+    const outcome = await Promise.race([
+      dialog.waitFor({ state: "hidden", timeout: 15_000 }).then(() => "closed"),
+      dialog
+        .locator(".el-form-item.is-error")
+        .first()
+        .waitFor({ state: "visible", timeout: 15_000 })
+        .then(() => "invalid")
+    ]).catch(() => "closed");
+    if (outcome !== "invalid") break;
+    // 与报错同时关闭（成功路径）时不再补点
+    if (!(await dialog.isVisible().catch(() => false))) break;
+    // 等报错清除后再补点，避免点在仍处于校验失败状态的按钮上
+    await dialog
+      .locator(".el-form-item.is-error")
+      .first()
+      .waitFor({ state: "hidden", timeout: 10_000 })
+      .catch(() => undefined);
+  }
   await expect(dialog).not.toBeVisible({ timeout: 15_000 });
 
   await expect(

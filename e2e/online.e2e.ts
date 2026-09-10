@@ -15,7 +15,7 @@ import {
  * 1. 受限用户登录拿到 access token；
  * 2. 管理员调用 force-logout（用户维度踢全部会话）；
  * 3. 旧 access token 立即 401（服务端令牌失效，而非仅前端登出）；
- * 4. 重新登录可恢复（iat 秒级粒度，越过被踢秒即可）。
+ * 4. 重新登录可恢复（被踢按 iat 秒级比较：以「签发后访问 userinfo」断言式重试验证）。
  * 另验证在线用户页面渲染（管理员自身 WS 会话在列）。
  */
 
@@ -71,18 +71,27 @@ test("强制下线：服务端令牌立即失效且可重新登录", async ({ pa
   });
   expect(checkResp.status()).toBe(401);
 
-  // 重新登录恢复（iat 秒级粒度：越过被踢秒即可）
-  await page.waitForTimeout(1100);
-  const reLogin = await loginBasic(
-    page,
-    PLAIN_USER.username,
-    PLAIN_USER.password
-  );
-  expect(reLogin.code).toBe(1000);
-  const reMe = await page.request.get(`${FRONT_URL}/api/system/userinfo`, {
-    headers: authz(reLogin.data.access as string)
-  });
-  expect(reMe.status()).toBe(200);
+  // 重新登录恢复：被踢判定为「revoked_at 与 iat 秒级比较」（common/core/auth.py），
+  // 新签发的 token 必须落在失效时间戳之后 —— 属服务端时间域约束，无法用 DOM 断言表达。
+  // 因此不用固定 1.1s 延时，而是「签发 → 以新 token 访问 userinfo」的断言式重试（web-first）：
+  // 立即生效即通过；同一秒内签发仍 401 时自动重试，跨过秒边界即成功。
+  await expect
+    .poll(
+      async () => {
+        const resp = await loginBasic(
+          page,
+          PLAIN_USER.username,
+          PLAIN_USER.password
+        );
+        if (resp?.code !== 1000) return `login:${resp?.code}`;
+        const me = await page.request.get(`${FRONT_URL}/api/system/userinfo`, {
+          headers: authz(resp.data.access as string)
+        });
+        return me.status();
+      },
+      { timeout: 15_000, intervals: [200, 300, 400, 600, 800] }
+    )
+    .toBe(200);
 });
 
 test("在线用户页面渲染", async ({ page }) => {

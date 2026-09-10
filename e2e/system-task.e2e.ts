@@ -198,7 +198,7 @@ test("定时任务：批量执行 → 执行历史产生多条成功记录", asy
     .getByRole("button", { name: "确定" })
     .first()
     .click();
-  await expect(page.locator(".el-message--success")).toBeVisible();
+  await expect(page.locator(".el-message--success").last()).toBeVisible();
 
   // 执行历史页：两条新记录均「成功」（所属定时任务列显示任务名）
   await openMenuPath(
@@ -247,7 +247,7 @@ test("执行历史：行删除与批量删除后记录消失", async ({ page }) 
     .getByRole("button", { name: "确定" })
     .first()
     .click();
-  await expect(page.locator(".el-message--success")).toBeVisible();
+  await expect(page.locator(".el-message--success").last()).toBeVisible();
   await expect(visibleRow(names[0])).toBeHidden();
 
   // 批量删除：勾选剩余两条 → 表头「批量删除」→ popconfirm 确认 → 行消失
@@ -263,7 +263,7 @@ test("执行历史：行删除与批量删除后记录消失", async ({ page }) 
     .getByRole("button", { name: "确定" })
     .first()
     .click();
-  await expect(page.locator(".el-message--success")).toBeVisible();
+  await expect(page.locator(".el-message--success").last()).toBeVisible();
   for (const name of names.slice(1)) {
     await expect(visibleRow(name)).toBeHidden();
   }
@@ -299,7 +299,7 @@ test("定时任务：克隆 → 生成停用副本", async ({ page }) => {
     .getByRole("button", { name: "确定" })
     .first()
     .click();
-  await expect(page.locator(".el-message--success")).toBeVisible();
+  await expect(page.locator(".el-message--success").last()).toBeVisible();
 
   const cloneRow = page
     .locator(".el-table__body-wrapper .el-table__row", {
@@ -362,7 +362,7 @@ test("定时任务：批量停用 → 批量启用", async ({ page }) => {
     .getByRole("button", { name: "确定" })
     .first()
     .click();
-  await expect(page.locator(".el-message--success")).toBeVisible();
+  await expect(page.locator(".el-message--success").last()).toBeVisible();
   for (const name of names) {
     await expect(bodyRow(name)).toContainText("禁用", { timeout: 15_000 });
   }
@@ -377,7 +377,7 @@ test("定时任务：批量停用 → 批量启用", async ({ page }) => {
     .getByRole("button", { name: "确定" })
     .first()
     .click();
-  await expect(page.locator(".el-message--success")).toBeVisible();
+  await expect(page.locator(".el-message--success").last()).toBeVisible();
 });
 
 test("定时表达式页：crontab 列表渲染", async ({ page }) => {

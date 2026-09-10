@@ -87,30 +87,39 @@ export async function logout(page: Page) {
  */
 export async function openMenuPath(page: Page, dirs: string[], path: string) {
   const link = page.locator(`a[href="#${path}"]`).first();
-  // 逐级展开目录：每级展开动画稳定后再进下一级，避免链路后半段元素
-  // 未稳定/被遮挡导致 webkit 下点击偶发失败（intercepts pointer events）
+  const dirTitle = (dir: string) =>
+    page.locator(".el-sub-menu__title", { hasText: dir }).first();
+  /**
+   * 逐级展开目录，并等待每级真正展开后再进下一级：避免链路后半段元素未稳定/
+   * 被遮挡导致 webkit 下点击偶发失败（intercepts pointer events）。
+   *
+   * el-menu **不暴露展开状态属性**（`aria-expanded` 读到的一直是 null，据此判断会
+   * 恒定走「未展开」分支），但折叠时子级元素不可见（`isVisible()` 为 false），
+   * 故统一以「下一级标题（最后一级用目标链接）已可见」作为本级已展开的判据（web-first）：
+   * 既替代了固定 300ms 延时，也保证重复调用幂等（已展开则跳过点击，不会误折叠）。
+   */
   const openDirs = async () => {
-    for (const dir of dirs) {
-      const title = page
-        .locator(".el-sub-menu__title", { hasText: dir })
-        .first();
+    for (let i = 0; i < dirs.length; i++) {
+      const title = dirTitle(dirs[i]);
       await title.scrollIntoViewIfNeeded().catch(() => undefined);
-      if (await title.isVisible().catch(() => false)) {
-        if ((await title.getAttribute("aria-expanded")) !== "true") {
-          await title.click({ timeout: 8_000 });
-        }
-      }
-      // 等本目录子菜单完成展开，再继续（纯-admin 菜单展开动画 ~300ms）
-      if (await title.isVisible().catch(() => false)) {
-        await page.waitForTimeout(300);
-      }
+      // 上一级尚未展开时本级标题不可见：等其出现，超时交给外层重试兜底
+      await title
+        .waitFor({ state: "visible", timeout: 3_000 })
+        .catch(() => undefined);
+      if (!(await title.isVisible().catch(() => false))) continue;
+      const next = i + 1 < dirs.length ? dirTitle(dirs[i + 1]) : link;
+      if (await next.isVisible().catch(() => false)) continue;
+      await title.click({ timeout: 8_000 });
     }
   };
   await openDirs();
   await link.scrollIntoViewIfNeeded().catch(() => undefined);
   // 目标链接最终仍不可见（某级展开被遮挡失败）时，整段重开一次
   for (let i = 0; i < 3 && !(await link.isVisible().catch(() => false)); i++) {
-    await page.waitForTimeout(300);
+    // 等目标链接出现（web-first）后再重开目录，替代固定 300ms 延时；超时进入下一轮
+    await link
+      .waitFor({ state: "visible", timeout: 2_000 })
+      .catch(() => undefined);
     await openDirs();
     await link.scrollIntoViewIfNeeded().catch(() => undefined);
   }
@@ -124,7 +133,8 @@ export async function openMenuPath(page: Page, dirs: string[], path: string) {
       .catch(() => false);
   await link.click({ timeout: 10_000 });
   if (!(await arrived())) {
-    await page.waitForTimeout(300);
+    // arrived() 内部已等待 5s，登录后的菜单异步刷新必然已结束，直接重开目录补点一次；
+    // 不再插入固定延时（web-first：以 arrived() 的 waitForURL 重试为准）
     await openDirs();
     await link.click({ timeout: 10_000 }).catch(() => undefined);
     await arrived();
@@ -163,6 +173,25 @@ export async function openList(
   const input = page.getByPlaceholder(filter.placeholder).first();
   await input.fill(filter.value);
   await page.getByRole("button", { name: "搜索", exact: true }).first().click();
+}
+
+/**
+ * 进入「用户管理」页，兼容两种菜单形态（受限角色仅授权单页时的形态差异）：
+ * - 管理员：「系统管理」是 el-sub-menu（无 href），需展开目录后点页面链接；
+ * - 受限角色（如 e2e_dp / e2e_fp）：被提升为顶级真链接（href=#/system），直接点击。
+ */
+export async function openUserManagement(page: Page) {
+  const dir = page
+    .locator(".el-sub-menu__title", { hasText: "系统管理" })
+    .first();
+  const table = page.locator(".el-table").first();
+  if (await dir.isVisible().catch(() => false)) {
+    await dir.click();
+    await page.locator(`a[href="#/system/user/index"]`).first().click();
+  } else {
+    await page.locator(`a[href="#/system"]`).first().click();
+  }
+  await expect(table).toBeVisible({ timeout: 15_000 });
 }
 
 /**

@@ -55,9 +55,17 @@ test("受限用户：直接访问系统管理路由仍无法取得用户列表�
   page
 }) => {
   await login(page, PLAIN_USER);
-  // 越权访问用户管理页面：路由可能进入，但列表数据必须被数据权限拦下
+  // 越权访问用户管理页面：路由可能进入，但列表数据必须被数据权限拦下。
+  // 以「表格已就绪且零数据行」断言替代固定 1s 延时（web-first）：
+  // 页面未渲染表格（被路由守卫拦下）时跳过该断言，接口断言仍为最终判据
   await page.goto("/#/system/users");
-  await page.waitForTimeout(1_000);
+  const table = page.locator(".el-table").first();
+  await table
+    .waitFor({ state: "visible", timeout: 6_000 })
+    .catch(() => undefined);
+  if (await table.isVisible().catch(() => false)) {
+    await expect(page.locator(".el-table__row")).toHaveCount(0);
+  }
   const response = await page.request.get(
     `${BACKEND_URL}/api/system/user?page=1&limit=10`,
     {
