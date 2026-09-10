@@ -5,6 +5,7 @@ import { addDialog } from "@/components/ReDialog";
 import editForm from "../components/edit.vue";
 import type { FormItemProps } from "./types";
 import { handleTree } from "@/utils/tree";
+import { fetchMetaList, META_KEYS } from "@/utils/metaCache";
 import {
   cloneDeep,
   deviceDetection,
@@ -93,17 +94,29 @@ export function useMenu() {
 
   const getMenuData = () => {
     loading.value = true;
-    api.list({ page: 1, size: 1000 }).then(res => {
-      if (res.code === 1000) {
-        const results = res.data.results;
-        results.forEach(item => {
-          item.menu_type = item.menu_type?.value ?? item.menu_type;
-          item.parent = item.parent?.pk ?? item.parent;
-        });
-        treeData.value = handleTree(results);
-      }
-      loading.value = false;
-    });
+    // 菜单页是菜单全量列表的权威刷新方：强制拉取并回填共享缓存（force），
+    // 供角色页 / 权限页直接复用，避免切页重复拉同一份数据
+    fetchMetaList(META_KEYS.menu, () => api.list({ page: 1, size: 1000 }), {
+      force: true
+    })
+      .then(res => {
+        if (res.code === 1000) {
+          const results = res.data.results;
+          results.forEach(item => {
+            item.menu_type = item.menu_type?.value ?? item.menu_type;
+            item.parent = item.parent?.pk ?? item.parent;
+          });
+          treeData.value = handleTree(results);
+        } else {
+          // 业务失败（权限不足/服务异常）给出反馈，避免只看到空白树
+          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+        }
+        loading.value = false;
+      })
+      .catch(() => {
+        // HTTP 层已提示具体错误，这里只负责收敛加载态
+        loading.value = false;
+      });
   };
 
   const handleDelete = row => {
@@ -295,7 +308,12 @@ export function useMenu() {
     });
   };
 
+  // 组件路径清单需逐个 import 视图组件才能读到其 name，成本高且仅用于下拉选项：
+  // 幂等 + 首屏空闲后再加载，避免阻塞菜单页首屏
+  let viewsLoading = false;
   const getViews = () => {
+    if (viewsLoading) return;
+    viewsLoading = true;
     const files = import.meta.glob<{ default: { name?: string } }>(
       "@/views/**/*.vue"
     );
@@ -444,7 +462,17 @@ export function useMenu() {
   onMounted(() => {
     getMenuApiList();
     getMenuData();
-    getViews();
+    // 组件路径清单体积大：延后到首屏空闲再加载（不支持 requestIdleCallback 的环境退回宏任务）
+    const idle = (
+      window as Window & {
+        requestIdleCallback?: (cb: () => void) => number;
+      }
+    ).requestIdleCallback;
+    if (typeof idle === "function") {
+      idle(() => getViews());
+    } else {
+      setTimeout(getViews, 0);
+    }
     if (hasAuth("list:SystemModelLabelField")) {
       modelLabelFieldApi
         .list({

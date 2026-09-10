@@ -1,7 +1,6 @@
 import {
   computed,
   getCurrentInstance,
-  h,
   onMounted,
   reactive,
   ref,
@@ -18,8 +17,7 @@ import {
   type OperationProps,
   type PageColumn
 } from "@/components/RePlusPage";
-import { addDialog } from "@/components/ReDialog";
-import TaskLogDialog from "@/views/system/components/TaskLogDialog.vue";
+import { openTaskLogDialog } from "@/views/system/components/taskLogDialog";
 import VideoPlay from "~icons/ep/video-play";
 import FileList from "~icons/ri/file-list-3-line";
 import PlayList from "~icons/ri/play-list-2-line";
@@ -53,15 +51,7 @@ export function useTask(tableRef: Ref) {
    * 打开某条执行记录的实时日志弹窗（WebSocket 增量推送）
    */
   const openLog = (pk: string | number, name: string) => {
-    addDialog({
-      title: `${name} ${t("systemTask.logTitle")}`,
-      width: "860px",
-      destroyOnClose: true,
-      closeOnClickModal: false,
-      hideFooter: true,
-      props: { pk },
-      contentRenderer: () => h(TaskLogDialog)
-    });
+    openTaskLogDialog(pk, `${name} ${t("systemTask.logTitle")}`);
   };
 
   /**

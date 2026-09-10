@@ -324,7 +324,7 @@ function onReset() {
                     @click.stop="
                       toggleSelectAll(true, getKeyList(data.children, 'pk'))
                     "
-                    >全选</el-button
+                    >{{ t("buttons.selectAll") }}</el-button
                   >
                   <el-button
                     v-if="data.parent === null"

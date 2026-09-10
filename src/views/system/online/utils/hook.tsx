@@ -1,7 +1,8 @@
 import { useI18n } from "vue-i18n";
 import { userOnlineApi } from "@/api/system/online";
 import { useRouter } from "vue-router";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { getDefaultAuths } from "@/router/utils";
+import { goUserDetail } from "@/views/system/hooks";
 import { getCurrentInstance, reactive, shallowRef, type Ref } from "vue";
 import {
   handleOperation,
@@ -139,12 +140,7 @@ export function useUserOnline(tableRef: Ref) {
 
   /** 行内 `creator` 嵌套字段（点击跳转 SystemUser 详情） */
   function onGoDetail(row: OnlineRow) {
-    if (hasAuth("list:SystemUser") && row?.creator && row?.creator?.pk) {
-      router.push({
-        name: "SystemUser",
-        query: { pk: row.creator.pk }
-      });
-    }
+    goUserDetail(router, row?.creator?.pk);
   }
 
   return {

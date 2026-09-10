@@ -221,7 +221,7 @@ start();
       </el-col>
       <el-col :xs="24" :md="8">
         <el-card shadow="never">
-          <template #header>Redis</template>
+          <template #header>{{ t("systemMonitor.redis") }}</template>
           <div class="flex flex-col gap-2 text-sm">
             <div class="flex justify-between">
               <span class="text-gray-500">{{
@@ -262,7 +262,9 @@ start();
       </el-col>
       <el-col :xs="24" :md="8">
         <el-card shadow="never">
-          <template #header> Celery ({{ celery.total }}) </template>
+          <template #header>
+            {{ t("systemMonitor.celery") }} ({{ celery.total }})
+          </template>
           <el-table
             v-if="celery.workers.length"
             :data="celery.workers"
@@ -270,7 +272,7 @@ start();
           >
             <el-table-column
               prop="name"
-              label="Worker"
+              :label="t('systemMonitor.worker')"
               min-width="140"
               show-overflow-tooltip
             />
@@ -279,8 +281,16 @@ start();
               :label="t('systemMonitor.concurrency')"
               width="80"
             />
-            <el-table-column prop="active" label="Active" width="70" />
-            <el-table-column prop="reserved" label="Reserved" width="80" />
+            <el-table-column
+              prop="active"
+              :label="t('systemMonitor.active')"
+              width="70"
+            />
+            <el-table-column
+              prop="reserved"
+              :label="t('systemMonitor.reserved')"
+              width="80"
+            />
           </el-table>
           <div v-else class="text-sm text-gray-400">
             {{
@@ -319,7 +329,11 @@ start();
           min-width="220"
           show-overflow-tooltip
         />
-        <el-table-column prop="method" label="Method" width="80" />
+        <el-table-column
+          prop="method"
+          :label="t('systemMonitor.method')"
+          width="80"
+        />
         <el-table-column
           prop="exec_time"
           :label="t('systemMonitor.cost')"

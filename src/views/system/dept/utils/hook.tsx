@@ -1,10 +1,9 @@
 import { deptApi } from "@/api/system/dept";
 import { getCurrentInstance, reactive, ref, type Ref, shallowRef } from "vue";
-import { cloneDeep } from "@pureadmin/utils";
 import { useRouter } from "vue-router";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
-import { customRolePermissionOptions } from "@/views/system/hooks";
+import { buildRoleRulesColumns } from "@/views/system/hooks";
 import { handleTree } from "@/utils/tree";
 import {
   type PageTableColumn,
@@ -106,31 +105,9 @@ export function useDept(tableRef: Ref) {
   const roleRules = ref({});
   const baseColumnsFormat = ({ addOrEditColumns, addOrEditRules }) => {
     roleRules.value = addOrEditRules.value;
-    roleRulesColumns.value = cloneDeep(addOrEditColumns.value);
-    roleRulesColumns.value.forEach(column => {
-      if (
-        ["name", "code", "roles", "rules", "mode_type"].indexOf(
-          column._column.key
-        ) === -1
-      ) {
-        column.hideInForm = true;
-      }
-      if (["name", "code"].indexOf(column._column.key) > -1) {
-        column["fieldProps"]["disabled"] = true;
-      }
-      if (["roles", "rules"].indexOf(column._column.key) > -1) {
-        column.options = customRolePermissionOptions(
-          column._column.choices ?? []
-        );
-      }
-    });
-    /* "pk", "roles", "rules", "mode_type" 这些字段在编辑和新增隐藏 */
-    addOrEditColumns.value.forEach(column => {
-      if (
-        ["pk", "roles", "rules", "mode_type"].indexOf(column._column.key) > -1
-      ) {
-        column.hideInForm = true;
-      }
+    roleRulesColumns.value = buildRoleRulesColumns(addOrEditColumns.value, {
+      keepKeys: ["name", "code", "roles", "rules", "mode_type"],
+      disabledKeys: ["name", "code"]
     });
   };
 

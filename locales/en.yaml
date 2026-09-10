@@ -720,7 +720,14 @@ systemUploadFile:
 status:
   hsLoad: Loading...
 
+chat:
+  inputLabel: "Message:"
+  inputPlaceholder: Type a message and press Enter
+  send: Send
+
 login:
+  serverForbidden: Login is not allowed on this server
+  serverRegisterForbidden: Registration is not allowed on this server
   username: Username
   password: Password
   verifyCode: VerifyCode
@@ -991,6 +998,10 @@ recycleBin:
   purgeDone: Purged
 
 systemMonitor:
+  worker: Worker
+  active: Active
+  reserved: Reserved
+  method: Method
   cpu: CPU usage
   memory: Memory usage
   disk: Disk usage

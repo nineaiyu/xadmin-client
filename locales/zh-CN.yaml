@@ -721,7 +721,14 @@ systemUploadFile:
 status:
   hsLoad: 加载中...
 
+chat:
+  inputLabel: 请输入：
+  inputPlaceholder: 输入消息并回车发送
+  send: 发送
+
 login:
+  serverForbidden: 当前服务器不允许登录
+  serverRegisterForbidden: 当前服务器不允许注册
   username: 账号
   password: 密码
   verifyCode: 验证码
@@ -992,6 +999,10 @@ recycleBin:
   purgeDone: 清除完成
 
 systemMonitor:
+  worker: Worker
+  active: Active
+  reserved: Reserved
+  method: Method
   cpu: CPU 使用率
   memory: 内存使用率
   disk: 磁盘使用率

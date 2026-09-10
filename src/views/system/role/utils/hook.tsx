@@ -10,7 +10,9 @@ import {
 } from "vue";
 import { useI18n } from "vue-i18n";
 import { roleApi } from "@/api/system/role";
+import { message } from "@/utils/message";
 import { handleTree } from "@/utils/tree";
+import { fetchMetaList, META_KEYS } from "@/utils/metaCache";
 import { menuApi } from "@/api/system/menu";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { FieldChoices } from "@/views/system/constants";
@@ -66,29 +68,34 @@ export function useRole() {
   /** 菜单权限 */
 
   const getMenuData = () => {
-    menuApi.list({ page: 1, size: 1000 }).then(res => {
-      setTimeout(() => {
-        if (res.code === 1000) {
-          if (hasAuth("list:SystemModelLabelField")) {
-            modelLabelFieldApi
-              .list({
-                page: 1,
-                size: 1000,
-                field_type: FieldChoices.ROLE
-              })
-              .then(result => {
-                if (result.code === 1000) {
-                  handleTree(result.data.results).forEach(item => {
-                    fieldLookupsData.value[item.pk] = item;
-                  });
-                  menuTreeData.value = handleTree(res.data.results);
-                  autoFieldTree(menuTreeData.value);
-                }
-              });
-          }
+    // 菜单全量列表与菜单页 / 权限页共用缓存；菜单页为权威刷新方（force）
+    fetchMetaList(META_KEYS.menu, () => menuApi.list({ page: 1, size: 1000 }))
+      .then(res => {
+        if (res.code !== 1000) {
+          // 业务失败（权限不足/服务异常）也要给出反馈，否则用户只看到空树
+          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+          return;
         }
-      }, 300);
-    });
+        if (hasAuth("list:SystemModelLabelField")) {
+          modelLabelFieldApi
+            .list({
+              page: 1,
+              size: 1000,
+              field_type: FieldChoices.ROLE
+            })
+            .then(result => {
+              if (result.code === 1000) {
+                handleTree(result.data.results).forEach(item => {
+                  fieldLookupsData.value[item.pk] = item;
+                });
+                menuTreeData.value = handleTree(res.data.results);
+                autoFieldTree(menuTreeData.value);
+              }
+            })
+            .catch(() => undefined);
+        }
+      })
+      .catch(() => undefined);
   };
 
   onMounted(() => {

@@ -244,7 +244,7 @@ onMounted(() => (configLoading.value = true));
       </Motion>
     </el-form>
     <Motion v-else :delay="300">
-      <el-result icon="error" title="当前服务器不允许注册" />
+      <el-result icon="error" :title="t('login.serverRegisterForbidden')" />
     </Motion>
     <Motion :delay="400">
       <el-form-item>

@@ -5,8 +5,7 @@ import { getDefaultAuths } from "@/router/utils";
 import { statusTagProps } from "@/utils/dict";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { addDialog } from "@/components/ReDialog";
-import TaskLogDialog from "@/views/system/components/TaskLogDialog.vue";
+import { openTaskLogDialog } from "@/views/system/components/taskLogDialog";
 import { ElTag } from "element-plus";
 import FileList from "~icons/ri/file-list-3-line";
 
@@ -22,15 +21,7 @@ export function useTaskExecution() {
    * 打开某条执行记录的实时日志弹窗（WebSocket 增量推送）
    */
   const openLog = (pk: string | number, name: string) => {
-    addDialog({
-      title: `${name} ${t("systemTask.logTitle")}`,
-      width: "860px",
-      destroyOnClose: true,
-      closeOnClickModal: false,
-      hideFooter: true,
-      props: { pk },
-      contentRenderer: () => h(TaskLogDialog)
-    });
+    openTaskLogDialog(pk, `${name} ${t("systemTask.logTitle")}`);
   };
 
   /**

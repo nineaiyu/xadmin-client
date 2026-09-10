@@ -12,6 +12,7 @@ import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { FieldChoices, MenuChoices } from "@/views/system/constants";
 import { menuApi } from "@/api/system/menu";
 import { handleTree } from "@/utils/tree";
+import { fetchMetaList, META_KEYS } from "@/utils/metaCache";
 import { modelLabelFieldApi } from "@/api/system/field";
 import { transformI18n } from "@/plugins/i18n";
 import { getKeyList } from "@pureadmin/utils";
@@ -82,7 +83,10 @@ export function useDataPermission() {
 
   onMounted(() => {
     if (hasAuth("list:SystemMenu")) {
-      menuApi.list({ page: 1, size: 1000 }).then(res => {
+      // 菜单全量列表与菜单页 / 角色页共用缓存；菜单页为权威刷新方（force）
+      fetchMetaList(META_KEYS.menu, () =>
+        menuApi.list({ page: 1, size: 1000 })
+      ).then(res => {
         if (res.code === 1000) {
           menuTreeData.value = res.data.results as MenuRow[];
         }

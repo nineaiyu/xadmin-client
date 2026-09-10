@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, reactive, ref } from "vue";
 import { DynamicScroller, DynamicScrollerItem } from "vue-virtual-scroller";
 import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
 import { message } from "@/utils/message";
+import { useI18n } from "vue-i18n";
 import { PureWebSocket, WS } from "@/utils/websocket";
 import {
   MessageAction,
@@ -14,6 +15,7 @@ import {
 defineOptions({
   name: "Chat"
 });
+const { t } = useI18n();
 const msgData = ref([]);
 const chatMsg = ref("");
 const scroller = ref();
@@ -122,15 +124,15 @@ const filteredItems = computed(() => {
         </div>
       </el-card>
       <el-card>
-        <el-form-item label="请输入：">
+        <el-form-item :label="t('chat.inputLabel')">
           <div class="w-[60%]">
             <el-input
               v-model="chatMsg"
-              placeholder="输入消息并回车发送"
+              :placeholder="t('chat.inputPlaceholder')"
               @keyup.enter="chatHandle"
             />
           </div>
-          <el-button @click="chatHandle">发送</el-button>
+          <el-button @click="chatHandle">{{ t("chat.send") }}</el-button>
         </el-form-item>
       </el-card>
     </el-col>

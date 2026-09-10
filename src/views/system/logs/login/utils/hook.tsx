@@ -1,9 +1,9 @@
 import { useI18n } from "vue-i18n";
 import { loginLogApi } from "@/api/system/logs/login";
 import { useRouter } from "vue-router";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { getDefaultAuths } from "@/router/utils";
 import { getCurrentInstance, reactive, shallowRef } from "vue";
-import { usePublicHooks } from "@/views/system/hooks";
+import { goUserDetail, usePublicHooks } from "@/views/system/hooks";
 import {
   type PageTableColumn,
   type OperationProps,
@@ -96,12 +96,7 @@ export function useLoginLog(tableRef) {
   };
 
   function onGoDetail(row: CreatorRow) {
-    if (hasAuth("list:SystemUser") && row?.creator && row?.creator?.pk) {
-      router.push({
-        name: "SystemUser",
-        query: { pk: row.creator.pk }
-      });
-    }
+    goUserDetail(router, row?.creator?.pk);
   }
 
   return {

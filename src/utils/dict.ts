@@ -15,6 +15,16 @@ const DICT_TTL = 5 * 60 * 1000;
 const dictCache = new Map<string, { items: DictItem[]; expires: number }>();
 const inflight = new Map<string, Promise<DictItem[]>>();
 
+/**
+ * 清空前端字典缓存（不传 code 清全部）。
+ *
+ * 字典维护页「刷新缓存」后调用，避免其他页面在其 TTL（5 分钟）内继续读旧字典。
+ */
+export function clearDictCache(code?: string) {
+  if (code) dictCache.delete(code);
+  else dictCache.clear();
+}
+
 /** 取字典项（带进程内 TTL 缓存与并发去重；失败返回空数组不缓存，下次调用重试） */
 export function getDictItems(code: string): Promise<DictItem[]> {
   const cached = dictCache.get(code);

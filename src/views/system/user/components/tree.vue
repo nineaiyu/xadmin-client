@@ -9,7 +9,8 @@ import type { TreeInstance } from "element-plus";
 
 interface Tree {
   id: number;
-  name: string;
+  pk?: number;
+  name?: string;
   highlight?: boolean;
   children?: Tree[];
 }
@@ -69,12 +70,28 @@ function nodeClick(value) {
   );
 }
 
+/** 递归收集树节点 pk（替代 el-tree 私有 store._getAllNodes） */
+function collectNodePks(nodes?: Tree[]): number[] {
+  const pks: number[] = [];
+  const walk = (list?: Tree[]) => {
+    list?.forEach(node => {
+      if (node.pk !== undefined && node.pk !== null) pks.push(node.pk);
+      if (node.children?.length) walk(node.children);
+    });
+  };
+  walk(nodes);
+  return pks;
+}
+
 function toggleRowExpansionAll(status) {
   isExpand.value = status;
-  const nodes = (proxy.$refs["treeRef"] as TreeInstance).store._getAllNodes();
-  for (let i = 0; i < nodes.length; i++) {
-    nodes[i].expanded = status;
-  }
+  // getNode 为 el-tree 公开 API，避免依赖私有 store（升级后不易失效）
+  const tree = proxy.$refs["treeRef"] as TreeInstance | undefined;
+  if (!tree?.getNode) return;
+  collectNodePks(props.treeData as Tree[]).forEach(pk => {
+    const node = tree.getNode(pk);
+    if (node) node.expanded = status;
+  });
 }
 
 /** 重置部门树状态（选中状态、搜索框值、树初始化） */

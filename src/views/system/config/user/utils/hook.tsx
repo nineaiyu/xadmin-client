@@ -1,6 +1,7 @@
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { goUserDetail } from "@/views/system/hooks";
 import { getCurrentInstance, reactive, type Ref, shallowRef } from "vue";
 import { userConfigApi } from "@/api/system/config/user";
 import {
@@ -63,12 +64,7 @@ export function useUserConfig(tableRef: Ref) {
   };
 
   const onGoUserDetail = (row: OwnerRow) => {
-    if (hasAuth("list:SystemUser") && row.owner && row.owner?.pk) {
-      router.push({
-        name: "SystemUser",
-        query: { pk: row.owner.pk }
-      });
-    }
+    goUserDetail(router, row.owner?.pk);
   };
 
   const operationButtonsProps = shallowRef<OperationProps>({

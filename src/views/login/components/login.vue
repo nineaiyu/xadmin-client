@@ -316,7 +316,7 @@ function onBack() {
         </Motion>
       </el-form>
       <Motion v-else :delay="300">
-        <el-result icon="error" title="当前服务器不允许登录" />
+        <el-result icon="error" :title="t('login.serverForbidden')" />
       </Motion>
       <Motion :delay="400">
         <el-form-item>

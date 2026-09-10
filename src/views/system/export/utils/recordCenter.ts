@@ -7,8 +7,7 @@ import { getDefaultAuths } from "@/router/utils";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { addDialog } from "@/components/ReDialog";
-import TaskLogDialog from "@/views/system/components/TaskLogDialog.vue";
+import { openTaskLogDialog } from "@/views/system/components/taskLogDialog";
 import ArrowDown from "~icons/ri/arrow-down-line";
 import FileList from "~icons/ri/file-list-3-line";
 
@@ -59,15 +58,7 @@ export function useRecordCenter(options: RecordCenterOptions) {
 
   /** 打开任务日志弹窗（复用任务执行日志的 WS 增量消费组件） */
   const openLog = (pk: string | number, name: string) => {
-    addDialog({
-      title: `${name} ${t(`${localePrefix}.logTitle`)}`,
-      width: "860px",
-      destroyOnClose: true,
-      closeOnClickModal: false,
-      hideFooter: true,
-      props: { pk },
-      contentRenderer: () => h(TaskLogDialog)
-    });
+    openTaskLogDialog(pk, `${name} ${t(`${localePrefix}.logTitle`)}`);
   };
 
   /** 字典 label 优先，回退页面 i18n；两边都没有时不渲染原始 key */

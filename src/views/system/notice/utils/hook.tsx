@@ -235,8 +235,17 @@ export function useNotice(tableRef: Ref) {
       searchFields.value.notice_user &&
       searchFields.value.notice_user !== ""
     ) {
+      // 参数来自 URL（可被手工篡改或外链传错）：非法 JSON 直接清理并中止，
+      // 避免解析异常中断 searchComplete 导致弹窗不再出现
+      let noticeUser: unknown;
+      try {
+        noticeUser = JSON.parse(routeParams.notice_user);
+      } catch {
+        searchFields.value.notice_user = "";
+        return;
+      }
       const row = {
-        notice_user: JSON.parse(routeParams.notice_user),
+        notice_user: noticeUser,
         notice_type: { value: NoticeChoices.USER }
       };
       searchFields.value.notice_user = "";

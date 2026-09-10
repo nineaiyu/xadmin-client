@@ -5,7 +5,7 @@ import { addDialog } from "@/components/ReDialog";
 import { deviceDetection, isAllEmpty } from "@pureadmin/utils";
 import { watch } from "vue";
 import { AesEncrypted } from "@/utils/aes";
-import { passwordRulesCheck } from "@/utils";
+import { buildPasswordValidator } from "./passwordRules";
 import { reactive, ref, type UnwrapNestedRefs } from "vue";
 import type { userApi } from "@/api/system/user";
 import type { PasswordRule } from "@/api/auth";
@@ -63,18 +63,7 @@ export function useUserResetPassword({
               rules={[
                 {
                   required: true,
-                  validator: (rule, value, callback) => {
-                    const { result, msg } = passwordRulesCheck(
-                      value,
-                      passwordRules.value,
-                      t
-                    );
-                    if (result) {
-                      callback();
-                    } else {
-                      callback(new Error(msg));
-                    }
-                  },
+                  validator: buildPasswordValidator(t, passwordRules),
                   trigger: "blur"
                 }
               ]}

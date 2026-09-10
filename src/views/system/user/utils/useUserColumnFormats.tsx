@@ -1,5 +1,5 @@
-import { cloneDeep, isPhone } from "@pureadmin/utils";
-import { customRolePermissionOptions } from "@/views/system/hooks";
+import { isPhone } from "@pureadmin/utils";
+import { buildRoleRulesColumns } from "@/views/system/hooks";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";
 import { AesEncrypted } from "@/utils/aes";
 import { h, shallowRef, ref, type Ref, type UnwrapNestedRefs } from "vue";
@@ -13,7 +13,7 @@ import {
   type RePlusPageProps
 } from "@/components/RePlusPage";
 import { handleTree } from "@/utils/tree";
-import { passwordRulesCheck } from "@/utils";
+import { buildPasswordValidator } from "./passwordRules";
 import type { useI18n } from "vue-i18n";
 import type { userApi } from "@/api/system/user";
 import type { PasswordRule } from "@/api/auth";
@@ -135,18 +135,7 @@ export function useUserColumnFormats({
           rules["password"] = [
             {
               required: true,
-              validator: (rule, value, callback) => {
-                const { result, msg } = passwordRulesCheck(
-                  value,
-                  passwordRules.value,
-                  t
-                );
-                if (result) {
-                  callback();
-                } else {
-                  callback(new Error(msg));
-                }
-              },
+              validator: buildPasswordValidator(t, passwordRules),
               trigger: "blur"
             }
           ];
@@ -181,38 +170,10 @@ export function useUserColumnFormats({
 
   const baseColumnsFormat = ({ addOrEditColumns, addOrEditRules }) => {
     roleRules.value = addOrEditRules.value;
-    roleRulesColumns.value = cloneDeep(addOrEditColumns.value);
-    roleRulesColumns.value.forEach(column => {
-      if (
-        ["username", "nickname", "roles", "rules", "mode_type"].indexOf(
-          column._column.key
-        ) === -1
-      ) {
-        column.hideInForm = true;
-      }
-      if (["username", "nickname"].indexOf(column._column.key) > -1) {
-        column["fieldProps"]["disabled"] = true;
-      }
-      if (["roles", "rules"].indexOf(column._column.key) > -1) {
-        column.options = customRolePermissionOptions(
-          column._column.choices ?? []
-        );
-      }
-    });
-    /* "pk", "roles", "rules", "mode_type" 这些字段在编辑和新增隐藏 */
-    addOrEditColumns.value.forEach(column => {
-      if (
-        ["pk", "roles", "rules", "mode_type"].indexOf(column._column.key) > -1
-      ) {
-        column.hideInForm = true;
-      }
-      if (
-        ["username", "nickname", "phone", "email", "gender"].indexOf(
-          column._column.key
-        ) > -1
-      ) {
-        column["colProps"] = { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 };
-      }
+    roleRulesColumns.value = buildRoleRulesColumns(addOrEditColumns.value, {
+      keepKeys: ["username", "nickname", "roles", "rules", "mode_type"],
+      disabledKeys: ["username", "nickname"],
+      wideKeys: ["username", "nickname", "phone", "email", "gender"]
     });
   };
 

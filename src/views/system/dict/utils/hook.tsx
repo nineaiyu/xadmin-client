@@ -4,7 +4,7 @@ import { ElTag } from "element-plus";
 import { dataDictApi, type MoveDirection } from "@/api/system/dict";
 import { getDefaultAuths } from "@/router/utils";
 import { message } from "@/utils/message";
-import { dictTagProps } from "@/utils/dict";
+import { clearDictCache, dictTagProps } from "@/utils/dict";
 import {
   handleOperation,
   type OperationProps,
@@ -185,6 +185,11 @@ export function useDataDict(tableRef: Ref) {
           handleOperation({
             t,
             apiReq: api.refreshCache(),
+            success() {
+              // 同步清空前端进程内字典缓存：否则其他页面在 5 分钟 TTL 内仍读旧字典
+              clearDictCache();
+              message(t("results.success"), { type: "success" });
+            },
             requestEnd() {
               loading.value = false;
             }

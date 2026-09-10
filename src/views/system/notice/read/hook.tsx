@@ -11,6 +11,7 @@ import { deviceDetection } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog";
 import { useRouter } from "vue-router";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { goUserDetail } from "@/views/system/hooks";
 import { useI18n } from "vue-i18n";
 import type { PageTableColumn, OperationProps } from "@/components/RePlusPage";
 import { renderSwitch, usePublicHooks } from "@/components/RePlusPage";
@@ -106,12 +107,7 @@ export function useNoticeRead(tableRef: Ref) {
   };
 
   function onGoUserDetail(row: OwnerRow) {
-    if (hasAuth("list:SystemUser") && row.owner && row.owner?.pk) {
-      router.push({
-        name: "SystemUser",
-        query: { pk: row.owner.pk }
-      });
-    }
+    goUserDetail(router, row.owner?.pk);
   }
 
   /** 行内 `notice_info` 嵌套字段（点击跳转 SystemNotice 详情） */

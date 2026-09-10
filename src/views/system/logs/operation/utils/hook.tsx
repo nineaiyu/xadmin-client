@@ -4,7 +4,8 @@ import type {
   PageTableColumn
 } from "@/components/RePlusPage";
 import { useRouter } from "vue-router";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { getDefaultAuths } from "@/router/utils";
+import { goUserDetail } from "@/views/system/hooks";
 import { operationLogApi } from "@/api/system/logs/operation";
 import { monitorApi } from "@/api/system/monitor";
 import { useI18n } from "vue-i18n";
@@ -160,12 +161,7 @@ export function useOperationLog() {
   };
 
   function onGoDetail(row: CreatorRow) {
-    if (hasAuth("list:SystemUser") && row?.creator && row?.creator?.pk) {
-      router.push({
-        name: "SystemUser",
-        query: { pk: row.creator.pk }
-      });
-    }
+    goUserDetail(router, row?.creator?.pk);
   }
 
   return {

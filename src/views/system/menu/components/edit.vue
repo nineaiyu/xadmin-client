@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
 import { FormProps } from "../utils/types";
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { cloneDeep, isEmpty, isNullOrUnDef } from "@pureadmin/utils";
 import { transformI18n } from "@/plugins/i18n";
 import { IconSelect } from "@/components/ReIcon";
@@ -94,15 +94,16 @@ const onChange = ({ option }) => {
 };
 
 const handleChangeMenuType = menu_type => {
-  setTimeout(function () {
-    ruleFormRef.value!.clearValidate([
+  // 用 nextTick 替代 30ms 定时器：等表单按新规则渲染完成后再清校验，避免时序竞态
+  nextTick(() => {
+    ruleFormRef.value?.clearValidate([
       "menu_type",
       "title",
       "rank",
       "path",
       "perms"
     ]);
-  }, 30);
+  });
 
   if (menu_type === MenuChoices.DIRECTORY) {
     formRules.value = dirFormRules;

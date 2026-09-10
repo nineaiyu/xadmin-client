@@ -1,6 +1,20 @@
 // 抽离可公用的工具函数等用于系统管理页面逻辑
 import { computed } from "vue";
-import { isNullOrUnDef, useDark } from "@pureadmin/utils";
+import type { Router } from "vue-router";
+import { cloneDeep, isNullOrUnDef, useDark } from "@pureadmin/utils";
+import { hasAuth } from "@/router/utils";
+import type { PageColumn } from "@/components/RePlusPage";
+
+/**
+ * 跳转用户管理页并按用户主键定位（列表 creator / owner 列的统一点击行为）。
+ *
+ * 无用户列表权限或缺少主键时静默不跳转。
+ */
+export function goUserDetail(router: Router, pk?: number | string | null) {
+  if (hasAuth("list:SystemUser") && pk) {
+    router.push({ name: "SystemUser", query: { pk } });
+  }
+}
 
 /** 通用选项条目（choices 接口下发） */
 type OptionsItem = {
@@ -183,6 +197,51 @@ export const formatColumnsLabel = (
     column.label =
       column.label ?? formatPublicLabels(t, te, key as string, localeName);
   });
+};
+
+/**
+ * 角色-数据权限授权弹层的列装配（部门授权 / 用户授权共用）。
+ *
+ * 两者原为两份逐字重复的实现，差异仅在字段集合，故在此参数化：
+ * - keepKeys：弹层内保留的字段（其余 hideInForm）
+ * - disabledKeys：只读展示的字段
+ * - wideKeys：需要占半行的大宽度字段
+ */
+export const buildRoleRulesColumns = (
+  addOrEditColumns: PageColumn[],
+  options: {
+    keepKeys: string[];
+    disabledKeys: string[];
+    wideKeys?: string[];
+  }
+): PageColumn[] => {
+  const { keepKeys, disabledKeys, wideKeys = [] } = options;
+  const columns = cloneDeep(addOrEditColumns);
+  columns.forEach((column: PageColumn) => {
+    const key = column._column?.key;
+    if (!key || !keepKeys.includes(key)) {
+      column.hideInForm = true;
+    }
+    if (key && disabledKeys.includes(key)) {
+      column["fieldProps"]["disabled"] = true;
+    }
+    if (key && ["roles", "rules"].includes(key)) {
+      column.options = customRolePermissionOptions(
+        (column._column?.choices ?? []) as Array<RolePermissionItem>
+      );
+    }
+  });
+  // "pk" / "roles" / "rules" / "mode_type" 在新增、编辑主表单中隐藏
+  addOrEditColumns.forEach((column: PageColumn) => {
+    const key = column._column?.key;
+    if (key && ["pk", "roles", "rules", "mode_type"].includes(key)) {
+      column.hideInForm = true;
+    }
+    if (key && wideKeys.includes(key)) {
+      column["colProps"] = { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 };
+    }
+  });
+  return columns;
 };
 
 export const customRolePermissionOptions = (
