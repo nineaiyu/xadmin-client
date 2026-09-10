@@ -464,6 +464,7 @@ systemDept:
   parent: Department
   roles: Roles
   rules: Data Permissions
+  preview: Permission Preview
 
 systemPermission:
   permission: Permissions
@@ -487,6 +488,19 @@ systemPermission:
   notice_role: Roles
   notice_menu: Menus
   preview: Permission Preview
+  presets: Presets
+  preset_self: Only myself
+  preset_ownDept: My department
+  preset_ownDeptTree: My department and sub-departments
+  preset_leaderDepts: Departments I lead and sub-departments
+  preset_leaderUsers: Members of departments I lead
+  preset_all: All data
+  valueByRuntime: The value is injected by the system for the current user, nothing to fill
+  lookupNoAuth: Missing model-field lookup permission, match options cannot be loaded
+  excludeInclude: Include (only matching data)
+  excludeExclude: Exclude (exclude matching data)
+  copyRule: Copy this rule
+  modeTypeSingleTip: With a single rule the mode is saved as OR (AND/OR are equivalent for one rule)
 
 systemRole:
   role: Role
@@ -545,7 +559,7 @@ permissionPreview:
   emptyMenus: No visible menus
   emptyApis: No API permissions
   fieldDisabled: Field permission disabled, cropping inactive
-  fieldBlank: No field whitelist configured = unrestricted
+  fieldBlank: Models without a field whitelist have their fields trimmed to empty (invisible at runtime)
   codeTag: Code
   roleMenus: Menus Granted to Role
   roleFields: Field Grants
@@ -559,6 +573,23 @@ permissionPreview:
   run: Run
   hitCount: Matched rows
   noModels: Data permission registry is empty, run sync_model_field first
+  menuScopedHint: Takes effect only on the bound menu pages, not in general list APIs
+  inactiveDeptHint: This department is inactive, grants on it do not take effect
+  trialNoAuth: No permission to run the data-permission trial
+  trialFailed: Trial failed
+  deptTitle: Department grant preview
+  deptInfo: Department info
+  deptParent: Parent department
+  deptLeader: Department leader
+  deptChildren: Active / all sub-departments
+  deptMembers: Direct members
+  rolesGranted: Granted roles
+  noRoles: No role granted to this department
+  dataGrant: Department data grants
+  trialDraft: Instant trial (unsaved rules)
+  draftEmpty: Add rules before running the trial
+  draftApplied: Current rule draft applied
+  draftSkipped: Draft skipped (menu context mismatch)
 
 systemMenu:
   menus: Menus

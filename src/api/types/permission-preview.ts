@@ -43,6 +43,8 @@ export interface PreviewDataRuleGroup {
   is_active: boolean;
   mode_type: number;
   menus: Array<{ pk: string; title: string }>;
+  /** 绑定了菜单：仅在对应菜单上下文生效，通用列表接口下不生效 */
+  menu_scoped: boolean;
   rules: PreviewRule[];
   rule_text: string;
 }
@@ -51,6 +53,9 @@ export interface PreviewDataRuleGroup {
 export interface PreviewDeptChainItem {
   dept: { pk: string; name: string };
   relation: "self" | "ancestor";
+  /** 该部门是否启用；停用部门的授权不参与实际过滤（effective=false） */
+  is_active: boolean;
+  effective: boolean;
   permissions: PreviewDataRuleGroup[];
 }
 
@@ -109,6 +114,14 @@ export interface UserPreviewResult {
   };
 }
 
+/** 试算草稿：配置页即时验证影响面（不落库，仅参与本次试算） */
+export interface TrialDraft {
+  rules: Array<Record<string, unknown>>;
+  mode_type?: number;
+  /** 草稿绑定的菜单：仅在该菜单上下文下参与试算 */
+  menu?: string | null;
+}
+
 /** POST /api/system/user/{pk}/preview/trial 响应 data */
 export interface TrialResult {
   model: string;
@@ -117,7 +130,54 @@ export interface TrialResult {
   sql: string;
   is_superuser: boolean;
   data_enabled: boolean;
+  /** 草稿是否参与本次试算（绑定了不匹配的菜单时为 false） */
+  draft_applied: boolean;
   note: string | null;
+}
+
+/** 部门维度预览行（部门信息 + 部门侧授权 + 成员采样） */
+export interface DeptPreviewResult {
+  dept: {
+    pk: string;
+    name: string;
+    code: string;
+    is_active: boolean;
+    rank: number;
+    parent: { pk: string; name: string } | null;
+    leader: { pk: string; username: string; nickname: string | null } | null;
+    child_count: number;
+    active_child_count: number;
+  };
+  roles: Array<{ pk: string; name: string; code: string; is_active: boolean }>;
+  menu_tree: PreviewMenuItem[];
+  data_permissions: {
+    enabled: boolean;
+    has_any_grant: boolean;
+    rules: PreviewDataRuleGroup[];
+  };
+  field_permissions: Array<{
+    menu: { pk: string; title: string };
+    role: { pk: string; name: string };
+    models: Array<{
+      model: string;
+      model_label: string;
+      fields: string[];
+      field_labels: string[];
+    }>;
+  }>;
+  field_permission_enabled: boolean;
+  users: {
+    total: number;
+    truncated: boolean;
+    sample_limit: number;
+    list: Array<{
+      pk: string;
+      username: string;
+      nickname: string | null;
+      is_active: boolean;
+    }>;
+  };
+  notes: string[];
 }
 
 /** GET /api/system/role/{pk}/preview 响应 data */

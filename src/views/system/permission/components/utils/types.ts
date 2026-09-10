@@ -21,6 +21,8 @@ export interface FieldLookupItem {
   label: string;
   value: string;
   disabled?: boolean;
+  /** 过滤语义说明（后端 choices.hint 下发，仅规则类型项有） */
+  hint?: string;
 }
 
 /** 字段级联树节点（el-cascader 按 name/label/children 映射） */
@@ -38,6 +40,8 @@ interface FormProps {
   ruleList?: FieldLookupNode[];
   dataList?: FieldRuleRow[];
   valuesData?: FieldLookupItem[];
+  /** 菜单上下文候选（配置页即时试算面板用） */
+  menus?: Array<{ value: string; label: string }>;
 }
 
 export type { FormItemProps, FormProps };

@@ -3,12 +3,16 @@ import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { userApi } from "@/api/system/user";
 import type { UserPreviewResult } from "@/api/types/permission-preview";
+import { hasAuth } from "@/router/utils";
 import PreviewDataPermission from "./preview/PreviewDataPermission.vue";
 import PreviewTrial from "./preview/PreviewTrial.vue";
 
 defineOptions({ name: "PermissionPreview" });
 
 const { t } = useI18n();
+
+/** 试算有独立权限码：缺失时只提示，不发必然 403 的请求 */
+const canTrial = computed(() => hasAuth("previewTrial:SystemUser"));
 
 const visible = ref(false);
 const loading = ref(false);
@@ -222,14 +226,18 @@ defineExpose({ open });
               class="mb-2"
             />
             <el-alert
-              v-if="!data.field_permissions.length"
               :title="t('permissionPreview.fieldBlank')"
               type="info"
               :closable="false"
               show-icon
               class="mb-2"
             />
-            <el-table v-else :data="data.field_permissions" size="small" border>
+            <el-table
+              v-if="data.field_permissions.length"
+              :data="data.field_permissions"
+              size="small"
+              border
+            >
               <el-table-column
                 prop="menu.title"
                 :label="t('permissionPreview.colMenu')"
@@ -273,6 +281,7 @@ defineExpose({ open });
               :pk="data.user.pk"
               :candidates="data.trial_candidates"
               :menu-tree="data.menu_tree"
+              :can-trial="canTrial"
             />
           </el-collapse-item>
         </el-collapse>

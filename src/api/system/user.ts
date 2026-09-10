@@ -2,6 +2,7 @@ import { BaseApi } from "@/api/base";
 import type { BaseResult } from "@/api/types";
 import type {
   PreviewDetailResult,
+  TrialDraft,
   TrialResult,
   UserPreviewResult
 } from "@/api/types/permission-preview";
@@ -72,10 +73,10 @@ class UserApi extends BaseApi {
       `${this.baseApi}/${pk}/preview`
     );
   };
-  /** 数据权限实时试算（命中行数 + 最终 SQL） */
+  /** 数据权限实时试算（命中行数 + 最终 SQL；draft 为未保存的规则草稿） */
   previewTrial = (
     pk: number | string,
-    data?: { model: string; menu?: string | null }
+    data?: { model: string; menu?: string | null; draft?: TrialDraft | null }
   ) => {
     return this.request<PreviewDetailResult<TrialResult>>(
       "post",

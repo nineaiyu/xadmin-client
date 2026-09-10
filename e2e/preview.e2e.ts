@@ -172,8 +172,9 @@ test.describe("数据权限预览与试算（e2e_dp：仅本人规则真实生�
     await expect(drawer).toContainText("目标用户本人");
     // 有授权 → 不出现「无任何授权默认不可见」警告
     await expect(drawer).not.toContainText("无任何数据权限授权，默认不可见");
-    // 语义注释 alert 渲染
-    await expect(drawer).toContainText("部门祖先链各层授权之间为「且」组合");
+    // 语义注释 alert 渲染（「取最宽生效」口径：祖先链与个人授权同池、结果「或」合并）
+    await expect(drawer).toContainText("与个人授权汇入同一授权池");
+    await expect(drawer).toContainText("取最宽生效");
   });
 
   test("试算仅命中本人（count = 1）", async ({ page }) => {
@@ -210,6 +211,28 @@ test.describe("角色授权预览（超管）", () => {
     }
     // 未截断时不出现「仅显示前」文案
     await expect(drawer).not.toContainText("仅显示前");
+  });
+});
+
+test.describe("部门授权预览（超管）", () => {
+  test("部门信息、挂载角色与成员采样", async ({ page }) => {
+    await login(page);
+    await openMenuPath(page, ["系统管理"], "/system/dept/index");
+    const row = page.locator(".el-table__row").first();
+    await expect(row).toBeVisible({ timeout: 10_000 });
+    await clickRowButton(page, row, "权限预览");
+
+    const drawer = page
+      .locator(".el-drawer")
+      .filter({ hasText: "部门授权预览" });
+    await expect(drawer).toBeVisible({ timeout: 15_000 });
+    // 四个分区标题渲染
+    await expect(drawer).toContainText("部门信息");
+    await expect(drawer).toContainText("挂载角色");
+    await expect(drawer).toContainText("部门数据权限");
+    await expect(drawer).toContainText("直属成员");
+    // 口径说明：部门授权作用于部门及其下级成员
+    await expect(drawer).toContainText("作用于「该部门及其下级的成员」");
   });
 });
 

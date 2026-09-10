@@ -171,7 +171,7 @@ export function useUserColumnFormats({
   const baseColumnsFormat = ({ addOrEditColumns, addOrEditRules }) => {
     roleRules.value = addOrEditRules.value;
     roleRulesColumns.value = buildRoleRulesColumns(addOrEditColumns.value, {
-      keepKeys: ["username", "nickname", "roles", "rules", "mode_type"],
+      keepKeys: ["username", "nickname", "roles", "rules"],
       disabledKeys: ["username", "nickname"],
       wideKeys: ["username", "nickname", "phone", "email", "gender"]
     });
@@ -192,8 +192,7 @@ export function useUserColumnFormats({
           t,
           apiReq: api.empower(row.pk as string | number, {
             roles: formData.roles,
-            rules: formData.rules,
-            mode_type: formData.mode_type
+            rules: formData.rules
           }),
           success() {
             done();

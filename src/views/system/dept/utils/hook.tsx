@@ -4,6 +4,8 @@ import { useRouter } from "vue-router";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { buildRoleRulesColumns } from "@/views/system/hooks";
+import type DeptPermissionPreview from "../components/DeptPermissionPreview.vue";
+import View from "~icons/ri/eye-line";
 import { handleTree } from "@/utils/tree";
 import {
   type PageTableColumn,
@@ -22,8 +24,12 @@ export function useDept(tableRef: Ref) {
 
   const auth = reactive({
     empower: false,
-    ...getDefaultAuths(getCurrentInstance(), ["empower"])
+    preview: false,
+    ...getDefaultAuths(getCurrentInstance(), ["empower", "preview"])
   });
+
+  /** 部门授权预览抽屉（挂载角色 / 数据权限 / 字段权限 / 成员采样） */
+  const previewRef = ref<InstanceType<typeof DeptPermissionPreview>>();
 
   const listColumnsFormat = (columns: PageTableColumn[]) => {
     columns.forEach(column => {
@@ -106,7 +112,7 @@ export function useDept(tableRef: Ref) {
   const baseColumnsFormat = ({ addOrEditColumns, addOrEditRules }) => {
     roleRules.value = addOrEditRules.value;
     roleRulesColumns.value = buildRoleRulesColumns(addOrEditColumns.value, {
-      keepKeys: ["name", "code", "roles", "rules", "mode_type"],
+      keepKeys: ["name", "code", "roles", "rules"],
       disabledKeys: ["name", "code"]
     });
   };
@@ -126,8 +132,7 @@ export function useDept(tableRef: Ref) {
           t,
           apiReq: api.empower(row.pk, {
             roles: formData.roles,
-            rules: formData.rules,
-            mode_type: formData.mode_type
+            rules: formData.rules
           }),
           success() {
             done();
@@ -142,7 +147,7 @@ export function useDept(tableRef: Ref) {
   }
 
   const operationButtonsProps = shallowRef<OperationProps>({
-    width: 210,
+    width: 280,
     buttons: [
       {
         text: t("systemDept.assignRoles"),
@@ -156,6 +161,19 @@ export function useDept(tableRef: Ref) {
           handleRoleRules(row);
         },
         show: auth.empower
+      },
+      {
+        text: t("systemDept.preview"),
+        code: "preview",
+        props: {
+          type: "primary",
+          icon: useRenderIcon(View),
+          link: true
+        },
+        onClick: ({ row }) => {
+          previewRef.value?.open(row);
+        },
+        show: auth.preview
       }
     ]
   });
@@ -167,6 +185,7 @@ export function useDept(tableRef: Ref) {
     listColumnsFormat,
     baseColumnsFormat,
     addOrEditOptions,
-    operationButtonsProps
+    operationButtonsProps,
+    previewRef
   };
 }

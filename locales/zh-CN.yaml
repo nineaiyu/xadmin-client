@@ -464,6 +464,7 @@ systemDept:
   parent: 归属部门
   roles: 角色
   rules: 数据权限
+  preview: 权限预览
 
 systemPermission:
   permission: 数据权限
@@ -487,6 +488,19 @@ systemPermission:
   notice_role: 角色
   notice_menu: 菜单
   preview: 权限预览
+  presets: 常用模板
+  preset_self: 仅本人
+  preset_ownDept: 本部门
+  preset_ownDeptTree: 本部门及下级
+  preset_leaderDepts: 我主管部门及下级
+  preset_leaderUsers: 我主管部门成员
+  preset_all: 全部数据
+  valueByRuntime: 该类型的值由系统按当前用户自动填充，无需填写
+  lookupNoAuth: 缺少模型字段查询权限，无法加载「匹配」选项，可手动输入
+  excludeInclude: 包含（只看匹配的数据）
+  excludeExclude: 排除（排除匹配的数据）
+  copyRule: 复制此规则
+  modeTypeSingleTip: 规则列表仅 1 条时系统按「或模式」保存（单条规则下且/或等价）
 
 systemRole:
   role: 角色
@@ -545,7 +559,7 @@ permissionPreview:
   emptyMenus: 无可见菜单
   emptyApis: 无 API 权限码
   fieldDisabled: 字段权限未启用，裁剪不生效
-  fieldBlank: 未配置字段白名单 = 不限制
+  fieldBlank: 未配置字段白名单的模型，其字段会被裁剪为空（运行时不可见）
   codeTag: 权限码
   roleMenus: 该角色授权的菜单
   roleFields: 字段授权
@@ -557,6 +571,23 @@ permissionPreview:
   menuContext: 菜单上下文
   hasRules: 有规则
   run: 试算
+  menuScopedHint: 仅在绑定的菜单页面生效，通用列表接口下不生效
+  inactiveDeptHint: 该部门已停用，其上的授权不生效
+  trialNoAuth: 无数据权限试算权限
+  trialFailed: 试算失败
+  deptTitle: 部门授权预览
+  deptInfo: 部门信息
+  deptParent: 上级部门
+  deptLeader: 部门主管
+  deptChildren: 启用子部门 / 全部子部门
+  deptMembers: 直属成员
+  rolesGranted: 挂载角色
+  noRoles: 该部门未挂载任何角色
+  dataGrant: 部门数据权限
+  trialDraft: 即时试算（未保存的规则）
+  draftEmpty: 请先添加规则，再试算
+  draftApplied: 已应用当前规则草稿
+  draftSkipped: 草稿未生效（菜单上下文不匹配）
   hitCount: 命中行数
   noModels: 数据权限注册表为空，请先执行 sync_model_field
 

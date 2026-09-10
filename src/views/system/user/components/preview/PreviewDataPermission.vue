@@ -65,7 +65,17 @@ function groupTitle(group: PreviewDataRuleGroup) {
         name="personal"
       >
         <div v-for="group in data.personal" :key="group.pk" class="mb-3">
-          <div class="mb-1 text-sm font-medium">{{ groupTitle(group) }}</div>
+          <div class="mb-1 flex items-center gap-1 text-sm font-medium">
+            <span>{{ groupTitle(group) }}</span>
+            <el-tooltip
+              v-if="group.menu_scoped"
+              :content="t('permissionPreview.menuScopedHint')"
+            >
+              <el-tag size="small" type="warning">
+                {{ t("permissionPreview.boundMenus") }}
+              </el-tag>
+            </el-tooltip>
+          </div>
           <el-table :data="group.rules" size="small" border>
             <el-table-column
               prop="table_label"
@@ -109,16 +119,48 @@ function groupTitle(group: PreviewDataRuleGroup) {
       <el-collapse-item
         v-for="chain in data.dept_chain"
         :key="chain.dept.pk"
-        :title="`${chain.dept.name}（${t(`permissionPreview.relation_${chain.relation}`)}，${chain.permissions.length}）`"
         :name="chain.dept.pk"
       >
+        <template #title>
+          <span>
+            {{ chain.dept.name }}（{{
+              t(`permissionPreview.relation_${chain.relation}`)
+            }}，{{ chain.permissions.length }}）
+          </span>
+          <el-tag
+            v-if="chain.is_active === false"
+            class="ml-2"
+            size="small"
+            type="info"
+          >
+            {{ t("permissionPreview.disabled") }}
+          </el-tag>
+        </template>
+        <el-alert
+          v-if="chain.is_active === false"
+          :closable="false"
+          :title="t('permissionPreview.inactiveDeptHint')"
+          class="mb-2"
+          show-icon
+          type="warning"
+        />
         <el-empty
           v-if="!chain.permissions.length"
           :description="t('permissionPreview.noGrantAtLevel')"
           :image-size="60"
         />
         <div v-for="group in chain.permissions" :key="group.pk" class="mb-3">
-          <div class="mb-1 text-sm font-medium">{{ groupTitle(group) }}</div>
+          <div class="mb-1 flex items-center gap-1 text-sm font-medium">
+            <span>{{ groupTitle(group) }}</span>
+            <el-tooltip
+              v-if="group.menu_scoped"
+              :content="t('permissionPreview.menuScopedHint')"
+            >
+              <el-tag size="small" type="warning">
+                {{ t("permissionPreview.boundMenus") }}
+              </el-tag>
+            </el-tooltip>
+          </div>
           <el-table :data="group.rules" size="small" border>
             <el-table-column
               prop="table_label"

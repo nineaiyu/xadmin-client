@@ -15,6 +15,7 @@ import { handleTree } from "@/utils/tree";
 import { fetchMetaList, META_KEYS } from "@/utils/metaCache";
 import { modelLabelFieldApi } from "@/api/system/field";
 import { transformI18n } from "@/plugins/i18n";
+import { useI18n } from "vue-i18n";
 import { getKeyList } from "@pureadmin/utils";
 import type { OperationProps, RePlusPageProps } from "@/components/RePlusPage";
 import type { FieldRuleRow } from "../components/utils/types";
@@ -22,6 +23,7 @@ import filterForm from "../components/index.vue";
 import { formatFiledAppParent } from "@/views/system/hooks";
 
 export function useDataPermission() {
+  const { t } = useI18n();
   const fieldLookupsData = ref([]);
   const valuesData = ref([]);
 
@@ -80,6 +82,16 @@ export function useDataPermission() {
       "parent_id"
     );
   });
+
+  /** 配置页试算面板的菜单上下文候选（页面菜单 = menu_type 1） */
+  const menuContextOptions = computed(() =>
+    menuTreeData.value
+      .filter(item => menuTypeOf(item) === MenuChoices.MENU)
+      .map(item => ({
+        value: item.pk,
+        label: transformI18n(item.meta?.title) ?? item.pk
+      }))
+  );
 
   onMounted(() => {
     if (hasAuth("list:SystemMenu")) {
@@ -154,6 +166,14 @@ export function useDataPermission() {
           };
           return column;
         },
+        mode_type: ({ column }) => {
+          // 仅 1 条规则时服务端会统一按「或模式」保存（单条规则且/或等价），此处提前说明避免"选了没生效"
+          column["fieldProps"] = {
+            ...column["fieldProps"],
+            tip: t("systemPermission.modeTypeSingleTip")
+          };
+          return column;
+        },
         rules: ({ column }) => {
           column["hasLabel"] = false;
           column["renderField"] = (value, onChange) => {
@@ -162,6 +182,7 @@ export function useDataPermission() {
               dataList: value as FieldRuleRow[],
               valuesData: valuesData.value,
               ruleList: fieldLookupsData.value,
+              menus: menuContextOptions.value,
               onChange
             });
           };

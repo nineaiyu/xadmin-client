@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { ref } from "vue";
 import { useDept } from "./utils/hook";
+import DeptPermissionPreview from "./components/DeptPermissionPreview.vue";
 
 defineOptions({
   name: "SystemDept"
@@ -14,7 +15,8 @@ const {
   listColumnsFormat,
   addOrEditOptions,
   baseColumnsFormat,
-  operationButtonsProps
+  operationButtonsProps,
+  previewRef
 } = useDept(tableRef);
 </script>
 
@@ -30,4 +32,6 @@ const {
     :operationButtonsProps="operationButtonsProps"
     locale-name="systemDept"
   />
+  <!-- 部门授权预览：挂载角色 / 数据权限 / 字段权限 / 成员采样（auth.preview 门控按钮） -->
+  <DeptPermissionPreview ref="previewRef" />
 </template>

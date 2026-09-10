@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { userApi } from "@/api/system/user";
+import { message } from "@/utils/message";
 import type {
   PreviewMenuItem,
   TrialCandidate,
@@ -10,14 +11,19 @@ import type {
 
 defineOptions({ name: "PreviewTrial" });
 
-const props = defineProps<{
-  /** 目标用户 pk */
-  pk: string;
-  /** 试算模型候选（数据权限注册表） */
-  candidates: TrialCandidate[];
-  /** 目标用户可见菜单树（页面菜单作为上下文选项） */
-  menuTree: PreviewMenuItem[];
-}>();
+const props = withDefaults(
+  defineProps<{
+    /** 目标用户 pk */
+    pk: string;
+    /** 试算模型候选（数据权限注册表） */
+    candidates: TrialCandidate[];
+    /** 目标用户可见菜单树（页面菜单作为上下文选项） */
+    menuTree: PreviewMenuItem[];
+    /** 是否持有 previewTrial 权限码（缺失时只提示、不发请求） */
+    canTrial?: boolean;
+  }>(),
+  { canTrial: true }
+);
 
 const { t } = useI18n();
 
@@ -53,6 +59,10 @@ async function runTrial() {
       menu: menuContext.value ? menuContext.value : null
     });
     result.value = res.data;
+  } catch {
+    // 失败（含 403 无码）就地提示，不依赖全局拦截器的静默处理
+    result.value = null;
+    message(t("permissionPreview.trialFailed"), { type: "error" });
   } finally {
     loading.value = false;
   }
@@ -61,8 +71,15 @@ async function runTrial() {
 
 <template>
   <div>
+    <el-alert
+      v-if="!canTrial"
+      :closable="false"
+      :title="t('permissionPreview.trialNoAuth')"
+      show-icon
+      type="info"
+    />
     <el-empty
-      v-if="!candidates.length"
+      v-else-if="!candidates.length"
       :description="t('permissionPreview.noModels')"
       :image-size="70"
     />

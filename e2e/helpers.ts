@@ -41,6 +41,13 @@ export const SCOPED_USER = {
 };
 /** 数据权限场景：用户列表仅可见本人（种子 DataPermission「E2E-仅本人用户数据」） */
 export const DP_USER = { username: "e2e_dp", password: "E2E-DataPerm-2026!" };
+/** 部门主管场景：用户列表可见本人 + 主管部门成员（种子 DataPermission「E2E-主管部门成员」） */
+export const LEADER_USER = {
+  username: "e2e_leader",
+  password: "E2E-Leader-2026!"
+};
+/** e2e_leader 主管测试部门的成员（列表可见性断言对象） */
+export const LEADER_MEMBER_USERNAME = "e2e_member";
 /** 字段权限场景：用户列表隐藏邮件列（种子 FieldPermission，角色 e2e_fp） */
 export const FP_USER = { username: "e2e_fp", password: "E2E-FieldPer-2026!" };
 /** 登录锁定场景专用账号（用例内会连续输错密码） */

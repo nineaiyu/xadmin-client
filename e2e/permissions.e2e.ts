@@ -5,6 +5,8 @@ import {
   DP_USER,
   FP_USER,
   FRONT_URL,
+  LEADER_MEMBER_USERNAME,
+  LEADER_USER,
   getAccessToken,
   login,
   openUserManagement
@@ -14,6 +16,8 @@ import {
  * 三层权限 E2E：数据权限越权验证 + 字段权限列隐藏。
  * 种子见 scripts/e2e_seed.py：
  * - e2e_dp 携带 DataPermission「E2E-仅本人用户数据」（table=system.userinfo, type=value.user.id）
+ * - e2e_leader 主管「E2E-主管测试部」（本人兼成员），携带 DataPermission
+ *   「E2E-主管部门成员」（type=value.leader.user.ids），列表可见本人 + 部门成员
  * - e2e_fp 的角色在用户列表菜单配置了 FieldPermission 白名单（email 被剔除）
  *
  * 列表接口断言走同源 FRONT_URL：这两个账号仅靠会话 Cookie 鉴权，
@@ -43,6 +47,18 @@ test.describe("数据权限", () => {
       payload?.data?.results ?? payload?.data ?? [];
     expect(results).toHaveLength(1);
     expect(String(results[0]?.username)).toBe(DP_USER.username);
+  });
+
+  test("部门主管：列表仅可见本人与主管部门成员", async ({ page }) => {
+    await login(page, LEADER_USER);
+    await openUserManagement(page);
+    const rows = page.locator(".el-table__row");
+    await expect(rows).toHaveCount(2, { timeout: 15_000 });
+    await expect(page.locator(".el-table")).toContainText(LEADER_USER.username);
+    await expect(page.locator(".el-table")).toContainText(
+      LEADER_MEMBER_USERNAME
+    );
+    await expect(page.locator(".el-table")).not.toContainText(ADMIN.username);
   });
 
   test("对照：管理员可见全部用户记录", async ({ page }) => {

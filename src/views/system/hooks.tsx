@@ -231,10 +231,10 @@ export const buildRoleRulesColumns = (
       );
     }
   });
-  // "pk" / "roles" / "rules" / "mode_type" 在新增、编辑主表单中隐藏
+  // "pk" / "roles" / "rules" 在新增、编辑主表单中隐藏
   addOrEditColumns.forEach((column: PageColumn) => {
     const key = column._column?.key;
-    if (key && ["pk", "roles", "rules", "mode_type"].includes(key)) {
+    if (key && ["pk", "roles", "rules"].includes(key)) {
       column.hideInForm = true;
     }
     if (key && wideKeys.includes(key)) {
