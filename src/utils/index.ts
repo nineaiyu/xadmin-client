@@ -22,27 +22,31 @@ export const getMenuOrderPk = (
   return x;
 };
 
-//查找父节点
+//查找父节点（返回 [自身, 父, 祖父...]；沿 parent 上溯时做环检测，脏数据不会无限递归）
 export const getMenuFromPk = (
   data: MenuTreeNode[],
   id: number
 ): MenuTreeNode[] => {
   const temp: MenuTreeNode[] = [];
-  const forFn = (arr: MenuTreeNode[], pk: number) => {
-    for (let i = 0; i < arr.length; i++) {
-      const item = arr[i];
-      if (item.pk === pk) {
-        temp.push(item);
-        forFn(data, item.parent);
-        break;
-      } else {
-        if (item.children) {
-          forFn(item.children, pk);
-        }
+  const visited = new Set<number>();
+  const findNode = (arr: MenuTreeNode[], pk: number): MenuTreeNode | null => {
+    for (const item of arr) {
+      if (item.pk === pk) return item;
+      if (item.children?.length) {
+        const found = findNode(item.children, pk);
+        if (found) return found;
       }
     }
+    return null;
   };
-  forFn(data, id);
+  let current = findNode(data, id);
+  // visited 兜底：parent 形成环（或指向自身）时及时终止，避免栈溢出
+  while (current && !visited.has(current.pk)) {
+    visited.add(current.pk);
+    temp.push(current);
+    if (current.parent === undefined || current.parent === null) break;
+    current = findNode(data, current.parent) as MenuTreeNode;
+  }
   return temp;
 };
 

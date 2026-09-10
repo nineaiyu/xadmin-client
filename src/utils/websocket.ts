@@ -18,9 +18,13 @@ type Interval = ReturnType<typeof setInterval>;
 type Nullable<T> = T | null;
 
 /**
- * 默认重连次数
+ * 默认重连次数（有限次；与原 AutoReconnect 注释声明的默认值一致，避免近乎无限重连）
  */
-const reconnectMaxCount = 1000;
+const reconnectMaxCount = 3;
+/**
+ * 重连退避上限：间隔按次数指数增长并封顶，避免服务端抖动时被固定间隔高频冲击
+ */
+const reconnectMaxTimeout = 30000;
 /**
  * 默认心跳信息
  */
@@ -163,8 +167,9 @@ class WS {
   reconnectHandle(): void {
     if (this.socketOpen) {
       this.socketOpen = false;
+      // 用 ?? 而非 ||：显式传 0 表示"不重连"，不应被默认值覆盖
       const count =
-        (this.autoReconnect as AutoReconnect)?.reconnectMaxCount ||
+        (this.autoReconnect as AutoReconnect)?.reconnectMaxCount ??
         reconnectMaxCount;
       if (this.autoReconnect && this.reconnectCount < count) {
         this.reconnectCount++;
@@ -187,10 +192,15 @@ class WS {
         if (this.closeCallback) {
           this.closeCallback(this.socket);
         }
+        // 指数退避：3s、6s、12s… 封顶 30s，避免服务端抖动时被固定 3s 高频重连冲击
+        const backoff = Math.min(
+          timeout * 2 ** this.reconnectCount,
+          reconnectMaxTimeout
+        );
         this.delay = setTimeout(async () => {
           await getUsedAccessToken();
           this.reconnectHandle();
-        }, timeout);
+        }, backoff);
       };
     }
   }

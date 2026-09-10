@@ -14,6 +14,17 @@ import {
 } from "../utils";
 import { usePermissionStoreHook } from "./permission";
 
+/** 标签页持久化防抖句柄：标签增删频繁，合并写盘避免逐次同步序列化阻塞主线程 */
+let tagsCacheTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleTagsCache(multiTags: RouteConfigs[]) {
+  if (tagsCacheTimer) clearTimeout(tagsCacheTimer);
+  tagsCacheTimer = setTimeout(() => {
+    storageLocal().setItem(`${responsiveStorageNameSpace()}tags`, multiTags);
+    tagsCacheTimer = null;
+  }, 150);
+}
+
 export const useMultiTagsStore = defineStore("pure-multiTags", {
   state: () => ({
     // 存储标签页信息（路由信息）
@@ -52,10 +63,8 @@ export const useMultiTagsStore = defineStore("pure-multiTags", {
     },
     tagsCache(multiTags) {
       if (this.getMultiTagsCache) {
-        storageLocal().setItem(
-          `${responsiveStorageNameSpace()}tags`,
-          multiTags
-        );
+        // 防抖写盘：标签增删很频繁，逐次同步序列化整个标签数组会阻塞主线程
+        scheduleTagsCache(multiTags);
       }
     },
     handleTags(
@@ -135,6 +144,9 @@ export const useMultiTagsStore = defineStore("pure-multiTags", {
           return this.multiTags;
         case "slice":
           return this.multiTags.slice(-1);
+        default:
+          // 未知 mode 返回当前标签列表，避免调用方拿到 undefined
+          return this.multiTags;
       }
     }
   }

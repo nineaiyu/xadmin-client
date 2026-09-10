@@ -215,6 +215,10 @@ function initRouter(loadConfig: boolean = false) {
     .getUserInfo()
     .then(() => {
       useUserStoreHook().messageHandler();
+    })
+    .catch(error => {
+      // 用户信息拉取失败（凭证失效/网络异常）：不建立 WS，避免半登录态下无谓的重连风暴
+      console.error("get user info failed", error);
     });
 
   if (getConfig()?.CachingAsyncRoutes) {

@@ -303,13 +303,17 @@ export const useUserStore = defineStore("pure-user", {
           }
         }
       };
-      this.websocket = new PureWebSocket(this.username, "xadmin", {
+      // 先关闭旧连接：重复调用 messageHandler（如重新拉取用户信息）时，
+      // 避免叠加多个 WS 实例与其监听造成连接/内存泄漏
+      this.websocket?.close();
+      const socket = new PureWebSocket(this.username, "xadmin", {
         openCallback: () => {
-          this.websocket.onMessage(data => {
+          socket.onMessage(data => {
             onMessage(data);
           });
         }
       });
+      this.websocket = socket;
     }
   }
 });

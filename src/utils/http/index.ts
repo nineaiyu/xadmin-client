@@ -139,23 +139,13 @@ class PureHttp {
       url,
       ...param,
       ...axiosConfig
-    } as PureHttpRequestConfig & {
-      _mfaRetried?: boolean;
-      _tokenRetried?: boolean;
-      _approvalId?: string;
-    };
+    } as PureHttpRequestConfig;
     const controller = PureHttp.attachRouteController(config);
     return this.send<T>(config).finally(() => unregisterPending(controller));
   }
 
   /** 请求执行与统一错误处理（412 重发时复用同一 config 以防递归弹窗） */
-  private send<T>(
-    config: PureHttpRequestConfig & {
-      _mfaRetried?: boolean;
-      _tokenRetried?: boolean;
-      _approvalId?: string;
-    }
-  ): Promise<T> {
+  private send<T>(config: PureHttpRequestConfig): Promise<T> {
     // 单独处理自定义请求/响应回调
     return new Promise((resolve, reject) => {
       PureHttp.axiosInstance
@@ -231,9 +221,7 @@ class PureHttp {
               if (approvalId) {
                 // 优先用请求期写入的指纹 key（axios 改写 config.data 后仍能命中）；
                 // 未经请求拦截器的调用路径（直发 axiosInstance / 单测驱动）回退重算
-                const requestKey = (
-                  config as PureHttpRequestConfig & { _approvalKey?: string }
-                )._approvalKey;
+                const requestKey = config._approvalKey;
                 setPendingApproval(
                   requestKey ??
                     approvalKey(config.method, config.url, config.data),
@@ -248,9 +236,7 @@ class PureHttp {
               data?.type === "approval_required"
             ) {
               /** 审批令牌被拒（驳回/过期/已消费/指纹不一致）：清除暂存令牌后按普通错误提示 */
-              const rejectedKey = (
-                config as PureHttpRequestConfig & { _approvalKey?: string }
-              )._approvalKey;
+              const rejectedKey = config._approvalKey;
               deletePendingApproval(
                 rejectedKey ??
                   approvalKey(config.method, config.url, config.data)
@@ -419,9 +405,7 @@ class PureHttp {
         // 请求期指纹固定到 config：响应/异常阶段 config.data 已被 axios 改写，
         // 只能靠这里写入的 key 做暂存与删除（空 key = 不参与指纹，如 FormData）
         if (approvalKeyValue) {
-          (
-            config as PureHttpRequestConfig & { _approvalKey?: string }
-          )._approvalKey = approvalKeyValue;
+          config._approvalKey = approvalKeyValue;
         }
         const approvalId = takePendingApproval(approvalKeyValue);
         if (approvalId) {
@@ -507,9 +491,7 @@ class PureHttp {
         NProgress.done();
         // 携审批令牌的请求消费成功（业务码 1000）：按请求期写入的 key 清除暂存令牌
         // （一次性通行；不能重算 key——axios 已把 config.data 改成序列化字符串）
-        const approvalKeyOfRequest = (
-          $config as PureHttpRequestConfig & { _approvalKey?: string }
-        )._approvalKey;
+        const approvalKeyOfRequest = $config._approvalKey;
         if (approvalKeyOfRequest && response.data?.code === 1000) {
           deletePendingApproval(approvalKeyOfRequest);
         }
@@ -545,7 +527,10 @@ class PureHttp {
 export function redirectToLogin() {
   clearPendingApprovals();
   import("@/router")
-    .then(({ router }) => {
+    .then(({ router, resetRouter }) => {
+      // 登录态失效：同步重置动态路由与权限缓存（含 localStorage 的 async-routes），
+      // 避免下一个账号登录后复用上一个账号的菜单
+      resetRouter();
       router.push({
         name: "Login",
         query: { redirect: router.currentRoute.value.fullPath }
