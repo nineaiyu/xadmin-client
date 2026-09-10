@@ -168,6 +168,7 @@ exportImport:
   upload: Upload
   uploadRuleTip: upload file not exist
   uploadTip: Drag file here or click here to upload
+  pleaseSelectFile: Please select a file first
   downloadTip: Download { action } template
   downloadTemplate: Download template
   ignoreError: Ignore error
@@ -298,6 +299,36 @@ menus:
   importCenter: Import Records
   systemMonitor: System Monitor
   dataDict: Data Dictionary
+  dataMaskRule: Data Mask Rule
+  approvalCenter: Approval Center
+
+approval:
+  pendingTab: Pending My Approval
+  mineTab: Submitted By Me
+  approve: Approve
+  reject: Reject
+  cancel: Cancel
+  batchApprove: Batch Approve
+  approveConfirm: Approve request {no}?
+  cancelConfirm: Cancel request {no}?
+  batchApproveConfirm: Batch approve the selected requests?
+  rejectTitle: Reject request {no}
+  rejectReasonRequired: Rejection reason is required
+  reasonPlaceholder: Please enter the rejection reason (required)
+  module: Module
+  method: Method
+  path: Request Path
+  object_pk: Object PK
+  status: Status
+  approver: Approver
+  reason: Reason
+  creator: Applicant
+  statusPENDING: Pending
+  statusAPPROVED: Approved
+  statusREJECTED: Rejected
+  statusEXPIRED: Expired
+  statusCANCELLED: Cancelled
+  statusFAILED: Failed
 
 userinfo:
   userinfo: UserInfo
@@ -583,6 +614,7 @@ logsOperation:
   creator: Creator
   body: Response Body
   response_code: Status Code
+  status_code: Business Code
   response_result: Response Result
   method: Method
   exec_time: Cost (s)
@@ -678,6 +710,9 @@ systemUploadFile:
   upload: Upload
   fileLink: File Link
   filename: File Name
+  category: Category
+  storageUsage: Storage Usage
+  fileCount: File Count
   clickUpload: click to upload
   dropFile: Drop file here or
   uploadTip: Files with a size less than
@@ -909,7 +944,20 @@ accessToken:
   onceTip: This is the only time the plain token is shown. It cannot be retrieved after closing.
   copy: Copy token
   copied: Copied to clipboard
+  copyFailed: Copy failed, please select and copy manually
   revoke: Revoke
+  scope: Scopes
+  scopeCount: "Scopes: {n}"
+  scopeUnrestricted: Unrestricted
+  scopeTip: One allowed path prefix or regex per line (e.g. /api/system/user). Leave empty for unrestricted; out-of-scope requests get 403
+  scopePlaceholder: |-
+    /api/system/user
+    /api/system/exports
+  callLogs: Call logs
+  callLogsTip: Logs are approximately associated by your account within the token's lifetime (operation logs carry no token identity)
+  totalCalls: Calls (last {n}d)
+  failedCalls: Failed calls
+  lastCall: Last call
 
 systemTaskCrontab:
   minute: Minute
@@ -988,15 +1036,15 @@ systemOnline:
 
 dataDict:
   dictType: Dict type
-  parent: Parent type
-  parent_code: Type code
-  code: Dict code
-  label: Label
-  label_en: Label (EN)
-  value: Dict value
+  parent: Parent
+  parent_code: Dict code
+  code: Code
+  label: Display name
+  label_en: English name
+  value: Value
   sort: Sort
   color: Tag color
-  is_active: Active
+  is_active: Is active
   is_locked: Built-in
   children_count: Item count
   items: Dict items
@@ -1010,3 +1058,29 @@ dataDict:
   refreshCache: Refresh cache
   addType: Add dict type
   addChild: Add child item
+
+mask:
+  model: Model
+  field: Field
+  mask_type: Mask Type
+  keep_head: Keep Head
+  keep_tail: Keep Tail
+  mask_char: Mask Char
+  pattern: Pattern
+  roles: Roles
+  is_active: Is Active
+  sort: Sort
+  description: Description
+  creator: Creator
+  preview: Mask Preview
+  previewValue: Sample Value
+  previewTip: Input a sample value
+  previewResult: Result
+  previewBtn: Preview
+  customOnlyTip: Only used for custom type
+  maskTypePhone: Phone
+  maskTypeIdcard: ID Card
+  maskTypeEmail: Email
+  maskTypeName: Name
+  maskTypeBankcard: Bank Card
+  maskTypeCustom: Custom Pattern

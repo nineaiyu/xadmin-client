@@ -262,7 +262,12 @@ const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
     closeOnClickModal: false,
     contentRenderer: () => h(formOptions?.form ?? AddOrEdit, { ref: formRef }),
     beforeSure: async (done, { options, closeLoading }) => {
-      const FormRef = formRef.value.getRef();
+      const FormRef = formRef.value?.getRef();
+      if (!FormRef) {
+        // 内容组件尚未就绪（极端时序）：收口 loading 直接返回，避免保存按钮卡死
+        closeLoading();
+        return;
+      }
       const allFormInstances = FormRef?._allInstances ?? [FormRef]; // 获取所有 PlusForm 实例
       const formInlineData = cloneDeep(options.props.formInline);
 
@@ -407,6 +412,20 @@ interface changeOptions {
   requestEnd?: (options?: operationOptions) => void;
 }
 
+/** 确认弹窗走 dangerouslyUseHTMLString，插值（含服务端列名/文案）必须转义防注入 */
+const escapeHtml = (value: unknown): string =>
+  String(value ?? "").replace(
+    /[&<>"']/g,
+    char =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[char] as string
+  );
+
 const onSwitchChange = (changeOptions: changeOptions) => {
   const {
     t,
@@ -423,8 +442,8 @@ const onSwitchChange = (changeOptions: changeOptions) => {
   } = changeOptions;
   ElMessageBox.confirm(
     `${t("buttons.operateConfirm", {
-      action: `<strong>${actionMsg}</strong>`,
-      message: `<strong style="color:var(--el-color-primary)">${msg}</strong>`
+      action: `<strong>${escapeHtml(actionMsg)}</strong>`,
+      message: `<strong style="color:var(--el-color-primary)">${escapeHtml(msg)}</strong>`
     })}`,
     {
       confirmButtonText: t("buttons.sure"),
@@ -629,8 +648,11 @@ const handleExportData = (options: exportDataOptions) => {
         if (formData.range === "all") {
           await exportBy(formData);
         } else if (formData.range === "search" && searchFields) {
-          searchFields.value["type"] = formData["type"];
-          await exportBy(toRaw(searchFields.value));
+          // 在副本上拼导出参数：直接写 searchFields 会污染列表页的查询条件
+          await exportBy({
+            ...toRaw(searchFields.value),
+            type: formData["type"]
+          });
         } else if (formData.range === "selected") {
           const res = await resourcesIDCacheApi(formData.pks);
           formData["spm"] = res.spm;
@@ -676,7 +698,12 @@ const handleImportData = (options: importDataOptions) => {
     dialogDrawerOptions: { width: EXPORT_IMPORT_DIALOG_WIDTH },
     form: ImportData,
     saveCallback: async ({ formData, success, failed, closeLoading }) => {
-      const file = formData.upload[0].raw;
+      // 取文件在 try 之外，必须先判空：空值会抛 TypeError 且 closeLoading 不执行
+      const file = formData.upload?.[0]?.raw;
+      if (!file) {
+        failed(t("exportImport.pleaseSelectFile"), false);
+        return;
+      }
       try {
         // 仅校验：逐行校验不落库，弹窗展示错误行定位
         if (formData.mode === "validate") {

@@ -1,6 +1,8 @@
 import { h, reactive, shallowRef } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElProgress, ElTag } from "element-plus";
+// 文件大小格式化统一走框架工具（与文件管理页同一实现，避免两套口径）
+import { formatBytes } from "@pureadmin/utils";
 import { getDefaultAuths } from "@/router/utils";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
@@ -10,28 +12,27 @@ import TaskLogDialog from "@/views/system/components/TaskLogDialog.vue";
 import ArrowDown from "~icons/ri/arrow-down-line";
 import FileList from "~icons/ri/file-list-3-line";
 
-/** 导入动作的 tag 类型兜底映射（字典项未配置 color 时使用） */
+/**
+ * 导入动作的 tag 类型兜底映射（字典项未配置 color 时使用）。
+ * 键与后端 ImportRecord.Action 取值（小写 create/update）一致，未命中回退 info。
+ */
 const ACTION_TAG_TYPE: Record<string, StatusTagType> = {
   create: "success",
   update: "primary"
 };
 
-/** 字节数人类可读（导入/导出记录同一口径：1024 进制） */
-export function formatBytes(size: number): string {
-  if (!size) return "0 B";
-  const units = ["B", "KB", "MB", "GB"];
-  let value = size;
-  let index = 0;
-  while (value >= 1024 && index < units.length - 1) {
-    value /= 1024;
-    index += 1;
-  }
-  return `${value.toFixed(index === 0 ? 0 : 1)} ${units[index]}`;
+/** 进度归一化：兼容 0~1 比值与 0~100 百分比两种后端口径 */
+export function normalizeProgress(value: unknown): number {
+  const num = Number(value ?? 0);
+  if (!Number.isFinite(num) || num <= 0) return 0;
+  // 仅 (0,1) 的小数按比值处理：整数 1 视为 1%（后端下发 0~100 整数）
+  const percent = num > 0 && num < 1 ? num * 100 : num;
+  return Math.min(100, Math.round(percent));
 }
 
 /** 记录 API 最小契约：exportRecordApi / importRecordApi 均实现 */
 interface RecordCenterApi {
-  download: (pk: string | number) => unknown;
+  download: (pk: string | number) => Promise<unknown>;
 }
 
 interface RecordCenterOptions {
@@ -54,7 +55,7 @@ export function useRecordCenter(options: RecordCenterOptions) {
   const { localePrefix, componentName, sizeKey } = options;
   const api = reactive(options.api);
   const auth = reactive(getDefaultAuths(componentName, ["download", "log"]));
-  const { t } = useI18n();
+  const { t, te } = useI18n();
 
   /** 打开任务日志弹窗（复用任务执行日志的 WS 增量消费组件） */
   const openLog = (pk: string | number, name: string) => {
@@ -69,12 +70,18 @@ export function useRecordCenter(options: RecordCenterOptions) {
     });
   };
 
+  /** 字典 label 优先，回退页面 i18n；两边都没有时不渲染原始 key */
+  const labelOrFallback = (
+    dictItem: { label?: string } | undefined,
+    key: string
+  ) => dictItem?.label ?? (te(key) ? t(key) : "—");
+
   /** 进度列：RUNNING 进度条，SUCCESS 100%，其余显示 — */
   const renderProgress = row => {
     const statusValue = row.status?.value ?? row.status;
     if (statusValue === "RUNNING") {
       return h(ElProgress, {
-        percentage: row.progress ?? 0,
+        percentage: normalizeProgress(row.progress),
         strokeWidth: 8,
         class: "w-full!"
       });
@@ -93,8 +100,14 @@ export function useRecordCenter(options: RecordCenterOptions) {
           icon: useRenderIcon(ArrowDown),
           link: true
         },
-        onClick: ({ row }) => {
-          api.download(row?.pk ?? row?.id);
+        onClick: async ({ row }) => {
+          // autoDownload 在业务失败/无文件时会 reject（拦截器已 toast），
+          // 这里显式 catch，避免按钮点击产生 unhandled rejection
+          try {
+            await api.download(row?.pk ?? row?.id);
+          } catch {
+            // 失败提示由 http 拦截器统一处理
+          }
         },
         show: auth.download && 4
       },
@@ -122,27 +135,23 @@ export function useRecordCenter(options: RecordCenterOptions) {
           // 字典未配置回退枚举时无 color，由 statusTagProps 走本地映射兜底
           column.cellRenderer = ({ row }) => {
             const statusValue = row.status?.value ?? row.status;
-            return h(
-              ElTag,
-              statusTagProps(row.status),
-              () =>
-                row.status?.label ?? t(`${localePrefix}.status${statusValue}`)
+            return h(ElTag, statusTagProps(row.status), () =>
+              labelOrFallback(
+                row.status,
+                `${localePrefix}.status${statusValue}`
+              )
             );
           };
           break;
         case "action":
-          // 导入动作（import_action 字典驱动）：color 优先彩色 tag，
+          // 导入动作（import_action 字典驱动）：color 优先彩色 tag（字典色统一
+          // 走 statusTagProps，避免 ElTag 只换背景导致字体色与字典不一致），
           // 无色回退 ACTION_TAG_TYPE；label 字典优先回退页面 i18n
           column.cellRenderer = ({ row }) => {
             const action = row.action;
             const actionValue = action?.value ?? action;
-            const actionProps = action?.color
-              ? { color: action.color }
-              : { type: ACTION_TAG_TYPE[String(actionValue)] ?? "info" };
-            return h(
-              ElTag,
-              actionProps,
-              () => action?.label ?? t(`${localePrefix}.action${actionValue}`)
+            return h(ElTag, statusTagProps(action, ACTION_TAG_TYPE), () =>
+              labelOrFallback(action, `${localePrefix}.action${actionValue}`)
             );
           };
           break;

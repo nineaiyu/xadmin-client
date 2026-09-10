@@ -30,10 +30,27 @@ test("用户配置：新增配置项 → 刷新后仍存在", async ({ page }) =
   await dialog.locator(".el-select").first().click();
   const pickerSearch = page.getByPlaceholder("请输入用户名");
   await pickerSearch.waitFor({ state: "visible", timeout: 15_000 });
-  const pickerRow = page
+  // 选择器内的用户表格是页面最后一个表格，先等它加载出行；列表默认
+  // ordering=-created_time + pageSize=15，早建的 e2e_user 可能已被挤出首页 —
+  // 此时退化为选择首行（本用例只要求「配置绑定到某个用户」，不关心是哪一个）
+  const pickerTable = page.locator(".el-table").last();
+  await pickerTable
+    .locator(".el-table__row")
+    .first()
+    .waitFor({ state: "visible", timeout: 15_000 });
+  const preferredRow = pickerTable
     .locator(".el-table__row", { hasText: "e2e_user" })
     .last();
-  await pickerRow.waitFor({ state: "visible", timeout: 15_000 });
+  const pickerRow = (await preferredRow.count())
+    ? preferredRow
+    : pickerTable.locator(".el-table__row").first();
+  // 列表 loading 与残留下拉浮层会拦截点击（webkit 曾表现为
+  // 「.el-select-dropdown__empty / .el-loading-mask intercepts pointer events」）
+  await page
+    .locator(".el-loading-mask:visible")
+    .first()
+    .waitFor({ state: "hidden", timeout: 15_000 })
+    .catch(() => undefined);
   await pickerRow.locator(".el-checkbox").first().click();
   await page.getByRole("button", { name: "确定" }).last().click();
   // RePlusPage 弹层表单非 el-form-item 结构：按 placeholder 定位配置名称，

@@ -1,4 +1,4 @@
-import { ref } from "vue";
+import { ref, type CSSProperties } from "vue";
 import { dataDictApi, type DictItem } from "@/api/system/dict";
 
 /**
@@ -92,15 +92,30 @@ export const STATUS_TAG_TYPE: Record<string, StatusTagType> = {
 };
 
 /**
- * 状态列 ElTag props 的规范取法：字典 color 优先（彩色 tag，与 labeled_choice
- * 渲染器/字典页同款样式），无 color 回退 STATUS_TAG_TYPE 枚举映射。
+ * 字典色 tag 的统一 props（数据字典页 / 列表 / 详情三处同款）。
+ *
+ * ElTag 的 color 只覆盖背景色，文字色与边框仍取默认 primary 语义色（蓝），
+ * 不补 style 就会出现「红底蓝字蓝边」，与字典页配置的颜色观感不一致。
  */
-export function statusTagProps(status: StatusValue): {
-  color?: string;
-  type?: StatusTagType;
-} {
+export function dictTagProps(
+  color?: string | null
+): { color: string; style: CSSProperties } | undefined {
+  if (!color) return undefined;
+  return { color, style: { border: "none", color: "#fff" } };
+}
+
+/**
+ * 状态列 ElTag props 的规范取法：字典 color 优先（彩色 tag，与字典页/详情
+ * 渲染器同款），无 color 回退 fallbackTypes 枚举映射（默认 STATUS_TAG_TYPE）。
+ */
+export function statusTagProps(
+  status: StatusValue,
+  fallbackTypes: Record<string, StatusTagType> = STATUS_TAG_TYPE
+): { color?: string; type?: StatusTagType; style?: CSSProperties } {
   const item = typeof status === "object" && status !== null ? status : null;
-  if (item?.color) return { color: item.color };
+  if (item?.color) {
+    return { color: item.color, style: { border: "none", color: "#fff" } };
+  }
   const value = item ? item.value : status;
-  return { type: STATUS_TAG_TYPE[String(value)] ?? "info" };
+  return { type: fallbackTypes[String(value)] ?? "info" };
 }

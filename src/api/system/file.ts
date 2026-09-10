@@ -31,6 +31,15 @@ class SystemUploadFileApi extends BaseApi {
       `${this.baseApi}/config`
     );
   };
+  /** 个人文件统计（数量/总大小/配额使用率）；服务端 10s 短缓存 */
+  stats = (params?: object) => {
+    return this.request<DetailResult>(
+      "get",
+      params,
+      {},
+      `${this.baseApi}/stats`
+    );
+  };
 }
 
 export const systemUploadFileApi = new SystemUploadFileApi("/api/system/file");

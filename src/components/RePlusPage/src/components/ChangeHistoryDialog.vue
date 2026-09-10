@@ -59,9 +59,20 @@ const fetchHistory = () => {
       size: pagination.pageSize
     })
     .then((res: ListResult) => {
+      // 业务失败（HTTP 200 + code != 1000）时 data 可能缺失，先判 code 再取值
+      if (res?.code !== 1000 || !res.data) {
+        dataList.value = [];
+        pagination.total = 0;
+        return;
+      }
       // 操作日志接口返回宽表行（RecordType[]），这里只消费变更历史所需字段
       dataList.value = res.data.results as unknown as HistoryRow[];
       pagination.total = res.data.total ?? dataList.value.length;
+    })
+    .catch(() => {
+      // 失败提示由 http 拦截器统一处理，这里兜住 reject 并清空列表
+      dataList.value = [];
+      pagination.total = 0;
     })
     .finally(() => {
       loading.value = false;

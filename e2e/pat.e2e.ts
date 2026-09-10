@@ -62,3 +62,75 @@ test("访问令牌：创建 → Pat 头调 API → 吊销后 401", async ({ page
   );
   expect(revokedResponse.status()).toBe(401);
 });
+
+/**
+ * PAT scope：scope 清单限制凭证可调用的路径前缀。
+ * 创建令牌 → 行内「接口范围」配置 scope → 命中路径 200 / 越界路径 403
+ * → 吊销后同凭证 401。
+ */
+test("访问令牌 scope：命中 200 / 越界 403 / 吊销 401", async ({ page }) => {
+  await login(page);
+  await page.goto("/#/account-settings");
+  await page.locator(".el-menu-item", { hasText: "访问令牌" }).first().click();
+
+  const tokenName = `e2e-pat-scope-${Date.now()}`;
+  await page
+    .locator(".el-form-item", { hasText: "令牌名称" })
+    .first()
+    .locator("input")
+    .first()
+    .fill(tokenName);
+  await page.getByRole("button", { name: "创建令牌" }).first().click();
+  const tokenDialog = page
+    .locator(".el-dialog", { hasText: "令牌创建成功" })
+    .first();
+  await expect(tokenDialog).toBeVisible({ timeout: 15_000 });
+  const plainToken =
+    (await tokenDialog.locator("code").first().textContent()) ?? "";
+  await page.keyboard.press("Escape");
+  await expect(tokenDialog).not.toBeVisible({ timeout: 10_000 });
+
+  // 行内「接口范围」按钮 → scope 编辑弹窗（一行一条路径前缀）
+  const row = page.locator(".el-table__row", { hasText: tokenName }).first();
+  await expect(row).toBeVisible({ timeout: 15_000 });
+  await row.getByTitle("接口范围").first().click();
+  const scopeDialog = page
+    .locator(".el-dialog", { hasText: "接口范围" })
+    .first();
+  await expect(scopeDialog).toBeVisible({ timeout: 10_000 });
+  await scopeDialog
+    .locator("textarea")
+    .fill("/api/system/personal-access-tokens");
+  // ReDialog 默认确认按钮文案为「保存」
+  await scopeDialog.getByRole("button", { name: "保存" }).first().click();
+  await expect(scopeDialog).not.toBeVisible({ timeout: 10_000 });
+
+  // 命中 scope 的路径 200（凭证调自身清单接口）
+  const hit = await page.request.get(
+    `${BACKEND_URL}/api/system/personal-access-tokens`,
+    { headers: { Authorization: `Pat ${plainToken}` } }
+  );
+  expect(hit.status()).toBe(200);
+
+  // 越界路径 403
+  const denied = await page.request.get(`${BACKEND_URL}/api/system/user`, {
+    headers: { Authorization: `Pat ${plainToken}` }
+  });
+  expect(denied.status()).toBe(403);
+
+  // 吊销后同凭证 401（scope 是否配置不影响吊销即时生效）
+  await row.getByRole("button", { name: "吊销" }).first().click();
+  const confirm = page
+    .locator(".el-popconfirm, .el-popper, .el-message-box")
+    .getByRole("button", { name: "确定" })
+    .first();
+  if (await confirm.isVisible().catch(() => false)) {
+    await confirm.click();
+  }
+  await expect(row).toContainText("禁用", { timeout: 15_000 });
+  const revoked = await page.request.get(
+    `${BACKEND_URL}/api/system/personal-access-tokens`,
+    { headers: { Authorization: `Pat ${plainToken}` } }
+  );
+  expect(revoked.status()).toBe(401);
+});

@@ -4,6 +4,7 @@ import { ElTag } from "element-plus";
 import { dataDictApi, type MoveDirection } from "@/api/system/dict";
 import { getDefaultAuths } from "@/router/utils";
 import { message } from "@/utils/message";
+import { dictTagProps } from "@/utils/dict";
 import {
   handleOperation,
   type OperationProps,
@@ -245,17 +246,12 @@ export function useDataDict(tableRef: Ref) {
             h("span", row.parent?.label ?? row.parent_code ?? "—");
           break;
         case "label":
-          // 与 labeled_choice 渲染保持一致：配了颜色即彩色 tag，否则纯文本
+          // 与 labeled_choice 渲染保持一致：配了颜色即彩色 tag，否则纯文本；
+          // 彩色 tag props 统一取 dictTagProps（列表/详情同款，避免只换背景色
+          // 导致字体色沿用 ElTag 默认语义色）
           column.cellRenderer = ({ row }) =>
             row.color
-              ? h(
-                  ElTag,
-                  {
-                    color: row.color,
-                    style: { border: "none", color: "#fff" }
-                  },
-                  () => row.label
-                )
+              ? h(ElTag, dictTagProps(row.color), () => row.label)
               : h("span", row.label ?? "—");
           break;
         case "color":

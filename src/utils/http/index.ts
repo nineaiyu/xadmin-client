@@ -25,6 +25,13 @@ import { useUserStoreHook } from "@/store/modules/user";
 import { message } from "@/utils/message";
 import { ElMessage } from "element-plus";
 import { buildUUID, downloadByData } from "@pureadmin/utils";
+import {
+  approvalKey,
+  clearPendingApprovals,
+  deletePendingApproval,
+  setPendingApproval,
+  takePendingApproval
+} from "./pendingApproval";
 import { registerPending, unregisterPending } from "./routeCancel";
 // import { router } from "@/router";
 
@@ -40,6 +47,10 @@ import { registerPending, unregisterPending } from "./routeCancel";
  * 必须保持此键格式，否则含文件表单的服务端解析会错位。
  */
 const FORM_SERIALIZER = { indexes: null, dots: true };
+
+// 敏感操作审批令牌暂存逻辑独立在 ./pendingApproval：该模块同时被用户 store
+// （登出清理）引用，定义在此会形成 store ↔ http 循环依赖；此处转出保持既有调用点
+export { clearPendingApprovals };
 
 const defaultConfig: AxiosRequestConfig = {
   baseURL: import.meta.env.VITE_API_DOMAIN,
@@ -116,6 +127,7 @@ class PureHttp {
     } as PureHttpRequestConfig & {
       _mfaRetried?: boolean;
       _tokenRetried?: boolean;
+      _approvalId?: string;
     };
     const controller = PureHttp.attachRouteController(config);
     return this.send<T>(config).finally(() => unregisterPending(controller));
@@ -126,6 +138,7 @@ class PureHttp {
     config: PureHttpRequestConfig & {
       _mfaRetried?: boolean;
       _tokenRetried?: boolean;
+      _approvalId?: string;
     }
   ): Promise<T> {
     // 单独处理自定义请求/响应回调
@@ -187,6 +200,43 @@ class PureHttp {
                     reject(error.response.data);
                   });
               }
+              return;
+            } else if (
+              error.response.status === 412 &&
+              data?.type === "approval_required"
+            ) {
+              /** 敏感操作审批（业务码 1002）：已建审批单，提示单号等待审批，
+               *  令牌暂存待审批通过后由请求拦截器自动携带重发（不做自动重试） */
+              const approvalId = data?.data?.approval_id;
+              if (approvalId) {
+                // 优先用请求期写入的指纹 key（axios 改写 config.data 后仍能命中）；
+                // 未经请求拦截器的调用路径（直发 axiosInstance / 单测驱动）回退重算
+                const requestKey = (
+                  config as PureHttpRequestConfig & { _approvalKey?: string }
+                )._approvalKey;
+                setPendingApproval(
+                  requestKey ??
+                    approvalKey(config.method, config.url, config.data),
+                  approvalId
+                );
+              }
+              ElMessage.warning(data?.detail);
+              reject(error.response.data);
+              return;
+            } else if (
+              error.response.status === 403 &&
+              data?.type === "approval_required"
+            ) {
+              /** 审批令牌被拒（驳回/过期/已消费/指纹不一致）：清除暂存令牌后按普通错误提示 */
+              const rejectedKey = (
+                config as PureHttpRequestConfig & { _approvalKey?: string }
+              )._approvalKey;
+              deletePendingApproval(
+                rejectedKey ??
+                  approvalKey(config.method, config.url, config.data)
+              );
+              ElMessage.error(data?.detail);
+              reject(error.response.data);
               return;
             } else {
               ElMessage.error(data?.detail ?? error.response.statusText);
@@ -338,6 +388,25 @@ class PureHttp {
         setApiLanguage(config);
         // 开启进度条动画
         NProgress.start();
+        // 敏感操作审批重发：同指纹请求携带暂存的审批令牌（审批通过后重发即消费）。
+        // 必须在 beforeRequestCallback 早退之前执行，否则带回调的请求永不携带审批头。
+        // key 落在 config 上供响应期按原样删除（响应期 config.data 已被 axios 改写）
+        const approvalKeyValue = approvalKey(
+          config.method,
+          config.url,
+          config.data
+        );
+        // 请求期指纹固定到 config：响应/异常阶段 config.data 已被 axios 改写，
+        // 只能靠这里写入的 key 做暂存与删除（空 key = 不参与指纹，如 FormData）
+        if (approvalKeyValue) {
+          (
+            config as PureHttpRequestConfig & { _approvalKey?: string }
+          )._approvalKey = approvalKeyValue;
+        }
+        const approvalId = takePendingApproval(approvalKeyValue);
+        if (approvalId) {
+          config.headers["X-Approval-Id"] = approvalId;
+        }
         // 优先判断post/get等方法是否传入回调，否则执行初始化设置等回调
         if (typeof config.beforeRequestCallback === "function") {
           config.beforeRequestCallback(config);
@@ -404,6 +473,14 @@ class PureHttp {
         const $config = response.config;
         // 关闭进度条动画
         NProgress.done();
+        // 携审批令牌的请求消费成功（业务码 1000）：按请求期写入的 key 清除暂存令牌
+        // （一次性通行；不能重算 key——axios 已把 config.data 改成序列化字符串）
+        const approvalKeyOfRequest = (
+          $config as PureHttpRequestConfig & { _approvalKey?: string }
+        )._approvalKey;
+        if (approvalKeyOfRequest && response.data?.code === 1000) {
+          deletePendingApproval(approvalKeyOfRequest);
+        }
         // 优先判断post/get等方法是否传入回调，否则执行初始化设置等回调
         if (typeof $config.beforeResponseCallback === "function") {
           $config.beforeResponseCallback(response);
@@ -434,6 +511,7 @@ class PureHttp {
 
 /** 登录态失效时跳转登录页并携带回跳地址（动态引入避免与路由模块循环依赖） */
 export function redirectToLogin() {
+  clearPendingApprovals();
   import("@/router")
     .then(({ router }) => {
       router.push({

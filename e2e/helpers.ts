@@ -29,6 +29,11 @@ const APP_WS_PATTERN = /\/ws\/message\//;
 export const E2E_USER_AGENT = "e2e-test";
 
 export const ADMIN = { username: "xadmin", password: "E2E-Admin-2026!" };
+/** 审批人（第二超管）：申请人不能自审，审批中心用例以其身份通过审批单 */
+export const APPROVER = {
+  username: "e2e_approver",
+  password: "E2E-Approver-2026!"
+};
 export const PLAIN_USER = { username: "e2e_user", password: "E2E-User-2026!" };
 export const SCOPED_USER = {
   username: "e2e_scoped",
@@ -110,6 +115,32 @@ export async function openMenuPath(page: Page, dirs: string[], path: string) {
     await link.scrollIntoViewIfNeeded().catch(() => undefined);
   }
   await link.click({ timeout: 10_000 });
+}
+
+/**
+ * 带查询条件进入列表页（hash 路由 + query 过滤）。
+ *
+ * **为什么必须过滤，而不是直接在表格里按文本找目标行**：列表默认
+ * `ordering=-created_time` 且 `pageSize=15`（RePlusPage 默认），E2E 一轮里靠前的
+ * 用例会持续创建带时间戳的账号，早期种子账号（`xadmin` / `e2e_user` 等）会被挤出
+ * 第一页 —— 直接 `locator(".el-table__row", { hasText: "xadmin" })` 就会「找不到
+ * 行」。而 webkit 是第二个执行的浏览器阶段、用户累积最多，于是只在 webkit 上失败，
+ * 历史上被误判为「时序 flaky」（真实原因见 e2e/README.md「分页污染」）。
+ *
+ * RePlusPage 会把 `route.query` 合并进首屏 searchFields（见
+ * `src/components/RePlusPage/src/utils/hook.tsx` 的 fieldsInitCallback），因此
+ * `#/system/user/index?username=xadmin` 进入页面即按用户名过滤。
+ */
+export async function openListWithQuery(
+  page: Page,
+  path: string,
+  query: Record<string, string> = {}
+) {
+  const qs = new URLSearchParams(query).toString();
+  await page.goto(`/#${path}${qs ? `?${qs}` : ""}`);
+  await expect(page.locator(".el-table").first()).toBeVisible({
+    timeout: 15_000
+  });
 }
 
 /**

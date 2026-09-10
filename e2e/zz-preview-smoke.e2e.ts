@@ -5,6 +5,7 @@ import {
   E2E_USER_AGENT,
   getAccessToken,
   login,
+  openListWithQuery,
   openMenuPath,
   PLAIN_USER
 } from "./helpers";
@@ -15,8 +16,9 @@ import {
  * 折叠进「更多」下拉，故先尝试直接点击，失败则展开下拉点击。
  *
  * 注意：
- * - 用户页表格默认排序的首行是 e2e_lock（无角色/部门的锁定测试用户），
- *   其预览 API 码为 0 属正确行为；超管全量断言必须定位到 xadmin 行。
+ * - 用户页列表默认 `ordering=-created_time` + `pageSize=15`，xadmin 创建最早会被
+ *   后建账号挤出第一页 —— 必须按用户名过滤进入（openListWithQuery），不能直接按
+ *   文本在表格里找行（历史上因此被误判为 webkit flaky，见 e2e/README.md）。
  * - 超管全量菜单（系统管理下 11 个子项 + 顶级菜单）超出默认 720px 视口，
  *   角色管理在 el-scrollbar 溢出区导致链接 hidden，需加高视口。
  */
@@ -44,9 +46,9 @@ async function openPreviewViaRow(page: Page, row: Locator, buttonText: string) {
 
 test("用户权限预览：抽屉与分区渲染（超管全量）", async ({ page }) => {
   await login(page);
-  await openMenuPath(page, ["系统管理"], "/system/user/index");
+  // 按用户名过滤进入（xadmin 最早创建，默认分页下不在第一页）
+  await openListWithQuery(page, "/system/user/index", { username: "xadmin" });
 
-  // 锁定超管行（e2e_lock 等种子用户的用户名不含 "xadmin"）
   const row = page
     .locator(".el-table__row")
     .filter({ hasText: "xadmin" })

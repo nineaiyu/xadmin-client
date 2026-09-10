@@ -1,5 +1,6 @@
 import { cloneDeep, isPhone } from "@pureadmin/utils";
 import { customRolePermissionOptions } from "@/views/system/hooks";
+import { statusTagProps, type StatusTagType } from "@/utils/dict";
 import { AesEncrypted } from "@/utils/aes";
 import { h, shallowRef, ref, type Ref, type UnwrapNestedRefs } from "vue";
 import { ElImage } from "element-plus";
@@ -19,6 +20,13 @@ import type { PasswordRule } from "@/api/auth";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 type SwitchStyle = ReturnType<typeof usePublicHooks>["switchStyle"];
+
+/** 字典色失效时的性别 tag 语义色兜底（1=男 2=女） */
+const GENDER_TAG_TYPE: Record<string, StatusTagType> = {
+  "0": "primary",
+  "1": "primary",
+  "2": "danger"
+};
 
 /** 用户视图列渲染与表单格式化：单元格渲染器、新增/编辑表单选项、授权弹窗列 */
 export function useUserColumnFormats({
@@ -57,18 +65,14 @@ export function useUserColumnFormats({
             });
           break;
         case "gender":
-          // 字典驱动（user_gender）：字典色优先彩色 tag；无色回退枚举映射（女=2 danger）
+          // 字典驱动（user_gender）：字典色优先彩色 tag（统一走 statusTagProps，
+          // 避免 ElTag 只换背景导致字体色与字典不一致）；无色回退枚举映射（女=2 danger）
           column["cellRenderer"] = ({ row, props }) => {
             const gender = row.gender;
-            const tagType: "danger" | "primary" =
-              String(gender?.value ?? gender) === "2" ? "danger" : "primary";
-            const tagProps = gender?.color
-              ? { color: gender.color }
-              : { type: tagType };
             return (
               <el-tag
                 size={props.size}
-                {...tagProps}
+                {...statusTagProps(gender, GENDER_TAG_TYPE)}
                 effect={gender?.color ? undefined : "plain"}
               >
                 {gender?.label ?? ""}

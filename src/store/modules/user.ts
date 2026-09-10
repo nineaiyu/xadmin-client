@@ -17,6 +17,7 @@ import {
   setUserInfo,
   userKey
 } from "@/utils/auth";
+import { clearPendingApprovals } from "@/utils/http/pendingApproval";
 
 import {
   resetRouter,
@@ -208,6 +209,8 @@ export const useUserStore = defineStore("pure-user", {
     logOut() {
       this.username = "";
       this.roles = [];
+      // 审批令牌绑定申请人：登出即清空，防跨账号残留（不依赖整页 reload）
+      clearPendingApprovals();
       logoutApi({ refresh: getRefreshToken() })
         .then(res => {
           if (res.code === 1000) {

@@ -6,23 +6,40 @@ const {
   downloadByDataMock,
   buildUUIDMock,
   confirmMfaMock,
-  elMessageMock
+  elMessageMock,
+  interceptorHooks
 } = vi.hoisted(() => {
   const request = vi.fn();
   // axios 实例的测试替身：http 层仅触达 interceptors 与 request
+  const requestUse = vi.fn();
+  const responseUse = vi.fn();
   const instance = {
     interceptors: {
-      request: { use: vi.fn() },
-      response: { use: vi.fn() }
+      request: { use: requestUse },
+      response: { use: responseUse }
     },
     request
   } as unknown as AxiosInstance;
+  // 捕获注册进来的拦截器回调，供审批令牌生命周期用例直接驱动
+  const interceptorHooks = {
+    requestResolved: undefined as ((config: unknown) => unknown) | undefined,
+    responseResolved: undefined as ((response: unknown) => unknown) | undefined
+  };
+  requestUse.mockImplementation((cb: unknown) => {
+    interceptorHooks.requestResolved =
+      cb as typeof interceptorHooks.requestResolved;
+  });
+  responseUse.mockImplementation((cb: unknown, _err: unknown) => {
+    interceptorHooks.responseResolved =
+      cb as typeof interceptorHooks.responseResolved;
+  });
   return {
     instanceMock: { instance, request },
     downloadByDataMock: vi.fn(),
     buildUUIDMock: vi.fn(() => "uuid-123"),
     confirmMfaMock: vi.fn(),
-    elMessageMock: vi.fn()
+    elMessageMock: vi.fn(),
+    interceptorHooks
   };
 });
 
@@ -52,7 +69,7 @@ vi.mock("@/utils/message", () => ({
 }));
 
 vi.mock("element-plus", () => ({
-  ElMessage: { error: elMessageMock }
+  ElMessage: { error: elMessageMock, warning: elMessageMock }
 }));
 
 vi.mock("@/components/ReMfaConfirm", () => ({
@@ -68,7 +85,7 @@ vi.mock("@pureadmin/utils", () => ({
   downloadByData: downloadByDataMock
 }));
 
-import { http } from "./index";
+import { clearPendingApprovals, http } from "./index";
 
 describe("PureHttp 请求分发", () => {
   beforeEach(() => {
@@ -237,5 +254,175 @@ describe("PureHttp 412 敏感操作二次验证拦截", () => {
 
     expect(confirmMfaMock).not.toHaveBeenCalled();
     expect(instanceMock.request).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("PureHttp 412 敏感操作审批（code=1002）令牌生命周期", () => {
+  const makeApproval412 = () =>
+    Object.assign(new Error("Request failed with status code 412"), {
+      response: {
+        status: 412,
+        statusText: "Precondition Required",
+        data: {
+          code: 1002,
+          type: "approval_required",
+          detail: "操作已提交审批（单号：A1B2C3D4）",
+          data: { approval_id: "token-1", status: "PENDING" }
+        }
+      }
+    });
+
+  const makeApproval403 = () =>
+    Object.assign(new Error("Request failed with status code 403"), {
+      response: {
+        status: 403,
+        statusText: "Forbidden",
+        data: {
+          code: 403,
+          type: "approval_required",
+          detail: "审批令牌已使用"
+        }
+      }
+    });
+
+  beforeEach(() => {
+    instanceMock.request.mockReset();
+    confirmMfaMock.mockReset();
+    elMessageMock.mockClear();
+    clearPendingApprovals();
+  });
+
+  it("1002 时暂存令牌、warning 提示、不自动重发、不唤起 MFA 验证", async () => {
+    instanceMock.request.mockRejectedValueOnce(makeApproval412());
+
+    await expect(
+      http.request("delete", "/api/system/user/1", {})
+    ).rejects.toMatchObject({ code: 1002 });
+
+    expect(confirmMfaMock).not.toHaveBeenCalled();
+    expect(instanceMock.request).toHaveBeenCalledTimes(1);
+    expect(elMessageMock).toHaveBeenCalledWith(
+      "操作已提交审批（单号：A1B2C3D4）"
+    );
+  });
+
+  it("审批通过后重发同指纹请求自动携带 X-Approval-Id，消费成功清除令牌", async () => {
+    // 无暂存令牌的请求：拦截器不注入审批头
+    const plainConfig = {
+      method: "delete",
+      url: "/api/system/user/1",
+      headers: {} as Record<string, string>
+    };
+    await interceptorHooks.requestResolved?.(plainConfig);
+    expect(plainConfig.headers["X-Approval-Id"]).toBeUndefined();
+
+    // 触发 1002：令牌入暂存表
+    instanceMock.request.mockRejectedValueOnce(makeApproval412());
+    await expect(
+      http.request("delete", "/api/system/user/1", {})
+    ).rejects.toBeTruthy();
+
+    // 有暂存令牌的同指纹请求：拦截器注入令牌
+    const retryConfig = {
+      method: "delete",
+      url: "/api/system/user/1",
+      headers: {} as Record<string, string>
+    };
+    await interceptorHooks.requestResolved?.(retryConfig);
+    expect(retryConfig.headers["X-Approval-Id"]).toBe("token-1");
+
+    // 响应拦截器在业务码 1000 时清除令牌：再次重发不再携带
+    interceptorHooks.responseResolved?.({
+      config: { ...retryConfig, _approvalId: "token-1" },
+      data: { code: 1000 },
+      headers: {}
+    });
+    const thirdConfig = {
+      method: "delete",
+      url: "/api/system/user/1",
+      headers: {} as Record<string, string>
+    };
+    await interceptorHooks.requestResolved?.(thirdConfig);
+    expect(thirdConfig.headers["X-Approval-Id"]).toBeUndefined();
+  });
+
+  it("对象请求体消费成功后清理暂存令牌（回归：axios 会改写 config.data）", async () => {
+    // 历史缺陷：响应期用 config.data 重算 key，而 axios 已把对象改写成 JSON 字符串，
+    // key 不一致 → 令牌清不掉，下次同请求误带已消费令牌返回 403
+    const body = { pks: ["pk-a"] };
+    instanceMock.request.mockRejectedValueOnce(makeApproval412());
+    await expect(
+      http.request("post", "/api/system/user/batch-destroy", { data: body })
+    ).rejects.toBeTruthy();
+
+    const retryConfig = {
+      method: "post",
+      url: "/api/system/user/batch-destroy",
+      data: { ...body },
+      headers: {} as Record<string, string>
+    };
+    await interceptorHooks.requestResolved?.(retryConfig);
+    expect(retryConfig.headers["X-Approval-Id"]).toBe("token-1");
+
+    // 响应期 config.data 已被 axios 序列化为字符串，令牌仍须按请求期 key 清理
+    interceptorHooks.responseResolved?.({
+      config: { ...retryConfig, data: JSON.stringify(body) },
+      data: { code: 1000 },
+      headers: {}
+    });
+
+    const thirdConfig = {
+      method: "post",
+      url: "/api/system/user/batch-destroy",
+      data: { ...body },
+      headers: {} as Record<string, string>
+    };
+    await interceptorHooks.requestResolved?.(thirdConfig);
+    expect(thirdConfig.headers["X-Approval-Id"]).toBeUndefined();
+  });
+
+  it("令牌被拒（403 approval_required）后清除暂存令牌", async () => {
+    instanceMock.request
+      .mockRejectedValueOnce(makeApproval412())
+      .mockRejectedValueOnce(makeApproval403());
+
+    await expect(
+      http.request("delete", "/api/system/user/2", {})
+    ).rejects.toBeTruthy();
+    await expect(
+      http.request("delete", "/api/system/user/2", {})
+    ).rejects.toBeTruthy();
+
+    // 第二次请求虽携带了暂存令牌，但消费被拒 403 后令牌已清除：
+    // 第三次重发不再注入
+    const thirdConfig = {
+      method: "delete",
+      url: "/api/system/user/2",
+      headers: {}
+    };
+    await interceptorHooks.requestResolved?.(thirdConfig);
+    expect(
+      (thirdConfig.headers as Record<string, string>)["X-Approval-Id"]
+    ).toBeUndefined();
+  });
+
+  it("不同指纹（body 不同）不串用暂存令牌", async () => {
+    instanceMock.request.mockRejectedValueOnce(makeApproval412());
+    await expect(
+      http.request("post", "/api/system/user/batch-destroy", {
+        data: ["pk-a"]
+      })
+    ).rejects.toBeTruthy();
+
+    const otherBodyConfig = {
+      method: "post",
+      url: "/api/system/user/batch-destroy",
+      data: ["pk-b"],
+      headers: {}
+    };
+    await interceptorHooks.requestResolved?.(otherBodyConfig);
+    expect(
+      (otherBodyConfig.headers as Record<string, string>)["X-Approval-Id"]
+    ).toBeUndefined();
   });
 });

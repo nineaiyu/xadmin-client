@@ -162,12 +162,13 @@ exportImport:
   exportRange: 导出范围
   exportAll: 导出所有
   exportSelected: 导出选中项
-  exportFiltered: 仅导出搜素结果
+  exportFiltered: 仅导出搜索结果
   create: 创建
   update: 更新
   upload: 上传
   uploadRuleTip: 文件不能为空
   uploadTip: 可点击或拖拽上传
+  pleaseSelectFile: 请先选择文件
   downloadTip: 下载{ action }模板
   downloadTemplate: 下载模板
   ignoreError: 忽略错误
@@ -298,6 +299,36 @@ menus:
   importCenter: 导入记录
   systemMonitor: 系统监控
   dataDict: 数据字典
+  dataMaskRule: 脱敏规则
+  approvalCenter: 审批中心
+
+approval:
+  pendingTab: 待我审批
+  mineTab: 我发起的
+  approve: 通过
+  reject: 驳回
+  cancel: 撤回
+  batchApprove: 批量通过
+  approveConfirm: 确定通过审批单 {no} 吗？
+  cancelConfirm: 确定撤回审批单 {no} 吗？
+  batchApproveConfirm: 确定批量通过选中的审批单吗？
+  rejectTitle: 驳回审批单 {no}
+  rejectReasonRequired: 请填写驳回原因
+  reasonPlaceholder: 请输入驳回原因（必填）
+  module: 模块
+  method: 方法
+  path: 请求路径
+  object_pk: 对象主键
+  status: 状态
+  approver: 审批人
+  reason: 原因
+  creator: 申请人
+  statusPENDING: 待审批
+  statusAPPROVED: 已通过
+  statusREJECTED: 已驳回
+  statusEXPIRED: 已过期
+  statusCANCELLED: 已撤回
+  statusFAILED: 校验失败
 
 userinfo:
   userinfo: 个人信息
@@ -584,6 +615,7 @@ logsOperation:
   creator: 用户
   body: 请求体
   response_code: 状态码
+  status_code: 业务码
   response_result: 响应内容
   method: 请求方法
   exec_time: 耗时(秒)
@@ -679,6 +711,9 @@ systemUploadFile:
   upload: 上传
   fileLink: 文件连接
   filename: 文件名
+  category: 分类
+  storageUsage: 存储使用
+  fileCount: 文件数量
   clickUpload: 点击上传
   dropFile: 拖拽文件到这里或
   uploadTip: 上传文件大小需要小于
@@ -910,7 +945,20 @@ accessToken:
   onceTip: 这是令牌明文唯一一次展示机会，关闭后无法再次查看
   copy: 复制令牌
   copied: 已复制到剪贴板
+  copyFailed: 复制失败，请手动选中复制
   revoke: 吊销
+  scope: 接口范围
+  scopeCount: "接口范围：{n} 条"
+  scopeUnrestricted: 不限
+  scopeTip: 每行一条允许的路径前缀或正则（如 /api/system/user），留空表示不限；越界请求将返回 403
+  scopePlaceholder: |-
+    /api/system/user
+    /api/system/exports
+  callLogs: 调用记录
+  callLogsTip: 调用记录按「你的账号 + 该令牌周期」近似关联（操作日志不含令牌标识）
+  totalCalls: 近 {n} 天调用
+  failedCalls: 失败调用
+  lastCall: 末次调用
 
 systemTaskCrontab:
   minute: 分钟
@@ -1011,3 +1059,29 @@ dataDict:
   refreshCache: 刷新缓存
   addType: 新增字典类型
   addChild: 新增子项
+
+mask:
+  model: 所属模型
+  field: 字段
+  mask_type: 掩码类型
+  keep_head: 保留前
+  keep_tail: 保留后
+  mask_char: 掩码字符
+  pattern: 正则
+  roles: 角色
+  is_active: 启用
+  sort: 排序
+  description: 描述
+  creator: 创建人
+  preview: 脱敏预览
+  previewValue: 样例值
+  previewTip: 请输入样例值
+  previewResult: 预览结果
+  previewBtn: 预览
+  customOnlyTip: 仅 custom 类型使用
+  maskTypePhone: 手机号
+  maskTypeIdcard: 身份证
+  maskTypeEmail: 邮箱
+  maskTypeName: 姓名
+  maskTypeBankcard: 银行卡
+  maskTypeCustom: 自定义正则

@@ -11,6 +11,27 @@ import { getColourTypeByIndex } from "./index";
 import type { ChoiceOptionItem, PlusColumnRegistry } from "./types";
 
 /**
+ * 字典色 tag 的 props（与 @/utils/dict 的 dictTagProps 同款）。
+ * 这里不直接 import @/utils/dict：它会连带引入 @/api/system/dict，与本组件
+ * 测试形成循环依赖（ViewBaseApi 尚未初始化就被继承）。
+ * ElTag 的 color 只覆盖背景色，文字/边框需显式覆盖，否则沿用默认 primary 语义色。
+ */
+const dictTagStyle = (color: string) => ({
+  color,
+  style: { border: "none", color: "#fff" }
+});
+
+/** 色块（14px 圆角方块），用于 color 字段的详情/表格展示 */
+const colorBlockStyle = (color: string) => ({
+  display: "inline-block",
+  width: "14px",
+  height: "14px",
+  marginRight: "6px",
+  borderRadius: "3px",
+  background: color
+});
+
+/**
  * 详情/表格列内置渲染器：input_type -> 对 PageColumn 就地配置
  * 迁移自 columns.tsx formatAddOrEditColumns 的第二个 switch-case
  * 注意：无匹配 input_type 时不做任何配置（与原 switch 无 default 分支一致）
@@ -19,6 +40,23 @@ export const builtinDetailRenderers: PlusColumnRegistry = {
   labeled_choice: (item, { column }) => {
     item["prop"] = `${column.key}.value`;
     item["options"] = computed(() => formatAddOrEditOptions(column?.choices));
+    // 详情（PlusDescriptions）只认 render/valueType，不看 cellRenderer：
+    // prop 已改为 status.value，valueType=select 只会输出纯文本 label，字典项的
+    // color 不会生效。这里补 render，按元数据 choices 的 color 渲染彩色 tag。
+    item["render"] = (value: unknown) => {
+      const option = (
+        column?.choices as
+          | { value?: unknown; label?: string; color?: string | null }[]
+          | undefined
+      )?.find?.(option => option?.value === value);
+      const label = option?.label ?? value;
+      if (!option?.color) return <span v-copy={label}>{label}</span>;
+      return (
+        <el-tag {...dictTagStyle(option.color)} v-copy={label}>
+          {label}
+        </el-tag>
+      );
+    };
     // pure-table ******
     item["cellRenderer"] = ({ row }) => {
       const label = get(row, `${column.key}.label`);
@@ -32,16 +70,37 @@ export const builtinDetailRenderers: PlusColumnRegistry = {
           ?.color;
       if (color) {
         return (
-          <el-tag
-            color={color as string}
-            style={{ border: "none", color: "#fff" }}
-            v-copy={label}
-          >
+          <el-tag {...dictTagStyle(color)} v-copy={label}>
             {label}
           </el-tag>
         );
       }
       return <span v-copy={label}>{label}</span>;
+    };
+  },
+  color: (item, { column }) => {
+    // 详情（PlusDescriptions）对 valueType=color-picker 没有展示组件，只会退化成
+    // 纯文本色值；这里补成与列表一致的「色块 + 色值」（表单侧仍是颜色选择器）
+    item["render"] = (value: string) =>
+      value ? (
+        <span class="flex items-center" v-copy={value}>
+          <span style={colorBlockStyle(value)} />
+          <span>{value}</span>
+        </span>
+      ) : (
+        <span>—</span>
+      );
+    // pure-table ******
+    item["cellRenderer"] = ({ row }) => {
+      const value = get(row, column.key);
+      return value ? (
+        <span class="flex items-center">
+          <span style={colorBlockStyle(value)} />
+          <span>{value}</span>
+        </span>
+      ) : (
+        <span>—</span>
+      );
     };
   },
   object_related_field: (item, { column }) => {

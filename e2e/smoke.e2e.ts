@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { login, logout, openMenu } from "./helpers";
+import { login, logout, openMenu, openListWithQuery } from "./helpers";
 
 /**
  * xadmin E2E 冒烟：登录 → 菜单 → 部门 CRUD → 用户列表 → 登出
@@ -56,10 +56,14 @@ test("部门管理：新增 → 列表可见 → 删除 → 列表消失 @smoke"
 
 test("用户管理：列表加载数据 @smoke", async ({ page }) => {
   await login(page);
-  await openMenu(page, "系统管理", "用户管理");
-  const table = page.locator(".el-table");
+  await openListWithQuery(page, "/system/user/index");
+  const table = page.locator(".el-table").first();
   await expect(table).toBeVisible();
-  await expect(table.getByText("xadmin").first()).toBeVisible();
+  // 只断言「列表已加载出数据行 + 分页渲染」，不绑定具体账号：默认
+  // ordering=-created_time + pageSize=15，全量跑时早期种子账号会被挤出第一页
+  // （详见 helpers.openListWithQuery 注释）
+  await expect(table.locator(".el-table__row").first()).toBeVisible();
+  await expect(page.locator(".el-pagination").first()).toBeVisible();
 });
 
 test("角色权限：列表与搜索区渲染 @smoke", async ({ page }) => {
