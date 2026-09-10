@@ -78,13 +78,15 @@ export default defineConfig({
         `$PYTHON -m daphne -b 127.0.0.1 -p ${apiPort} server.asgi:application`,
       cwd: serverDir,
       url: `${apiURL}/api/common/api/health`,
-      reuseExistingServer: !process.env.CI,
+      // 默认不复用已存在服务：历史上复用旧后端进程会造成「改了后端却跑旧行为」的假失败。
+      // 确需复用（本地反复跑、后端无改动）时显式设置 E2E_REUSE_SERVER=1。
+      reuseExistingServer: !process.env.CI && !!process.env.E2E_REUSE_SERVER,
       timeout: 120_000
     },
     {
       command: `pnpm dev --port ${frontPort} --strictPort`,
       url: baseURL,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: !process.env.CI && !!process.env.E2E_REUSE_SERVER,
       timeout: 120_000
     }
   ]

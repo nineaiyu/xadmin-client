@@ -6,6 +6,9 @@
     "strict": false,
     "strictFunctionTypes": false,
     "noImplicitThis": true,
+    // noImplicitAny 收敛中（存量约 350 处历史类型债，专项推进）：开启后 typecheck 会报错，
+    // 收敛完成前保持关闭以不阻塞 CI；已收敛模块的类型标注已保留
+    "noImplicitAny": false,
     "jsx": "preserve",
     "jsxImportSource": "vue",
     "skipLibCheck": true,

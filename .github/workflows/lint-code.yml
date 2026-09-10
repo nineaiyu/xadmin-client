@@ -65,3 +65,18 @@ jobs:
         run: |
           pnpm gen:metadata-types
           git diff --exit-code -- src/api/types
+
+      - name: Checkout contract source (xadmin-server)
+        # 服务端是契约唯一真源：检出其开发分支用于校验镜像是否漂移
+        uses: actions/checkout@v4
+        with:
+          repository: nineaiyu/xadmin-server
+          ref: dev
+          path: xadmin-server
+
+      - name: Metadata contract mirror is in sync
+        # 客户端 contract/schema 为服务端 docs/schema 的镜像；
+        # 服务端改契约而镜像未同步时在此失败（此前两侧无任何一致性校验）
+        env:
+          XADMIN_SERVER_DIR: xadmin-server
+        run: pnpm check:contract
