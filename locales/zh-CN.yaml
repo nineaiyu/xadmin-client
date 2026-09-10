@@ -454,7 +454,6 @@ systemDept:
   roles: 角色
   rules: 数据权限
 
-
 systemPermission:
   permission: 数据权限
   name: 权限名称
@@ -957,12 +956,19 @@ accessToken:
   scope: 接口范围
   scopeCount: "接口范围：{n} 条"
   scopeUnrestricted: 不限
-  scopeTip: 每行一条允许的路径前缀或正则（如 /api/system/user），留空表示不限；越界请求将返回 403
+  scopeTip: 每行一条允许的路径前缀或正则（如 /api/system/user），可加方法前缀限定（如 GET /api/system/user）；留空表示不限，越界请求返回 403
   scopePlaceholder: |-
     /api/system/user
     /api/system/exports
+  ipAllowlist: IP 白名单
+  ipCount: "IP 白名单：{n} 条"
+  ipAllowlistUnrestricted: 不限来源
+  ipAllowlistTip: 每行一个允许的来源 IP 或 CIDR 网段（如 10.0.0.0/8），留空表示不限；不在白名单内的调用将被拒绝
+  ipAllowlistPlaceholder: |-
+    127.0.0.1
+    10.0.0.0/8
   callLogs: 调用记录
-  callLogsTip: 调用记录按「你的账号 + 该令牌周期」近似关联（操作日志不含令牌标识）
+  callLogsTip: 调用记录按令牌精确归集（操作日志已记录令牌标识）；升级前产生的历史记录无法区分到具体令牌，不计入
   totalCalls: 近 {n} 天调用
   failedCalls: 失败调用
   lastCall: 末次调用

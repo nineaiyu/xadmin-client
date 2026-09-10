@@ -35,7 +35,7 @@ panel:
   watermarkTextPlaceholder: Please enter text
 
 avatarUpload:
-  tips: 'Tips: Right-click the cropping area can open the function menu'
+  tips: "Tips: Right-click the cropping area can open the function menu"
   imageSize: "Image size: { x } x { y } pixels"
   fileSize: "File size: { x } ({ y } bytes)"
 
@@ -183,7 +183,7 @@ exportImport:
   asyncImportTip: 'Enable for large datasets: submit a background task; track progress and error reports in "Download Center - Import Records"'
   validateResult: Import validation result
   validateDone: Validation finished
-  validateSummary: '{total} rows in total, {valid} valid, {invalid} invalid'
+  validateSummary: "{total} rows in total, {valid} valid, {invalid} invalid"
   validateTruncated: Error details truncated
   validateRow: Row
   validateField: Field
@@ -956,12 +956,19 @@ accessToken:
   scope: Scopes
   scopeCount: "Scopes: {n}"
   scopeUnrestricted: Unrestricted
-  scopeTip: One allowed path prefix or regex per line (e.g. /api/system/user). Leave empty for unrestricted; out-of-scope requests get 403
+  scopeTip: One allowed path prefix or regex per line (e.g. /api/system/user), optionally prefixed with a method (e.g. GET /api/system/user). Leave empty for unrestricted; out-of-scope requests get 403
   scopePlaceholder: |-
     /api/system/user
     /api/system/exports
+  ipAllowlist: IP allowlist
+  ipCount: "IP allowlist: {n}"
+  ipAllowlistUnrestricted: Unrestricted
+  ipAllowlistTip: One allowed source IP or CIDR network per line (e.g. 10.0.0.0/8). Leave empty for unrestricted; calls from other IPs are rejected
+  ipAllowlistPlaceholder: |-
+    127.0.0.1
+    10.0.0.0/8
   callLogs: Call logs
-  callLogsTip: Logs are approximately associated by your account within the token's lifetime (operation logs carry no token identity)
+  callLogsTip: Call logs are attributed per token (operation logs now carry the token identity); records created before the upgrade cannot be attributed and are excluded
   totalCalls: Calls (last {n}d)
   failedCalls: Failed calls
   lastCall: Last call

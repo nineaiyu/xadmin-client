@@ -12,6 +12,7 @@ import PatCallLogs from "./PatCallLogs.vue";
 import Delete from "~icons/ep/delete";
 import Document from "~icons/ep/document";
 import Lock from "~icons/ep/lock";
+import Location from "~icons/ep/location";
 
 defineOptions({ name: "AccessToken" });
 
@@ -29,6 +30,7 @@ const columns = computed(() => [
   { prop: "name", label: t("accessToken.name") },
   { prop: "token_prefix", label: t("accessToken.prefix") },
   { prop: "scopes", label: t("accessToken.scope") },
+  { prop: "ip_allowlist", label: t("accessToken.ipAllowlist") },
   { prop: "is_active", label: t("accessToken.active") },
   { prop: "expired_at", label: t("accessToken.expiredAt") },
   { prop: "last_used_time", label: t("accessToken.lastUsed") },
@@ -98,13 +100,24 @@ const handleDelete = (row: RecordType) => {
   });
 };
 
-/** scope 编辑：多行路径前缀/正则，一行一条（空 = 不限）。SFC 内不用 JSX，用 h() */
-const openScopeEditor = (row: RecordType) => {
-  const scopeForm = reactive({
-    scopes: (row.scopes ?? []).join("\n")
-  });
+/**
+ * 清单编辑器（接口范围 / IP 白名单共用）：多行文本，一行一条，空 = 不限。
+ *
+ * 两者交互完全一致（textarea + 说明 + 保存 loading 收口），收口避免两份实现漂移；
+ * SFC 内不用 JSX，用 h()。
+ */
+const openListEditor = (options: {
+  pk: string | number;
+  /** 提交的字段名（与后端字段一致） */
+  field: "scopes" | "ip_allowlist";
+  title: string;
+  tip: string;
+  placeholder: string;
+  value: string[];
+}) => {
+  const editor = reactive({ text: (options.value ?? []).join("\n") });
   addDialog({
-    title: t("accessToken.scope"),
+    title: options.title,
     width: "480px",
     draggable: true,
     destroyOnClose: true,
@@ -114,24 +127,22 @@ const openScopeEditor = (row: RecordType) => {
         h(ElInput, {
           type: "textarea",
           rows: 6,
-          modelValue: scopeForm.scopes,
-          "onUpdate:modelValue": (value: string) => (scopeForm.scopes = value),
-          placeholder: t("accessToken.scopePlaceholder")
+          modelValue: editor.text,
+          "onUpdate:modelValue": (value: string) => (editor.text = value),
+          placeholder: options.placeholder
         }),
-        h(
-          "div",
-          { class: "el-form-item__help w-full! mt-1" },
-          t("accessToken.scopeTip")
-        )
+        h("div", { class: "el-form-item__help w-full! mt-1" }, options.tip)
       ]),
     beforeSure: (done, { closeLoading }) => {
-      const scopes = scopeForm.scopes
+      const items = editor.text
         .split("\n")
         .map(item => item.trim())
         .filter(Boolean);
       handleOperation({
         t,
-        apiReq: personalAccessTokenApi.partialUpdate(row.pk, { scopes }),
+        apiReq: personalAccessTokenApi.partialUpdate(options.pk, {
+          [options.field]: items
+        }),
         success: () => {
           done();
           fetchList();
@@ -143,7 +154,29 @@ const openScopeEditor = (row: RecordType) => {
   });
 };
 
-/** 调用记录弹窗：内容组件自发起请求（近似口径说明见弹窗内提示） */
+/** 接口范围编辑：路径前缀/正则，可带方法前缀（如 `GET /api/system/user`） */
+const openScopeEditor = (row: RecordType) =>
+  openListEditor({
+    pk: row.pk,
+    field: "scopes",
+    title: t("accessToken.scope"),
+    tip: t("accessToken.scopeTip"),
+    placeholder: t("accessToken.scopePlaceholder"),
+    value: row.scopes ?? []
+  });
+
+/** IP 白名单编辑：单个 IP 或 CIDR 网段，格式校验由服务端收口 */
+const openIpAllowlistEditor = (row: RecordType) =>
+  openListEditor({
+    pk: row.pk,
+    field: "ip_allowlist",
+    title: t("accessToken.ipAllowlist"),
+    tip: t("accessToken.ipAllowlistTip"),
+    placeholder: t("accessToken.ipAllowlistPlaceholder"),
+    value: row.ip_allowlist ?? []
+  });
+
+/** 调用记录弹窗：内容组件自发起请求（精确口径说明见弹窗内提示） */
 const openCallLogs = (row: RecordType) => {
   addDialog({
     title: `${t("accessToken.callLogs")} - ${row.name}`,
@@ -209,13 +242,23 @@ onMounted(fetchList);
           </el-tag>
           <span v-else>{{ t("accessToken.scopeUnrestricted") }}</span>
         </template>
+        <template v-else-if="column.prop === 'ip_allowlist'" #default="{ row }">
+          <el-tag
+            v-if="(row.ip_allowlist ?? []).length"
+            size="small"
+            type="info"
+          >
+            {{ t("accessToken.ipCount", { n: row.ip_allowlist.length }) }}
+          </el-tag>
+          <span v-else>{{ t("accessToken.ipAllowlistUnrestricted") }}</span>
+        </template>
         <template v-else #default="{ row }">
           {{ row[column.prop] ?? "—" }}
         </template>
       </el-table-column>
       <el-table-column
         :label="t('labels.operations')"
-        width="170"
+        width="210"
         fixed="right"
       >
         <template #default="{ row }">
@@ -234,6 +277,14 @@ onMounted(fetchList);
             @click="openScopeEditor(row)"
           >
             <IconifyIconOffline :icon="Lock" />
+          </el-button>
+          <el-button
+            type="primary"
+            link
+            :title="t('accessToken.ipAllowlist')"
+            @click="openIpAllowlistEditor(row)"
+          >
+            <IconifyIconOffline :icon="Location" />
           </el-button>
           <el-button
             type="primary"
