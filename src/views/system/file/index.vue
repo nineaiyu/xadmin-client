@@ -55,6 +55,9 @@ const quotaColor = computed(() => {
         <el-tag type="info" size="small" effect="plain">
           {{ t("systemUploadFile.fileCount") }}: {{ stats.count }}
         </el-tag>
+        <el-text type="info" size="small" class="basis-full">
+          {{ t("systemUploadFile.quotaTip") }}
+        </el-text>
       </div>
     </el-card>
     <RePlusPage

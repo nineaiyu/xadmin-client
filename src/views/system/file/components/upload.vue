@@ -71,7 +71,11 @@ const refreshData = throttle(props.tableRef?.handleGetData, 2000);
 const uploadSuccess = (response: UploadResult, uploadFile: UploadFile) => {
   if (response.code === 1000) {
     refreshData();
-    message(`${uploadFile.name} ${t("results.success")}`, { type: "success" });
+    // 优先展示服务端 detail：命中上传去重时会附带「已复用已有副本」提示，
+    // 缺省回退通用成功文案（老后端/无 detail 场景）
+    message(`${uploadFile.name} ${response.detail || t("results.success")}`, {
+      type: "success"
+    });
   } else {
     uploadFile.status = "fail";
     message(`${uploadFile.name} ${t("results.failed")}，${response.detail}`, {

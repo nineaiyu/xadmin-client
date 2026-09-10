@@ -728,6 +728,7 @@ systemUploadFile:
   clickUpload: click to upload
   dropFile: Drop file here or
   uploadTip: Files with a size less than
+  quotaTip: Re-uploading the same file reuses the stored copy, while the quota still counts each record in full
 
 status:
   hsLoad: Loading...
