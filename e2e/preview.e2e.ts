@@ -6,7 +6,7 @@ import {
   E2E_USER_AGENT,
   getAccessToken,
   login,
-  openListWithQuery,
+  openList,
   openMenuPath,
   PLAIN_USER
 } from "./helpers";
@@ -50,9 +50,12 @@ async function clickRowButton(page: Page, row: Locator, buttonText: string) {
 /** 超管：进入用户管理页并打开指定用户行的权限预览抽屉 */
 async function openUserPreviewAsAdmin(page: Page, username: string) {
   await login(page);
-  // 按用户名过滤进入：目标行（xadmin）创建最早，默认 ordering=-created_time +
-  // pageSize=15 下会被后建的账号挤出第一页（详见 helpers.openListWithQuery）
-  await openListWithQuery(page, "/system/user/index", { username });
+  // 搜索过滤后再定位目标行：xadmin 创建最早，默认 ordering=-created_time +
+  // pageSize=15 下会被后建账号挤出第一页（详见 helpers.openList）
+  await openList(page, "/system/user/index", {
+    placeholder: "请输入用户名",
+    value: username
+  });
   const row = page
     .locator(".el-table__row")
     .filter({ hasText: username })

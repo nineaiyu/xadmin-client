@@ -118,29 +118,37 @@ export async function openMenuPath(page: Page, dirs: string[], path: string) {
 }
 
 /**
- * 带查询条件进入列表页（hash 路由 + query 过滤）。
+ * 进入列表页（hash 路由）；传入 `filter` 时在搜索区填入条件并点「搜索」。
  *
- * **为什么必须过滤，而不是直接在表格里按文本找目标行**：列表默认
- * `ordering=-created_time` 且 `pageSize=15`（RePlusPage 默认），E2E 一轮里靠前的
- * 用例会持续创建带时间戳的账号，早期种子账号（`xadmin` / `e2e_user` 等）会被挤出
- * 第一页 —— 直接 `locator(".el-table__row", { hasText: "xadmin" })` 就会「找不到
- * 行」。而 webkit 是第二个执行的浏览器阶段、用户累积最多，于是只在 webkit 上失败，
- * 历史上被误判为「时序 flaky」（真实原因见 e2e/README.md「分页污染」）。
+ * **为什么断言具体行前必须过滤**：列表固定发 `ordering=-created_time`，默认
+ * `pageSize=15`（RePlusPage 默认），E2E 一轮里靠前的用例会持续创建带时间戳的账号，
+ * 早期种子账号（`xadmin` / `e2e_user` 等）会被挤出第一页 —— 直接
+ * `locator(".el-table__row", { hasText: "xadmin" })` 就会「找不到行」。而 webkit 是
+ * 第二个执行的浏览器阶段、用户累积最多，于是只在 webkit 上失败，历史上被误判为
+ * 「时序 flaky」（真实原因与处理纪律见 e2e/README.md「列表断言陷阱」）。
  *
- * RePlusPage 会把 `route.query` 合并进首屏 searchFields（见
- * `src/components/RePlusPage/src/utils/hook.tsx` 的 fieldsInitCallback），因此
- * `#/system/user/index?username=xadmin` 进入页面即按用户名过滤。
+ * 注意**不要**用 `?username=xadmin` 这种 route.query 方式预置：RePlusPage 会把
+ * route.query 合并进 searchFields 并回填搜索框，但首屏列表请求并未带上该条件
+ * （实测：搜索框显示 xadmin、表格仍是未过滤的第一页），必须在页面上真实触发一次搜索。
  */
-export async function openListWithQuery(
+export async function openList(
   page: Page,
   path: string,
-  query: Record<string, string> = {}
+  filter?: { placeholder: string; value: string }
 ) {
-  const qs = new URLSearchParams(query).toString();
-  await page.goto(`/#${path}${qs ? `?${qs}` : ""}`);
+  await page.goto(`/#${path}`);
   await expect(page.locator(".el-table").first()).toBeVisible({
     timeout: 15_000
   });
+  if (!filter) return;
+  // 搜索项多时默认折叠，展开后条件输入与「搜索」按钮才可见
+  const expandBtn = page.getByRole("button", { name: /展开/ });
+  if (await expandBtn.isVisible().catch(() => false)) {
+    await expandBtn.click();
+  }
+  const input = page.getByPlaceholder(filter.placeholder).first();
+  await input.fill(filter.value);
+  await page.getByRole("button", { name: "搜索", exact: true }).first().click();
 }
 
 /**

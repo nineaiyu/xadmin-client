@@ -5,7 +5,7 @@ import {
   E2E_USER_AGENT,
   getAccessToken,
   login,
-  openListWithQuery,
+  openList,
   openMenuPath,
   PLAIN_USER
 } from "./helpers";
@@ -46,8 +46,11 @@ async function openPreviewViaRow(page: Page, row: Locator, buttonText: string) {
 
 test("用户权限预览：抽屉与分区渲染（超管全量）", async ({ page }) => {
   await login(page);
-  // 按用户名过滤进入（xadmin 最早创建，默认分页下不在第一页）
-  await openListWithQuery(page, "/system/user/index", { username: "xadmin" });
+  // 搜索过滤后再定位超管行（xadmin 最早创建，默认分页下不在第一页）
+  await openList(page, "/system/user/index", {
+    placeholder: "请输入用户名",
+    value: "xadmin"
+  });
 
   const row = page
     .locator(".el-table__row")

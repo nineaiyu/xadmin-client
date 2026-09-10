@@ -45,8 +45,12 @@ RePlusPage 列表**固定发 `ordering=-created_time` 且默认 `pageSize=15`**�
 
 **处置（断言纪律）**：
 
-1. 需要定位具体行时，**先按条件过滤进入页面**（`helpers.openListWithQuery(page, "/system/user/index", { username: "xadmin" })`，
-   RePlusPage 会把 `route.query` 合并进首屏 searchFields），或先点搜索区过滤；
+1. 需要定位具体行时，**先按条件过滤再断言**：
+   `helpers.openList(page, "/system/user/index", { placeholder: "请输入用户名", value: "xadmin" })`
+   （导航进页面后在搜索区填入并点「搜索」）。
+   注意**不要**用 `?username=xadmin` 这种 route.query 预置——RePlusPage 会把 route.query
+   合并进 searchFields 并**回填搜索框**，但**首屏列表请求并不带该条件**（实测：搜索框显示
+   xadmin、表格仍是未过滤的第一页），必须在页面上真实触发一次搜索；
 2. 只验证「列表能加载」时，断言**已渲染出数据行 + 分页可见**，不要绑定具体账号；
 3. 弹层内选择器（`api-search-user`）同理：等目标行渲染后按需退化到首行，并等
    `.el-loading-mask` 等浮层消失再点击（否则点击被 `intercepts pointer events` 拦截）。

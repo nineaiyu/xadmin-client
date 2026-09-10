@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { login, logout, openMenu, openListWithQuery } from "./helpers";
+import { login, logout, openList, openMenu } from "./helpers";
 
 /**
  * xadmin E2E 冒烟：登录 → 菜单 → 部门 CRUD → 用户列表 → 登出
@@ -56,7 +56,7 @@ test("部门管理：新增 → 列表可见 → 删除 → 列表消失 @smoke"
 
 test("用户管理：列表加载数据 @smoke", async ({ page }) => {
   await login(page);
-  await openListWithQuery(page, "/system/user/index");
+  await openList(page, "/system/user/index");
   const table = page.locator(".el-table").first();
   await expect(table).toBeVisible();
   // 只断言「列表已加载出数据行 + 分页渲染」，不绑定具体账号：默认
