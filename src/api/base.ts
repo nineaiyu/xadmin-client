@@ -117,6 +117,15 @@ export class BaseApi extends BaseRequest {
   update = (pk: number | string, data?: object) => {
     return this.request<DetailResult>("put", {}, data, `${this.baseApi}/${pk}`);
   };
+  /**
+   * 按主键取详情：与 retrieve 同协议，作为「编辑态取原文」的能力入口。
+   *
+   * RePlusPage 据此判断页面是否支持详情拉取（ViewBaseApi 的单对象接口无此方法，
+   * 不会触发多余的详情请求）。
+   */
+  detail = (pk: number | string, params?: object) => {
+    return this.retrieve(pk, params);
+  };
   partialUpdate = (pk: number | string, data?: object) => {
     return this.request<DetailResult>(
       "patch",

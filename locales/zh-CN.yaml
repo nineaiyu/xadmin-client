@@ -1087,7 +1087,9 @@ mask:
   preview: 脱敏预览
   previewValue: 样例值
   previewTip: 请输入样例值
+  previewMultiTip: 每行一条样例，可一次粘贴多条
   previewResult: 预览结果
+  previewTruncated: 样例过多或过长，已按上限截断展示
   previewBtn: 预览
   customOnlyTip: 仅 custom 类型使用
   maskTypePhone: 手机号

@@ -368,17 +368,58 @@ export function usePlusPage(
     });
   };
 
+  /**
+   * 编辑态取原文：脱敏字段的列表行是掩码值，直接作为表单初始值会让编辑者
+   * 「看不见原文就改不动」。这里显式走 `?mask=false` 详情通道（服务端按
+   * 「对该菜单有更新权限」放行，无权限仍返回掩码），失败/无权限时静默回退
+   * 当前行数据，不阻断编辑。
+   */
+  const fetchOriginalRow = async (row: Record<string, unknown>) => {
+    const pk = (row?.pk ?? row?.id) as number | string | undefined;
+    const detail = api?.detail;
+    if (pk === undefined || pk === null || typeof detail !== "function") {
+      return null;
+    }
+    try {
+      const res = await detail(pk, { mask: "false" });
+      if (
+        res?.code === 1000 &&
+        res.data &&
+        typeof res.data === "object" &&
+        !isArray(res.data)
+      ) {
+        return res.data;
+      }
+    } catch (error) {
+      // 静默回退：失败提示由 http 拦截器统一处理，这里只留调试信息
+      console.debug("[RePlusPage] fetch original row failed", error);
+    }
+    return null;
+  };
+
   //新增或编辑
-  const handleAddOrEdit = (isAdd = true, row = {}) => {
+  const handleAddOrEdit = async (
+    isAdd = true,
+    row: Record<string, unknown> = {}
+  ) => {
     let title = t("buttons.edit");
     if (isAdd) {
       title = t("buttons.add");
+    }
+    let rawRow = isAdd
+      ? { ...addOrEditDefaultValue.value, ...row }
+      : { ...row };
+    if (!isAdd) {
+      const original = await fetchOriginalRow(row);
+      if (original) {
+        rawRow = { ...rawRow, ...original };
+      }
     }
     openDialogDrawer({
       t,
       isAdd,
       title: `${title} ${addOrEditOptions?.title ?? pageTitle.value}`,
-      rawRow: isAdd ? { ...addOrEditDefaultValue.value, ...row } : { ...row },
+      rawRow,
       form: addOrEditOptions?.form,
       rawColumns: addOrEditColumns.value,
       rawFormProps: {

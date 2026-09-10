@@ -1086,7 +1086,9 @@ mask:
   preview: Mask Preview
   previewValue: Sample Value
   previewTip: Input a sample value
+  previewMultiTip: One sample per line; paste multiple lines at once
   previewResult: Result
+  previewTruncated: Too many or too long samples; truncated to the limit
   previewBtn: Preview
   customOnlyTip: Only used for custom type
   maskTypePhone: Phone

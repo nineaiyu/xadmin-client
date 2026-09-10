@@ -7,8 +7,14 @@ defineOptions({
 });
 const tableRef = ref();
 
-const { api, auth, addOrEditOptions, listColumnsFormat, tableBarButtonsProps } =
-  useMask();
+const {
+  api,
+  auth,
+  addOrEditOptions,
+  listColumnsFormat,
+  tableBarButtonsProps,
+  operationButtonsProps
+} = useMask();
 </script>
 
 <template>
@@ -19,6 +25,7 @@ const { api, auth, addOrEditOptions, listColumnsFormat, tableBarButtonsProps } =
     :addOrEditOptions="addOrEditOptions"
     :listColumnsFormat="listColumnsFormat"
     :tableBarButtonsProps="tableBarButtonsProps"
+    :operationButtonsProps="operationButtonsProps"
     locale-name="mask"
   />
 </template>
