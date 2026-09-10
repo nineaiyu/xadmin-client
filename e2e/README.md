@@ -77,14 +77,15 @@ RePlusPage 列表**固定发 `ordering=-created_time` 且默认 `pageSize=15`**�
 
 ## 历史教训速查
 
-| 教训                                                                                  | 处置                                                                                                                                                       |
-| ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 8896 与本机 compose nginx 端口冲突 → reuseExistingServer 误复用容器服务               | 统一用 `test:e2e` 注入的 18896 隔离端口                                                                                                                    |
-| 改后端代码后复用旧进程 → 假失败                                                       | `test:e2e:fresh` / `test:e2e:smoke:fresh`                                                                                                                  |
-| eager celery 下 `send_task` 不流转执行状态                                            | dispatch 层走 `apply`（见 `system/views/task.py::_dispatch_periodic_run`）                                                                                 |
-| sqlite 并发 database is locked                                                        | settings_e2e 已开 WAL + busy_timeout + IMMEDIATE                                                                                                           |
-| 敏感操作告警 WS 弹窗盖住抽屉按钮 → 点击持续 `element is not stable`                   | e2e_seed 用哨兵值关闭（`SENSITIVE_OPERATION_METHODS=["__E2E_DISABLED__"]`；**空清单=不按方法过滤=全告警**，且该配置走 SysConfig DB 值，settings 覆盖无效） |
-| 断言目标行在「第一页」→ 全量跑越到后面越失败（只在 webkit 暴露，曾误判 flaky）        | 用 `openList` 真实触发搜索过滤 / 断言「已加载出数据行」；详见上节「列表断言陷阱」                                                                          |
-| 菜单点击后 hash 未生效（页面停在 welcome）→ 后续 `expect(table)` 报 element not found | `openMenuPath` 点击后校验 hash，未生效则重开目录重试一次（见 helpers.ts 实现注释）                                                                         |
-| 机器负载高（IDE 满载 / 多浏览器并发）→ 10s 断言超时被击穿，基础用例也失败             | 先看 `uptime`；失败行落在 login/导航/渲染等待处时按环境假失败处理，隔离重跑复核                                                                            |
-| `waitForTimeout` 盲等（快机器白等、慢机器仍超时，掩盖真实原因）                       | 全量改 web-first 断言（`toBeVisible` / `waitFor` 状态 / `expect.poll` 轮询结果）；仅服务端时间域约束（强制下线 iat）用 `expect.poll`（详见上节）           |
+| 教训                                                                                                  | 处置                                                                                                                                                       |
+| ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 8896 与本机 compose nginx 端口冲突 → reuseExistingServer 误复用容器服务                               | 统一用 `test:e2e` 注入的 18896 隔离端口                                                                                                                    |
+| 改后端代码后复用旧进程 → 假失败                                                                       | `test:e2e:fresh` / `test:e2e:smoke:fresh`                                                                                                                  |
+| eager celery 下 `send_task` 不流转执行状态                                                            | dispatch 层走 `apply`（见 `system/views/task.py::_dispatch_periodic_run`）                                                                                 |
+| sqlite 并发 database is locked                                                                        | settings_e2e 已开 WAL + busy_timeout + IMMEDIATE                                                                                                           |
+| 敏感操作告警 WS 弹窗盖住抽屉按钮 → 点击持续 `element is not stable`                                   | e2e_seed 用哨兵值关闭（`SENSITIVE_OPERATION_METHODS=["__E2E_DISABLED__"]`；**空清单=不按方法过滤=全告警**，且该配置走 SysConfig DB 值，settings 覆盖无效） |
+| 断言目标行在「第一页」→ 全量跑越到后面越失败（只在 webkit 暴露，曾误判 flaky）                        | 用 `openList` 真实触发搜索过滤 / 断言「已加载出数据行」；详见上节「列表断言陷阱」                                                                          |
+| 菜单点击后 hash 未生效（页面停在 welcome）→ 后续 `expect(table)` 报 element not found                 | `openMenuPath` 点击后校验 hash，未生效则重开目录重试一次（见 helpers.ts 实现注释）                                                                         |
+| 机器负载高（IDE 满载 / 多浏览器并发）→ 10s 断言超时被击穿，基础用例也失败                             | 先看 `uptime`；失败行落在 login/导航/渲染等待处时按环境假失败处理，隔离重跑复核                                                                            |
+| `waitForTimeout` 盲等（快机器白等、慢机器仍超时，掩盖真实原因）                                       | 全量改 web-first 断言（`toBeVisible` / `waitFor` 状态 / `expect.poll` 轮询结果）；仅服务端时间域约束（强制下线 iat）用 `expect.poll`（详见上节）           |
+| 登录页落到「当前服务器不允许登录」→ 找不到账号输入框（站点配置拉取失败/被拖慢，等价 config 为空分支） | `login()` 先等账号框可见；超时则 `reload()` 一次重新拉取配置再重试（不硬等、不重复提交）；同一页面内二次登录（登出后再登录）概率更高                       |

@@ -49,8 +49,20 @@ export const LOCK_USER = { username: "e2e_lock", password: "E2E-Lock-2026!" };
 export type Credentials = { username: string; password: string };
 
 export async function login(page: Page, creds: Credentials = ADMIN) {
+  const accountInput = page.getByPlaceholder("账号");
   await page.goto("/#/login");
-  await page.getByPlaceholder("账号").fill(creds.username);
+  // 登录表单依赖站点配置：配置请求失败/被拖慢时登录页会落到「当前服务器不允许登录」
+  // 分支（等价于 config 为空），此时重载一次重新拉取即可恢复——属已知瞬态，
+  // 不在用例里硬等或多点一次（全量跑 + 一个页面内二次登录时概率升高）
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const ready = await accountInput
+      .waitFor({ state: "visible", timeout: 10_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (ready) break;
+    await page.reload();
+  }
+  await accountInput.fill(creds.username);
   await page.getByPlaceholder("密码").fill(creds.password);
   await page.getByRole("button", { name: "登录", exact: true }).click();
   // hash 路由：登录成功后离开 #/login
