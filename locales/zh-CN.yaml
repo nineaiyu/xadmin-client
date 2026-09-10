@@ -189,6 +189,23 @@ exportImport:
   validateField: 字段
   validateError: 错误信息
   importSubmitted: 导入任务已提交，请稍后在下载中心查看进度与错误报告
+  mappingStep: 列映射
+  mappingTip: 文件表头与字段名不一致时，按列映射导入；未映射列默认忽略
+  mappingSource: 文件列
+  mappingTarget: 目标字段
+  mappingIgnore: 忽略该列
+  mappingMatched: 等名候选：{ field }
+  mappingUnmatched: 未匹配到字段
+  mappingParseFailed: 表头解析失败，请检查文件格式
+  templatePlaceholder: 选择映射模板（可选）
+  templateShared: 共享
+  templateSavePlaceholder: 模板名称
+  saveAsTemplate: 另存为模板
+  templateSaved: 映射模板已保存
+  templateNameRequired: 请先填写模板名称
+  ignoreUnknown: 保留未映射列
+  ignoreUnknownTip: 勾选后未映射列保留原表头并再尝试等名匹配；不勾选则直接忽略
+  unmatchedColumns: 以下列未匹配到任何字段，已忽略：{ columns }
 
 messageNotifications:
   messageType: 消息类型

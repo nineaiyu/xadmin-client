@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 
 defineOptions({ name: "ImportValidateResult" });
@@ -15,10 +16,24 @@ interface Props {
   invalidCount: number;
   errorsTruncated: boolean;
   errors: ValidateRow[];
+  /** 字段名 → 原始表头：错误行按源文件列名展示，便于对照 */
+  fieldTitles?: Record<string, string>;
+  /** 提供了列映射但未命中的列（ignore_unknown=false 时非空） */
+  unmatchedColumns?: string[];
 }
 
-defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  fieldTitles: () => ({}),
+  unmatchedColumns: () => []
+});
 const { t } = useI18n();
+
+const rows = computed(() =>
+  props.errors.map(item => ({
+    ...item,
+    field: props.fieldTitles?.[item.field] ?? item.field
+  }))
+);
 </script>
 
 <template>
@@ -41,7 +56,19 @@ const { t } = useI18n();
         </span>
       </template>
     </el-alert>
-    <el-table :data="errors" max-height="360" size="small" border>
+    <el-alert
+      v-if="unmatchedColumns.length > 0"
+      :closable="false"
+      class="mb-3"
+      type="info"
+    >
+      {{
+        t("exportImport.unmatchedColumns", {
+          columns: unmatchedColumns.join("、")
+        })
+      }}
+    </el-alert>
+    <el-table :data="rows" max-height="360" size="small" border>
       <el-table-column
         prop="row"
         :label="t('exportImport.validateRow')"

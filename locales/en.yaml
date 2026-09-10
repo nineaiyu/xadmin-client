@@ -189,6 +189,23 @@ exportImport:
   validateField: Field
   validateError: Error message
   importSubmitted: Import task submitted, track progress and error report in the download center
+  mappingStep: Column mapping
+  mappingTip: Map file columns to fields when headers do not match field names; unmapped columns are ignored by default
+  mappingSource: File column
+  mappingTarget: Target field
+  mappingIgnore: Ignore this column
+  mappingMatched: "Name match: { field }"
+  mappingUnmatched: No field matched
+  mappingParseFailed: Failed to parse headers, please check the file format
+  templatePlaceholder: Select a mapping template (optional)
+  templateShared: shared
+  templateSavePlaceholder: Template name
+  saveAsTemplate: Save as template
+  templateSaved: Mapping template saved
+  templateNameRequired: Please enter a template name
+  ignoreUnknown: Keep unmapped columns
+  ignoreUnknownTip: When checked, unmapped columns keep their original headers and are matched by name again; otherwise they are ignored
+  unmatchedColumns: "Columns not matched to any field (ignored): { columns }"
 
 messageNotifications:
   messageType: Message type

@@ -100,6 +100,35 @@ export type BaseResult = {
   errors?: ServerErrors;
 };
 
+/** 导入列映射的目标字段选项（import-headers 下发） */
+export type ImportFieldOption = { value: string; label: string };
+
+/**
+ * 上传文件首行表头解析结果（列映射步骤）：
+ * `candidates` 与 `headers` 等长（归一化等名候选，无候选为空串）；
+ * `model` 为目标模型 label_lower，模板按该标识隔离。
+ */
+export type ImportHeadersResult = {
+  detail: string;
+  code: number;
+  data: {
+    headers: string[];
+    candidates: string[];
+    fields: ImportFieldOption[];
+    model: string;
+  };
+};
+
+/** 导入列映射模板（按目标模型隔离，个人 / 共享两档） */
+export type ImportTemplateItem = {
+  pk: string;
+  model: string;
+  name: string;
+  mapping: Record<string, string>;
+  options?: Record<string, unknown>;
+  is_shared: boolean;
+};
+
 /**
  * 标准操作结果：`create`/`update` 类接口返回 `DetailResult`（带 `data`），
  * 其余写操作返回 `BaseResult`；调用方仅依赖 `code`/`detail` 时使用本联合类型

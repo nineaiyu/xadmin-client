@@ -683,6 +683,26 @@ interface importDataOptions {
   success?: (res?: DetailResult) => void;
 }
 
+/**
+ * 导入参数：三条链路（同步 / 校验 / 异步）共用同一份。
+ *
+ * - 列映射：套用模板时下发 template_id（后端按模型校验可见性），否则下发 mapping 明文；
+ *   两者互斥——用户改动映射后前端会清空 template_id，避免模板覆盖手工映射；
+ * - 未映射列：后端默认丢弃，仅在用户显式勾选「保留未映射列」时下发 ignore_unknown=false。
+ */
+const buildImportParams = (formData: RecordType) => {
+  const params: RecordType = { action: formData.action };
+  if (formData.template_id) {
+    params.template_id = formData.template_id;
+  } else if (formData.mapping && Object.keys(formData.mapping).length > 0) {
+    params.mapping = JSON.stringify(formData.mapping);
+  }
+  if (formData.ignore_unknown === false) {
+    params.ignore_unknown = "false";
+  }
+  return params;
+};
+
 // 数据导入
 const handleImportData = (options: importDataOptions) => {
   const { t, api, mode } = options;
@@ -709,12 +729,10 @@ const handleImportData = (options: importDataOptions) => {
         return;
       }
       try {
+        const importParams = buildImportParams(formData);
         // 仅校验：逐行校验不落库，弹窗展示错误行定位
         if (formData.mode === "validate") {
-          const res = await api.importValidate(
-            { action: formData.action },
-            file
-          );
+          const res = await api.importValidate(importParams, file);
           if (res.code !== 1000) {
             failed(res.detail, false);
             return;
@@ -729,7 +747,10 @@ const handleImportData = (options: importDataOptions) => {
               validCount: res.data.valid_count,
               invalidCount: res.data.invalid_count,
               errorsTruncated: res.data.errors_truncated,
-              errors: res.data.errors
+              errors: res.data.errors,
+              // 字段名 → 原始表头：错误行按源文件列名展示，便于对照
+              fieldTitles: res.data.field_titles ?? {},
+              unmatchedColumns: res.data.unmatched_columns ?? []
             },
             contentRenderer: () => h(ImportValidateResult)
           });
@@ -738,7 +759,7 @@ const handleImportData = (options: importDataOptions) => {
         }
         // 异步导入：提交后台任务，进度与错误报告在下载中心「导入记录」获取
         if (formData.async) {
-          const res = await api.importAsync({ action: formData.action }, file);
+          const res = await api.importAsync(importParams, file);
           if (res.code === 1000) {
             if (options?.success) {
               options?.success(res);
@@ -752,7 +773,7 @@ const handleImportData = (options: importDataOptions) => {
         }
         // 同步导入（原有行为不变）
         const res = await api.importData(
-          { action: formData.action, ignore_error: formData.ignore_error },
+          { ...importParams, ignore_error: formData.ignore_error },
           file
         );
         if (res.code === 1000) {

@@ -5,10 +5,18 @@ import type {
   BaseResult,
   ChoicesResult,
   DetailResult,
+  ImportHeadersResult,
+  ImportTemplateItem,
   ListResult,
   SearchColumnsResult,
   SearchFieldsResult
 } from "@/api/types";
+
+/**
+ * 导入列映射模板接口地址：全局资源（按目标模型隔离），
+ * 不挂在任何具体资源 baseApi 下，故在通用 API 层集中声明。
+ */
+export const IMPORT_TEMPLATE_API = "/api/system/import-templates";
 
 export class BaseRequest {
   baseApi = "";
@@ -235,6 +243,35 @@ export class BaseApi extends BaseRequest {
         }
       }
     );
+  };
+
+  /** 读取上传文件首行表头与列映射候选（列映射步骤，不落库） */
+  importHeaders = (params: object, data: File) => {
+    return http.upload<ImportHeadersResult, File>(
+      `${this.baseApi}/import-headers`,
+      params,
+      data,
+      {
+        headers: {
+          "Content-Type": data.type === "text/csv" ? "text/csv" : "text/xlsx"
+        }
+      }
+    );
+  };
+
+  /** 列映射模板列表（全局资源；`model` 取 importHeaders 下发的 label_lower） */
+  importTemplates = (params?: object) => {
+    return this.request<ListResult<ImportTemplateItem>>(
+      "get",
+      params,
+      {},
+      IMPORT_TEMPLATE_API
+    );
+  };
+
+  /** 保存列映射模板（个人模板；共享模板仅超管可建） */
+  createImportTemplate = (data?: object) => {
+    return this.request<DetailResult>("post", {}, data, IMPORT_TEMPLATE_API);
   };
 }
 
