@@ -6,7 +6,8 @@ import {
   FP_USER,
   FRONT_URL,
   getAccessToken,
-  login
+  login,
+  openUserManagement
 } from "./helpers";
 
 /**
@@ -20,25 +21,6 @@ import {
  */
 
 const USER_LIST_API = `${FRONT_URL}/api/system/user?page=1&limit=10`;
-
-async function openUserManagement(page: import("@playwright/test").Page) {
-  // 两种菜单形态（快照实证）：
-  // - 管理员：顶级 menubar 中「系统管理」为 el-sub-menu（无 href），需点开目录
-  //   后再点 /system/user/index 链接
-  // - 受限用户（e2e_dp/e2e_fp）：仅授权的单页被提升为顶级真链接（href=#/system，
-  //   文案「用户管理」），点击直接落到用户管理页
-  const dir = page
-    .locator(".el-sub-menu__title", { hasText: "系统管理" })
-    .first();
-  const table = page.locator(".el-table").first();
-  if (await dir.isVisible().catch(() => false)) {
-    await dir.click();
-    await page.locator(`a[href="#/system/user/index"]`).first().click();
-  } else {
-    await page.locator(`a[href="#/system"]`).first().click();
-  }
-  await expect(table).toBeVisible({ timeout: 15_000 });
-}
 
 test.describe("数据权限", () => {
   test("仅本人数据：界面列表只出现自己一条记录", async ({ page }) => {
