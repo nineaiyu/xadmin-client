@@ -3,11 +3,10 @@ import { expect, test } from "@playwright/test";
 import { FRONT_URL, login, openMenuPath } from "./helpers";
 
 /**
- * 文件中心增强（F2 裁剪版）：个人配额统计卡片 + 分类（字典驱动）下拉筛选。
+ * 文件中心增强（F2）：个人配额统计卡片 + 分类（字典驱动）下拉筛选 + 上传去重。
  *
- * 去重与保留期清理在评审复盘后降级候选池（去重记录复用 filepath 会与磁盘
- * 删除产生悬挂引用），不在本用例范围；后端单测见
- * xadmin-server/tests/unit/system/test_upload_enhance.py。
+ * 保留期清理（FILE_KEEP_DAYS）默认 0 = 不清理，且属定时任务行为，由后端单测覆盖
+ * （xadmin-server/tests/unit/system/test_upload_enhance.py 的守护与清理用例）。
  */
 test("文件中心：上传刷新统计卡片 + 分类下拉筛选", async ({ page }) => {
   await login(page);
@@ -96,4 +95,73 @@ test("文件中心：上传刷新统计卡片 + 分类下拉筛选", async ({ pa
   await expect(
     page.locator(".el-table__row", { hasText: filename }).first()
   ).toBeVisible({ timeout: 15_000 });
+});
+
+/**
+ * 上传去重（F2）：同一文件重复上传复用磁盘副本（access_url 相同），
+ * 配额仍按记录全量计入（保守口径：数量 +2、大小按两条记录计）。
+ */
+test("文件中心：重复上传同一文件复用磁盘副本", async ({ page }) => {
+  await login(page);
+
+  const filename = `e2e-dedup-${Date.now()}.txt`;
+  const content = "dedup e2e content";
+
+  const statsResp = await page.request.get(
+    `${FRONT_URL}/api/system/file/stats?no_cache=1`
+  );
+  const baseCount = (await statsResp.json()).data.count as number;
+
+  // 第一次：API 上传
+  const firstResp = await page.request.post(
+    `${FRONT_URL}/api/system/file/upload`,
+    {
+      multipart: {
+        file: {
+          name: filename,
+          mimeType: "text/plain",
+          buffer: Buffer.from(content)
+        }
+      }
+    }
+  );
+  const firstPayload = await firstResp.json();
+  expect(firstPayload.code, `upload: ${JSON.stringify(firstPayload)}`).toBe(
+    1000
+  );
+
+  // 第二次：走 UI 上传同一文件 → 成功后提示「已复用」
+  await openMenuPath(page, ["系统管理"], "/system/file/index");
+  await expect(page.locator(".el-table").first()).toBeVisible({
+    timeout: 15_000
+  });
+  await page.getByRole("button", { name: "上传" }).first().click();
+  const dialog = page.locator(".el-dialog:visible").first();
+  await expect(dialog).toBeVisible({ timeout: 15_000 });
+  await dialog
+    .locator("input[type='file']")
+    .first()
+    .setInputFiles({
+      name: filename,
+      mimeType: "text/plain",
+      buffer: Buffer.from(content)
+    });
+  await expect(page.locator(".el-message").last()).toContainText("复用", {
+    timeout: 15_000
+  });
+
+  // 两条记录指向同一物理文件（access_url 相同）＋配额按记录全量计入
+  const listResp = await page.request.get(
+    `${FRONT_URL}/api/system/file?filename=${encodeURIComponent(filename)}`
+  );
+  const results = (await listResp.json()).data.results as Array<
+    Record<string, unknown>
+  >;
+  expect(results.length).toBe(2);
+  expect(results[0].access_url).toBe(results[1].access_url);
+
+  const afterResp = await page.request.get(
+    `${FRONT_URL}/api/system/file/stats?no_cache=1`
+  );
+  expect((await afterResp.json()).data.count).toBe(baseCount + 2);
 });
