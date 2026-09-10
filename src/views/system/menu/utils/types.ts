@@ -101,7 +101,10 @@ interface TreeFormProps {
 
 interface Tree {
   id: number;
-  name: string;
+  /** 主键（el-tree 的 node-key="pk"），与 id 同源，供展开/高亮按 pk 定位 */
+  pk?: number;
+  name?: string;
+  menu_type?: number;
   highlight?: boolean;
   children?: Tree[];
 }

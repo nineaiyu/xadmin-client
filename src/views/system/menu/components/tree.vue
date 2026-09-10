@@ -3,19 +3,12 @@ import { useI18n } from "vue-i18n";
 import { match } from "pinyin-pro";
 import { getMenuFromPk } from "@/utils";
 import { useVModel } from "@vueuse/core";
-import { isAllEmpty } from "@pureadmin/utils";
+import { isAllEmpty, isNullOrUnDef } from "@pureadmin/utils";
 import { transformI18n } from "@/plugins/i18n";
 import { FormItemProps, Tree, TreeFormProps } from "../utils/types";
 import { MenuChoices } from "@/views/system/constants";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import {
-  computed,
-  getCurrentInstance,
-  nextTick,
-  onMounted,
-  ref,
-  watch
-} from "vue";
+import { computed, getCurrentInstance, nextTick, ref, watch } from "vue";
 import type { TreeInstance, TreeNodeData } from "element-plus";
 
 import Back from "~icons/ep/back";
@@ -124,20 +117,39 @@ const initMenuData = value => {
 };
 
 function nodeClick(value) {
-  const nodeId = value.$treeNodeId;
+  // 键必须与模板读取口径一致：模板读的是 el-tree 节点的 node.id（= node-key="pk"），
+  // 原实现用内部 $treeNodeId 写入，两者不同源导致高亮实际取不到值
+  const nodeId = value.pk;
   highlightMap.value[nodeId] = highlightMap.value[nodeId]?.highlight
-    ? Object.assign({ id: nodeId }, highlightMap.value[nodeId], {
+    ? Object.assign({}, highlightMap.value[nodeId], {
+        pk: nodeId,
         highlight: false
       })
-    : Object.assign({ id: nodeId }, highlightMap.value[nodeId], {
+    : Object.assign({}, highlightMap.value[nodeId], {
+        pk: nodeId,
         highlight: true
       });
   Object.values(highlightMap.value).forEach((v: Tree) => {
-    if (v.id !== nodeId) {
+    if (v.pk !== nodeId) {
       v.highlight = false;
     }
   });
   initMenuData(value);
+}
+
+/** 递归收集需要展开/折叠的节点 pk（替代依赖 el-tree 私有 store._getAllNodes） */
+function collectNodePks(nodes: Tree[], all: boolean, changeType: number) {
+  const pks: number[] = [];
+  const walk = (list?: Tree[]) => {
+    list?.forEach(node => {
+      if ((all || node.menu_type === changeType) && !isNullOrUnDef(node.pk)) {
+        pks.push(node.pk);
+      }
+      if (node.children?.length) walk(node.children);
+    });
+  };
+  walk(nodes);
+  return pks;
 }
 
 function toggleRowExpansionAll(status: boolean, all = false) {
@@ -145,14 +157,13 @@ function toggleRowExpansionAll(status: boolean, all = false) {
   let changeType = MenuChoices.MENU;
   if (status) changeType = MenuChoices.DIRECTORY;
 
-  const nodes = (
-    proxy.$refs["treeRef"] as TreeInstance | undefined
-  )?.store._getAllNodes();
-  for (let i = 0; i < nodes?.length; i++) {
-    if (nodes[i].data?.menu_type === changeType || all) {
-      nodes[i].expanded = status;
-    }
-  }
+  const tree = proxy.$refs["treeRef"] as TreeInstance | undefined;
+  if (!tree?.getNode) return;
+  // getNode 为 el-tree 公开 API，逐节点设置 expanded，避免私有 store 在升级后失效
+  collectNodePks(props.treeData, all, changeType).forEach(pk => {
+    const node = tree.getNode(pk);
+    if (node) node.expanded = status;
+  });
 }
 
 const handleDragEnd = (node, node2, position) => {
@@ -205,14 +216,31 @@ watch(searchValue, val => {
   treeRef.value!.filter(val);
 });
 
-onMounted(() => {
-  nextTick(() => {
-    setTimeout(() => {
-      toggleRowExpansionAll(true);
+// 数据到达后再展开目录并结束加载态：替代原固定 500ms 延时
+// （慢网不再提前结束 loading 造成白屏，快网不再空等）
+let expandInited = false;
+let hasTreeData = false;
+watch(
+  () => props.treeData,
+  val => {
+    if (!val?.length) {
+      // 首次仍为空说明请求尚未返回，保持 loading；已有数据后被清空才结束加载态
+      if (hasTreeData) loading.value = false;
+      return;
+    }
+    hasTreeData = true;
+    if (!expandInited) {
+      expandInited = true;
+      // 首次加载默认展开目录层级，与原行为保持一致
+      isExpand.value = true;
+    }
+    nextTick(() => {
+      toggleRowExpansionAll(isExpand.value);
       loading.value = false;
-    }, 500);
-  });
-});
+    });
+  },
+  { immediate: true }
+);
 </script>
 
 <template>

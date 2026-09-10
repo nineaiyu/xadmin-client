@@ -10,12 +10,29 @@ import type {
   ButtonProps
 } from "./type";
 
+/** 兼容扩展：抽屉内部挂载的不可枚举唯一标识 */
+type DrawerOptionsWithUid = DrawerOptions & { _uid?: number };
+
 const drawerStore = ref<Array<DrawerOptions>>([]);
+
+/** 抽屉实例自增标识（挂载为不可枚举属性，避免经 `v-bind="options"` 透传给 el-drawer） */
+let drawerUid = 0;
+
+/** 读取抽屉唯一标识：用作稳定 `key` 与按钮状态映射，替代易失效的数组下标 */
+export const getDrawerUid = (options: DrawerOptions): number | undefined =>
+  (options as DrawerOptionsWithUid)?._uid;
 
 /** 打开抽屉 */
 const addDrawer = (options: DrawerOptions) => {
-  const open = () =>
+  const open = () => {
+    Object.defineProperty(options, "_uid", {
+      value: ++drawerUid,
+      enumerable: false,
+      configurable: true,
+      writable: true
+    });
     drawerStore.value.push(Object.assign(options, { visible: true }));
+  };
   if (options?.openDelay) {
     useTimeoutFn(() => {
       open();
@@ -31,13 +48,21 @@ const closeDrawer = (
   index: number,
   args?: ArgsType
 ) => {
-  drawerStore.value[index].visible = false;
+  // 下标由模板实时传入，但延迟关闭期间若有其它抽屉被移除，下标会失效；
+  // 统一按 options 引用在 store 中重新定位，失败再回退传入下标。
+  const byRef = drawerStore.value.indexOf(options);
+  const targetIndex = byRef > -1 ? byRef : index;
+  const target = drawerStore.value[targetIndex];
+  if (!target) return;
+  target.visible = false;
   if (options.closeCallBack) {
-    options.closeCallBack({ options, index, args });
+    options.closeCallBack({ options, index: targetIndex, args });
   }
   const closeDelay = options?.closeDelay ?? 200;
   useTimeoutFn(() => {
-    drawerStore.value.splice(index, 1);
+    // 延迟回调内再次定位：期间数组可能已被其它抽屉关闭操作改动
+    const currentIndex = drawerStore.value.indexOf(options);
+    if (currentIndex > -1) drawerStore.value.splice(currentIndex, 1);
   }, closeDelay);
 };
 

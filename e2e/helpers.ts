@@ -114,7 +114,21 @@ export async function openMenuPath(page: Page, dirs: string[], path: string) {
     await openDirs();
     await link.scrollIntoViewIfNeeded().catch(() => undefined);
   }
+  // 点击后必须确认路由真的切走了：偶发情况下点击落在菜单重渲染前的旧节点上
+  // （登录后权限/菜单数据仍在异步刷新），hash 不变、页面停在 welcome，
+  // 后续 `expect(table)` 才报「element(s) not found」——历史上被当成时序 flaky
+  const arrived = () =>
+    page
+      .waitForURL(url => url.hash.includes(path), { timeout: 5_000 })
+      .then(() => true)
+      .catch(() => false);
   await link.click({ timeout: 10_000 });
+  if (!(await arrived())) {
+    await page.waitForTimeout(300);
+    await openDirs();
+    await link.click({ timeout: 10_000 }).catch(() => undefined);
+    await arrived();
+  }
 }
 
 /**

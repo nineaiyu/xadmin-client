@@ -1,13 +1,7 @@
 import { message } from "@/utils/message";
 import type { PageColumn, RePlusPageProps } from "./types";
 import { computed, onMounted, ref, type Ref, shallowRef, toRaw } from "vue";
-import {
-  cloneDeep,
-  delay,
-  getKeyList,
-  isArray,
-  isEmpty
-} from "@pureadmin/utils";
+import { cloneDeep, getKeyList, isArray, isEmpty } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { useBaseColumns } from "./columns";
@@ -488,6 +482,8 @@ export function usePlusPage(
   };
 
   // 数据获取
+  // 请求序号：仅接受最新一次请求的响应，避免同页快速切换筛选/分页时旧响应覆盖新列表
+  let latestRequestSeq = 0;
   const handleGetData = (
     queryParams = {},
     options: {
@@ -497,6 +493,7 @@ export function usePlusPage(
       onInlineMetaMissing?: () => void;
     } = {}
   ) => {
+    const requestSeq = ++latestRequestSeq;
     loadingStatus.value = true;
 
     ["created_time", "updated_time"].forEach(key => {
@@ -532,6 +529,8 @@ export function usePlusPage(
     api
       .list(data)
       .then(res => {
+        // 过期响应直接丢弃：不覆盖新数据、不触发 searchComplete、不关闭 loading
+        if (requestSeq !== latestRequestSeq) return;
         if (res.code === 1000 && res.data) {
           if (searchResultFormat && typeof searchResultFormat === "function") {
             dataList.value = searchResultFormat(res.data.results);
@@ -564,11 +563,11 @@ export function usePlusPage(
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
         }
         emit("searchComplete", { routeParams, searchFields, dataList, res });
-        delay(500).then(() => {
-          loadingStatus.value = false;
-        });
+        loadingStatus.value = false;
       })
       .catch(() => {
+        // 过期请求的失败同样忽略；其它失败的提示由 http 层统一给出，此处只收尾 loading
+        if (requestSeq !== latestRequestSeq) return;
         loadingStatus.value = false;
       });
   };

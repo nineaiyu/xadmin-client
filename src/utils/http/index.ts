@@ -70,8 +70,8 @@ const defaultConfig: AxiosRequestConfig = {
 };
 
 class PureHttp {
-  /** `token`过期后，暂存待执行的请求 */
-  private static requests = [];
+  /** `token`过期后，暂存待执行的请求；回调参数为 `null` 表示刷新失败，需以拒绝收尾 */
+  private static requests: Array<(token: string | null) => void> = [];
   /** 防止重复刷新`token` */
   private static isRefreshing = false;
   /** 初始化配置对象 */
@@ -102,14 +102,29 @@ class PureHttp {
     return controller;
   }
 
-  /** 重连原始请求 */
+  /** 重连原始请求（排队等待刷新结果；刷新失败以拒绝收尾，避免 Promise 永久挂起） */
   private static retryOriginalRequest(config: PureHttpRequestConfig) {
-    return new Promise(resolve => {
-      PureHttp.requests.push((token: string) => {
+    return new Promise((resolve, reject) => {
+      PureHttp.requests.push((token: string | null) => {
+        if (!token) {
+          const error = new Error("refresh token failed") as Error & {
+            _refreshFailed?: boolean;
+          };
+          error._refreshFailed = true;
+          reject(error);
+          return;
+        }
         config.headers["Authorization"] = formatToken(token);
         resolve(config);
       });
     });
+  }
+
+  /** 统一落定暂存请求：先清空队列再按结果回调，保证每个排队 Promise 必然 settle */
+  private static flushPendingRequests(token: string | null) {
+    const queue = PureHttp.requests;
+    PureHttp.requests = [];
+    queue.forEach(cb => cb(token));
   }
 
   /** 通用请求工具函数 */
@@ -151,6 +166,11 @@ class PureHttp {
         .catch(error => {
           // 路由切换主动取消的请求静默失败，不打扰用户
           if (Axios.isCancel(error) || error.code === "ERR_CANCELED") {
+            reject(error);
+            return;
+          }
+          // token 刷新失败导致的排队拒绝：已在刷新失败处统一提示并跳登录，这里静默收尾
+          if (error?._refreshFailed) {
             reject(error);
             return;
           }
@@ -438,11 +458,23 @@ class PureHttp {
                           const token = res.data.access;
                           setToken(res.data);
                           config.headers["Authorization"] = formatToken(token);
-                          PureHttp.requests.forEach(cb => cb(token));
-                          PureHttp.requests = [];
+                          PureHttp.flushPendingRequests(token);
                         } else {
+                          // 刷新被拒（refresh_token 失效等）：提示一次并让排队请求以失败收尾
                           message(res.detail, { type: "warning" });
+                          PureHttp.flushPendingRequests(null);
+                          removeToken();
+                          redirectToLogin();
                         }
+                      })
+                      .catch(err => {
+                        // 刷新请求本身异常（网络/超时）：同上，保证队列不悬挂
+                        message(err?.message ?? String(err), {
+                          type: "warning"
+                        });
+                        PureHttp.flushPendingRequests(null);
+                        removeToken();
+                        redirectToLogin();
                       })
                       .finally(() => {
                         PureHttp.isRefreshing = false;

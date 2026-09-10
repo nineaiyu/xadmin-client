@@ -5,7 +5,8 @@ import {
   type DrawerOptions,
   drawerStore,
   type EventType,
-  type ArgsType
+  type ArgsType,
+  getDrawerUid
 } from "./index";
 import { computed, ref } from "vue";
 import { isFunction } from "@pureadmin/utils";
@@ -44,10 +45,12 @@ const footerButtons = computed(() => {
             bg: true,
             popConfirm: options?.popConfirm,
             btnClick: ({ drawer: { options, index } }) => {
+              // 以抽屉唯一标识（回退下标）作为状态键，避免多抽屉并存时下标漂移串状态
+              const uid = getDrawerUid(options) ?? index;
               if (options?.sureBtnLoading) {
-                sureBtnMap.value[index] = Object.assign(
+                sureBtnMap.value[uid] = Object.assign(
                   {},
-                  sureBtnMap.value[index],
+                  sureBtnMap.value[uid],
                   {
                     loading: true
                   }
@@ -55,7 +58,7 @@ const footerButtons = computed(() => {
               }
               const closeLoading = () => {
                 if (options?.sureBtnLoading) {
-                  sureBtnMap.value[index].loading = false;
+                  sureBtnMap.value[uid].loading = false;
                 }
               };
               const done = () => {
@@ -87,8 +90,9 @@ function handleCloseDrawer(
   index: number,
   args?: ArgsType
 ) {
-  if (options?.sureBtnLoading && sureBtnMap.value[index]?.loading) {
-    sureBtnMap.value[index].loading = false;
+  const uid = getDrawerUid(options) ?? index;
+  if (options?.sureBtnLoading && sureBtnMap.value[uid]?.loading) {
+    sureBtnMap.value[uid].loading = false;
   }
   closeDrawer(options, index, args);
 }
@@ -110,7 +114,7 @@ function handleChange(options: DrawerOptions, index: number, values: unknown) {
 <template>
   <el-drawer
     v-for="(options, index) in drawerStore"
-    :key="index"
+    :key="getDrawerUid(options) ?? index"
     v-model="options.visible"
     :append-to="options?.appendTo ? options.appendTo : 'body'"
     class="pure-drawer"
@@ -159,7 +163,9 @@ function handleChange(options: DrawerOptions, index: number, values: unknown) {
           </el-popconfirm>
           <el-button
             v-else
-            :loading="key === 1 && sureBtnMap[index]?.loading"
+            :loading="
+              key === 1 && sureBtnMap[getDrawerUid(options) ?? index]?.loading
+            "
             v-bind="btn"
             @click="
               btn.btnClick({

@@ -5,7 +5,8 @@ import {
   type ButtonProps,
   type DialogOptions,
   closeDialog,
-  dialogStore
+  dialogStore,
+  getDialogUid
 } from "./index";
 import { ref, computed } from "vue";
 import { isFunction } from "@pureadmin/utils";
@@ -46,10 +47,12 @@ const footerButtons = computed(() => {
             bg: true,
             popconfirm: options?.popconfirm,
             btnClick: ({ dialog: { options, index } }) => {
+              // 以弹层唯一标识（回退下标）作为状态键，避免多弹层并存时下标漂移串状态
+              const uid = getDialogUid(options) ?? index;
               if (options?.sureBtnLoading) {
-                sureBtnMap.value[index] = Object.assign(
+                sureBtnMap.value[uid] = Object.assign(
                   {},
-                  sureBtnMap.value[index],
+                  sureBtnMap.value[uid],
                   {
                     loading: true
                   }
@@ -57,7 +60,7 @@ const footerButtons = computed(() => {
               }
               const closeLoading = () => {
                 if (options?.sureBtnLoading) {
-                  sureBtnMap.value[index].loading = false;
+                  sureBtnMap.value[uid].loading = false;
                 }
               };
               const done = () => {
@@ -101,8 +104,9 @@ function handleCloseDialog(
   index: number,
   args?: ArgsType
 ) {
-  if (options?.sureBtnLoading && sureBtnMap.value[index]?.loading) {
-    sureBtnMap.value[index].loading = false;
+  const uid = getDialogUid(options) ?? index;
+  if (options?.sureBtnLoading && sureBtnMap.value[uid]?.loading) {
+    sureBtnMap.value[uid].loading = false;
   }
   closeDialog(options, index, args);
 }
@@ -124,7 +128,7 @@ function handleChange(options: DialogOptions, index: number, values: unknown) {
 <template>
   <el-dialog
     v-for="(options, index) in dialogStore"
-    :key="index"
+    :key="getDialogUid(options) ?? index"
     v-bind="options"
     v-model="options.visible"
     class="pure-dialog"
@@ -203,7 +207,9 @@ function handleChange(options: DialogOptions, index: number, values: unknown) {
           <el-button
             v-else
             v-bind="btn"
-            :loading="key === 1 && sureBtnMap[index]?.loading"
+            :loading="
+              key === 1 && sureBtnMap[getDialogUid(options) ?? index]?.loading
+            "
             @click="
               btn.btnClick({
                 dialog: { options, index },

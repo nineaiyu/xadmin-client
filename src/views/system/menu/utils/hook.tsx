@@ -247,24 +247,36 @@ export function useMenu() {
     } else {
       u_menu.parent = node2.data.parent;
     }
-    api.partialUpdate(u_menu.pk, u_menu).then(res => {
-      if (res.code === 1000) {
-        api
-          .rank(getMenuOrderPk(treeRef?.data))
-          .then(res => {
-            if (res.code === 1000) {
-              message(res.detail, { type: "success" });
-            } else {
-              message(res.detail, { type: "error" });
-            }
-          })
-          .catch(err => {
-            message(err.detail, { type: "error" });
-          });
-      } else {
-        message(res.detail, { type: "error" });
-      }
-    });
+    api
+      .partialUpdate(u_menu.pk, u_menu)
+      .then(res => {
+        if (res.code === 1000) {
+          api
+            .rank(getMenuOrderPk(treeRef?.data))
+            .then(res => {
+              if (res.code === 1000) {
+                message(res.detail, { type: "success" });
+              } else {
+                message(res.detail, { type: "error" });
+                // 排序未生效：重拉数据，避免本地顺序与服务端不一致
+                getMenuData();
+              }
+            })
+            .catch(err => {
+              message(err?.detail, { type: "error" });
+              getMenuData();
+            });
+        } else {
+          message(res.detail, { type: "error" });
+          // 拖拽已改变本地树结构但后端未保存：重拉服务端数据回滚视图
+          getMenuData();
+        }
+      })
+      .catch(err => {
+        // 请求异常（网络/权限）时同样回滚，避免"前端已移动、后端未保存"的假象
+        message(err?.detail, { type: "error" });
+        getMenuData();
+      });
   };
 
   const exportData = val => {
