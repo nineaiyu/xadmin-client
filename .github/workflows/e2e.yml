@@ -48,7 +48,7 @@ jobs:
   e2e:
     name: Full (chromium + webkit)
     needs: smoke
-    # dev push 只吃 smoke 反馈；全量留给 PR、main、夜间与手动，避免 ~9min 阻塞日常提交
+    # dev push 只吃 smoke 反馈；全量留给 PR、main、夜间与手动，避免阻塞日常提交
     if: >-
       github.event_name == 'pull_request' ||
       github.ref == 'refs/heads/main' ||
@@ -59,6 +59,10 @@ jobs:
       E2E_PYTHON: python3
       E2E_SERVER_DIR: xadmin-server
       CI: "1"
+      # 并行分片：runner 4 vCPU 取 3 路（vite/daphne/浏览器各一份），全量 ~12m → ~5m。
+      # --reporter=list 覆盖配置里的 html reporter：4 个 shard 进程不能共写 playwright-report/
+      # （失败现场仍由 test-results/ 逐用例目录承载，upload 不受影响）
+      E2E_PARALLEL: "3"
     steps:
       - name: Checkout client repository
         uses: actions/checkout@v4
@@ -66,8 +70,8 @@ jobs:
       - name: Setup E2E environment
         uses: ./.github/actions/e2e-setup
 
-      - name: Run full E2E
-        run: pnpm test:e2e
+      - name: Run full E2E (parallel shards)
+        run: pnpm test:e2e:parallel --reporter=list
 
       - uses: actions/upload-artifact@v4
         if: always()
