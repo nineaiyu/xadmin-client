@@ -19,6 +19,11 @@ export class SystemMsgSubscriptionApi extends BaseRequest {
   update = (pk: number | string, data?: object) => {
     return this.request<DetailResult>("put", {}, data, `${this.baseApi}/${pk}`);
   };
+
+  /** 发送测试消息（渠道连通性自检：系统订阅发超管，个人订阅发自己） */
+  testMsg = (data: { message_type: string }) => {
+    return this.request<DetailResult>("post", {}, data, `${this.baseApi}/test`);
+  };
   partialUpdate = (pk: number | string, data?: object) => {
     return this.request<DetailResult>(
       "patch",

@@ -100,6 +100,13 @@ const onCheckReceiveBackend = row => {
   });
 };
 
+const handleSendTestMsg = row => {
+  handleOperation({
+    t,
+    apiReq: props.api.testMsg({ message_type: row.pk })
+  });
+};
+
 const handleSaveReceivers = row => {
   openDialogDrawer({
     t,
@@ -182,14 +189,20 @@ const handleSaveReceivers = row => {
       </template>
     </el-table-column>
     <el-table-column
-      v-if="auth.partialUpdate && hasOperations"
+      v-if="auth.partialUpdate || auth.list"
       :label="t('commonLabels.operation')"
-      width="200"
+      width="240"
     >
       <template v-slot="{ row }">
-        <el-button v-if="!row.children" @click="handleSaveReceivers(row)">
-          {{ t("messageNotifications.editRecipient") }}
-        </el-button>
+        <template v-if="!row.children">
+          <!-- 发送测试：按订阅行真实下发一条测试消息（系统订阅发超管 / 个人订阅发自己） -->
+          <el-button @click="handleSendTestMsg(row)">
+            {{ t("messageNotifications.sendTestMessage") }}
+          </el-button>
+          <el-button v-if="hasOperations" @click="handleSaveReceivers(row)">
+            {{ t("messageNotifications.editRecipient") }}
+          </el-button>
+        </template>
       </template>
     </el-table-column>
   </el-table>
