@@ -212,6 +212,7 @@ messageNotifications:
   receivers: Receivers
   editRecipient: Edit recipient
   editRecipientTitle: Edit { title } recipient
+  sendTestMessage: Send test message
 
 taskCenter:
   title: Task center
@@ -348,6 +349,8 @@ menus:
   dataDict: Data Dictionary
   dataMaskRule: Data Mask Rule
   approvalCenter: Approval Center
+  approvalFlow: Flow Definition
+  approvalInstance: Flow Approval
 
 approval:
   pendingTab: Pending My Approval
@@ -387,6 +390,102 @@ approval:
   statusEXPIRED: Expired
   statusCANCELLED: Cancelled
   statusFAILED: Failed
+
+systemApprovalFlow:
+  createTitle: New Flow
+  editTitle: Edit Configuration
+  formName: Flow Name
+  formCode: Flow Code
+  formActive: Active
+  formSchemaTitle: Form Fields
+  formSchemaTip: The dynamic form rendered when submitting; field keys are referenced by node conditions and the "form field" assignee type
+  fieldLabel: Label
+  fieldKey: Field Key
+  fieldType: Type
+  fieldRequired: Required
+  fieldOptions: Options (comma separated)
+  fieldOptionsTip: Required for select type, comma separated
+  addField: Add Field
+  nodesTitle: Approval Nodes
+  nodesTip: Nodes are visited in order (nodes with unmatched conditions are skipped); OR = any approver passes, AND = all approvers pass; no value needed for the "leader" assignee type
+  nodeOrder: Order
+  nodeName: Node Name
+  approveType: Approve Type
+  approveTypeOR: Any (OR)
+  approveTypeAND: All (AND)
+  assigneeType: Assignee Type
+  assigneeType_role: Role
+  assigneeType_user: User
+  assigneeType_leader: Applicant Leader
+  assigneeType_field: Form Field
+  assigneeValue: Assignee Value
+  assigneeHint_role: Role codes, comma separated
+  assigneeHint_user: Usernames, comma separated
+  assigneeHint_leader: No value needed (uses the applicant's department leader)
+  assigneeHint_field: Form field key (value is a username or username list)
+  conditionField: Condition Field
+  conditionFieldTip: Empty = no condition
+  conditionOp: Operator
+  conditionValue: Condition Value
+  timeoutHours: Timeout (hours)
+  addNode: Add Node
+  nameAndCodeRequired: Flow name and code are required
+  nodeRequired: At least one approval node is required
+  nodeNameRequired: Some node has no name
+  saveSuccess: Flow saved
+
+systemApprovalInstance:
+  start: New Application
+  startTitle: New Application
+  pendingTab: Pending My Approval
+  mineTab: My Applications
+  doneTab: Processed
+  formTitle: Title
+  formFlow: Flow
+  formStatus: Status
+  formApplicant: Applicant
+  formCurrentNode: Current Node
+  formCreatedTime: Submitted At
+  formReason: Rejection / Result Note
+  formData: Application Content
+  formDataEmpty: No form data
+  detailRich: Application Detail
+  tasks: Approval Trail
+  taskNode: Node
+  taskAssignee: Approver
+  taskAdded: Added
+  taskComment: Comment
+  taskActedAt: Acted At
+  approve: Approve
+  reject: Reject
+  addSign: Add Approver
+  cancel: Cancel
+  approveConfirm: Approve the current node of "{title}"?
+  rejectTitle: Reject application "{title}"
+  rejectReasonRequired: Rejection reason is required
+  reasonPlaceholder: Please enter the rejection reason (required)
+  addSignTitle: Add approvers for "{title}"
+  addSignRequired: Please enter the usernames to add
+  addSignPlaceholder: Usernames, comma separated
+  commentPlaceholder: Comment (optional)
+  batchApprove: Batch Approve
+  batchReject: Batch Reject
+  batchApproveConfirm: Batch approve the selected applications?
+  batchRejectTitle: Reject {n} applications
+  batchRejectPartial: "{n} not processed: {detail}"
+  cancelConfirm: Cancel application "{title}"?
+  submit: Submit
+  submitSuccess: Application submitted
+  flowRequired: Please select an approval flow
+  flowPlaceholder: Please select an approval flow
+  titleRequired: Title is required
+  titlePlaceholder: Please enter the application title
+  fieldRequired: Please fill in {label}
+  fieldPlaceholder: Please enter
+  statusPENDING: Pending
+  statusAPPROVED: Approved
+  statusREJECTED: Rejected
+  statusCANCELLED: Cancelled
 
 userinfo:
   userinfo: UserInfo
@@ -808,6 +907,7 @@ systemUploadFile:
   uploadTip: Files with a size less than
   quotaTip: Re-uploading the same file reuses the stored copy, while the quota still counts each record in full
   preview: Preview
+  previewPreparing: Document is being converted, please wait... (first preview requires conversion)
   previewUnsupported: This file type does not support online preview, please download it
   previewFailed: Failed to load preview, please retry later or download the file
   previewTruncated: Content too large and truncated, download for the full content
