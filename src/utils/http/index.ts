@@ -244,6 +244,11 @@ class PureHttp {
               ElMessage.error(data?.detail);
               reject(error.response.data);
               return;
+            } else if (error.response.status === 425) {
+              /** 425 Too Early：资源仍在准备（如 Office 转 PDF 中，业务码 1006），
+               *  由调用方按自己的重试策略处理（轮询/提示"转换中"），不弹全局错误 */
+              reject(error.response.data);
+              return;
             } else {
               ElMessage.error(data?.detail ?? error.response.statusText);
               // router.push("/error/500");
