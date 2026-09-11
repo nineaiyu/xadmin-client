@@ -26,7 +26,7 @@ test("用户回收站：删除 → 回收站恢复 → 列表重现", async ({ p
     data: {
       username,
       nickname: username,
-      password: AesEncrypted(username, "E2E-Recycle-2026!")
+      password: await AesEncrypted(username, "E2E-Recycle-2026!")
     }
   });
   expect(created.ok(), await created.text()).toBeTruthy();

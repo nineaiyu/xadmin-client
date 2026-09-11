@@ -49,7 +49,7 @@ test("敏感操作审批：删除用户 → 提交审批 → 审批中心通过 
       data: {
         username,
         nickname: username,
-        password: AesEncrypted(username, "E2E-Approve-2026!")
+        password: await AesEncrypted(username, "E2E-Approve-2026!")
       }
     });
     expect(created.ok(), await created.text()).toBeTruthy();
@@ -158,7 +158,7 @@ test("审批中心：待办角标 → 批量驳回 → 角标归零", async ({ p
           data: {
             username,
             nickname: username,
-            password: AesEncrypted(username, "E2E-Approve-2026!")
+            password: await AesEncrypted(username, "E2E-Approve-2026!")
           }
         }
       );
