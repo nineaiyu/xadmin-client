@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { loadEcharts } from "@/plugins/echarts";
 import TrendChart from "./components/TrendChart.vue";
+import TaskHealthCard from "./components/TaskHealthCard.vue";
 import { formatUptime, useMonitor } from "./utils/hook";
 
 defineOptions({
@@ -26,6 +27,7 @@ const {
   redisInfo,
   celery,
   slow,
+  taskHealth,
   fetchAll,
   toggleAuto,
   start
@@ -310,6 +312,8 @@ start();
         </el-card>
       </el-col>
     </el-row>
+
+    <task-health-card :health="taskHealth" />
 
     <el-card shadow="never">
       <template #header>

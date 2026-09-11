@@ -1,61 +1,27 @@
-import { message } from "@/utils/message";
-import type { PageColumn, RePlusPageProps } from "./types";
-import { computed, onMounted, ref, type Ref, shallowRef, toRaw } from "vue";
-import { cloneDeep, getKeyList, isArray, isEmpty } from "@pureadmin/utils";
+import { computed, onMounted, ref, type Ref } from "vue";
+import { getKeyList, isEmpty } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
+import type { RePlusPageProps } from "./types";
 import { useBaseColumns } from "./columns";
-import {
-  handleExportData,
-  handleImportData,
-  handleOperation,
-  openDialogDrawer,
-  renderSwitch
-} from "./handle";
-import { handleShowChangeHistory } from "./handle-history";
-import { applyServerErrors } from "./serverErrors";
-import type { OperationButtonsRow } from "@/components/RePlusPage";
-import {
-  formatPublicLabels,
-  uniqueArrayObj,
-  usePublicHooks
-} from "@/components/RePlusPage";
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import DetailDataForm from "../components/DetailData.vue";
+import { usePlusPageColumns } from "./usePlusPageColumns";
+import { usePlusPageData } from "./usePlusPageData";
+import { usePlusPageForm } from "./usePlusPageForm";
+import { usePlusPageButtons } from "./usePlusPageButtons";
 
-import View from "~icons/ep/view";
-import Delete from "~icons/ep/delete";
-import Upload from "~icons/ep/upload";
-import Download from "~icons/ep/download";
-import EditPen from "~icons/ep/edit-pen";
-import AddFill from "~icons/ri/add-circle-line";
-import FileList from "~icons/ri/file-list-3-line";
-import { handleTree } from "@/utils/tree";
-
+/**
+ * RePlusPage 视图组装入口（拆分自 720 行单体，行为与返回契约不变）：
+ * - usePlusPageColumns 列表列渲染（开关列、多选/操作列注入、三类列格式化出口）
+ * - usePlusPageData    请求与分页（搜索字段装配、请求序号防过期、首开元数据编排）
+ * - usePlusPageForm    表单与详情（新增/编辑、脱敏原文回取、详情、删除）
+ * - usePlusPageButtons 默认操作列与工具栏按钮组
+ */
 export function usePlusPage(
   emit: (event: string, ...args: unknown[]) => void,
   tableRef: Ref,
   props: RePlusPageProps
 ) {
-  const {
-    api,
-    auth,
-    isTree,
-    immediate,
-    pagination,
-    localeName,
-    addOrEditOptions,
-    operationButtonsProps,
-    tableBarButtonsProps,
-    plusDescriptionsProps,
-    searchResultFormat,
-    listColumnsFormat,
-    detailColumnsFormat,
-    searchColumnsFormat,
-    beforeSearchSubmit,
-    baseColumnsFormat,
-    allowAsyncExport
-  } = props;
+  const { isTree, immediate, pagination, localeName } = props;
 
   const route = useRoute();
   const { t, te } = useI18n();
@@ -74,7 +40,6 @@ export function usePlusPage(
   const selectedNum = ref(0);
   const defaultValue = ref({});
   const switchLoadMap = ref({});
-  const { switchStyle } = usePublicHooks();
   const routeParams = isEmpty(route.params) ? route.query : route.params;
   const defaultPagination: RePlusPageProps["pagination"] = {
     total: 0,
@@ -120,164 +85,6 @@ export function usePlusPage(
     renderClass: []
   });
 
-  // 默认操作按钮
-  const defaultOperationButtons = shallowRef<OperationButtonsRow[]>([]);
-  defaultOperationButtons.value = [
-    {
-      text: t("buttons.edit"),
-      code: "update",
-      props: {
-        type: "primary",
-        icon: useRenderIcon(EditPen),
-        link: true
-      },
-      onClick: ({ row }) => {
-        handleAddOrEdit(false, row);
-      },
-      show: (auth.partialUpdate || auth.update) && -30
-    },
-    {
-      text: t("buttons.changeHistory"),
-      code: "changeHistory",
-      props: {
-        type: "info",
-        icon: useRenderIcon(FileList),
-        link: true
-      },
-      onClick: ({ row }) => {
-        handleShowChangeHistory({ t, api, row });
-      },
-      tooltip: { content: t("buttons.changeHistory") },
-      // 页面在 getDefaultAuths 中声明 changeHistory 且菜单授予
-      // changeHistory:<ComponentName> 权限码时显示（用户管理页已开启示范）
-      show: auth.changeHistory && -25
-    },
-    {
-      text: t("buttons.delete"),
-      code: "delete",
-      confirm: { title: t("buttons.confirmDelete") },
-      props: {
-        type: "danger",
-        icon: useRenderIcon(Delete),
-        link: true
-      },
-      onClick: ({ row, loading }) => {
-        loading.value = true;
-        handleDelete(row, () => {
-          loading.value = false;
-        });
-      },
-      show: auth.destroy && -20
-    },
-    {
-      code: "detail",
-      props: {
-        type: "primary",
-        icon: useRenderIcon(View),
-        link: true
-      },
-      onClick: ({ row }) => {
-        handleDetail(row);
-      },
-      tooltip: { content: t("buttons.detail") },
-      show: (auth.list || auth.retrieve) && -10
-    }
-  ];
-
-  const operationButtons = computed(() => {
-    return [
-      ...defaultOperationButtons.value,
-      ...(operationButtonsProps?.buttons ?? [])
-    ];
-  });
-  // 默认tableBar按钮
-  const defaultTableBarButtons = shallowRef<OperationButtonsRow[]>([]);
-
-  defaultTableBarButtons.value = [
-    {
-      text: computed(() =>
-        treeProps.value.checkStrictly
-          ? t("buttons.checkUnStrictly")
-          : t("buttons.checkStrictly")
-      ),
-      code: "checkStrictly",
-      props: {
-        type: "success",
-        plain: true
-      },
-      onClick: () => {
-        treeProps.value.checkStrictly = !treeProps.value.checkStrictly;
-      },
-      show: isTree && -30
-    },
-    {
-      text: t("buttons.add"),
-      code: "create",
-      props: {
-        type: "primary",
-        icon: useRenderIcon(AddFill)
-      },
-      onClick: ({ row }) => {
-        handleAddOrEdit(true, row);
-      },
-      show: auth.create && -30
-    },
-    {
-      code: "export",
-      props: {
-        type: "primary",
-        icon: useRenderIcon(Download),
-        plain: true
-      },
-      onClick: () => {
-        const pks = getSelectPks();
-        handleExportData({
-          t,
-          pks,
-          api,
-          searchFields,
-          // 未显式设置时按页面导出权限自动显示异步开关（与导出按钮同源判定），
-          // 保证所有支持导出的页面都提供大数据量异步导出入口
-          allowAsync: allowAsyncExport ?? Boolean(auth.exportData)
-        });
-      },
-      tooltip: { content: t("exportImport.export") },
-      show: auth.exportData && -20
-    },
-    {
-      code: "import",
-      props: {
-        type: "primary",
-        icon: useRenderIcon(Upload),
-        plain: true
-      },
-      onClick: () => {
-        handleImportData({
-          t,
-          api,
-          success: () => {
-            handleGetData();
-          }
-        });
-      },
-      tooltip: { content: t("exportImport.import") },
-      show: auth.importData && -10
-    }
-  ];
-
-  const tableBarButtons = computed(() => {
-    return [
-      ...defaultTableBarButtons.value,
-      ...(tableBarButtonsProps?.buttons ?? [])
-    ];
-  });
-
-  const initSearchFields = () => {
-    searchFields.value = cloneDeep(defaultValue.value);
-    tablePagination.value.pageSize = searchFields.value.size;
-    tablePagination.value.currentPage = searchFields.value.page;
-  };
-
   const handleTableBarChange = ({ dynamicColumns, size, renderClass }) => {
     tableBarData.value.dynamicColumns = dynamicColumns;
     tableBarData.value.size = size;
@@ -285,29 +92,8 @@ export function usePlusPage(
     tablePagination.value.size = size;
   };
 
-  const handleReset = () => {
-    initSearchFields();
-    handleGetData();
-  };
-
-  const handleSearch = async () => {
-    searchFields.value.page = tablePagination.value.currentPage = 1;
-    handleGetData();
-  };
-
-  const handleSizeChange = (val: number) => {
-    searchFields.value.page = 1;
-    searchFields.value.size = val;
-    handleGetData();
-  };
-
   const handleFullscreen = () => {
     tableRef.value.setAdaptive();
-  };
-
-  const handleCurrentChange = (val: number) => {
-    searchFields.value.page = val;
-    handleGetData();
   };
 
   const handleSelectionChange = val => {
@@ -325,365 +111,75 @@ export function usePlusPage(
     return getKeyList(manySelectData, key);
   };
 
-  // 删除
-  const handleDelete = (row, requestEnd) => {
-    handleOperation({
+  // 列表列渲染：操作列需要按钮集合，而 buttons 子 hook 依赖 data/form 的动作，
+  // 故经 getter 延迟取值（formatColumnsRender 仅在挂载后执行，无初始化顺序风险）
+  const { formatColumnsRender } = usePlusPageColumns({
+    props,
+    t,
+    te,
+    listColumns,
+    detailColumns,
+    searchColumns,
+    addOrEditRules,
+    addOrEditColumns,
+    searchDefaultValue,
+    addOrEditDefaultValue,
+    switchLoadMap,
+    getOperationButtons: () => buttons.operationButtons.value
+  });
+
+  // 请求与分页
+  const {
+    handleReset,
+    handleSearch,
+    handleSizeChange,
+    handleCurrentChange,
+    handleGetData,
+    getPageColumn
+  } = usePlusPageData({
+    props,
+    emit,
+    t,
+    routeParams,
+    dataList,
+    loadingStatus,
+    searchFields,
+    defaultValue,
+    tablePagination,
+    getColumnData,
+    searchDefaultValue,
+    columnsInitCallback: formatColumnsRender
+  });
+
+  // 表单与详情
+  const { handleAddOrEdit, handleDetail, handleDelete, handleManyDelete } =
+    usePlusPageForm({
+      props,
       t,
-      apiReq: api.destroy(row?.pk ?? row?.id),
-      success() {
-        handleGetData();
-      },
-      requestEnd
-    });
-  };
-
-  // 批量删除
-  const handleManyDelete = () => {
-    if (selectedNum.value === 0) {
-      message(t("results.noSelectedData"), { type: "error" });
-      return;
-    }
-
-    handleOperation({
-      t,
-      apiReq: api.batchDestroy(getSelectPks("pk")),
-      success() {
-        onSelectionCancel();
-        handleGetData();
-      }
-    });
-  };
-
-  // 查看详情
-  const handleDetail = row => {
-    openDialogDrawer({
-      t,
-      title: t("buttons.detail"),
-      rawRow: { ...row },
-      rawColumns: detailColumns.value,
-      dialogDrawerOptions: { width: "60vw", hideFooter: true },
-      minWidth: "600px",
-      formProps: { ...plusDescriptionsProps },
-      form: DetailDataForm
-    });
-  };
-
-  /**
-   * 编辑态取原文：脱敏字段的列表行是掩码值，直接作为表单初始值会让编辑者
-   * 「看不见原文就改不动」。这里显式走 `?mask=false` 详情通道（服务端按
-   * 「对该菜单有更新权限」放行，无权限仍返回掩码），失败/无权限时静默回退
-   * 当前行数据，不阻断编辑。
-   */
-  const fetchOriginalRow = async (row: Record<string, unknown>) => {
-    const pk = (row?.pk ?? row?.id) as number | string | undefined;
-    const detail = api?.detail;
-    if (pk === undefined || pk === null || typeof detail !== "function") {
-      return null;
-    }
-    try {
-      const res = await detail(pk, { mask: "false" });
-      if (
-        res?.code === 1000 &&
-        res.data &&
-        typeof res.data === "object" &&
-        !isArray(res.data)
-      ) {
-        return res.data;
-      }
-    } catch (error) {
-      // 静默回退：失败提示由 http 拦截器统一处理，这里只留调试信息
-      console.debug("[RePlusPage] fetch original row failed", error);
-    }
-    return null;
-  };
-
-  //新增或编辑
-  const handleAddOrEdit = async (
-    isAdd = true,
-    row: Record<string, unknown> = {}
-  ) => {
-    let title = t("buttons.edit");
-    if (isAdd) {
-      title = t("buttons.add");
-    }
-    let rawRow = isAdd
-      ? { ...addOrEditDefaultValue.value, ...row }
-      : { ...row };
-    if (!isAdd) {
-      const original = await fetchOriginalRow(row);
-      if (original) {
-        rawRow = { ...rawRow, ...original };
-      }
-    }
-    openDialogDrawer({
-      t,
-      isAdd,
-      title: `${title} ${addOrEditOptions?.title ?? pageTitle.value}`,
-      rawRow,
-      form: addOrEditOptions?.form,
-      rawColumns: addOrEditColumns.value,
-      rawFormProps: {
-        rules: addOrEditRules.value
-      },
-      saveCallback: ({
-        formData,
-        done,
-        closeLoading,
-        formRef,
-        formOptions
-      }) => {
-        handleOperation({
-          t,
-          apiReq:
-            (addOrEditOptions?.apiReq &&
-              addOrEditOptions?.apiReq({ ...formOptions, formData })) ||
-            (isAdd
-              ? api.create(formData)
-              : api.partialUpdate(formData?.pk ?? formData?.id, formData)),
-          success() {
-            done();
-            handleGetData();
-          },
-          failed: res => {
-            // 业务失败（HTTP 200 + code!=1000）携带的 errors 内联到表单项
-            applyServerErrors(formRef, res?.errors);
-          },
-          exception: err => {
-            // 校验失败（HTTP 400，http 层 reject 响应体）携带的 errors 内联到表单项
-            applyServerErrors(formRef, err?.errors);
-          },
-          requestEnd() {
-            closeLoading();
-          }
-        });
-      },
-      ...addOrEditOptions?.props
-    });
-  };
-
-  // 表格字段自定义渲染
-  const formatColumnsRender = () => {
-    listColumns.value.forEach((column: PageColumn) => {
-      switch (column._column?.input_type) {
-        case "boolean":
-          // pure-table ****** start
-          column["cellRenderer"] = renderSwitch({
-            t,
-            updateApi: api.partialUpdate,
-            switchLoadMap,
-            switchStyle,
-            field: column.prop,
-            disabled: () => !(auth.partialUpdate || auth.update)
-          });
-          break;
-        // pure-table ****** end
-      }
-    });
-    if (props.selection) {
-      listColumns.value.unshift({
-        _column: { key: "selection" },
-        type: "selection",
-        fixed: "left",
-        reserveSelection: true
-      });
-    }
-    const hasOperations = uniqueArrayObj(operationButtons.value, "code").filter(
-      (item: OperationButtonsRow) => item?.show
-    );
-    if (props.operation && hasOperations.length > 0) {
-      listColumns.value.push({
-        _column: { key: "operation" },
-        label: formatPublicLabels(t, te, "operation", localeName),
-        fixed: "right",
-        width: operationButtonsProps?.width ?? 200,
-        slot: "operation"
-      });
-    }
-    listColumns.value =
-      (listColumnsFormat && listColumnsFormat(listColumns.value)) ||
-      listColumns.value;
-    detailColumns.value =
-      (detailColumnsFormat && detailColumnsFormat(detailColumns.value)) ||
-      detailColumns.value;
-    searchColumns.value =
-      (searchColumnsFormat && searchColumnsFormat(searchColumns.value)) ||
-      searchColumns.value;
-
-    if (baseColumnsFormat) {
-      baseColumnsFormat({
-        listColumns,
-        detailColumns,
-        searchColumns,
-        addOrEditRules,
-        addOrEditColumns,
-        searchDefaultValue,
-        addOrEditDefaultValue
-      });
-    }
-  };
-
-  // 数据获取
-  // 请求序号：仅接受最新一次请求的响应，避免同页快速切换筛选/分页时旧响应覆盖新列表
-  let latestRequestSeq = 0;
-  const handleGetData = (
-    queryParams = {},
-    options: {
-      /** 首开内联元数据消费（with_meta=1 响应中的 search_columns/search_fields） */
-      inline?: boolean;
-      /** 内联响应缺元数据键时的一次性回退（旧后端/无元数据 Action 视图集） */
-      onInlineMetaMissing?: () => void;
-    } = {}
-  ) => {
-    const requestSeq = ++latestRequestSeq;
-    loadingStatus.value = true;
-
-    ["created_time", "updated_time"].forEach(key => {
-      if (searchFields.value[key]?.length === 2) {
-        searchFields.value[`${key}_after`] = searchFields.value[key][0];
-        searchFields.value[`${key}_before`] = searchFields.value[key][1];
-      } else {
-        searchFields.value[`${key}_after`] = "";
-        searchFields.value[`${key}_before`] = "";
-      }
+      pageTitle,
+      detailColumns,
+      addOrEditColumns,
+      addOrEditRules,
+      addOrEditDefaultValue,
+      selectedNum,
+      onSelectionCancel,
+      getSelectPks,
+      handleGetData
     });
 
-    const params = cloneDeep(toRaw({ ...searchFields.value, ...queryParams }));
+  // 默认按钮组
+  const buttons = usePlusPageButtons({
+    props,
+    t,
+    treeProps,
+    searchFields,
+    handleGetData,
+    getSelectPks,
+    handleAddOrEdit,
+    handleDelete,
+    handleDetail
+  });
 
-    // 该方法为了支持pk多选操作将如下格式 [{pk:1},{pk:2}] 转换为 [1,2]
-    Object.keys(params).forEach(key => {
-      const value = params[key];
-      const pks = [];
-      if (isArray(value)) {
-        value.forEach(item => {
-          if (item.pk ?? item.id) {
-            pks.push(item.pk ?? item.id);
-          }
-        });
-        if (pks.length > 0) {
-          params[key] = pks;
-        }
-      }
-    });
-
-    const data = (beforeSearchSubmit && beforeSearchSubmit(params)) || params;
-
-    api
-      .list(data)
-      .then(res => {
-        // 过期响应直接丢弃：不覆盖新数据、不触发 searchComplete、不关闭 loading
-        if (requestSeq !== latestRequestSeq) return;
-        if (res.code === 1000 && res.data) {
-          if (searchResultFormat && typeof searchResultFormat === "function") {
-            dataList.value = searchResultFormat(res.data.results);
-          } else {
-            dataList.value = isTree
-              ? handleTree(res.data.results)
-              : res.data.results;
-          }
-          tablePagination.value.total = res.data.total;
-          if (options.inline) {
-            if (res.data.search_columns || res.data.search_fields) {
-              getColumnData(
-                undefined,
-                undefined,
-                columnsInitCallback,
-                fieldsInitCallback,
-                {},
-                {},
-                {
-                  search_columns: res.data.search_columns,
-                  search_fields: res.data.search_fields
-                }
-              );
-            } else {
-              // 旧后端/未混入元数据 Action：回退分离请求
-              options.onInlineMetaMissing?.();
-            }
-          }
-        } else {
-          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-        }
-        emit("searchComplete", { routeParams, searchFields, dataList, res });
-        loadingStatus.value = false;
-      })
-      .catch(() => {
-        // 过期请求的失败同样忽略；其它失败的提示由 http 层统一给出，此处只收尾 loading
-        if (requestSeq !== latestRequestSeq) return;
-        loadingStatus.value = false;
-      });
-  };
-
-  /** 搜索表单默认值装配（fieldsCallback 与 内联首开共用） */
-  const fieldsInitCallback = () => {
-    defaultValue.value = {
-      ...{
-        page: tablePagination.value.currentPage,
-        size: tablePagination.value.pageSize,
-        ordering: "-created_time"
-      },
-      ...searchDefaultValue.value
-    };
-    searchFields.value = cloneDeep(defaultValue.value);
-
-    if (routeParams) {
-      const parameter = cloneDeep(routeParams);
-      Object.keys(parameter).forEach(param => {
-        searchFields.value[param] = parameter[param];
-      });
-    }
-  };
-
-  /** 元数据格式化（columnsCallback 载荷） */
-  const columnsInitCallback = () => {
-    formatColumnsRender();
-  };
-
-  const getPageColumn = (immediate: boolean) => {
-    if (immediate && auth.list && api.list) {
-      // 首开以 with_meta=1 合并 list/search-columns/search-fields 三个请求；
-      // 响应缺元数据键（旧后端/无元数据 Action）时回退分离请求
-      handleGetData(
-        { with_meta: 1 },
-        {
-          inline: true,
-          onInlineMetaMissing: () =>
-            getColumnData(
-              auth.list && api.columns,
-              api.fields,
-              () => {
-                columnsInitCallback();
-                if (!api.fields && immediate) {
-                  handleGetData();
-                }
-              },
-              () => {
-                fieldsInitCallback();
-                if (immediate) {
-                  handleGetData();
-                }
-              }
-            )
-        }
-      );
-      return;
-    }
-    getColumnData(
-      auth.list && api.columns,
-      api.fields,
-      () => {
-        columnsInitCallback();
-        if (!api.fields && immediate) {
-          handleGetData();
-        }
-      },
-      () => {
-        fieldsInitCallback();
-        if (immediate) {
-          handleGetData();
-        }
-      }
-    );
-  };
   onMounted(() => {
     getPageColumn(immediate);
   });
@@ -701,8 +197,8 @@ export function usePlusPage(
     searchColumns,
     loadingStatus,
     tablePagination,
-    tableBarButtons,
-    operationButtons,
+    tableBarButtons: buttons.tableBarButtons,
+    operationButtons: buttons.operationButtons,
     handleReset,
     handleSearch,
     getSelectPks,

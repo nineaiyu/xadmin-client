@@ -1165,6 +1165,13 @@ accessToken:
     10.0.0.0/8
   callLogs: 调用记录
   callLogsTip: 调用记录按令牌精确归集（操作日志已记录令牌标识）；升级前产生的历史记录无法区分到具体令牌，不计入
+  token_prefix: 令牌前缀
+  scopes: 接口范围
+  ip_allowlist: IP 白名单
+  is_active: 状态
+  expired_at: 过期时间
+  last_used_time: 最后使用
+  description: 备注
   totalCalls: 近 {n} 天调用
   failedCalls: 失败调用
   lastCall: 末次调用
@@ -1236,6 +1243,19 @@ systemMonitor:
   creator: 触发人
   time: 时间
   noSlowRequest: 窗口内无慢请求
+  taskHealth: 后台任务健康度（最近 {n} 天）
+  taskState: 健康状态
+  taskSuccessRate: 终态成功率
+  taskTotal: 执行总数
+  taskRunning: 在途（RUNNING/PENDING）
+  taskAvgCost: 平均耗时
+  taskPerTask: 高频任务 Top 10
+  taskRecentFailures: 近期失败/撤销
+  taskNoFailures: 窗口内无失败任务
+  taskSuccessRateNone: 无终态样本
+  stateHealthy: 健康
+  stateDegraded: 降级
+  stateFailing: 异常
   autoRefresh: 自动刷新
   refresh: 刷新
   wsLive: 实时推送

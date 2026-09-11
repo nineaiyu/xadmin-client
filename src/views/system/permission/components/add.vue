@@ -13,7 +13,7 @@ import { modelLabelFieldApi } from "@/api/system/field";
 import {
   getDateTimePickerShortcuts,
   getPickerShortcuts
-} from "@/views/system/utils";
+} from "@/components/RePlusPage";
 import SearchUser from "@/views/system/components/SearchUser.vue";
 import SearchDept from "@/views/system/components/SearchDept.vue";
 import SearchRole from "@/views/system/components/SearchRole.vue";

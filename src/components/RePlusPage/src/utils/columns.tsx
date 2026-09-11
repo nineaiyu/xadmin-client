@@ -1,4 +1,6 @@
 import { computed, ref } from "vue";
+// 注意：这里的列对象在挂载 renderer/computed 之后就地深拷贝，含循环引用——
+// 必须用 lodash-es 的 cloneDeep（带环检测）；@pureadmin/utils 的同名实现会爆栈
 import { cloneDeep } from "lodash-es";
 import { useI18n } from "vue-i18n";
 import type { BaseApi } from "@/api/base";

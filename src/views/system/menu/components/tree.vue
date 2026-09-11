@@ -23,6 +23,7 @@ import More2Fill from "~icons/ri/more-2-fill";
 import DocumentAdd from "~icons/ep/document-add";
 import ExpandIcon from "../svg/expand.svg?component";
 import UnExpandIcon from "../svg/unexpand.svg?component";
+import ReTreeLine from "@/components/ReTreeLine";
 
 const { t } = useI18n();
 const { locale } = useI18n();
@@ -405,27 +406,32 @@ watch(
         @node-click="nodeClick"
       >
         <template #default="{ node, data }">
-          <span
-            :class="[
-              'pr-1',
-              'rounded-sm',
-              'flex',
-              'items-center',
-              'select-none',
-              searchValue.trim().length > 0 &&
-                node.label.includes(searchValue) &&
-                'text-red-500',
-              highlightMap[node.id]?.highlight ? 'dark:text-primary' : ''
-            ]"
-            :style="{
-              background: highlightMap[node.id]?.highlight
-                ? 'var(--el-color-primary-light-7)'
-                : 'transparent'
-            }"
-          >
-            <component :is="useRenderIcon(data.meta.icon)" class="m-1" />
-            {{ `${transformI18n(data.meta.title)}` }}
-          </span>
+          <!-- 树形连接线：indent 与 el-tree 默认缩进（18）一致，行尾操作区留在包装外 -->
+          <ReTreeLine :indent="18" :node="node" :showLabelLine="false">
+            <template #node-label>
+              <span
+                :class="[
+                  'pr-1',
+                  'rounded-sm',
+                  'flex',
+                  'items-center',
+                  'select-none',
+                  searchValue.trim().length > 0 &&
+                    node.label.includes(searchValue) &&
+                    'text-red-500',
+                  highlightMap[node.id]?.highlight ? 'dark:text-primary' : ''
+                ]"
+                :style="{
+                  background: highlightMap[node.id]?.highlight
+                    ? 'var(--el-color-primary-light-7)'
+                    : 'transparent'
+                }"
+              >
+                <component :is="useRenderIcon(data.meta.icon)" class="m-1" />
+                {{ `${transformI18n(data.meta.title)}` }}
+              </span>
+            </template>
+          </ReTreeLine>
           <span class="flex items-center">
             <el-tooltip
               v-if="auth.create && data.menu_type !== MenuChoices.PERMISSION"

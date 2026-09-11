@@ -1165,6 +1165,13 @@ accessToken:
     10.0.0.0/8
   callLogs: Call logs
   callLogsTip: Call logs are attributed per token (operation logs now carry the token identity); records created before the upgrade cannot be attributed and are excluded
+  token_prefix: Prefix
+  scopes: Scopes
+  ip_allowlist: IP allowlist
+  is_active: Status
+  expired_at: Expires at
+  last_used_time: Last used
+  description: Description
   totalCalls: Calls (last {n}d)
   failedCalls: Failed calls
   lastCall: Last call
@@ -1236,6 +1243,19 @@ systemMonitor:
   creator: Creator
   time: Time
   noSlowRequest: No slow request in the window
+  taskHealth: Task health (last {n}d)
+  taskState: State
+  taskSuccessRate: Terminal success rate
+  taskTotal: Total runs
+  taskRunning: In-flight (RUNNING/PENDING)
+  taskAvgCost: Avg cost
+  taskPerTask: Top 10 tasks
+  taskRecentFailures: Recent failures/revoked
+  taskNoFailures: No failed tasks in window
+  taskSuccessRateNone: No terminal samples
+  stateHealthy: Healthy
+  stateDegraded: Degraded
+  stateFailing: Failing
   autoRefresh: Auto refresh
   refresh: Refresh
   wsLive: Live (WebSocket)

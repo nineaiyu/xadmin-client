@@ -92,6 +92,30 @@ export type MonitorSlow = {
   }[];
 };
 
+export type MonitorTaskHealth = {
+  window_days: number;
+  total: number;
+  success: number;
+  failure: number;
+  revoked: number;
+  running: number;
+  pending: number;
+  success_rate: number | null;
+  state: "healthy" | "degraded" | "failing";
+  avg_cost_seconds: number | null;
+  recent_failures: {
+    pk: string;
+    name: string;
+    status: string;
+    date_finished: string | null;
+  }[];
+  per_task: {
+    name: string;
+    total: number;
+    success_rate: number | null;
+  }[];
+};
+
 /** 系统监控面板（只读，短缓存） */
 class MonitorApi extends BaseRequest {
   overview = (params?: object) => {
@@ -124,6 +148,14 @@ class MonitorApi extends BaseRequest {
       params ?? {},
       {},
       `${this.baseApi}/celery`
+    );
+  };
+  taskHealth = (params?: object) => {
+    return this.request<MonitorResult<MonitorTaskHealth>>(
+      "get",
+      params ?? {},
+      {},
+      `${this.baseApi}/task-health`
     );
   };
   slow = (params?: object) => {

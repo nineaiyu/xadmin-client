@@ -1,24 +1,30 @@
 <script lang="ts" setup>
-import { computed, h, onMounted, reactive, ref } from "vue";
+import { h, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElInput } from "element-plus";
+import { ElInput, ElTag } from "element-plus";
 import type { RecordType } from "plus-pro-components";
-import type { DetailResult, ListResult } from "@/api/types";
+import type { DetailResult } from "@/api/types";
 import { addDialog } from "@/components/ReDialog";
 import { message } from "@/utils/message";
-import { handleOperation } from "@/components/RePlusPage";
+import {
+  handleOperation,
+  RePlusPage,
+  type OperationProps,
+  type PageTableColumn,
+  type RePlusPageProps
+} from "@/components/RePlusPage";
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { personalAccessTokenApi } from "@/api/user/token";
 import PatCallLogs from "./PatCallLogs.vue";
-import Delete from "~icons/ep/delete";
-import Document from "~icons/ep/document";
 import Lock from "~icons/ep/lock";
 import Location from "~icons/ep/location";
+import Document from "~icons/ep/document";
 
 defineOptions({ name: "AccessToken" });
 
 const { t } = useI18n();
-const loading = ref(false);
-const dataList = ref<RecordType[]>([]);
+const plusPageRef = ref();
+
 const dialogVisible = ref(false);
 
 /** 创建后明文仅展示一次：弹层 + 复制按钮，关闭即不再可见 */
@@ -26,34 +32,23 @@ const plainToken = ref("");
 
 const form = reactive({ name: "", expired_at: null });
 
-const columns = computed(() => [
-  { prop: "name", label: t("accessToken.name") },
-  { prop: "token_prefix", label: t("accessToken.prefix") },
-  { prop: "scopes", label: t("accessToken.scope") },
-  { prop: "ip_allowlist", label: t("accessToken.ipAllowlist") },
-  { prop: "is_active", label: t("accessToken.active") },
-  { prop: "expired_at", label: t("accessToken.expiredAt") },
-  { prop: "last_used_time", label: t("accessToken.lastUsed") },
-  { prop: "created_time", label: t("accessToken.createdTime") }
-]);
-
-const fetchList = () => {
-  loading.value = true;
-  personalAccessTokenApi
-    .list()
-    .then((res: ListResult) => {
-      if (res.code === 1000 && res.data) {
-        dataList.value = res.data.results;
-      }
-    })
-    .catch(() => {
-      // 失败提示由 http 拦截器统一处理，这里兜住 reject
-      dataList.value = [];
-    })
-    .finally(() => {
-      loading.value = false;
-    });
+/**
+ * PAT 是个人资源：路由挂在 PERMISSION_WHITE_URL（同 MFA 口径，无需菜单权限码），
+ * auth 仅作 RePlusPage 显隐开关；内置新增/编辑/导入导出隐藏——
+ * 创建走页面顶部专用表单（承载明文一次性展示），字段编辑由行内清单编辑器承载。
+ */
+const auth: RePlusPageProps["auth"] = {
+  list: true,
+  create: false,
+  update: false,
+  partialUpdate: false,
+  destroy: true,
+  retrieve: false,
+  exportData: false,
+  importData: false
 };
+
+const refresh = () => plusPageRef.value?.handleGetData();
 
 const copyToken = async () => {
   try {
@@ -79,7 +74,7 @@ const handleCreate = () => {
       dialogVisible.value = true;
       form.name = "";
       form.expired_at = null;
-      fetchList();
+      refresh();
     }
   });
 };
@@ -88,15 +83,7 @@ const handleRevoke = (row: RecordType) => {
   handleOperation({
     t,
     apiReq: personalAccessTokenApi.partialUpdate(row.pk, { is_active: false }),
-    success: () => fetchList()
-  });
-};
-
-const handleDelete = (row: RecordType) => {
-  handleOperation({
-    t,
-    apiReq: personalAccessTokenApi.destroy(row.pk),
-    success: () => fetchList()
+    success: () => refresh()
   });
 };
 
@@ -145,7 +132,7 @@ const openListEditor = (options: {
         }),
         success: () => {
           done();
-          fetchList();
+          refresh();
         },
         // 确定按钮 loading 收口：失败保持弹窗可重试，避免重复点击
         requestEnd: closeLoading
@@ -188,7 +175,89 @@ const openCallLogs = (row: RecordType) => {
   });
 };
 
-onMounted(fetchList);
+/** 列渲染覆盖：状态/接口范围/IP 白名单与时间列空值占位（保持迁移前展示口径） */
+const listColumnsFormat = (columns: PageTableColumn[]) => {
+  columns.forEach(column => {
+    switch (column._column?.key) {
+      case "is_active":
+        column.cellRenderer = ({ row }) =>
+          h(
+            ElTag,
+            { type: row.is_active ? "success" : "danger", size: "small" },
+            () => (row.is_active ? t("labels.enable") : t("labels.disable"))
+          );
+        break;
+      case "scopes":
+        column.cellRenderer = ({ row }) =>
+          (row.scopes ?? []).length
+            ? h(ElTag, { type: "info", size: "small" }, () =>
+                t("accessToken.scopeCount", { n: row.scopes.length })
+              )
+            : t("accessToken.scopeUnrestricted");
+        break;
+      case "ip_allowlist":
+        column.cellRenderer = ({ row }) =>
+          (row.ip_allowlist ?? []).length
+            ? h(ElTag, { type: "info", size: "small" }, () =>
+                t("accessToken.ipCount", { n: row.ip_allowlist.length })
+              )
+            : t("accessToken.ipAllowlistUnrestricted");
+        break;
+      case "expired_at":
+      case "last_used_time":
+        column.cellRenderer = ({ row }) => row[column._column?.key] ?? "—";
+        break;
+    }
+  });
+  return columns;
+};
+
+/** 行内动作：吊销（仅启用态）+ 接口范围 + IP 白名单 + 调用记录 */
+const operationButtonsProps: OperationProps = {
+  showNumber: 6,
+  buttons: [
+    {
+      text: t("accessToken.revoke"),
+      code: "revoke",
+      props: { type: "warning", link: true },
+      onClick: ({ row }) => handleRevoke(row),
+      show: (row: RecordType) => !!row.is_active
+    },
+    {
+      code: "scope",
+      props: {
+        type: "primary",
+        link: true,
+        title: t("accessToken.scope"),
+        icon: useRenderIcon(Lock)
+      },
+      onClick: ({ row }) => openScopeEditor(row),
+      show: 2
+    },
+    {
+      code: "ipAllowlist",
+      props: {
+        type: "primary",
+        link: true,
+        title: t("accessToken.ipAllowlist"),
+        icon: useRenderIcon(Location)
+      },
+      onClick: ({ row }) => openIpAllowlistEditor(row),
+      show: 3
+    },
+    {
+      code: "callLogs",
+      props: {
+        type: "primary",
+        link: true,
+        title: t("accessToken.callLogs"),
+        icon: useRenderIcon(Document)
+      },
+      onClick: ({ row }) => openCallLogs(row),
+      show: 4
+    }
+  ]
+};
 </script>
 
 <template>
@@ -224,82 +293,15 @@ onMounted(fetchList);
       </el-form-item>
     </el-form>
 
-    <el-table v-loading="loading" :data="dataList" size="default" border>
-      <el-table-column
-        v-for="column in columns"
-        :key="column.prop"
-        :prop="column.prop"
-        :label="column.label"
-      >
-        <template v-if="column.prop === 'is_active'" #default="{ row }">
-          <el-tag :type="row.is_active ? 'success' : 'danger'" size="small">
-            {{ row.is_active ? t("labels.enable") : t("labels.disable") }}
-          </el-tag>
-        </template>
-        <template v-else-if="column.prop === 'scopes'" #default="{ row }">
-          <el-tag v-if="(row.scopes ?? []).length" size="small" type="info">
-            {{ t("accessToken.scopeCount", { n: row.scopes.length }) }}
-          </el-tag>
-          <span v-else>{{ t("accessToken.scopeUnrestricted") }}</span>
-        </template>
-        <template v-else-if="column.prop === 'ip_allowlist'" #default="{ row }">
-          <el-tag
-            v-if="(row.ip_allowlist ?? []).length"
-            size="small"
-            type="info"
-          >
-            {{ t("accessToken.ipCount", { n: row.ip_allowlist.length }) }}
-          </el-tag>
-          <span v-else>{{ t("accessToken.ipAllowlistUnrestricted") }}</span>
-        </template>
-        <template v-else #default="{ row }">
-          {{ row[column.prop] ?? "—" }}
-        </template>
-      </el-table-column>
-      <el-table-column
-        :label="t('labels.operations')"
-        width="210"
-        fixed="right"
-      >
-        <template #default="{ row }">
-          <el-button
-            v-if="row.is_active"
-            type="warning"
-            link
-            @click="handleRevoke(row)"
-          >
-            {{ t("accessToken.revoke") }}
-          </el-button>
-          <el-button
-            type="primary"
-            link
-            :title="t('accessToken.scope')"
-            @click="openScopeEditor(row)"
-          >
-            <IconifyIconOffline :icon="Lock" />
-          </el-button>
-          <el-button
-            type="primary"
-            link
-            :title="t('accessToken.ipAllowlist')"
-            @click="openIpAllowlistEditor(row)"
-          >
-            <IconifyIconOffline :icon="Location" />
-          </el-button>
-          <el-button
-            type="primary"
-            link
-            :title="t('accessToken.callLogs')"
-            @click="openCallLogs(row)"
-          >
-            <IconifyIconOffline :icon="Document" />
-          </el-button>
-          <el-button type="danger" link @click="handleDelete(row)">
-            <IconifyIconOffline :icon="Delete" />
-          </el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <RePlusPage
+      ref="plusPageRef"
+      :api="personalAccessTokenApi"
+      :auth="auth"
+      :selection="false"
+      locale-name="accessToken"
+      :list-columns-format="listColumnsFormat"
+      :operation-buttons-props="operationButtonsProps"
+    />
 
     <el-dialog
       v-model="dialogVisible"

@@ -8,7 +8,8 @@ import {
   type MonitorOverview,
   type MonitorRedisInfo,
   type MonitorServices,
-  type MonitorSlow
+  type MonitorSlow,
+  type MonitorTaskHealth
 } from "@/api/system/monitor";
 /** WS 断连后的轮询兜底间隔（WS 在线时由服务端 5s 推 live / 30s 推 panel） */
 const POLL_FALLBACK_INTERVAL = 15_000;
@@ -27,6 +28,7 @@ export function useMonitor() {
   const redisInfo = ref<MonitorRedisInfo>({});
   const celery = ref<MonitorCelery>({ workers: [], total: 0 });
   const slow = ref<MonitorSlow>({ threshold: 1, results: [] });
+  const taskHealth = ref<MonitorTaskHealth | null>(null);
 
   let timer: ReturnType<typeof setInterval> | null = null;
   let ws: WS | null = null;
@@ -42,7 +44,8 @@ export function useMonitor() {
         monitorApi.services(params),
         monitorApi.redisInfo(params),
         monitorApi.celery(params),
-        monitorApi.slow(params)
+        monitorApi.slow(params),
+        monitorApi.taskHealth(params)
       ]);
       if (results[0].status === "fulfilled")
         overview.value = results[0].value.data;
@@ -53,6 +56,8 @@ export function useMonitor() {
       if (results[3].status === "fulfilled")
         celery.value = results[3].value.data;
       if (results[4].status === "fulfilled") slow.value = results[4].value.data;
+      if (results[5].status === "fulfilled")
+        taskHealth.value = results[5].value.data;
     } finally {
       loading.value = false;
     }
@@ -146,6 +151,7 @@ export function useMonitor() {
     redisInfo,
     celery,
     slow,
+    taskHealth,
     fetchAll,
     toggleAuto,
     start

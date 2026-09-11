@@ -51,6 +51,36 @@ pnpm build      # 生产构建
 - 状态管理统一走 Pinia（用户态勿直接读写 localStorage/cookie，走 `store/modules/user` 与 utils 封装）；
 - 巨型文件红线 ≤400 行，新组件按 composables/子组件拆分（T2.5 约定）。
 
+### 4.1 上游 vue-pure-admin 不可覆盖清单
+
+本仓与上游 vue-pure-admin（7.0.0）同源分叉，以下目录/文件已深度分叉（含审批挂起、
+412 协议、路由取消、无感刷新等自研扩展），**禁止从上游整文件覆盖**，同步上游改动
+只能按 diff 逐段评估移植：
+
+| 路径                         | 原因                                                           |
+| ---------------------------- | -------------------------------------------------------------- |
+| `src/layout/**`              | 已模块化重构（lay-tag/lay-setting 等拆分），覆盖即回归         |
+| `src/store/**`（user 等）    | 用户态接的是真实后端 + 权限模型，非上游 mock 体系              |
+| `src/utils/http/**`          | 自研加厚：412 审批挂起/MFA、路由取消、无感刷新、脱敏错误处理   |
+| `src/router/utils.ts`        | 权限码（`hasAuth("动作:组件名")`）与菜单权限链路与上游体系不同 |
+| `src/views/system/**` 框架页 | 已元数据化回归 RePlusPage，上游无对应实现                      |
+
+上游**不可移植**的机制（本仓权限模型不同，无使用场景）：`RePerms` 组件与
+`v-perms` 指令（上游 `permissions:["*:*:*"]` 体系）、上游 mock 假数据。
+
+### 4.2 组件 / 工具移植规范（自上游）
+
+移植前先做替换性评估（上游实现是否已被本仓增强版覆盖，如 `ReCropperPreview`
+与 `RePictureUpload` 重复，评估后放弃移植）；移植时保持三步：
+
+1. 逐文件拷贝 + 最小适配（对齐本仓 lint：`no-explicit-any` 收敛为结构类型、
+   prop 形状对齐 element-plus/@pureadmin/table 类型，差异在文件头注释标注）；
+2. 至少 1 处真实业务接入（避免移植即闲置，如 ReTreeLine 接入菜单树）；
+3. `pnpm lint` + `pnpm typecheck` + 受影响页面 E2E 全绿后再合入。
+
+参考项目借鉴的整体决策与排期见 server 仓库
+`docs/adr/ADR-015-reference-project-adoption.md`。
+
 ## 5. PR 流程
 
 1. 从 `dev` 切出分支，提交前跑齐 §4 门禁；
