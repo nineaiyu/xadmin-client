@@ -94,22 +94,22 @@ export function useUserInfo() {
     });
   }
 
-  function handleResetPassword(data) {
-    api
-      .resetPassword({
-        old_password: AesEncrypted(currentUserInfo.username, data.old_password),
-        sure_password: AesEncrypted(
-          currentUserInfo.username,
-          data.sure_password
-        )
-      })
-      .then(async res => {
-        if (res.code === 1000) {
-          message(t("results.success"), { type: "success" });
-        } else {
-          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-        }
-      });
+  async function handleResetPassword(data) {
+    const old_password = await AesEncrypted(
+      currentUserInfo.username,
+      data.old_password
+    );
+    const sure_password = await AesEncrypted(
+      currentUserInfo.username,
+      data.sure_password
+    );
+    api.resetPassword({ old_password, sure_password }).then(async res => {
+      if (res.code === 1000) {
+        message(t("results.success"), { type: "success" });
+      } else {
+        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+      }
+    });
   }
 
   onMounted(() => {

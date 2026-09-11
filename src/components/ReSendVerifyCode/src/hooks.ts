@@ -173,10 +173,10 @@ export const useSendVerifyCode = (
       formDataRef.value,
       [formData.value.form_type, "captcha_code"],
       verifyCodeConfig.rate,
-      interval => {
+      async interval => {
         const data = formatSendData();
         if (verifyCodeConfig.encrypted) {
-          data["target"] = AesEncrypted(data["token"], data.target);
+          data["target"] = await AesEncrypted(data["token"], data.target);
         }
         handleOperation({
           t,

@@ -143,7 +143,7 @@ export interface formDialogDrawerOptions {
     formData: RecordType;
     formRef: Ref<DialogFormInstance | undefined>;
     formOptions: formDialogDrawerOptions;
-  }) => RecordType | undefined;
+  }) => RecordType | undefined | Promise<RecordType | undefined>;
   /** 点击保存回调 */
   saveCallback?: (args: callBackArgs) => void;
 }
@@ -283,14 +283,14 @@ export const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
           return;
         }
       }
-      const formData =
-        (formOptions?.beforeSubmit &&
-          formOptions?.beforeSubmit({
+      const submitted = formOptions?.beforeSubmit
+        ? await formOptions.beforeSubmit({
             formData: formInlineData,
             formRef: formRef,
             formOptions
-          })) ||
-        formInlineData;
+          })
+        : undefined;
+      const formData = submitted || formInlineData;
       formOptions?.saveCallback({
         formData,
         formRef: FormRef,

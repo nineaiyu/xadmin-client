@@ -95,7 +95,7 @@ const formatLoginDayList = () => {
   }
 };
 
-const onLogin = () => {
+const onLogin = async () => {
   loading.value = true;
   const data = {
     verify_token: formData.value.verify_token,
@@ -103,8 +103,11 @@ const onLogin = () => {
     verify_code: formData.value.verify_code
   };
   if (authInfo.value.encrypted) {
-    data["password"] = AesEncrypted(data["verify_token"], data["password"]);
-    data["target"] = AesEncrypted(data["verify_token"], data["target"]);
+    data["password"] = await AesEncrypted(
+      data["verify_token"],
+      data["password"]
+    );
+    data["target"] = await AesEncrypted(data["verify_token"], data["target"]);
   }
 
   handleOperation({

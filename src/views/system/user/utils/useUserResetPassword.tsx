@@ -105,22 +105,19 @@ export function useUserResetPassword({
       ),
       closeCallBack: () => (pwdForm.newPwd = ""),
       beforeSure: done => {
-        ruleFormRef.value.validate(valid => {
+        ruleFormRef.value.validate(async valid => {
           if (valid) {
-            api
-              .resetPassword(row.pk, {
-                password: AesEncrypted(row.username, pwdForm.newPwd)
-              })
-              .then(res => {
-                if (res.code === 1000) {
-                  message(t("results.success"), { type: "success" });
-                } else {
-                  message(`${t("results.failed")}，${res.detail}`, {
-                    type: "error"
-                  });
-                }
-                done(); // 关闭弹框
-              });
+            const password = await AesEncrypted(row.username, pwdForm.newPwd);
+            api.resetPassword(row.pk, { password }).then(res => {
+              if (res.code === 1000) {
+                message(t("results.success"), { type: "success" });
+              } else {
+                message(`${t("results.failed")}，${res.detail}`, {
+                  type: "error"
+                });
+              }
+              done(); // 关闭弹框
+            });
           }
         });
       }

@@ -35,7 +35,7 @@ const verifyCodeRef = ref();
 const handleSubmit = () => {
   verifyCodeRef.value.getRef().validate(isValid => {
     if (isValid) {
-      formDataRef.value.validate(valid => {
+      formDataRef.value.validate(async valid => {
         if (valid) {
           loading.value = true;
           const data = {
@@ -44,11 +44,14 @@ const handleSubmit = () => {
             verify_code: formData.value.verify_code
           };
           if (authInfo.value.encrypted) {
-            data["password"] = AesEncrypted(
+            data["password"] = await AesEncrypted(
               data["verify_token"],
               data["password"]
             );
-            data["target"] = AesEncrypted(data["verify_token"], data["target"]);
+            data["target"] = await AesEncrypted(
+              data["verify_token"],
+              data["target"]
+            );
           }
           handleOperation({
             t,

@@ -296,13 +296,13 @@ export function useAccountManage() {
         sure_password: ""
       },
       form: ChangePassword,
-      saveCallback: ({ formData, done, closeLoading }) => {
+      saveCallback: async ({ formData, done, closeLoading }) => {
         const rowData = {
-          old_password: AesEncrypted(
+          old_password: await AesEncrypted(
             userinfoStore.username,
             formData.old_password
           ),
-          sure_password: AesEncrypted(
+          sure_password: await AesEncrypted(
             userinfoStore.username,
             formData.sure_password
           )

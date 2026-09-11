@@ -136,11 +136,11 @@ export const useUserStore = defineStore("pure-user", {
     },
     /** 登入 */
     async loginByUsername(data, encrypted) {
+      if (encrypted) {
+        data["password"] = await AesEncrypted(data["token"], data["password"]);
+        data["username"] = await AesEncrypted(data["token"], data["username"]);
+      }
       return new Promise<LoginResult>((resolve, reject) => {
-        if (encrypted) {
-          data["password"] = AesEncrypted(data["token"], data["password"]);
-          data["username"] = AesEncrypted(data["token"], data["username"]);
-        }
         loginBasicApi(data)
           .then(res => {
             // mfa_required 时后端未签发 token（data 中无 access），不能写入

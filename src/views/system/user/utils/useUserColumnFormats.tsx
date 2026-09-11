@@ -156,9 +156,9 @@ export function useUserColumnFormats({
           return rules;
         }
       },
-      beforeSubmit: ({ formData, formOptions: { isAdd } }) => {
+      beforeSubmit: async ({ formData, formOptions: { isAdd } }) => {
         if (isAdd) {
-          formData["password"] = AesEncrypted(
+          formData["password"] = await AesEncrypted(
             formData.username,
             formData.password
           );
