@@ -2,3 +2,9 @@
 /public/*
 public/*
 src/style/reset.scss
+# 测试/覆盖率与 E2E 产物（本地跑完 test:coverage / playwright 后会生成 HTML，
+# 内含未加引号的 url() 等，会污染 stylelint 结果；CI 顺序恰好规避，这里显式忽略）
+/coverage/*
+/playwright-report/*
+/test-results/*
+/test-results-shard-*

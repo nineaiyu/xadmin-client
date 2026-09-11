@@ -16,6 +16,8 @@ tests/**/coverage/
 
 # Playwright
 test-results/
+# 并行分片产物（scripts/e2e-parallel.mjs 给每个 shard 独立的 --output 目录）
+test-results-shard-*/
 playwright-report/
 blob-report/
 

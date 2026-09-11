@@ -20,7 +20,9 @@ import { spawn, execSync } from "node:child_process";
 
 const total = Number(process.env.E2E_PARALLEL ?? "4");
 if (!Number.isInteger(total) || total < 1) {
-  console.error(`[e2e-parallel] E2E_PARALLEL 非法: ${process.env.E2E_PARALLEL}`);
+  console.error(
+    `[e2e-parallel] E2E_PARALLEL 非法: ${process.env.E2E_PARALLEL}`
+  );
   process.exit(2);
 }
 
@@ -59,6 +61,10 @@ const jobs = Array.from({ length: total }, (_, i) => {
     "playwright",
     "test",
     `--shard=${i + 1}/${total}`,
+    // 每个 shard 独立产物目录：共用 ./test-results 时各 shard 启动阶段会并发清理/写入
+    // 同一目录，互相踩到就整片退出（表现为随机 shard "启动即失败"，Node 安全删除 shim
+    // 下更是直接抛 FSMoveObjectToTrashSync 错误）
+    `--output=test-results-shard-${i}`,
     "--workers=1",
     ...extra
   ];
