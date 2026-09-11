@@ -67,6 +67,13 @@ function isAllowed(
 
 /** 扫描并返回阻断级违规摘要（豁免项已剔除） */
 async function scanBlockingViolations(page: import("@playwright/test").Page) {
+  // axe 采样必须在动画终态进行：el-tree 等组件入场 opacity transition 未结束时，
+  // 半透明文字与背景混色会拉低对比度，产生瞬态 color-contrast 假违规
+  // （首扫偶发、隔离重跑必过）。注入样式让所有动画立即跳到终态再扫描。
+  await page.addStyleTag({
+    content:
+      "*, *::before, *::after { transition: none !important; animation: none !important; }"
+  });
   const builder = new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]);
   const { violations } = await builder.analyze();
   return violations

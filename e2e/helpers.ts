@@ -72,8 +72,9 @@ export async function login(page: Page, creds: Credentials = ADMIN) {
   await accountInput.fill(creds.username);
   await page.getByPlaceholder("密码").fill(creds.password);
   await page.getByRole("button", { name: "登录", exact: true }).click();
-  // hash 路由：登录成功后离开 #/login
-  await expect(page).not.toHaveURL(/#\/login/, { timeout: 15_000 });
+  // hash 路由：登录成功后离开 #/login。上限给足 30s：并行分片（e2e-parallel）
+  // 高负载下登录 POST + 路由拉取可能超过 15s（auto-retry 断言的上界，非盲等）
+  await expect(page).not.toHaveURL(/#\/login/, { timeout: 30_000 });
 }
 
 export async function openMenu(page: Page, parent: string, child: string) {
