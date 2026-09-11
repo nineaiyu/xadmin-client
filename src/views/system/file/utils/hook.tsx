@@ -21,8 +21,9 @@ import {
   type RePlusPageProps
 } from "@/components/RePlusPage";
 import uploadForm from "../components/upload.vue";
+import { openPreviewDrawer } from "../components/previewDrawer";
 import { usePublicHooks } from "@/views/system/hooks";
-import { ElIcon, ElLink, ElText } from "element-plus";
+import { ElButton, ElIcon, ElLink, ElText } from "element-plus";
 import { Link } from "@element-plus/icons-vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Upload from "~icons/ep/upload";
@@ -50,7 +51,8 @@ export function useSystemUploadFile(tableRef: Ref) {
   const auth = reactive({
     ...getDefaultAuths(getCurrentInstance()),
     upload: hasAuth("upload:SystemUploadFile"),
-    config: hasAuth("config:SystemUploadFile")
+    config: hasAuth("config:SystemUploadFile"),
+    preview: hasAuth("preview:SystemUploadFile")
   });
 
   // 个人配额统计：顶部使用率卡片数据源（服务端 10s 短缓存）
@@ -93,6 +95,7 @@ export function useSystemUploadFile(tableRef: Ref) {
   };
 
   const operationButtonsProps = shallowRef<OperationProps>({});
+
   const tableBarButtonsProps = shallowRef<OperationProps>({
     buttons: [
       {
@@ -181,6 +184,28 @@ export function useSystemUploadFile(tableRef: Ref) {
             field: column.prop,
             actionMap: { true: t("labels.yes"), false: t("labels.no") }
           });
+          break;
+        case "preview_kind":
+          // 行内预览入口走 cellRenderer：操作列 slot 传入的 row 是空对象
+          // （框架现状），行级显隐只能在列渲染里取到真实行数据
+          column["cellRenderer"] = ({ row }) => {
+            if (!row?.preview_kind || !auth.preview) return h("span", "-");
+            return h(
+              ElButton,
+              {
+                link: true,
+                type: "primary",
+                onClick: () =>
+                  openPreviewDrawer({
+                    pk: row.pk,
+                    filename: row.filename,
+                    mime_type: row.mime_type,
+                    preview_kind: row.preview_kind
+                  })
+              },
+              () => t("systemUploadFile.preview")
+            );
+          };
           break;
         case "filesize":
           column["cellRenderer"] = ({ row }) =>

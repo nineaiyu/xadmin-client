@@ -1,3 +1,4 @@
+import type { AxiosResponse } from "axios";
 import { BaseApi } from "@/api/base";
 import { http } from "@/utils/http";
 import type { DetailResult } from "@/api/types";
@@ -38,6 +39,16 @@ class SystemUploadFileApi extends BaseApi {
       params,
       {},
       `${this.baseApi}/stats`
+    );
+  };
+  /**
+   * 在线预览（走鉴权，不暴露 /media/ 直链）：
+   * 图片/PDF 返回二进制，文本返回 `text/plain`（由调用方按 `preview_kind` 分流）。
+   */
+  preview = (pk: string | number, params?: object) => {
+    return http.download<AxiosResponse<Blob>>(
+      `${this.baseApi}/${pk}/preview`,
+      params
     );
   };
 }

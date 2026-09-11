@@ -8,20 +8,25 @@ import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useUserStoreHook } from "@/store/modules/user";
 import { useApprovalBadge } from "@/utils/approvalBadge";
+import { useTaskCenter } from "@/utils/taskCenter";
+import { openTaskCenterDrawer } from "@/views/system/components/taskCenterDrawer";
 
 const { t } = useI18n();
 
 /**
- * 顶栏铃铛角标 = 未读站内信 + 待我审批数。
+ * 顶栏铃铛角标 = 未读站内信 + 待我审批数 + 进行中的异步记录数（导出/导入/任务执行）。
  *
- * 审批计数走轻量接口（60s 轮询 + 服务端 10s 短缓存），无 pendingCount 权限码的
- * 用户不发起请求、计数恒为 0（见 utils/approvalBadge）。
+ * 两类计数都走轻量接口（60s 轮询 + 服务端 10s 短缓存），无对应权限码的用户
+ * 不发起请求、计数恒为 0（见 utils/approvalBadge 与 utils/taskCenter）。
+ * 失败记录不计入角标（会在近 30 天窗口内长期滞留，制造噪声），只在任务中心抽屉里展示。
  */
 const { pendingCount } = useApprovalBadge();
+const { runningCount } = useTaskCenter();
 const badgeCount = computed(
   () =>
     Number(useUserStoreHook().noticeCount || 0) +
-    Number(pendingCount.value || 0)
+    Number(pendingCount.value || 0) +
+    Number(runningCount.value || 0)
 );
 const notices = ref<TabItem[]>([
   {
@@ -57,6 +62,12 @@ const goUserNotice = () => {
     name: "UserNotice"
   });
   dropdownRef.value?.handleClose();
+};
+
+/** 打开任务中心聚合抽屉（审批待办 / 进行中任务 / 最近导出 / 最近导入） */
+const goTaskCenter = () => {
+  dropdownRef.value?.handleClose();
+  openTaskCenterDrawer();
 };
 
 const handleCommand = (flag: Boolean) => {
@@ -124,15 +135,21 @@ const getLabel = computed(
                 </el-scrollbar>
               </el-tab-pane>
             </template>
-            <el-divider />
-            <el-row style="height: 30px; text-align: center">
-              <el-col :span="24">
-                <el-link underline="never" @click="goUserNotice">{{
-                  t("layout.more")
-                }}</el-link>
-              </el-col>
-            </el-row>
           </span>
+          <!-- 底栏常驻：无未读站内信时也要能进任务中心 -->
+          <el-divider />
+          <el-row style="height: 30px; text-align: center">
+            <el-col :span="12">
+              <el-link underline="never" @click="goUserNotice">{{
+                t("layout.more")
+              }}</el-link>
+            </el-col>
+            <el-col :span="12">
+              <el-link underline="never" @click="goTaskCenter">{{
+                t("taskCenter.title")
+              }}</el-link>
+            </el-col>
+          </el-row>
         </el-tabs>
       </el-dropdown-menu>
     </template>

@@ -165,3 +165,67 @@ test("文件中心：重复上传同一文件复用磁盘副本", async ({ page 
   );
   expect((await afterResp.json()).data.count).toBe(baseCount + 2);
 });
+
+/** 16x16 PNG（Pillow 可解码）：用于验证真实缩略图生成链路 */
+const PNG_BASE64 =
+  "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAI0lEQVR4nGOUqzjBQApgIkk1w6gG4gATkergYFQDMYDkUAIAYMYBfhU7IIEAAAAASUVORK5CYII=";
+
+async function uploadViaApi(
+  page: import("@playwright/test").Page,
+  name: string,
+  mime: string,
+  buffer: Buffer
+) {
+  const resp = await page.request.post(`${FRONT_URL}/api/system/file/upload`, {
+    multipart: { file: { name, mimeType: mime, buffer } }
+  });
+  expect((await resp.json()).code).toBe(1000);
+  return name;
+}
+
+test("文件中心：图片在线预览（行内按钮 → 抽屉大图）", async ({ page }) => {
+  await login(page);
+  await openMenuPath(page, ["系统管理"], "/system/file/index");
+  await expect(page.locator(".el-table").first()).toBeVisible({
+    timeout: 15_000
+  });
+
+  const filename = `e2e-preview-${Date.now()}.png`;
+  await uploadViaApi(
+    page,
+    filename,
+    "image/png",
+    Buffer.from(PNG_BASE64, "base64")
+  );
+
+  await page.reload();
+  const row = page.locator(".el-table__row", { hasText: filename }).first();
+  await expect(row).toBeVisible({ timeout: 30_000 });
+
+  await row.getByRole("button", { name: "预览" }).click();
+  const drawer = page.locator(".el-drawer:visible").first();
+  await expect(drawer).toBeVisible({ timeout: 15_000 });
+  // 抽屉内图片加载成功（object URL 由鉴权接口取回的 blob 生成）
+  await expect(drawer.locator(".preview-image img").first()).toBeVisible({
+    timeout: 30_000
+  });
+});
+
+test("文件中心：不支持预览的类型不显示预览按钮", async ({ page }) => {
+  await login(page);
+  const filename = `e2e-nopreview-${Date.now()}.zip`;
+  await uploadViaApi(
+    page,
+    filename,
+    "application/zip",
+    Buffer.from("PK\x03\x04zip")
+  );
+
+  await openMenuPath(page, ["系统管理"], "/system/file/index");
+  await expect(page.locator(".el-table").first()).toBeVisible({
+    timeout: 15_000
+  });
+  const row = page.locator(".el-table__row", { hasText: filename }).first();
+  await expect(row).toBeVisible({ timeout: 30_000 });
+  await expect(row.getByRole("button", { name: "预览" })).toHaveCount(0);
+});

@@ -213,6 +213,36 @@ messageNotifications:
   editRecipient: Edit recipient
   editRecipientTitle: Edit { title } recipient
 
+taskCenter:
+  title: Task center
+  pendingApproval: Pending approvals
+  runningTasks: Running tasks
+  recentExports: Recent exports
+  recentImports: Recent imports
+  viewAll: View all
+  download: Download
+  log: Log
+  handle: Handle
+  logTitle: execution log
+  empty: No async task records
+  noData: No records
+
+oauth:
+  title: Third-party login
+  tabTitle: Third-party accounts
+  noBindings: No third-party account bound
+  unbind: Unbind
+  unbindPasswordTip: Enter your password to confirm unbinding
+  unbindSuccess: Unbound
+  password: Password
+  invalidCallback: Incomplete callback parameters, please login again
+  loginFailed: Third-party login failed
+  mfaRequired: This account requires a second factor, please login with password and bind it
+
+plus:
+  detailBlankTitle: Detail data is empty
+  detailBlankTip: If field permission is enabled, configure the field whitelist for this menu (fields without whitelist entries are trimmed to empty)
+
 results:
   success: Executed successfully
   failed: Execution failure
@@ -777,6 +807,10 @@ systemUploadFile:
   dropFile: Drop file here or
   uploadTip: Files with a size less than
   quotaTip: Re-uploading the same file reuses the stored copy, while the quota still counts each record in full
+  preview: Preview
+  previewUnsupported: This file type does not support online preview, please download it
+  previewFailed: Failed to load preview, please retry later or download the file
+  previewTruncated: Content too large and truncated, download for the full content
 
 status:
   hsLoad: Loading...
@@ -787,6 +821,7 @@ chat:
   send: Send
 
 login:
+  thirdPartyLogin: Third-party login
   serverForbidden: Login is not allowed on this server
   serverRegisterForbidden: Registration is not allowed on this server
   username: Username

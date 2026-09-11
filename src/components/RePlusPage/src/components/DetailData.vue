@@ -7,6 +7,7 @@ import {
   PlusForm
 } from "plus-pro-components";
 import { deviceDetection } from "@pureadmin/utils";
+import { useI18n } from "vue-i18n";
 import type { ExposedFormInstance } from "../utils/types";
 
 defineOptions({ name: "DetailData" });
@@ -25,11 +26,24 @@ const props = withDefaults(defineProps<DetailFormProps>(), {
   columns: () => []
 });
 
+const { t } = useI18n();
 const formRef = ref();
 const activeName = ref(0);
 const newFormInline = ref<FieldValues>(props.formInline);
 const column = computed(() => (deviceDetection() ? 1 : 2));
 const formRefs = ref<Record<number, InstanceType<typeof PlusForm>>>({});
+
+/**
+ * 详情数据是否「整行皆空」：字段权限启用且未给当前菜单配白名单时，
+ * 序列化器会把字段裁空（未配置 = 裁空，运行时不可见），用户看到的是一块空白。
+ * 这里给出可读解释，避免误判为数据丢失（白名单是部署前提，见 docs/architecture/field-permission.md）。
+ */
+const isBlankDetail = computed(() => {
+  const values = Object.values(newFormInline.value ?? {});
+  return (
+    values.length > 0 && values.every(value => value === null || value === "")
+  );
+});
 
 const isTabs = computed(() => {
   return (
@@ -90,6 +104,14 @@ defineExpose({ getRef, setActiveName });
 
 <template>
   <div>
+    <el-alert
+      v-if="isBlankDetail"
+      class="mb-3"
+      :closable="false"
+      :title="t('plus.detailBlankTitle')"
+      :description="t('plus.detailBlankTip')"
+      type="warning"
+    />
     <el-tabs v-if="isTabs" v-model="activeName" v-bind="tabsProps">
       <el-tab-pane
         v-for="tabs in tabsColumns"

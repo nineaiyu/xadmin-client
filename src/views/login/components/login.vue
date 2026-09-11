@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import OAuthEntry from "./oauthEntry.vue";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import Motion from "../utils/motion";
@@ -317,6 +318,9 @@ function onBack() {
       </el-form>
       <Motion v-else :delay="300">
         <el-result icon="error" :title="t('login.serverForbidden')" />
+      </Motion>
+      <Motion :delay="350">
+        <OAuthEntry />
       </Motion>
       <Motion :delay="400">
         <el-form-item>

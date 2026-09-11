@@ -63,4 +63,13 @@ export const crontabScheduleApi = new BaseApi("/api/system/tasks/crontab");
 export const intervalScheduleApi = new BaseApi("/api/system/tasks/interval");
 
 /** 任务执行历史（日志经 WebSocket 增量推送，见 TaskLogDialog.vue） */
-export const taskExecutionApi = new BaseApi("/api/system/tasks/executions");
+class TaskExecutionApi extends BaseApi {
+  /** 近 N 天统计（总数 / 进行中 / 失败 / 最近一次），服务端 10s 短缓存 */
+  stats = () => {
+    return this.request<DetailResult>("get", {}, {}, `${this.baseApi}/stats`);
+  };
+}
+
+export const taskExecutionApi = new TaskExecutionApi(
+  "/api/system/tasks/executions"
+);

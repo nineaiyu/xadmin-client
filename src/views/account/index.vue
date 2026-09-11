@@ -18,8 +18,10 @@ import SecurityLogIcon from "~icons/ri/window-line";
 import MessageIcon from "~icons/ep/message";
 import AccountManagementIcon from "~icons/ri/profile-line";
 import ShieldKeyholeIcon from "~icons/ri/shield-keyhole-line";
+import LinksIcon from "~icons/ri/links-line";
 import KeyIcon from "~icons/ri/key-2-line";
 import MfaSecurity from "./components/MfaSecurity.vue";
+import OAuthBindings from "./components/OAuthBindings.vue";
 import AccessToken from "./components/AccessToken.vue";
 import { useUserStoreHook } from "@/store/modules/user";
 import { useI18n } from "vue-i18n";
@@ -58,6 +60,14 @@ const panes = computed(() => [
     label: t("mfa.tabTitle"),
     icon: ShieldKeyholeIcon,
     component: MfaSecurity,
+    auth: true
+  },
+  {
+    key: "oauthBindings",
+    label: t("oauth.tabTitle"),
+    icon: LinksIcon,
+    component: OAuthBindings,
+    // 未配置 provider 时接口返回空列表，页签仍可见（便于查看已有绑定）
     auth: true
   },
   {

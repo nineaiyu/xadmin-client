@@ -213,6 +213,36 @@ messageNotifications:
   editRecipient: 修改消息接收人
   editRecipientTitle: 修改 { title } 的消息接收人
 
+taskCenter:
+  title: 任务中心
+  pendingApproval: 审批待办
+  runningTasks: 进行中任务
+  recentExports: 最近导出
+  recentImports: 最近导入
+  viewAll: 查看全部
+  download: 下载
+  log: 日志
+  handle: 去处理
+  logTitle: 执行日志
+  empty: 暂无异步任务记录
+  noData: 暂无记录
+
+oauth:
+  title: 第三方登录
+  tabTitle: 第三方账号
+  noBindings: 暂无第三方账号绑定
+  unbind: 解绑
+  unbindPasswordTip: 请输入登录密码以确认解绑
+  unbindSuccess: 已解绑
+  password: 登录密码
+  invalidCallback: 回调参数不完整，请重新发起登录
+  loginFailed: 第三方登录失败
+  mfaRequired: 该账号需完成二次验证，请改用账号密码登录后绑定
+
+plus:
+  detailBlankTitle: 详情数据为空
+  detailBlankTip: 若已开启字段权限，请为当前菜单配置字段白名单（未配置白名单的模型字段会被裁剪为空）
+
 results:
   success: 执行成功
   failed: 执行失败
@@ -777,6 +807,10 @@ systemUploadFile:
   dropFile: 拖拽文件到这里或
   uploadTip: 上传文件大小需要小于
   quotaTip: 同一文件重复上传会复用磁盘副本，配额仍按记录全量计入
+  preview: 预览
+  previewUnsupported: 该文件类型不支持在线预览，请下载后查看
+  previewFailed: 预览加载失败，请稍后重试或下载查看
+  previewTruncated: 内容过大已截断显示，完整内容请下载查看
 
 status:
   hsLoad: 加载中...
@@ -787,6 +821,7 @@ chat:
   send: 发送
 
 login:
+  thirdPartyLogin: 第三方登录
   serverForbidden: 当前服务器不允许登录
   serverRegisterForbidden: 当前服务器不允许注册
   username: 账号

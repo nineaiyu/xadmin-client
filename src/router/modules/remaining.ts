@@ -41,6 +41,16 @@ const remainingRoutes: Array<RouteConfigsTable> = [
     }
   },
   {
+    path: "/oauth/callback",
+    name: "OAuthCallback",
+    component: () => import("@/views/oauth/callback.vue"),
+    meta: {
+      title: $t("oauth.title"),
+      showLink: false,
+      rank: 10104
+    }
+  },
+  {
     path: "/account-settings",
     name: "AccountSettings",
     component: () => import("@/views/account/index.vue"),
