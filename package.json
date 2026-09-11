@@ -28,6 +28,7 @@
     "test:e2e:smoke": "E2E_API_PORT=18896 E2E_SMOKE=1 playwright test",
     "test:e2e:fresh": "lsof -ti :18896 | xargs kill 2>/dev/null; lsof -ti :8848 | xargs kill 2>/dev/null; E2E_API_PORT=18896 playwright test",
     "test:e2e:smoke:fresh": "lsof -ti :18896 | xargs kill 2>/dev/null; lsof -ti :8848 | xargs kill 2>/dev/null; E2E_API_PORT=18896 E2E_SMOKE=1 playwright test",
+    "test:e2e:parallel": "node scripts/e2e-parallel.mjs",
     "prepare": "husky",
     "preinstall": "npx only-allow pnpm"
   },
