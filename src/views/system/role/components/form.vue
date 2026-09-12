@@ -17,6 +17,11 @@ import { MenuChoices } from "@/views/system/constants";
 import { getKeyList, isAllEmpty } from "@pureadmin/utils";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { Auths } from "@/router/utils";
+import {
+  isSyntheticKey,
+  menuFieldKey,
+  parseMenuFieldKey
+} from "../utils/treeKeys";
 import type { BaseApi } from "@/api/base";
 import type { TreeInstance, TreeNodeData, TreeKey } from "element-plus";
 
@@ -88,22 +93,19 @@ const filterMenuNode = (value: string, data: TreeNodeData) => {
 };
 
 const formatMenuFields = () => {
-  const menu = treeRoleRef.value!.getCheckedKeys(false);
-  formData.value.menu = menu.filter(x => {
-    return x.indexOf("+") === -1;
-  });
-  menu.filter(x => {
-    return x.toString().indexOf("+") > -1;
-  });
-  const fields = {};
-  menu.forEach(item => {
-    if (item.indexOf("+") > -1 && !item.startsWith("+")) {
-      let data = item.split("+");
-      let val = fields[data[0]];
-      if (!val) {
-        fields[data[0]] = [data[1]];
+  const checked = treeRoleRef.value!.getCheckedKeys(false).map(String);
+  // 无合成段 = 菜单授权；字段叶子键（menuPk+fieldPk）按菜单分组合并进 fields；
+  // 分组键（+fieldPk）仅作展示，不计入授权。键约定见 ../utils/treeKeys.ts
+  formData.value.menu = checked.filter(key => !isSyntheticKey(key));
+  const fields: Record<string, Array<string | number>> = {};
+  checked.forEach(key => {
+    const parsed = parseMenuFieldKey(key);
+    if (parsed) {
+      const [menuPk, fieldPk] = parsed;
+      if (fields[menuPk]) {
+        fields[menuPk].push(fieldPk);
       } else {
-        fields[data[0]].push(data[1]);
+        fields[menuPk] = [fieldPk];
       }
     }
   });
@@ -129,7 +131,7 @@ const getCheckedMenu = pk => {
         formData.value.menu = getKeyList(data?.menu ?? [], "pk");
         Object.keys(data?.field).forEach(key => {
           data?.field[key].forEach(val => {
-            formData.value.field.push(`${key}+${val}`);
+            formData.value.field.push(menuFieldKey(key, String(val)));
           });
         });
         initData();
@@ -164,7 +166,7 @@ function toggleRowExpansionAll(status) {
     if (
       status &&
       (nodes[i].data?.model?.length > 0 ||
-        nodes[i].data?.pk?.toString().indexOf("+") > -1)
+        isSyntheticKey(nodes[i].data?.pk?.toString() ?? ""))
     ) {
       continue;
     }

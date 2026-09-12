@@ -6,14 +6,8 @@ defineOptions({
   name: "SystemRole"
 });
 
-const {
-  api,
-  auth,
-  addOrEditOptions,
-  listColumnsFormat,
-  operationButtonsProps,
-  previewRef
-} = useRole();
+const { api, auth, addOrEditOptions, operationButtonsProps, previewRef } =
+  useRole();
 </script>
 
 <template>
@@ -24,7 +18,6 @@ const {
       :auth="auth"
       locale-name="systemRole"
       :addOrEditOptions="addOrEditOptions"
-      :listColumnsFormat="listColumnsFormat"
       :operationButtonsProps="operationButtonsProps"
       recycleBin
     />

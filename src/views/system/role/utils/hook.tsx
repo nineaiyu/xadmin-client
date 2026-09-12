@@ -19,13 +19,10 @@ import { FieldChoices } from "@/views/system/constants";
 import { cloneDeep, getKeyList } from "@pureadmin/utils";
 import { modelLabelFieldApi } from "@/api/system/field";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import { fieldGroupKey, menuFieldKey } from "./treeKeys";
 import View from "~icons/ep/view";
 import type { RecordType } from "plus-pro-components";
-import type {
-  PageTableColumn,
-  OperationProps,
-  RePlusPageProps
-} from "@/components/RePlusPage";
+import type { OperationProps, RePlusPageProps } from "@/components/RePlusPage";
 
 export function useRole() {
   const { t } = useI18n();
@@ -38,7 +35,8 @@ export function useRole() {
 
   const previewRef = ref<{ open: (row: RecordType) => void } | null>(null);
 
-  const menuTreeData = ref([]);
+  // 授权树节点（菜单树 + 注入的模型字段合成节点，键约定见 ./treeKeys.ts）
+  const menuTreeData = ref<Array<Record<string, unknown>>>([]);
   const fieldLookupsData = ref({});
 
   function autoFieldTree(arr) {
@@ -48,9 +46,9 @@ export function useRole() {
           item.children = [];
           item.model.forEach(m => {
             const data = cloneDeep(fieldLookupsData.value[m?.pk ?? m]);
-            data.pk = `+${data.pk}`;
+            data.pk = fieldGroupKey(data.pk);
             data.children.forEach(x => {
-              x.pk = `${item.pk}+${x.pk}`;
+              x.pk = menuFieldKey(item.pk, x.pk);
               x.parent = data.pk;
             });
             item.children.push(data);
@@ -145,10 +143,6 @@ export function useRole() {
     }
   });
 
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    return columns;
-  };
-
   const operationButtonsProps = shallowRef<OperationProps>({
     width: 160,
     buttons: [
@@ -172,7 +166,6 @@ export function useRole() {
     api,
     auth,
     addOrEditOptions,
-    listColumnsFormat,
     operationButtonsProps,
     previewRef
   };
