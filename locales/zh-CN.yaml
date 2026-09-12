@@ -429,6 +429,27 @@ systemApprovalFlow:
   conditionValue: 条件值
   timeoutHours: 超时（小时）
   addNode: 添加节点
+  moveUp: 上移
+  moveDown: 下移
+  versionsTitle: 版本历史
+  versionsTip: 每次保存节点/表单定义都会留版本快照；回滚把历史快照写回当前定义（有在途申请时不可回滚）
+  versionNo: 版本
+  versionRemark: 说明
+  versionCurrent: 当前
+  rollbackTitle: 回滚
+  rollbackConfirm: 确认回滚到 v{n}？当前定义将被覆盖并生成新版本
+  rollbackRemark: 回滚说明（可留空）
+  rollbackSuccess: 回滚成功
+  approveTypeRATIO: 比例会签
+  approveRatio: 通过比例 %
+  modeList: 列表编辑
+  modeCanvas: 画布视图
+  routes: 分支
+  routesTitle: 出口路由（条件分支）
+  routesTip: 按顺序逐条求值，首个命中的条件决定该节点通过后跳转的目标节点；全部未命中则走线性下一节点
+  routeTarget: 跳转节点
+  addRoute: 添加分支
+  routeAlways: 恒命中
   nameAndCodeRequired: 请填写流程名称与编码
   nodeRequired: 至少配置一个审批节点
   nodeNameRequired: 存在未命名的节点

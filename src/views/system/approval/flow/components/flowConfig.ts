@@ -3,13 +3,21 @@
  * （拆分自 FlowConfigDrawer.vue，行为不变；便于单测）。
  */
 
+/** 出口路由（排他网关，ADR-016 §1）：condition 命中即跳转 target 节点 order */
+export type RouteItem = {
+  condition?: { field?: string; op?: string; value?: unknown } | null;
+  target: number;
+};
 export type ApiNode = {
   name: string;
   order: number;
   approve_type?: string;
+  approve_ratio?: number;
   assignee_type?: string;
   assignee_value?: string;
   condition?: { field?: string; op?: string; value?: unknown } | null;
+  routes?: RouteItem[];
+  layout?: { x?: number; y?: number };
   timeout_hours?: number;
 };
 export type FlowRow = {
@@ -29,11 +37,14 @@ export type FlowRow = {
 export type NodeRow = {
   name: string;
   approve_type: string;
+  approve_ratio: number;
   assignee_type: string;
   assignee_value: string;
   condition_field: string;
   condition_op: string;
   condition_value: string;
+  routes: RouteItem[];
+  layout: { x?: number; y?: number };
   timeout_hours: number;
 };
 export type FieldRow = {
@@ -104,11 +115,14 @@ export function createEmptyNode(): NodeRow {
   return {
     name: "",
     approve_type: "OR",
+    approve_ratio: 100,
     assignee_type: "role",
     assignee_value: "",
     condition_field: "",
     condition_op: "eq",
     condition_value: "",
+    routes: [],
+    layout: {},
     timeout_hours: 0
   };
 }
@@ -127,6 +141,14 @@ export function validateFlowConfig(
   const emptyNode = nodes.find(node => !node.name.trim());
   if (emptyNode) {
     return "systemApprovalFlow.nodeNameRequired";
+  }
+  const badRatio = nodes.find(
+    node =>
+      node.approve_type === "RATIO" &&
+      !(node.approve_ratio >= 1 && node.approve_ratio <= 100)
+  );
+  if (badRatio) {
+    return "systemApprovalFlow.ratioRangeRequired";
   }
   return null;
 }
@@ -160,6 +182,7 @@ export function buildFlowPayload(
       name: node.name.trim(),
       order: index + 1,
       approve_type: node.approve_type,
+      approve_ratio: Number(node.approve_ratio) || 100,
       assignee_type: node.assignee_type,
       assignee_value: node.assignee_value.trim(),
       condition: node.condition_field.trim()
@@ -169,6 +192,25 @@ export function buildFlowPayload(
             value: parseConditionValue(node.condition_op, node.condition_value)
           }
         : {},
+      // 出口路由（ADR-016 §1）：条件值按 op 规范化后提交；layout 为画布坐标
+      routes: (node.routes || []).map(route => ({
+        condition: route.condition?.field?.trim()
+          ? {
+              field: route.condition.field.trim(),
+              op: route.condition.op || "eq",
+              value: parseConditionValue(
+                route.condition.op || "eq",
+                String(route.condition.value ?? "")
+              )
+            }
+          : (route.condition ?? {}),
+        target: Number(route.target)
+      })),
+      layout:
+        node.layout &&
+        (node.layout.x !== undefined || node.layout.y !== undefined)
+          ? node.layout
+          : {},
       timeout_hours: Number(node.timeout_hours) || 0
     }))
   };

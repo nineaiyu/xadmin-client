@@ -2,8 +2,34 @@ import { BaseApi } from "@/api/base";
 import type { BaseResult, DataListResult, DetailResult } from "@/api/types";
 
 /** 流程定义（ADR-012：列表式节点编辑；节点随定义整体提交） */
+export type FlowVersionRow = {
+  version: number;
+  remark: string;
+  created_time: string;
+};
+
 class ApprovalFlowApi extends BaseApi {
   // 标准 CRUD 由 BaseApi 提供（list/create/retrieve/partialUpdate/destroy）
+
+  /** 流程定义版本列表（ADR-016 §2 快照审计） */
+  versions = (pk: string, params?: object) => {
+    return this.request<BaseResult & { data: FlowVersionRow[] }>(
+      "get",
+      params ?? {},
+      {},
+      `${this.baseApi}/${pk}/versions`
+    );
+  };
+
+  /** 回滚到历史版本：快照写回活定义并落新版本 */
+  rollback = (pk: string, version: number, remark?: string) => {
+    return this.request<BaseResult>(
+      "post",
+      { version, remark },
+      {},
+      `${this.baseApi}/${pk}/rollback`
+    );
+  };
 }
 
 export const approvalFlowApi = new ApprovalFlowApi(

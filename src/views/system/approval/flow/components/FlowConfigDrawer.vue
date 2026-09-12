@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElRadioButton, ElRadioGroup } from "element-plus";
 import { approvalFlowApi } from "@/api/system/approvalFlow";
 import {
   buildFlowPayload,
@@ -15,6 +15,7 @@ import {
 } from "./flowConfig";
 import FlowFieldsEditor from "./FlowFieldsEditor.vue";
 import FlowNodesEditor from "./FlowNodesEditor.vue";
+import FlowCanvas from "./FlowCanvas.vue";
 
 /**
  * 流程定义配置抽屉（ADR-012 一期：列表式节点编辑，不做拖拽画布）。
@@ -38,6 +39,9 @@ const saving = ref(false);
 const basic = reactive({ name: "", code: "", is_active: true });
 const nodes = ref<NodeRow[]>([]);
 const fields = ref<FieldRow[]>([]);
+const canvasRef = ref<{ syncLayout: () => void } | null>(null);
+// 节点编辑模式：列表（顺序编辑） / 画布（分支可视化 + 布局拖拽），二者共享同一 nodes
+const editMode = ref<"list" | "canvas">("list");
 
 function initFromFlow() {
   const flow = props.flow;
@@ -57,17 +61,29 @@ function initFromFlow() {
     .map(node => ({
       name: node.name ?? "",
       approve_type: pickValue(node.approve_type, "OR"),
+      approve_ratio: node.approve_ratio ?? 100,
       assignee_type: pickValue(node.assignee_type, "role"),
       assignee_value: node.assignee_value ?? "",
       condition_field: node.condition?.field ?? "",
       condition_op: node.condition?.op ?? "eq",
       condition_value: formatConditionValue(node.condition?.value),
+      routes: (node.routes ?? []).map(route => ({
+        condition: {
+          field: route.condition?.field ?? "",
+          op: route.condition?.op ?? "eq",
+          value: route.condition?.value ?? ""
+        },
+        target: Number(route.target)
+      })),
+      layout: { ...(node.layout ?? {}) },
       timeout_hours: node.timeout_hours ?? 0
     }));
   if (!nodes.value.length) nodes.value.push(createEmptyNode());
 }
 
 async function save() {
+  // 画布模式下先回写拖拽后的节点坐标，再走统一校验与载荷装配
+  canvasRef.value?.syncLayout();
   const errorKey = validateFlowConfig(basic, nodes.value);
   if (errorKey) {
     ElMessage.error(t(errorKey));
@@ -121,13 +137,24 @@ onMounted(initFromFlow);
     <el-divider content-position="left">
       {{ t("systemApprovalFlow.nodesTitle") }}
     </el-divider>
-    <el-alert
-      :closable="false"
-      type="info"
-      :title="t('systemApprovalFlow.nodesTip')"
-      class="mb-2"
-    />
-    <FlowNodesEditor :nodes="nodes" />
+    <div class="mb-2 flex-bc">
+      <el-alert
+        :closable="false"
+        type="info"
+        :title="t('systemApprovalFlow.nodesTip')"
+        class="flex-1"
+      />
+      <el-radio-group v-model="editMode" size="small" class="ml-3">
+        <el-radio-button value="list">{{
+          t("systemApprovalFlow.modeList")
+        }}</el-radio-button>
+        <el-radio-button value="canvas">{{
+          t("systemApprovalFlow.modeCanvas")
+        }}</el-radio-button>
+      </el-radio-group>
+    </div>
+    <FlowCanvas v-show="editMode === 'canvas'" ref="canvasRef" :nodes="nodes" />
+    <FlowNodesEditor v-show="editMode === 'list'" :nodes="nodes" />
 
     <div class="flex justify-end mt-4">
       <el-button @click="props.onClose?.()">{{

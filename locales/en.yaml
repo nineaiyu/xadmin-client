@@ -429,6 +429,27 @@ systemApprovalFlow:
   conditionValue: Condition Value
   timeoutHours: Timeout (hours)
   addNode: Add Node
+  moveUp: Move up
+  moveDown: Move down
+  versionsTitle: Version history
+  versionsTip: Each save of node/form definitions creates a version snapshot; rollback writes the historical snapshot back to the current definition (blocked while applications are pending)
+  versionNo: Version
+  versionRemark: Remark
+  versionCurrent: Current
+  rollbackTitle: Rollback
+  rollbackConfirm: Roll back to v{n}? The current definition will be overwritten and a new version created
+  rollbackRemark: Rollback remark (optional)
+  rollbackSuccess: Rollback succeeded
+  approveTypeRATIO: Ratio
+  approveRatio: Approve ratio %
+  modeList: List
+  modeCanvas: Canvas
+  routes: Branches
+  routesTitle: Outbound routes (conditional branches)
+  routesTip: Evaluated in order; the first matching condition decides the next node after this one passes. Falls back to the linear next node when none matches
+  routeTarget: Target node
+  addRoute: Add branch
+  routeAlways: Always
   nameAndCodeRequired: Flow name and code are required
   nodeRequired: At least one approval node is required
   nodeNameRequired: Some node has no name

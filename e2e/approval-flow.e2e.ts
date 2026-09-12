@@ -290,4 +290,16 @@ test("流程定义：列表可见 + 编辑配置抽屉展示节点", async ({ pa
   await expect(
     drawer.locator(".el-table__row").last().locator("input").first()
   ).toHaveValue("E2E节点A");
+
+  // 二期画布（ADR-016 §4）：切换到画布视图，节点卡渲染（含节点名与序号）
+  await drawer
+    .locator(".el-radio-button", { hasText: "画布视图" })
+    .first()
+    .click();
+  await expect(drawer.locator(".vue-flow__node").first()).toBeVisible({
+    timeout: 10_000
+  });
+  await expect(drawer.locator(".vue-flow__node").first()).toContainText(
+    "E2E节点A"
+  );
 });

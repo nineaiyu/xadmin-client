@@ -10,8 +10,10 @@ import { approvalFlowApi } from "@/api/system/approvalFlow";
 import type { OperationProps } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import FlowConfigDrawer from "../components/FlowConfigDrawer.vue";
+import FlowVersions from "../components/FlowVersions.vue";
 import Edit from "~icons/ep/edit-pen";
 import Plus from "~icons/ep/plus";
+import Clock from "~icons/ep/clock";
 
 type FlowRow = {
   pk: string;
@@ -77,8 +79,29 @@ export function useFlow(tableRef: Ref) {
     ]
   });
 
+  /** 版本历史抽屉：快照列表 + 回滚动作（ADR-016 §2） */
+  const openVersions = (row: FlowRow) => {
+    const options: DrawerOptions = {
+      title: `${t("systemApprovalFlow.versionsTitle")} - ${row.name}`,
+      size: "40%",
+      destroyOnClose: true,
+      closeOnClickModal: false,
+      hideFooter: true,
+      props: {},
+      contentRenderer: () =>
+        h(FlowVersions, {
+          flowPk: row.pk,
+          onRollback: () => {
+            closeDrawer(options, 0);
+            tableRef.value?.handleGetData();
+          }
+        })
+    };
+    addDrawer(options);
+  };
+
   const operationButtonsProps = shallowRef<OperationProps>({
-    showNumber: 3,
+    showNumber: 4,
     buttons: [
       {
         text: t("systemApprovalFlow.editTitle"),
@@ -90,6 +113,17 @@ export function useFlow(tableRef: Ref) {
         },
         onClick: ({ row }) => openConfig(row),
         show: canUpdate && 50
+      },
+      {
+        text: t("systemApprovalFlow.versionsTitle"),
+        code: "versions",
+        props: {
+          type: "info",
+          icon: useRenderIcon(Clock),
+          link: true
+        },
+        onClick: ({ row }) => openVersions(row as FlowRow),
+        show: canUpdate && 40
       }
     ]
   });

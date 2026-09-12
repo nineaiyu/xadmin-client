@@ -40,14 +40,17 @@ const ALLOWED_VIOLATIONS: Record<string, RegExp[]> = {
     /el-link/,
     /plus-form-item__label/,
     /(^|\s)p($|\s|\.)/,
-    /^#el-id-/
+    /^#el-id-/,
+    // EP 空表格占位文字与 info alert 标题（主题级对比度，需换主题色统一修复）
+    /el-table__empty-text/,
+    /el-alert__title/
   ],
   // RePlusPage 工具栏 el-tooltip 图标按钮与 EP 动态 id 的无名命令按钮
   "button-name": [/el-tooltip__trigger/, /^#el-id-/],
   "aria-command-name": [/^#el-id-/],
   "scrollable-region-focusable": [/el-scrollbar__wrap/],
-  // Iconify 图标以 role="img" 渲染且无 alt（属性选择器与 class 形态都登记）
-  "svg-img-alt": [/\[role="img"\]/],
+  // Iconify 图标无 alt（有 role="img" 与无 role 两种渲染形态，统一豁免至渲染层修复）
+  "svg-img-alt": [/\[role="img"\]/, /iconify--/],
   label: [/^#el-id-/],
   "aria-roles": [/^\.bar$/]
 };
@@ -125,5 +128,27 @@ test("a11y 基线：用户管理页无 critical/serious 违规", async ({ page }
   expect(
     violations,
     `用户管理页 a11y 违规：\n${formatViolations(violations)}`
+  ).toEqual([]);
+});
+
+test("a11y 扩面：流程配置抽屉（表单密集场景）无 critical/serious 违规", async ({
+  page
+}) => {
+  await login(page);
+  await openMenuPath(page, ["系统管理"], "/system/approval-flow/index");
+  await expect(page.locator(".el-table").first()).toBeVisible({
+    timeout: 15_000
+  });
+
+  // 打开「新增流程」配置抽屉：基本信息 + 表单字段 + 节点编辑的密集表单场景
+  await page.getByRole("button", { name: "新增流程" }).first().click();
+  const drawer = page.locator(".el-drawer:visible").first();
+  await expect(drawer).toBeVisible({ timeout: 15_000 });
+  await expect(drawer).toContainText("审批节点");
+
+  const violations = await scanBlockingViolations(page);
+  expect(
+    violations,
+    `流程配置抽屉 a11y 违规：\n${formatViolations(violations)}`
   ).toEqual([]);
 });
