@@ -1,4 +1,5 @@
-import { onMounted, onUnmounted, ref } from "vue";
+import { ref } from "vue";
+import { useIntervalFn } from "@vueuse/core";
 import { hasAuth } from "@/router/utils";
 import { approvalApi } from "@/api/system/approval";
 
@@ -39,19 +40,15 @@ export function refreshApprovalBadge() {
 }
 
 /**
- * 订阅待我审批计数：挂载时拉取一次并开启轮询，卸载时清理定时器。
+ * 订阅待我审批计数：挂载即拉取一次并开启轮询，卸载自动停止
+ * （轮询生命周期由 `useIntervalFn` 随组件 scope 清理）。
  *
  * 顶栏铃铛（layout/lay-notice）与审批中心页签角标都用它；审批动作成功后调用
  * `refreshApprovalBadge()` 即时更新。
  */
 export function useApprovalBadge() {
-  let timer: ReturnType<typeof setInterval> | null = null;
-  onMounted(() => {
-    refreshApprovalBadge();
-    timer = setInterval(refreshApprovalBadge, POLL_INTERVAL);
-  });
-  onUnmounted(() => {
-    if (timer) clearInterval(timer);
+  useIntervalFn(refreshApprovalBadge, POLL_INTERVAL, {
+    immediateCallback: true
   });
 
   return { pendingCount, load: refreshApprovalBadge };

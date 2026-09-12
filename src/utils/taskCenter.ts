@@ -1,9 +1,10 @@
-import { computed, onMounted, onUnmounted, type Ref, ref } from "vue";
+import { computed, type Ref, ref } from "vue";
+import { useIntervalFn } from "@vueuse/core";
 import { hasAuth } from "@/router/utils";
 import { exportRecordApi } from "@/api/system/export";
 import { importRecordApi } from "@/api/system/import";
 import { taskExecutionApi } from "@/api/system/task";
-import type { DetailResult } from "@/api/types";
+import type { DetailResult, RecordStats } from "@/api/types";
 
 /**
  * 任务中心：导出 / 导入 / 任务执行三类异步记录的**聚合计数**。
@@ -14,23 +15,13 @@ import type { DetailResult } from "@/api/types";
  *   对应计数保持 0 —— 与后端 action 的权限校验口径一致；
  * - **短轮询 + 写后刷新**：服务端 `stats` 有 10s 短缓存，客户端 60s 轮询足够；
  *   提交异步任务后调用 `refreshTaskCenter()` 立即刷新，避免"刚提交看不到"。
+ * 轮询生命周期（挂载即拉取、卸载自动停止）由 `useIntervalFn` 随组件 scope 清理。
  */
 
 const POLL_INTERVAL = 60_000;
 
-/** 记录统计（与后端 `system/utils/record_stats.py` 契约一致） */
-export type RecordStats = {
-  days: number;
-  total: number;
-  in_progress: number;
-  failed: number;
-  latest: {
-    pk: string;
-    name: string;
-    status: string;
-    created_time: string;
-  } | null;
-};
+// RecordStats 契约类型已归位到 @/api/types（后端 record_stats.py 对应），此处 re-export 保持既有引用点
+export type { RecordStats };
 
 const STATS_AUTH = {
   export: "stats:SystemExportRecord",
@@ -50,7 +41,7 @@ const statsRefs: Record<StatsKey, Ref<RecordStats | null>> = {
   task: taskStats
 };
 
-const statsApis: Record<StatsKey, () => Promise<DetailResult>> = {
+const statsApis: Record<StatsKey, () => Promise<DetailResult<RecordStats>>> = {
   export: () => exportRecordApi.stats(),
   import: () => importRecordApi.stats(),
   task: () => taskExecutionApi.stats()
@@ -65,7 +56,7 @@ async function loadOne(key: StatsKey): Promise<void> {
   try {
     const res = await statsApis[key]();
     if (res.code === 1000 && res.data) {
-      statsRefs[key].value = res.data as unknown as RecordStats;
+      statsRefs[key].value = res.data;
     }
   } catch {
     // 静默：轮询失败不应打断页面
@@ -90,16 +81,9 @@ export const runningCount = computed(
     Number(taskStats.value?.in_progress || 0)
 );
 
-/** 订阅聚合统计：挂载时拉取一次并开启轮询，卸载时清理定时器 */
+/** 订阅聚合统计：挂载即拉取一次并开启轮询，卸载自动停止 */
 export function useTaskCenter() {
-  let timer: ReturnType<typeof setInterval> | null = null;
-  onMounted(() => {
-    refreshTaskCenter();
-    timer = setInterval(refreshTaskCenter, POLL_INTERVAL);
-  });
-  onUnmounted(() => {
-    if (timer) clearInterval(timer);
-  });
+  useIntervalFn(refreshTaskCenter, POLL_INTERVAL, { immediateCallback: true });
 
   return {
     exportStats,

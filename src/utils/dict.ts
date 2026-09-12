@@ -1,19 +1,20 @@
 import { ref, type CSSProperties } from "vue";
 import { dataDictApi, type DictItem } from "@/api/system/dict";
+import { createTtlCache } from "./ttlCache";
 
 /**
  * 数据字典前端消费端（参考 RuoYi/Jeecg 的 getDicts 模式）。
  *
  * 后端 items 接口已带 5 分钟服务端缓存 + 变更信号失效，且在 PERMISSION_WHITE_URL
- * 白名单内（GET），登录用户可直接消费；本模块再做一层进程内 TTL 缓存，避免同一
- * 页面多个下拉重复请求。表单/表格如需跟随字典维护即时变化，优先用
- * DictChoiceField（后端 choices 驱动，元数据自带），本 composable 供自定义
- * 页面/非元数据场景直接消费。
+ * 白名单内（GET），登录用户可直接消费；本模块再做一层进程内 TTL 缓存（机制见
+ * `ttlCache.ts`），避免同一页面多个下拉重复请求。表单/表格如需跟随字典维护即时
+ * 变化，优先用 DictChoiceField（后端 choices 驱动，元数据自带），本 composable
+ * 供自定义页面/非元数据场景直接消费。
  */
 
 const DICT_TTL = 5 * 60 * 1000;
-const dictCache = new Map<string, { items: DictItem[]; expires: number }>();
-const inflight = new Map<string, Promise<DictItem[]>>();
+
+const dictCache = createTtlCache<DictItem[]>({ ttl: DICT_TTL });
 
 /**
  * 清空前端字典缓存（不传 code 清全部）。
@@ -21,35 +22,19 @@ const inflight = new Map<string, Promise<DictItem[]>>();
  * 字典维护页「刷新缓存」后调用，避免其他页面在其 TTL（5 分钟）内继续读旧字典。
  */
 export function clearDictCache(code?: string) {
-  if (code) dictCache.delete(code);
-  else dictCache.clear();
+  dictCache.invalidate(code);
 }
 
 /** 取字典项（带进程内 TTL 缓存与并发去重；失败返回空数组不缓存，下次调用重试） */
 export function getDictItems(code: string): Promise<DictItem[]> {
-  const cached = dictCache.get(code);
-  if (cached && cached.expires > Date.now()) {
-    return Promise.resolve(cached.items);
-  }
-  const pending = inflight.get(code);
-  if (pending) return pending;
-
-  const request = dataDictApi
-    .items(code)
-    .then(res => {
-      const items = res?.data?.results ?? [];
-      dictCache.set(code, { items, expires: Date.now() + DICT_TTL });
-      return items;
-    })
+  return dictCache
+    .get(code, () =>
+      dataDictApi.items(code).then(res => res?.data?.results ?? [])
+    )
     .catch(() => {
       // 失败降级为空选项，避免消费端 unhandled rejection；不缓存以便重试
       return [] as DictItem[];
-    })
-    .finally(() => {
-      inflight.delete(code);
     });
-  inflight.set(code, request);
-  return request;
 }
 
 /** 按 value 反查字典项（找不到返回 undefined） */
