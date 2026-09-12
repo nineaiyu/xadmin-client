@@ -2,19 +2,24 @@
 import { useI18n } from "vue-i18n";
 import { FormProps } from "../utils/types";
 import { computed, nextTick, ref, watch } from "vue";
-import { cloneDeep, isEmpty, isNullOrUnDef } from "@pureadmin/utils";
+import { cloneDeep } from "@pureadmin/utils";
 import { transformI18n } from "@/plugins/i18n";
-import { IconSelect } from "@/components/ReIcon";
 import { MenuChoices } from "@/views/system/constants";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import ReAnimateSelector from "@/components/ReAnimateSelector";
-import FromQuestion from "@/components/FromQuestion/index.vue";
 import Segmented, { type OptionsType } from "@/components/ReSegmented";
 import {
   dirFormRules,
   menuFormRules,
   permissionFormRules
 } from "../utils/rule";
+import MenuBasicFields from "./MenuBasicFields.vue";
+import MenuPermissionFields from "./MenuPermissionFields.vue";
+
+/**
+ * 菜单新增/编辑表单（拆分自 553 行单体）：
+ * 类型切换与父节点选择留在本组件，目录/菜单字段区见 MenuBasicFields.vue，
+ * 权限码字段区见 MenuPermissionFields.vue（均就地修改 formInline）。
+ */
 
 const { t } = useI18n();
 
@@ -135,14 +140,6 @@ const menuOptions = computed<Array<OptionsType>>(() => {
   return data;
 });
 
-const handleComponentChange = value => {
-  if (isEmpty(value) || isNullOrUnDef(value)) {
-    return;
-  }
-  newFormInline.value.path = `/${value}`;
-  newFormInline.value.name = props.viewList[value];
-};
-
 defineExpose({ getRef });
 </script>
 
@@ -204,332 +201,21 @@ defineExpose({ getRef });
           </template>
         </el-tree-select>
       </el-form-item>
-      <div v-if="newFormInline.menu_type !== MenuChoices.PERMISSION">
-        <el-form-item :label="t('systemMenu.title')" prop="title">
-          <el-input
-            v-model="newFormInline.title"
-            :placeholder="t('systemMenu.verifyTitle')"
-            clearable
-          />
-        </el-form-item>
-        <el-form-item :label="t('systemMenu.icon')" prop="icon">
-          <icon-select v-model="newFormInline.meta.icon" />
-        </el-form-item>
-        <div v-if="newFormInline.menu_type === MenuChoices.MENU">
-          <el-form-item :label="t('systemMenu.transitionEnter')" prop="icon">
-            <ReAnimateSelector v-model="newFormInline.meta.transition_enter" />
-          </el-form-item>
 
-          <el-form-item :label="t('systemMenu.transitionLeave')" prop="icon">
-            <ReAnimateSelector
-              v-model="newFormInline.meta.transition_leave"
-              :disabled="!newFormInline.meta.transition_enter"
-            />
-          </el-form-item>
-          <el-form-item :label="t('systemMenu.componentPath')" prop="component">
-            <template #label>
-              <from-question
-                :description="t('systemMenu.exampleComponentPath')"
-                :label="t('systemMenu.componentPath')"
-              />
-            </template>
-            <el-select
-              v-model="newFormInline.component"
-              class="w-full"
-              :placeholder="t('systemMenu.verifyComponentPath')"
-              clearable
-              filterable
-              @change="handleComponentChange"
-            >
-              <el-option
-                v-for="item in Object.keys(viewList)"
-                :key="item"
-                :value="item"
-              >
-                <span style="float: left">{{ item }}</span>
-                <span
-                  style="
-                    float: right;
-                    font-size: 13px;
-                    color: var(--el-text-color-secondary);
-                  "
-                >
-                  {{ viewList[item] }}
-                </span>
-              </el-option>
-            </el-select>
-          </el-form-item>
-        </div>
-        <el-form-item :label="t('systemMenu.componentName')" prop="name">
-          <template #label>
-            <from-question
-              :description="t('systemMenu.exampleComponentName')"
-              :label="t('systemMenu.componentName')"
-            />
-          </template>
-          <el-input
-            v-model="newFormInline.name"
-            :disabled="newFormInline.menu_type === MenuChoices.MENU"
-            :placeholder="t('systemMenu.componentName')"
-            clearable
-          />
-        </el-form-item>
-        <el-form-item :label="t('systemMenu.path')" prop="path">
-          <template #label>
-            <from-question
-              :description="t('systemMenu.exampleRoutePath')"
-              :label="t('systemMenu.path')"
-            />
-          </template>
-          <el-input
-            v-model="newFormInline.path"
-            :placeholder="t('systemMenu.verifyPath')"
-            clearable
-          />
-        </el-form-item>
-      </div>
-      <div v-if="newFormInline.menu_type === MenuChoices.MENU">
-        <el-divider />
-        <el-form-item :label="t('systemMenu.cache')" prop="keepAlive">
-          <template #label>
-            <from-question
-              :description="t('systemMenu.exampleCache')"
-              :label="t('systemMenu.cache')"
-            />
-          </template>
-          <Segmented
-            :modelValue="newFormInline.meta.is_keepalive ? 0 : 1"
-            :options="ifEnableOptions"
-            @change="
-              ({ option: { value } }) => {
-                newFormInline.meta.is_keepalive = value;
-              }
-            "
-          />
-        </el-form-item>
-        <el-form-item :label="t('systemMenu.showParentMenu')" prop="showParent">
-          <Segmented
-            :modelValue="newFormInline.meta.is_show_parent ? 0 : 1"
-            :options="ifEnableOptions"
-            @change="
-              ({ option: { value } }) => {
-                newFormInline.meta.is_show_parent = value;
-              }
-            "
-          />
-        </el-form-item>
-      </div>
-      <div v-if="newFormInline.menu_type !== MenuChoices.PERMISSION">
-        <el-divider />
-        <el-row>
-          <el-col :span="12">
-            <el-form-item :label="t('systemMenu.showLink')" prop="showLink">
-              <template #label>
-                <from-question
-                  :description="t('systemMenu.exampleShowLink')"
-                  :label="t('systemMenu.showLink')"
-                />
-              </template>
-              <Segmented
-                :modelValue="newFormInline.meta.is_show_menu ? 0 : 1"
-                :options="ifEnableOptions"
-                @change="
-                  ({ option: { value } }) => {
-                    newFormInline.meta.is_show_menu = value;
-                  }
-                "
-              />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item :label="t('labels.status')" prop="is_active">
-              <template #label>
-                <from-question
-                  :description="t('systemMenu.exampleMenuStatus')"
-                  :label="t('labels.status')"
-                />
-              </template>
-              <Segmented
-                :modelValue="newFormInline.is_active ? 0 : 1"
-                :options="ifEnableOptions"
-                @change="
-                  ({ option: { value } }) => {
-                    newFormInline.is_active = value;
-                  }
-                "
-              />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item :label="t('systemMenu.fixedTag')" prop="fixedTag">
-              <template #label>
-                <from-question
-                  :description="t('systemMenu.fixedTagTip')"
-                  :label="t('systemMenu.fixedTag')"
-                />
-              </template>
-              <Segmented
-                :modelValue="newFormInline.meta.fixed_tag ? 0 : 1"
-                :options="ifEnableOptions"
-                @change="
-                  ({ option: { value } }) => {
-                    newFormInline.meta.fixed_tag = value;
-                  }
-                "
-              />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item :label="t('systemMenu.hiddenTag')" prop="hiddenTag">
-              <template #label>
-                <from-question
-                  :description="t('systemMenu.hiddenTagTip')"
-                  :label="t('systemMenu.hiddenTag')"
-                />
-              </template>
-              <Segmented
-                :modelValue="newFormInline.meta.is_hidden_tag ? 0 : 1"
-                :options="ifEnableOptions"
-                @change="
-                  ({ option: { value } }) => {
-                    newFormInline.meta.is_hidden_tag = value;
-                  }
-                "
-              />
-            </el-form-item>
-          </el-col>
-        </el-row>
+      <menu-basic-fields
+        :if-enable-options="ifEnableOptions"
+        :new-form-inline="newFormInline"
+        :view-list="viewList"
+      />
 
-        <el-divider />
-        <el-form-item :label="t('systemMenu.externalLink')" prop="isFrame">
-          <template #label>
-            <from-question
-              :description="t('systemMenu.exampleExternalLink')"
-              :label="t('systemMenu.externalLink')"
-            />
-          </template>
-          <el-input
-            v-model="newFormInline.meta.frame_url"
-            :placeholder="t('systemMenu.verifyExampleExternalLink')"
-            clearable
-          />
-        </el-form-item>
-        <el-form-item :label="t('systemMenu.animation')" prop="frameLoading">
-          <template #label>
-            <from-question
-              :description="t('systemMenu.exampleAnimation')"
-              :label="t('systemMenu.animation')"
-            />
-          </template>
-          <Segmented
-            :modelValue="newFormInline.meta.frame_loading ? 0 : 1"
-            :options="ifEnableOptions"
-            @change="
-              ({ option: { value } }) => {
-                newFormInline.meta.frame_loading = value;
-              }
-            "
-          />
-        </el-form-item>
-      </div>
-      <div v-if="newFormInline.menu_type === MenuChoices.PERMISSION">
-        <el-form-item :label="t('systemMenu.permissionName')" prop="title">
-          <el-input
-            v-model="newFormInline.title"
-            :placeholder="t('systemMenu.verifyPermissionName')"
-            clearable
-          />
-        </el-form-item>
-        <el-form-item :label="t('systemMenu.permissionCode')" prop="name">
-          <template #label>
-            <from-question
-              :description="t('systemMenu.examplePermissionCode')"
-              :label="t('systemMenu.permissionCode')"
-            />
-          </template>
-          <el-input
-            v-model="newFormInline.name"
-            :placeholder="t('systemMenu.verifyPermissionCode')"
-            clearable
-          />
-        </el-form-item>
-        <el-form-item :label="t('systemMenu.permissionPath')" prop="path">
-          <el-select
-            v-model="newFormInline.path"
-            class="w-full"
-            clearable
-            filterable
-          >
-            <el-option
-              v-for="item in menuUrlList"
-              :key="item.name"
-              :label="`${item.name}----${item.url}`"
-              :value="item.url"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item :label="t('systemMenu.associationModel')" prop="model">
-          <template #label>
-            <from-question
-              :description="t('systemMenu.exampleAssociationModel')"
-              :label="t('systemMenu.associationModel')"
-            />
-          </template>
-          <el-cascader
-            v-model="newFormInline.model"
-            :options="modelList"
-            :props="{
-              multiple: true,
-              emitPath: false,
-              checkStrictly: false
-            }"
-            class="w-full"
-            clearable
-            filterable
-          >
-            <template #default="{ node, data }">
-              <span>{{ data.label }}</span>
-              <span v-show="data.parent">({{ data.name }})</span>
-              <span v-show="!node.isLeaf">
-                ({{ data?.children?.length }})
-              </span>
-            </template>
-          </el-cascader>
-        </el-form-item>
-        <el-form-item :label="t('systemMenu.requestMethod')" prop="method">
-          <el-select
-            v-model="newFormInline.method"
-            class="w-45!"
-            clearable
-            value-key="value"
-          >
-            <el-option
-              v-for="item in methodChoices"
-              :key="item.value"
-              :disabled="item.disabled"
-              :label="item.label"
-              :value="item"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item :label="t('labels.status')" prop="is_active">
-          <template #label>
-            <from-question
-              :description="t('systemMenu.exampleRequestStatus')"
-              :label="t('labels.status')"
-            />
-          </template>
-          <Segmented
-            :modelValue="newFormInline.is_active ? 0 : 1"
-            :options="ifEnableOptions"
-            @change="
-              ({ option: { value } }) => {
-                newFormInline.is_active = value;
-              }
-            "
-          />
-        </el-form-item>
-      </div>
+      <menu-permission-fields
+        :if-enable-options="ifEnableOptions"
+        :menu-url-list="menuUrlList"
+        :method-choices="methodChoices"
+        :model-list="modelList"
+        :new-form-inline="newFormInline"
+      />
+
       <el-form-item
         v-if="auth.partialUpdate && !newFormInline.isAdd && newFormInline.pk"
         class="flex float-right"
