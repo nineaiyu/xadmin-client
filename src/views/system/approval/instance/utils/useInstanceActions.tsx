@@ -4,6 +4,8 @@ import { ElForm, ElFormItem, ElInput } from "element-plus";
 import { addDialog } from "@/components/ReDialog";
 import { approvalInstanceApi } from "@/api/system/approvalFlow";
 import { handleOperation } from "@/components/RePlusPage";
+import { hasAuth } from "@/router/utils";
+import SearchUser from "@/views/system/components/SearchUser.vue";
 import { message } from "@/utils/message";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
@@ -74,8 +76,13 @@ export function useInstanceActions({
     });
   };
 
-  /** 加签弹窗：用户名逗号分隔（一期简版，不做用户选择器） */
-  const addSignForm = reactive({ usernames: "", comment: "" });
+  /** 加签弹窗：SearchUser 多选选人（复用权限表单同款的表格面板选择器）；
+   *  无 list:SearchUser 权限的审批人回退用户名逗号输入，保证加签始终可用 */
+  const addSignForm = reactive({
+    users: [] as Array<{ pk: string; username: string }>,
+    usernames: "",
+    comment: ""
+  });
   const openAddSign = (row: { pk?: string | number; title?: string }) => {
     addDialog({
       title: t("systemApprovalInstance.addSignTitle", {
@@ -86,20 +93,24 @@ export function useInstanceActions({
       closeOnClickModal: false,
       contentRenderer: () => (
         <ElForm model={addSignForm}>
-          <ElFormItem
-            prop="usernames"
-            rules={[
-              {
-                required: true,
-                message: t("systemApprovalInstance.addSignRequired"),
-                trigger: "blur"
-              }
-            ]}
-          >
-            <ElInput
-              v-model={addSignForm.usernames}
-              placeholder={t("systemApprovalInstance.addSignPlaceholder")}
-            />
+          <ElFormItem prop="users" required>
+            {hasAuth("list:SearchUser") ? (
+              <SearchUser
+                modelValue={addSignForm.users}
+                multiple
+                style={{ width: "100%" }}
+                onUpdate:modelValue={(value: unknown) => {
+                  addSignForm.users = Array.isArray(value)
+                    ? (value as Array<{ pk: string; username: string }>)
+                    : [];
+                }}
+              />
+            ) : (
+              <ElInput
+                v-model={addSignForm.usernames}
+                placeholder={t("systemApprovalInstance.addSignPlaceholder")}
+              />
+            )}
           </ElFormItem>
           <ElFormItem prop="comment">
             <ElInput
@@ -113,11 +124,17 @@ export function useInstanceActions({
         </ElForm>
       ),
       closeCallBack: () => {
+        addSignForm.users = [];
         addSignForm.usernames = "";
         addSignForm.comment = "";
       },
       beforeSure: (done, { closeLoading }) => {
-        const usernames = addSignForm.usernames.trim();
+        const usernames = hasAuth("list:SearchUser")
+          ? addSignForm.users
+              .map(user => user.username)
+              .filter(Boolean)
+              .join(",")
+          : addSignForm.usernames.trim();
         if (!usernames) {
           message(t("systemApprovalInstance.addSignRequired"), {
             type: "error"
