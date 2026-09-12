@@ -18,9 +18,12 @@ type Interval = ReturnType<typeof setInterval>;
 type Nullable<T> = T | null;
 
 /**
- * 默认重连次数（有限次；与原 AutoReconnect 注释声明的默认值一致，避免近乎无限重连）
+ * 默认重连次数上限：默认无限——长会话应用断网恢复后必须能续上（原 3 次上限在
+ * 断网超过 1 分钟时即永久掉线）；重试频率由指数退避封顶 30s 保证有界，主动
+ * close（登出/组件卸载）会置 socketOpen=false 阻断重连。显式传
+ * `reconnectMaxCount` 仍生效（0 = 不重连）。
  */
-const reconnectMaxCount = 3;
+const reconnectMaxCount = Infinity;
 /**
  * 重连退避上限：间隔按次数指数增长并封顶，避免服务端抖动时被固定间隔高频冲击
  */
@@ -41,7 +44,7 @@ const timeout = 3000;
 
 type AutoReconnect = {
   /**
-   *重连尝试次数 默认 3
+   * 重连尝试次数上限，默认无限（Infinity）；显式传 0 表示不重连
    */
   reconnectMaxCount?: number;
 };
@@ -130,7 +133,27 @@ class WS {
     this.socketOpen = true;
     this.onError();
     this.onOpen();
+    // 监听页面可见性：退避等待期间回到前台可立即重连（见 handleVisibilityChange）
+    document.addEventListener("visibilitychange", this.handleVisibilityChange);
   }
+
+  /**
+   * 页面恢复可见时立即重连：断网常发生在页面后台期间，退避计时器最长 30s，
+   * 回到前台不必等它走完。主动 close（socketOpen=false）与无需重连时静默跳过；
+   * 监听器随 close() 移除、connect() 重挂，避免实例废弃后残留监听。
+   */
+  private handleVisibilityChange = (): void => {
+    if (document.visibilityState !== "visible" || !this.autoReconnect) return;
+    const closed = !this.socket || this.socket.readyState === WebSocket.CLOSED;
+    if (this.socketOpen && closed) {
+      // 清掉未到期的退避计时器，避免恢复后定时器再触发造成双重连接
+      if (this.delay) {
+        clearTimeout(this.delay);
+        this.delay = null;
+      }
+      this.reconnectHandle();
+    }
+  };
 
   /**
    * 监听连接
@@ -210,6 +233,10 @@ class WS {
    */
   close(): void {
     this.socketOpen = false;
+    document.removeEventListener(
+      "visibilitychange",
+      this.handleVisibilityChange
+    );
     if (this.socket) {
       this.socket.close();
     }
@@ -248,18 +275,15 @@ class WS {
     // 状态为 `1-开启状态` 直接发送
     if (this.socket.readyState === this.socket.OPEN) {
       this.socket.send(data);
-      // 状态为 `0-开启状态` 则延后调用
-    } else if (this.socket.readyState === this.socket.CONNECTING) {
-      this.delay = setTimeout(() => {
-        this.socket?.send(data);
-      }, timeout);
-      // 状态为 `2-关闭中 3-关闭状态` 则重新连接
-    } else {
-      this.connect();
-      this.delay = setTimeout(() => {
-        this.socket?.send(data);
-      }, timeout);
+      return;
     }
+    // `0-连接中`：等连接就绪后延后发送；`2/3-关闭中/已关闭`：先触发重连再延后发送
+    if (this.socket.readyState !== this.socket.CONNECTING) {
+      this.connect();
+    }
+    this.delay = setTimeout(() => {
+      this.socket?.send(data);
+    }, timeout);
   }
 }
 
