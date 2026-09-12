@@ -2,7 +2,7 @@
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { MenuChoices } from "@/views/system/constants";
-import FromQuestion from "@/components/FromQuestion/index.vue";
+import FormQuestion from "@/components/FormQuestion/index.vue";
 import Segmented, { type OptionsType } from "@/components/ReSegmented";
 import type {
   ChoicesOptionItem,
@@ -37,7 +37,7 @@ const newFormInline = ref(props.newFormInline);
     </el-form-item>
     <el-form-item :label="t('systemMenu.permissionCode')" prop="name">
       <template #label>
-        <from-question
+        <form-question
           :description="t('systemMenu.examplePermissionCode')"
           :label="t('systemMenu.permissionCode')"
         />
@@ -65,7 +65,7 @@ const newFormInline = ref(props.newFormInline);
     </el-form-item>
     <el-form-item :label="t('systemMenu.associationModel')" prop="model">
       <template #label>
-        <from-question
+        <form-question
           :description="t('systemMenu.exampleAssociationModel')"
           :label="t('systemMenu.associationModel')"
         />
@@ -107,7 +107,7 @@ const newFormInline = ref(props.newFormInline);
     </el-form-item>
     <el-form-item :label="t('labels.status')" prop="is_active">
       <template #label>
-        <from-question
+        <form-question
           :description="t('systemMenu.exampleRequestStatus')"
           :label="t('labels.status')"
         />

@@ -12,7 +12,7 @@ defineProps({
     type: String
   }
 });
-defineOptions({ name: "FromQuestion" });
+defineOptions({ name: "FormQuestion" });
 </script>
 
 <template>

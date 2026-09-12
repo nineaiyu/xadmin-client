@@ -18,7 +18,7 @@ import SearchUser from "@/views/system/components/SearchUser.vue";
 import SearchDept from "@/views/system/components/SearchDept.vue";
 import SearchRole from "@/views/system/components/SearchRole.vue";
 import SearchMenu from "@/views/system/components/SearchMenu.vue";
-import FromQuestion from "@/components/FromQuestion/index.vue";
+import FormQuestion from "@/components/FormQuestion/index.vue";
 import {
   RULE_PRESETS,
   ruleValueInput,
@@ -225,7 +225,7 @@ defineExpose({ getRef });
       >
         <el-form-item :label="t('systemPermission.addMatch')" prop="match">
           <template #label>
-            <from-question
+            <form-question
               description="https://docs.djangoproject.com/zh-hans/5.0/ref/models/querysets/#field-lookups"
               :label="t('systemPermission.addMatch')"
             />
@@ -264,7 +264,7 @@ defineExpose({ getRef });
       <re-col :sm="24" :value="24" :xs="24">
         <el-form-item :label="t('systemPermission.addExclude')" prop="exclude">
           <template #label>
-            <from-question
+            <form-question
               :description="t('systemPermission.addExcludeTip')"
               :label="t('systemPermission.addExclude')"
             />

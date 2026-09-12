@@ -5,7 +5,7 @@ import { isEmpty, isNullOrUnDef } from "@pureadmin/utils";
 import { IconSelect } from "@/components/ReIcon";
 import { MenuChoices } from "@/views/system/constants";
 import ReAnimateSelector from "@/components/ReAnimateSelector";
-import FromQuestion from "@/components/FromQuestion/index.vue";
+import FormQuestion from "@/components/FormQuestion/index.vue";
 import Segmented, { type OptionsType } from "@/components/ReSegmented";
 import type { FormItemProps } from "../utils/types";
 
@@ -59,7 +59,7 @@ const handleComponentChange = (value: string) => {
       </el-form-item>
       <el-form-item :label="t('systemMenu.componentPath')" prop="component">
         <template #label>
-          <from-question
+          <form-question
             :description="t('systemMenu.exampleComponentPath')"
             :label="t('systemMenu.componentPath')"
           />
@@ -93,7 +93,7 @@ const handleComponentChange = (value: string) => {
     </div>
     <el-form-item :label="t('systemMenu.componentName')" prop="name">
       <template #label>
-        <from-question
+        <form-question
           :description="t('systemMenu.exampleComponentName')"
           :label="t('systemMenu.componentName')"
         />
@@ -107,7 +107,7 @@ const handleComponentChange = (value: string) => {
     </el-form-item>
     <el-form-item :label="t('systemMenu.path')" prop="path">
       <template #label>
-        <from-question
+        <form-question
           :description="t('systemMenu.exampleRoutePath')"
           :label="t('systemMenu.path')"
         />
@@ -123,7 +123,7 @@ const handleComponentChange = (value: string) => {
     <el-divider />
     <el-form-item :label="t('systemMenu.cache')" prop="keepAlive">
       <template #label>
-        <from-question
+        <form-question
           :description="t('systemMenu.exampleCache')"
           :label="t('systemMenu.cache')"
         />
@@ -156,7 +156,7 @@ const handleComponentChange = (value: string) => {
       <el-col :span="12">
         <el-form-item :label="t('systemMenu.showLink')" prop="showLink">
           <template #label>
-            <from-question
+            <form-question
               :description="t('systemMenu.exampleShowLink')"
               :label="t('systemMenu.showLink')"
             />
@@ -175,7 +175,7 @@ const handleComponentChange = (value: string) => {
       <el-col :span="12">
         <el-form-item :label="t('labels.status')" prop="is_active">
           <template #label>
-            <from-question
+            <form-question
               :description="t('systemMenu.exampleMenuStatus')"
               :label="t('labels.status')"
             />
@@ -194,7 +194,7 @@ const handleComponentChange = (value: string) => {
       <el-col :span="12">
         <el-form-item :label="t('systemMenu.fixedTag')" prop="fixedTag">
           <template #label>
-            <from-question
+            <form-question
               :description="t('systemMenu.fixedTagTip')"
               :label="t('systemMenu.fixedTag')"
             />
@@ -213,7 +213,7 @@ const handleComponentChange = (value: string) => {
       <el-col :span="12">
         <el-form-item :label="t('systemMenu.hiddenTag')" prop="hiddenTag">
           <template #label>
-            <from-question
+            <form-question
               :description="t('systemMenu.hiddenTagTip')"
               :label="t('systemMenu.hiddenTag')"
             />
@@ -234,7 +234,7 @@ const handleComponentChange = (value: string) => {
     <el-divider />
     <el-form-item :label="t('systemMenu.externalLink')" prop="isFrame">
       <template #label>
-        <from-question
+        <form-question
           :description="t('systemMenu.exampleExternalLink')"
           :label="t('systemMenu.externalLink')"
         />
@@ -247,7 +247,7 @@ const handleComponentChange = (value: string) => {
     </el-form-item>
     <el-form-item :label="t('systemMenu.animation')" prop="frameLoading">
       <template #label>
-        <from-question
+        <form-question
           :description="t('systemMenu.exampleAnimation')"
           :label="t('systemMenu.animation')"
         />
