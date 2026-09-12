@@ -16,7 +16,6 @@ import {
   formatToken,
   getRefreshToken,
   getToken,
-  remoteAccessToken,
   removeToken,
   setApiLanguage,
   setToken
@@ -24,16 +23,20 @@ import {
 import { useUserStoreHook } from "@/store/modules/user";
 import { message } from "@/utils/message";
 import { ElMessage } from "element-plus";
-import { buildUUID, downloadByData } from "@pureadmin/utils";
+import { downloadByData } from "@pureadmin/utils";
+import { resolveDownloadFilename } from "@/utils/download";
 import {
   approvalKey,
   clearPendingApprovals,
   deletePendingApproval,
-  setPendingApproval,
   takePendingApproval
 } from "./pendingApproval";
 import { registerPending, unregisterPending } from "./routeCancel";
-// import { router } from "@/router";
+import { redirectToLogin } from "./redirect";
+import {
+  SEND_ERROR_STRATEGIES,
+  type SendErrorContext
+} from "./errorStrategies";
 
 // 相关配置请参考：www.axios-js.com/zh-cn/docs/#axios-request-config-1
 
@@ -166,93 +169,26 @@ class PureHttp {
           }
           const data = error.response?.data;
           if (error.response && error.response.status) {
-            if (error.response.status === 401) {
-              if (error.response.data.code === 40001) {
-                if (config._tokenRetried) {
-                  // 重试后仍 40001（如刷新失败），跳登录防止死循环
-                  ElMessage.error(data?.detail);
-                  removeToken();
-                  redirectToLogin();
-                  reject(error.response.data);
-                } else {
-                  config._tokenRetried = true;
-                  remoteAccessToken();
-                  // axios 1.20 收紧了 request 泛型签名；此处复用 send 的统一错误处理，结果经响应拦截器已是业务数据
-                  resolve(
-                    PureHttp.axiosInstance.request(
-                      config
-                    ) as unknown as Promise<T>
-                  );
-                }
-                // } else if (error.response.data.code === 40002) {
-              } else {
-                ElMessage.error(data?.detail);
-                removeToken();
-                // 跳转登录页并携带回跳地址，替代整页 reload（保留路由上下文）
-                redirectToLogin();
-              }
-            } else if (
-              error.response.status === 412 &&
-              data?.type === "user_confirm_required"
-            ) {
-              /** 敏感操作二次验证（MFA）：弹验证窗，通过后自动重发原请求 */
-              if (config._mfaRetried) {
-                // 重发后仍未通过（如确认过期），不再递归弹窗
-                ElMessage.error(data?.detail);
-                reject(error.response.data);
-              } else {
-                config._mfaRetried = true;
-                // 动态引入避免与验证组件产生模块循环依赖
-                import("@/components/ReMfaConfirm")
-                  .then(({ confirmMfa }) => confirmMfa(data?.confirm_type))
-                  .then(() => resolve(this.send<T>(config)))
-                  .catch(() => {
-                    reject(error.response.data);
-                  });
-              }
-              return;
-            } else if (
-              error.response.status === 412 &&
-              data?.type === "approval_required"
-            ) {
-              /** 敏感操作审批（业务码 1002）：已建审批单，提示单号等待审批，
-               *  令牌暂存待审批通过后由请求拦截器自动携带重发（不做自动重试） */
-              const approvalId = data?.data?.approval_id;
-              if (approvalId) {
-                // 优先用请求期写入的指纹 key（axios 改写 config.data 后仍能命中）；
-                // 未经请求拦截器的调用路径（直发 axiosInstance / 单测驱动）回退重算
-                const requestKey = config._approvalKey;
-                setPendingApproval(
-                  requestKey ??
-                    approvalKey(config.method, config.url, config.data),
-                  approvalId
-                );
-              }
-              ElMessage.warning(data?.detail);
-              reject(error.response.data);
-              return;
-            } else if (
-              error.response.status === 403 &&
-              data?.type === "approval_required"
-            ) {
-              /** 审批令牌被拒（驳回/过期/已消费/指纹不一致）：清除暂存令牌后按普通错误提示 */
-              const rejectedKey = config._approvalKey;
-              deletePendingApproval(
-                rejectedKey ??
-                  approvalKey(config.method, config.url, config.data)
-              );
-              ElMessage.error(data?.detail);
-              reject(error.response.data);
-              return;
-            } else if (error.response.status === 425) {
-              /** 425 Too Early：资源仍在准备（如 Office 转 PDF 中，业务码 1006），
-               *  由调用方按自己的重试策略处理（轮询/提示"转换中"），不弹全局错误 */
-              reject(error.response.data);
-              return;
-            } else {
-              ElMessage.error(data?.detail ?? error.response.statusText);
-              // router.push("/error/500");
+            // 状态码/业务类型分发：命中策略即已落定 Promise，未命中走默认兜底
+            const ctx: SendErrorContext = {
+              config,
+              status: error.response.status,
+              statusText: error.response.statusText,
+              data,
+              // 412-MFA 验证通过后经 send 重发，保留统一错误处理（同一 config 防递归弹窗）
+              resend: () => this.send<T>(config),
+              reissue: () =>
+                PureHttp.axiosInstance.request(
+                  config
+                ) as unknown as Promise<unknown>,
+              resolve: value => resolve(value as T),
+              reject
+            };
+            for (const strategy of SEND_ERROR_STRATEGIES) {
+              if (strategy.match(ctx) && strategy.handle(ctx)) return;
             }
+            ElMessage.error(data?.detail ?? error.response.statusText);
+            // router.push("/error/500");
             reject(error.response.data);
           } else {
             ElMessage.error(error.message);
@@ -328,58 +264,12 @@ class PureHttp {
       this.download<AxiosResponse<Blob>>(url, params, config)
         .then((response: AxiosResponse<Blob>) => {
           try {
-            const { data, headers } = response;
-            let finalFilename = `${buildUUID()}`;
-            const headerValue =
-              headers["content-disposition"] ??
-              (typeof headers.get === "function"
-                ? headers.get("content-disposition")
-                : undefined);
-            const contentDisposition =
-              headerValue == null
-                ? undefined
-                : Array.isArray(headerValue)
-                  ? headerValue.join("; ")
-                  : String(headerValue);
-            if (contentDisposition) {
-              // 优先处理UTF-8编码的文件名 (RFC 5987)
-              const utf8FilenameRegex = /filename\*=?UTF-8''([^;]+)/i;
-              const utf8Matches = utf8FilenameRegex.exec(contentDisposition);
-              if (utf8Matches && utf8Matches[1]) {
-                try {
-                  // 解码UTF-8编码的文件名
-                  finalFilename = decodeURIComponent(utf8Matches[1]);
-                } catch (e) {
-                  console.error("Failed to decode UTF-8 filename.", e);
-                  // 如果解码失败，回退到普通文件名提取
-                  extractNormalFilename(contentDisposition);
-                }
-              } else {
-                // 处理普通ASCII文件名
-                extractNormalFilename(contentDisposition);
-              }
-              function extractNormalFilename(disposition: string) {
-                const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-                const matches = filenameRegex.exec(disposition);
-
-                if (matches && matches[1]) {
-                  // 移除引号并解码
-                  let extractedFilename = matches[1].replace(/['"]/g, "");
-                  try {
-                    // 尝试解码URL编码的文件名
-                    extractedFilename = decodeURIComponent(extractedFilename);
-                  } catch (e) {
-                    console.error("Failed to decode filename.", e);
-                  }
-                  finalFilename = extractedFilename;
-                }
-              }
-            } else {
-              const paramType = (params as { type?: string } | undefined)?.type;
-              if (paramType) {
-                finalFilename = `${finalFilename}.${paramType}`;
-              }
-            }
+            const { data } = response;
+            // 文件名解析规则（RFC 5987 优先等）见 utils/download.ts
+            const finalFilename = resolveDownloadFilename(
+              response.headers,
+              (params as { type?: string } | undefined)?.type
+            );
             downloadByData(data, filename ?? finalFilename);
             resolve();
           } catch (err) {
@@ -526,24 +416,6 @@ class PureHttp {
       }
     );
   }
-}
-
-/** 登录态失效时跳转登录页并携带回跳地址（动态引入避免与路由模块循环依赖） */
-export function redirectToLogin() {
-  clearPendingApprovals();
-  import("@/router")
-    .then(({ router, resetRouter }) => {
-      // 登录态失效：同步重置动态路由与权限缓存（含 localStorage 的 async-routes），
-      // 避免下一个账号登录后复用上一个账号的菜单
-      resetRouter();
-      router.push({
-        name: "Login",
-        query: { redirect: router.currentRoute.value.fullPath }
-      });
-    })
-    .catch(() => {
-      window.location.href = "/#/login";
-    });
 }
 
 export const http = new PureHttp();
