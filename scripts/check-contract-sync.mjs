@@ -9,7 +9,13 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-const SCHEMA_NAMES = ["search-columns", "search-fields"];
+const SCHEMA_NAMES = [
+  "search-columns",
+  "search-fields",
+  "api-response",
+  "routes-payload",
+  "ws-frame"
+];
 const mirrorDir = path.resolve("contract", "schema");
 const serverDir = path.resolve(
   process.env.XADMIN_SERVER_DIR ?? "../xadmin-server"
