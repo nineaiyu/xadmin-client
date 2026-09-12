@@ -1,6 +1,6 @@
 import { http } from "@/utils/http";
 import { BaseApi } from "@/api/base";
-import type { DetailResult } from "@/api/types";
+import type { DetailResult, RecordStats } from "@/api/types";
 
 /** 导入记录（下载中心「导入记录」页签） */
 class ImportRecordApi extends BaseApi {
@@ -10,7 +10,12 @@ class ImportRecordApi extends BaseApi {
   };
   /** 近 N 天统计（总数 / 进行中 / 失败 / 最近一次），服务端 10s 短缓存 */
   stats = () => {
-    return this.request<DetailResult>("get", {}, {}, `${this.baseApi}/stats`);
+    return this.request<DetailResult<RecordStats>>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/stats`
+    );
   };
 }
 

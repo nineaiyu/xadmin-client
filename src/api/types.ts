@@ -81,13 +81,27 @@ export type ListResult<T = RecordType> = {
   };
 };
 
-export type DetailResult = {
+export type DetailResult<T = RecordType> = {
   detail: string;
   code: number;
-  /** 详情数据：单行动态对象，字段由具体接口决定 */
-  data: RecordType;
+  /** 详情数据：单行动态对象（可用泛型收窄具体契约形状） */
+  data: T;
   /** 服务端字段级校验错误（校验失败场景），RePlusPage 表单消费后内联展示 */
   errors?: ServerErrors;
+};
+
+/** 任务中心异步记录统计（后端 system/utils/record_stats.py 契约；导出/导入/任务执行三端 stats 共用） */
+export type RecordStats = {
+  days: number;
+  total: number;
+  in_progress: number;
+  failed: number;
+  latest: {
+    pk: string;
+    name: string;
+    status: string;
+    created_time: string;
+  } | null;
 };
 
 /** 服务端字段级校验错误（common/core/exception.py 封装），field → 错误消息(列表) */

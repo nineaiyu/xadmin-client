@@ -1,5 +1,10 @@
 import { BaseApi } from "@/api/base";
-import type { BaseResult, DataListResult, DetailResult } from "@/api/types";
+import type {
+  BaseResult,
+  DataListResult,
+  DetailResult,
+  RecordStats
+} from "@/api/types";
 
 /** 已注册 celery 任务（任务路径下拉数据源） */
 type RegisteredTask = {
@@ -66,7 +71,12 @@ export const intervalScheduleApi = new BaseApi("/api/system/tasks/interval");
 class TaskExecutionApi extends BaseApi {
   /** 近 N 天统计（总数 / 进行中 / 失败 / 最近一次），服务端 10s 短缓存 */
   stats = () => {
-    return this.request<DetailResult>("get", {}, {}, `${this.baseApi}/stats`);
+    return this.request<DetailResult<RecordStats>>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/stats`
+    );
   };
 }
 

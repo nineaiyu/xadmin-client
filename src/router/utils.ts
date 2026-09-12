@@ -443,7 +443,7 @@ function getDefaultAuths(
     "recycleList",
     ...auth
   ];
-  const auths = {};
+  const auths: Auths = {};
   actions.forEach(key => {
     auths[key] = hasAuth(`${key}:${suffix}`);
   });
