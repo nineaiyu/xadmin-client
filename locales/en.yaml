@@ -970,6 +970,18 @@ systemUploadFile:
   dropFile: Drop file here or
   uploadTip: Files with a size less than
   quotaTip: Re-uploading the same file reuses the stored copy, while the quota still counts each record in full
+  usageRate: Usage
+  usedSpace: Used
+  remainingSpace: Remaining
+  unlimited: Unlimited
+  avgSize: Average Size
+  totalSize: Total Size
+  size: Size
+  categoryDist: Category Distribution
+  uncategorized: Uncategorized
+  uploadTrend: Uploads (7 Days)
+  trendSummary: "Files uploaded in the last 7 days: {count}, total {size}"
+  largestFiles: Largest Files
   preview: Preview
   previewPreparing: Document is being converted, please wait... (first preview requires conversion)
   previewUnsupported: This file type does not support online preview, please download it

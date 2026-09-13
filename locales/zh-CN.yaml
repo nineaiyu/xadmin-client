@@ -970,6 +970,18 @@ systemUploadFile:
   dropFile: 拖拽文件到这里或
   uploadTip: 上传文件大小需要小于
   quotaTip: 同一文件重复上传会复用磁盘副本，配额仍按记录全量计入
+  usageRate: 使用率
+  usedSpace: 已用空间
+  remainingSpace: 剩余空间
+  unlimited: 不限
+  avgSize: 平均大小
+  totalSize: 总大小
+  size: 大小
+  categoryDist: 分类分布
+  uncategorized: 未分类
+  uploadTrend: 近 7 天上传
+  trendSummary: 近 7 天上传 {count} 个文件，共 {size}
+  largestFiles: 占用最大的文件
   preview: 预览
   previewPreparing: 文档转换中，请稍候……（首次预览需要转换）
   previewUnsupported: 该文件类型不支持在线预览，请下载后查看

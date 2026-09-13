@@ -12,6 +12,7 @@ import {
   shallowRef
 } from "vue";
 import {
+  isReadonlyCell,
   isUrl,
   openDialogDrawer,
   type OperationProps,
@@ -30,12 +31,42 @@ import Upload from "~icons/ep/upload";
 import { formatBytes } from "@pureadmin/utils";
 import { getDictItems } from "@/utils/dict";
 
+/** 分类分布项（stats.category_stats）：value 为 null 表示未分类 */
+export type FileCategoryStat = {
+  value: string | null;
+  /** 分类展示名来自 upload_category 字典；未分类为 null（前端 i18n 兜底） */
+  label: string | null;
+  color: string | null;
+  count: number;
+  size: number;
+};
+
+/** 单日上传趋势（stats.recent_trend，后端已补齐缺失日期） */
+export type FileTrendPoint = {
+  date: string;
+  count: number;
+  size: number;
+};
+
+/** 占用空间最大的文件（stats.top_files） */
+export type FileTopItem = {
+  pk: string;
+  filename: string;
+  filesize: number;
+};
+
 /** 个人文件统计载荷（system/views/admin/file.py::stats） */
 export type FileStats = {
   count: number;
   total_size: number;
   quota_mb: number;
   usage_rate: number;
+  /** 剩余空间：无配额（0=不限）时为 null，前端显示「不限」 */
+  remaining_size: number | null;
+  avg_size: number;
+  category_stats: FileCategoryStat[];
+  recent_trend: FileTrendPoint[];
+  top_files: FileTopItem[];
 };
 
 /** 分类字典 code：与 UploadFileSerializer.category 的 DictChoiceField 同源 */
@@ -162,12 +193,16 @@ export function useSystemUploadFile(tableRef: Ref) {
     columns.forEach(column => {
       switch (column._column?.key) {
         case "access_url":
-          column["cellRenderer"] = ({ row }) =>
-            h(
+          column["cellRenderer"] = scope => {
+            // 回收站只读：不提供下载入口，降级为纯文本地址
+            if (isReadonlyCell(scope)) {
+              return h("span", scope.row[column._column?.key] ?? "");
+            }
+            return h(
               ElLink,
               {
                 type: "success",
-                href: row[column._column?.key],
+                href: scope.row[column._column?.key],
                 target: "_blank"
               },
               {
@@ -175,6 +210,7 @@ export function useSystemUploadFile(tableRef: Ref) {
                 default: () => t("systemUploadFile.fileLink")
               }
             );
+          };
           break;
         case "is_upload":
         case "is_tmp":
@@ -188,7 +224,10 @@ export function useSystemUploadFile(tableRef: Ref) {
         case "preview_kind":
           // 行内预览入口走 cellRenderer：操作列 slot 传入的 row 是空对象
           // （框架现状），行级显隐只能在列渲染里取到真实行数据
-          column["cellRenderer"] = ({ row }) => {
+          column["cellRenderer"] = scope => {
+            const { row } = scope;
+            // 回收站只读：不提供预览入口
+            if (isReadonlyCell(scope)) return h("span", "-");
             if (!row?.preview_kind || !auth.preview) return h("span", "-");
             return h(
               ElButton,

@@ -18,6 +18,9 @@ test("文件中心：上传刷新统计卡片 + 分类下拉筛选", async ({ pa
   const basePayload = await baseResp.json();
   expect(basePayload.code, `stats: ${JSON.stringify(basePayload)}`).toBe(1000);
   const baseCount = basePayload.data.count as number;
+  // 统计面板新维度：分类分布 + 近 7 天趋势（后端已按天补零，恒为 7 个点）
+  expect(Array.isArray(basePayload.data.category_stats)).toBe(true);
+  expect(basePayload.data.recent_trend).toHaveLength(7);
 
   await openMenuPath(page, ["系统管理"], "/system/file/index");
   await expect(page.locator(".el-table").first()).toBeVisible({
@@ -27,7 +30,20 @@ test("文件中心：上传刷新统计卡片 + 分类下拉筛选", async ({ pa
   // 顶部配额统计卡片：初始数量与基线一致
   const card = page.locator(".el-card", { hasText: "存储使用" }).first();
   await expect(card).toBeVisible();
-  await expect(card).toContainText(`文件数量: ${baseCount}`);
+  await expect(card.locator('[data-testid="stat-count"]')).toHaveText(
+    String(baseCount)
+  );
+  // 分类分布饼图与最大文件卡片（echarts 懒加载就绪后渲染 SVG）
+  await expect(
+    page
+      .locator(".el-card", { hasText: "分类分布" })
+      .first()
+      .locator("svg")
+      .first()
+  ).toBeVisible({ timeout: 15_000 });
+  await expect(
+    page.locator(".el-card", { hasText: "占用最大的文件" }).first()
+  ).toBeVisible();
 
   // 上传弹窗上传一个文件：成功后 loadStats(true) 穿透短缓存刷新卡片数量
   const filename = `e2e-file-${Date.now()}.txt`;
@@ -42,28 +58,35 @@ test("文件中心：上传刷新统计卡片 + 分类下拉筛选", async ({ pa
       mimeType: "text/plain",
       buffer: Buffer.from("hello e2e file center")
     });
-  await expect(card).toContainText(`文件数量: ${baseCount + 1}`, {
-    timeout: 15_000
-  });
+  await expect(card.locator('[data-testid="stat-count"]')).toHaveText(
+    String(baseCount + 1),
+    { timeout: 15_000 }
+  );
 
-  // 重新加载页面（收起上传弹窗），取出该文件的 pk 并写入字典分类
+  // 重新加载页面（收起上传弹窗）：上传即自动分类（txt → 文档），无需人工挑选
   await page.reload();
   await expect(page.locator(".el-table").first()).toBeVisible({
     timeout: 15_000
   });
+  const autoRow = page.locator(".el-table__row", { hasText: filename }).first();
+  await expect(autoRow).toBeVisible({ timeout: 15_000 });
+  await expect(autoRow).toContainText("文档");
+
   const listResp = await page.request.get(
     `${FRONT_URL}/api/system/file?filename=${encodeURIComponent(filename)}`
   );
   const listPayload = await listResp.json();
   const row = listPayload.data.results[0];
   expect(row?.pk, `uploaded row: ${JSON.stringify(listPayload)}`).toBeTruthy();
+  // 字典驱动字段序列化为 {value,label,color}
+  expect(row.category?.value ?? row.category, "auto category").toBe("document");
   const patchResp = await page.request.patch(
     `${FRONT_URL}/api/system/file/${row.pk}`,
     { data: { category: "image" } }
   );
   expect((await patchResp.json()).code, "set category").toBe(1000);
 
-  // 分类列按字典 renderer 渲染彩色标签（label = 图片）
+  // 人工改分类后按字典 renderer 渲染彩色标签（label = 图片）
   await page.reload();
   const table = page.locator(".el-table").first();
   await expect(table).toBeVisible({ timeout: 15_000 });
@@ -201,6 +224,8 @@ test("文件中心：图片在线预览（行内按钮 → 抽屉大图）", asy
   await page.reload();
   const row = page.locator(".el-table__row", { hasText: filename }).first();
   await expect(row).toBeVisible({ timeout: 30_000 });
+  // 上传 png 自动归入「图片」分类（分类列按字典 label 渲染）
+  await expect(row).toContainText("图片");
 
   await row.getByRole("button", { name: "预览" }).click();
   const drawer = page.locator(".el-drawer:visible").first();
@@ -227,5 +252,7 @@ test("文件中心：不支持预览的类型不显示预览按钮", async ({ pa
   });
   const row = page.locator(".el-table__row", { hasText: filename }).first();
   await expect(row).toBeVisible({ timeout: 30_000 });
+  // zip 自动归入「压缩包」；不支持预览的类型不渲染预览按钮
+  await expect(row).toContainText("压缩包");
   await expect(row.getByRole("button", { name: "预览" })).toHaveCount(0);
 });
