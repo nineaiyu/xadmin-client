@@ -8,7 +8,11 @@ defineOptions({
   name: "ApprovalInstancePanel"
 });
 
-const props = defineProps<{ scope: InstanceScope }>();
+const props = defineProps<{
+  scope: InstanceScope;
+  /** 发起申请成功后的页面级回调（刷新角标/切页签） */
+  onStart?: () => void;
+}>();
 const tableRef = ref();
 
 const {
@@ -17,7 +21,7 @@ const {
   operationButtonsProps,
   tableBarButtonsProps,
   listColumnsFormat
-} = useInstancePanel(props.scope, tableRef);
+} = useInstancePanel(props.scope, tableRef, props.onStart);
 
 /** 供父页面在「发起申请」成功后即时刷新当前页签 */
 defineExpose({

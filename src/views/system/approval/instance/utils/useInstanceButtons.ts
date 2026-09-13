@@ -8,7 +8,7 @@ import {
 } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
-import { openInstanceDetail } from "./instanceDialogs";
+import { openInstanceDetail, openStartInstanceDialog } from "./instanceDialogs";
 import type { InstanceScope } from "./hook";
 import Check from "~icons/ep/check";
 import Close from "~icons/ep/close";
@@ -36,7 +36,8 @@ export function useInstanceButtons({
   t,
   refresh,
   tableRef,
-  actions
+  actions,
+  onStarted
 }: {
   scope: InstanceScope;
   auth: InstanceAuth;
@@ -48,7 +49,26 @@ export function useInstanceButtons({
     openAddSign: (row: { pk?: string | number; title?: string }) => void;
     openBatchReject: () => void;
   };
+  /** 发起申请成功后的页面级回调（切页签/刷新角标），由 InstancePanel 从父页面透传 */
+  onStarted?: () => void;
 }) {
+  /** 工具栏「发起申请」：所有页签首位（选流程 + 动态表单；成功后页面切页签/刷新角标） */
+  const startButton: OperationButtonsRow = {
+    text: t("systemApprovalInstance.start"),
+    code: "create",
+    props: {
+      type: "primary",
+      icon: useRenderIcon(Plus)
+    },
+    onClick: () => {
+      openStartInstanceDialog(t("systemApprovalInstance.startTitle"), () => {
+        refresh();
+        onStarted?.();
+      });
+    },
+    show: auth.create
+  };
+
   const detailButton: OperationButtonsRow = {
     // 与内置「查看」（通用记录详情）区分：本按钮展示表单数据 + 审批轨迹
     text: t("systemApprovalInstance.detailRich"),
@@ -150,51 +170,52 @@ export function useInstanceButtons({
           : [detailButton]
   });
 
-  /** 工具栏批量（仅待办页签） */
+  const batchApproveButton: OperationButtonsRow = {
+    text: t("systemApprovalInstance.batchApprove"),
+    code: "batchApprove",
+    confirm: {
+      title: t("systemApprovalInstance.batchApproveConfirm")
+    },
+    props: {
+      type: "primary",
+      icon: useRenderIcon(Check),
+      plain: true
+    },
+    onClick: ({ loading }) => {
+      const pks = tableRef.value?.getSelectPks("pk") ?? [];
+      if (!pks.length) {
+        message(t("results.noSelectedData"), { type: "error" });
+        return;
+      }
+      loading.value = true;
+      handleOperation({
+        t,
+        apiReq: approvalInstanceApi.batchApprove(pks),
+        success: () => refresh(),
+        requestEnd: () => (loading.value = false)
+      });
+    },
+    show: auth.batchApprove
+  };
+
+  const batchRejectButton: OperationButtonsRow = {
+    text: t("systemApprovalInstance.batchReject"),
+    code: "batchReject",
+    props: {
+      type: "danger",
+      icon: useRenderIcon(Close),
+      plain: true
+    },
+    onClick: () => actions.openBatchReject(),
+    show: auth.batchReject
+  };
+
+  /** 工具栏：发起申请（所有页签）+ 批量（仅待办页签） */
   const tableBarButtonsProps = shallowRef<OperationProps>({
-    buttons:
-      scope === "pending"
-        ? [
-            {
-              text: t("systemApprovalInstance.batchApprove"),
-              code: "batchApprove",
-              confirm: {
-                title: t("systemApprovalInstance.batchApproveConfirm")
-              },
-              props: {
-                type: "primary",
-                icon: useRenderIcon(Check),
-                plain: true
-              },
-              onClick: ({ loading }) => {
-                const pks = tableRef.value?.getSelectPks("pk") ?? [];
-                if (!pks.length) {
-                  message(t("results.noSelectedData"), { type: "error" });
-                  return;
-                }
-                loading.value = true;
-                handleOperation({
-                  t,
-                  apiReq: approvalInstanceApi.batchApprove(pks),
-                  success: () => refresh(),
-                  requestEnd: () => (loading.value = false)
-                });
-              },
-              show: auth.batchApprove
-            },
-            {
-              text: t("systemApprovalInstance.batchReject"),
-              code: "batchReject",
-              props: {
-                type: "danger",
-                icon: useRenderIcon(Close),
-                plain: true
-              },
-              onClick: () => actions.openBatchReject(),
-              show: auth.batchReject
-            }
-          ]
-        : []
+    buttons: [
+      startButton,
+      ...(scope === "pending" ? [batchApproveButton, batchRejectButton] : [])
+    ]
   });
 
   return { operationButtonsProps, tableBarButtonsProps };

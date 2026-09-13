@@ -4,7 +4,6 @@ import { useI18n } from "vue-i18n";
 import { getDefaultAuths } from "@/router/utils";
 import { approvalInstanceApi } from "@/api/system/approvalFlow";
 import InstancePanel from "./components/InstancePanel.vue";
-import { openStartInstanceDialog } from "./utils/hook";
 
 defineOptions({
   name: "SystemApprovalInstance" // 必须定义，用于菜单自动匹配组件
@@ -33,14 +32,12 @@ function loadPendingCount() {
     .catch(() => undefined);
 }
 
-/** 发起申请：弹窗内选择流程 + 动态表单，成功后切到「我的申请」并刷新 */
-function openStart() {
-  openStartInstanceDialog(t("systemApprovalInstance.startTitle"), () => {
-    activeTab.value = "mine";
-    minePanel.value?.refresh();
-    pendingPanel.value?.refresh();
-    loadPendingCount();
-  });
+/** 任一页签工具条的「发起申请」成功：刷新角标、切到「我的申请」并同步页签数据 */
+function handleStarted() {
+  loadPendingCount();
+  activeTab.value = "mine";
+  minePanel.value?.refresh();
+  pendingPanel.value?.refresh();
 }
 
 onMounted(() => {
@@ -55,13 +52,7 @@ onUnmounted(() => {
   <div class="pr-[1%]">
     <!-- 单根包裹 + 去掉手写 ml/mx：由 layout 注入的 main-content（24px）统一提供边距；
          pr-[1%] 与 RePlusPage 的 w-99/100 等效 -->
-    <!-- 单按钮工具条：内边距对齐搜索区工具条（12px 24px），避免卡片显得空旷 -->
-    <el-card shadow="never" class="mb-2" body-style="padding: 12px 24px">
-      <el-button v-if="AUTH.create" type="primary" @click="openStart">
-        {{ t("systemApprovalInstance.start") }}
-      </el-button>
-    </el-card>
-    <el-tabs v-model="activeTab" class="mt-2">
+    <el-tabs v-model="activeTab">
       <el-tab-pane name="pending">
         <template #label>
           <el-badge
@@ -73,21 +64,25 @@ onUnmounted(() => {
             {{ t("systemApprovalInstance.pendingTab") }}
           </el-badge>
         </template>
-        <InstancePanel ref="pendingPanel" scope="pending" />
+        <InstancePanel
+          ref="pendingPanel"
+          scope="pending"
+          :on-start="handleStarted"
+        />
       </el-tab-pane>
       <el-tab-pane
         :label="t('systemApprovalInstance.mineTab')"
         name="mine"
         lazy
       >
-        <InstancePanel ref="minePanel" scope="mine" />
+        <InstancePanel ref="minePanel" scope="mine" :on-start="handleStarted" />
       </el-tab-pane>
       <el-tab-pane
         :label="t('systemApprovalInstance.doneTab')"
         name="done"
         lazy
       >
-        <InstancePanel ref="donePanel" scope="done" />
+        <InstancePanel ref="donePanel" scope="done" :on-start="handleStarted" />
       </el-tab-pane>
     </el-tabs>
   </div>

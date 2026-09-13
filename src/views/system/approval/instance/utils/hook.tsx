@@ -22,7 +22,11 @@ export { openStartInstanceDialog, openInstanceDetail } from "./instanceDialogs";
  * 唯一差异：scope 过滤（后端 ApprovalInstanceScopeFilter 收口取值域）与行内
  * 操作按钮；权限码挂页面组件名 SystemApprovalInstance 下。
  */
-export function useInstancePanel(scope: InstanceScope, tableRef: Ref) {
+export function useInstancePanel(
+  scope: InstanceScope,
+  tableRef: Ref,
+  onStarted?: () => void
+) {
   const componentName = "SystemApprovalInstance";
   const baseAuth = getDefaultAuths(componentName, [
     "approve",
@@ -30,7 +34,8 @@ export function useInstancePanel(scope: InstanceScope, tableRef: Ref) {
     "cancel",
     "addSign",
     "batchApprove",
-    "batchReject"
+    "batchReject",
+    "create"
   ]);
   // 自定义权限码先声明默认值再展开（与 demo/book、system/role 同范式）：
   // UnwrapNestedRefs 会丢掉索引签名，不显式声明时 auth.approve 等取用会报 TS2339；
@@ -42,9 +47,8 @@ export function useInstancePanel(scope: InstanceScope, tableRef: Ref) {
     addSign: false,
     batchApprove: false,
     batchReject: false,
-    ...baseAuth,
-    // 隐藏内置「新增」入口：发起申请由页面顶部的专用按钮承载（弹窗内选流程 + 动态表单）
-    create: false
+    create: false,
+    ...baseAuth
   });
   const { t } = useI18n();
 
@@ -70,7 +74,8 @@ export function useInstancePanel(scope: InstanceScope, tableRef: Ref) {
     t,
     refresh,
     tableRef,
-    actions: { openReject, openAddSign, openBatchReject }
+    actions: { openReject, openAddSign, openBatchReject },
+    onStarted
   });
 
   return {
