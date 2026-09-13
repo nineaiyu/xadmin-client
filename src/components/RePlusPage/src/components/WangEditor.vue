@@ -53,10 +53,9 @@ function getUploadFiles() {
 
 defineExpose({ getUploadFiles });
 
-// 注册。要在创建编辑器之前注册，且只能注册一次，不可重复注册。
-// created(() => {
-//   Boot.registerModule(attachmentModule);
-// });
+// 附件菜单（uploadAttachment / downloadAttachment）由 @wangeditor/plugin-upload-attachment
+// 插件提供，统一在应用入口 src/App.vue 注册（Boot.registerModule 需在创建编辑器之前、
+// 全局只注册一次）——此处不要再重复注册，否则会抛 Duplicated key。
 
 /**
  * 工具栏配置。官方 IToolbarConfig 将 excludeKeys 声明为 string[]，但运行时仅以
@@ -189,3 +188,21 @@ const beforeUpload = (rawFile: File) => {
     </div>
   </el-card>
 </template>
+
+<style lang="scss" scoped>
+/**
+ * 编辑区高度修正。
+ *
+ * wangEditor 官方样式给 `.w-e-text-container`、`.w-e-scroll` 只设了 `height: 100%`，
+ * 依赖祖先链上存在确定高度；而 Editor 组件会把 style（模板里的 `min-height: 400px`）
+ * 落在组件外层的 wrapper 上，容器自身高度实际解析为 auto → `.w-e-scroll` 退化为内容
+ * 高度（空内容仅约 52px），于是创建/编辑时抛出告警「编辑区域高度 < 300px 这可能会
+ * 导致 modal hoverbar 定位异常」，hoverbar/modal 定位也会偏移。
+ * 这里给容器与滚动区补 min-height：既满足 ≥300px 的下限，又保留正文变多时自适应增高
+ * （不用固定 height，避免长正文在编辑区内出现滚动条）。
+ */
+:deep(.w-e-text-container),
+:deep(.w-e-text-container .w-e-scroll) {
+  min-height: 400px;
+}
+</style>

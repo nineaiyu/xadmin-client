@@ -102,3 +102,15 @@ const sanitizedMessage = computed(() =>
     </el-card>
   </el-form>
 </template>
+
+<style lang="scss" scoped>
+/**
+ * 只读展示区高度修正（同 WangEditor.vue 的说明）：Editor 的 style 落在组件 wrapper 上，
+ * `.w-e-text-container` / `.w-e-scroll` 的 `height: 100%` 解析失败会退化为内容高度
+ * （空内容约 52px），触发「编辑区域高度 < 300px …」告警。补 min-height 保持自适应增高。
+ */
+:deep(.w-e-text-container),
+:deep(.w-e-text-container .w-e-scroll) {
+  min-height: 500px;
+}
+</style>

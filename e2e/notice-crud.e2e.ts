@@ -26,10 +26,19 @@ async function pickSelectOption(
   await option.click();
 }
 
-test("通知公告：新增（富文本 + 字典级别）→ 列表可见含字典色 → 编辑 → 删除", async ({
+test("通知公告：新增（富文本 + 字典级别）→ 列表可见含字典色 → 查看 → 编辑 → 删除", async ({
   page
 }) => {
   const title = `E2E公告-${Date.now()}`;
+  // 编辑器高度告警守护：WangEditor/NoticeShow 的编辑区高度依赖容器确定高度，一旦退化为
+  // 内容高度（空内容约 52px）就会告警「编辑区域高度 < 300px 这可能会导致 modal hoverbar
+  // 定位异常」并使 hoverbar/modal 定位偏移（修法见两个组件的 scoped 样式）。
+  const editorWarnings: string[] = [];
+  page.on("console", msg => {
+    if (msg.type() === "warning" && msg.text().includes("300px")) {
+      editorWarnings.push(msg.text());
+    }
+  });
   await login(page);
   await openMenuPath(page, ["系统管理", "通知公告"], "/system/notice/index");
 
@@ -65,6 +74,13 @@ test("通知公告：新增（富文本 + 字典级别）→ 列表可见含字�
     .click();
   await page.getByRole("button", { name: "确定" }).last().click();
   // 正文（WangEditor）：真实键盘输入
+  // 附件菜单（uploadAttachment）由 @wangeditor/plugin-upload-attachment 提供、在
+  // src/App.vue 注册（需在创建编辑器前且只能注册一次）。历史上 rolldown 预打包会把
+  // 该 UMD 插件的默认导出裹成 `{ default: module }`，注册静默失效、工具栏抛
+  // "Not found menu item factory by key 'uploadAttachment'"——此处守护菜单真实渲染。
+  await expect(
+    dialog.locator('[data-menu-key="uploadAttachment"]').first()
+  ).toBeVisible({ timeout: 15_000 });
   const editor = dialog.locator("[contenteditable='true']").first();
   await editor.click();
   await page.keyboard.type("E2E 通知公告内容");
@@ -82,6 +98,25 @@ test("通知公告：新增（富文本 + 字典级别）→ 列表可见含字�
   const levelText = row.locator(".el-text").first();
   await expect(levelText).toBeVisible();
   await expect(levelText).toHaveAttribute("style", /color:\s*rgb/);
+
+  // 查看弹层（NoticeShow 只读编辑器）：与新增弹窗同源的高度修复须生效（≥300px 告警阈值）。
+  // 行内按钮顺序为 编辑/删除/详情，「详情」无文字（icon=View、仅 tooltip），故按序号取
+  await row.hover();
+  await row.locator("button").nth(2).click();
+  const detailDialog = page.locator(".el-dialog:visible");
+  await expect(detailDialog).toBeVisible({ timeout: 10_000 });
+  await expect(detailDialog.locator(".w-e-scroll").first()).toBeVisible({
+    timeout: 10_000
+  });
+  const detailEditorH = await detailDialog
+    .locator(".w-e-scroll")
+    .first()
+    .evaluate(el => (el as HTMLElement).offsetHeight);
+  expect(detailEditorH).toBeGreaterThanOrEqual(300);
+  await detailDialog.locator(".el-dialog__headerbtn").first().click();
+  await expect(page.locator(".el-dialog:visible")).toHaveCount(0, {
+    timeout: 10_000
+  });
 
   // 编辑：改标题后新标题可见
   const edited = `${title}-改`;
@@ -114,4 +149,7 @@ test("通知公告：新增（富文本 + 字典级别）→ 列表可见含字�
   await expect(page.locator(".el-table__row", { hasText: edited })).toHaveCount(
     0
   );
+
+  // 全流程（创建/编辑/查看三处编辑器）都不应出现编辑区高度告警
+  expect(editorWarnings).toEqual([]);
 });
