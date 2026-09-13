@@ -21,7 +21,13 @@ import type {
 /** 协议版本，与服务端 PROTOCOL_VERSION 对齐 */
 export const WS_PROTOCOL_VERSION = 1;
 
-/** 消息动作（字符串常量，与服务端 MessageAction 一致） */
+/**
+ * 消息动作（字符串常量，与服务端 MessageAction 一致）
+ *
+ * `CHAT_MESSAGE` 在两条通道上载荷不同（历史原因）：
+ * - `/ws/message/{group}/{username}`（MessageNotify，仅兼容保留）→ ChatMessagePayload；
+ * - `/ws/chat/`（ChatNotify，聊天室页面）→ ChatRoomMessage。
+ */
 export const MessageAction = {
   /** 心跳：上行 ping → 下行 data='pong' */
   PING: "ping",
@@ -31,6 +37,12 @@ export const MessageAction = {
   PUSH_MESSAGE: "push_message",
   /** 聊天室消息（双向） */
   CHAT_MESSAGE: "chat_message",
+  /** 消息撤回（双向，ws/chat/） */
+  CHAT_RECALL: "chat_recall",
+  /** 已读回执（上行 chat_read → 下行最新游标） */
+  CHAT_READ: "chat_read",
+  /** 未读红点推送（下行，ws/chat/） */
+  CHAT_UNREAD: "chat_unread",
   /** 任务执行日志增量推送 */
   TASK_LOG: "task_log",
   /** 监控面板指标推送（system/ws_monitor.py） */
@@ -85,13 +97,54 @@ export interface PushMessagePayload {
   [key: string]: unknown;
 }
 
-/** 聊天泡载荷（chat_message；服务端回填 pk/username 后广播） */
+/** 历史聊天通道（ws/message/*）气泡载荷；服务端回填 pk/username 后广播 */
 export interface ChatMessagePayload {
   text?: string;
   pk?: string | number;
   username?: string;
   userinfo?: { username?: string };
   [key: string]: unknown;
+}
+
+/** 聊天室消息（ChatRoomMessage，与 src/api/chat 的 ChatMessageItem 同形状） */
+export interface ChatRoomMessage {
+  id: number;
+  room_id: number;
+  room_type: string;
+  sender_pk: number | null;
+  sender_name: string;
+  sender_avatar: string;
+  message_type: "text" | "ai" | "system";
+  content: string;
+  created_time: string;
+  client_msg_id: string;
+  extra: {
+    mode?: "chat" | "kb";
+    sources?: Array<{ title: string; path: string; chunk_index: number }>;
+    error?: boolean;
+  };
+  is_recalled?: boolean;
+  can_recall?: boolean;
+}
+
+/** 消息撤回帧（chat_recall） */
+export interface ChatRecallPayload {
+  message_id: number;
+  id?: number;
+  room_id: number;
+  operator_pk?: number;
+}
+
+/** 已读回执帧（chat_read） */
+export interface ChatReadPayload {
+  room_id: number;
+  last_read_id: number;
+}
+
+/** 未读红点帧（chat_unread） */
+export interface ChatUnreadPayload {
+  room_id: number;
+  unread_count: number;
 }
 
 /** 当前登录用户信息帧（userinfo） */

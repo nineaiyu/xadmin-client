@@ -280,13 +280,29 @@ export const useUserStore = defineStore("pure-user", {
               this.INCR_NOTICECOUNT();
               break;
             case "chat_message":
+              // @提及：点击跳聊天室并定位到该会话（服务端下发 room_id）
               ElNotification({
                 title: `${data?.notice_type?.label}-${data?.title}`,
                 message: h("i", { style: "color: teal" }, message),
                 duration: 3000,
                 onClick: () => {
                   router.push({
-                    name: "Chat"
+                    name: "Chat",
+                    query: data?.room_id ? { room: String(data.room_id) } : {}
+                  });
+                }
+              });
+              break;
+            case "chat_private":
+              // 私聊提醒（对端未开聊天室时推送）：点击直达该私聊会话
+              ElNotification({
+                title: `${data?.notice_type?.label}-${data?.title}`,
+                message: h("i", { style: "color: teal" }, message),
+                duration: 5000,
+                onClick: () => {
+                  router.push({
+                    name: "Chat",
+                    query: data?.room_id ? { room: String(data.room_id) } : {}
                   });
                 }
               });

@@ -296,4 +296,16 @@ class PureWebSocket extends WS {
   }
 }
 
-export { WS, PureWebSocket };
+/**
+ * 聊天室专用通道（ADR-034，服务端 message/consumers.py::ChatNotify）。
+ *
+ * 与 PureWebSocket（全局通知连接）分离：聊天页自建一条，避免与 user store
+ * 的 onmessage 争抢；服务端不为该连接登记登录日志/UserSession。
+ */
+class ChatWebSocket extends WS {
+  constructor(options?: WSOptions) {
+    super(`${VITE_WSS_DOMAIN}/ws/chat/`, options);
+  }
+}
+
+export { WS, PureWebSocket, ChatWebSocket };

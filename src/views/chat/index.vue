@@ -1,171 +1,186 @@
 <script lang="ts" setup>
-import { computed, onMounted, onUnmounted, reactive, ref } from "vue";
-import { DynamicScroller, DynamicScrollerItem } from "vue-virtual-scroller";
-import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
-import { message } from "@/utils/message";
+import { computed, onActivated, onMounted, onUnmounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { PureWebSocket, WS } from "@/utils/websocket";
-import {
-  MessageAction,
-  isOutboundMessage,
-  type ChatMessagePayload,
-  type UserinfoPayload
-} from "@/utils/websocket/protocol";
+import { useRoute } from "vue-router";
+import { ElMessageBox } from "element-plus";
+import { message } from "@/utils/message";
+import type { ChatMessageItem } from "@/api/chat";
+import { useChat } from "./hooks/useChat";
+import ChatSidebar from "./components/ChatSidebar.vue";
+import ChatWindow from "./components/ChatWindow.vue";
 
+/**
+ * 聊天室（ADR-034）：微信式两栏布局。
+ *
+ * 左栏 = 会话（公共聊天室 / AI 助手 / 私聊，未读红点）+ 最近在线联系人；
+ * 右栏 = 消息气泡 + 输入区。窄屏（<768px）左栏折叠为抽屉。
+ *
+ * 路由/keep-alive 依赖组件名 `Chat`（user store 的通知点击跳本页）。
+ */
 defineOptions({
   name: "Chat"
 });
+
 const { t } = useI18n();
-const msgData = ref([]);
-const chatMsg = ref("");
-const scroller = ref();
-const userinfo = reactive({
-  username: "",
-  pk: ""
+const route = useRoute();
+const chat = useChat();
+const drawerVisible = ref(false);
+const isNarrow = ref(false);
+
+const aiCommand = computed(() => chat.roomState.aiHint.value || "/kb");
+
+function updateViewport() {
+  isNarrow.value = window.innerWidth < 768;
+}
+
+/** 站内信通知点击跳转时会带 `?room=<id>`：定位到目标会话 */
+function applyRouteRoom() {
+  const roomId = Number(route.query.room ?? 0);
+  if (roomId && chat.rooms.value.some(item => item.id === roomId)) {
+    chat.activate(roomId);
+  }
+}
+
+/** 在线态轮询（30s）：联系人进出与私聊对端在线点按此粒度刷新 */
+let presenceTimer: number | undefined;
+
+function refreshPresence() {
+  chat.roomState.loadContacts();
+  chat.roomState.loadRooms();
+}
+
+onMounted(async () => {
+  updateViewport();
+  window.addEventListener("resize", updateViewport);
+  await Promise.all([
+    chat.roomState.loadRooms(),
+    chat.roomState.loadContacts()
+  ]);
+  applyRouteRoom();
+  chat.connect();
+  presenceTimer = window.setInterval(refreshPresence, 30_000);
 });
-const ws = ref<WS>();
 
-const scrollToBottom = () => {
-  scroller.value?.scrollToBottom();
-};
+watch(() => route.query.room, applyRouteRoom);
 
-const onMessage = (raw: unknown) => {
-  // 协议帧分派（protocol.ts）：userinfo / chat_message，其余忽略
-  if (isOutboundMessage<UserinfoPayload>(raw, MessageAction.USERINFO)) {
-    userinfo.username = raw.data?.userinfo?.username ?? "";
-    userinfo.pk = String(raw.data?.pk ?? "");
-  } else if (
-    isOutboundMessage<ChatMessagePayload>(raw, MessageAction.CHAT_MESSAGE)
-  ) {
-    msgData.value.push({ ...raw.data, timestamp: raw.timestamp });
-    scrollToBottom();
-  }
-};
-
-const chatHandle = () => {
-  if (chatMsg.value) {
-    ws.value.send(
-      JSON.stringify({
-        action: MessageAction.CHAT_MESSAGE,
-        data: { text: chatMsg.value }
-      })
-    );
-    chatMsg.value = "";
-  } else {
-    message("消息不存在", { type: "warning" });
-  }
-};
-const enter = ref(false);
-
-onMounted(() => {
-  ws.value = new PureWebSocket("system_default_websocket", "xadmin", {
-    openCallback: () => {
-      message("连接建立成功", { type: "success" });
-      enter.value = true;
-      ws.value.send(JSON.stringify({ action: MessageAction.USERINFO }));
-      ws.value.onMessage(data => {
-        onMessage(data);
-      });
-    },
-    errorCallback() {
-      message(`连接已断开，正在进行第${ws.value.reconnectCount}次重试`, {
-        type: "warning"
-      });
-    }
-  });
+onActivated(() => {
+  // keep-alive 返回聊天页：刷新在线态（连接由 onUnmounted 关闭，需重连）
+  refreshPresence();
+  if (!chat.connected.value) chat.connect();
 });
 
 onUnmounted(() => {
-  if (ws.value) ws.value.close();
+  window.removeEventListener("resize", updateViewport);
+  if (presenceTimer) window.clearInterval(presenceTimer);
 });
-const search = ref("");
-const filteredItems = computed(() => {
-  if (!search.value) return msgData.value;
-  const lowerCaseSearch = search.value;
-  return msgData.value.filter(i => i.text == lowerCaseSearch);
-});
+
+function selectRoom(roomId: number) {
+  chat.activate(roomId);
+  if (isNarrow.value) drawerVisible.value = false;
+}
+
+async function openPrivate(peerPk: number) {
+  const { ok, detail } = await chat.roomState.openPrivate(peerPk);
+  if (ok) {
+    if (isNarrow.value) drawerVisible.value = false;
+  } else if (detail) {
+    message(String(detail), { type: "warning" });
+  }
+}
+
+function submit(content: string) {
+  if (chat.activeRoom.value?.room_type === "ai") chat.sendAi(content);
+  else chat.send(content);
+}
+
+async function recall(item: ChatMessageItem) {
+  try {
+    await ElMessageBox.confirm(t("chat.recallConfirm"), {
+      confirmButtonText: t("buttons.sure"),
+      cancelButtonText: t("buttons.cancel"),
+      type: "warning",
+      confirmButtonClass: "el-button--danger",
+      draggable: true
+    });
+  } catch {
+    return;
+  }
+  await chat.recall(item);
+}
 </script>
 
 <template>
-  <el-row :gutter="24">
-    <el-col :lg="13" :md="13" :sm="24" :xl="13" :xs="24">
-      <el-card class="mb-4 box-card" shadow="never">
-        <template #header>
-          <div class="card-header">
-            <span class="font-medium">公共聊天室</span>
-          </div>
-        </template>
-        <div class="h-125">
-          <DynamicScroller
-            ref="scroller"
-            :items="filteredItems"
-            :min-item-size="20"
-            class="scroller"
-            key-field="timestamp"
-            @resize="scrollToBottom"
-          >
-            <template #default="{ item, index, active }">
-              <DynamicScrollerItem
-                :active="active"
-                :class="[userinfo.pk === item.pk ? 'message-me' : 'message']"
-                :data-active="active"
-                :data-index="index"
-                :item="item"
-                :size-dependencies="[item.text]"
-                :title="`${index} ${item.username}  ${item.pk}`"
-              >
-                <div class="flex items-center">
-                  <el-text type="info">{{ item.username }}：</el-text>
-                  <el-text type="primary">{{ item.text }}</el-text>
-                </div>
-              </DynamicScrollerItem>
-            </template>
-          </DynamicScroller>
-        </div>
-      </el-card>
-      <el-card>
-        <el-form-item :label="t('chat.inputLabel')">
-          <div class="w-[60%]">
-            <el-input
-              v-model="chatMsg"
-              :placeholder="t('chat.inputPlaceholder')"
-              @keyup.enter="chatHandle"
-            />
-          </div>
-          <el-button @click="chatHandle">{{ t("chat.send") }}</el-button>
-        </el-form-item>
-      </el-card>
-    </el-col>
-  </el-row>
+  <div
+    class="chat-page flex overflow-hidden rounded bg-bg_color"
+    :style="{ height: 'calc(100vh - 148px)', minHeight: '420px' }"
+    data-testid="chat-page"
+  >
+    <ChatSidebar
+      v-if="!isNarrow"
+      class="w-70 shrink-0"
+      :rooms="chat.rooms.value"
+      :contacts="chat.contacts.value"
+      :active-room-id="chat.activeRoomId.value"
+      :ai-enabled="chat.roomState.aiEnabled.value"
+      :ai-hint="chat.roomState.aiHint.value"
+      :loading="chat.roomState.loadingRooms.value"
+      :loading-contacts="chat.roomState.loadingContacts.value"
+      @select="selectRoom"
+      @open-private="openPrivate"
+      @refresh-contacts="chat.roomState.loadContacts()"
+    />
+
+    <el-drawer
+      v-if="isNarrow"
+      v-model="drawerVisible"
+      direction="ltr"
+      size="80%"
+      :with-header="false"
+    >
+      <ChatSidebar
+        :rooms="chat.rooms.value"
+        :contacts="chat.contacts.value"
+        :active-room-id="chat.activeRoomId.value"
+        :ai-enabled="chat.roomState.aiEnabled.value"
+        :ai-hint="chat.roomState.aiHint.value"
+        :loading="chat.roomState.loadingRooms.value"
+        :loading-contacts="chat.roomState.loadingContacts.value"
+        @select="selectRoom"
+        @open-private="openPrivate"
+        @refresh-contacts="chat.roomState.loadContacts()"
+      />
+    </el-drawer>
+
+    <ChatWindow
+      class="grow"
+      :room="chat.activeRoom.value"
+      :groups="chat.messageGroups.value"
+      :mine="chat.isMine"
+      :contacts="chat.contacts.value"
+      :ai-enabled="chat.roomState.aiEnabled.value"
+      :ai-hint="chat.roomState.aiHint.value"
+      :ai-command="aiCommand"
+      :loading="chat.loadingHistory.value"
+      :has-more="chat.hasMore.value"
+      :loading-more="chat.loadingMore.value"
+      :thinking="chat.thinking.value"
+      :connected="chat.connected.value"
+      :pending-count="chat.pendingCount.value"
+      :is-narrow="isNarrow"
+      @send="submit"
+      @recall="recall"
+      @resend="chat.resend"
+      @load-more="chat.loadMore"
+      @scroll="chat.onScroll"
+      @scroll-to-bottom="chat.scrollToBottom"
+      @scroller="chat.scroller.value = $event"
+      @toggle-sidebar="drawerVisible = true"
+    />
+  </div>
 </template>
 
 <style lang="scss" scoped>
-.main-content {
-  margin: 0 !important;
-}
-
-.message {
-  box-sizing: border-box;
-  display: flex;
-  min-height: 28px;
-  padding: 12px;
-}
-
-.message-me {
-  box-sizing: border-box;
-  display: flex;
-  justify-content: flex-end;
-  min-height: 28px;
-  padding: 12px;
-}
-
-.scroller {
-  flex: auto 1 1;
-  height: 100%;
-}
-
-:deep(.vue-recycle-scroller__item-view.hover) {
-  color: white;
-  background: #4fc08d;
+.chat-page {
+  border: 1px solid var(--pure-border-color);
 }
 </style>
