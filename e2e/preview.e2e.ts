@@ -12,11 +12,12 @@ import {
 } from "./helpers";
 
 /**
- * 权限可视化（三层权限预览 + 数据权限试算）E2E 回归。
+ * 权限可视化（三层权限预览 + 数据权限/字段权限试算）E2E 回归。
  *
  * 覆盖计划文档「交互要点」与步骤 5 双角色验证：
- * - 超管：用户预览六分区渲染、API 码关键字过滤、数据权限试算（count/note/SQL）、角色授权预览
- * - 数据权限用户（e2e_dp，规则=仅本人）：预览规则解码文案、试算 count 真实生效（=1）
+ * - 超管：用户预览六分区渲染、API 码关键字过滤、数据权限试算（count/note/样本/SQL）、角色授权预览
+ * - 数据权限用户（e2e_dp，规则=仅本人）：预览规则解码文案、试算 count 真实生效（=1）、授权来源诊断
+ * - 数据权限配置页：新增弹窗内即时试算面板渲染（数据/字段两个作用域）
  * - 普通用户（e2e_user，无角色）：直打预览/试算接口 401/403
  *
  * 环境注意（种子 scripts/e2e_seed.py）：
@@ -147,7 +148,7 @@ test.describe("用户权限预览（超管）", () => {
     await expect(rows).toHaveCount(total);
   });
 
-  test("数据权限试算：count + 超管提示 + SQL", async ({ page }) => {
+  test("数据权限试算：count + 超管提示 + 样本 + SQL", async ({ page }) => {
     const drawer = await openUserPreviewAsAdmin(page, "xadmin");
     const trial = await runTrial(page, drawer, "system.userinfo");
     // 命中行数为正数大字展示
@@ -156,6 +157,9 @@ test.describe("用户权限预览（超管）", () => {
     expect(Number(await hitCount.textContent())).toBeGreaterThan(0);
     // 超管旁路提示
     await expect(trial).toContainText("试算返回全量");
+    // 试算增强：命中样本（行标识）与耗时展示
+    await expect(trial).toContainText("命中样本");
+    await expect(trial).toContainText("耗时");
     // SQL 只读回显（SELECT 语句 + 目标表名）
     const sql = await trial.locator("textarea").first().inputValue();
     expect(sql).toContain("SELECT");
@@ -185,6 +189,37 @@ test.describe("数据权限预览与试算（e2e_dp：仅本人规则真实生�
     expect(Number(await hitCount.textContent())).toBe(1);
     // e2e_dp 无超管旁路 → 不出现全量提示
     await expect(trial).not.toContainText("试算返回全量");
+    // 样本行给出命中行的标识（str(user) = 昵称(username)）
+    await expect(trial).toContainText("命中样本");
+    await expect(trial).toContainText("e2e_dp");
+    // 授权来源诊断：列出生效授权（个人授权）——解释 count 从何而来
+    await expect(trial).toContainText("生效授权来源");
+    await expect(trial).toContainText("个人授权");
+  });
+});
+
+test.describe("数据权限配置页即时试算", () => {
+  test("新增弹窗内渲染试算面板（数据/字段两个作用域）", async ({ page }) => {
+    await login(page);
+    await openMenuPath(
+      page,
+      ["系统管理", "权限管理"],
+      "/system/permission/index"
+    );
+    await page.getByRole("button", { name: "新增" }).first().click();
+    const dialog = page.locator(".el-dialog").filter({ hasText: "新增" });
+    await expect(dialog).toBeVisible({ timeout: 15_000 });
+    // 面板默认展开（折叠时极易被忽略）
+    await expect(dialog.getByText("即时试算（未保存的规则）")).toBeVisible({
+      timeout: 10_000
+    });
+    // 两个作用域页签：数据权限（草稿规则）/ 字段权限（生效字段）
+    await expect(
+      dialog.getByText("数据权限", { exact: true }).first()
+    ).toBeVisible();
+    await expect(
+      dialog.getByText("字段权限", { exact: true }).first()
+    ).toBeVisible();
   });
 });
 

@@ -38,10 +38,14 @@ interface FormProps {
   formInline?: FormItemProps;
   fieldLookupsData?: FieldLookupNode[];
   ruleList?: FieldLookupNode[];
+  /** 字段权限注册表（ROLE）树：字段试算草稿候选 */
+  fieldRuleList?: FieldLookupNode[];
   dataList?: FieldRuleRow[];
   valuesData?: FieldLookupItem[];
   /** 菜单上下文候选（配置页即时试算面板用） */
   menus?: Array<{ value: string; label: string }>;
+  /** 当前表单值（试算面板读 mode_type / 绑定菜单，保证草稿与保存同语义） */
+  formValue?: unknown;
 }
 
 export type { FormItemProps, FormProps };
