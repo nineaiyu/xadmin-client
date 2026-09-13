@@ -22,4 +22,14 @@ export const personalAccessTokenApi = new (class extends BaseApi {
       `${this.baseApi}/${pk}/stats`
     );
   };
+
+  /** 可授权的接口范围（按本人权限收口，供令牌接口范围勾选） */
+  scopeOptions = () => {
+    return this.request<BaseResult>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/scope-options`
+    );
+  };
 })("/api/system/personal-access-tokens");
