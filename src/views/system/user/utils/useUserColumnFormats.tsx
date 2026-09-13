@@ -6,6 +6,7 @@ import { h, shallowRef, ref, type Ref, type UnwrapNestedRefs } from "vue";
 import { ElImage } from "element-plus";
 import {
   handleOperation,
+  isReadonlyCell,
   openDialogDrawer,
   renderSwitch,
   type usePublicHooks,
@@ -53,16 +54,19 @@ export function useUserColumnFormats({
     columns.forEach(column => {
       switch (column._column?.key) {
         case "avatar":
-          column["cellRenderer"] = ({ row }) =>
-            h(ElImage, {
+          column["cellRenderer"] = scope => {
+            const src = scope.row[column._column?.key];
+            return h(ElImage, {
               lazy: true,
-              src: row[column._column?.key],
+              src,
               // 无头像用户 alt 为空串（装饰图）；非空才用图片地址，避免 alt 缺失
-              alt: row[column._column?.key] || "用户头像",
+              alt: src || "用户头像",
               class: ["w-[36px]", "h-[36px]", "align-middle"],
-              previewSrcList: [row[column._column?.key]],
+              // 回收站只读：不提供点击放大预览
+              previewSrcList: isReadonlyCell(scope) ? undefined : [src],
               previewTeleported: true
             });
+          };
           break;
         case "gender":
           // 字典驱动（user_gender）：字典色优先彩色 tag（统一走 statusTagProps，

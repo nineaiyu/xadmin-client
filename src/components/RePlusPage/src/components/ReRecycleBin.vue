@@ -17,11 +17,13 @@ type RecycleBinApi = Pick<
 >;
 
 /** 自定义单元格：cellRenderer 返回 VNode 直接渲染，文本/空值回退到行字段。
- * 两个关键点：
+ * 三个关键点：
  * 1. 渲染器约定 pure-table 的参数形状（handle.tsx 的 el-switch/el-tag 读
  *    scope.props.size），这里补齐最小参数集；
  * 2. el-table-column 注册阶段会用空 row 调用一次插槽，而回收行必有 pk，
- *    据此跳过真实渲染，否则业务渲染器（如 row.gender.label）会崩整表。 */
+ *    据此跳过真实渲染，否则业务渲染器（如 row.gender.label）会崩整表；
+ * 3. 以 `readonly: true` 调用渲染器：行已软删除，除操作列「恢复」外不得再提供
+ *    可变更入口（框架开关据此置灰，见 handle.tsx 的 isReadonlyCell）。 */
 const CellContent = (props: {
   column: RecycleBinColumn;
   row: Record<string, unknown>;
@@ -32,7 +34,8 @@ const CellContent = (props: {
     row: props.row,
     index: props.index,
     size: "default",
-    props: { size: "default" }
+    props: { size: "default" },
+    readonly: true
   });
   if (isVNode(rendered)) return rendered;
   if (rendered != null && rendered !== "") return h("span", String(rendered));

@@ -60,6 +60,13 @@ test("角色回收站：删除 → 回收站恢复 → 列表重现", async ({ p
   const drawerRow = drawer.locator(".el-table__row", { hasText: roleName });
   await expect(drawerRow).toBeVisible({ timeout: 15_000 });
 
+  // 回收站只读：行已软删除，除操作列「恢复」外不得再提供可变更入口
+  // （激活状态 / 内置等布尔列开关必须置灰）
+  await expect(drawerRow.locator(".el-switch").first()).toBeVisible();
+  await expect(drawerRow.locator(".el-switch:not(.is-disabled)")).toHaveCount(
+    0
+  );
+
   // 单行恢复 → 抽屉中消失（popconfirm 的 popper teleport 到 body，须 page 级定位）
   await drawerRow.getByRole("button", { name: "恢复" }).last().click();
   await page

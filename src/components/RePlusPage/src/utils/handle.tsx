@@ -19,6 +19,17 @@ interface operationOptions {
 }
 
 /**
+ * 单元格渲染作用域是否处于只读场景（回收站抽屉以 `readonly: true` 调用）。
+ *
+ * 回收站里的行已软删除，除操作列「恢复」外不应再提供任何可变更/可交互入口：
+ * 框架内建开关渲染器据此置灰，业务自定义交互单元格（下载链接 / 预览按钮 /
+ * 明细入口等）应在只读场景下降级为纯展示。该标记由 ReRecycleBin 附加，
+ * `@pureadmin/table` 的 TableColumnRenderer 未声明该位，故从 unknown 收窄读取。
+ */
+const isReadonlyCell = (scope: unknown) =>
+  (scope as { readonly?: boolean } | undefined)?.readonly === true;
+
+/**
  * 请求接口封装
  * @param options
  */
@@ -216,7 +227,7 @@ const renderSwitch = (switchOptions: switchOptions) => {
       active-text={defaultActionMap["true"]}
       inactive-text={defaultActionMap["false"]}
       inline-prompt
-      disabled={disabled && disabled(scope.row)}
+      disabled={isReadonlyCell(scope) || Boolean(disabled?.(scope.row))}
       style={switchStyle.value}
       onChange={() => {
         onSwitchChange({
@@ -269,5 +280,11 @@ export type {
   DialogFormInstance
 } from "./handle-dialog";
 export type { exportDataOptions, importDataOptions } from "./handle-record";
-export { renderSwitch, onSwitchChange, handleOperation, renderBooleanTag };
+export {
+  renderSwitch,
+  onSwitchChange,
+  handleOperation,
+  renderBooleanTag,
+  isReadonlyCell
+};
 export type { changeOptions, switchOptions, operationOptions };

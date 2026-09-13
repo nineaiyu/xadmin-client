@@ -54,6 +54,12 @@ test("用户回收站：删除 → 回收站恢复 → 列表重现", async ({ p
   const drawerRow = drawer.locator(".el-table__row", { hasText: username });
   await expect(drawerRow).toBeVisible({ timeout: 15_000 });
 
+  // 回收站只读：block / is_active 等布尔列开关必须置灰（框架按 readonly 场景禁用）
+  await expect(drawerRow.locator(".el-switch").first()).toBeVisible();
+  await expect(drawerRow.locator(".el-switch:not(.is-disabled)")).toHaveCount(
+    0
+  );
+
   // 单行恢复 → 抽屉中消失
   await drawerRow.getByRole("button", { name: "恢复" }).last().click();
   await page

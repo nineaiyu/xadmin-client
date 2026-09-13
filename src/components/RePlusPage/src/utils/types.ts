@@ -149,12 +149,17 @@ interface RecycleBinColumn {
   label?: string;
   /** 单元格格式化（row 为动态接口数据行） */
   formatter?: (row: RecordType) => string;
-  /** 自定义单元格渲染（与主列表 cellRenderer 同形，返回 VNode 或文本） */
+  /**
+   * 自定义单元格渲染（与主列表 cellRenderer 同形，返回 VNode 或文本）。
+   * 回收站为只读场景，`readonly` 恒为 true：交互单元格（开关/链接/预览按钮）
+   * 须置灰或降级为纯展示，可用 `isReadonlyCell(scope)` 判定
+   */
   cellRenderer?: (data: {
     row: RecordType;
     index: number;
     size?: string;
     props?: { size?: string };
+    readonly?: boolean;
   }) => unknown;
 }
 

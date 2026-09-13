@@ -14,10 +14,11 @@ import { addDialog } from "@/components/ReDialog";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { NoticeChoices } from "@/views/system/constants";
-import type {
-  PageTableColumn,
-  OperationProps,
-  RePlusPageProps
+import {
+  isReadonlyCell,
+  type PageTableColumn,
+  type OperationProps,
+  type RePlusPageProps
 } from "@/components/RePlusPage";
 import NoticeShowForm from "@/views/system/components/NoticeShow.vue";
 import WangEditor from "@/components/RePlusPage/src/components/WangEditor.vue";
@@ -84,18 +85,29 @@ export function useNotice(tableRef: Ref) {
           );
           break;
         case "read_user_count":
-          column["cellRenderer"] = ({ row }) => (
-            <el-link
-              type={row.level?.value}
-              style={row.level?.color ? { color: row.level.color } : undefined}
-              onClick={() => onGoNoticeReadDetail(row)}
-            >
-              {row.notice_type?.value === NoticeChoices.NOTICE
+          column["cellRenderer"] = scope => {
+            const { row } = scope;
+            const content = `${
+              row.notice_type?.value === NoticeChoices.NOTICE
                 ? t("systemNotice.allRead")
-                : row.user_count}
-              /{row.read_user_count}
-            </el-link>
-          );
+                : row.user_count
+            }/${row.read_user_count}`;
+            // 回收站只读：不提供「阅读明细」入口
+            if (isReadonlyCell(scope)) {
+              return <span>{content}</span>;
+            }
+            return (
+              <el-link
+                type={row.level?.value}
+                style={
+                  row.level?.color ? { color: row.level.color } : undefined
+                }
+                onClick={() => onGoNoticeReadDetail(row)}
+              >
+                {content}
+              </el-link>
+            );
+          };
           column["minWidth"] = 140;
           break;
       }
