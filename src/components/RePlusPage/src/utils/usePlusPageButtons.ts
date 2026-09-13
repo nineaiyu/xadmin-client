@@ -92,7 +92,11 @@ export function usePlusPageButtons({
       props: {
         type: "primary",
         icon: useRenderIcon(View),
-        link: true
+        link: true,
+        // icon-only 按钮：tooltip 不产生可编程可访问名（axe button-name critical），
+        // 必须显式提供 aria-label（种子/演示数据让列表有行后，a11y 扩面扫描即暴露）；
+        // 键名用 "aria-label" 字符串：ariaLabel 驼峰透传到 DOM 会丢失连字符而失效
+        "aria-label": t("buttons.detail")
       },
       onClick: ({ row }) => {
         handleDetail(row);
