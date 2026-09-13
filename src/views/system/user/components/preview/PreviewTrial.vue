@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { userApi } from "@/api/system/user";
 import { message } from "@/utils/message";
+import TrialResultPanel from "@/views/system/components/TrialResultPanel.vue";
 import type {
   PreviewMenuItem,
   TrialCandidate,
@@ -133,30 +134,8 @@ async function runTrial() {
         </el-button>
       </div>
 
-      <template v-if="result">
-        <div class="mt-3 flex items-center gap-2">
-          <span class="text-sm text-gray-500">{{
-            t("permissionPreview.hitCount")
-          }}</span>
-          <span class="text-xl font-semibold">{{ result.count }}</span>
-        </div>
-        <el-alert
-          v-if="result.note"
-          :title="result.note"
-          type="warning"
-          :closable="false"
-          show-icon
-          class="mt-2"
-        />
-        <el-input
-          :model-value="result.sql"
-          type="textarea"
-          readonly
-          :rows="6"
-          class="mt-2"
-          :label="t('permissionPreview.sql')"
-        />
-      </template>
+      <!-- 命中行数 + 耗时 + 样本行 + 生效授权诊断 + SQL（与配置页抽成共用组件） -->
+      <TrialResultPanel v-if="result" :result="result" />
     </template>
   </div>
 </template>

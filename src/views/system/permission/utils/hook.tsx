@@ -25,6 +25,8 @@ import { formatFiledAppParent } from "@/views/system/hooks";
 export function useDataPermission() {
   const { t } = useI18n();
   const fieldLookupsData = ref([]);
+  /** 字段权限注册表（ROLE）：字段试算草稿候选 */
+  const fieldLookupsRole = ref([]);
   const valuesData = ref([]);
 
   const api = reactive(dataPermissionApi);
@@ -117,6 +119,19 @@ export function useDataPermission() {
             fieldLookupsData.value = handleTree(res.data.results);
           }
         });
+      // 字段权限注册表（ROLE）：供字段试算草稿选择模型/字段
+      modelLabelFieldApi
+        .list({
+          page: 1,
+          size: 1000,
+          field_type: FieldChoices.ROLE
+        })
+        .then(res => {
+          if (res.code === 1000) {
+            formatFiledAppParent(res.data.results);
+            fieldLookupsRole.value = handleTree(res.data.results);
+          }
+        });
     }
     modelLabelFieldApi.choices().then(res => {
       if (res.code === 1000) {
@@ -174,7 +189,7 @@ export function useDataPermission() {
           };
           return column;
         },
-        rules: ({ column }) => {
+        rules: ({ column, formValue }) => {
           column["hasLabel"] = false;
           column["renderField"] = (value, onChange) => {
             return h(filterForm, {
@@ -182,7 +197,10 @@ export function useDataPermission() {
               dataList: value as FieldRuleRow[],
               valuesData: valuesData.value,
               ruleList: fieldLookupsData.value,
+              fieldRuleList: fieldLookupsRole.value,
               menus: menuContextOptions.value,
+              // 表单值 Ref：试算面板据此自动带入且/或模式与绑定菜单（草稿与保存同语义）
+              formValue,
               onChange
             });
           };

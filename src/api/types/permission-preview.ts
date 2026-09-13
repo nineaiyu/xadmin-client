@@ -116,23 +116,86 @@ export interface UserPreviewResult {
 
 /** 试算草稿：配置页即时验证影响面（不落库，仅参与本次试算） */
 export interface TrialDraft {
-  rules: Array<Record<string, unknown>>;
+  /** 数据权限规则草稿（scope=data） */
+  rules?: Array<Record<string, unknown>>;
   mode_type?: number;
-  /** 草稿绑定的菜单：仅在该菜单上下文下参与试算 */
-  menu?: string | null;
+  /** 草稿绑定的菜单（单 pk 或 pk 列表）：仅在这些菜单上下文下参与试算 */
+  menu?: string | string[] | null;
+  /** 字段权限白名单草稿（scope=field）：{model: [field,...]} */
+  fields?: Record<string, string[]>;
 }
 
-/** POST /api/system/user/{pk}/preview/trial 响应 data */
+/** 试算授权诊断项：解释命中行数由哪些授权决定 */
+export interface TrialGrantDiagnosis {
+  /** personal=个人授权 / dept=部门链授权 / draft=当前草稿 */
+  source: "personal" | "dept" | "draft";
+  name: string;
+  dept_name: string | null;
+  /** 是否参与本次编译（与当前模型相关） */
+  applied: boolean;
+  /** all=全部数据 / condition=条件过滤 / deny=恒空 / none=与模型无关 */
+  kind: "all" | "condition" | "deny" | "none";
+}
+
+/** 试算样本行（只回行标识，不展开字段内容） */
+export interface TrialSampleRow {
+  pk: string;
+  label: string;
+}
+
+/** POST /api/system/user/{pk}/preview/trial 响应 data（scope=data） */
 export interface TrialResult {
+  scope: "data";
   model: string;
   menu: string | null;
   count: number;
   sql: string;
+  /** 命中样本行（最多 sample_limit 条） */
+  sample?: TrialSampleRow[];
+  sample_limit?: number;
+  /** 参与编译的授权组诊断 */
+  grants?: TrialGrantDiagnosis[];
+  /** 后端试算耗时（毫秒） */
+  elapsed_ms?: number;
   is_superuser: boolean;
   data_enabled: boolean;
   /** 草稿是否参与本次试算（绑定了不匹配的菜单时为 false） */
   draft_applied: boolean;
   note: string | null;
+}
+
+/** 字段权限试算单模型结果 */
+export interface FieldTrialModel {
+  model: string;
+  model_label: string;
+  /** 是否有该模型的字段白名单（未配置=运行时裁空） */
+  configured: boolean;
+  /** 生效可见字段（含草稿） */
+  fields: string[];
+  field_labels: string[];
+  /** 草稿新增可见的字段 */
+  draft_fields: string[];
+  total_fields: number;
+  total_field_labels: string[];
+}
+
+/** POST /api/system/user/{pk}/preview/trial 响应 data（scope=field） */
+export interface FieldTrialResult {
+  scope: "field";
+  menu: { pk: string; title: string };
+  enabled: boolean;
+  superuser_bypass: boolean;
+  draft_applied: boolean;
+  models: FieldTrialModel[];
+  note: string | null;
+}
+
+/** 试算请求载荷（scope 缺省为 data） */
+export interface TrialRequest {
+  scope?: "data" | "field";
+  model?: string;
+  menu?: string | null;
+  draft?: TrialDraft | null;
 }
 
 /** 部门维度预览行（部门信息 + 部门侧授权 + 成员采样） */

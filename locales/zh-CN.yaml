@@ -771,6 +771,35 @@ permissionPreview:
   draftSkipped: 草稿未生效（菜单上下文不匹配）
   hitCount: 命中行数
   noModels: 数据权限注册表为空，请先执行 sync_model_field
+  trialHint: 用当前表单里尚未保存的规则试算：草稿不落库、与保存走同一套校验，且/或模式与绑定菜单自动取自表单。
+  trialDataScope: 数据权限
+  trialFieldScope: 字段权限
+  modeOverride: 手动模式
+  modeOverrideHint: 已手动指定试算模式（表单为 {mode}），保存仍按表单模式
+  boundMenuHint: 表单绑定了 {count} 个菜单，草稿只在对应菜单上下文生效
+  elapsed: 耗时 {ms} ms
+  staleHint: 规则已变化，请重新试算
+  sampleRows: 命中样本
+  sampleNote: 仅展示前 {limit} 行标识（不含字段内容，字段权限不影响数据试算）
+  grantDiagnosis: 生效授权来源
+  diagnosisSource: 来源
+  diagnosisName: 授权
+  diagnosisKind: 判定
+  sourcePersonal: 个人授权
+  sourceDept: 部门授权
+  sourceDraft: 当前草稿
+  kindAll: 全部数据
+  kindCondition: 条件过滤
+  kindDeny: 恒空
+  kindNone: 与模型无关
+  fieldDraftTip: 字段权限按菜单生效：选择用户与菜单后试算，可叠加一份未保存的字段白名单草稿。
+  fieldMenuRequired: 请先选择菜单（字段权限按菜单生效）
+  fieldResultTitle: 生效字段
+  fieldVisible: 可见 {visible} / {total}
+  fieldUnconfigured: 未配置=裁空
+  fieldNone: 无可见字段
+  draftModel: 草稿模型（可选）
+  draftFields: 草稿字段（可选）
 
 systemMenu:
   menus: 菜单

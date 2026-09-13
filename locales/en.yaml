@@ -771,6 +771,35 @@ permissionPreview:
   draftEmpty: Add rules before running the trial
   draftApplied: Current rule draft applied
   draftSkipped: Draft skipped (menu context mismatch)
+  trialHint: "Trial-run the unsaved rules in the form; the draft is never persisted and passes the same validation as saving, while the mode and bound menus come from the form."
+  trialDataScope: Data permission
+  trialFieldScope: Field permission
+  modeOverride: Manual mode
+  modeOverrideHint: "Trial mode is set manually (form uses {mode}); saving still follows the form mode"
+  boundMenuHint: "{count} menu(s) bound in the form; the draft applies only in those menu contexts"
+  elapsed: Took {ms} ms
+  staleHint: Rules changed, run the trial again
+  sampleRows: Sample rows
+  sampleNote: "Only the first {limit} row labels are shown (no field content; field permission does not affect the data trial)"
+  grantDiagnosis: Effective grants
+  diagnosisSource: Source
+  diagnosisName: Grant
+  diagnosisKind: Result
+  sourcePersonal: Personal
+  sourceDept: Department
+  sourceDraft: Current draft
+  kindAll: All data
+  kindCondition: Condition filter
+  kindDeny: Empty result
+  kindNone: Unrelated to this model
+  fieldDraftTip: "Field permissions apply per menu: pick a user and a menu, optionally stacking an unsaved field whitelist draft."
+  fieldMenuRequired: Select a menu first (field permissions apply per menu)
+  fieldResultTitle: Effective fields
+  fieldVisible: Visible {visible} / {total}
+  fieldUnconfigured: Not configured = all hidden
+  fieldNone: No visible fields
+  draftModel: Draft model (optional)
+  draftFields: Draft fields (optional)
 
 systemMenu:
   menus: Menus

@@ -16,6 +16,7 @@ const props = withDefaults(defineProps<FormProps>(), {
   valuesData: () => [],
   dataList: () => [],
   ruleList: () => [],
+  fieldRuleList: () => [],
   menus: () => []
 });
 
@@ -108,6 +109,8 @@ watch(ruleInfo.value, () => {
     </PureTableBar>
     <!-- 即时试算：用当前未保存的规则草稿验证影响面（不落库） -->
     <TrialPanel
+      :field-rule-list="props.fieldRuleList"
+      :form-value="props.formValue"
       :menus="props.menus"
       :rule-list="props.ruleList"
       :rules="Object.values(ruleInfo)"

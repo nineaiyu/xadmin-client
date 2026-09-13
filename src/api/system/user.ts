@@ -1,6 +1,7 @@
 import { BaseApi } from "@/api/base";
 import type { BaseResult } from "@/api/types";
 import type {
+  FieldTrialResult,
   PreviewDetailResult,
   TrialDraft,
   TrialResult,
@@ -73,7 +74,7 @@ class UserApi extends BaseApi {
       `${this.baseApi}/${pk}/preview`
     );
   };
-  /** 数据权限实时试算（命中行数 + 最终 SQL；draft 为未保存的规则草稿） */
+  /** 数据权限实时试算（命中行数 + 样本行 + 授权诊断 + 最终 SQL；draft 为未保存的规则草稿） */
   previewTrial = (
     pk: number | string,
     data?: { model: string; menu?: string | null; draft?: TrialDraft | null }
@@ -82,6 +83,18 @@ class UserApi extends BaseApi {
       "post",
       {},
       data,
+      `${this.baseApi}/${pk}/preview/trial`
+    );
+  };
+  /** 字段权限试算（指定菜单下的生效字段矩阵；draft.fields 为未保存的白名单草稿） */
+  previewFieldTrial = (
+    pk: number | string,
+    data?: { menu: string; draft?: TrialDraft | null }
+  ) => {
+    return this.request<PreviewDetailResult<FieldTrialResult>>(
+      "post",
+      {},
+      { ...data, scope: "field" },
       `${this.baseApi}/${pk}/preview/trial`
     );
   };
