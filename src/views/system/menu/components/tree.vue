@@ -288,7 +288,7 @@ const {
               </span>
             </template>
           </ReTreeLine>
-          <span class="flex items-center">
+          <span class="flex items-center mr-2.5">
             <el-tooltip
               v-if="auth.create && data.menu_type !== MenuChoices.PERMISSION"
               :content="t('buttons.add')"
