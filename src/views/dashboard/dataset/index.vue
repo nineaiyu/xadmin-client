@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { ElMessageBox } from "element-plus";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import {
@@ -10,6 +11,7 @@ import {
   type DatasetItem,
   type DatasetMeta
 } from "@/api/system/datasets";
+import { choiceValue } from "@/utils/dict";
 
 defineOptions({
   name: "DataDataset"
@@ -98,7 +100,8 @@ const openEdit = (row: DatasetItem) => {
     filters: JSON.parse(JSON.stringify(row.filters ?? [])),
     ordering: row.ordering,
     row_limit: row.row_limit,
-    visibility: row.visibility,
+    // visibility 序列化为 {value,label} 对象，radio 只接受标量（归一化取 value）
+    visibility: choiceValue(row.visibility) as "personal" | "shared",
     date_field: row.config?.date_field ?? ""
   });
   dialog.value = true;
@@ -157,6 +160,20 @@ const submit = async () => {
 };
 
 const remove = async (row: DatasetItem) => {
+  try {
+    await ElMessageBox.confirm(
+      t("dataDataset.deleteConfirm", { name: row.name }),
+      {
+        confirmButtonText: t("buttons.sure"),
+        cancelButtonText: t("buttons.cancel"),
+        type: "warning",
+        confirmButtonClass: "el-button--danger",
+        draggable: true
+      }
+    );
+  } catch {
+    return;
+  }
   const res = await datasetApi.destroy(row.pk);
   if (res.code === 1000) {
     message(t("dataDataset.saveOk"), { type: "success" });
@@ -218,10 +235,12 @@ onMounted(loadAll);
         >
           <template #default="{ row }">
             <el-tag
-              :type="row.visibility === 'shared' ? 'success' : 'info'"
+              :type="
+                choiceValue(row.visibility) === 'shared' ? 'success' : 'info'
+              "
               size="small"
             >
-              {{ visibilityLabel(row.visibility) }}
+              {{ visibilityLabel(choiceValue(row.visibility)) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -270,7 +289,7 @@ onMounted(loadAll);
     <el-dialog
       v-model="dialog"
       :title="editingPk ? t('dataDataset.edit') : t('dataDataset.create')"
-      width="640px"
+      width="760px"
     >
       <el-form label-width="100px">
         <el-form-item :label="t('dataDataset.name')" required>
@@ -317,7 +336,8 @@ onMounted(loadAll);
                   :label="f"
                 />
               </el-select>
-              <el-select v-model="item.op" class="w-36">
+              <!-- op 为短枚举值，收窄让位给右侧 value 输入框 -->
+              <el-select v-model="item.op" class="w-32">
                 <el-option
                   v-for="op in opOptions"
                   :key="op"

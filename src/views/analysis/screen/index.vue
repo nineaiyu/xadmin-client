@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
+import { ElMessageBox } from "element-plus";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import {
@@ -10,6 +11,7 @@ import {
   screenApi,
   type ScreenItem
 } from "@/api/system/analysis";
+import { choiceValue } from "@/utils/dict";
 
 defineOptions({
   name: "DataScreen"
@@ -62,6 +64,8 @@ const openCreate = () => {
 const openEdit = (row: ScreenItem) => {
   editingPk.value = row.pk;
   Object.assign(form, JSON.parse(JSON.stringify(row)));
+  // visibility 序列化为 {value,label} 对象，radio 只接受标量（归一化取 value）
+  form.visibility = choiceValue(row.visibility) as "personal" | "shared";
   dialog.value = true;
 };
 
@@ -83,6 +87,20 @@ const submit = async () => {
 };
 
 const remove = async (row: ScreenItem) => {
+  try {
+    await ElMessageBox.confirm(
+      t("dataScreen.deleteConfirm", { name: row.name }),
+      {
+        confirmButtonText: t("buttons.sure"),
+        cancelButtonText: t("buttons.cancel"),
+        type: "warning",
+        confirmButtonClass: "el-button--danger",
+        draggable: true
+      }
+    );
+  } catch {
+    return;
+  }
   const res = await screenApi.destroy(row.pk);
   if (res.code === 1000) {
     await loadAll();
@@ -144,9 +162,11 @@ onMounted(loadAll);
           <template #default="{ row }">
             <el-tag
               size="small"
-              :type="row.visibility === 'shared' ? 'success' : 'info'"
+              :type="
+                choiceValue(row.visibility) === 'shared' ? 'success' : 'info'
+              "
             >
-              {{ visibilityLabel(row.visibility) }}
+              {{ visibilityLabel(choiceValue(row.visibility)) }}
             </el-tag>
           </template>
         </el-table-column>

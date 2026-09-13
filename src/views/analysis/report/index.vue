@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { ElMessageBox } from "element-plus";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { datasetApi, listRows, type DatasetItem } from "@/api/system/datasets";
@@ -10,6 +11,7 @@ import {
   runReport,
   type ReportItem
 } from "@/api/system/analysis";
+import { choiceValue } from "@/utils/dict";
 
 defineOptions({
   name: "DataReport"
@@ -81,6 +83,10 @@ const openEdit = (row: ReportItem) => {
   editingPk.value = row.pk;
   Object.assign(form, {
     ...JSON.parse(JSON.stringify(row)),
+    // mode/frequency 带 choices，序列化为 {value,label} 对象；不归一化会让
+    // radio 警告，且 mode 判断失效会把聚合报表的 date_trunc 误清空
+    mode: choiceValue(row.mode) as "rows" | "aggregate",
+    frequency: choiceValue(row.frequency) as "daily" | "weekly" | "monthly",
     recipients: (row.recipients ?? []).join(", ")
   });
   selectedDataset.value =
@@ -126,6 +132,20 @@ const submit = async () => {
 };
 
 const remove = async (row: ReportItem) => {
+  try {
+    await ElMessageBox.confirm(
+      t("dataReport.deleteConfirm", { name: row.name }),
+      {
+        confirmButtonText: t("buttons.sure"),
+        cancelButtonText: t("buttons.cancel"),
+        type: "warning",
+        confirmButtonClass: "el-button--danger",
+        draggable: true
+      }
+    );
+  } catch {
+    return;
+  }
   const res = await reportApi.destroy(row.pk);
   if (res.code === 1000) await loadAll();
 };
@@ -178,11 +198,11 @@ onMounted(loadAll);
             datasetName((row as ReportItem).dataset)
           }}</template>
         </el-table-column>
-        <el-table-column
-          prop="frequency"
-          :label="t('dataReport.frequency')"
-          width="90"
-        />
+        <el-table-column :label="t('dataReport.frequency')" width="90">
+          <template #default="{ row }">
+            {{ choiceValue((row as ReportItem).frequency) }}
+          </template>
+        </el-table-column>
         <el-table-column
           prop="send_time"
           :label="t('dataReport.sendTime')"
