@@ -3,6 +3,9 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { VueFlow, useVueFlow } from "@vue-flow/core";
 import { Background } from "@vue-flow/background";
+// vue-flow 必需样式：缺省时控制台告警且节点/边无默认主题样式
+import "@vue-flow/core/dist/style.css";
+import "@vue-flow/core/dist/theme-default.css";
 import type { NodeRow } from "./flowConfig";
 
 /**

@@ -56,10 +56,11 @@ export function useFlow(tableRef: Ref) {
       props: {},
       contentRenderer: () => h(FlowConfigDrawer)
     };
+    // 关闭不走 props（ReDrawer 会把 props 里的 onClose 与模板 @close 合并成数组），
+    // 配置抽屉内部 emit("close")，由 ReDrawer 的 @close 统一关闭
     options.props = {
       flow: row?.pk ? row : null,
-      onSaved: () => tableRef.value?.handleGetData(),
-      onClose: () => closeDrawer(options, 0)
+      onSaved: () => tableRef.value?.handleGetData()
     };
     addDrawer(options);
   };

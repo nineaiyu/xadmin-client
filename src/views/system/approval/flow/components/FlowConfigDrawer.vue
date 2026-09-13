@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, reactive, ref } from "vue";
+import { onMounted, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessage, ElRadioButton, ElRadioGroup } from "element-plus";
 import { approvalFlowApi } from "@/api/system/approvalFlow";
@@ -30,8 +30,11 @@ defineOptions({ name: "ApprovalFlowConfig" });
 const props = defineProps<{
   flow?: FlowRow | null;
   onSaved?: () => void;
-  onClose?: () => void;
 }>();
+
+// 关闭统一走 ReDrawer 约定的 close 事件（不要声明 onClose prop：ReDrawer 会把
+// v-bind 的 props 与模板 @close 监听器合并成数组，prop 类型检查会报 Expected Function）
+const emit = defineEmits<{ close: [] }>();
 
 const { t } = useI18n();
 const saving = ref(false);
@@ -42,6 +45,13 @@ const fields = ref<FieldRow[]>([]);
 const canvasRef = ref<{ syncLayout: () => void } | null>(null);
 // 节点编辑模式：列表（顺序编辑） / 画布（分支可视化 + 布局拖拽），二者共享同一 nodes
 const editMode = ref<"list" | "canvas">("list");
+// 画布懒挂载：首次切到画布时才渲染 FlowCanvas。抽屉打开时画布容器 display:none（v-show），
+// 尺寸为 0，若此时挂载会触发 "[Vue Flow]: Viewport not initialized yet" 且 fit-view 失效
+const canvasMounted = ref(false);
+
+watch(editMode, mode => {
+  if (mode === "canvas") canvasMounted.value = true;
+});
 
 function initFromFlow() {
   const flow = props.flow;
@@ -98,7 +108,7 @@ async function save() {
     if (res.code === 1000) {
       ElMessage.success(t("systemApprovalFlow.saveSuccess"));
       props.onSaved?.();
-      props.onClose?.();
+      emit("close");
     }
   } catch {
     // 失败提示（含「有在途申请不可改节点」等业务错误）由 http 拦截器统一处理
@@ -153,13 +163,16 @@ onMounted(initFromFlow);
         }}</el-radio-button>
       </el-radio-group>
     </div>
-    <FlowCanvas v-show="editMode === 'canvas'" ref="canvasRef" :nodes="nodes" />
+    <FlowCanvas
+      v-if="canvasMounted"
+      v-show="editMode === 'canvas'"
+      ref="canvasRef"
+      :nodes="nodes"
+    />
     <FlowNodesEditor v-show="editMode === 'list'" :nodes="nodes" />
 
     <div class="flex justify-end mt-4">
-      <el-button @click="props.onClose?.()">{{
-        t("buttons.cancel")
-      }}</el-button>
+      <el-button @click="emit('close')">{{ t("buttons.cancel") }}</el-button>
       <el-button type="primary" :loading="saving" @click="save">
         {{ t("buttons.save") }}
       </el-button>
