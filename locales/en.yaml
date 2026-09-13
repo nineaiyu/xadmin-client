@@ -1470,6 +1470,10 @@ dashboard:
   saveOk: Saved
   cardRequired: Please complete the card configuration
   manageDatasets: Manage Datasets
+  cardHeight: Card Height
+  cardSettings: Card Settings
+  editCard: Edit Card
+  removeConfirm: Delete dashboard "{name}"? Its layout and cards will be removed, and screens referencing it will lose this page
 
 dataDataset:
   title: Datasets
@@ -1497,6 +1501,7 @@ dataDataset:
   confirm: Confirm
   required: Name, model and columns are required
   saveOk: Saved
+  deleteConfirm: Delete dataset "{name}"? Dashboard cards and reports referencing it will no longer resolve data
 
 dataScreen:
   title: Display Screens
@@ -1516,6 +1521,7 @@ dataScreen:
   confirm: Confirm
   required: Name and dashboards are required
   saveOk: Saved
+  deleteConfirm: Delete screen "{name}"?
 
 dataReport:
   title: Scheduled Reports
@@ -1551,6 +1557,7 @@ dataReport:
   confirm: Confirm
   required: Name and dataset are required
   saveOk: Saved
+  deleteConfirm: Delete report "{name}"?
 
 webhook:
   title: Webhook Subscriptions

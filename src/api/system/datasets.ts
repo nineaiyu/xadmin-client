@@ -62,6 +62,8 @@ export type DashboardCard = {
   date_trunc?: "day" | "month";
   value_field?: string;
   span?: 3 | 6 | 9 | 12;
+  /** 卡片高度 px（缺省 224，向后兼容存量布局） */
+  height?: number;
 };
 
 export type DashboardItem = {

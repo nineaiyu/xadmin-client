@@ -132,7 +132,8 @@ onBeforeUnmount(stopTimers);
         }"
       >
         <div class="mb-2 text-sm text-gray-300">{{ card.title }}</div>
-        <div class="h-64">
+        <!-- 高度跟随卡片配置（与仪表盘页所见即所得），缺省 224 兼容存量布局 -->
+        <div :style="{ height: `${card.height ?? 224}px` }">
           <ChartCard
             :key="`${currentDashboard?.pk}-${card.id}`"
             :ref="setCardRef(card.id)"

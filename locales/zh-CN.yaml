@@ -1470,6 +1470,10 @@ dashboard:
   saveOk: 保存成功
   cardRequired: 请完整填写卡片配置
   manageDatasets: 管理数据集
+  cardHeight: 卡片高度
+  cardSettings: 卡片设置
+  editCard: 编辑卡片
+  removeConfirm: 确定删除仪表盘「{name}」吗？布局与卡片将一并移除，引用它的大屏将失去此页
 
 dataDataset:
   title: 数据集
@@ -1497,6 +1501,7 @@ dataDataset:
   confirm: 确认
   required: 请完整填写名称、模型与数据列
   saveOk: 保存成功
+  deleteConfirm: 确定删除数据集「{name}」吗？引用它的仪表盘卡片与报表将无法取数
 
 dataScreen:
   title: 大屏投屏
@@ -1516,6 +1521,7 @@ dataScreen:
   confirm: 确认
   required: 请填写名称并选择仪表盘
   saveOk: 保存成功
+  deleteConfirm: 确定删除大屏「{name}」吗？
 
 dataReport:
   title: 定时报表
@@ -1551,6 +1557,7 @@ dataReport:
   confirm: 确认
   required: 请填写名称并选择数据集
   saveOk: 保存成功
+  deleteConfirm: 确定删除报表「{name}」吗？
 
 webhook:
   title: Webhook 订阅

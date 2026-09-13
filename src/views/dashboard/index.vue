@@ -3,6 +3,8 @@ import { computed, onMounted, ref } from "vue";
 import Sortable from "sortablejs";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
+import { Setting } from "@element-plus/icons-vue";
+import { ElMessageBox } from "element-plus";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import {
@@ -131,9 +133,12 @@ const datasetName = (pk: string) =>
   datasets.value.find(item => item.pk === pk)?.name ?? pk;
 
 const spanOptions = [3, 6, 9, 12];
+/** 卡片高度档位（px）：标准 224 与存量 h-56 渲染一致，向后兼容 */
+const heightOptions = [160, 224, 320, 440];
 
-// ---- 新建卡片弹窗 ----
+// ---- 卡片弹窗（新建 / 编辑双模式） ----
 const cardDialog = ref(false);
+const editingCardId = ref<string | null>(null);
 const cardForm = ref<DashboardCard>(newCard());
 const datasetColumns = ref<string[]>([]);
 
@@ -144,13 +149,24 @@ function newCard(): DashboardCard {
     title: "",
     chart_type: "number",
     metric: "count",
-    span: 6
+    span: 6,
+    height: 224
   };
 }
 
 const openCardDialog = () => {
+  editingCardId.value = null;
   cardForm.value = newCard();
   datasetColumns.value = [];
+  cardDialog.value = true;
+};
+
+/** 编辑既有卡片：回填表单，确认后原位更新 */
+const openCardSettings = (card: DashboardCard) => {
+  editingCardId.value = card.id;
+  cardForm.value = { ...card, height: card.height ?? 224 };
+  datasetColumns.value =
+    datasets.value.find(item => item.pk === card.dataset)?.columns ?? [];
   cardDialog.value = true;
 };
 
@@ -173,7 +189,13 @@ const addCard = async () => {
     message(t("dashboard.cardRequired"), { type: "warning" });
     return;
   }
-  draftLayout.value = [...draftLayout.value, { ...card }];
+  if (editingCardId.value) {
+    draftLayout.value = draftLayout.value.map(item =>
+      item.id === editingCardId.value ? { ...card, id: item.id } : item
+    );
+  } else {
+    draftLayout.value = [...draftLayout.value, { ...card }];
+  }
   cardDialog.value = false;
 };
 
@@ -205,6 +227,20 @@ const createDashboard = async () => {
 
 const removeDashboard = async () => {
   if (!current.value) return;
+  try {
+    await ElMessageBox.confirm(
+      t("dashboard.removeConfirm", { name: current.value.name }),
+      {
+        confirmButtonText: t("buttons.sure"),
+        cancelButtonText: t("buttons.cancel"),
+        type: "warning",
+        confirmButtonClass: "el-button--danger",
+        draggable: true
+      }
+    );
+  } catch {
+    return;
+  }
   const res = await dashboardApi.destroy(current.value.pk);
   if (res.code === 1000) {
     current.value = null;
@@ -278,7 +314,12 @@ onMounted(async () => {
           :span="card.span ?? 6"
           class="mb-3"
         >
-          <el-card shadow="hover" class="h-56">
+          <el-card
+            shadow="hover"
+            class="flex flex-col overflow-hidden"
+            :style="{ height: `${card.height ?? 224}px` }"
+            :body-style="{ flex: '1 1 0%', minHeight: '0' }"
+          >
             <template #header>
               <div class="flex items-center gap-2">
                 <el-icon v-if="editing" class="drag-handle cursor-move">
@@ -289,6 +330,14 @@ onMounted(async () => {
                   {{ datasetName(card.dataset) }}
                 </el-tag>
                 <div class="flex-1" />
+                <el-button
+                  v-if="editing"
+                  link
+                  type="primary"
+                  :icon="Setting"
+                  :title="t('dashboard.cardSettings')"
+                  @click="openCardSettings(card)"
+                />
                 <el-button
                   v-if="editing"
                   link
@@ -311,7 +360,7 @@ onMounted(async () => {
     <!-- 新建卡片 -->
     <el-dialog
       v-model="cardDialog"
-      :title="t('dashboard.addCard')"
+      :title="editingCardId ? t('dashboard.editCard') : t('dashboard.addCard')"
       width="480px"
     >
       <el-form label-width="110px">
@@ -380,6 +429,16 @@ onMounted(async () => {
               :key="span"
               :value="span"
               :label="`${span}/12`"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item :label="t('dashboard.cardHeight')">
+          <el-select v-model="cardForm.height" class="w-full">
+            <el-option
+              v-for="h in heightOptions"
+              :key="h"
+              :value="h"
+              :label="`${h}px`"
             />
           </el-select>
         </el-form-item>

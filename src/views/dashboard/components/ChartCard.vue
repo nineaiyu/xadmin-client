@@ -19,7 +19,8 @@ const theme = computed(() => (isDark.value ? "dark" : "light"));
 const chartRef = ref();
 const loading = ref(false);
 const total = ref(0);
-const { setOptions } = useECharts(chartRef, { theme, renderer: "svg" });
+/** 解构 resize：容器尺寸（卡片高度/宽度档位）变化后手动重算，window resize 监听不覆盖容器变化 */
+const { setOptions, resize } = useECharts(chartRef, { theme, renderer: "svg" });
 
 /** 容器非 0 宽高等待（路由过渡期 DOM 尺寸为 0 会报错且不自愈），照抄 TrendChart */
 const waitSized = async (): Promise<boolean> => {
@@ -103,7 +104,11 @@ const loadData = async () => {
     });
     if (res.code === 1000) {
       const result = res.data as unknown as AggregateResult;
-      if (await waitSized()) setOptions(buildSeriesOptions(result));
+      if (await waitSized()) {
+        // 尺寸可能因卡片高度/宽度配置变化而与上次渲染不同，先重算再 set
+        resize();
+        setOptions(buildSeriesOptions(result));
+      }
     }
   } finally {
     loading.value = false;
