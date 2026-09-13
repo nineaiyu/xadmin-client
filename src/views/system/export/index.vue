@@ -15,7 +15,7 @@ const showImportTab = hasAuth("list:SystemImportRecord");
 </script>
 <template>
   <el-tabs v-model="activeTab" class="mx-3">
-    <el-tab-pane :label="t('menus.exportCenter')" name="export">
+    <el-tab-pane :label="t('menus.exportRecord')" name="export">
       <ExportPanel />
     </el-tab-pane>
     <el-tab-pane

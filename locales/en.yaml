@@ -358,6 +358,7 @@ menus:
   chat: Chat
   apiDocs: Api Docs
   exportCenter: Download Center
+  exportRecord: Export Records
   importCenter: Import Records
   systemMonitor: System Monitor
   dataDict: Data Dictionary
