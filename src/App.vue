@@ -11,7 +11,21 @@ import { checkVersion } from "version-rocket";
 import { ElConfigProvider } from "element-plus";
 import { useRouter, useRoute } from "vue-router";
 import { useGlobal, useWatermark } from "@pureadmin/utils";
-import { defineComponent, computed, watch, nextTick } from "vue";
+import {
+  defineComponent,
+  computed,
+  watch,
+  nextTick,
+  ref,
+  onMounted,
+  onBeforeUnmount
+} from "vue";
+import { useUserStoreHook } from "@/store/modules/user";
+import {
+  buildWatermarkText,
+  formatWatermarkTime,
+  isWatermarkPath
+} from "@/utils/watermark";
 import { ReDialog, closeAllDialog } from "@/components/ReDialog";
 import { ReDrawer, closeAllDrawer } from "@/components/ReDrawer";
 import en from "element-plus/es/locale/lang/en";
@@ -40,8 +54,35 @@ export default defineComponent({
     const router = useRouter();
     const { setWatermark, clear } = useWatermark();
     const { $storage } = useGlobal<GlobalPropertiesApi>();
+    const userStore = useUserStoreHook();
+    // 设置面板的本地水印（每浏览器独立）
     const watermarkEnable = computed(() => $storage.configure?.watermark);
     const watermarkText = computed(() => $storage.configure?.watermarkText);
+    // 站点水印（服务端基本设置下发，ADR-029）：仅「敏感页面」范围内生效
+    const siteWatermark = computed(() => userStore.siteWatermark);
+    const onLoginPage = computed(() => route.name === "Login");
+    const siteWatermarkVisible = computed(
+      () =>
+        !!siteWatermark.value?.enabled &&
+        !onLoginPage.value &&
+        isWatermarkPath(route.path, siteWatermark.value?.paths)
+    );
+    const watermarkVisible = computed(
+      () => siteWatermarkVisible.value || !!watermarkEnable.value
+    );
+    // 时间戳按分钟刷新（仅站点水印含时间；本地水印文案由用户自定义，原样使用）
+    const watermarkTime = ref(formatWatermarkTime());
+    let timer: number | undefined;
+    const watermarkContent = computed(() =>
+      siteWatermarkVisible.value
+        ? buildWatermarkText({
+            username: userStore.username,
+            nickname: userStore.nickname,
+            customText: siteWatermark.value?.text,
+            time: watermarkTime.value
+          })
+        : watermarkText.value
+    );
     const currentLocale = computed(() => {
       return $storage.locale?.locale === "zh"
         ? { ...zhCn, ...plusZhCn }
@@ -52,16 +93,25 @@ export default defineComponent({
       closeAllDrawer();
     });
 
+    onMounted(() => {
+      timer = window.setInterval(() => {
+        if (siteWatermarkVisible.value)
+          watermarkTime.value = formatWatermarkTime();
+      }, 60_000);
+    });
+    onBeforeUnmount(() => {
+      if (timer) window.clearInterval(timer);
+    });
+
     watch(
-      [watermarkEnable, watermarkText, () => route.name],
-      async ([enable, text, name], prev) => {
+      [watermarkVisible, watermarkContent, onLoginPage],
+      async ([visible, text]) => {
         await nextTick();
-        // 兼容登录接口下发的用户名水印（`FRONT_END_WEB_WATERMARK_ENABLED`）：
-        // 仅在用户主动关闭本水印或进入登录页时清除，避免误清用户名水印
-        const prevEnable = prev?.[0];
-        if (enable && name !== "Login") {
+        if (visible && !onLoginPage.value) {
+          // 先清除再挂载：文案分钟级刷新时避免水印节点叠加
+          clear();
           setWatermark(text, { verticalOffset: 170 });
-        } else if (prevEnable === true || name === "Login") {
+        } else {
           clear();
         }
       },

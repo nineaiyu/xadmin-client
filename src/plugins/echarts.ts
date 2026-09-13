@@ -12,6 +12,8 @@ export function loadEcharts(app?: App) {
   ]).then(([core, charts, renderers, components]) => {
     core.use([
       charts.LineChart,
+      charts.BarChart,
+      charts.PieChart,
       renderers.SVGRenderer,
       components.GridComponent,
       components.TitleComponent,

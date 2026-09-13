@@ -1,0 +1,83 @@
+import { BaseApi } from "@/api/base";
+
+/** 开放平台应用（ADR-030）：client_id/secret 由服务端生成，明文只在创建与重置时返回一次 */
+export interface ApiApplicationItem {
+  pk: string;
+  name: string;
+  client_id: string;
+  client_secret_prefix: string;
+  scopes: string[];
+  ip_allowlist: string[];
+  rate_limit_per_minute: number;
+  callback_urls: string[];
+  token_ttl_seconds: number;
+  is_active: boolean;
+  expired_at: string | null;
+  created_time: string;
+}
+
+/** 创建/重置密钥响应：附带一次性明文密钥 */
+export interface ApiApplicationCredential extends ApiApplicationItem {
+  client_secret: string;
+  callback_secret: string;
+}
+
+/** 响应信封：与 http 层既有 DetailResult 口径一致（含 code/detail） */
+export interface ApiApplicationCredentialResult {
+  code: number;
+  detail?: string;
+  data: ApiApplicationCredential;
+}
+
+export interface CallbackProbeEnvelope {
+  code: number;
+  detail?: string;
+  data: { results: CallbackProbeResult[] };
+}
+
+export interface CallbackProbeResult {
+  url: string;
+  success: boolean;
+  status_code?: number;
+  detail?: string;
+}
+
+class ApiApplicationApi extends BaseApi {
+  /** 重置应用密钥（旧密钥与旧凭证即时失效），明文仅本次返回 */
+  regenerateSecret = (pk: string) =>
+    this.request<ApiApplicationCredentialResult>(
+      "post",
+      {},
+      {},
+      `${this.baseApi}/${pk}/regenerate-secret`
+    );
+
+  /** 回调测试：向登记地址逐一投递 HMAC 签名探测 */
+  testCallback = (pk: string) =>
+    this.request<CallbackProbeEnvelope>(
+      "post",
+      {},
+      {},
+      `${this.baseApi}/${pk}/test-callback`
+    );
+}
+
+export const apiApplicationApi = new ApiApplicationApi(
+  "/api/system/api-applications"
+);
+
+/** 列表响应取行（兼容分页 results 与裸数组两种返回） */
+export function listApplicationRows(res: unknown): ApiApplicationItem[] {
+  const payload = (res as { data?: unknown })?.data;
+  if (Array.isArray(payload)) return payload as ApiApplicationItem[];
+  const results = (payload as { results?: unknown } | undefined)?.results;
+  return (Array.isArray(results) ? results : []) as ApiApplicationItem[];
+}
+
+/** 逗号分隔文本 ↔ 清单（管理表单口径） */
+export function parseListText(text: string): string[] {
+  return String(text || "")
+    .split(/[,，\n]/)
+    .map(item => item.trim())
+    .filter(Boolean);
+}

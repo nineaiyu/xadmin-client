@@ -2,7 +2,12 @@ import { BaseApi } from "@/api/base";
 import type { BaseResult, DetailResult } from "@/api/types";
 
 /** 登录页可见的第三方 provider（未启用/未配置的不返回） */
-export type OAuthProvider = { key: string; name: string };
+export type OAuthProvider = {
+  key: string;
+  name: string;
+  /** 协议类型：oauth2（通用）| dingtalk | wecom | feishu（ADR-018），本期仅备用字段 */
+  flavor?: string;
+};
 
 /** 第三方登录（OAuth2 / OIDC 通用 provider） */
 class OAuthApi extends BaseApi {

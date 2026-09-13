@@ -308,6 +308,20 @@ menus:
   basicSettings: Basic Settings
   messageSettings: Message Settings
   smsSettings: SMS Settings
+  ldapSettings: LDAP Directory
+  dataAnalysis: Data Analysis
+  dataDashboard: Dashboards
+  dataDataset: Datasets
+  dataReport: Scheduled Reports
+  dataScreen: Display Screens
+  integration: Integrations
+  webhookSubscription: Webhook Subscriptions
+  webhookDelivery: Delivery Audit
+  aiAssistant: AI Assistant
+  aiAssistantConfig: AI Configuration
+  formCollection: Form Collection
+  formDesigner: Form Design
+  formMySubmission: My Submissions
   securitySettings: Security Settings
   userManagement: User Manage
   deptManagement: Department Manage
@@ -953,15 +967,10 @@ login:
   sure: Sure Password
   forget: Forget Password?
   login: Login
-  thirdLogin: Third Login
   basicLogin: Basic Login
   verifyCodeLogin: Verify Code Login
   qRCodeLogin: QRCode Login
   register: Register
-  weChatLogin: WeChat Login
-  alipayLogin: Alipay Login
-  qqLogin: QQ Login
-  weiboLogin: Weibo Login
   phone: Phone
   email: Email
   smsVerifyCode: SMS VerifyCode
@@ -1004,12 +1013,52 @@ welcome:
   userNum: Number of Users
   loginTimes: Number of Logins
 
+search:
+  globalResult: Global search
+apiApp:
+  title: API applications
+  tip: "Exchange credentials with POST /api/system/open/token (client_id/client_secret), then call APIs with the Authorization: Pat token header"
+  create: New application
+  edit: Edit application
+  name: Name
+  clientId: Client ID
+  clientSecret: Client Secret
+  callbackSecret: Callback secret
+  scopes: Scopes
+  scopesPlaceholder: Empty = unlimited; separate multiple with commas, e.g. api/system/userinfo
+  ipAllowlist: IP allowlist
+  listPlaceholder: Separate multiple with commas; empty = unlimited
+  rateLimit: Rate limit / minute
+  callbackUrls: Callback urls
+  tokenTtl: Token TTL (seconds)
+  isActive: Active
+  on: Active
+  off: Disabled
+  actions: Actions
+  regenerate: Reset secret
+  testCallback: Test callback
+  saveOk: Saved
+  saveFailed: Save failed
+  cancel: Cancel
+  confirm: OK
+  credentialTitle: One-time credentials
+  credentialTip: Copy them now - plaintext is returned only once; resetting the secret invalidates old tokens immediately
+  copy: Copy
+  copied: Copied
+  copyFailed: Copy failed, please select and copy manually
+  callbackOk: Callback delivered
+  callbackFailed: "{count} callback(s) failed"
+  unlimited: Unlimited
 settingBasic:
   title: Basic Settings
 
 settingMessage:
   mailTitle: Email Server
   messageTitle: Message Notifications
+  imTitle: IM Channels
+
+settingLdap:
+  title: LDAP Directory
 
 settingSecurity:
   code: Verify Code
@@ -1341,3 +1390,231 @@ mask:
   maskTypeName: Name
   maskTypeBankcard: Bank Card
   maskTypeCustom: Custom Pattern
+
+dashboard:
+  title: Dashboards
+  pickDashboard: Pick a dashboard
+  create: New Dashboard
+  edit: Edit Layout
+  cancelEdit: Exit Edit
+  saveLayout: Save Layout
+  remove: Remove
+  empty: No dashboards yet, click "New Dashboard" to start
+  addCard: Add Card
+  dataset: Dataset
+  cardTitle: Card Title
+  chartType: Chart Type
+  chartNumber: Number Card
+  chartLine: Trend
+  chartBar: Bar
+  chartPie: Pie
+  groupBy: Group By
+  dateTrunc: Time Grain
+  byDay: Daily
+  byMonth: Monthly
+  metric: Metric
+  metricCount: Count
+  metricSum: Sum
+  metricAvg: Average
+  cardSpan: Card Width
+  dashName: Dashboard Name
+  visibility: Visibility
+  personal: Personal
+  shared: Shared
+  cancel: Cancel
+  confirm: Confirm
+  saveOk: Saved
+  cardRequired: Please complete the card configuration
+  manageDatasets: Manage Datasets
+
+dataDataset:
+  title: Datasets
+  create: New Dataset
+  edit: Edit
+  delete: Delete
+  preview: Preview
+  name: Name
+  model: Bound Model
+  columns: Columns
+  filters: Filters
+  addFilter: Add Filter
+  value: Value
+  inHint: Comma-separated values
+  ordering: Ordering
+  rowLimit: Row Limit
+  dateField: Date Field (for trends)
+  visibilityLabel: Visibility
+  personal: Personal
+  shared: Shared
+  description: Description
+  actions: Actions
+  total: Total rows
+  cancel: Cancel
+  confirm: Confirm
+  required: Name, model and columns are required
+  saveOk: Saved
+
+dataScreen:
+  title: Display Screens
+  create: New Screen
+  edit: Edit
+  delete: Delete
+  display: Display
+  name: Name
+  dashboards: Dashboard Sequence
+  interval: Interval (s)
+  refresh: Refresh (s)
+  visibilityLabel: Visibility
+  personal: Personal
+  shared: Shared
+  actions: Actions
+  cancel: Cancel
+  confirm: Confirm
+  required: Name and dashboards are required
+  saveOk: Saved
+
+dataReport:
+  title: Scheduled Reports
+  create: New Report
+  edit: Edit
+  delete: Delete
+  run: Run Now
+  runOk: Dispatched; the artifact will appear in the download center
+  name: Name
+  dataset: Dataset
+  mode: Content
+  modeRows: Rows
+  modeAggregate: Aggregate
+  groupBy: Group By
+  metric: Metric
+  metricCount: Count
+  metricSum: Sum
+  metricAvg: Average
+  dateTrunc: Time Grain
+  byDay: Daily
+  byMonth: Monthly
+  frequency: Frequency
+  daily: Daily
+  weekly: Weekly
+  monthly: Monthly
+  sendTime: Send Time
+  recipients: Recipients
+  recipientsHint: Comma-separated emails
+  isActive: Enabled
+  lastStatus: Last Status
+  actions: Actions
+  cancel: Cancel
+  confirm: Confirm
+  required: Name and dataset are required
+  saveOk: Saved
+
+webhook:
+  title: Webhook Subscriptions
+  deliveryTitle: Delivery Audit
+  create: New Subscription
+  edit: Edit
+  delete: Delete
+  test: Test
+  retry: Retry
+  retryOk: Delivery re-dispatched
+  name: Name
+  url: URL
+  secret: Secret
+  secretKeep: Leave empty to keep the current secret
+  secretHint: Used for HMAC-SHA256 signing
+  events: Events
+  isActive: Enabled
+  on: On
+  off: Off
+  lastFailure: Last Failure
+  description: Description
+  actions: Actions
+  cancel: Cancel
+  confirm: Confirm
+  required: Name, URL and events are required
+  saveOk: Saved
+  testDispatched: Test event dispatched
+  statusFilter: Status
+  stSuccess: Success
+  stFailed: Failed
+  stExhausted: Exhausted
+  stPending: Pending
+  search: Search
+  time: Time
+  subscriptionCol: Subscription
+  event: Event
+  statusCol: Status
+  attempt: Attempts
+  responseCode: Code
+  responseBody: Response
+  duration: Duration(s)
+
+ai:
+  title: AI Assistant (Usage/Development Q&A)
+  docsTab: Docs Q&A
+  nlTab: Data Query
+  nlPlaceholder: e.g. Which enabled users were created recently?
+  nlInterpret: Interpret
+  nlDataset: Dataset
+  nlPreview: Preview rows
+  nlFilters: Filters
+  nlNoFilters: none
+  nlRun: Run Query
+  on: Enabled
+  off: Disabled
+  knowledgeChunks: Knowledge chunks
+  goConfig: Go to configuration
+  disabledHint: The AI assistant is disabled; enable and configure it in "AI Configuration"
+  notConfiguredHint: The AI provider is not fully configured; fill in the base URL, API key and model in "AI Configuration"
+  emptyHint: Ask questions about the platform docs; answers cite their sources
+  sources: Sources
+  askPlaceholder: e.g. How does dataset apply data permission filtering?
+  ask: Ask
+
+aiConfig:
+  title: AI Configuration
+
+dform:
+  designerTitle: Form Design
+  fillTitle: Available Forms
+  mySubmissions: My Submissions
+  create: New Form
+  edit: Edit
+  delete: Delete
+  name: Name
+  description: Description
+  fieldCount: Fields
+  isActive: Status
+  active: Active
+  inactive: Inactive
+  actions: Actions
+  fields: Field Definitions
+  addField: Add Field
+  fieldKey: Key
+  fieldLabel: Label
+  fieldType: Widget
+  fieldOptions: Options
+  optionsHint: Comma-separated
+  fieldRequired: Required
+  noForms: No forms available
+  noDescription: No description
+  approvalRequired: Approval
+  approvalOn: Approval
+  approvalOff: Direct
+  approvalTip: Submissions are stored only after approval (superusers submit directly)
+  approvalHint: This form requires approval; please submit it again after approval
+  submissionData: Submission
+  submittedAt: Submitted At
+  editSubmission: Edit Submission
+  cancel: Cancel
+  confirm: Confirm
+  required: Name and at least one field are required
+  saveOk: Saved
+  typeInput: Input
+  typeTextarea: Textarea
+  typeNumber: Number
+  typeSelect: Select
+  typeRadio: Radio
+  typeCheckbox: Checkbox
+  typeDate: Date
+  typeSwitch: Switch

@@ -54,13 +54,22 @@ export interface UserInfo {
   roles: string[];
 }
 
+/** 站点水印配置（基本设置下发，ADR-029 三项口径） */
+export type SiteWatermarkResultConfig = {
+  FRONT_END_WEB_WATERMARK_ENABLED?: boolean;
+  /** 自定义文案，留空 = 用户名-昵称-时间 */
+  FRONT_END_WEB_WATERMARK_TEXT?: string;
+  /** 生效页面路由前缀，逗号分隔，留空 = 全部页面 */
+  FRONT_END_WEB_WATERMARK_PATHS?: string;
+};
+
 export type UserInfoResult = {
   code: number;
   detail: string;
   data: UserInfo;
   choices_dict?: ChoiceEntry[];
   password_rule?: PasswordRule[];
-  config?: { FRONT_END_WEB_WATERMARK_ENABLED: boolean };
+  config?: SiteWatermarkResultConfig;
 };
 
 export type TempTokenResult = {

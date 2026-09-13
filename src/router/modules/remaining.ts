@@ -41,6 +41,16 @@ const remainingRoutes: Array<RouteConfigsTable> = [
     }
   },
   {
+    path: "/analysis/screen/display",
+    name: "DataScreenDisplay",
+    component: () => import("@/views/analysis/screen/display.vue"),
+    meta: {
+      title: $t("menus.dataScreen"),
+      showLink: false,
+      rank: 10105
+    }
+  },
+  {
     path: "/oauth/callback",
     name: "OAuthCallback",
     component: () => import("@/views/oauth/callback.vue"),

@@ -308,6 +308,20 @@ menus:
   basicSettings: 基本设置
   messageSettings: 消息通知
   smsSettings: 短信设置
+  ldapSettings: LDAP 目录
+  dataAnalysis: 数据分析
+  dataDashboard: 仪表盘
+  dataDataset: 数据集
+  dataReport: 定时报表
+  dataScreen: 大屏投屏
+  integration: 集成管理
+  webhookSubscription: Webhook 订阅
+  webhookDelivery: 投递审计
+  aiAssistant: AI 助手
+  aiAssistantConfig: AI 配置
+  formCollection: 表单采集
+  formDesigner: 表单设计
+  formMySubmission: 我的填报
   securitySettings: 安全设置
   userManagement: 用户管理
   deptManagement: 部门管理
@@ -953,15 +967,10 @@ login:
   sure: 确认密码
   forget: 忘记密码?
   login: 登录
-  thirdLogin: 第三方登录
   verifyCodeLogin: 验证码登录
   basicLogin: 普通登录
   qRCodeLogin: 二维码登录
   register: 注册
-  weChatLogin: 微信登录
-  alipayLogin: 支付宝登录
-  qqLogin: QQ登录
-  weiboLogin: 微博登录
   phone: 手机号码
   email: 邮箱地址
   smsVerifyCode: 短信验证码
@@ -1004,12 +1013,52 @@ welcome:
   userNum: 用户人数
   loginTimes: 登录次数
 
+search:
+  globalResult: 全局搜索
+apiApp:
+  title: API 应用
+  tip: "换发凭证：POST /api/system/open/token（client_id/client_secret），随后以 Authorization: Pat 令牌头调用接口"
+  create: 新建应用
+  edit: 编辑应用
+  name: 应用名称
+  clientId: Client ID
+  clientSecret: Client Secret
+  callbackSecret: 回调签名密钥
+  scopes: 接口范围
+  scopesPlaceholder: 留空 = 不限；多条用英文逗号分隔，如 api/system/userinfo
+  ipAllowlist: IP 白名单
+  listPlaceholder: 多条用英文逗号分隔，留空 = 不限
+  rateLimit: 每分钟限流
+  callbackUrls: 回调地址
+  tokenTtl: 凭证有效期（秒）
+  isActive: 启用
+  on: 启用
+  off: 停用
+  actions: 操作
+  regenerate: 重置密钥
+  testCallback: 回调测试
+  saveOk: 保存成功
+  saveFailed: 保存失败
+  cancel: 取消
+  confirm: 确定
+  credentialTitle: 一次性密钥（仅展示一次）
+  credentialTip: 请立即复制保存：明文只在本次返回；重置密钥会使旧凭证立即失效
+  copy: 复制
+  copied: 已复制
+  copyFailed: 复制失败，请手动选择复制
+  callbackOk: 回调投递成功
+  callbackFailed: 有 {count} 个回调投递失败
+  unlimited: 不限
 settingBasic:
   title: 基本设置
 
 settingMessage:
   mailTitle: 邮件服务器
   messageTitle: 系统消息订阅
+  imTitle: IM 消息渠道
+
+settingLdap:
+  title: LDAP 目录
 
 settingSecurity:
   code: 验证码安全配置
@@ -1341,3 +1390,231 @@ mask:
   maskTypeName: 姓名
   maskTypeBankcard: 银行卡
   maskTypeCustom: 自定义正则
+
+dashboard:
+  title: 仪表盘
+  pickDashboard: 选择仪表盘
+  create: 新建仪表盘
+  edit: 编辑布局
+  cancelEdit: 退出编辑
+  saveLayout: 保存布局
+  remove: 删除
+  empty: 暂无仪表盘，点击「新建仪表盘」开始
+  addCard: 添加卡片
+  dataset: 数据集
+  cardTitle: 卡片标题
+  chartType: 图表类型
+  chartNumber: 数字卡片
+  chartLine: 趋势图
+  chartBar: 柱状图
+  chartPie: 饼图
+  groupBy: 分组字段
+  dateTrunc: 时间粒度
+  byDay: 按天
+  byMonth: 按月
+  metric: 聚合方式
+  metricCount: 计数
+  metricSum: 求和
+  metricAvg: 平均
+  cardSpan: 卡片宽度
+  dashName: 仪表盘名称
+  visibility: 可见性
+  personal: 个人
+  shared: 共享
+  cancel: 取消
+  confirm: 确认
+  saveOk: 保存成功
+  cardRequired: 请完整填写卡片配置
+  manageDatasets: 管理数据集
+
+dataDataset:
+  title: 数据集
+  create: 新建数据集
+  edit: 编辑
+  delete: 删除
+  preview: 执行预览
+  name: 名称
+  model: 绑定模型
+  columns: 数据列
+  filters: 过滤条件
+  addFilter: 添加条件
+  value: 值
+  inHint: 逗号分隔多个值
+  ordering: 排序
+  rowLimit: 行数上限
+  dateField: 时间字段（趋势用）
+  visibilityLabel: 可见性
+  personal: 个人
+  shared: 共享
+  description: 描述
+  actions: 操作
+  total: 总行数
+  cancel: 取消
+  confirm: 确认
+  required: 请完整填写名称、模型与数据列
+  saveOk: 保存成功
+
+dataScreen:
+  title: 大屏投屏
+  create: 新建大屏
+  edit: 编辑
+  delete: 删除
+  display: 投屏
+  name: 名称
+  dashboards: 仪表盘序列
+  interval: 切换间隔(秒)
+  refresh: 数据刷新(秒)
+  visibilityLabel: 可见性
+  personal: 个人
+  shared: 共享
+  actions: 操作
+  cancel: 取消
+  confirm: 确认
+  required: 请填写名称并选择仪表盘
+  saveOk: 保存成功
+
+dataReport:
+  title: 定时报表
+  create: 新建报表
+  edit: 编辑
+  delete: 删除
+  run: 立即运行
+  runOk: 已派发执行，产物稍后进入下载中心
+  name: 名称
+  dataset: 数据集
+  mode: 内容
+  modeRows: 行数据
+  modeAggregate: 聚合
+  groupBy: 分组字段
+  metric: 聚合方式
+  metricCount: 计数
+  metricSum: 求和
+  metricAvg: 平均
+  dateTrunc: 时间粒度
+  byDay: 按天
+  byMonth: 按月
+  frequency: 频率
+  daily: 每天
+  weekly: 每周
+  monthly: 每月
+  sendTime: 发送时刻
+  recipients: 收件人
+  recipientsHint: 多个邮箱用逗号分隔
+  isActive: 启用
+  lastStatus: 上次状态
+  actions: 操作
+  cancel: 取消
+  confirm: 确认
+  required: 请填写名称并选择数据集
+  saveOk: 保存成功
+
+webhook:
+  title: Webhook 订阅
+  deliveryTitle: 投递审计
+  create: 新建订阅
+  edit: 编辑
+  delete: 删除
+  test: 测试
+  retry: 重试
+  retryOk: 投递已重新派发
+  name: 名称
+  url: 地址
+  secret: 签名密钥
+  secretKeep: 留空沿用原密钥
+  secretHint: 用于 HMAC-SHA256 签名
+  events: 订阅事件
+  isActive: 启用
+  on: 启用
+  off: 停用
+  lastFailure: 最近失败
+  description: 描述
+  actions: 操作
+  cancel: 取消
+  confirm: 确认
+  required: 名称、地址与订阅事件为必填
+  saveOk: 保存成功
+  testDispatched: 测试事件已派发
+  statusFilter: 状态
+  stSuccess: 成功
+  stFailed: 失败
+  stExhausted: 已耗尽
+  stPending: 待投递
+  search: 查询
+  time: 时间
+  subscriptionCol: 订阅
+  event: 事件
+  statusCol: 状态
+  attempt: 次数
+  responseCode: 响应码
+  responseBody: 响应内容
+  duration: 耗时(秒)
+
+ai:
+  title: AI 助手（使用/二开问答）
+  docsTab: 文档问答
+  nlTab: 数据查询
+  nlPlaceholder: 例如：最近创建的启用用户有哪些？
+  nlInterpret: 解释查询
+  nlDataset: 命中数据集
+  nlPreview: 预览行数
+  nlFilters: 过滤条件
+  nlNoFilters: 无
+  nlRun: 确认执行
+  on: 已启用
+  off: 未启用
+  knowledgeChunks: 知识块
+  goConfig: 前往配置
+  disabledHint: AI 助手未启用，请到「AI 配置」开启并完成配置
+  notConfiguredHint: AI 服务未配置完成，请到「AI 配置」填写接口地址、API 密钥与模型
+  emptyHint: 基于平台文档库的使用/二开问答，回答将引用文档出处
+  sources: 出处
+  askPlaceholder: 例如：数据集如何做数据权限过滤？
+  ask: 提问
+
+aiConfig:
+  title: AI 配置
+
+dform:
+  designerTitle: 表单设计
+  fillTitle: 可填表单
+  mySubmissions: 我的提交
+  create: 新建表单
+  edit: 编辑
+  delete: 删除
+  name: 名称
+  description: 描述
+  fieldCount: 字段数
+  isActive: 状态
+  active: 启用
+  inactive: 停用
+  actions: 操作
+  fields: 字段定义
+  addField: 添加字段
+  fieldKey: 标识
+  fieldLabel: 标签
+  fieldType: 控件
+  fieldOptions: 选项
+  optionsHint: 逗号分隔
+  fieldRequired: 必填
+  noForms: 暂无可填表单
+  noDescription: 无描述
+  approvalRequired: 提交审批
+  approvalOn: 需审批
+  approvalOff: 直接提交
+  approvalTip: 开启后提交需审批通过才落库（超管直提）
+  approvalHint: 该表单提交需审批，审批通过后请再次提交本表单
+  submissionData: 提交内容
+  submittedAt: 提交时间
+  editSubmission: 修改提交
+  cancel: 取消
+  confirm: 确认
+  required: 请填写名称并添加字段
+  saveOk: 保存成功
+  typeInput: 单行文本
+  typeTextarea: 多行文本
+  typeNumber: 数字
+  typeSelect: 下拉
+  typeRadio: 单选
+  typeCheckbox: 多选
+  typeDate: 日期
+  typeSwitch: 开关

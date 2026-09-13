@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { settingsEmailApi } from "@/api/system/settings";
+import { settingsEmailApi, settingsNotifyImApi } from "@/api/system/settings";
 import { computed, ref } from "vue";
 import { hasAuth } from "@/router/utils";
 import { settingItemProps } from "@/views/settings/components/settings/types";
@@ -23,6 +23,17 @@ const settingData = computed<Array<settingItemProps>>(() => [
     api: settingsEmailApi,
     localeName: "settingMessage",
     title: "mailTitle"
+  },
+  {
+    // 企业 IM 通知渠道（ADR-019）：钉钉/企微/飞书，凭据加密落库
+    auth: {
+      partialUpdate: hasAuth("partialUpdate:ImNotifySetting"),
+      retrieve: hasAuth("retrieve:ImNotifySetting"),
+      test: hasAuth("create:ImNotifySetting")
+    },
+    api: settingsNotifyImApi,
+    localeName: "settingMessage",
+    title: "imTitle"
   }
 ]);
 

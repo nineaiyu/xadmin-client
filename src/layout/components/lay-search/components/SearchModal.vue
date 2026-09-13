@@ -13,6 +13,7 @@ import { computed, ref, shallowRef, watch } from "vue";
 import { onKeyStroke, useDebounceFn } from "@vueuse/core";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import { cloneDeep, isAllEmpty, storageLocal } from "@pureadmin/utils";
+import { searchGlobal, type GlobalSearchGroup } from "@/api/system/search";
 import SearchIcon from "~icons/ri/search-line";
 
 interface Props {
@@ -42,6 +43,9 @@ const activePath = ref("");
 const historyPath = ref("");
 const resultOptions = shallowRef([]);
 const historyOptions = shallowRef([]);
+// 全局搜索（ADR-028）：菜单结果之外跨实体检索的分组结果
+const globalGroups = shallowRef<GlobalSearchGroup[]>([]);
+const globalLoading = ref(false);
 const handleSearch = useDebounceFn(search, 300);
 const historyNum = getConfig().MenuSearchHistory;
 const inputRef = ref<HTMLInputElement | null>(null);
@@ -78,7 +82,9 @@ const showSearchHistory = computed(() => {
 const showEmpty = computed(() => {
   return (
     (!keyword.value && historyOptions.value.length === 0) ||
-    (keyword.value && resultOptions.value.length === 0)
+    (keyword.value &&
+      resultOptions.value.length === 0 &&
+      globalGroups.value.length === 0)
   );
 });
 
@@ -113,7 +119,7 @@ function flatTree(arr) {
 }
 
 /** 查询 */
-function search() {
+async function search() {
   const flatMenusData = flatTree(menusData.value);
   resultOptions.value = flatMenusData.filter(menu =>
     keyword.value
@@ -131,6 +137,31 @@ function search() {
   );
   activePath.value =
     resultOptions.value?.length > 0 ? resultOptions.value[0].path : "";
+  await fetchGlobalResults();
+}
+
+/** 全局搜索（ADR-028）：跨实体检索，失败静默降级为仅菜单结果 */
+async function fetchGlobalResults() {
+  const kw = keyword.value.trim();
+  if (!kw) {
+    globalGroups.value = [];
+    return;
+  }
+  globalLoading.value = true;
+  try {
+    const res = await searchGlobal(kw);
+    globalGroups.value = res.code === 1000 ? res.data.groups : [];
+  } catch {
+    globalGroups.value = [];
+  } finally {
+    globalLoading.value = false;
+  }
+}
+
+/** 跳转到命中实体对应的页面（搜索词由该页面自身的搜索能力承接） */
+function goGlobalResult(group: GlobalSearchGroup) {
+  router.push(group.route);
+  handleClose();
 }
 
 function handleClose() {
@@ -140,6 +171,7 @@ function handleClose() {
     resultOptions.value = [];
     historyPath.value = "";
     keyword.value = "";
+    globalGroups.value = [];
   }, 200);
 }
 
@@ -327,6 +359,28 @@ onKeyStroke("ArrowDown", handleDown);
           :options="resultOptions"
           @click="handleEnter"
         />
+        <div v-if="keyword && globalGroups.length">
+          <div class="px-5 py-1.5 text-xs text-gray-400">
+            {{ t("search.globalResult") }}
+          </div>
+          <div v-for="group in globalGroups" :key="group.key">
+            <div class="flex-bc px-5 py-1 text-xs text-gray-400">
+              <span>{{ group.label }}</span>
+              <span>{{ group.total }}</span>
+            </div>
+            <div
+              v-for="item in group.items"
+              :key="item.pk"
+              class="mx-2.5 my-0.5 flex cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-sm hover:bg-[#f5f5f5] dark:hover:bg-[#242424]"
+              :data-testid="`global-search-item-${group.key}`"
+              @click="goGlobalResult(group)"
+            >
+              <span class="truncate text-gray-900 dark:text-white">
+                {{ item.text }}
+              </span>
+            </div>
+          </div>
+        </div>
       </el-scrollbar>
     </div>
     <template #footer>

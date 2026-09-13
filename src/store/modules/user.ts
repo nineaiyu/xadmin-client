@@ -30,8 +30,8 @@ import {
 
 import { useMultiTagsStoreHook } from "./multiTags";
 import { AesEncrypted } from "@/utils/aes";
-import { useWatermark } from "@pureadmin/utils";
-import { h, nextTick, type VNode } from "vue";
+import { defaultSiteWatermark, parseWatermarkPaths } from "@/utils/watermark";
+import { h, type VNode } from "vue";
 import { PureWebSocket } from "@/utils/websocket";
 import {
   MessageAction,
@@ -43,8 +43,6 @@ import {
   type NotificationOptions,
   type NotificationType
 } from "element-plus";
-
-const { setWatermark, clear } = useWatermark();
 
 export const useUserStore = defineStore("pure-user", {
   state: (): userType => {
@@ -74,7 +72,8 @@ export const useUserStore = defineStore("pure-user", {
       noticeCount: 0,
       // 消息通知websocket
       websocket: null,
-      clear: null
+      // 站点水印配置（用户信息接口下发后写入，App.vue 观察应用）
+      siteWatermark: { ...defaultSiteWatermark }
     };
   },
   actions: {
@@ -90,6 +89,13 @@ export const useUserStore = defineStore("pure-user", {
       this.phone = data.phone;
       this.roles = data?.roles;
       storageLocal().setItem(userKey, data);
+    },
+    /**
+     * 清空水印态（登出 / 清空缓存调用）：
+     * 站点水印配置复位，已挂载的水印 DOM 由 App.vue 观察 siteWatermark 变化后清除（ADR-029）
+     */
+    clear() {
+      this.siteWatermark = { ...defaultSiteWatermark };
     },
     /** 存储用户头像 */
     SET_AVATAR(avatar: string) {
@@ -161,23 +167,14 @@ export const useUserStore = defineStore("pure-user", {
           .then(res => {
             if (res.code === 1000) {
               setUserInfo(res.data);
-              this.clear = clear;
-              if (res.config.FRONT_END_WEB_WATERMARK_ENABLED) {
-                this.clear();
-                nextTick(() => {
-                  setWatermark(
-                    `${this.username}${this.nickname ? "-" + this.nickname : ""}`,
-                    {
-                      globalAlpha: 0.1, // 值越低越透明
-                      gradient: [
-                        { value: 0, color: "magenta" },
-                        { value: 0.5, color: "blue" },
-                        { value: 1.0, color: "red" }
-                      ]
-                    }
-                  );
-                });
-              }
+              // 水印配置存入本 store：由 App.vue 按「当前路由是否命中生效范围」应用/清除（ADR-029）
+              this.siteWatermark = {
+                enabled: !!res.config?.FRONT_END_WEB_WATERMARK_ENABLED,
+                text: res.config?.FRONT_END_WEB_WATERMARK_TEXT ?? "",
+                paths: parseWatermarkPaths(
+                  res.config?.FRONT_END_WEB_WATERMARK_PATHS
+                )
+              };
               resolve(res);
             } else {
               reject(res);

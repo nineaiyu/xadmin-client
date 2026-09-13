@@ -46,6 +46,27 @@ describe("user store", () => {
     expect(store.roles).toEqual(["dev"]);
   });
 
+  it("站点水印配置默认关闭，clear() 复位（ADR-029）", () => {
+    const store = useUserStore();
+    expect(store.siteWatermark).toEqual({
+      enabled: false,
+      text: "",
+      paths: []
+    });
+    // 模拟用户信息接口写入后（登出/清空缓存需复位）
+    store.siteWatermark = {
+      enabled: true,
+      text: "内部资料",
+      paths: ["/system/user/index"]
+    };
+    store.clear();
+    expect(store.siteWatermark).toEqual({
+      enabled: false,
+      text: "",
+      paths: []
+    });
+  });
+
   it("页面状态与未读计数", () => {
     const store = useUserStore();
     store.SET_VERIFY_CODE_LENGTH(6);

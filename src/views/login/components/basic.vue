@@ -7,7 +7,7 @@ import { message } from "@/utils/message";
 import { loginRules } from "../utils/rule";
 import type { FormInstance } from "element-plus";
 import { $t, transformI18n } from "@/plugins/i18n";
-import { operates, thirdParty } from "../utils/enums";
+import { operates } from "../utils/enums";
 import { useUserStoreHook } from "@/store/modules/user";
 import { getTopMenu, initRouter } from "@/router/utils";
 import { ReImageVerify } from "@/components/ReImageVerify";
@@ -27,6 +27,7 @@ import { setToken } from "@/utils/auth";
 import { cloneDeep, debounce } from "@pureadmin/utils";
 import { useEventListener } from "@vueuse/core";
 import LoginMfa from "./mfa.vue";
+import OAuthEntry from "./oauthEntry.vue";
 
 defineOptions({
   name: "BasicLogin"
@@ -320,26 +321,10 @@ watch(loginDay, value => {
             </el-button>
           </el-form-item>
         </Motion>
+        <!-- 第三方登录入口（ADR-018）：读取后端已启用 provider，
+             替换原静态装饰图标（不接后端、不可点击的死 UI） -->
         <Motion :delay="350">
-          <el-form-item>
-            <el-divider>
-              <p class="text-gray-500 text-xs">{{ t("login.thirdLogin") }}</p>
-            </el-divider>
-            <div class="w-full flex justify-evenly">
-              <span
-                v-for="(item, index) in thirdParty"
-                :key="index"
-                :title="t(item.title)"
-              >
-                <IconifyIconOnline
-                  :icon="`ri:${item.icon}-fill`"
-                  class="cursor-pointer text-gray-500 hover:text-blue-400"
-                  width="20"
-                  aria-hidden="true"
-                />
-              </span>
-            </div>
-          </el-form-item>
+          <OAuthEntry />
         </Motion>
       </el-form>
       <Motion v-else :delay="300">
