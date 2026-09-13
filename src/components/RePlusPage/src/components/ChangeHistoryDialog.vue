@@ -158,7 +158,7 @@ onMounted(fetchHistory);
     <el-pagination
       v-model:current-page="pagination.currentPage"
       v-model:page-size="pagination.pageSize"
-      class="float-right mt-3"
+      class="mt-3 justify-end"
       :total="pagination.total"
       :layout="pagination.layout"
       :background="pagination.background"

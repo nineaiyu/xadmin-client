@@ -55,12 +55,34 @@ test("变更历史：编辑用户后行按钮弹窗展示字段级 diff", async 
     .click();
   await expect(editDialog).not.toBeVisible({ timeout: 15_000 });
 
-  // 行按钮「变更历史」：弹窗含本次 PATCH 记录与字段级 diff（old → new）
-  await row.getByRole("button", { name: "变更历史" }).first().click();
+  // 行按钮「变更历史」：操作列默认只展示 3 个（编辑/删除/详情），变更历史在第 4 位、
+  // 折叠进「更多」下拉（ButtonOperation 的 showNumber 默认 3）——先展开下拉再点
+  await row.locator(".el-dropdown").first().hover();
+  await page
+    .locator(".el-dropdown-menu__item", { hasText: "变更历史" })
+    .first()
+    .click();
   const historyDialog = page
     .locator(".el-dialog", { hasText: "变更历史" })
     .first();
   await expect(historyDialog).toBeVisible({ timeout: 15_000 });
   await expect(historyDialog).toContainText("变更历史新昵称");
   await expect(historyDialog).toContainText("变更历史原昵称");
+
+  // 分页落在弹窗内容区内（回归守护：曾用 float-right 浮动脱离文档流，父容器不
+  // 计算其高度，分页浮到弹窗右下角外/被裁切）
+  const pager = historyDialog.locator(".el-pagination");
+  await expect(pager).toBeVisible();
+  const dialogBox = await historyDialog.boundingBox();
+  const pagerBox = await pager.boundingBox();
+  expect(dialogBox).not.toBeNull();
+  expect(pagerBox).not.toBeNull();
+  if (dialogBox && pagerBox) {
+    expect(pagerBox.x + pagerBox.width).toBeLessThanOrEqual(
+      dialogBox.x + dialogBox.width + 1
+    );
+    expect(pagerBox.y + pagerBox.height).toBeLessThanOrEqual(
+      dialogBox.y + dialogBox.height + 1
+    );
+  }
 });

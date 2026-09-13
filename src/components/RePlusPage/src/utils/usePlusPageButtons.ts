@@ -71,22 +71,6 @@ export function usePlusPageButtons({
       show: (auth.partialUpdate || auth.update) && -30
     },
     {
-      text: t("buttons.changeHistory"),
-      code: "changeHistory",
-      props: {
-        type: "info",
-        icon: useRenderIcon(FileList),
-        link: true
-      },
-      onClick: ({ row }) => {
-        handleShowChangeHistory({ t, api, row });
-      },
-      tooltip: { content: t("buttons.changeHistory") },
-      // 页面在 getDefaultAuths 中声明 changeHistory 且菜单授予
-      // changeHistory:<ComponentName> 权限码时显示（用户管理页已开启示范）
-      show: auth.changeHistory && -25
-    },
-    {
       text: t("buttons.delete"),
       code: "delete",
       confirm: { title: t("buttons.confirmDelete") },
@@ -115,6 +99,22 @@ export function usePlusPageButtons({
       },
       tooltip: { content: t("buttons.detail") },
       show: (auth.list || auth.retrieve) && -10
+    },
+    {
+      text: t("buttons.changeHistory"),
+      code: "changeHistory",
+      props: {
+        type: "info",
+        icon: useRenderIcon(FileList),
+        link: true
+      },
+      onClick: ({ row }) => {
+        handleShowChangeHistory({ t, api, row });
+      },
+      tooltip: { content: t("buttons.changeHistory") },
+      // 页面在 getDefaultAuths 中声明 changeHistory 且菜单授予
+      // changeHistory:<ComponentName> 权限码时显示（用户管理页已开启示范）
+      show: auth.changeHistory && -5
     }
   ];
 
