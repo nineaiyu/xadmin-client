@@ -231,6 +231,16 @@ taskCenter:
 oauth:
   title: Third-party login
   tabTitle: Third-party accounts
+  bindTip: Bind a third-party account to sign in with it directly. Unbinding requires your login password and never removes your last available login method.
+  bound: Bound accounts
+  bindable: Available to bind
+  bind: Bind
+  bindSuccess: Bound successfully
+  bindAlready: This third-party account is already bound, no action needed
+  bindFailed: Binding failed
+  backToAccount: Back to account settings
+  providerNotConfigured: The administrator has not configured any third-party login yet, binding is unavailable
+  allBound: All enabled third-party accounts are already bound
   noBindings: No third-party account bound
   unbind: Unbind
   unbindPasswordTip: Enter your password to confirm unbinding
@@ -319,6 +329,7 @@ menus:
   webhookDelivery: Delivery Audit
   aiAssistant: AI Assistant
   aiAssistantConfig: AI Configuration
+  aiKnowledge: Knowledge base
   formCollection: Form Collection
   formDesigner: Form Design
   formMySubmission: My Submissions
@@ -366,6 +377,7 @@ menus:
   approvalCenter: Approval Center
   approvalFlow: Flow Definition
   approvalInstance: Flow Approval
+  leaveApply: Leave Request
 
 approval:
   pendingTab: Pending My Approval
@@ -996,6 +1008,43 @@ chat:
   inputLabel: "Message:"
   inputPlaceholder: Type a message and press Enter
   send: Send
+  sessions: Chats
+  contacts: Recent online
+  refresh: Refresh
+  searchPlaceholder: Search chats or contacts
+  publicRoom: Public chat room
+  publicRoomHint: Visible to all members
+  aiAssistant: AI assistant
+  aiRoomHint: Multi-turn chat; prefix with /kb to ask the knowledge base
+  aiPlaceholder: "Ask the AI assistant, or prefix {command} to query the knowledge base"
+  unknownUser: Unknown user
+  noMessageYet: No messages yet
+  emptyRooms: No chats
+  emptyContacts: No contacts
+  emptyMessages: No messages yet, say hello
+  selectRoom: Select a chat to start
+  online: Online
+  offline: Offline
+  onlineCount: "{count} online"
+  connecting: Connecting...
+  enterHint: Enter to send, Shift + Enter for a new line
+  mentionHint: Type {'@'} to mention an online member
+  loadMore: Load earlier messages
+  noMoreHistory: No more history
+  newMessages: "{count} new messages"
+  thinking: AI is thinking...
+  sources: Sources
+  hideSources: Hide sources
+  recall: Recall
+  recallConfirm: Recall this message? It will be hidden for both sides.
+  recalled: The other side recalled a message
+  youRecalled: You recalled a message
+  sending: Sending...
+  sendFailed: Failed to send
+  resend: Retry
+  disconnected: Connection lost, reconnecting
+  yesterday: Yesterday
+  openPrivate: Send message
 
 login:
   thirdPartyLogin: Third-party login
@@ -1257,6 +1306,7 @@ accessToken:
   lastUsed: Last used
   createdTime: Created time
   create: Create token
+  createDialogTitle: Create access token
   createdTitle: Token created
   onceTip: This is the only time the plain token is shown. It cannot be retrieved after closing.
   copy: Copy token
@@ -1266,7 +1316,15 @@ accessToken:
   scope: Scopes
   scopeCount: "Scopes: {n}"
   scopeUnrestricted: Unrestricted
-  scopeTip: One allowed path prefix or regex per line (e.g. /api/system/user), optionally prefixed with a method (e.g. GET /api/system/user). Leave empty for unrestricted; out-of-scope requests get 403
+  scopeGrantTip: The list shows the APIs you are allowed to call. Select them and the token can only call those (out-of-scope requests get 403). You can still adjust them later via the inline "Scopes" action
+  scopeSelectPlaceholder: Search and select the APIs to allow
+  scopeNoOptions: No API available for authorization (ask an administrator to grant menu permissions)
+  scopeSelected: "{n} selected"
+  scopeEmptyMeansUnlimited: Nothing selected = unrestricted (every API you can access)
+  scopeCustom: Custom entries (advanced)
+  scopeCustomTip: Paths or regexes not listed above, one per line, e.g. GET /api/system/personal-access-tokens
+  scopeOther: Other
+  revokeConfirm: Revoking "{name}" takes effect immediately — every call with it returns 401 and this cannot be undone. Continue?
   scopePlaceholder: |-
     /api/system/user
     /api/system/exports
@@ -1669,3 +1727,73 @@ dform:
   typeCheckbox: Checkbox
   typeDate: Date
   typeSwitch: Switch
+
+leaveApply:
+  leave_type: Leave type
+  start_date: Start date
+  end_date: End date
+  days: Days
+  daysUnit: days
+  reason: Reason
+  status: Status
+  current_node_name: Current node
+  instance_no: Application no.
+  reject_reason: Reject reason
+  finished_at: Finished at
+  creator: Applicant
+  created_time: Submitted at
+  submit: Submit
+  cancel: Cancel
+  confirmTitle: Confirmation
+  submitConfirm: Submit this leave request for approval again?
+  cancelConfirm: Cancel this leave request? It must be resubmitted afterwards.
+  submitSuccess: Leave request submitted
+  cancelSuccess: Leave request cancelled
+  rejectedTip: Rejected
+  statusDRAFT: Draft
+  statusPENDING: Pending
+  statusAPPROVED: Approved
+  statusREJECTED: Rejected
+  statusCANCELLED: Cancelled
+
+aiKnowledge:
+  upload: Upload document
+  uploadTitle: Upload document
+  syncRepo: Sync repository docs
+  syncDone: "Sync done: created {created}, updated {updated}, removed {removed}"
+  preview: Preview
+  previewTitle: Document preview
+  enable: Enable
+  disable: Disable
+  toggleDone: Status updated
+  deleteConfirm: Delete this uploaded document? Its chunks will be removed from retrieval
+  deleteDone: Document deleted
+  required: Please fill in the document name and content
+  tooLarge: Content exceeds the 200k character limit
+  uploadDone: Document uploaded and effective
+  readFileFailed: Failed to read the file; ensure UTF-8 encoding
+  name: Document name
+  namePlaceholder: Enter a name (same name overwrites the existing document)
+  chooseFile: Choose a local file
+  chooseFileTip: Supports .md/.markdown/.txt; editable after loading
+  content: Content
+  contentPlaceholder: Paste or edit Markdown text
+  contentTitle: Content
+  chunksTitle: Knowledge chunks (retrieval units)
+  chunkLabel: Chunk {n}
+  chunkSize: "{size} chars"
+  title: Document name
+  source: Source
+  sourceRepo: Repository doc
+  sourceUpload: Uploaded
+  source_type: Source
+  chunkCount: Chunks
+  chunk_count: Chunks
+  is_active: Status
+  creator: Uploader
+  syncedAt: Synced at
+  synced_at: Synced at
+  path: Storage path
+  batchEnable: Batch enable
+  batchDisable: Batch disable
+  batchToggleDone: "Updated {count}"

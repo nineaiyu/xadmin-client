@@ -231,6 +231,16 @@ taskCenter:
 oauth:
   title: 第三方登录
   tabTitle: 第三方账号
+  bindTip: 绑定第三方账号后可直接用它登录本系统；解绑需验证登录密码，且不会解掉你最后一种可用的登录方式。
+  bound: 已绑定
+  bindable: 可绑定
+  bind: 绑定
+  bindSuccess: 绑定成功
+  bindAlready: 该第三方账号已绑定，无需重复操作
+  bindFailed: 绑定失败
+  backToAccount: 返回账户设置
+  providerNotConfigured: 管理员尚未配置可用的第三方登录，暂时无法绑定
+  allBound: 已启用的第三方账号均已绑定
   noBindings: 暂无第三方账号绑定
   unbind: 解绑
   unbindPasswordTip: 请输入登录密码以确认解绑
@@ -319,6 +329,7 @@ menus:
   webhookDelivery: 投递审计
   aiAssistant: AI 助手
   aiAssistantConfig: AI 配置
+  aiKnowledge: 知识库
   formCollection: 表单采集
   formDesigner: 表单设计
   formMySubmission: 我的填报
@@ -366,6 +377,7 @@ menus:
   approvalCenter: 审批中心
   approvalFlow: 流程定义
   approvalInstance: 流程审批
+  leaveApply: 请假申请
 
 approval:
   pendingTab: 待我审批
@@ -996,6 +1008,43 @@ chat:
   inputLabel: 请输入：
   inputPlaceholder: 输入消息并回车发送
   send: 发送
+  sessions: 会话
+  contacts: 最近在线
+  refresh: 刷新
+  searchPlaceholder: 搜索会话或联系人
+  publicRoom: 公共聊天室
+  publicRoomHint: 全站公开，所有成员可见
+  aiAssistant: AI 助手
+  aiRoomHint: 支持多轮对话，输入 /kb 加问题可查知识库
+  aiPlaceholder: "向 AI 助手提问，{command} 加问题可查知识库"
+  unknownUser: 未知用户
+  noMessageYet: 还没有消息
+  emptyRooms: 暂无会话
+  emptyContacts: 暂无联系人
+  emptyMessages: 还没有消息，说点什么吧
+  selectRoom: 选择一个会话开始聊天
+  online: 在线
+  offline: 离线
+  onlineCount: "在线 {count} 人"
+  connecting: 连接中…
+  enterHint: 回车发送，Shift + 回车换行
+  mentionHint: 输入 {'@'} 可提及在线成员
+  loadMore: 加载更早的消息
+  noMoreHistory: 没有更多历史消息
+  newMessages: "有 {count} 条新消息"
+  thinking: AI 正在思考…
+  sources: 参考来源
+  hideSources: 收起来源
+  recall: 撤回
+  recallConfirm: 确定撤回这条消息吗？撤回后双方都不再可见。
+  recalled: 对方撤回了一条消息
+  youRecalled: 你撤回了一条消息
+  sending: 发送中…
+  sendFailed: 发送失败
+  resend: 重试
+  disconnected: 连接已断开，正在重连
+  yesterday: 昨天
+  openPrivate: 发消息
 
 login:
   thirdPartyLogin: 第三方登录
@@ -1257,6 +1306,7 @@ accessToken:
   lastUsed: 最后使用
   createdTime: 创建时间
   create: 创建令牌
+  createDialogTitle: 创建访问令牌
   createdTitle: 令牌创建成功
   onceTip: 这是令牌明文唯一一次展示机会，关闭后无法再次查看
   copy: 复制令牌
@@ -1266,7 +1316,15 @@ accessToken:
   scope: 接口范围
   scopeCount: "接口范围：{n} 条"
   scopeUnrestricted: 不限
-  scopeTip: 每行一条允许的路径前缀或正则（如 /api/system/user），可加方法前缀限定（如 GET /api/system/user）；留空表示不限，越界请求返回 403
+  scopeGrantTip: 下拉列出的是你有权限的接口，勾选后该令牌只能调用这些接口（越界返回 403）；创建后仍可在行内「接口范围」里调整
+  scopeSelectPlaceholder: 搜索并选择允许调用的接口
+  scopeNoOptions: 暂无可授权的接口（请联系管理员开通菜单权限）
+  scopeSelected: "已选 {n} 条"
+  scopeEmptyMeansUnlimited: 未选择 = 不限（可调用你权限内的全部接口）
+  scopeCustom: 自定义条目（高级）
+  scopeCustomTip: 下拉未覆盖的路径或正则，一行一条，例如 GET /api/system/personal-access-tokens
+  scopeOther: 其它
+  revokeConfirm: 吊销后「{name}」立即失效，所有用它调用的接口都会返回 401，且不可恢复。确定吊销吗？
   scopePlaceholder: |-
     /api/system/user
     /api/system/exports
@@ -1669,3 +1727,73 @@ dform:
   typeCheckbox: 多选
   typeDate: 日期
   typeSwitch: 开关
+
+leaveApply:
+  leave_type: 请假类型
+  start_date: 开始日期
+  end_date: 结束日期
+  days: 请假天数
+  daysUnit: 天
+  reason: 请假事由
+  status: 状态
+  current_node_name: 当前节点
+  instance_no: 申请单号
+  reject_reason: 驳回原因
+  finished_at: 结束时间
+  creator: 申请人
+  created_time: 提交时间
+  submit: 提交审批
+  cancel: 撤回
+  confirmTitle: 操作确认
+  submitConfirm: 确定重新提交该请假申请进入审批吗？
+  cancelConfirm: 确定撤回该请假申请吗？撤回后需重新提交。
+  submitSuccess: 请假申请已提交审批
+  cancelSuccess: 请假申请已撤回
+  rejectedTip: 已驳回
+  statusDRAFT: 草稿
+  statusPENDING: 审批中
+  statusAPPROVED: 已通过
+  statusREJECTED: 已驳回
+  statusCANCELLED: 已撤回
+
+aiKnowledge:
+  upload: 上传文档
+  uploadTitle: 上传文档
+  syncRepo: 同步仓库文档
+  syncDone: 同步完成：新增 {created}、更新 {updated}、清理 {removed}
+  preview: 预览
+  previewTitle: 文档预览
+  enable: 启用
+  disable: 停用
+  toggleDone: 状态已更新
+  deleteConfirm: 确定删除该上传文档吗？其分块将从问答检索中移除
+  deleteDone: 文档已删除
+  required: 请填写文档名称与内容
+  tooLarge: 文档内容超出 20 万字符上限
+  uploadDone: 文档已上传并生效
+  readFileFailed: 文件读取失败，请确认编码为 UTF-8
+  name: 文档名称
+  namePlaceholder: 请输入文档名称（同名文档将覆盖更新）
+  chooseFile: 选择本地文件
+  chooseFileTip: 支持 .md/.markdown/.txt，读取后可在下方编辑
+  content: 文档内容
+  contentPlaceholder: 粘贴或编辑 Markdown 文本
+  contentTitle: 原文
+  chunksTitle: 知识分块（问答检索命中的最小单元）
+  chunkLabel: 第 {n} 块
+  chunkSize: "{size} 字符"
+  title: 文档名称
+  source: 来源
+  sourceRepo: 仓库文档
+  sourceUpload: 上传文档
+  source_type: 来源
+  chunkCount: 分块数
+  chunk_count: 分块数
+  is_active: 状态
+  creator: 上传人
+  syncedAt: 同步时间
+  synced_at: 同步时间
+  path: 存储路径
+  batchEnable: 批量启用
+  batchDisable: 批量停用
+  batchToggleDone: 已更新 {count} 条
