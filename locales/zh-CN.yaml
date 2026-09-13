@@ -1055,7 +1055,9 @@ settingBasic:
 settingMessage:
   mailTitle: 邮件服务器
   messageTitle: 系统消息订阅
-  imTitle: IM 消息渠道
+  dingtalkTitle: 钉钉
+  wecomTitle: 企业微信
+  feishuTitle: 飞书
 
 settingLdap:
   title: LDAP 目录

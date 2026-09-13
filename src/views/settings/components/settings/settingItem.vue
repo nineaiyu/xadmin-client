@@ -3,7 +3,7 @@ import { onMounted, ref } from "vue";
 import { handleOperation, useBaseColumns } from "@/components/RePlusPage";
 import { PlusForm } from "plus-pro-components";
 import type { FieldValues } from "plus-pro-components";
-import { cloneDeep } from "lodash-es";
+import { cloneDeep, pickBy } from "lodash-es";
 import { useI18n } from "vue-i18n";
 import { settingItemProps } from "./types";
 
@@ -42,6 +42,10 @@ const addOrEditData = ref({
   formData: {}
 });
 
+/** 字段白名单过滤：设置页按渠道拆分页签时各页签只渲染/提交自己的字段 */
+const keepField = (key: string) =>
+  !props.fields?.length || props.fields.includes(key);
+
 const getData = () => {
   if (props.auth.retrieve) {
     loading.value = true;
@@ -52,18 +56,23 @@ const getData = () => {
         addOrEditData.value.addOrEditRules = cloneDeep(addOrEditRules.value);
         addOrEditData.value.addOrEditColumns = cloneDeep(
           addOrEditColumns.value
-        );
+        ).filter((column: { prop: string }) => keepField(column.prop));
         addOrEditData.value.addOrEditColumns.forEach(column => {
           column["colProps"] = {};
           column["fieldProps"]["disabled"] = !props.auth.partialUpdate;
         });
-        addOrEditData.value.formData = cloneDeep(addOrEditDefaultValue.value);
+        addOrEditData.value.formData = pickBy(
+          cloneDeep(addOrEditDefaultValue.value),
+          (_value, key) => keepField(key)
+        );
 
         props.api
           .retrieve(props.queryParams)
           .then(res => {
             if (res.code === 1000) {
-              addOrEditData.value.formData = res.data;
+              addOrEditData.value.formData = pickBy(res.data, (_value, key) =>
+                keepField(key)
+              );
               addOrEditData.value.defaultData = cloneDeep(
                 addOrEditData.value.formData
               );

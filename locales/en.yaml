@@ -1055,7 +1055,9 @@ settingBasic:
 settingMessage:
   mailTitle: Email Server
   messageTitle: Message Notifications
-  imTitle: IM Channels
+  dingtalkTitle: DingTalk
+  wecomTitle: WeCom
+  feishuTitle: FeiShu
 
 settingLdap:
   title: LDAP Directory
