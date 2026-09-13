@@ -291,7 +291,8 @@ onMounted(loadAll);
       :title="editingPk ? t('dataDataset.edit') : t('dataDataset.create')"
       width="760px"
     >
-      <el-form label-width="100px">
+      <!-- 112px：「时间字段（趋势）」8 个全角字符不折行 -->
+      <el-form label-width="112px">
         <el-form-item :label="t('dataDataset.name')" required>
           <el-input v-model="form.name" />
         </el-form-item>
@@ -328,7 +329,13 @@ onMounted(loadAll);
               :key="index"
               class="mb-2 flex gap-2"
             >
-              <el-select v-model="item.field" class="w-44" filterable>
+              <!-- EP .el-select 根元素默认 width:var(--el-select-width)=100%，
+                   flex 行内会与 value 输入框争宽，工具类 w-* 同级被覆盖，须行内样式定宽 -->
+              <el-select
+                v-model="item.field"
+                :style="{ width: '190px' }"
+                filterable
+              >
                 <el-option
                   v-for="f in fieldOptions"
                   :key="f"
@@ -337,7 +344,7 @@ onMounted(loadAll);
                 />
               </el-select>
               <!-- op 为短枚举值，收窄让位给右侧 value 输入框 -->
-              <el-select v-model="item.op" class="w-32">
+              <el-select v-model="item.op" :style="{ width: '110px' }">
                 <el-option
                   v-for="op in opOptions"
                   :key="op"
@@ -355,7 +362,12 @@ onMounted(loadAll);
                     : t('dataDataset.value')
                 "
               />
-              <el-button link type="danger" @click="removeFilter(index)">
+              <el-button
+                link
+                type="danger"
+                class="shrink-0"
+                @click="removeFilter(index)"
+              >
                 {{ t("dataDataset.delete") }}
               </el-button>
             </div>
