@@ -55,7 +55,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div v-if="allowed" v-loading="loading" class="mx-3 mb-2 mt-4">
+  <!-- 白底卡片与页面其余区域（搜索/表格区）观感一致，避免统计数字裸在灰底上 -->
+  <el-card v-if="allowed" v-loading="loading" shadow="never" class="mb-2">
     <el-alert
       type="info"
       :closable="false"
@@ -94,5 +95,5 @@ onMounted(() => {
         </el-statistic>
       </el-col>
     </el-row>
-  </div>
+  </el-card>
 </template>

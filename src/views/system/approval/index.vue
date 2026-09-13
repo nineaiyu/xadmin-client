@@ -16,23 +16,27 @@ const activeTab = ref("pending");
 const { pendingCount } = useApprovalBadge();
 </script>
 <template>
-  <ApprovalStats />
-  <el-tabs v-model="activeTab" class="mx-3 mt-2">
-    <el-tab-pane name="pending">
-      <template #label>
-        <el-badge
-          :value="pendingCount"
-          :max="99"
-          :hidden="pendingCount === 0"
-          class="mr-1"
-        >
-          {{ t("approval.pendingTab") }}
-        </el-badge>
-      </template>
-      <PendingPanel />
-    </el-tab-pane>
-    <el-tab-pane :label="t('approval.mineTab')" name="mine" lazy>
-      <MinePanel />
-    </el-tab-pane>
-  </el-tabs>
+  <div class="pr-[1%]">
+    <!-- 单根包裹：layout 注入的 main-content（24px 外边距）只有单根组件才会继承，
+         多根 Fragment 会让该 class 被丢弃；pr-[1%] 与 RePlusPage 的 w-99/100 等效 -->
+    <ApprovalStats />
+    <el-tabs v-model="activeTab" class="mt-2">
+      <el-tab-pane name="pending">
+        <template #label>
+          <el-badge
+            :value="pendingCount"
+            :max="99"
+            :hidden="pendingCount === 0"
+            class="mr-1"
+          >
+            {{ t("approval.pendingTab") }}
+          </el-badge>
+        </template>
+        <PendingPanel />
+      </el-tab-pane>
+      <el-tab-pane :label="t('approval.mineTab')" name="mine" lazy>
+        <MinePanel />
+      </el-tab-pane>
+    </el-tabs>
+  </div>
 </template>

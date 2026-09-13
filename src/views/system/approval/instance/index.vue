@@ -52,30 +52,43 @@ onUnmounted(() => {
 });
 </script>
 <template>
-  <div class="mb-2 ml-3 mt-3">
-    <el-button v-if="AUTH.create" type="primary" @click="openStart">
-      {{ t("systemApprovalInstance.start") }}
-    </el-button>
+  <div class="pr-[1%]">
+    <!-- 单根包裹 + 去掉手写 ml/mx：由 layout 注入的 main-content（24px）统一提供边距；
+         pr-[1%] 与 RePlusPage 的 w-99/100 等效 -->
+    <!-- 单按钮工具条：内边距对齐搜索区工具条（12px 24px），避免卡片显得空旷 -->
+    <el-card shadow="never" class="mb-2" body-style="padding: 12px 24px">
+      <el-button v-if="AUTH.create" type="primary" @click="openStart">
+        {{ t("systemApprovalInstance.start") }}
+      </el-button>
+    </el-card>
+    <el-tabs v-model="activeTab" class="mt-2">
+      <el-tab-pane name="pending">
+        <template #label>
+          <el-badge
+            :value="pendingCount"
+            :max="99"
+            :hidden="pendingCount === 0"
+            class="mr-1"
+          >
+            {{ t("systemApprovalInstance.pendingTab") }}
+          </el-badge>
+        </template>
+        <InstancePanel ref="pendingPanel" scope="pending" />
+      </el-tab-pane>
+      <el-tab-pane
+        :label="t('systemApprovalInstance.mineTab')"
+        name="mine"
+        lazy
+      >
+        <InstancePanel ref="minePanel" scope="mine" />
+      </el-tab-pane>
+      <el-tab-pane
+        :label="t('systemApprovalInstance.doneTab')"
+        name="done"
+        lazy
+      >
+        <InstancePanel ref="donePanel" scope="done" />
+      </el-tab-pane>
+    </el-tabs>
   </div>
-  <el-tabs v-model="activeTab" class="mx-3 mt-2">
-    <el-tab-pane name="pending">
-      <template #label>
-        <el-badge
-          :value="pendingCount"
-          :max="99"
-          :hidden="pendingCount === 0"
-          class="mr-1"
-        >
-          {{ t("systemApprovalInstance.pendingTab") }}
-        </el-badge>
-      </template>
-      <InstancePanel ref="pendingPanel" scope="pending" />
-    </el-tab-pane>
-    <el-tab-pane :label="t('systemApprovalInstance.mineTab')" name="mine" lazy>
-      <InstancePanel ref="minePanel" scope="mine" />
-    </el-tab-pane>
-    <el-tab-pane :label="t('systemApprovalInstance.doneTab')" name="done" lazy>
-      <InstancePanel ref="donePanel" scope="done" />
-    </el-tab-pane>
-  </el-tabs>
 </template>

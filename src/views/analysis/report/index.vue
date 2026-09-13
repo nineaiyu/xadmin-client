@@ -156,7 +156,9 @@ onMounted(loadAll);
 </script>
 
 <template>
-  <div class="p-4">
+  <div class="pr-[1%]">
+    <!-- pr-[1%]：内容宽度对齐 RePlusPage 的 w-99/100（右侧留 1%），
+         根元素自带 layout 注入的 main-content（24px 外边距），不能再设百分比宽度（会溢出） -->
     <el-card shadow="never">
       <div class="mb-3 flex items-center gap-2">
         <span class="font-semibold">{{ t("dataReport.title") }}</span>
