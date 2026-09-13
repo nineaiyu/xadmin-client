@@ -1,6 +1,14 @@
 import { expect, test } from "@playwright/test";
 
-import { login, logout, openList, openMenu } from "./helpers";
+import {
+  BACKEND_URL,
+  getAccessToken,
+  login,
+  logout,
+  openList,
+  openMenu,
+  openMenuPath
+} from "./helpers";
 
 /**
  * xadmin E2E 冒烟：登录 → 菜单 → 部门 CRUD → 用户列表 → 登出
@@ -66,7 +74,9 @@ test("用户管理：列表加载数据 @smoke", async ({ page }) => {
   await expect(page.locator(".el-pagination").first()).toBeVisible();
 });
 
-test("角色权限：列表与搜索区渲染 @smoke", async ({ page }) => {
+test("角色权限：列表与搜索区渲染，新增弹层渲染授权树 @smoke", async ({
+  page
+}) => {
   await login(page);
   // 角色权限位于 系统管理 → 权限管理 二级目录下
   await page.getByRole("menuitem", { name: "系统管理" }).first().click();
@@ -87,6 +97,121 @@ test("角色权限：列表与搜索区渲染 @smoke", async ({ page }) => {
   await expect(
     page.locator("form").getByRole("button", { name: "重置" })
   ).toBeVisible();
+
+  // 新增弹层的授权树来自 search-columns 的 menu 列：首开走 with_meta=1 内联
+  // 元数据，列缺失时弹层会退化成空白表单（控制台 fieldProps 报错），这里锚定
+  await page.getByRole("button", { name: "新增" }).first().click();
+  const dialog = page.locator(".el-dialog:visible").first();
+  await expect(dialog).toBeVisible({ timeout: 15_000 });
+  await expect(dialog.locator(".el-tree").first()).toBeVisible({
+    timeout: 15_000
+  });
+  await expect(dialog.locator(".el-tree-node").first()).toBeVisible({
+    timeout: 15_000
+  });
+  await dialog.locator(".el-dialog__headerbtn").first().click();
+  await expect(dialog).not.toBeVisible({ timeout: 15_000 });
+});
+
+test("角色权限：新增保存 → 列表可见 → 删除 @smoke", async ({ page }) => {
+  const roleName = `e2e新增角色_${Date.now()}`;
+  await login(page);
+  await openMenuPath(page, ["系统管理", "权限管理"], "/system/role/index");
+  await expect(page.locator(".el-table").first()).toBeVisible({
+    timeout: 15_000
+  });
+
+  // 新增（名称 + 编码必填）；不勾选授权也要能保存（fields 需有默认值）
+  await page.getByRole("button", { name: "新增" }).first().click();
+  const dialog = page.locator(".el-dialog:visible").first();
+  await expect(dialog).toBeVisible({ timeout: 15_000 });
+  await dialog
+    .locator(".el-form-item:has-text('角色名称') input")
+    .first()
+    .fill(roleName);
+  await dialog
+    .locator(".el-form-item:has-text('角色标识') input")
+    .first()
+    .fill(`e2e_add_${Date.now()}`);
+  await dialog
+    .getByRole("button", { name: /保存|确定/ })
+    .first()
+    .click();
+  await expect(dialog).not.toBeVisible({ timeout: 15_000 });
+
+  // 列表出现（列表固定 ordering=-created_time，新角色在首屏）
+  const row = page.locator(".el-table__row", { hasText: roleName }).first();
+  await expect(row).toBeVisible({ timeout: 15_000 });
+
+  // 删除（操作列按钮 + Popconfirm 确认）
+  await row.getByRole("button", { name: "删除" }).first().click();
+  await page
+    .locator(".el-popconfirm, .el-popper, .el-message-box")
+    .getByRole("button", { name: "确定" })
+    .first()
+    .click();
+  await expect(
+    page.locator(".el-table__row", { hasText: roleName })
+  ).toHaveCount(0, { timeout: 15_000 });
+});
+
+test("角色权限：编辑弹层回显授权树勾选 @smoke", async ({ page }) => {
+  const roleName = `e2e编辑回显角色_${Date.now()}`;
+  await login(page);
+
+  // API 造一个带授权的角色：授权根级菜单（树默认折叠，根节点也会渲染，便于断言勾选回显）
+  const token = await getAccessToken(page);
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    "User-Agent": "e2e-test"
+  };
+  const menusRes = await page.request.get(
+    `${BACKEND_URL}/api/system/menu?page=1&size=1000`,
+    { headers }
+  );
+  const menus = ((await menusRes.json())?.data?.results ?? []) as Array<{
+    pk: string;
+    parent?: string;
+  }>;
+  const rootMenu = menus.find(menu => !menu.parent);
+  if (!rootMenu) {
+    throw new Error("种子菜单缺少根级节点");
+  }
+  const created = await page.request.post(`${BACKEND_URL}/api/system/role`, {
+    headers,
+    data: {
+      name: roleName,
+      code: `e2e_edit_${Date.now()}`,
+      fields: {},
+      menu: [rootMenu.pk]
+    }
+  });
+  expect(created.ok()).toBeTruthy();
+  const rolePk = (await created.json())?.data?.pk;
+
+  try {
+    await openMenuPath(page, ["系统管理", "权限管理"], "/system/role/index");
+    const row = page.locator(".el-table__row", { hasText: roleName }).first();
+    await expect(row).toBeVisible({ timeout: 15_000 });
+    await row.getByRole("button", { name: "编辑" }).first().click();
+
+    const dialog = page.locator(".el-dialog:visible").first();
+    await expect(dialog).toBeVisible({ timeout: 15_000 });
+    await expect(dialog.locator(".el-tree").first()).toBeVisible({
+      timeout: 15_000
+    });
+    // 回显：详情里的授权（field 为 {menuPk: [fieldPk]} 字典）必须落到树勾选态；
+    // 修复前字典未归一化 → form.vue push 抛错、initData 不执行 → 勾选全丢
+    await expect(dialog.locator(".el-checkbox.is-checked").first()).toBeVisible(
+      {
+        timeout: 15_000
+      }
+    );
+  } finally {
+    await page.request.delete(`${BACKEND_URL}/api/system/role/${rolePk}`, {
+      headers
+    });
+  }
 });
 
 test("登出后回到登录页 @smoke", async ({ page }) => {

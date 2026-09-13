@@ -106,10 +106,29 @@ export function useRole() {
     props: {
       row: {
         field: ({ rawRow }) => {
-          return rawRow?.field ?? [];
+          // 列表行 field 为 []（ListRoleSerializer 口径）；编辑态会叠加详情原文，
+          // 详情口径是 {menuPk: [fieldPk]} 字典。授权树勾选回显（form.vue 的
+          // setCheckedKeys）要的是合成键数组，这里统一归一化（键约定见 ./treeKeys.ts）
+          const field = rawRow?.field;
+          if (Array.isArray(field)) {
+            return field;
+          }
+          if (field && typeof field === "object") {
+            return Object.keys(field).flatMap(menuPk =>
+              (field[menuPk] ?? []).map(fieldPk =>
+                menuFieldKey(menuPk, String(fieldPk))
+              )
+            );
+          }
+          return [];
         },
         menu: ({ rawRow }) => {
           return getKeyList(rawRow?.menu ?? [], "pk") ?? [];
+        },
+        fields: ({ rawRow }) => {
+          // 后端 fields 必填：未在授权树勾选任何字段授权时也要带上空字典
+          // （空字典 = 该角色无字段权限；编辑态后端对空字典不做替换，保留原权限）
+          return rawRow?.fields ?? {};
         }
       },
       columns: {
