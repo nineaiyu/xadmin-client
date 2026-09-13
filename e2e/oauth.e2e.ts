@@ -57,7 +57,7 @@ test("未配置 provider：authorize 返回可读业务错误", async ({ page })
   expect(body.detail).toBeTruthy();
 });
 
-test("个人中心：第三方账号页签可见且为空态", async ({ page }) => {
+test("个人中心：第三方账号页签展示空态与绑定入口", async ({ page }) => {
   await login(page);
   await page.goto("/#/account-settings");
   await expect(page.getByText("第三方账号").first()).toBeVisible({
@@ -67,4 +67,22 @@ test("个人中心：第三方账号页签可见且为空态", async ({ page }) 
   await expect(page.getByText("暂无第三方账号绑定").first()).toBeVisible({
     timeout: 15_000
   });
+  // 种子注入的启用态 provider（E2E飞书）出现在「可绑定」区，带绑定入口
+  const providerRow = page
+    .locator(".provider-row", { hasText: "E2E飞书" })
+    .first();
+  await expect(providerRow).toBeVisible({ timeout: 15_000 });
+  await expect(providerRow.getByRole("button", { name: "绑定" })).toBeVisible();
+});
+
+test("个人中心：绑定授权地址可取（已登录 + 带 state）", async ({ page }) => {
+  await login(page);
+  const resp = await page.request.get(
+    `${FRONT_URL}/api/system/auth/oauth/feishu/bind-authorize`
+  );
+  const body = await resp.json();
+  expect(body.code).toBe(1000);
+  // 返回 IdP 授权地址与一次性 state（真实绑定跳转依赖真实 IdP，由后端 stub 单测覆盖）
+  expect(String(body.data.url)).toContain("https://");
+  expect(String(body.data.state)).toBeTruthy();
 });

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { computed, onBeforeMount, ref } from "vue";
 import { ReText } from "@/components/ReText";
 import Profile from "./components/Profile.vue";
@@ -32,6 +32,7 @@ defineOptions({
 });
 
 const router = useRouter();
+const route = useRoute();
 const isOpen = ref(!deviceDetection());
 const userinfoStore = useUserStoreHook();
 const { $storage } = useGlobal<GlobalPropertiesApi>();
@@ -99,7 +100,33 @@ const panes = computed(() => [
     auth: hasAuth("list:UserLoginLog")
   }
 ]);
-const witchPane = ref("profile");
+/**
+ * 页签定位：支持 `?tab=xxx` 直达（OAuth 绑定回调落地后回到「第三方账号」），
+ * 非法/无权限的 key 一律回落「个人信息」，避免落到空白面板。
+ */
+const initialPane = () => {
+  const key = String(route.query.tab ?? "");
+  return panes.value.some(item => item.key === key && item.auth)
+    ? key
+    : "profile";
+};
+const witchPane = ref(initialPane());
+
+/**
+ * 切换页签只改本地状态，**不**同步 URL query。
+ *
+ * 面板首屏请求会按「当前路由 fullPath」登记（见 utils/http/routeCancel）；
+ * 若在此处 `router.replace({query})`，afterEach 的
+ * `cancelRoutePending(from.fullPath)` 会取消刚挂载面板的在途请求
+ * （列表/元数据被中止 → 表格空白、provider 列表为空），且取消与挂载是竞态，
+ * 表现为偶发。深度定位一次性由 `?tab=` 读入即可，URL 保持落地时的值。
+ */
+const switchPane = (key: string) => {
+  witchPane.value = key;
+  if (deviceDetection()) {
+    isOpen.value = !isOpen.value;
+  }
+};
 </script>
 
 <template>
@@ -136,14 +163,7 @@ const witchPane = ref("profile");
           v-for="item in panes.filter(item => item.auth)"
           :key="item.key"
           :index="item.key"
-          @click="
-            () => {
-              witchPane = item.key;
-              if (deviceDetection()) {
-                isOpen = !isOpen;
-              }
-            }
-          "
+          @click="switchPane(item.key)"
         >
           <div class="flex items-center z-10">
             <el-icon>
