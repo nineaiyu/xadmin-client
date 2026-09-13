@@ -114,3 +114,17 @@ export function statusTagProps(
   const value = item ? item.value : status;
   return { type: fallbackTypes[String(value)] ?? "info" };
 }
+
+/**
+ * labeled choice 序列化值的归一化取值。
+ *
+ * BaseModelSerializer 会把带 choices 的 CharField 自动换成 LabeledChoiceField，
+ * 接口输出为 {value,label,...} 对象；表单控件（el-radio-group / el-select 等）
+ * 只接受标量。自定义页面消费这类字段时统一经本函数取回原始枚举值，
+ * 历史纯字符串输入原样透传（与 StatusValue 的兼容口径一致）。
+ */
+export function choiceValue(value: StatusValue): string {
+  return typeof value === "object" && value !== null
+    ? String(value.value ?? "")
+    : String(value ?? "");
+}
