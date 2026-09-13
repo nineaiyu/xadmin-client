@@ -136,75 +136,78 @@ async function submit() {
 onMounted(loadFlows);
 </script>
 <template>
-  <el-form
-    ref="formRef"
-    v-loading="loading"
-    :model="form"
-    :rules="rules"
-    label-width="90px"
-  >
-    <el-form-item :label="t('systemApprovalInstance.formFlow')" prop="flow">
-      <el-select
-        v-model="form.flow"
-        class="w-full"
-        filterable
-        :placeholder="t('systemApprovalInstance.flowPlaceholder')"
-        @change="onFlowChange"
-      >
-        <el-option
-          v-for="item in flows"
-          :key="item.pk"
-          :label="item.name"
-          :value="item.pk"
-        />
-      </el-select>
-    </el-form-item>
-    <el-form-item :label="t('systemApprovalInstance.formTitle')" prop="title">
-      <el-input
-        v-model="form.title"
-        maxlength="128"
-        :placeholder="t('systemApprovalInstance.titlePlaceholder')"
-      />
-    </el-form-item>
-    <el-form-item
-      v-for="field in fields"
-      :key="field.key"
-      :label="field.label ?? field.key"
-      :prop="`values.${field.key}`"
-      :required="field.required"
+  <!-- 单根包裹：ReDialog 会透传 change/close 监听器，fragment 根无法继承会告警 -->
+  <div>
+    <el-form
+      ref="formRef"
+      v-loading="loading"
+      :model="form"
+      :rules="rules"
+      label-width="90px"
     >
-      <el-select
-        v-if="field.type === 'select'"
-        v-model="form.values[field.key]"
-        class="w-full"
-        :placeholder="t('systemApprovalInstance.fieldPlaceholder')"
-      >
-        <el-option
-          v-for="option in field.options ?? []"
-          :key="String(option)"
-          :label="String(option)"
-          :value="String(option)"
+      <el-form-item :label="t('systemApprovalInstance.formFlow')" prop="flow">
+        <el-select
+          v-model="form.flow"
+          class="w-full"
+          filterable
+          :placeholder="t('systemApprovalInstance.flowPlaceholder')"
+          @change="onFlowChange"
+        >
+          <el-option
+            v-for="item in flows"
+            :key="item.pk"
+            :label="item.name"
+            :value="item.pk"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item :label="t('systemApprovalInstance.formTitle')" prop="title">
+        <el-input
+          v-model="form.title"
+          maxlength="128"
+          :placeholder="t('systemApprovalInstance.titlePlaceholder')"
         />
-      </el-select>
-      <el-date-picker
-        v-else-if="field.type === 'date'"
-        v-model="form.values[field.key]"
-        type="date"
-        value-format="YYYY-MM-DD"
-        class="w-full"
-      />
-      <el-input
-        v-else
-        v-model="form.values[field.key]"
-        :type="field.type === 'textarea' ? 'textarea' : 'text'"
-        :rows="3"
-        :placeholder="t('systemApprovalInstance.fieldPlaceholder')"
-      />
-    </el-form-item>
-  </el-form>
-  <div class="flex justify-end mt-2">
-    <el-button type="primary" :loading="submitting" @click="submit">
-      {{ t("systemApprovalInstance.submit") }}
-    </el-button>
+      </el-form-item>
+      <el-form-item
+        v-for="field in fields"
+        :key="field.key"
+        :label="field.label ?? field.key"
+        :prop="`values.${field.key}`"
+        :required="field.required"
+      >
+        <el-select
+          v-if="field.type === 'select'"
+          v-model="form.values[field.key]"
+          class="w-full"
+          :placeholder="t('systemApprovalInstance.fieldPlaceholder')"
+        >
+          <el-option
+            v-for="option in field.options ?? []"
+            :key="String(option)"
+            :label="String(option)"
+            :value="String(option)"
+          />
+        </el-select>
+        <el-date-picker
+          v-else-if="field.type === 'date'"
+          v-model="form.values[field.key]"
+          type="date"
+          value-format="YYYY-MM-DD"
+          class="w-full"
+        />
+        <el-input
+          v-else
+          v-model="form.values[field.key]"
+          :type="field.type === 'textarea' ? 'textarea' : 'text'"
+          :rows="3"
+          :placeholder="t('systemApprovalInstance.fieldPlaceholder')"
+        />
+      </el-form-item>
+    </el-form>
+    <div class="flex justify-end mt-2">
+      <el-button type="primary" :loading="submitting" @click="submit">
+        {{ t("systemApprovalInstance.submit") }}
+      </el-button>
+    </div>
   </div>
 </template>
