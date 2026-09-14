@@ -21,6 +21,7 @@ import Lock from "~icons/ep/lock";
 import Location from "~icons/ep/location";
 import Document from "~icons/ep/document";
 import Plus from "~icons/ep/plus";
+import { dialogSize } from "@/components/ReDialog/size";
 
 defineOptions({ name: "AccessToken" });
 
@@ -158,7 +159,7 @@ const openListEditor = (options: {
   const editor = reactive({ text: (options.value ?? []).join("\n") });
   addDialog({
     title: options.title,
-    width: "480px",
+    width: dialogSize("sm"),
     draggable: true,
     destroyOnClose: true,
     closeOnClickModal: false,
@@ -205,7 +206,7 @@ const openScopeEditor = (row: RecordType) => {
   });
   addDialog({
     title: t("accessToken.scope"),
-    width: "680px",
+    width: dialogSize("md"),
     draggable: true,
     destroyOnClose: true,
     closeOnClickModal: false,
@@ -246,7 +247,7 @@ const openIpAllowlistEditor = (row: RecordType) =>
 const openCallLogs = (row: RecordType) => {
   addDialog({
     title: `${t("accessToken.callLogs")} - ${row.name}`,
-    width: "720px",
+    width: dialogSize("lg"),
     draggable: true,
     destroyOnClose: true,
     closeOnClickModal: false,
@@ -381,7 +382,7 @@ const operationButtonsProps: OperationProps = {
     <el-dialog
       v-model="createVisible"
       :title="t('accessToken.createDialogTitle')"
-      width="620px"
+      :width="dialogSize('md')"
       :close-on-click-modal="false"
     >
       <el-form label-width="90px" @submit.prevent>
@@ -425,7 +426,7 @@ const operationButtonsProps: OperationProps = {
     <el-dialog
       v-model="tokenVisible"
       :title="t('accessToken.createdTitle')"
-      width="520px"
+      :width="dialogSize('md')"
       @closed="plainToken = ''"
     >
       <el-alert
