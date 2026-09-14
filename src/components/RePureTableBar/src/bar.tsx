@@ -267,8 +267,10 @@ export default defineComponent({
     };
 
     /** 列展示拖拽排序 */
-    // 复用同一 Sortable 实例：rowDrop 会在每次 hover 拖拽按钮时触发，
+    // 复用同一 Sortable 实例：rowDrop 会在每次触发拖拽按钮时重整实例，
     // 重复 create 会在同一 wrapper 上叠加监听，需先销毁旧实例
+    // R9 触屏降级：原先仅 mouseenter 触发（触屏无 hover，列排序不可用），
+    // 现由 mousedown / touchstart 同样触发（Sortable 自身支持 touch 拖拽）
     let sortableInstance: ReturnType<typeof Sortable.create> | null = null;
     const rowDrop = (event: { preventDefault: () => void }) => {
       event.preventDefault();
@@ -443,6 +445,12 @@ export default defineComponent({
                                   fixed ? "cursor-no-drop!" : "cursor-grab!"
                                 ]}
                                 onMouseenter={(event: {
+                                  preventDefault: () => void;
+                                }) => rowDrop(event)}
+                                onMousedown={(event: {
+                                  preventDefault: () => void;
+                                }) => rowDrop(event)}
+                                onTouchstart={(event: {
                                   preventDefault: () => void;
                                 }) => rowDrop(event)}
                               />
