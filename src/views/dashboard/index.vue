@@ -1,12 +1,14 @@
 <script lang="ts" setup>
 import { SUCCESS_CODE } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
-import { computed, onMounted, ref } from "vue";
+import { computed, h, onMounted, ref } from "vue";
 import Sortable from "sortablejs";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { Setting } from "@element-plus/icons-vue";
 import { ElMessageBox } from "element-plus";
+import { addDialog } from "@/components/ReDialog";
+import { dialogSize } from "@/components/ReDialog/size";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import {
@@ -17,7 +19,9 @@ import {
   type DashboardItem,
   type DatasetItem
 } from "@/api/system/datasets";
+import CardForm from "./components/CardForm.vue";
 import ChartCard from "./components/ChartCard.vue";
+import DashboardCreateForm from "./components/DashboardCreateForm.vue";
 
 defineOptions({
   name: "DataDashboard"
@@ -134,15 +138,8 @@ const removeCard = (id: string) => {
 const datasetName = (pk: string) =>
   datasets.value.find(item => item.pk === pk)?.name ?? pk;
 
-const spanOptions = [3, 6, 9, 12];
-/** 卡片高度档位（px）：标准 224 与存量 h-56 渲染一致，向后兼容 */
-const heightOptions = [160, 224, 320, 440];
-
-// ---- 卡片弹窗（新建 / 编辑双模式） ----
-const cardDialog = ref(false);
-const editingCardId = ref<string | null>(null);
-const cardForm = ref<DashboardCard>(newCard());
-const datasetColumns = ref<string[]>([]);
+// ---- 卡片弹窗（新建 / 编辑双模式；草稿保存在内存 draftLayout，随「保存布局」统一提交） ----
+const cardFormRef = ref<InstanceType<typeof CardForm>>();
 
 function newCard(): DashboardCard {
   return {
@@ -156,75 +153,76 @@ function newCard(): DashboardCard {
   };
 }
 
-const openCardDialog = () => {
-  editingCardId.value = null;
-  cardForm.value = newCard();
-  datasetColumns.value = [];
-  cardDialog.value = true;
-};
+const openCardDialog = () => openCardSettings(null);
 
-/** 编辑既有卡片：回填表单，确认后原位更新 */
-const openCardSettings = (card: DashboardCard) => {
-  editingCardId.value = card.id;
-  cardForm.value = { ...card, height: card.height ?? 224 };
-  datasetColumns.value =
-    datasets.value.find(item => item.pk === card.dataset)?.columns ?? [];
-  cardDialog.value = true;
-};
-
-const onDatasetPicked = async (pk: string) => {
-  const dataset = datasets.value.find(item => item.pk === pk);
-  datasetColumns.value = dataset?.columns ?? [];
-  cardForm.value.group_by = datasetColumns.value[0];
-  if (!cardForm.value.title) {
-    cardForm.value.title = dataset?.name ?? "";
-  }
-};
-
-const addCard = async () => {
-  const card = cardForm.value;
-  if (!card.dataset || !card.title) {
-    message(t("dashboard.cardRequired"), { type: "warning" });
-    return;
-  }
-  if (card.chart_type !== "number" && !card.group_by) {
-    message(t("dashboard.cardRequired"), { type: "warning" });
-    return;
-  }
-  if (editingCardId.value) {
-    draftLayout.value = draftLayout.value.map(item =>
-      item.id === editingCardId.value ? { ...card, id: item.id } : item
-    );
-  } else {
-    draftLayout.value = [...draftLayout.value, { ...card }];
-  }
-  cardDialog.value = false;
+/** 编辑既有卡片（null = 新建）：确认后原位更新内存草稿 */
+const openCardSettings = (card: DashboardCard | null) => {
+  const editingId = card?.id ?? null;
+  cardFormRef.value = undefined;
+  addDialog({
+    title: editingId ? t("dashboard.editCard") : t("dashboard.addCard"),
+    width: dialogSize("sm"),
+    draggable: true,
+    destroyOnClose: true,
+    closeOnClickModal: false,
+    contentRenderer: () =>
+      h(CardForm, {
+        ref: cardFormRef,
+        card: card ?? newCard(),
+        datasets: datasets.value
+      }),
+    beforeSure: (done, { closeLoading }) => {
+      const updated = cardFormRef.value?.getCard();
+      if (!updated) {
+        closeLoading();
+        return;
+      }
+      if (editingId) {
+        draftLayout.value = draftLayout.value.map(item =>
+          item.id === editingId ? { ...updated, id: item.id } : item
+        );
+      } else {
+        draftLayout.value = [...draftLayout.value, { ...updated }];
+      }
+      done();
+    }
+  });
 };
 
 // ---- 新建仪表盘弹窗 ----
-const dashDialog = ref(false);
-const dashForm = ref({
-  name: "",
-  visibility: "personal" as "personal" | "shared"
-});
+const dashFormRef = ref<InstanceType<typeof DashboardCreateForm>>();
 
-const createDashboard = async () => {
-  if (!dashForm.value.name) return;
-  const res = await dashboardApi.create({
-    name: dashForm.value.name,
-    visibility: dashForm.value.visibility,
-    layout: []
+const openCreateDashboard = () => {
+  dashFormRef.value = undefined;
+  addDialog({
+    title: t("dashboard.create"),
+    width: dialogSize("sm"),
+    draggable: true,
+    destroyOnClose: true,
+    closeOnClickModal: false,
+    sureBtnLoading: true,
+    contentRenderer: () => h(DashboardCreateForm, { ref: dashFormRef }),
+    beforeSure: async (done, { closeLoading }) => {
+      const payload = dashFormRef.value?.getPayload();
+      if (!payload) {
+        closeLoading();
+        return;
+      }
+      const res = await dashboardApi.create({ ...payload, layout: [] });
+      if (res.code === SUCCESS_CODE) {
+        message(t("dashboard.saveOk"), { type: "success" });
+        current.value = null;
+        await loadDashboards();
+        current.value =
+          dashboards.value.find(
+            item => item.pk === (res.data as never as DashboardItem)?.pk
+          ) ?? null;
+        done();
+        return;
+      }
+      closeLoading();
+    }
   });
-  if (res.code === SUCCESS_CODE) {
-    message(t("dashboard.saveOk"), { type: "success" });
-    dashDialog.value = false;
-    current.value = null;
-    await loadDashboards();
-    current.value =
-      dashboards.value.find(
-        item => item.pk === (res.data as never as DashboardItem)?.pk
-      ) ?? null;
-  }
 };
 
 const removeDashboard = async () => {
@@ -283,7 +281,7 @@ onMounted(async () => {
         <el-button
           v-if="canCreate"
           data-testid="dashboard-create"
-          @click="dashDialog = true"
+          @click="openCreateDashboard"
         >
           {{ t("dashboard.create") }}
         </el-button>
@@ -358,128 +356,5 @@ onMounted(async () => {
         {{ t("dashboard.addCard") }}
       </el-button>
     </template>
-
-    <!-- 新建卡片 -->
-    <el-dialog
-      v-model="cardDialog"
-      :title="editingCardId ? t('dashboard.editCard') : t('dashboard.addCard')"
-      width="480px"
-    >
-      <el-form label-width="110px">
-        <el-form-item :label="t('dashboard.dataset')">
-          <el-select
-            v-model="cardForm.dataset"
-            class="w-full"
-            filterable
-            @change="onDatasetPicked"
-          >
-            <el-option
-              v-for="item in datasets"
-              :key="item.pk"
-              :value="item.pk"
-              :label="item.name"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item :label="t('dashboard.cardTitle')">
-          <el-input v-model="cardForm.title" />
-        </el-form-item>
-        <el-form-item :label="t('dashboard.chartType')">
-          <el-select v-model="cardForm.chart_type" class="w-full">
-            <el-option value="number" :label="t('dashboard.chartNumber')" />
-            <el-option value="line" :label="t('dashboard.chartLine')" />
-            <el-option value="bar" :label="t('dashboard.chartBar')" />
-            <el-option value="pie" :label="t('dashboard.chartPie')" />
-          </el-select>
-        </el-form-item>
-        <el-form-item
-          v-if="cardForm.chart_type !== 'number'"
-          :label="t('dashboard.groupBy')"
-        >
-          <el-select v-model="cardForm.group_by" class="w-full" filterable>
-            <el-option
-              v-for="field in datasetColumns"
-              :key="field"
-              :value="field"
-              :label="field"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item
-          v-if="cardForm.chart_type === 'line'"
-          :label="t('dashboard.dateTrunc')"
-        >
-          <el-select v-model="cardForm.date_trunc" class="w-full">
-            <el-option value="day" :label="t('dashboard.byDay')" />
-            <el-option value="month" :label="t('dashboard.byMonth')" />
-          </el-select>
-        </el-form-item>
-        <el-form-item
-          v-if="cardForm.chart_type === 'bar' || cardForm.chart_type === 'pie'"
-          :label="t('dashboard.metric')"
-        >
-          <el-select v-model="cardForm.metric" class="w-full">
-            <el-option value="count" :label="t('dashboard.metricCount')" />
-            <el-option value="sum" :label="t('dashboard.metricSum')" />
-            <el-option value="avg" :label="t('dashboard.metricAvg')" />
-          </el-select>
-        </el-form-item>
-        <el-form-item :label="t('dashboard.cardSpan')">
-          <el-select v-model="cardForm.span" class="w-full">
-            <el-option
-              v-for="span in spanOptions"
-              :key="span"
-              :value="span"
-              :label="`${span}/12`"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item :label="t('dashboard.cardHeight')">
-          <el-select v-model="cardForm.height" class="w-full">
-            <el-option
-              v-for="h in heightOptions"
-              :key="h"
-              :value="h"
-              :label="`${h}px`"
-            />
-          </el-select>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="cardDialog = false">{{
-          t("dashboard.cancel")
-        }}</el-button>
-        <el-button type="primary" @click="addCard">
-          {{ t("dashboard.confirm") }}
-        </el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 新建仪表盘 -->
-    <el-dialog
-      v-model="dashDialog"
-      :title="t('dashboard.create')"
-      width="420px"
-    >
-      <el-form label-width="90px">
-        <el-form-item :label="t('dashboard.dashName')">
-          <el-input v-model="dashForm.name" />
-        </el-form-item>
-        <el-form-item :label="t('dashboard.visibility')">
-          <el-radio-group v-model="dashForm.visibility">
-            <el-radio value="personal">{{ t("dashboard.personal") }}</el-radio>
-            <el-radio value="shared">{{ t("dashboard.shared") }}</el-radio>
-          </el-radio-group>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dashDialog = false">{{
-          t("dashboard.cancel")
-        }}</el-button>
-        <el-button type="primary" @click="createDashboard">
-          {{ t("dashboard.confirm") }}
-        </el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>

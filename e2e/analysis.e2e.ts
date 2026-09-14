@@ -57,14 +57,15 @@ test("报表与大屏主链路", async ({ page }) => {
     .locator(".el-dialog")
     .filter({ hasText: "新建仪表盘" });
   await dashDialog.getByLabel("仪表盘名称").fill(dashboardName);
-  await dashDialog.getByRole("button", { name: "确认" }).click();
+  // C5 收敛后弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确认」）
+  await dashDialog.getByRole("button", { name: "保存" }).click();
   await expect(dashDialog).not.toBeVisible();
   await page.getByRole("button", { name: "编辑布局" }).click();
   await page.getByRole("button", { name: "添加卡片" }).click();
   const cardDialog = page.locator(".el-dialog").filter({ hasText: "添加卡片" });
   await pickSelectOption(page, "数据集", datasetName);
   await cardDialog.getByLabel("卡片标题").fill("投屏用户总数");
-  await cardDialog.getByRole("button", { name: "确认" }).click();
+  await cardDialog.getByRole("button", { name: "保存" }).click();
   await expect(cardDialog).not.toBeVisible();
   await page.getByRole("button", { name: "保存布局" }).click();
 
@@ -95,7 +96,7 @@ test("报表与大屏主链路", async ({ page }) => {
     .filter({ hasText: "新建大屏" });
   await screenDialog.getByLabel("名称").fill(screenName);
   await pickSelectOption(page, "仪表盘序列", dashboardName);
-  await screenDialog.getByRole("button", { name: "确认" }).click();
+  await screenDialog.getByRole("button", { name: "保存" }).click();
   await expect(screenDialog).not.toBeVisible();
 
   const screenRow = page.getByRole("row", { name: screenName });

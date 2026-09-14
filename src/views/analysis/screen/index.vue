@@ -1,10 +1,12 @@
 <script lang="ts" setup>
 import { SUCCESS_CODE } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
-import { onMounted, reactive, ref } from "vue";
+import { h, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { ElMessageBox } from "element-plus";
+import { addDialog } from "@/components/ReDialog";
+import { dialogSize } from "@/components/ReDialog/size";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import {
@@ -14,6 +16,7 @@ import {
   type ScreenItem
 } from "@/api/system/analysis";
 import { choiceValue } from "@/utils/dict";
+import ScreenForm from "./components/ScreenForm.vue";
 
 defineOptions({
   name: "DataScreen"
@@ -43,50 +46,43 @@ const loadAll = async () => {
   }
 };
 
-const dialog = ref(false);
-const editingPk = ref<string | null>(null);
-const form = reactive({
-  name: "",
-  dashboards: [] as string[],
-  interval: 15,
-  refresh: 60,
-  visibility: "shared" as "personal" | "shared"
-});
+/** 新建 / 编辑弹窗（C5：统一走 ReDialog，表单在 ScreenForm 中） */
+const formRef = ref<InstanceType<typeof ScreenForm>>();
 
-const openCreate = () => {
-  editingPk.value = null;
-  form.name = "";
-  form.dashboards = [];
-  form.interval = 15;
-  form.refresh = 60;
-  form.visibility = "shared";
-  dialog.value = true;
+const openDialog = (row: ScreenItem | null) => {
+  formRef.value = undefined;
+  addDialog({
+    title: row ? t("dataScreen.edit") : t("dataScreen.create"),
+    width: dialogSize("md"),
+    draggable: true,
+    destroyOnClose: true,
+    closeOnClickModal: false,
+    sureBtnLoading: true,
+    contentRenderer: () =>
+      h(ScreenForm, { ref: formRef, row, dashboards: dashboards.value }),
+    beforeSure: async (done, { closeLoading }) => {
+      const payload = formRef.value?.getPayload();
+      if (!payload) {
+        closeLoading();
+        return;
+      }
+      const res = row
+        ? await screenApi.partialUpdate(row.pk, payload)
+        : await screenApi.create(payload);
+      if (res.code === SUCCESS_CODE) {
+        message(t("dataScreen.saveOk"), { type: "success" });
+        await loadAll();
+        done();
+        return;
+      }
+      if (res.detail) message(String(res.detail), { type: "warning" });
+      closeLoading();
+    }
+  });
 };
 
-const openEdit = (row: ScreenItem) => {
-  editingPk.value = row.pk;
-  Object.assign(form, JSON.parse(JSON.stringify(row)));
-  // visibility 序列化为 {value,label} 对象，radio 只接受标量（归一化取 value）
-  form.visibility = choiceValue(row.visibility) as "personal" | "shared";
-  dialog.value = true;
-};
-
-const submit = async () => {
-  if (!form.name || form.dashboards.length === 0) {
-    message(t("dataScreen.required"), { type: "warning" });
-    return;
-  }
-  const res = editingPk.value
-    ? await screenApi.partialUpdate(editingPk.value, { ...form })
-    : await screenApi.create({ ...form });
-  if (res.code === SUCCESS_CODE) {
-    message(t("dataScreen.saveOk"), { type: "success" });
-    dialog.value = false;
-    await loadAll();
-  } else if (res.detail) {
-    message(String(res.detail), { type: "warning" });
-  }
-};
+const openCreate = () => openDialog(null);
+const openEdit = (row: ScreenItem) => openDialog(row);
 
 const remove = async (row: ScreenItem) => {
   try {
@@ -201,52 +197,5 @@ onMounted(loadAll);
         </el-table-column>
       </el-table>
     </el-card>
-
-    <el-dialog
-      v-model="dialog"
-      :title="editingPk ? t('dataScreen.edit') : t('dataScreen.create')"
-      width="520px"
-    >
-      <el-form label-width="100px">
-        <el-form-item :label="t('dataScreen.name')" required>
-          <el-input v-model="form.name" />
-        </el-form-item>
-        <el-form-item :label="t('dataScreen.dashboards')" required>
-          <el-select
-            v-model="form.dashboards"
-            class="w-full"
-            multiple
-            filterable
-          >
-            <el-option
-              v-for="item in dashboards"
-              :key="item.pk"
-              :value="item.pk"
-              :label="item.name"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item :label="t('dataScreen.interval')">
-          <el-input-number v-model="form.interval" :min="5" :max="3600" />
-        </el-form-item>
-        <el-form-item :label="t('dataScreen.refresh')">
-          <el-input-number v-model="form.refresh" :min="10" :max="3600" />
-        </el-form-item>
-        <el-form-item :label="t('dataScreen.visibilityLabel')">
-          <el-radio-group v-model="form.visibility">
-            <el-radio value="personal">{{ t("dataScreen.personal") }}</el-radio>
-            <el-radio value="shared">{{ t("dataScreen.shared") }}</el-radio>
-          </el-radio-group>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialog = false">{{
-          t("dataScreen.cancel")
-        }}</el-button>
-        <el-button type="primary" @click="submit">{{
-          t("dataScreen.confirm")
-        }}</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>

@@ -60,7 +60,8 @@ test("数据集 + 仪表盘主链路", async ({ page }) => {
     .locator(".el-dialog")
     .filter({ hasText: "新建仪表盘" });
   await dashDialog.getByLabel("仪表盘名称").fill(dashboardName);
-  await dashDialog.getByRole("button", { name: "确认" }).click();
+  // C5 收敛后弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确认」）
+  await dashDialog.getByRole("button", { name: "保存" }).click();
   await expect(dashDialog).not.toBeVisible();
 
   await page.getByRole("button", { name: "编辑布局" }).click();
@@ -69,7 +70,7 @@ test("数据集 + 仪表盘主链路", async ({ page }) => {
   await expect(cardDialog).toBeVisible();
   await pickSelectOption(page, "数据集", datasetName);
   await cardDialog.getByLabel("卡片标题").fill("用户总数");
-  await cardDialog.getByRole("button", { name: "确认" }).click();
+  await cardDialog.getByRole("button", { name: "保存" }).click();
   await expect(cardDialog).not.toBeVisible();
 
   await page.getByRole("button", { name: "保存布局" }).click();
