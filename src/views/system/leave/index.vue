@@ -14,7 +14,7 @@ const {
   operationButtonsProps,
   listColumnsFormat,
   addOrEditOptions
-} = useLeave();
+} = useLeave(tableRef);
 </script>
 
 <template>

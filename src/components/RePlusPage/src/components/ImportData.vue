@@ -213,7 +213,10 @@ const saveTemplate = async () => {
     if (created) {
       onSelectTemplate(created.pk);
     }
+    return;
   }
+  // 200 + 业务码非 1000（同名模板等）：全局拦截器只处理 HTTP 层错误，必须显式提示
+  message(String(res.detail || t("results.failed")), { type: "error" });
 };
 
 function getRef() {

@@ -46,13 +46,21 @@ const handleRollback = (version: number) => {
     }
   )
     .then(({ value }) => {
-      approvalFlowApi.rollback(props.flowPk, version, value || "").then(res => {
-        if (res.code === SUCCESS_CODE) {
-          ElMessage.success(t("systemApprovalFlow.rollbackSuccess"));
-          emit("rollback");
-          fetchVersions();
-        }
-      });
+      approvalFlowApi
+        .rollback(props.flowPk, version, value || "")
+        .then(res => {
+          if (res.code === SUCCESS_CODE) {
+            ElMessage.success(t("systemApprovalFlow.rollbackSuccess"));
+            emit("rollback");
+            fetchVersions();
+            return;
+          }
+          // 200 + 业务码非 1000：全局拦截器只处理 HTTP 层错误，业务失败显式提示
+          ElMessage.error(String(res.detail || t("results.failed")));
+        })
+        .catch(() => {
+          /* HTTP 层错误提示由拦截器统一处理 */
+        });
     })
     .catch(() => {
       // 取消确认框：静默

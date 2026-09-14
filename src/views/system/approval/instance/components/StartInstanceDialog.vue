@@ -126,9 +126,13 @@ async function submit() {
     if (res.code === SUCCESS_CODE) {
       ElMessage.success(t("systemApprovalInstance.submitSuccess"));
       emit("submitted");
+      return;
     }
+    // 200 + 业务码非 1000（未配置流程 / 校验拒绝等）：全局拦截器只处理 HTTP 层错误，
+    // 业务失败必须显式提示
+    ElMessage.error(String(res.detail || t("results.failed")));
   } catch {
-    // 失败提示由 http 拦截器统一处理
+    // HTTP 层错误提示由拦截器统一处理
   } finally {
     submitting.value = false;
   }

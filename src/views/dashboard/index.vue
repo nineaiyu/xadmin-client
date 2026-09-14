@@ -129,7 +129,10 @@ const saveLayout = async () => {
     }
     editing.value = false;
     destroySortable();
+    return;
   }
+  // 200 + 业务码非 1000：全局拦截器只处理 HTTP 层错误，业务失败必须显式提示
+  if (res.detail) message(String(res.detail), { type: "error" });
 };
 
 const removeCard = (id: string) => {
@@ -229,6 +232,8 @@ const openCreateDashboard = () => {
           ) ?? null;
         return;
       }
+      // 200 + 业务码非 1000：全局拦截器只处理 HTTP 层错误，业务失败必须显式提示
+      if (res.detail) message(String(res.detail), { type: "error" });
       closeLoading();
     }
   });

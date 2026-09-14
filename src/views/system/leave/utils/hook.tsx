@@ -1,5 +1,5 @@
 import { SUCCESS_CODE } from "@/api/types";
-import { getCurrentInstance, h, reactive, shallowRef } from "vue";
+import { getCurrentInstance, h, reactive, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessage, ElMessageBox, ElTag } from "element-plus";
 import { leaveApi } from "@/api/system/leave";
@@ -40,7 +40,7 @@ const RESUBMITTABLE = ["DRAFT", "REJECTED", "CANCELLED"];
  * 审批动作不在本页：审批人统一在「流程审批」中心处理，避免出现第二套审批入口；
  * 本页只展示审批进度（当前节点 / 驳回原因），点击详情可看到流程轨迹。
  */
-export function useLeave() {
+export function useLeave(tableRef: Ref) {
   const api = reactive(leaveApi);
   const auth = reactive({
     submit: false,
@@ -49,10 +49,12 @@ export function useLeave() {
   });
   const { t } = useI18n();
 
+  const refresh = () => tableRef.value?.handleGetData();
+
   const confirmAndRun = (
     row: Record<string, unknown>,
     titleKey: string,
-    run: (pk: string | number) => Promise<{ code: number }>,
+    run: (pk: string | number) => Promise<{ code: number; detail?: string }>,
     successKey: string
   ) => {
     ElMessageBox.confirm(
@@ -67,11 +69,18 @@ export function useLeave() {
     )
       .then(() => run(row.pk as string | number))
       .then(res => {
-        if (res?.code === SUCCESS_CODE)
+        if (res?.code === SUCCESS_CODE) {
           ElMessage.success(t(`leaveApply.${successKey}`));
+          // 状态列/操作按钮随业务单状态联动（提交 → 审批中、撤回 → 已撤回），必须刷新
+          refresh();
+          return;
+        }
+        // 200 + 业务码非 1000（已在审批中 / 区间冲突 / 未配置流程等）：全局拦截器只处理
+        // HTTP 层错误，业务失败必须显式展示后端 detail，否则用户点击后完全无反馈
+        ElMessage.error(String(res?.detail || t("results.failed")));
       })
       .catch(() => {
-        /* 用户取消确认 / 请求失败提示由 http 层统一处理 */
+        /* 用户取消确认 / HTTP 层错误：提示由拦截器统一处理 */
       });
   };
 

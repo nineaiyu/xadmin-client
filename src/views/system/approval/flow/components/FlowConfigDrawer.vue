@@ -110,9 +110,13 @@ async function save() {
       ElMessage.success(t("systemApprovalFlow.saveSuccess"));
       props.onSaved?.();
       emit("close");
+      return;
     }
+    // 200 + 业务码非 1000（含「有在途申请不可改节点」等）：全局拦截器只处理 HTTP
+    // 层错误，业务失败必须显式提示
+    ElMessage.error(String(res.detail || t("results.failed")));
   } catch {
-    // 失败提示（含「有在途申请不可改节点」等业务错误）由 http 拦截器统一处理
+    // HTTP 层错误提示由拦截器统一处理
   } finally {
     saving.value = false;
   }
