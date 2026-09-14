@@ -15,6 +15,7 @@ import type { PlusFormProps, RecordType } from "plus-pro-components";
 import type { SearchColumnsResult, SearchFieldsResult } from "@/api/types";
 import AddOrEdit from "../components/AddOrEdit.vue";
 import { addDrawer, type DrawerOptions } from "@/components/ReDrawer/index";
+import { dialogSize } from "@/components/ReDialog/size";
 
 const modeFuncMap = {
   drawer: addDrawer,
@@ -25,8 +26,8 @@ const modeFuncMap = {
   ) => void;
 };
 
-/** 导入/导出弹窗统一宽度（两弹窗视觉对称） */
-export const EXPORT_IMPORT_DIALOG_WIDTH = "600px";
+/** 导入/导出弹窗统一宽度（两弹窗视觉对称，取 T6 档位 md） */
+export const EXPORT_IMPORT_DIALOG_WIDTH = dialogSize("md");
 
 /**
  * 动态属性表：每个键的值可以是静态值，也可以是接收表单上下文求值的解析器。

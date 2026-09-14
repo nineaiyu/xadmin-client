@@ -3,6 +3,7 @@ import { onMounted, ref } from "vue";
 
 import { SystemMsgSubscriptionApi } from "@/api/system/notifications";
 import { handleOperation, openDialogDrawer } from "@/components/RePlusPage";
+import { dialogSize } from "@/components/ReDialog/size";
 import { useI18n } from "vue-i18n";
 import SearchDialog from "@/views/system/components/SearchDialog.vue";
 
@@ -115,7 +116,7 @@ const handleSaveReceivers = row => {
       component: "SearchUser",
       data: row.receivers
     },
-    dialogDrawerOptions: { width: "600px" },
+    dialogDrawerOptions: { width: dialogSize("md") },
     form: SearchDialog,
     saveCallback: ({ formData, done, closeLoading }) => {
       handleOperation({

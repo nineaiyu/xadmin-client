@@ -1,5 +1,6 @@
 import { h } from "vue";
 import { addDialog } from "@/components/ReDialog";
+import { dialogSize } from "@/components/ReDialog/size";
 import TaskLogDialog from "./TaskLogDialog.vue";
 
 /**
@@ -14,7 +15,7 @@ import TaskLogDialog from "./TaskLogDialog.vue";
 export function openTaskLogDialog(pk: string | number, title: string) {
   addDialog({
     title,
-    width: "860px",
+    width: dialogSize("xl"),
     destroyOnClose: true,
     closeOnClickModal: false,
     hideFooter: true,

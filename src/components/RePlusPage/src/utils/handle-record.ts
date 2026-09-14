@@ -1,5 +1,6 @@
 import { SUCCESS_CODE } from "@/api/types";
 import { addDialog } from "@/components/ReDialog/index";
+import { dialogSize } from "@/components/ReDialog/size";
 import { h, toRaw, type Ref } from "vue";
 import type { RecordType } from "plus-pro-components";
 import type { BaseApi } from "@/api/base";
@@ -157,7 +158,7 @@ export const handleImportData = (options: importDataOptions) => {
           }
           addDialog({
             title: t("exportImport.validateResult"),
-            width: "640px",
+            width: dialogSize("md"),
             hideFooter: true,
             destroyOnClose: true,
             props: {
