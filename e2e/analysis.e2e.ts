@@ -39,7 +39,8 @@ test("报表与大屏主链路", async ({ page }) => {
 
   // ---- 素材：数据集 ----
   await openMenuPath(page, ["数据分析"], "/analysis/dataset/index");
-  await expect(page.getByTestId("dataset-table")).toBeVisible({
+  // RePlusPage 列表以工具栏按钮为加载锚点（表格行需等种子/新建数据）
+  await expect(page.getByRole("button", { name: "新建数据集" })).toBeVisible({
     timeout: 15_000
   });
   await page.getByRole("button", { name: "新建数据集" }).click();

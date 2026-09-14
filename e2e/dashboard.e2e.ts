@@ -37,7 +37,8 @@ test("数据集 + 仪表盘主链路", async ({ page }) => {
 
   // ---- 建数据集 ----
   await openMenuPath(page, ["数据分析"], "/analysis/dataset/index");
-  await expect(page.getByTestId("dataset-table")).toBeVisible({
+  // RePlusPage 列表以工具栏按钮为加载锚点（表格行需等种子/新建数据）
+  await expect(page.getByRole("button", { name: "新建数据集" })).toBeVisible({
     timeout: 15_000
   });
 
@@ -51,8 +52,8 @@ test("数据集 + 仪表盘主链路", async ({ page }) => {
   await dialog.getByRole("button", { name: "保存" }).click();
   await expect(dialog).not.toBeVisible();
   await expect(
-    page.getByTestId("dataset-table").getByText(datasetName)
-  ).toBeVisible();
+    page.getByRole("row", { name: datasetName }).first()
+  ).toBeVisible({ timeout: 15_000 });
 
   // ---- 建仪表盘并加卡片 ----
   await openMenuPath(page, ["数据分析"], "/analysis/dashboard/index");
