@@ -10,7 +10,7 @@ import { login, openMenuPath } from "./helpers";
 test("API 应用：新建应用并展示一次性密钥", async ({ page }) => {
   await login(page);
   await openMenuPath(page, ["集成管理"], "/integration/api-app/index");
-  await expect(page.getByTestId("api-app-table")).toBeVisible({
+  await expect(page.getByTestId("api-app-create")).toBeVisible({
     timeout: 15_000
   });
 

@@ -17,7 +17,8 @@ test("Webhook 订阅与投递审计主链路", async ({ page }) => {
 
   // ---- 建订阅（指向不可达端口，触发失败路径） ----
   await openMenuPath(page, ["集成管理"], "/integration/subscription/index");
-  await expect(page.getByTestId("webhook-table")).toBeVisible({
+  // RePlusPage 列表以工具栏按钮为加载锚点（表格行需等种子/新建数据）
+  await expect(page.getByRole("button", { name: "新建订阅" })).toBeVisible({
     timeout: 15_000
   });
 
@@ -31,26 +32,23 @@ test("Webhook 订阅与投递审计主链路", async ({ page }) => {
   // C5 收敛后弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确认」）
   await dialog.getByRole("button", { name: "保存" }).click();
   await expect(dialog).not.toBeVisible();
-  await expect(
-    page.getByTestId("webhook-table").getByText(subName)
-  ).toBeVisible();
+  const subRow = page.getByRole("row", { name: subName });
+  await expect(subRow).toBeVisible({ timeout: 15_000 });
 
   // ---- 测试动作：派发 ping（不可达 → 投递失败） ----
-  const subRow = page.getByRole("row", { name: subName });
   await subRow.getByRole("button", { name: "测试" }).click();
   await expect(page.getByText("测试事件已派发").first()).toBeVisible();
 
   // ---- 投递审计页：失败记录可见（指数退避重试中） ----
   await openMenuPath(page, ["集成管理"], "/integration/delivery/index");
-  await expect(page.getByTestId("webhook-delivery-table")).toBeVisible({
+  const deliveryRow = page.getByRole("row", { name: subName }).first();
+  await expect(deliveryRow).toBeVisible({ timeout: 20_000 });
+  // 状态列为 LabeledChoiceField：渲染中文 label。必须用锚定正则精确匹配 tag 文本——
+  // 宽容的 /failed/i 会同时命中 response_body 里的 "Failed to establish a new
+  // connection"（strict mode violation）
+  await expect(deliveryRow.getByText(/^(失败（重试中）|已耗尽)$/)).toBeVisible({
     timeout: 15_000
   });
-  const deliveryRow = page
-    .getByTestId("webhook-delivery-table")
-    .getByRole("row", { name: subName })
-    .first();
-  await expect(deliveryRow).toBeVisible({ timeout: 20_000 });
-  await expect(deliveryRow.getByText(/failed|exhausted/)).toBeVisible();
 });
 
 /** el-select 选项选择（多选场景选完不关闭弹窗） */

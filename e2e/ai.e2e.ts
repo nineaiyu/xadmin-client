@@ -61,8 +61,7 @@ test("AI 配置：全局开关 + 档案创建激活 + 助手页引导", async ({
   await expect(dialog).toBeHidden({ timeout: 15_000 });
 
   // 表格出现该档案（未激活）
-  const table = page.getByTestId("ai-profile-table");
-  const row = table.getByRole("row", { name: profileName });
+  const row = page.getByRole("row", { name: profileName });
   await expect(row).toBeVisible({ timeout: 15_000 });
   await expect(row.getByText("未激活")).toBeVisible();
 

@@ -12,12 +12,18 @@ export type WebhookSubscriptionItem = {
   last_failure: string;
 };
 
+export type WebhookDeliveryStatus =
+  "pending" | "success" | "failed" | "exhausted";
+
 export type WebhookDeliveryItem = {
   pk: string;
   subscription: string;
   subscription_name: string;
   event: string;
-  status: "pending" | "success" | "failed" | "exhausted";
+  /** 状态：后端 LabeledChoiceField 输出 {value,label}（字典接入后带 color） */
+  status:
+    | WebhookDeliveryStatus
+    | { value: WebhookDeliveryStatus; label?: string; color?: string | null };
   attempt: number;
   response_code: number | null;
   response_body: string;
