@@ -18,7 +18,8 @@ async function createToken(page: Page, tokenName: string): Promise<string> {
     .locator("input")
     .first()
     .fill(tokenName);
-  await createDialog.getByRole("button", { name: "创建令牌" }).click();
+  // C5 收敛后弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「创建令牌」）
+  await createDialog.getByRole("button", { name: "保存" }).click();
 
   const tokenDialog = page
     .locator(".el-dialog", { hasText: "令牌创建成功" })

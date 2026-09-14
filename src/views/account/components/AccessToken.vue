@@ -3,7 +3,7 @@ import { h, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElInput, ElMessageBox, ElTag, ElTooltip } from "element-plus";
 import type { RecordType } from "plus-pro-components";
-import type { DetailResult } from "@/api/types";
+import { SUCCESS_CODE } from "@/api/types";
 import { addDialog } from "@/components/ReDialog";
 import { message } from "@/utils/message";
 import {
@@ -17,6 +17,7 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { personalAccessTokenApi } from "@/api/user/token";
 import PatCallLogs from "./PatCallLogs.vue";
 import PatScopeEditor from "./PatScopeEditor.vue";
+import AccessTokenCreateForm from "./AccessTokenCreateForm.vue";
 import Lock from "~icons/ep/lock";
 import Location from "~icons/ep/location";
 import Document from "~icons/ep/document";
@@ -29,20 +30,6 @@ const { t } = useI18n();
 const plusPageRef = ref();
 
 /** 创建弹层（名称 / 过期时间 / 接口范围）与明文一次性展示弹层 */
-const createVisible = ref(false);
-const creating = ref(false);
-const createForm = reactive<{
-  name: string;
-  expired_at: string | null;
-  scopes: string[];
-}>({
-  name: "",
-  expired_at: null,
-  scopes: []
-});
-const tokenVisible = ref(false);
-const plainToken = ref("");
-
 /**
  * PAT 是个人资源：路由挂在 PERMISSION_WHITE_URL（同 MFA 口径，无需菜单权限码），
  * auth 仅作 RePlusPage 显隐开关；内置新增/编辑/导入导出隐藏——
@@ -61,34 +48,48 @@ const auth: RePlusPageProps["auth"] = {
 
 const refresh = () => plusPageRef.value?.handleGetData();
 
-const openCreate = () => {
-  createForm.name = "";
-  createForm.expired_at = null;
-  // 接口范围留空 = 不限（其后可在行内「接口范围」里补配）
-  createForm.scopes = [];
-  createVisible.value = true;
-};
+/** 明文一次性展示弹层（创建成功后打开，关闭后不可再读） */
+const tokenVisible = ref(false);
+const plainToken = ref("");
 
-const submitCreate = () => {
-  if (!createForm.name || creating.value) return;
-  creating.value = true;
-  handleOperation({
-    t,
-    // 明文随后在弹层里一次性展示，成功提示交给弹层，避免双弹窗叠 toast
-    showSuccessMsg: false,
-    apiReq: personalAccessTokenApi.create({
-      name: createForm.name,
-      expired_at: createForm.expired_at || null,
-      scopes: createForm.scopes
-    }),
-    success: (res: DetailResult) => {
-      plainToken.value = String(res.data.token ?? "");
-      createVisible.value = false;
-      tokenVisible.value = true;
-      refresh();
-    },
-    requestEnd: () => {
-      creating.value = false;
+/** 创建令牌弹窗（C5：统一走 ReDialog，表单在 AccessTokenCreateForm 中） */
+const createFormRef = ref<InstanceType<typeof AccessTokenCreateForm>>();
+
+const openCreate = () => {
+  createFormRef.value = undefined;
+  addDialog({
+    title: t("accessToken.createDialogTitle"),
+    width: dialogSize("md"),
+    draggable: true,
+    destroyOnClose: true,
+    closeOnClickModal: false,
+    sureBtnLoading: true,
+    contentRenderer: () => h(AccessTokenCreateForm, { ref: createFormRef }),
+    beforeSure: async (done, { closeLoading }) => {
+      const payload = createFormRef.value?.getPayload();
+      if (!payload) {
+        closeLoading();
+        return;
+      }
+      // 异常归一为可读失败结果：避免请求异常时 beforeSure 抛错、弹窗 loading 悬挂
+      const res = await personalAccessTokenApi.create(payload).catch(error => ({
+        code: -1,
+        data: null,
+        detail: String((error as { detail?: string })?.detail ?? error)
+      }));
+      if (res.code === SUCCESS_CODE) {
+        // 明文随后在弹层里一次性展示，成功提示交给弹层，避免双弹窗叠 toast
+        plainToken.value = String(
+          (res.data as unknown as { token?: string })?.token ?? ""
+        );
+        // 先关创建弹窗再打开明文弹窗（与原手写弹窗行为一致）
+        done();
+        tokenVisible.value = true;
+        refresh();
+        return;
+      }
+      if (res.detail) message(String(res.detail), { type: "warning" });
+      closeLoading();
     }
   });
 };
@@ -378,50 +379,6 @@ const operationButtonsProps: OperationProps = {
       :operation-buttons-props="operationButtonsProps"
       :table-bar-buttons-props="tableBarButtonsProps"
     />
-
-    <el-dialog
-      v-model="createVisible"
-      :title="t('accessToken.createDialogTitle')"
-      :width="dialogSize('md')"
-      :close-on-click-modal="false"
-    >
-      <el-form label-width="90px" @submit.prevent>
-        <el-form-item :label="t('accessToken.name')" required>
-          <el-input
-            v-model="createForm.name"
-            :placeholder="t('accessToken.nameRule')"
-            maxlength="128"
-            clearable
-            @keyup.enter="submitCreate"
-          />
-        </el-form-item>
-        <el-form-item :label="t('accessToken.expiredAt')">
-          <el-date-picker
-            v-model="createForm.expired_at"
-            type="datetime"
-            class="w-full!"
-            value-format="YYYY-MM-DDTHH:mm:ss"
-            :placeholder="t('accessToken.neverExpire')"
-          />
-        </el-form-item>
-        <el-form-item :label="t('accessToken.scope')">
-          <PatScopeEditor v-model="createForm.scopes" hide-custom />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="createVisible = false">
-          {{ t("buttons.cancel") }}
-        </el-button>
-        <el-button
-          type="primary"
-          :loading="creating"
-          :disabled="!createForm.name"
-          @click="submitCreate"
-        >
-          {{ t("accessToken.create") }}
-        </el-button>
-      </template>
-    </el-dialog>
 
     <el-dialog
       v-model="tokenVisible"
