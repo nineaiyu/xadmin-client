@@ -41,8 +41,9 @@ import type { TokenInfo } from "@/api/auth";
     setToken(params);
 
     // 删除不需要显示在 url 的参数
-    delete params.refresh;
-    delete params.access;
+    // TokenInfo 描述的是登录响应形态；URL 参数按可选视图删除，避免 strict 下 delete 非可选属性
+    delete (params as Partial<TokenInfo>).refresh;
+    delete (params as Partial<TokenInfo>).access;
 
     const newUrl = `${location.origin}${location.pathname}${subBefore(
       location.hash,

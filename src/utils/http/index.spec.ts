@@ -156,7 +156,7 @@ describe("PureHttp.autoDownload", () => {
             : "application/octet-stream"
       }
     });
-    await http.autoDownload("/api/system/export-data", null, {});
+    await http.autoDownload("/api/system/export-data", undefined, {});
     expect(downloadByDataMock).toHaveBeenCalledWith(
       expect.any(Blob),
       "测试.xlsx"
@@ -168,7 +168,7 @@ describe("PureHttp.autoDownload", () => {
       data: new Blob(["x"]),
       headers: { get: () => null }
     });
-    await http.autoDownload("/api/system/export-data", null, {});
+    await http.autoDownload("/api/system/export-data", undefined, {});
     expect(downloadByDataMock).toHaveBeenCalledWith(
       expect.any(Blob),
       "uuid-123"

@@ -97,9 +97,9 @@ class WS {
   autoReconnect: WSOptions["autoReconnect"];
   heartbeat: WSOptions["heartbeat"];
   query: WSOptions["query"];
-  openCallback: WSOptions["openCallback"];
-  closeCallback: WSOptions["closeCallback"];
-  errorCallback: WSOptions["errorCallback"];
+  openCallback: WSOptions["openCallback"] | null;
+  closeCallback: WSOptions["closeCallback"] | null;
+  errorCallback: WSOptions["errorCallback"] | null;
 
   constructor(url?: string, options?: WSOptions) {
     const {
@@ -159,11 +159,13 @@ class WS {
    * 监听连接
    */
   onOpen(): void {
-    if (this.socket) {
-      this.socket.onopen = () => {
+    // 局部持有 socket：闭包内 this.socket 的类型不收窄，且避免回调期 socket 被重置
+    const socket = this.socket;
+    if (socket) {
+      socket.onopen = () => {
         this.reconnectCount = 0;
         if (this.openCallback) {
-          this.openCallback(this.socket);
+          this.openCallback(socket);
         }
         // this.send("ping");
         // 开启心跳
@@ -205,15 +207,16 @@ class WS {
    * 监听错误
    */
   onError(): void {
-    if (this.socket) {
-      this.socket.onerror = () => {
+    const socket = this.socket;
+    if (socket) {
+      socket.onerror = () => {
         if (this.errorCallback) {
-          this.errorCallback(this.socket);
+          this.errorCallback(socket);
         }
       };
-      this.socket.onclose = () => {
+      socket.onclose = () => {
         if (this.closeCallback) {
-          this.closeCallback(this.socket);
+          this.closeCallback(socket);
         }
         // 指数退避：3s、6s、12s… 封顶 30s，避免服务端抖动时被固定 3s 高频重连冲击
         const backoff = Math.min(

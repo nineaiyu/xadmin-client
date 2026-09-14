@@ -1,10 +1,12 @@
 import { useEventListener } from "@vueuse/core";
 
 /** 是否为`img`标签 */
-function isImgElement(element) {
-  return typeof HTMLImageElement !== "undefined"
-    ? element instanceof HTMLImageElement
-    : element.tagName.toLowerCase() === "img";
+function isImgElement(element: EventTarget | null) {
+  if (typeof HTMLImageElement !== "undefined") {
+    return element instanceof HTMLImageElement;
+  }
+  // 非浏览器环境（SSR/测试）退化为 tagName 判断
+  return (element as HTMLElement | null)?.tagName?.toLowerCase() === "img";
 }
 
 // 在 src/main.ts 引入并调用即可 import { addPreventDefault } from "@/utils/preventDefault"; addPreventDefault();

@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "preview:build": "pnpm build && vite preview",
     "typecheck": "tsc --noEmit && vue-tsc --noEmit --skipLibCheck",
+    "typecheck:strict": "node scripts/typecheck-strict.mjs",
     "gen:metadata-types": "node scripts/gen-metadata-types.mjs",
     "check:contract": "node scripts/check-contract-sync.mjs",
     "svgo": "svgo -f . -r",

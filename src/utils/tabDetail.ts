@@ -23,25 +23,30 @@ export function useTabDetail() {
     // ⚠️ 这里要特别注意下，因为vue-router在解析路由参数的时候会自动转化成字符串类型，比如在使用useRoute().route.query或useRoute().route.params时，得到的参数都是字符串类型
     // 所以在传参的时候，如果参数是数字类型，就需要在此处 toString() 一下，保证传参跟路由参数类型一致都是字符串，这是必不可少的环节！！！
     Object.keys(parameter).forEach(param => {
-      if (!isString(parameter[param])) {
-        parameter[param] = parameter[param].toString();
+      const value = parameter[param];
+      // null/undefined 跳过转换；其余非字符串值统一 toString（vue-router 解析出的参数均为字符串）
+      if (value != null && !isString(value)) {
+        parameter[param] = value.toString();
       }
     });
-    const pushRoute = usePermissionStoreHook().flatteningRoutes.find(
-      item => item.name === name
-    );
+    // store 的 flatteningRoutes 初始值为 []（无显式标注 → never[]），此处按路由记录数组收窄
+    const pushRoute = (
+      usePermissionStoreHook().flatteningRoutes as RouteRecordRaw[]
+    ).find(item => item.name === name);
 
     if (!pushRoute?.path) {
       return;
     }
 
+    const routeMeta: { title?: string } = pushRoute.meta ?? {};
     const routeInfo = {
       path: pushRoute.path,
-      name: pushRoute.name,
+      // 路由 name 运行时均为字符串；RouteRecordNameGeneric 含 symbol，标签页协议只收 string
+      name: String(pushRoute.name),
       meta: {
         title: isFunction(title)
           ? title(pushRoute)
-          : (title ?? `No.${parameter.pk} - ${pushRoute.meta.title}`)
+          : (title ?? `No.${parameter.pk} - ${routeMeta.title ?? ""}`)
       }
     };
     if (model === "query") {
@@ -53,11 +58,13 @@ export function useTabDetail() {
       // 路由跳转
       router.push({ name: name, query: parameter });
     } else if (model === "params") {
+      // params 模式入参约定为路由参数形态；LocationQueryRaw 允许 null 值，类型层无法自动收窄
+      const params = parameter as unknown as RouteParamsRaw;
       useMultiTagsStoreHook().handleTags("push", {
         ...routeInfo,
-        params: parameter
+        params
       });
-      router.push({ name: name, params: parameter });
+      router.push({ name: name, params });
     }
   }
 

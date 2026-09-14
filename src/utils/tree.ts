@@ -9,7 +9,7 @@ export interface TreeHelperNode {
   parentId?: number | string | null;
   pathList?: Array<number | string>;
   uniqueId?: number | string;
-  children?: TreeHelperNode[];
+  children?: TreeHelperNode[] | null;
 }
 
 /**
@@ -31,7 +31,8 @@ export const extractPathList = <T extends TreeHelperNode>(
     if (hasChildren) {
       extractPathList(node.children);
     }
-    expandedPaths.push(node.uniqueId);
+    // uniqueId 为可选字段：未生成时不入列（push undefined 会污染调用方的展开路径）
+    if (node.uniqueId !== undefined) expandedPaths.push(node.uniqueId);
   }
   return expandedPaths;
 };

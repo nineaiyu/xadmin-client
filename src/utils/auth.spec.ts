@@ -88,7 +88,7 @@ describe("token 工具", () => {
     setRefreshToken("refresh-1");
     storageMock.getItem.mockReturnValue({ username: "zhangsan" });
     removeToken();
-    expect(getToken()).toBeUndefined();
+    expect(getToken()).toBe("");
     expect(getRefreshToken()).toBeUndefined();
     expect(storageMock.removeItem).toHaveBeenCalledWith(userKey);
   });
@@ -97,7 +97,7 @@ describe("token 工具", () => {
     setAccessToken("token-1");
     setRefreshToken("refresh-1");
     remoteAccessToken();
-    expect(getToken()).toBeUndefined();
+    expect(getToken()).toBe("");
     expect(getRefreshToken()).toBe("refresh-1");
   });
 });

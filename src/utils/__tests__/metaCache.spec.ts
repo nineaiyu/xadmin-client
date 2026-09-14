@@ -73,7 +73,8 @@ describe("元数据共享缓存", () => {
   });
 
   it("并发调用去重：同键并发只发一次请求", async () => {
-    let resolveRequest: (value: ReturnType<typeof ok>) => void;
+    // 由被 mock 的 fetcher 在调用时赋值（断言并发去重：只有首个 fetcher 被调用）
+    let resolveRequest!: (value: ReturnType<typeof ok>) => void;
     const fetcher = vi.fn(
       () =>
         new Promise<ReturnType<typeof ok>>(resolve => {

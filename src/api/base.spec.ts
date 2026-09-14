@@ -181,7 +181,7 @@ describe("BaseApi 导出 / 导入", () => {
     api.exportData({ name: "x", empty: "" });
     expect(autoDownloadMock).toHaveBeenCalledWith(
       "/api/demo/book/export-data",
-      null,
+      undefined,
       {
         name: "x"
       }

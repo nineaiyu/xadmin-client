@@ -71,8 +71,8 @@ const isFingerprintable = (data: unknown): boolean =>
 
 /** 请求指纹 key：不参与指纹的载荷返回空串（调用方需按空串跳过） */
 export const approvalKey = (
-  method: string,
-  url: string,
+  method: string | undefined,
+  url: string | undefined,
   data?: unknown
 ): string => {
   if (!isFingerprintable(data)) return "";

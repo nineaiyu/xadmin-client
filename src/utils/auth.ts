@@ -1,4 +1,5 @@
 import Cookies from "js-cookie";
+import type { PureHttpRequestConfig } from "@/utils/http/types";
 import { storageLocal } from "@pureadmin/utils";
 import { useUserStoreHook } from "@/store/modules/user";
 import type { TokenInfo, UserInfo } from "@/api/auth";
@@ -19,8 +20,9 @@ export const multipleTabsKey = "multiple-tabs";
 
 /** 获取`token` */
 export function getToken(): string {
-  // 此处与`TokenKey`相同，此写法解决初始化时`Cookies`中不存在`TokenKey`报错
-  return Cookies.get(TokenKey);
+  // 此处与`TokenKey`相同，此写法解决初始化时`Cookies`中不存在`TokenKey`报错；
+  // 未登录时归一为空串（调用方统一按 falsy 判定）
+  return Cookies.get(TokenKey) ?? "";
 }
 
 export function getRefreshToken() {
@@ -97,8 +99,9 @@ export const formatToken = (token: string): string => {
   return "Bearer " + token;
 };
 
-export const setApiLanguage = config => {
+export const setApiLanguage = (config: PureHttpRequestConfig) => {
   const nameSpace = responsiveStorageNameSpace();
-  config.headers["Accept-Language"] =
+  // 请求拦截阶段 axios 必已构造 headers
+  config.headers!["Accept-Language"] =
     Storage.getData("locale", nameSpace)?.locale ?? "zh";
 };

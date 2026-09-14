@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "strictFunctionTypes": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true
+  },
+  "include": [
+    "types/*.d.ts",
+    "src/api/**/*.ts",
+    "src/utils/**/*.ts",
+    "src/utils/**/*.tsx"
+  ]
+}

@@ -119,7 +119,7 @@ class PureHttp {
           reject(error);
           return;
         }
-        config.headers["Authorization"] = formatToken(token);
+        config.headers!["Authorization"] = formatToken(token);
         resolve(config);
       });
     });
@@ -146,7 +146,9 @@ class PureHttp {
       ...axiosConfig
     } as PureHttpRequestConfig;
     const controller = PureHttp.attachRouteController(config);
-    return this.send<T>(config).finally(() => unregisterPending(controller));
+    return this.send<T>(config).finally(() => {
+      if (controller) unregisterPending(controller);
+    });
   }
 
   /** 请求执行与统一错误处理（412 重发时复用同一 config 以防递归弹窗） */
@@ -155,8 +157,9 @@ class PureHttp {
     return new Promise((resolve, reject) => {
       PureHttp.axiosInstance
         .request(config)
-        .then((response: undefined) => {
-          resolve(response);
+        .then(response => {
+          // 响应拦截器已把响应壳拆成业务数据（运行时即 T），axios 类型层无此信息
+          resolve(response as unknown as T);
         })
         .catch(error => {
           // 路由切换主动取消的请求静默失败，不打扰用户
@@ -312,7 +315,7 @@ class PureHttp {
         }
         const approvalId = takePendingApproval(approvalKeyValue);
         if (approvalId) {
-          config.headers["X-Approval-Id"] = approvalId;
+          config.headers!["X-Approval-Id"] = approvalId;
         }
         // 优先判断post/get等方法是否传入回调，否则执行初始化设置等回调
         if (typeof config.beforeRequestCallback === "function") {
@@ -325,12 +328,12 @@ class PureHttp {
         }
         /** 请求白名单，放置一些不需要`token`的接口（通过设置请求白名单，防止`token`过期后再请求造成的死循环问题） */
         const whiteList = ["/api/system/refresh", "/api/system/login"];
-        return whiteList.some(url => config.url.endsWith(url))
+        return whiteList.some(url => (config.url ?? "").endsWith(url))
           ? (config as InternalAxiosRequestConfig)
           : new Promise(resolve => {
               const token = getToken();
               if (token) {
-                config.headers["Authorization"] = formatToken(token);
+                config.headers!["Authorization"] = formatToken(token);
                 resolve(config as InternalAxiosRequestConfig);
               } else {
                 const refresh_token = getRefreshToken();
@@ -344,7 +347,7 @@ class PureHttp {
                         if (res.code === SUCCESS_CODE) {
                           const token = res.data.access;
                           setToken(res.data);
-                          config.headers["Authorization"] = formatToken(token);
+                          config.headers!["Authorization"] = formatToken(token);
                           PureHttp.flushPendingRequests(token);
                         } else {
                           // 刷新被拒（refresh_token 失效等）：提示一次并让排队请求以失败收尾

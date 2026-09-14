@@ -36,10 +36,12 @@ export class BaseRequest {
   }
 
   formatParams = (params?: object) => {
-    const notNullParams = {};
-    Object.keys(params ?? {}).forEach(item => {
-      if (params[item] !== "") {
-        notNullParams[item] = params[item];
+    const notNullParams: Record<string, unknown> = {};
+    const source = (params ?? {}) as Record<string, unknown>;
+    Object.keys(source).forEach(item => {
+      // 空串视为「未填写」从查询串中剔除（0/false 等合法值保留）
+      if (source[item] !== "") {
+        notNullParams[item] = source[item];
       }
     });
     return notNullParams;
@@ -48,7 +50,8 @@ export class BaseRequest {
   /*
    *判断是否有文件类型数据，如果 有的话，使用form-data 上传
    */
-  private hasFileObject = (data?: object) => {
+  /** 类型谓词：命中文件字段时把 data 收窄为 object（供 dataToFormData 使用） */
+  private hasFileObject = (data?: object): data is object => {
     for (const item of Object.values(data ?? {})) {
       if (File.prototype.isPrototypeOf(item)) return true;
       if (item instanceof Array) {
@@ -64,7 +67,7 @@ export class BaseRequest {
     method: RequestMethods,
     params?: object,
     data?: object,
-    url: string = null,
+    url?: string,
     axiosConfig: PureHttpRequestConfig = {}
   ) {
     if (this.hasFileObject(data)) {
@@ -199,7 +202,7 @@ export class BaseApi extends BaseRequest {
   exportData = (params: object) => {
     return http.autoDownload(
       `${this.baseApi}/export-data`,
-      null,
+      undefined,
       this.formatParams(params)
     );
   };
