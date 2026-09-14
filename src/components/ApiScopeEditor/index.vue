@@ -2,35 +2,28 @@
 import { SUCCESS_CODE } from "@/api/types";
 import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { personalAccessTokenApi } from "@/api/user/token";
 import { message } from "@/utils/message";
+import type { ScopeCatalogResponse, ScopeGroup } from "@/utils/scopeDisplay";
 
 /**
- * 接口范围编辑器：勾选「我有权限的接口」+ 自定义条目（高级）。
+ * 接口范围编辑器（访问令牌与 API 应用共用）：勾选「有权限的接口」+ 自定义条目（高级）。
  *
- * 选项来自 `scope-options`（口径 = 请求鉴权同源的权限菜单 × 本人角色），
- * 勾选即「允许该令牌调这个接口」；条目是锚定正则（如 `GET ^/api/system/user/?$`），
- * 只放行勾选的那一个接口，不连带放行同前缀的兄弟接口。
+ * 选项由调用方注入的加载器下发（口径 = 请求鉴权同源的权限菜单 × 本人角色），
+ * 勾选即「允许该凭证调这个接口」；条目是锚定正则（如 `GET ^/api/system/user/?$`），
+ * 只放行勾选的那一个接口，不连带放行同前缀的兄弟接口或相似前缀（如 /api/system/user-center）。
  *
  * 已保存的条目里不在选项中的（历史手填、白名单接口、正则）自动落到「自定义」，
  * 保证打开编辑不会丢条目，也让纯文本时代的数据继续可见可改。
  */
 
-defineOptions({ name: "PatScopeEditor" });
+defineOptions({ name: "ApiScopeEditor" });
 
-type ScopeOption = {
-  value: string;
-  method: string;
-  path: string;
-  label: string;
-  code: string;
-};
-type ScopeGroup = { key: string; title: string; options: ScopeOption[] };
-
-withDefaults(
+const props = withDefaults(
   defineProps<{
     /** 隐藏「自定义条目」区（创建弹窗空间有限时用） */
     hideCustom?: boolean;
+    /** 选项目录加载器（令牌 / 应用两套端点由调用方注入，组件不绑定具体接口） */
+    loadOptions: () => Promise<ScopeCatalogResponse>;
   }>(),
   { hideCustom: false }
 );
@@ -65,7 +58,7 @@ const merge = () => {
 
 /** 分组/标题翻译：菜单标题可能是 i18n key（如 menus.userManagement） */
 const labelOf = (title: string) =>
-  title ? (te(title) ? t(title) : title) : t("accessToken.scopeOther");
+  title ? (te(title) ? t(title) : title) : t("apiScope.other");
 
 type MethodTagType = "success" | "primary" | "warning" | "danger" | "info";
 const METHOD_TAG_TYPES: Record<string, MethodTagType> = {
@@ -82,11 +75,11 @@ watch([picked, customText], merge);
 
 onMounted(() => {
   loading.value = true;
-  personalAccessTokenApi
-    .scopeOptions()
+  props
+    .loadOptions()
     .then(res => {
       if (res.code !== SUCCESS_CODE) return;
-      const payload = (res.data ?? {}) as { groups?: ScopeGroup[] };
+      const payload = res.data ?? {};
       groups.value = payload.groups ?? [];
       // 已有条目分流：命中选项的进勾选，其余进自定义（不丢历史/正则条目）
       const saved = scopes.value ?? [];
@@ -112,7 +105,7 @@ defineExpose({ merge });
     <el-alert
       type="info"
       :closable="false"
-      :title="t('accessToken.scopeGrantTip')"
+      :title="t('apiScope.grantTip')"
       class="mb-3"
     />
 
@@ -125,8 +118,9 @@ defineExpose({ merge });
       collapse-tags-tooltip
       :max-collapse-tags="4"
       class="w-full!"
-      :placeholder="t('accessToken.scopeSelectPlaceholder')"
-      :no-data-text="t('accessToken.scopeNoOptions')"
+      data-testid="api-scope-select"
+      :placeholder="t('apiScope.selectPlaceholder')"
+      :no-data-text="t('apiScope.noOptions')"
     >
       <el-option-group
         v-for="group in groups"
@@ -158,25 +152,23 @@ defineExpose({ merge });
     <div class="mt-2 text-xs text-gray-500">
       {{
         picked.length + customItems.length
-          ? t("accessToken.scopeSelected", {
-              n: picked.length + customItems.length
-            })
-          : t("accessToken.scopeEmptyMeansUnlimited")
+          ? t("apiScope.selected", { n: picked.length + customItems.length })
+          : t("apiScope.emptyMeansUnlimited")
       }}
     </div>
 
     <template v-if="!hideCustom">
       <div class="mt-4 mb-1 text-sm font-medium">
-        {{ t("accessToken.scopeCustom") }}
+        {{ t("apiScope.custom") }}
       </div>
       <el-input
         v-model="customText"
         type="textarea"
         :rows="3"
-        :placeholder="t('accessToken.scopePlaceholder')"
+        :placeholder="t('apiScope.placeholder')"
       />
       <div class="el-form-item__help mt-1">
-        {{ t("accessToken.scopeCustomTip") }}
+        {{ t("apiScope.customTip") }}
       </div>
     </template>
   </div>

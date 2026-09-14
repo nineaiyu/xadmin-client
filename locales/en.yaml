@@ -1125,7 +1125,7 @@ apiApp:
   clientSecret: Client Secret
   callbackSecret: Callback secret
   scopes: Scopes
-  scopesPlaceholder: Empty = unlimited; separate multiple with commas, e.g. api/system/userinfo
+  scopeCount: "Scopes: {n}"
   ipAllowlist: IP allowlist
   listPlaceholder: Separate multiple with commas; empty = unlimited
   rateLimit: Rate limit / minute
@@ -1149,6 +1149,18 @@ apiApp:
   callbackOk: Callback delivered
   callbackFailed: "{count} callback(s) failed"
   unlimited: Unlimited
+apiScope:
+  grantTip: The list shows the APIs you are allowed to call. Once selected, the credential can only call those (out-of-scope requests get 403). Empty = unrestricted, and you can adjust it later
+  selectPlaceholder: Search and select the APIs to allow
+  noOptions: No API available for authorization (ask an administrator to grant menu permissions)
+  selected: "{n} selected"
+  emptyMeansUnlimited: Nothing selected = unrestricted (every API you can access)
+  custom: Custom entries (advanced)
+  customTip: Paths or regexes not listed above, one per line, e.g. GET /api/system/user
+  other: Other
+  placeholder: |-
+    /api/system/user
+    /api/system/exports
 settingBasic:
   title: Basic Settings
 
@@ -1325,18 +1337,7 @@ accessToken:
   scope: Scopes
   scopeCount: "Scopes: {n}"
   scopeUnrestricted: Unrestricted
-  scopeGrantTip: The list shows the APIs you are allowed to call. Select them and the token can only call those (out-of-scope requests get 403). You can still adjust them later via the inline "Scopes" action
-  scopeSelectPlaceholder: Search and select the APIs to allow
-  scopeNoOptions: No API available for authorization (ask an administrator to grant menu permissions)
-  scopeSelected: "{n} selected"
-  scopeEmptyMeansUnlimited: Nothing selected = unrestricted (every API you can access)
-  scopeCustom: Custom entries (advanced)
-  scopeCustomTip: Paths or regexes not listed above, one per line, e.g. GET /api/system/personal-access-tokens
-  scopeOther: Other
   revokeConfirm: Revoking "{name}" takes effect immediately — every call with it returns 401 and this cannot be undone. Continue?
-  scopePlaceholder: |-
-    /api/system/user
-    /api/system/exports
   ipAllowlist: IP allowlist
   ipCount: "IP allowlist: {n}"
   ipAllowlistUnrestricted: Unrestricted

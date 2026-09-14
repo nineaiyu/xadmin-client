@@ -1,14 +1,16 @@
 import { SUCCESS_CODE } from "@/api/types";
 import { h, reactive, ref, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElSwitch, ElTag } from "element-plus";
+import { ElSwitch, ElTag, ElTooltip } from "element-plus";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
+import { buildScopeIndex, formatScopeLines } from "@/utils/scopeDisplay";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
 import {
   apiApplicationApi,
+  loadScopeCatalog,
   type ApiApplicationCredential,
   type ApiApplicationItem,
   type CallbackProbeResult
@@ -101,21 +103,44 @@ export function useApiApplication(tableRef: Ref) {
     }
   };
 
+  /* ---------------- 接口范围展示 ---------------- */
+  // 目录只用于「把锚定正则还原成人可读路径」：拉取失败仅退回条目原文，不影响列表
+  const scopeIndex = shallowRef(buildScopeIndex());
+  loadScopeCatalog()
+    .then(res => {
+      if (res.code !== SUCCESS_CODE) return;
+      scopeIndex.value = buildScopeIndex(res.data?.groups);
+    })
+    .catch(() => undefined);
+
   /* ---------------- 列渲染 ---------------- */
   const listColumnsFormat = (columns: PageTableColumn[]) => {
     columns.forEach(column => {
       switch (column._column?.key) {
         case "scopes":
-          column["minWidth"] = 200;
+          // 明细走 tooltip：条目本体是锚定正则，列内只显示条数，hover 看到可读路径
+          column["minWidth"] = 130;
           column["cellRenderer"] = ({ row }) => {
             const scopes = (row as ApiApplicationItem).scopes ?? [];
-            if (!scopes.length) return h("span", t("apiApp.unlimited"));
+            if (!scopes.length) return t("apiApp.unlimited");
             return h(
-              "span",
-              { class: "flex flex-wrap justify-center gap-1" },
-              scopes.map(scope =>
-                h(ElTag, { key: scope, size: "small" }, () => scope)
-              )
+              ElTooltip,
+              { placement: "top" },
+              {
+                default: () =>
+                  h(ElTag, { type: "info", size: "small" }, () =>
+                    t("apiApp.scopeCount", { n: scopes.length })
+                  ),
+                content: () =>
+                  h(
+                    "div",
+                    {
+                      class: "text-xs",
+                      style: { maxWidth: "420px", whiteSpace: "pre-line" }
+                    },
+                    formatScopeLines(scopes, scopeIndex.value)
+                  )
+              }
             );
           };
           break;

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { h, reactive, ref } from "vue";
+import { h, reactive, ref, shallowRef } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElInput, ElMessageBox, ElTag, ElTooltip } from "element-plus";
 import type { RecordType } from "plus-pro-components";
@@ -14,9 +14,10 @@ import {
   type RePlusPageProps
 } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { personalAccessTokenApi } from "@/api/user/token";
+import ApiScopeEditor from "@/components/ApiScopeEditor/index.vue";
+import { loadPatScopeCatalog, personalAccessTokenApi } from "@/api/user/token";
+import { buildScopeIndex, formatScopeLines } from "@/utils/scopeDisplay";
 import PatCallLogs from "./PatCallLogs.vue";
-import PatScopeEditor from "./PatScopeEditor.vue";
 import AccessTokenCreateForm from "./AccessTokenCreateForm.vue";
 import Lock from "~icons/ep/lock";
 import Location from "~icons/ep/location";
@@ -47,6 +48,18 @@ const auth: RePlusPageProps["auth"] = {
 };
 
 const refresh = () => plusPageRef.value?.handleGetData();
+
+/**
+ * 接口范围目录：只用于把条目（锚定正则）还原成人可读路径；
+ * 目录拉取失败仅退回条目原文展示，列表与编辑不受影响。
+ */
+const scopeIndex = shallowRef(buildScopeIndex());
+loadPatScopeCatalog()
+  .then(res => {
+    if (res.code !== SUCCESS_CODE) return;
+    scopeIndex.value = buildScopeIndex(res.data?.groups);
+  })
+  .catch(() => undefined);
 
 /** 明文一次性展示弹层（创建成功后打开，关闭后不可再读） */
 const tokenVisible = ref(false);
@@ -146,7 +159,7 @@ const tableBarButtonsProps: OperationProps = {
 /**
  * 清单编辑器（IP 白名单）：多行文本，一行一条，空 = 不限。
  *
- * SFC 内不用 JSX，用 h()；接口范围改走 PatScopeEditor（勾选有权限的接口）。
+ * SFC 内不用 JSX，用 h()；接口范围改走 ApiScopeEditor（勾选有权限的接口）。
  */
 const openListEditor = (options: {
   pk: string | number;
@@ -212,9 +225,10 @@ const openScopeEditor = (row: RecordType) => {
     destroyOnClose: true,
     closeOnClickModal: false,
     contentRenderer: () =>
-      h(PatScopeEditor, {
+      h(ApiScopeEditor, {
         modelValue: state.value,
-        "onUpdate:modelValue": (value: string[]) => (state.value = value)
+        "onUpdate:modelValue": (value: string[]) => (state.value = value),
+        loadOptions: loadPatScopeCatalog
       }),
     beforeSure: (done, { closeLoading }) => {
       handleOperation({
@@ -269,7 +283,7 @@ const listColumnsFormat = (columns: PageTableColumn[]) => {
           );
         break;
       case "scopes":
-        // 明细走 tooltip：条目是路径正则，列内只显示条数，hover 可看到具体范围
+        // 明细走 tooltip：条目本体是锚定正则，列内只显示条数，hover 看到可读路径
         column.cellRenderer = ({ row }) => {
           const items: string[] = row.scopes ?? [];
           if (!items.length) return t("accessToken.scopeUnrestricted");
@@ -288,7 +302,7 @@ const listColumnsFormat = (columns: PageTableColumn[]) => {
                     class: "text-xs",
                     style: { maxWidth: "420px", whiteSpace: "pre-line" }
                   },
-                  items.join("\n")
+                  formatScopeLines(items, scopeIndex.value)
                 )
             }
           );

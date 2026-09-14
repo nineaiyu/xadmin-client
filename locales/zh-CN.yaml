@@ -1125,7 +1125,7 @@ apiApp:
   clientSecret: Client Secret
   callbackSecret: 回调签名密钥
   scopes: 接口范围
-  scopesPlaceholder: 留空 = 不限；多条用英文逗号分隔，如 api/system/userinfo
+  scopeCount: "接口范围：{n} 条"
   ipAllowlist: IP 白名单
   listPlaceholder: 多条用英文逗号分隔，留空 = 不限
   rateLimit: 每分钟限流
@@ -1149,6 +1149,18 @@ apiApp:
   callbackOk: 回调投递成功
   callbackFailed: 有 {count} 个回调投递失败
   unlimited: 不限
+apiScope:
+  grantTip: 下拉列出的是你有权限的接口，勾选后凭证只能调用这些接口（越界返回 403）；留空 = 不限，保存后可随时回来调整
+  selectPlaceholder: 搜索并选择允许调用的接口
+  noOptions: 暂无可授权的接口（请联系管理员开通菜单权限）
+  selected: "已选 {n} 条"
+  emptyMeansUnlimited: 未选择 = 不限（可调用你权限内的全部接口）
+  custom: 自定义条目（高级）
+  customTip: 下拉未覆盖的路径或正则，一行一条，例如 GET /api/system/user
+  other: 其它
+  placeholder: |-
+    /api/system/user
+    /api/system/exports
 settingBasic:
   title: 基本设置
 
@@ -1325,18 +1337,7 @@ accessToken:
   scope: 接口范围
   scopeCount: "接口范围：{n} 条"
   scopeUnrestricted: 不限
-  scopeGrantTip: 下拉列出的是你有权限的接口，勾选后该令牌只能调用这些接口（越界返回 403）；创建后仍可在行内「接口范围」里调整
-  scopeSelectPlaceholder: 搜索并选择允许调用的接口
-  scopeNoOptions: 暂无可授权的接口（请联系管理员开通菜单权限）
-  scopeSelected: "已选 {n} 条"
-  scopeEmptyMeansUnlimited: 未选择 = 不限（可调用你权限内的全部接口）
-  scopeCustom: 自定义条目（高级）
-  scopeCustomTip: 下拉未覆盖的路径或正则，一行一条，例如 GET /api/system/personal-access-tokens
-  scopeOther: 其它
   revokeConfirm: 吊销后「{name}」立即失效，所有用它调用的接口都会返回 401，且不可恢复。确定吊销吗？
-  scopePlaceholder: |-
-    /api/system/user
-    /api/system/exports
   ipAllowlist: IP 白名单
   ipCount: "IP 白名单：{n} 条"
   ipAllowlistUnrestricted: 不限来源

@@ -1,4 +1,9 @@
 import { BaseApi } from "@/api/base";
+import {
+  SCOPE_CATALOG_KEYS,
+  fetchScopeCatalog,
+  type ScopeCatalogResponse
+} from "@/utils/scopeDisplay";
 
 /** 开放平台应用：client_id/secret 由服务端生成，明文只在创建与重置时返回一次 */
 export interface ApiApplicationItem {
@@ -43,6 +48,15 @@ export interface CallbackProbeResult {
 }
 
 class ApiApplicationApi extends BaseApi {
+  /** 应用可授权的接口范围（按当前用户权限收口，供表单「接口范围」勾选） */
+  scopeOptions = (): Promise<ScopeCatalogResponse> =>
+    this.request<ScopeCatalogResponse>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/scope-options`
+    );
+
   /** 重置应用密钥（旧密钥与旧凭证即时失效），明文仅本次返回 */
   regenerateSecret = (pk: string) =>
     this.request<ApiApplicationCredentialResult>(
@@ -65,6 +79,13 @@ class ApiApplicationApi extends BaseApi {
 export const apiApplicationApi = new ApiApplicationApi(
   "/api/system/api-applications"
 );
+
+/** 应用接口范围目录（同页只拉一次：列表 tooltip 与表单勾选器共用，见 utils/scopeDisplay） */
+export function loadScopeCatalog(): Promise<ScopeCatalogResponse> {
+  return fetchScopeCatalog(SCOPE_CATALOG_KEYS.application, () =>
+    apiApplicationApi.scopeOptions()
+  );
+}
 
 /** 列表响应取行（兼容分页 results 与裸数组两种返回） */
 export function listApplicationRows(res: unknown): ApiApplicationItem[] {

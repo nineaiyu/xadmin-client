@@ -2,7 +2,8 @@
 import { reactive } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
-import PatScopeEditor from "./PatScopeEditor.vue";
+import ApiScopeEditor from "@/components/ApiScopeEditor/index.vue";
+import { loadPatScopeCatalog } from "@/api/user/token";
 
 /**
  * 创建访问令牌表单（C5：弹窗体系收敛到 ReDialog 的 content 组件形态）。
@@ -60,7 +61,11 @@ defineExpose({ getPayload });
       />
     </el-form-item>
     <el-form-item :label="t('accessToken.scope')">
-      <PatScopeEditor v-model="form.scopes" hide-custom />
+      <ApiScopeEditor
+        v-model="form.scopes"
+        hide-custom
+        :load-options="loadPatScopeCatalog"
+      />
     </el-form-item>
   </el-form>
 </template>
