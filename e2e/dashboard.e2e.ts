@@ -47,7 +47,8 @@ test("数据集 + 仪表盘主链路", async ({ page }) => {
   await dialog.getByLabel("名称").fill(datasetName);
   await pickSelectOption(page, "绑定模型", "system.userinfo");
   await pickSelectOption(page, "数据列", "username");
-  await dialog.getByRole("button", { name: "确认" }).click();
+  // C5 收敛后弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确认」）
+  await dialog.getByRole("button", { name: "保存" }).click();
   await expect(dialog).not.toBeVisible();
   await expect(
     page.getByTestId("dataset-table").getByText(datasetName)

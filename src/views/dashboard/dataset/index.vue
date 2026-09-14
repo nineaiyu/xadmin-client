@@ -1,19 +1,21 @@
 <script lang="ts" setup>
 import { SUCCESS_CODE } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
-import { computed, onMounted, reactive, ref } from "vue";
+import { h, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
+import { addDialog } from "@/components/ReDialog";
+import { dialogSize } from "@/components/ReDialog/size";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import {
   datasetApi,
   listRows,
-  type DatasetFilter,
   type DatasetItem,
   type DatasetMeta
 } from "@/api/system/datasets";
 import { choiceValue } from "@/utils/dict";
+import DatasetForm from "./components/DatasetForm.vue";
 
 defineOptions({
   name: "DataDataset"
@@ -45,121 +47,43 @@ const loadAll = async () => {
   }
 };
 
-const fieldOptions = computed(() => meta.value.fields[form.bound_model] ?? []);
+/** 新建 / 编辑弹窗（C5：统一走 ReDialog，表单在 DatasetForm 中） */
+const formRef = ref<InstanceType<typeof DatasetForm>>();
 
-// ---- 新建 / 编辑 ----
-const dialog = ref(false);
-const editingPk = ref<string | null>(null);
-const form = reactive({
-  name: "",
-  description: "",
-  bound_model: "",
-  columns: [] as string[],
-  filters: [] as DatasetFilter[],
-  ordering: "",
-  row_limit: 1000,
-  visibility: "personal" as "personal" | "shared",
-  date_field: ""
-});
-
-const opOptions = [
-  "exact",
-  "in",
-  "gte",
-  "gt",
-  "lte",
-  "lt",
-  "contains",
-  "startswith",
-  "isnull"
-];
-
-const resetForm = () => {
-  form.name = "";
-  form.description = "";
-  form.bound_model = "";
-  form.columns = [];
-  form.filters = [];
-  form.ordering = "";
-  form.row_limit = 1000;
-  form.visibility = "personal";
-  form.date_field = "";
-};
-
-const openCreate = () => {
-  editingPk.value = null;
-  resetForm();
-  dialog.value = true;
-};
-
-const openEdit = (row: DatasetItem) => {
-  editingPk.value = row.pk;
-  Object.assign(form, {
-    name: row.name,
-    description: row.description,
-    bound_model: row.bound_model,
-    columns: [...row.columns],
-    filters: JSON.parse(JSON.stringify(row.filters ?? [])),
-    ordering: row.ordering,
-    row_limit: row.row_limit,
-    // visibility 序列化为 {value,label} 对象，radio 只接受标量（归一化取 value）
-    visibility: choiceValue(row.visibility) as "personal" | "shared",
-    date_field: row.config?.date_field ?? ""
-  });
-  dialog.value = true;
-};
-
-const onModelChanged = () => {
-  form.columns = [];
-  form.filters = [];
-  form.ordering = "";
-  form.date_field = "";
-};
-
-const addFilter = () => {
-  form.filters.push({
-    field: fieldOptions.value[0] ?? "",
-    op: "exact",
-    value: ""
+const openDialog = (row: DatasetItem | null) => {
+  formRef.value = undefined;
+  addDialog({
+    title: row ? t("dataDataset.edit") : t("dataDataset.create"),
+    width: dialogSize("lg"),
+    draggable: true,
+    destroyOnClose: true,
+    closeOnClickModal: false,
+    sureBtnLoading: true,
+    contentRenderer: () =>
+      h(DatasetForm, { ref: formRef, row, meta: meta.value }),
+    beforeSure: async (done, { closeLoading }) => {
+      const payload = formRef.value?.getPayload();
+      if (!payload) {
+        closeLoading();
+        return;
+      }
+      const res = row
+        ? await datasetApi.partialUpdate(row.pk, payload)
+        : await datasetApi.create(payload);
+      if (res.code === SUCCESS_CODE) {
+        message(t("dataDataset.saveOk"), { type: "success" });
+        await loadAll();
+        done();
+        return;
+      }
+      if (res.detail) message(String(res.detail), { type: "warning" });
+      closeLoading();
+    }
   });
 };
 
-const removeFilter = (index: number) => {
-  form.filters.splice(index, 1);
-};
-
-const buildPayload = () => ({
-  name: form.name,
-  description: form.description,
-  bound_model: form.bound_model,
-  columns: form.columns,
-  filters: form.filters.map(item => ({
-    field: item.field,
-    op: item.op,
-    value: item.op === "isnull" ? Boolean(item.value) : item.value
-  })),
-  ordering: form.ordering,
-  row_limit: Number(form.row_limit) || 1000,
-  visibility: form.visibility,
-  config: form.date_field ? { date_field: form.date_field } : {}
-});
-
-const submit = async () => {
-  if (!form.name || !form.bound_model || form.columns.length === 0) {
-    message(t("dataDataset.required"), { type: "warning" });
-    return;
-  }
-  const res = editingPk.value
-    ? await datasetApi.partialUpdate(editingPk.value, buildPayload())
-    : await datasetApi.create(buildPayload());
-  if (res.code === SUCCESS_CODE) {
-    message(t("dataDataset.saveOk"), { type: "success" });
-    dialog.value = false;
-    await loadAll();
-  } else if (res.detail) {
-    message(String(res.detail), { type: "warning" });
-  }
-};
+const openCreate = () => openDialog(null);
+const openEdit = (row: DatasetItem) => openDialog(row);
 
 const remove = async (row: DatasetItem) => {
   try {
@@ -288,157 +212,6 @@ onMounted(loadAll);
     </el-card>
 
     <!-- 新建 / 编辑 -->
-    <el-dialog
-      v-model="dialog"
-      :title="editingPk ? t('dataDataset.edit') : t('dataDataset.create')"
-      width="760px"
-    >
-      <!-- 112px：「时间字段（趋势）」8 个全角字符不折行 -->
-      <el-form label-width="112px">
-        <el-form-item :label="t('dataDataset.name')" required>
-          <el-input v-model="form.name" />
-        </el-form-item>
-        <el-form-item :label="t('dataDataset.model')" required>
-          <el-select
-            v-model="form.bound_model"
-            class="w-full"
-            filterable
-            :disabled="Boolean(editingPk)"
-            @change="onModelChanged"
-          >
-            <el-option
-              v-for="m in meta.models"
-              :key="m"
-              :value="m"
-              :label="m"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item :label="t('dataDataset.columns')" required>
-          <el-select v-model="form.columns" class="w-full" multiple filterable>
-            <el-option
-              v-for="f in fieldOptions"
-              :key="f"
-              :value="f"
-              :label="f"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item :label="t('dataDataset.filters')">
-          <div class="w-full">
-            <div
-              v-for="(item, index) in form.filters"
-              :key="index"
-              class="mb-2 flex gap-2"
-            >
-              <!-- EP .el-select 根元素默认 width:var(--el-select-width)=100%，
-                   flex 行内会与 value 输入框争宽，工具类 w-* 同级被覆盖，须行内样式定宽 -->
-              <el-select
-                v-model="item.field"
-                :style="{ width: '190px' }"
-                filterable
-              >
-                <el-option
-                  v-for="f in fieldOptions"
-                  :key="f"
-                  :value="f"
-                  :label="f"
-                />
-              </el-select>
-              <!-- op 为短枚举值，收窄让位给右侧 value 输入框 -->
-              <el-select v-model="item.op" :style="{ width: '110px' }">
-                <el-option
-                  v-for="op in opOptions"
-                  :key="op"
-                  :value="op"
-                  :label="op"
-                />
-              </el-select>
-              <el-input
-                v-if="item.op !== 'isnull'"
-                v-model="item.value as string"
-                class="flex-1"
-                :placeholder="
-                  item.op === 'in'
-                    ? t('dataDataset.inHint')
-                    : t('dataDataset.value')
-                "
-              />
-              <el-button
-                link
-                type="danger"
-                class="shrink-0"
-                @click="removeFilter(index)"
-              >
-                {{ t("dataDataset.delete") }}
-              </el-button>
-            </div>
-            <el-button @click="addFilter">{{
-              t("dataDataset.addFilter")
-            }}</el-button>
-          </div>
-        </el-form-item>
-        <el-form-item :label="t('dataDataset.ordering')">
-          <el-select
-            v-model="form.ordering"
-            class="w-full"
-            clearable
-            filterable
-          >
-            <el-option
-              v-for="f in form.columns"
-              :key="f"
-              :value="f"
-              :label="f"
-            />
-            <el-option
-              v-for="f in form.columns"
-              :key="`-${f}`"
-              :value="`-${f}`"
-              :label="`-${f}`"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item :label="t('dataDataset.rowLimit')">
-          <el-input-number v-model="form.row_limit" :min="1" :max="5000" />
-        </el-form-item>
-        <el-form-item :label="t('dataDataset.dateField')">
-          <el-select
-            v-model="form.date_field"
-            class="w-full"
-            clearable
-            filterable
-          >
-            <el-option
-              v-for="f in fieldOptions"
-              :key="f"
-              :value="f"
-              :label="f"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item :label="t('dataDataset.visibilityLabel')">
-          <el-radio-group v-model="form.visibility">
-            <el-radio value="personal">{{
-              t("dataDataset.personal")
-            }}</el-radio>
-            <el-radio value="shared">{{ t("dataDataset.shared") }}</el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item :label="t('dataDataset.description')">
-          <el-input v-model="form.description" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialog = false">{{
-          t("dataDataset.cancel")
-        }}</el-button>
-        <el-button type="primary" @click="submit">{{
-          t("dataDataset.confirm")
-        }}</el-button>
-      </template>
-    </el-dialog>
-
     <!-- 执行预览 -->
     <el-dialog
       v-model="previewDialog"

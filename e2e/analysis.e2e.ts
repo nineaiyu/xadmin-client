@@ -47,7 +47,8 @@ test("报表与大屏主链路", async ({ page }) => {
   await dsDialog.getByLabel("名称").fill(datasetName);
   await pickSelectOption(page, "绑定模型", "system.userinfo");
   await pickSelectOption(page, "数据列", "username");
-  await dsDialog.getByRole("button", { name: "确认" }).click();
+  // C5 收敛后弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确认」）
+  await dsDialog.getByRole("button", { name: "保存" }).click();
   await expect(dsDialog).not.toBeVisible();
 
   // ---- 素材：看板 + 数字卡片 ----
