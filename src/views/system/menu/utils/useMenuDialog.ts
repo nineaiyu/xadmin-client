@@ -9,7 +9,7 @@ import type { menuApi } from "@/api/system/menu";
 import type { FormItemProps } from "./types";
 import { getMenuFromPk } from "@/utils";
 import { MenuChoices } from "@/views/system/constants";
-import editForm from "../components/edit.vue";
+import editForm from "../components/MenuEdit.vue";
 import type { RecordType } from "plus-pro-components";
 
 /** 菜单新增/编辑弹层：表单装配与保存（拆分自 hook.tsx，纯搬迁） */

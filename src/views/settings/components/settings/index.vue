@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { settingItemProps } from "./types";
-import SettingItem from "./settingItem.vue";
+import SettingItem from "./SettingItem.vue";
 import { useI18n } from "vue-i18n";
 
 defineOptions({

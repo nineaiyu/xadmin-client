@@ -2,11 +2,11 @@
 import dayjs from "dayjs";
 import { computed, ref } from "vue";
 import type { ChoicesLabel } from "./utils/types";
-import editUserInfo from "./components/edit.vue";
-import editUserAvatar from "./components/avatar.vue";
-import editUserMfa from "./components/mfa.vue";
+import editUserInfo from "./components/UserInfoEdit.vue";
+import editUserAvatar from "./components/UserInfoAvatar.vue";
+import editUserMfa from "./components/UserInfoMfa.vue";
 import { useUserInfo } from "./utils/hook";
-import editUserPassword from "./components/password.vue";
+import editUserPassword from "./components/UserInfoPassword.vue";
 
 defineOptions({
   name: "UserInfo"

@@ -5,7 +5,6 @@
       required
       clearable
       :disabled="disabled"
-      tabindex="100"
       @input="onInputChange"
     >
       <template v-slot:prepend>

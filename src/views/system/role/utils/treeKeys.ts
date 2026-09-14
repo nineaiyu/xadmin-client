@@ -1,5 +1,5 @@
 /**
- * 角色权限树合成键约定（`utils/hook.tsx` 构树 ↔ `components/form.vue` 解析
+ * 角色权限树合成键约定（`utils/hook.tsx` 构树 ↔ `components/RoleForm.vue` 解析
  * 的单一事实源）。
  *
  * 角色授权树在真实菜单节点（pk 为 UUID，不含 "+"）下注入两类合成节点：

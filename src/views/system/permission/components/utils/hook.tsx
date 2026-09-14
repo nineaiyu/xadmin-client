@@ -7,7 +7,7 @@ import type {
 } from "./types";
 import { addDialog } from "@/components/ReDialog/index";
 import { h, onMounted, ref } from "vue";
-import addForm from "../add.vue";
+import addForm from "../PermissionAdd.vue";
 import { deviceDetection } from "@pureadmin/utils";
 
 export function useFieldRule(

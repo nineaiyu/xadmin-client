@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import OAuthEntry from "./oauthEntry.vue";
+import OAuthEntry from "./OauthEntry.vue";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import Motion from "../utils/motion";
@@ -22,7 +22,7 @@ import ReSendVerifyCode from "@/components/ReSendVerifyCode";
 import { AesEncrypted } from "@/utils/aes";
 import { handleOperation } from "@/components/RePlusPage";
 import { setToken } from "@/utils/auth";
-import LoginMfa from "./mfa.vue";
+import LoginMfa from "./LoginMfa.vue";
 
 defineOptions({
   name: "Login"
@@ -234,7 +234,6 @@ function onBack() {
                 :aria-label="t('login.username')"
                 :prefix-icon="useRenderIcon(User)"
                 clearable
-                tabindex="100"
               />
             </el-form-item>
             <el-form-item
@@ -254,7 +253,6 @@ function onBack() {
                 :prefix-icon="useRenderIcon(Lock)"
                 clearable
                 show-password
-                tabindex="100"
               />
             </el-form-item>
           </Motion>
@@ -265,7 +263,7 @@ function onBack() {
         <Motion :delay="250">
           <el-form-item>
             <div class="w-full h-5 flex-bc">
-              <el-checkbox v-model="checked" tabindex="800">
+              <el-checkbox v-model="checked">
                 <span class="flex">
                   <select
                     v-model="loginDay"
@@ -310,7 +308,6 @@ function onBack() {
               class="w-full mt-4!"
               size="default"
               type="primary"
-              tabindex="1000"
               @click="handleLogin"
             >
               {{ t("login.login") }}
@@ -326,12 +323,7 @@ function onBack() {
       </Motion>
       <Motion :delay="400">
         <el-form-item>
-          <el-button
-            class="w-full"
-            size="default"
-            tabindex="100"
-            @click="onBack"
-          >
+          <el-button class="w-full" size="default" @click="onBack">
             {{ t("login.back") }}
           </el-button>
         </el-form-item>

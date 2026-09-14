@@ -27,8 +27,8 @@ import type { LoginMfaRequired } from "@/api/mfa";
 import { setToken } from "@/utils/auth";
 import { cloneDeep, debounce } from "@pureadmin/utils";
 import { useEventListener } from "@vueuse/core";
-import LoginMfa from "./mfa.vue";
-import OAuthEntry from "./oauthEntry.vue";
+import LoginMfa from "./LoginMfa.vue";
+import OAuthEntry from "./OauthEntry.vue";
 
 defineOptions({
   name: "BasicLogin"
@@ -225,7 +225,6 @@ watch(loginDay, value => {
             <el-form-item prop="username">
               <el-input
                 v-model="ruleForm.username"
-                tabindex="100"
                 :placeholder="t('login.username')"
                 :prefix-icon="useRenderIcon(User)"
                 clearable
@@ -237,7 +236,6 @@ watch(loginDay, value => {
             <el-form-item prop="password">
               <el-input
                 v-model="ruleForm.password"
-                tabindex="100"
                 :placeholder="t('login.password')"
                 :prefix-icon="useRenderIcon(Lock)"
                 clearable
@@ -250,7 +248,6 @@ watch(loginDay, value => {
             <el-form-item prop="captcha_code">
               <el-input
                 v-model="ruleForm.captcha_code"
-                tabindex="100"
                 :placeholder="t('login.verifyCode')"
                 :prefix-icon="useRenderIcon(Keyhole)"
                 clearable
@@ -268,7 +265,7 @@ watch(loginDay, value => {
         <Motion :delay="250">
           <el-form-item>
             <div class="w-full h-5 flex-bc">
-              <el-checkbox v-model="checked" tabindex="100">
+              <el-checkbox v-model="checked">
                 <span class="flex">
                   <select
                     v-model="loginDay"
@@ -314,7 +311,6 @@ watch(loginDay, value => {
               class="w-full mt-4!"
               size="default"
               type="primary"
-              tabindex="100"
               @click="onLogin(ruleFormRef)"
             >
               {{ t("login.login") }}

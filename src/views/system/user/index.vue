@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import tree from "./components/tree.vue";
+import tree from "./components/UserTree.vue";
 import PermissionPreview from "./components/PermissionPreview.vue";
 import { computed, ref } from "vue";
 import { useUser } from "./utils/hook";

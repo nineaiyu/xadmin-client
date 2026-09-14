@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { useMenu } from "./utils/hook";
 
-import tree from "./components/tree.vue";
-import edit from "./components/edit.vue";
+import tree from "./components/MenuTree.vue";
+import edit from "./components/MenuEdit.vue";
 
 defineOptions({
   name: "SystemMenu"

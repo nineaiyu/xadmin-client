@@ -135,7 +135,6 @@ onMounted(() => (configLoading.value = true));
           <el-form-item prop="password">
             <el-input
               v-model="formData.password"
-              tabindex="300"
               :placeholder="t('login.password')"
               :prefix-icon="useRenderIcon(Lock)"
               clearable
@@ -148,7 +147,6 @@ onMounted(() => (configLoading.value = true));
           <el-form-item prop="repeatPassword">
             <el-input
               v-model="formData.repeatPassword"
-              tabindex="300"
               :placeholder="t('login.sure')"
               :prefix-icon="useRenderIcon(Lock)"
               clearable
@@ -163,7 +161,6 @@ onMounted(() => (configLoading.value = true));
               class="w-full"
               size="default"
               type="primary"
-              tabindex="1000"
               @click="handleSubmit"
             >
               {{ t("login.definite") }}
@@ -173,12 +170,7 @@ onMounted(() => (configLoading.value = true));
       </div>
       <Motion :delay="300">
         <el-form-item>
-          <el-button
-            class="w-full"
-            size="default"
-            tabindex="1000"
-            @click="onBack"
-          >
+          <el-button class="w-full" size="default" @click="onBack">
             {{ t("login.back") }}
           </el-button>
         </el-form-item>

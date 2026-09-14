@@ -106,7 +106,6 @@ const phone = ref({ code: "+86", phone: "" });
               clearable
               :trigger-on-focus="false"
               :fetch-suggestions="fetchSuggestions"
-              tabindex="100"
             />
           </el-form-item>
         </el-tab-pane>
@@ -124,7 +123,6 @@ const phone = ref({ code: "+86", phone: "" });
           :placeholder="t('login.verifyCode')"
           :prefix-icon="useRenderIcon(Keyhole)"
           clearable
-          tabindex="100"
         >
           <template #append>
             <ReImageVerify ref="captchaRef" v-model="formData.captcha_key" />
@@ -141,10 +139,8 @@ const phone = ref({ code: "+86", phone: "" });
             :placeholder="t('login.verifyCode')"
             :prefix-icon="useRenderIcon(Keyhole)"
             clearable
-            tabindex="200"
           />
           <el-button
-            tabindex="100"
             :disabled="isDisabled"
             class="ml-2"
             @click="handleSendCode(null)"

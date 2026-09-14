@@ -1,12 +1,12 @@
 <script lang="ts" setup>
 import { computed, toRaw } from "vue";
 import Motion from "./utils/motion";
-import basic from "./components/basic.vue";
+import basic from "./components/Basic.vue";
 import TypeIt from "@/components/ReTypeit";
-import qrCode from "./components/qrCode.vue";
-import register from "./components/register.vue";
-import resetPassword from "./components/resetPassword.vue";
-import login from "./components/login.vue";
+import qrCode from "./components/QrCode.vue";
+import register from "./components/Register.vue";
+import resetPassword from "./components/ResetPassword.vue";
+import login from "./components/Login.vue";
 import { useNav } from "@/layout/hooks/useNav";
 import { useLayout } from "@/layout/hooks/useLayout";
 import { useUserStoreHook } from "@/store/modules/user";

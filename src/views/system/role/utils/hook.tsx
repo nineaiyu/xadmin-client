@@ -1,5 +1,5 @@
 import { SUCCESS_CODE } from "@/api/types";
-import menuFieldForm from "../components/form.vue";
+import menuFieldForm from "../components/RoleForm.vue";
 
 import {
   getCurrentInstance,

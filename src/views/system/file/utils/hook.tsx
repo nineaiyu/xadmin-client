@@ -22,7 +22,7 @@ import {
   renderBooleanTag,
   type RePlusPageProps
 } from "@/components/RePlusPage";
-import uploadForm from "../components/upload.vue";
+import uploadForm from "../components/FileUpload.vue";
 import { openPreviewDrawer } from "../components/previewDrawer";
 import { usePublicHooks } from "@/views/system/hooks";
 import { ElButton, ElIcon, ElLink, ElText } from "element-plus";

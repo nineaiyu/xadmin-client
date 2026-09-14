@@ -4,7 +4,7 @@
  * 按账户页面板规范补 h3 标题与宽度约束（对齐 Profile / AccountManagement）。
  */
 import { deviceDetection } from "@pureadmin/utils";
-import EditUserMfa from "@/views/user/info/components/mfa.vue";
+import EditUserMfa from "@/views/user/info/components/UserInfoMfa.vue";
 
 defineOptions({
   name: "AccountMfaSecurity"
