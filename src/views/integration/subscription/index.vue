@@ -1,8 +1,10 @@
 <script lang="ts" setup>
 import { SUCCESS_CODE } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
-import { onMounted, reactive, ref } from "vue";
+import { h, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { addDialog } from "@/components/ReDialog";
+import { dialogSize } from "@/components/ReDialog/size";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import {
@@ -11,6 +13,7 @@ import {
   type WebhookEvent,
   type WebhookSubscriptionItem
 } from "@/api/system/webhook";
+import SubscriptionForm from "./components/SubscriptionForm.vue";
 
 defineOptions({
   name: "WebhookSubscription"
@@ -42,66 +45,46 @@ const loadAll = async () => {
   }
 };
 
-const dialog = ref(false);
-const editingPk = ref<string | null>(null);
-const form = reactive({
-  name: "",
-  url: "",
-  secret: "",
-  events: [] as string[],
-  description: "",
-  is_active: true
-});
-
 const eventLabel = (key: string) =>
   events.value.find(item => item.key === key)?.label ?? key;
 
-const openCreate = () => {
-  editingPk.value = null;
-  Object.assign(form, {
-    name: "",
-    url: "",
-    secret: "",
-    events: [],
-    description: "",
-    is_active: true
+/** 新建 / 编辑弹窗（C5：统一走 ReDialog，表单在 SubscriptionForm 中） */
+const formRef = ref<InstanceType<typeof SubscriptionForm>>();
+
+const openDialog = (row: WebhookSubscriptionItem | null) => {
+  formRef.value = undefined;
+  addDialog({
+    title: row ? t("webhook.edit") : t("webhook.create"),
+    width: dialogSize("md"),
+    draggable: true,
+    destroyOnClose: true,
+    closeOnClickModal: false,
+    sureBtnLoading: true,
+    contentRenderer: () =>
+      h(SubscriptionForm, { ref: formRef, row, events: events.value }),
+    beforeSure: async (done, { closeLoading }) => {
+      const payload = formRef.value?.getPayload();
+      if (!payload) {
+        closeLoading();
+        return;
+      }
+      const res = row
+        ? await webhookSubscriptionApi.partialUpdate(row.pk, payload)
+        : await webhookSubscriptionApi.create(payload);
+      if (res.code === SUCCESS_CODE) {
+        message(t("webhook.saveOk"), { type: "success" });
+        await loadAll();
+        done();
+        return;
+      }
+      if (res.detail) message(String(res.detail), { type: "warning" });
+      closeLoading();
+    }
   });
-  dialog.value = true;
 };
 
-const openEdit = (row: WebhookSubscriptionItem) => {
-  editingPk.value = row.pk;
-  Object.assign(form, { ...JSON.parse(JSON.stringify(row)), secret: "" });
-  dialog.value = true;
-};
-
-const submit = async () => {
-  if (!form.name || !form.url || form.events.length === 0) {
-    message(t("webhook.required"), { type: "warning" });
-    return;
-  }
-  const payload: Record<string, unknown> = {
-    name: form.name,
-    url: form.url,
-    events: form.events,
-    description: form.description,
-    is_active: form.is_active
-  };
-  // 编辑时留空 secret = 沿用原密钥
-  if (form.secret || !editingPk.value) {
-    payload.secret = form.secret;
-  }
-  const res = editingPk.value
-    ? await webhookSubscriptionApi.partialUpdate(editingPk.value, payload)
-    : await webhookSubscriptionApi.create(payload);
-  if (res.code === SUCCESS_CODE) {
-    message(t("webhook.saveOk"), { type: "success" });
-    dialog.value = false;
-    await loadAll();
-  } else if (res.detail) {
-    message(String(res.detail), { type: "warning" });
-  }
-};
+const openCreate = () => openDialog(null);
+const openEdit = (row: WebhookSubscriptionItem) => openDialog(row);
 
 const remove = async (row: WebhookSubscriptionItem) => {
   const res = await webhookSubscriptionApi.destroy(row.pk);
@@ -227,55 +210,5 @@ onMounted(loadAll);
         </el-table-column>
       </el-table>
     </el-card>
-
-    <el-dialog
-      v-model="dialog"
-      :title="editingPk ? t('webhook.edit') : t('webhook.create')"
-      width="560px"
-    >
-      <el-form label-width="110px">
-        <el-form-item :label="t('webhook.name')" required>
-          <el-input v-model="form.name" />
-        </el-form-item>
-        <el-form-item :label="t('webhook.url')" required>
-          <el-input
-            v-model="form.url"
-            placeholder="https://hooks.example.com/x"
-          />
-        </el-form-item>
-        <el-form-item :label="t('webhook.secret')" :required="!editingPk">
-          <el-input
-            v-model="form.secret"
-            type="password"
-            show-password
-            :placeholder="
-              editingPk ? t('webhook.secretKeep') : t('webhook.secretHint')
-            "
-          />
-        </el-form-item>
-        <el-form-item :label="t('webhook.events')" required>
-          <el-select v-model="form.events" class="w-full" multiple filterable>
-            <el-option
-              v-for="item in events"
-              :key="item.key"
-              :value="item.key"
-              :label="item.label"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item :label="t('webhook.isActive')">
-          <el-switch v-model="form.is_active" />
-        </el-form-item>
-        <el-form-item :label="t('webhook.description')">
-          <el-input v-model="form.description" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialog = false">{{ t("webhook.cancel") }}</el-button>
-        <el-button type="primary" @click="submit">{{
-          t("webhook.confirm")
-        }}</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
