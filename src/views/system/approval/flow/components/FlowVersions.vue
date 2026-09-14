@@ -8,7 +8,7 @@ import {
 } from "@/api/system/approvalFlow";
 
 /**
- * 流程定义版本历史（ADR-016 §2）：快照列表 + 回滚动作。
+ * 流程定义版本历史：快照列表 + 回滚动作。
  * 回滚需确认；有在途申请时后端拒绝并提示。
  */
 defineOptions({ name: "FlowVersions" });

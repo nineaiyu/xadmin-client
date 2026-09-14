@@ -34,7 +34,7 @@ const loadAll = async () => {
   }
 };
 
-/** 字段类型选项（收敛控件集，ADR-025） */
+/** 字段类型选项（收敛控件集） */
 const typeOptions: { value: FormFieldType; labelKey: string }[] = [
   { value: "input", labelKey: "dform.typeInput" },
   { value: "textarea", labelKey: "dform.typeTextarea" },

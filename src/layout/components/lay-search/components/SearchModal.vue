@@ -43,7 +43,7 @@ const activePath = ref("");
 const historyPath = ref("");
 const resultOptions = shallowRef([]);
 const historyOptions = shallowRef([]);
-// 全局搜索（ADR-028）：菜单结果之外跨实体检索的分组结果
+// 全局搜索：菜单结果之外跨实体检索的分组结果
 const globalGroups = shallowRef<GlobalSearchGroup[]>([]);
 const globalLoading = ref(false);
 const handleSearch = useDebounceFn(search, 300);
@@ -140,7 +140,7 @@ async function search() {
   await fetchGlobalResults();
 }
 
-/** 全局搜索（ADR-028）：跨实体检索，失败静默降级为仅菜单结果 */
+/** 全局搜索：跨实体检索，失败静默降级为仅菜单结果 */
 async function fetchGlobalResults() {
   const kw = keyword.value.trim();
   if (!kw) {

@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { login } from "./helpers";
 
 /**
- * 全局搜索（ADR-028，G9）：顶栏搜索弹窗在菜单结果之外给出跨实体分组结果，
+ * 全局搜索：顶栏搜索弹窗在菜单结果之外给出跨实体分组结果，
  * 点击分组项跳转到对应页面。种子数据含 e2e_user（普通用户），超管可检索到。
  */
 

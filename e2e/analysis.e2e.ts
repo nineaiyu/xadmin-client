@@ -3,7 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { login, openMenuPath } from "./helpers";
 
 /**
- * 数据分析二期主链路（ADR-021）：
+ * 数据分析二期主链路：
  * 建数据集 → 建看板+卡片（投屏素材）→ 建报表并立即运行（状态落 SUCCESS*，
  * 邮件后端缺失时走 SUCCESS_WITH_EMAIL_ERROR 降级）→ 建大屏并投屏（全屏页渲染卡片）。
  */

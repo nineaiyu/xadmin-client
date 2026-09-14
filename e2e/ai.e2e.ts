@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { login, openMenuPath } from "./helpers";
 
 /**
- * AI 助手主链路（ADR-023）：E2E 环境无真实 LLM，覆盖配置保存与助手页
+ * AI 助手主链路：E2E 环境无真实 LLM，覆盖配置保存与助手页
  * 「未配置/未启用」引导渲染；问答全链路由后端集成测试以 stub LLM 覆盖。
  */
 

@@ -321,7 +321,7 @@ watch(loginDay, value => {
             </el-button>
           </el-form-item>
         </Motion>
-        <!-- 第三方登录入口（ADR-018）：读取后端已启用 provider，
+        <!-- 第三方登录入口：读取后端已启用 provider，
              替换原静态装饰图标（不接后端、不可点击的死 UI） -->
         <Motion :delay="350">
           <OAuthEntry />

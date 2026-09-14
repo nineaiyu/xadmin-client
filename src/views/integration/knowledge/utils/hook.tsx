@@ -28,7 +28,7 @@ const dictValue = (value: unknown): string =>
     : ((value as { value?: string })?.value ?? "");
 
 /**
- * 知识库页装配（ADR-033）：列表走 RePlusPage 标准 CRUD 口径，操作列按来源分化：
+ * 知识库页装配：列表走 RePlusPage 标准 CRUD 口径，操作列按来源分化：
  * - 上传文档：启用/停用（partialUpdate → 分块移除/重建）+ 删除（分块级联清理）；
  * - 仓库文档：只读（随 `sync-repo`/命令与 docs/ 文件保持一致，删除入口不出现）；
  * - 预览：抽屉展示全文 + 分块清单（问答检索命中的最小单元）。

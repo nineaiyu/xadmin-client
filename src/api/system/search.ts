@@ -32,7 +32,7 @@ export interface GlobalSearchResult {
   };
 }
 
-/** 全局搜索（ADR-028）：跨实体关键词检索，顶栏统一入口 */
+/** 全局搜索：跨实体关键词检索，顶栏统一入口 */
 export const globalSearchApi = new BaseApi("/api/system/global-search");
 
 export function searchGlobal(

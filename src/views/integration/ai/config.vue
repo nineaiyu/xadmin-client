@@ -9,7 +9,7 @@ defineOptions({
   name: "AiAssistantConfig"
 });
 
-// AI 助手配置（ADR-023）：API Key 值级加密；测试按钮真实 ping LLM
+// AI 助手配置：API Key 值级加密；测试按钮真实 ping LLM
 const settingData = computed<Array<settingItemProps>>(() => [
   {
     auth: {

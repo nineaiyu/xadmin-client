@@ -16,7 +16,7 @@ type PreviewRow = {
   pk: string | number;
   filename?: string;
   mime_type?: string;
-  /** 后端判定的预览类型：image / pdf / text / office（ADR-013），null 表示不支持 */
+  /** 后端判定的预览类型：image / pdf / text / office，null 表示不支持 */
   preview_kind?: string | null;
 };
 

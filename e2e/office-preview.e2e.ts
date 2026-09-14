@@ -8,7 +8,7 @@ import { expect, test } from "@playwright/test";
 import { FRONT_URL, login, openMenuPath } from "./helpers";
 
 /**
- * O3 Office 在线预览 E2E（ADR-013）：docx → heavy 队列 LibreOffice 转 PDF →
+ * Office 在线预览 E2E：docx → heavy 队列 LibreOffice 转 PDF →
  * 预览抽屉内嵌渲染。首次预览会经历「转换中（1006/425）→ 轮询重试 → 就绪」。
  *
  * 样本用 LibreOffice 自身把 txt 转成 docx（避免把二进制样本入库）；

@@ -9,7 +9,7 @@ import {
 } from "./helpers";
 
 /**
- * WebSocket 实时消息推送 E2E（ADR-034 后改写）：聊天室公共房间 @提及 → 站内信推送。
+ * WebSocket 实时消息推送 E2E：聊天室公共房间 @提及 → 站内信推送。
  *
  * 链路：发送方在 `/ws/chat/`（聊天室通道）发消息 → 服务端落库 → 公共广播 +
  * `notify_mentions` 解析 @用户名 → `async_push_message` 投到接收者 `websocket_group_{pk}`
@@ -27,6 +27,25 @@ import {
 
 test("聊天室 @消息 实时收到 push_message 站内信推送", async ({ page }) => {
   test.setTimeout(150_000);
+  // 注入假 Notification（替代真实桌面权限弹窗）：记录实例，供桌面通知断言
+  await page.addInitScript(() => {
+    const w = window as unknown as {
+      __desktopNotifications: Array<{ title: string; body?: string }>;
+      Notification?: unknown;
+    };
+    w.__desktopNotifications = [];
+    class FakeNotification {
+      static permission = "granted";
+      static requestPermission = async () => "granted";
+      onclick: unknown = null;
+      constructor(title: string, options?: { body?: string }) {
+        w.__desktopNotifications.push({ title, body: options?.body });
+      }
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      close() {}
+    }
+    w.Notification = FakeNotification;
+  });
   const wsOpened = waitAppWebSocket(page);
   await login(page);
   const ws = await wsOpened;
@@ -54,6 +73,8 @@ test("聊天室 @消息 实时收到 push_message 站内信推送", async ({ pag
   await expect(page.locator('[data-testid="chat-page"]')).toBeVisible({
     timeout: 20_000
   });
+  // 开启桌面通知（假 Notification 已授权）：聊天类推送前台也弹桌面通知
+  await page.locator('[data-testid="chat-desktop-notify"]').first().click();
 
   const browser = page.context().browser();
   const contextB = await browser!.newContext({
@@ -80,6 +101,19 @@ test("聊天室 @消息 实时收到 push_message 站内信推送", async ({ pag
         .locator('[data-testid="chat-messages"]')
         .getByText(/E2E 实时推送验证/)
     ).toBeVisible({ timeout: 15_000 });
+
+    // 桌面通知（Notification API）：@提及属聊天类推送，前台也弹，正文为纯文本
+    const notifications = await page.evaluate(
+      () =>
+        (
+          window as unknown as {
+            __desktopNotifications: Array<{ body?: string }>;
+          }
+        ).__desktopNotifications
+    );
+    expect(
+      notifications.some(item => (item.body ?? "").includes("E2E 实时推送验证"))
+    ).toBe(true);
   } finally {
     await contextB.close();
   }

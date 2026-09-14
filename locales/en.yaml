@@ -1033,6 +1033,13 @@ chat:
   noMoreHistory: No more history
   newMessages: "{count} new messages"
   thinking: AI is thinking...
+  aiFailed: Failed to get the AI reply, please try again later
+  emoji: Emoji
+  desktopNotify: Desktop notifications
+  desktopNotifyOn: Desktop notifications on, click to turn off
+  desktopNotifyOff: Turn on desktop notifications
+  desktopNotifyDenied: Notification permission denied, allow it in the browser address bar
+  desktopNotifyUnsupported: This browser does not support desktop notifications
   sources: Sources
   hideSources: Hide sources
   recall: Recall

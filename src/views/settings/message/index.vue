@@ -13,7 +13,7 @@ defineOptions({
 });
 const { t } = useI18n();
 
-// 企业 IM 通知渠道（ADR-019）：钉钉/企微/飞书各一个独立页签。channel 既是后端字段
+// 企业 IM 通知渠道：钉钉/企微/飞书各一个独立页签。channel 既是后端字段
 // 作用域（retrieve/search-columns/partialUpdate 只读写本渠道），也是测试按钮的定位
 // 参数（?channel= 只测本渠道），避免"一个测试按钮测三家"的歧义；fields 白名单为前端
 // 兜底，确保字段不跨页签渲染

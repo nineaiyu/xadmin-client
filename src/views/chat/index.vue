@@ -10,7 +10,7 @@ import ChatSidebar from "./components/ChatSidebar.vue";
 import ChatWindow from "./components/ChatWindow.vue";
 
 /**
- * 聊天室（ADR-034）：微信式两栏布局。
+ * 聊天室：微信式两栏布局。
  *
  * 左栏 = 会话（公共聊天室 / AI 助手 / 私聊，未读红点）+ 最近在线联系人；
  * 右栏 = 消息气泡 + 输入区。窄屏（<768px）左栏折叠为抽屉。
@@ -163,7 +163,7 @@ async function recall(item: ChatMessageItem) {
       :loading="chat.loadingHistory.value"
       :has-more="chat.hasMore.value"
       :loading-more="chat.loadingMore.value"
-      :thinking="chat.thinking.value"
+      :streaming="chat.streaming.value"
       :connected="chat.connected.value"
       :pending-count="chat.pendingCount.value"
       :is-narrow="isNarrow"

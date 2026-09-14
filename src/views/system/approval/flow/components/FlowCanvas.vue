@@ -9,7 +9,7 @@ import "@vue-flow/core/dist/theme-default.css";
 import type { NodeRow } from "./flowConfig";
 
 /**
- * 流程分支画布（ADR-016 §4，@vue-flow）：
+ * 流程分支画布（@vue-flow）：
  * - 节点卡 = 审批节点（名称 + 审批人摘要），位置存 layout（拖动后经 syncLayout 回写）；
  * - 条件边 = 节点出口路由 routes（一条边一条 route，animated），线性默认推进不画边；
  * - 分支的增删改在列表模式的「分支」编辑器完成，画布负责可视化与布局，保持实现轻薄。

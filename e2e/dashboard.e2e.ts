@@ -3,7 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { login, openMenuPath } from "./helpers";
 
 /**
- * 数据集 + 仪表盘主链路（ADR-020）：
+ * 数据集 + 仪表盘主链路：
  * 建数据集（绑定 system.userinfo）→ 建仪表盘 → 添加数字卡片 → 保存布局 →
  * 卡片标题与统计渲染。聚合图表由后端集成测试覆盖数据形态，E2E 走 UI 链路。
  */

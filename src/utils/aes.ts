@@ -1,7 +1,7 @@
 import { AES, Utf8 } from "crypto-es";
 
 /**
- * 前端凭证加密协议（ADR-010 / ADR-011）：
+ * 前端凭证加密协议：
  * - 旧协议：OpenSSL `Salted__` 兼容格式（EVP_BytesToKey(MD5) + AES-256-CBC），
  *   由 crypto-es 产出，无前缀，服务端 AESCipherV2 原生支持；
  * - v2 协议：浏览器 WebCrypto PBKDF2-HMAC-SHA256（100k 迭代）派生 AES-256-GCM

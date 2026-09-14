@@ -1033,6 +1033,13 @@ chat:
   noMoreHistory: 没有更多历史消息
   newMessages: "有 {count} 条新消息"
   thinking: AI 正在思考…
+  aiFailed: AI 回复失败，请稍后重试
+  emoji: 表情
+  desktopNotify: 桌面通知
+  desktopNotifyOn: 已开启桌面通知，点击关闭
+  desktopNotifyOff: 开启桌面通知
+  desktopNotifyDenied: 未获得通知权限，请在浏览器地址栏设置中允许
+  desktopNotifyUnsupported: 当前浏览器不支持桌面通知
   sources: 参考来源
   hideSources: 收起来源
   recall: 撤回

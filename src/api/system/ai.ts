@@ -1,7 +1,7 @@
 import { BaseApi, ViewBaseApi } from "@/api/base";
 import type { DetailResult } from "@/api/types";
 
-/** AI 使用/二开助手（ADR-023） */
+/** AI 使用/二开助手 */
 export type AiStatus = {
   enabled: boolean;
   configured: boolean;
@@ -40,7 +40,7 @@ class AiAssistantApi extends BaseApi {
   ask = (question: string) => {
     return this.request<DetailResult>("post", {}, { question });
   };
-  /** NL 查数：NL → DSL + 试算预览（ADR-024） */
+  /** NL 查数：NL → DSL + 试算预览 */
   nlInterpret = (question: string) => {
     return this.request<DetailResult>(
       "post",

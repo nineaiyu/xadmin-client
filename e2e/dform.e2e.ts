@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { login, openMenuPath } from "./helpers";
 
 /**
- * 动态表单主链路（ADR-025 / G5b）：
+ * 动态表单主链路：
  * 管理员设计表单（两个控件 + 提交需审批）→ 用户填报 → 我的提交列表可见 → 提交内容渲染。
  *
  * 审批开关本身走「设计器 → 列表 → 填报卡片」往返（超管直提，不触发 412）；
@@ -22,7 +22,7 @@ test("动态表单：设计（含审批开关）→ 填报 → 提交可见", as
   const dialog = page.locator(".el-dialog").filter({ hasText: "新建表单" });
   await expect(dialog).toBeVisible();
   await dialog.getByLabel("名称").fill("E2E设备登记");
-  // G5b：开启「提交审批」，落库后列表与填报页均带「需审批」标记
+  // 开启「提交审批」，落库后列表与填报页均带「需审批」标记
   await dialog.getByTestId("form-approval-switch").click();
   await dialog.getByRole("button", { name: "添加字段" }).click();
   const firstRow = dialog.locator(".el-table__row").first();

@@ -10,7 +10,8 @@ import {
   type ChatUnreadPayload,
   type UserinfoPayload
 } from "@/utils/websocket/protocol";
-import { chatApi, type ChatMessageItem } from "@/api/chat";
+import { chatApi, streamAiMessage, type ChatMessageItem } from "@/api/chat";
+import { SseError } from "@/utils/sse";
 import { useRooms } from "./useRooms";
 
 /** 历史分页每页条数（与服务端默认/上限一致：20 / 50） */
@@ -24,6 +25,14 @@ export function genClientMsgId(): string {
       ? crypto.randomUUID()
       : `${Date.now()}${Math.random().toString(16).slice(2)}`;
   return raw.replace(/-/g, "").slice(0, 32);
+}
+
+function isAbortError(error: unknown): boolean {
+  return (
+    typeof DOMException !== "undefined" &&
+    error instanceof DOMException &&
+    error.name === "AbortError"
+  );
 }
 
 export type TimeDivider = { id: number; label: string; time: number };
@@ -44,12 +53,14 @@ export function useChat() {
   const hasMore = ref(false);
   const loadingHistory = ref(false);
   const loadingMore = ref(false);
-  const thinking = ref(false);
+  /** AI 流式回答（SSE）：roomId 为归属会话，content 为已到达的增量拼接 */
+  const streaming = ref<{ roomId: number; content: string } | null>(null);
   const connected = ref(false);
   const socket = ref<WS>();
   const me = ref({ pk: 0, username: "", avatar: "" });
   /** 离底时的新消息计数（悬浮条「N 条新消息」） */
   const pendingCount = ref(0);
+  let streamAbort: AbortController | null = null;
 
   const activeRoomId = roomState.activeRoomId;
 
@@ -315,27 +326,50 @@ export function useChat() {
     );
   }
 
-  /** AI 提问：用户消息与 AI 回复都由服务端落库并广播（REST 响应兜底对齐） */
+  /**
+   * AI 流式提问（SSE，二期）：增量写入 streaming 气泡；
+   * done/error 帧带回正式载荷（服务端落库 + WS 广播，多端经 upsertMessage 对齐）。
+   */
   async function sendAi(content: string) {
     const text = content.trim();
-    if (!text || !activeRoomId.value || thinking.value) return;
+    if (!text || !activeRoomId.value || streaming.value) return;
     const clientMsgId = genClientMsgId();
+    const roomId = activeRoomId.value;
     pushOptimistic(text, clientMsgId);
     scrollToBottom();
-    thinking.value = true;
+    streaming.value = { roomId, content: "" };
+    streamAbort = new AbortController();
     try {
-      const { code, data, detail } = await chatApi.aiMessage({
-        room_id: activeRoomId.value,
-        content: text,
-        client_msg_id: clientMsgId
-      });
-      if (data?.question) upsertMessage(data.question);
-      if (data?.message) upsertMessage(data.message);
-      if (code !== 1000) markFailed(clientMsgId, detail);
-    } catch {
-      markFailed(clientMsgId);
+      await streamAiMessage(
+        { room_id: roomId, content: text, client_msg_id: clientMsgId },
+        {
+          onMeta: data => {
+            // 问题回执：以服务端正式载荷对齐乐观上屏（id/created_time）
+            if (data?.question) upsertMessage(data.question);
+          },
+          onDelta: delta => {
+            if (!streaming.value) return;
+            streaming.value.content += delta;
+            if (atBottom.value) scrollToBottom();
+          },
+          onDone: data => {
+            if (data?.message) upsertMessage(data.message);
+          },
+          onError: data => {
+            if (data?.message) upsertMessage(data.message);
+            if (data?.detail) message(String(data.detail), { type: "warning" });
+          }
+        },
+        streamAbort.signal
+      );
+    } catch (error) {
+      if (isAbortError(error)) return;
+      const detail =
+        error instanceof SseError ? error.message : t("chat.aiFailed");
+      markFailed(clientMsgId, detail);
     } finally {
-      thinking.value = false;
+      streaming.value = null;
+      streamAbort = null;
       scrollToBottom();
     }
   }
@@ -382,10 +416,18 @@ export function useChat() {
     }
   }
 
-  // 切换会话：拉历史 + 清未读（本地红点 + 服务端游标）
+  /** 中断进行中的 AI 流（切会话/卸载时）：已到达的增量随 streaming 复位丢弃 */
+  function abortStream() {
+    streamAbort?.abort();
+    streamAbort = null;
+    streaming.value = null;
+  }
+
+  // 切换会话：中断流 + 拉历史 + 清未读（本地红点 + 服务端游标）
   watch(
     activeRoomId,
     async roomId => {
+      abortStream();
       if (!roomId) return;
       await loadHistory(roomId);
       markRead(roomId);
@@ -393,7 +435,10 @@ export function useChat() {
     { immediate: true }
   );
 
-  onUnmounted(() => disconnect());
+  onUnmounted(() => {
+    abortStream();
+    disconnect();
+  });
 
   return {
     // 状态
@@ -407,7 +452,7 @@ export function useChat() {
     hasMore,
     loadingHistory,
     loadingMore,
-    thinking,
+    streaming,
     connected,
     pendingCount,
     scroller,

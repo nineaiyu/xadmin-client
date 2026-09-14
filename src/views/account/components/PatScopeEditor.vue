@@ -26,16 +26,15 @@ type ScopeOption = {
 };
 type ScopeGroup = { key: string; title: string; options: ScopeOption[] };
 
-const props = withDefaults(
+withDefaults(
   defineProps<{
-    /** 已保存的 scope 条目（空 = 不限） */
-    modelValue?: string[];
     /** 隐藏「自定义条目」区（创建弹窗空间有限时用） */
     hideCustom?: boolean;
   }>(),
-  { modelValue: () => [], hideCustom: false }
+  { hideCustom: false }
 );
-const emit = defineEmits<{ (e: "update:modelValue", value: string[]): void }>();
+/** 已保存的 scope 条目（空 = 不限），双向绑定给调用方 */
+const scopes = defineModel<string[]>({ default: () => [] });
 
 const { t, te } = useI18n();
 const loading = ref(false);
@@ -60,24 +59,23 @@ const customItems = computed(() =>
 
 const merge = () => {
   const merged = [...picked.value, ...customItems.value];
-  emit(
-    "update:modelValue",
-    merged.filter((item, index) => merged.indexOf(item) === index)
-  );
+  scopes.value = merged.filter((item, index) => merged.indexOf(item) === index);
 };
 
 /** 分组/标题翻译：菜单标题可能是 i18n key（如 menus.userManagement） */
 const labelOf = (title: string) =>
   title ? (te(title) ? t(title) : title) : t("accessToken.scopeOther");
 
-const methodTagType = (method: string) =>
-  ({
-    GET: "success",
-    POST: "primary",
-    PUT: "warning",
-    PATCH: "warning",
-    DELETE: "danger"
-  })[String(method).toUpperCase()] ?? "info";
+type MethodTagType = "success" | "primary" | "warning" | "danger" | "info";
+const METHOD_TAG_TYPES: Record<string, MethodTagType> = {
+  GET: "success",
+  POST: "primary",
+  PUT: "warning",
+  PATCH: "warning",
+  DELETE: "danger"
+};
+const methodTagType = (method: string): MethodTagType =>
+  METHOD_TAG_TYPES[String(method).toUpperCase()] ?? "info";
 
 watch([picked, customText], merge);
 
@@ -90,7 +88,7 @@ onMounted(() => {
       const payload = (res.data ?? {}) as { groups?: ScopeGroup[] };
       groups.value = payload.groups ?? [];
       // 已有条目分流：命中选项的进勾选，其余进自定义（不丢历史/正则条目）
-      const saved = props.modelValue ?? [];
+      const saved = scopes.value ?? [];
       picked.value = saved.filter(item => knownValues.value.has(item));
       const rest = saved.filter(item => !knownValues.value.has(item));
       if (rest.length) customText.value = rest.join("\n");

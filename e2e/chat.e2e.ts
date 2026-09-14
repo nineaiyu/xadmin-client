@@ -9,7 +9,7 @@ import {
 } from "./helpers";
 
 /**
- * 聊天室 E2E（ADR-034）：微信式两栏布局 + 公共聊天室收发持久化 + 私聊实时送达与未读红点。
+ * 聊天室 E2E：微信式两栏布局 + 公共聊天室收发持久化 + 私聊实时送达与未读红点。
  *
  * 页面选择器以 `data-testid` 为主（chat-page / chat-room-* / chat-contact-* /
  * chat-messages / chat-input / chat-send），仅「刷新」「发送」按文案定位。
@@ -48,6 +48,33 @@ test("聊天室：两栏布局与公共聊天室收发持久化", async ({ page 
   await expect(
     page.locator('[data-testid="chat-messages"]').getByText(text)
   ).toBeVisible({ timeout: 25_000 });
+});
+
+test("聊天室：表情包光标处插入", async ({ page }) => {
+  test.setTimeout(90_000);
+  const wsOpened = waitAppWebSocket(page);
+  await login(page);
+  await wsOpened;
+  await openMenuPath(page, [], "/default/chat/index");
+  await expect(page.locator('[data-testid="chat-page"]')).toBeVisible({
+    timeout: 20_000
+  });
+
+  const input = page.locator('[data-testid="chat-input"] textarea');
+  await input.waitFor({ state: "visible", timeout: 20_000 });
+  await page.locator('[data-testid="chat-emoji"]').first().click();
+  const panel = page.locator('[data-testid="chat-emoji-panel"]');
+  await panel.waitFor({ state: "visible", timeout: 10_000 });
+
+  // 空草稿点第一个表情 → 直接成为内容
+  await panel.locator("button").first().click();
+  const firstEmoji = await panel.locator("button").first().innerText();
+  await expect(input).toHaveValue(firstEmoji.trim());
+
+  // 光标停在插入内容之后：再点第二个表情 → 顺序拼接（微信式连发表情）
+  await panel.locator("button").nth(1).click();
+  const secondEmoji = (await panel.locator("button").nth(1).innerText()).trim();
+  await expect(input).toHaveValue(firstEmoji.trim() + secondEmoji);
 });
 
 test("聊天室：私聊实时送达、未读红点与已读清零", async ({ page }) => {

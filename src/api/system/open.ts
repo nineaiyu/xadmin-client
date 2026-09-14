@@ -1,6 +1,6 @@
 import { BaseApi } from "@/api/base";
 
-/** 开放平台应用（ADR-030）：client_id/secret 由服务端生成，明文只在创建与重置时返回一次 */
+/** 开放平台应用：client_id/secret 由服务端生成，明文只在创建与重置时返回一次 */
 export interface ApiApplicationItem {
   pk: string;
   name: string;

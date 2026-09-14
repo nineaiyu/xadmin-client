@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { login, openMenuPath } from "./helpers";
 
 /**
- * 开放平台 API 应用（ADR-030，G11）：管理页新建应用 → 一次性密钥只展示一次。
+ * 开放平台 API 应用：管理页新建应用 → 一次性密钥只展示一次。
  * 换发/限流/回调的服务端口径由 tests/integration/system/test_api_application.py 钉死。
  */
 

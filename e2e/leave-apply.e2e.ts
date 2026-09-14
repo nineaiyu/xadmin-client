@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { FRONT_URL, login, openMenuPath } from "./helpers";
 
 /**
- * 请假申请（ADR-032）：审批流引擎接入的第一个真实业务页面。
+ * 请假申请：审批流引擎接入的第一个真实业务页面。
  *
  * 覆盖：菜单可达 → 元数据列与字典标签渲染 → 行内「提交审批/撤回」按钮随状态显隐 →
  * 新增弹窗字段齐全 → 删除清理。

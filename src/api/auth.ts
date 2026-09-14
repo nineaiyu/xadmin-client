@@ -54,7 +54,7 @@ export interface UserInfo {
   roles: string[];
 }
 
-/** 站点水印配置（基本设置下发，ADR-029 三项口径） */
+/** 站点水印配置（基本设置下发的三项口径） */
 export type SiteWatermarkResultConfig = {
   FRONT_END_WEB_WATERMARK_ENABLED?: boolean;
   /** 自定义文案，留空 = 用户名-昵称-时间 */

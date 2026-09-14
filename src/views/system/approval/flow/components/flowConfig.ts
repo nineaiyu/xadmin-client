@@ -3,7 +3,7 @@
  * （拆分自 FlowConfigDrawer.vue，行为不变；便于单测）。
  */
 
-/** 出口路由（排他网关，ADR-016 §1）：condition 命中即跳转 target 节点 order */
+/** 出口路由（排他网关）：condition 命中即跳转 target 节点 order */
 export type RouteItem = {
   condition?: { field?: string; op?: string; value?: unknown } | null;
   target: number;
@@ -192,7 +192,7 @@ export function buildFlowPayload(
             value: parseConditionValue(node.condition_op, node.condition_value)
           }
         : {},
-      // 出口路由（ADR-016 §1）：条件值按 op 规范化后提交；layout 为画布坐标
+      // 出口路由：条件值按 op 规范化后提交；layout 为画布坐标
       routes: (node.routes || []).map(route => ({
         condition: route.condition?.field?.trim()
           ? {

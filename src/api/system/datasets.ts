@@ -1,7 +1,7 @@
 import { BaseApi } from "@/api/base";
 import type { DetailResult, ListResult } from "@/api/types";
 
-/** 数据集与仪表盘（ADR-020，可视化一期） */
+/** 数据集与仪表盘（可视化一期） */
 export type DatasetVisibility = "personal" | "shared";
 
 export type DatasetFilter = {

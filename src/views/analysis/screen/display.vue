@@ -15,7 +15,7 @@ defineOptions({
 });
 
 /**
- * 大屏投屏（ADR-021）：全屏轮播 Screen 内的仪表盘，按 refresh 秒自动重拉数据。
+ * 大屏投屏：全屏轮播 Screen 内的仪表盘，按 refresh 秒自动重拉数据。
  * 权限复用仪表盘可见性：对当前浏览者不可见的仪表盘自动跳过。
  * 图表渲染复用一期的 ChartCard（defineExpose loadData 供定时刷新）。
  */

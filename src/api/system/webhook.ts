@@ -1,7 +1,7 @@
 import { BaseApi } from "@/api/base";
 import type { DetailResult } from "@/api/types";
 
-/** 出站 Webhook（ADR-022）：订阅与投递审计 */
+/** 出站 Webhook：订阅与投递审计 */
 export type WebhookSubscriptionItem = {
   pk: string;
   name: string;

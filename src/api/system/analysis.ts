@@ -2,7 +2,7 @@ import { BaseApi } from "@/api/base";
 import type { DetailResult, ListResult } from "@/api/types";
 import type { DashboardItem } from "@/api/system/datasets";
 
-/** 大屏与定时报表（ADR-021） */
+/** 大屏与定时报表 */
 export type ScreenItem = {
   pk: string;
   name: string;

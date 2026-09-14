@@ -1,11 +1,12 @@
 import { BaseRequest } from "@/api/base";
 import type { BaseResult, DetailResult } from "@/api/types";
+import { postSse, type SseFrame } from "@/utils/sse";
 
 /**
- * 聊天室 REST（ADR-034，服务端 message/views.py）。
+ * 聊天室 REST（服务端 message/views.py）。
  *
  * WS 负责实时收发（src/utils/websocket.ts::ChatWebSocket），REST 负责
- * 会话列表 / 历史分页 / 私聊开通 / 撤回 / 联系人 / AI 提问。
+ * 会话列表 / 历史分页 / 私聊开通 / 撤回 / 联系人 / AI 提问（含 SSE 流式）。
  */
 
 /** 会话对端 / 联系人用户简介 */
@@ -137,6 +138,60 @@ class ChatApi extends BaseRequest {
       `${this.baseApi}/ai/message`
     );
   };
+}
+
+export interface ChatAiStreamEvents {
+  /** meta：问题回执（服务端落库后的正式载荷） */
+  onMeta?: (data: { question: ChatMessageItem }) => void;
+  /** delta：文本增量 */
+  onDelta?: (delta: string) => void;
+  /** done：AI 回复落库后的正式载荷（mode/message），此刻流结束 */
+  onDone?: (data: { mode: string; message: ChatMessageItem }) => void;
+  /** error：AI 全程失败（message 为 system 降级消息，detail 为可读原因） */
+  onError?: (data: { detail: string; message: ChatMessageItem }) => void;
+}
+
+/**
+ * AI 流式提问（SSE，二期）：POST /api/chat/ai/stream。
+ *
+ * 服务端事件序 meta → delta* → done | error；响应头已发出后无法再改状态码，
+ * 所以失败通过 error 带内下发光，非 SSE 错误（门禁/参数）由 postSse 抛 SseError。
+ */
+export function streamAiMessage(
+  data: { room_id?: number; content: string; client_msg_id?: string },
+  events: ChatAiStreamEvents,
+  signal?: AbortSignal
+): Promise<void> {
+  return postSse(
+    `${import.meta.env.VITE_API_DOMAIN ?? ""}/api/chat/ai/stream`,
+    data,
+    {
+      signal,
+      onFrame: (frame: SseFrame) => {
+        let payload: unknown = {};
+        try {
+          payload = frame.data ? JSON.parse(frame.data) : {};
+        } catch {
+          return;
+        }
+        if (frame.event === "meta") {
+          events.onMeta?.(payload as { question: ChatMessageItem });
+        } else if (frame.event === "delta") {
+          events.onDelta?.(
+            String((payload as { delta?: unknown }).delta ?? "")
+          );
+        } else if (frame.event === "done") {
+          events.onDone?.(
+            payload as { mode: string; message: ChatMessageItem }
+          );
+        } else if (frame.event === "error") {
+          events.onError?.(
+            payload as { detail: string; message: ChatMessageItem }
+          );
+        }
+      }
+    }
+  );
 }
 
 export const chatApi = new ChatApi("/api/chat");

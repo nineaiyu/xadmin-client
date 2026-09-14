@@ -149,8 +149,12 @@ test("访问令牌 scope 方法前缀：GET 放行 / POST 拒绝", async ({ page
   const row = page.locator(".el-table__row", { hasText: tokenName }).first();
   await expect(row).toBeVisible({ timeout: 15_000 });
   await row.getByTitle("接口范围").first().click();
+  // 创建弹层里也有「接口范围」字段，按弹层标题精确定位，避免命中隐藏的创建弹层
   const scopeDialog = page
-    .locator(".el-dialog", { hasText: "接口范围" })
+    .locator(".el-dialog")
+    .filter({
+      has: page.locator(".el-dialog__title", { hasText: "接口范围" })
+    })
     .first();
   await expect(scopeDialog).toBeVisible({ timeout: 10_000 });
   // 自定义条目（下拉未覆盖的路径/正则），一行一条
@@ -197,8 +201,12 @@ test("访问令牌 scope：命中 200 / 越界 403 / 吊销 401", async ({ page 
   const row = page.locator(".el-table__row", { hasText: tokenName }).first();
   await expect(row).toBeVisible({ timeout: 15_000 });
   await row.getByTitle("接口范围").first().click();
+  // 创建弹层里也有「接口范围」字段，按弹层标题精确定位，避免命中隐藏的创建弹层
   const scopeDialog = page
-    .locator(".el-dialog", { hasText: "接口范围" })
+    .locator(".el-dialog")
+    .filter({
+      has: page.locator(".el-dialog__title", { hasText: "接口范围" })
+    })
     .first();
   await expect(scopeDialog).toBeVisible({ timeout: 10_000 });
   // 令牌自身接口在权限白名单里（不在权限菜单），走自定义条目
@@ -254,14 +262,21 @@ test("访问令牌接口范围：勾选有权限的接口即生效", async ({ pa
   const row = page.locator(".el-table__row", { hasText: tokenName }).first();
   await expect(row).toBeVisible({ timeout: 15_000 });
   await row.getByTitle("接口范围").first().click();
+  // 创建弹层里也有「接口范围」字段，按弹层标题精确定位，避免命中隐藏的创建弹层
   const scopeDialog = page
-    .locator(".el-dialog", { hasText: "接口范围" })
+    .locator(".el-dialog")
+    .filter({
+      has: page.locator(".el-dialog__title", { hasText: "接口范围" })
+    })
     .first();
   await expect(scopeDialog).toBeVisible({ timeout: 10_000 });
 
-  // 下拉展开 → 勾选第一个可授权接口（选项由后端按本人权限下发）
+  // 选项按本人权限异步下发：等加载遮罩消失再展开下拉（否则点击会被遮罩吃掉）
+  await expect(scopeDialog.locator(".el-loading-mask")).toHaveCount(0, {
+    timeout: 15_000
+  });
   await scopeDialog.locator(".el-select").click();
-  const firstOption = page.locator(".el-select-dropdown__item").first();
+  const firstOption = page.locator(".el-select-dropdown__item:visible").first();
   await expect(firstOption).toBeVisible({ timeout: 15_000 });
   await firstOption.click();
   await page.keyboard.press("Escape");

@@ -46,7 +46,7 @@ describe("user store", () => {
     expect(store.roles).toEqual(["dev"]);
   });
 
-  it("站点水印配置默认关闭，clear() 复位（ADR-029）", () => {
+  it("站点水印配置默认关闭，clear() 复位", () => {
     const store = useUserStore();
     expect(store.siteWatermark).toEqual({
       enabled: false,

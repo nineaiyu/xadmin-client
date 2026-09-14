@@ -1,6 +1,6 @@
 import { BaseApi } from "@/api/base";
 
-/** 动态表单（ADR-025）：收敛控件集 schema + 通用 JSON 提交 */
+/** 动态表单：收敛控件集 schema + 通用 JSON 提交 */
 export type FormFieldType =
   | "input"
   | "textarea"
@@ -29,7 +29,7 @@ export type DynamicFormItem = {
   description: string;
   schema: { fields: FormField[] };
   is_active: boolean;
-  /** G5b：提交需审批（412 → 审批通过 → 携令牌重放自动落库） */
+  /** 提交需审批（412 → 审批通过 → 携令牌重放自动落库） */
   approval_required: boolean;
 };
 

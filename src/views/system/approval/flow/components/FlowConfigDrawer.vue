@@ -18,7 +18,7 @@ import FlowNodesEditor from "./FlowNodesEditor.vue";
 import FlowCanvas from "./FlowCanvas.vue";
 
 /**
- * 流程定义配置抽屉（ADR-012 一期：列表式节点编辑，不做拖拽画布）。
+ * 流程定义配置抽屉（一期：列表式节点编辑，不做拖拽画布）。
  *
  * 三段式：基本信息 / 表单字段（发起申请时的动态表单）/ 审批节点（顺序 + 或签会签 +
  * 审批人解析 + 节点条件 + 超时小时）；保存时整体提交（节点列表替换式更新）。

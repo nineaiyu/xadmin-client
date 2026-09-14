@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { login } from "./helpers";
 
 /**
- * 企业 IM 扫码登录入口（ADR-018）：种子注入启用态 feishu flavor provider，
+ * 企业 IM 扫码登录入口：种子注入启用态 feishu flavor provider，
  * 登录页必须渲染对应入口按钮（providers 接口 + flavor 预设合并全链路）。
  *
  * 回调交互依赖真实 IdP，由后端集成测试 stub HTTP 覆盖（tests/unit/system/

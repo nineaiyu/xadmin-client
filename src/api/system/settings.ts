@@ -18,10 +18,10 @@ export const settingsLoginAuthApi = new ViewBaseApi("/api/settings/login/auth");
 // 邮箱配置
 export const settingsEmailApi = new ViewBaseApi("/api/settings/email");
 
-// LDAP 目录配置（ADR-017）
+// LDAP 目录配置
 export const settingsLdapApi = new ViewBaseApi("/api/settings/ldap");
 
-// 企业 IM 通知渠道配置（ADR-019）
+// 企业 IM 通知渠道配置
 export const settingsNotifyImApi = new ViewBaseApi("/api/settings/notify/im");
 // 注册配置
 export const settingsRegisterAuthApi = new ViewBaseApi(

@@ -79,7 +79,7 @@ export default defineComponent({
     // 设置面板的本地水印（每浏览器独立）
     const watermarkEnable = computed(() => $storage.configure?.watermark);
     const watermarkText = computed(() => $storage.configure?.watermarkText);
-    // 站点水印（服务端基本设置下发，ADR-029）：仅「敏感页面」范围内生效
+    // 站点水印（服务端基本设置下发）：仅「敏感页面」范围内生效
     const siteWatermark = computed(() => userStore.siteWatermark);
     const onLoginPage = computed(() => route.name === "Login");
     const siteWatermarkVisible = computed(

@@ -17,7 +17,7 @@ export const OAUTH_BIND_FLAG_TTL = 15 * 60;
 export type OAuthProvider = {
   key: string;
   name: string;
-  /** 协议类型：oauth2（通用）| dingtalk | wecom | feishu（ADR-018），本期仅备用字段 */
+  /** 协议类型：oauth2（通用）| dingtalk | wecom | feishu，本期仅备用字段 */
   flavor?: string;
 };
 

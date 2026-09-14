@@ -8,7 +8,7 @@ import {
   parseWatermarkPaths
 } from "../watermark";
 
-describe("站点水印配置解析（ADR-029）", () => {
+describe("站点水印配置解析", () => {
   it("默认配置未开启且范围为全部页面", () => {
     expect(defaultSiteWatermark).toEqual({
       enabled: false,

@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { login, logout, openMenuPath } from "./helpers";
 
 /**
- * LDAP 目录设置主链路（ADR-017）：
+ * LDAP 目录设置主链路：
  * 页面渲染（后端 gettext 中文标签）→ 保存配置 → 连接测试失败可读 → 登出后
  * 本地账密登录不受影响（目录不可达不阻断本地登录的核心降级验收）。
  *

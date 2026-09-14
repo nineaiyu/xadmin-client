@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { login, openMenuPath } from "./helpers";
 
 /**
- * 出站 Webhook 主链路（ADR-022）：
+ * 出站 Webhook 主链路：
  * 建订阅（指向不可达地址）→ test 动作派发 ping → 投递审计页出现失败记录。
  * 签名/成功路径/重试退避由后端集成测试以进程内接收端覆盖。
  */

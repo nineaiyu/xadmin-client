@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { FRONT_URL, getAccessToken, login, openMenuPath } from "./helpers";
 
 /**
- * 站点水印（ADR-029，G10）：基本设置开启后，只有「生效页面」范围内的页面挂水印节点。
+ * 站点水印：基本设置开启后，只有「生效页面」范围内的页面挂水印节点。
  *
  * 断言口径：`@pureadmin/utils` 的水印容器是 id 为 `Symbol(watermark-dom)` 的固定层
  * （文案烧进 canvas 背景图，故断言节点与其 background 样式，不解析文本）。

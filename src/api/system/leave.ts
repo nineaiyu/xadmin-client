@@ -2,7 +2,7 @@ import { BaseApi } from "@/api/base";
 import type { DetailResult } from "@/api/types";
 
 /**
- * 请假申请（ADR-032）：新增即提交审批。
+ * 请假申请：新增即提交审批。
  *
  * 通过 / 驳回在「流程审批」中心处理（审批人视角），本接口只负责
  * 申请人侧的提交与撤回；业务单状态由后端在审批终态自动回写。

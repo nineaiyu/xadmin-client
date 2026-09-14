@@ -1,7 +1,7 @@
 import { BaseApi } from "@/api/base";
 import type { BaseResult, DataListResult, DetailResult } from "@/api/types";
 
-/** 流程定义（ADR-012：列表式节点编辑；节点随定义整体提交） */
+/** 流程定义（列表式节点编辑；节点随定义整体提交） */
 export type FlowVersionRow = {
   version: number;
   remark: string;
@@ -11,7 +11,7 @@ export type FlowVersionRow = {
 class ApprovalFlowApi extends BaseApi {
   // 标准 CRUD 由 BaseApi 提供（list/create/retrieve/partialUpdate/destroy）
 
-  /** 流程定义版本列表（ADR-016 §2 快照审计） */
+  /** 流程定义版本列表（快照审计） */
   versions = (pk: string, params?: object) => {
     return this.request<BaseResult & { data: FlowVersionRow[] }>(
       "get",

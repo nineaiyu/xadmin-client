@@ -24,7 +24,7 @@ type FlowRow = {
 
 /**
  * 流程定义页装配：列表用 RePlusPage 标准 CRUD，新增/编辑走自定义「配置抽屉」
- * （基本信息 + 表单字段 + 节点列表整体编辑，ADR-012 一期不做拖拽画布）。
+ * （基本信息 + 表单字段 + 节点列表整体编辑，一期不做拖拽画布）。
  *
  * 内置的 create/update 入口被显式关闭（auth 覆盖），避免"标准表单 + 配置抽屉"
  * 两套编辑口径并存；删除/详情仍走标准入口（后端对在途实例有保护）。
@@ -80,7 +80,7 @@ export function useFlow(tableRef: Ref) {
     ]
   });
 
-  /** 版本历史抽屉：快照列表 + 回滚动作（ADR-016 §2） */
+  /** 版本历史抽屉：快照列表 + 回滚动作 */
   const openVersions = (row: FlowRow) => {
     const options: DrawerOptions = {
       title: `${t("systemApprovalFlow.versionsTitle")} - ${row.name}`,

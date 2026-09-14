@@ -5,7 +5,7 @@ import { message } from "@/utils/message";
 import { knowledgeApi } from "@/api/system/knowledge";
 
 /**
- * 上传知识库文档（ADR-033）：文本入库，不落文件系统。
+ * 上传知识库文档：文本入库，不落文件系统。
  *
  * 「选择本地 Markdown 文件」由浏览器 FileReader 读取为文本填充到编辑区，
  * 用户可再编辑后提交——与直接粘贴文本走同一接口（同名覆盖更新）。

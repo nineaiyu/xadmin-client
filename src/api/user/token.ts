@@ -1,5 +1,5 @@
 import { BaseApi } from "@/api/base";
-import type { BaseResult } from "@/api/types";
+import type { BaseResult, DetailResult } from "@/api/types";
 
 /** 个人访问令牌（PAT）：机器集成凭证，个人凭证个人管 */
 export const personalAccessTokenApi = new (class extends BaseApi {
@@ -25,7 +25,7 @@ export const personalAccessTokenApi = new (class extends BaseApi {
 
   /** 可授权的接口范围（按本人权限收口，供令牌接口范围勾选） */
   scopeOptions = () => {
-    return this.request<BaseResult>(
+    return this.request<DetailResult>(
       "get",
       {},
       {},

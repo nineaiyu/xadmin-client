@@ -1,7 +1,7 @@
 import { BaseApi } from "@/api/base";
 import type { DetailResult } from "@/api/types";
 
-/** AI 知识库文档（ADR-033）：仓库同步 + 管理端上传两类来源 */
+/** AI 知识库文档：仓库同步 + 管理端上传两类来源 */
 export type KnowledgeSourceType = "repo" | "upload";
 
 export type KnowledgeDocumentItem = {

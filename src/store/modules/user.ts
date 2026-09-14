@@ -30,6 +30,7 @@ import {
 
 import { useMultiTagsStoreHook } from "./multiTags";
 import { AesEncrypted } from "@/utils/aes";
+import { notifyDesktop, stripHtml } from "@/utils/desktopNotify";
 import { defaultSiteWatermark, parseWatermarkPaths } from "@/utils/watermark";
 import { h, type VNode } from "vue";
 import { PureWebSocket } from "@/utils/websocket";
@@ -92,7 +93,7 @@ export const useUserStore = defineStore("pure-user", {
     },
     /**
      * 清空水印态（登出 / 清空缓存调用）：
-     * 站点水印配置复位，已挂载的水印 DOM 由 App.vue 观察 siteWatermark 变化后清除（ADR-029）
+     * 站点水印配置复位，已挂载的水印 DOM 由 App.vue 观察 siteWatermark 变化后清除
      */
     clear() {
       this.siteWatermark = { ...defaultSiteWatermark };
@@ -167,7 +168,7 @@ export const useUserStore = defineStore("pure-user", {
           .then(res => {
             if (res.code === 1000) {
               setUserInfo(res.data);
-              // 水印配置存入本 store：由 App.vue 按「当前路由是否命中生效范围」应用/清除（ADR-029）
+              // 水印配置存入本 store：由 App.vue 按「当前路由是否命中生效范围」应用/清除
               this.siteWatermark = {
                 enabled: !!res.config?.FRONT_END_WEB_WATERMARK_ENABLED,
                 text: res.config?.FRONT_END_WEB_WATERMARK_TEXT ?? "",
@@ -249,6 +250,27 @@ export const useUserStore = defineStore("pure-user", {
         ) {
           const data = raw.data ?? {};
           let message: string | VNode | undefined = data?.message;
+          // 桌面通知（二期）：聊天类（@提及/私聊）前台也弹，
+          // 其余站内推送仅页面不可见时弹；点击行为与各分支的应用内通知一致
+          const isChatPush =
+            data?.message_type === "chat_message" ||
+            data?.message_type === "chat_private";
+          notifyDesktop({
+            type: isChatPush ? "chat" : "push",
+            title: `${data?.notice_type?.label}-${data?.title}`,
+            body: stripHtml(String(data?.message ?? "")),
+            tag: data?.pk ? String(data.pk) : undefined,
+            onClick: () => {
+              if (isChatPush) {
+                router.push({
+                  name: "Chat",
+                  query: data?.room_id ? { room: String(data.room_id) } : {}
+                });
+              } else {
+                router.push({ name: "UserNotice", query: { pk: data?.pk } });
+              }
+            }
+          });
           switch (data?.message_type) {
             case "notify_message":
               if (data?.notice_type?.value === 0) {

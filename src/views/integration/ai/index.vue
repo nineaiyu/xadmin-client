@@ -30,7 +30,7 @@ const messages = ref<
   Array<{ role: "user" | "assistant"; content: string; sources?: AiSource[] }>
 >([]);
 
-/** NL 查数状态（ADR-024）：解释卡片 → 确认执行 */
+/** NL 查数状态：解释卡片 → 确认执行 */
 const nlQuestion = ref("");
 const nlLoading = ref(false);
 const nlResult = ref<NlInterpretResult | null>(null);
@@ -224,7 +224,7 @@ onActivated(loadStatus);
           </div>
         </el-tab-pane>
 
-        <!-- 数据查询（NL 查数，ADR-024）：解释卡片 → 确认执行 -->
+        <!-- 数据查询（NL 查数）：解释卡片 → 确认执行 -->
         <el-tab-pane v-if="canInterpret" :label="t('ai.nlTab')" name="nl">
           <div class="flex gap-2">
             <el-input

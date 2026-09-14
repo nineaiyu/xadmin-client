@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { login, openMenuPath } from "./helpers";
 
 /**
- * 消息设置页 IM 渠道三页签（ADR-019 改进）：钉钉/企微/飞书各自独立页签，仅渲染
+ * 消息设置页 IM 渠道三页签：钉钉/企微/飞书各自独立页签，仅渲染
  * 自己的字段（SettingItem fields 白名单）——消除「一个表单三家字段 + 单个测试
  * 按钮测的是哪家」的歧义，测试按钮经 ?channel= 只测本渠道（后端单测覆盖）。
  *
