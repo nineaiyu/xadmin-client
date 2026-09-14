@@ -1,9 +1,11 @@
 <script lang="ts" setup>
 import { SUCCESS_CODE } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
-import { onMounted, reactive, ref } from "vue";
+import { h, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
+import { addDialog } from "@/components/ReDialog";
+import { dialogSize } from "@/components/ReDialog/size";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import {
@@ -12,6 +14,7 @@ import {
   listAiProfileRows,
   type AiProfileItem
 } from "@/api/system/ai";
+import AiProfileForm from "./components/AiProfileForm.vue";
 
 defineOptions({
   name: "AiAssistantConfig"
@@ -74,93 +77,42 @@ const saveGlobal = async () => {
 };
 
 /* ---------------- 配置档案 CRUD ---------------- */
-const dialog = ref(false);
-const saving = ref(false);
-const editingPk = ref<string | null>(null);
+const formRef = ref<InstanceType<typeof AiProfileForm>>();
 
-const numberOrNull = (value: unknown): number | null =>
-  value === "" || value === undefined || value === null ? null : Number(value);
-
-const emptyForm = () => ({
-  name: "",
-  base_url: "",
-  api_key: "",
-  model: "",
-  temperature: 0.2 as number | null,
-  max_tokens: null as number | null,
-  top_p: null as number | null,
-  frequency_penalty: null as number | null,
-  presence_penalty: null as number | null,
-  stop: "",
-  seed: null as number | null,
-  timeout: 60,
-  max_retries: 0,
-  context_limit: 20,
-  persona: "",
-  is_active: false,
-  remark: ""
-});
-
-const form = reactive(emptyForm());
-
-const openCreate = () => {
-  editingPk.value = null;
-  Object.assign(form, emptyForm());
-  dialog.value = true;
-};
-
-const openEdit = (row: AiProfileItem) => {
-  editingPk.value = row.pk;
-  Object.assign(form, emptyForm(), {
-    ...JSON.parse(JSON.stringify(row)),
-    api_key: ""
+/** 新建 / 编辑弹窗（C5：统一走 ReDialog，表单在 AiProfileForm 中） */
+const openDialog = (row: AiProfileItem | null) => {
+  formRef.value = undefined;
+  addDialog({
+    title: row ? t("aiConfig.edit") : t("aiConfig.create"),
+    width: dialogSize("md"),
+    draggable: true,
+    destroyOnClose: true,
+    closeOnClickModal: false,
+    sureBtnLoading: true,
+    contentRenderer: () => h(AiProfileForm, { ref: formRef, row }),
+    beforeSure: async (done, { closeLoading }) => {
+      const payload = formRef.value?.getPayload();
+      if (!payload) {
+        closeLoading();
+        return;
+      }
+      const res = row
+        ? await aiProfileApi.partialUpdate(row.pk, payload)
+        : await aiProfileApi.create(payload);
+      if (res.code === SUCCESS_CODE) {
+        message(t("aiConfig.saveOk"), { type: "success" });
+        await loadRows();
+        done();
+        return;
+      }
+      if (res.detail) message(String(res.detail), { type: "warning" });
+      closeLoading();
+    }
   });
-  dialog.value = true;
 };
 
-const submit = async () => {
-  if (!form.name.trim() || !form.base_url.trim() || !form.model.trim()) {
-    message(t("aiConfig.required"), { type: "warning" });
-    return;
-  }
-  saving.value = true;
-  try {
-    const payload: Record<string, unknown> = {
-      name: form.name,
-      base_url: form.base_url,
-      model: form.model,
-      temperature: numberOrNull(form.temperature),
-      max_tokens: numberOrNull(form.max_tokens),
-      top_p: numberOrNull(form.top_p),
-      frequency_penalty: numberOrNull(form.frequency_penalty),
-      presence_penalty: numberOrNull(form.presence_penalty),
-      stop: form.stop,
-      seed: numberOrNull(form.seed),
-      timeout: form.timeout,
-      max_retries: form.max_retries,
-      context_limit: form.context_limit,
-      persona: form.persona,
-      is_active: form.is_active,
-      remark: form.remark
-    };
-    // 编辑时留空 api_key = 沿用原密钥
-    if (form.api_key || !editingPk.value) {
-      payload.api_key = form.api_key;
-    }
-    const res = editingPk.value
-      ? await aiProfileApi.partialUpdate(editingPk.value, payload)
-      : await aiProfileApi.create(payload);
-    if (res.code === SUCCESS_CODE) {
-      message(t("aiConfig.saveOk"), { type: "success" });
-      dialog.value = false;
-      await loadRows();
-    } else if (res.detail) {
-      message(String(res.detail), { type: "warning" });
-    }
-  } finally {
-    saving.value = false;
-  }
-};
+const openCreate = () => openDialog(null);
+const openEdit = (row: AiProfileItem) => openDialog(row);
 
 const remove = async (row: AiProfileItem) => {
   await ElMessageBox.confirm(
@@ -367,145 +319,5 @@ onMounted(() => {
         </el-table-column>
       </el-table>
     </el-card>
-
-    <el-dialog
-      v-model="dialog"
-      :title="editingPk ? t('aiConfig.edit') : t('aiConfig.create')"
-      width="640px"
-    >
-      <el-form label-width="120px">
-        <el-divider content-position="left">{{
-          t("aiConfig.sectionBasic")
-        }}</el-divider>
-        <el-form-item :label="t('aiConfig.name')" required>
-          <el-input
-            v-model="form.name"
-            maxlength="64"
-            data-testid="ai-profile-name"
-          />
-        </el-form-item>
-        <el-form-item :label="t('aiConfig.baseUrl')" required>
-          <el-input
-            v-model="form.base_url"
-            placeholder="https://api.deepseek.com/v1"
-          />
-        </el-form-item>
-        <el-form-item :label="t('aiConfig.apiKey')" :required="!editingPk">
-          <el-input
-            v-model="form.api_key"
-            type="password"
-            show-password
-            :placeholder="
-              editingPk ? t('aiConfig.apiKeyKeep') : t('aiConfig.apiKeyHint')
-            "
-          />
-        </el-form-item>
-        <el-form-item :label="t('aiConfig.model')" required>
-          <el-input v-model="form.model" placeholder="deepseek-chat" />
-        </el-form-item>
-        <el-form-item :label="t('aiConfig.remark')">
-          <el-input v-model="form.remark" maxlength="255" />
-        </el-form-item>
-        <el-form-item :label="t('aiConfig.isActive')">
-          <el-switch v-model="form.is_active" />
-        </el-form-item>
-
-        <el-divider content-position="left">{{
-          t("aiConfig.sectionSampling")
-        }}</el-divider>
-        <el-form-item :label="t('aiConfig.temperature')">
-          <el-input-number
-            v-model="form.temperature"
-            :min="0"
-            :max="2"
-            :step="0.1"
-            :precision="2"
-          />
-        </el-form-item>
-        <el-form-item :label="t('aiConfig.maxTokens')">
-          <el-input-number v-model="form.max_tokens" :min="1" :step="256" />
-        </el-form-item>
-        <el-form-item :label="t('aiConfig.topP')">
-          <el-input-number
-            v-model="form.top_p"
-            :min="0"
-            :max="1"
-            :step="0.05"
-            :precision="2"
-          />
-        </el-form-item>
-        <el-form-item :label="t('aiConfig.frequencyPenalty')">
-          <el-input-number
-            v-model="form.frequency_penalty"
-            :min="-2"
-            :max="2"
-            :step="0.1"
-            :precision="1"
-          />
-        </el-form-item>
-        <el-form-item :label="t('aiConfig.presencePenalty')">
-          <el-input-number
-            v-model="form.presence_penalty"
-            :min="-2"
-            :max="2"
-            :step="0.1"
-            :precision="1"
-          />
-        </el-form-item>
-        <el-form-item :label="t('aiConfig.stop')">
-          <el-input
-            v-model="form.stop"
-            :placeholder="t('aiConfig.stopHint')"
-            maxlength="255"
-          />
-        </el-form-item>
-        <el-form-item :label="t('aiConfig.seed')">
-          <el-input-number v-model="form.seed" :step="1" />
-        </el-form-item>
-
-        <el-divider content-position="left">{{
-          t("aiConfig.sectionBehavior")
-        }}</el-divider>
-        <el-form-item :label="t('aiConfig.timeout')">
-          <el-input-number
-            v-model="form.timeout"
-            :min="5"
-            :max="300"
-            :step="5"
-          />
-        </el-form-item>
-        <el-form-item :label="t('aiConfig.maxRetries')">
-          <el-input-number
-            v-model="form.max_retries"
-            :min="0"
-            :max="3"
-            :step="1"
-          />
-        </el-form-item>
-        <el-form-item :label="t('aiConfig.contextLimit')">
-          <el-input-number
-            v-model="form.context_limit"
-            :min="2"
-            :max="50"
-            :step="1"
-          />
-        </el-form-item>
-        <el-form-item :label="t('aiConfig.persona')">
-          <el-input
-            v-model="form.persona"
-            type="textarea"
-            :rows="3"
-            maxlength="2000"
-            :placeholder="t('aiConfig.personaHint')"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialog = false">{{ t("buttons.cancel") }}</el-button>
-        <el-button type="primary" :loading="saving" @click="submit">
-          {{ t("buttons.sure") }}
-        </el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
