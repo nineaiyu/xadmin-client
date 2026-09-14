@@ -80,4 +80,16 @@ test("数据集 + 仪表盘主链路", async ({ page }) => {
   const card = page.locator(".el-card").filter({ hasText: "用户总数" });
   await expect(card).toBeVisible();
   await expect(card.locator(".text-3xl")).toHaveText(/\d+/);
+
+  // 卡片宽度档位是 12 栅格（默认 6 → 6/12），渲染到 el-col 需换算为 24 栅格：
+  // 默认半宽 ≈ 0.5（曾直接透传导致实渲染只有标称一半，见 views/dashboard/utils/span.ts）
+  const rowBox = await page.getByTestId("dashboard-cards").boundingBox();
+  const colBox = await page
+    .getByTestId("dashboard-cards")
+    .locator(".el-col")
+    .first()
+    .boundingBox();
+  const ratio = (colBox?.width ?? 0) / (rowBox?.width ?? 1);
+  expect(ratio).toBeGreaterThan(0.4);
+  expect(ratio).toBeLessThan(0.6);
 });

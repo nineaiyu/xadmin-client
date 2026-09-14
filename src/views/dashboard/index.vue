@@ -20,6 +20,7 @@ import {
   type DatasetItem
 } from "@/api/system/datasets";
 import CardForm from "./components/CardForm.vue";
+import { cardColSpan, cardColSpanNarrow } from "./utils/span";
 import ChartCard from "./components/ChartCard.vue";
 import DashboardCreateForm from "./components/DashboardCreateForm.vue";
 
@@ -316,10 +317,16 @@ onMounted(async () => {
     <el-empty v-if="!current" :description="t('dashboard.empty')" />
     <template v-else>
       <el-row ref="rowRef" :gutter="12" data-testid="dashboard-cards">
+        <!-- 栅格：窄屏最多两列（xs 全宽 / sm、md 半宽上限）；lg 起回到用户档位。
+             EP 断点类为 min-width 语义，必须显式给 lg，否则大屏仍命中 md 的半宽值 -->
         <el-col
           v-for="card in layout"
           :key="card.id"
-          :span="card.span ?? 6"
+          :span="cardColSpan(card)"
+          :xs="24"
+          :sm="cardColSpanNarrow(card)"
+          :md="cardColSpanNarrow(card)"
+          :lg="cardColSpan(card)"
           class="mb-3"
         >
           <el-card
