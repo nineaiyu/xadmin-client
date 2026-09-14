@@ -208,16 +208,24 @@ const openCreateDashboard = () => {
         closeLoading();
         return;
       }
-      const res = await dashboardApi.create({ ...payload, layout: [] });
+      // 异常归一为可读失败结果：避免请求异常时 beforeSure 抛错、弹窗 loading 悬挂
+      const res = await dashboardApi
+        .create({ ...payload, layout: [] })
+        .catch(error => ({
+          code: -1,
+          data: null,
+          detail: String((error as { detail?: string })?.detail ?? error)
+        }));
       if (res.code === SUCCESS_CODE) {
         message(t("dashboard.saveOk"), { type: "success" });
+        // 先关弹窗再刷新列表（与原手写弹窗行为一致，避免刷新耗时导致弹窗滞留）
+        done();
         current.value = null;
         await loadDashboards();
         current.value =
           dashboards.value.find(
             item => item.pk === (res.data as never as DashboardItem)?.pk
           ) ?? null;
-        done();
         return;
       }
       closeLoading();

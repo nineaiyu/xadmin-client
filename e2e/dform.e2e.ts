@@ -32,7 +32,8 @@ test("动态表单：设计（含审批开关）→ 填报 → 提交可见", as
   const secondRow = dialog.locator(".el-table__row").nth(1);
   await secondRow.locator("input").first().fill("location");
   await secondRow.locator("input").nth(1).fill("存放位置");
-  await dialog.getByRole("button", { name: "确认" }).click();
+  // C5 收敛后弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确认」）
+  await dialog.getByRole("button", { name: "保存" }).click();
   await expect(dialog).not.toBeVisible();
   await expect(
     page.getByTestId("form-designer-table").getByText("E2E设备登记")

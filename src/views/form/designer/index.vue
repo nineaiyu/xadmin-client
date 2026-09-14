@@ -1,17 +1,18 @@
 <script lang="ts" setup>
 import { SUCCESS_CODE } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
-import { onMounted, reactive, ref } from "vue";
+import { h, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { addDialog } from "@/components/ReDialog";
+import { dialogSize } from "@/components/ReDialog/size";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import {
   dynamicFormApi,
   listRows,
-  type DynamicFormItem,
-  type FormField,
-  type FormFieldType
+  type DynamicFormItem
 } from "@/api/system/dform";
+import DynamicFormForm from "./components/DynamicFormForm.vue";
 
 defineOptions({
   name: "FormDesigner"
@@ -37,98 +38,54 @@ const loadAll = async () => {
 };
 
 /** 字段类型选项（收敛控件集） */
-const typeOptions: { value: FormFieldType; labelKey: string }[] = [
-  { value: "input", labelKey: "dform.typeInput" },
-  { value: "textarea", labelKey: "dform.typeTextarea" },
-  { value: "number", labelKey: "dform.typeNumber" },
-  { value: "select", labelKey: "dform.typeSelect" },
-  { value: "radio", labelKey: "dform.typeRadio" },
-  { value: "checkbox", labelKey: "dform.typeCheckbox" },
-  { value: "date", labelKey: "dform.typeDate" },
-  { value: "switch", labelKey: "dform.typeSwitch" }
-];
+/** 新建 / 编辑弹窗（C5：统一走 ReDialog，字段设计器在 DynamicFormForm 中） */
+const formRef = ref<InstanceType<typeof DynamicFormForm>>();
 
-const dialog = ref(false);
-const editingPk = ref<string | null>(null);
-const form = reactive({
-  name: "",
-  description: "",
-  is_active: true,
-  approval_required: false
-});
-const fields = ref<FormField[]>([]);
-
-const openCreate = () => {
-  editingPk.value = null;
-  form.name = "";
-  form.description = "";
-  form.is_active = true;
-  form.approval_required = false;
-  fields.value = [];
-  dialog.value = true;
-};
-
-const openEdit = (row: DynamicFormItem) => {
-  editingPk.value = row.pk;
-  form.name = row.name;
-  form.description = row.description;
-  form.is_active = row.is_active;
-  form.approval_required = Boolean(row.approval_required);
-  fields.value = JSON.parse(JSON.stringify(row.schema?.fields ?? []));
-  dialog.value = true;
-};
-
-const addField = () => {
-  fields.value.push({
-    key: `field_${Date.now().toString(36)}`,
-    label: "",
-    type: "input"
+const openDialog = (row: DynamicFormItem | null) => {
+  formRef.value = undefined;
+  addDialog({
+    title: row ? t("dform.edit") : t("dform.create"),
+    width: dialogSize("lg"),
+    top: "5vh",
+    draggable: true,
+    destroyOnClose: true,
+    closeOnClickModal: false,
+    sureBtnLoading: true,
+    contentRenderer: () => h(DynamicFormForm, { ref: formRef, row }),
+    beforeSure: async (done, { closeLoading }) => {
+      const payload = formRef.value?.getPayload();
+      if (!payload) {
+        closeLoading();
+        return;
+      }
+      // 异常归一为可读失败结果：避免请求异常时 beforeSure 抛错、弹窗 loading 悬挂
+      const res = await (
+        row
+          ? dynamicFormApi.partialUpdate(row.pk, payload)
+          : dynamicFormApi.create(payload)
+      ).catch(error => ({
+        code: -1,
+        detail: String((error as { detail?: string })?.detail ?? error)
+      }));
+      if (res.code === SUCCESS_CODE) {
+        message(t("dform.saveOk"), { type: "success" });
+        // 先关弹窗再刷新列表（与原手写弹窗行为一致，避免刷新耗时导致弹窗滞留）
+        done();
+        await loadAll();
+        return;
+      }
+      if (res.detail) message(String(res.detail), { type: "warning" });
+      closeLoading();
+    }
   });
 };
 
-const removeField = (index: number) => {
-  fields.value.splice(index, 1);
-};
-
-const needsOptions = (type: FormFieldType) =>
-  ["select", "radio", "checkbox"].includes(type);
-
-const submit = async () => {
-  if (!form.name || fields.value.length === 0) {
-    message(t("dform.required"), { type: "warning" });
-    return;
-  }
-  const payload = {
-    name: form.name,
-    description: form.description,
-    is_active: form.is_active,
-    approval_required: form.approval_required,
-    schema: { fields: fields.value }
-  };
-  const res = editingPk.value
-    ? await dynamicFormApi.partialUpdate(editingPk.value, payload)
-    : await dynamicFormApi.create(payload);
-  if (res.code === SUCCESS_CODE) {
-    message(t("dform.saveOk"), { type: "success" });
-    dialog.value = false;
-    await loadAll();
-  } else if (res.detail) {
-    message(String(res.detail), { type: "warning" });
-  }
-};
+const openCreate = () => openDialog(null);
+const openEdit = (row: DynamicFormItem) => openDialog(row);
 
 const remove = async (row: DynamicFormItem) => {
   const res = await dynamicFormApi.destroy(row.pk);
   if (res.code === SUCCESS_CODE) await loadAll();
-};
-
-const optionsText = (field: FormField) => (field.options ?? []).join(", ");
-
-const onOptionsChanged = (field: FormField, value: string) => {
-  field.options = value
-    .split(/[,，]/)
-    .map(item => item.trim())
-    .filter(Boolean);
 };
 
 onMounted(loadAll);
@@ -218,93 +175,5 @@ onMounted(loadAll);
     </el-card>
 
     <!-- 设计器 -->
-    <el-dialog
-      v-model="dialog"
-      :title="editingPk ? t('dform.edit') : t('dform.create')"
-      width="760px"
-      top="5vh"
-    >
-      <el-form label-width="90px">
-        <el-form-item :label="t('dform.name')" required>
-          <el-input v-model="form.name" />
-        </el-form-item>
-        <el-form-item :label="t('dform.description')">
-          <el-input v-model="form.description" />
-        </el-form-item>
-        <el-form-item :label="t('dform.approvalRequired')">
-          <div class="flex items-center gap-2">
-            <el-switch
-              v-model="form.approval_required"
-              data-testid="form-approval-switch"
-            />
-            <span class="text-xs text-gray-500">{{
-              t("dform.approvalTip")
-            }}</span>
-          </div>
-        </el-form-item>
-      </el-form>
-      <div class="mb-2 flex items-center gap-2">
-        <span class="text-sm font-medium">{{ t("dform.fields") }}</span>
-        <div class="flex-1" />
-        <el-button size="small" type="primary" plain @click="addField">
-          {{ t("dform.addField") }}
-        </el-button>
-      </div>
-      <el-table :data="fields" size="small" max-height="320">
-        <el-table-column :label="t('dform.fieldKey')" width="150">
-          <template #default="{ row }">
-            <el-input v-model="(row as FormField).key" size="small" />
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('dform.fieldLabel')" width="140">
-          <template #default="{ row }">
-            <el-input v-model="(row as FormField).label" size="small" />
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('dform.fieldType')" width="120">
-          <template #default="{ row }">
-            <el-select v-model="(row as FormField).type" size="small">
-              <el-option
-                v-for="item in typeOptions"
-                :key="item.value"
-                :value="item.value"
-                :label="t(item.labelKey)"
-              />
-            </el-select>
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('dform.fieldOptions')" min-width="150">
-          <template #default="{ row }">
-            <el-input
-              v-if="needsOptions((row as FormField).type)"
-              :model-value="optionsText(row as FormField)"
-              size="small"
-              :placeholder="t('dform.optionsHint')"
-              @update:model-value="
-                (value: string) => onOptionsChanged(row as FormField, value)
-              "
-            />
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('dform.fieldRequired')" width="70">
-          <template #default="{ row }">
-            <el-switch v-model="(row as FormField).required" size="small" />
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('dform.actions')" width="70">
-          <template #default="{ $index }">
-            <el-button link type="danger" @click="removeField($index)">
-              {{ t("dform.delete") }}
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-      <template #footer>
-        <el-button @click="dialog = false">{{ t("dform.cancel") }}</el-button>
-        <el-button type="primary" @click="submit">{{
-          t("dform.confirm")
-        }}</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>

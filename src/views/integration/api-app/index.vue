@@ -64,20 +64,27 @@ const openDialog = (row: ApiApplicationItem | null) => {
         closeLoading();
         return;
       }
-      const res = row
-        ? await apiApplicationApi.partialUpdate(row.pk, payload)
-        : await apiApplicationApi.create(payload);
+      // 异常归一为可读失败结果：避免请求异常时 beforeSure 抛错、弹窗 loading 悬挂
+      const res = await (
+        row
+          ? apiApplicationApi.partialUpdate(row.pk, payload)
+          : apiApplicationApi.create(payload)
+      ).catch(error => ({
+        code: -1,
+        data: null,
+        detail: String((error as { detail?: string })?.detail ?? error)
+      }));
       if (res.code === SUCCESS_CODE) {
         message(t("apiApp.saveOk"), { type: "success" });
-        await loadAll();
+        // 先关表单弹窗（与原手写弹窗行为一致），一次性密钥弹窗紧接展示（列表/详情不回传）
         done();
         const created = res.data as unknown as
           ApiApplicationCredential | undefined;
-        // 创建响应携带一次性明文密钥：紧接弹窗展示（列表/详情不回传）
         if (!row && created?.client_secret) {
           credential.value = created;
           credentialDialog.value = true;
         }
+        await loadAll();
         return;
       }
       if (res.detail) message(String(res.detail), { type: "warning" });

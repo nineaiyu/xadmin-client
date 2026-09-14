@@ -67,13 +67,20 @@ const openDialog = (row: DatasetItem | null) => {
         closeLoading();
         return;
       }
-      const res = row
-        ? await datasetApi.partialUpdate(row.pk, payload)
-        : await datasetApi.create(payload);
+      // 异常归一为可读失败结果：避免请求异常时 beforeSure 抛错、弹窗 loading 悬挂
+      const res = await (
+        row
+          ? datasetApi.partialUpdate(row.pk, payload)
+          : datasetApi.create(payload)
+      ).catch(error => ({
+        code: -1,
+        detail: String((error as { detail?: string })?.detail ?? error)
+      }));
       if (res.code === SUCCESS_CODE) {
         message(t("dataDataset.saveOk"), { type: "success" });
-        await loadAll();
+        // 先关弹窗再刷新列表（与原手写弹窗行为一致，避免刷新耗时导致弹窗滞留）
         done();
+        await loadAll();
         return;
       }
       if (res.detail) message(String(res.detail), { type: "warning" });
