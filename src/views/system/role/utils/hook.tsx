@@ -1,3 +1,4 @@
+import { SUCCESS_CODE } from "@/api/types";
 import menuFieldForm from "../components/form.vue";
 
 import {
@@ -70,7 +71,7 @@ export function useRole() {
     // 菜单全量列表与菜单页 / 权限页共用缓存；菜单页为权威刷新方（force）
     fetchMetaList(META_KEYS.menu, () => fetchAllRows(menuApi.list))
       .then(res => {
-        if (res.code !== 1000) {
+        if (res.code !== SUCCESS_CODE) {
           // 业务失败（权限不足/服务异常）也要给出反馈，否则用户只看到空树
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
           return;
@@ -80,7 +81,7 @@ export function useRole() {
             field_type: FieldChoices.ROLE
           })
             .then(result => {
-              if (result.code === 1000) {
+              if (result.code === SUCCESS_CODE) {
                 handleTree(result.data.results).forEach(item => {
                   fieldLookupsData.value[item.pk] = item;
                 });

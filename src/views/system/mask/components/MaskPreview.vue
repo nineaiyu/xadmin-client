@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
 import { computed, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
@@ -87,7 +88,7 @@ const onPreview = () => {
   maskApi
     .preview({ values, rule: previewRule })
     .then(res => {
-      if (res.code === 1000 && res.data) {
+      if (res.code === SUCCESS_CODE && res.data) {
         const data = res.data as {
           results?: Array<{ input: string; output: string }>;
           result?: string;

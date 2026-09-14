@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
 import {
   settingsSmsConfigApi,
   settingsSmsServerApi
@@ -32,7 +33,7 @@ const settingData = computed<Array<settingItemProps>>(() => {
 onMounted(() => {
   hasAuth("backends:SmsSetting") &&
     settingsSmsServerApi.backends().then(res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         smsBackends.value = [];
         res.data.forEach(item => {
           smsBackends.value.push({

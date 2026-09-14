@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
@@ -56,7 +57,7 @@ const submit = async () => {
   saving.value = true;
   try {
     const res = await knowledgeApi.upload(name.value.trim(), content.value);
-    if (res.code === 1000) {
+    if (res.code === SUCCESS_CODE) {
       message(res.detail ?? t("aiKnowledge.uploadDone"), { type: "success" });
       props.onSaved?.();
       emit("close");

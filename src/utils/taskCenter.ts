@@ -1,3 +1,4 @@
+import { SUCCESS_CODE } from "@/api/types";
 import { computed, type Ref, ref } from "vue";
 import { useIntervalFn } from "@vueuse/core";
 import { hasAuth } from "@/router/utils";
@@ -55,7 +56,7 @@ async function loadOne(key: StatsKey): Promise<void> {
   }
   try {
     const res = await statsApis[key]();
-    if (res.code === 1000 && res.data) {
+    if (res.code === SUCCESS_CODE && res.data) {
       statsRefs[key].value = res.data;
     }
   } catch {

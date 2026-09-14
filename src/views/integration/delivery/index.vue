@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
 import { onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
@@ -35,7 +36,9 @@ const load = async () => {
   try {
     const params: Record<string, unknown> = {
       page: query.page,
-      page_size: query.page_size
+      // 后端分页参数名为 size（common/core/pagination.py 的 page_size_query_param），
+      // 误传 page_size 会被静默忽略、按默认 20 条/页返回
+      size: query.page_size
     };
     if (query.status) params.status = query.status;
     if (query.event) params.event = query.event;
@@ -56,7 +59,7 @@ const search = () => {
 
 const retry = async (row: WebhookDeliveryItem) => {
   const res = await webhookDeliveryApi.retry(row.pk);
-  if (res.code === 1000) {
+  if (res.code === SUCCESS_CODE) {
     message(t("webhook.retryOk"), { type: "success" });
     await load();
   } else if (res.detail) {

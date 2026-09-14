@@ -1,3 +1,4 @@
+import { SUCCESS_CODE } from "@/api/types";
 import { addDialog } from "@/components/ReDialog/index";
 import { h, toRaw, type Ref } from "vue";
 import type { RecordType } from "plus-pro-components";
@@ -54,7 +55,7 @@ export const handleExportData = (options: exportDataOptions) => {
       const exportBy = async (params: object) => {
         if (formData.async) {
           const res = await api.exportAsync(params);
-          if (res?.code === 1000) {
+          if (res?.code === SUCCESS_CODE) {
             success(t("exportImport.asyncSubmitted"));
           } else {
             // 200 + 业务码非 1000 时全局拦截器不提示，这里必须显式报错
@@ -150,7 +151,7 @@ export const handleImportData = (options: importDataOptions) => {
         // 仅校验：逐行校验不落库，弹窗展示错误行定位
         if (formData.mode === "validate") {
           const res = await api.importValidate(importParams, file);
-          if (res.code !== 1000) {
+          if (res.code !== SUCCESS_CODE) {
             failed(res.detail, false);
             return;
           }
@@ -177,7 +178,7 @@ export const handleImportData = (options: importDataOptions) => {
         // 异步导入：提交后台任务，进度与错误报告在下载中心「导入记录」获取
         if (formData.async) {
           const res = await api.importAsync(importParams, file);
-          if (res.code === 1000) {
+          if (res.code === SUCCESS_CODE) {
             if (options?.success) {
               options?.success(res);
             }
@@ -193,7 +194,7 @@ export const handleImportData = (options: importDataOptions) => {
           { ...importParams, ignore_error: formData.ignore_error },
           file
         );
-        if (res.code === 1000) {
+        if (res.code === SUCCESS_CODE) {
           if (options?.success) {
             options?.success(res);
           }

@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { formRules } from "./utils/rule";
@@ -81,7 +82,7 @@ function loadMatchOptions(name?: string[]) {
   return modelLabelFieldApi
     .lookups({ table: name[index], field: name[index + 1] })
     .then(res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         matchList.value = res.data as Array<{ value: string; label: string }>;
         // 字段变化后旧 match 可能已不适用（后端会拒），新列表里没有就清掉
         if (

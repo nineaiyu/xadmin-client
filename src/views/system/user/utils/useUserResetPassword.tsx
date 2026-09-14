@@ -1,3 +1,4 @@
+import { SUCCESS_CODE } from "@/api/types";
 import { message } from "@/utils/message";
 import { ZxcvbnFactory } from "@zxcvbn-ts/core";
 import { ElForm, ElFormItem, ElInput, ElProgress } from "element-plus";
@@ -109,7 +110,7 @@ export function useUserResetPassword({
           if (valid) {
             const password = await AesEncrypted(row.username, pwdForm.newPwd);
             api.resetPassword(row.pk, { password }).then(res => {
-              if (res.code === 1000) {
+              if (res.code === SUCCESS_CODE) {
                 message(t("results.success"), { type: "success" });
               } else {
                 message(`${t("results.failed")}，${res.detail}`, {

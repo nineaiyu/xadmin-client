@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
 import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessage, type FormInstance, type FormRules } from "element-plus";
@@ -122,7 +123,7 @@ async function submit() {
       title: form.title,
       form_data: formData
     });
-    if (res.code === 1000) {
+    if (res.code === SUCCESS_CODE) {
       ElMessage.success(t("systemApprovalInstance.submitSuccess"));
       emit("submitted");
     }

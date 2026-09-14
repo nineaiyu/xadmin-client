@@ -1,3 +1,4 @@
+import { SUCCESS_CODE } from "@/api/types";
 import { message } from "@/utils/message";
 import type { Reactive, Ref } from "vue";
 import { h } from "vue";
@@ -95,7 +96,7 @@ export function useMenuDialog({
             // 当后端pk 不设置可读时，需要删除pk，否则后端会提示 pk 不对
             delete curData.pk;
             api.create(curData).then(res => {
-              if (res.code === 1000) {
+              if (res.code === SUCCESS_CODE) {
                 message(t("results.success"), { type: "success" });
                 done(); // 关闭弹框
                 getMenuData(); // 刷新表格数据
@@ -130,7 +131,7 @@ export function useMenuDialog({
         row.meta.title = row.title;
         if (row.pk) {
           api.partialUpdate(row.pk, row).then(res => {
-            if (res.code === 1000) {
+            if (res.code === SUCCESS_CODE) {
               message(res.detail, { type: "success" });
               getMenuData();
             } else {

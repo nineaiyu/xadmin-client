@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
@@ -41,7 +42,7 @@ onMounted(() => {
   approvalApi
     .stats()
     .then(res => {
-      if (res.code === 1000 && res.data) {
+      if (res.code === SUCCESS_CODE && res.data) {
         stats.value = res.data as unknown as ApprovalStatsData;
       }
     })

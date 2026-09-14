@@ -1,3 +1,4 @@
+import { SUCCESS_CODE } from "@/api/types";
 import type { CSSProperties, Ref } from "vue";
 import { message } from "@/utils/message";
 import { invalidateMetaCache } from "@/utils/metaCache";
@@ -47,7 +48,7 @@ const handleOperation = (options: operationOptions) => {
 
   apiReq
     ?.then((res: DetailResult) => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         // 写操作成功即失效共享元数据缓存（菜单等全量列表）：避免「刚保存的改动
         // 在其它页面的树/下拉里看不到」。命中缓存的下次读取会重新拉取。
         invalidateMetaCache();

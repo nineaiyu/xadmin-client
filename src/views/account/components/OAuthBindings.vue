@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { deviceDetection } from "@pureadmin/utils";
@@ -49,7 +50,8 @@ const load = () => {
   oauthApi
     .bindings()
     .then(res => {
-      if (res.code === 1000) rows.value = (res.data ?? []) as BindingRow[];
+      if (res.code === SUCCESS_CODE)
+        rows.value = (res.data ?? []) as BindingRow[];
     })
     .catch(() => undefined)
     .finally(() => {
@@ -62,7 +64,7 @@ const loadProviders = () => {
   oauthApi
     .providers()
     .then(res => {
-      if (res.code === 1000)
+      if (res.code === SUCCESS_CODE)
         providers.value = (res.data?.providers ?? []) as OAuthProvider[];
     })
     .catch(() => undefined)
@@ -82,7 +84,7 @@ const unbind = (row: BindingRow) => {
   })
     .then(({ value }) => oauthApi.unbind(row.pk, String(value)))
     .then(res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         message(t("oauth.unbindSuccess"), { type: "success" });
         load();
       } else if (res.detail) {
@@ -98,7 +100,7 @@ const bind = (provider: OAuthProvider) => {
   oauthApi
     .bindAuthorize(provider.key)
     .then(res => {
-      if (res.code === 1000 && res.data?.url) {
+      if (res.code === SUCCESS_CODE && res.data?.url) {
         // 标记绑定意图（时间戳）：回调落地页据此在失败时给出「返回账户设置」出口
         sessionStorage.setItem(OAUTH_BIND_FLAG, String(Date.now()));
         window.location.href = String(res.data.url);

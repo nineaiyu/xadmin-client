@@ -1,3 +1,4 @@
+import { SUCCESS_CODE } from "@/api/types";
 import { message } from "@/utils/message";
 import { menuApi } from "@/api/system/menu";
 import { getCurrentInstance, onMounted, reactive, ref } from "vue";
@@ -114,11 +115,11 @@ export function useMenu() {
     api
       .partialUpdate(u_menu.pk, u_menu)
       .then(res => {
-        if (res.code === 1000) {
+        if (res.code === SUCCESS_CODE) {
           api
             .rank(getMenuOrderPk(treeRef?.data))
             .then(res => {
-              if (res.code === 1000) {
+              if (res.code === SUCCESS_CODE) {
                 message(res.detail, { type: "success" });
               } else {
                 message(res.detail, { type: "error" });
@@ -189,7 +190,7 @@ export function useMenu() {
         parent: 0,
         field_type: FieldChoices.ROLE
       }).then(res => {
-        if (res.code === 1000) {
+        if (res.code === SUCCESS_CODE) {
           const results = [];
           res.data.results.forEach(item => {
             const value = { pk: item.pk, name: item.name, label: item.label };

@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
@@ -103,7 +104,7 @@ async function loadSection(
   }
   try {
     const res = await request();
-    const rows = res.code === 1000 ? toRows(res) : [];
+    const rows = res.code === SUCCESS_CODE ? toRows(res) : [];
     target.value = (filter ? rows.filter(filter) : rows).slice(0, SECTION_SIZE);
   } catch {
     target.value = [];

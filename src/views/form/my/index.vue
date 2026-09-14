@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
+import { fetchAllRows } from "@/utils/fetchAllRows";
 import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
@@ -28,8 +30,8 @@ const loadAll = async () => {
   loading.value = true;
   try {
     const [formRes, subRes] = await Promise.all([
-      dynamicFormApi.list({ page_size: 100 }),
-      submissionApi.list({ page_size: 50 })
+      fetchAllRows(dynamicFormApi.list),
+      fetchAllRows(submissionApi.list)
     ]);
     forms.value = listRows<DynamicFormItem>(formRes).filter(
       item => item.is_active
@@ -73,7 +75,7 @@ const submit = async () => {
   const res = editingPk.value
     ? await submissionApi.partialUpdate(editingPk.value, payload)
     : await submissionApi.create(payload);
-  if (res.code === 1000) {
+  if (res.code === SUCCESS_CODE) {
     message(t("dform.saveOk"), { type: "success" });
     dialog.value = false;
     await loadAll();
@@ -84,7 +86,7 @@ const submit = async () => {
 
 const remove = async (row: SubmissionItem) => {
   const res = await submissionApi.destroy(row.pk);
-  if (res.code === 1000) await loadAll();
+  if (res.code === SUCCESS_CODE) await loadAll();
 };
 
 const formName = (pk: string) =>

@@ -272,7 +272,6 @@ function onBack() {
                     :disabled="loginDayList.length < 2"
                     :style="{
                       width: loginDay < 10 ? '10px' : '16px',
-                      outline: 'none',
                       background: 'none',
                       appearance: 'none',
                       border: 'none'

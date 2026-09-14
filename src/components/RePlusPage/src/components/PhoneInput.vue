@@ -37,6 +37,7 @@
 </template>
 
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
 import { onMounted, ref } from "vue";
 import { countriesApi } from "@/api/common";
 import type { PhoneInputProps } from "../utils/types";
@@ -60,7 +61,7 @@ const emit = defineEmits<{
 
 onMounted(() => {
   countriesApi().then(res => {
-    if (res.code === 1000) {
+    if (res.code === SUCCESS_CODE) {
       countries.value = res.data.map(item => {
         if (value.value.code === item.phone_code) {
           phoneCode.value.name = `${item.flag} ${item.name}`;

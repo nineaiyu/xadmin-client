@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { oauthApi, type OAuthProvider } from "@/api/system/oauth";
@@ -19,7 +20,7 @@ onMounted(() => {
   oauthApi
     .providers()
     .then(res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         providers.value = (res.data?.providers ?? []) as OAuthProvider[];
       }
     })
@@ -30,7 +31,7 @@ const goAuthorize = (key: string) => {
   oauthApi
     .authorize(key)
     .then(res => {
-      if (res.code === 1000 && res.data?.url) {
+      if (res.code === SUCCESS_CODE && res.data?.url) {
         window.location.href = String(res.data.url);
       } else if (res.detail) {
         message(res.detail, { type: "warning" });

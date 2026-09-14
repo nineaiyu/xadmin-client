@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
+import { fetchAllRows } from "@/utils/fetchAllRows";
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import { screenApi, type ScreenItem } from "@/api/system/analysis";
@@ -85,11 +87,11 @@ onMounted(async () => {
   const pk = String(route.query.pk ?? "");
   if (!pk) return;
   const res = await screenApi.retrieve(pk);
-  if (res.code !== 1000) return;
+  if (res.code !== SUCCESS_CODE) return;
   screen.value = res.data as never;
   // 仅保留浏览者可见的仪表盘（personal 对他人不在可见列表内）
   const all = listRows<DashboardItem>(
-    (await dashboardApi.list({ page_size: 100 })) as never
+    (await fetchAllRows(dashboardApi.list)) as never
   );
   dashboards.value = (screen.value?.dashboards ?? [])
     .map(id => all.find(item => item.pk === id))

@@ -47,5 +47,5 @@ export const submissionApi = new BaseApi(
   "/api/system/dynamic-form-submissions"
 );
 
-export const listRows = <T>(body: unknown): T[] =>
-  (((body as { data?: { results?: T[] } })?.data?.results ?? []) as T[]) || [];
+/** 列表结果取行：统一实现在 api/base.ts */
+export { listRows } from "@/api/base";

@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
 import { onActivated, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
@@ -41,7 +42,7 @@ const nlRan = ref(false);
 
 const loadStatus = async () => {
   const res = await aiAssistantApi.status();
-  if (res.code === 1000) {
+  if (res.code === SUCCESS_CODE) {
     status.value = res.data as unknown as AiStatus;
   }
 };
@@ -54,7 +55,7 @@ const ask = async () => {
   docLoading.value = true;
   try {
     const res = await aiAssistantApi.ask(text);
-    if (res.code === 1000) {
+    if (res.code === SUCCESS_CODE) {
       const result = res.data as unknown as {
         answer: string;
         sources: AiSource[];
@@ -82,7 +83,7 @@ const interpret = async () => {
   nlRan.value = false;
   try {
     const res = await aiAssistantApi.nlInterpret(text);
-    if (res.code === 1000) {
+    if (res.code === SUCCESS_CODE) {
       nlResult.value = res.data as unknown as NlInterpretResult;
     } else if (res.detail) {
       message(String(res.detail), { type: "warning" });
@@ -97,7 +98,7 @@ const runQuery = async () => {
   nlRunning.value = true;
   try {
     const res = await aiAssistantApi.nlRun(nlResult.value.dsl as never);
-    if (res.code === 1000) {
+    if (res.code === SUCCESS_CODE) {
       const data = res.data as unknown as Record<string, unknown>;
       if (nlResult.value.mode === "aggregate") {
         const series = (data.series as { name: string; value: number }[]) ?? [];

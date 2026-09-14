@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
 import { computed, ref, watch } from "vue";
 import { FieldValues, PlusColumn, PlusForm } from "plus-pro-components";
 import { ExportImportFormatOptions } from "../utils/constants";
@@ -131,7 +132,7 @@ const loadTemplates = async () => {
     model: modelLabel.value,
     size: 100
   });
-  if (res?.code === 1000) {
+  if (res?.code === SUCCESS_CODE) {
     templates.value = res.data.results ?? [];
   }
 };
@@ -142,7 +143,7 @@ const parseHeaders = async (file: File) => {
   parsing.value = true;
   try {
     const res = await state.value.api.importHeaders({}, file);
-    if (res.code !== 1000) {
+    if (res.code !== SUCCESS_CODE) {
       message(res.detail || t("exportImport.mappingParseFailed"), {
         type: "warning"
       });
@@ -204,7 +205,7 @@ const saveTemplate = async () => {
     options: { ignore_unknown: state.value.ignore_unknown !== false },
     is_shared: false
   });
-  if (res.code === 1000) {
+  if (res.code === SUCCESS_CODE) {
     message(t("exportImport.templateSaved"), { type: "success" });
     newTemplateName.value = "";
     await loadTemplates();

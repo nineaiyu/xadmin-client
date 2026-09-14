@@ -1,3 +1,4 @@
+import { SUCCESS_CODE } from "@/api/types";
 import { onUnmounted, ref } from "vue";
 import { isOutboundMessage, MessageAction } from "@/utils/websocket/protocol";
 import type { MonitorPushPayload } from "@/utils/websocket/protocol";
@@ -98,7 +99,7 @@ export function useMonitor() {
     ws.onMessage((res: unknown) => {
       if (!isOutboundMessage<MonitorPushPayload>(res, MessageAction.MONITOR))
         return;
-      if (res.code !== 1000 || !res.data) return;
+      if (res.code !== SUCCESS_CODE || !res.data) return;
       applyWsFrame(res.data);
     });
   };

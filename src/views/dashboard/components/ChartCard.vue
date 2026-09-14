@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useDark, useECharts } from "@pureadmin/utils";
 import type { UtilsEChartsOption } from "@pureadmin/utils";
@@ -88,7 +89,7 @@ const loadData = async () => {
   try {
     if (card.chart_type === "number") {
       const res = await datasetApi.execute(card.dataset);
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         total.value = Number(
           (res.data as unknown as ExecuteResult)?.total ?? 0
         );
@@ -102,7 +103,7 @@ const loadData = async () => {
         card.chart_type === "line" ? (card.date_trunc ?? "day") : undefined,
       value_field: card.value_field
     });
-    if (res.code === 1000) {
+    if (res.code === SUCCESS_CODE) {
       const result = res.data as unknown as AggregateResult;
       if (await waitSized()) {
         // 尺寸可能因卡片高度/宽度配置变化而与上次渲染不同，先重算再 set

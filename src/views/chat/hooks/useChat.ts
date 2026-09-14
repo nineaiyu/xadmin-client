@@ -1,3 +1,4 @@
+import { SUCCESS_CODE } from "@/api/types";
 import { computed, nextTick, onUnmounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
@@ -228,7 +229,7 @@ export function useChat() {
         room: roomId,
         limit: PAGE_SIZE
       });
-      if (code === 1000) {
+      if (code === SUCCESS_CODE) {
         messages.value = data?.results ?? [];
         hasMore.value = !!data?.has_more;
       }
@@ -253,7 +254,7 @@ export function useChat() {
         before_id: firstId,
         limit: PAGE_SIZE
       });
-      if (code === 1000) {
+      if (code === SUCCESS_CODE) {
         messages.value = [...(data?.results ?? []), ...messages.value];
         hasMore.value = !!data?.has_more;
         await nextTick();
@@ -409,7 +410,7 @@ export function useChat() {
 
   async function recall(item: ChatMessageItem) {
     const { code, detail } = await chatApi.recall(item.id);
-    if (code === 1000) {
+    if (code === SUCCESS_CODE) {
       applyRecall({ message_id: item.id, room_id: item.room_id });
     } else {
       message(detail, { type: "warning" });

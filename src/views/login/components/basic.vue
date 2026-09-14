@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
 import { onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import Motion from "../utils/motion";
@@ -84,7 +85,7 @@ const formatLoginDayList = () => {
 const initToken = () => {
   if (authInfo.access && authInfo.token) {
     getTempTokenApi().then(res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         ruleForm.token = res.token;
       }
     });
@@ -99,7 +100,7 @@ const onLogin = async (formEl: FormInstance | undefined) => {
       useUserStoreHook()
         .loginByUsername(cloneDeep(ruleForm), authInfo.encrypted)
         .then(res => {
-          if (res.code === 1000) {
+          if (res.code === SUCCESS_CODE) {
             if ("mfa_required" in res.data && res.data.mfa_required) {
               // 密码阶段通过，切换到登录 MFA 动态码验证步骤
               loginMfaInfo.value = res.data;
@@ -171,7 +172,7 @@ onMounted(() => {
   configLoading.value = true;
   loginAuthApi()
     .then(res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         Object.keys(res.data).forEach(key => {
           authInfo[key] = res.data[key];
         });
@@ -275,7 +276,6 @@ watch(loginDay, value => {
                     :disabled="loginDayList.length < 2"
                     :style="{
                       width: loginDay < 10 ? '10px' : '16px',
-                      outline: 'none',
                       background: 'none',
                       appearance: 'none',
                       border: 'none'

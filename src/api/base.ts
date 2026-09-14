@@ -18,6 +18,16 @@ import type {
  */
 export const IMPORT_TEMPLATE_API = "/api/system/import-templates";
 
+/**
+ * 从统一列表响应壳中解包行数据（`data.results`）。
+ *
+ * 列表接口的唯一拆包点：此前 analysis/datasets/dform 三处重复实现，
+ * 协议变化需改三处；各业务模块 re-export 保持既有导入路径可用。
+ */
+export function listRows<T>(body: unknown): T[] {
+  return ((body as { data?: { results?: T[] } })?.data?.results ?? []) as T[];
+}
+
 export class BaseRequest {
   baseApi = "";
 

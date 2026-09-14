@@ -1,3 +1,4 @@
+import { SUCCESS_CODE } from "@/api/types";
 import {
   computed,
   getCurrentInstance,
@@ -78,7 +79,7 @@ export function useMask() {
     if (!canPickModel) return;
     fetchAllRows(modelLabelFieldApi.list, { field_type: FieldChoices.ROLE })
       .then(res => {
-        if (res.code !== 1000 || !res.data) return;
+        if (res.code !== SUCCESS_CODE || !res.data) return;
         const rows = res.data.results as Array<{
           pk: string;
           name: string;

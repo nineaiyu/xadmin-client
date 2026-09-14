@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
+import { fetchAllRows } from "@/utils/fetchAllRows";
 import { computed, onMounted, ref } from "vue";
 import Sortable from "sortablejs";
 import { useI18n } from "vue-i18n";
@@ -59,7 +61,7 @@ const loadDashboards = async () => {
 
 const datasets = ref<DatasetItem[]>([]);
 const loadDatasets = async () => {
-  const res = await datasetApi.list({ page_size: 100 });
+  const res = await fetchAllRows(datasetApi.list);
   datasets.value = listRows<DatasetItem>(res as never);
 };
 
@@ -111,7 +113,7 @@ const saveLayout = async () => {
   const res = await dashboardApi.partialUpdate(current.value.pk, {
     layout: draftLayout.value
   });
-  if (res.code === 1000) {
+  if (res.code === SUCCESS_CODE) {
     message(t("dashboard.saveOk"), { type: "success" });
     const index = dashboards.value.findIndex(
       item => item.pk === current.value?.pk
@@ -213,7 +215,7 @@ const createDashboard = async () => {
     visibility: dashForm.value.visibility,
     layout: []
   });
-  if (res.code === 1000) {
+  if (res.code === SUCCESS_CODE) {
     message(t("dashboard.saveOk"), { type: "success" });
     dashDialog.value = false;
     current.value = null;
@@ -242,7 +244,7 @@ const removeDashboard = async () => {
     return;
   }
   const res = await dashboardApi.destroy(current.value.pk);
-  if (res.code === 1000) {
+  if (res.code === SUCCESS_CODE) {
     current.value = null;
     await loadDashboards();
   }

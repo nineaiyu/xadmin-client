@@ -3,6 +3,7 @@
  * 登录 MFA 二次验证步骤：密码阶段通过后（mfa_required），
  * 选择验证方式 → 挑战码发送 → 动态码校验，通过后由父组件完成登录跳转。
  */
+import { SUCCESS_CODE } from "@/api/types";
 import { computed, onBeforeUnmount, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import Motion from "../utils/motion";
@@ -57,7 +58,7 @@ const handleSendCode = () => {
     mfa_token: props.mfaInfo.mfa_token,
     method: currentMethod.value
   }).then(res => {
-    if (res.code === 1000) {
+    if (res.code === SUCCESS_CODE) {
       message(res.detail || t("mfa.codeSent"), { type: "success" });
       startCooldown();
     } else {
@@ -78,7 +79,7 @@ const handleVerify = () => {
     code: code.value
   })
     .then(res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         emit("success", res.data);
       } else {
         message(res.detail, { type: "warning" });

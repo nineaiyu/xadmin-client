@@ -1,3 +1,4 @@
+import { SUCCESS_CODE } from "@/api/types";
 import { dataPermissionApi } from "@/api/system/permission";
 import {
   computed,
@@ -101,7 +102,7 @@ export function useDataPermission() {
       // 菜单全量列表与菜单页 / 角色页共用缓存；菜单页为权威刷新方（force）
       fetchMetaList(META_KEYS.menu, () => fetchAllRows(menuApi.list)).then(
         res => {
-          if (res.code === 1000) {
+          if (res.code === SUCCESS_CODE) {
             menuTreeData.value = res.data.results as MenuRow[];
           }
         }
@@ -111,7 +112,7 @@ export function useDataPermission() {
       fetchAllRows(modelLabelFieldApi.list, {
         field_type: FieldChoices.DATA
       }).then(res => {
-        if (res.code === 1000) {
+        if (res.code === SUCCESS_CODE) {
           formatFiledAppParent(res.data.results);
           fieldLookupsData.value = handleTree(res.data.results);
         }
@@ -120,14 +121,14 @@ export function useDataPermission() {
       fetchAllRows(modelLabelFieldApi.list, {
         field_type: FieldChoices.ROLE
       }).then(res => {
-        if (res.code === 1000) {
+        if (res.code === SUCCESS_CODE) {
           formatFiledAppParent(res.data.results);
           fieldLookupsRole.value = handleTree(res.data.results);
         }
       });
     }
     modelLabelFieldApi.choices().then(res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         valuesData.value = res.choices_dict?.choices;
       }
     });

@@ -1,4 +1,5 @@
-import { BaseApi } from "@/api/base";
+import { BaseApi, listRows } from "@/api/base";
+import { fetchAllRows } from "@/utils/fetchAllRows";
 import type { DetailResult, ListResult } from "@/api/types";
 import type { DashboardItem } from "@/api/system/datasets";
 
@@ -39,13 +40,11 @@ export const runReport = (pk: string) => {
   return api.request<DetailResult>("post", {}, {}, `${api.baseApi}/${pk}/run`);
 };
 
-/** 大屏管理弹窗的仪表盘选项 */
+/** 大屏管理弹窗的仪表盘选项（fetchAllRows 逐页拉全，避免超过分页上限被截断） */
 export const listDashboards = async (): Promise<DashboardItem[]> => {
   const api = new BaseApi("/api/system/dashboards");
-  const res = (await api.list({ page_size: 100 })) as ListResult;
-  return ((res?.data as { results?: DashboardItem[] })?.results ??
-    []) as DashboardItem[];
+  const res = (await fetchAllRows(api.list)) as ListResult;
+  return listRows<DashboardItem>(res);
 };
 
-export const listRows = <T>(body: ListResult): T[] =>
-  ((body?.data as { results?: T[] })?.results ?? []) as T[];
+export { listRows };

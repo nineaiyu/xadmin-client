@@ -1,3 +1,4 @@
+import { SUCCESS_CODE } from "@/api/types";
 import { onMounted, ref } from "vue";
 import { getCaptchaApi } from "@/api/auth";
 import { useUserStoreHook } from "@/store/modules/user";
@@ -12,7 +13,7 @@ export const useImageVerify = imgCode => {
     loading.value = true;
     getCaptchaApi()
       .then(res => {
-        if (res.code === 1000) {
+        if (res.code === SUCCESS_CODE) {
           imgUrl.value = res.captcha_image;
           imgCode.value = res.captcha_key;
           useUserStoreHook().SET_VERIFY_CODE_LENGTH(res.length);

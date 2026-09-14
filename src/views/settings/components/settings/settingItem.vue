@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
 import { onMounted, ref } from "vue";
 import { handleOperation, useBaseColumns } from "@/components/RePlusPage";
 import { PlusForm } from "plus-pro-components";
@@ -69,7 +70,7 @@ const getData = () => {
         props.api
           .retrieve(props.queryParams)
           .then(res => {
-            if (res.code === 1000) {
+            if (res.code === SUCCESS_CODE) {
               addOrEditData.value.formData = pickBy(res.data, (_value, key) =>
                 keepField(key)
               );

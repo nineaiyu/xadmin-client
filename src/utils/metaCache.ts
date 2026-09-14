@@ -1,3 +1,4 @@
+import { SUCCESS_CODE } from "@/api/types";
 import { cloneDeep } from "lodash-es";
 import { createTtlCache } from "./ttlCache";
 
@@ -34,7 +35,7 @@ interface MetaListResponse {
 const metaCache = createTtlCache<MetaListResponse>({
   ttl: META_TTL,
   // 业务失败不写缓存：调用方会提示，下次调用可重试
-  shouldCache: res => res?.code === 1000,
+  shouldCache: res => res?.code === SUCCESS_CODE,
   clone: cloneDeep
 });
 

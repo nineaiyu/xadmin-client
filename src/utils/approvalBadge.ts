@@ -1,3 +1,4 @@
+import { SUCCESS_CODE } from "@/api/types";
 import { ref } from "vue";
 import { useIntervalFn } from "@vueuse/core";
 import { hasAuth } from "@/router/utils";
@@ -32,7 +33,7 @@ export function refreshApprovalBadge() {
   approvalApi
     .pendingCount()
     .then(res => {
-      if (res.code === 1000 && res.data) {
+      if (res.code === SUCCESS_CODE && res.data) {
         pendingCount.value = Number(res.data.pending ?? 0);
       }
     })

@@ -1,3 +1,4 @@
+import { SUCCESS_CODE } from "@/api/types";
 import { message } from "@/utils/message";
 import type { Ref } from "vue";
 import { isArray } from "@pureadmin/utils";
@@ -97,7 +98,7 @@ export function usePlusPageForm({
     try {
       const res = await detail(pk, { mask: "false" });
       if (
-        res?.code === 1000 &&
+        res?.code === SUCCESS_CODE &&
         res.data &&
         typeof res.data === "object" &&
         !isArray(res.data)
@@ -159,7 +160,7 @@ export function usePlusPageForm({
             handleGetData();
           },
           failed: res => {
-            // 业务失败（HTTP 200 + code!=1000）携带的 errors 内联到表单项
+            // 业务失败（HTTP 200 + code!=SUCCESS_CODE）携带的 errors 内联到表单项
             applyServerErrors(formRef, res?.errors);
           },
           exception: err => {

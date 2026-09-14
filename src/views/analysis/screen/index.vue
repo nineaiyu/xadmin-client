@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
+import { fetchAllRows } from "@/utils/fetchAllRows";
 import { onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
@@ -31,7 +33,7 @@ const loadAll = async () => {
   loading.value = true;
   try {
     const [listRes, dashRes] = await Promise.all([
-      screenApi.list({ page_size: 100 }),
+      fetchAllRows(screenApi.list),
       listDashboards()
     ]);
     rows.value = listRows<ScreenItem>(listRes as never);
@@ -77,7 +79,7 @@ const submit = async () => {
   const res = editingPk.value
     ? await screenApi.partialUpdate(editingPk.value, { ...form })
     : await screenApi.create({ ...form });
-  if (res.code === 1000) {
+  if (res.code === SUCCESS_CODE) {
     message(t("dataScreen.saveOk"), { type: "success" });
     dialog.value = false;
     await loadAll();
@@ -102,7 +104,7 @@ const remove = async (row: ScreenItem) => {
     return;
   }
   const res = await screenApi.destroy(row.pk);
-  if (res.code === 1000) {
+  if (res.code === SUCCESS_CODE) {
     await loadAll();
   }
 };

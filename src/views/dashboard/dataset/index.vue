@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
+import { fetchAllRows } from "@/utils/fetchAllRows";
 import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
@@ -31,11 +33,11 @@ const loadAll = async () => {
   loading.value = true;
   try {
     const [listRes, metaRes] = await Promise.all([
-      datasetApi.list({ page_size: 100 }),
+      fetchAllRows(datasetApi.list),
       datasetApi.meta()
     ]);
     rows.value = listRows<DatasetItem>(listRes as never);
-    if (metaRes.code === 1000) {
+    if (metaRes.code === SUCCESS_CODE) {
       meta.value = metaRes.data as unknown as DatasetMeta;
     }
   } finally {
@@ -150,7 +152,7 @@ const submit = async () => {
   const res = editingPk.value
     ? await datasetApi.partialUpdate(editingPk.value, buildPayload())
     : await datasetApi.create(buildPayload());
-  if (res.code === 1000) {
+  if (res.code === SUCCESS_CODE) {
     message(t("dataDataset.saveOk"), { type: "success" });
     dialog.value = false;
     await loadAll();
@@ -175,7 +177,7 @@ const remove = async (row: DatasetItem) => {
     return;
   }
   const res = await datasetApi.destroy(row.pk);
-  if (res.code === 1000) {
+  if (res.code === SUCCESS_CODE) {
     message(t("dataDataset.saveOk"), { type: "success" });
     await loadAll();
   }
@@ -191,7 +193,7 @@ const preview = ref<{
 
 const openPreview = async (row: DatasetItem) => {
   const res = await datasetApi.execute(row.pk);
-  if (res.code === 1000) {
+  if (res.code === SUCCESS_CODE) {
     preview.value = res.data as never;
     previewDialog.value = true;
   } else if (res.detail) {

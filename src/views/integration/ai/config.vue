@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
+import { fetchAllRows } from "@/utils/fetchAllRows";
 import { onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
@@ -33,7 +35,7 @@ const rows = ref<AiProfileItem[]>([]);
 const loadRows = async () => {
   loading.value = true;
   try {
-    const res = await aiProfileApi.list({ page_size: 100 });
+    const res = await fetchAllRows(aiProfileApi.list);
     rows.value = listAiProfileRows<AiProfileItem>(res);
   } finally {
     loading.value = false;
@@ -52,7 +54,7 @@ const loadGlobal = async () => {
   globalLoading.value = true;
   try {
     const res = await aiConfigApi.retrieve();
-    if (res.code === 1000) {
+    if (res.code === SUCCESS_CODE) {
       const data = res.data as Record<string, unknown>;
       globalForm.AI_ASSISTANT_ENABLED = Boolean(data?.AI_ASSISTANT_ENABLED);
       globalForm.AI_NL_QUERY_ENABLED = Boolean(data?.AI_NL_QUERY_ENABLED);
@@ -64,7 +66,7 @@ const loadGlobal = async () => {
 
 const saveGlobal = async () => {
   const res = await aiConfigApi.partialUpdate({}, { ...globalForm });
-  if (res.code === 1000) {
+  if (res.code === SUCCESS_CODE) {
     message(t("aiConfig.globalSaved"), { type: "success" });
   } else if (res.detail) {
     message(String(res.detail), { type: "warning" });
@@ -148,7 +150,7 @@ const submit = async () => {
     const res = editingPk.value
       ? await aiProfileApi.partialUpdate(editingPk.value, payload)
       : await aiProfileApi.create(payload);
-    if (res.code === 1000) {
+    if (res.code === SUCCESS_CODE) {
       message(t("aiConfig.saveOk"), { type: "success" });
       dialog.value = false;
       await loadRows();
@@ -171,7 +173,7 @@ const remove = async (row: AiProfileItem) => {
     }
   ).catch(() => null);
   const res = await aiProfileApi.destroy(row.pk);
-  if (res.code === 1000) {
+  if (res.code === SUCCESS_CODE) {
     message(t("aiConfig.deleteDone"), { type: "success" });
     await loadRows();
   } else if (res.detail) {
@@ -190,7 +192,7 @@ const activate = async (row: AiProfileItem) => {
     }
   ).catch(() => null);
   const res = await aiProfileApi.activate(row.pk);
-  if (res.code === 1000) {
+  if (res.code === SUCCESS_CODE) {
     message(t("aiConfig.activateDone"), { type: "success" });
     await loadRows();
   } else if (res.detail) {
@@ -209,7 +211,7 @@ const deactivate = async (row: AiProfileItem) => {
     }
   ).catch(() => null);
   const res = await aiProfileApi.deactivate(row.pk);
-  if (res.code === 1000) {
+  if (res.code === SUCCESS_CODE) {
     message(t("aiConfig.deactivateDone"), { type: "success" });
     await loadRows();
   } else if (res.detail) {
@@ -219,7 +221,7 @@ const deactivate = async (row: AiProfileItem) => {
 
 const testProfile = async (row: AiProfileItem) => {
   const res = await aiProfileApi.test(row.pk);
-  if (res.code === 1000) {
+  if (res.code === SUCCESS_CODE) {
     message(String(res.detail ?? t("aiConfig.testOk")), { type: "success" });
   } else if (res.detail) {
     message(String(res.detail), { type: "warning" });

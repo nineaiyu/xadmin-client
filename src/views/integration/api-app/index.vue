@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
+import { fetchAllRows } from "@/utils/fetchAllRows";
 import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
@@ -29,7 +31,7 @@ const loadAll = async () => {
   loading.value = true;
   try {
     rows.value = listApplicationRows(
-      await apiApplicationApi.list({ page_size: 100 })
+      await fetchAllRows(apiApplicationApi.list)
     );
   } finally {
     loading.value = false;
@@ -105,7 +107,7 @@ const submit = async () => {
     const res = editingPk.value
       ? await apiApplicationApi.partialUpdate(editingPk.value, buildPayload())
       : await apiApplicationApi.create(buildPayload());
-    if (res.code === 1000) {
+    if (res.code === SUCCESS_CODE) {
       message(t("apiApp.saveOk"), { type: "success" });
       dialog.value = false;
       const created = res.data as unknown as
@@ -128,7 +130,7 @@ const toggleActive = async (row: ApiApplicationItem) => {
   const res = await apiApplicationApi.partialUpdate(row.pk, {
     is_active: row.is_active
   });
-  if (res.code !== 1000) {
+  if (res.code !== SUCCESS_CODE) {
     row.is_active = !row.is_active;
     message(String(res.detail ?? t("apiApp.saveFailed")), { type: "warning" });
   }
@@ -136,7 +138,7 @@ const toggleActive = async (row: ApiApplicationItem) => {
 
 const regenerateSecret = async (row: ApiApplicationItem) => {
   const res = await apiApplicationApi.regenerateSecret(row.pk);
-  if (res.code === 1000) {
+  if (res.code === SUCCESS_CODE) {
     credential.value = res.data;
     credentialDialog.value = true;
     await loadAll();
@@ -145,7 +147,7 @@ const regenerateSecret = async (row: ApiApplicationItem) => {
 
 const testCallback = async (row: ApiApplicationItem) => {
   const res = await apiApplicationApi.testCallback(row.pk);
-  if (res.code === 1000) {
+  if (res.code === SUCCESS_CODE) {
     probeResults.value = res.data?.results ?? [];
     const failed = probeResults.value.filter(item => !item.success).length;
     message(

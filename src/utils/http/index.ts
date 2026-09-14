@@ -1,3 +1,4 @@
+import { SUCCESS_CODE } from "@/api/types";
 import Axios, {
   type AxiosInstance,
   type AxiosRequestConfig,
@@ -23,6 +24,7 @@ import {
 import { useUserStoreHook } from "@/store/modules/user";
 import { message } from "@/utils/message";
 import { ElMessage } from "element-plus";
+import { announce } from "@/utils/announcer";
 import { downloadByData } from "@pureadmin/utils";
 import { resolveDownloadFilename } from "@/utils/download";
 import {
@@ -187,11 +189,17 @@ class PureHttp {
             for (const strategy of SEND_ERROR_STRATEGIES) {
               if (strategy.match(ctx) && strategy.handle(ctx)) return;
             }
-            ElMessage.error(data?.detail ?? error.response.statusText);
+            const detail = String(
+              data?.detail ?? error.response.statusText ?? ""
+            );
+            ElMessage.error(detail);
+            // 读屏播报（R5）：全局兜底错误提示同步播报到 aria-live 区域
+            announce(detail);
             // router.push("/error/500");
             reject(error.response.data);
           } else {
             ElMessage.error(error.message);
+            announce(String(error.message ?? ""));
             reject(error);
           }
         });
@@ -333,7 +341,7 @@ class PureHttp {
                     useUserStoreHook()
                       .handRefreshToken({ refresh: refresh_token })
                       .then(res => {
-                        if (res.code === 1000) {
+                        if (res.code === SUCCESS_CODE) {
                           const token = res.data.access;
                           setToken(res.data);
                           config.headers["Authorization"] = formatToken(token);
@@ -387,7 +395,7 @@ class PureHttp {
         // 携审批令牌的请求消费成功（业务码 1000）：按请求期写入的 key 清除暂存令牌
         // （一次性通行；不能重算 key——axios 已把 config.data 改成序列化字符串）
         const approvalKeyOfRequest = $config._approvalKey;
-        if (approvalKeyOfRequest && response.data?.code === 1000) {
+        if (approvalKeyOfRequest && response.data?.code === SUCCESS_CODE) {
           deletePendingApproval(approvalKeyOfRequest);
         }
         // 优先判断post/get等方法是否传入回调，否则执行初始化设置等回调

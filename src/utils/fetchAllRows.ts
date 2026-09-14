@@ -1,13 +1,10 @@
-import type { ListResult } from "@/api/types";
+import { SUCCESS_CODE, type ListResult } from "@/api/types";
 import type { RecordType } from "plus-pro-components";
 
 /** 单页条数：与后端 `DynamicPageNumber(1000)` 的分页上限对齐 */
 const DEFAULT_PAGE_SIZE = 1000;
 /** 翻页防御上限（页）：total 异常时避免无限循环 */
 const DEFAULT_MAX_PAGES = 200;
-
-/** 业务成功码（与后端约定一致，散落在各调用点的 1000 同源） */
-const SUCCESS_CODE = 1000;
 
 type ListFetcher<T, R extends ListResult<T>> = (
   params: Record<string, unknown>

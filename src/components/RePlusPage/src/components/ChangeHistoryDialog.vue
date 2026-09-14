@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
 import { onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import type { PaginationProps } from "@pureadmin/table";
@@ -59,8 +60,8 @@ const fetchHistory = () => {
       size: pagination.pageSize
     })
     .then((res: ListResult) => {
-      // 业务失败（HTTP 200 + code != 1000）时 data 可能缺失，先判 code 再取值
-      if (res?.code !== 1000 || !res.data) {
+      // 业务失败（HTTP 200 + code != SUCCESS_CODE）时 data 可能缺失，先判 code 再取值
+      if (res?.code !== SUCCESS_CODE || !res.data) {
         dataList.value = [];
         pagination.total = 0;
         return;

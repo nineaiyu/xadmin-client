@@ -1,3 +1,4 @@
+import { SUCCESS_CODE } from "@/api/types";
 import {
   getDashBoardUserTotalApi,
   getDashBoardUserActiveApi,
@@ -38,7 +39,7 @@ export function useDashboard() {
 
   const getUserActiveList = () => {
     getDashBoardUserActiveApi().then(res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         res.data.forEach(item => {
           userActiveList.value.push({
             name:
@@ -58,7 +59,7 @@ export function useDashboard() {
       if (hasAuth("list:SystemOperationLog")) {
         getOperateLogList();
       }
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         chartData.value.push({
           icon: LogLine,
           bgColor: "#eff8f4",
@@ -76,7 +77,7 @@ export function useDashboard() {
   };
   const getUserTotal = () => {
     getDashBoardUserTotalApi().then(res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         chartData.value.push({
           icon: GroupLine,
           bgColor: "#eff8f4",
@@ -92,7 +93,7 @@ export function useDashboard() {
   };
   const getUserLoginTotal = () => {
     getDashBoardUserLoginTotalApi().then(res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         chartData.value.push({
           icon: LoginLine,
           bgColor: "#effaff",
@@ -108,7 +109,7 @@ export function useDashboard() {
   };
   const getUserLoginList = () => {
     getDashBoardUserLoginTrendApi().then(res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         userLoginList.value = res.data;
       }
     });
@@ -116,7 +117,7 @@ export function useDashboard() {
 
   const getUserRegisterList = () => {
     getDashBoardUserRegisterTrendApi().then(res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         userRegisterList.value = res.data;
       }
     });
@@ -130,7 +131,7 @@ export function useDashboard() {
         ordering: "-created_time"
       })
       .then(res => {
-        if (res.code === 1000) {
+        if (res.code === SUCCESS_CODE) {
           operateLogList.value = res.data?.results;
         }
       });

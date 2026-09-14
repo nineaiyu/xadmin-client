@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
 import { onMounted, ref } from "vue";
 import type {
   UploadFile,
@@ -47,7 +48,7 @@ const uploadConfig = ref({ file_upload_size: 1048576 });
 onMounted(() => {
   if (hasAuth("config:SystemUploadFile")) {
     systemUploadFileApi.config().then(res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         // 文件上传配置详情数据，消费侧仅依赖 file_upload_size
         uploadConfig.value = res.data as { file_upload_size: number };
       }
@@ -69,7 +70,7 @@ const uploadRequest = (option: UploadRequestOptions) => {
 };
 const refreshData = throttle(props.tableRef?.handleGetData, 2000);
 const uploadSuccess = (response: UploadResult, uploadFile: UploadFile) => {
-  if (response.code === 1000) {
+  if (response.code === SUCCESS_CODE) {
     refreshData();
     // 优先展示服务端 detail：命中上传去重时会附带「已复用已有副本」提示，
     // 缺省回退通用成功文案（老后端/无 detail 场景）

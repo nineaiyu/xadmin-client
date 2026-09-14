@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
 import { onMounted, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessage, ElRadioButton, ElRadioGroup } from "element-plus";
@@ -105,7 +106,7 @@ async function save() {
     const res = props.flow?.pk
       ? await approvalFlowApi.partialUpdate(props.flow.pk, payload)
       : await approvalFlowApi.create(payload);
-    if (res.code === 1000) {
+    if (res.code === SUCCESS_CODE) {
       ElMessage.success(t("systemApprovalFlow.saveSuccess"));
       props.onSaved?.();
       emit("close");

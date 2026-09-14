@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
 import { computed, onMounted, ref, watch } from "vue";
 import { Delete, Plus, ZoomIn } from "@element-plus/icons-vue";
 import type {
@@ -106,7 +107,7 @@ const uploadConfig = ref({ file_upload_size: 1048576 });
 onMounted(() => {
   if (hasAuth("config:SystemUploadFile")) {
     systemUploadFileApi.config().then(res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         // 文件上传配置详情数据，消费侧仅依赖 file_upload_size
         uploadConfig.value = res.data as { file_upload_size: number };
       }
@@ -149,7 +150,7 @@ const uploadSuccess = (
   response: UploadResponse,
   uploadFile: UploadUserFile
 ) => {
-  if (response.code === 1000 && response?.data.length == 1) {
+  if (response.code === SUCCESS_CODE && response?.data.length == 1) {
     const data = response.data[0];
     uploadFile.pk = data.pk;
     message(`${uploadFile.name} ${t("results.success")}`, { type: "success" });

@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
 import { onMounted, onUnmounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { getDefaultAuths } from "@/router/utils";
@@ -25,7 +26,7 @@ function loadPendingCount() {
   approvalInstanceApi
     .pendingCount()
     .then(res => {
-      if (res.code === 1000 && res.data) {
+      if (res.code === SUCCESS_CODE && res.data) {
         pendingCount.value = Number(res.data.pending ?? 0);
       }
     })

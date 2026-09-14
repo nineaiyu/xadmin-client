@@ -1,5 +1,18 @@
 import type { RecordType } from "plus-pro-components";
 
+/** 业务成功码（与后端统一响应壳约定一致：common/core/response.py 的默认 code） */
+export const SUCCESS_CODE = 1000;
+
+/**
+ * 判断业务响应是否成功（`code === SUCCESS_CODE`）。
+ *
+ * 统一入口：全库 165+ 处 `code === SUCCESS_CODE` 字面量收敛于此，
+ * 成功码变更时只需改一处；与 http 层（axios 异常/状态码）错误策略互补。
+ */
+export function isSuccess(res?: { code?: number } | null): boolean {
+  return res?.code === SUCCESS_CODE;
+}
+
 /**
  * choices 接口下发的选项条目：对象形态（value/label + attrs 扩展字段），
  * 与 RePlusPage formatAddOrEditOptions 的入参契约保持一致

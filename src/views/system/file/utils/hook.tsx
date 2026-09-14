@@ -1,3 +1,4 @@
+import { SUCCESS_CODE } from "@/api/types";
 import { useI18n } from "vue-i18n";
 import { systemUploadFileApi } from "@/api/system/file";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
@@ -95,7 +96,7 @@ export function useSystemUploadFile(tableRef: Ref) {
     systemUploadFileApi
       .stats(fresh ? { no_cache: "1" } : undefined)
       .then(res => {
-        if (res.code === 1000) stats.value = res.data as FileStats;
+        if (res.code === SUCCESS_CODE) stats.value = res.data as FileStats;
       });
   };
   onMounted(loadStats);

@@ -1,3 +1,4 @@
+import { SUCCESS_CODE } from "@/api/types";
 import { computed, ref } from "vue";
 import {
   chatApi,
@@ -54,7 +55,7 @@ export function useRooms() {
     loadingRooms.value = true;
     try {
       const { code, data } = await chatApi.roomList();
-      if (code === 1000) {
+      if (code === SUCCESS_CODE) {
         rooms.value = data?.rooms ?? [];
         aiEnabled.value = !!data?.ai_enabled;
         aiHint.value = data?.ai_hint ?? "";
@@ -72,7 +73,7 @@ export function useRooms() {
     loadingContacts.value = true;
     try {
       const { code, data } = await chatApi.contacts();
-      if (code === 1000) contacts.value = data?.results ?? [];
+      if (code === SUCCESS_CODE) contacts.value = data?.results ?? [];
     } finally {
       loadingContacts.value = false;
     }
@@ -92,7 +93,7 @@ export function useRooms() {
   /** 开通（或复用）私聊并切到该会话：对端已存在会话时幂等复用 */
   async function openPrivate(peerPk: number) {
     const { code, data, detail } = await chatApi.openPrivate(peerPk);
-    if (code !== 1000 || !data) return { ok: false, detail };
+    if (code !== SUCCESS_CODE || !data) return { ok: false, detail };
     upsertRoom(data);
     activate(data.id);
     return { ok: true, detail: "" };

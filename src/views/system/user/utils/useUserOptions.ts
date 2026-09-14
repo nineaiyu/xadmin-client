@@ -1,3 +1,4 @@
+import { SUCCESS_CODE } from "@/api/types";
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 
@@ -22,14 +23,14 @@ export function useUserOptions(auth: { empower: boolean }, tableRef: Ref) {
     if (auth.empower) {
       if (hasAuth("list:SystemRole")) {
         fetchAllRows(roleApi.list).then(res => {
-          if (res.code === 1000 && res.data) {
+          if (res.code === SUCCESS_CODE && res.data) {
             rolesOptions.value = res.data.results;
           }
         });
       }
       if (hasAuth("list:SystemDataPermission")) {
         fetchAllRows(dataPermissionApi.list).then(res => {
-          if (res.code === 1000 && res.data) {
+          if (res.code === SUCCESS_CODE && res.data) {
             rulesOptions.value = res.data.results;
           }
         });
@@ -39,7 +40,7 @@ export function useUserOptions(auth: { empower: boolean }, tableRef: Ref) {
     if (hasAuth("list:SystemDept")) {
       fetchAllRows(deptApi.list)
         .then(res => {
-          if (res.code === 1000 && res.data) {
+          if (res.code === SUCCESS_CODE && res.data) {
             treeData.value = handleTree(res.data.results);
           } else {
             message(`${t("results.failed")}，${res.detail}`, { type: "error" });

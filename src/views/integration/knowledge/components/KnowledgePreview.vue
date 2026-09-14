@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import {
@@ -23,7 +24,7 @@ const detail = ref<KnowledgeDocumentDetail | null>(null);
 onMounted(async () => {
   try {
     const res = await knowledgeApi.retrieve(props.pk);
-    if (res.code === 1000) {
+    if (res.code === SUCCESS_CODE) {
       detail.value = res.data as unknown as KnowledgeDocumentDetail;
     }
   } finally {

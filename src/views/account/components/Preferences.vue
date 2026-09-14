@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
 import { onMounted, ref } from "vue";
 import { deviceDetection } from "@pureadmin/utils";
 import { configApi } from "@/api/config";
@@ -42,7 +43,7 @@ onMounted(() => {
   loading.value = true;
   list.value.forEach(config => {
     configApi.getConfig(config.name).then(res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         config.checked = res.config.value as boolean;
       }
     });

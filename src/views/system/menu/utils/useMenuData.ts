@@ -1,3 +1,4 @@
+import { SUCCESS_CODE } from "@/api/types";
 import { message } from "@/utils/message";
 import { useI18n } from "vue-i18n";
 import type { Ref } from "vue";
@@ -30,14 +31,14 @@ export function useMenuData({
   const getMenuApiList = () => {
     if (auth.apiUrl) {
       api.apiUrl().then(res => {
-        if (res.code === 1000) {
+        if (res.code === SUCCESS_CODE) {
           menuUrlList.value = res.data;
         }
       });
     }
 
     api.choices().then(res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         choicesDict.value = res.choices_dict;
       }
     });
@@ -51,7 +52,7 @@ export function useMenuData({
       force: true
     })
       .then(res => {
-        if (res.code === 1000) {
+        if (res.code === SUCCESS_CODE) {
           const results = res.data.results;
           results.forEach(item => {
             item.menu_type = item.menu_type?.value ?? item.menu_type;
@@ -72,7 +73,7 @@ export function useMenuData({
 
   const handleDelete = row => {
     api.destroy(row.pk).then(res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         message(t("results.success"), { type: "success" });
         getMenuData();
       } else {
@@ -88,7 +89,7 @@ export function useMenuData({
       return;
     }
     api.batchDestroy(manyPks).then(res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         message(t("results.batchDestroy", { count: manyPks.length }), {
           type: "success"
         });

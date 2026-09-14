@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
 import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { personalAccessTokenApi } from "@/api/user/token";
@@ -84,7 +85,7 @@ onMounted(() => {
   personalAccessTokenApi
     .scopeOptions()
     .then(res => {
-      if (res.code !== 1000) return;
+      if (res.code !== SUCCESS_CODE) return;
       const payload = (res.data ?? {}) as { groups?: ScopeGroup[] };
       groups.value = payload.groups ?? [];
       // 已有条目分流：命中选项的进勾选，其余进自定义（不丢历史/正则条目）

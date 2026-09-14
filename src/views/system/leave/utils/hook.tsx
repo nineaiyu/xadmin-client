@@ -1,3 +1,4 @@
+import { SUCCESS_CODE } from "@/api/types";
 import { getCurrentInstance, h, reactive, shallowRef } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessage, ElMessageBox, ElTag } from "element-plus";
@@ -66,7 +67,7 @@ export function useLeave() {
     )
       .then(() => run(row.pk as string | number))
       .then(res => {
-        if (res?.code === 1000)
+        if (res?.code === SUCCESS_CODE)
           ElMessage.success(t(`leaveApply.${successKey}`));
       })
       .catch(() => {

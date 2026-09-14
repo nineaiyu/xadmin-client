@@ -1,3 +1,4 @@
+import { SUCCESS_CODE } from "@/api/types";
 import { h, reactive, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { addDialog } from "@/components/ReDialog";
@@ -85,7 +86,7 @@ export function useKnowledge(tableRef: Ref) {
     const res = await knowledgeApi.partialUpdate(row.pk, {
       is_active: !row.is_active
     });
-    if (res.code === 1000) {
+    if (res.code === SUCCESS_CODE) {
       message(t("aiKnowledge.toggleDone"), { type: "success" });
       refresh();
     } else if (res.detail) {
@@ -101,7 +102,7 @@ export function useKnowledge(tableRef: Ref) {
       return;
     }
     const res = await knowledgeApi.batchToggle(pks, isActive);
-    if (res.code === 1000) {
+    if (res.code === SUCCESS_CODE) {
       const changed =
         (res.data as unknown as { changed?: number })?.changed ?? 0;
       message(t("aiKnowledge.batchToggleDone", { count: changed }), {
@@ -116,7 +117,7 @@ export function useKnowledge(tableRef: Ref) {
 
   const syncRepo = async () => {
     const res = await knowledgeApi.syncRepo();
-    if (res.code === 1000) {
+    if (res.code === SUCCESS_CODE) {
       const summary = (res.data ?? {}) as unknown as KnowledgeSyncSummary;
       message(
         t("aiKnowledge.syncDone", {

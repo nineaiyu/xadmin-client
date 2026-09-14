@@ -1,5 +1,5 @@
 import { BaseApi } from "@/api/base";
-import type { DetailResult, ListResult } from "@/api/types";
+import type { DetailResult } from "@/api/types";
 
 /** 数据集与仪表盘（可视化一期） */
 export type DatasetVisibility = "personal" | "shared";
@@ -101,6 +101,5 @@ export const datasetApi = new DatasetApi("/api/system/datasets");
 
 export const dashboardApi = new BaseApi("/api/system/dashboards");
 
-/** 列表结果取行（BaseModelSet 分页外壳） */
-export const listRows = <T>(body: ListResult): T[] =>
-  ((body?.data as { results?: T[] })?.results ?? []) as T[];
+/** 列表结果取行（BaseModelSet 分页外壳）：统一实现在 api/base.ts */
+export { listRows } from "@/api/base";

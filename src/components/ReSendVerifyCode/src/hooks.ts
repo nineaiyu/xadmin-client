@@ -1,3 +1,4 @@
+import { SUCCESS_CODE } from "@/api/types";
 import { computed, onMounted, reactive, useSlots } from "vue";
 import {
   getTempTokenApi,
@@ -55,7 +56,7 @@ export const useSendVerifyCode = (
   const initToken = () => {
     if (access.value && verifyCodeConfig.token) {
       getTempTokenApi().then(res => {
-        if (res.code === 1000) {
+        if (res.code === SUCCESS_CODE) {
           formData.value.token = res.token;
         }
       });
@@ -206,7 +207,7 @@ export const useSendVerifyCode = (
   onMounted(() => {
     verifyCodeConfigApi({ category: props.category })
       .then(res => {
-        if (res.code === 1000) {
+        if (res.code === SUCCESS_CODE) {
           Object.keys(res.data).forEach(key => {
             verifyCodeConfig[key] = res.data[key];
           });

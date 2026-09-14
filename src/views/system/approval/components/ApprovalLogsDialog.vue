@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import type { RecordType } from "plus-pro-components";
@@ -45,7 +46,7 @@ const fetchLogs = () => {
       ...(props.creatorPk ? { creator: props.creatorPk } : {})
     })
     .then(res => {
-      if (res.code === 1000 && res.data) {
+      if (res.code === SUCCESS_CODE && res.data) {
         rows.value = res.data.results as Array<LogRow>;
         total.value = res.data.total ?? 0;
       }

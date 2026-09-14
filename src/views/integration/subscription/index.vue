@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
+import { fetchAllRows } from "@/utils/fetchAllRows";
 import { onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
@@ -28,11 +30,11 @@ const loadAll = async () => {
   loading.value = true;
   try {
     const [listRes, eventsRes] = await Promise.all([
-      webhookSubscriptionApi.list({ page_size: 100 }),
+      fetchAllRows(webhookSubscriptionApi.list),
       webhookSubscriptionApi.events()
     ]);
     rows.value = listWebhookRows<WebhookSubscriptionItem>(listRes);
-    if (eventsRes.code === 1000) {
+    if (eventsRes.code === SUCCESS_CODE) {
       events.value = (eventsRes.data as never as WebhookEvent[]) ?? [];
     }
   } finally {
@@ -92,7 +94,7 @@ const submit = async () => {
   const res = editingPk.value
     ? await webhookSubscriptionApi.partialUpdate(editingPk.value, payload)
     : await webhookSubscriptionApi.create(payload);
-  if (res.code === 1000) {
+  if (res.code === SUCCESS_CODE) {
     message(t("webhook.saveOk"), { type: "success" });
     dialog.value = false;
     await loadAll();
@@ -103,12 +105,12 @@ const submit = async () => {
 
 const remove = async (row: WebhookSubscriptionItem) => {
   const res = await webhookSubscriptionApi.destroy(row.pk);
-  if (res.code === 1000) await loadAll();
+  if (res.code === SUCCESS_CODE) await loadAll();
 };
 
 const testSubscription = async (row: WebhookSubscriptionItem) => {
   const res = await webhookSubscriptionApi.test(row.pk);
-  if (res.code === 1000) {
+  if (res.code === SUCCESS_CODE) {
     message(String(res.detail ?? t("webhook.testDispatched")), {
       type: "success"
     });
@@ -121,7 +123,7 @@ const toggleActive = async (row: WebhookSubscriptionItem) => {
   const res = await webhookSubscriptionApi.partialUpdate(row.pk, {
     is_active: row.is_active
   });
-  if (res.code !== 1000) await loadAll();
+  if (res.code !== SUCCESS_CODE) await loadAll();
 };
 
 onMounted(loadAll);

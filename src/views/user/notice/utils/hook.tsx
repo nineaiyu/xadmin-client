@@ -1,3 +1,4 @@
+import { SUCCESS_CODE } from "@/api/types";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
@@ -41,7 +42,7 @@ export function useUserNotice(tableRef: Ref) {
     api
       .batchRead({ pks: getKeyList(manySelectData.value, "pk") })
       .then(async res => {
-        if (res.code === 1000) {
+        if (res.code === SUCCESS_CODE) {
           message(t("results.batchRead", { count: selectedNum.value }), {
             type: "success"
           });

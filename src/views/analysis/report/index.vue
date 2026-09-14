@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
+import { fetchAllRows } from "@/utils/fetchAllRows";
 import { onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
@@ -32,8 +34,8 @@ const loadAll = async () => {
   loading.value = true;
   try {
     const [reportRes, datasetRes] = await Promise.all([
-      reportApi.list({ page_size: 100 }),
-      datasetApi.list({ page_size: 100 })
+      fetchAllRows(reportApi.list),
+      fetchAllRows(datasetApi.list)
     ]);
     rows.value = listAnalysisRows<ReportItem>(reportRes as never);
     datasets.value = listRows<DatasetItem>(datasetRes as never);
@@ -122,7 +124,7 @@ const submit = async () => {
   const res = editingPk.value
     ? await reportApi.partialUpdate(editingPk.value, payload)
     : await reportApi.create(payload);
-  if (res.code === 1000) {
+  if (res.code === SUCCESS_CODE) {
     message(t("dataReport.saveOk"), { type: "success" });
     dialog.value = false;
     await loadAll();
@@ -147,12 +149,12 @@ const remove = async (row: ReportItem) => {
     return;
   }
   const res = await reportApi.destroy(row.pk);
-  if (res.code === 1000) await loadAll();
+  if (res.code === SUCCESS_CODE) await loadAll();
 };
 
 const run = async (row: ReportItem) => {
   const res = await runReport(row.pk);
-  if (res.code === 1000) {
+  if (res.code === SUCCESS_CODE) {
     message(t("dataReport.runOk"), { type: "success" });
     await loadAll();
   } else if (res.detail) {

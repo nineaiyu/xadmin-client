@@ -1,3 +1,4 @@
+import { SUCCESS_CODE } from "@/api/types";
 import { defineStore } from "pinia";
 import { message } from "@/utils/message";
 import type { LoginResult, TokenResult } from "@/api/auth";
@@ -151,7 +152,7 @@ export const useUserStore = defineStore("pure-user", {
         loginBasicApi(data)
           .then(res => {
             // mfa_required 时后端未签发 token（data 中无 access），不能写入
-            if (res.code === 1000 && "access" in res.data) {
+            if (res.code === SUCCESS_CODE && "access" in res.data) {
               setToken(res.data);
             }
             resolve(res);
@@ -166,7 +167,7 @@ export const useUserStore = defineStore("pure-user", {
         userInfoApi
           .retrieve()
           .then(res => {
-            if (res.code === 1000) {
+            if (res.code === SUCCESS_CODE) {
               setUserInfo(res.data);
               // 水印配置存入本 store：由 App.vue 按「当前路由是否命中生效范围」应用/清除
               this.siteWatermark = {
@@ -191,7 +192,7 @@ export const useUserStore = defineStore("pure-user", {
       return new Promise<TokenResult>((resolve, reject) => {
         registerApi(data)
           .then(res => {
-            if (res.code === 1000) {
+            if (res.code === SUCCESS_CODE) {
               setToken(res.data);
               resolve(res);
             } else {
@@ -211,7 +212,7 @@ export const useUserStore = defineStore("pure-user", {
       clearPendingApprovals();
       logoutApi({ refresh: getRefreshToken() })
         .then(res => {
-          if (res.code === 1000) {
+          if (res.code === SUCCESS_CODE) {
             message("登出成功", { type: "success" });
           }
         })
@@ -230,7 +231,7 @@ export const useUserStore = defineStore("pure-user", {
       return new Promise<TokenResult>((resolve, reject) => {
         refreshTokenApi(data)
           .then(res => {
-            if (res.code === 1000) {
+            if (res.code === SUCCESS_CODE) {
               setToken(res.data);
               resolve(res);
             } else {

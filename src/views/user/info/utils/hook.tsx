@@ -1,3 +1,4 @@
+import { SUCCESS_CODE } from "@/api/types";
 import "./reset.css";
 import { useI18n } from "vue-i18n";
 import { createFormData, delay } from "@pureadmin/utils";
@@ -45,7 +46,7 @@ export function useUserInfo() {
 
   function handleUpdate(row) {
     api.partialUpdate({}, row).then(res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         message(t("results.success"), { type: "success" });
         getUserInfo();
       } else {
@@ -59,7 +60,7 @@ export function useUserInfo() {
     useUserStoreHook()
       .getUserInfo()
       .then(res => {
-        if (res.code === 1000) {
+        if (res.code === SUCCESS_CODE) {
           Object.keys(res.data).forEach(param => {
             currentUserInfo[param] = res.data[param];
           });
@@ -85,7 +86,7 @@ export function useUserInfo() {
       })
     });
     api.upload(formData).then(res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         message(t("results.success"), { type: "success" });
         getUserInfo();
       } else {
@@ -104,7 +105,7 @@ export function useUserInfo() {
       data.sure_password
     );
     api.resetPassword({ old_password, sure_password }).then(async res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         message(t("results.success"), { type: "success" });
       } else {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });

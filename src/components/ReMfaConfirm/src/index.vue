@@ -4,6 +4,7 @@
  * 敏感接口返回 412（type=user_confirm_required）时由 http 层唤起，
  * 验证成功后 http 层自动重发原请求。
  */
+import { SUCCESS_CODE } from "@/api/types";
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
@@ -57,7 +58,7 @@ const loadMethods = () => {
   infoLoading.value = true;
   mfaConfirmInfoApi({ confirm_type: props.confirmType ?? "mfa" })
     .then(res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         methods.value = res.data.methods;
         currentMethod.value = res.data.methods[0]?.name ?? "";
       }
@@ -80,7 +81,7 @@ const startCooldown = (seconds: number) => {
 const handleSendCode = () => {
   if (!currentMethod.value) return;
   mfaSendCodeApi({ method: currentMethod.value }).then(res => {
-    if (res.code === 1000) {
+    if (res.code === SUCCESS_CODE) {
       message(res.detail || t("mfa.codeSent"), { type: "success" });
       startCooldown(60);
     } else {
@@ -104,7 +105,7 @@ const handleConfirm = () => {
       code: formData.code
     })
       .then(res => {
-        if (res.code === 1000) {
+        if (res.code === SUCCESS_CODE) {
           message(res.detail || t("mfa.verifySuccess"), { type: "success" });
           visible.value = false;
           props.resolve({ expire_at: res.data?.expire_at ?? null });

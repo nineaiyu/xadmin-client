@@ -7,6 +7,7 @@
  * 排版对齐同页「基本资料 / 修改密码」tab：固定 label-width 的普通 el-form，
  * 操作按钮置于无 label 的尾部 form-item（与保存按钮列对齐）。
  */
+import { SUCCESS_CODE } from "@/api/types";
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
@@ -55,7 +56,7 @@ const loadStatus = () => {
   statusLoading.value = true;
   otpStatusApi()
     .then(res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         status.value = res.data;
       }
     })
@@ -66,7 +67,7 @@ const handleStartBind = () => {
   bindLoading.value = true;
   otpStartApi()
     .then(res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         bindInfo.value = res.data;
       } else {
         message(res.detail, { type: "warning" });
@@ -83,7 +84,7 @@ const handleConfirmBind = () => {
   bindLoading.value = true;
   otpConfirmApi({ code: code.value })
     .then(res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         message(res.detail || t("mfa.bindSuccess"), { type: "success" });
         bindInfo.value = null;
         code.value = "";
@@ -113,7 +114,7 @@ const handleOpen = () => {
   openLoading.value = true;
   otpOpenApi({ code: verifyCode.value })
     .then(res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         message(res.detail || t("mfa.otpEnabled"), { type: "success" });
         verifyCode.value = "";
         loadStatus();
@@ -132,7 +133,7 @@ const handleTest = () => {
   testLoading.value = true;
   otpTestApi({ code: verifyCode.value })
     .then(res => {
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         message(res.detail || t("mfa.testSuccess"), { type: "success" });
       } else {
         message(res.detail, { type: "warning" });
