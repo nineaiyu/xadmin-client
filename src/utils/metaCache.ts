@@ -4,7 +4,8 @@ import { createTtlCache } from "./ttlCache";
 /**
  * 跨页面共享的「全量元数据列表」缓存。
  *
- * 背景：菜单全量列表（`list({page:1,size:1000})`）在菜单页、角色页、权限页各拉一次，
+ * 背景：菜单全量列表（`fetchAllRows(menuApi.list)`，见 `utils/fetchAllRows.ts`）
+ * 在菜单页、角色页、权限页各拉一次，
  * 切页即重复请求同一份数据，返回原页面还会再拉一次。
  *
  * 一致性策略（避免「刚新建的 X 在下拉/树里看不到」）：

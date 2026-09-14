@@ -170,6 +170,7 @@ export function useKnowledge(tableRef: Ref) {
 
   const operationButtonsProps = shallowRef<OperationProps>({
     showNumber: 5,
+    width: 260,
     buttons: [
       {
         text: t("aiKnowledge.preview"),

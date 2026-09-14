@@ -10,6 +10,7 @@ import { modelLabelFieldApi } from "@/api/system/field";
 import { formatFiledAppParent } from "@/views/system/hooks";
 import type { RecordType } from "plus-pro-components";
 import { handleTree } from "@/utils/tree";
+import { fetchAllRows } from "@/utils/fetchAllRows";
 import { useMenuData } from "./useMenuData";
 import { useMenuDialog } from "./useMenuDialog";
 import { useMenuPermissions } from "./useMenuPermissions";
@@ -184,24 +185,20 @@ export function useMenu() {
       setTimeout(getViews, 0);
     }
     if (hasAuth("list:SystemModelLabelField")) {
-      modelLabelFieldApi
-        .list({
-          page: 1,
-          size: 1000,
-          parent: 0,
-          field_type: FieldChoices.ROLE
-        })
-        .then(res => {
-          if (res.code === 1000) {
-            const results = [];
-            res.data.results.forEach(item => {
-              const value = { pk: item.pk, name: item.name, label: item.label };
-              results.push({ ...value, value });
-            });
-            formatFiledAppParent(results);
-            modelList.value = handleTree(results);
-          }
-        });
+      fetchAllRows(modelLabelFieldApi.list, {
+        parent: 0,
+        field_type: FieldChoices.ROLE
+      }).then(res => {
+        if (res.code === 1000) {
+          const results = [];
+          res.data.results.forEach(item => {
+            const value = { pk: item.pk, name: item.name, label: item.label };
+            results.push({ ...value, value });
+          });
+          formatFiledAppParent(results);
+          modelList.value = handleTree(results);
+        }
+      });
     }
   });
 

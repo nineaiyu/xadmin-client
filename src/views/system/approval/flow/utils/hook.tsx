@@ -103,6 +103,7 @@ export function useFlow(tableRef: Ref) {
 
   const operationButtonsProps = shallowRef<OperationProps>({
     showNumber: 4,
+    width: 300,
     buttons: [
       {
         text: t("systemApprovalFlow.editTitle"),

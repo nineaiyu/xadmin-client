@@ -50,8 +50,11 @@ export function usePlusPage(
     size: "default"
   };
   if (isTree) {
+    // 树形列表数据经 fetchAllRows 全量拉取（见 usePlusPageData），分页器仅
+    // 展示总数；不再提供翻页/切页大小（切页会破坏树形父子结构的展示完整性）
     defaultPagination.pageSize = 1000;
-    defaultPagination.pageSizes = [100, 500, 1000];
+    defaultPagination.layout = "total";
+    defaultPagination.pageSizes = [];
   }
   const tablePagination = ref<RePlusPageProps["pagination"]>({
     ...defaultPagination,

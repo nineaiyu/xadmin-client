@@ -12,6 +12,7 @@ import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { maskApi } from "@/api/system/mask";
 import { modelLabelFieldApi } from "@/api/system/field";
 import { FieldChoices } from "@/views/system/constants";
+import { fetchAllRows } from "@/utils/fetchAllRows";
 import type {
   OperationProps,
   PageTableColumn,
@@ -75,8 +76,7 @@ export function useMask() {
   /** 一次拉取全部角色侧模型字段（模型 + 字段，量级几百行），前端本地分组联动 */
   const loadModelFieldOptions = () => {
     if (!canPickModel) return;
-    modelLabelFieldApi
-      .list({ page: 1, size: 1000, field_type: FieldChoices.ROLE })
+    fetchAllRows(modelLabelFieldApi.list, { field_type: FieldChoices.ROLE })
       .then(res => {
         if (res.code !== 1000 || !res.data) return;
         const rows = res.data.results as Array<{

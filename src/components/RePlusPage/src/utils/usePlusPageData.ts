@@ -1,4 +1,5 @@
 import { message } from "@/utils/message";
+import { fetchAllRows } from "@/utils/fetchAllRows";
 import type { Ref } from "vue";
 import { toRaw } from "vue";
 import { cloneDeep, isArray } from "@pureadmin/utils";
@@ -112,8 +113,11 @@ export function usePlusPageData({
 
     const data = (beforeSearchSubmit && beforeSearchSubmit(params)) || params;
 
-    api
-      .list(data)
+    // 树形列表（菜单/部门等）父子关系不能被分页切断，需全量数据；
+    // fetchAllRows 按页循环拉满 total，返回形状与单页响应一致，消费逻辑无需区分
+    const request = isTree ? fetchAllRows(api.list, data) : api.list(data);
+
+    request
       .then(res => {
         // 过期响应直接丢弃：不覆盖新数据、不触发 searchComplete、不关闭 loading
         if (requestSeq !== latestRequestSeq) return;

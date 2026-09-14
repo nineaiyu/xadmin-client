@@ -13,6 +13,7 @@ import { FieldChoices, MenuChoices } from "@/views/system/constants";
 import { menuApi } from "@/api/system/menu";
 import { handleTree } from "@/utils/tree";
 import { fetchMetaList, META_KEYS } from "@/utils/metaCache";
+import { fetchAllRows } from "@/utils/fetchAllRows";
 import { modelLabelFieldApi } from "@/api/system/field";
 import { transformI18n } from "@/plugins/i18n";
 import { useI18n } from "vue-i18n";
@@ -98,40 +99,32 @@ export function useDataPermission() {
   onMounted(() => {
     if (hasAuth("list:SystemMenu")) {
       // 菜单全量列表与菜单页 / 角色页共用缓存；菜单页为权威刷新方（force）
-      fetchMetaList(META_KEYS.menu, () =>
-        menuApi.list({ page: 1, size: 1000 })
-      ).then(res => {
-        if (res.code === 1000) {
-          menuTreeData.value = res.data.results as MenuRow[];
+      fetchMetaList(META_KEYS.menu, () => fetchAllRows(menuApi.list)).then(
+        res => {
+          if (res.code === 1000) {
+            menuTreeData.value = res.data.results as MenuRow[];
+          }
         }
-      });
+      );
     }
     if (hasAuth("list:SystemModelLabelField")) {
-      modelLabelFieldApi
-        .list({
-          page: 1,
-          size: 1000,
-          field_type: FieldChoices.DATA
-        })
-        .then(res => {
-          if (res.code === 1000) {
-            formatFiledAppParent(res.data.results);
-            fieldLookupsData.value = handleTree(res.data.results);
-          }
-        });
+      fetchAllRows(modelLabelFieldApi.list, {
+        field_type: FieldChoices.DATA
+      }).then(res => {
+        if (res.code === 1000) {
+          formatFiledAppParent(res.data.results);
+          fieldLookupsData.value = handleTree(res.data.results);
+        }
+      });
       // 字段权限注册表（ROLE）：供字段试算草稿选择模型/字段
-      modelLabelFieldApi
-        .list({
-          page: 1,
-          size: 1000,
-          field_type: FieldChoices.ROLE
-        })
-        .then(res => {
-          if (res.code === 1000) {
-            formatFiledAppParent(res.data.results);
-            fieldLookupsRole.value = handleTree(res.data.results);
-          }
-        });
+      fetchAllRows(modelLabelFieldApi.list, {
+        field_type: FieldChoices.ROLE
+      }).then(res => {
+        if (res.code === 1000) {
+          formatFiledAppParent(res.data.results);
+          fieldLookupsRole.value = handleTree(res.data.results);
+        }
+      });
     }
     modelLabelFieldApi.choices().then(res => {
       if (res.code === 1000) {

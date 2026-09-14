@@ -4,6 +4,7 @@ import type { Ref } from "vue";
 import type { RecordType } from "plus-pro-components";
 import { handleExportData, handleImportData } from "@/components/RePlusPage";
 import { fetchMetaList, META_KEYS } from "@/utils/metaCache";
+import { fetchAllRows } from "@/utils/fetchAllRows";
 import { handleTree } from "@/utils/tree";
 import type { menuApi } from "@/api/system/menu";
 import type { Reactive } from "vue";
@@ -46,7 +47,7 @@ export function useMenuData({
     loading.value = true;
     // 菜单页是菜单全量列表的权威刷新方：强制拉取并回填共享缓存（force），
     // 供角色页 / 权限页直接复用，避免切页重复拉同一份数据
-    fetchMetaList(META_KEYS.menu, () => api.list({ page: 1, size: 1000 }), {
+    fetchMetaList(META_KEYS.menu, () => fetchAllRows(api.list), {
       force: true
     })
       .then(res => {
