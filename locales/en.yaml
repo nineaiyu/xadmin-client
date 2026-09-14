@@ -347,6 +347,7 @@ menus:
   dataPermissionManagement: Data Permission
   logManagement: Log Manage
   systemTaskCrontab: Crontab Schedule
+  systemTaskInterval: Interval Schedule
   modelFieldManagement: Model Field Manage
   operationLogManagement: Operation Log Manage
   loginLogManagement: Login Log Manage
@@ -1373,6 +1374,10 @@ systemTaskCrontab:
   cronWeekday4: Thursday
   cronWeekday5: Friday
   cronWeekday6: Saturday
+
+systemTaskInterval:
+  every: Number of Periods
+  period: Period Unit
 
 recycleBin:
   title: Recycle Bin

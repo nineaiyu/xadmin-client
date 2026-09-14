@@ -347,6 +347,7 @@ menus:
   dataPermissionManagement: 数据权限
   logManagement: 日志管理
   systemTaskCrontab: 定时表达式
+  systemTaskInterval: 间隔调度
   modelFieldManagement: 字段管理
   operationLogManagement: 访问日志
   loginLogManagement: 登录日志
@@ -1373,6 +1374,10 @@ systemTaskCrontab:
   cronWeekday4: 周四
   cronWeekday5: 周五
   cronWeekday6: 周六
+
+systemTaskInterval:
+  every: 周期数
+  period: 间隔周期
 
 recycleBin:
   title: 回收站

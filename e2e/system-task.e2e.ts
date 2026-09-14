@@ -411,3 +411,81 @@ test("定时表达式页：crontab 列表渲染", async ({ page }) => {
     page.locator(".el-table__row", { hasText: "7" }).first()
   ).toBeVisible({ timeout: 15_000 });
 });
+
+test("间隔调度页：新增间隔 → 周期任务引用后列表显示可读标签", async ({
+  page
+}) => {
+  // (every, period) 为业务侧唯一：时间戳 + 随机数保证双浏览器与失败重试不撞车
+  const every =
+    200000 + (Date.now() % 500000) + Math.floor(Math.random() * 997);
+  const taskName = `e2e-interval-${Date.now()}`;
+  await login(page);
+  const token = await getAccessToken(page);
+
+  // 1) 间隔调度页 UI 新增：周期数 + 间隔周期=分钟
+  await openMenuPath(
+    page,
+    ["系统管理", "任务管理"],
+    "/system/celery/interval/index"
+  );
+  const table = page.locator(".el-table").first();
+  await expect(table).toBeVisible({ timeout: 15_000 });
+  await page.getByRole("button", { name: "新增" }).first().click();
+  const dialog = page.locator(".el-dialog, .el-drawer").first();
+  await expect(dialog).toBeVisible();
+  const everyInput = dialog.locator("input").first();
+  await everyInput.fill(String(every));
+  await everyInput.blur();
+  await dialog.locator(".el-select").first().click();
+  await page
+    .locator(".el-select-dropdown__item:visible", { hasText: "分钟" })
+    .first()
+    .click();
+  await dialog
+    .getByRole("button", { name: /保存|确定/ })
+    .first()
+    .click();
+  await expect(dialog).not.toBeVisible({ timeout: 15_000 });
+  // 列表按主键正序且 E2E 库每次重置（行数远小于分页大小），新行必在首页
+  await expect(
+    page.locator(".el-table__row", { hasText: String(every) }).first()
+  ).toBeVisible({ timeout: 15_000 });
+
+  // 2) 新建的间隔可直接挂到周期任务（任务表单「执行间隔」下拉即来自该表）
+  const listRes = await page.request.get(
+    `${BACKEND_URL}/api/system/tasks/interval?every=${every}`,
+    { headers: { Authorization: `Bearer ${token}`, "User-Agent": "e2e-test" } }
+  );
+  expect(listRes.ok()).toBeTruthy();
+  const intervalPk = (await listRes.json())?.data?.results?.[0]?.pk;
+  expect(intervalPk).toBeTruthy();
+  const createRes = await page.request.post(
+    `${BACKEND_URL}/api/system/tasks/periodic`,
+    {
+      headers: { Authorization: `Bearer ${token}`, "User-Agent": "e2e-test" },
+      data: {
+        name: taskName,
+        task: TASK_PATH,
+        interval: intervalPk,
+        args: "[]",
+        kwargs: "{}",
+        enabled: false
+      }
+    }
+  );
+  expect(createRes.ok()).toBeTruthy();
+
+  // 3) 周期任务列表「执行间隔」列显示可读标签（每 N 分钟）
+  await openMenuPath(
+    page,
+    ["系统管理", "任务管理"],
+    "/system/celery/task/index"
+  );
+  await searchTaskByName(page, taskName);
+  const row = page
+    .locator(".el-table__body-wrapper .el-table__row", { hasText: taskName })
+    .first();
+  await expect(row).toBeVisible({ timeout: 15_000 });
+  await expect(row).toContainText(String(every));
+  await expect(row).toContainText("分钟");
+});
