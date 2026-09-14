@@ -59,7 +59,8 @@ test("动态表单：设计（含审批开关）→ 填报 → 提交可见", as
   await expect(fillDialog).toBeVisible();
   await fillDialog.getByLabel("设备名称").fill("E2E路由器");
   await fillDialog.getByLabel("存放位置").fill("A 机房 01 柜");
-  await fillDialog.getByRole("button", { name: "确认" }).click();
+  // C5 收敛后弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确认」）
+  await fillDialog.getByRole("button", { name: "保存" }).click();
   await expect(fillDialog).not.toBeVisible();
 
   // ---- 我的提交可见且内容渲染 ----

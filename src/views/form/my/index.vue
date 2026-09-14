@@ -1,8 +1,10 @@
 <script lang="ts" setup>
 import { SUCCESS_CODE } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
-import { computed, onMounted, reactive, ref } from "vue";
+import { h, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { addDialog } from "@/components/ReDialog";
+import { dialogSize } from "@/components/ReDialog/size";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import {
@@ -10,9 +12,9 @@ import {
   listRows,
   submissionApi,
   type DynamicFormItem,
-  type FormField,
   type SubmissionItem
 } from "@/api/system/dform";
+import SubmissionForm from "./components/SubmissionForm.vue";
 
 defineOptions({
   name: "FormMySubmission"
@@ -42,46 +44,57 @@ const loadAll = async () => {
   }
 };
 
-/** 当前编辑的表单与数据（动态表单渲染核心） */
-const dialog = ref(false);
-const editingPk = ref<string | null>(null);
-const currentForm = ref<DynamicFormItem | null>(null);
-const formData = reactive<Record<string, unknown>>({});
+/** 填报 / 编辑提交弹窗（C5：统一走 ReDialog，动态字段渲染在 SubmissionForm 中） */
+const submissionFormRef = ref<InstanceType<typeof SubmissionForm>>();
 
-const schemaFields = computed<FormField[]>(
-  () => currentForm.value?.schema?.fields ?? []
-);
-
-const openFill = (form: DynamicFormItem) => {
-  currentForm.value = form;
-  editingPk.value = null;
-  Object.keys(formData).forEach(key => delete formData[key]);
-  dialog.value = true;
+const openDialog = (
+  form: DynamicFormItem,
+  submission: SubmissionItem | null = null
+) => {
+  submissionFormRef.value = undefined;
+  addDialog({
+    title: submission ? t("dform.editSubmission") : form.name,
+    width: dialogSize("md"),
+    draggable: true,
+    destroyOnClose: true,
+    closeOnClickModal: false,
+    sureBtnLoading: true,
+    contentRenderer: () =>
+      h(SubmissionForm, { ref: submissionFormRef, form, submission }),
+    beforeSure: async (done, { closeLoading }) => {
+      const payload = submissionFormRef.value?.getPayload();
+      if (!payload) {
+        closeLoading();
+        return;
+      }
+      // 异常归一为可读失败结果：避免请求异常时 beforeSure 抛错、弹窗 loading 悬挂
+      const res = await (
+        submission
+          ? submissionApi.partialUpdate(submission.pk, payload)
+          : submissionApi.create(payload)
+      ).catch(error => ({
+        code: -1,
+        detail: String((error as { detail?: string })?.detail ?? error)
+      }));
+      if (res.code === SUCCESS_CODE) {
+        message(t("dform.saveOk"), { type: "success" });
+        // 先关弹窗再刷新列表（与原手写弹窗行为一致，避免刷新耗时导致弹窗滞留）
+        done();
+        await loadAll();
+        return;
+      }
+      if (res.detail) message(String(res.detail), { type: "warning" });
+      closeLoading();
+    }
+  });
 };
+
+const openFill = (form: DynamicFormItem) => openDialog(form, null);
 
 const openEditSubmission = (submission: SubmissionItem) => {
   const form = forms.value.find(item => item.pk === submission.form);
   if (!form) return;
-  currentForm.value = form;
-  editingPk.value = submission.pk;
-  Object.keys(formData).forEach(key => delete formData[key]);
-  Object.assign(formData, JSON.parse(JSON.stringify(submission.data)));
-  dialog.value = true;
-};
-
-const submit = async () => {
-  if (!currentForm.value) return;
-  const payload = { form: currentForm.value.pk, data: { ...formData } };
-  const res = editingPk.value
-    ? await submissionApi.partialUpdate(editingPk.value, payload)
-    : await submissionApi.create(payload);
-  if (res.code === SUCCESS_CODE) {
-    message(t("dform.saveOk"), { type: "success" });
-    dialog.value = false;
-    await loadAll();
-  } else if (res.detail) {
-    message(String(res.detail), { type: "warning" });
-  }
+  openDialog(form, submission);
 };
 
 const remove = async (row: SubmissionItem) => {
@@ -190,99 +203,5 @@ onMounted(loadAll);
         </el-table-column>
       </el-table>
     </el-card>
-
-    <!-- 动态填报表单 -->
-    <el-dialog
-      v-model="dialog"
-      :title="editingPk ? t('dform.editSubmission') : (currentForm?.name ?? '')"
-      width="560px"
-    >
-      <el-alert
-        v-if="!editingPk && currentForm?.approval_required"
-        type="warning"
-        :closable="false"
-        class="mb-3"
-        :title="t('dform.approvalHint')"
-      />
-      <el-form label-width="110px">
-        <el-form-item
-          v-for="field in schemaFields"
-          :key="field.key"
-          :label="field.label"
-          :required="field.required"
-        >
-          <el-input
-            v-if="field.type === 'input'"
-            v-model="formData[field.key] as string"
-            :maxlength="field.max_length"
-            :placeholder="field.placeholder"
-          />
-          <el-input
-            v-else-if="field.type === 'textarea'"
-            v-model="formData[field.key] as string"
-            type="textarea"
-            :rows="3"
-            :maxlength="field.max_length"
-          />
-          <el-input-number
-            v-else-if="field.type === 'number'"
-            v-model="formData[field.key] as number"
-            :min="field.min"
-            :max="field.max"
-          />
-          <el-select
-            v-else-if="field.type === 'select'"
-            v-model="formData[field.key] as string"
-            class="w-full"
-            clearable
-          >
-            <el-option
-              v-for="option in field.options"
-              :key="option"
-              :value="option"
-              :label="option"
-            />
-          </el-select>
-          <el-radio-group
-            v-else-if="field.type === 'radio'"
-            v-model="formData[field.key] as string"
-          >
-            <el-radio
-              v-for="option in field.options"
-              :key="option"
-              :value="option"
-              >{{ option }}</el-radio
-            >
-          </el-radio-group>
-          <el-checkbox-group
-            v-else-if="field.type === 'checkbox'"
-            v-model="formData[field.key] as string[]"
-          >
-            <el-checkbox
-              v-for="option in field.options"
-              :key="option"
-              :value="option"
-              >{{ option }}</el-checkbox
-            >
-          </el-checkbox-group>
-          <el-date-picker
-            v-else-if="field.type === 'date'"
-            v-model="formData[field.key] as string"
-            type="date"
-            value-format="YYYY-MM-DD"
-          />
-          <el-switch
-            v-else-if="field.type === 'switch'"
-            v-model="formData[field.key] as boolean"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialog = false">{{ t("dform.cancel") }}</el-button>
-        <el-button type="primary" @click="submit">{{
-          t("dform.confirm")
-        }}</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
