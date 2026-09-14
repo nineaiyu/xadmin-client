@@ -1,55 +1,51 @@
 <script lang="ts" setup>
-import { ref } from "vue";
+import { h, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { addDialog } from "@/components/ReDialog";
+import { dialogSize } from "@/components/ReDialog/size";
 import {
   ASSIGNEE_TYPES,
   CONDITION_OPS,
   createEmptyNode,
-  type NodeRow,
-  type RouteItem
+  type NodeRow
 } from "./flowConfig";
+import RouteEditorForm from "./RouteEditorForm.vue";
 
 /** 审批节点编辑表格（顺序 + 策略 OR/AND/RATIO + 审批人解析 + 节点条件 + 出口路由 + 超时）；就地编辑父组件传入的行数组 */
 defineProps<{ nodes: NodeRow[] }>();
 
 const { t } = useI18n();
 
-/** 分支路由编辑：节点序号（1-based）+ 全部节点数 + routes 副本（保存时回写） */
-const routeEditor = ref<{
-  order: number;
-  count: number;
-  routes: RouteItem[];
-} | null>(null);
-const routeEditorVisible = ref(false);
+/** 分支路由编辑（C5：统一走 ReDialog，路由表格在 RouteEditorForm 中） */
+const routeFormRef = ref<InstanceType<typeof RouteEditorForm>>();
 
 function openRouteEditor(nodes: NodeRow[], index: number) {
-  routeEditor.value = {
-    order: index + 1,
-    count: nodes.length,
-    routes: (nodes[index].routes || []).map(route => ({
-      condition: { ...(route.condition || {}) },
-      target: Number(route.target)
-    }))
-  };
-  routeEditorVisible.value = true;
-}
-
-function addRoute(routes: RouteItem[]) {
-  routes.push({ condition: { field: "", op: "eq", value: "" }, target: 1 });
-}
-
-function saveRouteEditor(nodes: NodeRow[], index: number) {
-  const editor = routeEditor.value;
-  if (!editor) return;
-  // 回写：过滤自环与越界 target
-  nodes[index].routes = editor.routes.filter(
-    route =>
-      route.target >= 1 &&
-      route.target <= editor.count &&
-      route.target !== editor.order
-  );
-  routeEditor.value = null;
-  routeEditorVisible.value = false;
+  const order = index + 1;
+  const count = nodes.length;
+  const routes = (nodes[index].routes || []).map(route => ({
+    condition: { ...(route.condition || {}) },
+    target: Number(route.target)
+  }));
+  routeFormRef.value = undefined;
+  addDialog({
+    title: t("systemApprovalFlow.routesTitle"),
+    width: dialogSize("lg"),
+    draggable: true,
+    destroyOnClose: true,
+    closeOnClickModal: false,
+    contentRenderer: () =>
+      h(RouteEditorForm, { ref: routeFormRef, order, count, routes }),
+    beforeSure: (done, { closeLoading }) => {
+      const updated = routeFormRef.value?.getRoutes();
+      if (!updated) {
+        closeLoading();
+        return;
+      }
+      // 回写：过滤自环与越界 target（同原实现口径）
+      nodes[index].routes = updated;
+      done();
+    }
+  });
 }
 
 function addNode(nodes: NodeRow[]) {
@@ -251,100 +247,6 @@ function assigneeHint(type: string): string {
         </template>
       </el-table-column>
     </el-table>
-
-    <el-dialog
-      v-model="routeEditorVisible"
-      :title="t('systemApprovalFlow.routesTitle')"
-      width="720px"
-      destroy-on-close
-    >
-      <el-alert
-        :closable="false"
-        type="info"
-        :title="t('systemApprovalFlow.routesTip')"
-        class="mb-3"
-      />
-      <el-table
-        v-if="routeEditor"
-        :data="routeEditor.routes"
-        size="small"
-        border
-      >
-        <el-table-column
-          :label="t('systemApprovalFlow.conditionField')"
-          width="150"
-        >
-          <template #default="{ row }">
-            <el-input v-model="row.condition.field" size="small" />
-          </template>
-        </el-table-column>
-        <el-table-column
-          :label="t('systemApprovalFlow.conditionOp')"
-          width="120"
-        >
-          <template #default="{ row }">
-            <el-select v-model="row.condition.op" size="small">
-              <el-option
-                v-for="op in CONDITION_OPS"
-                :key="op"
-                :label="op"
-                :value="op"
-              />
-            </el-select>
-          </template>
-        </el-table-column>
-        <el-table-column
-          :label="t('systemApprovalFlow.conditionValue')"
-          width="150"
-        >
-          <template #default="{ row }">
-            <el-input v-model="row.condition.value" size="small" />
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('systemApprovalFlow.routeTarget')">
-          <template #default="{ row, $index }">
-            <el-select v-model="row.target" size="small" class="w-45!">
-              <el-option
-                v-for="order in routeEditor.count"
-                :key="order"
-                :label="`${t('systemApprovalFlow.nodeOrder')} ${order}`"
-                :value="order"
-                :disabled="order === routeEditor.order"
-              />
-            </el-select>
-            <el-button
-              link
-              type="danger"
-              size="small"
-              class="ml-1"
-              @click="routeEditor.routes.splice($index, 1)"
-            >
-              {{ t("buttons.delete") }}
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-      <el-button
-        link
-        type="primary"
-        size="small"
-        class="mt-2"
-        @click="routeEditor && addRoute(routeEditor.routes)"
-      >
-        {{ t("systemApprovalFlow.addRoute") }}
-      </el-button>
-      <template #footer>
-        <el-button @click="routeEditorVisible = false">
-          {{ t("buttons.cancel") }}
-        </el-button>
-        <el-button
-          type="primary"
-          @click="nodes && saveRouteEditor(nodes, routeEditor.order - 1)"
-        >
-          {{ t("buttons.save") }}
-        </el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
