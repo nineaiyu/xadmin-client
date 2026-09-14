@@ -77,7 +77,8 @@ test("报表与大屏主链路", async ({ page }) => {
   await reportDialog.getByLabel("名称").fill(reportName);
   await pickSelectOption(page, "数据集", datasetName);
   await reportDialog.getByLabel("收件人").fill("e2e@corp.com");
-  await reportDialog.getByRole("button", { name: "确认" }).click();
+  // C5 收敛后弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确认」）
+  await reportDialog.getByRole("button", { name: "保存" }).click();
   await expect(reportDialog).not.toBeVisible();
 
   const reportRow = page.getByRole("row", { name: reportName });

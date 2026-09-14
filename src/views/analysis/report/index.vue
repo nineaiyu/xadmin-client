@@ -1,9 +1,11 @@
 <script lang="ts" setup>
 import { SUCCESS_CODE } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
-import { onMounted, reactive, ref } from "vue";
+import { h, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
+import { addDialog } from "@/components/ReDialog";
+import { dialogSize } from "@/components/ReDialog/size";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { datasetApi, listRows, type DatasetItem } from "@/api/system/datasets";
@@ -14,6 +16,7 @@ import {
   type ReportItem
 } from "@/api/system/analysis";
 import { choiceValue } from "@/utils/dict";
+import ReportForm from "./components/ReportForm.vue";
 
 defineOptions({
   name: "DataReport"
@@ -28,7 +31,6 @@ const canRun = hasAuth("run:DataReport");
 const loading = ref(false);
 const rows = ref<ReportItem[]>([]);
 const datasets = ref<DatasetItem[]>([]);
-const selectedDataset = ref<DatasetItem | null>(null);
 
 const loadAll = async () => {
   loading.value = true;
@@ -44,94 +46,43 @@ const loadAll = async () => {
   }
 };
 
-const dialog = ref(false);
-const editingPk = ref<string | null>(null);
-const form = reactive({
-  name: "",
-  dataset: "",
-  mode: "rows" as "rows" | "aggregate",
-  group_by: "",
-  metric: "count" as "count" | "sum" | "avg",
-  date_trunc: "day",
-  value_field: "",
-  frequency: "daily" as "daily" | "weekly" | "monthly",
-  send_time: "08:00",
-  weekday: 0,
-  recipients: "",
-  is_active: true
-});
+/** 新建 / 编辑弹窗（C5：统一走 ReDialog，表单在 ReportForm 中） */
+const formRef = ref<InstanceType<typeof ReportForm>>();
 
-const openCreate = () => {
-  editingPk.value = null;
-  Object.assign(form, {
-    name: "",
-    dataset: "",
-    mode: "rows",
-    group_by: "",
-    metric: "count",
-    date_trunc: "day",
-    value_field: "",
-    frequency: "daily",
-    send_time: "08:00",
-    weekday: 0,
-    recipients: "",
-    is_active: true
+const openDialog = (row: ReportItem | null) => {
+  formRef.value = undefined;
+  addDialog({
+    title: row ? t("dataReport.edit") : t("dataReport.create"),
+    width: dialogSize("md"),
+    draggable: true,
+    destroyOnClose: true,
+    closeOnClickModal: false,
+    sureBtnLoading: true,
+    contentRenderer: () =>
+      h(ReportForm, { ref: formRef, row, datasets: datasets.value }),
+    beforeSure: async (done, { closeLoading }) => {
+      const payload = formRef.value?.getPayload();
+      if (!payload) {
+        closeLoading();
+        return;
+      }
+      const res = row
+        ? await reportApi.partialUpdate(row.pk, payload)
+        : await reportApi.create(payload);
+      if (res.code === SUCCESS_CODE) {
+        message(t("dataReport.saveOk"), { type: "success" });
+        await loadAll();
+        done();
+        return;
+      }
+      if (res.detail) message(String(res.detail), { type: "warning" });
+      closeLoading();
+    }
   });
-  selectedDataset.value = null;
-  dialog.value = true;
 };
 
-const openEdit = (row: ReportItem) => {
-  editingPk.value = row.pk;
-  Object.assign(form, {
-    ...JSON.parse(JSON.stringify(row)),
-    // mode/frequency 带 choices，序列化为 {value,label} 对象；不归一化会让
-    // radio 警告，且 mode 判断失效会把聚合报表的 date_trunc 误清空
-    mode: choiceValue(row.mode) as "rows" | "aggregate",
-    frequency: choiceValue(row.frequency) as "daily" | "weekly" | "monthly",
-    recipients: (row.recipients ?? []).join(", ")
-  });
-  selectedDataset.value =
-    datasets.value.find(item => item.pk === row.dataset) ?? null;
-  dialog.value = true;
-};
-
-const onDatasetPicked = (pk: string) => {
-  selectedDataset.value = datasets.value.find(item => item.pk === pk) ?? null;
-  form.group_by = selectedDataset.value?.columns[0] ?? "";
-};
-
-const submit = async () => {
-  if (!form.name || !form.dataset) {
-    message(t("dataReport.required"), { type: "warning" });
-    return;
-  }
-  const recipients = form.recipients.split(/[,;\s]+/).filter(Boolean);
-  const payload = {
-    name: form.name,
-    dataset: form.dataset,
-    mode: form.mode,
-    group_by: form.group_by,
-    metric: form.metric,
-    date_trunc: form.mode === "aggregate" ? form.date_trunc : "",
-    value_field: form.value_field,
-    frequency: form.frequency,
-    send_time: form.send_time,
-    weekday: Number(form.weekday),
-    recipients,
-    is_active: form.is_active
-  };
-  const res = editingPk.value
-    ? await reportApi.partialUpdate(editingPk.value, payload)
-    : await reportApi.create(payload);
-  if (res.code === SUCCESS_CODE) {
-    message(t("dataReport.saveOk"), { type: "success" });
-    dialog.value = false;
-    await loadAll();
-  } else if (res.detail) {
-    message(String(res.detail), { type: "warning" });
-  }
-};
+const openCreate = () => openDialog(null);
+const openEdit = (row: ReportItem) => openDialog(row);
 
 const remove = async (row: ReportItem) => {
   try {
@@ -265,116 +216,5 @@ onMounted(loadAll);
         </el-table-column>
       </el-table>
     </el-card>
-
-    <el-dialog
-      v-model="dialog"
-      :title="editingPk ? t('dataReport.edit') : t('dataReport.create')"
-      width="560px"
-    >
-      <el-form label-width="100px">
-        <el-form-item :label="t('dataReport.name')" required>
-          <el-input v-model="form.name" />
-        </el-form-item>
-        <el-form-item :label="t('dataReport.dataset')" required>
-          <el-select
-            v-model="form.dataset"
-            class="w-full"
-            filterable
-            @change="onDatasetPicked"
-          >
-            <el-option
-              v-for="item in datasets"
-              :key="item.pk"
-              :value="item.pk"
-              :label="item.name"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item :label="t('dataReport.mode')">
-          <el-radio-group v-model="form.mode">
-            <el-radio value="rows">{{ t("dataReport.modeRows") }}</el-radio>
-            <el-radio value="aggregate">{{
-              t("dataReport.modeAggregate")
-            }}</el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <template v-if="form.mode === 'aggregate'">
-          <el-form-item :label="t('dataReport.groupBy')">
-            <el-select v-model="form.group_by" class="w-full" filterable>
-              <el-option
-                v-for="f in selectedDataset?.columns ?? []"
-                :key="f"
-                :value="f"
-                :label="f"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item :label="t('dataReport.metric')">
-            <el-select v-model="form.metric" class="w-full">
-              <el-option value="count" :label="t('dataReport.metricCount')" />
-              <el-option value="sum" :label="t('dataReport.metricSum')" />
-              <el-option value="avg" :label="t('dataReport.metricAvg')" />
-            </el-select>
-          </el-form-item>
-          <el-form-item :label="t('dataReport.dateTrunc')">
-            <el-select v-model="form.date_trunc" class="w-full" clearable>
-              <el-option value="day" :label="t('dataReport.byDay')" />
-              <el-option value="month" :label="t('dataReport.byMonth')" />
-            </el-select>
-          </el-form-item>
-        </template>
-        <el-form-item :label="t('dataReport.frequency')">
-          <el-radio-group v-model="form.frequency">
-            <el-radio value="daily">{{ t("dataReport.daily") }}</el-radio>
-            <el-radio value="weekly">{{ t("dataReport.weekly") }}</el-radio>
-            <el-radio value="monthly">{{ t("dataReport.monthly") }}</el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item :label="t('dataReport.sendTime')">
-          <el-input
-            v-model="form.send_time"
-            class="w-32!"
-            placeholder="08:00"
-          />
-          <el-select
-            v-if="form.frequency === 'weekly'"
-            v-model="form.weekday"
-            class="ml-2 w-32"
-          >
-            <el-option
-              v-for="(label, index) in [
-                '周一',
-                '周二',
-                '周三',
-                '周四',
-                '周五',
-                '周六',
-                '周日'
-              ]"
-              :key="index"
-              :value="index"
-              :label="label"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item :label="t('dataReport.recipients')" required>
-          <el-input
-            v-model="form.recipients"
-            :placeholder="t('dataReport.recipientsHint')"
-          />
-        </el-form-item>
-        <el-form-item :label="t('dataReport.isActive')">
-          <el-switch v-model="form.is_active" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialog = false">{{
-          t("dataReport.cancel")
-        }}</el-button>
-        <el-button type="primary" @click="submit">{{
-          t("dataReport.confirm")
-        }}</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
