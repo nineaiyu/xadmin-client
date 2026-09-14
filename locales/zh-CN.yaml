@@ -88,6 +88,7 @@ layout:
   cleanOut: 清空缓存并返回登录页
   noticeTime: YYYY年MM月DD日 HH:mm:ss
   backTop: 回到顶部
+  skipToContent: 跳到主内容
   updateCheck: 检测到新版本
   updateNow: 立即更新
   clearCache: 清空缓存

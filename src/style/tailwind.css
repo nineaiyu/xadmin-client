@@ -5,10 +5,24 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
+  /* Element Plus 语义令牌 → Tailwind 工具类（T5）：用 token 而非任意值写法
+     （如 text-text_color_secondary / bg-fill_color-light / border-border_color），
+     明暗主题随 EP 变量自动切换 */
   --color-bg_color: var(--el-bg-color);
+  --color-bg_color_page: var(--el-bg-color-page);
   --color-primary: var(--el-color-primary);
+  --color-success: var(--el-color-success);
+  --color-warning: var(--el-color-warning);
+  --color-danger: var(--el-color-danger);
+  --color-info: var(--el-color-info);
   --color-text_color_primary: var(--el-text-color-primary);
   --color-text_color_regular: var(--el-text-color-regular);
+  --color-text_color_secondary: var(--el-text-color-secondary);
+  --color-text_color_placeholder: var(--el-text-color-placeholder);
+  --color-border_color: var(--el-border-color);
+  --color-border_color_light: var(--el-border-color-light);
+  --color-fill_color: var(--el-fill-color);
+  --color-fill_color_light: var(--el-fill-color-light);
 }
 
 /*

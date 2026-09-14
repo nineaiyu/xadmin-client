@@ -170,7 +170,7 @@ Object.keys(devDependencies).forEach(key => {
 }
 
 .main-content {
-  margin: 0 !important;
+  --main-content-margin: 0;
 }
 
 :deep(.el-descriptions__header) {

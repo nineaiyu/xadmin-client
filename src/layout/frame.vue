@@ -116,6 +116,6 @@ onMounted(() => {
 }
 
 .main-content {
-  margin: 2px 0 0 !important;
+  --main-content-margin: 2px 0 0;
 }
 </style>

@@ -283,6 +283,6 @@ let curWeek = ref(1);
 }
 
 .main-content {
-  margin: 20px 20px 0 !important;
+  --main-content-margin: 20px 20px 0;
 }
 </style>

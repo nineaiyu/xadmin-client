@@ -320,6 +320,6 @@ defineExpose({
 
 <style lang="scss" scoped>
 .main-content {
-  margin: 24px 24px 0 !important;
+  --main-content-margin: 24px 24px 0;
 }
 </style>

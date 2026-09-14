@@ -74,6 +74,16 @@ const getSectionStyle = computed(() => {
   ];
 });
 
+/** 跳转主内容（R5）：编程聚焦 + tabindex=-1（非交互容器可聚焦）；
+ *  不用锚点默认跳转——hash 路由下会把 location.hash 改写成 #main-content 造成路由错乱 */
+const focusMainContent = () => {
+  const main = document.getElementById("main-content");
+  if (!main) return;
+  if (!main.hasAttribute("tabindex")) main.setAttribute("tabindex", "-1");
+  main.focus();
+  main.scrollIntoView({ block: "start" });
+};
+
 const transitionMain = defineComponent({
   props: {
     route: {
@@ -112,6 +122,10 @@ const transitionMain = defineComponent({
     :class="[fixedHeader ? 'app-main' : 'app-main-nofixed-header']"
     :style="getSectionStyle"
   >
+    <!-- 跳转主内容（R5）：仅键盘聚焦时可见；@click.prevent 避免 hash 路由被锚点改写 -->
+    <a class="skip-link" href="#main-content" @click.prevent="focusMainContent">
+      {{ t("layout.skipToContent") }}
+    </a>
     <router-view>
       <template #default="{ Component, route }">
         <LayFrame :currComp="Component" :currRoute="route">
@@ -138,7 +152,7 @@ const transitionMain = defineComponent({
               >
                 <BackTopIcon />
               </el-backtop>
-              <div class="grow">
+              <div id="main-content" class="grow" role="main">
                 <transitionMain :route="route">
                   <keep-alive
                     v-if="isKeepAlive"
@@ -162,7 +176,7 @@ const transitionMain = defineComponent({
               </div>
               <LayFooter v-if="!hideFooter" />
             </el-scrollbar>
-            <div v-else class="grow">
+            <div v-else id="main-content" class="grow" role="main">
               <transitionMain :route="route">
                 <keep-alive
                   v-if="isKeepAlive"
@@ -191,6 +205,15 @@ const transitionMain = defineComponent({
 
     <!-- 页脚 -->
     <LayFooter v-if="!hideFooter && !fixedHeader" />
+
+    <!-- 读屏播报区（R5）：异步操作结果经 utils/announcer 写入此处 -->
+    <div
+      id="a11y-live"
+      class="sr-only"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    />
   </section>
 </template>
 
@@ -202,6 +225,25 @@ const transitionMain = defineComponent({
   overflow-x: hidden;
 }
 
+.skip-link {
+  position: fixed;
+  top: -100px;
+  left: 12px;
+  z-index: var(--pure-z-index-layout);
+  padding: 8px 14px;
+  font-size: 14px;
+  color: #fff;
+  background-color: var(--el-color-primary);
+  border-radius: 0 0 6px 6px;
+  transition: top 0.2s ease-in-out;
+}
+
+/* 仅键盘聚焦时滑入可视区（display/visibility 隐藏会导致不可聚焦） */
+.skip-link:focus,
+.skip-link:focus-visible {
+  top: 0;
+}
+
 .app-main-nofixed-header {
   position: relative;
   display: flex;
@@ -210,6 +252,8 @@ const transitionMain = defineComponent({
 }
 
 .main-content {
-  margin: 24px;
+  /* 页面外边距单点提供（T1）：页面通过覆盖 --main-content-margin 调整，
+     不再各自 !important 互搏；缺省 24px 与原行为一致 */
+  margin: var(--main-content-margin, 24px);
 }
 </style>

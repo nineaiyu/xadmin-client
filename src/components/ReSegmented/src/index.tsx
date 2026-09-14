@@ -1,6 +1,7 @@
 import "./index.css";
 import type { OptionsType } from "./type";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import { Z_INDEX } from "@/utils/zIndex";
 import {
   isFunction,
   isNumber,
@@ -68,15 +69,18 @@ export default defineComponent({
     const curMouseActive = ref(-1);
     const segmentedItembg = ref("");
     const instance = getCurrentInstance()!;
+    // 每个实例独立的 radio 组名：避免页面多个 ReSegmented 的选项互相串组
+    const radioName = `pure-segmented-${instance.uid}`;
     const curIndex = isNumber(props.modelValue)
       ? toRef(props, "modelValue")
       : isNumber(props.defaultValue)
         ? ref(computed(() => props.defaultValue))
         : ref(0);
 
-    function handleChange({ option, index }, event: Event) {
+    function handleChange({ option, index }) {
       if (props.disabled || option.disabled) return;
-      event.preventDefault();
+      // 不再阻止默认行为：选中语义交由原生 radio 维护（键盘方向键/读屏可用），
+      // 组件视觉选中态仍由 curIndex 驱动
       if (isNumber(props.modelValue)) {
         emit("update:modelValue", index);
       }
@@ -165,14 +169,25 @@ export default defineComponent({
             }}
             onMouseenter={event => handleMouseenter({ option, index }, event)}
             onMouseleave={event => handleMouseleave({ option, index }, event)}
-            onClick={event => handleChange({ option, index }, event)}
           >
-            <input type="radio" name="segmented" />
+            {/* 键盘/读屏可用：native radio 携带组名、选中态与禁用态，
+                由 change 事件统一处理（点击 label 会由浏览器转发到本 input） */}
+            <input
+              type="radio"
+              name={radioName}
+              value={String(index)}
+              checked={curIndex.value === index}
+              disabled={props.disabled || !!option?.disabled}
+              aria-label={
+                typeof option.label === "string" ? option.label : undefined
+              }
+              onChange={() => handleChange({ option, index })}
+            />
             <div
               class="pure-segmented-item-label"
               v-tippy={{
                 content: option?.tip,
-                zIndex: 41000
+                zIndex: Z_INDEX.tippy
               }}
             >
               {option.icon && !isFunction(option.label) ? (

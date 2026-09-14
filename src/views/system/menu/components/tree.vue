@@ -165,6 +165,7 @@ const {
             :icon="More2Fill"
             class="w-7 cursor-pointer"
             width="18px"
+            :aria-label="t('layout.more')"
           />
           <template #dropdown>
             <el-dropdown-menu>
@@ -337,7 +338,11 @@ const {
               <IconifyIconOffline
                 :icon="MenuAdd"
                 class="set-icon"
-                style="width: 26px; height: 20px; color: #0004fc"
+                style="
+                  width: 26px;
+                  height: 20px;
+                  color: var(--el-color-primary);
+                "
                 @click.stop="emit('handleAddPermissions', data)"
               />
             </el-tooltip>
@@ -359,15 +364,16 @@ const {
   line-height: 30px;
 }
 
+/* 语义变量替代硬编码色（R7）：明暗主题自适应且保证对比度 */
 :deep(.is-penultimate > .el-tree-node__content) {
-  color: #626aef;
+  color: var(--el-color-primary);
 }
 
 :deep(.is-permission > .el-tree-node__content) {
-  color: #15a307;
+  color: var(--el-color-success);
 }
 
 :deep(.is-disabled > .el-tree-node__content) {
-  color: #fc0101;
+  color: var(--el-color-danger);
 }
 </style>

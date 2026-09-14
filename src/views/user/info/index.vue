@@ -142,11 +142,7 @@ const genderInfo = computed<ChoicesLabel | undefined>(() =>
 </template>
 
 <style lang="scss" scoped>
-:deep(.el-button:focus-visible) {
-  outline: none;
-}
-
 .main-content {
-  margin: 20px 20px 0 !important;
+  --main-content-margin: 20px 20px 0;
 }
 </style>

@@ -222,6 +222,12 @@ export const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
   } else {
     numberWidth = Number(width.replace("px", ""));
   }
+  // 小屏回退：视口不足 minWidth（含两侧留白）时按 90vw 展示，避免弹窗横向溢出、
+  // 关闭按钮不可点；移动端仍由 fullscreen 覆盖（见下方 fullscreen 配置）
+  const isNarrowScreen = clientWidth < minWidth + 32;
+  const finalWidth = isNarrowScreen
+    ? Math.max(Math.round(clientWidth * 0.9), 320)
+    : Math.max(minWidth, numberWidth);
   const func = modeFuncMap[formOptions.mode ?? "dialog"] ?? addDialog;
   func({
     title: formOptions.title,
@@ -302,8 +308,8 @@ export const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
       });
     },
     ...formOptions?.dialogDrawerOptions,
-    width: `${minWidth > numberWidth ? minWidth : numberWidth}px`,
-    size: `${minWidth > numberWidth ? minWidth : numberWidth}`,
+    width: `${finalWidth}px`,
+    size: `${finalWidth}`,
     onChange(data) {
       // 内容组件 change 透传：AddOrEdit 载荷为 { values, column }
       const payload = data?.values as

@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 // 系统设置面板：导航模式（垂直/水平/混合）设置区块
 import { ref, unref, watch, type Ref } from "vue";
+import { Z_INDEX } from "@/utils/zIndex";
 import { debounce, useGlobal } from "@pureadmin/utils";
 import { useNav } from "@/layout/hooks/useNav";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
@@ -52,7 +53,7 @@ watch($storage, ({ layout }) => {
       ref="verticalRef"
       v-tippy="{
         content: t('layout.leftMode'),
-        zIndex: 41000
+        zIndex: Z_INDEX.tippy
       }"
       :class="layoutTheme.layout === 'vertical' ? 'is-select' : ''"
       @click="setMenuLayout('vertical')"
@@ -65,7 +66,7 @@ watch($storage, ({ layout }) => {
       ref="horizontalRef"
       v-tippy="{
         content: t('layout.topMode'),
-        zIndex: 41000
+        zIndex: Z_INDEX.tippy
       }"
       :class="layoutTheme.layout === 'horizontal' ? 'is-select' : ''"
       @click="setMenuLayout('horizontal')"
@@ -78,7 +79,7 @@ watch($storage, ({ layout }) => {
       ref="mixRef"
       v-tippy="{
         content: t('layout.mixedMode'),
-        zIndex: 41000
+        zIndex: Z_INDEX.tippy
       }"
       :class="layoutTheme.layout === 'mix' ? 'is-select' : ''"
       @click="setMenuLayout('mix')"

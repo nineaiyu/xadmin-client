@@ -57,3 +57,18 @@
 | color-contrast | `.el-table__empty-text`             | EP 空表格占位文字对比度不足（主题级）             | 全局主题色/空态样式修复后           |
 | color-contrast | `.el-alert__title`                  | info alert 标题对比度不足（主题级）               | 同上                                |
 | svg-img-alt    | `.iconify--*`（无 role="img" 形态） | Iconify 图标族无 alt（`--ri` 等变体无 role 属性） | 图标渲染层统一补 aria-hidden/alt 后 |
+
+## 2026-09-14 治理批次（a11y 三件套 R1/R2/R4/R6 + 登录页对比度复核）
+
+| 项                      | 变更                                                                                                                                                                                                                                                       | 状态                                        |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| R1 ReSegmented          | 渲染原生 radio（实例唯一组名 / `checked` 同步 / change 统一处理 / 选项文案作可访问名），补 `:focus-visible` 焦点环；守护测试 `segmented.spec.ts`                                                                                                           | ✅ 已修复                                   |
+| R2 工具栏可访问名       | `RePureTableBar` 刷新/密度/列设置/全屏/展开折叠/左右固定列图标补 `aria-label`（i18n）；部门树/菜单树/角色表单「更多」下拉、`ButtonOperation`「更多」按钮补 `aria-label`                                                                                    | ✅ 已修复                                   |
+| R4 焦点环恢复           | 删除 `reset.scss` 全局 `outline:none`（a/div）、EP 关闭按钮/消息关闭、侧栏图标、登录页 select 的 outline 抹除；新增全局 `:focus-visible` 主题环（`:where()` 降特异性，组件样式可覆盖）                                                                     | ✅ 已修复                                   |
+| R6 Iconify 渲染层       | 装饰性图标默认 `aria-hidden="true"`；图标承担交互语义时（EP dropdown 注入 role/tabindex/aria-*）自动恢复可访问，规避 `aria-hidden-focus`                                                                                                                   | ✅ 已修复                                   |
+| T4 z-index 阶梯         | 设置面板 40000/20000 → `--pure-z-index-setting-panel/mask`（1010/1005，低于 EP 弹层）；v-tippy 统一 9999（`utils/zIndex.ts` 与 `style/index.scss` 同源）                                                                                                   | ✅ 已修复                                   |
+| color-contrast 形态补充 | 登录页「忘记密码」（`.is-link > span`）/「登录」按钮（`.el-button--primary…`）/`el-divider__text`：**稳定采样（异步渲染 + 入场动画终态后）必现**的主题级对比度项；2026-09-14 以干净基线（HEAD + 相同等待）复核确认与本次改动无关（原用例采样窗口恰好躲开） | ⚠️ 豁免补充并登记，待全局主题色决策后统一修 |
+
+> 豁免消化进度（待办 #5）：`svg-img-alt` 与 `button-name` 仍有机命中（EP dropdown 动态
+> id 关联缺失、`[role="img"]` 形态），摘除条件不变；`color-contrast` 新增形态属同一
+> 主题级问题（换全局主题色时一并摘除）。

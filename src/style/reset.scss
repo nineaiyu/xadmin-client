@@ -174,7 +174,8 @@ textarea {
 
 input::placeholder,
 textarea::placeholder {
-  color: #9ca3af;
+  /* 语义变量自适应明暗主题（原硬编码 #9ca3af 在暗色下不可辨，且对比度约 2.6:1） */
+  color: var(--el-text-color-secondary);
   opacity: 1;
 }
 
@@ -221,11 +222,6 @@ label {
   box-sizing: inherit;
 }
 
-a:focus,
-a:active {
-  outline: none;
-}
-
 a,
 a:focus,
 a:hover {
@@ -234,8 +230,20 @@ a:hover {
   cursor: pointer;
 }
 
-div:focus {
-  outline: none;
+/* 键盘焦点可见（a11y）：历史全局 outline:none 会让键盘用户无法定位焦点，
+   这里仅对键盘导航（:focus-visible）提供主题化焦点环；:where() 将特异性降为 0，
+   组件/页面仍可用更高特异性覆盖自己的焦点样式 */
+:where(
+  a,
+  button,
+  [role="button"],
+  input,
+  select,
+  textarea,
+  [tabindex]
+):focus-visible {
+  outline: 2px solid var(--el-color-primary);
+  outline-offset: 2px;
 }
 
 .clearfix {

@@ -67,6 +67,7 @@ layout:
   more: More
   fold: Fold
   unfold: Unfold
+  skipToContent: Skip to main content
   searchPlaceholder: Search menu (Pinyin search is supported)
   theme: Theme Mode
   menuLayout: Menu Layout

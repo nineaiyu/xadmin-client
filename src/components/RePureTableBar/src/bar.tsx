@@ -333,6 +333,9 @@ export default defineComponent({
         <SettingIcon
           class={["w-4", iconClass.value]}
           v-tippy={rendTippyProps(t("tableBar.columnSettings"))}
+          // a11y：图标按钮需可访问名；显式 aria-hidden=false 保证名称生效
+          aria-label={t("tableBar.columnSettings")}
+          aria-hidden={false}
         />
       )
     };
@@ -362,6 +365,12 @@ export default defineComponent({
                         ? t("tableBar.fold")
                         : t("tableBar.unfold")
                     )}
+                    aria-label={
+                      isExpandAll.value
+                        ? t("tableBar.fold")
+                        : t("tableBar.unfold")
+                    }
+                    aria-hidden={false}
                     onClick={() => onExpand()}
                   />
                   <el-divider direction="vertical" />
@@ -374,6 +383,8 @@ export default defineComponent({
                   loading.value ? "animate-spin" : ""
                 ]}
                 v-tippy={rendTippyProps(t("tableBar.refresh"))}
+                aria-label={t("tableBar.refresh")}
+                aria-hidden={false}
                 onClick={() => onReFresh()}
               />
               <el-divider direction="vertical" />
@@ -382,7 +393,11 @@ export default defineComponent({
                 trigger="click"
                 v-tippy={rendTippyProps(t("tableBar.density"))}
               >
-                <CollapseIcon class={["w-4", iconClass.value]} />
+                <CollapseIcon
+                  class={["w-4", iconClass.value]}
+                  aria-label={t("tableBar.density")}
+                  aria-hidden={false}
+                />
               </el-dropdown>
               <el-divider direction="vertical" />
 
@@ -460,6 +475,12 @@ export default defineComponent({
                                     ? transformI18n($t("tableBar.unpin"))
                                     : transformI18n($t("tableBar.pinLeft"))
                                 }
+                                aria-label={
+                                  left
+                                    ? transformI18n($t("tableBar.unpin"))
+                                    : transformI18n($t("tableBar.pinLeft"))
+                                }
+                                aria-hidden={false}
                                 onClick={() =>
                                   handleToggleColumnFixed(
                                     left ? false : "left",
@@ -482,6 +503,12 @@ export default defineComponent({
                                     ? transformI18n($t("tableBar.unpin"))
                                     : transformI18n($t("tableBar.pinRight"))
                                 }
+                                aria-label={
+                                  right
+                                    ? transformI18n($t("tableBar.unpin"))
+                                    : transformI18n($t("tableBar.pinRight"))
+                                }
+                                aria-hidden={false}
                                 onClick={() =>
                                   handleToggleColumnFixed(
                                     right ? false : "right",
@@ -507,6 +534,12 @@ export default defineComponent({
                     ? t("tableBar.exitFullscreen")
                     : t("tableBar.fullscreen")
                 }
+                aria-label={
+                  isFullscreen.value
+                    ? t("tableBar.exitFullscreen")
+                    : t("tableBar.fullscreen")
+                }
+                aria-hidden={false}
                 onClick={() => onFullscreen()}
               />
             </div>

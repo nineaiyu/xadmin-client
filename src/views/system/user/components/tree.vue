@@ -144,7 +144,11 @@ defineExpose({ onTreeReset });
         </template>
       </el-input>
       <el-dropdown :hide-on-click="false">
-        <IconifyIconOffline :icon="More2Fill" class="w-7 cursor-pointer" />
+        <IconifyIconOffline
+          :icon="More2Fill"
+          class="w-7 cursor-pointer"
+          :aria-label="t('layout.more')"
+        />
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item>

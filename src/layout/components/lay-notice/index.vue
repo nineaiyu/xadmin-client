@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
 import { computed, onMounted, ref } from "vue";
 import NoticeList from "./components/noticeList.vue";
 import BellIcon from "~icons/lucide/bell";
@@ -44,7 +45,7 @@ const activeKey = ref();
 
 const getNoticeData = () => {
   userNoticeReadApi.unread().then(res => {
-    if (res.code === 1000 && res.data) {
+    if (res.code === SUCCESS_CODE && res.data) {
       useUserStoreHook().SET_NOTICECOUNT(res.data.total);
       notices.value = res.data.results;
       if (notices.value.length > 0) {

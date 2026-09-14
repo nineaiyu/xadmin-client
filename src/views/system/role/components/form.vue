@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { SUCCESS_CODE } from "@/api/types";
 import {
   computed,
   getCurrentInstance,
@@ -127,7 +128,7 @@ const getCheckedMenu = pk => {
   if (pk && props.auth.retrieve) {
     loading.value = true;
     props.api.retrieve(pk).then(({ code, data }) => {
-      if (code === 1000) {
+      if (code === SUCCESS_CODE) {
         formData.value.menu = getKeyList(data?.menu ?? [], "pk");
         Object.keys(data?.field).forEach(key => {
           data?.field[key].forEach(val => {
@@ -222,6 +223,7 @@ function onReset() {
         :icon="More2Fill"
         class="w-7 cursor-pointer"
         width="18px"
+        :aria-label="t('layout.more')"
       />
       <template #dropdown>
         <el-dropdown-menu>
@@ -360,12 +362,13 @@ function onReset() {
   line-height: 30px;
 }
 
+/* 语义变量替代硬编码色（R7）：明暗主题自适应且保证对比度 */
 :deep(.is-penultimate > .el-tree-node__content) {
-  color: #626aef;
+  color: var(--el-color-primary);
 }
 
 :deep(.is-permission > .el-tree-node__content) {
-  color: #15a307;
+  color: var(--el-color-success);
 }
 
 :deep(.el-tree__empty-text) {

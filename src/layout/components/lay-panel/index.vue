@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { emitter } from "@/utils/mitt";
+import { Z_INDEX } from "@/utils/zIndex";
 import { onClickOutside } from "@vueuse/core";
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
@@ -68,7 +69,7 @@ onBeforeUnmount(() => {
           v-tippy="{
             content: t('buttons.close'),
             placement: 'bottom-start',
-            zIndex: 41000
+            zIndex: Z_INDEX.tippy
           }"
           :class="iconClass"
         >
@@ -94,7 +95,7 @@ onBeforeUnmount(() => {
           v-tippy="{
             content: t('layout.saveConfigTip'),
             placement: 'top-start',
-            zIndex: 41000
+            zIndex: Z_INDEX.tippy
           }"
           bg
           text
@@ -107,7 +108,7 @@ onBeforeUnmount(() => {
           v-tippy="{
             content: t('layout.resetConfigTip'),
             placement: 'top-start',
-            zIndex: 41000
+            zIndex: Z_INDEX.tippy
           }"
           bg
           text
@@ -120,7 +121,7 @@ onBeforeUnmount(() => {
           v-tippy="{
             content: t('layout.cleanOut'),
             placement: 'top-start',
-            zIndex: 41000
+            zIndex: Z_INDEX.tippy
           }"
           bg
           text
@@ -149,7 +150,9 @@ onBeforeUnmount(() => {
   position: fixed;
   top: 0;
   right: 0;
-  z-index: 40000;
+
+  /* z-index 阶梯（T4）：面板必须低于 EP 弹层（2000 起），避免遮挡 dialog/confirm */
+  z-index: var(--pure-z-index-setting-panel);
   width: 100%;
   max-width: 280px;
   box-shadow: 0 0 15px 0 rgb(0 0 0 / 5%);
@@ -161,7 +164,7 @@ onBeforeUnmount(() => {
   transition: all 0.3s cubic-bezier(0.7, 0.3, 0.1, 1);
 
   .right-panel-background {
-    z-index: 20000;
+    z-index: var(--pure-z-index-setting-mask);
     width: 100%;
     height: 100%;
     opacity: 1;

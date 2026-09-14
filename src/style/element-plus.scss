@@ -12,7 +12,8 @@
 }
 
 .is-dark {
-  z-index: 9999 !important;
+  /* 暗色 tooltip（v-tippy 独立 popper 引擎）：必须高于 EP 弹层，取值见 z-index 阶梯 */
+  z-index: var(--pure-z-index-tippy) !important;
 }
 
 /* 重置 el-button 中 icon 的 margin */
@@ -83,7 +84,8 @@
   .el-upload-list__item.is-ready &.el-icon--close {
     width: 24px;
     height: 24px;
-    outline: none;
+
+    /* 不抹除焦点环：键盘用户需要看到关闭按钮的焦点位置（a11y） */
     border-radius: 4px;
     transition:
       background-color 0.2s,
@@ -117,7 +119,6 @@
   }
 
   & .el-message__closeBtn {
-    outline: none;
     border-radius: 4px;
     transition:
       background-color 0.2s,

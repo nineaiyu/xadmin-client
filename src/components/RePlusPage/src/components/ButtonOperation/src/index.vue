@@ -14,6 +14,7 @@
       class="ml-3! mt-0.5"
       link
       type="primary"
+      :aria-label="t('layout.more')"
     />
 
     <!-- 下拉按钮 -->
@@ -33,6 +34,7 @@
 <script lang="ts" setup>
 import type { Component, VNode, Ref, ComputedRef } from "vue";
 import { h, unref, computed, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { ElPopconfirm, ElTooltip } from "element-plus";
 import {
   ElButton,
@@ -52,6 +54,9 @@ const emit = defineEmits<OperationEmits>();
 defineOptions({
   name: "ButtonOperation"
 });
+
+// 「更多」下拉按钮（icon-only）的可访问名（a11y）
+const { t } = useI18n();
 
 const props = withDefaults(defineProps<OperationProps>(), {
   text: undefined,

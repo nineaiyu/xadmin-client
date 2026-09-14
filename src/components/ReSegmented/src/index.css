@@ -145,6 +145,13 @@
   pointer-events: none;
 }
 
+/* 键盘焦点可见（a11y）：input 视觉隐藏，焦点环透传到相邻 label 容器 */
+.pure-segmented-item > input:focus-visible + .pure-segmented-item-label {
+  outline: 2px solid var(--el-color-primary);
+  outline-offset: -2px;
+  border-radius: var(--el-border-radius-base);
+}
+
 .pure-segmented-item-label {
   display: flex;
   align-items: center;
