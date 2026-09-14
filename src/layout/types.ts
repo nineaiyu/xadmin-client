@@ -26,6 +26,10 @@ export type routeMetaType = {
   hiddenTag?: boolean;
   /** 动态路由可打开的最大数量 */
   dynamicLevel?: number;
+  /** 固定标签页：不可关闭（标签操作按此禁用） */
+  fixedTag?: boolean;
+  /** iframe 内嵌页面地址（lay-frame 多标签缓存按此识别） */
+  frameSrc?: string;
 };
 
 export type RouteConfigs = {

@@ -14,8 +14,8 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
   }),
   actions: {
     setSiteConfig(config: PlatformConfigs) {
-      Object.keys(config).forEach(key => {
-        Storage.set(`${this.nameSpace}${key}`, config[key]);
+      Object.entries(config).forEach(([key, value]) => {
+        Storage.set(`${this.nameSpace}${key}`, value);
       });
     },
     async resetSiteConfig() {

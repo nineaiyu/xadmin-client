@@ -130,7 +130,7 @@ export function useTagActions(ctx: TagActionsContext) {
           [
             VITE_HIDE_HOME === "false" ? fixedTags : toRaw(getTopMenu()),
             obj
-          ].flat()
+          ].flat() as RouteConfigs[]
         );
       } else {
         useMultiTagsStoreHook().handleTags("splice", "", {

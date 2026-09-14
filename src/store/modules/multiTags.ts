@@ -5,7 +5,6 @@ import {
   store,
   isUrl,
   isEqual,
-  isNumber,
   isBoolean,
   getConfig,
   routerArrays,
@@ -28,7 +27,7 @@ function scheduleTagsCache(multiTags: RouteConfigs[]) {
 export const useMultiTagsStore = defineStore("pure-multiTags", {
   state: () => ({
     // 存储标签页信息（路由信息）
-    multiTags: storageLocal().getItem<StorageConfigs>(
+    multiTags: (storageLocal().getItem<StorageConfigs>(
       `${responsiveStorageNameSpace()}configure`
     )?.multiTagsCache
       ? (storageLocal().getItem<RouteConfigs[]>(
@@ -39,7 +38,7 @@ export const useMultiTagsStore = defineStore("pure-multiTags", {
           ...usePermissionStoreHook().flatteningRoutes.filter(
             v => v?.meta?.fixedTag
           )
-        ],
+        ]) as RouteConfigs[],
     multiTagsCache: storageLocal().getItem<StorageConfigs>(
       `${responsiveStorageNameSpace()}configure`
     )?.multiTagsCache
@@ -61,7 +60,7 @@ export const useMultiTagsStore = defineStore("pure-multiTags", {
         storageLocal().removeItem(`${responsiveStorageNameSpace()}tags`);
       }
     },
-    tagsCache(multiTags) {
+    tagsCache(multiTags: RouteConfigs[]) {
       if (this.getMultiTagsCache) {
         // 防抖写盘：标签增删很频繁，逐次同步序列化整个标签数组会阻塞主线程
         scheduleTagsCache(multiTags);
@@ -71,13 +70,13 @@ export const useMultiTagsStore = defineStore("pure-multiTags", {
       mode: string,
       value?: RouteConfigs | RouteConfigs[] | string,
       position?: positionType
-    ): RouteConfigs[] {
+    ): RouteConfigs[] | undefined {
       switch (mode) {
         case "equal":
           if (Array.isArray(value)) {
             this.multiTags = value;
           } else if (value) {
-            this.multiTags = [value];
+            this.multiTags = [value as RouteConfigs];
           }
           this.tagsCache(this.multiTags);
           break;
@@ -87,7 +86,7 @@ export const useMultiTagsStore = defineStore("pure-multiTags", {
             // 不添加到标签页
             if (tagVal?.meta?.hiddenTag) return;
             // 如果是外链无需添加信息到标签页
-            if (isUrl(tagVal?.name)) return;
+            if (isUrl(tagVal?.name ?? "")) return;
             // 如果title为空拒绝添加空信息到标签页
             if (tagVal?.meta?.title?.length === 0) return;
             // showLink:false 不添加到标签页
@@ -122,13 +121,12 @@ export const useMultiTagsStore = defineStore("pure-multiTags", {
             }
             this.multiTags.push(tagVal);
             this.tagsCache(this.multiTags);
+            const maxTagsLevel = getConfig()?.MaxTagsLevel;
             if (
-              getConfig()?.MaxTagsLevel &&
-              isNumber(getConfig().MaxTagsLevel)
+              typeof maxTagsLevel === "number" &&
+              this.multiTags.length > maxTagsLevel
             ) {
-              if (this.multiTags.length > getConfig().MaxTagsLevel) {
-                this.multiTags.splice(1, 1);
-              }
+              this.multiTags.splice(1, 1);
             }
           }
           break;
@@ -138,7 +136,7 @@ export const useMultiTagsStore = defineStore("pure-multiTags", {
             if (index === -1) return;
             this.multiTags.splice(index, 1);
           } else {
-            this.multiTags.splice(position?.startIndex, position?.length);
+            this.multiTags.splice(position.startIndex ?? 0, position.length);
           }
           this.tagsCache(this.multiTags);
           return this.multiTags;

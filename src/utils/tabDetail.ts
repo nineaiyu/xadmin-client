@@ -29,9 +29,10 @@ export function useTabDetail() {
         parameter[param] = value.toString();
       }
     });
-    // store 的 flatteningRoutes 初始值为 []（无显式标注 → never[]），此处按路由记录数组收窄
+    // store 的路由数组元素为项目自定义 RouteConfigs（meta 含 fixedTag 等扩展字段），
+    // 与 vue-router 的 RouteRecordRaw 联合类型在类型层不可直接断言，边界处显式收窄
     const pushRoute = (
-      usePermissionStoreHook().flatteningRoutes as RouteRecordRaw[]
+      usePermissionStoreHook().flatteningRoutes as unknown as RouteRecordRaw[]
     ).find(item => item.name === name);
 
     if (!pushRoute?.path) {

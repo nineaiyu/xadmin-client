@@ -7,7 +7,7 @@
 // 再扩白名单（扩之前需先把该目录的 strict 错误清零）。
 import { spawnSync } from "node:child_process";
 
-const TARGET_DIRS = ["src/api/", "src/utils/"];
+const TARGET_DIRS = ["src/api/", "src/store/", "src/utils/"];
 
 const result = spawnSync(
   "npx vue-tsc --noEmit --skipLibCheck -p tsconfig.strict.json",

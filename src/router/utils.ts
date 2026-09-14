@@ -18,7 +18,7 @@ import {
 } from "@pureadmin/utils";
 import { getConfig } from "@/config";
 import { buildHierarchyTree } from "@/utils/tree";
-import { type menuType, routerArrays } from "@/layout/types";
+import { type menuType, type RouteConfigs, routerArrays } from "@/layout/types";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 // 动态路由
@@ -201,7 +201,7 @@ function handleAsyncRoutes(routeList, authList) {
       ...usePermissionStoreHook().flatteningRoutes.filter(
         v => v?.meta?.fixedTag
       )
-    ]);
+    ] as RouteConfigs[]);
   }
   addPathMatch();
 }

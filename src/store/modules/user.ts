@@ -140,13 +140,20 @@ export const useUserStore = defineStore("pure-user", {
       this.noticeCount = Number(value);
     },
     INCR_NOTICECOUNT(value: number = 1) {
-      this.noticeCount += Number(value);
+      this.noticeCount = (this.noticeCount ?? 0) + Number(value);
     },
     /** 登入 */
-    async loginByUsername(data, encrypted) {
+    async loginByUsername(data: Record<string, unknown>, encrypted?: boolean) {
       if (encrypted) {
-        data["password"] = await AesEncrypted(data["token"], data["password"]);
-        data["username"] = await AesEncrypted(data["token"], data["username"]);
+        // 加密入参先按字符串归一（表单值类型在运行期为 string）
+        data["password"] = await AesEncrypted(
+          String(data["token"] ?? ""),
+          String(data["password"] ?? "")
+        );
+        data["username"] = await AesEncrypted(
+          String(data["token"] ?? ""),
+          String(data["username"] ?? "")
+        );
       }
       return new Promise<LoginResult>((resolve, reject) => {
         loginBasicApi(data)
@@ -188,7 +195,7 @@ export const useUserStore = defineStore("pure-user", {
       });
     },
     /** 注册 */
-    async registerByUsername(data) {
+    async registerByUsername(data: Record<string, unknown>) {
       return new Promise<TokenResult>((resolve, reject) => {
         registerApi(data)
           .then(res => {
@@ -227,7 +234,7 @@ export const useUserStore = defineStore("pure-user", {
         });
     },
     /** 刷新`token` */
-    async handRefreshToken(data) {
+    async handRefreshToken(data: { refresh: string }) {
       return new Promise<TokenResult>((resolve, reject) => {
         refreshTokenApi(data)
           .then(res => {
@@ -275,9 +282,10 @@ export const useUserStore = defineStore("pure-user", {
           switch (data?.message_type) {
             case "notify_message":
               if (data?.notice_type?.value === 0) {
+                // 统一按字符串测试（RegExp.test 本身会 ToString；显式归一消除类型歧义）
                 const isHtml =
                   /<(?=.*? .*?\/ ?>|br|hr|input|!--|wbr)[a-z]+.*?>|<([a-z]+).*?<\/\1>/i.test(
-                    message
+                    String(message ?? "")
                   );
                 if (!isHtml) {
                   message = h("i", { style: "color: teal" }, data?.message);
@@ -342,7 +350,7 @@ export const useUserStore = defineStore("pure-user", {
       // 先关闭旧连接：重复调用 messageHandler（如重新拉取用户信息）时，
       // 避免叠加多个 WS 实例与其监听造成连接/内存泄漏
       this.websocket?.close();
-      const socket = new PureWebSocket(this.username, "xadmin", {
+      const socket = new PureWebSocket(this.username ?? "", "xadmin", {
         openCallback: () => {
           socket.onMessage(data => {
             onMessage(data);

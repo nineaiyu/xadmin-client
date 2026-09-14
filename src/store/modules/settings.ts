@@ -3,9 +3,9 @@ import { getConfig, type setType, store } from "../utils";
 
 export const useSettingStore = defineStore("pure-setting", {
   state: (): setType => ({
-    title: getConfig().Title,
-    fixedHeader: getConfig().FixedHeader,
-    hiddenSideBar: getConfig().HiddenSideBar
+    title: getConfig().Title ?? "",
+    fixedHeader: getConfig().FixedHeader ?? false,
+    hiddenSideBar: getConfig().HiddenSideBar ?? false
   }),
   getters: {
     getTitle(state) {
@@ -19,12 +19,13 @@ export const useSettingStore = defineStore("pure-setting", {
     }
   },
   actions: {
-    CHANGE_SETTING({ key, value }) {
+    CHANGE_SETTING({ key, value }: { key: string; value: unknown }) {
       if (Reflect.has(this, key)) {
-        this[key] = value;
+        // 值类型随 key 变化（title/fixedHeader/hiddenSideBar），统一按对象合并写入
+        Object.assign(this, { [key]: value });
       }
     },
-    changeSetting(data) {
+    changeSetting(data: { key: string; value: unknown }) {
       this.CHANGE_SETTING(data);
     }
   }

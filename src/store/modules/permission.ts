@@ -19,9 +19,9 @@ export const usePermissionStore = defineStore("pure-permission", {
     // 整体路由生成的菜单（静态、动态）
     wholeMenus: [],
     // 整体路由（一维数组格式）
-    flatteningRoutes: [],
-    // 缓存页面keepAlive
-    cachePageList: [],
+    flatteningRoutes: [] as RouteRecordRaw[],
+    // 缓存页面keepAlive（路由 name 归一为字符串，keep-alive include 按名称匹配）
+    cachePageList: [] as string[],
     // 全局的授权
     permissionAuths: {} as Record<string, boolean>
   }),
@@ -69,7 +69,7 @@ export const usePermissionStore = defineStore("pure-permission", {
           this.clearCache();
           break;
         case "add":
-          this.cachePageList.push(name);
+          this.cachePageList.push(String(name));
           break;
         case "delete":
           if (delIndex !== -1) {
