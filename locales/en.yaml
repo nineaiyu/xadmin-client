@@ -154,6 +154,7 @@ labels:
   offline: Offline
   yes: Yes
   no: No
+  noData: No data
 
 exportImport:
   import: Import
@@ -1666,7 +1667,7 @@ webhook:
   duration: Duration(s)
 
 ai:
-  title: AI Assistant (Usage/Development Q&A)
+  title: AI Assistant
   docsTab: Docs Q&A
   nlTab: Data Query
   nlPlaceholder: e.g. Which enabled users were created recently?
@@ -1689,6 +1690,55 @@ ai:
 
 aiConfig:
   title: AI Configuration
+  globalTitle: Global Switches
+  assistantEnabled: Enable AI assistant
+  nlQueryEnabled: Enable NL data query
+  globalSave: Save switches
+  globalSaved: Global switches saved
+  profileTitle: AI Profiles
+  profileHint: Maintain multiple profiles and activate one for all AI features; falls back to the legacy config when none is active
+  create: New Profile
+  edit: Edit
+  test: Test
+  activate: Set Default
+  deactivate: Unset Default
+  profileOn: Active
+  profileOff: Inactive
+  unset: Default
+  name: Profile Name
+  model: Model
+  baseUrl: Base URL
+  apiKey: API Key
+  apiKeyKeep: Leave blank to keep the current key
+  apiKeyHint: OpenAI-compatible key; encrypted at rest and never echoed
+  temperature: Temperature
+  maxTokens: Max Tokens
+  topP: Top P
+  frequencyPenalty: Frequency Penalty
+  presencePenalty: Presence Penalty
+  stop: Stop Sequences
+  stopHint: Comma separated, e.g. END,STOP
+  seed: Seed
+  timeout: Timeout (seconds)
+  maxRetries: Max Retries
+  contextLimit: Context Messages
+  persona: Persona
+  personaHint: System prompt for the chat assistant; blank uses the builtin default
+  isActive: Set as default
+  remark: Remark
+  sectionBasic: Connection
+  sectionSampling: Sampling
+  sectionBehavior: Behavior
+  required: Profile name, base URL and model are required
+  saveOk: Profile saved
+  deleteConfirm: Delete this profile?
+  deleteDone: Profile deleted
+  activateConfirm: Switch all AI features to this profile?
+  activateDone: Profile activated
+  deactivateConfirm: Deactivate this profile? AI will fall back to the legacy config
+  deactivateDone: Profile deactivated
+  testOk: Connected
+  actions: Actions
 
 dform:
   designerTitle: Form Design

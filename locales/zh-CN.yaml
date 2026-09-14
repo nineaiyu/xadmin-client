@@ -154,6 +154,7 @@ labels:
   offline: 下线
   yes: 是
   no: 否
+  noData: 暂无数据
 
 exportImport:
   import: 导入
@@ -1666,7 +1667,7 @@ webhook:
   duration: 耗时(秒)
 
 ai:
-  title: AI 助手（使用/二开问答）
+  title: AI 助手
   docsTab: 文档问答
   nlTab: 数据查询
   nlPlaceholder: 例如：最近创建的启用用户有哪些？
@@ -1682,13 +1683,62 @@ ai:
   goConfig: 前往配置
   disabledHint: AI 助手未启用，请到「AI 配置」开启并完成配置
   notConfiguredHint: AI 服务未配置完成，请到「AI 配置」填写接口地址、API 密钥与模型
-  emptyHint: 基于平台文档库的使用/二开问答，回答将引用文档出处
+  emptyHint: 基于平台文档库的使用，回答将引用文档出处
   sources: 出处
   askPlaceholder: 例如：数据集如何做数据权限过滤？
   ask: 提问
 
 aiConfig:
   title: AI 配置
+  globalTitle: 全局开关
+  assistantEnabled: 启用 AI 助手
+  nlQueryEnabled: 启用数据问答（NL 查数）
+  globalSave: 保存开关
+  globalSaved: 全局开关已保存
+  profileTitle: AI 配置档案
+  profileHint: 可维护多套配置并激活其中一套，供全部 AI 功能使用；未激活任何档案时回落到历史配置
+  create: 新建档案
+  edit: 编辑
+  test: 测试
+  activate: 设为默认
+  deactivate: 取消默认
+  profileOn: 使用中
+  profileOff: 未激活
+  unset: 默认
+  name: 档案名称
+  model: 模型
+  baseUrl: 接口地址
+  apiKey: API 密钥
+  apiKeyKeep: 留空表示沿用原密钥
+  apiKeyHint: OpenAI 兼容密钥，加密存储、不回显
+  temperature: 温度
+  maxTokens: 最大输出 tokens
+  topP: Top P
+  frequencyPenalty: 频率惩罚
+  presencePenalty: 存在惩罚
+  stop: 停止序列
+  stopHint: 逗号分隔，如：结束,STOP
+  seed: 随机种子
+  timeout: 超时（秒）
+  maxRetries: 重试次数
+  contextLimit: 聊天上下文条数
+  persona: 助手人设
+  personaHint: 聊天室 AI 的系统提示词，留空使用内置默认
+  isActive: 设为默认配置
+  remark: 备注
+  sectionBasic: 连接配置
+  sectionSampling: 采样参数
+  sectionBehavior: 行为参数
+  required: 请填写档案名称、接口地址与模型
+  saveOk: 档案已保存
+  deleteConfirm: 确定删除该档案吗？
+  deleteDone: 档案已删除
+  activateConfirm: 确定将 AI 全部功能切换到该档案吗？
+  activateDone: 档案已激活
+  deactivateConfirm: 确定停用该档案吗？AI 将回落到历史配置
+  deactivateDone: 档案已停用
+  testOk: 连接成功
+  actions: 操作
 
 dform:
   designerTitle: 表单设计
