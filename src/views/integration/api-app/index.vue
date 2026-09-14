@@ -1,18 +1,20 @@
 <script lang="ts" setup>
 import { SUCCESS_CODE } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
-import { computed, onMounted, reactive, ref } from "vue";
+import { h, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { addDialog } from "@/components/ReDialog";
+import { dialogSize } from "@/components/ReDialog/size";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import {
   apiApplicationApi,
   listApplicationRows,
-  parseListText,
   type ApiApplicationCredential,
   type ApiApplicationItem,
   type CallbackProbeResult
 } from "@/api/system/open";
+import ApiApplicationForm from "./components/ApiApplicationForm.vue";
 
 defineOptions({
   name: "IntegrationApiApp"
@@ -38,93 +40,54 @@ const loadAll = async () => {
   }
 };
 
-const dialog = ref(false);
-const submitLoading = ref(false);
-const editingPk = ref<string | null>(null);
-const form = reactive({
-  name: "",
-  scopes: "",
-  ip_allowlist: "",
-  rate_limit_per_minute: 0,
-  callback_urls: "",
-  token_ttl_seconds: 7200,
-  is_active: true,
-  description: ""
-});
-
 /** 一次性密钥展示（创建/重置后弹窗，关闭后不可再读） */
 const credentialDialog = ref(false);
 const credential = ref<ApiApplicationCredential | null>(null);
 const probeResults = ref<CallbackProbeResult[]>([]);
 
-const dialogTitle = computed(() =>
-  editingPk.value ? t("apiApp.edit") : t("apiApp.create")
-);
+/** 新建 / 编辑弹窗（C5：统一走 ReDialog，表单在 ApiApplicationForm 中） */
+const formRef = ref<InstanceType<typeof ApiApplicationForm>>();
 
-const openCreate = () => {
-  editingPk.value = null;
-  Object.assign(form, {
-    name: "",
-    scopes: "",
-    ip_allowlist: "",
-    rate_limit_per_minute: 0,
-    callback_urls: "",
-    token_ttl_seconds: 7200,
-    is_active: true,
-    description: ""
-  });
-  dialog.value = true;
-};
-
-const openEdit = (row: ApiApplicationItem) => {
-  editingPk.value = row.pk;
-  Object.assign(form, {
-    name: row.name,
-    scopes: (row.scopes ?? []).join(","),
-    ip_allowlist: (row.ip_allowlist ?? []).join(","),
-    rate_limit_per_minute: row.rate_limit_per_minute ?? 0,
-    callback_urls: (row.callback_urls ?? []).join(","),
-    token_ttl_seconds: row.token_ttl_seconds ?? 7200,
-    is_active: row.is_active,
-    description: ""
-  });
-  dialog.value = true;
-};
-
-const buildPayload = () => ({
-  name: form.name,
-  scopes: parseListText(form.scopes),
-  ip_allowlist: parseListText(form.ip_allowlist),
-  rate_limit_per_minute: Number(form.rate_limit_per_minute) || 0,
-  callback_urls: parseListText(form.callback_urls),
-  token_ttl_seconds: Number(form.token_ttl_seconds) || 0,
-  is_active: form.is_active
-});
-
-const submit = async () => {
-  submitLoading.value = true;
-  try {
-    const res = editingPk.value
-      ? await apiApplicationApi.partialUpdate(editingPk.value, buildPayload())
-      : await apiApplicationApi.create(buildPayload());
-    if (res.code === SUCCESS_CODE) {
-      message(t("apiApp.saveOk"), { type: "success" });
-      dialog.value = false;
-      const created = res.data as unknown as
-        ApiApplicationCredential | undefined;
-      // 创建响应携带一次性明文密钥：直接弹窗展示（列表/详情不回传）
-      if (!editingPk.value && created?.client_secret) {
-        credential.value = created;
-        credentialDialog.value = true;
+const openDialog = (row: ApiApplicationItem | null) => {
+  formRef.value = undefined;
+  addDialog({
+    title: row ? t("apiApp.edit") : t("apiApp.create"),
+    width: dialogSize("md"),
+    draggable: true,
+    destroyOnClose: true,
+    closeOnClickModal: false,
+    sureBtnLoading: true,
+    contentRenderer: () => h(ApiApplicationForm, { ref: formRef, row }),
+    beforeSure: async (done, { closeLoading }) => {
+      const payload = formRef.value?.getPayload();
+      if (!payload) {
+        closeLoading();
+        return;
       }
-      await loadAll();
-    } else if (res.detail) {
-      message(String(res.detail), { type: "warning" });
+      const res = row
+        ? await apiApplicationApi.partialUpdate(row.pk, payload)
+        : await apiApplicationApi.create(payload);
+      if (res.code === SUCCESS_CODE) {
+        message(t("apiApp.saveOk"), { type: "success" });
+        await loadAll();
+        done();
+        const created = res.data as unknown as
+          ApiApplicationCredential | undefined;
+        // 创建响应携带一次性明文密钥：紧接弹窗展示（列表/详情不回传）
+        if (!row && created?.client_secret) {
+          credential.value = created;
+          credentialDialog.value = true;
+        }
+        return;
+      }
+      if (res.detail) message(String(res.detail), { type: "warning" });
+      closeLoading();
     }
-  } finally {
-    submitLoading.value = false;
-  }
+  });
 };
+
+const openCreate = () => openDialog(null);
+const openEdit = (row: ApiApplicationItem) => openDialog(row);
 
 const toggleActive = async (row: ApiApplicationItem) => {
   const res = await apiApplicationApi.partialUpdate(row.pk, {
@@ -281,52 +244,6 @@ onMounted(loadAll);
         </el-table-column>
       </el-table>
     </el-card>
-
-    <el-dialog v-model="dialog" :title="dialogTitle" width="560px">
-      <el-form label-width="130px">
-        <el-form-item :label="t('apiApp.name')" required>
-          <el-input v-model="form.name" data-testid="api-app-name" />
-        </el-form-item>
-        <el-form-item :label="t('apiApp.scopes')">
-          <el-input
-            v-model="form.scopes"
-            :placeholder="t('apiApp.scopesPlaceholder')"
-          />
-        </el-form-item>
-        <el-form-item :label="t('apiApp.ipAllowlist')">
-          <el-input
-            v-model="form.ip_allowlist"
-            :placeholder="t('apiApp.listPlaceholder')"
-          />
-        </el-form-item>
-        <el-form-item :label="t('apiApp.rateLimit')">
-          <el-input-number v-model="form.rate_limit_per_minute" :min="0" />
-        </el-form-item>
-        <el-form-item :label="t('apiApp.callbackUrls')">
-          <el-input
-            v-model="form.callback_urls"
-            :placeholder="t('apiApp.listPlaceholder')"
-          />
-        </el-form-item>
-        <el-form-item :label="t('apiApp.tokenTtl')">
-          <el-input-number v-model="form.token_ttl_seconds" :min="0" />
-        </el-form-item>
-        <el-form-item :label="t('apiApp.isActive')">
-          <el-switch v-model="form.is_active" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialog = false">{{ t("apiApp.cancel") }}</el-button>
-        <el-button
-          type="primary"
-          :loading="submitLoading"
-          data-testid="api-app-submit"
-          @click="submit"
-        >
-          {{ t("apiApp.confirm") }}
-        </el-button>
-      </template>
-    </el-dialog>
 
     <el-dialog
       v-model="credentialDialog"

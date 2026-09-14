@@ -15,8 +15,11 @@ test("API 应用：新建应用并展示一次性密钥", async ({ page }) => {
   });
 
   await page.getByTestId("api-app-create").click();
-  await page.locator(".el-dialog input").first().fill("E2E 应用");
-  await page.getByTestId("api-app-submit").click();
+  // 编辑弹窗按标题定位：页面存在多个「保存」按钮（弹窗外的配置面板），必须限定在弹窗内
+  const createDialog = page.locator(".el-dialog", { hasText: "新建应用" });
+  await createDialog.locator("input").first().fill("E2E 应用");
+  // C5 收敛后弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确定」）
+  await createDialog.getByRole("button", { name: "保存" }).click();
 
   // 创建响应携带一次性明文密钥：弹窗立即展示（列表不回传明文）
   const credentialDialog = page.locator(".el-dialog", {
