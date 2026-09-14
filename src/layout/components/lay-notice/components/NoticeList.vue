@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { PropType } from "vue";
 import { ListItem } from "../data";
-import NoticeItem from "./noticeItem.vue";
+import NoticeItem from "./NoticeItem.vue";
 import { transformI18n } from "@/plugins/i18n";
 
 defineProps({

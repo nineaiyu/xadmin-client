@@ -4,12 +4,12 @@ import { unref } from "vue";
 import LayPanel from "../lay-panel/index.vue";
 import { useLayout } from "@/layout/hooks/useLayout";
 import { useMenuLayout } from "./hooks/useMenuLayout";
-import SettingTheme from "./components/setting-theme.vue";
-import SettingMenuLayout from "./components/setting-menu-layout.vue";
-import SettingStretch from "./components/setting-stretch.vue";
-import SettingTagsStyle from "./components/setting-tags-style.vue";
-import SettingDisplay from "./components/setting-display.vue";
-import SettingWatermark from "./components/setting-watermark.vue";
+import SettingTheme from "./components/SettingTheme.vue";
+import SettingMenuLayout from "./components/SettingMenuLayout.vue";
+import SettingStretch from "./components/SettingStretch.vue";
+import SettingTagsStyle from "./components/SettingTagsStyle.vue";
+import SettingDisplay from "./components/SettingDisplay.vue";
+import SettingWatermark from "./components/SettingWatermark.vue";
 
 const { layoutTheme } = useLayout();
 const { setMenuLayout } = useMenuLayout();

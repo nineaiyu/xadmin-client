@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { SUCCESS_CODE } from "@/api/types";
 import { computed, onMounted, ref } from "vue";
-import NoticeList from "./components/noticeList.vue";
+import NoticeList from "./components/NoticeList.vue";
 import BellIcon from "~icons/lucide/bell";
 import { userNoticeReadApi } from "@/api/user/notice";
 import { TabItem } from "@/layout/components/lay-notice/data";
