@@ -118,6 +118,7 @@ const {
           placement="top-start"
         >
           <el-button
+            :aria-label="t('exportImport.export')"
             :icon="useRenderIcon(Download)"
             plain
             size="small"
@@ -131,6 +132,7 @@ const {
           placement="top-start"
         >
           <el-button
+            :aria-label="t('exportImport.import')"
             :icon="useRenderIcon(Upload)"
             plain
             size="small"

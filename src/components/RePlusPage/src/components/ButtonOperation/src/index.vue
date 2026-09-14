@@ -135,12 +135,24 @@ const render = (row: RecordType, buttonRow: OperationButtonsRow): VNode => {
     ? buttonRow.props(row, buttonRow)
     : unref(buttonRow.props);
 
+  // icon-only 按钮补可访问名（a11y）：无 text 时取 tooltip 文案；显式 aria-label 优先
+  const explicitAriaLabel = (buttonRowProps as Record<string, unknown>)?.[
+    "aria-label"
+  ];
+  const tooltipContent = buttonRow.tooltip?.content
+    ? renderString(buttonRow.tooltip.content, row, buttonRow)
+    : undefined;
+  const ariaLabel =
+    explicitAriaLabel ??
+    (!buttonRow?.text && tooltipContent ? tooltipContent : undefined);
+
   const buttonComponent = h(
     ElButton,
     {
       size: props.size,
       loading: buttonLoadings.value[buttonRow.code],
       ...buttonRowProps,
+      ...(ariaLabel ? { "aria-label": ariaLabel } : {}),
       onClick: buttonRow.confirm?.title
         ? undefined
         : (event: MouseEvent) => handleClickAction(row, buttonRow, event)
@@ -168,7 +180,7 @@ const render = (row: RecordType, buttonRow: OperationButtonsRow): VNode => {
       ElTooltip,
       {
         placement: "top",
-        content: renderString(buttonRow.tooltip?.content, row, buttonRow),
+        content: tooltipContent,
         ...buttonRow.tooltip?.props
       },
       () => buttonComponent

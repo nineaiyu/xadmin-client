@@ -25,8 +25,8 @@ const IMPACT_BLOCKING = new Set(["critical", "serious"]);
  *   「登录」按钮，axe target 取最短唯一选择器、不含 el-button 字面）与 el-divider
  *   文字同属该主题级问题——登录页表单为异步渲染，采样窗口不同会时而命中时而躲开，
  *   2026-09-14 用干净基线复核确认与功能改动无关（详见 docs/accessibility-audit.md）；
- * - button-name：RePlusPage 工具栏 el-tooltip 包裹的图标按钮（刷新/列设置/密度），
- *   缺可访问名称，待 RePlusPage 统一补 aria-label 后移出；
+ * - button-name：EP 动态 id（#el-id-*）的无名命令按钮；RePlusPage 工具栏图标按钮
+ *   已于 R2 补 aria-label，不再依赖 el-tooltip__trigger 形态豁免；
  * - scrollable-region-focusable：EP 表格内嵌 el-scrollbar 滚动区不可键盘聚焦，组件库行为；
  * - svg-img-alt：Iconify 菜单/输入框装饰图标以 role="img" 渲染且无 alt，统一改渲染层后移出；
  * - label：plus-pro-components 动态表单控件的 label 关联缺失（EP 动态 id）；
@@ -52,8 +52,8 @@ const ALLOWED_VIOLATIONS: Record<string, RegExp[]> = {
     /\.is-(link|plain) > span/,
     /el-divider__text/
   ],
-  // RePlusPage 工具栏 el-tooltip 图标按钮与 EP 动态 id 的无名命令按钮
-  "button-name": [/el-tooltip__trigger/, /^#el-id-/],
+  // EP 动态 id 的无名命令按钮（RePlusPage 工具栏/EIcon 触发器等已补 aria-label）
+  "button-name": [/^#el-id-/],
   "aria-command-name": [/^#el-id-/],
   "scrollable-region-focusable": [/el-scrollbar__wrap/],
   // Iconify 图标无 alt（有 role="img" 与无 role 两种渲染形态，统一豁免至渲染层修复）

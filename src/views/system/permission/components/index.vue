@@ -72,6 +72,7 @@ watch(ruleInfo.value, () => {
           <template #operation="{ row }">
             <el-button
               v-if="hasAuth('list:SystemModelLabelField')"
+              :aria-label="t('buttons.edit')"
               :icon="useRenderIcon(EditPen)"
               :size="size"
               class="reset-margin"
@@ -82,6 +83,7 @@ watch(ruleInfo.value, () => {
             <el-button
               v-if="hasAuth('list:SystemModelLabelField')"
               v-tippy="t('systemPermission.copyRule')"
+              :aria-label="t('systemPermission.copyRule')"
               :icon="useRenderIcon(CopyDocument)"
               :size="size"
               class="reset-margin"
@@ -95,6 +97,7 @@ watch(ruleInfo.value, () => {
             >
               <template #reference>
                 <el-button
+                  :aria-label="t('buttons.delete')"
                   :icon="useRenderIcon(Delete)"
                   :size="size"
                   class="reset-margin"
