@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { formatBytes } from "@pureadmin/utils";
 import { loadEcharts } from "@/plugins/echarts";
+import { epColor } from "@/utils/chartTheme";
 import type { FileStats } from "../utils/hook";
 import CategoryPieChart from "./CategoryPieChart.vue";
 import UploadTrendChart from "./UploadTrendChart.vue";
@@ -19,12 +20,12 @@ onMounted(async () => {
   echartsReady.value = true;
 });
 
-/** 使用率配色：<80 正常，80~95 警告，>=95 危险（与旧卡片同口径） */
+/** 使用率配色：<80 正常，80~95 警告，>=95 危险（与旧卡片同口径；EP 语义色跟随主题） */
 const quotaColor = computed(() => {
   const rate = props.stats.usage_rate ?? 0;
-  if (rate >= 95) return "#f56c6c";
-  if (rate >= 80) return "#e6a23c";
-  return "#409eff";
+  if (rate >= 95) return epColor("danger");
+  if (rate >= 80) return epColor("warning");
+  return epColor("primary");
 });
 
 const quotaPercent = computed(() =>

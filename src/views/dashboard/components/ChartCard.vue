@@ -9,6 +9,7 @@ import {
   type DashboardCard,
   type ExecuteResult
 } from "@/api/system/datasets";
+import { epColor } from "@/utils/chartTheme";
 
 defineOptions({ name: "DashboardChartCard" });
 
@@ -33,12 +34,13 @@ const waitSized = async (): Promise<boolean> => {
   return false;
 };
 
-const PALETTE = [
-  "#409eff",
-  "#67c23a",
-  "#e6a23c",
-  "#f56c6c",
-  "#909399",
+/** 分类色板：EP 语义色跟随主题（第 6 色为图表专用紫，无 EP 对应语义）；调用时读取 */
+const palette = () => [
+  epColor("primary"),
+  epColor("success"),
+  epColor("warning"),
+  epColor("danger"),
+  epColor("info"),
   "#9a66e4"
 ];
 
@@ -46,6 +48,7 @@ const buildSeriesOptions = (result: AggregateResult): UtilsEChartsOption => {
   const names = result.series.map(item => item.name);
   const values = result.series.map(item => Number(item.value ?? 0));
   if (props.card.chart_type === "pie") {
+    const colors = palette();
     return {
       tooltip: { trigger: "item" },
       legend: { bottom: 0, icon: "circle" },
@@ -57,13 +60,14 @@ const buildSeriesOptions = (result: AggregateResult): UtilsEChartsOption => {
           data: result.series.map((item, index) => ({
             name: item.name || "-",
             value: Number(item.value ?? 0),
-            itemStyle: { color: PALETTE[index % PALETTE.length] }
+            itemStyle: { color: colors[index % colors.length] }
           }))
         }
       ]
     };
   }
   const isLine = props.card.chart_type === "line";
+  const primary = epColor("primary");
   return {
     tooltip: { trigger: "axis" },
     grid: { top: "24px", left: "48px", right: "24px", bottom: "36px" },
@@ -76,8 +80,8 @@ const buildSeriesOptions = (result: AggregateResult): UtilsEChartsOption => {
         smooth: isLine,
         showSymbol: isLine,
         data: values,
-        lineStyle: { width: 2, color: "#409eff" },
-        itemStyle: { color: "#409eff" }
+        lineStyle: { width: 2, color: primary },
+        itemStyle: { color: primary }
       }
     ]
   };

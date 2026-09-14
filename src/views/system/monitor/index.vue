@@ -5,6 +5,7 @@ import { loadEcharts } from "@/plugins/echarts";
 import TrendChart from "./components/TrendChart.vue";
 import TaskHealthCard from "./components/TaskHealthCard.vue";
 import { formatUptime, useMonitor } from "./utils/hook";
+import { epColor } from "@/utils/chartTheme";
 
 defineOptions({
   name: "SystemMonitor" // 必须定义，用于菜单自动匹配组件
@@ -168,7 +169,9 @@ start();
             class="mt-2"
             type="dashboard"
             :percentage="Math.min(100, Math.round(Number(card.value) || 0))"
-            :color="Number(card.value) > 80 ? '#f56c6c' : '#409eff'"
+            :color="
+              Number(card.value) > 80 ? epColor('danger') : epColor('primary')
+            "
           >
             <span class="text-lg">{{ card.value }}{{ card.suffix }}</span>
           </el-progress>

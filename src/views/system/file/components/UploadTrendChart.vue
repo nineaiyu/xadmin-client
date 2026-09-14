@@ -3,6 +3,7 @@ import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { formatBytes, useDark, useECharts } from "@pureadmin/utils";
 import type { UtilsEChartsOption } from "@pureadmin/utils";
+import { epColor } from "@/utils/chartTheme";
 import type { FileTrendPoint } from "../utils/hook";
 import { waitChartSized } from "../utils/chart";
 
@@ -56,7 +57,7 @@ const buildOptions = (): UtilsEChartsOption => ({
       type: "bar",
       name: t("systemUploadFile.fileCount"),
       barMaxWidth: 22,
-      itemStyle: { borderRadius: [4, 4, 0, 0], color: "#409eff" },
+      itemStyle: { borderRadius: [4, 4, 0, 0], color: epColor("primary") },
       data: props.trend.map(point => Number(point.count) || 0)
     }
   ]

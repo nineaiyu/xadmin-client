@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { useDark, useECharts } from "@pureadmin/utils";
 import type { UtilsEChartsOption } from "@pureadmin/utils";
 import type { MonitorOverview } from "@/api/system/monitor";
+import { epColor } from "@/utils/chartTheme";
 
 defineOptions({ name: "MonitorTrendChart" });
 
@@ -19,11 +20,11 @@ const { setOptions } = useECharts(chartRef, {
   renderer: "svg"
 });
 
-/** 仅绘制百分比指标（cpu_load 非百分比，量纲不同不入图） */
+/** 仅绘制百分比指标（cpu_load 非百分比，量纲不同不入图）；颜色走 EP 语义色（跟随主题） */
 const SERIES = [
-  { key: "cpu_percent", nameKey: "systemMonitor.cpu", color: "#409eff" },
-  { key: "memory_used", nameKey: "systemMonitor.memory", color: "#67c23a" },
-  { key: "disk_used", nameKey: "systemMonitor.disk", color: "#e6a23c" }
+  { key: "cpu_percent", nameKey: "systemMonitor.cpu", color: "primary" },
+  { key: "memory_used", nameKey: "systemMonitor.memory", color: "success" },
+  { key: "disk_used", nameKey: "systemMonitor.disk", color: "warning" }
 ] as const;
 
 const buildOptions = (): UtilsEChartsOption => ({
@@ -56,8 +57,8 @@ const buildOptions = (): UtilsEChartsOption => ({
     smooth: true,
     showSymbol: false,
     data: props.trend.map(point => Number(point[series.key] ?? 0)),
-    lineStyle: { width: 2, color: series.color },
-    itemStyle: { color: series.color },
+    lineStyle: { width: 2, color: epColor(series.color) },
+    itemStyle: { color: epColor(series.color) },
     areaStyle: { opacity: 0.08 }
   }))
 });

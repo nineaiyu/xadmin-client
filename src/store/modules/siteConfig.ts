@@ -5,6 +5,7 @@ import { message } from "@/utils/message";
 import { cloneDeep } from "@pureadmin/utils";
 import { responsiveStorageNameSpace, store } from "../utils";
 import { configApi } from "@/api/config";
+import { DEFAULT_EP_THEME_COLOR } from "@/utils/themeConstants";
 
 export const useSiteConfigStore = defineStore("pure-site-config", {
   state: () => ({
@@ -78,7 +79,7 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
                   theme: config.Theme ?? "light",
                   darkMode: config.DarkMode ?? false,
                   sidebarStatus: config.SidebarStatus ?? true,
-                  epThemeColor: config.EpThemeColor ?? "#409EFF",
+                  epThemeColor: config.EpThemeColor ?? DEFAULT_EP_THEME_COLOR,
                   themeColor: config.Theme ?? "light", // 主题色（对应项目配置中的主题色，与theme不同的是它不会受到浅色、深色整体风格切换的影响，只会在手动点击主题色时改变）
                   themeMode: config.ThemeMode ?? "light" // 整体风格（浅色：light、深色：dark、自动：system）
                 },

@@ -3,6 +3,7 @@ import type { App } from "vue";
 import Storage from "responsive-storage";
 import { routerArrays } from "@/layout/types";
 import { responsiveStorageNameSpace } from "@/config";
+import { DEFAULT_EP_THEME_COLOR } from "@/utils/themeConstants";
 
 export const injectResponsiveStorage = (app: App, config: PlatformConfigs) => {
   const nameSpace = responsiveStorageNameSpace();
@@ -18,7 +19,7 @@ export const injectResponsiveStorage = (app: App, config: PlatformConfigs) => {
         theme: config.Theme ?? "light",
         darkMode: config.DarkMode ?? false,
         sidebarStatus: config.SidebarStatus ?? true,
-        epThemeColor: config.EpThemeColor ?? "#409EFF",
+        epThemeColor: config.EpThemeColor ?? DEFAULT_EP_THEME_COLOR,
         themeColor: config.Theme ?? "light", // 主题色（对应项目配置中的主题色，与theme不同的是它不会受到浅色、深色整体风格切换的影响，只会在手动点击主题色时改变）
         themeMode: config.ThemeMode ?? "light" // 整体风格（浅色：light、深色：dark、自动：system）
       },

@@ -10,6 +10,7 @@ import { useEpThemeStoreHook } from "@/store/modules/epTheme";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { useUserStoreHook } from "@/store/modules/user";
 import { darken, lighten, useGlobal, storageLocal } from "@pureadmin/utils";
+import { DEFAULT_EP_THEME_COLOR } from "@/utils/themeConstants";
 
 export function useDataThemeChange() {
   const { layoutTheme, layout } = useLayout();
@@ -66,7 +67,7 @@ export function useDataThemeChange() {
     if (theme === "default" || theme === "light") {
       // setEpThemeColor(getConfig().EpThemeColor);
       // 当用户自定义主题色之后，保存服务器，默认的主题色会被覆盖，该操作可以修复默认的主题色
-      setEpThemeColor("#409EFF");
+      setEpThemeColor(DEFAULT_EP_THEME_COLOR);
     } else {
       const colors = themeColors.value.find(v => v.themeColor === theme);
       setEpThemeColor(colors.color);
