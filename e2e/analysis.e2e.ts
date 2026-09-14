@@ -28,6 +28,15 @@ const pickSelectOption = async (
 test("报表与大屏主链路", async ({ page }) => {
   await login(page);
 
+  // 名称唯一约束（Dataset/Dashboard/Report/Screen.name unique）+ 双浏览器共享同一
+  // sqlite 库：固定名字会让后跑的浏览器撞唯一约束（曾表现为 webkit 稳定失败、隔离
+  // 复跑才过），统一加随机后缀防冲突（e2e/README「历史教训速查」同款处置）
+  const suffix = Math.random().toString(36).slice(2, 8);
+  const datasetName = `E2E报表数据集-${suffix}`;
+  const dashboardName = `E2E投屏看板-${suffix}`;
+  const reportName = `E2E日报-${suffix}`;
+  const screenName = `E2E大屏-${suffix}`;
+
   // ---- 素材：数据集 ----
   await openMenuPath(page, ["数据分析"], "/analysis/dataset/index");
   await expect(page.getByTestId("dataset-table")).toBeVisible({
@@ -35,7 +44,7 @@ test("报表与大屏主链路", async ({ page }) => {
   });
   await page.getByRole("button", { name: "新建数据集" }).click();
   const dsDialog = page.locator(".el-dialog").filter({ hasText: "新建数据集" });
-  await dsDialog.getByLabel("名称").fill("E2E报表数据集");
+  await dsDialog.getByLabel("名称").fill(datasetName);
   await pickSelectOption(page, "绑定模型", "system.userinfo");
   await pickSelectOption(page, "数据列", "username");
   await dsDialog.getByRole("button", { name: "确认" }).click();
@@ -47,13 +56,13 @@ test("报表与大屏主链路", async ({ page }) => {
   const dashDialog = page
     .locator(".el-dialog")
     .filter({ hasText: "新建仪表盘" });
-  await dashDialog.getByLabel("仪表盘名称").fill("E2E投屏看板");
+  await dashDialog.getByLabel("仪表盘名称").fill(dashboardName);
   await dashDialog.getByRole("button", { name: "确认" }).click();
   await expect(dashDialog).not.toBeVisible();
   await page.getByRole("button", { name: "编辑布局" }).click();
   await page.getByRole("button", { name: "添加卡片" }).click();
   const cardDialog = page.locator(".el-dialog").filter({ hasText: "添加卡片" });
-  await pickSelectOption(page, "数据集", "E2E报表数据集");
+  await pickSelectOption(page, "数据集", datasetName);
   await cardDialog.getByLabel("卡片标题").fill("投屏用户总数");
   await cardDialog.getByRole("button", { name: "确认" }).click();
   await expect(cardDialog).not.toBeVisible();
@@ -65,13 +74,13 @@ test("报表与大屏主链路", async ({ page }) => {
   const reportDialog = page
     .locator(".el-dialog")
     .filter({ hasText: "新建报表" });
-  await reportDialog.getByLabel("名称").fill("E2E日报");
-  await pickSelectOption(page, "数据集", "E2E报表数据集");
+  await reportDialog.getByLabel("名称").fill(reportName);
+  await pickSelectOption(page, "数据集", datasetName);
   await reportDialog.getByLabel("收件人").fill("e2e@corp.com");
   await reportDialog.getByRole("button", { name: "确认" }).click();
   await expect(reportDialog).not.toBeVisible();
 
-  const reportRow = page.getByRole("row", { name: /E2E日报/ });
+  const reportRow = page.getByRole("row", { name: reportName });
   await expect(reportRow).toBeVisible();
   await reportRow.getByRole("button", { name: "立即运行" }).click();
   await expect(page.getByText("已派发执行").first()).toBeVisible();
@@ -83,16 +92,16 @@ test("报表与大屏主链路", async ({ page }) => {
   const screenDialog = page
     .locator(".el-dialog")
     .filter({ hasText: "新建大屏" });
-  await screenDialog.getByLabel("名称").fill("E2E大屏");
-  await pickSelectOption(page, "仪表盘序列", "E2E投屏看板");
+  await screenDialog.getByLabel("名称").fill(screenName);
+  await pickSelectOption(page, "仪表盘序列", dashboardName);
   await screenDialog.getByRole("button", { name: "确认" }).click();
   await expect(screenDialog).not.toBeVisible();
 
-  const screenRow = page.getByRole("row", { name: /E2E大屏/ });
+  const screenRow = page.getByRole("row", { name: screenName });
   await screenRow.getByRole("button", { name: "投屏" }).click();
   const screenRoot = page.locator(".screen-root");
   await expect(
-    screenRoot.locator("span", { hasText: "E2E大屏 · E2E投屏看板" })
+    screenRoot.locator("span", { hasText: `${screenName} · ${dashboardName}` })
   ).toBeVisible({ timeout: 15_000 });
   // 轮播页渲染卡片标题与数字
   await expect(screenRoot.getByText("投屏用户总数")).toBeVisible();

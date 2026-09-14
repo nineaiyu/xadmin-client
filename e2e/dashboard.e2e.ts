@@ -28,6 +28,13 @@ const pickSelectOption = async (
 test("数据集 + 仪表盘主链路", async ({ page }) => {
   await login(page);
 
+  // 名称唯一约束（Dataset/Dashboard.name unique）+ 双浏览器共享同一 sqlite 库：
+  // 固定名字会让后跑的浏览器撞唯一约束（曾表现为 webkit 稳定失败、隔离复跑才过），
+  // 统一加随机后缀防冲突（e2e/README「历史教训速查」同款处置）
+  const suffix = Math.random().toString(36).slice(2, 8);
+  const datasetName = `E2E数据集-${suffix}`;
+  const dashboardName = `E2E看板-${suffix}`;
+
   // ---- 建数据集 ----
   await openMenuPath(page, ["数据分析"], "/analysis/dataset/index");
   await expect(page.getByTestId("dataset-table")).toBeVisible({
@@ -37,13 +44,13 @@ test("数据集 + 仪表盘主链路", async ({ page }) => {
   await page.getByRole("button", { name: "新建数据集" }).click();
   const dialog = page.locator(".el-dialog").filter({ hasText: "新建数据集" });
   await expect(dialog).toBeVisible();
-  await dialog.getByLabel("名称").fill("E2E数据集");
+  await dialog.getByLabel("名称").fill(datasetName);
   await pickSelectOption(page, "绑定模型", "system.userinfo");
   await pickSelectOption(page, "数据列", "username");
   await dialog.getByRole("button", { name: "确认" }).click();
   await expect(dialog).not.toBeVisible();
   await expect(
-    page.getByTestId("dataset-table").getByText("E2E数据集")
+    page.getByTestId("dataset-table").getByText(datasetName)
   ).toBeVisible();
 
   // ---- 建仪表盘并加卡片 ----
@@ -52,7 +59,7 @@ test("数据集 + 仪表盘主链路", async ({ page }) => {
   const dashDialog = page
     .locator(".el-dialog")
     .filter({ hasText: "新建仪表盘" });
-  await dashDialog.getByLabel("仪表盘名称").fill("E2E看板");
+  await dashDialog.getByLabel("仪表盘名称").fill(dashboardName);
   await dashDialog.getByRole("button", { name: "确认" }).click();
   await expect(dashDialog).not.toBeVisible();
 
@@ -60,7 +67,7 @@ test("数据集 + 仪表盘主链路", async ({ page }) => {
   await page.getByRole("button", { name: "添加卡片" }).click();
   const cardDialog = page.locator(".el-dialog").filter({ hasText: "添加卡片" });
   await expect(cardDialog).toBeVisible();
-  await pickSelectOption(page, "数据集", "E2E数据集");
+  await pickSelectOption(page, "数据集", datasetName);
   await cardDialog.getByLabel("卡片标题").fill("用户总数");
   await cardDialog.getByRole("button", { name: "确认" }).click();
   await expect(cardDialog).not.toBeVisible();

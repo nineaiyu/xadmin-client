@@ -11,6 +11,10 @@ import { login, openMenuPath } from "./helpers";
 test("Webhook 订阅与投递审计主链路", async ({ page }) => {
   await login(page);
 
+  // 名称唯一约束（WebhookSubscription.name unique）+ 双浏览器共享同一 sqlite 库：
+  // 固定名字会让后跑的浏览器撞唯一约束（同 dashboard/analysis 的既有教训，见 e2e/README）
+  const subName = `E2E外部系统-${Math.random().toString(36).slice(2, 8)}`;
+
   // ---- 建订阅（指向不可达端口，触发失败路径） ----
   await openMenuPath(page, ["集成管理"], "/integration/subscription/index");
   await expect(page.getByTestId("webhook-table")).toBeVisible({
@@ -20,18 +24,18 @@ test("Webhook 订阅与投递审计主链路", async ({ page }) => {
   await page.getByRole("button", { name: "新建订阅" }).click();
   const dialog = page.locator(".el-dialog").filter({ hasText: "新建订阅" });
   await expect(dialog).toBeVisible();
-  await dialog.getByLabel("名称").fill("E2E外部系统");
+  await dialog.getByLabel("名称").fill(subName);
   await dialog.getByLabel("地址").fill("http://127.0.0.1:9/hook");
   await dialog.getByLabel("签名密钥", { exact: false }).fill("e2e-secret");
   await pickOption(page, "订阅事件", "连接测试");
   await dialog.getByRole("button", { name: "确认" }).click();
   await expect(dialog).not.toBeVisible();
   await expect(
-    page.getByTestId("webhook-table").getByText("E2E外部系统")
+    page.getByTestId("webhook-table").getByText(subName)
   ).toBeVisible();
 
   // ---- 测试动作：派发 ping（不可达 → 投递失败） ----
-  const subRow = page.getByRole("row", { name: /E2E外部系统/ });
+  const subRow = page.getByRole("row", { name: subName });
   await subRow.getByRole("button", { name: "测试" }).click();
   await expect(page.getByText("测试事件已派发").first()).toBeVisible();
 
@@ -42,7 +46,7 @@ test("Webhook 订阅与投递审计主链路", async ({ page }) => {
   });
   const deliveryRow = page
     .getByTestId("webhook-delivery-table")
-    .getByRole("row", { name: /E2E外部系统/ })
+    .getByRole("row", { name: subName })
     .first();
   await expect(deliveryRow).toBeVisible({ timeout: 20_000 });
   await expect(deliveryRow.getByText(/failed|exhausted/)).toBeVisible();

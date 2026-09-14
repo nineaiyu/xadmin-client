@@ -21,7 +21,10 @@ const IMPACT_BLOCKING = new Set(["critical", "serious"]);
  *   生成的 ARIA 结构不完整，属组件库内部实现，仓库侧不覆盖其 DOM；
  * - color-contrast：主题色（--el-color-primary #409EFF）白字对比度不足，
  *   命中形态为 el-button / el-link（两者同源取主题色），修复需换全局主题色，
- *   影响面大，另行决策；
+ *   影响面大，另行决策；el-button 的 link/plain 变体文字节点（登录页「忘记密码」
+ *   「登录」按钮，axe target 取最短唯一选择器、不含 el-button 字面）与 el-divider
+ *   文字同属该主题级问题——登录页表单为异步渲染，采样窗口不同会时而命中时而躲开，
+ *   2026-09-14 用干净基线复核确认与功能改动无关（详见 docs/accessibility-audit.md）；
  * - button-name：RePlusPage 工具栏 el-tooltip 包裹的图标按钮（刷新/列设置/密度），
  *   缺可访问名称，待 RePlusPage 统一补 aria-label 后移出；
  * - scrollable-region-focusable：EP 表格内嵌 el-scrollbar 滚动区不可键盘聚焦，组件库行为；
@@ -43,7 +46,11 @@ const ALLOWED_VIOLATIONS: Record<string, RegExp[]> = {
     /^#el-id-/,
     // EP 空表格占位文字与 info alert 标题（主题级对比度，需换主题色统一修复）
     /el-table__empty-text/,
-    /el-alert__title/
+    /el-alert__title/,
+    // el-button 的 link/plain 变体文字节点（axe target 取「最短唯一选择器」，
+    // 不含 el-button 字面）与分隔线文字：同属主题级对比度问题
+    /\.is-(link|plain) > span/,
+    /el-divider__text/
   ],
   // RePlusPage 工具栏 el-tooltip 图标按钮与 EP 动态 id 的无名命令按钮
   "button-name": [/el-tooltip__trigger/, /^#el-id-/],

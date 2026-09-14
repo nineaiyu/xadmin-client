@@ -95,11 +95,11 @@ test("聊天室 @消息 实时收到 push_message 站内信推送", async ({ pag
     expect(frame).toContain("push_message");
     expect(frame).toContain("chat_message");
 
-    // 公共房间广播：接收方聊天页实时看到该消息（无需刷新）
+    // 公共房间广播：接收方聊天页实时看到该消息（无需刷新）。
+    // 断言精确到本次消息文本（含时间戳）：公共房间历史消息持久保留，双浏览器共享
+    // 同一库时前一个浏览器留下的同前缀消息会让宽正则命中多条（strict mode violation）
     await expect(
-      page
-        .locator('[data-testid="chat-messages"]')
-        .getByText(/E2E 实时推送验证/)
+      page.locator('[data-testid="chat-messages"]').getByText(text)
     ).toBeVisible({ timeout: 15_000 });
 
     // 桌面通知（Notification API）：@提及属聊天类推送，前台也弹，正文为纯文本
