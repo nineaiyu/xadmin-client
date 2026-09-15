@@ -25,6 +25,7 @@ export type ReportItem = {
   frequency: "daily" | "weekly" | "monthly";
   send_time: string;
   weekday: number;
+  cron_expression: string;
   recipients: string[];
   is_active: boolean;
   last_run_at: string | null;

@@ -1712,6 +1712,8 @@ dataReport:
   weekly: 每周
   monthly: 每月
   sendTime: 发送时刻
+  cronExpression: Cron 表达式
+  cronHint: 留空则按上方固定频次；填写后优先级更高（如 0 9 * * 1-5 表示工作日 9 点）
   recipients: 收件人
   recipientsHint: 多个邮箱用逗号分隔
   isActive: 启用

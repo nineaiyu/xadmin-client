@@ -38,6 +38,8 @@ const form = reactive({
     "daily" | "weekly" | "monthly",
   send_time: props.row?.send_time ?? "08:00",
   weekday: props.row?.weekday ?? 0,
+  // cron 表达式（ADR-041）：非空时优先于上面三档频次
+  cron_expression: props.row?.cron_expression ?? "",
   recipients: (props.row?.recipients ?? []).join(", "),
   is_active: props.row?.is_active ?? true
 });
@@ -70,6 +72,7 @@ const getPayload = (): Record<string, unknown> | null => {
     frequency: form.frequency,
     send_time: form.send_time,
     weekday: Number(form.weekday),
+    cron_expression: form.cron_expression.trim(),
     recipients,
     is_active: form.is_active
   };
@@ -160,6 +163,16 @@ defineExpose({ getPayload });
           :label="label"
         />
       </el-select>
+    </el-form-item>
+    <el-form-item :label="t('dataReport.cronExpression')">
+      <el-input
+        v-model="form.cron_expression"
+        class="w-64!"
+        placeholder="0 9 * * 1-5"
+      />
+      <span class="ml-2 text-xs text-gray-400">
+        {{ t("dataReport.cronHint") }}
+      </span>
     </el-form-item>
     <el-form-item :label="t('dataReport.recipients')" required>
       <el-input

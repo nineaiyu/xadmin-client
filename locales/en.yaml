@@ -1712,6 +1712,8 @@ dataReport:
   weekly: Weekly
   monthly: Monthly
   sendTime: Send Time
+  cronExpression: Cron Expression
+  cronHint: Leave empty to use the fixed frequency above; when set it takes precedence (e.g. 0 9 * * 1-5)
   recipients: Recipients
   recipientsHint: Comma-separated emails
   isActive: Enabled
