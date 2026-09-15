@@ -1,7 +1,9 @@
 <script lang="ts" setup>
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
+import Info from "~icons/ri/information-line";
 import { useApiApplication } from "./utils/hook";
+import ApiUsageDrawer from "./components/ApiUsageDrawer.vue";
 
 defineOptions({
   name: "IntegrationApiApp"
@@ -17,7 +19,11 @@ const {
   tableBarButtonsProps,
   credentialDialog,
   credential,
-  copyText
+  copyText,
+  usageVisible,
+  usageLoading,
+  usageRow,
+  usage
 } = useApiApplication(tableRef);
 </script>
 
@@ -25,12 +31,15 @@ const {
   <div>
     <!-- 一次性密钥为只读展示弹窗（C5 既定保留手写场景），
          明文只在创建/重置响应中出现一次，列表与详情不回传 -->
-    <el-alert
-      class="w-99/100 mb-3"
-      :closable="false"
-      type="info"
-      :title="t('apiApp.tip')"
-    />
+    <div
+      class="api-app-tip mb-3 flex w-99/100 items-center gap-2 px-3 py-2.5 text-sm text-text_color_regular"
+    >
+      <IconifyIconOffline
+        :icon="Info"
+        class="shrink-0 text-base text-(--el-color-primary)"
+      />
+      <span>{{ t("apiApp.tip") }}</span>
+    </div>
     <RePlusPage
       ref="tableRef"
       :api="api"
@@ -98,5 +107,19 @@ const {
         </el-button>
       </template>
     </el-dialog>
+
+    <ApiUsageDrawer
+      v-model="usageVisible"
+      :row="usageRow"
+      :loading="usageLoading"
+      :data="usage"
+    />
   </div>
 </template>
+
+<style lang="scss" scoped>
+.api-app-tip {
+  background: var(--el-fill-color-light);
+  border: 1px solid var(--pure-border-color);
+}
+</style>

@@ -1172,6 +1172,49 @@ apiApp:
   callbackOk: 回调投递成功
   callbackFailed: 有 {count} 个回调投递失败
   unlimited: 不限
+  dailyQuota: 每日配额（0 = 不限）
+  quotaAlertPercent: 配额告警阈值（%）
+  grant:
+    title: 资源授权
+    hint: 未配置 = 沿用 owner 权限与接口范围；配置任意一条即白名单模式（模型 / 动作 / 字段 / 行四级收敛，只收紧不放宽）
+    add: 添加规则
+    remove: 删除
+    model: 模型
+    allModels: 全部模型
+    actions: 动作
+    allActions: 全部动作
+    fields: 字段
+    fieldsPlaceholder: 允许的字段（留空 = 全部字段）
+    enabled: 启用
+    rowFilter: 行级规则（可选，留空 = 不限）
+    addRow: 添加行级规则
+    rowField: 字段
+    rowMatch: 匹配
+    rowValue: 值（属于类型用逗号分隔）
+    removeRow: 删除规则
+    catalogFailed: 授权目录加载失败，请刷新重试
+    loadFailed: 资源授权未加载成功：本次保存跳过授权规则（不会清空已有规则）
+    saveFailed: 资源授权保存失败
+    matchExact: 等于
+    matchContains: 包含
+    matchIn: 属于（逗号分隔）
+    matchGt: 大于
+    matchGte: 大于等于
+    matchLt: 小于
+    matchLte: 小于等于
+  usage:
+    title: 用量
+    total: 调用量
+    failed: 失败数
+    avgDuration: 平均耗时
+    quota: 当日配额
+    quotaDetail: 今日已用 {used} / 配额 {quota}（达 {percent}% 告警，软口径不阻断）
+    daily: 按天明细
+    date: 日期
+    topPaths: 高频路径
+    statusCodes: 业务码分布
+    statusCode: 业务码
+    empty: 暂无调用数据
 apiScope:
   grantTip: 下拉列出的是你有权限的接口，勾选后凭证只能调用这些接口（越界返回 403）；留空 = 不限，保存后可随时回来调整
   selectPlaceholder: 搜索并选择允许调用的接口
@@ -1774,6 +1817,7 @@ dform:
   designerTitle: 表单设计
   fillTitle: 可填表单
   mySubmissions: 我的提交
+  exportCsv: 导出 CSV
   create: 新建表单
   edit: 编辑
   delete: 删除
@@ -1884,3 +1928,15 @@ aiKnowledge:
   batchEnable: 批量启用
   batchDisable: 批量停用
   batchToggleDone: 已更新 {count} 条
+
+oauthAuthorize:
+  title: 授权请求
+  appRequest: "{app} 请求访问你的 xadmin 账号"
+  user: 当前用户
+  scopesTitle: 请求的权限范围
+  scopesEmpty: 该应用未限制接口范围（以你在应用中的授权面为准）
+  hint: 同意后，该应用将以你的身份调用授权范围内的接口（权限仍受应用授权与你的账号权限双重约束）
+  approve: 同意授权
+  deny: 拒绝
+  invalidRequest: 请求参数不完整（缺少 client_id / redirect_uri）
+  loadFailed: 授权请求加载失败

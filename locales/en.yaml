@@ -1172,6 +1172,49 @@ apiApp:
   callbackOk: Callback delivered
   callbackFailed: "{count} callback(s) failed"
   unlimited: Unlimited
+  dailyQuota: "Daily quota (0 = unlimited)"
+  quotaAlertPercent: "Quota alert percent (%)"
+  grant:
+    title: Resource grants
+    hint: "Empty = inherit owner permissions and API scopes; any rule enables whitelist mode (model / action / field / row, tighten only)"
+    add: Add rule
+    remove: Remove
+    model: Model
+    allModels: All models
+    actions: Actions
+    allActions: All actions
+    fields: Fields
+    fieldsPlaceholder: "Allowed fields (empty = all fields)"
+    enabled: Enabled
+    rowFilter: "Row rules (optional, empty = unrestricted)"
+    addRow: Add row rule
+    rowField: Field
+    rowMatch: Match
+    rowValue: "Value (comma-separated for in)"
+    removeRow: Remove rule
+    catalogFailed: Failed to load grant catalog, please refresh
+    loadFailed: "Resource grants were not loaded: this save skips grant rules (existing rules are kept)"
+    saveFailed: Failed to save resource grants
+    matchExact: Equals
+    matchContains: Contains
+    matchIn: "In (comma-separated)"
+    matchGt: Greater than
+    matchGte: Greater or equal
+    matchLt: Less than
+    matchLte: Less or equal
+  usage:
+    title: Usage
+    total: Requests
+    failed: Failed
+    avgDuration: Avg duration
+    quota: Daily quota
+    quotaDetail: "Used {used} / quota {quota} today (alert at {percent}%, soft limit)"
+    daily: Daily breakdown
+    date: Date
+    topPaths: Top paths
+    statusCodes: Business code distribution
+    statusCode: Code
+    empty: No request data yet
 apiScope:
   grantTip: The list shows the APIs you are allowed to call. Once selected, the credential can only call those (out-of-scope requests get 403). Empty = unrestricted, and you can adjust it later
   selectPlaceholder: Search and select the APIs to allow
@@ -1774,6 +1817,7 @@ dform:
   designerTitle: Form Design
   fillTitle: Available Forms
   mySubmissions: My Submissions
+  exportCsv: Export CSV
   create: New Form
   edit: Edit
   delete: Delete
@@ -1884,3 +1928,15 @@ aiKnowledge:
   batchEnable: Batch enable
   batchDisable: Batch disable
   batchToggleDone: "Updated {count}"
+
+oauthAuthorize:
+  title: Authorization request
+  appRequest: "{app} requests access to your xadmin account"
+  user: Current user
+  scopesTitle: Requested scopes
+  scopesEmpty: This application has no API scope restriction (limited by your own authorization)
+  hint: After approval, the application acts on your behalf within the approved scopes (still bounded by app grants and your permissions)
+  approve: Approve
+  deny: Deny
+  invalidRequest: Missing request parameters (client_id / redirect_uri)
+  loadFailed: Failed to load authorization request

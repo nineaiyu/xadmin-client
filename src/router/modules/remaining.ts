@@ -60,6 +60,17 @@ const remainingRoutes: Array<RouteConfigsTable> = [
       rank: 10104
     }
   },
+  // 开放平台 OAuth 授权码同意页（ADR-039 B2）：第三方发起，独立无侧栏
+  {
+    path: "/oauth/authorize",
+    name: "OAuthAuthorize",
+    component: () => import("@/views/oauth/authorize.vue"),
+    meta: {
+      title: $t("oauthAuthorize.title"),
+      showLink: false,
+      rank: 10106
+    }
+  },
   {
     path: "/account-settings",
     name: "AccountSettings",

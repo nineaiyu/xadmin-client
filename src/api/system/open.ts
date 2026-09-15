@@ -16,6 +16,10 @@ export interface ApiApplicationItem {
   rate_limit_per_minute: number;
   callback_urls: string[];
   token_ttl_seconds: number;
+  /** 每日配额（0 = 不限，软告警） */
+  daily_quota: number;
+  /** 配额告警阈值（百分比，默认 80） */
+  quota_alert_percent: number;
   is_active: boolean;
   expired_at: string | null;
   created_time: string;
@@ -47,7 +51,116 @@ export interface CallbackProbeResult {
   detail?: string;
 }
 
+/** 资源授权规则（模型 × 动作 × 字段 × 行，ADR-039 B1） */
+export interface ApiApplicationGrant {
+  pk?: string;
+  /** 模型标签（system.dataset）或 *（全部模型） */
+  model: string;
+  /** 权限点动作段（list/retrieve/create/...）或 ["*"] */
+  actions: string[];
+  /** 允许字段（空 = 全部字段） */
+  fields: string[];
+  /** 行级规则（空 = 不限；结构与后端 data_scope 规则同源） */
+  row_filter: RowFilterRule[];
+  is_active: boolean;
+  description?: string | null;
+}
+
+/** 行级规则（table 由所属规则的模型注入，前端不填） */
+export interface RowFilterRule {
+  field?: string;
+  match?: string;
+  value?: unknown;
+  type?: string;
+  exclude?: boolean;
+  table?: string;
+}
+
+export interface GrantOptionItem {
+  value: string;
+  label: string;
+}
+
+export interface GrantModelOption extends GrantOptionItem {
+  actions: GrantOptionItem[];
+  fields: GrantOptionItem[];
+}
+
+export interface GrantCatalogResponse {
+  code: number;
+  detail?: string;
+  data: { total: number; models: GrantModelOption[] };
+}
+
+export interface GrantListResponse {
+  code: number;
+  detail?: string;
+  data: { results: ApiApplicationGrant[] };
+}
+
+/** 应用用量报表（ADR-039 B3） */
+export interface ApplicationUsageStats {
+  days: number;
+  total: number;
+  failed: number;
+  avg_duration: number;
+  daily: Array<{
+    date: string;
+    total: number;
+    failed: number;
+    avg_duration: number;
+  }>;
+  top_paths: Array<{ path: string; total: number }>;
+  status_codes: Array<{ status_code: number | null; total: number }>;
+  quota: { daily_quota: number; alert_percent: number; used_today: number };
+}
+
+export interface UsageStatsResponse {
+  code: number;
+  detail?: string;
+  data: ApplicationUsageStats;
+}
+
 class ApiApplicationApi extends BaseApi {
+  /** 应用资源授权规则（读） */
+  grants = (pk: string): Promise<GrantListResponse> =>
+    this.request<GrantListResponse>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/${pk}/grants`
+    );
+
+  /** 应用资源授权规则（全量替换写） */
+  updateGrants = (
+    pk: string,
+    grants: ApiApplicationGrant[]
+  ): Promise<GrantListResponse> =>
+    this.request<GrantListResponse>(
+      "put",
+      {},
+      { grants },
+      `${this.baseApi}/${pk}/grants`
+    );
+
+  /** 资源授权目录（模型 → 动作 / 字段，按本人可授权面收口） */
+  grantOptions = (): Promise<GrantCatalogResponse> =>
+    this.request<GrantCatalogResponse>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/grant-options`
+    );
+
+  /** 应用用量报表（近 N 天，默认 7 / 上限 30） */
+  stats = (pk: string, days = 7): Promise<UsageStatsResponse> =>
+    this.request<UsageStatsResponse>(
+      "get",
+      { days },
+      {},
+      `${this.baseApi}/${pk}/stats`
+    );
+
   /** 应用可授权的接口范围（按当前用户权限收口，供表单「接口范围」勾选） */
   scopeOptions = (): Promise<ScopeCatalogResponse> =>
     this.request<ScopeCatalogResponse>(
@@ -80,11 +193,79 @@ export const apiApplicationApi = new ApiApplicationApi(
   "/api/system/api-applications"
 );
 
+/* ---------------- OAuth 授权码（同意页） ---------------- */
+
+export interface OAuthAuthorizeInfo {
+  application: { client_id: string; name: string };
+  scopes: string[];
+  user: { pk: number; username: string };
+  redirect_uri: string;
+  state: string;
+  code_challenge_required: boolean;
+  code_challenge_method: string;
+}
+
+export interface OAuthAuthorizeResponse {
+  code: number;
+  detail?: string;
+  data: OAuthAuthorizeInfo;
+}
+
+export interface OAuthApproveResponse {
+  code: number;
+  detail?: string;
+  data: {
+    code: string;
+    redirect_uri: string;
+    state: string;
+    error?: string;
+  };
+}
+
+class OAuthAuthorizeApi extends BaseApi {
+  /** 同意页数据（校验 client/redirect_uri/scope/PKCE，需登录态） */
+  authorize = (
+    params: Record<string, string>
+  ): Promise<OAuthAuthorizeResponse> =>
+    this.request<OAuthAuthorizeResponse>(
+      "get",
+      params,
+      {},
+      "/api/system/open/oauth/authorize"
+    );
+
+  /** 用户同意 / 拒绝（同意返回一次性授权码，拒绝回传 access_denied） */
+  approve = (payload: Record<string, unknown>): Promise<OAuthApproveResponse> =>
+    this.request<OAuthApproveResponse>(
+      "post",
+      {},
+      payload,
+      "/api/system/open/oauth/approve"
+    );
+}
+
+export const oauthAuthorizeApi = new OAuthAuthorizeApi(
+  "/api/system/open/oauth"
+);
+
 /** 应用接口范围目录（同页只拉一次：列表 tooltip 与表单勾选器共用，见 utils/scopeDisplay） */
 export function loadScopeCatalog(): Promise<ScopeCatalogResponse> {
   return fetchScopeCatalog(SCOPE_CATALOG_KEYS.application, () =>
     apiApplicationApi.scopeOptions()
   );
+}
+
+let grantCatalogPromise: Promise<GrantCatalogResponse> | null = null;
+
+/** 资源授权目录（同页只拉一次；失败重置以便重试） */
+export function loadGrantCatalog(): Promise<GrantCatalogResponse> {
+  if (!grantCatalogPromise) {
+    grantCatalogPromise = apiApplicationApi.grantOptions().catch(error => {
+      grantCatalogPromise = null;
+      throw error;
+    });
+  }
+  return grantCatalogPromise;
 }
 
 /** 列表响应取行（兼容分页 results 与裸数组两种返回） */
