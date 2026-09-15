@@ -381,6 +381,7 @@ menus:
   approvalCenter: Approval Center
   approvalFlow: Flow Definition
   approvalInstance: Flow Approval
+  approvalDelegation: Approval Delegation
   leaveApply: Leave Request
 
 approval:
@@ -1443,6 +1444,17 @@ systemTaskCrontab:
 systemTaskInterval:
   every: Number of Periods
   period: Period Unit
+
+systemApprovalDelegation:
+  delegator: Delegator
+  delegator_name: Delegator
+  delegate: Delegate
+  delegate_name: Delegate
+  start_time: Start Time
+  end_time: End Time
+  flow_codes: Flow Scope (empty = all flows)
+  is_active: Active
+  remark: Remark
 
 recycleBin:
   title: Recycle Bin

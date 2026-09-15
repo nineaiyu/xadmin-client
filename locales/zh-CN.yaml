@@ -381,6 +381,7 @@ menus:
   approvalCenter: 审批中心
   approvalFlow: 流程定义
   approvalInstance: 流程审批
+  approvalDelegation: 审批委托
   leaveApply: 请假申请
 
 approval:
@@ -1443,6 +1444,17 @@ systemTaskCrontab:
 systemTaskInterval:
   every: 周期数
   period: 间隔周期
+
+systemApprovalDelegation:
+  delegator: 委托人
+  delegator_name: 委托人
+  delegate: 代理人
+  delegate_name: 代理人
+  start_time: 生效时间
+  end_time: 失效时间
+  flow_codes: 流程范围（空 = 全部流程）
+  is_active: 启用
+  remark: 备注
 
 recycleBin:
   title: 回收站
