@@ -31,7 +31,9 @@ const iconClass = computed(() => {
 
 const { onReset } = useDataThemeChange();
 
-const { saveSiteConfig, resetSiteConfig } = useSiteConfigStoreHook();
+// 设置项已实时自动保存（layout/index.vue 的 watch + store.autoSaveSiteConfig），
+// 面板不再提供「保存配置」按钮，仅保留重置与清缓存
+const { resetSiteConfig } = useSiteConfigStoreHook();
 
 onClickOutside(target, event => {
   if (event.clientX > target.value.offsetLeft) return;
@@ -91,19 +93,6 @@ onBeforeUnmount(() => {
       <div
         class="flex justify-end p-3 border-0 border-l border-solid border-(--pure-border-color)"
       >
-        <el-button
-          v-tippy="{
-            content: t('layout.saveConfigTip'),
-            placement: 'top-start',
-            zIndex: Z_INDEX.tippy
-          }"
-          bg
-          text
-          type="success"
-          @click="saveSiteConfig"
-        >
-          {{ t("layout.saveConfig") }}
-        </el-button>
         <el-button
           v-tippy="{
             content: t('layout.resetConfigTip'),

@@ -2,6 +2,7 @@ import { useNav } from "./useNav";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { onBeforeMount, type Ref, watch } from "vue";
+import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
 
 export function useTranslationLang(ref?: Ref) {
   const { $storage, changeTitle, handleResize } = useNav();
@@ -11,6 +12,8 @@ export function useTranslationLang(ref?: Ref) {
   function translationCh() {
     $storage.locale = { locale: "zh" };
     locale.value = "zh";
+    // 语言切换即时生效之外同步持久化（实时保存，无需手动点保存配置）
+    useSiteConfigStoreHook().autoSaveSiteConfig();
     if (ref) {
       handleResize(ref.value);
     }
@@ -19,6 +22,8 @@ export function useTranslationLang(ref?: Ref) {
   function translationEn() {
     $storage.locale = { locale: "en" };
     locale.value = "en";
+    // 语言切换即时生效之外同步持久化（实时保存，无需手动点保存配置）
+    useSiteConfigStoreHook().autoSaveSiteConfig();
     if (ref) {
       handleResize(ref.value);
     }

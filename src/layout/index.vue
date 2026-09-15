@@ -15,7 +15,8 @@ import {
   onBeforeMount,
   onMounted,
   reactive,
-  ref
+  ref,
+  watch
 } from "vue";
 import {
   deviceDetection,
@@ -28,6 +29,7 @@ import LayTag from "./components/lay-tag/index.vue";
 import LayNavbar from "./components/lay-navbar/index.vue";
 import LayContent from "./components/lay-content/index.vue";
 import LaySetting from "./components/lay-setting/index.vue";
+import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
 import NavVertical from "./components/lay-sidebar/NavVertical.vue";
 import NavHorizontal from "./components/lay-sidebar/NavHorizontal.vue";
 import BackTopIcon from "@/assets/svg/back_top.svg?component";
@@ -39,6 +41,16 @@ const { layout } = useLayout();
 const isMobile = deviceDetection();
 const pureSetting = useSettingStoreHook();
 const { $storage } = useGlobal<GlobalPropertiesApi>();
+
+// 项目设置实时生效：layout/configure 任意设置项变更即防抖自动 PATCH
+// （不再依赖面板里的「保存配置」按钮；首次挂载不触发）
+watch(
+  () => [$storage.layout, $storage.configure],
+  () => {
+    useSiteConfigStoreHook().autoSaveSiteConfig();
+  },
+  { deep: true }
+);
 
 const set: setType = reactive({
   sidebar: computed(() => {

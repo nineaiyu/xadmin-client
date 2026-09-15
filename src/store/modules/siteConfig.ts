@@ -7,6 +7,10 @@ import { responsiveStorageNameSpace, store } from "../utils";
 import { configApi } from "@/api/config";
 import { DEFAULT_EP_THEME_COLOR } from "@/utils/themeConstants";
 
+/** 设置项变更后的自动保存防抖窗口（合并设置面板里的连续操作） */
+const AUTO_SAVE_DEBOUNCE_MS = 600;
+let autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
+
 export const useSiteConfigStore = defineStore("pure-site-config", {
   state: () => ({
     config: {},
@@ -24,7 +28,11 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
         window.location.reload();
       });
     },
-    async saveSiteConfig() {
+    /**
+     * 保存站点配置（整包 PATCH，后端按键 merge）。
+     * @param silent 自动保存场景传 true：成功不弹提示，避免每次设置变更刷屏
+     */
+    async saveSiteConfig(silent = false) {
       return new Promise((resolve, reject) => {
         const locale = Storage.getData("locale", this.nameSpace);
         const layout = Storage.getData("layout", this.nameSpace);
@@ -53,13 +61,31 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
         configApi
           .setSiteConfig(newConfig)
           .then(res => {
-            message("项目配置保存成功", { type: "success" });
+            if (!silent) {
+              message("项目配置保存成功", { type: "success" });
+            }
             resolve(res);
           })
           .catch(error => {
             reject(error);
           });
       });
+    },
+    /**
+     * 设置项变更后的自动保存（防抖 + 静默）——项目设置面板已改为实时生效，
+     * 无需用户手动点「保存配置」。失败时提示一次，避免配置静默丢失。
+     */
+    autoSaveSiteConfig() {
+      if (autoSaveTimer) clearTimeout(autoSaveTimer);
+      autoSaveTimer = setTimeout(() => {
+        autoSaveTimer = null;
+        this.saveSiteConfig(true).catch(error => {
+          message("项目配置自动保存失败，请检查网络后重试", {
+            type: "error"
+          });
+          console.warn("[site-config] auto save failed:", error);
+        });
+      }, AUTO_SAVE_DEBOUNCE_MS);
     },
     async getSiteConfig() {
       return new Promise<PlatformConfigs>((resolve, reject) => {
