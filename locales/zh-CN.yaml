@@ -1055,6 +1055,27 @@ chat:
   disconnected: 连接已断开，正在重连
   yesterday: 昨天
   openPrivate: 发消息
+  actionCardTitle: "AI 动作确认：{label}"
+  actionNeedApproval: 需审批
+  actionConfirm: 确认执行
+  actionRetry: 重新确认
+  actionCancel: 暂不执行
+  actionCancelled: 已取消，未执行
+  actionDone: 已执行
+  actionPending: 已提交审批，审批通过后可再次确认执行
+  leaveType: 假期类型
+  startDate: 开始日期
+  endDate: 结束日期
+  days: 天数
+  reason: 事由
+  formName: 表单
+  formData: 表单数据
+  annual: 年假
+  sick: 病假
+  personal: 事假
+  compTime: 调休
+  marriage: 婚假
+  other: 其他
 
 login:
   thirdPartyLogin: 第三方登录
@@ -1700,6 +1721,7 @@ aiConfig:
   globalTitle: 全局开关
   assistantEnabled: 启用 AI 助手
   nlQueryEnabled: 启用数据问答（NL 查数）
+  actionEnabled: 启用 AI 动作草稿（确认后执行，默认关闭）
   globalSave: 保存开关
   globalSaved: 全局开关已保存
   profileTitle: AI 配置档案

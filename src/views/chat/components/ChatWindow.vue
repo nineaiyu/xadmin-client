@@ -103,7 +103,6 @@ const props = defineProps<{
   contacts: ChatPeer[];
   aiEnabled: boolean;
   aiHint: string;
-  aiCommand: string;
   loading: boolean;
   hasMore: boolean;
   loadingMore: boolean;
@@ -160,8 +159,9 @@ const subtitle = computed(() => {
 });
 
 const placeholder = computed(() => {
+  // aiHint 来自后端（含 /kb 与 /do 的完整提示），空时回落到本地的 /kb 提示
   if (isAiRoom.value) {
-    return t("chat.aiPlaceholder", { command: props.aiCommand || "/kb" });
+    return props.aiHint || t("chat.aiPlaceholder", { command: "/kb" });
   }
   return t("chat.inputPlaceholder");
 });

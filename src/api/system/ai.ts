@@ -7,6 +7,18 @@ export type AiStatus = {
   configured: boolean;
   chunks: number;
   synced_at: string;
+  /** A2 受限动作：灰度开启且当前用户有可用动作时为 true */
+  action_enabled?: boolean;
+  actions?: { key: string; label: string }[];
+};
+
+/** A2 受限动作草稿（LLM 产出、服务端校验后的结构，执行前需用户确认） */
+export type AiActionDraft = {
+  action: string;
+  label: string;
+  params: Record<string, unknown>;
+  summary: string;
+  requires_approval: boolean;
 };
 
 export type AiSource = { title: string; path: string; chunk_index: number };
@@ -115,6 +127,24 @@ class AiAssistantApi extends BaseApi {
       {},
       { dsl },
       `${this.baseApi}/nl-query/run`
+    );
+  };
+  /**
+   * A2 受限动作：执行确认后的草稿（以当前用户身份执行，服务端重校验 + 审计）。
+   * 需审批的动作首次调用返回 412 + approval_required：令牌由 http 拦截器暂存，
+   * 审批通过后原样重发即自动携带 X-Approval-Id。
+   */
+  actionExecute = (payload: {
+    action: string;
+    params: Record<string, unknown>;
+    room_id?: number;
+    message_id?: number;
+  }) => {
+    return this.request<DetailResult>(
+      "post",
+      {},
+      payload,
+      `${this.baseApi}/action/execute`
     );
   };
 }

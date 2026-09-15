@@ -19,7 +19,8 @@ const canReadGlobal = hasAuth("list:AiAssistantConfig");
 const globalLoading = ref(false);
 const globalForm = reactive({
   AI_ASSISTANT_ENABLED: false,
-  AI_NL_QUERY_ENABLED: false
+  AI_NL_QUERY_ENABLED: false,
+  AI_ACTION_ENABLED: false
 });
 
 const loadGlobal = async () => {
@@ -31,6 +32,7 @@ const loadGlobal = async () => {
       const data = res.data as Record<string, unknown>;
       globalForm.AI_ASSISTANT_ENABLED = Boolean(data?.AI_ASSISTANT_ENABLED);
       globalForm.AI_NL_QUERY_ENABLED = Boolean(data?.AI_NL_QUERY_ENABLED);
+      globalForm.AI_ACTION_ENABLED = Boolean(data?.AI_ACTION_ENABLED);
     }
   } finally {
     globalLoading.value = false;
@@ -81,6 +83,12 @@ onMounted(loadGlobal);
           :disabled="!canEditGlobal"
           :active-text="t('aiConfig.nlQueryEnabled')"
           data-testid="ai-nl-query-enabled"
+        />
+        <el-switch
+          v-model="globalForm.AI_ACTION_ENABLED"
+          :disabled="!canEditGlobal"
+          :active-text="t('aiConfig.actionEnabled')"
+          data-testid="ai-action-enabled"
         />
         <el-button v-if="canEditGlobal" type="primary" @click="saveGlobal">
           {{ t("aiConfig.globalSave") }}

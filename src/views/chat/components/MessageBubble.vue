@@ -4,10 +4,14 @@ import { useI18n } from "vue-i18n";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import AiIcon from "~icons/ep/cpu";
 import WarningIcon from "~icons/ep/warning";
+import { aiAssistantApi } from "@/api/system/ai";
+import { message } from "@/utils/message";
+import { SUCCESS_CODE } from "@/api/types";
 import type { ChatMessageItem } from "@/api/chat";
 
 /**
- * 单条消息气泡：自己靠右、他人靠左；系统消息居中；AI 回复附引用来源。
+ * 单条消息气泡：自己靠右、他人靠左；系统消息居中；AI 回复附引用来源；
+ * AI 动作草稿（extra.action_draft）渲染确认卡片，确认后才经 execute 端点执行。
  *
  * 内容一律文本插值渲染（不 v-html），与后端长度限制共同约束 XSS 面。
  */
@@ -45,6 +49,93 @@ const displayName = computed(() =>
     ? t("chat.aiAssistant")
     : props.item.sender_name || t("chat.unknownUser")
 );
+
+/* ---------------- A2 受限动作确认卡片 ---------------- */
+type ActionState =
+  "idle" | "loading" | "done" | "pending" | "failed" | "cancelled";
+const actionState = ref<ActionState>("idle");
+const actionDetail = ref("");
+
+const actionDraft = computed(() => props.item.extra?.action_draft ?? null);
+
+const LEAVE_PARAM_LABELS: Record<string, string> = {
+  leave_type: "leaveType",
+  start_date: "startDate",
+  end_date: "endDate",
+  days: "days",
+  reason: "reason",
+  form_name: "formName",
+  data: "formData"
+};
+const LEAVE_TYPE_LABELS: Record<string, string> = {
+  annual: "annual",
+  sick: "sick",
+  personal: "personal",
+  comp_time: "compTime",
+  marriage: "marriage",
+  other: "other"
+};
+
+const actionRows = computed(() => {
+  if (!actionDraft.value) return [];
+  return Object.entries(actionDraft.value.params ?? {})
+    .filter(([key]) => key !== "form_id")
+    .map(([key, value]) => ({
+      key,
+      label: LEAVE_PARAM_LABELS[key]
+        ? t(`chat.${LEAVE_PARAM_LABELS[key]}`)
+        : key,
+      value: formatActionValue(key, value)
+    }));
+});
+
+function formatActionValue(key: string, value: unknown): string {
+  if (key === "leave_type" && typeof value === "string") {
+    const mapped = LEAVE_TYPE_LABELS[value];
+    return mapped ? t(`chat.${mapped}`) : value;
+  }
+  if (value !== null && typeof value === "object") {
+    return Object.entries(value as Record<string, unknown>)
+      .map(([childKey, childValue]) => `${childKey}: ${String(childValue)}`)
+      .join("; ");
+  }
+  return String(value);
+}
+
+const onExecuteAction = async () => {
+  const draft = actionDraft.value;
+  if (!draft || actionState.value === "loading") return;
+  actionState.value = "loading";
+  try {
+    const res = await aiAssistantApi.actionExecute({
+      action: draft.action,
+      params: draft.params,
+      room_id: props.item.room_id,
+      message_id: props.item.id
+    });
+    if (res.code === SUCCESS_CODE) {
+      actionState.value = "done";
+      actionDetail.value = String(res.detail || t("chat.actionDone"));
+      message(actionDetail.value, { type: "success" });
+    } else {
+      actionState.value = "failed";
+      actionDetail.value = String(res.detail || t("results.failed"));
+    }
+  } catch (error) {
+    // 412 + approval_required：令牌已由 http 拦截器暂存，审批通过后再点确认即自动携带
+    const err = error as { code?: number; type?: string; detail?: string };
+    if (err?.type === "approval_required" && err?.code === 1002) {
+      actionState.value = "pending";
+      actionDetail.value = String(err.detail || t("chat.actionPending"));
+    } else {
+      actionState.value = "failed";
+      actionDetail.value = String(err?.detail || t("results.failed"));
+    }
+  } finally {
+    // 兜底：任何未预期异常路径都不得把卡片留在 loading 态
+    if (actionState.value === "loading") actionState.value = "failed";
+  }
+};
 </script>
 
 <template>
@@ -154,6 +245,88 @@ const displayName = computed(() =>
           class="truncate"
         >
           [{{ index + 1 }}] {{ source.title }}（{{ source.path }}）
+        </div>
+      </div>
+
+      <!-- A2 受限动作确认卡片：AI 只产出草稿，执行必须由用户在此二次确认 -->
+      <div
+        v-if="actionDraft && !item.is_recalled"
+        class="mt-1 w-full rounded border border-(--el-border-color-light) bg-(--el-bg-color) px-3 py-2 text-xs"
+        data-testid="chat-action-card"
+      >
+        <div class="flex items-center gap-2">
+          <span class="font-semibold">
+            {{ t("chat.actionCardTitle", { label: actionDraft.label }) }}
+          </span>
+          <el-tag
+            v-if="actionDraft.requires_approval"
+            size="small"
+            type="warning"
+          >
+            {{ t("chat.actionNeedApproval") }}
+          </el-tag>
+        </div>
+        <div
+          v-if="actionDraft.summary"
+          class="mt-1 text-(--el-text-color-secondary)"
+        >
+          {{ actionDraft.summary }}
+        </div>
+        <div class="mt-1 flex flex-col gap-0.5">
+          <div v-for="row in actionRows" :key="row.key" class="truncate">
+            <span class="text-(--el-text-color-secondary)"
+              >{{ row.label }}：</span
+            >{{ row.value }}
+          </div>
+        </div>
+        <div class="mt-2 flex flex-wrap items-center gap-2">
+          <el-button
+            v-if="actionState === 'idle'"
+            type="primary"
+            size="small"
+            data-testid="chat-action-confirm"
+            @click="onExecuteAction"
+          >
+            {{ t("chat.actionConfirm") }}
+          </el-button>
+          <el-button
+            v-else-if="actionState === 'pending' || actionState === 'failed'"
+            type="primary"
+            size="small"
+            data-testid="chat-action-confirm"
+            @click="onExecuteAction"
+          >
+            {{ t("chat.actionRetry") }}
+          </el-button>
+          <el-button
+            v-if="actionState === 'idle'"
+            size="small"
+            data-testid="chat-action-cancel"
+            @click="actionState = 'cancelled'"
+          >
+            {{ t("chat.actionCancel") }}
+          </el-button>
+          <span v-if="actionState === 'done'" class="text-(--el-color-success)">
+            {{ actionDetail || t("chat.actionDone") }}
+          </span>
+          <span
+            v-else-if="actionState === 'pending'"
+            class="text-(--el-color-warning)"
+          >
+            {{ actionDetail || t("chat.actionPending") }}
+          </span>
+          <span
+            v-else-if="actionState === 'failed'"
+            class="text-(--el-color-danger)"
+          >
+            {{ actionDetail }}
+          </span>
+          <span
+            v-else-if="actionState === 'cancelled'"
+            class="text-(--el-text-color-secondary)"
+          >
+            {{ t("chat.actionCancelled") }}
+          </span>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onActivated, onMounted, onUnmounted, ref, watch } from "vue";
+import { onActivated, onMounted, onUnmounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { ElMessageBox } from "element-plus";
@@ -26,8 +26,6 @@ const route = useRoute();
 const chat = useChat();
 const drawerVisible = ref(false);
 const isNarrow = ref(false);
-
-const aiCommand = computed(() => chat.roomState.aiHint.value || "/kb");
 
 function updateViewport() {
   isNarrow.value = window.innerWidth < 768;
@@ -159,7 +157,6 @@ async function recall(item: ChatMessageItem) {
       :contacts="chat.contacts.value"
       :ai-enabled="chat.roomState.aiEnabled.value"
       :ai-hint="chat.roomState.aiHint.value"
-      :ai-command="aiCommand"
       :loading="chat.loadingHistory.value"
       :has-more="chat.hasMore.value"
       :loading-more="chat.loadingMore.value"

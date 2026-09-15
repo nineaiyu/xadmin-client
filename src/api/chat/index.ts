@@ -44,9 +44,18 @@ export interface ChatMessageItem {
   created_time: string;
   client_msg_id: string;
   extra: {
-    mode?: "chat" | "kb";
+    mode?: "chat" | "kb" | "action";
     sources?: Array<{ title: string; path: string; chunk_index: number }>;
     error?: boolean;
+    /** A2 受限动作草稿（AI 消息携带，确认后执行） */
+    action_draft?: {
+      action: string;
+      label: string;
+      params: Record<string, unknown>;
+      summary: string;
+      requires_approval: boolean;
+    };
+    action_result?: Record<string, unknown>;
   };
   is_recalled?: boolean;
   can_recall?: boolean;

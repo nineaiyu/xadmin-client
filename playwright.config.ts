@@ -29,7 +29,9 @@ const serverDir = process.env.E2E_SERVER_DIR ?? "../xadmin-server";
 // 拖到 20 分钟以上。dev 态（pnpm dev）不带该变量时 proxy 指向 8896 容器后端，不受影响
 const apiPort = process.env.E2E_API_PORT ?? "8896";
 const frontPort = process.env.E2E_FRONT_PORT ?? "8848";
+const stubLlmPort = process.env.E2E_STUB_LLM_PORT ?? "18897";
 const apiURL = `http://127.0.0.1:${apiPort}`;
+const stubLlmURL = `http://127.0.0.1:${stubLlmPort}`;
 const baseURL = process.env.E2E_BASE_URL ?? `http://localhost:${frontPort}`;
 
 // smoke 档 = 只跑 @smoke 用例 + 只跑 chromium，把 dev push 的反馈从 ~9min 压到 ~3min；
@@ -82,6 +84,15 @@ export default defineConfig({
       // 确需复用（本地反复跑、后端无改动）时显式设置 E2E_REUSE_SERVER=1。
       reuseExistingServer: !process.env.CI && !!process.env.E2E_REUSE_SERVER,
       timeout: 120_000
+    },
+    {
+      // 桩 LLM（scripts/stub_llm.py）：E2E 无真实模型，AI 动作草稿（A2）等链路
+      // 需要确定性的 chat/completions 回答；AI 配置指向 http://127.0.0.1:<port>/v1
+      command: `${process.env.E2E_PYTHON ?? `${serverDir}/.venv/bin/python`} scripts/stub_llm.py`,
+      cwd: serverDir,
+      url: `${stubLlmURL}/health`,
+      reuseExistingServer: !process.env.CI && !!process.env.E2E_REUSE_SERVER,
+      timeout: 30_000
     },
     {
       command: `pnpm dev --port ${frontPort} --strictPort`,

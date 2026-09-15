@@ -1055,6 +1055,27 @@ chat:
   disconnected: Connection lost, reconnecting
   yesterday: Yesterday
   openPrivate: Send message
+  actionCardTitle: "Confirm AI action: {label}"
+  actionNeedApproval: Approval required
+  actionConfirm: Confirm and run
+  actionRetry: Confirm again
+  actionCancel: Not now
+  actionCancelled: Cancelled, nothing executed
+  actionDone: Executed
+  actionPending: Submitted for approval. Confirm again once it is approved.
+  leaveType: Leave type
+  startDate: Start date
+  endDate: End date
+  days: Days
+  reason: Reason
+  formName: Form
+  formData: Form data
+  annual: Annual leave
+  sick: Sick leave
+  personal: Personal leave
+  compTime: Compensatory leave
+  marriage: Marriage leave
+  other: Other
 
 login:
   thirdPartyLogin: Third-party login
@@ -1700,6 +1721,7 @@ aiConfig:
   globalTitle: Global Switches
   assistantEnabled: Enable AI assistant
   nlQueryEnabled: Enable NL data query
+  actionEnabled: Enable AI action drafts (run after confirmation, off by default)
   globalSave: Save switches
   globalSaved: Global switches saved
   profileTitle: AI Profiles
