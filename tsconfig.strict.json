@@ -5,12 +5,5 @@
     "strictFunctionTypes": true,
     "noImplicitAny": true,
     "noImplicitThis": true
-  },
-  "include": [
-    "types/*.d.ts",
-    "src/api/**/*.ts",
-    "src/store/**/*.ts",
-    "src/utils/**/*.ts",
-    "src/utils/**/*.tsx"
-  ]
+  }
 }
