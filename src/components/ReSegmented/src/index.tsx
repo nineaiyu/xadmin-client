@@ -25,14 +25,19 @@ const props = {
     type: Array<OptionsType>,
     default: () => []
   },
-  /** 默认选中，按照第一个索引为 `0` 的模式，可选（`modelValue`只有传`number`类型时才为响应式） */
+  /**
+   * 默认选中，按照第一个索引为 `0` 的模式，可选（`modelValue`只有传`number`类型时才为响应式）。
+   * `Boolean` 是为 RePlusPage 表单布尔字段预留的兼容值：plus-pro-components 的
+   * PlusRender 会把表单字段原始布尔值强制注入为 `modelValue`（调用侧无法覆盖），
+   * 布尔值在本组件内不参与响应式，选中态回落到 `defaultValue` 驱动。
+   */
   modelValue: {
-    type: [String, Number] as PropType<string | number>,
+    type: [String, Number, Boolean] as PropType<string | number | boolean>,
     require: false,
     default: "0"
   },
   defaultValue: {
-    type: [String, Number] as PropType<string | number>,
+    type: [String, Number, Boolean] as PropType<string | number | boolean>,
     require: false,
     default: "0"
   },

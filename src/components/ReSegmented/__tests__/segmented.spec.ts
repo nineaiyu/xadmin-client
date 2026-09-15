@@ -82,4 +82,23 @@ describe("ReSegmented a11y 语义", () => {
     const secondName = second.find('input[type="radio"]').attributes("name");
     expect(firstName).not.toBe(secondName);
   });
+
+  it("布尔 modelValue（PlusRender 注入形态）不破坏选中态，选中态回落 defaultValue", () => {
+    // RePlusPage 表单布尔字段：PlusRender 会把布尔值注入为 modelValue，
+    // 组件不应产生类型警告、且选中态由 defaultValue 驱动（true → 0、false → 1）
+    const wrapper = mount(ReSegmented, {
+      props: {
+        options: [
+          { label: "是", value: true },
+          { label: "否", value: false }
+        ],
+        modelValue: true,
+        defaultValue: 0
+      }
+    });
+    const checked = wrapper
+      .findAll('input[type="radio"]')
+      .map(input => (input.element as HTMLInputElement).checked);
+    expect(checked).toEqual([true, false]);
+  });
 });

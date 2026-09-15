@@ -22,7 +22,11 @@ import { useDark } from "@pureadmin/utils";
 
 defineOptions({ name: "JsonInput" });
 const { isDark } = useDark();
-const value = defineModel<string | Record<string, unknown>>({
+// modelValue 必须用 unknown（不能收窄成 string | Record）：JSON 字段值域是任意
+// JSON 值（number/boolean/array/...，如系统配置里值为 200 的项），defineModel 的
+// 泛型会被 Vue 编译成运行时 prop 校验，收窄类型会让合法值挂「type check failed」
+// 开发态警告。编辑器以 text 模式渲染，值回传由 handleChange JSON.parse 还原形态
+const value = defineModel<unknown>({
   default: () => ({})
 });
 const attr = useAttrs();

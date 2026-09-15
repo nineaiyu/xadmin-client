@@ -44,7 +44,11 @@ export const handleExportData = (options: exportDataOptions) => {
     rawRow: {
       type: "xlsx",
       range: pks.length > 0 ? "selected" : "all",
-      pks: pks
+      pks: pks,
+      // 布尔键必须显式初始化：formInline 一旦传入，ExportData 的 withDefaults
+      // 默认值不再生效，缺键会让异步导出开关拿到 undefined（不在 ElSwitch
+      // active/inactive 值域内，挂载即报 model-value 警告）。与导入 rawRow 口径一致
+      async: false
     },
     props: {
       allowTypes,

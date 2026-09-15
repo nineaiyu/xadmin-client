@@ -4,6 +4,10 @@ import { selectBooleanOptions } from "./constants";
 export const renderBooleanSegmentedOption = (
   options: Array<Record<string, unknown>> | null = null
 ) => {
+  // 契约：只传 defaultValue 不传 modelValue。plus-pro-components 的 PlusRender
+  // 会把布尔表单值（true/false）强制注入为 modelValue（cloneVNode 后注总是
+  // 覆盖调用侧），ReSegmented 已兼容 Boolean 类型并回落 defaultValue 驱动选中态；
+  // 表单值回写走下方 change 事件（option.value 为原始布尔）
   return (value: unknown, onChange: (val: unknown) => void) => {
     return (
       <Segmented

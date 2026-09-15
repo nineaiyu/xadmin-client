@@ -150,8 +150,9 @@ export const builtinFormRenderers: PlusColumnRegistry = {
       value: unknown,
       onChange: (val: unknown) => void
     ) => {
+      // 值域为任意 JSON（number/boolean/array/...），JsonInput 内部已按 unknown 接收
       return h(JsonInput, {
-        modelValue: value as string | Record<string, unknown>,
+        modelValue: value,
         onChange: (x: unknown) => {
           onChange(x);
         }
