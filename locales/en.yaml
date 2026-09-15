@@ -627,6 +627,7 @@ account:
 systemUser:
   user: User
   resetMfa: Reset MFA
+  imBinding: IM Binding
   email: Email
   username: Username
   phone: Mobile
@@ -1444,6 +1445,19 @@ systemTaskCrontab:
 systemTaskInterval:
   every: Number of Periods
   period: Period Unit
+
+imBinding:
+  title: "IM bindings of {user}"
+  provider: Provider
+  subject: Account identity
+  subjectPlaceholder: "IdP unique identity (unionId for DingTalk)"
+  nickname: Nickname
+  current: Current bindings
+  empty: No IM binding yet
+  unbind: Unbind
+  required: Provider and account identity are required
+  saved: IM binding saved
+  unbound: Unbound
 
 systemApprovalDelegation:
   delegator: Delegator

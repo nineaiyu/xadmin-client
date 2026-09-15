@@ -627,6 +627,7 @@ account:
 systemUser:
   user: 用户
   resetMfa: 重置MFA
+  imBinding: IM 绑定
   email: 邮箱
   username: 用户名
   phone: 手机号
@@ -1444,6 +1445,19 @@ systemTaskCrontab:
 systemTaskInterval:
   every: 周期数
   period: 间隔周期
+
+imBinding:
+  title: "{user} 的 IM 绑定"
+  provider: 平台
+  subject: 账号标识
+  subjectPlaceholder: "IdP 侧唯一标识（钉钉为 unionId）"
+  nickname: 备注昵称
+  current: 已有绑定
+  empty: 暂无 IM 绑定
+  unbind: 解绑
+  required: 请填写平台与账号标识
+  saved: IM 绑定已保存
+  unbound: 已解绑
 
 systemApprovalDelegation:
   delegator: 委托人

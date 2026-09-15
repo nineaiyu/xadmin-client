@@ -29,7 +29,8 @@ export function useUserButtons({
   handleUpload,
   handleReset,
   handleRoleRules,
-  handlePreview
+  handlePreview,
+  handleImBinding
 }: {
   t: TFunction;
   api: UnwrapNestedRefs<typeof userApi>;
@@ -40,6 +41,7 @@ export function useUserButtons({
     empower?: boolean;
     resetMfa?: boolean;
     preview?: boolean;
+    imBinding?: boolean;
   };
   tableRef: Ref;
   selectedNum: Ref<number>;
@@ -48,6 +50,7 @@ export function useUserButtons({
   handleReset: (row: Row) => void;
   handleRoleRules: (row: RecordType) => void;
   handlePreview: (row: RecordType) => void;
+  handleImBinding: (row: RecordType) => void;
 }) {
   const router = useRouter();
 
@@ -189,6 +192,19 @@ export function useUserButtons({
           });
         },
         show: auth.resetMfa
+      },
+      {
+        text: t("systemUser.imBinding"),
+        code: "imBinding",
+        props: {
+          type: "primary",
+          icon: useRenderIcon(Message),
+          link: true
+        },
+        onClick: ({ row }) => {
+          handleImBinding(row as RecordType);
+        },
+        show: auth.imBinding
       }
     ]
   });

@@ -14,6 +14,7 @@ import { useUserAvatarUpload } from "./useUserAvatarUpload";
 import { useUserResetPassword } from "./useUserResetPassword";
 import { useUserColumnFormats } from "./useUserColumnFormats";
 import { useUserButtons } from "./useUserButtons";
+import { useUserImBinding } from "./useUserImBinding";
 
 /**
  * 用户视图组装入口（拆分自 604 行单体）：
@@ -58,6 +59,7 @@ export function useUser(tableRef: Ref) {
   );
   const { handleUpload } = useUserAvatarUpload({ t, api, tableRef });
   const { handleReset } = useUserResetPassword({ t, api, passwordRules });
+  const { handleImBinding } = useUserImBinding({ t });
   const {
     listColumnsFormat,
     addOrEditOptions,
@@ -85,7 +87,8 @@ export function useUser(tableRef: Ref) {
       handleUpload,
       handleReset,
       handleRoleRules,
-      handlePreview: row => previewRef.value?.open(row)
+      handlePreview: row => previewRef.value?.open(row),
+      handleImBinding
     });
 
   // 全局密码规则（重置密码与新增/编辑表单校验共用）

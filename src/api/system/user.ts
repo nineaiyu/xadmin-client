@@ -98,6 +98,39 @@ class UserApi extends BaseApi {
       `${this.baseApi}/${pk}/preview/trial`
     );
   };
+  /** 管理员查看某用户的 IM 绑定列表（免扫码代录的读侧） */
+  imBindingList = (pk: number | string) => {
+    return this.request<{
+      code: number;
+      detail: string;
+      data: Array<{
+        pk: string;
+        provider: string;
+        subject: string;
+        profile: Record<string, unknown>;
+      }>;
+    }>("get", {}, {}, `${this.baseApi}/${pk}/im-binding`);
+  };
+  /** 管理员代录 IM 身份（免扫码）：创建或更新绑定 */
+  imBinding = (
+    pk: number | string,
+    data: { provider: string; subject: string; nickname?: string }
+  ) => {
+    return this.request<{
+      code: number;
+      detail: string;
+      data: { pk: string; created: boolean };
+    }>("post", {}, data, `${this.baseApi}/${pk}/im-binding`);
+  };
+  /** 管理员解绑 IM 身份（防自锁：仅剩此登录方式时后端拒绝） */
+  imUnbind = (pk: number | string, provider: string) => {
+    return this.request<{ code: number; detail: string }>(
+      "post",
+      {},
+      { provider },
+      `${this.baseApi}/${pk}/im-unbind`
+    );
+  };
 }
 
 export const userApi = new UserApi("/api/system/user");
