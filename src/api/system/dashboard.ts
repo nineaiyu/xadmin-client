@@ -36,7 +36,7 @@ export const getDashBoardUserTotalApi = (params?: object) => {
 };
 
 export const getDashBoardUserRegisterTrendApi = (params?: object) => {
-  return http.request<DataListResult>(
+  return http.request<DataListResult<DashboardTrendItem>>(
     "get",
     "/api/system/dashboard/user-registered-trend",
     {
@@ -46,7 +46,7 @@ export const getDashBoardUserRegisterTrendApi = (params?: object) => {
 };
 
 export const getDashBoardUserLoginTrendApi = (params?: object) => {
-  return http.request<DataListResult>(
+  return http.request<DataListResult<DashboardTrendItem>>(
     "get",
     "/api/system/dashboard/user-login-trend",
     {
@@ -56,7 +56,8 @@ export const getDashBoardUserLoginTrendApi = (params?: object) => {
 };
 
 export const getDashBoardUserActiveApi = (params?: object) => {
-  return http.request<DataListResult>(
+  // 行结构为 [天数, 注册数, 活跃数] 的数字数组
+  return http.request<DataListResult<number[]>>(
     "get",
     "/api/system/dashboard/user-active",
     {

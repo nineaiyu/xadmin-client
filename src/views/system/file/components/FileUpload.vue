@@ -63,12 +63,14 @@ const uploadRequest = (option: UploadRequestOptions) => {
     onUploadProgress: (event: AxiosProgressEvent | UploadProgressEvent) => {
       const progressEvt = event as UploadProgressEvent;
       progressEvt.percent =
-        event.total > 0 ? (event.loaded / event.total) * 100 : 0;
-      option.onProgress(progressEvt);
+        (event.total ?? 0) > 0
+          ? (event.loaded / (event.total as number)) * 100
+          : 0;
+      option.onProgress?.(progressEvt);
     }
   });
 };
-const refreshData = throttle(props.tableRef?.handleGetData, 2000);
+const refreshData = throttle(() => props.tableRef?.handleGetData?.(), 2000);
 const uploadSuccess = (response: UploadResult, uploadFile: UploadFile) => {
   if (response.code === SUCCESS_CODE) {
     refreshData();

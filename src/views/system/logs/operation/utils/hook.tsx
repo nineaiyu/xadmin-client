@@ -101,10 +101,12 @@ export function useOperationLog() {
     columns.forEach(column => {
       switch (column._column?.key) {
         case "request_uuid":
-          column.render = value => <span v-copy={value}>{value || "—"}</span>;
+          column.render = (value: unknown) => (
+            <span v-copy={value}>{value || "—"}</span>
+          );
           break;
         case "exec_time":
-          column.render = value => (
+          column.render = (value: unknown) => (
             <span
               style={{
                 color:
@@ -123,7 +125,7 @@ export function useOperationLog() {
           break;
         case "changes":
           column.descriptionsItemProps = { span: 2 };
-          column.render = value => {
+          column.render = (value: unknown) => {
             const rows = parseChanges(value);
             if (!rows.length) return <span>—</span>;
             return (

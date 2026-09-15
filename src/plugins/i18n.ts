@@ -1,5 +1,5 @@
 // 多组件库的国际化和本地项目国际化兼容
-import { createI18n, type I18n } from "vue-i18n";
+import { createI18n, type Composer, type I18n } from "vue-i18n";
 import type { App } from "vue";
 import { responsiveStorageNameSpace } from "@/config";
 import { isObject, storageLocal } from "@pureadmin/utils";
@@ -13,9 +13,10 @@ const siphonI18n = (function () {
   const cache = Object.fromEntries(
     Object.entries(
       import.meta.glob("../../locales/*.{yaml,yml}", { eager: true })
-    ).map(([key, value]: [string, { default: Record<string, string> }]) => {
-      const matched = key.match(/([A-Za-z0-9-_]+)\./i)[1];
-      return [matched, value.default];
+    ).map(([key, value]) => {
+      // 语料文件名格式固定（zh-CN.yaml 等），未匹配到前缀时退回空串
+      const matched = key.match(/([A-Za-z0-9-_]+)\./i)?.[1] ?? "";
+      return [matched, (value as { default: Record<string, string> }).default];
     })
   );
   return (prefix = "zh-CN") => {
@@ -34,21 +35,30 @@ export const localesConfigs = {
   }
 };
 
+/** 对象键展开栈元素（getObjectKeys 内部使用） */
+type ObjectKeyStackItem = {
+  obj: Record<string, unknown>;
+  key: string;
+};
+
 /** 获取对象中所有嵌套对象的key键，并将它们用点号分割组成字符串 */
-function getObjectKeys(obj) {
-  const stack = [];
+function getObjectKeys(obj: Record<string, unknown>) {
+  const stack: ObjectKeyStackItem[] = [];
   const keys: Set<string> = new Set();
 
   stack.push({ obj, key: "" });
 
   while (stack.length > 0) {
-    const { obj, key } = stack.pop();
+    const item = stack.pop();
+    if (!item) break;
+    const { obj, key } = item;
 
     for (const k in obj) {
       const newKey = key ? `${key}.${k}` : k;
+      const value = obj[k];
 
-      if (obj[k] && isObject(obj[k])) {
-        stack.push({ obj: obj[k], key: newKey });
+      if (value && isObject(value)) {
+        stack.push({ obj: value, key: newKey });
       } else {
         keys.add(key);
       }
@@ -88,11 +98,14 @@ export function transformI18n(message: string | Record<string, string> = "") {
 
   const key = message.match(/(\S*)\./)?.input;
 
+  // legacy: false 下 global 为 Composer（I18n 类型的 global 是 Composer | VueI18n 联合，此处收窄）
+  const composer = i18n.global as Composer;
+
   if (key && flatI18n("zh-CN").has(key)) {
-    return i18n.global.t.call(i18n.global.locale, message);
+    return composer.t(message);
   } else if (!key && Object.hasOwn(siphonI18n("zh-CN"), message)) {
     // 兼容非嵌套形式的国际化写法
-    return i18n.global.t.call(i18n.global.locale, message);
+    return composer.t(message);
   } else {
     return message;
   }

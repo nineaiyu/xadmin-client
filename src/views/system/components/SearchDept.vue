@@ -1,8 +1,9 @@
 <script lang="ts" setup>
-import { reactive } from "vue";
+import { reactive, type Ref } from "vue";
 import { hasAuth } from "@/router/utils";
 import { searchDeptApi } from "@/api/system/search";
 import RePlusSearch from "@/components/RePlusSearch";
+import type { PageTableColumn } from "@/components/RePlusPage";
 
 defineOptions({ name: "SearchDept" });
 
@@ -16,10 +17,16 @@ const { multiple = true } = defineProps<{ multiple?: boolean }>();
 
 const api = reactive(searchDeptApi);
 
-const baseColumnsFormat = ({ listColumns }) => {
+const baseColumnsFormat = ({
+  listColumns
+}: {
+  listColumns: Ref<PageTableColumn[]>;
+}) => {
   listColumns.value.forEach(column => {
     if (
-      ["pk", "is_active", "code", "user_count"].indexOf(column._column.key) > -1
+      ["pk", "is_active", "code", "user_count"].indexOf(
+        column._column?.key as string
+      ) > -1
     ) {
       column["width"] = 80;
     }

@@ -176,8 +176,8 @@ export function useApiApplication(tableRef: Ref) {
             h(ElSwitch, {
               modelValue: (row as ApiApplicationItem).is_active,
               disabled: !canEdit,
-              "onUpdate:modelValue": (value: boolean) =>
-                toggleActive(row as ApiApplicationItem, value)
+              "onUpdate:modelValue": (value: string | number | boolean) =>
+                toggleActive(row as ApiApplicationItem, value as boolean)
             });
           break;
         case "client_id":
@@ -222,7 +222,7 @@ export function useApiApplication(tableRef: Ref) {
           const grants = formRef.value?.getGrants();
           const targetPk =
             row?.pk ?? (res.data as { pk?: string } | null)?.pk ?? "";
-          if (grants === null) {
+          if (grants === null || grants === undefined) {
             message(t("apiApp.grant.loadFailed"), { type: "warning" });
           } else if (targetPk) {
             const grantRes = await apiApplicationApi

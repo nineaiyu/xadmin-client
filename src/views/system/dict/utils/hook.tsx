@@ -66,7 +66,7 @@ export function useDataDict(tableRef: Ref) {
     if (loading) loading.value = true;
     handleOperation({
       t,
-      apiReq: api.move(row?.pk, direction),
+      apiReq: api.move(row?.pk as string | number, direction),
       success() {
         refresh();
       },
@@ -215,7 +215,7 @@ export function useDataDict(tableRef: Ref) {
         },
         parent: ({ column, rawRow, isAdd }) => {
           // 类型行没有「所属类型」概念（新建时留空即创建类型层）
-          if (isTypeRow(rawRow)) {
+          if (isTypeRow(rawRow as DictRow)) {
             column["hideInForm"] = true;
             return column;
           }
@@ -227,7 +227,7 @@ export function useDataDict(tableRef: Ref) {
         },
         // 字典值仅字典项使用；类型行隐藏
         value: ({ column, rawRow }) => {
-          if (isTypeRow(rawRow)) column["hideInForm"] = true;
+          if (isTypeRow(rawRow as DictRow)) column["hideInForm"] = true;
           return column;
         }
       }

@@ -88,13 +88,13 @@ onMounted(async () => {
   if (!pk) return;
   const res = await screenApi.retrieve(pk);
   if (res.code !== SUCCESS_CODE) return;
-  screen.value = res.data as never;
+  screen.value = res.data as ScreenItem;
   // 仅保留浏览者可见的仪表盘（personal 对他人不在可见列表内）
   const all = listRows<DashboardItem>(
     (await fetchAllRows(dashboardApi.list)) as never
   );
   dashboards.value = (screen.value?.dashboards ?? [])
-    .map(id => all.find(item => item.pk === id))
+    .map((id: string) => all.find((item: DashboardItem) => item.pk === id))
     .filter((item): item is DashboardItem => Boolean(item));
   startTimers();
 });

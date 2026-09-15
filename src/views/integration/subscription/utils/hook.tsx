@@ -85,8 +85,8 @@ export function useWebhookSubscription(tableRef: Ref) {
             h(ElSwitch, {
               modelValue: (row as WebhookSubscriptionItem).is_active,
               disabled: !canEdit,
-              "onUpdate:modelValue": (value: boolean) =>
-                toggleActive(row as WebhookSubscriptionItem, value)
+              "onUpdate:modelValue": (value: string | number | boolean) =>
+                toggleActive(row as WebhookSubscriptionItem, value as boolean)
             });
           break;
         case "url":

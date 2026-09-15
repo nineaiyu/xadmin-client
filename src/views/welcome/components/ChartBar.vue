@@ -1,10 +1,12 @@
 <script lang="ts" setup>
 import { getKeyList, useDark, useECharts, useGlobal } from "@pureadmin/utils";
 import { computed, nextTick, type PropType, ref, watch } from "vue";
+import type { DashboardTrendItem } from "@/api/system/dashboard";
 
 const props = defineProps({
+  // 行结构为 { day, count }（内部按字段取值渲染 x 轴与折线）
   showData: {
-    type: Array as PropType<Array<number>>,
+    type: Array as PropType<Array<DashboardTrendItem>>,
     default: () => []
   },
   title: {

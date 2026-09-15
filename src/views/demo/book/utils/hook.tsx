@@ -99,7 +99,9 @@ export function useDemoBook(tableRef: Ref) {
          */
         publisher: ({ column }) => {
           column.valueType = "autocomplete";
-          column["fieldProps"]["fetchSuggestions"] = (
+          (
+            column["fieldProps"] as { fetchSuggestions?: unknown }
+          ).fetchSuggestions = (
             queryString: string,
             cb: (results: Array<{ value: string }>) => void
           ) => {
@@ -140,7 +142,9 @@ export function useDemoBook(tableRef: Ref) {
            * 重写 publisher 组件，可参考 https://plus-pro-components.com/components/config.html
            */
           column.valueType = "autocomplete";
-          column["fieldProps"]["fetchSuggestions"] = (
+          (
+            column["fieldProps"] as { fetchSuggestions?: unknown }
+          ).fetchSuggestions = (
             queryString: string,
             cb: (results: Array<{ value: string }>) => void
           ) => {

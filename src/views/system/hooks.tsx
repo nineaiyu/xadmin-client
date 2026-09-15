@@ -1,7 +1,9 @@
 // 抽离可公用的工具函数等用于系统管理页面逻辑
 import type { Router } from "vue-router";
+import type { VNode } from "vue";
 import { cloneDeep, isNullOrUnDef } from "@pureadmin/utils";
 import { hasAuth } from "@/router/utils";
+import type { RecordType } from "plus-pro-components";
 import { formatPublicLabels, type PageColumn } from "@/components/RePlusPage";
 
 // 以下工具已收敛到 RePlusPage 框架层（消除双份实现），此处保留同名出口以兼容既有调用方
@@ -41,8 +43,8 @@ export function picturePng(url: string) {
   return url?.replace(/_(\d).jpg/, ".png");
 }
 
-export const disableState = (props, key) => {
-  return !props?.isAdd && props?.showColumns?.indexOf(key) === -1;
+export const disableState = (props: FormStateProps, key?: string) => {
+  return !props?.isAdd && props?.showColumns?.indexOf(key as string) === -1;
 };
 
 export const formatFormColumns = (
@@ -97,7 +99,7 @@ export const buildRoleRulesColumns = (
       column.hideInForm = true;
     }
     if (key && disabledKeys.includes(key)) {
-      column["fieldProps"]["disabled"] = true;
+      (column["fieldProps"] as { disabled?: boolean })["disabled"] = true;
     }
     if (key && ["roles", "rules"].includes(key)) {
       column.options = customRolePermissionOptions(
@@ -121,7 +123,11 @@ export const buildRoleRulesColumns = (
 export const customRolePermissionOptions = (
   data: Array<RolePermissionItem>
 ) => {
-  const result = [];
+  const result: Array<{
+    label?: string;
+    value: { pk?: number | string; name?: string };
+    fieldSlot: () => VNode;
+  }> = [];
   data?.forEach(item => {
     result.push({
       label: item?.name,
@@ -147,8 +153,9 @@ export const customRolePermissionOptions = (
   return result;
 };
 
-export const formatFiledAppParent = results => {
-  const app = {};
+/** 为缺少父级的模型字段补应用分组节点（原地修改 results 并追加分组行） */
+export const formatFiledAppParent = (results: RecordType[]) => {
+  const app: Record<string, RecordType> = {};
   results.forEach(item => {
     if (!item.parent && item.name !== "*") {
       const appName = item.name.split(".")[0];

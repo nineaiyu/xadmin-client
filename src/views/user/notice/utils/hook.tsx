@@ -10,6 +10,7 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { deviceDetection, getKeyList } from "@pureadmin/utils";
 import NoticeShowForm from "@/views/system/components/NoticeShow.vue";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
+import type { RecordType } from "plus-pro-components";
 
 import Success from "~icons/ep/success-filled";
 
@@ -26,7 +27,7 @@ export function useUserNotice(tableRef: Ref) {
 
   const selectedNum = ref(0);
   const unreadCount = ref(0);
-  const manySelectData = ref([]);
+  const manySelectData = ref<RecordType[]>([]);
 
   function handleReadAll() {
     api.allRead().then(() => {
@@ -53,7 +54,11 @@ export function useUserNotice(tableRef: Ref) {
       });
   }
 
-  const showDialog = (row, routeParams = null, searchFields = null) => {
+  const showDialog = (
+    row: RecordType,
+    routeParams: RecordType | null = null,
+    searchFields: Ref<RecordType> | null = null
+  ) => {
     if (row.unread) {
       api.batchRead({ pks: [row.pk] });
     }
@@ -71,7 +76,7 @@ export function useUserNotice(tableRef: Ref) {
       hideFooter: true,
       contentRenderer: () => h(NoticeShowForm),
       closeCallBack: () => {
-        if (routeParams?.pk) {
+        if (routeParams?.pk && searchFields) {
           searchFields.value.pk = "";
         }
         if (row.unread) {
@@ -84,7 +89,17 @@ export function useUserNotice(tableRef: Ref) {
     });
   };
 
-  const searchComplete = ({ routeParams, searchFields, dataList, res }) => {
+  const searchComplete = ({
+    routeParams,
+    searchFields,
+    dataList,
+    res
+  }: {
+    routeParams: RecordType;
+    searchFields: Ref<RecordType>;
+    dataList: Ref<RecordType[]>;
+    res: RecordType;
+  }) => {
     unreadCount.value = res.unread_count;
     useUserStoreHook().SET_NOTICECOUNT(res.unread_count);
     if (
@@ -97,7 +112,7 @@ export function useUserNotice(tableRef: Ref) {
     }
   };
 
-  const selectionChange = data => {
+  const selectionChange = (data: RecordType[]) => {
     manySelectData.value = data;
     selectedNum.value = manySelectData.value.length ?? 0;
   };

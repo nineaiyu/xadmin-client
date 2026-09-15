@@ -18,6 +18,9 @@ interface MenuTreeDeps {
   emit: (event: string, ...args: unknown[]) => void;
 }
 
+/** el-tree 拖拽事件节点（取内部 data 判定菜单类型） */
+type MenuDragNode = { data: TreeNodeData };
+
 /** 菜单树交互状态机：搜索过滤/高亮/展开折叠/拖拽约束/重置（拆分自 tree.vue） */
 export function useMenuTree({
   treeData,
@@ -29,10 +32,14 @@ export function useMenuTree({
 }: MenuTreeDeps) {
   const { t } = useI18n();
   const { locale } = useI18n();
-  const { proxy } = getCurrentInstance();
+  // useMenuTree 在组件 setup 内调用，实例必然存在；proxy 供 $refs 取 el-tree 实例
+  const proxy = getCurrentInstance()?.proxy;
 
   const searchValue = ref("");
-  const highlightMap = ref({});
+  /** 节点高亮状态（pk → 高亮标记；模板按 pk 读取） */
+  const highlightMap = ref<
+    Record<string | number, { pk?: number; highlight?: boolean }>
+  >({});
   const loading = ref(true);
   const isExpand = ref(false);
   const checkStrictly = ref(true);
@@ -53,24 +60,25 @@ export function useMenuTree({
       : false;
   };
 
-  const initMenuData = value => {
-    Object.keys(value).forEach(key => {
-      // 树节点数据按键值整体回填表单，经索引签名逐键写入
+  const initMenuData = (value: Tree) => {
+    // 树节点数据按键值整体回填表单，经索引签名逐键写入
+    const row = value as Tree & Record<string, unknown>;
+    Object.keys(row).forEach(key => {
       (formInline.value as FormItemProps & Record<string, unknown>)[key] =
-        value[key];
+        row[key];
     });
-    formInline.value.title = formInline.value.meta.title;
-    const p_menus = getMenuFromPk(treeRef.value.data, value.pk);
+    formInline.value.title = formInline.value.meta?.title;
+    const p_menus = getMenuFromPk(treeRef.value.data, value.pk as number);
     if (p_menus.length > 0) {
       formInline.value.parent_ids = p_menus.map(res => res.pk);
       parentIds.value = formInline.value.parent_ids;
     }
   };
 
-  function nodeClick(value) {
+  function nodeClick(value: Tree) {
     // 键必须与模板读取口径一致：模板读的是 el-tree 节点的 node.id（= node-key="pk"），
     // 原实现用内部 $treeNodeId 写入，两者不同源导致高亮实际取不到值
-    const nodeId = value.pk;
+    const nodeId = value.pk ?? value.id;
     highlightMap.value[nodeId] = highlightMap.value[nodeId]?.highlight
       ? Object.assign({}, highlightMap.value[nodeId], {
           pk: nodeId,
@@ -80,7 +88,7 @@ export function useMenuTree({
           pk: nodeId,
           highlight: true
         });
-    Object.values(highlightMap.value).forEach((v: Tree) => {
+    Object.values(highlightMap.value).forEach(v => {
       if (v.pk !== nodeId) {
         v.highlight = false;
       }
@@ -108,7 +116,7 @@ export function useMenuTree({
     let changeType = MenuChoices.MENU;
     if (status) changeType = MenuChoices.DIRECTORY;
 
-    const tree = proxy.$refs["treeRef"] as TreeInstance | undefined;
+    const tree = proxy?.$refs["treeRef"] as TreeInstance | undefined;
     if (!tree?.getNode) return;
     // getNode 为 el-tree 公开 API，逐节点设置 expanded，避免私有 store 在升级后失效
     collectNodePks(treeData.value, all, changeType).forEach(pk => {
@@ -117,7 +125,11 @@ export function useMenuTree({
     });
   }
 
-  const handleDragEnd = (node, node2, position) => {
+  const handleDragEnd = (
+    node: MenuDragNode,
+    node2: MenuDragNode | null,
+    position: string
+  ) => {
     emit("handleDrag", treeRef.value, node, node2, position);
   };
 
@@ -128,11 +140,13 @@ export function useMenuTree({
     toggleRowExpansionAll(!isExpand.value);
     parentIds.value = [];
     Object.keys(formInline.value).forEach(param => {
-      formInline.value[param] = defaultData[param];
+      (formInline.value as FormItemProps & Record<string, unknown>)[param] = (
+        defaultData as Record<string, unknown>
+      )[param];
     });
   }
 
-  const customNodeClass = data => {
+  const customNodeClass = (data: TreeNodeData): string => {
     if (!data.is_active) {
       return "is-disabled";
     }
@@ -141,7 +155,7 @@ export function useMenuTree({
     } else if (data.menu_type === MenuChoices.MENU) {
       return "is-permission";
     }
-    return null;
+    return "";
   };
 
   const defaultProps = {
@@ -159,7 +173,11 @@ export function useMenuTree({
     ];
   });
 
-  const handleDragDrop = (node1, node2, type) => {
+  const handleDragDrop = (
+    node1: MenuDragNode,
+    node2: MenuDragNode,
+    type: string
+  ) => {
     return !(
       type === "inner" && node2.data.menu_type === MenuChoices.PERMISSION
     );

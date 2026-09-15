@@ -8,6 +8,7 @@ import type DeptPermissionPreview from "../components/DeptPermissionPreview.vue"
 import View from "~icons/ri/eye-line";
 import { handleTree } from "@/utils/tree";
 import {
+  type PageColumn,
   type PageTableColumn,
   handleOperation,
   openDialogDrawer,
@@ -15,6 +16,7 @@ import {
   type RePlusPageProps
 } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import type { RecordType } from "plus-pro-components";
 import Role from "~icons/ri/admin-line";
 
 export function useDept(tableRef: Ref) {
@@ -51,7 +53,7 @@ export function useDept(tableRef: Ref) {
   const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
     props: {
       row: {
-        parent: ({ rawRow }) => {
+        parent: ({ rawRow }: { rawRow?: RecordType }) => {
           return rawRow?.parent?.pk ?? "";
         }
       },
@@ -70,7 +72,7 @@ export function useDept(tableRef: Ref) {
             }
           };
           column["options"] = handleTree(
-            column._column.choices,
+            column._column?.choices ?? [],
             "pk",
             "parent_id"
           );
@@ -107,9 +109,15 @@ export function useDept(tableRef: Ref) {
     }
   }
 
-  const roleRulesColumns = ref([]);
+  const roleRulesColumns = ref<PageColumn[]>([]);
   const roleRules = ref({});
-  const baseColumnsFormat = ({ addOrEditColumns, addOrEditRules }) => {
+  const baseColumnsFormat = ({
+    addOrEditColumns,
+    addOrEditRules
+  }: {
+    addOrEditColumns: Ref<PageColumn[]>;
+    addOrEditRules: Ref<RecordType>;
+  }) => {
     roleRules.value = addOrEditRules.value;
     roleRulesColumns.value = buildRoleRulesColumns(addOrEditColumns.value, {
       keepKeys: ["name", "code", "roles", "rules"],
@@ -130,7 +138,7 @@ export function useDept(tableRef: Ref) {
       saveCallback: ({ formData, done, closeLoading }) => {
         handleOperation({
           t,
-          apiReq: api.empower(row.pk, {
+          apiReq: api.empower(row.pk as number | string, {
             roles: formData.roles,
             rules: formData.rules
           }),

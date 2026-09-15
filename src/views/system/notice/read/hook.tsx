@@ -80,7 +80,7 @@ export function useNoticeRead(tableRef: Ref) {
             updateApi: api.state,
             switchLoadMap,
             switchStyle,
-            field: column.prop,
+            field: column.prop as string,
             disabled: () => !auth.state,
             success() {
               tableRef.value.handleGetData();

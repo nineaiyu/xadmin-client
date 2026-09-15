@@ -22,6 +22,7 @@ import {
 } from "@/components/RePlusPage";
 import NoticeShowForm from "@/views/system/components/NoticeShow.vue";
 import WangEditor from "@/components/RePlusPage/src/components/WangEditor.vue";
+import type { RecordType } from "plus-pro-components";
 
 export function useNotice(tableRef: Ref) {
   const { t } = useI18n();
@@ -145,15 +146,18 @@ export function useNotice(tableRef: Ref) {
         },
         notice_type: ({ column, isAdd }) => {
           if (!isAdd) {
-            column["fieldProps"]["disabled"] = true;
+            (column["fieldProps"] as { disabled?: boolean })["disabled"] = true;
           }
           (column?.options as SelectOption[]).forEach(option => {
+            const fieldItemProps = option.fieldItemProps as {
+              disabled?: boolean;
+            };
             if (option.value?.value == NoticeChoices.SYSTEM) {
-              option.fieldItemProps.disabled = true;
+              fieldItemProps.disabled = true;
             }
             if (option.value?.value == NoticeChoices.NOTICE) {
               if (!hasAuth("announcement:SystemNotice")) {
-                option.fieldItemProps.disabled = true;
+                fieldItemProps.disabled = true;
               }
             }
           });
@@ -162,7 +166,7 @@ export function useNotice(tableRef: Ref) {
         notice_user: ({ column, formValue }) => {
           column["hideInForm"] = computed(() => {
             return !(
-              formValue.value?.notice_type?.value === NoticeChoices.USER &&
+              formValue?.value?.notice_type?.value === NoticeChoices.USER &&
               hasAuth("list:SearchUser")
             );
           });
@@ -171,7 +175,7 @@ export function useNotice(tableRef: Ref) {
         notice_dept: ({ column, formValue }) => {
           column["hideInForm"] = computed(() => {
             return !(
-              formValue.value?.notice_type?.value === NoticeChoices.DEPT &&
+              formValue?.value?.notice_type?.value === NoticeChoices.DEPT &&
               hasAuth("list:SearchDept")
             );
           });
@@ -180,7 +184,7 @@ export function useNotice(tableRef: Ref) {
         notice_role: ({ column, formValue }) => {
           column["hideInForm"] = computed(() => {
             return !(
-              formValue.value?.notice_type?.value === NoticeChoices.ROLE &&
+              formValue?.value?.notice_type?.value === NoticeChoices.ROLE &&
               hasAuth("list:SearchRole")
             );
           });
@@ -188,12 +192,15 @@ export function useNotice(tableRef: Ref) {
         },
         message: ({ column, formValue }) => {
           column["hasLabel"] = false;
-          column["renderField"] = (value, onChange) => {
+          column["renderField"] = (
+            value: unknown,
+            onChange: (val: unknown) => void
+          ) => {
             return h(WangEditor, {
-              modelValue: value,
+              modelValue: value as string,
               onChange: ({ messages, files }) => {
                 onChange(messages);
-                formValue.value.files = files;
+                if (formValue?.value) formValue.value.files = files;
               }
             });
           };
@@ -241,7 +248,13 @@ export function useNotice(tableRef: Ref) {
     }
   }
 
-  const searchComplete = ({ routeParams, searchFields }) => {
+  const searchComplete = ({
+    routeParams,
+    searchFields
+  }: {
+    routeParams: RecordType;
+    searchFields: Ref<RecordType>;
+  }) => {
     if (
       routeParams.notice_user &&
       searchFields.value.notice_user &&

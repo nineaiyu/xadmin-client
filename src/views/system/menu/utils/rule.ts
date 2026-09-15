@@ -1,5 +1,18 @@
 import { $t, transformI18n } from "@/plugins/i18n";
 
+/** 路由地址校验（目录/菜单共用）：必须以 "/" 开头 */
+const pathValidator = (
+  _rule: unknown,
+  value: string | undefined,
+  callback: (error?: Error) => void
+) => {
+  if (value && value.startsWith("/")) {
+    callback();
+  } else {
+    callback(new Error(transformI18n($t("systemMenu.pathError"))));
+  }
+};
+
 export const dirFormRules = {
   menu_type: [
     {
@@ -22,13 +35,7 @@ export const dirFormRules = {
       trigger: "blur"
     },
     {
-      validator: (rule, value, callback) => {
-        if (value && value.startsWith("/")) {
-          callback();
-        } else {
-          callback(new Error(transformI18n($t("systemMenu.pathError"))));
-        }
-      },
+      validator: pathValidator,
       trigger: "blur"
     }
   ]
@@ -55,13 +62,7 @@ export const menuFormRules = {
       trigger: "blur"
     },
     {
-      validator: (rule, value, callback) => {
-        if (value && value.startsWith("/")) {
-          callback();
-        } else {
-          callback(new Error(transformI18n($t("systemMenu.pathError"))));
-        }
-      },
+      validator: pathValidator,
       trigger: "blur"
     }
   ],

@@ -9,6 +9,7 @@ import { picturePng } from "@/views/system/hooks";
 import type { useI18n } from "vue-i18n";
 import type { Ref, UnwrapNestedRefs } from "vue";
 import type { userApi } from "@/api/system/user";
+import type { RecordType } from "plus-pro-components";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
@@ -26,7 +27,7 @@ export function useUserAvatarUpload({
   const avatarInfo = ref();
 
   /** 上传头像 */
-  function handleUpload(row) {
+  function handleUpload(row: RecordType) {
     addDialog({
       title: t("systemUser.updateAvatar", { user: row.username }),
       width: "40%",

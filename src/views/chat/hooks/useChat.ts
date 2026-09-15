@@ -162,7 +162,10 @@ export function useChat() {
       };
       return;
     }
-    if (isOutboundMessage<ChatRoomMessage>(raw, MessageAction.CHAT_MESSAGE)) {
+    if (
+      isOutboundMessage<ChatRoomMessage>(raw, MessageAction.CHAT_MESSAGE) &&
+      raw.data
+    ) {
       onIncomingMessage(raw.data);
       return;
     }
@@ -170,7 +173,10 @@ export function useChat() {
       if (raw.data?.room_id === activeRoomId.value) applyRecall(raw.data);
       return;
     }
-    if (isOutboundMessage<ChatUnreadPayload>(raw, MessageAction.CHAT_UNREAD)) {
+    if (
+      isOutboundMessage<ChatUnreadPayload>(raw, MessageAction.CHAT_UNREAD) &&
+      raw.data
+    ) {
       roomState.applyUnread(raw.data.room_id, raw.data.unread_count);
     }
   }

@@ -29,6 +29,7 @@ import { cloneDeep, debounce } from "@pureadmin/utils";
 import { useEventListener } from "@vueuse/core";
 import LoginMfa from "./LoginMfa.vue";
 import OAuthEntry from "./OauthEntry.vue";
+import type { RecordType } from "plus-pro-components";
 
 defineOptions({
   name: "BasicLogin"
@@ -136,7 +137,9 @@ const handleLoginSuccess = () => {
     .then(() => {
       disabled.value = true;
       router
-        .push((route.query?.redirect as string) ?? getTopMenu(true).path)
+        .push(
+          (route.query?.redirect as string) ?? getTopMenu(true)?.path ?? "/"
+        )
         .finally(() => {
           disabled.value = false;
         });
@@ -173,11 +176,12 @@ onMounted(() => {
   loginAuthApi()
     .then(res => {
       if (res.code === SUCCESS_CODE) {
-        Object.keys(res.data).forEach(key => {
-          authInfo[key] = res.data[key];
+        const authData = res.data as RecordType;
+        Object.keys(authData).forEach(key => {
+          (authInfo as unknown as RecordType)[key] = authData[key];
         });
         initToken();
-        loginDay.value = authInfo.lifetime;
+        loginDay.value = authInfo.lifetime ?? 1;
         formatLoginDayList();
         useUserStoreHook().SET_ISREMEMBERED(checked.value);
         useUserStoreHook().SET_LOGINDAY(loginDay.value);

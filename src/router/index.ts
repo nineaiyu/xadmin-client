@@ -12,6 +12,7 @@ import remainingRouter from "./modules/remaining";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import { useUserStoreHook } from "@/store/modules/user";
+import type { RouteConfigs } from "@/layout/types";
 import {
   isUrl,
   openLink,
@@ -30,7 +31,12 @@ import {
   formatFlatteningRoutes,
   isOneOfArray
 } from "./utils";
-import { type Router, type RouteRecordRaw, createRouter } from "vue-router";
+import {
+  type Router,
+  type RouterHistory,
+  type RouteRecordRaw,
+  createRouter
+} from "vue-router";
 import { defineComponent } from "vue";
 import {
   removeToken,
@@ -51,7 +57,7 @@ const modules = import.meta.glob<{ default: RouteConfigsTable }>(
 );
 
 /** 原始静态路由（未做任何处理） */
-const routes = [];
+const routes: RouteConfigsTable[] = [];
 
 Object.keys(modules).forEach(key => {
   routes.push(modules[key].default);
@@ -59,21 +65,24 @@ Object.keys(modules).forEach(key => {
 
 /** 导出处理后的静态路由（三级及以上的路由全部拍成二级） */
 export const constantRoutes: Array<RouteRecordRaw> = formatTwoStageRoutes(
-  formatFlatteningRoutes(buildHierarchyTree(ascending(routes.flat(Infinity))))
+  // 静态路由配置表（RouteConfigsTable）与 vue-router 运行时联合类型在边界收窄（运行时即合法路由记录）
+  formatFlatteningRoutes(
+    buildHierarchyTree(
+      ascending(routes.flat(Infinity))
+    ) as unknown as RouteRecordRaw[]
+  )
 );
 
 /** 初始的静态路由，用于退出登录时重置路由 */
 const initConstantRoutes: Array<RouteRecordRaw> = cloneDeep(constantRoutes);
 
 /** 用于渲染菜单，保持原始层级 */
-export const constantMenus: Array<RouteRecordRaw> = ascending(
-  routes.flat(Infinity)
-).concat(...remainingRouter);
+export const constantMenus: Array<RouteRecordRaw> = (
+  ascending(routes.flat(Infinity)) as unknown as RouteRecordRaw[]
+).concat(...(remainingRouter as unknown as RouteRecordRaw[]));
 
 /** 不参与菜单的路由 */
-export const remainingPaths = Object.keys(remainingRouter).map(v => {
-  return remainingRouter[v].path;
-});
+export const remainingPaths = remainingRouter.map(v => v.path);
 
 /**
  * 顶层兜底路由（无 redirect、无组件），必须在创建路由实例时就注册：
@@ -94,7 +103,8 @@ const pathMatchRoute: RouteRecordRaw = {
 
 /** 创建路由实例 */
 export const router: Router = createRouter({
-  history: getHistoryMode(import.meta.env.VITE_ROUTER_HISTORY),
+  // VITE_ROUTER_HISTORY 由构建配置保证为合法值（hash / h5[,base]），未命中场景不发生后端兜底
+  history: getHistoryMode(import.meta.env.VITE_ROUTER_HISTORY) as RouterHistory,
   // vue-router 5 的 RouteRecordRaw 联合判定不认宽松的 RouteConfigsTable 接口（redirect 可选性），
   // 运行时 remainingRoutes 即合法路由，此处按原始路由边界收窄
   routes: constantRoutes.concat(
@@ -135,7 +145,11 @@ export function resetRouter() {
   }
   router.addRoute(pathMatchRoute);
   router.options.routes = formatTwoStageRoutes(
-    formatFlatteningRoutes(buildHierarchyTree(ascending(routes.flat(Infinity))))
+    formatFlatteningRoutes(
+      buildHierarchyTree(
+        ascending(routes.flat(Infinity))
+      ) as unknown as RouteRecordRaw[]
+    )
   );
   usePermissionStoreHook().clearAllCachePage();
   // 一并清掉动态路由/权限的本地缓存（CachingAsyncRoutes 开启时写入）：
@@ -216,26 +230,28 @@ router.beforeEach((to: ToRouteType, _from) => {
             const { path } = to;
             const route = findRouteByPath(
               path,
-              router.options.routes[0].children
+              router.options.routes[0].children ?? []
             );
             getTopMenu(true);
             // query、params模式路由传参数的标签页不在此处处理
             if (route && route.meta?.title) {
               if (isAllEmpty(route.parentId) && route.meta?.backstage) {
-                // 此处为动态顶级路由（目录）
-                const { path, name, meta } = route.children[0];
+                // 此处为动态顶级路由（目录）：目录型记录必然带 children，边界断言保持运行时原语义
+                const { path, name, meta } = (
+                  route.children as RouteRecordRaw[]
+                )[0];
                 useMultiTagsStoreHook().handleTags("push", {
                   path,
                   name,
                   meta
-                });
+                } as unknown as RouteConfigs);
               } else {
                 const { path, name, meta } = route;
                 useMultiTagsStoreHook().handleTags("push", {
                   path,
                   name,
                   meta
-                });
+                } as unknown as RouteConfigs);
               }
             }
           }

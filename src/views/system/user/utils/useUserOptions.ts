@@ -8,16 +8,17 @@ import { roleApi } from "@/api/system/role";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { fetchAllRows } from "@/utils/fetchAllRows";
-import { handleTree } from "@/utils/tree";
+import { handleTree, type TreeResult } from "@/utils/tree";
 import type { Ref } from "vue";
+import type { RecordType } from "plus-pro-components";
 
 /** 用户视图下拉/树选项：部门树、角色、数据权限（empower 权限控制可见性） */
 export function useUserOptions(auth: { empower: boolean }, tableRef: Ref) {
   const { t } = useI18n();
-  const treeData = ref([]);
+  const treeData = ref<TreeResult<RecordType>[]>([]);
   const treeLoading = ref(true);
-  const rolesOptions = ref([]);
-  const rulesOptions = ref([]);
+  const rolesOptions = ref<RecordType[]>([]);
+  const rulesOptions = ref<RecordType[]>([]);
 
   onMounted(() => {
     if (auth.empower) {
@@ -57,7 +58,13 @@ export function useUserOptions(auth: { empower: boolean }, tableRef: Ref) {
     }
   });
 
-  function onTreeSelect({ pk, selected }) {
+  function onTreeSelect({
+    pk,
+    selected
+  }: {
+    pk: number | string;
+    selected: boolean;
+  }) {
     tableRef.value.handleGetData({ dept: selected ? pk : "", page: 1 });
   }
 

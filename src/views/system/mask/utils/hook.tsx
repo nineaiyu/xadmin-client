@@ -193,7 +193,7 @@ export function useMask() {
             column["options"] = computed(
               () =>
                 fieldOptionsMap.value[
-                  rawValueOf(formValue.value?.model) ?? ""
+                  rawValueOf(formValue?.value?.model) ?? ""
                 ] ?? []
             );
           }
@@ -201,7 +201,7 @@ export function useMask() {
         },
         pattern: ({ column, formValue }) => {
           const isCustom = () => {
-            const v = formValue.value?.mask_type;
+            const v = formValue?.value?.mask_type;
             return v?.value === "custom" || v === "custom";
           };
           column["hideInForm"] = computed(() => !isCustom());

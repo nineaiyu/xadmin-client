@@ -40,7 +40,7 @@ export const usePermissionStore = defineStore("pure-permission", {
         filterTree(
           ascending(this.constantMenus.concat(routes) as RouteRecordRaw[])
         )
-      );
+      ) as unknown as menuType[];
       this.flatteningRoutes = formatFlatteningRoutes(
         // 同上：UnwrapRef 映射后需在边界断言
         this.constantMenus.concat(routes) as RouteRecordRaw[]

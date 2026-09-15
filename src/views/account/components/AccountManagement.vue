@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { deviceDetection } from "@pureadmin/utils";
 import { useAccountManage } from "../utils/hook";
 import { hasAuth } from "@/router/utils";
+import type { RecordType } from "plus-pro-components";
 
 defineOptions({
   name: "AccountManagement"
@@ -34,7 +35,7 @@ const list = computed(() => [
   }
 ]);
 
-function onClick(item) {
+function onClick(item: RecordType) {
   if (item.name === "password") {
     handleChangePassword();
   } else if (item.name === "email") {

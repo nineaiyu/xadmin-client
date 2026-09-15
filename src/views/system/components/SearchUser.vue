@@ -1,9 +1,10 @@
 <script lang="ts" setup>
-import { h, reactive } from "vue";
+import { h, reactive, type Ref } from "vue";
 import { hasAuth } from "@/router/utils";
 import { searchUserApi } from "@/api/system/search";
 import RePlusSearch from "@/components/RePlusSearch";
 import { ElImage } from "element-plus";
+import type { PageTableColumn } from "@/components/RePlusPage";
 
 defineOptions({ name: "SearchUser" });
 
@@ -17,10 +18,16 @@ const { multiple = true } = defineProps<{ multiple?: boolean }>();
 
 const api = reactive(searchUserApi);
 
-const baseColumnsFormat = ({ listColumns }) => {
+const baseColumnsFormat = ({
+  listColumns
+}: {
+  listColumns: Ref<PageTableColumn[]>;
+}) => {
   listColumns.value.forEach(column => {
     if (
-      ["pk", "is_active", "gender", "avatar"].indexOf(column._column.key) > -1
+      ["pk", "is_active", "gender", "avatar"].indexOf(
+        column._column?.key as string
+      ) > -1
     ) {
       column["width"] = 80;
     }
@@ -28,10 +35,10 @@ const baseColumnsFormat = ({ listColumns }) => {
       column["cellRenderer"] = ({ row }) =>
         h(ElImage, {
           lazy: true,
-          src: row[column._column?.key],
-          alt: row[column._column?.key],
+          src: row[column._column?.key as string],
+          alt: row[column._column?.key as string],
           class: ["w-[36px]", "h-[36px]", "align-middle"],
-          previewSrcList: [row[column._column?.key]],
+          previewSrcList: [row[column._column?.key as string]],
           previewTeleported: true
         });
     }

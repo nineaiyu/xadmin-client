@@ -5,7 +5,7 @@ import UnExpandIcon from "../svg/unexpand.svg?component";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import More2Fill from "~icons/ri/more-2-fill?width=18&height=18";
 import { computed, getCurrentInstance, nextTick, ref, watch } from "vue";
-import type { TreeInstance } from "element-plus";
+import type { TreeInstance, TreeNodeData } from "element-plus";
 
 interface Tree {
   id: number;
@@ -26,8 +26,14 @@ const emit = defineEmits(["tree-select"]);
 const treeRef = ref();
 const isExpand = ref(true);
 const searchValue = ref("");
-const highlightMap = ref({});
-const { proxy } = getCurrentInstance();
+/** 节点高亮状态（pk → 高亮标记；模板按 pk 读取） */
+const highlightMap = ref<
+  Record<string | number, { id?: number | string; highlight?: boolean }>
+>({});
+// 组件 setup 内调用，实例必然存在；proxy 供 $refs 取 el-tree 实例
+const proxy = getCurrentInstance()?.proxy;
+/** el-tree 数据（props 为宽 Array 声明，此处收窄为部门节点树） */
+const treeViewData = computed(() => props.treeData as Tree[]);
 const defaultProps = {
   children: "children",
   label: "name"
@@ -43,13 +49,13 @@ const buttonClass = computed(() => {
   ];
 });
 
-const filterNode = (value: string, data: Tree) => {
+const filterNode = (value: string, data: TreeNodeData) => {
   if (!value) return true;
-  return data.name.includes(value);
+  return data.name?.includes(value) ?? false;
 };
 
-function nodeClick(value) {
-  const nodeId = value.pk;
+function nodeClick(value: TreeNodeData) {
+  const nodeId = value.pk ?? value.id;
   highlightMap.value[nodeId] = highlightMap.value[nodeId]?.highlight
     ? Object.assign({ id: nodeId }, highlightMap.value[nodeId], {
         highlight: false
@@ -57,7 +63,7 @@ function nodeClick(value) {
     : Object.assign({ id: nodeId }, highlightMap.value[nodeId], {
         highlight: true
       });
-  Object.values(highlightMap.value).forEach((v: Tree) => {
+  Object.values(highlightMap.value).forEach(v => {
     if (v.id !== nodeId) {
       v.highlight = false;
     }
@@ -83,10 +89,10 @@ function collectNodePks(nodes?: Tree[]): number[] {
   return pks;
 }
 
-function toggleRowExpansionAll(status) {
+function toggleRowExpansionAll(status: boolean) {
   isExpand.value = status;
   // getNode 为 el-tree 公开 API，避免依赖私有 store（升级后不易失效）
-  const tree = proxy.$refs["treeRef"] as TreeInstance | undefined;
+  const tree = proxy?.$refs["treeRef"] as TreeInstance | undefined;
   if (!tree?.getNode) return;
   collectNodePks(props.treeData as Tree[]).forEach(pk => {
     const node = tree.getNode(pk);
@@ -110,8 +116,9 @@ watch(
   () => props.pk,
   () => {
     nextTick(() => {
-      if (props.pk) {
-        highlightMap.value[props.pk] = { highlight: true };
+      const pk = props.pk;
+      if (pk) {
+        highlightMap.value[pk] = { highlight: true };
       }
     });
   }
@@ -172,7 +179,7 @@ defineExpose({ onTreeReset });
     <el-scrollbar height="calc(90vh - 108px)">
       <el-tree
         ref="treeRef"
-        :data="props.treeData"
+        :data="treeViewData"
         :expand-on-click-node="false"
         :filter-node-method="filterNode"
         :props="defaultProps"

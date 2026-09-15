@@ -5,6 +5,7 @@ import { deviceDetection } from "@pureadmin/utils";
 import { configApi } from "@/api/config";
 import { handleOperation } from "@/components/RePlusPage";
 import { useI18n } from "vue-i18n";
+import type { RecordType } from "plus-pro-components";
 
 defineOptions({
   name: "Preferences"
@@ -27,12 +28,12 @@ const list = ref([
   }
 ]);
 
-function onChange(val, item) {
+function onChange(val: unknown, item: RecordType) {
   loading.value = true;
 
   handleOperation({
     t,
-    apiReq: configApi.setConfig(item.name, val, "patch"),
+    apiReq: configApi.setConfig(item.name, val as object, "patch"),
     requestEnd() {
       loading.value = false;
     }

@@ -39,21 +39,35 @@ export function useRole() {
 
   // 授权树节点（菜单树 + 注入的模型字段合成节点，键约定见 ./treeKeys.ts）
   const menuTreeData = ref<Array<Record<string, unknown>>>([]);
-  const fieldLookupsData = ref({});
+  const fieldLookupsData = ref<Record<string | number, RecordType>>({});
 
-  function autoFieldTree(arr) {
-    function deep(arr) {
+  /** 授权树节点（菜单节点掺入模型字段分组节点后的形态） */
+  type AuthTreeNode = {
+    pk?: number | string;
+    /** 字段节点的父级合成键 */
+    parent?: number | string;
+    model?: Array<number | string | { pk?: number | string }>;
+    children?: AuthTreeNode[];
+  };
+
+  function autoFieldTree(arr: AuthTreeNode[]) {
+    function deep(arr: AuthTreeNode[]) {
       arr.forEach(item => {
         if (item.model && item.model.length > 0 && !item.children) {
-          item.children = [];
+          const children: AuthTreeNode[] = [];
+          item.children = children;
           item.model.forEach(m => {
-            const data = cloneDeep(fieldLookupsData.value[m?.pk ?? m]);
+            const mPk =
+              typeof m === "object" && m !== null
+                ? (m as { pk?: number | string }).pk
+                : m;
+            const data = cloneDeep(fieldLookupsData.value[mPk as string]);
             data.pk = fieldGroupKey(data.pk);
-            data.children.forEach(x => {
-              x.pk = menuFieldKey(item.pk, x.pk);
+            data.children.forEach((x: AuthTreeNode) => {
+              x.pk = menuFieldKey(String(item.pk), String(x.pk));
               x.parent = data.pk;
             });
-            item.children.push(data);
+            children.push(data);
           });
         }
         if (item.children) {
@@ -104,7 +118,7 @@ export function useRole() {
   const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
     props: {
       row: {
-        field: ({ rawRow }) => {
+        field: ({ rawRow }: { rawRow?: RecordType }) => {
           // 列表行 field 为 []（ListRoleSerializer 口径）；编辑态会叠加详情原文，
           // 详情口径是 {menuPk: [fieldPk]} 字典。授权树勾选回显（form.vue 的
           // setCheckedKeys）要的是合成键数组，这里统一归一化（键约定见 ./treeKeys.ts）
@@ -114,17 +128,17 @@ export function useRole() {
           }
           if (field && typeof field === "object") {
             return Object.keys(field).flatMap(menuPk =>
-              (field[menuPk] ?? []).map(fieldPk =>
+              (field[menuPk] ?? []).map((fieldPk: string | number) =>
                 menuFieldKey(menuPk, String(fieldPk))
               )
             );
           }
           return [];
         },
-        menu: ({ rawRow }) => {
+        menu: ({ rawRow }: { rawRow?: RecordType }) => {
           return getKeyList(rawRow?.menu ?? [], "pk") ?? [];
         },
-        fields: ({ rawRow }) => {
+        fields: ({ rawRow }: { rawRow?: RecordType }) => {
           // 后端 fields 必填：未在授权树勾选任何字段授权时也要带上空字典
           // （空字典 = 该角色无字段权限；编辑态后端对空字典不做替换，保留原权限）
           return rawRow?.fields ?? {};
@@ -137,16 +151,19 @@ export function useRole() {
         },
         menu: ({ column, formValue }) => {
           column["fieldProps"] = {};
-          column["renderField"] = (value, onChange) => {
+          column["renderField"] = (
+            value: unknown,
+            onChange: (val: unknown) => void
+          ) => {
             return h(menuFieldForm, {
               api,
               auth,
-              pk: formValue.value?.pk,
+              pk: formValue?.value?.pk,
               modelValue: value as Array<string | number>,
-              field: formValue.value?.field,
+              field: formValue?.value?.field,
               menuTreeData: menuTreeData.value,
               onChange: ({ fields, menu }) => {
-                formValue.value.fields = fields;
+                if (formValue?.value) formValue.value.fields = fields;
                 onChange(menu);
               }
             });

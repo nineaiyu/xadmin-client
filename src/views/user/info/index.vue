@@ -22,6 +22,9 @@ const {
   t
 } = useUserInfo();
 const activeTab = ref("userinfo");
+
+/** edit-user-avatar 的 handleUpdate 载荷为裁剪结果对象，向头像上传的 Blob 参数收窄 */
+const onAvatarUpload = (values: object) => handleUpload(values as Blob);
 /** gender 在 choices 下发后为选项对象；数字形态（未下发）时无 label/value */
 const genderInfo = computed<ChoicesLabel | undefined>(() =>
   typeof currentUserInfo.gender === "object"
@@ -132,7 +135,7 @@ const genderInfo = computed<ChoicesLabel | undefined>(() =>
             <edit-user-avatar
               v-if="activeTab === 'avatar'"
               :avatar="currentUserInfo.avatar"
-              @handle-update="handleUpload"
+              @handle-update="onAvatarUpload"
             />
           </el-tab-pane>
         </el-tabs>

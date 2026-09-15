@@ -4,7 +4,7 @@ import { hasAuth } from "@/router/utils";
 import { computed, h, onMounted, reactive, type Ref, ref } from "vue";
 import { userInfoApi } from "@/api/user/userinfo";
 import { useUserStoreHook } from "@/store/modules/user";
-import type { PlusColumn } from "plus-pro-components";
+import type { PlusColumn, RecordType } from "plus-pro-components";
 import {
   formatFormColumns,
   formatOptions,
@@ -51,7 +51,7 @@ export function useUserProfileForm(formRef: Ref) {
   const { t, te } = useI18n();
   const { api, auth } = useApiAuth();
   const userinfoStore = useUserStoreHook();
-  const choicesDict = ref({});
+  const choicesDict = ref<RecordType>({});
   const avatarInfo = ref();
   const cropRef = ref();
   const userInfo = ref({
@@ -92,8 +92,8 @@ export function useUserProfileForm(formRef: Ref) {
   ];
   formatFormColumns({}, columns, t, te, "userinfo");
 
-  const handleUpdate = row => {
-    formRef.value?.formInstance?.validate(valid => {
+  const handleUpdate = (row: RecordType) => {
+    formRef.value?.formInstance?.validate((valid: boolean) => {
       if (valid) {
         handleOperation({
           t,
@@ -113,7 +113,7 @@ export function useUserProfileForm(formRef: Ref) {
     });
   };
 
-  const handleUpload = row => {
+  const handleUpload = (row: RecordType) => {
     addDialog({
       title: t("userinfo.updateAvatar", { user: row.username }),
       width: "40%",
@@ -187,7 +187,8 @@ export function useUserProfileForm(formRef: Ref) {
 export function useUserLoginLog() {
   const { t } = useI18n();
   const api = reactive(userLoginLogApi);
-  api.fields = undefined;
+  // 显式禁用 search-fields 接口（走内联列表元数据）
+  (api as unknown as { fields?: unknown }).fields = undefined;
 
   const auth = reactive({
     list: hasAuth("list:UserLoginLog")
@@ -210,7 +211,7 @@ export function useUserLoginLog() {
           column["cellRenderer"] = renderBooleanTag({
             t,
             tagStyle,
-            field: column.prop,
+            field: column.prop as string,
             actionMap: { true: t("labels.success"), false: t("labels.failed") }
           });
           break;
@@ -299,11 +300,11 @@ export function useAccountManage() {
       saveCallback: async ({ formData, done, closeLoading }) => {
         const rowData = {
           old_password: await AesEncrypted(
-            userinfoStore.username,
+            userinfoStore.username as string,
             formData.old_password
           ),
           sure_password: await AesEncrypted(
-            userinfoStore.username,
+            userinfoStore.username as string,
             formData.sure_password
           )
         };

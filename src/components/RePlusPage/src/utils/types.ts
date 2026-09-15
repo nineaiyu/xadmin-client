@@ -254,9 +254,10 @@ interface RePlusPageProps {
     title?: "";
     props?: Partial<formDialogDrawerOptions>;
     form?: undefined;
+    // 页面可按场景返回 undefined 表示「不覆盖默认保存请求」（框架回退 create/partialUpdate）
     apiReq?: (
       formOptions: Partial<formDialogDrawerOptions> & { formData: RecordType }
-    ) => Promise<ApiResult>;
+    ) => Promise<ApiResult> | undefined;
   };
   /**
    * 操作栏 按钮组方法

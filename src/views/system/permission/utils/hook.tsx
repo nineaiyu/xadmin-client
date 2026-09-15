@@ -12,24 +12,25 @@ import {
 import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { FieldChoices, MenuChoices } from "@/views/system/constants";
 import { menuApi } from "@/api/system/menu";
-import { handleTree } from "@/utils/tree";
+import { handleTree, type TreeResult } from "@/utils/tree";
 import { fetchMetaList, META_KEYS } from "@/utils/metaCache";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { modelLabelFieldApi } from "@/api/system/field";
 import { transformI18n } from "@/plugins/i18n";
 import { useI18n } from "vue-i18n";
 import { getKeyList } from "@pureadmin/utils";
+import type { RecordType } from "plus-pro-components";
 import type { OperationProps, RePlusPageProps } from "@/components/RePlusPage";
-import type { FieldRuleRow } from "../components/utils/types";
+import type { FieldLookupItem, FieldRuleRow } from "../components/utils/types";
 import filterForm from "../components/index.vue";
 import { formatFiledAppParent } from "@/views/system/hooks";
 
 export function useDataPermission() {
   const { t } = useI18n();
-  const fieldLookupsData = ref([]);
+  const fieldLookupsData = ref<TreeResult<RecordType>[]>([]);
   /** 字段权限注册表（ROLE）：字段试算草稿候选 */
-  const fieldLookupsRole = ref([]);
-  const valuesData = ref([]);
+  const fieldLookupsRole = ref<TreeResult<RecordType>[]>([]);
+  const valuesData = ref<FieldLookupItem[]>([]);
 
   const api = reactive(dataPermissionApi);
 
@@ -137,10 +138,10 @@ export function useDataPermission() {
   const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
     props: {
       row: {
-        menu: ({ rawRow }) => {
+        menu: ({ rawRow }: { rawRow?: RecordType }) => {
           return getKeyList(rawRow?.menu ?? [], "pk") ?? [];
         },
-        rules: ({ rawRow }) => {
+        rules: ({ rawRow }: { rawRow?: RecordType }) => {
           return rawRow?.rules ?? [];
         }
       },
@@ -155,18 +156,24 @@ export function useDataPermission() {
           delete column["renderField"];
           column["options"] = buildMenuOptions;
           column["valueType"] = "cascader";
-          column["fieldProps"]["props"] = {
-            ...column["fieldProps"]["props"],
-            ...{
-              value: "pk",
-              label: "title",
-              emitPath: false,
-              checkStrictly: false,
-              multiple: true
-            }
+          const fieldProps = (column["fieldProps"] ?? {}) as RecordType;
+          fieldProps["props"] = {
+            ...(fieldProps["props"] as RecordType | undefined),
+            value: "pk",
+            label: "title",
+            emitPath: false,
+            checkStrictly: false,
+            multiple: true
           };
+          column["fieldProps"] = fieldProps;
           column["fieldSlots"] = {
-            default: ({ node, data }) => (
+            default: ({
+              node,
+              data
+            }: {
+              node: { isLeaf?: boolean };
+              data: RecordType;
+            }) => (
               <>
                 <span>{data.title}</span>
                 <span v-show={!node.isLeaf}> ({data?.children?.length}) </span>
@@ -185,7 +192,10 @@ export function useDataPermission() {
         },
         rules: ({ column, formValue }) => {
           column["hasLabel"] = false;
-          column["renderField"] = (value, onChange) => {
+          column["renderField"] = (
+            value: unknown,
+            onChange: (val: unknown) => void
+          ) => {
             return h(filterForm, {
               class: ["overflow-auto"],
               dataList: value as FieldRuleRow[],

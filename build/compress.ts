@@ -4,7 +4,7 @@ import compressPlugin from "vite-plugin-compression";
 
 export const configCompressPlugin = (
   compress: ViteCompression
-): Plugin | Plugin[] => {
+): Plugin | Plugin[] | null => {
   if (compress === "none") return null;
 
   const gz = {

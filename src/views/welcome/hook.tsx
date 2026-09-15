@@ -5,7 +5,8 @@ import {
   getDashBoardUserLoginTotalApi,
   getDashBoardUserLoginTrendApi,
   getDashBoardUserRegisterTrendApi,
-  getDashBoardTodayOperateTotalApi
+  getDashBoardTodayOperateTotalApi,
+  type DashboardTrendItem
 } from "@/api/system/dashboard";
 import { useI18n } from "vue-i18n";
 import LoginLine from "~icons/ep/lock";
@@ -13,8 +14,30 @@ import LogLine from "~icons/ep/tickets";
 import { hasAuth } from "@/router/utils";
 import GroupLine from "~icons/ri/group-line";
 import { getKeyList } from "@pureadmin/utils";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, type Component } from "vue";
 import { operationLogApi } from "@/api/system/logs/operation";
+import type { RecordType } from "plus-pro-components";
+
+/** 顶部指标卡片（chartData） */
+export type ChartCardItem = {
+  icon: Component;
+  bgColor: string;
+  color: string;
+  duration: number;
+  name: string;
+  value: number;
+  /** 环比百分比文案（形如 +12%） */
+  percent: string;
+  /** 折线趋势数据 */
+  data: number[];
+};
+
+/** 活跃用户卡片（userActiveList，value 为 [天数, 注册数, 活跃数]） */
+export type UserActiveCardItem = {
+  name: string;
+  value: number[];
+  duration: number;
+};
 
 export function useDashboard() {
   const { t } = useI18n();
@@ -31,11 +54,11 @@ export function useDashboard() {
   const dataList = ref([]);
   const loading = ref(true);
 
-  const chartData = ref([]);
-  const userLoginList = ref([]);
-  const userRegisterList = ref([]);
-  const operateLogList = ref([]);
-  const userActiveList = ref([]);
+  const chartData = ref<ChartCardItem[]>([]);
+  const userLoginList = ref<DashboardTrendItem[]>([]);
+  const userRegisterList = ref<DashboardTrendItem[]>([]);
+  const operateLogList = ref<RecordType[]>([]);
+  const userActiveList = ref<UserActiveCardItem[]>([]);
 
   const getUserActiveList = () => {
     getDashBoardUserActiveApi().then(res => {
@@ -60,17 +83,17 @@ export function useDashboard() {
         getOperateLogList();
       }
       if (res.code === SUCCESS_CODE) {
+        // results 为可选字段，缺失时按空数组处理
+        const results = res.results ?? [];
         chartData.value.push({
           icon: LogLine,
           bgColor: "#eff8f4",
           color: "#7846e5",
           duration: 2200,
           name: t("welcome.requestNum"),
-          value: getKeyList(res.results, "count", false)[
-            res.results.length - 1
-          ],
+          value: getKeyList(results, "count", false)[results.length - 1],
           percent: res.percent > 0 ? `+${res.percent}%` : `${res.percent}%`,
-          data: getKeyList(res.results, "count", false)
+          data: getKeyList(results, "count", false)
         });
       }
     });
@@ -78,6 +101,7 @@ export function useDashboard() {
   const getUserTotal = () => {
     getDashBoardUserTotalApi().then(res => {
       if (res.code === SUCCESS_CODE) {
+        const results = res.results ?? [];
         chartData.value.push({
           icon: GroupLine,
           bgColor: "#eff8f4",
@@ -86,7 +110,7 @@ export function useDashboard() {
           name: t("welcome.userNum"),
           value: res.count,
           percent: res.percent > 0 ? `+${res.percent}%` : `${res.percent}%`,
-          data: getKeyList(res.results, "count", false)
+          data: getKeyList(results, "count", false)
         });
       }
     });
@@ -94,6 +118,7 @@ export function useDashboard() {
   const getUserLoginTotal = () => {
     getDashBoardUserLoginTotalApi().then(res => {
       if (res.code === SUCCESS_CODE) {
+        const results = res.results ?? [];
         chartData.value.push({
           icon: LoginLine,
           bgColor: "#effaff",
@@ -102,7 +127,7 @@ export function useDashboard() {
           name: t("welcome.loginTimes"),
           value: res.count,
           percent: res.percent > 0 ? `+${res.percent}%` : `${res.percent}%`,
-          data: getKeyList(res.results, "count", false)
+          data: getKeyList(results, "count", false)
         });
       }
     });
@@ -132,7 +157,7 @@ export function useDashboard() {
       })
       .then(res => {
         if (res.code === SUCCESS_CODE) {
-          operateLogList.value = res.data?.results;
+          operateLogList.value = res.data?.results ?? [];
         }
       });
   };

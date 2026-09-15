@@ -121,7 +121,8 @@ const auth = ref({
   batchDestroy: hasAuth("batchDestroy:SecurityBlockIp")
 });
 const api = ref(settingsBlockIpApi);
-api.value.fields = undefined;
+// 显式禁用 search-fields 接口（走内联列表元数据）
+(api.value as unknown as { fields?: unknown }).fields = undefined;
 const { t } = useI18n();
 </script>
 

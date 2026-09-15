@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useRoute } from "vue-router";
+import { useRoute, type RouteRecordRaw } from "vue-router";
 import { emitter } from "@/utils/mitt";
 import { useNav } from "@/layout/hooks/useNav";
 import { responsiveStorageNameSpace } from "@/config";
@@ -29,7 +29,7 @@ const {
   toggleSideBar
 } = useNav();
 
-const subMenuData = ref([]);
+const subMenuData = ref<RouteRecordRaw[]>([]);
 
 const menuData = computed(() => {
   return pureApp.layout === "mix" && device.value !== "mobile"

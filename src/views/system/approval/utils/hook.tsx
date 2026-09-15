@@ -14,6 +14,7 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";
 import { refreshApprovalBadge } from "@/utils/approvalBadge";
+import type { RecordType } from "plus-pro-components";
 import ApprovalLogsDialog from "../components/ApprovalLogsDialog.vue";
 import Check from "~icons/ep/check";
 import Close from "~icons/ep/close";
@@ -67,7 +68,7 @@ export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
 
   /** 驳回弹窗：原因必填（hook 内联表单，走 addDialog 标准范式） */
   const rejectForm = reactive({ reason: "" });
-  const openReject = row => {
+  const openReject = (row: RecordType) => {
     addDialog({
       title: t("approval.rejectTitle", {
         no: String(row.pk).slice(0, 8).toUpperCase()
@@ -122,7 +123,7 @@ export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
   };
 
   /** 互跳：查看该审批单对应的操作日志（近似口径，弹窗内已标注） */
-  const openRelatedLogs = row => {
+  const openRelatedLogs = (row: RecordType) => {
     addDialog({
       title: `${t("approval.relatedLogs")} - ${String(row.pk).slice(0, 8).toUpperCase()}`,
       width: "860px",
@@ -294,7 +295,9 @@ export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
                 });
               },
               show: row =>
-                auth.cancel && (row.status?.value ?? row.status) === "PENDING"
+                Boolean(
+                  auth.cancel && (row.status?.value ?? row.status) === "PENDING"
+                )
             },
             relatedLogsButton
           ]

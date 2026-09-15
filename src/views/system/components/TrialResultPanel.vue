@@ -35,6 +35,10 @@ const sourceTexts = computed<Record<string, string>>(() => ({
   draft: t("permissionPreview.sourceDraft")
 }));
 
+/** 诊断类型 tag 色（未知类型回退 info） */
+const kindTagType = (kind: string) =>
+  KIND_TAG_TYPES[kind as keyof typeof KIND_TAG_TYPES] ?? "info";
+
 const kindTexts = computed<Record<string, string>>(() => ({
   all: t("permissionPreview.kindAll"),
   condition: t("permissionPreview.kindCondition"),
@@ -135,7 +139,7 @@ const kindTexts = computed<Record<string, string>>(() => ({
             width="130"
           >
             <template #default="{ row }">
-              <el-tag :type="KIND_TAG_TYPES[row.kind]" size="small">
+              <el-tag :type="kindTagType(row.kind)" size="small">
                 {{ kindTexts[row.kind] ?? row.kind }}
               </el-tag>
             </template>

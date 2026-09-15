@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref } from "vue";
+import { computed, ref, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { isEmpty, isNullOrUnDef } from "@pureadmin/utils";
 import { IconSelect } from "@/components/ReIcon";
@@ -7,7 +7,7 @@ import { MenuChoices } from "@/views/system/constants";
 import ReAnimateSelector from "@/components/ReAnimateSelector";
 import FormQuestion from "@/components/FormQuestion/index.vue";
 import Segmented, { type OptionsType } from "@/components/ReSegmented";
-import type { FormItemProps } from "../utils/types";
+import type { FormItemProps, FormMetaProps } from "../utils/types";
 
 /**
  * 菜单/目录类型的表单字段区（拆分自 edit.vue：基本信息、缓存与标签开关、
@@ -21,8 +21,14 @@ const props = defineProps<{
 
 const { t } = useI18n();
 
-// ref 包装同一对象引用：模板/回调经 ref 修改字段（避免 vue/no-mutating-props）
-const newFormInline = ref(props.newFormInline);
+// ref 包装同一对象引用：模板/回调经 ref 修改字段（避免 vue/no-mutating-props）；
+// meta 由父级弹层装配时构造，模板绑定按必有字段收窄
+const newFormInline = ref(props.newFormInline) as Ref<
+  Omit<FormItemProps, "meta"> & { meta: FormMetaProps }
+>;
+
+/** 组件路径候选（value → 组件名），供下拉与详情展示 */
+const viewListMap = computed(() => props.viewList as Record<string, string>);
 
 /** 组件路径联动：path 自动补 "/" 前缀，name 取视图组件 name */
 const handleComponentChange = (value: string) => {
@@ -30,7 +36,7 @@ const handleComponentChange = (value: string) => {
     return;
   }
   newFormInline.value.path = `/${value}`;
-  newFormInline.value.name = (props.viewList as Record<string, string>)[value];
+  newFormInline.value.name = viewListMap.value[value];
 };
 </script>
 
@@ -85,7 +91,7 @@ const handleComponentChange = (value: string) => {
                 color: var(--el-text-color-secondary);
               "
             >
-              {{ viewList[item] }}
+              {{ viewListMap[item] }}
             </span>
           </el-option>
         </el-select>

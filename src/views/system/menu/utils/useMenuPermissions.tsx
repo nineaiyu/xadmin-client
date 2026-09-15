@@ -23,7 +23,8 @@ export function useMenuPermissions({
 }) {
   const { t } = useI18n();
 
-  const handleAddPermissions = row => {
+  // 模板中行作用域为 el-table DefaultRow，按 RecordType 接收
+  const handleAddPermissions = (row: RecordType) => {
     row.skip_existing = true;
     const columns = ref<PlusColumn[]>([
       {
@@ -51,7 +52,7 @@ export function useMenuPermissions({
           multiple: true
         },
         options: computed(() => {
-          const result = {};
+          const result: Record<string, RecordType> = {};
           menuUrlList.value?.forEach(item => {
             if (item.name !== "#") {
               result[item?.view] = {
@@ -79,7 +80,8 @@ export function useMenuPermissions({
         label: t("systemMenu.skipExistingData"),
         prop: "skip_existing",
         valueType: "radio",
-        renderField: renderBooleanSegmentedOption()
+        // 渲染器入参签名与 PlusColumn.renderField 在边界收窄（同 ImportData 用法）
+        renderField: renderBooleanSegmentedOption() as never
       }
     ]);
 
@@ -111,14 +113,12 @@ export function useMenuPermissions({
             | undefined;
           const values = payload?.values;
           if (isObject(values) && payload?.column?.prop === "method") {
-            if (values.method?.length > 1) {
-              values.name = values.method
+            const method = values.method;
+            if (method && method.length > 1) {
+              values.name = method
                 .map(item => {
-                  return item
-                    .split(".")
-                    .pop()
-                    .replace("ViewSet", "")
-                    .replace("APIView", "");
+                  const suffix = item.split(".").pop() ?? "";
+                  return suffix.replace("ViewSet", "").replace("APIView", "");
                 })
                 .join(" | ");
             } else {

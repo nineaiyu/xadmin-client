@@ -15,6 +15,7 @@ import ReSendVerifyCode from "@/components/ReSendVerifyCode";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import User from "~icons/ri/user-3-fill";
 import Lock from "~icons/ri/lock-fill";
+import type { RecordType } from "plus-pro-components";
 
 const { t } = useI18n();
 const checked = ref(false);
@@ -33,21 +34,27 @@ const formData = ref({
   target: "",
   form_type: "",
   verify_code: "",
-  verify_token: undefined
+  verify_token: undefined as string | undefined
 });
 const formDataRef = ref<FormInstance>();
 const verifyCodeRef = ref();
 
 const router = useRouter();
 const handleRegister = () => {
-  verifyCodeRef.value?.getRef()?.validate(isValid => {
+  verifyCodeRef.value?.getRef()?.validate((isValid: boolean) => {
     if (isValid) {
       formDataRef.value?.validate(valid => {
         if (valid) {
           if (checked.value) {
             if (isUsername.value) {
               verifyCodeRef.value?.handleSendCode(
-                ({ verify_code, verify_token }) => {
+                ({
+                  verify_code,
+                  verify_token
+                }: {
+                  verify_code: string;
+                  verify_token: string;
+                }) => {
                   formData.value.verify_code = verify_code;
                   formData.value.verify_token = verify_token;
                   delay().then(() => onRegister());
@@ -69,17 +76,20 @@ const handleRegister = () => {
 
 const onRegister = async () => {
   loading.value = true;
-  const data = {
+  const data: Record<string, string | undefined> = {
     verify_token: formData.value.verify_token,
     password: formData.value.password,
     verify_code: formData.value.verify_code
   };
   if (authInfo.value.encrypted) {
     data["password"] = await AesEncrypted(
-      data["verify_token"],
-      data["password"]
+      data["verify_token"] as string,
+      data["password"] as string
     );
-    data["target"] = await AesEncrypted(data["verify_token"], data["target"]);
+    data["target"] = await AesEncrypted(
+      data["verify_token"] as string,
+      data["target"] as string
+    );
   }
   useUserStoreHook()
     .registerByUsername(data)
@@ -89,7 +99,7 @@ const onRegister = async () => {
       });
       // 获取后端路由
       initRouter(true).then(() => {
-        router.push(getTopMenu(true).path);
+        router.push(getTopMenu(true)?.path ?? "/");
       });
       loading.value = false;
     })
@@ -141,7 +151,7 @@ const formRules = reactive<FormRules>({
   ]
 });
 
-const configReqSuccess = verifyCodeConfig => {
+const configReqSuccess = (verifyCodeConfig: RecordType) => {
   authInfo.value = Object.assign(authInfo.value, verifyCodeConfig);
   formData.value.form_type = authInfo.value.basic ? "username" : "";
 };

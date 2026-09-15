@@ -3,7 +3,7 @@ import { clone } from "@pureadmin/utils";
 import { ref } from "vue";
 
 const isDisabled = ref(false);
-const timer = ref(null);
+const timer = ref<ReturnType<typeof setInterval>>();
 const text = ref("");
 
 export const useVerifyCode = () => {
@@ -11,7 +11,7 @@ export const useVerifyCode = () => {
     formEl: FormInstance | undefined,
     props: FormItemProp,
     time = 60,
-    callback = null
+    callback: ((interval: (time: number) => void) => void) | null = null
   ) => {
     if (!formEl) return;
     await formEl.validateField(props, isValid => {

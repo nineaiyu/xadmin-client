@@ -96,7 +96,8 @@ const {
   formInline,
   parentIds,
   treeRef,
-  emit
+  // 组件 emit 的精确事件联合与工具签名的事件名参数在边界收窄（运行时原样透传）
+  emit: emit as unknown as (_event: string, ..._args: unknown[]) => void
 });
 </script>
 

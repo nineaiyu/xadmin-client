@@ -28,6 +28,7 @@ import { usePublicHooks } from "@/views/system/hooks";
 import { ElButton, ElIcon, ElLink, ElText } from "element-plus";
 import { Link } from "@element-plus/icons-vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import type { RecordType } from "plus-pro-components";
 import Upload from "~icons/ep/upload";
 import { formatBytes } from "@pureadmin/utils";
 import { getDictItems } from "@/utils/dict";
@@ -167,13 +168,25 @@ export function useSystemUploadFile(tableRef: Ref) {
   const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
     props: {
       formProps: {
-        rules: ({ rawFormProps: { rules }, isAdd, rawRow }) => {
+        rules: ({
+          rawFormProps: { rules },
+          isAdd,
+          rawRow
+        }: {
+          rawFormProps: { rules: RecordType };
+          isAdd?: boolean;
+          rawRow?: RecordType;
+        }) => {
           if (isAdd || !rawRow?.is_upload) {
             const fileUrlRule = rules["file_url"][0];
             rules["file_url"] = [
               {
                 required: true,
-                validator: (rule, value, callback) => {
+                validator: (
+                  _rule: unknown,
+                  value: string,
+                  callback: (error?: Error) => void
+                ) => {
                   if (!isUrl(value)) {
                     callback(new Error(fileUrlRule?.message));
                   } else {
@@ -197,13 +210,13 @@ export function useSystemUploadFile(tableRef: Ref) {
           column["cellRenderer"] = scope => {
             // 回收站只读：不提供下载入口，降级为纯文本地址
             if (isReadonlyCell(scope)) {
-              return h("span", scope.row[column._column?.key] ?? "");
+              return h("span", scope.row[column._column?.key as string] ?? "");
             }
             return h(
               ElLink,
               {
                 type: "success",
-                href: scope.row[column._column?.key],
+                href: scope.row[column._column?.key as string],
                 target: "_blank"
               },
               {
@@ -218,7 +231,7 @@ export function useSystemUploadFile(tableRef: Ref) {
           column["cellRenderer"] = renderBooleanTag({
             t,
             tagStyle,
-            field: column.prop,
+            field: column.prop as string,
             actionMap: { true: t("labels.yes"), false: t("labels.no") }
           });
           break;
@@ -250,7 +263,7 @@ export function useSystemUploadFile(tableRef: Ref) {
         case "filesize":
           column["cellRenderer"] = ({ row }) =>
             h(ElText, { type: "primary" }, () => {
-              return formatBytes(row[column._column?.key]);
+              return formatBytes(row[column._column?.key as string]);
             });
       }
     });

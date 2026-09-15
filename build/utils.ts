@@ -1,4 +1,5 @@
 import dayjs from "dayjs";
+import type { ProxyOptions } from "vite";
 import { readdir, stat } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
@@ -67,7 +68,9 @@ const wrapperEnv = (envConf: Recordable): ViteEnv => {
     if (envName === "VITE_PORT") {
       realName = Number(realName);
     }
-    ret[envName] = realName;
+    // envName 为运行时环境变量键（ViteEnv 子集），动态写入按字符串索引访问
+    (ret as unknown as Record<string, string | boolean | number>)[envName] =
+      realName;
     if (typeof realName === "string") {
       process.env[envName] = realName;
     } else if (typeof realName === "object") {
@@ -79,8 +82,14 @@ const wrapperEnv = (envConf: Recordable): ViteEnv => {
 
 const fileListTotal: number[] = [];
 
+type PackageSizeOptions = {
+  folder?: string;
+  callback: (size: string | number) => void;
+  format?: boolean;
+};
+
 /** 获取指定文件夹中所有文件的总大小 */
-const getPackageSize = options => {
+const getPackageSize = (options: PackageSizeOptions) => {
   const { folder = "dist", callback, format = true } = options;
   readdir(folder, (err, files: string[]) => {
     if (err) throw err;
@@ -111,7 +120,7 @@ const getPackageSize = options => {
 };
 
 const createProxyConfig = (configs: { [key: string]: string[] }) => {
-  const proxyConfig = {};
+  const proxyConfig: Record<string, ProxyOptions> = {};
   Object.keys(configs).forEach(target => {
     if (target.startsWith("http")) {
       configs[target].forEach(path => {

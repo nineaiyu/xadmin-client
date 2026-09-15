@@ -93,8 +93,8 @@ export function useUser(tableRef: Ref) {
     handleOperation({
       t,
       apiReq: rulesPasswordApi(),
-      success({ data: { password_rules } }) {
-        passwordRules.value = password_rules;
+      success(res) {
+        passwordRules.value = res?.data?.password_rules;
       },
       showSuccessMsg: false
     });

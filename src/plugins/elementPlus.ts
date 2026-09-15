@@ -272,9 +272,9 @@ const plugins = [
 
 /** 按需注册`element-plus` */
 export function useElementPlus(app: App) {
-  // 全局注册组件
+  // 全局注册组件（组件名运行时必然为字符串）
   components.forEach((component: Component) => {
-    app.component(component.name, component);
+    app.component(component.name as string, component);
   });
   // 全局注册插件
   plugins.forEach(plugin => {

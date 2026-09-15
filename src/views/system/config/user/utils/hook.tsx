@@ -11,6 +11,7 @@ import {
   type RePlusPageProps
 } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import type { RecordType } from "plus-pro-components";
 import CircleClose from "~icons/ep/circle-close";
 
 export function useUserConfig(tableRef: Ref) {
@@ -26,14 +27,14 @@ export function useUserConfig(tableRef: Ref) {
   const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
     props: {
       row: {
-        config_user: ({ rawRow }) => {
+        config_user: ({ rawRow }: { rawRow?: RecordType }) => {
           return rawRow?.owner ? [rawRow?.owner] : [];
         }
       },
       columns: {
         config_user: ({ column, isAdd }) => {
           if (!isAdd) {
-            column["fieldProps"]["disabled"] = true;
+            (column["fieldProps"] as { disabled?: boolean })["disabled"] = true;
           }
           return column;
         }

@@ -13,25 +13,27 @@ const getConfig = (key?: string): PlatformConfigs => {
   if (typeof key === "string") {
     const arr = key.split(".");
     if (arr && arr.length) {
-      let data = config;
+      // 逐层取值的过程值类型不可静态确定，收敛到 unknown 并在返回处收窄
+      let data: unknown = config;
       arr.forEach(v => {
-        if (data && typeof data[v] !== "undefined") {
-          data = data[v];
+        const cur = data as Record<string, unknown> | null;
+        if (cur && typeof cur[v] !== "undefined") {
+          data = cur[v];
         } else {
           data = null;
         }
       });
-      return data;
+      return data as PlatformConfigs;
     }
   }
-  return config;
+  return config as PlatformConfigs;
 };
 
 /** 获取项目动态全局配置 */
 export const getPlatformConfig = async (
   app: App,
-  url = null
-): Promise<undefined> => {
+  url: string | null = null
+): Promise<PlatformConfigs> => {
   app.config.globalProperties.$config = getConfig();
   return axios({
     method: "get",

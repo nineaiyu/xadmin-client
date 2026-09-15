@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import ReCol from "@/components/ReCol";
 import { formRules } from "../utils/rule";
 import { FormItemProps, FormProps } from "../utils/types";
@@ -24,6 +24,14 @@ const props = withDefaults(defineProps<FormProps>(), {
 const { t } = useI18n();
 const { auth } = useApiAuth();
 
+/** 性别选项（value 归一：el-option 不接受 undefined 值） */
+const genderOptions = computed(() =>
+  (props.genderChoices ?? []).map(item => ({
+    label: item.label,
+    value: item.value as string | number
+  }))
+);
+
 const ruleFormRef = ref();
 const newFormInline = ref(props.formInline);
 
@@ -31,8 +39,8 @@ const emit = defineEmits<{
   handleUpdate: [values: FormItemProps];
 }>();
 
-const handleUpdate = row => {
-  ruleFormRef.value.validate(valid => {
+const handleUpdate = (row: FormItemProps) => {
+  ruleFormRef.value.validate((valid: boolean) => {
     if (valid) {
       emit("handleUpdate", row);
     }
@@ -94,7 +102,7 @@ const handleUpdate = row => {
             clearable
           >
             <el-option
-              v-for="item in props.genderChoices"
+              v-for="item in genderOptions"
               :key="item.value"
               :label="item.label"
               :value="item.value"

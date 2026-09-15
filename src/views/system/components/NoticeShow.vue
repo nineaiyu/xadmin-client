@@ -59,7 +59,7 @@ const editorConfig = {
   readOnly: true
 };
 
-const handleCreated = editor => {
+const handleCreated = (editor: unknown) => {
   // 记录 editor 实例，重要！
   editorRef.value = editor;
 };

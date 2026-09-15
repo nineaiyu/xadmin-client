@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
-import { FormProps } from "../utils/types";
+import { FormProps, type ChoicesOptionItem } from "../utils/types";
 import { computed, nextTick, ref, watch } from "vue";
 import { cloneDeep } from "@pureadmin/utils";
 import { transformI18n } from "@/plugins/i18n";
@@ -93,12 +93,13 @@ watch(
   }
 );
 
-const onChange = ({ option }) => {
+// Segmented 的 change 载荷为被点击项：按 choice 的 key 联动表单校验规则
+const onChange = ({ option }: { option: { key?: number } }) => {
   const { key } = option;
   handleChangeMenuType(key);
 };
 
-const handleChangeMenuType = menu_type => {
+const handleChangeMenuType = (menu_type?: number) => {
   // 用 nextTick 替代 30ms 定时器：等表单按新规则渲染完成后再清校验，避免时序竞态
   nextTick(() => {
     ruleFormRef.value?.clearValidate([
@@ -127,7 +128,7 @@ const getMinHeight = () => {
 };
 
 const menuOptions = computed<Array<OptionsType>>(() => {
-  const data = cloneDeep(props.menuChoices);
+  const data = cloneDeep(props.menuChoices) as ChoicesOptionItem[];
   data.forEach(item => {
     if (!newFormInline.value.isAdd) {
       if (newFormInline.value.menu_type === MenuChoices.PERMISSION) {

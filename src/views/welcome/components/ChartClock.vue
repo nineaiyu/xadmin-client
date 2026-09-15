@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onBeforeUnmount, ref } from "vue";
+import { onBeforeUnmount, ref, type Ref } from "vue";
 import { useResizeObserver } from "@pureadmin/utils";
 
 defineOptions({ name: "Clock" });
@@ -137,16 +137,26 @@ const digit = [
     [0, 0, 0, 0]
   ] //:
 ];
-const canvasRef = ref(null);
-const divRef = ref(null);
-const timer = ref(null);
+/** 下落小球（数字由小球拼成，物理参数随帧更新） */
+interface Ball {
+  x: number;
+  y: number;
+  g: number;
+  vx: number;
+  vy: number;
+  color: string;
+}
+
+const canvasRef = ref<HTMLCanvasElement>();
+const divRef = ref<HTMLDivElement>();
+const timer = ref<ReturnType<typeof setInterval>>();
 
 const maxBallCount = ref(100);
 const storeTime = ref(new Date());
 const radius = ref(7);
 const winWidth = ref(0);
 const winHeight = ref(0);
-const balls = ref([]);
+const balls = ref<Ball[]>([]);
 const marginLeft = ref(10);
 const marginTop = ref(30);
 const distNumber = ref(15);
@@ -164,13 +174,13 @@ const colors = ref([
 ]);
 
 const initConfig = () => {
-  winWidth.value = divRef.value?.offsetWidth;
-  winHeight.value = divRef.value?.offsetHeight;
+  winWidth.value = divRef.value?.offsetWidth ?? 0;
+  winHeight.value = divRef.value?.offsetHeight ?? 0;
   radius.value = Math.round((winWidth.value * 3) / 4 / 98) - 1;
 };
 const initCanvas = () => {
-  let context = canvasRef.value?.getContext("2d");
-  if (canvasRef.value) {
+  const context = canvasRef.value?.getContext("2d");
+  if (canvasRef.value && context) {
     canvasRef.value.width = winWidth.value;
     canvasRef.value.height = winHeight.value;
     render(context); //初始启动绘画
@@ -181,15 +191,15 @@ const initCanvas = () => {
 };
 
 const renderBall = (
-  nextHours,
-  nextMinutes,
-  nextSeconds,
-  beforeHours,
-  beforeMinutes,
-  beforeSeconds
+  nextHours: number,
+  nextMinutes: number,
+  nextSeconds: number,
+  beforeHours: number,
+  beforeMinutes: number,
+  beforeSeconds: number
 ) => {
   if (parseInt(beforeHours / 10) != parseInt(nextHours / 10))
-    addBalls(marginLeft.value + 0, marginTop, parseInt(nextHours / 10));
+    addBalls(marginLeft.value + 0, marginTop.value, parseInt(nextHours / 10));
   if (parseInt(beforeHours % 10) != parseInt(nextHours % 10))
     addBalls(
       marginLeft.value + 1 * distNumber.value * (radius.value + 1),
@@ -222,7 +232,7 @@ const renderBall = (
     );
 };
 
-const render = cxt => {
+const render = (cxt: CanvasRenderingContext2D) => {
   let nextTime = new Date();
 
   const nextHours = nextTime.getHours();
@@ -248,11 +258,11 @@ const render = cxt => {
   storeTime.value = nextTime;
 };
 
-const addBalls = (x, y, num) => {
+const addBalls = (x: number, y: number, num: number) => {
   digit[num].forEach((digit, i) => {
     digit.forEach((item, j) => {
       if (item == 1) {
-        let aBall = {
+        let aBall: Ball = {
           x: x + j * 2 * (radius.value + 1) + (radius.value + 1),
           y: y + i * 2 * (radius.value + 1) + (radius.value + 1),
           g: 1.5 + Math.random(),
@@ -294,7 +304,12 @@ const updateBalls = () => {
     } //随机删除超出200个小球的球
   });
 };
-const renderTime = (hours, minutes, seconds, cxt) => {
+const renderTime = (
+  hours: number,
+  minutes: number,
+  seconds: number,
+  cxt: CanvasRenderingContext2D
+) => {
   renderDigit(marginLeft.value, marginTop.value, parseInt(hours / 10), cxt); //绘制数字
   renderDigit(
     marginLeft.value + distNumber.value * (radius.value + 1),
@@ -347,7 +362,12 @@ const renderTime = (hours, minutes, seconds, cxt) => {
     cxt.fill();
   });
 };
-const renderDigit = (x, y, num, cxt) => {
+const renderDigit = (
+  x: number,
+  y: number,
+  num: number,
+  cxt: CanvasRenderingContext2D
+) => {
   cxt.fillStyle = "#3893fa";
   digit[num].forEach((item, i) => {
     item.forEach((dig, j) => {
@@ -364,7 +384,8 @@ const renderDigit = (x, y, num, cxt) => {
   });
 };
 
-useResizeObserver(divRef, () => {
+// 模板 ref 挂载后必然有值；useResizeObserver 的 ElementRef 不含 undefined，边界收窄
+useResizeObserver(divRef as Ref<HTMLDivElement>, () => {
   clearInterval(timer.value);
   initConfig();
   initCanvas();
@@ -373,7 +394,7 @@ useResizeObserver(divRef, () => {
 onBeforeUnmount(() => {
   if (timer.value) {
     clearInterval(timer.value);
-    timer.value = null;
+    timer.value = undefined;
   }
 });
 </script>

@@ -7,7 +7,7 @@ import { useI18n } from "vue-i18n";
 import { addDialog } from "@/components/ReDialog";
 import type { menuApi } from "@/api/system/menu";
 import type { FormItemProps } from "./types";
-import { getMenuFromPk } from "@/utils";
+import { getMenuFromPk, type MenuTreeNode } from "@/utils";
 import { MenuChoices } from "@/views/system/constants";
 import editForm from "../components/MenuEdit.vue";
 import type { RecordType } from "plus-pro-components";
@@ -65,19 +65,19 @@ export function useMenuDialog({
           model: row?.model ?? [],
           is_active: row?.is_active ?? true,
           meta: {
-            title: row?.meta.title ?? "",
-            icon: row?.meta.icon ?? "",
-            frame_url: row?.meta.frame_url ?? "",
-            r_svg_name: row?.meta.r_svg_name ?? "",
-            is_show_menu: row?.meta.is_show_menu ?? true,
-            is_show_parent: row?.meta.is_show_parent ?? false,
-            is_keepalive: row?.meta.is_keepalive ?? true,
-            frame_loading: row?.meta.frame_loading ?? false,
-            transition_enter: row?.meta.transition_enter ?? "",
-            transition_leave: row?.meta.transition_leave ?? "",
-            is_hidden_tag: row?.meta.is_hidden_tag ?? false,
-            fixed_tag: row?.meta.fixed_tag ?? false,
-            dynamic_level: row?.meta.dynamic_level ?? 0
+            title: row?.meta?.title ?? "",
+            icon: row?.meta?.icon ?? "",
+            frame_url: row?.meta?.frame_url ?? "",
+            r_svg_name: row?.meta?.r_svg_name ?? "",
+            is_show_menu: row?.meta?.is_show_menu ?? true,
+            is_show_parent: row?.meta?.is_show_parent ?? false,
+            is_keepalive: row?.meta?.is_keepalive ?? true,
+            frame_loading: row?.meta?.frame_loading ?? false,
+            transition_enter: row?.meta?.transition_enter ?? "",
+            transition_leave: row?.meta?.transition_leave ?? "",
+            is_hidden_tag: row?.meta?.is_hidden_tag ?? false,
+            fixed_tag: row?.meta?.fixed_tag ?? false,
+            dynamic_level: row?.meta?.dynamic_level ?? 0
           }
         }
       },
@@ -89,10 +89,10 @@ export function useMenuDialog({
       contentRenderer: () => h(editForm, { ref: formRef }),
       beforeSure: (done, { options }) => {
         const FormRef = formRef.value?.getRef();
-        const curData = options.props.formInline as FormItemProps;
-        FormRef?.validate(valid => {
+        const curData = options.props?.formInline as FormItemProps;
+        FormRef?.validate((valid: boolean) => {
           if (valid) {
-            curData.meta.title = curData.title;
+            if (curData.meta) curData.meta.title = curData.title ?? "";
             // 当后端pk 不设置可读时，需要删除pk，否则后端会提示 pk 不对
             delete curData.pk;
             api.create(curData).then(res => {
@@ -112,8 +112,11 @@ export function useMenuDialog({
     });
   };
 
-  const addNewMenu = (treeRef, data: FormItemProps) => {
-    const p_menus = getMenuFromPk(treeRef?.data, data.pk);
+  const addNewMenu = (
+    treeRef: { data?: MenuTreeNode[] } | undefined,
+    data: FormItemProps
+  ) => {
+    const p_menus = getMenuFromPk(treeRef?.data ?? [], data.pk as number);
     const row = cloneDeep(defaultData);
     if (p_menus.length > 0) {
       row.parent = p_menus[0].pk;
@@ -125,10 +128,13 @@ export function useMenuDialog({
     openDialog(MenuChoices.DIRECTORY, row);
   };
 
-  const handleConfirm = (instance, row) => {
-    instance!.validate((isValid: boolean) => {
+  const handleConfirm = (
+    instance: { validate: (callback: (isValid: boolean) => void) => void },
+    row: FormItemProps
+  ) => {
+    instance.validate((isValid: boolean) => {
       if (isValid) {
-        row.meta.title = row.title;
+        if (row.meta) row.meta.title = row.title ?? "";
         if (row.pk) {
           api.partialUpdate(row.pk, row).then(res => {
             if (res.code === SUCCESS_CODE) {

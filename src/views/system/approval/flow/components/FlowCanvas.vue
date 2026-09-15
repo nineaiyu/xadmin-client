@@ -35,7 +35,13 @@ const flowNodes = computed(() =>
 );
 
 const flowEdges = computed(() => {
-  const edges = [];
+  const edges: Array<{
+    id: string;
+    source: string;
+    target: string;
+    label: string;
+    animated: boolean;
+  }> = [];
   props.nodes.forEach((row, index) => {
     (row.routes || []).forEach((route, routeIndex) => {
       const condition = route.condition || {};

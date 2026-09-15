@@ -2,7 +2,7 @@ import { SUCCESS_CODE } from "@/api/types";
 import { message } from "@/utils/message";
 import { menuApi } from "@/api/system/menu";
 import { getCurrentInstance, onMounted, reactive, ref } from "vue";
-import type { FormItemProps } from "./types";
+import type { FormItemProps, Tree } from "./types";
 import { cloneDeep, isEmpty, isNullOrUnDef } from "@pureadmin/utils";
 import { getMenuOrderPk } from "@/utils";
 import { FieldChoices, MenuChoices } from "@/views/system/constants";
@@ -64,8 +64,9 @@ export function useMenu() {
   // menu choices 接口为字典形态：{ method: [...], menu_type: [...] }
   const choicesDict = ref<RecordType>({});
   const menuUrlList = ref([]);
-  const viewList = ref({});
-  const modelList = ref([]);
+  /** 组件路径清单（value → 视图组件 name，异步填充） */
+  const viewList = ref<Record<string, string>>({});
+  const modelList = ref<RecordType[]>([]);
   const menuData = ref<FormItemProps>(cloneDeep(defaultData));
   const loading = ref(true);
 
@@ -105,15 +106,21 @@ export function useMenu() {
     getMenuData
   });
 
-  const handleDrag = (treeRef, node, node2, position) => {
+  const handleDrag = (
+    treeRef: { data?: unknown } | undefined,
+    node: { data: Tree },
+    node2: { data: Tree },
+    position: string
+  ) => {
     const u_menu = node.data;
     if (position === "inner") {
-      u_menu.parent = node2.data.pk;
+      // 拖拽节点来自后端菜单树，pk 恒存在
+      u_menu.parent = node2.data.pk as number;
     } else {
       u_menu.parent = node2.data.parent;
     }
     api
-      .partialUpdate(u_menu.pk, u_menu)
+      .partialUpdate(u_menu.pk as number, u_menu)
       .then(res => {
         if (res.code === SUCCESS_CODE) {
           api
@@ -165,7 +172,7 @@ export function useMenu() {
           }
           viewList.value[
             file.replace(/(\.\/|\.vue)/g, "").replace("/src/views/", "")
-          ] = data?.default?.name;
+          ] = data?.default?.name as string;
         });
       }
     });
@@ -191,7 +198,7 @@ export function useMenu() {
         field_type: FieldChoices.ROLE
       }).then(res => {
         if (res.code === SUCCESS_CODE) {
-          const results = [];
+          const results: RecordType[] = [];
           res.data.results.forEach(item => {
             const value = { pk: item.pk, name: item.name, label: item.label };
             results.push({ ...value, value });

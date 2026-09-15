@@ -12,6 +12,7 @@ import { handleOperation } from "@/components/RePlusPage";
 import { AesEncrypted } from "@/utils/aes";
 import { passwordRulesCheck } from "@/utils";
 import ReSendVerifyCode from "@/components/ReSendVerifyCode";
+import type { RecordType } from "plus-pro-components";
 
 const { t } = useI18n();
 const loading = ref(false);
@@ -33,24 +34,24 @@ const formDataRef = ref<FormInstance>();
 const verifyCodeRef = ref();
 
 const handleSubmit = () => {
-  verifyCodeRef.value.getRef().validate(isValid => {
+  verifyCodeRef.value.getRef().validate((isValid: boolean) => {
     if (isValid) {
-      formDataRef.value.validate(async valid => {
+      formDataRef.value?.validate(async valid => {
         if (valid) {
           loading.value = true;
-          const data = {
+          const data: Record<string, string | undefined> = {
             verify_token: formData.value.verify_token,
             password: formData.value.password,
             verify_code: formData.value.verify_code
           };
           if (authInfo.value.encrypted) {
             data["password"] = await AesEncrypted(
-              data["verify_token"],
-              data["password"]
+              data["verify_token"] as string,
+              data["password"] as string
             );
             data["target"] = await AesEncrypted(
-              data["verify_token"],
-              data["target"]
+              data["verify_token"] as string,
+              data["target"] as string
             );
           }
           handleOperation({
@@ -108,7 +109,7 @@ const formRules = reactive<FormRules>({
     }
   ]
 });
-const configReqSuccess = verifyCodeConfig => {
+const configReqSuccess = (verifyCodeConfig: RecordType) => {
   authInfo.value = Object.assign(authInfo.value, verifyCodeConfig);
 };
 onMounted(() => (configLoading.value = true));

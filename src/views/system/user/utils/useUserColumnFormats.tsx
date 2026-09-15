@@ -10,6 +10,7 @@ import {
   openDialogDrawer,
   renderSwitch,
   type usePublicHooks,
+  type PageColumn,
   type PageTableColumn,
   type RePlusPageProps
 } from "@/components/RePlusPage";
@@ -18,6 +19,7 @@ import { buildPasswordValidator } from "./passwordRules";
 import type { useI18n } from "vue-i18n";
 import type { userApi } from "@/api/system/user";
 import type { PasswordRule } from "@/api/auth";
+import type { RecordType } from "plus-pro-components";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 type SwitchStyle = ReturnType<typeof usePublicHooks>["switchStyle"];
@@ -47,7 +49,7 @@ export function useUserColumnFormats({
   passwordRules: { value: PasswordRule[] };
   tableRef: Ref;
 }) {
-  const roleRulesColumns = ref([]);
+  const roleRulesColumns = ref<PageColumn[]>([]);
   const roleRules = ref({});
 
   const listColumnsFormat = (columns: PageTableColumn[]) => {
@@ -55,7 +57,7 @@ export function useUserColumnFormats({
       switch (column._column?.key) {
         case "avatar":
           column["cellRenderer"] = scope => {
-            const src = scope.row[column._column?.key];
+            const src = scope.row[column._column?.key as string];
             return h(ElImage, {
               lazy: true,
               src,
@@ -90,8 +92,8 @@ export function useUserColumnFormats({
             updateApi: api.unblock,
             switchLoadMap,
             switchStyle,
-            field: column.prop,
-            disabled: row => !auth.unblock || !row.block
+            field: column.prop as string,
+            disabled: row => !auth.unblock || !row?.block
           });
           break;
       }
@@ -102,7 +104,7 @@ export function useUserColumnFormats({
   const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
     props: {
       row: {
-        dept: ({ rawRow }) => {
+        dept: ({ rawRow }: { rawRow?: RecordType }) => {
           return rawRow?.dept?.pk ?? "";
         }
       },
@@ -127,7 +129,7 @@ export function useUserColumnFormats({
             }
           };
           column["options"] = handleTree(
-            column._column.choices,
+            column._column?.choices ?? [],
             "pk",
             "parent_id"
           );
@@ -135,7 +137,11 @@ export function useUserColumnFormats({
         }
       },
       formProps: {
-        rules: ({ rawFormProps: { rules } }) => {
+        rules: ({
+          rawFormProps: { rules }
+        }: {
+          rawFormProps: { rules: RecordType };
+        }) => {
           rules["password"] = [
             {
               required: true,
@@ -145,7 +151,11 @@ export function useUserColumnFormats({
           ];
           rules["phone"] = [
             {
-              validator: (rule, value, callback) => {
+              validator: (
+                _rule: unknown,
+                value: string | undefined,
+                callback: (error?: Error) => void
+              ) => {
                 if (value === "" || !value) {
                   callback();
                 } else if (!isPhone(value)) {
@@ -172,7 +182,13 @@ export function useUserColumnFormats({
     }
   });
 
-  const baseColumnsFormat = ({ addOrEditColumns, addOrEditRules }) => {
+  const baseColumnsFormat = ({
+    addOrEditColumns,
+    addOrEditRules
+  }: {
+    addOrEditColumns: Ref<PageColumn[]>;
+    addOrEditRules: Ref<RecordType>;
+  }) => {
     roleRules.value = addOrEditRules.value;
     roleRulesColumns.value = buildRoleRulesColumns(addOrEditColumns.value, {
       keepKeys: ["username", "nickname", "roles", "rules"],
@@ -181,7 +197,7 @@ export function useUserColumnFormats({
     });
   };
 
-  function handleRoleRules(row: { username: string; [key: string]: unknown }) {
+  function handleRoleRules(row: RecordType) {
     openDialogDrawer({
       t,
       isAdd: false,

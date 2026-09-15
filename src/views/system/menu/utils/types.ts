@@ -2,7 +2,7 @@
 
 import type { Auths } from "@/router/utils";
 
-interface FormMetaProps {
+export interface FormMetaProps {
   /** 菜单名称 */
   title: string;
   /** 菜单图标 */
@@ -105,6 +105,8 @@ interface Tree {
   pk?: number;
   name?: string;
   menu_type?: number;
+  /** 父级 pk（拖拽排序时写回） */
+  parent?: number;
   highlight?: boolean;
   children?: Tree[];
 }

@@ -4,7 +4,7 @@ import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { formRules } from "./utils/rule";
 import { FormProps } from "./utils/types";
-import type { CascaderOption, FormRules } from "element-plus";
+import type { CascaderOption, CascaderValue, FormRules } from "element-plus";
 import { message } from "@/utils/message";
 import { FieldKeyChoices } from "@/views/system/constants";
 import { hasAuth } from "@/router/utils";
@@ -100,7 +100,9 @@ function loadMatchOptions(name?: string[]) {
 }
 
 /** 属性名（表/字段）变化：旧的 match 与 value 失去语义，一律清空重填 */
-function handleNameChange(name?: string[]) {
+function handleNameChange(value: CascaderValue | null | undefined) {
+  // el-cascader 默认 emitPath：取值为路径数组（节点值均为 string）
+  const name = value as string[] | undefined;
   newFormInline.value.match = "";
   newFormInline.value.value = "";
   tableData.value = [];
@@ -144,7 +146,7 @@ function applyPreset(preset: RulePreset) {
 onMounted(() => {
   loadMatchOptions(newFormInline.value.name);
   try {
-    tableData.value = JSON.parse(newFormInline.value.value);
+    tableData.value = JSON.parse(newFormInline.value.value as string);
   } catch {
     tableData.value = [];
   }
@@ -160,7 +162,7 @@ watchDeep(
         FieldKeyChoices.TABLE_MENU,
         FieldKeyChoices.TABLE_DEPT,
         FieldKeyChoices.DEPARTMENTS
-      ].indexOf(newFormInline.value.type) > -1
+      ].indexOf(newFormInline.value.type as string) > -1
     ) {
       newFormInline.value.value = JSON.stringify(value);
     }

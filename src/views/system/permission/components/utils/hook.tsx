@@ -17,7 +17,8 @@ export function useFieldRule(
 ) {
   const { t } = useI18n();
   const formRef = ref();
-  const ruleInfo = ref({});
+  /** 规则集合（"表__字段__匹配" → 规则；键唯一性即规则身份） */
+  const ruleInfo = ref<Record<string, FieldRuleRow>>({});
   onMounted(() => {
     if (dataList.length) {
       dataList.forEach(item => {
@@ -33,7 +34,8 @@ export function useFieldRule(
     }
   });
   /** 规则身份 key：表__字段__匹配 唯一确定一条规则 */
-  const ruleKey = (row?) => `${row?.table}__${row?.field}__${row?.match}`;
+  const ruleKey = (row?: FieldRuleRow) =>
+    `${row?.table}__${row?.field}__${row?.match}`;
 
   /** 值类型的可读名称（列表直接展示中文语义，而不是 value.user.id 这类类型码） */
   const typeLabel = (value?: string) =>
@@ -83,12 +85,12 @@ export function useFieldRule(
     }
   ]);
 
-  function handleDelete(row) {
+  function handleDelete(row: FieldRuleRow) {
     delete ruleInfo.value[ruleKey(row)];
   }
 
   /** 复制规则：同构规则（多字段/多表）不必重复走完整配置流程 */
-  function handleCopy(row) {
+  function handleCopy(row: FieldRuleRow) {
     const base = ruleKey(row);
     let key = `${base}__copy`;
     let index = 2;
@@ -98,13 +100,13 @@ export function useFieldRule(
     ruleInfo.value[key] = { ...row };
   }
 
-  function openDialog(row) {
+  function openDialog(row?: Partial<FieldRuleRow>) {
     const name = [row?.table, row?.field];
     if (row?.table !== "*") {
       name.unshift(row?.table?.split(".")[0]);
     }
     // 编辑场景：身份（表/字段/match）可能被改动，成功后须移除旧键，否则会残留成两条规则
-    const originalKey = row ? ruleKey(row) : null;
+    const originalKey = row ? ruleKey(row as FieldRuleRow) : null;
     addDialog({
       title: `${t("buttons.add")} ${t("systemPermission.rules")}`,
       props: {
@@ -126,21 +128,24 @@ export function useFieldRule(
       top: "10vh",
       contentRenderer: () => h(addForm, { ref: formRef }),
       beforeSure: (done, { options }) => {
-        const data = options.props.formInline as FormItemProps;
+        const data = options.props?.formInline as FormItemProps;
         if (data.name?.length === 2) {
           data.name.unshift("*");
         }
+        // validate 回调为闭包：先固化名称/匹配值，保证回调内读到的与当前一致
+        const name = data.name ?? [];
+        const match = data.match ?? "";
         const FormRef = formRef.value.getRef();
-        FormRef.validate(valid => {
+        FormRef.validate((valid: boolean) => {
           if (valid) {
-            const nextKey = `${data.name[1]}__${data.name[2]}__${data.match}`;
+            const nextKey = `${name[1]}__${name[2]}__${match}`;
             if (originalKey && originalKey !== nextKey) {
               delete ruleInfo.value[originalKey];
             }
             ruleInfo.value[nextKey] = {
-              table: data.name[1],
-              field: data.name[2],
-              match: data.match,
+              table: name[1],
+              field: name[2],
+              match,
               exclude: data.exclude,
               type: data.type,
               value: data.value

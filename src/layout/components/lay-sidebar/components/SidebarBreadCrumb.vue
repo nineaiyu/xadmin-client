@@ -31,7 +31,11 @@ const getBreadcrumb = (): void => {
       }
     });
   } else {
-    currentRoute = findRouteByPath(router.currentRoute.value.path, routes);
+    // findRouteByPath 返回路由树原始节点，与面包屑使用的 menuType 在边界处收窄
+    currentRoute = findRouteByPath(
+      router.currentRoute.value.path,
+      routes
+    ) as unknown as menuType;
   }
 
   // 当前路由的父级路径组成的数组
@@ -45,7 +49,8 @@ const getBreadcrumb = (): void => {
 
   // 获取每个父级路径对应的路由信息
   parentRoutes.forEach(path => {
-    if (path !== "/") matched.push(findRouteByPath(path, routes));
+    if (path !== "/")
+      matched.push(findRouteByPath(path, routes) as unknown as menuType);
   });
 
   matched.push(currentRoute);

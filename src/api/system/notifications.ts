@@ -2,9 +2,30 @@ import type { DetailResult } from "@/api/types";
 import { BaseRequest } from "@/api/base";
 import type { DataListResult } from "@/api/types";
 
+/** 接收渠道（backends 接口返回） */
+export type MsgBackendItem = {
+  value: string;
+  label: string;
+};
+
+/** 系统消息订阅行（分类的子级） */
+export type MsgSubscriptionItem = {
+  message_type: string;
+  message_type_label: string;
+  receive_backends: string[];
+  receivers: { pk: number | string; label: string }[];
+};
+
+/** 系统消息订阅分类（list 接口返回） */
+export type MsgSubscriptionCategory = {
+  category: string;
+  category_label: string;
+  children: MsgSubscriptionItem[];
+};
+
 export class SystemMsgSubscriptionApi extends BaseRequest {
   backends = () => {
-    return this.request<DataListResult>(
+    return this.request<DataListResult<MsgBackendItem>>(
       "get",
       {},
       {},
@@ -13,7 +34,11 @@ export class SystemMsgSubscriptionApi extends BaseRequest {
   };
 
   list = (params?: object) => {
-    return this.request<DetailResult>("get", params, {});
+    return this.request<DetailResult<MsgSubscriptionCategory[]>>(
+      "get",
+      params,
+      {}
+    );
   };
 
   update = (pk: number | string, data?: object) => {

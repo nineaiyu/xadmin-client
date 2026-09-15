@@ -11,6 +11,7 @@ import { reactive, ref, type UnwrapNestedRefs } from "vue";
 import type { userApi } from "@/api/system/user";
 import type { PasswordRule } from "@/api/auth";
 import type { useI18n } from "vue-i18n";
+import type { RecordType } from "plus-pro-components";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
@@ -49,7 +50,7 @@ export function useUserResetPassword({
   );
 
   /** 重置密码 */
-  function handleReset(row) {
+  function handleReset(row: RecordType) {
     addDialog({
       title: t("systemUser.resetPasswd", { user: row.username }),
       width: "30%",
@@ -106,7 +107,7 @@ export function useUserResetPassword({
       ),
       closeCallBack: () => (pwdForm.newPwd = ""),
       beforeSure: done => {
-        ruleFormRef.value.validate(async valid => {
+        ruleFormRef.value.validate(async (valid: boolean) => {
           if (valid) {
             const password = await AesEncrypted(row.username, pwdForm.newPwd);
             api.resetPassword(row.pk, { password }).then(res => {

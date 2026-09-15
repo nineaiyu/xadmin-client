@@ -39,7 +39,8 @@ import { $t, transformI18n } from "@/plugins/i18n";
 export default defineComponent({
   name: "app",
   components: {
-    [ElConfigProvider.name]: ElConfigProvider,
+    // 组件名由 ElConfigProvider.name 动态给出（运行时必然为字符串）
+    [ElConfigProvider.name as string]: ElConfigProvider,
     ReDialog,
     ReDrawer
   },
@@ -104,7 +105,8 @@ export default defineComponent({
         if (visible && !onLoginPage.value) {
           // 先清除再挂载：文案分钟级刷新时避免水印节点叠加
           clear();
-          setWatermark(text, { verticalOffset: 170 });
+          // 文案未配置时传空串，避免 canvas 绘制出 "undefined" 文本
+          setWatermark(text ?? "", { verticalOffset: 170 });
         } else {
           clear();
         }

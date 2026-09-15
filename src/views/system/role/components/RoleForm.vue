@@ -25,6 +25,7 @@ import {
 } from "../utils/treeKeys";
 import type { BaseApi } from "@/api/base";
 import type { TreeInstance, TreeNodeData, TreeKey } from "element-plus";
+import type { RecordType } from "plus-pro-components";
 
 interface FormProps {
   pk?: string;
@@ -34,6 +35,18 @@ interface FormProps {
   auth?: Auths;
   menuTreeData?: Array<Record<string, unknown>>;
 }
+
+/** el-tree 实例（含私有 store：当前实现按 _getAllNodes 全量遍历节点） */
+type RoleTreeInstance = TreeInstance & {
+  store: {
+    _getAllNodes: () => Array<{
+      data?: RecordType;
+      key?: TreeKey;
+      expanded?: boolean;
+      checked?: boolean;
+    }>;
+  };
+};
 
 const props = withDefaults(defineProps<FormProps>(), {
   menuTreeData: () => [],
@@ -68,13 +81,13 @@ const handleChange = () => {
   emit("change", { ...formData.value });
 };
 
-const customNodeClass = data => {
+const customNodeClass = (data: TreeNodeData): string => {
   if (data?.menu_type?.value === MenuChoices.DIRECTORY) {
     return "is-penultimate";
   } else if (data?.menu_type?.value === MenuChoices.MENU) {
     return "is-permission";
   }
-  return null;
+  return "";
 };
 
 const filterMenuNode = (value: string, data: TreeNodeData) => {
@@ -94,7 +107,9 @@ const filterMenuNode = (value: string, data: TreeNodeData) => {
 };
 
 const formatMenuFields = () => {
-  const checked = treeRoleRef.value!.getCheckedKeys(false).map(String);
+  const checked: string[] = treeRoleRef
+    .value!.getCheckedKeys(false)
+    .map(String);
   // 无合成段 = 菜单授权；字段叶子键（menuPk+fieldPk）按菜单分组合并进 fields；
   // 分组键（+fieldPk）仅作展示，不计入授权。键约定见 ../utils/treeKeys.ts
   formData.value.menu = checked.filter(key => !isSyntheticKey(key));
@@ -124,14 +139,14 @@ const initData = () => {
     );
   });
 };
-const getCheckedMenu = pk => {
+const getCheckedMenu = (pk?: string) => {
   if (pk && props.auth.retrieve) {
     loading.value = true;
-    props.api.retrieve(pk).then(({ code, data }) => {
+    props.api.retrieve?.(pk).then(({ code, data }) => {
       if (code === SUCCESS_CODE) {
         formData.value.menu = getKeyList(data?.menu ?? [], "pk");
         Object.keys(data?.field).forEach(key => {
-          data?.field[key].forEach(val => {
+          data?.field[key].forEach((val: string | number) => {
             formData.value.field.push(menuFieldKey(key, String(val)));
           });
         });
@@ -156,12 +171,13 @@ const buttonClass = computed(() => {
 const isExpand = ref(false);
 const selectAll = ref(false);
 const checkStrictly = ref(true);
-const { proxy } = getCurrentInstance();
+// 组件 setup 内调用，实例必然存在；proxy 供 $refs 取 el-tree 实例
+const proxy = getCurrentInstance()?.proxy;
 
-function toggleRowExpansionAll(status) {
+function toggleRowExpansionAll(status: boolean) {
   isExpand.value = status;
   const nodes = (
-    proxy.$refs["treeRoleRef"] as TreeInstance
+    proxy?.$refs["treeRoleRef"] as RoleTreeInstance
   ).store._getAllNodes();
   for (let i = 0; i < nodes.length; i++) {
     if (
@@ -175,20 +191,20 @@ function toggleRowExpansionAll(status) {
   }
 }
 
-function toggleSelectAll(status, keys: Array<TreeKey> | null = null) {
+function toggleSelectAll(status: boolean, keys: Array<TreeKey> | null = null) {
   selectAll.value = status;
   const nodes = (
-    proxy.$refs["treeRoleRef"] as TreeInstance
+    proxy?.$refs["treeRoleRef"] as RoleTreeInstance
   ).store._getAllNodes();
   for (let i = 0; i < nodes.length; i++) {
-    if ((keys && keys.indexOf(nodes[i].key) > -1) || !keys) {
+    if ((keys && keys.indexOf(nodes[i].key as TreeKey) > -1) || !keys) {
       nodes[i].checked = status;
     }
   }
   handleChange();
 }
 
-function nodeClick(value, node) {
+function nodeClick(value: TreeNodeData, node: { checked: boolean }) {
   if (value.pk.toString().indexOf("+") > 0) {
     node.checked = !node.checked;
   }

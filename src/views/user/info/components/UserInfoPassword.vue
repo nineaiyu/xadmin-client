@@ -80,8 +80,8 @@ const emit = defineEmits<{
   handleUpdate: [values: FormPasswordProps];
 }>();
 
-const handleUpdate = row => {
-  ruleFormRef.value.validate(valid => {
+const handleUpdate = (row: FormPasswordProps) => {
+  ruleFormRef.value.validate((valid: boolean) => {
     if (valid) {
       emit("handleUpdate", row);
     }
@@ -99,8 +99,8 @@ onMounted(() => {
   handleOperation({
     t,
     apiReq: rulesPasswordApi(),
-    success({ data: { password_rules } }) {
-      passwordRules.value = password_rules;
+    success(res) {
+      passwordRules.value = res?.data?.password_rules;
     },
     showSuccessMsg: false
   });

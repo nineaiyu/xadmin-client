@@ -2,6 +2,7 @@ import { SUCCESS_CODE } from "@/api/types";
 import { message } from "@/utils/message";
 import { useI18n } from "vue-i18n";
 import type { Ref } from "vue";
+import type { TreeInstance } from "element-plus";
 import type { RecordType } from "plus-pro-components";
 import { handleExportData, handleImportData } from "@/components/RePlusPage";
 import { fetchMetaList, META_KEYS } from "@/utils/metaCache";
@@ -71,7 +72,8 @@ export function useMenuData({
       });
   };
 
-  const handleDelete = row => {
+  // 模板中行作用域为 el-table DefaultRow，按 RecordType 接收
+  const handleDelete = (row: RecordType) => {
     api.destroy(row.pk).then(res => {
       if (res.code === SUCCESS_CODE) {
         message(t("results.success"), { type: "success" });
@@ -82,8 +84,9 @@ export function useMenuData({
     });
   };
 
-  const handleManyDelete = val => {
-    const manyPks = val!.getCheckedKeys(false);
+  /** 批量删除（模板传入 el-tree 实例，取勾选节点 pk） */
+  const handleManyDelete = (val: TreeInstance) => {
+    const manyPks = val.getCheckedKeys(false);
     if (manyPks.length === 0) {
       message(t("results.noSelectedData"), { type: "error" });
       return;
@@ -100,8 +103,8 @@ export function useMenuData({
     });
   };
 
-  const exportData = val => {
-    const pks = val!.getCheckedKeys(false);
+  const exportData = (val: TreeInstance) => {
+    const pks = val.getCheckedKeys(false);
     handleExportData({ t, pks, api, allowTypes: ["selected", "all"] });
   };
 

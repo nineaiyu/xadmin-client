@@ -6,6 +6,7 @@ import { formatBytes } from "@pureadmin/utils";
 import { getDefaultAuths } from "@/router/utils";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
+import type { RecordType } from "plus-pro-components";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { openTaskLogDialog } from "@/views/system/components/taskLogDialog";
 import ArrowDown from "~icons/ri/arrow-down-line";
@@ -68,7 +69,7 @@ export function useRecordCenter(options: RecordCenterOptions) {
   ) => dictItem?.label ?? (te(key) ? t(key) : "—");
 
   /** 进度列：RUNNING 进度条，SUCCESS 100%，其余显示 — */
-  const renderProgress = row => {
+  const renderProgress = (row: RecordType) => {
     const statusValue = row.status?.value ?? row.status;
     if (statusValue === "RUNNING") {
       return h(ElProgress, {

@@ -98,8 +98,9 @@ export function useTask(tableRef: Ref) {
             apiReq: api.run(row?.pk ?? row?.id),
             success(res) {
               tableRef.value.handleGetData();
-              if (res.data?.task_id) {
-                openLog(res.data.task_id, row.name);
+              const taskId = res?.data?.task_id;
+              if (taskId) {
+                openLog(taskId, row.name);
               }
             },
             requestEnd() {
@@ -262,7 +263,11 @@ export function useTask(tableRef: Ref) {
   /**
    * 新增/编辑表单：任务路径改为"已注册任务下拉 + 可手输兜底"
    */
-  const baseColumnsFormat = ({ addOrEditColumns }) => {
+  const baseColumnsFormat = ({
+    addOrEditColumns
+  }: {
+    addOrEditColumns: Ref<PageColumn[]>;
+  }) => {
     const taskCol = addOrEditColumns.value.find(
       (column: PageColumn) => column._column.key === "task"
     );

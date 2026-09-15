@@ -1,9 +1,10 @@
 <script lang="ts" setup>
-import { h, reactive } from "vue";
+import { h, reactive, type Ref } from "vue";
 import { hasAuth } from "@/router/utils";
 import { searchMenuApi } from "@/api/system/search";
 import RePlusSearch from "@/components/RePlusSearch";
 import { transformI18n } from "@/plugins/i18n";
+import type { PageTableColumn } from "@/components/RePlusPage";
 
 defineOptions({ name: "SearchMenu" });
 
@@ -16,9 +17,15 @@ const selectValue = defineModel<object | object[] | string>();
 const { multiple = true } = defineProps<{ multiple?: boolean }>();
 
 const api = reactive(searchMenuApi);
-const baseColumnsFormat = ({ listColumns }) => {
+const baseColumnsFormat = ({
+  listColumns
+}: {
+  listColumns: Ref<PageTableColumn[]>;
+}) => {
   listColumns.value.forEach(column => {
-    if (["pk", "is_active", "method"].indexOf(column._column.key) > -1) {
+    if (
+      ["pk", "is_active", "method"].indexOf(column._column?.key as string) > -1
+    ) {
       column["width"] = 80;
     }
     if (column._column.key === "title") {

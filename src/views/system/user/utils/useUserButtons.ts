@@ -52,7 +52,7 @@ export function useUserButtons({
   const router = useRouter();
 
   function goNotice() {
-    const users = [];
+    const users: RecordType[] = [];
     manySelectData.value.forEach(user => {
       users.push({
         pk: user.pk,
@@ -65,7 +65,7 @@ export function useUserButtons({
     });
   }
 
-  const selectionChange = data => {
+  const selectionChange = (data: Row[]) => {
     manySelectData.value = data;
     selectedNum.value = manySelectData.value.length ?? 0;
   };

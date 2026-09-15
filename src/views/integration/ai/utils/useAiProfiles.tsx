@@ -54,7 +54,9 @@ export function useAiProfiles(tableRef: Ref) {
         case "max_tokens":
           // 采样参数未配置为 null：与表单「未设置」语义一致
           column["cellRenderer"] = ({ row }) => {
-            const value = (row as Record<string, unknown>)[column.prop];
+            const value = (row as Record<string, unknown>)[
+              column.prop as string
+            ];
             return value == null ? t("aiConfig.unset") : String(value);
           };
           break;

@@ -318,7 +318,8 @@ const listColumnsFormat = (columns: PageTableColumn[]) => {
         break;
       case "expired_at":
       case "last_used_time":
-        column.cellRenderer = ({ row }) => row[column._column?.key] ?? "—";
+        column.cellRenderer = ({ row }) =>
+          row[column._column?.key as string] ?? "—";
         break;
     }
   });

@@ -67,13 +67,18 @@ const buildOptions = (): UtilsEChartsOption => ({
   },
   tooltip: {
     trigger: "item",
-    formatter: params => {
-      const data = (params.data ?? {}) as Record<string, number>;
+    formatter: (params: unknown) => {
+      const p = params as {
+        data?: Record<string, number>;
+        name?: string;
+        percent?: number;
+      };
+      const data = p.data ?? {};
       return [
-        params.name,
+        p.name,
         `${t("systemUploadFile.size")}: ${formatBytes(data.size || 0)}`,
         `${t("systemUploadFile.fileCount")}: ${data.count || 0}`,
-        `${params.percent ?? 0}%`
+        `${p.percent ?? 0}%`
       ].join("<br/>");
     }
   },

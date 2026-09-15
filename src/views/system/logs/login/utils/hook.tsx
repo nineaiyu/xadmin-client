@@ -2,7 +2,7 @@ import { useI18n } from "vue-i18n";
 import { loginLogApi } from "@/api/system/logs/login";
 import { useRouter } from "vue-router";
 import { getDefaultAuths } from "@/router/utils";
-import { getCurrentInstance, reactive, shallowRef } from "vue";
+import { getCurrentInstance, reactive, shallowRef, type Ref } from "vue";
 import { goUserDetail, usePublicHooks } from "@/views/system/hooks";
 import {
   type PageTableColumn,
@@ -13,7 +13,7 @@ import {
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Logout from "~icons/ri/logout-circle-r-line";
 
-export function useLoginLog(tableRef) {
+export function useLoginLog(tableRef: Ref) {
   const { t } = useI18n();
   const api = reactive(loginLogApi);
 
@@ -69,7 +69,7 @@ export function useLoginLog(tableRef) {
           column["cellRenderer"] = renderBooleanTag({
             t,
             tagStyle,
-            field: column.prop,
+            field: column.prop as string,
             actionMap: { true: t("labels.success"), false: t("labels.failed") }
           });
           break;
@@ -77,7 +77,7 @@ export function useLoginLog(tableRef) {
           column["cellRenderer"] = renderBooleanTag({
             t,
             tagStyle,
-            field: column.prop,
+            field: column.prop as string,
             actionMap: {
               true: t("labels.online"),
               false: t("labels.offline"),

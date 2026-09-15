@@ -155,7 +155,7 @@ const switchPane = (key: string) => {
       <template #paneR>
         <el-main>
           <component
-            :is="panes.find(item => item.key === witchPane).component"
+            :is="panes.find(item => item.key === witchPane)?.component"
           />
         </el-main>
       </template>
@@ -180,7 +180,7 @@ const switchPane = (key: string) => {
         class="px-0"
         @toggleClick="isOpen = !isOpen"
       />
-      <component :is="panes.find(item => item.key === witchPane).component" />
+      <component :is="panes.find(item => item.key === witchPane)?.component" />
     </el-main>
   </el-container>
 </template>

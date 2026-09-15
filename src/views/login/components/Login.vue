@@ -23,6 +23,7 @@ import { AesEncrypted } from "@/utils/aes";
 import { handleOperation } from "@/components/RePlusPage";
 import { setToken } from "@/utils/auth";
 import LoginMfa from "./LoginMfa.vue";
+import type { RecordType } from "plus-pro-components";
 
 defineOptions({
   name: "Login"
@@ -52,7 +53,7 @@ const formData = ref({
   password: "",
   form_type: "",
   verify_code: "",
-  verify_token: undefined
+  verify_token: undefined as string | undefined
 });
 
 /** 登录 MFA 二次验证载荷：非空时登录页切换为动态码验证步骤 */
@@ -63,7 +64,7 @@ const handleLoginSuccess = () => {
   initRouter(true).then(() => {
     disabled.value = true;
     router
-      .push((route.query?.redirect as string) ?? getTopMenu(true).path)
+      .push((route.query?.redirect as string) ?? getTopMenu(true)?.path ?? "/")
       .finally(() => {
         disabled.value = false;
       });
@@ -97,17 +98,20 @@ const formatLoginDayList = () => {
 
 const onLogin = async () => {
   loading.value = true;
-  const data = {
+  const data: Record<string, string | undefined> = {
     verify_token: formData.value.verify_token,
     password: formData.value.password,
     verify_code: formData.value.verify_code
   };
   if (authInfo.value.encrypted) {
     data["password"] = await AesEncrypted(
-      data["verify_token"],
-      data["password"]
+      data["verify_token"] as string,
+      data["password"] as string
     );
-    data["target"] = await AesEncrypted(data["verify_token"], data["target"]);
+    data["target"] = await AesEncrypted(
+      data["verify_token"] as string,
+      data["target"] as string
+    );
   }
 
   handleOperation({
@@ -115,7 +119,7 @@ const onLogin = async () => {
     apiReq: loginVerifyCodeApi(data),
     success(res) {
       // 登录载荷：正常登录为 TokenInfo；开启登录 MFA 时为 mfa_required 引导信息
-      const result = res.data as LoginResultData;
+      const result = res?.data as LoginResultData;
       if ("mfa_required" in result && result.mfa_required) {
         // 密码阶段通过，切换到登录 MFA 动态码验证步骤
         loginMfaInfo.value = result;
@@ -162,7 +166,7 @@ watch(loginDay, value => {
   useUserStoreHook().SET_LOGINDAY(value);
 });
 
-const configReqSuccess = verifyCodeConfig => {
+const configReqSuccess = (verifyCodeConfig: RecordType) => {
   authInfo.value = Object.assign(authInfo.value, verifyCodeConfig);
 
   loginDay.value = authInfo.value.lifetime;
@@ -176,14 +180,22 @@ const configReqSuccess = verifyCodeConfig => {
 const isUsername = computed(() => formData.value.form_type === "username");
 
 const handleLogin = () => {
-  verifyCodeRef.value?.getRef()?.validate(isValid => {
+  verifyCodeRef.value?.getRef()?.validate((isValid: boolean) => {
     if (isValid) {
       if (isUsername.value) {
-        verifyCodeRef.value?.handleSendCode(({ verify_code, verify_token }) => {
-          formData.value.verify_code = verify_code;
-          formData.value.verify_token = verify_token;
-          delay().then(() => onLogin());
-        });
+        verifyCodeRef.value?.handleSendCode(
+          ({
+            verify_code,
+            verify_token
+          }: {
+            verify_code: string;
+            verify_token: string;
+          }) => {
+            formData.value.verify_code = verify_code;
+            formData.value.verify_token = verify_token;
+            delay().then(() => onLogin());
+          }
+        );
       } else {
         onLogin();
       }

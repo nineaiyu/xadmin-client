@@ -32,6 +32,11 @@ const { initStorage } = useLayout();
 initStorage();
 const { dataTheme, themeMode, dataThemeChange } = useDataThemeChange();
 dataThemeChange(themeMode.value);
+
+/** el-switch 的 change 载荷为 boolean/string/number，按既有调用口径透传给主题切换 */
+const handleDataThemeChange = (value: string | number | boolean) => {
+  dataThemeChange(value as string);
+};
 const { title, getDropdownItemStyle, getDropdownItemClass } = useNav();
 const { locale, translationCh, translationEn } = useTranslationLang();
 </script>
@@ -46,7 +51,7 @@ const { locale, translationCh, translationEn } = useTranslationLang();
         :active-icon="dayIcon"
         :inactive-icon="darkIcon"
         inline-prompt
-        @change="dataThemeChange"
+        @change="handleDataThemeChange"
       />
       <!-- 国际化 -->
       <el-dropdown trigger="click">
@@ -91,7 +96,7 @@ const { locale, translationCh, translationEn } = useTranslationLang();
           <Motion>
             <h2 class="outline-hidden">
               <TypeIt
-                :options="{ strings: [title], cursor: false, speed: 100 }"
+                :options="{ strings: [title ?? ''], cursor: false, speed: 100 }"
               />
             </h2>
           </Motion>

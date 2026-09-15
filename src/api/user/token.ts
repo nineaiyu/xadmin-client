@@ -1,5 +1,5 @@
 import { BaseApi } from "@/api/base";
-import type { BaseResult } from "@/api/types";
+import type { BaseResult, ListResult } from "@/api/types";
 import {
   SCOPE_CATALOG_KEYS,
   fetchScopeCatalog,
@@ -10,7 +10,7 @@ import {
 export const personalAccessTokenApi = new (class extends BaseApi {
   /** 凭证调用记录（近似口径：本人凭证周期内的操作日志） */
   logs = (pk: string | number, params?: object) => {
-    return this.request<BaseResult>(
+    return this.request<ListResult>(
       "get",
       params,
       {},

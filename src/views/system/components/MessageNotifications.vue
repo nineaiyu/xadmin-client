@@ -1,11 +1,19 @@
 <script lang="ts" setup>
 import { onMounted, ref } from "vue";
 
-import { SystemMsgSubscriptionApi } from "@/api/system/notifications";
+import {
+  SystemMsgSubscriptionApi,
+  type MsgBackendItem,
+  type MsgSubscriptionCategory
+} from "@/api/system/notifications";
 import { handleOperation, openDialogDrawer } from "@/components/RePlusPage";
 import { dialogSize } from "@/components/ReDialog/size";
 import { useI18n } from "vue-i18n";
 import SearchDialog from "@/views/system/components/SearchDialog.vue";
+import type { RecordType } from "plus-pro-components";
+
+/** el-table 行作用域类型（element-plus 的 DefaultRow 结构；模板侧按 RecordType 接收） */
+type DefaultRow = RecordType;
 
 defineOptions({
   name: "MessageNotifications"
@@ -33,29 +41,44 @@ const props = withDefaults(defineProps<NotificationsProps>(), {
   hasOperations: false
 });
 
+/** 表格订阅行（接口分类数据格式化后用于表格展示） */
+type SubscriptionItem = {
+  pk: string;
+  value: string;
+  receivers: { pk: number | string; label: string }[];
+  receiveBackends: Record<string, boolean>;
+};
+
+/** 表格分类行（children 为订阅行） */
+type SubscriptionCategory = {
+  pk: string;
+  value: string;
+  children?: SubscriptionItem[];
+};
+
 const { t } = useI18n();
-const tableData = ref([]);
-const receiveBackends = ref([]);
+const tableData = ref<SubscriptionCategory[]>([]);
+const receiveBackends = ref<MsgBackendItem[]>([]);
 const loading = ref(false);
 
-const formatCategory = subscriptions => {
+const formatCategory = (subscriptions: MsgSubscriptionCategory[]) => {
   tableData.value = [];
   for (const category of subscriptions) {
-    const subItems = [];
-    const item = {
+    const subItems: SubscriptionItem[] = [];
+    const item: SubscriptionCategory = {
       pk: category["category"],
       value: category["category_label"],
       children: subItems
     };
 
     for (const item of category["children"]) {
-      const backendsChecked = {};
+      const backendsChecked: Record<string, boolean> = {};
       receiveBackends.value.forEach(backend => {
         backendsChecked[backend.value] =
           item["receive_backends"].indexOf(backend.value) > -1;
       });
 
-      const subItem = {
+      const subItem: SubscriptionItem = {
         pk: item["message_type"],
         value: item["message_type_label"],
         receivers: item.receivers,
@@ -69,13 +92,13 @@ const formatCategory = subscriptions => {
 
 const getInitData = () => {
   if (props.auth.backends) {
-    props.api.backends().then(res => {
+    props.api?.backends().then(res => {
       receiveBackends.value = res.data;
     });
   }
   if (props.auth.list) {
     loading.value = true;
-    props.api.list().then(res => {
+    props.api?.list().then(res => {
       formatCategory(res.data);
       loading.value = false;
     });
@@ -86,7 +109,9 @@ onMounted(() => {
   getInitData();
 });
 
-const onCheckReceiveBackend = row => {
+// 模板中 el-table 行作用域为 DefaultRow（Record<PropertyKey, any>），
+// 三个行操作按该类型接收后再使用，避免与订阅行类型在模板侧冲突
+const onCheckReceiveBackend = (row: DefaultRow) => {
   const backends = [];
   for (const [name, checked] of Object.entries(row.receiveBackends)) {
     if (checked) {
@@ -95,20 +120,20 @@ const onCheckReceiveBackend = row => {
   }
   handleOperation({
     t,
-    apiReq: props.api.partialUpdate(row.pk, {
+    apiReq: props.api?.partialUpdate(row.pk, {
       receive_backends: backends
     })
   });
 };
 
-const handleSendTestMsg = row => {
+const handleSendTestMsg = (row: DefaultRow) => {
   handleOperation({
     t,
-    apiReq: props.api.testMsg({ message_type: row.pk })
+    apiReq: props.api?.testMsg({ message_type: row.pk })
   });
 };
 
-const handleSaveReceivers = row => {
+const handleSaveReceivers = (row: DefaultRow) => {
   openDialogDrawer({
     t,
     title: t("messageNotifications.editRecipientTitle", { title: row.value }),
@@ -121,15 +146,16 @@ const handleSaveReceivers = row => {
     saveCallback: ({ formData, done, closeLoading }) => {
       handleOperation({
         t,
-        apiReq: props.api.partialUpdate(row.pk, {
-          users: formData.data.map(r => r.pk)
+        apiReq: props.api?.partialUpdate(row.pk, {
+          users: formData.data.map((r: { pk: number | string }) => r.pk)
         }),
-        success({ data }) {
+        success(res) {
+          const data = res?.data;
           done();
           tableData.value.forEach(i => {
-            for (const item of i.children) {
-              if (item.pk === data.message_type) {
-                item.receivers = data.receivers;
+            for (const item of i.children ?? []) {
+              if (item.pk === data?.message_type) {
+                item.receivers = data?.receivers ?? item.receivers;
                 break;
               }
             }
@@ -141,6 +167,12 @@ const handleSaveReceivers = row => {
       });
     }
   });
+};
+
+/** 订阅行接收人标签（模板行作用域为 DefaultRow，内部按订阅行接收人数组收窄） */
+const receiverLabels = (row: DefaultRow) => {
+  const receivers = row.receivers as SubscriptionItem["receivers"];
+  return receivers.map(item => item.label).join(", ");
 };
 </script>
 
@@ -185,7 +217,7 @@ const handleSaveReceivers = row => {
     >
       <template #default="{ row }">
         <span v-if="!row.children">
-          {{ row.receivers.map(item => item.label).join(", ") }}
+          {{ receiverLabels(row) }}
         </span>
       </template>
     </el-table-column>

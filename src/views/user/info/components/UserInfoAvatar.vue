@@ -24,7 +24,7 @@ const avatarInfo = ref();
 const { t } = useI18n();
 const { auth } = useApiAuth();
 
-function onCropper({ blob }) {
+function onCropper({ blob }: { blob: Blob }) {
   avatarInfo.value = blob;
 }
 </script>
