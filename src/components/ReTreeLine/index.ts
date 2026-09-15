@@ -1,5 +1,6 @@
 // 参考https://www.npmjs.com/package/element-tree-line (主要是替换需要通过函数传参的方式去注册组件，并添加更好的类型支持，并移除this.$scopedSlots，在3.x中,将所有this.$scopedSlots替换为this.$slots)
 import "./index.scss";
+import type { Slot } from "vue";
 import { isFunction } from "@pureadmin/utils";
 import { type PropType, h, defineComponent } from "vue";
 import type {
@@ -48,19 +49,23 @@ export default defineComponent({
   },
   setup(_, context) {
     const { slots } = context;
-    const getScopedSlot = slotName => {
+    const getScopedSlot = (slotName?: string) => {
       if (!slotName) {
         return null;
       }
       const slotNameSplits = slotName.split("||");
-      let slot = null;
+      let slot: Slot | undefined;
       for (let index = 0; index < slotNameSplits.length; index++) {
         const name = slotNameSplits[index];
         slot = (slots || {})[name];
       }
       return slot;
     };
-    const getSlotValue = (slot, scopedData, defaultNode = null) => {
+    const getSlotValue = (
+      slot: Slot | null | undefined,
+      scopedData: unknown,
+      defaultNode: unknown = null
+    ) => {
       if (isFunction(slot)) {
         return slot(scopedData) || defaultNode;
       }
@@ -127,12 +132,12 @@ export default defineComponent({
       }
       if (parentNode) {
         // element-plus的 el-tree-v2 使用的是children和key， 其他使用的是 childNodes和id
-        const index = (parentNode.children || parentNode.childNodes).findIndex(
-          item => (item.key || item.id) === (currentNode.key || currentNode.id)
+        const siblings = parentNode.children ?? parentNode.childNodes ?? [];
+        const index = siblings.findIndex(
+          item =>
+            (item.key || item.id) === (currentNode?.key || currentNode?.id)
         );
-        lastnodeArr.unshift(
-          index === (parentNode.children || parentNode.childNodes).length - 1
-        );
+        lastnodeArr.unshift(index === siblings.length - 1);
       }
       currentNode = parentNode;
     }
@@ -162,7 +167,7 @@ export default defineComponent({
             left: (this.node.level - 1) * this.indent + "px"
           }
         })
-      ])
+      ]) as never
     );
   }
 });

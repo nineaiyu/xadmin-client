@@ -14,11 +14,11 @@ const watermarkConfigs = reactive({
   text: $storage.configure.watermarkText
 });
 
-function onWatermarkSwitchChange(value) {
-  storageConfigureChange("watermark", value);
+function onWatermarkSwitchChange(value: boolean | string | number) {
+  storageConfigureChange("watermark", Boolean(value));
 }
 
-function onWatermarkInputChange(text) {
+function onWatermarkInputChange(text: string) {
   storageConfigureChange("watermarkText", text);
 }
 </script>

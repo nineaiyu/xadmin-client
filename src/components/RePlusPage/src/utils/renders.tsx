@@ -1,8 +1,10 @@
 import Segmented from "@/components/ReSegmented";
 import { selectBooleanOptions } from "./constants";
 
-export const renderBooleanSegmentedOption = (options = null) => {
-  return (value, onChange) => {
+export const renderBooleanSegmentedOption = (
+  options: Array<Record<string, unknown>> | null = null
+) => {
+  return (value: unknown, onChange: (val: unknown) => void) => {
     return (
       <Segmented
         defaultValue={value ? 0 : 1}
@@ -27,7 +29,7 @@ export const formatAddOrEditOptions = (
   }>,
   isObjValue = false
 ) => {
-  const result = [];
+  const result: Array<Record<string, unknown>> = [];
   data?.forEach(item => {
     // 不就地改写入参（后端元数据对象会被多处渲染复用）：需要 pk 时构造副本
     const normalized = { ...item, pk: item.value };

@@ -159,7 +159,7 @@ onBeforeUnmount(() => {
             <span
               class="tag-title dark:text-text_color_primary! dark:hover:text-primary!"
             >
-              {{ transformI18n(item.meta.title) }}
+              {{ transformI18n(item.meta?.title ?? "") }}
             </span>
             <span
               v-if="
@@ -188,7 +188,7 @@ onBeforeUnmount(() => {
               <TagChrome />
             </div>
             <span class="tag-title">
-              {{ transformI18n(item.meta.title) }}
+              {{ transformI18n(item.meta?.title ?? "") }}
             </span>
             <span
               v-if="isFixedTag(item) ? false : index !== 0"

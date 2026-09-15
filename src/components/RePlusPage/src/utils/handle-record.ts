@@ -33,6 +33,9 @@ export const handleExportData = (options: exportDataOptions) => {
     searchFields = undefined,
     allowAsync = false
   } = options;
+  // 导出入口契约：本 hook 仅在页面装配了导出方法时被触发（按钮 show 条件同源），
+  // 这里显式收窄类型避免逐个调用点判空（行为不变：缺方法时与原先一样抛错）
+  const exportApi = api as Pick<BaseApi, "exportData" | "exportAsync">;
 
   openDialogDrawer({
     t,
@@ -55,7 +58,7 @@ export const handleExportData = (options: exportDataOptions) => {
       let ok = true;
       const exportBy = async (params: object) => {
         if (formData.async) {
-          const res = await api.exportAsync(params);
+          const res = await exportApi.exportAsync(params);
           if (res?.code === SUCCESS_CODE) {
             success(t("exportImport.asyncSubmitted"));
           } else {
@@ -64,7 +67,7 @@ export const handleExportData = (options: exportDataOptions) => {
             failed(res?.detail ?? t("results.failed"));
           }
         } else {
-          await api.exportData(params);
+          await exportApi.exportData(params);
         }
       };
       try {
@@ -125,6 +128,11 @@ export const buildImportParams = (formData: RecordType) => {
 // 数据导入
 export const handleImportData = (options: importDataOptions) => {
   const { t, api, mode } = options;
+  // 导入入口契约：同导出的收窄口径（本 hook 仅在装配了导入方法的页面被触发）
+  const importApi = api as Pick<
+    BaseApi,
+    "importValidate" | "importAsync" | "importData"
+  >;
 
   openDialogDrawer({
     t,
@@ -151,7 +159,7 @@ export const handleImportData = (options: importDataOptions) => {
         const importParams = buildImportParams(formData);
         // 仅校验：逐行校验不落库，弹窗展示错误行定位
         if (formData.mode === "validate") {
-          const res = await api.importValidate(importParams, file);
+          const res = await importApi.importValidate(importParams, file);
           if (res.code !== SUCCESS_CODE) {
             failed(res.detail, false);
             return;
@@ -178,7 +186,7 @@ export const handleImportData = (options: importDataOptions) => {
         }
         // 异步导入：提交后台任务，进度与错误报告在下载中心「导入记录」获取
         if (formData.async) {
-          const res = await api.importAsync(importParams, file);
+          const res = await importApi.importAsync(importParams, file);
           if (res.code === SUCCESS_CODE) {
             if (options?.success) {
               options?.success(res);
@@ -191,7 +199,7 @@ export const handleImportData = (options: importDataOptions) => {
           return;
         }
         // 同步导入（原有行为不变）
-        const res = await api.importData(
+        const res = await importApi.importData(
           { ...importParams, ignore_error: formData.ignore_error },
           file
         );

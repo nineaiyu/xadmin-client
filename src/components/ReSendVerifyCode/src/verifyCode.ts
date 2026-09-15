@@ -3,7 +3,7 @@ import { clone } from "@pureadmin/utils";
 import { ref } from "vue";
 
 const isDisabled = ref(false);
-const timer = ref(null);
+const timer = ref<number | null>(null);
 const text = ref("");
 
 export const useVerifyCode = () => {
@@ -11,7 +11,7 @@ export const useVerifyCode = () => {
     formEl: FormInstance | undefined,
     props: FormItemProp,
     time = 60,
-    callback = null
+    callback: ((interval: (time: number) => void) => void) | null = null
   ) => {
     if (!formEl) return;
     await formEl.validateField(props, isValid => {
@@ -26,18 +26,18 @@ export const useVerifyCode = () => {
   };
 
   const interval = (time: number) => {
-    clearInterval(timer.value);
+    clearInterval(timer.value ?? undefined);
     const initTime = clone(time, true);
     isDisabled.value = true;
     text.value = `${time}`;
-    timer.value = setInterval(() => {
+    timer.value = window.setInterval(() => {
       if (time > 0) {
         time -= 1;
         text.value = `${time}`;
       } else {
         text.value = "";
         isDisabled.value = false;
-        clearInterval(timer.value);
+        clearInterval(timer.value ?? undefined);
         time = initTime;
       }
     }, 1000);
@@ -46,7 +46,7 @@ export const useVerifyCode = () => {
   const end = () => {
     text.value = "";
     isDisabled.value = false;
-    clearInterval(timer.value);
+    clearInterval(timer.value ?? undefined);
   };
 
   return {

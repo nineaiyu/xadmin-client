@@ -63,7 +63,7 @@ const {
 
 defineExpose({ getRef, handleSendCode });
 
-const updatePhone = phone => {
+const updatePhone = (phone: { code: string; phone: string }) => {
   formData.value.phone = `${phone.code}${phone.phone}`;
 };
 const phone = ref({ code: "+86", phone: "" });

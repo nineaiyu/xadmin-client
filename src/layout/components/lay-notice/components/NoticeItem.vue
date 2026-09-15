@@ -18,7 +18,7 @@ const props = defineProps({
   }
 });
 
-const titleRef = ref(null);
+const titleRef = ref<HTMLElement | null>(null);
 const titleTooltip = ref(false);
 // const descriptionRef = ref(null);
 // const descriptionTooltip = ref(false);
@@ -28,7 +28,7 @@ const { t } = useI18n();
 
 function hoverTitle() {
   nextTick(() => {
-    titleRef.value?.scrollWidth > titleRef.value?.clientWidth
+    (titleRef.value?.scrollWidth ?? 0) > (titleRef.value?.clientWidth ?? 0)
       ? (titleTooltip.value = true)
       : (titleTooltip.value = false);
   });

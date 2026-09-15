@@ -16,7 +16,7 @@
 
 <script lang="ts" setup>
 // https://github.com/bestkolobok/vue3-jsoneditor
-import JsonEditor, { MenuItem, TextContent } from "vue3-ts-jsoneditor";
+import JsonEditor, { MenuItem } from "vue3-ts-jsoneditor";
 import { useAttrs } from "vue";
 import { useDark } from "@pureadmin/utils";
 
@@ -30,7 +30,9 @@ const emit = defineEmits<{
   change: [values: unknown];
 }>();
 
-const handleChange = (content: TextContent) => {
+// vue-json-pretty 的 change 事件透传多参（首个参数为 Content）
+const handleChange = (...args: unknown[]) => {
+  const content = args[0] as { text: string };
   try {
     emit("change", JSON.parse(content.text));
   } catch {

@@ -8,7 +8,7 @@ import CloseIcon from "~icons/ep/close";
 import { useI18n } from "vue-i18n";
 import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
 
-const target = ref(null);
+const target = ref<HTMLElement | null>(null);
 const show = ref<Boolean>(false);
 const { t } = useI18n();
 const {
@@ -36,7 +36,7 @@ const { onReset } = useDataThemeChange();
 const { resetSiteConfig } = useSiteConfigStoreHook();
 
 onClickOutside(target, event => {
-  if (event.clientX > target.value.offsetLeft) return;
+  if (event.clientX > (target.value?.offsetLeft ?? 0)) return;
   show.value = false;
 });
 

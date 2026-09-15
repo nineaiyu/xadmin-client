@@ -5,6 +5,7 @@ import { useResizeObserver } from "@pureadmin/utils";
 import { useEpThemeStoreHook } from "@/store/modules/epTheme";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { computed, getCurrentInstance, onMounted, ref } from "vue";
+import type { optionsItem } from "../types";
 import EnterOutlined from "@/assets/svg/enter_outlined.svg?component";
 
 const resultRef = ref();
@@ -17,7 +18,7 @@ const instance = getCurrentInstance()!;
 const props = withDefaults(defineProps<Props>(), {});
 
 const itemStyle = computed(() => {
-  return item => {
+  return (item: optionsItem) => {
     return {
       background:
         item?.path === active.value ? useEpThemeStoreHook().epThemeColor : "",
@@ -37,7 +38,7 @@ const active = computed({
 });
 
 /** 鼠标移入 */
-async function handleMouse(item) {
+async function handleMouse(item: optionsItem) {
   active.value = item.path;
 }
 
@@ -53,9 +54,11 @@ function resizeResult() {
 useResizeObserver(resultRef, resizeResult);
 
 function handleScroll(index: number) {
-  const curInstance = instance?.proxy?.$refs[`resultItemRef${index}`];
-  if (!curInstance) return 0;
-  const curRef = curInstance[0] as ElRef;
+  const curInstance = (
+    instance?.proxy?.$refs as Record<string, ElRef[] | undefined>
+  )?.[`resultItemRef${index}`];
+  const curRef = curInstance?.[0];
+  if (!curRef) return 0;
   const scrollTop = curRef.offsetTop + 128; // 128 两个result-item（56px+56px=112px）高度加上下margin（8px+8px=16px）
   return scrollTop > innerHeight.value ? scrollTop - innerHeight.value : 0;
 }
@@ -78,9 +81,9 @@ defineExpose({ handleScroll });
       @click="handleTo"
       @mouseenter="handleMouse(item)"
     >
-      <component :is="useRenderIcon(item.meta?.icon)" />
+      <component :is="useRenderIcon(item.meta?.icon ?? '')" />
       <span class="result-item-title">
-        {{ transformI18n(item.meta?.title) }}
+        {{ transformI18n(item.meta?.title ?? "") }}
       </span>
       <EnterOutlined />
     </div>

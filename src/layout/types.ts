@@ -30,6 +30,14 @@ export type routeMetaType = {
   fixedTag?: boolean;
   /** iframe 内嵌页面地址（lay-frame 多标签缓存按此识别） */
   frameSrc?: string;
+  /** 菜单排序（后端菜单 rank 透传） */
+  rank?: number;
+  /** 菜单树展开时是否显示父级（SidebarItem 折叠判定） */
+  showParent?: boolean;
+  /** 菜单右侧附加图标 */
+  extraIcon?: string;
+  /** 当前激活的父级菜单路径 */
+  activePath?: string;
 };
 
 export type RouteConfigs = {
@@ -77,17 +85,16 @@ export type menuType = {
   noShowingChildren?: boolean;
   children?: menuType[];
   value: unknown;
-  meta?: {
-    icon?: string;
-    title?: string;
-    rank?: number;
-    showParent?: boolean;
-    extraIcon?: string;
-  };
+  meta?: routeMetaType;
   showTooltip?: boolean;
+  /** 右键菜单项禁用态（标签页右键菜单透传） */
+  disabled?: boolean;
   parentId?: number;
   pathList?: number[];
   redirect?: string;
+  /** 路由查询/路径参数（标签页等场景透传） */
+  query?: LocationQueryRaw;
+  params?: RouteParamsRaw;
 };
 
 export type themeColorsType = {

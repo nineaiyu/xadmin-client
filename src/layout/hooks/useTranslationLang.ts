@@ -1,5 +1,6 @@
 import { useNav } from "./useNav";
 import { useI18n } from "vue-i18n";
+import type { routeMetaType } from "../types";
 import { useRoute } from "vue-router";
 import { onBeforeMount, type Ref, watch } from "vue";
 import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
@@ -32,7 +33,7 @@ export function useTranslationLang(ref?: Ref) {
   watch(
     () => locale.value,
     () => {
-      changeTitle(route.meta);
+      changeTitle(route.meta as routeMetaType);
     }
   );
 

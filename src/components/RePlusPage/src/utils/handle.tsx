@@ -47,7 +47,7 @@ const handleOperation = (options: operationOptions) => {
   } = options;
 
   apiReq
-    ?.then((res: DetailResult) => {
+    ?.then((res: ApiResult) => {
       if (res.code === SUCCESS_CODE) {
         // 写操作成功即失效共享元数据缓存（菜单等全量列表）：避免「刚保存的改动
         // 在其它页面的树/下拉里看不到」。命中缓存的下次读取会重新拉取。
@@ -56,14 +56,14 @@ const handleOperation = (options: operationOptions) => {
           message(res.detail ?? t("results.success"), { type: "success" });
         }
         if (success) {
-          success(res);
+          success(res as DetailResult);
         }
       } else {
         if (showFailedMsg) {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
         }
         if (failed) {
-          failed(res);
+          failed(res as DetailResult);
         }
       }
     })
@@ -87,6 +87,7 @@ interface changeOptions {
   row: {
     pk?: string | number;
     id?: string | number;
+    [key: string]: unknown;
   }; // 更新的表单数据
   field: string; // 更新的字段
   actionMsg: string;
@@ -145,11 +146,11 @@ const onSwitchChange = (changeOptions: changeOptions) => {
           loading: true
         }
       );
-      const updateData = {};
+      const updateData: Record<string, unknown> = {};
       updateData[field] = row[field];
       handleOperation({
         t,
-        apiReq: updateApi(row?.pk ?? row?.id, updateData),
+        apiReq: updateApi((row?.pk ?? row?.id) as string | number, updateData),
         requestEnd(options) {
           switchLoadMap.value[index] = Object.assign(
             {},
@@ -207,13 +208,13 @@ const renderSwitch = (switchOptions: switchOptions) => {
     disabled
   } = switchOptions;
 
-  const defaultActionMap = {
+  const defaultActionMap: Record<string, string> = {
     true: t("labels.enable"),
     false: t("labels.disable"),
     ...(actionMap ?? {})
   };
 
-  const defaultActiveMap = {
+  const defaultActiveMap: Record<string, boolean> = {
     true: true,
     false: false,
     ...(activeMap ?? {})
@@ -240,7 +241,8 @@ const renderSwitch = (switchOptions: switchOptions) => {
           row: scope.row,
           index: scope.index,
           actionMsg:
-            actionMsg ?? defaultActionMap[defaultActiveMap[scope.row[field]]],
+            actionMsg ??
+            defaultActionMap[String(defaultActiveMap[scope.row[field]])],
           success,
           failed,
           requestEnd
@@ -260,7 +262,7 @@ interface booleanTagOptions {
 
 const renderBooleanTag = (booleanTagOptions: booleanTagOptions) => {
   const { t, tagStyle, field, actionMap } = booleanTagOptions;
-  const defaultActionMap = {
+  const defaultActionMap: Record<string, string> = {
     true: t("labels.enable"),
     false: t("labels.disable"),
     ...actionMap

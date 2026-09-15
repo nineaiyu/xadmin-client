@@ -24,17 +24,17 @@ const settings = reactive({
 });
 
 /** 灰色模式设置 */
-const greyChange = (value): void => {
+const greyChange = (value: boolean | string | number): void => {
   const htmlEl = document.querySelector("html");
-  toggleClass(settings.greyVal, "html-grey", htmlEl);
-  storageConfigureChange("grey", value);
+  toggleClass(settings.greyVal ?? false, "html-grey", htmlEl ?? undefined);
+  storageConfigureChange("grey", Boolean(value));
 };
 
 /** 色弱模式设置 */
-const weekChange = (value): void => {
+const weekChange = (value: boolean | string | number): void => {
   const htmlEl = document.querySelector("html");
-  toggleClass(settings.weakVal, "html-weakness", htmlEl);
-  storageConfigureChange("weak", value);
+  toggleClass(settings.weakVal ?? false, "html-weakness", htmlEl ?? undefined);
+  storageConfigureChange("weak", Boolean(value));
 };
 
 /** 隐藏标签页设置 */
@@ -53,8 +53,8 @@ const hideFooterChange = () => {
 /** 标签页持久化设置 */
 const multiTagsCacheChange = () => {
   const multiTagsCache = settings.multiTagsCache;
-  storageConfigureChange("multiTagsCache", multiTagsCache);
-  useMultiTagsStoreHook().multiTagsCacheChange(multiTagsCache);
+  storageConfigureChange("multiTagsCache", multiTagsCache ?? false);
+  useMultiTagsStoreHook().multiTagsCacheChange(multiTagsCache ?? false);
 };
 
 /** 侧边栏Logo */

@@ -23,7 +23,7 @@ export default defineComponent({
         xl: val,
         ...attrs
       },
-      { default: () => this.$slots.default() }
+      { default: () => this.$slots.default?.() }
     );
   }
 });

@@ -2,9 +2,10 @@ import { SUCCESS_CODE } from "@/api/types";
 import { onMounted, ref } from "vue";
 import { getCaptchaApi } from "@/api/auth";
 import { useUserStoreHook } from "@/store/modules/user";
+import type { Ref } from "vue";
 import { delay } from "@pureadmin/utils";
 
-export const useImageVerify = imgCode => {
+export const useImageVerify = (imgCode: Ref<string | undefined>) => {
   // const imgCode = ref("");
   const imgUrl = ref("");
   const loading = ref(false);

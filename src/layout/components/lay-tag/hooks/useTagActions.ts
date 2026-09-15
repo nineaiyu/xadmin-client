@@ -4,6 +4,8 @@ import NProgress from "@/utils/progress";
 import type { RouteConfigs, tagsViewsType } from "../../../types";
 import type { useTags } from "../../../hooks/useTag";
 import { routerArrays } from "@/layout/types";
+import type { LocationQueryRaw, RouteParamsRaw } from "vue-router";
+import type { menuType } from "@/layout/types";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import { useTagMenuState } from "./useTagMenuState";
 import { handleAliveRoute, getTopMenu } from "@/router/utils";
@@ -151,7 +153,7 @@ export function useTagActions(ctx: TagActionsContext) {
       // 从当前匹配到的路径中删除
       spliceRoute(valueIndex, 1);
     }
-    const newRoute = useMultiTagsStoreHook().handleTags("slice");
+    const newRoute = useMultiTagsStoreHook().handleTags("slice") ?? [];
     if (current === route.path) {
       // 如果删除当前激活tag就自动切换到最后一个tag
       if (tag === "left") return;
@@ -175,25 +177,34 @@ export function useTagActions(ctx: TagActionsContext) {
     }
   }
 
-  function deleteMenu(item, tag?: string) {
-    deleteDynamicTag(item, item.path, tag);
+  function deleteMenu(item: RouteConfigs, tag?: string) {
+    deleteDynamicTag(item, item.path ?? "", tag);
     handleAliveRoute(route as ToRouteType);
   }
 
-  function onClickDrop(key, item, selectRoute?: RouteConfigs) {
+  function onClickDrop(
+    key: number,
+    item: { disabled?: boolean },
+    selectRoute?: RouteConfigs
+  ) {
     if (item && item.disabled) return;
 
-    let selectTagRoute;
+    let selectTagRoute: menuType;
     if (selectRoute) {
       selectTagRoute = {
         path: selectRoute.path,
-        meta: selectRoute.meta,
-        name: selectRoute.name,
-        query: selectRoute?.query,
-        params: selectRoute?.params
+        value: undefined,
+        meta: selectRoute.meta as menuType["meta"],
+        name: selectRoute.name as string,
+        query: selectRoute?.query as LocationQueryRaw,
+        params: selectRoute?.params as RouteParamsRaw
       };
     } else {
-      selectTagRoute = { path: route.path, meta: route.meta };
+      selectTagRoute = {
+        path: route.path,
+        value: undefined,
+        meta: route.meta as menuType["meta"]
+      };
     }
 
     // 当前路由信息
@@ -224,7 +235,7 @@ export function useTagActions(ctx: TagActionsContext) {
           startIndex: fixedTags.length,
           length: multiTags.value.length
         });
-        router.push(topPath);
+        router.push(topPath ?? "/");
         // router.push(fixedTags[fixedTags.length - 1]?.path);
         handleAliveRoute(route as ToRouteType);
         break;
@@ -259,12 +270,12 @@ export function useTagActions(ctx: TagActionsContext) {
   }
 
   /** 触发右键中菜单的点击事件 */
-  function selectTag(key, item) {
+  function selectTag(key: number, item: { disabled?: boolean }) {
     closeMenu();
     onClickDrop(key, item, currentSelect.value);
   }
 
-  function openMenu(tag, e) {
+  function openMenu(tag: RouteConfigs, e: MouseEvent) {
     closeMenu();
     if (tag.path === topPath || tag?.meta?.fixedTag) {
       // 右键菜单为顶级菜单或拥有 fixedTag 属性，只显示刷新
@@ -273,14 +284,14 @@ export function useTagActions(ctx: TagActionsContext) {
     } else if (route.path !== tag.path && route.name !== tag.name) {
       // 右键菜单不匹配当前路由，隐藏刷新
       tagsViews[0].show = false;
-      showMenuModel(tag.path, tag.query, tag.params);
+      showMenuModel(tag.path ?? "", tag.query, tag.params);
     } else if (multiTags.value.length === 2 && route.path !== tag.path) {
       showMenus(true);
       // 只有两个标签时不显示关闭其他标签页
       tagsViews[4].show = false;
-      showMenuModel(tag.path, tag.query, tag.params);
+      showMenuModel(tag.path ?? "", tag.query, tag.params);
     } else {
-      showMenuModel(tag.path, tag.query, tag.params, true);
+      showMenuModel(tag.path ?? "", tag.query, tag.params, true);
     }
 
     currentSelect.value = tag;
@@ -305,7 +316,7 @@ export function useTagActions(ctx: TagActionsContext) {
   }
 
   /** 触发tags标签切换 */
-  function tagOnClick(item) {
+  function tagOnClick(item: RouteConfigs) {
     const { name, path } = item;
     if (name) {
       if (item.query) {
@@ -324,7 +335,7 @@ export function useTagActions(ctx: TagActionsContext) {
     } else {
       router.push({ path });
     }
-    emitter.emit("tagOnClick", item);
+    emitter.emit("tagOnClick", item as never);
   }
 
   return {

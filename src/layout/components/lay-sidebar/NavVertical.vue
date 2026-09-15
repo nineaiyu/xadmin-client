@@ -51,12 +51,12 @@ function getSubMenuData() {
   // path的上级路由组成的数组
   const parentPathArr = getParentPaths(
     path,
-    usePermissionStoreHook().wholeMenus
+    usePermissionStoreHook().wholeMenus as never
   );
   // 当前路由的父级路由信息
   const parenetRoute = findRouteByPath(
     parentPathArr[0] || path,
-    usePermissionStoreHook().wholeMenus
+    usePermissionStoreHook().wholeMenus as never
   );
   if (!parenetRoute?.children) return;
   subMenuData.value = parenetRoute?.children;
@@ -110,7 +110,7 @@ onBeforeUnmount(() => {
         <LaySidebarItem
           v-for="routes in menuData"
           :key="routes.path"
-          :item="routes"
+          :item="routes as never"
           :base-path="routes.path"
           class="outer-most select-none"
         />

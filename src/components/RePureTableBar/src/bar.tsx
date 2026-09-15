@@ -34,6 +34,9 @@ import { useI18n } from "vue-i18n";
 /** 树形表格行：展开/折叠按 `children` 递归 */
 type TableRowLike = Record<string, unknown> & { children?: TableRowLike[] };
 
+/** 列表列类型（pure-admin `TableColumnList` 元素） */
+type TableColumnLike = TableColumnList[number];
+
 /**
  * 树形表格实例契约：传入 pure-table 的 ref 以启用展开/折叠功能。
  * 仅声明本组件依赖的成员（`data` 行集合、`toggleRowExpansion`、`size` 门控展开图标）
@@ -82,7 +85,7 @@ export default defineComponent({
     const instance = getCurrentInstance()!;
     const isExpandAll = ref(props.isExpandAll);
     const filterColumns = computed(() => {
-      return cloneDeep(props?.columns).filter(column =>
+      return cloneDeep(props?.columns).filter((column: TableColumnLike) =>
         isBoolean(column?.hide)
           ? !column.hide
           : !(isFunction(column?.hide) && column?.hide())
@@ -151,7 +154,8 @@ export default defineComponent({
 
     function onExpand() {
       isExpandAll.value = !isExpandAll.value;
-      toggleRowExpansionAll(props.tableRef.data, isExpandAll.value);
+      const rows = props.tableRef?.data;
+      if (rows) toggleRowExpansionAll(rows, isExpandAll.value);
     }
 
     function onFullscreen() {
@@ -161,7 +165,7 @@ export default defineComponent({
 
     function toggleRowExpansionAll(data: TableRowLike[], isExpansion: boolean) {
       data.forEach(item => {
-        props.tableRef.toggleRowExpansion(item, isExpansion);
+        props.tableRef?.toggleRowExpansion?.(item, isExpansion);
         if (item.children !== undefined && item.children !== null) {
           toggleRowExpansionAll(item.children, isExpansion);
         }
@@ -171,7 +175,7 @@ export default defineComponent({
     function handleCheckAllChange(val: CheckboxValueType) {
       checkedColumns.value = val ? checkColumnList.value : [];
       isIndeterminate.value = false;
-      dynamicColumns.value.map(column =>
+      dynamicColumns.value.map((column: TableColumnLike) =>
         val ? (column.hide = false) : (column.hide = true)
       );
     }
@@ -189,13 +193,18 @@ export default defineComponent({
       label: string
     ) {
       dynamicColumns.value.filter(
-        item => transformI18n(item.label) === transformI18n(label)
+        (item: TableColumnLike) =>
+          transformI18n(item.label) === transformI18n(label)
       )[0].hide = !val;
     }
 
-    function handleToggleColumnFixed(fixed, label: string) {
+    function handleToggleColumnFixed(
+      fixed: boolean | "left" | "right",
+      label: string
+    ) {
       const column = dynamicColumns.value.find(
-        item => transformI18n(item.label) === transformI18n(label)
+        (item: TableColumnLike) =>
+          transformI18n(item.label) === transformI18n(label)
       );
       if (column) {
         column.fixed = fixed;
@@ -285,6 +294,7 @@ export default defineComponent({
           animation: 300,
           handle: ".drag-btn",
           onEnd: ({ newIndex, oldIndex, item }) => {
+            if (newIndex === undefined || oldIndex === undefined) return;
             const targetThElem = item;
             const wrapperElem = targetThElem.parentNode as HTMLElement;
             const oldColumn = dynamicColumns.value[oldIndex];
@@ -311,7 +321,8 @@ export default defineComponent({
 
     const isFixedColumn = (label: string) => {
       const column = dynamicColumns.value.find(
-        item => transformI18n(item.label) === transformI18n(label)
+        (item: TableColumnLike) =>
+          transformI18n(item.label) === transformI18n(label)
       );
       const fixedOption = column?.fixed;
       const left = fixedOption === "left";

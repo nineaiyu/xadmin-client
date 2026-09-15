@@ -35,12 +35,12 @@ const stretchTypeOptions = computed<Array<OptionsType>>(() => {
   ];
 });
 
-const setStretch = value => {
+const setStretch = (value: boolean | number) => {
   settings.stretch = value;
   storageConfigureChange("stretch", value);
 };
 
-const stretchTypeChange = ({ option }) => {
+const stretchTypeChange = ({ option }: { option: { value: string } }) => {
   const { value } = option;
   value === "custom" ? setStretch(1440) : setStretch(false);
 };
@@ -61,7 +61,7 @@ const stretchTypeChange = ({ option }) => {
       :max="1600"
       :min="1280"
       controls-position="right"
-      @change="value => setStretch(value)"
+      @change="value => setStretch(value ?? false)"
     />
     <button
       v-else

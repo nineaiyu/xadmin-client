@@ -51,8 +51,8 @@ export function useLayout() {
   };
 
   /** 清空缓存后从platform-config.json读取默认配置并赋值到storage中 */
-  const layout = computed(() => {
-    return $storage?.layout.layout;
+  const layout = computed((): string => {
+    return $storage?.layout?.layout ?? "vertical";
   });
 
   const layoutTheme = computed(() => {

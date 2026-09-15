@@ -188,7 +188,8 @@ export const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
 
   const rawColumnsMap: Record<string, RawColumn> = {};
   cloneDeep(formOptions?.rawColumns ?? []).forEach(column => {
-    rawColumnsMap[column._column?.key ?? column.prop] = column;
+    const rawKey = column._column?.key ?? column.prop;
+    if (rawKey) rawColumnsMap[rawKey] = column;
   });
   const editColumns: Record<string, RawColumn> = {};
   Object.keys(formOptions?.columns ?? {}).forEach(key => {
@@ -205,7 +206,7 @@ export const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
       } catch (err) {
         console.warn(err);
       }
-    } else {
+    } else if (getValue) {
       editColumns[key] = getValue;
     }
   });
@@ -257,9 +258,9 @@ export const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
         return;
       }
       const allFormInstances = FormRef?._allInstances ?? [FormRef]; // 获取所有 PlusForm 实例
-      const formInlineData = cloneDeep(options.props.formInline);
+      const formInlineData = cloneDeep(options.props?.formInline ?? {});
 
-      const success = (detail = undefined, close = true) => {
+      const success = (detail?: string, close: boolean = true) => {
         message(detail ?? formOptions?.t("results.success"), {
           type: "success"
         });
@@ -282,7 +283,7 @@ export const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
       for (let i = 0; i < allFormInstances.length; i++) {
         const valid = await allFormInstances[i]?.validate(valid => {
           if (!valid) {
-            formRef.value.setActiveName(i);
+            formRef.value?.setActiveName?.(i);
             closeLoading();
           }
         });
@@ -297,8 +298,8 @@ export const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
             formOptions
           })
         : undefined;
-      const formData = submitted || formInlineData;
-      formOptions?.saveCallback({
+      const formData = (submitted as RecordType | undefined) || formInlineData;
+      formOptions?.saveCallback?.({
         formData,
         formRef: FormRef,
         closeLoading,
@@ -315,7 +316,7 @@ export const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
       // 内容组件 change 透传：AddOrEdit 载荷为 { values, column }
       const payload = data?.values as
         { values?: RecordType; column?: unknown } | undefined;
-      if (payload) {
+      if (payload?.values && formOptions.formValue) {
         formOptions.formValue.value = payload.values;
       }
       if (formOptions?.dialogDrawerOptions?.onChange) {

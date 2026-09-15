@@ -1,7 +1,7 @@
 import "./circled.css";
 import Cropper from "cropperjs";
 import { ElUpload } from "element-plus";
-import type { CSSProperties } from "vue";
+import type { CSSProperties, Ref } from "vue";
 import {
   computed,
   defineComponent,
@@ -157,7 +157,9 @@ export default defineComponent({
       scaleY = 1;
     });
 
-    useResizeObserver(tippyElRef, () => handCropper("reset"));
+    useResizeObserver(tippyElRef as unknown as Ref<HTMLDivElement>, () =>
+      handCropper("reset")
+    );
 
     async function init() {
       const imgEl = unref(imgElRef);
@@ -247,7 +249,7 @@ export default defineComponent({
       );
     }
 
-    function getRoundedCanvas(sourceCanvas) {
+    function getRoundedCanvas(sourceCanvas: HTMLCanvasElement) {
       const canvas = document.createElement("canvas");
       const context = canvas.getContext("2d")!;
       const width = sourceCanvas.width;
@@ -278,18 +280,22 @@ export default defineComponent({
       if (event === "scaleY") {
         scaleY = arg = scaleY === -1 ? 1 : -1;
       }
+      const cropperApi = cropper.value as unknown as Record<
+        string,
+        ((...args: unknown[]) => void) | undefined
+      >;
       if (arg && isArray(arg)) {
-        cropper.value?.[event]?.(...arg);
+        cropperApi?.[event]?.(...arg);
       } else {
-        cropper.value?.[event]?.(arg);
+        cropperApi?.[event]?.(arg);
       }
     }
 
-    function beforeUpload(file) {
+    function beforeUpload(file: File) {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       inSrc.value = "";
-      reader.onload = e => {
+      reader.onload = (e: ProgressEvent<FileReader>) => {
         inSrc.value = e.target?.result as string;
       };
       reader.onloadend = () => {
@@ -431,7 +437,7 @@ export default defineComponent({
       }
     });
 
-    function onContextmenu(event) {
+    function onContextmenu(event: MouseEvent) {
       event.preventDefault();
 
       const { show, setProps, destroy, state } = useTippy(tippyElRef, {

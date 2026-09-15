@@ -42,8 +42,8 @@ const historyRef = ref();
 const scrollbarRef = ref();
 const activePath = ref("");
 const historyPath = ref("");
-const resultOptions = shallowRef([]);
-const historyOptions = shallowRef([]);
+const resultOptions = shallowRef<optionsItem[]>([]);
+const historyOptions = shallowRef<optionsItem[]>([]);
 // 全局搜索：菜单结果之外跨实体检索的分组结果
 const globalGroups = shallowRef<GlobalSearchGroup[]>([]);
 const globalLoading = ref(false);
@@ -89,19 +89,19 @@ const showEmpty = computed(() => {
   );
 });
 
-function getStorageItem(key) {
+function getStorageItem(key: string) {
   return storageLocal().getItem<optionsItem[]>(key) || [];
 }
 
-function setStorageItem(key, value) {
+function setStorageItem(key: string, value: optionsItem[]) {
   storageLocal().setItem(key, value);
 }
 
 /** 将菜单树形结构扁平化为一维数组，用于菜单查询 */
-function flatTree(arr) {
-  const res = [];
+function flatTree(arr: optionsItem[]) {
+  const res: optionsItem[] = [];
 
-  function deep(arr, parentIcon?) {
+  function deep(arr: optionsItem[], parentIcon?: string) {
     arr.forEach(item => {
       if (!item.children || item.children.length === 0) {
         const menuItem =
@@ -176,7 +176,7 @@ function handleClose() {
   }, 200);
 }
 
-function scrollTo(index) {
+function scrollTo(index: number) {
   const ref = resultOptions.value.length ? resultRef.value : historyRef.value;
   const scrollTop = ref.handleScroll(index);
   scrollbarRef.value.setScrollTop(scrollTop);
@@ -191,7 +191,7 @@ function getCurrentOptionsAndPath() {
 }
 
 /** 更新路径并滚动到指定项 */
-function updatePathAndScroll(newIndex, isResultOptions) {
+function updatePathAndScroll(newIndex: number, isResultOptions: boolean) {
   if (isResultOptions) {
     activePath.value = resultOptions.value[newIndex].path;
   } else {
@@ -234,7 +234,7 @@ function handleEnter() {
 }
 
 /** 删除历史记录 */
-function handleDelete(item) {
+function handleDelete(item: optionsItem) {
   const key = item.type === HISTORY_TYPE ? LOCALEHISTORYKEY : LOCALECOLLECTKEY;
   let list = getStorageItem(key);
   list = list.filter(listItem => listItem.path !== item.path);
@@ -243,7 +243,7 @@ function handleDelete(item) {
 }
 
 /** 收藏历史记录 */
-function handleCollect(item) {
+function handleCollect(item: optionsItem) {
   let searchHistoryList = getStorageItem(LOCALEHISTORYKEY);
   let searchCollectList = getStorageItem(LOCALECOLLECTKEY);
   searchHistoryList = searchHistoryList.filter(
@@ -259,16 +259,18 @@ function handleCollect(item) {
 
 /** 存储搜索记录 */
 function saveHistory() {
-  const { path, meta } = resultOptions.value.find(
+  const found = resultOptions.value.find(
     item => item.path === activePath.value
   );
+  if (!found) return;
+  const { path, meta } = found;
   const searchHistoryList = getStorageItem(LOCALEHISTORYKEY);
   const searchCollectList = getStorageItem(LOCALECOLLECTKEY);
   const isCollected = searchCollectList.some(item => item.path === path);
   const existingIndex = searchHistoryList.findIndex(item => item.path === path);
   if (!isCollected) {
     if (existingIndex !== -1) searchHistoryList.splice(existingIndex, 1);
-    if (searchHistoryList.length >= historyNum) searchHistoryList.pop();
+    if (searchHistoryList.length >= (historyNum ?? 0)) searchHistoryList.pop();
     searchHistoryList.unshift({ path, meta, type: HISTORY_TYPE });
     storageLocal().setItem(LOCALEHISTORYKEY, searchHistoryList);
   }
@@ -325,8 +327,8 @@ onKeyStroke("ArrowDown", handleDown);
     append-to-body
     class="pure-search-dialog"
     top="5vh"
-    @closed="inputRef.blur()"
-    @opened="inputRef.focus()"
+    @closed="inputRef?.blur()"
+    @opened="inputRef?.focus()"
   >
     <el-input
       ref="inputRef"

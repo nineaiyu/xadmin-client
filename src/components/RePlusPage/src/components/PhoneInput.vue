@@ -71,7 +71,7 @@ onMounted(() => {
   });
 });
 
-const onChange = country => {
+const onChange = (country: { value: string }) => {
   value.value.code = country.value;
   onInputChange();
 };

@@ -56,25 +56,29 @@ interface FormProps {
   columns?: PlusColumn[];
 }
 
+type FormInline = Partial<FieldValues & FormItemProps>;
+
 const props = withDefaults(defineProps<FormProps>(), {
-  formInline: () => ({
-    type: "xlsx",
-    action: "create",
-    ignore_error: false,
-    mode: "import",
-    async: false,
-    upload: [],
-    mapping: {},
-    template_id: "",
-    ignore_unknown: true,
-    api: {
-      exportData: null
-    }
-  })
+  formInline: () =>
+    ({
+      type: "xlsx",
+      action: "create",
+      ignore_error: false,
+      mode: "import",
+      async: false,
+      upload: [],
+      mapping: {},
+      template_id: "",
+      ignore_unknown: true,
+      api: {
+        exportData: null
+      }
+    }) as unknown as FormInline
 });
 const { t } = useI18n();
 
-const state = ref<FormProps["formInline"]>(props.formInline);
+// 非 undefined 泛型：表单态恒有值（默认值兜底），避免全文件 state.value 可空告警
+const state = ref<FormInline>(props.formInline ?? {});
 
 /** 表头解析结果（列映射面板数据源） */
 const headers = ref<string[]>([]);
@@ -236,7 +240,7 @@ const goDownloadXlsx = (type: string) => {
   });
 };
 /** 按所选格式下载模板（与导出弹窗的格式 radio 联动） */
-const goDownloadTemplate = () => goDownloadXlsx(state.value.type);
+const goDownloadTemplate = () => goDownloadXlsx(state.value.type ?? "xlsx");
 
 /** 已解析表头的文件标识：避免裁剪/重渲染触发重复解析 */
 const parsedUid = ref<number | string>("");
@@ -254,7 +258,7 @@ watch(
       return;
     }
     if (uid !== parsedUid.value) {
-      parsedUid.value = uid;
+      parsedUid.value = uid ?? "";
       parseHeaders(file);
     }
   }
@@ -300,7 +304,7 @@ const formColumns: PlusColumn[] = [
   {
     label: t("exportImport.ignoreError"),
     prop: "ignore_error",
-    renderField: renderBooleanSegmentedOption(),
+    renderField: renderBooleanSegmentedOption() as never,
     tooltip: t("exportImport.ignoreErrorAsyncTip")
   },
   {

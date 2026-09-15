@@ -42,8 +42,11 @@ export function usePlusPageButtons({
   handleGetData: (queryParams?: object) => void;
   getSelectPks: (key?: string) => (string | number)[];
   handleAddOrEdit: (isAdd?: boolean, row?: Record<string, unknown>) => void;
-  handleDelete: (row: unknown, requestEnd: () => void) => void;
-  handleDetail: (row: unknown) => void;
+  handleDelete: (
+    row: { pk?: string | number; id?: string | number },
+    requestEnd?: (options?: object) => void
+  ) => void;
+  handleDetail: (row: Record<string, unknown>) => void;
 }) {
   const {
     api,
@@ -68,7 +71,7 @@ export function usePlusPageButtons({
       onClick: ({ row }) => {
         handleAddOrEdit(false, row);
       },
-      show: (auth.partialUpdate || auth.update) && -30
+      show: auth.partialUpdate || auth.update ? -30 : false
     },
     {
       text: t("buttons.delete"),
@@ -85,7 +88,7 @@ export function usePlusPageButtons({
           loading.value = false;
         });
       },
-      show: auth.destroy && -20
+      show: auth.destroy ? -20 : false
     },
     {
       code: "detail",
@@ -102,7 +105,7 @@ export function usePlusPageButtons({
         handleDetail(row);
       },
       tooltip: { content: t("buttons.detail") },
-      show: (auth.list || auth.retrieve) && -10
+      show: auth.list || auth.retrieve ? -10 : false
     },
     {
       text: t("buttons.changeHistory"),
@@ -118,7 +121,7 @@ export function usePlusPageButtons({
       tooltip: { content: t("buttons.changeHistory") },
       // 页面在 getDefaultAuths 中声明 changeHistory 且菜单授予
       // changeHistory:<ComponentName> 权限码时显示（用户管理页已开启示范）
-      show: auth.changeHistory && -5
+      show: auth.changeHistory ? -5 : false
     }
   ];
 
@@ -147,7 +150,7 @@ export function usePlusPageButtons({
       onClick: () => {
         treeProps.value.checkStrictly = !treeProps.value.checkStrictly;
       },
-      show: isTree && -30
+      show: isTree ? -30 : false
     },
     {
       text: t("buttons.add"),
@@ -159,7 +162,7 @@ export function usePlusPageButtons({
       onClick: ({ row }) => {
         handleAddOrEdit(true, row);
       },
-      show: auth.create && -30
+      show: auth.create ? -30 : false
     },
     {
       code: "export",
@@ -181,7 +184,7 @@ export function usePlusPageButtons({
         });
       },
       tooltip: { content: t("exportImport.export") },
-      show: auth.exportData && -20
+      show: auth.exportData ? -20 : false
     },
     {
       code: "import",
@@ -200,7 +203,7 @@ export function usePlusPageButtons({
         });
       },
       tooltip: { content: t("exportImport.import") },
-      show: auth.importData && -10
+      show: auth.importData ? -10 : false
     }
   ];
 

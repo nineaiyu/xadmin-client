@@ -1,4 +1,5 @@
 import { defineStore } from "pinia";
+import type { menuType } from "@/layout/types";
 import {
   ascending,
   type cacheType,
@@ -17,7 +18,7 @@ export const usePermissionStore = defineStore("pure-permission", {
     // 静态路由生成的菜单
     constantMenus,
     // 整体路由生成的菜单（静态、动态）
-    wholeMenus: [],
+    wholeMenus: [] as menuType[],
     // 整体路由（一维数组格式）
     flatteningRoutes: [] as RouteRecordRaw[],
     // 缓存页面keepAlive（路由 name 归一为字符串，keep-alive include 按名称匹配）

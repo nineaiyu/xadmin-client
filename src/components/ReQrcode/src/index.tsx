@@ -83,11 +83,13 @@ export default defineComponent({
           options
         );
         if (props.logo) {
-          const url = await createLogoCode(canvasRef);
+          const url = await createLogoCode(
+            canvasRef as unknown as HTMLCanvasElement
+          );
           emit("done", url);
           loading.value = false;
         } else {
-          emit("done", canvasRef.toDataURL());
+          emit("done", (canvasRef as unknown as HTMLCanvasElement).toDataURL());
           loading.value = false;
         }
       } else {

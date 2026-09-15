@@ -7,7 +7,7 @@ import {
   ref,
   unref
 } from "vue";
-import type { tagsViewsType } from "../types";
+import type { RouteConfigs, tagsViewsType } from "../types";
 import { useRoute, useRouter } from "vue-router";
 import { $t, transformI18n } from "@/plugins/i18n";
 import { responsiveStorageNameSpace } from "@/config";
@@ -113,7 +113,11 @@ export function useTags() {
     }
   ]);
 
-  function conditionHandle(item, previous, next) {
+  function conditionHandle(
+    item: RouteConfigs,
+    previous: string | boolean,
+    next: string | boolean
+  ) {
     const currentName = route.name || "";
     const itemName = item.name || "";
 
@@ -133,26 +137,26 @@ export function useTags() {
   }
 
   const isFixedTag = computed(() => {
-    return item => {
+    return (item: RouteConfigs) => {
       return isBoolean(item?.meta?.fixedTag) && item?.meta?.fixedTag === true;
     };
   });
 
   const iconIsActive = computed(() => {
-    return (item, index) => {
+    return (item: RouteConfigs, index: number) => {
       if (index === 0) return;
       return conditionHandle(item, true, false);
     };
   });
 
   const linkIsActive = computed(() => {
-    return item => {
+    return (item: RouteConfigs) => {
       return conditionHandle(item, "is-active", "");
     };
   });
 
   const scheduleIsActive = computed(() => {
-    return item => {
+    return (item: RouteConfigs) => {
       return conditionHandle(item, "schedule-active", "");
     };
   });
@@ -173,32 +177,36 @@ export function useTags() {
   };
 
   /** 鼠标移入添加激活样式 */
-  function onMouseenter(index) {
+  /** 取标签元素（模板 ref 数组；运行时该 ref 必然存在，类型层做兜底断言） */
+  function getTagEl(prefix: string, index: number): HTMLElement {
+    const refs = instance?.refs as Record<string, HTMLElement[]> | undefined;
+    return refs?.[prefix + index]?.[0] as HTMLElement;
+  }
+
+  function onMouseenter(index: number) {
     if (index) activeIndex.value = index;
     if (unref(tagsStyle) === "smart") {
-      if (hasClass(instance.refs["schedule" + index][0], "schedule-active"))
-        return;
-      toggleClass(true, "schedule-in", instance.refs["schedule" + index][0]);
-      toggleClass(false, "schedule-out", instance.refs["schedule" + index][0]);
+      if (hasClass(getTagEl("schedule", index), "schedule-active")) return;
+      toggleClass(true, "schedule-in", getTagEl("schedule", index));
+      toggleClass(false, "schedule-out", getTagEl("schedule", index));
     } else {
-      if (hasClass(instance.refs["dynamic" + index][0], "is-active")) return;
-      toggleClass(true, "card-in", instance.refs["dynamic" + index][0]);
-      toggleClass(false, "card-out", instance.refs["dynamic" + index][0]);
+      if (hasClass(getTagEl("dynamic", index), "is-active")) return;
+      toggleClass(true, "card-in", getTagEl("dynamic", index));
+      toggleClass(false, "card-out", getTagEl("dynamic", index));
     }
   }
 
   /** 鼠标移出恢复默认样式 */
-  function onMouseleave(index) {
+  function onMouseleave(index: number) {
     activeIndex.value = -1;
     if (unref(tagsStyle) === "smart") {
-      if (hasClass(instance.refs["schedule" + index][0], "schedule-active"))
-        return;
-      toggleClass(false, "schedule-in", instance.refs["schedule" + index][0]);
-      toggleClass(true, "schedule-out", instance.refs["schedule" + index][0]);
+      if (hasClass(getTagEl("schedule", index), "schedule-active")) return;
+      toggleClass(false, "schedule-in", getTagEl("schedule", index));
+      toggleClass(true, "schedule-out", getTagEl("schedule", index));
     } else {
-      if (hasClass(instance.refs["dynamic" + index][0], "is-active")) return;
-      toggleClass(false, "card-in", instance.refs["dynamic" + index][0]);
-      toggleClass(true, "card-out", instance.refs["dynamic" + index][0]);
+      if (hasClass(getTagEl("dynamic", index), "is-active")) return;
+      toggleClass(false, "card-in", getTagEl("dynamic", index));
+      toggleClass(true, "card-out", getTagEl("dynamic", index));
     }
   }
 

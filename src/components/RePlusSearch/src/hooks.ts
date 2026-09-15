@@ -1,4 +1,4 @@
-import { nextTick, reactive, type Ref, ref } from "vue";
+import { computed, nextTick, reactive, type Ref, ref, unref } from "vue";
 import type { PaginationProps } from "@pureadmin/table";
 import { getKeyList, isArray } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
@@ -15,7 +15,9 @@ export function usePlusSearch(
   props: PlusSearchProps
 ) {
   const { pagination, valueProps, isTree } = props;
-  const dataList = ref([]);
+  const dataList = ref<SelectionRow[]>([]);
+  /** 展示字段名（valueProps.label 支持字符串/Ref，统一取值兜底 "label"） */
+  const labelKey = computed(() => unref(valueProps?.label) ?? "label");
   const { t } = useI18n();
   const selectVisible = ref(false);
 
@@ -31,7 +33,10 @@ export function usePlusSearch(
     ...pagination
   });
 
-  const formatValue = (row, key) => {
+  const formatValue = (
+    row: SelectionRow,
+    key: string | ((row: SelectionRow) => unknown)
+  ) => {
     if (typeof key === "function") {
       return key(row);
     } else {
@@ -42,7 +47,7 @@ export function usePlusSearch(
     if (!isArray(selectValue.value)) {
       return [];
     }
-    return getKeyList(selectValue.value ?? [], valueProps.value ?? "pk");
+    return getKeyList(selectValue.value ?? [], valueProps?.value ?? "pk");
   };
 
   const handleSelectionChange = (val: SelectionRow[]) => {
@@ -52,7 +57,7 @@ export function usePlusSearch(
         if (getSelectPks().indexOf(row.pk) == -1) {
           const item = {
             pk: row.pk,
-            label: formatValue(row, valueProps.label)
+            label: formatValue(row, labelKey.value)
           };
           if (isArray(selectValue.value)) {
             selectValue.value.push(item);
@@ -74,11 +79,12 @@ export function usePlusSearch(
     });
   };
 
-  const removeTag = (val?: SelectionRow) => {
+  const removeTag = (val?: unknown) => {
+    const selected = val as SelectionRow | undefined;
     if (dataList.value?.length > 0) {
       const { toggleRowSelection } = tableRef.value.getTableRef().getTableRef();
       toggleRowSelection(
-        dataList.value.filter(v => v.pk === val?.pk)[0],
+        dataList.value.filter(v => v.pk === selected?.pk)[0],
         false
       );
     }
@@ -136,7 +142,7 @@ export function usePlusSearch(
     }
     selectValue.value = {
       pk: row.pk,
-      label: formatValue(row, valueProps.label)
+      label: formatValue(row, labelKey.value)
     };
   };
 

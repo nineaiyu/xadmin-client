@@ -1,4 +1,5 @@
 import { computed, ref } from "vue";
+import type { Ref } from "vue";
 // 注意：这里的列对象在挂载 renderer/computed 之后就地深拷贝，含循环引用——
 // 必须用 lodash-es 的 cloneDeep（带环检测）；@pureadmin/utils 的同名实现会爆栈
 import { cloneDeep } from "lodash-es";
@@ -32,12 +33,12 @@ export function useBaseColumns(localeName: string) {
   const apiSearchComponents = getApiSearchComponents();
 
   const addOrEditRules = ref<Record<string, unknown>>({});
-  const addOrEditColumns = ref([]);
+  const addOrEditColumns = ref<PageColumn[]>([]);
   const addOrEditDefaultValue = ref<Record<string, unknown>>({});
-  const searchColumns = ref([]);
+  const searchColumns = ref<PageColumn[]>([]);
   const searchDefaultValue = ref<Record<string, unknown>>({});
-  const listColumns = ref([]);
-  const detailColumns = ref([]);
+  const listColumns = ref<PageColumn[]>([]);
+  const detailColumns = ref<PageColumn[]>([]);
   const { t, te } = useI18n();
 
   /** 组装列渲染器上下文 */
@@ -73,7 +74,7 @@ export function useBaseColumns(localeName: string) {
           formatPublicLabels(t, te, column.key, localeName) ?? column.label,
         prop: column.key,
         tooltip: column?.help_text,
-        options: computed(() => formatAddOrEditOptions(column.choices)),
+        options: computed(() => formatAddOrEditOptions(column.choices ?? [])),
         valueType: "input",
         fieldProps: {},
         hideInForm: true,
@@ -232,10 +233,23 @@ export function useBaseColumns(localeName: string) {
    * 该方法用于页面onMount内调用，用于第一次渲染页面
    */
   const getColumnData = async (
-    apiColumns: BaseApi["columns"],
-    apiFields: BaseApi["fields"],
-    columnsCallback = null,
-    fieldsCallback = null,
+    apiColumns: BaseApi["columns"] | null | undefined,
+    apiFields: BaseApi["fields"] | null | undefined,
+    columnsCallback:
+      | ((payload: {
+          listColumns: Ref<PageColumn[]>;
+          detailColumns: Ref<PageColumn[]>;
+          addOrEditRules: Ref<Record<string, unknown>>;
+          addOrEditColumns: Ref<PageColumn[]>;
+          addOrEditDefaultValue: Ref<Record<string, unknown>>;
+        }) => void)
+      | null = null,
+    fieldsCallback:
+      | ((payload: {
+          searchDefaultValue: Ref<Record<string, unknown>>;
+          searchColumns: Ref<PageColumn[]>;
+        }) => void)
+      | null = null,
     columnsParams: object = {},
     fieldsParams: object = {},
     /** with_meta=1 内联载荷，存在时跳过对应分离请求 */

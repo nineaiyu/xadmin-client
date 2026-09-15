@@ -5,8 +5,8 @@ export default defineComponent({
   name: "Auth",
   props: {
     value: {
-      type: undefined,
-      default: []
+      type: String,
+      default: ""
     }
   },
   setup(props, { slots }) {

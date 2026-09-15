@@ -16,6 +16,7 @@ import type {
   SearchColumnsResult,
   SearchFieldsResult
 } from "@/api/types";
+import type { Ref } from "vue";
 import type { FormInstance } from "element-plus";
 import type { formDialogDrawerOptions } from "./handle";
 import type { OperationProps } from "@/components/RePlusPage";
@@ -227,14 +228,15 @@ interface RePlusPageProps {
    * @param columns
    */
   searchColumnsFormat?: (columns: PageColumn[]) => PageColumn[];
-  baseColumnsFormat?: ({
-    listColumns,
-    detailColumns,
-    searchColumns,
-    addOrEditRules,
-    addOrEditColumns,
-    searchDefaultValue,
-    addOrEditDefaultValue
+  baseColumnsFormat?: (payload: {
+    /** 表格列（响应式 ref，就地修改生效） */
+    listColumns: Ref<PageColumn[]>;
+    detailColumns: Ref<PageColumn[]>;
+    searchColumns: Ref<PageColumn[]>;
+    addOrEditRules: Ref<Record<string, unknown>>;
+    addOrEditColumns: Ref<PageColumn[]>;
+    searchDefaultValue: Ref<Record<string, unknown>>;
+    addOrEditDefaultValue: Ref<Record<string, unknown>>;
   }) => void;
   /**
    * 搜索之前进行一些修改

@@ -73,7 +73,7 @@ onMounted(() => {
       <LaySidebarItem
         v-for="route in usePermissionStoreHook().wholeMenus"
         :key="route.path"
-        :item="route"
+        :item="route as never"
         :base-path="route.path"
       />
     </el-menu>

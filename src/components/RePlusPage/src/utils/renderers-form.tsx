@@ -45,8 +45,8 @@ export const builtinFormRenderers: PlusColumnRegistry = {
   },
   color: item => {
     item["valueType"] = "color-picker";
-    item["fieldProps"]["showAlpha"] = true;
-    item["fieldProps"]["predefine"] = [
+    item["fieldProps"]!["showAlpha"] = true;
+    item["fieldProps"]!["predefine"] = [
       "#001100",
       "#ffffff",
       "#ff4500",
@@ -60,8 +60,8 @@ export const builtinFormRenderers: PlusColumnRegistry = {
   },
   datetime: (item, { column }) => {
     item["valueType"] = "date-picker";
-    item["fieldProps"]["type"] = column.input_type;
-    item["fieldProps"]["valueFormat"] = "YYYY-MM-DD HH:mm:ss";
+    item["fieldProps"]!["type"] = column.input_type;
+    item["fieldProps"]!["valueFormat"] = "YYYY-MM-DD HH:mm:ss";
     item["width"] = 160;
     // pure-table ******
     item["cellRenderer"] = ({ row }) => (
@@ -74,8 +74,8 @@ export const builtinFormRenderers: PlusColumnRegistry = {
   },
   date: (item, { column }) => {
     item["valueType"] = "date-picker";
-    item["fieldProps"]["type"] = column.input_type;
-    item["fieldProps"]["valueFormat"] = "YYYY-MM-DD";
+    item["fieldProps"]!["type"] = column.input_type;
+    item["fieldProps"]!["valueFormat"] = "YYYY-MM-DD";
     item["width"] = 140;
     // pure-table ******
     item["cellRenderer"] = ({ row }) => (
@@ -112,10 +112,10 @@ export const builtinFormRenderers: PlusColumnRegistry = {
     // 无候选值的自由列表保持 TagInput 手动输入
     const childChoices = column?.child?.choices;
     if (childChoices?.length) {
-      item["fieldProps"]["multiple"] = true;
-      item["fieldProps"]["filterable"] = true;
+      item["fieldProps"]!["multiple"] = true;
+      item["fieldProps"]!["filterable"] = true;
       item["options"] = computed(() =>
-        formatAddOrEditOptions(childChoices, false)
+        formatAddOrEditOptions(childChoices ?? [], false)
       );
       return;
     }
@@ -183,7 +183,7 @@ export const formFallbackRenderer: PlusColumnHandler = (item, ctx) => {
 /** integer / float 共用 */
 function numberFormRenderer(item: PageColumn, { column }: PlusColumnContext) {
   item["valueType"] = "input-number";
-  item["fieldProps"]["controlsPosition"] = "right";
+  item["fieldProps"]!["controlsPosition"] = "right";
   item["colProps"] = { xs: 24, sm: 24, md: 12, lg: 12, xl: 12 };
   if (column.key === "pk") {
     item["minWidth"] = 80;
@@ -193,12 +193,12 @@ function numberFormRenderer(item: PageColumn, { column }: PlusColumnContext) {
 /** choice / multiple choice 共用 */
 function choiceFormRenderer(item: PageColumn, { column }: PlusColumnContext) {
   item["valueType"] = "select";
-  item["fieldProps"]["filterable"] = true;
+  item["fieldProps"]!["filterable"] = true;
   item["options"] = computed(() =>
-    formatAddOrEditOptions(column?.choices, false)
+    formatAddOrEditOptions(column?.choices ?? [], false)
   );
   if (column.input_type === "multiple choice") {
-    item["fieldProps"]["multiple"] = true;
+    item["fieldProps"]!["multiple"] = true;
   }
 }
 
@@ -208,18 +208,18 @@ function labeledChoiceFormRenderer(
   { column }: PlusColumnContext
 ) {
   item["valueType"] = "select";
-  item["fieldProps"]["filterable"] = true;
+  item["fieldProps"]!["filterable"] = true;
   item["options"] = computed(() =>
-    formatAddOrEditOptions(column?.choices, true)
+    formatAddOrEditOptions(column?.choices ?? [], true)
   );
   if (
     ["labeled_choice", "labeled_multiple_choice"].indexOf(column.input_type) ===
     -1
   ) {
-    item["fieldProps"]["valueKey"] = "pk";
+    item["fieldProps"]!["valueKey"] = "pk";
   }
   if (column.input_type === "labeled_multiple_choice") {
-    item["fieldProps"]["multiple"] = true;
+    item["fieldProps"]!["multiple"] = true;
   }
 }
 

@@ -94,8 +94,9 @@ type PopConfirm = {
 };
 
 type BtnClickDrawer = {
-  options?: DrawerOptions;
-  index?: number;
+  // 框架调用 btnClick 时必然携带当前弹层信息（原先标可选导致全量消费方判空噪声）
+  options: DrawerOptions;
+  index: number;
 };
 type BtnClickButton = {
   btn?: ButtonProps;

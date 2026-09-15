@@ -7,7 +7,7 @@ const props = defineProps<{
   to: menuType;
 }>();
 
-const isExternalLink = computed(() => isUrl(props.to.name));
+const isExternalLink = computed(() => isUrl(props.to.name ?? ""));
 const getLinkProps = (item: menuType) => {
   if (isExternalLink.value) {
     return {

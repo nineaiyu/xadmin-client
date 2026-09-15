@@ -18,12 +18,12 @@ defineOptions({
   name: "ReDialog"
 });
 
-const sureBtnMap = ref({});
+const sureBtnMap = ref<Record<string | number, { loading?: boolean }>>({});
 const fullscreen = ref(false);
 const { t } = useI18n();
 const footerButtons = computed(() => {
   return (options: DialogOptions) => {
-    return options?.footerButtons?.length > 0
+    return (options?.footerButtons?.length ?? 0) > 0
       ? options.footerButtons
       : ([
           {
@@ -173,15 +173,15 @@ function handleChange(options: DialogOptions, index: number, values: unknown) {
         </i>
       </div>
       <component
-        :is="options?.headerRenderer({ close, titleId, titleClass })"
+        :is="options?.headerRenderer?.({ close, titleId, titleClass })"
         v-else
       />
     </template>
     <component
       v-bind="options?.props"
-      :is="options.contentRenderer({ options, index })"
-      @change="values => handleChange(options, index, values)"
-      @close="args => handleClose(options, index, args)"
+      :is="options.contentRenderer?.({ options, index })"
+      @change="(values: unknown) => handleChange(options, index, values)"
+      @close="(args: ArgsType) => handleClose(options, index, args)"
     />
     <!-- footer -->
     <template v-if="!options?.hideFooter" #footer>
@@ -194,7 +194,7 @@ function handleChange(options: DialogOptions, index: number, values: unknown) {
             v-if="btn.popconfirm"
             v-bind="btn.popconfirm"
             @confirm="
-              btn.btnClick({
+              btn.btnClick?.({
                 dialog: { options, index },
                 button: { btn, index: key }
               })
@@ -211,7 +211,7 @@ function handleChange(options: DialogOptions, index: number, values: unknown) {
               key === 1 && sureBtnMap[getDialogUid(options) ?? index]?.loading
             "
             @click="
-              btn.btnClick({
+              btn.btnClick?.({
                 dialog: { options, index },
                 button: { btn, index: key }
               })

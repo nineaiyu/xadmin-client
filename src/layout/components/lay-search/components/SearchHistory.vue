@@ -23,7 +23,7 @@ const instance = getCurrentInstance()!;
 const props = withDefaults(defineProps<Props>(), {});
 
 const itemStyle = computed(() => {
-  return item => {
+  return (item: optionsItem) => {
     return {
       background:
         item?.path === active.value ? useEpThemeStoreHook().epThemeColor : "",
@@ -65,20 +65,20 @@ const historyList = computed(() => {
 });
 
 const collectList = computed(() => {
-  return props.options.filter(item => item.type === "collect");
+  return props.options.filter((item: optionsItem) => item.type === "collect");
 });
 
-function handleCollect(item) {
+function handleCollect(item: optionsItem) {
   emit("collect", item);
 }
 
-function handleDelete(item) {
+function handleDelete(item: optionsItem) {
   stopMouseEvent.value = true;
   emit("delete", item);
 }
 
 /** 鼠标移入 */
-async function handleMouse(item) {
+async function handleMouse(item: optionsItem) {
   if (!stopMouseEvent.value) active.value = item.path;
 }
 
@@ -99,23 +99,30 @@ function handleScroll(index: number) {
   const curRef = isArray(curInstance)
     ? (curInstance[0] as ElRef)
     : (curInstance as ElRef);
-  const scrollTop = curRef.offsetTop + 128; // 128 两个history-item（56px+56px=112px）高度加上下margin（8px+8px=16px）
+  const scrollTop = (curRef?.offsetTop ?? 0) + 128; // 128 两个history-item（56px+56px=112px）高度加上下margin（8px+8px=16px）
   return scrollTop > innerHeight.value ? scrollTop - innerHeight.value : 0;
 }
 
-const handleChangeIndex = (evt): void => {
-  emit("drag", { oldIndex: evt.oldIndex, newIndex: evt.newIndex });
+const handleChangeIndex = (evt: {
+  oldIndex?: number;
+  newIndex?: number;
+}): void => {
+  emit("drag", {
+    oldIndex: evt.oldIndex ?? 0,
+    newIndex: evt.newIndex ?? 0
+  });
 };
 
-let sortableInstance = null;
+let sortableInstance: ReturnType<typeof Sortable.create> | null = null;
 
 watch(
   collectList,
   val => {
     if (val.length > 1) {
       nextTick(() => {
-        const wrapper: HTMLElement =
-          document.querySelector(".collect-container");
+        const wrapper = document.querySelector(
+          ".collect-container"
+        ) as HTMLElement | null;
         if (!wrapper || sortableInstance) return;
         sortableInstance = Sortable.create(wrapper, {
           animation: 160,

@@ -20,8 +20,15 @@ const isKeepAlive = computed(() => {
   return $config?.KeepAlive;
 });
 
+/** 路由过渡配置：pure-admin 的 meta.transition 为对象（name/enterTransition/leaveTransition） */
+interface RouteTransition {
+  name?: string;
+  enterTransition?: string;
+  leaveTransition?: string;
+}
+
 const transitions = computed(() => {
-  return route => {
+  return (route: { meta: { transition?: RouteTransition } }) => {
     return route.meta.transition;
   };
 });
@@ -92,10 +99,12 @@ const transitionMain = defineComponent({
     }
   },
   render() {
-    const transitionName =
-      transitions.value(this.route)?.name || "fade-transform";
-    const enterTransition = transitions.value(this.route)?.enterTransition;
-    const leaveTransition = transitions.value(this.route)?.leaveTransition;
+    const transition = transitions.value(
+      this.route as unknown as { meta: { transition?: RouteTransition } }
+    );
+    const transitionName = transition?.name || "fade-transform";
+    const enterTransition = transition?.enterTransition;
+    const leaveTransition = transition?.leaveTransition;
     return h(
       Transition,
       {
@@ -110,7 +119,7 @@ const transitionMain = defineComponent({
         appear: true
       },
       {
-        default: () => [this.$slots.default()]
+        default: () => [this.$slots.default?.()]
       }
     );
   }

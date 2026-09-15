@@ -11,7 +11,9 @@ export default defineComponent({
     }
   },
   render() {
-    if (typeof this.icon === "object") addIcon(this.icon, this.icon);
+    if (typeof this.icon === "object") {
+      addIcon(this.icon as never, this.icon as never);
+    }
     const attrs = this.$attrs as Record<string, unknown>;
     // 装饰性图标默认对读屏隐藏（a11y）；当图标承担交互语义时（如下拉/气泡
     // trigger，Element Plus 会向 vnode 注入 role/tabindex/aria-haspopup 等属性）
@@ -41,7 +43,7 @@ export default defineComponent({
       );
     } else {
       return h(
-        this.icon,
+        this.icon as never,
         {
           "aria-hidden": ariaHidden,
           style: attrs?.style

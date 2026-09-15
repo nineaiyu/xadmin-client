@@ -35,7 +35,7 @@ const markOptions = computed<Array<OptionsType>>(() => {
   ];
 });
 
-function onChange({ option }) {
+function onChange({ option }: { option: { value: string } }) {
   const { value } = option;
   tagsStyleValue.value = value;
   storageConfigureChange("tagsStyle", value);

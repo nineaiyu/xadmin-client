@@ -57,7 +57,7 @@ const getData = () => {
         addOrEditData.value.addOrEditRules = cloneDeep(addOrEditRules.value);
         addOrEditData.value.addOrEditColumns = cloneDeep(
           addOrEditColumns.value
-        ).filter((column: { prop: string }) => keepField(column.prop));
+        ).filter(column => keepField(column.prop as string));
         addOrEditData.value.addOrEditColumns.forEach(column => {
           column["colProps"] = {};
           column["fieldProps"]["disabled"] = !props.auth.partialUpdate;

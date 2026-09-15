@@ -33,10 +33,11 @@ export function useTagScroll(ctx: TagScrollContext) {
   const moveToView = async (index: number): Promise<void> => {
     await nextTick();
     const tabNavPadding = 10;
-    if (!instance.refs["dynamic" + index]) return;
-    const tabItemEl = instance.refs["dynamic" + index][0];
-    const tabItemElOffsetLeft = (tabItemEl as HTMLElement)?.offsetLeft;
-    const tabItemOffsetWidth = (tabItemEl as HTMLElement)?.offsetWidth;
+    const refs = instance?.refs as Record<string, HTMLElement[]> | undefined;
+    const tabItemEl = refs?.["dynamic" + index]?.[0];
+    if (!tabItemEl) return;
+    const tabItemElOffsetLeft = tabItemEl?.offsetLeft;
+    const tabItemOffsetWidth = tabItemEl?.offsetWidth;
     // 标签页导航栏可视长度（不包含溢出部分）
     const scrollbarDomWidth = scrollbarDom.value
       ? scrollbarDom.value?.offsetWidth

@@ -27,12 +27,12 @@ const props = {
   },
   /** 默认选中，按照第一个索引为 `0` 的模式，可选（`modelValue`只有传`number`类型时才为响应式） */
   modelValue: {
-    type: undefined,
+    type: [String, Number] as PropType<string | number>,
     require: false,
     default: "0"
   },
   defaultValue: {
-    type: undefined,
+    type: [String, Number] as PropType<string | number>,
     require: false,
     default: "0"
   },
@@ -77,7 +77,13 @@ export default defineComponent({
         ? ref(computed(() => props.defaultValue))
         : ref(0);
 
-    function handleChange({ option, index }) {
+    function handleChange({
+      option,
+      index
+    }: {
+      option: { disabled?: boolean };
+      index: number;
+    }) {
       if (props.disabled || option.disabled) return;
       // 不再阻止默认行为：选中语义交由原生 radio 维护（键盘方向键/读屏可用），
       // 组件视觉选中态仍由 curIndex 驱动
@@ -88,7 +94,10 @@ export default defineComponent({
       emit("change", { index, option });
     }
 
-    function handleMouseenter({ option, index }, event: Event) {
+    function handleMouseenter(
+      { option, index }: { option: { disabled?: boolean }; index: number },
+      event: Event
+    ) {
       if (props.disabled) return;
       event.preventDefault();
       curMouseActive.value = index;
@@ -101,7 +110,7 @@ export default defineComponent({
       }
     }
 
-    function handleMouseleave(_, event: Event) {
+    function handleMouseleave(_: unknown, event: Event) {
       if (props.disabled) return;
       event.preventDefault();
       curMouseActive.value = -1;
@@ -159,7 +168,7 @@ export default defineComponent({
               background:
                 curMouseActive.value === index ? segmentedItembg.value : "",
               color: props.disabled
-                ? null
+                ? undefined
                 : !option.disabled &&
                     (curIndex.value === index || curMouseActive.value === index)
                   ? isDark.value

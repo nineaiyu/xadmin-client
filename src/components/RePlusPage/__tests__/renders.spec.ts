@@ -18,14 +18,16 @@ describe("formatAddOrEditOptions", () => {
     const option = { value: "a", label: "A" };
     const result = formatAddOrEditOptions([option], true);
     expect(result[0].value).toEqual({ pk: "a", value: "a", label: "A" });
-    expect(result[0].value.pk).toBe("a");
+    expect((result[0].value as { pk: string }).pk).toBe("a");
   });
 
   it("disabled 透传到 fieldItemProps", () => {
     const result = formatAddOrEditOptions([
       { value: 2, label: "锁定", disabled: true }
     ]);
-    expect(result[0].fieldItemProps.disabled).toBe(true);
+    expect((result[0].fieldItemProps as { disabled: boolean }).disabled).toBe(
+      true
+    );
   });
 
   it("data 为空时返回空数组", () => {

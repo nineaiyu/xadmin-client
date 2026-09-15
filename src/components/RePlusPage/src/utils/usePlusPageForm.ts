@@ -3,6 +3,7 @@ import { message } from "@/utils/message";
 import type { Ref } from "vue";
 import { isArray } from "@pureadmin/utils";
 import type { useI18n } from "vue-i18n";
+import type { BaseApi } from "@/api/base";
 import type { RePlusPageProps } from "./types";
 import type { useBaseColumns } from "./columns";
 import { handleOperation, openDialogDrawer } from "./handle";
@@ -38,13 +39,22 @@ export function usePlusPageForm({
   getSelectPks: (key?: string) => (string | number)[];
   handleGetData: (queryParams?: object) => void;
 }) {
-  const { api, addOrEditOptions, plusDescriptionsProps } = props;
+  const { api: rawApi, addOrEditOptions, plusDescriptionsProps } = props;
+  // 表单动作所需的 API 面：页面装配保证存在（调用点均受权限点控制），
+  // 这里显式收窄类型避免逐处判空（行为不变：缺方法时与原先一样抛错）
+  const api = rawApi as Pick<
+    BaseApi,
+    "destroy" | "batchDestroy" | "create" | "partialUpdate" | "detail"
+  >;
 
   // 删除
-  const handleDelete = (row, requestEnd) => {
+  const handleDelete = (
+    row: { pk?: string | number; id?: string | number },
+    requestEnd?: (options?: object) => void
+  ) => {
     handleOperation({
       t,
-      apiReq: api.destroy(row?.pk ?? row?.id),
+      apiReq: api.destroy((row?.pk ?? row?.id) as string | number),
       success() {
         handleGetData();
       },
@@ -70,7 +80,7 @@ export function usePlusPageForm({
   };
 
   // 查看详情
-  const handleDetail = row => {
+  const handleDetail = (row: Record<string, unknown>) => {
     openDialogDrawer({
       t,
       title: t("buttons.detail"),
@@ -138,7 +148,7 @@ export function usePlusPageForm({
       form: addOrEditOptions?.form,
       rawColumns: addOrEditColumns.value,
       rawFormProps: {
-        rules: addOrEditRules.value
+        rules: addOrEditRules.value as Record<string, Record<string, unknown>>
       },
       saveCallback: ({
         formData,

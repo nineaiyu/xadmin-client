@@ -14,19 +14,19 @@ const emit = defineEmits<{
 }>();
 withDefaults(defineProps<Props>(), {});
 
-function handleCollect(item) {
+function handleCollect(item: optionsItem) {
   emit("collectItem", item);
 }
 
-function handleDelete(item) {
+function handleDelete(item: optionsItem) {
   emit("deleteItem", item);
 }
 </script>
 
 <template>
-  <component :is="useRenderIcon(item.meta?.icon)" />
+  <component :is="useRenderIcon(item.meta?.icon ?? '')" />
   <span class="history-item-title">
-    {{ transformI18n(item.meta?.title) }}
+    {{ transformI18n(item.meta?.title ?? "") }}
   </span>
   <IconifyIconOffline
     v-show="item.type === 'history'"

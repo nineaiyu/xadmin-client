@@ -265,7 +265,7 @@ export const formatPublicLabels = (
   te: (arg0: string, arg1?: string) => boolean,
   label: string,
   localeName: string
-): string => {
+): string | undefined => {
   const formatLabel = `${localeName}.${label}`;
   if (te(formatLabel)) {
     return t(formatLabel);
@@ -285,17 +285,26 @@ export const formatPublicLabels = (
   ) {
     return t(`commonLabels.${label}`);
   }
-  return;
+  return undefined;
 };
 
-export const uniqueArrayObj = (array, key, update = false) => {
-  const b = {};
+export const uniqueArrayObj = <T extends object>(
+  array: T[],
+  key: string,
+  update = false
+) => {
+  const b: Record<string, T> = {};
   array.forEach(item => {
     if (typeof item === "object") {
-      if (item?.update ?? update) {
-        b[item[key]] = { ...(b[item[key]] ?? {}), ...item, _: b[item[key]] };
+      const itemKey = String((item as Record<string, unknown>)[key]);
+      if ((item as { update?: boolean }).update ?? update) {
+        b[itemKey] = {
+          ...(b[itemKey] ?? {}),
+          ...item,
+          _: b[itemKey]
+        } as T;
       } else {
-        b[item[key]] = item;
+        b[itemKey] = item;
       }
     }
   });

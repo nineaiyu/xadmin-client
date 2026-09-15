@@ -53,8 +53,8 @@ const isTabs = computed(() => {
 });
 
 const tabsColumns = computed(() => {
-  const _tabsColumns = {};
-  const _tabsLabels = {};
+  const _tabsColumns: Record<string | number, typeof props.columns> = {};
+  const _tabsLabels: Record<string | number, string> = {};
   props.columns.forEach(column => {
     const index = column._column.tabs_index;
     _tabsLabels[index] = column._column.tabs_label;
@@ -64,7 +64,11 @@ const tabsColumns = computed(() => {
       _tabsColumns[index] = [column];
     }
   });
-  const result = [];
+  const result: Array<{
+    label: string;
+    index: number;
+    columns: typeof props.columns;
+  }> = [];
   for (let i = 0; i < Object.keys(_tabsLabels).length; i++) {
     result.push({
       label: _tabsLabels[i],
@@ -89,10 +93,12 @@ function getRef() {
     const instance = formRefs.value[activeName.value]?.formInstance as
       ExposedFormInstance | undefined;
 
-    instance._allInstances = Object.keys(formRefs.value)
-      .map(Number)
-      .sort((a, b) => a - b)
-      .map(key => formRefs.value[key]?.formInstance);
+    if (instance) {
+      instance._allInstances = Object.keys(formRefs.value)
+        .map(Number)
+        .sort((a, b) => a - b)
+        .map(key => formRefs.value[key]?.formInstance as ExposedFormInstance);
+    }
     return instance;
   }
 

@@ -65,7 +65,7 @@ export function usePlusPageColumns({
           // pure-table ****** start
           column["cellRenderer"] = renderSwitch({
             t,
-            updateApi: api.partialUpdate,
+            updateApi: api.partialUpdate as never,
             switchLoadMap,
             switchStyle,
             field: column.prop,
@@ -89,7 +89,13 @@ export function usePlusPageColumns({
     if (operation && hasOperations.length > 0) {
       listColumns.value.push({
         _column: { key: "operation" },
-        label: formatPublicLabels(t, te, "operation", localeName),
+        label:
+          formatPublicLabels(
+            t as (arg0: string, arg1?: object) => string,
+            te as (arg0: string, arg1?: string) => boolean,
+            "operation",
+            localeName ?? ""
+          ) ?? "",
         fixed: "right",
         width: operationButtonsProps?.width ?? 200,
         slot: "operation"

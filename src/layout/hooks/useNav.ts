@@ -5,7 +5,7 @@ import { emitter } from "@/utils/mitt";
 import Avatar from "@/assets/avatar.png";
 import { getTopMenu } from "@/router/utils";
 import { useFullscreen } from "@vueuse/core";
-import type { routeMetaType } from "../types";
+import type { menuType, routeMetaType } from "../types";
 import { transformI18n } from "@/plugins/i18n";
 import { remainingPaths, router } from "@/router";
 import { computed, type CSSProperties } from "vue";
@@ -56,7 +56,7 @@ export function useNav() {
 
   /** 设置国际化选中后的样式 */
   const getDropdownItemStyle = computed(() => {
-    return (locale, t) => {
+    return (locale: string, t: string) => {
       return {
         background: locale === t ? useEpThemeStoreHook().epThemeColor : "",
         color: locale === t ? "#f4f4f5" : "#000"
@@ -65,7 +65,7 @@ export function useNav() {
   });
 
   const getDropdownItemClass = computed(() => {
-    return (locale, t) => {
+    return (locale: string, t: string) => {
       return locale === t ? "" : "dark:hover:text-primary!";
     };
   });
@@ -83,8 +83,8 @@ export function useNav() {
   });
 
   const { $storage, $config } = useGlobal<GlobalPropertiesApi>();
-  const layout = computed(() => {
-    return $storage?.layout?.layout;
+  const layout = computed((): string => {
+    return $storage?.layout?.layout ?? "vertical";
   });
 
   const title = computed(() => {
@@ -104,11 +104,11 @@ export function useNav() {
   }
 
   function backTopMenu() {
-    router.push(getTopMenu()?.path);
+    router.push(getTopMenu()?.path ?? "/");
   }
 
   function onPanel() {
-    emitter.emit("openPanel");
+    emitter.emit("openPanel" as never);
   }
 
   function toAccountSettings() {
@@ -119,15 +119,15 @@ export function useNav() {
     pureApp.toggleSideBar();
   }
 
-  function handleResize(menuRef) {
+  function handleResize(menuRef: { handleResize: () => void } | null) {
     menuRef?.handleResize();
   }
 
-  function resolvePath(route) {
+  function resolvePath(route: menuType) {
     if (!route.children) return console.error(errorInfo);
     const httpReg = /^http(s?):\/\//;
     const routeChildPath = route.children[0]?.path;
-    if (httpReg.test(routeChildPath)) {
+    if (httpReg.test(routeChildPath ?? "")) {
       return route.path + "/" + routeChildPath;
     } else {
       return routeChildPath;

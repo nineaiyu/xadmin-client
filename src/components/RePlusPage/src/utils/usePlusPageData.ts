@@ -33,9 +33,13 @@ export function usePlusPageData({
   routeParams: Record<string, unknown>;
   dataList: Ref<unknown[]>;
   loadingStatus: Ref<boolean>;
-  searchFields: Ref<{ size?: number; page?: number }>;
+  searchFields: Ref<{
+    size?: number;
+    page?: number;
+    [key: string]: unknown;
+  }>;
   defaultValue: Ref<Record<string, unknown>>;
-  tablePagination: Ref<RePlusPageProps["pagination"]>;
+  tablePagination: Ref<NonNullable<RePlusPageProps["pagination"]>>;
   getColumnData: BaseColumnsReturn["getColumnData"];
   searchDefaultValue: BaseColumnsReturn["searchDefaultValue"];
   columnsInitCallback: () => void;
@@ -81,13 +85,19 @@ export function usePlusPageData({
       onInlineMetaMissing?: () => void;
     } = {}
   ) => {
+    // 列表接口是分页数据源的必要条件（缺省时直接收尾 loading，不发起请求）
+    if (!api.list) {
+      loadingStatus.value = false;
+      return;
+    }
     const requestSeq = ++latestRequestSeq;
     loadingStatus.value = true;
 
     ["created_time", "updated_time"].forEach(key => {
-      if (searchFields.value[key]?.length === 2) {
-        searchFields.value[`${key}_after`] = searchFields.value[key][0];
-        searchFields.value[`${key}_before`] = searchFields.value[key][1];
+      const range = searchFields.value[key];
+      if (isArray(range) && range.length === 2) {
+        searchFields.value[`${key}_after`] = range[0];
+        searchFields.value[`${key}_before`] = range[1];
       } else {
         searchFields.value[`${key}_after`] = "";
         searchFields.value[`${key}_before`] = "";
@@ -99,11 +109,16 @@ export function usePlusPageData({
     // 该方法为了支持pk多选操作将如下格式 [{pk:1},{pk:2}] 转换为 [1,2]
     Object.keys(params).forEach(key => {
       const value = params[key];
-      const pks = [];
+      const pks: Array<string | number> = [];
       if (isArray(value)) {
-        value.forEach(item => {
-          if (item.pk ?? item.id) {
-            pks.push(item.pk ?? item.id);
+        value.forEach(rawItem => {
+          const item = rawItem as {
+            pk?: string | number;
+            id?: string | number;
+          };
+          const identifier = item.pk ?? item.id;
+          if (identifier) {
+            pks.push(identifier);
           }
         });
         if (pks.length > 0) {
@@ -134,8 +149,8 @@ export function usePlusPageData({
           if (options.inline) {
             if (res.data.search_columns || res.data.search_fields) {
               getColumnData(
-                undefined,
-                undefined,
+                null,
+                null,
                 columnsInitCallback,
                 fieldsInitCallback,
                 {},
@@ -193,7 +208,7 @@ export function usePlusPageData({
           inline: true,
           onInlineMetaMissing: () =>
             getColumnData(
-              auth.list && api.columns,
+              auth.list ? api.columns : null,
               api.fields,
               () => {
                 columnsInitCallback();
@@ -213,7 +228,7 @@ export function usePlusPageData({
       return;
     }
     getColumnData(
-      auth.list && api.columns,
+      auth.list ? api.columns : null,
       api.fields,
       () => {
         columnsInitCallback();

@@ -18,8 +18,8 @@ const { setMenuLayout } = useMenuLayout();
 if (unref(layoutTheme)) {
   const layout = unref(layoutTheme).layout;
   const theme = unref(layoutTheme).theme;
-  document.documentElement.setAttribute("data-theme", theme);
-  setMenuLayout(layout);
+  document.documentElement.setAttribute("data-theme", theme ?? "");
+  setMenuLayout(layout ?? "");
 }
 </script>
 

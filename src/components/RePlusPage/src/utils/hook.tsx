@@ -17,7 +17,8 @@ import { usePlusPageButtons } from "./usePlusPageButtons";
  * - usePlusPageButtons 默认操作列与工具栏按钮组
  */
 export function usePlusPage(
-  emit: (event: string, ...args: unknown[]) => void,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Vue EmitFn 交叉类型在参数逆变下需 any 才能收宽
+  emit: (...args: any[]) => void,
   tableRef: Ref,
   props: RePlusPageProps
 ) {
@@ -56,7 +57,7 @@ export function usePlusPage(
     defaultPagination.layout = "total";
     defaultPagination.pageSizes = [];
   }
-  const tablePagination = ref<RePlusPageProps["pagination"]>({
+  const tablePagination = ref<NonNullable<RePlusPageProps["pagination"]>>({
     ...defaultPagination,
     ...pagination
   });
@@ -69,7 +70,7 @@ export function usePlusPage(
     addOrEditColumns,
     searchDefaultValue,
     addOrEditDefaultValue
-  } = useBaseColumns(localeName);
+  } = useBaseColumns(localeName ?? "");
   const searchFields = ref({
     size: tablePagination.value.pageSize,
     page: tablePagination.value.currentPage
@@ -82,24 +83,36 @@ export function usePlusPage(
     return route.meta.title;
   });
 
-  const tableBarData = ref({
+  const tableBarData = ref<{
+    size: string;
+    dynamicColumns: typeof listColumns.value;
+    renderClass: string[];
+  }>({
     size: "default",
     dynamicColumns: listColumns.value,
     renderClass: []
   });
 
-  const handleTableBarChange = ({ dynamicColumns, size, renderClass }) => {
+  const handleTableBarChange = ({
+    dynamicColumns,
+    size,
+    renderClass
+  }: {
+    dynamicColumns: typeof listColumns.value;
+    size: string;
+    renderClass: string[];
+  }) => {
     tableBarData.value.dynamicColumns = dynamicColumns;
     tableBarData.value.size = size;
     tableBarData.value.renderClass = renderClass;
-    tablePagination.value.size = size;
+    tablePagination.value.size = size as typeof tablePagination.value.size;
   };
 
   const handleFullscreen = () => {
     tableRef.value.setAdaptive();
   };
 
-  const handleSelectionChange = val => {
+  const handleSelectionChange = (val: Array<{ pk?: string | number }>) => {
     selectedNum.value = val.length;
     emit("selectionChange", tableRef.value.getTableRef().getSelectionRows());
   };
@@ -184,7 +197,7 @@ export function usePlusPage(
   });
 
   onMounted(() => {
-    getPageColumn(immediate);
+    getPageColumn(!!immediate);
   });
 
   return {

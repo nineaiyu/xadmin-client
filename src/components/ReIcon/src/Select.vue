@@ -11,13 +11,13 @@ defineOptions({
   name: "IconSelect"
 });
 
-const inputValue = defineModel({ type: String });
+const inputValue = defineModel({ type: String, default: "" });
 
 const iconList = ref(IconJson);
 const icon = ref();
 const currentActiveType = ref("ep:");
 // 深拷贝图标数据，前端做搜索
-const copyIconList = cloneDeep(iconList.value);
+const copyIconList: Record<string, string[]> = cloneDeep(iconList.value);
 const totalPage = ref(0);
 // 每页显示35个图标
 const pageSize = ref(35);
@@ -83,17 +83,18 @@ function onAfterLeave() {
   filterValue.value = "";
 }
 
-function handleClick({ props }) {
+function handleClick(pane: unknown) {
+  const { props } = pane as { props: { name: string } };
   currentPage.value = 1;
   currentActiveType.value = props.name;
 }
 
-function onChangeIcon(item) {
+function onChangeIcon(item: string) {
   icon.value = item;
   inputValue.value = currentActiveType.value + item;
 }
 
-function onCurrentChange(page) {
+function onCurrentChange(page: number) {
   currentPage.value = page;
 }
 

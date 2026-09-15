@@ -7,8 +7,14 @@ import "vue-json-pretty/lib/styles.css";
 import VueJsonPretty from "vue-json-pretty";
 import { selectBooleanOptions } from "./constants";
 import { formatAddOrEditOptions } from "./renders";
+import type { TableColumnRenderer } from "@pureadmin/table";
 import { getColourTypeByIndex } from "./index";
-import type { ChoiceOptionItem, PlusColumnRegistry } from "./types";
+import type {
+  ChoiceOptionItem,
+  PageColumn,
+  PlusColumnContext,
+  PlusColumnRegistry
+} from "./types";
 
 /**
  * 字典色 tag 的 props（与 @/utils/dict 的 dictTagProps 同款）。
@@ -39,7 +45,9 @@ const colorBlockStyle = (color: string) => ({
 export const builtinDetailRenderers: PlusColumnRegistry = {
   labeled_choice: (item, { column }) => {
     item["prop"] = `${column.key}.value`;
-    item["options"] = computed(() => formatAddOrEditOptions(column?.choices));
+    item["options"] = computed(() =>
+      formatAddOrEditOptions(column?.choices ?? [])
+    );
     // 详情（PlusDescriptions）只认 render/valueType，不看 cellRenderer：
     // prop 已改为 status.value，valueType=select 只会输出纯文本 label，字典项的
     // color 不会生效。这里补 render，按元数据 choices 的 color 渲染彩色 tag。
@@ -104,15 +112,17 @@ export const builtinDetailRenderers: PlusColumnRegistry = {
     };
   },
   object_related_field: (item, { column }) => {
-    if (!isEmpty(column?.choices)) {
+    if (!isEmpty(column?.choices ?? [])) {
       item["prop"] = `${column.key}.pk`;
-      item["options"] = computed(() => formatAddOrEditOptions(column?.choices));
+      item["options"] = computed(() =>
+        formatAddOrEditOptions(column?.choices ?? [])
+      );
     } else {
       item["valueType"] = "text";
       item["prop"] = `${column.key}.label`;
     }
     // pure-table ******
-    item["cellRenderer"] = ({ row }) => (
+    item["cellRenderer"] = ({ row }: TableColumnRenderer) => (
       <span
         v-copy={get(row, `${column.key}.label`) ?? get(row, `${column.key}`)}
       >
@@ -126,7 +136,7 @@ export const builtinDetailRenderers: PlusColumnRegistry = {
     item["descriptionsItemProps"] = {
       span: 2
     };
-    item["render"] = value => {
+    item["render"] = (value: unknown) => {
       let jsonValue = value;
       let stringValue = "";
       if (isString(value)) {
@@ -154,7 +164,7 @@ export const builtinDetailRenderers: PlusColumnRegistry = {
       }
       return (
         <el-scrollbar max-height="calc(100vh - 240px)">
-          <VueJsonPretty data={jsonValue} v-copy={stringValue} />
+          <VueJsonPretty data={jsonValue as never} v-copy={stringValue} />
         </el-scrollbar>
       );
     };
@@ -165,7 +175,7 @@ export const builtinDetailRenderers: PlusColumnRegistry = {
   },
   object_related_field_image: (item, { column }) => {
     item["valueType"] = "img";
-    item["formatter"] = ({ filepath }) => {
+    item["formatter"] = ({ filepath }: { filepath?: string }) => {
       return filepath;
     };
     // pure-table ******
@@ -180,7 +190,13 @@ export const builtinDetailRenderers: PlusColumnRegistry = {
       });
   },
   object_related_field_file: (item, { column }) => {
-    item["render"] = ({ filepath, filename }) => {
+    item["render"] = ({
+      filepath,
+      filename
+    }: {
+      filepath?: string;
+      filename?: string;
+    }) => {
       return h(
         ElLink,
         {
@@ -243,14 +259,14 @@ export const builtinDetailRenderers: PlusColumnRegistry = {
       <>
         <el-scrollbar>
           <el-space>
-            {row[column.key]?.map(item => {
+            {row[column.key]?.map((item: ChoiceOptionItem) => {
               return h(
                 ElLink,
                 {
                   type: "success",
                   href: item.filepath,
                   target: "_blank"
-                },
+                } as Record<string, unknown>,
                 {
                   icon: () => h(ElIcon, null, () => h(Link)),
                   default: () => item.filename ?? "文件连接"
@@ -292,7 +308,7 @@ export const builtinDetailRenderers: PlusColumnRegistry = {
       <>
         <el-scrollbar>
           <el-space>
-            {row[column.key]?.map(item => {
+            {row[column.key]?.map((item: ChoiceOptionItem) => {
               return h(ElImage, {
                 lazy: true,
                 class: "plus-display-item__image",
@@ -300,7 +316,7 @@ export const builtinDetailRenderers: PlusColumnRegistry = {
                 alt: item.filename,
                 previewSrcList: [item.filepath],
                 previewTeleported: true
-              });
+              } as Record<string, unknown>);
             })}
           </el-space>
         </el-scrollbar>
@@ -378,7 +394,10 @@ export const builtinDetailRenderers: PlusColumnRegistry = {
 };
 
 /** m2m_related_field / labeled_multiple_choice 共用 */
-function multipleListDetailRenderer(item, { column }) {
+function multipleListDetailRenderer(
+  item: PageColumn,
+  { column }: PlusColumnContext
+) {
   item["render"] = (value: ChoiceOptionItem[]) => {
     if (value instanceof Array) {
       return (
@@ -406,7 +425,7 @@ function multipleListDetailRenderer(item, { column }) {
     <>
       <el-scrollbar>
         <el-space>
-          {row[column.key]?.map((item, index) => {
+          {row[column.key]?.map((item: ChoiceOptionItem, index: number) => {
             return (
               <el-text key={item.pk} type={getColourTypeByIndex(index + 1)}>
                 {item.label}

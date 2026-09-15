@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { isEqual } from "@pureadmin/utils";
+import type { menuType } from "@/layout/types";
 import { transformI18n } from "@/plugins/i18n";
 import { useRoute, useRouter, type RouteRecordRaw } from "vue-router";
 import { onMounted, ref, toRaw, watch } from "vue";
@@ -7,7 +8,7 @@ import { findRouteByPath, getParentPaths } from "@/router/utils";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 
 const route = useRoute();
-const levelList = ref([]);
+const levelList = ref<menuType[]>([]);
 const router = useRouter();
 // options.routes 为 readonly，去除 readonly 以复用 findRouteByPath / getParentPaths 的签名
 const routes = router.options.routes as RouteRecordRaw[];
@@ -15,18 +16,18 @@ const multiTags = useMultiTagsStoreHook().multiTags;
 
 const getBreadcrumb = (): void => {
   // 当前路由信息
-  let currentRoute;
+  let currentRoute: menuType = { value: undefined };
 
   if (Object.keys(route.query).length > 0) {
     multiTags.forEach(item => {
       if (isEqual(route.query, item?.query)) {
-        currentRoute = toRaw(item);
+        currentRoute = toRaw(item) as menuType;
       }
     });
   } else if (Object.keys(route.params).length > 0) {
     multiTags.forEach(item => {
       if (isEqual(route.params, item?.params)) {
-        currentRoute = toRaw(item);
+        currentRoute = toRaw(item) as menuType;
       }
     });
   } else {
@@ -40,7 +41,7 @@ const getBreadcrumb = (): void => {
     "name"
   );
   // 存放组成面包屑的数组
-  const matched = [];
+  const matched: menuType[] = [];
 
   // 获取每个父级路径对应的路由信息
   parentRoutes.forEach(path => {
@@ -60,12 +61,10 @@ const getBreadcrumb = (): void => {
     }
   });
 
-  levelList.value = matched.filter(
-    item => item?.meta && item?.meta.title !== false
-  );
+  levelList.value = matched.filter(item => item?.meta && item?.meta.title);
 };
 
-const handleLink = item => {
+const handleLink = (item: menuType) => {
   const { redirect, name, path } = item;
   if (redirect) {
     router.push(redirect);
@@ -114,7 +113,7 @@ watch(
         class="inline! items-stretch!"
       >
         <a @click.prevent="handleLink(item)">
-          {{ transformI18n(item.meta.title) }}
+          {{ transformI18n(item.meta?.title ?? "") }}
         </a>
       </el-breadcrumb-item>
     </transition-group>

@@ -103,8 +103,23 @@ const {
  * pure-table 的 treeProps 期望三字段全必填的形状（其 default 字面量类型），
  * 模板层对 setup ref 的类型展开会丢失 checkStrictly，经由此处显式签名传递。
  */
+/** 搜索列类型变化（select/date-picker 等）后自动触发查询（模板内联类型注解会触发 eslint 解析错误，改 script 函数） */
+const onSearchColumnChange = (_: unknown, column: { valueType?: string }) => {
+  const canChangeType = ["select", "date-picker", "time-picker", "time-select"];
+  if (canChangeType.indexOf(column.valueType ?? "") > -1) handleSearch();
+};
+
+/** 行点击透传（同上：模板内联类型注解不可用） */
+const onRowClick = (row: Record<string, unknown>) => emit("rowClick", row);
+
 function getTreeProps() {
-  return treeProps.value;
+  // pure-table 的 treeProps 期望三字段全必填（其 default 字面量类型），
+  // setup ref 展开会丢可选性，这里显式签名传递（与组件内注记一致）
+  return treeProps.value as {
+    hasChildren: string;
+    children: string;
+    checkStrictly: boolean;
+  };
 }
 
 function getTableRef() {
@@ -166,7 +181,7 @@ defineExpose({
           lg: 6,
           xl: 6
         }"
-        :columns="searchColumns"
+        :columns="searchColumns as never"
         :default-values="cloneDeep(defaultValue)"
         :row-props="{
           gutter: 24
@@ -176,17 +191,7 @@ defineExpose({
         :needValidate="true"
         label-width="100px"
         v-bind="plusSearchProps"
-        @change="
-          (_, column) => {
-            const canChangeType = [
-              'select',
-              'date-picker',
-              'time-picker',
-              'time-select'
-            ];
-            canChangeType.indexOf(column.valueType) > -1 && handleSearch();
-          }
-        "
+        @change="onSearchColumnChange"
         @reset="handleReset"
         @search="handleSearch"
         @keyup.enter="handleSearch"
@@ -267,7 +272,7 @@ defineExpose({
       <pure-table
         ref="tableRef"
         :adaptiveConfig="{ offsetBottom: 110 }"
-        :columns="tableBarData.dynamicColumns"
+        :columns="tableBarData.dynamicColumns as never"
         :data="dataList"
         :header-cell-style="{
           background: 'var(--el-table-row-hover-bg-color)',
@@ -281,9 +286,10 @@ defineExpose({
         default-expand-all
         row-key="pk"
         table-layout="fixed"
-        v-bind="{ ...pureTableProps, treeProps: getTreeProps() }"
+        v-bind="pureTableProps as unknown as Record<string, unknown>"
+        :tree-props="getTreeProps()"
         @selection-change="handleSelectionChange"
-        @row-click="row => emit('rowClick', row)"
+        @row-click="onRowClick"
         @page-size-change="handleSizeChange"
         @page-current-change="handleCurrentChange"
       >

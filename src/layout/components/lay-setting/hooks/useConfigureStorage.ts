@@ -6,7 +6,7 @@ export function useConfigureStorage() {
 
   function storageConfigureChange<T>(key: string, val: T): void {
     const storageConfigure = $storage.configure;
-    storageConfigure[key] = val;
+    (storageConfigure as Record<string, unknown>)[key] = val;
     $storage.configure = storageConfigure;
   }
 

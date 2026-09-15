@@ -36,7 +36,7 @@ const props = withDefaults(defineProps<FormProps>(), {
 });
 const { t } = useI18n();
 
-const state = ref<FormProps["formInline"]>(props.formInline);
+const state = ref<NonNullable<FormProps["formInline"]>>(props.formInline ?? {});
 const formColumns: PlusColumn[] = [
   {
     label: t("exportImport.type"),

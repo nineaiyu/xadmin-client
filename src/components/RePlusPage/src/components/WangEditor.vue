@@ -14,7 +14,11 @@ import { systemUploadFileApi } from "@/api/system/file";
 import { message } from "@/utils/message";
 import { formatBytes, getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
-import type { IEditorConfig, IToolbarConfig } from "@wangeditor/editor";
+import type {
+  IDomEditor,
+  IEditorConfig,
+  IToolbarConfig
+} from "@wangeditor/editor";
 import { hasAuth } from "@/router/utils";
 
 // wangeditor 全量约 1MB，编辑器仅在弹窗打开时出现：这里以「先注册附件插件、再加载
@@ -100,7 +104,10 @@ const editorConfig: Partial<IEditorConfig> = {
   }
 };
 if (hasAuth("config:SystemUploadFile") && hasAuth("upload:SystemUploadFile")) {
-  toolbarConfig.insertKeys.keys = ["uploadAttachment"]; // “上传附件”菜单
+  // Partial 配置的嵌套键可能缺省：先兜底再写，避免运行期改写可选链误判
+  editorConfig.hoverbarKeys ??= { attachment: { menuKeys: [] } };
+  editorConfig.MENU_CONF ??= {};
+  toolbarConfig.insertKeys!.keys = ["uploadAttachment"]; // “上传附件”菜单
   editorConfig.hoverbarKeys.attachment = {
     menuKeys: ["downloadAttachment"] // “下载附件”菜单
   };
@@ -114,9 +121,9 @@ if (hasAuth("config:SystemUploadFile") && hasAuth("upload:SystemUploadFile")) {
       systemUploadFileApi.upload(data).then(res => {
         if (res.code === SUCCESS_CODE) {
           insertFn(
-            res.data[0]?.access_url,
-            res.data[0]?.filename,
-            res.data[0]?.access_url
+            res.data?.[0]?.access_url ?? "",
+            res.data?.[0]?.filename ?? "",
+            res.data?.[0]?.access_url ?? ""
           );
         } else {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
@@ -135,7 +142,7 @@ if (hasAuth("config:SystemUploadFile") && hasAuth("upload:SystemUploadFile")) {
       data.append("file", file);
       systemUploadFileApi.upload(data).then(res => {
         if (res.code === SUCCESS_CODE) {
-          insertFn(res.data[0]?.access_url, "");
+          insertFn(res.data?.[0]?.access_url ?? "", "");
         } else {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
         }
@@ -153,7 +160,10 @@ if (hasAuth("config:SystemUploadFile") && hasAuth("upload:SystemUploadFile")) {
       data.append("file", file);
       systemUploadFileApi.upload(data).then(res => {
         if (res.code === SUCCESS_CODE) {
-          insertFn(res.data[0]?.filename, res.data[0]?.access_url);
+          insertFn(
+            res.data?.[0]?.filename ?? "",
+            res.data?.[0]?.access_url ?? ""
+          );
         } else {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
         }
@@ -163,7 +173,7 @@ if (hasAuth("config:SystemUploadFile") && hasAuth("upload:SystemUploadFile")) {
   };
 }
 
-const handleCreated = editor => {
+const handleCreated = (editor: IDomEditor) => {
   // 记录 editor 实例，重要！
   editorRef.value = editor;
 };

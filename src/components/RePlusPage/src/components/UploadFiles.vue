@@ -59,17 +59,17 @@ if (value.value) {
   if (props.multiple) {
     fileList.value = (value.value as FileItem[]).map(item => {
       return {
-        name: item.filename ?? item.label,
+        name: item.filename ?? item.label ?? "",
         size: item.filesize,
         pk: item.pk,
         url: props.isImageFile ? item.filepath : defaultFile
-      };
+      } as UploadUserFile;
     });
   } else {
     const file = value.value as FileItem;
     fileList.value = [
       {
-        name: file.filename ?? file.label,
+        name: file.filename ?? file.label ?? "",
         size: file.filesize,
         pk: file.pk,
         url: props.isImageFile ? file.filepath : defaultFile
@@ -123,7 +123,7 @@ const uploadRequest = (option: UploadRequestOptions) => {
       // axios 进度事件与 element-plus UploadProgressEvent 运行时同形，percent 由本处回填
       const progressEvt = event as AxiosProgressEvent & UploadProgressEvent;
       progressEvt.percent =
-        event.total > 0 ? (event.loaded / event.total) * 100 : 0;
+        (event.total ?? 0) > 0 ? (event.loaded / (event.total ?? 1)) * 100 : 0;
       option.onProgress(progressEvt);
     }
   });
@@ -150,7 +150,7 @@ const uploadSuccess = (
   response: UploadResponse,
   uploadFile: UploadUserFile
 ) => {
-  if (response.code === SUCCESS_CODE && response?.data.length == 1) {
+  if (response.code === SUCCESS_CODE && response?.data?.length === 1) {
     const data = response.data[0];
     uploadFile.pk = data.pk;
     message(`${uploadFile.name} ${t("results.success")}`, { type: "success" });

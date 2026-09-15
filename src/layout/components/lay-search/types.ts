@@ -5,6 +5,8 @@ interface optionsItem {
     icon?: string;
     title?: string;
   };
+  /** 菜单树子级（查询前扁平化时使用） */
+  children?: optionsItem[];
 }
 
 interface dragItem {

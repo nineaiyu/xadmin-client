@@ -16,12 +16,12 @@ defineOptions({
   name: "ReDrawer"
 });
 
-const sureBtnMap = ref({});
+const sureBtnMap = ref<Record<string | number, { loading?: boolean }>>({});
 const { t } = useI18n();
 
 const footerButtons = computed(() => {
   return (options: DrawerOptions) => {
-    return options?.footerButtons?.length > 0
+    return (options?.footerButtons?.length ?? 0) > 0
       ? options.footerButtons
       : ([
           {
@@ -130,15 +130,15 @@ function handleChange(options: DrawerOptions, index: number, values: unknown) {
       #header="{ close, titleId, titleClass }"
     >
       <component
-        :is="options?.headerRenderer({ close, titleId, titleClass })"
+        :is="options?.headerRenderer?.({ close, titleId, titleClass })"
       />
     </template>
     <!--  body  -->
     <component
-      :is="options.contentRenderer({ options, index })"
+      :is="options.contentRenderer?.({ options, index })"
       v-bind="options?.props"
-      @change="values => handleChange(options, index, values)"
-      @close="args => handleClose(options, index, args)"
+      @change="(values: unknown) => handleChange(options, index, values)"
+      @close="(args: ArgsType) => handleClose(options, index, args)"
     />
     <!-- footer  -->
     <template v-if="!options?.hideFooter" #footer>
@@ -151,7 +151,7 @@ function handleChange(options: DrawerOptions, index: number, values: unknown) {
             v-if="btn.popConfirm"
             v-bind="btn.popConfirm"
             @confirm="
-              btn.btnClick({
+              btn.btnClick?.({
                 drawer: { options, index },
                 button: { btn, index: key }
               })
@@ -168,7 +168,7 @@ function handleChange(options: DrawerOptions, index: number, values: unknown) {
             "
             v-bind="btn"
             @click="
-              btn.btnClick({
+              btn.btnClick?.({
                 drawer: { options, index },
                 button: { btn, index: key }
               })

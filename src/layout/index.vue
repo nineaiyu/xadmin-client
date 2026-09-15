@@ -53,6 +53,7 @@ watch(
 );
 
 const set: setType = reactive({
+  // 各字段为 computed ref，reactive 解包后与 setType 对齐
   sidebar: computed(() => {
     return useAppStoreHook().sidebar;
   }),
@@ -75,7 +76,7 @@ const set: setType = reactive({
   }),
 
   hideTabs: computed(() => {
-    return $storage?.configure.hideTabs;
+    return $storage?.configure.hideTabs ?? false;
   })
 });
 

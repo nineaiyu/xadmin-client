@@ -25,21 +25,21 @@ const {
 } = useDataThemeChange();
 
 const getThemeColorStyle = computed(() => {
-  return color => {
+  return (color: string) => {
     return { background: color };
   };
 });
 
 /** 当网页整体为暗色风格时不显示亮白色主题配色切换选项 */
 const showThemeColors = computed(() => {
-  return themeColor => {
+  return (themeColor: string) => {
     return !(themeColor === "light" && isDark.value);
   };
 });
 
 /** 主题色 激活选择项 */
 const getThemeColor = computed(() => {
-  return current => {
+  return (current: string) => {
     if (
       current === layoutTheme.value.theme &&
       layoutTheme.value.theme !== "light"

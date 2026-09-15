@@ -18,7 +18,7 @@ import Setting from "~icons/ri/settings-3-line";
 import Check from "~icons/ep/check";
 
 const menuRef = ref();
-const defaultActive = ref(null);
+const defaultActive = ref<string | undefined>(undefined);
 
 const { t, route, locale, translationCh, translationEn } =
   useTranslationLang(menuRef);
@@ -36,13 +36,13 @@ const {
   getDropdownItemClass
 } = useNav();
 
-function getDefaultActive(routePath) {
+function getDefaultActive(routePath: string) {
   const wholeMenus = usePermissionStoreHook().wholeMenus;
   /** 当前路由的父级路径 */
-  const parentRoutes = getParentPaths(routePath, wholeMenus)[0];
+  const parentRoutes = getParentPaths(routePath, wholeMenus as never)[0];
   defaultActive.value = !isAllEmpty(route.meta?.activePath)
     ? route.meta.activePath
-    : findRouteByPath(parentRoutes, wholeMenus)?.children[0]?.path;
+    : findRouteByPath(parentRoutes, wholeMenus as never)?.children[0]?.path;
 }
 
 onMounted(() => {
@@ -78,22 +78,24 @@ watch(
       <el-menu-item
         v-for="route in usePermissionStoreHook().wholeMenus"
         :key="route.path"
-        :index="resolvePath(route) || route.redirect"
+        :index="resolvePath(route) || route.redirect || ''"
       >
         <template #title>
           <div
-            v-if="toRaw(route.meta.icon)"
-            :class="['sub-menu-icon', route.meta.icon]"
+            v-if="toRaw(route.meta?.icon)"
+            :class="['sub-menu-icon', route.meta?.icon]"
           >
             <component
-              :is="useRenderIcon(route.meta && toRaw(route.meta.icon))"
+              :is="
+                useRenderIcon(route.meta ? (toRaw(route.meta.icon) ?? '') : '')
+              "
             />
           </div>
           <div :style="getDivStyle">
             <span class="select-none">
-              {{ transformI18n(route.meta.title) }}
+              {{ transformI18n(route.meta?.title ?? "") }}
             </span>
-            <LaySidebarExtraIcon :extraIcon="route.meta.extraIcon" />
+            <LaySidebarExtraIcon :extraIcon="route.meta?.extraIcon" />
           </div>
         </template>
       </el-menu-item>

@@ -86,7 +86,7 @@ const getSubButtons = () => {
       item.index = Number(unref(item.show));
       return Boolean(item.index) === true;
     })
-    .sort((a, b) => a.index - b.index);
+    .sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
   // 获取'更多'之前的按钮组
   const preButtons = data.slice(0, props.showNumber);
   // 获取'更多'之后的按钮组
@@ -127,7 +127,7 @@ const buttonClass = computed(() => {
   ];
 });
 
-const buttonLoadings = ref({});
+const buttonLoadings = ref<Record<string | number, boolean>>({});
 
 // 渲染
 const render = (row: RecordType, buttonRow: OperationButtonsRow): VNode => {
@@ -190,10 +190,13 @@ const render = (row: RecordType, buttonRow: OperationButtonsRow): VNode => {
 };
 
 class Loading {
-  private readonly code = undefined;
-  private readonly loadings = undefined;
+  private readonly code: string | number;
+  private readonly loadings: Record<string | number, boolean>;
 
-  constructor(code, loadings) {
+  constructor(
+    code: string | number,
+    loadings: Record<string | number, boolean>
+  ) {
     this.code = code;
     this.loadings = loadings;
   }

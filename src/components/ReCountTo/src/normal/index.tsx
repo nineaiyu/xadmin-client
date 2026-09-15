@@ -36,7 +36,7 @@ export default defineComponent({
       timestamp: null,
       remaining: null,
       rAF: null,
-      color: null,
+      color: "",
       fontSize: "16px"
     });
 

@@ -92,7 +92,7 @@ export function useRenderIcon(
         return h(IconifyIconOffline, {
           icon: icon,
           ...attrs
-        });
+        } as Record<string, unknown>);
       }
     });
   } else {
@@ -104,10 +104,13 @@ export function useRenderIcon(
         const IconifyIcon = icon.includes(":")
           ? IconifyIconOnline
           : IconifyIconOffline;
-        return h(IconifyIcon, {
-          icon,
-          ...attrs
-        });
+        return h(
+          IconifyIcon as never,
+          {
+            icon,
+            ...attrs
+          } as Record<string, unknown>
+        );
       }
     });
   }

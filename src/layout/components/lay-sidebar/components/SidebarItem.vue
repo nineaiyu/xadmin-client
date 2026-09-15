@@ -25,9 +25,13 @@ import ArrowRight from "~icons/ep/arrow-right-bold";
 const attrs = useAttrs();
 const { layout, isCollapse, tooltipEffect, getDivStyle } = useNav();
 
+/** 侧边栏菜单节点：路由数据在运行时必然携带 meta，类型层窄化便于模板直接访问 */
+type SidebarMenuNode = menuType & { meta: NonNullable<menuType["meta"]> };
+
 const props = defineProps({
   item: {
-    type: Object as PropType<menuType>
+    type: Object as PropType<SidebarMenuNode>,
+    required: true
   },
   isNest: {
     type: Boolean,
@@ -69,7 +73,7 @@ const textClass = computed(() => {
     isCollapse.value &&
     !toRaw(item.meta.icon) &&
     ((layout.value === "vertical" && item.parentId === null) ||
-      (layout.value === "mix" && item.pathList.length === 2))
+      (layout.value === "mix" && item.pathList?.length === 2))
   ) {
     return `${baseClass} min-w-13.5! text-center! px-3!`;
   }
@@ -86,11 +90,11 @@ const expandCloseIcon = computed(() => {
   };
 });
 
-const onlyOneChild: menuType = ref(null);
+const onlyOneChild = ref<SidebarMenuNode>({ meta: {}, value: undefined });
 
 function hasOneShowingChild(children: menuType[] = [], parent: menuType) {
   const showingChildren = children.filter(item => {
-    onlyOneChild.value = item;
+    onlyOneChild.value = item as SidebarMenuNode;
     return true;
   });
 
@@ -103,13 +107,22 @@ function hasOneShowingChild(children: menuType[] = [], parent: menuType) {
   }
 
   if (showingChildren.length === 0) {
-    onlyOneChild.value = { ...parent, path: "", noShowingChildren: true };
+    onlyOneChild.value = {
+      ...parent,
+      path: "",
+      noShowingChildren: true
+    } as SidebarMenuNode;
     return true;
   }
   return false;
 }
 
-function resolvePath(routePath) {
+/** 子菜单节点窄化（运行时由路由数据保证 meta 存在） */
+function asMenuNode(node: menuType): SidebarMenuNode {
+  return node as SidebarMenuNode;
+}
+
+function resolvePath(routePath: string) {
   const httpReg = /^http(s?):\/\//;
   if (httpReg.test(routePath) || httpReg.test(props.basePath)) {
     return routePath || props.basePath;
@@ -128,7 +141,7 @@ function resolvePath(routePath) {
     :to="item"
   >
     <el-menu-item
-      :index="resolvePath(onlyOneChild.path)"
+      :index="resolvePath(onlyOneChild.path ?? '')"
       :class="{ 'submenu-title-noDropdown': !isNest }"
       :style="getNoDropdownStyle"
       v-bind="attrs"
@@ -141,8 +154,7 @@ function resolvePath(routePath) {
         <component
           :is="
             useRenderIcon(
-              toRaw(onlyOneChild.meta.icon) ||
-                (item.meta && toRaw(item.meta.icon))
+              toRaw(onlyOneChild.meta.icon) ?? toRaw(item.meta.icon) ?? ''
             )
           "
         />
@@ -183,7 +195,7 @@ function resolvePath(routePath) {
   <el-sub-menu
     v-else
     ref="subMenu"
-    :index="resolvePath(item.path)"
+    :index="resolvePath(item.path ?? '')"
     teleported
     v-bind="expandCloseIcon"
   >
@@ -193,7 +205,7 @@ function resolvePath(routePath) {
         :style="getSubMenuIconStyle"
         class="sub-menu-icon"
       >
-        <component :is="useRenderIcon(item.meta && toRaw(item.meta.icon))" />
+        <component :is="useRenderIcon(toRaw(item.meta.icon) ?? '')" />
       </div>
       <ReText
         v-if="
@@ -221,8 +233,8 @@ function resolvePath(routePath) {
       v-for="child in item.children"
       :key="child.path"
       :is-nest="true"
-      :item="child"
-      :base-path="resolvePath(child.path)"
+      :item="asMenuNode(child)"
+      :base-path="resolvePath(child.path ?? '')"
       class="nest-menu"
     />
   </el-sub-menu>
