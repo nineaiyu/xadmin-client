@@ -1,0 +1,51 @@
+name: Visual Baseline
+
+# 手动生成/更新 ubuntu 视觉回归基线（Playwright 快照按平台后缀存放，linux 基线只能在 CI 生成）：
+#   1. 手动触发本 workflow（可选目标浏览器）
+#   2. 下载 visual-baseline artifact，解压到 e2e/visual.e2e.ts-snapshots/
+#   3. 提交基线文件（*-linux.png）后，e2e.yml 的 Visual Regression job 自动启用常态比对
+#
+# 本地重建 darwin 基线：pnpm test:e2e:visual:update
+on:
+  workflow_dispatch:
+    inputs:
+      project:
+        description: 生成哪个浏览器的基线
+        required: false
+        default: chromium
+        type: choice
+        options:
+          - chromium
+          - webkit
+          - all
+
+jobs:
+  baseline:
+    name: Generate linux baseline
+    runs-on: ubuntu-latest
+    env:
+      E2E_PYTHON: python3
+      E2E_SERVER_DIR: xadmin-server
+      CI: "1"
+    steps:
+      - name: Checkout client repository
+        uses: actions/checkout@v4
+
+      - name: Setup E2E environment
+        uses: ./.github/actions/e2e-setup
+
+      - name: Update snapshots
+        run: |
+          if [ "${{ inputs.project }}" = "all" ]; then
+            pnpm test:e2e:visual:update
+          else
+            pnpm test:e2e:visual:update -- --project=${{ inputs.project }}
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        name: Upload baseline snapshots
+        with:
+          name: visual-baseline
+          path: e2e/visual.e2e.ts-snapshots/
+          retention-days: 14

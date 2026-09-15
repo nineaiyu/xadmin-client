@@ -45,6 +45,55 @@ jobs:
             test-results/
           retention-days: 7
 
+  visual:
+    name: Visual Regression (chromium)
+    needs: smoke
+    # 与 full 同档：PR / main / 夜间 / 手动；切视觉回归只覆盖主链路核心页
+    if: >-
+      github.event_name == 'pull_request' ||
+      github.ref == 'refs/heads/main' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    env:
+      E2E_PYTHON: python3
+      E2E_SERVER_DIR: xadmin-server
+      CI: "1"
+    steps:
+      - name: Checkout client repository
+        uses: actions/checkout@v4
+
+      # 快照按平台后缀存放（-linux / -darwin），linux 基线只能在 ubuntu 生成：
+      # 未入库前本 job 直接跳过比对（不误报红），提示先跑 Visual Baseline workflow
+      - name: Check baseline availability
+        id: baseline
+        shell: bash
+        run: |
+          if compgen -G "e2e/visual.e2e.ts-snapshots/*-linux.png" > /dev/null; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=视觉基线缺失::未找到 e2e/visual.e2e.ts-snapshots/*-linux.png —— 先手动运行「Visual Baseline」workflow 生成基线并提交，之后本 job 自动启用常态比对。"
+          fi
+
+      - name: Setup E2E environment
+        if: steps.baseline.outputs.available == 'true'
+        uses: ./.github/actions/e2e-setup
+
+      - name: Run visual regression
+        if: steps.baseline.outputs.available == 'true'
+        run: pnpm test:e2e:visual -- --project=chromium
+
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.baseline.outputs.available == 'true'
+        name: Upload visual report
+        with:
+          name: playwright-report-visual
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
   e2e:
     name: Full (chromium + webkit)
     needs: smoke

@@ -76,6 +76,21 @@ RePlusPage 列表**固定发 `ordering=-created_time` 且默认 `pageSize=15`**�
 `iat` 必须跨过失效秒 —— 这不是 UI 状态，任何 DOM 断言都无法表达，故用
 `expect.poll` 轮询「签发 → 以新 token 访问 userinfo」代替盲等（既拿到确定性，也不白等）。
 
+## 视觉回归（`visual.e2e.ts`）
+
+核心页（welcome / 用户 / 菜单 / 仪表盘 / AI / 聊天室）全页像素比对，为样式类改动（如 T2 `!important` 存量清零）提供安全网：
+
+| 场景                    | 命令                                                                                                                   |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 本地比对（darwin 基线） | `pnpm test:e2e:visual`（按需，不进常规全量；默认双浏览器）                                                             |
+| 本地更新基线            | `pnpm test:e2e:visual:update`                                                                                          |
+| 生成 ubuntu 基线        | 手动触发 **Visual Baseline** workflow → 下载 `visual-baseline` artifact → 解压到 `e2e/visual.e2e.ts-snapshots/` 并提交 |
+
+- 快照按平台后缀存放（`*-chromium-linux.png` / `*-chromium-darwin.png`），**跨平台像素必然差异**：ubuntu 基线只能在 CI 生成，本地 darwin 基线仅供本地比对；
+- `e2e.yml` 的 `Visual Regression` job 与 full 同档（PR / main / 夜间 / 手动）跑 chromium 单浏览器；**基线未入库时自动跳过**（notice 提示先生成基线），入库后自动启用常态比对；
+- 判定 `maxDiffPixelRatio 2%`（容忍字体渲染亚像素差）；stabilize 已禁 CSS 动画/光标闪烁并等 ECharts canvas 绘制结束（≥1.5s）；
+- 失败产物见 `playwright-report-visual` artifact / `test-results/`（含 expected / actual / diff 三图）。
+
 ## 历史教训速查
 
 | 教训                                                                                                                                                                                                                                                            | 处置                                                                                                                                                                                                                                                                                                                                                                             |
@@ -110,4 +125,4 @@ RePlusPage 列表**固定发 `ordering=-created_time` 且默认 `pageSize=15`**�
 | 表单设计（dform）用例漏了上条处置：固定名 `E2E设备登记` → webkit 名称唯一约束冲突 → 保存失败弹窗不关（报 `not.toBeVisible` 误导性断言）；改名后提交内容断言 `page.getByText("device_name: E2E路由器")` 又命中 chromium/webkit 两条提交（strict mode violation） | 名称加随机后缀；**表格行内的文本断言必须限定 scope**（`submissionRow.getByText(...)`）——共享库下的行断言与消息断言同理（2026-09-14 dform 实测，迁移 RePlusPage 后暴露）                                                                                                                                                                                                          |
 | AI 动作用例（ai-action）：聊天室同房间历史卡片可见可点 + 按 `.last()` 取「最新卡片」→ 新卡片尚未渲染时命中历史卡片（其表单已被清理 → 执行必然失败，表现为 1001 但断言先行通过）；计数断言写死 `toHaveCount(0)` 也被历史卡片击穿                                 | 元素卡片按本 run 唯一标识 `hasText` 定位（随机表单名）；计数断言用「执行前基线 +1」而非绝对值；跨用例按用户隔离会话（双超管各一间 AI 房）（2026-09-15 实测）                                                                                                                                                                                                                     |
 | AI 动作 E2E 无真实 LLM：草稿生成需要确定性的模型回答                                                                                                                                                                                                            | playwright webServer 第三项拉起 `xadmin-server/scripts/stub_llm.py`（OpenAI 兼容桩，18897 端口，`test:e2e:fresh` 会清理）；用例以 API 建 AI 档案指向 `http://127.0.0.1:18897/v1` 并激活——同时实测了「多档案激活优先」通路（2026-09-15）                                                                                                                                          |
-| 视觉回归（visual.e2e.ts）按需运行（`pnpm test:e2e:visual`，E2E_VISUAL=1）：全页像素比对，基线按平台目录存放（darwin/linux 像素必然差异）                                                                                                                        | 基线更新 `pnpm test:e2e:visual -- --update-snapshots`；仪表盘等 ECharts 走 canvas 内部动画（CSS 禁不掉），stabilize 需等 ≥1.5s 再截图；CI 侧等 ubuntu 基线生成入库后再启用常态比对（2026-09-15，C4 前置交付）                                                                                                                                                                    |
+| 视觉回归（visual.e2e.ts）按需运行（`pnpm test:e2e:visual`，E2E_VISUAL=1）：全页像素比对，基线按平台目录存放（darwin/linux 像素必然差异）                                                                                                                        | 基线更新 `pnpm test:e2e:visual:update`；仪表盘等 ECharts 走 canvas 内部动画（CSS 禁不掉），stabilize 需等 ≥1.5s 再截图；CI 已接线（Visual Regression job + Visual Baseline workflow），ubuntu 基线入库后自动启用常态比对（2026-09-15）                                                                                                                                           |
