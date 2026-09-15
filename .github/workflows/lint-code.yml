@@ -58,9 +58,17 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: TypeScript strict gate (migrated modules only)
-        # C4 渐进 strict：白名单目录（src/api、src/utils）在 strict 下必须零错误，
+        # C4 渐进 strict：白名单目录（src/api、src/store、src/utils）在 strict 下必须零错误，
         # 回归即失败；其余目录的存量债务不计入，按模块清零后扩白名单
         run: pnpm typecheck:strict
+
+      - name: Bundle size snapshot gate
+        # 首屏 KPI 为「增长预算制」：闭包 gzip9 相比基线增长超过 15 KB 即失败，
+        # 确属必要增量时在 PR 说明后执行 pnpm check:bundle-size -- --update 刷新基线
+        # （基线登记与口径见 xadmin-server/docs/metrics.md）
+        run: |
+          pnpm build
+          pnpm check:bundle-size
 
       - name: Run Unit Tests (coverage gate)
         # T4.2：vitest 覆盖率阈值（statements/branches/functions/lines）在 CI 强制生效

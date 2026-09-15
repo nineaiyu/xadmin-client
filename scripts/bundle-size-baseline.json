@@ -1,0 +1,53 @@
+{
+  "updated": "2026-09-14",
+  "budget_kb": 15,
+  "closure_gzip9_kb": 557.5,
+  "main_chunk_gzip9_kb": 194.6,
+  "chunks": [
+    {
+      "name": "index.js",
+      "file": "index-BjvJCYJ1.js",
+      "kb": 194.6
+    },
+    {
+      "name": "rolldown.js",
+      "file": "rolldown-runtime-B0Z9INg1.js",
+      "kb": 0.5
+    },
+    {
+      "name": "vue.js",
+      "file": "vue-core-DiBtOmQH.js",
+      "kb": 86.4
+    },
+    {
+      "name": "element.js",
+      "file": "element-plus-D1QEpGO5.js",
+      "kb": 235.6
+    },
+    {
+      "name": "plus.js",
+      "file": "plus-pro-Dk8ObLUO.js",
+      "kb": 13.2
+    },
+    {
+      "name": "dist.js",
+      "file": "dist-DEbwxnGA.js",
+      "kb": 7.5
+    },
+    {
+      "name": "types.js",
+      "file": "types-Dr3d1fKO.js",
+      "kb": 0
+    },
+    {
+      "name": "message.js",
+      "file": "message-ClY399BS.js",
+      "kb": 0.3
+    },
+    {
+      "name": "config.js",
+      "file": "config-3texjOaa.js",
+      "kb": 19.4
+    }
+  ]
+}
