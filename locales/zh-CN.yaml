@@ -295,6 +295,7 @@ buttons:
   contentExitFullScreen: 内容区退出全屏
   fullScreenToggle: 全屏切换
   language: 切换语言
+  splitPaneReset: 重置分栏宽度
   userMenu: 用户菜单
   cancel: 取消
   close: 关闭

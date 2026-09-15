@@ -1,0 +1,73 @@
+.clearfix::after {
+  visibility: hidden;
+  display: block;
+  font-size: 0;
+  content: " ";
+  clear: both;
+  height: 0;
+}
+
+/* flex 分栏：paneL 百分比宽（内联 style）、resizer 固定 6px 参与排列、paneR flex:1。
+   不用绝对定位方案——父级无固定高度时（内容自然撑开的表格页）container 会塌陷，
+   resizer 的 height:100% 归零导致拖拽条不可见；flex 下 resizer 由内容自然撑高。 */
+.vue-splitter-container {
+  display: flex;
+  position: relative;
+  width: 100%;
+}
+
+.vue-splitter-container.vertical {
+  flex-direction: row;
+}
+
+.vue-splitter-container.horizontal {
+  flex-direction: column;
+}
+
+.vue-splitter-container-mask {
+  z-index: 9999;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* 拖拽期间全局禁选：遮罩只覆盖容器内部，鼠标移出容器后浏览器仍可能继续
+   按原生语义划选页面文本（表现为"拖分隔条却在选右栏内容"），此处兜底 */
+body.splitter-dragging,
+body.splitter-dragging * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+.splitter-pane {
+  min-width: 0;
+  min-height: 0;
+}
+
+.splitter-pane.vertical.splitter-paneL {
+  flex: 0 0 auto;
+}
+
+.splitter-pane.vertical.splitter-paneR {
+  flex: 1 1 0;
+}
+
+.splitter-pane.vertical.splitter-paneL {
+  padding-right: 3px;
+}
+
+.splitter-pane.vertical.splitter-paneR {
+  padding-left: 3px;
+}
+
+.splitter-pane.horizontal.splitter-paneL {
+  flex: 0 0 auto;
+  padding-bottom: 3px;
+}
+
+.splitter-pane.horizontal.splitter-paneR {
+  flex: 1 1 0;
+  padding-top: 3px;
+}

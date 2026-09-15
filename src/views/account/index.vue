@@ -1,21 +1,19 @@
 <script lang="ts" setup>
-import { useRoute, useRouter } from "vue-router";
+import { useRoute } from "vue-router";
 import { computed, onBeforeMount, ref } from "vue";
-import { ReText } from "@/components/ReText";
+import { deviceDetection, useGlobal } from "@pureadmin/utils";
 import Profile from "./components/Profile.vue";
 import Preferences from "./components/Preferences.vue";
 import SecurityLog from "./components/SecurityLog.vue";
 import Notifications from "./components/Notifications.vue";
-import { deviceDetection, useGlobal } from "@pureadmin/utils";
+import AccountSidebar from "./components/AccountSidebar.vue";
 import AccountManagement from "./components/AccountManagement.vue";
 import TopCollapse from "@/layout/components/lay-sidebar/components/SidebarTopCollapse.vue";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
-import avatar from "@/assets/avatar.png";
-import leftLine from "~icons/ri/arrow-left-s-line";
+import MessageIcon from "~icons/ep/message";
 import ProfileIcon from "~icons/ri/user-3-line";
 import PreferencesIcon from "~icons/ri/settings-3-line";
 import SecurityLogIcon from "~icons/ri/window-line";
-import MessageIcon from "~icons/ep/message";
 import AccountManagementIcon from "~icons/ri/profile-line";
 import ShieldKeyholeIcon from "~icons/ri/shield-keyhole-line";
 import LinksIcon from "~icons/ri/links-line";
@@ -23,23 +21,28 @@ import KeyIcon from "~icons/ri/key-2-line";
 import MfaSecurity from "./components/MfaSecurity.vue";
 import OAuthBindings from "./components/OAuthBindings.vue";
 import AccessToken from "./components/AccessToken.vue";
-import { useUserStoreHook } from "@/store/modules/user";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
+import { ReSplitPane } from "@/components/ReSplitPane";
+import { useSplitPaneConfig } from "@/hooks/useSplitPaneConfig";
 
 defineOptions({
   name: "Account"
 });
 
-const router = useRouter();
 const route = useRoute();
 const isOpen = ref(!deviceDetection());
-const userinfoStore = useUserStoreHook();
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 onBeforeMount(() => {
   useDataThemeChange().dataThemeChange($storage.layout?.themeMode);
 });
 const { t } = useI18n();
+
+// 侧栏宽度持久化（默认 15%，约等于原 210px 固定宽；双击分隔条或点悬浮按钮重置）
+const { percent, handleDragEnd } = useSplitPaneConfig("account", {
+  defaultPercent: 15,
+  minPercent: 10
+});
 
 const panes = computed(() => [
   {
@@ -130,61 +133,54 @@ const switchPane = (key: string) => {
 </script>
 
 <template>
-  <el-container class="h-full">
+  <!-- 桌面：侧栏宽度可拖拽（比例持久化到 WEB_SITE_CONFIG.SplitPanes） -->
+  <el-container v-if="!deviceDetection()" class="h-full">
+    <ReSplitPane
+      v-model:percent="percent"
+      :split-set="{ minPercent: 10, defaultPercent: 15, split: 'vertical' }"
+      class="w-full"
+      @drag-end="handleDragEnd"
+    >
+      <template #paneL>
+        <div
+          class="pure-account-settings h-full overflow-hidden px-2 dark:bg-(--el-bg-color)! border-r border-(--pure-border-color)"
+        >
+          <AccountSidebar
+            :witch-pane="witchPane"
+            :panes="panes"
+            @switch-pane="switchPane"
+          />
+        </div>
+      </template>
+      <template #paneR>
+        <el-main>
+          <component
+            :is="panes.find(item => item.key === witchPane).component"
+          />
+        </el-main>
+      </template>
+    </ReSplitPane>
+  </el-container>
+  <!-- 移动端：侧栏抽屉式显隐 -->
+  <el-container v-else class="h-full">
     <el-aside
       v-if="isOpen"
-      :width="deviceDetection() ? '180px' : '210px'"
+      width="180px"
       class="pure-account-settings overflow-hidden px-2 dark:bg-(--el-bg-color)! border-r border-(--pure-border-color)"
     >
-      <el-menu :default-active="witchPane" class="pure-account-settings-menu">
-        <div
-          class="h-12.5! text-(--pure-theme-menu-text) cursor-pointer text-sm transition-all duration-300 ease-in-out hover:scale-105 will-change-transform transform-gpu origin-center hover:text-base! hover:text-(--pure-theme-menu-title-hover)!"
-          @click="router.go(-1)"
-        >
-          <div
-            class="h-full flex items-center px-(--el-menu-base-level-padding)"
-          >
-            <IconifyIconOffline :icon="leftLine" />
-            <span class="ml-2">{{ t("account.back") }}</span>
-          </div>
-        </div>
-        <div class="flex items-center ml-8 my-4">
-          <el-avatar :size="48" :src="userinfoStore.avatar ?? avatar" />
-          <div class="ml-4 flex flex-col max-w-25">
-            <ReText class="font-bold self-baseline!">
-              {{ userinfoStore.nickname }}
-            </ReText>
-            <ReText class="self-baseline!" type="info">
-              {{ userinfoStore.username }}
-            </ReText>
-          </div>
-        </div>
-        <el-menu-item
-          v-for="item in panes.filter(item => item.auth)"
-          :key="item.key"
-          :index="item.key"
-          @click="switchPane(item.key)"
-        >
-          <div class="flex items-center z-10">
-            <el-icon>
-              <IconifyIconOffline :icon="item.icon" />
-            </el-icon>
-            <span>{{ item.label }}</span>
-          </div>
-        </el-menu-item>
-      </el-menu>
+      <AccountSidebar
+        :witch-pane="witchPane"
+        :panes="panes"
+        @switch-pane="switchPane"
+      />
     </el-aside>
     <el-main>
       <TopCollapse
-        v-if="deviceDetection()"
         :is-active="isOpen"
         class="px-0"
         @toggleClick="isOpen = !isOpen"
       />
-      <component
-        :is="panes.find(item => item.key === witchPane).component"
-        :class="[!deviceDetection() && 'ml-30']"
-      />
+      <component :is="panes.find(item => item.key === witchPane).component" />
     </el-main>
   </el-container>
 </template>

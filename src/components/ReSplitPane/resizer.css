@@ -1,0 +1,93 @@
+.splitter-pane-resizer {
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+  flex: 0 0 6px;
+  background: var(--pure-border-color, var(--el-border-color, #dcdfe6));
+  border-radius: 3px;
+  background-clip: padding-box;
+  transition:
+    background-color 0.2s,
+    box-shadow 0.2s;
+}
+
+/* 常态可见的拖拽纹理：中央竖向三点（横向分栏为横向三点），提示可拖拽 */
+.splitter-pane-resizer::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 4px;
+  background-image: radial-gradient(
+    circle,
+    var(--el-text-color-secondary) 1.5px,
+    transparent 2px
+  );
+  background-size: 6px 4px;
+  background-position: center;
+  background-repeat: repeat-x;
+  pointer-events: none;
+  transition: background-image 0.2s;
+}
+
+.splitter-pane-resizer.vertical::after {
+  width: 4px;
+  height: 26px;
+  background-size: 4px 6px;
+  background-repeat: repeat-y;
+}
+
+.splitter-pane-resizer:hover {
+  background: var(--el-color-primary);
+  box-shadow: 0 0 0 3px rgb(64 158 255 / 15%);
+}
+
+.splitter-pane-resizer:hover::after {
+  background-image: radial-gradient(circle, #fff 1.5px, transparent 2px);
+}
+
+.splitter-pane-resizer.vertical {
+  width: 6px;
+  height: auto;
+  align-self: stretch;
+  cursor: col-resize;
+}
+
+.splitter-pane-resizer.horizontal {
+  width: auto;
+  height: 6px;
+  align-self: stretch;
+  cursor: row-resize;
+}
+
+/* 分隔条中央的悬浮重置按钮：hover 分隔条时出现，点击恢复默认比例 */
+.splitter-reset-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  color: var(--el-text-color-secondary);
+  background: var(--el-bg-color);
+  box-shadow: 0 0 4px rgb(0 0 0 / 20%);
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  z-index: 2;
+}
+
+.splitter-pane-resizer:hover .splitter-reset-btn,
+.splitter-reset-btn:focus-visible {
+  opacity: 1;
+}
+
+.splitter-reset-btn:hover {
+  color: var(--el-color-primary);
+}

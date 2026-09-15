@@ -109,6 +109,8 @@ declare global {
     TooltipEffect?: Effect;
     ResponsiveStorageNameSpace?: string;
     MenuSearchHistory?: number;
+    /** 可拖拽分栏页面的左栏宽度百分比：{页面标识: percent}，前端整包读写 */
+    SplitPanes?: Record<string, number>;
   }
 
   /**
@@ -170,7 +172,7 @@ declare global {
       multiTagsCache?: boolean;
       stretch?: boolean | number;
     };
-    tags?: Array<any>;
+    tags?: Array<Recordable>;
   }
 
   /**
