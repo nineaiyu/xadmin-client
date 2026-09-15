@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, ref, type Ref } from "vue";
+import { computed, onMounted, onUnmounted, ref, type Ref } from "vue";
 import PureTable from "@pureadmin/table";
 import { usePlusPage } from "./utils/hook";
 import { RePlusPageProps, type RecycleBinColumn } from "./utils/types";
@@ -68,6 +68,26 @@ const emit = defineEmits<{
 }>();
 
 const tableRef = ref();
+const rootRef = ref<HTMLElement>();
+
+/**
+ * 表格 adaptive 高度仅在挂载与窗口 resize 时测量：搜索区依赖后端字段元数据
+ * 异步渲染、或用户展开/收起搜索行时，上方高度变化不会触发重测，过时的高度
+ * 会把分页挤出视口造成页面级滚动条。观察根节点高度变化后重跑 setAdaptive
+ * （表格自身高度变化会再触发一次观察，但重算结果一致，随后自然收敛）。
+ */
+let rootResizeObserver: ResizeObserver | undefined;
+
+onMounted(() => {
+  const el = rootRef.value;
+  if (!el || typeof ResizeObserver === "undefined") return;
+  rootResizeObserver = new ResizeObserver(() => {
+    tableRef.value?.setAdaptive();
+  });
+  rootResizeObserver.observe(el);
+});
+
+onUnmounted(() => rootResizeObserver?.disconnect());
 
 const {
   t,
@@ -170,7 +190,7 @@ defineExpose({
 </script>
 
 <template>
-  <div v-if="auth?.list" class="main">
+  <div v-if="auth?.list" ref="rootRef" class="main re-plus-page">
     <div v-if="api?.fields" class="bg-bg_color w-99/100 px-6 py-3">
       <PlusSearch
         v-model="searchFields"
@@ -321,8 +341,12 @@ defineExpose({
   </div>
 </template>
 
-<style lang="scss" scoped>
-.main-content {
+<style lang="scss">
+/* 列表页主内容底边距归零：.main-content 类由 layout 注入到路由组件根节点，
+   页面包 div 或 el-tabs 时本组件 scoped 属性带不上该节点（实测 var 永远为空），
+   改用全局块并以本组件根类锚定——自身即根时类落同一节点，包裹时经 :has 命中 */
+.main-content.re-plus-page,
+.main-content:has(.re-plus-page) {
   --main-content-margin: 24px 24px 0;
 }
 </style>
