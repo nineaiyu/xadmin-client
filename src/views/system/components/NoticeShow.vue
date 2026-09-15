@@ -1,8 +1,21 @@
 <script lang="ts" setup>
-import { computed, onBeforeUnmount, ref, shallowRef } from "vue";
+import {
+  computed,
+  defineAsyncComponent,
+  onBeforeUnmount,
+  ref,
+  shallowRef
+} from "vue";
 import "@wangeditor/editor/dist/css/style.css";
-import { Editor } from "@wangeditor/editor-for-vue";
+import { ensureWangEditorBoot } from "@/utils/wangEditorBoot";
 import { useI18n } from "vue-i18n";
+
+// 先注册附件插件、再加载只读编辑器组件，保持 wangeditor 栈留在懒加载 chunk
+// （同 WangEditor.vue 的做法，见 src/utils/wangEditorBoot.ts）
+const Editor = defineAsyncComponent(async () => {
+  await ensureWangEditorBoot();
+  return (await import("@wangeditor/editor-for-vue")).Editor;
+});
 import { NoticeChoices } from "@/views/system/constants";
 import { sanitizeHtml } from "@/utils/sanitize";
 

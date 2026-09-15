@@ -7,7 +7,6 @@
 </template>
 
 <script lang="ts">
-import { checkVersion } from "version-rocket";
 import { ElConfigProvider } from "element-plus";
 import { useRouter, useRoute } from "vue-router";
 import { useGlobal, useWatermark } from "@pureadmin/utils";
@@ -32,36 +31,10 @@ import en from "element-plus/es/locale/lang/en";
 import zhCn from "element-plus/es/locale/lang/zh-cn";
 import plusEn from "plus-pro-components/es/locale/lang/en";
 import plusZhCn from "plus-pro-components/es/locale/lang/zh-cn";
-import { Boot, type IModuleConf } from "@wangeditor/editor";
-import attachmentModuleExport from "@wangeditor/plugin-upload-attachment";
 import { $t, transformI18n } from "@/plugins/i18n";
 
-/**
- * 附件菜单插件（uploadAttachment / downloadAttachment）的兼容解包。
- *
- * 该插件是 webpack 产出的 UMD 包，CJS 导出为 `{ __esModule: true, default: module }`：
- * - Vite 5（esbuild 预打包）会按 __esModule 解包，默认导入即真模块；
- * - Vite 8（rolldown 预打包）不再解包，默认导入拿到 `{ default: module }` 外壳，
- *   传给 Boot.registerModule 会因读不到 menus 而静默跳过注册（不抛错、难排查），
- *   编辑器工具栏随后抛 "Not found menu item factory by key 'uploadAttachment'"，
- *   表现为通知公告等富文本表单的创建页报错。
- * 这里按「取含 menus 的那一层」解包，两种打包行为都可用。
- */
-const attachmentModule = ((): Partial<IModuleConf> => {
-  const raw = attachmentModuleExport as unknown as {
-    menus?: unknown;
-    default?: Partial<IModuleConf>;
-  };
-  if (raw?.menus) return raw as Partial<IModuleConf>;
-  return raw?.default ?? (raw as Partial<IModuleConf>);
-})();
-
-// 注册。要在创建编辑器之前注册，且只能注册一次，不可重复注册（HMR 重入时静默跳过）。
-try {
-  Boot.registerModule(attachmentModule);
-} catch (e) {
-  console.log(e);
-}
+// wangeditor 附件插件注册已迁移至懒加载路径（src/utils/wangEditorBoot.ts），
+// 由编辑器异步组件在挂载前调用，避免约 1MB 的编辑器栈进入首屏闭包。
 
 export default defineComponent({
   name: "app",
@@ -150,23 +123,31 @@ export default defineComponent({
     const { VITE_PUBLIC_PATH, MODE } = import.meta.env;
     // https://github.com/guMcrey/version-rocket/blob/main/README.zh-CN.md#api
     if (MODE === "production") {
-      // 版本实时更新检测，只作用于线上环境
-      checkVersion(
-        // config
-        {
-          // 5分钟检测一次版本
-          pollingTime: 300000,
-          localPackageVersion: version,
-          originVersionFileUrl: `${location.origin}${VITE_PUBLIC_PATH}version.json`
-        },
-        // options
-        {
-          title,
-          description: transformI18n($t("layout.updateCheck")),
-          buttonText: transformI18n($t("layout.updateNow")),
-          primaryColor: "#758bfd"
-        }
-      );
+      // 版本实时更新检测，只作用于线上环境。
+      // 懒加载：version-rocket 及其主题约占 130KB（rendered），不进入首屏闭包；
+      // 检测本身是 5 分钟轮询的后台行为，延后到动态 chunk 加载完成即可。
+      import("version-rocket")
+        .then(({ checkVersion }) =>
+          checkVersion(
+            // config
+            {
+              // 5分钟检测一次版本
+              pollingTime: 300000,
+              localPackageVersion: version,
+              originVersionFileUrl: `${location.origin}${VITE_PUBLIC_PATH}version.json`
+            },
+            // options
+            {
+              title,
+              description: transformI18n($t("layout.updateCheck")),
+              buttonText: transformI18n($t("layout.updateNow")),
+              primaryColor: "#758bfd"
+            }
+          )
+        )
+        .catch(() => {
+          // 版本检测不可用（资源/网络异常）不影响主流程，静默忽略
+        });
     }
   }
 });

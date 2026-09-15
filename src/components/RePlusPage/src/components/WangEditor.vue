@@ -1,14 +1,33 @@
 <script lang="ts" setup>
 import { SUCCESS_CODE } from "@/api/types";
-import { onBeforeUnmount, onMounted, ref, shallowRef, type Ref } from "vue";
+import {
+  defineAsyncComponent,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  shallowRef,
+  type Ref
+} from "vue";
 import "@wangeditor/editor/dist/css/style.css";
-import { Editor, Toolbar } from "@wangeditor/editor-for-vue";
+import { ensureWangEditorBoot } from "@/utils/wangEditorBoot";
 import { systemUploadFileApi } from "@/api/system/file";
 import { message } from "@/utils/message";
 import { formatBytes, getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import type { IEditorConfig, IToolbarConfig } from "@wangeditor/editor";
 import { hasAuth } from "@/router/utils";
+
+// wangeditor 全量约 1MB，编辑器仅在弹窗打开时出现：这里以「先注册附件插件、再加载
+// 编辑器组件」的异步组件接入，使编辑器栈整体留在懒加载 chunk（入口 App.vue 原先的
+// 静态注册已移除，见 src/utils/wangEditorBoot.ts）。
+const Editor = defineAsyncComponent(async () => {
+  await ensureWangEditorBoot();
+  return (await import("@wangeditor/editor-for-vue")).Editor;
+});
+const Toolbar = defineAsyncComponent(async () => {
+  await ensureWangEditorBoot();
+  return (await import("@wangeditor/editor-for-vue")).Toolbar;
+});
 
 const messages = defineModel<string>();
 const editorRef = shallowRef();
@@ -55,8 +74,8 @@ function getUploadFiles() {
 defineExpose({ getUploadFiles });
 
 // 附件菜单（uploadAttachment / downloadAttachment）由 @wangeditor/plugin-upload-attachment
-// 插件提供，统一在应用入口 src/App.vue 注册（Boot.registerModule 需在创建编辑器之前、
-// 全局只注册一次）——此处不要再重复注册，否则会抛 Duplicated key。
+// 插件提供，经上面的异步组件在挂载前统一注册（Boot.registerModule 需在创建编辑器之前、
+// 全局只注册一次，见 src/utils/wangEditorBoot.ts）——此处不要再重复注册，否则会抛 Duplicated key。
 
 /**
  * 工具栏配置。官方 IToolbarConfig 将 excludeKeys 声明为 string[]，但运行时仅以
