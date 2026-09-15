@@ -82,7 +82,8 @@ jobs:
 
       - name: Run visual regression
         if: steps.baseline.outputs.available == 'true'
-        run: pnpm test:e2e:visual -- --project=chromium
+        # 直调 playwright（不走 pnpm script + `--` 透传，避免 “-- --project” 叠写歧义）
+        run: E2E_VISUAL=1 E2E_API_PORT=18896 pnpm exec playwright test e2e/visual.e2e.ts --project=chromium
 
       - uses: actions/upload-artifact@v4
         if: always() && steps.baseline.outputs.available == 'true'

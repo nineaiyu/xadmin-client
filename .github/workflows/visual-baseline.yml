@@ -35,11 +35,12 @@ jobs:
         uses: ./.github/actions/e2e-setup
 
       - name: Update snapshots
+        # 直调 playwright（不走 pnpm script + `--` 透传，避免 “-- --project” 叠写歧义）
         run: |
           if [ "${{ inputs.project }}" = "all" ]; then
-            pnpm test:e2e:visual:update
+            E2E_VISUAL=1 E2E_API_PORT=18896 pnpm exec playwright test e2e/visual.e2e.ts --update-snapshots
           else
-            pnpm test:e2e:visual:update -- --project=${{ inputs.project }}
+            E2E_VISUAL=1 E2E_API_PORT=18896 pnpm exec playwright test e2e/visual.e2e.ts --update-snapshots --project=${{ inputs.project }}
           fi
 
       - uses: actions/upload-artifact@v4
