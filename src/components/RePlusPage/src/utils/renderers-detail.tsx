@@ -1,10 +1,8 @@
-import { computed, h } from "vue";
+import { computed, defineAsyncComponent, h } from "vue";
 import { get } from "lodash-es";
 import { isEmpty, isString } from "@pureadmin/utils";
 import { ElIcon, ElImage, ElLink } from "element-plus";
 import { Link } from "@element-plus/icons-vue";
-import "vue-json-pretty/lib/styles.css";
-import VueJsonPretty from "vue-json-pretty";
 import { selectBooleanOptions } from "./constants";
 import { formatAddOrEditOptions } from "./renders";
 import type { TableColumnRenderer } from "@pureadmin/table";
@@ -15,6 +13,16 @@ import type {
   PlusColumnContext,
   PlusColumnRegistry
 } from "./types";
+
+/**
+ * vue-json-pretty 异步组件（含样式）：仅服务 detail 的「JSON 展开」渲染。
+ * 静态引入会把 JS + CSS 双双拖入首屏闭包（约 9.6 KB gzip），改为首次渲染时加载；
+ * Vite 会为动态 import 的 CSS 产出独立 chunk 并在加载时注入。
+ */
+const VueJsonPretty = defineAsyncComponent(async () => {
+  await import("vue-json-pretty/lib/styles.css");
+  return (await import("vue-json-pretty")).default;
+});
 
 /**
  * 字典色 tag 的 props（与 @/utils/dict 的 dictTagProps 同款）。

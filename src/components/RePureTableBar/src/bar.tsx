@@ -1,4 +1,4 @@
-import Sortable from "sortablejs";
+import type SortableJs from "sortablejs";
 import { $t, transformI18n } from "@/plugins/i18n";
 import type { CheckboxValueType } from "element-plus";
 import { useEpThemeStoreHook } from "@/store/modules/epTheme";
@@ -280,10 +280,13 @@ export default defineComponent({
     // 重复 create 会在同一 wrapper 上叠加监听，需先销毁旧实例
     // R9 触屏降级：原先仅 mouseenter 触发（触屏无 hover，列排序不可用），
     // 现由 mousedown / touchstart 同样触发（Sortable 自身支持 touch 拖拽）
-    let sortableInstance: ReturnType<typeof Sortable.create> | null = null;
+    let sortableInstance: ReturnType<typeof SortableJs.create> | null = null;
     const rowDrop = (event: { preventDefault: () => void }) => {
       event.preventDefault();
-      nextTick(() => {
+      nextTick(async () => {
+        // sortablejs 仅由“列排序”交互触发时加载（静态引入会被打进入口闭包）；
+        // 加载完成后的行为与原先一致：每次重整前先销毁旧实例
+        const { default: Sortable } = await import("sortablejs");
         const wrapper: HTMLElement = (
           instance?.proxy?.$refs[`GroupRef${unref(props.tableKey)}`] as {
             $el: HTMLElement;
