@@ -23,10 +23,26 @@ defineOptions({
 const { t } = useI18n();
 const canEdit = hasAuth("partialUpdate:FormMySubmission");
 const canDestroy = hasAuth("destroy:FormMySubmission");
+const canExport = hasAuth("exportData:FormMySubmission");
 
 const loading = ref(false);
+const exporting = ref(false);
 const forms = ref<DynamicFormItem[]>([]);
 const submissions = ref<SubmissionItem[]>([]);
+
+/** 导出本人提交（C2：后端按表单 schema 展开动态列，导出范围跟随 creator 隔离） */
+const exportCsv = async () => {
+  exporting.value = true;
+  try {
+    await submissionApi.exportData({ type: "csv" });
+  } catch (error) {
+    message(String((error as { detail?: string })?.detail ?? error), {
+      type: "warning"
+    });
+  } finally {
+    exporting.value = false;
+  }
+};
 
 const loadAll = async () => {
   loading.value = true;
@@ -153,7 +169,19 @@ onMounted(loadAll);
     <!-- 我的提交 -->
     <el-card shadow="never">
       <template #header>
-        <span class="font-semibold">{{ t("dform.mySubmissions") }}</span>
+        <div class="flex-bc">
+          <span class="font-semibold">{{ t("dform.mySubmissions") }}</span>
+          <el-button
+            v-if="canExport"
+            link
+            type="primary"
+            :loading="exporting"
+            data-testid="my-submission-export"
+            @click="exportCsv"
+          >
+            {{ t("dform.exportCsv") }}
+          </el-button>
+        </div>
       </template>
       <el-table
         v-loading="loading"
