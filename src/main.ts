@@ -9,7 +9,7 @@ import "./style/tailwind.css";
 import App from "./App.vue";
 import router from "./router";
 import { setupStore } from "@/store";
-import { useI18n } from "@/plugins/i18n";
+import { ensureLocale, useI18n } from "@/plugins/i18n";
 import { getPlatformConfig } from "./config";
 import { MotionPlugin } from "@vueuse/motion";
 import { useEcharts } from "@/plugins/echarts";
@@ -80,5 +80,7 @@ getPlatformConfig(app).then(async config => {
     .use(usePlusProComponents)
     .use(Table)
     .use(useEcharts);
+  // 初始语言为 en 时按需加载语言包（en 不随首屏闭包；zh 为 eager，无额外开销）
+  await ensureLocale();
   app.mount("#app");
 });
