@@ -1,8 +1,15 @@
 <script lang="ts" setup>
-import { computed, reactive } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { SUCCESS_CODE } from "@/api/types";
+import { fetchAllRows } from "@/utils/fetchAllRows";
+import { roleApi } from "@/api/system/role";
+import {
+  listRows,
+  type DashboardCard,
+  type DatasetItem
+} from "@/api/system/datasets";
 import { message } from "@/utils/message";
-import type { DashboardCard, DatasetItem } from "@/api/system/datasets";
 
 /**
  * 仪表盘卡片表单（C5：弹窗体系收敛到 ReDialog 的 content 组件形态）。
@@ -27,7 +34,25 @@ const heightOptions = [160, 224, 320, 440];
 
 const form = reactive<DashboardCard>({
   ...props.card,
-  height: props.card.height ?? 224
+  height: props.card.height ?? 224,
+  allowed_roles: props.card.allowed_roles ?? []
+});
+
+/** 可见角色选项（ADR-042 授权面）：值 = 角色 code，与 layout[].allowed_roles 同口径。
+ * 无角色列表权限（如非超管创建者）时静默降级为空选项，已有授权值不受影响 */
+const roleOptions = ref<{ pk: string; name: string; code: string }[]>([]);
+
+onMounted(async () => {
+  try {
+    const res = await fetchAllRows(roleApi.list);
+    if (res.code === SUCCESS_CODE && res.data) {
+      roleOptions.value = listRows<{ pk: string; name: string; code: string }>(
+        res as never
+      );
+    }
+  } catch {
+    roleOptions.value = [];
+  }
 });
 
 /** 当前数据集列（切换数据集后候选更新） */
@@ -78,6 +103,24 @@ defineExpose({ getCard });
     </el-form-item>
     <el-form-item :label="t('dashboard.cardTitle')">
       <el-input v-model="form.title" />
+    </el-form-item>
+    <el-form-item :label="t('dashboard.cardRoles')">
+      <el-select
+        v-model="form.allowed_roles"
+        class="w-full"
+        multiple
+        collapse-tags
+        filterable
+        clearable
+        :placeholder="t('dashboard.cardRolesPlaceholder')"
+      >
+        <el-option
+          v-for="role in roleOptions"
+          :key="role.code"
+          :value="role.code"
+          :label="role.name"
+        />
+      </el-select>
     </el-form-item>
     <el-form-item :label="t('dashboard.chartType')">
       <el-select v-model="form.chart_type" class="w-full">

@@ -1637,6 +1637,8 @@ dashboard:
   cardHeight: 卡片高度
   cardSettings: 卡片设置
   editCard: 编辑卡片
+  cardRoles: 可见角色
+  cardRolesPlaceholder: 留空 = 能看此仪表盘的人均可见
   removeConfirm: 确定删除仪表盘「{name}」吗？布局与卡片将一并移除，引用它的大屏将失去此页
 
 dataDataset:

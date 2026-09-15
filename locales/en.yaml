@@ -1637,6 +1637,8 @@ dashboard:
   cardHeight: Card Height
   cardSettings: Card Settings
   editCard: Edit Card
+  cardRoles: Visible roles
+  cardRolesPlaceholder: Empty = visible to everyone who can see this dashboard
   removeConfirm: Delete dashboard "{name}"? Its layout and cards will be removed, and screens referencing it will lose this page
 
 dataDataset:

@@ -71,14 +71,50 @@ test("数据集 + 仪表盘主链路", async ({ page }) => {
   const cardDialog = page.locator(".el-dialog").filter({ hasText: "添加卡片" });
   await expect(cardDialog).toBeVisible();
   await pickSelectOption(page, "数据集", datasetName);
+  // EP 的单选下拉在选中后并不真正收起（残留 DOM 且拦截后续点击，见 e2e/README），
+  // 点弹窗空白头部（下拉上方，不会被其遮挡）触发外部点击收起
+  await cardDialog.locator(".el-dialog__header").click();
   await cardDialog.getByLabel("卡片标题").fill("用户总数");
+  // ADR-042 二期：卡片授权面——选一个「可见角色」（多选下拉不自动收起，同样需手动收起）。
+  // EP 收起后的下拉仍以可见态残留在 DOM，必须经 aria-controls 精确锁定本下拉的列表
+  const rolesSelect = cardDialog
+    .locator(".el-form-item")
+    .filter({ hasText: "可见角色" })
+    .locator(".el-select");
+  await rolesSelect.click();
+  const rolesCombo = cardDialog.getByRole("combobox", { name: "可见角色" });
+  const rolesListId = await rolesCombo.getAttribute("aria-controls");
+  expect(rolesListId).not.toBeNull();
+  const roleItem = page
+    .locator(`[id="${rolesListId}"] .el-select-dropdown__item`)
+    .last();
+  await expect(roleItem).toBeVisible();
+  const roleName = ((await roleItem.textContent()) ?? "").trim();
+  expect(roleName).not.toBe("");
+  await roleItem.click();
+  await expect(rolesSelect.locator(".el-tag").first()).toContainText(roleName);
+  await cardDialog.locator(".el-dialog__header").click();
   await cardDialog.getByRole("button", { name: "保存" }).click();
   await expect(cardDialog).not.toBeVisible();
+
+  // ADR-042 二期：重开卡片设置验证「可见角色」回显（读内存草稿，无需先保存布局；
+  // 放在保存布局之前——保存后 dashboards 数组整行替换会重建卡片按钮导致 detached 抖动）
+  const card = page.locator(".el-card").filter({ hasText: "用户总数" });
+  await expect(card).toBeVisible();
+  await card.getByTitle("卡片设置").click();
+  const editCardDialog = page
+    .locator(".el-dialog")
+    .filter({ hasText: "编辑卡片" });
+  await expect(editCardDialog).toBeVisible();
+  await expect(
+    editCardDialog.locator(".el-select").filter({ hasText: roleName }).first()
+  ).toBeVisible();
+  await editCardDialog.getByRole("button", { name: "关闭此对话框" }).click();
+  await expect(editCardDialog).not.toBeVisible();
 
   await page.getByRole("button", { name: "保存布局" }).click();
   await expect(page.getByText("保存成功").first()).toBeVisible();
   // 卡片渲染：标题 + 数字卡内容（total 为系统用户数，E2E 种子环境 > 0）
-  const card = page.locator(".el-card").filter({ hasText: "用户总数" });
   await expect(card).toBeVisible();
   await expect(card.locator(".text-3xl")).toHaveText(/\d+/);
 
