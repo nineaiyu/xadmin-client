@@ -110,7 +110,7 @@ async function recall(item: ChatMessageItem) {
 <template>
   <div
     class="chat-page flex overflow-hidden rounded bg-bg_color"
-    :style="{ height: 'calc(100vh - 148px)', minHeight: '420px' }"
+    :style="{ height: 'calc(100vh - 164px)', minHeight: '420px' }"
     data-testid="chat-page"
   >
     <ChatSidebar
