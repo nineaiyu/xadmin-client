@@ -1880,7 +1880,7 @@ dform:
   approvalOn: Approval
   approvalOff: Direct
   approvalTip: Submissions are stored only after approval (superusers submit directly)
-  approvalHint: This form requires approval; please submit it again after approval
+  approvalHint: This form requires approval; the submission is completed automatically once approved
   submissionData: Submission
   submittedAt: Submitted At
   editSubmission: Edit Submission
@@ -1896,6 +1896,22 @@ dform:
   typeCheckbox: Checkbox
   typeDate: Date
   typeSwitch: Switch
+  typeUpload: Attachment
+  typeDaterange: Date range
+  typeTable: Detail table
+  columnsHint: "One per line: key,label,type[,options]"
+  tableColumnsRequired: Detail table fields require column definitions
+  approvalFlow: Approval flow
+  noApprovalFlow: Not bound
+  approvalFlowTip: Bound submissions enter this multi-step flow and the result syncs back to the submission status; the approval switch is ignored once bound
+  approvalFlowHint: This form is bound to an approval flow; submitting starts the approval process
+  flowOn: Flow
+  status: Status
+  resubmit: Resubmit
+  resubmitOk: Resubmitted, pending approval
+  addRow: Add row
+  rangeStart: Start date
+  rangeEnd: End date
 
 leaveApply:
   leave_type: Leave type

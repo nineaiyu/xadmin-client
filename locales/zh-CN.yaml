@@ -1880,7 +1880,7 @@ dform:
   approvalOn: 需审批
   approvalOff: 直接提交
   approvalTip: 开启后提交需审批通过才落库（超管直提）
-  approvalHint: 该表单提交需审批，审批通过后请再次提交本表单
+  approvalHint: 该表单提交需审批，审批通过后系统将自动完成提交
   submissionData: 提交内容
   submittedAt: 提交时间
   editSubmission: 修改提交
@@ -1896,6 +1896,22 @@ dform:
   typeCheckbox: 多选
   typeDate: 日期
   typeSwitch: 开关
+  typeUpload: 附件
+  typeDaterange: 日期范围
+  typeTable: 明细子表
+  columnsHint: "每行一条：标识,标签,类型[,选项]"
+  tableColumnsRequired: 明细子表字段需先定义列
+  approvalFlow: 审批流程
+  noApprovalFlow: 不绑定流程
+  approvalFlowTip: 绑定后提交进入该流程的多级审批，审批结果回写到提交状态；绑定后「提交审批」开关不再生效
+  approvalFlowHint: 该表单已绑定审批流程，提交后将进入流程审批
+  flowOn: 流程审批
+  status: 审批状态
+  resubmit: 重新提交
+  resubmitOk: 已重新提交，等待审批
+  addRow: 添加一行
+  rangeStart: 开始日期
+  rangeEnd: 结束日期
 
 leaveApply:
   leave_type: 请假类型
