@@ -73,6 +73,8 @@ export type SearchColumnsResult = {
     choices?: ChoiceOption[];
     /** 关联列选项超过 SEARCH_CHOICES_MAX_COUNT 被截断，应降级为远程搜索 */
     choices_truncated?: boolean;
+    /** 远程联想端点：资源混入 SuggestionsAction 时对 api-search-* 关联字段下发 */
+    suggest_url?: string;
     /** ListField(child=ChoiceField) 下发的子字段元信息，choices 候选值供多选下拉渲染 */
     child?: { choices?: ChoiceOption[]; [key: string]: unknown };
   }>;

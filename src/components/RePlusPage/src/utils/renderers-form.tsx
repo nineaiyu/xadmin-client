@@ -29,6 +29,9 @@ const UploadFiles = defineAsyncComponent(
 const PhoneInput = defineAsyncComponent(
   () => import("../components/PhoneInput.vue")
 );
+const SuggestSelect = defineAsyncComponent(
+  () => import("../components/SuggestSelect.vue")
+);
 
 /**
  * 表单列（新增/编辑）内置渲染器：input_type -> 对 PageColumn 就地配置
@@ -164,9 +167,35 @@ export const builtinFormRenderers: PlusColumnRegistry = {
 /** 表单列回退渲染器：对应原 default 分支（api-* 自定义搜索组件） */
 export const formFallbackRenderer: PlusColumnHandler = (item, ctx) => {
   const { column } = ctx;
+  // TEMP-PROBE: E2E 调试，随后移除
+  if (import.meta.env.DEV && column.input_type?.startsWith("api-")) {
+    console.log(
+      "[suggest-probe] fallback renderer:",
+      column.key,
+      column.input_type,
+      column.suggest_url
+    );
+  }
   if (column.input_type.startsWith("api-")) {
     if (!column.hasOwnProperty("default")) {
       column.default = column?.multiple ? [] : undefined;
+    }
+    // 元数据下发 suggest_url 时升级为远程联想（候选集与写入校验同源、
+    // 权限回落资源 list 权限点）；未下发时维持 api-search-* 弹窗选择器
+    if (column.suggest_url) {
+      item["renderField"] = (
+        value: unknown,
+        onChange: (val: unknown) => void
+      ) => {
+        return h(SuggestSelect, {
+          url: column.suggest_url as string,
+          field: column.key,
+          multiple: column?.multiple ?? false,
+          modelValue: value,
+          "onUpdate:modelValue": onChange
+        });
+      };
+      return;
     }
     item["renderField"] = (
       value: unknown,

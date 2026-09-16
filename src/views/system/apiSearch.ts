@@ -8,7 +8,14 @@
  * 采用异步组件保持按需加载：只有页面真正用到对应 `input_type` 时才加载该组件。
  */
 import { defineAsyncComponent } from "vue";
-import { registerApiSearchComponents } from "@/components/RePlusPage";
+import {
+  registerApiSearchComponents,
+  registerSuggestFetcher
+} from "@/components/RePlusPage";
+import { http } from "@/utils/http";
+
+/** 远程联想fetcher：统一走 axios 拦截器（token / 业务码归一） */
+registerSuggestFetcher((url, params) => http.request("get", url, { params }));
 
 registerApiSearchComponents({
   "api-search-user": defineAsyncComponent(
