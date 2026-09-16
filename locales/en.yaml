@@ -1798,6 +1798,13 @@ aiConfig:
   actionEnabled: Enable AI action drafts (run after confirmation, off by default)
   globalSave: Save switches
   globalSaved: Global switches saved
+  metricsTitle: Usage overview (docs Q&A / NL query / actions)
+  metricsTotal: Total calls
+  metricsSuccess: Succeeded
+  metricsFailed: Failed
+  metricsRate: Success rate
+  metricsModule: By type
+  metricsTopUsers: Active users
   profileTitle: AI Profiles
   profileHint: Maintain multiple profiles and activate one for all AI features; falls back to the legacy config when none is active
   create: New Profile

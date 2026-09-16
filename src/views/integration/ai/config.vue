@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 import { SUCCESS_CODE } from "@/api/types";
-import { onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
-import { aiConfigApi } from "@/api/system/ai";
+import { aiAssistantApi, aiConfigApi, type AiMetrics } from "@/api/system/ai";
 import { useAiProfiles } from "./utils/useAiProfiles";
 
 defineOptions({
@@ -48,6 +48,46 @@ const saveGlobal = async () => {
   }
 };
 
+/* ---------------- B1 调用观测（权限复用 status:AiAssistant） ---------------- */
+const canReadMetrics = hasAuth("status:AiAssistant");
+const metricsLoading = ref(false);
+const metricsDays = ref(30);
+const metrics = ref<AiMetrics | null>(null);
+const metricsCards = computed(() => {
+  const data = metrics.value;
+  const total = data?.total ?? 0;
+  const success = data?.success ?? 0;
+  const failed = data?.failed ?? 0;
+  const rate = total ? Math.round((success / total) * 100) : 100;
+  return [
+    { label: t("aiConfig.metricsTotal"), value: String(total) },
+    { label: t("aiConfig.metricsSuccess"), value: String(success) },
+    { label: t("aiConfig.metricsFailed"), value: String(failed) },
+    { label: t("aiConfig.metricsRate"), value: `${rate}%` }
+  ];
+});
+
+const loadMetrics = async () => {
+  if (!canReadMetrics) return;
+  metricsLoading.value = true;
+  try {
+    const res = await aiAssistantApi.metrics(metricsDays.value);
+    if (res.code === SUCCESS_CODE) {
+      metrics.value = res.data as unknown as AiMetrics;
+    }
+  } finally {
+    metricsLoading.value = false;
+  }
+};
+
+const metricPercent = (count: number) => {
+  const max = Math.max(
+    1,
+    ...(metrics.value?.by_module ?? []).map(row => row.count)
+  );
+  return Math.round((count / max) * 100);
+};
+
 /* ---------------- 配置档案（RePlusPage） ---------------- */
 const tableRef = ref();
 const {
@@ -58,7 +98,10 @@ const {
   tableBarButtonsProps
 } = useAiProfiles(tableRef);
 
-onMounted(loadGlobal);
+onMounted(() => {
+  loadGlobal();
+  loadMetrics();
+});
 </script>
 
 <template>
@@ -93,6 +136,63 @@ onMounted(loadGlobal);
         <el-button v-if="canEditGlobal" type="primary" @click="saveGlobal">
           {{ t("aiConfig.globalSave") }}
         </el-button>
+      </div>
+    </el-card>
+
+    <!-- B1 调用观测：近 N 天用量 / 成功率 / 类型分布 / 活跃用户 -->
+    <el-card
+      v-if="canReadMetrics"
+      v-loading="metricsLoading"
+      shadow="never"
+      class="w-99/100 mb-3"
+    >
+      <div class="flex flex-wrap items-center gap-4 mb-3">
+        <span class="font-semibold">{{ t("aiConfig.metricsTitle") }}</span>
+        <el-radio-group
+          v-model="metricsDays"
+          size="small"
+          @change="loadMetrics"
+        >
+          <el-radio-button :value="7">7</el-radio-button>
+          <el-radio-button :value="30">30</el-radio-button>
+          <el-radio-button :value="90">90</el-radio-button>
+        </el-radio-group>
+      </div>
+      <div class="flex flex-wrap gap-10 mb-3">
+        <div v-for="card in metricsCards" :key="card.label">
+          <div class="text-sm opacity-70">{{ card.label }}</div>
+          <div class="text-2xl font-semibold">{{ card.value }}</div>
+        </div>
+      </div>
+      <div v-if="metrics?.by_module?.length" class="mb-3">
+        <div class="text-sm opacity-70 mb-1">
+          {{ t("aiConfig.metricsModule") }}
+        </div>
+        <div
+          v-for="row in metrics.by_module"
+          :key="row.module"
+          class="flex items-center gap-3 mb-1"
+        >
+          <span class="inline-block w-24 text-sm">{{ row.label }}</span>
+          <el-progress
+            class="flex-1"
+            :percentage="metricPercent(row.count)"
+            :format="() => String(row.count)"
+          />
+        </div>
+      </div>
+      <div v-if="metrics?.top_users?.length">
+        <div class="text-sm opacity-70 mb-1">
+          {{ t("aiConfig.metricsTopUsers") }}
+        </div>
+        <el-tag
+          v-for="row in metrics.top_users"
+          :key="row.username"
+          class="mr-2 mb-1"
+          type="info"
+        >
+          {{ row.username }} · {{ row.count }}
+        </el-tag>
       </div>
     </el-card>
 

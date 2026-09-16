@@ -25,6 +25,17 @@ export type AiSource = { title: string; path: string; chunk_index: number };
 
 export type AiAskResult = { answer: string; sources: AiSource[] };
 
+/** B1 调用观测：近 N 天聚合（数据源 OperationLog auth_type=ai） */
+export type AiMetrics = {
+  days: number;
+  total: number;
+  success: number;
+  failed: number;
+  by_module: { module: string; label: string; count: number }[];
+  by_day: { date: string; module: string; count: number }[];
+  top_users: { username: string; count: number }[];
+};
+
 export type NlQueryDsl = {
   dataset: string;
   mode: "rows" | "aggregate";
@@ -107,6 +118,15 @@ export const listAiProfileRows = <T>(body: unknown): T[] =>
 class AiAssistantApi extends BaseApi {
   status = () => {
     return this.request<DetailResult>("get", {}, {}, `${this.baseApi}/status`);
+  };
+  /** B1 观测：近 N 天用量 / 成功率 / 趋势 / 类型分布 / Top 用户 */
+  metrics = (days = 30) => {
+    return this.request<DetailResult>(
+      "get",
+      { days },
+      {},
+      `${this.baseApi}/metrics`
+    );
   };
   ask = (question: string) => {
     return this.request<DetailResult>("post", {}, { question });
