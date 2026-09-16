@@ -63,7 +63,11 @@ const metricsCards = computed(() => {
     { label: t("aiConfig.metricsTotal"), value: String(total) },
     { label: t("aiConfig.metricsSuccess"), value: String(success) },
     { label: t("aiConfig.metricsFailed"), value: String(failed) },
-    { label: t("aiConfig.metricsRate"), value: `${rate}%` }
+    { label: t("aiConfig.metricsRate"), value: `${rate}%` },
+    {
+      label: t("aiConfig.metricsTokens"),
+      value: (data?.tokens?.total ?? 0).toLocaleString()
+    }
   ];
 });
 

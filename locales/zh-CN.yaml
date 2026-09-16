@@ -1805,6 +1805,7 @@ aiConfig:
   metricsRate: 成功率
   metricsModule: 类型分布
   metricsTopUsers: 活跃用户
+  metricsTokens: Token 用量
   profileTitle: AI 配置档案
   profileHint: 可维护多套配置并激活其中一套，供全部 AI 功能使用；未激活任何档案时回落到历史配置
   create: 新建档案

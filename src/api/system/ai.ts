@@ -34,6 +34,7 @@ export type AiMetrics = {
   by_module: { module: string; label: string; count: number }[];
   by_day: { date: string; module: string; count: number }[];
   top_users: { username: string; count: number }[];
+  tokens: { prompt: number; completion: number; total: number };
 };
 
 export type NlQueryDsl = {

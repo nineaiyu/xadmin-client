@@ -1805,6 +1805,7 @@ aiConfig:
   metricsRate: Success rate
   metricsModule: By type
   metricsTopUsers: Active users
+  metricsTokens: Tokens used
   profileTitle: AI Profiles
   profileHint: Maintain multiple profiles and activate one for all AI features; falls back to the legacy config when none is active
   create: New Profile
