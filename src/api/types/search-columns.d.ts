@@ -49,6 +49,10 @@ export type SearchColumnsData = {
    */
   choices_truncated?: boolean;
   /**
+   * 远程联想端点：仅当资源混入 SuggestionsAction 且字段 input_type 为 api-search-* 时下发；候选集与写入校验同源
+   */
+  suggest_url?: string;
+  /**
    * 多值关联（M2M）字段为 true
    */
   multiple?: boolean;
