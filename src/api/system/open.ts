@@ -51,7 +51,7 @@ export interface CallbackProbeResult {
   detail?: string;
 }
 
-/** 资源授权规则（模型 × 动作 × 字段 × 行，ADR-039 B1） */
+/** 资源授权规则（模型 × 动作 × 字段 × 行） */
 export interface ApiApplicationGrant {
   pk?: string;
   /** 模型标签（system.dataset）或 *（全部模型） */
@@ -98,7 +98,7 @@ export interface GrantListResponse {
   data: { results: ApiApplicationGrant[] };
 }
 
-/** 应用用量报表（ADR-039 B3） */
+/** 应用用量报表 */
 export interface ApplicationUsageStats {
   days: number;
   total: number;

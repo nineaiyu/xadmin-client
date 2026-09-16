@@ -74,7 +74,7 @@ test("API 应用：接口范围勾选后列表显示条数", async ({ page }) =>
 });
 
 /**
- * 资源授权配置（ADR-039 B1）：管理面主链路（添加规则 → 保存 → 回显）。
+ * 资源授权配置：管理面主链路（添加规则 → 保存 → 回显）。
  * 四级收敛语义（403 / 字段裁剪 / 行级过滤）由 tests/integration/system/test_api_grant.py 钉死。
  */
 test("API 应用：资源授权配置保存并回显", async ({ page }) => {
@@ -132,7 +132,7 @@ test("API 应用：资源授权配置保存并回显", async ({ page }) => {
   );
 });
 
-/** 用量报表（ADR-039 B3）：抽屉打开并展示统计区块。 */
+/** 用量报表：抽屉打开并展示统计区块。 */
 test("API 应用：用量抽屉展示统计", async ({ page }) => {
   await login(page);
   const name = `E2E 用量应用 ${Date.now()}`;

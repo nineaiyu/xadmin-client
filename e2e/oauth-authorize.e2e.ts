@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { login } from "./helpers";
 
 /**
- * OAuth 授权码同意页（ADR-039 B2）：第三方发起 → 同意页展示 → 同意回跳携带 code /
+ * OAuth 授权码同意页：第三方发起 → 同意页展示 → 同意回跳携带 code /
  * 拒绝回跳携带 access_denied。
  *
  * 服务端口径（PKCE / 一次性码 / refresh 轮换 / 撤销）由

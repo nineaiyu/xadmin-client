@@ -75,7 +75,7 @@ test("数据集 + 仪表盘主链路", async ({ page }) => {
   // 点弹窗空白头部（下拉上方，不会被其遮挡）触发外部点击收起
   await cardDialog.locator(".el-dialog__header").click();
   await cardDialog.getByLabel("卡片标题").fill("用户总数");
-  // ADR-042 二期：卡片授权面——选一个「可见角色」（多选下拉不自动收起，同样需手动收起）。
+  // 卡片授权面——选一个「可见角色」（多选下拉不自动收起，同样需手动收起）。
   // EP 收起后的下拉仍以可见态残留在 DOM，必须经 aria-controls 精确锁定本下拉的列表
   const rolesSelect = cardDialog
     .locator(".el-form-item")
@@ -97,7 +97,7 @@ test("数据集 + 仪表盘主链路", async ({ page }) => {
   await cardDialog.getByRole("button", { name: "保存" }).click();
   await expect(cardDialog).not.toBeVisible();
 
-  // ADR-042 二期：重开卡片设置验证「可见角色」回显（读内存草稿，无需先保存布局；
+  // 重开卡片设置验证「可见角色」回显（读内存草稿，无需先保存布局；
   // 放在保存布局之前——保存后 dashboards 数组整行替换会重建卡片按钮导致 detached 抖动）
   const card = page.locator(".el-card").filter({ hasText: "用户总数" });
   await expect(card).toBeVisible();

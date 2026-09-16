@@ -6,7 +6,7 @@ import { SUCCESS_CODE } from "@/api/types";
 import { oauthAuthorizeApi, type OAuthAuthorizeInfo } from "@/api/system/open";
 
 /**
- * OAuth 授权码同意页（ADR-039 B2）：第三方应用「代表用户访问」的授权确认。
+ * OAuth 授权码同意页：第三方应用「代表用户访问」的授权确认。
  *
  * 独立路由（无侧栏）：未登录由路由守卫送到登录页（带 redirect 回跳）；
  * 同意 → 回跳 redirect_uri?code=&state=；拒绝 → redirect_uri?error=access_denied&state=。

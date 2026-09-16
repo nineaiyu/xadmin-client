@@ -38,7 +38,7 @@ const form = reactive<DashboardCard>({
   allowed_roles: props.card.allowed_roles ?? []
 });
 
-/** 可见角色选项（ADR-042 授权面）：值 = 角色 code，与 layout[].allowed_roles 同口径。
+/** 可见角色选项：值 = 角色 code，与 layout[].allowed_roles 同口径。
  * 无角色列表权限（如非超管创建者）时静默降级为空选项，已有授权值不受影响 */
 const roleOptions = ref<{ pk: string; name: string; code: string }[]>([]);
 

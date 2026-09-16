@@ -64,7 +64,7 @@ export type DashboardCard = {
   span?: 3 | 6 | 9 | 12;
   /** 卡片高度 px（缺省 224，向后兼容存量布局） */
   height?: number;
-  /** 卡片级权限（ADR-042）：可见角色 code 列表，空/缺省 = 全员可见 */
+  /** 卡片级权限：可见角色 code 列表，空/缺省 = 全员可见 */
   allowed_roles?: string[];
 };
 

@@ -38,7 +38,7 @@ const form = reactive({
     "daily" | "weekly" | "monthly",
   send_time: props.row?.send_time ?? "08:00",
   weekday: props.row?.weekday ?? 0,
-  // cron 表达式（ADR-041）：非空时优先于上面三档频次
+  // cron 表达式：非空时优先于上面三档频次
   cron_expression: props.row?.cron_expression ?? "",
   recipients: (props.row?.recipients ?? []).join(", "),
   is_active: props.row?.is_active ?? true

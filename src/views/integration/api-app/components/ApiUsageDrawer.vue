@@ -7,7 +7,7 @@ import type {
 } from "@/api/system/open";
 
 /**
- * 应用用量抽屉（ADR-039 B3）：近 N 天调用量 / 失败数 / 平均耗时 + Top 路径 +
+ * 应用用量抽屉：近 N 天调用量 / 失败数 / 平均耗时 + Top 路径 +
  * 业务码分布 + 当日配额用量（软口径，不阻断请求）。
  */
 defineOptions({ name: "ApiApplicationUsageDrawer" });
