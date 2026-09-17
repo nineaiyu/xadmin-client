@@ -5,5 +5,15 @@
     "strictFunctionTypes": true,
     "noImplicitAny": true,
     "noImplicitThis": true
-  }
+  },
+  "include": [
+    "mock/*.ts",
+    "build/*.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue",
+    "types/*.d.ts",
+    "vite.config.ts",
+    "e2e/**/*.ts"
+  ]
 }

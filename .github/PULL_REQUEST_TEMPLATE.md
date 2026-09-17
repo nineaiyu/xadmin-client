@@ -26,6 +26,8 @@
 - [ ] 页面开发优先 `BaseApi` + `RePlusPage`，无重复 CRUD 模板
 - [ ] 用户态读写走 Pinia / utils 封装，无直接 localStorage/cookie 调用
 - [ ] 新文件 ≤400 行，巨型文件拆分符合 composables 约定
+- [ ] `node scripts/check-file-length.mjs` 通过（>500 行新增即失败，存量基线只减不增）
+- [ ] 断言与环境/语言无关（locale、时区、排序等，避免本地与 CI 不一致的假绿）
 
 ## 验证方式
 
