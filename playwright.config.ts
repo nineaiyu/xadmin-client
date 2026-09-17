@@ -35,7 +35,8 @@ const stubLlmURL = `http://127.0.0.1:${stubLlmPort}`;
 const baseURL = process.env.E2E_BASE_URL ?? `http://localhost:${frontPort}`;
 
 // smoke 档 = 只跑 @smoke 用例 + 只跑 chromium，把 dev push 的反馈从 ~9min 压到 ~3min；
-// 全量档（PR / main / 夜间 / 手动）保持 40 unique × 双浏览器
+// 全量档（PR / main / 夜间 / 手动）保持全部用例 × 双浏览器（当前双浏览器合计约 300 例：
+// 本地串行成本高，日常用 smoke 档反馈、CI 走并行分片）
 const smokeOnly = process.env.E2E_SMOKE === "1";
 
 export default defineConfig({

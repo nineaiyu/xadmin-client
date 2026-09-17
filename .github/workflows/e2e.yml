@@ -2,7 +2,7 @@ name: E2E Tests
 
 # 拆成两档，把日常提交的反馈时间从 ~9min 压到 ~3min
 #   smoke —— 任何 push/PR 都跑：chromium + 仅 @smoke 用例（e2e/smoke.e2e.ts 等）
-#   full  —— 仅 PR / main / 夜间定时 / 手动触发：40 unique × chromium+webkit 全量
+#   full  —— 仅 PR / main / 夜间定时 / 手动触发：全部用例 × chromium+webkit（当前合计约 300 例）
 on:
   schedule:
     - cron: '0 18 * * *'
