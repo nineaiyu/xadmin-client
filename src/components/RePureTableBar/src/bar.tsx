@@ -7,7 +7,6 @@ import {
   defineComponent,
   getCurrentInstance,
   nextTick,
-  type PropType,
   ref,
   unref,
   watch
@@ -31,50 +30,20 @@ import SettingIcon from "@/assets/table-bar/settings.svg?component";
 import CollapseIcon from "@/assets/table-bar/collapse.svg?component";
 import { useI18n } from "vue-i18n";
 
-/** 树形表格行：展开/折叠按 `children` 递归 */
-type TableRowLike = Record<string, unknown> & { children?: TableRowLike[] };
-
-/** 列表列类型（pure-admin `TableColumnList` 元素） */
-type TableColumnLike = TableColumnList[number];
-
-/**
- * 树形表格实例契约：传入 pure-table 的 ref 以启用展开/折叠功能。
- * 仅声明本组件依赖的成员（`data` 行集合、`toggleRowExpansion`、`size` 门控展开图标）
- */
-interface ExpandableTableInstance {
-  data?: TableRowLike[];
-  toggleRowExpansion?: (row: TableRowLike, expanded?: boolean) => void;
-  size?: unknown;
-}
-
-const props = {
-  /** 头部最左边的标题 */
-  title: {
-    type: String,
-    default: "列表"
-  },
-  /** 对于树形表格，如果想启用展开和折叠功能，传入当前表格的ref即可 */
-  tableRef: {
-    type: Object as PropType<ExpandableTableInstance>
-  },
-  /** 需要展示的列 */
-  columns: {
-    type: Array as PropType<TableColumnList>,
-    default: () => []
-  },
-  isExpandAll: {
-    type: Boolean,
-    default: true
-  },
-  tableKey: {
-    type: [String, Number] as PropType<string | number>,
-    default: "0"
-  }
-};
+import {
+  ICON_CLASS,
+  TOP_CLASS,
+  buildRenderClass,
+  rendTippyProps,
+  resolveFixedState,
+  tableBarProps,
+  toggleRowExpansionAll,
+  type TableColumnLike
+} from "./utils";
 
 export default defineComponent({
   name: "PureTableBar",
-  props,
+  props: tableBarProps,
   emits: ["refresh", "fullscreen", "change"],
   setup(props, { emit, slots, attrs }) {
     const size = ref("default");
@@ -110,41 +79,11 @@ export default defineComponent({
       };
     });
 
-    const iconClass = computed(() => {
-      return [
-        "text-black",
-        "dark:text-white",
-        "duration-100",
-        "hover:text-primary!",
-        "cursor-pointer",
-        "outline-hidden"
-      ];
-    });
+    const iconClass = computed(() => ICON_CLASS);
 
-    const topClass = computed(() => {
-      return [
-        "flex",
-        "justify-between",
-        "pt-0.75",
-        "px-2.75",
-        "border-b",
-        "border-b-solid",
-        "border-[#dcdfe6]",
-        "dark:border-[#303030]"
-      ];
-    });
+    const topClass = computed(() => TOP_CLASS);
 
-    const renderClass = computed(() => {
-      return [
-        "w-99/100",
-        "px-2",
-        "pb-2",
-        "bg-bg_color",
-        isFullscreen.value
-          ? ["w-full!", "h-full!", "z-2002", "fixed", "inset-0"]
-          : "mt-2"
-      ];
-    });
+    const renderClass = computed(() => buildRenderClass(isFullscreen.value));
 
     function onReFresh() {
       loading.value = true;
@@ -155,21 +94,12 @@ export default defineComponent({
     function onExpand() {
       isExpandAll.value = !isExpandAll.value;
       const rows = props.tableRef?.data;
-      if (rows) toggleRowExpansionAll(rows, isExpandAll.value);
+      if (rows) toggleRowExpansionAll(props.tableRef, rows, isExpandAll.value);
     }
 
     function onFullscreen() {
       isFullscreen.value = !isFullscreen.value;
       emit("fullscreen", isFullscreen.value);
-    }
-
-    function toggleRowExpansionAll(data: TableRowLike[], isExpansion: boolean) {
-      data.forEach(item => {
-        props.tableRef?.toggleRowExpansion?.(item, isExpansion);
-        if (item.children !== undefined && item.children !== null) {
-          toggleRowExpansionAll(item.children, isExpansion);
-        }
-      });
     }
 
     function handleCheckAllChange(val: CheckboxValueType) {
@@ -327,21 +257,7 @@ export default defineComponent({
         (item: TableColumnLike) =>
           transformI18n(item.label) === transformI18n(label)
       );
-      const fixedOption = column?.fixed;
-      const left = fixedOption === "left";
-      const right = fixedOption === true || fixedOption === "right";
-      return { fixed: left || right, left, right };
-    };
-
-    const rendTippyProps = (content: string) => {
-      // https://vue-tippy.netlify.app/props
-      return {
-        content,
-        offset: [0, 18],
-        duration: [300, 0],
-        followCursor: true,
-        hideOnClick: "toggle"
-      };
+      return resolveFixedState(column);
     };
 
     const reference = {

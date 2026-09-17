@@ -1,282 +1,47 @@
 <script lang="ts" setup>
-import { computed, isRef, ref } from "vue";
-import { useI18n } from "vue-i18n";
-import { message } from "@/utils/message";
-import { userApi } from "@/api/system/user";
-import { hasAuth } from "@/router/utils";
 import SearchUser from "@/views/system/components/SearchUser.vue";
 import TrialResultPanel from "@/views/system/components/TrialResultPanel.vue";
-import type {
-  FieldTrialResult,
-  TrialResult
-} from "@/api/types/permission-preview";
-import type { FieldLookupNode, FieldRuleRow } from "./utils/types";
+import { useTrialPanel, type TrialPanelProps } from "./useTrialPanel";
 
 defineOptions({ name: "PermissionTrialPanel" });
 
-/**
- * 即时试算（配置页，草稿不落库）：
- * - 数据权限：把当前表单里**尚未保存**的规则 + 且/或模式 + 绑定菜单作为草稿，
- *   预演「该用户按这组规则能查到多少行」——与保存走同一套写入校验，不能绕过校验；
- * - 字段权限：预演「该用户在某菜单下实际能看到哪些字段」（未配置=裁空），
- *   可叠加一份未保存的字段白名单草稿看新增可见字段。
- */
-const props = withDefaults(
-  defineProps<{
-    /** 当前表单里的规则（草稿） */
-    rules?: FieldRuleRow[];
-    /** 数据权限注册表树（取第二层作为试算模型候选） */
-    ruleList?: FieldLookupNode[];
-    /** 字段权限注册表（ROLE）树：模型 → 字段，字段试算草稿候选 */
-    fieldRuleList?: FieldLookupNode[];
-    /** 菜单上下文候选（绑定菜单的授权只在该上下文生效） */
-    menus?: Array<{ value: string; label: string }>;
-    /** 当前表单值（读 mode_type / menu 自动带入草稿，保证试算与保存同语义） */
-    formValue?: unknown;
-  }>(),
-  {
-    rules: () => [],
-    ruleList: () => [],
-    fieldRuleList: () => [],
-    menus: () => []
-  }
-);
-
-const { t } = useI18n();
-
-/** 默认展开：试算入口折叠时极易被忽略 */
-const activeNames = ref<string[]>(["trial"]);
-
-/** 试算有独立权限码：缺失时只提示，不发必然 403 的请求 */
-const canTrial = computed(() => hasAuth("previewTrial:SystemUser"));
-
-const scope = ref<"data" | "field">("data");
-const targetUser = ref<object | object[] | string>();
-
-/* ---------- 表单上下文（草稿与保存保持同语义） ---------- */
-
-const formValue = computed<Record<string, unknown>>(() => {
-  const raw = props.formValue;
-  if (!raw) return {};
-  const value = isRef(raw) ? raw.value : raw;
-  return (value ?? {}) as Record<string, unknown>;
+const props = withDefaults(defineProps<TrialPanelProps>(), {
+  rules: () => [],
+  ruleList: () => [],
+  fieldRuleList: () => [],
+  menus: () => []
 });
 
-/** 表单里的且/或模式（数字/字符串/labeled 对象归一；单条规则时服务端统一按或模式保存） */
-const formMode = computed<number | null>(() => {
-  const raw = formValue.value.mode_type;
-  const value =
-    raw && typeof raw === "object" ? (raw as { value?: unknown }).value : raw;
-  if (value === null || value === undefined || value === "") return null;
-  const num = Number(value);
-  return Number.isNaN(num) ? null : num;
-});
-
-/** 表单绑定的菜单 pk 列表（多选；草稿只在这些菜单上下文生效） */
-const boundMenuPks = computed<string[]>(() =>
-  (Array.isArray(formValue.value.menu)
-    ? formValue.value.menu
-    : formValue.value.menu === null || formValue.value.menu === undefined
-      ? []
-      : [formValue.value.menu]
-  )
-    .map(item =>
-      item && typeof item === "object" ? (item as { pk?: unknown }).pk : item
-    )
-    .filter(item => item !== null && item !== undefined && item !== "")
-    .map(String)
-);
-
-/* ---------- 数据权限试算 ---------- */
-
-const targetPk = computed(() => {
-  const raw = targetUser.value as unknown;
-  const first = Array.isArray(raw) ? raw[0] : raw;
-  if (first === null || first === undefined || first === "") return "";
-  if (typeof first === "string" || typeof first === "number")
-    return String(first);
-  const pk = (first as { pk?: string | number }).pk;
-  return pk === undefined || pk === null ? "" : String(pk);
-});
-
-const model = ref("");
-const menuContext = ref("");
-const loading = ref(false);
-const result = ref<TrialResult | null>(null);
-
-/** 试算模式：默认跟随表单，可手动覆盖 */
-const modeOverride = ref<number | null>(null);
-const effectiveMode = computed(() => modeOverride.value ?? formMode.value ?? 0);
-const modeOverridden = computed(
-  () => modeOverride.value !== null && modeOverride.value !== formMode.value
-);
-
-/** 模型候选 = 注册表树第二层（app → model → field） */
-const modelOptions = computed(() => {
-  const options: Array<{ value: string; label: string }> = [];
-  props.ruleList.forEach(app => {
-    (app.children ?? []).forEach(modelNode => {
-      if (!modelNode.name || modelNode.name === "*") return;
-      options.push({
-        value: modelNode.name,
-        label: `${modelNode.label ?? modelNode.name} (${modelNode.name})`
-      });
-    });
-  });
-  return options;
-});
-
-const canRunData = computed(
-  () =>
-    Boolean(targetPk.value && model.value && props.rules.length) &&
-    !loading.value
-);
-
-/** 结果与当前草稿是否一致（规则/模式/绑定菜单变化后提示重新试算） */
-const lastRunKey = ref("");
-const draftKey = computed(() =>
-  JSON.stringify({
-    rules: props.rules,
-    mode: effectiveMode.value,
-    menu: boundMenuPks.value
-  })
-);
-const dataStale = computed(
-  () => Boolean(result.value) && lastRunKey.value !== draftKey.value
-);
-
-function handleModeChange(value: number) {
-  // 与表单一致时回到「跟随」状态，避免留下无意义的覆盖标记
-  modeOverride.value = value === formMode.value ? null : value;
-}
-
-async function runDataTrial() {
-  if (!canRunData.value) return;
-  loading.value = true;
-  try {
-    const res = await userApi.previewTrial(targetPk.value, {
-      model: model.value,
-      menu: menuContext.value ? menuContext.value : null,
-      draft: {
-        rules: props.rules as unknown as Array<Record<string, unknown>>,
-        mode_type: effectiveMode.value,
-        // 表单绑定的菜单一并带入：草稿只在对应上下文生效（与保存后一致）
-        menu: boundMenuPks.value.length ? boundMenuPks.value : null
-      }
-    });
-    result.value = res.data;
-    lastRunKey.value = draftKey.value;
-  } catch {
-    result.value = null;
-    message(t("permissionPreview.trialFailed"), { type: "error" });
-  } finally {
-    loading.value = false;
-  }
-}
-
-/* ---------- 字段权限试算 ---------- */
-
-const fieldResult = ref<FieldTrialResult | null>(null);
-
-/** 字段注册表 → 模型候选（兼容 app→model→field 与 model→field 两种层级） */
-const fieldModelOptions = computed(() => {
-  const options: Array<{
-    value: string;
-    label: string;
-    fields: Array<{ value: string; label: string }>;
-  }> = [];
-  const walk = (nodes: FieldLookupNode[]) => {
-    nodes.forEach(node => {
-      if (!node.name) return;
-      const children = node.children ?? [];
-      if (children.some(child => (child.children ?? []).length > 0)) {
-        walk(children);
-        return;
-      }
-      if (!children.length) return;
-      options.push({
-        value: node.name,
-        label: node.label ?? node.name,
-        fields: children
-          .filter(child => Boolean(child.name))
-          .map(child => ({
-            value: child.name as string,
-            label: child.label ?? (child.name as string)
-          }))
-      });
-    });
-  };
-  walk(props.fieldRuleList);
-  return options;
-});
-
-const draftFieldModel = ref("");
-const draftFieldNames = ref<string[]>([]);
-const draftFields = ref<Record<string, string[]>>({});
-
-const draftFieldNameOptions = computed(
-  () =>
-    fieldModelOptions.value.find(item => item.value === draftFieldModel.value)
-      ?.fields ?? []
-);
-
-const draftEntries = computed(() =>
-  Object.keys(draftFields.value).map(modelLabel => {
-    const option = fieldModelOptions.value.find(
-      item => item.value === modelLabel
-    );
-    const labels = (draftFields.value[modelLabel] ?? []).map(
-      name => option?.fields.find(field => field.value === name)?.label ?? name
-    );
-    return {
-      model: modelLabel,
-      label: option?.label ?? modelLabel,
-      text: labels.join("、")
-    };
-  })
-);
-
-const hasDraftFields = computed(
-  () => Object.keys(draftFields.value).length > 0
-);
-const canRunField = computed(
-  () => Boolean(targetPk.value && menuContext.value) && !loading.value
-);
-
-function addDraftFields() {
-  const modelLabel = draftFieldModel.value;
-  if (!modelLabel || !draftFieldNames.value.length) return;
-  const current = new Set(draftFields.value[modelLabel] ?? []);
-  draftFieldNames.value.forEach(name => current.add(name));
-  draftFields.value = {
-    ...draftFields.value,
-    [modelLabel]: [...current]
-  };
-  draftFieldNames.value = [];
-}
-
-function removeDraftEntry(modelLabel: string) {
-  const next = { ...draftFields.value };
-  delete next[modelLabel];
-  draftFields.value = next;
-}
-
-async function runFieldTrial() {
-  if (!canRunField.value) return;
-  loading.value = true;
-  try {
-    const res = await userApi.previewFieldTrial(targetPk.value, {
-      menu: menuContext.value,
-      draft: hasDraftFields.value ? { fields: draftFields.value } : null
-    });
-    fieldResult.value = res.data;
-  } catch {
-    fieldResult.value = null;
-    message(t("permissionPreview.trialFailed"), { type: "error" });
-  } finally {
-    loading.value = false;
-  }
-}
+const {
+  t,
+  activeNames,
+  canTrial,
+  scope,
+  targetUser,
+  formMode,
+  boundMenuPks,
+  model,
+  menuContext,
+  loading,
+  result,
+  effectiveMode,
+  modeOverridden,
+  modelOptions,
+  canRunData,
+  dataStale,
+  handleModeChange,
+  runDataTrial,
+  fieldResult,
+  fieldModelOptions,
+  draftFieldModel,
+  draftFieldNames,
+  draftFieldNameOptions,
+  draftEntries,
+  canRunField,
+  addDraftFields,
+  removeDraftEntry,
+  runFieldTrial
+} = useTrialPanel(props);
 </script>
 
 <template>
