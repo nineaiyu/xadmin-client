@@ -14,6 +14,7 @@
  *   E2E_PARALLEL      并发路数（默认 4）
  *   E2E_API_PORT      后端起始端口（默认 18896，第 i 路使用 +i*2）
  *   E2E_FRONT_PORT    前端起始端口（默认 8848，第 i 路使用 +i*2）
+ *   E2E_STUB_LLM_PORT 桩 LLM 起始端口（默认 18897，第 i 路使用 +i*2，避开偶数段的后端端口）
  *   E2E_NO_KILL=1     跳过启动前清理端口（CI 全新无残留，或自行管理端口）
  */
 import { spawn, execSync } from "node:child_process";
@@ -28,6 +29,9 @@ if (!Number.isInteger(total) || total < 1) {
 
 const baseApi = Number(process.env.E2E_API_PORT ?? "18896");
 const baseFront = Number(process.env.E2E_FRONT_PORT ?? "8848");
+// 桩 LLM 端口必须按路分配：webServer 会真的 bind 该端口，共用会让后起的 shard
+// 直接 EADDRINUSE 退出（表现为「随机 shard 启动即失败」）。步长取 2 与后端同段错开
+const baseStub = Number(process.env.E2E_STUB_LLM_PORT ?? "18897");
 const extra = process.argv.slice(2);
 
 // 启动前清理本次并行将独占的端口：上一次串行/并行 e2e 若有残留 daphne/vite，
@@ -45,6 +49,7 @@ if (process.env.E2E_NO_KILL !== "1") {
   for (let i = 0; i < total; i++) {
     freePort(baseApi + i * 2);
     freePort(baseFront + i * 2);
+    freePort(baseStub + i * 2);
   }
   await new Promise(r => setTimeout(r, 500)); // 等杀掉的进程释放端口
 }
@@ -54,6 +59,9 @@ const jobs = Array.from({ length: total }, (_, i) => {
     ...process.env,
     E2E_API_PORT: String(baseApi + i * 2),
     E2E_FRONT_PORT: String(baseFront + i * 2),
+    // 桩 LLM：端口按路分配，并让用例指向本路的桩（ai-action 读 E2E_STUB_LLM_URL）
+    E2E_STUB_LLM_PORT: String(baseStub + i * 2),
+    E2E_STUB_LLM_URL: `http://127.0.0.1:${baseStub + i * 2}/v1`,
     E2E_DB_FILENAME: `e2e-shard-${i}.sqlite3`
   };
   const args = [
@@ -82,6 +90,7 @@ if (process.env.E2E_NO_KILL !== "1") {
   for (let i = 0; i < total; i++) {
     freePort(baseApi + i * 2);
     freePort(baseFront + i * 2);
+    freePort(baseStub + i * 2);
   }
 }
 

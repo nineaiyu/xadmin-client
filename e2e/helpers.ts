@@ -197,12 +197,19 @@ export async function openList(
     timeout: 15_000
   });
   if (!filter) return;
-  // 搜索项多时默认折叠，展开后条件输入与「搜索」按钮才可见
-  const expandBtn = page.getByRole("button", { name: /展开/ });
-  if (await expandBtn.isVisible().catch(() => false)) {
-    await expandBtn.click();
-  }
+  // 搜索项多时默认折叠，展开后条件输入与「搜索」按钮才可见。
+  // 早期实现只在「瞬时 isVisible 为真」时才点展开：渲染稍慢（webkit 下实测）就漏点，
+  // 随后 fill 命中折叠态里存在但不可见的输入 → 10s 超时（曾表现为 webkit 专属假失败）。
+  // 这里改成先等输入框可见、不可见再点展开并强制等到可见，避免瞬时判断竞态。
   const input = page.getByPlaceholder(filter.placeholder).first();
+  const inputVisible = await input
+    .waitFor({ state: "visible", timeout: 5_000 })
+    .then(() => true)
+    .catch(() => false);
+  if (!inputVisible) {
+    await page.getByRole("button", { name: /展开/ }).first().click();
+    await expect(input).toBeVisible({ timeout: 10_000 });
+  }
   await input.fill(filter.value);
   await page.getByRole("button", { name: "搜索", exact: true }).first().click();
 }
