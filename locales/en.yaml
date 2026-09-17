@@ -383,6 +383,7 @@ menus:
   approvalInstance: Flow Approval
   approvalDelegation: Approval Delegation
   leaveApply: Leave Request
+  moduleManager: Module Manager
 
 approval:
   pendingTab: Pending My Approval
@@ -1994,3 +1995,28 @@ oauthAuthorize:
   deny: Deny
   invalidRequest: Missing request parameters (client_id / redirect_uri)
   loadFailed: Failed to load authorization request
+
+systemModule:
+  currentPreset: Current preset
+  enabledSummary: "{enabled} / {total} modules enabled"
+  restartTip: Trimming is configured in config.yml and takes effect after restart; disabling only hides entry points and APIs, and never deletes data
+  disabledModules: Disabled modules
+  configSnippet: Trimming snippet (config.yml)
+  copy: Copy
+  copied: Copied to clipboard
+  copyFailed: Copy failed, please select the text manually
+  docsTip: Module list and trimming semantics
+  moduleId: Module ID
+  moduleName: Name
+  level: Level
+  levelCore: Core
+  levelStandard: Standard
+  levelOptional: Optional
+  status: Status
+  enabled: Enabled
+  disabled: Disabled
+  coverage: Coverage
+  coverageValue: "{menus} pages / {routes} routes"
+  depends: Depends
+  note: Notes
+  loadFailed: Failed to load module list

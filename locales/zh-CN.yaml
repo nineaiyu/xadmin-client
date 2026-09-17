@@ -383,6 +383,7 @@ menus:
   approvalInstance: 流程审批
   approvalDelegation: 审批委托
   leaveApply: 请假申请
+  moduleManager: 模块管理
 
 approval:
   pendingTab: 待我审批
@@ -1994,3 +1995,28 @@ oauthAuthorize:
   deny: 拒绝
   invalidRequest: 请求参数不完整（缺少 client_id / redirect_uri）
   loadFailed: 授权请求加载失败
+
+systemModule:
+  currentPreset: 当前预设
+  enabledSummary: "已启用 {enabled} / {total} 个模块"
+  restartTip: 模块裁剪通过 config.yml 配置、重启进程后生效；关闭模块只隐藏入口与接口，不删除任何数据
+  disabledModules: 已停用模块
+  configSnippet: 裁剪配置片段（config.yml）
+  copy: 复制
+  copied: 已复制到剪贴板
+  copyFailed: 复制失败，请手动选择文本
+  docsTip: 模块清单与裁剪语义见
+  moduleId: 模块标识
+  moduleName: 名称
+  level: 等级
+  levelCore: 内核
+  levelStandard: 标配
+  levelOptional: 可选
+  status: 状态
+  enabled: 启用
+  disabled: 停用
+  coverage: 覆盖范围
+  coverageValue: "页面 {menus} / 路由 {routes}"
+  depends: 依赖
+  note: 说明
+  loadFailed: 加载模块清单失败

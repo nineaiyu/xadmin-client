@@ -68,6 +68,38 @@ test("消息公告：页面可打开", async ({ page }) => {
   });
 });
 
+test("模块管理：清单渲染与裁剪配置片段", async ({ page }) => {
+  await login(page);
+  await openMenuPath(page, ["系统管理"], "/system/module/index");
+
+  const table = page.getByTestId("module-table");
+  await expect(table).toBeVisible({ timeout: 15_000 });
+  // 内核模块与可选模块都在清单里（可选模块即使被裁掉也以「停用」状态展示）
+  await expect(table.getByText("core_rbac").first()).toBeVisible();
+  await expect(table.getByText("chat").first()).toBeVisible();
+
+  // 预设相关断言与接口对齐：用例可在 full / standard / core 任一预设下运行
+  // （standard 预设下 E2E 会裁剪掉 chat 等 9 个模块，写死 full 的期望会假失败）
+  const report = (await (
+    await page.request.get("/api/system/modules")
+  ).json()) as {
+    data: { preset: string; enabled_count: number; total: number };
+  };
+  await expect(page.getByTestId("module-summary")).toContainText(
+    `已启用 ${report.data.enabled_count} / ${report.data.total} 个模块`
+  );
+  await expect(page.getByTestId("module-snippet")).toHaveValue(
+    new RegExp(`MODULE_PRESET: ${report.data.preset}`)
+  );
+
+  // 剪贴板 API 在无头环境可能被浏览器拒绝（失败侧也会给出可读提示），
+  // 因此只断言有可读反馈，不断言成功文案；页面上可能残留早前操作的 message，取最后一条
+  await page.getByTestId("module-copy").click();
+  await expect(page.locator(".el-message").last()).toBeVisible({
+    timeout: 5_000
+  });
+});
+
 test("账户设置：头像下拉可进入个人信息页", async ({ page }) => {
   await login(page);
   await page.locator(".el-dropdown-link").first().click();
