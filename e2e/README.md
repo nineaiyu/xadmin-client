@@ -9,6 +9,7 @@
 | `pnpm test:e2e:smoke`                          | 只跑 `@smoke` 用例 + chromium（快速反馈，约 30s）                                                                                                                                    |
 | `pnpm test:e2e:fresh` / `test:e2e:smoke:fresh` | **先杀掉 18896/8848 旧进程再跑**（见下）                                                                                                                                             |
 | `pnpm test:e2e:parallel`                       | 并行分片全量（默认 4 路，`E2E_PARALLEL` 可调；每路独立端口 + 独立 sqlite 库，~4min）。CI 全量档用 3 路 + `--reporter=list`。**注意**：起手会清理本分片段端口，串行跑批运行中勿再执行 |
+| `pnpm test:e2e:perf` / `:perf:update`          | 体验基线采集（chromium，TTFB/FCP/LCP/CLS；`:update` 写基线）；见「体验基线与时长预算」                                                                                               |
 
 环境：sqlite 文件库（tmp/e2e.sqlite3）+ 进程内 FakeRedis + eager celery + 种子脚本（`scripts/e2e_seed.py`），
 零外部服务依赖，不触碰本机 config.yml。配置见 `playwright.config.ts`（`E2E_API_PORT` 等
@@ -91,6 +92,27 @@ RePlusPage 列表**固定发 `ordering=-created_time` 且默认 `pageSize=15`**�
 - 判定 `maxDiffPixelRatio 2%`（容忍字体渲染亚像素差）；stabilize 已禁 CSS 动画/光标闪烁并等 ECharts canvas 绘制结束（≥1.5s）；
 - 失败产物见 `playwright-report-visual` artifact / `test-results/`（含 expected / actual / diff 三图）。
 
+## 体验基线（`perf.e2e.ts`，U1）与跑批时长预算（Q4）
+
+**体验基线**（首测 2026-09-17，登录页 LCP 1224ms / 列表页 CLS 0.05~0.24）：
+
+| 场景              | 命令                                                   |
+| ----------------- | ------------------------------------------------------ |
+| 采集 + 与基线比对 | `pnpm test:e2e:perf`（chromium；无基线时只打印不比对） |
+| 刷新基线          | `pnpm test:e2e:perf:update`                            |
+
+- 指标：TTFB / FCP / LCP / CLS（PerformanceObserver 缓冲 LCP/layout-shift），页面稳定等待 `E2E_PERF_SETTLE`（默认 2s）；
+- 基线文件 `e2e/perf-baseline.json` 按「平台-CI」分组（`darwin-local` / `linux-ci`），**跨环境数字不可比、只看同环境趋势**；
+- 现阶段只做「离谱回归」兜底（TTFB ≤ 2s / LCP ≤ 5s / CLS ≤ 0.5）；正式预算待数据积累后评审；
+- 采集口径为 dev 链路（vite + 种子后端），与生产构建存在差异，仅用于趋势与回归。
+
+**跑批时长预算**（`scripts/e2e-parallel.mjs`）：每次跑批打印各 shard 与总用时，并按同环境基线
+（`e2e/duration-budget.json`）校验 **+20% 上限**（`E2E_BUDGET_RATIO` 可覆盖）：
+
+- 首次在某环境运行自动记录基线；`E2E_BUDGET_UPDATE=1` 强制刷新（如确认环境变更/合理增量）；
+- 透传参数的子集运行不参与比对；跑批失败时不记录基线（避免把异常时长写成基线）；
+- 超预算报错文案给出「本次 / 基线 / 上限」三值，便于判断是回归还是环境变化。
+
 ## 历史教训速查
 
 | 教训                                                                                                                                                                                                                                                                                                                                                              | 处置                                                                                                                                                                                                                                                                                                                                                                             |
@@ -137,3 +159,4 @@ RePlusPage 列表**固定发 `ordering=-created_time` 且默认 `pageSize=15`**�
 | 站点配置 `Locale` 是跨用例共享状态：locale 用例失败（或两个防抖 PATCH 乱序）把英文留给后续 spec → 中文定位器（`退出系统` / `展开` / 菜单名）成批失配，**双浏览器、跨模块同时失败**，极易误判为 webkit 负载 flaky（2026-09-17 实测 oauth / zz-preview-smoke 全挂）                                                                                                 | 三层防线：① `waitLocaleSaved` 按**目标语言**精确匹配保存 PATCH（等「任意 PATCH」会误判落库 → reload 后仍中文）；② `afterEach` 接口兜底写 zh（失败重试一次）；③ `helpers.login` 语言自愈：登录后检测非中文 → 写回 zh + reload，保证任何 spec 起点干净                                                                                                                             |
 | `openList` 固定 5s 窗口等搜索输入框 → 高负载下把「未折叠但渲染慢」误判为折叠 → 点击不存在的「展开」按钮 10s 超时（双浏览器同挂）                                                                                                                                                                                                                                  | 同时等「输入框可见」与「展开按钮可见」任一出现，再按输入框可见性决定是否点展开；展开点击失败不致命（后续可见性断言兜底）                                                                                                                                                                                                                                                         |
 | 并行分片未向子进程注入 `E2E_PARALLEL` → `helpers.HIGH_LOAD` 恒为 false（除非用户手动设置）→ `test.slow()` / `DOWNLOAD_TIMEOUT=90s` 高负载档失效，分片下沿用严格上限随机超时                                                                                                                                                                                       | `e2e-parallel.mjs` 子进程 env 注入 `E2E_PARALLEL=<total>`                                                                                                                                                                                                                                                                                                                        |
+| `zz-preview-smoke`（用户权限预览抽屉）并行跑批**连 retry 稳定失败**（2/4 分片、chromium+webkit 同挂，`toBeVisible` 31s 超时），隔离复跑必绿（2026-09-17 三轮并行均复现、两轮隔离全绿）                                                                                                                                                                            | 权限预览抽屉渲染重（全量分区 × 字段白名单），并行分片 CPU 争抢下渲染超窗；定性沿用「隔离复跑 ≠ 回归」。若 CI 并行档同样复现，给该用例断言上 `HIGH_LOAD` 档位或单开串行档，勿盲改业务代码                                                                                                                                                                                         |

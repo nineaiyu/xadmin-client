@@ -1,0 +1,28 @@
+{
+  "darwin-local": {
+    "login": {
+      "ttfb": 332,
+      "fcp": 1172,
+      "lcp": 1224,
+      "cls": 0.0157,
+      "dcl": 949,
+      "load": 952
+    },
+    "welcome": {
+      "ttfb": 3,
+      "fcp": 284,
+      "lcp": 284,
+      "cls": 0.0199,
+      "dcl": 215,
+      "load": 219
+    },
+    "system-user": {
+      "ttfb": 3,
+      "fcp": 268,
+      "lcp": 268,
+      "cls": 0.2403,
+      "dcl": 200,
+      "load": 202
+    }
+  }
+}

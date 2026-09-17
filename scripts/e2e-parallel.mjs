@@ -18,6 +18,8 @@
  *   E2E_NO_KILL=1     跳过启动前清理端口（CI 全新无残留，或自行管理端口）
  */
 import { spawn, execSync } from "node:child_process";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 const total = Number(process.env.E2E_PARALLEL ?? "4");
 if (!Number.isInteger(total) || total < 1) {
@@ -54,6 +56,63 @@ if (process.env.E2E_NO_KILL !== "1") {
   await new Promise(r => setTimeout(r, 500)); // 等杀掉的进程释放端口
 }
 
+/**
+ * 时长预算（Q4）：跑批总时长相对同环境基线只允许 +20%（`E2E_BUDGET_RATIO` 可覆盖）。
+ * 基线按「平台-CI + 分片数」分组（时长随机器/分片数变化，跨环境不可比）；
+ * 首次在某环境运行即记录基线（`e2e/duration-budget.json`），子集运行（透传参数）
+ * 不参与比对。
+ */
+const BUDGET_FILE = fileURLToPath(
+  new URL("../e2e/duration-budget.json", import.meta.url)
+);
+const BUDGET_RATIO = Number(process.env.E2E_BUDGET_RATIO ?? "1.2");
+// 预算键 = 平台-CI-运行范围：时长随环境与用例范围变化，跨键不可比；
+// smoke 子集与全量分别记录，避免「拿 smoke 基线卡全量」的错配。
+const RUN_SCOPE = process.env.E2E_SMOKE ? "smoke" : "full";
+const ENV_KEY = `${process.platform}-${process.env.CI ? "ci" : "local"}-${RUN_SCOPE}`;
+
+function checkDurationBudget(seconds) {
+  if (extra.length > 0) {
+    console.log("[e2e-budget] 子集运行（透传参数），跳过时长预算比对");
+    return;
+  }
+  let data = {};
+  if (existsSync(BUDGET_FILE)) {
+    try {
+      data = JSON.parse(readFileSync(BUDGET_FILE, "utf-8"));
+    } catch {
+      data = {};
+    }
+  }
+  const key = String(total);
+  const entry = data[ENV_KEY]?.[key];
+  if (process.env.E2E_BUDGET_UPDATE === "1" || !entry) {
+    data[ENV_KEY] = {
+      ...(data[ENV_KEY] ?? {}),
+      [key]: {
+        seconds: Math.round(seconds),
+        recorded_at: new Date().toISOString()
+      }
+    };
+    writeFileSync(BUDGET_FILE, `${JSON.stringify(data, null, 2)}\n`);
+    console.log(
+      `[e2e-budget] 基线已记录：env=${ENV_KEY} shards=${key} seconds=${Math.round(seconds)}`
+    );
+    return;
+  }
+  const budgetSeconds = entry.seconds * BUDGET_RATIO;
+  const line =
+    `[e2e-budget] 本次 ${Math.round(seconds)}s / 基线 ${entry.seconds}s` +
+    `（上限 +${Math.round((BUDGET_RATIO - 1) * 100)}% = ${Math.round(budgetSeconds)}s）`;
+  if (seconds > budgetSeconds) {
+    console.error(`${line} —— 超出时长预算（刷新基线：E2E_BUDGET_UPDATE=1）`);
+    process.exitCode = 1;
+  } else {
+    console.log(`${line} ✓`);
+  }
+}
+
+const startedAt = Date.now();
 const jobs = Array.from({ length: total }, (_, i) => {
   const env = {
     ...process.env,
@@ -80,12 +139,19 @@ const jobs = Array.from({ length: total }, (_, i) => {
     ...extra
   ];
   return new Promise(resolve => {
+    const shardStartedAt = Date.now();
     const child = spawn("pnpm", args, { stdio: "inherit", env });
-    child.on("close", code => resolve(code ?? 1));
+    child.on("close", code =>
+      resolve({
+        code: code ?? 1,
+        seconds: (Date.now() - shardStartedAt) / 1000
+      })
+    );
   });
 });
 
-const codes = await Promise.all(jobs);
+const results = await Promise.all(jobs);
+const totalSeconds = (Date.now() - startedAt) / 1000;
 
 // run 结束后兜底清理本并行段端口：playwright 偶发不会回收 webServer（残留 daphne/vite），
 // 留到下次会撞 reuseExistingServer=false 的 "already used"，故对称清理一次
@@ -97,8 +163,19 @@ if (process.env.E2E_NO_KILL !== "1") {
   }
 }
 
-const failed = codes.filter(c => c !== 0);
+results.forEach((result, i) =>
+  console.log(
+    `[e2e-parallel] shard ${i + 1}/${total} 用时 ${result.seconds.toFixed(1)}s（exit=${result.code}）`
+  )
+);
+console.log(
+  `[e2e-parallel] 总用时 ${totalSeconds.toFixed(1)}s（env=${ENV_KEY}, shards=${total}）`
+);
+
+const failed = results.filter(result => result.code !== 0);
 if (failed.length > 0) {
   console.error(`[e2e-parallel] ${failed.length}/${total} 个 shard 失败`);
   process.exit(1);
 }
+
+checkDurationBudget(totalSeconds);
