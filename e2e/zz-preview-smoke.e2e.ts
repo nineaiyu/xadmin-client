@@ -46,16 +46,29 @@ async function openPreviewViaRow(page: Page, row: Locator, buttonText: string) {
 
 test("用户权限预览：抽屉与分区渲染（超管全量）", async ({ page }) => {
   await login(page);
-  // 搜索过滤后再定位超管行（xadmin 最早创建，默认分页下不在第一页）
-  await openList(page, "/system/user/index", {
-    placeholder: "请输入用户名",
-    value: "xadmin"
+  await page.goto(`/#/system/user/index`);
+  await expect(page.locator(".el-table").first()).toBeVisible({
+    timeout: 15_000
   });
-
-  const row = page
+  // 目标行双通道：并行分片库仅 ~10 用户（15/页全放下），超管行按 ID 列精确定位直接
+  // 可用——并行高负载下搜索区/列的响应式宽度可能被锁死（表格只剩 ID/操作列、搜索字段
+  // 收起、输入框持续 hidden；2026-09-17 并行五连挂，隔离复跑不复现），能不走搜索就不走；
+  // 共享库被挤出首页时才回退到搜索过滤。
+  let row = page
     .locator(".el-table__row")
-    .filter({ hasText: "xadmin" })
+    .filter({ has: page.locator("td").filter({ hasText: /^1$/ }) })
     .first();
+  const directHit = await row
+    .waitFor({ state: "visible", timeout: 8_000 })
+    .then(() => true)
+    .catch(() => false);
+  if (!directHit) {
+    await openList(page, "/system/user/index", {
+      placeholder: "请输入用户名",
+      value: "xadmin"
+    });
+    row = page.locator(".el-table__row").filter({ hasText: "xadmin" }).first();
+  }
   await expect(row).toBeVisible({ timeout: 10_000 });
   await openPreviewViaRow(page, row, "权限预览");
 

@@ -236,11 +236,10 @@ export async function openList(
   // 搜索项多时默认折叠，展开后条件输入与「搜索」按钮才可见。
   // 早期实现只在「瞬时 isVisible 为真」时才点展开：渲染稍慢（webkit 下实测）就漏点，
   // 随后 fill 命中折叠态里存在但不可见的输入 → 10s 超时（曾表现为 webkit 专属假失败）。
-  // 后续实现「等任一形态出现 → 按瞬时 isVisible 单次判定」，仍会被并行高负载打穿：
-  // 搜索区在慢渲染下经历「表单重建」中间态，单次判定可能落在 hidden 瞬间 → 误判折叠
-  // 且点击落空后不再重试，输入框持续 hidden 10s（zz-preview 并行连挂 5 轮的根因，
-  // 2026-09-17 定位）。这里改为循环自愈：每轮等输入可见（8s），不可见则容错点「展开」，
-  // 最多 3 轮；任一轮输入可见即继续，最坏 ~30s 有界。
+  // 并行高负载下搜索区的响应式宽度可能被锁死（字段收起、输入框持续 hidden，2026-09-17
+  // zz-preview 五连挂），单次「等任一形态 → 判定 → 点击」都会被中间态打穿。这里改为
+  // 循环自愈：每轮等输入可见（8s），不可见则容错点「展开」，最多 3 轮；最坏 ~30s 有界。
+  // 用例侧应优先选用不依赖搜索区的定位通道（见 zz-preview-smoke 的目标行双通道）。
   const input = page.getByPlaceholder(filter.placeholder).first();
   const expandBtn = page.getByRole("button", { name: /展开/ }).first();
   for (let attempt = 0; attempt < 3; attempt++) {
