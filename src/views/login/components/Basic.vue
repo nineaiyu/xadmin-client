@@ -83,21 +83,38 @@ const formatLoginDayList = () => {
   }
 };
 
-const initToken = () => {
-  if (authInfo.access && authInfo.token) {
-    getTempTokenApi().then(res => {
+/**
+ * 临时 Token 首次获取的进行中 Promise：登录提交前 await 它，避免「首帧 token 尚未
+ * 返回就提交」用空 token 打后端；就绪后复用，不为每次提交重复请求。
+ */
+let tokenPromise: Promise<void> | null = null;
+
+/** 取一次性临时 Token 写入表单；force=true 强制刷新（登录失败后 token 已被消费） */
+const initToken = (force = false) => {
+  if (!(authInfo.access && authInfo.token)) return Promise.resolve();
+  if (!force && tokenPromise) return tokenPromise;
+  tokenPromise = getTempTokenApi()
+    .then(res => {
       if (res.code === SUCCESS_CODE) {
         ruleForm.token = res.token;
       }
+    })
+    .catch(() => {
+      // 静默失败：真正拦截在提交环节，由失败分支统一提示与刷新
+      tokenPromise = null;
     });
-  }
+  return tokenPromise;
 };
 
 const onLogin = async (formEl: FormInstance | undefined) => {
   if (!formEl) return;
-  await formEl.validate(valid => {
+  await formEl.validate(async valid => {
     if (valid) {
       loading.value = true;
+      // 临时 Token 必须与本次提交一一对应：首帧 token 请求尚未返回就提交会带着
+      // 空 token 打后端，命中「临时Token校验失败」的 400 且不会自动重试。
+      // 提交前等 token 就绪（就绪后瞬时返回；失败重试路径见下方 catch 的强制刷新）。
+      await initToken();
       useUserStoreHook()
         .loginByUsername(cloneDeep(ruleForm), authInfo.encrypted)
         .then(res => {
@@ -116,7 +133,7 @@ const onLogin = async (formEl: FormInstance | undefined) => {
           }
         })
         .catch(() => {
-          initToken();
+          void initToken(true);
           captchaRef.value?.getImgCode();
         })
         .finally(() => {
@@ -156,7 +173,7 @@ const handleMfaSuccess = (data: TokenInfo) => {
 /** 返回重新登录 */
 const handleMfaBack = () => {
   loginMfaInfo.value = null;
-  initToken();
+  void initToken(true);
   captchaRef.value?.getImgCode();
 };
 
@@ -180,7 +197,7 @@ onMounted(() => {
         Object.keys(authData).forEach(key => {
           (authInfo as unknown as RecordType)[key] = authData[key];
         });
-        initToken();
+        void initToken();
         loginDay.value = authInfo.lifetime ?? 1;
         formatLoginDayList();
         useUserStoreHook().SET_ISREMEMBERED(checked.value);
