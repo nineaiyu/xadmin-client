@@ -4,5 +4,11 @@
       "seconds": 35,
       "recorded_at": "2026-09-17T11:36:48.316Z"
     }
+  },
+  "darwin-local-full": {
+    "4": {
+      "seconds": 470,
+      "recorded_at": "2026-09-17T12:55:00.755Z"
+    }
   }
 }
