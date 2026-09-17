@@ -55,6 +55,18 @@ export const LOCK_USER = { username: "e2e_lock", password: "E2E-Lock-2026!" };
 
 export type Credentials = { username: string; password: string };
 
+/**
+ * 高负载档：CI（`CI=1`）或并行分片跑批（`E2E_PARALLEL>1`）。
+ *
+ * 这两档下登录、导出下载等链路会显著变慢，历史上有「仅 webkit 失败、retries 内重跑即过」
+ * 的负载型瞬态记录（见 e2e/README.md「历史教训速查」）。本地串行跑批不启用本档，
+ * 保持严格上限，让真回归第一时间暴露。
+ */
+export const HIGH_LOAD = Boolean(process.env.CI || process.env.E2E_PARALLEL);
+
+/** 下载事件（导出 xlsx/CSV）等待上限：高负载档放宽，避免把「机器忙」记成回归。 */
+export const DOWNLOAD_TIMEOUT = HIGH_LOAD ? 90_000 : 30_000;
+
 export async function login(page: Page, creds: Credentials = ADMIN) {
   const accountInput = page.getByPlaceholder("账号");
   await page.goto("/#/login");

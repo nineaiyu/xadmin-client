@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { statSync } from "node:fs";
 
-import { login, openMenuPath } from "./helpers";
+import { DOWNLOAD_TIMEOUT, HIGH_LOAD, login, openMenuPath } from "./helpers";
 
 /**
  * 异步导出 + 下载中心全流程（用户管理，export-async action）：
@@ -26,6 +26,8 @@ function toolbarButton(page: import("@playwright/test").Page, index: number) {
 }
 
 test("异步导出：提交任务并在下载中心出现记录可下载", async ({ page }) => {
+  // 高负载档放宽用例超时：下载等待已放宽到 DOWNLOAD_TIMEOUT（见 helpers.ts 说明）
+  if (HIGH_LOAD) test.slow();
   await openUserManagement(page);
 
   await toolbarButton(page, 1).click();
@@ -52,7 +54,9 @@ test("异步导出：提交任务并在下载中心出现记录可下载", async
   await expect(row).toContainText("成功");
 
   // 鉴权下载：走 download action 而非 /media/ 直出
-  const downloadPromise = page.waitForEvent("download", { timeout: 30_000 });
+  const downloadPromise = page.waitForEvent("download", {
+    timeout: DOWNLOAD_TIMEOUT
+  });
   await row.getByRole("button", { name: "下载" }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toMatch(/\.xlsx$/);

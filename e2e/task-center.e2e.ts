@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { login, openMenuPath } from "./helpers";
+import { DOWNLOAD_TIMEOUT, HIGH_LOAD, login, openMenuPath } from "./helpers";
 
 /**
  * 任务中心聚合抽屉（铃铛入口）：提交一次异步导出 → 抽屉「最近导出」出现该记录
@@ -28,6 +28,8 @@ async function openTaskCenter(page: Page) {
 }
 
 test("任务中心抽屉：异步导出后「最近导出」可见且可下载", async ({ page }) => {
+  // 高负载档放宽用例超时：下载等待已放宽到 DOWNLOAD_TIMEOUT（见 helpers.ts 说明）
+  if (HIGH_LOAD) test.slow();
   await openUserManagement(page);
 
   // 工具栏第 2 个按钮 = 导出（其后为导入）
@@ -53,7 +55,9 @@ test("任务中心抽屉：异步导出后「最近导出」可见且可下载",
   await expect(row).toBeVisible({ timeout: 30_000 });
   await expect(row).toContainText("成功");
 
-  const downloadPromise = page.waitForEvent("download", { timeout: 30_000 });
+  const downloadPromise = page.waitForEvent("download", {
+    timeout: DOWNLOAD_TIMEOUT
+  });
   await row.getByRole("button", { name: "下载" }).click();
   expect((await downloadPromise).suggestedFilename()).toMatch(/\.xlsx$/);
 });

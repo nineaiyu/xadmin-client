@@ -1,7 +1,13 @@
 import { expect, test } from "@playwright/test";
 import { statSync } from "node:fs";
 
-import { FRONT_URL, login, openMenuPath } from "./helpers";
+import {
+  DOWNLOAD_TIMEOUT,
+  FRONT_URL,
+  HIGH_LOAD,
+  login,
+  openMenuPath
+} from "./helpers";
 
 /**
  * 导入导出全流程 E2E：导出文件下载 + 导入建数据（用户管理，ImportExportDataAction）。
@@ -29,13 +35,17 @@ function toolbarButton(page: import("@playwright/test").Page, index: number) {
 }
 
 test("导出：弹层确认后触发 xlsx 文件下载", async ({ page }) => {
+  // 高负载档放宽用例超时：下载等待已放宽到 DOWNLOAD_TIMEOUT（见 helpers.ts 说明）
+  if (HIGH_LOAD) test.slow();
   await openUserManagement(page);
 
   await toolbarButton(page, 1).click();
   const dialog = page.locator(".el-dialog", { hasText: "导出" }).first();
   await expect(dialog).toBeVisible();
 
-  const downloadPromise = page.waitForEvent("download", { timeout: 30_000 });
+  const downloadPromise = page.waitForEvent("download", {
+    timeout: DOWNLOAD_TIMEOUT
+  });
   await dialog
     .getByRole("button", { name: /保存|确定/ })
     .first()

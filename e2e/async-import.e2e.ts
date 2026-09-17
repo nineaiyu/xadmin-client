@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { statSync } from "node:fs";
 
-import { login, openMenuPath } from "./helpers";
+import { DOWNLOAD_TIMEOUT, HIGH_LOAD, login, openMenuPath } from "./helpers";
 
 /**
  * 异步导入 2.0 全流程（用户管理，import-validate / import-async action）：
@@ -89,6 +89,8 @@ test("仅校验：非法行精确定位且不落库", async ({ page }) => {
 test("异步导入：提交任务并在下载中心「导入记录」出现记录可下载错误报告", async ({
   page
 }) => {
+  // 高负载档放宽用例超时：下载等待已放宽到 DOWNLOAD_TIMEOUT（见 helpers.ts 说明）
+  if (HIGH_LOAD) test.slow();
   const username = `e2e_aimp_${Date.now()}`;
   await openUserManagement(page);
   const dialog = await openImportDialog(page);
@@ -117,7 +119,9 @@ test("异步导入：提交任务并在下载中心「导入记录」出现记�
   await expect(row).toContainText("成功");
 
   // 下载失败行错误报告（xlsx）
-  const downloadPromise = page.waitForEvent("download", { timeout: 30_000 });
+  const downloadPromise = page.waitForEvent("download", {
+    timeout: DOWNLOAD_TIMEOUT
+  });
   await row.getByRole("button", { name: "错误报告" }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toMatch(/_errors\.xlsx$/);
