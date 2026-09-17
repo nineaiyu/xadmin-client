@@ -67,6 +67,41 @@ export const HIGH_LOAD = Boolean(process.env.CI || process.env.E2E_PARALLEL);
 /** 下载事件（导出 xlsx/CSV）等待上限：高负载档放宽，避免把「机器忙」记成回归。 */
 export const DOWNLOAD_TIMEOUT = HIGH_LOAD ? 90_000 : 30_000;
 
+/** 站点配置列表接口：语言（Locale）等跨用例共享状态的自愈/还原用 */
+const SITE_CONFIG_LIST_API = `${FRONT_URL}/api/system/config/system`;
+
+/**
+ * 语言自愈：站点配置的 Locale 是跨用例共享状态，locale 用例一旦失败（还原链路
+ * 被 token/防抖时序打断）可能把英文留给后续 spec，后续中文定位器（菜单/按钮/
+ * placeholder）会成批失配（曾被误判为 webkit flaky）。登录后统一校正为中文：
+ * 仅在检测到非中文时写回并 reload，让当前页面按中文重新挂载。失败静默不阻塞用例。
+ */
+async function healSharedLocale(page: Page) {
+  try {
+    const resp = await page.request.get(
+      `${SITE_CONFIG_LIST_API}?key=WEB_SITE_CONFIG`
+    );
+    const rows = (await resp.json())?.data?.results ?? [];
+    const row = Array.isArray(rows)
+      ? rows.find(item => item.key === "WEB_SITE_CONFIG")
+      : undefined;
+    if (!row) return;
+    const value =
+      typeof row.value === "string" ? JSON.parse(row.value) : row.value;
+    if (!value || value.Locale === "zh") return;
+    await page.request.patch(`${SITE_CONFIG_LIST_API}/${row.pk}`, {
+      data: { value: { ...value, Locale: "zh" } }
+    });
+    // 写回后当前页面仍是旧语言渲染，reload 让 ensureLocale 以中文重新挂载
+    await page.reload();
+    await expect(page.locator("#header-translation")).toBeVisible({
+      timeout: 15_000
+    });
+  } catch {
+    // 自愈失败不阻塞用例（真实问题由用例断言暴露）
+  }
+}
+
 export async function login(page: Page, creds: Credentials = ADMIN) {
   const accountInput = page.getByPlaceholder("账号");
   await page.goto("/#/login");
@@ -87,6 +122,7 @@ export async function login(page: Page, creds: Credentials = ADMIN) {
   // hash 路由：登录成功后离开 #/login。上限给足 30s：并行分片（e2e-parallel）
   // 高负载下登录 POST + 路由拉取可能超过 15s（auto-retry 断言的上界，非盲等）
   await expect(page).not.toHaveURL(/#\/login/, { timeout: 30_000 });
+  await healSharedLocale(page);
 }
 
 export async function openMenu(page: Page, parent: string, child: string) {
@@ -200,16 +236,20 @@ export async function openList(
   // 搜索项多时默认折叠，展开后条件输入与「搜索」按钮才可见。
   // 早期实现只在「瞬时 isVisible 为真」时才点展开：渲染稍慢（webkit 下实测）就漏点，
   // 随后 fill 命中折叠态里存在但不可见的输入 → 10s 超时（曾表现为 webkit 专属假失败）。
-  // 这里改成先等输入框可见、不可见再点展开并强制等到可见，避免瞬时判断竞态。
+  // 后续实现固定等输入框 5s 再判定折叠，同样不够：高负载下两种形态都可能晚于 el-table
+  // 渲染，5s 窗口把「未折叠但渲染慢」误判成折叠，随后点击不存在的「展开」按钮 → 10s 点击
+  // 超时（并行分片下双浏览器同挂）。这里改为同时等两种形态任一出现，再按输入框可见性决定。
   const input = page.getByPlaceholder(filter.placeholder).first();
-  const inputVisible = await input
-    .waitFor({ state: "visible", timeout: 5_000 })
-    .then(() => true)
-    .catch(() => false);
-  if (!inputVisible) {
-    await page.getByRole("button", { name: /展开/ }).first().click();
-    await expect(input).toBeVisible({ timeout: 10_000 });
+  const expandBtn = page.getByRole("button", { name: /展开/ }).first();
+  await Promise.race([
+    input.waitFor({ state: "visible", timeout: 15_000 }).catch(() => null),
+    expandBtn.waitFor({ state: "visible", timeout: 15_000 }).catch(() => null)
+  ]);
+  if (!(await input.isVisible())) {
+    // 折叠态：容错点击（若恰为「未折叠但渲染慢」，下方可见性断言会兜住）
+    await expandBtn.click({ timeout: 5_000 }).catch(() => null);
   }
+  await expect(input).toBeVisible({ timeout: 10_000 });
   await input.fill(filter.value);
   await page.getByRole("button", { name: "搜索", exact: true }).first().click();
 }

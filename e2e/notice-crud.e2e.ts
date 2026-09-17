@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { login, openMenuPath } from "./helpers";
 
@@ -12,11 +12,7 @@ import { login, openMenuPath } from "./helpers";
  */
 
 /** 弹窗内选下拉项：按可见选项文案匹配（级别/类型/用户均走 el-select） */
-async function pickSelectOption(
-  page: Page,
-  dialog: Page["locator"],
-  label: string
-) {
+async function pickSelectOption(page: Page, dialog: Locator, label: string) {
   const option = page
     .locator(".el-select-dropdown__item")
     .filter({ hasText: label })

@@ -58,6 +58,9 @@ const jobs = Array.from({ length: total }, (_, i) => {
   const env = {
     ...process.env,
     E2E_API_PORT: String(baseApi + i * 2),
+    // 分片跑批 = 高负载档：helpers 的 HIGH_LOAD（test.slow / 放宽下载超时）据此生效。
+    // 不注入时子进程读不到 E2E_PARALLEL，并行下会沿用严格上限（历史表现为随机 shard 超时失败）
+    E2E_PARALLEL: String(total),
     E2E_FRONT_PORT: String(baseFront + i * 2),
     // 桩 LLM：端口按路分配，并让用例指向本路的桩（ai-action 读 E2E_STUB_LLM_URL）
     E2E_STUB_LLM_PORT: String(baseStub + i * 2),

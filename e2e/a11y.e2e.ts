@@ -62,10 +62,16 @@ const ALLOWED_VIOLATIONS: Record<string, RegExp[]> = {
   "aria-roles": [/^\.bar$/]
 };
 
+/** axe 阻断级违规摘要（豁免剔除后的最小结构） */
+type ViolationSummary = {
+  id: string;
+  impact: string | null | undefined;
+  help: string;
+  nodes: string;
+};
+
 /** 判断单条违规是否被豁免：所有命中节点都匹配登记的选择器才算豁免 */
-function isAllowed(
-  violation: Awaited<ReturnType<typeof scanBlockingViolations>>[number]
-): boolean {
+function isAllowed(violation: ViolationSummary): boolean {
   const patterns = ALLOWED_VIOLATIONS[violation.id];
   if (!patterns) return false;
   const targets = violation.nodes.split(" | ").filter(Boolean);
@@ -76,7 +82,9 @@ function isAllowed(
 }
 
 /** 扫描并返回阻断级违规摘要（豁免项已剔除） */
-async function scanBlockingViolations(page: import("@playwright/test").Page) {
+async function scanBlockingViolations(
+  page: import("@playwright/test").Page
+): Promise<ViolationSummary[]> {
   // axe 采样必须在动画终态进行：el-tree 等组件入场 opacity transition 未结束时，
   // 半透明文字与背景混色会拉低对比度，产生瞬态 color-contrast 假违规
   // （首扫偶发、隔离重跑必过）。注入样式让所有动画立即跳到终态再扫描。
@@ -100,9 +108,7 @@ async function scanBlockingViolations(page: import("@playwright/test").Page) {
     .filter(violation => !isAllowed(violation));
 }
 
-function formatViolations(
-  violations: Awaited<ReturnType<typeof scanBlockingViolations>>
-): string {
+function formatViolations(violations: ViolationSummary[]): string {
   return violations
     .map(
       violation =>

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import { login } from "./helpers";
 
@@ -12,7 +12,7 @@ import { login } from "./helpers";
 
 const CALLBACK = "http://127.0.0.1:19999/cb";
 
-async function createApplication(page, name: string) {
+async function createApplication(page: Page, name: string) {
   const created = await page.request.post("/api/system/api-applications", {
     data: { name, callback_urls: [CALLBACK], rate_limit_per_minute: 0 }
   });

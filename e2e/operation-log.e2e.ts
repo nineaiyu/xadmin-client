@@ -28,7 +28,10 @@ test("审计日志：DELETE 操作入日志且可按方法检索", async ({ page
     `${FRONT_URL}/api/system/logs/operation?method=DELETE&page_size=20`
   );
   expect(listResp.status()).toBe(200);
-  const rows = (await listResp.json()).data.results;
+  const rows = (await listResp.json()).data.results as Array<{
+    path?: string;
+    method?: string;
+  }>;
   const dictDelete = rows.find(
     row => row.path?.includes("/api/system/dict/") && row.method === "DELETE"
   );

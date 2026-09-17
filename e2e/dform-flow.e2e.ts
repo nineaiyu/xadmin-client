@@ -21,6 +21,7 @@ import {
 
 async function approverToken(page: Page): Promise<string> {
   const browser = page.context().browser();
+  if (!browser) throw new Error("无法获取浏览器实例");
   const context = await browser.newContext({ locale: "zh-CN" });
   const approverPage = await context.newPage();
   try {
@@ -37,7 +38,10 @@ async function findInstance(page: Page, token: string, keyword: string) {
     { headers: { Authorization: `Bearer ${token}` } }
   );
   expect(response.ok(), await response.text()).toBeTruthy();
-  const rows = (await response.json())?.data?.results ?? [];
+  const rows = ((await response.json())?.data?.results ?? []) as Array<{
+    title?: string;
+    pk: string;
+  }>;
   return rows.find(item => (item.title ?? "").includes(keyword));
 }
 
@@ -144,6 +148,7 @@ test("表单绑定审批流程：提交进入流程 → 驳回重提 → 审批�
       formName
     );
     expect(instance, "绑定流程的表单提交应生成流程实例").toBeTruthy();
+    if (!instance) throw new Error("绑定流程的表单提交未生成流程实例");
     const rejectRes = await page.request.post(
       `${BACKEND_URL}/api/system/approval-instances/${instance.pk}/reject`,
       { headers: approverHeaders, data: { reason: "E2E 材料不齐" } }
@@ -177,6 +182,7 @@ test("表单绑定审批流程：提交进入流程 → 驳回重提 → 审批�
       approverHeaders.Authorization.split(" ")[1],
       formName
     );
+    if (!instance) throw new Error("重新提交后未生成流程实例");
     const approveRes = await page.request.post(
       `${BACKEND_URL}/api/system/approval-instances/${instance.pk}/approve`,
       { headers: approverHeaders, data: { reason: "E2E 同意" } }
