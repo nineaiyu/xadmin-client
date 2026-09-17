@@ -1,4 +1,4 @@
-FROM nineaiyu/xadmin-client-base:20260916_131445 AS stage-build
+FROM nineaiyu/xadmin-client-base:20260917_003157 AS stage-build
 
 ARG VERSION
 
