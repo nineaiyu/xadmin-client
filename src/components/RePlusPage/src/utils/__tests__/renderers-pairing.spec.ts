@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { TableColumnRenderer } from "@pureadmin/table";
 import { builtinDetailRenderers } from "../renderers-detail";
+import { builtinFormRenderers } from "../renderers-form";
+import { builtinSearchRenderers } from "../renderers-search";
 import {
   getDetailRenderer,
   getFormRenderer,
@@ -50,6 +52,25 @@ const CLASSIFIED = new Set<string>([
   ...VALUE_TYPE_TYPES,
   ...OPTIONS_ONLY_TYPES
 ]);
+
+/**
+ * 表单通道豁免登记：详情有渲染器但表单无需对应编辑器的类型（须写明理由）。
+ * 未登记且表单缺失 → 编辑弹窗退化为默认输入框，对象值会被写成 `[object Object]`。
+ */
+const FORM_EXEMPT_TYPES: string[] = [];
+
+/** 搜索通道注册表分类清单（搜索侧有 `api-*` 兜底，不强制与详情/表单对齐，只防无登记新增） */
+const SEARCH_REGISTRY_TYPES = [
+  "text",
+  "datetime",
+  "datetimerange",
+  "number",
+  "select",
+  "select-multiple",
+  "select-ordering"
+] as const;
+
+const SEARCH_CLASSIFIED = new Set<string>([...SEARCH_REGISTRY_TYPES]);
 
 function makeColumn(inputType: string): PageColumn {
   return {
@@ -145,5 +166,43 @@ describe("RePlusPage 详情/列表渲染器成对守护", () => {
     expect(getSearchRenderer(unknown)).toBeTypeOf("function");
     expect(getFormRenderer(unknown)).toBeTypeOf("function");
     expect(getDetailRenderer("labeled_choice")).toBeTypeOf("function");
+  });
+});
+
+/**
+ * 四通道契约守护扩展（§3.3）：元数据的 input_type 同时驱动「搜索 / 列表 / 详情 / 表单」，
+ * 除详情/列表成对外，表单与搜索通道的注册表同样纳入分类守护，防「只补一侧」的静默退化。
+ */
+describe("渲染器四通道契约守护（表单 / 搜索通道）", () => {
+  it("详情注册表的 input_type 必须能在表单通道编辑（或登记 FORM_EXEMPT_TYPES）", () => {
+    const missing = Object.keys(builtinDetailRenderers).filter(
+      key => !builtinFormRenderers[key] && !FORM_EXEMPT_TYPES.includes(key)
+    );
+    expect(
+      missing,
+      `以下类型缺表单渲染器：${missing.join(", ")}；` +
+        "请在 renderers-form.tsx 补齐，或在 FORM_EXEMPT_TYPES 登记豁免理由（详情专用/只读展示）"
+    ).toEqual([]);
+  });
+
+  it("搜索注册表新增 input_type 必须先在 SEARCH_REGISTRY_TYPES 登记", () => {
+    const unclassified = Object.keys(builtinSearchRenderers).filter(
+      key => !SEARCH_CLASSIFIED.has(key)
+    );
+    expect(
+      unclassified,
+      `以下搜索 input_type 未登记：${unclassified.join(", ")}；` +
+        "请在 SEARCH_REGISTRY_TYPES 登记并同步 framework-cookbook 检查清单"
+    ).toEqual([]);
+  });
+
+  it("SEARCH_REGISTRY_TYPES 中登记的键都必须在搜索注册表存在（防改名漂移）", () => {
+    const missing = [...SEARCH_CLASSIFIED].filter(
+      key => !builtinSearchRenderers[key]
+    );
+    expect(
+      missing,
+      `分类清单引用了不存在的搜索渲染器：${missing.join(", ")}`
+    ).toEqual([]);
   });
 });

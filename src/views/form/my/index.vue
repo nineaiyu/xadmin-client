@@ -7,6 +7,7 @@ import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
+import { statusTagProps, type StatusTagType } from "@/utils/dict";
 import {
   listRows,
   submissionApi,
@@ -130,14 +131,14 @@ const resubmit = async (row: SubmissionItem) => {
   message(String(res.detail || t("results.failed")), { type: "warning" });
 };
 
-/** 审批状态样式（绑定流程的表单由审批结果回写） */
-const statusType = (status?: string) =>
-  (({
-    PENDING: "warning",
-    APPROVED: "success",
-    REJECTED: "danger",
-    CANCELLED: "info"
-  })[status ?? ""] ?? "info") as "info" | "success" | "warning" | "danger";
+/** 提交状态（审批回写）语义色兜底：字典未配 color 时按审批结果取 EP 语义色，
+ * tag props 统一经 `statusTagProps`（与列表/详情同口径，禁止页面自建映射函数） */
+const SUBMISSION_STATUS_TAG_TYPE: Record<string, StatusTagType> = {
+  PENDING: "warning",
+  APPROVED: "success",
+  REJECTED: "danger",
+  CANCELLED: "info"
+};
 
 /** 提交数据展示：非标量值 JSON 化，避免附件/日期范围/明细行渲染成 [object Object] */
 const dataText = (data: Record<string, unknown>) =>
@@ -246,7 +247,12 @@ onMounted(loadAll);
             <el-tag
               v-if="(row as SubmissionItem).status?.value"
               size="small"
-              :type="statusType((row as SubmissionItem).status?.value)"
+              v-bind="
+                statusTagProps(
+                  (row as SubmissionItem).status,
+                  SUBMISSION_STATUS_TAG_TYPE
+                )
+              "
               data-testid="submission-status-tag"
             >
               {{ (row as SubmissionItem).status?.label }}
