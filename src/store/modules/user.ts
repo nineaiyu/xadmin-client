@@ -262,7 +262,8 @@ export const useUserStore = defineStore("pure-user", {
           // 其余站内推送仅页面不可见时弹；点击行为与各分支的应用内通知一致
           const isChatPush =
             data?.message_type === "chat_message" ||
-            data?.message_type === "chat_private";
+            data?.message_type === "chat_private" ||
+            data?.message_type === "chat_group";
           notifyDesktop({
             type: isChatPush ? "chat" : "push",
             title: `${data?.notice_type?.label}-${data?.title}`,
@@ -325,7 +326,8 @@ export const useUserStore = defineStore("pure-user", {
               });
               break;
             case "chat_private":
-              // 私聊提醒（对端未开聊天室时推送）：点击直达该私聊会话
+            case "chat_group":
+              // 私聊/群聊提醒（未开聊天室时推送）：点击直达该会话
               ElNotification({
                 title: `${data?.notice_type?.label}-${data?.title}`,
                 message: h("i", { style: "color: teal" }, message),

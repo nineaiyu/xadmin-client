@@ -29,6 +29,8 @@ export interface FormMetaProps {
   fixed_tag: boolean;
   /** 显示标签页最大数量 */
   dynamic_level: number;
+  /** 页面水印：置顶强制挂载（与基本设置的路径范围是或关系） */
+  watermark: boolean;
 }
 
 interface FormItemProps {

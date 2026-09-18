@@ -46,7 +46,9 @@ export const MessageAction = {
   /** 任务执行日志增量推送 */
   TASK_LOG: "task_log",
   /** 监控面板指标推送（system/ws_monitor.py） */
-  MONITOR: "monitor"
+  MONITOR: "monitor",
+  /** 大屏远程控制指令（system/ws_screen.py，展示端被动接收） */
+  SCREEN_COMMAND: "screen_command"
 } as const;
 
 export type MessageActionValue =
@@ -84,6 +86,19 @@ export interface MonitorPushPayload {
   celery?: MonitorCelery;
   slow?: MonitorSlow;
   trend?: MonitorOverview["trend"];
+}
+
+/** 大屏远程控制帧（screen_command；ws/screen/<pk> 下行，与 system/ws_screen.py 对齐）
+ *
+ * command=state 为连接回放（对齐最近一次控制态），其余为管理端下发的指令；
+ * mode=manual 时展示端停轮播并停在 index 页，refresh_rev 递增表示需重拉数据。 */
+export interface ScreenCommandPayload {
+  command: "switch" | "page" | "refresh" | "auto" | "state";
+  mode?: "auto" | "manual";
+  index?: number;
+  refresh_rev?: number;
+  rev?: number;
+  ts?: string;
 }
 
 /** 通知推送载荷（push_message；message_type 语义见 message/notifications） */

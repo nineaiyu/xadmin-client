@@ -3,7 +3,11 @@ import { h, onMounted, reactive, ref, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { ElTag } from "element-plus";
-import { addDialog } from "@/components/ReDialog";
+import {
+  addDialog,
+  closeDialog,
+  type DialogOptions
+} from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
@@ -16,6 +20,7 @@ import {
 } from "@/api/system/analysis";
 import type { DashboardItem } from "@/api/system/datasets";
 import ScreenForm from "../components/ScreenForm.vue";
+import ScreenControlForm from "../components/ScreenControlForm.vue";
 
 /** 可见性兜底配色（与数据集同款语义） */
 const VISIBILITY_TAG: Record<string, StatusTagType> = {
@@ -24,10 +29,11 @@ const VISIBILITY_TAG: Record<string, StatusTagType> = {
 };
 
 /**
- * 大屏模板：CRUD + 投屏。
+ * 大屏模板：CRUD + 投屏 + 远程控制。
  *
  * - 新建/编辑走 ReDialog + ScreenForm（仪表盘序列多选在表单内收敛）；
  * - 删除保留框架默认入口；投屏为行内按钮（跳独立全屏页，保留原交互）；
+ * - 远程控制走 ReDialog + ScreenControlForm（指令经 REST 落态并广播到展示端）；
  * - dashboards 为仪表盘 pk 数组：前端映射名称展示。
  */
 export function useScreen(tableRef: Ref) {
@@ -42,6 +48,7 @@ export function useScreen(tableRef: Ref) {
   });
   const canCreate = hasAuth("create:DataScreen");
   const canEdit = hasAuth("partialUpdate:DataScreen");
+  const canCommand = hasAuth("command:DataScreen");
 
   /** 仪表盘清单：列名映射 + 表单多选共用 */
   const dashboards = ref<DashboardItem[]>([]);
@@ -87,6 +94,29 @@ export function useScreen(tableRef: Ref) {
   /** 投屏：新开独立全屏页（隐藏静态路由，保留原交互） */
   const display = (row: ScreenItem) => {
     router.push({ path: "/analysis/screen/display", query: { pk: row.pk } });
+  };
+
+  /* ---------------- 远程控制（ReDialog + ScreenControlForm） ---------------- */
+  const openControl = (row: ScreenItem) => {
+    // 按大屏自身的仪表盘序列传参（顺序即服务端下标序；不可解析的名称回落 pk）
+    const options: DialogOptions = {
+      title: `${t("dataScreen.remoteControl")} - ${row.name}`,
+      width: dialogSize("md"),
+      draggable: true,
+      destroyOnClose: true,
+      closeOnClickModal: false,
+      hideFooter: true,
+      contentRenderer: () =>
+        h(ScreenControlForm, {
+          row,
+          dashboards: (row.dashboards ?? []).map(pk => ({
+            pk,
+            name: dashboards.value.find(item => item.pk === pk)?.name ?? pk
+          })),
+          onClose: () => closeDialog(options, 0)
+        })
+    };
+    addDialog(options);
   };
 
   /* ---------------- 新建 / 编辑（ReDialog + ScreenForm） ---------------- */
@@ -141,6 +171,13 @@ export function useScreen(tableRef: Ref) {
         props: { type: "success", link: true },
         onClick: ({ row }) => display(row as ScreenItem),
         show: 10
+      },
+      {
+        text: t("dataScreen.remoteControl"),
+        code: "command",
+        props: { type: "warning", link: true },
+        onClick: ({ row }) => openControl(row as ScreenItem),
+        show: canCommand && 15
       },
       {
         text: t("dataScreen.edit"),

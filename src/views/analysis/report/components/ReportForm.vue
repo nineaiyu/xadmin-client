@@ -1,10 +1,14 @@
 <script lang="ts" setup>
-import { computed, reactive } from "vue";
+import { computed, onMounted, reactive } from "vue";
 import { useI18n } from "vue-i18n";
 import { choiceValue } from "@/utils/dict";
 import { message } from "@/utils/message";
 import type { DatasetItem } from "@/api/system/datasets";
-import type { ReportItem } from "@/api/system/analysis";
+import {
+  searchReportUsers,
+  type ReportItem,
+  type ReportUserOption
+} from "@/api/system/analysis";
 
 /**
  * 定时报表表单（C5：弹窗体系收敛到 ReDialog 的 content 组件形态）。
@@ -41,7 +45,53 @@ const form = reactive({
   // cron 表达式：非空时优先于上面三档频次
   cron_expression: props.row?.cron_expression ?? "",
   recipients: (props.row?.recipients ?? []).join(", "),
+  // 投递渠道：空 = 仅邮件（存量数据兼容）；新建默认勾选邮件
+  notify_channels: props.row?.notify_channels?.length
+    ? [...props.row.notify_channels]
+    : ["email"],
+  im_recipients: [...(props.row?.im_recipients ?? [])],
   is_active: props.row?.is_active ?? true
+});
+
+/** 渠道选项（值与后端 REPORT_NOTIFY_CHANNELS 对齐） */
+const CHANNEL_OPTIONS = [
+  { value: "email", labelKey: "dataReport.channelEmail" },
+  { value: "dingtalk", labelKey: "dataReport.channelDingtalk" },
+  { value: "wecom", labelKey: "dataReport.channelWecom" },
+  { value: "feishu", labelKey: "dataReport.channelFeishu" }
+];
+const emailSelected = computed(() => form.notify_channels.includes("email"));
+const imSelected = computed(
+  () => form.notify_channels.filter(item => item !== "email").length > 0
+);
+
+/** IM 接收人候选缓存：远程搜索与编辑回显共用 */
+const userOptions = reactive<ReportUserOption[]>([]);
+const userLabel = (user: ReportUserOption) =>
+  user.nickname ? `${user.username}-${user.nickname}` : user.username;
+
+const mergeUsers = (rows: ReportUserOption[]) => {
+  const known = new Set(userOptions.map(item => item.pk));
+  for (const row of rows) {
+    if (!known.has(row.pk)) userOptions.push(row);
+  }
+};
+
+const searchUsers = (keyword: string) => {
+  const value = (keyword ?? "").trim();
+  if (!value) return;
+  searchReportUsers({ keyword: value })
+    .then(res => mergeUsers(res?.data ?? []))
+    .catch(() => undefined);
+};
+
+/** 编辑既有报表：按主键回显已选接收人（避免无边界的通讯录枚举） */
+onMounted(() => {
+  if (form.im_recipients.length) {
+    searchReportUsers({ pks: form.im_recipients })
+      .then(res => mergeUsers(res?.data ?? []))
+      .catch(() => undefined);
+  }
 });
 
 /** 当前数据集（驱动分组字段候选） */
@@ -60,6 +110,10 @@ const getPayload = (): Record<string, unknown> | null => {
     message(t("dataReport.required"), { type: "warning" });
     return null;
   }
+  if (!form.notify_channels.length) {
+    message(t("dataReport.channelRequired"), { type: "warning" });
+    return null;
+  }
   const recipients = form.recipients.split(/[,;\s]+/).filter(Boolean);
   return {
     name: form.name,
@@ -74,6 +128,8 @@ const getPayload = (): Record<string, unknown> | null => {
     weekday: Number(form.weekday),
     cron_expression: form.cron_expression.trim(),
     recipients,
+    notify_channels: [...form.notify_channels],
+    im_recipients: [...form.im_recipients],
     is_active: form.is_active
   };
 };
@@ -174,11 +230,49 @@ defineExpose({ getPayload });
         {{ t("dataReport.cronHint") }}
       </span>
     </el-form-item>
-    <el-form-item :label="t('dataReport.recipients')" required>
+    <el-form-item :label="t('dataReport.notifyChannels')">
+      <el-checkbox-group v-model="form.notify_channels">
+        <el-checkbox
+          v-for="channel in CHANNEL_OPTIONS"
+          :key="channel.value"
+          :value="channel.value"
+        >
+          {{ t(channel.labelKey) }}
+        </el-checkbox>
+      </el-checkbox-group>
+      <div class="text-xs text-gray-400">
+        {{ t("dataReport.notifyChannelsHint") }}
+      </div>
+    </el-form-item>
+    <el-form-item
+      v-if="emailSelected"
+      :label="t('dataReport.recipients')"
+      required
+    >
       <el-input
         v-model="form.recipients"
         :placeholder="t('dataReport.recipientsHint')"
       />
+    </el-form-item>
+    <el-form-item v-if="imSelected" :label="t('dataReport.imRecipients')">
+      <el-select
+        v-model="form.im_recipients"
+        class="w-full"
+        multiple
+        filterable
+        remote
+        reserve-keyword
+        clearable
+        :remote-method="searchUsers"
+        :placeholder="t('dataReport.imRecipientsHint')"
+      >
+        <el-option
+          v-for="user in userOptions"
+          :key="user.pk"
+          :value="user.pk"
+          :label="userLabel(user)"
+        />
+      </el-select>
     </el-form-item>
     <el-form-item :label="t('dataReport.isActive')">
       <el-switch v-model="form.is_active" />

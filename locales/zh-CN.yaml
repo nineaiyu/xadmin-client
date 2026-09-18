@@ -870,6 +870,8 @@ systemMenu:
   fixedTagTip: 当前菜单名称是否固定显示在标签页且不可关闭
   hiddenTag: 隐藏标签页
   hiddenTagTip: 当前菜单名称或自定义信息禁止添加到标签页
+  pageWatermark: 页面水印
+  pageWatermarkTip: 开启后该页面强制显示站点水印（需在基本设置中开启水印总开关，与生效页面路径范围是或关系）
   addPermissions: 自动批量添加权限
   codeSuffix: 权限标识后缀
   codeSuffixTip: 默认为组件名称，若为空，则默认为后端视图名称，可自行修改
@@ -1080,6 +1082,20 @@ chat:
   compTime: 调休
   marriage: 婚假
   other: 其他
+  newGroup: 新建群聊
+  groupName: 群名称
+  groupNamePlaceholder: 请输入群名称
+  selectMembers: 选择成员
+  searchUserHint: 输入用户名或昵称搜索
+  groupMembers: 群成员
+  groupOwner: 群主
+  addMember: 添加成员
+  removeMember: 移除成员
+  renameGroup: 修改群名
+  leaveGroup: 退出群聊
+  leaveGroupConfirm: 确定退出该群聊吗？退出后将不再接收该群消息。
+  groupMemberCount: "{count} 人"
+  emptyMembers: 暂无成员
 
 login:
   thirdPartyLogin: 第三方登录
@@ -1689,6 +1705,22 @@ dataScreen:
   required: 请填写名称并选择仪表盘
   saveOk: 保存成功
   deleteConfirm: 确定删除大屏「{name}」吗？
+  remoteControl: 远程控制
+  controlState: 当前状态
+  controlAuto: 自动轮播
+  controlManual: 远程接管
+  controlPageText: 页码
+  controlSwitch: 切换仪表盘
+  controlSwitchHint: 选择要投屏的仪表盘
+  controlApply: 切换
+  controlPage: 翻页与刷新
+  controlPrev: 上一页
+  controlNext: 下一页
+  controlRefresh: 刷新数据
+  controlResume: 恢复轮播
+  controlSent: 指令已下发
+  controlHint: 展示端需已打开投屏页并保持在线；切换或翻页后展示端停轮播，点「恢复轮播」后继续自动切换。
+  close: 关闭
 
 dataReport:
   title: 定时报表
@@ -1719,6 +1751,15 @@ dataReport:
   cronHint: 留空则按上方固定频次；填写后优先级更高（如 0 9 * * 1-5 表示工作日 9 点）
   recipients: 收件人
   recipientsHint: 多个邮箱用逗号分隔
+  notifyChannels: 投递渠道
+  channelEmail: 邮件
+  channelDingtalk: 钉钉
+  channelWecom: 企业微信
+  channelFeishu: 飞书
+  notifyChannelsHint: 至少选择一个渠道；邮件渠道需填收件人，IM 渠道需选接收人
+  imRecipients: IM 接收人
+  imRecipientsHint: 输入用户名或昵称搜索（需先绑定对应 IM 账号）
+  channelRequired: 请至少选择一个投递渠道
   isActive: 启用
   lastStatus: 上次状态
   actions: 操作
@@ -1900,8 +1941,13 @@ dform:
   typeUpload: 附件
   typeDaterange: 日期范围
   typeTable: 明细子表
+  typeAmount: 金额
+  typeUser: 选人
+  typeCascader: 级联
   columnsHint: "每行一条：标识,标签,类型[,选项]"
+  cascaderHint: "每行一条叶子路径，段以 / 分隔，如：华东/江苏/南京"
   tableColumnsRequired: 明细子表字段需先定义列
+  userSearchPlaceholder: 输入用户名或昵称搜索
   approvalFlow: 审批流程
   noApprovalFlow: 不绑定流程
   approvalFlowTip: 绑定后提交进入该流程的多级审批，审批结果回写到提交状态；绑定后「提交审批」开关不再生效

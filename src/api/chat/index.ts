@@ -1,12 +1,12 @@
 import { BaseRequest } from "@/api/base";
-import type { BaseResult, DetailResult } from "@/api/types";
+import type { BaseResult, DataListResult, DetailResult } from "@/api/types";
 import { postSse, type SseFrame } from "@/utils/sse";
 
 /**
  * 聊天室 REST（服务端 message/views.py）。
  *
  * WS 负责实时收发（src/utils/websocket.ts::ChatWebSocket），REST 负责
- * 会话列表 / 历史分页 / 私聊开通 / 撤回 / 联系人 / AI 提问（含 SSE 流式）。
+ * 会话列表 / 历史分页 / 私聊开通 / 撤回 / 联系人 / 群聊管理 / AI 提问（含 SSE 流式）。
  */
 
 /** 会话对端 / 联系人用户简介 */
@@ -19,16 +19,31 @@ export interface ChatPeer {
   last_active?: string;
 }
 
-/** 会话（公共聊天室 / 私聊 / AI 助手） */
+/** 群成员候选（选人控件：仅 pk/用户名/昵称） */
+export interface ChatUserOption {
+  pk: number;
+  username: string;
+  nickname?: string;
+}
+
+/** 会话（公共聊天室 / 私聊 / AI 助手 / 群聊） */
 export interface ChatRoomItem {
   id: number;
-  room_type: "public" | "private" | "ai";
+  room_type: "public" | "private" | "ai" | "group";
   room_key: string;
   name: string;
   peer: ChatPeer | null;
   last_message: string;
   last_message_time: string;
   unread_count: number;
+  /** 群主主键（服务端对所有会话下发，非群聊为空） */
+  owner_pk?: number | null;
+  /** 群成员总数（群聊下发） */
+  member_count?: number;
+  /** 群成员预览（前 12 人，群聊下发） */
+  members?: ChatPeer[];
+  /** 当前用户是否为群主（群聊下发） */
+  is_owner?: boolean;
 }
 
 /** 消息（与 WS 广播载荷同形状，见 utils/websocket/protocol.ts::ChatRoomMessage） */
@@ -82,6 +97,18 @@ export interface ChatContactResult {
   results: ChatPeer[];
 }
 
+export interface ChatGroupMembersResult {
+  room: ChatRoomItem;
+  /** 完整成员列表（非预览） */
+  members: ChatPeer[];
+}
+
+export interface ChatLeaveResult {
+  room_id: number;
+  /** 解散后为 false（最后一人退出） */
+  is_active: boolean;
+}
+
 export interface ChatAiMessageResult {
   mode: "chat" | "kb";
   question: ChatMessageItem;
@@ -105,6 +132,63 @@ class ChatApi extends BaseRequest {
       {},
       { user_pk: userPk },
       `${this.baseApi}/room/open-private`
+    );
+  };
+  /** 创建多人群聊（创建者为群主；成员至少 1 人且不含自己） */
+  createGroup = (data: { name: string; member_pks: number[] }) => {
+    return this.request<DetailResult<ChatRoomItem>>(
+      "post",
+      {},
+      data,
+      `${this.baseApi}/room/create-group`
+    );
+  };
+  /** 群成员完整列表（成员可见） */
+  groupMembers = (pk: number) => {
+    return this.request<DetailResult<ChatGroupMembersResult>>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/room/${pk}/members`
+    );
+  };
+  /** 群成员变更（仅群主；add/remove 至少一项） */
+  updateGroupMembers = (
+    pk: number,
+    data: { add?: number[]; remove?: number[] }
+  ) => {
+    return this.request<DetailResult<ChatRoomItem>>(
+      "post",
+      {},
+      data,
+      `${this.baseApi}/room/${pk}/members`
+    );
+  };
+  /** 修改群名（仅群主） */
+  renameGroup = (pk: number, name: string) => {
+    return this.request<DetailResult<ChatRoomItem>>(
+      "post",
+      {},
+      { name },
+      `${this.baseApi}/room/${pk}/rename`
+    );
+  };
+  /** 退出群聊（群主退出自动转让；最后一人退出解散） */
+  leaveGroup = (pk: number) => {
+    return this.request<DetailResult<ChatLeaveResult>>(
+      "post",
+      {},
+      {},
+      `${this.baseApi}/room/${pk}/leave`
+    );
+  };
+  /** 群成员候选：输入用户名/昵称搜索（≤20 条） */
+  searchChatUsers = (keyword: string) => {
+    return this.request<DataListResult<ChatUserOption>>(
+      "get",
+      { keyword },
+      {},
+      `${this.baseApi}/contacts/user-options`
     );
   };
   /** 历史消息（倒序游标拉取，响应内按时间正序） */

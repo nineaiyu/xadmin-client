@@ -77,7 +77,8 @@ export function useMenuDialog({
             transition_leave: row?.meta?.transition_leave ?? "",
             is_hidden_tag: row?.meta?.is_hidden_tag ?? false,
             fixed_tag: row?.meta?.fixed_tag ?? false,
-            dynamic_level: row?.meta?.dynamic_level ?? 0
+            dynamic_level: row?.meta?.dynamic_level ?? 0,
+            watermark: row?.meta?.watermark ?? false
           }
         }
       },

@@ -38,8 +38,51 @@ async function reloadApp(page: import("@playwright/test").Page) {
   });
 }
 
+/** 递归查找路由节点（后端路由树为「目录分组 + children」结构，pk 即菜单主键） */
+function findRouteByPath(
+  nodes: Array<Record<string, unknown>>,
+  path: string
+): Record<string, unknown> | null {
+  for (const node of nodes) {
+    if (node.path === path) return node;
+    const found = findRouteByPath(
+      (node.children as Array<Record<string, unknown>>) ?? [],
+      path
+    );
+    if (found) return found;
+  }
+  return null;
+}
+
+/** 菜单级水印开关（PATCH 仅传 meta 部分更新；保存会触发菜单缓存失效） */
+async function setMenuWatermark(
+  page: import("@playwright/test").Page,
+  pk: string,
+  enabled: boolean
+) {
+  const token = await getAccessToken(page);
+  const response = await page.request.patch(
+    `${FRONT_URL}/api/system/menu/${pk}`,
+    {
+      data: { meta: { watermark: enabled } },
+      headers: { Authorization: `Bearer ${token}` }
+    }
+  );
+  expect(response.status()).toBe(200);
+  const payload = await response.json();
+  expect(payload.code).toBe(1000);
+}
+
+// 用例期间被打开的菜单级水印开关（afterEach 还原，防止污染其它用例）
+let watermarkedMenuPk: string | null = null;
+
 test.describe("站点水印（敏感页面范围）", () => {
   test.afterEach(async ({ page }) => {
+    // 先还原菜单级开关（用例中途失败也要还原，避免污染其它用例的路由 meta）
+    if (watermarkedMenuPk) {
+      await setMenuWatermark(page, watermarkedMenuPk, false);
+      watermarkedMenuPk = null;
+    }
     await saveWatermarkSetting(page, {
       FRONT_END_WEB_WATERMARK_ENABLED: false,
       FRONT_END_WEB_WATERMARK_TEXT: "",
@@ -89,5 +132,37 @@ test.describe("站点水印（敏感页面范围）", () => {
     });
     await reloadApp(page);
     await expect(page.locator(WATERMARK_NODE)).toHaveCount(0);
+  });
+
+  test("菜单级水印：路径范围外页面由菜单开关强制挂载", async ({ page }) => {
+    await login(page);
+    const token = await getAccessToken(page);
+    const routesResp = await page.request.get(
+      `${FRONT_URL}/api/system/routes`,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+    expect(routesResp.status()).toBe(200);
+    const routes = await routesResp.json();
+    const target = findRouteByPath(routes.data ?? [], OTHER_PATH);
+    expect(target?.pk, `路由树中未找到 ${OTHER_PATH}`).toBeTruthy();
+    // expect 抛错后不可达；此处兜底仅为类型收窄（strict 门禁）
+    watermarkedMenuPk = String(target?.pk ?? "");
+
+    // 打开目标页菜单级开关（菜单管理 → 页面水印）
+    await setMenuWatermark(page, watermarkedMenuPk, true);
+    // 生效路径范围故意不含目标页：命中完全来自菜单级开关
+    await saveWatermarkSetting(page, {
+      FRONT_END_WEB_WATERMARK_ENABLED: true,
+      FRONT_END_WEB_WATERMARK_TEXT: "菜单级水印",
+      FRONT_END_WEB_WATERMARK_PATHS: SENSITIVE_PATH
+    });
+    await reloadApp(page);
+
+    await openMenuPath(page, ["数据分析"], OTHER_PATH);
+    await expect(page.locator(WATERMARK_NODE).first()).toBeAttached({
+      timeout: 15_000
+    });
   });
 });

@@ -58,7 +58,8 @@ const props = withDefaults(defineProps<FormProps>(), {
       transition_leave: "",
       is_hidden_tag: false,
       fixed_tag: false,
-      dynamic_level: 0
+      dynamic_level: 0,
+      watermark: false
     }
   })
 });

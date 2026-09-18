@@ -10,6 +10,13 @@ import {
   type DashboardCard,
   type DashboardItem
 } from "@/api/system/datasets";
+import {
+  isOutboundMessage,
+  MessageAction,
+  type ScreenCommandPayload
+} from "@/utils/websocket/protocol";
+import { WS } from "@/utils/websocket";
+import { resolveScreenFrame } from "./utils/control";
 import ChartCard from "@/views/dashboard/components/ChartCard.vue";
 
 defineOptions({
@@ -20,6 +27,10 @@ defineOptions({
  * 大屏投屏：全屏轮播 Screen 内的仪表盘，按 refresh 秒自动重拉数据。
  * 权限复用仪表盘可见性：对当前浏览者不可见的仪表盘自动跳过。
  * 图表渲染复用一期的 ChartCard（defineExpose loadData 供定时刷新）。
+ *
+ * 远程控制：连接 ws/screen/<pk> 接收管理端指令（切换/翻页/刷新/恢复轮播）；
+ * manual 态停本地轮播并停在远程指定页，auto 态恢复轮播。控制帧按
+ * 「服务端 dashboards 下标 → 本地可见列表」映射，跳过不可见仪表盘不会错位。
  */
 
 const route = useRoute();
@@ -29,6 +40,8 @@ const dashboards = ref<DashboardItem[]>([]);
 const pageIndex = ref(0);
 const paused = ref(false);
 const clock = ref("");
+/** 远程控制态：manual = 管理端接管（停轮播）；连接时以服务端回放为准 */
+const controlMode = ref<"auto" | "manual">("auto");
 
 const currentDashboard = computed(
   () => dashboards.value[pageIndex.value] ?? null
@@ -53,6 +66,9 @@ const refreshVisible = () => {
 let pageTimer: number | undefined;
 let refreshTimer: number | undefined;
 let clockTimer: number | undefined;
+let ws: WS | null = null;
+/** 最近一次数据刷新代数：重连回放/重复帧不触发多余重拉 */
+let lastRefreshRev = 0;
 
 const stopTimers = () => {
   [pageTimer, refreshTimer, clockTimer].forEach(
@@ -66,13 +82,58 @@ const startTimers = () => {
   const interval = Math.max((screen.value?.interval ?? 15) * 1000, 5000);
   const refresh = Math.max((screen.value?.refresh ?? 60) * 1000, 10000);
   pageTimer = window.setInterval(() => {
-    if (paused.value || dashboards.value.length === 0) return;
+    if (
+      paused.value ||
+      controlMode.value === "manual" ||
+      dashboards.value.length === 0
+    )
+      return;
     pageIndex.value = (pageIndex.value + 1) % dashboards.value.length;
   }, interval);
   refreshTimer = window.setInterval(refreshVisible, refresh);
   clockTimer = window.setInterval(() => {
     clock.value = new Date().toLocaleTimeString("zh-CN", { hour12: false });
   }, 1000);
+};
+
+/** 服务端下标 → 本地可见列表下标（服务端按 Screen.dashboards 原序计页） */
+const applyServerIndex = (serverIndex: number) => {
+  const pk = (screen.value?.dashboards ?? [])[serverIndex];
+  if (!pk) return;
+  const localIndex = dashboards.value.findIndex(item => item.pk === pk);
+  if (localIndex >= 0) pageIndex.value = localIndex;
+};
+
+/** 应用控制帧：模式/页码对齐 + refresh 帧仅在代数递增时重拉数据（纯函数内核见 utils/control.ts） */
+const applyScreenFrame = (frame: ScreenCommandPayload) => {
+  const effect = resolveScreenFrame(
+    { mode: controlMode.value, refreshRev: lastRefreshRev },
+    frame
+  );
+  controlMode.value = effect.mode;
+  lastRefreshRev = effect.refreshRev;
+  if (effect.serverIndex !== null) applyServerIndex(effect.serverIndex);
+  if (effect.refresh) refreshVisible();
+};
+
+/** 展示端通道：连接即回放控制态，此后被动接收控制帧（断线由 WS 自带退避重连） */
+const startWs = (pk: string) => {
+  const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+  ws = new WS(`${protocol}//${location.host}/ws/screen/${pk}`, {
+    autoReconnect: true,
+    heartbeat: true
+  });
+  ws.onMessage((res: unknown) => {
+    if (
+      !isOutboundMessage<ScreenCommandPayload>(
+        res,
+        MessageAction.SCREEN_COMMAND
+      )
+    )
+      return;
+    if (res.code !== SUCCESS_CODE || !res.data) return;
+    applyScreenFrame(res.data);
+  });
 };
 
 const toggleFullscreen = () => {
@@ -97,9 +158,14 @@ onMounted(async () => {
     .map((id: string) => all.find((item: DashboardItem) => item.pk === id))
     .filter((item): item is DashboardItem => Boolean(item));
   startTimers();
+  startWs(pk);
 });
 
-onBeforeUnmount(stopTimers);
+onBeforeUnmount(() => {
+  stopTimers();
+  ws?.close();
+  ws = null;
+});
 </script>
 
 <template>
@@ -111,6 +177,15 @@ onBeforeUnmount(stopTimers);
       <span class="text-sm text-gray-400">
         {{ pageIndex + 1 }} / {{ dashboards.length }}
       </span>
+      <!-- 远程接管指示：manual 态停本地轮播，回到 auto 后指示消失 -->
+      <el-tag
+        v-if="controlMode === 'manual'"
+        size="small"
+        type="warning"
+        effect="dark"
+      >
+        远程控制中
+      </el-tag>
       <div class="flex-1" />
       <span class="font-mono text-lg text-gray-300">{{ clock }}</span>
       <el-button size="small" @click="paused = !paused">

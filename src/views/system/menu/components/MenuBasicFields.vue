@@ -155,6 +155,23 @@ const handleComponentChange = (value: string) => {
         "
       />
     </el-form-item>
+    <el-form-item :label="t('systemMenu.pageWatermark')" prop="watermark">
+      <template #label>
+        <form-question
+          :description="t('systemMenu.pageWatermarkTip')"
+          :label="t('systemMenu.pageWatermark')"
+        />
+      </template>
+      <Segmented
+        :modelValue="newFormInline.meta.watermark ? 0 : 1"
+        :options="ifEnableOptions"
+        @change="
+          ({ option: { value } }) => {
+            newFormInline.meta.watermark = value;
+          }
+        "
+      />
+    </el-form-item>
   </div>
   <div v-if="newFormInline.menu_type !== MenuChoices.PERMISSION">
     <el-divider />

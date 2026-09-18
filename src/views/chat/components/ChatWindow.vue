@@ -1,8 +1,10 @@
 <script lang="ts" setup>
-import { computed, nextTick, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import { ElMessageBox } from "element-plus";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
+import { SUCCESS_CODE } from "@/api/types";
 import {
   desktopNotifyEnabled,
   disableDesktopNotify,
@@ -15,7 +17,14 @@ import AiIcon from "~icons/ep/cpu";
 import EmojiIcon from "~icons/ri/emotion-line";
 import BellIcon from "~icons/ep/bell";
 import BellFilledIcon from "~icons/ep/bell-filled";
-import type { ChatMessageItem, ChatPeer, ChatRoomItem } from "@/api/chat";
+import GroupIcon from "~icons/ep/user-filled";
+import {
+  chatApi,
+  type ChatMessageItem,
+  type ChatPeer,
+  type ChatRoomItem,
+  type ChatUserOption
+} from "@/api/chat";
 import MessageBubble from "./MessageBubble.vue";
 
 /**
@@ -122,6 +131,10 @@ const emit = defineEmits<{
   scrollToBottom: [];
   scroller: [HTMLElement | null];
   toggleSidebar: [];
+  /** 群信息变更（改名 / 成员增减）后回传最新会话行 */
+  roomChanged: [ChatRoomItem];
+  /** 退出群聊成功（携带被退出的会话主键） */
+  left: [number];
 }>();
 
 const { t } = useI18n();
@@ -135,6 +148,7 @@ onMounted(() => emit("scroller", scrollEl.value));
 
 const isAiRoom = computed(() => props.room?.room_type === "ai");
 const isPublicRoom = computed(() => props.room?.room_type === "public");
+const isGroupRoom = computed(() => props.room?.room_type === "group");
 const onlineCount = computed(
   () => props.contacts.filter(item => item.online).length
 );
@@ -143,6 +157,7 @@ const title = computed(() => {
   if (!props.room) return t("chat.selectRoom");
   if (isAiRoom.value) return t("chat.aiAssistant");
   if (isPublicRoom.value) return t("chat.publicRoom");
+  if (isGroupRoom.value) return props.room.name || t("chat.groupMembers");
   return (
     props.room.peer?.nickname ||
     props.room.peer?.username ||
@@ -155,6 +170,8 @@ const subtitle = computed(() => {
   if (isAiRoom.value) return props.aiHint || t("chat.aiRoomHint");
   if (isPublicRoom.value)
     return t("chat.onlineCount", { count: onlineCount.value });
+  if (isGroupRoom.value)
+    return t("chat.groupMemberCount", { count: props.room.member_count ?? 0 });
   return props.room.peer?.online ? t("chat.online") : t("chat.offline");
 });
 
@@ -219,6 +236,168 @@ async function toggleDesktopNotify() {
   }
 }
 
+// ------------------------------------------------------------------ 群成员管理
+
+const membersVisible = ref(false);
+const membersLoading = ref(false);
+const groupMemberList = ref<ChatPeer[]>([]);
+const renameValue = ref("");
+const renaming = ref(false);
+const addMemberPks = ref<number[]>([]);
+/** 待添加成员候选缓存：远程搜索与已选回显共用 */
+const memberOptions = ref<ChatUserOption[]>([]);
+const searchingMembers = ref(false);
+const savingMembers = ref(false);
+let memberSearchTimer: number | undefined;
+
+/** 仅群主可改名 / 增删成员；所有成员均可退出群聊 */
+const isOwner = computed(() => !!props.room?.is_owner);
+
+function memberLabel(user: ChatUserOption) {
+  return user.nickname ? `${user.username}-${user.nickname}` : user.username;
+}
+
+function avatarText(peer: ChatPeer) {
+  return (peer.nickname || peer.username || "?").slice(0, 1).toUpperCase();
+}
+
+function mergeMemberOptions(rows: ChatUserOption[]) {
+  const known = new Set(memberOptions.value.map(item => item.pk));
+  for (const row of rows) {
+    if (!known.has(row.pk)) memberOptions.value.push(row);
+  }
+}
+
+/** 远程搜索待添加成员（防抖 300ms） */
+function searchMemberOptions(value: string) {
+  window.clearTimeout(memberSearchTimer);
+  const word = (value ?? "").trim();
+  if (!word) return;
+  memberSearchTimer = window.setTimeout(async () => {
+    searchingMembers.value = true;
+    try {
+      const { code, data } = await chatApi.searchChatUsers(word);
+      if (code === SUCCESS_CODE) mergeMemberOptions(data ?? []);
+    } finally {
+      searchingMembers.value = false;
+    }
+  }, 300);
+}
+
+function isMember(pk: number) {
+  return groupMemberList.value.some(item => item.pk === pk);
+}
+
+/** 拉取完整成员列表，并把最新会话行回传父级同步列表 */
+async function loadMembers() {
+  if (!props.room) return;
+  membersLoading.value = true;
+  try {
+    const { code, data, detail } = await chatApi.groupMembers(props.room.id);
+    if (code === SUCCESS_CODE && data) {
+      groupMemberList.value = data.members ?? [];
+      emit("roomChanged", data.room);
+    } else if (detail) {
+      message(String(detail), { type: "warning" });
+    }
+  } finally {
+    membersLoading.value = false;
+  }
+}
+
+function openMembers() {
+  membersVisible.value = true;
+  renameValue.value = props.room?.name ?? "";
+  addMemberPks.value = [];
+  memberOptions.value = [];
+  loadMembers();
+}
+
+async function submitAddMembers() {
+  if (!props.room || !addMemberPks.value.length) return;
+  savingMembers.value = true;
+  try {
+    const { code, data, detail } = await chatApi.updateGroupMembers(
+      props.room.id,
+      { add: [...addMemberPks.value] }
+    );
+    if (code === SUCCESS_CODE && data) {
+      addMemberPks.value = [];
+      emit("roomChanged", data);
+      await loadMembers();
+    } else if (detail) {
+      message(String(detail), { type: "warning" });
+    }
+  } finally {
+    savingMembers.value = false;
+  }
+}
+
+async function removeMember(peer: ChatPeer) {
+  if (!props.room) return;
+  savingMembers.value = true;
+  try {
+    const { code, data, detail } = await chatApi.updateGroupMembers(
+      props.room.id,
+      { remove: [peer.pk] }
+    );
+    if (code === SUCCESS_CODE && data) {
+      emit("roomChanged", data);
+      await loadMembers();
+    } else if (detail) {
+      message(String(detail), { type: "warning" });
+    }
+  } finally {
+    savingMembers.value = false;
+  }
+}
+
+async function submitRename() {
+  if (!props.room) return;
+  const name = renameValue.value.trim();
+  if (!name || name === props.room.name) return;
+  renaming.value = true;
+  try {
+    const { code, data, detail } = await chatApi.renameGroup(
+      props.room.id,
+      name
+    );
+    if (code === SUCCESS_CODE && data) {
+      emit("roomChanged", data);
+    } else if (detail) {
+      message(String(detail), { type: "warning" });
+    }
+  } finally {
+    renaming.value = false;
+  }
+}
+
+/** 退出群聊（二次确认；群主退出由服务端自动转让） */
+async function leaveGroup() {
+  const room = props.room;
+  if (!room) return;
+  try {
+    await ElMessageBox.confirm(t("chat.leaveGroupConfirm"), {
+      confirmButtonText: t("chat.leaveGroup"),
+      cancelButtonText: t("buttons.cancel"),
+      type: "warning",
+      confirmButtonClass: "el-button--danger",
+      draggable: true
+    });
+  } catch {
+    return;
+  }
+  const { code, detail } = await chatApi.leaveGroup(room.id);
+  if (code === SUCCESS_CODE) {
+    membersVisible.value = false;
+    emit("left", room.id);
+  } else if (detail) {
+    message(String(detail), { type: "warning" });
+  }
+}
+
+onUnmounted(() => window.clearTimeout(memberSearchTimer));
+
 /** 流式气泡归属当前会话才渲染（切会话后残留的流不显示） */
 const activeStreaming = computed(() =>
   props.streaming && props.streaming.roomId === props.room?.id
@@ -269,6 +448,15 @@ watch(
           {{ subtitle }}
         </div>
       </div>
+      <el-button
+        v-if="isGroupRoom"
+        link
+        data-testid="chat-group-members"
+        :aria-label="t('chat.groupMembers')"
+        :title="t('chat.groupMembers')"
+        :icon="useRenderIcon(GroupIcon)"
+        @click="openMembers"
+      />
       <el-tooltip
         :content="
           desktopOn ? t('chat.desktopNotifyOn') : t('chat.desktopNotifyOff')
@@ -450,6 +638,109 @@ watch(
         </el-button>
       </div>
     </div>
+
+    <!-- 群成员：完整成员列表；群主可改名/增删成员，所有成员可退出群聊 -->
+    <el-dialog
+      v-model="membersVisible"
+      :title="t('chat.groupMembers')"
+      width="480px"
+      append-to-body
+    >
+      <div v-loading="membersLoading">
+        <div v-if="isOwner" class="mb-3 flex items-center gap-2">
+          <el-input
+            v-model="renameValue"
+            maxlength="64"
+            :placeholder="t('chat.groupNamePlaceholder')"
+            data-testid="chat-group-rename-input"
+          />
+          <el-button
+            :loading="renaming"
+            :disabled="!renameValue.trim() || renameValue.trim() === room?.name"
+            data-testid="chat-group-rename"
+            @click="submitRename"
+          >
+            {{ t("chat.renameGroup") }}
+          </el-button>
+        </div>
+
+        <div v-if="isOwner" class="mb-3 flex items-center gap-2">
+          <el-select
+            v-model="addMemberPks"
+            class="grow"
+            multiple
+            filterable
+            remote
+            reserve-keyword
+            :loading="searchingMembers"
+            :remote-method="searchMemberOptions"
+            :placeholder="t('chat.searchUserHint')"
+            data-testid="chat-group-add-select"
+          >
+            <el-option
+              v-for="user in memberOptions"
+              :key="user.pk"
+              :value="user.pk"
+              :label="memberLabel(user)"
+              :disabled="isMember(user.pk)"
+            />
+          </el-select>
+          <el-button
+            type="primary"
+            :loading="savingMembers"
+            :disabled="!addMemberPks.length"
+            data-testid="chat-group-add-confirm"
+            @click="submitAddMembers"
+          >
+            {{ t("chat.addMember") }}
+          </el-button>
+        </div>
+
+        <div
+          v-for="member in groupMemberList"
+          :key="member.pk"
+          class="flex items-center gap-2 border-b border-solid border-(--pure-border-color) py-1.5"
+          :data-testid="`chat-group-member-${member.pk}`"
+        >
+          <el-avatar
+            :size="30"
+            :src="member.avatar || undefined"
+            class="shrink-0"
+          >
+            {{ avatarText(member) }}
+          </el-avatar>
+          <div class="min-w-0 grow truncate text-sm">
+            {{ member.nickname || member.username }}
+          </div>
+          <el-tag v-if="member.pk === room?.owner_pk" size="small">
+            {{ t("chat.groupOwner") }}
+          </el-tag>
+          <el-button
+            v-if="isOwner && member.pk !== room?.owner_pk"
+            link
+            type="danger"
+            size="small"
+            :title="t('chat.removeMember')"
+            @click="removeMember(member)"
+          >
+            {{ t("chat.removeMember") }}
+          </el-button>
+        </div>
+        <el-empty
+          v-if="!membersLoading && !groupMemberList.length"
+          :description="t('chat.emptyMembers')"
+          :image-size="60"
+        />
+      </div>
+      <template #footer>
+        <el-button type="danger" plain @click="leaveGroup">
+          {{ t("chat.leaveGroup") }}
+        </el-button>
+        <el-button @click="membersVisible = false">
+          {{ t("buttons.close") }}
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 

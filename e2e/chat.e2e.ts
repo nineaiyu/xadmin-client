@@ -9,10 +9,11 @@ import {
 } from "./helpers";
 
 /**
- * 聊天室 E2E：微信式两栏布局 + 公共聊天室收发持久化 + 私聊实时送达与未读红点。
+ * 聊天室 E2E：微信式两栏布局 + 公共聊天室收发持久化 + 私聊实时送达与未读红点
+ * + 多人群聊（建群/改名/增减成员/退群）。
  *
  * 页面选择器以 `data-testid` 为主（chat-page / chat-room-* / chat-contact-* /
- * chat-messages / chat-input / chat-send），仅「刷新」「发送」按文案定位。
+ * chat-messages / chat-input / chat-send / chat-group-*），仅个别按钮按文案定位。
  * 两个参与者都用超管（xadmin / e2e_approver）：聊天室接口按菜单权限点门控，
  * E2E 种子里的普通用户没有聊天室菜单授权（授权形态由后端守护测试覆盖）。
  */
@@ -138,4 +139,115 @@ test("聊天室：私聊实时送达、未读红点与已读清零", async ({ pa
   } finally {
     await contextB.close();
   }
+});
+
+test("聊天室：多人群聊建群、消息、成员管理与退群", async ({ page }) => {
+  test.setTimeout(180_000);
+  const wsOpened = waitAppWebSocket(page);
+  await login(page);
+  await wsOpened;
+  await openMenuPath(page, [], "/default/chat/index");
+  await expect(page.locator('[data-testid="chat-page"]')).toBeVisible({
+    timeout: 20_000
+  });
+
+  const suffix = Date.now();
+  const groupName = `E2E群聊-${suffix}`;
+  const renamedGroup = `${groupName}-改`;
+
+  // ---- 建群：群名 + 远程搜索一名成员（e2e_approver，创建者自动成为群主） ----
+  await page.locator('[data-testid="chat-new-group"]').click();
+  const createDialog = page
+    .locator(".el-dialog")
+    .filter({ hasText: "新建群聊" });
+  // el-input 把 $attrs 透传到内部 <input>（inheritAttrs:false + mergeProps），
+  // 按 placeholder 定位内外形态都稳（data-testid 落在 input 本身，不能再加 " input" 后缀）
+  await createDialog.getByPlaceholder("请输入群名称").fill(groupName);
+  const memberSelect = createDialog.locator(".el-select").first();
+  await memberSelect.click();
+  await memberSelect.locator("input").first().fill("e2e_approver");
+  await page
+    .locator(".el-select-dropdown:visible .el-select-dropdown__item", {
+      hasText: "e2e_approver"
+    })
+    .first()
+    .click();
+  // 多选下拉不自动收起：点标题收起后提交
+  await createDialog.locator(".el-dialog__header").click();
+  await createDialog
+    .locator('[data-testid="chat-group-create-confirm"]')
+    .click();
+  await expect(createDialog).not.toBeVisible();
+
+  // 会话列表出现群聊（2 人）并自动选中
+  const groupRoom = page.locator('[data-testid="chat-room-group"]', {
+    hasText: groupName
+  });
+  await expect(groupRoom).toBeVisible({ timeout: 15_000 });
+  await expect(groupRoom).toContainText("2 人");
+
+  // ---- 群消息：发送后上屏 ----
+  const text = `E2E-群消息-${suffix}`;
+  const input = page.locator('[data-testid="chat-input"] textarea');
+  await input.fill(text);
+  await page.locator('[data-testid="chat-send"]').click();
+  await expect(
+    page.locator('[data-testid="chat-messages"]').getByText(text)
+  ).toBeVisible({ timeout: 15_000 });
+
+  // ---- 成员面板：群主标识 + 成员列表（群主 xadmin 与 e2e_approver） ----
+  await page.locator('[data-testid="chat-group-members"]').click();
+  const membersDialog = page
+    .locator(".el-dialog")
+    .filter({ hasText: "群成员" });
+  const memberRows = membersDialog.locator(
+    '[data-testid^="chat-group-member-"]'
+  );
+  await expect(memberRows).toHaveCount(2, { timeout: 15_000 });
+  await expect(membersDialog.getByText("群主")).toBeVisible();
+  await expect(membersDialog.getByText("E2E审批人")).toBeVisible();
+
+  // 改名（仅群主可见入口）→ 会话列表行同步新群名
+  await membersDialog.getByPlaceholder("请输入群名称").fill(renamedGroup);
+  await membersDialog.locator('[data-testid="chat-group-rename"]').click();
+  await expect(
+    page.locator('[data-testid="chat-room-group"]', { hasText: renamedGroup })
+  ).toBeVisible({ timeout: 15_000 });
+
+  // 拉人入群（e2e_user / 昵称 E2E普通用户）→ 成员 3 人、会话行计数同步
+  const addSelect = membersDialog.locator(".el-select").first();
+  await addSelect.click();
+  await addSelect.locator("input").first().fill("e2e_user");
+  await page
+    .locator(".el-select-dropdown:visible .el-select-dropdown__item", {
+      hasText: "e2e_user"
+    })
+    .first()
+    .click();
+  await membersDialog.locator('[data-testid="chat-group-add-confirm"]').click();
+  await expect(memberRows).toHaveCount(3, { timeout: 15_000 });
+  await expect(
+    page.locator('[data-testid="chat-room-group"]', { hasText: "3 人" })
+  ).toBeVisible({ timeout: 15_000 });
+
+  // 移除成员：删掉刚加入的 e2e_user，回到 2 人
+  const addedRow = membersDialog.locator(
+    '[data-testid^="chat-group-member-"]',
+    {
+      hasText: "E2E普通用户"
+    }
+  );
+  await addedRow.getByRole("button", { name: "移除成员" }).click();
+  await expect(memberRows).toHaveCount(2, { timeout: 15_000 });
+
+  // ---- 退群（群主退出自动转让；二次确认）→ 会话从列表消失 ----
+  await membersDialog.getByRole("button", { name: "退出群聊" }).click();
+  const confirm = page
+    .locator(".el-popconfirm, .el-popper, .el-message-box")
+    .getByRole("button", { name: "退出群聊" })
+    .first();
+  await confirm.click();
+  await expect(
+    page.locator('[data-testid="chat-room-group"]', { hasText: renamedGroup })
+  ).toHaveCount(0, { timeout: 15_000 });
 });

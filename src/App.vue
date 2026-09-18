@@ -23,7 +23,7 @@ import { useUserStoreHook } from "@/store/modules/user";
 import {
   buildWatermarkText,
   formatWatermarkTime,
-  isWatermarkPath
+  isSiteWatermarkVisible
 } from "@/utils/watermark";
 import { ReDialog, closeAllDialog } from "@/components/ReDialog";
 import { ReDrawer, closeAllDrawer } from "@/components/ReDrawer";
@@ -56,11 +56,15 @@ export default defineComponent({
     // 站点水印（服务端基本设置下发）：仅「敏感页面」范围内生效
     const siteWatermark = computed(() => userStore.siteWatermark);
     const onLoginPage = computed(() => route.name === "Login");
-    const siteWatermarkVisible = computed(
-      () =>
-        !!siteWatermark.value?.enabled &&
-        !onLoginPage.value &&
-        isWatermarkPath(route.path, siteWatermark.value?.paths)
+    const siteWatermarkVisible = computed(() =>
+      isSiteWatermarkVisible({
+        enabled: !!siteWatermark.value?.enabled,
+        paths: siteWatermark.value?.paths,
+        path: route.path,
+        onLoginPage: onLoginPage.value,
+        // 菜单级开关（菜单管理 → 页面水印）置顶强制挂载
+        menuWatermark: route.meta?.watermark === true
+      })
     );
     const watermarkVisible = computed(
       () => siteWatermarkVisible.value || !!watermarkEnable.value

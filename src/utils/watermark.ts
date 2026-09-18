@@ -38,6 +38,29 @@ export function isWatermarkPath(path: string, paths: string[] = []): boolean {
   return paths.some(prefix => path === prefix || path.startsWith(prefix));
 }
 
+/**
+ * 站点水印是否应在当前路由展示：
+ * 总开关命中 + 非登录页 +（菜单级开关置顶强制 或 命中路径前缀范围）。
+ * 菜单级开关来自后端菜单 meta（菜单管理 → 页面水印），是「路径范围」的补充而非替代。
+ */
+export function isSiteWatermarkVisible(options: {
+  enabled: boolean;
+  paths?: string[];
+  path: string;
+  onLoginPage?: boolean;
+  menuWatermark?: boolean;
+}): boolean {
+  const {
+    enabled,
+    paths = [],
+    path,
+    onLoginPage = false,
+    menuWatermark = false
+  } = options;
+  if (!enabled || onLoginPage) return false;
+  return menuWatermark || isWatermarkPath(path, paths);
+}
+
 /** 水印时间戳：YYYY-MM-DD HH:mm（分钟粒度，便于定位泄露时点） */
 export function formatWatermarkTime(date: Date = new Date()): string {
   const pad = (value: number) => String(value).padStart(2, "0");

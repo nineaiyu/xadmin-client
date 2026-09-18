@@ -6,6 +6,7 @@ export type FormFieldType =
   | "input"
   | "textarea"
   | "number"
+  | "amount"
   | "select"
   | "radio"
   | "checkbox"
@@ -13,7 +14,19 @@ export type FormFieldType =
   | "switch"
   | "upload"
   | "daterange"
-  | "table";
+  | "table"
+  | "user"
+  | "cascader";
+
+/** 级联选项节点（value 同时作为提交值，label 为展示文案） */
+export type FormCascaderOption = {
+  value: string | number;
+  label: string;
+  children?: FormCascaderOption[];
+};
+
+/** 展开的选项：平铺控件为字符串数组，级联为树形节点数组 */
+export type FormFieldOption = string | FormCascaderOption;
 
 /** 明细子表列类型：限基础控件，禁止嵌套 table / upload / daterange */
 export type FormTableColumnType =
@@ -31,10 +44,15 @@ export type FormField = {
   label: string;
   type: FormFieldType;
   required?: boolean;
-  options?: string[];
+  /** 平铺控件为字符串数组；级联（cascader）为树形节点数组 */
+  options?: FormFieldOption[];
   min?: number;
   max?: number;
   max_length?: number;
+  /** 金额控件（amount）最多保留的小数位（0-6，缺省不限） */
+  precision?: number;
+  /** 选人控件（user）是否多选 */
+  multiple?: boolean;
   placeholder?: string;
   /** 明细子表列定义（type=table 时必填） */
   columns?: FormTableColumn[];
@@ -78,7 +96,27 @@ export type SubmissionItem = {
   created_time: string;
 };
 
+/** 选人控件候选（user-options）：仅基本展示字段 */
+export type FormUserOption = {
+  pk: number;
+  username: string;
+  nickname: string;
+};
+
 class SubmissionApi extends BaseApi {
+  /** 选人控件数据源：关键字搜索 / 按主键回显已选用户（≤20 条） */
+  userOptions = (params: { keyword?: string; pks?: number[] }) => {
+    const query: Record<string, unknown> = {};
+    if (params.keyword) query.keyword = params.keyword;
+    if (params.pks?.length) query.pks = params.pks.join(",");
+    return this.request<DataListResult<FormUserOption>>(
+      "get",
+      query,
+      {},
+      `${this.baseApi}/user-options`
+    );
+  };
+
   /** 重新提交被驳回的填报（仅申请人、仅驳回态） */
   resubmit = (pk: string) => {
     return this.request<BaseResult>(

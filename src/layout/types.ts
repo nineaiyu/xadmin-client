@@ -38,6 +38,8 @@ export type routeMetaType = {
   extraIcon?: string;
   /** 当前激活的父级菜单路径 */
   activePath?: string;
+  /** 菜单级水印开关（后端菜单 meta 透传，置顶强制挂载） */
+  watermark?: boolean;
 };
 
 export type RouteConfigs = {

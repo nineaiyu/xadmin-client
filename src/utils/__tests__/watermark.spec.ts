@@ -4,6 +4,7 @@ import {
   buildWatermarkText,
   defaultSiteWatermark,
   formatWatermarkTime,
+  isSiteWatermarkVisible,
   isWatermarkPath,
   parseWatermarkPaths
 } from "../watermark";
@@ -39,6 +40,47 @@ describe("站点水印配置解析", () => {
     );
     expect(isWatermarkPath("/system/role/index", paths)).toBe(false);
     expect(isWatermarkPath("/analysis/dashboard/index", paths)).toBe(false);
+  });
+});
+
+describe("站点水印展示判定（菜单级开关 + 路径范围）", () => {
+  const outside = {
+    enabled: true,
+    paths: ["/system/user/index"],
+    path: "/analysis/dashboard/index"
+  };
+
+  it("总开关关闭或登录页一律不展示", () => {
+    expect(isSiteWatermarkVisible({ ...outside, enabled: false })).toBe(false);
+    expect(isSiteWatermarkVisible({ ...outside, onLoginPage: true })).toBe(
+      false
+    );
+  });
+
+  it("路径前缀范围命中即展示（既有行为不变）", () => {
+    expect(
+      isSiteWatermarkVisible({
+        enabled: true,
+        paths: ["/system"],
+        path: "/system/user/index"
+      })
+    ).toBe(true);
+    expect(isSiteWatermarkVisible(outside)).toBe(false);
+  });
+
+  it("菜单级开关为或关系：范围外页面置顶强制展示", () => {
+    expect(isSiteWatermarkVisible({ ...outside, menuWatermark: true })).toBe(
+      true
+    );
+    // 范围内页面即使菜单开关关闭也照常展示（开关不承担排除语义）
+    expect(
+      isSiteWatermarkVisible({
+        enabled: true,
+        paths: ["/system"],
+        path: "/system/user/index",
+        menuWatermark: false
+      })
+    ).toBe(true);
   });
 });
 

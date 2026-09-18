@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { approvalFlowApi } from "@/api/system/approvalFlow";
 import type {
   DynamicFormItem,
+  FormCascaderOption,
   FormField,
   FormFieldType,
   FormTableColumn,
@@ -30,6 +31,7 @@ const typeOptions: { value: FormFieldType; labelKey: string }[] = [
   { value: "input", labelKey: "dform.typeInput" },
   { value: "textarea", labelKey: "dform.typeTextarea" },
   { value: "number", labelKey: "dform.typeNumber" },
+  { value: "amount", labelKey: "dform.typeAmount" },
   { value: "select", labelKey: "dform.typeSelect" },
   { value: "radio", labelKey: "dform.typeRadio" },
   { value: "checkbox", labelKey: "dform.typeCheckbox" },
@@ -37,7 +39,9 @@ const typeOptions: { value: FormFieldType; labelKey: string }[] = [
   { value: "switch", labelKey: "dform.typeSwitch" },
   { value: "upload", labelKey: "dform.typeUpload" },
   { value: "daterange", labelKey: "dform.typeDaterange" },
-  { value: "table", labelKey: "dform.typeTable" }
+  { value: "table", labelKey: "dform.typeTable" },
+  { value: "user", labelKey: "dform.typeUser" },
+  { value: "cascader", labelKey: "dform.typeCascader" }
 ];
 
 const COLUMN_TYPES: FormTableColumnType[] = [
@@ -92,7 +96,10 @@ const removeField = (index: number) => {
 const needsOptions = (type: FormFieldType) =>
   ["select", "radio", "checkbox"].includes(type);
 
-const optionsText = (field: FormField) => (field.options ?? []).join(", ");
+const optionsText = (field: FormField) =>
+  (field.options ?? [])
+    .filter((item): item is string => typeof item === "string")
+    .join(", ");
 
 const onOptionsChanged = (field: FormField, value: string) => {
   field.options = value
@@ -100,6 +107,57 @@ const onOptionsChanged = (field: FormField, value: string) => {
     .map(item => item.trim())
     .filter(Boolean);
 };
+
+/** 级联选项文本：每行一条叶子路径，段以 `/` 分隔；段名同时作为 value 与 label */
+const cascaderText = (field: FormField) => {
+  const lines: string[] = [];
+  const walk = (nodes: FormCascaderOption[], prefix: string[]) => {
+    for (const node of nodes) {
+      const path = [...prefix, String(node.label)];
+      if (node.children?.length) walk(node.children, path);
+      else lines.push(path.join("/"));
+    }
+  };
+  walk(cascaderOptionsOf(field), []);
+  return lines.join("\n");
+};
+
+const onCascaderChanged = (field: FormField, value: string) => {
+  const roots: FormCascaderOption[] = [];
+  for (const line of value.split("\n")) {
+    const segments = line
+      .split("/")
+      .map(item => item.trim())
+      .filter(Boolean);
+    if (!segments.length) continue;
+    let nodes = roots;
+    for (const segment of segments) {
+      let node = nodes.find(item => item.value === segment);
+      if (!node) {
+        node = { value: segment, label: segment };
+        nodes.push(node);
+      }
+      node.children ??= [];
+      nodes = node.children;
+    }
+  }
+  // 清理叶子上的空 children（提交 schema 更干净；服务端允许 children 缺省）
+  const prune = (nodes: FormCascaderOption[]) => {
+    for (const node of nodes) {
+      if (node.children?.length) prune(node.children);
+      else delete node.children;
+    }
+  };
+  prune(roots);
+  field.options = roots.length ? roots : [];
+};
+
+/** 从混合选项数组中取级联树节点（平铺字符串项忽略） */
+function cascaderOptionsOf(field: FormField): FormCascaderOption[] {
+  return (field.options ?? []).filter(
+    (item): item is FormCascaderOption => typeof item !== "string"
+  );
+}
 
 /** 明细子表列定义文本：每行 `key,标签,类型[,选项1|选项2]` */
 const columnsText = (field: FormField) =>
@@ -251,6 +309,17 @@ defineExpose({ getPayload });
             :placeholder="t('dform.columnsHint')"
             @update:model-value="
               (value: string) => onColumnsChanged(row as FormField, value)
+            "
+          />
+          <el-input
+            v-else-if="(row as FormField).type === 'cascader'"
+            type="textarea"
+            :rows="2"
+            size="small"
+            :model-value="cascaderText(row as FormField)"
+            :placeholder="t('dform.cascaderHint')"
+            @update:model-value="
+              (value: string) => onCascaderChanged(row as FormField, value)
             "
           />
         </template>

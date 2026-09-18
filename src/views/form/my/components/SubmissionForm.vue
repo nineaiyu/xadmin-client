@@ -1,11 +1,14 @@
 <script lang="ts" setup>
-import { computed, reactive } from "vue";
+import { computed, onMounted, reactive } from "vue";
 import { useI18n } from "vue-i18n";
 import UploadFiles from "@/components/RePlusPage/src/components/UploadFiles.vue";
-import type {
-  FillableFormItem,
-  FormField,
-  SubmissionItem
+import {
+  submissionApi,
+  type FillableFormItem,
+  type FormCascaderOption,
+  type FormField,
+  type FormUserOption,
+  type SubmissionItem
 } from "@/api/system/dform";
 
 /**
@@ -53,6 +56,59 @@ const addRow = (field: FormField) => {
 const removeRow = (field: FormField, index: number) => {
   rowsOf(field).splice(index, 1);
 };
+
+/** 选人控件候选缓存：key → 候选列表（远程搜索与编辑回显共用） */
+const userOptionCache = reactive<Record<string, FormUserOption[]>>({});
+const userOptionsOf = (field: FormField) => userOptionCache[field.key] ?? [];
+const userLabel = (user: FormUserOption) =>
+  user.nickname ? `${user.username}-${user.nickname}` : user.username;
+
+const searchUsers = (field: FormField, keyword: string) => {
+  const value = (keyword ?? "").trim();
+  if (!value) {
+    userOptionCache[field.key] = [];
+    return;
+  }
+  submissionApi
+    .userOptions({ keyword: value })
+    .then(res => {
+      userOptionCache[field.key] = res?.data ?? [];
+    })
+    .catch(() => {
+      userOptionCache[field.key] = [];
+    });
+};
+
+/** 编辑既有提交：按主键批量回显已选用户（避免无边界的通讯录枚举） */
+const loadPickedUsers = () => {
+  for (const field of schemaFields.value) {
+    if (field.type !== "user") continue;
+    const raw = formData[field.key];
+    const pks = (Array.isArray(raw) ? raw : [raw])
+      .map(item => Number(item))
+      .filter(item => Number.isInteger(item) && item > 0);
+    if (!pks.length) continue;
+    submissionApi
+      .userOptions({ pks })
+      .then(res => {
+        userOptionCache[field.key] = res?.data ?? [];
+      })
+      .catch(() => undefined);
+  }
+};
+onMounted(loadPickedUsers);
+
+/** 级联控件的树形选项（平铺字符串项忽略） */
+const cascaderOptionsOf = (field: FormField): FormCascaderOption[] =>
+  (field.options ?? []).filter(
+    (item): item is FormCascaderOption => typeof item !== "string"
+  );
+
+/** 平铺控件的字符串选项（select/radio/checkbox；忽略树形节点等非字符串项） */
+const flatOptionsOf = (field: FormField): string[] =>
+  (field.options ?? []).filter(
+    (item): item is string => typeof item === "string"
+  );
 
 /** 生成提交载荷（字段校验由后端按 schema 执行） */
 const getPayload = () => ({
@@ -105,6 +161,39 @@ defineExpose({ getPayload });
           :min="field.min"
           :max="field.max"
         />
+        <el-input-number
+          v-else-if="field.type === 'amount'"
+          v-model="formData[field.key] as number"
+          :min="field.min"
+          :max="field.max"
+          :precision="field.precision"
+        />
+        <el-select
+          v-else-if="field.type === 'user'"
+          v-model="formData[field.key] as number | number[]"
+          class="w-full"
+          :multiple="field.multiple === true"
+          filterable
+          remote
+          reserve-keyword
+          clearable
+          :remote-method="(keyword: string) => searchUsers(field, keyword)"
+          :placeholder="t('dform.userSearchPlaceholder')"
+        >
+          <el-option
+            v-for="user in userOptionsOf(field)"
+            :key="user.pk"
+            :value="user.pk"
+            :label="userLabel(user)"
+          />
+        </el-select>
+        <el-cascader
+          v-else-if="field.type === 'cascader'"
+          v-model="formData[field.key] as (string | number)[]"
+          class="w-full"
+          :options="cascaderOptionsOf(field)"
+          clearable
+        />
         <el-select
           v-else-if="field.type === 'select'"
           v-model="formData[field.key] as string"
@@ -112,7 +201,7 @@ defineExpose({ getPayload });
           clearable
         >
           <el-option
-            v-for="option in field.options"
+            v-for="option in flatOptionsOf(field)"
             :key="option"
             :value="option"
             :label="option"
@@ -123,7 +212,7 @@ defineExpose({ getPayload });
           v-model="formData[field.key] as string"
         >
           <el-radio
-            v-for="option in field.options"
+            v-for="option in flatOptionsOf(field)"
             :key="option"
             :value="option"
             >{{ option }}</el-radio
@@ -134,7 +223,7 @@ defineExpose({ getPayload });
           v-model="formData[field.key] as string[]"
         >
           <el-checkbox
-            v-for="option in field.options"
+            v-for="option in flatOptionsOf(field)"
             :key="option"
             :value="option"
             >{{ option }}</el-checkbox

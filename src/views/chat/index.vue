@@ -4,7 +4,7 @@ import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { ElMessageBox } from "element-plus";
 import { message } from "@/utils/message";
-import type { ChatMessageItem } from "@/api/chat";
+import type { ChatMessageItem, ChatRoomItem } from "@/api/chat";
 import { useChat } from "./hooks/useChat";
 import ChatSidebar from "./components/ChatSidebar.vue";
 import ChatWindow from "./components/ChatWindow.vue";
@@ -86,6 +86,29 @@ async function openPrivate(peerPk: number) {
   }
 }
 
+/** 新建群聊成功：并入列表并选中新群 */
+function createdGroup(room: ChatRoomItem) {
+  chat.roomState.upsertRoom(room);
+  chat.activate(room.id);
+  if (isNarrow.value) drawerVisible.value = false;
+}
+
+/** 群改名 / 成员增减后同步列表行（成员数、群名） */
+function groupChanged(room: ChatRoomItem) {
+  chat.roomState.upsertRoom(room);
+}
+
+/** 退出群聊成功：刷新列表，当前会话已失效时切到首个会话 */
+async function groupLeft(roomId: number) {
+  await chat.roomState.loadRooms();
+  if (
+    chat.activeRoomId.value === roomId ||
+    !chat.rooms.value.some(item => item.id === chat.activeRoomId.value)
+  ) {
+    chat.activate(chat.rooms.value[0]?.id ?? 0);
+  }
+}
+
 function submit(content: string) {
   if (chat.activeRoom.value?.room_type === "ai") chat.sendAi(content);
   else chat.send(content);
@@ -126,6 +149,7 @@ async function recall(item: ChatMessageItem) {
       @select="selectRoom"
       @open-private="openPrivate"
       @refresh-contacts="chat.roomState.loadContacts()"
+      @created="createdGroup"
     />
 
     <el-drawer
@@ -172,6 +196,8 @@ async function recall(item: ChatMessageItem) {
       @scroll-to-bottom="chat.scrollToBottom"
       @scroller="chat.scroller.value = $event"
       @toggle-sidebar="drawerVisible = true"
+      @room-changed="groupChanged"
+      @left="groupLeft"
     />
   </div>
 </template>
