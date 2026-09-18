@@ -124,7 +124,11 @@ test("报表与大屏主链路", async ({ page }) => {
     .locator(".el-dialog")
     .filter({ hasText: "新建大屏" });
   await screenDialog.getByLabel("名称").fill(screenName);
-  await pickSelectOption(page, "仪表盘序列", dashboardName);
+  // 仪表盘序列是 el-select multiple：选完不自动收起，残留下拉会拦截「保存」点击
+  // （webkit 必现、chromium 时序侥幸），必须走多选辅助（选完点标题收起并等隐藏）
+  await pickMultiSelectOptions(page, screenDialog, "仪表盘序列", [
+    dashboardName
+  ]);
   await screenDialog.getByRole("button", { name: "保存" }).click();
   await expect(screenDialog).not.toBeVisible();
 

@@ -146,6 +146,21 @@ const onRowClick = (row: Record<string, unknown>) => emit("rowClick", row);
 const tableLayoutPending = ref(false);
 let layoutRaf = 0;
 
+/**
+ * 搜索卡片高度占位是否生效（体验基线 U1 / CLS 主因修复）：
+ * 搜索列元数据随列表首包（with_meta=1）到达，此前卡片只渲染按钮行（56px），
+ * 到达后叠加一行字段（+50px），中间帧会被真实绘制产生位移。
+ * 这里在「元数据到达前」按「按钮行 + 一行字段」预留高度；到达后必须撤掉占位
+ * 改由内容自适应——字段与按钮同行的页面实际只有约 74px，固定 106px 会在卡片
+ * 底部留出可见空白（2026-09-18 用户反馈「搜索框变高」回归修复）。
+ * 到达信号与表格列首帧规避共用同一组列装配来源（dynamicColumns / listColumns）。
+ */
+const searchMetaReady = computed(
+  () =>
+    (tableBarData.value.dynamicColumns?.length ?? 0) > 0 ||
+    listColumns.value.length > 0
+);
+
 const holdTableUntilLaidOut = () => {
   tableLayoutPending.value = true;
   cancelAnimationFrame(layoutRaf);
@@ -225,7 +240,10 @@ defineExpose({
   <div v-if="auth?.list" ref="rootRef" class="main re-plus-page">
     <div
       v-if="api?.fields"
-      class="re-plus-search-card bg-bg_color w-99/100 px-6 py-3"
+      :class="[
+        're-plus-search-card bg-bg_color w-99/100 px-6 py-3',
+        { 're-plus-search-card--pending': !searchMetaReady }
+      ]"
     >
       <PlusSearch
         v-model="searchFields"
@@ -388,14 +406,15 @@ defineExpose({
 </style>
 
 <style scoped lang="scss">
-/* 搜索卡片高度占位（体验基线 U1 / CLS 主因修复）：
+/* 搜索卡片高度占位（体验基线 U1 / CLS 主因修复）：**仅在列元数据到达前生效**。
    搜索列元数据随列表首包（with_meta=1）到达，此前卡片只渲染按钮行（56px），
    到达后叠加一行字段（+50px）；同帧还伴随 el-table 列宽首绘与自适应高度重算，
    中间帧会被真实绘制（表头换行 155px → 41px 的瞬态位移）。
-   这里按「按钮行 + 一行字段」预留最小高度，让页面结构在元数据到达前后不变。
    数值 = py-3(12+12) + 按钮行(32) + 行间距与字段行(50) = 106px；
-   字段多于一行（窄屏 2 行）时自然更高，仅预留下限、不影响布局。 */
-.re-plus-search-card {
+   字段多于一行（窄屏 2 行）时自然更高，仅预留下限、不影响布局。
+   元数据到达后必须撤掉占位改由内容自适应：字段与按钮同行的页面实际约 74px，
+   固定 106px 会在卡片底部留出可见空白（2026-09-18 反馈回归修复）。 */
+.re-plus-search-card--pending {
   min-height: 106px;
 }
 

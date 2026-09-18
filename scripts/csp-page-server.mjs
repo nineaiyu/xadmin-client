@@ -17,7 +17,13 @@
 //   证书落 node_modules/.cache，playwright 侧以 ignoreHTTPSErrors 放行）——复现
 //   HTTPS 部署形态，让 webkit 接收 Secure 认证 Cookie（PROD 构建的 auth.ts 分支），
 //   把 CSP 隔离验证纳入 webkit（T3 口径：策略本身与引擎无关）。
-import { createReadStream, existsSync, mkdirSync, readFileSync, statSync } from "node:fs";
+import {
+  createReadStream,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  statSync
+} from "node:fs";
 import http from "node:http";
 import https from "node:https";
 import net from "node:net";
