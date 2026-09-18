@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onMounted, onUnmounted, ref, type Ref } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch, type Ref } from "vue";
 import PureTable from "@pureadmin/table";
 import { usePlusPage } from "./utils/hook";
 import { RePlusPageProps, type RecycleBinColumn } from "./utils/types";
@@ -87,7 +87,10 @@ onMounted(() => {
   rootResizeObserver.observe(el);
 });
 
-onUnmounted(() => rootResizeObserver?.disconnect());
+onUnmounted(() => {
+  rootResizeObserver?.disconnect();
+  cancelAnimationFrame(layoutRaf);
+});
 
 const {
   t,
@@ -131,6 +134,35 @@ const onSearchColumnChange = (_: unknown, column: { valueType?: string }) => {
 
 /** 行点击透传（同上：模板内联类型注解不可用） */
 const onRowClick = (row: Record<string, unknown>) => emit("rowClick", row);
+
+/**
+ * 表格列首帧的瞬态规避（体验基线 U1 / 列表页 CLS 主因）：
+ * el-table 在列挂载后用 rAF 才计算列宽（EP `requestAnimationFrame(doLayout)`），
+ * 列挂载后的第一帧仍是浏览器对未定宽列的均分宽度——长表头换行（实测表头
+ * 155px → 41px）、单元格变高（86px → 53px），下一帧才回到真实列宽；该中间帧
+ * 会被真实绘制并产生位移（visibility: hidden 的元素不参与 layout-shift 统计）。
+ * 列集合每次变化（元数据到达 / 列设置调整）时隐藏表格两帧，待布局落位后再显示。
+ */
+const tableLayoutPending = ref(false);
+let layoutRaf = 0;
+
+const holdTableUntilLaidOut = () => {
+  tableLayoutPending.value = true;
+  cancelAnimationFrame(layoutRaf);
+  layoutRaf = requestAnimationFrame(() => {
+    layoutRaf = requestAnimationFrame(() => {
+      tableLayoutPending.value = false;
+    });
+  });
+};
+
+// 同一列集合既可能整体替换（RePureTableBar 深拷贝回写），也可能被就地
+// splice/push（列元数据装配路径），两个来源都要盯
+watch(
+  [() => tableBarData.value.dynamicColumns, () => listColumns.value.length],
+  holdTableUntilLaidOut,
+  { flush: "pre" }
+);
 
 function getTreeProps() {
   // pure-table 的 treeProps 期望三字段全必填（其 default 字面量类型），
@@ -191,7 +223,10 @@ defineExpose({
 
 <template>
   <div v-if="auth?.list" ref="rootRef" class="main re-plus-page">
-    <div v-if="api?.fields" class="bg-bg_color w-99/100 px-6 py-3">
+    <div
+      v-if="api?.fields"
+      class="re-plus-search-card bg-bg_color w-99/100 px-6 py-3"
+    >
       <PlusSearch
         v-model="searchFields"
         :col-props="{
@@ -291,6 +326,7 @@ defineExpose({
       </el-scrollbar>
       <pure-table
         ref="tableRef"
+        :class="{ 're-plus-table-layout-pending': tableLayoutPending }"
         :adaptiveConfig="{ offsetBottom: 110 }"
         :columns="tableBarData.dynamicColumns as never"
         :data="dataList"
@@ -348,5 +384,24 @@ defineExpose({
 .main-content.re-plus-page,
 .main-content:has(.re-plus-page) {
   --main-content-margin: 24px 24px 0;
+}
+</style>
+
+<style scoped lang="scss">
+/* 搜索卡片高度占位（体验基线 U1 / CLS 主因修复）：
+   搜索列元数据随列表首包（with_meta=1）到达，此前卡片只渲染按钮行（56px），
+   到达后叠加一行字段（+50px）；同帧还伴随 el-table 列宽首绘与自适应高度重算，
+   中间帧会被真实绘制（表头换行 155px → 41px 的瞬态位移）。
+   这里按「按钮行 + 一行字段」预留最小高度，让页面结构在元数据到达前后不变。
+   数值 = py-3(12+12) + 按钮行(32) + 行间距与字段行(50) = 106px；
+   字段多于一行（窄屏 2 行）时自然更高，仅预留下限、不影响布局。 */
+.re-plus-search-card {
+  min-height: 106px;
+}
+
+/* 列首帧隐藏（同上）：el-table 列宽在 rAF 内才落位，隐藏这一两帧即可
+   消除「表头换行 → 回弹」的瞬态位移；visibility 保留占位、不影响自适应高度测量 */
+.re-plus-table-layout-pending {
+  visibility: hidden;
 }
 </style>

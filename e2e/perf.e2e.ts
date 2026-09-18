@@ -31,8 +31,10 @@ const BASELINE_FILE = fileURLToPath(
 /**
  * 离谱回归兜底（非正式预算；预算待基线数据积累后另行评审）。
  * 首轮实测（darwin-local）：TTFB ≤ 332ms、LCP ≤ 1224ms、CLS ≤ 0.2403——
- * 阈值取「明显超出实测」的量级，只拦离谱回归；CLS 0.24（用户列表页）已登记为
- * 体验改进候选（远高于 0.1 的「良好」线）。
+ * 阈值取「明显超出实测」的量级，只拦离谱回归。
+ * 2026-09-18 列表页 CLS 定位收口：0.2403 → ~0.02（搜索卡片高度占位 +
+ * 列首帧隐藏，见 RePlusPage 组件内注释与长期优化方案 U1）；剩余为登录页/
+ * 布局页脚等页面级小位移（各 ≤ 0.008）。
  */
 const CEILINGS = { ttfb: 2000, lcp: 5000, cls: 0.5 };
 
@@ -41,16 +43,39 @@ type PagePerfMetrics = {
   fcp: number | null;
   lcp: number | null;
   cls: number;
+  /** CLS 定位（U1 改进候选）：按影响值排序的前 5 个 layout-shift 来源明细（src 含位移/尺寸几何） */
+  cls_top?: Array<{ v: number; t: number; src: string }>;
   dcl: number;
   load: number;
 };
 
-/** 采集脚本注入：LCP / CLS 用 PerformanceObserver 缓冲历史条目 */
+/**
+ * layout-shift 条目形状（局部声明）：`LayoutShift` 是 Chrome 专有 API，
+ * 尚未进入 TS 内置 DOM lib（lib.dom.d.ts 无该类型）；这里按 W3C 规范声明
+ * 本文件实际消费的字段，避免依赖全局补丁（TS 升级新增该类型时也不会冲突）。
+ */
+type LayoutShiftAttribution = {
+  node: Node | null;
+  previousRect: DOMRectReadOnly;
+  currentRect: DOMRectReadOnly;
+};
+
+type LayoutShiftEntry = PerformanceEntry & {
+  value: number;
+  hadRecentInput: boolean;
+  sources: LayoutShiftAttribution[];
+};
+
+/** 采集脚本注入：LCP / CLS 用 PerformanceObserver 缓冲历史条目；CLS 记录来源明细 */
 const INIT_PERF_SCRIPT = () => {
   const target = window as unknown as {
-    __perf?: { lcp: number; cls: number };
+    __perf?: {
+      lcp: number;
+      cls: number;
+      shifts: Array<{ v: number; t: number; src: string }>;
+    };
   };
-  target.__perf = { lcp: 0, cls: 0 };
+  target.__perf = { lcp: 0, cls: 0, shifts: [] };
   try {
     new PerformanceObserver(list => {
       for (const entry of list.getEntries()) {
@@ -58,13 +83,37 @@ const INIT_PERF_SCRIPT = () => {
       }
     }).observe({ type: "largest-contentful-paint", buffered: true });
     new PerformanceObserver(list => {
-      for (const entry of list.getEntries() as (PerformanceEntry & {
-        hadRecentInput?: boolean;
-        value?: number;
-      })[]) {
-        if (!entry.hadRecentInput) {
-          target.__perf!.cls += entry.value ?? 0;
-        }
+      for (const entry of list.getEntries() as LayoutShiftEntry[]) {
+        if (entry.hadRecentInput) continue;
+        const value = entry.value ?? 0;
+        target.__perf!.cls += value;
+        const src = (entry.sources ?? [])
+          .slice(0, 3)
+          .map(s => {
+            const node = s.node as Element | null;
+            const tag = node?.tagName?.toLowerCase() ?? "?";
+            const id = node?.id ? `#${node.id}` : "";
+            const cls =
+              typeof node?.className === "string" && node.className
+                ? `.${node.className.split(/\s+/)[0]}`
+                : "";
+            // 几何明细（U1 定位用）：位移量与尺寸变化，区分「整体下移」与「自身增高」
+            const prev = s.previousRect;
+            const cur = s.currentRect;
+            const dx = Math.round(cur.x - prev.x);
+            const dy = Math.round(cur.y - prev.y);
+            const geo =
+              `[dx${dx >= 0 ? "+" : ""}${dx},dy${dy >= 0 ? "+" : ""}${dy},` +
+              `${Math.round(prev.width)}x${Math.round(prev.height)}→` +
+              `${Math.round(cur.width)}x${Math.round(cur.height)}]`;
+            return `${tag}${id}${cls}${geo}`;
+          })
+          .join(",");
+        target.__perf!.shifts.push({
+          v: Number(value.toFixed(4)),
+          t: Math.round(entry.startTime),
+          src
+        });
       }
     }).observe({ type: "layout-shift", buffered: true });
   } catch {
@@ -76,13 +125,21 @@ const READ_PERF_SCRIPT = () => {
   const nav = performance.getEntriesByType("navigation")[0] as
     PerformanceNavigationTiming | undefined;
   const fcpEntry = performance.getEntriesByName("first-contentful-paint")[0];
-  const perf = (window as unknown as { __perf?: { lcp: number; cls: number } })
-    .__perf;
+  const perf = (
+    window as unknown as {
+      __perf?: {
+        lcp: number;
+        cls: number;
+        shifts: Array<{ v: number; t: number; src: string }>;
+      };
+    }
+  ).__perf;
   return {
     ttfb: Math.round(nav?.responseStart ?? 0),
     fcp: fcpEntry ? Math.round(fcpEntry.startTime) : null,
     lcp: perf?.lcp ? Math.round(perf.lcp) : null,
     cls: Number((perf?.cls ?? 0).toFixed(4)),
+    cls_top: [...(perf?.shifts ?? [])].sort((a, b) => b.v - a.v).slice(0, 5),
     dcl: Math.round(nav?.domContentLoadedEventEnd ?? 0),
     load: Math.round(nav?.loadEventEnd ?? 0)
   };
