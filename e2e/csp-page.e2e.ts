@@ -16,21 +16,30 @@ import { ADMIN, openMenuPath } from "./helpers";
  * 2. `/__csp_probe` 负对照页的内联脚本必须被拦截并采集到（证明采集链路有效，
  *    避免「零违规」其实是「采集没生效」的假绿）。
  *
- * 说明：当前测试服不可达时无法靠真实流量累计「连续 7 天零违规」，本验证以
- * 「全量归因 + 隔离验证」替代观察窗口（与 2026-09-16 CSP 服务端切换同口径）。
+ * 说明：
+ * - 当前测试服不可达时无法靠真实流量累计「连续 7 天零违规」，本验证以
+ *   「全量归因 + 隔离验证」替代观察窗口（与 2026-09-16 CSP 服务端切换同口径）；
+ * - 双浏览器：生产构建的认证 Cookie 带 Secure（src/utils/auth.ts 的
+ *   `import.meta.env.PROD` 分支），http 下 WebKit 拒收 Secure Cookie 无法登录——
+ *   因此跑批默认 `E2E_CSP_TLS=1`（验证服务以 HTTPS 提供，openssl 自签 +
+ *   ignoreHTTPSErrors 放行），复现 HTTPS 部署形态后 chromium 与 webkit 都可登录；
+ *   http 兜底形态（E2E_CSP_TLS 未设）仅 chromium 可登录，此时双浏览器跑批中
+ *   webkit 的页面会因无法登录而失败，属预期（勿据此判定 CSP 回归）。
  */
 
-const CSP_BASE = `http://127.0.0.1:${process.env.E2E_CSP_PORT ?? "18899"}`;
+const CSP_TLS = process.env.E2E_CSP_TLS === "1";
+const CSP_BASE = `${CSP_TLS ? "https" : "http"}://127.0.0.1:${
+  process.env.E2E_CSP_PORT ?? "18899"
+}`;
 
 test.skip(
   process.env.E2E_CSP !== "1",
   "页面层 CSP 验证按需运行：pnpm test:e2e:csp"
 );
 test.skip(
-  ({ browserName }) => browserName !== "chromium",
-  "首个版本仅 chromium：生产构建的认证 Cookie 带 Secure（src/utils/auth.ts 的 " +
-    "import.meta.env.PROD 分支），http 下 WebKit 拒收 Secure Cookie 无法登录；" +
-    "待部署形态走 HTTPS 后再纳入 webkit（策略本身与引擎无关）"
+  ({ browserName }) => browserName !== "chromium" && !CSP_TLS,
+  "http 形态下 WebKit 拒收 Secure Cookie 无法登录（跑批默认 E2E_CSP_TLS=1）；" +
+    "TLS 形态下 chromium 与 webkit 都参与验证（策略本身与引擎无关）"
 );
 // 本 spec 走「构建产物 + 强制 CSP 头」的独立服务（模拟 xadmin-web 形态），
 // 覆盖 baseURL 后 helpers 的相对导航（login/openMenuPath）自动落到该服务
