@@ -1,7 +1,10 @@
 <script lang="ts" setup>
-import { onMounted, reactive, ref } from "vue";
+import { h, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { ElTag } from "element-plus";
 import { approvalFlowApi } from "@/api/system/approvalFlow";
+import { addDialog } from "@/components/ReDialog";
+import { dialogSize } from "@/components/ReDialog/size";
 import type {
   DynamicFormItem,
   FormCascaderOption,
@@ -11,6 +14,7 @@ import type {
   FormTableColumnType
 } from "@/api/system/dform";
 import { message } from "@/utils/message";
+import FormFieldDialog from "./FormFieldDialog.vue";
 
 /**
  * 动态表单定义表单（弹窗体系收敛到 ReDialog 的 content 组件形态）。
@@ -23,6 +27,12 @@ defineOptions({ name: "DynamicFormDefinitionForm" });
 const props = defineProps<{
   /** 编辑时的原始行（null / 缺省 = 新建） */
   row?: DynamicFormItem | null;
+  /** 新建预填（如「从模板新建」）：仅填充名称/描述/字段，不携带主键 */
+  prefill?: {
+    name?: string;
+    description?: string;
+    schema?: { fields: FormField[] };
+  } | null;
 }>();
 
 const { t } = useI18n();
@@ -53,14 +63,18 @@ const COLUMN_TYPES: FormTableColumnType[] = [
 ];
 
 const form = reactive({
-  name: props.row?.name ?? "",
-  description: props.row?.description ?? "",
+  name: props.row?.name ?? props.prefill?.name ?? "",
+  description: props.row?.description ?? props.prefill?.description ?? "",
   is_active: props.row?.is_active ?? true,
   approval_required: Boolean(props.row?.approval_required),
   approval_flow: props.row?.approval_flow?.pk ?? ""
 });
 const fields = ref<FormField[]>(
-  JSON.parse(JSON.stringify(props.row?.schema?.fields ?? []))
+  JSON.parse(
+    JSON.stringify(
+      props.row?.schema?.fields ?? props.prefill?.schema?.fields ?? []
+    )
+  )
 );
 
 /** 可绑定的审批流程（无流程管理权限时降级为空选项，不阻断表单定义） */
@@ -91,6 +105,41 @@ const addField = () => {
 
 const removeField = (index: number) => {
   fields.value.splice(index, 1);
+};
+
+/** 字段排序：上移/下移一位（字段顺序即渲染顺序，保存时按数组顺序落 schema） */
+const moveField = (index: number, offset: -1 | 1) => {
+  const target = index + offset;
+  if (target < 0 || target >= fields.value.length) return;
+  const next = [...fields.value];
+  [next[index], next[target]] = [next[target], next[index]];
+  fields.value = next;
+};
+
+/* ---------------- 字段属性弹窗（完整校验/展示属性 + 数据字典绑定） ---------------- */
+const fieldDialogRef = ref<InstanceType<typeof FormFieldDialog>>();
+
+const openFieldDialog = (index: number) => {
+  fieldDialogRef.value = undefined;
+  addDialog({
+    title: t("dform.fieldProps"),
+    width: dialogSize("sm"),
+    draggable: true,
+    destroyOnClose: true,
+    closeOnClickModal: false,
+    contentRenderer: () =>
+      h(FormFieldDialog, { ref: fieldDialogRef, field: fields.value[index] }),
+    beforeSure: (done, { closeLoading }) => {
+      const next = fieldDialogRef.value?.getField();
+      if (!next) {
+        closeLoading();
+        return;
+      }
+      // 直接替换数组元素：保持整体顺序不变，仅该字段属性变更
+      fields.value[index] = next;
+      done();
+    }
+  });
 };
 
 const needsOptions = (type: FormFieldType) =>
@@ -291,8 +340,16 @@ defineExpose({ getPayload });
       </el-table-column>
       <el-table-column :label="t('dform.fieldOptions')" min-width="150">
         <template #default="{ row }">
+          <el-tag
+            v-if="(row as FormField).dict"
+            size="small"
+            type="success"
+            data-testid="field-dict-tag"
+          >
+            {{ t("dform.fieldDictBound", { code: (row as FormField).dict }) }}
+          </el-tag>
           <el-input
-            v-if="needsOptions((row as FormField).type)"
+            v-else-if="needsOptions((row as FormField).type)"
             :model-value="optionsText(row as FormField)"
             size="small"
             :placeholder="t('dform.optionsHint')"
@@ -329,9 +386,43 @@ defineExpose({ getPayload });
           <el-switch v-model="(row as FormField).required" size="small" />
         </template>
       </el-table-column>
-      <el-table-column :label="t('dform.actions')" width="70">
+      <el-table-column :label="t('dform.actions')" width="220">
         <template #default="{ $index }">
-          <el-button link type="danger" @click="removeField($index)">
+          <el-button
+            link
+            type="primary"
+            size="small"
+            :disabled="$index === 0"
+            data-testid="field-move-up"
+            @click="moveField($index, -1)"
+          >
+            {{ t("dform.moveUp") }}
+          </el-button>
+          <el-button
+            link
+            type="primary"
+            size="small"
+            :disabled="$index === fields.length - 1"
+            data-testid="field-move-down"
+            @click="moveField($index, 1)"
+          >
+            {{ t("dform.moveDown") }}
+          </el-button>
+          <el-button
+            link
+            type="primary"
+            size="small"
+            data-testid="field-props"
+            @click="openFieldDialog($index)"
+          >
+            {{ t("dform.fieldProps") }}
+          </el-button>
+          <el-button
+            link
+            type="danger"
+            size="small"
+            @click="removeField($index)"
+          >
             {{ t("dform.delete") }}
           </el-button>
         </template>

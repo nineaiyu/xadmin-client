@@ -21,6 +21,21 @@ const readSplitPanes = (page: Page) =>
       : null;
   });
 
+/**
+ * 等首轮列表加载完成（有数据行且加载遮罩退场）再拖拽：
+ * el-loading 遮罩覆盖整个分栏容器（含分隔条），遮罩未退场时 mouse 事件被吞成划选，
+ * 表现为分隔条不动、表格文本被选中（左栏停在默认 20%）。
+ */
+const waitListLoaded = (page: Page) =>
+  Promise.all([
+    expect(page.locator(".el-table__row").first()).toBeVisible({
+      timeout: 15_000
+    }),
+    expect(page.locator(".el-loading-mask")).toHaveCount(0, {
+      timeout: 15_000
+    })
+  ]);
+
 /** 拖拽分隔条到容器横向百分比 toPercent 处（steps 保证连续 mousemove 生效） */
 async function dragResizer(page: Page, toPercent: number) {
   const container = await page.locator(".vue-splitter-container").boundingBox();
@@ -48,6 +63,7 @@ test("分栏拖拽持久化、刷新保持与重置", async ({ page }) => {
 
   const resizer = page.locator(".splitter-pane-resizer");
   await expect(resizer).toBeVisible({ timeout: 15_000 });
+  await waitListLoaded(page);
 
   // ---- 拖拽到约 40% ----
   await dragResizer(page, 0.4);
@@ -80,6 +96,7 @@ test("分栏拖拽持久化、刷新保持与重置", async ({ page }) => {
   // ---- 刷新后保持（本地缓存优先） ----
   await page.reload();
   await expect(resizer).toBeVisible({ timeout: 15_000 });
+  await waitListLoaded(page);
   const kept = await leftPanePercent(page);
   expect(kept).toBeGreaterThan(35);
   expect(kept).toBeLessThan(45);
@@ -108,6 +125,7 @@ test("跨设备：本机旧缓存不压制服务器值", async ({ page }) => {
 
   const resizer = page.locator(".splitter-pane-resizer");
   await expect(resizer).toBeVisible({ timeout: 15_000 });
+  await waitListLoaded(page);
 
   // 设备 A：拖到约 60% 并等 PATCH 落库
   await dragResizer(page, 0.6);

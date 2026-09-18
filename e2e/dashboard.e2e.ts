@@ -1,6 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { login, openMenuPath } from "./helpers";
+import {
+  BACKEND_URL,
+  FRONT_URL,
+  getAccessToken,
+  login,
+  openMenuPath
+} from "./helpers";
 
 /**
  * 数据集 + 仪表盘主链路：
@@ -129,4 +135,129 @@ test("数据集 + 仪表盘主链路", async ({ page }) => {
   const ratio = (colBox?.width ?? 0) / (rowBox?.width ?? 1);
   expect(ratio).toBeGreaterThan(0.4);
   expect(ratio).toBeLessThan(0.6);
+});
+
+test("仪表盘聚合卡片：度量字段（sum）可配置并真实渲染，支持刷新与设置", async ({
+  page
+}) => {
+  await login(page);
+  const token = await getAccessToken(page);
+  const headers = { Authorization: `Bearer ${token}` };
+  const suffix = Math.random().toString(36).slice(2, 8);
+  const datasetName = `E2E度量集-${suffix}`;
+  const dashboardName = `E2E度量板-${suffix}`;
+  const renamed = `${dashboardName}-改名`;
+  let datasetPk = "";
+  let dashboardPk = "";
+
+  try {
+    // 数值列 days 用于 sum 度量；leave_type 作为分组列（白名单模型见 system.utils.dataset）
+    const dsRes = await page.request.post(
+      `${BACKEND_URL}/api/system/datasets`,
+      {
+        headers,
+        data: {
+          name: datasetName,
+          bound_model: "system.leave",
+          columns: ["days", "leave_type"],
+          row_limit: 100,
+          visibility: "shared"
+        }
+      }
+    );
+    expect(dsRes.ok(), await dsRes.text()).toBeTruthy();
+    datasetPk = (await dsRes.json()).data.pk;
+
+    const dbRes = await page.request.post(
+      `${BACKEND_URL}/api/system/dashboards`,
+      {
+        headers,
+        data: { name: dashboardName, visibility: "shared", layout: [] }
+      }
+    );
+    expect(dbRes.ok(), await dbRes.text()).toBeTruthy();
+    dashboardPk = (await dbRes.json()).data.pk;
+
+    await page.goto(`${FRONT_URL}/#/analysis/dashboard/index`);
+    await page
+      .locator(".el-card")
+      .first()
+      .locator(".el-select")
+      .first()
+      .click();
+    await page
+      .locator(".el-select-dropdown:visible .el-select-dropdown__item", {
+        hasText: dashboardName
+      })
+      .first()
+      .click();
+
+    await page.getByRole("button", { name: "编辑布局" }).click();
+    await page.getByRole("button", { name: "添加卡片" }).click();
+    const cardDialog = page
+      .locator(".el-dialog")
+      .filter({ hasText: "添加卡片" });
+    await expect(cardDialog).toBeVisible();
+    await pickSelectOption(page, "数据集", datasetName);
+    await cardDialog.locator(".el-dialog__header").click();
+    await cardDialog.getByLabel("卡片标题").fill("用户名ID求和");
+    await pickSelectOption(page, "图表类型", "柱状图");
+    await pickSelectOption(page, "分组字段", "leave_type");
+    await pickSelectOption(page, "聚合方式", "求和");
+    // sum/avg 的度量字段选择器（此前缺失 → 卡片必失败）：候选来自数据集数值列
+    await pickSelectOption(page, "度量字段", "days");
+    await cardDialog.locator(".el-dialog__header").click();
+    await cardDialog.getByRole("button", { name: "保存" }).click();
+    await expect(cardDialog).not.toBeVisible();
+
+    await page.getByRole("button", { name: "保存布局" }).click();
+    await expect(page.getByText("保存成功").first()).toBeVisible();
+
+    // 图表真实渲染（svg）且无错误提示
+    const card = page.locator(".el-card").filter({ hasText: "用户名ID求和" });
+    await expect(card).toBeVisible();
+    await expect(card.locator("svg").first()).toBeVisible({ timeout: 15_000 });
+    await expect(card.getByTestId("chart-card-error")).toHaveCount(0);
+
+    // 手动刷新：重挂载并重新拉数，不出现错误提示
+    await page.getByTestId("dashboard-refresh").click();
+    await expect(
+      page.locator(".el-card").filter({ hasText: "用户名ID求和" })
+    ).toBeVisible();
+    await expect(
+      page
+        .locator(".el-card")
+        .filter({ hasText: "用户名ID求和" })
+        .getByTestId("chart-card-error")
+    ).toHaveCount(0, { timeout: 15_000 });
+
+    // 设置：重命名 + 可见性（此前 UI 无入口）
+    await page.getByTestId("dashboard-settings").click();
+    const settingsDialog = page
+      .locator(".el-dialog")
+      .filter({ hasText: "设置" });
+    await expect(settingsDialog).toBeVisible();
+    await settingsDialog.getByLabel("仪表盘名称").fill(renamed);
+    await settingsDialog.getByRole("button", { name: "保存" }).click();
+    await expect(settingsDialog).not.toBeVisible();
+    // EP select 的选中值渲染为文本节点（filterable 模式下 input 不承载 label）
+    await expect(
+      page.locator(".el-card").first().locator(".el-select").first()
+    ).toContainText(renamed, { timeout: 15_000 });
+  } finally {
+    if (dashboardPk) {
+      await page.request
+        .delete(`${BACKEND_URL}/api/system/dashboards/${dashboardPk}`, {
+          headers
+        })
+        .catch(() => undefined);
+    }
+    if (datasetPk) {
+      await page.request
+        .delete(`${BACKEND_URL}/api/system/datasets/${datasetPk}`, {
+          headers
+        })
+        .catch(() => undefined);
+    }
+  }
 });

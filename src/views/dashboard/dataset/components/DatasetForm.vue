@@ -57,6 +57,11 @@ const form = reactive({
 
 const fieldOptions = computed(() => props.meta.fields[form.bound_model] ?? []);
 
+/** 可选模型：过滤伪模型 "*"（「全部表」根节点，选择后保存必被后端拒绝） */
+const modelOptions = computed(() =>
+  props.meta.models.filter(model => model !== "*")
+);
+
 /** 绑定模型切换：下游字段候选全变，清空已选列/过滤/排序/时间字段 */
 const onModelChanged = () => {
   form.columns = [];
@@ -117,7 +122,7 @@ defineExpose({ getPayload });
         :disabled="isEdit"
         @change="onModelChanged"
       >
-        <el-option v-for="m in meta.models" :key="m" :value="m" :label="m" />
+        <el-option v-for="m in modelOptions" :key="m" :value="m" :label="m" />
       </el-select>
     </el-form-item>
     <el-form-item :label="t('dataDataset.columns')" required>
@@ -197,6 +202,9 @@ defineExpose({ getPayload });
       <el-select v-model="form.date_field" class="w-full" clearable filterable>
         <el-option v-for="f in fieldOptions" :key="f" :value="f" :label="f" />
       </el-select>
+      <div class="text-xs text-gray-500">
+        {{ t("dataDataset.dateFieldTip") }}
+      </div>
     </el-form-item>
     <el-form-item :label="t('dataDataset.visibilityLabel')">
       <el-radio-group v-model="form.visibility">

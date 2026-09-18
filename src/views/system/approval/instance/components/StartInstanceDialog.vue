@@ -28,6 +28,15 @@ type FlowOption = {
   form_schema?: FormField[];
 };
 
+const props = defineProps<{
+  /** 预填（「重新提交」场景）：预选流程 + 回填标题与表单内容 */
+  initial?: {
+    flow?: string;
+    title?: string;
+    formData?: Record<string, unknown>;
+  } | null;
+}>();
+
 const emit = defineEmits<{ submitted: [] }>();
 const { t } = useI18n();
 
@@ -94,6 +103,26 @@ function onFlowChange() {
   formRef.value?.clearValidate();
 }
 
+/** 预填（重新提交）：流程须仍可发起（available-flows 内），表单值按字段原样回填为字符串 */
+function applyInitial() {
+  const initial = props.initial;
+  if (!initial?.flow) return;
+  const flow = flows.value.find(item => item.pk === initial.flow);
+  if (!flow) {
+    ElMessage.warning(t("systemApprovalInstance.flowUnavailable"));
+    return;
+  }
+  form.flow = initial.flow;
+  form.title = initial.title ?? "";
+  const next: Record<string, string> = {};
+  for (const field of flow.form_schema ?? []) {
+    const raw = initial.formData?.[field.key];
+    next[field.key] =
+      raw === null || raw === undefined ? "" : String(raw as string | number);
+  }
+  form.values = next;
+}
+
 async function loadFlows() {
   loading.value = true;
   try {
@@ -102,6 +131,7 @@ async function loadFlows() {
     flows.value = Array.isArray(res.data)
       ? (res.data as unknown as FlowOption[])
       : [];
+    applyInitial();
   } finally {
     loading.value = false;
   }

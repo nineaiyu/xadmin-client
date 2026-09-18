@@ -32,6 +32,7 @@ export function useInstancePanel(
     "approve",
     "reject",
     "cancel",
+    "urge",
     "addSign",
     "batchApprove",
     "batchReject",
@@ -44,6 +45,7 @@ export function useInstancePanel(
     approve: false,
     reject: false,
     cancel: false,
+    urge: false,
     addSign: false,
     batchApprove: false,
     batchReject: false,
@@ -63,18 +65,27 @@ export function useInstancePanel(
   const refresh = () => tableRef.value?.handleGetData();
 
   const { listColumnsFormat } = useInstanceColumnFormats({ t });
-  const { openReject, openAddSign, openBatchReject } = useInstanceActions({
-    t,
-    refresh,
-    tableRef
-  });
+  const {
+    openApprove,
+    openBatchApprove,
+    openUrge,
+    openReject,
+    openAddSign,
+    openBatchReject
+  } = useInstanceActions({ t, refresh, tableRef });
   const { operationButtonsProps, tableBarButtonsProps } = useInstanceButtons({
     scope,
     auth,
     t,
     refresh,
-    tableRef,
-    actions: { openReject, openAddSign, openBatchReject },
+    actions: {
+      openApprove,
+      openBatchApprove,
+      openUrge,
+      openReject,
+      openAddSign,
+      openBatchReject
+    },
     onStarted
   });
 

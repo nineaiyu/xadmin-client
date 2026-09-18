@@ -97,6 +97,32 @@ export function useDataset(tableRef: Ref) {
     }
   };
 
+  /** 预览结果导出 CSV（前端生成，字段权限已在执行侧收敛，导出的即所见行） */
+  const exportPreviewCsv = () => {
+    if (!preview.value) return;
+    const { columns, rows } = preview.value;
+    const escape = (value: unknown) => {
+      if (value === null || value === undefined) return "";
+      const text =
+        typeof value === "object" ? JSON.stringify(value) : String(value);
+      return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+    };
+    const lines = [
+      columns.map(escape).join(","),
+      ...rows.map(row => columns.map(col => escape(row[col])).join(","))
+    ];
+    // BOM 头保证 Excel 打开中文不乱码
+    const blob = new Blob([`\uFEFF${lines.join("\r\n")}`], {
+      type: "text/csv;charset=utf-8"
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `dataset-preview-${Date.now()}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   /* ---------------- 新建 / 编辑（ReDialog + DatasetForm） ---------------- */
   const formRef = ref<InstanceType<typeof DatasetForm>>();
 
@@ -179,6 +205,7 @@ export function useDataset(tableRef: Ref) {
     operationButtonsProps,
     tableBarButtonsProps,
     previewDialog,
-    preview
+    preview,
+    exportPreviewCsv
   };
 }

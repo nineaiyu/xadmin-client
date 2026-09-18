@@ -487,6 +487,7 @@ systemApprovalFlow:
   nodeRequired: 至少配置一个审批节点
   nodeNameRequired: 存在未命名的节点
   saveSuccess: 流程已保存
+  routeInvalidDropped: 已忽略无效分支（需填写条件字段，且目标不能是当前节点）
 
 systemApprovalInstance:
   start: 发起申请
@@ -540,6 +541,19 @@ systemApprovalInstance:
   statusAPPROVED: 已通过
   statusREJECTED: 已驳回
   statusCANCELLED: 已撤回
+  approveTitle: 通过申请「{title}」
+  batchApproveTitle: 批量通过 {n} 条申请
+  urge: 催办
+  urgeTitle: 催办申请「{title}」
+  urgeMessagePlaceholder: 催办留言（选填）
+  urgeOk: 催办提醒已发送
+  resubmit: 重新提交
+  resubmitConfirm: 确定按原内容重新提交「{title}」吗？
+  resubmitSuccess: 已重新提交，等待审批
+  delegatedFrom: 由 {name} 代理
+  tasksEmpty: 暂无审批记录
+  flowUnavailable: 原流程已停用或不可发起，请选择其他流程
+
 
 userinfo:
   userinfo: 个人信息
@@ -1657,6 +1671,13 @@ dashboard:
   cardRoles: 可见角色
   cardRolesPlaceholder: 留空 = 能看此仪表盘的人均可见
   removeConfirm: 确定删除仪表盘「{name}」吗？布局与卡片将一并移除，引用它的大屏将失去此页
+  valueField: 度量字段
+  valueFieldTip: sum/avg 聚合的数值来源字段（仅数值列可选）
+  valueFieldRequired: 请选择度量字段
+  loadFailed: 数据加载失败
+  retry: 重试
+  settings: 设置
+  refresh: 刷新
 
 dataDataset:
   title: 数据集
@@ -1685,6 +1706,8 @@ dataDataset:
   required: 请完整填写名称、模型与数据列
   saveOk: 保存成功
   deleteConfirm: 确定删除数据集「{name}」吗？引用它的仪表盘卡片与报表将无法取数
+  dateFieldTip: 折线趋势卡片的默认分组字段（可选）
+  exportCsv: 导出 CSV
 
 dataScreen:
   title: 大屏投屏
@@ -1768,6 +1791,9 @@ dataReport:
   required: 请填写名称并选择数据集
   saveOk: 保存成功
   deleteConfirm: 确定删除报表「{name}」吗？
+  valueField: 度量字段
+  valueFieldTip: sum/avg 聚合的数值来源字段（仅数值列可选）
+  valueFieldRequired: 请选择度量字段
 
 webhook:
   title: Webhook 订阅
@@ -1959,6 +1985,50 @@ dform:
   addRow: 添加一行
   rangeStart: 开始日期
   rangeEnd: 结束日期
+  fieldProps: 属性
+  moveUp: 上移
+  moveDown: 下移
+  fieldKeyHint: 小写字母开头，字母/数字/下划线
+  fieldKeyInvalid: 标识需以小写字母开头（字母/数字/下划线，≤32 位）
+  fieldLabelRequired: 请填写字段标签
+  fieldPlaceholder: 占位提示
+  fieldPlaceholderHint: 输入框中的灰色提示文案
+  fieldMaxLength: 最大长度
+  fieldMin: 最小值
+  fieldMax: 最大值
+  fieldPrecision: 小数位
+  fieldMultiple: 允许多选
+  fieldDict: 数据字典
+  fieldDictHint: 选择或输入字典类型 code
+  fieldDictTip: 绑定后选项由数据字典维护，与内联选项互斥（提交校验按字典项收敛）
+  fieldDictBound: "字典：{code}"
+  dictEmpty: 字典暂无可选项，请联系管理员维护
+  selectPlaceholder: 请选择
+  yes: 是
+  no: 否
+  saveDraft: 存为草稿
+  draftSaved: 草稿已保存
+  submitDraft: 提交
+  submitDraftOk: 已提交
+  detail: 详情
+  continueEdit: 继续编辑
+  updatedAt: 更新时间
+  instanceNo: 流程单号
+  noData: 暂无数据
+  approvalTrail: 审批轨迹
+  removeConfirm: 确定删除「{name}」的这条提交吗？
+  fromTemplate: 从模板新建
+  saveAsTemplate: 存为模板
+  templateNameHint: 请输入模板名称
+  templateNameDefault: "{name} 模板"
+  templateNameRequired: 模板名称不能为空
+  templateCopyName: "{name}（副本）"
+  templateSaved: 已保存为模板
+  templateRemoved: 模板已删除
+  templateRemoveConfirm: 确定删除模板「{name}」吗？
+  noTemplates: 暂无表单模板
+  useTemplate: 使用
+
 
 leaveApply:
   leave_type: 请假类型

@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { SUCCESS_CODE } from "@/api/types";
 import { computed, nextTick, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useDark, useECharts } from "@pureadmin/utils";
 import type { UtilsEChartsOption } from "@pureadmin/utils";
 import {
@@ -15,12 +16,15 @@ defineOptions({ name: "DashboardChartCard" });
 
 const props = defineProps<{ card: DashboardCard }>();
 
+const { t } = useI18n();
 const { isDark } = useDark();
 const theme = computed(() => (isDark.value ? "dark" : "light"));
 
 const chartRef = ref();
 const loading = ref(false);
 const total = ref(0);
+/** 加载失败原因：图表/数字区域改为可读提示 + 重试（业务码非 1000 与网络异常统一收敛） */
+const errorMsg = ref("");
 /** 解构 resize：容器尺寸（卡片高度/宽度档位）变化后手动重算，window resize 监听不覆盖容器变化 */
 const { setOptions, resize } = useECharts(chartRef, { theme, renderer: "svg" });
 
@@ -90,6 +94,7 @@ const buildSeriesOptions = (result: AggregateResult): UtilsEChartsOption => {
 const loadData = async () => {
   const card = props.card;
   loading.value = true;
+  errorMsg.value = "";
   try {
     if (card.chart_type === "number") {
       const res = await datasetApi.execute(card.dataset);
@@ -97,7 +102,9 @@ const loadData = async () => {
         total.value = Number(
           (res.data as unknown as ExecuteResult)?.total ?? 0
         );
+        return;
       }
+      errorMsg.value = String(res.detail ?? t("dashboard.loadFailed"));
       return;
     }
     const res = await datasetApi.aggregate(card.dataset, {
@@ -114,7 +121,16 @@ const loadData = async () => {
         resize();
         setOptions(buildSeriesOptions(result));
       }
+      return;
     }
+    // 200 + 业务码非 1000（字段权限/数值字段校验等）：显式提示，避免图表空白无解释
+    errorMsg.value = String(res.detail ?? t("dashboard.loadFailed"));
+  } catch (error) {
+    errorMsg.value = String(
+      (error as { detail?: string })?.detail ??
+        error ??
+        t("dashboard.loadFailed")
+    );
   } finally {
     loading.value = false;
   }
@@ -136,13 +152,25 @@ defineExpose({ loadData });
 
 <template>
   <div v-loading="loading" class="size-full">
-    <div v-if="card.chart_type === 'number'" class="flex-c size-full">
-      <span class="text-3xl font-semibold">{{ total }}</span>
-    </div>
     <div
-      v-show="card.chart_type !== 'number'"
-      ref="chartRef"
-      class="size-full"
-    />
+      v-if="errorMsg"
+      class="flex-c size-full flex-col gap-2 text-center"
+      data-testid="chart-card-error"
+    >
+      <span class="text-xs text-(--el-color-danger)">{{ errorMsg }}</span>
+      <el-button link type="primary" size="small" @click="loadData">
+        {{ t("dashboard.retry") }}
+      </el-button>
+    </div>
+    <template v-else>
+      <div v-if="card.chart_type === 'number'" class="flex-c size-full">
+        <span class="text-3xl font-semibold">{{ total }}</span>
+      </div>
+      <div
+        v-show="card.chart_type !== 'number'"
+        ref="chartRef"
+        class="size-full"
+      />
+    </template>
   </div>
 </template>

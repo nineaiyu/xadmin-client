@@ -1,6 +1,10 @@
 import { ref, type CSSProperties } from "vue";
 import { dataDictApi, type DictItem } from "@/api/system/dict";
+import { fetchAllRows } from "./fetchAllRows";
 import { createTtlCache } from "./ttlCache";
+
+// 字典项类型再导出：页面只经本入口消费字典（值 + 类型），不直连 @/api/system/dict
+export type { DictItem };
 
 /**
  * 数据字典前端消费端（参考 RuoYi/Jeecg 的 getDicts 模式）。
@@ -15,6 +19,12 @@ import { createTtlCache } from "./ttlCache";
 const DICT_TTL = 5 * 60 * 1000;
 
 const dictCache = createTtlCache<DictItem[]>({ ttl: DICT_TTL });
+const dictTypeCache = createTtlCache<DictTypeItem[]>({ ttl: DICT_TTL });
+/** 字典类型清单缓存键（单一逻辑清单，键固定） */
+const DICT_TYPES_KEY = "types";
+
+/** 字典类型候选（绑定选择器用）：仅 code/label */
+export type DictTypeItem = { code: string; label: string };
 
 /**
  * 清空前端字典缓存（不传 code 清全部）。
@@ -23,6 +33,32 @@ const dictCache = createTtlCache<DictItem[]>({ ttl: DICT_TTL });
  */
 export function clearDictCache(code?: string) {
   dictCache.invalidate(code);
+  if (!code) dictTypeCache.invalidate(DICT_TYPES_KEY);
+}
+
+/**
+ * 字典类型候选（设计器「数据字典」绑定选择器）：启用中的类型行 code/label。
+ *
+ * 走字典管理列表接口（需要字典查看权限）；无权限时降级空数组，
+ * 调用方回退为直接输入 code 的输入形态。失败不缓存（下次调用重试）。
+ */
+export function getDictTypes(): Promise<DictTypeItem[]> {
+  return dictTypeCache
+    .get(DICT_TYPES_KEY, async () => {
+      const res = await fetchAllRows(dataDictApi.list, {
+        is_type: true,
+        is_active: true
+      });
+      const rows = (res?.data?.results ?? []) as {
+        code: string;
+        label: string;
+      }[];
+      return rows.map(item => ({
+        code: item.code,
+        label: item.label || item.code
+      }));
+    })
+    .catch(() => [] as DictTypeItem[]);
 }
 
 /** 取字典项（带进程内 TTL 缓存与并发去重；失败返回空数组不缓存，下次调用重试） */

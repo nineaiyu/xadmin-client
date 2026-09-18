@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive } from "vue";
 import { useI18n } from "vue-i18n";
 import UploadFiles from "@/components/RePlusPage/src/components/UploadFiles.vue";
+import { getDictItems, type DictItem } from "@/utils/dict";
 import {
   submissionApi,
   type FillableFormItem,
@@ -110,6 +111,39 @@ const flatOptionsOf = (field: FormField): string[] =>
     (item): item is string => typeof item === "string"
   );
 
+/** 数据字典字段的选项缓存：key → 字典项（label 展示 / value 提交） */
+const dictItemCache = reactive<Record<string, DictItem[]>>({});
+
+/** 选项型字段的 label/value 对：绑定字典时读字典项，否则内联选项（值即标签） */
+const optionEntries = (
+  field: FormField
+): { label: string; value: string }[] => {
+  if (field.dict) {
+    return (dictItemCache[field.key] ?? []).map(item => ({
+      label: item.label,
+      value: String(item.value ?? "")
+    }));
+  }
+  return flatOptionsOf(field).map(value => ({ label: value, value }));
+};
+
+/** 加载所有绑定字典字段的选项（字典接口已带缓存且对登录用户开放） */
+const loadDictOptions = () => {
+  for (const field of schemaFields.value) {
+    if (!field.dict) continue;
+    getDictItems(field.dict).then(items => {
+      dictItemCache[field.key] = items;
+    });
+  }
+};
+onMounted(loadDictOptions);
+
+/** 字典字段占位：字典为空时给出提示（提交会被后端 fail-closed 拒绝） */
+const dictPlaceholder = (field: FormField) =>
+  field.dict && !(dictItemCache[field.key] ?? []).length
+    ? t("dform.dictEmpty")
+    : t("dform.selectPlaceholder");
+
 /** 生成提交载荷（字段校验由后端按 schema 执行） */
 const getPayload = () => ({
   form: props.form.pk,
@@ -199,12 +233,13 @@ defineExpose({ getPayload });
           v-model="formData[field.key] as string"
           class="w-full"
           clearable
+          :placeholder="dictPlaceholder(field)"
         >
           <el-option
-            v-for="option in flatOptionsOf(field)"
-            :key="option"
-            :value="option"
-            :label="option"
+            v-for="option in optionEntries(field)"
+            :key="option.value"
+            :value="option.value"
+            :label="option.label"
           />
         </el-select>
         <el-radio-group
@@ -212,10 +247,10 @@ defineExpose({ getPayload });
           v-model="formData[field.key] as string"
         >
           <el-radio
-            v-for="option in flatOptionsOf(field)"
-            :key="option"
-            :value="option"
-            >{{ option }}</el-radio
+            v-for="option in optionEntries(field)"
+            :key="option.value"
+            :value="option.value"
+            >{{ option.label }}</el-radio
           >
         </el-radio-group>
         <el-checkbox-group
@@ -223,10 +258,10 @@ defineExpose({ getPayload });
           v-model="formData[field.key] as string[]"
         >
           <el-checkbox
-            v-for="option in flatOptionsOf(field)"
-            :key="option"
-            :value="option"
-            >{{ option }}</el-checkbox
+            v-for="option in optionEntries(field)"
+            :key="option.value"
+            :value="option.value"
+            >{{ option.label }}</el-checkbox
           >
         </el-checkbox-group>
         <el-date-picker

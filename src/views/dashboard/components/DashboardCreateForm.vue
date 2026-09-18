@@ -1,18 +1,29 @@
 <script lang="ts" setup>
 import { reactive } from "vue";
 import { useI18n } from "vue-i18n";
+import { choiceValue } from "@/utils/dict";
 import { message } from "@/utils/message";
+import type { DashboardItem } from "@/api/system/datasets";
 
 /**
- * 新建仪表盘表单（C5：弹窗体系收敛到 ReDialog 的 content 组件形态）。
+ * 仪表盘表单（C5：弹窗体系收敛到 ReDialog 的 content 组件形态）。
+ *
+ * 新建（row 缺省）与设置（row 非空：重命名 / 可见性）双模式，载荷同构。
  */
 defineOptions({ name: "DashboardCreateForm" });
+
+const props = defineProps<{
+  /** 编辑既有仪表盘（设置弹窗）：预填名称与可见性 */
+  row?: DashboardItem | null;
+}>();
 
 const { t } = useI18n();
 
 const form = reactive({
-  name: "",
-  visibility: "personal" as "personal" | "shared"
+  name: props.row?.name ?? "",
+  // visibility 序列化为 {value,label} 对象，radio 只接受标量（归一化取 value）
+  visibility: (props.row ? choiceValue(props.row.visibility) : "personal") as
+    "personal" | "shared"
 });
 
 /** 校验并生成提交载荷；校验失败返回 null（调用方保持弹窗打开并给出提示） */

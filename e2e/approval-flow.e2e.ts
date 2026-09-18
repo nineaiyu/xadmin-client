@@ -146,10 +146,15 @@ test("流程审批：发起申请 → 两级会签通过 → 我的申请已通�
   const approverPage = await approverContext.newPage();
   await login(approverPage, APPROVER);
   await openInstanceCenter(approverPage);
-  const confirmPopconfirm = async () => {
-    await approverPage
-      .locator(".el-popconfirm, .el-popper, .el-message-box")
-      .getByRole("button", { name: "确定" })
+  // 通过走弹窗（审批意见选填）：锚定标题含实例名的弹窗，确认按钮为 ReDialog 默认「保存」
+  const confirmApprove = async () => {
+    const approveDialog = approverPage
+      .locator(".el-dialog:visible")
+      .filter({ hasText: title })
+      .first();
+    await expect(approveDialog).toBeVisible({ timeout: 10_000 });
+    await approveDialog
+      .getByRole("button", { name: /保存|确定/ })
       .first()
       .click();
   };
@@ -158,13 +163,13 @@ test("流程审批：发起申请 → 两级会签通过 → 我的申请已通�
     .first();
   await expect(pendingRow).toBeVisible({ timeout: 20_000 });
   await pendingRow.getByRole("button", { name: "通过" }).first().click();
-  await confirmPopconfirm();
+  await confirmApprove();
 
   // 首节点通过后流转到终审：行仍在待办（第二节点待我审批）
   await expect(pendingRow).toBeVisible({ timeout: 20_000 });
   await expect(pendingRow).toContainText("终审", { timeout: 20_000 });
   await pendingRow.getByRole("button", { name: "通过" }).first().click();
-  await confirmPopconfirm();
+  await confirmApprove();
   await expect(
     approverPage.locator(".el-table__row", { hasText: title })
   ).toHaveCount(0, { timeout: 20_000 });

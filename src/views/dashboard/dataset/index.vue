@@ -16,7 +16,8 @@ const {
   operationButtonsProps,
   tableBarButtonsProps,
   previewDialog,
-  preview
+  preview,
+  exportPreviewCsv
 } = useDataset(tableRef);
 </script>
 
@@ -39,9 +40,20 @@ const {
       :title="t('dataDataset.preview')"
       width="720px"
     >
-      <p class="mb-2 text-sm text-gray-500">
-        {{ t("dataDataset.total") }}: {{ preview?.total ?? 0 }}
-      </p>
+      <div class="mb-2 flex-bc">
+        <span class="text-sm text-gray-500">
+          {{ t("dataDataset.total") }}: {{ preview?.total ?? 0 }}
+        </span>
+        <el-button
+          link
+          type="primary"
+          size="small"
+          data-testid="dataset-preview-export"
+          @click="exportPreviewCsv"
+        >
+          {{ t("dataDataset.exportCsv") }}
+        </el-button>
+      </div>
       <el-table :data="preview?.rows ?? []" max-height="380">
         <el-table-column
           v-for="col in preview?.columns ?? []"

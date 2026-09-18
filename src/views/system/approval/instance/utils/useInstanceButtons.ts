@@ -1,4 +1,4 @@
-import { shallowRef, type Ref } from "vue";
+import { shallowRef } from "vue";
 import type { useI18n } from "vue-i18n";
 import { approvalInstanceApi } from "@/api/system/approvalFlow";
 import {
@@ -10,9 +10,11 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
 import { openInstanceDetail, openStartInstanceDialog } from "./instanceDialogs";
 import type { InstanceScope } from "./hook";
+import Bell from "~icons/ep/bell";
 import Check from "~icons/ep/check";
 import Close from "~icons/ep/close";
 import Plus from "~icons/ep/plus";
+import Refresh from "~icons/ep/refresh";
 import RefreshLeft from "~icons/ep/refresh-left";
 import View from "~icons/ep/view";
 
@@ -23,19 +25,22 @@ export type InstanceAuth = {
   approve: boolean;
   reject: boolean;
   cancel: boolean;
+  urge: boolean;
   addSign: boolean;
   batchApprove: boolean;
   batchReject: boolean;
   create: boolean;
 };
 
-/** 行内/工具栏按钮组：待办=通过/驳回/加签，我的申请=撤回，已办=只读（拆分自 hook.tsx，行为不变） */
+const statusValue = (row: { status?: { value?: string } | string }) =>
+  (row.status as { value?: string })?.value ?? row.status;
+
+/** 行内/工具栏按钮组：待办=通过/驳回/加签，我的申请=撤回/催办/重提，已办=只读 */
 export function useInstanceButtons({
   scope,
   auth,
   t,
   refresh,
-  tableRef,
   actions,
   onStarted
 }: {
@@ -43,8 +48,10 @@ export function useInstanceButtons({
   auth: InstanceAuth;
   t: TFunction;
   refresh: () => void;
-  tableRef: Ref;
   actions: {
+    openApprove: (row: { pk?: string | number; title?: string }) => void;
+    openBatchApprove: () => void;
+    openUrge: (row: { pk?: string | number; title?: string }) => void;
     openReject: (row: { pk?: string | number; title?: string }) => void;
     openAddSign: (row: { pk?: string | number; title?: string }) => void;
     openBatchReject: () => void;
@@ -90,21 +97,8 @@ export function useInstanceButtons({
       icon: useRenderIcon(Check),
       link: true
     },
-    confirm: {
-      title: (row: { title?: string }) =>
-        t("systemApprovalInstance.approveConfirm", {
-          title: row?.title ?? ""
-        })
-    },
-    onClick: ({ row, loading }) => {
-      loading.value = true;
-      handleOperation({
-        t,
-        apiReq: approvalInstanceApi.approve(row.pk, row.my_task?.pk),
-        success: () => refresh(),
-        requestEnd: () => (loading.value = false)
-      });
-    },
+    // 通过走弹窗：审批意见选填（随任务落轨迹；后端 comment 字段同口径）
+    onClick: ({ row }) => actions.openApprove(row),
     show: auth.approve && 6
   };
 
@@ -154,47 +148,83 @@ export function useInstanceButtons({
       });
     },
     show: (row: { status?: { value?: string } | string }) =>
-      auth.cancel &&
-      ((row.status as { value?: string })?.value ?? row.status) === "PENDING"
+      auth.cancel && statusValue(row) === "PENDING"
   };
 
-  /** 行内按钮：待办=通过/驳回/加签；我的申请=撤回；已办/详情=只读 */
+  /** 催办（我的申请页签）：审批中才可用，通知当前节点审批人（服务端 10 分钟节流） */
+  const urgeButton: OperationButtonsRow = {
+    text: t("systemApprovalInstance.urge"),
+    code: "urge",
+    props: {
+      type: "warning",
+      icon: useRenderIcon(Bell),
+      link: true
+    },
+    onClick: ({ row }) => actions.openUrge(row),
+    show: (row: { status?: { value?: string } | string }) =>
+      auth.urge && statusValue(row) === "PENDING"
+  };
+
+  /** 重新提交（我的申请页签）：已驳回时按原流程与原表单内容发起新申请 */
+  const resubmitButton: OperationButtonsRow = {
+    text: t("systemApprovalInstance.resubmit"),
+    code: "resubmit",
+    props: {
+      type: "primary",
+      icon: useRenderIcon(Refresh),
+      link: true
+    },
+    confirm: {
+      title: (row: { title?: string }) =>
+        t("systemApprovalInstance.resubmitConfirm", {
+          title: row?.title ?? ""
+        })
+    },
+    onClick: ({ row }) => {
+      const flowPk = (row.flow as { pk?: string | number } | undefined)?.pk;
+      if (!flowPk) {
+        message(t("results.failed"), { type: "error" });
+        return;
+      }
+      openStartInstanceDialog(
+        t("systemApprovalInstance.startTitle"),
+        () => {
+          refresh();
+          onStarted?.();
+        },
+        {
+          flow: String(flowPk),
+          title: row.title,
+          formData: (row.form_data ?? {}) as Record<string, unknown>
+        }
+      );
+    },
+    show: (row: { status?: { value?: string } | string }) =>
+      auth.create && statusValue(row) === "REJECTED"
+  };
+
+  /** 行内按钮：待办=通过/驳回/加签；我的申请=撤回/催办/重提；已办/详情=只读 */
   const operationButtonsProps = shallowRef<OperationProps>({
-    // 5 个按钮（内置查看 + 通过/驳回/加签/申请详情）全部内联，避免折叠进「更多」
-    showNumber: 5,
+    // 按钮全部内联（内置查看 + 业务动作），避免折叠进「更多」
+    showNumber: 6,
     buttons:
       scope === "pending"
         ? [approveButton, rejectButton, addSignButton, detailButton]
         : scope === "mine"
-          ? [cancelButton, detailButton]
+          ? [cancelButton, urgeButton, resubmitButton, detailButton]
           : [detailButton]
   });
 
   const batchApproveButton: OperationButtonsRow = {
     text: t("systemApprovalInstance.batchApprove"),
     code: "batchApprove",
-    confirm: {
-      title: t("systemApprovalInstance.batchApproveConfirm")
-    },
     props: {
       type: "primary",
       icon: useRenderIcon(Check),
       plain: true
     },
-    onClick: ({ loading }) => {
-      const pks = tableRef.value?.getSelectPks("pk") ?? [];
-      if (!pks.length) {
-        message(t("results.noSelectedData"), { type: "error" });
-        return;
-      }
-      loading.value = true;
-      handleOperation({
-        t,
-        apiReq: approvalInstanceApi.batchApprove(pks),
-        success: () => refresh(),
-        requestEnd: () => (loading.value = false)
-      });
-    },
+    // 批量通过走弹窗：审批意见选填（逐单落同一意见）
+    onClick: () => actions.openBatchApprove(),
     show: auth.batchApprove
   };
 

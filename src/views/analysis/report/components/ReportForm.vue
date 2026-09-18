@@ -99,9 +99,32 @@ const selectedDataset = computed(
   () => props.datasets.find(item => item.pk === form.dataset) ?? null
 );
 
-/** 数据集切换联动：分组字段重置为该数据集首列 */
+/** sum/avg 的数值字段候选（后端聚合要求数值列；无元数据时回落全列） */
+const numericColumns = computed(() => {
+  const numeric = selectedDataset.value?.numeric_columns ?? [];
+  return numeric.length ? numeric : (selectedDataset.value?.columns ?? []);
+});
+
+const needsValueField = computed(
+  () =>
+    form.mode === "aggregate" &&
+    (form.metric === "sum" || form.metric === "avg")
+);
+
+/** 数据集切换联动：分组字段重置为该数据集首列，清空数值字段 */
 const onDatasetPicked = () => {
   form.group_by = selectedDataset.value?.columns[0] ?? "";
+  form.value_field = "";
+};
+
+/** 指标切换联动：sum/avg 需要数值字段（缺省自动带上首个数值列） */
+const onMetricChanged = () => {
+  if (needsValueField.value && !form.value_field) {
+    form.value_field = numericColumns.value[0] ?? "";
+  }
+  if (!needsValueField.value) {
+    form.value_field = "";
+  }
 };
 
 /** 校验并生成提交载荷；校验失败返回 null（调用方保持弹窗打开） */
@@ -112,6 +135,11 @@ const getPayload = (): Record<string, unknown> | null => {
   }
   if (!form.notify_channels.length) {
     message(t("dataReport.channelRequired"), { type: "warning" });
+    return null;
+  }
+  // 聚合报表的 sum/avg 必须指定数值字段（否则执行期必然 FAILURE，提前拦截）
+  if (needsValueField.value && !form.value_field) {
+    message(t("dataReport.valueFieldRequired"), { type: "warning" });
     return null;
   }
   const recipients = form.recipients.split(/[,;\s]+/).filter(Boolean);
@@ -177,11 +205,28 @@ defineExpose({ getPayload });
         </el-select>
       </el-form-item>
       <el-form-item :label="t('dataReport.metric')">
-        <el-select v-model="form.metric" class="w-full">
+        <el-select
+          v-model="form.metric"
+          class="w-full"
+          @change="onMetricChanged"
+        >
           <el-option value="count" :label="t('dataReport.metricCount')" />
           <el-option value="sum" :label="t('dataReport.metricSum')" />
           <el-option value="avg" :label="t('dataReport.metricAvg')" />
         </el-select>
+      </el-form-item>
+      <el-form-item v-if="needsValueField" :label="t('dataReport.valueField')">
+        <el-select v-model="form.value_field" class="w-full" filterable>
+          <el-option
+            v-for="f in numericColumns"
+            :key="f"
+            :value="f"
+            :label="f"
+          />
+        </el-select>
+        <div class="text-xs text-gray-400">
+          {{ t("dataReport.valueFieldTip") }}
+        </div>
       </el-form-item>
       <el-form-item :label="t('dataReport.dateTrunc')">
         <el-select v-model="form.date_trunc" class="w-full" clearable>

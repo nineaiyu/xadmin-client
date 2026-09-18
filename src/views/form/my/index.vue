@@ -3,8 +3,14 @@ import { SUCCESS_CODE } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { h, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { addDialog } from "@/components/ReDialog";
+import { ElButton, ElMessageBox } from "element-plus";
+import {
+  addDialog,
+  closeDialog,
+  type DialogOptions
+} from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
+import { addDrawer } from "@/components/ReDrawer";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";
@@ -15,6 +21,7 @@ import {
   type SubmissionItem
 } from "@/api/system/dform";
 import SubmissionForm from "./components/SubmissionForm.vue";
+import SubmissionDetail from "./components/SubmissionDetail.vue";
 
 defineOptions({
   name: "FormMySubmission"
@@ -24,6 +31,8 @@ const { t } = useI18n();
 const canEdit = hasAuth("partialUpdate:FormMySubmission");
 const canDestroy = hasAuth("destroy:FormMySubmission");
 const canExport = hasAuth("exportData:FormMySubmission");
+const canResubmit = hasAuth("resubmit:FormMySubmission");
+const canSubmit = hasAuth("submit:FormMySubmission");
 
 const loading = ref(false);
 const exporting = ref(false);
@@ -59,7 +68,11 @@ const loadAll = async () => {
   }
 };
 
-/** 填报 / 编辑提交弹窗（C5：统一走 ReDialog，动态字段渲染在 SubmissionForm 中） */
+/** 填报 / 编辑提交弹窗（C5：统一走 ReDialog，动态字段渲染在 SubmissionForm 中）
+ *
+ * 草稿：新建填报或编辑既有草稿时附「保存草稿」（轻校验、跳过审批）；
+ * 编辑已生效/已驳回的提交不提供草稿入口（避免把已生效数据改回草稿态）。
+ */
 const submissionFormRef = ref<InstanceType<typeof SubmissionForm>>();
 
 const openDialog = (
@@ -67,7 +80,33 @@ const openDialog = (
   submission: SubmissionItem | null = null
 ) => {
   submissionFormRef.value = undefined;
-  addDialog({
+  const draftMode = !submission || submission.status?.value === "DRAFT";
+  const savingDraft = ref(false);
+
+  const saveDraft = async (options: DialogOptions) => {
+    const payload = submissionFormRef.value?.getPayload();
+    if (!payload) return;
+    savingDraft.value = true;
+    const res = await (
+      submission
+        ? submissionApi.partialUpdate(submission.pk, payload)
+        : submissionApi.create({ ...payload, as_draft: true })
+    )
+      .catch(error => ({
+        code: -1,
+        detail: String((error as { detail?: string })?.detail ?? error)
+      }))
+      .finally(() => (savingDraft.value = false));
+    if (res.code === SUCCESS_CODE) {
+      message(t("dform.draftSaved"), { type: "success" });
+      closeDialog(options, 0);
+      await loadAll();
+      return;
+    }
+    if (res.detail) message(String(res.detail), { type: "warning" });
+  };
+
+  const options: DialogOptions = {
     title: submission ? t("dform.editSubmission") : form.name,
     width: dialogSize("md"),
     draggable: true,
@@ -75,7 +114,23 @@ const openDialog = (
     closeOnClickModal: false,
     sureBtnLoading: true,
     contentRenderer: () =>
-      h(SubmissionForm, { ref: submissionFormRef, form, submission }),
+      h("div", [
+        h(SubmissionForm, { ref: submissionFormRef, form, submission }),
+        draftMode
+          ? h("div", { class: "mt-1 flex justify-end" }, [
+              h(
+                ElButton,
+                {
+                  size: "small",
+                  loading: savingDraft.value,
+                  "data-testid": "submission-save-draft",
+                  onClick: () => saveDraft(options)
+                },
+                () => t("dform.saveDraft")
+              )
+            ])
+          : null
+      ]),
     beforeSure: async (done, { closeLoading }) => {
       const payload = submissionFormRef.value?.getPayload();
       if (!payload) {
@@ -101,7 +156,8 @@ const openDialog = (
       if (res.detail) message(String(res.detail), { type: "warning" });
       closeLoading();
     }
-  });
+  };
+  addDialog(options);
 };
 
 const openFill = (form: FillableFormItem) => openDialog(form, null);
@@ -113,8 +169,49 @@ const openEditSubmission = (submission: SubmissionItem) => {
 };
 
 const remove = async (row: SubmissionItem) => {
+  try {
+    await ElMessageBox.confirm(
+      t("dform.removeConfirm", { name: row.form_name }),
+      {
+        confirmButtonText: t("buttons.sure"),
+        cancelButtonText: t("buttons.cancel"),
+        type: "warning",
+        confirmButtonClass: "el-button--danger",
+        draggable: true
+      }
+    );
+  } catch {
+    return;
+  }
   const res = await submissionApi.destroy(row.pk);
   if (res.code === SUCCESS_CODE) await loadAll();
+};
+
+/** 提交草稿（仅草稿态）：服务端按 schema 严格校验后进入审批/直接生效 */
+const submitDraft = async (row: SubmissionItem) => {
+  const res = await submissionApi.submit(row.pk).catch(error => ({
+    code: -1,
+    detail: String((error as { detail?: string })?.detail ?? error)
+  }));
+  if (res.code === SUCCESS_CODE) {
+    message(t("dform.submitDraftOk"), { type: "success" });
+    await loadAll();
+    return;
+  }
+  message(String(res.detail || t("results.failed")), { type: "warning" });
+};
+
+/** 提交详情抽屉：字段明细 + 审批轨迹（只读） */
+const openDetail = (row: SubmissionItem) => {
+  addDrawer({
+    title: `${row.form_name} - ${String(row.pk).slice(0, 8).toUpperCase()}`,
+    size: "45%",
+    destroyOnClose: true,
+    closeOnClickModal: true,
+    hideFooter: true,
+    props: { row },
+    contentRenderer: () => h(SubmissionDetail)
+  });
 };
 
 /** 重新提交被驳回的填报（仅申请人、仅驳回态：按当前数据重新发起流程实例） */
@@ -134,6 +231,7 @@ const resubmit = async (row: SubmissionItem) => {
 /** 提交状态（审批回写）语义色兜底：字典未配 color 时按审批结果取 EP 语义色，
  * tag props 统一经 `statusTagProps`（与列表/详情同口径，禁止页面自建映射函数） */
 const SUBMISSION_STATUS_TAG_TYPE: Record<string, StatusTagType> = {
+  DRAFT: "info",
   PENDING: "warning",
   APPROVED: "success",
   REJECTED: "danger",
@@ -264,8 +362,16 @@ onMounted(loadAll);
           :label="t('dform.submittedAt')"
           width="170"
         />
-        <el-table-column :label="t('dform.actions')" width="220" fixed="right">
+        <el-table-column :label="t('dform.actions')" width="320" fixed="right">
           <template #default="{ row }">
+            <el-button
+              link
+              type="primary"
+              data-testid="submission-detail"
+              @click="openDetail(row as SubmissionItem)"
+            >
+              {{ t("dform.detail") }}
+            </el-button>
             <el-button
               v-if="
                 canEdit && (row as SubmissionItem).status?.value !== 'PENDING'
@@ -274,10 +380,28 @@ onMounted(loadAll);
               type="primary"
               @click="openEditSubmission(row as SubmissionItem)"
             >
-              {{ t("dform.edit") }}
+              {{
+                (row as SubmissionItem).status?.value === "DRAFT"
+                  ? t("dform.continueEdit")
+                  : t("dform.edit")
+              }}
             </el-button>
             <el-button
-              v-if="(row as SubmissionItem).status?.value === 'REJECTED'"
+              v-if="
+                canSubmit && (row as SubmissionItem).status?.value === 'DRAFT'
+              "
+              link
+              type="success"
+              data-testid="submission-submit-draft"
+              @click="submitDraft(row as SubmissionItem)"
+            >
+              {{ t("dform.submitDraft") }}
+            </el-button>
+            <el-button
+              v-if="
+                canResubmit &&
+                (row as SubmissionItem).status?.value === 'REJECTED'
+              "
               link
               type="primary"
               data-testid="submission-resubmit"
@@ -289,6 +413,7 @@ onMounted(loadAll);
               v-if="canDestroy"
               link
               type="danger"
+              :disabled="(row as SubmissionItem).status?.value === 'PENDING'"
               @click="remove(row as SubmissionItem)"
             >
               {{ t("dform.delete") }}

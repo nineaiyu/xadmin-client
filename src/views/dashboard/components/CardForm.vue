@@ -55,16 +55,53 @@ onMounted(async () => {
   }
 });
 
-/** 当前数据集列（切换数据集后候选更新） */
-const datasetColumns = computed(
-  () => props.datasets.find(item => item.pk === form.dataset)?.columns ?? []
+/** 当前数据集（切换数据集后候选更新） */
+const selectedDataset = computed(
+  () => props.datasets.find(item => item.pk === form.dataset) ?? null
+);
+const datasetColumns = computed(() => selectedDataset.value?.columns ?? []);
+
+/** sum/avg 的数值字段候选（后端聚合要求数值列且在白名单内；无元数据时回落全列） */
+const numericColumns = computed(() => {
+  const numeric = selectedDataset.value?.numeric_columns ?? [];
+  return numeric.length ? numeric : datasetColumns.value;
+});
+
+const needsValueField = computed(
+  () => form.metric === "sum" || form.metric === "avg"
 );
 
 const onDatasetPicked = () => {
-  form.group_by = datasetColumns.value[0];
+  // 折线（趋势）优先用数据集的「时间字段」作为分组字段，否则退回首列
+  const dateField = selectedDataset.value?.config?.date_field;
+  form.group_by =
+    form.chart_type === "line" && dateField
+      ? dateField
+      : datasetColumns.value[0];
+  form.value_field = "";
+  if (form.metric === "sum" || form.metric === "avg") {
+    form.value_field = numericColumns.value[0];
+  }
   if (!form.title) {
-    form.title =
-      props.datasets.find(item => item.pk === form.dataset)?.name ?? "";
+    form.title = selectedDataset.value?.name ?? "";
+  }
+};
+
+/** 指标切换联动：sum/avg 需要数值字段（缺省自动带上首个数值列） */
+const onMetricChanged = () => {
+  if (needsValueField.value && !form.value_field) {
+    form.value_field = numericColumns.value[0];
+  }
+  if (!needsValueField.value) {
+    form.value_field = "";
+  }
+};
+
+/** 图表类型切换：折线默认分组到时间字段（趋势语义），其余首列 */
+const onChartTypeChanged = () => {
+  if (form.chart_type === "line") {
+    const dateField = selectedDataset.value?.config?.date_field;
+    if (dateField) form.group_by = dateField;
   }
 };
 
@@ -76,6 +113,14 @@ const getCard = (): DashboardCard | null => {
   }
   if (form.chart_type !== "number" && !form.group_by) {
     message(t("dashboard.cardRequired"), { type: "warning" });
+    return null;
+  }
+  if (
+    form.chart_type !== "number" &&
+    needsValueField.value &&
+    !form.value_field
+  ) {
+    message(t("dashboard.valueFieldRequired"), { type: "warning" });
     return null;
   }
   return { ...form };
@@ -123,7 +168,11 @@ defineExpose({ getCard });
       </el-select>
     </el-form-item>
     <el-form-item :label="t('dashboard.chartType')">
-      <el-select v-model="form.chart_type" class="w-full">
+      <el-select
+        v-model="form.chart_type"
+        class="w-full"
+        @change="onChartTypeChanged"
+      >
         <el-option value="number" :label="t('dashboard.chartNumber')" />
         <el-option value="line" :label="t('dashboard.chartLine')" />
         <el-option value="bar" :label="t('dashboard.chartBar')" />
@@ -147,20 +196,36 @@ defineExpose({ getCard });
       v-if="form.chart_type === 'line'"
       :label="t('dashboard.dateTrunc')"
     >
-      <el-select v-model="form.date_trunc" class="w-full">
+      <el-select v-model="form.date_trunc" class="w-full" clearable>
         <el-option value="day" :label="t('dashboard.byDay')" />
         <el-option value="month" :label="t('dashboard.byMonth')" />
       </el-select>
     </el-form-item>
     <el-form-item
-      v-if="form.chart_type === 'bar' || form.chart_type === 'pie'"
+      v-if="form.chart_type !== 'number'"
       :label="t('dashboard.metric')"
     >
-      <el-select v-model="form.metric" class="w-full">
+      <el-select v-model="form.metric" class="w-full" @change="onMetricChanged">
         <el-option value="count" :label="t('dashboard.metricCount')" />
         <el-option value="sum" :label="t('dashboard.metricSum')" />
         <el-option value="avg" :label="t('dashboard.metricAvg')" />
       </el-select>
+    </el-form-item>
+    <el-form-item
+      v-if="form.chart_type !== 'number' && needsValueField"
+      :label="t('dashboard.valueField')"
+    >
+      <el-select v-model="form.value_field" class="w-full" filterable>
+        <el-option
+          v-for="field in numericColumns"
+          :key="field"
+          :value="field"
+          :label="field"
+        />
+      </el-select>
+      <div class="text-xs text-gray-500">
+        {{ t("dashboard.valueFieldTip") }}
+      </div>
     </el-form-item>
     <el-form-item :label="t('dashboard.cardSpan')">
       <el-select v-model="form.span" class="w-full">

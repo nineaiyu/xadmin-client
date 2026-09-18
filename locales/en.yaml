@@ -487,6 +487,7 @@ systemApprovalFlow:
   nodeRequired: At least one approval node is required
   nodeNameRequired: Some node has no name
   saveSuccess: Flow saved
+  routeInvalidDropped: Invalid routes were ignored (a condition field is required and the target cannot be the current node)
 
 systemApprovalInstance:
   start: New Application
@@ -540,6 +541,19 @@ systemApprovalInstance:
   statusAPPROVED: Approved
   statusREJECTED: Rejected
   statusCANCELLED: Cancelled
+  approveTitle: Approve "{title}"
+  batchApproveTitle: Approve {n} applications
+  urge: Urge
+  urgeTitle: Urge "{title}"
+  urgeMessagePlaceholder: Urge message (optional)
+  urgeOk: The approval reminder has been sent
+  resubmit: Resubmit
+  resubmitConfirm: Resubmit "{title}" with the same content?
+  resubmitSuccess: Resubmitted, pending approval
+  delegatedFrom: Delegated by {name}
+  tasksEmpty: No approval records
+  flowUnavailable: The original flow is disabled or unavailable, please choose another one
+
 
 userinfo:
   userinfo: UserInfo
@@ -1657,6 +1671,13 @@ dashboard:
   cardRoles: Visible roles
   cardRolesPlaceholder: Empty = visible to everyone who can see this dashboard
   removeConfirm: Delete dashboard "{name}"? Its layout and cards will be removed, and screens referencing it will lose this page
+  valueField: Measure field
+  valueFieldTip: Numeric source field for sum/avg aggregation (numeric columns only)
+  valueFieldRequired: Please select a measure field
+  loadFailed: Failed to load data
+  retry: Retry
+  settings: Settings
+  refresh: Refresh
 
 dataDataset:
   title: Datasets
@@ -1685,6 +1706,8 @@ dataDataset:
   required: Name, model and columns are required
   saveOk: Saved
   deleteConfirm: Delete dataset "{name}"? Dashboard cards and reports referencing it will no longer resolve data
+  dateFieldTip: Default grouping field for line trend cards (optional)
+  exportCsv: Export CSV
 
 dataScreen:
   title: Display Screens
@@ -1768,6 +1791,9 @@ dataReport:
   required: Name and dataset are required
   saveOk: Saved
   deleteConfirm: Delete report "{name}"?
+  valueField: Measure field
+  valueFieldTip: Numeric source field for sum/avg aggregation (numeric columns only)
+  valueFieldRequired: Please select a measure field
 
 webhook:
   title: Webhook Subscriptions
@@ -1959,6 +1985,50 @@ dform:
   addRow: Add row
   rangeStart: Start date
   rangeEnd: End date
+  fieldProps: Properties
+  moveUp: Move up
+  moveDown: Move down
+  fieldKeyHint: "Starts with a lowercase letter; letters/digits/underscore"
+  fieldKeyInvalid: "Key must start with a lowercase letter (letters/digits/underscore, max 32)"
+  fieldLabelRequired: Field label is required
+  fieldPlaceholder: Placeholder
+  fieldPlaceholderHint: Hint text shown inside the input
+  fieldMaxLength: Max length
+  fieldMin: Min value
+  fieldMax: Max value
+  fieldPrecision: Decimal places
+  fieldMultiple: Allow multiple
+  fieldDict: Data dict
+  fieldDictHint: Pick or type a dict type code
+  fieldDictTip: Options are maintained by the data dict and are exclusive with inline options
+  fieldDictBound: "Dict: {code}"
+  dictEmpty: No dict options available, please contact the administrator
+  selectPlaceholder: Please select
+  yes: "Yes"
+  no: "No"
+  saveDraft: Save draft
+  draftSaved: Draft saved
+  submitDraft: Submit
+  submitDraftOk: Submitted
+  detail: Detail
+  continueEdit: Continue editing
+  updatedAt: Updated at
+  instanceNo: Instance no.
+  noData: No data
+  approvalTrail: Approval trail
+  removeConfirm: Delete this submission of "{name}"?
+  fromTemplate: New from template
+  saveAsTemplate: Save as template
+  templateNameHint: Please enter the template name
+  templateNameDefault: "{name} template"
+  templateNameRequired: Template name is required
+  templateCopyName: "{name} (copy)"
+  templateSaved: Saved as template
+  templateRemoved: Template deleted
+  templateRemoveConfirm: Delete template "{name}"?
+  noTemplates: No form templates
+  useTemplate: Use
+
 
 leaveApply:
   leave_type: Leave type

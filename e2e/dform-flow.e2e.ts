@@ -185,7 +185,7 @@ test("表单绑定审批流程：提交进入流程 → 驳回重提 → 审批�
     if (!instance) throw new Error("重新提交后未生成流程实例");
     const approveRes = await page.request.post(
       `${BACKEND_URL}/api/system/approval-instances/${instance.pk}/approve`,
-      { headers: approverHeaders, data: { reason: "E2E 同意" } }
+      { headers: approverHeaders, data: { comment: "E2E 同意" } }
     );
     expect(approveRes.ok(), await approveRes.text()).toBeTruthy();
 
@@ -196,6 +196,18 @@ test("表单绑定审批流程：提交进入流程 → 驳回重提 → 审批�
         .getByRole("row", { name: formName })
         .getByTestId("submission-status-tag")
     ).toHaveText("已通过", { timeout: 15_000 });
+
+    // 提交详情：字段明细（schema label）+ 审批轨迹时间线（含审批意见）
+    await page
+      .getByTestId("my-submission-table")
+      .getByRole("row", { name: formName })
+      .getByTestId("submission-detail")
+      .click();
+    const detail = page.getByTestId("submission-detail-drawer");
+    await expect(detail).toBeVisible({ timeout: 10_000 });
+    await expect(detail).toContainText("E2E小明");
+    await expect(detail).toContainText("人事确认");
+    await expect(detail.getByTestId("trail-comment")).toContainText("E2E 同意");
   } finally {
     if (formPk) {
       await page.request

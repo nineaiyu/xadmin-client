@@ -46,6 +46,11 @@ export type FormField = {
   required?: boolean;
   /** 平铺控件为字符串数组；级联（cascader）为树形节点数组 */
   options?: FormFieldOption[];
+  /**
+   * 数据字典绑定（select/radio/checkbox）：填类型 code，选项值集合由数据字典维护
+   * （与内联 options 互斥；提交校验读字典项，空字典 fail-closed）
+   */
+  dict?: string;
   min?: number;
   max?: number;
   max_length?: number;
@@ -68,6 +73,8 @@ export type DynamicFormItem = {
   approval_required: boolean;
   /** 绑定审批流程：非空时提交进入流程引擎（多级审批，终态回写提交状态） */
   approval_flow?: { pk: string; label?: string } | null;
+  /** 表单模板：只保存 schema 供「从模板新建」复用，不进入可填报表单列表 */
+  is_template?: boolean;
 };
 
 /** 可填报表单（available-forms 返回结构：流程字段给名称与主键，不回传整个定义） */
@@ -81,19 +88,39 @@ export type FillableFormItem = {
   approval_flow_pk?: string | null;
 };
 
-/** 填报状态：空 = 无需审批已生效；绑定流程后随流程实例终态回写 */
+/** 填报状态：空 = 无需审批已生效；DRAFT = 草稿；绑定流程后随流程实例终态回写 */
 export type SubmissionStatusValue =
-  "" | "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
+  "" | "DRAFT" | "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
+
+/** 审批轨迹条目（提交绑定流程时按实例任务下发） */
+export type SubmissionTrailItem = {
+  pk: string;
+  node_name: string;
+  node_order: number;
+  assignee?: { pk?: number | string; label?: string } | null;
+  delegate_from?: { pk?: number | string; label?: string } | null;
+  actor?: { pk?: number | string; label?: string } | null;
+  status?: { value?: string; label?: string; color?: string | null } | null;
+  comment?: string;
+  acted_at?: string;
+  is_added?: boolean;
+  created_time?: string;
+};
 
 export type SubmissionItem = {
   pk: string;
   form: string;
   form_name: string;
+  /** 表单 schema 快照：详情页渲染字段 label 与复杂控件（无需表单设计器权限） */
+  form_schema?: FormField[];
   data: Record<string, unknown>;
   status?: { value: SubmissionStatusValue; label: string } | null;
   instance?: string | null;
+  /** 审批轨迹（仅绑定流程的提交非空） */
+  approval_trail?: SubmissionTrailItem[];
   creator?: { username: string };
   created_time: string;
+  updated_time?: string;
 };
 
 /** 选人控件候选（user-options）：仅基本展示字段 */
@@ -124,6 +151,16 @@ class SubmissionApi extends BaseApi {
       {},
       {},
       `${this.baseApi}/${pk}/resubmit`
+    );
+  };
+
+  /** 提交草稿（仅草稿态）：按 schema 严格校验后进入 流程引擎 / 操作审批 / 直接生效 */
+  submit = (pk: string, data?: Record<string, unknown>) => {
+    return this.request<BaseResult>(
+      "post",
+      {},
+      data ? { data } : {},
+      `${this.baseApi}/${pk}/submit`
     );
   };
 

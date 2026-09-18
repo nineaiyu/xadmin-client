@@ -8,14 +8,23 @@ import { addDrawer } from "@/components/ReDrawer";
 import StartInstanceDialog from "../components/StartInstanceDialog.vue";
 import InstanceDetail from "../components/InstanceDetail.vue";
 
+/** 发起申请预填（重新提交场景：复用原流程与原表单内容） */
+export type StartInstanceInitial = {
+  flow: string;
+  title?: string;
+  formData?: Record<string, unknown>;
+};
+
 /**
  * 打开「发起申请」弹窗：选择流程 + 动态表单，提交成功即关弹层并回调刷新。
  *
+ * initial 非空时预选流程并回填表单（我的申请页「重新提交」按原内容重发）；
  * 放在 .tsx 里以承载 contentRenderer 的 JSX；标题由调用方传入（i18n 需在 setup 内取）。
  */
 export function openStartInstanceDialog(
   title: string,
-  onSubmitted: () => void
+  onSubmitted: () => void,
+  initial?: StartInstanceInitial
 ) {
   const handleSubmitted = () => {
     closeDialog(options, 0);
@@ -28,7 +37,7 @@ export function openStartInstanceDialog(
     closeOnClickModal: false,
     hideFooter: true,
     contentRenderer: () =>
-      h(StartInstanceDialog, { onSubmitted: handleSubmitted })
+      h(StartInstanceDialog, { onSubmitted: handleSubmitted, initial })
   };
   addDialog(options);
 }

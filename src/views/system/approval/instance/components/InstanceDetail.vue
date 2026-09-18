@@ -18,10 +18,13 @@ type TaskRow = {
   node_name: string;
   node_order: number;
   assignee?: RelatedUser;
+  /** 委托代审来源：assignee 为代理人时记录的原审批人 */
+  delegate_from?: RelatedUser;
   actor?: RelatedUser;
   status?: DictValue;
   comment?: string;
   acted_at?: string;
+  created_time?: string;
   is_added?: boolean;
 };
 type FormField = {
@@ -161,44 +164,61 @@ onMounted(load);
       <el-divider content-position="left">
         {{ t("systemApprovalInstance.tasks") }}
       </el-divider>
-      <el-table :data="detail.tasks ?? []" size="small">
-        <el-table-column
-          prop="node_name"
-          :label="t('systemApprovalInstance.taskNode')"
-        />
-        <el-table-column :label="t('systemApprovalInstance.taskAssignee')">
-          <template #default="{ row }">
-            {{ row.assignee?.label ?? "-" }}
+      <el-empty
+        v-if="!(detail.tasks ?? []).length"
+        :description="t('systemApprovalInstance.tasksEmpty')"
+        :image-size="60"
+      />
+      <!-- 流转记录时间线：每个节点任务一行（处理人/状态/意见/加签/代理来源） -->
+      <el-timeline v-else data-testid="instance-trail">
+        <el-timeline-item
+          v-for="task in detail.tasks"
+          :key="task.pk"
+          :timestamp="task.acted_at || task.created_time || ''"
+          placement="top"
+        >
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="font-medium">{{ task.node_name }}</span>
             <el-tag
-              v-if="row.is_added"
+              v-if="statusOf(task.status)?.value"
               size="small"
-              type="warning"
-              class="ml-1"
+              v-bind="statusTagProps(task.status, FLOW_STATUS_TAG_TYPE)"
             >
-              {{ t("systemApprovalInstance.taskAdded") }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('systemApprovalInstance.formStatus')">
-          <template #default="{ row }">
-            <el-tag v-bind="statusTagProps(row.status, FLOW_STATUS_TAG_TYPE)">
               {{
-                statusOf(row.status)?.label ??
-                t(`systemApprovalInstance.status${statusOf(row.status)?.value}`)
+                statusOf(task.status)?.label ??
+                t(
+                  `systemApprovalInstance.status${statusOf(task.status)?.value}`
+                )
               }}
             </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="comment"
-          :label="t('systemApprovalInstance.taskComment')"
-        />
-        <el-table-column
-          prop="acted_at"
-          :label="t('systemApprovalInstance.taskActedAt')"
-          width="180"
-        />
-      </el-table>
+            <el-tag v-if="task.is_added" size="small" type="warning">
+              {{ t("systemApprovalInstance.taskAdded") }}
+            </el-tag>
+            <span class="text-xs text-gray-500">
+              {{ task.actor?.label ?? task.assignee?.label ?? "-" }}
+            </span>
+            <el-tag
+              v-if="task.delegate_from?.label"
+              size="small"
+              type="info"
+              data-testid="trail-delegate-from"
+            >
+              {{
+                t("systemApprovalInstance.delegatedFrom", {
+                  name: task.delegate_from.label
+                })
+              }}
+            </el-tag>
+          </div>
+          <div
+            v-if="task.comment"
+            class="mt-1 text-xs text-gray-500"
+            data-testid="trail-comment"
+          >
+            {{ task.comment }}
+          </div>
+        </el-timeline-item>
+      </el-timeline>
     </template>
   </div>
 </template>

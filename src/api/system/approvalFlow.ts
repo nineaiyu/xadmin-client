@@ -68,6 +68,16 @@ class ApprovalInstanceApi extends BaseApi {
     );
   };
 
+  /** 催办（仅申请人/超管、仅审批中；可选留言，服务端 10 分钟节流） */
+  urge = (pk: string | number, message?: string) => {
+    return this.request<BaseResult>(
+      "post",
+      {},
+      { message },
+      `${this.baseApi}/${pk}/urge`
+    );
+  };
+
   /** 加签（当前节点追加审批人，用户名逗号分隔） */
   addSign = (pk: string | number, usernames: string, comment?: string) => {
     return this.request<DetailResult>(

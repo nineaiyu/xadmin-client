@@ -10,7 +10,11 @@ import { message } from "@/utils/message";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
-/** 审批动作弹窗：驳回（原因必填）/ 加签 / 批量驳回（拆分自 hook.tsx，行为不变） */
+/** 行简化标题（无标题时回退单号前 8 位） */
+const rowTitle = (row: { pk?: string | number; title?: string }) =>
+  row.title ?? String(row.pk).slice(0, 8).toUpperCase();
+
+/** 审批动作弹窗：通过（意见选填）/ 驳回（原因必填）/ 加签 / 批量 / 催办 / 重新提交 */
 export function useInstanceActions({
   t,
   refresh,
@@ -20,6 +24,135 @@ export function useInstanceActions({
   refresh: () => void;
   tableRef: Ref;
 }) {
+  /** 通过弹窗：审批意见选填（会签/多级场景下意见随任务留痕，进审批轨迹） */
+  const approveForm = reactive({ comment: "" });
+  const openApprove = (row: { pk?: string | number; title?: string }) => {
+    addDialog({
+      title: t("systemApprovalInstance.approveTitle", {
+        title: rowTitle(row)
+      }),
+      width: "440px",
+      draggable: true,
+      closeOnClickModal: false,
+      contentRenderer: () => (
+        <ElForm model={approveForm}>
+          <ElFormItem prop="comment">
+            <ElInput
+              type="textarea"
+              rows={3}
+              maxlength={200}
+              show-word-limit
+              v-model={approveForm.comment}
+              placeholder={t("systemApprovalInstance.commentPlaceholder")}
+            />
+          </ElFormItem>
+        </ElForm>
+      ),
+      closeCallBack: () => (approveForm.comment = ""),
+      beforeSure: (done, { closeLoading }) => {
+        handleOperation({
+          t,
+          apiReq: approvalInstanceApi.approve(
+            row.pk ?? "",
+            undefined,
+            approveForm.comment.trim()
+          ),
+          success: () => {
+            done();
+            refresh();
+          },
+          requestEnd: closeLoading
+        });
+      }
+    });
+  };
+
+  /** 批量通过弹窗：意见选填（逐单落同一意见） */
+  const batchApproveForm = reactive({ comment: "" });
+  const openBatchApprove = () => {
+    const pks = tableRef.value?.getSelectPks("pk") ?? [];
+    if (!pks.length) {
+      message(t("results.noSelectedData"), { type: "error" });
+      return;
+    }
+    addDialog({
+      title: t("systemApprovalInstance.batchApproveTitle", { n: pks.length }),
+      width: "440px",
+      draggable: true,
+      closeOnClickModal: false,
+      contentRenderer: () => (
+        <ElForm model={batchApproveForm}>
+          <ElFormItem prop="comment">
+            <ElInput
+              type="textarea"
+              rows={3}
+              maxlength={200}
+              show-word-limit
+              v-model={batchApproveForm.comment}
+              placeholder={t("systemApprovalInstance.commentPlaceholder")}
+            />
+          </ElFormItem>
+        </ElForm>
+      ),
+      closeCallBack: () => (batchApproveForm.comment = ""),
+      beforeSure: (done, { closeLoading }) => {
+        handleOperation({
+          t,
+          apiReq: approvalInstanceApi.batchApprove(
+            pks,
+            batchApproveForm.comment.trim()
+          ),
+          success: () => {
+            done();
+            refresh();
+          },
+          requestEnd: closeLoading
+        });
+      }
+    });
+  };
+
+  /** 催办弹窗：留言选填（通知当前节点审批人；服务端 10 分钟节流） */
+  const urgeForm = reactive({ message: "" });
+  const openUrge = (row: { pk?: string | number; title?: string }) => {
+    addDialog({
+      title: t("systemApprovalInstance.urgeTitle", { title: rowTitle(row) }),
+      width: "440px",
+      draggable: true,
+      closeOnClickModal: false,
+      contentRenderer: () => (
+        <ElForm model={urgeForm}>
+          <ElFormItem prop="message">
+            <ElInput
+              type="textarea"
+              rows={3}
+              maxlength={200}
+              show-word-limit
+              v-model={urgeForm.message}
+              placeholder={t("systemApprovalInstance.urgeMessagePlaceholder")}
+            />
+          </ElFormItem>
+        </ElForm>
+      ),
+      closeCallBack: () => (urgeForm.message = ""),
+      beforeSure: (done, { closeLoading }) => {
+        handleOperation({
+          t,
+          apiReq: approvalInstanceApi.urge(
+            row.pk ?? "",
+            urgeForm.message.trim()
+          ),
+          success: () => {
+            message(t("systemApprovalInstance.urgeOk"), { type: "success" });
+            done();
+            refresh();
+          },
+          requestEnd: closeLoading
+        });
+      }
+    });
+  };
+
   /** 驳回弹窗：原因必填（驳回即终止申请） */
   const rejectForm = reactive({ reason: "" });
   const openReject = (row: { pk?: string | number; title?: string }) => {
@@ -221,5 +354,12 @@ export function useInstanceActions({
     });
   };
 
-  return { openReject, openAddSign, openBatchReject };
+  return {
+    openApprove,
+    openBatchApprove,
+    openUrge,
+    openReject,
+    openAddSign,
+    openBatchReject
+  };
 }

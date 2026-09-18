@@ -1,13 +1,15 @@
 <script lang="ts" setup>
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { message } from "@/utils/message";
 import { CONDITION_OPS, type RouteItem } from "./flowConfig";
 
 /**
  * 节点出口路由编辑（C5：弹窗体系收敛到 ReDialog 的 content 组件形态）。
  *
  * 纯本地 state 编辑：组件持有 routes 副本，确认时由页面把过滤后的 routes 回写到节点
- * （自环 / 越界 target 过滤口径与原实现一致）。
+ * （自环 / 越界 target 过滤口径与原实现一致）；未填条件字段的残缺行同样忽略并提示
+ * （服务端要求条件必须带 field，残缺行会导致整份保存 400，提前在确认时收口）。
  */
 defineOptions({ name: "FlowRouteEditorForm" });
 
@@ -29,14 +31,20 @@ const addRoute = () => {
   });
 };
 
-/** 过滤自环与越界 target（与原实现同口径） */
-const getRoutes = (): RouteItem[] =>
-  routes.value.filter(
+/** 过滤自环与越界 target（与原实现同口径）；残缺行（未填条件字段）同样忽略并提示 */
+const getRoutes = (): RouteItem[] => {
+  const valid = routes.value.filter(
     route =>
+      (route.condition?.field ?? "").trim() &&
       route.target >= 1 &&
       route.target <= props.count &&
       route.target !== props.order
   );
+  if (valid.length !== routes.value.length) {
+    message(t("systemApprovalFlow.routeInvalidDropped"), { type: "warning" });
+  }
+  return valid;
+};
 
 defineExpose({ getRoutes });
 </script>
@@ -82,11 +90,11 @@ defineExpose({ getRoutes });
         <template #default="{ row, $index }">
           <el-select v-model="row.target" size="small" class="w-45!">
             <el-option
-              v-for="order in count"
-              :key="order"
-              :label="`${t('systemApprovalFlow.nodeOrder')} ${order}`"
-              :value="order"
-              :disabled="order === order"
+              v-for="nodeOrder in count"
+              :key="nodeOrder"
+              :label="`${t('systemApprovalFlow.nodeOrder')} ${nodeOrder}`"
+              :value="nodeOrder"
+              :disabled="nodeOrder === props.order"
             />
           </el-select>
           <el-button

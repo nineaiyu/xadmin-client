@@ -37,6 +37,12 @@ const dashboards = ref<DashboardItem[]>([]);
 const current = ref<DashboardItem | null>(null);
 const loading = ref(false);
 const editing = ref(false);
+/** 卡片刷新计数：自增触发卡片重挂载并重新拉数（手动刷新入口） */
+const refreshKey = ref(0);
+
+const refreshCards = () => {
+  refreshKey.value += 1;
+};
 
 const layout = computed<DashboardCard[]>(() =>
   editing.value ? draftLayout.value : (current.value?.layout ?? [])
@@ -239,6 +245,51 @@ const openCreateDashboard = () => {
   });
 };
 
+// ---- 仪表盘设置弹窗（重命名 / 可见性；与新建表单同构） ----
+const dashSettingsRef = ref<InstanceType<typeof DashboardCreateForm>>();
+
+const openDashboardSettings = () => {
+  if (!current.value) return;
+  const editingPk = current.value.pk;
+  dashSettingsRef.value = undefined;
+  addDialog({
+    title: t("dashboard.settings"),
+    width: dialogSize("sm"),
+    draggable: true,
+    destroyOnClose: true,
+    closeOnClickModal: false,
+    sureBtnLoading: true,
+    contentRenderer: () =>
+      h(DashboardCreateForm, { ref: dashSettingsRef, row: current.value }),
+    beforeSure: async (done, { closeLoading }) => {
+      const payload = dashSettingsRef.value?.getPayload();
+      if (!payload) {
+        closeLoading();
+        return;
+      }
+      const res = await dashboardApi
+        .partialUpdate(editingPk, payload)
+        .catch(error => ({
+          code: -1,
+          data: null,
+          detail: String((error as { detail?: string })?.detail ?? error)
+        }));
+      if (res.code === SUCCESS_CODE) {
+        message(t("dashboard.saveOk"), { type: "success" });
+        done();
+        const index = dashboards.value.findIndex(item => item.pk === editingPk);
+        if (index >= 0 && res.data) {
+          dashboards.value[index] = res.data as unknown as DashboardItem;
+          current.value = dashboards.value[index];
+        }
+        return;
+      }
+      if (res.detail) message(String(res.detail), { type: "error" });
+      closeLoading();
+    }
+  });
+};
+
 const removeDashboard = async () => {
   if (!current.value) return;
   try {
@@ -312,7 +363,24 @@ onMounted(async () => {
         <el-button v-if="editing" type="danger" plain @click="removeDashboard">
           {{ t("dashboard.remove") }}
         </el-button>
+        <el-button
+          v-if="canEdit && current && !editing"
+          plain
+          data-testid="dashboard-settings"
+          @click="openDashboardSettings"
+        >
+          {{ t("dashboard.settings") }}
+        </el-button>
         <div class="flex-1" />
+        <el-button
+          v-if="current"
+          link
+          type="primary"
+          data-testid="dashboard-refresh"
+          @click="refreshCards"
+        >
+          {{ t("dashboard.refresh") }}
+        </el-button>
         <el-button link type="primary" @click="goDatasetPage">
           {{ t("dashboard.manageDatasets") }}
         </el-button>
@@ -368,7 +436,10 @@ onMounted(async () => {
                 </el-button>
               </div>
             </template>
-            <ChartCard :key="layoutKey + card.id" :card="card" />
+            <ChartCard
+              :key="`${layoutKey}-${card.id}-${refreshKey}`"
+              :card="card"
+            />
           </el-card>
         </el-col>
       </el-row>

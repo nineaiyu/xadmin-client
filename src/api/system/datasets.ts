@@ -25,6 +25,8 @@ export type DatasetItem = {
   description: string;
   bound_model: string;
   columns: string[];
+  /** 数值列（读侧派生）：sum/avg 度量字段候选（后端聚合二次校验） */
+  numeric_columns?: string[];
   filters: DatasetFilter[];
   ordering: string;
   row_limit: number;
