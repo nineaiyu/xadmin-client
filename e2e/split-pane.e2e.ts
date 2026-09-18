@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { login, openMenuPath } from "./helpers";
+import { BACKEND_URL, getAccessToken, login, openMenuPath } from "./helpers";
 
 /**
  * 可拖拽分栏（ReSplitPane）+ 宽度持久化主链路（system/user 页）：
@@ -57,8 +57,37 @@ const leftPanePercent = (page: Page) =>
     .locator(".splitter-paneL")
     .evaluate((el: HTMLElement) => parseFloat(el.style.width));
 
+/**
+ * 服务端 SplitPanes 状态复原：分栏比例经 WEB_SITE_CONFIG 持久化，**跨浏览器会话生效**。
+ * 不复原会把本 run 的拖拽结果泄漏给共享库的后续用例/跑批（左栏 60% 会把
+ * 用户管理等分栏页的右侧内容挤压变形，表现为搜索输入框宽度为 0 不可填写）。
+ * 统一复原到应用默认比例 20（与「重置」语义一致），不回写已污染的历史值。
+ */
+let restoreSplitPanes: (() => Promise<void>) | null = null;
+
+const captureSplitPanes = async (page: Page) => {
+  const token = await getAccessToken(page);
+  const headers = { Authorization: `Bearer ${token}` };
+  restoreSplitPanes = async () => {
+    await page.request
+      .patch(`${BACKEND_URL}/api/system/configs/WEB_SITE_CONFIG`, {
+        headers,
+        data: { SplitPanes: { "system/user": 20 } }
+      })
+      .catch(() => undefined);
+  };
+};
+
+test.afterEach(async () => {
+  if (restoreSplitPanes) {
+    await restoreSplitPanes();
+    restoreSplitPanes = null;
+  }
+});
+
 test("分栏拖拽持久化、刷新保持与重置", async ({ page }) => {
   await login(page);
+  await captureSplitPanes(page);
   await openMenuPath(page, ["系统管理"], "/system/user/index");
 
   const resizer = page.locator(".splitter-pane-resizer");
@@ -121,6 +150,7 @@ test("分栏拖拽持久化、刷新保持与重置", async ({ page }) => {
 
 test("跨设备：本机旧缓存不压制服务器值", async ({ page }) => {
   await login(page);
+  await captureSplitPanes(page);
   await openMenuPath(page, ["系统管理"], "/system/user/index");
 
   const resizer = page.locator(".splitter-pane-resizer");

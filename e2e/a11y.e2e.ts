@@ -50,7 +50,10 @@ const ALLOWED_VIOLATIONS: Record<string, RegExp[]> = {
     // el-button 的 link/plain 变体文字节点（axe target 取「最短唯一选择器」，
     // 不含 el-button 字面）与分隔线文字：同属主题级对比度问题
     /\.is-(link|plain) > span/,
-    /el-divider__text/
+    /el-divider__text/,
+    // 未读消息角标（danger 红底白字，EP Badge 组件默认配色）——通知类功能
+    // （审批提醒/催办）在跑批中随时产生未读，命中与否取决于采样窗口
+    /el-badge__content--danger/
   ],
   // EP 动态 id 的无名命令按钮（RePlusPage 工具栏/EIcon 触发器等已补 aria-label）
   "button-name": [/^#el-id-/],

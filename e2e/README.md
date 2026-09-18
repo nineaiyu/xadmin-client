@@ -172,3 +172,10 @@ RePlusPage 列表**固定发 `ordering=-created_time` 且默认 `pageSize=15`**�
 | EP 2.14 的 `el-select` 选中值渲染为**文本节点**（filterable 模式下 input 不承载 label）→ 对选中值用 `toHaveValue` 断言恒失败；处置=对 select 容器用 `toContainText`（2026-09-18 仪表盘设置重命名实测） |
 | 表单模板场景：副本名 = 模板名 + 后缀，`getByRole('row', { name: templateName })` 是**子串匹配**→ 副本行被命中，`toHaveCount(0)`（断言模板不在表单列表）必失败；处置=断言名避免子串包含关系，或断言正向存在性而非数量（2026-09-18 模板用例实测） |
 | 表单草稿 × 操作审批：审批通过后的**重放必须先于草稿态检查**（自动落库后状态已不是 DRAFT，否则重放被「仅草稿可提交」拒绝）、且通过后动作按 `approval.object_pk` 更新既有行（不重复建行）——协议顺序由 `test_dform_draft_template.py::test_draft_submit_then_auto_complete_and_replay` 守护（2026-09-18） |
+
+| 自研功能给审批人/管理员发通知（催办/审批提醒）后，共享库里管理员出现未读角标（`.el-badge__content--danger`）→ a11y 扫描新增 color-contrast 节点成批失败；**全新种子（test:e2e:fresh）下 a11y 字母序靠前先跑、不受影响**，非 fresh 的复跑才会命中（2026-09-18 实测：污染库双浏览器挂、fresh 全绿） |
+| split-pane 拖拽「分隔条不动、表格文本被划选」（左栏停在默认 20%）= 首轮列表的 **el-loading 遮罩未退场**（遮罩覆盖整个分栏容器含分隔条，mouse 事件被吞）；拖拽/点击前先等「有数据行 + `.el-loading-mask` 计数为 0」。此前登记的「webkit 位移判定限制」实为同一遮罩竞态，加等待后 webkit 也稳定通过（2026-09-18 实证，steps 等拖拽参数无需改动） |
+| RePlusPage 自适应高度在「上方内容过多 + 矮视口」下会算出不可用小高度（AI 配置页两卡在上，表顶 577 → 表高 33px、表体 0 高、行溢出到分页之下、按钮滚入视口后被 sticky 表头拦截）；已在组件内钳制最小 260px（写定值只依赖表顶位置，不与 RO 振荡），超出部分页面级滚动兜底（2026-09-18 修复 ai.e2e webkit 6/6 失败） |
+| EP 2.14 的 el-loading 遮罩在 fade-leave 期间仍拦截点击（webkit 下更久）→ 「行已可见就点按钮」会撞 `el-loading-spinner intercepts pointer events`；处置=同上等遮罩计数为 0，不要靠 retries 硬扛（2026-09-18） |
+
+| split-pane 用例把拖拽结果**持久化到服务端**（WEB_SITE_CONFIG.SplitPanes 跨会话生效）→ 泄漏给共享库后续用例：左栏 60% 把分栏页右侧压扁（搜索输入框宽度 0 → fill「element is not visible」，import-mapping/preview 双浏览器连挂）；处置=用例 afterEach 统一 PATCH 回默认 20（勿回写已污染的历史「原值」）；同批 chromium 跑得快时会在 webkit 还没跑 split-pane 前就污染它（2026-09-18 实测） |
