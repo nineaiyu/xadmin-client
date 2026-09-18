@@ -37,15 +37,10 @@ Object.keys(directives).forEach(key => {
   app.directive(key, (directives as { [key: string]: Directive })[key]);
 });
 
-// 全局注册@iconify/vue图标库
-import {
-  FontIcon,
-  IconifyIconOffline,
-  IconifyIconOnline
-} from "./components/ReIcon";
+// 全局注册图标库（离线：不做在线图标 API 兜底，见 components/ReIcon/src/iconRegistry.ts）
+import { FontIcon, IconifyIconOffline } from "./components/ReIcon";
 
 app.component("IconifyIconOffline", IconifyIconOffline);
-app.component("IconifyIconOnline", IconifyIconOnline);
 app.component("FontIcon", FontIcon);
 
 // 全局注册按钮级别权限组件

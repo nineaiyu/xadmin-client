@@ -31,6 +31,12 @@ importers:
 
   .:
     dependencies:
+      '@iconify/json':
+        specifier: ^2.2.529
+        version: 2.2.529
+      '@iconify/vue':
+        specifier: 5.0.1
+        version: 5.0.1(vue@3.5.42(typescript@6.0.3))
       '@pureadmin/table':
         specifier: ^3.3.0
         version: 3.3.0(element-plus@2.14.5(vue@3.5.42(typescript@6.0.3)))(typescript@6.0.3)
@@ -179,12 +185,6 @@ importers:
       '@faker-js/faker':
         specifier: ^10.6.0
         version: 10.6.0
-      '@iconify/json':
-        specifier: ^2.2.529
-        version: 2.2.529
-      '@iconify/vue':
-        specifier: 5.0.1
-        version: 5.0.1(vue@3.5.42(typescript@6.0.3))
       '@intlify/unplugin-vue-i18n':
         specifier: ^11.2.5
         version: 11.2.5(@vue/compiler-dom@3.5.42)(eslint@10.10.0(jiti@2.7.0)(supports-color@10.2.2))(rollup@4.63.1)(supports-color@10.2.2)(typescript@6.0.3)(vite@8.3.0(@types/node@24.13.5)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.104.1)(yaml@2.9.1))(vue-i18n@11.4.12(vue@3.5.42(typescript@6.0.3)))(vue@3.5.42(typescript@6.0.3))

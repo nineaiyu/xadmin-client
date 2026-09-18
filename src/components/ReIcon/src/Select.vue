@@ -5,6 +5,9 @@ import { ref, computed, CSSProperties, watch } from "vue";
 import Search from "~icons/ri/search-eye-line";
 import { useI18n } from "vue-i18n";
 
+import LocalIcon from "./localIcon";
+import { ensureIconSet, isIconSetLoaded } from "./iconRegistry";
+
 type ParameterCSSProperties = (_item?: string) => CSSProperties | undefined;
 
 defineOptions({
@@ -48,6 +51,19 @@ const pageList = computed(() =>
       (currentPage.value - 1) * pageSize.value,
       currentPage.value * pageSize.value
     )
+);
+
+// 图标集本地懒加载：切 tab 即加载对应 set（构建期内置的同源 chunk，不访问在线图标 API），
+// 加载完成前网格展示加载态——内网/离线部署下「选择器可用」与「图标可渲染」一致。
+const currentSetLoaded = computed(() =>
+  isIconSetLoaded(currentActiveType.value.replace(":", ""))
+);
+watch(
+  () => currentActiveType.value,
+  value => {
+    void ensureIconSet(value.replace(":", ""));
+  },
+  { immediate: true }
 );
 
 const iconItemStyle = computed((): ParameterCSSProperties => {
@@ -139,7 +155,7 @@ watch(
           <template #reference>
             <div class="w-10 h-8 cursor-pointer flex-c">
               <IconifyIconOffline v-if="!icon" :icon="Search" />
-              <IconifyIconOnline v-else :icon="inputValue" />
+              <LocalIcon v-else :icon="inputValue" />
             </div>
           </template>
 
@@ -157,7 +173,7 @@ watch(
               :label="pane.label"
               :name="pane.name"
             >
-              <el-scrollbar height="220px">
+              <el-scrollbar v-loading="!currentSetLoaded" height="220px">
                 <ul class="flex flex-wrap px-2! ml-2!">
                   <li
                     v-for="(item, key) in pageList"
@@ -167,7 +183,7 @@ watch(
                     :style="iconItemStyle(item)"
                     @click="onChangeIcon(item)"
                   >
-                    <IconifyIconOnline
+                    <LocalIcon
                       :icon="currentActiveType + item"
                       width="20px"
                       height="20px"

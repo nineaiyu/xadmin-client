@@ -10,9 +10,8 @@
     />
     <title>xadmin</title>
     <link href="/favicon.ico" rel="icon" />
-    <script>
-      window.process = {};
-    </script>
+    <!-- process 垫片走同源静态文件（页面层 CSP script-src 'self' 不允许内联脚本，见 public/process-shim.js） -->
+    <script src="/process-shim.js"></script>
   </head>
 
   <body>

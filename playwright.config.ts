@@ -30,8 +30,11 @@ const serverDir = process.env.E2E_SERVER_DIR ?? "../xadmin-server";
 const apiPort = process.env.E2E_API_PORT ?? "8896";
 const frontPort = process.env.E2E_FRONT_PORT ?? "8848";
 const stubLlmPort = process.env.E2E_STUB_LLM_PORT ?? "18897";
+// 页面层 CSP 隔离验证（e2e/csp-page.e2e.ts）：构建产物 + 强制 CSP 头的独立服务
+const cspPort = process.env.E2E_CSP_PORT ?? "18899";
 const apiURL = `http://127.0.0.1:${apiPort}`;
 const stubLlmURL = `http://127.0.0.1:${stubLlmPort}`;
+const cspPageURL = `http://127.0.0.1:${cspPort}`;
 const baseURL = process.env.E2E_BASE_URL ?? `http://localhost:${frontPort}`;
 
 // smoke 档 = 只跑 @smoke 用例 + 只跑 chromium，把 dev push 的反馈从 ~9min 压到 ~3min；
@@ -100,6 +103,18 @@ export default defineConfig({
       url: baseURL,
       reuseExistingServer: !process.env.CI && !!process.env.E2E_REUSE_SERVER,
       timeout: 120_000
-    }
+    },
+    // 页面层 CSP 隔离验证（E2E_CSP=1）：构建产物 + 强制 CSP 头模拟 xadmin-web 形态；
+    // 需先 `pnpm build`（服务启动时校验 dist/index.html，缺失即失败并提示）
+    ...(process.env.E2E_CSP === "1"
+      ? [
+          {
+            command: "node scripts/csp-page-server.mjs",
+            url: `${cspPageURL}/__csp_probe`,
+            reuseExistingServer: false,
+            timeout: 30_000
+          }
+        ]
+      : [])
   ]
 });

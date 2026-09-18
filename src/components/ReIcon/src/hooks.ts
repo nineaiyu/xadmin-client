@@ -1,6 +1,7 @@
 import type { iconType } from "./types";
 import { h, defineComponent, type Component } from "vue";
-import { FontIcon, IconifyIconOnline, IconifyIconOffline } from "../index";
+import { FontIcon, IconifyIconOffline } from "../index";
+import LocalIcon from "./localIcon";
 
 const ifReg = /^IF-/;
 const svgReg = /^\s*<svg[\s>]/;
@@ -96,16 +97,13 @@ export function useRenderIcon(
       }
     });
   } else {
-    // 通过是否存在 : 符号来判断是在线还是本地图标，存在即是在线图标，反之
+    // 字符串图标：统一走本地解析（随包注册 + 本地图标集懒加载；不依赖在线图标 API）
     return defineComponent({
       name: "Icon",
       render() {
         if (!icon) return;
-        const IconifyIcon = icon.includes(":")
-          ? IconifyIconOnline
-          : IconifyIconOffline;
         return h(
-          IconifyIcon as never,
+          LocalIcon as never,
           {
             icon,
             ...attrs
