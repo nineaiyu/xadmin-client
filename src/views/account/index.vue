@@ -118,11 +118,11 @@ const witchPane = ref(initialPane());
 /**
  * 切换页签只改本地状态，**不**同步 URL query。
  *
- * 面板首屏请求会按「当前路由 fullPath」登记（见 utils/http/routeCancel）；
- * 若在此处 `router.replace({query})`，afterEach 的
- * `cancelRoutePending(from.fullPath)` 会取消刚挂载面板的在途请求
- * （列表/元数据被中止 → 表格空白、provider 列表为空），且取消与挂载是竞态，
- * 表现为偶发。深度定位一次性由 `?tab=` 读入即可，URL 保持落地时的值。
+ * 面板首屏请求按「当前路由 path」登记（见 utils/http/routeCancel）；
+ * 若在此处 `router.replace({query})`，afterEach 取消来源页在途请求的链路会把
+ * 刚挂载面板的请求一并中止（列表/元数据被中止 → 表格空白、provider 列表为空），
+ * 且取消与挂载是竞态，表现为偶发。深度定位一次性由 `?tab=` 读入即可，
+ * URL 保持落地时的值。
  */
 const switchPane = (key: string) => {
   witchPane.value = key;
