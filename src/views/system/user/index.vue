@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import tree from "./components/UserTree.vue";
-import PermissionPreview from "./components/PermissionPreview.vue";
 import { computed, ref } from "vue";
 import { useUser } from "./utils/hook";
 import { ReSplitPane } from "@/components/ReSplitPane";
@@ -29,8 +28,7 @@ const {
   selectionChange,
   deviceDetection,
   listColumnsFormat,
-  baseColumnsFormat,
-  previewRef
+  baseColumnsFormat
 } = useUser(tableRef);
 
 // 左栏宽度持久化（默认 20%，约等于原 250px 固定宽；双击分隔条或点悬浮按钮重置）
@@ -99,8 +97,7 @@ const { percent, handleDragEnd } = useSplitPaneConfig("system/user", {
         @selectionChange="selectionChange"
       />
     </div>
-    <!-- 权限可视化：三层权限只读预览 + 数据权限试算（auth.preview 门控按钮） -->
-    <PermissionPreview ref="previewRef" />
+    <!-- 权限可视化：三层权限只读预览 + 数据权限试算（hook 经 addDrawer 打开） -->
   </div>
 </template>
 

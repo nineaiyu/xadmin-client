@@ -56,45 +56,43 @@ onMounted(() => {
 </script>
 
 <template>
-  <!-- 白底卡片与页面其余区域（搜索/表格区）观感一致，避免统计数字裸在灰底上 -->
-  <el-card v-if="allowed" v-loading="loading" shadow="never" class="mb-2">
+  <!-- 白底卡片与页面其余区域（搜索/表格区）观感一致，避免统计数字裸在灰底上；
+       w-99/100 与 RePlusPage 的搜索/表格卡同宽，右边缘对齐（两者均为容器 99%） -->
+  <el-card
+    v-if="allowed"
+    v-loading="loading"
+    shadow="never"
+    class="mb-2 w-99/100"
+  >
     <el-alert
       type="info"
       :closable="false"
       :title="t('approval.statsTip', { n: stats?.days ?? 30 })"
       class="mb-2"
     />
-    <el-row :gutter="12">
-      <el-col :xs="12" :sm="8" :md="4">
-        <el-statistic
-          :title="t('approval.statsSubmitted')"
-          :value="stats?.submitted ?? 0"
-        />
-      </el-col>
-      <el-col :xs="12" :sm="8" :md="4">
-        <el-statistic
-          :title="t('approval.statsApproved')"
-          :value="stats?.approved ?? 0"
-        />
-      </el-col>
-      <el-col :xs="12" :sm="8" :md="4">
-        <el-statistic
-          :title="t('approval.statsRejected')"
-          :value="stats?.rejected ?? 0"
-        />
-      </el-col>
-      <el-col :xs="12" :sm="8" :md="4">
-        <el-statistic :title="t('approval.statsPending')">
-          <template #default>
-            <span>{{ stats?.pending ?? 0 }}</span>
-          </template>
-        </el-statistic>
-      </el-col>
-      <el-col :xs="12" :sm="8" :md="6">
-        <el-statistic :title="t('approval.statsAvgDuration')">
-          <template #default>{{ avgDuration }}</template>
-        </el-statistic>
-      </el-col>
-    </el-row>
+    <!-- 5 张统计卡等分：el-col 的整数跨度无法均分 24（4,4,4,4,6 会留 2/24 空档），
+         改 grid 五等分（窄屏 2 列回退），卡面与下方列表卡等宽 -->
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+      <el-statistic
+        :title="t('approval.statsSubmitted')"
+        :value="stats?.submitted ?? 0"
+      />
+      <el-statistic
+        :title="t('approval.statsApproved')"
+        :value="stats?.approved ?? 0"
+      />
+      <el-statistic
+        :title="t('approval.statsRejected')"
+        :value="stats?.rejected ?? 0"
+      />
+      <el-statistic :title="t('approval.statsPending')">
+        <template #default>
+          <span>{{ stats?.pending ?? 0 }}</span>
+        </template>
+      </el-statistic>
+      <el-statistic :title="t('approval.statsAvgDuration')">
+        <template #default>{{ avgDuration }}</template>
+      </el-statistic>
+    </div>
   </el-card>
 </template>

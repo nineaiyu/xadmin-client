@@ -1,5 +1,13 @@
 <script lang="ts" setup>
-import { computed, onMounted, onUnmounted, ref, watch, type Ref } from "vue";
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  ref,
+  watch,
+  type Ref
+} from "vue";
 import PureTable from "@pureadmin/table";
 import { usePlusPage } from "./utils/hook";
 import { RePlusPageProps, type RecycleBinColumn } from "./utils/types";
@@ -11,6 +19,10 @@ import Delete from "~icons/ep/delete";
 import { PlusSearch, type RecordType } from "plus-pro-components";
 import type { ComponentSize } from "element-plus";
 import type { BaseApi } from "@/api/base";
+import {
+  collectDataColumnWidths,
+  resolveOperationColumnWidth
+} from "./utils/operationColumnWidth";
 
 import ButtonOperation, {
   ButtonsCallBackParams
@@ -108,13 +120,43 @@ const applyAdaptiveTableHeight = () => {
   });
 };
 
-onMounted(() => {
-  const el = rootRef.value;
-  if (!el || typeof ResizeObserver === "undefined") return;
+/**
+ * 固定操作列宽度对齐（列表页表头被固定列裁切修复）。
+ *
+ * 表格横向滚动时右侧固定列 sticky 在容器右端，覆盖区间为
+ * `[容器宽 - 操作列宽, 容器宽]`：若某数据列跨过该区间左边界，其表头内容
+ * （列名、问号图标）会被切掉一半，出现"半个字"。这里实测容器宽度后动态
+ * 收敛操作列宽度，让覆盖区左边界恰好落在列边界上——左侧列完整可见、
+ * 右侧列整体被覆盖（内容不跨界）；无横向滚动时保持页面配置宽度。
+ * 计算只依赖容器宽与数据列宽（不含操作列自身），重算幂等、无循环。
+ */
+const tableElWidth = ref(0);
+
+/** 表格可视区实测宽度（布局变化时由根 ResizeObserver 触发） */
+function measureTableWidth() {
+  // 横向滚动容器（body-wrapper）的 clientWidth 即列可视区宽度：
+  // 用 el-table 宽度会多算纵向滚动条占位，边界对齐会整体偏移
+  const scrollArea = rootRef.value?.querySelector<HTMLElement>(
+    ".pure-table .el-table__body-wrapper"
+  );
+  const width = scrollArea?.clientWidth ?? 0;
+  if (width !== tableElWidth.value) tableElWidth.value = width;
+}
+
+/** 建立根节点尺寸观察（auth 依赖异步数据时根元素可能晚于挂载渲染） */
+function ensureRootObserver() {
+  if (rootResizeObserver || !rootRef.value) return;
+  if (typeof ResizeObserver === "undefined") return;
   rootResizeObserver = new ResizeObserver(() => {
     applyAdaptiveTableHeight();
+    measureTableWidth();
   });
-  rootResizeObserver.observe(el);
+  rootResizeObserver.observe(rootRef.value);
+}
+
+onMounted(() => {
+  ensureRootObserver();
+  measureTableWidth();
 });
 
 onUnmounted(() => {
@@ -192,6 +234,49 @@ const searchMetaReady = computed(
   () =>
     (tableBarData.value.dynamicColumns?.length ?? 0) > 0 ||
     listColumns.value.length > 0
+);
+
+// 元数据到达前根节点可能尚未渲染（auth 依赖异步数据时）：到达后补偿测量与观察
+watch(searchMetaReady, ready => {
+  if (!ready) return;
+  nextTick(() => {
+    ensureRootObserver();
+    measureTableWidth();
+  });
+});
+
+const operationColumnMinWidth = computed(() =>
+  Number(props.operationButtonsProps?.width ?? 200)
+);
+
+/** 对齐后的操作列宽度（无横向滚动时等于页面配置宽度） */
+const alignedOperationWidth = computed(() =>
+  resolveOperationColumnWidth(
+    tableElWidth.value,
+    collectDataColumnWidths(
+      tableBarData.value.dynamicColumns as Array<Record<string, unknown>>
+    ),
+    operationColumnMinWidth.value
+  )
+);
+
+// 列集合（元数据到达 / 列设置调整）与容器宽度变化都会重算：列对象是表格的
+// 实际渲染来源，就地改写操作列宽度即可生效（重算不依赖操作列自身宽度，
+// 幂等无循环）
+watch(
+  [alignedOperationWidth, () => tableBarData.value.dynamicColumns],
+  () => {
+    const columns: Array<Record<string, unknown>> =
+      tableBarData.value.dynamicColumns ?? [];
+    const operation = columns.find(
+      column =>
+        (column?._column as { key?: string } | undefined)?.key === "operation"
+    ) as { width?: number } | undefined;
+    if (operation && operation.width !== alignedOperationWidth.value) {
+      operation.width = alignedOperationWidth.value;
+    }
+  },
+  { immediate: true, flush: "post" }
 );
 
 const holdTableUntilLaidOut = () => {

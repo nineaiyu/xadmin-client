@@ -45,7 +45,9 @@ export function useUserOnline(tableRef: Ref) {
           };
         },
         update: true,
-        show: auth.destroy
+        // 保留内置「删除」按钮的排序位（-20）：show 返回布尔会让 Number(true)=1
+        // 覆盖默认索引，按钮被排到「详情」（-10）之后，与全站顺序不一致
+        show: auth.destroy && -20
       },
       {
         text: t("systemOnline.forceLogout"),

@@ -1,5 +1,7 @@
 import { SUCCESS_CODE } from "@/api/types";
 import menuFieldForm from "../components/RoleForm.vue";
+import RolePermissionPreview from "../components/RolePermissionPreview.vue";
+import { addDrawer } from "@/components/ReDrawer";
 
 import {
   getCurrentInstance,
@@ -35,7 +37,16 @@ export function useRole() {
     ...getDefaultAuths(getCurrentInstance(), ["preview"])
   });
 
-  const previewRef = ref<{ open: (row: RecordType) => void } | null>(null);
+  /** 权限预览抽屉（统一走 ReDrawer，不在页面模板手挂 el-drawer） */
+  const openPreview = (row: RecordType) => {
+    addDrawer({
+      title: t("permissionPreview.roleTitle"),
+      size: "60%",
+      destroyOnClose: true,
+      hideFooter: true,
+      contentRenderer: () => h(RolePermissionPreview, { row })
+    });
+  };
 
   // 授权树节点（菜单树 + 注入的模型字段合成节点，键约定见 ./treeKeys.ts）
   const menuTreeData = ref<Array<Record<string, unknown>>>([]);
@@ -179,7 +190,8 @@ export function useRole() {
   });
 
   const operationButtonsProps = shallowRef<OperationProps>({
-    width: 160,
+    // 160px 下 3 个按钮（编辑/删除/详情）换行使行高翻倍，200px 单行
+    width: 200,
     buttons: [
       { code: "detail", show: false },
       {
@@ -191,7 +203,7 @@ export function useRole() {
           link: true
         },
         onClick: ({ row }) => {
-          previewRef.value?.open(row);
+          openPreview(row);
         },
         show: auth.preview
       }
@@ -201,7 +213,6 @@ export function useRole() {
     api,
     auth,
     addOrEditOptions,
-    operationButtonsProps,
-    previewRef
+    operationButtonsProps
   };
 }

@@ -1,13 +1,15 @@
 import "./reset.css";
-import { getCurrentInstance, onMounted, reactive, ref, type Ref } from "vue";
+import { getCurrentInstance, h, onMounted, reactive, ref, type Ref } from "vue";
 import { userApi } from "@/api/system/user";
 import { getDefaultAuths } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { handleOperation, usePublicHooks } from "@/components/RePlusPage";
+import { addDrawer } from "@/components/ReDrawer";
 import { deviceDetection } from "@pureadmin/utils";
 import { rulesPasswordApi } from "@/api/auth";
 import type { PasswordRule } from "@/api/auth";
 import type { RecordType } from "plus-pro-components";
+import PermissionPreview from "../components/PermissionPreview.vue";
 
 import { useUserOptions } from "./useUserOptions";
 import { useUserAvatarUpload } from "./useUserAvatarUpload";
@@ -44,7 +46,8 @@ export function useUser(tableRef: Ref) {
       "unblock",
       "resetMfa",
       "preview",
-      "changeHistory"
+      "changeHistory",
+      "imBinding"
     ])
   });
   const switchLoadMap = ref({});
@@ -53,10 +56,7 @@ export function useUser(tableRef: Ref) {
   const manySelectData = ref([]);
   const passwordRules = ref<PasswordRule[]>([]);
 
-  const { treeData, treeLoading, onTreeSelect } = useUserOptions(
-    auth,
-    tableRef
-  );
+  const { treeData, treeLoading, onTreeSelect } = useUserOptions(tableRef);
   const { handleUpload } = useUserAvatarUpload({ t, api, tableRef });
   const { handleReset } = useUserResetPassword({ t, api, passwordRules });
   const { handleImBinding } = useUserImBinding({ t });
@@ -74,7 +74,16 @@ export function useUser(tableRef: Ref) {
     passwordRules,
     tableRef
   });
-  const previewRef = ref<{ open: (row: RecordType) => void } | null>(null);
+  /** 用户权限预览抽屉（统一走 ReDrawer，不在页面模板手挂 el-drawer） */
+  const openPreview = (row: RecordType) => {
+    addDrawer({
+      title: t("permissionPreview.userTitle"),
+      size: "70%",
+      destroyOnClose: true,
+      hideFooter: true,
+      contentRenderer: () => h(PermissionPreview, { row })
+    });
+  };
 
   const { selectionChange, tableBarButtonsProps, operationButtonsProps } =
     useUserButtons({
@@ -87,7 +96,7 @@ export function useUser(tableRef: Ref) {
       handleUpload,
       handleReset,
       handleRoleRules,
-      handlePreview: row => previewRef.value?.open(row),
+      handlePreview: row => openPreview(row),
       handleImBinding
     });
 
@@ -115,7 +124,6 @@ export function useUser(tableRef: Ref) {
     selectionChange,
     deviceDetection,
     listColumnsFormat,
-    baseColumnsFormat,
-    previewRef
+    baseColumnsFormat
   };
 }

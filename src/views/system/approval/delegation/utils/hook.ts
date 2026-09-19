@@ -1,6 +1,7 @@
 import { approvalDelegationApi } from "@/api/system/approvalDelegation";
 import { getCurrentInstance, reactive } from "vue";
 import { getDefaultAuths } from "@/router/utils";
+import type { PageTableColumn } from "@/components/RePlusPage";
 
 /**
  * 审批委托管理（审批流三期）。
@@ -13,8 +14,19 @@ export function useApprovalDelegation() {
   const api = reactive(approvalDelegationApi);
   const auth = reactive({ ...getDefaultAuths(getCurrentInstance()) });
 
+  /** 「流程范围（空 = 全部流程）」标题较长：默认 120px 列宽会折行抬高表头 */
+  const listColumnsFormat = (columns: PageTableColumn[]) => {
+    columns.forEach(column => {
+      if (column._column?.key === "flow_codes") {
+        column["minWidth"] = 200;
+      }
+    });
+    return columns;
+  };
+
   return {
     api,
-    auth
+    auth,
+    listColumnsFormat
   };
 }

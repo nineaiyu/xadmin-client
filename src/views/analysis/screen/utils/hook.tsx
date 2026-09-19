@@ -162,8 +162,10 @@ export function useScreen(tableRef: Ref) {
   };
 
   const operationButtonsProps = shallowRef<OperationProps>({
-    showNumber: 4,
-    width: 240,
+    // 5 个按钮（删除/详情/编辑/投屏/远程控制）全部内联：任一被折叠都会
+    // 使既有操作路径多点一次；列宽由 RePlusPage 按容器宽度对齐收敛（≥320）
+    showNumber: 5,
+    width: 320,
     buttons: [
       {
         text: t("dataScreen.display"),
@@ -184,7 +186,8 @@ export function useScreen(tableRef: Ref) {
         code: "edit",
         props: { type: "primary", link: true },
         onClick: ({ row }) => openDialog(row as ScreenItem),
-        show: canEdit && 20
+        // 索引 5：编辑排在低频的「远程控制」之前，showNumber=4 内联时不被折叠
+        show: canEdit && 5
       }
     ]
   });

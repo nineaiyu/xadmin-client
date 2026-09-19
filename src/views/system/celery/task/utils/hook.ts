@@ -76,7 +76,10 @@ export function useTask(tableRef: Ref) {
    * 新增一个"立即执行"和"实时日志"的行内操作按钮
    */
   const operationButtonsProps = shallowRef<OperationProps>({
-    width: 340,
+    // 6 个按钮全部内联（编辑/删除/详情/立即执行/最新日志/克隆）：任意折叠
+    // 都会让既有操作路径多点一次；列宽收敛到刚好容纳单行按钮，表头不再被
+    // 固定列裁切由 RePlusPage 的覆盖区边界对齐机制保证（见其组件注释）
+    width: 420,
     showNumber: 6,
     buttons: [
       {
@@ -248,7 +251,7 @@ export function useTask(tableRef: Ref) {
             }
           });
         },
-        show: auth.batchEnable
+        show: auth.batchDisable && 3
       }
     ]
   });

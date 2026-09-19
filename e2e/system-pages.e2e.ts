@@ -70,6 +70,8 @@ test("消息公告：页面可打开", async ({ page }) => {
 
 test("模块管理：清单渲染与裁剪配置片段", async ({ page }) => {
   await login(page);
+  // 后台覆盖会改变生效态断言，先恢复为部署配置，保证用例可重复执行
+  await page.request.post("/api/system/modules/reset");
   await openMenuPath(page, ["系统管理"], "/system/module/index");
 
   const table = page.getByTestId("module-table");
@@ -97,6 +99,38 @@ test("模块管理：清单渲染与裁剪配置片段", async ({ page }) => {
   await page.getByTestId("module-copy").click();
   await expect(page.locator(".el-message").last()).toBeVisible({
     timeout: 5_000
+  });
+});
+
+test("模块管理：保存后台覆盖并展示待重启差异", async ({ page }) => {
+  await login(page);
+  await page.request.post("/api/system/modules/reset");
+  await openMenuPath(page, ["系统管理"], "/system/module/index");
+
+  await expect(page.getByTestId("module-table")).toBeVisible({
+    timeout: 15_000
+  });
+
+  // 切到「仅内核」预设 → 保存（只落库，不重启）
+  await page.getByTestId("module-preset").getByText("仅内核").click();
+  await page.getByTestId("module-save").click();
+
+  const pending = page.getByTestId("module-pending");
+  await expect(pending).toBeVisible({ timeout: 10_000 });
+  await expect(pending).toContainText("待重启生效");
+  await expect(page.getByTestId("module-restart-command")).toContainText(
+    "xadmin.sh restart"
+  );
+
+  // 恢复为部署配置 → 待重启差异消失（不重启服务）
+  await page.getByTestId("module-reset").click();
+  await page
+    .locator(".el-message-box")
+    .getByRole("button", { name: "确定" })
+    .first()
+    .click();
+  await expect(page.getByTestId("module-pending")).toHaveCount(0, {
+    timeout: 10_000
   });
 });
 

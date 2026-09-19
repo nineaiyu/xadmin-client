@@ -1,11 +1,13 @@
+import { useI18n } from "vue-i18n";
 import type { PlusColumn } from "plus-pro-components";
 
 export function useColumns() {
+  const { t } = useI18n();
   const { pkg, lastBuildTime } = __APP_INFO__;
   const { version, engines } = pkg;
   const columns: PlusColumn[] = [
     {
-      label: "当前版本",
+      label: t("about.version"),
       prop: "version",
       minWidth: 100,
       renderDescriptionsItem: () => {
@@ -17,7 +19,7 @@ export function useColumns() {
       }
     },
     {
-      label: "最后编译时间",
+      label: t("about.buildTime"),
       prop: "buildTime",
       minWidth: 120,
       renderDescriptionsItem: () => {
@@ -29,7 +31,7 @@ export function useColumns() {
       }
     },
     {
-      label: "推荐 node 版本",
+      label: t("about.nodeVersion"),
       prop: "node",
       minWidth: 140,
       renderDescriptionsItem: () => {
@@ -41,7 +43,7 @@ export function useColumns() {
       }
     },
     {
-      label: "推荐 pnpm 版本",
+      label: t("about.pnpmVersion"),
       prop: "pnpm",
       minWidth: 140,
       renderDescriptionsItem: () => {
@@ -53,53 +55,61 @@ export function useColumns() {
       }
     },
     {
-      label: "前端代码地址",
+      label: t("about.webRepo"),
       prop: "webUrl",
       minWidth: 140,
       className: "pure-version",
       renderDescriptionsItem: () => {
         return (
           <a href="https://github.com/nineaiyu/xadmin-client" target="_blank">
-            <span style="color: var(--el-color-primary)">前端代码地址</span>
+            <span style="color: var(--el-color-primary)">
+              {t("about.webRepo")}
+            </span>
           </a>
         );
       }
     },
     {
-      label: "后端代码地址",
+      label: t("about.serverRepo"),
       prop: "apiUrl",
       minWidth: 140,
       className: "pure-version",
       renderDescriptionsItem: () => {
         return (
           <a href="https://github.com/nineaiyu/xadmin-server" target="_blank">
-            <span style="color: var(--el-color-primary)">后端代码地址</span>
+            <span style="color: var(--el-color-primary)">
+              {t("about.serverRepo")}
+            </span>
           </a>
         );
       }
     },
     {
-      label: "文档地址",
+      label: t("about.docUrl"),
       prop: "docUrl",
       minWidth: 100,
       className: "pure-version",
       renderDescriptionsItem: () => {
         return (
           <a href="https://docs.dvcloud.xin" target="_blank">
-            <span style="color: var(--el-color-primary)">文档链接</span>
+            <span style="color: var(--el-color-primary)">
+              {t("about.docUrl")}
+            </span>
           </a>
         );
       }
     },
     {
-      label: "预览地址",
+      label: t("about.demoUrl"),
       prop: "demoUrl",
       minWidth: 100,
       className: "pure-version",
       renderDescriptionsItem: () => {
         return (
           <a href="https://xadmin.dvcloud.xin/" target="_blank">
-            <span style="color: var(--el-color-primary)">预览链接</span>
+            <span style="color: var(--el-color-primary)">
+              {t("about.demoUrl")}
+            </span>
           </a>
         );
       }

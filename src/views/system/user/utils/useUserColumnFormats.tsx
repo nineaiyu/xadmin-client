@@ -61,8 +61,8 @@ export function useUserColumnFormats({
             return h(ElImage, {
               lazy: true,
               src,
-              // 无头像用户 alt 为空串（装饰图）；非空才用图片地址，避免 alt 缺失
-              alt: src || "用户头像",
+              // 有头像给可访问名；无头像回落的装饰图 alt 置空（读屏器可忽略）
+              alt: src ? t("systemUser.avatarAlt") : "",
               class: ["w-[36px]", "h-[36px]", "align-middle"],
               // 回收站只读：不提供点击放大预览
               previewSrcList: isReadonlyCell(scope) ? undefined : [src],

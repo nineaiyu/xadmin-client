@@ -1,10 +1,21 @@
 <script lang="ts" setup>
 import { h, reactive, ref, shallowRef } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElInput, ElMessageBox, ElTag, ElTooltip } from "element-plus";
+import {
+  ElAlert,
+  ElButton,
+  ElInput,
+  ElMessageBox,
+  ElTag,
+  ElTooltip
+} from "element-plus";
 import type { RecordType } from "plus-pro-components";
 import { SUCCESS_CODE } from "@/api/types";
-import { addDialog } from "@/components/ReDialog";
+import {
+  addDialog,
+  closeDialog,
+  type DialogOptions
+} from "@/components/ReDialog";
 import { message } from "@/utils/message";
 import {
   handleOperation,
@@ -61,9 +72,59 @@ loadPatScopeCatalog()
   })
   .catch(() => undefined);
 
-/** 明文一次性展示弹层（创建成功后打开，关闭后不可再读） */
-const tokenVisible = ref(false);
-const plainToken = ref("");
+/** 明文令牌复制（弹层内按钮使用；token 由调用参数带入，不再依赖组件级 ref） */
+const copyTokenText = async (token: string) => {
+  try {
+    // clipboard API 仅在安全上下文（https/localhost）可用，非安全上下文降级
+    if (!navigator.clipboard?.writeText)
+      throw new Error("clipboard unavailable");
+    await navigator.clipboard.writeText(token);
+    message(t("accessToken.copied"), { type: "success" });
+  } catch {
+    message(t("accessToken.copyFailed"), { type: "error" });
+  }
+};
+
+/** 明文一次性展示弹层（创建成功后打开，关闭后不可再读；统一走 ReDialog） */
+const openPlainToken = (token: string) => {
+  const options: DialogOptions = {
+    title: t("accessToken.createdTitle"),
+    width: dialogSize("md"),
+    draggable: true,
+    closeOnClickModal: false,
+    hideFooter: true,
+    contentRenderer: () =>
+      h("div", [
+        h(ElAlert, {
+          type: "warning",
+          closable: false,
+          title: t("accessToken.onceTip"),
+          class: "mb-3"
+        }),
+        h(
+          "code",
+          {
+            class: "block break-all rounded bg-gray-100 p-2 dark:bg-gray-800"
+          },
+          token
+        ),
+        h("div", { class: "mt-4 text-right" }, [
+          h(
+            ElButton,
+            {
+              type: "primary",
+              onClick: () => copyTokenText(token)
+            },
+            () => t("accessToken.copy")
+          ),
+          h(ElButton, { onClick: () => closeDialog(options, 0) }, () =>
+            t("buttons.close")
+          )
+        ])
+      ])
+  };
+  addDialog(options);
+};
 
 /** 创建令牌弹窗（C5：统一走 ReDialog，表单在 AccessTokenCreateForm 中） */
 const createFormRef = ref<InstanceType<typeof AccessTokenCreateForm>>();
@@ -91,13 +152,12 @@ const openCreate = () => {
         detail: String((error as { detail?: string })?.detail ?? error)
       }));
       if (res.code === SUCCESS_CODE) {
-        // 明文随后在弹层里一次性展示，成功提示交给弹层，避免双弹窗叠 toast
-        plainToken.value = String(
+        const token = String(
           (res.data as unknown as { token?: string })?.token ?? ""
         );
-        // 先关创建弹窗再打开明文弹窗（与原手写弹窗行为一致）
+        // 先关创建弹窗再打开明文弹层，避免双弹窗叠层
         done();
-        tokenVisible.value = true;
+        openPlainToken(token);
         refresh();
         return;
       }
@@ -105,18 +165,6 @@ const openCreate = () => {
       closeLoading();
     }
   });
-};
-
-const copyToken = async () => {
-  try {
-    // clipboard API 仅在安全上下文（https/localhost）可用，非安全上下文降级
-    if (!navigator.clipboard?.writeText)
-      throw new Error("clipboard unavailable");
-    await navigator.clipboard.writeText(plainToken.value);
-    message(t("accessToken.copied"), { type: "success" });
-  } catch {
-    message(t("accessToken.copyFailed"), { type: "error" });
-  }
 };
 
 /** 吊销：不可恢复，先二次确认（凭证即时失效，所有在用脚本会 401） */
@@ -394,30 +442,5 @@ const operationButtonsProps: OperationProps = {
       :operation-buttons-props="operationButtonsProps"
       :table-bar-buttons-props="tableBarButtonsProps"
     />
-
-    <el-dialog
-      v-model="tokenVisible"
-      :title="t('accessToken.createdTitle')"
-      :width="dialogSize('md')"
-      @closed="plainToken = ''"
-    >
-      <el-alert
-        type="warning"
-        :closable="false"
-        :title="t('accessToken.onceTip')"
-        class="mb-3"
-      />
-      <code class="block break-all rounded bg-gray-100 p-2 dark:bg-gray-800">
-        {{ plainToken }}
-      </code>
-      <template #footer>
-        <el-button type="primary" @click="copyToken">
-          {{ t("accessToken.copy") }}
-        </el-button>
-        <el-button @click="tokenVisible = false">
-          {{ t("buttons.close") }}
-        </el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>

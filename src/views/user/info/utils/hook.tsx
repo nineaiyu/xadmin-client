@@ -1,9 +1,10 @@
 import { SUCCESS_CODE } from "@/api/types";
 import "./reset.css";
 import { useI18n } from "vue-i18n";
-import { createFormData, delay } from "@pureadmin/utils";
+import { createFormData } from "@pureadmin/utils";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
+import { handleOperation } from "@/components/RePlusPage";
 import type { ChoicesLabel, FormItemProps, FormPasswordProps } from "./types";
 import type { RecordType } from "plus-pro-components";
 import { onMounted, reactive, ref } from "vue";
@@ -46,13 +47,10 @@ export function useUserInfo() {
   });
 
   function handleUpdate(row: FormItemProps) {
-    api.partialUpdate({}, row).then(res => {
-      if (res.code === SUCCESS_CODE) {
-        message(t("results.success"), { type: "success" });
-        getUserInfo();
-      } else {
-        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-      }
+    handleOperation({
+      t,
+      apiReq: api.partialUpdate({}, row),
+      success: () => getUserInfo()
     });
   }
 
@@ -74,10 +72,14 @@ export function useUserInfo() {
         } else {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
         }
+      })
+      .catch(() => {
+        // 请求异常：提示由 http 拦截器统一给出，这里只需结束加载态
+      })
+      .finally(() => {
+        // 以请求结束为准关闭加载态：原先 delay(500) 是盲等兜底
+        loading.value = false;
       });
-    delay(500).then(() => {
-      loading.value = false;
-    });
   }
 
   /** 上传头像 */
@@ -88,13 +90,10 @@ export function useUserInfo() {
         lastModified: Date.now()
       })
     });
-    api.upload(formData).then(res => {
-      if (res.code === SUCCESS_CODE) {
-        message(t("results.success"), { type: "success" });
-        getUserInfo();
-      } else {
-        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-      }
+    handleOperation({
+      t,
+      apiReq: api.upload(formData),
+      success: () => getUserInfo()
     });
   }
 
@@ -107,12 +106,9 @@ export function useUserInfo() {
       currentUserInfo.username,
       data.sure_password as string
     );
-    api.resetPassword({ old_password, sure_password }).then(async res => {
-      if (res.code === SUCCESS_CODE) {
-        message(t("results.success"), { type: "success" });
-      } else {
-        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-      }
+    handleOperation({
+      t,
+      apiReq: api.resetPassword({ old_password, sure_password })
     });
   }
 

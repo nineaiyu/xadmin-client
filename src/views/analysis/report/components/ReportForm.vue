@@ -5,6 +5,7 @@ import { choiceValue } from "@/utils/dict";
 import { message } from "@/utils/message";
 import type { DatasetItem } from "@/api/system/datasets";
 import {
+  relatedPk,
   searchReportUsers,
   type ReportItem,
   type ReportUserOption
@@ -29,7 +30,9 @@ const { t } = useI18n();
 
 const form = reactive({
   name: props.row?.name ?? "",
-  dataset: props.row?.dataset ?? "",
+  // dataset 为关联对象 {pk,label}（label 与 pk 同值）：下拉值必须是标量 pk，
+  // 直接回显对象会与 el-option 的 pk 值失配、原样提交还会把对象写回接口
+  dataset: relatedPk(props.row?.dataset),
   // mode/frequency 带 choices，接口下发 {value,label} 对象；不归一化会让 radio 警告，
   // 且 mode 判断失效会把聚合报表的 date_trunc 误清空
   mode: (props.row ? choiceValue(props.row.mode) : "rows") as
@@ -52,6 +55,14 @@ const form = reactive({
   im_recipients: [...(props.row?.im_recipients ?? [])],
   is_active: props.row?.is_active ?? true
 });
+
+/** 每周投递日选项（0=周一，与后端 Report.weekday 语义对齐；文案走 i18n） */
+const weekdayOptions = computed(() =>
+  Array.from({ length: 7 }, (_, index) => ({
+    value: index,
+    label: t(`dataReport.weekday${index}`)
+  }))
+);
 
 /** 渠道选项（值与后端 REPORT_NOTIFY_CHANNELS 对齐） */
 const CHANNEL_OPTIONS = [
@@ -250,18 +261,10 @@ defineExpose({ getPayload });
         class="ml-2 w-32"
       >
         <el-option
-          v-for="(label, index) in [
-            '周一',
-            '周二',
-            '周三',
-            '周四',
-            '周五',
-            '周六',
-            '周日'
-          ]"
-          :key="index"
-          :value="index"
-          :label="label"
+          v-for="item in weekdayOptions"
+          :key="item.value"
+          :value="item.value"
+          :label="item.label"
         />
       </el-select>
     </el-form-item>

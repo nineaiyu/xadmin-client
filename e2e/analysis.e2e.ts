@@ -113,6 +113,9 @@ test("报表与大屏主链路", async ({ page }) => {
 
   const reportRow = page.getByRole("row", { name: reportName });
   await expect(reportRow).toBeVisible();
+  // 数据集列必须回显数据集名称：接口把外键下发成 {pk,label} 对象（label 与 pk 同值），
+  // 前端未取 pk 时该列会渲染成空 span（回归守卫）
+  await expect(reportRow.getByText(datasetName)).toBeVisible();
   await reportRow.getByRole("button", { name: "立即运行" }).click();
   await expect(page.getByText("已派发执行").first()).toBeVisible();
   await expect(reportRow.getByText(/SUCCESS/)).toBeVisible({ timeout: 20_000 });

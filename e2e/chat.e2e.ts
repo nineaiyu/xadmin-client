@@ -172,11 +172,9 @@ test("聊天室：多人群聊建群、消息、成员管理与退群", async ({
     })
     .first()
     .click();
-  // 多选下拉不自动收起：点标题收起后提交
+  // 多选下拉不自动收起：点标题收起后提交（ReDialog 默认「保存」按钮）
   await createDialog.locator(".el-dialog__header").click();
-  await createDialog
-    .locator('[data-testid="chat-group-create-confirm"]')
-    .click();
+  await createDialog.getByRole("button", { name: "保存" }).click();
   await expect(createDialog).not.toBeVisible();
 
   // 会话列表出现群聊（2 人）并自动选中

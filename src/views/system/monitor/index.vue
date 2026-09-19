@@ -42,25 +42,31 @@ const resourceCards = computed(() => {
       key: "cpu",
       label: t("systemMonitor.cpu"),
       value: current?.cpu_percent ?? 0,
-      suffix: "%"
+      suffix: "%",
+      ring: true
     },
     {
       key: "memory",
       label: t("systemMonitor.memory"),
       value: current?.memory_used ?? 0,
-      suffix: "%"
+      suffix: "%",
+      ring: true
     },
     {
       key: "disk",
       label: t("systemMonitor.disk"),
       value: current?.disk_used ?? 0,
-      suffix: "%"
+      suffix: "%",
+      ring: true
     },
     {
+      // cpu_load 是负载均值（如 0.14），不是百分比：进度环会被 Math.round 归零
+      // 成空环配原始数字，改用纯数字展示
       key: "load",
       label: t("systemMonitor.load"),
       value: current?.cpu_load ?? 0,
-      suffix: ""
+      suffix: "",
+      ring: false
     }
   ];
 });
@@ -166,6 +172,7 @@ start();
         <el-card shadow="hover">
           <div class="text-sm text-gray-500">{{ card.label }}</div>
           <el-progress
+            v-if="card.ring"
             class="mt-2"
             type="dashboard"
             :percentage="Math.min(100, Math.round(Number(card.value) || 0))"
@@ -175,13 +182,27 @@ start();
           >
             <span class="text-lg">{{ card.value }}{{ card.suffix }}</span>
           </el-progress>
+          <div v-else class="mt-2 flex-c h-30">
+            <span class="text-3xl font-medium">
+              {{ card.value }}{{ card.suffix }}
+            </span>
+          </div>
         </el-card>
       </el-col>
     </el-row>
 
-    <el-card shadow="never" class="mb-4">
+    <el-card v-loading="loading" shadow="never" class="mb-4">
       <template #header>{{ t("systemMonitor.trend") }}</template>
-      <TrendChart v-if="echartsReady" :trend="overview.trend" />
+      <TrendChart
+        v-if="echartsReady && overview.trend.length"
+        :trend="overview.trend"
+      />
+      <!-- 无采样点时图表画布整块纯白（无轴/网格），给空态提示避免误判为渲染故障 -->
+      <el-empty
+        v-else-if="echartsReady"
+        :description="t('systemMonitor.noTrendData')"
+        :image-size="60"
+      />
     </el-card>
 
     <el-row :gutter="16" class="mb-4">

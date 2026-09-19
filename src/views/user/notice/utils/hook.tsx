@@ -1,4 +1,3 @@
-import { SUCCESS_CODE } from "@/api/types";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
@@ -9,7 +8,11 @@ import { h, reactive, ref, type Ref, shallowRef } from "vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { deviceDetection, getKeyList } from "@pureadmin/utils";
 import NoticeShowForm from "@/views/system/components/NoticeShow.vue";
-import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
+import {
+  handleOperation,
+  type OperationProps,
+  type PageTableColumn
+} from "@/components/RePlusPage";
 import type { RecordType } from "plus-pro-components";
 
 import Success from "~icons/ep/success-filled";
@@ -29,9 +32,12 @@ export function useUserNotice(tableRef: Ref) {
   const unreadCount = ref(0);
   const manySelectData = ref<RecordType[]>([]);
 
+  /** 统一走 handleOperation：成功/失败提示与业务码分支收口，失败不再静默 */
   function handleReadAll() {
-    api.allRead().then(() => {
-      tableRef.value.handleGetData();
+    handleOperation({
+      t,
+      apiReq: api.allRead(),
+      success: () => tableRef.value.handleGetData()
     });
   }
 
@@ -40,18 +46,11 @@ export function useUserNotice(tableRef: Ref) {
       message(t("results.noSelectedData"), { type: "error" });
       return;
     }
-    api
-      .batchRead({ pks: getKeyList(manySelectData.value, "pk") })
-      .then(async res => {
-        if (res.code === SUCCESS_CODE) {
-          message(t("results.batchRead", { count: selectedNum.value }), {
-            type: "success"
-          });
-          tableRef.value.handleGetData();
-        } else {
-          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-        }
-      });
+    handleOperation({
+      t,
+      apiReq: api.batchRead({ pks: getKeyList(manySelectData.value, "pk") }),
+      success: () => tableRef.value.handleGetData()
+    });
   }
 
   const showDialog = (
@@ -158,7 +157,8 @@ export function useUserNotice(tableRef: Ref) {
         },
         confirm: {
           title: () => {
-            return t("buttons.batchDeleteConfirm", {
+            // 批量已读用独立文案：复用删除确认会误导（"确定批量删除 N 条数据吗？"）
+            return t("userNotice.batchReadConfirm", {
               count: selectedNum.value
             });
           }

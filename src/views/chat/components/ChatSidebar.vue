@@ -1,15 +1,12 @@
 <script lang="ts" setup>
-import { computed, onUnmounted, ref } from "vue";
+import { computed, h, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import { addDialog } from "@/components/ReDialog";
 import { message } from "@/utils/message";
 import { SUCCESS_CODE } from "@/api/types";
-import {
-  chatApi,
-  type ChatPeer,
-  type ChatRoomItem,
-  type ChatUserOption
-} from "@/api/chat";
+import { chatApi, type ChatPeer, type ChatRoomItem } from "@/api/chat";
+import ChatGroupCreateForm from "./ChatGroupCreateForm.vue";
 import AiIcon from "~icons/ep/cpu";
 import RoomIcon from "~icons/ep/chat-dot-square";
 import GroupIcon from "~icons/ep/user-filled";
@@ -44,73 +41,38 @@ const keyword = ref("");
 
 // ------------------------------------------------------------------ 新建群聊
 
-const groupDialogVisible = ref(false);
-const groupName = ref("");
-const groupMemberPks = ref<number[]>([]);
-/** 候选成员缓存：远程搜索与已选回显共用 */
-const groupOptions = ref<ChatUserOption[]>([]);
-const searchingMembers = ref(false);
-const creatingGroup = ref(false);
-let memberSearchTimer: number | undefined;
-
-const canCreateGroup = computed(
-  () => !!groupName.value.trim() && groupMemberPks.value.length > 0
-);
-
-function mergeGroupOptions(rows: ChatUserOption[]) {
-  const known = new Set(groupOptions.value.map(item => item.pk));
-  for (const row of rows) {
-    if (!known.has(row.pk)) groupOptions.value.push(row);
-  }
-}
-
-function groupUserLabel(user: ChatUserOption) {
-  return user.nickname ? `${user.username}-${user.nickname}` : user.username;
-}
-
-/** 远程搜索候选成员（防抖 300ms） */
-function onSearchMembers(value: string) {
-  window.clearTimeout(memberSearchTimer);
-  const word = (value ?? "").trim();
-  if (!word) return;
-  memberSearchTimer = window.setTimeout(async () => {
-    searchingMembers.value = true;
-    try {
-      const { code, data } = await chatApi.searchChatUsers(word);
-      if (code === SUCCESS_CODE) mergeGroupOptions(data ?? []);
-    } finally {
-      searchingMembers.value = false;
+/** 打开新建群聊弹窗（弹层体系统一收敛：addDialog + 内容组件） */
+function openCreateGroupDialog() {
+  const formRef = ref<InstanceType<typeof ChatGroupCreateForm> | null>(null);
+  addDialog({
+    title: t("chat.newGroup"),
+    width: "420px",
+    destroyOnClose: true,
+    closeOnClickModal: false,
+    sureBtnLoading: true,
+    contentRenderer: () => h(ChatGroupCreateForm, { ref: formRef }),
+    beforeSure: async (done, { closeLoading }) => {
+      const payload = formRef.value?.getPayload();
+      if (!payload) {
+        closeLoading();
+        return;
+      }
+      // 异常归一为可读失败结果：避免请求异常时 beforeSure 抛错、弹层 loading 悬挂
+      const res = await chatApi.createGroup(payload).catch(error => ({
+        code: -1,
+        data: null,
+        detail: String((error as { detail?: string })?.detail ?? error)
+      }));
+      if (res.code === SUCCESS_CODE && res.data) {
+        done();
+        emit("created", res.data);
+        return;
+      }
+      if (res.detail) message(String(res.detail), { type: "warning" });
+      closeLoading();
     }
-  }, 300);
+  });
 }
-
-function openGroupDialog() {
-  groupDialogVisible.value = true;
-  groupName.value = "";
-  groupMemberPks.value = [];
-  groupOptions.value = [];
-}
-
-async function confirmCreateGroup() {
-  if (!canCreateGroup.value) return;
-  creatingGroup.value = true;
-  try {
-    const { code, data, detail } = await chatApi.createGroup({
-      name: groupName.value.trim(),
-      member_pks: [...groupMemberPks.value]
-    });
-    if (code === SUCCESS_CODE && data) {
-      groupDialogVisible.value = false;
-      emit("created", data);
-    } else if (detail) {
-      message(String(detail), { type: "warning" });
-    }
-  } finally {
-    creatingGroup.value = false;
-  }
-}
-
-onUnmounted(() => window.clearTimeout(memberSearchTimer));
 
 const filteredRooms = computed(() => filterByName(props.rooms, roomTitle));
 const filteredContacts = computed(() =>
@@ -178,7 +140,7 @@ function avatarText(peer: ChatPeer) {
               data-testid="chat-new-group"
               :aria-label="t('chat.newGroup')"
               :icon="useRenderIcon(PlusIcon)"
-              @click="openGroupDialog"
+              @click="openCreateGroupDialog"
             />
           </el-tooltip>
         </div>
@@ -305,59 +267,5 @@ function avatarText(peer: ChatPeer) {
         />
       </div>
     </el-scrollbar>
-
-    <!-- 新建群聊：群名称 + 成员多选（远程搜索候选） -->
-    <el-dialog
-      v-model="groupDialogVisible"
-      :title="t('chat.newGroup')"
-      width="420px"
-      append-to-body
-    >
-      <el-form label-width="80px">
-        <el-form-item :label="t('chat.groupName')" required>
-          <el-input
-            v-model="groupName"
-            maxlength="64"
-            :placeholder="t('chat.groupNamePlaceholder')"
-            data-testid="chat-group-name"
-          />
-        </el-form-item>
-        <el-form-item :label="t('chat.selectMembers')" required>
-          <el-select
-            v-model="groupMemberPks"
-            class="w-full"
-            multiple
-            filterable
-            remote
-            reserve-keyword
-            :loading="searchingMembers"
-            :remote-method="onSearchMembers"
-            :placeholder="t('chat.searchUserHint')"
-            data-testid="chat-group-members-select"
-          >
-            <el-option
-              v-for="user in groupOptions"
-              :key="user.pk"
-              :value="user.pk"
-              :label="groupUserLabel(user)"
-            />
-          </el-select>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="groupDialogVisible = false">
-          {{ t("buttons.cancel") }}
-        </el-button>
-        <el-button
-          type="primary"
-          :loading="creatingGroup"
-          :disabled="!canCreateGroup"
-          data-testid="chat-group-create-confirm"
-          @click="confirmCreateGroup"
-        >
-          {{ t("buttons.sure") }}
-        </el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>

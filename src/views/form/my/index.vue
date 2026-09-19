@@ -355,6 +355,10 @@ onMounted(loadAll);
             >
               {{ (row as SubmissionItem).status?.label }}
             </el-tag>
+            <!-- 无需审批的提交没有状态码：不能留空，否则用户不知是否已生效 -->
+            <span v-else class="text-xs text-gray-400">
+              {{ t("dform.noApprovalNeeded") }}
+            </span>
           </template>
         </el-table-column>
         <el-table-column

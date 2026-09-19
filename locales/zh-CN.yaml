@@ -554,7 +554,6 @@ systemApprovalInstance:
   tasksEmpty: 暂无审批记录
   flowUnavailable: 原流程已停用或不可发起，请选择其他流程
 
-
 userinfo:
   userinfo: 个人信息
   edit: 修改个人信息
@@ -640,6 +639,7 @@ account:
   unbound: 暂未绑定
 
 systemUser:
+  avatarAlt: 用户头像
   user: 用户
   resetMfa: 重置MFA
   imBinding: IM 绑定
@@ -986,6 +986,7 @@ noticeRead:
 
 userNotice:
   message: 内容
+  batchReadConfirm: 确定将选中的 {count} 条通知标记为已读吗？
   title: 标题
   unread: 是否已读
   level: 通知级别
@@ -1028,6 +1029,8 @@ status:
   hsLoad: 加载中...
 
 chat:
+  groupNameRequired: 请输入群名称
+  membersRequired: 请选择群成员
   inputLabel: 请输入：
   inputPlaceholder: 输入消息并回车发送
   send: 发送
@@ -1260,6 +1263,13 @@ apiScope:
   placeholder: |-
     /api/system/user
     /api/system/exports
+setting:
+  name: 配置名称
+  value: 配置数值
+  category: 分类
+  is_active: 启用状态
+  encrypted: 加密存储
+
 settingBasic:
   title: 基本设置
 
@@ -1526,6 +1536,7 @@ systemMonitor:
   disk: 磁盘使用率
   load: CPU 负载
   trend: 主机资源趋势（最近 60 个采样点）
+  noTrendData: 暂无监控数据
   cores: CPU 核数
   processes: 进程数
   swap: Swap 使用率
@@ -1747,6 +1758,13 @@ dataScreen:
 
 dataReport:
   title: 定时报表
+  weekday0: 周一
+  weekday1: 周二
+  weekday2: 周三
+  weekday3: 周四
+  weekday4: 周五
+  weekday5: 周六
+  weekday6: 周日
   create: 新建报表
   edit: 编辑
   delete: 删除
@@ -1920,6 +1938,7 @@ aiConfig:
   actions: 操作
 
 dform:
+  noApprovalNeeded: 无需审批
   designerTitle: 表单设计
   fillTitle: 可填表单
   mySubmissions: 我的提交
@@ -2029,7 +2048,6 @@ dform:
   noTemplates: 暂无表单模板
   useTemplate: 使用
 
-
 leaveApply:
   leave_type: 请假类型
   start_date: 开始日期
@@ -2113,11 +2131,11 @@ oauthAuthorize:
   loadFailed: 授权请求加载失败
 
 systemModule:
-  currentPreset: 当前预设
+  currentPreset: 当前生效预设
   enabledSummary: "已启用 {enabled} / {total} 个模块"
-  restartTip: 模块裁剪通过 config.yml 配置、重启进程后生效；关闭模块只隐藏入口与接口，不删除任何数据
+  restartTip: 模块裁剪保存后需重启进程生效；关闭模块只隐藏入口与接口，不删除任何数据
   disabledModules: 已停用模块
-  configSnippet: 裁剪配置片段（config.yml）
+  configSnippet: 裁剪配置片段（重启后生效）
   copy: 复制
   copied: 已复制到剪贴板
   copyFailed: 复制失败，请手动选择文本
@@ -2136,3 +2154,42 @@ systemModule:
   depends: 依赖
   note: 说明
   loadFailed: 加载模块清单失败
+  desiredPreset: 待生效预设
+  overrideActive: 已启用后台覆盖
+  baseline: 部署基线
+  baselineValue: "预设 {preset}，额外启用 {enable}，额外停用 {disable}"
+  baselineEmpty: 无
+  pendingTitle: 配置已保存，待重启生效
+  pendingTip: 当前进程仍按原配置运行，重启服务后新配置才会生效
+  restartCommand: 重启命令
+  copyCommand: 复制命令
+  diffEnable: 将启用
+  diffDisable: 将停用
+  presetChanged: 预设将变更
+  editTitle: 模块配置
+  selectPreset: 预设
+  enableSwitch: 启用
+  coreLocked: 内核模块不可关闭
+  editTip: 按预设调整模块开关后保存；保存只落库，需重启进程生效
+  save: 保存配置
+  saved: 已保存，重启后生效
+  saveFailed: 保存失败
+  noChange: 没有需要保存的改动
+  reset: 恢复部署配置
+  resetConfirm: 确认清除后台覆盖，恢复为部署基线（config.yml / 环境变量）？
+  resetDone: 已恢复为部署配置，重启后生效
+  discardConfirm: 有未保存的改动，切换预设将丢弃这些改动，是否继续？
+
+about:
+  intro: xAdmin 是一款开源免费且开箱即用的中后台管理系统模版。完全采用 ECMAScript 模块（ESM）规范来编写和组织代码，使用了最新的 Vue3、Vite、Element-Plus、TypeScript、Pinia、Tailwindcss 等主流技术开发。
+  platformInfo: 平台信息
+  prodDeps: 生产环境依赖
+  devDeps: 开发环境依赖
+  version: 当前版本
+  buildTime: 最后编译时间
+  nodeVersion: 推荐 node 版本
+  pnpmVersion: 推荐 pnpm 版本
+  webRepo: 前端代码地址
+  serverRepo: 后端代码地址
+  docUrl: 文档地址
+  demoUrl: 预览地址

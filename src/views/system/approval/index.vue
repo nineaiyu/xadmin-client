@@ -16,9 +16,10 @@ const activeTab = ref("pending");
 const { pendingCount } = useApprovalBadge();
 </script>
 <template>
-  <div class="pr-[1%]">
+  <div>
     <!-- 单根包裹：layout 注入的 main-content（24px 外边距）只有单根组件才会继承，
-         多根 Fragment 会让该 class 被丢弃；pr-[1%] 与 RePlusPage 的 w-99/100 等效 -->
+         多根 Fragment 会让该 class 被丢弃。不加右侧内边距：统计卡与下方列表卡
+         同为容器满宽，右边缘对齐（pr-[1%] 会让统计卡比列表卡窄约 1%） -->
     <ApprovalStats />
     <el-tabs v-model="activeTab" class="mt-2">
       <el-tab-pane name="pending">

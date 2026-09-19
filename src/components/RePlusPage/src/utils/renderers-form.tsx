@@ -167,15 +167,6 @@ export const builtinFormRenderers: PlusColumnRegistry = {
 /** 表单列回退渲染器：对应原 default 分支（api-* 自定义搜索组件） */
 export const formFallbackRenderer: PlusColumnHandler = (item, ctx) => {
   const { column } = ctx;
-  // TEMP-PROBE: E2E 调试，随后移除
-  if (import.meta.env.DEV && column.input_type?.startsWith("api-")) {
-    console.log(
-      "[suggest-probe] fallback renderer:",
-      column.key,
-      column.input_type,
-      column.suggest_url
-    );
-  }
   if (column.input_type.startsWith("api-")) {
     if (!column.hasOwnProperty("default")) {
       column.default = column?.multiple ? [] : undefined;

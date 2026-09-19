@@ -40,7 +40,13 @@ const loadGlobal = async () => {
 };
 
 const saveGlobal = async () => {
-  const res = await aiConfigApi.partialUpdate({}, { ...globalForm });
+  // 异常归一为可读失败结果：PATCH 失败（网络/HTTP 层）不能让 Promise 未处理
+  const res = await aiConfigApi
+    .partialUpdate({}, { ...globalForm })
+    .catch(error => ({
+      code: -1,
+      detail: String((error as { detail?: string })?.detail ?? error)
+    }));
   if (res.code === SUCCESS_CODE) {
     message(t("aiConfig.globalSaved"), { type: "success" });
   } else if (res.detail) {
@@ -58,7 +64,8 @@ const metricsCards = computed(() => {
   const total = data?.total ?? 0;
   const success = data?.success ?? 0;
   const failed = data?.failed ?? 0;
-  const rate = total ? Math.round((success / total) * 100) : 100;
+  // 无调用（total=0）时成功率为 0：显示 100% 会被误读为"全部成功"
+  const rate = total ? Math.round((success / total) * 100) : 0;
   return [
     { label: t("aiConfig.metricsTotal"), value: String(total) },
     { label: t("aiConfig.metricsSuccess"), value: String(success) },

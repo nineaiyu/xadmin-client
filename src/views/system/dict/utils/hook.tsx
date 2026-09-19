@@ -187,8 +187,8 @@ export function useDataDict(tableRef: Ref) {
             apiReq: api.refreshCache(),
             success() {
               // 同步清空前端进程内字典缓存：否则其他页面在 5 分钟 TTL 内仍读旧字典
+              // （成功提示由 handleOperation 统一给出，重复 message 会弹两次）
               clearDictCache();
-              message(t("results.success"), { type: "success" });
             },
             requestEnd() {
               loading.value = false;

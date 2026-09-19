@@ -205,6 +205,7 @@ let curWeek = ref(1);
               v-if="echartsReady"
               :showData="curWeek ? userLoginList : userRegisterList"
               :title="optionsBasis[curWeek].label"
+              :variant="curWeek ? 'login' : 'register'"
             />
           </div>
         </el-card>

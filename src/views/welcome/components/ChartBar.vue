@@ -12,6 +12,12 @@ const props = defineProps({
   title: {
     type: String,
     default: ""
+  },
+  // 语义变体（注册/登录）：决定折线配色。不能用中文标题做判断——
+  // 英文环境下标题恒不等于"注册"，会永远落入登录配色分支
+  variant: {
+    type: String as PropType<"register" | "login">,
+    default: "register"
   }
 });
 
@@ -27,7 +33,7 @@ watch(
   () => props,
   async () => {
     await nextTick(); // 确保DOM更新完成后再执行
-    const color = ["#41b6ff", "#26ce83"][props.title === "注册" ? 0 : 1];
+    const color = ["#41b6ff", "#26ce83"][props.variant === "register" ? 0 : 1];
     setOptions({
       container: ".bar-card",
       tooltip: {
@@ -83,7 +89,8 @@ watch(
       ],
       series: [
         {
-          name: `${props.title}人数`,
+          // series 名直接用调用方传入的（已 i18n）标题：不再拼中文"人数"
+          name: props.title,
           type: "line",
           smooth: true,
           symbolSize: 8,

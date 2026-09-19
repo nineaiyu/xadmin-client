@@ -3,6 +3,7 @@ import {
   getCurrentInstance,
   h,
   reactive,
+  ref,
   type Ref,
   shallowRef,
   type VNode
@@ -16,6 +17,8 @@ import { useI18n } from "vue-i18n";
 import { NoticeChoices } from "@/views/system/constants";
 import {
   isReadonlyCell,
+  renderSwitch,
+  usePublicHooks,
   type PageTableColumn,
   type OperationProps,
   type RePlusPageProps
@@ -33,6 +36,10 @@ export function useNotice(tableRef: Ref) {
     publish: false,
     ...getDefaultAuths(getCurrentInstance(), ["publish"])
   });
+
+  // 发布开关（publish 列）的加载态与样式：走框架 renderSwitch 同款机制
+  const switchLoadMap = ref<Record<number, { loading?: boolean }>>({});
+  const { switchStyle } = usePublicHooks();
 
   const operationButtonsProps = shallowRef<OperationProps>({
     width: 200,
@@ -84,6 +91,22 @@ export function useNotice(tableRef: Ref) {
               {row.title}
             </el-text>
           );
+          break;
+        case "publish":
+          // 发布开关：文案用「已发布/未发布」（默认「启用/禁用」语义不符）；
+          // 无 publish 权限时置灰，权限码不再形同虚设
+          column["cellRenderer"] = renderSwitch({
+            t,
+            updateApi: api.publish,
+            switchLoadMap,
+            switchStyle,
+            field: "publish",
+            actionMap: {
+              true: t("labels.publish"),
+              false: t("labels.unPublish")
+            },
+            disabled: () => !auth.publish
+          });
           break;
         case "read_user_count":
           column["cellRenderer"] = scope => {

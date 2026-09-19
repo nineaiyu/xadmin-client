@@ -13,10 +13,24 @@ export type ScreenItem = {
   visibility: "personal" | "shared";
 };
 
+/**
+ * 关联字段（object_related_field）的接口形态：BaseModelSerializer 对未声明
+ * `label_format` 的外键下发 `{pk,label}` 对象，且此时 label 与 pk 同值；
+ * 历史数据与部分接口为纯 pk 字符串，故按联合类型兼容两种形态。
+ */
+export type RelatedPk = string | { pk: string; label?: string };
+
+/** 取关联字段主键：对象取 pk，标量原样透传（空值归空串） */
+export function relatedPk(value: RelatedPk | null | undefined): string {
+  return typeof value === "object" && value !== null
+    ? value.pk
+    : String(value ?? "");
+}
+
 export type ReportItem = {
   pk: string;
   name: string;
-  dataset: string;
+  dataset: RelatedPk;
   mode: "rows" | "aggregate";
   group_by: string;
   metric: "count" | "sum" | "avg";

@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 import { useColumns } from "./columns";
 import { PlusDescriptions } from "plus-pro-components";
 
@@ -12,6 +13,7 @@ defineOptions({
   name: "About"
 });
 
+const { t } = useI18n();
 const { pkg } = __APP_INFO__;
 const { dependencies, devDependencies } = pkg;
 
@@ -61,19 +63,14 @@ Object.keys(devDependencies).forEach(key => {
 
 <template>
   <div>
-    <el-card class="mb-4 box-card" shadow="never">
-      <span>
-        xAdmin 是一款开源免费且开箱即用的中后台管理系统模版。完全采用 ECMAScript
-        模块（ESM）规范来编写和组织代码，使用了最新的
-        Vue3、Vite、Element-Plus、TypeScript、Pinia、Tailwindcss
-        等主流技术开发。
-      </span>
+    <el-card class="m-4 box-card" shadow="never">
+      <span>{{ t("about.intro") }}</span>
     </el-card>
 
     <el-card class="m-4 box-card" shadow="never">
       <template #header>
         <div class="card-header">
-          <span class="font-medium">平台信息</span>
+          <span class="font-medium">{{ t("about.platformInfo") }}</span>
         </div>
       </template>
       <el-scrollbar>
@@ -84,7 +81,7 @@ Object.keys(devDependencies).forEach(key => {
     <el-card class="m-4 box-card" shadow="never">
       <template #header>
         <div class="card-header flex items-center">
-          <span class="font-medium">生产环境依赖</span>
+          <span class="font-medium">{{ t("about.prodDeps") }}</span>
           <el-tag class="ml-1" effect="dark" round size="small" type="primary">
             {{ schema.length }}
           </el-tag>
@@ -119,7 +116,7 @@ Object.keys(devDependencies).forEach(key => {
     <el-card class="m-4 box-card" shadow="never">
       <template #header>
         <div class="card-header flex items-center">
-          <span class="font-medium">开发环境依赖</span>
+          <span class="font-medium">{{ t("about.devDeps") }}</span>
           <el-tag class="ml-1" effect="dark" round size="small" type="primary">
             {{ devSchema.length }}
           </el-tag>

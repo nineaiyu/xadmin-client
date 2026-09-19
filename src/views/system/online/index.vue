@@ -17,7 +17,7 @@ const {
     ref="tableRef"
     :api="api"
     :auth="auth"
-    locale-name="userOnline"
+    locale-name="systemOnline"
     :listColumnsFormat="listColumnsFormat"
     :tableBarButtonsProps="tableBarButtonsProps"
     :operationButtonsProps="operationButtonsProps"

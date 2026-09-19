@@ -6,6 +6,8 @@ import { TreeFormProps } from "../utils/types";
 import { MenuChoices } from "@/views/system/constants";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { useMenuTree } from "../utils/useMenuTree";
+import { ReRecycleBin, type RecycleBinColumn } from "@/components/RePlusPage";
+import { menuApi } from "@/api/system/menu";
 
 import Back from "~icons/ep/back";
 import Upload from "~icons/ep/upload";
@@ -100,6 +102,15 @@ const {
   // 组件 emit 的精确事件联合与工具签名的事件名参数在边界收窄（运行时原样透传）
   emit: emit as unknown as (_event: string, ..._args: unknown[]) => void
 });
+
+/**
+ * 菜单回收站：菜单是软删除模型（删除进回收站可恢复），入口挂在树工具栏。
+ * 组件自带「回收站」按钮与抽屉，恢复/清除后经 changed 事件刷新菜单树。
+ */
+const recycleColumns: RecycleBinColumn[] = [
+  { prop: "name", label: t("systemMenu.componentName") },
+  { prop: "path", label: t("systemMenu.componentPath") }
+];
 </script>
 
 <template>
@@ -148,6 +159,14 @@ const {
           @click="emit('openDialog', 0)"
           >{{ t("buttons.add") }}
         </el-button>
+        <re-recycle-bin
+          v-if="auth.recycleList"
+          class="ml-2"
+          :api="menuApi"
+          locale-name="systemMenu"
+          :columns="recycleColumns"
+          @changed="emit('getMenuData')"
+        />
         <el-input
           v-model="searchValue"
           :placeholder="t('systemMenu.verifyTitle')"

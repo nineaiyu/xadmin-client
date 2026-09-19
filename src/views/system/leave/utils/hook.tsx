@@ -94,8 +94,10 @@ export function useLeave(tableRef: Ref) {
         code: "submit",
         text: t("leaveApply.submit"),
         props: { type: "primary", link: true, icon: useRenderIcon(Check) },
+        // 排序索引避开内置按钮（编辑 -30 / 删除 -20 / 详情 -10 / 变更历史 -5）：
+        // 与「删除」同索引时两者先后不确定
         show: (row: Record<string, unknown>) =>
-          auth.submit && RESUBMITTABLE.includes(statusOf(row)) && -20,
+          auth.submit && RESUBMITTABLE.includes(statusOf(row)) && -25,
         onClick: ({ row }) =>
           confirmAndRun(
             row as Record<string, unknown>,
@@ -113,7 +115,7 @@ export function useLeave(tableRef: Ref) {
           icon: useRenderIcon(RefreshLeft)
         },
         show: (row: Record<string, unknown>) =>
-          auth.cancel && statusOf(row) === "PENDING" && -18,
+          auth.cancel && statusOf(row) === "PENDING" && -15,
         onClick: ({ row }) =>
           confirmAndRun(
             row as Record<string, unknown>,

@@ -9,7 +9,12 @@ import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
-import { reportApi, runReport, type ReportItem } from "@/api/system/analysis";
+import {
+  reportApi,
+  runReport,
+  relatedPk,
+  type ReportItem
+} from "@/api/system/analysis";
 import { datasetApi, listRows, type DatasetItem } from "@/api/system/datasets";
 import ReportForm from "../components/ReportForm.vue";
 
@@ -45,7 +50,8 @@ const dictLabel = (raw: unknown): string => {
  *
  * - 新建/编辑走 ReDialog + ReportForm（数据集下拉 / 聚合细则在表单内收敛）；
  * - 删除保留框架默认入口；立即运行为行内按钮（派发后刷新，状态列联动）；
- * - dataset 列为外键 pk：前端用数据集清单映射名称（与迁移前口径一致）。
+ * - dataset 列接口下发 `{pk,label}` 关联对象（label 与 pk 同值）：取 pk 后用
+ *   数据集清单映射名称展示。
  */
 export function useReport(tableRef: Ref) {
   const { t } = useI18n();
@@ -67,8 +73,10 @@ export function useReport(tableRef: Ref) {
     datasets.value = listRows<DatasetItem>(res as never);
   });
 
-  const datasetName = (pk: string) =>
-    datasets.value.find(item => item.pk === pk)?.name ?? pk;
+  const datasetName = (value: ReportItem["dataset"]) => {
+    const pk = relatedPk(value);
+    return datasets.value.find(item => item.pk === pk)?.name ?? pk;
+  };
 
   /** 投递渠道展示：空 = 仅邮件（存量兼容） */
   const channelLabels = (channels: string[] | undefined) =>

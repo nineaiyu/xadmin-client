@@ -554,7 +554,6 @@ systemApprovalInstance:
   tasksEmpty: No approval records
   flowUnavailable: The original flow is disabled or unavailable, please choose another one
 
-
 userinfo:
   userinfo: UserInfo
   edit: Modify personal information
@@ -640,6 +639,7 @@ account:
   unbound: Unbound
 
 systemUser:
+  avatarAlt: User avatar
   user: User
   resetMfa: Reset MFA
   imBinding: IM Binding
@@ -986,6 +986,7 @@ noticeRead:
 
 userNotice:
   message: Message
+  batchReadConfirm: Mark the selected {count} notifications as read?
   title: Title
   unread: Have Read
   level: Level
@@ -1028,6 +1029,8 @@ status:
   hsLoad: Loading...
 
 chat:
+  groupNameRequired: Please enter a group name
+  membersRequired: Please select group members
   inputLabel: "Message:"
   inputPlaceholder: Type a message and press Enter
   send: Send
@@ -1260,6 +1263,13 @@ apiScope:
   placeholder: |-
     /api/system/user
     /api/system/exports
+setting:
+  name: Name
+  value: Value
+  category: Category
+  is_active: Is active
+  encrypted: Encrypted
+
 settingBasic:
   title: Basic Settings
 
@@ -1526,6 +1536,7 @@ systemMonitor:
   disk: Disk usage
   load: CPU load
   trend: Host resource trend (last 60 samples)
+  noTrendData: No monitoring data
   cores: CPU cores
   processes: Processes
   swap: Swap usage
@@ -1747,6 +1758,13 @@ dataScreen:
 
 dataReport:
   title: Scheduled Reports
+  weekday0: Monday
+  weekday1: Tuesday
+  weekday2: Wednesday
+  weekday3: Thursday
+  weekday4: Friday
+  weekday5: Saturday
+  weekday6: Sunday
   create: New Report
   edit: Edit
   delete: Delete
@@ -1920,6 +1938,7 @@ aiConfig:
   actions: Actions
 
 dform:
+  noApprovalNeeded: No approval required
   designerTitle: Form Design
   fillTitle: Available Forms
   mySubmissions: My Submissions
@@ -2029,7 +2048,6 @@ dform:
   noTemplates: No form templates
   useTemplate: Use
 
-
 leaveApply:
   leave_type: Leave type
   start_date: Start date
@@ -2113,11 +2131,11 @@ oauthAuthorize:
   loadFailed: Failed to load authorization request
 
 systemModule:
-  currentPreset: Current preset
+  currentPreset: Current effective preset
   enabledSummary: "{enabled} / {total} modules enabled"
-  restartTip: Trimming is configured in config.yml and takes effect after restart; disabling only hides entry points and APIs, and never deletes data
+  restartTip: Trimming takes effect after a service restart; disabling only hides entry points and APIs, and never deletes data
   disabledModules: Disabled modules
-  configSnippet: Trimming snippet (config.yml)
+  configSnippet: Trimming snippet (effective after restart)
   copy: Copy
   copied: Copied to clipboard
   copyFailed: Copy failed, please select the text manually
@@ -2136,3 +2154,42 @@ systemModule:
   depends: Depends
   note: Notes
   loadFailed: Failed to load module list
+  desiredPreset: Pending preset
+  overrideActive: Backend override active
+  baseline: Deployment baseline
+  baselineValue: "preset {preset}, extra enabled {enable}, extra disabled {disable}"
+  baselineEmpty: None
+  pendingTitle: Saved, restart required
+  pendingTip: The running process still uses the previous configuration; the new one applies after a service restart
+  restartCommand: Restart command
+  copyCommand: Copy command
+  diffEnable: Will enable
+  diffDisable: Will disable
+  presetChanged: Preset will change
+  editTitle: Module configuration
+  selectPreset: Preset
+  enableSwitch: Enable
+  coreLocked: Core modules cannot be disabled
+  editTip: Adjust module switches against a preset and save; saving only persists to DB and takes effect after a restart
+  save: Save
+  saved: Saved; takes effect after restart
+  saveFailed: Save failed
+  noChange: No changes to save
+  reset: Reset to deployment config
+  resetConfirm: Clear the backend override and fall back to the deployment baseline (config.yml / environment variables)?
+  resetDone: Reset to deployment config; takes effect after restart
+  discardConfirm: You have unsaved changes; switching preset will discard them. Continue?
+
+about:
+  intro: xAdmin is an open-source, free and ready-to-use admin management template. It is written and organized entirely with ECMAScript Modules (ESM) and built with the latest Vue3, Vite, Element-Plus, TypeScript, Pinia, Tailwindcss and other mainstream technologies.
+  platformInfo: Platform info
+  prodDeps: Production dependencies
+  devDeps: Development dependencies
+  version: Current version
+  buildTime: Last build time
+  nodeVersion: Recommended Node version
+  pnpmVersion: Recommended pnpm version
+  webRepo: Frontend repository
+  serverRepo: Backend repository
+  docUrl: Documentation
+  demoUrl: Live demo

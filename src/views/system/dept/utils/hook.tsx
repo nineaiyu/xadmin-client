@@ -1,10 +1,18 @@
 import { deptApi } from "@/api/system/dept";
-import { getCurrentInstance, reactive, ref, type Ref, shallowRef } from "vue";
+import {
+  getCurrentInstance,
+  h,
+  reactive,
+  ref,
+  type Ref,
+  shallowRef
+} from "vue";
 import { useRouter } from "vue-router";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { buildRoleRulesColumns } from "@/views/system/hooks";
-import type DeptPermissionPreview from "../components/DeptPermissionPreview.vue";
+import DeptPermissionPreview from "../components/DeptPermissionPreview.vue";
+import { addDrawer } from "@/components/ReDrawer";
 import View from "~icons/ri/eye-line";
 import { handleTree } from "@/utils/tree";
 import {
@@ -30,16 +38,32 @@ export function useDept(tableRef: Ref) {
     ...getDefaultAuths(getCurrentInstance(), ["empower", "preview"])
   });
 
-  /** 部门授权预览抽屉（挂载角色 / 数据权限 / 字段权限 / 成员采样） */
-  const previewRef = ref<InstanceType<typeof DeptPermissionPreview>>();
+  /** 部门授权预览抽屉（挂载角色 / 数据权限 / 字段权限 / 成员采样；统一走 ReDrawer） */
+  const openPreview = (row: DeptRow) => {
+    addDrawer({
+      title: t("permissionPreview.deptTitle"),
+      size: "70%",
+      destroyOnClose: true,
+      hideFooter: true,
+      contentRenderer: () => h(DeptPermissionPreview, { row })
+    });
+  };
 
   const listColumnsFormat = (columns: PageTableColumn[]) => {
     columns.forEach(column => {
       switch (column._column?.key) {
         case "user_count":
-          column["cellRenderer"] = ({ row }) => (
-            <el-link onClick={() => onGoDetail(row)}>{row.user_count}</el-link>
-          );
+          column["cellRenderer"] = ({ row }) => {
+            // 无「用户列表」权限或人数为 0 时不可跳转：渲染为纯文本，
+            // 避免出现可点却无反应（也无提示）的假链接
+            const canJump = hasAuth("list:SystemUser") && row.user_count > 0;
+            if (!canJump) return <span>{row.user_count}</span>;
+            return (
+              <el-link onClick={() => onGoDetail(row)}>
+                {row.user_count}
+              </el-link>
+            );
+          };
           break;
         case "name":
           column["minWidth"] = 200;
@@ -179,7 +203,7 @@ export function useDept(tableRef: Ref) {
           link: true
         },
         onClick: ({ row }) => {
-          previewRef.value?.open(row);
+          openPreview(row);
         },
         show: auth.preview
       }
@@ -193,7 +217,6 @@ export function useDept(tableRef: Ref) {
     listColumnsFormat,
     baseColumnsFormat,
     addOrEditOptions,
-    operationButtonsProps,
-    previewRef
+    operationButtonsProps
   };
 }
