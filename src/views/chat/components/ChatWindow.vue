@@ -32,73 +32,172 @@ import ChatGroupMembersPanel from "./ChatGroupMembersPanel.vue";
  * 插入（光标处）；AI 会话支持 `/kb 问题` 走知识库问答；头部可开关桌面通知（全站生效）。
  */
 
-/** 常用表情（不引第三方依赖，保持包体；点击在光标处插入） */
-const EMOJIS = [
-  "😀",
-  "😁",
-  "😂",
-  "🤣",
-  "😊",
-  "😍",
-  "😘",
-  "😜",
-  "🤔",
-  "😎",
-  "😭",
-  "😅",
-  "🙄",
-  "😡",
-  "🥳",
-  "🤗",
-  "👍",
-  "👎",
-  "👏",
-  "🙏",
-  "💪",
-  "🤝",
-  "✌️",
-  "👌",
-  "❤️",
-  "💔",
-  "💯",
-  "🔥",
-  "⭐",
-  "🎉",
-  "🎊",
-  "🎁",
-  "☕",
-  "🍵",
-  "🍺",
-  "🍰",
-  "🍎",
-  "🍉",
-  "🍚",
-  "🍜",
-  "🐶",
-  "🐱",
-  "🐭",
-  "🐰",
-  "🦊",
-  "🐻",
-  "🐼",
-  "🐨",
-  "☀️",
-  "🌈",
-  "⛅",
-  "🌧️",
-  "❄️",
-  "🌙",
-  "🌸",
-  "🌻",
-  "🚀",
-  "🛸",
-  "🏠",
-  "💻",
-  "📱",
-  "⏰",
-  "📚",
-  "✅"
+/**
+ * 表情分组（纯文本字符、零第三方依赖，保持包体；点击在光标处插入）。
+ *
+ * 面板内只有表情格子是 `<button>`、分类签用 `<span>`：页面 E2E 以 button 序号定位表情。
+ */
+type EmojiGroup = { key: string; icon: string; items: string[] };
+
+const EMOJI_GROUPS: EmojiGroup[] = [
+  {
+    key: "common",
+    icon: "😀",
+    items: [
+      "😀",
+      "😁",
+      "😂",
+      "🤣",
+      "😊",
+      "😍",
+      "😘",
+      "😜",
+      "🤔",
+      "😎",
+      "😭",
+      "😅",
+      "🙄",
+      "😡",
+      "🥳",
+      "🤗"
+    ]
+  },
+  {
+    key: "gesture",
+    icon: "👍",
+    items: [
+      "👍",
+      "👎",
+      "👏",
+      "🙏",
+      "💪",
+      "🤝",
+      "✌️",
+      "👌",
+      "👋",
+      "🙌",
+      "👊",
+      "✊",
+      "🤞",
+      "🤙",
+      "☝️",
+      "🖖"
+    ]
+  },
+  {
+    key: "symbol",
+    icon: "❤️",
+    items: [
+      "❤️",
+      "💔",
+      "💯",
+      "🔥",
+      "⭐",
+      "🎉",
+      "🎊",
+      "🎁",
+      "✨",
+      "💫",
+      "⚡",
+      "💖",
+      "💘",
+      "🏆",
+      "💐",
+      "🎯"
+    ]
+  },
+  {
+    key: "food",
+    icon: "🍜",
+    items: [
+      "☕",
+      "🍵",
+      "🍺",
+      "🍰",
+      "🍎",
+      "🍉",
+      "🍚",
+      "🍜",
+      "🍕",
+      "🍔",
+      "🍟",
+      "🍦",
+      "🍓",
+      "🍇",
+      "🍑",
+      "🥤"
+    ]
+  },
+  {
+    key: "animal",
+    icon: "🐶",
+    items: [
+      "🐶",
+      "🐱",
+      "🐭",
+      "🐰",
+      "🦊",
+      "🐻",
+      "🐼",
+      "🐨",
+      "🐯",
+      "🦁",
+      "🐮",
+      "🐷",
+      "🐸",
+      "🐵",
+      "🐔",
+      "🦄"
+    ]
+  },
+  {
+    key: "nature",
+    icon: "🌸",
+    items: [
+      "☀️",
+      "🌈",
+      "⛅",
+      "🌧️",
+      "❄️",
+      "🌙",
+      "🌸",
+      "🌻",
+      "🌹",
+      "🌲",
+      "🍀",
+      "🌊",
+      "⛰️",
+      "🌋",
+      "🍂",
+      "🌵"
+    ]
+  },
+  {
+    key: "object",
+    icon: "💻",
+    items: [
+      "🚀",
+      "🛸",
+      "🏠",
+      "💻",
+      "📱",
+      "⏰",
+      "📚",
+      "✅",
+      "🧩",
+      "🔧",
+      "📌",
+      "📎",
+      "🎧",
+      "📷",
+      "🖥️",
+      "📅"
+    ]
+  }
 ];
+
+/** 默认分类：首屏即最常用的一组（E2E 以该组首个表情为断言基准） */
+const DEFAULT_EMOJI_GROUP = "common";
 
 const props = defineProps<{
   room: ChatRoomItem | null;
@@ -140,6 +239,11 @@ const draft = ref("");
 const scrollEl = ref<HTMLElement | null>(null);
 const inputWrap = ref<HTMLElement | null>(null);
 const emojiVisible = ref(false);
+/** 表情面板当前分类（key 见 EMOJI_GROUPS） */
+const emojiGroup = ref(DEFAULT_EMOJI_GROUP);
+const activeEmojis = computed(
+  () => EMOJI_GROUPS.find(group => group.key === emojiGroup.value)?.items ?? []
+);
 const desktopOn = ref(desktopNotifyEnabled());
 
 onMounted(() => emit("scroller", scrollEl.value));
@@ -445,8 +549,11 @@ watch(
           <el-popover
             v-model:visible="emojiVisible"
             placement="top-start"
-            :width="296"
+            :width="348"
+            :show-arrow="false"
+            :offset="12"
             trigger="click"
+            popper-class="chat-emoji-popper"
           >
             <template #reference>
               <el-button
@@ -454,22 +561,43 @@ watch(
                 :aria-label="t('chat.emoji')"
                 :title="t('chat.emoji')"
                 data-testid="chat-emoji"
+                :class="emojiVisible ? 'text-(--el-color-primary)' : ''"
                 :icon="useRenderIcon(EmojiIcon)"
               />
             </template>
-            <div
-              class="grid grid-cols-8 gap-0.5"
-              data-testid="chat-emoji-panel"
-            >
-              <button
-                v-for="item in EMOJIS"
-                :key="item"
-                type="button"
-                class="rounded text-lg/8 transition-colors hover:bg-(--el-fill-color)"
-                @click="insertEmoji(item)"
+            <div class="chat-emoji-panel" data-testid="chat-emoji-panel">
+              <div
+                class="chat-emoji-panel__tabs"
+                role="tablist"
+                :aria-label="t('chat.emoji')"
               >
-                {{ item }}
-              </button>
+                <span
+                  v-for="group in EMOJI_GROUPS"
+                  :key="group.key"
+                  class="chat-emoji-panel__tab"
+                  :class="{ 'is-active': group.key === emojiGroup }"
+                  role="tab"
+                  :aria-selected="group.key === emojiGroup"
+                  :title="t(`chat.emojiGroups.${group.key}`)"
+                  @click="emojiGroup = group.key"
+                >
+                  {{ group.icon }}
+                </span>
+              </div>
+              <!-- 切换分类时网格淡入淡出（out-in：旧组先退场，避免两组同帧顶开高度） -->
+              <Transition name="chat-emoji-swap" mode="out-in">
+                <div :key="emojiGroup" class="chat-emoji-panel__grid">
+                  <button
+                    v-for="item in activeEmojis"
+                    :key="item"
+                    type="button"
+                    class="chat-emoji-panel__item"
+                    @click="insertEmoji(item)"
+                  >
+                    {{ item }}
+                  </button>
+                </div>
+              </Transition>
             </div>
           </el-popover>
         </div>
@@ -514,5 +642,145 @@ watch(
   50% {
     opacity: 0;
   }
+}
+</style>
+
+<style lang="scss">
+/* 表情面板：el-popover 内容 teleport 到 body，组件 scoped 样式无法命中，
+   因此用唯一的 popper-class 承载全局样式（类名互斥，不影响其他弹层）。
+   颜色全部取自 EP 变量，明暗主题随站点自动适配 */
+.el-popover.el-popper.chat-emoji-popper {
+  padding: 12px;
+  background:
+    radial-gradient(
+      120% 72% at 50% 0%,
+      var(--el-color-primary-light-8) 0%,
+      transparent 70%
+    ),
+    var(--el-bg-color-overlay);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 16px;
+  box-shadow:
+    0 16px 40px rgb(0 0 0 / 12%),
+    0 4px 10px rgb(0 0 0 / 6%);
+}
+
+.chat-emoji-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transform-origin: bottom left;
+  animation: chat-emoji-panel-in 0.18s ease-out;
+
+  &__tabs {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    background: var(--el-fill-color-light);
+    border-radius: 11px;
+  }
+
+  &__tab {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    height: 28px;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+    border-radius: 8px;
+    opacity: 0.7;
+    transition:
+      opacity 0.18s ease,
+      background-color 0.18s ease;
+
+    &:hover {
+      background: var(--el-fill-color);
+      opacity: 1;
+    }
+
+    &.is-active {
+      background: var(--el-bg-color-overlay);
+      box-shadow: 0 1px 4px rgb(0 0 0 / 10%);
+      opacity: 1;
+    }
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 3px;
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
+    padding: 0;
+    font-size: 21px;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    opacity: 0.92;
+    transition:
+      transform 0.15s ease,
+      background-color 0.15s ease,
+      opacity 0.15s ease;
+
+    &:hover {
+      background: var(--el-fill-color);
+      opacity: 1;
+      transform: scale(1.12);
+    }
+
+    &:active {
+      transform: scale(0.9);
+    }
+  }
+}
+
+@keyframes chat-emoji-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 暗色下 --el-bg-color-overlay 比分类条底色更深，激活项会读成「凹陷」，
+   改用 fill-color（暗色下比 fill-color-light 更亮）保持「浮起」的语义 */
+html.dark {
+  .chat-emoji-panel__tab.is-active {
+    background: var(--el-fill-color);
+    box-shadow: 0 1px 4px rgb(0 0 0 / 32%);
+  }
+}
+
+/* 分类切换：退出略上移、进入自下方浮入，避免整块硬切 */
+.chat-emoji-swap-enter-active,
+.chat-emoji-swap-leave-active {
+  transition:
+    opacity 0.12s ease,
+    transform 0.12s ease;
+}
+
+.chat-emoji-swap-enter-from {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+.chat-emoji-swap-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
 }
 </style>

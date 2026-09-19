@@ -1061,6 +1061,14 @@ chat:
   thinking: AI is thinking...
   aiFailed: Failed to get the AI reply, please try again later
   emoji: Emoji
+  emojiGroups:
+    common: Common
+    gesture: Gestures
+    symbol: Symbols
+    food: Food
+    animal: Animals
+    nature: Nature
+    object: Objects
   desktopNotify: Desktop notifications
   desktopNotifyOn: Desktop notifications on, click to turn off
   desktopNotifyOff: Turn on desktop notifications

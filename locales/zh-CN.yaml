@@ -1061,6 +1061,14 @@ chat:
   thinking: AI 正在思考…
   aiFailed: AI 回复失败，请稍后重试
   emoji: 表情
+  emojiGroups:
+    common: 常用
+    gesture: 手势
+    symbol: 符号
+    food: 美食
+    animal: 动物
+    nature: 自然
+    object: 物件
   desktopNotify: 桌面通知
   desktopNotifyOn: 已开启桌面通知，点击关闭
   desktopNotifyOff: 开启桌面通知
