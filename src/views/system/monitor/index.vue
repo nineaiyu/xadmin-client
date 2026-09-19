@@ -2,14 +2,12 @@
 import { computed, h, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
-import { ArrowDown } from "@element-plus/icons-vue";
 import { loadEcharts } from "@/plugins/echarts";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { message } from "@/utils/message";
 import { SUCCESS_CODE } from "@/api/types";
 import { hasAuth } from "@/router/utils";
-import { epColor } from "@/utils/chartTheme";
 import {
   monitorApi,
   type MonitorAlertEvent,
@@ -18,9 +16,14 @@ import {
 import HealthBanner from "./components/HealthBanner.vue";
 import HistoryChart from "./components/HistoryChart.vue";
 import EventPanel from "./components/EventPanel.vue";
+import MonitorAlertPanel from "./components/MonitorAlertPanel.vue";
+import MonitorResourceCards from "./components/MonitorResourceCards.vue";
+import MonitorSlowRequests from "./components/MonitorSlowRequests.vue";
+import MonitorStatusPanels from "./components/MonitorStatusPanels.vue";
+import MonitorToolbar from "./components/MonitorToolbar.vue";
 import TaskHealthCard from "./components/TaskHealthCard.vue";
 import ThresholdForm from "./components/ThresholdForm.vue";
-import { formatUptime, useMonitor } from "./utils/hook";
+import { useMonitor } from "./utils/hook";
 import {
   DEFAULT_METRICS,
   INTERVAL_OPTIONS,
@@ -28,7 +31,6 @@ import {
   buildShareQuery,
   formatComparePercent,
   formatMetricValue,
-  formatRate,
   metricLabelKey,
   metricStat,
   parseShareQuery
@@ -345,11 +347,6 @@ const metricSummaries = computed(() =>
 
 const metricLabel = (metric: MonitorMetric) => t(metricLabelKey(metric));
 
-const alertItemLabel = (item: string) => t(metricLabelKey(item));
-
-const alertStatusType = (status: string) =>
-  status === "firing" ? "danger" : "success";
-
 const eventPanelRef = ref<InstanceType<typeof EventPanel>>();
 
 const refreshAll = async () => {
@@ -371,102 +368,19 @@ onMounted(() => {
   <div class="main">
     <health-banner :health="overview.health" />
 
-    <el-card shadow="never" class="mb-4">
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="font-medium">{{ t("menus.systemMonitor") }}</span>
-        <el-tag
-          :type="wsConnected ? 'success' : 'info'"
-          size="small"
-          effect="plain"
-        >
-          {{
-            wsConnected
-              ? t("systemMonitor.wsLive")
-              : t("systemMonitor.wsFallback")
-          }}
-        </el-tag>
-        <div class="flex-1" />
-        <el-switch
-          v-model="autoRefresh"
-          :active-text="t('systemMonitor.autoRefresh')"
-          @change="value => toggleAuto(Boolean(value))"
-        />
-        <el-button type="primary" plain :loading="loading" @click="refreshAll">
-          {{ t("systemMonitor.refresh") }}
-        </el-button>
-        <el-button plain data-testid="monitor-share" @click="shareView">
-          {{ t("systemMonitor.share") }}
-        </el-button>
-        <el-dropdown v-if="canExport" @command="exportReport">
-          <el-button plain :loading="exporting" data-testid="monitor-export">
-            {{ t("systemMonitor.exportReport") }}
-            <el-icon class="ml-1"><ArrowDown /></el-icon>
-          </el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="history:csv">
-                {{ t("systemMonitor.exportHistoryCsv") }}
-              </el-dropdown-item>
-              <el-dropdown-item command="history:xlsx">
-                {{ t("systemMonitor.exportHistoryXlsx") }}
-              </el-dropdown-item>
-              <el-dropdown-item command="alerts:csv">
-                {{ t("systemMonitor.exportAlertsCsv") }}
-              </el-dropdown-item>
-              <el-dropdown-item command="alerts:xlsx">
-                {{ t("systemMonitor.exportAlertsXlsx") }}
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-      </div>
-    </el-card>
+    <MonitorToolbar
+      v-model:auto-refresh="autoRefresh"
+      :ws-connected="wsConnected"
+      :loading="loading"
+      :exporting="exporting"
+      :can-export="canExport"
+      @toggle-auto="toggleAuto"
+      @refresh="refreshAll"
+      @share="shareView"
+      @export-report="exportReport"
+    />
 
-    <!-- 实时资源卡片：窄屏两列、中屏三列、宽屏一行五张 -->
-    <div class="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-      <el-card v-for="card in resourceCards" :key="card.key" shadow="hover">
-        <div class="text-sm text-gray-500">{{ card.label }}</div>
-        <el-progress
-          v-if="card.ring"
-          class="mt-2"
-          type="dashboard"
-          :percentage="Math.min(100, Math.round(Number(card.value) || 0))"
-          :color="
-            Number(card.value) > 80 ? epColor('danger') : epColor('primary')
-          "
-        >
-          <span class="text-lg">{{ card.value }}{{ card.suffix }}</span>
-        </el-progress>
-        <div v-else class="mt-2 flex-c h-30">
-          <span class="text-3xl font-medium">
-            {{ card.value }}{{ card.suffix }}
-          </span>
-        </div>
-      </el-card>
-      <el-card shadow="hover" data-testid="monitor-network-card">
-        <div class="text-sm text-gray-500">
-          {{ t("systemMonitor.netRate") }}
-        </div>
-        <div class="mt-4 flex flex-col gap-2">
-          <div class="flex-bc text-sm">
-            <span class="text-gray-500">{{ t("systemMonitor.netSent") }}</span>
-            <span class="font-medium">{{ formatRate(netRates.sent) }}</span>
-          </div>
-          <div class="flex-bc text-sm">
-            <span class="text-gray-500">{{ t("systemMonitor.netRecv") }}</span>
-            <span class="font-medium">{{ formatRate(netRates.recv) }}</span>
-          </div>
-          <div class="text-xs text-gray-400">
-            {{
-              t("systemMonitor.netTotal", {
-                sent: netRates.sentTotal ?? 0,
-                recv: netRates.recvTotal ?? 0
-              })
-            }}
-          </div>
-        </div>
-      </el-card>
-    </div>
+    <MonitorResourceCards :cards="resourceCards" :net-rates="netRates" />
 
     <el-card v-loading="historyLoading" shadow="never" class="mb-4">
       <template #header>
@@ -558,318 +472,28 @@ onMounted(() => {
       />
     </el-card>
 
-    <el-row :gutter="16" class="mb-4">
-      <el-col :xs="24" :md="8">
-        <el-card shadow="never">
-          <template #header>{{ t("systemMonitor.serviceHealth") }}</template>
-          <div class="flex flex-col gap-3">
-            <div v-for="item in serviceItems" :key="item.key" class="flex-bc">
-              <span class="flex items-center gap-2">
-                <el-tag :type="item.ok ? 'success' : 'danger'" size="small">
-                  {{
-                    item.ok
-                      ? t("systemMonitor.healthy")
-                      : t("systemMonitor.unhealthy")
-                  }}
-                </el-tag>
-                {{ item.label }}
-              </span>
-              <span class="text-xs text-gray-400">
-                {{
-                  typeof item.cost === "number"
-                    ? `${(item.cost * 1000).toFixed(1)}ms`
-                    : item.cost
-                }}
-              </span>
-            </div>
-          </div>
-          <div v-if="overview.latest" class="mt-4 text-xs text-gray-400">
-            {{ t("systemMonitor.uptime") }}:
-            {{ formatUptime(overview.latest.boot_time) }}
-          </div>
-          <el-divider v-if="runtimeItems.length" class="my-3!" />
-          <div
-            v-for="item in runtimeItems"
-            :key="item.key"
-            class="flex-bc text-sm"
-          >
-            <span class="text-gray-500">{{ item.label }}</span>
-            <span>{{ item.value }}</span>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :xs="24" :md="8">
-        <el-card shadow="never">
-          <template #header>{{ t("systemMonitor.redis") }}</template>
-          <div class="flex flex-col gap-2 text-sm">
-            <div class="flex justify-between">
-              <span class="text-gray-500">{{
-                t("systemMonitor.version")
-              }}</span>
-              <span>{{ redis.version ?? "—" }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-500">{{
-                t("systemMonitor.usedMemory")
-              }}</span>
-              <span>{{ redis.used_memory_human ?? "—" }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-500">{{
-                t("systemMonitor.hitRate")
-              }}</span>
-              <span>{{
-                redis.hit_rate == null ? "—" : `${redis.hit_rate}%`
-              }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-500">{{
-                t("systemMonitor.clients")
-              }}</span>
-              <span>{{ redis.connected_clients ?? "—" }}</span>
-            </div>
-            <div
-              v-for="(keys, db) in redis.dbs ?? {}"
-              :key="db"
-              class="flex justify-between"
-            >
-              <span class="text-gray-500">{{ db }}</span>
-              <span>{{ keys }}</span>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :xs="24" :md="8">
-        <el-card shadow="never">
-          <template #header>
-            {{ t("systemMonitor.celery") }} ({{ celery.total }})
-          </template>
-          <el-table
-            v-if="celery.workers.length"
-            :data="celery.workers"
-            size="small"
-          >
-            <el-table-column
-              prop="name"
-              :label="t('systemMonitor.worker')"
-              min-width="140"
-              show-overflow-tooltip
-            />
-            <el-table-column
-              prop="concurrency"
-              :label="t('systemMonitor.concurrency')"
-              width="80"
-            />
-            <el-table-column
-              prop="active"
-              :label="t('systemMonitor.active')"
-              width="70"
-            />
-            <el-table-column
-              prop="reserved"
-              :label="t('systemMonitor.reserved')"
-              width="80"
-            />
-          </el-table>
-          <div v-else class="text-sm text-gray-400">
-            {{
-              celery.skipped
-                ? t("systemMonitor.celerySkipped")
-                : t("systemMonitor.noWorker")
-            }}
-          </div>
-          <div
-            v-if="queues.length"
-            class="mt-3 flex flex-wrap gap-3 text-xs text-gray-500"
-          >
-            <span v-for="[name, length] in queues" :key="name">
-              {{ name }}: {{ length }}
-            </span>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
+    <MonitorStatusPanels
+      :service-items="serviceItems"
+      :runtime-items="runtimeItems"
+      :redis="redis"
+      :celery="celery"
+      :queues="queues"
+      :latest="overview.latest"
+    />
 
-    <el-card shadow="never" class="mb-4" data-testid="monitor-alert-panel">
-      <template #header>
-        <div class="flex flex-wrap items-center gap-3">
-          <span>{{ t("systemMonitor.alertsTitle") }}</span>
-          <el-tag v-if="alertCounts.firing" type="danger" size="small">
-            {{ t("systemMonitor.alertsFiring") }} {{ alertCounts.firing }}
-          </el-tag>
-          <el-radio-group v-model="alertStatus" size="small">
-            <el-radio-button value="">
-              {{ t("systemMonitor.alertFilterAll") }}
-            </el-radio-button>
-            <el-radio-button value="firing">
-              {{ t("systemMonitor.alertFiring") }}
-            </el-radio-button>
-            <el-radio-button value="resolved">
-              {{ t("systemMonitor.alertResolved") }}
-            </el-radio-button>
-          </el-radio-group>
-          <div class="flex-1" />
-          <el-button
-            v-if="canUpdateThreshold"
-            link
-            type="primary"
-            data-testid="monitor-threshold-settings"
-            @click="openThresholdDialog"
-          >
-            {{ t("systemMonitor.thresholdSettings") }}
-          </el-button>
-        </div>
-      </template>
-      <div class="mb-3 flex flex-wrap gap-2">
-        <el-tag
-          v-for="item in thresholds?.items ?? []"
-          :key="item.key"
-          size="small"
-          effect="plain"
-          type="info"
-        >
-          {{ item.label }}：{{ item.value }}
-        </el-tag>
-        <span class="text-xs text-gray-400">
-          {{
-            t("systemMonitor.thresholdCheckTip", {
-              seconds: thresholds?.check_interval_seconds ?? 60
-            })
-          }}
-        </span>
-      </div>
-      <el-table :data="alertRows" size="small">
-        <el-table-column
-          prop="item"
-          :label="t('systemMonitor.alertItem')"
-          width="120"
-        >
-          <template #default="{ row }">{{ alertItemLabel(row.item) }}</template>
-        </el-table-column>
-        <el-table-column
-          prop="status"
-          :label="t('systemMonitor.alertStatus')"
-          width="100"
-        >
-          <template #default="{ row }">
-            <el-tag :type="alertStatusType(row.status)" size="small">
-              {{
-                row.status === "firing"
-                  ? t("systemMonitor.alertFiring")
-                  : t("systemMonitor.alertResolved")
-              }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="value"
-          :label="t('systemMonitor.alertValue')"
-          width="110"
-        />
-        <el-table-column
-          prop="threshold"
-          :label="t('systemMonitor.alertThreshold')"
-          width="90"
-        />
-        <el-table-column
-          prop="count"
-          :label="t('systemMonitor.alertCount')"
-          width="90"
-        />
-        <el-table-column
-          prop="first_time"
-          :label="t('systemMonitor.alertFirstTime')"
-          width="170"
-        />
-        <el-table-column
-          prop="last_time"
-          :label="t('systemMonitor.alertLastTime')"
-          width="170"
-        />
-        <el-table-column
-          prop="resolved_time"
-          :label="t('systemMonitor.alertResolvedTime')"
-          width="170"
-        >
-          <template #default="{ row }">{{ row.resolved_time ?? "—" }}</template>
-        </el-table-column>
-        <el-table-column
-          prop="message"
-          :label="t('systemMonitor.alertMessage')"
-          min-width="200"
-          show-overflow-tooltip
-        >
-          <template #default="{ row }">{{ row.message || "—" }}</template>
-        </el-table-column>
-      </el-table>
-      <el-empty
-        v-if="!alertRows.length"
-        :description="t('systemMonitor.noAlert')"
-        :image-size="60"
-      />
-    </el-card>
+    <MonitorAlertPanel
+      v-model:status="alertStatus"
+      :rows="alertRows"
+      :counts="alertCounts"
+      :thresholds="thresholds"
+      :can-update-threshold="canUpdateThreshold"
+      @open-threshold="openThresholdDialog"
+    />
 
     <event-panel ref="eventPanelRef" class="mb-4" />
 
     <task-health-card :health="taskHealth" />
 
-    <el-card shadow="never">
-      <template #header>
-        <div class="flex flex-wrap items-center gap-3">
-          <span>
-            {{ t("systemMonitor.slowRequests") }}
-            (≥ {{ slow.threshold }}s / 24h)
-          </span>
-        </div>
-      </template>
-      <el-table :data="slowRows" size="small">
-        <el-table-column
-          prop="module"
-          :label="t('systemMonitor.module')"
-          min-width="160"
-          show-overflow-tooltip
-        />
-        <el-table-column
-          prop="path"
-          :label="t('systemMonitor.path')"
-          min-width="220"
-          show-overflow-tooltip
-        />
-        <el-table-column
-          prop="method"
-          :label="t('systemMonitor.method')"
-          width="80"
-        />
-        <el-table-column
-          prop="exec_time"
-          :label="t('systemMonitor.cost')"
-          width="90"
-        >
-          <template #default="{ row }"
-            >{{ Number(row.exec_time).toFixed(3) }}s</template
-          >
-        </el-table-column>
-        <el-table-column
-          prop="status_code"
-          :label="t('systemMonitor.statusCode')"
-          width="90"
-        />
-        <el-table-column
-          prop="creator__username"
-          :label="t('systemMonitor.creator')"
-          width="110"
-        />
-        <el-table-column
-          prop="created_time"
-          :label="t('systemMonitor.time')"
-          width="170"
-        />
-      </el-table>
-      <el-empty
-        v-if="!slowRows.length"
-        :description="t('systemMonitor.noSlowRequest')"
-        :image-size="60"
-      />
-    </el-card>
+    <MonitorSlowRequests :rows="slowRows" :threshold="slow.threshold" />
   </div>
 </template>
