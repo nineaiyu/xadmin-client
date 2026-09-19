@@ -113,6 +113,13 @@ test("聊天室：私聊实时送达、未读红点与已读清零", async ({ pa
         timeout: 15_000
       }
     );
+    // 会话行在上次运行后可能已存在（复用库 / 双浏览器第二段），此时上面这行不等价于
+    // 「已切进私聊」：必须在填草稿前确认房间标题已切换，否则 openPrivate 的 activate
+    // 生效时会触发「切换会话清空草稿」，把刚填进去的文本清掉（发送按钮随即置灰）
+    await expect(page.locator('[data-testid="chat-room-title"]')).toHaveText(
+      "E2E审批人",
+      { timeout: 15_000 }
+    );
 
     const text = `E2E-私聊-${Date.now()}`;
     const input = page.locator('[data-testid="chat-input"] textarea');
