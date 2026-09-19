@@ -188,6 +188,29 @@ test("用户管理：新增 → 搜索可见 → 删除", async ({ page }) => {
   ).toHaveCount(0, { timeout: 15_000 });
 });
 
+/**
+ * 回归守护：页面组件必须单元素根。
+ * 系统设置页曾因模板根级注释构成 Fragment 根——离开该页时 <Transition> 无法
+ * 收尾，此后所有页面都被渲染成占位注释（整站白屏、切页不可恢复，须刷新）。
+ */
+test("系统设置：打开后切其他页面不白屏（单元素根守护）", async ({ page }) => {
+  await login(page);
+  await openMenuPath(page, ["系统管理"], "/system/setting/index");
+  await expect(page.getByText("系统设置").first()).toBeVisible({
+    timeout: 15_000
+  });
+
+  // 切到用户管理：必须真实渲染内容（白屏时 #main-content 仅剩注释占位）
+  await openMenuPath(page, ["系统管理"], "/system/user/index");
+  await expect(page.getByText("用户管理").first()).toBeVisible({
+    timeout: 15_000
+  });
+  const contentLen = await page
+    .locator("#main-content")
+    .evaluate(el => el.innerHTML.length);
+  expect(contentLen).toBeGreaterThan(200);
+});
+
 test("WebSocket：登录后建立应用 ws 连接", async ({ page }) => {
   const wsOpened = waitAppWebSocket(page);
   await login(page);
