@@ -1,5 +1,6 @@
 import type {
   MonitorCelery,
+  MonitorHealth,
   MonitorLive,
   MonitorOverview,
   MonitorRedisInfo,
@@ -86,6 +87,7 @@ export interface MonitorPushPayload {
   celery?: MonitorCelery;
   slow?: MonitorSlow;
   trend?: MonitorOverview["trend"];
+  health?: MonitorHealth;
 }
 
 /** 大屏远程控制帧（screen_command；ws/screen/<pk> 下行，与 system/ws_screen.py 对齐）

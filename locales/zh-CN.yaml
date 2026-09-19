@@ -1581,6 +1581,76 @@ systemMonitor:
   wsLive: 实时推送
   wsFallback: 轮询模式
 
+  healthOverview: 健康总览
+  healthHealthy: 运行良好
+  healthWarning: 存在告警
+  healthCritical: 严重异常
+  itemWarning: 超阈值
+  itemCritical: 严重超限
+  itemUnknown: 未探测
+  alertsFiring: 未恢复告警
+  checkedAt: 检查时间
+  netRate: 网络速率
+  netSent: 上行
+  netRecv: 下行
+  netTotal: 累计 ↑{sent}MB ↓{recv}MB
+  historyTrend: 历史趋势
+  range1h: 1 小时
+  range6h: 6 小时
+  range24h: 24 小时
+  range7d: 7 天
+  range30d: 30 天
+  intervalLabel: 聚合粒度
+  intervalAuto: 自动
+  interval1m: 1 分钟
+  interval5m: 5 分钟
+  interval15m: 15 分钟
+  interval1h: 1 小时
+  interval1d: 1 天
+  metricsLabel: 指标
+  metricCpu: CPU 使用率
+  metricCpuLoad: CPU 负载
+  metricMemory: 内存使用率
+  metricDisk: 磁盘使用率
+  metricNetSent: 上行速率
+  metricNetRecv: 下行速率
+  summaryRange: 区间 {min} ~ {max}
+  trendEmpty: 窗口内暂无监控数据
+  exportImage: 导出图片
+  exportReport: 导出报表
+  exportHistoryCsv: 趋势数据（CSV）
+  exportHistoryXlsx: 趋势数据（Excel）
+  exportAlertsCsv: 告警记录（CSV）
+  exportAlertsXlsx: 告警记录（Excel）
+  exportDone: 报表已导出
+  share: 分享
+  shareCopied: 视图链接已复制
+  thresholdSettings: 告警阈值设置
+  thresholdSaved: 阈值已更新
+  thresholdCheckTip: 系统每 {seconds} 秒检查一次，超阈值时通知管理员
+  alertsTitle: 资源告警记录
+  alertFilterAll: 全部状态
+  alertFiring: 告警中
+  alertResolved: 已恢复
+  alertItem: 指标
+  alertStatus: 状态
+  alertValue: 触发值
+  alertThreshold: 阈值
+  alertCount: 命中次数
+  alertFirstTime: 首次触发
+  alertLastTime: 最近触发
+  alertResolvedTime: 恢复时间
+  alertMessage: 说明
+  noAlert: 窗口内无告警记录
+  events: 事件记录
+  errorEvents: 异常请求
+  taskEvents: 任务失败
+  noErrorEvent: 窗口内无异常请求
+  taskName: 任务名称
+  taskStart: 开始时间
+  taskFinished: 结束时间
+  bizCode: 业务码
+  ip: IP 地址
 systemOnline:
   forceLogout: 强制下线
   forceLogoutConfirm: 确认强制 { name } 下线？该用户全部会话将立即失效
@@ -1690,6 +1760,8 @@ dashboard:
   settings: 设置
   refresh: 刷新
 
+  share: 分享
+  shareCopied: 仪表盘链接已复制
 dataDataset:
   title: 数据集
   create: 新建数据集

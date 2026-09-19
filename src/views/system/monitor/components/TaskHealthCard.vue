@@ -19,7 +19,8 @@ const STATE_META = {
 
 const stateMeta = computed(() => {
   const state = props.health?.state ?? "healthy";
-  return STATE_META[state];
+  // 未知状态回退健康档：直接取键会拿到 undefined 致渲染崩溃
+  return STATE_META[state] ?? STATE_META.healthy;
 });
 </script>
 

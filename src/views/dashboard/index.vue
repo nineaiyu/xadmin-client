@@ -4,7 +4,7 @@ import { fetchAllRows } from "@/utils/fetchAllRows";
 import { computed, h, onMounted, ref } from "vue";
 import Sortable from "sortablejs";
 import { useI18n } from "vue-i18n";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { Setting } from "@element-plus/icons-vue";
 import { ElMessageBox } from "element-plus";
 import { addDialog } from "@/components/ReDialog";
@@ -30,6 +30,7 @@ defineOptions({
 
 const { t } = useI18n();
 const router = useRouter();
+const route = useRoute();
 const canEdit = hasAuth("partialUpdate:DataDashboard");
 const canCreate = hasAuth("create:DataDashboard");
 
@@ -63,7 +64,11 @@ const loadDashboards = async () => {
     const res = await dashboardApi.list();
     dashboards.value = listRows<DashboardItem>(res as never);
     if (!current.value && dashboards.value.length > 0) {
-      current.value = dashboards.value[0];
+      // 分享链接定位：?pk=<仪表盘主键> 命中则直接打开对应仪表盘
+      const sharedPk = typeof route.query.pk === "string" ? route.query.pk : "";
+      current.value =
+        dashboards.value.find(item => item.pk === sharedPk) ??
+        dashboards.value[0];
     }
   } finally {
     loading.value = false;
@@ -76,9 +81,29 @@ const loadDatasets = async () => {
   datasets.value = listRows<DatasetItem>(res as never);
 };
 
+/** 选中仪表盘并把 pk 写回地址栏（分享即复制当前 URL） */
 const selectDashboard = (pk: string) => {
   current.value = dashboards.value.find(item => item.pk === pk) ?? null;
   editing.value = false;
+  syncDashboardQuery();
+};
+
+const syncDashboardQuery = () => {
+  if (!current.value) return;
+  router.replace({ query: { ...route.query, pk: current.value.pk } });
+};
+
+/** 复制当前仪表盘视图链接（同角色内有权限者打开即定位到该仪表盘） */
+const shareDashboard = async () => {
+  if (!current.value) return;
+  syncDashboardQuery();
+  try {
+    await navigator.clipboard.writeText(window.location.href);
+    message(t("dashboard.shareCopied"), { type: "success" });
+  } catch {
+    // 剪贴板不可用（非 https/权限受限）时直接展示链接供手动复制
+    message(String(window.location.href), { type: "info", duration: 5000 });
+  }
 };
 
 const toggleEdit = () => {
@@ -236,6 +261,7 @@ const openCreateDashboard = () => {
           dashboards.value.find(
             item => item.pk === (res.data as never as DashboardItem)?.pk
           ) ?? null;
+        syncDashboardQuery();
         return;
       }
       // 200 + 业务码非 1000：全局拦截器只处理 HTTP 层错误，业务失败必须显式提示
@@ -310,6 +336,7 @@ const removeDashboard = async () => {
   if (res.code === SUCCESS_CODE) {
     current.value = null;
     await loadDashboards();
+    syncDashboardQuery();
   }
 };
 
@@ -372,6 +399,15 @@ onMounted(async () => {
           {{ t("dashboard.settings") }}
         </el-button>
         <div class="flex-1" />
+        <el-button
+          v-if="current"
+          link
+          type="primary"
+          data-testid="dashboard-share"
+          @click="shareDashboard"
+        >
+          {{ t("dashboard.share") }}
+        </el-button>
         <el-button
           v-if="current"
           link

@@ -1581,6 +1581,76 @@ systemMonitor:
   wsLive: Live (WebSocket)
   wsFallback: Polling
 
+  healthOverview: Health overview
+  healthHealthy: Healthy
+  healthWarning: Warning
+  healthCritical: Critical
+  itemWarning: Over threshold
+  itemCritical: Critical
+  itemUnknown: Unknown
+  alertsFiring: Firing alerts
+  checkedAt: Checked at
+  netRate: Network rate
+  netSent: Upload
+  netRecv: Download
+  netTotal: Total ↑{sent}MB ↓{recv}MB
+  historyTrend: History trend
+  range1h: 1 hour
+  range6h: 6 hours
+  range24h: 24 hours
+  range7d: 7 days
+  range30d: 30 days
+  intervalLabel: Aggregation
+  intervalAuto: Auto
+  interval1m: 1 minute
+  interval5m: 5 minutes
+  interval15m: 15 minutes
+  interval1h: 1 hour
+  interval1d: 1 day
+  metricsLabel: Metrics
+  metricCpu: CPU usage
+  metricCpuLoad: CPU load
+  metricMemory: Memory usage
+  metricDisk: Disk usage
+  metricNetSent: Upload rate
+  metricNetRecv: Download rate
+  summaryRange: Range {min} ~ {max}
+  trendEmpty: No monitor data in window
+  exportImage: Export image
+  exportReport: Export report
+  exportHistoryCsv: Trend data (CSV)
+  exportHistoryXlsx: Trend data (Excel)
+  exportAlertsCsv: Alert records (CSV)
+  exportAlertsXlsx: Alert records (Excel)
+  exportDone: Report exported
+  share: Share
+  shareCopied: View link copied
+  thresholdSettings: Alert threshold settings
+  thresholdSaved: Thresholds updated
+  thresholdCheckTip: Checked every {seconds}s; admins are notified when thresholds are exceeded
+  alertsTitle: Resource alert records
+  alertFilterAll: All status
+  alertFiring: Firing
+  alertResolved: Resolved
+  alertItem: Metric
+  alertStatus: Status
+  alertValue: Trigger value
+  alertThreshold: Threshold
+  alertCount: Hit count
+  alertFirstTime: First time
+  alertLastTime: Last time
+  alertResolvedTime: Resolved time
+  alertMessage: Message
+  noAlert: No alerts in window
+  events: Event records
+  errorEvents: Failed requests
+  taskEvents: Task failures
+  noErrorEvent: No failed requests in window
+  taskName: Task name
+  taskStart: Started at
+  taskFinished: Finished at
+  bizCode: Business code
+  ip: IP address
 systemOnline:
   forceLogout: Force offline
   forceLogoutConfirm: Force { name } offline? All sessions will be revoked immediately
@@ -1690,6 +1760,8 @@ dashboard:
   settings: Settings
   refresh: Refresh
 
+  share: Share
+  shareCopied: Dashboard link copied
 dataDataset:
   title: Datasets
   create: New Dataset

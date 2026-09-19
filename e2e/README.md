@@ -179,3 +179,5 @@ RePlusPage 列表**固定发 `ordering=-created_time` 且默认 `pageSize=15`**�
 | EP 2.14 的 el-loading 遮罩在 fade-leave 期间仍拦截点击（webkit 下更久）→ 「行已可见就点按钮」会撞 `el-loading-spinner intercepts pointer events`；处置=同上等遮罩计数为 0，不要靠 retries 硬扛（2026-09-18） |
 
 | split-pane 用例把拖拽结果**持久化到服务端**（WEB_SITE_CONFIG.SplitPanes 跨会话生效）→ 泄漏给共享库后续用例：左栏 60% 把分栏页右侧压扁（搜索输入框宽度 0 → fill「element is not visible」，import-mapping/preview 双浏览器连挂）；处置=用例 afterEach 统一 PATCH 回默认 20（勿回写已污染的历史「原值」）；同批 chromium 跑得快时会在 webkit 还没跑 split-pane 前就污染它（2026-09-18 实测） |
+| `el-dropdown` 的 popper 在 DOM 里保留多份隐藏副本（`getByText("趋势数据（CSV）")` 一次命中 3 个 li）→ strict mode violation 双浏览器同挂（2026-09-19 监控页导出下拉实测） | 下拉项断言必须限定可见菜单：`page.locator(".el-dropdown-menu:visible")`（同类：EP 多实例弹层断言一律先过滤可见态） |
+| 监控页趋势/告警数据依赖 `common.Monitor` 心跳表，而 E2E 后端是 daphne（**不跑 gunicorn 的启动心跳线程**）→ 历史趋势恒空态、图表用例无从断言（2026-09-19） | `scripts/e2e_seed.py` 增 `seed_monitor_scene()`：造近 24h 心跳（5 分钟粒度，网络累计量递增使速率可算）+ 一条 firing 告警；断言图表 `[data-testid="monitor-history-chart"] svg` 与告警记录行 |
