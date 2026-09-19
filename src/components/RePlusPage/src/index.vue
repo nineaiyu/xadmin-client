@@ -1,13 +1,5 @@
 <script lang="ts" setup>
-import {
-  computed,
-  nextTick,
-  onMounted,
-  onUnmounted,
-  ref,
-  watch,
-  type Ref
-} from "vue";
+import { computed, nextTick, onUnmounted, ref, watch, type Ref } from "vue";
 import PureTable from "@pureadmin/table";
 import { usePlusPage } from "./utils/hook";
 import { RePlusPageProps, type RecycleBinColumn } from "./utils/types";
@@ -19,10 +11,8 @@ import Delete from "~icons/ep/delete";
 import { PlusSearch, type RecordType } from "plus-pro-components";
 import type { ComponentSize } from "element-plus";
 import type { BaseApi } from "@/api/base";
-import {
-  collectDataColumnWidths,
-  resolveOperationColumnWidth
-} from "./utils/operationColumnWidth";
+import { useTableLayout } from "./utils/useTableLayout";
+import { useTableMeasure } from "./utils/useTableMeasure";
 
 import ButtonOperation, {
   ButtonsCallBackParams
@@ -82,87 +72,10 @@ const emit = defineEmits<{
 const tableRef = ref();
 const rootRef = ref<HTMLElement>();
 
-/**
- * 表格 adaptive 高度仅在挂载与窗口 resize 时测量：搜索区依赖后端字段元数据
- * 异步渲染、或用户展开/收起搜索行时，上方高度变化不会触发重测，过时的高度
- * 会把分页挤出视口造成页面级滚动条。观察根节点高度变化后重算高度。
- */
-let rootResizeObserver: ResizeObserver | undefined;
-
-/**
- * 自适应高度的最小可用高度钳制（框架级兜底）：
- * 库内 setAdaptive 的公式为「视口高 - 表格顶 - offsetBottom」，上方内容较多
- * （如 AI 配置页的全局开关 + 调用观测卡片）且视口较矮时会算出不可用的小高度
- * （实测 33px：表体被压成 0 高、行溢出到分页之下，页面不可用）。这里在同一
- * 元素上把高度钳制到最小可用值，超出视口的部分交给页面级滚动兜底。
- * 期望高度只依赖表格顶部位置（与当前高度无关），写定后不再变化，
- * 因此不会与 ResizeObserver 形成收缩/放开的振荡循环。
- */
-const ADAPTIVE_OFFSET_BOTTOM = 110;
-const MIN_ADAPTIVE_TABLE_HEIGHT = 260;
-let adaptiveRaf = 0;
-
-const applyAdaptiveTableHeight = () => {
-  cancelAnimationFrame(adaptiveRaf);
-  adaptiveRaf = requestAnimationFrame(() => {
-    const table = rootRef.value?.querySelector<HTMLElement>(
-      ".pure-table .el-table"
-    );
-    if (!table || !table.isConnected) return;
-    const rect = table.getBoundingClientRect();
-    if (!rect.height) return;
-    const desired = Math.round(
-      window.innerHeight - rect.top - ADAPTIVE_OFFSET_BOTTOM
-    );
-    const next = Math.max(MIN_ADAPTIVE_TABLE_HEIGHT, desired);
-    if (Math.abs(rect.height - next) <= 1) return;
-    table.style.height = `${next}px`;
-  });
-};
-
-/**
- * 固定操作列宽度对齐（列表页表头被固定列裁切修复）。
- *
- * 表格横向滚动时右侧固定列 sticky 在容器右端，覆盖区间为
- * `[容器宽 - 操作列宽, 容器宽]`：若某数据列跨过该区间左边界，其表头内容
- * （列名、问号图标）会被切掉一半，出现"半个字"。这里实测容器宽度后动态
- * 收敛操作列宽度，让覆盖区左边界恰好落在列边界上——左侧列完整可见、
- * 右侧列整体被覆盖（内容不跨界）；无横向滚动时保持页面配置宽度。
- * 计算只依赖容器宽与数据列宽（不含操作列自身），重算幂等、无循环。
- */
-const tableElWidth = ref(0);
-
-/** 表格可视区实测宽度（布局变化时由根 ResizeObserver 触发） */
-function measureTableWidth() {
-  // 横向滚动容器（body-wrapper）的 clientWidth 即列可视区宽度：
-  // 用 el-table 宽度会多算纵向滚动条占位，边界对齐会整体偏移
-  const scrollArea = rootRef.value?.querySelector<HTMLElement>(
-    ".pure-table .el-table__body-wrapper"
-  );
-  const width = scrollArea?.clientWidth ?? 0;
-  if (width !== tableElWidth.value) tableElWidth.value = width;
-}
-
-/** 建立根节点尺寸观察（auth 依赖异步数据时根元素可能晚于挂载渲染） */
-function ensureRootObserver() {
-  if (rootResizeObserver || !rootRef.value) return;
-  if (typeof ResizeObserver === "undefined") return;
-  rootResizeObserver = new ResizeObserver(() => {
-    applyAdaptiveTableHeight();
-    measureTableWidth();
-  });
-  rootResizeObserver.observe(rootRef.value);
-}
-
-onMounted(() => {
-  ensureRootObserver();
-  measureTableWidth();
-});
+const { tableElWidth, measureTableWidth, ensureRootObserver } =
+  useTableMeasure(rootRef);
 
 onUnmounted(() => {
-  rootResizeObserver?.disconnect();
-  cancelAnimationFrame(layoutRaf);
-  cancelAnimationFrame(adaptiveRaf);
   cancelAnimationFrame(searchCardPollRaf);
   searchCardAnimation?.cancel();
 });
@@ -211,17 +124,6 @@ const onSearchColumnChange = (_: unknown, column: { valueType?: string }) => {
 const onRowClick = (row: Record<string, unknown>) => emit("rowClick", row);
 
 /**
- * 表格列首帧的瞬态规避（体验基线 U1 / 列表页 CLS 主因）：
- * el-table 在列挂载后用 rAF 才计算列宽（EP `requestAnimationFrame(doLayout)`），
- * 列挂载后的第一帧仍是浏览器对未定宽列的均分宽度——长表头换行（实测表头
- * 155px → 41px）、单元格变高（86px → 53px），下一帧才回到真实列宽；该中间帧
- * 会被真实绘制并产生位移（visibility: hidden 的元素不参与 layout-shift 统计）。
- * 列集合每次变化（元数据到达 / 列设置调整）时隐藏表格两帧，待布局落位后再显示。
- */
-const tableLayoutPending = ref(false);
-let layoutRaf = 0;
-
-/**
  * 搜索卡片高度占位是否生效（体验基线 U1 / CLS 主因修复）：
  * 搜索列元数据随列表首包（with_meta=1）到达，此前卡片只渲染按钮行（56px），
  * 到达后叠加一行字段（+50px），中间帧会被真实绘制产生位移。
@@ -245,57 +147,12 @@ watch(searchMetaReady, ready => {
   });
 });
 
-const operationColumnMinWidth = computed(() =>
-  Number(props.operationButtonsProps?.width ?? 200)
-);
-
-/** 对齐后的操作列宽度（无横向滚动时等于页面配置宽度） */
-const alignedOperationWidth = computed(() =>
-  resolveOperationColumnWidth(
-    tableElWidth.value,
-    collectDataColumnWidths(
-      tableBarData.value.dynamicColumns as Array<Record<string, unknown>>
-    ),
-    operationColumnMinWidth.value
-  )
-);
-
-// 列集合（元数据到达 / 列设置调整）与容器宽度变化都会重算：列对象是表格的
-// 实际渲染来源，就地改写操作列宽度即可生效（重算不依赖操作列自身宽度，
-// 幂等无循环）
-watch(
-  [alignedOperationWidth, () => tableBarData.value.dynamicColumns],
-  () => {
-    const columns: Array<Record<string, unknown>> =
-      tableBarData.value.dynamicColumns ?? [];
-    const operation = columns.find(
-      column =>
-        (column?._column as { key?: string } | undefined)?.key === "operation"
-    ) as { width?: number } | undefined;
-    if (operation && operation.width !== alignedOperationWidth.value) {
-      operation.width = alignedOperationWidth.value;
-    }
-  },
-  { immediate: true, flush: "post" }
-);
-
-const holdTableUntilLaidOut = () => {
-  tableLayoutPending.value = true;
-  cancelAnimationFrame(layoutRaf);
-  layoutRaf = requestAnimationFrame(() => {
-    layoutRaf = requestAnimationFrame(() => {
-      tableLayoutPending.value = false;
-    });
-  });
-};
-
-// 同一列集合既可能整体替换（RePureTableBar 深拷贝回写），也可能被就地
-// splice/push（列元数据装配路径），两个来源都要盯
-watch(
-  [() => tableBarData.value.dynamicColumns, () => listColumns.value.length],
-  holdTableUntilLaidOut,
-  { flush: "pre" }
-);
+const { tableLayoutPending } = useTableLayout({
+  tableElWidth,
+  dynamicColumns: computed(() => tableBarData.value.dynamicColumns),
+  listColumnsLength: computed(() => listColumns.value.length),
+  operationMinWidth: () => Number(props.operationButtonsProps?.width ?? 200)
+});
 
 /**
  * 搜索区展开/收起的过渡。PlusSearch 的展开就是「增删搜索列」，两处都会让卡片高度瞬跳：
