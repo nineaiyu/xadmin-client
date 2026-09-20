@@ -73,9 +73,9 @@
 
 ## 六、相关文档
 
-| 文档                                                                                                                 | 内容                                                                    |
-| -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| [../CONTRIBUTING.md](../CONTRIBUTING.md)                                                                             | 分支模型、commitlint、提交前门禁                                        |
-| [../README.md](../README.md)                                                                                         | 环境要求、默认代理、环境变量、门禁清单、FAQ                             |
-| [xadmin-server/docs/architecture/metadata-protocol.md](../../xadmin-server/docs/architecture/metadata-protocol.md)   | 元数据协议规范：字段语义、`input_type` 推断链与注册表、与字段权限的关系 |
-| [xadmin-server/docs/architecture/framework-cookbook.md](../../xadmin-server/docs/architecture/framework-cookbook.md) | RePlusPage props/emits/expose 契约、ViewSet 选型、覆写点                |
+| 文档                                                                                                                                                | 内容                                                                    |
+| --------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| [../CONTRIBUTING.md](../CONTRIBUTING.md)                                                                                                            | 分支模型、commitlint、提交前门禁                                        |
+| [../README.md](../README.md)                                                                                                                        | 环境要求、默认代理、环境变量、门禁清单、FAQ                             |
+| [xadmin-server/docs/architecture/metadata-protocol.md](https://github.com/nineaiyu/xadmin-server/blob/dev/docs/architecture/metadata-protocol.md)   | 元数据协议规范：字段语义、`input_type` 推断链与注册表、与字段权限的关系 |
+| [xadmin-server/docs/architecture/framework-cookbook.md](https://github.com/nineaiyu/xadmin-server/blob/dev/docs/architecture/framework-cookbook.md) | RePlusPage props/emits/expose 契约、ViewSet 选型、覆写点                |

@@ -90,6 +90,20 @@ jobs:
           ref: dev
           path: xadmin-server
 
+      - name: Set up Python (docs gates)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Docs gates (client side)
+        # 复用服务端脚本就地守护客户端文档：事实（Node/pnpm 版本）+ 索引登记 + 文档路径可达性
+        env:
+          XADMIN_CLIENT_DIR: ${{ github.workspace }}
+        run: |
+          python xadmin-server/scripts/check_doc_facts.py
+          python xadmin-server/scripts/check_doc_index.py
+          python xadmin-server/scripts/check_doc_paths.py
+
       - name: Metadata contract mirror is in sync
         # 客户端 contract/schema 为服务端 docs/schema 的镜像；
         # 服务端改契约而镜像未同步时在此失败（此前两侧无任何一致性校验）

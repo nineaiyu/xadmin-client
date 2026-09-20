@@ -52,8 +52,8 @@ pnpm build:staging      # 预发构建
 Docker 构建（先改 `.env.production` 的 API 域名）：
 
 ```shell
-docker compose up xadmin-client-build   # 构建
-docker compose up xadmin-client-prod    # 启动 → http://localhost:8891
+sh build.sh                    # 构建前端产物到 web/data/dist（内部用 node 镜像执行 pnpm build，需交互式终端）
+docker compose up -d --build   # 构建并启动 nginx-web 服务（默认 80 端口；SSL/域名见 compose 注释）
 ```
 
 生产推荐形态：`dist/` 交给 nginx 托管并反代 `/api`、`/ws`、`/media` 到后端（模板见 `xadmin-web/`）。
@@ -89,6 +89,7 @@ E2E（Playwright，chromium + webkit）：`pnpm test:e2e` / `pnpm test:e2e:smoke
 
 ## 开发文档
 
+- **前端开发指引（含独立检出）**：[docs/development-guide.md](docs/development-guide.md)
 - 开发约定与门禁清单：[CONTRIBUTING.md](CONTRIBUTING.md)
 - E2E 纪律与陷阱表：[e2e/README.md](e2e/README.md)
 - 后端文档中心（架构 / 三层权限 / 元数据契约）：`xadmin-server/docs/README.md`
