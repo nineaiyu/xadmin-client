@@ -2,7 +2,12 @@
 import { computed, nextTick, onUnmounted, ref, watch, type Ref } from "vue";
 import PureTable from "@pureadmin/table";
 import { usePlusPage } from "./utils/hook";
-import { RePlusPageProps, type RecycleBinColumn } from "./utils/types";
+import {
+  RePlusPageProps,
+  type PageColumn,
+  type RecycleBinColumn
+} from "./utils/types";
+import { INJECTED_COLUMN_KEYS } from "./utils/constants";
 import ReRecycleBin from "./components/ReRecycleBin.vue";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
@@ -78,6 +83,7 @@ const { tableElWidth, measureTableWidth, ensureRootObserver } =
 onUnmounted(() => {
   cancelAnimationFrame(searchCardPollRaf);
   searchCardAnimation?.cancel();
+  clearTimeout(metaWarnTimer);
 });
 
 const {
@@ -132,10 +138,21 @@ const onRowClick = (row: Record<string, unknown>) => emit("rowClick", row);
  * 底部留出可见空白（2026-09-18 用户反馈「搜索框变高」回归修复）。
  * 到达信号与表格列首帧规避共用同一组列装配来源（dynamicColumns / listColumns）。
  */
+/** 是否为框架注入列（选择列 / 操作列）——它们无条件存在，不来自后端元数据 */
+const isInjectedColumn = (column?: PageColumn) =>
+  INJECTED_COLUMN_KEYS.includes(
+    (column?._column?.key ?? "") as (typeof INJECTED_COLUMN_KEYS)[number]
+  );
+
 const searchMetaReady = computed(
   () =>
-    (tableBarData.value.dynamicColumns?.length ?? 0) > 0 ||
-    listColumns.value.length > 0
+    // 搜索区字段元数据到达（只有 search-fields、无表格列的页面）
+    searchColumns.value.length > 0 ||
+    // 表格列元数据到达：**必须排除框架注入的选择列 / 操作列**。
+    // 不能看 listColumns.length（恒 ≥1）也不能看 tableBarData.dynamicColumns
+    // （初值就是 listColumns 同一数组），否则本判定恒为真——
+    // 元数据缺失警示条与搜索卡片高度占位会双双失效（实测踩过）。
+    listColumns.value.some(column => !isInjectedColumn(column))
 );
 
 // 元数据到达前根节点可能尚未渲染（auth 依赖异步数据时）：到达后补偿测量与观察
@@ -146,6 +163,44 @@ watch(searchMetaReady, ready => {
     measureTableWidth();
   });
 });
+
+/**
+ * 开发态显式报错：列表请求已完成但列元数据仍为空 —— 给出可操作的排查指引。
+ * 元数据缺失在运行期表现为「页面空白但不报错」，是最高频的一类上手问题；
+ * 判定点在「请求完成（loadingStatus true→false）」后留 1.5s 余量（列元数据可能走独立请求），
+ * 元数据到达后自动清除。仅 DEV 生效，不影响生产与视觉基线。
+ */
+const metaMissing = ref(false);
+let metaWarnTimer: ReturnType<typeof setTimeout> | undefined;
+
+watch(searchMetaReady, ready => {
+  if (!ready) return;
+  metaMissing.value = false;
+  clearTimeout(metaWarnTimer);
+});
+
+if (import.meta.env.DEV) {
+  watch(
+    () => loadingStatus.value,
+    (loading, wasLoading) => {
+      // 只在「请求刚完成」那一刻起算：new=false 且 old=true。
+      // 写成 `!loading || !wasLoading` 会把这个分支正好 return 掉（定时器永不设置，
+      // 警示条变死代码——2026-09-20 实测发现）。
+      if (loading || !wasLoading) return;
+      clearTimeout(metaWarnTimer);
+      metaWarnTimer = setTimeout(() => {
+        if (searchMetaReady.value || metaMissing.value) return;
+        metaMissing.value = true;
+        console.error(
+          "[RePlusPage] 列表请求已完成，但未获取到列元数据（search-columns / search-fields），页面将无列可用。排查清单：\n" +
+            "  1) app 是否已注册：config.yml 的 XADMIN_APPS（改后需重启进程）；\n" +
+            "  2) 序列化器是否声明 Meta.fields / Meta.table_fields；\n" +
+            "  3) 当前账号是否有该页面权限点（未授权时接口 403）。"
+        );
+      }, 1500);
+    }
+  );
+}
 
 const { tableLayoutPending } = useTableLayout({
   tableElWidth,
@@ -294,6 +349,15 @@ defineExpose({
 
 <template>
   <div v-if="auth?.list" ref="rootRef" class="main re-plus-page">
+    <el-alert
+      v-if="metaMissing"
+      class="mb-2"
+      type="error"
+      :closable="false"
+      show-icon
+      title="未获取到列元数据（search-columns / search-fields）"
+      description="本页面的搜索列与表格列由后端元数据生成。请检查：app 是否已注册 XADMIN_APPS、序列化器是否声明 fields / table_fields、当前账号是否有页面权限点（未授权时接口 403）。"
+    />
     <div
       v-if="api?.fields"
       ref="searchCardRef"

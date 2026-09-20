@@ -16,7 +16,10 @@
       "input_type"
     ],
     "properties": {
-      "key": { "type": "string", "description": "序列化器字段名" },
+      "key": {
+        "type": "string",
+        "description": "序列化器字段名"
+      },
       "label": {
         "type": ["string", "null"],
         "description": "展示名（优先取模型 verbose_name）"
@@ -25,9 +28,15 @@
         "type": ["string", "null"],
         "description": "字段说明；无 help_text 时缺省"
       },
-      "required": { "type": "boolean" },
-      "read_only": { "type": "boolean" },
-      "write_only": { "type": "boolean" },
+      "required": {
+        "type": "boolean"
+      },
+      "read_only": {
+        "type": "boolean"
+      },
+      "write_only": {
+        "type": "boolean"
+      },
       "input_type": {
         "type": "string",
         "description": "前端渲染器类型：string/integer/float/boolean/datetime/labeled_choice/api-search-user/object_related_field/m2m_related_field/image upload/textarea 等"
@@ -69,8 +78,14 @@
         "type": "integer",
         "description": "表格列顺序（serializer Meta.table_fields 中的位置+1；不在 table_fields 中则缺省）"
       },
-      "tabs_index": { "type": "integer", "description": "表单分组 tabs 下标" },
-      "tabs_label": { "type": "string", "description": "表单分组 tabs 名称" }
+      "tabs_index": {
+        "type": "integer",
+        "description": "表单分组 tabs 下标"
+      },
+      "tabs_label": {
+        "type": "string",
+        "description": "表单分组 tabs 名称"
+      }
     }
   }
 }

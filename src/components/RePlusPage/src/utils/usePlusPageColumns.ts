@@ -9,6 +9,7 @@ import {
 import type { PageColumn, RePlusPageProps } from "./types";
 import type { useBaseColumns } from "./columns";
 import { renderSwitch } from "./handle";
+import { OPERATION_COLUMN_KEY, SELECTION_COLUMN_KEY } from "./constants";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 type TeFunction = ReturnType<typeof useI18n>["te"];
@@ -77,7 +78,7 @@ export function usePlusPageColumns({
     });
     if (selection) {
       listColumns.value.unshift({
-        _column: { key: "selection" },
+        _column: { key: SELECTION_COLUMN_KEY },
         type: "selection",
         fixed: "left",
         reserveSelection: true
@@ -88,7 +89,7 @@ export function usePlusPageColumns({
     );
     if (operation && hasOperations.length > 0) {
       listColumns.value.push({
-        _column: { key: "operation" },
+        _column: { key: OPERATION_COLUMN_KEY },
         label:
           formatPublicLabels(
             t as (arg0: string, arg1?: object) => string,

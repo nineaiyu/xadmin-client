@@ -42,6 +42,8 @@ pnpm build      # 生产构建
 | 类型检查         | `pnpm typecheck`                                                 | vue-tsc 全量                                                                           |
 | 单测 + 覆盖率    | `pnpm test:coverage`                                             | store/RePlusPage 注册表均有阈值（T4.2）                                                |
 | 元数据类型 regen | `pnpm gen:metadata-types && git diff --exit-code src/api/types/` | 改动依赖 schema 时执行（CI regen-check 门禁）                                          |
+| 契约镜像         | `pnpm check:contract`（同步用 `pnpm sync:contract`）             | server 改 `docs/schema/` 后同步镜像并重新生成类型（CI 校验）                           |
+| 版本一致性       | `pnpm check:version`                                             | `package.json` 版本需与 server `const.py` 同步提升（发布另有 tag 门禁）                |
 | E2E              | `pnpm test:e2e`                                                  | 涉及核心流程/权限场景时本地跑受影响用例                                                |
 
 约束清单：

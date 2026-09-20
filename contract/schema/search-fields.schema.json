@@ -13,7 +13,10 @@
         "type": "string",
         "description": "过滤字段名；排序聚合项固定为 ordering"
       },
-      "label": { "type": ["string", "null"], "description": "展示名" },
+      "label": {
+        "type": ["string", "null"],
+        "description": "展示名"
+      },
       "help_text": {
         "type": ["string", "null"],
         "description": "字段说明；ordering 聚合项无此键"
@@ -31,7 +34,9 @@
           "properties": {
             "value": {},
             "label": {},
-            "disabled": { "type": "boolean" }
+            "disabled": {
+              "type": "boolean"
+            }
           }
         }
       },

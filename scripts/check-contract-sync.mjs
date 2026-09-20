@@ -51,7 +51,7 @@ if (drifted.length) {
   console.error("[fail] 契约镜像已漂移：");
   drifted.forEach(item => console.error(`  - ${item}`));
   console.error(
-    "       请同步 contract/schema 后重跑 `pnpm gen:metadata-types`。"
+    "       请运行 `pnpm sync:contract` 一键同步镜像并重新生成类型。"
   );
   process.exit(1);
 }

@@ -159,6 +159,13 @@ function addAsyncRoutes(
           ? modulesRoutesKeys.findIndex(ev => ev.includes(rawComponent))
           : modulesRoutesKeys.findIndex(ev => ev.includes(v.path))
         : modulesRoutesKeys.findIndex(ev => ev.includes(v.path));
+      if (index === -1 && import.meta.env.DEV) {
+        // 开发态显式报错：component 字符串与 src/views 下文件路径未匹配（运行期表现为空白路由）
+        console.error(
+          `[xadmin] 动态路由组件未匹配：component=${String(rawComponent ?? "")} path=${String(v.path ?? "")}——` +
+            "请确认 src/views 下存在对应页面文件（后端下发的 component 需为文件路径片段）。"
+        );
+      }
       v.component = modulesRoutes[modulesRoutesKeys[index]];
     }
     if (v?.children && v.children.length) {

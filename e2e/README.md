@@ -16,6 +16,21 @@
 零外部服务依赖，不触碰本机 config.yml。配置见 `playwright.config.ts`（`E2E_API_PORT` 等
 环境变量说明在文件头注释）。
 
+### 独立检出运行（非多仓工作区）
+
+默认假定 `xadmin-server` 与本仓库同级（`../xadmin-server`）。单独 clone 前端时用
+`E2E_SERVER_DIR` 指向后端检出目录（playwright 会以 `tests.settings_e2e` 自动拉起后端与种子）：
+
+```shell
+XADMIN=../xadmin-server                                   # 或任意路径
+XADMIN_SERVER_DIR=$XADMIN pnpm test:e2e:smoke             # 变量名为 E2E_SERVER_DIR*
+E2E_SERVER_DIR=$XADMIN pnpm test:e2e
+# 后端解释器默认 ${E2E_SERVER_DIR}/.venv/bin/python，可用 E2E_PYTHON 覆盖
+```
+
+> *正确变量名：`E2E_SERVER_DIR`（见 `playwright.config.ts` 文件头注释的完整清单）。
+> 后端仓库需先装依赖：`pip install -r requirements.txt -r requirements-dev.txt`。
+
 ## ⚠️ reuseExistingServer 陷阱：改动后端代码后必须 fresh
 
 `playwright.config.ts` 的 `reuseExistingServer: !process.env.CI` 会在端口已有服务时

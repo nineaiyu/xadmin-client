@@ -96,3 +96,10 @@ jobs:
         env:
           XADMIN_SERVER_DIR: xadmin-server
         run: pnpm check:contract
+
+      - name: Version is in sync with xadmin-server
+        # 前后端版本号必须同步提升：发布侧另有 tag 门禁（server build-image.yml），
+        # 这里把校验前移到提交/PR 阶段，避免发版时才暴露
+        env:
+          XADMIN_SERVER_DIR: xadmin-server
+        run: pnpm check:version
