@@ -27,5 +27,6 @@ const {
     :list-columns-format="listColumnsFormat"
     :tableBarButtonsProps="tableBarButtonsProps"
     :operationButtonsProps="operationButtonsProps"
+    :recycle-bin="[{ prop: 'name' }]"
   />
 </template>

@@ -16,11 +16,19 @@ import { message } from "@/utils/message";
 import { ElTag } from "element-plus";
 
 export function useDemoBook(tableRef: Ref) {
-  // 权限判断，用于判断是否有该权限
+  // 权限判断，用于判断是否有该权限（recycleList 控制回收站入口、changeHistory 控制行级变更历史）
   const api = reactive(bookApi);
   const auth = reactive({
     push: false,
-    ...getDefaultAuths(getCurrentInstance(), ["push"])
+    submit: false,
+    recycleList: false,
+    changeHistory: false,
+    ...getDefaultAuths(getCurrentInstance(), [
+      "push",
+      "submit",
+      "recycleList",
+      "changeHistory"
+    ])
   });
   const { t } = useI18n();
 
@@ -31,6 +39,33 @@ export function useDemoBook(tableRef: Ref) {
     width: 300,
     showNumber: 4,
     buttons: [
+      {
+        text: t("demoBook.submitBook"),
+        code: "submit",
+        confirm: {
+          title: row => {
+            return t("demoBook.confirmSubmitBook", { name: row.name });
+          }
+        },
+        props: {
+          type: "primary",
+          link: true
+        },
+        onClick: ({ row, loading }) => {
+          loading.value = true;
+          handleOperation({
+            t,
+            apiReq: api.submit(row?.pk ?? row?.id),
+            success() {
+              tableRef.value.handleGetData();
+            },
+            requestEnd() {
+              loading.value = false;
+            }
+          });
+        },
+        show: auth.submit && 5
+      },
       {
         text: t("demoBook.pushBook"),
         code: "push",
@@ -180,6 +215,32 @@ export function useDemoBook(tableRef: Ref) {
           column["cellRenderer"] = ({ row }) => {
             return h(ElTag, { type: "success" }, () => row.category.label);
           };
+          break;
+        case "status": {
+          // 上架状态（后端 choices 下发为 {value,label}）：按状态渲染彩色标签
+          const statusTagTypes: Record<
+            string,
+            "success" | "warning" | "info" | "danger"
+          > = {
+            DRAFT: "info",
+            PENDING: "warning",
+            ON_SHELF: "success",
+            REJECTED: "danger"
+          };
+          column["cellRenderer"] = ({ row }) => {
+            const status = row.status;
+            return h(
+              ElTag,
+              { type: statusTagTypes[status?.value] ?? "info" },
+              () => status?.label ?? status
+            );
+          };
+          break;
+        }
+        case "price":
+          // 售价格式化渲染（自定义单元格的又一示例）
+          column["cellRenderer"] = ({ row }) =>
+            h("span", `￥${Number(row.price ?? 0).toFixed(2)}`);
           break;
       }
     });

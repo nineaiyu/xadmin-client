@@ -1325,6 +1325,9 @@ demoBook:
   publication_date: Publication date
   price: Price
   is_active: Active
+  status: Shelf status
+  submitBook: Submit for approval
+  confirmSubmitBook: Submit {name} for on-shelf approval?
   pushBook: Push book
   confirmPushBook: Are you sure to push {name} book?
 

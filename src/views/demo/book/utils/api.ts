@@ -10,6 +10,15 @@ class BookApi extends BaseApi {
       `${this.baseApi}/${pk}/push`
     );
   };
+
+  submit = (pk: number | string) => {
+    return this.request<BaseResult>(
+      "post",
+      {},
+      {},
+      `${this.baseApi}/${pk}/submit`
+    );
+  };
 }
 
 const bookApi = new BookApi("/api/demo/book");
