@@ -298,6 +298,7 @@ buttons:
   splitPaneReset: 重置分栏宽度
   userMenu: 用户菜单
   cancel: 取消
+  confirm: 确定
   close: 关闭
   switch: 切换
   sure: 确定
@@ -456,6 +457,8 @@ systemApprovalFlow:
   assigneeHint_user: 用户名，逗号分隔
   assigneeHint_leader: 无需填写（取申请人部门主管）
   assigneeHint_field: 表单字段 key（值为用户名或用户名列表）
+  assigneeValueRequired: 请填写该节点的审批人（角色 / 用户 / 表单字段）
+  ratioRangeRequired: 比例会签的比例需在 1-100 之间
   conditionField: 条件字段
   conditionFieldTip: 留空=无条件
   conditionOp: 运算符
@@ -495,6 +498,7 @@ systemApprovalInstance:
   pendingTab: 待我审批
   mineTab: 我的申请
   doneTab: 已办
+  ongoingTab: 全部在途
   formTitle: 申请标题
   formFlow: 审批流程
   formStatus: 状态
@@ -550,6 +554,21 @@ systemApprovalInstance:
   resubmit: 重新提交
   resubmitConfirm: 确定按原内容重新提交「{title}」吗？
   resubmitSuccess: 已重新提交，等待审批
+  transfer: 转交
+  transferTitle: 转交申请「{title}」
+  transferTarget: 转交给
+  transferPlaceholder: 请输入被转交人的用户名
+  transferRequired: 请选择转交对象
+  transferOk: 已转交，等待对方处理
+  batchTransfer: 批量转交
+  batchTransferTitle: 批量转交 {n} 条待办
+  batchTransferPartial: "{n} 条转交失败：{detail}"
+  nodeProgress: 节点进度
+  progressCount: "已通过 {approved} / 需 {required} 人（候选 {total}）"
+  progressRatioHint: "比例会签：通过数达到 {ratio}% 即通过（加签会抬高达标线）"
+  progressOrHint: 或签：任一审批人通过即可
+  progressAndHint: 会签：需全部审批人通过
+  addSignThreshold: "加签后：已通过 {approved} / 需 {required} 人（候选 {total}）"
   delegatedFrom: 由 {name} 代理
   tasksEmpty: 暂无审批记录
   flowUnavailable: 原流程已停用或不可发起，请选择其他流程
@@ -563,6 +582,7 @@ userinfo:
   updateUserInfo: 更新信息
   oldPassword: 旧密码
   newPassword: 新密码
+  verifyPassword: 请输入密码
   verifyOldPassword: 请输入旧密码
   verifyNewPassword: 请输入新密码
   surePassword: 确认密码
@@ -1059,6 +1079,14 @@ chat:
   noMoreHistory: 没有更多历史消息
   newMessages: "有 {count} 条新消息"
   thinking: AI 正在思考…
+  stopGenerating: 停止生成
+  yes: 是
+  no: 否
+  isActive: 启用状态
+  targetUser: 目标用户
+  noticeTitle: 公告标题
+  noticeMessage: 公告内容
+  noticeLevel: 公告级别
   aiFailed: AI 回复失败，请稍后重试
   emoji: 表情
   emojiGroups:
@@ -1094,6 +1122,7 @@ chat:
   actionCancelled: 已取消，未执行
   actionDone: 已执行
   actionPending: 已提交审批，审批通过后可再次确认执行
+  actionNoPermission: 需「AI 助手-指令执行」权限才能执行该操作
   leaveType: 假期类型
   startDate: 开始日期
   endDate: 结束日期
@@ -1939,6 +1968,39 @@ webhook:
 
 ai:
   title: AI 助手
+  features: 功能入口
+  noFeature: 暂无可用功能
+  featureDocs: 文档问答
+  featureDocsDesc: 基于平台文档库的引用问答
+  featureNl: 数据查询
+  featureNlDesc: 自然语言查数（解释后执行）
+  featureAction: 指令执行
+  featureActionDesc: 白名单系统操作（确认后执行）
+  actionPlaceholder: 例如：新建一个角色，或查询某位用户的信息
+  actionFailed: 指令解析失败，请重试或更换模型
+  actionToolCount: 可执行操作 {count} 项（统一工具目录）
+  emptyMessages: 还没有与{name}的对话，开始提问吧
+  persistHint: 对话与操作记录已保存在服务端，刷新后可回看
+  partialHint: 回答未完成
+  resultRows: "共 {count} 条，显示前 {shown} 条"
+  resultName: 指标
+  resultValue: 值
+  nlModeRows: 明细
+  nlModeAggregate: 聚合
+  paramKeyword: 关键字
+  paramNickname: 昵称
+  paramPhone: 手机号
+  paramEmail: 邮箱
+  paramName: 名称
+  paramCode: 编码
+  paramDescription: 描述
+  paramMenus: 授权菜单
+  paramPassword: 初始密码
+  paramValue: 配置值
+  paramParent: 上级部门
+  paramGroupBy: 分组字段
+  paramMetric: 聚合方式
+  paramStatus: 状态
   docsTab: 文档问答
   nlTab: 数据查询
   nlPlaceholder: 例如：最近创建的启用用户有哪些？
@@ -1958,6 +2020,12 @@ ai:
   sources: 出处
   askPlaceholder: 例如：数据集如何做数据权限过滤？
   ask: 提问
+  thinking: 思考过程
+  thinkingRunning: 思考中…
+  thinkingDone: 已思考 · {count} 字
+  stopGenerating: 停止生成
+  askFailed: 文档问答失败，请重试或更换模型
+  nlFailed: 数据查询失败，请重试或更换模型
 
 aiConfig:
   title: AI 配置
@@ -1965,6 +2033,11 @@ aiConfig:
   assistantEnabled: 启用 AI 助手
   nlQueryEnabled: 启用数据问答（NL 查数）
   actionEnabled: 启用 AI 动作草稿（确认后执行，默认关闭）
+  structuredMaxTokens: 结构化输出上限
+  structuredMaxTokensPlaceholder: 默认 2048
+  structuredMaxTokensHint: >-
+    动作草稿 / NL 查数在未配置「Max tokens」时的 token 上限。思考型模型（R1
+    等）思考消耗大，遇到「回答未完成」可调大此值或改配 Max tokens；0 = 使用内置默认 2048
   globalSave: 保存开关
   globalSaved: 全局开关已保存
   metricsTitle: 调用观测（文档问答 / NL 查数 / 受限动作）

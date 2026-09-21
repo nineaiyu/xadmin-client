@@ -298,6 +298,7 @@ buttons:
   splitPaneReset: Reset pane width
   userMenu: User menu
   cancel: Cancel
+  confirm: Confirm
   close: Close
   switch: Switch
   sure: Ok
@@ -456,6 +457,8 @@ systemApprovalFlow:
   assigneeHint_user: Usernames, comma separated
   assigneeHint_leader: No value needed (uses the applicant's department leader)
   assigneeHint_field: Form field key (value is a username or username list)
+  assigneeValueRequired: Please fill in the approver for this node (role / user / form field)
+  ratioRangeRequired: The ratio of ratio-based approval must be between 1 and 100
   conditionField: Condition Field
   conditionFieldTip: Empty = no condition
   conditionOp: Operator
@@ -495,6 +498,7 @@ systemApprovalInstance:
   pendingTab: Pending My Approval
   mineTab: My Applications
   doneTab: Processed
+  ongoingTab: All in progress
   formTitle: Title
   formFlow: Flow
   formStatus: Status
@@ -550,6 +554,21 @@ systemApprovalInstance:
   resubmit: Resubmit
   resubmitConfirm: Resubmit "{title}" with the same content?
   resubmitSuccess: Resubmitted, pending approval
+  transfer: Transfer
+  transferTitle: Transfer application "{title}"
+  transferTarget: Transfer to
+  transferPlaceholder: Enter the username to transfer to
+  transferRequired: Please select the user to transfer to
+  transferOk: Transferred, waiting for the assignee
+  batchTransfer: Batch transfer
+  batchTransferTitle: Batch transfer {n} tasks
+  batchTransferPartial: "{n} tasks failed to transfer: {detail}"
+  nodeProgress: Node progress
+  progressCount: "{approved} approved / {required} required ({total} candidates)"
+  progressRatioHint: "Ratio sign-off: passes when approvals reach {ratio}% (counter-signing raises the threshold)"
+  progressOrHint: "OR sign: any approver can pass it"
+  progressAndHint: "AND sign: all approvers must pass"
+  addSignThreshold: "After counter-sign: {approved} approved / {required} required ({total} candidates)"
   delegatedFrom: Delegated by {name}
   tasksEmpty: No approval records
   flowUnavailable: The original flow is disabled or unavailable, please choose another one
@@ -563,6 +582,7 @@ userinfo:
   updateUserInfo: Update UserInfo
   oldPassword: Old Password
   newPassword: New Password
+  verifyPassword: Please enter the password
   verifyOldPassword: Please enter old password
   verifyNewPassword: Please enter new password
   surePassword: Sure Password
@@ -1059,6 +1079,14 @@ chat:
   noMoreHistory: No more history
   newMessages: "{count} new messages"
   thinking: AI is thinking...
+  stopGenerating: Stop generating
+  yes: "Yes"
+  no: "No"
+  isActive: Active
+  targetUser: Target user
+  noticeTitle: Title
+  noticeMessage: Message
+  noticeLevel: Level
   aiFailed: Failed to get the AI reply, please try again later
   emoji: Emoji
   emojiGroups:
@@ -1094,6 +1122,7 @@ chat:
   actionCancelled: Cancelled, nothing executed
   actionDone: Executed
   actionPending: Submitted for approval. Confirm again once it is approved.
+  actionNoPermission: The "AI assistant - action execution" permission is required to run this action
   leaveType: Leave type
   startDate: Start date
   endDate: End date
@@ -1939,6 +1968,39 @@ webhook:
 
 ai:
   title: AI Assistant
+  features: Features
+  noFeature: No available feature
+  featureDocs: Document Q&A
+  featureDocsDesc: Cited answers from the platform docs
+  featureNl: Data query
+  featureNlDesc: NL to dataset query (confirm before run)
+  featureAction: Action execution
+  featureActionDesc: Whitelisted system operations (confirm before run)
+  actionPlaceholder: e.g. create a role, or look up a user's profile
+  actionFailed: Failed to interpret the request, please retry or switch models
+  actionToolCount: "{count} executable operations (unified tool catalog)"
+  emptyMessages: No conversation with {name} yet, start asking
+  persistHint: Conversations and operation records are stored on the server
+  partialHint: Answer incomplete
+  resultRows: "{count} rows in total, showing first {shown}"
+  resultName: Metric
+  resultValue: Value
+  nlModeRows: Detail
+  nlModeAggregate: Aggregate
+  paramKeyword: Keyword
+  paramNickname: Nickname
+  paramPhone: Phone
+  paramEmail: Email
+  paramName: Name
+  paramCode: Code
+  paramDescription: Description
+  paramMenus: Menus to grant
+  paramPassword: Initial password
+  paramValue: Config value
+  paramParent: Parent department
+  paramGroupBy: Group by field
+  paramMetric: Aggregate metric
+  paramStatus: Status
   docsTab: Docs Q&A
   nlTab: Data Query
   nlPlaceholder: e.g. Which enabled users were created recently?
@@ -1958,6 +2020,12 @@ ai:
   sources: Sources
   askPlaceholder: e.g. How does dataset apply data permission filtering?
   ask: Ask
+  thinking: Thinking
+  thinkingRunning: Thinking...
+  thinkingDone: Thought for {count} chars
+  stopGenerating: Stop generating
+  askFailed: Docs Q&A failed; please retry or switch models
+  nlFailed: Data query failed; please retry or switch models
 
 aiConfig:
   title: AI Configuration
@@ -1965,6 +2033,12 @@ aiConfig:
   assistantEnabled: Enable AI assistant
   nlQueryEnabled: Enable NL data query
   actionEnabled: Enable AI action drafts (run after confirmation, off by default)
+  structuredMaxTokens: Structured max tokens
+  structuredMaxTokensPlaceholder: default 2048
+  structuredMaxTokensHint: >-
+    Token cap for action drafts / NL query when "Max tokens" is not configured.
+    Reasoning models consume many thinking tokens; raise this (or set Max tokens)
+    if you see "no final answer". 0 = built-in default 2048
   globalSave: Save switches
   globalSaved: Global switches saved
   metricsTitle: Usage overview (docs Q&A / NL query / actions)

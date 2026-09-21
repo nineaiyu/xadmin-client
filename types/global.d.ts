@@ -70,6 +70,8 @@ declare global {
     VITE_CDN: boolean;
     VITE_HIDE_HOME: string;
     VITE_COMPRESSION: ViteCompression;
+    /** 生产构建认证 Cookie 的 Secure 开关：默认开启；内网 HTTP 测试服构建时置 false */
+    VITE_COOKIE_SECURE: string;
   }
 
   /**
