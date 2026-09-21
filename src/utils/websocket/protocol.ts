@@ -136,9 +136,13 @@ export interface ChatRoomMessage {
   created_time: string;
   client_msg_id: string;
   extra: {
-    mode?: "chat" | "kb";
+    mode?: "chat" | "kb" | "action";
     sources?: Array<{ title: string; path: string; chunk_index: number }>;
     error?: boolean;
+    /** 思考过程（思考型模型的 reasoning_content，落库供回看） */
+    reasoning?: string;
+    /** 模型只产出思考、未给出最终回答（内容为可读提示文案） */
+    no_answer?: boolean;
   };
   is_recalled?: boolean;
   can_recall?: boolean;

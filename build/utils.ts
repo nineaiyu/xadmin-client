@@ -57,7 +57,9 @@ const wrapperEnv = (envConf: Recordable): ViteEnv => {
     VITE_ROUTER_HISTORY: "",
     VITE_CDN: false,
     VITE_HIDE_HOME: "false",
-    VITE_COMPRESSION: "none"
+    VITE_COMPRESSION: "none",
+    // 空串 = 保持生产默认 Secure（auth.ts 仅认显式 "false" 才关闭）
+    VITE_COOKIE_SECURE: ""
   };
 
   for (const envName of Object.keys(envConf)) {

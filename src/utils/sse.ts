@@ -1,4 +1,4 @@
-import { getToken, formatToken } from "@/utils/auth";
+import { getToken, formatToken, getApiLanguage } from "@/utils/auth";
 
 /**
  * POST + SSE 流式读取（二期）。
@@ -72,6 +72,8 @@ export async function postSse(
     headers: {
       "Content-Type": "application/json",
       Accept: "text/event-stream",
+      // 后端 gettext 按请求语言物化草稿 label/摘要，与 axios 链路（setApiLanguage）同口径
+      "Accept-Language": getApiLanguage(),
       ...(token ? { Authorization: formatToken(token) } : {})
     },
     body: JSON.stringify(body),

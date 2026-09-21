@@ -29,11 +29,18 @@ export function getRefreshToken() {
   return Cookies.get(RefreshTokenKey);
 }
 
-/** 认证 Cookie 统一附带 SameSite/Secure 属性，防跨站自动携带与明文传输 */
+/**
+ * 认证 Cookie 统一附带 SameSite/Secure 属性，防跨站自动携带与明文传输。
+ * 生产默认 Secure；仅当构建时显式注入 VITE_COOKIE_SECURE=false 才关闭——
+ * 供内网 HTTP 测试服使用（http://<内网IP> 属非安全上下文，Secure Cookie
+ * 会被浏览器静默丢弃，表现为「登录成功后立即未授权」的循环）。
+ */
 function cookieSecureOptions() {
   return {
     sameSite: "Lax",
-    ...(import.meta.env.PROD ? { secure: true } : {})
+    ...(import.meta.env.PROD && import.meta.env.VITE_COOKIE_SECURE !== "false"
+      ? { secure: true }
+      : {})
   } as Cookies.CookieAttributes;
 }
 
@@ -99,9 +106,13 @@ export const formatToken = (token: string): string => {
   return "Bearer " + token;
 };
 
-export const setApiLanguage = (config: PureHttpRequestConfig) => {
+/** 当前 UI 语言 → 后端 gettext 语言（SSE fetch 等不走 axios 拦截器的链路复用） */
+export const getApiLanguage = (): string => {
   const nameSpace = responsiveStorageNameSpace();
+  return Storage.getData("locale", nameSpace)?.locale ?? "zh";
+};
+
+export const setApiLanguage = (config: PureHttpRequestConfig) => {
   // 请求拦截阶段 axios 必已构造 headers
-  config.headers!["Accept-Language"] =
-    Storage.getData("locale", nameSpace)?.locale ?? "zh";
+  config.headers!["Accept-Language"] = getApiLanguage();
 };

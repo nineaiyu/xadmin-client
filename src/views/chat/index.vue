@@ -191,6 +191,7 @@ async function recall(item: ChatMessageItem) {
       @send="submit"
       @recall="recall"
       @resend="chat.resend"
+      @stop-stream="chat.abortStream"
       @load-more="chat.loadMore"
       @scroll="chat.onScroll"
       @scroll-to-bottom="chat.scrollToBottom"

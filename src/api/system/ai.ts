@@ -1,5 +1,6 @@
 import { BaseApi, ViewBaseApi } from "@/api/base";
 import type { DetailResult } from "@/api/types";
+import { postSse, type SseFrame } from "@/utils/sse";
 
 /** AI 使用/二开助手 */
 export type AiStatus = {
@@ -24,6 +25,56 @@ export type AiActionDraft = {
 export type AiSource = { title: string; path: string; chunk_index: number };
 
 export type AiAskResult = { answer: string; sources: AiSource[] };
+
+/** 助手页（左右分栏）三入口标识：文档问答 / 数据查询 / 指令执行 */
+export type AiConsoleFeature = "docs" | "nl" | "action";
+
+/** 服务端持久化的助手消息（AiChatMessage；历史与流式 done 共用同一份契约） */
+export type AiConsoleMessage = {
+  id: number;
+  feature: AiConsoleFeature;
+  role: "user" | "assistant" | "system";
+  content: string;
+  reasoning: string;
+  extra: {
+    /** 文档问答引用出处 */
+    sources?: AiSource[];
+    /** NL 查询解释结果（草稿卡片） */
+    nl?: NlInterpretResult;
+    /** NL 查询运行结果（明细表 / 聚合序列） */
+    nl_run?: {
+      columns?: string[];
+      rows?: Record<string, unknown>[];
+      series?: { name: string; value: number }[];
+      total?: number;
+    };
+    /** 受限动作草稿（确认卡片；单动作契约） */
+    action_draft?: AiActionDraft;
+    /** 受限动作草稿数组（多步串联，一次对话多个动作逐项确认） */
+    action_drafts?: AiActionDraft[];
+    /** 动作执行结果 */
+    action_result?: Record<string, unknown>;
+    /** 流中断标记（部分内容保留的原因） */
+    partial?: string;
+    /** 系统级错误消息 */
+    error?: boolean;
+    no_answer?: boolean;
+  };
+  created_time: string;
+};
+
+/** 统一工具目录条目（MCP tools/list 等价：标准化能力描述） */
+export type AiToolItem = {
+  name: string;
+  description: string;
+  inputSchema: {
+    type: string;
+    properties: Record<string, unknown>;
+    required: string[];
+  };
+};
+
+export type AiToolsResult = { action_enabled: boolean; tools: AiToolItem[] };
 
 /** B1 调用观测：近 N 天聚合（数据源 OperationLog auth_type=ai） */
 export type AiMetrics = {
@@ -56,6 +107,54 @@ export type NlInterpretResult = {
 };
 
 export const aiConfigApi = new ViewBaseApi("/api/system/ai/assistant/config");
+
+/**
+ * AI 流式事件回调（服务端统一契约：meta → reasoning* → delta* → done | error）。
+ *
+ * - `onReasoning`：思考型模型的思考增量（实时上屏）；
+ * - `onDelta`：正式回答增量；
+ * - `onError`：流内失败（响应头已发出，带下发光；门禁类错误由 postSse 抛 SseError）。
+ */
+export interface AiStreamEvents<TDone> {
+  onMeta?: (data: Record<string, unknown>) => void;
+  onReasoning?: (delta: string) => void;
+  onDelta?: (delta: string) => void;
+  onDone?: (data: TDone) => void;
+  onError?: (data: { detail: string }) => void;
+}
+
+/** 通用 AI 流式请求：POST + SSE 逐帧分发（助手页文档问答 / NL 查数解释共用）。 */
+function streamRequest<TDone>(
+  url: string,
+  body: unknown,
+  events: AiStreamEvents<TDone>,
+  signal?: AbortSignal
+): Promise<void> {
+  return postSse(url, body, {
+    signal,
+    onFrame: (frame: SseFrame) => {
+      let payload: unknown = {};
+      try {
+        payload = frame.data ? JSON.parse(frame.data) : {};
+      } catch {
+        return;
+      }
+      if (frame.event === "meta") {
+        events.onMeta?.(payload as Record<string, unknown>);
+      } else if (frame.event === "reasoning") {
+        events.onReasoning?.(
+          String((payload as { delta?: unknown }).delta ?? "")
+        );
+      } else if (frame.event === "delta") {
+        events.onDelta?.(String((payload as { delta?: unknown }).delta ?? ""));
+      } else if (frame.event === "done") {
+        events.onDone?.(payload as TDone);
+      } else if (frame.event === "error") {
+        events.onError?.(payload as { detail: string });
+      }
+    }
+  });
+}
 
 /** AI 配置档案：多套凭据 + 采样/行为参数，激活唯一 */
 export type AiProfileItem = {
@@ -129,8 +228,48 @@ class AiAssistantApi extends BaseApi {
       `${this.baseApi}/metrics`
     );
   };
+  /** 文档问答（非流式；流式请用 askStream） */
   ask = (question: string) => {
-    return this.request<DetailResult>("post", {}, { question });
+    return this.request<DetailResult>(
+      "post",
+      {},
+      { question },
+      `${this.baseApi}/ask`
+    );
+  };
+  /** 文档问答（流式）：思考增量 + 回答增量实时上屏，done 带 answer/sources/message */
+  askStream = (
+    question: string,
+    events: AiStreamEvents<{
+      answer: string;
+      sources: AiSource[];
+      message?: AiConsoleMessage;
+    }>,
+    signal?: AbortSignal
+  ) => {
+    return streamRequest<{
+      answer: string;
+      sources: AiSource[];
+      message?: AiConsoleMessage;
+    }>(
+      `${import.meta.env.VITE_API_DOMAIN ?? ""}${this.baseApi}/ask/stream`,
+      { question },
+      events,
+      signal
+    );
+  };
+  /** NL 查数解释（流式）：思考流实时展示，done 带 dsl/试算预览/持久化消息 */
+  nlInterpretStream = (
+    question: string,
+    events: AiStreamEvents<NlInterpretResult & { message?: AiConsoleMessage }>,
+    signal?: AbortSignal
+  ) => {
+    return streamRequest<NlInterpretResult & { message?: AiConsoleMessage }>(
+      `${import.meta.env.VITE_API_DOMAIN ?? ""}${this.baseApi}/nl-query/interpret/stream`,
+      { question },
+      events,
+      signal
+    );
   };
   /** NL 查数：NL → DSL + 试算预览 */
   nlInterpret = (question: string) => {
@@ -148,6 +287,46 @@ class AiAssistantApi extends BaseApi {
       {},
       { dsl },
       `${this.baseApi}/nl-query/run`
+    );
+  };
+  /** 助手页对话历史（按入口分页，时间正序；before_id 向上翻页） */
+  history = (params: {
+    feature: AiConsoleFeature;
+    before_id?: number;
+    limit?: number;
+  }) => {
+    return this.request<DetailResult>(
+      "get",
+      params,
+      {},
+      `${this.baseApi}/history`
+    );
+  };
+  /** 统一工具目录（MCP tools/list 等价：当前用户可执行的全部系统动作） */
+  tools = () => {
+    return this.request<DetailResult>("get", {}, {}, `${this.baseApi}/tools`);
+  };
+  /** 指令执行草稿（流式）：思考增量 + done 带 drafts（多步串联）/ draft（单动作兜底）/ 澄清消息 */
+  actionInterpretStream = (
+    message: string,
+    events: AiStreamEvents<{
+      kind: "draft" | "message";
+      draft?: AiActionDraft;
+      drafts?: AiActionDraft[];
+      message?: AiConsoleMessage;
+    }>,
+    signal?: AbortSignal
+  ) => {
+    return streamRequest<{
+      kind: "draft" | "message";
+      draft?: AiActionDraft;
+      drafts?: AiActionDraft[];
+      message?: AiConsoleMessage;
+    }>(
+      `${import.meta.env.VITE_API_DOMAIN ?? ""}${this.baseApi}/action/interpret/stream`,
+      { message },
+      events,
+      signal
     );
   };
   /**

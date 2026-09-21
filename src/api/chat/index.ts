@@ -62,7 +62,11 @@ export interface ChatMessageItem {
     mode?: "chat" | "kb" | "action";
     sources?: Array<{ title: string; path: string; chunk_index: number }>;
     error?: boolean;
-    /** A2 受限动作草稿（AI 消息携带，确认后执行） */
+    /** 思考过程（思考型模型的 reasoning_content，落库供回看） */
+    reasoning?: string;
+    /** 模型只产出思考、未给出最终回答（内容为可读提示文案） */
+    no_answer?: boolean;
+    /** A2 受限动作草稿（AI 消息携带，确认后执行；单动作契约） */
     action_draft?: {
       action: string;
       label: string;
@@ -70,6 +74,14 @@ export interface ChatMessageItem {
       summary: string;
       requires_approval: boolean;
     };
+    /** 受限动作草稿数组（多步串联，一次对话多个动作逐项确认） */
+    action_drafts?: Array<{
+      action: string;
+      label: string;
+      params: Record<string, unknown>;
+      summary: string;
+      requires_approval: boolean;
+    }>;
     action_result?: Record<string, unknown>;
   };
   is_recalled?: boolean;
@@ -236,6 +248,8 @@ class ChatApi extends BaseRequest {
 export interface ChatAiStreamEvents {
   /** meta：问题回执（服务端落库后的正式载荷） */
   onMeta?: (data: { question: ChatMessageItem }) => void;
+  /** reasoning：思考增量（思考型模型，实时上屏到思考面板） */
+  onReasoning?: (delta: string) => void;
   /** delta：文本增量 */
   onDelta?: (delta: string) => void;
   /** done：AI 回复落库后的正式载荷（mode/message），此刻流结束 */
@@ -247,8 +261,8 @@ export interface ChatAiStreamEvents {
 /**
  * AI 流式提问（SSE，二期）：POST /api/chat/ai/stream。
  *
- * 服务端事件序 meta → delta* → done | error；响应头已发出后无法再改状态码，
- * 所以失败通过 error 带内下发光，非 SSE 错误（门禁/参数）由 postSse 抛 SseError。
+ * 服务端事件序 meta → reasoning* → delta* → done | error；响应头已发出后无法
+ * 再改状态码，所以失败通过 error 带内下发光，非 SSE 错误（门禁/参数）由 postSse 抛 SseError。
  */
 export function streamAiMessage(
   data: { room_id?: number; content: string; client_msg_id?: string },
@@ -269,6 +283,10 @@ export function streamAiMessage(
         }
         if (frame.event === "meta") {
           events.onMeta?.(payload as { question: ChatMessageItem });
+        } else if (frame.event === "reasoning") {
+          events.onReasoning?.(
+            String((payload as { delta?: unknown }).delta ?? "")
+          );
         } else if (frame.event === "delta") {
           events.onDelta?.(
             String((payload as { delta?: unknown }).delta ?? "")

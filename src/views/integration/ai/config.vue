@@ -20,7 +20,8 @@ const globalLoading = ref(false);
 const globalForm = reactive({
   AI_ASSISTANT_ENABLED: false,
   AI_NL_QUERY_ENABLED: false,
-  AI_ACTION_ENABLED: false
+  AI_ACTION_ENABLED: false,
+  AI_STRUCTURED_MAX_TOKENS: null as number | null
 });
 
 const loadGlobal = async () => {
@@ -33,6 +34,8 @@ const loadGlobal = async () => {
       globalForm.AI_ASSISTANT_ENABLED = Boolean(data?.AI_ASSISTANT_ENABLED);
       globalForm.AI_NL_QUERY_ENABLED = Boolean(data?.AI_NL_QUERY_ENABLED);
       globalForm.AI_ACTION_ENABLED = Boolean(data?.AI_ACTION_ENABLED);
+      globalForm.AI_STRUCTURED_MAX_TOKENS =
+        (data?.AI_STRUCTURED_MAX_TOKENS as number | null) ?? null;
     }
   } finally {
     globalLoading.value = false;
@@ -143,6 +146,21 @@ onMounted(() => {
           :disabled="!canEditGlobal"
           :active-text="t('aiConfig.actionEnabled')"
           data-testid="ai-action-enabled"
+        />
+        <span
+          class="text-xs text-(--el-text-color-secondary)"
+          :title="t('aiConfig.structuredMaxTokensHint')"
+        >
+          {{ t("aiConfig.structuredMaxTokens") }}
+        </span>
+        <el-input-number
+          v-model="globalForm.AI_STRUCTURED_MAX_TOKENS"
+          :min="0"
+          :step="512"
+          :disabled="!canEditGlobal"
+          :placeholder="t('aiConfig.structuredMaxTokensPlaceholder')"
+          controls-position="right"
+          data-testid="ai-structured-max-tokens"
         />
         <el-button v-if="canEditGlobal" type="primary" @click="saveGlobal">
           {{ t("aiConfig.globalSave") }}

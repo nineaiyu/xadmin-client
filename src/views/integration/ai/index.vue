@@ -1,290 +1,234 @@
 <script lang="ts" setup>
-import { SUCCESS_CODE } from "@/api/types";
-import { onActivated, onMounted, ref } from "vue";
+import { computed, onActivated, onMounted, onUnmounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
-import { message } from "@/utils/message";
+import { SUCCESS_CODE } from "@/api/types";
 import {
   aiAssistantApi,
-  type AiSource,
+  type AiConsoleFeature,
   type AiStatus,
-  type NlInterpretResult,
-  type NlQueryDsl
+  type AiToolsResult
 } from "@/api/system/ai";
+import { useAiConsole } from "./hooks/useAiConsole";
+import AiFeatureNav, {
+  type AiFeatureEntry
+} from "./components/AiFeatureNav.vue";
+import AiChatPanel from "./components/AiChatPanel.vue";
+import DocIcon from "~icons/ep/document";
+import DataIcon from "~icons/ep/data-analysis";
+import ActionIcon from "~icons/ri/terminal-window-line";
 
+/**
+ * AI 助手控制台：微信式左右分栏（与聊天室同一套布局口径）。
+ *
+ * 左栏 = 功能导航（文档问答 / 数据查询 / 指令执行，按权限点组装）；
+ * 右栏 = 该入口的持久化消息流 + 输入区（AiChatPanel）。
+ * 三个入口各自独立的持久化消息流（服务端 AiChatMessage），切换入口
+ * 即切换消息流；窄屏（<768px）左栏折叠为抽屉。
+ *
+ * 路由/keep-alive 依赖组件名 `AiAssistant`。
+ */
 defineOptions({
   name: "AiAssistant"
 });
 
 const { t } = useI18n();
+const aiConsole = useAiConsole();
+
 const canAsk = hasAuth("ask:AiAssistant");
 const canInterpret = hasAuth("interpret:AiAssistant");
 const canRun = hasAuth("run:AiAssistant");
+const canExecute = hasAuth("actionExecute:AiAssistant");
 
 const status = ref<AiStatus | null>(null);
-const activeTab = ref("docs");
-
-/** 文档问答状态 */
-const question = ref("");
-const docLoading = ref(false);
-const messages = ref<
-  Array<{ role: "user" | "assistant"; content: string; sources?: AiSource[] }>
->([]);
-
-/** NL 查数状态：解释卡片 → 确认执行 */
-const nlQuestion = ref("");
-const nlLoading = ref(false);
-const nlResult = ref<NlInterpretResult | null>(null);
-const nlRows = ref<Record<string, unknown>[]>([]);
-const nlColumns = ref<string[]>([]);
-const nlRunning = ref(false);
-const nlRan = ref(false);
+const tools = ref<AiToolsResult | null>(null);
 
 const loadStatus = async () => {
   const res = await aiAssistantApi.status();
   if (res.code === SUCCESS_CODE) {
     status.value = res.data as unknown as AiStatus;
   }
-};
-
-const ask = async () => {
-  const text = question.value.trim();
-  if (!text || docLoading.value) return;
-  messages.value.push({ role: "user", content: text });
-  question.value = "";
-  docLoading.value = true;
-  try {
-    const res = await aiAssistantApi.ask(text);
-    if (res.code === SUCCESS_CODE) {
-      const result = res.data as unknown as {
-        answer: string;
-        sources: AiSource[];
-      };
-      messages.value.push({
-        role: "assistant",
-        content: result.answer,
-        sources: result.sources ?? []
-      });
-    } else if (res.detail) {
-      message(String(res.detail), { type: "warning" });
-    }
-  } finally {
-    docLoading.value = false;
+  const toolRes = await aiAssistantApi.tools().catch(() => null);
+  if (toolRes && toolRes.code === SUCCESS_CODE) {
+    tools.value = toolRes.data as unknown as AiToolsResult;
   }
 };
 
-const interpret = async () => {
-  const text = nlQuestion.value.trim();
-  if (!text || nlLoading.value) return;
-  nlLoading.value = true;
-  nlResult.value = null;
-  nlRows.value = [];
-  nlColumns.value = [];
-  nlRan.value = false;
-  try {
-    const res = await aiAssistantApi.nlInterpret(text);
-    if (res.code === SUCCESS_CODE) {
-      nlResult.value = res.data as unknown as NlInterpretResult;
-    } else if (res.detail) {
-      message(String(res.detail), { type: "warning" });
-    }
-  } finally {
-    nlLoading.value = false;
+const ready = computed(() =>
+  Boolean(status.value?.enabled && status.value?.configured)
+);
+
+/** 左栏入口按权限点组装（无权限的入口不出现） */
+const entries = computed<AiFeatureEntry[]>(() => {
+  const list: AiFeatureEntry[] = [];
+  if (canAsk) {
+    list.push({
+      key: "docs",
+      title: t("ai.featureDocs"),
+      description: t("ai.featureDocsDesc"),
+      icon: DocIcon
+    });
   }
-};
-
-const runQuery = async () => {
-  if (!nlResult.value || nlRunning.value) return;
-  nlRunning.value = true;
-  try {
-    const res = await aiAssistantApi.nlRun(nlResult.value.dsl as never);
-    if (res.code === SUCCESS_CODE) {
-      const data = res.data as unknown as Record<string, unknown>;
-      if (nlResult.value.mode === "aggregate") {
-        const series = (data.series as { name: string; value: number }[]) ?? [];
-        nlColumns.value = ["name", "value"];
-        nlRows.value = series.map(item => ({
-          name: item.name,
-          value: item.value
-        }));
-      } else {
-        nlColumns.value = (data.columns as string[]) ?? [];
-        nlRows.value = (data.rows as Record<string, unknown>[]) ?? [];
-      }
-      nlRan.value = true;
-    } else if (res.detail) {
-      message(String(res.detail), { type: "warning" });
-    }
-  } finally {
-    nlRunning.value = false;
+  if (canInterpret) {
+    list.push({
+      key: "nl",
+      title: t("ai.featureNl"),
+      description: t("ai.featureNlDesc"),
+      icon: DataIcon
+    });
   }
-};
+  if (canExecute) {
+    list.push({
+      key: "action",
+      title: t("ai.featureAction"),
+      description: t("ai.featureActionDesc"),
+      icon: ActionIcon
+    });
+  }
+  return list;
+});
 
-const filterText = (dsl: NlQueryDsl) => {
-  const filters = dsl.filters ?? [];
-  if (filters.length === 0) return t("ai.nlNoFilters");
-  return filters
-    .map(item => `${item.field} ${item.op} ${JSON.stringify(item.value ?? "")}`)
-    .join("; ");
-};
+const activeEntry = computed(
+  () =>
+    entries.value.find(item => item.key === aiConsole.feature.value) ??
+    entries.value[0] ??
+    null
+);
 
-onMounted(loadStatus);
+// 权限变化时当前入口可能不可见：回落第一个可用入口
+watch(entries, list => {
+  if (list.length && !list.some(item => item.key === aiConsole.feature.value)) {
+    aiConsole.feature.value = list[0].key;
+  }
+});
+
+const placeholder = computed(() => {
+  if (aiConsole.feature.value === "nl") return t("ai.nlPlaceholder");
+  if (aiConsole.feature.value === "action") return t("ai.actionPlaceholder");
+  return t("ai.askPlaceholder");
+});
+
+const emptyText = computed(() =>
+  activeEntry.value
+    ? t("ai.emptyMessages", { name: activeEntry.value.title })
+    : t("ai.emptyMessages", { name: t("ai.featureDocs") })
+);
+
+const subtitle = computed(() => {
+  if (!activeEntry.value) return "";
+  if (aiConsole.feature.value === "docs" && status.value) {
+    return `${t("ai.knowledgeChunks")}: ${status.value.chunks}`;
+  }
+  if (aiConsole.feature.value === "action" && tools.value) {
+    return t("ai.actionToolCount", { count: tools.value.tools.length });
+  }
+  return activeEntry.value.description;
+});
+
+const navFooter = computed(() => (ready.value ? t("ai.persistHint") : ""));
+
+const isNarrow = ref(false);
+const drawerVisible = ref(false);
+
+function updateViewport() {
+  isNarrow.value = window.innerWidth < 768;
+}
+
+function selectFeature(key: AiConsoleFeature) {
+  aiConsole.feature.value = key;
+  if (isNarrow.value) drawerVisible.value = false;
+}
+
+onMounted(() => {
+  updateViewport();
+  window.addEventListener("resize", updateViewport);
+  loadStatus();
+});
+
 // keep-alive 页面二次进入不重跑 onMounted，配置保存后需重新拉取状态
 onActivated(loadStatus);
+
+onUnmounted(() => {
+  window.removeEventListener("resize", updateViewport);
+});
 </script>
 
 <template>
   <div class="pr-[1%]">
     <!-- pr-[1%]：内容宽度对齐 RePlusPage 的 w-99/100（右侧留 1%），
          根元素自带 layout 注入的 main-content（24px 外边距），不能再设百分比宽度（会溢出） -->
-    <el-card shadow="never">
-      <template #header>
-        <div class="flex items-center gap-2">
-          <span class="font-semibold">{{ t("ai.title") }}</span>
-          <el-tag
-            v-if="status"
-            size="small"
-            :type="status.enabled ? 'success' : 'info'"
-          >
-            {{ status.enabled ? t("ai.on") : t("ai.off") }}
-          </el-tag>
-          <span
-            v-if="status && activeTab === 'docs'"
-            class="text-xs text-gray-400"
-          >
-            {{ t("ai.knowledgeChunks") }}: {{ status.chunks }}
-          </span>
-          <div class="flex-1" />
-          <router-link
-            v-if="status && (!status.enabled || !status.configured)"
-            to="/integration/ai/config"
-          >
-            <el-button link type="primary">{{ t("ai.goConfig") }}</el-button>
-          </router-link>
-        </div>
-      </template>
-
-      <template v-if="status && !status.enabled">
+    <template v-if="status && !status.enabled">
+      <el-card shadow="never">
         <el-empty :description="t('ai.disabledHint')" />
-      </template>
-      <template v-else-if="status && !status.configured">
-        <el-empty :description="t('ai.notConfiguredHint')" />
-      </template>
-      <el-tabs v-else v-model="activeTab">
-        <!-- 文档问答 -->
-        <el-tab-pane :label="t('ai.docsTab')" name="docs">
-          <div class="mb-3 max-h-100 overflow-auto">
-            <el-empty
-              v-if="messages.length === 0"
-              :description="t('ai.emptyHint')"
-              :image-size="60"
-            />
-            <div
-              v-for="(item, index) in messages"
-              :key="index"
-              class="mb-2 flex"
-              :class="item.role === 'user' ? 'justify-end' : 'justify-start'"
-            >
-              <div
-                class="max-w-4/5 rounded-lg px-3 py-2 text-sm"
-                :class="
-                  item.role === 'user'
-                    ? 'bg-blue-100 dark:bg-blue-900'
-                    : 'bg-gray-100 dark:bg-gray-700'
-                "
-              >
-                <div class="whitespace-pre-wrap">{{ item.content }}</div>
-                <div
-                  v-if="item.sources?.length"
-                  class="mt-2 border-t border-gray-200 pt-1 text-xs text-gray-500 dark:border-gray-600 dark:text-gray-400"
-                >
-                  <div>{{ t("ai.sources") }}:</div>
-                  <div v-for="(source, sIndex) in item.sources" :key="sIndex">
-                    [{{ sIndex + 1 }}] {{ source.title }} ({{ source.path }})
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="flex gap-2">
-            <el-input
-              v-model="question"
-              :placeholder="t('ai.askPlaceholder')"
-              :disabled="!canAsk || docLoading"
-              data-testid="ai-ask-input"
-              @keydown.enter="ask"
-            />
-            <el-button
-              type="primary"
-              :loading="docLoading"
-              :disabled="!canAsk"
-              @click="ask"
-            >
-              {{ t("ai.ask") }}
-            </el-button>
-          </div>
-        </el-tab-pane>
+      </el-card>
+    </template>
+    <template v-else-if="status && !status.configured">
+      <el-card shadow="never">
+        <el-empty :description="t('ai.notConfiguredHint')">
+          <router-link to="/integration/ai/config">
+            <el-button type="primary">{{ t("ai.goConfig") }}</el-button>
+          </router-link>
+        </el-empty>
+      </el-card>
+    </template>
+    <div
+      v-else-if="status"
+      class="flex overflow-hidden rounded bg-bg_color"
+      :style="{ height: 'calc(100vh - 164px)', minHeight: '420px' }"
+      style="border: 1px solid var(--pure-border-color)"
+      data-testid="ai-console"
+    >
+      <AiFeatureNav
+        v-if="!isNarrow"
+        class="w-70 shrink-0"
+        :entries="entries"
+        :active="aiConsole.feature.value"
+        :footer="navFooter"
+        @select="selectFeature"
+      />
 
-        <!-- 数据查询（NL 查数）：解释卡片 → 确认执行 -->
-        <el-tab-pane v-if="canInterpret" :label="t('ai.nlTab')" name="nl">
-          <div class="flex gap-2">
-            <el-input
-              v-model="nlQuestion"
-              :placeholder="t('ai.nlPlaceholder')"
-              :disabled="nlLoading"
-              data-testid="ai-nl-input"
-              @keydown.enter="interpret"
-            />
-            <el-button type="primary" :loading="nlLoading" @click="interpret">
-              {{ t("ai.nlInterpret") }}
-            </el-button>
-          </div>
+      <el-drawer
+        v-if="isNarrow"
+        v-model="drawerVisible"
+        direction="ltr"
+        size="80%"
+        :with-header="false"
+      >
+        <AiFeatureNav
+          :entries="entries"
+          :active="aiConsole.feature.value"
+          :footer="navFooter"
+          @select="selectFeature"
+        />
+      </el-drawer>
 
-          <el-alert
-            v-if="nlResult"
-            class="mt-3"
-            type="info"
-            :closable="false"
-            data-testid="ai-nl-card"
-          >
-            <template #title>
-              {{ t("ai.nlDataset") }}: {{ nlResult.dataset_name }} ·
-              {{ t("ai.nlPreview") }}: {{ nlResult.preview_count }}
-            </template>
-            <div class="text-xs">
-              {{ t("ai.nlFilters") }}: {{ filterText(nlResult.dsl) }}
-            </div>
-          </el-alert>
-          <div v-if="nlResult" class="mt-3 flex gap-2">
-            <el-button
-              v-if="canRun"
-              type="success"
-              :loading="nlRunning"
-              data-testid="ai-nl-run"
-              @click="runQuery"
-            >
-              {{ t("ai.nlRun") }}
-            </el-button>
-          </div>
-
-          <el-table
-            v-if="nlRan"
-            :data="nlRows"
-            max-height="360"
-            class="mt-3"
-            data-testid="ai-nl-result"
-          >
-            <el-table-column
-              v-for="col in nlColumns"
-              :key="col"
-              :prop="col"
-              :label="col"
-              min-width="120"
-              show-overflow-tooltip
-            />
-          </el-table>
-        </el-tab-pane>
-      </el-tabs>
-    </el-card>
+      <AiChatPanel
+        class="grow"
+        :title="activeEntry?.title ?? ''"
+        :subtitle="subtitle"
+        :placeholder="placeholder"
+        :empty-text="emptyText"
+        :disabled="!ready || !activeEntry"
+        :loading-history="aiConsole.loadingHistory.value"
+        :has-more="aiConsole.hasMore.value"
+        :loading-more="aiConsole.loadingMore.value"
+        :groups="aiConsole.messageGroups.value"
+        :active-streaming="aiConsole.activeStreaming.value"
+        :streaming="Boolean(aiConsole.activeStreaming.value)"
+        :pending-count="aiConsole.pendingCount.value"
+        :nl-running="aiConsole.nlRunning.value"
+        :nl-runnable="canRun"
+        :action-executor="aiConsole.executeAction"
+        :is-narrow="isNarrow"
+        @send="aiConsole.send"
+        @stop="aiConsole.abortStream"
+        @load-more="aiConsole.loadMore"
+        @scroll="aiConsole.onScroll"
+        @scroll-to-bottom="aiConsole.scrollToBottom"
+        @scroller="el => (aiConsole.scroller.value = el)"
+        @toggle-nav="drawerVisible = true"
+        @run-nl="dsl => aiConsole.runNl(dsl)"
+      />
+    </div>
   </div>
 </template>

@@ -207,3 +207,147 @@ test("AI 配置页展示 AI 动作灰度开关", async ({ page }) => {
     timeout: 20_000
   });
 });
+
+test("AI 受限动作：/do 发全体公告 → 确认卡片 → 执行发布", async ({ page }) => {
+  await login(page);
+  await enableAiAction(page);
+
+  const input = await openAiRoom(page);
+  await input.fill("/do 发个全体公告，内容是大家好");
+  await input.press("Enter");
+
+  // 确认卡片：断言参数值（与界面语言无关；label 文案随服务端 gettext 语言变化）
+  const card = page.locator('[data-testid="chat-action-card"]').last();
+  await expect(card).toBeVisible({ timeout: 20_000 });
+  await expect(card.getByText("E2E 系统公告")).toBeVisible();
+  await card.locator('[data-testid="chat-action-confirm"]').click();
+
+  // 结果回执（system 消息）
+  await expect(page.getByText("操作成功").last()).toBeVisible({
+    timeout: 20_000
+  });
+  // 公告确已落库（title icontains 过滤可查；双浏览器共享库允许存在历史同名公告）
+  const list = await jsonRequest(
+    page,
+    "get",
+    "/api/notifications/notice-messages?title=E2E"
+  );
+  expect(list.code).toBe(1000);
+  expect(JSON.stringify(list.data)).toContain("E2E 系统公告");
+});
+
+test("AI 受限动作：/do 禁用用户 → 确认卡片 → 执行（复用现有用户接口）", async ({
+  page
+}) => {
+  await login(page);
+  await enableAiAction(page);
+
+  // 目标用户（API 创建，随机名避免双浏览器共享库冲突）
+  const username = `e2e_ai_target_${Date.now()}`;
+  const created = await jsonRequest(page, "post", "/api/system/user", {
+    username,
+    nickname: `AI目标${Date.now() % 100000}`,
+    password: "Test@123456"
+  });
+  expect(created.code).toBe(1000);
+
+  const input = await openAiRoom(page);
+  await input.fill(`/do 禁用用户 ${username}`);
+  await input.press("Enter");
+
+  // 确认卡片：断言目标用户名（声明式动作，服务端把用户名解析为具体用户）
+  const card = page.locator('[data-testid="chat-action-card"]').last();
+  await expect(card).toBeVisible({ timeout: 20_000 });
+  await expect(card.getByText(username).first()).toBeVisible();
+  await card.locator('[data-testid="chat-action-confirm"]').click();
+  await expect(page.getByText("操作成功").last()).toBeVisible({
+    timeout: 20_000
+  });
+
+  // 落库断言：目标用户 is_active 已置 false（复用既有 PATCH /api/system/user/<pk> 的真实写入）
+  const list = await jsonRequest(
+    page,
+    "get",
+    `/api/system/user?username=${username}`
+  );
+  expect(list.code).toBe(1000);
+  expect(JSON.stringify(list.data)).toContain('"is_active":false');
+});
+
+test("AI 受限动作：/do 多步串联 → 两张确认卡片逐项执行", async ({ page }) => {
+  test.setTimeout(150_000);
+  await login(page);
+  await enableAiAction(page);
+
+  const input = await openAiRoom(page);
+  // 执行基线：每次动作执行写一条 AI:action 审计行（API 查询，双浏览器并行下
+  // 计数只增不减，用 >= 基线+2 容忍并行噪声；WS 回执计数在本房间不可靠）
+  const auditCount = async () => {
+    const res = await jsonRequest(
+      page,
+      "get",
+      "/api/system/logs/operation?module=AI%3Aaction&page_size=1"
+    );
+    expect(res.code).toBe(1000);
+    return Number(res.data?.total ?? 0);
+  };
+  const beforeAudits = await auditCount();
+
+  await input.fill("/do 串联：发个全体公告，再把我的消息全部标记已读");
+  await input.press("Enter");
+
+  // 多草稿契约：一次产出两张确认卡片（action_drafts 逐项渲染，各自独立确认）。
+  // 共享库存在历史卡片：按「本 run 唯一的公告标题」过滤后取 .last()（最新一条）。
+  const cards = page.locator('[data-testid="chat-action-card"]');
+  const publishCard = cards.filter({ hasText: "E2E 串联公告" }).last();
+  const readCard = cards.filter({ hasText: "标记全部消息已读" }).last();
+  await expect(publishCard).toBeVisible({ timeout: 20_000 });
+  await expect(readCard).toBeVisible({ timeout: 20_000 });
+
+  await publishCard.locator('[data-testid="chat-action-confirm"]').click();
+  await readCard.locator('[data-testid="chat-action-confirm"]').click();
+  await expect
+    .poll(auditCount, { timeout: 30_000, intervals: [1_000, 2_000, 5_000] })
+    .toBeGreaterThanOrEqual(beforeAudits + 2);
+
+  // 落库断言：串联公告确已发布（title icontains 过滤，共享库允许历史同名）
+  const list = await jsonRequest(
+    page,
+    "get",
+    "/api/notifications/notice-messages?title=E2E 串联"
+  );
+  expect(list.code).toBe(1000);
+  expect(JSON.stringify(list.data)).toContain("E2E 串联公告");
+});
+
+test("AI 受限动作：/do 查询用户数 → 结果表渲染（dashboard.overview）", async ({
+  page
+}) => {
+  await login(page);
+  await enableAiAction(page);
+
+  const input = await openAiRoom(page);
+  await input.fill("/do 系统里有多少用户数？");
+  await input.press("Enter");
+
+  // 确认卡片 → 确认执行（只读动作）
+  const cards = page.locator('[data-testid="chat-action-card"]');
+  const card = cards.filter({ hasText: "首页统计" }).last();
+  await expect(card).toBeVisible({ timeout: 20_000 });
+  await card.locator('[data-testid="chat-action-confirm"]').click();
+
+  // 结果表渲染（回归：dashboard.overview 曾只显示 detail 文案看不到数据）
+  // 执行回执是 system 消息，action_result 挂在回执上 → 结果表跟在回执下方
+  const table = page
+    .locator('[data-testid="chat-messages"]')
+    .locator('[data-testid="ai-result-table"]')
+    .last();
+  await expect(table).toBeVisible({ timeout: 30_000 });
+  await expect(table.getByText("用户数量")).toBeVisible();
+  // 用户数量行有真实数值（非空）
+  const valueCell = table
+    .locator("tr", { hasText: "用户数量" })
+    .locator("td")
+    .nth(1);
+  await expect(valueCell).not.toHaveText("");
+});

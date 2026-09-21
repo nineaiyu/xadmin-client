@@ -33,6 +33,7 @@ import {
   ElColorPicker,
   ElCollapse,
   ElCollapseItem,
+  ElCollapseTransition,
   ElConfigProvider,
   ElContainer,
   ElDatePicker,
@@ -121,6 +122,7 @@ import "element-plus/es/components/color-picker/style/css";
 import "element-plus/es/components/col/style/css";
 import "element-plus/es/components/collapse/style/css";
 import "element-plus/es/components/collapse-item/style/css";
+import "element-plus/es/components/collapse-transition/style/css";
 import "element-plus/es/components/config-provider/style/css";
 import "element-plus/es/components/container/style/css";
 import "element-plus/es/components/date-picker/style/css";
@@ -203,6 +205,7 @@ const components = [
   ElColorPicker,
   ElCollapse,
   ElCollapseItem,
+  ElCollapseTransition,
   ElConfigProvider,
   ElContainer,
   ElDatePicker,

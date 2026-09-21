@@ -55,7 +55,12 @@ export function useChat() {
   const loadingHistory = ref(false);
   const loadingMore = ref(false);
   /** AI 流式回答（SSE）：roomId 为归属会话，content 为已到达的增量拼接 */
-  const streaming = ref<{ roomId: number; content: string } | null>(null);
+  const streaming = ref<{
+    roomId: number;
+    content: string;
+    /** 思考增量（思考型模型，实时上屏到思考面板） */
+    reasoning: string;
+  } | null>(null);
   const connected = ref(false);
   const socket = ref<WS>();
   const me = ref({ pk: 0, username: "", avatar: "" });
@@ -334,7 +339,7 @@ export function useChat() {
   }
 
   /**
-   * AI 流式提问（SSE，二期）：增量写入 streaming 气泡；
+   * AI 流式提问（SSE，二期）：思考增量与回答增量分别写入 streaming 气泡；
    * done/error 帧带回正式载荷（服务端落库 + WS 广播，多端经 upsertMessage 对齐）。
    */
   async function sendAi(content: string) {
@@ -344,7 +349,7 @@ export function useChat() {
     const roomId = activeRoomId.value;
     pushOptimistic(text, clientMsgId);
     scrollToBottom();
-    streaming.value = { roomId, content: "" };
+    streaming.value = { roomId, content: "", reasoning: "" };
     streamAbort = new AbortController();
     try {
       await streamAiMessage(
@@ -353,6 +358,11 @@ export function useChat() {
           onMeta: data => {
             // 问题回执：以服务端正式载荷对齐乐观上屏（id/created_time）
             if (data?.question) upsertMessage(data.question);
+          },
+          onReasoning: delta => {
+            if (!streaming.value) return;
+            streaming.value.reasoning += delta;
+            if (atBottom.value) scrollToBottom();
           },
           onDelta: delta => {
             if (!streaming.value) return;
@@ -478,7 +488,9 @@ export function useChat() {
     recall,
     markRead,
     isMine,
-    upsertMessage
+    upsertMessage,
+    /** 停止生成：中断进行中的 AI 流（已到达增量随 streaming 复位丢弃） */
+    abortStream
   };
 }
 

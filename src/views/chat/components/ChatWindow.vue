@@ -24,6 +24,7 @@ import {
 import MessageBubble from "./MessageBubble.vue";
 import ChatEmojiPanel from "./ChatEmojiPanel.vue";
 import ChatGroupMembersPanel from "./ChatGroupMembersPanel.vue";
+import AiMessageBlock from "@/components/AiMessageBlock/index.vue";
 
 /**
  * 右栏：会话头部 + 消息区（时间分组 / 向上加载 / 新消息悬浮条 / AI 流式气泡）+ 输入区。
@@ -45,8 +46,8 @@ const props = defineProps<{
   loading: boolean;
   hasMore: boolean;
   loadingMore: boolean;
-  /** AI 流式回答（SSE）：roomId 为归属会话，content 为已到达增量 */
-  streaming: { roomId: number; content: string } | null;
+  /** AI 流式回答（SSE）：roomId 为归属会话，reasoning/content 为已到达增量 */
+  streaming: { roomId: number; content: string; reasoning: string } | null;
   connected: boolean;
   pendingCount: number;
   isNarrow: boolean;
@@ -61,6 +62,8 @@ const emit = defineEmits<{
   scrollToBottom: [];
   scroller: [HTMLElement | null];
   toggleSidebar: [];
+  /** 停止生成（中断进行中的 AI 流式响应） */
+  stopStream: [];
   /** 群信息变更（改名 / 成员增减）后回传最新会话行 */
   roomChanged: [ChatRoomItem];
   /** 退出群聊成功（携带被退出的会话主键） */
@@ -312,7 +315,7 @@ watch(
         />
       </template>
 
-      <!-- AI 流式回答气泡（SSE 增量逐字上屏；首个增量到达前显示思考占位） -->
+      <!-- AI 流式回答气泡（SSE 增量逐字上屏；思考增量到达后先展示思考面板） -->
       <div
         v-if="activeStreaming"
         class="flex gap-2 px-2 py-1.5"
@@ -325,15 +328,23 @@ watch(
           <div class="mb-1 text-xs text-(--el-text-color-secondary)">
             {{ t("chat.aiAssistant") }}
           </div>
-          <div
-            class="rounded-lg bg-(--el-fill-color-light) px-3 py-2 text-sm wrap-break-word whitespace-pre-wrap text-(--el-text-color-primary)"
-          >
-            <template v-if="activeStreaming.content">
-              {{ activeStreaming.content }}<span class="chat-cursor">▍</span>
-            </template>
-            <span v-else class="animate-pulse">
-              {{ t("chat.thinking") }}
-            </span>
+          <!-- 与 AI 助手页同一套布局：思考面板 + 流式正文 + 光标 -->
+          <AiMessageBlock
+            :reasoning="activeStreaming.reasoning"
+            :content="activeStreaming.content"
+            streaming
+          />
+          <!-- 停止生成：思考型模型输出可能较长，允许用户中断（已到达增量不落库） -->
+          <div class="mt-1">
+            <el-button
+              link
+              type="info"
+              size="small"
+              data-testid="chat-stream-stop"
+              @click="emit('stopStream')"
+            >
+              {{ t("chat.stopGenerating") }}
+            </el-button>
           </div>
         </div>
       </div>
@@ -405,19 +416,3 @@ watch(
     </div>
   </div>
 </template>
-
-<style lang="scss" scoped>
-/* AI 流式输出的光标闪烁（SSE 增量逐字上屏） */
-.chat-cursor {
-  display: inline-block;
-  margin-left: 1px;
-  color: var(--el-color-primary);
-  animation: chat-cursor-blink 1s step-end infinite;
-}
-
-@keyframes chat-cursor-blink {
-  50% {
-    opacity: 0;
-  }
-}
-</style>
