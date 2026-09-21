@@ -8,6 +8,18 @@ export type FlowVersionRow = {
   created_time: string;
 };
 
+/** 当前节点进度（比例会签的达标线预览）：required 为达标所需通过数，与后端 engine 同口径 */
+export type NodeProgress = {
+  approve_type: string;
+  approve_ratio: number;
+  total: number;
+  approved: number;
+  pending: number;
+  rejected: number;
+  required: number;
+  reached: boolean;
+};
+
 class ApprovalFlowApi extends BaseApi {
   // 标准 CRUD 由 BaseApi 提供（list/create/retrieve/partialUpdate/destroy）
 
@@ -88,6 +100,21 @@ class ApprovalInstanceApi extends BaseApi {
     );
   };
 
+  /** 转交（把我的当前待办交给指定用户处理；task 缺省取当前待办） */
+  transfer = (
+    pk: string | number,
+    username: string,
+    comment?: string,
+    task?: string
+  ) => {
+    return this.request<DetailResult>(
+      "post",
+      {},
+      { username, comment, task },
+      `${this.baseApi}/${pk}/transfer`
+    );
+  };
+
   /** 批量通过 */
   batchApprove = (pks: Array<string | number>, comment?: string) => {
     return this.request<BaseResult>(
@@ -105,6 +132,20 @@ class ApprovalInstanceApi extends BaseApi {
       {},
       { pks, reason },
       `${this.baseApi}/batch-reject`
+    );
+  };
+
+  /** 批量转交：勾选的待办一次性转给同一用户（逐条独立，返回成功数与失败明细） */
+  batchTransfer = (
+    pks: Array<string | number>,
+    username: string,
+    comment?: string
+  ) => {
+    return this.request<DetailResult>(
+      "post",
+      {},
+      { pks, username, comment },
+      `${this.baseApi}/batch-transfer`
     );
   };
 

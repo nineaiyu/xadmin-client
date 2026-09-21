@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { approvalInstanceApi } from "@/api/system/approvalFlow";
+import type { NodeProgress } from "@/api/system/approvalFlow";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";
 
 /**
@@ -40,6 +41,8 @@ type InstanceDetailData = {
   status?: DictValue;
   creator?: RelatedUser;
   current_node_name?: string;
+  /** 当前节点进度（比例会签达标线预览；非审批中实例为 null） */
+  node_progress?: NodeProgress | null;
   reason?: string;
   finished_at?: string;
   created_time?: string;
@@ -94,6 +97,32 @@ async function load() {
 const statusOf = (value?: DictValue) =>
   typeof value === "object" && value !== null ? value : undefined;
 
+/** 节点进度（比例会签达标线预览）：审批中且有当前节点时由服务端下发 */
+const nodeProgress = computed(() => detail.value?.node_progress ?? null);
+/** 进度计数文案：已通过 X / 需 Y 人（候选 Z） */
+const progressCount = computed(() => {
+  const progress = nodeProgress.value;
+  if (!progress) return "";
+  return t("systemApprovalInstance.progressCount", {
+    approved: progress.approved,
+    required: progress.required,
+    total: progress.total
+  });
+});
+/** 审批类型提示：比例会签给达标线，或签/会签给规则说明 */
+const progressHint = computed(() => {
+  const progress = nodeProgress.value;
+  if (!progress) return "";
+  if (progress.approve_type === "RATIO") {
+    return t("systemApprovalInstance.progressRatioHint", {
+      ratio: progress.approve_ratio
+    });
+  }
+  return progress.approve_type === "OR"
+    ? t("systemApprovalInstance.progressOrHint")
+    : t("systemApprovalInstance.progressAndHint");
+});
+
 onMounted(load);
 </script>
 <template>
@@ -133,6 +162,22 @@ onMounted(load);
           :label="t('systemApprovalInstance.formCreatedTime')"
         >
           {{ detail.created_time ?? "-" }}
+        </el-descriptions-item>
+        <el-descriptions-item
+          v-if="nodeProgress"
+          :label="t('systemApprovalInstance.nodeProgress')"
+          :span="2"
+        >
+          <div class="flex items-center gap-2">
+            <el-tag
+              :type="nodeProgress.reached ? 'success' : 'warning'"
+              size="small"
+              data-testid="node-progress-tag"
+            >
+              {{ progressCount }}
+            </el-tag>
+            <span class="text-[13px] text-gray-500">{{ progressHint }}</span>
+          </div>
         </el-descriptions-item>
         <el-descriptions-item
           v-if="detail.reason"

@@ -6,14 +6,15 @@ import { useInstanceActions } from "./useInstanceActions";
 import { useInstanceButtons } from "./useInstanceButtons";
 import { useInstanceColumnFormats } from "./useInstanceColumnFormats";
 
-export type InstanceScope = "pending" | "mine" | "done";
+/** 页签取值域；ongoing = 全部在途（管理视角，按 ongoing 权限点显示） */
+export type InstanceScope = "pending" | "mine" | "done" | "ongoing";
 
 // 页面级复用入口（index.vue / 面板按钮经此导入，保持原导出路径不变）
 export { openStartInstanceDialog, openInstanceDetail } from "./instanceDialogs";
 
 /**
- * 流程审批面板公共装配（待我审批 / 我的申请 / 已办三页签同构；拆分自 493 行单体）：
- * - useInstanceActions        审批动作弹窗（驳回/加签/批量驳回）
+ * 流程审批面板公共装配（待我审批 / 我的申请 / 已办 / 全部在途四页签同构）：
+ * - useInstanceActions        审批动作弹窗（驳回/加签/转交/批量驳回）
  * - useInstanceButtons        行内/工具栏按钮组
  * - useInstanceColumnFormats  状态列与当前节点列渲染
  * - instanceDialogs           发起申请弹窗与详情抽屉（页面级复用）
@@ -34,9 +35,14 @@ export function useInstancePanel(
     "cancel",
     "urge",
     "addSign",
+    "transfer",
+    "ongoing",
     "batchApprove",
     "batchReject",
-    "create"
+    "batchTransfer",
+    "create",
+    // 导出按钮由框架内建（usePlusPageButtons 读 auth.exportData 决定显示与异步开关）
+    "exportData"
   ]);
   // 自定义权限码先声明默认值再展开（与 demo/book、system/role 同范式）：
   // UnwrapNestedRefs 会丢掉索引签名，不显式声明时 auth.approve 等取用会报 TS2339；
@@ -47,9 +53,13 @@ export function useInstancePanel(
     cancel: false,
     urge: false,
     addSign: false,
+    transfer: false,
+    ongoing: false,
     batchApprove: false,
     batchReject: false,
+    batchTransfer: false,
     create: false,
+    exportData: false,
     ...baseAuth
   });
   const { t } = useI18n();
@@ -71,6 +81,8 @@ export function useInstancePanel(
     openUrge,
     openReject,
     openAddSign,
+    openTransfer,
+    openBatchTransfer,
     openBatchReject
   } = useInstanceActions({ t, refresh, tableRef });
   const { operationButtonsProps, tableBarButtonsProps } = useInstanceButtons({
@@ -84,6 +96,8 @@ export function useInstancePanel(
       openUrge,
       openReject,
       openAddSign,
+      openTransfer,
+      openBatchTransfer,
       openBatchReject
     },
     onStarted

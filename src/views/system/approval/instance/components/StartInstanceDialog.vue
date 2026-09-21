@@ -199,6 +199,7 @@ onMounted(loadFlows);
       <el-form-item :label="t('systemApprovalInstance.formTitle')" prop="title">
         <el-input
           v-model="form.title"
+          class="w-full"
           maxlength="128"
           :placeholder="t('systemApprovalInstance.titlePlaceholder')"
         />
@@ -233,6 +234,7 @@ onMounted(loadFlows);
         <el-input
           v-else
           v-model="form.values[field.key]"
+          class="w-full"
           :type="field.type === 'textarea' ? 'textarea' : 'text'"
           :rows="3"
           :placeholder="t('systemApprovalInstance.fieldPlaceholder')"

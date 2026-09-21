@@ -15,13 +15,13 @@ import { openTaskCenterDrawer } from "@/views/system/components/taskCenterDrawer
 const { t } = useI18n();
 
 /**
- * 顶栏铃铛角标 = 未读站内信 + 待我审批数 + 进行中的异步记录数（导出/导入/任务执行）。
+ * 顶栏铃铛角标 = 未读站内信 + 待我审批数（轻量审批 + 流程实例） + 进行中的异步记录数。
  *
- * 两类计数都走轻量接口（60s 轮询 + 服务端 10s 短缓存），无对应权限码的用户
+ * 所有计数都走轻量接口（60s 轮询 + 服务端 10s 短缓存），无对应权限码的用户
  * 不发起请求、计数恒为 0（见 utils/approvalBadge 与 utils/taskCenter）。
  * 失败记录不计入角标（会在近 30 天窗口内长期滞留，制造噪声），只在任务中心抽屉里展示。
  */
-const { pendingCount } = useApprovalBadge();
+const { totalPendingCount: pendingCount } = useApprovalBadge();
 const { runningCount } = useTaskCenter();
 const badgeCount = computed(
   () =>

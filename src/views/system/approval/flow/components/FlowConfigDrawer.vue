@@ -174,7 +174,11 @@ onMounted(initFromFlow);
       ref="canvasRef"
       :nodes="nodes"
     />
-    <FlowNodesEditor v-show="editMode === 'list'" :nodes="nodes" />
+    <FlowNodesEditor
+      v-show="editMode === 'list'"
+      :nodes="nodes"
+      :fields="fields"
+    />
 
     <div class="flex justify-end mt-4">
       <el-button @click="emit('close')">{{ t("buttons.cancel") }}</el-button>

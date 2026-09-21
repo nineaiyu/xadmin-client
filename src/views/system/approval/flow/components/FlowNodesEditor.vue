@@ -1,20 +1,103 @@
 <script lang="ts" setup>
-import { h, ref } from "vue";
+import { h, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { SUCCESS_CODE } from "@/api/types";
+import { hasAuth } from "@/router/utils";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
+import { fetchAllRows } from "@/utils/fetchAllRows";
+import { listRows } from "@/api/base";
+import { searchUserApi } from "@/api/system/search";
+import { roleApi } from "@/api/system/role";
 import {
   ASSIGNEE_TYPES,
   CONDITION_OPS,
   createEmptyNode,
+  type FieldRow,
   type NodeRow
 } from "./flowConfig";
 import RouteEditorForm from "./RouteEditorForm.vue";
 
 /** 审批节点编辑表格（顺序 + 策略 OR/AND/RATIO + 审批人解析 + 节点条件 + 出口路由 + 超时）；就地编辑父组件传入的行数组 */
-defineProps<{ nodes: NodeRow[] }>();
+const props = defineProps<{ nodes: NodeRow[]; fields?: FieldRow[] }>();
 
 const { t } = useI18n();
+
+/* ---------------- 审批人选择器（避免裸文本输错用户名/角色码） ---------------- */
+
+/** 无对应用户/角色查询权限时降级为纯文本输入（不产生 403 噪声） */
+const canSearchUser = hasAuth("list:SearchUser");
+const canListRole = hasAuth("list:SystemRole");
+
+const userOptions = ref<Array<{ username: string; label: string }>>([]);
+const userLoading = ref(false);
+const roleOptions = ref<Array<{ name: string; code: string }>>([]);
+
+/** 逗号分隔串 ↔ 多选数组（服务端契约：assignee_value 为逗号分隔串） */
+function splitValues(value: string): string[] {
+  return String(value || "")
+    .split(",")
+    .map(item => item.trim())
+    .filter(Boolean);
+}
+
+function joinValues(values: unknown): string {
+  return (Array.isArray(values) ? values : [values]).map(String).join(",");
+}
+
+/** el-select 多选回写：事件载荷是宽联合、el-table 的 row 是 DefaultRow，统一按行号写回 */
+function updateMultiValue(index: number, value: unknown) {
+  const node = props.nodes[index];
+  if (node) node.assignee_value = joinValues(value);
+}
+
+/** 已选用户并入选项：未搜索时也能看到已选人员（后端只存用户名，无法反查昵称） */
+function ensureUserOption(username: string) {
+  if (!username) return;
+  if (!userOptions.value.some(item => item.username === username)) {
+    userOptions.value.push({ username, label: username });
+  }
+}
+
+async function searchUsers(query: string) {
+  if (!canSearchUser || !query) return;
+  userLoading.value = true;
+  try {
+    const res = await searchUserApi.list({
+      page: 1,
+      size: 20,
+      username: query
+    });
+    if (res.code === SUCCESS_CODE && res.data) {
+      const rows = listRows<{ username: string; nickname?: string }>(
+        res as never
+      );
+      const fetched = rows.map(user => ({
+        username: user.username,
+        label: user.nickname
+          ? `${user.nickname}(${user.username})`
+          : user.username
+      }));
+      const fetchedNames = new Set(fetched.map(item => item.username));
+      userOptions.value = [
+        ...fetched,
+        ...userOptions.value.filter(item => !fetchedNames.has(item.username))
+      ];
+    }
+  } catch {
+    // 搜索失败保持已选选项，不打断编辑
+  } finally {
+    userLoading.value = false;
+  }
+}
+
+onMounted(async () => {
+  if (!canListRole) return;
+  const res = await fetchAllRows(roleApi.list).catch(() => null);
+  if (res && res.code === SUCCESS_CODE && res.data) {
+    roleOptions.value = listRows<{ name: string; code: string }>(res as never);
+  }
+});
 
 /** 分支路由编辑（C5：统一走 ReDialog，路由表格在 RouteEditorForm 中） */
 const routeFormRef = ref<InstanceType<typeof RouteEditorForm>>();
@@ -136,11 +219,74 @@ function assigneeHint(type: string): string {
         :label="t('systemApprovalFlow.assigneeValue')"
         min-width="150"
       >
-        <template #default="{ row }">
+        <template #default="{ row, $index }">
+          <!-- leader：由申请人部门负责人解析，无需填写 -->
           <el-input
+            v-if="row.assignee_type === 'leader'"
             v-model="row.assignee_value"
             size="small"
-            :disabled="row.assignee_type === 'leader'"
+            disabled
+            :placeholder="t('systemApprovalFlow.assigneeHint_leader')"
+          />
+          <!-- 指定用户：按用户名远程搜索多选（值=用户名，逗号分隔）；无查询权限时回退文本 -->
+          <el-select
+            v-else-if="row.assignee_type === 'user' && canSearchUser"
+            :model-value="splitValues(row.assignee_value)"
+            multiple
+            filterable
+            remote
+            reserve-keyword
+            size="small"
+            :remote-method="searchUsers"
+            :loading="userLoading"
+            :placeholder="t('systemApprovalFlow.assigneeHint_user')"
+            @focus="splitValues(row.assignee_value).forEach(ensureUserOption)"
+            @update:model-value="value => updateMultiValue($index, value)"
+          >
+            <el-option
+              v-for="user in userOptions"
+              :key="user.username"
+              :label="user.label"
+              :value="user.username"
+            />
+          </el-select>
+          <!-- 角色：按角色名多选（值=角色编码）；无角色查询权限时回退文本 -->
+          <el-select
+            v-else-if="row.assignee_type === 'role' && canListRole"
+            :model-value="splitValues(row.assignee_value)"
+            multiple
+            filterable
+            size="small"
+            :placeholder="t('systemApprovalFlow.assigneeHint_role')"
+            @update:model-value="value => updateMultiValue($index, value)"
+          >
+            <el-option
+              v-for="role in roleOptions"
+              :key="role.code"
+              :label="role.name"
+              :value="role.code"
+            />
+          </el-select>
+          <!-- 表单字段：单选（值=字段 key，来自本流程已配置的表单字段） -->
+          <el-select
+            v-else-if="row.assignee_type === 'field' && (fields ?? []).length"
+            v-model="row.assignee_value"
+            size="small"
+            clearable
+            :placeholder="t('systemApprovalFlow.assigneeHint_field')"
+          >
+            <el-option
+              v-for="field in fields"
+              :key="field.key"
+              :label="field.label || field.key"
+              :value="field.key"
+            />
+          </el-select>
+          <!-- 兜底：未知类型 / 无查询权限 / 字段未配置 → 纯文本输入 -->
+          <el-input
+            v-else
+            v-model="row.assignee_value"
+            size="small"
             :placeholder="t(assigneeHint(row.assignee_type))"
           />
         </template>

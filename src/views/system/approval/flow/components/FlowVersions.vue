@@ -3,6 +3,7 @@ import { SUCCESS_CODE } from "@/api/types";
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { hasAuth } from "@/router/utils";
 import {
   approvalFlowApi,
   type FlowVersionRow
@@ -20,6 +21,9 @@ const emit = defineEmits<{ rollback: [] }>();
 const { t } = useI18n();
 const loading = ref(false);
 const rows = ref<FlowVersionRow[]>([]);
+
+/** 回滚是独立权限点（rollback:SystemApprovalFlow）：无权限时隐藏按钮而非请求 403 */
+const canRollback = hasAuth("rollback:SystemApprovalFlow");
 
 const fetchVersions = () => {
   loading.value = true;
@@ -100,7 +104,7 @@ onMounted(fetchVersions);
       <el-table-column width="90" align="center">
         <template #default="{ row, $index }">
           <el-button
-            v-if="$index !== 0"
+            v-if="$index !== 0 && canRollback"
             link
             type="warning"
             size="small"
@@ -108,7 +112,7 @@ onMounted(fetchVersions);
           >
             {{ t("systemApprovalFlow.rollbackTitle") }}
           </el-button>
-          <el-tag v-else size="small" type="success">
+          <el-tag v-else-if="$index === 0" size="small" type="success">
             {{ t("systemApprovalFlow.versionCurrent") }}
           </el-tag>
         </template>

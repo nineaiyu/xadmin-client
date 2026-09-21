@@ -5,6 +5,7 @@ import {
   type DialogOptions
 } from "@/components/ReDialog";
 import { addDrawer } from "@/components/ReDrawer";
+import { dialogSize } from "@/components/ReDialog/size";
 import StartInstanceDialog from "../components/StartInstanceDialog.vue";
 import InstanceDetail from "../components/InstanceDetail.vue";
 
@@ -32,7 +33,8 @@ export function openStartInstanceDialog(
   };
   const options: DialogOptions = {
     title,
-    width: "560px",
+    // 档位口径（T6 治理）：常规表单弹窗用 md；动态表单字段数不定，留足输入宽度
+    width: dialogSize("md"),
     draggable: true,
     closeOnClickModal: false,
     hideFooter: true,

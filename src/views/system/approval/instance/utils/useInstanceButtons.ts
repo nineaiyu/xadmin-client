@@ -27,10 +27,18 @@ export type InstanceAuth = {
   cancel: boolean;
   urge: boolean;
   addSign: boolean;
+  transfer: boolean;
+  ongoing: boolean;
   batchApprove: boolean;
   batchReject: boolean;
+  batchTransfer: boolean;
   create: boolean;
+  /** 导出走框架内建按钮（auth.exportData 控制显示），此处仅声明形状 */
+  exportData: boolean;
 };
+
+/** 行数据是否含「我的当前待办」（服务端 my_task 口径：仅当前节点、指派给我、审批中） */
+const hasMyTask = (row: { my_task?: unknown }) => !!row.my_task;
 
 const statusValue = (row: { status?: { value?: string } | string }) =>
   (row.status as { value?: string })?.value ?? row.status;
@@ -54,6 +62,8 @@ export function useInstanceButtons({
     openUrge: (row: { pk?: string | number; title?: string }) => void;
     openReject: (row: { pk?: string | number; title?: string }) => void;
     openAddSign: (row: { pk?: string | number; title?: string }) => void;
+    openTransfer: (row: { pk?: string | number; title?: string }) => void;
+    openBatchTransfer: () => void;
     openBatchReject: () => void;
   };
   /** 发起申请成功后的页面级回调（切页签/刷新角标），由 InstancePanel 从父页面透传 */
@@ -123,7 +133,21 @@ export function useInstanceButtons({
       link: true
     },
     onClick: ({ row }) => actions.openAddSign(row),
-    show: auth.addSign && 4
+    // 仅有我的当前待办时可用（或签节点会被服务端以可读原因拒绝并引导转交）
+    show: (row: { my_task?: unknown }) => auth.addSign && hasMyTask(row) && 4
+  };
+
+  /** 转交（待办页签）：把我的当前待办交给他人处理（一次性，区别于长期委托） */
+  const transferButton: OperationButtonsRow = {
+    text: t("systemApprovalInstance.transfer"),
+    code: "transfer",
+    props: {
+      type: "warning",
+      icon: useRenderIcon(Refresh),
+      link: true
+    },
+    onClick: ({ row }) => actions.openTransfer(row),
+    show: (row: { my_task?: unknown }) => auth.transfer && hasMyTask(row) && 3
   };
 
   const cancelButton: OperationButtonsRow = {
@@ -203,16 +227,25 @@ export function useInstanceButtons({
       auth.create && statusValue(row) === "REJECTED"
   };
 
-  /** 行内按钮：待办=通过/驳回/加签；我的申请=撤回/催办/重提；已办/详情=只读 */
+  /** 行内按钮：待办=通过/驳回/加签/转交；我的申请=撤回/催办/重提；
+   *  全部在途（管理视角）=催办/详情；已办=只读 */
   const operationButtonsProps = shallowRef<OperationProps>({
     // 按钮全部内联（内置查看 + 业务动作），避免折叠进「更多」
     showNumber: 6,
     buttons:
       scope === "pending"
-        ? [approveButton, rejectButton, addSignButton, detailButton]
+        ? [
+            approveButton,
+            rejectButton,
+            addSignButton,
+            transferButton,
+            detailButton
+          ]
         : scope === "mine"
           ? [cancelButton, urgeButton, resubmitButton, detailButton]
-          : [detailButton]
+          : scope === "ongoing"
+            ? [urgeButton, detailButton]
+            : [detailButton]
   });
 
   const batchApproveButton: OperationButtonsRow = {
@@ -240,11 +273,26 @@ export function useInstanceButtons({
     show: auth.batchReject
   };
 
-  /** 工具栏：发起申请（所有页签）+ 批量（仅待办页签） */
+  /** 批量转交（待办页签）：勾选的多条待办一次交给同一人（区别于逐条转交） */
+  const batchTransferButton: OperationButtonsRow = {
+    text: t("systemApprovalInstance.batchTransfer"),
+    code: "batchTransfer",
+    props: {
+      type: "warning",
+      icon: useRenderIcon(Refresh),
+      plain: true
+    },
+    onClick: () => actions.openBatchTransfer(),
+    show: auth.batchTransfer
+  };
+
+  /** 工具栏：发起申请（所有页签）+ 批量（仅待办页签；导出由框架按 auth.exportData 内建） */
   const tableBarButtonsProps = shallowRef<OperationProps>({
     buttons: [
       startButton,
-      ...(scope === "pending" ? [batchApproveButton, batchRejectButton] : [])
+      ...(scope === "pending"
+        ? [batchApproveButton, batchRejectButton, batchTransferButton]
+        : [])
     ]
   });
 

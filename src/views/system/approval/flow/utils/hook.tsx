@@ -42,6 +42,9 @@ export function useFlow(tableRef: Ref) {
   const canUpdate =
     hasAuth("partialUpdate:SystemApprovalFlow") ||
     hasAuth("update:SystemApprovalFlow");
+  // 版本历史与回滚是独立权限点（versions/rollback），与编辑权限互不蕴含：
+  // 用编辑权限判断会让只有 partialUpdate 的角色点开抽屉后回滚 403
+  const canViewVersions = hasAuth("versions:SystemApprovalFlow");
   const api = reactive(approvalFlowApi);
 
   const openConfig = (row?: Partial<FlowRow> | null) => {
@@ -125,7 +128,7 @@ export function useFlow(tableRef: Ref) {
           link: true
         },
         onClick: ({ row }) => openVersions(row as FlowRow),
-        show: canUpdate && 40
+        show: canViewVersions && 40
       }
     ]
   });

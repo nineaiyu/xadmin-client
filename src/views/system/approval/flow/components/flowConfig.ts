@@ -150,6 +150,16 @@ export function validateFlowConfig(
   if (badRatio) {
     return "systemApprovalFlow.ratioRangeRequired";
   }
+  // 审批人必填（leader 由申请人部门负责人解析，无需填写）：
+  // 缺值时保存会拿到后端 400，前端先行拦截给出可读提示
+  const missingAssignee = nodes.find(
+    node =>
+      ["role", "user", "field"].includes(node.assignee_type) &&
+      !node.assignee_value.trim()
+  );
+  if (missingAssignee) {
+    return "systemApprovalFlow.assigneeValueRequired";
+  }
   return null;
 }
 
