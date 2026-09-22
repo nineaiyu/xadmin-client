@@ -1,4 +1,12 @@
-proxy_pass http://server:8896;
+# 后端地址运行期解析（勿改回静态 `proxy_pass http://server:8896;`）：
+# - 静态写法在 nginx 配置加载期解析域名：web/nginx 容器早于 server 启动时会
+#   [emerg] host not found in upstream 启动失败（靠 restart: always 兜底）；且 server
+#   容器重建换 IP 后必须手工 restart web 才恢复转发。
+# - 变量 proxy_pass：启动不解析、建连时解析（127.0.0.11 = Docker 内嵌 DNS，
+#   valid=10s 短缓存）；变量值不含 URI，按原样透传客户端请求 URI，与静态写法一致。
+resolver 127.0.0.11 valid=10s ipv6=off;
+set $xadmin_api_backend server:8896;
+proxy_pass http://$xadmin_api_backend;
 proxy_buffering off;
 proxy_request_buffering off;
 proxy_http_version 1.1;
