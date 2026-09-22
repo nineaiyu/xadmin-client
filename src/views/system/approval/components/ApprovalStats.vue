@@ -1,9 +1,10 @@
 <script lang="ts" setup>
 import { SUCCESS_CODE } from "@/api/types";
-import { computed, onMounted, ref } from "vue";
+import { computed, onActivated, onMounted, onUnmounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import { approvalApi } from "@/api/system/approval";
+import { registerApprovalStatsRefresh } from "@/utils/approvalStats";
 
 defineOptions({ name: "ApprovalStats" });
 
@@ -75,7 +76,18 @@ function fetchStats() {
     });
 }
 
-onMounted(fetchStats);
+let unregister: (() => void) | undefined;
+
+onMounted(() => {
+  fetchStats();
+  // 审批动作成功后由 refreshApprovalStats() 触发（轻量审批 / 流程实例两轨共用）
+  unregister = registerApprovalStatsRefresh(fetchStats);
+});
+
+/** keep-alive 页面切回时重拉：离开期间在其它页面发生的审批动作不会漏刷 */
+onActivated(fetchStats);
+
+onUnmounted(() => unregister?.());
 
 /** 供父级在操作后刷新（如发起申请、批量审批成功） */
 defineExpose({ refresh: fetchStats });

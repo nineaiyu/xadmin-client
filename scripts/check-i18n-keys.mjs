@@ -5,7 +5,10 @@
 // - 提取 src/ 下所有静态 `t("a.b.c")` / `$t("a.b.c")` 引用（含模板与脚本；动态拼接
 //   的 key 无法静态解析，天然豁免，需在运行时兜底）；
 // - 每个被引用的 key 必须同时存在于 locales/zh-CN.yaml 与 locales/en.yaml；
-// - zh 与 en 的 key 集合必须完全一致（任一缺失即失败）。
+// - zh 与 en 的 key 集合必须完全一致（任一缺失即失败）；
+// - 词条值不得含 HTML 标签形态（`<tag>` / `</tag>`）：unplugin-vue-i18n 构建期会把这类
+//   词条判定为 HTML 并**直接抛错**（Detected HTML in ... message），locale 模块整块转换
+//   失败；正则/代码示例里的尖括号要写成字面量插值，如 `{'<'}pk{'>'}`。
 //
 // 背景：缺失词条不会报错——vue-i18n 会把 key 原样显示在界面上（如 "buttons.confirm"），
 // 只有在人工走查该页面时才会被发现（历史问题：ratioRangeRequired / buttons.confirm /
@@ -55,6 +58,30 @@ function parseYamlKeys(file) {
   return keys;
 }
 
+/** yaml「key: value」行（与 parseYamlKeys 同口径，value 取第 3 组） */
+const YAML_ENTRY_RE = /^(\s*)([A-Za-z0-9_."]+):(\s.*)?$/;
+
+/** HTML 标签形态（`<pk>` / `</pk>` / `<br/>`；数学比较符 "a < b" 不会命中） */
+const HTML_TAG_RE = /<\/?[A-Za-z][^<>\s]*\/?>/;
+
+/**
+ * 扫描词条值里的 HTML 标签（unplugin-vue-i18n 会因此在转换期抛错，必须提前拦截）。
+ * 仅覆盖单行 `key: "value"` 形态；多行块标量（`|`/`>`）内的标签不在扫描面内。
+ */
+function collectHtmlMessages(file) {
+  const hits = [];
+  readFileSync(file, "utf-8")
+    .split(/\r\n|\n|\r/)
+    .forEach((line, index) => {
+      const match = YAML_ENTRY_RE.exec(line);
+      if (!match || !match[3]) return;
+      if (HTML_TAG_RE.test(match[3])) {
+        hits.push([index + 1, match[2], match[3].trim()]);
+      }
+    });
+  return hits;
+}
+
 /** 提取源文件中静态引用的词条 key（`t("a.b")` 形态，至少两级） */
 function collectUsedKeys(files) {
   const used = new Map(); // key -> Set(相对路径)
@@ -84,6 +111,9 @@ for (const [key, files] of used) {
 }
 const onlyZh = [...zhKeys].filter(key => !enKeys.has(key));
 const onlyEn = [...enKeys].filter(key => !zhKeys.has(key));
+const htmlHits = [ZH_FILE, EN_FILE].flatMap(file =>
+  collectHtmlMessages(file).map(item => [relative(ROOT, file), ...item])
+);
 
 console.log(
   `国际化词条门禁：静态引用 ${used.size} 个 key；zh ${zhKeys.size} 条 / en ${enKeys.size} 条。`
@@ -91,7 +121,7 @@ console.log(
 
 if (process.argv.includes("--report")) {
   console.log(
-    `  缺 zh: ${missingZh.length}；缺 en: ${missingEn.length}；仅 zh: ${onlyZh.length}；仅 en: ${onlyEn.length}`
+    `  缺 zh: ${missingZh.length}；缺 en: ${missingEn.length}；仅 zh: ${onlyZh.length}；仅 en: ${onlyEn.length}；含 HTML: ${htmlHits.length}`
   );
   process.exit(0);
 }
@@ -105,10 +135,15 @@ for (const [key, files] of missingEn.sort()) {
 }
 for (const key of onlyZh.sort()) violations.push(`仅 zh 存在: ${key}`);
 for (const key of onlyEn.sort()) violations.push(`仅 en 存在: ${key}`);
+for (const [file, line, key, value] of htmlHits) {
+  violations.push(
+    `词条含 HTML 标签: ${file}:${line} ${key} -> ${value}（改用字面量插值，如 {'<'}pk{'>'}）`
+  );
+}
 
 if (violations.length > 0) {
   console.error(
-    "\n国际化词条门禁失败（缺词条会以 key 原文显示在界面上；zh/en 必须完全对称）："
+    "\n国际化词条门禁失败（缺词条会以 key 原文显示在界面上；zh/en 必须完全对称；词条含 HTML 标签会让 unplugin-vue-i18n 转换期直接抛错）："
   );
   for (const item of violations) console.error(`  ${item}`);
   process.exit(1);

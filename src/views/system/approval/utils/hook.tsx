@@ -1,9 +1,10 @@
 import { h, reactive, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElForm, ElFormItem, ElInput, ElTag } from "element-plus";
+import { ElForm, ElFormItem, ElInput, ElLink, ElTag } from "element-plus";
 import { addDialog } from "@/components/ReDialog";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { approvalApi } from "@/api/system/approval";
+import { SUCCESS_CODE } from "@/api/types";
 import {
   handleOperation,
   type OperationButtonsRow,
@@ -14,6 +15,7 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";
 import { refreshApprovalBadge } from "@/utils/approvalBadge";
+import { refreshApprovalStats } from "@/utils/approvalStats";
 import type { RecordType } from "plus-pro-components";
 import ApprovalLogsDialog from "../components/ApprovalLogsDialog.vue";
 import Check from "~icons/ep/check";
@@ -60,10 +62,11 @@ export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
     })
   );
 
-  /** 列表刷新 + 待办角标即时刷新（审批动作都会改变待办数，不能等下一次轮询） */
+  /** 列表 + 待办角标 + 顶部统计卡即时刷新（审批动作三者都会变化，不能等下一次轮询） */
   const refresh = () => {
     tableRef.value?.handleGetData();
     refreshApprovalBadge();
+    refreshApprovalStats();
   };
 
   /** 驳回弹窗：原因必填（hook 内联表单，走 addDialog 标准范式） */
@@ -227,7 +230,8 @@ export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
 
   /** 行内按钮：待我审批页签 = 通过/驳回；我发起的页签 = 撤回（仅 PENDING） */
   const operationButtonsProps = shallowRef<OperationProps>({
-    showNumber: 3,
+    showNumber: 4,
+    width: 300,
     buttons:
       scope === "pending"
         ? [
@@ -255,7 +259,8 @@ export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
                   requestEnd: () => (loading.value = false)
                 });
               },
-              show: auth.approve && 4
+              // 多级链：只有当前级候选人可见（服务端 can_act），避免点了才报「不是当前级审批人」
+              show: row => (auth.approve && canActRow(row) ? 4 : false)
             },
             {
               text: t("approval.reject"),
@@ -266,7 +271,7 @@ export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
                 link: true
               },
               onClick: ({ row }) => openReject(row),
-              show: auth.reject && 5
+              show: row => (auth.reject && canActRow(row) ? 5 : false)
             },
             relatedLogsButton
           ]
@@ -348,6 +353,117 @@ export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
     ]
   });
 
+  /** 多级审批链单：带当前级即「配置到某个人/角色」的逐级审批单（current_level>0） */
+  const isChainRow = (row?: RecordType) => Number(row?.current_level ?? 0) > 0;
+
+  /** 行级动作可见性：多级链按服务端 can_act 收口（只有当前级候选人能审），扁平单沿用页面权限 */
+  const canActRow = (row?: RecordType) =>
+    isChainRow(row) ? Boolean(row?.can_act) : true;
+
+  /** 「审批人」列文案：多级链显示当前级候选人；扁平单显示实际审批人（未处理时占位说明） */
+  const approverText = (row?: RecordType) => {
+    if (isChainRow(row)) {
+      const names = ((row?.current_assignees ?? []) as Array<RecordType>)
+        .map(item => item?.username ?? item?.pk)
+        .filter(Boolean);
+      return `${t("approval.levelNo", { n: row?.current_level })}：${
+        names.join("、") || t("approval.pendingApprover")
+      }`;
+    }
+    return row?.approver?.username || t("approval.pendingApprover");
+  };
+
+  /** 审批进度弹窗：逐级候选人 / 处理人 / 意见 / 时间（多级链单专用） */
+  const openProgress = (row?: RecordType) => {
+    if (!row?.pk) return;
+    approvalApi.retrieve?.(row.pk)?.then(res => {
+      if (res.code !== SUCCESS_CODE || !res.data) return;
+      const steps = ((res.data as RecordType).steps ?? []) as Array<RecordType>;
+      addDialog({
+        title: t("approval.progressTitle", {
+          no: String(row.pk).slice(0, 8).toUpperCase()
+        }),
+        width: "620px",
+        draggable: true,
+        destroyOnClose: true,
+        closeOnClickModal: false,
+        hideFooter: true,
+        contentRenderer: () => (
+          <div class="space-y-2">
+            <p class="text-xs text-gray-500">{t("approval.progressTip")}</p>
+            {steps.map((step: RecordType) => (
+              <div
+                key={step.order}
+                class="rounded border border-gray-200 p-2 text-sm dark:border-gray-700"
+              >
+                <div class="flex items-center gap-2">
+                  {h(
+                    ElTag,
+                    statusTagProps(step.status, APPROVAL_STATUS_TAG_TYPE),
+                    () =>
+                      step.status?.label ?? t(`approval.status${step.status}`)
+                  )}
+                  {h(
+                    ElTag,
+                    { size: "small", type: "info", effect: "plain" },
+                    () =>
+                      step.approve_type === "AND"
+                        ? t("approval.modeAND")
+                        : t("approval.modeOR")
+                  )}
+                  <span>
+                    {`${t("approval.levelNo", { n: step.order })}${
+                      step.name ? ` · ${step.name}` : ""
+                    }`}
+                  </span>
+                  {step.approve_type === "AND" ? (
+                    <span class="text-xs text-gray-500">
+                      {t("approval.andProgress", {
+                        done: Number(step.approved_count ?? 0),
+                        total: ((step.assignees ?? []) as Array<RecordType>)
+                          .length
+                      })}
+                    </span>
+                  ) : null}
+                </div>
+                <div class="mt-1 text-xs text-gray-500">
+                  {`${t("approval.approver")}: ${
+                    ((step.assignees ?? []) as Array<RecordType>)
+                      .map(item => item?.username ?? item?.pk)
+                      .filter(Boolean)
+                      .join("、") || "-"
+                  }`}
+                  {step.approver?.username
+                    ? ` · ${t("approval.handler")}: ${step.approver.username}`
+                    : ""}
+                  {step.acted_at ? ` · ${step.acted_at}` : ""}
+                </div>
+                {(step.actions ?? []).length ? (
+                  <div class="mt-1 text-xs text-gray-500">
+                    {`${t("approval.actedUsers")}: `}
+                    {((step.actions ?? []) as Array<RecordType>)
+                      .map(
+                        item =>
+                          `${item.approver?.username ?? "-"}${
+                            item.comment ? `（${item.comment}）` : ""
+                          }`
+                      )
+                      .join("、")}
+                  </div>
+                ) : null}
+                {step.comment ? (
+                  <div class="mt-1 text-xs">{`${t("approval.stepComment")}: ${
+                    step.comment
+                  }`}</div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        )
+      });
+    });
+  };
+
   /** 状态列：字典驱动（approval_status）颜色/文案，字典未配置回退页面 i18n */
   const listColumnsFormat = (columns: PageTableColumn[]) => {
     columns.forEach(column => {
@@ -362,6 +478,21 @@ export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
               () => row.status?.label ?? t(`approval.status${status}`)
             );
           };
+          break;
+        // 审批人列：多级链显示「第 N 级：当前级候选人」（点击查看逐级进度）；
+        // 扁平单显示实际审批人或「待审批」占位——原来的空列极易被误读为数据缺失
+        case "approver":
+          column.cellRenderer = ({ row }) =>
+            isChainRow(row)
+              ? h(
+                  ElLink,
+                  {
+                    type: "primary",
+                    onClick: () => openProgress(row)
+                  },
+                  () => approverText(row)
+                )
+              : approverText(row);
           break;
       }
     });

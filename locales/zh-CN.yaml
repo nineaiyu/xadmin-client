@@ -383,6 +383,7 @@ menus:
   approvalFlow: 流程定义
   approvalInstance: 流程审批
   approvalDelegation: 审批委托
+  approvalRule: 审批规则
   leaveApply: 请假申请
   moduleManager: 模块管理
 
@@ -424,6 +425,59 @@ approval:
   statusEXPIRED: 已过期
   statusCANCELLED: 已撤回
   statusFAILED: 校验失败
+  levelNo: 第 {n} 级
+  pendingApprover: 待审批
+  progressTitle: 审批进度 - {no}
+  progressTip: 按配置顺序逐级审批：当前级通过后自动通知下一级，全部通过才算审批通过
+  handler: 处理人
+  stepComment: 意见
+  modeOR: 或签
+  modeAND: 会签
+  andProgress: 已通过 {done}/{total}
+  actedUsers: 处理记录
+
+approvalRule:
+  createTitle: 新增审批规则
+  editTitle: 编辑审批规则
+  name: 规则名称
+  nameRequired: 请输入规则名称
+  path_patterns: 匹配路径
+  level_count: 审批级数
+  priority: 优先级
+  is_active: 启用
+  remark: 备注
+  formName: 规则名称
+  formNameTip: 例如「书籍删除审批」
+  formPaths: 匹配路径
+  # 尖括号用字面量插值 {'<'} 包裹：直接写 <pk> 会被 message-compiler 判定为 HTML 而告警
+  formPathsTip: "每行一条路径正则，命中即按本规则逐级审批（如 api/demo/book/(?P{'<'}pk{'>'}[^/.]+)$）"
+  pathRequired: 请至少填写一条匹配路径
+  pathsPlaceholder: 从接口清单中选择需要审批的接口
+  pathsTip: 勾选接口后按路径拦截；实际拦截仅发生在删除/批量删除等已登记审批的操作上
+  pathsCustomTip: 自定义路径正则，每行一条（高级用法，如 api/demo/book/(?P{'<'}pk{'>'}[^/.]+)$）
+  approveType: 审批方式
+  approveTypeOR: 或签（任一人通过）
+  approveTypeAND: 会签（全部通过）
+  formPriority: 优先级
+  formPriorityTip: 多条规则同时命中时取优先级最大的规则
+  formActive: 启用
+  formRemark: 备注
+  levels: 审批级次
+  levelsTip: 按顺序逐级审批：当前级通过后自动通知下一级，全部通过才算审批通过（保存时校验审批人存在性）
+  levelOrder: 顺序
+  levelName: 级次名称
+  levelType: 审批人类型
+  levelTypeUser: 指定用户
+  levelTypeRole: 角色
+  levelAssignee: 审批人
+  levelUserTip: 输入用户名搜索（可多选，任一人通过即该级通过）
+  levelRoleTip: 选择角色（角色成员任一人通过即该级通过）
+  levelValueTip: 填写用户名或角色 code（逗号分隔）
+  levelActions: 操作
+  moveUp: 上移
+  moveDown: 下移
+  addLevel: 添加级次
+  levelCount: "{n} 级"
 
 systemApprovalFlow:
   createTitle: 新增流程

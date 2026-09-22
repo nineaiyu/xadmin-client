@@ -2,6 +2,8 @@ import { reactive, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { getDefaultAuths } from "@/router/utils";
 import { approvalInstanceApi } from "@/api/system/approvalFlow";
+import { refreshApprovalBadge } from "@/utils/approvalBadge";
+import { refreshApprovalStats } from "@/utils/approvalStats";
 import { useInstanceActions } from "./useInstanceActions";
 import { useInstanceButtons } from "./useInstanceButtons";
 import { useInstanceColumnFormats } from "./useInstanceColumnFormats";
@@ -72,7 +74,15 @@ export function useInstancePanel(
     })
   );
 
-  const refresh = () => tableRef.value?.handleGetData();
+  /**
+   * 列表 + 待办角标 + 顶部统计卡即时刷新：审批动作（通过/驳回/加签/转办…）
+   * 三者都会变化，不能等 60s 轮询或下次进入页面
+   */
+  const refresh = () => {
+    tableRef.value?.handleGetData();
+    refreshApprovalBadge();
+    refreshApprovalStats();
+  };
 
   const { listColumnsFormat } = useInstanceColumnFormats({ t });
   const {

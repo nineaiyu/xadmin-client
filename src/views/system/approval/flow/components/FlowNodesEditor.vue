@@ -2,7 +2,6 @@
 import { h, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { SUCCESS_CODE } from "@/api/types";
-import { hasAuth } from "@/router/utils";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { fetchAllRows } from "@/utils/fetchAllRows";
@@ -25,9 +24,7 @@ const { t } = useI18n();
 
 /* ---------------- 审批人选择器（避免裸文本输错用户名/角色码） ---------------- */
 
-/** 无对应用户/角色查询权限时降级为纯文本输入（不产生 403 噪声） */
-const canSearchUser = hasAuth("list:SearchUser");
-const canListRole = hasAuth("list:SystemRole");
+/** 始终提供可查询下拉（用户远程搜索 / 角色下拉），搜索无结果时允许直接输入兜底 */
 
 const userOptions = ref<Array<{ username: string; label: string }>>([]);
 const userLoading = ref(false);
@@ -60,7 +57,7 @@ function ensureUserOption(username: string) {
 }
 
 async function searchUsers(query: string) {
-  if (!canSearchUser || !query) return;
+  if (!query) return;
   userLoading.value = true;
   try {
     const res = await searchUserApi.list({
@@ -92,7 +89,6 @@ async function searchUsers(query: string) {
 }
 
 onMounted(async () => {
-  if (!canListRole) return;
   const res = await fetchAllRows(roleApi.list).catch(() => null);
   if (res && res.code === SUCCESS_CODE && res.data) {
     roleOptions.value = listRows<{ name: string; code: string }>(res as never);
@@ -228,13 +224,15 @@ function assigneeHint(type: string): string {
             disabled
             :placeholder="t('systemApprovalFlow.assigneeHint_leader')"
           />
-          <!-- 指定用户：按用户名远程搜索多选（值=用户名，逗号分隔）；无查询权限时回退文本 -->
+          <!-- 指定用户：按用户名远程搜索多选（值=用户名，逗号分隔）；搜索无结果可直接输入用户名兜底 -->
           <el-select
-            v-else-if="row.assignee_type === 'user' && canSearchUser"
+            v-else-if="row.assignee_type === 'user'"
             :model-value="splitValues(row.assignee_value)"
             multiple
             filterable
             remote
+            allow-create
+            default-first-option
             reserve-keyword
             size="small"
             :remote-method="searchUsers"
@@ -250,12 +248,14 @@ function assigneeHint(type: string): string {
               :value="user.username"
             />
           </el-select>
-          <!-- 角色：按角色名多选（值=角色编码）；无角色查询权限时回退文本 -->
+          <!-- 角色：按角色名多选（值=角色编码）；可直接输入角色 code 兜底 -->
           <el-select
-            v-else-if="row.assignee_type === 'role' && canListRole"
+            v-else-if="row.assignee_type === 'role'"
             :model-value="splitValues(row.assignee_value)"
             multiple
             filterable
+            allow-create
+            default-first-option
             size="small"
             :placeholder="t('systemApprovalFlow.assigneeHint_role')"
             @update:model-value="value => updateMultiValue($index, value)"
@@ -282,7 +282,7 @@ function assigneeHint(type: string): string {
               :value="field.key"
             />
           </el-select>
-          <!-- 兜底：未知类型 / 无查询权限 / 字段未配置 → 纯文本输入 -->
+          <!-- 兜底：未知类型 / 字段未配置 → 纯文本输入 -->
           <el-input
             v-else
             v-model="row.assignee_value"

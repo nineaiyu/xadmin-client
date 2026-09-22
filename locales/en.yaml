@@ -383,6 +383,7 @@ menus:
   approvalFlow: Flow Definition
   approvalInstance: Flow Approval
   approvalDelegation: Approval Delegation
+  approvalRule: Approval Rules
   leaveApply: Leave Request
   moduleManager: Module Manager
 
@@ -424,6 +425,59 @@ approval:
   statusEXPIRED: Expired
   statusCANCELLED: Cancelled
   statusFAILED: Failed
+  levelNo: Level {n}
+  pendingApprover: Pending
+  progressTitle: Approval progress - {no}
+  progressTip: "Level by level: the next approver is notified after each level passes; approved only when all levels pass"
+  handler: Handler
+  stepComment: Comment
+  modeOR: Any one approves
+  modeAND: All must approve
+  andProgress: "Approved {done}/{total}"
+  actedUsers: Action records
+
+approvalRule:
+  createTitle: New Approval Rule
+  editTitle: Edit Approval Rule
+  name: Rule Name
+  nameRequired: Rule name is required
+  path_patterns: Path Patterns
+  level_count: Levels
+  priority: Priority
+  is_active: Active
+  remark: Remark
+  formName: Rule Name
+  formNameTip: e.g. Book deletion approval
+  formPaths: Path Patterns
+  # angle brackets wrapped in literal interpolation {'<'} - raw <pk> is detected as HTML by message-compiler
+  formPathsTip: "One regex per line; matching requests are approved level by level (e.g. api/demo/book/(?P{'<'}pk{'>'}[^/.]+)$)"
+  pathRequired: At least one path pattern is required
+  pathsPlaceholder: Select the endpoints that require approval
+  pathsTip: Selected endpoints are matched by path; only operations registered for approval (delete / batch delete etc.) are actually intercepted
+  pathsCustomTip: "Custom path regex, one per line (advanced, e.g. api/demo/book/(?P{'<'}pk{'>'}[^/.]+)$)"
+  approveType: Approve Mode
+  approveTypeOR: Any one approves
+  approveTypeAND: All must approve
+  formPriority: Priority
+  formPriorityTip: When several rules match, the highest priority wins
+  formActive: Active
+  formRemark: Remark
+  levels: Approval Levels
+  levelsTip: "Approvals are handled in order: the next approver is notified after each level passes; all levels must pass"
+  levelOrder: Order
+  levelName: Level Name
+  levelType: Assignee Type
+  levelTypeUser: User
+  levelTypeRole: Role
+  levelAssignee: Approver
+  levelUserTip: Search username (multi-select, any one approves this level)
+  levelRoleTip: Select roles (any member approves this level)
+  levelValueTip: Username or role code, comma separated
+  levelActions: Actions
+  moveUp: Up
+  moveDown: Down
+  addLevel: Add Level
+  levelCount: "{n} levels"
 
 systemApprovalFlow:
   createTitle: New Flow

@@ -67,7 +67,8 @@ jobs:
 
       - name: i18n keys gate
         # 代码引用的静态词条必须同时存在于 zh/en（缺失时界面显示 key 原文）；
-        # 两侧 key 集合必须完全对称（scripts/check-i18n-keys.mjs）
+        # 两侧 key 集合必须完全对称；词条值含 <tag> 会让 unplugin-vue-i18n 转换期
+        # 直接抛错（locale 模块整块失败），门禁一并拦截（scripts/check-i18n-keys.mjs）
         run: pnpm check:i18n
 
       - name: Bundle size snapshot gate

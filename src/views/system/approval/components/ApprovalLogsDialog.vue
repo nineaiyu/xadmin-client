@@ -20,12 +20,24 @@ const props = defineProps<{
   creatorPk?: number | string | null;
 }>();
 
+/** 后端 creator 为嵌套对象（OperationLogSerializer: attrs=[pk,username] + format），
+ * 字段权限裁剪时可能退化为裸 pk，故类型按并集声明 */
+type LogCreator = { pk?: number | string; username?: string; label?: string };
+
 type LogRow = RecordType & {
   created_time: string;
-  creator: string;
+  creator?: LogCreator | number | string | null;
   method: string;
   path: string;
   status_code: number | null;
+};
+
+/** creator 不能直接 prop 绑定（对象会渲染成 [object Object]），与操作日志页同口径取 username */
+const formatCreator = (creator: LogRow["creator"]) => {
+  if (creator === null || creator === undefined) return "/";
+  if (typeof creator === "object")
+    return creator.username ?? creator.label ?? "/";
+  return String(creator);
 };
 
 const { t } = useI18n();
@@ -94,7 +106,9 @@ onMounted(fetchLogs);
         :label="t('logsOperation.creator')"
         width="120"
         show-overflow-tooltip
-      />
+      >
+        <template #default="{ row }">{{ formatCreator(row.creator) }}</template>
+      </el-table-column>
       <el-table-column
         prop="method"
         :label="t('logsOperation.method')"

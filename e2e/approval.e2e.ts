@@ -95,6 +95,19 @@ test("敏感操作审批：删除用户 → 提交审批 → 审批中心通过 
       .locator(".el-table__row", { hasText: approvalNo })
       .first();
     await approvalRow.waitFor({ state: "visible", timeout: 15_000 });
+
+    // 相关日志弹窗：creator 为嵌套对象（{pk,username}），列直接 prop 绑定会渲染
+    // [object Object]——断言「用户」列落到 username（守护 + 覆盖互跳链路）
+    await approvalRow.getByRole("button", { name: "相关日志" }).first().click();
+    const logsDialog = pageB.locator(".el-dialog:visible").first();
+    await expect(logsDialog).toBeVisible({ timeout: 10_000 });
+    const logRow = logsDialog.locator(".el-table__row").first();
+    await logRow.waitFor({ state: "visible", timeout: 10_000 });
+    await expect(logRow).toContainText("xadmin");
+    await expect(logsDialog).not.toContainText("[object Object]");
+    await logsDialog.locator(".el-dialog__headerbtn").first().click();
+    await expect(logsDialog).not.toBeVisible({ timeout: 10_000 });
+
     await approvalRow.getByRole("button", { name: "通过" }).first().click();
     await pageB
       .locator(".el-popconfirm, .el-popper, .el-message-box")
