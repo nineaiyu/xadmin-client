@@ -81,7 +81,7 @@ defineExpose({ scrollEl });
 <template>
   <div class="relative flex h-full min-w-0 grow flex-col">
     <div
-      class="flex items-center gap-2 border-b border-solid border-(--pure-border-color) px-3 py-2"
+      class="flex items-center gap-2 border-0 border-b border-solid border-(--pure-border-color) px-3 py-2"
     >
       <el-button
         v-if="isNarrow"
@@ -189,7 +189,9 @@ defineExpose({ scrollEl });
       </el-tag>
     </div>
 
-    <div class="border-t border-solid border-(--pure-border-color) p-3">
+    <div
+      class="border-0 border-t border-solid border-(--pure-border-color) p-3"
+    >
       <!-- data-testid 挂 el-input：Element Plus 会把属性透传到内部 textarea
            （E2E 直接 fill 该 testid；挂外层 div 会被判为不可编辑元素） -->
       <el-input

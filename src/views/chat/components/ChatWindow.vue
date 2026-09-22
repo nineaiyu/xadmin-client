@@ -217,7 +217,7 @@ watch(
 <template>
   <div class="relative flex h-full min-w-0 grow flex-col">
     <div
-      class="flex items-center gap-2 border-b border-solid border-(--pure-border-color) px-3 py-2"
+      class="flex items-center gap-2 border-0 border-b border-solid border-(--pure-border-color) px-3 py-2"
     >
       <el-button
         v-if="isNarrow"
@@ -366,7 +366,9 @@ watch(
       </el-tag>
     </div>
 
-    <div class="border-t border-solid border-(--pure-border-color) p-3">
+    <div
+      class="border-0 border-t border-solid border-(--pure-border-color) p-3"
+    >
       <div
         v-if="mentionCandidates.length"
         class="mb-2 rounded border border-solid border-(--pure-border-color) p-1"

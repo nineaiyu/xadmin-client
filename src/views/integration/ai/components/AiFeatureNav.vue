@@ -33,7 +33,7 @@ const { t } = useI18n();
 
 <template>
   <div
-    class="flex h-full flex-col border-r border-solid border-(--pure-border-color)"
+    class="flex h-full flex-col border-0 border-r border-solid border-(--pure-border-color)"
   >
     <div class="flex items-center gap-2 p-3">
       <span class="font-semibold">{{ t("ai.title") }}</span>
@@ -86,7 +86,7 @@ const { t } = useI18n();
 
     <div
       v-if="footer"
-      class="border-t border-solid border-(--pure-border-color) px-3 py-2 text-xs text-(--el-text-color-secondary)"
+      class="border-0 border-t border-solid border-(--pure-border-color) px-3 py-2 text-xs text-(--el-text-color-secondary)"
     >
       {{ footer }}
     </div>

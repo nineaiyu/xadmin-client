@@ -129,9 +129,29 @@ const navFooter = computed(() => (ready.value ? t("ai.persistHint") : ""));
 
 const isNarrow = ref(false);
 const drawerVisible = ref(false);
+/** 控制台面板高度：按视口实测（面板顶部距离 + 底部留白 + 页脚高度），
+ *  替代 calc(100vh - 164px) 魔数——标签栏显隐 / 窗口尺寸变化都自适应 */
+const pageRef = ref<HTMLElement | null>(null);
+const PANEL_MIN_HEIGHT = 420;
+const PANEL_BOTTOM_GAP = 24;
+const panelHeight = ref(PANEL_MIN_HEIGHT);
+
+function measurePanelHeight() {
+  const el = pageRef.value;
+  if (!el) return;
+  const top = el.getBoundingClientRect().top;
+  // 页脚与面板同处一个滚动容器（紧随其后）：不扣除会把「面板 + 页脚」顶出视口，整页出现滚动
+  const footer = document.querySelector(".layout-footer");
+  const footerHeight = footer instanceof HTMLElement ? footer.offsetHeight : 0;
+  panelHeight.value = Math.max(
+    Math.round(window.innerHeight - top - PANEL_BOTTOM_GAP - footerHeight),
+    PANEL_MIN_HEIGHT
+  );
+}
 
 function updateViewport() {
   isNarrow.value = window.innerWidth < 768;
+  measurePanelHeight();
 }
 
 function selectFeature(key: AiConsoleFeature) {
@@ -145,8 +165,11 @@ onMounted(() => {
   loadStatus();
 });
 
-// keep-alive 页面二次进入不重跑 onMounted，配置保存后需重新拉取状态
-onActivated(loadStatus);
+// keep-alive 页面二次进入不重跑 onMounted：重测面板高度 + 重新拉取状态（配置保存后）
+onActivated(() => {
+  measurePanelHeight();
+  loadStatus();
+});
 
 onUnmounted(() => {
   window.removeEventListener("resize", updateViewport);
@@ -154,9 +177,9 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="pr-[1%]">
-    <!-- pr-[1%]：内容宽度对齐 RePlusPage 的 w-99/100（右侧留 1%），
-         根元素自带 layout 注入的 main-content（24px 外边距），不能再设百分比宽度（会溢出） -->
+  <div ref="pageRef">
+    <!-- 控制台面板满宽铺开（不再 pr-[1%]：与聊天室口径一致，四边只保留
+         main-content 的 24px 统一边距）；高度按视口实测（measurePanelHeight） -->
     <template v-if="status && !status.enabled">
       <el-card shadow="never">
         <el-empty :description="t('ai.disabledHint')" />
@@ -174,7 +197,10 @@ onUnmounted(() => {
     <div
       v-else-if="status"
       class="flex overflow-hidden rounded bg-bg_color"
-      :style="{ height: 'calc(100vh - 164px)', minHeight: '420px' }"
+      :style="{
+        height: `${panelHeight}px`,
+        minHeight: `${PANEL_MIN_HEIGHT}px`
+      }"
       style="border: 1px solid var(--pure-border-color)"
       data-testid="ai-console"
     >

@@ -243,7 +243,7 @@ onUnmounted(() => window.clearTimeout(memberSearchTimer));
     <div
       v-for="member in groupMemberList"
       :key="member.pk"
-      class="flex items-center gap-2 border-b border-solid border-(--pure-border-color) py-1.5"
+      class="flex items-center gap-2 border-0 border-b border-solid border-(--pure-border-color) py-1.5"
       :data-testid="`chat-group-member-${member.pk}`"
     >
       <el-avatar :size="30" :src="member.avatar || undefined" class="shrink-0">
