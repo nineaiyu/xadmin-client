@@ -1,6 +1,6 @@
 import { h, reactive, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElForm, ElFormItem, ElInput, ElLink, ElTag } from "element-plus";
+import { ElLink, ElTag } from "element-plus";
 import { addDialog } from "@/components/ReDialog";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { approvalApi } from "@/api/system/approval";
@@ -13,11 +13,13 @@ import {
 } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
-import { statusTagProps, type StatusTagType } from "@/utils/dict";
+import { statusTagProps } from "@/utils/dict";
 import { refreshApprovalBadge } from "@/utils/approvalBadge";
 import { refreshApprovalStats } from "@/utils/approvalStats";
 import type { RecordType } from "plus-pro-components";
 import ApprovalLogsDialog from "../components/ApprovalLogsDialog.vue";
+import { APPROVAL_STATUS_TAG_TYPE } from "./constants";
+import { openApprovalProgressDialog, openRejectReasonDialog } from "./dialogs";
 import Check from "~icons/ep/check";
 import Close from "~icons/ep/close";
 import Document from "~icons/ep/document";
@@ -25,18 +27,11 @@ import RefreshLeft from "~icons/ep/refresh-left";
 
 export type ApprovalScope = "pending" | "mine";
 
-/** 字典色失效时的 EP tag 语义色兜底（审批状态） */
-const APPROVAL_STATUS_TAG_TYPE: Record<string, StatusTagType> = {
-  APPROVED: "success",
-  REJECTED: "danger",
-  FAILED: "danger",
-  PENDING: "warning"
-};
-
 /**
  * 审批中心面板公共装配：待我审批 / 我发起的两页签同构，唯一差异是
  * scope 过滤与操作按钮（通过/驳回 vs 撤回）。权限码挂页面组件名
  * SystemApprovalRequest 下（页签无独立菜单，显式传字符串后缀）。
+ * 弹窗内容（驳回原因 / 逐级进度）见 utils/dialogs.tsx。
  */
 export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
   const componentName = "SystemApprovalRequest";
@@ -69,59 +64,15 @@ export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
     refreshApprovalStats();
   };
 
-  /** 驳回弹窗：原因必填（hook 内联表单，走 addDialog 标准范式） */
-  const rejectForm = reactive({ reason: "" });
+  /** 驳回弹窗（弹窗工厂见 utils/dialogs.tsx）：原因必填 + 成功后刷新列表/角标/统计 */
   const openReject = (row: RecordType) => {
-    addDialog({
+    openRejectReasonDialog({
+      t,
       title: t("approval.rejectTitle", {
         no: String(row.pk).slice(0, 8).toUpperCase()
       }),
-      width: "440px",
-      draggable: true,
-      closeOnClickModal: false,
-      contentRenderer: () => (
-        <ElForm model={rejectForm}>
-          <ElFormItem
-            prop="reason"
-            rules={[
-              {
-                required: true,
-                message: t("approval.rejectReasonRequired"),
-                trigger: "blur"
-              }
-            ]}
-          >
-            <ElInput
-              type="textarea"
-              rows={3}
-              maxlength={200}
-              show-word-limit
-              v-model={rejectForm.reason}
-              placeholder={t("approval.reasonPlaceholder")}
-            />
-          </ElFormItem>
-        </ElForm>
-      ),
-      closeCallBack: () => (rejectForm.reason = ""),
-      beforeSure: (done, { closeLoading }) => {
-        const reason = rejectForm.reason.trim();
-        // ReDialog 只回调 beforeSure，不触发表单校验：原因必填在此显式收口
-        if (!reason) {
-          message(t("approval.rejectReasonRequired"), { type: "error" });
-          return;
-        }
-        // 统一走 handleOperation：成功/失败提示、异常 catch、loading 收口齐全
-        // （手写 then 时后端 400 会让 done() 不执行 → 弹窗卡死）
-        handleOperation({
-          t,
-          apiReq: approvalApi.reject(row.pk, reason),
-          success: () => {
-            done();
-            refresh();
-          },
-          requestEnd: closeLoading
-        });
-      }
+      submit: reason => approvalApi.reject(row.pk, reason),
+      onSuccess: () => refresh()
     });
   };
 
@@ -144,72 +95,32 @@ export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
   };
 
   /** 批量驳回弹窗：原因必填，逐单校验由服务端收口（部分失败明细逐条提示） */
-  const batchRejectForm = reactive({ reason: "" });
   const openBatchReject = () => {
     const pks = tableRef.value?.getSelectPks("pk") ?? [];
     if (!pks.length) {
       message(t("results.noSelectedData"), { type: "error" });
       return;
     }
-    addDialog({
+    openRejectReasonDialog({
+      t,
       title: t("approval.batchRejectTitle", { n: pks.length }),
-      width: "440px",
-      draggable: true,
-      closeOnClickModal: false,
-      contentRenderer: () => (
-        <ElForm model={batchRejectForm}>
-          <ElFormItem
-            prop="reason"
-            rules={[
-              {
-                required: true,
-                message: t("approval.rejectReasonRequired"),
-                trigger: "blur"
-              }
-            ]}
-          >
-            <ElInput
-              type="textarea"
-              rows={3}
-              maxlength={200}
-              show-word-limit
-              v-model={batchRejectForm.reason}
-              placeholder={t("approval.reasonPlaceholder")}
-            />
-          </ElFormItem>
-        </ElForm>
-      ),
-      closeCallBack: () => (batchRejectForm.reason = ""),
-      beforeSure: (done, { closeLoading }) => {
-        const reason = batchRejectForm.reason.trim();
-        // ReDialog 不触发表单校验：原因必填同样在此显式收口
-        if (!reason) {
-          message(t("approval.rejectReasonRequired"), { type: "error" });
-          return;
+      submit: reason => approvalApi.batchReject(pks, reason),
+      onSuccess: res => {
+        const failed =
+          (res?.data as { failed?: Array<{ no: string; reason: string }> })
+            ?.failed ?? [];
+        if (failed.length) {
+          message(
+            t("approval.batchRejectPartial", {
+              n: failed.length,
+              detail: failed
+                .map(item => `${item.no}: ${item.reason}`)
+                .join("；")
+            }),
+            { type: "warning" }
+          );
         }
-        handleOperation({
-          t,
-          apiReq: approvalApi.batchReject(pks, reason),
-          success: res => {
-            done();
-            const failed =
-              (res?.data as { failed?: Array<{ no: string; reason: string }> })
-                ?.failed ?? [];
-            if (failed.length) {
-              message(
-                t("approval.batchRejectPartial", {
-                  n: failed.length,
-                  detail: failed
-                    .map(item => `${item.no}: ${item.reason}`)
-                    .join("；")
-                }),
-                { type: "warning" }
-              );
-            }
-            refresh();
-          },
-          requestEnd: closeLoading
-        });
+        refresh();
       }
     });
   };
@@ -373,93 +284,15 @@ export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
     return row?.approver?.username || t("approval.pendingApprover");
   };
 
-  /** 审批进度弹窗：逐级候选人 / 处理人 / 意见 / 时间（多级链单专用） */
+  /** 审批进度弹窗（内容渲染见 utils/dialogs.tsx）：先取详情里的 steps 再打开 */
   const openProgress = (row?: RecordType) => {
     if (!row?.pk) return;
     approvalApi.retrieve?.(row.pk)?.then(res => {
       if (res.code !== SUCCESS_CODE || !res.data) return;
-      const steps = ((res.data as RecordType).steps ?? []) as Array<RecordType>;
-      addDialog({
-        title: t("approval.progressTitle", {
-          no: String(row.pk).slice(0, 8).toUpperCase()
-        }),
-        width: "620px",
-        draggable: true,
-        destroyOnClose: true,
-        closeOnClickModal: false,
-        hideFooter: true,
-        contentRenderer: () => (
-          <div class="space-y-2">
-            <p class="text-xs text-gray-500">{t("approval.progressTip")}</p>
-            {steps.map((step: RecordType) => (
-              <div
-                key={step.order}
-                class="rounded border border-gray-200 p-2 text-sm dark:border-gray-700"
-              >
-                <div class="flex items-center gap-2">
-                  {h(
-                    ElTag,
-                    statusTagProps(step.status, APPROVAL_STATUS_TAG_TYPE),
-                    () =>
-                      step.status?.label ?? t(`approval.status${step.status}`)
-                  )}
-                  {h(
-                    ElTag,
-                    { size: "small", type: "info", effect: "plain" },
-                    () =>
-                      step.approve_type === "AND"
-                        ? t("approval.modeAND")
-                        : t("approval.modeOR")
-                  )}
-                  <span>
-                    {`${t("approval.levelNo", { n: step.order })}${
-                      step.name ? ` · ${step.name}` : ""
-                    }`}
-                  </span>
-                  {step.approve_type === "AND" ? (
-                    <span class="text-xs text-gray-500">
-                      {t("approval.andProgress", {
-                        done: Number(step.approved_count ?? 0),
-                        total: ((step.assignees ?? []) as Array<RecordType>)
-                          .length
-                      })}
-                    </span>
-                  ) : null}
-                </div>
-                <div class="mt-1 text-xs text-gray-500">
-                  {`${t("approval.approver")}: ${
-                    ((step.assignees ?? []) as Array<RecordType>)
-                      .map(item => item?.username ?? item?.pk)
-                      .filter(Boolean)
-                      .join("、") || "-"
-                  }`}
-                  {step.approver?.username
-                    ? ` · ${t("approval.handler")}: ${step.approver.username}`
-                    : ""}
-                  {step.acted_at ? ` · ${step.acted_at}` : ""}
-                </div>
-                {(step.actions ?? []).length ? (
-                  <div class="mt-1 text-xs text-gray-500">
-                    {`${t("approval.actedUsers")}: `}
-                    {((step.actions ?? []) as Array<RecordType>)
-                      .map(
-                        item =>
-                          `${item.approver?.username ?? "-"}${
-                            item.comment ? `（${item.comment}）` : ""
-                          }`
-                      )
-                      .join("、")}
-                  </div>
-                ) : null}
-                {step.comment ? (
-                  <div class="mt-1 text-xs">{`${t("approval.stepComment")}: ${
-                    step.comment
-                  }`}</div>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        )
+      openApprovalProgressDialog({
+        t,
+        no: String(row.pk).slice(0, 8).toUpperCase(),
+        steps: ((res.data as RecordType).steps ?? []) as Array<RecordType>
       });
     });
   };
