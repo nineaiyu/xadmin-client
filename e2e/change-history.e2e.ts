@@ -57,7 +57,8 @@ test("变更历史：编辑用户后行按钮弹窗展示字段级 diff", async 
 
   // 行按钮「变更历史」：操作列默认只展示 3 个（编辑/删除/详情），变更历史在第 4 位、
   // 折叠进「更多」下拉（ButtonOperation 的 showNumber 默认 3）——先展开下拉再点
-  await row.locator(".el-dropdown").first().hover();
+  // （下拉为 click 触发：hover 展开会在鼠标移向弹层时自动收起）
+  await row.locator(".el-dropdown").first().click();
   await page
     .locator(".el-dropdown-menu__item", { hasText: "变更历史" })
     .first()

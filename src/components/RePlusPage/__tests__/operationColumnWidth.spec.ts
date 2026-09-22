@@ -16,26 +16,26 @@ describe("resolveOperationColumnWidth", () => {
     expect(resolveOperationColumnWidth(1708, TASK_COLUMNS, 300)).toBe(300);
   });
 
-  it("有横向滚动时把覆盖区左边界对齐到列边界", () => {
-    // 累计边界 48/128/248/368/488/608/728…；容器 996 - 300 = 696 → 对齐 608
-    expect(resolveOperationColumnWidth(996, TASK_COLUMNS, 300)).toBe(388);
-    // 更窄容器（1280 档）：836 - 300 = 536 → 对齐 488
-    expect(resolveOperationColumnWidth(836, TASK_COLUMNS, 300)).toBe(348);
-    // 更宽容器（1920 档）：1476 - 300 = 1176 → 对齐 1128
-    expect(resolveOperationColumnWidth(1476, TASK_COLUMNS, 300)).toBe(348);
+  it("对齐加宽幅度在容差内时应用对齐（覆盖区左边界落到列边界）", () => {
+    // 累计边界 48/128/248/368/488/608/728…；容器 800 - 300 = 500 → 对齐 488 → 312（+12）
+    expect(resolveOperationColumnWidth(800, TASK_COLUMNS, 300)).toBe(312);
+    // 恰好 +30（含容差边界）：818 - 488 = 330
+    expect(resolveOperationColumnWidth(818, TASK_COLUMNS, 300)).toBe(330);
   });
 
-  it("对齐宽度不小于页面配置的最小宽度", () => {
-    // 容器 1200：x0 = 900 → 对齐 848（边界 728+120）→ aligned 352 > 300
-    const width = resolveOperationColumnWidth(1200, TASK_COLUMNS, 300);
-    expect(width).toBeGreaterThanOrEqual(300);
-    expect(width).toBe(352);
+  it("对齐加宽幅度超过容差时保持页面配置宽度（所见即配置）", () => {
+    // 996 - 608 = 388（+88）；836 - 488 = 348（+48）；1200 - 848 = 352（+52）
+    expect(resolveOperationColumnWidth(996, TASK_COLUMNS, 300)).toBe(300);
+    expect(resolveOperationColumnWidth(836, TASK_COLUMNS, 300)).toBe(300);
+    expect(resolveOperationColumnWidth(1200, TASK_COLUMNS, 300)).toBe(300);
+    // +31（超容差 1px）：819 - 488 = 331 → 保持 300
+    expect(resolveOperationColumnWidth(819, TASK_COLUMNS, 300)).toBe(300);
   });
 
-  it("操作列配置较宽（>35% 容器）时仍正常对齐", () => {
-    // 定时任务页：操作列配置 420、容器 996 → 边界 488（996-420=576 内最大边界）
-    // → 对齐后 508；可对齐边界占容器 49%，不得触发窄容器兜底
-    expect(resolveOperationColumnWidth(996, TASK_COLUMNS, 420)).toBe(508);
+  it("操作列配置较宽（>35% 容器）时按同一口径判定", () => {
+    // 定时任务页：996 - 420 = 576 → 对齐边界 488 → 508（+88，超容差）→ 保持 420；
+    // 可对齐边界占容器 49%，不得触发窄容器兜底
+    expect(resolveOperationColumnWidth(996, TASK_COLUMNS, 420)).toBe(420);
   });
 
   it("极端窄容器（可对齐边界落在容器前 35% 以左）放弃对齐", () => {

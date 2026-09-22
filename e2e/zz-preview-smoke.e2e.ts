@@ -31,9 +31,9 @@ async function openPreviewViaRow(page: Page, row: Locator, buttonText: string) {
     await direct.first().click();
     return;
   }
-  // 展开更多下拉（DOM 中存在多个未展开的 popup 实例，必须按可见过滤）
+  // 展开更多下拉（click 触发；DOM 中存在多个未展开的 popup 实例，必须按可见过滤）
   const dropdownTrigger = opCell.locator(".el-dropdown").first();
-  await dropdownTrigger.hover();
+  await dropdownTrigger.click();
   // 下拉展开由下方 toBeVisible 自动等待（web-first），无需固定延时
   const item = page
     .locator(".el-dropdown-menu__item")

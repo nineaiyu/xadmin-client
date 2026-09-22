@@ -17,13 +17,26 @@ export const SELECTION_COLUMN_WIDTH = 48;
 export const DEFAULT_COLUMN_WIDTH = 120;
 
 /**
+ * 对齐容差：对齐值与配置宽度的差不超过该值时才应用对齐。
+ *
+ * 对齐只能保证「初始滚动位置」表头不被固定列裁出半个字——横向滚动后
+ * 覆盖边界相对内容必然移动，裁切属滚动场景的固有观感。若为此把操作列
+ * 长期加宽几十上百像素（实测访问日志页 140 → 226），视觉代价大于收益，
+ * 也违背「所见即配置」的预期；因此只保留小幅修正（用户几乎无感），
+ * 差异过大时严格按页面配置宽度渲染（此时容忍初始位置的跨界列）。
+ */
+export const ALIGN_TOLERANCE = 30;
+
+/**
  * 计算操作列宽度。
  *
  * @param containerWidth 表格容器宽度（px；未测量到时为 0）
  * @param columnWidths   数据列宽序列（含多选列，不含操作列）
  * @param minWidth       页面为操作列配置的最小宽度
- * @returns 操作列宽度：无横向滚动时恒为 minWidth；有滚动时取
- *          「覆盖区左边界对齐某列右边界」的最小可行宽度
+ * @returns 操作列宽度：无横向滚动时恒为 minWidth；有滚动时，若
+ *          「覆盖区左边界对齐某列右边界」的最小可行宽度与 minWidth
+ *          的差不超过 ALIGN_TOLERANCE 则取该对齐值，否则保持 minWidth
+ *          （对齐只能让初始位置表头整齐，不值得把操作列长期加宽）
  */
 export function resolveOperationColumnWidth(
   containerWidth: number,
@@ -46,6 +59,8 @@ export function resolveOperationColumnWidth(
   if (accumulated < containerWidth * 0.35) return minWidth;
 
   const aligned = containerWidth - accumulated;
+  // 对齐收益门槛：加宽幅度超过容差就保持配置宽度（见 ALIGN_TOLERANCE 注释）
+  if (Math.max(minWidth, aligned) - minWidth > ALIGN_TOLERANCE) return minWidth;
   return Math.max(minWidth, aligned);
 }
 

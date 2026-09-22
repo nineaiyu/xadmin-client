@@ -255,6 +255,7 @@ export function useApiApplication(tableRef: Ref) {
   /* ---------------- 按钮装配 ---------------- */
   const operationButtonsProps = shallowRef<OperationProps>({
     width: 360,
+    showNumber: 5,
     buttons: [
       {
         text: t("apiApp.usage.title"),

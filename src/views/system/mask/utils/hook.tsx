@@ -151,7 +151,7 @@ export function useMask() {
   const operationButtonsProps = shallowRef<OperationProps>({
     // 放大到 6 / 360，保证内建按钮与「脱敏预览」平铺展示，不落进「更多」
     showNumber: 6,
-    width: 360,
+    width: 300,
     buttons: [
       {
         code: "preview",

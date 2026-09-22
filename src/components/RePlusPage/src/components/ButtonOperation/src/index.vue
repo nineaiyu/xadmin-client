@@ -3,11 +3,24 @@
     v-for="buttonRow in getSubButtons().preButtons"
     :key="buttonRow.code"
   >
-    <component :is="() => render(row, buttonRow)" />
+    <OperationButton
+      :row="row"
+      :button-row="buttonRow"
+      :size="size"
+      @action="handleChildAction"
+    />
   </template>
 
-  <!-- 隐藏的按钮 -->
-  <el-dropdown v-if="getSubButtons().showMore">
+  <!-- 隐藏的按钮（更多）：click 触发 + hide-on-click=false。
+       hover 触发时鼠标移向二次确认框即离开下拉区域，下拉关闭会连带确认框消失；
+       hide-on-click=false 则避免点击菜单项时立刻收起下拉。收起时机由子组件
+       OperationButton 在交互完成（确认/取消/点击）后经 close-dropdown 回调控制。 -->
+  <el-dropdown
+    v-if="getSubButtons().showMore"
+    ref="dropdownRef"
+    trigger="click"
+    :hide-on-click="false"
+  >
     <el-button
       :icon="useRenderIcon(More)"
       :size="size"
@@ -24,7 +37,15 @@
           v-for="buttonRow in getSubButtons().nextButtons"
           :key="unref(buttonRow.code)"
         >
-          <component :is="() => render(row, buttonRow)" :class="buttonClass" />
+          <OperationButton
+            :row="row"
+            :button-row="buttonRow"
+            :size="size"
+            is-sub-button
+            :close-dropdown="closeDropdown"
+            :class="buttonClass"
+            @action="handleChildAction"
+          />
         </el-dropdown-item>
       </el-dropdown-menu>
     </template>
@@ -32,10 +53,9 @@
 </template>
 
 <script lang="ts" setup>
-import type { Component, VNode, Ref, ComputedRef } from "vue";
-import { h, unref, computed, ref } from "vue";
+import type { Ref, ComputedRef } from "vue";
+import { unref, computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElPopconfirm, ElTooltip } from "element-plus";
 import {
   ElButton,
   ElDropdown,
@@ -43,11 +63,16 @@ import {
   ElDropdownMenu
 } from "element-plus";
 import { RecordType } from "plus-pro-components";
-import { isFunction } from "@pureadmin/utils";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import More from "~icons/ep/more-filled";
-import { OperationButtonsRow, OperationEmits, OperationProps } from "./types";
+import {
+  ButtonsCallBackParams,
+  OperationButtonsRow,
+  OperationEmits,
+  OperationProps
+} from "./types";
 import { uniqueArrayObj } from "@/components/RePlusPage";
+import OperationButton from "./OperationButton";
 
 const emit = defineEmits<OperationEmits>();
 
@@ -100,23 +125,6 @@ const getSubButtons = () => {
   };
 };
 
-const renderString = (
-  str: OperationButtonsRow["text"],
-  row: RecordType,
-  buttonRow: OperationButtonsRow
-) => {
-  if (typeof str === "function") {
-    const tempFunction = str as (
-      _row: RecordType,
-      _button: OperationButtonsRow
-    ) => string | Ref<string> | ComputedRef<string>;
-    const text = tempFunction(row, buttonRow);
-    return unref(text);
-  } else {
-    return unref(str);
-  }
-};
-
 const buttonClass = computed(() => {
   return [
     "h-[20px]!",
@@ -127,106 +135,16 @@ const buttonClass = computed(() => {
   ];
 });
 
-const buttonLoadings = ref<Record<string | number, boolean>>({});
+// 「更多」下拉实例：hide-on-click=false 后由子组件在手势完成后回调收起
+const dropdownRef = ref();
 
-// 渲染
-const render = (row: RecordType, buttonRow: OperationButtonsRow): VNode => {
-  const buttonRowProps = isFunction(buttonRow.props)
-    ? buttonRow.props(row, buttonRow)
-    : unref(buttonRow.props);
-
-  // icon-only 按钮补可访问名（a11y）：无 text 时取 tooltip 文案；显式 aria-label 优先
-  const explicitAriaLabel = (buttonRowProps as Record<string, unknown>)?.[
-    "aria-label"
-  ];
-  const tooltipContent = buttonRow.tooltip?.content
-    ? renderString(buttonRow.tooltip.content, row, buttonRow)
-    : undefined;
-  const ariaLabel =
-    explicitAriaLabel ??
-    (!buttonRow?.text && tooltipContent ? tooltipContent : undefined);
-
-  const buttonComponent = h(
-    ElButton,
-    {
-      size: props.size,
-      loading: buttonLoadings.value[buttonRow.code],
-      ...buttonRowProps,
-      ...(ariaLabel ? { "aria-label": ariaLabel } : {}),
-      onClick: buttonRow.confirm?.title
-        ? undefined
-        : (event: MouseEvent) => handleClickAction(row, buttonRow, event)
-    },
-    buttonRow?.text
-      ? () => {
-          return renderString(buttonRow.text, row, buttonRow);
-        }
-      : {}
-  );
-  if (buttonRow.confirm?.title) {
-    return h(
-      ElPopconfirm as Component,
-      {
-        title: renderString(buttonRow.confirm?.title, row, buttonRow),
-        onConfirm: (event: MouseEvent) =>
-          handleClickAction(row, buttonRow, event),
-        ...buttonRow.confirm?.props
-      },
-      { reference: () => buttonComponent }
-    );
-  }
-  if (buttonRow.tooltip?.content) {
-    return h(
-      ElTooltip,
-      {
-        placement: "top",
-        content: tooltipContent,
-        ...buttonRow.tooltip?.props
-      },
-      () => buttonComponent
-    );
-  }
-  return buttonComponent;
+/** 收起「更多」下拉（子组件 close-dropdown 回调，引用稳定） */
+const closeDropdown = () => {
+  dropdownRef.value?.handleClose?.();
 };
 
-class Loading {
-  private readonly code: string | number;
-  private readonly loadings: Record<string | number, boolean>;
-
-  constructor(
-    code: string | number,
-    loadings: Record<string | number, boolean>
-  ) {
-    this.code = code;
-    this.loadings = loadings;
-  }
-
-  //get 的用法
-  get value(): boolean {
-    return this.loadings[this.code];
-  }
-
-  // set 的用法
-  set value(loading: boolean) {
-    this.loadings[this.code] = loading;
-  }
-}
-
-// 分发按钮事件
-const handleClickAction = (
-  row: RecordType,
-  buttonRow: OperationButtonsRow,
-  e: MouseEvent
-) => {
-  const callbackParams = {
-    e,
-    row,
-    buttonRow,
-    loading: new Loading(buttonRow.code, buttonLoadings.value)
-  };
-  if (buttonRow.onClick && isFunction(buttonRow.onClick)) {
-    buttonRow.onClick(callbackParams);
-  }
-  emit("clickAction", callbackParams);
+/** 子组件按钮事件转发（对外契约不变：clickAction） */
+const handleChildAction = (params: ButtonsCallBackParams) => {
+  emit("clickAction", params);
 };
 </script>

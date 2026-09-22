@@ -12,6 +12,7 @@ import CircleClose from "~icons/ep/circle-close";
 import { handleOperation } from "@/components/RePlusPage";
 import { useI18n } from "vue-i18n";
 import Success from "~icons/ep/success-filled";
+import Upload from "~icons/ep/upload";
 import { message } from "@/utils/message";
 import { ElTag } from "element-plus";
 
@@ -49,6 +50,7 @@ export function useDemoBook(tableRef: Ref) {
         },
         props: {
           type: "primary",
+          icon: useRenderIcon(Upload),
           link: true
         },
         onClick: ({ row, loading }) => {

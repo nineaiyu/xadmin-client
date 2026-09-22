@@ -91,7 +91,7 @@ export function useWebhookDelivery(tableRef: Ref) {
   };
 
   const operationButtonsProps = shallowRef<OperationProps>({
-    width: 140,
+    width: 180,
     buttons: [
       {
         text: t("webhook.retry"),
