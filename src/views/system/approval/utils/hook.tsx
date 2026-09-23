@@ -19,7 +19,11 @@ import { refreshApprovalStats } from "@/utils/approvalStats";
 import type { RecordType } from "plus-pro-components";
 import ApprovalLogsDialog from "../components/ApprovalLogsDialog.vue";
 import { APPROVAL_STATUS_TAG_TYPE } from "./constants";
-import { openApprovalProgressDialog, openRejectReasonDialog } from "./dialogs";
+import {
+  openApprovalProgressDialog,
+  openRejectReasonDialog,
+  type TargetSnapshot
+} from "./dialogs";
 import Check from "~icons/ep/check";
 import Close from "~icons/ep/close";
 import Document from "~icons/ep/document";
@@ -284,15 +288,18 @@ export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
     return row?.approver?.username || t("approval.pendingApprover");
   };
 
-  /** 审批进度弹窗（内容渲染见 utils/dialogs.tsx）：先取详情里的 steps 再打开 */
+  /** 审批进度弹窗（内容渲染见 utils/dialogs.tsx）：先取详情里的 steps + 目标快照再打开 */
   const openProgress = (row?: RecordType) => {
     if (!row?.pk) return;
     approvalApi.retrieve?.(row.pk)?.then(res => {
       if (res.code !== SUCCESS_CODE || !res.data) return;
+      const detail = res.data as RecordType;
       openApprovalProgressDialog({
         t,
         no: String(row.pk).slice(0, 8).toUpperCase(),
-        steps: ((res.data as RecordType).steps ?? []) as Array<RecordType>
+        steps: (detail.steps ?? []) as Array<RecordType>,
+        // U-1：目标对象变更对照（敏感操作审批的目标快照；缺失时弹窗跳过该区块）
+        snapshot: (detail.target_snapshot ?? null) as TargetSnapshot | null
       });
     });
   };
@@ -312,20 +319,18 @@ export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
             );
           };
           break;
-        // 审批人列：多级链显示「第 N 级：当前级候选人」（点击查看逐级进度）；
-        // 扁平单显示实际审批人或「待审批」占位——原来的空列极易被误读为数据缺失
+        // 审批人列：多级链显示「第 N 级：当前级候选人」，扁平单显示实际审批人或
+        // 「待审批」占位；两者均可点击查看审批详情（U-1：详情含目标对象变更对照）
         case "approver":
           column.cellRenderer = ({ row }) =>
-            isChainRow(row)
-              ? h(
-                  ElLink,
-                  {
-                    type: "primary",
-                    onClick: () => openProgress(row)
-                  },
-                  () => approverText(row)
-                )
-              : approverText(row);
+            h(
+              ElLink,
+              {
+                type: "primary",
+                onClick: () => openProgress(row)
+              },
+              () => approverText(row)
+            );
           break;
       }
     });

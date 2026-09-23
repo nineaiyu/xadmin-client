@@ -12,6 +12,194 @@ commonLabels:
   descending: 降序
   ascending: 升序
 
+fileAccess:
+  download: 下载
+  accessLogs: 访问记录
+  accessLogsTitle: 访问记录 - {name}
+  total: 记录总数
+  time: 时间
+  user: 操作人
+  action: 动作
+  actionUpload: 上传
+  actionDownload: 下载
+  actionPreview: 预览
+  actionDelete: 删除
+  ipaddress: IP
+  result: 结果
+  detail: 明细
+
+forcePassword:
+  title: 需要修改密码
+  tip: 管理员已要求你修改密码，请立即设置新密码后再继续使用系统
+  submit: 修改密码
+  success: 密码修改成功
+  later: 稍后处理
+
+savedView:
+  button: 视图
+  save: 保存当前筛选
+  saveTitle: 保存为我的视图
+  namePlaceholder: 视图名称
+  shared: 共享给同页其他用户
+  saveSuccess: 视图已保存
+  empty: 暂无保存的视图
+  default: 默认视图
+  setDefault: 设为默认
+  deleteConfirm: 确认删除视图「{name}」？
+  applied: 已应用视图「{name}」
+  sharedShort: 共享
+  emptyConditions: 当前没有筛选条件可保存，请先设置筛选
+
+advancedFilter:
+  button: 高级筛选
+  title: 高级筛选
+  fieldPlaceholder: 选择字段
+  valuePlaceholder: 输入值
+  multiPlaceholder: 多个值用英文逗号分隔
+  addCondition: 添加条件
+  true: 是
+  false: 否
+  hint: 条件之间为「与」关系；字段与取值仍受当前账号的字段权限约束
+  lookups:
+    icontains: 包含
+    exact: 等于
+    startswith: 开头是
+    in: 属于（多值）
+    gte: 大于等于
+    lte: 小于等于
+    isnull: 为空
+    ne: 不等于
+
+passkey:
+  title: Passkey 凭据
+  add: 添加 Passkey
+  name: 凭据名称
+  namePlaceholder: 例如：MacBook 指纹
+  lastUsed: 最近使用
+  created: 绑定时间
+  empty: 暂无 Passkey 凭据
+  removeConfirm: 确认删除该 Passkey 凭据？
+  removeSuccess: 凭据已删除
+  registerSuccess: Passkey 绑定成功
+  unsupported: 当前环境不支持 Passkey（需 HTTPS 且浏览器支持 WebAuthn）
+  failed: Passkey 操作失败
+  loginTip: 请在系统弹窗中完成指纹 / 人脸 / 安全密钥验证
+  login: 使用 Passkey 验证
+
+messageTemplate:
+  title: 消息模板
+  messageType: 消息类型
+  category: 分类
+  override: 覆盖状态
+  overridden: 已自定义
+  defaultState: 代码默认
+  defaultSubject: 默认标题
+  variables: 可用变量
+  subject: 标题模板
+  body: 正文模板
+  subjectPlaceholder: 留空表示使用代码默认标题
+  bodyPlaceholder: 留空表示使用代码默认正文
+  edit: 编辑
+  editTitle: 编辑模板 - {name}
+  preview: 预览
+  previewTip: 预览使用样例数据渲染，不会真实发送
+  reset: 重置为默认
+  resetConfirm: 确认重置「{name}」为代码默认模板？
+  saveSuccess: 模板已保存
+  resetSuccess: 已重置为默认模板
+
+approvalDiscussion:
+  title: 讨论
+  placeholder: 输入评论，可用 {'@'}用户名 提醒相关人
+  submit: 发表评论
+  empty: 暂无评论
+  deleteConfirm: 确认删除这条评论？
+  submitted: 评论已发表
+  cc: 抄送人
+  ccPlaceholder: 选择抄送人（可多选）
+
+accountRisk:
+  scan: 立即巡检
+  batchHandle: 批量处置
+  handle: 处置
+  detail: 详情
+  detailTitle: 风险详情 - {name}
+  handleTitle: 风险处置（已选 {count} 项）
+  action: 处置动作
+  remark: 处置备注
+  suggestion: 处理建议
+  metrics: 指标
+  actionNotify: 发送提醒
+  actionForcePassword: 强制改密
+  actionForceLogout: 强制下线
+  actionDisable: 停用账号
+  actionIgnore: 豁免（不再提醒）
+  actionResolve: 标记已处理
+  typePasswordExpired: 密码已过期
+  typePasswordStale: 长期未改密码
+  typeLoginStale: 长期未登录
+  typeNeverLoggedIn: 从未登录
+  typeSuperuserNoMfa: 管理员未绑定 MFA
+  typeSuperuserCount: 超管数量异常
+
+loginPolicy:
+  add: 新增策略
+  addTitle: 新增登录策略
+  editTitle: 编辑登录策略
+  name: 策略名称
+  priority: 优先级
+  priorityTip: 数字越小越先匹配，首个命中的策略生效
+  isActive: 启用
+  targetType: 目标对象
+  targetAll: 全部用户
+  targetRole: 指定角色
+  targetUser: 指定用户
+  targetValue: 对象值
+  rolePlaceholder: 角色编码（多个用逗号分隔）
+  userPlaceholder: 用户名（多个用逗号分隔）
+  weekdays: 生效星期
+  weekday1: 周一
+  weekday2: 周二
+  weekday3: 周三
+  weekday4: 周四
+  weekday5: 周五
+  weekday6: 周六
+  weekday7: 周日
+  timeRange: 生效时段
+  startTime: 开始时间
+  endTime: 结束时间
+  ipRanges: 限制网段
+  ipPlaceholder: 每行一个 CIDR 或区间，例如 192.168.0.0/24
+  action: 命中动作
+  actionAccept: 允许登录（豁免后续策略）
+  actionReject: 拒绝登录
+  actionRequireMfa: 要求二次验证
+  actionRecord: 仅记录
+  remark: 备注
+  preview: 命中预演
+  previewTitle: 登录策略命中预演
+  previewUser: 样例用户
+  previewUserTip: 留空表示当前用户
+  previewIp: 样例 IP
+  previewRun: 预演
+  previewResult: 命中「{policy}」→ {action}
+  previewNoMatch: 当前没有策略命中该样例
+  previewMatched: 是否匹配
+  previewEffective: 最终生效
+  effective: 生效
+  invalidForm: 请完整填写策略名称、对象值与时段
+
+batchUpdate:
+  button: 批量更新
+  title: 批量更新（已选 {count} 条）
+  field: 更新字段
+  fieldPlaceholder: 请选择要更新的字段
+  value: 目标值
+  valuePlaceholder: 请输入目标值
+  tip: 将把选中记录的同名字段统一改为该值，操作不可撤销
+  selectFirst: 请先勾选要更新的记录
+  fieldRequired: 请选择字段并填写目标值
+
 tableBar:
   loose: 宽松
   default: 默认
@@ -229,6 +417,79 @@ taskCenter:
   logTitle: 执行日志
   empty: 暂无异步任务记录
   noData: 暂无记录
+  type: 记录类型
+  status: 状态
+  keyword: 名称关键字
+  total: 共 {total} 条
+  colType: 类型
+  colName: 名称
+  colModule: 来源
+  colStatus: 状态
+  colProgress: 进度
+  colCreator: 创建人
+  colCreated: 创建时间
+  colError: 失败原因
+  colActions: 操作
+  typeTask: 执行任务
+  typeExport: 导出
+  typeImport: 导入
+  type_task: 任务
+  type_export: 导出
+  type_import: 导入
+  statusPending: 等待中
+  statusRunning: 运行中
+  statusSuccess: 成功
+  statusFailure: 失败
+  statusRevoked: 已取消
+  status_PENDING: 等待中
+  status_RUNNING: 运行中
+  status_SUCCESS: 成功
+  status_FAILURE: 失败
+  status_REVOKED: 已取消
+  cancel: 取消
+  cancelTitle: 取消任务
+  cancelConfirm: 取消后任务将在安全点停止（运行中的导出/导入会在下一个检查点结束），是否继续？
+  cancelDone: 已取消
+  rerun: 重跑
+  rerunDone: 已提交重跑
+
+tag:
+  title: 标签
+  create: 新建标签
+  edit: 编辑标签
+  saveOk: 标签已保存
+  name: 标签名称
+  nameRequired: 请填写标签名称
+  color: 颜色
+  remark: 备注
+  usage: 使用数
+  builtin: 内置
+  assignTitle: 打标
+  assignPlaceholder: 选择标签（可多选）
+  assignHint: 保存后为全量替换：未选中的标签将被解绑
+  assignDone: 标签已更新
+  selectPlaceholder: 请选择标签
+
+commandPalette:
+  title: 快捷动作
+  openAi: 打开 AI 助手
+  openTaskCenter: 打开任务中心
+  openTags: 打开标签管理
+  toggleTheme: 切换浅色 / 深色
+  backHome: 返回首页
+
+invite:
+  title: 账号激活
+  subtitle: 设置登录密码以完成账号激活
+  password: 登录密码
+  confirm: 确认密码
+  submit: 激活账号
+  passwordRequired: 请输入登录密码
+  mismatch: 两次输入的密码不一致
+  success: 激活成功，请登录
+  invalid: 邀请链接无效或已过期，请联系管理员重新发送邀请
+  accepted: 账号已激活，请直接登录
+  toLogin: 去登录
 
 oauth:
   title: 第三方登录
@@ -272,6 +533,7 @@ sorts:
   rank: 排序
 
 buttons:
+  tips: 提示
   loginOut: 退出系统
   add: 新增
   save: 保存
@@ -378,6 +640,10 @@ menus:
   importCenter: 导入记录
   systemMonitor: 系统监控
   dataDict: 数据字典
+  tag: 标签管理
+  taskCenter: 任务中心
+  accountRisk: 账号安全
+  loginPolicy: 登录策略
   dataMaskRule: 脱敏规则
   approvalCenter: 审批中心
   approvalFlow: 流程定义
@@ -386,6 +652,35 @@ menus:
   approvalRule: 审批规则
   leaveApply: 请假申请
   moduleManager: 模块管理
+  credential: 凭据与密钥
+
+impact:
+  title: 影响面预览
+  affected: 该操作会影响以下关联数据
+  confirmDelete: 确认删除
+
+credential:
+  title: 凭据与密钥
+  systemConfigs: 系统配置敏感项
+  settings: 设置项凭据
+  modelFields: 模型字段凭据
+  name: 名称
+  field: 字段
+  fields: 加密字段
+  category: 分类
+  status: 加密状态
+  action: 操作
+  updatedTime: 最近更新
+  configuredCount: 已配置数量
+  empty: 未配置
+  encrypted: 已加密
+  plaintext: 明文
+  plaintextWarn: "发现 {count} 项敏感配置仍为明文，请尽快轮换"
+  rotate: 轮换
+  rotateConfirm: "确认重新加密凭据 {name}？轮换后旧密文立即失效，使用该凭据的链路会读取新密文"
+  rotateOk: 凭据已重新加密
+  rotateFailed: 凭据轮换失败
+  modelFieldsHint: 模型字段级凭据按行值级加密（AESCipherV3），此处仅展示已配置数量，不展示密钥内容
 
 approval:
   pendingTab: 待我审批
@@ -429,6 +724,9 @@ approval:
   pendingApprover: 待审批
   progressTitle: 审批进度 - {no}
   progressTip: 按配置顺序逐级审批：当前级通过后自动通知下一级，全部通过才算审批通过
+  target: 目标对象
+  targetChanges: 变更对照（变更前 → 变更后）
+  targetNoChanges: 未记录字段变更（删除类操作仅展示目标对象）
   handler: 处理人
   stepComment: 意见
   modeOR: 或签
@@ -513,6 +811,8 @@ systemApprovalFlow:
   assigneeHint_field: 表单字段 key（值为用户名或用户名列表）
   assigneeValueRequired: 请填写该节点的审批人（角色 / 用户 / 表单字段）
   ratioRangeRequired: 比例会签的比例需在 1-100 之间
+  ccUsers: 抄送人
+  ccUsersHint: 节点默认抄送人（可多选，留空不抄送）
   conditionField: 条件字段
   conditionFieldTip: 留空=无条件
   conditionOp: 运算符
@@ -562,6 +862,11 @@ systemApprovalInstance:
   formReason: 驳回/结束说明
   formData: 申请内容
   formDataEmpty: 无表单数据
+  relatedObject: 关联业务对象
+  relatedType: 类型
+  relatedTitle: 对象
+  relatedStatus: 业务状态
+  relatedMissing: 对象已不可达（已删除或模块未启用）
   detailRich: 申请详情
   tasks: 审批轨迹
   taskNode: 节点
@@ -713,6 +1018,10 @@ account:
   unbound: 暂未绑定
 
 systemUser:
+  invite: 邀请激活
+  inviteConfirm: 将向该用户发送邀请邮件（重置为待激活，原密码立即失效；已激活账号需重新激活），确认继续？
+  invitePending: 待接受邀请
+  inviteAccepted: 已激活
   avatarAlt: 用户头像
   user: 用户
   resetMfa: 重置MFA
@@ -732,9 +1041,13 @@ systemUser:
   resetPassword: 重置密码
   assignRoles: 分配角色权限
   resetPasswd: 重置用户 { user } 的密码
+  generatePassword: 生成随机密码
+  passwordCopied: 已生成随机密码并复制到剪贴板
+  passwordGenerated: 已生成随机密码，请手动复制
   assignRole: 分配用户 { user } 的角色权限
   updateAvatar: 更新用户 { user } 的头像
   password: 密码
+  passwordRequired: 请输入密码
   roles: 角色
   rules: 数据权限
   preview: 权限预览
@@ -1806,6 +2119,8 @@ mask:
   maskTypeCustom: 自定义正则
 
 dashboard:
+  exportImage: 导出图片
+  exportNoChart: 指标卡没有可导出的图表
   title: 仪表盘
   pickDashboard: 选择仪表盘
   create: 新建仪表盘
@@ -1887,6 +2202,9 @@ dataDataset:
   exportCsv: 导出 CSV
 
 dataScreen:
+  exportScreen: 导出当前屏
+  exportNoChart: 当前屏没有可导出的图表
+  exportSkipped: 有 { count } 个指标卡未导出
   title: 大屏投屏
   create: 新建大屏
   edit: 编辑
@@ -2138,6 +2456,40 @@ aiConfig:
   sectionBehavior: 行为参数
   required: 请填写档案名称、接口地址与模型
   saveOk: 档案已保存
+  probe: 探测能力
+  probeDone: 探测完成
+  probeHint: 按序验证结构化 JSON / 原生工具调用 / 思考内容（可选多模态），结果写入档案画像
+  capabilityTitle: 模型能力
+  capJson: JSON 输出
+  capToolCalls: 原生工具调用
+  capReasoning: 思考内容
+  capVision: 多模态
+  capUnknown: 未探测
+  capOk: 支持
+  capFail: 不支持
+  probeAt: 探测时间
+  purpose: 用途
+  purposeChat: 对话问答
+  purposeStructured: 结构化输出
+  purposeHint: 对话问答供聊天/文档问答；结构化输出供 NL 查数与动作草稿（未配置时回落对话档案）
+  nativeTools: 原生工具调用（结构化链路）
+  probeVision: 探测（含多模态）
+  trackTitle: 草稿链路
+  trackNative: 原生轨道
+  trackPrompt: prompt-JSON 轨道
+  nativeToolsHint: 开启且档案探测通过 tool_calls 能力时，动作草稿优先走原生 function calling，否则回落 prompt-JSON
+  quotaTitle: 用量配额（0 = 不限）
+  quotaCalls: 单用户日调用次数
+  quotaTokens: 单用户日 token 上限
+  quotaStreams: 全局并发流式上限
+  usageTitle: 用量账本
+  usageHint: 逐次记账（档案 / 链路 / token / 耗时），保留期随监控保留天数清理
+  usageCalls: 调用数
+  usageTokens: Token
+  usageFailed: 失败数
+  usageByFeature: 链路分布
+  usageByDay: 日用量
+  usageTopUsers: 用户用量 Top
   deleteConfirm: 确定删除该档案吗？
   deleteDone: 档案已删除
   activateConfirm: 确定将 AI 全部功能切换到该档案吗？

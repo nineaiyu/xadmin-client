@@ -174,10 +174,40 @@ export type AiProfileItem = {
   max_retries: number;
   context_limit: number;
   persona: string;
+  /** 用途（AI-1 档案分流）：chat 供问答/聊天，structured 供 NL 查数/动作草稿 */
+  purpose?: "chat" | "structured";
+  /** 能力画像（AI-1 探测结果，可人工修正） */
+  capabilities?: Record<string, { ok?: boolean; detail?: string } | undefined>;
+  probed_at?: string | null;
   is_active: boolean;
   remark: string;
   updated_time: string;
   created_time: string;
+};
+
+/** AI 用量账本汇总（AI-5） */
+export type AiUsageSummary = {
+  days: number;
+  total_calls: number;
+  total_tokens: number;
+  failed: number;
+  by_day: { day: string; calls: number; tokens: number }[];
+  by_feature: { feature: string; calls: number; tokens: number }[];
+  /** AI-2 双轨对照：动作草稿链路按轨道（native / prompt）的成功率统计 */
+  by_track: {
+    track: string;
+    calls: number;
+    failed: number;
+    tokens: number;
+    success_rate: number;
+  }[];
+  top_users: { username: string; calls: number; tokens: number }[];
+  quota: {
+    daily_calls: number;
+    daily_tokens: number;
+    concurrent_streams: number;
+  };
+  stream_slots: number;
 };
 
 class AiProfileApi extends BaseApi {
@@ -208,6 +238,18 @@ class AiProfileApi extends BaseApi {
       `${this.baseApi}/${pk}/test`
     );
   };
+  /** AI-1 能力探测：JSON / 原生工具调用 / 思考内容（可选多模态），结果落档案画像 */
+  probe = (
+    pk: string,
+    data?: { capabilities?: string[]; vision?: boolean }
+  ) => {
+    return this.request<Record<string, { ok?: boolean } | undefined>>(
+      "post",
+      {},
+      data ?? {},
+      `${this.baseApi}/${pk}/probe`
+    );
+  };
 }
 
 export const aiProfileApi = new AiProfileApi("/api/system/ai/profiles");
@@ -226,6 +268,15 @@ class AiAssistantApi extends BaseApi {
       { days },
       {},
       `${this.baseApi}/metrics`
+    );
+  };
+  /** AI-5 用量账本：按天 / 按链路 / Top 用户 + 配额配置 */
+  usage = (days = 7, feature = "") => {
+    return this.request<DetailResult<AiUsageSummary>>(
+      "get",
+      { days, feature },
+      {},
+      `${this.baseApi}/usage`
     );
   };
   /** 文档问答（非流式；流式请用 askStream） */

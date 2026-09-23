@@ -1,13 +1,13 @@
 {
-  "updated": "2026-09-16",
+  "updated": "2026-09-23",
   "budget_kb": 15,
-  "closure_gzip9_kb": 522,
-  "main_chunk_gzip9_kb": 130.1,
+  "closure_gzip9_kb": 537.4,
+  "main_chunk_gzip9_kb": 134.9,
   "chunks": [
     {
       "name": "index.js",
-      "file": "index-B_D9qBh3.js",
-      "kb": 130.1
+      "file": "index-Cet7CxBi.js",
+      "kb": 134.9
     },
     {
       "name": "rolldown.js",
@@ -16,22 +16,22 @@
     },
     {
       "name": "vue.js",
-      "file": "vue-core-DVjAgzUh.js",
-      "kb": 88.2
+      "file": "vue-core-DuAfQblM.js",
+      "kb": 88.3
     },
     {
       "name": "element.js",
-      "file": "element-plus-WYv-G1gW.js",
-      "kb": 235.9
+      "file": "element-plus-BoT21acX.js",
+      "kb": 236
     },
     {
       "name": "plus.js",
-      "file": "plus-pro-TuBhPtOf.js",
+      "file": "plus-pro-Dgc9S5JQ.js",
       "kb": 13.2
     },
     {
       "name": "dist.js",
-      "file": "dist-yOq3T9Gv.js",
+      "file": "dist-D3zE3J-V.js",
       "kb": 7.5
     },
     {
@@ -41,7 +41,7 @@
     },
     {
       "name": "message.js",
-      "file": "message-CASP-QNu.js",
+      "file": "message-DUt-d_kK.js",
       "kb": 0.3
     },
     {
@@ -51,8 +51,8 @@
     },
     {
       "name": "i18n.js",
-      "file": "i18n-DS2Ajssm.js",
-      "kb": 45.5
+      "file": "i18n-B3IcVXS_.js",
+      "kb": 55.9
     }
   ]
 }

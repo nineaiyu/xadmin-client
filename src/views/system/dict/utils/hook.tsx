@@ -18,6 +18,7 @@ import ArrowDown from "~icons/ep/arrow-down-bold";
 import CircleCheck from "~icons/ep/circle-check";
 import CircleClose from "~icons/ep/circle-close";
 import Refresh from "~icons/ep/refresh";
+import { useBatchUpdate } from "@/views/system/components/useBatchUpdate";
 
 /** 数据字典行：parent 为空 = 字典类型，非空 = 字典项（模型只支持两级） */
 type DictRow = {
@@ -114,6 +115,20 @@ export function useDataDict(tableRef: Ref) {
     ]
   });
 
+  // F-1 批量更新：勾选行后统一写入同组字段（字段白名单：启用状态）
+  const { batchUpdateButton } = useBatchUpdate({
+    t,
+    api,
+    tableRef,
+    fields: [
+      {
+        key: "is_active",
+        label: t("dataDict.is_active"),
+        input_type: "boolean"
+      }
+    ]
+  });
+
   /** 工具栏：新增（覆盖内建 create，parent 留空即字典类型）+ 批量启停 + 刷新缓存 */
   const tableBarButtonsProps = shallowRef<OperationProps>({
     buttons: [
@@ -196,7 +211,8 @@ export function useDataDict(tableRef: Ref) {
           });
         },
         show: auth.refreshCache && 3
-      }
+      },
+      batchUpdateButton
     ]
   });
 

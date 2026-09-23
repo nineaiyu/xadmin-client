@@ -12,6 +12,12 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import type { LoginMfaRequired } from "@/api/mfa";
 import { loginMfaSendCodeApi, loginMfaVerifyApi } from "@/api/mfa";
 import type { TokenInfo } from "@/api/auth";
+import { passkeyApi } from "@/api/system/security";
+import {
+  b64urlToBuffer,
+  bufferToB64url,
+  isPasskeySupported
+} from "@/utils/webauthn";
 import Shield from "~icons/ri/shield-keyhole-line";
 
 defineOptions({
@@ -40,6 +46,60 @@ let cooldownTimer: ReturnType<typeof setInterval> | null = null;
 const activeMethod = computed(() =>
   props.mfaInfo.methods.find(item => item.name === currentMethod.value)
 );
+
+/** F-9 Passkey 方式：无验证码输入，走浏览器断言（challenge → credentials.get） */
+const isPasskey = computed(() => currentMethod.value === "passkey");
+
+const handlePasskeyVerify = async () => {
+  if (!isPasskeySupported()) {
+    message(t("passkey.unsupported"), { type: "warning" });
+    return;
+  }
+  loading.value = true;
+  try {
+    const challengeRes = await passkeyApi.loginChallenge(
+      props.mfaInfo.mfa_token
+    );
+    if (challengeRes.code !== SUCCESS_CODE) {
+      message(challengeRes.detail, { type: "warning" });
+      return;
+    }
+    const { challenge, rp_id } = challengeRes.data;
+    const credential = (await navigator.credentials.get({
+      publicKey: {
+        challenge: b64urlToBuffer(challenge),
+        rpId: rp_id,
+        timeout: 60000,
+        userVerification: "preferred"
+      }
+    })) as PublicKeyCredential | null;
+    if (!credential) {
+      message(t("passkey.failed"), { type: "warning" });
+      return;
+    }
+    const response = credential.response as AuthenticatorAssertionResponse;
+    const payload = {
+      credential_id: credential.id,
+      client_data_json: bufferToB64url(response.clientDataJSON),
+      authenticator_data: bufferToB64url(response.authenticatorData),
+      signature: bufferToB64url(response.signature)
+    };
+    const res = await loginMfaVerifyApi({
+      mfa_token: props.mfaInfo.mfa_token,
+      method: "passkey",
+      code: JSON.stringify(payload)
+    });
+    if (res.code === SUCCESS_CODE) {
+      emit("success", res.data);
+    } else {
+      message(res.detail, { type: "warning" });
+    }
+  } catch {
+    // 用户取消系统弹窗或验证失败：停留在本页可重试
+  } finally {
+    loading.value = false;
+  }
+};
 
 const startCooldown = () => {
   sendCooldown.value = 60;
@@ -141,7 +201,18 @@ onBeforeUnmount(() => {
         </el-button>
       </el-form-item>
     </Motion>
-    <Motion :delay="250">
+    <Motion v-if="isPasskey" :delay="230">
+      <el-form-item>
+        <el-alert
+          :title="$t('passkey.loginTip')"
+          type="info"
+          :closable="false"
+          show-icon
+          class="w-full"
+        />
+      </el-form-item>
+    </Motion>
+    <Motion v-if="!isPasskey" :delay="250">
       <el-form-item>
         <el-input
           v-model="code"
@@ -159,9 +230,9 @@ onBeforeUnmount(() => {
           class="w-full!"
           size="default"
           type="primary"
-          @click="handleVerify"
+          @click="isPasskey ? handlePasskeyVerify() : handleVerify()"
         >
-          {{ $t("mfa.loginVerify") }}
+          {{ isPasskey ? $t("passkey.login") : $t("mfa.loginVerify") }}
         </el-button>
       </el-form-item>
     </Motion>

@@ -1,7 +1,8 @@
 import { SUCCESS_CODE } from "@/api/types";
 import { h, onMounted, reactive, ref, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElTag } from "element-plus";
+import { ElLink, ElTag } from "element-plus";
+import { useRouter } from "vue-router";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
@@ -32,6 +33,7 @@ const VISIBILITY_TAG: Record<string, StatusTagType> = {
 export function useDataset(tableRef: Ref) {
   const { t } = useI18n();
   const api = reactive(datasetApi);
+  const router = useRouter();
   const auth = reactive({
     ...getDefaultAuths("DataDataset"),
     create: false,
@@ -73,6 +75,24 @@ export function useDataset(tableRef: Ref) {
           break;
         case "description":
           column["minWidth"] = 180;
+          break;
+        case "report_count":
+          // F-12 联动：被几张定时报表引用（后端关联计数）可点击，跳转报表页按数据集筛选
+          column["minWidth"] = 100;
+          column["cellRenderer"] = ({ row }) =>
+            h(
+              ElLink,
+              {
+                type: "primary",
+                underline: false,
+                onClick: () =>
+                  router.push({
+                    path: "/analysis/report/index",
+                    query: { dataset: String(row.pk) }
+                  })
+              },
+              () => String(row.report_count ?? 0)
+            );
           break;
       }
     });

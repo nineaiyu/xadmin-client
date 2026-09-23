@@ -163,10 +163,10 @@ export class BaseApi extends BaseRequest {
       `${this.baseApi}/${pk}`
     );
   };
-  batchDestroy = (pks: Array<number | string>) => {
+  batchDestroy = (pks: Array<number | string>, params?: object) => {
     return this.request<BaseResult>(
       "post",
-      {},
+      params,
       [...pks],
       `${this.baseApi}/batch-destroy`
     );

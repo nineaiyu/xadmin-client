@@ -14,6 +14,7 @@ const {
   listColumnsFormat,
   addOrEditOptions,
   baseColumnsFormat,
+  tableBarButtonsProps,
   operationButtonsProps
 } = useDept(tableRef);
 </script>
@@ -30,6 +31,7 @@ const {
       :addOrEditOptions="addOrEditOptions"
       :baseColumnsFormat="baseColumnsFormat"
       :listColumnsFormat="listColumnsFormat"
+      :tableBarButtonsProps="tableBarButtonsProps"
       :operationButtonsProps="operationButtonsProps"
       locale-name="systemDept"
     />

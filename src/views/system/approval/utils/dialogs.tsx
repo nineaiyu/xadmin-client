@@ -73,14 +73,31 @@ export function openRejectReasonDialog(options: {
   });
 }
 
-/** 逐级审批进度弹窗：逐级候选人 / 处理人 / 意见 / 时间（多级链单专用） */
+/** 目标对象轻量快照（U-1）：主键 / 名称 + 变更前后事实对照 */
+export interface TargetSnapshot {
+  model?: string;
+  verbose_name?: string;
+  pk?: string;
+  name?: string;
+  changes?: Array<{
+    field?: string;
+    label?: string;
+    old?: string;
+    new?: string;
+  }>;
+}
+
+/** 逐级审批进度弹窗：目标对象变更对照 + 逐级候选人 / 处理人 / 意见 / 时间 */
 export function openApprovalProgressDialog(options: {
   t: (arg0: string, arg1?: object) => string;
   /** 审批单号（截断展示） */
   no: string;
   steps: Array<RecordType>;
+  /** 目标对象快照（敏感操作审批）：有变更时渲染「变更前 → 变更后」对照 */
+  snapshot?: TargetSnapshot | null;
 }) {
-  const { t, no, steps } = options;
+  const { t, no, steps, snapshot } = options;
+  const changes = (snapshot?.changes ?? []).filter(item => item?.field);
   addDialog({
     title: t("approval.progressTitle", { no }),
     width: "620px",
@@ -91,6 +108,42 @@ export function openApprovalProgressDialog(options: {
     contentRenderer: () => (
       <div class="space-y-2">
         <p class="text-xs text-gray-500">{t("approval.progressTip")}</p>
+        {snapshot?.name ? (
+          <div
+            class="rounded border border-gray-200 p-2 text-sm dark:border-gray-700"
+            data-testid="approval-target-snapshot"
+          >
+            <div class="font-medium">
+              {`${t("approval.target")}: ${snapshot.name}`}
+            </div>
+            <div class="mt-1 text-xs text-gray-500">
+              {changes.length
+                ? t("approval.targetChanges")
+                : t("approval.targetNoChanges")}
+            </div>
+            {changes.length ? (
+              <div class="mt-1 space-y-1 text-xs">
+                {changes.map(item => (
+                  <div
+                    key={item.field}
+                    class="flex flex-wrap items-center gap-2"
+                  >
+                    <span class="text-gray-500">
+                      {item.label ?? item.field}
+                    </span>
+                    <span class="text-(--el-color-danger) line-through">
+                      {item.old || "-"}
+                    </span>
+                    <span>→</span>
+                    <span class="text-(--el-color-success)">
+                      {item.new || "-"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
         {steps.map((step: RecordType) => (
           <div
             key={step.order}

@@ -75,6 +75,8 @@ export type SearchColumnsResult = {
     choices_truncated?: boolean;
     /** 远程联想端点：资源混入 SuggestionsAction 时对 api-search-* 关联字段下发 */
     suggest_url?: string;
+    /** 该列是否支持表头排序（服务端 ordering_fields 声明面下发；未声明则不出现） */
+    sortable?: boolean;
     /** ListField(child=ChoiceField) 下发的子字段元信息，choices 候选值供多选下拉渲染 */
     child?: { choices?: ChoiceOption[]; [key: string]: unknown };
   }>;

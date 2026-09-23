@@ -291,6 +291,33 @@ function assigneeHint(type: string): string {
           />
         </template>
       </el-table-column>
+      <el-table-column :label="t('systemApprovalFlow.ccUsers')" min-width="150">
+        <template #default="{ row }">
+          <!-- F-5 抄送人（节点级默认）：与审批人同口径的多选（用户名数组，可直接输入兜底） -->
+          <el-select
+            :model-value="row.cc_users || []"
+            multiple
+            filterable
+            remote
+            allow-create
+            default-first-option
+            reserve-keyword
+            size="small"
+            :remote-method="searchUsers"
+            :loading="userLoading"
+            :placeholder="t('systemApprovalFlow.ccUsersHint')"
+            @focus="(row.cc_users || []).forEach(ensureUserOption)"
+            @update:model-value="value => (row.cc_users = value)"
+          >
+            <el-option
+              v-for="user in userOptions"
+              :key="user.username"
+              :label="user.label"
+              :value="user.username"
+            />
+          </el-select>
+        </template>
+      </el-table-column>
       <el-table-column
         :label="t('systemApprovalFlow.conditionField')"
         width="120"

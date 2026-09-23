@@ -39,6 +39,7 @@ const emptyForm = () => ({
   max_retries: 0,
   context_limit: 20,
   persona: "",
+  purpose: "chat",
   is_active: false,
   remark: ""
 });
@@ -74,6 +75,7 @@ const getPayload = (): Record<string, unknown> | null => {
     max_retries: form.max_retries,
     context_limit: form.context_limit,
     persona: form.persona,
+    purpose: form.purpose,
     is_active: form.is_active,
     remark: form.remark
   };
@@ -117,6 +119,18 @@ defineExpose({ getPayload });
     </el-form-item>
     <el-form-item :label="t('aiConfig.model')" required>
       <el-input v-model="form.model" placeholder="deepseek-chat" />
+    </el-form-item>
+    <el-form-item
+      :label="t('aiConfig.purpose')"
+      :title="t('aiConfig.purposeHint')"
+    >
+      <el-select v-model="form.purpose" style="width: 220px">
+        <el-option :label="t('aiConfig.purposeChat')" value="chat" />
+        <el-option
+          :label="t('aiConfig.purposeStructured')"
+          value="structured"
+        />
+      </el-select>
     </el-form-item>
     <el-form-item :label="t('aiConfig.remark')">
       <el-input v-model="form.remark" maxlength="255" />

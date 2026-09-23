@@ -2,6 +2,8 @@ import { SUCCESS_CODE } from "@/api/types";
 import menuFieldForm from "../components/RoleForm.vue";
 import RolePermissionPreview from "../components/RolePermissionPreview.vue";
 import { addDrawer } from "@/components/ReDrawer";
+import { ElLink } from "element-plus";
+import { useRouter } from "vue-router";
 
 import {
   getCurrentInstance,
@@ -9,7 +11,8 @@ import {
   onMounted,
   reactive,
   ref,
-  shallowRef
+  shallowRef,
+  type Ref
 } from "vue";
 import { useI18n } from "vue-i18n";
 import { roleApi } from "@/api/system/role";
@@ -25,12 +28,20 @@ import { modelLabelFieldApi } from "@/api/system/field";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { fieldGroupKey, menuFieldKey } from "./treeKeys";
 import View from "~icons/ep/view";
+import { useBatchUpdate } from "@/views/system/components/useBatchUpdate";
 import type { RecordType } from "plus-pro-components";
-import type { OperationProps, RePlusPageProps } from "@/components/RePlusPage";
+import type {
+  OperationProps,
+  PageTableColumn,
+  RePlusPageProps
+} from "@/components/RePlusPage";
 
-export function useRole() {
+export function useRole(pageRef?: Ref) {
   const { t } = useI18n();
   const api = reactive(roleApi);
+  const router = useRouter();
+  // F-1 批量更新需要读取勾选行：页面传入 RePlusPage ref（缺省自带一个，供独立使用）
+  const tableRef = pageRef ?? ref();
 
   const auth = reactive({
     preview: false,
@@ -209,10 +220,56 @@ export function useRole() {
       }
     ]
   });
+  // F-1 批量更新：勾选行后统一写入同组字段（字段白名单：启用状态）
+  const { batchUpdateButton } = useBatchUpdate({
+    t,
+    api,
+    tableRef,
+    fields: [
+      {
+        key: "is_active",
+        label: t("commonLabels.is_active"),
+        input_type: "boolean"
+      }
+    ]
+  });
+  const tableBarButtonsProps = shallowRef<OperationProps>({
+    buttons: [batchUpdateButton]
+  });
+
+  /**
+   * F-12 联动：列表「用户数」列（后端关联计数）可点击，跳转到按该角色筛选的用户列表
+   * （用户页读取 ?role=<pk> 注入搜索条件并刷新，见 system/user/utils/hook.tsx）
+   */
+  const listColumnsFormat = (columns: PageTableColumn[]) => {
+    columns.forEach(column => {
+      if (column._column?.key !== "user_count") return;
+      column["minWidth"] = 90;
+      column["cellRenderer"] = ({ row }) =>
+        h(
+          ElLink,
+          {
+            type: "primary",
+            underline: false,
+            onClick: () =>
+              router.push({
+                path: "/system/user/index",
+                query: { role: String(row.pk) }
+              })
+          },
+          () => String(row.user_count ?? 0)
+        );
+    });
+    return columns;
+  };
+
   return {
     api,
     auth,
+    tableRef,
     addOrEditOptions,
+    listColumnsFormat,
+    tableBarButtonsProps,
     operationButtonsProps
   };
 }

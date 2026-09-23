@@ -16,6 +16,7 @@ import { useUserAvatarUpload } from "./useUserAvatarUpload";
 import { useUserResetPassword } from "./useUserResetPassword";
 import { useUserColumnFormats } from "./useUserColumnFormats";
 import { useUserButtons } from "./useUserButtons";
+import { useUserTags } from "./useUserTags";
 import { useUserImBinding } from "./useUserImBinding";
 
 /**
@@ -47,7 +48,8 @@ export function useUser(tableRef: Ref) {
       "resetMfa",
       "preview",
       "changeHistory",
-      "imBinding"
+      "imBinding",
+      "invite"
     ])
   });
   const switchLoadMap = ref({});
@@ -60,6 +62,7 @@ export function useUser(tableRef: Ref) {
   const { handleUpload } = useUserAvatarUpload({ t, api, tableRef });
   const { handleReset } = useUserResetPassword({ t, api, passwordRules });
   const { handleImBinding } = useUserImBinding({ t });
+  const { openTagDialog } = useUserTags(tableRef);
   const {
     listColumnsFormat,
     addOrEditOptions,
@@ -97,7 +100,8 @@ export function useUser(tableRef: Ref) {
       handleReset,
       handleRoleRules,
       handlePreview: row => openPreview(row),
-      handleImBinding
+      handleImBinding,
+      handleTags: row => openTagDialog(row)
     });
 
   // 全局密码规则（重置密码与新增/编辑表单校验共用）
@@ -111,6 +115,10 @@ export function useUser(tableRef: Ref) {
       showSuccessMsg: false
     });
   });
+
+  // F-12 联动：角色列表「用户数」跳转携带 ?role=<pk> —— 由 RePlusPage 的
+  // routeParams 装配（route.query → 搜索默认值）自动生效，页面无需再注入：
+  // 首开后二次手动刷新会覆盖请求序号，导致首开内联元数据被丢弃（表格无列）。
 
   return {
     api,

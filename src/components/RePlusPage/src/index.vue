@@ -23,6 +23,8 @@ import { useSearchCardCollapse } from "./utils/useSearchCardCollapse";
 import ButtonOperation, {
   ButtonsCallBackParams
 } from "./components/ButtonOperation";
+import SavedViews from "./components/SavedViews.vue";
+import AdvancedFilterEntry from "./components/AdvancedFilterEntry.vue";
 
 defineOptions({ name: "RePlusPage" });
 
@@ -51,7 +53,9 @@ const props = withDefaults(defineProps<RePlusPageProps>(), {
   operationButtonsProps: () => ({}),
   tableBarButtonsProps: () => ({}),
   // undefined 时由 hook 按页面导出权限（auth.exportData）自动显示异步开关，false 可显式关闭
-  allowAsyncExport: undefined
+  allowAsyncExport: undefined,
+  // F-4 我的视图：开启后工具栏出现「视图」下拉（筛选条件命名保存 / 一键套用 / 默认视图）
+  savedViews: false
 });
 const emit = defineEmits<{
   /** 行点击：row 为动态接口数据行 */
@@ -74,6 +78,16 @@ const emit = defineEmits<{
   tableBarClickAction: [data: ButtonsCallBackParams];
   operationClickAction: [data: ButtonsCallBackParams];
 }>();
+
+/**
+ * F-4 我的视图：把保存的筛选条件写回搜索区并刷新列表。
+ *
+ * 组件只上抛条件快照，写入 searchFields 由页面侧统一完成（单向数据流）。
+ */
+const applySavedView = (conditions: RecordType) => {
+  searchFields.value = cloneDeep(conditions ?? {});
+  handleGetData();
+};
 
 const tableRef = ref();
 const rootRef = ref<HTMLElement>();
@@ -113,7 +127,8 @@ const {
   onSelectionCancel,
   handleCurrentChange,
   handleTableBarChange,
-  handleSelectionChange
+  handleSelectionChange,
+  handleSortChange
 } = usePlusPage(emit, tableRef, props);
 
 /**
@@ -364,6 +379,17 @@ defineExpose({
                   </template>
                 </el-popconfirm>
               </div>
+              <advanced-filter-entry
+                v-if="advancedFilter && auth?.list"
+                v-model="searchFields"
+                :columns="tableBarData.dynamicColumns as never"
+                @applied="handleGetData"
+              />
+              <saved-views
+                v-if="savedViews && auth?.list"
+                :conditions="searchFields"
+                @apply="applySavedView"
+              />
               <button-operation
                 :show-number="99"
                 v-bind="tableBarButtonsProps"
@@ -410,6 +436,7 @@ defineExpose({
         @row-click="onRowClick"
         @page-size-change="handleSizeChange"
         @page-current-change="handleCurrentChange"
+        @sort-change="handleSortChange"
       >
         <template #operation="{ row }">
           <button-operation

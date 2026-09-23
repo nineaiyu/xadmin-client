@@ -8,11 +8,13 @@ import { usePlusPageColumns } from "./usePlusPageColumns";
 import { usePlusPageData } from "./usePlusPageData";
 import { usePlusPageForm } from "./usePlusPageForm";
 import { usePlusPageButtons } from "./usePlusPageButtons";
+import { useTableSort } from "./useTableSort";
 
 /**
  * RePlusPage 视图组装入口（拆分自 720 行单体，行为与返回契约不变）：
  * - usePlusPageColumns 列表列渲染（开关列、多选/操作列注入、三类列格式化出口）
  * - usePlusPageData    请求与分页（搜索字段装配、请求序号防过期、首开元数据编排）
+ * - useTableSort       表头排序（元数据 sortable 列 → ordering 参数，与搜索区同源）
  * - usePlusPageForm    表单与详情（新增/编辑、脱敏原文回取、详情、删除）
  * - usePlusPageButtons 默认操作列与工具栏按钮组
  */
@@ -167,6 +169,14 @@ export function usePlusPage(
     columnsInitCallback: formatColumnsRender
   });
 
+  // 表头排序：与搜索区 ordering 同源（未声明 sortable 的页面零变化）
+  const { handleSortChange } = useTableSort({
+    searchFields,
+    defaultValue,
+    tableRef,
+    handleGetData
+  });
+
   // 表单与详情
   const { handleAddOrEdit, handleDetail, handleDelete, handleManyDelete } =
     usePlusPageForm({
@@ -227,6 +237,7 @@ export function usePlusPage(
     onSelectionCancel,
     handleCurrentChange,
     handleTableBarChange,
-    handleSelectionChange
+    handleSelectionChange,
+    handleSortChange
   };
 }

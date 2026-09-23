@@ -37,6 +37,8 @@ defineOptions({
 
 const router = useRouter();
 const loading = ref(false);
+/** F-6 巡检处置联动：后端登录响应带 must_change_password 时引导改密 */
+const mustChangePassword = ref(false);
 const captchaRef = ref();
 const configLoading = ref(false);
 const checked = ref(true);
@@ -122,8 +124,11 @@ const onLogin = async (formEl: FormInstance | undefined) => {
             if ("mfa_required" in res.data && res.data.mfa_required) {
               // 密码阶段通过，切换到登录 MFA 动态码验证步骤
               loginMfaInfo.value = res.data;
+              mustChangePassword.value = Boolean(res.data.must_change_password);
               return;
             }
+            // F-6 巡检处置联动：管理员要求改密时登录后引导到个人配置页
+            mustChangePassword.value = Boolean(res.data.must_change_password);
             handleLoginSuccess();
           } else {
             message(res.detail, {
@@ -150,12 +155,22 @@ const handleLoginSuccess = () => {
   message(transformI18n($t("login.loginSuccess")), {
     type: "success"
   });
+  if (mustChangePassword.value) {
+    message(transformI18n($t("forcePassword.tip")), {
+      type: "warning",
+      duration: 6000
+    });
+  }
   initRouter(true)
     .then(() => {
       disabled.value = true;
       router
         .push(
-          (route.query?.redirect as string) ?? getTopMenu(true)?.path ?? "/"
+          mustChangePassword.value
+            ? "/settings/basic"
+            : ((route.query?.redirect as string) ??
+                getTopMenu(true)?.path ??
+                "/")
         )
         .finally(() => {
           disabled.value = false;
@@ -167,6 +182,10 @@ const handleLoginSuccess = () => {
 /** 登录 MFA 验证通过：写入正式 token 并进入系统 */
 const handleMfaSuccess = (data: TokenInfo) => {
   setToken(data);
+  mustChangePassword.value = Boolean(
+    (data as TokenInfo & { must_change_password?: boolean })
+      .must_change_password
+  );
   handleLoginSuccess();
 };
 

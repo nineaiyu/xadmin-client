@@ -14,6 +14,7 @@ import { buildRoleRulesColumns } from "@/views/system/hooks";
 import DeptPermissionPreview from "../components/DeptPermissionPreview.vue";
 import { addDrawer } from "@/components/ReDrawer";
 import View from "~icons/ri/eye-line";
+import { useBatchUpdate } from "@/views/system/components/useBatchUpdate";
 import { handleTree } from "@/utils/tree";
 import {
   type PageColumn,
@@ -178,6 +179,23 @@ export function useDept(tableRef: Ref) {
     });
   }
 
+  // F-1 批量更新：勾选行后统一写入同组字段（字段白名单：启用状态）
+  const { batchUpdateButton } = useBatchUpdate({
+    t,
+    api,
+    tableRef,
+    fields: [
+      {
+        key: "is_active",
+        label: t("commonLabels.is_active"),
+        input_type: "boolean"
+      }
+    ]
+  });
+  const tableBarButtonsProps = shallowRef<OperationProps>({
+    buttons: [batchUpdateButton]
+  });
+
   const operationButtonsProps = shallowRef<OperationProps>({
     width: 280,
     buttons: [
@@ -217,6 +235,7 @@ export function useDept(tableRef: Ref) {
     listColumnsFormat,
     baseColumnsFormat,
     addOrEditOptions,
+    tableBarButtonsProps,
     operationButtonsProps
   };
 }

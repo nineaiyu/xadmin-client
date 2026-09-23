@@ -6,6 +6,7 @@ import { settingItemProps } from "@/views/settings/components/settings/types";
 import Setting from "@/views/settings/components/settings/index.vue";
 import { systemMsgSubscriptionApi } from "@/api/system/notifications";
 import MessageNotifications from "@/views/system/components/MessageNotifications.vue";
+import MessageTemplatePanel from "./components/MessageTemplatePanel.vue";
 import { useI18n } from "vue-i18n";
 
 defineOptions({
@@ -94,6 +95,10 @@ const auth = ref({
         :has-operations="true"
         :has-receivers="true"
       />
+    </el-tab-pane>
+    <!-- F-3 消息模板：通知文本可配置（代码默认 → DB 覆盖层） -->
+    <el-tab-pane :lazy="true" :label="t('messageTemplate.title')">
+      <MessageTemplatePanel />
     </el-tab-pane>
   </setting>
 </template>

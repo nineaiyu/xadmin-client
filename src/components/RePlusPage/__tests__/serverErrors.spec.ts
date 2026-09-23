@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { nextTick } from "vue";
 import { applyServerErrors } from "../src/utils/serverErrors";
 
 describe("applyServerErrors（服务端错误内联）", () => {
@@ -35,5 +36,54 @@ describe("applyServerErrors（服务端错误内联）", () => {
     expect(applyServerErrors(null, { a: ["x"] })).toBe(0);
     expect(applyServerErrors(makeForm(["a"]), null)).toBe(0);
     expect(applyServerErrors(makeForm([undefined]), { a: ["x"] })).toBe(0);
+  });
+
+  it("命中后滚动并聚焦首个错误字段", async () => {
+    const scrolled: string[] = [];
+    const focused: string[] = [];
+    const form = {
+      fields: [
+        {
+          prop: "name",
+          validateState: "",
+          validateMessage: "",
+          $el: { querySelector: () => ({ focus: () => focused.push("name") }) }
+        }
+      ],
+      scrollToField: (prop: string) => scrolled.push(prop)
+    };
+    const applied = applyServerErrors(form, { name: ["重复"] });
+    expect(applied).toBe(1);
+    await nextTick();
+    expect(scrolled).toEqual(["name"]);
+    expect(focused).toEqual(["name"]);
+  });
+
+  it("跨页签：先切到错误所在页签再滚动聚焦", async () => {
+    const scrolled: string[] = [];
+    const focused: string[] = [];
+    const makeInstance = (props: string[]) => ({
+      fields: props.map(prop => ({
+        prop,
+        validateState: "",
+        validateMessage: "",
+        $el: { querySelector: () => ({ focus: () => focused.push(prop) }) }
+      })),
+      scrollToField: (prop: string) => scrolled.push(prop)
+    });
+    const tab0 = makeInstance(["a"]);
+    const tab1 = makeInstance(["b"]);
+    (tab0 as Record<string, unknown>)._allInstances = [tab0, tab1];
+    const activated: number[] = [];
+    const applied = applyServerErrors(
+      tab0,
+      { b: ["错了"] },
+      { activateTab: index => activated.push(index) }
+    );
+    expect(applied).toBe(1);
+    await nextTick();
+    expect(activated).toEqual([1]);
+    expect(scrolled).toEqual(["b"]);
+    expect(focused).toEqual(["b"]);
   });
 });

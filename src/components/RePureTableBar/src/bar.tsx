@@ -40,13 +40,16 @@ import {
   toggleRowExpansionAll,
   type TableColumnLike
 } from "./utils";
+import { useTablePrefs } from "./useTablePrefs";
 
 export default defineComponent({
   name: "PureTableBar",
   props: tableBarProps,
   emits: ["refresh", "fullscreen", "change"],
   setup(props, { emit, slots, attrs }) {
-    const size = ref("default");
+    // U-3 表格偏好：列显隐/顺序/密度跨刷新保持（本地 + 可选跨设备同步）
+    const tablePrefs = useTablePrefs();
+    const size = ref(tablePrefs.size.value);
     const loading = ref(false);
     const checkAll = ref(true);
     const isFullscreen = ref(false);
@@ -69,15 +72,12 @@ export default defineComponent({
     const dynamicColumns = ref(cloneDeep(props?.columns));
     const { t } = useI18n();
 
-    const getDropdownItemStyle = computed(() => {
-      return (s: string) => {
-        return {
-          background:
-            s === size.value ? useEpThemeStoreHook().epThemeColor : "",
-          color: s === size.value ? "#fff" : "var(--el-text-color-primary)"
-        };
-      };
-    });
+    // 密度下拉项样式：选中项用主题色高亮
+    const themeColor = computed(() => useEpThemeStoreHook().epThemeColor);
+    const getDropdownItemStyle = computed(() => (s: string) => ({
+      background: s === size.value ? themeColor.value : "",
+      color: s === size.value ? "#fff" : "var(--el-text-color-primary)"
+    }));
 
     const iconClass = computed(() => ICON_CLASS);
 
@@ -145,6 +145,7 @@ export default defineComponent({
       checkAll.value = true;
       isIndeterminate.value = false;
       dynamicColumns.value = cloneDeep(props?.columns);
+      tablePrefs.apply(dynamicColumns.value);
       checkColumnList.value = getKeyList(
         cloneDeep(props?.columns ?? []),
         "label"
@@ -161,11 +162,15 @@ export default defineComponent({
         size: size.value,
         renderClass: slots?.default ? "" : renderClass.value
       });
+      tablePrefs.save(dynamicColumns.value, size.value);
     };
 
     watch(props?.columns, () => {
       onReset();
     });
+
+    // 首帧即应用偏好（放在 change watcher 之前，父组件先拿到带偏好的列）
+    onReset();
 
     watch(
       () => [dynamicColumns.value, renderClass.value],

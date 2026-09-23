@@ -5,10 +5,10 @@ xadmin 前端 —— 基于 [vue-pure-admin](https://github.com/pure-admin/vue-p
 
 后端：[xadmin-server](https://github.com/nineaiyu/xadmin-server)（Django 6 + DRF + Channels）
 
-### 在线预览
+### 在线预览（线上演示）
 
 [https://xadmin.dvcloud.xin/](https://xadmin.dvcloud.xin/)
-账号密码：admin/admin123
+账号密码：admin/admin123（线上演示账号；本地后端初始化的账号见 `xadmin-server` README）
 
 ## 环境要求
 

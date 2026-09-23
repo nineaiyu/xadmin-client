@@ -11,6 +11,8 @@ import {
   type ExecuteResult
 } from "@/api/system/datasets";
 import { epColor } from "@/utils/chartTheme";
+// 仅类型引用（不进包）：导出实现按需动态加载（U-5，保持首屏体积）
+import type { EChartsLike, ExportedImage } from "@/utils/imageExport";
 
 defineOptions({ name: "DashboardChartCard" });
 
@@ -26,7 +28,10 @@ const total = ref(0);
 /** 加载失败原因：图表/数字区域改为可读提示 + 重试（业务码非 1000 与网络异常统一收敛） */
 const errorMsg = ref("");
 /** 解构 resize：容器尺寸（卡片高度/宽度档位）变化后手动重算，window resize 监听不覆盖容器变化 */
-const { setOptions, resize } = useECharts(chartRef, { theme, renderer: "svg" });
+const { setOptions, resize, getInstance } = useECharts(chartRef, {
+  theme,
+  renderer: "svg"
+});
 
 /** 容器非 0 宽高等待（路由过渡期 DOM 尺寸为 0 会报错且不自愈），照抄 TrendChart */
 const waitSized = async (): Promise<boolean> => {
@@ -147,7 +152,20 @@ watch(
   { deep: true }
 );
 
-defineExpose({ loadData });
+/**
+ * U-5 图片导出：返回可下载图片（PNG 优先，转换失败回退 SVG）；
+ * number 卡（无 ECharts 实例）返回 null，由调用方跳过并提示。
+ */
+async function renderImage(): Promise<ExportedImage | null> {
+  const { renderEchartsImage } = await import("@/utils/imageExport");
+  return renderEchartsImage(getInstance() as EChartsLike | null, {
+    pixelRatio: 2,
+    // 透明底在深色面板/暗色主题下不可读，按主题取底色
+    backgroundColor: isDark.value ? "#1d1e1f" : "#ffffff"
+  });
+}
+
+defineExpose({ loadData, renderImage });
 </script>
 
 <template>

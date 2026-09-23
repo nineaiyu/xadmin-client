@@ -54,4 +54,9 @@ export type userType = {
   websocket?: WS | null;
   /** 站点水印配置（用户信息接口下发）；挂载/刷新由 src/App.vue 观察本字段执行 */
   siteWatermark?: SiteWatermarkConfig;
+  /**
+   * F-6 巡检处置联动：管理员要求改密（userinfo 下发）；
+   * App.vue 观察本字段后引导到个人配置页，改密成功由服务端清除标记。
+   */
+  mustChangePassword?: boolean;
 };

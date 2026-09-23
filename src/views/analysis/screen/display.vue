@@ -16,6 +16,10 @@ import {
   type ScreenCommandPayload
 } from "@/utils/websocket/protocol";
 import { WS } from "@/utils/websocket";
+import { useI18n } from "vue-i18n";
+import { message } from "@/utils/message";
+// 仅类型引用（不进包）：导出实现按需动态加载（U-5，保持首屏体积）
+import type { ExportedImage } from "@/utils/imageExport";
 import { resolveScreenFrame } from "./utils/control";
 import ChartCard from "@/views/dashboard/components/ChartCard.vue";
 
@@ -34,6 +38,7 @@ defineOptions({
  */
 
 const route = useRoute();
+const { t } = useI18n();
 
 const screen = ref<ScreenItem | null>(null);
 const dashboards = ref<DashboardItem[]>([]);
@@ -50,16 +55,60 @@ const currentCards = computed<DashboardCard[]>(
   () => currentDashboard.value?.layout ?? []
 );
 
-/** 卡片刷新句柄：模板 ref 收集 ChartCard 的 loadData */
-const cardLoaders = ref<Record<string, (() => void) | undefined>>({});
+/** 卡片组件句柄：模板 ref 收集 ChartCard（loadData 刷新 + renderImage 图片导出） */
+type CardHandle = {
+  loadData?: () => void;
+  renderImage?: () => Promise<ExportedImage | null>;
+};
+const cardRefs = ref<Record<string, CardHandle | undefined>>({});
 const setCardRef = (cardId: string) => (el: unknown) => {
-  const loader = el as { loadData?: () => void } | null;
-  if (loader?.loadData) cardLoaders.value[cardId] = loader.loadData;
+  const handle = el as CardHandle | null;
+  if (handle) cardRefs.value[cardId] = handle;
 };
 
 const refreshVisible = () => {
   for (const card of currentCards.value) {
-    cardLoaders.value[card.id]?.();
+    cardRefs.value[card.id]?.loadData?.();
+  }
+};
+
+/** U-5 导出当前屏：逐卡渲染图片并按 ZIP 打包（一次下载，规避浏览器对连续下载的拦截） */
+const exporting = ref(false);
+const exportScreen = async () => {
+  if (exporting.value || currentCards.value.length === 0) return;
+  exporting.value = true;
+  try {
+    const { buildZipStore, downloadBlob, safeFileName } =
+      await import("@/utils/imageExport");
+    const files: { name: string; data: Uint8Array }[] = [];
+    let skipped = 0;
+    for (const card of currentCards.value) {
+      const image = await cardRefs.value[card.id]?.renderImage?.();
+      if (!image) {
+        skipped += 1;
+        continue;
+      }
+      const base = safeFileName(
+        String(card.title ?? card.id),
+        `card-${files.length + 1}`
+      );
+      files.push({
+        name: `${base}.${image.extension}`,
+        data: new Uint8Array(await image.blob.arrayBuffer())
+      });
+    }
+    if (files.length === 0) {
+      message(t("dataScreen.exportNoChart"), { type: "warning" });
+      return;
+    }
+    downloadBlob(buildZipStore(files), `screen-${Date.now()}.zip`);
+    if (skipped > 0) {
+      message(t("dataScreen.exportSkipped", { count: skipped }), {
+        type: "warning"
+      });
+    }
+  } finally {
+    exporting.value = false;
   }
 };
 
@@ -188,6 +237,14 @@ onBeforeUnmount(() => {
       </el-tag>
       <div class="flex-1" />
       <span class="font-mono text-lg text-gray-300">{{ clock }}</span>
+      <el-button
+        size="small"
+        :loading="exporting"
+        data-testid="screen-export"
+        @click="exportScreen"
+      >
+        {{ t("dataScreen.exportScreen") }}
+      </el-button>
       <el-button size="small" @click="paused = !paused">
         {{ paused ? "▶" : "⏸" }}
       </el-button>

@@ -23,7 +23,9 @@ import {
   type RePlusPageProps
 } from "@/components/RePlusPage";
 import uploadForm from "../components/FileUpload.vue";
+import AccessLogPanel from "../components/AccessLogPanel.vue";
 import { openPreviewDrawer } from "../components/previewDrawer";
+import { addDrawer } from "@/components/ReDrawer";
 import { usePublicHooks } from "@/views/system/hooks";
 import { ElButton, ElIcon, ElLink, ElText } from "element-plus";
 import { Link } from "@element-plus/icons-vue";
@@ -127,7 +129,40 @@ export function useSystemUploadFile(tableRef: Ref) {
     return columns;
   };
 
-  const operationButtonsProps = shallowRef<OperationProps>({});
+  /** F-8 访问记录抽屉（上传 / 下载 / 预览 / 删除留痕） */
+  const openAccessLogs = (row: RecordType) => {
+    addDrawer({
+      title: t("fileAccess.accessLogsTitle", { name: row?.filename ?? "" }),
+      size: "50%",
+      destroyOnClose: true,
+      hideFooter: true,
+      props: { row },
+      contentRenderer: () => h(AccessLogPanel)
+    });
+  };
+
+  const operationButtonsProps = shallowRef<OperationProps>({
+    width: 220,
+    buttons: [
+      {
+        text: t("fileAccess.download"),
+        code: "download",
+        props: { type: "success", link: true },
+        onClick: async ({ row }) => {
+          // F-8 下载走受鉴权端点（服务端记访问审计），不再使用 /media/ 直链
+          await api.download(row?.pk, row?.filename);
+        },
+        show: true
+      },
+      {
+        text: t("fileAccess.accessLogs"),
+        code: "accessLogs",
+        props: { type: "info", link: true },
+        onClick: ({ row }) => openAccessLogs(row as RecordType),
+        show: true
+      }
+    ]
+  });
 
   const tableBarButtonsProps = shallowRef<OperationProps>({
     buttons: [

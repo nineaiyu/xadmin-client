@@ -1,11 +1,21 @@
 import { SUCCESS_CODE } from "@/api/types";
 import { message } from "@/utils/message";
 import { ZxcvbnFactory } from "@zxcvbn-ts/core";
-import { ElForm, ElFormItem, ElInput, ElProgress } from "element-plus";
+import {
+  ElButton,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElProgress
+} from "element-plus";
 import { addDialog } from "@/components/ReDialog";
 import { deviceDetection, isAllEmpty } from "@pureadmin/utils";
 import { watch } from "vue";
 import { AesEncrypted } from "@/utils/aes";
+import {
+  copyToClipboard,
+  generateRandomPassword
+} from "@/utils/randomPassword";
 import { buildPasswordValidator } from "./passwordRules";
 import { reactive, ref, type UnwrapNestedRefs } from "vue";
 import type { userApi } from "@/api/system/user";
@@ -49,6 +59,22 @@ export function useUserResetPassword({
         : zxcvbnFactory.check(newPwd).score)
   );
 
+  /**
+   * 生成随机密码（F-11）：按当前安全策略生成并尝试复制到剪贴板，
+   * 管理员无需自己构思密码（生成值必然通过策略校验）。
+   */
+  async function handleGeneratePassword() {
+    const password = generateRandomPassword(passwordRules.value ?? []);
+    pwdForm.newPwd = password;
+    const copied = await copyToClipboard(password);
+    message(
+      copied
+        ? t("systemUser.passwordCopied")
+        : t("systemUser.passwordGenerated"),
+      { type: copied ? "success" : "warning" }
+    );
+  }
+
   /** 重置密码 */
   function handleReset(row: RecordType) {
     addDialog({
@@ -76,7 +102,19 @@ export function useUserResetPassword({
                 type="password"
                 v-model={pwdForm.newPwd}
                 placeholder={t("systemUser.password")}
-              />
+              >
+                {{
+                  append: () => (
+                    <ElButton
+                      type="primary"
+                      plain
+                      onClick={handleGeneratePassword}
+                    >
+                      {t("systemUser.generatePassword")}
+                    </ElButton>
+                  )
+                }}
+              </ElInput>
             </ElFormItem>
           </ElForm>
           <div class="my-4 flex">

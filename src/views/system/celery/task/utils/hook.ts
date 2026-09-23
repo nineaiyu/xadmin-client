@@ -23,6 +23,7 @@ import FileList from "~icons/ri/file-list-3-line";
 import PlayList from "~icons/ri/play-list-2-line";
 import FileCopy from "~icons/ri/file-copy-line";
 import VideoPause from "~icons/ep/video-pause";
+import { useBatchUpdate } from "@/views/system/components/useBatchUpdate";
 import CircleCheck from "~icons/ep/circle-check";
 
 /** 定时任务行（run/log 按钮行内使用的字段） */
@@ -155,6 +156,16 @@ export function useTask(tableRef: Ref) {
     ]
   });
 
+  // F-1 批量更新：勾选行后统一写入同组字段（字段白名单：启用状态）
+  const { batchUpdateButton } = useBatchUpdate({
+    t,
+    api,
+    tableRef,
+    fields: [
+      { key: "enabled", label: t("systemTask.enabled"), input_type: "boolean" }
+    ]
+  });
+
   /**
    * 新增表格标题栏"批量执行"按钮，作用于勾选行
    */
@@ -252,7 +263,8 @@ export function useTask(tableRef: Ref) {
           });
         },
         show: auth.batchDisable && 3
-      }
+      },
+      batchUpdateButton
     ]
   });
 

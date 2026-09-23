@@ -33,6 +33,7 @@ export function useAiProfiles(tableRef: Ref) {
   const canActivate = hasAuth("activate:AiProfile");
   const canDeactivate = hasAuth("deactivate:AiProfile");
   const canTest = hasAuth("test:AiProfile");
+  const canProbe = hasAuth("probe:AiProfile");
 
   const refresh = () => tableRef.value?.handleGetData();
 
@@ -58,6 +59,51 @@ export function useAiProfiles(tableRef: Ref) {
               column.prop as string
             ];
             return value == null ? t("aiConfig.unset") : String(value);
+          };
+          break;
+        case "purpose":
+          column["cellRenderer"] = ({ row }) => {
+            const purpose = (row as AiProfileItem).purpose;
+            return h(
+              ElTag,
+              {
+                size: "small",
+                type: purpose === "structured" ? "warning" : "primary"
+              },
+              () =>
+                purpose === "structured"
+                  ? t("aiConfig.purposeStructured")
+                  : t("aiConfig.purposeChat")
+            );
+          };
+          break;
+        case "capabilities":
+          // AI-1 能力画像：JSON / 原生工具调用 / 思考内容三项（未探测显示灰 tag）
+          column["cellRenderer"] = ({ row }) => {
+            const capabilities = ((row as AiProfileItem).capabilities ??
+              {}) as Record<string, { ok?: boolean } | undefined>;
+            const items: { key: string; label: string }[] = [
+              { key: "json", label: t("aiConfig.capJson") },
+              { key: "tool_calls", label: t("aiConfig.capToolCalls") },
+              { key: "reasoning", label: t("aiConfig.capReasoning") }
+            ];
+            // 视觉能力（AI-1 按需探测）：仅在有探测结果时展示，默认形态零变化
+            if (capabilities["vision"]) {
+              items.push({ key: "vision", label: t("aiConfig.capVision") });
+            }
+            return h(
+              "div",
+              { class: "flex flex-wrap gap-1" },
+              items.map(item => {
+                const entry = capabilities[item.key];
+                const type = entry ? (entry.ok ? "success" : "danger") : "info";
+                return h(
+                  ElTag,
+                  { key: item.key, size: "small", type },
+                  () => item.label
+                );
+              })
+            );
           };
           break;
       }
@@ -156,10 +202,35 @@ export function useAiProfiles(tableRef: Ref) {
     }
   };
 
+  /** AI-1 能力探测：结果落档案画像，前端按能力项提示（不阻断使用）
+   *  withVision=true 追加多模态探测（默认按钮不触发，避免无多模态模型上的无谓等待） */
+  const probeProfile = async (row: AiProfileItem, withVision = false) => {
+    const res = await aiProfileApi
+      .probe(row.pk, withVision ? { vision: true } : undefined)
+      .catch(error => ({
+        code: -1,
+        detail: String((error as { detail?: string })?.detail ?? error)
+      }));
+    if (res.code === SUCCESS_CODE) {
+      const data = ((res as { data?: Record<string, { ok?: boolean }> }).data ??
+        {}) as Record<string, { ok?: boolean } | undefined>;
+      const okList = ["json", "tool_calls", "reasoning"]
+        .concat(withVision ? ["vision"] : [])
+        .filter(key => data[key]?.ok);
+      message(
+        `${t("aiConfig.probeDone")}: ${okList.length ? okList.join(" / ") : t("aiConfig.capUnknown")}`,
+        { type: "success" }
+      );
+      refresh();
+      return;
+    }
+    if (res.detail) message(String(res.detail), { type: "warning" });
+  };
+
   /* ---------------- 按钮装配 ---------------- */
   const operationButtonsProps = shallowRef<OperationProps>({
-    showNumber: 6,
-    width: 320,
+    showNumber: 8,
+    width: 430,
     buttons: [
       {
         text: t("aiConfig.test"),
@@ -167,6 +238,20 @@ export function useAiProfiles(tableRef: Ref) {
         props: { type: "success", link: true },
         onClick: ({ row }) => testProfile(row as AiProfileItem),
         show: canTest && 10
+      },
+      {
+        text: t("aiConfig.probe"),
+        code: "probe",
+        props: { type: "success", link: true },
+        onClick: ({ row }) => probeProfile(row as AiProfileItem),
+        show: canProbe && 15
+      },
+      {
+        text: t("aiConfig.probeVision"),
+        code: "probeVision",
+        props: { type: "success", link: true },
+        onClick: ({ row }) => probeProfile(row as AiProfileItem, true),
+        show: canProbe && 16
       },
       {
         text: t("aiConfig.edit"),

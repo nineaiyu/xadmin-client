@@ -15,6 +15,7 @@ import {
 import { computed, ref } from "vue";
 import { hasAuth } from "@/router/utils";
 import Setting from "@/views/settings/components/settings/index.vue";
+import PasskeyPanel from "./components/PasskeyPanel.vue";
 import { settingItemProps } from "@/views/settings/components/settings/types";
 
 import { useI18n } from "vue-i18n";
@@ -143,6 +144,10 @@ const { t } = useI18n();
           adaptiveConfig: { offsetBottom: 160 }
         }"
       />
+    </el-tab-pane>
+    <!-- F-9 Passkey 凭据（个人凭据，白名单路由，不依赖菜单权限点） -->
+    <el-tab-pane :label="t('passkey.title')" :lazy="true">
+      <PasskeyPanel />
     </el-tab-pane>
   </setting>
 </template>

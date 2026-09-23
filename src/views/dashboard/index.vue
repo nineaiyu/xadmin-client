@@ -5,7 +5,7 @@ import { computed, h, onMounted, ref } from "vue";
 import Sortable from "sortablejs";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
-import { Setting } from "@element-plus/icons-vue";
+import { Download, Setting } from "@element-plus/icons-vue";
 import { ElMessageBox } from "element-plus";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
@@ -19,7 +19,8 @@ import {
   type DashboardItem,
   type DatasetItem
 } from "@/api/system/datasets";
-import CardForm from "./components/CardForm.vue";
+import { useCardImageExport } from "./utils/useCardImageExport";
+import { useCardDialog } from "./utils/useCardDialog";
 import { cardColSpan, cardColSpanNarrow } from "./utils/span";
 import ChartCard from "./components/ChartCard.vue";
 import DashboardCreateForm from "./components/DashboardCreateForm.vue";
@@ -57,6 +58,9 @@ const layoutKey = computed(() =>
 
 let sortable: Sortable | null = null;
 const rowRef = ref();
+
+/** U-5 卡片图片导出（composable：句柄收集 + 单卡导出，控制页面体积） */
+const { setCardRef, exportingCard, exportCardImage } = useCardImageExport(t);
 
 const loadDashboards = async () => {
   loading.value = true;
@@ -173,56 +177,14 @@ const removeCard = (id: string) => {
 const datasetName = (pk: string) =>
   datasets.value.find(item => item.pk === pk)?.name ?? pk;
 
-// ---- 卡片弹窗（新建 / 编辑双模式；草稿保存在内存 draftLayout，随「保存布局」统一提交） ----
-const cardFormRef = ref<InstanceType<typeof CardForm>>();
-
-function newCard(): DashboardCard {
-  return {
-    id: `card-${Date.now()}`,
-    dataset: "",
-    title: "",
-    chart_type: "number",
-    metric: "count",
-    span: 6,
-    height: 224
-  };
-}
-
-const openCardDialog = () => openCardSettings(null);
-
-/** 编辑既有卡片（null = 新建）：确认后原位更新内存草稿 */
-const openCardSettings = (card: DashboardCard | null) => {
-  const editingId = card?.id ?? null;
-  cardFormRef.value = undefined;
-  addDialog({
-    title: editingId ? t("dashboard.editCard") : t("dashboard.addCard"),
-    width: dialogSize("sm"),
-    draggable: true,
-    destroyOnClose: true,
-    closeOnClickModal: false,
-    contentRenderer: () =>
-      h(CardForm, {
-        ref: cardFormRef,
-        card: card ?? newCard(),
-        datasets: datasets.value
-      }),
-    beforeSure: (done, { closeLoading }) => {
-      const updated = cardFormRef.value?.getCard();
-      if (!updated) {
-        closeLoading();
-        return;
-      }
-      if (editingId) {
-        draftLayout.value = draftLayout.value.map(item =>
-          item.id === editingId ? { ...updated, id: item.id } : item
-        );
-      } else {
-        draftLayout.value = [...draftLayout.value, { ...updated }];
-      }
-      done();
-    }
-  });
-};
+// ---- 卡片弹窗（新建 / 编辑双模式）与图片导出：独立 composable（控制页面体积） ----
+const { openCardSettings, openCardDialog } = useCardDialog({
+  t,
+  datasets,
+  updateDraft: updater => {
+    draftLayout.value = updater(draftLayout.value);
+  }
+});
 
 // ---- 新建仪表盘弹窗 ----
 const dashFormRef = ref<InstanceType<typeof DashboardCreateForm>>();
@@ -455,6 +417,16 @@ onMounted(async () => {
                 </el-tag>
                 <div class="flex-1" />
                 <el-button
+                  v-if="!editing"
+                  link
+                  type="primary"
+                  :icon="Download"
+                  :title="t('dashboard.exportImage')"
+                  :loading="exportingCard === card.id"
+                  data-testid="card-export-image"
+                  @click="exportCardImage(card)"
+                />
+                <el-button
                   v-if="editing"
                   link
                   type="primary"
@@ -474,6 +446,7 @@ onMounted(async () => {
             </template>
             <ChartCard
               :key="`${layoutKey}-${card.id}-${refreshKey}`"
+              :ref="setCardRef(card.id)"
               :card="card"
             />
           </el-card>

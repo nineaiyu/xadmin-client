@@ -12,6 +12,194 @@ commonLabels:
   descending: Descending
   ascending: Ascending
 
+fileAccess:
+  download: Download
+  accessLogs: Access Logs
+  accessLogsTitle: Access Logs - {name}
+  total: Total
+  time: Time
+  user: User
+  action: Action
+  actionUpload: Upload
+  actionDownload: Download
+  actionPreview: Preview
+  actionDelete: Delete
+  ipaddress: IP
+  result: Result
+  detail: Detail
+
+forcePassword:
+  title: Password Change Required
+  tip: The administrator requires you to change your password. Please set a new password to continue.
+  submit: Change Password
+  success: Password updated
+  later: Later
+
+savedView:
+  button: Views
+  save: Save Current Filter
+  saveTitle: Save as My View
+  namePlaceholder: View name
+  shared: Share with others on this page
+  saveSuccess: View saved
+  empty: No saved views
+  default: Default view
+  setDefault: Set as default
+  deleteConfirm: Delete view "{name}"?
+  applied: Applied view "{name}"
+  sharedShort: Shared
+  emptyConditions: No filters to save, please set filters first
+
+advancedFilter:
+  button: Advanced Filter
+  title: Advanced Filter
+  fieldPlaceholder: Select a field
+  valuePlaceholder: Enter a value
+  multiPlaceholder: Separate multiple values with commas
+  addCondition: Add Condition
+  true: "Yes"
+  false: "No"
+  hint: Conditions are combined with AND; fields and values still follow the field permissions of the current account
+  lookups:
+    icontains: Contains
+    exact: Equals
+    startswith: Starts with
+    in: In (multi-value)
+    gte: Greater or equal
+    lte: Less or equal
+    isnull: Is empty
+    ne: Not equal
+
+passkey:
+  title: Passkey Credentials
+  add: Add Passkey
+  name: Credential Name
+  namePlaceholder: e.g. MacBook fingerprint
+  lastUsed: Last Used
+  created: Bound At
+  empty: No passkey credentials
+  removeConfirm: Delete this passkey credential?
+  removeSuccess: Credential deleted
+  registerSuccess: Passkey bound successfully
+  unsupported: Passkey is not supported here (HTTPS and WebAuthn-capable browser required)
+  failed: Passkey operation failed
+  loginTip: Complete fingerprint / face / security key verification in the system dialog
+  login: Verify with Passkey
+
+messageTemplate:
+  title: Message Templates
+  messageType: Message Type
+  category: Category
+  override: Override
+  overridden: Customized
+  defaultState: Code Default
+  defaultSubject: Default Subject
+  variables: Variables
+  subject: Subject Template
+  body: Body Template
+  subjectPlaceholder: Leave empty to use the default subject
+  bodyPlaceholder: Leave empty to use the default body
+  edit: Edit
+  editTitle: Edit Template - {name}
+  preview: Preview
+  previewTip: Preview renders with sample data and will not send anything
+  reset: Reset to Default
+  resetConfirm: Reset "{name}" to the code default template?
+  saveSuccess: Template saved
+  resetSuccess: Reset to default template
+
+approvalDiscussion:
+  title: Discussion
+  placeholder: Write a comment, use {'@'}username to notify
+  submit: Post Comment
+  empty: No comments yet
+  deleteConfirm: Delete this comment?
+  submitted: Comment posted
+  cc: CC Users
+  ccPlaceholder: Select CC users (multiple)
+
+accountRisk:
+  scan: Scan Now
+  batchHandle: Batch Handle
+  handle: Handle
+  detail: Detail
+  detailTitle: Risk Detail - {name}
+  handleTitle: Handle Risks ({count} selected)
+  action: Action
+  remark: Remark
+  suggestion: Suggestion
+  metrics: Metrics
+  actionNotify: Send Notification
+  actionForcePassword: Force Password Change
+  actionForceLogout: Force Logout
+  actionDisable: Disable Account
+  actionIgnore: Ignore (no more reminders)
+  actionResolve: Mark as Resolved
+  typePasswordExpired: Password expired
+  typePasswordStale: Password not changed for a long time
+  typeLoginStale: No login for a long time
+  typeNeverLoggedIn: Never logged in
+  typeSuperuserNoMfa: Admin without MFA
+  typeSuperuserCount: Abnormal superuser count
+
+loginPolicy:
+  add: New Policy
+  addTitle: New Login Policy
+  editTitle: Edit Login Policy
+  name: Policy Name
+  priority: Priority
+  priorityTip: Lower number matches first; the first match takes effect
+  isActive: Active
+  targetType: Target
+  targetAll: All Users
+  targetRole: Roles
+  targetUser: Users
+  targetValue: Target Value
+  rolePlaceholder: Role codes separated by commas
+  userPlaceholder: Usernames separated by commas
+  weekdays: Weekdays
+  weekday1: Monday
+  weekday2: Tuesday
+  weekday3: Wednesday
+  weekday4: Thursday
+  weekday5: Friday
+  weekday6: Saturday
+  weekday7: Sunday
+  timeRange: Time Range
+  startTime: Start Time
+  endTime: End Time
+  ipRanges: IP Ranges
+  ipPlaceholder: One CIDR or range per line, e.g. 192.168.0.0/24
+  action: Action
+  actionAccept: Allow login (exempts later policies)
+  actionReject: Reject login
+  actionRequireMfa: Require MFA
+  actionRecord: Record only
+  remark: Remark
+  preview: Preview
+  previewTitle: Login Policy Preview
+  previewUser: Sample User
+  previewUserTip: Leave empty to use current user
+  previewIp: Sample IP
+  previewRun: Preview
+  previewResult: Matched "{policy}" -> {action}
+  previewNoMatch: No policy matches this sample
+  previewMatched: Matched
+  previewEffective: Effective
+  effective: Effective
+  invalidForm: Please complete name, target value and time range
+
+batchUpdate:
+  button: Batch Update
+  title: Batch Update ({count} Selected)
+  field: Field to Update
+  fieldPlaceholder: Select a field to update
+  value: Target Value
+  valuePlaceholder: Enter the target value
+  tip: The selected records will be set to this value. This cannot be undone.
+  selectFirst: Please select records to update first
+  fieldRequired: Please select a field and enter a value
+
 tableBar:
   loose: Loose
   default: Default
@@ -229,6 +417,79 @@ taskCenter:
   logTitle: execution log
   empty: No async task records
   noData: No records
+  type: Record type
+  status: Status
+  keyword: Name keyword
+  total: "Total {total}"
+  colType: Type
+  colName: Name
+  colModule: Source
+  colStatus: Status
+  colProgress: Progress
+  colCreator: Creator
+  colCreated: Created at
+  colError: Error
+  colActions: Actions
+  typeTask: Task
+  typeExport: Export
+  typeImport: Import
+  type_task: Task
+  type_export: Export
+  type_import: Import
+  statusPending: Waiting
+  statusRunning: Running
+  statusSuccess: Success
+  statusFailure: Failure
+  statusRevoked: Cancelled
+  status_PENDING: Waiting
+  status_RUNNING: Running
+  status_SUCCESS: Success
+  status_FAILURE: Failure
+  status_REVOKED: Cancelled
+  cancel: Cancel
+  cancelTitle: Cancel task
+  cancelConfirm: The task will stop at the next safe point (running exports/imports finish the current checkpoint). Continue?
+  cancelDone: Cancelled
+  rerun: Rerun
+  rerunDone: Rerun submitted
+
+tag:
+  title: Tag
+  create: New tag
+  edit: Edit tag
+  saveOk: Tag saved
+  name: Tag name
+  nameRequired: Tag name is required
+  color: Color
+  remark: Remark
+  usage: Usage
+  builtin: Builtin
+  assignTitle: Tag objects
+  assignPlaceholder: Select tags (multiple)
+  assignHint: "Saving replaces all tags: unselected tags will be unbound"
+  assignDone: Tags updated
+  selectPlaceholder: Select tags
+
+commandPalette:
+  title: Quick actions
+  openAi: Open AI assistant
+  openTaskCenter: Open task center
+  openTags: Open tag management
+  toggleTheme: Toggle light / dark
+  backHome: Back to home
+
+invite:
+  title: Account activation
+  subtitle: Set your password to activate the account
+  password: Password
+  confirm: Confirm password
+  submit: Activate
+  passwordRequired: Please enter your password
+  mismatch: The two passwords do not match
+  success: Activated successfully, please sign in
+  invalid: The invitation link is invalid or has expired. Please contact the administrator to resend it.
+  accepted: The account is already activated, please sign in directly
+  toLogin: Go to sign in
 
 oauth:
   title: Third-party login
@@ -272,6 +533,7 @@ sorts:
   rank: Rank
 
 buttons:
+  tips: Tips
   loginOut: LoginOut
   add: Add
   save: Save
@@ -378,6 +640,10 @@ menus:
   importCenter: Import Records
   systemMonitor: System Monitor
   dataDict: Data Dictionary
+  tag: Tag management
+  taskCenter: Task center
+  accountRisk: Account Security
+  loginPolicy: Login Policy
   dataMaskRule: Data Mask Rule
   approvalCenter: Approval Center
   approvalFlow: Flow Definition
@@ -386,6 +652,35 @@ menus:
   approvalRule: Approval Rules
   leaveApply: Leave Request
   moduleManager: Module Manager
+  credential: Credentials
+
+impact:
+  title: Impact preview
+  affected: This operation affects the following related data
+  confirmDelete: Confirm delete
+
+credential:
+  title: Credentials
+  systemConfigs: Sensitive system configs
+  settings: Setting credentials
+  modelFields: Model field credentials
+  name: Name
+  field: Field
+  fields: Encrypted fields
+  category: Category
+  status: Encryption
+  action: Actions
+  updatedTime: Updated at
+  configuredCount: Configured
+  empty: Not configured
+  encrypted: Encrypted
+  plaintext: Plaintext
+  plaintextWarn: "{count} sensitive configs are still plaintext, rotate them as soon as possible"
+  rotate: Rotate
+  rotateConfirm: "Re-encrypt credential {name}? The old ciphertext stops working immediately and consumers read the new one"
+  rotateOk: Credential re-encrypted
+  rotateFailed: Credential rotation failed
+  modelFieldsHint: Model field credentials are encrypted per row (AESCipherV3); only the configured count is shown here, never the secret itself
 
 approval:
   pendingTab: Pending My Approval
@@ -429,6 +724,9 @@ approval:
   pendingApprover: Pending
   progressTitle: Approval progress - {no}
   progressTip: "Level by level: the next approver is notified after each level passes; approved only when all levels pass"
+  target: Target object
+  targetChanges: Change comparison (before → after)
+  targetNoChanges: No field changes recorded (deletion shows the target identity only)
   handler: Handler
   stepComment: Comment
   modeOR: Any one approves
@@ -513,6 +811,8 @@ systemApprovalFlow:
   assigneeHint_field: Form field key (value is a username or username list)
   assigneeValueRequired: Please fill in the approver for this node (role / user / form field)
   ratioRangeRequired: The ratio of ratio-based approval must be between 1 and 100
+  ccUsers: CC Users
+  ccUsersHint: Default CC users of this node (optional)
   conditionField: Condition Field
   conditionFieldTip: Empty = no condition
   conditionOp: Operator
@@ -562,6 +862,11 @@ systemApprovalInstance:
   formReason: Rejection / Result Note
   formData: Application Content
   formDataEmpty: No form data
+  relatedObject: Related business object
+  relatedType: Type
+  relatedTitle: Object
+  relatedStatus: Business status
+  relatedMissing: Object is no longer reachable (deleted or module disabled)
   detailRich: Application Detail
   tasks: Approval Trail
   taskNode: Node
@@ -713,6 +1018,10 @@ account:
   unbound: Unbound
 
 systemUser:
+  invite: Invite to activate
+  inviteConfirm: An invitation email will be sent (the account becomes pending and the current password is invalidated immediately; an activated account must be activated again). Continue?
+  invitePending: Pending acceptance
+  inviteAccepted: Accepted
   avatarAlt: User avatar
   user: User
   resetMfa: Reset MFA
@@ -732,9 +1041,13 @@ systemUser:
   resetPassword: Reset Password
   assignRoles: Assign Roles Permissions
   resetPasswd: Reset the password of user { user }
+  generatePassword: Generate
+  passwordCopied: Random password generated and copied
+  passwordGenerated: Random password generated, please copy it manually
   assignRole: Assign multiple roles and permissions to user { user }
   updateAvatar: Upload and update avatar to { user }
   password: Password
+  passwordRequired: Please input the password
   roles: Roles
   rules: Data Permissions
   preview: Permission Preview
@@ -1806,6 +2119,8 @@ mask:
   maskTypeCustom: Custom Pattern
 
 dashboard:
+  exportImage: Export image
+  exportNoChart: Metric cards have no chart to export
   title: Dashboards
   pickDashboard: Pick a dashboard
   create: New Dashboard
@@ -1887,6 +2202,9 @@ dataDataset:
   exportCsv: Export CSV
 
 dataScreen:
+  exportScreen: Export screen
+  exportNoChart: The current screen has no chart to export
+  exportSkipped: "{count} metric cards were not exported"
   title: Display Screens
   create: New Screen
   edit: Edit
@@ -2139,6 +2457,40 @@ aiConfig:
   sectionBehavior: Behavior
   required: Profile name, base URL and model are required
   saveOk: Profile saved
+  probe: Probe capabilities
+  probeDone: Probe finished
+  probeHint: Probes structured JSON / native tool calling / reasoning (optionally multimodal) and stores the result on the profile
+  capabilityTitle: Model capabilities
+  capJson: Structured JSON
+  capToolCalls: Native tool calls
+  capReasoning: Reasoning content
+  capVision: Multimodal
+  capUnknown: Not probed
+  capOk: Supported
+  capFail: Unsupported
+  probeAt: Probed at
+  purpose: Purpose
+  purposeChat: Chat / Q&A
+  purposeStructured: Structured output
+  purposeHint: Chat serves Q&A; structured serves NL query and action drafts (falls back to the chat profile when unset)
+  nativeTools: Native tool calling (structured flows)
+  probeVision: Probe (with vision)
+  trackTitle: Draft track
+  trackNative: Native
+  trackPrompt: Prompt JSON
+  nativeToolsHint: When enabled and the profile passed the tool_calls probe, action drafts prefer native function calling; otherwise the prompt-JSON track is used
+  quotaTitle: Usage quotas (0 = unlimited)
+  quotaCalls: Daily calls per user
+  quotaTokens: Daily tokens per user
+  quotaStreams: Concurrent streams (global)
+  usageTitle: Usage ledger
+  usageHint: Per-call ledger (profile/flow/tokens/duration); retention follows the monitor retention days
+  usageCalls: Calls
+  usageTokens: Tokens
+  usageFailed: Failed
+  usageByFeature: By flow
+  usageByDay: Daily usage
+  usageTopUsers: Top users
   deleteConfirm: Delete this profile?
   deleteDone: Profile deleted
   activateConfirm: Switch all AI features to this profile?

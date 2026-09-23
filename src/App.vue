@@ -7,7 +7,7 @@
 </template>
 
 <script lang="ts">
-import { ElConfigProvider } from "element-plus";
+import { ElConfigProvider, ElMessageBox } from "element-plus";
 import { useRouter, useRoute } from "vue-router";
 import { useGlobal, useWatermark } from "@pureadmin/utils";
 import {
@@ -91,6 +91,29 @@ export default defineComponent({
       closeAllDialog();
       closeAllDrawer();
     });
+
+    // F-6 巡检处置联动：管理员要求改密时引导到个人配置页（每会话提示一次，改密即清除标记）
+    let forcePasswordNotified = false;
+    watch(
+      () => userStore.mustChangePassword,
+      value => {
+        if (!value || forcePasswordNotified) return;
+        if (route.path === "/settings/basic") return;
+        forcePasswordNotified = true;
+        ElMessageBox.confirm(
+          transformI18n($t("forcePassword.tip")),
+          transformI18n($t("forcePassword.title")),
+          {
+            confirmButtonText: transformI18n($t("forcePassword.submit")),
+            cancelButtonText: transformI18n($t("forcePassword.later")),
+            type: "warning"
+          }
+        )
+          .then(() => router.push("/settings/basic"))
+          .catch(() => null);
+      },
+      { immediate: true }
+    );
 
     onMounted(() => {
       timer = window.setInterval(() => {

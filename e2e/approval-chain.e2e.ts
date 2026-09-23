@@ -277,6 +277,14 @@ test.describe.serial("审批规则多级审批链", () => {
       // 单 B：两级全部通过 → 申请人携令牌重发删除成功
       const approvedId = await submitDelete(page, token, userPk);
       const approvedNo = approvedId.slice(0, 8).toUpperCase();
+      // 审批列表不做实时推送（提交新单不会自动刷新 pageB 的旧数据）：
+      // 显式重新导航拉取最新待办，再断言行出现
+      await pageB.reload();
+      await openMenuPath(pageB, ["系统管理"], "/system/approval/index");
+      await expect(pageB.locator(".el-table").first()).toBeVisible({
+        timeout: 15_000
+      });
+      await waitNotificationsGone(pageB);
       const levelRow = pageB
         .locator(".el-table__row", { hasText: approvedNo })
         .first();

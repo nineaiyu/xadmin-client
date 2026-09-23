@@ -7,14 +7,16 @@ import { useRouter } from "vue-router";
 import SearchResult from "./SearchResult.vue";
 import SearchFooter from "./SearchFooter.vue";
 import { useNav } from "@/layout/hooks/useNav";
+import { useCommandPalette } from "../useCommandPalette";
 import { transformI18n } from "@/plugins/i18n";
 import SearchHistory from "./SearchHistory.vue";
 import type { dragItem, optionsItem } from "../types";
 import { computed, ref, shallowRef, watch } from "vue";
-import { onKeyStroke, useDebounceFn } from "@vueuse/core";
+import { useDebounceFn } from "@vueuse/core";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import { cloneDeep, isAllEmpty, storageLocal } from "@pureadmin/utils";
 import { searchGlobal, type GlobalSearchGroup } from "@/api/system/search";
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import SearchIcon from "~icons/ri/search-line";
 
 interface Props {
@@ -51,7 +53,6 @@ const handleSearch = useDebounceFn(search, 300);
 const historyNum = getConfig().MenuSearchHistory;
 const inputRef = ref<HTMLInputElement | null>(null);
 
-/** 菜单树形结构 */
 const menusData = computed(() => {
   return cloneDeep(usePermissionStoreHook().wholeMenus);
 });
@@ -72,6 +73,30 @@ watch(
   }
 );
 
+/** 命令面板（U-2）：Cmd/Ctrl+K 唤起 + 快捷动作 + 键盘全导航（实现见 useCommandPalette） */
+const {
+  commandItems,
+  commandActive,
+  globalActive,
+  handleEnter,
+  runQuickAction
+} = useCommandPalette({
+  t,
+  router,
+  show,
+  keyword,
+  resultOptions,
+  historyOptions,
+  globalGroups,
+  activePath,
+  historyPath,
+  scrollTo,
+  goGlobalResult,
+  saveHistory,
+  updateHistory,
+  handleClose
+});
+
 const showSearchResult = computed(() => {
   return keyword.value && resultOptions.value.length > 0;
 });
@@ -82,7 +107,9 @@ const showSearchHistory = computed(() => {
 
 const showEmpty = computed(() => {
   return (
-    (!keyword.value && historyOptions.value.length === 0) ||
+    (!keyword.value &&
+      historyOptions.value.length === 0 &&
+      commandItems.value.length === 0) ||
     (keyword.value &&
       resultOptions.value.length === 0 &&
       globalGroups.value.length === 0)
@@ -182,57 +209,6 @@ function scrollTo(index: number) {
   scrollbarRef.value.setScrollTop(scrollTop);
 }
 
-/** 获取当前选项和路径 */
-function getCurrentOptionsAndPath() {
-  const isResultOptions = resultOptions.value.length > 0;
-  const options = isResultOptions ? resultOptions.value : historyOptions.value;
-  const currentPath = isResultOptions ? activePath.value : historyPath.value;
-  return { options, currentPath, isResultOptions };
-}
-
-/** 更新路径并滚动到指定项 */
-function updatePathAndScroll(newIndex: number, isResultOptions: boolean) {
-  if (isResultOptions) {
-    activePath.value = resultOptions.value[newIndex].path;
-  } else {
-    historyPath.value = historyOptions.value[newIndex].path;
-  }
-  scrollTo(newIndex);
-}
-
-/** key up */
-function handleUp() {
-  const { options, currentPath, isResultOptions } = getCurrentOptionsAndPath();
-  if (options.length === 0) return;
-  const index = options.findIndex(item => item.path === currentPath);
-  const prevIndex = (index - 1 + options.length) % options.length;
-  updatePathAndScroll(prevIndex, isResultOptions);
-}
-
-/** key down */
-function handleDown() {
-  const { options, currentPath, isResultOptions } = getCurrentOptionsAndPath();
-  if (options.length === 0) return;
-  const index = options.findIndex(item => item.path === currentPath);
-  const nextIndex = (index + 1) % options.length;
-  updatePathAndScroll(nextIndex, isResultOptions);
-}
-
-/** key enter */
-function handleEnter() {
-  const { options, currentPath, isResultOptions } = getCurrentOptionsAndPath();
-  if (options.length === 0 || currentPath === "") return;
-  const index = options.findIndex(item => item.path === currentPath);
-  if (index === -1) return;
-  if (isResultOptions) {
-    saveHistory();
-  } else {
-    updateHistory();
-  }
-  router.push(options[index].path);
-  handleClose();
-}
-
 /** 删除历史记录 */
 function handleDelete(item: optionsItem) {
   const key = item.type === HISTORY_TYPE ? LOCALEHISTORYKEY : LOCALECOLLECTKEY;
@@ -309,10 +285,6 @@ function handleDrag(item: dragItem) {
   ];
   historyPath.value = reorderedItem.path;
 }
-
-onKeyStroke("Enter", handleEnter);
-onKeyStroke("ArrowUp", handleUp);
-onKeyStroke("ArrowDown", handleDown);
 </script>
 
 <template>
@@ -344,6 +316,30 @@ onKeyStroke("ArrowDown", handleDown);
     </el-input>
     <div class="search-content">
       <el-scrollbar ref="scrollbarRef" max-height="calc(90vh - 140px)">
+        <!-- U-2 命令面板：无关键字时的快捷动作（键盘 ↑↓ 可达，Enter 执行） -->
+        <div
+          v-if="!keyword && commandItems.length"
+          data-testid="command-palette"
+        >
+          <div class="px-5 py-1.5 text-xs text-gray-400">
+            {{ t("commandPalette.title") }}
+          </div>
+          <div
+            v-for="item in commandItems"
+            :key="item.id"
+            class="mx-2.5 my-0.5 flex cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-sm hover:bg-[#f5f5f5] dark:hover:bg-[#242424]"
+            :class="{
+              'bg-[#f5f5f5] dark:bg-[#242424]': commandActive === item.id
+            }"
+            :data-testid="`command-${item.id.replace('cmd:', '')}`"
+            @click="runQuickAction(item.id)"
+          >
+            <component :is="useRenderIcon(item.icon)" class="size-4" />
+            <span class="truncate text-gray-900 dark:text-white">
+              {{ item.title }}
+            </span>
+          </div>
+        </div>
         <el-empty v-if="showEmpty" :description="t('layout.noData')" />
         <SearchHistory
           v-if="showSearchHistory"
@@ -375,6 +371,10 @@ onKeyStroke("ArrowDown", handleDown);
               v-for="item in group.items"
               :key="item.pk"
               class="mx-2.5 my-0.5 flex cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-sm hover:bg-[#f5f5f5] dark:hover:bg-[#242424]"
+              :class="{
+                'bg-[#f5f5f5] dark:bg-[#242424]':
+                  globalActive === `global:${group.key}:${item.pk}`
+              }"
               :data-testid="`global-search-item-${group.key}`"
               @click="goGlobalResult(group)"
             >

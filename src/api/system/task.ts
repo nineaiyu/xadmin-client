@@ -3,6 +3,7 @@ import type {
   BaseResult,
   DataListResult,
   DetailResult,
+  ListResult,
   RecordStats
 } from "@/api/types";
 
@@ -14,6 +15,19 @@ type RegisteredTask = {
 
 /** 定时任务管理（django_celery_beat） */
 class PeriodicTaskApi extends BaseApi {
+  /** F-1 批量更新：对选中行统一写入同组字段值 */
+  batchUpdate = (
+    pks: Array<number | string>,
+    fields: Record<string, unknown>,
+    marker = "batchUpdate"
+  ) => {
+    return this.request<BaseResult>(
+      "post",
+      {},
+      { pks, fields, _write_marker: marker },
+      `${this.baseApi}/batch-update`
+    );
+  };
   /** 立即执行一次任务 */
   run = (pk: number | string) => {
     return this.request<DetailResult>(
@@ -83,3 +97,71 @@ class TaskExecutionApi extends BaseApi {
 export const taskExecutionApi = new TaskExecutionApi(
   "/api/system/tasks/executions"
 );
+
+/* ---------------- 任务中心（P-2）：三类记录统一视图 + 取消 / 重跑 ---------------- */
+
+export type TaskCenterKind = "task" | "export" | "import";
+
+export type TaskCenterRow = {
+  type: TaskCenterKind;
+  pk: string;
+  name: string;
+  module: string;
+  status: string;
+  progress: number | null;
+  /** P-2 统一进度助手的阶段描述（如「统计行数 / 渲染内容」，任务类型为空） */
+  stage: string;
+  creator: string;
+  created_time: string | null;
+  finished_time: string | null;
+  error: string;
+  has_file: boolean;
+  total?: number;
+  success_rows?: number;
+  failed_rows?: number;
+  can_cancel: boolean;
+  can_rerun: boolean;
+};
+
+export type TaskCenterQuery = {
+  type?: string;
+  status?: string;
+  keyword?: string;
+  start?: string;
+  end?: string;
+  page?: number;
+  size?: number;
+};
+
+/** 任务中心接口（跨类型聚合，不建新表） */
+class TaskCenterApi extends BaseApi {
+  /** 统一任务列表（按创建时间倒序 + 分页） */
+  getUnified = (params: TaskCenterQuery) => {
+    return this.request<ListResult<TaskCenterRow>>(
+      "get",
+      params,
+      {},
+      this.baseApi
+    );
+  };
+  /** 取消任务（PENDING 立即终态；RUNNING 走协作点） */
+  cancel = (type: TaskCenterKind, pk: string) => {
+    return this.request<DetailResult>(
+      "post",
+      {},
+      { type, pk },
+      `${this.baseApi}/cancel`
+    );
+  };
+  /** 重跑任务（白名单：导出 / 导入 / 报表） */
+  rerun = (type: TaskCenterKind, pk: string) => {
+    return this.request<DetailResult>(
+      "post",
+      {},
+      { type, pk },
+      `${this.baseApi}/rerun`
+    );
+  };
+}
+
+export const taskCenterApi = new TaskCenterApi("/api/system/tasks/unified");

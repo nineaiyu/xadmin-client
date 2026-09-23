@@ -4,7 +4,12 @@ import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
-import { aiAssistantApi, aiConfigApi, type AiMetrics } from "@/api/system/ai";
+import {
+  aiAssistantApi,
+  aiConfigApi,
+  type AiMetrics,
+  type AiUsageSummary
+} from "@/api/system/ai";
 import { useAiProfiles } from "./utils/useAiProfiles";
 
 defineOptions({
@@ -21,7 +26,13 @@ const globalForm = reactive({
   AI_ASSISTANT_ENABLED: false,
   AI_NL_QUERY_ENABLED: false,
   AI_ACTION_ENABLED: false,
-  AI_STRUCTURED_MAX_TOKENS: null as number | null
+  AI_STRUCTURED_MAX_TOKENS: null as number | null,
+  // AI-2 原生工具调用双轨（结构化链路，需档案探测通过 tool_calls）
+  AI_NATIVE_TOOLS_ENABLED: false,
+  // AI-5 用量配额（0 = 不限）
+  AI_QUOTA_USER_DAILY_CALLS: 0,
+  AI_QUOTA_USER_DAILY_TOKENS: 0,
+  AI_QUOTA_MAX_CONCURRENT_STREAMS: 0
 });
 
 const loadGlobal = async () => {
@@ -36,6 +47,18 @@ const loadGlobal = async () => {
       globalForm.AI_ACTION_ENABLED = Boolean(data?.AI_ACTION_ENABLED);
       globalForm.AI_STRUCTURED_MAX_TOKENS =
         (data?.AI_STRUCTURED_MAX_TOKENS as number | null) ?? null;
+      globalForm.AI_NATIVE_TOOLS_ENABLED = Boolean(
+        data?.AI_NATIVE_TOOLS_ENABLED
+      );
+      globalForm.AI_QUOTA_USER_DAILY_CALLS = Number(
+        data?.AI_QUOTA_USER_DAILY_CALLS ?? 0
+      );
+      globalForm.AI_QUOTA_USER_DAILY_TOKENS = Number(
+        data?.AI_QUOTA_USER_DAILY_TOKENS ?? 0
+      );
+      globalForm.AI_QUOTA_MAX_CONCURRENT_STREAMS = Number(
+        data?.AI_QUOTA_MAX_CONCURRENT_STREAMS ?? 0
+      );
     }
   } finally {
     globalLoading.value = false;
@@ -102,6 +125,41 @@ const metricPercent = (count: number) => {
   return Math.round((count / max) * 100);
 };
 
+/* ---------------- AI-5 用量账本（权限复用 status:AiAssistant） ---------------- */
+const usageLoading = ref(false);
+const usageDays = ref(7);
+const usage = ref<AiUsageSummary | null>(null);
+const usageCards = computed(() => [
+  {
+    label: t("aiConfig.usageCalls"),
+    value: String(usage.value?.total_calls ?? 0)
+  },
+  {
+    label: t("aiConfig.usageTokens"),
+    value: (usage.value?.total_tokens ?? 0).toLocaleString()
+  },
+  { label: t("aiConfig.usageFailed"), value: String(usage.value?.failed ?? 0) },
+  {
+    label: t("aiConfig.quotaStreams"),
+    value: `${usage.value?.stream_slots ?? 0}/${
+      usage.value?.quota?.concurrent_streams || "∞"
+    }`
+  }
+]);
+
+const loadUsage = async () => {
+  if (!canReadMetrics) return;
+  usageLoading.value = true;
+  try {
+    const res = await aiAssistantApi.usage(usageDays.value);
+    if (res.code === SUCCESS_CODE) {
+      usage.value = res.data as AiUsageSummary;
+    }
+  } finally {
+    usageLoading.value = false;
+  }
+};
+
 /* ---------------- 配置档案（RePlusPage） ---------------- */
 const tableRef = ref();
 const {
@@ -115,6 +173,7 @@ const {
 onMounted(() => {
   loadGlobal();
   loadMetrics();
+  loadUsage();
 });
 </script>
 
@@ -165,6 +224,49 @@ onMounted(() => {
         <el-button v-if="canEditGlobal" type="primary" @click="saveGlobal">
           {{ t("aiConfig.globalSave") }}
         </el-button>
+      </div>
+      <!-- AI-2 双轨 + AI-5 配额：与全局开关同一保存出口 -->
+      <div class="flex flex-wrap items-center gap-6 mt-3">
+        <el-switch
+          v-model="globalForm.AI_NATIVE_TOOLS_ENABLED"
+          :disabled="!canEditGlobal"
+          :active-text="t('aiConfig.nativeTools')"
+          :title="t('aiConfig.nativeToolsHint')"
+          data-testid="ai-native-tools-enabled"
+        />
+        <span class="text-xs text-(--el-text-color-secondary)">
+          {{ t("aiConfig.quotaTitle") }}
+        </span>
+        <el-input-number
+          v-model="globalForm.AI_QUOTA_USER_DAILY_CALLS"
+          :min="0"
+          :step="10"
+          :disabled="!canEditGlobal"
+          :placeholder="t('aiConfig.quotaCalls')"
+          :title="t('aiConfig.quotaCalls')"
+          controls-position="right"
+          data-testid="ai-quota-calls"
+        />
+        <el-input-number
+          v-model="globalForm.AI_QUOTA_USER_DAILY_TOKENS"
+          :min="0"
+          :step="10000"
+          :disabled="!canEditGlobal"
+          :placeholder="t('aiConfig.quotaTokens')"
+          :title="t('aiConfig.quotaTokens')"
+          controls-position="right"
+          data-testid="ai-quota-tokens"
+        />
+        <el-input-number
+          v-model="globalForm.AI_QUOTA_MAX_CONCURRENT_STREAMS"
+          :min="0"
+          :step="1"
+          :disabled="!canEditGlobal"
+          :placeholder="t('aiConfig.quotaStreams')"
+          :title="t('aiConfig.quotaStreams')"
+          controls-position="right"
+          data-testid="ai-quota-streams"
+        />
       </div>
     </el-card>
 
@@ -221,6 +323,65 @@ onMounted(() => {
           type="info"
         >
           {{ row.username }} · {{ row.count }}
+        </el-tag>
+      </div>
+    </el-card>
+
+    <!-- AI-5 用量账本：按天 / 链路 / 用户（与调用观测量表互补：观测看成功率，账本看成本） -->
+    <el-card
+      v-if="canReadMetrics"
+      v-loading="usageLoading"
+      shadow="never"
+      class="w-99/100 mb-3"
+    >
+      <div class="flex flex-wrap items-center gap-4 mb-3">
+        <span class="font-semibold">{{ t("aiConfig.usageTitle") }}</span>
+        <el-radio-group v-model="usageDays" size="small" @change="loadUsage">
+          <el-radio-button :value="1">1</el-radio-button>
+          <el-radio-button :value="7">7</el-radio-button>
+          <el-radio-button :value="30">30</el-radio-button>
+        </el-radio-group>
+        <span class="text-xs text-(--el-text-color-secondary)">
+          {{ t("aiConfig.usageHint") }}
+        </span>
+      </div>
+      <div class="flex flex-wrap gap-10 mb-3">
+        <div v-for="card in usageCards" :key="card.label">
+          <div class="text-sm opacity-70">{{ card.label }}</div>
+          <div class="text-2xl font-semibold">{{ card.value }}</div>
+        </div>
+      </div>
+      <div v-if="usage?.by_feature?.length" class="flex flex-wrap gap-2 mb-2">
+        <el-tag
+          v-for="row in usage.by_feature"
+          :key="row.feature"
+          type="info"
+          size="small"
+        >
+          {{ row.feature }} · {{ row.calls }} ·
+          {{ row.tokens.toLocaleString() }}
+        </el-tag>
+      </div>
+      <!-- AI-2 双轨对照：动作草稿链路的原生 / prompt 轨道成功率（弱模型占比低到阈值后评估下线 prompt 轨） -->
+      <div v-if="usage?.by_track?.length" class="flex flex-wrap gap-2 mb-2">
+        <el-tag
+          v-for="row in usage.by_track"
+          :key="row.track"
+          type="warning"
+          size="small"
+        >
+          {{ t("aiConfig.trackTitle") }}:
+          {{
+            row.track === "native"
+              ? t("aiConfig.trackNative")
+              : t("aiConfig.trackPrompt")
+          }}
+          · {{ row.calls }} · {{ row.success_rate }}%
+        </el-tag>
+      </div>
+      <div v-if="usage?.top_users?.length" class="flex flex-wrap gap-2">
+        <el-tag v-for="row in usage.top_users" :key="row.username" size="small">
+          {{ row.username }} · {{ row.tokens.toLocaleString() }}
         </el-tag>
       </div>
     </el-card>

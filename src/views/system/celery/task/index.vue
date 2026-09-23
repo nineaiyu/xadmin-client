@@ -20,6 +20,7 @@ const {
     :api="api"
     :auth="auth"
     locale-name="systemTask"
+    saved-views
     :base-columns-format="baseColumnsFormat"
     :tableBarButtonsProps="tableBarButtonsProps"
     :operationButtonsProps="operationButtonsProps"

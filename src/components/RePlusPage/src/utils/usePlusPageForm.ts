@@ -7,6 +7,7 @@ import type { BaseApi } from "@/api/base";
 import type { RePlusPageProps } from "./types";
 import type { useBaseColumns } from "./columns";
 import { handleOperation, openDialogDrawer } from "./handle";
+import { confirmImpact } from "./impact";
 import { applyServerErrors } from "./serverErrors";
 import DetailDataForm from "../components/DetailData.vue";
 
@@ -48,13 +49,19 @@ export function usePlusPageForm({
   >;
 
   // 删除
-  const handleDelete = (
+  const handleDelete = async (
     row: { pk?: string | number; id?: string | number },
     requestEnd?: (options?: object) => void
   ) => {
+    const pk = (row?.pk ?? row?.id) as string | number;
+    // 影响面预检（F-2）：有引用先弹窗确认；取消时收尾按钮 loading
+    if (!(await confirmImpact(rawApi as unknown as BaseApi, [pk], t))) {
+      requestEnd?.();
+      return;
+    }
     handleOperation({
       t,
-      apiReq: api.destroy((row?.pk ?? row?.id) as string | number),
+      apiReq: api.destroy(pk, { impact_confirmed: true }),
       success() {
         handleGetData();
       },
@@ -63,15 +70,19 @@ export function usePlusPageForm({
   };
 
   // 批量删除
-  const handleManyDelete = () => {
+  const handleManyDelete = async () => {
     if (selectedNum.value === 0) {
       message(t("results.noSelectedData"), { type: "error" });
+      return;
+    }
+    const pks = getSelectPks("pk");
+    if (!(await confirmImpact(rawApi as unknown as BaseApi, pks, t))) {
       return;
     }
 
     handleOperation({
       t,
-      apiReq: api.batchDestroy(getSelectPks("pk")),
+      apiReq: api.batchDestroy(pks, { impact_confirmed: true }),
       success() {
         onSelectionCancel();
         handleGetData();
@@ -155,7 +166,8 @@ export function usePlusPageForm({
         done,
         closeLoading,
         formRef,
-        formOptions
+        formOptions,
+        setActiveName
       }) => {
         handleOperation({
           t,
@@ -170,12 +182,17 @@ export function usePlusPageForm({
             handleGetData();
           },
           failed: res => {
-            // 业务失败（HTTP 200 + code!=SUCCESS_CODE）携带的 errors 内联到表单项
-            applyServerErrors(formRef, res?.errors);
+            // 业务失败（HTTP 200 + code!=SUCCESS_CODE）携带的 errors 内联到表单项；
+            // 命中后滚动/聚焦首个错误字段（跨页签先切页签，U-4）
+            applyServerErrors(formRef, res?.errors, {
+              activateTab: setActiveName
+            });
           },
           exception: err => {
             // 校验失败（HTTP 400，http 层 reject 响应体）携带的 errors 内联到表单项
-            applyServerErrors(formRef, err?.errors);
+            applyServerErrors(formRef, err?.errors, {
+              activateTab: setActiveName
+            });
           },
           requestEnd() {
             closeLoading();

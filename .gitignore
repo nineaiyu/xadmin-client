@@ -29,3 +29,4 @@ blob-report/
 *.sln
 tsconfig.tsbuildinfo
 .pnpm-store
+_delete

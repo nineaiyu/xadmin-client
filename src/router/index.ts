@@ -159,8 +159,8 @@ export function resetRouter() {
   resetLoadedPaths();
 }
 
-/** 路由白名单 */
-const whiteList = ["/login"];
+/** 路由白名单（未登录可达；邀请激活页令牌即凭据，F-11） */
+const whiteList = ["/login", "/invite/accept"];
 
 const { VITE_HIDE_HOME } = import.meta.env;
 
@@ -195,7 +195,8 @@ router.beforeEach((to: ToRouteType, _from) => {
     if (to.path === "/login" && getToken()) {
       return (to?.query?.redirect as string) ?? "/";
     }
-    return whiteList.includes(to.fullPath) ? _from.fullPath : undefined;
+    // 按 path 判断（白名单页面可能带 query，如邀请激活 token）
+    return whiteList.includes(to.path) ? _from.fullPath : undefined;
   }
 
   if (Cookies.get(multipleTabsKey) && refresh) {

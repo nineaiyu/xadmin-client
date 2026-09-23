@@ -6,6 +6,19 @@ import type {
 } from "@/api/types/permission-preview";
 
 class DeptApi extends BaseApi {
+  /** F-1 批量更新：对选中行统一写入同组字段值 */
+  batchUpdate = (
+    pks: Array<number | string>,
+    fields: Record<string, unknown>,
+    marker = "batchUpdate"
+  ) => {
+    return this.request<BaseResult>(
+      "post",
+      {},
+      { pks, fields, _write_marker: marker },
+      `${this.baseApi}/batch-update`
+    );
+  };
   empower = (pk: number | string, data?: object) => {
     return this.request<BaseResult>(
       "post",

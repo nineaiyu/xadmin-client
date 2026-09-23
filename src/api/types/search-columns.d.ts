@@ -49,6 +49,10 @@ export type SearchColumnsData = {
    */
   choices_truncated?: boolean;
   /**
+   * 该列是否支持表头排序：服务端 ViewSet 声明过 ordering_fields 的字段为 true；未声明排序的视图集不下发
+   */
+  sortable?: boolean;
+  /**
    * 远程联想端点：仅当资源混入 SuggestionsAction 且字段 input_type 为 api-search-* 时下发；候选集与写入校验同源
    */
   suggest_url?: string;

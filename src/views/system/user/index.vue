@@ -67,6 +67,8 @@ const { percent, handleDragEnd } = useSplitPaneConfig("system/user", {
           locale-name="systemUser"
           :operationButtonsProps="operationButtonsProps"
           :tableBarButtonsProps="tableBarButtonsProps"
+          saved-views
+          advanced-filter
           recycleBin
           @selectionChange="selectionChange"
         />
@@ -93,6 +95,8 @@ const { percent, handleDragEnd } = useSplitPaneConfig("system/user", {
         locale-name="systemUser"
         :operationButtonsProps="operationButtonsProps"
         :tableBarButtonsProps="tableBarButtonsProps"
+        saved-views
+        advanced-filter
         recycleBin
         @selectionChange="selectionChange"
       />

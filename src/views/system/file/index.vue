@@ -34,6 +34,8 @@ const {
       :api="api"
       :auth="auth"
       locale-name="systemUploadFile"
+      saved-views
+      advanced-filter
       :searchColumnsFormat="searchColumnsFormat"
       :listColumnsFormat="listColumnsFormat"
       :addOrEditOptions="addOrEditOptions"

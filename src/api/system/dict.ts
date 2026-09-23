@@ -13,6 +13,19 @@ export type MoveDirection = "up" | "down";
 
 /** 数据字典管理 */
 class DataDictApi extends BaseApi {
+  /** F-1 批量更新：对选中行统一写入同组字段值 */
+  batchUpdate = (
+    pks: Array<number | string>,
+    fields: Record<string, unknown>,
+    marker = "batchUpdate"
+  ) => {
+    return this.request<BaseResult>(
+      "post",
+      {},
+      { pks, fields, _write_marker: marker },
+      `${this.baseApi}/batch-update`
+    );
+  };
   /** 按字典类型 code 取启用字典项（带缓存，供下拉/表单消费） */
   items = (code: string) => {
     return this.request<{ data: { results: DictItem[] } }>(

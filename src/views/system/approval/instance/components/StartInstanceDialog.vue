@@ -4,6 +4,7 @@ import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessage, type FormInstance, type FormRules } from "element-plus";
 import { approvalInstanceApi } from "@/api/system/approvalFlow";
+import { searchUserApi } from "@/api/system/search";
 
 /**
  * 发起申请弹窗：选择启用中的流程 → 按 form_schema 渲染动态表单 → 提交。
@@ -49,11 +50,59 @@ const form = reactive<{
   flow: string;
   title: string;
   values: Record<string, string>;
+  /** F-5 发起时追加抄送人（用户名；与节点级抄送合并去重） */
+  ccUsers: string[];
 }>({
   flow: "",
   title: "",
-  values: {}
+  values: {},
+  ccUsers: []
 });
+
+/* ---------------- F-5 抄送人选择（用户名远程搜索，与流程设计器同口径） ---------------- */
+const userOptions = ref<Array<{ username: string; label: string }>>([]);
+const userLoading = ref(false);
+
+/** 已选用户并入选项：未搜索时也能看到已选人员（后端只存用户名，无法反查昵称） */
+function ensureUserOption(username: string) {
+  if (!username) return;
+  if (!userOptions.value.some(item => item.username === username)) {
+    userOptions.value.push({ username, label: username });
+  }
+}
+
+async function searchUsers(query: string) {
+  if (!query) return;
+  userLoading.value = true;
+  try {
+    const res = await searchUserApi.list({
+      page: 1,
+      size: 20,
+      username: query
+    });
+    if (res.code === SUCCESS_CODE && res.data) {
+      const rows =
+        (
+          res.data as {
+            results?: Array<{ username: string; nickname?: string }>;
+          }
+        ).results ?? [];
+      const fetched = rows.map(user => ({
+        username: user.username,
+        label: user.nickname
+          ? `${user.nickname}(${user.username})`
+          : user.username
+      }));
+      const fetchedNames = new Set(fetched.map(item => item.username));
+      userOptions.value = [
+        ...fetched,
+        ...userOptions.value.filter(item => !fetchedNames.has(item.username))
+      ];
+    }
+  } finally {
+    userLoading.value = false;
+  }
+}
 
 const currentFlow = computed(() =>
   flows.value.find(item => item.pk === form.flow)
@@ -151,7 +200,9 @@ async function submit() {
     const res = await approvalInstanceApi.create({
       flow: form.flow,
       title: form.title,
-      form_data: formData
+      form_data: formData,
+      // F-5 抄送人：与流程节点级默认抄送合并（后端去重、不含申请人）
+      cc_users: form.ccUsers
     });
     if (res.code === SUCCESS_CODE) {
       ElMessage.success(t("systemApprovalInstance.submitSuccess"));
@@ -203,6 +254,31 @@ onMounted(loadFlows);
           maxlength="128"
           :placeholder="t('systemApprovalInstance.titlePlaceholder')"
         />
+      </el-form-item>
+      <!-- F-5 抄送人：可选，留空则仅按流程节点配置的默认抄送 -->
+      <el-form-item :label="t('approvalDiscussion.cc')">
+        <el-select
+          v-model="form.ccUsers"
+          class="w-full"
+          multiple
+          filterable
+          remote
+          allow-create
+          default-first-option
+          reserve-keyword
+          clearable
+          :remote-method="searchUsers"
+          :loading="userLoading"
+          :placeholder="t('approvalDiscussion.ccPlaceholder')"
+          @focus="form.ccUsers.forEach(ensureUserOption)"
+        >
+          <el-option
+            v-for="user in userOptions"
+            :key="user.username"
+            :label="user.label"
+            :value="user.username"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item
         v-for="field in fields"

@@ -23,5 +23,6 @@ const {
     :listColumnsFormat="listColumnsFormat"
     :detailColumnsFormat="detailColumnsFormat"
     :operationButtonsProps="operationButtonsProps"
+    advanced-filter
   />
 </template>
