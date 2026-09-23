@@ -10,6 +10,7 @@ import { useUserStoreHook } from "@/store/modules/user";
 import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
 
 import { router } from "../index";
+import { resolveComponentKey } from "./resolve-component";
 import { ascending, formatFlatteningRoutes } from "./route-tree";
 
 const IFrame = () => import("@/layout/frame.vue");
@@ -154,11 +155,11 @@ function addAsyncRoutes(
       // 对后端传component组件路径和不传做兼容（如果后端传component组件路径，那么path可以随便写，如果不传，组件路径会跟path保持一致）
       // 后端下发的 `component` 实际是组件路径字符串，先退化为 `unknown` 再按类型收窄
       const rawComponent = v.component as unknown;
-      const index = rawComponent
-        ? typeof rawComponent === "string"
-          ? modulesRoutesKeys.findIndex(ev => ev.includes(rawComponent))
-          : modulesRoutesKeys.findIndex(ev => ev.includes(v.path))
-        : modulesRoutesKeys.findIndex(ev => ev.includes(v.path));
+      const target =
+        typeof rawComponent === "string" && rawComponent
+          ? rawComponent
+          : String(v.path ?? "");
+      const index = resolveComponentKey(target, modulesRoutesKeys);
       if (index === -1 && import.meta.env.DEV) {
         // 开发态显式报错：component 字符串与 src/views 下文件路径未匹配（运行期表现为空白路由）
         console.error(
