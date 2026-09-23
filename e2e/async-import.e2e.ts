@@ -18,16 +18,17 @@ async function openUserManagement(page: import("@playwright/test").Page) {
   });
 }
 
-function toolbarButton(page: import("@playwright/test").Page, index: number) {
+function toolbarButton(page: import("@playwright/test").Page, name: string) {
+  // 按可访问名定位：工具栏是图标按钮（无文本，hasText 匹配不到），且按钮集合
+  // 会随功能演进（高级筛选/视图等），序号定位会错点
   return page
     .locator("div.flex.mr-4")
     .first()
-    .locator("button.el-button")
-    .nth(index);
+    .getByRole("button", { name, exact: true });
 }
 
 async function openImportDialog(page: import("@playwright/test").Page) {
-  await toolbarButton(page, 2).click();
+  await toolbarButton(page, "导入").click();
   const dialog = page.locator(".el-dialog", { hasText: "导入" }).first();
   await expect(dialog).toBeVisible();
   return dialog;

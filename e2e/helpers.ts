@@ -34,7 +34,12 @@ export const APPROVER = {
   username: "e2e_approver",
   password: "E2E-Approver-2026!"
 };
-export const PLAIN_USER = { username: "e2e_user", password: "E2E-User-2026!" };
+export const PLAIN_USER = {
+  username: "e2e_user",
+  /** 显示名快照断言用（轨迹/审批人列等按昵称展示，见 e2e_seed 种子） */
+  nickname: "E2E普通用户",
+  password: "E2E-User-2026!"
+};
 export const SCOPED_USER = {
   username: "e2e_scoped",
   password: "E2E-Scoped-2026!"

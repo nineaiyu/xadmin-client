@@ -152,8 +152,9 @@ test.describe.serial("审批规则多级审批链", () => {
       await expect(row).toContainText("第 1 级");
 
       await row.getByRole("button", { name: "通过" }).first().click();
+      // 页面常驻多个隐藏 popper 实例（下拉/气泡），按可见态收敛到确认层
       await pageB
-        .locator(".el-popconfirm, .el-popper, .el-message-box")
+        .locator(".el-popconfirm:visible, .el-message-box:visible")
         .getByRole("button", { name: "确定" })
         .first()
         .click();
@@ -166,8 +167,9 @@ test.describe.serial("审批规则多级审批链", () => {
 
       // 复核第一人通过 → 会签等待（1/2），单仍停在当前级
       await row.getByRole("button", { name: "通过" }).first().click();
+      // 页面常驻多个隐藏 popper 实例（下拉/气泡），按可见态收敛到确认层
       await pageB
-        .locator(".el-popconfirm, .el-popper, .el-message-box")
+        .locator(".el-popconfirm:visible, .el-message-box:visible")
         .getByRole("button", { name: "确定" })
         .first()
         .click();
@@ -192,15 +194,29 @@ test.describe.serial("审批规则多级审批链", () => {
       const mineRow = page.locator(".el-table__row", { hasText: no8 }).first();
       await mineRow.waitFor({ state: "visible", timeout: 15_000 });
       await mineRow.getByRole("button", { name: "撤回" }).first().click();
+      // 页面常驻多个隐藏 popper 实例（下拉/气泡），必须按文案 + 可见态收敛到撤回确认层
       await page
-        .locator(".el-popconfirm, .el-popper, .el-message-box")
+        .locator(".el-popconfirm, .el-message-box")
+        .filter({ hasText: "撤回" })
         .getByRole("button", { name: "确定" })
         .first()
         .click();
+      // 撤回请求为异步落库：轮询至终态再断言，避免读到提交前的 PENDING（曾致首跑 flaky）
+      await expect
+        .poll(
+          async () =>
+            page.request
+              .get(`${BACKEND_URL}/api/system/approvals/${approvalId}`, {
+                headers
+              })
+              .then(res => res.json())
+              .then(data => data?.data?.status?.value),
+          { timeout: 15_000, message: "撤回后审批单应终止" }
+        )
+        .toBe("CANCELLED");
       const detail = await page.request
         .get(`${BACKEND_URL}/api/system/approvals/${approvalId}`, { headers })
         .then(res => res.json());
-      expect(detail?.data?.status?.value).toBe("CANCELLED");
       expect(Number(detail?.data?.current_level ?? 0)).toBe(0);
     } finally {
       await disableRule(page, token, rule.pk);
@@ -291,8 +307,9 @@ test.describe.serial("审批规则多级审批链", () => {
       await levelRow.waitFor({ state: "visible", timeout: 15_000 });
 
       await levelRow.getByRole("button", { name: "通过" }).first().click();
+      // 页面常驻多个隐藏 popper 实例（下拉/气泡），按可见态收敛到确认层
       await pageB
-        .locator(".el-popconfirm, .el-popper, .el-message-box")
+        .locator(".el-popconfirm:visible, .el-message-box:visible")
         .getByRole("button", { name: "确定" })
         .first()
         .click();
@@ -301,8 +318,9 @@ test.describe.serial("审批规则多级审批链", () => {
       await expect(levelRow).toContainText("第 2 级", { timeout: 15_000 });
 
       await levelRow.getByRole("button", { name: "通过" }).first().click();
+      // 页面常驻多个隐藏 popper 实例（下拉/气泡），按可见态收敛到确认层
       await pageB
-        .locator(".el-popconfirm, .el-popper, .el-message-box")
+        .locator(".el-popconfirm:visible, .el-message-box:visible")
         .getByRole("button", { name: "确定" })
         .first()
         .click();

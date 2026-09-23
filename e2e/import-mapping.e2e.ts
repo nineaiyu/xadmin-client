@@ -21,12 +21,12 @@ async function openDialogOnUserPage(page: Page) {
   await expect(page.locator(".el-table").first()).toBeVisible({
     timeout: 15_000
   });
-  // 工具栏第 3 个按钮 = 导入（前两个为新增 / 导出）
+  // 按可访问名定位「导入」：工具栏是图标按钮（无文本，hasText 匹配不到），且按钮
+  // 集合会随功能演进（高级筛选/视图等），序号定位会错点
   await page
     .locator("div.flex.mr-4")
     .first()
-    .locator("button.el-button")
-    .nth(2)
+    .getByRole("button", { name: "导入", exact: true })
     .click();
   const dialog = page.locator(".el-dialog", { hasText: "导入" }).first();
   await expect(dialog).toBeVisible();

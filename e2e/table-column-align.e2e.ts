@@ -21,7 +21,7 @@ const PAGES = [
     name: "celery-task（列最多）",
     dirs: ["系统管理", "任务管理"],
     path: "/system/celery/task/index",
-    opWidth: 420
+    opWidth: 440
   },
   {
     name: "leave",
@@ -45,7 +45,7 @@ const PAGES = [
     name: "user（含左侧树）",
     dirs: ["系统管理"],
     path: "/system/user/index",
-    opWidth: 200
+    opWidth: 260
   },
   {
     name: "role",

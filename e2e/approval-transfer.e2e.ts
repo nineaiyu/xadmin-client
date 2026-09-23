@@ -175,8 +175,9 @@ test("流程审批：转交待办 → 原待办消失 + 轨迹留痕（申请详
   const drawer = page.locator(".el-drawer:visible").first();
   await expect(drawer).toBeVisible({ timeout: 15_000 });
   const trail = drawer.getByTestId("instance-trail");
-  // 新任务处理人是转交目标；来源标注（delegate_from → 「由 X 代理」）指向原审批人
-  await expect(trail).toContainText(PLAIN_USER.username);
+  // 新任务处理人是转交目标；来源标注（delegate_from → 「由 X 代理」）指向原审批人。
+  // 轨迹处理人走显示名快照（昵称优先、缺失回落 username），代理留痕保留 username
+  await expect(trail).toContainText(PLAIN_USER.nickname);
   await expect(trail).toContainText(APPROVER.username);
   await expect(drawer.getByTestId("trail-delegate-from").first()).toBeVisible({
     timeout: 10_000
