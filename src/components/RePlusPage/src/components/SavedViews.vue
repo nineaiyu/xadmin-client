@@ -10,7 +10,7 @@ import type { RecordType } from "plus-pro-components";
 import View from "~icons/ep/view";
 
 /**
- * 列表「我的视图」（F-4）：把当前搜索区的筛选条件保存为命名视图，
+ * 列表「我的视图」：把当前搜索区的筛选条件保存为命名视图，
  * 一键套用 / 设默认 / 删除；共享视图同页其他用户可见（只读应用）。
  *
  * 页面侧只需传「当前搜索条件快照」并监听 apply —— 应用逻辑由 RePlusPage

@@ -73,7 +73,7 @@ watch(
   }
 );
 
-/** 命令面板（U-2）：Cmd/Ctrl+K 唤起 + 快捷动作 + 键盘全导航（实现见 useCommandPalette） */
+/** 命令面板：Cmd/Ctrl+K 唤起 + 快捷动作 + 键盘全导航（实现见 useCommandPalette） */
 const {
   commandItems,
   commandActive,
@@ -316,7 +316,7 @@ function handleDrag(item: dragItem) {
     </el-input>
     <div class="search-content">
       <el-scrollbar ref="scrollbarRef" max-height="calc(90vh - 140px)">
-        <!-- U-2 命令面板：无关键字时的快捷动作（键盘 ↑↓ 可达，Enter 执行） -->
+        <!-- 命令面板：无关键字时的快捷动作（键盘 ↑↓ 可达，Enter 执行） -->
         <div
           v-if="!keyword && commandItems.length"
           data-testid="command-palette"

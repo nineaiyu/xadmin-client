@@ -47,7 +47,7 @@ export default defineComponent({
   props: tableBarProps,
   emits: ["refresh", "fullscreen", "change"],
   setup(props, { emit, slots, attrs }) {
-    // U-3 表格偏好：列显隐/顺序/密度跨刷新保持（本地 + 可选跨设备同步）
+    // 表格偏好：列显隐/顺序/密度跨刷新保持（本地 + 可选跨设备同步）
     const tablePrefs = useTablePrefs();
     const size = ref(tablePrefs.size.value);
     const loading = ref(false);

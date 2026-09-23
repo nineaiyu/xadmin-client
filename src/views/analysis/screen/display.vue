@@ -18,7 +18,7 @@ import {
 import { WS } from "@/utils/websocket";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
-// 仅类型引用（不进包）：导出实现按需动态加载（U-5，保持首屏体积）
+// 仅类型引用（不进包）：导出实现按需动态加载（保持首屏体积）
 import type { ExportedImage } from "@/utils/imageExport";
 import { resolveScreenFrame } from "./utils/control";
 import ChartCard from "@/views/dashboard/components/ChartCard.vue";
@@ -72,7 +72,7 @@ const refreshVisible = () => {
   }
 };
 
-/** U-5 导出当前屏：逐卡渲染图片并按 ZIP 打包（一次下载，规避浏览器对连续下载的拦截） */
+/** 导出当前屏：逐卡渲染图片并按 ZIP 打包（一次下载，规避浏览器对连续下载的拦截） */
 const exporting = ref(false);
 const exportScreen = async () => {
   if (exporting.value || currentCards.value.length === 0) return;

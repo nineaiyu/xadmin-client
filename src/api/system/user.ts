@@ -11,7 +11,7 @@ import type { PureHttpRequestConfig } from "@/utils/http/types";
 import { http } from "@/utils/http";
 
 class UserApi extends BaseApi {
-  /** F-1 批量更新：对选中行统一写入同组字段值 */
+  /** 批量更新：对选中行统一写入同组字段值 */
   batchUpdate = (
     pks: Array<number | string>,
     fields: Record<string, unknown>,
@@ -46,7 +46,7 @@ class UserApi extends BaseApi {
     );
   };
 
-  /** 邀请激活（F-11）：重置为待激活并发送一次性链接邮件（已激活账号密码将立即失效） */
+  /** 邀请激活：重置为待激活并发送一次性链接邮件（已激活账号密码将立即失效） */
   invite = (pk: number | string, data?: object) => {
     return this.request<BaseResult>(
       "post",

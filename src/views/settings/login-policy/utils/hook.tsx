@@ -22,7 +22,7 @@ import LoginPolicyForm from "../components/LoginPolicyForm.vue";
 import PolicyPreviewPanel from "../components/PolicyPreviewPanel.vue";
 
 /**
- * 登录访问策略（F-7）：策略 CRUD 走自定义弹窗（关闭框架默认新增/编辑按钮，
+ * 登录访问策略：策略 CRUD 走自定义弹窗（关闭框架默认新增/编辑按钮，
  * 因为 target_type / action 为 LabeledChoiceField，需要前端给选项与回显转换）；
  * 权限点本身不变（create / partialUpdate 仍按 hasAuth 判定入口可见性）。
  */

@@ -32,7 +32,7 @@ export interface CredentialRotateResult {
   data?: { action?: string };
 }
 
-/** 凭据与密钥（P-3）：只读聚合 + 轮换（重新加密） */
+/** 凭据与密钥：只读聚合 + 轮换（重新加密） */
 class CredentialApi extends BaseApi {
   overview = () => {
     return this.request<{ code: number; data: CredentialOverview }>(

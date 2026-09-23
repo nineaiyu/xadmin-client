@@ -8,7 +8,7 @@ import type { ApiResult } from "@/api/types";
 import BatchUpdateForm from "./BatchUpdateForm.vue";
 
 /**
- * 批量更新（F-1）通用弹窗：勾选行 → 选择字段与值 → POST {baseApi}/batch-update。
+ * 批量更新通用弹窗：勾选行 → 选择字段与值 → POST {baseApi}/batch-update。
  *
  * 页面侧只需：
  * 1. `const { batchUpdateButton } = useBatchUpdate({ t, api, tableRef, fields })`；

@@ -58,7 +58,7 @@ export interface LoginMfaRequired {
   mfa_required: boolean;
   mfa_token: string;
   methods: MfaMethod[];
-  /** F-6 巡检处置联动：管理员要求改密时透传（MFA 通过后进入系统前引导改密） */
+  /** 巡检处置联动：管理员要求改密时透传（MFA 通过后进入系统前引导改密） */
   must_change_password?: boolean;
 }
 

@@ -49,7 +49,7 @@ export const approvalFlowApi = new ApprovalFlowApi(
 );
 
 /** 流程实例（一次申请） */
-/** F-5 审批讨论区评论（mentions 为被 @ 用户 pk 列表） */
+/** 审批讨论区评论（mentions 为被 @ 用户 pk 列表） */
 export type InstanceComment = {
   pk: string;
   creator: string | number | null;
@@ -60,7 +60,7 @@ export type InstanceComment = {
 };
 
 class ApprovalInstanceApi extends BaseApi {
-  /** F-5 讨论区：评论列表 */
+  /** 讨论区：评论列表 */
   comments = (pk: string | number) => {
     return this.request<DataListResult<InstanceComment>>(
       "get",
@@ -69,7 +69,7 @@ class ApprovalInstanceApi extends BaseApi {
       `${this.baseApi}/${pk}/comments`
     );
   };
-  /** F-5 讨论区：发表评论（内容支持 @用户名 提醒） */
+  /** 讨论区：发表评论（内容支持 @用户名 提醒） */
   addComment = (pk: string | number, content: string) => {
     return this.request<DetailResult<InstanceComment>>(
       "post",
@@ -78,7 +78,7 @@ class ApprovalInstanceApi extends BaseApi {
       `${this.baseApi}/${pk}/comment`
     );
   };
-  /** F-5 讨论区：删除评论（作者本人或超管） */
+  /** 讨论区：删除评论（作者本人或超管） */
   deleteComment = (pk: string | number, commentPk: string | number) => {
     return this.request<BaseResult>(
       "post",

@@ -7,7 +7,7 @@ import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
 import type { TableColumnLike } from "./utils";
 
 /**
- * 表格偏好持久化（U-3）：列显隐 / 列顺序 / 密度「本地即时层 + WEB_SITE_CONFIG 跨设备层」。
+ * 表格偏好持久化：列显隐 / 列顺序 / 密度「本地即时层 + WEB_SITE_CONFIG 跨设备层」。
  *
  * - 页面标识用路由 path（同一页面在不同入口下保持一套偏好）；
  * - 列用 **label（i18n key）** 作为稳定标识：切换语言不改偏好，列被删除时静默忽略；

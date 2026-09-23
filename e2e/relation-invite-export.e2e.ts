@@ -11,16 +11,16 @@ import {
 } from "./helpers";
 
 /**
- * 批四功能 E2E（JumpServer 对标 · 触发制与工程改造）：
+ * 跨页联动与导出 E2E：
  *
- * 1. F-12 关联计数声明式：角色列表「用户数」展示真实计数，点击跳转到按角色筛选的用户列表；
- * 2. F-11 邀请开户：行操作「邀请激活」发送邀请后状态列变为「待接受邀请」；
- * 3. U-5 图表导出：仪表盘卡片「导出图片」触发下载（PNG，SVG 回退），文件非空。
+ * 1. 关联计数声明式：角色列表「用户数」展示真实计数，点击跳转到按角色筛选的用户列表；
+ * 2. 邀请开户：行操作「邀请激活」发送邀请后状态列变为「待接受邀请」；
+ * 3. 图表导出：仪表盘卡片「导出图片」触发下载（PNG，SVG 回退），文件非空。
  *
  * 数据准备走 API（角色 / 用户 / 数据集 / 仪表盘），UI 只做展示与交互断言。
  */
 
-const E2E_PASSWORD = "E2E@Batch42026x";
+const E2E_PASSWORD = "E2E@CrossPage2026x";
 
 type ApiBody = {
   code: number;
@@ -28,9 +28,7 @@ type ApiBody = {
   data?: { pk?: string };
 };
 
-test("角色列表用户数可点击，跳转到按角色筛选的用户列表（F-12）", async ({
-  page
-}) => {
+test("角色列表用户数可点击，跳转到按角色筛选的用户列表", async ({ page }) => {
   await login(page);
   const token = await getAccessToken(page);
   const headers = { Authorization: `Bearer ${token}` };
@@ -79,7 +77,7 @@ test("角色列表用户数可点击，跳转到按角色筛选的用户列表�
   ).toBeVisible({ timeout: 20_000 });
 });
 
-test("邀请激活：发送邀请后状态列显示待接受（F-11）", async ({ page }) => {
+test("邀请激活：发送邀请后状态列显示待接受", async ({ page }) => {
   await login(page);
   const token = await getAccessToken(page);
   const headers = { Authorization: `Bearer ${token}` };
@@ -122,7 +120,7 @@ test("邀请激活：发送邀请后状态列显示待接受（F-11）", async (
   });
 });
 
-test("仪表盘卡片导出图片触发下载且文件非空（U-5）", async ({ page }) => {
+test("仪表盘卡片导出图片触发下载且文件非空", async ({ page }) => {
   await login(page);
   const token = await getAccessToken(page);
   const headers = { Authorization: `Bearer ${token}` };

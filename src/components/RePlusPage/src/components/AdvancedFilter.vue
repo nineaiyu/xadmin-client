@@ -14,7 +14,7 @@ import {
 } from "../utils/advancedFilter";
 
 /**
- * 高级筛选（F-13）：受控 lookup 条件的可视化编辑。
+ * 高级筛选：受控 lookup 条件的可视化编辑。
  *
  * 组件只产出「查询参数」并交由 RePlusPage 写入搜索条件（单向数据流）；
  * 字段候选来自列表元数据（列名），lookup 白名单与后端

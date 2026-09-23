@@ -3,12 +3,12 @@ import { expect, test } from "@playwright/test";
 import { login } from "./helpers";
 
 /**
- * Passkey（F-9）浏览器侧链路 E2E：CDP 虚拟认证器走完
+ * Passkey浏览器侧链路 E2E：CDP 虚拟认证器走完
  * `navigator.credentials.create` → 服务端验签 → 落库 → 列表回显 → 删除。
  *
  * 仅 chromium：虚拟认证器依赖 CDP（`WebAuthn.enable` / `WebAuthn.addVirtualAuthenticator`），
  * webkit 无对应通道；真实认证器依赖系统级凭据（本地不可编程），登录侧
- * `navigator.credentials.get` 与后端验签同源，仍由后端用例覆盖（ADR-052 §5）。
+ * `navigator.credentials.get` 与后端验签同源，仍由后端用例覆盖。
  */
 test.describe("Passkey 凭据", () => {
   test.skip(

@@ -1,7 +1,7 @@
 import { BaseApi } from "@/api/base";
 import type { DetailResult } from "@/api/types";
 
-/** 通用标签中心（P-1）：标签定义 + 对象打标 */
+/** 通用标签中心：标签定义 + 对象打标 */
 export type TagItem = {
   pk: string;
   name: string;

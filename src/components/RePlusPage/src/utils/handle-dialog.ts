@@ -45,7 +45,7 @@ interface callBackArgs {
   success: (detail: string, close?: boolean) => void;
   failed: (detail: string, close?: boolean) => void;
   done: () => void;
-  /** 分页签表单：切到指定页签（服务端校验错误定位用，U-4） */
+  /** 分页签表单：切到指定页签（服务端校验错误定位用） */
   setActiveName?: (index: number) => void;
 }
 
@@ -309,7 +309,7 @@ export const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
         success,
         failed,
         done,
-        // 服务端校验错误定位（U-4）：分页签表单需切到错误所在页签
+        // 服务端校验错误定位：分页签表单需切到错误所在页签
         setActiveName: (index: number) => formRef.value?.setActiveName?.(index)
       });
     },

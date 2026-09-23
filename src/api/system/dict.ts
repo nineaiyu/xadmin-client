@@ -13,7 +13,7 @@ export type MoveDirection = "up" | "down";
 
 /** 数据字典管理 */
 class DataDictApi extends BaseApi {
-  /** F-1 批量更新：对选中行统一写入同组字段值 */
+  /** 批量更新：对选中行统一写入同组字段值 */
   batchUpdate = (
     pks: Array<number | string>,
     fields: Record<string, unknown>,

@@ -156,7 +156,7 @@ export function useTask(tableRef: Ref) {
     ]
   });
 
-  // F-1 批量更新：勾选行后统一写入同组字段（字段白名单：启用状态）
+  // 批量更新：勾选行后统一写入同组字段（字段白名单：启用状态）
   const { batchUpdateButton } = useBatchUpdate({
     t,
     api,

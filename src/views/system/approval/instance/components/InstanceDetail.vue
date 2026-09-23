@@ -22,7 +22,7 @@ type TaskRow = {
   node_name: string;
   node_order: number;
   assignee?: RelatedUser;
-  /** 处理人显示名快照（U-1）：用户删除/改名后轨迹仍可读 */
+  /** 处理人显示名快照：用户删除/改名后轨迹仍可读 */
   assignee_display?: string;
   /** 委托代审来源：assignee 为代理人时记录的原审批人 */
   delegate_from?: RelatedUser;
@@ -63,7 +63,7 @@ type InstanceDetailData = {
   form_data?: Record<string, unknown>;
   form_schema?: FormField[];
   tasks?: TaskRow[];
-  /** U-1：关联业务对象当前状态（白名单渲染；无关联为 null） */
+  /** 关联业务对象当前状态（白名单渲染；无关联为 null） */
   related_object?: RelatedObject | null;
 };
 
@@ -110,7 +110,7 @@ async function load() {
   }
 }
 
-/** F-5 讨论区：参与人（申请人 / 处理人 / 抄送人）可评论，@用户名 会提醒相关人 */
+/** 讨论区：参与人（申请人 / 处理人 / 抄送人）可评论，@用户名 会提醒相关人 */
 const comments = ref<InstanceComment[]>([]);
 const commentText = ref("");
 const commentLoading = ref(false);
@@ -175,7 +175,7 @@ const commentTime = (value?: string) =>
 const statusOf = (value?: DictValue) =>
   typeof value === "object" && value !== null ? value : undefined;
 
-/** 关联业务对象（U-1）：无关联 / 未接入白名单时为 null（不渲染卡片） */
+/** 关联业务对象：无关联 / 未接入白名单时为 null（不渲染卡片） */
 const related = computed(() => detail.value?.related_object ?? null);
 
 /** 处理人展示：显示名快照优先（用户删除/改名后不丢痕迹），回落实时 label */
@@ -398,7 +398,7 @@ onMounted(() => {
       </el-timeline>
     </template>
 
-    <!-- F-5 讨论区：与审批轨迹同页，评论支持 @用户名 提醒 -->
+    <!-- 讨论区：与审批轨迹同页，评论支持 @用户名 提醒 -->
     <el-divider content-position="left">
       {{ t("approvalDiscussion.title") }}
     </el-divider>

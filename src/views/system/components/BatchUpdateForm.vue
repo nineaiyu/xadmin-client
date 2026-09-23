@@ -3,7 +3,7 @@ import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 
 /**
- * 批量更新内容组件（F-1）：选择字段 + 值，交由父级 addDialog 提交。
+ * 批量更新内容组件：选择字段 + 值，交由父级 addDialog 提交。
  *
  * 字段白名单由页面声明（避免把关联/上传类字段暴露给批量写入），
  * `getFields()` 返回 `{ [field]: value }`，未选字段或空值返回 null（父级拦截提交）。

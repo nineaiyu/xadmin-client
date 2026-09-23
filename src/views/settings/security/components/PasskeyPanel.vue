@@ -11,7 +11,7 @@ import {
 import type { RecordType } from "plus-pro-components";
 
 /**
- * Passkey 凭据管理（F-9）：浏览器侧完成 WebAuthn 注册仪式，服务端验签落库。
+ * Passkey 凭据管理：浏览器侧完成 WebAuthn 注册仪式，服务端验签落库。
  *
  * 流程：challenge（服务端一次性挑战）→ navigator.credentials.create →
  * register（提交 clientDataJSON / attestationObject）；列表与删除走个人凭据接口

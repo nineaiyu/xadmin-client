@@ -8,7 +8,7 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import type { PageColumn } from "../utils/types";
 
 /**
- * 高级筛选入口（F-13）：工具栏按钮 + 弹窗编排 + 条件写回。
+ * 高级筛选入口：工具栏按钮 + 弹窗编排 + 条件写回。
  *
  * 条件是 `searchFields` 的一部分（随「我的视图」快照一起持久化），
  * 故以 v-model 双向绑定搜索条件对象；写入后 emit `applied` 由页面/页面框架刷新列表。

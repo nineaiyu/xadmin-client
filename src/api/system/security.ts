@@ -2,13 +2,13 @@ import { BaseApi } from "@/api/base";
 import type { BaseResult, DataListResult, DetailResult } from "@/api/types";
 
 /**
- * 安全域接口集合（JumpServer 对标批三）。
+ * 安全域接口集合。
  *
- * - accountRiskApi：账号安全风险巡检（F-6）
- * - loginPolicyApi：登录访问策略（F-7）
- * - passkeyApi：Passkey 凭据（F-9，个人凭据；challenge 为登录前匿名端点）
- * - savedViewApi：列表「我的视图」（F-4，个人筛选偏好）
- * - messageTemplateApi：通知消息模板（F-3，配置型端点 save/reset）
+ * - accountRiskApi：账号安全风险巡检
+ * - loginPolicyApi：登录访问策略
+ * - passkeyApi：Passkey 凭据（个人凭据；challenge 为登录前匿名端点）
+ * - savedViewApi：列表「我的视图」（个人筛选偏好）
+ * - messageTemplateApi：通知消息模板（配置型端点 save/reset）
  */
 
 /** 处置动作：与后端 system/utils/account_risk.py 的 HANDLE_ACTIONS 同源 */

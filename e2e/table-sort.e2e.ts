@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { login, openMenuPath } from "./helpers";
 
 /**
- * U-3 表头排序 + F-13 高级筛选（同一页验证，减少登录/导航重复）。
+ * 表头排序 + 高级筛选（同一页验证，减少登录/导航重复）。
  *
  * 口径：
  * - 表头排序：仅元数据下发 sortable 的列可点，点击把 `ordering=field` / `-field`

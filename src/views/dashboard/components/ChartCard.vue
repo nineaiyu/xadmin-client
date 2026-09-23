@@ -11,7 +11,7 @@ import {
   type ExecuteResult
 } from "@/api/system/datasets";
 import { epColor } from "@/utils/chartTheme";
-// 仅类型引用（不进包）：导出实现按需动态加载（U-5，保持首屏体积）
+// 仅类型引用（不进包）：导出实现按需动态加载（保持首屏体积）
 import type { EChartsLike, ExportedImage } from "@/utils/imageExport";
 
 defineOptions({ name: "DashboardChartCard" });
@@ -153,7 +153,7 @@ watch(
 );
 
 /**
- * U-5 图片导出：返回可下载图片（PNG 优先，转换失败回退 SVG）；
+ * 图片导出：返回可下载图片（PNG 优先，转换失败回退 SVG）；
  * number 卡（无 ECharts 实例）返回 null，由调用方跳过并提示。
  */
 async function renderImage(): Promise<ExportedImage | null> {

@@ -54,7 +54,7 @@ export function usePlusPageForm({
     requestEnd?: (options?: object) => void
   ) => {
     const pk = (row?.pk ?? row?.id) as string | number;
-    // 影响面预检（F-2）：有引用先弹窗确认；取消时收尾按钮 loading
+    // 影响面预检：有引用先弹窗确认；取消时收尾按钮 loading
     if (!(await confirmImpact(rawApi as unknown as BaseApi, [pk], t))) {
       requestEnd?.();
       return;
@@ -183,7 +183,7 @@ export function usePlusPageForm({
           },
           failed: res => {
             // 业务失败（HTTP 200 + code!=SUCCESS_CODE）携带的 errors 内联到表单项；
-            // 命中后滚动/聚焦首个错误字段（跨页签先切页签，U-4）
+            // 命中后滚动/聚焦首个错误字段（跨页签先切页签）
             applyServerErrors(formRef, res?.errors, {
               activateTab: setActiveName
             });

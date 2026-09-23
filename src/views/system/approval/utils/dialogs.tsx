@@ -73,7 +73,7 @@ export function openRejectReasonDialog(options: {
   });
 }
 
-/** 目标对象轻量快照（U-1）：主键 / 名称 + 变更前后事实对照 */
+/** 目标对象轻量快照：主键 / 名称 + 变更前后事实对照 */
 export interface TargetSnapshot {
   model?: string;
   verbose_name?: string;

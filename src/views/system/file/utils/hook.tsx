@@ -129,7 +129,7 @@ export function useSystemUploadFile(tableRef: Ref) {
     return columns;
   };
 
-  /** F-8 访问记录抽屉（上传 / 下载 / 预览 / 删除留痕） */
+  /** 访问记录抽屉（上传 / 下载 / 预览 / 删除留痕） */
   const openAccessLogs = (row: RecordType) => {
     addDrawer({
       title: t("fileAccess.accessLogsTitle", { name: row?.filename ?? "" }),
@@ -149,7 +149,7 @@ export function useSystemUploadFile(tableRef: Ref) {
         code: "download",
         props: { type: "success", link: true },
         onClick: async ({ row }) => {
-          // F-8 下载走受鉴权端点（服务端记访问审计），不再使用 /media/ 直链
+          // 下载走受鉴权端点（服务端记访问审计），不再使用 /media/ 直链
           await api.download(row?.pk, row?.filename);
         },
         show: true

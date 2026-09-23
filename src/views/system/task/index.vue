@@ -14,7 +14,7 @@ import {
 } from "@/api/system/task";
 
 /**
- * 任务中心（P-2）：三类记录（执行历史 / 导出 / 导入）统一列表 + 取消 / 重跑 / 日志 / 下载。
+ * 任务中心：三类记录（执行历史 / 导出 / 导入）统一列表 + 取消 / 重跑 / 日志 / 下载。
  *
  * 接口只读聚合，不建新表；数据域与下载中心一致（超管全量，其余仅本人记录）。
  * 取消为协作式语义（PENDING 立即终态，RUNNING 在安全点收敛），文案需如实说明。
@@ -279,7 +279,7 @@ onMounted(load);
               :status="progressStatus(asRow(row))"
             />
             <span v-else>-</span>
-            <!-- P-2 统一进度助手：阶段描述（运行中显示，如「统计行数 / 渲染内容」） -->
+            <!-- 统一进度助手：阶段描述（运行中显示，如「统计行数 / 渲染内容」） -->
             <div
               v-if="asRow(row).stage"
               class="text-xs text-(--el-text-color-secondary)"

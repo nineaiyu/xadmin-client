@@ -1,5 +1,5 @@
 /**
- * 高级筛选（F-13）：受控 lookup 条件行的拼装与回显（纯函数，单测出口）。
+ * 高级筛选：受控 lookup 条件行的拼装与回显（纯函数，单测出口）。
  *
  * 与后端 `ControlledLookupFilterBackend` 同口径：
  * - 参数形态 `?field__lookup=value`；

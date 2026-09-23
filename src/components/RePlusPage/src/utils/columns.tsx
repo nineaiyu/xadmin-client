@@ -220,7 +220,7 @@ export function useBaseColumns(localeName: string) {
         detailColumns.value.push(cloneDeep(item));
         if (column.table_show) {
           const tableItem = cloneDeep(item);
-          // 表头排序（U-3）：仅元数据声明 sortable 的列开启，排序走服务端 ordering 参数
+          // 表头排序：仅元数据声明 sortable 的列开启，排序走服务端 ordering 参数
           if (column.sortable) tableItem.sortable = "custom";
           listColumns.value.push(tableItem);
         }

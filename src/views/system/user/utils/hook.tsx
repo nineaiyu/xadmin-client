@@ -116,7 +116,7 @@ export function useUser(tableRef: Ref) {
     });
   });
 
-  // F-12 联动：角色列表「用户数」跳转携带 ?role=<pk> —— 由 RePlusPage 的
+  // 联动：角色列表「用户数」跳转携带 ?role=<pk> —— 由 RePlusPage 的
   // routeParams 装配（route.query → 搜索默认值）自动生效，页面无需再注入：
   // 首开后二次手动刷新会覆盖请求序号，导致首开内联元数据被丢弃（表格无列）。
 

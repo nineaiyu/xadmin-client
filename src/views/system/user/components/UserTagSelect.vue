@@ -5,7 +5,7 @@ import { SUCCESS_CODE } from "@/api/types";
 import { tagApi, type TagItem } from "@/api/system/tag";
 
 /**
- * 用户打标弹窗内容（P-1）：多选已有标签 + 回显当前标签（全量替换语义）。
+ * 用户打标弹窗内容：多选已有标签 + 回显当前标签（全量替换语义）。
  *
  * 标签新建/删除在「标签管理」页维护；此处只做打标，权限回落用户对象的
  * update 权限点（后端校验）。

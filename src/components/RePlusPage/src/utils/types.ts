@@ -47,7 +47,7 @@ interface TableColumn {
   /** 自定义头部渲染器（`jsx`语法） */
   headerRenderer?: (data: TableColumnRenderer) => VNode | string;
   /**
-   * 表头排序；`"custom"` 表示由服务端 ordering 参数排序（U-3）。
+   * 表头排序；`"custom"` 表示由服务端 ordering 参数排序。
    * 仅元数据下发了 sortable 的列会开启，其余列保持不可排序
    */
   sortable?: boolean | "custom";
@@ -284,12 +284,12 @@ interface RePlusPageProps {
    */
   allowAsyncExport?: boolean;
   /**
-   * F-4 我的视图：开启后工具栏出现「视图」下拉（个人筛选条件命名保存 / 一键套用 /
+   * 我的视图：开启后工具栏出现「视图」下拉（个人筛选条件命名保存 / 一键套用 /
    * 默认视图 / 共享只读）。视图存条件，应用时仍按当前用户权限裁剪。
    */
   savedViews?: boolean;
   /**
-   * F-13 高级筛选：开启后工具栏出现「高级筛选」按钮（受控 lookup 条件行：
+   * 高级筛选：开启后工具栏出现「高级筛选」按钮（受控 lookup 条件行：
    * `field__lookup=value`，与后端 ControlledLookupFilterBackend 同口径）。
    * 仅在视图集 opt-in（`controlled_lookup = True`）的页面开启，未开启页面零变化。
    */

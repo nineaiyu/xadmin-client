@@ -54,7 +54,7 @@ const props = withDefaults(defineProps<RePlusPageProps>(), {
   tableBarButtonsProps: () => ({}),
   // undefined 时由 hook 按页面导出权限（auth.exportData）自动显示异步开关，false 可显式关闭
   allowAsyncExport: undefined,
-  // F-4 我的视图：开启后工具栏出现「视图」下拉（筛选条件命名保存 / 一键套用 / 默认视图）
+  // 我的视图：开启后工具栏出现「视图」下拉（筛选条件命名保存 / 一键套用 / 默认视图）
   savedViews: false
 });
 const emit = defineEmits<{
@@ -80,7 +80,7 @@ const emit = defineEmits<{
 }>();
 
 /**
- * F-4 我的视图：把保存的筛选条件写回搜索区并刷新列表。
+ * 我的视图：把保存的筛选条件写回搜索区并刷新列表。
  *
  * 组件只上抛条件快照，写入 searchFields 由页面侧统一完成（单向数据流）。
  */

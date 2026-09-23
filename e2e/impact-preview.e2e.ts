@@ -5,7 +5,7 @@ import { AesEncrypted } from "../src/utils/aes";
 import { BACKEND_URL, getAccessToken, login, openMenuPath } from "./helpers";
 
 /**
- * 影响面预检（F-2）：删除有引用的角色时，删除动作前弹窗展示「会影响谁」；
+ * 影响面预检：删除有引用的角色时，删除动作前弹窗展示「会影响谁」；
  * 取消后角色保留（删除中止），确认后按既有链路执行。
  *
  * 数据准备走 API（角色 + 绑定该角色的用户），UI 只做删除动作与弹窗断言。

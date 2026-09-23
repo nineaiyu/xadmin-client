@@ -60,7 +60,7 @@ export function useUserResetPassword({
   );
 
   /**
-   * 生成随机密码（F-11）：按当前安全策略生成并尝试复制到剪贴板，
+   * 生成随机密码：按当前安全策略生成并尝试复制到剪贴板，
    * 管理员无需自己构思密码（生成值必然通过策略校验）。
    */
   async function handleGeneratePassword() {

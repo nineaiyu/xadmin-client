@@ -96,7 +96,7 @@ const auth = ref({
         :has-receivers="true"
       />
     </el-tab-pane>
-    <!-- F-3 消息模板：通知文本可配置（代码默认 → DB 覆盖层） -->
+    <!-- 消息模板：通知文本可配置（代码默认 → DB 覆盖层） -->
     <el-tab-pane :lazy="true" :label="t('messageTemplate.title')">
       <MessageTemplatePanel />
     </el-tab-pane>

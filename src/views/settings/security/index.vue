@@ -145,7 +145,7 @@ const { t } = useI18n();
         }"
       />
     </el-tab-pane>
-    <!-- F-9 Passkey 凭据（个人凭据，白名单路由，不依赖菜单权限点） -->
+    <!-- Passkey 凭据（个人凭据，白名单路由，不依赖菜单权限点） -->
     <el-tab-pane :label="t('passkey.title')" :lazy="true">
       <PasskeyPanel />
     </el-tab-pane>

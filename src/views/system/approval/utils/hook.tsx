@@ -298,7 +298,7 @@ export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
         t,
         no: String(row.pk).slice(0, 8).toUpperCase(),
         steps: (detail.steps ?? []) as Array<RecordType>,
-        // U-1：目标对象变更对照（敏感操作审批的目标快照；缺失时弹窗跳过该区块）
+        // 目标对象变更对照（敏感操作审批的目标快照；缺失时弹窗跳过该区块）
         snapshot: (detail.target_snapshot ?? null) as TargetSnapshot | null
       });
     });
@@ -320,7 +320,7 @@ export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
           };
           break;
         // 审批人列：多级链显示「第 N 级：当前级候选人」，扁平单显示实际审批人或
-        // 「待审批」占位；两者均可点击查看审批详情（U-1：详情含目标对象变更对照）
+        // 「待审批」占位；两者均可点击查看审批详情（详情含目标对象变更对照）
         case "approver":
           column.cellRenderer = ({ row }) =>
             h(

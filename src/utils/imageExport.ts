@@ -1,5 +1,5 @@
 /**
- * 图表图片导出与极简 ZIP 打包（U-5，零新依赖）。
+ * 图表图片导出与极简 ZIP 打包（零新依赖）。
  *
  * - 项目 ECharts 使用 SVGRenderer（见 src/plugins/echarts.ts），`getDataURL()` 返回
  *   **SVG dataURL**；导出统一转 PNG（浏览器原生 Image + canvas），失败回退 SVG 原图；

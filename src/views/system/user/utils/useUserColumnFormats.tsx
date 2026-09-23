@@ -52,7 +52,7 @@ export function useUserColumnFormats({
 }) {
   const roleRulesColumns = ref<PageColumn[]>([]);
   const roleRules = ref({});
-  // F-11 一步邀请：新建表单中「邀请激活」开关的当前值（驱动密码字段的动态校验与提交）
+  // 一步邀请：新建表单中「邀请激活」开关的当前值（驱动密码字段的动态校验与提交）
   const inviteMode = ref(false);
 
   const listColumnsFormat = (columns: PageTableColumn[]) => {
@@ -100,7 +100,7 @@ export function useUserColumnFormats({
           });
           break;
         case "invite_status":
-          // F-11 邀请开户：pending = 待接受邀请；accepted = 已激活；空 = 非邀请账号
+          // 邀请开户：pending = 待接受邀请；accepted = 已激活；空 = 非邀请账号
           // （choices 字段下发 {value,label} 对象，label 优先走服务端 i18n，前端键兜底）
           column["cellRenderer"] = ({ row, props }) => {
             const raw = row.invite_status;
@@ -123,7 +123,7 @@ export function useUserColumnFormats({
           };
           break;
         case "tags":
-          // P-1 通用标签：数组字段需页面自渲染（框架对数组只做 String 化）
+          // 通用标签：数组字段需页面自渲染（框架对数组只做 String 化）
           // 颜色为自定义色值时 ElTag 只换背景，需补文字色与去边框
           column["cellRenderer"] = ({ row, props }) => {
             const tags = (row.tags ?? []) as TagItem[];
@@ -166,7 +166,7 @@ export function useUserColumnFormats({
           return column;
         },
         invite: ({ column, isAdd }) => {
-          // F-11 一步邀请：新建时可选「邀请激活」——创建后立即发邀请邮件（用户自行设置密码），
+          // 一步邀请：新建时可选「邀请激活」——创建后立即发邀请邮件（用户自行设置密码），
           // 免去「先建号（管理员设密码）再点行操作邀请」的两步；编辑场景不展示
           inviteMode.value = false;
           if (!isAdd) {
@@ -208,7 +208,7 @@ export function useUserColumnFormats({
         }: {
           rawFormProps: { rules: RecordType };
         }) => {
-          // F-11 一步邀请：邀请模式下密码由被邀请人自行设置 → 密码非必填（动态校验）
+          // 一步邀请：邀请模式下密码由被邀请人自行设置 → 密码非必填（动态校验）
           rules["password"] = [
             {
               validator: (
@@ -252,7 +252,7 @@ export function useUserColumnFormats({
       },
       beforeSubmit: async ({ formData, formOptions: { isAdd } }) => {
         if (isAdd && formData.invite) {
-          // F-11 邀请模式：不提交密码（服务端置不可用，由被邀请人从邮件链接自行设置）
+          // 邀请模式：不提交密码（服务端置不可用，由被邀请人从邮件链接自行设置）
           delete formData["password"];
           return formData;
         }

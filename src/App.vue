@@ -92,7 +92,7 @@ export default defineComponent({
       closeAllDrawer();
     });
 
-    // F-6 巡检处置联动：管理员要求改密时引导到个人配置页（每会话提示一次，改密即清除标记）
+    // 巡检处置联动：管理员要求改密时引导到个人配置页（每会话提示一次，改密即清除标记）
     let forcePasswordNotified = false;
     watch(
       () => userStore.mustChangePassword,

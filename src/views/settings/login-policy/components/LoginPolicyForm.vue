@@ -4,7 +4,7 @@ import { useI18n } from "vue-i18n";
 import type { RecordType } from "plus-pro-components";
 
 /**
- * 登录访问策略编辑表单（F-7）。
+ * 登录访问策略编辑表单。
  *
  * 目标对象与动作由前端给选项（后端为 LabeledChoiceField，回显为 {value,label}），
  * `getPayload()` 返回 null 表示校验未通过（父级拦截提交，保持弹窗打开）。

@@ -73,7 +73,7 @@ export function useReport(tableRef: Ref) {
     datasets.value = listRows<DatasetItem>(res as never);
   });
 
-  // F-12 联动：数据集列表「报表数」跳转携带 ?dataset=<pk> —— 由 RePlusPage 的
+  // 联动：数据集列表「报表数」跳转携带 ?dataset=<pk> —— 由 RePlusPage 的
   // routeParams 装配（route.query → 搜索默认值）自动生效，页面无需再注入。
 
   const datasetName = (value: ReportItem["dataset"]) => {

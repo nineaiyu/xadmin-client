@@ -5,7 +5,7 @@ import { AesEncrypted } from "../src/utils/aes";
 import { BACKEND_URL, getAccessToken, login, openMenuPath } from "./helpers";
 
 /**
- * 表单提交失败定位（U-4）：服务端校验错误内联展示后自动滚动并聚焦首个错误字段。
+ * 表单提交失败定位：服务端校验错误内联展示后自动滚动并聚焦首个错误字段。
  *
  * 场景：新增用户时用户名与已存在用户重复（服务端唯一性校验 400/1001）→ 弹窗内
  * 用户名表单项进入 error 态且获得焦点（长表单「找不到错在哪」的回归守护）。

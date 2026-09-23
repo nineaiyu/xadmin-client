@@ -47,7 +47,7 @@ const activeMethod = computed(() =>
   props.mfaInfo.methods.find(item => item.name === currentMethod.value)
 );
 
-/** F-9 Passkey 方式：无验证码输入，走浏览器断言（challenge → credentials.get） */
+/** Passkey 方式：无验证码输入，走浏览器断言（challenge → credentials.get） */
 const isPasskey = computed(() => currentMethod.value === "passkey");
 
 const handlePasskeyVerify = async () => {

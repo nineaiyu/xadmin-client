@@ -37,7 +37,7 @@ defineOptions({
 
 const router = useRouter();
 const loading = ref(false);
-/** F-6 巡检处置联动：后端登录响应带 must_change_password 时引导改密 */
+/** 巡检处置联动：后端登录响应带 must_change_password 时引导改密 */
 const mustChangePassword = ref(false);
 const captchaRef = ref();
 const configLoading = ref(false);
@@ -127,7 +127,7 @@ const onLogin = async (formEl: FormInstance | undefined) => {
               mustChangePassword.value = Boolean(res.data.must_change_password);
               return;
             }
-            // F-6 巡检处置联动：管理员要求改密时登录后引导到个人配置页
+            // 巡检处置联动：管理员要求改密时登录后引导到个人配置页
             mustChangePassword.value = Boolean(res.data.must_change_password);
             handleLoginSuccess();
           } else {

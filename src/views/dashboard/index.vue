@@ -59,7 +59,7 @@ const layoutKey = computed(() =>
 let sortable: Sortable | null = null;
 const rowRef = ref();
 
-/** U-5 卡片图片导出（composable：句柄收集 + 单卡导出，控制页面体积） */
+/** 卡片图片导出（composable：句柄收集 + 单卡导出，控制页面体积） */
 const { setCardRef, exportingCard, exportCardImage } = useCardImageExport(t);
 
 const loadDashboards = async () => {

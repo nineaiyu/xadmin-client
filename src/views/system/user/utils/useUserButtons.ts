@@ -60,7 +60,7 @@ export function useUserButtons({
   handleTags: (row: RecordType) => void;
 }) {
   const router = useRouter();
-  // P-1 通用标签：打标入口按全局权限点显示（对象级 update 权限由后端复核）
+  // 通用标签：打标入口按全局权限点显示（对象级 update 权限由后端复核）
   const canAssignTags = hasAuth("assign:Tag");
 
   function goNotice() {
@@ -83,7 +83,7 @@ export function useUserButtons({
   };
 
   /**
-   * F-11 邀请激活：发送/重发邀请邮件（重置为待激活 + 密码立即失效）——高危动作二次确认；
+   * 邀请激活：发送/重发邀请邮件（重置为待激活 + 密码立即失效）——高危动作二次确认；
    * 已激活账号重发后原密码失效，需重新激活（后端状态机保证非 pending 不可再激活）。
    */
   function handleInvite(row: Row) {
@@ -108,7 +108,7 @@ export function useUserButtons({
       .catch(() => undefined);
   }
 
-  // F-1 批量更新：勾选行后统一写入同组字段（字段白名单：启用状态）
+  // 批量更新：勾选行后统一写入同组字段（字段白名单：启用状态）
   const { batchUpdateButton } = useBatchUpdate({
     t,
     api,

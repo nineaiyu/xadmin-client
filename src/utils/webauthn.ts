@@ -1,5 +1,5 @@
 /**
- * WebAuthn / Passkey 浏览器侧工具（F-9）。
+ * WebAuthn / Passkey 浏览器侧工具。
  *
  * 服务端下发的 challenge / credentialId 为 base64url，浏览器 API 需要 ArrayBuffer，
  * 注册（navigator.credentials.create）与断言（.get）共用这一组转换。

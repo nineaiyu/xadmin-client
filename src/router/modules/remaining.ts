@@ -50,7 +50,7 @@ const remainingRoutes: Array<RouteConfigsTable> = [
       rank: 10105
     }
   },
-  // 邀请激活（F-11）：令牌即凭据，未登录访问，独立无侧栏页面
+  // 邀请激活：令牌即凭据，未登录访问，独立无侧栏页面
   {
     path: "/invite/accept",
     name: "InviteAccept",

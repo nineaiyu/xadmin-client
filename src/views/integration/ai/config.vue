@@ -27,9 +27,9 @@ const globalForm = reactive({
   AI_NL_QUERY_ENABLED: false,
   AI_ACTION_ENABLED: false,
   AI_STRUCTURED_MAX_TOKENS: null as number | null,
-  // AI-2 原生工具调用双轨（结构化链路，需档案探测通过 tool_calls）
+  // 原生工具调用双轨（结构化链路，需档案探测通过 tool_calls）
   AI_NATIVE_TOOLS_ENABLED: false,
-  // AI-5 用量配额（0 = 不限）
+  // 用量配额（0 = 不限）
   AI_QUOTA_USER_DAILY_CALLS: 0,
   AI_QUOTA_USER_DAILY_TOKENS: 0,
   AI_QUOTA_MAX_CONCURRENT_STREAMS: 0
@@ -125,7 +125,7 @@ const metricPercent = (count: number) => {
   return Math.round((count / max) * 100);
 };
 
-/* ---------------- AI-5 用量账本（权限复用 status:AiAssistant） ---------------- */
+/* ---------------- 用量账本（权限复用 status:AiAssistant） ---------------- */
 const usageLoading = ref(false);
 const usageDays = ref(7);
 const usage = ref<AiUsageSummary | null>(null);
@@ -225,7 +225,7 @@ onMounted(() => {
           {{ t("aiConfig.globalSave") }}
         </el-button>
       </div>
-      <!-- AI-2 双轨 + AI-5 配额：与全局开关同一保存出口 -->
+      <!-- 双轨 + 配额：与全局开关同一保存出口 -->
       <div class="flex flex-wrap items-center gap-6 mt-3">
         <el-switch
           v-model="globalForm.AI_NATIVE_TOOLS_ENABLED"
@@ -327,7 +327,7 @@ onMounted(() => {
       </div>
     </el-card>
 
-    <!-- AI-5 用量账本：按天 / 链路 / 用户（与调用观测量表互补：观测看成功率，账本看成本） -->
+    <!-- 用量账本：按天 / 链路 / 用户（与调用观测量表互补：观测看成功率，账本看成本） -->
     <el-card
       v-if="canReadMetrics"
       v-loading="usageLoading"
@@ -362,7 +362,7 @@ onMounted(() => {
           {{ row.tokens.toLocaleString() }}
         </el-tag>
       </div>
-      <!-- AI-2 双轨对照：动作草稿链路的原生 / prompt 轨道成功率（弱模型占比低到阈值后评估下线 prompt 轨） -->
+      <!-- 双轨对照：动作草稿链路的原生 / prompt 轨道成功率（弱模型占比低到阈值后评估下线 prompt 轨） -->
       <div v-if="usage?.by_track?.length" class="flex flex-wrap gap-2 mb-2">
         <el-tag
           v-for="row in usage.by_track"

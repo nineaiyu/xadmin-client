@@ -77,7 +77,7 @@ export function useDataset(tableRef: Ref) {
           column["minWidth"] = 180;
           break;
         case "report_count":
-          // F-12 联动：被几张定时报表引用（后端关联计数）可点击，跳转报表页按数据集筛选
+          // 联动：被几张定时报表引用（后端关联计数）可点击，跳转报表页按数据集筛选
           column["minWidth"] = 100;
           column["cellRenderer"] = ({ row }) =>
             h(

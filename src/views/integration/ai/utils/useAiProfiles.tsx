@@ -78,7 +78,7 @@ export function useAiProfiles(tableRef: Ref) {
           };
           break;
         case "capabilities":
-          // AI-1 能力画像：JSON / 原生工具调用 / 思考内容三项（未探测显示灰 tag）
+          // 能力画像：JSON / 原生工具调用 / 思考内容三项（未探测显示灰 tag）
           column["cellRenderer"] = ({ row }) => {
             const capabilities = ((row as AiProfileItem).capabilities ??
               {}) as Record<string, { ok?: boolean } | undefined>;
@@ -87,7 +87,7 @@ export function useAiProfiles(tableRef: Ref) {
               { key: "tool_calls", label: t("aiConfig.capToolCalls") },
               { key: "reasoning", label: t("aiConfig.capReasoning") }
             ];
-            // 视觉能力（AI-1 按需探测）：仅在有探测结果时展示，默认形态零变化
+            // 视觉能力（按需探测）：仅在有探测结果时展示，默认形态零变化
             if (capabilities["vision"]) {
               items.push({ key: "vision", label: t("aiConfig.capVision") });
             }
@@ -202,7 +202,7 @@ export function useAiProfiles(tableRef: Ref) {
     }
   };
 
-  /** AI-1 能力探测：结果落档案画像，前端按能力项提示（不阻断使用）
+  /** 能力探测：结果落档案画像，前端按能力项提示（不阻断使用）
    *  withVision=true 追加多模态探测（默认按钮不触发，避免无多模态模型上的无谓等待） */
   const probeProfile = async (row: AiProfileItem, withVision = false) => {
     const res = await aiProfileApi

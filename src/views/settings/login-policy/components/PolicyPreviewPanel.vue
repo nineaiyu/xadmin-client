@@ -5,7 +5,7 @@ import { ElMessage } from "element-plus";
 import { loginPolicyApi, type LoginPolicyPreview } from "@/api/system/security";
 
 /**
- * 登录策略命中预演（F-7）：给出样例用户 / IP / 时间，逐条策略展示匹配结果与最终判定。
+ * 登录策略命中预演：给出样例用户 / IP / 时间，逐条策略展示匹配结果与最终判定。
  *
  * 保存前预演可避免「一条 reject 把全员挡在门外」——预演不写库、不依赖当前登录用户。
  */

@@ -174,9 +174,9 @@ export type AiProfileItem = {
   max_retries: number;
   context_limit: number;
   persona: string;
-  /** 用途（AI-1 档案分流）：chat 供问答/聊天，structured 供 NL 查数/动作草稿 */
+  /** 用途（档案分流）：chat 供问答/聊天，structured 供 NL 查数/动作草稿 */
   purpose?: "chat" | "structured";
-  /** 能力画像（AI-1 探测结果，可人工修正） */
+  /** 能力画像（探测结果，可人工修正） */
   capabilities?: Record<string, { ok?: boolean; detail?: string } | undefined>;
   probed_at?: string | null;
   is_active: boolean;
@@ -185,7 +185,7 @@ export type AiProfileItem = {
   created_time: string;
 };
 
-/** AI 用量账本汇总（AI-5） */
+/** AI 用量账本汇总 */
 export type AiUsageSummary = {
   days: number;
   total_calls: number;
@@ -193,7 +193,7 @@ export type AiUsageSummary = {
   failed: number;
   by_day: { day: string; calls: number; tokens: number }[];
   by_feature: { feature: string; calls: number; tokens: number }[];
-  /** AI-2 双轨对照：动作草稿链路按轨道（native / prompt）的成功率统计 */
+  /** 双轨对照：动作草稿链路按轨道（native / prompt）的成功率统计 */
   by_track: {
     track: string;
     calls: number;
@@ -238,7 +238,7 @@ class AiProfileApi extends BaseApi {
       `${this.baseApi}/${pk}/test`
     );
   };
-  /** AI-1 能力探测：JSON / 原生工具调用 / 思考内容（可选多模态），结果落档案画像 */
+  /** 能力探测：JSON / 原生工具调用 / 思考内容（可选多模态），结果落档案画像 */
   probe = (
     pk: string,
     data?: { capabilities?: string[]; vision?: boolean }
@@ -270,7 +270,7 @@ class AiAssistantApi extends BaseApi {
       `${this.baseApi}/metrics`
     );
   };
-  /** AI-5 用量账本：按天 / 按链路 / Top 用户 + 配额配置 */
+  /** 用量账本：按天 / 按链路 / Top 用户 + 配额配置 */
   usage = (days = 7, feature = "") => {
     return this.request<DetailResult<AiUsageSummary>>(
       "get",

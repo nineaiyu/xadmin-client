@@ -40,7 +40,7 @@ export function useRole(pageRef?: Ref) {
   const { t } = useI18n();
   const api = reactive(roleApi);
   const router = useRouter();
-  // F-1 批量更新需要读取勾选行：页面传入 RePlusPage ref（缺省自带一个，供独立使用）
+  // 批量更新需要读取勾选行：页面传入 RePlusPage ref（缺省自带一个，供独立使用）
   const tableRef = pageRef ?? ref();
 
   const auth = reactive({
@@ -220,7 +220,7 @@ export function useRole(pageRef?: Ref) {
       }
     ]
   });
-  // F-1 批量更新：勾选行后统一写入同组字段（字段白名单：启用状态）
+  // 批量更新：勾选行后统一写入同组字段（字段白名单：启用状态）
   const { batchUpdateButton } = useBatchUpdate({
     t,
     api,
@@ -238,7 +238,7 @@ export function useRole(pageRef?: Ref) {
   });
 
   /**
-   * F-12 联动：列表「用户数」列（后端关联计数）可点击，跳转到按该角色筛选的用户列表
+   * 联动：列表「用户数」列（后端关联计数）可点击，跳转到按该角色筛选的用户列表
    * （用户页读取 ?role=<pk> 注入搜索条件并刷新，见 system/user/utils/hook.tsx）
    */
   const listColumnsFormat = (columns: PageTableColumn[]) => {

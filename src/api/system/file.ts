@@ -15,7 +15,7 @@ type UploadFileResult = {
   detail?: string;
 };
 
-/** F-8 文件访问记录项（action 为 {value,label} 字典化形态） */
+/** 文件访问记录项（action 为 {value,label} 字典化形态） */
 export type FileAccessLogItem = {
   pk: number | string;
   filename: string;
@@ -35,11 +35,11 @@ export type FileAccessLogResult = {
 };
 
 class SystemUploadFileApi extends BaseApi {
-  /** F-8 受鉴权下载（替代 /media/ 直链，服务端记访问审计） */
+  /** 受鉴权下载（替代 /media/ 直链，服务端记访问审计） */
   download = (pk: string | number, filename?: string) => {
     return http.autoDownload(`${this.baseApi}/${pk}/download`, filename);
   };
-  /** F-8 文件访问记录（最近若干条 + 各动作计数） */
+  /** 文件访问记录（最近若干条 + 各动作计数） */
   accessLogs = (pk: string | number) => {
     return this.request<DetailResult<FileAccessLogResult>>(
       "get",

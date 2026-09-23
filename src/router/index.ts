@@ -159,7 +159,7 @@ export function resetRouter() {
   resetLoadedPaths();
 }
 
-/** 路由白名单（未登录可达；邀请激活页令牌即凭据，F-11） */
+/** 路由白名单（未登录可达；邀请激活页令牌即凭据） */
 const whiteList = ["/login", "/invite/accept"];
 
 const { VITE_HIDE_HOME } = import.meta.env;

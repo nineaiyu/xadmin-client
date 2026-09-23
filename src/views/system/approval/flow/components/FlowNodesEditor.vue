@@ -293,7 +293,7 @@ function assigneeHint(type: string): string {
       </el-table-column>
       <el-table-column :label="t('systemApprovalFlow.ccUsers')" min-width="150">
         <template #default="{ row }">
-          <!-- F-5 抄送人（节点级默认）：与审批人同口径的多选（用户名数组，可直接输入兜底） -->
+          <!-- 抄送人（节点级默认）：与审批人同口径的多选（用户名数组，可直接输入兜底） -->
           <el-select
             :model-value="row.cc_users || []"
             multiple

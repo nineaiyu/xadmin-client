@@ -1,6 +1,6 @@
 import { ref } from "vue";
 import { message } from "@/utils/message";
-// 仅类型引用（不进包）：下载实现按需动态加载（U-5，保持首屏体积）
+// 仅类型引用（不进包）：下载实现按需动态加载（保持首屏体积）
 import type { ExportedImage } from "@/utils/imageExport";
 import type { useI18n } from "vue-i18n";
 import type { DashboardCard } from "@/api/system/datasets";
@@ -13,7 +13,7 @@ export type CardImageHandle = {
 };
 
 /**
- * U-5 卡片图片导出：模板 ref 收集 ChartCard 句柄，单卡导出 PNG（转换失败回退 SVG）。
+ * 卡片图片导出：模板 ref 收集 ChartCard 句柄，单卡导出 PNG（转换失败回退 SVG）。
  * 抽出独立 composable 控制页面体积（dashboard/index.vue 行数门禁）。
  */
 export function useCardImageExport(t: TFunction) {

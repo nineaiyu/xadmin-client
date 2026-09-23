@@ -15,7 +15,7 @@ type RegisteredTask = {
 
 /** 定时任务管理（django_celery_beat） */
 class PeriodicTaskApi extends BaseApi {
-  /** F-1 批量更新：对选中行统一写入同组字段值 */
+  /** 批量更新：对选中行统一写入同组字段值 */
   batchUpdate = (
     pks: Array<number | string>,
     fields: Record<string, unknown>,
@@ -98,7 +98,7 @@ export const taskExecutionApi = new TaskExecutionApi(
   "/api/system/tasks/executions"
 );
 
-/* ---------------- 任务中心（P-2）：三类记录统一视图 + 取消 / 重跑 ---------------- */
+/* ---------------- 任务中心：三类记录统一视图 + 取消 / 重跑 ---------------- */
 
 export type TaskCenterKind = "task" | "export" | "import";
 
@@ -109,7 +109,7 @@ export type TaskCenterRow = {
   module: string;
   status: string;
   progress: number | null;
-  /** P-2 统一进度助手的阶段描述（如「统计行数 / 渲染内容」，任务类型为空） */
+  /** 统一进度助手的阶段描述（如「统计行数 / 渲染内容」，任务类型为空） */
   stage: string;
   creator: string;
   created_time: string | null;

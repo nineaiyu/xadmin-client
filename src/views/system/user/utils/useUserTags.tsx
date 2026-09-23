@@ -9,7 +9,7 @@ import type { RecordType } from "plus-pro-components";
 import UserTagSelect from "../components/UserTagSelect.vue";
 
 /**
- * 用户打标（P-1）：弹窗多选标签 → 全量替换语义提交。
+ * 用户打标：弹窗多选标签 → 全量替换语义提交。
  *
  * 打标权限回落用户对象的 update 权限点（后端 `ensure_tag_permission` 校验），
  * 按钮显示条件用全局 `assign:Tag` 权限点（少权限时不出现）。

@@ -76,7 +76,7 @@ export const useUserStore = defineStore("pure-user", {
       websocket: null,
       // 站点水印配置（用户信息接口下发后写入，App.vue 观察应用）
       siteWatermark: { ...defaultSiteWatermark },
-      // F-6 巡检处置联动：管理员要求改密（userinfo 下发，App.vue 观察后引导改密）
+      // 巡检处置联动：管理员要求改密（userinfo 下发，App.vue 观察后引导改密）
       mustChangePassword: userInfo?.must_change_password ?? false
     };
   },
@@ -92,7 +92,7 @@ export const useUserStore = defineStore("pure-user", {
       this.email = data.email;
       this.phone = data.phone;
       this.roles = data?.roles;
-      // F-6 巡检处置联动：改密要求随用户信息刷新（App.vue 观察后引导，改密即清除）
+      // 巡检处置联动：改密要求随用户信息刷新（App.vue 观察后引导，改密即清除）
       this.mustChangePassword = Boolean(data?.must_change_password);
       storageLocal().setItem(userKey, data);
     },

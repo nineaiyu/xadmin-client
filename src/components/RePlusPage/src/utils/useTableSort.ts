@@ -24,7 +24,7 @@ export const parseOrdering = (ordering: unknown) => {
 };
 
 /**
- * U-3 表头排序：与搜索区 ordering 下拉同源（`searchFields.ordering` 是唯一排序状态载体）。
+ * 表头排序：与搜索区 ordering 下拉同源（`searchFields.ordering` 是唯一排序状态载体）。
  *
  * - 点击表头（el-table `sort-change`，仅元数据下发 `sortable` 的列会触发）
  *   → 写入 ordering（升序 `field` / 降序 `-field`）→ 回到第一页刷新列表；

@@ -10,7 +10,7 @@ export interface TokenInfo {
   /** 用于调用刷新accessToken的接口时所需的token */
   access: string;
   /**
-   * F-6 巡检处置联动：管理员要求改密时为 true，
+   * 巡检处置联动：管理员要求改密时为 true，
    * 前端登录后引导到个人配置页（改密成功由服务端自动清除标记）。
    */
   must_change_password?: boolean;
@@ -58,7 +58,7 @@ export interface UserInfo {
   is_active: boolean;
   roles: string[];
   /**
-   * F-6 巡检处置联动：管理员要求改密时为 true（随 userinfo 下发），
+   * 巡检处置联动：管理员要求改密时为 true（随 userinfo 下发），
    * 客户端 App.vue 检测后引导到个人配置页；改密成功由服务端自动清除。
    */
   must_change_password?: boolean;
@@ -165,7 +165,7 @@ export const resetPasswordApi = (data?: object) => {
   });
 };
 
-/** 邀请令牌预检（F-11）：`state` = pending / accepted / invalid，不消费令牌 */
+/** 邀请令牌预检：`state` = pending / accepted / invalid，不消费令牌 */
 export type InviteValidateResult = {
   code: number;
   detail: string;
@@ -180,7 +180,7 @@ export const inviteValidateApi = (params?: object) => {
   );
 };
 
-/** 邀请激活（F-11）：设置密码完成激活（令牌一次性，激活即失效） */
+/** 邀请激活：设置密码完成激活（令牌一次性，激活即失效） */
 export const inviteAcceptApi = (data?: object) => {
   return http.request<TokenResult>("post", "/api/system/auth/invite/accept", {
     data

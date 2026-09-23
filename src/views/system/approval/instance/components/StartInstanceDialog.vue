@@ -50,7 +50,7 @@ const form = reactive<{
   flow: string;
   title: string;
   values: Record<string, string>;
-  /** F-5 发起时追加抄送人（用户名；与节点级抄送合并去重） */
+  /** 发起时追加抄送人（用户名；与节点级抄送合并去重） */
   ccUsers: string[];
 }>({
   flow: "",
@@ -59,7 +59,7 @@ const form = reactive<{
   ccUsers: []
 });
 
-/* ---------------- F-5 抄送人选择（用户名远程搜索，与流程设计器同口径） ---------------- */
+/* ---------------- 抄送人选择（用户名远程搜索，与流程设计器同口径） ---------------- */
 const userOptions = ref<Array<{ username: string; label: string }>>([]);
 const userLoading = ref(false);
 
@@ -201,7 +201,7 @@ async function submit() {
       flow: form.flow,
       title: form.title,
       form_data: formData,
-      // F-5 抄送人：与流程节点级默认抄送合并（后端去重、不含申请人）
+      // 抄送人：与流程节点级默认抄送合并（后端去重、不含申请人）
       cc_users: form.ccUsers
     });
     if (res.code === SUCCESS_CODE) {
@@ -255,7 +255,7 @@ onMounted(loadFlows);
           :placeholder="t('systemApprovalInstance.titlePlaceholder')"
         />
       </el-form-item>
-      <!-- F-5 抄送人：可选，留空则仅按流程节点配置的默认抄送 -->
+      <!-- 抄送人：可选，留空则仅按流程节点配置的默认抄送 -->
       <el-form-item :label="t('approvalDiscussion.cc')">
         <el-select
           v-model="form.ccUsers"
