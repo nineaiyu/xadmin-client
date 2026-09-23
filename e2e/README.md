@@ -32,7 +32,7 @@ E2E_SERVER_DIR=$XADMIN pnpm test:e2e
 ```
 
 > *正确变量名：`E2E_SERVER_DIR`（见 `playwright.config.ts` 文件头注释的完整清单）。
-> 后端仓库需先装依赖：`pip install -r requirements.txt -r requirements-dev.txt`。
+> 后端仓库需先装依赖：`uv sync --all-groups`（无 uv 时 `pip install -r requirements.txt -r requirements-dev.txt`）。
 
 ## ⚠️ reuseExistingServer 陷阱：改动后端代码后必须 fresh
 
