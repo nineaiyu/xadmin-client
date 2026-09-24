@@ -154,6 +154,10 @@ export type MessageTemplateItem = {
   category_label: string;
   is_system: boolean;
   default_subject: string;
+  /** 代码默认正文（样例渲染），编辑弹窗作为覆盖参照展示 */
+  default_body?: string;
+  /** 是否有样例消息：false 时无法预览（前端禁用预览按钮） */
+  has_preview?: boolean;
   variables: string[];
   has_override: boolean;
   override: {

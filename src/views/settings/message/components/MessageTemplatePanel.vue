@@ -188,7 +188,21 @@ onMounted(load);
         show-icon
         class="mb-3"
         :title="`${t('messageTemplate.variables')}: ${(current?.variables ?? []).join(' / ')}`"
+        :description="t('messageTemplate.syntaxHint')"
       />
+      <el-alert
+        v-if="current?.default_body"
+        type="warning"
+        :closable="false"
+        class="mb-3"
+        :title="t('messageTemplate.defaultContent')"
+      >
+        <!-- 默认正文是 HTML（渠道渲染原文）：按渲染结果展示，与下方预览区同口径 -->
+        <div
+          class="text-xs whitespace-pre-wrap"
+          v-html="current?.default_body"
+        />
+      </el-alert>
       <el-form label-width="90px">
         <el-form-item :label="t('messageTemplate.subject')">
           <el-input
@@ -219,9 +233,20 @@ onMounted(load);
         <el-button @click="dialogVisible = false">
           {{ t("buttons.cancel") }}
         </el-button>
-        <el-button @click="preview">{{
-          t("messageTemplate.preview")
-        }}</el-button>
+        <el-tooltip
+          :disabled="current?.has_preview !== false"
+          :content="t('messageTemplate.previewUnsupported')"
+          placement="top"
+        >
+          <span>
+            <el-button
+              :disabled="current?.has_preview === false"
+              @click="preview"
+            >
+              {{ t("messageTemplate.preview") }}
+            </el-button>
+          </span>
+        </el-tooltip>
         <el-button type="primary" :loading="saving" @click="save">
           {{ t("buttons.sure") }}
         </el-button>
