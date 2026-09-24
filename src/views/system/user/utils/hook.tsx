@@ -16,8 +16,11 @@ import { useUserAvatarUpload } from "./useUserAvatarUpload";
 import { useUserResetPassword } from "./useUserResetPassword";
 import { useUserColumnFormats } from "./useUserColumnFormats";
 import { useUserButtons } from "./useUserButtons";
-import { useUserTags } from "./useUserTags";
 import { useUserImBinding } from "./useUserImBinding";
+import { useTagAssign } from "@/views/system/components/useTagAssign";
+
+/** 通用标签资源标识（与后端 TAGGABLE_MODELS 白名单键同源） */
+const USER_TAG_RESOURCE = "system.userinfo";
 
 /**
  * 用户视图组装入口（拆分自 604 行单体）：
@@ -62,7 +65,8 @@ export function useUser(tableRef: Ref) {
   const { handleUpload } = useUserAvatarUpload({ t, api, tableRef });
   const { handleReset } = useUserResetPassword({ t, api, passwordRules });
   const { handleImBinding } = useUserImBinding({ t });
-  const { openTagDialog } = useUserTags(tableRef);
+  // 通用标签：行内打标（单对象全量替换）与工具栏批量打标共用同一弹窗
+  const { openTagDialog } = useTagAssign(tableRef);
   const {
     listColumnsFormat,
     addOrEditOptions,
@@ -101,7 +105,9 @@ export function useUser(tableRef: Ref) {
       handleRoleRules,
       handlePreview: row => openPreview(row),
       handleImBinding,
-      handleTags: row => openTagDialog(row)
+      handleTags: row => openTagDialog({ resource: USER_TAG_RESOURCE, row }),
+      handleBatchTags: pks =>
+        openTagDialog({ resource: USER_TAG_RESOURCE, pks })
     });
 
   // 全局密码规则（重置密码与新增/编辑表单校验共用）

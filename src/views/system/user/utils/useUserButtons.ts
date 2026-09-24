@@ -35,7 +35,8 @@ export function useUserButtons({
   handleRoleRules,
   handlePreview,
   handleImBinding,
-  handleTags
+  handleTags,
+  handleBatchTags
 }: {
   t: TFunction;
   api: UnwrapNestedRefs<typeof userApi>;
@@ -58,6 +59,7 @@ export function useUserButtons({
   handlePreview: (row: RecordType) => void;
   handleImBinding: (row: RecordType) => void;
   handleTags: (row: RecordType) => void;
+  handleBatchTags: (pks: string[]) => void;
 }) {
   const router = useRouter();
   // 通用标签：打标入口按全局权限点显示（对象级 update 权限由后端复核）
@@ -138,6 +140,20 @@ export function useUserButtons({
         show: () => {
           return Boolean(hasAuth("create:SystemNotice") && selectedNum.value);
         }
+      },
+      {
+        // 批量打标：标签此前只能逐行从「更多」菜单进入，勾选后可一次性追加/移除/替换
+        text: t("tag.batchAssignTitle"),
+        code: "batchTags",
+        props: {
+          type: "primary",
+          icon: useRenderIcon(Tag),
+          plain: true
+        },
+        onClick: () => {
+          handleBatchTags(manySelectData.value.map(item => String(item.pk)));
+        },
+        show: () => Boolean(canAssignTags && selectedNum.value)
       },
       batchUpdateButton
     ]
