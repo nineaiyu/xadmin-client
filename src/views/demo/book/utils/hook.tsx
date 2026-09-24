@@ -105,7 +105,7 @@ export function useDemoBook(tableRef: Ref) {
   const tableBarButtonsProps = shallowRef<OperationProps>({
     buttons: [
       {
-        text: "全部推送",
+        text: t("demoBook.pushAll"),
         code: "batchPush",
         props: {
           type: "success",
@@ -114,10 +114,10 @@ export function useDemoBook(tableRef: Ref) {
         },
         onClick: () => {
           // 这里写处理逻辑
-          message("操作成功");
+          message(t("results.operateSuccess"));
         },
         confirm: {
-          title: "确定操作？"
+          title: t("results.operateConfirmTitle")
         },
         show: auth.push
       }

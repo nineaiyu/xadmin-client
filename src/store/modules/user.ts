@@ -1,6 +1,7 @@
 import { SUCCESS_CODE } from "@/api/types";
 import { defineStore } from "pinia";
 import { message } from "@/utils/message";
+import { transformI18n } from "@/plugins/i18n";
 import type { LoginResult, TokenResult } from "@/api/auth";
 import {
   loginBasicApi,
@@ -224,7 +225,7 @@ export const useUserStore = defineStore("pure-user", {
       logoutApi({ refresh: getRefreshToken() })
         .then(res => {
           if (res.code === SUCCESS_CODE) {
-            message("登出成功", { type: "success" });
+            message(transformI18n("login.logoutSuccess"), { type: "success" });
           }
         })
         .finally(() => {

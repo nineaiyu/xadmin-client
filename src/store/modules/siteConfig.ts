@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { setConfig } from "@/config";
 import Storage from "responsive-storage";
 import { message } from "@/utils/message";
+import { transformI18n } from "@/plugins/i18n";
 import { cloneDeep } from "@pureadmin/utils";
 import { responsiveStorageNameSpace, store } from "../utils";
 import { configApi } from "@/api/config";
@@ -24,7 +25,9 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
     },
     async resetSiteConfig() {
       configApi.resetSiteConfig().then(() => {
-        message("项目配置重置成功", { type: "success" });
+        message(transformI18n("layout.resetConfigSuccess"), {
+          type: "success"
+        });
         window.location.reload();
       });
     },
@@ -62,7 +65,9 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
           .setSiteConfig(newConfig)
           .then(res => {
             if (!silent) {
-              message("项目配置保存成功", { type: "success" });
+              message(transformI18n("layout.saveConfigSuccess"), {
+                type: "success"
+              });
             }
             resolve(res);
           })
@@ -80,7 +85,7 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
       autoSaveTimer = setTimeout(() => {
         autoSaveTimer = null;
         this.saveSiteConfig(true).catch(error => {
-          message("项目配置自动保存失败，请检查网络后重试", {
+          message(transformI18n("layout.saveConfigFailed"), {
             type: "error"
           });
           console.warn("[site-config] auto save failed:", error);

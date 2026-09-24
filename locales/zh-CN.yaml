@@ -204,6 +204,7 @@ batchUpdate:
   fieldRequired: 请选择字段并填写目标值
 
 tableBar:
+  list: 列表
   loose: 宽松
   default: 默认
   compact: 紧凑
@@ -250,6 +251,9 @@ cropper:
   clockwise: 顺时针旋转
 
 layout:
+  saveConfigSuccess: 项目配置保存成功
+  resetConfigSuccess: 项目配置重置成功
+  saveConfigFailed: 项目配置自动保存失败，请检查网络后重试
   notice: 消息通知
   announcement: 系统公告
   settings: 项目配置
@@ -528,10 +532,17 @@ oauth:
   mfaRequired: 该账号需完成二次验证，请改用账号密码登录后绑定
 
 plus:
+  fileLink: 文件连接
+  metaMissingTitle: 未获取到列元数据（search-columns / search-fields）
+  metaMissingDetail: 本页面的搜索列与表格列由后端元数据生成。请检查：app 是否已注册 XADMIN_APPS、序列化器是否声明 fields / table_fields、当前账号是否有页面权限点（未授权时接口 403）。
   detailBlankTitle: 详情数据为空
   detailBlankTip: 若已开启字段权限，请为当前菜单配置字段白名单（未配置白名单的模型字段会被裁剪为空）
 
 results:
+  copySuccess: 复制成功
+  copyFailed: 复制失败
+  operateSuccess: 操作成功
+  operateConfirmTitle: 确定操作？
   success: 执行成功
   failed: 执行失败
   batchDestroy: 批量删除 { count } 条数据
@@ -591,6 +602,9 @@ buttons:
   changeHistory: 变更历史
 
 menus:
+  searchData: 数据查询
+  userOnline: 在线用户
+  apiApp: API 应用
   home: 首页
   login: 登录
   sysManagement: 系统管理
@@ -1533,6 +1547,7 @@ chat:
   emptyMembers: 暂无成员
 
 login:
+  logoutSuccess: 登出成功
   thirdPartyLogin: 第三方登录
   serverForbidden: 当前服务器不允许登录
   serverRegisterForbidden: 当前服务器不允许注册
@@ -1727,6 +1742,7 @@ settingSms:
   title: 短信设置
 
 demoBook:
+  pushAll: 全部推送
   book: 书籍
   name: 书籍名称
   isbn: ISBN书号
@@ -2216,6 +2232,7 @@ dataDataset:
   exportCsv: 导出 CSV
 
 dataScreen:
+  noDashboards: 无可投屏仪表盘
   exportScreen: 导出当前屏
   exportNoChart: 当前屏没有可导出的图表
   exportSkipped: 有 { count } 个指标卡未导出
@@ -2769,3 +2786,18 @@ about:
   serverRepo: 后端代码地址
   docUrl: 文档地址
   demoUrl: 预览地址
+
+pickerShortcuts:
+  today: 今天
+  yesterday: 昨天
+  beforeYesterday: 前天
+  thisWeek: 本周
+  lastWeek: 上周
+  thisMonth: 本月
+  lastMonth: 上个月
+  thisYear: 本年
+
+emptyPage:
+  title: 业务内容模块
+  description: "使用场景：需要外嵌平台某个页面，不需要展示菜单导航以及额外模块"
+  back: 返回上一页

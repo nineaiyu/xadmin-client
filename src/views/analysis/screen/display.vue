@@ -251,7 +251,10 @@ onBeforeUnmount(() => {
       <el-button size="small" @click="toggleFullscreen">⛶</el-button>
     </div>
 
-    <el-empty v-if="dashboards.length === 0" description="无可投屏仪表盘" />
+    <el-empty
+      v-if="dashboards.length === 0"
+      :description="t('dataScreen.noDashboards')"
+    />
 
     <div v-else class="grid grid-cols-12 gap-3 px-6 pb-6">
       <div

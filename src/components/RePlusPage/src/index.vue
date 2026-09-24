@@ -292,8 +292,8 @@ defineExpose({
       type="error"
       :closable="false"
       show-icon
-      title="未获取到列元数据（search-columns / search-fields）"
-      description="本页面的搜索列与表格列由后端元数据生成。请检查：app 是否已注册 XADMIN_APPS、序列化器是否声明 fields / table_fields、当前账号是否有页面权限点（未授权时接口 403）。"
+      :title="t('plus.metaMissingTitle')"
+      :description="t('plus.metaMissingDetail')"
     />
     <div
       v-if="api?.fields"

@@ -1,4 +1,5 @@
 import { message } from "@/utils/message";
+import { transformI18n } from "@/plugins/i18n";
 import { useEventListener } from "@vueuse/core";
 import { copyTextToClipboard } from "@pureadmin/utils";
 import type { Directive, DirectiveBinding } from "vue";
@@ -17,9 +18,9 @@ export const copy: Directive = {
       // Register using addEventListener on mounted, and removeEventListener automatically on unmounted
       useEventListener(el, arg, () => {
         if (copyTextToClipboard(el.copyValue)) {
-          message("复制成功", { type: "success" });
+          message(transformI18n("results.copySuccess"), { type: "success" });
         } else {
-          message("复制失败", { type: "error" });
+          message(transformI18n("results.copyFailed"), { type: "error" });
         }
       });
     } else {

@@ -1,3 +1,5 @@
+import { transformI18n } from "@/plugins/i18n";
+
 /**
  * 是否是链接
  * @param url
@@ -26,7 +28,7 @@ export const getPickerShortcuts = (): Array<{
 }> => {
   return [
     {
-      text: "今天",
+      text: transformI18n("pickerShortcuts.today"),
       value: () => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -36,7 +38,7 @@ export const getPickerShortcuts = (): Array<{
       }
     },
     {
-      text: "昨天",
+      text: transformI18n("pickerShortcuts.yesterday"),
       value: () => {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
@@ -48,7 +50,7 @@ export const getPickerShortcuts = (): Array<{
       }
     },
     {
-      text: "前天",
+      text: transformI18n("pickerShortcuts.beforeYesterday"),
       value: () => {
         const beforeYesterday = new Date();
         beforeYesterday.setDate(beforeYesterday.getDate() - 2);
@@ -60,7 +62,7 @@ export const getPickerShortcuts = (): Array<{
       }
     },
     {
-      text: "本周",
+      text: transformI18n("pickerShortcuts.thisWeek"),
       value: () => {
         const today = new Date();
         const startOfWeek = new Date(
@@ -81,7 +83,7 @@ export const getPickerShortcuts = (): Array<{
       }
     },
     {
-      text: "上周",
+      text: transformI18n("pickerShortcuts.lastWeek"),
       value: () => {
         const today = new Date();
         const startOfLastWeek = new Date(
@@ -102,7 +104,7 @@ export const getPickerShortcuts = (): Array<{
       }
     },
     {
-      text: "本月",
+      text: transformI18n("pickerShortcuts.thisMonth"),
       value: () => {
         const today = new Date();
         const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -117,7 +119,7 @@ export const getPickerShortcuts = (): Array<{
       }
     },
     {
-      text: "上个月",
+      text: transformI18n("pickerShortcuts.lastMonth"),
       value: () => {
         const today = new Date();
         const startOfLastMonth = new Date(
@@ -136,7 +138,7 @@ export const getPickerShortcuts = (): Array<{
       }
     },
     {
-      text: "本年",
+      text: transformI18n("pickerShortcuts.thisYear"),
       value: () => {
         const today = new Date();
         const startOfYear = new Date(today.getFullYear(), 0, 1);
@@ -158,7 +160,7 @@ export const getDateTimePickerShortcuts = (): Array<{
 }> => {
   return [
     {
-      text: "今天",
+      text: transformI18n("pickerShortcuts.today"),
       value: () => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -166,7 +168,7 @@ export const getDateTimePickerShortcuts = (): Array<{
       }
     },
     {
-      text: "昨天",
+      text: transformI18n("pickerShortcuts.yesterday"),
       value: () => {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
@@ -175,7 +177,7 @@ export const getDateTimePickerShortcuts = (): Array<{
       }
     },
     {
-      text: "前天",
+      text: transformI18n("pickerShortcuts.beforeYesterday"),
       value: () => {
         const beforeYesterday = new Date();
         beforeYesterday.setDate(beforeYesterday.getDate() - 2);
@@ -184,7 +186,7 @@ export const getDateTimePickerShortcuts = (): Array<{
       }
     },
     {
-      text: "本周",
+      text: transformI18n("pickerShortcuts.thisWeek"),
       value: () => {
         const today = new Date();
         const startOfWeek = new Date(
@@ -197,7 +199,7 @@ export const getDateTimePickerShortcuts = (): Array<{
       }
     },
     {
-      text: "上周",
+      text: transformI18n("pickerShortcuts.lastWeek"),
       value: () => {
         const today = new Date();
         const startOfLastWeek = new Date(
@@ -210,7 +212,7 @@ export const getDateTimePickerShortcuts = (): Array<{
       }
     },
     {
-      text: "本月",
+      text: transformI18n("pickerShortcuts.thisMonth"),
       value: () => {
         const today = new Date();
         const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -219,7 +221,7 @@ export const getDateTimePickerShortcuts = (): Array<{
       }
     },
     {
-      text: "上个月",
+      text: transformI18n("pickerShortcuts.lastMonth"),
       value: () => {
         const today = new Date();
         const startOfLastMonth = new Date(
@@ -232,7 +234,7 @@ export const getDateTimePickerShortcuts = (): Array<{
       }
     },
     {
-      text: "本年",
+      text: transformI18n("pickerShortcuts.thisYear"),
       value: () => {
         const today = new Date();
         const startOfYear = new Date(today.getFullYear(), 0, 1);

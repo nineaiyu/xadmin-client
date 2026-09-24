@@ -7,6 +7,7 @@ import { selectBooleanOptions } from "./constants";
 import { formatAddOrEditOptions } from "./renders";
 import type { TableColumnRenderer } from "@pureadmin/table";
 import { getColourTypeByIndex } from "./index";
+import { transformI18n } from "@/plugins/i18n";
 import type {
   ChoiceOptionItem,
   PageColumn,
@@ -214,7 +215,7 @@ export const builtinDetailRenderers: PlusColumnRegistry = {
         },
         {
           icon: () => h(ElIcon, null, () => h(Link)),
-          default: () => filename ?? "文件连接"
+          default: () => filename ?? transformI18n("plus.fileLink")
         }
       );
     };
@@ -229,7 +230,8 @@ export const builtinDetailRenderers: PlusColumnRegistry = {
         },
         {
           icon: () => h(ElIcon, null, () => h(Link)),
-          default: () => row[column.key]?.filename ?? "文件连接"
+          default: () =>
+            row[column.key]?.filename ?? transformI18n("plus.fileLink")
         }
       );
   },
@@ -252,7 +254,8 @@ export const builtinDetailRenderers: PlusColumnRegistry = {
                     },
                     {
                       icon: () => h(ElIcon, null, () => h(Link)),
-                      default: () => item.filename ?? "文件连接"
+                      default: () =>
+                        item.filename ?? transformI18n("plus.fileLink")
                     }
                   );
                 })}
@@ -277,7 +280,7 @@ export const builtinDetailRenderers: PlusColumnRegistry = {
                 } as Record<string, unknown>,
                 {
                   icon: () => h(ElIcon, null, () => h(Link)),
-                  default: () => item.filename ?? "文件连接"
+                  default: () => item.filename ?? transformI18n("plus.fileLink")
                 }
               );
             })}
@@ -355,7 +358,7 @@ export const builtinDetailRenderers: PlusColumnRegistry = {
         },
         {
           icon: () => h(ElIcon, null, () => h(Link)),
-          default: () => "文件连接"
+          default: () => transformI18n("plus.fileLink")
         }
       );
     };
@@ -370,7 +373,7 @@ export const builtinDetailRenderers: PlusColumnRegistry = {
         },
         {
           icon: () => h(ElIcon, null, () => h(Link)),
-          default: () => "文件连接"
+          default: () => transformI18n("plus.fileLink")
         }
       );
   },

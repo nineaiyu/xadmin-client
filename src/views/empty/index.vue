@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import back from "@/assets/svg/back_top.svg?component";
 
 defineOptions({
@@ -7,13 +8,14 @@ defineOptions({
 });
 
 const router = useRouter();
+const { t } = useI18n();
 </script>
 
 <template>
   <div class="size-full text-center">
-    <h1>业务内容模块</h1>
-    <p>使用场景：需要外嵌平台某个页面，不需要展示菜单导航以及额外模块</p>
-    <div class="back" title="返回上一页" @click="router.go(-1)">
+    <h1>{{ t("emptyPage.title") }}</h1>
+    <p>{{ t("emptyPage.description") }}</p>
+    <div class="back" :title="t('emptyPage.back')" @click="router.go(-1)">
       <back class="size-20" />
     </div>
   </div>
