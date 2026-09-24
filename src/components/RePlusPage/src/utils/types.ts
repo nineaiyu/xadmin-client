@@ -51,6 +51,12 @@ interface TableColumn {
    * 仅元数据下发了 sortable 的列会开启，其余列保持不可排序
    */
   sortable?: boolean | "custom";
+  /**
+   * 受控高级筛选：后端为该字段下发的可用 lookup 表达式（与
+   * `ControlledLookupFilterBackend` 的字段/lookup 白名单同源）。
+   * 未下发的字段不进入高级筛选候选，避免「选到即 400」。
+   */
+  lookups?: string[];
 }
 
 interface PageColumn extends Omit<PlusColumn, "fieldProps">, TableColumn {

@@ -77,6 +77,11 @@ export type SearchColumnsResult = {
     suggest_url?: string;
     /** 该列是否支持表头排序（服务端 ordering_fields 声明面下发；未声明则不出现） */
     sortable?: boolean;
+    /**
+     * 受控高级筛选：该列可用的 lookup 表达式（服务端 controlled_lookup 视图按
+     * filterset 声明面 + 字段类型下发；未下发的列不进入高级筛选候选）
+     */
+    lookups?: string[];
     /** ListField(child=ChoiceField) 下发的子字段元信息，choices 候选值供多选下拉渲染 */
     child?: { choices?: ChoiceOption[]; [key: string]: unknown };
   }>;

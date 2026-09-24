@@ -222,6 +222,8 @@ export function useBaseColumns(localeName: string) {
           const tableItem = cloneDeep(item);
           // 表头排序：仅元数据声明 sortable 的列开启，排序走服务端 ordering 参数
           if (column.sortable) tableItem.sortable = "custom";
+          // 受控高级筛选：透传字段级可用 lookup（未下发的字段不进入候选）
+          if (column.lookups?.length) tableItem.lookups = column.lookups;
           listColumns.value.push(tableItem);
         }
       }

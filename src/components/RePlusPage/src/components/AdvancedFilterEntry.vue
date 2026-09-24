@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { h, ref, type Component } from "vue";
+import { computed, h, ref, type Component } from "vue";
 import { useI18n } from "vue-i18n";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
@@ -21,6 +21,30 @@ const emit = defineEmits<{ applied: [] }>();
 const { t } = useI18n();
 
 let filterForm: Component | null = null;
+
+/** 受控 lookup 键后缀（与 ControlledLookupFilterBackend.allowed_lookups 对齐） */
+const LOOKUP_SUFFIXES = [
+  "__icontains",
+  "__exact",
+  "__startswith",
+  "__in",
+  "__gte",
+  "__lte",
+  "__isnull",
+  "__ne"
+];
+
+/**
+ * 当前生效的高级筛选条件数（轻量判定，不把编辑器模块拉进首屏闭包）。
+ * 用于在按钮上把「列表正在被高级筛选过滤」这一状态显式呈现出来——
+ * 条件写在 searchFields 里但不占搜索区字段，用户此前无从感知列表已被过滤。
+ */
+const activeCount = computed(
+  () =>
+    Object.keys(model.value ?? {}).filter(key =>
+      LOOKUP_SUFFIXES.some(suffix => key.endsWith(suffix))
+    ).length
+);
 
 const openFilterDialog = async () => {
   if (!filterForm) {
@@ -58,10 +82,15 @@ const openFilterDialog = async () => {
 <template>
   <el-button
     :icon="useRenderIcon('ep/filter')"
-    plain
+    :type="activeCount ? 'primary' : ''"
+    :plain="activeCount > 0"
     class="mr-3"
     @click="openFilterDialog"
   >
-    {{ t("advancedFilter.button") }}
+    {{
+      activeCount
+        ? `${t("advancedFilter.button")} (${activeCount})`
+        : t("advancedFilter.button")
+    }}
   </el-button>
 </template>

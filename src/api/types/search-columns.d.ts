@@ -53,6 +53,10 @@ export type SearchColumnsData = {
    */
   sortable?: boolean;
   /**
+   * 受控高级筛选：该列可用的 lookup 表达式（视图开启 controlled_lookup 且字段命中 filterset 声明面时下发；未下发即不可作为高级筛选条件）
+   */
+  lookups?: string[];
+  /**
    * 远程联想端点：仅当资源混入 SuggestionsAction 且字段 input_type 为 api-search-* 时下发；候选集与写入校验同源
    */
   suggest_url?: string;

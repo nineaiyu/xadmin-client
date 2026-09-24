@@ -10,6 +10,7 @@ import {
   isBooleanLookup,
   parseLookupConditions,
   stripLookupConditions,
+  type LookupName,
   type LookupRow
 } from "../utils/advancedFilter";
 
@@ -28,16 +29,45 @@ const props = defineProps<{
 
 const { t } = useI18n();
 
+/**
+ * 字段候选：仅保留后端下发了 `lookups` 的列。
+ *
+ * 白名单由 `ControlledLookupFilterBackend` 按视图的 filterset 声明生成，
+ * 未下发的列在后端会直接 400（如 GenericRelation 的标签列），因此不能进入候选。
+ */
 const fields = computed(() =>
   props.columns
     .filter(
-      column => column.prop && !column.type && column.prop !== "operation"
+      column =>
+        column.prop &&
+        !column.type &&
+        column.prop !== "operation" &&
+        column.lookups?.length
     )
     .map(column => ({
       value: String(column.prop),
-      label: String(column.label ?? column.prop)
+      label: String(column.label ?? column.prop),
+      lookups: column.lookups as string[]
     }))
 );
+
+/** 字段对应的可用 lookup；未选字段或未下发时回退到全量白名单（与后端 allowed_lookups 一致） */
+const lookupsFor = (field?: string): LookupName[] => {
+  const declared = fields.value.find(
+    item => item.value === String(field ?? "")
+  )?.lookups;
+  const allowed = (declared ?? []).filter((item): item is LookupName =>
+    (LOOKUP_OPTIONS as readonly string[]).includes(item)
+  );
+  return allowed.length ? allowed : [...LOOKUP_OPTIONS];
+};
+
+/** 切换字段后修正不兼容的 lookup（如文本字段的「包含」在布尔字段上不存在） */
+const normalizeLookup = (row: LookupRow) => {
+  const allowed = lookupsFor(row.field);
+  if (row.lookup && allowed.includes(row.lookup)) return;
+  row.lookup = allowed.includes(DEFAULT_LOOKUP) ? DEFAULT_LOOKUP : allowed[0];
+};
 
 const rows = ref<LookupRow[]>([
   ...parseLookupConditions(props.conditions),
@@ -86,6 +116,7 @@ defineExpose({ getConditions });
           clearable
           :placeholder="t('advancedFilter.fieldPlaceholder')"
           style="width: 100%"
+          @change="normalizeLookup(row)"
         >
           <el-option
             v-for="item in fields"
@@ -98,7 +129,7 @@ defineExpose({ getConditions });
       <div data-testid="af-lookup" style="width: 150px">
         <el-select v-model="row.lookup" style="width: 100%">
           <el-option
-            v-for="lookup in LOOKUP_OPTIONS"
+            v-for="lookup in lookupsFor(row.field)"
             :key="lookup"
             :label="lookupLabel(lookup)"
             :value="lookup"
