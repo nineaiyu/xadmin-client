@@ -56,7 +56,11 @@ const ALLOWED_VIOLATIONS: Record<string, RegExp[]> = {
     /el-divider__text/,
     // 未读消息角标（danger 红底白字，EP Badge 组件默认配色）——通知类功能
     // （审批提醒/催办）在跑批中随时产生未读，命中与否取决于采样窗口
-    /el-badge__content--danger/
+    /el-badge__content--danger/,
+    // ReDrawer/ReDialog 页脚按钮：`text + bg` 形态取主题色文字 + 浅底（2.9:1），
+    // axe 为该节点取「最短唯一选择器」为 button[label=...]，不含 el-button 字面；
+    // 属框架级主题色问题，登记见 docs/accessibility-audit.md（2026-09-24 补充登记）
+    /button\[label=/
   ],
   // EP 动态 id 的无名命令按钮（RePlusPage 工具栏/EIcon 触发器等已补 aria-label）
   "button-name": [/^#el-id-/],
@@ -169,5 +173,36 @@ test("a11y 扩面：流程配置抽屉（表单密集场景）无 critical/serio
   expect(
     violations,
     `流程配置抽屉 a11y 违规：\n${formatViolations(violations)}`
+  ).toEqual([]);
+});
+
+test("a11y 扩面：菜单管理页（树行 + 编辑抽屉）无 critical/serious 违规", async ({
+  page
+}) => {
+  await login(page);
+  await openMenuPath(page, ["系统管理"], "/system/menu/index");
+  await expect(page.locator(".el-tree").first()).toBeVisible({
+    timeout: 15_000
+  });
+
+  // 树行：行内启停开关与操作按钮（默认 opacity 0，仍在无障碍树内，必须有可访问名称）
+  const treeViolations = await scanBlockingViolations(page);
+  expect(
+    treeViolations,
+    `菜单管理页 a11y 违规：\n${formatViolations(treeViolations)}`
+  ).toEqual([]);
+
+  // 抽屉：分组表单 + 树选择（次级编辑面同样纳入扫描）
+  await expect(page.getByText("系统管理").first()).toBeVisible({
+    timeout: 15_000
+  });
+  const targetRow = page.locator(".menu-row").first();
+  await targetRow.locator(".menu-row__title").click();
+  const drawer = page.locator(".el-drawer:visible").first();
+  await expect(drawer).toBeVisible({ timeout: 15_000 });
+  const drawerViolations = await scanBlockingViolations(page);
+  expect(
+    drawerViolations,
+    `菜单编辑抽屉 a11y 违规：\n${formatViolations(drawerViolations)}`
   ).toEqual([]);
 });
