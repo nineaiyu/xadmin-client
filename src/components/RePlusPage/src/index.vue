@@ -389,6 +389,7 @@ defineExpose({
                 v-if="savedViews && auth?.list"
                 :conditions="searchFields"
                 :ready="searchMetaReady"
+                :columns="tableBarData.dynamicColumns as never"
                 @apply="applySavedView"
               />
               <button-operation
