@@ -20,6 +20,7 @@
     ref="dropdownRef"
     trigger="click"
     :hide-on-click="false"
+    popper-class="re-plus-more-dropdown"
   >
     <el-button
       :icon="useRenderIcon(More)"
@@ -148,3 +149,32 @@ const handleChildAction = (params: ButtonsCallBackParams) => {
   emit("clickAction", params);
 };
 </script>
+
+<style lang="scss">
+/**
+ * 「更多」下拉的可点区域对齐。
+ *
+ * 动作绑在内层按钮上，而 hover 高亮作用于整行 `li`：内层按钮（含确认型 /
+ * 提示型按钮外层的 EP reference 包装）按内容收缩时，点击 li 的左右内边距
+ * （各 16px）与上下（各 5px）不会有任何反应，热区"看着大、点着小"。
+ * 这里把下拉内各层一律撑满，使「可点区域 = 高亮区域 = 整行」；
+ * popper 挂到 body，须用非 scoped 样式 + popper-class 限定作用域。
+ */
+.re-plus-more-dropdown {
+  .el-dropdown-menu__item {
+    padding: 0;
+
+    > * {
+      width: 100%;
+    }
+
+    /* 选择器特异性（0-3-0）已高于 EP 自带的 .el-button.is-link（0-2-0），
+       无需 !important；padding 数值与原 e-dropdown-item 内边距一致，视觉不变 */
+    .el-button {
+      justify-content: flex-start;
+      width: 100%;
+      padding: 5px 16px;
+    }
+  }
+}
+</style>

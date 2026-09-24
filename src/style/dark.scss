@@ -91,8 +91,10 @@ html.dark {
     transition: background-color 0.25s cubic-bezier(0.7, 0.3, 0.1, 1);
   }
 
+  /* 暗色下拉项 hover：保留可感知的反馈背景（此前置为 transparent，
+     导致整行高亮消失、用户看不出可点范围） */
   .el-dropdown-menu__item:not(.is-disabled):hover {
-    background: transparent;
+    background: var(--el-fill-color);
   }
 
   /* 全局覆盖element-plus的el-dialog、el-drawer、el-message-box、el-notification组件右上角关闭图标的样式，表现更鲜明 */
