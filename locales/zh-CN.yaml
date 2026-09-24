@@ -37,14 +37,40 @@ forcePassword:
 
 savedView:
   button: 视图
+  title: 我的视图
   save: 保存当前筛选
+  saveCurrent: 保存当前筛选
   saveTitle: 保存为我的视图
-  namePlaceholder: 视图名称
-  shared: 共享给同页其他用户
+  editTitle: 编辑视图
+  duplicateTitle: 另存为副本
+  nameLabel: 视图名称
+  namePlaceholder: 例如：在职研发同学
+  nameRequired: 请输入视图名称
+  remarkLabel: 说明
+  remarkPlaceholder: 选填，便于团队识别用途
+  conditionsLabel: 筛选条件
+  noConditions: 无筛选条件
+  defaultLabel: 设为默认视图
+  defaultHint: 打开页面且未设置筛选时自动套用
+  sharedLabel: 共享给同页其他用户
+  sharedHint: 他人可见并套用（只读，不能修改）
+  searchPlaceholder: 搜索视图
+  emptyHint: 还没有保存的视图，先设置筛选条件再保存
+  noMatch: 没有匹配的视图
+  footerHint: 点击视图即可套用筛选条件
+  current: 当前
   saveSuccess: 视图已保存
   empty: 暂无保存的视图
   default: 默认视图
   setDefault: 设为默认
+  cancelDefault: 取消默认
+  defaultSet: 已设为默认视图
+  defaultCleared: 已取消默认视图
+  updateCurrent: 用当前筛选更新
+  rename: 重命名
+  duplicate: 另存副本
+  copySuffix: 副本
+  updated: 视图「{name}」已更新
   deleteConfirm: 确认删除视图「{name}」？
   applied: 已应用视图「{name}」
   sharedShort: 共享
@@ -55,11 +81,31 @@ advancedFilter:
   title: 高级筛选
   fieldPlaceholder: 选择字段
   valuePlaceholder: 输入值
+  numberPlaceholder: 输入数值
+  datePlaceholder: 选择日期
+  timePlaceholder: 选择时间
+  choicePlaceholder: 选择取值
   multiPlaceholder: 多个值用英文逗号分隔
+  tagPlaceholder: 输入后回车添加
   addCondition: 添加条件
+  clearAll: 清空条件
+  noFields: 当前页面没有支持高级筛选的字段
   true: 是
   false: 否
   hint: 条件之间为「与」关系；字段与取值仍受当前账号的字段权限约束
+  kinds:
+    text: 文本
+    number: 数字
+    boolean: 是/否
+    date: 日期
+    datetime: 日期时间
+    time: 时间
+    choice: 选项
+    multiple: 多选
+  errors:
+    field: 第 {no} 行：请选择字段
+    value: 第 {no} 行：请填写筛选值
+    duplicate: 第 {no} 行：与前面的条件重复
   lookups:
     icontains: 包含
     exact: 等于

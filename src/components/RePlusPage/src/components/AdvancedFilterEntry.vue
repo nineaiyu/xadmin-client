@@ -53,7 +53,7 @@ const openFilterDialog = async () => {
   const formRef = ref();
   addDialog({
     title: t("advancedFilter.title"),
-    width: dialogSize("md"),
+    width: dialogSize("xl"),
     draggable: true,
     destroyOnClose: true,
     closeOnClickModal: false,

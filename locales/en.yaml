@@ -37,14 +37,40 @@ forcePassword:
 
 savedView:
   button: Views
+  title: My Views
   save: Save Current Filter
+  saveCurrent: Save Current Filter
   saveTitle: Save as My View
-  namePlaceholder: View name
-  shared: Share with others on this page
+  editTitle: Edit View
+  duplicateTitle: Save as Copy
+  nameLabel: View name
+  namePlaceholder: e.g. Active developers
+  nameRequired: Please enter a view name
+  remarkLabel: Description
+  remarkPlaceholder: Optional, helps the team know its purpose
+  conditionsLabel: Filters
+  noConditions: No filters
+  defaultLabel: Set as default view
+  defaultHint: Applied automatically when the page opens without filters
+  sharedLabel: Share with others on this page
+  sharedHint: Visible and applicable to others (read-only)
+  searchPlaceholder: Search views
+  emptyHint: No saved views yet, set filters first and save
+  noMatch: No matching views
+  footerHint: Click a view to apply its filters
+  current: Current
   saveSuccess: View saved
   empty: No saved views
   default: Default view
   setDefault: Set as default
+  cancelDefault: Unset default
+  defaultSet: Default view updated
+  defaultCleared: Default view cleared
+  updateCurrent: Update with current filter
+  rename: Rename
+  duplicate: Save as copy
+  copySuffix: " copy"
+  updated: View "{name}" updated
   deleteConfirm: Delete view "{name}"?
   applied: Applied view "{name}"
   sharedShort: Shared
@@ -55,11 +81,31 @@ advancedFilter:
   title: Advanced Filter
   fieldPlaceholder: Select a field
   valuePlaceholder: Enter a value
+  numberPlaceholder: Enter a number
+  datePlaceholder: Pick a date
+  timePlaceholder: Pick a time
+  choicePlaceholder: Select a value
   multiPlaceholder: Separate multiple values with commas
+  tagPlaceholder: Type and press Enter
   addCondition: Add Condition
+  clearAll: Clear
+  noFields: No filterable fields on this page
   true: "Yes"
   false: "No"
   hint: Conditions are combined with AND; fields and values still follow the field permissions of the current account
+  kinds:
+    text: Text
+    number: Number
+    boolean: "Yes/No"
+    date: Date
+    datetime: Date time
+    time: Time
+    choice: Option
+    multiple: Multi
+  errors:
+    field: "Row {no}: please select a field"
+    value: "Row {no}: please enter a value"
+    duplicate: "Row {no}: duplicated condition"
   lookups:
     icontains: Contains
     exact: Equals
