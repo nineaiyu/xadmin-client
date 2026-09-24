@@ -5,6 +5,7 @@ import { ElMessageBox } from "element-plus";
 import { SUCCESS_CODE } from "@/api/types";
 import { message } from "@/utils/message";
 import { hasAuth } from "@/router/utils";
+import { formatDateTime } from "@/utils";
 import { statusTagProps } from "@/utils/dict";
 import { openTaskLogDialog } from "../components/taskLogDialog";
 import {
@@ -298,7 +299,12 @@ onMounted(load);
           :label="t('taskCenter.colCreated')"
           width="170"
           show-overflow-tooltip
-        />
+        >
+          <!-- 后端直出 ISO 原文，需按统一口径转本地可读时间 -->
+          <template #default="{ row }">
+            {{ formatDateTime(row.created_time) }}
+          </template>
+        </el-table-column>
         <el-table-column
           prop="error"
           :label="t('taskCenter.colError')"

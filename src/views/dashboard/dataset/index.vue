@@ -17,7 +17,8 @@ const {
   tableBarButtonsProps,
   previewDialog,
   preview,
-  exportPreviewCsv
+  exportPreviewCsv,
+  formatPreviewCell
 } = useDataset(tableRef);
 </script>
 
@@ -62,7 +63,13 @@ const {
           :label="col"
           min-width="120"
           show-overflow-tooltip
-        />
+        >
+          <!-- 行取自后端 values()：对象列（JSON）与时间列需按展示口径转换，
+               否则会出现 [object Object] 与 ISO 原文（与 CSV 导出同一函数保证一致） -->
+          <template #default="{ row }">
+            {{ formatPreviewCell(row[col]) }}
+          </template>
+        </el-table-column>
       </el-table>
     </el-dialog>
   </div>

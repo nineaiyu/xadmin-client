@@ -6,6 +6,7 @@ import { useRouter } from "vue-router";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { formatDateTime } from "@/utils";
 import { message } from "@/utils/message";
 import { choiceValue, statusTagProps, type StatusTagType } from "@/utils/dict";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
@@ -117,14 +118,25 @@ export function useDataset(tableRef: Ref) {
     }
   };
 
+  /**
+   * 预览单元格展示口径（表格与 CSV 导出共用，保证"所见即所得"）：
+   *
+   * - 行数据来自后端 `values()`，JSON 字段是对象、时间字段是 ISO 原文，
+   *   直接进表格会渲染成 `[object Object]` 与 `2026-09-22T13:07:31.030781Z`；
+   * - 对象/数组序列化为 JSON；ISO 8601 时间转本地可读格式（微秒先截到毫秒再解析）。
+   */
+  const formatPreviewCell = (value: unknown): string => {
+    if (value === null || value === undefined) return "";
+    if (typeof value === "object") return JSON.stringify(value);
+    return formatDateTime(value);
+  };
+
   /** 预览结果导出 CSV（前端生成，字段权限已在执行侧收敛，导出的即所见行） */
   const exportPreviewCsv = () => {
     if (!preview.value) return;
     const { columns, rows } = preview.value;
     const escape = (value: unknown) => {
-      if (value === null || value === undefined) return "";
-      const text =
-        typeof value === "object" ? JSON.stringify(value) : String(value);
+      const text = formatPreviewCell(value);
       return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
     };
     const lines = [
@@ -226,6 +238,7 @@ export function useDataset(tableRef: Ref) {
     tableBarButtonsProps,
     previewDialog,
     preview,
-    exportPreviewCsv
+    exportPreviewCsv,
+    formatPreviewCell
   };
 }
