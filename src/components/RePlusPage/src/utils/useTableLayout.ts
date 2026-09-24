@@ -20,9 +20,20 @@ import {
  * 列宽（EP `requestAnimationFrame(doLayout)`），列挂载后的第一帧仍是浏览器对未定宽列
  * 的均分宽度——长表头换行（实测表头 155px → 41px）、单元格变高（86px → 53px），下一帧
  * 才回到真实列宽；该中间帧会被真实绘制并产生位移（visibility: hidden 的元素不参与
- * layout-shift 统计）。列集合每次变化（元数据到达 / 列设置调整）时隐藏表格两帧，
- * 待布局落位后再显示。
+ * layout-shift 统计）。列集合每次变化（元数据到达 / 列设置调整）时隐藏表格若干帧
+ * （见 LAYOUT_HOLD_FRAMES），待布局落位后再显示。
  */
+
+/**
+ * 列首帧隐藏的持续帧数。
+ *
+ * 2 帧是 EP `doLayout` 落位的最小窗口；但首屏渲染任务多的页面会把落位推到第 2 帧之后
+ * ——用户管理页在行操作抽屉上线后实测（dev 链路）：2 帧不足，列宽回弹仍被绘制
+ * （表体高度回弹 + 行高 86→53，CLS 0.25），4 帧恢复基线（CLS 0.02）。
+ * 代价是表格多隐藏约 33ms（视觉无感）。新增首屏重组件后若再次观察到列宽回弹，
+ * 先核查该页首屏任务量，再评估本值（由 useTableLayout.spec.ts 守护帧数语义）。
+ */
+export const LAYOUT_HOLD_FRAMES = 4;
 export function useTableLayout(options: {
   /** 表格可视区实测宽度（useTableMeasure 提供） */
   tableElWidth: Ref<number>;
@@ -66,11 +77,14 @@ export function useTableLayout(options: {
   const holdTableUntilLaidOut = () => {
     tableLayoutPending.value = true;
     cancelAnimationFrame(layoutRaf);
-    layoutRaf = requestAnimationFrame(() => {
+    // 倒计时逐帧推进：窗口内再次变化会从头计数（不提前显示）
+    const holdFrame = (remaining: number) => {
       layoutRaf = requestAnimationFrame(() => {
-        tableLayoutPending.value = false;
+        if (remaining > 1) holdFrame(remaining - 1);
+        else tableLayoutPending.value = false;
       });
-    });
+    };
+    holdFrame(LAYOUT_HOLD_FRAMES);
   };
 
   // 同一列集合既可能整体替换（RePureTableBar 深拷贝回写），也可能被就地
