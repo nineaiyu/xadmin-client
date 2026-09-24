@@ -105,3 +105,49 @@ test("高级筛选：受控 lookup 条件写入请求并过滤列表", async ({ 
   await dialogAgain.getByRole("button", { name: "取消" }).click();
   await expect(dialogAgain).toBeHidden();
 });
+
+test("高级筛选：选择字段后条件与取值自动联动（性别 → 等于 → 男）", async ({
+  page
+}) => {
+  await login(page);
+  await openMenuPath(page, ["系统管理"], "/system/user/index");
+  await expect(
+    page.getByRole("button", { name: "新增" }).first()
+  ).toBeVisible();
+
+  const requests = collectUserRequests(page);
+  await page.getByRole("button", { name: "高级筛选" }).first().click();
+  const dialog = page.locator(".el-dialog:visible").first();
+  await expect(dialog).toBeVisible();
+
+  // 选字段「性别」：条件自动落到该字段的默认项「等于」（不再由用户随便写）
+  await dialog.locator('[data-testid="af-field"]').first().click();
+  await page
+    .locator(".el-select-dropdown:visible .el-select-dropdown__item", {
+      hasText: "性别"
+    })
+    .first()
+    .click();
+  await expect(
+    dialog.locator('[data-testid="af-lookup"]').first()
+  ).toContainText("等于");
+
+  // 取值控件联动为选项下拉（选项来自列元数据 choices），选「男」
+  const valueSelect = dialog
+    .locator('[data-testid="af-value"] .el-select__wrapper')
+    .first();
+  await expect(valueSelect).toBeVisible();
+  await valueSelect.click();
+  await page
+    .locator(".el-select-dropdown:visible .el-select-dropdown__item", {
+      hasText: "男"
+    })
+    .first()
+    .click();
+
+  await dialog.getByRole("button", { name: "保存" }).click();
+  await expect(dialog).toBeHidden();
+  await expect
+    .poll(() => requests.some(url => /gender__exact=1/.test(url)))
+    .toBeTruthy();
+});
