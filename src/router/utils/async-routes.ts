@@ -160,14 +160,19 @@ function addAsyncRoutes(
           ? rawComponent
           : String(v.path ?? "");
       const index = resolveComponentKey(target, modulesRoutesKeys);
-      if (index === -1 && import.meta.env.DEV) {
-        // 开发态显式报错：component 字符串与 src/views 下文件路径未匹配（运行期表现为空白路由）
+      // 目录/分组节点（有子菜单）自身不带页面，页面完全由子路由渲染：
+      // 后端对这类节点可能不下发 component，也可能残留历史脏值（如 /system/notice/ 上
+      // 挂着 system/notify/index），两种情况都不是「组件漏配」，开发态不报错
+      const hasChildren = Boolean(v.children?.length);
+      if (index === -1 && import.meta.env.DEV && !hasChildren) {
+        // 开发态显式报错：叶子菜单 component 与 src/views 下文件路径未匹配（运行期表现为空白路由）
         console.error(
           `[xadmin] 动态路由组件未匹配：component=${String(rawComponent ?? "")} path=${String(v.path ?? "")}——` +
             "请确认 src/views 下存在对应页面文件（后端下发的 component 需为文件路径片段）。"
         );
       }
-      v.component = modulesRoutes[modulesRoutesKeys[index]];
+      v.component =
+        index === -1 ? undefined : modulesRoutes[modulesRoutesKeys[index]];
     }
     if (v?.children && v.children.length) {
       addAsyncRoutes(v.children);
