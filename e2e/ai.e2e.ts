@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { FRONT_URL, login, openMenuPath } from "./helpers";
+import { FRONT_URL, login, openEntityPanel, openMenuPath } from "./helpers";
 
 /**
  * AI 助手主链路：覆盖全局开关、多档案管理（CRUD/激活）、助手页引导渲染，
@@ -285,4 +285,41 @@ test("指令执行：草稿确认卡片 + 确认执行（指向桩 LLM）", asyn
       .getByText(/草稿|已提交审批|已执行/)
       .first()
   ).toBeVisible({ timeout: 30_000 });
+});
+
+/**
+ * AI 档案「管理」抽屉：行内只保留在线处置（设为默认 / 测试），档案参数、能力画像与
+ * 低频动作（能力探测含多模态、编辑、删除）收敛进抽屉。
+ */
+test("AI 配置：档案管理抽屉渲染资料与动作", async ({ page }) => {
+  await login(page);
+  const name = `E2E-抽屉档案-${Date.now()}`;
+  const created = await jsonRequest(page, "post", "/api/system/ai/profiles", {
+    name,
+    base_url: STUB_LLM_URL,
+    api_key: "sk-e2e-stub",
+    model: "stub-model",
+    remark: "抽屉用例"
+  });
+  expect(created.code).toBe(1000);
+
+  await openMenuPath(page, ["集成管理"], "/integration/ai/config");
+  const row = page.locator(".el-table__row", { hasText: name }).first();
+  await expect(row).toBeVisible({ timeout: 15_000 });
+
+  // 操作列：行内保留「设为默认」，探测/编辑/删除不再直接暴露
+  await expect(row.getByRole("button", { name: "设为默认" })).toBeVisible();
+  await expect(row.getByRole("button", { name: "探测能力" })).toHaveCount(0);
+  await expect(row.getByRole("button", { name: "编辑" })).toHaveCount(0);
+
+  const panel = await openEntityPanel(page, row);
+  await expect(panel).toContainText("能力探测");
+  await expect(panel).toContainText("档案配置");
+  await expect(panel).toContainText("危险操作");
+  for (const code of ["probe", "probeVision", "edit", "delete"]) {
+    await expect(panel.locator(`[data-action-code="${code}"]`)).toBeVisible();
+  }
+  // 资料卡：接口地址/模型/密钥状态取自列表行快照
+  await expect(panel).toContainText("stub-model");
+  await expect(panel).toContainText("已配置");
 });

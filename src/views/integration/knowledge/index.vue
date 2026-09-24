@@ -7,8 +7,13 @@ defineOptions({
 });
 
 const tableRef = ref();
-const { api, auth, tableBarButtonsProps, operationButtonsProps } =
-  useKnowledge(tableRef);
+const {
+  api,
+  auth,
+  listColumnsFormat,
+  tableBarButtonsProps,
+  operationButtonsProps
+} = useKnowledge(tableRef);
 </script>
 <template>
   <RePlusPage
@@ -16,6 +21,7 @@ const { api, auth, tableBarButtonsProps, operationButtonsProps } =
     :api="api"
     :auth="auth"
     locale-name="aiKnowledge"
+    :listColumnsFormat="listColumnsFormat"
     :operationButtonsProps="operationButtonsProps"
     :tableBarButtonsProps="tableBarButtonsProps"
   />

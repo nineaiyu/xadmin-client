@@ -1,6 +1,11 @@
 import { expect, test } from "@playwright/test";
 
-import { login, openMenuPath } from "./helpers";
+import {
+  clickPanelAction,
+  login,
+  openEntityPanel,
+  openMenuPath
+} from "./helpers";
 
 /**
  * 批量操作（框架能力 + 自定义批量启停）：上传两条 → 勾选 → 批量停用（分块移除）
@@ -43,24 +48,16 @@ test("知识库：批量启用停用 + 批量删除", async ({ page }) => {
     await rowsOf(title).locator(".el-checkbox").first().click();
   }
 
-  // 批量停用 → 行内按钮翻转为「启用」
+  // 批量停用 → 状态列标签翻转为「已停用」（行内启停按钮已收敛进抽屉）
   await page.getByRole("button", { name: "批量停用" }).first().click();
   for (const title of titles) {
-    await expect(
-      rowsOf(title).getByRole("button", { name: "启用" })
-    ).toBeVisible({
-      timeout: 15_000
-    });
+    await expect(rowsOf(title)).toContainText("已停用", { timeout: 15_000 });
   }
 
-  // 批量启用 → 行内按钮翻转为「停用」
+  // 批量启用 → 状态列标签翻转为「已启用」
   await page.getByRole("button", { name: "批量启用" }).first().click();
   for (const title of titles) {
-    await expect(
-      rowsOf(title).getByRole("button", { name: "停用" })
-    ).toBeVisible({
-      timeout: 15_000
-    });
+    await expect(rowsOf(title)).toContainText("已启用", { timeout: 15_000 });
   }
 
   // 批量删除（勾选态保持）→ 两行消失
@@ -78,9 +75,10 @@ test("知识库：批量启用停用 + 批量删除", async ({ page }) => {
 });
 /**
  * AI 知识库文档管理 E2E：
- * 上传（弹窗内粘贴 Markdown 文本）→ 列表可见（分块数）→ 预览抽屉（全文 + 分块清单）
- * → 停用/启用（按钮文案随状态翻转）→ 删除（popconfirm）→ 行消失。
+ * 上传（弹窗内粘贴 Markdown 文本）→ 列表可见（分块数）→「管理文档」抽屉
+ * （全文 + 分块清单 + 停用/启用 + 删除）→ 状态列标签随状态翻转 → 删除后行消失。
  *
+ * 行操作已收敛进抽屉（操作列只留「预览」）：启停/删除经 data-action-code 定位；
  * 上传即入检索索引（分块表），问答链路（ask/nl-query）复用同一份数据，
  * 后端集成测试已锁定检索命中；本用例覆盖管理面单条操作全链路。
  */
@@ -123,22 +121,23 @@ test("知识库：上传 → 预览 → 停用启用 → 删除", async ({ page 
   await drawer.locator(".el-drawer__close-btn").click();
   await expect(drawer).not.toBeVisible({ timeout: 10_000 });
 
-  // ---- 停用/启用：按钮文案随状态翻转 ----
-  await row.getByRole("button", { name: "停用" }).click();
-  await expect(row.getByRole("button", { name: "启用" })).toBeVisible({
-    timeout: 15_000
-  });
-  await row.getByRole("button", { name: "启用" }).click();
-  await expect(row.getByRole("button", { name: "停用" })).toBeVisible({
-    timeout: 15_000
-  });
+  // ---- 抽屉内停用/启用：状态列标签随状态翻转 ----
+  await clickPanelAction(
+    await openEntityPanel(page, row, "预览"),
+    "toggleActive"
+  );
+  await expect(row).toContainText("已停用", { timeout: 15_000 });
+  await clickPanelAction(
+    await openEntityPanel(page, row, "预览"),
+    "toggleActive"
+  );
+  await expect(row).toContainText("已启用", { timeout: 15_000 });
 
-  // ---- 删除（popconfirm）→ 行消失 ----
-  await row.getByRole("button", { name: "删除" }).first().click();
+  // ---- 抽屉内删除（确认框）→ 行消失 ----
+  await clickPanelAction(await openEntityPanel(page, row, "预览"), "delete");
   await page
-    .locator(".el-popconfirm, .el-popper, .el-message-box")
+    .locator(".el-message-box:visible")
     .getByRole("button", { name: "确定" })
-    .first()
     .click();
   await expect(page.locator(".el-table__row", { hasText: title })).toHaveCount(
     0,

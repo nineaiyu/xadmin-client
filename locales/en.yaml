@@ -1655,6 +1655,24 @@ apiApp:
   actions: Actions
   regenerate: Reset secret
   testCallback: Test callback
+  manage: Manage
+  panelTitle: "Manage {name}"
+  copyClientId: Copy Client ID
+  copyScopes: Copy scopes
+  scopeDetail: Scope details
+  scopeMore: "{n} more not shown"
+  probeTitle: Callback test results
+  probeSuccess: Delivered
+  probeFailure: Failed
+  usageDesc: View 7-day call volume, failures, top paths and quota usage
+  regenerateDesc: Generate a new client secret and callback secret; old credentials stop working immediately
+  regenerateConfirm: "Resetting the secret invalidates old credentials immediately; third-party integrations must be updated. Reset now?"
+  testCallbackDesc: Send one test event to each callback url; results are shown below
+  editDesc: Edit name, scopes, rate limit, callback urls and resource grants
+  actionGroups:
+    access: Access and credentials
+    verify: Integration check
+    manage: Application settings
   saveOk: Saved
   saveFailed: Save failed
   cancel: Cancel
@@ -2547,6 +2565,17 @@ aiConfig:
   usageFailed: Failed
   usageByFeature: By flow
   usageByDay: Daily usage
+  manage: Manage
+  panelTitle: "Manage {name}"
+  apiKeySet: Configured
+  apiKeyUnset: Not configured
+  probeVisionDesc: Also probe multimodal support (sends an image); slow on models without vision
+  editDesc: Edit endpoint, model, sampling and behavior parameters
+  deleteDesc: Delete this profile (deactivate it first if in use; irreversible)
+  actionGroups:
+    probe: Capability probe
+    manage: Configuration
+    danger: Danger zone
   usageTopUsers: Top users
   deleteConfirm: Delete this profile?
   deleteDone: Profile deleted
@@ -2737,6 +2766,15 @@ aiKnowledge:
   batchEnable: Batch enable
   batchDisable: Batch disable
   batchToggleDone: "Updated {count}"
+  panelTitle: "Manage {title}"
+  enabled: Enabled
+  disabled: Disabled
+  enableDesc: Rebuild chunks and include the document in retrieval again
+  disableDesc: Remove all chunks and exclude the document from retrieval
+  deleteDesc: Delete the document and clean up all its retrieval chunks (irreversible)
+  actionGroups:
+    retrieval: Retrieval
+    danger: Danger zone
 
 oauthAuthorize:
   title: Authorization request

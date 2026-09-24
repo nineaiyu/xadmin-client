@@ -1655,6 +1655,24 @@ apiApp:
   actions: 操作
   regenerate: 重置密钥
   testCallback: 回调测试
+  manage: 管理
+  panelTitle: "管理应用 {name}"
+  copyClientId: 复制 Client ID
+  copyScopes: 复制接口范围
+  scopeDetail: 接口范围明细
+  scopeMore: "另有 {n} 条未展示"
+  probeTitle: 回调测试结果
+  probeSuccess: 投递成功
+  probeFailure: 投递失败
+  usageDesc: 查看近 7 天的调用量、失败分布、高频路径与配额使用情况
+  regenerateDesc: 生成新的 Client Secret 与回调签名密钥，旧凭证立即失效
+  regenerateConfirm: 重置密钥会使旧凭证立即失效，使用该应用的第三方集成需要同步更新。确定重置？
+  testCallbackDesc: 向各回调地址发送一次测试事件，投递结果在下方展示
+  editDesc: 修改名称、接口范围、限流、回调地址与资源授权
+  actionGroups:
+    access: 接入与密钥
+    verify: 联调与验证
+    manage: 应用配置
   saveOk: 保存成功
   saveFailed: 保存失败
   cancel: 取消
@@ -2546,6 +2564,17 @@ aiConfig:
   usageFailed: 失败数
   usageByFeature: 链路分布
   usageByDay: 日用量
+  manage: 管理
+  panelTitle: "管理档案 {name}"
+  apiKeySet: 已配置
+  apiKeyUnset: 未配置
+  probeVisionDesc: 追加多模态探测（发送图片），无多模态能力的模型耗时较长
+  editDesc: 修改接口地址、模型、采样与行为参数
+  deleteDesc: 删除该档案（使用中需先取消默认；删除后不可恢复）
+  actionGroups:
+    probe: 能力探测
+    manage: 档案配置
+    danger: 危险操作
   usageTopUsers: 用户用量 Top
   deleteConfirm: 确定删除该档案吗？
   deleteDone: 档案已删除
@@ -2736,6 +2765,15 @@ aiKnowledge:
   batchEnable: 批量启用
   batchDisable: 批量停用
   batchToggleDone: 已更新 {count} 条
+  panelTitle: "管理文档 {title}"
+  enabled: 已启用
+  disabled: 已停用
+  enableDesc: 启用后重建分块，重新参与问答检索
+  disableDesc: 停用后移除全部分块，不再参与问答检索
+  deleteDesc: 删除文档并清理其全部检索分块（不可恢复）
+  actionGroups:
+    retrieval: 检索生效
+    danger: 危险操作
 
 oauthAuthorize:
   title: 授权请求

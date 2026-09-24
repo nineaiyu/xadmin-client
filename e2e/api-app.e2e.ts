@@ -1,6 +1,11 @@
 import { expect, test } from "@playwright/test";
 
-import { login, openMenuPath } from "./helpers";
+import {
+  clickPanelAction,
+  login,
+  openEntityPanel,
+  openMenuPath
+} from "./helpers";
 
 /**
  * 开放平台 API 应用：管理页新建应用 → 一次性密钥只展示一次。
@@ -132,8 +137,11 @@ test("API 应用：资源授权配置保存并回显", async ({ page }) => {
   );
 });
 
-/** 用量报表：抽屉打开并展示统计区块。 */
-test("API 应用：用量抽屉展示统计", async ({ page }) => {
+/**
+ * 行操作收敛：操作列只留「编辑应用 / 管理」，用量报表入口在「管理」抽屉内。
+ * 抽屉打开后动作执行前先收起抽屉（避免与用量抽屉叠加）。
+ */
+test("API 应用：管理抽屉内打开用量报表", async ({ page }) => {
   await login(page);
   const name = `E2E 用量应用 ${Date.now()}`;
   const created = await page.request.post("/api/system/api-applications", {
@@ -144,11 +152,47 @@ test("API 应用：用量抽屉展示统计", async ({ page }) => {
   await openMenuPath(page, ["集成管理"], "/integration/api-app/index");
   const row = page.locator(".el-table__row", { hasText: name }).first();
   await expect(row).toBeVisible({ timeout: 15_000 });
-  await row.getByRole("button", { name: "用量" }).click();
 
-  const drawer = page.locator(".el-drawer", { hasText: "用量" });
+  // 操作列不再直接暴露「用量」按钮
+  await expect(row.getByRole("button", { name: "用量" })).toHaveCount(0);
+
+  const panel = await openEntityPanel(page, row);
+  await clickPanelAction(panel, "usage");
+
+  // 用量抽屉按内容特征定位（抽屉标题与行名都含「用量」，不能按标题区分）
+  const drawer = page.locator(".el-drawer:visible", { hasText: "调用量" });
   await expect(drawer).toBeVisible({ timeout: 15_000 });
   await expect(drawer.getByText("调用量").first()).toBeVisible({
     timeout: 15_000
   });
+});
+
+/**
+ * 管理抽屉：资料卡/分组动作渲染 + 重置密钥二次确认（高危动作不可一键执行）。
+ */
+test("API 应用：管理抽屉资料与密钥重置确认", async ({ page }) => {
+  await login(page);
+  const name = `E2E 抽屉应用 ${Date.now()}`;
+  const created = await page.request.post("/api/system/api-applications", {
+    data: { name, rate_limit_per_minute: 30 }
+  });
+  expect(created.ok()).toBeTruthy();
+
+  await openMenuPath(page, ["集成管理"], "/integration/api-app/index");
+  const row = page.locator(".el-table__row", { hasText: name }).first();
+  await expect(row).toBeVisible({ timeout: 15_000 });
+
+  const panel = await openEntityPanel(page, row);
+  await expect(panel).toContainText("接入与密钥");
+  await expect(panel).toContainText("每分钟限流");
+  await expect(panel.locator('[data-action-code="regenerate"]')).toBeVisible();
+
+  // 重置密钥：点击后弹二次确认；取消则什么也不发生（抽屉已按「先收起再执行」口径收走）
+  await clickPanelAction(panel, "regenerate");
+  const confirmBox = page.locator(".el-message-box:visible");
+  await expect(confirmBox).toBeVisible({ timeout: 10_000 });
+  await confirmBox.getByRole("button", { name: "取消" }).click();
+  await expect(
+    page.locator(".el-dialog", { hasText: "一次性密钥" })
+  ).toHaveCount(0);
 });

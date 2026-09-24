@@ -1,9 +1,14 @@
 import { SUCCESS_CODE } from "@/api/types";
 import { h, reactive, ref, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElSwitch, ElTag, ElTooltip } from "element-plus";
+import { ElLink, ElMessageBox, ElSwitch, ElTag, ElTooltip } from "element-plus";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
+import {
+  addDrawer,
+  closeDrawer,
+  type DrawerOptions
+} from "@/components/ReDrawer";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { buildScopeIndex, formatScopeLines } from "@/utils/scopeDisplay";
@@ -17,16 +22,22 @@ import {
   type CallbackProbeResult
 } from "@/api/system/open";
 import ApiApplicationForm from "../components/ApiApplicationForm.vue";
+import ApiAppPanel from "../components/ApiAppPanel.vue";
+import { buildApiAppActionGroups } from "./apiAppActions";
 
 /**
- * API 应用（开放平台）：CRUD + 重置密钥 + 回调测试。
+ * API 应用（开放平台）：CRUD + 重置密钥 + 回调测试 + 统一「管理」抽屉。
  *
+ * - 行操作收敛进抽屉：操作列只留编辑 / 管理，应用名与「管理」同为抽屉入口；
+ *   抽屉内按「接入与密钥 / 联调与验证 / 应用配置」分组承载用量、重置密钥（含
+ *   二次确认）、回调测试与编辑，回调测试结果在抽屉内即时回显；
  * - 新建/编辑关闭框架默认表单按钮，统一走 ReDialog + ApiApplicationForm；
  * - 一次性明文密钥弹窗为只读展示场景（C5 既定保留手写），状态在本 hook 内维护，
  *   由页面模板渲染；
  * - 删除按钮保持关闭（现状页面不提供删除入口，迁移不改行为）；
  * - is_active 自定义开关渲染：默认编辑按钮关闭（auth.partialUpdate=false）会连带
- *   禁用框架 boolean 列开关，故在列渲染层接管，失败回滚行内值。
+ *   禁用框架 boolean 列开关，故在列渲染层接管，失败回滚行内值（启停的唯一入口，
+ *   抽屉内不再重复提供）。
  */
 export function useApiApplication(tableRef: Ref) {
   const { t } = useI18n();
@@ -89,11 +100,44 @@ export function useApiApplication(tableRef: Ref) {
     }
   };
 
-  const testCallback = async (row: ApiApplicationItem) => {
-    const res = await apiApplicationApi.testCallback(row.pk);
+  /**
+   * 重置密钥：旧凭证立即失效、第三方集成需同步更新 —— 执行前二次确认。
+   * （抽屉内触发，确认框为独立遮罩层，不依赖抽屉状态）
+   */
+  const confirmRegenerate = (row: ApiApplicationItem) => {
+    ElMessageBox.confirm(
+      t("apiApp.regenerateConfirm"),
+      t("apiApp.regenerate"),
+      {
+        confirmButtonText: t("buttons.sure"),
+        cancelButtonText: t("buttons.cancel"),
+        type: "warning"
+      }
+    )
+      .then(() => regenerateSecret(row))
+      .catch(() => undefined);
+  };
+
+  /** 回调测试：state 由抽屉持有（测试结果在抽屉内即时展示） */
+  const runCallbackProbe = async (
+    row: ApiApplicationItem,
+    state?: { loading: boolean; results: CallbackProbeResult[] }
+  ) => {
+    if (state) {
+      state.loading = true;
+      state.results = [];
+    }
+    const res = await apiApplicationApi.testCallback(row.pk).catch(error => ({
+      code: -1,
+      data: null,
+      detail: String((error as { detail?: string })?.detail ?? error)
+    }));
+    if (state) state.loading = false;
     if (res.code === SUCCESS_CODE) {
-      probeResults.value = res.data?.results ?? [];
-      const failed = probeResults.value.filter(item => !item.success).length;
+      const results = res.data?.results ?? [];
+      probeResults.value = results;
+      if (state) state.results = results;
+      const failed = results.filter(item => !item.success).length;
       message(
         failed
           ? t("apiApp.callbackFailed", { count: failed })
@@ -144,6 +188,20 @@ export function useApiApplication(tableRef: Ref) {
   const listColumnsFormat = (columns: PageTableColumn[]) => {
     columns.forEach(column => {
       switch (column._column?.key) {
+        case "name":
+          // 应用名同为「管理」抽屉入口：名称即实体标识，点击最直观
+          column["cellRenderer"] = ({ row }) => {
+            const item = row as ApiApplicationItem;
+            return h(
+              ElLink,
+              {
+                type: "primary",
+                onClick: () => openApiAppPanel(item)
+              },
+              () => item.name
+            );
+          };
+          break;
         case "scopes":
           // 明细走 tooltip：条目本体是锚定正则，列内只显示条数，hover 看到可读路径
           column["minWidth"] = 130;
@@ -252,38 +310,69 @@ export function useApiApplication(tableRef: Ref) {
     });
   };
 
+  /* ---------------- 管理抽屉（行操作收敛） ---------------- */
+  const openApiAppPanel = (row: ApiApplicationItem) => {
+    // 接口范围明细：锚定正则还原为可读路径（目录未加载时退回条目原文）
+    const scopeLines = formatScopeLines(row.scopes ?? [], scopeIndex.value)
+      .split("\n")
+      .filter(Boolean);
+    // 回调测试状态由抽屉持有：结果在抽屉内即时更新（无需关闭抽屉看消息提示）
+    const probe = reactive({
+      loading: false,
+      results: [] as CallbackProbeResult[]
+    });
+    const options: DrawerOptions = {
+      title: t("apiApp.panelTitle", { name: row.name }),
+      size: "520px",
+      destroyOnClose: true,
+      hideFooter: true
+    };
+    // 动作执行前先收起抽屉再打开二级弹层（避免抽屉与弹窗叠加、焦点归属混乱）
+    const withClosed = (run: () => void) => () => {
+      closeDrawer(options, 0);
+      run();
+    };
+    options.contentRenderer = () =>
+      h(ApiAppPanel, {
+        row,
+        scopeLines,
+        probe,
+        copy: copyText,
+        groups: buildApiAppActionGroups({
+          t,
+          flags: { canStats, canRegenerate, canTestCallback, canEdit },
+          handlers: {
+            openUsage: withClosed(() => openUsage(row)),
+            regenerate: withClosed(() => confirmRegenerate(row)),
+            // 回调测试结果在抽屉内展示：不收起抽屉
+            testCallback: () => runCallbackProbe(row, probe),
+            edit: withClosed(() => openDialog(row))
+          }
+        })
+      });
+    addDrawer(options);
+  };
+
   /* ---------------- 按钮装配 ---------------- */
   const operationButtonsProps = shallowRef<OperationProps>({
-    width: 360,
-    showNumber: 5,
+    // 行操作收敛后操作列只需容纳编辑 / 管理两个按钮
+    width: 200,
+    // 应用资料由「管理」抽屉承载，关闭框架默认详情入口避免重复
+    hideDetail: true,
     buttons: [
-      {
-        text: t("apiApp.usage.title"),
-        code: "usage",
-        props: { type: "info", link: true },
-        onClick: ({ row }) => openUsage(row as ApiApplicationItem),
-        show: canStats && 10
-      },
-      {
-        text: t("apiApp.regenerate"),
-        code: "regenerate",
-        props: { type: "primary", link: true },
-        onClick: ({ row }) => regenerateSecret(row as ApiApplicationItem),
-        show: canRegenerate && 20
-      },
-      {
-        text: t("apiApp.testCallback"),
-        code: "testCallback",
-        props: { type: "success", link: true },
-        onClick: ({ row }) => testCallback(row as ApiApplicationItem),
-        show: canTestCallback && 30
-      },
       {
         text: t("apiApp.edit"),
         code: "edit",
         props: { type: "primary", link: true },
         onClick: ({ row }) => openDialog(row as ApiApplicationItem),
-        show: canEdit && 5
+        show: canEdit && -25
+      },
+      {
+        text: t("apiApp.manage"),
+        code: "manage",
+        props: { type: "primary", link: true },
+        onClick: ({ row }) => openApiAppPanel(row as ApiApplicationItem),
+        show: -15
       }
     ]
   });

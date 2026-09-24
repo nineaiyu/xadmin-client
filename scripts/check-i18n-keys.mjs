@@ -82,6 +82,34 @@ function collectHtmlMessages(file) {
   return hits;
 }
 
+/**
+ * 检测同一父路径下的重复 key（同一文件内 `a.b` 出现两次）。
+ *
+ * 危害：YAML 解析后值静默覆盖（后值生效，看似"生效了"），但 unplugin-vue-i18n
+ * 在转换期直接抛 `Map keys must be unique` —— locale 模块整块加载失败，
+ * **整页白屏、全部 E2E 在登录填表处超时**，排查成本极高（2026-09-24 集成三页
+ * 抽屉化补词条时踩过：aiConfig.deleteConfirm 与既有键重名）。
+ */
+function collectDuplicateKeys(file) {
+  const lines = readFileSync(file, "utf-8").split(/\r\n|\n|\r/);
+  const seen = new Map(); // fullPath -> 首次出现行号
+  const hits = [];
+  const stack = [];
+  lines.forEach((line, index) => {
+    const match = /^(\s*)([A-Za-z0-9_."]+):(\s.*)?$/.exec(line);
+    if (!match) return;
+    const indent = match[1].length;
+    const name = match[2].replace(/^["']|["']$/g, "");
+    while (stack.length && stack[stack.length - 1].indent >= indent)
+      stack.pop();
+    const path = [...stack.map(item => item.name), name].join(".");
+    if (seen.has(path)) hits.push([index + 1, path, seen.get(path)]);
+    else seen.set(path, index + 1);
+    stack.push({ indent, name });
+  });
+  return hits;
+}
+
 /** 提取源文件中静态引用的词条 key（`t("a.b")` 形态，至少两级） */
 function collectUsedKeys(files) {
   const used = new Map(); // key -> Set(相对路径)
@@ -140,10 +168,17 @@ for (const [file, line, key, value] of htmlHits) {
     `词条含 HTML 标签: ${file}:${line} ${key} -> ${value}（改用字面量插值，如 {'<'}pk{'>'}）`
   );
 }
+for (const file of [ZH_FILE, EN_FILE]) {
+  for (const [line, key, firstLine] of collectDuplicateKeys(file)) {
+    violations.push(
+      `词条重复定义: ${relative(ROOT, file)}:${line} ${key}（与第 ${firstLine} 行重名；unplugin-vue-i18n 转换期会抛 Map keys must be unique）`
+    );
+  }
+}
 
 if (violations.length > 0) {
   console.error(
-    "\n国际化词条门禁失败（缺词条会以 key 原文显示在界面上；zh/en 必须完全对称；词条含 HTML 标签会让 unplugin-vue-i18n 转换期直接抛错）："
+    "\n国际化词条门禁失败（缺词条会以 key 原文显示在界面上；zh/en 必须完全对称；词条含 HTML 标签或重复定义会让 unplugin-vue-i18n 转换期直接抛错）："
   );
   for (const item of violations) console.error(`  ${item}`);
   process.exit(1);
