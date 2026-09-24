@@ -39,8 +39,8 @@ const DOWNLOADABLE_STATUSES = ["SUCCESS", "FAILURE"];
 
 const PAGE_PATHS = {
   approval: "/system/approval/index",
-  // 执行历史已收敛到任务中心（任务日志页停用），抽屉跳转指向统一入口
-  task: "/system/task/index",
+  // 统一入口：任务日志（任务管理下）承载执行历史与产物任务的取消/重跑/下载
+  task: "/system/celery/logs/index",
   export: "/system/export/index"
 };
 

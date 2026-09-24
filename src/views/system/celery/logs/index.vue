@@ -1,23 +1,36 @@
 <script lang="ts" setup>
+import { ref } from "vue";
 import { useTaskExecution } from "./utils/hook";
 
 /**
- * 执行历史页（已停用）：菜单 is_active=false，执行历史收敛到任务中心
- * （views/system/task，能力等价且带取消/重跑/产物下载）。组件与权限点保留，
- * 便于按需恢复：把 loadjson/menu.json 中该菜单的 is_active 改回 true 并重灌种子。
+ * 任务日志：所有 celery 任务的执行记录（定时调度 + 即时执行 + 导出/导入/报表产物任务）。
+ *
+ * 导出/导入任务与执行记录共用主键，列表按 pk 带出产物信息（类型 / 业务名 / 进度 /
+ * 产物文件），因此「看日志 / 取消 / 重跑 / 下载 / 清理」都在本页完成，不再有第二入口。
  */
 defineOptions({
   name: "SystemTaskExecution" // 必须定义，用于菜单自动匹配组件
 });
-const { api, auth, listColumnsFormat, operationButtonsProps } =
-  useTaskExecution();
+
+const tableRef = ref();
+const {
+  api,
+  auth,
+  listColumnsFormat,
+  searchColumnsFormat,
+  operationButtonsProps
+} = useTaskExecution(tableRef);
 </script>
 <template>
   <RePlusPage
+    ref="tableRef"
     :api="api"
     :auth="auth"
     locale-name="systemTaskExecution"
     :list-columns-format="listColumnsFormat"
+    :searchColumnsFormat="searchColumnsFormat"
     :operationButtonsProps="operationButtonsProps"
+    saved-views
+    advanced-filter
   />
 </template>

@@ -545,7 +545,7 @@ tag:
 commandPalette:
   title: 快捷动作
   openAi: 打开 AI 助手
-  openTaskCenter: 打开任务中心
+  openTaskLog: 打开任务日志
   openTags: 打开标签管理
   toggleTheme: 切换浅色 / 深色
   backHome: 返回首页
@@ -1896,6 +1896,9 @@ systemTask:
 
 systemTaskExecution:
   name: 任务名称
+  product_type: 记录类型
+  product_progress: 进度
+  product_error: 失败原因
   periodic_task: 所属定时任务
   status: 执行状态
   statusPENDING: 等待中

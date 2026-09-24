@@ -28,10 +28,10 @@ const QUICK_ACTIONS = [
   },
   {
     id: "cmd:task",
-    titleKey: "commandPalette.openTaskCenter",
+    titleKey: "commandPalette.openTaskLog",
     icon: "ri:list-check-2",
-    auth: "list:SystemTaskCenter",
-    route: "/system/task/index"
+    auth: "list:SystemTaskExecution",
+    route: "/system/celery/logs/index"
   },
   {
     id: "cmd:tag",
