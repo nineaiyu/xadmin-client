@@ -1211,6 +1211,76 @@ systemPermission:
   excludeExclude: 排除（排除匹配的数据）
   copyRule: 复制此规则
   modeTypeSingleTip: 规则列表仅 1 条时系统按「或模式」保存（单条规则下且/或等价）
+  # 列表统计列（服务端 SerializerMethodField 的字段名 → 表头文案）
+  rule_count: 规则数
+  menu_count: 生效接口
+  user_count: 分配用户
+  dept_count: 分配部门
+  modeOr: 或模式
+  modeAnd: 且模式
+  modeOrShort: 或
+  modeAndShort: 且
+  notes:
+    title: 生效说明
+    rules: 规则之间按「组合模式」生效：且模式需同时满足全部规则，或模式满足任一规则即可。
+    priority: 同一用户/部门命中多条授权时取最宽结果（并集）；授权只用于放宽范围，不会收窄其他授权。
+    scope: 绑定接口后仅对该接口生效，未绑定表示对所有接口生效；超级管理员不受数据权限限制。
+  editor:
+    addRule: 添加规则
+    emptyRules: 尚未配置规则，可从常用模板开始，或点击「添加规则」
+    scope: 过滤对象
+    scopePlaceholder: 选择应用 / 模型 / 字段
+    scopeRequired: 请选择过滤对象（模型与字段）
+    scopeLockedTip: 取值方式为「全部数据」时无需选择过滤对象
+    anyField: 全部字段
+    multipleField: 多值字段
+    nullableField: 可为空
+    type: 取值方式
+    typePlaceholder: 选择取值方式
+    typeRequired: 请选择取值方式
+    typeGroup:
+      all: 全部数据
+      runtime: 跟随当前用户
+      explicit: 指定对象
+      time: 时间条件
+      free: 自定义值
+    match: 匹配条件
+    matchPlaceholder: 选择匹配条件
+    matchRequired: 请选择匹配条件
+    matchFixedTip: 该取值方式由系统固定匹配条件，无需选择
+    value: 取值
+    valueRequired: 请填写或选择取值
+    jsonPlaceholder: 请输入 JSON（保存时会校验格式）
+    jsonInvalid: JSON 格式不正确
+    secondsPast: 过去
+    secondsFuture: 未来
+    secondsUnit:
+      "60": 分钟
+      "3600": 小时
+      "86400": 天
+    secondsValue: "{count} {unit}"
+    summaryAll: 全部数据（不限制）
+    summaryInclude: 包含
+    summaryExclude: 排除
+    summaryObjectCount: 已选 {count} 项
+  scope:
+    label: 生效范围
+    unlimited: 未限制（所有接口）
+    selected: 已选 {count} 个接口
+    tip: 绑定后仅对所选接口生效；勾选页面等于其下全部接口
+    dialogTitle: 选择生效接口
+    searchPlaceholder: 搜索页面或接口名称
+    expandAll: 展开全部
+    collapseAll: 折叠全部
+    selectAll: 全选
+    clear: 清空
+    anyMethod: 通用
+    apiCount: "{count} 个接口"
+    dialogTip: 勾选页面会同时勾选其下全部接口；保存后按接口权限点生效。
+  list:
+    modeSingle: 单条
+    scopeAll: 全部接口
+    scopeApis: "{count} 个接口"
 
 systemRole:
   role: 角色

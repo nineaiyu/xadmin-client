@@ -1211,6 +1211,76 @@ systemPermission:
   excludeExclude: Exclude (exclude matching data)
   copyRule: Copy this rule
   modeTypeSingleTip: With a single rule the mode is saved as OR (AND/OR are equivalent for one rule)
+  # List statistics columns (server SerializerMethodField names -> header texts)
+  rule_count: Rules
+  menu_count: Scope
+  user_count: Users
+  dept_count: Departments
+  modeOr: OR mode
+  modeAnd: AND mode
+  modeOrShort: OR
+  modeAndShort: AND
+  notes:
+    title: How it works
+    rules: Rules are combined by the mode above - AND requires every rule to match, OR matches when any rule matches.
+    priority: Multiple grants for the same user or department are merged as a union (the widest result wins); grants only widen the scope and never narrow other grants.
+    scope: A grant bound to APIs applies only to those APIs, leaving it empty applies to all APIs. Superusers bypass data permissions.
+  editor:
+    addRule: Add rule
+    emptyRules: No rules yet. Start from a preset or click "Add rule"
+    scope: Filter target
+    scopePlaceholder: Select application / model / field
+    scopeRequired: Please select a filter target (model and field)
+    scopeLockedTip: No filter target is needed for the "All data" value type
+    anyField: All fields
+    multipleField: multiple values
+    nullableField: nullable
+    type: Value type
+    typePlaceholder: Select a value type
+    typeRequired: Value type is required
+    typeGroup:
+      all: All data
+      runtime: Current user
+      explicit: Specific objects
+      time: Time conditions
+      free: Custom value
+    match: Match
+    matchPlaceholder: Select a match
+    matchRequired: Match is required
+    matchFixedTip: The match is fixed by the system for this value type
+    value: Value
+    valueRequired: Value is required
+    jsonPlaceholder: Enter JSON (validated on save)
+    jsonInvalid: Invalid JSON
+    secondsPast: Past
+    secondsFuture: Future
+    secondsUnit:
+      "60": minutes
+      "3600": hours
+      "86400": days
+    secondsValue: "{count} {unit}"
+    summaryAll: All data (no restriction)
+    summaryInclude: Include
+    summaryExclude: Exclude
+    summaryObjectCount: "{count} selected"
+  scope:
+    label: Scope
+    unlimited: Unlimited (all APIs)
+    selected: "{count} APIs selected"
+    tip: Applies only to the selected APIs; selecting a page selects all its APIs
+    dialogTitle: Select APIs
+    searchPlaceholder: Search page or API name
+    expandAll: Expand all
+    collapseAll: Collapse all
+    selectAll: Select all
+    clear: Clear
+    anyMethod: any
+    apiCount: "{count} APIs"
+    dialogTip: Selecting a page selects all of its APIs; the scope is stored as API permission points.
+  list:
+    modeSingle: Single
+    scopeAll: All APIs
+    scopeApis: "{count} APIs"
 
 systemRole:
   role: Role

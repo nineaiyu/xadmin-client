@@ -202,7 +202,9 @@ test.describe("数据权限预览与试算（e2e_dp：仅本人规则真实生�
 });
 
 test.describe("数据权限配置页即时试算", () => {
-  test("新增弹窗内渲染试算面板（数据/字段两个作用域）", async ({ page }) => {
+  test("新增抽屉内渲染规则编辑器与试算面板（数据/字段两个作用域）", async ({
+    page
+  }) => {
     await login(page);
     await openMenuPath(
       page,
@@ -210,18 +212,25 @@ test.describe("数据权限配置页即时试算", () => {
       "/system/permission/index"
     );
     await page.getByRole("button", { name: "新增" }).first().click();
-    const dialog = page.locator(".el-dialog").filter({ hasText: "新增" });
-    await expect(dialog).toBeVisible({ timeout: 15_000 });
+    // 新增与编辑统一走右侧抽屉（旧实现为弹窗嵌套子弹窗）
+    const drawer = page
+      .locator(".el-drawer")
+      .filter({ hasText: "新增" })
+      .first();
+    await expect(drawer).toBeVisible({ timeout: 15_000 });
+    // 规则编辑器：生效说明入口 + 添加规则按钮（空态引导）
+    await expect(drawer.getByText("生效说明")).toBeVisible();
+    await expect(drawer.getByTestId("rule-add")).toBeVisible();
     // 面板默认展开（折叠时极易被忽略）
-    await expect(dialog.getByText("即时试算（未保存的规则）")).toBeVisible({
+    await expect(drawer.getByText("即时试算（未保存的规则）")).toBeVisible({
       timeout: 10_000
     });
     // 两个作用域页签：数据权限（草稿规则）/ 字段权限（生效字段）
     await expect(
-      dialog.getByText("数据权限", { exact: true }).first()
+      drawer.getByText("数据权限", { exact: true }).first()
     ).toBeVisible();
     await expect(
-      dialog.getByText("字段权限", { exact: true }).first()
+      drawer.getByText("字段权限", { exact: true }).first()
     ).toBeVisible();
   });
 });

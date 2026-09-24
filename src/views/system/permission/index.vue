@@ -5,8 +5,13 @@ defineOptions({
   name: "SystemDataPermission"
 });
 
-const { api, auth, addOrEditOptions, operationButtonsProps } =
-  useDataPermission();
+const {
+  api,
+  auth,
+  addOrEditOptions,
+  listColumnsFormat,
+  operationButtonsProps
+} = useDataPermission();
 </script>
 <template>
   <RePlusPage
@@ -14,6 +19,7 @@ const { api, auth, addOrEditOptions, operationButtonsProps } =
     :auth="auth"
     locale-name="systemPermission"
     :addOrEditOptions="addOrEditOptions"
+    :listColumnsFormat="listColumnsFormat"
     :operationButtonsProps="operationButtonsProps"
   />
 </template>
