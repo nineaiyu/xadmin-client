@@ -1,6 +1,13 @@
 import { expect, test } from "@playwright/test";
 
-import { BACKEND_URL, getAccessToken, login, openMenuPath } from "./helpers";
+import {
+  BACKEND_URL,
+  clickUserAction,
+  getAccessToken,
+  login,
+  openMenuPath,
+  openUserPanel
+} from "./helpers";
 
 /**
  * 行级变更历史（用户管理，object_pk 回溯操作日志）：
@@ -55,14 +62,9 @@ test("变更历史：编辑用户后行按钮弹窗展示字段级 diff", async 
     .click();
   await expect(editDialog).not.toBeVisible({ timeout: 15_000 });
 
-  // 行按钮「变更历史」：操作列默认只展示 3 个（编辑/删除/详情），变更历史在第 4 位、
-  // 折叠进「更多」下拉（ButtonOperation 的 showNumber 默认 3）——先展开下拉再点
-  // （下拉为 click 触发：hover 展开会在鼠标移向弹层时自动收起）
-  await row.locator(".el-dropdown").first().click();
-  await page
-    .locator(".el-dropdown-menu__item", { hasText: "变更历史" })
-    .first()
-    .click();
+  // 行操作收敛进用户抽屉：操作列「管理」→ 抽屉内「变更历史」
+  // （抽屉动作按 data-action-code 定位，与文案解耦）
+  await clickUserAction(await openUserPanel(page, row), "changeHistory");
   const historyDialog = page
     .locator(".el-dialog", { hasText: "变更历史" })
     .first();

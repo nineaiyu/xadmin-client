@@ -131,10 +131,19 @@ test("分栏拖拽持久化、刷新保持与重置", async ({ page }) => {
   expect(kept).toBeLessThan(45);
 
   // ---- 双击分隔条重置回默认 20% ----
+  // 双击的两次 click 之间存在重排：第一次 click 触发重置后分隔条跳回左侧，第二次
+  // click 落到重排后的表格数据列上；若命中用户名列（用户抽屉入口）会误开抽屉，
+  // 其遮罩层吞掉后续分隔条拖拽（elementFromPoint 命中 .el-overlay）。这里显式关闭
+  // 可能的误开抽屉，保证后续步骤在无遮罩状态下进行（详见 e2e/README 陷阱表）。
   await resizer.dblclick();
   await expect
     .poll(() => leftPanePercent(page), { timeout: 5_000 })
     .toBeLessThan(25);
+  const strayDrawer = page.locator(".el-drawer:visible").first();
+  if (await strayDrawer.count()) {
+    await page.keyboard.press("Escape");
+    await expect(strayDrawer).toBeHidden({ timeout: 5_000 });
+  }
 
   // ---- 中央重置按钮：单击（无位移）触发重置 ----
   await dragResizer(page, 0.6);

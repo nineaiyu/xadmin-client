@@ -114,6 +114,14 @@ export interface OperationProps {
    */
   showNumber?: number;
   /**
+   * 隐藏默认「查看」按钮（icon 按钮）：页面用自有抽屉/面板承载详情时使用
+   */
+  hideDetail?: boolean;
+  /**
+   * 隐藏默认「变更历史」按钮：页面把记录入口收敛到自有面板时使用
+   */
+  hideChangeHistory?: boolean;
+  /**
    * 操作按钮集合   默认值为 `[]`
    */
   buttons?: OperationButtonsRow[];

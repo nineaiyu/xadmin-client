@@ -36,7 +36,10 @@ const ALLOWED_VIOLATIONS: Record<string, RegExp[]> = {
   "aria-required-children": [/\.el-menu--vertical/, /ul\[data-old-padding-top/],
   "aria-required-parent": [
     /\.submenu-title-noDropdown/,
-    /\.el-menu-item\.nest-menu/
+    /\.el-menu-item\.nest-menu/,
+    // 当前激活菜单项：axe 对该节点取「最短唯一选择器」（命中形态 .is-active.el-menu-item[role=menuitem]），
+    // 不带 nest-menu / a[href$=...] 前缀，属同一 EP 菜单垂直模式 ARIA 结构问题（见 docs/accessibility-audit.md）
+    /\.is-active\.el-menu-item/
   ],
   "color-contrast": [
     /el-button/,

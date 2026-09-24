@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 
 /**
  * E2E 公共助手：凭据与登录/登出/菜单导航。
@@ -314,4 +314,41 @@ export async function getAccessToken(page: Page): Promise<string> {
   const cookies = await page.context().cookies();
   const tokenCookie = cookies.find(cookie => cookie.name === "X-Token");
   return tokenCookie?.value ?? "";
+}
+
+/**
+ * 打开用户管理抽屉（操作列「管理」按钮；行内头像与用户名同为入口）。
+ * 用户页的行操作已收敛进抽屉，返回的 locator 供 clickUserAction 继续操作。
+ */
+export async function openUserPanel(page: Page, row: Locator) {
+  await row.getByRole("button", { name: "管理" }).first().click();
+  const drawer = page
+    .locator(".el-drawer")
+    .filter({ hasText: "管理用户" })
+    .first();
+  await expect(drawer).toBeVisible({ timeout: 15_000 });
+  return drawer;
+}
+
+/** 在已打开的用户抽屉内点击动作（按 data-action-code 精确定位，避免文案耦合） */
+export async function clickUserAction(drawer: Locator, code: string) {
+  return clickPanelAction(drawer, code);
+}
+
+/**
+ * 打开行操作抽屉（通用）：点行内入口按钮（默认为「管理」）并返回抽屉 locator。
+ * 页面侧入口文案不同则传 name（如知识库为「预览」）。
+ */
+export async function openEntityPanel(page: Page, row: Locator, name = "管理") {
+  await row.getByRole("button", { name }).first().click();
+  const drawer = page.locator(".el-drawer:visible").first();
+  await expect(drawer).toBeVisible({ timeout: 15_000 });
+  return drawer;
+}
+
+/** 点击抽屉内的动作按钮（按 data-action-code 精确定位，与文案解耦） */
+export async function clickPanelAction(panel: Locator, code: string) {
+  const action = panel.locator(`[data-action-code="${code}"]`).first();
+  await expect(action).toBeVisible({ timeout: 10_000 });
+  await action.click();
 }

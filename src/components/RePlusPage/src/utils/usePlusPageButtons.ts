@@ -57,6 +57,11 @@ export function usePlusPageButtons({
     tableBarButtonsProps
   } = props;
 
+  // 默认按钮的页面级开关：页面用自有面板承载详情/记录时逐项收敛，
+  // 未声明时保持原行为（按钮按权限点显隐）
+  const hideDetail = operationButtonsProps?.hideDetail === true;
+  const hideChangeHistory = operationButtonsProps?.hideChangeHistory === true;
+
   // 默认操作按钮
   const defaultOperationButtons = shallowRef<OperationButtonsRow[]>([]);
   defaultOperationButtons.value = [
@@ -105,7 +110,7 @@ export function usePlusPageButtons({
         handleDetail(row);
       },
       tooltip: { content: t("buttons.detail") },
-      show: auth.list || auth.retrieve ? -10 : false
+      show: hideDetail ? false : auth.list || auth.retrieve ? -10 : false
     },
     {
       text: t("buttons.changeHistory"),
@@ -121,7 +126,7 @@ export function usePlusPageButtons({
       tooltip: { content: t("buttons.changeHistory") },
       // 页面在 getDefaultAuths 中声明 changeHistory 且菜单授予
       // changeHistory:<ComponentName> 权限码时显示（用户管理页已开启示范）
-      show: auth.changeHistory ? -5 : false
+      show: hideChangeHistory ? false : auth.changeHistory ? -5 : false
     }
   ];
 

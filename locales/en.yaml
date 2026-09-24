@@ -1080,6 +1080,32 @@ systemUser:
   rules: Data Permissions
   preview: Permission Preview
   logout: Logout
+  manage: Manage
+  manageUser: Manage user { user }
+  enabled: Enabled
+  disabled: Disabled
+  locked: Locked
+  onlineSessions: "{count} online"
+  dateExpired: Account Expiry
+  tags: Tags
+  sendNotice: Send Notice
+  actionGroups:
+    account: Account & Security
+    permission: Permission & Roles
+    lifecycle: Account Lifecycle
+    collaboration: Notice & Collaboration
+    record: Records & Audit
+  resetPasswordTip: "Set a new password for this user; the original password is invalidated immediately"
+  resetMfaTip: "Clear TOTP and Passkey bindings; the user must rebind"
+  editAvatarTip: Upload and crop a new avatar
+  logoutTip: Terminate all online sessions of this user
+  assignRolesTip: Adjust roles and data permission scope
+  previewTip: Read-only view of layered permissions and data scope
+  inviteTip: "Send an invitation email and reset the account to pending activation"
+  sendNoticeTip: Open notices with this user prefilled as the recipient
+  imBindingTip: Bind or unbind the IM account on behalf of the user
+  tagsTip: Maintain tags of this user
+  changeHistoryTip: View field-level change records of this user
 
 systemDept:
   dept: Department

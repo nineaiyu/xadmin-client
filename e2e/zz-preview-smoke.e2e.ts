@@ -2,11 +2,13 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import {
   BACKEND_URL,
+  clickUserAction,
   E2E_USER_AGENT,
   getAccessToken,
   login,
   openList,
   openMenuPath,
+  openUserPanel,
   PLAIN_USER
 } from "./helpers";
 
@@ -70,7 +72,7 @@ test("用户权限预览：抽屉与分区渲染（超管全量）", async ({ pa
     row = page.locator(".el-table__row").filter({ hasText: "xadmin" }).first();
   }
   await expect(row).toBeVisible({ timeout: 10_000 });
-  await openPreviewViaRow(page, row, "权限预览");
+  await clickUserAction(await openUserPanel(page, row), "preview");
 
   const drawer = page.locator(".el-drawer").filter({ hasText: "用户权限预览" });
   await expect(drawer).toBeVisible({ timeout: 15_000 });

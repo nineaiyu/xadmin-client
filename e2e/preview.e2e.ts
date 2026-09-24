@@ -2,12 +2,14 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import {
   BACKEND_URL,
+  clickUserAction,
   DP_USER,
   E2E_USER_AGENT,
   getAccessToken,
   login,
   openList,
   openMenuPath,
+  openUserPanel,
   PLAIN_USER
 } from "./helpers";
 
@@ -62,7 +64,8 @@ async function openUserPreviewAsAdmin(page: Page, username: string) {
     .filter({ hasText: username })
     .first();
   await expect(row).toBeVisible({ timeout: 10_000 });
-  await clickRowButton(page, row, "权限预览");
+  // 行操作收敛进用户抽屉：先开「管理」抽屉，再点抽屉里的「权限预览」
+  await clickUserAction(await openUserPanel(page, row), "preview");
   const drawer = page.locator(".el-drawer").filter({ hasText: "用户权限预览" });
   await expect(drawer).toBeVisible({ timeout: 15_000 });
   return drawer;
@@ -83,7 +86,7 @@ async function openSelfPreviewAsDpUser(page: Page) {
   const table = page.locator(".el-table").first();
   await expect(table).toBeVisible({ timeout: 15_000 });
   const row = page.locator(".el-table__row").first();
-  await clickRowButton(page, row, "权限预览");
+  await clickUserAction(await openUserPanel(page, row), "preview");
   const drawer = page.locator(".el-drawer").filter({ hasText: "用户权限预览" });
   await expect(drawer).toBeVisible({ timeout: 15_000 });
   return drawer;

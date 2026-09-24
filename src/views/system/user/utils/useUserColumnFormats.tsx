@@ -3,7 +3,7 @@ import { buildRoleRulesColumns } from "@/views/system/hooks";
 import { choiceValue, statusTagProps, type StatusTagType } from "@/utils/dict";
 import { AesEncrypted } from "@/utils/aes";
 import { h, shallowRef, ref, type Ref, type UnwrapNestedRefs } from "vue";
-import { ElImage } from "element-plus";
+import { ElImage, ElLink } from "element-plus";
 import {
   handleOperation,
   isReadonlyCell,
@@ -40,7 +40,8 @@ export function useUserColumnFormats({
   switchLoadMap,
   switchStyle,
   passwordRules,
-  tableRef
+  tableRef,
+  openUserPanel
 }: {
   t: TFunction;
   api: UnwrapNestedRefs<typeof userApi>;
@@ -49,6 +50,7 @@ export function useUserColumnFormats({
   switchStyle: SwitchStyle;
   passwordRules: { value: PasswordRule[] };
   tableRef: Ref;
+  openUserPanel: (row: RecordType) => void;
 }) {
   const roleRulesColumns = ref<PageColumn[]>([]);
   const roleRules = ref({});
@@ -59,18 +61,52 @@ export function useUserColumnFormats({
     columns.forEach(column => {
       switch (column._column?.key) {
         case "avatar":
+          // 头像即用户抽屉入口（回收站只读时降级为纯展示；大图预览移到抽屉资料卡内）
           column["cellRenderer"] = scope => {
             const src = scope.row[column._column?.key as string];
-            return h(ElImage, {
+            const image = h(ElImage, {
               lazy: true,
               src,
               // 有头像给可访问名；无头像回落的装饰图 alt 置空（读屏器可忽略）
               alt: src ? t("systemUser.avatarAlt") : "",
-              class: ["w-[36px]", "h-[36px]", "align-middle"],
-              // 回收站只读：不提供点击放大预览
-              previewSrcList: isReadonlyCell(scope) ? undefined : [src],
-              previewTeleported: true
+              class: ["w-[36px]", "h-[36px]", "align-middle"]
             });
+            if (isReadonlyCell(scope)) return image;
+            return h(
+              "button",
+              {
+                type: "button",
+                class: [
+                  "p-0",
+                  "border-none",
+                  "bg-transparent",
+                  "cursor-pointer",
+                  "leading-none",
+                  "rounded-full"
+                ],
+                "aria-label": t("systemUser.manageUser", {
+                  user: scope.row.username
+                }),
+                onClick: () => openUserPanel(scope.row)
+              },
+              [image]
+            );
+          };
+          break;
+        case "username":
+          // 用户名同为抽屉入口：hover 链接态提示可点（回收站只读时保持纯文本）
+          column["cellRenderer"] = scope => {
+            if (isReadonlyCell(scope) || !scope.row?.pk) {
+              return String(scope.row?.username ?? "");
+            }
+            return h(
+              ElLink,
+              {
+                type: "primary",
+                onClick: () => openUserPanel(scope.row)
+              },
+              () => scope.row.username
+            );
           };
           break;
         case "gender":

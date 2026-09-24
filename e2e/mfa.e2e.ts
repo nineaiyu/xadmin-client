@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { login } from "./helpers";
+import { login, openUserPanel } from "./helpers";
 
 /**
  * MFA 功能入口回归：
@@ -11,8 +11,8 @@ import { login } from "./helpers";
  * 3. 右上角账户设置页（/account-settings）包含「MFA 安全」面板（复用个人中心
  *    OTP 绑定组件）
  * 4. 个人中心包含「MFA 安全」tab，可进入 OTP 绑定
- * 5. 用户管理行操作「…」下拉包含「重置MFA」（缺失 resetMfa:SystemUser 权限码
- *    时按钮隐藏的回归）
+ * 5. 用户管理行操作「管理」抽屉包含「重置MFA」（缺失 resetMfa:SystemUser 权限码
+ *    时动作不渲染的回归）
  *
  * 注意：安全设置页的 el-tabs 为 border-card 类型，以此与右上角 lay-notice
  * 内的 tabs 区分，避免 tabpanel 断言命中两套 DOM 导致 strict violation。
@@ -83,21 +83,16 @@ test.describe("MFA 功能入口", () => {
     await expect(page.getByRole("button", { name: "绑定 OTP" })).toBeVisible();
   });
 
-  test("用户管理：行操作下拉包含重置MFA", async ({ page }) => {
+  test("用户管理：管理抽屉包含重置MFA", async ({ page }) => {
     await login(page);
     await page.goto("/#/system/user/index");
     const table = page.locator(".el-table").first();
     await expect(table).toBeVisible({ timeout: 15_000 });
 
-    const lastRow = page.locator(".el-table__body-wrapper tr").last();
-    const moreButton = lastRow.locator("button", { hasText: /…|⋯/ }).first();
-    if (await moreButton.count()) {
-      await moreButton.click();
-    } else {
-      await lastRow.locator(".el-button").last().click();
-    }
-    await expect(
-      page.locator(".el-dropdown-menu:visible").getByText("重置MFA")
-    ).toBeVisible();
+    // 行操作收敛进用户抽屉：操作列「管理」→ 抽屉内「重置MFA」
+    // （缺失 resetMfa:SystemUser 权限码时该动作不渲染的回归）
+    const row = page.locator(".el-table__body-wrapper tr").first();
+    const panel = await openUserPanel(page, row);
+    await expect(panel.locator('[data-action-code="resetMfa"]')).toBeVisible();
   });
 });
