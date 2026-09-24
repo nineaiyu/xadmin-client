@@ -39,7 +39,8 @@ const DOWNLOADABLE_STATUSES = ["SUCCESS", "FAILURE"];
 
 const PAGE_PATHS = {
   approval: "/system/approval/index",
-  task: "/system/celery/logs/index",
+  // 执行历史已收敛到任务中心（任务日志页停用），抽屉跳转指向统一入口
+  task: "/system/task/index",
   export: "/system/export/index"
 };
 

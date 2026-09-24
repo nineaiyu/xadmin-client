@@ -505,6 +505,14 @@ taskCenter:
   cancelDone: 已取消
   rerun: 重跑
   rerunDone: 已提交重跑
+  colTimeCost: 耗时
+  deleteConfirm: 确认删除这条执行历史？
+  deleteDone: 已删除
+  deleteProductHint: 导出/导入记录的清理请在下载中心操作
+  batchDelete: 批量删除
+  batchDeleteConfirm: 确认删除选中的 {count} 条执行历史？
+  batchDeleteEmpty: 选中的记录里没有可清理的执行历史
+  selected: 已选 {count} 条
 
 tag:
   title: 标签

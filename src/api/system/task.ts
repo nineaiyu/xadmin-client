@@ -107,10 +107,14 @@ export type TaskCenterRow = {
   pk: string;
   name: string;
   module: string;
+  /** 所属定时任务名（仅执行历史有值，手动执行为空） */
+  periodic_task: string;
   status: string;
   progress: number | null;
   /** 统一进度助手的阶段描述（如「统计行数 / 渲染内容」，任务类型为空） */
   stage: string;
+  /** 执行耗时（秒，仅执行历史有值） */
+  time_cost: number | null;
   creator: string;
   created_time: string | null;
   finished_time: string | null;
@@ -121,14 +125,17 @@ export type TaskCenterRow = {
   failed_rows?: number;
   can_cancel: boolean;
   can_rerun: boolean;
+  /** 可在任务中心清理（仅执行历史；导出/导入记录的删除在下载中心） */
+  can_delete: boolean;
 };
 
 export type TaskCenterQuery = {
   type?: string;
   status?: string;
   keyword?: string;
-  start?: string;
-  end?: string;
+  creator?: string;
+  created_time_after?: string;
+  created_time_before?: string;
   page?: number;
   size?: number;
 };

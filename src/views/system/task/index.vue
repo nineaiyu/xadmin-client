@@ -1,21 +1,22 @@
 <script lang="ts" setup>
-import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessageBox } from "element-plus";
-import { SUCCESS_CODE } from "@/api/types";
-import { message } from "@/utils/message";
-import { hasAuth } from "@/router/utils";
 import { formatDateTime } from "@/utils";
 import { statusTagProps } from "@/utils/dict";
-import { openTaskLogDialog } from "../components/taskLogDialog";
+import { useTaskCenter } from "./utils/hook";
 import {
-  taskCenterApi,
-  type TaskCenterKind,
-  type TaskCenterRow
-} from "@/api/system/task";
+  asRow,
+  progressOf,
+  progressStatus,
+  sourceOf,
+  timeCostText,
+  STATUS_OPTIONS,
+  STATUS_TAG_TYPE,
+  TYPE_OPTIONS,
+  TYPE_TAG_TYPE
+} from "./utils/columns";
 
 /**
- * 任务中心：三类记录（执行历史 / 导出 / 导入）统一列表 + 取消 / 重跑 / 日志 / 下载。
+ * 任务中心：三类记录（执行历史 / 导出 / 导入）统一列表 + 取消 / 重跑 / 日志 / 下载 / 清理。
  *
  * 接口只读聚合，不建新表；数据域与下载中心一致（超管全量，其余仅本人记录）。
  * 取消为协作式语义（PENDING 立即终态，RUNNING 在安全点收敛），文案需如实说明。
@@ -25,167 +26,30 @@ defineOptions({
 });
 
 const { t } = useI18n();
-
-const loading = ref(false);
-const rows = ref<TaskCenterRow[]>([]);
-const total = ref(0);
-const page = ref(1);
-const size = ref(15);
-const filters = ref({
-  type: "" as "" | TaskCenterKind,
-  status: "",
-  keyword: ""
-});
-
-const canCancel = hasAuth("cancel:SystemTaskCenter");
-const canRerun = hasAuth("rerun:SystemTaskCenter");
-
-const TYPE_OPTIONS: { value: TaskCenterKind; labelKey: string }[] = [
-  { value: "task", labelKey: "taskCenter.typeTask" },
-  { value: "export", labelKey: "taskCenter.typeExport" },
-  { value: "import", labelKey: "taskCenter.typeImport" }
-];
-
-const STATUS_OPTIONS = [
-  { value: "PENDING", labelKey: "taskCenter.statusPending" },
-  { value: "RUNNING", labelKey: "taskCenter.statusRunning" },
-  { value: "SUCCESS", labelKey: "taskCenter.statusSuccess" },
-  { value: "FAILURE", labelKey: "taskCenter.statusFailure" },
-  { value: "REVOKED", labelKey: "taskCenter.statusRevoked" }
-];
-
-const statusTagType: Record<string, "success" | "warning" | "danger" | "info"> =
-  {
-    PENDING: "info",
-    RUNNING: "warning",
-    SUCCESS: "success",
-    FAILURE: "danger",
-    REVOKED: "info"
-  };
-
-const typeTagType: Record<string, "primary" | "success" | "warning"> = {
-  task: "primary",
-  export: "success",
-  import: "warning"
-};
-
-const load = async () => {
-  loading.value = true;
-  try {
-    const res = await taskCenterApi
-      .getUnified({
-        type: filters.value.type || undefined,
-        status: filters.value.status || undefined,
-        keyword: filters.value.keyword || undefined,
-        page: page.value,
-        size: size.value
-      })
-      .catch(error => ({
-        code: -1,
-        detail: String((error as { detail?: string })?.detail ?? error),
-        data: { results: [], total: 0 }
-      }));
-    if (res.code === SUCCESS_CODE) {
-      const data = (res.data ?? {}) as {
-        results?: TaskCenterRow[];
-        total?: number;
-      };
-      rows.value = data.results ?? [];
-      total.value = data.total ?? 0;
-    } else if (res.detail) {
-      message(String(res.detail), { type: "warning" });
-    }
-  } finally {
-    loading.value = false;
-  }
-};
-
-const onSearch = () => {
-  page.value = 1;
-  load();
-};
-
-const onReset = () => {
-  filters.value = { type: "", status: "", keyword: "" };
-  onSearch();
-};
-
-const cancel = async (row: TaskCenterRow) => {
-  const ok = await ElMessageBox.confirm(
-    t("taskCenter.cancelConfirm"),
-    t("taskCenter.cancelTitle"),
-    {
-      type: "warning",
-      confirmButtonText: t("buttons.sure"),
-      cancelButtonText: t("buttons.cancel")
-    }
-  )
-    .then(() => true)
-    .catch(() => false);
-  if (!ok) return;
-  const res = await taskCenterApi.cancel(row.type, row.pk).catch(error => ({
-    code: -1,
-    detail: String((error as { detail?: string })?.detail ?? error)
-  }));
-  if (res.code === SUCCESS_CODE) {
-    message(String(res.detail ?? t("taskCenter.cancelDone")), {
-      type: "success"
-    });
-    load();
-  } else if (res.detail) {
-    message(String(res.detail), { type: "warning" });
-  }
-};
-
-const rerun = async (row: TaskCenterRow) => {
-  const res = await taskCenterApi.rerun(row.type, row.pk).catch(error => ({
-    code: -1,
-    detail: String((error as { detail?: string })?.detail ?? error)
-  }));
-  if (res.code === SUCCESS_CODE) {
-    message(String(res.detail ?? t("taskCenter.rerunDone")), {
-      type: "success"
-    });
-    load();
-  } else if (res.detail) {
-    message(String(res.detail), { type: "warning" });
-  }
-};
-
-const openLog = (row: TaskCenterRow) => {
-  if (row.type === "export") {
-    openTaskLogDialog(row.pk, `${row.name} ${t("taskCenter.logTitle")}`);
-    return;
-  }
-  if (row.type === "import") {
-    openTaskLogDialog(row.pk, `${row.name} ${t("taskCenter.logTitle")}`);
-    return;
-  }
-  openTaskLogDialog(row.pk, `${row.name} ${t("taskCenter.logTitle")}`);
-};
-
-/** 产物下载：导出/导入记录各自端点（与下载中心同一链路） */
-const downloadUrl = (row: TaskCenterRow) =>
-  row.type === "export"
-    ? `/api/system/exports/${row.pk}/download`
-    : `/api/system/imports/${row.pk}/download`;
-
-const progressOf = (row: TaskCenterRow) =>
-  row.progress === null || row.progress === undefined ? null : row.progress;
-
-const progressStatus = (row: TaskCenterRow) =>
-  row.status === "FAILURE" || row.status === "REVOKED"
-    ? "exception"
-    : row.status === "SUCCESS"
-      ? "success"
-      : undefined;
-
-const rowsLabel = computed(() => t("taskCenter.total", { total: total.value }));
-
-/** el-table 插槽行类型为 DefaultRow：统一归一为任务中心行类型（避免模板内散落断言） */
-const asRow = (row: unknown) => row as TaskCenterRow;
-
-onMounted(load);
+const {
+  loading,
+  rows,
+  total,
+  page,
+  size,
+  filters,
+  canCancel,
+  canRerun,
+  canDelete,
+  canBatchDelete,
+  selectedCount,
+  selectedDeletableCount,
+  load,
+  onSearch,
+  onReset,
+  onSelectionChange,
+  cancel,
+  rerun,
+  openLog,
+  remove,
+  batchRemove,
+  downloadUrl
+} = useTaskCenter();
 </script>
 
 <template>
@@ -196,7 +60,7 @@ onMounted(load);
           v-model="filters.type"
           clearable
           :placeholder="t('taskCenter.type')"
-          style="width: 150px"
+          style="width: 140px"
           data-testid="task-center-type"
         >
           <el-option
@@ -210,7 +74,7 @@ onMounted(load);
           v-model="filters.status"
           clearable
           :placeholder="t('taskCenter.status')"
-          style="width: 150px"
+          style="width: 140px"
           data-testid="task-center-status"
         >
           <el-option
@@ -224,15 +88,58 @@ onMounted(load);
           v-model="filters.keyword"
           clearable
           :placeholder="t('taskCenter.keyword')"
-          style="width: 200px"
+          style="width: 190px"
           data-testid="task-center-keyword"
           @keyup.enter="onSearch"
+        />
+        <el-input
+          v-model="filters.creator"
+          clearable
+          :placeholder="t('taskCenter.colCreator')"
+          style="width: 130px"
+          data-testid="task-center-creator"
+          @keyup.enter="onSearch"
+        />
+        <el-date-picker
+          v-model="filters.range"
+          type="datetimerange"
+          value-format="YYYY-MM-DDTHH:mm:ss"
+          :start-placeholder="t('taskCenter.colCreated')"
+          :end-placeholder="t('taskCenter.colCreated')"
+          style="width: 330px"
+          data-testid="task-center-range"
         />
         <el-button type="primary" @click="onSearch">
           {{ t("buttons.search") }}
         </el-button>
         <el-button @click="onReset">{{ t("buttons.reset") }}</el-button>
-        <span class="text-sm opacity-70">{{ rowsLabel }}</span>
+        <!-- 清理入口：只针对执行历史；选中的导出/导入记录自动跳过 -->
+        <el-popconfirm
+          v-if="canBatchDelete"
+          :title="
+            t('taskCenter.batchDeleteConfirm', {
+              count: selectedDeletableCount
+            })
+          "
+          @confirm="batchRemove"
+        >
+          <template #reference>
+            <el-button
+              type="danger"
+              plain
+              :disabled="!selectedDeletableCount"
+              data-testid="task-center-batch-delete"
+            >
+              {{ t("taskCenter.batchDelete") }}
+            </el-button>
+          </template>
+        </el-popconfirm>
+        <span v-if="selectedCount" class="text-sm opacity-70">
+          {{ t("taskCenter.selected", { count: selectedCount }) }}
+        </span>
+        <span class="text-sm opacity-70">
+          {{ t("taskCenter.total", { total }) }}
+        </span>
       </div>
     </el-card>
 
@@ -242,37 +149,42 @@ onMounted(load);
         :data="rows"
         row-key="pk"
         data-testid="task-center-table"
+        @selection-change="onSelectionChange"
       >
+        <el-table-column type="selection" width="40" />
         <el-table-column :label="t('taskCenter.colType')" width="90">
           <template #default="{ row }">
-            <el-tag size="small" :type="typeTagType[row.type]">
-              {{ t(`taskCenter.type_${row.type}`) }}
+            <el-tag size="small" :type="TYPE_TAG_TYPE[asRow(row).type]">
+              {{ t(`taskCenter.type_${asRow(row).type}`) }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column
           prop="name"
           :label="t('taskCenter.colName')"
-          min-width="220"
+          min-width="200"
           show-overflow-tooltip
         />
         <el-table-column
-          prop="module"
           :label="t('taskCenter.colModule')"
-          min-width="140"
+          width="150"
           show-overflow-tooltip
-        />
-        <el-table-column :label="t('taskCenter.colStatus')" width="130">
+        >
+          <template #default="{ row }">
+            {{ sourceOf(asRow(row)) || "-" }}
+          </template>
+        </el-table-column>
+        <el-table-column :label="t('taskCenter.colStatus')" width="110">
           <template #default="{ row }">
             <el-tag
               size="small"
-              :type="statusTagProps(row.status, statusTagType).type"
+              :type="statusTagProps(row.status, STATUS_TAG_TYPE).type"
             >
               {{ t(`taskCenter.status_${row.status}`) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column :label="t('taskCenter.colProgress')" width="200">
+        <el-table-column :label="t('taskCenter.colProgress')" width="180">
           <template #default="{ row }">
             <el-progress
               v-if="progressOf(asRow(row)) !== null"
@@ -289,10 +201,15 @@ onMounted(load);
             </div>
           </template>
         </el-table-column>
+        <el-table-column :label="t('taskCenter.colTimeCost')" width="100">
+          <template #default="{ row }">
+            {{ timeCostText(asRow(row)) }}
+          </template>
+        </el-table-column>
         <el-table-column
           prop="creator"
           :label="t('taskCenter.colCreator')"
-          width="120"
+          width="110"
         />
         <el-table-column
           prop="created_time"
@@ -308,23 +225,26 @@ onMounted(load);
         <el-table-column
           prop="error"
           :label="t('taskCenter.colError')"
-          min-width="180"
+          min-width="150"
           show-overflow-tooltip
         />
         <el-table-column
           :label="t('taskCenter.colActions')"
-          width="230"
+          width="260"
           fixed="right"
         >
           <template #default="{ row }">
-            <el-button
+            <el-popconfirm
               v-if="canCancel && row.can_cancel"
-              type="warning"
-              link
-              @click="cancel(asRow(row))"
+              :title="t('taskCenter.cancelConfirm')"
+              @confirm="cancel(asRow(row))"
             >
-              {{ t("taskCenter.cancel") }}
-            </el-button>
+              <template #reference>
+                <el-button type="warning" link>
+                  {{ t("taskCenter.cancel") }}
+                </el-button>
+              </template>
+            </el-popconfirm>
             <el-button
               v-if="canRerun && row.can_rerun"
               type="primary"
@@ -341,10 +261,21 @@ onMounted(load);
               type="primary"
               :href="downloadUrl(asRow(row))"
               target="_blank"
-              class="ml-2"
+              class="mx-2 align-middle"
             >
               {{ t("taskCenter.download") }}
             </el-link>
+            <el-popconfirm
+              v-if="canDelete && row.can_delete"
+              :title="t('taskCenter.deleteConfirm')"
+              @confirm="remove(asRow(row))"
+            >
+              <template #reference>
+                <el-button type="danger" link>
+                  {{ t("buttons.delete") }}
+                </el-button>
+              </template>
+            </el-popconfirm>
           </template>
         </el-table-column>
       </el-table>

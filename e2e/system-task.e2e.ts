@@ -141,11 +141,7 @@ test("执行历史：手动执行产生记录，状态成功、触发人可见",
   await runTask(page, token, periodicPk);
 
   // 执行历史页：新执行记录（任务路径为名），状态「成功」、触发人 xadmin
-  await openMenuPath(
-    page,
-    ["系统管理", "任务管理"],
-    "/system/celery/logs/index"
-  );
+  await openMenuPath(page, ["系统管理"], "/system/task/index");
   const row = page.locator(".el-table__row", { hasText: TASK_PATH }).first();
   await expect(row).toBeVisible({ timeout: 15_000 });
   await expect(row).toContainText("成功");
@@ -201,11 +197,7 @@ test("定时任务：批量执行 → 执行历史产生多条成功记录", asy
   await expect(page.locator(".el-message--success").last()).toBeVisible();
 
   // 执行历史页：两条新记录均「成功」（所属定时任务列显示任务名）
-  await openMenuPath(
-    page,
-    ["系统管理", "任务管理"],
-    "/system/celery/logs/index"
-  );
+  await openMenuPath(page, ["系统管理"], "/system/task/index");
   for (const name of names) {
     const row = page.locator(".el-table__row", { hasText: name }).first();
     await expect(row).toBeVisible({ timeout: 15_000 });
@@ -229,11 +221,7 @@ test("执行历史：行删除与批量删除后记录消失", async ({ page }) 
     await runTask(page, token, periodicPk);
   }
 
-  await openMenuPath(
-    page,
-    ["系统管理", "任务管理"],
-    "/system/celery/logs/index"
-  );
+  await openMenuPath(page, ["系统管理"], "/system/task/index");
   // 限定可见表格：keep-alive 缓存了定时任务页 DOM，避免跨页 hasText 串扰
   const visibleRow = (name: string) =>
     page.locator(".el-table:visible .el-table__row", { hasText: name }).first();

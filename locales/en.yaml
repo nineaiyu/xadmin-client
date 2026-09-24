@@ -505,6 +505,14 @@ taskCenter:
   cancelDone: Cancelled
   rerun: Rerun
   rerunDone: Rerun submitted
+  colTimeCost: Time cost
+  deleteConfirm: Delete this execution record?
+  deleteDone: Deleted
+  deleteProductHint: Delete export/import records in the download center
+  batchDelete: Batch delete
+  batchDeleteConfirm: Delete {count} selected execution records?
+  batchDeleteEmpty: No deletable execution records selected
+  selected: "{count} selected"
 
 tag:
   title: Tag
