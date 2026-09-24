@@ -111,9 +111,8 @@ test("任务日志：记录类型过滤 + 重跑 + 日志入口", async ({ page 
     .waitFor({ state: "hidden", timeout: 5_000 })
     .catch(() => null);
   await rerunRow.getByRole("button", { name: "日志" }).click();
-  await expect(page.locator(".el-dialog", { hasText: "执行日志" })).toBeVisible(
-    {
-      timeout: 15_000
-    }
-  );
+  // 弹窗标题为「<记录名> 日志」：按记录名定位，不依赖标题文案
+  await expect(
+    page.locator(".el-dialog", { hasText: `${record!.name}-rerun` })
+  ).toBeVisible({ timeout: 15_000 });
 });
