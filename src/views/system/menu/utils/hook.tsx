@@ -1,235 +1,322 @@
-import { SUCCESS_CODE } from "@/api/types";
-import { message } from "@/utils/message";
-import { menuApi } from "@/api/system/menu";
-import { getCurrentInstance, onMounted, reactive, ref } from "vue";
-import type { FormItemProps, Tree } from "./types";
-import { cloneDeep, isEmpty, isNullOrUnDef } from "@pureadmin/utils";
-import { getMenuOrderPk } from "@/utils";
-import { FieldChoices, MenuChoices } from "@/views/system/constants";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
-import { modelLabelFieldApi } from "@/api/system/field";
-import { formatFiledAppParent } from "@/views/system/hooks";
-import type { RecordType } from "plus-pro-components";
-import { handleTree } from "@/utils/tree";
-import { fetchAllRows } from "@/utils/fetchAllRows";
-import { useMenuData } from "./useMenuData";
-import { useMenuDialog } from "./useMenuDialog";
-import { useMenuPermissions } from "./useMenuPermissions";
-
-const defaultData: FormItemProps = {
-  menu_type: MenuChoices.DIRECTORY,
-  parent: "",
-  name: "",
-  path: "",
-  rank: 0,
-  component: "",
-  method: "",
-  model: [],
-  is_active: true,
-  meta: {
-    title: "",
-    icon: "",
-    r_svg_name: "",
-    is_show_menu: true,
-    is_show_parent: false,
-    is_keepalive: true,
-    frame_url: "",
-    frame_loading: false,
-    transition_enter: "",
-    transition_leave: "",
-    is_hidden_tag: false,
-    fixed_tag: false,
-    dynamic_level: 0,
-    watermark: false
-  }
-};
-
 /**
- * 菜单视图组装入口（拆分自 519 行单体，行为与返回契约不变）：
- * - useMenuData         数据加载与增删（列表/字典/接口清单、单删/批删、导入导出）
- * - useMenuDialog       新增/编辑弹层（表单装配与保存）
- * - useMenuPermissions  权限码批量生成抽屉
- * 组装入口保留：拖拽排序（handleDrag）、组件路径清单空闲加载（getViews）、初始拉取。
+ * 菜单管理页组装入口：数据 / 筛选 / 树交互 / 排序 / 多选 / 抽屉六块能力的接线。
+ *
+ * 页面（index.vue）只消费本文件返回的扁平引用，逻辑全部落在各职责模块：
+ * - useMenuData      数据拉取与增删改（含影响面预检、批量启停、导入导出）
+ * - useMenuFilter    关键字/类型/状态/展开层级与可见树
+ * - useMenuTree      树的展开应用、勾选、拖拽约束与定位
+ * - useMenuOrder     同层上移下移置顶与拖拽排序提交
+ * - useMenuSelection 多选模式与批量操作条
+ * - useMenuDrawer    新增/编辑/克隆/重命名/权限码抽屉编排
  */
+
+import {
+  computed,
+  getCurrentInstance,
+  nextTick,
+  onMounted,
+  reactive,
+  ref,
+  watch
+} from "vue";
+import { useI18n } from "vue-i18n";
+import { hasAuth, getDefaultAuths } from "@/router/utils";
+import { useMenuData } from "./useMenuData";
+import { useMenuFilter } from "./useMenuFilter";
+import { useMenuTree } from "./useMenuTree";
+import { useMenuOrder, type MoveDirection } from "./useMenuOrder";
+import { useMenuSelection } from "./useMenuSelection";
+import { useMenuDrawer } from "./useMenuDrawer";
+import { buildNodeActions, type MenuActionContext } from "./menuActions";
+import type { MenuAuths, MenuNodeAction, MenuRow } from "./types";
+
 export function useMenu() {
-  const api = reactive(menuApi);
+  const { t } = useI18n();
+  const instance = getCurrentInstance();
+
   const auth = reactive({
-    rank: false,
-    permissions: false,
-    apiUrl: false,
-    ...getDefaultAuths(getCurrentInstance(), ["rank", "permissions", "apiUrl"])
-  });
-  const formRef = ref();
-  const treeData = ref([]);
-  const parentIds = ref([]);
-  // menu choices 接口为字典形态：{ method: [...], menu_type: [...] }
-  const choicesDict = ref<RecordType>({});
-  const menuUrlList = ref([]);
-  /** 组件路径清单（value → 视图组件 name，异步填充） */
-  const viewList = ref<Record<string, string>>({});
-  const modelList = ref<RecordType[]>([]);
-  const menuData = ref<FormItemProps>(cloneDeep(defaultData));
-  const loading = ref(true);
+    // 排序/权限码/接口清单/影响面/批量更新为菜单页扩展动作
+    ...getDefaultAuths(instance, [
+      "rank",
+      "permissions",
+      "apiUrl",
+      "impact",
+      "batchUpdate"
+    ])
+  }) as MenuAuths;
 
-  const {
-    getMenuApiList,
-    getMenuData,
-    handleDelete,
-    handleManyDelete,
-    exportData,
-    importData
-  } = useMenuData({
-    api,
+  const treeRef = ref();
+  const rootRef = ref<HTMLElement>();
+  const currentRow = ref<MenuRow | null>(null);
+
+  const data = useMenuData();
+  const filter = useMenuFilter(data.treeData);
+
+  /** el-tree 绑定的本地副本：拖拽会就地改写数据，不能把 computed 结果直接交给它 */
+  const renderedTree = ref<MenuRow[]>([]);
+  watch(
+    filter.visibleTree,
+    value => {
+      renderedTree.value = value;
+    },
+    { immediate: true }
+  );
+
+  /** 保存/新增后需要临时展开的祖先（与筛选展开层级取并集） */
+  const revealPks = ref<Set<string>>(new Set());
+  const expandPks = computed(() => {
+    const merged = new Set(filter.expandPks.value);
+    revealPks.value.forEach(pk => merged.add(pk));
+    return merged;
+  });
+
+  const order = useMenuOrder({
+    api: data.api,
+    treeData: data.treeData,
+    renderedTree,
+    rowIndex: data.rowIndex,
+    patchRows: data.patchRows,
+    submitRank: data.submitRank,
+    reload: data.getMenuData
+  });
+
+  const selection = useMenuSelection({
+    treeRef,
+    rowIndex: data.rowIndex,
+    setRowsActive: data.setRowsActive,
+    removeRows: data.removeRows
+  });
+
+  const drawer = useMenuDrawer({
+    api: data.api,
     auth,
-    loading,
-    treeData,
-    choicesDict,
-    menuUrlList
-  });
-
-  const { openDialog, addNewMenu, handleConfirm } = useMenuDialog({
-    api,
-    auth,
-    treeData,
-    choicesDict,
-    menuUrlList,
-    viewList,
-    modelList,
-    parentIds,
-    formRef,
-    defaultData,
-    getMenuData
-  });
-
-  const { handleAddPermissions } = useMenuPermissions({
-    api,
-    menuUrlList,
-    getMenuData
-  });
-
-  const handleDrag = (
-    treeRef: { data?: unknown } | undefined,
-    node: { data: Tree },
-    node2: { data: Tree },
-    position: string
-  ) => {
-    const u_menu = node.data;
-    if (position === "inner") {
-      // 拖拽节点来自后端菜单树，pk 恒存在
-      u_menu.parent = node2.data.pk as number;
-    } else {
-      u_menu.parent = node2.data.parent;
+    t,
+    treeData: data.treeData,
+    rowIndex: data.rowIndex,
+    choicesDict: data.choicesDict,
+    modelList: data.modelList,
+    viewList: data.viewList,
+    menuUrlList: data.menuUrlList,
+    saveNode: data.saveNode,
+    renameNode: data.renameNode,
+    setRowsActive: data.setRowsActive,
+    reload: data.getMenuData,
+    onSaved: pk => {
+      if (pk === undefined) return;
+      revealRow(pk);
+      const row = data.rowIndex.value.byPk.get(String(pk));
+      if (row) currentRow.value = row;
     }
-    api
-      .partialUpdate(u_menu.pk as number, u_menu)
-      .then(res => {
-        if (res.code === SUCCESS_CODE) {
-          api
-            .rank(getMenuOrderPk(treeRef?.data))
-            .then(res => {
-              if (res.code === SUCCESS_CODE) {
-                message(res.detail, { type: "success" });
-              } else {
-                message(res.detail, { type: "error" });
-                // 排序未生效：重拉数据，避免本地顺序与服务端不一致
-                getMenuData();
-              }
-            })
-            .catch(err => {
-              message(err?.detail, { type: "error" });
-              getMenuData();
-            });
-        } else {
-          message(res.detail, { type: "error" });
-          // 拖拽已改变本地树结构但后端未保存：重拉服务端数据回滚视图
-          getMenuData();
-        }
-      })
-      .catch(err => {
-        // 请求异常（网络/权限）时同样回滚，避免"前端已移动、后端未保存"的假象
-        message(err?.detail, { type: "error" });
-        getMenuData();
-      });
+  });
+
+  /** 展开某节点的全部祖先并滚动定位（新增/保存后「看得见改了什么」） */
+  const revealRow = (pk: number | string) => {
+    const next = new Set(revealPks.value);
+    let cursor = data.rowIndex.value.byPk.get(String(pk));
+    const visited = new Set<string>();
+    while (cursor) {
+      const key = String(cursor.pk);
+      if (visited.has(key)) break;
+      visited.add(key);
+      next.add(key);
+      cursor =
+        cursor.parent === null
+          ? undefined
+          : data.rowIndex.value.byPk.get(String(cursor.parent));
+    }
+    revealPks.value = next;
+    nextTick(() => tree.scrollToPk(String(pk)));
   };
 
-  // 组件路径清单需逐个 import 视图组件才能读到其 name，成本高且仅用于下拉选项：
-  // 幂等 + 首屏空闲后再加载，避免阻塞菜单页首屏
-  let viewsLoading = false;
-  const getViews = () => {
-    if (viewsLoading) return;
-    viewsLoading = true;
-    const files = import.meta.glob<{ default: { name?: string } }>(
-      "@/views/**/*.vue"
-    );
-    Object.keys(files).forEach((file: string) => {
-      // 忽略 components 目录的文件，规定该目录下的文件为依赖组件，而不是页面组件
-      if (!/\/components\//.test(file)) {
-        files[file]().then(data => {
-          if (
-            isEmpty(data?.default?.name) ||
-            isNullOrUnDef(data?.default?.name)
-          ) {
-            return;
-          }
-          viewList.value[
-            file.replace(/(\.\/|\.vue)/g, "").replace("/src/views/", "")
-          ] = data?.default?.name as string;
-        });
-      }
+  // ---------------------------------------------------------------- 树交互
+
+  const onNodeClick = async (row: MenuRow) => {
+    currentRow.value = row;
+    if (!drawer.isOpen()) {
+      drawer.openEdit(row);
+      return;
+    }
+    if (String(drawer.openPk()) === String(row.pk)) return;
+    const choice = await drawer.confirmSwitch();
+    if (choice === "cancel") return;
+    if (choice === "save") {
+      const saved = await drawer.saveCurrent();
+      if (!saved) return;
+    } else {
+      drawer.close();
+    }
+    drawer.openEdit(row);
+  };
+
+  const tree = useMenuTree({
+    treeRef,
+    visibleTree: filter.visibleTree,
+    expandPks,
+    firstMatchPk: filter.firstMatchPk,
+    onNodeClick,
+    onDrop: order.handleDrag,
+    onCheck: selection.setChecked
+  });
+
+  // ---------------------------------------------------------------- 行操作
+
+  const removeRow = async (row: MenuRow) => {
+    const removed = await data.removeRows([row]);
+    if (removed && String(currentRow.value?.pk) === String(row.pk)) {
+      currentRow.value = null;
+    }
+  };
+
+  const toggleRowActive = async (row: MenuRow, value: boolean) => {
+    await data.toggleActive(row, value);
+  };
+
+  /**
+   * 打开新抽屉前的未保存拦截：编辑中直接切到别的节点/动作会静默丢弃改动
+   * （关闭/取消已由抽屉内守卫覆盖，这里覆盖"打开另一个编辑面"的路径）。
+   */
+  const openWithGuard = async (run: () => void) => {
+    if (drawer.isOpen() && drawer.dirty()) {
+      const choice = await drawer.confirmSwitch();
+      if (choice === "cancel") return;
+      if (choice === "save" && !(await drawer.saveCurrent())) return;
+    }
+    run();
+  };
+
+  const onRowAction = (code: string, row: MenuRow) => {
+    if (code === "edit") void openWithGuard(() => drawer.openEdit(row));
+    else if (code === "addChild")
+      void openWithGuard(() => drawer.openCreate(row));
+    else if (code === "clone") void openWithGuard(() => drawer.openClone(row));
+    else if (code === "permissions") {
+      void openWithGuard(() => drawer.openPermission(row));
+    } else if (code === "rename") drawer.openRename(row);
+    else if (code === "delete") removeRow(row);
+    else if (code.startsWith("move:")) {
+      order.moveSibling(row, code.split(":")[1] as MoveDirection);
+    }
+  };
+
+  /** 动作清单构建器（右键菜单与行内下拉共用同一份声明） */
+  const actionContext: MenuActionContext = {
+    t,
+    auth,
+    openEdit: row => onRowAction("edit", row),
+    openCreate: row => onRowAction("addChild", row),
+    openPermission: row => onRowAction("permissions", row),
+    openRename: row => onRowAction("rename", row),
+    openClone: row => onRowAction("clone", row),
+    remove: row => onRowAction("delete", row),
+    move: (row, direction) => onRowAction(`move:${direction}`, row),
+    toggleActive: row => toggleRowActive(row, !row.isActive)
+  };
+
+  const contextMenu = reactive({
+    visible: false,
+    x: 0,
+    y: 0,
+    row: null as MenuRow | null
+  });
+
+  const contextActions = computed<MenuNodeAction[]>(() =>
+    contextMenu.row ? buildNodeActions(contextMenu.row, actionContext) : []
+  );
+
+  const onRowContextMenu = (event: MouseEvent, row: MenuRow) => {
+    currentRow.value = row;
+    contextMenu.row = row;
+    contextMenu.x = event.clientX;
+    contextMenu.y = event.clientY;
+    contextMenu.visible = true;
+  };
+
+  const closeContextMenu = () => {
+    contextMenu.visible = false;
+  };
+
+  // ---------------------------------------------------------------- 工具栏
+
+  const onAdd = () => void openWithGuard(() => drawer.openCreate(null));
+  const onGeneratePermissions = () => {
+    if (!currentRow.value) return;
+    // 二级弹层前先收起抽屉（未保存时走守卫，不强收）
+    const target = currentRow.value;
+    void openWithGuard(() => {
+      if (drawer.isOpen()) drawer.close();
+      drawer.openPermission(target);
     });
   };
+  const onExport = () => data.exportData(treeRef.value);
+  const onImport = () => data.importData();
+  const onRefresh = () => data.getMenuData();
+  const onResetFilter = () => filter.reset();
+  const onToggleAll = (expand: boolean) => {
+    filter.filter.expandLevel = expand ? 3 : 1;
+  };
+  const onBatchActive = (isActive: boolean) => selection.batchActive(isActive);
+  const onBatchDelete = () => selection.batchRemove();
+  const onSelectAll = () =>
+    selection.selectAllVisible(filter.visibleTree.value);
+  const onClearSelection = () => selection.clearSelection();
+
+  // ---------------------------------------------------------------- 初始化
 
   onMounted(() => {
-    getMenuApiList();
-    getMenuData();
-    // 组件路径清单体积大：延后到首屏空闲再加载（不支持 requestIdleCallback 的环境退回宏任务）
+    data.getMenuData();
+    data.getMenuApiList(auth);
     const idle = (
       window as Window & {
         requestIdleCallback?: (cb: () => void) => number;
       }
     ).requestIdleCallback;
-    if (typeof idle === "function") {
-      idle(() => getViews());
-    } else {
-      setTimeout(getViews, 0);
-    }
-    if (hasAuth("list:SystemModelLabelField")) {
-      fetchAllRows(modelLabelFieldApi.list, {
-        parent: 0,
-        field_type: FieldChoices.ROLE
-      }).then(res => {
-        if (res.code === SUCCESS_CODE) {
-          const results: RecordType[] = [];
-          res.data.results.forEach(item => {
-            const value = { pk: item.pk, name: item.name, label: item.label };
-            results.push({ ...value, value });
-          });
-          formatFiledAppParent(results);
-          modelList.value = handleTree(results);
-        }
-      });
-    }
+    if (typeof idle === "function") idle(() => data.loadViews());
+    else setTimeout(() => data.loadViews(), 0);
+    if (hasAuth("list:SystemModelLabelField")) data.loadModels();
   });
 
   return {
     auth,
-    treeData,
-    menuData,
-    viewList,
-    modelList,
-    parentIds,
-    choicesDict,
-    menuUrlList,
-    defaultData,
-    addNewMenu,
-    exportData,
-    importData,
-    handleDrag,
-    openDialog,
-    getMenuData,
-    handleDelete,
-    handleConfirm,
-    handleManyDelete,
-    handleAddPermissions
+    rootRef,
+    treeRef,
+    loading: data.loading,
+    stats: data.stats,
+    treeData: data.treeData,
+    renderedTree,
+    rowIndex: data.rowIndex,
+    currentRow,
+    filter: filter.filter,
+    visibleTree: filter.visibleTree,
+    matchPks: filter.matchPks,
+    matchCount: computed(() => filter.matchPks.value.size),
+    filterActive: filter.filterActive,
+    checkStrictly: tree.checkStrictly,
+    isExpandAll: computed(() => filter.filter.expandLevel >= 3),
+    busyPks: data.busyPks,
+    multiMode: selection.multiMode,
+    checkedCount: selection.checkedCount,
+    contextMenu,
+    contextActions,
+    defaultProps: tree.defaultProps,
+    allowDrop: tree.allowDrop,
+    handleDrop: tree.handleDrop,
+    handleCheck: tree.handleCheck,
+    nodeClick: tree.nodeClick,
+    onRowAction,
+    onRowContextMenu,
+    closeContextMenu,
+    toggleRowActive,
+    onAdd,
+    onGeneratePermissions,
+    onExport,
+    onImport,
+    onRefresh,
+    onResetFilter,
+    onToggleAll,
+    onBatchActive,
+    onBatchDelete,
+    onSelectAll,
+    onClearSelection,
+    toggleMultiMode: selection.toggleMultiMode
   };
 }

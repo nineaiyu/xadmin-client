@@ -1355,6 +1355,7 @@ systemMenu:
   verifyType: Please choice menu type
   verifyTitle: Please enter menu title
   verifyPath: Please enter routing path
+  verifyComponentName: Enter the component name
   verifyComponentPath: Please enter component path
   verifyTransition: Please select animation
   verifyRequestMethod: Please enter request method
@@ -1386,6 +1387,87 @@ systemMenu:
   codeSuffixTip: It is by default the component name. If it is empty, it will be by default the name of the back-end view, and it can be modified by yourself.
   menuView: Back-end view name
   skipExistingData: Skip existing data
+  searchPlaceholder: Search name / route / permission code
+  rank: Rank
+  verifyPermissionPath: Select the permission route
+  modelSelected: "{ count } related model(s) selected"
+  inactiveDirectoryHint: Disabled menus are hidden from the sidebar; children are not disabled automatically (they are promoted to top level when the parent is missing)
+  cascadeInactive: "Also disable { count } child node(s)"
+  importExport: Import / Export
+  permissionTip: Generate API permission codes from backend views (preview create/overwrite before saving)
+  permissionViewsRequired: Select at least one backend view
+  permissionPreviewTip: Preview and execution share the same builder, so what you see is what you get
+  countDescendants: "{ count } descendant(s), { inactive } disabled"
+  countDescendantsShort: "{ count } items"
+  group:
+    basic: Basic
+    permission: Permission
+    nav: Sidebar and tabs
+    extra: External link and advanced
+  filter:
+    allType: All types
+    allStatus: All statuses
+    active: Enabled
+    inactive: Disabled
+    level1: Expand 1 level
+    level2: Expand 2 levels
+    levelAll: Expand all
+  stats:
+    summary: "{ total } nodes · { directory } directories / { menu } menus / { permission } permissions"
+    inactive: "{ count } disabled"
+    matched: "{ count } matched"
+  action:
+    addChild: Add child
+    clone: Clone node
+    rename: Rename
+    copyPath: Copy route path
+    copyPermissionPath: Copy API path
+    copyCode: Copy permission code
+    moveUp: Move up
+    moveDown: Move down
+    moveTop: Move to top
+    enable: Enable
+    disable: Disable
+    batchEnable: Enable selected
+    batchDisable: Disable selected
+    multiMode: Multi-select mode
+    exitMulti: Exit multi-select
+    saveAndSwitch: Save and switch
+    discard: Discard changes
+  confirm:
+    removeTitle: Delete menu
+    removeCount: "{ count } node(s) will be deleted"
+    cascade: "{ count } child node(s) under { title } will be moved to the recycle bin as well"
+    impactUnavailable: Impact preview is unavailable (deletion is not blocked, please confirm references manually)
+    recycleHint: Deleted menus can be restored as a group from the recycle bin.
+    unsavedTitle: Unsaved changes
+    unsaved: This menu has unsaved changes. Discard them?
+    activeTitle: Batch enable
+    inactiveTitle: Batch disable
+    activeCount: "{ count } node(s) will be enabled (including descendants of selected directories)"
+    inactiveCount: "{ count } node(s) will be disabled (including descendants of selected directories)"
+    inactiveDirectoryHint: "Disabling a directory does not cascade: when the parent is hidden its children are promoted to top level"
+  result:
+    enabled: "Enabled { title }"
+    disabled: "Disabled { title }"
+    batchActive: "{ count } menu(s) updated"
+    sorted: Order saved
+  preview:
+    action: Action
+    create: Create
+    update: Overwrite
+    empty: Nothing to generate
+    pickViews: Select backend views to preview
+    summary: "{ create } to create, { update } to overwrite"
+  dialog:
+    add: New menu
+    addChild: "New child under { title }"
+    edit: Edit menu
+    clone: Clone menu
+    cloneSuffix: "{ title } copy"
+  empty:
+    noMatch: No menu matches the filters, try clearing them
+    noData: No menu data
 
 logsOperation:
   creator_id: Creator Id

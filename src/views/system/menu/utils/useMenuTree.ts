@@ -1,233 +1,131 @@
-import { useI18n } from "vue-i18n";
-import { match } from "pinyin-pro";
-import { getMenuFromPk } from "@/utils";
-import { isAllEmpty, isNullOrUnDef } from "@pureadmin/utils";
-import { transformI18n } from "@/plugins/i18n";
-import type { FormItemProps, Tree } from "./types";
+/**
+ * 菜单树交互：展开层级应用、筛选后定位、勾选联动、拖拽约束与节点样式。
+ *
+ * 展开状态由「数据侧计算的 expandPks」驱动（数据/筛选变化后重新应用），
+ * 而不是依赖 el-tree 的 default-expand-all：树在筛选时会被替换，内部展开态
+ * 会随节点重建丢失，只有显式应用才能保证「筛选后命中路径可见」。
+ */
+
+import { nextTick, ref, watch, type Ref } from "vue";
+import type { TreeInstance } from "element-plus";
 import { MenuChoices } from "@/views/system/constants";
-import { computed, getCurrentInstance, nextTick, ref, watch } from "vue";
-import type { Ref } from "vue";
-import type { TreeInstance, TreeNodeData } from "element-plus";
+import type { MenuRow } from "./types";
 
 interface MenuTreeDeps {
-  treeData: Ref<Tree[]>;
-  defaultData: Partial<FormItemProps>;
-  formInline: Ref<FormItemProps>;
-  parentIds: Ref<unknown[]>;
-  treeRef: Ref;
-  emit: (event: string, ...args: unknown[]) => void;
+  treeRef: Ref<TreeInstance | undefined>;
+  visibleTree: Ref<MenuRow[]>;
+  expandPks: Ref<Set<string>>;
+  firstMatchPk: Ref<string>;
+  onNodeClick: (row: MenuRow) => void;
+  /** el-tree 拖拽回调入参为内部 Node 实例：边界收窄为 unknown，内部按 data 取值 */
+  onDrop: (draggingNode: unknown, dropNode: unknown, dropType: string) => void;
+  onCheck: (checkedPks: Array<number | string>) => void;
 }
 
-/** el-tree 拖拽事件节点（取内部 data 判定菜单类型） */
-type MenuDragNode = { data: TreeNodeData };
-
-/** 菜单树交互状态机：搜索过滤/高亮/展开折叠/拖拽约束/重置（拆分自 tree.vue） */
 export function useMenuTree({
-  treeData,
-  defaultData,
-  formInline,
-  parentIds,
   treeRef,
-  emit
+  visibleTree,
+  expandPks,
+  firstMatchPk,
+  onNodeClick,
+  onDrop,
+  onCheck
 }: MenuTreeDeps) {
-  const { t } = useI18n();
-  const { locale } = useI18n();
-  // useMenuTree 在组件 setup 内调用，实例必然存在；proxy 供 $refs 取 el-tree 实例
-  const proxy = getCurrentInstance()?.proxy;
+  /** 勾选联动：默认父子联动（勾选目录=整棵子树），可在「更多」里切为独立勾选 */
+  const checkStrictly = ref(false);
 
-  const searchValue = ref("");
-  /** 节点高亮状态（pk → 高亮标记；模板按 pk 读取） */
-  const highlightMap = ref<
-    Record<string | number, { pk?: number; highlight?: boolean }>
-  >({});
-  const loading = ref(true);
-  const isExpand = ref(false);
-  const checkStrictly = ref(true);
-
-  const filterMenuNode = (value: string, data: TreeNodeData) => {
-    if (!value) return true;
-    return value
-      ? transformI18n(data.meta?.title)
-          .toLocaleLowerCase()
-          .includes(value.toLocaleLowerCase().trim()) ||
-          (locale.value === "zh" &&
-            !isAllEmpty(
-              match(
-                transformI18n(data.meta?.title).toLocaleLowerCase(),
-                value.toLocaleLowerCase().trim()
-              )
-            ))
-      : false;
-  };
-
-  const initMenuData = (value: Tree) => {
-    // 树节点数据按键值整体回填表单，经索引签名逐键写入
-    const row = value as Tree & Record<string, unknown>;
-    Object.keys(row).forEach(key => {
-      (formInline.value as FormItemProps & Record<string, unknown>)[key] =
-        row[key];
-    });
-    formInline.value.title = formInline.value.meta?.title;
-    const p_menus = getMenuFromPk(treeRef.value.data, value.pk as number);
-    if (p_menus.length > 0) {
-      formInline.value.parent_ids = p_menus.map(res => res.pk);
-      parentIds.value = formInline.value.parent_ids;
-    }
-  };
-
-  function nodeClick(value: Tree) {
-    // 键必须与模板读取口径一致：模板读的是 el-tree 节点的 node.id（= node-key="pk"），
-    // 原实现用内部 $treeNodeId 写入，两者不同源导致高亮实际取不到值
-    const nodeId = value.pk ?? value.id;
-    highlightMap.value[nodeId] = highlightMap.value[nodeId]?.highlight
-      ? Object.assign({}, highlightMap.value[nodeId], {
-          pk: nodeId,
-          highlight: false
-        })
-      : Object.assign({}, highlightMap.value[nodeId], {
-          pk: nodeId,
-          highlight: true
-        });
-    Object.values(highlightMap.value).forEach(v => {
-      if (v.pk !== nodeId) {
-        v.highlight = false;
-      }
-    });
-    initMenuData(value);
-  }
-
-  /** 递归收集需要展开/折叠的节点 pk（替代依赖 el-tree 私有 store._getAllNodes） */
-  function collectNodePks(nodes: Tree[], all: boolean, changeType: number) {
-    const pks: number[] = [];
-    const walk = (list?: Tree[]) => {
-      list?.forEach(node => {
-        if ((all || node.menu_type === changeType) && !isNullOrUnDef(node.pk)) {
-          pks.push(node.pk);
-        }
-        if (node.children?.length) walk(node.children);
+  /** 应用当前展开层级（数据/筛选变化后调用） */
+  const applyExpansion = () => {
+    const tree = treeRef.value;
+    if (!tree?.getNode) return;
+    // 必须递归整棵可见树：只遍历根层会漏掉深层命中路径的展开
+    // （表现为「搜索命中 N 条但一条都看不到」）
+    const walk = (rows: MenuRow[]) => {
+      rows.forEach(row => {
+        if (!row.children.length) return;
+        const node = tree.getNode(String(row.pk));
+        if (node) node.expanded = expandPks.value.has(String(row.pk));
+        walk(row.children);
       });
     };
-    walk(nodes);
-    return pks;
-  }
-
-  function toggleRowExpansionAll(status: boolean, all = false) {
-    isExpand.value = status;
-    let changeType = MenuChoices.MENU;
-    if (status) changeType = MenuChoices.DIRECTORY;
-
-    const tree = proxy?.$refs["treeRef"] as TreeInstance | undefined;
-    if (!tree?.getNode) return;
-    // getNode 为 el-tree 公开 API，逐节点设置 expanded，避免私有 store 在升级后失效
-    collectNodePks(treeData.value, all, changeType).forEach(pk => {
-      const node = tree.getNode(pk);
-      if (node) node.expanded = status;
-    });
-  }
-
-  const handleDragEnd = (
-    node: MenuDragNode,
-    node2: MenuDragNode | null,
-    position: string
-  ) => {
-    emit("handleDrag", treeRef.value, node, node2, position);
+    walk(visibleTree.value);
   };
 
-  /** 重置状态（选中状态、搜索框值、树初始化） */
-  function onReset() {
-    highlightMap.value = {};
-    searchValue.value = "";
-    toggleRowExpansionAll(!isExpand.value);
-    parentIds.value = [];
-    Object.keys(formInline.value).forEach(param => {
-      (formInline.value as FormItemProps & Record<string, unknown>)[param] = (
-        defaultData as Record<string, unknown>
-      )[param];
-    });
-  }
-
-  const customNodeClass = (data: TreeNodeData): string => {
-    if (!data.is_active) {
-      return "is-disabled";
-    }
-    if (data.menu_type === MenuChoices.DIRECTORY) {
-      return "is-penultimate";
-    } else if (data.menu_type === MenuChoices.MENU) {
-      return "is-permission";
-    }
-    return "";
+  const scrollToPk = (pk: string) => {
+    // el-tree 的 Node 实例带 $el（公开行为，类型声明未覆盖）
+    const node = treeRef.value?.getNode(pk) as unknown as
+      { $el?: HTMLElement } | null | undefined;
+    node?.$el?.scrollIntoView({ block: "center", behavior: "smooth" });
   };
+
+  // 入参收敛为 unknown：el-tree 的 TreeOptionProps 回调参数与 MenuRow 名义不同，
+  // 直接用 MenuRow 会因逆变检查不通过（运行期同构）
+  const nodeClass = (data: unknown) =>
+    (data as MenuRow).isActive ? "" : "is-disabled";
 
   const defaultProps = {
     children: "children",
-    class: customNodeClass
+    label: (data: unknown) => (data as MenuRow).meta.title,
+    class: nodeClass
   };
 
-  const buttonClass = computed(() => {
-    return [
-      "h-[20px]!",
-      "reset-margin",
-      "text-gray-500!",
-      "dark:text-white!",
-      "dark:hover:text-primary!"
-    ];
-  });
-
-  const handleDragDrop = (
-    node1: MenuDragNode,
-    node2: MenuDragNode,
+  /** 拖拽约束：权限点不能再挂子级（其 path/method 是接口授权语义） */
+  const allowDrop = (
+    _draggingNode: unknown,
+    dropNode: unknown,
     type: string
   ) => {
-    return !(
-      type === "inner" && node2.data.menu_type === MenuChoices.PERMISSION
+    const data = (dropNode as { data?: MenuRow } | null | undefined)?.data;
+    return !(type === "inner" && data?.menuType === MenuChoices.PERMISSION);
+  };
+
+  const handleDrop = (
+    draggingNode: unknown,
+    dropNode: unknown,
+    dropType: string
+  ) => {
+    onDrop(draggingNode, dropNode, dropType);
+  };
+
+  const handleCheck = (
+    _data: unknown,
+    info: { checkedNodes: Array<unknown> }
+  ) => {
+    // el-tree 的 check 载荷里 checkedNodes 是「节点 data」而非 Node 实例
+    // （store.getCheckedNodes() 返回 child.data），此处对两种形态都兼容
+    onCheck(
+      info.checkedNodes
+        .map(node => {
+          const item = node as Partial<MenuRow> & { data?: MenuRow };
+          return (item.pk ?? item.data?.pk) as number | string | undefined;
+        })
+        .filter((pk): pk is number | string => pk !== undefined)
     );
   };
 
-  watch(searchValue, val => {
-    treeRef.value!.filter(val);
-  });
+  const nodeClick = (data: MenuRow) => onNodeClick(data);
 
-  // 数据到达后再展开目录并结束加载态：替代原固定 500ms 延时
-  // （慢网不再提前结束 loading 造成白屏，快网不再空等）
-  let expandInited = false;
-  let hasTreeData = false;
   watch(
-    () => treeData.value,
-    val => {
-      if (!val?.length) {
-        // 首次仍为空说明请求尚未返回，保持 loading；已有数据后被清空才结束加载态
-        if (hasTreeData) loading.value = false;
-        return;
-      }
-      hasTreeData = true;
-      if (!expandInited) {
-        expandInited = true;
-        // 首次加载默认展开目录层级，与原行为保持一致
-        isExpand.value = true;
-      }
-      nextTick(() => {
-        toggleRowExpansionAll(isExpand.value);
-        loading.value = false;
-      });
+    [visibleTree, expandPks],
+    () => {
+      nextTick(applyExpansion);
     },
-    { immediate: true }
+    { flush: "post" }
   );
 
+  watch(firstMatchPk, pk => {
+    if (!pk) return;
+    nextTick(() => scrollToPk(pk));
+  });
+
   return {
-    t,
-    searchValue,
-    highlightMap,
-    loading,
-    isExpand,
     checkStrictly,
-    filterMenuNode,
-    nodeClick,
-    toggleRowExpansionAll,
-    onReset,
-    customNodeClass,
     defaultProps,
-    buttonClass,
-    handleDragDrop,
-    handleDragEnd
+    applyExpansion,
+    scrollToPk,
+    allowDrop,
+    handleDrop,
+    handleCheck,
+    nodeClick
   };
 }

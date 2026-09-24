@@ -1,124 +1,145 @@
-// 虽然字段很少 但是抽离出来 后续有扩展字段需求就很方便了
+/**
+ * 菜单管理页类型定义。
+ *
+ * 接口原始行是「扁平 + 对象化」形态（menu_type 为 {value,label}、parent 可能是对象、
+ * model 可能是对象数组），页面统一经 `normalizeMenuRow` 归一为 MenuRow 后再消费，
+ * 避免各组件里散落 `item.menu_type?.value ?? item.menu_type` 这类运行时兜底。
+ */
 
+import type { Component } from "vue";
 import type { Auths } from "@/router/utils";
 
-export interface FormMetaProps {
-  /** 菜单名称 */
+/** 菜单 meta（与后端 system.MenuMeta 对齐） */
+export interface MenuMeta {
   title: string;
-  /** 菜单图标 */
   icon: string;
-  /** 菜单右侧额外图标iconfont名称，目前只支持iconfont */
   r_svg_name: string;
-  /** 是否显示该菜单 */
   is_show_menu: boolean;
-  /** 是否显示父级菜单 */
   is_show_parent: boolean;
-  /** 是否开启页面缓存 */
   is_keepalive: boolean;
-  /** 内嵌的iframe链接地址 */
   frame_url: string;
-  /** 内嵌的iframe页面是否开启首次加载动画 */
   frame_loading: boolean;
-  /** 当前页面进场动画 */
   transition_enter: string;
-  /** 当前页面离场动画 */
   transition_leave: string;
-  /** 当前菜单名称或自定义信息禁止添加到标签页 */
   is_hidden_tag: boolean;
-  /** 固定标签页（当前菜单名称是否固定显示在标签页且不可关闭） */
   fixed_tag: boolean;
-  /** 显示标签页最大数量 */
   dynamic_level: number;
-  /** 页面水印：置顶强制挂载（与基本设置的路径范围是或关系） */
   watermark: boolean;
 }
 
-interface FormItemProps {
-  /** ID */
-  pk?: number;
-  menu_type?: number;
-  isAdd?: boolean;
-  /** 父节点 */
-  parent: string;
-  parent_ids?: number[];
-  /** 菜单名称 */
-  title?: string;
-  /** 组件英文名称 */
+/** 归一化后的菜单行（树节点）：接口字段 + 树/展示派生字段 */
+export interface MenuRow {
+  pk: number | string;
+  /** 父级 pk（顶级为 null） */
+  parent: number | string | null;
+  /** 0 目录 / 1 菜单 / 2 权限点 */
+  menuType: number;
   name: string;
-  /** 绑定的模型 */
-  model?: number[];
-  /** 菜单顺序 */
-  rank: number;
-  /** 路由地址 */
-  path?: string;
-  /** 组件地址 */
+  path: string;
   component: string;
-  method?: string;
-  /** 是否启用该菜单 */
-  is_active: boolean;
-  /** 是否是编辑模式 */
-  meta?: FormMetaProps;
+  /** 权限点请求方法（普通菜单为空） */
+  method: string;
+  rank: number;
+  isActive: boolean;
+  /** 关联模型 pk 列表（权限点用于数据/字段权限绑定） */
+  modelPks: string[];
+  meta: MenuMeta;
+  /** 接口原始行：编辑提交前的兜底取值源 */
+  raw: Record<string, unknown>;
+  children: MenuRow[];
+  /** 层级（根为 1） */
+  depth: number;
+  /** 直接子节点数 */
+  directCount: number;
+  /** 后代总数 */
+  descendantCount: number;
+  /** 后代中停用数（含自身之外的停用项） */
+  inactiveDescendantCount: number;
 }
 
-/** choices 接口下发的通用选项（value + 展示 label） */
-interface ChoicesOptionItem {
+/** 抽屉表单模型（扁平结构，提交时组装为接口载荷） */
+export interface MenuFormModel {
+  pk?: number | string;
+  menuType: number;
+  parent: number | string | "";
+  title: string;
+  icon: string;
+  name: string;
+  path: string;
+  component: string;
+  method: string;
+  model: string[];
+  rank: number;
+  isActive: boolean;
+  meta: MenuMeta;
+}
+
+/** 筛选条件（关键字 + 类型 + 状态 + 展开层级） */
+export interface MenuFilterState {
+  keyword: string;
+  menuType: "all" | number;
+  status: "all" | "active" | "inactive";
+  /** 展开层级：1 仅顶层 / 2 两级 / 3 全部 */
+  expandLevel: 1 | 2 | 3;
+}
+
+/** choices 接口下发的通用选项 */
+export interface MenuChoiceItem {
   value?: number | string;
   label?: string;
   disabled?: boolean;
 }
 
-/** 菜单 URL 选项（component 路径候选） */
-interface MenuUrlItem {
-  name: string;
-  url: string;
+/** 后端接口清单项（权限路由下拉 + 权限码生成） */
+export interface MenuUrlItem {
+  name?: string;
+  url?: string;
+  view?: string;
+  label?: string;
 }
 
 /** 关联模型级联选项 */
-interface ModelTreeItem {
+export interface ModelTreeItem {
   label?: string;
   name?: string;
-  parent?: unknown;
+  value?: unknown;
   children?: ModelTreeItem[];
   [key: string]: unknown;
 }
 
-interface FormProps {
-  formInline?: FormItemProps;
-  treeData?: Tree[];
-  methodChoices?: ChoicesOptionItem[];
-  menuChoices?: ChoicesOptionItem[];
-  menuUrlList?: MenuUrlItem[];
-  modelList?: ModelTreeItem[];
-  viewList?: object;
-  auth?: Auths;
+/** 树行操作项（行内「更多」下拉与右键菜单共用同一份清单） */
+export interface MenuNodeAction {
+  code: string;
+  label: string;
+  icon?: Component;
+  /** 危险动作：行渲染为危险色并在确认后执行 */
+  danger?: boolean;
+  disabled?: boolean;
+  divided?: boolean;
+  run: () => void;
 }
 
-interface TreeFormProps {
-  formInline: FormItemProps;
-  treeData: Tree[];
-  defaultData: object;
-  parentIds: number[];
-  auth?: Auths;
-}
-
-interface Tree {
-  id: number;
-  /** 主键（el-tree 的 node-key="pk"），与 id 同源，供展开/高亮按 pk 定位 */
-  pk?: number;
-  name?: string;
-  menu_type?: number;
-  /** 父级 pk（拖拽排序时写回） */
-  parent?: number;
-  highlight?: boolean;
-  children?: Tree[];
-}
-
-export type {
-  FormItemProps,
-  FormProps,
-  Tree,
-  TreeFormProps,
-  ChoicesOptionItem,
-  MenuUrlItem,
-  ModelTreeItem
+/** 页面级权限集合（getDefaultAuths 口径 + 菜单页扩展动作） */
+export type MenuAuths = Auths & {
+  rank?: boolean;
+  permissions?: boolean;
+  apiUrl?: boolean;
+  impact?: boolean;
+  batchUpdate?: boolean;
 };
+
+/** 权限码预览项（后端 dry_run 下发） */
+export interface PermissionPreviewItem {
+  action: "create" | "update";
+  name: string;
+  path: string;
+  method: string;
+  title: string;
+}
+
+/** 权限码预览载荷 */
+export interface PermissionPreviewPayload {
+  results: PermissionPreviewItem[];
+  create_count: number;
+  update_count: number;
+}

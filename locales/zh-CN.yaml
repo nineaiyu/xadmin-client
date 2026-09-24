@@ -1355,6 +1355,7 @@ systemMenu:
   verifyType: 请选择菜单类型
   verifyTitle: 请输入菜单标题
   verifyPath: 请输入路由地址
+  verifyComponentName: 请输入组件名称
   verifyComponentPath: 请输入组件路径
   verifyTransition: 请选择动画
   verifyRequestMethod: 请输入请求方式
@@ -1386,6 +1387,87 @@ systemMenu:
   codeSuffixTip: 默认为组件名称，若为空，则默认为后端视图名称，可自行修改
   menuView: 后端视图名称
   skipExistingData: 跳过已存在数据
+  searchPlaceholder: 搜索菜单名称 / 路由 / 权限码
+  rank: 排序
+  verifyPermissionPath: 请选择权限路由
+  modelSelected: "已选 { count } 个关联模型"
+  inactiveDirectoryHint: 停用后该菜单在侧栏不可见；子菜单不会被自动停用（父级缺失时会被提升为顶级菜单）
+  cascadeInactive: "连同 { count } 个子节点一起停用"
+  importExport: 导入导出
+  permissionTip: 按后端视图批量生成接口权限点（生成前可预览新建/覆盖清单）
+  permissionViewsRequired: 请先选择后端视图
+  permissionPreviewTip: 预览与执行使用同一套构造逻辑，所见即所得
+  countDescendants: "含 { count } 个后代节点（其中 { inactive } 个停用）"
+  countDescendantsShort: "{ count } 项"
+  group:
+    basic: 基本信息
+    permission: 权限点
+    nav: 侧栏与标签
+    extra: 外链与高级
+  filter:
+    allType: 全部类型
+    allStatus: 全部状态
+    active: 启用
+    inactive: 停用
+    level1: 展开 1 级
+    level2: 展开 2 级
+    levelAll: 全部展开
+  stats:
+    summary: "共 { total } 个节点 · 目录 { directory } / 菜单 { menu } / 权限点 { permission }"
+    inactive: "停用 { count }"
+    matched: "命中 { count }"
+  action:
+    addChild: 新增子级
+    clone: 克隆节点
+    rename: 重命名
+    copyPath: 复制路由地址
+    copyPermissionPath: 复制接口路径
+    copyCode: 复制权限标识
+    moveUp: 上移一位
+    moveDown: 下移一位
+    moveTop: 置顶
+    enable: 启用
+    disable: 停用
+    batchEnable: 批量启用
+    batchDisable: 批量停用
+    multiMode: 多选模式
+    exitMulti: 退出多选
+    saveAndSwitch: 保存并切换
+    discard: 放弃修改
+  confirm:
+    removeTitle: 删除菜单
+    removeCount: "将删除 { count } 个节点"
+    cascade: "「{ title }」下的 { count } 个子节点会一并进入回收站"
+    impactUnavailable: 影响面预检不可用（不阻断删除，请自行确认引用）
+    recycleHint: 删除的菜单可在「回收站」中成组恢复。
+    unsavedTitle: 未保存的修改
+    unsaved: 当前菜单有未保存的修改，确定要放弃吗？
+    activeTitle: 批量启用
+    inactiveTitle: 批量停用
+    activeCount: "将启用 { count } 个节点（含选中目录的后代）"
+    inactiveCount: "将停用 { count } 个节点（含选中目录的后代）"
+    inactiveDirectoryHint: 停用目录不会级联停用子菜单：父级不可见时子菜单会被提升为顶级
+  result:
+    enabled: "已启用「{ title }」"
+    disabled: "已停用「{ title }」"
+    batchActive: "已更新 { count } 个菜单状态"
+    sorted: 排序已保存
+  preview:
+    action: 动作
+    create: 新建
+    update: 覆盖
+    empty: 无待生成的权限点
+    pickViews: 选择后端视图后展示预览
+    summary: "将新建 { create } 条，覆盖 { update } 条"
+  dialog:
+    add: 新增菜单
+    addChild: "在「{ title }」下新增"
+    edit: 编辑菜单
+    clone: 克隆菜单
+    cloneSuffix: "{ title } 副本"
+  empty:
+    noMatch: 无匹配菜单，试试清空筛选条件
+    noData: 暂无菜单数据
 
 logsOperation:
   creator_id: 用户ID

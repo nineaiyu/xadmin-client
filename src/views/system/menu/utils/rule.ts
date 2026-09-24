@@ -28,6 +28,15 @@ export const dirFormRules = {
       trigger: "blur"
     }
   ],
+  // 组件名称为必填（后端 name 字段非空，目录同样需要）：此前缺失校验，
+  // 留空提交会被后端 400 打回，用户在抽屉里看不出哪个字段有问题
+  name: [
+    {
+      required: true,
+      message: transformI18n($t("systemMenu.verifyComponentName")),
+      trigger: "blur"
+    }
+  ],
   path: [
     {
       required: true,

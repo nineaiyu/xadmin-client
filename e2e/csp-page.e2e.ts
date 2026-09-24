@@ -162,12 +162,15 @@ test("页面层 CSP：核心页面零违规 + 探针负对照命中", async ({ p
   await page.keyboard.press("Escape");
 
   // 图标选择器（菜单管理 → 图标字段）：按需加载**同源**图标集 chunk 后渲染网格，
-  // 严格 CSP（script-src 'self'）下能渲染即证明选择器也走离线本地图标集
+  // 严格 CSP（script-src 'self'）下能渲染即证明选择器也走离线本地图标集。
+  // 菜单新增/编辑统一走右侧抽屉（ReDrawer），选择器渲染在抽屉内。
   await page.keyboard.press("Escape");
   await openMenuPath(page, ["系统管理"], "/system/menu/index");
   await page.waitForTimeout(800);
-  await page.getByRole("button", { name: "新增" }).first().click();
-  await page.locator(".el-dialog .selector .cursor-pointer").first().click();
+  await page.getByRole("button", { name: "新增", exact: true }).first().click();
+  const menuDrawer = page.locator(".el-drawer:visible").first();
+  await expect(menuDrawer).toBeVisible({ timeout: 15_000 });
+  await menuDrawer.locator(".selector .cursor-pointer").first().click();
   await expect
     .poll(() => page.locator(".icon-item svg").count(), {
       timeout: 15_000,
@@ -176,6 +179,7 @@ test("页面层 CSP：核心页面零违规 + 探针负对照命中", async ({ p
     .toBeGreaterThan(0);
   await page.waitForTimeout(500);
   await record("menu-icon-picker");
+  await page.keyboard.press("Escape");
   await page.keyboard.press("Escape");
   await page.keyboard.press("Escape");
 
