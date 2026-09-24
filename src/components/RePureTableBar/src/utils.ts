@@ -1,4 +1,5 @@
 import type { PropType } from "vue";
+import { transformI18n } from "@/plugins/i18n";
 
 /** 树形表格行：展开/折叠按 `children` 递归 */
 export type TableRowLike = Record<string, unknown> & {
@@ -20,10 +21,10 @@ export interface ExpandableTableInstance {
 
 /** 组件 props 声明 */
 export const tableBarProps = {
-  /** 头部最左边的标题 */
+  /** 头部最左边的标题（未传时回落语言包词条） */
   title: {
     type: String,
-    default: "列表"
+    default: () => transformI18n("tableBar.list")
   },
   /** 对于树形表格，如果想启用展开和折叠功能，传入当前表格的ref即可 */
   tableRef: {

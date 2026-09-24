@@ -284,9 +284,7 @@ export default defineComponent({
             {slots?.title ? (
               slots.title()
             ) : (
-              <p class="font-bold truncate">
-                {props.title || t("tableBar.list")}
-              </p>
+              <p class="font-bold truncate">{props.title}</p>
             )}
             <div class="flex-ac">
               {slots?.buttons ? (
