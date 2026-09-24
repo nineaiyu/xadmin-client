@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { ElMessage, ElMessageBox } from "element-plus";
@@ -16,7 +16,17 @@ import View from "~icons/ep/view";
  * 页面侧只需传「当前搜索条件快照」并监听 apply —— 应用逻辑由 RePlusPage
  * 写入 searchFields 后刷新，组件不直接操作搜索区（保持单向数据流）。
  */
-const props = defineProps<{ conditions?: RecordType }>();
+const props = defineProps<{
+  conditions?: RecordType;
+  /**
+   * 列表元数据是否已就绪（RePlusPage 的 searchMetaReady）。
+   *
+   * 默认视图的静默套用必须等到元数据就绪后再执行：首开请求（with_meta=1）在途时
+   * 追加的筛选请求会把首包响应从「请求序号」上顶掉，首包里的列元数据随之被丢弃
+   * （表现为表格无列 + 元数据缺失警示条，只有分页总数正确）。
+   */
+  ready?: boolean;
+}>();
 const emit = defineEmits<{ apply: [conditions: RecordType] }>();
 
 const { t } = useI18n();
@@ -42,6 +52,19 @@ const cleanConditions = (source: RecordType | undefined) => {
 const hasActiveConditions = computed(
   () => Object.keys(cleanConditions(props.conditions)).length > 0
 );
+
+/** 当前生效的视图名（静默套用默认视图后按钮上显示，用户可感知列表来自哪个视图） */
+const activeName = computed(() => {
+  const row = rows.value.find(
+    item => String(item.pk) === String(currentPk.value)
+  );
+  return row ? String(row.name ?? "") : "";
+});
+
+// 搜索条件被清空（重置/清筛选）后不再对应任何视图，按钮回到默认态
+watch(hasActiveConditions, active => {
+  if (!active) currentPk.value = "";
+});
 
 const load = async () => {
   loading.value = true;
@@ -133,22 +156,40 @@ const remove = async (row: RecordType) => {
   }
 };
 
-onMounted(async () => {
-  await load();
-  // 默认视图：仅在当前没有任何筛选条件时静默套用（避免覆盖用户手输条件）
+/** 默认视图：仅在当前没有任何筛选条件时静默套用（避免覆盖用户手输条件） */
+const applyDefaultView = () => {
+  if (!props.ready || currentPk.value) return;
   const defaultView = rows.value.find(item => item.is_default);
   if (defaultView && !hasActiveConditions.value) {
     applyView(defaultView, true);
   }
+};
+
+onMounted(async () => {
+  await load();
+  applyDefaultView();
 });
+
+// 元数据就绪晚于视图列表加载：就绪后再补一次（早于就绪时套用会破坏首包元数据）
+watch(
+  () => props.ready,
+  ready => {
+    if (ready) applyDefaultView();
+  }
+);
 
 defineExpose({ reload: load });
 </script>
 
 <template>
   <el-dropdown trigger="click" class="mr-3">
-    <el-button :icon="useRenderIcon(View)" :loading="loading">
-      {{ t("savedView.button") }}
+    <el-button
+      :icon="useRenderIcon(View)"
+      :loading="loading"
+      :type="activeName ? 'primary' : ''"
+      :plain="!!activeName"
+    >
+      {{ activeName || t("savedView.button") }}
     </el-button>
     <template #dropdown>
       <el-dropdown-menu>

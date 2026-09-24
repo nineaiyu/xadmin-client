@@ -388,6 +388,7 @@ defineExpose({
               <saved-views
                 v-if="savedViews && auth?.list"
                 :conditions="searchFields"
+                :ready="searchMetaReady"
                 @apply="applySavedView"
               />
               <button-operation
