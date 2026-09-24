@@ -1221,6 +1221,37 @@ systemRole:
   menu: 菜单权限
   preview: 授权预览
 
+# 角色菜单权限配置树
+rolePermission:
+  searchPlaceholder: 搜索菜单标题、权限码或路由
+  matchedCount: 匹配 {count} 项
+  linked: 父子联动
+  independent: 独立勾选
+  selectAll: 全选
+  invert: 反选
+  clear: 清空
+  expandAll: 展开全部
+  collapseAll: 折叠全部
+  reset: 重置
+  selectedTotal: 已选 {checked} / {total} 项
+  statDirectory: 目录 {checked}/{total}
+  statMenu: 菜单 {checked}/{total}
+  statPermission: 权限点 {checked}/{total}
+  statField: 字段 {checked}/{total}
+  empty: 暂无可配置的菜单
+  statusChecked: 已选
+  statusPartial: 部分选中
+  statusUnchecked: 未选
+  typeDirectory: 目录
+  typeMenu: 菜单
+  typePermission: 权限点
+  typeFieldGroup: 字段权限
+  typeField: 字段
+  labelWithName: "{label} ({name})"
+  fieldProgress: 已选 {checked}/{total}
+  linkedTip: 勾选父级会同时勾选其下全部菜单与权限点；取消后按剩余子级回算父级状态
+  independentTip: 各节点独立勾选，勾选子级不会自动勾选父级
+
 permissionPreview:
   userTitle: 用户权限预览
   roleTitle: 角色授权预览

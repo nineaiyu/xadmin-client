@@ -1,72 +1,59 @@
 <script lang="ts" setup>
+import { onMounted, ref } from "vue";
+import type { Ref } from "vue";
 import { SUCCESS_CODE } from "@/api/types";
-import {
-  computed,
-  getCurrentInstance,
-  nextTick,
-  onMounted,
-  ref,
-  watch
-} from "vue";
-import { match } from "pinyin-pro";
-import { useI18n } from "vue-i18n";
-import { transformI18n } from "@/plugins/i18n";
-import Reset from "~icons/ri/restart-line";
-import More2Fill from "~icons/ri/more-2-fill";
-import SearchIcon from "~icons/ri/search-line";
-import { MenuChoices } from "@/views/system/constants";
-import { getKeyList, isAllEmpty } from "@pureadmin/utils";
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { Auths } from "@/router/utils";
-import {
-  isSyntheticKey,
-  menuFieldKey,
-  parseMenuFieldKey
-} from "../utils/treeKeys";
+import { getKeyList } from "@pureadmin/utils";
+import MenuPermissionTree from "./MenuPermissionTree.vue";
+import { menuFieldKey } from "../utils/treeKeys";
+import type {
+  PermissionSubmitPayload,
+  PermissionTreeNode
+} from "../utils/permissionTree";
 import type { BaseApi } from "@/api/base";
-import type { TreeInstance, TreeNodeData, TreeKey } from "element-plus";
-import type { RecordType } from "plus-pro-components";
+import type { Auths } from "@/router/utils";
 
 interface FormProps {
   pk?: string;
+  /** 字段权限合成键（`{menuPk}+{fieldPk}`，列表行归一化结果） */
   field?: Array<string | number>;
+  /** 字段权限字典（详情口径 `{menuPk: [fieldPk]}`） */
   fields?: object;
   api?: Partial<BaseApi>;
   auth?: Auths;
-  menuTreeData?: Array<Record<string, unknown>>;
+  /** 菜单树（含字段权限合成节点）；传 ref 可跟随菜单树的异步加载 */
+  menuTreeData?: PermissionTreeNode[] | Ref<PermissionTreeNode[]>;
 }
 
-/** el-tree 实例（含私有 store：当前实现按 _getAllNodes 全量遍历节点） */
-type RoleTreeInstance = TreeInstance & {
-  store: {
-    _getAllNodes: () => Array<{
-      data?: RecordType;
-      key?: TreeKey;
-      expanded?: boolean;
-      checked?: boolean;
-    }>;
-  };
+/** 授权树暴露的命令式接口 */
+type PermissionTreeExpose = {
+  setCheckedKeys: (_keys: Array<string | number>) => void;
 };
 
 const props = withDefaults(defineProps<FormProps>(), {
-  menuTreeData: () => [],
   pk: undefined,
+  field: () => [],
   fields: () => ({}),
   api: () => ({}),
   auth: () => ({}),
-  field: () => []
+  menuTreeData: () => []
 });
 
 const menu = defineModel<Array<string | number>>({ default: () => [] });
 
-const { locale, t } = useI18n();
-const treeRoleRef = ref();
-const searchValue = ref("");
 const loading = ref(false);
+const permissionTreeRef = ref<PermissionTreeExpose>();
 
-const formData = ref({
+const formData = ref<{
+  menu: Array<string | number>;
+  fields: {
+    [key: string]: Array<string | number>;
+  };
+  field: Array<string | number>;
+}>({
   menu: menu.value,
-  fields: props.fields,
+  fields: (props.fields ?? {}) as {
+    [key: string]: Array<string | number>;
+  },
   field: props.field
 });
 
@@ -76,318 +63,71 @@ const emit = defineEmits<{
   ];
 }>();
 
-const handleChange = () => {
-  formatMenuFields();
-  emit("change", { ...formData.value });
-};
+/** 把「菜单 pk + 字段合成键」回显到授权树（树数据未就绪时由组件缓冲） */
+function applyInitialChecked() {
+  permissionTreeRef.value?.setCheckedKeys([
+    ...formData.value.menu,
+    ...formData.value.field
+  ]);
+}
 
-const customNodeClass = (data: TreeNodeData): string => {
-  if (data?.menu_type?.value === MenuChoices.DIRECTORY) {
-    return "is-penultimate";
-  } else if (data?.menu_type?.value === MenuChoices.MENU) {
-    return "is-permission";
-  }
-  return "";
-};
+/** 授权树勾选变化：同步菜单授权与字段权限 */
+function onTreeChange(payload: PermissionSubmitPayload) {
+  formData.value.menu = payload.menu;
+  formData.value.fields = payload.fields;
+  menu.value = payload.menu;
+  emit("change", { menu: payload.menu, fields: payload.fields });
+}
 
-const filterMenuNode = (value: string, data: TreeNodeData) => {
-  if (!value) return true;
-  return value
-    ? transformI18n(data?.meta?.title)
-        .toLocaleLowerCase()
-        .includes(value.toLocaleLowerCase().trim()) ||
-        (locale.value === "zh" &&
-          !isAllEmpty(
-            match(
-              transformI18n(data?.meta?.title).toLocaleLowerCase(),
-              value.toLocaleLowerCase().trim()
-            )
-          ))
-    : false;
-};
-
-const formatMenuFields = () => {
-  const checked: string[] = treeRoleRef
-    .value!.getCheckedKeys(false)
-    .map(String);
-  // 无合成段 = 菜单授权；字段叶子键（menuPk+fieldPk）按菜单分组合并进 fields；
-  // 分组键（+fieldPk）仅作展示，不计入授权。键约定见 ../utils/treeKeys.ts
-  formData.value.menu = checked.filter(key => !isSyntheticKey(key));
-  const fields: Record<string, Array<string | number>> = {};
-  checked.forEach(key => {
-    const parsed = parseMenuFieldKey(key);
-    if (parsed) {
-      const [menuPk, fieldPk] = parsed;
-      if (fields[menuPk]) {
-        fields[menuPk].push(fieldPk);
-      } else {
-        fields[menuPk] = [fieldPk];
-      }
-    }
-  });
-  formData.value.fields = fields;
-};
-
-watch(searchValue, val => {
-  treeRoleRef.value!.filter(val);
-});
-const initData = () => {
-  nextTick(() => {
-    treeRoleRef.value!.setCheckedKeys(
-      [...formData.value.menu, ...formData.value.field],
-      false
-    );
-  });
-};
-const getCheckedMenu = (pk?: string) => {
+/**
+ * 编辑态回显：列表行的 field 为空数组（ListRoleSerializer 口径），
+ * 需按 pk 取详情原文（`{menuPk: [fieldPk]}`）后重建合成键。
+ */
+function getCheckedMenu(pk?: string) {
   if (pk && props.auth.retrieve) {
     loading.value = true;
-    props.api.retrieve?.(pk).then(({ code, data }) => {
-      if (code === SUCCESS_CODE) {
-        formData.value.menu = getKeyList(data?.menu ?? [], "pk");
-        Object.keys(data?.field).forEach(key => {
-          data?.field[key].forEach((val: string | number) => {
-            formData.value.field.push(menuFieldKey(key, String(val)));
+    props.api
+      .retrieve?.(pk)
+      .then(({ code, data }) => {
+        if (code === SUCCESS_CODE) {
+          formData.value.menu = getKeyList(data?.menu ?? [], "pk");
+          const field: Array<string | number> = [];
+          Object.keys(data?.field ?? {}).forEach(menuPk => {
+            (data?.field?.[menuPk] ?? []).forEach(
+              (fieldPk: string | number) => {
+                field.push(menuFieldKey(menuPk, String(fieldPk)));
+              }
+            );
           });
-        });
-        initData();
-      }
-      loading.value = false;
-    });
+          formData.value.field = field;
+          applyInitialChecked();
+        }
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        loading.value = false;
+      });
+    return;
   }
-};
-onMounted(() => {
-  getCheckedMenu(props.pk);
-});
-const buttonClass = computed(() => {
-  return [
-    "h-[20px]!",
-    "reset-margin",
-    "text-gray-500!",
-    "dark:text-white!",
-    "dark:hover:text-primary!"
-  ];
-});
-const isExpand = ref(false);
-const selectAll = ref(false);
-const checkStrictly = ref(true);
-// 组件 setup 内调用，实例必然存在；proxy 供 $refs 取 el-tree 实例
-const proxy = getCurrentInstance()?.proxy;
-
-function toggleRowExpansionAll(status: boolean) {
-  isExpand.value = status;
-  const nodes = (
-    proxy?.$refs["treeRoleRef"] as RoleTreeInstance
-  ).store._getAllNodes();
-  for (let i = 0; i < nodes.length; i++) {
-    if (
-      status &&
-      (nodes[i].data?.model?.length > 0 ||
-        isSyntheticKey(nodes[i].data?.pk?.toString() ?? ""))
-    ) {
-      continue;
-    }
-    nodes[i].expanded = status;
-  }
+  applyInitialChecked();
 }
 
-function toggleSelectAll(status: boolean, keys: Array<TreeKey> | null = null) {
-  selectAll.value = status;
-  const nodes = (
-    proxy?.$refs["treeRoleRef"] as RoleTreeInstance
-  ).store._getAllNodes();
-  for (let i = 0; i < nodes.length; i++) {
-    if ((keys && keys.indexOf(nodes[i].key as TreeKey) > -1) || !keys) {
-      nodes[i].checked = status;
-    }
-  }
-  handleChange();
-}
-
-function nodeClick(value: TreeNodeData, node: { checked: boolean }) {
-  if (value.pk.toString().indexOf("+") > 0) {
-    node.checked = !node.checked;
-  }
-}
-
-function onReset() {
-  searchValue.value = "";
-  initData();
-  toggleRowExpansionAll(false);
-}
+onMounted(() => getCheckedMenu(props.pk));
 </script>
 
 <template>
-  <div class="flex items-center h-8.5 w-full mb-2">
-    <el-input
-      v-model="searchValue"
-      :placeholder="t('systemRole.menuTitle')"
-      class="flex-1"
-      clearable
-    >
-      <template #suffix>
-        <el-icon class="el-input__icon">
-          <IconifyIconOffline
-            v-show="searchValue.length === 0"
-            :icon="SearchIcon"
-          />
-        </el-icon>
-      </template>
-    </el-input>
-    <el-dropdown :hide-on-click="false">
-      <IconifyIconOffline
-        :icon="More2Fill"
-        class="w-7 cursor-pointer"
-        width="18px"
-        :aria-label="t('layout.more')"
-      />
-      <template #dropdown>
-        <el-dropdown-menu>
-          <el-dropdown-item>
-            <el-button
-              :class="buttonClass"
-              link
-              type="primary"
-              @click="toggleSelectAll(!selectAll)"
-            >
-              {{
-                selectAll ? t("buttons.unSelectAll") : t("buttons.selectAll")
-              }}
-            </el-button>
-          </el-dropdown-item>
-          <el-dropdown-item>
-            <el-button
-              :class="buttonClass"
-              link
-              type="primary"
-              @click="toggleRowExpansionAll(!isExpand)"
-            >
-              {{ isExpand ? t("buttons.collapseAll") : t("buttons.expendAll") }}
-            </el-button>
-          </el-dropdown-item>
-          <el-dropdown-item>
-            <el-button
-              :class="buttonClass"
-              link
-              type="primary"
-              @click="checkStrictly = !checkStrictly"
-            >
-              {{
-                checkStrictly
-                  ? t("buttons.checkUnStrictly")
-                  : t("buttons.checkStrictly")
-              }}
-            </el-button>
-          </el-dropdown-item>
-          <el-dropdown-item>
-            <el-button
-              :class="buttonClass"
-              :icon="useRenderIcon(Reset)"
-              link
-              type="primary"
-              @click="onReset"
-            >
-              {{ t("buttons.reset") }}
-            </el-button>
-          </el-dropdown-item>
-        </el-dropdown-menu>
-      </template>
-    </el-dropdown>
-  </div>
-  <div>
-    <el-tree
-      ref="treeRoleRef"
-      v-loading="loading"
-      :check-strictly="checkStrictly"
+  <div class="role-form">
+    <MenuPermissionTree
+      ref="permissionTreeRef"
       :data="menuTreeData"
-      :default-expand-all="isExpand"
-      :expand-on-click-node="true"
-      :filter-node-method="filterMenuNode"
-      :props="{ class: customNodeClass }"
-      :show-checkbox="true"
-      class="w-full"
-      highlight-current
-      node-key="pk"
-      @checkChange="handleChange"
-      @node-click="nodeClick"
-    >
-      <template #default="{ data }">
-        <div style="height: 30px">
-          <span
-            :class="[
-              'pr-1',
-              'rounded-sm',
-              'flex',
-              'items-center',
-              'select-none',
-              'w-full'
-            ]"
-          >
-            <component
-              :is="useRenderIcon(data?.meta?.icon)"
-              v-if="data?.meta?.icon"
-              class="m-1"
-            />
-            <template v-if="data.model">
-              {{ `${transformI18n(data?.meta?.title)}` }}
-              <!--                  <component :is="useRenderIcon('ep:reading')" class="m-1" />-->
-            </template>
-            <template v-else>
-              <template v-if="data?.label">
-                {{ `${data?.label} (${data?.name})` }}
-                <el-button-group>
-                  <el-button
-                    v-if="data.parent === null"
-                    plain
-                    text
-                    type="success"
-                    @click.stop="
-                      toggleSelectAll(true, getKeyList(data.children, 'pk'))
-                    "
-                    >{{ t("buttons.selectAll") }}</el-button
-                  >
-                  <el-button
-                    v-if="data.parent === null"
-                    plain
-                    text
-                    type="warning"
-                    @click.stop="
-                      toggleSelectAll(
-                        false,
-                        getKeyList(data.children ?? [], 'pk')
-                      )
-                    "
-                    >{{ t("buttons.cancel") }}</el-button
-                  >
-                </el-button-group>
-              </template>
-              <template v-else>
-                {{ transformI18n(data?.meta?.title) }}
-              </template>
-            </template>
-          </span>
-        </div>
-      </template>
-    </el-tree>
+      :loading="loading"
+      @change="onTreeChange"
+    />
   </div>
 </template>
+
 <style lang="scss" scoped>
-:deep(.el-tree-node__content) {
-  height: 30px;
-  font-size: 16px;
-  line-height: 30px;
-}
-
-/* 语义变量替代硬编码色（R7）：明暗主题自适应且保证对比度 */
-:deep(.is-penultimate > .el-tree-node__content) {
-  color: var(--el-color-primary);
-}
-
-:deep(.is-permission > .el-tree-node__content) {
-  color: var(--el-color-success);
-}
-
-:deep(.el-tree__empty-text) {
-  position: initial;
+.role-form {
+  width: 100%;
 }
 </style>

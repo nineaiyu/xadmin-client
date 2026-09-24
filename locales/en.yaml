@@ -1221,6 +1221,37 @@ systemRole:
   menu: Menus
   preview: Grant Preview
 
+# Role menu permission tree
+rolePermission:
+  searchPlaceholder: Search by menu title, permission code or route
+  matchedCount: "{count} matched"
+  linked: Parent-child linked
+  independent: Independent
+  selectAll: Select all
+  invert: Invert
+  clear: Clear
+  expandAll: Expand all
+  collapseAll: Collapse all
+  reset: Reset
+  selectedTotal: "{checked} / {total} selected"
+  statDirectory: Directories {checked}/{total}
+  statMenu: Menus {checked}/{total}
+  statPermission: Permissions {checked}/{total}
+  statField: Fields {checked}/{total}
+  empty: No menus available
+  statusChecked: Selected
+  statusPartial: Partially selected
+  statusUnchecked: Not selected
+  typeDirectory: Directory
+  typeMenu: Menu
+  typePermission: Permission
+  typeFieldGroup: Field access
+  typeField: Field
+  labelWithName: "{label} ({name})"
+  fieldProgress: "{checked}/{total} selected"
+  linkedTip: Selecting a parent also selects all of its menus and permissions; deselecting recalculates parent state from the remaining children
+  independentTip: Each node is selected independently; children do not affect parents
+
 permissionPreview:
   userTitle: User Permission Preview
   roleTitle: Role Grant Preview
