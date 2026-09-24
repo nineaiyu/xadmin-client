@@ -107,6 +107,9 @@ messageTemplate:
   resetConfirm: Reset "{name}" to the code default template?
   saveSuccess: Template saved
   resetSuccess: Reset to default template
+  syntaxHint: "Insert variables as {'{{'}name{'}}'}; leave empty to keep the code default"
+  previewUnsupported: This message type has no sample data, preview is unavailable
+  defaultContent: Code default content
 
 approvalDiscussion:
   title: Discussion
@@ -469,6 +472,17 @@ tag:
   assignHint: "Saving replaces all tags: unselected tags will be unbound"
   assignDone: Tags updated
   selectPlaceholder: Select tags
+  selectRequired: Select at least one tag
+  batchAssignTitle: Tag objects in bulk
+  batchHint: "Bulk: the selected mode is applied to every chosen object"
+  batchDone: Tagged {success} object(s)
+  batchDonePartial: "{success} succeeded, {failures} failed"
+  newPlaceholder: Type a name to create a tag
+  createDone: Tag created
+  modeLabel: Apply mode
+  modeAdd: Add
+  modeRemove: Remove
+  modeReplace: Replace (overwrite existing tags)
 
 commandPalette:
   title: Quick actions

@@ -107,6 +107,9 @@ messageTemplate:
   resetConfirm: 确认重置「{name}」为代码默认模板？
   saveSuccess: 模板已保存
   resetSuccess: 已重置为默认模板
+  syntaxHint: "变量以 {'{{'}名称{'}}'} 形式插入；留空表示沿用代码默认内容"
+  previewUnsupported: 该消息类型未提供样例数据，暂不支持预览
+  defaultContent: 代码默认内容
 
 approvalDiscussion:
   title: 讨论
@@ -469,6 +472,17 @@ tag:
   assignHint: 保存后为全量替换：未选中的标签将被解绑
   assignDone: 标签已更新
   selectPlaceholder: 请选择标签
+  selectRequired: 请至少选择一个标签
+  batchAssignTitle: 批量打标
+  batchHint: 批量：按所选应用方式作用于已选对象
+  batchDone: 已为 {success} 个对象打标
+  batchDonePartial: 成功 {success} 个，失败 {failures} 个
+  newPlaceholder: 输入名称新建标签
+  createDone: 标签已创建
+  modeLabel: 应用方式
+  modeAdd: 追加
+  modeRemove: 移除
+  modeReplace: 替换（覆盖原有标签）
 
 commandPalette:
   title: 快捷动作
