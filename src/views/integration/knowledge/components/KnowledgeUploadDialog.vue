@@ -1,29 +1,24 @@
 <script lang="ts" setup>
-import { SUCCESS_CODE } from "@/api/types";
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
-import { knowledgeApi } from "@/api/system/knowledge";
 
 /**
  * 上传知识库文档：文本入库，不落文件系统。
  *
  * 「选择本地 Markdown 文件」由浏览器 FileReader 读取为文本填充到编辑区，
  * 用户可再编辑后提交——与直接粘贴文本走同一接口（同名覆盖更新）。
+ *
+ * 表单契约：`getPayload()` 校验并返回载荷，返回 `null` 表示校验未过、
+ * 调用方保持弹窗打开；提交与列表刷新由打开方（ReDialog 的 beforeSure）负责。
  */
 defineOptions({ name: "KnowledgeUploadDialog" });
 
-const props = defineProps<{
-  onSaved?: () => void;
-}>();
-
-const emit = defineEmits<{ close: [] }>();
 const { t } = useI18n();
 
 const MAX_CONTENT = 200_000;
 const name = ref("");
 const content = ref("");
-const saving = ref(false);
 const fileInput = ref<HTMLInputElement>();
 
 const pickFile = () => fileInput.value?.click();
@@ -45,29 +40,20 @@ const onFileChange = (event: Event) => {
   reader.readAsText(file, "utf-8");
 };
 
-const submit = async () => {
+/** 校验并生成提交载荷；校验失败返回 null（调用方保持弹窗打开） */
+const getPayload = (): { name: string; content: string } | null => {
   if (!name.value.trim() || !content.value.trim()) {
     message(t("aiKnowledge.required"), { type: "warning" });
-    return;
+    return null;
   }
   if (content.value.length > MAX_CONTENT) {
     message(t("aiKnowledge.tooLarge"), { type: "warning" });
-    return;
+    return null;
   }
-  saving.value = true;
-  try {
-    const res = await knowledgeApi.upload(name.value.trim(), content.value);
-    if (res.code === SUCCESS_CODE) {
-      message(res.detail ?? t("aiKnowledge.uploadDone"), { type: "success" });
-      props.onSaved?.();
-      emit("close");
-    } else if (res.detail) {
-      message(String(res.detail), { type: "warning" });
-    }
-  } finally {
-    saving.value = false;
-  }
+  return { name: name.value.trim(), content: content.value };
 };
+
+defineExpose({ getPayload });
 </script>
 
 <template>
@@ -87,7 +73,7 @@ const submit = async () => {
             <el-button size="small" @click="pickFile">
               {{ t("aiKnowledge.chooseFile") }}
             </el-button>
-            <span class="text-xs text-gray-400">
+            <span class="text-xs text-(--el-text-color-secondary)">
               {{ t("aiKnowledge.chooseFileTip") }}
             </span>
             <input
@@ -109,11 +95,5 @@ const submit = async () => {
         </div>
       </el-form-item>
     </el-form>
-    <div class="flex justify-end gap-2">
-      <el-button @click="emit('close')">{{ t("buttons.cancel") }}</el-button>
-      <el-button type="primary" :loading="saving" @click="submit">
-        {{ t("buttons.save") }}
-      </el-button>
-    </div>
   </div>
 </template>

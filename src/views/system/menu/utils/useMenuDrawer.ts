@@ -186,7 +186,7 @@ export function useMenuDrawer({
               closeLoading();
               return;
             }
-            const payload = form.getModel() as MenuFormModel;
+            const payload = form.getPayload() as MenuFormModel;
             const cascade = (form.getCascadePks?.() ?? []) as Array<
               number | string
             >;
@@ -332,7 +332,7 @@ export function useMenuDrawer({
     const form = formRef.value;
     const valid = await form?.validate?.();
     if (!valid) return false;
-    const payload = form.getModel() as MenuFormModel;
+    const payload = form.getPayload() as MenuFormModel;
     const ok = await performSave(
       payload,
       Boolean(current.value?.isAdd),

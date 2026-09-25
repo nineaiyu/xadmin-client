@@ -53,7 +53,7 @@ export function useCardDialog({
           datasets: datasets.value
         }),
       beforeSure: (done, { closeLoading }) => {
-        const updated = cardFormRef.value?.getCard();
+        const updated = cardFormRef.value?.getPayload();
         if (!updated) {
           closeLoading();
           return;

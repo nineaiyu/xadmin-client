@@ -1,5 +1,5 @@
 import { SUCCESS_CODE } from "@/api/types";
-import { h, reactive, shallowRef, type Ref } from "vue";
+import { h, reactive, ref, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElLink, ElMessageBox, ElTag } from "element-plus";
 import { addDialog } from "@/components/ReDialog";
@@ -69,15 +69,40 @@ export function useKnowledge(tableRef: Ref) {
 
   const refresh = () => tableRef.value?.handleGetData();
 
+  const uploadFormRef = ref<InstanceType<typeof KnowledgeUploadDialog>>();
+
   const openUpload = () => {
+    uploadFormRef.value = undefined;
     addDialog({
       title: t("aiKnowledge.uploadTitle"),
       width: "640px",
       draggable: true,
       destroyOnClose: true,
       closeOnClickModal: false,
-      hideFooter: true,
-      contentRenderer: () => h(KnowledgeUploadDialog, { onSaved: refresh })
+      sureBtnLoading: true,
+      contentRenderer: () => h(KnowledgeUploadDialog, { ref: uploadFormRef }),
+      beforeSure: async (done, { closeLoading }) => {
+        const payload = uploadFormRef.value?.getPayload();
+        if (!payload) {
+          closeLoading();
+          return;
+        }
+        // 异常归一为可读失败结果，避免请求异常时弹窗 loading 悬挂
+        const res = await knowledgeApi
+          .upload(payload.name, payload.content)
+          .catch(error => ({
+            code: -1,
+            detail: String((error as { detail?: string })?.detail ?? error)
+          }));
+        if (res.code !== SUCCESS_CODE) {
+          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+          return;
+        }
+        message(res.detail ?? t("aiKnowledge.uploadDone"), { type: "success" });
+        // 先关弹窗再刷新列表，避免刷新耗时导致弹窗滞留
+        done();
+        refresh();
+      }
     });
   };
 

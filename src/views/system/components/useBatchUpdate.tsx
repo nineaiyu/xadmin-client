@@ -57,7 +57,7 @@ export function useBatchUpdate(options: {
       sureBtnLoading: true,
       contentRenderer: () => h(BatchUpdateForm, { ref: formRef, fields }),
       beforeSure: (done, { closeLoading }) => {
-        const payload = formRef.value?.getFields?.();
+        const payload = formRef.value?.getPayload?.();
         if (!payload) {
           ElMessage.warning(t("batchUpdate.fieldRequired"));
           closeLoading();

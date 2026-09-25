@@ -2,7 +2,12 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import type { RecordType } from "plus-pro-components";
+import {
+  ReActionPanel,
+  type PanelActionGroup
+} from "@/components/ReActionPanel";
 import { choiceValue } from "@/utils/dict";
+import { SOLID_TAG_STYLE } from "@/utils/tagTone";
 import { formatDateTime } from "@/utils";
 import type { UserActionGroup } from "../utils/userActions";
 
@@ -137,12 +142,34 @@ const metaItems = computed(() => [
     value: formatDateTime(props.row.date_expired) || "—"
   }
 ]);
+
+/**
+ * 动作分组：本页的动作契约带行参数（`run(row)`），面板契约由调用方闭包绑定，
+ * 故在此做一次收敛——行级可用性（disabled）同样绑定当前行。
+ */
+const panelGroups = computed<PanelActionGroup[]>(() =>
+  props.groups.map(group => ({
+    key: group.key,
+    title: group.title,
+    actions: group.actions.map(action => ({
+      code: action.code,
+      label: action.label,
+      description: action.description,
+      icon: action.icon,
+      type: action.type,
+      disabled: action.disabled
+        ? () => Boolean(action.disabled?.(props.row))
+        : undefined,
+      run: () => action.run(props.row)
+    }))
+  }))
+);
 </script>
 
 <template>
-  <div class="user-action-panel">
+  <ReActionPanel :groups="panelGroups" :meta-items="metaItems">
     <!-- 资料卡：列表行快照，零额外请求 -->
-    <div class="profile-card">
+    <template #profile>
       <div class="flex items-center gap-3">
         <el-image
           v-if="row.avatar"
@@ -188,62 +215,18 @@ const metaItems = computed(() => [
           :key="item.key"
           size="small"
           :color="item.color || undefined"
-          :style="item.color ? { border: 'none', color: '#fff' } : undefined"
+          :style="item.color ? SOLID_TAG_STYLE : undefined"
         >
           {{ item.name }}
         </el-tag>
       </div>
-    </div>
-
-    <!-- 基础信息 -->
-    <dl class="meta-grid">
-      <div v-for="item in metaItems" :key="item.key" class="meta-item">
-        <dt class="meta-label">{{ item.label }}</dt>
-        <dd class="meta-value">{{ item.value }}</dd>
-      </div>
-    </dl>
-
-    <!-- 动作分组：整行可点，危险动作红色语义 -->
-    <div v-for="group in groups" :key="group.key" class="action-group">
-      <div class="group-title">{{ group.title }}</div>
-      <button
-        v-for="action in group.actions"
-        :key="action.code"
-        type="button"
-        class="action-item"
-        :class="`action-item--${action.type ?? 'primary'}`"
-        :disabled="action.disabled ? action.disabled(row) : false"
-        :data-action-code="action.code"
-        @click="action.run(row)"
-      >
-        <span class="action-icon">
-          <el-icon><component :is="action.icon" /></el-icon>
-        </span>
-        <span class="min-w-0 flex-1">
-          <span class="action-label">{{ action.label }}</span>
-          <span v-if="action.description" class="action-desc">
-            {{ action.description }}
-          </span>
-        </span>
-      </button>
-    </div>
-  </div>
+    </template>
+  </ReActionPanel>
 </template>
 
 <style scoped lang="scss">
-.user-action-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  padding: 2px 2px 12px;
-}
-
-.profile-card {
-  padding: 16px;
-  background: var(--el-fill-color-light);
-  border-radius: 10px;
-}
-
+/* 面板骨架（资料卡 / 基础信息 / 动作分组）由 ReActionPanel 提供，
+   此处只保留用户页特有的头像与文字层级样式。 */
 .profile-avatar {
   flex-shrink: 0;
   width: 56px;
@@ -266,7 +249,7 @@ const metaItems = computed(() => [
 .profile-name {
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 16px;
+  font-size: var(--el-font-size-medium);
   font-weight: 600;
   line-height: 22px;
   color: var(--el-text-color-primary);
@@ -274,124 +257,13 @@ const metaItems = computed(() => [
 }
 
 .profile-sub {
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
   line-height: 18px;
   color: var(--el-text-color-secondary);
 }
 
 .tag-caption {
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
   color: var(--el-text-color-secondary);
-}
-
-.meta-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px 16px;
-  margin: 0;
-}
-
-.meta-item {
-  min-width: 0;
-}
-
-.meta-label {
-  font-size: 12px;
-  line-height: 16px;
-  color: var(--el-text-color-secondary);
-}
-
-.meta-value {
-  margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 13px;
-  line-height: 20px;
-  color: var(--el-text-color-primary);
-  white-space: nowrap;
-}
-
-.action-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.group-title {
-  padding-left: 2px;
-  font-size: 12px;
-  line-height: 16px;
-  color: var(--el-text-color-secondary);
-}
-
-.action-item {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  width: 100%;
-  padding: 10px 12px;
-  text-align: left;
-  cursor: pointer;
-  background: var(--el-bg-color);
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 8px;
-  transition:
-    background-color 0.2s,
-    border-color 0.2s;
-
-  &:hover:not(:disabled) {
-    background: var(--el-fill-color-light);
-    border-color: var(--el-color-primary-light-5);
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
-}
-
-.action-icon {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  font-size: 16px;
-  color: var(--el-color-primary);
-  background: var(--el-color-primary-light-9);
-  border-radius: 8px;
-}
-
-.action-label {
-  display: block;
-  font-size: 14px;
-  line-height: 20px;
-  color: var(--el-text-color-primary);
-}
-
-.action-desc {
-  display: block;
-  font-size: 12px;
-  line-height: 16px;
-  color: var(--el-text-color-secondary);
-}
-
-.action-item--warning {
-  .action-icon {
-    color: var(--el-color-warning);
-    background: var(--el-color-warning-light-9);
-  }
-}
-
-.action-item--danger {
-  .action-icon {
-    color: var(--el-color-danger);
-    background: var(--el-color-danger-light-9);
-  }
-
-  .action-label {
-    color: var(--el-color-danger);
-  }
 }
 </style>

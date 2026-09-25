@@ -186,6 +186,13 @@ const switchPane = (key: string) => {
 </template>
 
 <style lang="scss">
+/**
+ * 个人中心的侧栏皮肤（副作用到 EP 菜单内部样式，必须非 scoped）。
+ *
+ * 固定尺寸（48px 行高、4px 圆角）是有意为之：侧栏是「页签式导航」而非普通菜单，
+ * 颜色一律取主题变量（`--pure-theme-menu-*` / `--el-color-*`），不写死色值——
+ * 写死 #fff 会在自定义菜单色主题下与标题色撞车。
+ */
 .pure-account-settings {
   background: var(--pure-theme-menu-bg) !important;
 }
@@ -205,10 +212,10 @@ const switchPane = (key: string) => {
     }
 
     &.is-active {
-      color: #fff !important;
+      color: var(--el-color-white) !important;
 
       &:hover {
-        color: #fff !important;
+        color: var(--el-color-white) !important;
       }
 
       &::before {
@@ -223,17 +230,22 @@ const switchPane = (key: string) => {
     }
   }
 }
-</style>
 
-<style lang="scss" scoped>
-body[layout] {
-  .el-menu--vertical .is-active {
-    color: #fff !important;
-    transition: color 0.2s;
+/**
+ * 激活项白字的兜底：本页侧栏不在布局侧栏（`.sidebar-container`）作用域内，
+ * 布局层的激活色规则压不到这里，因此需要在页内以**同等权重**兜底
+ * （`body[layout]` + 两个类 = 0-3-1，足以压过 EP 与布局层的菜单色）。
+ *
+ * 选择器必须带 `.pure-account-settings` 锚点：早期写法直接写
+ * `body[layout] .el-menu--vertical .is-active`，等于把规则挂到全站——会命中**主侧栏**的激活项
+ * （实测主侧栏因布局层权重更高暂未受影响，但属随时可能生效的隐患）。
+ */
+body[layout] .pure-account-settings .el-menu--vertical .is-active {
+  color: var(--el-color-white) !important;
+  transition: color 0.2s;
 
-    &:hover {
-      color: #fff !important;
-    }
+  &:hover {
+    color: var(--el-color-white) !important;
   }
 }
 </style>

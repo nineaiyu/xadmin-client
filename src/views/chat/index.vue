@@ -6,6 +6,7 @@ import { ElMessageBox } from "element-plus";
 import { message } from "@/utils/message";
 import type { ChatMessageItem, ChatRoomItem } from "@/api/chat";
 import { useChat } from "./hooks/useChat";
+import { ReNavDrawer } from "@/components/ReNavDrawer";
 import ChatSidebar from "./components/ChatSidebar.vue";
 import ChatWindow from "./components/ChatWindow.vue";
 
@@ -174,13 +175,7 @@ async function recall(item: ChatMessageItem) {
       @created="createdGroup"
     />
 
-    <el-drawer
-      v-if="isNarrow"
-      v-model="drawerVisible"
-      direction="ltr"
-      size="80%"
-      :with-header="false"
-    >
+    <ReNavDrawer v-model="drawerVisible" :narrow="isNarrow">
       <ChatSidebar
         :rooms="chat.rooms.value"
         :contacts="chat.contacts.value"
@@ -193,7 +188,7 @@ async function recall(item: ChatMessageItem) {
         @open-private="openPrivate"
         @refresh-contacts="chat.roomState.loadContacts()"
       />
-    </el-drawer>
+    </ReNavDrawer>
 
     <ChatWindow
       class="grow"

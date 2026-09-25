@@ -94,7 +94,7 @@ withDefaults(defineProps<Props>(), {
 }
 
 .meta-label {
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
   line-height: 16px;
   color: var(--el-text-color-secondary);
 }
@@ -103,7 +103,7 @@ withDefaults(defineProps<Props>(), {
   margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 13px;
+  font-size: var(--el-font-size-small);
   line-height: 20px;
   color: var(--el-text-color-primary);
   white-space: nowrap;
@@ -117,7 +117,7 @@ withDefaults(defineProps<Props>(), {
 
 .group-title {
   padding-left: 2px;
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
   line-height: 16px;
   color: var(--el-text-color-secondary);
 }
@@ -155,7 +155,7 @@ withDefaults(defineProps<Props>(), {
   justify-content: center;
   width: 32px;
   height: 32px;
-  font-size: 16px;
+  font-size: var(--el-font-size-medium);
   color: var(--el-color-primary);
   background: var(--el-color-primary-light-9);
   border-radius: 8px;
@@ -163,14 +163,14 @@ withDefaults(defineProps<Props>(), {
 
 .action-label {
   display: block;
-  font-size: 14px;
+  font-size: var(--el-font-size-base);
   line-height: 20px;
   color: var(--el-text-color-primary);
 }
 
 .action-desc {
   display: block;
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
   line-height: 16px;
   color: var(--el-text-color-secondary);
 }

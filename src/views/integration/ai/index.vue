@@ -10,6 +10,7 @@ import {
   type AiToolsResult
 } from "@/api/system/ai";
 import { useAiConsole } from "./hooks/useAiConsole";
+import { ReNavDrawer } from "@/components/ReNavDrawer";
 import AiFeatureNav, {
   type AiFeatureEntry
 } from "./components/AiFeatureNav.vue";
@@ -213,20 +214,14 @@ onUnmounted(() => {
         @select="selectFeature"
       />
 
-      <el-drawer
-        v-if="isNarrow"
-        v-model="drawerVisible"
-        direction="ltr"
-        size="80%"
-        :with-header="false"
-      >
+      <ReNavDrawer v-model="drawerVisible" :narrow="isNarrow">
         <AiFeatureNav
           :entries="entries"
           :active="aiConsole.feature.value"
           :footer="navFooter"
           @select="selectFeature"
         />
-      </el-drawer>
+      </ReNavDrawer>
 
       <AiChatPanel
         class="grow"

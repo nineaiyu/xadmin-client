@@ -202,7 +202,8 @@ const validate = (): Promise<boolean> =>
     .then(() => true)
     .catch(() => false) ?? Promise.resolve(false);
 
-const getModel = (): MenuFormModel => cloneDeep(form);
+/** 表单载荷（与全仓表单组件同契约名；返回深拷贝，调用方不再持有内部引用） */
+const getPayload = (): MenuFormModel => cloneDeep(form);
 
 /** 未保存变更：与打开时的快照比对（关闭/取消/切换节点三处拦截共用） */
 const isDirty = () => JSON.stringify(form) !== initialSnapshot;
@@ -224,7 +225,7 @@ const getCascadePks = (): Array<number | string> => {
   return pks;
 };
 
-defineExpose({ validate, getModel, isDirty, getCascadePks });
+defineExpose({ validate, getPayload, isDirty, getCascadePks });
 </script>
 
 <template>

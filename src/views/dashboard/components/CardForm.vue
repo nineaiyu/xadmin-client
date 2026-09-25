@@ -106,7 +106,7 @@ const onChartTypeChanged = () => {
 };
 
 /** 校验并返回卡片草稿；校验失败返回 null（调用方保持弹窗打开） */
-const getCard = (): DashboardCard | null => {
+const getPayload = (): DashboardCard | null => {
   if (!form.dataset || !form.title) {
     message(t("dashboard.cardRequired"), { type: "warning" });
     return null;
@@ -126,7 +126,7 @@ const getCard = (): DashboardCard | null => {
   return { ...form };
 };
 
-defineExpose({ getCard });
+defineExpose({ getPayload });
 </script>
 
 <template>
@@ -223,7 +223,7 @@ defineExpose({ getCard });
           :label="field"
         />
       </el-select>
-      <div class="text-xs text-gray-500">
+      <div class="text-xs text-(--el-text-color-regular)">
         {{ t("dashboard.valueFieldTip") }}
       </div>
     </el-form-item>
