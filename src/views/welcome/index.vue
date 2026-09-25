@@ -2,11 +2,12 @@
 import { markRaw, onMounted, ref } from "vue";
 import { loadEcharts } from "@/plugins/echarts";
 import ReCol from "@/components/ReCol";
-import { randomGradient, useDark } from "@pureadmin/utils";
+import { randomGradient } from "@pureadmin/utils";
 import { ReNormalCountTo } from "@/components/ReCountTo";
 import { useRenderFlicker } from "@/components/ReFlicker";
 import { ChartBar, ChartClock, ChartLine, ChartRound } from "./components";
 import Segmented from "@/components/ReSegmented";
+import { epColor, epColorLight } from "@/utils/chartTheme";
 import { useDashboard } from "@/views/welcome/hook";
 
 /** echarts 懒加载就绪后再渲染图表组件（useECharts 在初始化时同步读取 $echarts） */
@@ -21,7 +22,6 @@ defineOptions({
   name: "Welcome"
 });
 
-const { isDark } = useDark();
 const {
   t,
   chartData,
@@ -64,13 +64,11 @@ let curWeek = ref(1);
               {{ item.name }}
             </span>
             <div
-              :style="{
-                backgroundColor: isDark ? 'transparent' : item.bgColor
-              }"
+              :style="{ backgroundColor: epColorLight(item.tone) }"
               class="size-8 flex-c rounded-md"
             >
               <IconifyIconOffline
-                :color="item.color"
+                :color="epColor(item.tone)"
                 :icon="item.icon"
                 width="18"
                 height="18"
@@ -85,11 +83,13 @@ let curWeek = ref(1);
                 :fontSize="'1.6em'"
                 :startVal="100"
               />
-              <p class="font-medium text-green-500">{{ item.percent }}</p>
+              <p class="font-medium text-(--el-color-success)">
+                {{ item.percent }}
+              </p>
             </div>
             <ChartLine
               v-if="echartsReady && item.data.length > 1"
-              :color="item.color"
+              :color="epColor(item.tone)"
               :data="item.data"
               class="w-1/2!"
             />
@@ -157,7 +157,7 @@ let curWeek = ref(1);
                 :fontSize="'1.6em'"
                 :startVal="100"
               />
-              <p class="text-sm font-thin text-green-500">
+              <p class="text-sm font-thin text-(--el-color-success)">
                 {{ t("welcome.registerUser") }}
               </p>
             </div>
@@ -168,7 +168,7 @@ let curWeek = ref(1);
                 :fontSize="'1.6em'"
                 :startVal="100"
               />
-              <p class="text-sm font-thin text-violet-500">
+              <p class="text-sm font-thin text-(--el-color-primary)">
                 {{ t("welcome.activeUser") }}
               </p>
             </div>

@@ -1,6 +1,7 @@
 <script lang="ts" setup>
-import { onBeforeUnmount, ref, type Ref } from "vue";
-import { useResizeObserver } from "@pureadmin/utils";
+import { onBeforeUnmount, ref, watch, type Ref } from "vue";
+import { useDark, useResizeObserver } from "@pureadmin/utils";
+import { epColor } from "@/utils/chartTheme";
 
 defineOptions({ name: "Clock" });
 const digit = [
@@ -160,20 +161,24 @@ const balls = ref<Ball[]>([]);
 const marginLeft = ref(10);
 const marginTop = ref(30);
 const distNumber = ref(15);
-const colors = ref([
-  "red",
-  "#33B5E5",
-  "#0099CC",
-  "#AA66CC",
-  "#9933CC",
-  "#99CC00",
-  "#669900",
-  "#FFBB33",
-  "#FF8800",
-  "#FF444"
-]);
+const { isDark } = useDark();
+/** 小球色板与数字色：均取 EP 语义色，主题切换后重算（见 refreshTheme） */
+const colors = ref<string[]>([]);
+const digitColor = ref("");
+
+const refreshTheme = () => {
+  digitColor.value = epColor("primary");
+  colors.value = [
+    epColor("primary"),
+    epColor("success"),
+    epColor("warning"),
+    epColor("danger"),
+    epColor("info")
+  ];
+};
 
 const initConfig = () => {
+  refreshTheme();
   winWidth.value = divRef.value?.offsetWidth ?? 0;
   winHeight.value = divRef.value?.offsetHeight ?? 0;
   radius.value = Math.round((winWidth.value * 3) / 4 / 98) - 1;
@@ -268,7 +273,10 @@ const addBalls = (x: number, y: number, num: number) => {
           g: 1.5 + Math.random(),
           vx: Math.pow(-1, Math.ceil(Math.random() * 1000)) * 4,
           vy: -10,
-          color: colors.value[Math.floor(Math.random() * colors.value.length)]
+          // 色板为空（首帧尚未 initConfig）时回退主色，避免写入 undefined
+          color:
+            colors.value[Math.floor(Math.random() * colors.value.length)] ??
+            epColor("primary")
         };
         balls.value.push(aBall);
       }
@@ -368,7 +376,7 @@ const renderDigit = (
   num: number,
   cxt: CanvasRenderingContext2D
 ) => {
-  cxt.fillStyle = "#3893fa";
+  cxt.fillStyle = digitColor.value;
   digit[num].forEach((item, i) => {
     item.forEach((dig, j) => {
       if (dig == 1) {
@@ -384,12 +392,17 @@ const renderDigit = (
   });
 };
 
-// 模板 ref 挂载后必然有值；useResizeObserver 的 ElementRef 不含 undefined，边界收窄
-useResizeObserver(divRef as Ref<HTMLDivElement>, () => {
+/** 重建画布：容器尺寸变化与主题切换共用（色板在 initConfig 内按主题重算） */
+const restart = () => {
   clearInterval(timer.value);
   initConfig();
   initCanvas();
-});
+};
+
+// 模板 ref 挂载后必然有值；useResizeObserver 的 ElementRef 不含 undefined，边界收窄
+useResizeObserver(divRef as Ref<HTMLDivElement>, restart);
+// 暗色/亮色切换：数字与小球取色不同，重建一次画布
+watch(isDark, restart);
 
 onBeforeUnmount(() => {
   if (timer.value) {

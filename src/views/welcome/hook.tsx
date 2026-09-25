@@ -16,13 +16,13 @@ import GroupLine from "~icons/ri/group-line";
 import { getKeyList } from "@pureadmin/utils";
 import { computed, onMounted, ref, type Component } from "vue";
 import { operationLogApi } from "@/api/system/logs/operation";
+import type { EpColorName } from "@/utils/chartTheme";
 import type { RecordType } from "plus-pro-components";
 
-/** 顶部指标卡片（chartData） */
+/** 顶部指标卡片（chartData）：配色只声明 EP 语义色名，具体色值渲染期按主题解析 */
 export type ChartCardItem = {
   icon: Component;
-  bgColor: string;
-  color: string;
+  tone: EpColorName;
   duration: number;
   name: string;
   value: number;
@@ -87,8 +87,7 @@ export function useDashboard() {
         const results = res.results ?? [];
         chartData.value.push({
           icon: LogLine,
-          bgColor: "#eff8f4",
-          color: "#7846e5",
+          tone: "warning",
           duration: 2200,
           name: t("welcome.requestNum"),
           value: getKeyList(results, "count", false)[results.length - 1],
@@ -104,8 +103,7 @@ export function useDashboard() {
         const results = res.results ?? [];
         chartData.value.push({
           icon: GroupLine,
-          bgColor: "#eff8f4",
-          color: "#26ce83",
+          tone: "success",
           duration: 2200,
           name: t("welcome.userNum"),
           value: res.count,
@@ -121,8 +119,7 @@ export function useDashboard() {
         const results = res.results ?? [];
         chartData.value.push({
           icon: LoginLine,
-          bgColor: "#effaff",
-          color: "#41b6ff",
+          tone: "primary",
           duration: 2200,
           name: t("welcome.loginTimes"),
           value: res.count,
