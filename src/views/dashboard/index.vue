@@ -9,6 +9,7 @@ import { Download, Setting } from "@element-plus/icons-vue";
 import { ElMessageBox } from "element-plus";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
+import ReEmpty from "@/components/ReEmpty";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import {
@@ -385,7 +386,11 @@ onMounted(async () => {
       </div>
     </el-card>
 
-    <el-empty v-if="!current" :description="t('dashboard.empty')" />
+    <ReEmpty
+      v-if="!current"
+      :description="t('dashboard.empty')"
+      icon="ep/data-line"
+    />
     <template v-else>
       <el-row ref="rowRef" :gutter="12" data-testid="dashboard-cards">
         <!-- 栅格：窄屏最多两列（xs 全宽 / sm、md 半宽上限）；lg 起回到用户档位。
@@ -401,16 +406,14 @@ onMounted(async () => {
           class="mb-3"
         >
           <el-card
-            shadow="hover"
-            class="flex flex-col overflow-hidden"
+            shadow="never"
+            class="app-card flex flex-col overflow-hidden"
             :style="{ height: `${card.height ?? 224}px` }"
             :body-style="{ flex: '1 1 0%', minHeight: '0' }"
           >
             <template #header>
               <div class="flex items-center gap-2">
-                <el-icon v-if="editing" class="drag-handle cursor-move">
-                  <span>⋮⋮</span>
-                </el-icon>
+                <span v-if="editing" class="drag-handle" aria-hidden="true" />
                 <span class="truncate font-medium">{{ card.title }}</span>
                 <el-tag size="small" type="info" class="ml-1">
                   {{ datasetName(card.dataset) }}
@@ -458,3 +461,34 @@ onMounted(async () => {
     </template>
   </div>
 </template>
+
+<style lang="scss" scoped>
+/* 卡片拖拽手柄：2×3 点阵（CSS 绘制，避免文本字符在不同字体下的宽度差异） */
+.drag-handle {
+  display: block;
+  width: 10px;
+  height: 16px;
+  color: var(--el-text-color-placeholder);
+  cursor: move;
+  transition: color var(--el-transition-duration);
+
+  &::before {
+    display: block;
+    width: 4px;
+    height: 4px;
+    content: "";
+    background: currentcolor;
+    border-radius: 50%;
+    box-shadow:
+      0 6px 0 currentcolor,
+      0 12px 0 currentcolor,
+      6px 0 0 currentcolor,
+      6px 6px 0 currentcolor,
+      6px 12px 0 currentcolor;
+  }
+
+  &:hover {
+    color: var(--el-color-primary);
+  }
+}
+</style>

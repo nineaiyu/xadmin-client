@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { PropType } from "vue";
 import { ListItem } from "../data";
 import NoticeItem from "./NoticeItem.vue";
@@ -25,5 +26,5 @@ defineProps({
       :index="index"
     />
   </div>
-  <el-empty v-else :image-size="100" :description="transformI18n(emptyText)" />
+  <ReEmpty v-else :image-size="100" :description="transformI18n(emptyText)" />
 </template>

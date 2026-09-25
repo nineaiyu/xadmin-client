@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { userApi } from "@/api/system/user";
@@ -79,7 +80,7 @@ async function runTrial() {
       show-icon
       type="info"
     />
-    <el-empty
+    <ReEmpty
       v-else-if="!candidates.length"
       :description="t('permissionPreview.noModels')"
       :image-size="70"

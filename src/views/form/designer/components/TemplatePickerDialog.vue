@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
@@ -85,7 +86,7 @@ onMounted(load);
 
 <template>
   <div v-loading="loading">
-    <el-empty
+    <ReEmpty
       v-if="templates.length === 0"
       :description="t('dform.noTemplates')"
       :image-size="60"

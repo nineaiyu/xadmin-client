@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { useI18n } from "vue-i18n";
 import { useFormMySubmissions } from "./utils/hook";
 
@@ -30,7 +31,7 @@ const {
       <template #header>
         <span class="font-semibold">{{ t("dform.fillTitle") }}</span>
       </template>
-      <el-empty
+      <ReEmpty
         v-if="forms.length === 0"
         :description="t('dform.noForms')"
         :image-size="60"

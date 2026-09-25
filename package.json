@@ -109,7 +109,6 @@
     "vue-router": "^5.3.1",
     "vue-tippy": "^6.8.0",
     "vue-types": "^7.0.0",
-    "vue-virtual-scroller": "^3.0.5",
     "vue3-ts-jsoneditor": "^3.4.1",
     "vuedraggable": "^4.1.0"
   },

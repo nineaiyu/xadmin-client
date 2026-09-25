@@ -51,6 +51,8 @@ import EpTickets from "~icons/ep/tickets?raw";
 import EpTimer from "~icons/ep/timer?raw";
 import EpUser from "~icons/ep/user?raw";
 import EpView from "~icons/ep/view?raw";
+// —— 空态组件（ReEmpty）默认图标：本地图标集懒加载不会回填已挂载实例，必须随包注册 ——
+import EpBox from "~icons/ep/box?raw";
 
 // https://icon-sets.iconify.design/ri/?keyword=ri
 import RiMindMap from "~icons/ri/mind-map?raw";
@@ -96,6 +98,8 @@ const icons = [
   ["ep/lollipop", EpLollipop],
   ["ep/histogram", EpHistogram],
   ["ep/home-filled", EpHomeFilled],
+  // 空态组件（ReEmpty）默认图标
+  ["ep/box", EpBox],
   // Remix Icon: https://github.com/Remix-Design/RemixIcon
   ["ri/mind-map", RiMindMap],
   ["ri/admin-fill", RiAdminFill],

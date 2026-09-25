@@ -2,6 +2,7 @@
 import { computed, h, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import ReEmpty from "@/components/ReEmpty";
 import { addDialog } from "@/components/ReDialog";
 import { message } from "@/utils/message";
 import { SUCCESS_CODE } from "@/api/types";
@@ -147,8 +148,8 @@ function avatarText(peer: ChatPeer) {
         <div
           v-for="room in filteredRooms"
           :key="room.id"
-          class="mx-2 mb-1 cursor-pointer rounded p-2 transition-colors hover:bg-(--el-fill-color-light)"
-          :class="{ 'bg-(--el-fill-color-light)': room.id === activeRoomId }"
+          class="sidebar-item mx-2 mb-1 cursor-pointer rounded p-2"
+          :class="{ 'is-active': room.id === activeRoomId }"
           :data-testid="`chat-room-${room.room_type}`"
           @click="emit('select', room.id)"
         >
@@ -210,10 +211,10 @@ function avatarText(peer: ChatPeer) {
             />
           </div>
         </div>
-        <el-empty
+        <ReEmpty
           v-if="!loading && !filteredRooms.length"
           :description="t('chat.emptyRooms')"
-          :image-size="60"
+          size="small"
         />
       </div>
 
@@ -229,7 +230,7 @@ function avatarText(peer: ChatPeer) {
         <div
           v-for="peer in filteredContacts"
           :key="peer.pk"
-          class="mx-2 mb-1 cursor-pointer rounded px-2 py-1.5 transition-colors hover:bg-(--el-fill-color-light)"
+          class="sidebar-item mx-2 mb-1 cursor-pointer rounded px-2 py-1.5"
           :title="t('chat.openPrivate')"
           :data-testid="`chat-contact-${peer.username}`"
           @click="emit('openPrivate', peer.pk)"
@@ -260,10 +261,10 @@ function avatarText(peer: ChatPeer) {
             />
           </div>
         </div>
-        <el-empty
+        <ReEmpty
           v-if="!loadingContacts && !filteredContacts.length"
           :description="t('chat.emptyContacts')"
-          :image-size="60"
+          size="small"
         />
       </div>
     </el-scrollbar>

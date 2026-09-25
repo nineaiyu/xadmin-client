@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import type {
@@ -136,7 +137,7 @@ const durationText = (value: number) => `${(value * 1000).toFixed(1)} ms`;
           </el-table>
         </div>
       </template>
-      <el-empty v-else-if="!loading" :description="t('apiApp.usage.empty')" />
+      <ReEmpty v-else-if="!loading" :description="t('apiApp.usage.empty')" />
     </div>
   </el-drawer>
 </template>

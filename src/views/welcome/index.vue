@@ -2,12 +2,11 @@
 import { markRaw, onMounted, ref } from "vue";
 import { loadEcharts } from "@/plugins/echarts";
 import ReCol from "@/components/ReCol";
-import { randomGradient } from "@pureadmin/utils";
 import { ReNormalCountTo } from "@/components/ReCountTo";
 import { useRenderFlicker } from "@/components/ReFlicker";
 import { ChartBar, ChartClock, ChartLine, ChartRound } from "./components";
 import Segmented from "@/components/ReSegmented";
-import { epColor, epColorLight } from "@/utils/chartTheme";
+import { epColor, epColorLight, type EpColorName } from "@/utils/chartTheme";
 import { useDashboard } from "@/views/welcome/hook";
 
 /** echarts 懒加载就绪后再渲染图表组件（useECharts 在初始化时同步读取 $echarts） */
@@ -32,6 +31,19 @@ const {
   userRegisterList
 } = useDashboard();
 let curWeek = ref(1);
+
+/** 操作日志时间线节点色：按 EP 语义色循环（原为随机渐变，刷新观感不一致且不跟主题）；
+    组件实例一次性创建——渲染期重复创建会让节点在每次重渲染时闪动 */
+const timelineTones: EpColorName[] = [
+  "primary",
+  "success",
+  "warning",
+  "danger",
+  "info"
+];
+const timelineIcons = timelineTones.map(tone =>
+  markRaw(useRenderFlicker({ background: `var(--el-color-${tone})` }))
+);
 </script>
 
 <template>
@@ -58,7 +70,7 @@ let curWeek = ref(1);
         :xs="24"
         class="mb-4.5"
       >
-        <el-card class="line-card" shadow="never">
+        <el-card class="app-card line-card" shadow="never">
           <div class="flex justify-between">
             <span class="text-md font-medium">
               {{ item.name }}
@@ -118,7 +130,7 @@ let curWeek = ref(1);
       >
         <el-card
           :body-style="{ padding: '0' }"
-          class="line-card"
+          class="app-card line-card"
           shadow="never"
         >
           <ChartClock />
@@ -145,7 +157,7 @@ let curWeek = ref(1);
         :xs="24"
         class="mb-4.5"
       >
-        <el-card class="line-card" shadow="never">
+        <el-card class="app-card line-card" shadow="never">
           <div class="flex justify-between">
             <span class="text-md font-medium"> {{ item.name }}</span>
           </div>
@@ -193,7 +205,7 @@ let curWeek = ref(1);
         :xs="24"
         class="mb-4.5"
       >
-        <el-card class="bar-card" shadow="never">
+        <el-card class="app-card bar-card" shadow="never">
           <div class="flex justify-between">
             <span class="text-md font-medium">{{
               t("welcome.userAnalysis")
@@ -228,7 +240,7 @@ let curWeek = ref(1);
         :xs="24"
         class="mb-4.5"
       >
-        <el-card shadow="never">
+        <el-card class="app-card" shadow="never">
           <div class="flex justify-between">
             <span class="text-md font-medium">{{
               t("welcome.operateLog")
@@ -239,15 +251,7 @@ let curWeek = ref(1);
               <el-timeline-item
                 v-for="(item, index) in operateLogList"
                 :key="index"
-                :icon="
-                  markRaw(
-                    useRenderFlicker({
-                      background: randomGradient({
-                        randomizeHue: true
-                      })
-                    })
-                  )
-                "
+                :icon="timelineIcons[index % timelineIcons.length]"
                 :timestamp="
                   dayjs(item.created_time).format('YYYY-MM-DD HH:mm:ss')
                 "
@@ -270,8 +274,6 @@ let curWeek = ref(1);
 
 <style lang="scss" scoped>
 :deep(.el-card) {
-  --el-card-border-color: none;
-
   /* 隐藏 el-scrollbar 滚动条 */
   .el-scrollbar__bar {
     display: none;

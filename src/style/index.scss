@@ -25,6 +25,12 @@
   --pure-theme-menu-title-hover: initial;
   --pure-theme-menu-active-before: transparent;
 
+  /* 卡片视觉体系（观感层，引用处见 style/appearance.scss）：
+     圆角 / 静态层次 / 悬浮层次；阴影取 EP 变量，暗色主题下由 EP 重定义后自动跟随 */
+  --app-card-radius: 10px;
+  --app-card-shadow: var(--el-box-shadow-light);
+  --app-card-shadow-hover: var(--el-box-shadow);
+
   /* z-index 阶梯（T4）：集中定义避免 magic number 互斗。
      - layout 1000：侧栏/头部布局固定层（sidebar.scss 内 998/1001/1002 属该层内部细分）
      - settingMask 1005 / settingPanel 1010：设置面板（必须低于 EP 弹层起点 2000，

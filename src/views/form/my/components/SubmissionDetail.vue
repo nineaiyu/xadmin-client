@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { computed, onMounted, reactive } from "vue";
 import { useI18n } from "vue-i18n";
 import {
@@ -205,7 +206,7 @@ const trailStatus = (item: SubmissionTrailItem) =>
     <el-divider content-position="left">
       {{ t("dform.submissionData") }}
     </el-divider>
-    <el-empty
+    <ReEmpty
       v-if="!fieldRows.length"
       :description="t('dform.noData')"
       :image-size="60"

@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { SUCCESS_CODE } from "@/api/types";
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
@@ -134,7 +135,7 @@ defineExpose({ load });
 
     <div class="mb-2 text-sm font-medium">{{ t("oauth.bound") }}</div>
     <div v-loading="loading" class="binding-list">
-      <el-empty
+      <ReEmpty
         v-if="rows.length === 0"
         :description="t('oauth.noBindings')"
         :image-size="60"

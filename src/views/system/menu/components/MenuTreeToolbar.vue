@@ -9,7 +9,7 @@ import type { MenuAuths, MenuRow } from "../utils/types";
 
 import Add from "~icons/ep/plus";
 import Key from "~icons/ep/key";
-import More2Fill from "~icons/ri/more-2-fill";
+import MoreIcon from "~icons/ep/more-filled";
 import Upload from "~icons/ep/upload";
 import Download from "~icons/ep/download";
 import ExpandIcon from "../svg/expand.svg?component";
@@ -257,7 +257,7 @@ const onMoreCommand = (command: string) => {
 
       <el-dropdown @command="onMoreCommand">
         <IconifyIconOffline
-          :icon="More2Fill"
+          :icon="MoreIcon"
           :aria-label="t('layout.more')"
           class="menu-toolbar__more"
           width="18px"

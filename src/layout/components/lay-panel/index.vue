@@ -23,9 +23,9 @@ const iconClass = computed(() => {
     "rounded-sm",
     "cursor-pointer",
     "transition-colors",
-    "hover:bg-[#0000000f]",
-    "dark:hover:bg-[#ffffff1f]",
-    "dark:hover:text-[#ffffffd9]"
+    // 悬浮底色取 EP 令牌（暗色下由 EP 重定义，无需 dark 变体）
+    "hover:bg-(--el-fill-color-light)",
+    "dark:hover:text-(--el-text-color-primary)"
   ];
 });
 

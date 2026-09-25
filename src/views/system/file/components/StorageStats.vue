@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { formatBytes } from "@pureadmin/utils";
@@ -177,7 +178,7 @@ const shareOf = (filesize: number) => {
           </span>
         </div>
       </div>
-      <el-empty v-else :description="t('labels.noData')" :image-size="60" />
+      <ReEmpty v-else :description="t('labels.noData')" :image-size="60" />
     </el-card>
   </div>
 </template>

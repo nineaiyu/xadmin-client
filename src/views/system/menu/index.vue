@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useMenu } from "./utils/hook";
@@ -136,7 +137,7 @@ const emptyText = computed(() =>
           </template>
         </el-tree>
 
-        <el-empty
+        <ReEmpty
           v-if="!loading && !visibleTree.length"
           :description="emptyText"
         />

@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { userApi } from "@/api/system/user";
@@ -137,7 +138,7 @@ onMounted(() => {
               </span>
             </template>
           </el-tree>
-          <el-empty
+          <ReEmpty
             v-else
             :description="t('permissionPreview.emptyMenus')"
             :image-size="70"
@@ -194,7 +195,7 @@ onMounted(() => {
               show-overflow-tooltip
             />
             <template #empty>
-              <el-empty
+              <ReEmpty
                 :description="t('permissionPreview.emptyApis')"
                 :image-size="70"
               />

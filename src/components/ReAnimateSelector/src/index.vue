@@ -2,6 +2,7 @@
 import { animates } from "./animate";
 import { computed, ref } from "vue";
 import { cloneDeep } from "@pureadmin/utils";
+import ReEmpty from "@/components/ReEmpty";
 import { $t, transformI18n } from "@/plugins/i18n";
 
 defineOptions({
@@ -29,7 +30,7 @@ const animateClass = computed(() => {
     "h-25",
     "cursor-pointer",
     "transition-all",
-    "border-[#e5e7eb]",
+    "border-(--el-border-color-lighter)",
     "hover:text-primary",
     "hover:duration-700"
   ];
@@ -91,7 +92,7 @@ function onMouseleave() {
       <div class="w-70">
         <el-scrollbar
           :view-style="{ overflow: 'hidden' }"
-          class="border-t border-[#e5e7eb]"
+          class="border-t border-(--el-border-color-lighter)"
           height="212px"
           noresize
         >
@@ -118,10 +119,10 @@ function onMouseleave() {
               </h4>
             </li>
           </ul>
-          <el-empty
+          <ReEmpty
             v-show="animatesList.length === 0"
             :description="`${searchVal} ${transformI18n($t('layout.noData'))}`"
-            :image-size="60"
+            size="small"
           />
         </el-scrollbar>
       </div>

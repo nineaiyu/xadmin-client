@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
@@ -328,7 +329,7 @@ function applyPreset(preset: RulePreset) {
       </div>
     </div>
 
-    <el-empty
+    <ReEmpty
       v-else
       :description="t('systemPermission.editor.emptyRules')"
       :image-size="72"

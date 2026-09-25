@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { SUCCESS_CODE } from "@/api/types";
 import { computed, onMounted, ref } from "vue";
 import NoticeList from "./components/NoticeList.vue";
@@ -119,7 +120,7 @@ const getLabel = computed(
           :style="{ width: notices.length === 0 ? '200px' : '330px' }"
           class="dropdown-tabs"
         >
-          <el-empty
+          <ReEmpty
             v-if="notices.length === 0"
             :description="t('layout.noData')"
             :image-size="60"

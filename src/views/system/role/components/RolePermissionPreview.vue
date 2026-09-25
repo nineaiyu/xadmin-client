@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { roleApi } from "@/api/system/role";
@@ -77,7 +78,7 @@ onMounted(() => {
               </span>
             </template>
           </el-tree>
-          <el-empty
+          <ReEmpty
             v-else
             :description="t('permissionPreview.emptyMenus')"
             :image-size="70"
@@ -88,7 +89,7 @@ onMounted(() => {
           :title="t('permissionPreview.roleFields')"
           name="field"
         >
-          <el-empty
+          <ReEmpty
             v-if="!data.field_permissions.length"
             :description="t('permissionPreview.fieldBlank')"
             :image-size="70"
@@ -164,7 +165,7 @@ onMounted(() => {
               </template>
             </el-table-column>
             <template #empty>
-              <el-empty
+              <ReEmpty
                 :description="t('permissionPreview.emptyUsers')"
                 :image-size="70"
               />

@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { SUCCESS_CODE } from "@/api/types";
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
@@ -203,7 +204,7 @@ defineExpose({ load });
 
 <template>
   <div v-loading="loading" class="task-center">
-    <el-empty
+    <ReEmpty
       v-if="sections.every(item => item.rows.length === 0)"
       :description="t('taskCenter.empty')"
       :image-size="70"
@@ -220,7 +221,7 @@ defineExpose({ load });
           {{ t("taskCenter.viewAll") }}
         </el-link>
       </div>
-      <el-empty
+      <ReEmpty
         v-if="item.rows.length === 0"
         :description="t('taskCenter.noData')"
         :image-size="50"

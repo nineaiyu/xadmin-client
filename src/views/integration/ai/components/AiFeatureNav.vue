@@ -2,6 +2,7 @@
 import type { Component } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import ReEmpty from "@/components/ReEmpty";
 import type { AiConsoleFeature } from "@/api/system/ai";
 
 /**
@@ -49,8 +50,8 @@ const { t } = useI18n();
         <div
           v-for="entry in entries"
           :key="entry.key"
-          class="mx-2 mb-1 cursor-pointer rounded p-2 transition-colors hover:bg-(--el-fill-color-light)"
-          :class="{ 'bg-(--el-fill-color-light)': entry.key === active }"
+          class="sidebar-item mx-2 mb-1 cursor-pointer rounded p-2"
+          :class="{ 'is-active': entry.key === active }"
           :data-testid="`ai-feature-${entry.key}`"
           @click="emit('select', entry.key)"
         >
@@ -76,10 +77,10 @@ const { t } = useI18n();
             </div>
           </div>
         </div>
-        <el-empty
+        <ReEmpty
           v-if="!entries.length"
           :description="t('ai.noFeature')"
-          :image-size="60"
+          size="small"
         />
       </div>
     </el-scrollbar>

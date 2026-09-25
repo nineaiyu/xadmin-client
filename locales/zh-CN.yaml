@@ -2523,6 +2523,9 @@ dataScreen:
   exportScreen: 导出当前屏
   exportNoChart: 当前屏没有可导出的图表
   exportSkipped: 有 { count } 个指标卡未导出
+  pause: 暂停轮播
+  resume: 恢复轮播
+  fullscreen: 全屏显示
   title: 大屏投屏
   create: 新建大屏
   edit: 编辑

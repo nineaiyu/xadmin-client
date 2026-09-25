@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { computed, nextTick, onMounted, ref, unref, watch } from "vue";
 import type { Ref } from "vue";
 import { useI18n } from "vue-i18n";
@@ -362,7 +363,7 @@ defineExpose({ setCheckedKeys });
           />
         </template>
       </el-tree>
-      <el-empty
+      <ReEmpty
         v-else
         :description="t('rolePermission.empty')"
         :image-size="70"

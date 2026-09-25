@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
@@ -325,7 +326,7 @@ onMounted(() => {
       <el-divider content-position="left">
         {{ t("systemApprovalInstance.formData") }}
       </el-divider>
-      <el-empty
+      <ReEmpty
         v-if="!formRows.length"
         :description="t('systemApprovalInstance.formDataEmpty')"
         :image-size="60"
@@ -343,7 +344,7 @@ onMounted(() => {
       <el-divider content-position="left">
         {{ t("systemApprovalInstance.tasks") }}
       </el-divider>
-      <el-empty
+      <ReEmpty
         v-if="!(detail.tasks ?? []).length"
         :description="t('systemApprovalInstance.tasksEmpty')"
         :image-size="60"

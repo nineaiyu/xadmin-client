@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
 import type { RecordType } from "plus-pro-components";
+import ReEmpty from "@/components/ReEmpty";
 import type { ReadonlyColumn } from "./types";
 
 /**
@@ -77,9 +78,9 @@ const HEADER_CELL_STYLE = {
       </template>
     </el-table-column>
     <template #empty>
-      <el-empty
+      <ReEmpty
         :description="props.emptyText || t('labels.noData')"
-        :image-size="60"
+        size="small"
       />
     </template>
   </el-table>

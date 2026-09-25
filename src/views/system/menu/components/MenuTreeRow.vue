@@ -11,7 +11,7 @@ import type { MenuAuths, MenuNodeAction, MenuRow } from "../utils/types";
 
 import DocumentAdd from "~icons/ep/document-add";
 import EditPen from "~icons/ep/edit-pen";
-import More2Fill from "~icons/ri/more-2-fill";
+import MoreIcon from "~icons/ep/more-filled";
 
 /**
  * 菜单树行：类型标签 + 名称 + 次要信息（路由/权限码）+ 后代计数 + 状态与操作区。
@@ -202,7 +202,7 @@ const onSwitch = (value: boolean | string | number) => {
         >
           <el-button
             :aria-label="t('layout.more')"
-            :icon="useRenderIcon(More2Fill)"
+            :icon="useRenderIcon(MoreIcon)"
             link
             size="small"
             @click.stop

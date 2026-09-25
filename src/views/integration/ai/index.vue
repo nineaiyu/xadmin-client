@@ -11,6 +11,7 @@ import {
 } from "@/api/system/ai";
 import { useAiConsole } from "./hooks/useAiConsole";
 import { ReNavDrawer } from "@/components/ReNavDrawer";
+import ReEmpty from "@/components/ReEmpty";
 import AiFeatureNav, {
   type AiFeatureEntry
 } from "./components/AiFeatureNav.vue";
@@ -183,26 +184,25 @@ onUnmounted(() => {
          main-content 的 24px 统一边距）；高度按视口实测（measurePanelHeight） -->
     <template v-if="status && !status.enabled">
       <el-card shadow="never">
-        <el-empty :description="t('ai.disabledHint')" />
+        <ReEmpty :description="t('ai.disabledHint')" icon="ep/lock" />
       </el-card>
     </template>
     <template v-else-if="status && !status.configured">
       <el-card shadow="never">
-        <el-empty :description="t('ai.notConfiguredHint')">
+        <ReEmpty :description="t('ai.notConfiguredHint')" icon="ep/setting">
           <router-link to="/integration/ai/config">
             <el-button type="primary">{{ t("ai.goConfig") }}</el-button>
           </router-link>
-        </el-empty>
+        </ReEmpty>
       </el-card>
     </template>
     <div
       v-else-if="status"
-      class="flex overflow-hidden rounded bg-bg_color"
+      class="ai-console flex overflow-hidden"
       :style="{
         height: `${panelHeight}px`,
         minHeight: `${PANEL_MIN_HEIGHT}px`
       }"
-      style="border: 1px solid var(--pure-border-color)"
       data-testid="ai-console"
     >
       <AiFeatureNav
@@ -253,3 +253,13 @@ onUnmounted(() => {
     </div>
   </div>
 </template>
+
+<style lang="scss" scoped>
+/* 控制台面板：与卡片同一视觉语言（圆角 + 浅阴影 + 主题边框），此前仅 1px 边线 */
+.ai-console {
+  background: var(--el-bg-color-overlay);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 12px;
+  box-shadow: var(--el-box-shadow-light);
+}
+</style>

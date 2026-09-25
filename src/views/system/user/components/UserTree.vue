@@ -3,7 +3,7 @@ import { useI18n } from "vue-i18n";
 import ExpandIcon from "../svg/expand.svg?component";
 import UnExpandIcon from "../svg/unexpand.svg?component";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import More2Fill from "~icons/ri/more-2-fill?width=18&height=18";
+import MoreIcon from "~icons/ep/more-filled?width=18&height=18";
 import { computed, getCurrentInstance, nextTick, ref, watch } from "vue";
 import type { TreeInstance, TreeNodeData } from "element-plus";
 
@@ -152,7 +152,7 @@ defineExpose({ onTreeReset });
       </el-input>
       <el-dropdown :hide-on-click="false">
         <IconifyIconOffline
-          :icon="More2Fill"
+          :icon="MoreIcon"
           class="w-7 cursor-pointer"
           :aria-label="t('layout.more')"
         />

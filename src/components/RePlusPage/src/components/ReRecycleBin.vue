@@ -7,6 +7,7 @@ import type { RecycleBinColumn } from "../utils/types";
 import { message } from "@/utils/message";
 import Delete from "~icons/ep/delete";
 import RefreshRight from "~icons/ep/refresh-right";
+import ReEmpty from "@/components/ReEmpty";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 
 defineOptions({ name: "RecycleBin" });
@@ -277,7 +278,7 @@ defineExpose({ open });
         </template>
       </el-table-column>
       <template #empty>
-        <el-empty :description="t('recycleBin.empty')" :image-size="80" />
+        <ReEmpty :description="t('recycleBin.empty')" size="small" />
       </template>
     </el-table>
 

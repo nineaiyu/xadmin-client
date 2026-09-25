@@ -2,6 +2,7 @@
 import { SUCCESS_CODE } from "@/api/types";
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import ReSkeleton from "@/components/ReSkeleton";
 import { useDark, useECharts } from "@pureadmin/utils";
 import type { UtilsEChartsOption } from "@pureadmin/utils";
 import {
@@ -10,7 +11,12 @@ import {
   type DashboardCard,
   type ExecuteResult
 } from "@/api/system/datasets";
-import { CHART_ACCENT, cssVarColor, epColor } from "@/utils/chartTheme";
+import {
+  CHART_ACCENT,
+  cssVarColor,
+  epColor,
+  withAlpha
+} from "@/utils/chartTheme";
 // 仅类型引用（不进包）：导出实现按需动态加载（保持首屏体积）
 import type { EChartsLike, ExportedImage } from "@/utils/imageExport";
 
@@ -56,16 +62,25 @@ const palette = () => [
 const buildSeriesOptions = (result: AggregateResult): UtilsEChartsOption => {
   const names = result.series.map(item => item.name);
   const values = result.series.map(item => Number(item.value ?? 0));
+  // tooltip 统一样式：底色/边框/文字取主题变量，暗色卡片上不再出现白底黑字
+  const overlay = cssVarColor("--el-bg-color-overlay", "#ffffff");
+  const tooltipStyle = {
+    backgroundColor: overlay,
+    borderColor: cssVarColor("--el-border-color-lighter", "#ebeef5"),
+    textStyle: { color: cssVarColor("--el-text-color-primary", "#303133") }
+  };
   if (props.card.chart_type === "pie") {
     const colors = palette();
     return {
-      tooltip: { trigger: "item" },
+      tooltip: { trigger: "item", ...tooltipStyle },
       legend: { bottom: 0, icon: "circle" },
       series: [
         {
           name: props.card.title,
           type: "pie",
           radius: ["38%", "62%"],
+          // 扇区间留白 + 圆角：默认相邻扇区紧贴，深底上层次感不足
+          itemStyle: { borderColor: overlay, borderWidth: 2, borderRadius: 4 },
           data: result.series.map((item, index) => ({
             name: item.name || "-",
             value: Number(item.value ?? 0),
@@ -78,7 +93,7 @@ const buildSeriesOptions = (result: AggregateResult): UtilsEChartsOption => {
   const isLine = props.card.chart_type === "line";
   const primary = epColor("primary");
   return {
-    tooltip: { trigger: "axis" },
+    tooltip: { trigger: "axis", ...tooltipStyle },
     grid: { top: "24px", left: "48px", right: "24px", bottom: "36px" },
     xAxis: { type: "category", boundaryGap: !isLine, data: names },
     yAxis: { type: "value" },
@@ -88,9 +103,32 @@ const buildSeriesOptions = (result: AggregateResult): UtilsEChartsOption => {
         type: isLine ? "line" : "bar",
         smooth: isLine,
         showSymbol: isLine,
+        barMaxWidth: 36,
         data: values,
+        itemStyle: {
+          color: primary,
+          // 柱状圆角（折线不适用，走线宽与面积表达）
+          ...(isLine ? {} : { borderRadius: [6, 6, 0, 0] })
+        },
         lineStyle: { width: 2, color: primary },
-        itemStyle: { color: primary }
+        // 折线配面积渐变（主色 24% → 透明），大屏与看板上更有层次
+        ...(isLine
+          ? {
+              areaStyle: {
+                color: {
+                  type: "linear",
+                  x: 0,
+                  y: 0,
+                  x2: 0,
+                  y2: 1,
+                  colorStops: [
+                    { offset: 0, color: withAlpha(primary, 0.24) },
+                    { offset: 1, color: withAlpha(primary, 0) }
+                  ]
+                }
+              }
+            }
+          : {})
       }
     ]
   };
@@ -169,7 +207,7 @@ defineExpose({ loadData, renderImage });
 </script>
 
 <template>
-  <div v-loading="loading" class="size-full">
+  <div class="relative size-full">
     <div
       v-if="errorMsg"
       class="flex-c size-full flex-col gap-2 text-center"
@@ -181,7 +219,7 @@ defineExpose({ loadData, renderImage });
       </el-button>
     </div>
     <template v-else>
-      <div v-if="card.chart_type === 'number'" class="flex-c size-full">
+      <div v-show="card.chart_type === 'number'" class="flex-c size-full">
         <span class="text-3xl font-semibold">{{ total }}</span>
       </div>
       <div
@@ -189,6 +227,25 @@ defineExpose({ loadData, renderImage });
         ref="chartRef"
         class="size-full"
       />
+      <!-- 加载骨架：以覆盖层呈现（内容保留在 DOM，保证 waitSized 能测到容器尺寸） -->
+      <div
+        v-if="loading"
+        class="chart-card-skeleton absolute inset-0"
+        data-testid="chart-card-skeleton"
+      >
+        <ReSkeleton
+          :rows="2"
+          :variant="card.chart_type === 'number' ? 'text' : 'fill'"
+        />
+      </div>
     </template>
   </div>
 </template>
+
+<style lang="scss" scoped>
+/* 覆盖层需不透明底色（挡住加载中的旧数据/零值），取 EP 卡片底色变量 */
+.chart-card-skeleton {
+  padding: 16px;
+  background: var(--el-card-bg-color, var(--el-bg-color-overlay));
+}
+</style>

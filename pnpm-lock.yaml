@@ -154,9 +154,6 @@ importers:
       vue-types:
         specifier: ^7.0.0
         version: 7.0.0(vue@3.5.42(typescript@6.0.3))
-      vue-virtual-scroller:
-        specifier: ^3.0.5
-        version: 3.0.5(vue@3.5.42(typescript@6.0.3))
       vue3-ts-jsoneditor:
         specifier: ^3.4.1
         version: 3.4.1(@typescript-eslint/types@8.70.0)(vue@3.5.42(typescript@6.0.3))
@@ -4808,11 +4805,6 @@ packages:
       vue:
         optional: true
 
-  vue-virtual-scroller@3.0.5:
-    resolution: {integrity: sha512-5YXD+5DiLOGsngaubXmeNKLYsAnokSMKITT8BqlNIGJ7Pggy8udTg00vKVHZDE5ElPXPdxhTXnJBQqpGnzKAgw==}
-    peerDependencies:
-      vue: ^3.3.0
-
   vue3-ts-jsoneditor@3.4.1:
     resolution: {integrity: sha512-a6M8M+E8wzTvULpCoahoQF/a+ryfPy2Zm2EYUHY965cp54rhR+yXwWgoI7qjjUY/43t4CTD9zfPGupJv5KZNwQ==}
     engines: {node: '>=20.19.0'}
@@ -9450,10 +9442,6 @@ snapshots:
 
   vue-types@7.0.0(vue@3.5.42(typescript@6.0.3)):
     optionalDependencies:
-      vue: 3.5.42(typescript@6.0.3)
-
-  vue-virtual-scroller@3.0.5(vue@3.5.42(typescript@6.0.3)):
-    dependencies:
       vue: 3.5.42(typescript@6.0.3)
 
   vue3-ts-jsoneditor@3.4.1(@typescript-eslint/types@8.70.0)(vue@3.5.42(typescript@6.0.3)):

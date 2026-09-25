@@ -3,7 +3,7 @@ import { SUCCESS_CODE } from "@/api/types";
 import { computed, ref, watch } from "vue";
 import { FieldValues, PlusColumn, PlusForm } from "plus-pro-components";
 import { ExportImportFormatOptions } from "../utils/constants";
-import UploadIcon from "~icons/ri/upload-2-line";
+import UploadIcon from "~icons/ep/upload";
 import { useI18n } from "vue-i18n";
 import { renderBooleanSegmentedOption } from "@/components/RePlusPage";
 import { message } from "@/utils/message";

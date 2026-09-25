@@ -1,0 +1,49 @@
+/**
+ * 应用外观层：统一收敛 Element Plus 组件的视觉细节（卡片圆角 / 层次 / 微交互）。
+ *
+ * 导入顺序约束（重要）：必须在 element-plus 按需样式之后导入（见 main.ts 的导入注释），
+ * 因为本层选择器与 EP 的 `.el-card.is-*` 同为两个类（权重相同），靠后加载者生效。
+ */
+
+/* 卡片视觉体系：统一圆角与层次，hover 微上浮。
+   仅作用于显式标注 `.app-card` 的卡片（看板 / 工作台 / 图表卡），不影响列表页与表单容器。 */
+.el-card.app-card {
+  border-radius: var(--app-card-radius);
+  box-shadow: var(--app-card-shadow);
+  transition:
+    transform var(--el-transition-duration)
+      var(--el-transition-function-ease-in-out-bezier),
+    box-shadow var(--el-transition-duration)
+      var(--el-transition-function-ease-in-out-bezier);
+
+  &:hover {
+    box-shadow: var(--app-card-shadow-hover);
+    transform: translateY(-2px);
+  }
+}
+
+/* 侧栏列表项（聊天会话 / 联系人 / AI 功能导航）：
+   选中态以左侧主题色条 + 主题浅底强化（此前仅换底色，选中与 hover 难以区分） */
+.sidebar-item {
+  position: relative;
+  transition: background-color var(--el-transition-duration);
+
+  &:hover {
+    background: var(--el-fill-color-light);
+  }
+
+  &.is-active {
+    background: var(--el-color-primary-light-9);
+
+    &::before {
+      position: absolute;
+      top: 8px;
+      bottom: 8px;
+      left: 0;
+      width: 3px;
+      content: "";
+      background: var(--el-color-primary);
+      border-radius: 0 2px 2px 0;
+    }
+  }
+}

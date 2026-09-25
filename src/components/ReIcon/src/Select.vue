@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ReEmpty from "@/components/ReEmpty";
 import { IconJson } from "@/components/ReIcon/data";
 import { cloneDeep, isAllEmpty } from "@pureadmin/utils";
 import { ref, computed, CSSProperties, watch } from "vue";
@@ -190,10 +191,10 @@ watch(
                     />
                   </li>
                 </ul>
-                <el-empty
+                <ReEmpty
                   v-show="pageList.length === 0"
                   :description="`${filterValue} ${t('layout.noData')}`"
-                  :image-size="60"
+                  size="small"
                 />
               </el-scrollbar>
             </el-tab-pane>

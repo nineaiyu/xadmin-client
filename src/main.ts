@@ -1,6 +1,6 @@
 // 样式顺序即层叠顺序，改动前先读注释：
 // reset → 公共样式 → tailwind → element-plus 按需样式（随 @/plugins/elementPlus 引入）
-// → plus-pro-components。把 element-plus 提到最前面会让 tailwind 工具类反过来覆盖组件样式
+// → plus-pro-components → 应用外观层（appearance.scss，覆写 EP 组件视觉细节，必须最后）
 import "./style/reset.scss";
 import "./style/index.scss";
 // 一定要在main.ts中导入tailwind.css，防止vite每次hmr都会请求src/style/index.scss整体css文件导致热更新慢的问题
@@ -25,6 +25,8 @@ import Table from "@pureadmin/table";
 
 // 导入plus-pro-components 及其样式
 import "plus-pro-components/index.css";
+// 应用外观层（卡片圆角/层次/微交互）：必须排在 element-plus 样式之后才能覆写其组件规则
+import "./style/appearance.scss";
 // 导入字体图标
 import "./assets/iconfont/iconfont.js";
 import "./assets/iconfont/iconfont.css";

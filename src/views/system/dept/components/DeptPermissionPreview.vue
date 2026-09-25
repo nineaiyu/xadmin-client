@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { deptApi } from "@/api/system/dept";
@@ -106,7 +107,7 @@ onMounted(() => {
               {{ role.name }}（{{ role.code }}）
             </el-tag>
           </div>
-          <el-empty
+          <ReEmpty
             v-else
             :description="t('permissionPreview.noRoles')"
             :image-size="70"
@@ -129,7 +130,7 @@ onMounted(() => {
               </span>
             </template>
           </el-tree>
-          <el-empty
+          <ReEmpty
             v-else
             :description="t('permissionPreview.emptyMenus')"
             :image-size="70"
@@ -171,7 +172,7 @@ onMounted(() => {
               </div>
             </div>
           </template>
-          <el-empty
+          <ReEmpty
             v-else
             :description="t('permissionPreview.noGrantAtLevel')"
             :image-size="70"
@@ -281,7 +282,7 @@ onMounted(() => {
               </template>
             </el-table-column>
           </el-table>
-          <el-empty
+          <ReEmpty
             v-else
             :description="t('permissionPreview.emptyUsers')"
             :image-size="70"

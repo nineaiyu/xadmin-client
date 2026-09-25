@@ -25,6 +25,9 @@ import {
   useResizeObserver
 } from "@pureadmin/utils";
 
+import { useRoute } from "vue-router";
+import { usePermissionStoreHook } from "@/store/modules/permission";
+import { prefetchRoutesTo } from "@/utils/routePrefetch";
 import LayTag from "./components/lay-tag/index.vue";
 import LayNavbar from "./components/lay-navbar/index.vue";
 import LayContent from "./components/lay-content/index.vue";
@@ -133,6 +136,13 @@ onMounted(() => {
   if (isMobile) {
     toggle("mobile", false);
   }
+  // 空闲时段预取高频页面 chunk（菜单顺序近似常用度）：缩短二次导航等待，
+  // 上限 4 个、跳过当前页、失败静默，见 utils/routePrefetch.ts
+  const route = useRoute();
+  const paths = usePermissionStoreHook()
+    .flatteningRoutes.filter(item => item.path && !item.meta?.frameSrc)
+    .map(item => item.path);
+  prefetchRoutesTo(paths, { limit: 4, current: route.path });
 });
 
 onBeforeMount(() => {

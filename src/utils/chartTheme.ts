@@ -60,3 +60,34 @@ export function epColor(name: EpColorName): string {
 export function epColorLight(name: EpColorName): string {
   return cssVarColor(`--el-color-${name}-light-9`, EP_LIGHT_FALLBACK[name]);
 }
+
+/**
+ * 给色值附加透明度（图表渐变端点用；ECharts 只接受字面量，不能消费 CSS 变量）。
+ *
+ * 支持 `#rgb` / `#rrggbb` / `rgb()` / `rgba()`；无法识别的格式原样返回
+ * （宁可无渐变也不要渲染出错）。
+ */
+export function withAlpha(color: string, alpha: number): string {
+  const value = color.trim();
+  let rgb: [number, number, number] | null = null;
+  const shortHex = /^#([0-9a-f]{3})$/i.exec(value);
+  const fullHex = /^#([0-9a-f]{6})$/i.exec(value);
+  const rgbFn = /^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/i.exec(value);
+  if (fullHex) {
+    rgb = [
+      parseInt(fullHex[1].slice(0, 2), 16),
+      parseInt(fullHex[1].slice(2, 4), 16),
+      parseInt(fullHex[1].slice(4, 6), 16)
+    ];
+  } else if (shortHex) {
+    rgb = [
+      parseInt(shortHex[1][0].repeat(2), 16),
+      parseInt(shortHex[1][1].repeat(2), 16),
+      parseInt(shortHex[1][2].repeat(2), 16)
+    ];
+  } else if (rgbFn) {
+    rgb = [Number(rgbFn[1]), Number(rgbFn[2]), Number(rgbFn[3])];
+  }
+  if (!rgb) return value;
+  return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${alpha})`;
+}

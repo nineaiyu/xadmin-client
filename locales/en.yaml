@@ -2523,6 +2523,9 @@ dataScreen:
   exportScreen: Export screen
   exportNoChart: The current screen has no chart to export
   exportSkipped: "{count} metric cards were not exported"
+  pause: Pause rotation
+  resume: Resume rotation
+  fullscreen: Fullscreen
   title: Display Screens
   create: New Screen
   edit: Edit

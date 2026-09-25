@@ -32,12 +32,14 @@ const { t } = useI18n();
   width: 200px;
   height: 200px;
   cursor: pointer;
-  background: rgb(138 150 160 / 8%);
+
+  /* 底色/悬浮色取 EP 令牌（暗色下由 EP 重定义）；18px 为设计圆角，无对应令牌 */
+  background: var(--el-fill-color-light);
   border-radius: 18px;
   transform: translate(-50%, -50%);
 
   &:hover {
-    background: rgb(138 150 160 / 20%);
+    background: var(--el-fill-color);
     transition: background 0.6s;
   }
 }

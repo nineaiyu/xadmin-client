@@ -2,6 +2,7 @@
 import { computed, h, nextTick, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { addDialog, type DialogOptions } from "@/components/ReDialog";
+import ReEmpty from "@/components/ReEmpty";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
 import {
@@ -349,10 +350,9 @@ watch(
         </div>
       </div>
 
-      <el-empty
+      <ReEmpty
         v-if="room && !groups.length && !loading && !activeStreaming"
         :description="t('chat.emptyMessages')"
-        :image-size="80"
       />
     </div>
 
@@ -376,7 +376,7 @@ watch(
         <div
           v-for="peer in mentionCandidates"
           :key="peer.pk"
-          class="cursor-pointer rounded px-2 py-1 text-sm hover:bg-(--el-fill-color-light)"
+          class="sidebar-item cursor-pointer rounded px-2 py-1 text-sm"
           @click="insertMention(peer)"
         >
           {{ peer.nickname || peer.username }}

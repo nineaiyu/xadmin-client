@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { SUCCESS_CODE } from "@/api/types";
 import { match } from "pinyin-pro";
 import { useI18n } from "vue-i18n";
@@ -340,7 +341,7 @@ function handleDrag(item: dragItem) {
             </span>
           </div>
         </div>
-        <el-empty v-if="showEmpty" :description="t('layout.noData')" />
+        <ReEmpty v-if="showEmpty" :description="t('layout.noData')" />
         <SearchHistory
           v-if="showSearchHistory"
           ref="historyRef"

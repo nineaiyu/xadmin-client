@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import type {
@@ -144,7 +145,7 @@ function groupTitle(group: PreviewDataRuleGroup) {
           show-icon
           type="warning"
         />
-        <el-empty
+        <ReEmpty
           v-if="!chain.permissions.length"
           :description="t('permissionPreview.noGrantAtLevel')"
           :image-size="60"

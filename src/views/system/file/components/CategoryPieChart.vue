@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { formatBytes, useDark, useECharts } from "@pureadmin/utils";
@@ -153,7 +154,7 @@ watch(
           {{ shareOf(row) }}%
         </span>
       </div>
-      <el-empty
+      <ReEmpty
         v-if="!rows.length"
         :description="t('labels.noData')"
         :image-size="40"

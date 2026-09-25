@@ -7,6 +7,7 @@
 import { SUCCESS_CODE } from "@/api/types";
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import ReEmpty from "@/components/ReEmpty";
 import { message } from "@/utils/message";
 import {
   mfaConfirmApi,
@@ -186,10 +187,10 @@ const emit = defineEmits<{ destroy: [] }>();
           />
         </el-form-item>
       </el-form>
-      <el-empty
+      <ReEmpty
         v-else-if="!infoLoading"
         :description="$t('mfa.noAvailableMethod')"
-        :image-size="80"
+        size="small"
       />
     </div>
     <template #footer>

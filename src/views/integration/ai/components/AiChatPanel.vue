@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import ReEmpty from "@/components/ReEmpty";
 import AiIcon from "~icons/ep/cpu";
 import MenuIcon from "~icons/ep/menu";
 import SendIcon from "~icons/ep/promotion";
@@ -172,10 +173,9 @@ defineExpose({ scrollEl });
         </div>
       </div>
 
-      <el-empty
+      <ReEmpty
         v-if="!groups.length && !loadingHistory && !activeStreaming"
         :description="emptyText"
-        :image-size="80"
       />
     </div>
 

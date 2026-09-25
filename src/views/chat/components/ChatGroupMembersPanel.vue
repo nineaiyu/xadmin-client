@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
+import ReEmpty from "@/components/ReEmpty";
 import { message } from "@/utils/message";
 import { SUCCESS_CODE } from "@/api/types";
 import {
@@ -266,10 +267,10 @@ onUnmounted(() => window.clearTimeout(memberSearchTimer));
         {{ t("chat.removeMember") }}
       </el-button>
     </div>
-    <el-empty
+    <ReEmpty
       v-if="!membersLoading && !groupMemberList.length"
       :description="t('chat.emptyMembers')"
-      :image-size="60"
+      size="small"
     />
 
     <div class="mt-4 flex justify-end gap-2">

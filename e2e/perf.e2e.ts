@@ -169,6 +169,26 @@ const PAGES: Array<{
       await login(page);
       await openMenuPath(page, ["系统管理"], "/system/user/index");
     }
+  },
+  {
+    // 自绘卡片 + 图表 + 定时轮询（重渲染面最广的运营页）
+    name: "system-monitor",
+    open: async page => {
+      await login(page);
+      await openMenuPath(page, ["系统管理"], "/system/monitor/index");
+    }
+  },
+  {
+    // 长列表 + 复杂筛选（操作日志量大，覆盖表格渲染路径）
+    name: "system-logs",
+    open: async page => {
+      await login(page);
+      await openMenuPath(
+        page,
+        ["系统管理", "日志管理"],
+        "/system/logs/operation/index"
+      );
+    }
   }
 ];
 

@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { computed, h, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
@@ -465,7 +466,7 @@ onMounted(() => {
         :history="history"
         :metrics="metrics"
       />
-      <el-empty
+      <ReEmpty
         v-else-if="echartsReady"
         :description="t('systemMonitor.trendEmpty')"
         :image-size="60"
