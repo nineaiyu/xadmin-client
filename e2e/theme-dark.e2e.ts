@@ -70,6 +70,31 @@ async function switchTheme(page: Page, mode: "dark" | "light") {
   await saved; // 等服务端落库：刷新恢复与跨设备一致依赖它
 }
 
+/**
+ * 归一主题皮肤为「亮白」：皮肤取自 `getConfig().Theme` 并落在 localStorage
+ * （`$storage.layout.themeColor`，同库共享状态）——其它用例或残留可能留下深色皮肤
+ * （如道奇蓝 `--pure-theme-menu-bg: #001529`），此时账户设置侧栏在**浅色模式**下仍是深底，
+ * 会让「浅色应为浅表面」断言误报。面板第一个色块即亮白（`themeColors[0]`）。
+ * 仅在浅色模式下调用（深色模式下亮白色块按设计隐藏）。
+ */
+async function ensureLightSkin(page: Page) {
+  // 常态已是亮白（config 默认）→ 直接返回，零额外交互（并行高负载下点击面板色块
+  // 会撞「元素不稳定」超时，2026-09-25 全量并行实测）
+  if ((await page.locator("html").getAttribute("data-theme")) === "light") {
+    return;
+  }
+  await page.goto("/#/welcome");
+  await page.locator(".set-icon").first().click();
+  const panel = page.locator(".right-panel");
+  await expect(panel).toBeVisible({ timeout: 15_000 });
+  await panel.locator(".theme-color li").first().click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light", {
+    timeout: 10_000
+  });
+  // 不关面板：`onPanel` 是「打开」事件（非切换），面板开着不影响 computed style 断言；
+  // 后续 switchTheme 再次点击 .set-icon 仍是打开语义，流程自洽
+}
+
 async function measure(page: Page, surface: string) {
   await page.locator(surface).first().waitFor({ timeout: 15_000 });
   return page
@@ -90,6 +115,8 @@ test.describe("暗色模式主题一致性", () => {
   test("深色下核心页转为深表面 + 浅文本，切回浅色恢复", async ({ page }) => {
     await login(page, ADMIN);
     await switchTheme(page, "light");
+    // 皮肤也归一（共享 localStorage 状态），否则账户设置侧栏在浅色下可能仍是深底
+    await ensureLightSkin(page);
 
     for (const item of CASES) {
       await page.goto(item.path);

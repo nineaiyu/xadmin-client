@@ -127,6 +127,22 @@ function formatViolations(violations: ViolationSummary[]): string {
     .join("\n");
 }
 
+/**
+ * 等页面上「可见的树」渲染出真实节点再扫描。
+ *
+ * el-tree 数据未到位时渲染 `.el-tree__empty-block`（role=tree 的子节点不是 treeitem），
+ * axe 判 `aria-required-children` critical——并行高负载下采样到该瞬态即失败
+ * （2026-09-25 探针实测：empty-block 命中 / 无子节点与含 treeitem 均不命中）。
+ * 页面上没有可见树时直接跳过，不引入多余等待。
+ */
+async function waitForVisibleTreeRows(page: import("@playwright/test").Page) {
+  const tree = page.locator(".el-tree:visible").first();
+  if ((await tree.count()) === 0) return;
+  await expect(tree.locator(".el-tree-node").first()).toBeVisible({
+    timeout: 15_000
+  });
+}
+
 test("a11y 基线：登录页无 critical/serious 违规", async ({ page }) => {
   await page.goto("/#/login");
   await expect(page.getByPlaceholder("账号")).toBeVisible({
@@ -146,6 +162,8 @@ test("a11y 基线：用户管理页无 critical/serious 违规", async ({ page }
   await expect(page.locator(".el-table").first()).toBeVisible({
     timeout: 15_000
   });
+  // 左侧部门树同样是异步数据，等其渲染出节点（见 waitForVisibleTreeRows）
+  await waitForVisibleTreeRows(page);
 
   const violations = await scanBlockingViolations(page);
   expect(
@@ -184,6 +202,10 @@ test("a11y 扩面：菜单管理页（树行 + 编辑抽屉）无 critical/serio
   await expect(page.locator(".el-tree").first()).toBeVisible({
     timeout: 15_000
   });
+  // 等菜单树渲染出真实行：只等容器可见会在数据未到位时扫到 empty-block 态，
+  // axe 判 `.el-tree` aria-required-children critical（并行高负载下必现，
+  // 2026-09-25 根因定位：empty-block 命中 / 含 treeitem 不命中）
+  await waitForVisibleTreeRows(page);
 
   // 树行：行内启停开关与操作按钮（默认 opacity 0，仍在无障碍树内，必须有可访问名称）
   const treeViolations = await scanBlockingViolations(page);

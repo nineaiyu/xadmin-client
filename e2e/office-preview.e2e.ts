@@ -1,7 +1,14 @@
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 
 import { expect, test } from "@playwright/test";
 
@@ -46,10 +53,27 @@ function buildSampleDocx(soffice: string): Buffer {
     writeFileSync(txt, "XADMIN OFFICE PREVIEW\nE2E SAMPLE\n");
     execFileSync(
       soffice,
-      ["--headless", "--convert-to", "docx", "--outdir", dir, txt],
+      [
+        // 独立用户 profile：并行跑批（多 shard）下多个 soffice 抢同一 profile 会静默
+        // 转换失败，表现为 readFileSync ENOENT（2026-09-25 并行实测 4 分片跑批命中）
+        `-env:UserInstallation=${pathToFileURL(join(dir, "profile")).href}`,
+        "--headless",
+        "--convert-to",
+        "docx",
+        "--outdir",
+        dir,
+        txt
+      ],
       { stdio: "ignore" }
     );
-    return readFileSync(join(dir, "sample.docx"));
+    const docx = join(dir, "sample.docx");
+    if (!existsSync(docx)) {
+      // 显式报错而不是裸 ENOENT：区分「soffice 转换失败」与「路径写错」
+      throw new Error(
+        `LibreOffice 未生成 docx（soffice=${soffice}，dir=${dir}）——并行下请确认 profile 隔离参数生效`
+      );
+    }
+    return readFileSync(docx);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

@@ -5,9 +5,11 @@ import { expect, test } from "@playwright/test";
 import {
   BACKEND_URL,
   DOWNLOAD_TIMEOUT,
+  clickUserAction,
   getAccessToken,
   login,
-  openMenuPath
+  openMenuPath,
+  openUserPanel
 } from "./helpers";
 
 /**
@@ -101,17 +103,10 @@ test("邀请激活：发送邀请后状态列显示待接受", async ({ page }) 
   const row = page.locator(".el-table__row", { hasText: username }).first();
   await row.waitFor({ state: "visible", timeout: 20_000 });
 
-  // 用户行操作按钮超过 showNumber（3）会折叠进「更多」下拉
-  const inviteText = row.getByText("邀请激活", { exact: true });
-  if (await inviteText.isVisible().catch(() => false)) {
-    await inviteText.click();
-  } else {
-    await row.getByRole("button", { name: "更多" }).click();
-    await page
-      .locator(".el-dropdown-menu:visible")
-      .getByText("邀请激活", { exact: true })
-      .click();
-  }
+  // 用户行操作已收敛进「管理」抽屉（行内只剩编辑/删除/管理）：邀请激活在抽屉内按
+  // data-action-code 定位（2026-09-24 用户页重构后，旧「更多」下拉定位已不存在）
+  const drawer = await openUserPanel(page, row);
+  await clickUserAction(drawer, "invite");
 
   // 二次确认（重发会让原密码立即失效）
   await page.locator(".el-message-box__btns .el-button--primary").click();

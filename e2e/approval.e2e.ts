@@ -150,6 +150,9 @@ test("敏感操作审批：删除用户 → 提交审批 → 审批中心通过 
  *
  * 待办单经 API 直接提交（DELETE 命中拦截即建单，412 + approval_id），比 UI 删除省时；
  * 批量操作本身仍走真实 UI（勾选行 → 工具栏「批量驳回」→ 填原因）。
+ *
+ * 角标断言按「基线 − 本 run 建单数」相对判定：角标口径是全库 PENDING 计数，
+ * 同库连跑时前序 spec 的待审单会顶住绝对值归零（fresh 种子下即归零）。
  */
 test("审批中心：待办角标 → 批量驳回 → 角标归零", async ({ page }) => {
   const suffix = Date.now();
@@ -204,9 +207,16 @@ test("审批中心：待办角标 → 批量驳回 → 角标归零", async ({ p
     const table = pageB.locator(".el-table").first();
     await expect(table).toBeVisible({ timeout: 15_000 });
 
-    // 页签角标出现（待我审批 > 0）
+    // 页签角标出现（待我审批 > 0）。角标口径是**全库 PENDING** 计数，
+    // 共享库下可能含前序 spec 的待审单 → 记基线做相对断言，避免跨 spec 数据耦合
     const badge = pageB.locator(".el-tabs__item .el-badge__content").first();
     await expect(badge).toBeVisible({ timeout: 15_000 });
+    const badgeBaseline =
+      Number((await badge.textContent())?.trim() ?? "0") || 0;
+    expect(
+      badgeBaseline,
+      `角标基线 ${badgeBaseline} 应至少覆盖本 run 建的 ${approvalNos.length} 单`
+    ).toBeGreaterThanOrEqual(approvalNos.length);
 
     // 勾选两行 → 工具栏「批量驳回」→ 填原因
     for (const no of approvalNos) {
@@ -224,15 +234,24 @@ test("审批中心：待办角标 → 批量驳回 → 角标归零", async ({ p
       .click();
     await expect(dialog).not.toBeVisible({ timeout: 15_000 });
 
-    // 两单离开「待我审批」→ 角标归零（写操作后角标即时刷新，不等下一次轮询）
+    // 两单离开「待我审批」→ 角标减 2（写操作后角标即时刷新，不等下一次轮询）。
+    // 相对断言：角标为全库 PENDING 计数，同库连跑时前序 spec 的待审单会顶住「归零」
+    // （隔离跑才绿属数据耦合，非回归）——按本 run 建单数递减；fresh 库下即归零。
     for (const no of approvalNos) {
       await expect(
         pageB.locator(".el-table__row", { hasText: no })
       ).toHaveCount(0, { timeout: 15_000 });
     }
-    await expect(
-      pageB.locator(".el-tabs__item .el-badge__content")
-    ).toHaveCount(0, { timeout: 15_000 });
+    const badgeExpected = badgeBaseline - approvalNos.length;
+    if (badgeExpected <= 0) {
+      await expect(
+        pageB.locator(".el-tabs__item .el-badge__content")
+      ).toHaveCount(0, { timeout: 15_000 });
+    } else {
+      await expect(badge).toHaveText(String(badgeExpected), {
+        timeout: 15_000
+      });
+    }
     await contextB.close();
   } finally {
     // 复位拦截清单：其他用例的删除链路不依赖审批

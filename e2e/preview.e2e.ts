@@ -10,6 +10,7 @@ import {
   openList,
   openMenuPath,
   openUserPanel,
+  PANEL_ACTION_TIMEOUT,
   PLAIN_USER
 } from "./helpers";
 
@@ -97,8 +98,12 @@ async function runTrial(page: Page, drawer: Locator, modelKeyword: string) {
   const trial = drawer
     .locator(".el-collapse-item")
     .filter({ hasText: "数据权限试算" });
-  // el-plus select 的 placeholder 渲染为 generic 文本而非 input placeholder 属性，按容器定位
-  await trial.locator(".el-select").filter({ hasText: "试算模型" }).click();
+  // el-plus select 的 placeholder 渲染为 generic 文本而非 input placeholder 属性，按容器定位；
+  // 抽屉分区是异步渲染，稳定等待按高负载档放宽（见 helpers.PANEL_ACTION_TIMEOUT）
+  await trial
+    .locator(".el-select")
+    .filter({ hasText: "试算模型" })
+    .click({ timeout: PANEL_ACTION_TIMEOUT });
   const option = page
     .locator(".el-select-dropdown__item")
     .filter({ hasText: modelKeyword })

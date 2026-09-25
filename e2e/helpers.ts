@@ -72,6 +72,13 @@ export const HIGH_LOAD = Boolean(process.env.CI || process.env.E2E_PARALLEL);
 /** 下载事件（导出 xlsx/CSV）等待上限：高负载档放宽，避免把「机器忙」记成回归。 */
 export const DOWNLOAD_TIMEOUT = HIGH_LOAD ? 90_000 : 30_000;
 
+/**
+ * 抽屉/面板内交互的「可见且稳定」等待上限：面板内容异步渲染（权限分区、试算结果）
+ * 期间元素持续位移，默认 10s 会被高负载档打穿（2026-09-25 全量并行 preview 实测：
+ * 点击 `.el-select` 稳定等待超时、隔离复跑通过）。
+ */
+export const PANEL_ACTION_TIMEOUT = HIGH_LOAD ? 30_000 : 10_000;
+
 /** 站点配置列表接口：语言（Locale）等跨用例共享状态的自愈/还原用 */
 const SITE_CONFIG_LIST_API = `${FRONT_URL}/api/system/config/system`;
 
