@@ -69,7 +69,9 @@ async function submit() {
   >
     <el-card class="w-105 max-w-[92vw]" shadow="never">
       <div class="mb-1 text-lg font-medium">{{ t("invite.title") }}</div>
-      <div class="mb-4 text-sm text-gray-500">{{ t("invite.subtitle") }}</div>
+      <div class="mb-4 text-sm text-(--el-text-color-regular)">
+        {{ t("invite.subtitle") }}
+      </div>
 
       <!-- 预检令牌期间的占位（v-loading 已全局注册，避免为单页引入 ElSkeleton 组件体积） -->
       <div v-if="state === 'loading'" v-loading="true" class="h-24" />

@@ -292,7 +292,7 @@ defineExpose({ getPayload });
             :label="item.name"
           />
         </el-select>
-        <div class="text-xs text-gray-500">
+        <div class="text-xs text-(--el-text-color-regular)">
           {{ t("dform.approvalFlowTip") }}
         </div>
       </el-form-item>
@@ -302,7 +302,7 @@ defineExpose({ getPayload });
             v-model="form.approval_required"
             data-testid="form-approval-switch"
           />
-          <span class="text-xs text-gray-500">{{
+          <span class="text-xs text-(--el-text-color-regular)">{{
             t("dform.approvalTip")
           }}</span>
         </div>

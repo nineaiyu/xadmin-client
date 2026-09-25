@@ -44,7 +44,7 @@ const { t } = useI18n();
           opacity: 0,
           y: 100
         }"
-        class="mb-4! text-gray-500"
+        class="mb-4! text-(--el-text-color-regular)"
       >
         {{ t("error.error404") }}
       </p>

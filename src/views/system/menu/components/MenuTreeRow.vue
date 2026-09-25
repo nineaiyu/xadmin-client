@@ -261,7 +261,7 @@ const onSwitch = (value: boolean | string | number) => {
   &__hit {
     color: var(--el-color-danger);
     background: var(--el-color-warning-light-9);
-    border-radius: 2px;
+    border-radius: var(--el-border-radius-small);
   }
 
   &__right {
@@ -274,7 +274,7 @@ const onSwitch = (value: boolean | string | number) => {
 
   &__count {
     padding: 0 6px;
-    font-size: 12px;
+    font-size: var(--el-font-size-extra-small);
     color: var(--el-text-color-regular);
     background: var(--el-fill-color-light);
     border-radius: 9px;
@@ -305,7 +305,7 @@ const onSwitch = (value: boolean | string | number) => {
     overflow: hidden;
     text-overflow: ellipsis;
     font-family: var(--el-font-family-mono, monospace);
-    font-size: 12px;
+    font-size: var(--el-font-size-extra-small);
 
     /* 小字号需 AA 对比度：secondary 在白底仅 3:1，改 regular 并靠字号/等宽维持层级 */
     color: var(--el-text-color-regular);

@@ -179,7 +179,7 @@ defineExpose({ getField });
           :label="item.label"
         />
       </el-select>
-      <div class="text-xs text-gray-500">
+      <div class="text-xs text-(--el-text-color-regular)">
         {{ t("dform.fieldDictTip") }}
       </div>
     </el-form-item>

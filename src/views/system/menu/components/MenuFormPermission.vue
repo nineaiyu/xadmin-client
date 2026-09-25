@@ -106,7 +106,7 @@ const cascaderOptions = computed(
 <style lang="scss" scoped>
 .menu-form__hint {
   margin-top: 4px;
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
   color: var(--el-text-color-regular);
 }
 </style>

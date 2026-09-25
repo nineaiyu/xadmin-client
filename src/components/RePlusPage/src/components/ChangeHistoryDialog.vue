@@ -136,7 +136,9 @@ onMounted(fetchHistory);
       </el-table-column>
       <el-table-column :label="t('changeHistory.changes')">
         <template #default="{ row }">
-          <span v-if="!row.changes" class="text-gray-400">—</span>
+          <span v-if="!row.changes" class="text-(--el-text-color-secondary)"
+            >—</span
+          >
           <div v-else class="flex flex-col gap-1">
             <div
               v-for="entry in diffEntries(row.changes)"

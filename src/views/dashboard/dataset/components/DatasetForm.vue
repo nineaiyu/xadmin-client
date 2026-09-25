@@ -202,7 +202,7 @@ defineExpose({ getPayload });
       <el-select v-model="form.date_field" class="w-full" clearable filterable>
         <el-option v-for="f in fieldOptions" :key="f" :value="f" :label="f" />
       </el-select>
-      <div class="text-xs text-gray-500">
+      <div class="text-xs text-(--el-text-color-regular)">
         {{ t("dataDataset.dateFieldTip") }}
       </div>
     </el-form-item>

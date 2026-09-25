@@ -229,7 +229,9 @@ defineExpose({ load });
         <div v-for="row in item.rows" :key="row.pk" class="record-row">
           <div class="min-w-0 flex-1">
             <div class="truncate">{{ row.name || row.pk }}</div>
-            <div class="mt-1 flex items-center gap-2 text-xs text-gray-500">
+            <div
+              class="mt-1 flex items-center gap-2 text-xs text-(--el-text-color-regular)"
+            >
               <el-tag
                 v-bind="statusTagProps(row.status as StatusValue)"
                 size="small"

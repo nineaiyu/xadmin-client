@@ -108,7 +108,7 @@ const onSelect = (action: MenuNodeAction) => {
     padding: 4px 10px;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: 12px;
+    font-size: var(--el-font-size-extra-small);
     color: var(--el-text-color-regular);
     white-space: nowrap;
     border-bottom: 1px solid var(--el-border-color-lighter);
@@ -121,12 +121,12 @@ const onSelect = (action: MenuNodeAction) => {
     width: 100%;
     height: 30px;
     padding: 0 10px;
-    font-size: 13px;
+    font-size: var(--el-font-size-small);
     color: var(--el-text-color-regular);
     cursor: pointer;
     background: transparent;
     border: none;
-    border-radius: 4px;
+    border-radius: var(--el-border-radius-base);
 
     &:hover:not(:disabled) {
       color: var(--el-color-primary);
@@ -150,7 +150,7 @@ const onSelect = (action: MenuNodeAction) => {
   }
 
   &__icon {
-    font-size: 14px;
+    font-size: var(--el-font-size-base);
   }
 }
 </style>

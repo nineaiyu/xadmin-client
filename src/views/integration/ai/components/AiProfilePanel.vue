@@ -168,7 +168,7 @@ const metaItems = computed(() => [
   justify-content: center;
   width: 44px;
   height: 44px;
-  font-size: 18px;
+  font-size: var(--el-font-size-large);
   font-weight: 600;
   color: var(--el-color-primary);
   user-select: none;
@@ -179,7 +179,7 @@ const metaItems = computed(() => [
 .profile-name {
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 16px;
+  font-size: var(--el-font-size-medium);
   font-weight: 600;
   line-height: 22px;
   color: var(--el-text-color-primary);
@@ -189,14 +189,14 @@ const metaItems = computed(() => [
 .profile-sub {
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
   line-height: 18px;
   color: var(--el-text-color-secondary);
   white-space: nowrap;
 }
 
 .tag-caption {
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
   color: var(--el-text-color-secondary);
 }
 </style>

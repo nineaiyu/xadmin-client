@@ -126,14 +126,14 @@ const activeLabel = computed(() =>
 
 .doc-meta {
   margin-top: 8px;
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
   line-height: 16px;
   color: var(--el-text-color-secondary);
 }
 
 .doc-path {
   margin-top: 4px;
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
   line-height: 16px;
   color: var(--el-text-color-secondary);
   word-break: break-all;
@@ -141,7 +141,7 @@ const activeLabel = computed(() =>
 
 .section-title {
   margin-bottom: 8px;
-  font-size: 14px;
+  font-size: var(--el-font-size-base);
   font-weight: 500;
   line-height: 20px;
 }
@@ -151,7 +151,7 @@ const activeLabel = computed(() =>
   padding: 12px;
   margin: 0;
   overflow: auto;
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
   line-height: 20px;
   overflow-wrap: break-word;
   white-space: pre-wrap;
@@ -160,7 +160,7 @@ const activeLabel = computed(() =>
 }
 
 .chunk-preview {
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
   line-height: 20px;
   color: var(--el-text-color-regular);
   overflow-wrap: break-word;

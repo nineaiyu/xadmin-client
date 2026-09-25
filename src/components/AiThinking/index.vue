@@ -130,7 +130,7 @@ watch(
 <style scoped>
 .ai-thinking {
   margin-bottom: 8px;
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
   background: var(--el-fill-color-lighter);
   border-left: 2px solid var(--el-border-color);
   border-radius: 6px;

@@ -80,7 +80,7 @@ export function useOperationLog() {
                 style:
                   row.exec_time != null &&
                   Number(row.exec_time) > slowThreshold.value
-                    ? "color:#f56c6c;font-weight:600"
+                    ? "color:var(--el-color-danger);font-weight:600"
                     : ""
               },
               row.exec_time == null

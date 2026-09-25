@@ -329,7 +329,7 @@ defineExpose({ normalize });
 .row-filter {
   padding: 6px 8px;
   background: var(--el-fill-color-lighter);
-  border-radius: 4px;
+  border-radius: var(--el-border-radius-base);
 }
 
 .row-filter-head {
@@ -339,7 +339,7 @@ defineExpose({ normalize });
 }
 
 .row-filter-title {
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
   color: var(--el-text-color-secondary);
 }
 

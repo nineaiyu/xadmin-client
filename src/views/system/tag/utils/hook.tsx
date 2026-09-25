@@ -5,6 +5,7 @@ import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
+import { SOLID_TAG_STYLE } from "@/utils/tagTone";
 import { SUCCESS_CODE } from "@/api/types";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
 import { tagApi, type TagItem } from "@/api/system/tag";
@@ -41,7 +42,7 @@ export function useTags(tableRef: Ref) {
               ? h(ElTag, {
                   size: "small",
                   color,
-                  style: { border: "none", color: "#fff" }
+                  style: SOLID_TAG_STYLE
                 })
               : h("span", "-");
           };

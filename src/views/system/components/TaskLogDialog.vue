@@ -81,7 +81,7 @@ onUnmounted(stopWs);
   &__pre {
     padding: 12px;
     margin: 0;
-    font-size: 12px;
+    font-size: var(--el-font-size-extra-small);
     line-height: 1.6;
     word-break: break-all;
     white-space: pre-wrap;

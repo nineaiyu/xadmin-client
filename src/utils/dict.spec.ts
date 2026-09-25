@@ -14,6 +14,7 @@ import {
   statusTagProps,
   useDict
 } from "./dict";
+import { SOLID_TAG_STYLE } from "./tagTone";
 
 const ITEMS = [
   { value: "1", label: "男", color: "#409EFF" },
@@ -118,14 +119,14 @@ describe("tag props 工具", () => {
     expect(dictTagProps(null)).toBeUndefined();
     expect(dictTagProps("#f00")).toEqual({
       color: "#f00",
-      style: { border: "none", color: "#fff" }
+      style: SOLID_TAG_STYLE
     });
   });
 
   it("statusTagProps：字典色优先", () => {
     expect(statusTagProps({ value: "1", label: "男", color: "#0f0" })).toEqual({
       color: "#0f0",
-      style: { border: "none", color: "#fff" }
+      style: SOLID_TAG_STYLE
     });
   });
 

@@ -103,7 +103,7 @@ onMounted(load);
       </el-table-column>
       <el-table-column :label="t('dform.description')" min-width="150">
         <template #default="{ row }">
-          <span class="text-xs text-gray-500">{{
+          <span class="text-xs text-(--el-text-color-regular)">{{
             row.description || "-"
           }}</span>
         </template>

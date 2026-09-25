@@ -34,6 +34,29 @@ export function useDemoBook(tableRef: Ref) {
   const { t } = useI18n();
 
   /**
+   * 出版社建议词：示例数据走词条（英文界面下不至于全是中文），
+   * 编辑表单与搜索区共用同一份前缀匹配实现，避免两处漂移。
+   */
+  const fetchPublisherSuggestions = (
+    queryString: string,
+    cb: (results: Array<{ value: string }>) => void
+  ) => {
+    const queryList = [
+      { value: t("demoBook.publisherExample1") },
+      { value: t("demoBook.publisherExample2") },
+      { value: t("demoBook.publisherExample3") }
+    ];
+    cb(
+      queryString
+        ? queryList.filter(
+            item =>
+              item.value.toLowerCase().indexOf(queryString.toLowerCase()) === 0
+          )
+        : queryList
+    );
+  };
+
+  /**
    * 添加一个推送书籍的自定义操作按钮，用于控制书籍推送
    */
   const operationButtonsProps = shallowRef<OperationProps>({
@@ -138,26 +161,7 @@ export function useDemoBook(tableRef: Ref) {
           column.valueType = "autocomplete";
           (
             column["fieldProps"] as { fetchSuggestions?: unknown }
-          ).fetchSuggestions = (
-            queryString: string,
-            cb: (results: Array<{ value: string }>) => void
-          ) => {
-            const queryList = [
-              { value: "人民出版社" },
-              { value: "中华书局" },
-              { value: "科学出版社" }
-            ];
-
-            const results = queryString
-              ? queryList.filter(
-                  item =>
-                    item.value
-                      .toLowerCase()
-                      .indexOf(queryString.toLowerCase()) === 0
-                )
-              : queryList;
-            cb(results);
-          };
+          ).fetchSuggestions = fetchPublisherSuggestions;
           return column;
         }
       },
@@ -181,26 +185,7 @@ export function useDemoBook(tableRef: Ref) {
           column.valueType = "autocomplete";
           (
             column["fieldProps"] as { fetchSuggestions?: unknown }
-          ).fetchSuggestions = (
-            queryString: string,
-            cb: (results: Array<{ value: string }>) => void
-          ) => {
-            const queryList = [
-              { value: "人民出版社" },
-              { value: "中华书局" },
-              { value: "科学出版社" }
-            ];
-
-            const results = queryString
-              ? queryList.filter(
-                  item =>
-                    item.value
-                      .toLowerCase()
-                      .indexOf(queryString.toLowerCase()) === 0
-                )
-              : queryList;
-            cb(results);
-          };
+          ).fetchSuggestions = fetchPublisherSuggestions;
           break;
       }
     });

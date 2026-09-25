@@ -441,7 +441,7 @@ onMounted(() => {
           :key="item.metric"
           class="flex items-center gap-2 rounded bg-gray-50 px-3 py-1.5 text-sm dark:bg-(--el-fill-color-light)"
         >
-          <span class="text-gray-500">{{ item.label }}</span>
+          <span class="text-(--el-text-color-regular)">{{ item.label }}</span>
           <span class="font-medium">{{ item.avg }}</span>
           <el-tag
             v-if="item.percent"
@@ -451,7 +451,7 @@ onMounted(() => {
           >
             {{ item.percent }}
           </el-tag>
-          <span class="text-xs text-gray-400">
+          <span class="text-xs text-(--el-text-color-secondary)">
             {{
               t("systemMonitor.summaryRange", { min: item.min, max: item.max })
             }}

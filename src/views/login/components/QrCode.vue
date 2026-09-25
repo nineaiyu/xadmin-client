@@ -13,7 +13,7 @@ const { t } = useI18n();
   </Motion>
   <Motion :delay="100">
     <el-divider>
-      <p class="text-gray-500 text-xs">{{ t("login.tip") }}</p>
+      <p class="text-(--el-text-color-regular) text-xs">{{ t("login.tip") }}</p>
     </el-divider>
   </Motion>
   <Motion :delay="150">

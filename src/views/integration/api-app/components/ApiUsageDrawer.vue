@@ -160,13 +160,13 @@ const durationText = (value: number) => `${(value * 1000).toFixed(1)} ms`;
 }
 
 .usage-label {
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
   color: var(--el-text-color-secondary);
 }
 
 .usage-value {
   margin-top: 4px;
-  font-size: 20px;
+  font-size: var(--el-font-size-extra-large);
   font-weight: 600;
 }
 
@@ -180,13 +180,13 @@ const durationText = (value: number) => `${(value * 1000).toFixed(1)} ms`;
 
 .usage-section-title {
   margin-bottom: 8px;
-  font-size: 13px;
+  font-size: var(--el-font-size-small);
   font-weight: 600;
 }
 
 .usage-note {
   margin-top: 6px;
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
   color: var(--el-text-color-secondary);
 }
 </style>

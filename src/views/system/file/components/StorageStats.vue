@@ -84,7 +84,7 @@ const shareOf = (filesize: number) => {
                 <div class="text-lg font-medium">
                   {{ stats.quota_mb ? `${quotaPercent}%` : "∞" }}
                 </div>
-                <div class="text-xs text-gray-400">
+                <div class="text-xs text-(--el-text-color-secondary)">
                   {{
                     stats.quota_mb
                       ? t("systemUploadFile.usageRate")
@@ -95,7 +95,9 @@ const shareOf = (filesize: number) => {
             </el-progress>
             <div class="grid min-w-40 flex-1 grid-cols-2 gap-x-4 gap-y-3">
               <div v-for="metric in metrics" :key="metric.key">
-                <div class="text-xs text-gray-400">{{ metric.label }}</div>
+                <div class="text-xs text-(--el-text-color-secondary)">
+                  {{ metric.label }}
+                </div>
                 <div
                   class="mt-0.5 truncate text-sm font-medium"
                   :title="metric.value"
@@ -106,7 +108,7 @@ const shareOf = (filesize: number) => {
               </div>
             </div>
           </div>
-          <div class="mt-3 text-xs text-gray-400">
+          <div class="mt-3 text-xs text-(--el-text-color-secondary)">
             <template v-if="stats.quota_mb">
               {{ formatBytes(stats.total_size) }} / {{ stats.quota_mb }} MB
             </template>
@@ -150,7 +152,9 @@ const shareOf = (filesize: number) => {
           :key="file.pk"
           class="flex items-center gap-3 text-sm"
         >
-          <span class="w-5 shrink-0 text-center text-xs text-gray-400">
+          <span
+            class="w-5 shrink-0 text-center text-xs text-(--el-text-color-secondary)"
+          >
             {{ index + 1 }}
           </span>
           <span class="min-w-0 flex-1 truncate" :title="file.filename">
@@ -163,7 +167,9 @@ const shareOf = (filesize: number) => {
             :show-text="false"
             :color="quotaColor"
           />
-          <span class="w-10 shrink-0 text-right text-xs text-gray-400">
+          <span
+            class="w-10 shrink-0 text-right text-xs text-(--el-text-color-secondary)"
+          >
             {{ shareOf(file.filesize) }}%
           </span>
           <span class="w-24 shrink-0 text-right">

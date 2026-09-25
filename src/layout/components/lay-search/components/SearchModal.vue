@@ -321,7 +321,7 @@ function handleDrag(item: dragItem) {
           v-if="!keyword && commandItems.length"
           data-testid="command-palette"
         >
-          <div class="px-5 py-1.5 text-xs text-gray-400">
+          <div class="px-5 py-1.5 text-xs text-(--el-text-color-secondary)">
             {{ t("commandPalette.title") }}
           </div>
           <div
@@ -359,11 +359,13 @@ function handleDrag(item: dragItem) {
           @click="handleEnter"
         />
         <div v-if="keyword && globalGroups.length">
-          <div class="px-5 py-1.5 text-xs text-gray-400">
+          <div class="px-5 py-1.5 text-xs text-(--el-text-color-secondary)">
             {{ t("search.globalResult") }}
           </div>
           <div v-for="group in globalGroups" :key="group.key">
-            <div class="flex-bc px-5 py-1 text-xs text-gray-400">
+            <div
+              class="flex-bc px-5 py-1 text-xs text-(--el-text-color-secondary)"
+            >
               <span>{{ group.label }}</span>
               <span>{{ group.total }}</span>
             </div>

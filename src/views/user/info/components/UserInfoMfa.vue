@@ -194,7 +194,7 @@ onMounted(loadStatus);
           <el-form-item :label="$t('mfa.scanTip')">
             <div class="flex flex-col gap-1">
               <ReQrcode :text="bindInfo.uri" :width="160" />
-              <span class="text-xs text-gray-400">
+              <span class="text-xs text-(--el-text-color-secondary)">
                 {{ $t("mfa.manualEntry") }}：{{ bindInfo.secret }}
               </span>
             </div>

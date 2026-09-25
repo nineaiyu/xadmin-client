@@ -120,7 +120,7 @@ const onComponentChange = (value: string) => {
 <style lang="scss" scoped>
 .menu-form__option-hint {
   float: right;
-  font-size: 13px;
+  font-size: var(--el-font-size-small);
   color: var(--el-text-color-regular);
 }
 </style>

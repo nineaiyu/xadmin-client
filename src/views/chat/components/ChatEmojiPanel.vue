@@ -92,9 +92,9 @@ const items = computed(
     var(--el-bg-color-overlay);
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 16px;
-  box-shadow:
-    0 16px 40px rgb(0 0 0 / 12%),
-    0 4px 10px rgb(0 0 0 / 6%);
+
+  /* 浮起阴影取 EP 令牌：暗色主题下 EP 会换成更强的深色阴影，无需页面特判 */
+  box-shadow: var(--el-box-shadow);
 }
 
 .chat-emoji-panel {
@@ -118,7 +118,7 @@ const items = computed(
     align-items: center;
     justify-content: center;
     height: 28px;
-    font-size: 16px;
+    font-size: var(--el-font-size-medium);
     line-height: 1;
     cursor: pointer;
     user-select: none;
@@ -135,7 +135,7 @@ const items = computed(
 
     &.is-active {
       background: var(--el-bg-color-overlay);
-      box-shadow: 0 1px 4px rgb(0 0 0 / 10%);
+      box-shadow: var(--el-box-shadow-lighter);
       opacity: 1;
     }
   }
@@ -190,12 +190,10 @@ const items = computed(
 }
 
 /* 暗色下 --el-bg-color-overlay 比分类条底色更深，激活项会读成「凹陷」，
-   改用 fill-color（暗色下比 fill-color-light 更亮）保持「浮起」的语义 */
-html.dark {
-  .chat-emoji-panel__tab.is-active {
-    background: var(--el-fill-color);
-    box-shadow: 0 1px 4px rgb(0 0 0 / 32%);
-  }
+   改用 fill-color（暗色下比 fill-color-light 更亮）保持「浮起」的语义；
+   阴影由 --el-box-shadow-lighter 在暗色档自动加深，无需再写一份。 */
+html.dark .chat-emoji-panel__tab.is-active {
+  background: var(--el-fill-color);
 }
 
 /* 分类切换：退出略上移、进入自下方浮入，避免整块硬切 */

@@ -7,6 +7,7 @@ import { selectBooleanOptions } from "./constants";
 import { formatAddOrEditOptions } from "./renders";
 import type { TableColumnRenderer } from "@pureadmin/table";
 import { getColourTypeByIndex } from "./index";
+import { SOLID_TAG_STYLE } from "@/utils/tagTone";
 import { transformI18n } from "@/plugins/i18n";
 import type {
   ChoiceOptionItem,
@@ -26,14 +27,12 @@ const VueJsonPretty = defineAsyncComponent(async () => {
 });
 
 /**
- * 字典色 tag 的 props（与 @/utils/dict 的 dictTagProps 同款）。
- * 这里不直接 import @/utils/dict：它会连带引入 @/api/system/dict，与本组件
- * 测试形成循环依赖（ViewBaseApi 尚未初始化就被继承）。
- * ElTag 的 color 只覆盖背景色，文字/边框需显式覆盖，否则沿用默认 primary 语义色。
+ * 字典色 tag 的 props（与 @/utils/dict 的 dictTagProps 同款样式常量）。
+ * 样式取 @/utils/tagTone（纯样式模块，不牵连 @/api/system/dict 的循环依赖）。
  */
 const dictTagStyle = (color: string) => ({
   color,
-  style: { border: "none", color: "#fff" }
+  style: SOLID_TAG_STYLE
 });
 
 /** 色块（14px 圆角方块），用于 color 字段的详情/表格展示 */

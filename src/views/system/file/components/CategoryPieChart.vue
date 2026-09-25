@@ -3,6 +3,7 @@ import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { formatBytes, useDark, useECharts } from "@pureadmin/utils";
 import type { UtilsEChartsOption } from "@pureadmin/utils";
+import { cssVarColor } from "@/utils/chartTheme";
 import type { FileCategoryStat } from "../utils/hook";
 import { fallbackColor, waitChartSized } from "../utils/chart";
 
@@ -90,8 +91,8 @@ const buildOptions = (): UtilsEChartsOption => ({
       avoidLabelOverlap: true,
       itemStyle: {
         borderWidth: 2,
-        // 环形扇区间留白：边框取卡片底色，深浅色主题各一档
-        borderColor: isDark.value ? "#1d1e1f" : "#ffffff"
+        // 环形扇区间留白：边框取卡片底色（浮层背景变量，主题切换自动跟随）
+        borderColor: cssVarColor("--el-bg-color-overlay", "#ffffff")
       },
       label: { show: false },
       labelLine: { show: false },
@@ -140,7 +141,7 @@ watch(
           {{ row.label }}
         </span>
         <span
-          class="shrink-0 text-gray-400"
+          class="shrink-0 text-(--el-text-color-secondary)"
           :title="t('systemUploadFile.fileCount')"
         >
           {{ row.count }}
@@ -148,7 +149,7 @@ watch(
         <span class="w-16 shrink-0 text-right">
           {{ formatBytes(row.size) }}
         </span>
-        <span class="w-9 shrink-0 text-right text-gray-400">
+        <span class="w-9 shrink-0 text-right text-(--el-text-color-secondary)">
           {{ shareOf(row) }}%
         </span>
       </div>

@@ -30,7 +30,9 @@ defineExpose({ getPayload });
         :max="item.max"
         class="w-full!"
       />
-      <div class="mt-1 text-xs text-gray-400">{{ item.help_text }}</div>
+      <div class="mt-1 text-xs text-(--el-text-color-secondary)">
+        {{ item.help_text }}
+      </div>
     </el-form-item>
   </el-form>
 </template>

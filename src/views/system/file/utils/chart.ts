@@ -2,7 +2,7 @@
  * 文件中心图表公共工具。
  */
 
-import { epColor } from "@/utils/chartTheme";
+import { CHART_ACCENT, epColor } from "@/utils/chartTheme";
 
 /**
  * 等容器有非 0 宽高再 init：路由切换过渡动画期间挂载时 DOM 尺寸为 0，
@@ -30,7 +30,7 @@ export const chartFallbackColors = (): string[] => [
   epColor("warning"),
   epColor("info"),
   epColor("danger"),
-  "#9b59b6"
+  CHART_ACCENT
 ];
 
 /** 按索引取兜底色（超出色板长度后循环） */

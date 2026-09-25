@@ -50,7 +50,7 @@ const kindTexts = computed<Record<string, string>>(() => ({
 <template>
   <div>
     <div class="mt-3 flex flex-wrap items-center gap-2">
-      <span class="text-sm text-gray-500">{{
+      <span class="text-sm text-(--el-text-color-regular)">{{
         t("permissionPreview.hitCount")
       }}</span>
       <span class="text-xl font-semibold">{{ props.result.count }}</span>
@@ -85,7 +85,7 @@ const kindTexts = computed<Record<string, string>>(() => ({
       type="warning"
     />
     <div v-if="props.result.sample?.length" class="mt-2">
-      <span class="text-sm text-gray-500">{{
+      <span class="text-sm text-(--el-text-color-regular)">{{
         t("permissionPreview.sampleRows")
       }}</span>
       <el-tag
@@ -129,7 +129,10 @@ const kindTexts = computed<Record<string, string>>(() => ({
           >
             <template #default="{ row }">
               <span>{{ row.name }}</span>
-              <span v-if="row.dept_name" class="text-gray-400">
+              <span
+                v-if="row.dept_name"
+                class="text-(--el-text-color-secondary)"
+              >
                 （{{ row.dept_name }}）
               </span>
             </template>

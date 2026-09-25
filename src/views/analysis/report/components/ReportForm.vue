@@ -235,7 +235,7 @@ defineExpose({ getPayload });
             :label="f"
           />
         </el-select>
-        <div class="text-xs text-gray-400">
+        <div class="text-xs text-(--el-text-color-secondary)">
           {{ t("dataReport.valueFieldTip") }}
         </div>
       </el-form-item>
@@ -274,7 +274,7 @@ defineExpose({ getPayload });
         class="w-64!"
         placeholder="0 9 * * 1-5"
       />
-      <span class="ml-2 text-xs text-gray-400">
+      <span class="ml-2 text-xs text-(--el-text-color-secondary)">
         {{ t("dataReport.cronHint") }}
       </span>
     </el-form-item>
@@ -288,7 +288,7 @@ defineExpose({ getPayload });
           {{ t(channel.labelKey) }}
         </el-checkbox>
       </el-checkbox-group>
-      <div class="text-xs text-gray-400">
+      <div class="text-xs text-(--el-text-color-secondary)">
         {{ t("dataReport.notifyChannelsHint") }}
       </div>
     </el-form-item>

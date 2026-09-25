@@ -166,7 +166,9 @@ onMounted(() => {
                   </el-tag>
                 </el-tooltip>
               </div>
-              <div class="text-sm text-gray-600">{{ group.rule_text }}</div>
+              <div class="text-sm text-(--el-text-color-regular)">
+                {{ group.rule_text }}
+              </div>
             </div>
           </template>
           <el-empty

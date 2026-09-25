@@ -233,7 +233,7 @@ onBeforeUnmount(() => {
         type="warning"
         effect="dark"
       >
-        远程控制中
+        {{ t("dataScreen.remoteControlling") }}
       </el-tag>
       <div class="flex-1" />
       <span class="font-mono text-lg text-gray-300">{{ clock }}</span>
@@ -283,7 +283,8 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+/* 投屏底色恒为深色，空态文案取 EP 次级文本色（暗色档下同样可读） */
 .screen-root :deep(.el-empty__description p) {
-  color: #9ca3af;
+  color: var(--el-text-color-secondary);
 }
 </style>

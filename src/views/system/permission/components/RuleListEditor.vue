@@ -359,7 +359,7 @@ function applyPreset(preset: RulePreset) {
 }
 
 .rule-editor-title {
-  font-size: 14px;
+  font-size: var(--el-font-size-base);
   font-weight: 600;
   color: var(--el-text-color-primary);
 }
@@ -372,13 +372,13 @@ function applyPreset(preset: RulePreset) {
 }
 
 .rule-editor-preset-label {
-  font-size: 13px;
+  font-size: var(--el-font-size-small);
   color: var(--el-text-color-secondary);
 }
 
 .rule-notes p {
   margin: 0 0 8px;
-  font-size: 13px;
+  font-size: var(--el-font-size-small);
   line-height: 1.6;
   color: var(--el-text-color-regular);
 }
@@ -429,7 +429,7 @@ function applyPreset(preset: RulePreset) {
   justify-content: center;
   width: 20px;
   height: 20px;
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
   color: var(--el-text-color-secondary);
   background: var(--el-fill-color);
   border-radius: 50%;
@@ -438,7 +438,7 @@ function applyPreset(preset: RulePreset) {
 .rule-row-summary {
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 13px;
+  font-size: var(--el-font-size-small);
   color: var(--el-text-color-primary);
   white-space: nowrap;
 }

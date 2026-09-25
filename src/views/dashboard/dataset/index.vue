@@ -42,7 +42,7 @@ const {
       width="720px"
     >
       <div class="mb-2 flex-bc">
-        <span class="text-sm text-gray-500">
+        <span class="text-sm text-(--el-text-color-regular)">
           {{ t("dataDataset.total") }}: {{ preview?.total ?? 0 }}
         </span>
         <el-button

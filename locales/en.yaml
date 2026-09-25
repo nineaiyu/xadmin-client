@@ -2037,6 +2037,9 @@ demoBook:
   confirmSubmitBook: Submit {name} for on-shelf approval?
   pushBook: Push book
   confirmPushBook: Are you sure to push {name} book?
+  publisherExample1: People's Publishing House
+  publisherExample2: Zhonghua Book Company
+  publisherExample3: Science Press
 
 systemTask:
   name: Task Name
@@ -2539,6 +2542,7 @@ dataScreen:
   saveOk: Saved
   deleteConfirm: Delete screen "{name}"?
   remoteControl: Remote Control
+  remoteControlling: Remote controlling
   controlState: Current State
   controlAuto: Auto carousel
   controlManual: Remote control
@@ -2836,6 +2840,9 @@ dform:
   edit: Edit
   delete: Delete
   name: Name
+  # List column headers (RePlusPage resolves locales by `dform.<field>`)
+  form_name: Form
+  created_time: Submitted At
   description: Description
   fieldCount: Fields
   isActive: Status

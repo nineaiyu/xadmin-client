@@ -83,7 +83,7 @@ watch(
 <template>
   <div class="flex h-full flex-col">
     <div ref="chartRef" class="h-37.5 w-full flex-1" />
-    <div class="mt-1 text-xs text-gray-400">
+    <div class="mt-1 text-xs text-(--el-text-color-secondary)">
       {{
         t("systemUploadFile.trendSummary", {
           count: totalCount,

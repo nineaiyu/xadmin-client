@@ -15,6 +15,7 @@ import {
   type RePlusPageProps
 } from "@/components/RePlusPage";
 import { handleTree } from "@/utils/tree";
+import { SOLID_TAG_STYLE } from "@/utils/tagTone";
 import { buildPasswordValidator } from "./passwordRules";
 import type { useI18n } from "vue-i18n";
 import type { userApi } from "@/api/system/user";
@@ -171,9 +172,7 @@ export function useUserColumnFormats({
                     key={tag.pk}
                     size={props.size}
                     color={tag.color || undefined}
-                    style={
-                      tag.color ? { border: "none", color: "#fff" } : undefined
-                    }
+                    style={tag.color ? SOLID_TAG_STYLE : undefined}
                   >
                     {tag.name}
                   </el-tag>

@@ -1,6 +1,7 @@
 import { ref, type CSSProperties } from "vue";
 import { dataDictApi, type DictItem } from "@/api/system/dict";
 import { fetchAllRows } from "./fetchAllRows";
+import { SOLID_TAG_STYLE } from "./tagTone";
 import { createTtlCache } from "./ttlCache";
 
 // 字典项类型再导出：页面只经本入口消费字典（值 + 类型），不直连 @/api/system/dict
@@ -132,7 +133,7 @@ export function dictTagProps(
   color?: string | null
 ): { color: string; style: CSSProperties } | undefined {
   if (!color) return undefined;
-  return { color, style: { border: "none", color: "#fff" } };
+  return { color, style: SOLID_TAG_STYLE };
 }
 
 /**
@@ -145,7 +146,7 @@ export function statusTagProps(
 ): { color?: string; type?: StatusTagType; style?: CSSProperties } {
   const item = typeof status === "object" && status !== null ? status : null;
   if (item?.color) {
-    return { color: item.color, style: { border: "none", color: "#fff" } };
+    return { color: item.color, style: SOLID_TAG_STYLE };
   }
   const value = item ? item.value : status;
   return { type: fallbackTypes[String(value)] ?? "info" };

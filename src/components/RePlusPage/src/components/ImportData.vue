@@ -379,7 +379,7 @@ defineExpose({ getRef });
     <template #plus-field-mapping>
       <el-col v-if="headersReady" v-loading="parsing" :span="24">
         <div class="ml-35 mr-5">
-          <div class="mb-1 text-sm text-gray-500">
+          <div class="mb-1 text-sm text-(--el-text-color-regular)">
             {{ t("exportImport.mappingTip") }}
           </div>
           <div class="mb-2 flex flex-wrap items-center gap-2">

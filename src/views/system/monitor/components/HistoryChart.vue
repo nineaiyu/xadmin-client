@@ -4,7 +4,7 @@ import { useI18n } from "vue-i18n";
 import { useDark, useECharts } from "@pureadmin/utils";
 import type { UtilsEChartsOption } from "@pureadmin/utils";
 import type { MonitorHistory, MonitorMetric } from "@/api/system/monitor";
-import { epColor } from "@/utils/chartTheme";
+import { CHART_ACCENT, cssVarColor, epColor } from "@/utils/chartTheme";
 import {
   METRIC_META,
   buildSeries,
@@ -46,7 +46,8 @@ const seriesName = (metric: MonitorMetric) => {
 
 const seriesColor = (metric: MonitorMetric) => {
   const color = METRIC_META[metric]?.color;
-  return color ? epColor(color) : "#9a66e4";
+  // 无语义色标的指标（如网络速率）取图表强调色，集中在 chartTheme 定义
+  return color ? epColor(color) : CHART_ACCENT;
 };
 
 const axisIndex = (metric: MonitorMetric) => {
@@ -150,7 +151,8 @@ const exportImage = () => {
   const url = instance.getDataURL({
     type: "png",
     pixelRatio: 2,
-    backgroundColor: isDark.value ? "#1d1e1f" : "#ffffff"
+    // 透明底在暗色面板/暗色主题下不可读，取当前主题底色（EP 变量已按暗色重定义）
+    backgroundColor: cssVarColor("--el-bg-color-overlay", "#ffffff")
   });
   const link = document.createElement("a");
   link.href = url;

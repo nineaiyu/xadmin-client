@@ -144,7 +144,9 @@ defineExpose({ load });
           <div class="truncate">
             {{ row.provider_name || row.provider }} · {{ displayName(row) }}
           </div>
-          <div class="mt-1 text-xs text-gray-500">{{ row.created_time }}</div>
+          <div class="mt-1 text-xs text-(--el-text-color-regular)">
+            {{ row.created_time }}
+          </div>
         </div>
         <el-button link type="danger" @click="unbind(row)">
           {{ t("oauth.unbind") }}

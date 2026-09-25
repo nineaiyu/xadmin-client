@@ -2037,6 +2037,9 @@ demoBook:
   confirmSubmitBook: 确定将《{name}》提交上架审批？
   pushBook: 推送书籍
   confirmPushBook: 确定将该书籍 {name} 推送到推荐服务？
+  publisherExample1: 人民出版社
+  publisherExample2: 中华书局
+  publisherExample3: 科学出版社
 
 systemTask:
   name: 任务名称
@@ -2539,6 +2542,7 @@ dataScreen:
   saveOk: 保存成功
   deleteConfirm: 确定删除大屏「{name}」吗？
   remoteControl: 远程控制
+  remoteControlling: 远程控制中
   controlState: 当前状态
   controlAuto: 自动轮播
   controlManual: 远程接管
@@ -2835,6 +2839,9 @@ dform:
   edit: 编辑
   delete: 删除
   name: 名称
+  # 列表列标题（RePlusPage 按 `dform.<字段名>` 取词条）
+  form_name: 表单
+  created_time: 提交时间
   description: 描述
   fieldCount: 字段数
   isActive: 状态

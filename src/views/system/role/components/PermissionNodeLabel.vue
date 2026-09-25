@@ -184,7 +184,7 @@ const showRootActions = computed(
     max-width: 38%;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: 14px;
+    font-size: var(--el-font-size-base);
     white-space: nowrap;
   }
 
@@ -192,7 +192,7 @@ const showRootActions = computed(
     padding: 0 1px;
     color: var(--el-color-danger);
     background: var(--el-color-danger-light-9);
-    border-radius: 2px;
+    border-radius: var(--el-border-radius-small);
   }
 
   &__detail {
@@ -200,7 +200,7 @@ const showRootActions = computed(
     overflow: hidden;
     text-overflow: ellipsis;
     font-family: var(--el-font-family-mono, monospace);
-    font-size: 12px;
+    font-size: var(--el-font-size-extra-small);
     color: var(--el-text-color-secondary);
     white-space: nowrap;
   }
@@ -215,7 +215,7 @@ const showRootActions = computed(
 
   &__count {
     flex-shrink: 0;
-    font-size: 12px;
+    font-size: var(--el-font-size-extra-small);
     color: var(--el-text-color-secondary);
   }
 

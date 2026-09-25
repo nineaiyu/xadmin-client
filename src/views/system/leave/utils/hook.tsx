@@ -5,6 +5,7 @@ import { ElMessage, ElMessageBox, ElTag } from "element-plus";
 import { leaveApi } from "@/api/system/leave";
 import { getDefaultAuths } from "@/router/utils";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";
+import { SOLID_TAG_STYLE } from "@/utils/tagTone";
 import type {
   OperationProps,
   PageTableColumn,
@@ -138,12 +139,7 @@ export function useLeave(tableRef: Ref) {
             const item = raw as { label?: string; color?: string };
             return h(
               ElTag,
-              item.color
-                ? {
-                    color: item.color,
-                    style: { border: "none", color: "#fff" }
-                  }
-                : {},
+              item.color ? { color: item.color, style: SOLID_TAG_STYLE } : {},
               () => item.label ?? "—"
             );
           };

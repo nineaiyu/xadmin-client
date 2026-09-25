@@ -217,7 +217,7 @@ function handleConfirm() {
 }
 
 .scope-tip {
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
 }
 
 .scope-toolbar {
@@ -241,7 +241,7 @@ function handleConfirm() {
 }
 
 .scope-node-count {
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
   color: var(--el-text-color-secondary);
 }
 </style>

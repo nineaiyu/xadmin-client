@@ -151,13 +151,16 @@ Object.keys(devDependencies).forEach(key => {
 </template>
 
 <style lang="scss" scoped>
+/* 两张依赖卡的 el-descriptions 都开了 size="small"，EP 的 cell 字号规则
+   （`.el-descriptions--small … .el-descriptions__cell`，权重 0-4-0）压过页面选择器，
+   故这里是**必需**的 !important，不是可清理的样式债。 */
 :deep(.main-label) {
-  font-size: 16px !important;
+  font-size: var(--el-font-size-medium) !important;
   color: var(--el-color-danger) !important;
 }
 
 :deep(.pure-version) {
-  font-size: 14px !important;
+  font-size: var(--el-font-size-base) !important;
   font-weight: 600 !important;
   opacity: 0.6;
 
@@ -166,11 +169,12 @@ Object.keys(devDependencies).forEach(key => {
   }
 }
 
-.main-content {
-  --main-content-margin: 0;
-}
-
+/* descriptions 自带表头间距在本页不需要（卡片 header 已提供） */
 :deep(.el-descriptions__header) {
   margin: 0 !important;
+}
+
+.main-content {
+  --main-content-margin: 0;
 }
 </style>

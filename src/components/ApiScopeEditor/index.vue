@@ -142,14 +142,14 @@ defineExpose({ merge });
               {{ option.method }}
             </el-tag>
             <span class="truncate">{{ option.label }}</span>
-            <span class="ml-auto pl-4 text-xs text-gray-400">
+            <span class="ml-auto pl-4 text-xs text-(--el-text-color-secondary)">
               {{ option.path }}
             </span>
           </div>
         </el-option>
       </el-option-group>
     </el-select>
-    <div class="mt-2 text-xs text-gray-500">
+    <div class="mt-2 text-xs text-(--el-text-color-regular)">
       {{
         picked.length + customItems.length
           ? t("apiScope.selected", { n: picked.length + customItems.length })

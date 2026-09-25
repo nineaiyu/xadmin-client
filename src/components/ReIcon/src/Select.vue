@@ -258,7 +258,7 @@ watch(
 
 :deep(.el-tabs__item) {
   height: 30px;
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
   font-weight: normal;
   line-height: 30px;
 }

@@ -106,7 +106,10 @@ onMounted(load);
       </el-form-item>
     </el-form>
     <el-form-item :label="t('imBinding.current')">
-      <div v-if="bindings.length === 0" class="text-gray-400">
+      <div
+        v-if="bindings.length === 0"
+        class="text-(--el-text-color-secondary)"
+      >
         {{ t("imBinding.empty") }}
       </div>
       <div

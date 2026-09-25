@@ -406,7 +406,7 @@ defineExpose({ setCheckedKeys });
     margin-top: 10px;
     overflow: auto;
     border: 1px solid var(--el-border-color-lighter);
-    border-radius: 4px;
+    border-radius: var(--el-border-radius-base);
   }
 
   &__legend {
@@ -415,7 +415,7 @@ defineExpose({ setCheckedKeys });
     gap: 12px;
     align-items: center;
     margin-top: 8px;
-    font-size: 12px;
+    font-size: var(--el-font-size-extra-small);
     color: var(--el-text-color-secondary);
   }
 
@@ -449,7 +449,9 @@ defineExpose({ setCheckedKeys });
   }
 }
 
+/* 行高取 EP 默认组件尺寸（与列表页行高同档，字号随主题档位走） */
 :deep(.el-tree-node__content) {
-  height: 32px;
+  height: var(--el-component-size);
+  font-size: var(--el-font-size-base);
 }
 </style>

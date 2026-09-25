@@ -1,7 +1,8 @@
 <script lang="ts" setup>
-import { reactive } from "vue";
+import { computed, reactive } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
+import { CHART_ACCENT, epColor } from "@/utils/chartTheme";
 import type { TagItem } from "@/api/system/tag";
 
 /**
@@ -19,14 +20,18 @@ const props = defineProps<{
 const { t } = useI18n();
 const isEdit = !!props.row;
 
-const DEFAULT_COLORS = [
-  "#409EFF",
-  "#67C23A",
-  "#E6A23C",
-  "#F56C6C",
-  "#909399",
-  "#8E44AD"
-];
+/**
+ * 预设色板：EP 语义色经 CSS 变量取值（跟随自定义主题色与暗色主题），
+ * 末位为项目图表强调色（无 EP 语义对应的第 6 色，集中定义）。
+ */
+const DEFAULT_COLORS = computed(() => [
+  epColor("primary"),
+  epColor("success"),
+  epColor("warning"),
+  epColor("danger"),
+  epColor("info"),
+  CHART_ACCENT
+]);
 
 const form = reactive({
   name: props.row?.name ?? "",

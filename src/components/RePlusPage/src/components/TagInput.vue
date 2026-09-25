@@ -175,7 +175,7 @@ const handleTagClick = (value: string, index: number) => {
 }
 
 .el-input :deep(.el-input__inner) {
-  font-size: 13px;
+  font-size: var(--el-font-size-small);
   border: none !important;
   box-shadow: none !important;
 }

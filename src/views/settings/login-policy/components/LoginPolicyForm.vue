@@ -98,7 +98,7 @@ defineExpose({ getPayload });
     </el-form-item>
     <el-form-item :label="t('loginPolicy.priority')">
       <el-input-number v-model="form.priority" :min="1" :max="9999" />
-      <span class="ml-2 text-sm text-gray-400">{{
+      <span class="ml-2 text-sm text-(--el-text-color-secondary)">{{
         t("loginPolicy.priorityTip")
       }}</span>
     </el-form-item>

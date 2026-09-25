@@ -384,7 +384,7 @@ const onMoreCommand = (command: string) => {
   &__stats {
     display: inline-flex;
     align-items: center;
-    font-size: 12px;
+    font-size: var(--el-font-size-extra-small);
 
     /* 小字号必须满足 AA 对比度：secondary(#909399) 在白底仅 3:1，改用 regular(5.4:1) */
     color: var(--el-text-color-regular);
@@ -419,7 +419,7 @@ const onMoreCommand = (command: string) => {
   background: var(--el-color-primary-light-9);
 
   &__count {
-    font-size: 13px;
+    font-size: var(--el-font-size-small);
     color: var(--el-color-primary);
   }
 }

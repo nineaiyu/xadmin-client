@@ -166,7 +166,7 @@ const emptyText = computed(() =>
     overflow: hidden;
     background: var(--el-bg-color);
     border: 1px solid var(--el-border-color-lighter);
-    border-radius: 4px;
+    border-radius: var(--el-border-radius-base);
   }
 
   /* 高度由 useTreeHeight 实测写入（取代旧实现两处口径不一致的 calc 魔法值） */
@@ -175,9 +175,10 @@ const emptyText = computed(() =>
     overflow: auto;
   }
 
+  /* 行高/字号取 EP 默认档（与列表页一致）：主题改字号档时跟随，不再写死像素 */
   &:deep(.el-tree-node__content) {
-    height: 32px;
-    font-size: 14px;
+    height: var(--el-component-size);
+    font-size: var(--el-font-size-base);
   }
 
   &:deep(.el-tree-node.is-disabled > .el-tree-node__content) {

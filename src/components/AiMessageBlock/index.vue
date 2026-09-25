@@ -75,7 +75,7 @@ const showThinking = () => Boolean(props.reasoning);
   width: fit-content;
   max-width: 100%;
   padding: 10px 12px;
-  font-size: 14px;
+  font-size: var(--el-font-size-base);
   line-height: 1.7;
   color: var(--el-text-color-primary);
   white-space: pre-wrap;
@@ -132,7 +132,7 @@ const showThinking = () => Boolean(props.reasoning);
 .ai-message__sources {
   padding-top: 6px;
   margin-top: 8px;
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
   line-height: 1.6;
   color: var(--el-text-color-secondary);
   border-top: 1px solid var(--el-border-color-lighter);

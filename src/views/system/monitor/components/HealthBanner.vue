@@ -64,7 +64,7 @@ const itemTagType = (itemStatus: string) =>
           :color="scoreColor"
         />
         <div class="flex flex-col gap-1">
-          <span class="text-sm text-gray-500">
+          <span class="text-sm text-(--el-text-color-regular)">
             {{ t("systemMonitor.healthOverview") }}
           </span>
           <el-tag :type="meta.tag" size="small" effect="dark">
@@ -84,7 +84,7 @@ const itemTagType = (itemStatus: string) =>
           <span class="font-medium">{{ item.label }}</span>
           <template v-if="item.group === 'resource'">
             ：{{ item.value ?? "—" }}{{ item.unit ?? ""
-            }}<span class="text-gray-400">
+            }}<span class="text-(--el-text-color-secondary)">
               / {{ item.threshold }}{{ item.unit ?? "" }}</span
             >
           </template>
@@ -95,7 +95,9 @@ const itemTagType = (itemStatus: string) =>
           </template>
         </el-tag>
       </div>
-      <div class="ml-auto flex items-center gap-4 text-xs text-gray-500">
+      <div
+        class="ml-auto flex items-center gap-4 text-xs text-(--el-text-color-regular)"
+      >
         <span>
           {{ t("systemMonitor.alertsFiring") }}：
           <b :class="firing > 0 ? 'text-red-500' : ''">{{ firing }}</b>

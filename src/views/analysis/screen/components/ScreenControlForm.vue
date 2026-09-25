@@ -112,7 +112,7 @@ onMounted(loadState);
       <el-tag size="small" :type="state.mode === 'manual' ? 'warning' : 'info'">
         {{ modeText }}
       </el-tag>
-      <span class="ml-2 text-sm text-gray-500">
+      <span class="ml-2 text-sm text-(--el-text-color-regular)">
         {{ t("dataScreen.controlPageText") }} {{ pageText }}
       </span>
     </el-form-item>
@@ -161,7 +161,7 @@ onMounted(loadState);
       </el-button>
     </el-form-item>
   </el-form>
-  <div class="mt-1 text-xs text-gray-500">
+  <div class="mt-1 text-xs text-(--el-text-color-regular)">
     {{ t("dataScreen.controlHint") }}
   </div>
   <div class="mt-4 flex justify-end">

@@ -255,7 +255,7 @@ const {
           <!-- 字段权限结果 -->
           <template v-if="fieldResult">
             <div class="mt-3 flex flex-wrap items-center gap-2">
-              <span class="text-sm text-gray-500">
+              <span class="text-sm text-(--el-text-color-regular)">
                 {{ t("permissionPreview.fieldResultTitle") }}
               </span>
               <el-tag v-if="!fieldResult.enabled" size="small" type="warning">

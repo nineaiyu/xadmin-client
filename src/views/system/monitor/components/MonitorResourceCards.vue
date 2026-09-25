@@ -35,7 +35,7 @@ const { t } = useI18n();
   <!-- 实时资源卡片：窄屏两列、中屏三列、宽屏一行五张 -->
   <div class="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
     <el-card v-for="card in cards" :key="card.key" shadow="hover">
-      <div class="text-sm text-gray-500">{{ card.label }}</div>
+      <div class="text-sm text-(--el-text-color-regular)">{{ card.label }}</div>
       <el-progress
         v-if="card.ring"
         class="mt-2"
@@ -54,19 +54,23 @@ const { t } = useI18n();
       </div>
     </el-card>
     <el-card shadow="hover" data-testid="monitor-network-card">
-      <div class="text-sm text-gray-500">
+      <div class="text-sm text-(--el-text-color-regular)">
         {{ t("systemMonitor.netRate") }}
       </div>
       <div class="mt-4 flex flex-col gap-2">
         <div class="flex-bc text-sm">
-          <span class="text-gray-500">{{ t("systemMonitor.netSent") }}</span>
+          <span class="text-(--el-text-color-regular)">{{
+            t("systemMonitor.netSent")
+          }}</span>
           <span class="font-medium">{{ formatRate(netRates.sent) }}</span>
         </div>
         <div class="flex-bc text-sm">
-          <span class="text-gray-500">{{ t("systemMonitor.netRecv") }}</span>
+          <span class="text-(--el-text-color-regular)">{{
+            t("systemMonitor.netRecv")
+          }}</span>
           <span class="font-medium">{{ formatRate(netRates.recv) }}</span>
         </div>
-        <div class="text-xs text-gray-400">
+        <div class="text-xs text-(--el-text-color-secondary)">
           {{
             t("systemMonitor.netTotal", {
               sent: netRates.sentTotal ?? 0,

@@ -176,7 +176,7 @@ const metaItems = computed(() => [
   justify-content: center;
   width: 44px;
   height: 44px;
-  font-size: 18px;
+  font-size: var(--el-font-size-large);
   font-weight: 600;
   color: var(--el-color-primary);
   user-select: none;
@@ -187,7 +187,7 @@ const metaItems = computed(() => [
 .profile-name {
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 16px;
+  font-size: var(--el-font-size-medium);
   font-weight: 600;
   line-height: 22px;
   color: var(--el-text-color-primary);
@@ -197,14 +197,14 @@ const metaItems = computed(() => [
 .profile-sub {
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
   line-height: 18px;
   color: var(--el-text-color-secondary);
   white-space: nowrap;
 }
 
 .section-caption {
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
   line-height: 16px;
   color: var(--el-text-color-secondary);
 }
@@ -212,7 +212,7 @@ const metaItems = computed(() => [
 .scope-list {
   padding-left: 16px;
   margin: 6px 0 0;
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
   line-height: 18px;
   color: var(--el-text-color-regular);
 }
@@ -235,7 +235,7 @@ const metaItems = computed(() => [
   gap: 8px;
   align-items: center;
   padding: 8px 10px;
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
   background: var(--el-fill-color-light);
   border-radius: 8px;
 }

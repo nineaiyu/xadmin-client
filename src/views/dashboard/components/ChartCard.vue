@@ -10,7 +10,7 @@ import {
   type DashboardCard,
   type ExecuteResult
 } from "@/api/system/datasets";
-import { epColor } from "@/utils/chartTheme";
+import { CHART_ACCENT, cssVarColor, epColor } from "@/utils/chartTheme";
 // 仅类型引用（不进包）：导出实现按需动态加载（保持首屏体积）
 import type { EChartsLike, ExportedImage } from "@/utils/imageExport";
 
@@ -43,14 +43,14 @@ const waitSized = async (): Promise<boolean> => {
   return false;
 };
 
-/** 分类色板：EP 语义色跟随主题（第 6 色为图表专用紫，无 EP 对应语义）；调用时读取 */
+/** 分类色板：EP 语义色跟随主题（第 6 色为图表专用强调色，集中定义于 chartTheme）；调用时读取 */
 const palette = () => [
   epColor("primary"),
   epColor("success"),
   epColor("warning"),
   epColor("danger"),
   epColor("info"),
-  "#9a66e4"
+  CHART_ACCENT
 ];
 
 const buildSeriesOptions = (result: AggregateResult): UtilsEChartsOption => {
@@ -160,8 +160,8 @@ async function renderImage(): Promise<ExportedImage | null> {
   const { renderEchartsImage } = await import("@/utils/imageExport");
   return renderEchartsImage(getInstance() as EChartsLike | null, {
     pixelRatio: 2,
-    // 透明底在深色面板/暗色主题下不可读，按主题取底色
-    backgroundColor: isDark.value ? "#1d1e1f" : "#ffffff"
+    // 透明底在深色面板/暗色主题下不可读，取当前主题底色（EP 变量已按暗色重定义）
+    backgroundColor: cssVarColor("--el-bg-color-overlay", "#ffffff")
   });
 }
 

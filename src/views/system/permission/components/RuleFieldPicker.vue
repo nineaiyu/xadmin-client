@@ -143,17 +143,17 @@ function handlePathChange(value: unknown) {
 
 <style lang="scss" scoped>
 .rule-edit-label {
-  font-size: 13px;
+  font-size: var(--el-font-size-small);
   color: var(--el-text-color-regular);
 }
 
 .rule-edit-error {
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
   color: var(--el-color-danger);
 }
 
 .rule-edit-meta {
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
   color: var(--el-text-color-secondary);
 }
 </style>

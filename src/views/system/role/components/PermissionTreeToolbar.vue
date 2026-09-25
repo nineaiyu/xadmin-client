@@ -158,7 +158,7 @@ const { t } = useI18n();
   }
 
   &__matched {
-    font-size: 12px;
+    font-size: var(--el-font-size-extra-small);
     color: var(--el-text-color-secondary);
   }
 
@@ -171,7 +171,7 @@ const { t } = useI18n();
   }
 
   &__total {
-    font-size: 13px;
+    font-size: var(--el-font-size-small);
     color: var(--el-text-color-regular);
   }
 }
