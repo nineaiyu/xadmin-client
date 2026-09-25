@@ -1,32 +1,30 @@
 <script lang="ts" setup>
-import { onMounted, reactive, ref } from "vue";
+import { h, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessage, ElMessageBox } from "element-plus";
+import type { DialogOptions } from "@/components/ReDialog";
+import { addDialog } from "@/components/ReDialog";
+import { dialogSize } from "@/components/ReDialog/size";
+import { message } from "@/utils/message";
 import {
   messageTemplateApi,
   type MessageTemplateItem
 } from "@/api/system/security";
 import type { RecordType } from "plus-pro-components";
+import MessageTemplateForm from "./MessageTemplateForm.vue";
 
 /**
  * 通知消息模板：代码内模板是默认值，此处维护可选的 DB 覆盖层。
  *
  * - 覆盖为空 = 使用代码默认（零行为变化）；
- * - 保存前可预览（样例数据渲染，不真实发送）；重置即删除覆盖行。
+ * - 编辑走统一弹层（ReDialog + MessageTemplateForm），保存前可预览（样例数据渲染，不真实发送）；
+ * - 重置即删除覆盖行。
  */
 const { t } = useI18n();
 
 const loading = ref(false);
 const rows = ref<MessageTemplateItem[]>([]);
-const saving = ref(false);
-const dialogVisible = ref(false);
-const current = ref<MessageTemplateItem | null>(null);
-const previewResult = ref<{ subject: string; message: string } | null>(null);
-const form = reactive({
-  subject_template: "",
-  body_template: "",
-  is_active: true
-});
+const formRef = ref<InstanceType<typeof MessageTemplateForm>>();
 
 const load = async () => {
   loading.value = true;
@@ -43,51 +41,39 @@ const load = async () => {
 const openEdit = (raw: RecordType) => {
   // el-table 插槽 row 为宽类型，按注册表契约收窄
   const row = raw as unknown as MessageTemplateItem;
-  current.value = row;
-  form.subject_template = row.override?.subject_template ?? "";
-  form.body_template = row.override?.body_template ?? "";
-  form.is_active = row.override?.is_active !== false;
-  previewResult.value = null;
-  dialogVisible.value = true;
-};
-
-const preview = async () => {
-  if (!current.value) return;
-  const res = await messageTemplateApi.preview({
-    message_type: current.value.message_type,
-    subject_template: form.subject_template,
-    body_template: form.body_template
-  });
-  if (res.code === 1000) {
-    previewResult.value = {
-      subject: res.data.subject,
-      message: res.data.message
-    };
-  } else {
-    ElMessage.error(String(res.detail));
-  }
-};
-
-const save = async () => {
-  if (!current.value) return;
-  saving.value = true;
-  try {
-    const res = await messageTemplateApi.save({
-      message_type: current.value.message_type,
-      subject_template: form.subject_template,
-      body_template: form.body_template,
-      is_active: form.is_active
-    });
-    if (res.code === 1000) {
-      ElMessage.success(t("messageTemplate.saveSuccess"));
-      dialogVisible.value = false;
-      await load();
-    } else {
-      ElMessage.error(String(res.detail));
+  formRef.value = undefined;
+  const options: DialogOptions = {
+    title: t("messageTemplate.editTitle", {
+      name: row.message_type_label ?? ""
+    }),
+    width: dialogSize("lg"),
+    draggable: true,
+    destroyOnClose: true,
+    closeOnClickModal: false,
+    sureBtnLoading: true,
+    contentRenderer: () => h(MessageTemplateForm, { ref: formRef, row }),
+    beforeSure: async (done, { closeLoading }) => {
+      const payload = formRef.value?.getPayload();
+      if (!payload) {
+        closeLoading();
+        return;
+      }
+      // 异常归一为可读失败结果：避免请求异常时 beforeSure 抛错、弹窗 loading 悬挂
+      const res = await messageTemplateApi.save(payload).catch(error => ({
+        code: -1,
+        detail: String((error as { detail?: string })?.detail ?? error)
+      }));
+      if (res.code === 1000) {
+        message(t("messageTemplate.saveSuccess"), { type: "success" });
+        done();
+        await load();
+        return;
+      }
+      if (res.detail) ElMessage.error(String(res.detail));
+      closeLoading();
     }
-  } finally {
-    saving.value = false;
-  }
+  };
+  addDialog(options);
 };
 
 const reset = async (raw: RecordType) => {
@@ -109,7 +95,7 @@ const reset = async (raw: RecordType) => {
   }
   const res = await messageTemplateApi.reset(row.message_type);
   if (res.code === 1000) {
-    ElMessage.success(t("messageTemplate.resetSuccess"));
+    message(t("messageTemplate.resetSuccess"), { type: "success" });
     await load();
   } else {
     ElMessage.error(String(res.detail));
@@ -121,7 +107,7 @@ onMounted(load);
 
 <template>
   <div v-loading="loading">
-    <el-table :data="rows" border>
+    <el-table :data="rows" border data-testid="template-table">
       <el-table-column
         prop="message_type_label"
         :label="t('messageTemplate.messageType')"
@@ -134,7 +120,11 @@ onMounted(load);
       />
       <el-table-column :label="t('messageTemplate.override')" width="120">
         <template #default="{ row }">
-          <el-tag :type="row.has_override ? 'success' : 'info'" effect="light">
+          <el-tag
+            data-testid="template-override-tag"
+            :type="row.has_override ? 'success' : 'info'"
+            effect="light"
+          >
             {{
               row.has_override
                 ? t("messageTemplate.overridden")
@@ -155,11 +145,17 @@ onMounted(load);
         fixed="right"
       >
         <template #default="{ row }">
-          <el-button link type="primary" @click="openEdit(row)">
+          <el-button
+            data-testid="template-edit"
+            link
+            type="primary"
+            @click="openEdit(row)"
+          >
             {{ t("messageTemplate.edit") }}
           </el-button>
           <el-button
             v-if="row.has_override"
+            data-testid="template-reset"
             link
             type="warning"
             @click="reset(row)"
@@ -169,88 +165,5 @@ onMounted(load);
         </template>
       </el-table-column>
     </el-table>
-
-    <el-dialog
-      v-model="dialogVisible"
-      :title="
-        t('messageTemplate.editTitle', {
-          name: current?.message_type_label ?? ''
-        })
-      "
-      width="720px"
-      draggable
-      destroy-on-close
-      :close-on-click-modal="false"
-    >
-      <el-alert
-        type="info"
-        :closable="false"
-        show-icon
-        class="mb-3"
-        :title="`${t('messageTemplate.variables')}: ${(current?.variables ?? []).join(' / ')}`"
-        :description="t('messageTemplate.syntaxHint')"
-      />
-      <el-alert
-        v-if="current?.default_body"
-        type="warning"
-        :closable="false"
-        class="mb-3"
-        :title="t('messageTemplate.defaultContent')"
-      >
-        <!-- 默认正文是 HTML（渠道渲染原文）：按渲染结果展示，与下方预览区同口径 -->
-        <div
-          class="text-xs whitespace-pre-wrap"
-          v-html="current?.default_body"
-        />
-      </el-alert>
-      <el-form label-width="90px">
-        <el-form-item :label="t('messageTemplate.subject')">
-          <el-input
-            v-model="form.subject_template"
-            :placeholder="t('messageTemplate.subjectPlaceholder')"
-          />
-        </el-form-item>
-        <el-form-item :label="t('messageTemplate.body')">
-          <el-input
-            v-model="form.body_template"
-            type="textarea"
-            :rows="8"
-            :placeholder="t('messageTemplate.bodyPlaceholder')"
-          />
-        </el-form-item>
-        <el-form-item :label="t('loginPolicy.isActive')">
-          <el-switch v-model="form.is_active" />
-        </el-form-item>
-      </el-form>
-      <div v-if="previewResult" class="rounded bg-gray-50 p-3 dark:bg-gray-800">
-        <div class="mb-1 text-sm font-medium">{{ previewResult.subject }}</div>
-        <div
-          class="text-xs whitespace-pre-wrap"
-          v-html="previewResult.message"
-        />
-      </div>
-      <template #footer>
-        <el-button @click="dialogVisible = false">
-          {{ t("buttons.cancel") }}
-        </el-button>
-        <el-tooltip
-          :disabled="current?.has_preview !== false"
-          :content="t('messageTemplate.previewUnsupported')"
-          placement="top"
-        >
-          <span>
-            <el-button
-              :disabled="current?.has_preview === false"
-              @click="preview"
-            >
-              {{ t("messageTemplate.preview") }}
-            </el-button>
-          </span>
-        </el-tooltip>
-        <el-button type="primary" :loading="saving" @click="save">
-          {{ t("buttons.sure") }}
-        </el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>

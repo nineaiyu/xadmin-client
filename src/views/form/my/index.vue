@@ -1,259 +1,23 @@
 <script lang="ts" setup>
-import { SUCCESS_CODE } from "@/api/types";
-import { fetchAllRows } from "@/utils/fetchAllRows";
-import { h, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElButton, ElMessageBox } from "element-plus";
-import {
-  addDialog,
-  closeDialog,
-  type DialogOptions
-} from "@/components/ReDialog";
-import { dialogSize } from "@/components/ReDialog/size";
-import { addDrawer } from "@/components/ReDrawer";
-import { hasAuth } from "@/router/utils";
-import { message } from "@/utils/message";
-import { statusTagProps, type StatusTagType } from "@/utils/dict";
-import {
-  listRows,
-  submissionApi,
-  type FillableFormItem,
-  type SubmissionItem
-} from "@/api/system/dform";
-import SubmissionForm from "./components/SubmissionForm.vue";
-import SubmissionDetail from "./components/SubmissionDetail.vue";
+import { useFormMySubmissions } from "./utils/hook";
 
 defineOptions({
   name: "FormMySubmission"
 });
 
 const { t } = useI18n();
-const canEdit = hasAuth("partialUpdate:FormMySubmission");
-const canDestroy = hasAuth("destroy:FormMySubmission");
-const canExport = hasAuth("exportData:FormMySubmission");
-const canResubmit = hasAuth("resubmit:FormMySubmission");
-const canSubmit = hasAuth("submit:FormMySubmission");
 
-const loading = ref(false);
-const exporting = ref(false);
-const forms = ref<FillableFormItem[]>([]);
-const submissions = ref<SubmissionItem[]>([]);
-
-/** 导出本人提交（C2：后端按表单 schema 展开动态列，导出范围跟随 creator 隔离） */
-const exportCsv = async () => {
-  exporting.value = true;
-  try {
-    await submissionApi.exportData({ type: "csv" });
-  } catch (error) {
-    message(String((error as { detail?: string })?.detail ?? error), {
-      type: "warning"
-    });
-  } finally {
-    exporting.value = false;
-  }
-};
-
-const loadAll = async () => {
-  loading.value = true;
-  try {
-    // 可填表单走 available-forms（定义类资源，不需要表单设计器权限）
-    const [formRes, subRes] = await Promise.all([
-      submissionApi.availableForms(),
-      fetchAllRows(submissionApi.list)
-    ]);
-    forms.value = (formRes?.data ?? []) as FillableFormItem[];
-    submissions.value = listRows<SubmissionItem>(subRes);
-  } finally {
-    loading.value = false;
-  }
-};
-
-/** 填报 / 编辑提交弹窗（C5：统一走 ReDialog，动态字段渲染在 SubmissionForm 中）
- *
- * 草稿：新建填报或编辑既有草稿时附「保存草稿」（轻校验、跳过审批）；
- * 编辑已生效/已驳回的提交不提供草稿入口（避免把已生效数据改回草稿态）。
- */
-const submissionFormRef = ref<InstanceType<typeof SubmissionForm>>();
-
-const openDialog = (
-  form: FillableFormItem,
-  submission: SubmissionItem | null = null
-) => {
-  submissionFormRef.value = undefined;
-  const draftMode = !submission || submission.status?.value === "DRAFT";
-  const savingDraft = ref(false);
-
-  const saveDraft = async (options: DialogOptions) => {
-    const payload = submissionFormRef.value?.getPayload();
-    if (!payload) return;
-    savingDraft.value = true;
-    const res = await (
-      submission
-        ? submissionApi.partialUpdate(submission.pk, payload)
-        : submissionApi.create({ ...payload, as_draft: true })
-    )
-      .catch(error => ({
-        code: -1,
-        detail: String((error as { detail?: string })?.detail ?? error)
-      }))
-      .finally(() => (savingDraft.value = false));
-    if (res.code === SUCCESS_CODE) {
-      message(t("dform.draftSaved"), { type: "success" });
-      closeDialog(options, 0);
-      await loadAll();
-      return;
-    }
-    if (res.detail) message(String(res.detail), { type: "warning" });
-  };
-
-  const options: DialogOptions = {
-    title: submission ? t("dform.editSubmission") : form.name,
-    width: dialogSize("md"),
-    draggable: true,
-    destroyOnClose: true,
-    closeOnClickModal: false,
-    sureBtnLoading: true,
-    contentRenderer: () =>
-      h("div", [
-        h(SubmissionForm, { ref: submissionFormRef, form, submission }),
-        draftMode
-          ? h("div", { class: "mt-1 flex justify-end" }, [
-              h(
-                ElButton,
-                {
-                  size: "small",
-                  loading: savingDraft.value,
-                  "data-testid": "submission-save-draft",
-                  onClick: () => saveDraft(options)
-                },
-                () => t("dform.saveDraft")
-              )
-            ])
-          : null
-      ]),
-    beforeSure: async (done, { closeLoading }) => {
-      const payload = submissionFormRef.value?.getPayload();
-      if (!payload) {
-        closeLoading();
-        return;
-      }
-      // 异常归一为可读失败结果：避免请求异常时 beforeSure 抛错、弹窗 loading 悬挂
-      const res = await (
-        submission
-          ? submissionApi.partialUpdate(submission.pk, payload)
-          : submissionApi.create(payload)
-      ).catch(error => ({
-        code: -1,
-        detail: String((error as { detail?: string })?.detail ?? error)
-      }));
-      if (res.code === SUCCESS_CODE) {
-        message(t("dform.saveOk"), { type: "success" });
-        // 先关弹窗再刷新列表（与原手写弹窗行为一致，避免刷新耗时导致弹窗滞留）
-        done();
-        await loadAll();
-        return;
-      }
-      if (res.detail) message(String(res.detail), { type: "warning" });
-      closeLoading();
-    }
-  };
-  addDialog(options);
-};
-
-const openFill = (form: FillableFormItem) => openDialog(form, null);
-
-const openEditSubmission = (submission: SubmissionItem) => {
-  const form = forms.value.find(item => item.pk === submission.form);
-  if (!form) return;
-  openDialog(form, submission);
-};
-
-const remove = async (row: SubmissionItem) => {
-  try {
-    await ElMessageBox.confirm(
-      t("dform.removeConfirm", { name: row.form_name }),
-      {
-        confirmButtonText: t("buttons.sure"),
-        cancelButtonText: t("buttons.cancel"),
-        type: "warning",
-        confirmButtonClass: "el-button--danger",
-        draggable: true
-      }
-    );
-  } catch {
-    return;
-  }
-  const res = await submissionApi.destroy(row.pk);
-  if (res.code === SUCCESS_CODE) await loadAll();
-};
-
-/** 提交草稿（仅草稿态）：服务端按 schema 严格校验后进入审批/直接生效 */
-const submitDraft = async (row: SubmissionItem) => {
-  const res = await submissionApi.submit(row.pk).catch(error => ({
-    code: -1,
-    detail: String((error as { detail?: string })?.detail ?? error)
-  }));
-  if (res.code === SUCCESS_CODE) {
-    message(t("dform.submitDraftOk"), { type: "success" });
-    await loadAll();
-    return;
-  }
-  message(String(res.detail || t("results.failed")), { type: "warning" });
-};
-
-/** 提交详情抽屉：字段明细 + 审批轨迹（只读） */
-const openDetail = (row: SubmissionItem) => {
-  addDrawer({
-    title: `${row.form_name} - ${String(row.pk).slice(0, 8).toUpperCase()}`,
-    size: "45%",
-    destroyOnClose: true,
-    closeOnClickModal: true,
-    hideFooter: true,
-    props: { row },
-    contentRenderer: () => h(SubmissionDetail)
-  });
-};
-
-/** 重新提交被驳回的填报（仅申请人、仅驳回态：按当前数据重新发起流程实例） */
-const resubmit = async (row: SubmissionItem) => {
-  const res = await submissionApi.resubmit(row.pk).catch(error => ({
-    code: -1,
-    detail: String((error as { detail?: string })?.detail ?? error)
-  }));
-  if (res.code === SUCCESS_CODE) {
-    message(t("dform.resubmitOk"), { type: "success" });
-    await loadAll();
-    return;
-  }
-  message(String(res.detail || t("results.failed")), { type: "warning" });
-};
-
-/** 提交状态（审批回写）语义色兜底：字典未配 color 时按审批结果取 EP 语义色，
- * tag props 统一经 `statusTagProps`（与列表/详情同口径，禁止页面自建映射函数） */
-const SUBMISSION_STATUS_TAG_TYPE: Record<string, StatusTagType> = {
-  DRAFT: "info",
-  PENDING: "warning",
-  APPROVED: "success",
-  REJECTED: "danger",
-  CANCELLED: "info"
-};
-
-/** 提交数据展示：非标量值 JSON 化，避免附件/日期范围/明细行渲染成 [object Object] */
-const dataText = (data: Record<string, unknown>) =>
-  Object.entries(data ?? {})
-    .map(([key, value]) => {
-      const text =
-        typeof value === "object" && value !== null
-          ? JSON.stringify(value)
-          : ((value ?? "-") as string);
-      return `${key}: ${text}`;
-    })
-    .join(" | ") || "-";
-
-const formName = (pk: string) =>
-  forms.value.find(item => item.pk === pk)?.name ?? pk;
-
-onMounted(loadAll);
+const {
+  api,
+  auth,
+  tableRef,
+  forms,
+  listColumnsFormat,
+  searchColumnsFormat,
+  operationButtonsProps,
+  openFill
+} = useFormMySubmissions();
 </script>
 
 <template>
@@ -261,7 +25,7 @@ onMounted(loadAll);
     <!-- pr-[1%]：内容宽度对齐 RePlusPage 的 w-99/100（右侧留 1%），
          根元素自带 layout 注入的 main-content（24px 外边距），不能再设百分比宽度（会溢出） -->
 
-    <!-- 可填表单卡片 -->
+    <!-- 可填表单卡片：本页填报入口（属于「选择表单」语义，不进表格工具栏） -->
     <el-card shadow="never" class="mb-3">
       <template #header>
         <span class="font-semibold">{{ t("dform.fillTitle") }}</span>
@@ -299,132 +63,26 @@ onMounted(loadAll);
               {{ t("dform.approvalOn") }}
             </el-tag>
           </div>
-          <div class="mt-1 text-xs text-gray-500">
+          <div class="mt-1 text-xs text-(--el-text-color-regular)">
             {{ form.description || t("dform.noDescription") }}
           </div>
         </el-card>
       </div>
     </el-card>
 
-    <!-- 我的提交 -->
-    <el-card shadow="never">
-      <template #header>
-        <div class="flex-bc">
-          <span class="font-semibold">{{ t("dform.mySubmissions") }}</span>
-          <el-button
-            v-if="canExport"
-            link
-            type="primary"
-            :loading="exporting"
-            data-testid="my-submission-export"
-            @click="exportCsv"
-          >
-            {{ t("dform.exportCsv") }}
-          </el-button>
-        </div>
-      </template>
-      <el-table
-        v-loading="loading"
-        :data="submissions"
-        data-testid="my-submission-table"
-      >
-        <el-table-column :label="t('dform.name')" min-width="140">
-          <template #default="{ row }">{{
-            formName((row as SubmissionItem).form)
-          }}</template>
-        </el-table-column>
-        <el-table-column :label="t('dform.submissionData')" min-width="240">
-          <template #default="{ row }">
-            <span class="text-xs">{{
-              dataText((row as SubmissionItem).data ?? {})
-            }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('dform.status')" width="110">
-          <template #default="{ row }">
-            <el-tag
-              v-if="(row as SubmissionItem).status?.value"
-              size="small"
-              v-bind="
-                statusTagProps(
-                  (row as SubmissionItem).status,
-                  SUBMISSION_STATUS_TAG_TYPE
-                )
-              "
-              data-testid="submission-status-tag"
-            >
-              {{ (row as SubmissionItem).status?.label }}
-            </el-tag>
-            <!-- 无需审批的提交没有状态码：不能留空，否则用户不知是否已生效 -->
-            <span v-else class="text-xs text-gray-400">
-              {{ t("dform.noApprovalNeeded") }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="created_time"
-          :label="t('dform.submittedAt')"
-          width="170"
-        />
-        <el-table-column :label="t('dform.actions')" width="320" fixed="right">
-          <template #default="{ row }">
-            <el-button
-              link
-              type="primary"
-              data-testid="submission-detail"
-              @click="openDetail(row as SubmissionItem)"
-            >
-              {{ t("dform.detail") }}
-            </el-button>
-            <el-button
-              v-if="
-                canEdit && (row as SubmissionItem).status?.value !== 'PENDING'
-              "
-              link
-              type="primary"
-              @click="openEditSubmission(row as SubmissionItem)"
-            >
-              {{
-                (row as SubmissionItem).status?.value === "DRAFT"
-                  ? t("dform.continueEdit")
-                  : t("dform.edit")
-              }}
-            </el-button>
-            <el-button
-              v-if="
-                canSubmit && (row as SubmissionItem).status?.value === 'DRAFT'
-              "
-              link
-              type="success"
-              data-testid="submission-submit-draft"
-              @click="submitDraft(row as SubmissionItem)"
-            >
-              {{ t("dform.submitDraft") }}
-            </el-button>
-            <el-button
-              v-if="
-                canResubmit &&
-                (row as SubmissionItem).status?.value === 'REJECTED'
-              "
-              link
-              type="primary"
-              data-testid="submission-resubmit"
-              @click="resubmit(row as SubmissionItem)"
-            >
-              {{ t("dform.resubmit") }}
-            </el-button>
-            <el-button
-              v-if="canDestroy"
-              link
-              type="danger"
-              :disabled="(row as SubmissionItem).status?.value === 'PENDING'"
-              @click="remove(row as SubmissionItem)"
-            >
-              {{ t("dform.delete") }}
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </el-card>
+    <!-- 我的提交：搜索 / 分页 / 列设置 / 行操作收敛由框架统一接管；
+         testid 挂在容器上供 E2E 做行定位（RePlusPage 内部无法挂锚点） -->
+    <div data-testid="my-submission-table">
+      <RePlusPage
+        ref="tableRef"
+        :api="api"
+        :auth="auth"
+        locale-name="dform"
+        :selection="false"
+        :listColumnsFormat="listColumnsFormat"
+        :searchColumnsFormat="searchColumnsFormat"
+        :operationButtonsProps="operationButtonsProps"
+      />
+    </div>
   </div>
 </template>

@@ -262,7 +262,7 @@ const trailStatus = (item: SubmissionTrailItem) =>
             <el-tag v-if="item.is_added" size="small" type="warning">
               {{ t("systemApprovalInstance.taskAdded") }}
             </el-tag>
-            <span class="text-xs text-gray-500">
+            <span class="text-xs text-(--el-text-color-regular)">
               {{ item.actor?.label ?? item.assignee?.label ?? "-" }}
             </span>
             <el-tag
@@ -280,7 +280,7 @@ const trailStatus = (item: SubmissionTrailItem) =>
           </div>
           <div
             v-if="item.comment"
-            class="mt-1 text-xs text-gray-500"
+            class="mt-1 text-xs text-(--el-text-color-regular)"
             data-testid="trail-comment"
           >
             {{ item.comment }}
