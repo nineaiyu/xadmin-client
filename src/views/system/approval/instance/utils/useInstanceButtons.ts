@@ -37,7 +37,13 @@ export type InstanceAuth = {
   exportData: boolean;
 };
 
-/** 行数据是否含「我的当前待办」（服务端 my_task 口径：仅当前节点、指派给我、审批中） */
+/**
+ * 行数据是否含「我的当前待办」（服务端 my_task 口径：仅当前节点、指派给我、审批中）
+ *
+ * 按钮顺序权重（`show` 的角色）：框架按 `show` 升序排列，函数形态的返回值同样是
+ * 权重（`Number(true) = 1`，一律返回布尔会让所有行级条件按钮并列在最前）。
+ * 口径：通过 1 / 驳回 2 / 加签 3 / 转交 4 / 撤回 5 / 催办 6 / 重提 7 / 详情 9。
+ */
 const hasMyTask = (row: { my_task?: unknown }) => !!row.my_task;
 
 const statusValue = (row: { status?: { value?: string } | string }) =>
@@ -96,7 +102,7 @@ export function useInstanceButtons({
       link: true
     },
     onClick: ({ row }) => openInstanceDetail(row),
-    show: 10
+    show: 9
   };
 
   const approveButton: OperationButtonsRow = {
@@ -109,7 +115,7 @@ export function useInstanceButtons({
     },
     // 通过走弹窗：审批意见选填（随任务落轨迹；后端 comment 字段同口径）
     onClick: ({ row }) => actions.openApprove(row),
-    show: auth.approve && 6
+    show: auth.approve && 1
   };
 
   const rejectButton: OperationButtonsRow = {
@@ -121,7 +127,7 @@ export function useInstanceButtons({
       link: true
     },
     onClick: ({ row }) => actions.openReject(row),
-    show: auth.reject && 5
+    show: auth.reject && 2
   };
 
   const addSignButton: OperationButtonsRow = {
@@ -134,7 +140,7 @@ export function useInstanceButtons({
     },
     onClick: ({ row }) => actions.openAddSign(row),
     // 仅有我的当前待办时可用（或签节点会被服务端以可读原因拒绝并引导转交）
-    show: (row: { my_task?: unknown }) => auth.addSign && hasMyTask(row) && 4
+    show: (row: { my_task?: unknown }) => auth.addSign && hasMyTask(row) && 3
   };
 
   /** 转交（待办页签）：把我的当前待办交给他人处理（一次性，区别于长期委托） */
@@ -147,7 +153,7 @@ export function useInstanceButtons({
       link: true
     },
     onClick: ({ row }) => actions.openTransfer(row),
-    show: (row: { my_task?: unknown }) => auth.transfer && hasMyTask(row) && 3
+    show: (row: { my_task?: unknown }) => auth.transfer && hasMyTask(row) && 4
   };
 
   const cancelButton: OperationButtonsRow = {
@@ -172,7 +178,7 @@ export function useInstanceButtons({
       });
     },
     show: (row: { status?: { value?: string } | string }) =>
-      auth.cancel && statusValue(row) === "PENDING"
+      auth.cancel && statusValue(row) === "PENDING" && 5
   };
 
   /** 催办（我的申请页签）：审批中才可用，通知当前节点审批人（服务端 10 分钟节流） */
@@ -186,7 +192,7 @@ export function useInstanceButtons({
     },
     onClick: ({ row }) => actions.openUrge(row),
     show: (row: { status?: { value?: string } | string }) =>
-      auth.urge && statusValue(row) === "PENDING"
+      auth.urge && statusValue(row) === "PENDING" && 6
   };
 
   /** 重新提交（我的申请页签）：已驳回时按原流程与原表单内容发起新申请 */
@@ -224,14 +230,18 @@ export function useInstanceButtons({
       );
     },
     show: (row: { status?: { value?: string } | string }) =>
-      auth.create && statusValue(row) === "REJECTED"
+      auth.create && statusValue(row) === "REJECTED" && 7
   };
 
   /** 行内按钮：待办=通过/驳回/加签/转交；我的申请=撤回/催办/重提；
    *  全部在途（管理视角）=催办/详情；已办=只读 */
   const operationButtonsProps = shallowRef<OperationProps>({
-    // 按钮全部内联（内置查看 + 业务动作），避免折叠进「更多」
-    showNumber: 6,
+    // 一屏最多 5 个（待办页签：通过/驳回/加签/转交/申请详情），
+    // 再多则按权重把末位折叠进「更多」；
+    // 框架内置的 icon 版「查看」由业务「申请详情」承载（同 code="detail" 去重），
+    // 这里显式关闭以免出现两个详情入口
+    hideDetail: true,
+    showNumber: 5,
     buttons:
       scope === "pending"
         ? [

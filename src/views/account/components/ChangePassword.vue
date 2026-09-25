@@ -6,6 +6,7 @@ import { isAllEmpty } from "@pureadmin/utils";
 import { ZxcvbnFactory } from "@zxcvbn-ts/core";
 import { useI18n } from "vue-i18n";
 import { passwordRulesCheck } from "@/utils";
+import { passwordStrengthLevels } from "@/utils/passwordStrength";
 import { rulesPasswordApi } from "@/api/auth";
 import { handleOperation } from "@/components/RePlusPage";
 import { type PlusColumn } from "plus-pro-components";
@@ -44,13 +45,7 @@ const props = withDefaults(defineProps<AddOrEditFormProps>(), {
 
 const { t } = useI18n();
 
-const pwdProgress = [
-  { color: "#e74242", text: t("password.veryWeak") },
-  { color: "#EFBD47", text: t("password.weak") },
-  { color: "#ffa500", text: t("password.average") },
-  { color: "#1bbf1b", text: t("password.strong") },
-  { color: "#008000", text: t("password.veryStrong") }
-];
+const pwdProgress = passwordStrengthLevels(t);
 
 const password = ref(props.formInline);
 

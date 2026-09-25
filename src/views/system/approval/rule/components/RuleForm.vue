@@ -278,7 +278,9 @@ defineExpose({ getPayload });
               <div class="flex w-full items-center gap-2">
                 <el-tag size="small" effect="plain">{{ option.method }}</el-tag>
                 <span class="truncate">{{ option.label }}</span>
-                <span class="ml-auto pl-4 text-xs text-gray-400">
+                <span
+                  class="ml-auto pl-4 text-xs text-(--el-text-color-secondary)"
+                >
                   {{ option.path }}
                 </span>
               </div>
@@ -304,7 +306,7 @@ defineExpose({ getPayload });
         :min="0"
         controls-position="right"
       />
-      <span class="ml-2 text-xs text-gray-500">
+      <span class="ml-2 text-xs text-(--el-text-color-regular)">
         {{ t("approvalRule.formPriorityTip") }}
       </span>
     </el-form-item>
@@ -317,7 +319,7 @@ defineExpose({ getPayload });
 
     <el-form-item :label="t('approvalRule.levels')">
       <div class="w-full">
-        <p class="mb-2 text-xs text-gray-500">
+        <p class="mb-2 text-xs text-(--el-text-color-regular)">
           {{ t("approvalRule.levelsTip") }}
         </p>
         <el-table :data="form.levels" size="small" border>

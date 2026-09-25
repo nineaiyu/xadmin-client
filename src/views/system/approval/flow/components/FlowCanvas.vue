@@ -88,6 +88,6 @@ defineExpose({ syncLayout });
 
 <style lang="scss" scoped>
 :deep(.vue-flow__node) {
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
 }
 </style>

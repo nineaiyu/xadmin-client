@@ -8,6 +8,7 @@ import { ZxcvbnFactory } from "@zxcvbn-ts/core";
 import { useI18n } from "vue-i18n";
 import { useApiAuth } from "../utils/hook";
 import { passwordRulesCheck } from "@/utils";
+import { passwordStrengthLevels } from "@/utils/passwordStrength";
 import { rulesPasswordApi } from "@/api/auth";
 import { handleOperation } from "@/components/RePlusPage";
 
@@ -17,13 +18,7 @@ defineOptions({
 const { t } = useI18n();
 const { auth } = useApiAuth();
 
-const pwdProgress = [
-  { color: "#e74242", text: t("password.veryWeak") },
-  { color: "#EFBD47", text: t("password.weak") },
-  { color: "#ffa500", text: t("password.average") },
-  { color: "#1bbf1b", text: t("password.strong") },
-  { color: "#008000", text: t("password.veryStrong") }
-];
+const pwdProgress = passwordStrengthLevels(t);
 
 const password = reactive<FormPasswordProps>({
   old_password: "",

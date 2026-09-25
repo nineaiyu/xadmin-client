@@ -1,14 +1,16 @@
-import { getCurrentInstance, h, reactive, shallowRef, type Ref } from "vue";
+import {
+  getCurrentInstance,
+  h,
+  reactive,
+  ref,
+  shallowRef,
+  type Ref
+} from "vue";
 import { useI18n } from "vue-i18n";
 import {
   ElAlert,
   ElDescriptions,
   ElDescriptionsItem,
-  ElForm,
-  ElFormItem,
-  ElInput,
-  ElOption,
-  ElSelect,
   ElTag
 } from "element-plus";
 import {
@@ -28,6 +30,12 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import type { RecordType } from "plus-pro-components";
 import Search from "~icons/ep/search";
 import Edit from "~icons/ep/edit";
+import RiskHandleForm from "../components/RiskHandleForm.vue";
+
+/** 处置表单实例（getPayload 契约；动作取服务端枚举，备注自由文本） */
+type RiskHandleFormInstance = {
+  getPayload: () => { action: AccountRiskHandleAction; remark: string };
+};
 
 type TagType = "primary" | "success" | "warning" | "info" | "danger";
 
@@ -70,21 +78,6 @@ export function useAccountRisk(tableRef: Ref) {
     ])
   });
 
-  const actionOptions = shallowRef<
-    Array<{ value: AccountRiskHandleAction; label: string }>
-  >([]);
-  actionOptions.value = [
-    { value: "notify", label: t("accountRisk.actionNotify") },
-    {
-      value: "force_change_password",
-      label: t("accountRisk.actionForcePassword")
-    },
-    { value: "force_logout", label: t("accountRisk.actionForceLogout") },
-    { value: "disable", label: t("accountRisk.actionDisable") },
-    { value: "ignore", label: t("accountRisk.actionIgnore") },
-    { value: "resolve", label: t("accountRisk.actionResolve") }
-  ];
-
   /** 取 LabeledChoiceField 的 value / label（兼容后端下发标量的情况） */
   const pick = (raw: unknown) => {
     if (raw && typeof raw === "object" && "value" in (raw as RecordType)) {
@@ -108,11 +101,9 @@ export function useAccountRisk(tableRef: Ref) {
     );
   };
 
+  /** 处置弹窗（单行/批量共用）：表单在 RiskHandleForm 内，载荷经 getPayload 取回 */
+  const handleFormRef = ref<RiskHandleFormInstance>();
   const handleDialog = (pks: Array<string | number>) => {
-    const form = reactive<{ action: AccountRiskHandleAction; remark: string }>({
-      action: "notify",
-      remark: ""
-    });
     addDialog({
       title: t("accountRisk.handleTitle", { count: pks.length }),
       width: dialogSize("sm"),
@@ -120,46 +111,17 @@ export function useAccountRisk(tableRef: Ref) {
       destroyOnClose: true,
       closeOnClickModal: false,
       sureBtnLoading: true,
-      contentRenderer: () =>
-        h(ElForm, { labelWidth: "90px" }, () => [
-          h(
-            ElFormItem,
-            { label: t("accountRisk.action"), required: true },
-            () =>
-              h(
-                ElSelect,
-                {
-                  modelValue: form.action,
-                  class: "w-full",
-                  "onUpdate:modelValue": (value: AccountRiskHandleAction) =>
-                    (form.action = value)
-                },
-                () =>
-                  actionOptions.value.map(item =>
-                    h(ElOption, {
-                      key: item.value,
-                      label: item.label,
-                      value: item.value
-                    })
-                  )
-              )
-          ),
-          h(ElFormItem, { label: t("accountRisk.remark") }, () =>
-            h(ElInput, {
-              modelValue: form.remark,
-              type: "textarea",
-              rows: 3,
-              maxlength: 200,
-              showWordLimit: true,
-              "onUpdate:modelValue": (value: string) => (form.remark = value)
-            })
-          )
-        ]),
+      contentRenderer: () => h(RiskHandleForm, { ref: handleFormRef }),
       beforeSure: (done, { closeLoading }) => {
+        const payload = handleFormRef.value?.getPayload();
+        if (!payload) {
+          closeLoading();
+          return;
+        }
         const request =
           pks.length > 1
-            ? api.batchHandle(pks, form.action, form.remark)
-            : api.handle(pks[0], form.action, form.remark);
+            ? api.batchHandle(pks, payload.action, payload.remark)
+            : api.handle(pks[0], payload.action, payload.remark);
         handleOperation({
           t,
           apiReq: request.catch(error => ({

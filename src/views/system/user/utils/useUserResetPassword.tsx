@@ -16,6 +16,7 @@ import {
   copyToClipboard,
   generateRandomPassword
 } from "@/utils/randomPassword";
+import { passwordStrengthLevels } from "@/utils/passwordStrength";
 import { buildPasswordValidator } from "./passwordRules";
 import { reactive, ref, type UnwrapNestedRefs } from "vue";
 import type { userApi } from "@/api/system/user";
@@ -40,13 +41,7 @@ export function useUserResetPassword({
   const pwdForm = reactive({
     newPwd: ""
   });
-  const pwdProgress = [
-    { color: "#e74242", text: t("password.veryWeak") },
-    { color: "#EFBD47", text: t("password.weak") },
-    { color: "#ffa500", text: t("password.average") },
-    { color: "#1bbf1b", text: t("password.strong") },
-    { color: "#008000", text: t("password.veryStrong") }
-  ];
+  const pwdProgress = passwordStrengthLevels(t);
   // 当前密码强度（0-4）
   const curScore = ref();
   const zxcvbnFactory = new ZxcvbnFactory();

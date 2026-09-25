@@ -268,7 +268,9 @@ onMounted(() => {
             >
               {{ progressCount }}
             </el-tag>
-            <span class="text-[13px] text-gray-500">{{ progressHint }}</span>
+            <span class="text-[13px] text-(--el-text-color-regular)">{{
+              progressHint
+            }}</span>
           </div>
         </el-descriptions-item>
         <el-descriptions-item
@@ -371,7 +373,7 @@ onMounted(() => {
             <el-tag v-if="task.is_added" size="small" type="warning">
               {{ t("systemApprovalInstance.taskAdded") }}
             </el-tag>
-            <span class="text-xs text-gray-500">
+            <span class="text-xs text-(--el-text-color-regular)">
               {{ handlerText(task) }}
             </span>
             <el-tag
@@ -389,7 +391,7 @@ onMounted(() => {
           </div>
           <div
             v-if="task.comment"
-            class="mt-1 text-xs text-gray-500"
+            class="mt-1 text-xs text-(--el-text-color-regular)"
             data-testid="trail-comment"
           >
             {{ task.comment }}
@@ -409,7 +411,7 @@ onMounted(() => {
           :key="item.pk"
           class="mb-2 rounded bg-gray-50 p-2 dark:bg-gray-800"
         >
-          <div class="flex-bc text-xs text-gray-500">
+          <div class="flex-bc text-xs text-(--el-text-color-regular)">
             <span>
               {{ item.author_display || "-" }} ·
               {{ commentTime(item.created_time) }}
@@ -426,7 +428,7 @@ onMounted(() => {
           <div class="mt-1 text-sm whitespace-pre-wrap">{{ item.content }}</div>
         </div>
       </div>
-      <div v-else class="mb-2 text-xs text-gray-400">
+      <div v-else class="mb-2 text-xs text-(--el-text-color-secondary)">
         {{ t("approvalDiscussion.empty") }}
       </div>
       <el-input

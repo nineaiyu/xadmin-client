@@ -107,7 +107,9 @@ export function openApprovalProgressDialog(options: {
     hideFooter: true,
     contentRenderer: () => (
       <div class="space-y-2">
-        <p class="text-xs text-gray-500">{t("approval.progressTip")}</p>
+        <p class="text-xs text-(--el-text-color-regular)">
+          {t("approval.progressTip")}
+        </p>
         {snapshot?.name ? (
           <div
             class="rounded border border-gray-200 p-2 text-sm dark:border-gray-700"
@@ -116,7 +118,7 @@ export function openApprovalProgressDialog(options: {
             <div class="font-medium">
               {`${t("approval.target")}: ${snapshot.name}`}
             </div>
-            <div class="mt-1 text-xs text-gray-500">
+            <div class="mt-1 text-xs text-(--el-text-color-regular)">
               {changes.length
                 ? t("approval.targetChanges")
                 : t("approval.targetNoChanges")}
@@ -128,7 +130,7 @@ export function openApprovalProgressDialog(options: {
                     key={item.field}
                     class="flex flex-wrap items-center gap-2"
                   >
-                    <span class="text-gray-500">
+                    <span class="text-(--el-text-color-regular)">
                       {item.label ?? item.field}
                     </span>
                     <span class="text-(--el-color-danger) line-through">
@@ -166,7 +168,7 @@ export function openApprovalProgressDialog(options: {
                 }`}
               </span>
               {step.approve_type === "AND" ? (
-                <span class="text-xs text-gray-500">
+                <span class="text-xs text-(--el-text-color-regular)">
                   {t("approval.andProgress", {
                     done: Number(step.approved_count ?? 0),
                     total: ((step.assignees ?? []) as Array<RecordType>).length
@@ -174,7 +176,7 @@ export function openApprovalProgressDialog(options: {
                 </span>
               ) : null}
             </div>
-            <div class="mt-1 text-xs text-gray-500">
+            <div class="mt-1 text-xs text-(--el-text-color-regular)">
               {`${t("approval.approver")}: ${
                 ((step.assignees ?? []) as Array<RecordType>)
                   .map(item => item?.username ?? item?.pk)
@@ -187,7 +189,7 @@ export function openApprovalProgressDialog(options: {
               {step.acted_at ? ` · ${step.acted_at}` : ""}
             </div>
             {(step.actions ?? []).length ? (
-              <div class="mt-1 text-xs text-gray-500">
+              <div class="mt-1 text-xs text-(--el-text-color-regular)">
                 {`${t("approval.actedUsers")}: `}
                 {((step.actions ?? []) as Array<RecordType>)
                   .map(
