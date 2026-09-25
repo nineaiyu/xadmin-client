@@ -5,6 +5,10 @@ import { SUCCESS_CODE } from "@/api/types";
 import { message } from "@/utils/message";
 import { menuApi } from "@/api/system/menu";
 import type { MenuPermissionPreview } from "@/api/system/menu";
+import {
+  ReReadonlyTable,
+  type ReadonlyColumn
+} from "@/components/ReReadonlyTable";
 import { displayTitle } from "../utils/useMenuFilter";
 import type { MenuRow, MenuUrlItem } from "../utils/types";
 
@@ -54,6 +58,26 @@ const onViewsChange = (value: string[]) => {
     component.value = props.row?.name ?? "";
   }
 };
+
+/** 预览清单列：动作列走具名插槽渲染标签，其余为纯文本 */
+const previewColumns = computed<ReadonlyColumn[]>(() => [
+  { slot: "action", label: t("systemMenu.preview.action"), width: 88 },
+  { prop: "name", label: t("systemMenu.permissionCode"), minWidth: 200 },
+  { prop: "method", label: t("systemMenu.requestMethod"), width: 90 },
+  {
+    prop: "path",
+    label: t("systemMenu.permissionPath"),
+    minWidth: 220,
+    showOverflowTooltip: true
+  }
+]);
+
+/** 空态文案：未选视图 → 引导选择；已选但无新权限点 → 说明已覆盖 */
+const previewEmptyText = computed(() =>
+  views.value.length
+    ? t("systemMenu.preview.empty")
+    : t("systemMenu.preview.pickViews")
+);
 
 let timer: ReturnType<typeof setTimeout> | null = null;
 const fetchPreview = () => {
@@ -162,52 +186,27 @@ defineExpose({ submit });
     />
 
     <div v-loading="loading" class="menu-permission__preview">
-      <el-table
-        v-if="preview?.results?.length"
-        :data="preview.results"
-        height="240"
+      <ReReadonlyTable
+        :columns="previewColumns"
+        :empty-text="previewEmptyText"
+        :max-height="240"
+        :rows="preview?.results ?? []"
         size="small"
       >
-        <el-table-column :label="t('systemMenu.preview.action')" width="88">
-          <template #default="{ row: item }">
-            <el-tag
-              :type="item.action === 'create' ? 'success' : 'warning'"
-              effect="light"
-              size="small"
-            >
-              {{
-                item.action === "create"
-                  ? t("systemMenu.preview.create")
-                  : t("systemMenu.preview.update")
-              }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column
-          :label="t('systemMenu.permissionCode')"
-          min-width="200"
-          prop="name"
-        />
-        <el-table-column
-          :label="t('systemMenu.requestMethod')"
-          prop="method"
-          width="90"
-        />
-        <el-table-column
-          :label="t('systemMenu.permissionPath')"
-          min-width="220"
-          prop="path"
-          show-overflow-tooltip
-        />
-      </el-table>
-      <el-empty
-        v-else
-        :description="
-          views.length
-            ? t('systemMenu.preview.empty')
-            : t('systemMenu.preview.pickViews')
-        "
-      />
+        <template #action="{ row: item }">
+          <el-tag
+            :type="item.action === 'create' ? 'success' : 'warning'"
+            effect="light"
+            size="small"
+          >
+            {{
+              item.action === "create"
+                ? t("systemMenu.preview.create")
+                : t("systemMenu.preview.update")
+            }}
+          </el-tag>
+        </template>
+      </ReReadonlyTable>
     </div>
 
     <div v-if="preview?.results?.length" class="menu-permission__summary">
@@ -225,7 +224,7 @@ defineExpose({ submit });
 .menu-permission {
   &__hint {
     float: right;
-    font-size: 13px;
+    font-size: var(--el-font-size-small);
     color: var(--el-text-color-regular);
   }
 
@@ -236,7 +235,7 @@ defineExpose({ submit });
 
   &__summary {
     margin-top: 8px;
-    font-size: 13px;
+    font-size: var(--el-font-size-small);
     color: var(--el-text-color-regular);
   }
 }

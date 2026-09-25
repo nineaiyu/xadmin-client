@@ -1,5 +1,10 @@
 <script lang="ts" setup>
+import { computed } from "vue";
 import type { ModuleLevel } from "@/api/system/modules";
+import {
+  ReReadonlyTable,
+  type ReadonlyColumn
+} from "@/components/ReReadonlyTable";
 import { useSystemModule } from "./utils/hook";
 
 defineOptions({
@@ -27,6 +32,53 @@ const {
   resetToBaseline,
   copyText
 } = useSystemModule();
+
+/** 模块清单列：等级/状态/开关为复杂单元格，走具名插槽渲染 */
+const moduleColumns = computed<ReadonlyColumn[]>(() => [
+  { prop: "id", label: t("systemModule.moduleId"), minWidth: 180 },
+  {
+    prop: "label",
+    label: t("systemModule.moduleName"),
+    minWidth: 240,
+    showOverflowTooltip: true
+  },
+  {
+    label: t("systemModule.level"),
+    width: 100,
+    align: "center",
+    slot: "level"
+  },
+  {
+    label: t("systemModule.status"),
+    width: 100,
+    align: "center",
+    slot: "status"
+  },
+  {
+    label: t("systemModule.enableSwitch"),
+    width: 110,
+    align: "center",
+    slot: "enableSwitch"
+  },
+  {
+    label: t("systemModule.coverage"),
+    width: 140,
+    align: "center",
+    slot: "coverage"
+  },
+  {
+    label: t("systemModule.depends"),
+    minWidth: 140,
+    showOverflowTooltip: true,
+    slot: "depends"
+  },
+  {
+    prop: "note",
+    label: t("systemModule.note"),
+    minWidth: 260,
+    showOverflowTooltip: true
+  }
+]);
 </script>
 
 <template>
@@ -37,7 +89,10 @@ const {
           {{ t("systemModule.currentPreset") }}：
           <el-tag type="primary" effect="dark">{{ data?.preset }}</el-tag>
         </div>
-        <div class="text-sm text-gray-500" data-testid="module-summary">
+        <div
+          class="text-sm text-(--el-text-color-regular)"
+          data-testid="module-summary"
+        >
           {{ summary }}
         </div>
         <el-tag v-if="data?.override_active" type="warning" effect="plain">
@@ -51,10 +106,16 @@ const {
           :title="t('systemModule.restartTip')"
         />
       </div>
-      <div class="mt-3 text-sm text-gray-500" data-testid="module-baseline">
+      <div
+        class="mt-3 text-sm text-(--el-text-color-regular)"
+        data-testid="module-baseline"
+      >
         {{ t("systemModule.baseline") }}：{{ baselineText }}
       </div>
-      <div v-if="data?.disabled.length" class="mt-3 text-sm text-gray-500">
+      <div
+        v-if="data?.disabled.length"
+        class="mt-3 text-sm text-(--el-text-color-regular)"
+      >
         {{ t("systemModule.disabledModules") }}：{{ data.disabled.join(", ") }}
       </div>
       <el-alert
@@ -148,7 +209,7 @@ const {
         </div>
       </template>
       <div class="mb-3 flex flex-wrap items-center gap-3">
-        <span class="text-sm text-gray-500"
+        <span class="text-sm text-(--el-text-color-regular)"
           >{{ t("systemModule.selectPreset") }}：</span
         >
         <el-radio-group
@@ -164,96 +225,54 @@ const {
             {{ preset.label }}
           </el-radio-button>
         </el-radio-group>
-        <span class="text-xs text-gray-400">{{
+        <span class="text-xs text-(--el-text-color-secondary)">{{
           t("systemModule.editTip")
         }}</span>
       </div>
-      <el-table :data="rows" row-key="id" data-testid="module-table">
-        <el-table-column
-          prop="id"
-          :label="t('systemModule.moduleId')"
-          min-width="180"
-        />
-        <el-table-column
-          prop="label"
-          :label="t('systemModule.moduleName')"
-          min-width="240"
-          show-overflow-tooltip
-        />
-        <el-table-column
-          :label="t('systemModule.level')"
-          width="100"
-          align="center"
-        >
-          <template #default="{ row }">
-            <el-tag :type="LEVEL_TAG_TYPE[row.level as ModuleLevel]">
-              {{ t(`systemModule.${LEVEL_KEY[row.level as ModuleLevel]}`) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column
-          :label="t('systemModule.status')"
-          width="100"
-          align="center"
-        >
-          <template #default="{ row }">
-            <el-tag :type="row.enabled ? 'success' : 'danger'">
-              {{
-                row.enabled
-                  ? t("systemModule.enabled")
-                  : t("systemModule.disabled")
-              }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column
-          :label="t('systemModule.enableSwitch')"
-          width="100"
-          align="center"
-        >
-          <template #default="{ row }">
-            <el-tooltip
-              :disabled="row.level !== 'core'"
-              :content="t('systemModule.coreLocked')"
-            >
-              <el-switch
-                :model-value="draftEnabled.has(row.id)"
-                :disabled="row.level === 'core' || !canApply"
-                @change="value => onToggle(row.id, value)"
-              />
-            </el-tooltip>
-          </template>
-        </el-table-column>
-        <el-table-column
-          :label="t('systemModule.coverage')"
-          width="140"
-          align="center"
-        >
-          <template #default="{ row }">
+      <ReReadonlyTable
+        :columns="moduleColumns"
+        :rows="rows"
+        row-key="id"
+        data-testid="module-table"
+      >
+        <template #level="{ row }">
+          <el-tag :type="LEVEL_TAG_TYPE[row.level as ModuleLevel]">
+            {{ t(`systemModule.${LEVEL_KEY[row.level as ModuleLevel]}`) }}
+          </el-tag>
+        </template>
+        <template #status="{ row }">
+          <el-tag :type="row.enabled ? 'success' : 'danger'">
             {{
-              t("systemModule.coverageValue", {
-                menus: row.menus,
-                routes: row.routes
-              })
+              row.enabled
+                ? t("systemModule.enabled")
+                : t("systemModule.disabled")
             }}
-          </template>
-        </el-table-column>
-        <el-table-column
-          :label="t('systemModule.depends')"
-          min-width="140"
-          show-overflow-tooltip
-        >
-          <template #default="{ row }">
-            {{ row.depends.length ? row.depends.join(", ") : "-" }}
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="note"
-          :label="t('systemModule.note')"
-          min-width="260"
-          show-overflow-tooltip
-        />
-      </el-table>
+          </el-tag>
+        </template>
+        <template #enableSwitch="{ row }">
+          <el-tooltip
+            :disabled="row.level !== 'core'"
+            :content="t('systemModule.coreLocked')"
+          >
+            <el-switch
+              :model-value="draftEnabled.has(row.id)"
+              :disabled="row.level === 'core' || !canApply"
+              @change="value => onToggle(row.id, value)"
+            />
+          </el-tooltip>
+        </template>
+        <template #coverage="{ row }">
+          {{
+            t("systemModule.coverageValue", {
+              menus: row.menus,
+              routes: row.routes
+            })
+          }}
+        </template>
+        <template #depends="{ row }">
+          {{ row.depends.length ? row.depends.join(", ") : "-" }}
+        </template>
+      </ReReadonlyTable>
     </el-card>
 
     <el-card shadow="never">
@@ -278,7 +297,7 @@ const {
         readonly
         data-testid="module-snippet"
       />
-      <div class="mt-2 text-xs text-gray-400">
+      <div class="mt-2 text-xs text-(--el-text-color-secondary)">
         {{ t("systemModule.docsTip") }} {{ data?.docs }}
       </div>
     </el-card>

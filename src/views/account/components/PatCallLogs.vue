@@ -1,10 +1,14 @@
 <script lang="ts" setup>
 import { SUCCESS_CODE } from "@/api/types";
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import type { RecordType } from "plus-pro-components";
 import type { BaseResult, ListResult } from "@/api/types";
 import { personalAccessTokenApi } from "@/api/user/token";
+import {
+  ReReadonlyTable,
+  type ReadonlyColumn
+} from "@/components/ReReadonlyTable";
 
 defineOptions({ name: "PatCallLogs" });
 
@@ -72,6 +76,34 @@ const fetchStats = () => {
     });
 };
 
+/** 调用明细列：状态与耗时需格式化，走具名插槽 */
+const columns = computed<ReadonlyColumn[]>(() => [
+  {
+    prop: "module",
+    label: t("logsOperation.module"),
+    minWidth: 110,
+    showOverflowTooltip: true
+  },
+  {
+    prop: "path",
+    label: t("logsOperation.path"),
+    minWidth: 180,
+    showOverflowTooltip: true
+  },
+  { prop: "method", label: t("logsOperation.method"), width: 80 },
+  {
+    label: t("logsOperation.status_code"),
+    width: 90,
+    slot: "status_code"
+  },
+  { label: t("logsOperation.exec_time"), width: 90, slot: "exec_time" },
+  {
+    prop: "created_time",
+    label: t("accessToken.createdTime"),
+    width: 170
+  }
+]);
+
 const onPageChange = (value: number) => {
   page.value = value;
   fetchLogs();
@@ -104,53 +136,25 @@ onMounted(() => {
         {{ stats.last_used_time ?? "—" }}
       </el-descriptions-item>
     </el-descriptions>
-    <el-table v-loading="loading" :data="rows" size="small" border>
-      <el-table-column
-        prop="module"
-        :label="t('logsOperation.module')"
-        min-width="110"
-        show-overflow-tooltip
-      />
-      <el-table-column
-        prop="path"
-        :label="t('logsOperation.path')"
-        min-width="180"
-        show-overflow-tooltip
-      />
-      <el-table-column
-        prop="method"
-        :label="t('logsOperation.method')"
-        width="80"
-      />
-      <el-table-column
-        prop="status_code"
-        :label="t('logsOperation.status_code')"
-        width="80"
-      >
-        <template #default="{ row }">
-          <el-tag
-            :type="row.status_code === 1000 ? 'success' : 'danger'"
-            size="small"
-          >
-            {{ row.status_code ?? "—" }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column
-        prop="exec_time"
-        :label="t('logsOperation.exec_time')"
-        width="90"
-      >
-        <template #default="{ row }">
-          {{ row.exec_time != null ? `${row.exec_time.toFixed(2)}s` : "—" }}
-        </template>
-      </el-table-column>
-      <el-table-column
-        prop="created_time"
-        :label="t('accessToken.createdTime')"
-        width="160"
-      />
-    </el-table>
+    <ReReadonlyTable
+      :columns="columns"
+      :rows="rows"
+      :loading="loading"
+      size="small"
+      border
+    >
+      <template #status_code="{ row }">
+        <el-tag
+          :type="row.status_code === 1000 ? 'success' : 'danger'"
+          size="small"
+        >
+          {{ row.status_code ?? "—" }}
+        </el-tag>
+      </template>
+      <template #exec_time="{ row }">
+        {{ row.exec_time != null ? `${row.exec_time.toFixed(2)}s` : "—" }}
+      </template>
+    </ReReadonlyTable>
     <el-pagination
       class="mt-3"
       layout="prev, pager, next"

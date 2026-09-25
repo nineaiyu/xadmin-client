@@ -2,6 +2,10 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import type { MonitorCelery, MonitorRedisInfo } from "@/api/system/monitor";
+import {
+  ReReadonlyTable,
+  type ReadonlyColumn
+} from "@/components/ReReadonlyTable";
 import { formatUptime } from "../utils/hook";
 
 /**
@@ -31,6 +35,19 @@ const props = defineProps<{
 const { t } = useI18n();
 /** 后端未就绪时 redis 可能整体缺失，统一回落到空对象（与页面侧原口径一致） */
 const info = computed(() => props.redis ?? {});
+
+/** 卡片内嵌 worker 表：紧凑档（密度优先于与列表页行高对齐） */
+const workerColumns = computed<ReadonlyColumn[]>(() => [
+  {
+    prop: "name",
+    label: t("systemMonitor.worker"),
+    minWidth: 140,
+    showOverflowTooltip: true
+  },
+  { prop: "concurrency", label: t("systemMonitor.concurrency"), width: 80 },
+  { prop: "active", label: t("systemMonitor.active"), width: 70 },
+  { prop: "reserved", label: t("systemMonitor.reserved"), width: 80 }
+]);
 </script>
 
 <template>
@@ -50,7 +67,7 @@ const info = computed(() => props.redis ?? {});
               </el-tag>
               {{ item.label }}
             </span>
-            <span class="text-xs text-gray-400">
+            <span class="text-xs text-(--el-text-color-secondary)">
               {{
                 typeof item.cost === "number"
                   ? `${(item.cost * 1000).toFixed(1)}ms`
@@ -59,7 +76,10 @@ const info = computed(() => props.redis ?? {});
             </span>
           </div>
         </div>
-        <div v-if="latest" class="mt-4 text-xs text-gray-400">
+        <div
+          v-if="latest"
+          class="mt-4 text-xs text-(--el-text-color-secondary)"
+        >
           {{ t("systemMonitor.uptime") }}: {{ formatUptime(latest.boot_time) }}
         </div>
         <el-divider v-if="runtimeItems.length" class="my-3!" />
@@ -68,7 +88,7 @@ const info = computed(() => props.redis ?? {});
           :key="item.key"
           class="flex-bc text-sm"
         >
-          <span class="text-gray-500">{{ item.label }}</span>
+          <span class="text-(--el-text-color-regular)">{{ item.label }}</span>
           <span>{{ item.value }}</span>
         </div>
       </el-card>
@@ -78,21 +98,27 @@ const info = computed(() => props.redis ?? {});
         <template #header>{{ t("systemMonitor.redis") }}</template>
         <div class="flex flex-col gap-2 text-sm">
           <div class="flex justify-between">
-            <span class="text-gray-500">{{ t("systemMonitor.version") }}</span>
+            <span class="text-(--el-text-color-regular)">{{
+              t("systemMonitor.version")
+            }}</span>
             <span>{{ info.version ?? "—" }}</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-gray-500">{{
+            <span class="text-(--el-text-color-regular)">{{
               t("systemMonitor.usedMemory")
             }}</span>
             <span>{{ info.used_memory_human ?? "—" }}</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-gray-500">{{ t("systemMonitor.hitRate") }}</span>
+            <span class="text-(--el-text-color-regular)">{{
+              t("systemMonitor.hitRate")
+            }}</span>
             <span>{{ info.hit_rate == null ? "—" : `${info.hit_rate}%` }}</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-gray-500">{{ t("systemMonitor.clients") }}</span>
+            <span class="text-(--el-text-color-regular)">{{
+              t("systemMonitor.clients")
+            }}</span>
             <span>{{ info.connected_clients ?? "—" }}</span>
           </div>
           <div
@@ -100,7 +126,7 @@ const info = computed(() => props.redis ?? {});
             :key="db"
             class="flex justify-between"
           >
-            <span class="text-gray-500">{{ db }}</span>
+            <span class="text-(--el-text-color-regular)">{{ db }}</span>
             <span>{{ keys }}</span>
           </div>
         </div>
@@ -111,34 +137,13 @@ const info = computed(() => props.redis ?? {});
         <template #header>
           {{ t("systemMonitor.celery") }} ({{ celery.total }})
         </template>
-        <el-table
+        <ReReadonlyTable
           v-if="celery.workers.length"
-          :data="celery.workers"
+          :columns="workerColumns"
+          :rows="celery.workers"
           size="small"
-        >
-          <el-table-column
-            prop="name"
-            :label="t('systemMonitor.worker')"
-            min-width="140"
-            show-overflow-tooltip
-          />
-          <el-table-column
-            prop="concurrency"
-            :label="t('systemMonitor.concurrency')"
-            width="80"
-          />
-          <el-table-column
-            prop="active"
-            :label="t('systemMonitor.active')"
-            width="70"
-          />
-          <el-table-column
-            prop="reserved"
-            :label="t('systemMonitor.reserved')"
-            width="80"
-          />
-        </el-table>
-        <div v-else class="text-sm text-gray-400">
+        />
+        <div v-else class="text-sm text-(--el-text-color-secondary)">
           {{
             celery.skipped
               ? t("systemMonitor.celerySkipped")
@@ -147,7 +152,7 @@ const info = computed(() => props.redis ?? {});
         </div>
         <div
           v-if="queues.length"
-          class="mt-3 flex flex-wrap gap-3 text-xs text-gray-500"
+          class="mt-3 flex flex-wrap gap-3 text-xs text-(--el-text-color-regular)"
         >
           <span v-for="[name, length] in queues" :key="name">
             {{ name }}: {{ length }}

@@ -1,11 +1,15 @@
 <script lang="ts" setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import {
   monitorApi,
   type MonitorErrorEvent,
   type MonitorTaskEvent
 } from "@/api/system/monitor";
+import {
+  ReReadonlyTable,
+  type ReadonlyColumn
+} from "@/components/ReReadonlyTable";
 
 defineOptions({ name: "MonitorEventPanel" });
 
@@ -44,6 +48,40 @@ const fetchEvents = async () => {
 
 const onRangeChange = () => fetchEvents();
 
+/** 面板内嵌密集表：显式取紧凑档（此处密度优先于与列表页行高对齐） */
+const errorColumns = computed<ReadonlyColumn[]>(() => [
+  { prop: "created_time", label: t("systemMonitor.time"), width: 170 },
+  {
+    prop: "module",
+    label: t("systemMonitor.module"),
+    minWidth: 140,
+    showOverflowTooltip: true
+  },
+  {
+    prop: "path",
+    label: t("systemMonitor.path"),
+    minWidth: 200,
+    showOverflowTooltip: true
+  },
+  { prop: "method", label: t("systemMonitor.method"), width: 80 },
+  { label: t("systemMonitor.bizCode"), width: 90, slot: "status_code" },
+  { label: t("systemMonitor.cost"), width: 100, slot: "exec_time" },
+  { prop: "creator__username", label: t("systemMonitor.creator"), width: 110 },
+  { prop: "ipaddress", label: t("systemMonitor.ip"), width: 130 }
+]);
+
+const taskColumns = computed<ReadonlyColumn[]>(() => [
+  {
+    prop: "name",
+    label: t("systemMonitor.taskName"),
+    minWidth: 200,
+    showOverflowTooltip: true
+  },
+  { label: t("systemMonitor.taskState"), width: 120, slot: "status" },
+  { prop: "date_start", label: t("systemMonitor.taskStart"), width: 180 },
+  { prop: "date_finished", label: t("systemMonitor.taskFinished"), width: 180 }
+]);
+
 onMounted(fetchEvents);
 
 defineExpose({ refresh: fetchEvents });
@@ -71,106 +109,42 @@ defineExpose({ refresh: fetchEvents });
     </template>
     <el-tabs v-model="activeKind">
       <el-tab-pane :label="t('systemMonitor.errorEvents')" name="error">
-        <el-table v-loading="loading" :data="errorRows" size="small">
-          <el-table-column
-            prop="created_time"
-            :label="t('systemMonitor.time')"
-            width="170"
-          />
-          <el-table-column
-            prop="module"
-            :label="t('systemMonitor.module')"
-            min-width="140"
-            show-overflow-tooltip
-          />
-          <el-table-column
-            prop="path"
-            :label="t('systemMonitor.path')"
-            min-width="200"
-            show-overflow-tooltip
-          />
-          <el-table-column
-            prop="method"
-            :label="t('systemMonitor.method')"
-            width="80"
-          />
-          <el-table-column
-            prop="status_code"
-            :label="t('systemMonitor.bizCode')"
-            width="90"
-          >
-            <template #default="{ row }">
-              <el-tag type="danger" size="small">{{ row.status_code }}</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column
-            prop="exec_time"
-            :label="t('systemMonitor.cost')"
-            width="90"
-          >
-            <template #default="{ row }">
-              {{
-                typeof row.exec_time === "number"
-                  ? `${Number(row.exec_time).toFixed(3)}s`
-                  : "—"
-              }}
-            </template>
-          </el-table-column>
-          <el-table-column
-            prop="creator__username"
-            :label="t('systemMonitor.creator')"
-            width="110"
-          />
-          <el-table-column
-            prop="ipaddress"
-            :label="t('systemMonitor.ip')"
-            width="130"
-          />
-        </el-table>
-        <el-empty
-          v-if="!loading && !errorRows.length"
-          :description="t('systemMonitor.noErrorEvent')"
-          :image-size="60"
-        />
+        <ReReadonlyTable
+          :columns="errorColumns"
+          :rows="errorRows"
+          :loading="loading"
+          size="small"
+          :empty-text="t('systemMonitor.noErrorEvent')"
+        >
+          <template #status_code="{ row }">
+            <el-tag type="danger" size="small">{{ row.status_code }}</el-tag>
+          </template>
+          <template #exec_time="{ row }">
+            {{
+              typeof row.exec_time === "number"
+                ? `${Number(row.exec_time).toFixed(3)}s`
+                : "—"
+            }}
+          </template>
+        </ReReadonlyTable>
       </el-tab-pane>
       <el-tab-pane :label="t('systemMonitor.taskEvents')" name="task">
-        <el-table v-loading="loading" :data="taskRows" size="small">
-          <el-table-column
-            prop="name"
-            :label="t('systemMonitor.taskName')"
-            min-width="200"
-            show-overflow-tooltip
-          />
-          <el-table-column
-            prop="status"
-            :label="t('systemMonitor.taskState')"
-            width="120"
-          >
-            <template #default="{ row }">
-              <el-tag
-                :type="row.status === 'FAILURE' ? 'danger' : 'warning'"
-                size="small"
-              >
-                {{ row.status }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column
-            prop="date_start"
-            :label="t('systemMonitor.taskStart')"
-            width="180"
-          />
-          <el-table-column
-            prop="date_finished"
-            :label="t('systemMonitor.taskFinished')"
-            width="180"
-          />
-        </el-table>
-        <el-empty
-          v-if="!loading && !taskRows.length"
-          :description="t('systemMonitor.taskNoFailures')"
-          :image-size="60"
-        />
+        <ReReadonlyTable
+          :columns="taskColumns"
+          :rows="taskRows"
+          :loading="loading"
+          size="small"
+          :empty-text="t('systemMonitor.taskNoFailures')"
+        >
+          <template #status="{ row }">
+            <el-tag
+              :type="row.status === 'FAILURE' ? 'danger' : 'warning'"
+              size="small"
+            >
+              {{ row.status }}
+            </el-tag>
+          </template>
+        </ReReadonlyTable>
       </el-tab-pane>
     </el-tabs>
   </el-card>

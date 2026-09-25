@@ -8,6 +8,10 @@ import {
 } from "@/api/system/credential";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
+import {
+  ReReadonlyTable,
+  type ReadonlyColumn
+} from "@/components/ReReadonlyTable";
 
 defineOptions({ name: "SystemCredential" });
 
@@ -47,6 +51,63 @@ const statusMeta = (
   }
   return { type: "success", text: t("credential.encrypted") };
 };
+
+/** 轮换动作列：仅「有轮换权限」时下发（列集合是数据的一部分，不能只靠 v-if） */
+const rotateColumn: ReadonlyColumn = {
+  label: t("credential.action"),
+  width: 110,
+  align: "center",
+  fixed: "right",
+  slot: "actions"
+};
+const withRotate = (columns: ReadonlyColumn[]): ReadonlyColumn[] =>
+  canRotate ? [...columns, rotateColumn] : columns;
+
+/** 系统配置类凭据（Setting / SysConfig）：字段清单与服务端注册表同源 */
+const configColumns = computed(() =>
+  withRotate([
+    { prop: "name", label: t("credential.name"), minWidth: 200 },
+    {
+      label: t("credential.fields"),
+      minWidth: 140,
+      slot: "fields"
+    },
+    {
+      label: t("credential.status"),
+      width: 120,
+      align: "center",
+      slot: "status"
+    },
+    { prop: "updated_time", label: t("credential.updatedTime"), minWidth: 180 }
+  ])
+);
+
+/** 模型字段级加密：只给「字段 + 已配置数量」，不回传任何值 */
+const modelFieldColumns = computed<ReadonlyColumn[]>(() => [
+  { prop: "label", label: t("credential.name"), minWidth: 200 },
+  { prop: "name", label: t("credential.field"), minWidth: 240 },
+  {
+    prop: "configured_count",
+    label: t("credential.configuredCount"),
+    width: 150,
+    align: "center"
+  },
+  { label: t("credential.status"), width: 120, align: "center", slot: "status" }
+]);
+
+const settingsColumns = computed(() =>
+  withRotate([
+    { prop: "name", label: t("credential.name"), minWidth: 220 },
+    { prop: "category", label: t("credential.category"), width: 140 },
+    {
+      label: t("credential.status"),
+      width: 120,
+      align: "center",
+      slot: "status"
+    },
+    { prop: "updated_time", label: t("credential.updatedTime"), minWidth: 180 }
+  ])
+);
 
 async function loadData() {
   if (!canView) return;
@@ -112,149 +173,77 @@ onMounted(() => {
       <template #header>
         <span class="font-medium">{{ t("credential.systemConfigs") }}</span>
       </template>
-      <el-table
-        v-loading="loading"
-        :data="data.system_configs"
-        row-key="name"
+      <ReReadonlyTable
+        :columns="configColumns"
+        :rows="data.system_configs"
+        :loading="loading"
         border
       >
-        <el-table-column
-          prop="name"
-          :label="t('credential.name')"
-          min-width="200"
-        />
-        <el-table-column :label="t('credential.fields')" min-width="140">
-          <template #default="{ row }">
-            {{ (row.fields ?? []).join("、") }}
-          </template>
-        </el-table-column>
-        <el-table-column
-          :label="t('credential.status')"
-          width="120"
-          align="center"
-        >
-          <template #default="{ row }">
-            <el-tag :type="statusMeta(row).type" effect="light">
-              {{ statusMeta(row).text }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="updated_time"
-          :label="t('credential.updatedTime')"
-          min-width="180"
-        />
-        <el-table-column
-          v-if="canRotate"
-          :label="t('credential.action')"
-          width="110"
-          align="center"
-          fixed="right"
-        >
-          <template #default="{ row }">
-            <el-button
-              link
-              type="primary"
-              :disabled="!row.configured"
-              @click="handleRotate(row)"
-            >
-              {{ t("credential.rotate") }}
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+        <template #fields="{ row }">
+          {{ (row.fields ?? []).join("、") }}
+        </template>
+        <template #status="{ row }">
+          <el-tag :type="statusMeta(row).type" effect="light">
+            {{ statusMeta(row).text }}
+          </el-tag>
+        </template>
+        <template #actions="{ row }">
+          <el-button
+            link
+            type="primary"
+            :disabled="!row.configured"
+            @click="handleRotate(row)"
+          >
+            {{ t("credential.rotate") }}
+          </el-button>
+        </template>
+      </ReReadonlyTable>
     </el-card>
 
     <el-card shadow="never" class="mb-3">
       <template #header>
         <span class="font-medium">{{ t("credential.settings") }}</span>
       </template>
-      <el-table v-loading="loading" :data="data.settings" row-key="name" border>
-        <el-table-column
-          prop="name"
-          :label="t('credential.name')"
-          min-width="220"
-        />
-        <el-table-column
-          prop="category"
-          :label="t('credential.category')"
-          width="140"
-        />
-        <el-table-column
-          :label="t('credential.status')"
-          width="120"
-          align="center"
-        >
-          <template #default="{ row }">
-            <el-tag :type="statusMeta(row).type" effect="light">
-              {{ statusMeta(row).text }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="updated_time"
-          :label="t('credential.updatedTime')"
-          min-width="180"
-        />
-        <el-table-column
-          v-if="canRotate"
-          :label="t('credential.action')"
-          width="110"
-          align="center"
-          fixed="right"
-        >
-          <template #default="{ row }">
-            <el-button
-              link
-              type="primary"
-              :disabled="!row.configured"
-              @click="handleRotate(row)"
-            >
-              {{ t("credential.rotate") }}
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <ReReadonlyTable
+        :columns="settingsColumns"
+        :rows="data.settings"
+        :loading="loading"
+        border
+      >
+        <template #status="{ row }">
+          <el-tag :type="statusMeta(row).type" effect="light">
+            {{ statusMeta(row).text }}
+          </el-tag>
+        </template>
+        <template #actions="{ row }">
+          <el-button
+            link
+            type="primary"
+            :disabled="!row.configured"
+            @click="handleRotate(row)"
+          >
+            {{ t("credential.rotate") }}
+          </el-button>
+        </template>
+      </ReReadonlyTable>
     </el-card>
 
     <el-card shadow="never">
       <template #header>
         <span class="font-medium">{{ t("credential.modelFields") }}</span>
       </template>
-      <el-table
-        v-loading="loading"
-        :data="data.model_fields"
-        row-key="name"
+      <ReReadonlyTable
+        :columns="modelFieldColumns"
+        :rows="data.model_fields"
+        :loading="loading"
         border
       >
-        <el-table-column
-          prop="label"
-          :label="t('credential.name')"
-          min-width="200"
-        />
-        <el-table-column
-          prop="name"
-          :label="t('credential.field')"
-          min-width="240"
-        />
-        <el-table-column
-          prop="configured_count"
-          :label="t('credential.configuredCount')"
-          width="150"
-          align="center"
-        />
-        <el-table-column
-          :label="t('credential.status')"
-          width="120"
-          align="center"
-        >
-          <template #default="{ row }">
-            <el-tag :type="statusMeta(row).type" effect="light">
-              {{ statusMeta(row).text }}
-            </el-tag>
-          </template>
-        </el-table-column>
-      </el-table>
+        <template #status="{ row }">
+          <el-tag :type="statusMeta(row).type" effect="light">
+            {{ statusMeta(row).text }}
+          </el-tag>
+        </template>
+      </ReReadonlyTable>
       <div class="mt-2 text-sm text-(--el-text-color-secondary)">
         {{ t("credential.modelFieldsHint") }}
       </div>

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { passkeyApi } from "@/api/system/security";
@@ -9,6 +9,10 @@ import {
   isPasskeySupported
 } from "@/utils/webauthn";
 import type { RecordType } from "plus-pro-components";
+import {
+  ReReadonlyTable,
+  type ReadonlyColumn
+} from "@/components/ReReadonlyTable";
 
 /**
  * Passkey 凭据管理：浏览器侧完成 WebAuthn 注册仪式，服务端验签落库。
@@ -126,48 +130,48 @@ const remove = async (row: RecordType) => {
   }
 };
 
+/** 时间展示：服务端 ISO 串统一裁到秒（本地化时区口径由后端下发值决定） */
+const formatTime = (value: unknown) =>
+  value ? String(value).replace("T", " ").slice(0, 19) : "-";
+
+/** 凭据列：时间与删除动作需格式化，走具名插槽 */
+const columns = computed<ReadonlyColumn[]>(() => [
+  { prop: "name", label: t("passkey.name"), minWidth: 160 },
+  { label: t("passkey.created"), width: 180, slot: "created" },
+  { label: t("passkey.lastUsed"), width: 180, slot: "lastUsed" },
+  {
+    label: t("commonLabels.operation"),
+    width: 100,
+    slot: "operation",
+    fixed: "right"
+  }
+]);
+
 onMounted(load);
 </script>
 
 <template>
   <div v-loading="loading">
     <div class="mb-3 flex-bc">
-      <span class="text-sm text-gray-400">{{ t("passkey.loginTip") }}</span>
+      <span class="text-sm text-(--el-text-color-secondary)">
+        {{ t("passkey.loginTip") }}
+      </span>
       <el-button type="primary" :loading="registering" @click="register">
         {{ t("passkey.add") }}
       </el-button>
     </div>
-    <el-table :data="rows" border>
-      <el-table-column prop="name" :label="t('passkey.name')" min-width="160" />
-      <el-table-column :label="t('passkey.created')" width="180">
-        <template #default="{ row }">
-          {{
-            row.created_time
-              ? String(row.created_time).replace("T", " ").slice(0, 19)
-              : "-"
-          }}
-        </template>
-      </el-table-column>
-      <el-table-column :label="t('passkey.lastUsed')" width="180">
-        <template #default="{ row }">
-          {{
-            row.last_used_at
-              ? String(row.last_used_at).replace("T", " ").slice(0, 19)
-              : "-"
-          }}
-        </template>
-      </el-table-column>
-      <el-table-column
-        :label="t('commonLabels.operation')"
-        width="100"
-        fixed="right"
-      >
-        <template #default="{ row }">
-          <el-button type="danger" link @click="remove(row)">
-            {{ t("buttons.delete") }}
-          </el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <ReReadonlyTable :columns="columns" :rows="rows" border>
+      <template #created="{ row }">
+        {{ formatTime(row.created_time) }}
+      </template>
+      <template #lastUsed="{ row }">
+        {{ formatTime(row.last_used_at) }}
+      </template>
+      <template #operation="{ row }">
+        <el-button type="danger" link @click="remove(row)">
+          {{ t("buttons.delete") }}
+        </el-button>
+      </template>
+    </ReReadonlyTable>
   </div>
 </template>
