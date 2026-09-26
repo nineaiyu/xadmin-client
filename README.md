@@ -61,7 +61,7 @@ docker compose up -d --build   # 构建并启动 nginx-web 服务（默认 80 �
 ## 测试与门禁（提交前）
 
 ```shell
-pnpm typecheck && pnpm typecheck:strict   # 类型检查（strict 全仓）
+pnpm typecheck                            # 类型检查（strict 全仓，单轨）
 pnpm lint                                 # eslint + prettier + stylelint
 pnpm test:run                             # vitest（覆盖率阈值）
 pnpm check:contract                       # 与后端契约镜像一致性

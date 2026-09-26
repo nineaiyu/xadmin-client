@@ -12,7 +12,6 @@
     "preview": "vite preview",
     "preview:build": "pnpm build && vite preview",
     "typecheck": "tsc --noEmit && vue-tsc --noEmit --skipLibCheck",
-    "typecheck:strict": "node scripts/typecheck-strict.mjs",
     "check:bundle-size": "node scripts/check-bundle-size.mjs",
     "check:i18n": "node scripts/check-i18n-keys.mjs",
     "analyze:bundle": "node scripts/bundle-analyze.mjs",

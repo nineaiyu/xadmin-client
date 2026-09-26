@@ -67,18 +67,15 @@ describe("user store", () => {
     });
   });
 
-  it("页面状态与未读计数", () => {
+  it("页面状态", () => {
     const store = useUserStore();
     store.SET_VERIFY_CODE_LENGTH(6);
     store.SET_CURRENT_PAGE(3);
     store.SET_ISREMEMBERED(true);
     store.SET_LOGINDAY(14);
-    store.SET_NOTICECOUNT(2);
-    store.INCR_NOTICECOUNT();
     expect(store.verifyCodeLength).toBe(6);
     expect(store.currentPage).toBe(3);
     expect(store.isRemembered).toBe(true);
     expect(store.loginDay).toBe(14);
-    expect(store.noticeCount).toBe(3);
   });
 });

@@ -13,6 +13,7 @@ import {
 } from "@/views/system/hooks";
 import { addDialog } from "@/components/ReDialog/index";
 import croppingUpload from "@/components/RePictureUpload";
+import type { CropperPayload } from "@/components/RePictureUpload";
 import { userLoginLogApi } from "@/api/user/logs";
 import type { PaginationProps } from "@pureadmin/table";
 import {
@@ -124,7 +125,7 @@ export function useUserProfileForm(formRef: Ref) {
       contentRenderer: () =>
         h(croppingUpload, {
           imgSrc: picturePng(row?.avatar) ?? "",
-          onCropper: info => (avatarInfo.value = info),
+          onCropper: (info: CropperPayload) => (avatarInfo.value = info),
           circled: true,
           quality: 1,
           ref: cropRef,

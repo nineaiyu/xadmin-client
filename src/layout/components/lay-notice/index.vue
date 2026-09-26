@@ -8,7 +8,7 @@ import { userNoticeReadApi } from "@/api/user/notice";
 import { TabItem } from "@/layout/components/lay-notice/data";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { useUserStoreHook } from "@/store/modules/user";
+import { useNoticeStoreHook } from "@/store/modules/notice";
 import { useApprovalBadge } from "@/utils/approvalBadge";
 import { useTaskCenter } from "@/utils/taskCenter";
 import { openTaskCenterDrawer } from "@/views/system/components/taskCenterDrawer";
@@ -26,7 +26,7 @@ const { totalPendingCount: pendingCount } = useApprovalBadge();
 const { runningCount } = useTaskCenter();
 const badgeCount = computed(
   () =>
-    Number(useUserStoreHook().noticeCount || 0) +
+    Number(useNoticeStoreHook().noticeCount || 0) +
     Number(pendingCount.value || 0) +
     Number(runningCount.value || 0)
 );
@@ -47,7 +47,7 @@ const activeKey = ref();
 const getNoticeData = () => {
   userNoticeReadApi.unread().then(res => {
     if (res.code === SUCCESS_CODE && res.data) {
-      useUserStoreHook().SET_NOTICECOUNT(res.data.total);
+      useNoticeStoreHook().SET_NOTICECOUNT(res.data.total);
       notices.value = res.data.results;
       if (notices.value.length > 0) {
         activeKey.value = notices.value[0].key;

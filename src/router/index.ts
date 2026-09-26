@@ -156,6 +156,7 @@ export function resetRouter() {
   // 否则下一个账号登录会命中上一个账号的菜单缓存
   storageLocal().removeItem("async-routes");
   storageLocal().removeItem("async-auths");
+  storageLocal().removeItem("async-routes-version");
   resetLoadedPaths();
 }
 
@@ -226,41 +227,50 @@ router.beforeEach((to: ToRouteType, _from) => {
         usePermissionStoreHook().wholeMenus.length === 0 &&
         to.path !== "/login"
       ) {
-        initRouter().then((router: Router) => {
-          if (!useMultiTagsStoreHook().getMultiTagsCache) {
-            const { path } = to;
-            const route = findRouteByPath(
-              path,
-              router.options.routes[0].children ?? []
-            );
-            getTopMenu(true);
-            // query、params模式路由传参数的标签页不在此处处理
-            if (route && route.meta?.title) {
-              if (isAllEmpty(route.parentId) && route.meta?.backstage) {
-                // 此处为动态顶级路由（目录）：目录型记录必然带 children，边界断言保持运行时原语义
-                const { path, name, meta } = (
-                  route.children as RouteRecordRaw[]
-                )[0];
-                useMultiTagsStoreHook().handleTags("push", {
-                  path,
-                  name,
-                  meta
-                } as unknown as RouteConfigs);
-              } else {
-                const { path, name, meta } = route;
-                useMultiTagsStoreHook().handleTags("push", {
-                  path,
-                  name,
-                  meta
-                } as unknown as RouteConfigs);
+        initRouter()
+          .then((router: Router) => {
+            if (!useMultiTagsStoreHook().getMultiTagsCache) {
+              const { path } = to;
+              const route = findRouteByPath(
+                path,
+                router.options.routes[0].children ?? []
+              );
+              getTopMenu(true);
+              // query、params模式路由传参数的标签页不在此处处理
+              if (route && route.meta?.title) {
+                if (isAllEmpty(route.parentId) && route.meta?.backstage) {
+                  // 此处为动态顶级路由（目录）：目录型记录必然带 children，边界断言保持运行时原语义
+                  const { path, name, meta } = (
+                    route.children as RouteRecordRaw[]
+                  )[0];
+                  useMultiTagsStoreHook().handleTags("push", {
+                    path,
+                    name,
+                    meta
+                  } as unknown as RouteConfigs);
+                } else {
+                  const { path, name, meta } = route;
+                  useMultiTagsStoreHook().handleTags("push", {
+                    path,
+                    name,
+                    meta
+                  } as unknown as RouteConfigs);
+                }
               }
             }
-          }
-          // 确保动态路由完全加入路由列表并且不影响静态路由（注意：动态路由刷新时router.beforeEach可能会触发两次，第一次触发动态路由还未完全添加，第二次动态路由才完全添加到路由列表，如果需要在router.beforeEach做一些判断可以在to.name存在的条件下去判断，这样就只会触发一次）
-          // to.name 为 "pathMatch" 时说明首次导航被顶层兜底路由接住（如强制刷新动态路由页），路由注册完成后同样需要重新跳转
-          if (isAllEmpty(to.name) || to.name === "pathMatch")
-            router.push(to.fullPath);
-        });
+            // 确保动态路由完全加入路由列表并且不影响静态路由（注意：动态路由刷新时router.beforeEach可能会触发两次，第一次触发动态路由还未完全添加，第二次动态路由才完全添加到路由列表，如果需要在router.beforeEach做一些判断可以在to.name存在的条件下去判断，这样就只会触发一次）
+            // to.name 为 "pathMatch" 时说明首次导航被顶层兜底路由接住（如强制刷新动态路由页），路由注册完成后同样需要重新跳转
+            if (isAllEmpty(to.name) || to.name === "pathMatch")
+              router.push(to.fullPath);
+          })
+          .catch(() => {
+            // 动态路由拉取/注册失败（后端 5xx/网络异常）：跳静态的 /error/500 可重试页，
+            // 而非停留在无菜单的兜底路由。已在 500 页时不再重复跳转，避免守卫→initRouter
+            // 失败→再跳 500 的循环；500 页返回按钮 router.push('/') 会重新触发 initRouter 重试
+            if (to.path !== "/error/500") {
+              router.push("/error/500").catch(() => undefined);
+            }
+          });
       }
       return toCorrectRoute();
     }

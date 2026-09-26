@@ -4,6 +4,7 @@ import { formatBytes } from "@pureadmin/utils";
 import ReCropper from "@/components/ReCropper";
 import avatar from "@/assets/avatar.png";
 import { useI18n } from "vue-i18n";
+import type { CropperPayload } from "../index";
 
 defineOptions({
   name: "RePictureUpload"
@@ -19,7 +20,7 @@ defineProps({
   canvasOption: Object
 });
 
-const emit = defineEmits(["cropper"]);
+const emit = defineEmits<{ cropper: [payload: CropperPayload] }>();
 const { t } = useI18n();
 const infos = ref<Record<string, unknown>>();
 const popoverRef = ref();

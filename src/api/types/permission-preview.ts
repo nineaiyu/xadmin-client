@@ -229,18 +229,24 @@ export interface DeptPreviewResult {
     }>;
   }>;
   field_permission_enabled: boolean;
-  users: {
-    total: number;
-    truncated: boolean;
-    sample_limit: number;
-    list: Array<{
-      pk: string;
-      username: string;
-      nickname: string | null;
-      is_active: boolean;
-    }>;
-  };
+  users: PreviewUsersSample;
   notes: string[];
+}
+
+/** 成员采样（role / dept 预览共用；dept 列仅 role 行投影下发，故为可选） */
+export interface PreviewUserSampleRow {
+  pk: string;
+  username: string;
+  nickname: string | null;
+  dept?: { pk: string; name: string } | null;
+  is_active: boolean;
+}
+
+export interface PreviewUsersSample {
+  total: number;
+  truncated: boolean;
+  sample_limit: number;
+  list: PreviewUserSampleRow[];
 }
 
 /** GET /api/system/role/{pk}/preview 响应 data */
@@ -256,18 +262,7 @@ export interface RolePreviewResult {
       field_labels: string[];
     }>;
   }>;
-  users: {
-    total: number;
-    truncated: boolean;
-    sample_limit: number;
-    list: Array<{
-      pk: string;
-      username: string;
-      nickname: string | null;
-      dept: { pk: string; name: string } | null;
-      is_active: boolean;
-    }>;
-  };
+  users: PreviewUsersSample;
 }
 
 /** ApiResponse 信封 + 强类型 data（后端 preview 系列端点） */

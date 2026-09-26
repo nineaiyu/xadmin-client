@@ -1,4 +1,4 @@
-// 元数据接口契约类型：由 contract/schema/*.schema.json 生成。
+// 接口契约类型：由 contract/schema/*.schema.json 生成。
 // 该目录镜像自 xadmin-server/docs/schema（服务端为契约源）；禁止手改。
 // 重新生成：pnpm gen:metadata-types；Schema 变更属破坏性契约变更，需与后端一同评审。
 

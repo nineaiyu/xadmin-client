@@ -56,10 +56,11 @@ export default defineConfig({
       reporter: ["text", "html"],
       thresholds: {
         // 覆盖率门禁（含 api/utils/store 三域），实测基线打平后随补测逐步上调
-        statements: 50,
-        branches: 42,
-        functions: 38,
-        lines: 50
+        // 2026-09-26 第二步：盲区补测后实测 53.09/55.42/42.01/52.96，再各 +1 上调
+        statements: 52,
+        branches: 54,
+        functions: 41,
+        lines: 52
       }
     }
   }

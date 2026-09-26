@@ -1,5 +1,4 @@
 import type { RouteMeta, RouteRecordName } from "vue-router";
-import type { WS } from "@/utils/websocket";
 import type { SiteWatermarkConfig } from "@/utils/watermark";
 
 export type cacheType = {
@@ -50,8 +49,6 @@ export type userType = {
   currentPage?: number;
   isRemembered?: boolean;
   loginDay?: number;
-  noticeCount?: number;
-  websocket?: WS | null;
   /** 站点水印配置（用户信息接口下发）；挂载/刷新由 src/App.vue 观察本字段执行 */
   siteWatermark?: SiteWatermarkConfig;
   /**

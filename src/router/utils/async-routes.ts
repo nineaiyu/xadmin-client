@@ -33,42 +33,41 @@ function handleAsyncRoutes(routeList: RouteRecordRaw[], authList: string[]) {
   if (routeList.length === 0) {
     usePermissionStoreHook().handleWholeMenus(routeList);
   } else {
-    // 根路由（constantRoutes 首条 Layout 记录）的 children 由构造期保证存在，运行时对该数组原地增删
+    // 根路由（constantRoutes 首条 Layout 记录）的 children 由构造期保证存在；
+    // 原地 splice 保持数组引用不变（options.routes 的消费方按引用读取）
     const rootChildren = router.options.routes[0].children as RouteRecordRaw[];
-    formatFlatteningRoutes(addAsyncRoutes(routeList) ?? []).map(
-      (v: RouteRecordRaw) => {
-        // 防止重复添加路由
-        if (rootChildren.findIndex(value => value.path === v.path) !== -1) {
-          return;
-        } else {
-          // 切记将路由push到routes后还需要使用addRoute，这样路由才能正常跳转
-          rootChildren.push(v);
-          // 最终路由进行升序
-          ascending(rootChildren);
-          // 后端目录型路由（含 children、子级为绝对 path）若连同 children 一起注册，
-          // 会与拍平后的同级子记录产生同 path 的嵌套/扁平双 matcher，最终命中哪条
-          // 取决于注册顺序；目录被命中时其组件无 <router-view>，子路由渲染被整体
-          // 遮蔽（页面白屏）。matcher 只注册拍平记录，目录访问由 redirect 兜底；
-          // options.routes 中保留完整父子树供面包屑/菜单查找。
-          const matcherRecord: RouteRecordRaw =
-            (v.children?.length ?? 0) > 0
-              ? ({ ...v, children: undefined } as RouteRecordRaw)
-              : v;
-          if (!matcherRecord.name || !router.hasRoute(matcherRecord.name))
-            router.addRoute(matcherRecord);
-          const flattenRouters = router.getRoutes().find(n => n.path === "/");
-          // 保持router.options.routes[0].children与path为"/"的children一致，防止数据不一致导致异常
-          if (flattenRouters) {
-            flattenRouters.children = rootChildren.map(c =>
-              (c.children?.length ?? 0) > 0
-                ? ({ ...c, children: undefined } as RouteRecordRaw)
-                : c
-            );
-            router.addRoute(flattenRouters);
-          }
-        }
-      }
-    );
+    const existingPaths = new Set(rootChildren.map(value => value.path));
+    const fresh = formatFlatteningRoutes(
+      addAsyncRoutes(routeList) ?? []
+    ).filter((v: RouteRecordRaw) => !existingPaths.has(v.path));
+    // 批量注册（原实现逐条 push + 每条全量 ascending 重排 + 每条重注册 "/"，O(n²) 双写）：
+    // 追加 → 单次排序 → 逐条 addRoute 匹配记录 → "/" 末尾重注册一次。
+    // 排序在同步循环内完成、中间态无观察者，options.routes 与 matcher 的最终状态等价
+    rootChildren.splice(rootChildren.length, 0, ...fresh);
+    ascending(rootChildren);
+    fresh.forEach((v: RouteRecordRaw) => {
+      // 后端目录型路由（含 children、子级为绝对 path）若连同 children 一起注册，
+      // 会与拍平后的同级子记录产生同 path 的嵌套/扁平双 matcher，最终命中哪条
+      // 取决于注册顺序；目录被命中时其组件无 <router-view>，子路由渲染被整体
+      // 遮蔽（页面白屏）。matcher 只注册拍平记录，目录访问由 redirect 兜底；
+      // options.routes 中保留完整父子树供面包屑/菜单查找。
+      const matcherRecord: RouteRecordRaw =
+        (v.children?.length ?? 0) > 0
+          ? ({ ...v, children: undefined } as RouteRecordRaw)
+          : v;
+      if (!matcherRecord.name || !router.hasRoute(matcherRecord.name))
+        router.addRoute(matcherRecord);
+    });
+    const flattenRouters = router.getRoutes().find(n => n.path === "/");
+    // 保持router.options.routes[0].children与path为"/"的children一致，防止数据不一致导致异常
+    if (flattenRouters) {
+      flattenRouters.children = rootChildren.map(c =>
+        (c.children?.length ?? 0) > 0
+          ? ({ ...c, children: undefined } as RouteRecordRaw)
+          : c
+      );
+      router.addRoute(flattenRouters);
+    }
     usePermissionStoreHook().handleWholeMenus(routeList);
   }
   if (!useMultiTagsStoreHook().getMultiTagsCache) {
@@ -97,35 +96,67 @@ function initRouter(loadConfig: boolean = false): Promise<Router> {
       console.error("get user info failed", error);
     });
 
+  // 拉取失败（后端 5xx/网络异常）必须向调用方抛出而非吞掉：
+  // 否则本 Promise 永不 settle，登录按钮永久 loading、刷新后停留在无菜单的兜底路由。
+  // 兜底在调用方：登录/注册态跳 /error/500（静态路由，返回按钮重新触发本函数即重试）
+  const fetchRoutes = () =>
+    getAsyncRoutes()
+      .then(({ data, auths, version }) => {
+        handleAsyncRoutes(cloneDeep(data), auths);
+        return { data, auths, version };
+      })
+      .catch(error => {
+        console.error("get async routes failed", error);
+        throw error;
+      });
+
   if (getConfig()?.CachingAsyncRoutes) {
     // 开启动态路由缓存本地localStorage
     const key = "async-routes";
     const authKey = "async-auths";
+    const versionKey = "async-routes-version";
     const asyncRouteList = storageLocal().getItem<RouteRecordRaw[]>(key);
     const asyncAuthList = storageLocal().getItem<string[]>(authKey);
     if (asyncRouteList && asyncRouteList?.length > 0) {
+      // 快照即时渲染（保持零等待体验）；版本号后台比对自愈：
+      // 收权/菜单变更后旧快照若继续沿用，已收权限会一直可用到登出——这是快照模式的
+      // 原生缺陷，靠响应里的内容指纹（/api/system/routes 的 version）校验并整页刷新
+      reconcileRoutesVersion(storageLocal().getItem<string>(versionKey));
       return new Promise(resolve => {
         handleAsyncRoutes(asyncRouteList, asyncAuthList ?? []);
         resolve(router);
       });
-    } else {
-      return new Promise(resolve => {
-        getAsyncRoutes().then(({ data, auths }) => {
-          handleAsyncRoutes(cloneDeep(data), auths);
-          storageLocal().setItem(key, data);
-          storageLocal().setItem(authKey, auths);
-          resolve(router);
-        });
-      });
     }
-  } else {
-    return new Promise(resolve => {
-      getAsyncRoutes().then(({ data, auths }) => {
-        handleAsyncRoutes(cloneDeep(data), auths);
-        resolve(router);
-      });
+    return fetchRoutes().then(({ data, auths, version }) => {
+      handleAsyncRoutes(cloneDeep(data), auths);
+      storageLocal().setItem(key, data);
+      storageLocal().setItem(authKey, auths);
+      storageLocal().setItem(versionKey, version);
+      return router;
     });
   }
+  return fetchRoutes().then(() => router);
+}
+
+/** 每次页面会话仅做一次快照版本校验 */
+let routesVersionChecked = false;
+
+/** 后台比对快照版本：不一致（菜单/授权已变更）则清快照整页刷新，重走正常拉取注册链路 */
+function reconcileRoutesVersion(cachedVersion?: string) {
+  if (routesVersionChecked || !cachedVersion) return;
+  routesVersionChecked = true;
+  getAsyncRoutes()
+    .then(({ version }) => {
+      if (version && version !== cachedVersion) {
+        storageLocal().removeItem("async-routes");
+        storageLocal().removeItem("async-auths");
+        storageLocal().removeItem("async-routes-version");
+        window.location.reload();
+      }
+    })
+    .catch(() => {
+      // 校验请求失败不阻塞快照渲染，下次启动再校验
+    });
 }
 
 /** 过滤后端传来的动态路由 重新生成规范路由 */

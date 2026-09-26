@@ -49,17 +49,16 @@ jobs:
 
       - name: Start Lint Code
         run: |
-          pnpm install --no-frozen-lockfile
+          # frozen：CI 必须按 pnpm-lock.yaml 精确安装，lockfile 漂移应显式失败而非被静默消化
+          pnpm install --frozen-lockfile
           pnpm lint
+          # strict 全仓单轨（src / build / mock / types / e2e，含 e2e）：任何 strict 回归即失败。
+          # 2026-09-26 双轨收敛：tsconfig.strict.json 已删除，typecheck 本身即 strict 门禁
           pnpm typecheck
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: TypeScript strict gate (full repo)
-        # 全仓 strict（src / build / mock / types / e2e）：任何 strict 回归即失败
-        run: pnpm typecheck:strict
 
       - name: File length gate (anti-regression)
         # 防巨型文件回潮：>500 行新增即失败；存量基线只减不增（scripts/check-file-length.mjs）

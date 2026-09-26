@@ -1,10 +1,14 @@
 <script lang="ts" setup>
-import ReEmpty from "@/components/ReEmpty";
-import { computed, onMounted, ref } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import ReEmpty from "@/components/ReEmpty";
 import { userApi } from "@/api/system/user";
 import type { UserPreviewResult } from "@/api/types/permission-preview";
 import { hasAuth } from "@/router/utils";
+import {
+  PreviewMenuTree,
+  usePermissionPreview
+} from "@/components/RePermissionPreview";
 import PreviewDataPermission from "./preview/PreviewDataPermission.vue";
 import PreviewTrial from "./preview/PreviewTrial.vue";
 
@@ -23,12 +27,11 @@ const { t } = useI18n();
 /** 试算有独立权限码：缺失时只提示，不发必然 403 的请求 */
 const canTrial = computed(() => hasAuth("previewTrial:SystemUser"));
 
-const loading = ref(false);
-const data = ref<UserPreviewResult | null>(null);
+const { loading, data } = usePermissionPreview<UserPreviewResult>(
+  async pk => (await userApi.preview(pk)).data,
+  () => props.row.pk
+);
 const keyword = ref("");
-
-/** el-tree 只读展示配置 */
-const treeProps = { label: "title", children: "children" };
 
 const METHOD_TAG_TYPES: Record<
   string,
@@ -52,22 +55,6 @@ const filteredApiPermissions = computed(() => {
       item.path.toLowerCase().includes(kw) ||
       item.title.toLowerCase().includes(kw)
   );
-});
-
-async function load(pk: string) {
-  loading.value = true;
-  try {
-    const res = await userApi.preview(pk);
-    data.value = res.data;
-  } finally {
-    loading.value = false;
-  }
-}
-
-onMounted(() => {
-  data.value = null;
-  keyword.value = "";
-  load(String(props.row.pk));
 });
 </script>
 
@@ -124,25 +111,7 @@ onMounted(() => {
           :title="`${t('permissionPreview.menuTree')}（${data.summary.menu_count}）`"
           name="menu"
         >
-          <el-tree
-            v-if="data.menu_tree.length"
-            :data="data.menu_tree"
-            :props="treeProps"
-            node-key="pk"
-            default-expand-all
-          >
-            <template #default="{ data: node }">
-              <span class="flex items-center gap-1">
-                <span>{{ node.title }}</span>
-                <el-tag size="small" type="info">{{ node.name }}</el-tag>
-              </span>
-            </template>
-          </el-tree>
-          <ReEmpty
-            v-else
-            :description="t('permissionPreview.emptyMenus')"
-            :image-size="70"
-          />
+          <PreviewMenuTree :data="data.menu_tree" />
         </el-collapse-item>
 
         <!-- API 权限码 -->

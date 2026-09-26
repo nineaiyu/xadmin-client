@@ -587,8 +587,8 @@ oauth:
 
 plus:
   fileLink: 文件连接
-  metaMissingTitle: 未获取到列元数据（search-columns / search-fields）
-  metaMissingDetail: 本页面的搜索列与表格列由后端元数据生成。请检查：app 是否已注册 XADMIN_APPS、序列化器是否声明 fields / table_fields、当前账号是否有页面权限点（未授权时接口 403）。
+  metaMissingTitle: 页面列配置加载失败
+  metaMissingDetail: 本页面的搜索列与表格列由后端元数据生成，当前未获取到。请刷新页面重试；若持续出现，请联系管理员（常见原因：页面未正确注册、序列化器未声明字段、当前账号缺少页面权限点）。
   detailBlankTitle: 详情数据为空
   detailBlankTip: 若已开启字段权限，请为当前菜单配置字段白名单（未配置白名单的模型字段会被裁剪为空）
 

@@ -72,7 +72,7 @@
 
 ```shell
 pnpm lint                 # prettier + eslint(--max-warnings 0) + stylelint
-pnpm typecheck:strict     # strict 全仓（CI 门禁）
+pnpm typecheck            # strict 全仓（CI 门禁，单轨）
 pnpm test:run             # vitest（含 locale-keys / 渲染器配对等守护测试）
 ```
 

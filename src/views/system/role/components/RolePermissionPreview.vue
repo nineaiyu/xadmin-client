@@ -1,9 +1,13 @@
 <script lang="ts" setup>
 import ReEmpty from "@/components/ReEmpty";
-import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { roleApi } from "@/api/system/role";
 import type { RolePreviewResult } from "@/api/types/permission-preview";
+import {
+  PreviewMenuTree,
+  PreviewUsersTable,
+  usePermissionPreview
+} from "@/components/RePermissionPreview";
 
 defineOptions({ name: "RolePermissionPreview" });
 
@@ -17,25 +21,10 @@ const props = defineProps<{ row: { pk?: string | number } }>();
 
 const { t } = useI18n();
 
-const loading = ref(false);
-const data = ref<RolePreviewResult | null>(null);
-
-const treeProps = { label: "title", children: "children" };
-
-async function load(pk: string) {
-  loading.value = true;
-  try {
-    const res = await roleApi.preview(pk);
-    data.value = res.data;
-  } finally {
-    loading.value = false;
-  }
-}
-
-onMounted(() => {
-  data.value = null;
-  load(String(props.row.pk));
-});
+const { loading, data } = usePermissionPreview<RolePreviewResult>(
+  async pk => (await roleApi.preview(pk)).data,
+  () => props.row.pk
+);
 </script>
 
 <template>
@@ -61,28 +50,7 @@ onMounted(() => {
 
       <el-collapse class="mt-3" :model-value="['menu', 'field', 'users']">
         <el-collapse-item :title="t('permissionPreview.roleMenus')" name="menu">
-          <el-tree
-            v-if="data.menu_tree.length"
-            :data="data.menu_tree"
-            :props="treeProps"
-            node-key="pk"
-            default-expand-all
-          >
-            <template #default="{ data: node }">
-              <span class="flex items-center gap-1">
-                <span>{{ node.title }}</span>
-                <el-tag v-if="node.menu_type === 2" size="small" type="warning">
-                  {{ t("permissionPreview.codeTag") }}
-                </el-tag>
-                <el-tag v-else size="small" type="info">{{ node.name }}</el-tag>
-              </span>
-            </template>
-          </el-tree>
-          <ReEmpty
-            v-else
-            :description="t('permissionPreview.emptyMenus')"
-            :image-size="70"
-          />
+          <PreviewMenuTree :data="data.menu_tree" show-code-tag />
         </el-collapse-item>
 
         <el-collapse-item
@@ -121,56 +89,7 @@ onMounted(() => {
           :title="`${t('permissionPreview.users')}（${data.users.total}）`"
           name="users"
         >
-          <el-alert
-            v-if="data.users.truncated"
-            :title="
-              t('permissionPreview.sampleTruncated', {
-                limit: data.users.sample_limit,
-                total: data.users.total
-              })
-            "
-            type="info"
-            :closable="false"
-            show-icon
-            class="mb-2"
-          />
-          <el-table :data="data.users.list" size="small" border>
-            <el-table-column
-              prop="username"
-              :label="t('systemUser.username')"
-              min-width="120"
-            />
-            <el-table-column
-              prop="nickname"
-              :label="t('systemUser.nickname')"
-              min-width="120"
-            />
-            <el-table-column
-              :label="t('permissionPreview.dept')"
-              min-width="140"
-            >
-              <template #default="{ row }">
-                {{ row.dept?.name ?? "-" }}
-              </template>
-            </el-table-column>
-            <el-table-column :label="t('permissionPreview.status')" width="90">
-              <template #default="{ row }">
-                <el-tag :type="row.is_active ? 'success' : 'info'" size="small">
-                  {{
-                    row.is_active
-                      ? t("permissionPreview.enabled")
-                      : t("permissionPreview.disabled")
-                  }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <template #empty>
-              <ReEmpty
-                :description="t('permissionPreview.emptyUsers')"
-                :image-size="70"
-              />
-            </template>
-          </el-table>
+          <PreviewUsersTable :data="data.users" show-dept />
         </el-collapse-item>
       </el-collapse>
     </template>

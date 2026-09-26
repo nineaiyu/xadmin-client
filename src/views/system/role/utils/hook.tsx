@@ -183,7 +183,13 @@ export function useRole(pageRef?: Ref) {
               field: formValue?.value?.field,
               // 传 ref 而非快照：菜单树晚于弹窗渲染完成时仍能回显勾选
               menuTreeData,
-              onChange: ({ fields, menu }) => {
+              onChange: ({
+                fields,
+                menu
+              }: {
+                fields: object | undefined;
+                menu: Array<string | number>;
+              }) => {
                 if (formValue?.value) formValue.value.fields = fields;
                 onChange(menu);
               }

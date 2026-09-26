@@ -23,7 +23,27 @@
       "description": "服务端响应时间"
     },
     "data": {
-      "description": "业务载荷，形状由具体接口契约决定（如 routes-payload / search-columns / search-fields）；缺省表示无载荷"
+      "description": "业务载荷，形状由具体接口契约决定（如 routes-payload / search-columns / search-fields）；缺省表示无载荷",
+      "oneOf": [
+        {
+          "type": "object"
+        },
+        {
+          "type": "array"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
     }
   },
   "additionalProperties": true

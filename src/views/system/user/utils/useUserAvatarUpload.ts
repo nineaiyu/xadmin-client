@@ -2,6 +2,7 @@ import { ref } from "vue";
 
 import { addDialog } from "@/components/ReDialog";
 import croppingUpload from "@/components/RePictureUpload";
+import type { CropperPayload } from "@/components/RePictureUpload";
 import { createFormData, deviceDetection } from "@pureadmin/utils";
 import { h } from "vue";
 import { handleOperation } from "@/components/RePlusPage";
@@ -37,7 +38,7 @@ export function useUserAvatarUpload({
       contentRenderer: () =>
         h(croppingUpload, {
           imgSrc: picturePng(row?.avatar) ?? "",
-          onCropper: info => (avatarInfo.value = info),
+          onCropper: (info: CropperPayload) => (avatarInfo.value = info),
           circled: true,
           quality: 1,
           ref: cropRef,

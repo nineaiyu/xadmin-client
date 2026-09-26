@@ -3,12 +3,10 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "strict": false,
-    "strictFunctionTypes": false,
-    "noImplicitThis": true,
-    // noImplicitAny 收敛中（存量约 350 处历史类型债，专项推进）：开启后 typecheck 会报错，
-    // 收敛完成前保持关闭以不阻塞 CI；已收敛模块的类型标注已保留
-    "noImplicitAny": false,
+    // strict 全仓单轨（2026-09-26 双轨收敛）：原 noImplicitAny 存量约 350 处历史类型债
+    // 已按模块全部清零，主 tsconfig 与原 tsconfig.strict.json 口径合并为单轨，
+    // e2e 一并纳入 include（与原 strict 轨道覆盖面一致），不再保留第二套配置
+    "strict": true,
     "jsx": "preserve",
     "jsxImportSource": "vue",
     "skipLibCheck": true,
@@ -41,7 +39,8 @@
     "src/**/*.tsx",
     "src/**/*.vue",
     "types/*.d.ts",
-    "vite.config.ts"
+    "vite.config.ts",
+    "e2e/**/*.ts"
   ],
   "exclude": ["dist", "**/*.js", "node_modules"]
 }

@@ -176,6 +176,10 @@ const handleLoginSuccess = () => {
           disabled.value = false;
         });
     })
+    .catch(() => {
+      // 动态路由拉取失败：跳静态 /error/500 可重试页（返回按钮会重新触发 initRouter）
+      router.push("/error/500").catch(() => undefined);
+    })
     .finally(() => (loading.value = false));
 };
 

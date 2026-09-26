@@ -8,6 +8,7 @@ import type { themeColorsType } from "../types";
 import { useAppStoreHook } from "@/store/modules/app";
 import { useEpThemeStoreHook } from "@/store/modules/epTheme";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
+import { useNoticeStoreHook } from "@/store/modules/notice";
 import { useUserStoreHook } from "@/store/modules/user";
 import { darken, lighten, useGlobal, storageLocal } from "@pureadmin/utils";
 import { DEFAULT_EP_THEME_COLOR } from "@/utils/themeConstants";
@@ -114,7 +115,7 @@ export function useDataThemeChange() {
 
   /** 清空缓存并返回登录页 */
   function onReset() {
-    useUserStoreHook().websocket?.close();
+    useNoticeStoreHook().disconnect();
     removeToken();
     storageLocal().clear();
     const { Grey, Weak, MultiTagsCache, EpThemeColor, Layout } = getConfig();

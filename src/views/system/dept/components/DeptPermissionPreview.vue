@@ -1,9 +1,13 @@
 <script lang="ts" setup>
 import ReEmpty from "@/components/ReEmpty";
-import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { deptApi } from "@/api/system/dept";
 import type { DeptPreviewResult } from "@/api/types/permission-preview";
+import {
+  PreviewMenuTree,
+  PreviewUsersTable,
+  usePermissionPreview
+} from "@/components/RePermissionPreview";
 
 defineOptions({ name: "DeptPermissionPreview" });
 
@@ -17,26 +21,10 @@ const props = defineProps<{ row: { pk?: string | number } }>();
 
 const { t } = useI18n();
 
-const loading = ref(false);
-const data = ref<DeptPreviewResult | null>(null);
-
-/** el-tree 只读展示配置 */
-const treeProps = { label: "title", children: "children" };
-
-async function load(pk: string | number) {
-  loading.value = true;
-  try {
-    const res = await deptApi.preview(pk);
-    data.value = res.data;
-  } finally {
-    loading.value = false;
-  }
-}
-
-onMounted(() => {
-  data.value = null;
-  load(String(props.row.pk));
-});
+const { loading, data } = usePermissionPreview<DeptPreviewResult>(
+  async pk => (await deptApi.preview(pk)).data,
+  () => props.row.pk
+);
 </script>
 
 <template>
@@ -116,25 +104,7 @@ onMounted(() => {
 
         <!-- 可见菜单（部门角色并集） -->
         <el-collapse-item :title="t('permissionPreview.menuTree')" name="menu">
-          <el-tree
-            v-if="data.menu_tree.length"
-            :data="data.menu_tree"
-            :props="treeProps"
-            node-key="pk"
-            default-expand-all
-          >
-            <template #default="{ data: node }">
-              <span class="flex items-center gap-1">
-                <span>{{ node.title }}</span>
-                <el-tag size="small" type="info">{{ node.name }}</el-tag>
-              </span>
-            </template>
-          </el-tree>
-          <ReEmpty
-            v-else
-            :description="t('permissionPreview.emptyMenus')"
-            :image-size="70"
-          />
+          <PreviewMenuTree :data="data.menu_tree" />
         </el-collapse-item>
 
         <!-- 部门数据权限 -->
@@ -243,50 +213,7 @@ onMounted(() => {
           :title="`${t('permissionPreview.deptMembers')}（${data.users.total}）`"
           name="users"
         >
-          <el-alert
-            v-if="data.users.truncated"
-            :title="
-              t('permissionPreview.sampleTruncated', {
-                limit: data.users.sample_limit,
-                total: data.users.total
-              })
-            "
-            class="mb-2"
-            :closable="false"
-            show-icon
-            type="warning"
-          />
-          <el-table
-            v-if="data.users.list.length"
-            :data="data.users.list"
-            border
-            size="small"
-          >
-            <el-table-column
-              :label="t('systemUser.username')"
-              prop="username"
-            />
-            <el-table-column
-              :label="t('systemUser.nickname')"
-              prop="nickname"
-            />
-            <el-table-column :label="t('permissionPreview.status')" width="90">
-              <template #default="{ row }">
-                <el-tag :type="row.is_active ? 'success' : 'info'" size="small">
-                  {{
-                    row.is_active
-                      ? t("permissionPreview.enabled")
-                      : t("permissionPreview.disabled")
-                  }}
-                </el-tag>
-              </template>
-            </el-table-column>
-          </el-table>
-          <ReEmpty
-            v-else
-            :description="t('permissionPreview.emptyUsers')"
-            :image-size="70"
-          />
+          <PreviewUsersTable :data="data.users" />
         </el-collapse-item>
       </el-collapse>
     </template>

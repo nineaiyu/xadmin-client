@@ -98,9 +98,14 @@ const onRegister = async () => {
         type: "success"
       });
       // 获取后端路由
-      initRouter(true).then(() => {
-        router.push(getTopMenu(true)?.path ?? "/");
-      });
+      initRouter(true)
+        .then(() => {
+          router.push(getTopMenu(true)?.path ?? "/");
+        })
+        .catch(() => {
+          // 动态路由拉取失败：跳静态 /error/500 可重试页（返回按钮会重新触发 initRouter）
+          router.push("/error/500").catch(() => undefined);
+        });
       loading.value = false;
     })
     .catch(err => {

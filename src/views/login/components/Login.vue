@@ -61,14 +61,21 @@ const loginMfaInfo = ref<LoginMfaRequired | null>(null);
 
 /** 登录完成（直接登录成功或 MFA 验证通过）：初始化路由并跳转 */
 const handleLoginSuccess = () => {
-  initRouter(true).then(() => {
-    disabled.value = true;
-    router
-      .push((route.query?.redirect as string) ?? getTopMenu(true)?.path ?? "/")
-      .finally(() => {
-        disabled.value = false;
-      });
-  });
+  initRouter(true)
+    .then(() => {
+      disabled.value = true;
+      router
+        .push(
+          (route.query?.redirect as string) ?? getTopMenu(true)?.path ?? "/"
+        )
+        .finally(() => {
+          disabled.value = false;
+        });
+    })
+    .catch(() => {
+      // 动态路由拉取失败：跳静态 /error/500 可重试页（返回按钮会重新触发 initRouter）
+      router.push("/error/500").catch(() => undefined);
+    });
 };
 
 /** 登录 MFA 验证通过：写入正式 token 并进入系统 */

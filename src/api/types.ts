@@ -1,5 +1,20 @@
 import type { RecordType } from "plus-pro-components";
 
+import type { ApiResponseEnvelope } from "./types/api-response";
+
+/**
+ * 统一响应信封（服务端 common/core/response.py `ApiResponse`）。
+ *
+ * 契约唯一事实源是 `contract/schema/api-response.schema.json`（生成的
+ * `./types/api-response.d.ts`）；这里显式取信封键（丢弃生成的索引签名——
+ * `[k: string]: unknown` 会经交叉类型污染泛型 data）。`requestId`/`timestamp`
+ * wire 上必有、但本仓存在手工构造的本地响应字面量（前端校验失败即时返回），
+ * 故宽松为可选；`code`/`detail` 保持必有。本文件的信封形结果类型一律从
+ * `Envelope` 派生，禁止再手写 `detail/code` 重复体。
+ */
+export type Envelope = Pick<ApiResponseEnvelope, "code" | "detail"> &
+  Partial<Pick<ApiResponseEnvelope, "requestId" | "timestamp">>;
+
 /** 业务成功码（与后端统一响应壳约定一致：common/core/response.py 的默认 code） */
 export const SUCCESS_CODE = 1000;
 
@@ -24,23 +39,17 @@ export type ChoiceOption = {
   [key: string]: unknown;
 };
 
-export type ChoicesResult = {
-  detail: string;
-  code: number;
+export type ChoicesResult = Omit<Envelope, "data"> & {
   /** choices 字典：userinfo 系接口为选项数组、permission 系接口为 { choices: [...] }，形态由消费侧收窄 */
   choices_dict: RecordType;
 };
 
 /** 动态行列表结果，行结构由具体接口决定 */
-export type DataListResult<T = RecordType> = {
-  detail: string;
-  code: number;
+export type DataListResult<T = RecordType> = Omit<Envelope, "data"> & {
   data: Array<T>;
 };
 
-export type SearchFieldsResult = {
-  detail: string;
-  code: number;
+export type SearchFieldsResult = Omit<Envelope, "data"> & {
   data: Array<{
     key: string;
     label: string;
@@ -54,9 +63,7 @@ export type SearchFieldsResult = {
   }>;
 };
 
-export type SearchColumnsResult = {
-  detail: string;
-  code: number;
+export type SearchColumnsResult = Omit<Envelope, "data"> & {
   data: Array<{
     key: string;
     label: string;
@@ -88,9 +95,7 @@ export type SearchColumnsResult = {
 };
 
 /** 分页列表结果，行结构由具体接口决定 */
-export type ListResult<T = RecordType> = {
-  detail: string;
-  code: number;
+export type ListResult<T = RecordType> = Omit<Envelope, "data"> & {
   data: {
     /** 列表数据 */
     results: Array<T>;
@@ -103,9 +108,7 @@ export type ListResult<T = RecordType> = {
   };
 };
 
-export type DetailResult<T = RecordType> = {
-  detail: string;
-  code: number;
+export type DetailResult<T = RecordType> = Omit<Envelope, "data"> & {
   /** 详情数据：单行动态对象（可用泛型收窄具体契约形状） */
   data: T;
   /** 服务端字段级校验错误（校验失败场景），RePlusPage 表单消费后内联展示 */
@@ -129,9 +132,7 @@ export type RecordStats = {
 /** 服务端字段级校验错误（common/core/exception.py 封装），field → 错误消息(列表) */
 export type ServerErrors = Record<string, string[] | string>;
 
-export type BaseResult = {
-  detail: string;
-  code: number;
+export type BaseResult = Omit<Envelope, "data"> & {
   /** 校验错误时携带；RePlusPage 表单消费后内联展示 */
   errors?: ServerErrors;
 };
@@ -144,9 +145,7 @@ export type ImportFieldOption = { value: string; label: string };
  * `candidates` 与 `headers` 等长（归一化等名候选，无候选为空串）；
  * `model` 为目标模型 label_lower，模板按该标识隔离。
  */
-export type ImportHeadersResult = {
-  detail: string;
-  code: number;
+export type ImportHeadersResult = Omit<Envelope, "data"> & {
   data: {
     headers: string[];
     candidates: string[];

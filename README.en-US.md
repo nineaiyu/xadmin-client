@@ -53,7 +53,7 @@ Recommended production setup: serve `dist/` with nginx and proxy `/api`, `/ws`, 
 ## Quality gates (before commit)
 
 ```shell
-pnpm typecheck && pnpm typecheck:strict   # type check (strict across the repo)
+pnpm typecheck                            # type check (strict across the repo, single track)
 pnpm lint                                 # eslint + prettier + stylelint
 pnpm test:run                             # vitest
 pnpm check:contract                       # contract mirror consistency with the backend

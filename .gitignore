@@ -30,3 +30,4 @@ blob-report/
 tsconfig.tsbuildinfo
 .pnpm-store
 _delete
+tmp

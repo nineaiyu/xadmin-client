@@ -221,7 +221,13 @@ export function useNotice(tableRef: Ref) {
           ) => {
             return h(WangEditor, {
               modelValue: value as string,
-              onChange: ({ messages, files }) => {
+              onChange: ({
+                messages,
+                files
+              }: {
+                messages: Ref<string | undefined>;
+                files: string[];
+              }) => {
                 onChange(messages);
                 if (formValue?.value) formValue.value.files = files;
               }

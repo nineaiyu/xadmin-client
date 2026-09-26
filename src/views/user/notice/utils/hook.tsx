@@ -3,7 +3,7 @@ import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { addDialog } from "@/components/ReDialog";
 import { userNoticeReadApi } from "@/api/user/notice";
-import { useUserStoreHook } from "@/store/modules/user";
+import { useNoticeStoreHook } from "@/store/modules/notice";
 import { h, reactive, ref, type Ref, shallowRef } from "vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { deviceDetection, getKeyList } from "@pureadmin/utils";
@@ -100,7 +100,7 @@ export function useUserNotice(tableRef: Ref) {
     res: RecordType;
   }) => {
     unreadCount.value = res.unread_count;
-    useUserStoreHook().SET_NOTICECOUNT(res.unread_count);
+    useNoticeStoreHook().SET_NOTICECOUNT(res.unread_count);
     if (
       routeParams.pk &&
       routeParams.pk === searchFields.value.pk &&
