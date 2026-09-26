@@ -151,14 +151,15 @@ test("仪表盘聚合卡片：度量字段（sum）可配置并真实渲染，�
   let dashboardPk = "";
 
   try {
-    // 数值列 days 用于 sum 度量；leave_type 作为分组列（白名单模型见 system.utils.dataset）
+    // 数值列 days 用于 sum 度量；leave_type 作为分组列
+    // （白名单模型来自 ModelLabelField DATA 根节点；leave 已随 3.1 拆分迁至 approval app）
     const dsRes = await page.request.post(
       `${BACKEND_URL}/api/system/datasets`,
       {
         headers,
         data: {
           name: datasetName,
-          bound_model: "system.leave",
+          bound_model: "approval.leave",
           columns: ["days", "leave_type"],
           row_limit: 100,
           visibility: "shared"

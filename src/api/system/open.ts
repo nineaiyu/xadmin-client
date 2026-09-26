@@ -54,7 +54,7 @@ export interface CallbackProbeResult {
 /** 资源授权规则（模型 × 动作 × 字段 × 行） */
 export interface ApiApplicationGrant {
   pk?: string;
-  /** 模型标签（system.dataset）或 *（全部模型） */
+  /** 模型标签（dataset.dataset）或 *（全部模型） */
   model: string;
   /** 权限点动作段（list/retrieve/create/...）或 ["*"] */
   actions: string[];
