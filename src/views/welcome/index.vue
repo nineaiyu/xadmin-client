@@ -4,6 +4,7 @@ import { loadEcharts } from "@/plugins/echarts";
 import ReCol from "@/components/ReCol";
 import { ReNormalCountTo } from "@/components/ReCountTo";
 import { useRenderFlicker } from "@/components/ReFlicker";
+import ReSkeleton from "@/components/ReSkeleton";
 import { ChartBar, ChartClock, ChartLine, ChartRound } from "./components";
 import Segmented from "@/components/ReSegmented";
 import { epColor, epColorLight, type EpColorName } from "@/utils/chartTheme";
@@ -106,6 +107,8 @@ const timelineIcons = timelineTones.map(tone =>
               class="w-1/2!"
             />
             <ChartRound v-else-if="echartsReady" class="w-1/2!" />
+            <!-- echarts 懒加载就绪前：等高骨架占位，防止图表区塌陷（CLS） -->
+            <ReSkeleton v-else variant="fill" class="h-15! w-1/2!" />
           </div>
         </el-card>
       </re-col>
@@ -219,6 +222,7 @@ const timelineIcons = timelineTones.map(tone =>
               :title="optionsBasis[curWeek].label"
               :variant="curWeek ? 'login' : 'register'"
             />
+            <ReSkeleton v-else variant="fill" class="h-100!" />
           </div>
         </el-card>
       </re-col>

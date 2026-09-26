@@ -3,6 +3,7 @@ import { computed, h, nextTick, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { addDialog, type DialogOptions } from "@/components/ReDialog";
 import ReEmpty from "@/components/ReEmpty";
+import ReSkeleton from "@/components/ReSkeleton";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
 import {
@@ -276,11 +277,25 @@ watch(
 
     <div
       ref="scrollEl"
-      v-loading="loading"
       class="grow overflow-y-auto px-2 py-3"
       data-testid="chat-messages"
       @scroll.passive="emit('scroll')"
     >
+      <!-- 历史首屏加载：骨架气泡占位（切换房间时消息已清空，加载态与空态互斥） -->
+      <div
+        v-if="loading && !groups.length"
+        class="flex flex-col gap-3 py-2"
+        data-testid="chat-history-skeleton"
+      >
+        <ReSkeleton
+          v-for="row in 4"
+          :key="row"
+          variant="fill"
+          class="h-12!"
+          :class="row % 2 ? 'w-2/3! self-start' : 'w-1/2! self-end'"
+        />
+      </div>
+
       <!-- 仅在有历史消息时显示「加载更早 / 没有更多」：空会话由中部空态统一表达，
            否则顶部「没有更多历史消息」与中部「还没有消息」同时出现、文案矛盾 -->
       <div

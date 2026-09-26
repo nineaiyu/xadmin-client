@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import ReEmpty from "@/components/ReEmpty";
+import ReSkeleton from "@/components/ReSkeleton";
 import AiIcon from "~icons/ep/cpu";
 import MenuIcon from "~icons/ep/menu";
 import SendIcon from "~icons/ep/promotion";
@@ -104,11 +105,25 @@ defineExpose({ scrollEl });
 
     <div
       ref="scrollEl"
-      v-loading="loadingHistory"
       class="grow overflow-y-auto px-2 py-3"
       data-testid="ai-messages"
       @scroll.passive="emit('scroll')"
     >
+      <!-- 历史首屏加载：骨架气泡占位（切换入口时消息已清空，加载态与空态互斥） -->
+      <div
+        v-if="loadingHistory && !groups.length"
+        class="flex flex-col gap-3 py-2"
+        data-testid="ai-history-skeleton"
+      >
+        <ReSkeleton
+          v-for="row in 4"
+          :key="row"
+          variant="fill"
+          class="h-12!"
+          :class="row % 2 ? 'w-2/3! self-start' : 'w-1/2! self-end'"
+        />
+      </div>
+
       <div
         v-if="groups.length"
         class="mb-2 text-center text-xs text-(--el-text-color-secondary)"
