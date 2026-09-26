@@ -29,7 +29,7 @@ import {
   normalizeMenuRow,
   toPayload
 } from "./normalize";
-import { confirmBatchActive, confirmMenuDelete } from "./menuConfirm";
+import { confirmBatchActive, confirmMenuDelete } from "./menuActions";
 import { displayTitle } from "./useMenuFilter";
 import type {
   MenuAuths,

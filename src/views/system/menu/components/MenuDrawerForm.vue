@@ -4,14 +4,15 @@ import { cloneDeep } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { MenuChoices } from "@/views/system/constants";
 import {
+  MENU_FORM_KEY,
   dirFormRules,
   menuFormRules,
-  permissionFormRules
-} from "../utils/rule";
+  permissionFormRules,
+  type MenuFormContext
+} from "../utils/formContext";
 import { menuTypeTagType } from "../utils/normalize";
 import { displayTitle, translateTitle } from "../utils/useMenuFilter";
 import Segmented, { type OptionsType } from "@/components/ReSegmented";
-import { MENU_FORM_KEY, type MenuFormContext } from "../utils/formContext";
 import MenuFormBasic from "./MenuFormBasic.vue";
 import MenuFormNav from "./MenuFormNav.vue";
 import MenuFormExtra from "./MenuFormExtra.vue";

@@ -107,6 +107,9 @@ export interface ModelTreeItem {
   [key: string]: unknown;
 }
 
+/** 同层移动方向（动作清单与排序提交共用） */
+export type MoveDirection = "up" | "down" | "top";
+
 /** 树行操作项（行内「更多」下拉与右键菜单共用同一份清单） */
 export interface MenuNodeAction {
   code: string;

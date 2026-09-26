@@ -4,7 +4,7 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useMenu } from "./utils/hook";
 import { displayTitle } from "./utils/useMenuFilter";
-import { useTreeHeight } from "./utils/useTreeHeight";
+import { useTreeHeight } from "./utils/useMenuTree";
 import MenuTreeToolbar from "./components/MenuTreeToolbar.vue";
 import MenuTreeRow from "./components/MenuTreeRow.vue";
 import MenuContextMenu from "./components/MenuContextMenu.vue";

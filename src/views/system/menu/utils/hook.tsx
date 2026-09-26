@@ -4,10 +4,9 @@
  * 页面（index.vue）只消费本文件返回的扁平引用，逻辑全部落在各职责模块：
  * - useMenuData      数据拉取与增删改（含影响面预检、批量启停、导入导出）
  * - useMenuFilter    关键字/类型/状态/展开层级与可见树
- * - useMenuTree      树的展开应用、勾选、拖拽约束与定位
- * - useMenuOrder     同层上移下移置顶与拖拽排序提交
- * - useMenuSelection 多选模式与批量操作条
+ * - useMenuTree      树交互域：展开应用、勾选联动、拖拽约束/排序、多选与视口高度
  * - useMenuDrawer    新增/编辑/克隆/重命名/权限码抽屉编排
+ * - menuActions      行操作清单与危险动作确认（右键菜单/行内下拉/批量）
  */
 
 import {
@@ -23,12 +22,15 @@ import { useI18n } from "vue-i18n";
 import { hasAuth, getDefaultAuths } from "@/router/utils";
 import { useMenuData } from "./useMenuData";
 import { useMenuFilter } from "./useMenuFilter";
-import { useMenuTree } from "./useMenuTree";
-import { useMenuOrder, type MoveDirection } from "./useMenuOrder";
-import { useMenuSelection } from "./useMenuSelection";
+import { useMenuOrder, useMenuSelection, useMenuTree } from "./useMenuTree";
 import { useMenuDrawer } from "./useMenuDrawer";
 import { buildNodeActions, type MenuActionContext } from "./menuActions";
-import type { MenuAuths, MenuNodeAction, MenuRow } from "./types";
+import type {
+  MenuAuths,
+  MenuNodeAction,
+  MenuRow,
+  MoveDirection
+} from "./types";
 
 export function useMenu() {
   const { t } = useI18n();
