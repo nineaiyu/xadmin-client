@@ -118,7 +118,7 @@ test("AI 受限动作：/do 草稿 → 确认卡片 → 执行动态表单提交
   const input = await openAiRoom(page);
 
   await input.fill(`/do 请用表单「${form.name}」提交一条记录，备注写 E2E`);
-  await page.getByRole("button", { name: "发送" }).first().click();
+  await page.locator('[data-testid="chat-send"]').first().click();
 
   // AI 草稿消息带确认卡片（流式 done 帧回填正式载荷）。
   // 卡片必须按「本 run 唯一的表单名」定位：共享库里同房间有历史卡片，按 .last()
@@ -180,7 +180,7 @@ test("AI 受限动作：灰度关闭时 /do 给出可读降级", async ({ page }
 
   const input = await openAiRoom(page);
   await input.fill("/do 帮我请一天年假");
-  await page.getByRole("button", { name: "发送" }).first().click();
+  await page.locator('[data-testid="chat-send"]').first().click();
 
   // 后端把门禁错误落成 system 消息（前端可见），不产生动作草稿
   await expect(

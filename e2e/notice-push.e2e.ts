@@ -89,7 +89,7 @@ test("聊天室 @消息 实时收到 push_message 站内信推送", async ({ pag
     await inputB.waitFor({ state: "visible", timeout: 25_000 });
     const text = `@xadmin E2E 实时推送验证 ${Date.now()}`;
     await inputB.fill(text);
-    await pageB.getByRole("button", { name: "发送" }).first().click();
+    await pageB.locator('[data-testid="chat-send"]').first().click();
 
     const frame = await pushFrame;
     expect(frame).toContain("push_message");
