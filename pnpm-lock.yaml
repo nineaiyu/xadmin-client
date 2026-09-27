@@ -103,9 +103,6 @@ importers:
       mitt:
         specifier: ^3.0.1
         version: 3.0.1
-      nprogress:
-        specifier: ^0.2.0
-        version: 0.2.0
       path-browserify:
         specifier: ^1.0.1
         version: 1.0.1
@@ -157,9 +154,6 @@ importers:
       vue3-ts-jsoneditor:
         specifier: ^3.4.1
         version: 3.4.1(@typescript-eslint/types@8.70.0)(vue@3.5.42(typescript@6.0.3))
-      vuedraggable:
-        specifier: ^4.1.0
-        version: 4.1.0(vue@3.5.42(typescript@6.0.3))
     devDependencies:
       '@axe-core/playwright':
         specifier: ^4.13.0
@@ -200,9 +194,6 @@ importers:
       '@types/node':
         specifier: ^24.13.5
         version: 24.13.5
-      '@types/nprogress':
-        specifier: ^0.2.3
-        version: 0.2.3
       '@types/path-browserify':
         specifier: ^1.0.3
         version: 1.0.3
@@ -1653,9 +1644,6 @@ packages:
 
   '@types/node@24.13.5':
     resolution: {integrity: sha512-TXyindR+lBr22aJIdMQzCFHPHR6cR4js838mRDCSz5hOKWZvZwsXSSiXDmjRj4iJmgl+sR9O+1mkoVBSMadNug==}
-
-  '@types/nprogress@0.2.3':
-    resolution: {integrity: sha512-k7kRA033QNtC+gLc4VPlfnue58CM1iQLgn1IMAU8VPHGOj7oIHPp9UlhedEnD/Gl8evoCjwkZjlBORtZ3JByUA==}
 
   '@types/path-browserify@1.0.3':
     resolution: {integrity: sha512-ZmHivEbNCBtAfcrFeBCiTjdIc2dey0l7oCGNGpSuRTy8jP6UVND7oUowlvDujBy8r2Hoa8bfFUOCiPWfmtkfxw==}
@@ -3605,9 +3593,6 @@ packages:
   nostics@1.2.0:
     resolution: {integrity: sha512-FGqEfhQjrvo1lL8KFifdTQiNwwQHJxC1jtYE1Rc54qF/jxONUNL+kC9gS1krX8Q65PgrQ5fCqH/I4NhWBvdSqg==}
 
-  nprogress@0.2.0:
-    resolution: {integrity: sha512-I19aIingLgR1fmhftnbWWO3dXc0hSxqHQHQb3H8m+K3TnEn/iSeTZZOyvKXWqQESMwuUVnatlCnZdLBZZt2VSA==}
-
   nth-check@2.1.1:
     resolution: {integrity: sha512-lqjrjmaOoAnWfMmBPL+XNnynZh2+swxiX3WUE0s4yEHI6m+AwrK2UZOimIRl3X/4QctVqS8AiZjFqyOGrMXb/w==}
 
@@ -4183,9 +4168,6 @@ packages:
   snabbdom@3.6.4:
     resolution: {integrity: sha512-VmxEfuw1/Y/eFj5VtMhYnukExpYiPkNzoo3+N3qwAOUDMl8wXgbli5ebR+j0knE3lZ/0eYskLxNcX64uy10N9w==}
     engines: {node: '>=12.17.0'}
-
-  sortablejs@1.14.0:
-    resolution: {integrity: sha512-pBXvQCs5/33fdN1/39pPL0NZF20LeRbLQ5jtnheIPN9JQAaufGjKdWduZn4U7wCtVuzKhmRkI0DFYHYRbB2H1w==}
 
   sortablejs@1.15.7:
     resolution: {integrity: sha512-Kk8wLQPlS+yi1ZEf48a4+fzHa4yxjC30M/Sr2AnQu+f/MPwvvX9XjZ6OWejiz8crBsLwSq8GHqaxaET7u6ux0A==}
@@ -4818,11 +4800,6 @@ packages:
     peerDependenciesMeta:
       typescript:
         optional: true
-
-  vuedraggable@4.1.0:
-    resolution: {integrity: sha512-FU5HCWBmsf20GpP3eudURW3WdWTKIbEIQxh9/8GE806hydR9qZqRRxRE3RjqX7PkuLuMQG/A7n3cfj9rCEchww==}
-    peerDependencies:
-      vue: ^3.0.1
 
   w3c-keyname@2.2.8:
     resolution: {integrity: sha512-dpojBhNsCNN7T82Tm7k26A6G9ML3NkhDsnw9n/eoxSRlVBB4CEtIQ/KTCLI2Fwf3ataSXRhYFkQi3SlnFwPvPQ==}
@@ -6150,8 +6127,6 @@ snapshots:
   '@types/node@24.13.5':
     dependencies:
       undici-types: 7.18.2
-
-  '@types/nprogress@0.2.3': {}
 
   '@types/path-browserify@1.0.3': {}
 
@@ -8213,8 +8188,6 @@ snapshots:
 
   nostics@1.2.0: {}
 
-  nprogress@0.2.0: {}
-
   nth-check@2.1.1:
     dependencies:
       boolbase: 1.0.0
@@ -8789,8 +8762,6 @@ snapshots:
       is-fullwidth-code-point: 3.0.0
 
   snabbdom@3.6.4: {}
-
-  sortablejs@1.14.0: {}
 
   sortablejs@1.15.7: {}
 
@@ -9461,11 +9432,6 @@ snapshots:
       '@vue/shared': 3.5.42
     optionalDependencies:
       typescript: 6.0.3
-
-  vuedraggable@4.1.0(vue@3.5.42(typescript@6.0.3)):
-    dependencies:
-      sortablejs: 1.14.0
-      vue: 3.5.42(typescript@6.0.3)
 
   w3c-keyname@2.2.8: {}
 

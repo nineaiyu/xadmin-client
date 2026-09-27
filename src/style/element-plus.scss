@@ -26,23 +26,8 @@
   padding: 0 !important;
 }
 
-/* nprogress 适配 element-plus 的主题色 */
-#nprogress {
-  & .bar {
-    background-color: var(--el-color-primary) !important;
-  }
-
-  & .peg {
-    box-shadow:
-      0 0 10px var(--el-color-primary),
-      0 0 5px var(--el-color-primary) !important;
-  }
-
-  & .spinner-icon {
-    border-top-color: var(--el-color-primary);
-    border-left-color: var(--el-color-primary);
-  }
-}
+/* 顶栏进度条（src/utils/progress）的配色在模块内联样式中读取
+   --el-color-primary，无需在此重复定义，避免主题色两处维护 */
 
 .pure-dialog {
   .el-dialog__header.show-close {
