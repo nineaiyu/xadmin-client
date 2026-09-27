@@ -9,6 +9,7 @@ import { passwordRulesCheck } from "@/utils";
 import { $t, transformI18n } from "@/plugins/i18n";
 import { getTopMenu, initRouter } from "@/router/utils";
 import { useUserStoreHook } from "@/store/modules/user";
+import { LOGIN_PAGE } from "../utils/enums";
 import { computed, onMounted, reactive, ref } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import ReSendVerifyCode from "@/components/ReSendVerifyCode";
@@ -117,7 +118,7 @@ const onRegister = async () => {
 };
 
 function onBack() {
-  useUserStoreHook().SET_CURRENT_PAGE(0);
+  useUserStoreHook().SET_CURRENT_PAGE(LOGIN_PAGE.basic);
 }
 
 const formRules = reactive<FormRules>({

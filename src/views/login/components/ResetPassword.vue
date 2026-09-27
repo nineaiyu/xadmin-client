@@ -5,6 +5,7 @@ import Motion from "../utils/motion";
 import type { FormInstance, FormRules } from "element-plus";
 import { $t, transformI18n } from "@/plugins/i18n";
 import { useUserStoreHook } from "@/store/modules/user";
+import { LOGIN_PAGE } from "../utils/enums";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Lock from "~icons/ri/lock-fill";
 import { resetPasswordApi } from "@/api/auth";
@@ -71,7 +72,7 @@ const handleSubmit = () => {
 };
 
 function onBack() {
-  useUserStoreHook().SET_CURRENT_PAGE(0);
+  useUserStoreHook().SET_CURRENT_PAGE(LOGIN_PAGE.basic);
 }
 
 const formRules = reactive<FormRules>({

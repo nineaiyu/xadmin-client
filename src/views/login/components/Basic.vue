@@ -8,7 +8,7 @@ import { message } from "@/utils/message";
 import { loginRules } from "../utils/rule";
 import type { FormInstance } from "element-plus";
 import { $t, transformI18n } from "@/plugins/i18n";
-import { operates } from "../utils/enums";
+import { LOGIN_PAGE, operates } from "../utils/enums";
 import { useUserStoreHook } from "@/store/modules/user";
 import { getTopMenu, initRouter } from "@/router/utils";
 import { ReImageVerify } from "@/components/ReImageVerify";
@@ -344,7 +344,9 @@ watch(loginDay, value => {
                 v-if="authInfo.reset"
                 link
                 type="primary"
-                @click="useUserStoreHook().SET_CURRENT_PAGE(4)"
+                @click="
+                  useUserStoreHook().SET_CURRENT_PAGE(LOGIN_PAGE.resetPassword)
+                "
               >
                 {{ t("login.forget") }}
               </el-button>
@@ -374,11 +376,11 @@ watch(loginDay, value => {
         <el-form-item>
           <div class="w-full h-5 flex-bc">
             <el-button
-              v-for="(item, index) in operates"
-              :key="index"
+              v-for="item in operates"
+              :key="item.page"
               class="w-full mt-4!"
               size="default"
-              @click="useUserStoreHook().SET_CURRENT_PAGE(index + 1)"
+              @click="useUserStoreHook().SET_CURRENT_PAGE(item.page)"
             >
               {{ t(item.title) }}
             </el-button>

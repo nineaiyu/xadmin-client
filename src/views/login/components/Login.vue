@@ -5,6 +5,7 @@ import { useI18n } from "vue-i18n";
 import Motion from "../utils/motion";
 import { useRoute, useRouter } from "vue-router";
 import { useUserStoreHook } from "@/store/modules/user";
+import { LOGIN_PAGE } from "../utils/enums";
 import { getTopMenu, initRouter } from "@/router/utils";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Lock from "~icons/ri/lock-fill";
@@ -211,7 +212,7 @@ const handleLogin = () => {
 };
 
 function onBack() {
-  useUserStoreHook().SET_CURRENT_PAGE(0);
+  useUserStoreHook().SET_CURRENT_PAGE(LOGIN_PAGE.basic);
 }
 </script>
 
@@ -316,7 +317,9 @@ function onBack() {
                 v-if="authInfo.reset"
                 link
                 type="primary"
-                @click="useUserStoreHook().SET_CURRENT_PAGE(4)"
+                @click="
+                  useUserStoreHook().SET_CURRENT_PAGE(LOGIN_PAGE.resetPassword)
+                "
               >
                 {{ t("login.forget") }}
               </el-button>

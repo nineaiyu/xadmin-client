@@ -3,10 +3,10 @@ import { computed, toRaw } from "vue";
 import Motion from "./utils/motion";
 import basic from "./components/Basic.vue";
 import TypeIt from "@/components/ReTypeit";
-import qrCode from "./components/QrCode.vue";
 import register from "./components/Register.vue";
 import resetPassword from "./components/ResetPassword.vue";
 import login from "./components/Login.vue";
+import { LOGIN_PAGE } from "./utils/enums";
 import { useNav } from "@/layout/hooks/useNav";
 import { useLayout } from "@/layout/hooks/useLayout";
 import { useUserStoreHook } from "@/store/modules/user";
@@ -101,16 +101,14 @@ const { locale, translationCh, translationEn } = useTranslationLang();
             </h2>
           </Motion>
           <!-- 账户密码登录 -->
-          <basic v-if="currentPage === 0" />
+          <basic v-if="currentPage === LOGIN_PAGE.basic" />
 
           <!-- 验证码登录 -->
-          <login v-if="currentPage === 1" />
-          <!-- 二维码登录 -->
-          <qrCode v-if="currentPage === 2" />
+          <login v-if="currentPage === LOGIN_PAGE.verifyCode" />
           <!-- 注册 -->
-          <register v-if="currentPage === 3" />
+          <register v-if="currentPage === LOGIN_PAGE.register" />
           <!-- 忘记密码 -->
-          <resetPassword v-if="currentPage === 4" />
+          <resetPassword v-if="currentPage === LOGIN_PAGE.resetPassword" />
         </div>
       </div>
     </div>

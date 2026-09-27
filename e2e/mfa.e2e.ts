@@ -73,13 +73,17 @@ test.describe("MFA 功能入口", () => {
     await expect(page.getByRole("button", { name: "绑定 OTP" })).toBeVisible();
   });
 
-  test("个人中心：包含 MFA 安全 tab", async ({ page }) => {
+  test("个人中心入口收敛：渲染账户设置（功能超集）且 MFA 面板可达", async ({
+    page
+  }) => {
     await login(page);
+    // 个人中心已收敛到「账户设置」：菜单 path 不变（旧书签可用），component 指向同一实现
     await page.goto("/#/user/info/index");
 
-    const mfaTab = page.getByRole("tab", { name: "MFA 安全" }).first();
-    await expect(mfaTab).toBeVisible({ timeout: 15_000 });
-    await mfaTab.click();
+    const mfaItem = page.getByRole("menuitem", { name: "MFA 安全" });
+    await expect(mfaItem).toBeVisible({ timeout: 15_000 });
+    await expect(page).toHaveURL(/#\/user\/info\/index/, { timeout: 15_000 });
+    await mfaItem.click();
     await expect(page.getByRole("button", { name: "绑定 OTP" })).toBeVisible();
   });
 
