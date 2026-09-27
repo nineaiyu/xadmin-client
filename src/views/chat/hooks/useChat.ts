@@ -14,6 +14,8 @@ import {
 import { chatApi, streamAiMessage, type ChatMessageItem } from "@/api/chat";
 import { SseError } from "@/utils/sse";
 import { useRooms } from "./useRooms";
+import { createMessageStore } from "./chatMessages";
+import { useChatAttachments } from "./useChatAttachments";
 
 /** 历史分页每页条数（与服务端默认/上限一致：20 / 50） */
 const PAGE_SIZE = 20;
@@ -109,51 +111,13 @@ export function useChat() {
     return !!item.sender_pk && item.sender_pk === me.value.pk;
   }
 
-  function upsertMessage(incoming: ChatMessageItem) {
-    const index = messages.value.findIndex(
-      item =>
-        item.id === incoming.id ||
-        (!!incoming.client_msg_id &&
-          item.client_msg_id === incoming.client_msg_id)
-    );
-    if (index >= 0) {
-      messages.value[index] = {
-        ...messages.value[index],
-        ...incoming,
-        sending: false,
-        failed: false
-      };
-      return false;
-    }
-    messages.value.push(incoming);
-    return true;
-  }
-
-  function applyRecall(payload: ChatRecallPayload) {
-    const target = messages.value.find(item => item.id === payload.message_id);
-    if (target) {
-      target.is_recalled = true;
-      target.content = "";
-      target.can_recall = false;
-    }
-  }
-
-  function pushOptimistic(content: string, clientMsgId: string) {
-    messages.value.push({
-      id: -Date.now(),
-      room_id: activeRoomId.value,
-      room_type: roomState.activeRoom.value?.room_type ?? "",
-      sender_pk: me.value.pk,
-      sender_name: me.value.username,
-      sender_avatar: me.value.avatar,
-      message_type: "text",
-      content,
-      created_time: new Date().toISOString(),
-      client_msg_id: clientMsgId,
-      extra: {},
-      sending: true
-    });
-  }
+  /** 消息集合写入口径（乐观上屏 / 服务端对齐 / 撤回，实现见 chatMessages.ts） */
+  const store = createMessageStore(messages, () => ({
+    roomId: activeRoomId.value,
+    roomType: roomState.activeRoom.value?.room_type ?? "",
+    sender: me.value
+  }));
+  const { upsert: upsertMessage, applyRecall, pushText } = store;
 
   // ------------------------------------------------------------------ WS
 
@@ -319,7 +283,7 @@ export function useChat() {
     const text = content.trim();
     if (!text || !activeRoomId.value) return;
     const clientMsgId = genClientMsgId();
-    pushOptimistic(text, clientMsgId);
+    pushText(text, clientMsgId);
     scrollToBottom();
     if (!socket.value) {
       markFailed(clientMsgId);
@@ -347,7 +311,7 @@ export function useChat() {
     if (!text || !activeRoomId.value || streaming.value) return;
     const clientMsgId = genClientMsgId();
     const roomId = activeRoomId.value;
-    pushOptimistic(text, clientMsgId);
+    pushText(text, clientMsgId);
     scrollToBottom();
     streaming.value = { roomId, content: "", reasoning: "" };
     streamAbort = new AbortController();
@@ -391,6 +355,16 @@ export function useChat() {
     }
   }
 
+  /** 附件发送（上传 + 乐观上屏 + WS 上行，实现见 useChatAttachments.ts） */
+  const { uploading, sendAttachment } = useChatAttachments({
+    activeRoomId,
+    socket,
+    genClientMsgId,
+    pushAttachment: store.pushAttachment,
+    scrollToBottom,
+    markFailed
+  });
+
   function markFailed(clientMsgId: string, detail?: string) {
     const target = messages.value.find(
       item => item.client_msg_id === clientMsgId
@@ -412,15 +386,24 @@ export function useChat() {
       sendAi(item.content);
       return;
     }
+    const payload: Record<string, unknown> = {
+      room_id: activeRoomId.value,
+      content: item.content,
+      client_msg_id: item.client_msg_id
+    };
+    if (item.message_type === "image" || item.message_type === "file") {
+      // 附件消息重发：沿用已上传的附件引用（服务端幂等，不会重复落库）
+      const filePk = item.extra?.file?.pk;
+      if (!filePk) {
+        item.sending = false;
+        item.failed = true;
+        return;
+      }
+      payload.message_type = item.message_type;
+      payload.file_pk = filePk;
+    }
     socket.value?.send(
-      JSON.stringify({
-        action: MessageAction.CHAT_MESSAGE,
-        data: {
-          room_id: activeRoomId.value,
-          content: item.content,
-          client_msg_id: item.client_msg_id
-        }
-      })
+      JSON.stringify({ action: MessageAction.CHAT_MESSAGE, data: payload })
     );
   }
 
@@ -472,6 +455,7 @@ export function useChat() {
     streaming,
     connected,
     pendingCount,
+    uploading,
     scroller,
     me,
     // 操作
@@ -483,6 +467,7 @@ export function useChat() {
     onScroll,
     scrollToBottom,
     send,
+    sendAttachment,
     sendAi,
     resend,
     recall,

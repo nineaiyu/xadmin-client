@@ -131,7 +131,8 @@ export interface ChatRoomMessage {
   sender_pk: number | null;
   sender_name: string;
   sender_avatar: string;
-  message_type: "text" | "ai" | "system";
+  /** text/ai/system 为文本类；image/file 为附件消息（附件信息见 extra.file） */
+  message_type: "text" | "ai" | "system" | "image" | "file";
   content: string;
   created_time: string;
   client_msg_id: string;
@@ -143,6 +144,8 @@ export interface ChatRoomMessage {
     reasoning?: string;
     /** 模型只产出思考、未给出最终回答（内容为可读提示文案） */
     no_answer?: boolean;
+    /** 附件（图片/文件消息）的渲染信息（类型定义见 src/api/chat） */
+    file?: import("@/api/chat").ChatAttachment;
   };
   is_recalled?: boolean;
   can_recall?: boolean;

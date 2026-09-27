@@ -1,12 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { requestMock, postSseMock } = vi.hoisted(() => ({
+const { requestMock, uploadMock, postSseMock } = vi.hoisted(() => ({
   requestMock: vi.fn(),
+  uploadMock: vi.fn(),
   postSseMock: vi.fn()
 }));
 
 vi.mock("@/utils/http", () => ({
-  http: { request: requestMock }
+  http: { request: requestMock, upload: uploadMock }
 }));
 
 vi.mock("@/utils/sse", () => ({ postSse: postSseMock }));
@@ -111,6 +112,28 @@ describe("chatApi 消息与联系人", () => {
       "/api/chat/message",
       { params: { room: 1, before_id: 88, limit: 20 }, data: {} },
       {}
+    );
+  });
+
+  it("附件：upload 端点与取件地址派生（图片可带 size）", () => {
+    const file = new File([new Uint8Array([1, 2, 3])], "pic.png", {
+      type: "image/png"
+    });
+    chatApi.uploadAttachment(file, "image");
+    // 走 http.upload（multipart/form-data 专用通道，与文件中心上传同口径）
+    const [url, params, form] = uploadMock.mock.calls.at(-1)!;
+    expect(url).toBe("/api/chat/message/upload");
+    expect(params).toEqual({});
+    expect(form).toBeInstanceOf(FormData);
+    expect((form as FormData).get("kind")).toBe("image");
+    expect(((form as FormData).get("file") as File).name).toBe("pic.png");
+
+    expect(chatApi.attachmentUrl(66)).toBe("/api/chat/message/66/file");
+    expect(chatApi.attachmentUrl(66, "thumb")).toBe(
+      "/api/chat/message/66/file?size=thumb"
+    );
+    expect(chatApi.attachmentUrl(66, "preview")).toBe(
+      "/api/chat/message/66/file?size=preview"
     );
   });
 

@@ -18,6 +18,8 @@ import AiIcon from "~icons/ep/cpu";
 import BellIcon from "~icons/ep/bell";
 import BellFilledIcon from "~icons/ep/bell-filled";
 import GroupIcon from "~icons/ep/user-filled";
+import PictureIcon from "~icons/ep/picture";
+import PaperclipIcon from "~icons/ep/paperclip";
 import {
   type ChatMessageItem,
   type ChatPeer,
@@ -53,10 +55,14 @@ const props = defineProps<{
   connected: boolean;
   pendingCount: number;
   isNarrow: boolean;
+  /** 附件上传中（禁用重复触发） */
+  uploading: boolean;
 }>();
 
 const emit = defineEmits<{
   send: [string];
+  /** 附件消息：文件 + 种类（image / file），上传与发送由父级（useChat）驱动 */
+  sendAttachment: [File, "image" | "file"];
   recall: [ChatMessageItem];
   resend: [ChatMessageItem];
   loadMore: [];
@@ -150,6 +156,25 @@ function insertEmoji(emoji: string) {
     textarea.focus();
     textarea.setSelectionRange(position, position);
   });
+}
+
+/* ---------------- 附件消息（图片 / 文件） ---------------- */
+
+const imageInput = ref<HTMLInputElement | null>(null);
+const fileInput = ref<HTMLInputElement | null>(null);
+
+/** 唤起系统选择器（隐藏 input 作为唯一入口，避免额外弹层组件） */
+function pickAttachment(kind: "image" | "file") {
+  if (!props.room || props.uploading) return;
+  (kind === "image" ? imageInput.value : fileInput.value)?.click();
+}
+
+function onAttachmentChange(event: Event, kind: "image" | "file") {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  // 清空 value：允许连续选择同一文件（否则 change 不再触发）
+  input.value = "";
+  if (file) emit("sendAttachment", file, kind);
 }
 
 /** 桌面通知开关（全站生效）：开启时按需申请权限，拒绝则保持关闭并提示 */
@@ -405,6 +430,38 @@ watch(
       <div ref="inputWrap" data-testid="chat-input">
         <div class="flex items-center gap-1 pb-1">
           <ChatEmojiPanel @select="insertEmoji" />
+          <el-button
+            text
+            :disabled="!room || uploading"
+            :icon="useRenderIcon(PictureIcon)"
+            :title="t('chat.attachImage')"
+            data-testid="chat-attach-image"
+            @click="pickAttachment('image')"
+          />
+          <el-button
+            text
+            :disabled="!room || uploading"
+            :icon="useRenderIcon(PaperclipIcon)"
+            :title="t('chat.attachFile')"
+            data-testid="chat-attach-file"
+            @click="pickAttachment('file')"
+          />
+          <!-- 隐藏文件选择器：图片限 image/*；文件不限制（扩展名策略由服务端 fail-closed 把关） -->
+          <input
+            ref="imageInput"
+            type="file"
+            accept="image/*"
+            class="hidden"
+            data-testid="chat-image-input"
+            @change="onAttachmentChange($event, 'image')"
+          />
+          <input
+            ref="fileInput"
+            type="file"
+            class="hidden"
+            data-testid="chat-file-input"
+            @change="onAttachmentChange($event, 'file')"
+          />
         </div>
         <el-input
           v-model="draft"

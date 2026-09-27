@@ -10,13 +10,20 @@ import {
 
 /**
  * 聊天室 E2E：微信式两栏布局 + 公共聊天室收发持久化 + 私聊实时送达与未读红点
- * + 多人群聊（建群/改名/增减成员/退群）。
+ * + 多人群聊（建群/改名/增减成员/退群）+ 附件消息（图片/文件上传渲染）。
  *
  * 页面选择器以 `data-testid` 为主（chat-page / chat-room-* / chat-contact-* /
- * chat-messages / chat-input / chat-send / chat-group-*），仅个别按钮按文案定位。
+ * chat-messages / chat-input / chat-send / chat-group-*，以及附件消息的
+ * chat-image 与 chat-file-*），仅个别按钮按文案定位。
  * 两个参与者都用超管（xadmin / e2e_approver）：聊天室接口按菜单权限点门控，
  * E2E 种子里的普通用户没有聊天室菜单授权（授权形态由后端守护测试覆盖）。
  */
+
+/** 2x2 纯色 PNG（最小合法图片：走服务端缩略图链路） */
+const E2E_PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEElEQVR4nGP8zwACTGCSAQANHQEDgslx/wAAAABJRU5ErkJggg==",
+  "base64"
+);
 
 test("聊天室：两栏布局与公共聊天室收发持久化", async ({ page }) => {
   test.setTimeout(120_000);
@@ -35,7 +42,7 @@ test("聊天室：两栏布局与公共聊天室收发持久化", async ({ page 
   await input.waitFor({ state: "visible", timeout: 20_000 });
   const text = `E2E-公共聊天室-${Date.now()}`;
   await input.fill(text);
-  await page.getByRole("button", { name: "发送" }).first().click();
+  await page.locator('[data-testid="chat-send"]').first().click();
 
   await expect(
     page.locator('[data-testid="chat-messages"]').getByText(text)
@@ -48,6 +55,50 @@ test("聊天室：两栏布局与公共聊天室收发持久化", async ({ page 
   });
   await expect(
     page.locator('[data-testid="chat-messages"]').getByText(text)
+  ).toBeVisible({ timeout: 25_000 });
+});
+
+test("聊天室：图片与文件消息上传渲染（含刷新持久化）", async ({ page }) => {
+  test.setTimeout(150_000);
+  const wsOpened = waitAppWebSocket(page);
+  await login(page);
+  await wsOpened;
+  await openMenuPath(page, [], "/default/chat/index");
+  await expect(page.locator('[data-testid="chat-page"]')).toBeVisible({
+    timeout: 20_000
+  });
+
+  // 文件消息：上传 → 文件卡片（文件名 + 受鉴权下载入口）
+  const fileName = `e2e-${Date.now()}.txt`;
+  await page.locator('[data-testid="chat-file-input"]').setInputFiles({
+    name: fileName,
+    mimeType: "text/plain",
+    buffer: Buffer.from("hello e2e")
+  });
+  const fileBubble = page.locator('[data-testid="chat-file"]').last();
+  await expect(fileBubble).toBeVisible({ timeout: 20_000 });
+  await expect(fileBubble).toContainText(fileName);
+  await expect(
+    fileBubble.locator('[data-testid="chat-file-download"]')
+  ).toBeVisible();
+
+  // 图片消息：上传 → 缩略图（取件地址为受鉴权的 /api/chat/message/{id}/file）
+  await page.locator('[data-testid="chat-image-input"]').setInputFiles({
+    name: "e2e-pic.png",
+    mimeType: "image/png",
+    buffer: E2E_PNG
+  });
+  const imageBubble = page.locator('[data-testid="chat-image"]').last();
+  await expect(imageBubble).toBeVisible({ timeout: 20_000 });
+  await expect(imageBubble.locator("img")).toHaveAttribute(
+    "src",
+    /\/api\/chat\/message\/\d+\/file\?size=thumb/
+  );
+
+  // 刷新后历史仍在（服务端落库 + 游标分页恢复）
+  await page.reload();
+  await expect(
+    page.locator('[data-testid="chat-messages"]').getByText(fileName)
   ).toBeVisible({ timeout: 25_000 });
 });
 
@@ -124,7 +175,7 @@ test("聊天室：私聊实时送达、未读红点与已读清零", async ({ pa
     const text = `E2E-私聊-${Date.now()}`;
     const input = page.locator('[data-testid="chat-input"] textarea');
     await input.fill(text);
-    await page.getByRole("button", { name: "发送" }).first().click();
+    await page.locator('[data-testid="chat-send"]').first().click();
 
     // B 侧：私聊会话出现且带未读红点
     const badgeB = pageB.locator(

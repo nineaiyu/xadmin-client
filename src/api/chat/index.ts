@@ -1,5 +1,7 @@
 import { BaseRequest } from "@/api/base";
 import type { BaseResult, DataListResult, DetailResult } from "@/api/types";
+import { http } from "@/utils/http";
+import type { PureHttpRequestConfig } from "@/utils/http/types";
 import { postSse, type SseFrame } from "@/utils/sse";
 
 /**
@@ -46,6 +48,20 @@ export interface ChatRoomItem {
   is_owner?: boolean;
 }
 
+/** 附件（图片 / 文件消息）：取件地址由服务端按消息主键派生（受鉴权） */
+export interface ChatAttachment {
+  pk: string;
+  filename: string;
+  filesize: number;
+  mime_type: string;
+  category: string;
+  kind: "image" | "file";
+  /** 受鉴权取件地址（图片 img / 文件下载共用；撤回或附件被清理后为空） */
+  url: string;
+  /** 附件记录已失效（服务端外键置空 / 消息已撤回） */
+  missing: boolean;
+}
+
 /** 消息（与 WS 广播载荷同形状，见 utils/websocket/protocol.ts::ChatRoomMessage） */
 export interface ChatMessageItem {
   id: number;
@@ -54,7 +70,8 @@ export interface ChatMessageItem {
   sender_pk: number | null;
   sender_name: string;
   sender_avatar: string;
-  message_type: "text" | "ai" | "system";
+  /** text/ai/system 为文本类；image/file 为附件消息（附件信息见 extra.file） */
+  message_type: "text" | "ai" | "system" | "image" | "file";
   content: string;
   created_time: string;
   client_msg_id: string;
@@ -83,6 +100,8 @@ export interface ChatMessageItem {
       requires_approval: boolean;
     }>;
     action_result?: Record<string, unknown>;
+    /** 附件消息（image/file）的渲染信息：受鉴权取件地址 + 失效标记 */
+    file?: ChatAttachment;
   };
   is_recalled?: boolean;
   can_recall?: boolean;
@@ -220,6 +239,31 @@ class ChatApi extends BaseRequest {
       {},
       `${this.baseApi}/message/${id}/recall`
     );
+  };
+  /**
+   * 附件上传（图片 / 文件消息共用）：复用文件中心安全策略（扩展名/大小/配额），
+   * 落库为临时件，发送消息后由服务端转正（未发送的临时件由每日清理回收）。
+   * `kind=image` 时服务端校验确为图片（不匹配返回 1001）。
+   */
+  uploadAttachment = (
+    file: File,
+    kind: "image" | "file",
+    config?: PureHttpRequestConfig
+  ) => {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("kind", kind);
+    return http.upload<DetailResult<ChatAttachment>, FormData>(
+      `${this.baseApi}/message/upload`,
+      {},
+      form,
+      config
+    );
+  };
+  /** 附件取件地址（图片 `size=thumb|preview`；文件不带参即下载，均需登录态） */
+  attachmentUrl = (messageId: number, size?: "thumb" | "preview") => {
+    const base = `${import.meta.env.VITE_API_DOMAIN ?? ""}/api/chat/message/${messageId}/file`;
+    return size ? `${base}?size=${size}` : base;
   };
   /** 最近在线联系人 */
   contacts = (params?: { limit?: number }) => {

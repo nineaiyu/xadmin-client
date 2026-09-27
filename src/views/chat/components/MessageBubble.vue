@@ -4,12 +4,15 @@ import { useI18n } from "vue-i18n";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import AiIcon from "~icons/ep/cpu";
 import WarningIcon from "~icons/ep/warning";
+import DocumentIcon from "~icons/ep/document";
+import DownloadIcon from "~icons/ep/download";
 import { aiAssistantApi } from "@/api/ai/ai";
 import type { AiActionDraft } from "@/api/ai/ai";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
+import { http } from "@/utils/http";
 import { SUCCESS_CODE } from "@/api/types";
-import type { ChatMessageItem } from "@/api/chat";
+import type { ChatAttachment, ChatMessageItem } from "@/api/chat";
 import AiMessageBlock from "@/components/AiMessageBlock/index.vue";
 import AiActionCard from "@/views/integration/ai/components/AiActionCard.vue";
 import AiResultTable from "@/views/integration/ai/components/AiResultTable.vue";
@@ -18,6 +21,8 @@ import AiResultTable from "@/views/integration/ai/components/AiResultTable.vue";
  * 单条消息气泡：自己靠右、他人靠左；系统消息居中；AI 回复附引用来源；
  * AI 动作草稿（extra.action_draft / action_drafts）渲染确认卡片（复用助手页
  * AiActionCard，testid 前缀 chat 保持既有 E2E 选择器），确认后才经 execute 端点执行。
+ * 附件消息（image/file）：图片走缩略图 + 点击预览，文件走卡片 + 受鉴权下载，
+ * 取件一律经 /api/chat/message/{id}/file（登录态 + 房间成员校验，不暴露直链）。
  *
  * 内容一律文本插值渲染（不 v-html），与后端长度限制共同约束 XSS 面。
  */
@@ -38,6 +43,42 @@ const { t } = useI18n();
 
 const isSystem = computed(() => props.item.message_type === "system");
 const isAi = computed(() => props.item.message_type === "ai");
+const isImage = computed(() => props.item.message_type === "image");
+const isFile = computed(() => props.item.message_type === "file");
+/** 附件渲染信息（服务端随载荷下发；撤回/附件被清理时 missing=true） */
+const attachment = computed<ChatAttachment | undefined>(
+  () => props.item.extra?.file
+);
+/** 附件不可取件：撤回中、附件缺失（被清理）或地址为空 */
+const attachmentUnavailable = computed(
+  () => !attachment.value?.url || !!attachment.value?.missing
+);
+/** 取件地址补 API 域名前缀（跨域部署时 VITE_API_DOMAIN 非空；同源时为空串） */
+const withApiDomain = (url: string) =>
+  url.startsWith("http")
+    ? url
+    : `${import.meta.env.VITE_API_DOMAIN ?? ""}${url}`;
+const thumbSrc = computed(() =>
+  attachment.value?.url
+    ? `${withApiDomain(attachment.value.url)}?size=thumb`
+    : ""
+);
+const previewSrc = computed(() =>
+  attachment.value?.url
+    ? `${withApiDomain(attachment.value.url)}?size=preview`
+    : ""
+);
+const formatSize = (size?: number) => {
+  const value = Number(size ?? 0);
+  if (!value) return "";
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${(value / 1024 / 1024).toFixed(1)} MB`;
+};
+const downloadAttachment = () => {
+  if (attachment.value?.url)
+    http.autoDownload(withApiDomain(attachment.value.url));
+};
 const sources = computed(() => props.item.extra?.sources ?? []);
 /** 思考过程（落库的 reasoning_content；历史消息默认折叠，点击展开） */
 const reasoningText = computed(() => String(props.item.extra?.reasoning ?? ""));
@@ -163,6 +204,60 @@ const chatActionExecutor = async (draft: AiActionDraft) => {
         :sources="sources"
         class="w-full"
       />
+
+      <!-- 图片消息：缩略图气泡（点击预览大图）；附件失效时渲染占位 -->
+      <div v-else-if="isImage && !item.is_recalled" class="max-w-60">
+        <el-image
+          v-if="!attachmentUnavailable"
+          :src="thumbSrc"
+          :preview-src-list="[previewSrc]"
+          :preview-teleported="true"
+          fit="cover"
+          class="max-h-60 cursor-pointer rounded-lg"
+          data-testid="chat-image"
+        />
+        <div
+          v-else
+          class="rounded-lg bg-(--el-fill-color-light) px-3 py-2 text-xs text-(--el-text-color-secondary)"
+        >
+          {{ t("chat.attachmentMissing") }}
+        </div>
+      </div>
+
+      <!-- 文件消息：文件卡片（名称 + 大小 + 受鉴权下载） -->
+      <div
+        v-else-if="isFile && !item.is_recalled"
+        class="flex min-w-45 max-w-70 items-center gap-2 rounded-lg px-3 py-2"
+        :class="
+          mine
+            ? 'bg-(--el-color-primary) text-white'
+            : 'bg-(--el-fill-color-light) text-(--el-text-color-primary)'
+        "
+        data-testid="chat-file"
+      >
+        <el-icon class="shrink-0 text-lg"
+          ><component :is="useRenderIcon(DocumentIcon)"
+        /></el-icon>
+        <div class="min-w-0 flex-1">
+          <div class="truncate text-sm" :title="attachment?.filename">
+            {{ attachment?.filename || item.content }}
+          </div>
+          <div class="text-xs opacity-70">
+            {{ formatSize(attachment?.filesize) }}
+          </div>
+        </div>
+        <el-button
+          v-if="!attachmentUnavailable"
+          link
+          :type="mine ? 'default' : 'primary'"
+          size="small"
+          class="shrink-0"
+          :icon="useRenderIcon(DownloadIcon)"
+          :title="t('chat.download')"
+          data-testid="chat-file-download"
+          @click="downloadAttachment"
+        />
+      </div>
 
       <div
         v-else
