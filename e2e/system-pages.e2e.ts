@@ -188,6 +188,66 @@ test("用户管理：新增 → 搜索可见 → 删除", async ({ page }) => {
   ).toHaveCount(0, { timeout: 15_000 });
 });
 
+test("岗位管理：新增 → 分配成员 → 搜索可见 → 删除", async ({ page }) => {
+  const postName = `E2E岗位${Date.now()}`;
+  await login(page);
+  await openMenuPath(page, ["系统管理"], "/system/post/index");
+  const table = page.locator(".el-table");
+  await expect(table).toBeVisible({ timeout: 20_000 });
+
+  // 自定义按钮组（关闭了框架默认 create）：工具栏「新建岗位」
+  await page.getByRole("button", { name: "新建岗位" }).first().click();
+  const dialog = page.locator(".el-dialog:visible").first();
+  await expect(dialog).toBeVisible();
+  await dialog.locator('[data-testid="post-name"]').fill(postName);
+  await dialog.locator('[data-testid="post-code"]').fill(`e2e_${Date.now()}`);
+  await dialog.getByRole("button", { name: "保存" }).click();
+  await expect(dialog).not.toBeVisible({ timeout: 15_000 });
+  await expect(table.getByText(postName).first()).toBeVisible({
+    timeout: 15_000
+  });
+
+  // 成员分配：远程搜索选人 → 保存（增量 add）
+  const row = page.locator(".el-table__row", { hasText: postName }).first();
+  await row.getByRole("button", { name: "成员" }).first().click();
+  const memberDialog = page.locator(".el-dialog:visible").first();
+  await expect(memberDialog).toBeVisible();
+  // 远程搜索 + 键盘选中：下拉由 EP teleport 到 body，按可见项定位易受残留副本干扰，
+  // 这里用「输入关键字 → ArrowDown → Enter」这条稳定路径（与联想输入用例同口径）；
+  // 不先 click（el-select 输入框有宽度动画，click 的可操作性检查会因 not stable 超时）
+  const memberSelect = memberDialog.locator(
+    '[data-testid="post-member-select"] input'
+  );
+  await memberSelect.fill("xadmin");
+  await page.waitForTimeout(500); // 远程搜索（≤20 条）返回后下拉才出候选
+  await memberSelect.press("ArrowDown");
+  await memberSelect.press("Enter");
+  // 选中后下拉仍在可见态并拦截后续点击（EP 已知行为）：点弹窗标题区强制收起再保存
+  await memberDialog.locator(".el-dialog__header").click();
+  await memberDialog.getByRole("button", { name: "保存" }).click();
+  await expect(memberDialog).not.toBeVisible({ timeout: 15_000 });
+
+  // 复开成员弹窗：成员已在列（增量写入生效，列表计数由后端注解）
+  await row.getByRole("button", { name: "成员" }).first().click();
+  const reopen = page.locator(".el-dialog:visible").first();
+  await expect(reopen.getByText("xadmin").first()).toBeVisible({
+    timeout: 15_000
+  });
+  await reopen.press("Escape");
+  await expect(reopen).not.toBeVisible({ timeout: 15_000 });
+
+  // 清理：删除岗位（框架默认入口，自带二次确认）
+  await row.getByRole("button", { name: "删除" }).first().click();
+  const confirm = page
+    .locator(".el-popconfirm, .el-popper, .el-message-box")
+    .getByRole("button", { name: "确定" })
+    .first();
+  await confirm.click();
+  await expect(
+    page.locator(".el-table__row", { hasText: postName })
+  ).toHaveCount(0, { timeout: 15_000 });
+});
+
 /**
  * 回归守护：页面组件必须单元素根。
  * 系统设置页曾因模板根级注释构成 Fragment 根——离开该页时 <Transition> 无法
