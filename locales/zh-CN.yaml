@@ -706,6 +706,7 @@ menus:
   formCollection: 表单采集
   formDesigner: 表单设计
   formMySubmission: 我的填报
+  formData: 表单数据
   securitySettings: 安全设置
   userManagement: 用户管理
   deptManagement: 部门管理
@@ -2543,7 +2544,8 @@ dataDataset:
   required: 请完整填写名称、模型与数据列
   saveOk: 保存成功
   deleteConfirm: 确定删除数据集「{name}」吗？引用它的仪表盘卡片与报表将无法取数
-  dateFieldTip: 折线趋势卡片的默认分组字段（可选）
+  dateFieldTip: 折线趋势卡片的默认分组字段（可选）；JSON 日期列需 |date 标注
+  jsonColumnTip: "支持 JSON 路径列：{roots}.键；数值加 |number，日期（趋势用）加 |date（值须为 YYYY-MM-DD）"
   exportCsv: 导出 CSV
 
 dataScreen:
@@ -3097,6 +3099,13 @@ dform:
   historyRollbackDone: 已回滚到版本 v{version}
   historyLoadFailed: 版本历史加载失败
 
+formData:
+  selectTitle: 选择表单
+  selectPlaceholder: 请选择表单
+  noForms: 暂无可查看的表单
+  selectHint: 请先选择表单
+  inactive: 已停用
+  tableRows: "{count} 行"
 leaveApply:
   leave_type: 请假类型
   start_date: 开始日期

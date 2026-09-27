@@ -706,6 +706,7 @@ menus:
   formCollection: Form Collection
   formDesigner: Form Design
   formMySubmission: My Submissions
+  formData: Form Data
   securitySettings: Security Settings
   userManagement: User Manage
   deptManagement: Department Manage
@@ -2543,7 +2544,8 @@ dataDataset:
   required: Name, model and columns are required
   saveOk: Saved
   deleteConfirm: Delete dataset "{name}"? Dashboard cards and reports referencing it will no longer resolve data
-  dateFieldTip: Default grouping field for line trend cards (optional)
+  dateFieldTip: Default group field for line-trend cards (optional); JSON date columns need |date
+  jsonColumnTip: "JSON path columns: {roots}.key; add |number for numeric, |date for date/trend (value must be YYYY-MM-DD)"
   exportCsv: Export CSV
 
 dataScreen:
@@ -3098,6 +3100,13 @@ dform:
   historyRollbackDone: Rolled back to v{version}
   historyLoadFailed: Failed to load version history
 
+formData:
+  selectTitle: Select Form
+  selectPlaceholder: Please select a form
+  noForms: No form available
+  selectHint: Please select a form first
+  inactive: Inactive
+  tableRows: "{count} rows"
 leaveApply:
   leave_type: Leave type
   start_date: Start date
