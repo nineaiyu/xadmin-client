@@ -178,9 +178,9 @@ class SubmissionApi extends BaseApi {
   };
 }
 
-export const dynamicFormApi = new BaseApi("/api/system/dynamic-forms");
+export const dynamicFormApi = new BaseApi("/api/dataset/dynamic-forms");
 export const submissionApi = new SubmissionApi(
-  "/api/system/dynamic-form-submissions"
+  "/api/dataset/dynamic-form-submissions"
 );
 
 /** 列表结果取行：统一实现在 api/base.ts */

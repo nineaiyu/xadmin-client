@@ -3,13 +3,13 @@ import { SUCCESS_CODE } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
-import { screenApi, type ScreenItem } from "@/api/system/analysis";
+import { screenApi, type ScreenItem } from "@/api/dataset/analysis";
 import {
   dashboardApi,
   listRows,
   type DashboardCard,
   type DashboardItem
-} from "@/api/system/datasets";
+} from "@/api/dataset/datasets";
 import {
   isOutboundMessage,
   MessageAction,

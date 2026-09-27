@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import type { AiActionDraft } from "@/api/system/ai";
+import type { AiActionDraft } from "@/api/ai/ai";
 
 /**
  * 受限动作确认卡片（与聊天室 MessageBubble 的动作卡同一交互口径）：

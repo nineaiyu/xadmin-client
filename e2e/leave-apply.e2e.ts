@@ -16,7 +16,7 @@ test("请假申请：列表渲染、状态按钮与删除清理", async ({ page 
   await login(page);
 
   const reason = `E2E请假事由-${Date.now()}`;
-  const created = await page.request.post(`${FRONT_URL}/api/system/leaves`, {
+  const created = await page.request.post(`${FRONT_URL}/api/approval/leaves`, {
     data: {
       leave_type: "annual",
       start_date: "2026-12-01",
@@ -85,11 +85,11 @@ test("请假申请：列表渲染、状态按钮与删除清理", async ({ page 
   } finally {
     // 兜底清理：UI 删除未生效时不残留用例数据
     const listed = await page.request.get(
-      `${FRONT_URL}/api/system/leaves?reason=${encodeURIComponent(reason)}`
+      `${FRONT_URL}/api/approval/leaves?reason=${encodeURIComponent(reason)}`
     );
     const listedPayload = await listed.json();
     for (const item of listedPayload?.data?.results ?? []) {
-      await page.request.delete(`${FRONT_URL}/api/system/leaves/${item.pk}`);
+      await page.request.delete(`${FRONT_URL}/api/approval/leaves/${item.pk}`);
     }
   }
 });

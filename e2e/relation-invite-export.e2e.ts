@@ -125,21 +125,24 @@ test("仪表盘卡片导出图片触发下载且文件非空", async ({ page }) 
   const cardTitle = `E2E导出卡片${suffix}`;
 
   // 数据集（绑定系统用户，按性别分组计数）→ 仪表盘（内嵌柱状图卡片）
-  const dsResp = await page.request.post(`${BACKEND_URL}/api/system/datasets`, {
-    headers,
-    data: {
-      name: datasetName,
-      bound_model: "system.userinfo",
-      columns: ["username"]
+  const dsResp = await page.request.post(
+    `${BACKEND_URL}/api/dataset/datasets`,
+    {
+      headers,
+      data: {
+        name: datasetName,
+        bound_model: "system.userinfo",
+        columns: ["username"]
+      }
     }
-  });
+  );
   expect(dsResp.ok(), await dsResp.text()).toBeTruthy();
   const dsBody = (await dsResp.json()) as ApiBody;
   expect(dsBody.code, JSON.stringify(dsBody)).toBe(1000);
   const datasetPk = dsBody.data?.pk ?? "";
 
   const dashResp = await page.request.post(
-    `${BACKEND_URL}/api/system/dashboards`,
+    `${BACKEND_URL}/api/dataset/dashboards`,
     {
       headers,
       data: {

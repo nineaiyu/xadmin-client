@@ -82,7 +82,7 @@ test("动态表单：金额/选人/级联控件填报主链路", async ({ page }
   // 定义侧走 API（三个新控件的 schema 直接固定，设计器交互已在上一用例覆盖）
   const token = await getAccessToken(page);
   const created = await page.request.post(
-    `${FRONT_URL}/api/system/dynamic-forms`,
+    `${FRONT_URL}/api/dataset/dynamic-forms`,
     {
       data: {
         name: formName,

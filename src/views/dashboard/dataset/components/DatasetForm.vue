@@ -7,7 +7,7 @@ import type {
   DatasetFilter,
   DatasetItem,
   DatasetMeta
-} from "@/api/system/datasets";
+} from "@/api/dataset/datasets";
 
 /**
  * 数据集表单（C5：弹窗体系收敛到 ReDialog 的 content 组件形态）。

@@ -6,7 +6,7 @@ import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { hasAuth } from "@/router/utils";
 import { closeAllDrawer } from "@/components/ReDrawer";
-import { approvalApi } from "@/api/system/approval";
+import { approvalApi } from "@/api/approval/approval";
 import { exportRecordApi } from "@/api/system/export";
 import { importRecordApi } from "@/api/system/import";
 import { taskExecutionApi } from "@/api/system/task";

@@ -6,11 +6,11 @@ const { pendingCountMock, flowPendingCountMock, hasAuthMock } = vi.hoisted(
   })
 );
 
-vi.mock("@/api/system/approval", () => ({
+vi.mock("@/api/approval/approval", () => ({
   approvalApi: { pendingCount: pendingCountMock }
 }));
 
-vi.mock("@/api/system/approvalFlow", () => ({
+vi.mock("@/api/approval/approvalFlow", () => ({
   approvalInstanceApi: { pendingCount: flowPendingCountMock }
 }));
 

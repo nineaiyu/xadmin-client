@@ -3,7 +3,7 @@ import { SUCCESS_CODE } from "@/api/types";
 import { computed, onActivated, onMounted, onUnmounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
-import { approvalApi } from "@/api/system/approval";
+import { approvalApi } from "@/api/approval/approval";
 import { registerApprovalStatsRefresh } from "@/utils/approvalStats";
 
 defineOptions({ name: "ApprovalStats" });

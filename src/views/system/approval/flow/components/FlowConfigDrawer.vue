@@ -3,7 +3,7 @@ import { SUCCESS_CODE } from "@/api/types";
 import { onMounted, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessage, ElRadioButton, ElRadioGroup } from "element-plus";
-import { approvalFlowApi } from "@/api/system/approvalFlow";
+import { approvalFlowApi } from "@/api/approval/approvalFlow";
 import {
   buildFlowPayload,
   createEmptyNode,

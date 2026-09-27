@@ -3,7 +3,7 @@ import { useI18n } from "vue-i18n";
 import { ElLink, ElTag } from "element-plus";
 import { addDialog } from "@/components/ReDialog";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
-import { approvalApi } from "@/api/system/approval";
+import { approvalApi } from "@/api/approval/approval";
 import { SUCCESS_CODE } from "@/api/types";
 import {
   handleOperation,

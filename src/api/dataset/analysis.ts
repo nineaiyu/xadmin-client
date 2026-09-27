@@ -1,7 +1,7 @@
 import { BaseApi, listRows } from "@/api/base";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import type { DataListResult, DetailResult, ListResult } from "@/api/types";
-import type { DashboardItem } from "@/api/system/datasets";
+import type { DashboardItem } from "@/api/dataset/datasets";
 
 /** 大屏与定时报表 */
 export type ScreenItem = {
@@ -78,8 +78,8 @@ export type ScreenCommandPayload =
   | { command: "refresh" }
   | { command: "auto" };
 
-export const screenApi = new BaseApi("/api/system/screens");
-export const reportApi = new BaseApi("/api/system/reports");
+export const screenApi = new BaseApi("/api/dataset/screens");
+export const reportApi = new BaseApi("/api/dataset/reports");
 
 /** 读取控制态：state + 该大屏的仪表盘清单（pk 数组） */
 export const getScreenCommandState = (pk: string) => {
@@ -103,7 +103,7 @@ export const searchReportUsers = (params: {
   keyword?: string;
   pks?: number[];
 }) => {
-  const api = new BaseApi("/api/system/reports");
+  const api = new BaseApi("/api/dataset/reports");
   const query: Record<string, unknown> = {};
   if (params.keyword) query.keyword = params.keyword;
   if (params.pks?.length) query.pks = params.pks.join(",");
@@ -117,13 +117,13 @@ export const searchReportUsers = (params: {
 
 /** 报表立即运行（返回下载中心产物 pk） */
 export const runReport = (pk: string) => {
-  const api = new BaseApi("/api/system/reports");
+  const api = new BaseApi("/api/dataset/reports");
   return api.request<DetailResult>("post", {}, {}, `${api.baseApi}/${pk}/run`);
 };
 
 /** 大屏管理弹窗的仪表盘选项（fetchAllRows 逐页拉全，避免超过分页上限被截断） */
 export const listDashboards = async (): Promise<DashboardItem[]> => {
-  const api = new BaseApi("/api/system/dashboards");
+  const api = new BaseApi("/api/dataset/dashboards");
   const res = (await fetchAllRows(api.list)) as ListResult;
   return listRows<DashboardItem>(res);
 };

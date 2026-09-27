@@ -39,7 +39,7 @@ async function createFlow(
   formSchema: Array<Record<string, unknown>> = []
 ) {
   const resp = await page.request.post(
-    `${BACKEND_URL}/api/system/approval-flows`,
+    `${BACKEND_URL}/api/approval/approval-flows`,
     {
       headers: { Authorization: `Bearer ${token}` },
       data: {

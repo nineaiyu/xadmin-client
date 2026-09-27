@@ -20,7 +20,7 @@ async function createForm(
   data: Record<string, unknown>
 ): Promise<string> {
   const res = await page.request.post(
-    `${BACKEND_URL}/api/system/dynamic-forms`,
+    `${BACKEND_URL}/api/dataset/dynamic-forms`,
     {
       headers: headers(token),
       data
@@ -33,7 +33,7 @@ async function createForm(
 async function removeForm(page: Page, token: string, pk: string) {
   if (!pk) return;
   await page.request
-    .delete(`${BACKEND_URL}/api/system/dynamic-forms/${pk}`, {
+    .delete(`${BACKEND_URL}/api/dataset/dynamic-forms/${pk}`, {
       headers: headers(token)
     })
     .catch(() => undefined);
@@ -94,7 +94,7 @@ test("表单设计器：字段排序与属性编辑落库", async ({ page }) => 
 
     // 落库校验：顺序 + 属性（以服务端 schema 为准）
     const detail = await page.request.get(
-      `${BACKEND_URL}/api/system/dynamic-forms/${formPk}`,
+      `${BACKEND_URL}/api/dataset/dynamic-forms/${formPk}`,
       { headers: headers(token) }
     );
     const fields = (await detail.json())?.data?.schema?.fields ?? [];
@@ -167,14 +167,14 @@ test("表单模板：存为模板 → 从模板新建 → 新表单可填报", a
 
     // 清理前记录副本与模板主键
     const listRes = await page.request.get(
-      `${BACKEND_URL}/api/system/dynamic-forms?page=1&size=100`,
+      `${BACKEND_URL}/api/dataset/dynamic-forms?page=1&size=100`,
       { headers: headers(token) }
     );
     const rows = (await listRes.json())?.data?.results ?? [];
     copyPk =
       rows.find((item: { name: string }) => item.name === copyName)?.pk ?? "";
     const templateRes = await page.request.get(
-      `${BACKEND_URL}/api/system/dynamic-forms?kind=templates&page=1&size=100`,
+      `${BACKEND_URL}/api/dataset/dynamic-forms?kind=templates&page=1&size=100`,
       { headers: headers(token) }
     );
     const templates = (await templateRes.json())?.data?.results ?? [];

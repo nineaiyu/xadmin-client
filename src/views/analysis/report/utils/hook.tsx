@@ -14,8 +14,8 @@ import {
   runReport,
   relatedPk,
   type ReportItem
-} from "@/api/system/analysis";
-import { datasetApi, listRows, type DatasetItem } from "@/api/system/datasets";
+} from "@/api/dataset/analysis";
+import { datasetApi, listRows, type DatasetItem } from "@/api/dataset/datasets";
 import ReportForm from "../components/ReportForm.vue";
 
 /** 最近执行状态兜底配色（后端值：SUCCESS* / FAILURE / 空） */

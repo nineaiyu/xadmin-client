@@ -30,13 +30,13 @@ import { importRecordApi } from "./import";
 import { systemConfigApi } from "./config/system";
 import { userConfigApi } from "./config/user";
 import { loginLogApi } from "./logs/login";
-import { approvalApi } from "./approval";
-import { approvalRuleApi } from "./approvalRule";
+import { approvalApi } from "@/api/approval/approval";
+import { approvalRuleApi } from "@/api/approval/approvalRule";
 import { noticeApi, noticeReadApi } from "./notice";
 import { systemMsgSubscriptionApi } from "./notifications";
-import { leaveApi } from "./leave";
+import { leaveApi } from "@/api/approval/leave";
 import { credentialApi } from "./credential";
-import { knowledgeApi } from "./knowledge";
+import { knowledgeApi } from "@/api/ai/knowledge";
 import { oauthApi } from "./oauth";
 import { tagApi } from "./tag";
 import {
@@ -53,7 +53,7 @@ import {
   getDashBoardUserRegisterTrendApi,
   getDashBoardUserTotalApi
 } from "./dashboard";
-import { datasetApi } from "./datasets";
+import { datasetApi } from "@/api/dataset/datasets";
 import { searchGlobal } from "./search";
 import { settingsSmsServerApi } from "./settings";
 import { systemModuleApi } from "./modules";
@@ -317,7 +317,7 @@ describe("approvalApi 审批单动作", () => {
     approvalApi.approve("t1");
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/approvals/t1/approve",
+      "/api/approval/approvals/t1/approve",
       { params: {}, data: {} },
       {}
     );
@@ -325,7 +325,7 @@ describe("approvalApi 审批单动作", () => {
     approvalApi.reject("t1", "不符合");
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/approvals/t1/reject",
+      "/api/approval/approvals/t1/reject",
       { params: {}, data: { reason: "不符合" } },
       {}
     );
@@ -333,7 +333,7 @@ describe("approvalApi 审批单动作", () => {
     approvalApi.cancel("t1");
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/approvals/t1/cancel",
+      "/api/approval/approvals/t1/cancel",
       { params: {}, data: {} },
       {}
     );
@@ -343,7 +343,7 @@ describe("approvalApi 审批单动作", () => {
     approvalApi.batchApprove([1, 2]);
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/approvals/batch-approve",
+      "/api/approval/approvals/batch-approve",
       { params: {}, data: { pks: [1, 2] } },
       {}
     );
@@ -351,7 +351,7 @@ describe("approvalApi 审批单动作", () => {
     approvalApi.batchReject([3], "材料不全");
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/approvals/batch-reject",
+      "/api/approval/approvals/batch-reject",
       { params: {}, data: { pks: [3], reason: "材料不全" } },
       {}
     );
@@ -361,7 +361,7 @@ describe("approvalApi 审批单动作", () => {
     approvalApi.pendingCount();
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/approvals/pending-count",
+      "/api/approval/approvals/pending-count",
       { params: {}, data: {} },
       {}
     );
@@ -369,7 +369,7 @@ describe("approvalApi 审批单动作", () => {
     approvalApi.stats();
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/approvals/stats",
+      "/api/approval/approvals/stats",
       { params: {}, data: {} },
       {}
     );
@@ -379,7 +379,7 @@ describe("approvalApi 审批单动作", () => {
     approvalRuleApi.candidateOptions();
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/approval-rules/candidate-options",
+      "/api/approval/approval-rules/candidate-options",
       { params: {}, data: {} },
       {}
     );
@@ -465,7 +465,7 @@ describe("leaveApi 请假", () => {
     leaveApi.submit("lv1");
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/leaves/lv1/submit",
+      "/api/approval/leaves/lv1/submit",
       { params: {}, data: {} },
       {}
     );
@@ -473,7 +473,7 @@ describe("leaveApi 请假", () => {
     leaveApi.cancel("lv1");
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/leaves/lv1/cancel",
+      "/api/approval/leaves/lv1/cancel",
       { params: {}, data: {} },
       {}
     );
@@ -481,7 +481,7 @@ describe("leaveApi 请假", () => {
     leaveApi.stats();
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/leaves/stats",
+      "/api/approval/leaves/stats",
       { params: {}, data: {} },
       {}
     );
@@ -513,7 +513,7 @@ describe("knowledgeApi 知识库", () => {
     knowledgeApi.upload("手册", "# 内容");
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/ai/knowledge-documents",
+      "/api/ai/knowledge-documents",
       { params: {}, data: { name: "手册", content: "# 内容" } },
       {}
     );
@@ -523,7 +523,7 @@ describe("knowledgeApi 知识库", () => {
     knowledgeApi.syncRepo();
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/ai/knowledge-documents/sync-repo",
+      "/api/ai/knowledge-documents/sync-repo",
       { params: {}, data: {} },
       {}
     );
@@ -531,7 +531,7 @@ describe("knowledgeApi 知识库", () => {
     knowledgeApi.batchToggle([1, 2], false);
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/ai/knowledge-documents/batch-toggle",
+      "/api/ai/knowledge-documents/batch-toggle",
       { params: {}, data: { pks: [1, 2], is_active: false } },
       {}
     );
@@ -776,7 +776,7 @@ describe("datasets 数据集动作", () => {
     datasetApi.meta();
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/datasets/meta",
+      "/api/dataset/datasets/meta",
       { params: {}, data: {} },
       {}
     );
@@ -784,7 +784,7 @@ describe("datasets 数据集动作", () => {
     datasetApi.execute("ds1", { params: { limit: 10 } });
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/datasets/ds1/execute",
+      "/api/dataset/datasets/ds1/execute",
       { params: {}, data: { params: { limit: 10 } } },
       {}
     );
@@ -792,7 +792,7 @@ describe("datasets 数据集动作", () => {
     datasetApi.aggregate("ds1", { type: "sum" });
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/datasets/ds1/aggregate",
+      "/api/dataset/datasets/ds1/aggregate",
       { params: {}, data: { type: "sum" } },
       {}
     );

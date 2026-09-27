@@ -46,7 +46,7 @@ async function createFlow(
   name = `E2E深度流程-${suffix}`
 ): Promise<string> {
   const res = await page.request.post(
-    `${BACKEND_URL}/api/system/approval-flows`,
+    `${BACKEND_URL}/api/approval/approval-flows`,
     {
       headers: auth(token),
       data: {
@@ -78,7 +78,7 @@ async function createInstance(
   title: string
 ): Promise<string> {
   const res = await page.request.post(
-    `${BACKEND_URL}/api/system/approval-instances`,
+    `${BACKEND_URL}/api/approval/approval-instances`,
     {
       headers: auth(token),
       data: { flow: flowPk, title, form_data: { amount: 100 } }
@@ -127,7 +127,7 @@ test("通过弹窗填审批意见：意见入流转记录时间线", async ({ pa
 
     // 落库校验：任务意见写入（服务端口径）
     const detail = await page.request.get(
-      `${BACKEND_URL}/api/system/approval-instances`,
+      `${BACKEND_URL}/api/approval/approval-instances`,
       {
         headers: auth(approverToken),
         params: { scope: "done", page: 1, size: 50 }
@@ -141,7 +141,7 @@ test("通过弹窗填审批意见：意见入流转记录时间线", async ({ pa
   } finally {
     if (flowPk) {
       await page.request
-        .delete(`${BACKEND_URL}/api/system/approval-flows/${flowPk}`, {
+        .delete(`${BACKEND_URL}/api/approval/approval-flows/${flowPk}`, {
           headers: auth(adminToken)
         })
         .catch(() => undefined);
@@ -188,7 +188,7 @@ test("申请人催办：发送提醒并命中 10 分钟节流", async ({ page })
     if (instancePk) {
       await page.request
         .post(
-          `${BACKEND_URL}/api/system/approval-instances/${instancePk}/cancel`,
+          `${BACKEND_URL}/api/approval/approval-instances/${instancePk}/cancel`,
           {
             headers: auth(token),
             data: {}
@@ -198,7 +198,7 @@ test("申请人催办：发送提醒并命中 10 分钟节流", async ({ page })
     }
     if (flowPk) {
       await page.request
-        .delete(`${BACKEND_URL}/api/system/approval-flows/${flowPk}`, {
+        .delete(`${BACKEND_URL}/api/approval/approval-flows/${flowPk}`, {
           headers: auth(token)
         })
         .catch(() => undefined);
@@ -219,7 +219,7 @@ test("驳回后重新提交：按原流程与原内容预填发起弹窗", async
     flowPk = await createFlow(page, token, suffix);
     instancePk = await createInstance(page, token, flowPk, title);
     const rejectRes = await page.request.post(
-      `${BACKEND_URL}/api/system/approval-instances/${instancePk}/reject`,
+      `${BACKEND_URL}/api/approval/approval-instances/${instancePk}/reject`,
       { headers: auth(approverToken), data: { reason: "E2E信息有误" } }
     );
     expect(rejectRes.ok(), await rejectRes.text()).toBeTruthy();
@@ -265,7 +265,7 @@ test("驳回后重新提交：按原流程与原内容预填发起弹窗", async
   } finally {
     if (flowPk) {
       await page.request
-        .delete(`${BACKEND_URL}/api/system/approval-flows/${flowPk}`, {
+        .delete(`${BACKEND_URL}/api/approval/approval-flows/${flowPk}`, {
           headers: auth(token)
         })
         .catch(() => undefined);
@@ -282,7 +282,7 @@ test("流程定义：分支路由 target 可选（非自环）并落库", async 
 
   try {
     const res = await page.request.post(
-      `${BACKEND_URL}/api/system/approval-flows`,
+      `${BACKEND_URL}/api/approval/approval-flows`,
       {
         headers: auth(token),
         data: {
@@ -354,7 +354,7 @@ test("流程定义：分支路由 target 可选（非自环）并落库", async 
     await expect(drawer).not.toBeVisible({ timeout: 15_000 });
 
     const detail = await page.request.get(
-      `${BACKEND_URL}/api/system/approval-flows/${flowPk}`,
+      `${BACKEND_URL}/api/approval/approval-flows/${flowPk}`,
       { headers: auth(token) }
     );
     const nodes = (await detail.json())?.data?.nodes ?? [];
@@ -365,7 +365,7 @@ test("流程定义：分支路由 target 可选（非自环）并落库", async 
   } finally {
     if (flowPk) {
       await page.request
-        .delete(`${BACKEND_URL}/api/system/approval-flows/${flowPk}`, {
+        .delete(`${BACKEND_URL}/api/approval/approval-flows/${flowPk}`, {
           headers: auth(token)
         })
         .catch(() => undefined);

@@ -9,7 +9,7 @@ import {
   aiConfigApi,
   type AiMetrics,
   type AiUsageSummary
-} from "@/api/system/ai";
+} from "@/api/ai/ai";
 import { useAiProfiles } from "./utils/useAiProfiles";
 
 defineOptions({

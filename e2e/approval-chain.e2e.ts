@@ -54,7 +54,7 @@ async function createChainRule(
   levels: Array<Record<string, unknown>>
 ): Promise<ChainRule> {
   const response = await page.request.post(
-    `${BACKEND_URL}/api/system/approval-rules`,
+    `${BACKEND_URL}/api/approval/approval-rules`,
     {
       headers: { Authorization: `Bearer ${token}` },
       data: {
@@ -73,7 +73,7 @@ async function createChainRule(
 
 async function disableRule(page: Page, token: string, pk: string) {
   await page.request
-    .patch(`${BACKEND_URL}/api/system/approval-rules/${pk}`, {
+    .patch(`${BACKEND_URL}/api/approval/approval-rules/${pk}`, {
       headers: { Authorization: `Bearer ${token}` },
       data: { is_active: false }
     })
@@ -206,7 +206,7 @@ test.describe.serial("审批规则多级审批链", () => {
         .poll(
           async () =>
             page.request
-              .get(`${BACKEND_URL}/api/system/approvals/${approvalId}`, {
+              .get(`${BACKEND_URL}/api/approval/approvals/${approvalId}`, {
                 headers
               })
               .then(res => res.json())
@@ -215,7 +215,7 @@ test.describe.serial("审批规则多级审批链", () => {
         )
         .toBe("CANCELLED");
       const detail = await page.request
-        .get(`${BACKEND_URL}/api/system/approvals/${approvalId}`, { headers })
+        .get(`${BACKEND_URL}/api/approval/approvals/${approvalId}`, { headers })
         .then(res => res.json());
       expect(Number(detail?.data?.current_level ?? 0)).toBe(0);
     } finally {
@@ -328,7 +328,7 @@ test.describe.serial("审批规则多级审批链", () => {
       await expect(levelRow).toHaveCount(0, { timeout: 15_000 });
 
       const detail = await page.request
-        .get(`${BACKEND_URL}/api/system/approvals/${approvedId}`, { headers })
+        .get(`${BACKEND_URL}/api/approval/approvals/${approvedId}`, { headers })
         .then(res => res.json());
       expect(detail?.data?.status?.value).toBe("APPROVED");
 

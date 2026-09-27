@@ -12,7 +12,7 @@ import {
 import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
-import { aiProfileApi, type AiProfileItem } from "@/api/system/ai";
+import { aiProfileApi, type AiProfileItem } from "@/api/ai/ai";
 import AiProfileForm from "../components/AiProfileForm.vue";
 import AiProfilePanel from "../components/AiProfilePanel.vue";
 import { buildAiProfileActionGroups } from "./aiProfileActions";

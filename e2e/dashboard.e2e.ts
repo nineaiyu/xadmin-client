@@ -154,7 +154,7 @@ test("仪表盘聚合卡片：度量字段（sum）可配置并真实渲染，�
     // 数值列 days 用于 sum 度量；leave_type 作为分组列
     // （白名单模型来自 ModelLabelField DATA 根节点；leave 已随 3.1 拆分迁至 approval app）
     const dsRes = await page.request.post(
-      `${BACKEND_URL}/api/system/datasets`,
+      `${BACKEND_URL}/api/dataset/datasets`,
       {
         headers,
         data: {
@@ -170,7 +170,7 @@ test("仪表盘聚合卡片：度量字段（sum）可配置并真实渲染，�
     datasetPk = (await dsRes.json()).data.pk;
 
     const dbRes = await page.request.post(
-      `${BACKEND_URL}/api/system/dashboards`,
+      `${BACKEND_URL}/api/dataset/dashboards`,
       {
         headers,
         data: { name: dashboardName, visibility: "shared", layout: [] }
@@ -248,14 +248,14 @@ test("仪表盘聚合卡片：度量字段（sum）可配置并真实渲染，�
   } finally {
     if (dashboardPk) {
       await page.request
-        .delete(`${BACKEND_URL}/api/system/dashboards/${dashboardPk}`, {
+        .delete(`${BACKEND_URL}/api/dataset/dashboards/${dashboardPk}`, {
           headers
         })
         .catch(() => undefined);
     }
     if (datasetPk) {
       await page.request
-        .delete(`${BACKEND_URL}/api/system/datasets/${datasetPk}`, {
+        .delete(`${BACKEND_URL}/api/dataset/datasets/${datasetPk}`, {
           headers
         })
         .catch(() => undefined);

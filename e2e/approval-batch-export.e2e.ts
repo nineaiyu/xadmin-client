@@ -20,7 +20,7 @@ import {
  */
 
 const INSTANCE_URL = "/system/approval/instance/index";
-const LIST_URL = `${BACKEND_URL}/api/system/approval-instances`;
+const LIST_URL = `${BACKEND_URL}/api/approval/approval-instances`;
 
 /**
  * 内建导出按钮：按 aria-label 定位（框架给图标按钮带 aria-label="导出"）。
@@ -31,7 +31,7 @@ const exportButton = (page: Page) =>
 
 async function createFlow(page: Page, token: string, code: string) {
   const resp = await page.request.post(
-    `${BACKEND_URL}/api/system/approval-flows`,
+    `${BACKEND_URL}/api/approval/approval-flows`,
     {
       headers: { Authorization: `Bearer ${token}` },
       data: {

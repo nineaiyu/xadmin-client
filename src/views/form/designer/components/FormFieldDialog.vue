@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { getDictTypes } from "@/utils/dict";
-import type { FormField, FormFieldType } from "@/api/system/dform";
+import type { FormField, FormFieldType } from "@/api/dataset/dform";
 import { message } from "@/utils/message";
 
 /**

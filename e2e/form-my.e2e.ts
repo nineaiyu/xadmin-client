@@ -22,7 +22,7 @@ test("我的填报：卡片填报 → 框架列表 → 详情抽屉", async ({ p
 
   try {
     const formRes = await page.request.post(
-      `${BACKEND_URL}/api/system/dynamic-forms`,
+      `${BACKEND_URL}/api/dataset/dynamic-forms`,
       {
         headers,
         data: {
@@ -84,7 +84,7 @@ test("我的填报：卡片填报 → 框架列表 → 详情抽屉", async ({ p
   } finally {
     if (formPk) {
       await page.request
-        .delete(`${BACKEND_URL}/api/system/dynamic-forms/${formPk}`, {
+        .delete(`${BACKEND_URL}/api/dataset/dynamic-forms/${formPk}`, {
           headers
         })
         .catch(() => undefined);

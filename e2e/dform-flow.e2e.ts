@@ -34,7 +34,7 @@ async function approverToken(page: Page): Promise<string> {
 
 async function findInstance(page: Page, token: string, keyword: string) {
   const response = await page.request.get(
-    `${BACKEND_URL}/api/system/approval-instances?page=1&size=50`,
+    `${BACKEND_URL}/api/approval/approval-instances?page=1&size=50`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
   expect(response.ok(), await response.text()).toBeTruthy();
@@ -60,7 +60,7 @@ test("表单绑定审批流程：提交进入流程 → 驳回重提 → 审批�
   try {
     // ---- 准备：审批流程（单节点，审批人 = 第二超管） ----
     const flowRes = await page.request.post(
-      `${BACKEND_URL}/api/system/approval-flows`,
+      `${BACKEND_URL}/api/approval/approval-flows`,
       {
         headers,
         data: {
@@ -85,7 +85,7 @@ test("表单绑定审批流程：提交进入流程 → 驳回重提 → 审批�
 
     // ---- 准备：表单绑定流程，含日期范围与明细子表控件 ----
     const formRes = await page.request.post(
-      `${BACKEND_URL}/api/system/dynamic-forms`,
+      `${BACKEND_URL}/api/dataset/dynamic-forms`,
       {
         headers,
         data: {
@@ -150,7 +150,7 @@ test("表单绑定审批流程：提交进入流程 → 驳回重提 → 审批�
     expect(instance, "绑定流程的表单提交应生成流程实例").toBeTruthy();
     if (!instance) throw new Error("绑定流程的表单提交未生成流程实例");
     const rejectRes = await page.request.post(
-      `${BACKEND_URL}/api/system/approval-instances/${instance.pk}/reject`,
+      `${BACKEND_URL}/api/approval/approval-instances/${instance.pk}/reject`,
       { headers: approverHeaders, data: { reason: "E2E 材料不齐" } }
     );
     expect(rejectRes.ok(), await rejectRes.text()).toBeTruthy();
@@ -184,7 +184,7 @@ test("表单绑定审批流程：提交进入流程 → 驳回重提 → 审批�
     );
     if (!instance) throw new Error("重新提交后未生成流程实例");
     const approveRes = await page.request.post(
-      `${BACKEND_URL}/api/system/approval-instances/${instance.pk}/approve`,
+      `${BACKEND_URL}/api/approval/approval-instances/${instance.pk}/approve`,
       { headers: approverHeaders, data: { comment: "E2E 同意" } }
     );
     expect(approveRes.ok(), await approveRes.text()).toBeTruthy();
@@ -211,14 +211,14 @@ test("表单绑定审批流程：提交进入流程 → 驳回重提 → 审批�
   } finally {
     if (formPk) {
       await page.request
-        .delete(`${BACKEND_URL}/api/system/dynamic-forms/${formPk}`, {
+        .delete(`${BACKEND_URL}/api/dataset/dynamic-forms/${formPk}`, {
           headers
         })
         .catch(() => undefined);
     }
     if (flowPk) {
       await page.request
-        .delete(`${BACKEND_URL}/api/system/approval-flows/${flowPk}`, {
+        .delete(`${BACKEND_URL}/api/approval/approval-flows/${flowPk}`, {
           headers
         })
         .catch(() => undefined);

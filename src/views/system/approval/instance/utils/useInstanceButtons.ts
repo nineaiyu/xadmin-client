@@ -1,6 +1,6 @@
 import { shallowRef } from "vue";
 import type { useI18n } from "vue-i18n";
-import { approvalInstanceApi } from "@/api/system/approvalFlow";
+import { approvalInstanceApi } from "@/api/approval/approvalFlow";
 import {
   handleOperation,
   type OperationButtonsRow,

@@ -106,7 +106,7 @@ export type NlInterpretResult = {
   mode: string;
 };
 
-export const aiConfigApi = new ViewBaseApi("/api/system/ai/assistant/config");
+export const aiConfigApi = new ViewBaseApi("/api/ai/assistant/config");
 
 /**
  * AI 流式事件回调（服务端统一契约：meta → reasoning* → delta* → done | error）。
@@ -252,7 +252,7 @@ class AiProfileApi extends BaseApi {
   };
 }
 
-export const aiProfileApi = new AiProfileApi("/api/system/ai/profiles");
+export const aiProfileApi = new AiProfileApi("/api/ai/profiles");
 
 export const listAiProfileRows = <T>(body: unknown): T[] =>
   (((body as { data?: { results?: T[] } })?.data?.results ?? []) as T[]) || [];
@@ -400,4 +400,4 @@ class AiAssistantApi extends BaseApi {
   };
 }
 
-export const aiAssistantApi = new AiAssistantApi("/api/system/ai/assistant");
+export const aiAssistantApi = new AiAssistantApi("/api/ai/assistant");

@@ -75,7 +75,7 @@ async function pickFromDialog(
 async function cleanupDelegationsOf(page: Page, delegatorName: string) {
   // 后端 router 为 SimpleRouter(False)：路由不带尾斜杠（带斜杠会 404，见 e2e/README）
   const resp = await page.request.get(
-    `${FRONT_URL}/api/system/approval-delegations?size=100`
+    `${FRONT_URL}/api/approval/approval-delegations?size=100`
   );
   const body = await resp.json();
   const rows = (body?.data?.results ?? []) as Array<{
@@ -85,7 +85,7 @@ async function cleanupDelegationsOf(page: Page, delegatorName: string) {
   for (const row of rows) {
     if (row.delegator_name === delegatorName) {
       const deleted = await page.request.delete(
-        `${FRONT_URL}/api/system/approval-delegations/${row.pk}`
+        `${FRONT_URL}/api/approval/approval-delegations/${row.pk}`
       );
       expect(deleted.ok()).toBeTruthy();
     }

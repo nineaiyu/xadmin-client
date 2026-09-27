@@ -34,4 +34,4 @@ class LeaveApi extends BaseApi {
   };
 }
 
-export const leaveApi = new LeaveApi("/api/system/leaves");
+export const leaveApi = new LeaveApi("/api/approval/leaves");

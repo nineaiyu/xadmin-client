@@ -5,7 +5,7 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import AiIcon from "~icons/ep/cpu";
 import WarningIcon from "~icons/ep/warning";
 import AiMessageBlock from "@/components/AiMessageBlock/index.vue";
-import type { AiActionDraft, AiConsoleMessage } from "@/api/system/ai";
+import type { AiActionDraft, AiConsoleMessage } from "@/api/ai/ai";
 import AiNlCard from "./AiNlCard.vue";
 import AiActionCard from "./AiActionCard.vue";
 import AiResultTable from "./AiResultTable.vue";

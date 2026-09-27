@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { DashboardCard } from "@/api/system/datasets";
+import type { DashboardCard } from "@/api/dataset/datasets";
 import { cardColSpan, cardColSpanNarrow } from "./span";
 
 const card = (span?: number) => ({ span }) as Pick<DashboardCard, "span">;

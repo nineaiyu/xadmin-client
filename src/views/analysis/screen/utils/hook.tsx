@@ -17,8 +17,8 @@ import {
   listDashboards,
   screenApi,
   type ScreenItem
-} from "@/api/system/analysis";
-import type { DashboardItem } from "@/api/system/datasets";
+} from "@/api/dataset/analysis";
+import type { DashboardItem } from "@/api/dataset/datasets";
 import ScreenForm from "../components/ScreenForm.vue";
 import ScreenControlForm from "../components/ScreenControlForm.vue";
 

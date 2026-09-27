@@ -7,7 +7,7 @@ import {
   type FormField,
   type SubmissionItem,
   type SubmissionTrailItem
-} from "@/api/system/dform";
+} from "@/api/dataset/dform";
 import {
   getDictItems,
   statusTagProps,

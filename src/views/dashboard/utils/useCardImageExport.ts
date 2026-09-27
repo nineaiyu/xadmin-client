@@ -3,7 +3,7 @@ import { message } from "@/utils/message";
 // 仅类型引用（不进包）：下载实现按需动态加载（保持首屏体积）
 import type { ExportedImage } from "@/utils/imageExport";
 import type { useI18n } from "vue-i18n";
-import type { DashboardCard } from "@/api/system/datasets";
+import type { DashboardCard } from "@/api/dataset/datasets";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 

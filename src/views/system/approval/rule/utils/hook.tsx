@@ -4,7 +4,7 @@ import type { RecordType } from "plus-pro-components";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
-import { approvalRuleApi } from "@/api/system/approvalRule";
+import { approvalRuleApi } from "@/api/approval/approvalRule";
 import {
   handleOperation,
   type OperationProps,

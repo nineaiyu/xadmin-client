@@ -3,7 +3,7 @@ import { reactive } from "vue";
 import { useI18n } from "vue-i18n";
 import { choiceValue } from "@/utils/dict";
 import { message } from "@/utils/message";
-import type { DashboardItem } from "@/api/system/datasets";
+import type { DashboardItem } from "@/api/dataset/datasets";
 
 /**
  * 仪表盘表单（C5：弹窗体系收敛到 ReDialog 的 content 组件形态）。

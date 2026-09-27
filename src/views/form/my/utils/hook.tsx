@@ -22,7 +22,7 @@ import {
   submissionApi,
   type FillableFormItem,
   type SubmissionItem
-} from "@/api/system/dform";
+} from "@/api/dataset/dform";
 import SubmissionForm from "../components/SubmissionForm.vue";
 import SubmissionDetail from "../components/SubmissionDetail.vue";
 

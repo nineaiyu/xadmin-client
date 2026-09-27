@@ -5,7 +5,7 @@ import {
   ReActionPanel,
   type PanelActionGroup
 } from "@/components/ReActionPanel";
-import type { AiProfileItem } from "@/api/system/ai";
+import type { AiProfileItem } from "@/api/ai/ai";
 
 /**
  * AI 档案「管理」抽屉内容：档案资料 + 能力画像 + 探测/配置/删除动作。

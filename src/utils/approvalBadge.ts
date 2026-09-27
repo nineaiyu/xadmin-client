@@ -2,8 +2,8 @@ import { SUCCESS_CODE } from "@/api/types";
 import { computed, ref } from "vue";
 import { useIntervalFn } from "@vueuse/core";
 import { hasAuth } from "@/router/utils";
-import { approvalApi } from "@/api/system/approval";
-import { approvalInstanceApi } from "@/api/system/approvalFlow";
+import { approvalApi } from "@/api/approval/approval";
+import { approvalInstanceApi } from "@/api/approval/approvalFlow";
 
 /**
  * 待审批角标轮询间隔：服务端 `pending-count` 有 10s 短缓存，客户端 60s 足够

@@ -18,7 +18,7 @@ import {
   knowledgeApi,
   type KnowledgeDocumentItem,
   type KnowledgeSyncSummary
-} from "@/api/system/knowledge";
+} from "@/api/ai/knowledge";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
 import KnowledgeUploadDialog from "../components/KnowledgeUploadDialog.vue";

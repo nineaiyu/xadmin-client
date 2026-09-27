@@ -1,7 +1,7 @@
 import { reactive, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { getDefaultAuths } from "@/router/utils";
-import { approvalInstanceApi } from "@/api/system/approvalFlow";
+import { approvalInstanceApi } from "@/api/approval/approvalFlow";
 import { refreshApprovalBadge } from "@/utils/approvalBadge";
 import { refreshApprovalStats } from "@/utils/approvalStats";
 import { useInstanceActions } from "./useInstanceActions";

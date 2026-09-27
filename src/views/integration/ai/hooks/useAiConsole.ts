@@ -8,7 +8,7 @@ import {
   type AiActionDraft,
   type AiConsoleFeature,
   type AiConsoleMessage
-} from "@/api/system/ai";
+} from "@/api/ai/ai";
 
 /** 历史分页每页条数（与服务端默认/上限一致：20 / 100） */
 const PAGE_SIZE = 20;

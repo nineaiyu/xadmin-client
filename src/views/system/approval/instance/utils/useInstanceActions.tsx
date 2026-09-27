@@ -1,6 +1,6 @@
 import { h, ref, type Ref } from "vue";
-import { approvalInstanceApi } from "@/api/system/approvalFlow";
-import type { NodeProgress } from "@/api/system/approvalFlow";
+import { approvalInstanceApi } from "@/api/approval/approvalFlow";
+import type { NodeProgress } from "@/api/approval/approvalFlow";
 import { handleOperation } from "@/components/RePlusPage";
 import { message } from "@/utils/message";
 

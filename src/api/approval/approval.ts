@@ -69,4 +69,4 @@ class ApprovalApi extends BaseApi {
   };
 }
 
-export const approvalApi = new ApprovalApi("/api/system/approvals");
+export const approvalApi = new ApprovalApi("/api/approval/approvals");

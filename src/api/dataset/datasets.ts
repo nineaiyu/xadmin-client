@@ -101,9 +101,9 @@ class DatasetApi extends BaseApi {
   };
 }
 
-export const datasetApi = new DatasetApi("/api/system/datasets");
+export const datasetApi = new DatasetApi("/api/dataset/datasets");
 
-export const dashboardApi = new BaseApi("/api/system/dashboards");
+export const dashboardApi = new BaseApi("/api/dataset/dashboards");
 
 /** 列表结果取行（BaseModelSet 分页外壳）：统一实现在 api/base.ts */
 export { listRows } from "@/api/base";

@@ -3,13 +3,13 @@ import { computed, onMounted, reactive } from "vue";
 import { useI18n } from "vue-i18n";
 import { choiceValue } from "@/utils/dict";
 import { message } from "@/utils/message";
-import type { DatasetItem } from "@/api/system/datasets";
+import type { DatasetItem } from "@/api/dataset/datasets";
 import {
   relatedPk,
   searchReportUsers,
   type ReportItem,
   type ReportUserOption
-} from "@/api/system/analysis";
+} from "@/api/dataset/analysis";
 
 /**
  * 定时报表表单（C5：弹窗体系收敛到 ReDialog 的 content 组件形态）。

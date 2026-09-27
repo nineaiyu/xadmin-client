@@ -10,7 +10,7 @@ import {
   type FormField,
   type FormUserOption,
   type SubmissionItem
-} from "@/api/system/dform";
+} from "@/api/dataset/dform";
 
 /**
  * 动态填报表单（弹窗体系收敛到 ReDialog 的 content 组件形态）。

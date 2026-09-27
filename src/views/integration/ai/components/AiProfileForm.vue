@@ -2,7 +2,7 @@
 import { reactive } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
-import type { AiProfileItem } from "@/api/system/ai";
+import type { AiProfileItem } from "@/api/ai/ai";
 
 /**
  * AI 配置档案表单（C5：弹窗体系收敛到 ReDialog 的 content 组件形态）。

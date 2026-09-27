@@ -10,7 +10,7 @@ import {
   dynamicFormApi,
   listRows,
   type DynamicFormItem
-} from "@/api/system/dform";
+} from "@/api/dataset/dform";
 import { message } from "@/utils/message";
 
 /**

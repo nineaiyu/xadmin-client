@@ -1,4 +1,4 @@
-import { approvalDelegationApi } from "@/api/system/approvalDelegation";
+import { approvalDelegationApi } from "@/api/approval/approvalDelegation";
 import { getCurrentInstance, reactive } from "vue";
 import { getDefaultAuths } from "@/router/utils";
 import type { PageTableColumn } from "@/components/RePlusPage";

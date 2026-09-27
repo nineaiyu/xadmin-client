@@ -54,10 +54,10 @@ const IMPACT_SUPPORTED = new Set([
   "/api/system/role",
   "/api/system/dept",
   "/api/system/dict",
-  "/api/system/datasets",
-  "/api/system/approval-flows",
-  "/api/system/dynamic-forms",
-  "/api/system/screens",
+  "/api/dataset/datasets",
+  "/api/approval/approval-flows",
+  "/api/dataset/dynamic-forms",
+  "/api/dataset/screens",
   "/api/system/menu"
 ]);
 

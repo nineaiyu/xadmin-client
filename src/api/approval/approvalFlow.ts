@@ -45,7 +45,7 @@ class ApprovalFlowApi extends BaseApi {
 }
 
 export const approvalFlowApi = new ApprovalFlowApi(
-  "/api/system/approval-flows"
+  "/api/approval/approval-flows"
 );
 
 /** 流程实例（一次申请） */
@@ -213,5 +213,5 @@ class ApprovalInstanceApi extends BaseApi {
 }
 
 export const approvalInstanceApi = new ApprovalInstanceApi(
-  "/api/system/approval-instances"
+  "/api/approval/approval-instances"
 );

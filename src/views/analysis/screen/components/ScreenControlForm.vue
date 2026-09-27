@@ -9,7 +9,7 @@ import {
   type ScreenCommandPayload,
   type ScreenCommandState,
   type ScreenItem
-} from "@/api/system/analysis";
+} from "@/api/dataset/analysis";
 
 /**
  * 大屏远程控制面板（ReDialog 内容组件，hideFooter）。

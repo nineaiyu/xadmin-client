@@ -8,7 +8,7 @@ import {
   listRows,
   type DashboardCard,
   type DatasetItem
-} from "@/api/system/datasets";
+} from "@/api/dataset/datasets";
 import { message } from "@/utils/message";
 
 /**

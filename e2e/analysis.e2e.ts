@@ -180,7 +180,7 @@ test("大屏远程控制：管理端下发切换，展示端实时跟随", async
   // ---- 展示端：第二标签页打开投屏页（同 context 共享登录态与 WS 通道） ----
   const token = await getAccessToken(page);
   const listResp = await page.request.get(
-    `${FRONT_URL}/api/system/screens?name=${encodeURIComponent(screenName)}&size=50`,
+    `${FRONT_URL}/api/dataset/screens?name=${encodeURIComponent(screenName)}&size=50`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
   const rows: Array<{ name?: string; pk?: string }> =

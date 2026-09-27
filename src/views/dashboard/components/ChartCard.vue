@@ -10,7 +10,7 @@ import {
   type AggregateResult,
   type DashboardCard,
   type ExecuteResult
-} from "@/api/system/datasets";
+} from "@/api/dataset/datasets";
 import {
   CHART_ACCENT,
   cssVarColor,

@@ -3,7 +3,7 @@ import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import CardForm from "../components/CardForm.vue";
 import type { useI18n } from "vue-i18n";
-import type { DashboardCard, DatasetItem } from "@/api/system/datasets";
+import type { DashboardCard, DatasetItem } from "@/api/dataset/datasets";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 

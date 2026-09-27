@@ -1,4 +1,4 @@
-import type { DashboardCard } from "@/api/system/datasets";
+import type { DashboardCard } from "@/api/dataset/datasets";
 
 /**
  * 卡片宽度换算：存储值按 12 栅格档位（表单文案 `${span}/12`，类型 3|6|9|12），

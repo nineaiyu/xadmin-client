@@ -3,7 +3,7 @@ import { SUCCESS_CODE } from "@/api/types";
 import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessage, type FormInstance, type FormRules } from "element-plus";
-import { approvalInstanceApi } from "@/api/system/approvalFlow";
+import { approvalInstanceApi } from "@/api/approval/approvalFlow";
 import { searchUserApi } from "@/api/system/search";
 
 /**

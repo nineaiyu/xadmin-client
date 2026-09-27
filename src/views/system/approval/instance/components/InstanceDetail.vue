@@ -3,8 +3,11 @@ import ReEmpty from "@/components/ReEmpty";
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
-import { approvalInstanceApi } from "@/api/system/approvalFlow";
-import type { InstanceComment, NodeProgress } from "@/api/system/approvalFlow";
+import { approvalInstanceApi } from "@/api/approval/approvalFlow";
+import type {
+  InstanceComment,
+  NodeProgress
+} from "@/api/approval/approvalFlow";
 import { SUCCESS_CODE } from "@/api/types";
 import { message } from "@/utils/message";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";

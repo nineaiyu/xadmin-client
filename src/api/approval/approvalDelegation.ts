@@ -21,5 +21,5 @@ class ApprovalDelegationApi extends BaseApi {
 }
 
 export const approvalDelegationApi = new ApprovalDelegationApi(
-  "/api/system/approval-delegations"
+  "/api/approval/approval-delegations"
 );

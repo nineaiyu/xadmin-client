@@ -2,7 +2,7 @@
 import { h, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElTag } from "element-plus";
-import { approvalFlowApi } from "@/api/system/approvalFlow";
+import { approvalFlowApi } from "@/api/approval/approvalFlow";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import type {
@@ -12,7 +12,7 @@ import type {
   FormFieldType,
   FormTableColumn,
   FormTableColumnType
-} from "@/api/system/dform";
+} from "@/api/dataset/dform";
 import { message } from "@/utils/message";
 import FormFieldDialog from "./FormFieldDialog.vue";
 

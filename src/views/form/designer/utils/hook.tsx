@@ -11,7 +11,7 @@ import {
   dynamicFormApi,
   type DynamicFormItem,
   type FormField
-} from "@/api/system/dform";
+} from "@/api/dataset/dform";
 import DynamicFormForm from "../components/DynamicFormForm.vue";
 import TemplatePickerDialog from "../components/TemplatePickerDialog.vue";
 

@@ -5,7 +5,7 @@ import type { FormInstance, FormRules } from "element-plus";
 import type { RecordType } from "plus-pro-components";
 import { SUCCESS_CODE } from "@/api/types";
 import { loadPatScopeCatalog } from "@/api/user/token";
-import { approvalRuleApi } from "@/api/system/approvalRule";
+import { approvalRuleApi } from "@/api/approval/approvalRule";
 import type { ScopeGroup } from "@/utils/scopeDisplay";
 
 defineOptions({ name: "ApprovalRuleForm" });

@@ -34,7 +34,7 @@ async function createFlow(
   nodes: NodePayload[]
 ) {
   const resp = await page.request.post(
-    `${BACKEND_URL}/api/system/approval-flows`,
+    `${BACKEND_URL}/api/approval/approval-flows`,
     {
       headers: { Authorization: `Bearer ${token}` },
       data: { name: `E2E流程-${code}`, code, form_schema: [], nodes }
@@ -54,7 +54,7 @@ async function startInstance(
   title: string
 ) {
   const resp = await page.request.post(
-    `${BACKEND_URL}/api/system/approval-instances`,
+    `${BACKEND_URL}/api/approval/approval-instances`,
     {
       headers: { Authorization: `Bearer ${token}` },
       data: { flow: flowPk, title, form_data: {} }

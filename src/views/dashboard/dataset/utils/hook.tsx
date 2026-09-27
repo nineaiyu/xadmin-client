@@ -14,7 +14,7 @@ import {
   datasetApi,
   type DatasetItem,
   type DatasetMeta
-} from "@/api/system/datasets";
+} from "@/api/dataset/datasets";
 import DatasetForm from "../components/DatasetForm.vue";
 
 /** 可见性兜底配色（字典未接入时的本地映射） */

@@ -63,6 +63,4 @@ class KnowledgeApi extends BaseApi {
   };
 }
 
-export const knowledgeApi = new KnowledgeApi(
-  "/api/system/ai/knowledge-documents"
-);
+export const knowledgeApi = new KnowledgeApi("/api/ai/knowledge-documents");

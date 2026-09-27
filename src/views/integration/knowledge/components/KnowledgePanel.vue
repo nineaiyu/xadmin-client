@@ -10,7 +10,7 @@ import {
   knowledgeApi,
   type KnowledgeDocumentDetail,
   type KnowledgeDocumentItem
-} from "@/api/system/knowledge";
+} from "@/api/ai/knowledge";
 
 /**
  * 知识库「管理文档」抽屉：文档资料 + 启停/删除动作 + 全文与分块清单。

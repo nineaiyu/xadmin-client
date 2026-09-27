@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import type { NlInterpretResult } from "@/api/system/ai";
+import type { NlInterpretResult } from "@/api/ai/ai";
 
 /**
  * NL 查询解释卡片：数据集 / 预览行数 / 模式 / 过滤条件摘要。

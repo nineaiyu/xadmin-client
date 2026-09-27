@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { approvalInstanceApi } from "@/api/system/approvalFlow";
+import { approvalInstanceApi } from "@/api/approval/approvalFlow";
 import { hasAuth } from "@/router/utils";
 import { refreshApprovalBadge, useApprovalBadge } from "@/utils/approvalBadge";
 import InstancePanel from "./components/InstancePanel.vue";

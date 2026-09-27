@@ -7,7 +7,7 @@ import ReSkeleton from "@/components/ReSkeleton";
 import AiIcon from "~icons/ep/cpu";
 import MenuIcon from "~icons/ep/menu";
 import SendIcon from "~icons/ep/promotion";
-import type { AiActionDraft, AiConsoleMessage } from "@/api/system/ai";
+import type { AiActionDraft, AiConsoleMessage } from "@/api/ai/ai";
 import AiMessageBlock from "@/components/AiMessageBlock/index.vue";
 import AiMessageRow from "./AiMessageRow.vue";
 

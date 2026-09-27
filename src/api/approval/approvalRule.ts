@@ -15,5 +15,5 @@ class ApprovalRuleApi extends BaseApi {
 }
 
 export const approvalRuleApi = new ApprovalRuleApi(
-  "/api/system/approval-rules"
+  "/api/approval/approval-rules"
 );

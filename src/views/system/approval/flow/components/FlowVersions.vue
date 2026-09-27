@@ -7,7 +7,7 @@ import { hasAuth } from "@/router/utils";
 import {
   approvalFlowApi,
   type FlowVersionRow
-} from "@/api/system/approvalFlow";
+} from "@/api/approval/approvalFlow";
 
 /**
  * 流程定义版本历史：快照列表 + 回滚动作。

@@ -29,15 +29,12 @@ async function jsonRequest(
 }
 
 async function useStubProfile(page: Page) {
-  const saved = await jsonRequest(
-    page,
-    "patch",
-    "/api/system/ai/assistant/config",
-    { AI_ASSISTANT_ENABLED: true }
-  );
+  const saved = await jsonRequest(page, "patch", "/api/ai/assistant/config", {
+    AI_ASSISTANT_ENABLED: true
+  });
   expect(saved.code).toBe(1000);
 
-  const created = await jsonRequest(page, "post", "/api/system/ai/profiles", {
+  const created = await jsonRequest(page, "post", "/api/ai/profiles", {
     name: `E2E-聊天档案-${Date.now()}`,
     base_url: STUB_LLM_URL,
     api_key: "sk-e2e-stub",
@@ -47,7 +44,7 @@ async function useStubProfile(page: Page) {
   const activated = await jsonRequest(
     page,
     "post",
-    `/api/system/ai/profiles/${String(created.data?.pk ?? "")}/activate`
+    `/api/ai/profiles/${String(created.data?.pk ?? "")}/activate`
   );
   expect(activated.code).toBe(1000);
 }

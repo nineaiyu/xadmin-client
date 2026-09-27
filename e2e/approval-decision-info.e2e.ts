@@ -84,7 +84,7 @@ test("敏感操作审批：详情弹窗展示目标对象快照", async ({ page 
 
     // 记录单号，供清理阶段撤回
     const pending = await page.request.get(
-      `${BACKEND_URL}/api/system/approvals?scope=pending&object_pk=${rolePk}`,
+      `${BACKEND_URL}/api/approval/approvals?scope=pending&object_pk=${rolePk}`,
       { headers }
     );
     const results = (
@@ -95,7 +95,7 @@ test("敏感操作审批：详情弹窗展示目标对象快照", async ({ page 
     await setApprovalPaths(page, token, []).catch(() => undefined);
     if (approvalPk) {
       await page.request
-        .post(`${BACKEND_URL}/api/system/approvals/${approvalPk}/cancel`, {
+        .post(`${BACKEND_URL}/api/approval/approvals/${approvalPk}/cancel`, {
           headers,
           data: {}
         })
@@ -137,7 +137,7 @@ test("流程审批详情：展示关联业务对象（请假单）", async ({ pa
     // fail-closed 拒绝——本用例改用临时流程：创建唯一 code 的流程（审批人 = 第二超管），
     // 并把 LEAVE_APPROVAL_FLOW_CODE 指向它（finally 复位），保证提交可成功。
     const flowResp = await page.request.post(
-      `${BACKEND_URL}/api/system/approval-flows`,
+      `${BACKEND_URL}/api/approval/approval-flows`,
       {
         headers,
         data: {
@@ -192,7 +192,7 @@ test("流程审批详情：展示关联业务对象（请假单）", async ({ pa
     expect(patched.ok(), await patched.text()).toBeTruthy();
 
     const leaveResp = await page.request.post(
-      `${BACKEND_URL}/api/system/leaves`,
+      `${BACKEND_URL}/api/approval/leaves`,
       {
         headers,
         data: {
@@ -208,14 +208,14 @@ test("流程审批详情：展示关联业务对象（请假单）", async ({ pa
     leavePk = ((await leaveResp.json()) as { data: { pk: string } }).data.pk;
 
     const submitResp = await page.request.post(
-      `${BACKEND_URL}/api/system/leaves/${leavePk}/submit`,
+      `${BACKEND_URL}/api/approval/leaves/${leavePk}/submit`,
       { headers, data: {} }
     );
     expect(submitResp.ok(), await submitResp.text()).toBeTruthy();
 
     // 实例按 biz_id 精确匹配（leave 主键）：不依赖标题文案与列表顺序
     const instances = await page.request.get(
-      `${BACKEND_URL}/api/system/approval-instances?size=50`,
+      `${BACKEND_URL}/api/approval/approval-instances?size=50`,
       { headers }
     );
     const rows = (
@@ -250,7 +250,7 @@ test("流程审批详情：展示关联业务对象（请假单）", async ({ pa
     let cancelPk = instancePk;
     if (!cancelPk && leavePk) {
       const listed = await page.request
-        .get(`${BACKEND_URL}/api/system/approval-instances?size=50`, {
+        .get(`${BACKEND_URL}/api/approval/approval-instances?size=50`, {
           headers
         })
         .catch(() => undefined);
@@ -268,7 +268,7 @@ test("流程审批详情：展示关联业务对象（请假单）", async ({ pa
     if (cancelPk) {
       await page.request
         .post(
-          `${BACKEND_URL}/api/system/approval-instances/${cancelPk}/cancel`,
+          `${BACKEND_URL}/api/approval/approval-instances/${cancelPk}/cancel`,
           {
             headers,
             data: {}
@@ -278,7 +278,7 @@ test("流程审批详情：展示关联业务对象（请假单）", async ({ pa
     }
     if (leavePk) {
       await page.request
-        .delete(`${BACKEND_URL}/api/system/leaves/${leavePk}`, { headers })
+        .delete(`${BACKEND_URL}/api/approval/leaves/${leavePk}`, { headers })
         .catch(() => undefined);
     }
     if (configPk) {
@@ -291,7 +291,7 @@ test("流程审批详情：展示关联业务对象（请假单）", async ({ pa
     }
     if (flowPk && ownsFlow) {
       await page.request
-        .delete(`${BACKEND_URL}/api/system/approval-flows/${flowPk}`, {
+        .delete(`${BACKEND_URL}/api/approval/approval-flows/${flowPk}`, {
           headers
         })
         .catch(() => undefined);

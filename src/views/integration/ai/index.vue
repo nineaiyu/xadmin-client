@@ -8,7 +8,7 @@ import {
   type AiConsoleFeature,
   type AiStatus,
   type AiToolsResult
-} from "@/api/system/ai";
+} from "@/api/ai/ai";
 import { useAiConsole } from "./hooks/useAiConsole";
 import { ReNavDrawer } from "@/components/ReNavDrawer";
 import ReEmpty from "@/components/ReEmpty";

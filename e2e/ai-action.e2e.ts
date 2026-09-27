@@ -41,19 +41,14 @@ async function jsonRequest(
 
 async function enableAiAction(page: Page) {
   // 全局开关 + 动作灰度（Setting 通路），再建档案指向桩 LLM 并激活
-  const saved = await jsonRequest(
-    page,
-    "patch",
-    "/api/system/ai/assistant/config",
-    {
-      AI_ASSISTANT_ENABLED: true,
-      AI_ACTION_ENABLED: true
-    }
-  );
+  const saved = await jsonRequest(page, "patch", "/api/ai/assistant/config", {
+    AI_ASSISTANT_ENABLED: true,
+    AI_ACTION_ENABLED: true
+  });
   expect(saved.code).toBe(1000);
 
   const profileName = `E2E-AI动作档案-${Date.now()}`;
-  const created = await jsonRequest(page, "post", "/api/system/ai/profiles", {
+  const created = await jsonRequest(page, "post", "/api/ai/profiles", {
     name: profileName,
     base_url: STUB_LLM_URL,
     api_key: "sk-e2e-stub",
@@ -65,7 +60,7 @@ async function enableAiAction(page: Page) {
   const activated = await jsonRequest(
     page,
     "post",
-    `/api/system/ai/profiles/${pk}/activate`
+    `/api/ai/profiles/${pk}/activate`
   );
   expect(activated.code).toBe(1000);
   return { profileName, profilePk: pk };
@@ -73,23 +68,28 @@ async function enableAiAction(page: Page) {
 
 async function createE2eForm(page: Page) {
   const name = `E2E-AI动作表单-${Date.now()}`;
-  const created = await jsonRequest(page, "post", "/api/system/dynamic-forms", {
-    name,
-    description: "AI 动作草稿 E2E 专用表单",
-    is_active: true,
-    approval_required: false,
-    schema: {
-      fields: [
-        {
-          key: "note",
-          label: "备注",
-          type: "input",
-          required: false,
-          max_length: 100
-        }
-      ]
+  const created = await jsonRequest(
+    page,
+    "post",
+    "/api/dataset/dynamic-forms",
+    {
+      name,
+      description: "AI 动作草稿 E2E 专用表单",
+      is_active: true,
+      approval_required: false,
+      schema: {
+        fields: [
+          {
+            key: "note",
+            label: "备注",
+            type: "input",
+            required: false,
+            max_length: 100
+          }
+        ]
+      }
     }
-  });
+  );
   expect(created.code).toBe(1000);
   return { name, pk: String(created.data?.pk ?? "") };
 }
@@ -142,7 +142,7 @@ test("AI 受限动作：/do 草稿 → 确认卡片 → 执行动态表单提交
   const listed = await jsonRequest(
     page,
     "get",
-    "/api/system/dynamic-form-submissions"
+    "/api/dataset/dynamic-form-submissions"
   );
   expect(listed.code).toBe(1000);
   const rows = (listed.data?.results ?? []) as Array<Record<string, unknown>>;
@@ -153,9 +153,9 @@ test("AI 受限动作：/do 草稿 → 确认卡片 → 执行动态表单提交
   await jsonRequest(
     page,
     "delete",
-    `/api/system/dynamic-form-submissions/${mine?.pk}`
+    `/api/dataset/dynamic-form-submissions/${mine?.pk}`
   );
-  await jsonRequest(page, "delete", `/api/system/dynamic-forms/${form.pk}`);
+  await jsonRequest(page, "delete", `/api/dataset/dynamic-forms/${form.pk}`);
 });
 
 test("AI 受限动作：灰度关闭时 /do 给出可读降级", async ({ page }) => {
@@ -170,7 +170,7 @@ test("AI 受限动作：灰度关闭时 /do 给出可读降级", async ({ page }
   const disabled = await jsonRequest(
     page,
     "patch",
-    "/api/system/ai/assistant/config",
+    "/api/ai/assistant/config",
     {
       AI_ASSISTANT_ENABLED: true,
       AI_ACTION_ENABLED: false
@@ -192,7 +192,7 @@ test("AI 受限动作：灰度关闭时 /do 给出可读降级", async ({ page }
   await expect(page.locator('[data-testid="chat-action-card"]')).toHaveCount(0);
 
   // 恢复开启：避免影响同库后续用例（如重跑上一条用例）
-  await jsonRequest(page, "patch", "/api/system/ai/assistant/config", {
+  await jsonRequest(page, "patch", "/api/ai/assistant/config", {
     AI_ASSISTANT_ENABLED: true,
     AI_ACTION_ENABLED: true
   });

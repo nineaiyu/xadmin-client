@@ -19,7 +19,7 @@ import {
   type DashboardCard,
   type DashboardItem,
   type DatasetItem
-} from "@/api/system/datasets";
+} from "@/api/dataset/datasets";
 import { useCardImageExport } from "./utils/useCardImageExport";
 import { useCardDialog } from "./utils/useCardDialog";
 import { cardColSpan, cardColSpanNarrow } from "./utils/span";

@@ -3,7 +3,7 @@ import type { Component } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import ReEmpty from "@/components/ReEmpty";
-import type { AiConsoleFeature } from "@/api/system/ai";
+import type { AiConsoleFeature } from "@/api/ai/ai";
 
 /**
  * 左栏：功能导航（文档问答 / 数据查询 / 指令执行）。
