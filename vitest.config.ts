@@ -44,6 +44,12 @@ export default defineConfig({
     include: ["src/**/*.spec.ts"],
     coverage: {
       provider: "v8",
+      // 2026-09-27 口径复核：曾试验把 views/components/layout/router/directives 纳入
+      // include，全仓实测仅 13.01/11.1/9.45/13.08（UI 层守护由 Playwright E2E 承担，
+      // 单测不覆盖 SFC 模板属既定分工）——若跟随扩面，门禁将跌至装饰性阈值，且分域
+      // glob 阈值与本版 vitest 的报告口径不一致（src/api 域引擎值 ≠ 报告值），故维持
+      // 「逻辑三域」实质门禁不变；扩面待 views 单测补足后再议（server/docs/metrics.md
+      // 2026-09-27 回填行已定量登记该盲区）
       include: [
         "src/api/**",
         "src/utils/**",

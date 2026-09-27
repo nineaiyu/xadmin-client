@@ -31,3 +31,6 @@ tsconfig.tsbuildinfo
 .pnpm-store
 _delete
 tmp
+
+# AI 辅助工具本地配置（含不可审计的第三方脚本，禁止随仓库分发）
+.claude/
