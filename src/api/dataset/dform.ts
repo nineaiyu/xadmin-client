@@ -1,5 +1,11 @@
 import { BaseApi } from "@/api/base";
-import type { BaseResult, DataListResult, DetailResult } from "@/api/types";
+import { http } from "@/utils/http";
+import type {
+  BaseResult,
+  DataListResult,
+  DetailResult,
+  ListResult
+} from "@/api/types";
 
 /** 动态表单：收敛控件集 schema + 通用 JSON 提交 */
 export type FormFieldType =
@@ -246,6 +252,88 @@ export const designerApi = new DesignerApi("/api/dataset/dynamic-forms");
 export const submissionApi = new SubmissionApi(
   "/api/dataset/dynamic-form-submissions"
 );
+
+/** 表单数据（管理端）：表单选项（全部非模板表单，含停用；schema 供动态列渲染） */
+export type FormDataFormOption = {
+  pk: string;
+  name: string;
+  description: string;
+  is_active: boolean;
+  schema: FormSchema;
+  schema_version: number;
+};
+
+/** 表单数据（管理端）列表行：固定列 + data 全量（按表单 schema 渲染动态列） */
+export type FormDataItem = {
+  pk: string;
+  form_name: string;
+  /** 保存时的表单 schema 版本（审计口径） */
+  schema_version?: number;
+  data: Record<string, unknown>;
+  status?: { value: SubmissionStatusValue; label: string } | null;
+  creator?: { username?: string; label?: string } | null;
+  created_time: string;
+  updated_time?: string;
+  /** 详情口径：schema 快照与审批轨迹（retrieve 下发） */
+  form_schema?: FormField[];
+  approval_trail?: SubmissionTrailItem[];
+  instance?: string | null;
+};
+
+/**
+ * 表单数据（管理端）接口：只读浏览 + 按表单筛选 + 导出。
+ *
+ * `form` 为页面侧写入的当前表单（响应式）：列表 / 导出请求自动带上，
+ * 行可见性由后端数据权限编译器收敛（超管全量、非超管按授权 fail-closed）。
+ */
+class FormDataApi extends BaseApi {
+  form = "";
+
+  list = (params?: object) =>
+    this.request<ListResult>(
+      "get",
+      { ...(params ?? {}), ...(this.form ? { form: this.form } : {}) },
+      {}
+    );
+
+  exportData = (params: object) =>
+    http.autoDownload(
+      `${this.baseApi}/export-data`,
+      undefined,
+      this.formatParams({
+        ...(params ?? {}),
+        ...(this.form ? { form: this.form } : {})
+      })
+    );
+
+  exportAsync = (data?: object) =>
+    this.request<BaseResult>(
+      "post",
+      {},
+      { ...(data ?? {}), ...(this.form ? { form: this.form } : {}) },
+      `${this.baseApi}/export-async`
+    );
+
+  /** 表单选项（全部非模板表单，含停用）：页面「选择表单」数据源 */
+  formOptions = () =>
+    this.request<DataListResult<FormDataFormOption>>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/form-options`
+    );
+
+  /** 选人字段回显：按主键批量取用户名（≤20 条，与填报页同源） */
+  userOptions = (pks: number[]) =>
+    this.request<DataListResult<FormUserOption>>(
+      "get",
+      { pks: pks.join(",") },
+      {},
+      `${this.baseApi}/user-options`
+    );
+}
+
+export const formDataApi = new FormDataApi("/api/dataset/form-data");
 
 /** 列表结果取行：统一实现在 api/base.ts */
 export { listRows } from "@/api/base";

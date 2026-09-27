@@ -24,7 +24,7 @@ import {
   type SubmissionItem
 } from "@/api/dataset/dform";
 import SubmissionForm from "../components/SubmissionForm.vue";
-import SubmissionDetail from "../components/SubmissionDetail.vue";
+import SubmissionDetail from "../../components/SubmissionDetail.vue";
 
 /** 提交状态（审批回写）语义色兜底：字典未配 color 时按审批结果取 EP 语义色，
  * tag props 统一经 `statusTagProps`（与列表/详情同口径，禁止页面自建映射函数） */
