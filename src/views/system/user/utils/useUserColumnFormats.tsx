@@ -15,11 +15,10 @@ import {
   type RePlusPageProps
 } from "@/components/RePlusPage";
 import { handleTree } from "@/utils/tree";
-import { SOLID_TAG_STYLE } from "@/utils/tagTone";
+import { renderTagsCell } from "@/utils/tagTone";
 import { buildPasswordValidator } from "./passwordRules";
 import type { useI18n } from "vue-i18n";
 import type { userApi } from "@/api/system/user";
-import type { TagItem } from "@/api/system/tag";
 import type { PasswordRule } from "@/api/auth";
 import type { RecordType } from "plus-pro-components";
 
@@ -161,25 +160,7 @@ export function useUserColumnFormats({
           break;
         case "tags":
           // 通用标签：数组字段需页面自渲染（框架对数组只做 String 化）
-          // 颜色为自定义色值时 ElTag 只换背景，需补文字色与去边框
-          column["cellRenderer"] = ({ row, props }) => {
-            const tags = (row.tags ?? []) as TagItem[];
-            if (!tags.length) return <span>-</span>;
-            return (
-              <div class="flex flex-wrap items-center gap-1">
-                {tags.map(tag => (
-                  <el-tag
-                    key={tag.pk}
-                    size={props.size}
-                    color={tag.color || undefined}
-                    style={tag.color ? SOLID_TAG_STYLE : undefined}
-                  >
-                    {tag.name}
-                  </el-tag>
-                ))}
-              </div>
-            );
-          };
+          column["cellRenderer"] = renderTagsCell;
           break;
       }
     });

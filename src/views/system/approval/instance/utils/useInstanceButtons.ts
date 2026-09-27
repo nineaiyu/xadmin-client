@@ -1,6 +1,7 @@
 import { shallowRef } from "vue";
 import type { useI18n } from "vue-i18n";
 import { approvalInstanceApi } from "@/api/approval/approvalFlow";
+import { hasAuth } from "@/router/utils";
 import {
   handleOperation,
   type OperationButtonsRow,
@@ -17,6 +18,7 @@ import Plus from "~icons/ep/plus";
 import Refresh from "~icons/ep/refresh";
 import RefreshLeft from "~icons/ep/refresh-left";
 import View from "~icons/ep/view";
+import Tag from "~icons/ri/price-tag-3-line";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
@@ -71,6 +73,8 @@ export function useInstanceButtons({
     openTransfer: (row: { pk?: string | number; title?: string }) => void;
     openBatchTransfer: () => void;
     openBatchReject: () => void;
+    /** 打标（管理视角）：单对象全量替换语义，权限按 assign:Tag 显示、后端逐对象复核 */
+    openAssignTags?: (row: { pk?: string | number }) => void;
   };
   /** 发起申请成功后的页面级回调（切页签/刷新角标），由 InstancePanel 从父页面透传 */
   onStarted?: () => void;
@@ -103,6 +107,19 @@ export function useInstanceButtons({
     },
     onClick: ({ row }) => openInstanceDetail(row),
     show: 9
+  };
+
+  /** 打标（管理视角）：给在途实例打分类标签（如「加急」），走通用打标弹窗 */
+  const assignTagsButton: OperationButtonsRow = {
+    text: t("tag.assignTitle"),
+    code: "assignTags",
+    props: {
+      type: "warning",
+      icon: useRenderIcon(Tag),
+      link: true
+    },
+    onClick: ({ row }) => actions.openAssignTags?.(row),
+    show: Boolean(actions.openAssignTags) && hasAuth("assign:Tag")
   };
 
   const approveButton: OperationButtonsRow = {
@@ -234,7 +251,7 @@ export function useInstanceButtons({
   };
 
   /** 行内按钮：待办=通过/驳回/加签/转交；我的申请=撤回/催办/重提；
-   *  全部在途（管理视角）=催办/详情；已办=只读 */
+   *  全部在途（管理视角）=催办/打标/详情；已办=只读 */
   const operationButtonsProps = shallowRef<OperationProps>({
     // 一屏最多 5 个（待办页签：通过/驳回/加签/转交/申请详情），
     // 再多则按权重把末位折叠进「更多」；
@@ -254,7 +271,7 @@ export function useInstanceButtons({
         : scope === "mine"
           ? [cancelButton, urgeButton, resubmitButton, detailButton]
           : scope === "ongoing"
-            ? [urgeButton, detailButton]
+            ? [urgeButton, assignTagsButton, detailButton]
             : [detailButton]
   });
 

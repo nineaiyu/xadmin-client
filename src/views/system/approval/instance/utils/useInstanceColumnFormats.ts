@@ -3,6 +3,7 @@ import type { useI18n } from "vue-i18n";
 import { ElTag } from "element-plus";
 import type { PageTableColumn } from "@/components/RePlusPage";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";
+import { renderTagsCell } from "@/utils/tagTone";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
@@ -35,6 +36,10 @@ export function useInstanceColumnFormats({ t }: { t: TFunction }) {
         case "current_node_name":
           // 已结束实例 current_node 为空：统一显示占位符，避免列空白
           column.cellRenderer = data => data.row.current_node_name || "-";
+          break;
+        case "tags":
+          // 通用标签：数组字段需页面自渲染（框架对数组只做 String 化）
+          column.cellRenderer = renderTagsCell;
           break;
       }
     });

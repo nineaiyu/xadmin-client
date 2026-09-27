@@ -547,6 +547,7 @@ commandPalette:
   openAi: 打开 AI 助手
   openTaskLog: 打开任务日志
   openTags: 打开标签管理
+  openModules: 打开模块管理
   toggleTheme: 切换浅色 / 深色
   backHome: 返回首页
 

@@ -17,7 +17,8 @@ const {
   listColumnsFormat,
   addOrEditOptions,
   tableBarButtonsProps,
-  operationButtonsProps
+  operationButtonsProps,
+  selectionChange
 } = useSystemUploadFile(tableRef);
 </script>
 
@@ -42,6 +43,7 @@ const {
       :operationButtonsProps="operationButtonsProps"
       :tableBarButtonsProps="tableBarButtonsProps"
       recycleBin
+      @selectionChange="selectionChange"
     />
   </div>
 </template>

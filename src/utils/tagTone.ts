@@ -1,4 +1,6 @@
-import type { CSSProperties } from "vue";
+import { h, type CSSProperties } from "vue";
+import { ElTag } from "element-plus";
+import type { TagItem } from "@/api/system/tag";
 
 /**
  * 自定义色 tag 的实心样式（字典色 / 标签色 / 请假类型色等场景共用）。
@@ -13,3 +15,33 @@ export const SOLID_TAG_STYLE: CSSProperties = {
   border: "none",
   color: "var(--el-color-white)"
 };
+
+/**
+ * 通用标签列渲染（用户 / 文件 / 审批实例等可打标列表共用）。
+ *
+ * tags 是数组字段，框架对数组只做 String 化，需页面自渲染；cellRenderer scope
+ * 的 `props` 来自操作列 slot（含 size），缺省时 ElTag 走默认尺寸。
+ */
+export function renderTagsCell(scope: {
+  row?: { tags?: TagItem[] | null };
+  props?: { size?: "default" | "small" | "large" };
+}) {
+  const tags = scope.row?.tags ?? [];
+  if (!tags.length) return h("span", "-");
+  return h(
+    "div",
+    { class: "flex flex-wrap items-center gap-1" },
+    tags.map(tag =>
+      h(
+        ElTag,
+        {
+          key: tag.pk,
+          size: scope.props?.size,
+          color: tag.color || undefined,
+          style: tag.color ? SOLID_TAG_STYLE : undefined
+        },
+        () => tag.name
+      )
+    )
+  );
+}

@@ -547,6 +547,7 @@ commandPalette:
   openAi: Open AI assistant
   openTaskLog: Open task log
   openTags: Open tag management
+  openModules: Open module management
   toggleTheme: Toggle light / dark
   backHome: Back to home
 

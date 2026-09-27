@@ -7,6 +7,8 @@ import { refreshApprovalStats } from "@/utils/approvalStats";
 import { useInstanceActions } from "./useInstanceActions";
 import { useInstanceButtons } from "./useInstanceButtons";
 import { useInstanceColumnFormats } from "./useInstanceColumnFormats";
+import { useTagAssign } from "@/views/system/components/useTagAssign";
+import { TAGGABLE_RESOURCE } from "@/api/system/tag";
 
 /** 页签取值域；ongoing = 全部在途（管理视角，按 ongoing 权限点显示） */
 export type InstanceScope = "pending" | "mine" | "done" | "ongoing";
@@ -95,6 +97,8 @@ export function useInstancePanel(
     openBatchTransfer,
     openBatchReject
   } = useInstanceActions({ t, refresh, tableRef });
+  // 通用标签（管理视角行内打标）：单对象全量替换，成功后由弹窗刷新当前表格
+  const { openTagDialog } = useTagAssign(tableRef);
   const { operationButtonsProps, tableBarButtonsProps } = useInstanceButtons({
     scope,
     auth,
@@ -108,7 +112,12 @@ export function useInstancePanel(
       openAddSign,
       openTransfer,
       openBatchTransfer,
-      openBatchReject
+      openBatchReject,
+      openAssignTags: target =>
+        openTagDialog({
+          resource: TAGGABLE_RESOURCE.approvalInstance,
+          row: target as Record<string, unknown>
+        })
     },
     onStarted
   });

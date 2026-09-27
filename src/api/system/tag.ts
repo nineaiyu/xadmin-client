@@ -39,8 +39,18 @@ export type TagBatchAssignResult = {
   failures: { pk: string; reason: string }[];
 };
 
+/**
+ * 可打标资源键（与后端 TAGGABLE_MODELS 白名单同源，白名单键即唯一事实源）：
+ * 各页面打标入口统一从这取 resource，避免字面量散落各处拼错后静默打不上。
+ */
+export const TAGGABLE_RESOURCE = {
+  user: "system.userinfo",
+  file: "system.uploadfile",
+  approvalInstance: "approval.approvalinstance"
+} as const;
+
 class TagApi extends BaseApi {
-  /** 可打标对象白名单 */
+  /** 可打标对象白名单（动态数据源：页面 resource 键取自 TAGGABLE_RESOURCE 常量，本端点供白名单展示/选择器类功能扩展用） */
   getResources = () => {
     return this.request<DetailResult<{ resources: TaggableResource[] }>>(
       "get",

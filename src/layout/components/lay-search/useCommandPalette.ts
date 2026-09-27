@@ -41,6 +41,13 @@ const QUICK_ACTIONS = [
     route: "/system/tag/index"
   },
   {
+    id: "cmd:module",
+    titleKey: "commandPalette.openModules",
+    icon: "ri:apps-2-line",
+    auth: "list:SystemModule",
+    route: "/system/module/index"
+  },
+  {
     id: "cmd:theme",
     titleKey: "commandPalette.toggleTheme",
     icon: "ri:sun-line"

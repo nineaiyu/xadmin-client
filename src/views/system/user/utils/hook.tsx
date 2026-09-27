@@ -30,9 +30,7 @@ import { useUserButtons } from "./useUserButtons";
 import { useUserImBinding } from "./useUserImBinding";
 import { buildUserActionGroups } from "./userActions";
 import { useTagAssign } from "@/views/system/components/useTagAssign";
-
-/** 通用标签资源标识（与后端 TAGGABLE_MODELS 白名单键同源） */
-const USER_TAG_RESOURCE = "system.userinfo";
+import { TAGGABLE_RESOURCE } from "@/api/system/tag";
 
 /**
  * 用户视图组装入口：
@@ -185,7 +183,7 @@ export function useUser(tableRef: Ref) {
         sendNotice: withClosed(handleSendNotice),
         imBinding: withClosed(handleImBinding),
         assignTags: withClosed(target =>
-          openTagDialog({ resource: USER_TAG_RESOURCE, row: target })
+          openTagDialog({ resource: TAGGABLE_RESOURCE.user, row: target })
         ),
         changeHistory: withClosed(target =>
           handleShowChangeHistory({ t, api, row: target })
@@ -220,7 +218,7 @@ export function useUser(tableRef: Ref) {
       selectedNum,
       manySelectData,
       handleBatchTags: pks =>
-        openTagDialog({ resource: USER_TAG_RESOURCE, pks }),
+        openTagDialog({ resource: TAGGABLE_RESOURCE.user, pks }),
       openUserPanel
     });
 
