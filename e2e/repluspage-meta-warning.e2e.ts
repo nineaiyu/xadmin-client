@@ -51,15 +51,19 @@ test("RePlusPage：元数据缺失时 DEV 出现显式警示", async ({ page }) 
   await login(page);
   await openMenuPath(page, ["系统管理", "日志管理"], "/system/online/index");
 
+  // 警示条文案经 i18n（plus.metaMissingTitle/Detail，d89e25fd 起）：
+  // 面向用户的是「页面列配置加载失败 + 处置提示」；面向开发者的排查清单
+  // （含 XADMIN_APPS）走 DEV console.error——两层分别断言。
   const alert = page.locator(".el-alert").filter({
-    hasText: "未获取到列元数据"
+    hasText: "页面列配置加载失败"
   });
   // 判定点在「列表请求完成」后 1.5s（元数据可能走独立请求），断言用自动重试等待
   await expect(alert).toBeVisible({ timeout: 15_000 });
-  await expect(alert).toContainText("XADMIN_APPS");
+  await expect(alert).toContainText("请刷新页面重试");
   expect(consoleErrors.some(text => text.includes("未获取到列元数据"))).toBe(
     true
   );
+  expect(consoleErrors.some(text => text.includes("XADMIN_APPS"))).toBe(true);
 });
 
 test("RePlusPage：元数据正常时不出警示（负对照）", async ({ page }) => {
@@ -70,6 +74,6 @@ test("RePlusPage：元数据正常时不出警示（负对照）", async ({ page
   });
   // 真实后端元数据齐全：警示条不得出现（防止「恒亮」的假实现）
   await expect(
-    page.locator(".el-alert").filter({ hasText: "未获取到列元数据" })
+    page.locator(".el-alert").filter({ hasText: "页面列配置加载失败" })
   ).toHaveCount(0);
 });

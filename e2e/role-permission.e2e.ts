@@ -1,6 +1,12 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-import { FRONT_URL, getAccessToken, login, openMenuPath } from "./helpers";
+import {
+  filterList,
+  FRONT_URL,
+  getAccessToken,
+  login,
+  openMenuPath
+} from "./helpers";
 
 /**
  * 角色菜单权限配置树（新增/编辑角色弹窗内）。
@@ -19,12 +25,17 @@ const NODE_STATUS = '[data-testid="permission-node-status"]';
 /** 编辑对象：种子角色「管理员」（权限最全，只读用例不改动其授权） */
 const SEED_ROLE = "管理员";
 
-async function openRolePage(page: Page) {
+async function openRolePage(page: Page, role: string = SEED_ROLE) {
   // 角色管理是三级菜单：系统管理 → 权限管理 → 角色管理
   await openMenuPath(page, ["系统管理", "权限管理"], "/system/role/index");
   await expect(page.getByRole("button", { name: "新增" }).first()).toBeVisible({
     timeout: 15_000
   });
+  // 角色列表按创建时间倒序：全量跑时前序用例（AI 动作 role.create 等）新建的
+  // 角色会把最老的种子角色「管理员」挤出第一页——webkit 是第二个执行的浏览器
+  // 阶段，数据累积最多时必挂（曾误判 webkit flaky，见 e2e/README 列表断言陷阱）。
+  // 服务端搜索把目标行钉在第一页。
+  await filterList(page, "角色名称", role);
 }
 
 /** 打开指定角色的编辑弹窗（授权树可见后返回弹窗 locator） */
@@ -176,7 +187,7 @@ test("勾选保存后重新打开正确回显", async ({ page }) => {
   expect(rolePk).toBeTruthy();
 
   try {
-    await openRolePage(page);
+    await openRolePage(page, roleName);
     const dialog = await openEditDialog(page, roleName);
 
     // 勾选「数据分析」目录（顶层目录，规模小便于断言）

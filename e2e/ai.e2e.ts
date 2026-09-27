@@ -1,6 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { FRONT_URL, login, openEntityPanel, openMenuPath } from "./helpers";
+import {
+  filterList,
+  FRONT_URL,
+  login,
+  openEntityPanel,
+  openMenuPath
+} from "./helpers";
 
 /**
  * AI 助手主链路：覆盖全局开关、多档案管理（CRUD/激活）、助手页引导渲染，
@@ -148,27 +154,19 @@ test("文档问答：流式回答 + 思考过程展示（指向桩 LLM）", asyn
 
   // 前置（API 化，避免 UI 长链路）：全局开关 + 知识文档（保证检索命中）+
   // 指向桩 LLM 的档案并激活——这也是「多档案激活优先」通路的实测。
-  const saved = await jsonRequest(
-    page,
-    "patch",
-    "/api/system/ai/assistant/config",
-    { AI_ASSISTANT_ENABLED: true }
-  );
+  const saved = await jsonRequest(page, "patch", "/api/ai/assistant/config", {
+    AI_ASSISTANT_ENABLED: true
+  });
   expect(saved.code).toBe(1000);
 
-  const doc = await jsonRequest(
-    page,
-    "post",
-    "/api/system/ai/knowledge-documents",
-    {
-      name: `E2E知识-${Date.now()}`,
-      content:
-        "# E2E 知识文档\n\n## 数据权限\n\n数据集执行时按调用者的数据权限过滤。\n"
-    }
-  );
+  const doc = await jsonRequest(page, "post", "/api/ai/knowledge-documents", {
+    name: `E2E知识-${Date.now()}`,
+    content:
+      "# E2E 知识文档\n\n## 数据权限\n\n数据集执行时按调用者的数据权限过滤。\n"
+  });
   expect(doc.code).toBe(1000);
 
-  const created = await jsonRequest(page, "post", "/api/system/ai/profiles", {
+  const created = await jsonRequest(page, "post", "/api/ai/profiles", {
     name: `E2E-问答档案-${Date.now()}`,
     base_url: STUB_LLM_URL,
     api_key: "sk-e2e-stub",
@@ -178,7 +176,7 @@ test("文档问答：流式回答 + 思考过程展示（指向桩 LLM）", asyn
   const activated = await jsonRequest(
     page,
     "post",
-    `/api/system/ai/profiles/${String(created.data?.pk ?? "")}/activate`
+    `/api/ai/profiles/${String(created.data?.pk ?? "")}/activate`
   );
   expect(activated.code).toBe(1000);
 
@@ -218,15 +216,13 @@ test("指令执行：草稿确认卡片 + 确认执行（指向桩 LLM）", asyn
   await login(page);
 
   // 前置（API 化）：助手开关 + 动作灰度 + 指向桩 LLM 的激活档案
-  const saved = await jsonRequest(
-    page,
-    "patch",
-    "/api/system/ai/assistant/config",
-    { AI_ASSISTANT_ENABLED: true, AI_ACTION_ENABLED: true }
-  );
+  const saved = await jsonRequest(page, "patch", "/api/ai/assistant/config", {
+    AI_ASSISTANT_ENABLED: true,
+    AI_ACTION_ENABLED: true
+  });
   expect(saved.code).toBe(1000);
 
-  const created = await jsonRequest(page, "post", "/api/system/ai/profiles", {
+  const created = await jsonRequest(page, "post", "/api/ai/profiles", {
     name: `E2E-动作档案-${Date.now()}`,
     base_url: STUB_LLM_URL,
     api_key: "sk-e2e-stub",
@@ -236,14 +232,14 @@ test("指令执行：草稿确认卡片 + 确认执行（指向桩 LLM）", asyn
   const activated = await jsonRequest(
     page,
     "post",
-    `/api/system/ai/profiles/${String(created.data?.pk ?? "")}/activate`
+    `/api/ai/profiles/${String(created.data?.pk ?? "")}/activate`
   );
   expect(activated.code).toBe(1000);
 
   // 灰度生效确认（Setting 保存后经 pub/sub 异步回写 settings）
   await expect(async () => {
     const probe = await page.request.get(
-      `${FRONT_URL}/api/system/ai/assistant/status`
+      `${FRONT_URL}/api/ai/assistant/status`
     );
     const body = (await probe.json()) as {
       data: { action_enabled?: boolean; actions?: unknown[] };
@@ -294,7 +290,7 @@ test("指令执行：草稿确认卡片 + 确认执行（指向桩 LLM）", asyn
 test("AI 配置：档案管理抽屉渲染资料与动作", async ({ page }) => {
   await login(page);
   const name = `E2E-抽屉档案-${Date.now()}`;
-  const created = await jsonRequest(page, "post", "/api/system/ai/profiles", {
+  const created = await jsonRequest(page, "post", "/api/ai/profiles", {
     name,
     base_url: STUB_LLM_URL,
     api_key: "sk-e2e-stub",
@@ -304,6 +300,10 @@ test("AI 配置：档案管理抽屉渲染资料与动作", async ({ page }) => 
   expect(created.code).toBe(1000);
 
   await openMenuPath(page, ["集成管理"], "/integration/ai/config");
+  // 档案列表按 (-is_active, name) 排序：新建档案按名字排不保证在第一页，
+  // 全量跑数据累积后 webkit 阶段必挂（见 e2e/README 列表断言陷阱）——按唯一
+  // 名称服务端搜索钉住目标行。
+  await filterList(page, "档案名称", name);
   const row = page.locator(".el-table__row", { hasText: name }).first();
   await expect(row).toBeVisible({ timeout: 15_000 });
 

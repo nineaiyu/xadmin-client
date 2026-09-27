@@ -245,14 +245,27 @@ export async function openList(
     timeout: 15_000
   });
   if (!filter) return;
-  // 搜索项多时默认折叠，展开后条件输入与「搜索」按钮才可见。
-  // 早期实现只在「瞬时 isVisible 为真」时才点展开：渲染稍慢（webkit 下实测）就漏点，
-  // 随后 fill 命中折叠态里存在但不可见的输入 → 10s 超时（曾表现为 webkit 专属假失败）。
-  // 并行高负载下搜索区的响应式宽度可能被锁死（字段收起、输入框持续 hidden，2026-09-17
-  // zz-preview 五连挂），单次「等任一形态 → 判定 → 点击」都会被中间态打穿。这里改为
-  // 循环自愈：每轮等输入可见（8s），不可见则容错点「展开」，最多 3 轮；最坏 ~30s 有界。
-  // 用例侧应优先选用不依赖搜索区的定位通道（见 zz-preview-smoke 的目标行双通道）。
-  const input = page.getByPlaceholder(filter.placeholder).first();
+  await filterList(page, filter.placeholder, filter.value);
+}
+
+/**
+ * 在当前列表页真实触发一次服务端搜索（定位目标行用）。
+ *
+ * 「列表断言陷阱」（见 README）：服务端分页下目标行可能不在第一页——webkit 是
+ * 第二个执行的浏览器阶段，库里数据累积最多，首开即断言目标行可见会稳定失败
+ * （曾误判 webkit flaky）。用例侧应先按唯一条件搜索过滤，再定位目标行。
+ *
+ * 搜索项多时默认折叠，展开后条件输入与「搜索」按钮才可见。单次「等任一形态 →
+ * 判定 → 点击」会被中间态打穿（并行高负载下搜索区的响应式宽度可能被锁死，
+ * 2026-09-17 zz-preview 五连挂），这里循环自愈：每轮等输入可见（8s），不可见
+ * 则容错点「展开」，最多 3 轮；最坏 ~30s 有界。
+ */
+export async function filterList(
+  page: Page,
+  placeholder: string,
+  value: string
+) {
+  const input = page.getByPlaceholder(placeholder).first();
   const expandBtn = page.getByRole("button", { name: /展开/ }).first();
   for (let attempt = 0; attempt < 3; attempt++) {
     const visible = await input
@@ -263,7 +276,7 @@ export async function openList(
     await expandBtn.click({ timeout: 3_000 }).catch(() => null);
   }
   await expect(input).toBeVisible({ timeout: 10_000 });
-  await input.fill(filter.value);
+  await input.fill(value);
   await page.getByRole("button", { name: "搜索", exact: true }).first().click();
 }
 
