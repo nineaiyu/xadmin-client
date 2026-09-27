@@ -3,11 +3,36 @@ import { fetchAllRows } from "@/utils/fetchAllRows";
 import type { DataListResult, DetailResult, ListResult } from "@/api/types";
 import type { DashboardItem } from "@/api/dataset/datasets";
 
+/** 大屏画布窗格类型（首批三件组件） */
+export type ScreenPaneType = "dashboard" | "text" | "clock";
+
+/**
+ * 大屏画布窗格：12 列栅格绝对定位（x/y 为列/行下标，x+w≤12、y+h≤60）。
+ * `layout` 为空 = 轮播模式（存量形态），非空 = 画布模式。
+ * 服务端会丢弃未声明键并拒绝越界/重叠（见 dataset/utils/screen_layout.py）。
+ */
+export type ScreenLayoutPane = {
+  pk: string;
+  type: ScreenPaneType;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  title?: string;
+  /** type=dashboard：仪表盘 pk */
+  dashboard?: string;
+  /** type=text：文本内容 */
+  text?: string;
+  align?: "left" | "center" | "right";
+  size?: number;
+};
+
 /** 大屏与定时报表 */
 export type ScreenItem = {
   pk: string;
   name: string;
   dashboards: string[];
+  layout?: ScreenLayoutPane[];
   interval: number;
   refresh: number;
   visibility: "personal" | "shared";
@@ -27,6 +52,32 @@ export function relatedPk(value: RelatedPk | null | undefined): string {
     : String(value ?? "");
 }
 
+/** 报表聚合组件类型（表格即「明细本体」，不做成组件） */
+export type ReportComponentType = "number" | "bar" | "line" | "pie";
+
+/**
+ * 报表聚合组件：投递时每个组件落一张独立 sheet（见 dataset/utils/report_design.py）。
+ * `number` 不带 group_by；图表类必须带 group_by；`sum`/`avg` 必须给数值列 value_field。
+ */
+export type ReportDesignComponent = {
+  id: string;
+  type: ReportComponentType;
+  /** 宽度档位：12 整行 / 6 半行 */
+  span?: 12 | 6;
+  title?: string;
+  metric?: "count" | "sum" | "avg";
+  value_field?: string;
+  group_by?: string;
+  date_trunc?: "day" | "month";
+};
+
+/** 报表设计：明细列 + 行数上限 + 聚合组件；空 = 存量口径（全列明细单表） */
+export type ReportDesign = {
+  columns?: string[];
+  table_limit?: number;
+  components?: ReportDesignComponent[];
+};
+
 export type ReportItem = {
   pk: string;
   name: string;
@@ -36,6 +87,8 @@ export type ReportItem = {
   metric: "count" | "sum" | "avg";
   date_trunc: string;
   value_field: string;
+  /** 报表设计（P2.2 批次二）：空 = 存量口径 */
+  design?: ReportDesign;
   frequency: "daily" | "weekly" | "monthly";
   send_time: string;
   weekday: number;

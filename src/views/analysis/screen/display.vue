@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { SUCCESS_CODE } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import { screenApi, type ScreenItem } from "@/api/dataset/analysis";
 import {
@@ -10,18 +10,13 @@ import {
   type DashboardCard,
   type DashboardItem
 } from "@/api/dataset/datasets";
-import {
-  isOutboundMessage,
-  MessageAction,
-  type ScreenCommandPayload
-} from "@/utils/websocket/protocol";
-import { WS } from "@/utils/websocket";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
 // 仅类型引用（不进包）：导出实现按需动态加载（保持首屏体积）
 import type { ExportedImage } from "@/utils/imageExport";
-import { resolveScreenFrame } from "./utils/control";
+import { useScreenDisplay } from "./utils/useScreenDisplay";
 import ChartCard from "@/views/dashboard/components/ChartCard.vue";
+import ScreenPane from "./components/ScreenPane.vue";
 import ReEmpty from "@/components/ReEmpty";
 import PauseIcon from "~icons/ep/video-pause";
 import PlayIcon from "~icons/ep/video-play";
@@ -47,18 +42,6 @@ const { t } = useI18n();
 
 const screen = ref<ScreenItem | null>(null);
 const dashboards = ref<DashboardItem[]>([]);
-const pageIndex = ref(0);
-const paused = ref(false);
-const clock = ref("");
-/** 远程控制态：manual = 管理端接管（停轮播）；连接时以服务端回放为准 */
-const controlMode = ref<"auto" | "manual">("auto");
-
-const currentDashboard = computed(
-  () => dashboards.value[pageIndex.value] ?? null
-);
-const currentCards = computed<DashboardCard[]>(
-  () => currentDashboard.value?.layout ?? []
-);
 
 /** 卡片组件句柄：模板 ref 收集 ChartCard（loadData 刷新 + renderImage 图片导出） */
 type CardHandle = {
@@ -71,42 +54,105 @@ const setCardRef = (cardId: string) => (el: unknown) => {
   if (handle) cardRefs.value[cardId] = handle;
 };
 
+/**
+ * 画布模式（P2.2 批次一）：`layout` 非空即按窗格渲染，空则维持既有仪表盘轮播。
+ * 与轮播同一可见性口径：窗格引用的仪表盘对浏览者不可见时整格跳过
+ * （后端口径同 `can_view_screen`，前端只做展示层过滤）。
+ */
+const layoutPanes = computed(() =>
+  (screen.value?.layout ?? []).filter(
+    pane =>
+      pane.type !== "dashboard" ||
+      dashboards.value.some(item => item.pk === pane.dashboard)
+  )
+);
+const isCanvas = computed(() => layoutPanes.value.length > 0);
+const paneCards = (pane: { dashboard?: string }) =>
+  dashboards.value.find(item => item.pk === pane.dashboard)?.layout ?? [];
+const paneTitle = (pane: { dashboard?: string }) =>
+  dashboards.value.find(item => item.pk === pane.dashboard)?.name ?? "";
+
+/** 画布模式下的窗格句柄（刷新与导出共用同一接口，实现见 ScreenPane） */
+const paneRefs = ref<Record<string, InstanceType<typeof ScreenPane> | null>>(
+  {}
+);
+const setPaneRef = (pk: string) => (el: unknown) => {
+  paneRefs.value[pk] = el as InstanceType<typeof ScreenPane> | null;
+};
+
 const refreshVisible = () => {
+  if (isCanvas.value) {
+    Object.values(paneRefs.value).forEach(handle => handle?.refresh?.());
+    return;
+  }
   for (const card of currentCards.value) {
     cardRefs.value[card.id]?.loadData?.();
   }
 };
 
+/** 轮播 / 数据刷新 / 时钟定时器 + 远程控制通道（实现见 utils/useScreenDisplay.ts） */
+const { pageIndex, paused, clock, controlMode, startTimers, startWs } =
+  useScreenDisplay({ screen, dashboards, refreshVisible });
+
+const currentDashboard = computed(
+  () => dashboards.value[pageIndex.value] ?? null
+);
+const currentCards = computed<DashboardCard[]>(
+  () => currentDashboard.value?.layout ?? []
+);
+
+/**
+ * 收集当前屏的卡片图片：画布模式逐窗格、轮播模式逐卡
+ * （导出 ZIP 与「跳过数」共用；返回 total 用于算未渲染成功的卡片数）。
+ */
+const collectImages = async () => {
+  const images: { title: string; image: ExportedImage }[] = [];
+  if (isCanvas.value) {
+    const total = layoutPanes.value.reduce(
+      (count, pane) => count + paneCards(pane).length,
+      0
+    );
+    for (const handle of Object.values(paneRefs.value)) {
+      if (!handle) continue;
+      for (const item of await handle.renderImages()) {
+        images.push({ title: item.title, image: item.image });
+      }
+    }
+    return { images, total };
+  }
+  for (const card of currentCards.value) {
+    const image = await cardRefs.value[card.id]?.renderImage?.();
+    if (image) images.push({ title: card.title, image });
+  }
+  return { images, total: currentCards.value.length };
+};
+
 /** 导出当前屏：逐卡渲染图片并按 ZIP 打包（一次下载，规避浏览器对连续下载的拦截） */
 const exporting = ref(false);
 const exportScreen = async () => {
-  if (exporting.value || currentCards.value.length === 0) return;
+  if (exporting.value) return;
   exporting.value = true;
   try {
     const { buildZipStore, downloadBlob, safeFileName } =
       await import("@/utils/imageExport");
-    const files: { name: string; data: Uint8Array }[] = [];
-    let skipped = 0;
-    for (const card of currentCards.value) {
-      const image = await cardRefs.value[card.id]?.renderImage?.();
-      if (!image) {
-        skipped += 1;
-        continue;
-      }
-      const base = safeFileName(
-        String(card.title ?? card.id),
-        `card-${files.length + 1}`
-      );
-      files.push({
-        name: `${base}.${image.extension}`,
-        data: new Uint8Array(await image.blob.arrayBuffer())
-      });
-    }
-    if (files.length === 0) {
+    const { images, total } = await collectImages();
+    if (images.length === 0) {
       message(t("dataScreen.exportNoChart"), { type: "warning" });
       return;
     }
+    const files: { name: string; data: Uint8Array }[] = [];
+    for (const item of images) {
+      const base = safeFileName(
+        String(item.title ?? ""),
+        `card-${files.length + 1}`
+      );
+      files.push({
+        name: `${base}.${item.image.extension}`,
+        data: new Uint8Array(await item.image.blob.arrayBuffer())
+      });
+    }
     downloadBlob(buildZipStore(files), `screen-${Date.now()}.zip`);
+    const skipped = total - images.length;
     if (skipped > 0) {
       message(t("dataScreen.exportSkipped", { count: skipped }), {
         type: "warning"
@@ -115,79 +161,6 @@ const exportScreen = async () => {
   } finally {
     exporting.value = false;
   }
-};
-
-let pageTimer: number | undefined;
-let refreshTimer: number | undefined;
-let clockTimer: number | undefined;
-let ws: WS | null = null;
-/** 最近一次数据刷新代数：重连回放/重复帧不触发多余重拉 */
-let lastRefreshRev = 0;
-
-const stopTimers = () => {
-  [pageTimer, refreshTimer, clockTimer].forEach(
-    timer => timer && window.clearInterval(timer)
-  );
-  pageTimer = refreshTimer = clockTimer = undefined;
-};
-
-const startTimers = () => {
-  stopTimers();
-  const interval = Math.max((screen.value?.interval ?? 15) * 1000, 5000);
-  const refresh = Math.max((screen.value?.refresh ?? 60) * 1000, 10000);
-  pageTimer = window.setInterval(() => {
-    if (
-      paused.value ||
-      controlMode.value === "manual" ||
-      dashboards.value.length === 0
-    )
-      return;
-    pageIndex.value = (pageIndex.value + 1) % dashboards.value.length;
-  }, interval);
-  refreshTimer = window.setInterval(refreshVisible, refresh);
-  clockTimer = window.setInterval(() => {
-    clock.value = new Date().toLocaleTimeString("zh-CN", { hour12: false });
-  }, 1000);
-};
-
-/** 服务端下标 → 本地可见列表下标（服务端按 Screen.dashboards 原序计页） */
-const applyServerIndex = (serverIndex: number) => {
-  const pk = (screen.value?.dashboards ?? [])[serverIndex];
-  if (!pk) return;
-  const localIndex = dashboards.value.findIndex(item => item.pk === pk);
-  if (localIndex >= 0) pageIndex.value = localIndex;
-};
-
-/** 应用控制帧：模式/页码对齐 + refresh 帧仅在代数递增时重拉数据（纯函数内核见 utils/control.ts） */
-const applyScreenFrame = (frame: ScreenCommandPayload) => {
-  const effect = resolveScreenFrame(
-    { mode: controlMode.value, refreshRev: lastRefreshRev },
-    frame
-  );
-  controlMode.value = effect.mode;
-  lastRefreshRev = effect.refreshRev;
-  if (effect.serverIndex !== null) applyServerIndex(effect.serverIndex);
-  if (effect.refresh) refreshVisible();
-};
-
-/** 展示端通道：连接即回放控制态，此后被动接收控制帧（断线由 WS 自带退避重连） */
-const startWs = (pk: string) => {
-  const protocol = location.protocol === "https:" ? "wss:" : "ws:";
-  ws = new WS(`${protocol}//${location.host}/ws/screen/${pk}`, {
-    autoReconnect: true,
-    heartbeat: true
-  });
-  ws.onMessage((res: unknown) => {
-    if (
-      !isOutboundMessage<ScreenCommandPayload>(
-        res,
-        MessageAction.SCREEN_COMMAND
-      )
-    )
-      return;
-    if (res.code !== SUCCESS_CODE || !res.data) return;
-    applyScreenFrame(res.data);
-  });
 };
 
 const toggleFullscreen = () => {
@@ -214,12 +187,6 @@ onMounted(async () => {
   startTimers();
   startWs(pk);
 });
-
-onBeforeUnmount(() => {
-  stopTimers();
-  ws?.close();
-  ws = null;
-});
 </script>
 
 <template>
@@ -233,10 +200,13 @@ onBeforeUnmount(() => {
              视觉层次由内层 span 的字号/透明度表达 -->
         <span class="screen-title">
           {{ screen?.name }}
-          <span class="screen-subtitle">· {{ currentDashboard?.name }}</span>
+          <!-- 画布模式没有「当前看板」概念：副标题与页码仅轮播态渲染 -->
+          <span v-if="!isCanvas" class="screen-subtitle"
+            >· {{ currentDashboard?.name }}</span
+          >
         </span>
       </div>
-      <span class="screen-page"
+      <span v-if="!isCanvas" class="screen-page"
         >{{ pageIndex + 1 }} / {{ dashboards.length }}</span
       >
       <!-- 远程接管指示：manual 态停本地轮播，回到 auto 后指示消失 -->
@@ -260,6 +230,7 @@ onBeforeUnmount(() => {
         {{ t("dataScreen.exportScreen") }}
       </el-button>
       <el-button
+        v-if="!isCanvas"
         size="small"
         :icon="paused ? PlayIcon : PauseIcon"
         :aria-label="paused ? t('dataScreen.resume') : t('dataScreen.pause')"
@@ -278,10 +249,23 @@ onBeforeUnmount(() => {
     </header>
 
     <ReEmpty
-      v-if="dashboards.length === 0"
+      v-if="!isCanvas && dashboards.length === 0"
       :description="t('dataScreen.noDashboards')"
       icon="ep/monitor"
     />
+
+    <!-- 画布模式：窗格绝对定位（12 列 / 40px 行高 / 12px 间距，与设计器同口径） -->
+    <div v-if="isCanvas" class="screen-canvas" data-testid="screen-canvas">
+      <ScreenPane
+        v-for="pane in layoutPanes"
+        :key="pane.pk"
+        :ref="setPaneRef(pane.pk)"
+        :pane="pane"
+        :cards="paneCards(pane)"
+        :clock="clock"
+        :dashboard-name="paneTitle(pane)"
+      />
+    </div>
 
     <div v-else class="screen-grid">
       <section
@@ -385,6 +369,17 @@ onBeforeUnmount(() => {
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 16px;
   padding: 4px 24px 24px;
+}
+
+/* 画布模式栅格：行列步长必须与设计器一致（40 + 12 = 52），否则所见非所得 */
+.screen-canvas {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-auto-rows: 40px;
+  gap: 12px;
+  align-content: start;
+  padding: 16px 24px 24px;
 }
 
 .screen-card {

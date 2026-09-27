@@ -514,6 +514,30 @@ taskCenter:
   batchDeleteEmpty: 选中的记录里没有可清理的执行历史
   selected: 已选 {count} 条
 
+post:
+  title: 岗位
+  create: 新建岗位
+  edit: 编辑岗位
+  saveOk: 岗位已保存
+  name: 岗位名称
+  nameRequired: 请填写岗位名称
+  code: 岗位编码
+  codeRequired: 请填写岗位编码
+  dept: 所属部门
+  deptPlaceholder: 留空为组织通用岗
+  rank: 排序
+  isActive: 启用状态
+  description: 备注
+  memberCount: 成员数
+  enabled: 已启用
+  disabled: 已停用
+  members: 成员
+  memberHint: 移除已有成员或搜索添加新成员（保存后生效）
+  memberEmpty: 暂无成员
+  memberPlaceholder: 搜索用户名/昵称添加成员
+  memberNoChange: 未检测到成员变更
+  memberSaveOk: 岗位成员已更新
+
 tag:
   title: 标签
   create: 新建标签
@@ -685,6 +709,7 @@ menus:
   securitySettings: 安全设置
   userManagement: 用户管理
   deptManagement: 部门管理
+  postManagement: 岗位管理
   menuManagement: 菜单管理
   permissionManagement: 权限管理
   configManagement: 配置管理
@@ -1771,6 +1796,11 @@ chat:
   sendFailed: 发送失败
   resend: 重试
   disconnected: 连接已断开，正在重连
+  attachImage: 发送图片
+  attachFile: 发送文件
+  uploadFailed: 附件上传失败
+  attachmentMissing: 附件已失效
+  download: 下载
   yesterday: 昨天
   openPrivate: 发消息
   actionCardTitle: "AI 动作确认：{label}"
@@ -1825,14 +1855,11 @@ login:
   login: 登录
   verifyCodeLogin: 验证码登录
   basicLogin: 普通登录
-  qRCodeLogin: 二维码登录
   register: 注册
   phone: 手机号码
   email: 邮箱地址
   smsVerifyCode: 短信验证码
   back: 返回
-  test: 模拟测试
-  tip: 扫码后点击"确认"，即可完成登录
   definite: 确定
   loginSuccess: 登录成功
   registerSuccess: 注册成功
@@ -2520,6 +2547,44 @@ dataDataset:
   exportCsv: 导出 CSV
 
 dataScreen:
+  designer: 设计
+  designerTitle: 大屏画布设计器
+  pickScreenFirst: 请先从大屏列表进入设计器
+  loadFailed: 大屏加载失败
+  layoutSaved: 画布已保存
+  unsaved: 有未保存改动
+  palette: 组件库
+  paneDashboard: 仪表盘
+  paneText: 文本
+  paneClock: 时钟
+  paneTitle: 窗格标题
+  paneTitlePlaceholder: 留空则用仪表盘名
+  paneContent: 文本内容
+  paneFontSize: 字号
+  paneAlign: 对齐
+  alignLeft: 左
+  alignCenter: 居中
+  alignRight: 右
+  panePosition: 位置
+  paneSize: 尺寸
+  gridHint: 栅格 12 列 × 60 行；位置与尺寸为列/行下标
+  inspector: 窗格属性
+  noSelection: 选中画布上的窗格后可编辑属性
+  emptyCanvas: 从左侧组件库添加窗格（文本 / 时钟 / 仪表盘）
+  canvasFull: 画布剩余空间放不下该组件，请先调整或删除窗格
+  panesFull: 窗格数量已达上限（{max} 个）
+  overlapRejected: 该位置与其他窗格重叠
+  removePane: 删除窗格
+  dragHint: 拖动移动窗格
+  textPlaceholder: 空文本（在右侧属性面板输入内容）
+  paneNoCard: 该仪表盘暂无可见卡片
+  clearLayout: 清空画布
+  clearLayoutConfirm: 清空后该大屏回到仪表盘轮播模式，确认继续？
+  preview: 预览
+  editMode: 退出预览
+  refreshData: 刷新数据
+  backToList: 返回列表
+  save: 保存
   noDashboards: 无可投屏仪表盘
   exportScreen: 导出当前屏
   exportNoChart: 当前屏没有可导出的图表
@@ -2564,6 +2629,48 @@ dataScreen:
   close: 关闭
 
 dataReport:
+  designer: 设计报表
+  pickReportFirst: 请先从报表列表进入设计器
+  loadFailed: 报表加载失败
+  designSaved: 设计已保存
+  unsaved: 有未保存改动
+  template: 模板
+  templateDetail: 明细表
+  templateSummary: 分组统计
+  templateTrend: 趋势看板
+  templateApplied: 已套用模板「{name}」
+  designDetail: 明细表设计
+  datasetLabel: 数据集
+  tableLimit: 行数上限
+  componentShelf: 组件库
+  componentNumber: 指标卡
+  componentBar: 柱状图
+  componentLine: 折线图
+  componentPie: 饼图
+  componentProps: 组件属性
+  componentTitle: 标题
+  componentWidth: 宽度
+  widthFull: 整行
+  widthHalf: 半行
+  truncNone: 不按时间
+  truncDay: 按天
+  truncMonth: 按月
+  removeComponent: 删除组件
+  componentLimit: 组件数量已达上限（{max} 个）
+  noComponent: 还没有聚合组件，从左侧组件库添加
+  noComponentSelection: 点击画布上的组件后可编辑属性
+  metricOnly: 整表聚合
+  detailTable: 明细表
+  tableRows: 预览 {shown} 行 / 共 {total} 行
+  tableLoadFailed: 明细预览加载失败
+  tableTruncated: 明细已按行数上限截断（{shown} / {total}）
+  columnsRequired: 至少保留一列明细
+  groupByRequired: 图表组件必须先选分组字段
+  refreshData: 刷新数据
+  preview: 预览
+  editMode: 退出预览
+  backToList: 返回列表
+  save: 保存
   title: 定时报表
   weekday0: 周一
   weekday1: 周二

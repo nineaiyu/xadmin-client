@@ -2,6 +2,7 @@ import { SUCCESS_CODE } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { h, onMounted, reactive, ref, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { useRouter } from "vue-router";
 import { ElTag } from "element-plus";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
@@ -55,6 +56,7 @@ const dictLabel = (raw: unknown): string => {
  */
 export function useReport(tableRef: Ref) {
   const { t } = useI18n();
+  const router = useRouter();
   const api = reactive(reportApi);
   const auth = reactive({
     ...getDefaultAuths("DataReport"),
@@ -183,9 +185,14 @@ export function useReport(tableRef: Ref) {
     });
   };
 
+  /** 报表设计器：新开独立页（P2.2 批次二；保存走 partialUpdate，需编辑权限） */
+  const design = (row: ReportItem) => {
+    router.push({ path: "/analysis/report/designer", query: { pk: row.pk } });
+  };
+
   const operationButtonsProps = shallowRef<OperationProps>({
-    showNumber: 4,
-    width: 240,
+    showNumber: 5,
+    width: 300,
     buttons: [
       {
         text: t("dataReport.run"),
@@ -193,6 +200,13 @@ export function useReport(tableRef: Ref) {
         props: { type: "success", link: true },
         onClick: ({ row, loading }) => run(row as ReportItem, loading),
         show: canRun && 10
+      },
+      {
+        text: t("dataReport.designer"),
+        code: "design",
+        props: { type: "primary", link: true },
+        onClick: ({ row }) => design(row as ReportItem),
+        show: canEdit && 15
       },
       {
         text: t("dataReport.edit"),

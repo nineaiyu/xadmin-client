@@ -514,6 +514,30 @@ taskCenter:
   batchDeleteEmpty: No deletable execution records selected
   selected: "{count} selected"
 
+post:
+  title: Post
+  create: New Post
+  edit: Edit Post
+  saveOk: Post saved
+  name: Post name
+  nameRequired: Post name is required
+  code: Post code
+  codeRequired: Post code is required
+  dept: Department
+  deptPlaceholder: Leave empty for an organization-wide post
+  rank: Rank
+  isActive: Active
+  description: Remark
+  memberCount: Members
+  enabled: Enabled
+  disabled: Disabled
+  members: Members
+  memberHint: Remove existing members or search to add new ones (applies on save)
+  memberEmpty: No members yet
+  memberPlaceholder: Search username or nickname
+  memberNoChange: No member changes detected
+  memberSaveOk: Post members updated
+
 tag:
   title: Tag
   create: New tag
@@ -685,6 +709,7 @@ menus:
   securitySettings: Security Settings
   userManagement: User Manage
   deptManagement: Department Manage
+  postManagement: Post Manage
   menuManagement: Menu Manage
   permissionManagement: Permission Manage
   configManagement: Config Manage
@@ -1771,6 +1796,11 @@ chat:
   sendFailed: Failed to send
   resend: Retry
   disconnected: Connection lost, reconnecting
+  attachImage: Send image
+  attachFile: Send file
+  uploadFailed: Attachment upload failed
+  attachmentMissing: Attachment is no longer available
+  download: Download
   yesterday: Yesterday
   openPrivate: Send message
   actionCardTitle: "Confirm AI action: {label}"
@@ -1825,14 +1855,11 @@ login:
   login: Login
   basicLogin: Basic Login
   verifyCodeLogin: Verify Code Login
-  qRCodeLogin: QRCode Login
   register: Register
   phone: Phone
   email: Email
   smsVerifyCode: SMS VerifyCode
   back: Back
-  test: Mock Test
-  tip: After scanning the code, click "Confirm" to complete the login
   definite: Definite
   loginSuccess: Login Success
   registerSuccess: Registered successfully
@@ -2520,6 +2547,44 @@ dataDataset:
   exportCsv: Export CSV
 
 dataScreen:
+  designer: Design
+  designerTitle: Screen canvas designer
+  pickScreenFirst: Open the designer from a screen row
+  loadFailed: Failed to load the screen
+  layoutSaved: Canvas saved
+  unsaved: Unsaved changes
+  palette: Components
+  paneDashboard: Dashboard
+  paneText: Text
+  paneClock: Clock
+  paneTitle: Pane title
+  paneTitlePlaceholder: Empty = dashboard name
+  paneContent: Text content
+  paneFontSize: Font size
+  paneAlign: Align
+  alignLeft: Left
+  alignCenter: Center
+  alignRight: Right
+  panePosition: Position
+  paneSize: Size
+  gridHint: 12 columns x 60 rows; position and size are column/row indexes
+  inspector: Pane properties
+  noSelection: Select a pane on the canvas to edit its properties
+  emptyCanvas: Add panes from the left (text / clock / dashboard)
+  canvasFull: Not enough free space for this component; adjust or remove panes first
+  panesFull: Pane limit reached ({max})
+  overlapRejected: This position overlaps another pane
+  removePane: Remove pane
+  dragHint: Drag to move the pane
+  textPlaceholder: Empty text (type in the properties panel)
+  paneNoCard: No visible card in this dashboard
+  clearLayout: Clear canvas
+  clearLayoutConfirm: Clearing returns this screen to carousel mode. Continue?
+  preview: Preview
+  editMode: Exit preview
+  refreshData: Refresh data
+  backToList: Back to list
+  save: Save
   noDashboards: No dashboard to display
   exportScreen: Export screen
   exportNoChart: The current screen has no chart to export
@@ -2564,6 +2629,48 @@ dataScreen:
   close: Close
 
 dataReport:
+  designer: Design report
+  pickReportFirst: Open the designer from a report row
+  loadFailed: Failed to load the report
+  designSaved: Design saved
+  unsaved: Unsaved changes
+  template: Template
+  templateDetail: Detail table
+  templateSummary: Grouped summary
+  templateTrend: Trend board
+  templateApplied: Template "{name}" applied
+  designDetail: Detail table design
+  datasetLabel: Dataset
+  tableLimit: Row limit
+  componentShelf: Components
+  componentNumber: Metric card
+  componentBar: Bar chart
+  componentLine: Line chart
+  componentPie: Pie chart
+  componentProps: Component properties
+  componentTitle: Title
+  componentWidth: Width
+  widthFull: Full row
+  widthHalf: Half row
+  truncNone: No date bucket
+  truncDay: By day
+  truncMonth: By month
+  removeComponent: Remove component
+  componentLimit: Component limit reached ({max})
+  noComponent: No aggregated component yet; add one from the left
+  noComponentSelection: Select a component on the canvas to edit its properties
+  metricOnly: Whole table
+  detailTable: Detail table
+  tableRows: Previewing {shown} of {total} rows
+  tableLoadFailed: Failed to load the detail preview
+  tableTruncated: Detail truncated by the row limit ({shown} / {total})
+  columnsRequired: Keep at least one detail column
+  groupByRequired: Chart components require a group by field
+  refreshData: Refresh data
+  preview: Preview
+  editMode: Exit preview
+  backToList: Back to list
+  save: Save
   title: Scheduled Reports
   weekday0: Monday
   weekday1: Tuesday

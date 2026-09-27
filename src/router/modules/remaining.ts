@@ -50,6 +50,26 @@ const remainingRoutes: Array<RouteConfigsTable> = [
       rank: 10105
     }
   },
+  {
+    path: "/analysis/screen/designer",
+    name: "DataScreenDesigner",
+    component: () => import("@/views/analysis/screen/designer.vue"),
+    meta: {
+      title: $t("menus.dataScreen"),
+      showLink: false,
+      rank: 10106
+    }
+  },
+  {
+    path: "/analysis/report/designer",
+    name: "DataReportDesigner",
+    component: () => import("@/views/analysis/report/designer.vue"),
+    meta: {
+      title: $t("menus.dataReport"),
+      showLink: false,
+      rank: 10107
+    }
+  },
   // 邀请激活：令牌即凭据，未登录访问，独立无侧栏页面
   {
     path: "/invite/accept",

@@ -96,6 +96,11 @@ export function useScreen(tableRef: Ref) {
     router.push({ path: "/analysis/screen/display", query: { pk: row.pk } });
   };
 
+  /** 画布设计器：新开独立全屏页（P2.2 批次一；保存走 partialUpdate，需编辑权限） */
+  const design = (row: ScreenItem) => {
+    router.push({ path: "/analysis/screen/designer", query: { pk: row.pk } });
+  };
+
   /* ---------------- 远程控制（ReDialog + ScreenControlForm） ---------------- */
   const openControl = (row: ScreenItem) => {
     // 按大屏自身的仪表盘序列传参（顺序即服务端下标序；不可解析的名称回落 pk）
@@ -162,10 +167,10 @@ export function useScreen(tableRef: Ref) {
   };
 
   const operationButtonsProps = shallowRef<OperationProps>({
-    // 5 个按钮（删除/详情/编辑/投屏/远程控制）全部内联：任一被折叠都会
-    // 使既有操作路径多点一次；列宽由 RePlusPage 按容器宽度对齐收敛（≥320）
-    showNumber: 5,
-    width: 320,
+    // 6 个按钮（删除/详情/编辑/设计/投屏/远程控制）全部内联：任一被折叠都会
+    // 使既有操作路径多点一次；列宽由 RePlusPage 按容器宽度对齐收敛（≥360）
+    showNumber: 6,
+    width: 360,
     buttons: [
       {
         text: t("dataScreen.display"),
@@ -173,6 +178,13 @@ export function useScreen(tableRef: Ref) {
         props: { type: "success", link: true },
         onClick: ({ row }) => display(row as ScreenItem),
         show: 10
+      },
+      {
+        text: t("dataScreen.designer"),
+        code: "design",
+        props: { type: "primary", link: true },
+        onClick: ({ row }) => design(row as ScreenItem),
+        show: canEdit && 6
       },
       {
         text: t("dataScreen.remoteControl"),
