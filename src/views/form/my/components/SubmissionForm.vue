@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onMounted, reactive } from "vue";
+import { computed, onMounted, reactive, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import UploadFiles from "@/components/RePlusPage/src/components/UploadFiles.vue";
 import { getDictItems, type DictItem } from "@/utils/dict";
@@ -11,6 +11,11 @@ import {
   type FormUserOption,
   type SubmissionItem
 } from "@/api/dataset/dform";
+import {
+  evaluateLinkages,
+  isFieldRequired,
+  visibleFields
+} from "../utils/linkage";
 
 /**
  * 动态填报表单（弹窗体系收敛到 ReDialog 的 content 组件形态）。
@@ -38,6 +43,30 @@ const formData = reactive<Record<string, unknown>>(
   props.submission
     ? JSON.parse(JSON.stringify(props.submission.data ?? {}))
     : {}
+);
+
+/** 联动：按当前填写内容求值（隐藏字段不渲染、必填动态覆盖） */
+const controls = computed(() =>
+  evaluateLinkages(
+    schemaFields.value,
+    props.form?.schema?.linkages,
+    formData as Record<string, unknown>
+  )
+);
+const shownFields = computed(() =>
+  visibleFields(schemaFields.value, controls.value)
+);
+const requiredOf = (field: FormField) => isFieldRequired(field, controls.value);
+
+// 被联动隐藏的字段清空取值：与后端「隐藏即不落库」同口径，避免脏值随载荷提交
+watch(
+  controls,
+  value => {
+    for (const [key, control] of Object.entries(value)) {
+      if (control.hidden) delete formData[key];
+    }
+  },
+  { immediate: true }
 );
 
 /** 明细子表：新增一行（按列定义初始化空值） */
@@ -171,10 +200,10 @@ defineExpose({ getPayload });
     />
     <el-form label-width="110px">
       <el-form-item
-        v-for="field in schemaFields"
+        v-for="field in shownFields"
         :key="field.key"
         :label="field.label"
-        :required="field.required"
+        :required="requiredOf(field)"
       >
         <el-input
           v-if="field.type === 'input'"

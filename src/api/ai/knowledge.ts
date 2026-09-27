@@ -36,6 +36,32 @@ export type KnowledgeSyncSummary = {
   synced_at: string;
 };
 
+/**
+ * 向量通道状态：enabled 表示存在可用的 embedding 档案（用途=文本向量化）；
+ * fresh 为可直接参与检索的向量数，stale 为正文/模型变更后待重算的向量数。
+ */
+export type KnowledgeVectorStatus = {
+  enabled: boolean;
+  model: string;
+  dim: number;
+  total: number;
+  embedded: number;
+  fresh: number;
+  stale: number;
+};
+
+export type KnowledgeEmbeddingSummary = {
+  enabled: boolean;
+  ok: boolean;
+  model: string;
+  dim: number;
+  total: number;
+  embedded: number;
+  skipped: number;
+  failed: number;
+  detail: string;
+};
+
 class KnowledgeApi extends BaseApi {
   /** 上传文档（文本）：同名视为覆盖更新，上传后立即参与问答检索 */
   upload = (name: string, content: string) => {
@@ -59,6 +85,29 @@ class KnowledgeApi extends BaseApi {
       {},
       { pks, is_active: isActive },
       `${this.baseApi}/batch-toggle`
+    );
+  };
+
+  /** 向量通道状态（是否启用 / 模型 / 维度 / 已构建与陈旧条数） */
+  vectorStatus = () => {
+    return this.request<DetailResult<KnowledgeVectorStatus>>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/vector-status`
+    );
+  };
+
+  /**
+   * 构建/刷新知识块向量（幂等：只补缺失与陈旧块）：
+   * 需已配置「用途=文本向量化」的激活档案，未配置时返回 1001。
+   */
+  buildEmbeddings = (params: { force?: boolean; document?: string } = {}) => {
+    return this.request<DetailResult<KnowledgeEmbeddingSummary>>(
+      "post",
+      {},
+      { ...params },
+      `${this.baseApi}/build-embeddings`
     );
   };
 }

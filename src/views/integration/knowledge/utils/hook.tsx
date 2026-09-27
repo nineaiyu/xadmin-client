@@ -17,7 +17,9 @@ import {
 import {
   knowledgeApi,
   type KnowledgeDocumentItem,
-  type KnowledgeSyncSummary
+  type KnowledgeEmbeddingSummary,
+  type KnowledgeSyncSummary,
+  type KnowledgeVectorStatus
 } from "@/api/ai/knowledge";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
@@ -63,6 +65,7 @@ export function useKnowledge(tableRef: Ref) {
   const canDestroy = hasAuth("destroy:AiKnowledge");
   const canSync = hasAuth("syncRepo:AiKnowledge");
   const canBatchToggle = hasAuth("batchToggle:AiKnowledge");
+  const canBuildEmbeddings = hasAuth("buildEmbeddings:AiKnowledge");
   // 批量删除走框架内建入口（勾选行后工具栏出现），由 auth.batchDestroy 控制显示，
   // 后端 batch-destroy 只删上传文档并清理分块
   const api = reactive(knowledgeApi);
@@ -234,6 +237,58 @@ export function useKnowledge(tableRef: Ref) {
     }
   };
 
+  /**
+   * 构建向量索引（增量）：先取状态——未配置 embedding 档案时给引导；已配置则确认后构建。
+   * 构建只补「未向量化 / 模型变更 / 正文变更」的块，可反复执行；全量重算用
+   * `manage.py build_ai_embeddings --force`。
+   */
+  const buildEmbeddings = async () => {
+    const statusRes = await knowledgeApi.vectorStatus().catch(error => ({
+      code: -1,
+      detail: String((error as { detail?: string })?.detail ?? error),
+      data: null
+    }));
+    const status = statusRes.data as KnowledgeVectorStatus | null;
+    if (!status?.enabled) {
+      message(t("aiKnowledge.vectorDisabled"), { type: "warning" });
+      return;
+    }
+    try {
+      await ElMessageBox.confirm(
+        t("aiKnowledge.buildConfirm", {
+          fresh: status.fresh,
+          total: status.total,
+          model: status.model
+        }),
+        t("aiKnowledge.buildEmbeddings"),
+        {
+          confirmButtonText: t("buttons.sure"),
+          cancelButtonText: t("buttons.cancel"),
+          type: "info"
+        }
+      );
+    } catch {
+      return;
+    }
+    const res = await knowledgeApi.buildEmbeddings().catch(error => ({
+      code: -1,
+      detail: String((error as { detail?: string })?.detail ?? error),
+      data: null
+    }));
+    const summary = res.data as KnowledgeEmbeddingSummary | null;
+    if (res.code !== SUCCESS_CODE) {
+      message(res.detail ?? t("results.failed"), { type: "error" });
+      return;
+    }
+    message(
+      t("aiKnowledge.buildDone", {
+        embedded: summary?.embedded ?? 0,
+        skipped: summary?.skipped ?? 0
+      }),
+      { type: "success" }
+    );
+  };
+
   const syncRepo = async () => {
     const res = await knowledgeApi.syncRepo();
     if (res.code === SUCCESS_CODE) {
@@ -270,6 +325,13 @@ export function useKnowledge(tableRef: Ref) {
         props: { icon: useRenderIcon(Refresh) },
         onClick: syncRepo,
         show: canSync
+      },
+      {
+        text: t("aiKnowledge.buildEmbeddings"),
+        code: "buildEmbeddings",
+        props: { icon: useRenderIcon("ep/magic-stick") },
+        onClick: buildEmbeddings,
+        show: canBuildEmbeddings
       },
       {
         text: t("aiKnowledge.batchEnable"),

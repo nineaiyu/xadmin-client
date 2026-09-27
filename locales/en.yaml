@@ -2902,7 +2902,9 @@ aiConfig:
   purpose: Purpose
   purposeChat: Chat / Q&A
   purposeStructured: Structured output
+  purposeEmbedding: Text embedding
   purposeHint: Chat serves Q&A; structured serves NL query and action drafts (falls back to the chat profile when unset)
+  purposeEmbeddingTip: Used by knowledge vector retrieval (OpenAI-compatible /embeddings); this purpose has no fallback — activate it and build vectors on the knowledge page
   nativeTools: Native tool calling (structured flows)
   probeVision: Probe (with vision)
   trackTitle: Draft track
@@ -3054,6 +3056,47 @@ dform:
   templateRemoveConfirm: Delete template "{name}"?
   noTemplates: No form templates
   useTemplate: Use
+  fieldSort: Sort
+  dragHint: Drag to reorder fields
+  linkage: Field linkage
+  linkageAdd: Add rule
+  linkageEdit: Edit rule
+  linkageNone: No linkage rules
+  linkageTrigger: Trigger field
+  linkageCond: Condition
+  linkageTarget: Target fields
+  linkageTargetPlaceholder: Select one or more target fields
+  linkageEffect: Effect
+  linkageValuePlaceholder: Select or enter a condition value
+  linkageOpEq: Equals
+  linkageOpNe: Not equals
+  linkageOpIn: In
+  linkageOpNotin: Not in
+  linkageOpEmpty: Is empty
+  linkageOpNotempty: Is not empty
+  linkageEffectHide: Hide
+  linkageEffectShow: Show
+  linkageEffectRequire: Required
+  linkageEffectOptional: Optional
+  linkageRequired: Select a trigger field, an effect and at least one target field
+  linkageValueRequired: Select or enter a condition value
+  linkageHint: "Submission validation and the form UI share the same rules: hidden fields skip required checks and are dropped, while required/optional override the field setting"
+  linkageTip: Multiple target fields expand into one rule per target; a rule cannot target its own trigger field
+  linkageDropped: "{count} linkage rule(s) referenced removed fields and were dropped"
+  history: Versions
+  historyTitle: "Version history ({name})"
+  historyCurrent: Current version
+  historyVersion: Version
+  historyFields: Fields
+  historyLinkages: Linkages
+  historyUpdated: Updated at
+  historyBy: Updated by
+  historyEmpty: No history yet (generated after schema changes are saved)
+  historySchema: Version definition
+  historyRollback: Roll back
+  historyRollbackConfirm: Roll back to v{version}? It applies that version's fields and linkages and creates a new version
+  historyRollbackDone: Rolled back to v{version}
+  historyLoadFailed: Failed to load version history
 
 leaveApply:
   leave_type: Leave type
@@ -3124,6 +3167,10 @@ aiKnowledge:
   batchEnable: Batch enable
   batchDisable: Batch disable
   batchToggleDone: "Updated {count}"
+  buildEmbeddings: Build vectors
+  buildConfirm: "Build the vector index incrementally: {fresh} / {total} chunks available (model {model}). Only missing or stale chunks are embedded, safe to run repeatedly"
+  buildDone: "Vector build finished: {embedded} chunks embedded, {skipped} skipped"
+  vectorDisabled: No active profile with purpose Text embedding; add and activate one on the AI config page first
   panelTitle: "Manage {title}"
   enabled: Enabled
   disabled: Disabled

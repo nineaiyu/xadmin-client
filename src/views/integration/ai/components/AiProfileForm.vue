@@ -130,7 +130,14 @@ defineExpose({ getPayload });
           :label="t('aiConfig.purposeStructured')"
           value="structured"
         />
+        <el-option :label="t('aiConfig.purposeEmbedding')" value="embedding" />
       </el-select>
+      <div
+        v-if="form.purpose === 'embedding'"
+        class="w-full text-xs text-(--el-text-color-secondary)"
+      >
+        {{ t("aiConfig.purposeEmbeddingTip") }}
+      </div>
     </el-form-item>
     <el-form-item :label="t('aiConfig.remark')">
       <el-input v-model="form.remark" maxlength="255" />

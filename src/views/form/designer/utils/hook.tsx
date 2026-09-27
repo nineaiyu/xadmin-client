@@ -10,17 +10,19 @@ import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
 import {
   dynamicFormApi,
   type DynamicFormItem,
-  type FormField
+  type FormSchema
 } from "@/api/dataset/dform";
 import DynamicFormForm from "../components/DynamicFormForm.vue";
+import SchemaHistoryDialog from "../components/SchemaHistoryDialog.vue";
 import TemplatePickerDialog from "../components/TemplatePickerDialog.vue";
 
 /**
- * 表单设计：定义 CRUD + 模板复用。
+ * 表单设计：定义 CRUD + 模板复用 + schema 版本历史。
  *
  * - 新建/编辑走 ReDialog + DynamicFormForm（大尺寸设计器弹窗，字段表在表单内维护）；
  * - 模板：行内「存为模板」把当前定义复制为模板（is_template，创建权限即可）；
  *   「从模板新建」选择模板后预填设计器（权限与列表同口径）；
+ * - 版本：行内「版本」打开 schema 历史（查看/回滚；回滚生成新版本，历史保留）；
  * - 删除保留框架默认入口；
  * - schema 列渲染「字段数」；is_active / approval_required 渲染为语义 tag
  *   （覆盖框架对 boolean 列的自动开关渲染，与迁移前标签口径一致）。
@@ -36,6 +38,8 @@ export function useFormDesigner(tableRef: Ref) {
   });
   const canCreate = hasAuth("create:FormDesigner");
   const canEdit = hasAuth("partialUpdate:FormDesigner");
+  const canHistory = hasAuth("schemaHistory:FormDesigner");
+  const canRollback = hasAuth("rollback:FormDesigner");
 
   const listColumnsFormat = (columns: PageTableColumn[]) => {
     columns.forEach(column => {
@@ -80,7 +84,7 @@ export function useFormDesigner(tableRef: Ref) {
     prefill?: {
       name?: string;
       description?: string;
-      schema?: { fields: FormField[] };
+      schema?: FormSchema;
     }
   ) => {
     formRef.value = undefined;
@@ -186,10 +190,28 @@ export function useFormDesigner(tableRef: Ref) {
     if (res.detail) message(String(res.detail), { type: "warning" });
   };
 
+  /** 「版本」入口：schema 历史查看与回滚（行级主键可用，独立于设计器弹窗） */
+  const openHistory = (row: DynamicFormItem) => {
+    addDialog({
+      title: t("dform.historyTitle", { name: row.name }),
+      width: dialogSize("lg"),
+      draggable: true,
+      destroyOnClose: true,
+      closeOnClickModal: false,
+      hideFooter: true,
+      contentRenderer: () =>
+        h(SchemaHistoryDialog, {
+          row,
+          canRollback,
+          onDone: () => tableRef.value?.handleGetData()
+        })
+    });
+  };
+
   const operationButtonsProps = shallowRef<OperationProps>({
-    // 4 个按钮（框架「查看/删除」+ 编辑/存为模板）全部内联，避免折叠进「更多」
-    showNumber: 4,
-    width: 240,
+    // 5 个按钮（框架「查看/删除」+ 编辑/版本/存为模板）全部内联，避免折叠进「更多」
+    showNumber: 5,
+    width: 320,
     buttons: [
       {
         text: t("dform.edit"),
@@ -197,6 +219,13 @@ export function useFormDesigner(tableRef: Ref) {
         props: { type: "primary", link: true },
         onClick: ({ row }) => openDialog(row as DynamicFormItem),
         show: canEdit && 20
+      },
+      {
+        text: t("dform.history"),
+        code: "history",
+        props: { type: "primary", link: true },
+        onClick: ({ row }) => openHistory(row as DynamicFormItem),
+        show: canHistory && 15
       },
       {
         text: t("dform.saveAsTemplate"),

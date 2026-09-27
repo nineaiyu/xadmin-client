@@ -2901,7 +2901,9 @@ aiConfig:
   purpose: 用途
   purposeChat: 对话问答
   purposeStructured: 结构化输出
+  purposeEmbedding: 文本向量化
   purposeHint: 对话问答供聊天/文档问答；结构化输出供 NL 查数与动作草稿（未配置时回落对话档案）
+  purposeEmbeddingTip: 供知识库向量检索（OpenAI 兼容 /embeddings 接口）；该用途不做回落，激活后在知识库页「构建向量」
   nativeTools: 原生工具调用（结构化链路）
   probeVision: 探测（含多模态）
   trackTitle: 草稿链路
@@ -3053,6 +3055,47 @@ dform:
   templateRemoveConfirm: 确定删除模板「{name}」吗？
   noTemplates: 暂无表单模板
   useTemplate: 使用
+  fieldSort: 排序
+  dragHint: 拖拽调整字段顺序
+  linkage: 联动规则
+  linkageAdd: 新增规则
+  linkageEdit: 编辑规则
+  linkageNone: 暂无联动规则
+  linkageTrigger: 触发字段
+  linkageCond: 条件
+  linkageTarget: 目标字段
+  linkageTargetPlaceholder: 选择一个或多个目标字段
+  linkageEffect: 效果
+  linkageValuePlaceholder: 请选择或输入条件值
+  linkageOpEq: 等于
+  linkageOpNe: 不等于
+  linkageOpIn: 属于
+  linkageOpNotin: 不属于
+  linkageOpEmpty: 为空
+  linkageOpNotempty: 不为空
+  linkageEffectHide: 隐藏
+  linkageEffectShow: 显示
+  linkageEffectRequire: 必填
+  linkageEffectOptional: 非必填
+  linkageRequired: 请选择触发字段、效果与至少一个目标字段
+  linkageValueRequired: 请选择或输入条件值
+  linkageHint: 服务端提交校验与页面展示使用同一份规则：隐藏字段跳过必填且不落库，必填/非必填覆盖字段自身开关
+  linkageTip: 多选目标字段会展开为多条同条件规则；触发字段与目标字段不能相同
+  linkageDropped: 有 {count} 条联动规则引用了已删除字段，已自动移除
+  history: 版本
+  historyTitle: 版本历史（{name}）
+  historyCurrent: 当前版本
+  historyVersion: 版本
+  historyFields: 字段数
+  historyLinkages: 联动数
+  historyUpdated: 更新时间
+  historyBy: 操作人
+  historyEmpty: 暂无历史版本（修改 schema 保存后生成）
+  historySchema: 该版本配置
+  historyRollback: 回滚
+  historyRollbackConfirm: 确定回滚到版本 v{version} 吗？将应用该版本的字段与联动配置并生成新版本
+  historyRollbackDone: 已回滚到版本 v{version}
+  historyLoadFailed: 版本历史加载失败
 
 leaveApply:
   leave_type: 请假类型
@@ -3123,6 +3166,10 @@ aiKnowledge:
   batchEnable: 批量启用
   batchDisable: 批量停用
   batchToggleDone: 已更新 {count} 条
+  buildEmbeddings: 构建向量
+  buildConfirm: 增量构建向量索引：当前可用 {fresh} / {total} 块（模型 {model}）。只补「未向量化与正文变更」的块，可反复执行
+  buildDone: 向量构建完成：新增或更新 {embedded} 块，跳过 {skipped} 块
+  vectorDisabled: 未配置「用途 = 文本向量化」的激活档案，请先在 AI 配置页添加并激活
   panelTitle: "管理文档 {title}"
   enabled: 已启用
   disabled: 已停用

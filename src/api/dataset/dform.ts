@@ -1,5 +1,5 @@
 import { BaseApi } from "@/api/base";
-import type { BaseResult, DataListResult } from "@/api/types";
+import type { BaseResult, DataListResult, DetailResult } from "@/api/types";
 
 /** 动态表单：收敛控件集 schema + 通用 JSON 提交 */
 export type FormFieldType =
@@ -63,11 +63,35 @@ export type FormField = {
   columns?: FormTableColumn[];
 };
 
+/** 联动规则操作符：eq/ne 标量比较；in/notin 集合包含；empty/notempty 空值判定 */
+export type FormLinkageOp = "eq" | "ne" | "in" | "notin" | "empty" | "notempty";
+
+/** 联动效果：隐藏 / 显示 / 必填 / 非必填（同一目标多条命中时按顺序后者覆盖前者） */
+export type FormLinkageEffect = "hide" | "show" | "require" | "optional";
+
+/** 联动规则：触发字段（field）满足条件时对目标字段（target）的效果 */
+export type FormLinkage = {
+  target: string;
+  field: string;
+  op: FormLinkageOp;
+  /** 值型操作符（eq/ne/in/notin）的规则值；empty/notempty 不带该键 */
+  value?: string | number | boolean | Array<string | number | boolean>;
+  effect: FormLinkageEffect;
+};
+
+export type FormSchema = {
+  fields: FormField[];
+  /** 联动规则（可空）：服务端提交校验与前端展示同源 */
+  linkages?: FormLinkage[];
+};
+
 export type DynamicFormItem = {
   pk: string;
   name: string;
   description: string;
-  schema: { fields: FormField[] };
+  schema: FormSchema;
+  /** schema 版本：每次实质变更 +1；历史版本可查看/回滚 */
+  schema_version?: number;
   is_active: boolean;
   /** 提交需审批（走操作审批：审批通过后自动落库） */
   approval_required: boolean;
@@ -82,10 +106,24 @@ export type FillableFormItem = {
   pk: string;
   name: string;
   description: string;
-  schema: { fields: FormField[] };
+  schema: FormSchema;
   approval_required: boolean;
   approval_flow?: string | null;
   approval_flow_pk?: string | null;
+};
+
+/** 历史版本条目（schema-history 返回：新 → 旧） */
+export type SchemaHistoryItem = {
+  version: number;
+  schema: FormSchema;
+  updated_time?: string;
+  updated_by?: string;
+};
+
+export type SchemaHistoryResult = {
+  current: number;
+  updated_time?: string;
+  history: SchemaHistoryItem[];
 };
 
 /** 填报状态：空 = 无需审批已生效；DRAFT = 草稿；绑定流程后随流程实例终态回写 */
@@ -113,6 +151,8 @@ export type SubmissionItem = {
   form_name: string;
   /** 表单 schema 快照：详情页渲染字段 label 与复杂控件（无需表单设计器权限） */
   form_schema?: FormField[];
+  /** 保存时的表单 schema 版本（审计口径） */
+  schema_version?: number;
   data: Record<string, unknown>;
   status?: { value: SubmissionStatusValue; label: string } | null;
   instance?: string | null;
@@ -178,7 +218,31 @@ class SubmissionApi extends BaseApi {
   };
 }
 
+/** 表单设计器扩展端点：schema 版本历史与回滚（定义类资源，与 dynamicFormApi 同前缀） */
+class DesignerApi extends BaseApi {
+  /** schema 版本历史（新 → 旧，含每个版本的 schema 全文） */
+  schemaHistory = (pk: string) => {
+    return this.request<DetailResult<SchemaHistoryResult>>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/${pk}/schema-history`
+    );
+  };
+
+  /** 回滚到指定历史版本（生成新版本，历史保留） */
+  rollback = (pk: string, version: number) => {
+    return this.request<DetailResult<DynamicFormItem>>(
+      "post",
+      {},
+      { version },
+      `${this.baseApi}/${pk}/rollback`
+    );
+  };
+}
+
 export const dynamicFormApi = new BaseApi("/api/dataset/dynamic-forms");
+export const designerApi = new DesignerApi("/api/dataset/dynamic-forms");
 export const submissionApi = new SubmissionApi(
   "/api/dataset/dynamic-form-submissions"
 );

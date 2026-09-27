@@ -13,6 +13,7 @@ import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
 import { aiProfileApi, type AiProfileItem } from "@/api/ai/ai";
+import { purposeLabelKey, purposeTagType } from "./purpose";
 import AiProfileForm from "../components/AiProfileForm.vue";
 import AiProfilePanel from "../components/AiProfilePanel.vue";
 import { buildAiProfileActionGroups } from "./aiProfileActions";
@@ -92,14 +93,8 @@ export function useAiProfiles(tableRef: Ref) {
             const purpose = (row as AiProfileItem).purpose;
             return h(
               ElTag,
-              {
-                size: "small",
-                type: purpose === "structured" ? "warning" : "primary"
-              },
-              () =>
-                purpose === "structured"
-                  ? t("aiConfig.purposeStructured")
-                  : t("aiConfig.purposeChat")
+              { size: "small", type: purposeTagType(purpose) },
+              () => t(purposeLabelKey(purpose))
             );
           };
           break;

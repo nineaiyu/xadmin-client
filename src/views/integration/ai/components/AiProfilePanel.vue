@@ -6,6 +6,7 @@ import {
   type PanelActionGroup
 } from "@/components/ReActionPanel";
 import type { AiProfileItem } from "@/api/ai/ai";
+import { purposeLabelKey, purposeTagType } from "../utils/purpose";
 
 /**
  * AI 档案「管理」抽屉内容：档案资料 + 能力画像 + 探测/配置/删除动作。
@@ -54,11 +55,9 @@ const capabilityTags = computed(() => {
   });
 });
 
-const purposeText = computed(() =>
-  props.row.purpose === "structured"
-    ? t("aiConfig.purposeStructured")
-    : t("aiConfig.purposeChat")
-);
+const purposeText = computed(() => t(purposeLabelKey(props.row.purpose)));
+
+const purposeType = computed(() => purposeTagType(props.row.purpose));
 
 const metaItems = computed(() => [
   {
@@ -136,11 +135,7 @@ const metaItems = computed(() => [
 
       <div class="mt-3 flex flex-wrap items-center gap-1.5">
         <span class="tag-caption">{{ t("aiConfig.purpose") }}</span>
-        <el-tag
-          :type="row.purpose === 'structured' ? 'warning' : 'primary'"
-          size="small"
-          effect="plain"
-        >
+        <el-tag :type="purposeType" size="small" effect="plain">
           {{ purposeText }}
         </el-tag>
       </div>
