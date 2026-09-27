@@ -2,6 +2,7 @@
 import { reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessage } from "element-plus";
+import { sanitizeHtml } from "@/utils/sanitize";
 import {
   messageTemplateApi,
   type MessageTemplateItem
@@ -82,8 +83,12 @@ defineExpose({ getPayload });
       :title="t('messageTemplate.defaultContent')"
       type="warning"
     >
-      <!-- 默认正文是 HTML（渠道渲染原文）：按渲染结果展示，与下方预览区同口径 -->
-      <div class="text-xs whitespace-pre-wrap" v-html="row.default_body" />
+      <!-- 默认正文是 HTML（渠道渲染原文）：按渲染结果展示，与下方预览区同口径；
+           展示前经 DOMPurify 净化（模板正文可由管理员编辑，预览即渲染的 XSS 面） -->
+      <div
+        class="text-xs whitespace-pre-wrap"
+        v-html="sanitizeHtml(row.default_body)"
+      />
     </el-alert>
 
     <el-form label-width="90px">
@@ -133,7 +138,10 @@ defineExpose({ getPayload });
       data-testid="template-preview-result"
     >
       <div class="mb-1 text-sm font-medium">{{ previewResult.subject }}</div>
-      <div class="text-xs whitespace-pre-wrap" v-html="previewResult.message" />
+      <div
+        class="text-xs whitespace-pre-wrap"
+        v-html="sanitizeHtml(previewResult.message)"
+      />
     </div>
   </div>
 </template>
