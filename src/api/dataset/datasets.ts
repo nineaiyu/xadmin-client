@@ -37,6 +37,8 @@ export type DatasetItem = {
 export type DatasetMeta = {
   models: string[];
   fields: Record<string, string[]>;
+  /** 各模型上的 JSON 字段（JSON 路径列 `字段.键` 的可用根） */
+  json_fields?: Record<string, string[]>;
 };
 
 export type ExecuteResult = {

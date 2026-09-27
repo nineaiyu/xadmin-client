@@ -37,6 +37,17 @@ const visibleColumns = computed(() =>
     : available.value
 );
 
+/**
+ * 单元格取值：显式按键取（`row[column]`），不用 el-table 的 prop 解析。
+ * 列名可能是 JSON 路径声明（`data.kind` / `data.amount|number`），EP 的 prop
+ * 会按 `.` 拆路径，与其它渲染点（数据集预览 / AI 结果表）口径也不一致。
+ */
+const cellText = (row: Record<string, unknown>, column: string) => {
+  const value = row[column];
+  if (value === null || value === undefined || value === "") return "";
+  return typeof value === "object" ? JSON.stringify(value) : String(value);
+};
+
 const load = async () => {
   if (!props.datasetPk) return;
   loading.value = true;
@@ -106,11 +117,12 @@ defineExpose({ load, notifyFull });
       <el-table-column
         v-for="column in visibleColumns"
         :key="column"
-        :prop="column"
         :label="column"
         min-width="120"
         show-overflow-tooltip
-      />
+      >
+        <template #default="{ row }">{{ cellText(row, column) }}</template>
+      </el-table-column>
       <el-table-column v-if="visibleColumns.length === 0" label="—" />
     </el-table>
   </div>

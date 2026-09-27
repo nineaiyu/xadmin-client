@@ -57,6 +57,14 @@ const form = reactive({
 
 const fieldOptions = computed(() => props.meta.fields[form.bound_model] ?? []);
 
+/**
+ * JSON 路径列的可用根字段（如 `system.dynamicformsubmission` → `data`）：
+ * 非空时列/筛选输入框允许手工输入 `字段.键`（可加 `|number` 标注数值列）。
+ */
+const jsonRoots = computed(
+  () => props.meta.json_fields?.[form.bound_model] ?? []
+);
+
 /** 可选模型：过滤伪模型 "*"（「全部表」根节点，选择后保存必被后端拒绝） */
 const modelOptions = computed(() =>
   props.meta.models.filter(model => model !== "*")
@@ -126,9 +134,22 @@ defineExpose({ getPayload });
       </el-select>
     </el-form-item>
     <el-form-item :label="t('dataDataset.columns')" required>
-      <el-select v-model="form.columns" class="w-full" multiple filterable>
+      <el-select
+        v-model="form.columns"
+        class="w-full"
+        multiple
+        filterable
+        allow-create
+        default-first-option
+      >
         <el-option v-for="f in fieldOptions" :key="f" :value="f" :label="f" />
       </el-select>
+      <div
+        v-if="jsonRoots.length"
+        class="text-xs text-(--el-text-color-regular)"
+      >
+        {{ t("dataDataset.jsonColumnTip", { roots: jsonRoots.join(" / ") }) }}
+      </div>
     </el-form-item>
     <el-form-item :label="t('dataDataset.filters')">
       <div class="w-full">
@@ -143,6 +164,8 @@ defineExpose({ getPayload });
             v-model="item.field"
             :style="{ width: '190px' }"
             filterable
+            allow-create
+            default-first-option
           >
             <el-option
               v-for="f in fieldOptions"
@@ -199,7 +222,14 @@ defineExpose({ getPayload });
       <el-input-number v-model="form.row_limit" :min="1" :max="5000" />
     </el-form-item>
     <el-form-item :label="t('dataDataset.dateField')">
-      <el-select v-model="form.date_field" class="w-full" clearable filterable>
+      <el-select
+        v-model="form.date_field"
+        class="w-full"
+        clearable
+        filterable
+        allow-create
+        default-first-option
+      >
         <el-option v-for="f in fieldOptions" :key="f" :value="f" :label="f" />
       </el-select>
       <div class="text-xs text-(--el-text-color-regular)">
