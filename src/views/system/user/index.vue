@@ -74,7 +74,7 @@ const { percent, handleDragEnd } = useSplitPaneConfig("system/user", {
         />
       </template>
     </ReSplitPane>
-    <!-- 移动端：上下堆叠 -->
+    <!-- 移动端：上下堆叠（部门树限高，用户列表紧随其后） -->
     <div v-else :class="['flex', 'justify-between', 'flex-wrap']">
       <tree
         ref="treeRef"
@@ -82,6 +82,7 @@ const { percent, handleDragEnd } = useSplitPaneConfig("system/user", {
         :treeData="treeData"
         :treeLoading="treeLoading"
         class="w-full"
+        compact
         @tree-select="onTreeSelect"
       />
       <RePlusPage

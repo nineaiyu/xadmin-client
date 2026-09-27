@@ -18,7 +18,15 @@ interface Tree {
 const props = defineProps({
   treeLoading: Boolean,
   treeData: Array,
-  pk: String
+  pk: String,
+  /**
+   * 堆叠（移动端）形态：高度自适应并限高。
+   *
+   * 桌面形态依赖 split-pane 给出的高度，用 `calc(100vh - 141px)` 铺满；移动端是
+   * 「部门树在上、用户列表在下」的堆叠布局，同样的铺满高度会把列表推到整屏之外
+   * （实测 390×664 视口下用户列表完全不可见）。
+   */
+  compact: Boolean
 });
 
 const emit = defineEmits(["tree-select"]);
@@ -130,7 +138,7 @@ defineExpose({ onTreeReset });
 <template>
   <div
     v-loading="props.treeLoading"
-    :style="{ minHeight: `calc(100vh - 141px)` }"
+    :style="props.compact ? undefined : { minHeight: `calc(100vh - 141px)` }"
     class="bg-bg_color overflow-hidden relative"
   >
     <div class="flex items-center h-8.5">
@@ -176,7 +184,9 @@ defineExpose({ onTreeReset });
       </el-dropdown>
     </div>
     <el-divider />
-    <el-scrollbar height="calc(90vh - 108px)">
+    <el-scrollbar
+      :height="props.compact ? 'min(32vh, 260px)' : 'calc(90vh - 108px)'"
+    >
       <el-tree
         ref="treeRef"
         :data="treeViewData"
