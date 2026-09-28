@@ -5,7 +5,7 @@ import {
   deletePendingApproval,
   setPendingApproval
 } from "./pendingApproval";
-import { redirectToLogin } from "./redirect";
+import { redirectToLogin, redirectToModuleDisabled } from "./redirect";
 import type { PureHttpRequestConfig } from "./types.d";
 
 /**
@@ -148,11 +148,36 @@ const tooEarlyStrategy: SendErrorStrategy = {
   }
 };
 
+/** 404 + 业务码 1001：命中已停用功能模块的网关拦截（ModuleGateMiddleware），给专用提示而非裸 404 */
+const moduleDisabledStrategy: SendErrorStrategy = {
+  match: ({ status, data }) => status === 404 && data?.code === 1001,
+  handle: ({ config, data, reject }) => {
+    // detail 由后端按请求语言翻译（zh: 功能未启用 / en: Feature not enabled）；module 指明命中的模块 id
+    const moduleId = typeof data?.module === "string" ? data.module : "";
+    ElMessage.warning(
+      `${data?.detail ?? ""}${moduleId ? ` (${moduleId})` : ""}`
+    );
+    // 页面取数（GET）失败 → 整页化：跳「模块已停用」页（带返回入口），替代停留在必然
+    // 空数据的页面上；变更类请求失败只提示，避免打断用户正在进行的操作。
+    // 已在该页时不再跳转（页面自身的轮询/刷新会再次命中网关）。
+    const method = String(config?.method ?? "").toLowerCase();
+    const onDisabledPage = window.location.hash.includes(
+      "/error/module-disabled"
+    );
+    if (method === "get" && !onDisabledPage) {
+      redirectToModuleDisabled(moduleId);
+    }
+    reject(data);
+    return true;
+  }
+};
+
 export const SEND_ERROR_STRATEGIES: SendErrorStrategy[] = [
   tokenExpiredStrategy,
   unauthorizedStrategy,
   mfaConfirmStrategy,
   approvalPendingStrategy,
   approvalRejectedStrategy,
+  moduleDisabledStrategy,
   tooEarlyStrategy
 ];

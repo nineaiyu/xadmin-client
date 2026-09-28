@@ -17,3 +17,17 @@ export function redirectToLogin() {
       window.location.href = "/#/login";
     });
 }
+
+/** 命中「功能模块已停用」网关时跳整页提示（带返回入口；动态引入避免与路由模块循环依赖） */
+export function redirectToModuleDisabled(moduleId: string) {
+  import("@/router")
+    .then(({ router }) => {
+      router.push({
+        path: "/error/module-disabled",
+        query: moduleId ? { module: moduleId } : {}
+      });
+    })
+    .catch(() => {
+      window.location.href = `/#/error/module-disabled${moduleId ? `?module=${moduleId}` : ""}`;
+    });
+}
