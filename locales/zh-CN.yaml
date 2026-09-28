@@ -360,6 +360,9 @@ error:
   error404: 抱歉，你访问的页面不存在
   error500: 抱歉，服务器出错了
   goBack: 返回首页
+  moduleDisabled: 功能模块已停用
+  moduleDisabledTip: 该功能对应的模块已被停用，如需使用请联系管理员开启
+  back: 返回上一页
 
 password:
   veryWeak: 很弱
@@ -537,6 +540,23 @@ post:
   memberPlaceholder: 搜索用户名/昵称添加成员
   memberNoChange: 未检测到成员变更
   memberSaveOk: 岗位成员已更新
+  preview: 预览
+
+directory:
+  title: 通讯录
+  viewByDept: 按部门
+  viewByPost: 按岗位
+  searchPlaceholder: 用户名/昵称/邮箱/手机号
+  search: 搜索
+  emptyPosts: 暂无可用岗位
+  name: 姓名
+  username: 用户名
+  dept: 部门
+  posts: 岗位
+  gender: 性别
+  email: 邮箱
+  phone: 手机号
+  lastLogin: 最近登录
 
 tag:
   title: 标签
@@ -709,6 +729,7 @@ menus:
   formData: 表单数据
   securitySettings: 安全设置
   userManagement: 用户管理
+  directory: 通讯录
   deptManagement: 部门管理
   postManagement: 岗位管理
   menuManagement: 菜单管理
@@ -754,6 +775,7 @@ menus:
   accountRisk: 账号安全
   loginPolicy: 登录策略
   dataMaskRule: 脱敏规则
+  approval: 审批管理
   approvalCenter: 审批中心
   approvalFlow: 流程定义
   approvalInstance: 流程审批
@@ -789,6 +811,14 @@ credential:
   rotateConfirm: "确认重新加密凭据 {name}？轮换后旧密文立即失效，使用该凭据的链路会读取新密文"
   rotateOk: 凭据已重新加密
   rotateFailed: 凭据轮换失败
+  description: 说明
+  masked: 掩码值
+  goChange: 去更换
+  rotateModelConfirm: "确认轮换「{name}」？将重新生成随机密钥并覆盖原值，依赖该密钥的外部集成（如 Webhook 验签）必须同步更新，否则校验失败"
+  usedBy: 使用方
+  lastRotated: 上次轮换
+  rotateOverdue: 建议轮换
+  neverRotated: 从未轮换
   modelFieldsHint: 模型字段级凭据按行值级加密（AESCipherV3），此处仅展示已配置数量，不展示密钥内容
 
 approval:
@@ -876,9 +906,12 @@ approvalRule:
   levelType: 审批人类型
   levelTypeUser: 指定用户
   levelTypeRole: 角色
+  levelTypePost: 岗位
   levelAssignee: 审批人
   levelUserTip: 输入用户名搜索（可多选，任一人通过即该级通过）
   levelRoleTip: 选择角色（角色成员任一人通过即该级通过）
+  levelPostTip: 选择岗位（在岗成员任一人通过即该级通过，仅启用岗位）
+  levelAssigneeFallback: 输入审批人标识（用户名/角色 code/岗位 code，逗号分隔）
   levelValueTip: 填写用户名或角色 code（逗号分隔）
   levelActions: 操作
   moveUp: 上移
@@ -913,11 +946,13 @@ systemApprovalFlow:
   assigneeType_user: 用户
   assigneeType_leader: 申请人上级
   assigneeType_field: 表单字段
+  assigneeType_post: 指定岗位
   assigneeValue: 审批人值
   assigneeHint_role: 角色 code，逗号分隔
   assigneeHint_user: 用户名，逗号分隔
   assigneeHint_leader: 无需填写（取申请人部门主管）
   assigneeHint_field: 表单字段 key（值为用户名或用户名列表）
+  assigneeHint_post: 岗位 code，逗号分隔（仅启用岗位的在岗用户参与解析）
   assigneeValueRequired: 请填写该节点的审批人（角色 / 用户 / 表单字段）
   ratioRangeRequired: 比例会签的比例需在 1-100 之间
   ccUsers: 抄送人
@@ -1061,6 +1096,7 @@ userinfo:
   gender: 性别
   dept: 部门
   roles: 角色
+  posts: 岗位
   date_joined: 注册时间
   last_login: 上次登录时间
   avatar: 头像
@@ -1159,6 +1195,7 @@ systemUser:
   passwordRequired: 请输入密码
   roles: 角色
   rules: 数据权限
+  posts: 岗位
   preview: 权限预览
   logout: 登出
   manage: 管理
@@ -1223,6 +1260,7 @@ systemPermission:
   notice_user: 用户
   notice_dept: 部门
   notice_role: 角色
+  notice_post: 岗位
   notice_menu: 菜单
   preview: 权限预览
   presets: 常用模板
@@ -1352,6 +1390,9 @@ rolePermission:
 permissionPreview:
   userTitle: 用户权限预览
   roleTitle: 角色授权预览
+  postTitle: 岗位维度预览
+  postUsers: 持有该岗位的用户
+  emptyPostUsers: 暂无持有该岗位的用户（或不在你的数据权限范围内）
   basicInfo: 基本信息
   menuTree: 可见菜单树
   apiCodes: API 权限码
@@ -1593,6 +1634,25 @@ systemMenu:
     edit: 编辑菜单
     clone: 克隆菜单
     cloneSuffix: "{ title } 副本"
+  permissionAudit:
+    button: 权限检测
+    tip: 检测代码路由与菜单权限点的缺口、游离与重复项（只读，不改动数据）
+    title: 菜单权限检测
+    suggestion: 建议
+    missing: 权限缺口
+    orphan: 游离权限点
+    duplicate: 重复权限码
+    locate: 定位菜单
+    allClear: 未发现权限缺口
+    summary: "已扫描路由 { routes } 条 / 权限点 { permissions } 个 · 问题 { total } 处"
+    suggest:
+      generate: 执行权限同步或「自动批量添加权限」补齐
+      verify: 确认端点是否已下线，必要时删除该权限点
+      merge: 合并重复权限码或确认是否有意为之
+    empty:
+      missing: 未发现缺口
+      orphan: 未发现游离权限点
+      duplicate: 未发现重复权限码
   empty:
     noMatch: 无匹配菜单，试试清空筛选条件
     noData: 暂无菜单数据
@@ -1673,6 +1733,7 @@ systemNotice:
   notice_user: 用户
   notice_dept: 部门
   notice_role: 角色
+  notice_post: 岗位
   allRead: 全部
   showSystemNotice: 查看通知公告
 

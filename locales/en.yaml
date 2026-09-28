@@ -360,6 +360,9 @@ error:
   error404: Sorry, the page you are looking for does not exist
   error500: Sorry, server error
   goBack: Back to home page
+  moduleDisabled: Feature module is disabled
+  moduleDisabledTip: The module behind this feature has been disabled. Contact an administrator to enable it.
+  back: Go back
 
 password:
   veryWeak: Very weak
@@ -537,6 +540,23 @@ post:
   memberPlaceholder: Search username or nickname
   memberNoChange: No member changes detected
   memberSaveOk: Post members updated
+  preview: Preview
+
+directory:
+  title: Directory
+  viewByDept: By Department
+  viewByPost: By Post
+  searchPlaceholder: Username/nickname/email/phone
+  search: Search
+  emptyPosts: No active posts
+  name: Name
+  username: Username
+  dept: Department
+  posts: Posts
+  gender: Gender
+  email: Email
+  phone: Phone
+  lastLogin: Last Login
 
 tag:
   title: Tag
@@ -709,6 +729,7 @@ menus:
   formData: Form Data
   securitySettings: Security Settings
   userManagement: User Manage
+  directory: Directory
   deptManagement: Department Manage
   postManagement: Post Manage
   menuManagement: Menu Manage
@@ -754,6 +775,7 @@ menus:
   accountRisk: Account Security
   loginPolicy: Login Policy
   dataMaskRule: Data Mask Rule
+  approval: Approval Management
   approvalCenter: Approval Center
   approvalFlow: Flow Definition
   approvalInstance: Flow Approval
@@ -789,6 +811,14 @@ credential:
   rotateConfirm: "Re-encrypt credential {name}? The old ciphertext stops working immediately and consumers read the new one"
   rotateOk: Credential re-encrypted
   rotateFailed: Credential rotation failed
+  description: Description
+  masked: Masked value
+  goChange: Change
+  rotateModelConfirm: 'Rotate "{name}"? A new random secret overwrites the current one; external integrations (e.g. webhook signature verification) must be updated or verification fails.'
+  usedBy: Used By
+  lastRotated: Last Rotated
+  rotateOverdue: Rotation Suggested
+  neverRotated: Never Rotated
   modelFieldsHint: Model field credentials are encrypted per row (AESCipherV3); only the configured count is shown here, never the secret itself
 
 approval:
@@ -876,9 +906,12 @@ approvalRule:
   levelType: Assignee Type
   levelTypeUser: User
   levelTypeRole: Role
+  levelTypePost: Post
   levelAssignee: Approver
   levelUserTip: Search username (multi-select, any one approves this level)
   levelRoleTip: Select roles (any member approves this level)
+  levelPostTip: Select posts (any active member approves this level, active posts only)
+  levelAssigneeFallback: Enter approver identifiers (username/role code/post code, comma separated)
   levelValueTip: Username or role code, comma separated
   levelActions: Actions
   moveUp: Up
@@ -913,11 +946,13 @@ systemApprovalFlow:
   assigneeType_user: User
   assigneeType_leader: Applicant Leader
   assigneeType_field: Form Field
+  assigneeType_post: Post
   assigneeValue: Assignee Value
   assigneeHint_role: Role codes, comma separated
   assigneeHint_user: Usernames, comma separated
   assigneeHint_leader: No value needed (uses the applicant's department leader)
   assigneeHint_field: Form field key (value is a username or username list)
+  assigneeHint_post: Post codes, comma separated (only active members of active posts resolve)
   assigneeValueRequired: Please fill in the approver for this node (role / user / form field)
   ratioRangeRequired: The ratio of ratio-based approval must be between 1 and 100
   ccUsers: CC Users
@@ -1061,6 +1096,7 @@ userinfo:
   gender: Gender
   dept: Department
   roles: Roles
+  posts: Posts
   date_joined: Registration Date
   last_login: Last Login Date
   avatar: Avatar
@@ -1159,6 +1195,7 @@ systemUser:
   passwordRequired: Please input the password
   roles: Roles
   rules: Data Permissions
+  posts: Posts
   preview: Permission Preview
   logout: Logout
   manage: Manage
@@ -1223,6 +1260,7 @@ systemPermission:
   notice_user: Users
   notice_dept: Departments
   notice_role: Roles
+  notice_post: Posts
   notice_menu: Menus
   preview: Permission Preview
   presets: Presets
@@ -1352,6 +1390,9 @@ rolePermission:
 permissionPreview:
   userTitle: User Permission Preview
   roleTitle: Role Grant Preview
+  postTitle: Post Preview
+  postUsers: Users holding this post
+  emptyPostUsers: No users hold this post (or outside your data scope)
   basicInfo: Basic Info
   menuTree: Visible Menu Tree
   apiCodes: API Permissions
@@ -1593,6 +1634,25 @@ systemMenu:
     edit: Edit menu
     clone: Clone menu
     cloneSuffix: "{ title } copy"
+  permissionAudit:
+    button: Permission check
+    tip: Detect missing, orphaned and duplicate permission points between routes and menus (read-only)
+    title: Menu permission check
+    suggestion: Suggestion
+    missing: Missing permissions
+    orphan: Orphaned permissions
+    duplicate: Duplicate codes
+    locate: Locate
+    allClear: No permission issues found
+    summary: "Scanned { routes } routes / { permissions } permissions · { total } issues"
+    suggest:
+      generate: Run permission sync or "auto add permissions" to fill
+      verify: Confirm the endpoint is retired, remove the permission if so
+      merge: Merge the duplicate codes or confirm they are intentional
+    empty:
+      missing: No missing permissions
+      orphan: No orphaned permissions
+      duplicate: No duplicate codes
   empty:
     noMatch: No menu matches the filters, try clearing them
     noData: No menu data
@@ -1673,6 +1733,7 @@ systemNotice:
   notice_user: Users
   notice_dept: Departments
   notice_role: Roles
+  notice_post: Posts
   allRead: AllRead
   showSystemNotice: Check the system announcement
 
