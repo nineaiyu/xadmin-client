@@ -12,6 +12,7 @@
 import {
   computed,
   getCurrentInstance,
+  h,
   nextTick,
   onMounted,
   reactive,
@@ -20,6 +21,9 @@ import {
 } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth, getDefaultAuths } from "@/router/utils";
+import { addDialog, closeDialog } from "@/components/ReDialog";
+import { dialogSize } from "@/components/ReDialog/size";
+import MenuPermissionAuditDialog from "../components/MenuPermissionAuditDialog.vue";
 import { useMenuData } from "./useMenuData";
 import { useMenuFilter } from "./useMenuFilter";
 import { useMenuOrder, useMenuSelection, useMenuTree } from "./useMenuTree";
@@ -37,13 +41,14 @@ export function useMenu() {
   const instance = getCurrentInstance();
 
   const auth = reactive({
-    // 排序/权限码/接口清单/影响面/批量更新为菜单页扩展动作
+    // 排序/权限码/接口清单/影响面/批量更新/权限检测为菜单页扩展动作
     ...getDefaultAuths(instance, [
       "rank",
       "permissions",
       "apiUrl",
       "impact",
-      "batchUpdate"
+      "batchUpdate",
+      "permissionAudit"
     ])
   }) as MenuAuths;
 
@@ -253,6 +258,30 @@ export function useMenu() {
   const onImport = () => data.importData();
   const onRefresh = () => data.getMenuData();
   const onResetFilter = () => filter.reset();
+  /** 权限检测：只读报告，定位时收起弹层并展开高亮库内权限点 */
+  const onPermissionAudit = () => {
+    void openWithGuard(() => {
+      if (drawer.isOpen()) drawer.close();
+      addDialog({
+        title: t("systemMenu.permissionAudit.title"),
+        width: dialogSize("xl"),
+        draggable: true,
+        destroyOnClose: true,
+        closeOnClickModal: false,
+        hideFooter: true,
+        contentRenderer: ({ options, index }) =>
+          h(MenuPermissionAuditDialog, {
+            onLocate: (pk: string) => {
+              closeDialog(options, index);
+              const row = data.rowIndex.value.byPk.get(String(pk));
+              if (!row) return;
+              currentRow.value = row;
+              revealRow(row.pk);
+            }
+          })
+      });
+    });
+  };
   const onToggleAll = (expand: boolean) => {
     filter.filter.expandLevel = expand ? 3 : 1;
   };
@@ -310,6 +339,7 @@ export function useMenu() {
     toggleRowActive,
     onAdd,
     onGeneratePermissions,
+    onPermissionAudit,
     onExport,
     onImport,
     onRefresh,

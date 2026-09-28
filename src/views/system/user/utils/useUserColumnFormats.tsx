@@ -3,7 +3,7 @@ import { buildRoleRulesColumns } from "@/views/system/hooks";
 import { choiceValue, statusTagProps, type StatusTagType } from "@/utils/dict";
 import { AesEncrypted } from "@/utils/aes";
 import { h, shallowRef, ref, type Ref, type UnwrapNestedRefs } from "vue";
-import { ElImage, ElLink } from "element-plus";
+import { ElImage, ElLink, ElTag } from "element-plus";
 import {
   handleOperation,
   isReadonlyCell,
@@ -161,6 +161,29 @@ export function useUserColumnFormats({
         case "tags":
           // 通用标签：数组字段需页面自渲染（框架对数组只做 String 化）
           column["cellRenderer"] = renderTagsCell;
+          break;
+        case "posts":
+          // 列表列平铺小标签展示（多值字段框架不做 String 化）；编辑入口在用户表单
+          // 内的多选（与角色同口径，元数据驱动自动渲染），岗位页成员分配互为补充
+          column["cellRenderer"] = ({ row, props }) => {
+            const posts = Array.isArray(row.posts) ? row.posts : [];
+            if (!posts.length) return h("span", "-");
+            return h(
+              "div",
+              { class: "flex flex-wrap items-center gap-1" },
+              posts.map((item: Record<string, unknown>, index: number) =>
+                h(
+                  ElTag,
+                  {
+                    key: String(item?.pk ?? index),
+                    size: props.size,
+                    effect: "plain"
+                  },
+                  () => String(item?.name ?? item?.label ?? "")
+                )
+              )
+            );
+          };
           break;
       }
     });

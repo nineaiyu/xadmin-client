@@ -1,5 +1,9 @@
 import { BaseApi } from "@/api/base";
 import type { BaseResult, DataListResult, DetailResult } from "@/api/types";
+import type {
+  PostPreviewResult,
+  PreviewDetailResult
+} from "@/api/types/permission-preview";
 
 /** 岗位（人员维度，不参与权限判定；成员为多对多关联） */
 export interface PostItem {
@@ -30,6 +34,15 @@ export interface PostUserOption {
 }
 
 class PostApi extends BaseApi {
+  /** 岗位维度预览（岗位信息 + 成员采样，preview 权限点） */
+  preview = (pk: number | string) => {
+    return this.request<PreviewDetailResult<PostPreviewResult>>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/${pk}/preview`
+    );
+  };
   /** 岗位成员（查看） */
   members = (pk: number | string) => {
     return this.request<DetailResult<{ members: PostMemberItem[] }>>(

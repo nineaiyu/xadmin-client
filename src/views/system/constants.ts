@@ -3,7 +3,8 @@ export const NoticeChoices = {
   NOTICE: 1,
   USER: 2,
   DEPT: 3,
-  ROLE: 4
+  ROLE: 4,
+  POST: 5
 };
 
 export const MethodChoices = {

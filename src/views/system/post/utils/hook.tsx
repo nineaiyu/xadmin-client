@@ -2,6 +2,7 @@ import { h, reactive, ref, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElTag } from "element-plus";
 import { addDialog } from "@/components/ReDialog";
+import { addDrawer } from "@/components/ReDrawer";
 import { dialogSize } from "@/components/ReDialog/size";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
@@ -10,6 +11,7 @@ import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
 import { postApi, type PostItem } from "@/api/system/post";
 import PostForm from "../components/PostForm.vue";
 import PostMembersDialog from "../components/PostMembersDialog.vue";
+import PostPermissionPreview from "../components/PostPermissionPreview.vue";
 
 /**
  * 岗位管理表格：岗位 CRUD + 成员分配 + 成员数计数。
@@ -31,6 +33,7 @@ export function usePosts(tableRef: Ref) {
   const canCreate = hasAuth("create:SystemPost");
   const canEdit = hasAuth("partialUpdate:SystemPost");
   const canAssign = hasAuth("assign:SystemPost");
+  const canPreview = hasAuth("preview:SystemPost");
 
   const refresh = () => tableRef.value?.handleGetData();
 
@@ -131,6 +134,19 @@ export function usePosts(tableRef: Ref) {
     });
   };
 
+  /* ---------------- 维度预览（ReDrawer + PostPermissionPreview） ---------------- */
+
+  /** 岗位预览抽屉（与角色/部门预览同体系：ReDrawer，不在页面模板手挂 el-drawer） */
+  const openPreview = (row: PostItem) => {
+    addDrawer({
+      title: t("permissionPreview.postTitle"),
+      size: "60%",
+      destroyOnClose: true,
+      hideFooter: true,
+      contentRenderer: () => h(PostPermissionPreview, { row })
+    });
+  };
+
   const operationButtonsProps = shallowRef<OperationProps>({
     showNumber: 4,
     width: 220,
@@ -148,6 +164,13 @@ export function usePosts(tableRef: Ref) {
         props: { type: "primary", link: true },
         onClick: ({ row }) => openMembers(row as PostItem),
         show: canAssign && 9
+      },
+      {
+        text: t("post.preview"),
+        code: "preview",
+        props: { type: "primary", link: true },
+        onClick: ({ row }) => openPreview(row as PostItem),
+        show: canPreview && 8
       }
     ]
   });

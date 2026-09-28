@@ -129,6 +129,7 @@ export type MenuAuths = Auths & {
   apiUrl?: boolean;
   impact?: boolean;
   batchUpdate?: boolean;
+  permissionAudit?: boolean;
 };
 
 /** 权限码预览项（后端 dry_run 下发） */

@@ -27,6 +27,9 @@ registerApiSearchComponents({
   "api-search-role": defineAsyncComponent(
     () => import("./components/SearchRole.vue")
   ),
+  "api-search-post": defineAsyncComponent(
+    () => import("./components/SearchPost.vue")
+  ),
   "api-search-menu": defineAsyncComponent(
     () => import("./components/SearchMenu.vue")
   )

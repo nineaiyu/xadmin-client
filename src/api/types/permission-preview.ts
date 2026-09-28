@@ -265,6 +265,21 @@ export interface RolePreviewResult {
   users: PreviewUsersSample;
 }
 
+/** GET /api/system/posts/{pk}/preview 响应 data（岗位为人员维度，不参与权限判定，无授权段） */
+export interface PostPreviewResult {
+  post: {
+    pk: string;
+    name: string;
+    code: string;
+    rank: number;
+    is_active: boolean;
+    description: string;
+    dept: { pk: string; name: string } | null;
+  };
+  users: PreviewUsersSample;
+  notes: string[];
+}
+
 /** ApiResponse 信封 + 强类型 data（后端 preview 系列端点） */
 export type PreviewDetailResult<T> = {
   detail: string;

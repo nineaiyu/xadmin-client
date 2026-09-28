@@ -213,6 +213,15 @@ export function useNotice(tableRef: Ref) {
           });
           return column;
         },
+        notice_post: ({ column, formValue }) => {
+          column["hideInForm"] = computed(() => {
+            return !(
+              formValue?.value?.notice_type?.value === NoticeChoices.POST &&
+              hasAuth("list:SearchPost")
+            );
+          });
+          return column;
+        },
         message: ({ column, formValue }) => {
           column["hasLabel"] = false;
           column["renderField"] = (

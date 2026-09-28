@@ -53,6 +53,7 @@ const {
   toggleRowActive,
   onAdd,
   onGeneratePermissions,
+  onPermissionAudit,
   onExport,
   onImport,
   onRefresh,
@@ -91,6 +92,7 @@ const emptyText = computed(() =>
         :selected="currentRow"
         :stats="stats"
         @add="onAdd"
+        @audit="onPermissionAudit"
         @batch-active="onBatchActive"
         @batch-delete="onBatchDelete"
         @clear-selection="onClearSelection"

@@ -9,6 +9,7 @@ import type { MenuAuths, MenuRow } from "../utils/types";
 
 import Add from "~icons/ep/plus";
 import Key from "~icons/ep/key";
+import Audit from "~icons/ep/document-checked";
 import MoreIcon from "~icons/ep/more-filled";
 import Upload from "~icons/ep/upload";
 import Download from "~icons/ep/download";
@@ -69,6 +70,7 @@ const checkStrictly = defineModel<boolean>("checkStrictly", { default: false });
 const emit = defineEmits<{
   add: [];
   permissions: [];
+  audit: [];
   refresh: [];
   reset: [];
   "toggle-all": [expand: boolean];
@@ -225,6 +227,16 @@ const onMoreCommand = (command: string) => {
           @click="emit('permissions')"
         >
           {{ t("systemMenu.addPermissions") }}
+        </el-button>
+      </el-tooltip>
+
+      <el-tooltip
+        v-if="auth.permissionAudit"
+        :content="t('systemMenu.permissionAudit.tip')"
+        placement="top"
+      >
+        <el-button :icon="useRenderIcon(Audit)" @click="emit('audit')">
+          {{ t("systemMenu.permissionAudit.button") }}
         </el-button>
       </el-tooltip>
 

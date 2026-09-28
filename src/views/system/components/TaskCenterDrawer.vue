@@ -39,7 +39,7 @@ const IN_PROGRESS_STATUSES = ["PENDING", "RUNNING"];
 const DOWNLOADABLE_STATUSES = ["SUCCESS", "FAILURE"];
 
 const PAGE_PATHS = {
-  approval: "/system/approval/index",
+  approval: "/approval/index",
   // 统一入口：任务日志（任务管理下）承载执行历史与产物任务的取消/重跑/下载
   task: "/system/celery/logs/index",
   export: "/system/export/index"
