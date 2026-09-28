@@ -31,13 +31,11 @@ describe("站点水印配置解析", () => {
   });
 
   it("生效范围按路径前缀匹配（敏感页面）", () => {
-    const paths = ["/system/user/index", "/system/approval"];
+    const paths = ["/system/user/index", "/approval"];
     expect(isWatermarkPath("/system/user/index", paths)).toBe(true);
-    expect(isWatermarkPath("/system/approval", paths)).toBe(true);
+    expect(isWatermarkPath("/approval", paths)).toBe(true);
     // 前缀匹配：子路由同样生效
-    expect(isWatermarkPath("/system/approval/instance/index", paths)).toBe(
-      true
-    );
+    expect(isWatermarkPath("/approval/instance/index", paths)).toBe(true);
     expect(isWatermarkPath("/system/role/index", paths)).toBe(false);
     expect(isWatermarkPath("/analysis/dashboard/index", paths)).toBe(false);
   });

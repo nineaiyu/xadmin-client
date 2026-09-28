@@ -8,6 +8,7 @@ import { fetchAllRows } from "@/utils/fetchAllRows";
 import { listRows } from "@/api/base";
 import { searchUserApi } from "@/api/system/search";
 import { roleApi } from "@/api/system/role";
+import { postApi } from "@/api/system/post";
 import {
   ASSIGNEE_TYPES,
   CONDITION_OPS,
@@ -29,6 +30,8 @@ const { t } = useI18n();
 const userOptions = ref<Array<{ username: string; label: string }>>([]);
 const userLoading = ref(false);
 const roleOptions = ref<Array<{ name: string; code: string }>>([]);
+/** 岗位下拉（值=岗位 code）：仅启用岗位可选，停用岗位后端不参与解析 */
+const postOptions = ref<Array<{ name: string; code: string }>>([]);
 
 /** 逗号分隔串 ↔ 多选数组（服务端契约：assignee_value 为逗号分隔串） */
 function splitValues(value: string): string[] {
@@ -92,6 +95,14 @@ onMounted(async () => {
   const res = await fetchAllRows(roleApi.list).catch(() => null);
   if (res && res.code === SUCCESS_CODE && res.data) {
     roleOptions.value = listRows<{ name: string; code: string }>(res as never);
+  }
+  const postRes = await fetchAllRows(postApi.list).catch(() => null);
+  if (postRes && postRes.code === SUCCESS_CODE && postRes.data) {
+    postOptions.value = listRows<{
+      name: string;
+      code: string;
+      is_active?: boolean;
+    }>(postRes as never).filter(post => post.is_active !== false);
   }
 });
 
@@ -265,6 +276,25 @@ function assigneeHint(type: string): string {
               :key="role.code"
               :label="role.name"
               :value="role.code"
+            />
+          </el-select>
+          <!-- 岗位：按岗位名多选（值=岗位 code，逗号分隔）；后端仅启用岗位的在岗用户参与解析 -->
+          <el-select
+            v-else-if="row.assignee_type === 'post'"
+            :model-value="splitValues(row.assignee_value)"
+            multiple
+            filterable
+            allow-create
+            default-first-option
+            size="small"
+            :placeholder="t('systemApprovalFlow.assigneeHint_post')"
+            @update:model-value="value => updateMultiValue($index, value)"
+          >
+            <el-option
+              v-for="post in postOptions"
+              :key="post.code"
+              :label="post.name"
+              :value="post.code"
             />
           </el-select>
           <!-- 表单字段：单选（值=字段 key，来自本流程已配置的表单字段） -->

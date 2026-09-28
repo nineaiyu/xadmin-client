@@ -55,7 +55,7 @@ export type FieldRow = {
   options: string;
 };
 
-export const ASSIGNEE_TYPES = ["role", "user", "leader", "field"];
+export const ASSIGNEE_TYPES = ["role", "user", "leader", "field", "post"];
 export const CONDITION_OPS = [
   "eq",
   "ne",
@@ -154,7 +154,7 @@ export function validateFlowConfig(
   // 缺值时保存会拿到后端 400，前端先行拦截给出可读提示
   const missingAssignee = nodes.find(
     node =>
-      ["role", "user", "field"].includes(node.assignee_type) &&
+      ["role", "user", "field", "post"].includes(node.assignee_type) &&
       !node.assignee_value.trim()
   );
   if (missingAssignee) {

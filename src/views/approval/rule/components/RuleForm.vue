@@ -17,8 +17,9 @@ defineOptions({ name: "ApprovalRuleForm" });
  *   或在下方的自定义区写路径正则（高级用法，含历史数据回显）；
  * - **审批级次**：按顺序逐级审批，支持上移/下移排序；
  * - **级内多人**：或签（任一通过即进入下一级）/ 会签（全部通过才进入下一级）；
- * - **审批人**：指定用户走远程搜索（可多选，允许直接输入用户名兜底）/ 角色下拉；
- *   保存时服务端校验用户名/角色 code 存在性。
+ * - **审批人**：指定用户走远程搜索（可多选，允许直接输入用户名兜底）/ 角色下拉 /
+ *   岗位下拉（按岗位 code 解析在岗用户，仅启用岗位）；保存时服务端校验
+ *   用户名/角色 code/岗位 code 存在性。
  */
 const props = defineProps<{ row?: RecordType | null }>();
 
@@ -114,6 +115,8 @@ const customPathList = computed(() =>
 
 const userOptions = ref<Array<{ username: string; label: string }>>([]);
 const roleOptions = ref<Array<{ name: string; code: string }>>([]);
+/** 岗位下拉（值=岗位 code）：仅启用岗位，停用岗位后端不参与解析 */
+const postOptions = ref<Array<{ name: string; code: string }>>([]);
 
 function splitValues(value: string): string[] {
   return String(value || "")
@@ -205,6 +208,9 @@ onMounted(async () => {
     );
     roleOptions.value = ((res.data.roles ?? []) as Array<RecordType>).map(
       role => ({ code: String(role.code), name: String(role.name) })
+    );
+    postOptions.value = ((res.data.posts ?? []) as Array<RecordType>).map(
+      post => ({ code: String(post.code), name: String(post.name) })
     );
   }
 });
@@ -362,6 +368,10 @@ defineExpose({ getPayload });
                   :label="t('approvalRule.levelTypeRole')"
                   value="role"
                 />
+                <el-option
+                  :label="t('approvalRule.levelTypePost')"
+                  value="post"
+                />
               </el-select>
             </template>
           </el-table-column>
@@ -391,7 +401,7 @@ defineExpose({ getPayload });
               </el-select>
               <!-- 角色：下拉选择（值=角色 code，可直接输入 code 兜底） -->
               <el-select
-                v-else
+                v-else-if="row.assignee_type === 'role'"
                 :model-value="row.assignee_list"
                 multiple
                 filterable
@@ -408,6 +418,35 @@ defineExpose({ getPayload });
                   :value="role.code"
                 />
               </el-select>
+              <!-- 岗位：下拉选择（值=岗位 code，仅启用岗位的在岗用户参与解析） -->
+              <el-select
+                v-else-if="row.assignee_type === 'post'"
+                :model-value="row.assignee_list"
+                multiple
+                filterable
+                allow-create
+                default-first-option
+                size="small"
+                :placeholder="t('approvalRule.levelPostTip')"
+                @update:model-value="value => updateLevelValue($index, value)"
+              >
+                <el-option
+                  v-for="post in postOptions"
+                  :key="post.code"
+                  :label="`${post.name}(${post.code})`"
+                  :value="post.code"
+                />
+              </el-select>
+              <!-- 未知/历史类型兜底：纯文本输入 -->
+              <el-input
+                v-else
+                :model-value="row.assignee_value"
+                size="small"
+                :placeholder="t('approvalRule.levelAssigneeFallback')"
+                @update:model-value="
+                  value => updateLevelValue($index, splitValues(String(value)))
+                "
+              />
             </template>
           </el-table-column>
           <el-table-column :label="t('approvalRule.levelActions')" width="190">
