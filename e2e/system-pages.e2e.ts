@@ -299,20 +299,21 @@ test("模块停用整页提示：渲染与返回入口", async ({ page }) => {
 test("通讯录：按部门/按岗位视角渲染", async ({ page }) => {
   await login(page);
   await openMenuPath(page, ["系统管理"], "/system/directory/index");
-  // 成员名录表渲染（管理员自身在列）
-  const table = page.locator(".el-table");
-  await expect(table).toBeVisible({ timeout: 20_000 });
+  // 成员名录渲染（卡片视图默认，管理员自身在列）
+  await expect(page.locator(".member-card").first()).toBeVisible({
+    timeout: 20_000
+  });
   // 默认按部门视角：部门树可见
-  await expect(page.locator(".el-tree").first()).toBeVisible({
+  await expect(page.locator(".directory-tree").first()).toBeVisible({
     timeout: 15_000
   });
   // 切换按岗位视角：岗位清单可见（空态亦可），再切回部门视角
   await page.getByText("按岗位", { exact: true }).first().click();
   await expect(
-    page.locator(".directory-post-item, .el-empty").first()
+    page.locator("[data-post-pk], .directory-aside .el-empty").first()
   ).toBeVisible({ timeout: 15_000 });
   await page.getByText("按部门", { exact: true }).first().click();
-  await expect(page.locator(".el-tree").first()).toBeVisible({
+  await expect(page.locator(".directory-tree").first()).toBeVisible({
     timeout: 15_000
   });
 });
