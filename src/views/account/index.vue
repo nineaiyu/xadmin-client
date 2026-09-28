@@ -16,9 +16,11 @@ import PreferencesIcon from "~icons/ri/settings-3-line";
 import SecurityLogIcon from "~icons/ri/window-line";
 import AccountManagementIcon from "~icons/ri/profile-line";
 import ShieldKeyholeIcon from "~icons/ri/shield-keyhole-line";
+import FingerprintIcon from "~icons/ri/fingerprint-line";
 import LinksIcon from "~icons/ri/links-line";
 import KeyIcon from "~icons/ri/key-2-line";
 import MfaSecurity from "./components/MfaSecurity.vue";
+import PasskeySecurity from "./components/PasskeySecurity.vue";
 import OAuthBindings from "./components/OAuthBindings.vue";
 import AccessToken from "./components/AccessToken.vue";
 import { useI18n } from "vue-i18n";
@@ -64,6 +66,14 @@ const panes = computed(() => [
     label: t("mfa.tabTitle"),
     icon: ShieldKeyholeIcon,
     component: MfaSecurity,
+    auth: true
+  },
+  {
+    // Passkey 是登录凭据（个人凭据个人管，白名单路由），与 MFA / 访问令牌并列
+    key: "passkey",
+    label: t("passkey.title"),
+    icon: FingerprintIcon,
+    component: PasskeySecurity,
     auth: true
   },
   {

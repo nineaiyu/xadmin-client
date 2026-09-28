@@ -19,7 +19,8 @@ import {
  *
  * 流程：challenge（服务端一次性挑战）→ navigator.credentials.create →
  * register（提交 clientDataJSON / attestationObject）；列表与删除走个人凭据接口
- * （白名单路由，仅登录要求，本人凭据本人管）。
+ * （白名单路由，仅登录要求，本人凭据本人管）——因此归属「账户设置」而非受
+ * 系统设置菜单权限保护的页面。
  */
 const { t } = useI18n();
 

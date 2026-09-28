@@ -61,7 +61,9 @@ export function useUserProfileForm(formRef: Ref) {
     avatar: "",
     phone: "",
     email: "",
-    gender: 0
+    gender: 0,
+    /** 服务端 userinfo 只读下发（人员维度回显），Profile 以标签展示 */
+    posts: [] as string[]
   });
 
   const columns: PlusColumn[] = [

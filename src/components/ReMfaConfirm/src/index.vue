@@ -5,10 +5,16 @@
  * 验证成功后 http 层自动重发原请求。
  */
 import { SUCCESS_CODE } from "@/api/types";
+import { passkeyApi } from "@/api/system/security";
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import ReEmpty from "@/components/ReEmpty";
 import { message } from "@/utils/message";
+import {
+  b64urlToBuffer,
+  bufferToB64url,
+  isPasskeySupported
+} from "@/utils/webauthn";
 import {
   mfaConfirmApi,
   mfaConfirmInfoApi,
@@ -44,6 +50,9 @@ let cooldownTimer: ReturnType<typeof setInterval> | null = null;
 const activeMethod = computed(() =>
   methods.value.find(item => item.name === currentMethod.value)
 );
+
+/** Passkey 方式：无验证码输入，走浏览器断言（challenge → credentials.get） */
+const isPasskeyMethod = computed(() => currentMethod.value === "passkey");
 
 const rules = {
   code: [
@@ -118,6 +127,66 @@ const handleConfirm = () => {
   });
 };
 
+/** Passkey 确认：取挑战 → 浏览器断言 → 断言 JSON 作为 code 提交（与登录 MFA 同链路） */
+const handlePasskeyConfirm = async () => {
+  if (!isPasskeySupported()) {
+    message(t("passkey.unsupported"), { type: "warning" });
+    return;
+  }
+  loading.value = true;
+  try {
+    const challengeRes = await passkeyApi.challenge("authenticate");
+    if (challengeRes.code !== SUCCESS_CODE) {
+      message(challengeRes.detail, { type: "warning" });
+      return;
+    }
+    const { challenge, rp_id } = challengeRes.data;
+    const credential = (await navigator.credentials.get({
+      publicKey: {
+        challenge: b64urlToBuffer(challenge),
+        rpId: rp_id,
+        timeout: 60000,
+        userVerification: "preferred"
+      }
+    })) as PublicKeyCredential | null;
+    if (!credential) {
+      message(t("passkey.failed"), { type: "warning" });
+      return;
+    }
+    const response = credential.response as AuthenticatorAssertionResponse;
+    const payload = {
+      credential_id: credential.id,
+      client_data_json: bufferToB64url(response.clientDataJSON),
+      authenticator_data: bufferToB64url(response.authenticatorData),
+      signature: bufferToB64url(response.signature)
+    };
+    const res = await mfaConfirmApi({
+      confirm_type: props.confirmType ?? "mfa",
+      method: "passkey",
+      code: JSON.stringify(payload)
+    });
+    if (res.code === SUCCESS_CODE) {
+      message(res.detail || t("mfa.verifySuccess"), { type: "success" });
+      visible.value = false;
+      props.resolve({ expire_at: res.data?.expire_at ?? null });
+    } else {
+      message(res.detail, { type: "warning" });
+    }
+  } catch {
+    // 用户取消系统弹窗或验证失败：停留弹窗可重试
+  } finally {
+    loading.value = false;
+  }
+};
+
+const handleVerify = () => {
+  if (isPasskeyMethod.value) {
+    handlePasskeyConfirm();
+    return;
+  }
+  handleConfirm();
+};
+
 onMounted(loadMethods);
 onBeforeUnmount(() => {
   if (cooldownTimer) clearInterval(cooldownTimer);
@@ -176,14 +245,22 @@ const emit = defineEmits<{ destroy: [] }>();
             }}
           </el-button>
         </el-form-item>
-        <el-form-item :label="$t('mfa.code')" prop="code">
+        <el-form-item v-if="isPasskeyMethod">
+          <el-alert
+            :title="$t('passkey.loginTip')"
+            type="info"
+            :closable="false"
+            show-icon
+          />
+        </el-form-item>
+        <el-form-item v-else :label="$t('mfa.code')" prop="code">
           <el-input
             v-model="formData.code"
             :placeholder="
               activeMethod?.placeholder ?? $t('mfa.codePlaceholder')
             "
             clearable
-            @keyup.enter="handleConfirm"
+            @keyup.enter="handleVerify"
           />
         </el-form-item>
       </el-form>
@@ -199,7 +276,7 @@ const emit = defineEmits<{ destroy: [] }>();
         type="primary"
         :loading="loading"
         :disabled="!methods.length"
-        @click="handleConfirm"
+        @click="handleVerify"
       >
         {{ $t("mfa.verify") }}
       </el-button>

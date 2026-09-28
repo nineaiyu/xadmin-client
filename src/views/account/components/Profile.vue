@@ -63,5 +63,23 @@ const {
         </div>
       </template>
     </PlusForm>
+    <!-- 岗位为人员维度只读回显（不参与权限判定），由服务端 userinfo 下发 -->
+    <div
+      v-if="(userInfo.posts as string[] | undefined)?.length"
+      class="mt-3 flex flex-wrap items-center gap-2"
+    >
+      <span class="text-sm text-(--el-text-color-regular)">
+        {{ t("userinfo.posts") }}
+      </span>
+      <el-tag
+        v-for="post in userInfo.posts"
+        :key="post"
+        size="small"
+        type="primary"
+        effect="plain"
+      >
+        {{ post }}
+      </el-tag>
+    </div>
   </div>
 </template>
