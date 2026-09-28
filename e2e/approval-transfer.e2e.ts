@@ -67,7 +67,7 @@ async function startInstance(
 }
 
 async function openInstanceCenter(page: Page) {
-  await openMenuPath(page, ["系统管理"], "/system/approval/instance/index");
+  await openMenuPath(page, ["审批"], "/approval/instance/index");
   await expect(page.getByRole("tab", { name: /待我审批/ }).first()).toBeVisible(
     { timeout: 20_000 }
   );

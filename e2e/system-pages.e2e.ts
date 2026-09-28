@@ -282,3 +282,37 @@ test("登出后回到登录页", async ({ page }) => {
   await login(page);
   await logout(page);
 });
+
+test("模块停用整页提示：渲染与返回入口", async ({ page }) => {
+  await login(page);
+  await page.goto("/#/error/module-disabled?module=chat");
+  await expect(page.getByText("功能模块已停用")).toBeVisible({
+    timeout: 15_000
+  });
+  await expect(page.getByText("该功能对应的模块已被停用")).toBeVisible();
+  // 命中模块 id 随查询参数展示（网关 404 响应体的 module 字段）
+  await expect(page.getByText("(chat)")).toBeVisible();
+  await expect(page.getByRole("button", { name: "返回首页" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "返回上一页" })).toBeVisible();
+});
+
+test("通讯录：按部门/按岗位视角渲染", async ({ page }) => {
+  await login(page);
+  await openMenuPath(page, ["系统管理"], "/system/directory/index");
+  // 成员名录表渲染（管理员自身在列）
+  const table = page.locator(".el-table");
+  await expect(table).toBeVisible({ timeout: 20_000 });
+  // 默认按部门视角：部门树可见
+  await expect(page.locator(".el-tree").first()).toBeVisible({
+    timeout: 15_000
+  });
+  // 切换按岗位视角：岗位清单可见（空态亦可），再切回部门视角
+  await page.getByText("按岗位", { exact: true }).first().click();
+  await expect(
+    page.locator(".directory-post-item, .el-empty").first()
+  ).toBeVisible({ timeout: 15_000 });
+  await page.getByText("按部门", { exact: true }).first().click();
+  await expect(page.locator(".el-tree").first()).toBeVisible({
+    timeout: 15_000
+  });
+});

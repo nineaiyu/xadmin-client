@@ -12,9 +12,8 @@ import { ADMIN, login } from "./helpers";
  * 因此本 spec 开头先归一为浅色、结尾（含 afterEach 兜底）还原浅色并等落库。
  */
 
-const SITE_CONFIG_PATCH = (req: { method: () => string; url: () => string }) =>
-  req.method() === "PATCH" &&
-  req.url().includes("/api/system/configs/WEB_SITE_CONFIG");
+/** 整体风格落库接口（站点配置，改动即防抖 PATCH） */
+const SITE_CONFIG_URL = "/api/system/configs/WEB_SITE_CONFIG";
 
 /** 语言可能被其它用例/残留切到英文，文案一律中英双语匹配 */
 const DARK_LABEL = /深色|Dark/;
@@ -50,8 +49,15 @@ async function switchTheme(page: Page, mode: "dark" | "light") {
   await page.locator(".set-icon").first().waitFor({ timeout: 15_000 });
   if ((await isDark(page)) === (mode === "dark")) return;
 
+  // 等 PATCH **响应**（而非仅请求发出）：请求在途时立刻导航会读到旧配置，
+  // 表现为「切换成功 → 下一页主题回退」（2026-09-28 webkit 全量跑批实测竞态）
   const saved = page
-    .waitForRequest(SITE_CONFIG_PATCH, { timeout: 15_000 })
+    .waitForResponse(
+      resp =>
+        resp.request().method() === "PATCH" &&
+        resp.url().includes(SITE_CONFIG_URL),
+      { timeout: 15_000 }
+    )
     .catch(() => null);
   await page.locator(".set-icon").first().click();
   const panel = page.locator(".right-panel");
@@ -67,7 +73,16 @@ async function switchTheme(page: Page, mode: "dark" | "light") {
     dark => document.documentElement.classList.contains("dark") === dark,
     mode === "dark"
   );
-  await saved; // 等服务端落库：刷新恢复与跨设备一致依赖它
+  const response = await saved;
+  await response?.finished().catch(() => null); // 响应体收尾 = 服务端已落库
+
+  // 落库后重载一次：把「刷新恢复」这条读取路径也钉住（后续 goto 与本次同路径）
+  await page.reload();
+  await page.waitForFunction(
+    dark => document.documentElement.classList.contains("dark") === dark,
+    mode === "dark",
+    { timeout: 15_000 }
+  );
 }
 
 /**

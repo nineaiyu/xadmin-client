@@ -12,11 +12,7 @@ import { login, openMenuPath } from "./helpers";
 test("审批委托：菜单可达 + 列表与新建入口渲染", async ({ page }) => {
   test.setTimeout(120_000);
   await login(page);
-  await openMenuPath(
-    page,
-    ["系统管理", "审批委托"],
-    "/system/approval/delegation/index"
-  );
+  await openMenuPath(page, ["审批"], "/approval/delegation/index");
   await expect(page.getByText("审批委托").first()).toBeVisible({
     timeout: 20_000
   });

@@ -88,7 +88,7 @@ test("敏感操作审批：删除用户 → 提交审批 → 审批中心通过 
     });
     const pageB = await contextB.newPage();
     await login(pageB, APPROVER);
-    await openMenuPath(pageB, ["系统管理"], "/system/approval/index");
+    await openMenuPath(pageB, ["审批"], "/approval/index");
     const approvalTable = pageB.locator(".el-table").first();
     await expect(approvalTable).toBeVisible({ timeout: 15_000 });
     const approvalRow = pageB
@@ -203,7 +203,7 @@ test("审批中心：待办角标 → 批量驳回 → 角标归零", async ({ p
     });
     const pageB = await contextB.newPage();
     await login(pageB, APPROVER);
-    await openMenuPath(pageB, ["系统管理"], "/system/approval/index");
+    await openMenuPath(pageB, ["审批"], "/approval/index");
     const table = pageB.locator(".el-table").first();
     await expect(table).toBeVisible({ timeout: 15_000 });
 

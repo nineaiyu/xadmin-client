@@ -5,6 +5,7 @@ import {
   clickUserAction,
   DP_USER,
   E2E_USER_AGENT,
+  FRONT_URL,
   getAccessToken,
   login,
   openList,
@@ -322,4 +323,50 @@ test.describe("预览接口鉴权（普通用户）", () => {
     );
     expect(trial.status()).toBe(403);
   });
+});
+
+test("岗位维度预览：抽屉渲染（基本信息 + 持有用户采样）", async ({ page }) => {
+  await login(page);
+  const token = await getAccessToken(page);
+  const headers = { Authorization: `Bearer ${token}` };
+  const suffix = Date.now();
+  const postName = `E2E岗位预览-${suffix}`;
+
+  // 夹具走 API 建岗位（共享库幂等：用例末尾删除，不影响其它 spec 的岗位列表）
+  const created = await page.request.post(`${FRONT_URL}/api/system/posts`, {
+    headers,
+    data: {
+      name: postName,
+      code: `e2e_post_preview_${suffix}`,
+      is_active: true
+    }
+  });
+  expect(created.ok()).toBeTruthy();
+  const pk = (await created.json())?.data?.pk;
+  expect(pk).toBeTruthy();
+
+  try {
+    await openMenuPath(page, ["系统管理"], "/system/post/index");
+    const row = page
+      .locator(".el-table__row")
+      .filter({ hasText: postName })
+      .first();
+    await expect(row).toBeVisible({ timeout: 15_000 });
+
+    // 行操作「预览」→ 抽屉（岗位维度：基本信息 + 持有用户采样，无权限树段）
+    await row.getByRole("button", { name: "预览" }).first().click();
+    const drawer = page
+      .locator(".el-drawer")
+      .filter({ hasText: "岗位维度预览" });
+    await expect(drawer).toBeVisible({ timeout: 15_000 });
+    await expect(drawer.getByText(postName).first()).toBeVisible();
+    // 折叠区标题（`/持有该岗位的用户/` 会同时命中上方说明 alert 文案，按角色收敛）
+    await expect(
+      drawer.getByRole("button", { name: /^持有该岗位的用户（/ })
+    ).toBeVisible();
+  } finally {
+    await page.request.delete(`${FRONT_URL}/api/system/posts/${pk}`, {
+      headers
+    });
+  }
 });

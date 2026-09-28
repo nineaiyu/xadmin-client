@@ -30,7 +30,7 @@ test("请假申请：列表渲染、状态按钮与删除清理", async ({ page 
   expect(payload.data.status.value).toBe("DRAFT");
 
   try {
-    await openMenuPath(page, ["系统管理"], "/system/leave/index");
+    await openMenuPath(page, ["审批"], "/approval/leave/index");
     const table = page.locator(".el-table").first();
     await expect(table).toBeVisible({ timeout: 15_000 });
 

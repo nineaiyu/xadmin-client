@@ -37,15 +37,14 @@ test.describe("Passkey 凭据", () => {
     // 双浏览器共享库：名称唯一 + 用例末尾删除，保证重复运行幂等
     const credentialName = `E2E-Passkey-${Date.now()}`;
     await login(page);
-    await page.goto("/#/settings/security/index");
+    // 面板归属账户设置页（个人凭据个人管）：入口 = 侧栏「Passkey 凭据」页签
+    await page.goto("/#/account-settings");
+    await page
+      .locator(".el-menu-item", { hasText: "Passkey 凭据" })
+      .first()
+      .click();
 
-    const tabs = page.locator(".el-tabs--border-card").first();
-    const passkeyTab = tabs.getByRole("tab", { name: "Passkey 凭据" });
-    await expect(passkeyTab).toBeVisible({ timeout: 15_000 });
-    await passkeyTab.click();
-    const pane = tabs.getByRole("tabpanel", { name: "Passkey 凭据" });
-
-    await pane.getByRole("button", { name: "添加 Passkey" }).click();
+    await page.getByRole("button", { name: "添加 Passkey" }).click();
     const nameBox = page.locator(".el-message-box").last();
     await nameBox.locator("input").fill(credentialName);
     await nameBox.getByRole("button", { name: "确定" }).click();
@@ -54,15 +53,17 @@ test.describe("Passkey 凭据", () => {
     await expect(page.getByText("Passkey 绑定成功").last()).toBeVisible({
       timeout: 20_000
     });
-    const row = pane.locator(".el-table__row", { hasText: credentialName });
+    const row = page
+      .locator(".el-table__row", { hasText: credentialName })
+      .first();
     await expect(row).toBeVisible({ timeout: 15_000 });
 
     // 删除（二次确认）→ 行消失（幂等收尾）
-    await row.getByRole("button", { name: "删除" }).click();
+    await row.getByRole("button", { name: "删除" }).first().click();
     const confirmBox = page.locator(".el-message-box").last();
     await confirmBox.getByRole("button", { name: "确定" }).click();
     await expect(
-      pane.locator(".el-table__row", { hasText: credentialName })
+      page.locator(".el-table__row", { hasText: credentialName })
     ).toHaveCount(0, { timeout: 15_000 });
   });
 });

@@ -25,8 +25,8 @@ const PAGES = [
   },
   {
     name: "leave",
-    dirs: ["系统管理"],
-    path: "/system/leave/index",
+    dirs: ["审批"],
+    path: "/approval/leave/index",
     opWidth: 300
   },
   {

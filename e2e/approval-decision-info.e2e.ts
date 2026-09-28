@@ -65,7 +65,7 @@ test("敏感操作审批：详情弹窗展示目标对象快照", async ({ page 
 
     // 审批中心：「我发起的」页签（申请人是 xadmin 本人，不能出现在待我审批），
     // 按 object_pk（角色主键）定位该单，点「审批人」列链接打开详情
-    await openMenuPath(page, ["系统管理"], "/system/approval/index");
+    await openMenuPath(page, ["审批"], "/approval/index");
     await page
       .locator(".el-tabs__item", { hasText: "我发起的" })
       .first()
@@ -213,24 +213,24 @@ test("流程审批详情：展示关联业务对象（请假单）", async ({ pa
     );
     expect(submitResp.ok(), await submitResp.text()).toBeTruthy();
 
-    // 实例按 biz_id 精确匹配（leave 主键）：不依赖标题文案与列表顺序
-    const instances = await page.request.get(
-      `${BACKEND_URL}/api/approval/approval-instances?size=50`,
+    // 实例定位：列表契约只回表格列（biz_id 属详情专属字段），改经请假单详情的
+    // instance_pk 精确获取——同样不依赖标题文案与列表顺序
+    const leaveDetail = await page.request.get(
+      `${BACKEND_URL}/api/approval/leaves/${leavePk}`,
       { headers }
     );
-    const rows = (
-      (await instances.json()) as { data?: { results?: unknown[] } }
-    ).data?.results as
-      Array<{ pk: string; title: string; biz_id?: string }> | undefined;
-    const instance = (rows ?? []).find(
-      item => String(item.biz_id ?? "") === String(leavePk)
-    );
-    expect(instance, "leave instance should exist").toBeTruthy();
-    instancePk = instance!.pk;
+    const leaveRow = (
+      (await leaveDetail.json()) as { data?: { instance_pk?: string } }
+    ).data;
+    instancePk = leaveRow?.instance_pk ?? "";
+    expect(
+      instancePk,
+      "submitted leave should be bound to an approval instance"
+    ).toBeTruthy();
 
     // UI：流程审批列表（申请人视角在「我的申请」页签）→ 行「详情」抽屉 →
     // 关联业务对象卡片
-    await openMenuPath(page, ["系统管理"], "/system/approval/instance/index");
+    await openMenuPath(page, ["审批"], "/approval/instance/index");
     await page
       .locator(".el-tabs__item", { hasText: "我的申请" })
       .first()
@@ -246,24 +246,16 @@ test("流程审批详情：展示关联业务对象（请假单）", async ({ pa
     await expect(related).toContainText("请假申请");
     await expect(related).toContainText(startDate);
   } finally {
-    // 兜底：实例未记录时按 biz_id 反查（取消后业务单回写为可删状态）
+    // 兜底：实例未记录时按请假单详情的 instance_pk 反查（取消后业务单回写为可删状态）
     let cancelPk = instancePk;
     if (!cancelPk && leavePk) {
-      const listed = await page.request
-        .get(`${BACKEND_URL}/api/approval/approval-instances?size=50`, {
-          headers
-        })
+      const leaveDetail = await page.request
+        .get(`${BACKEND_URL}/api/approval/leaves/${leavePk}`, { headers })
         .catch(() => undefined);
-      const rows = listed
-        ? (
-            (await listed.json()) as {
-              data?: { results?: Array<{ pk: string; biz_id?: string }> };
-            }
-          ).data?.results
-        : undefined;
-      cancelPk =
-        (rows ?? []).find(item => String(item.biz_id ?? "") === String(leavePk))
-          ?.pk ?? "";
+      cancelPk = leaveDetail
+        ? (((await leaveDetail.json()) as { data?: { instance_pk?: string } })
+            .data?.instance_pk ?? "")
+        : "";
     }
     if (cancelPk) {
       await page.request

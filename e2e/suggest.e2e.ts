@@ -101,7 +101,7 @@ test("审批委托：代理人远程联想 + 委托人弹窗选择 → 保存 �
   await login(page);
   // 重复运行幂等：清理该委托人的历史记录（残留会让本次保存被重叠校验拒绝）
   await cleanupDelegationsOf(page, delegator);
-  await openMenuPath(page, ["系统管理"], "/system/approval/delegation/index");
+  await openMenuPath(page, ["审批"], "/approval/delegation/index");
   const table = page.locator(".el-table").first();
   await expect(table).toBeVisible({ timeout: 15_000 });
 

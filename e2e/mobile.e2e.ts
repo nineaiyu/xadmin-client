@@ -73,7 +73,9 @@ test.describe("移动端形态（iPhone 13）", () => {
 
     // 用户管理：部门树限高（不得占满视口），用户列表进入首屏
     await page.goto(`${FRONT_URL}/#/system/user/index`);
-    const userList = page.getByRole("row", { name: "xadmin" }).first();
+    // 只断言「有数据行」：不得钉具体行（xadmin 是最早创建的账号，共享库跑批后
+    // 会被后建账号挤出第一页——列表断言陷阱，见 e2e/README 教训表）
+    const userList = page.locator(".el-table__row").first();
     await expect(userList).toBeVisible({ timeout: 15_000 });
     const metrics = await page.evaluate(() => {
       const tree = document.querySelector(".el-tree");

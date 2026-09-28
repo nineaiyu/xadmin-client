@@ -19,7 +19,7 @@ import {
  * 3）节点进度：详情抽屉展示当前节点进度标签（比例会签的达标线预览数据源）。
  */
 
-const INSTANCE_URL = "/system/approval/instance/index";
+const INSTANCE_URL = "/approval/instance/index";
 const LIST_URL = `${BACKEND_URL}/api/approval/approval-instances`;
 
 /**
@@ -69,7 +69,7 @@ async function startInstance(
 }
 
 async function openInstanceCenter(page: Page) {
-  await openMenuPath(page, ["系统管理"], INSTANCE_URL);
+  await openMenuPath(page, ["审批"], INSTANCE_URL);
   await expect(page.getByRole("tab", { name: /待我审批/ }).first()).toBeVisible(
     {
       timeout: 20_000

@@ -143,7 +143,7 @@ test.describe.serial("审批规则多级审批链", () => {
       });
       const pageB = await contextB.newPage();
       await login(pageB, APPROVER);
-      await openMenuPath(pageB, ["系统管理"], "/system/approval/index");
+      await openMenuPath(pageB, ["审批"], "/approval/index");
       const table = pageB.locator(".el-table").first();
       await expect(table).toBeVisible({ timeout: 15_000 });
       const row = pageB.locator(".el-table__row", { hasText: no8 }).first();
@@ -186,7 +186,7 @@ test.describe.serial("审批规则多级审批链", () => {
 
       // 申请人撤回：单终止、在途级次清理（引擎口径由单测守护，这里验证 UI 链路）
       await contextB.close();
-      await openMenuPath(page, ["系统管理"], "/system/approval/index");
+      await openMenuPath(page, ["审批"], "/approval/index");
       const mineTab = page
         .locator(".el-tabs__item", { hasText: "我发起的" })
         .first();
@@ -271,7 +271,7 @@ test.describe.serial("审批规则多级审批链", () => {
       });
       const pageB = await contextB.newPage();
       await login(pageB, APPROVER);
-      await openMenuPath(pageB, ["系统管理"], "/system/approval/index");
+      await openMenuPath(pageB, ["审批"], "/approval/index");
       const table = pageB.locator(".el-table").first();
       await expect(table).toBeVisible({ timeout: 15_000 });
 
@@ -296,7 +296,7 @@ test.describe.serial("审批规则多级审批链", () => {
       // 审批列表不做实时推送（提交新单不会自动刷新 pageB 的旧数据）：
       // 显式重新导航拉取最新待办，再断言行出现
       await pageB.reload();
-      await openMenuPath(pageB, ["系统管理"], "/system/approval/index");
+      await openMenuPath(pageB, ["审批"], "/approval/index");
       await expect(pageB.locator(".el-table").first()).toBeVisible({
         timeout: 15_000
       });

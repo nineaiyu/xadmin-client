@@ -18,8 +18,8 @@ import {
  * 流程定义经 API 预置（配置抽屉的表单交互冗长且已被 UI 断言覆盖），业务动作全部走真实 UI。
  */
 
-const FLOW_LIST_URL = "/system/approval/instance/index";
-const FLOW_DEF_URL = "/system/approval-flow/index";
+const FLOW_LIST_URL = "/approval/instance/index";
+const FLOW_DEF_URL = "/approval/flow/index";
 
 type NodePayload = {
   name: string;
@@ -58,7 +58,7 @@ async function createFlow(
 
 /** 打开「流程审批」页并等待页签渲染 */
 async function openInstanceCenter(page: Page) {
-  await openMenuPath(page, ["系统管理"], FLOW_LIST_URL);
+  await openMenuPath(page, ["审批"], FLOW_LIST_URL);
   await expect(page.getByRole("tab", { name: /待我审批/ }).first()).toBeVisible(
     { timeout: 20_000 }
   );
@@ -279,7 +279,7 @@ test("流程定义：列表可见 + 编辑配置抽屉展示节点", async ({ pa
     }
   ]);
 
-  await openMenuPath(page, ["系统管理"], FLOW_DEF_URL);
+  await openMenuPath(page, ["审批"], FLOW_DEF_URL);
   const row = page.locator(".el-table__row", { hasText: flowName }).first();
   await expect(row).toBeVisible({ timeout: 20_000 });
   await expect(

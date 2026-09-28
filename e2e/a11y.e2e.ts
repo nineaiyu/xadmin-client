@@ -176,7 +176,7 @@ test("a11y 扩面：流程配置抽屉（表单密集场景）无 critical/serio
   page
 }) => {
   await login(page);
-  await openMenuPath(page, ["系统管理"], "/system/approval-flow/index");
+  await openMenuPath(page, ["审批"], "/approval/flow/index");
   await expect(page.locator(".el-table").first()).toBeVisible({
     timeout: 15_000
   });

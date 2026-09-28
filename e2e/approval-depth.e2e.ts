@@ -101,7 +101,7 @@ test("通过弹窗填审批意见：意见入流转记录时间线", async ({ pa
 
     // 审批人视角：待办页签 → 通过 → 弹窗填意见
     await login(page, APPROVER);
-    await page.goto(`${FRONT_URL}/#/system/approval/instance/index`);
+    await page.goto(`${FRONT_URL}/#/approval/instance/index`);
     const row = page.getByRole("row", { name: title });
     await expect(row).toBeVisible({ timeout: 15_000 });
     await row.getByRole("button", { name: "通过" }).click();
@@ -125,18 +125,25 @@ test("通过弹窗填审批意见：意见入流转记录时间线", async ({ pa
       "E2E同意并归档"
     );
 
-    // 落库校验：任务意见写入（服务端口径）
-    const detail = await page.request.get(
+    // 落库校验：审批轨迹（tasks）属详情专属字段，列表契约只回表格列——
+    // 先用列表定位 pk，再取详情断言意见写入
+    const listed = await page.request.get(
       `${BACKEND_URL}/api/approval/approval-instances`,
       {
         headers: auth(approverToken),
         params: { scope: "done", page: 1, size: 50 }
       }
     );
-    const rows = (await detail.json())?.data?.results ?? [];
-    const instance = rows.find(
+    const rows = (await listed.json())?.data?.results ?? [];
+    const listedRow = rows.find(
       (item: { title: string }) => item.title === title
     );
+    expect(listedRow?.pk, "approved instance should be listed").toBeTruthy();
+    const detail = await page.request.get(
+      `${BACKEND_URL}/api/approval/approval-instances/${listedRow.pk}`,
+      { headers: auth(approverToken) }
+    );
+    const instance = (await detail.json())?.data;
     expect(instance?.tasks?.[0]?.comment).toBe("E2E同意并归档");
   } finally {
     if (flowPk) {
@@ -161,7 +168,7 @@ test("申请人催办：发送提醒并命中 10 分钟节流", async ({ page })
     flowPk = await createFlow(page, token, suffix);
     instancePk = await createInstance(page, token, flowPk, title);
 
-    await page.goto(`${FRONT_URL}/#/system/approval/instance/index`);
+    await page.goto(`${FRONT_URL}/#/approval/instance/index`);
     await page.getByRole("tab", { name: /我的申请/ }).click();
     const row = page.getByRole("row", { name: title });
     await expect(row).toBeVisible({ timeout: 15_000 });
@@ -224,7 +231,7 @@ test("驳回后重新提交：按原流程与原内容预填发起弹窗", async
     );
     expect(rejectRes.ok(), await rejectRes.text()).toBeTruthy();
 
-    await page.goto(`${FRONT_URL}/#/system/approval/instance/index`);
+    await page.goto(`${FRONT_URL}/#/approval/instance/index`);
     await page.getByRole("tab", { name: /我的申请/ }).click();
     const row = page.getByRole("row", { name: title });
     await expect(row).toBeVisible({ timeout: 15_000 });
@@ -312,7 +319,7 @@ test("流程定义：分支路由 target 可选（非自环）并落库", async 
     expect(res.ok(), await res.text()).toBeTruthy();
     flowPk = (await res.json()).data.pk;
 
-    await page.goto(`${FRONT_URL}/#/system/approval-flow/index`);
+    await page.goto(`${FRONT_URL}/#/approval/flow/index`);
     const row = page.getByRole("row", { name: flowName });
     await expect(row).toBeVisible({ timeout: 15_000 });
     await row.getByRole("button", { name: "编辑配置" }).click();
