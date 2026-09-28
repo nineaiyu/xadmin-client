@@ -546,9 +546,23 @@ directory:
   title: Directory
   viewByDept: By Department
   viewByPost: By Post
+  allMembers: All members
+  allPosts: All posts
+  searchDept: Search department
+  searchPost: Search post
+  refresh: Refresh
   searchPlaceholder: Username/nickname/email/phone
   search: Search
+  total: "{n} members"
+  viewCard: Card view
+  viewList: List view
+  empty: No members
+  emptyDept: No department available
   emptyPosts: No active posts
+  noPost: No post
+  noContact: No contact info
+  memberDetail: Member details
+  copy: Copy
   name: Name
   username: Username
   dept: Department
@@ -557,6 +571,7 @@ directory:
   email: Email
   phone: Phone
   lastLogin: Last Login
+  dateJoined: Joined At
 
 tag:
   title: Tag
