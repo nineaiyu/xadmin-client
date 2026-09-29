@@ -186,11 +186,12 @@ test("菜单管理：权限检测弹窗（只读缺口报告）", async ({ page 
     .filter({ hasText: "菜单权限检测" });
   await expect(dialog).toBeVisible({ timeout: 15_000 });
 
-  // 只读报告：汇总计数 + 三类分组标题恒渲染（无问题的分组走空态）
+  // 只读报告：汇总计数 + 四类分组标题恒渲染（无问题的分组走空态）
   await expect(dialog.getByText(/已扫描路由/)).toBeVisible({ timeout: 15_000 });
   await expect(dialog.getByText("权限缺口").first()).toBeVisible();
   await expect(dialog.getByText("游离权限点").first()).toBeVisible();
   await expect(dialog.getByText("重复权限码").first()).toBeVisible();
+  await expect(dialog.getByText("角色未配置字段权限").first()).toBeVisible();
 
   // 只读语义：Esc 关闭后回到菜单树（不改动任何数据）
   await page.keyboard.press("Escape");

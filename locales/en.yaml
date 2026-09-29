@@ -1651,12 +1651,14 @@ systemMenu:
     cloneSuffix: "{ title } copy"
   permissionAudit:
     button: Permission check
-    tip: Detect missing, orphaned and duplicate permission points between routes and menus (read-only)
+    tip: Detect missing, orphaned, duplicate permission points and roles without field permissions (read-only)
     title: Menu permission check
     suggestion: Suggestion
     missing: Missing permissions
     orphan: Orphaned permissions
     duplicate: Duplicate codes
+    fieldUnconfigured: Roles without field permissions
+    role: Role
     locate: Locate
     allClear: No permission issues found
     summary: "Scanned { routes } routes / { permissions } permissions · { total } issues"
@@ -1664,10 +1666,12 @@ systemMenu:
       generate: Run permission sync or "auto add permissions" to fill
       verify: Confirm the endpoint is retired, remove the permission if so
       merge: Merge the duplicate codes or confirm they are intentional
+      configure: Pick the field whitelist for this permission on the role page (empty output otherwise)
     empty:
       missing: No missing permissions
       orphan: No orphaned permissions
       duplicate: No duplicate codes
+      fieldUnconfigured: No role missing field permissions
   empty:
     noMatch: No menu matches the filters, try clearing them
     noData: No menu data

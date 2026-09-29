@@ -1651,12 +1651,14 @@ systemMenu:
     cloneSuffix: "{ title } 副本"
   permissionAudit:
     button: 权限检测
-    tip: 检测代码路由与菜单权限点的缺口、游离与重复项（只读，不改动数据）
+    tip: 检测代码路由与菜单权限点的缺口、游离、重复项与角色字段权限缺口（只读，不改动数据）
     title: 菜单权限检测
     suggestion: 建议
     missing: 权限缺口
     orphan: 游离权限点
     duplicate: 重复权限码
+    fieldUnconfigured: 角色未配置字段权限
+    role: 角色
     locate: 定位菜单
     allClear: 未发现权限缺口
     summary: "已扫描路由 { routes } 条 / 权限点 { permissions } 个 · 问题 { total } 处"
@@ -1664,10 +1666,12 @@ systemMenu:
       generate: 执行权限同步或「自动批量添加权限」补齐
       verify: 确认端点是否已下线，必要时删除该权限点
       merge: 合并重复权限码或确认是否有意为之
+      configure: 去角色页勾选该权限点的字段白名单（未配置时接口输出空对象）
     empty:
       missing: 未发现缺口
       orphan: 未发现游离权限点
       duplicate: 未发现重复权限码
+      fieldUnconfigured: 未发现未配置字段权限的角色
   empty:
     noMatch: 无匹配菜单，试试清空筛选条件
     noData: 暂无菜单数据

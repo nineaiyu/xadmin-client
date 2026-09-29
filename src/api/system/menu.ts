@@ -24,7 +24,8 @@ export interface MenuPermissionPayload {
 }
 
 /** 权限检测问题类型：正向缺口 / 游离权限点 / 重复权限码 */
-export type MenuPermissionAuditProblem = "missing" | "orphan" | "duplicate";
+export type MenuPermissionAuditProblem =
+  "missing" | "orphan" | "duplicate" | "field_unconfigured";
 
 /** 权限检测条目（后端计算，前端只读渲染；suggestion 映射本地化建议文案） */
 export interface MenuPermissionAuditItem {
@@ -39,7 +40,9 @@ export interface MenuPermissionAuditItem {
   pk: string | null;
   /** 缺口所属后端视图类名（仅缺口非空） */
   view: string;
-  suggestion: "generate" | "verify" | "merge";
+  /** 未配置字段权限的角色名（仅 field_unconfigured 非空） */
+  role?: string;
+  suggestion: "generate" | "verify" | "merge" | "configure";
 }
 
 export interface MenuPermissionAuditResult {
@@ -47,6 +50,7 @@ export interface MenuPermissionAuditResult {
     missing: number;
     orphan: number;
     duplicate: number;
+    field_unconfigured: number;
     total: number;
     routes: number;
     permissions: number;
@@ -54,6 +58,7 @@ export interface MenuPermissionAuditResult {
   missing: MenuPermissionAuditItem[];
   orphan: MenuPermissionAuditItem[];
   duplicate: MenuPermissionAuditItem[];
+  field_unconfigured: MenuPermissionAuditItem[];
 }
 
 class MenuApi extends BaseApi {

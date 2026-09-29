@@ -21,10 +21,12 @@ import CopyDocument from "~icons/ep/copy-document";
 import Location from "~icons/ep/location";
 
 /**
- * 菜单权限检测：只读展示「正向缺口 / 游离权限点 / 重复权限码」三类问题的分组表格。
+ * 菜单权限检测：只读展示「正向缺口 / 游离权限点 / 重复权限码 / 角色未配置字段权限」
+ * 四类问题的分组表格。
  *
  * 数据一次拉取、前端只做渲染与本地化建议文案映射；不提供写操作，修复走既有的
- * 「自动批量添加权限」（缺口）或菜单编辑面（游离/重复），避免重复造轮子。
+ * 「自动批量添加权限」（缺口）、菜单编辑面（游离/重复）或角色页字段白名单
+ * （字段权限缺口），避免重复造轮子。
  */
 
 const props = withDefaults(
@@ -45,6 +47,8 @@ interface AuditGroup {
   type: "warning" | "danger" | "info";
   empty: string;
   rows: MenuPermissionAuditItem[];
+  /** 分组专用列（字段权限缺口需多一列「角色」）；缺省复用通用列 */
+  columns?: ReadonlyColumn[];
 }
 
 const columns = computed<ReadonlyColumn[]>(() => [
@@ -75,6 +79,12 @@ const columns = computed<ReadonlyColumn[]>(() => [
   { slot: "actions", label: t("commonLabels.operation"), width: 170 }
 ]);
 
+/** 字段权限缺口列：比通用列多一列「角色」（未配置字段白名单的角色名） */
+const fieldColumns = computed<ReadonlyColumn[]>(() => [
+  { prop: "role", label: t("systemMenu.permissionAudit.role"), width: 140 },
+  ...columns.value
+]);
+
 const groups = computed<AuditGroup[]>(() => [
   {
     key: "missing",
@@ -96,6 +106,14 @@ const groups = computed<AuditGroup[]>(() => [
     type: "info",
     empty: t("systemMenu.permissionAudit.empty.duplicate"),
     rows: result.value?.duplicate ?? []
+  },
+  {
+    key: "field_unconfigured",
+    label: t("systemMenu.permissionAudit.fieldUnconfigured"),
+    type: "warning",
+    empty: t("systemMenu.permissionAudit.empty.fieldUnconfigured"),
+    rows: result.value?.field_unconfigured ?? [],
+    columns: fieldColumns.value
   }
 ]);
 
@@ -104,7 +122,8 @@ const suggestText = (value: MenuPermissionAuditItem["suggestion"]) => {
   const map = {
     generate: t("systemMenu.permissionAudit.suggest.generate"),
     verify: t("systemMenu.permissionAudit.suggest.verify"),
-    merge: t("systemMenu.permissionAudit.suggest.merge")
+    merge: t("systemMenu.permissionAudit.suggest.merge"),
+    configure: t("systemMenu.permissionAudit.suggest.configure")
   };
   return map[value] ?? value;
 };
@@ -182,7 +201,7 @@ const onLocateRow = (pk: string | null) => {
         </el-tag>
       </div>
       <ReReadonlyTable
-        :columns="columns"
+        :columns="group.columns ?? columns"
         :empty-text="group.empty"
         :max-height="220"
         :rows="group.rows"
