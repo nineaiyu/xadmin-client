@@ -18,7 +18,7 @@
 
 - 后端不可达时：只影响"页面调接口"的联调，**测试 / 构建 / lint 不受影响**；
 - 独立检出的 E2E 完整说明（含 `E2E_PYTHON` 覆盖解释器）见 [../e2e/README.md](../e2e/README.md) 的「独立检出运行」章节；
-- 环境要求：Node ≥ 22.22.1（`.nvmrc` = v24）、pnpm ≥ 11（`preinstall` 强校验）。
+- 环境要求：Node ≥ 24（`.nvmrc` = v24.20.0）、pnpm ≥ 11（`preinstall` 强校验）。
 
 ## 二、目录速览（改哪里）
 

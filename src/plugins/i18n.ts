@@ -134,7 +134,10 @@ export const i18n: I18n = createI18n({
     storageLocal().getItem<StorageConfigs>(
       `${responsiveStorageNameSpace()}locale`
     )?.locale ?? "zh",
-  fallbackLocale: "en",
+  // 回退链以中文语料优先：zh 常驻（eager），en 是懒加载语言——
+  // 回退 en 会让「中文界面里动态 key 缺失」呈现英文文案；zh/en 词条对称由
+  // locale-keys 守护保证，回退 zh 仍能给出可读文案而非英文串
+  fallbackLocale: "zh",
   messages: localesConfigs
 });
 
@@ -163,11 +166,14 @@ export async function ensureLocale(locale?: string) {
 }
 
 // 兜底：任何路径把 locale 切成 en（站点配置恢复、布局初始化等）时自动补齐语言包，
-// 避免出现「locale=en 但 en 语料未加载」的 key 泄漏。
+// 避免出现「locale=en 但 en 语料未加载」的 key 泄漏；同时把 html.lang 与语言保持同步
+// （index.html 是静态产物，构建期不知道运行时语言——影响无障碍与浏览器翻译判定）
 const localeRef = i18n.global.locale;
 if (typeof localeRef !== "string") {
   watch(localeRef, value => {
-    void ensureLocale(String(value));
+    const locale = String(value);
+    document.documentElement.lang = locale === "zh" ? "zh-CN" : locale;
+    void ensureLocale(locale);
   });
 }
 

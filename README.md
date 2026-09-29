@@ -14,7 +14,7 @@ xadmin 前端 —— 基于 [vue-pure-admin](https://github.com/pure-admin/vue-p
 
 | 依赖    | 版本                         | 说明                                   |
 | ------- | ---------------------------- | -------------------------------------- |
-| Node.js | >= 22.22.1（`.nvmrc` = v24） | `engines` 强校验                       |
+| Node.js | >= 24（`.nvmrc` = v24.20.0） | `engines` 强校验                       |
 | pnpm    | >= 11                        | `preinstall` 强制（`only-allow pnpm`） |
 
 ## 快速开始（本地开发）

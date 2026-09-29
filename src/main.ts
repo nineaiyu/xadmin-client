@@ -10,6 +10,8 @@ import App from "./App.vue";
 import router from "./router";
 import { setupStore } from "@/store";
 import { ensureLocale, useI18n } from "@/plugins/i18n";
+import { responsiveStorageNameSpace } from "@/config";
+import { storageLocal } from "@pureadmin/utils";
 import { getPlatformConfig } from "./config";
 import { MotionPlugin } from "@vueuse/motion";
 import { useEcharts } from "@/plugins/echarts";
@@ -61,6 +63,16 @@ app.use(VueTippy);
 getPlatformConfig(app).then(async config => {
   injectResponsiveStorage(app, config);
   setupStore(app);
+  // index.html 是静态产物（构建期不知道运行时语言与平台标题），装配后回填：
+  // html.lang 影响无障碍（屏幕阅读器发音/浏览器翻译判定），初始 title 占位
+  // 在首次路由跳转前与 platform-config 的 Title 保持一致
+  const initialLocale =
+    storageLocal().getItem<StorageConfigs>(
+      `${responsiveStorageNameSpace()}locale`
+    )?.locale ?? "zh";
+  document.documentElement.lang =
+    initialLocale === "zh" ? "zh-CN" : initialLocale;
+  if (config?.Title) document.title = String(config.Title);
   if (getToken()) {
     try {
       await useSiteConfigStoreHook().getSiteConfig();

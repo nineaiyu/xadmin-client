@@ -71,7 +71,7 @@ importers:
         specifier: ^4.1.1
         version: 4.1.1
       axios:
-        specifier: 1.20.0
+        specifier: ^1.20.0
         version: 1.20.0(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)
       cropperjs:
         specifier: ^1.6.3

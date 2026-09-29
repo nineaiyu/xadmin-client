@@ -81,7 +81,7 @@
     "@wangeditor/plugin-upload-attachment": "^1.1.0",
     "@zxcvbn-ts/core": "^4.2.0",
     "animate.css": "^4.1.1",
-    "axios": "1.20.0",
+    "axios": "^1.20.0",
     "cropperjs": "^1.6.3",
     "crypto-es": "^3.1.3",
     "dayjs": "^1.11.23",
@@ -174,7 +174,7 @@
     "vue-tsc": "^3.3.11"
   },
   "engines": {
-    "node": ">=22.22.1",
+    "node": ">=24",
     "pnpm": ">=11"
   }
 }
