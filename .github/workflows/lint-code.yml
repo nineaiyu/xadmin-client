@@ -71,7 +71,8 @@ jobs:
         run: pnpm check:i18n
 
       - name: Bundle size snapshot gate
-        # 首屏 KPI 为「增长预算制」：闭包 gzip9 相比基线增长超过 15 KB 即失败，
+        # 首屏 KPI 为「增长预算制」：闭包 gzip9 拆「代码」与「i18n 语料」两账本，
+        # 各自相比基线增长超过 15 KB 即失败（语料增长是产品资产，不与代码增量互相挤占），
         # 确属必要增量时在 PR 说明后执行 pnpm check:bundle-size -- --update 刷新基线
         # （基线登记与口径见 xadmin-server/docs/metrics.md）
         run: |
