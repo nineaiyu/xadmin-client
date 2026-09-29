@@ -16,8 +16,8 @@ import {
 } from "@/components/RePlusPage";
 import {
   knowledgeApi,
+  type KnowledgeBuildStatus,
   type KnowledgeDocumentItem,
-  type KnowledgeEmbeddingSummary,
   type KnowledgeSyncSummary,
   type KnowledgeVectorStatus
 } from "@/api/ai/knowledge";
@@ -32,6 +32,10 @@ import Check from "~icons/ep/check";
 import Close from "~icons/ep/close";
 
 type KnowledgeRow = KnowledgeDocumentItem & { is_active: boolean };
+
+/** 构建进度轮询节奏：2s 间隔；超时 10 分钟（供应商级全量重算的理论上界） */
+const BUILD_POLL_INTERVAL = 2000;
+const BUILD_POLL_TIMEOUT = 10 * 60 * 1000;
 
 /** 行内字典化字段取标量值：后端 LabeledChoice 下发 {value,label}（或原始字符串） */
 const dictValue = (value: unknown): string =>
@@ -92,7 +96,7 @@ export function useKnowledge(tableRef: Ref) {
         }
         // 异常归一为可读失败结果，避免请求异常时弹窗 loading 悬挂
         const res = await knowledgeApi
-          .upload(payload.name, payload.content)
+          .upload(payload.name, payload)
           .catch(error => ({
             code: -1,
             detail: String((error as { detail?: string })?.detail ?? error)
@@ -238,7 +242,8 @@ export function useKnowledge(tableRef: Ref) {
   };
 
   /**
-   * 构建向量索引（增量）：先取状态——未配置 embedding 档案时给引导；已配置则确认后构建。
+   * 构建向量索引（增量，后台任务）：先取状态——未配置 embedding 档案时给引导；
+   * 已配置则确认后提交任务并轮询进度（单飞锁，重复提交被引导为跟踪既有任务）。
    * 构建只补「未向量化 / 模型变更 / 正文变更」的块，可反复执行；全量重算用
    * `manage.py build_ai_embeddings --force`。
    */
@@ -275,18 +280,66 @@ export function useKnowledge(tableRef: Ref) {
       detail: String((error as { detail?: string })?.detail ?? error),
       data: null
     }));
-    const summary = res.data as KnowledgeEmbeddingSummary | null;
     if (res.code !== SUCCESS_CODE) {
+      // 已有构建在跑（1001 + running 状态）：不报错，转为跟踪既有任务进度
+      const running = (res as { data?: KnowledgeBuildStatus | null }).data;
+      if (res.code === 1001 && running?.state === "running") {
+        message(t("aiKnowledge.buildAlreadyRunning"), { type: "info" });
+        await pollBuildStatus();
+        return;
+      }
       message(res.detail ?? t("results.failed"), { type: "error" });
       return;
     }
-    message(
-      t("aiKnowledge.buildDone", {
-        embedded: summary?.embedded ?? 0,
-        skipped: summary?.skipped ?? 0
-      }),
-      { type: "success" }
-    );
+    message(t("aiKnowledge.buildSubmitted"), { type: "success" });
+    await pollBuildStatus();
+  };
+
+  /** 构建进度轮询：运行中按里程碑提示（25/50/75%，过程可见不刷屏），终态给摘要。 */
+  const pollBuildStatus = async () => {
+    const startedAt = Date.now();
+    let lastPercent = 0;
+    while (Date.now() - startedAt < BUILD_POLL_TIMEOUT) {
+      await new Promise(resolve => setTimeout(resolve, BUILD_POLL_INTERVAL));
+      const res = await knowledgeApi.buildEmbeddingsStatus().catch(error => ({
+        code: -1,
+        detail: String((error as { detail?: string })?.detail ?? error),
+        data: null
+      }));
+      const status = res.data as KnowledgeBuildStatus | null;
+      if (!status) continue;
+      if (status.state === "running") {
+        const milestone = [25, 50, 75].find(
+          mark => lastPercent < mark && status.percent >= mark
+        );
+        if (milestone) {
+          message(t("aiKnowledge.buildProgress", { percent: status.percent }), {
+            type: "info"
+          });
+        }
+        lastPercent = status.percent;
+        continue;
+      }
+      if (status.state === "done") {
+        const summary = status.summary;
+        message(
+          t("aiKnowledge.buildDone", {
+            embedded: summary?.embedded ?? 0,
+            skipped: summary?.skipped ?? 0
+          }),
+          { type: "success" }
+        );
+        refresh();
+        return;
+      }
+      if (status.state === "error") {
+        message(String(status.summary?.detail || t("results.failed")), {
+          type: "error"
+        });
+        return;
+      }
+    }
+    message(t("aiKnowledge.buildPollTimeout"), { type: "warning" });
   };
 
   const syncRepo = async () => {

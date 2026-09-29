@@ -942,6 +942,7 @@ systemApprovalFlow:
   formActive: Active
   formSchemaTitle: Form Fields
   formSchemaTip: The dynamic form rendered when submitting; field keys are referenced by node conditions and the "form field" assignee type
+  formSchemaLocked: "This flow is bound to a dynamic form; form fields are synced from the bound form (edit in the form designer, read-only here)"
   fieldLabel: Label
   fieldKey: Field Key
   fieldType: Type
@@ -3255,7 +3256,7 @@ aiKnowledge:
   name: Document name
   namePlaceholder: Enter a name (same name overwrites the existing document)
   chooseFile: Choose a local file
-  chooseFileTip: Supports .md/.markdown/.txt; editable after loading
+  chooseFileTip: Supports .md/.markdown/.txt/.pdf/.docx; text is editable, pdf/docx are parsed on upload
   content: Content
   contentPlaceholder: Paste or edit Markdown text
   contentTitle: Content
@@ -3280,6 +3281,12 @@ aiKnowledge:
   buildEmbeddings: Build vectors
   buildConfirm: "Build the vector index incrementally: {fresh} / {total} chunks available (model {model}). Only missing or stale chunks are embedded, safe to run repeatedly"
   buildDone: "Vector build finished: {embedded} chunks embedded, {skipped} skipped"
+  binarySelected: "{type} file selected; it will be parsed to plain text on the server (not editable)"
+  binaryTooLarge: The file exceeds the 2 MB limit
+  buildSubmitted: "Embedding build task submitted, running in the background"
+  buildAlreadyRunning: "A build is already running; tracking its progress"
+  buildProgress: "Building vectors… {percent}%"
+  buildPollTimeout: "The build is taking long; progress tracking stopped. Check vector status later"
   vectorDisabled: No active profile with purpose Text embedding; add and activate one on the AI config page first
   panelTitle: "Manage {title}"
   enabled: Enabled

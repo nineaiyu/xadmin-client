@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { SUCCESS_CODE } from "@/api/types";
-import { onMounted, reactive, ref, watch } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessage, ElRadioButton, ElRadioGroup } from "element-plus";
 import { approvalFlowApi } from "@/api/approval/approvalFlow";
@@ -39,6 +39,9 @@ const emit = defineEmits<{ close: [] }>();
 
 const { t } = useI18n();
 const saving = ref(false);
+
+// 编辑锁：流程被 dform 绑定后字段由表单侧单向投影（服务端同步落库），流程侧只读
+const formSchemaLocked = computed(() => !!props.flow?.form_schema_locked);
 
 const basic = reactive({ name: "", code: "", is_active: true });
 const nodes = ref<NodeRow[]>([]);
@@ -143,12 +146,21 @@ onMounted(initFromFlow);
       {{ t("systemApprovalFlow.formSchemaTitle") }}
     </el-divider>
     <el-alert
+      v-if="formSchemaLocked"
+      :closable="false"
+      type="warning"
+      :title="t('systemApprovalFlow.formSchemaLocked')"
+      class="mb-2"
+      data-testid="flow-form-schema-locked"
+    />
+    <el-alert
+      v-else
       :closable="false"
       type="info"
       :title="t('systemApprovalFlow.formSchemaTip')"
       class="mb-2"
     />
-    <FlowFieldsEditor :fields="fields" />
+    <FlowFieldsEditor :fields="fields" :disabled="formSchemaLocked" />
 
     <el-divider content-position="left">
       {{ t("systemApprovalFlow.nodesTitle") }}

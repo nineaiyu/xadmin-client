@@ -942,6 +942,7 @@ systemApprovalFlow:
   formActive: 启用
   formSchemaTitle: 表单字段
   formSchemaTip: 发起申请时按此渲染动态表单；字段 key 供节点条件与「表单字段」审批人引用
+  formSchemaLocked: 该流程已绑定动态表单，表单字段由绑定表单自动同步维护（在表单设计器中修改，此处只读）
   fieldLabel: 字段名称
   fieldKey: 字段 key
   fieldType: 类型
@@ -3254,7 +3255,7 @@ aiKnowledge:
   name: 文档名称
   namePlaceholder: 请输入文档名称（同名文档将覆盖更新）
   chooseFile: 选择本地文件
-  chooseFileTip: 支持 .md/.markdown/.txt，读取后可在下方编辑
+  chooseFileTip: 支持 .md/.markdown/.txt/.pdf/.docx；文本可编辑，pdf/docx 解析后入库
   content: 文档内容
   contentPlaceholder: 粘贴或编辑 Markdown 文本
   contentTitle: 原文
@@ -3279,6 +3280,12 @@ aiKnowledge:
   buildEmbeddings: 构建向量
   buildConfirm: 增量构建向量索引：当前可用 {fresh} / {total} 块（模型 {model}）。只补「未向量化与正文变更」的块，可反复执行
   buildDone: 向量构建完成：新增或更新 {embedded} 块，跳过 {skipped} 块
+  binarySelected: 已选择 {type} 文件，解析为纯文本后入库（不可编辑）
+  binaryTooLarge: 文件超过 2MB 上限
+  buildSubmitted: 向量构建任务已提交，正在后台执行
+  buildAlreadyRunning: 已有构建任务在运行，正在跟踪其进度
+  buildProgress: 向量构建中… {percent}%
+  buildPollTimeout: 构建耗时较长，已停止进度跟踪；稍后刷新向量状态查看结果
   vectorDisabled: 未配置「用途 = 文本向量化」的激活档案，请先在 AI 配置页添加并激活
   panelTitle: "管理文档 {title}"
   enabled: 已启用

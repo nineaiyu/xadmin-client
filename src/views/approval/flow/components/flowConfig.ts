@@ -33,6 +33,8 @@ export type FlowRow = {
     required?: boolean;
     options?: string[];
   }>;
+  /** 表单字段编辑锁：流程被 dform 绑定后 form_schema 由绑定表单单向投影维护 */
+  form_schema_locked?: boolean;
   nodes?: ApiNode[];
 };
 export type NodeRow = {

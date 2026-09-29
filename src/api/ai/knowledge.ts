@@ -62,10 +62,27 @@ export type KnowledgeEmbeddingSummary = {
   detail: string;
 };
 
+/** 向量构建运行状态（轮询端点；终态摘要随状态通道保留 1 小时） */
+export type KnowledgeBuildStatus = {
+  state: "idle" | "running" | "done" | "error";
+  percent: number;
+  stage?: string;
+  embedded?: number;
+  total?: number;
+  updated_time?: string;
+  finished_time?: string;
+  summary?: Partial<KnowledgeEmbeddingSummary>;
+};
+
 class KnowledgeApi extends BaseApi {
-  /** 上传文档（文本）：同名视为覆盖更新，上传后立即参与问答检索 */
-  upload = (name: string, content: string) => {
-    return this.request<DetailResult>("post", {}, { name, content });
+  /** 上传文档：文本直传（content）或二进制解析（file_type + file_b64，pdf/docx）；
+   * 同名视为覆盖更新，上传后立即参与问答检索 */
+  upload = (
+    name: string,
+    payload:
+      { content: string } | { file_type: "pdf" | "docx"; file_b64: string }
+  ) => {
+    return this.request<DetailResult>("post", {}, { name, ...payload });
   };
 
   /** 重新扫描仓库文档（docs/）：上传文档不受影响 */
@@ -99,15 +116,26 @@ class KnowledgeApi extends BaseApi {
   };
 
   /**
-   * 构建/刷新知识块向量（幂等：只补缺失与陈旧块）：
-   * 需已配置「用途=文本向量化」的激活档案，未配置时返回 1001。
+   * 提交向量构建后台任务（异步；幂等补缺失与陈旧块）：
+   * 需已配置「用途=文本向量化」的激活档案，未配置/已有构建在跑时返回 1001。
+   * 进度经 buildEmbeddingsStatus 轮询。
    */
   buildEmbeddings = (params: { force?: boolean; document?: string } = {}) => {
-    return this.request<DetailResult<KnowledgeEmbeddingSummary>>(
+    return this.request<DetailResult<{ task_id?: string; state: string }>>(
       "post",
       {},
       { ...params },
       `${this.baseApi}/build-embeddings`
+    );
+  };
+
+  /** 向量构建运行状态（轮询）：running 期间 percent 推进，终态带 summary。 */
+  buildEmbeddingsStatus = () => {
+    return this.request<DetailResult<KnowledgeBuildStatus>>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/build-embeddings/status`
     );
   };
 }

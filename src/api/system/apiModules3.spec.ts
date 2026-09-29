@@ -195,7 +195,7 @@ describe("leaveApi 请假", () => {
 });
 describe("knowledgeApi 知识库", () => {
   it("upload 落在资源根端点", () => {
-    knowledgeApi.upload("手册", "# 内容");
+    knowledgeApi.upload("手册", { content: "# 内容" });
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
       "/api/ai/knowledge-documents",
