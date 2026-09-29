@@ -52,11 +52,12 @@ pnpm build:staging      # 预发构建
 Docker 构建（先改 `.env.production` 的 API 域名）：
 
 ```shell
-sh build.sh                    # 构建前端产物到 web/data/dist（内部用 node 镜像执行 pnpm build，需交互式终端）
-docker compose up -d --build   # 构建并启动 nginx-web 服务（默认 80 端口；SSL/域名见 compose 注释）
+sh build.sh                    # 容器内构建前端产物到 dist/（需可运行 docker）
 ```
 
-生产推荐形态：`dist/` 交给 nginx 托管并反代 `/api`、`/ws`、`/media` 到后端（模板见 `xadmin-web/`）。
+托管与反代：生产推荐 `dist/` 交给 nginx 托管并反代 `/api`、`/ws`、`/media` 到后端——
+模板见 `xadmin-web/` 仓库；需要 acme.sh 自动签发证书的自包含栈已迁至
+`xadmin-installer/deploy/web/`（`DIST_DIR` 指向本仓 `dist/` 后 `docker compose up -d --build`）。
 
 ## 测试与门禁（提交前）
 

@@ -33,7 +33,9 @@ const include = [
 /**
  * 在预构建中强制排除的依赖项
  * 温馨提示：平台推荐的使用方式是哪里需要哪里引入而且都是单个的引入，不需要预构建，直接让浏览器加载就好
+ * （@iconify/json 已不再被 src 运行时引用——图标集改为 gen-icon-subset 的引用子集，
+ *  该包仅作为 devDependency 供生成脚本读取）
  */
-const exclude = ["@iconify/json"];
+const exclude: string[] = [];
 
 export { include, exclude };

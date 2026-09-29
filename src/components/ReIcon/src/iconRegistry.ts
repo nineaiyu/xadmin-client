@@ -11,19 +11,21 @@ import { addCollection } from "@iconify/vue/dist/offline";
  * CSP 违规上报。本模块把图标来源收敛为「随包内置」：
  *
  * 1. **随包注册**（`offlineIcon.ts`）：种子与代码在用的图标，冒号/斜杠双形态同步注册；
- * 2. **按需懒加载**：其余图标按 set 前缀动态加载**构建期内置**的图标集
- *    （`@iconify/json`，与页面同源的同级 chunk；`pnpm build` 时打包进产物，
- *    不访问外网），加载完成即本地注册并触发重渲染；
+ * 2. **按需懒加载**：其余图标按 set 前缀动态加载**构建期内置**的引用子集
+ *    （`data/subsets/*.json`，由 `scripts/gen-icon-subset.mjs` 从「选择器候选 ∪
+ *    代码 `~icons` 引用 ∪ 服务端种子」生成——子集按构造包含选择器可出的每个图标，
+ *    陈旧图标名在生成期即失败；postinstall/prebuild 自动再生成，不访问外网），
+ *    加载完成即本地注册并触发重渲染；
  * 3. **绝不回退在线**：任何情况下都不发起外部请求；未内置的 set 只告警（DEV）。
  *
  * 可用性用 shallowRef 的 Set 承载：替换实例即触发依赖它的渲染重算。
  */
 
-/** 图标集懒加载器（键 = 图标名前缀；数据来自构建期打包的 @iconify/json） */
+/** 图标集懒加载器（键 = 图标名前缀；数据来自构建期生成的引用子集，gitignore） */
 const SET_LOADERS: Record<string, () => Promise<{ default: unknown }>> = {
-  ep: () => import("@iconify/json/json/ep.json"),
-  ri: () => import("@iconify/json/json/ri.json"),
-  "fa-solid": () => import("@iconify/json/json/fa-solid.json")
+  ep: () => import("../data/subsets/ep.json"),
+  ri: () => import("../data/subsets/ri.json"),
+  "fa-solid": () => import("../data/subsets/fa-solid.json")
 };
 
 /** 已注册（可直接渲染）的图标名 */

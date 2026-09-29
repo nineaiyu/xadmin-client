@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useRoute, useRouter } from "vue-router";
-import forbid from "@/assets/status/403.svg?component";
+import forbid from "@/assets/status/no-access.svg?component";
 import { useI18n } from "vue-i18n";
 
 defineOptions({

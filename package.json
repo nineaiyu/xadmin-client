@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "NODE_OPTIONS='--max-old-space-size=4096 --trace-deprecation' vite",
     "serve": "pnpm dev",
+    "prebuild": "node scripts/gen-icon-subset.mjs",
     "build": "rimraf dist && NODE_OPTIONS=--max-old-space-size=8192 vite build && generate-version-file",
     "build:staging": "rimraf dist && vite build --mode staging",
     "report": "rimraf dist && vite build && generate-version-file",
@@ -14,8 +15,10 @@
     "typecheck": "tsc --noEmit && vue-tsc --noEmit --skipLibCheck",
     "check:bundle-size": "node scripts/check-bundle-size.mjs",
     "check:i18n": "node scripts/check-i18n-keys.mjs",
+    "check:as-unknown": "node scripts/check-as-unknown.mjs",
     "analyze:bundle": "node scripts/bundle-analyze.mjs",
     "gen:metadata-types": "node scripts/gen-metadata-types.mjs",
+    "gen:icon-subset": "node scripts/gen-icon-subset.mjs",
     "sync:contract": "node scripts/sync-contract.mjs",
     "check:contract": "node scripts/check-contract-sync.mjs",
     "check:contract-usage": "node scripts/check-contract-usage.mjs",
@@ -40,6 +43,7 @@
     "test:e2e:fresh": "lsof -ti :18896 | xargs kill 2>/dev/null; lsof -ti :18897 | xargs kill 2>/dev/null; lsof -ti :8848 | xargs kill 2>/dev/null; E2E_API_PORT=18896 playwright test",
     "test:e2e:smoke:fresh": "lsof -ti :18896 | xargs kill 2>/dev/null; lsof -ti :18897 | xargs kill 2>/dev/null; lsof -ti :8848 | xargs kill 2>/dev/null; E2E_API_PORT=18896 E2E_SMOKE=1 playwright test",
     "test:e2e:parallel": "node scripts/e2e-parallel.mjs",
+    "postinstall": "node scripts/gen-icon-subset.mjs",
     "prepare": "husky",
     "preinstall": "npx only-allow pnpm"
   },
@@ -68,7 +72,6 @@
     "url": "https://github.com/nineaiyu/"
   },
   "dependencies": {
-    "@iconify/json": "^2.2.529",
     "@iconify/vue": "5.0.1",
     "@pureadmin/table": "^3.3.0",
     "@pureadmin/utils": "^2.6.4",
@@ -117,6 +120,7 @@
     "@commitlint/types": "^21.2.0",
     "@eslint/js": "^10.0.1",
     "@faker-js/faker": "^10.6.0",
+    "@iconify/json": "^2.2.529",
     "@intlify/unplugin-vue-i18n": "^11.2.5",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/vite": "^4.3.3",

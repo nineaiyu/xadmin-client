@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useRouter } from "vue-router";
-import noAccess from "@/assets/status/403.svg?component";
+import noAccess from "@/assets/status/no-access.svg?component";
 import { useI18n } from "vue-i18n";
 
 defineOptions({

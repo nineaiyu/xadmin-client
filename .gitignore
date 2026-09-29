@@ -34,3 +34,6 @@ tmp
 
 # AI 辅助工具本地配置（含不可审计的第三方脚本，禁止随仓库分发）
 .claude/
+
+# 图标集引用子集（scripts/gen-icon-subset.mjs 生成物，postinstall/prebuild 再生成）
+src/components/ReIcon/data/subsets/
