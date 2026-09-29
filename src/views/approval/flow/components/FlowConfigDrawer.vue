@@ -112,8 +112,8 @@ async function save() {
       emit("close");
       return;
     }
-    // 200 + 业务码非 1000（含「有在途申请不可改节点」等）：全局拦截器只处理 HTTP
-    // 层错误，业务失败必须显式提示
+    // 200 + 业务码非 1000（表单/节点校验失败等）：全局拦截器只处理 HTTP 层错误，
+    // 业务失败必须显式提示
     ElMessage.error(String(res.detail || t("results.failed")));
   } catch {
     // HTTP 层错误提示由拦截器统一处理

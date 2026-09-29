@@ -981,7 +981,7 @@ systemApprovalFlow:
   moveUp: 上移
   moveDown: 下移
   versionsTitle: 版本历史
-  versionsTip: 每次保存节点/表单定义都会留版本快照；回滚把历史快照写回当前定义（有在途申请时不可回滚）
+  versionsTip: 每次保存节点/表单定义都会留版本快照；回滚把历史快照写回当前定义。改版与回滚只影响之后发起的申请，在途单按发起时的版本推进
   versionNo: 版本
   versionRemark: 说明
   versionCurrent: 当前

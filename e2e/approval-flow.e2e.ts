@@ -308,3 +308,91 @@ test("流程定义：列表可见 + 编辑配置抽屉展示节点", async ({ pa
     "E2E节点A"
   );
 });
+
+/** 一次性浏览器上下文取指定账号的 access token（跨身份断言用） */
+async function tokenFor(
+  page: Page,
+  creds: { username: string; password: string }
+) {
+  const browser = page.context().browser();
+  if (!browser) throw new Error("无法获取浏览器实例");
+  const context = await browser.newContext({ locale: "zh-CN" });
+  const temp = await context.newPage();
+  try {
+    await login(temp, creds);
+    return await getAccessToken(temp);
+  } finally {
+    await context.close();
+  }
+}
+
+test("流程定义：有在途实例时可改版，在途单按自身版本走完", async ({ page }) => {
+  await login(page);
+  const token = await getAccessToken(page);
+  const stamp = Date.now();
+  const code = `e2e_inflight_${stamp}`;
+  const flowName = `E2E流程-${code}`;
+  const flowPk = await createFlow(page, token, code, [
+    {
+      name: "E2E节点A",
+      order: 1,
+      approve_type: "OR",
+      assignee_type: "user",
+      assignee_value: APPROVER.username
+    }
+  ]);
+
+  // 在途单（申请人 = 超管 ≠ 审批人）：钉住改版前的定义
+  const created = await page.request.post(
+    `${BACKEND_URL}/api/approval/approval-instances`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      data: { flow: flowPk, title: `E2E在途单-${stamp}`, form_data: {} }
+    }
+  );
+  expect(created.ok(), await created.text()).toBeTruthy();
+  const createdPayload = await created.json();
+  expect(createdPayload.code).toBe(1000);
+  const instancePk = createdPayload.data.pk as string;
+
+  // 改版：抽屉内给节点改名并保存——有在途实例时不再被拒（后端按版本推进）
+  await openMenuPath(page, ["审批"], FLOW_DEF_URL);
+  const row = page.locator(".el-table__row", { hasText: flowName }).first();
+  await expect(row).toBeVisible({ timeout: 20_000 });
+  await row.getByRole("button", { name: "编辑配置" }).first().click();
+  const drawer = page.locator(".el-drawer:visible").first();
+  await expect(drawer).toBeVisible({ timeout: 15_000 });
+  await drawer
+    .locator(".el-table__row")
+    .last()
+    .locator("input")
+    .first()
+    .fill("E2E节点A改");
+  await drawer.getByRole("button", { name: "保存" }).first().click();
+  await expect(page.locator(".el-message--success").last()).toBeVisible({
+    timeout: 15_000
+  });
+  await expect(drawer).toBeHidden({ timeout: 15_000 });
+
+  // 在途单仍可走完：审批人（e2e_approver）在待办里取到任务并通过 → 实例通过
+  const approverToken = await tokenFor(page, APPROVER);
+  const pending = await page.request.get(
+    `${BACKEND_URL}/api/approval/approval-instances?scope=pending&page=1&page_size=100`,
+    { headers: { Authorization: `Bearer ${approverToken}` } }
+  );
+  const pendingRows = (await pending.json()).data.results as Array<{
+    pk: string;
+    my_task: { pk: string } | null;
+  }>;
+  const inflight = pendingRows.find(item => item.pk === instancePk);
+  expect(inflight, "在途单应仍在审批人的待办列表中").toBeTruthy();
+  const approved = await page.request.post(
+    `${BACKEND_URL}/api/approval/approval-instances/${instancePk}/approve`,
+    {
+      headers: { Authorization: `Bearer ${approverToken}` },
+      data: { task: inflight?.my_task?.pk }
+    }
+  );
+  const approvedPayload = await approved.json();
+  expect(approvedPayload.code).toBe(1000);
+});

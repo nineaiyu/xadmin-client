@@ -981,7 +981,7 @@ systemApprovalFlow:
   moveUp: Move up
   moveDown: Move down
   versionsTitle: Version history
-  versionsTip: Each save of node/form definitions creates a version snapshot; rollback writes the historical snapshot back to the current definition (blocked while applications are pending)
+  versionsTip: Each save of node/form definitions creates a version snapshot; rollback writes the historical snapshot back to the current definition. Edits and rollbacks only affect applications submitted afterwards — in-flight ones follow the version they started with
   versionNo: Version
   versionRemark: Remark
   versionCurrent: Current
