@@ -69,6 +69,8 @@ export const MessageAction = {
   MONITOR: "monitor",
   /** 大屏远程控制指令（system/ws_screen.py，展示端被动接收） */
   SCREEN_COMMAND: "screen_command"
+  // 值形态由生成契约约束（未知动作字面量即类型错误）；
+  // 双向集合一致性由 protocol.spec.ts 对着镜像 schema 断言（新增 action 必须双端登记）
 } as const satisfies Record<string, WsContractAction>;
 
 export type MessageActionValue =
