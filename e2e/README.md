@@ -272,6 +272,7 @@ RePlusPage 列表**固定发 `ordering=-created_time` 且默认 `pageSize=15`**�
 | 表单设计器拖拽排序（sortablejs）无法用合成鼠标事件稳定驱动：`forceFallback` 手势依赖真实帧节奏，chromium/webkit 间表现漂移（同一用例一次通过一次无变化）；此外 `el-table` 的虚拟 DOM 会与 Sortable 的 DOM 位移失步（数据已换序但界面不更新） | 拖拽**不入 E2E**：排序数据路径抽 `utils/fieldOrder.ts::moveItem`（vitest 覆盖）+ 上移/下移按钮共用同一路径（既有 E2E 覆盖）；组件侧必须「回调里先撤销 Sortable 的 DOM 位移再更新数据」，并给 el-table 加 `row-key` |
 
 | 页签/面板迁移后 **E2E 入口定位未同步**：Passkey 面板从「设置 → 安全」页迁入「账户设置」侧栏后，`passkey.e2e.ts` 仍按旧页 `.el-tabs--border-card` 定位页签 → 稳定失败（**先查 UI 结构改动，别当 flaky 重跑**） | 用例改按新入口：`goto("/#/account-settings")` + 侧栏 `.el-menu-item`「Passkey 凭据」；页面结构重构后全仓 grep 受影响定位（同批复核 8 个账户设置相关 spec 全绿） |
+| `ai-action.e2e.ts` 的「结果表渲染（dashboard.overview）」在**双浏览器**跑批下 webkit 稳定失败（chromium 通过；两者各自单浏览器跑均通过）：API 全 200、`action/execute` 返回 1000 且数据完整、无 console 错误——`ai-result-table` 的 `.last()` 命中的是前序用例留下的历史表（本次执行的结果表未渲染，表内无「用户数量」）。**基线对照证实为既有渲染竞态**（HEAD 后端 + 同前端跑同批数据同样 1 failed / 13 passed，2026-09-29） | 定位口径：`ai-result-table` 断言须以「本 run 唯一文本 / 计数基线 +1」收敛（同聊天历史卡片教训），不要用裸 `.last()`；修复前该例在双浏览器跑批下的失败按既有 flaky 处理（隔离单浏览器复跑绿），不要归因为后端改动 |
 
 > 上面两条为 2026-09-27 表单设计器升级（ADR-064）实战记录；向量化用例（ADR-065）依赖桩 LLM 的 `/v1/embeddings`，新增档案类用例请自清理以免影响其它 spec 的检索口径。
 > | 移动端抽屉遮罩点击：`.app-mask` 覆盖整屏，`click()` 默认点元素中心（195px 处）会落在 210px 宽的抽屉上被拦截 | 遮罩用坐标点空白区：`locator(".app-mask").click({ position: { x: 300, y: 300 } })`；开合断言用 `boundingBox().x`（关 `< 0` / 开 `≥ 0`）而非 `toBeInViewport`（贴边元素判定有歧义） |
