@@ -29,6 +29,14 @@
 /* 顶栏进度条（src/utils/progress）的配色在模块内联样式中读取
    --el-color-primary，无需在此重复定义，避免主题色两处维护 */
 
+/* 窄屏守卫：非全屏弹窗宽度钳制在视口内。--el-dialog-width 由 el-dialog 的
+   width 属性注入（档位 px / 百分比），min() 在窄屏取 92vw 上限——驳回原因、
+   审批进度等固定宽度弹窗在移动端不再出屏（关闭按钮不可点）；桌面端 92vw
+   大于全部档位宽度，零影响；全屏形态由 is-fullscreen 排除 */
+.el-dialog.pure-dialog:not(.is-fullscreen) {
+  width: min(var(--el-dialog-width, 50%), 92vw);
+}
+
 .pure-dialog {
   .el-dialog__header.show-close {
     padding-right: 16px;

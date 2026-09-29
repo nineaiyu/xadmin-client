@@ -1,4 +1,5 @@
 import { h } from "vue";
+import { deviceDetection } from "@pureadmin/utils";
 import {
   addDialog,
   closeDialog,
@@ -55,7 +56,9 @@ export function openInstanceDetail(row: {
         /^-\s*/,
         ""
       ),
-    size: "45%",
+    // 移动端审批操作面：45% 抽屉在手机视口只剩 ~175px 不可读，全屏展示
+    // （先例：DirectoryMembers 的 deviceDetection 分支）
+    size: deviceDetection() ? "100%" : "45%",
     destroyOnClose: true,
     closeOnClickModal: true,
     hideFooter: true,
