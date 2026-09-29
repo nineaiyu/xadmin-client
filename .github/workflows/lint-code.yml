@@ -87,6 +87,11 @@ jobs:
           pnpm gen:metadata-types
           git diff --exit-code -- src/api/types
 
+      - name: Contract generated types have consumers
+        # 生成物必须有 import 方：search-columns / search-fields / ws-frame 三份曾长期
+        # 零引用（"生成即完成"假象，载荷类型仍手写）。新增 schema 无消费方时先接入再生成
+        run: pnpm check:contract-usage
+
       - name: Checkout contract source (xadmin-server)
         # 服务端是契约唯一真源：检出其开发分支用于校验镜像是否漂移
         uses: actions/checkout@v4

@@ -1,6 +1,8 @@
 import type { RecordType } from "plus-pro-components";
 
 import type { ApiResponseEnvelope } from "./types/api-response";
+import type { SearchColumnsData } from "./types/search-columns";
+import type { SearchFieldsData } from "./types/search-fields";
 
 /**
  * 统一响应信封（服务端 common/core/response.py `ApiResponse`）。
@@ -49,49 +51,49 @@ export type DataListResult<T = RecordType> = Omit<Envelope, "data"> & {
   data: Array<T>;
 };
 
+/**
+ * search-fields 条目：生成契约（contract/schema/search-fields.schema.json）+ 两处覆盖。
+ *
+ * 覆盖原因（服务端契约待补，见 contract/schema 与 xadmin-server/docs/schema）：
+ * - `default`：真实载荷是「多选为空数组 / 其余为字符串」（common/core/modelset/metadata.py），
+ *   契约该键未限定类型 → 生成物退化为对象字面量，读侧需要 `unknown`；
+ * - `choices`：契约要求必有，但字段无候选项时服务端下发空数组，前端按可选消费更贴合渲染分支。
+ */
+export type SearchFieldsItem = Omit<
+  SearchFieldsData[number],
+  "default" | "choices"
+> & {
+  /** 后端动态默认值（字符串/数值/布尔/数组），写入由渲染器按 input_type 决定 */
+  default?: unknown;
+  choices?: ChoiceOption[];
+};
+
+/**
+ * search-columns 条目：生成契约（contract/schema/search-columns.schema.json）+ 两处覆盖。
+ *
+ * 覆盖原因：
+ * - `child`（ListField(child=ChoiceField) 的子字段元信息）服务端确有下发，
+ *   但契约尚未登记该键（补契约前先在客户端显式声明，避免读取处裸断言）；
+ * - `default` 与 search-fields 同因：动态默认值（标量/数组/对象）由渲染器解释，
+ *   契约该键未限定类型而生成物退化为对象字面量。
+ */
+export type SearchColumnsItem = Omit<
+  SearchColumnsData[number],
+  "choices" | "default"
+> & {
+  choices?: ChoiceOption[];
+  /** 后端动态默认值（字符串/数值/布尔/数组/对象），写入由渲染器按 input_type 决定 */
+  default?: unknown;
+  /** ListField(child=ChoiceField) 下发的子字段元信息，choices 候选值供多选下拉渲染 */
+  child?: { choices?: ChoiceOption[]; [key: string]: unknown };
+};
+
 export type SearchFieldsResult = Omit<Envelope, "data"> & {
-  data: Array<{
-    key: string;
-    label: string;
-    input_type: string;
-    help_text?: string;
-    /** 后端动态默认值（字符串/数值/布尔/数组/对象），写入由渲染器按 input_type 决定 */
-    default?: unknown;
-    choices?: ChoiceOption[];
-    /** 关联列选项超过 SEARCH_CHOICES_MAX_COUNT 被截断，应降级为远程搜索 */
-    choices_truncated?: boolean;
-  }>;
+  data: SearchFieldsItem[];
 };
 
 export type SearchColumnsResult = Omit<Envelope, "data"> & {
-  data: Array<{
-    key: string;
-    label: string;
-    input_type: string;
-    required: boolean;
-    read_only: boolean;
-    write_only: boolean;
-    max_length?: number;
-    multiple?: boolean;
-    table_show?: number;
-    help_text?: string;
-    /** 后端动态默认值（字符串/数值/布尔/数组/对象），写入由渲染器按 input_type 决定 */
-    default?: unknown;
-    choices?: ChoiceOption[];
-    /** 关联列选项超过 SEARCH_CHOICES_MAX_COUNT 被截断，应降级为远程搜索 */
-    choices_truncated?: boolean;
-    /** 远程联想端点：资源混入 SuggestionsAction 时对 api-search-* 关联字段下发 */
-    suggest_url?: string;
-    /** 该列是否支持表头排序（服务端 ordering_fields 声明面下发；未声明则不出现） */
-    sortable?: boolean;
-    /**
-     * 受控高级筛选：该列可用的 lookup 表达式（服务端 controlled_lookup 视图按
-     * filterset 声明面 + 字段类型下发；未下发的列不进入高级筛选候选）
-     */
-    lookups?: string[];
-    /** ListField(child=ChoiceField) 下发的子字段元信息，choices 候选值供多选下拉渲染 */
-    child?: { choices?: ChoiceOption[]; [key: string]: unknown };
-  }>;
+  data: SearchColumnsItem[];
 };
 
 /** 分页列表结果，行结构由具体接口决定 */

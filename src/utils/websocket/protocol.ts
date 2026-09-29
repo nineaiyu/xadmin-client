@@ -7,6 +7,11 @@ import type {
   MonitorServices,
   MonitorSlow
 } from "@/api/system/monitor";
+import type {
+  Action as WsContractAction,
+  InboundFrame as WsContractInboundFrame,
+  OutboundFrame as WsContractOutboundFrame
+} from "@/api/types/ws-frame";
 
 /**
  * WebSocket 消息协议类型（与 server message/protocol.py 对齐）。
@@ -17,10 +22,24 @@ import type {
  * ```
  * 出站帧额外含 code / detail / timestamp（服务端 send_base_json）。
  * 新增 action：在 MessageAction 登记 + 补对应 Payload 接口。
+ *
+ * 帧壳与动作枚举以生成契约 `@/api/types/ws-frame` 为准（服务端 message/protocol.py
+ * 是唯一真源，`pnpm gen:metadata-types` 生成；本地常量经 `satisfies` 对账，
+ * 登记了契约外的动作即 typecheck 报错）。
  */
 
 /** 协议版本，与服务端 PROTOCOL_VERSION 对齐 */
 export const WS_PROTOCOL_VERSION = 1;
+
+/**
+ * 剥离生成契约的索引签名：服务端 send_base_json 允许追加顶层键（契约不封闭），
+ * 客户端按声明键消费更严格；这里只保留契约显式声明的帧壳字段。
+ */
+type ContractFrameKeys<T> = {
+  [
+    K in keyof T as string extends K ? never : number extends K ? never : K
+  ]: T[K];
+};
 
 /**
  * 消息动作（字符串常量，与服务端 MessageAction 一致）
@@ -50,24 +69,27 @@ export const MessageAction = {
   MONITOR: "monitor",
   /** 大屏远程控制指令（system/ws_screen.py，展示端被动接收） */
   SCREEN_COMMAND: "screen_command"
-} as const;
+} as const satisfies Record<string, WsContractAction>;
 
 export type MessageActionValue =
   (typeof MessageAction)[keyof typeof MessageAction];
 
-/** 客户端→服务端帧 */
-export interface InboundMessage<T = unknown> {
+/** 客户端→服务端帧（帧壳来自生成契约；data 泛型化以便按 action 收窄载荷） */
+export interface InboundMessage<T = unknown> extends Omit<
+  ContractFrameKeys<WsContractInboundFrame>,
+  "action" | "data"
+> {
   action: MessageActionValue;
   data?: T;
-  mid?: string;
-  v?: number;
 }
 
-/** 服务端→客户端帧 */
-export interface OutboundMessage<T = unknown> extends InboundMessage<T> {
-  code: number;
-  detail: string;
-  timestamp: string;
+/** 服务端→客户端帧（帧壳来自生成契约：code/detail/timestamp/v 均由契约声明） */
+export interface OutboundMessage<T = unknown> extends Omit<
+  ContractFrameKeys<WsContractOutboundFrame>,
+  "action" | "data"
+> {
+  action: MessageActionValue;
+  data?: T;
 }
 
 /** 任务执行日志增量帧（task_log） */

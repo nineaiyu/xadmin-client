@@ -51,6 +51,18 @@ export function useBaseColumns(localeName: string) {
   });
 
   /**
+   * 列展示名兜底链：i18n 词条 → 服务端 label（契约允许 null，模型无 verbose_name 时为 null）→ 字段名。
+   * 不兜底会把 null 透传给表头与校验文案（strict 下即类型错误）。
+   */
+  const resolveColumnLabel = (column: {
+    key: string;
+    label: string | null;
+  }): string =>
+    formatPublicLabels(t, te, column.key, localeName) ??
+    column.label ??
+    column.key;
+
+  /**
    * 降级处理：后端关联列的 choices 超过 SEARCH_CHOICES_MAX_COUNT 时会被截断，
    * 并带出 choices_truncated 标记。此时下拉必须开启本地过滤，并在开发环境提示
    * 开发者将该字段改为 api-search-* 远程搜索组件（SearchUser/SearchDept/SearchRole 模式）。
@@ -70,8 +82,7 @@ export function useBaseColumns(localeName: string) {
     columns.forEach(column => {
       const item: PageColumn = {
         _column: column,
-        label:
-          formatPublicLabels(t, te, column.key, localeName) ?? column.label,
+        label: resolveColumnLabel(column),
         prop: column.key,
         tooltip: column?.help_text,
         options: computed(() => formatAddOrEditOptions(column.choices ?? [])),
@@ -88,8 +99,7 @@ export function useBaseColumns(localeName: string) {
   };
 
   const formatAddOrEditRules = (column: SearchColumnsResult["data"][0]) => {
-    const message =
-      formatPublicLabels(t, te, column.key, localeName) ?? column.label;
+    const message = resolveColumnLabel(column);
     switch (column.input_type) {
       case "email":
         addOrEditRules.value[column.key] = [
@@ -148,8 +158,7 @@ export function useBaseColumns(localeName: string) {
       const item: PageColumn = {
         _column: column,
         prop: column.key,
-        label:
-          formatPublicLabels(t, te, column.key, localeName) ?? column.label,
+        label: resolveColumnLabel(column),
         tooltip: column?.help_text,
         minWidth: 120,
         fieldProps: {
