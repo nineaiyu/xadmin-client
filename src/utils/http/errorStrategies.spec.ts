@@ -139,3 +139,110 @@ describe("模块停用网关 404（code=1001）策略", () => {
     expect(strategy!.match(makeCtx({ status: 425, data: {} }))).toBe(false);
   });
 });
+
+describe("429 限流策略", () => {
+  const rateLimitStrategy = SEND_ERROR_STRATEGIES.find(candidate =>
+    candidate.match(makeCtx({ status: 429, data: {} }))
+  );
+
+  /** 前进 fake timers 并清空调用记录 */
+  async function flushTimers() {
+    await vi.advanceTimersByTimeAsync(10_000);
+  }
+
+  afterEach(() => {
+    elMessageMock.mockClear();
+    vi.useRealTimers();
+  });
+
+  it("命中 429", () => {
+    expect(rateLimitStrategy).toBeDefined();
+    expect(rateLimitStrategy!.match(makeCtx({ status: 429, data: {} }))).toBe(
+      true
+    );
+  });
+
+  it("GET 首次限流：按 Retry-After 延迟后重发一次并 resolve", async () => {
+    vi.useFakeTimers();
+    const ctx = makeCtx({
+      status: 429,
+      data: { detail: "请求过于频繁" },
+      method: "get"
+    }) as Awaited<ReturnType<typeof makeCtx>> & {
+      headers?: Record<string, unknown>;
+    };
+    (ctx as { headers: Record<string, unknown> }).headers = {
+      "Retry-After": "2"
+    };
+    rateLimitStrategy!.handle(ctx);
+    // 延迟期内未重发
+    expect(ctx.resend).not.toHaveBeenCalled();
+    await flushTimers();
+    expect(ctx.resend).toHaveBeenCalledTimes(1);
+    expect(ctx.resolve).toHaveBeenCalledTimes(1);
+    expect(elMessageMock).not.toHaveBeenCalled();
+  });
+
+  it("GET 重发后仍 429：不再重试，提示后拒绝（防循环）", () => {
+    const ctx = makeCtx({
+      status: 429,
+      data: { detail: "请求过于频繁" },
+      method: "get"
+    }) as Awaited<ReturnType<typeof makeCtx>> & {
+      headers?: Record<string, unknown>;
+    };
+    (ctx.config as { _rateLimitRetried?: boolean })._rateLimitRetried = true;
+    rateLimitStrategy!.handle(ctx);
+    expect(ctx.resend).not.toHaveBeenCalled();
+    expect(ctx.resolve).not.toHaveBeenCalled();
+    expect(elMessageMock).toHaveBeenCalledWith("请求过于频繁");
+    expect(ctx.reject).toHaveBeenCalledWith(
+      expect.objectContaining({ detail: "请求过于频繁" })
+    );
+  });
+
+  it("变更类请求（post）不重发：直接提示并拒绝", () => {
+    const ctx = makeCtx({
+      status: 429,
+      data: { detail: "操作太频繁" },
+      method: "post"
+    });
+    rateLimitStrategy!.handle(ctx);
+    expect(ctx.resend).not.toHaveBeenCalled();
+    expect(elMessageMock).toHaveBeenCalledWith("操作太频繁");
+    expect(ctx.reject).toHaveBeenCalledTimes(1);
+  });
+
+  it("相同 detail 3 秒内去重（连发只弹一次），跨窗口恢复弹窗", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1_000_000);
+    const build = () =>
+      makeCtx({ status: 429, data: { detail: "操作太频繁" }, method: "post" });
+    rateLimitStrategy!.handle(build());
+    rateLimitStrategy!.handle(build());
+    rateLimitStrategy!.handle(build());
+    expect(elMessageMock).toHaveBeenCalledTimes(1);
+
+    vi.setSystemTime(1_000_000 + 3_001);
+    rateLimitStrategy!.handle(build());
+    expect(elMessageMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("不同 detail 互不去重", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(2_000_000);
+    const build = (detail: string) =>
+      makeCtx({ status: 429, data: { detail }, method: "post" });
+    rateLimitStrategy!.handle(build("限流 A"));
+    rateLimitStrategy!.handle(build("限流 B"));
+    expect(elMessageMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("Retry-After 非法值回退默认 1 秒并钳制上限", async () => {
+    const { parseRetryAfterSeconds } = await import("./errorStrategies");
+    expect(parseRetryAfterSeconds(undefined)).toBe(1);
+    expect(parseRetryAfterSeconds("abc")).toBe(1);
+    expect(parseRetryAfterSeconds("0")).toBe(0);
+    expect(parseRetryAfterSeconds("120")).toBe(5);
+  });
+});

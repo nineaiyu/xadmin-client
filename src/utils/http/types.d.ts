@@ -38,6 +38,8 @@ export interface PureHttpRequestConfig extends AxiosRequestConfig {
   _mfaRetried?: boolean;
   /** access token 已重发标记（防止 40001 死循环） */
   _tokenRetried?: boolean;
+  /** 429 已按 Retry-After 延迟重发过一次的标记（防止限流循环重试） */
+  _rateLimitRetried?: boolean;
   /** 敏感操作审批单号 */
   _approvalId?: string;
 }

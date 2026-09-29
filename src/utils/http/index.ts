@@ -180,6 +180,7 @@ class PureHttp {
               status: error.response.status,
               statusText: error.response.statusText,
               data,
+              headers: error.response.headers,
               // 412-MFA 验证通过后经 send 重发，保留统一错误处理（同一 config 防递归弹窗）
               resend: () => this.send<T>(config),
               reissue: () =>

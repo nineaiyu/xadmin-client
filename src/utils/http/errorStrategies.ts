@@ -1,3 +1,4 @@
+import type { AxiosResponseHeaders, RawAxiosResponseHeaders } from "axios";
 import { ElMessage } from "element-plus";
 import { remoteAccessToken, removeToken } from "@/utils/auth";
 import {
@@ -34,6 +35,8 @@ export interface SendErrorContext {
   statusText: string;
   /** `error.response.data`（业务错误体） */
   data: ApiErrorBody;
+  /** `error.response.headers`（429 Retry-After 等协议头读取用；值可能为 string | string[]） */
+  headers?: RawAxiosResponseHeaders | AxiosResponseHeaders;
   /** 以统一错误处理重发原请求（412-MFA 验证通过后走此路径） */
   resend: () => Promise<unknown>;
   /** 绕过 send 直接重发原始 axios 请求（40001 静默重试走此路径，与原实现一致） */
@@ -172,6 +175,58 @@ const moduleDisabledStrategy: SendErrorStrategy = {
   }
 };
 
+/** 限流提示的相同 detail 去重窗口（毫秒）：连发请求命中同一限流只弹一次 */
+export const RATE_LIMIT_DEDUP_WINDOW_MS = 3000;
+/** 429 重发的延迟上限（秒）：Retry-After 可能给很大的值，等待过久不如让用户稍后手动重试 */
+const RETRY_DELAY_MAX_SECONDS = 5;
+/** 无 Retry-After 头时的默认重发延迟（秒） */
+const RETRY_DELAY_DEFAULT_SECONDS = 1;
+
+const lastRateLimitToastAt = new Map<string, number>();
+
+/**
+ * 429 提示（带 3 秒相同 detail 去重）：限流常在批量并发/轮询场景连发，
+ * 去重避免 ElMessage 队列连续弹窗淹没屏幕。
+ */
+export function notifyRateLimited(detail: string): void {
+  const now = Date.now();
+  const elapsed =
+    now - (lastRateLimitToastAt.get(detail) ?? Number.NEGATIVE_INFINITY);
+  // 仅「窗口内且时间未倒流」去重：系统时钟回拨不应吞掉真实提示
+  if (elapsed >= 0 && elapsed < RATE_LIMIT_DEDUP_WINDOW_MS) return;
+  lastRateLimitToastAt.set(detail, now);
+  ElMessage.error(detail || "Too many requests");
+}
+
+/** 解析 Retry-After（仅支持秒数形态；非法/缺失返回默认值，并钳制到上限内） */
+export function parseRetryAfterSeconds(value: unknown): number {
+  const parsed = Number(value);
+  const seconds =
+    Number.isFinite(parsed) && parsed >= 0
+      ? parsed
+      : RETRY_DELAY_DEFAULT_SECONDS;
+  return Math.min(seconds, RETRY_DELAY_MAX_SECONDS);
+}
+
+/** 429 Too Many Requests：GET 读一次 Retry-After 延迟重发（一次性，`_rateLimitRetried` 防循环）；
+ * 其余方法/重发后仍限流 → 带 3 秒去重的提示后落定拒绝 */
+const rateLimitStrategy: SendErrorStrategy = {
+  match: ({ status }) => status === 429,
+  handle: ({ config, data, headers, resend, resolve, reject }) => {
+    const detail = String(data?.detail ?? "");
+    const method = String(config?.method ?? "").toLowerCase();
+    if (method === "get" && !config._rateLimitRetried) {
+      config._rateLimitRetried = true;
+      const delayMs = parseRetryAfterSeconds(headers?.["retry-after"]) * 1000;
+      window.setTimeout(() => resolve(resend()), delayMs);
+      return true;
+    }
+    notifyRateLimited(detail);
+    reject(data);
+    return true;
+  }
+};
+
 export const SEND_ERROR_STRATEGIES: SendErrorStrategy[] = [
   tokenExpiredStrategy,
   unauthorizedStrategy,
@@ -179,5 +234,6 @@ export const SEND_ERROR_STRATEGIES: SendErrorStrategy[] = [
   approvalPendingStrategy,
   approvalRejectedStrategy,
   moduleDisabledStrategy,
-  tooEarlyStrategy
+  tooEarlyStrategy,
+  rateLimitStrategy
 ];
