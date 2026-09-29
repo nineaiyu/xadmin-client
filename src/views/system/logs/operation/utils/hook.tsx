@@ -29,6 +29,10 @@ export function useOperationLog() {
   const auth = reactive({
     ...getDefaultAuths(getCurrentInstance())
   });
+  // 审计日志只读：删除/批量删除端点已下线（留存的收敛由服务端归档命令统一执行），
+  // 关闭框架默认入口，避免按钮打了 405
+  auth.destroy = false;
+  auth.batchDestroy = false;
 
   onMounted(async () => {
     try {
