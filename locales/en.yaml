@@ -2033,6 +2033,8 @@ apiApp:
   unlimited: Unlimited
   dailyQuota: "Daily quota (0 = unlimited)"
   quotaAlertPercent: "Quota alert percent (%)"
+  enforceDailyQuota: "Enforce daily quota"
+  enforceDailyQuotaTip: "When on, requests beyond the daily quota get 429 (off = warn only)"
   grant:
     title: Resource grants
     hint: "Empty = inherit owner permissions and API scopes; any rule enables whitelist mode (model / action / field / row, tighten only)"

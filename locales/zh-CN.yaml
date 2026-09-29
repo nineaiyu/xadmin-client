@@ -2033,6 +2033,8 @@ apiApp:
   unlimited: 不限
   dailyQuota: 每日配额（0 = 不限）
   quotaAlertPercent: 配额告警阈值（%）
+  enforceDailyQuota: 超限硬阻断
+  enforceDailyQuotaTip: 开启后超过每日配额的请求返回 429（关闭时只告警不阻断）
   grant:
     title: 资源授权
     hint: 未配置 = 沿用 owner 权限与接口范围；配置任意一条即白名单模式（模型 / 动作 / 字段 / 行四级收敛，只收紧不放宽）

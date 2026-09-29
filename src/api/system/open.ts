@@ -16,10 +16,12 @@ export interface ApiApplicationItem {
   rate_limit_per_minute: number;
   callback_urls: string[];
   token_ttl_seconds: number;
-  /** 每日配额（0 = 不限，软告警） */
+  /** 每日配额（0 = 不限） */
   daily_quota: number;
   /** 配额告警阈值（百分比，默认 80） */
   quota_alert_percent: number;
+  /** 超限是否硬阻断（off = 仅告警；on = 超配额请求 429） */
+  daily_quota_hard: boolean;
   is_active: boolean;
   expired_at: string | null;
   created_time: string;

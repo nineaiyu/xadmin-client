@@ -44,6 +44,7 @@ const form = reactive({
   token_ttl_seconds: props.row?.token_ttl_seconds ?? 7200,
   daily_quota: props.row?.daily_quota ?? 0,
   quota_alert_percent: props.row?.quota_alert_percent ?? 80,
+  daily_quota_hard: props.row?.daily_quota_hard ?? false,
   is_active: props.row?.is_active ?? true
 });
 
@@ -79,6 +80,7 @@ const getPayload = () => ({
   token_ttl_seconds: Number(form.token_ttl_seconds) || 0,
   daily_quota: Number(form.daily_quota) || 0,
   quota_alert_percent: Number(form.quota_alert_percent) || 80,
+  daily_quota_hard: form.daily_quota_hard,
   is_active: form.is_active
 });
 
@@ -123,6 +125,13 @@ defineExpose({ getPayload, getGrants });
     <el-form-item :label="t('apiApp.quotaAlertPercent')">
       <el-input-number v-model="form.quota_alert_percent" :min="1" :max="100" />
     </el-form-item>
+    <el-form-item :label="t('apiApp.enforceDailyQuota')">
+      <el-switch
+        v-model="form.daily_quota_hard"
+        data-testid="api-app-quota-hard"
+      />
+      <span class="quota-hard-tip">{{ t("apiApp.enforceDailyQuotaTip") }}</span>
+    </el-form-item>
     <el-form-item :label="t('apiApp.grant.title')">
       <div v-loading="grantsLoading" class="w-full">
         <el-alert
@@ -141,3 +150,11 @@ defineExpose({ getPayload, getGrants });
     </el-form-item>
   </el-form>
 </template>
+
+<style lang="scss" scoped>
+.quota-hard-tip {
+  margin-left: 8px;
+  font-size: var(--el-font-size-extra-small);
+  color: var(--el-text-color-secondary);
+}
+</style>
