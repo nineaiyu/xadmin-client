@@ -771,6 +771,7 @@ menus:
   noticeAndAnnouncement: 通知公告
   newsAndAnnouncement: 消息公告
   readNotice: 已读消息
+  codeGenerator: 代码生成
   timingTask: 定时任务
   taskManage: 任务管理
   taskMonitor: 任务监控
@@ -3387,3 +3388,21 @@ emptyPage:
   title: 业务内容模块
   description: "使用场景：需要外嵌平台某个页面，不需要展示菜单导航以及额外模块"
   back: 返回上一页
+
+codegen:
+  model: 目标模型
+  modelPlaceholder: 搜索并选择模型（app.Model）
+  component: 组件名
+  urlPrefix: API 前缀
+  frontendDir: 前端目录
+  defaultDerive: 留空 = 按模型推导
+  options: 生成选项
+  withImportExport: 导入导出
+  withTags: 标签接入
+  withModule: 模块声明
+  fields: 序列化器字段
+  preview: 预览产物
+  download: 下载 zip
+  downloadStarted: 下载已开始
+  artifactTip: 生成产物（勾选字段决定序列化器字段面）
+  previewEmpty: 选择模型后点击「预览产物」查看生成文件

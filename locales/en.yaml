@@ -771,6 +771,7 @@ menus:
   noticeAndAnnouncement: Notice Announcement
   newsAndAnnouncement: News Announcement
   readNotice: Read Notices
+  codeGenerator: Code Generator
   timingTask: Timing Task
   taskManage: Task Management
   taskMonitor: Task Monitor
@@ -3388,3 +3389,21 @@ emptyPage:
   title: Business content module
   description: "Use case: embed a single platform page without menu navigation or extra modules"
   back: Back to previous page
+
+codegen:
+  model: Target Model
+  modelPlaceholder: Search and select a model (app.Model)
+  component: Component
+  urlPrefix: API Prefix
+  frontendDir: Frontend Dir
+  defaultDerive: Empty = derived from model
+  options: Options
+  withImportExport: Import/Export
+  withTags: Tags
+  withModule: Module Spec
+  fields: Serializer Fields
+  preview: Preview
+  download: Download zip
+  downloadStarted: Download started
+  artifactTip: generated artifacts (field checkboxes decide serializer fields)
+  previewEmpty: Select a model and click Preview to see generated files
