@@ -977,6 +977,12 @@ systemApprovalFlow:
   conditionOp: 运算符
   conditionValue: 条件值
   timeoutHours: 超时（小时）
+  timeoutAction: 超时动作
+  timeoutAction_none: 仅提醒
+  timeoutAction_approve: 自动通过
+  timeoutAction_reject: 自动驳回
+  timeoutAction_transfer_up: 升级给负责人
+  timeoutActionHint: 未配置超时
   addNode: 添加节点
   moveUp: 上移
   moveDown: 下移
@@ -1087,6 +1093,19 @@ systemApprovalInstance:
   progressOrHint: 或签：任一审批人通过即可
   progressAndHint: 会签：需全部审批人通过
   addSignThreshold: "加签后：已通过 {approved} / 需 {required} 人（候选 {total}）"
+  removeSign: 减签
+  removeSignTitle: 减签「{title}」的加签审批人
+  removeSignPlaceholder: 选择要移除的加签审批人
+  removeSignRequired: 请选择要移除的加签审批人
+  removeSignEmpty: 当前节点没有可减签的加签候选
+  return: 退回
+  returnTitle: 退回申请「{title}」
+  returnTarget: 退回至节点
+  returnTargetPlaceholder: 选择退回目标节点
+  returnReasonRequired: 请填写退回原因
+  returnReasonPlaceholder: 请输入退回原因（必填）
+  returnNoTarget: 没有可退回的节点
+  returnOk: 已退回，等待目标节点重新审批
   delegatedFrom: 由 {name} 代理
   tasksEmpty: 暂无审批记录
   flowUnavailable: 原流程已停用或不可发起，请选择其他流程

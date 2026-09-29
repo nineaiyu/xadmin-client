@@ -137,6 +137,41 @@ class ApprovalInstanceApi extends BaseApi {
     );
   };
 
+  /** 减签：移除加签追加的候选（仅 is_added 的 PENDING 任务；或签节点服务端拒绝） */
+  removeSign = (pk: string | number, task: string, comment?: string) => {
+    return this.request<DetailResult>(
+      "post",
+      {},
+      { task, comment },
+      `${this.baseApi}/${pk}/remove-sign`
+    );
+  };
+
+  /** 可退回节点（已途经、非当前，按 order 降序）：退回弹窗数据源 */
+  returnTargets = (pk: string | number) => {
+    return this.request<DataListResult<{ order: number; name: string }>>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/${pk}/return-targets`
+    );
+  };
+
+  /** 退回：实例回退到已途经节点重开重审（targetOrder 缺省 = 上一途经节点） */
+  returnTo = (
+    pk: string | number,
+    reason: string,
+    targetOrder?: number,
+    task?: string
+  ) => {
+    return this.request<DetailResult>(
+      "post",
+      {},
+      { reason, target_order: targetOrder, task },
+      `${this.baseApi}/${pk}/return`
+    );
+  };
+
   /** 转交（把我的当前待办交给指定用户处理；task 缺省取当前待办） */
   transfer = (
     pk: string | number,

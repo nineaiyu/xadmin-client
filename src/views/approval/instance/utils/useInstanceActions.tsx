@@ -8,6 +8,8 @@ import ApproveForm from "../components/ApproveForm.vue";
 import RejectForm from "../components/RejectForm.vue";
 import UrgeForm from "../components/UrgeForm.vue";
 import AddSignForm from "../components/AddSignForm.vue";
+import RemoveSignForm from "../components/RemoveSignForm.vue";
+import ReturnForm from "../components/ReturnForm.vue";
 import TransferForm from "../components/TransferForm.vue";
 import { rowTitle, type TFunction } from "./instanceFormShared";
 import {
@@ -173,6 +175,79 @@ export function useInstanceActions({
     });
   };
 
+  /** 减签：移除加签追加的候选（弹窗内列出当前节点的加签待办；返回新达标线提示） */
+  const removeSignFormRef =
+    ref<ActionFormInstance<{ task: string; comment: string }>>();
+  const openRemoveSign = (row: ActionRow) => {
+    openActionDialog({
+      title: t("systemApprovalInstance.removeSignTitle", {
+        title: rowTitle(row)
+      }),
+      formRef: removeSignFormRef,
+      render: () =>
+        h(RemoveSignForm, { ref: removeSignFormRef, pk: row.pk ?? "" }),
+      submit: (payload, done, closeLoading) => {
+        handleOperation({
+          t,
+          apiReq: approvalInstanceApi.removeSign(
+            row.pk ?? "",
+            payload.task,
+            payload.comment
+          ),
+          success: res => {
+            done();
+            refresh();
+            const progress = (
+              res?.data as { node_progress?: NodeProgress } | undefined
+            )?.node_progress;
+            if (progress && progress.required > 1) {
+              message(
+                t("systemApprovalInstance.addSignThreshold", {
+                  approved: progress.approved,
+                  required: progress.required,
+                  total: progress.total
+                }),
+                { type: "info" }
+              );
+            }
+          },
+          requestEnd: closeLoading
+        });
+      }
+    });
+  };
+
+  /** 退回：实例回退到已途经节点重开重审（目标节点与原因在弹窗内选择） */
+  const returnFormRef =
+    ref<ActionFormInstance<{ reason: string; target_order?: number }>>();
+  const openReturn = (row: ActionRow) => {
+    openActionDialog({
+      title: t("systemApprovalInstance.returnTitle", {
+        title: rowTitle(row)
+      }),
+      formRef: returnFormRef,
+      render: () => h(ReturnForm, { ref: returnFormRef, pk: row.pk ?? "" }),
+      submit: (payload, done, closeLoading) => {
+        handleOperation({
+          t,
+          apiReq: approvalInstanceApi.returnTo(
+            row.pk ?? "",
+            payload.reason,
+            payload.target_order
+          ),
+          success: () => {
+            message(t("systemApprovalInstance.returnOk"), {
+              type: "success"
+            });
+            done();
+            refresh();
+          },
+          requestEnd: closeLoading
+        });
+      }
+    });
+  };
+
   // 批量动作（通过/驳回/转交）拆在 useInstanceBatchActions，这里转发保持调用面不变
   const batchActions = useInstanceBatchActions({ t, refresh, tableRef });
 
@@ -181,6 +256,8 @@ export function useInstanceActions({
     openUrge,
     openReject,
     openAddSign,
+    openRemoveSign,
+    openReturn,
     openTransfer,
     ...batchActions
   };

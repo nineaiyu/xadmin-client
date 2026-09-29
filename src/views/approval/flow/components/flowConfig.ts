@@ -19,6 +19,7 @@ export type ApiNode = {
   routes?: RouteItem[];
   layout?: { x?: number; y?: number };
   timeout_hours?: number;
+  timeout_action?: string;
 };
 export type FlowRow = {
   pk: string;
@@ -46,6 +47,8 @@ export type NodeRow = {
   routes: RouteItem[];
   layout: { x?: number; y?: number };
   timeout_hours: number;
+  /** 超时自动动作（none/approve/reject/transfer_up；仅在 timeout_hours>0 时生效） */
+  timeout_action: string;
 };
 export type FieldRow = {
   label: string;
@@ -70,6 +73,8 @@ export const CONDITION_OPS = [
   "not_empty"
 ];
 export const FIELD_TYPES = ["text", "textarea", "number", "date", "select"];
+/** 超时自动动作（与后端 ApprovalFlowNode.TimeoutAction 同枚举） */
+export const TIMEOUT_ACTIONS = ["none", "approve", "reject", "transfer_up"];
 
 /**
  * 取选项类字段的原始值：接口把 choices 序列化为 {value,label}（LabeledChoiceField），
@@ -123,7 +128,8 @@ export function createEmptyNode(): NodeRow {
     condition_value: "",
     routes: [],
     layout: {},
-    timeout_hours: 0
+    timeout_hours: 0,
+    timeout_action: "none"
   };
 }
 
@@ -221,7 +227,10 @@ export function buildFlowPayload(
         (node.layout.x !== undefined || node.layout.y !== undefined)
           ? node.layout
           : {},
-      timeout_hours: Number(node.timeout_hours) || 0
+      timeout_hours: Number(node.timeout_hours) || 0,
+      timeout_action: TIMEOUT_ACTIONS.includes(node.timeout_action)
+        ? node.timeout_action
+        : "none"
     }))
   };
 }

@@ -977,6 +977,12 @@ systemApprovalFlow:
   conditionOp: Operator
   conditionValue: Condition Value
   timeoutHours: Timeout (hours)
+  timeoutAction: Timeout action
+  timeoutAction_none: Remind only
+  timeoutAction_approve: Auto approve
+  timeoutAction_reject: Auto reject
+  timeoutAction_transfer_up: Escalate to leader
+  timeoutActionHint: No timeout set
   addNode: Add Node
   moveUp: Move up
   moveDown: Move down
@@ -1087,6 +1093,19 @@ systemApprovalInstance:
   progressOrHint: "OR sign: any approver can pass it"
   progressAndHint: "AND sign: all approvers must pass"
   addSignThreshold: "After counter-sign: {approved} approved / {required} required ({total} candidates)"
+  removeSign: Remove sign
+  removeSignTitle: Remove added approver for "{title}"
+  removeSignPlaceholder: Select the added approver to remove
+  removeSignRequired: Please select the added approver to remove
+  removeSignEmpty: No added approver to remove at the current node
+  return: Return
+  returnTitle: Return application "{title}"
+  returnTarget: Return to node
+  returnTargetPlaceholder: Select the target node
+  returnReasonRequired: Return reason is required
+  returnReasonPlaceholder: Enter the return reason (required)
+  returnNoTarget: No earlier node to return to
+  returnOk: Returned, waiting for the target node to re-approve
   delegatedFrom: Delegated by {name}
   tasksEmpty: No approval records
   flowUnavailable: The original flow is disabled or unavailable, please choose another one

@@ -12,6 +12,7 @@ import { postApi } from "@/api/system/post";
 import {
   ASSIGNEE_TYPES,
   CONDITION_OPS,
+  TIMEOUT_ACTIONS,
   createEmptyNode,
   type FieldRow,
   type NodeRow
@@ -402,6 +403,33 @@ function assigneeHint(type: string): string {
             :min="0"
             controls-position="right"
           />
+        </template>
+      </el-table-column>
+      <el-table-column
+        :label="t('systemApprovalFlow.timeoutAction')"
+        width="130"
+      >
+        <template #default="{ row }">
+          <!-- 超时自动动作：仅在配置了超时小时数时生效（否则仅提醒） -->
+          <el-select
+            v-if="Number(row.timeout_hours) > 0"
+            v-model="row.timeout_action"
+            size="small"
+          >
+            <el-option
+              v-for="action in TIMEOUT_ACTIONS"
+              :key="action"
+              :label="
+                t(`systemApprovalFlow.timeoutAction_${action}`, {
+                  defaultValue: action
+                })
+              "
+              :value="action"
+            />
+          </el-select>
+          <span v-else class="text-xs text-(--el-text-color-secondary)">
+            {{ t("systemApprovalFlow.timeoutActionHint") }}
+          </span>
         </template>
       </el-table-column>
       <el-table-column width="210" align="center">

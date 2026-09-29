@@ -87,7 +87,8 @@ function initFromFlow() {
         target: Number(route.target)
       })),
       layout: { ...(node.layout ?? {}) },
-      timeout_hours: node.timeout_hours ?? 0
+      timeout_hours: node.timeout_hours ?? 0,
+      timeout_action: node.timeout_action ?? "none"
     }));
   if (!nodes.value.length) nodes.value.push(createEmptyNode());
 }
