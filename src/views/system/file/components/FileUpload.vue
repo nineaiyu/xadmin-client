@@ -9,6 +9,12 @@ import type {
 } from "element-plus";
 import type { AxiosProgressEvent } from "axios";
 import { systemUploadFileApi } from "@/api/system/file";
+import {
+  DEFAULT_CHUNK_SIZE as CHUNK_UPLOAD_THRESHOLD,
+  ChunkUploadBusinessError,
+  uploadFileChunked,
+  type ChunkUploadResult
+} from "@/utils/upload/chunked";
 import { message } from "@/utils/message";
 import { useI18n } from "vue-i18n";
 import { UploadFilled } from "@element-plus/icons-vue";
@@ -56,19 +62,52 @@ onMounted(() => {
   }
 });
 
-const uploadRequest = (option: UploadRequestOptions) => {
-  const data = new FormData();
-  data.append("file", option.file);
-  return systemUploadFileApi.upload(data, {
-    onUploadProgress: (event: AxiosProgressEvent | UploadProgressEvent) => {
-      const progressEvt = event as UploadProgressEvent;
-      progressEvt.percent =
-        (event.total ?? 0) > 0
-          ? (event.loaded / (event.total as number)) * 100
-          : 0;
-      option.onProgress?.(progressEvt);
+const uploadRequest = async (option: UploadRequestOptions) => {
+  const onProgress = (event: AxiosProgressEvent | UploadProgressEvent) => {
+    const progressEvt = event as UploadProgressEvent;
+    progressEvt.percent =
+      (event.total ?? 0) > 0
+        ? (event.loaded / (event.total as number)) * 100
+        : 0;
+    option.onProgress?.(progressEvt);
+  };
+  // 大文件走分片/断点续传：抗网络抖动（单片失败只重传该片）、绕过反代单请求体限制；
+  // 小文件维持单请求直传（少两次 init/complete 往返）。分片单片进度已汇总为整体进度。
+  if (option.file.size <= CHUNK_UPLOAD_THRESHOLD) {
+    const data = new FormData();
+    data.append("file", option.file);
+    return systemUploadFileApi.upload(data, { onUploadProgress: onProgress });
+  }
+  try {
+    const result = await uploadFileChunked(option.file, {
+      onProgress: percent =>
+        onProgress({
+          percent,
+          loaded: (percent / 100) * option.file.size,
+          total: option.file.size,
+          bytes: 0,
+          lengthComputable: true
+        } as AxiosProgressEvent)
+    });
+    // el-upload on-success 只消费 code/detail：data 附带文件记录便于扩展消费
+    return {
+      code: SUCCESS_CODE,
+      detail: undefined,
+      data: [result]
+    } as UploadResult & { data: ChunkUploadResult[] };
+  } catch (error) {
+    // 业务码失败 HTTP 层不 toast，这里补提示；网络错误由 http 层统一提示
+    if (error instanceof ChunkUploadBusinessError) {
+      message(`${option.file.name} ${t("results.failed")}，${error.message}`, {
+        type: "error"
+      });
     }
-  });
+    throw error;
+  }
+};
+const uploadError = (_error: unknown, uploadFile: UploadFile) => {
+  // http 层已按错误策略提示；这里仅回填 el-upload 状态
+  uploadFile.status = "fail";
 };
 const refreshData = throttle(() => props.tableRef?.handleGetData?.(), 2000);
 const uploadSuccess = (response: UploadResult, uploadFile: UploadFile) => {
@@ -104,6 +143,7 @@ const beforeUpload = (rawFile: UploadRawFile) => {
       v-model:file-list="fileList"
       :http-request="uploadRequest"
       :on-success="uploadSuccess"
+      :on-error="uploadError"
       :before-upload="beforeUpload"
       class="p-2"
       drag

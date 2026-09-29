@@ -256,3 +256,61 @@ test("文件中心：不支持预览的类型不显示预览按钮", async ({ pa
   await expect(row).toContainText("压缩包");
   await expect(row.getByRole("button", { name: "预览" })).toHaveCount(0);
 });
+
+/**
+ * 大文件分片 / 断点续传：>5MB（分片阈值）的文件经上传弹窗走 chunk/init →
+ * chunk/part → chunk/complete 协议（e2e 后端 FILE_UPLOAD_SIZE 默认 10MB，
+ * 6MB 文件同时满足「可上传」与「超阈值走分片」两个条件）。
+ */
+test("文件中心：大文件上传走分片协议并落库", async ({ page }) => {
+  const filename = `e2e-chunk-${Date.now()}.bin`;
+  // 6MB：> 分片阈值（5MB，走分片路径）且 < 服务端上限（10MB，可上传）
+  const chunkSize = 5 * 1024 * 1024;
+  const buffer = Buffer.alloc(chunkSize + 1024, 0x61);
+
+  // 记录协议响应（response 事件保证拿到响应码，比 request 更可靠）：
+  // init/part/complete 应齐备（分片路径确实生效）
+  const chunkEvents: string[] = [];
+  page.on("response", response => {
+    const url = response.url();
+    if (!url.includes("/api/system/file/chunk/")) return;
+    if (url.includes("/chunk/init")) chunkEvents.push("init");
+    if (url.includes("/chunk/part")) chunkEvents.push("part");
+    if (url.includes("/chunk/complete")) chunkEvents.push("complete");
+  });
+
+  await login(page);
+  await openMenuPath(page, ["系统管理"], "/system/file/index");
+  await expect(page.locator(".el-table").first()).toBeVisible({
+    timeout: 15_000
+  });
+  await page.getByRole("button", { name: "上传" }).first().click();
+  const dialog = page.locator(".el-dialog:visible").first();
+  await expect(dialog).toBeVisible({ timeout: 15_000 });
+  await dialog.locator("input[type='file']").first().setInputFiles({
+    name: filename,
+    mimeType: "application/octet-stream",
+    buffer
+  });
+  // 上传成功 toast 带文件名前缀：按文件名过滤（页面顶部可能残留登录页的
+  // 「登录成功」toast，通用 .el-message 匹配会在上传完成前秒过造成假阳性）
+  await expect(
+    page.locator(".el-message").filter({ hasText: filename }).last()
+  ).toContainText("成功", { timeout: 30_000 });
+  // 协议三段齐备：init 1 次、part ≥ 2 片、complete 1 次
+  expect(chunkEvents.filter(e => e === "init")).toHaveLength(1);
+  expect(chunkEvents.filter(e => e === "part").length).toBeGreaterThanOrEqual(
+    2
+  );
+  expect(chunkEvents.filter(e => e === "complete")).toHaveLength(1);
+
+  // 落库记录与单请求上传同构：文件名、大小、自动分类
+  const listResp = await page.request.get(
+    `${FRONT_URL}/api/system/file?filename=${encodeURIComponent(filename)}`
+  );
+  const results = (await listResp.json()).data.results as Array<
+    Record<string, unknown>
+  >;
+  expect(results.length).toBe(1);
+  expect(results[0].filesize).toBe(buffer.length);
+});
