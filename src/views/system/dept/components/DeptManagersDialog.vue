@@ -21,7 +21,9 @@ const props = defineProps<{
     name?: string;
     managers?: DeptManagerItem[];
   };
-  onReady?: (api: { getPayload: () => Record<string, unknown> | null }) => void;
+  onReady?: (_api: {
+    getPayload: () => Record<string, unknown> | null;
+  }) => void;
 }>();
 
 const { t } = useI18n();

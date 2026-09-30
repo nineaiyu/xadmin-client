@@ -58,13 +58,22 @@ Object.keys(modules).forEach(key => {
   routes.push(modules[key].default);
 });
 
+/**
+ * 路由类型边界收窄（单点收敛，替代各调用点的双重断言）：
+ * 静态路由配置表（宽松的 RouteConfigsTable 接口）与 vue-router 的
+ * RouteRecordRaw 联合类型互不兼容判定，但运行时形态即合法路由记录
+ * （含 children 递归与 meta），此处在类型边界统一收窄。
+ */
+const asRouteRecords = (value: unknown): RouteRecordRaw[] =>
+  value as RouteRecordRaw[];
+
+/** 标签页记录收窄（multiTags 入参形态：运行时只消费 path / name / meta） */
+const asRouteConfig = (value: unknown): RouteConfigs => value as RouteConfigs;
+
 /** 导出处理后的静态路由（三级及以上的路由全部拍成二级） */
 export const constantRoutes: Array<RouteRecordRaw> = formatTwoStageRoutes(
-  // 静态路由配置表（RouteConfigsTable）与 vue-router 运行时联合类型在边界收窄（运行时即合法路由记录）
   formatFlatteningRoutes(
-    buildHierarchyTree(
-      ascending(routes.flat(Infinity))
-    ) as unknown as RouteRecordRaw[]
+    asRouteRecords(buildHierarchyTree(ascending(routes.flat(Infinity))))
   )
 );
 
@@ -72,9 +81,9 @@ export const constantRoutes: Array<RouteRecordRaw> = formatTwoStageRoutes(
 const initConstantRoutes: Array<RouteRecordRaw> = cloneDeep(constantRoutes);
 
 /** 用于渲染菜单，保持原始层级 */
-export const constantMenus: Array<RouteRecordRaw> = (
-  ascending(routes.flat(Infinity)) as unknown as RouteRecordRaw[]
-).concat(...(remainingRouter as unknown as RouteRecordRaw[]));
+export const constantMenus: Array<RouteRecordRaw> = asRouteRecords(
+  ascending(routes.flat(Infinity))
+).concat(...asRouteRecords(remainingRouter));
 
 /** 不参与菜单的路由 */
 export const remainingPaths = remainingRouter.map(v => v.path);
@@ -103,7 +112,7 @@ export const router: Router = createRouter({
   // vue-router 5 的 RouteRecordRaw 联合判定不认宽松的 RouteConfigsTable 接口（redirect 可选性），
   // 运行时 remainingRoutes 即合法路由，此处按原始路由边界收窄
   routes: constantRoutes.concat(
-    ...(remainingRouter as RouteRecordRaw[]),
+    ...asRouteRecords(remainingRouter),
     pathMatchRoute
   ),
   strict: true,
@@ -134,16 +143,14 @@ export function resetLoadedPaths() {
 export function resetRouter() {
   router.clearRoutes();
   for (const route of initConstantRoutes.concat(
-    ...(remainingRouter as RouteRecordRaw[])
+    ...asRouteRecords(remainingRouter)
   )) {
     router.addRoute(route);
   }
   router.addRoute(pathMatchRoute);
   router.options.routes = formatTwoStageRoutes(
     formatFlatteningRoutes(
-      buildHierarchyTree(
-        ascending(routes.flat(Infinity))
-      ) as unknown as RouteRecordRaw[]
+      asRouteRecords(buildHierarchyTree(ascending(routes.flat(Infinity))))
     )
   );
   usePermissionStoreHook().clearAllCachePage();
@@ -236,18 +243,16 @@ router.beforeEach((to: ToRouteType, _from) => {
                   const { path, name, meta } = (
                     route.children as RouteRecordRaw[]
                   )[0];
-                  useMultiTagsStoreHook().handleTags("push", {
-                    path,
-                    name,
-                    meta
-                  } as unknown as RouteConfigs);
+                  useMultiTagsStoreHook().handleTags(
+                    "push",
+                    asRouteConfig({ path, name, meta })
+                  );
                 } else {
                   const { path, name, meta } = route;
-                  useMultiTagsStoreHook().handleTags("push", {
-                    path,
-                    name,
-                    meta
-                  } as unknown as RouteConfigs);
+                  useMultiTagsStoreHook().handleTags(
+                    "push",
+                    asRouteConfig({ path, name, meta })
+                  );
                 }
               }
             }
