@@ -3,10 +3,13 @@ import { describe, expect, it } from "vitest";
 import type { FormField } from "@/api/dataset/dform";
 import {
   buildFilterPayload,
+  cascaderOptionsOf,
   filterableFieldsOf,
   filterOptionsOf,
+  isCascaderField,
   isNumberField,
-  isOptionedField
+  isOptionedField,
+  isUserField
 } from "../filters";
 
 const field = (overrides: Partial<FormField>): FormField =>
@@ -23,12 +26,20 @@ describe("可筛选字段面", () => {
       field({ key: "name", filterable: true }),
       field({ key: "remark" }), // 未勾选
       field({ key: "level", type: "select", filterable: true }),
-      field({ key: "owner", type: "user", filterable: true }), // 需专用选择器，UI 不渲染
+      field({ key: "owner", type: "user", filterable: true }),
+      field({
+        key: "region",
+        type: "cascader",
+        options: [{ value: "zj", label: "浙江" }],
+        filterable: true
+      }),
       field({ key: "files", type: "upload", filterable: true }) // 类型不可筛选
     ];
     expect(filterableFieldsOf(fields).map(item => item.key)).toEqual([
       "name",
-      "level"
+      "level",
+      "owner",
+      "region"
     ]);
   });
 });
@@ -65,12 +76,41 @@ describe("筛选条件编译", () => {
 });
 
 describe("筛选控件渲染辅助", () => {
-  it("选项型/数字型判定", () => {
+  it("选项型/数字型/选人/级联判定", () => {
     expect(isOptionedField(field({ type: "select" }))).toBe(true);
     expect(isOptionedField(field({ type: "checkbox" }))).toBe(true);
     expect(isOptionedField(field({ type: "input" }))).toBe(false);
     expect(isNumberField(field({ type: "amount" }))).toBe(true);
     expect(isNumberField(field({ type: "date" }))).toBe(false);
+    expect(isUserField(field({ type: "user" }))).toBe(true);
+    expect(isUserField(field({ type: "select" }))).toBe(false);
+    expect(isCascaderField(field({ type: "cascader" }))).toBe(true);
+    expect(isCascaderField(field({ type: "user" }))).toBe(false);
+  });
+
+  it("级联候选项：只取树形节点（平铺字符串项忽略）", () => {
+    const tree = [{ value: "zj", label: "浙江", children: [] }];
+    expect(
+      cascaderOptionsOf(
+        field({ type: "cascader", options: ["x", ...(tree as never[])] })
+      )
+    ).toEqual(tree);
+    expect(cascaderOptionsOf(field({ type: "cascader" }))).toEqual([]);
+  });
+
+  it("选人/级联取值原样下发（主键与整条路径，服务端按类型规范化）", () => {
+    const filterFields = [
+      field({ key: "owner", type: "user", filterable: true }),
+      field({ key: "team", type: "user", multiple: true, filterable: true }),
+      field({ key: "region", type: "cascader", filterable: true })
+    ];
+    expect(
+      buildFilterPayload(filterFields, {
+        owner: 7,
+        team: [7, 8],
+        region: ["zj", "hz"]
+      })
+    ).toBe(JSON.stringify({ owner: 7, team: [7, 8], region: ["zj", "hz"] }));
   });
 
   it("下拉候选项：字典优先，内联选项过滤非字符串节点", () => {

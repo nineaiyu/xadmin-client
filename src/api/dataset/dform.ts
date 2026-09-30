@@ -349,14 +349,18 @@ class FormDataApi extends BaseApi {
       `${this.baseApi}/form-options`
     );
 
-  /** 选人字段回显：按主键批量取用户名（≤20 条，与填报页同源） */
-  userOptions = (pks: number[]) =>
-    this.request<DataListResult<FormUserOption>>(
+  /** 选人字段数据源：关键字搜索 / 按主键回显已选用户（≤20 条，与填报页同源） */
+  userOptions = (params: { keyword?: string; pks?: number[] }) => {
+    const query: Record<string, unknown> = {};
+    if (params.keyword) query.keyword = params.keyword;
+    if (params.pks?.length) query.pks = params.pks.join(",");
+    return this.request<DataListResult<FormUserOption>>(
       "get",
-      { pks: pks.join(",") },
+      query,
       {},
       `${this.baseApi}/user-options`
     );
+  };
 }
 
 export const formDataApi = new FormDataApi("/api/dataset/form-data");

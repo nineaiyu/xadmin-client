@@ -193,6 +193,104 @@ test("表单数据：按可筛选字段筛选列表", async ({ page }) => {
   }
 });
 
+test("表单数据：选人字段按主键筛选（远程搜索）", async ({ page }) => {
+  await login(page);
+  const suffix = Math.random().toString(36).slice(2, 8);
+  const token = await getAccessToken(page);
+  const headers = { Authorization: `Bearer ${token}` };
+  const formName = `E2E选人筛选-${suffix}`;
+  const deviceA = `E2E选人路由器-A-${suffix}`;
+  const deviceB = `E2E选人路由器-B-${suffix}`;
+
+  // 选人筛选取值为用户主键：本用例用「当前用户」与种子账号各提交一条
+  const meRes = await page.request.get(`${FRONT_URL}/api/system/userinfo`, {
+    headers
+  });
+  expect(meRes.ok(), await meRes.text()).toBeTruthy();
+  const me = (await meRes.json()).data;
+  const otherRes = await page.request.get(
+    `${FRONT_URL}/api/system/user?page=1&limit=10&username=e2e_user`,
+    { headers }
+  );
+  const other = ((await otherRes.json())?.data?.results ?? []).find(
+    (item: { username?: string }) => item.username === "e2e_user"
+  );
+  expect(other, "seed user e2e_user missing").toBeTruthy();
+
+  const formRes = await page.request.post(
+    `${FRONT_URL}/api/dataset/dynamic-forms`,
+    {
+      headers,
+      data: {
+        name: formName,
+        description: "E2E 选人字段筛选",
+        is_active: true,
+        schema: {
+          fields: [
+            {
+              key: "device",
+              label: "设备名称",
+              type: "input",
+              required: true
+            },
+            {
+              key: "owner",
+              label: "负责人",
+              type: "user",
+              required: true,
+              filterable: true
+            }
+          ]
+        }
+      }
+    }
+  );
+  expect(formRes.ok(), await formRes.text()).toBeTruthy();
+  const formPk = (await formRes.json()).data.pk;
+  for (const [device, owner] of [
+    [deviceA, me.pk],
+    [deviceB, other.pk]
+  ] as const) {
+    const filled = await page.request.post(
+      `${FRONT_URL}/api/dataset/dynamic-form-submissions`,
+      { headers, data: { form: formPk, data: { device, owner } } }
+    );
+    expect(filled.ok(), await filled.text()).toBeTruthy();
+  }
+
+  try {
+    await openFormDataPage(page, formName);
+    const table = page.getByTestId("form-data-table");
+    await expect(table.getByRole("row", { name: deviceA })).toBeVisible({
+      timeout: 15_000
+    });
+    await expect(table.getByRole("row", { name: deviceB })).toBeVisible();
+
+    // 选人筛选：远程搜索关键字 → 选中本人 → 后端按物化主键过滤
+    await page.getByTestId("form-data-filter-owner").click();
+    await page.keyboard.type(me.username);
+    await page
+      .locator(".el-popper:visible .el-select-dropdown__item")
+      .filter({ hasText: me.username })
+      .first()
+      .click();
+    await expect(table.getByRole("row", { name: deviceB })).toHaveCount(0, {
+      timeout: 15_000
+    });
+    await expect(table.getByRole("row", { name: deviceA })).toBeVisible();
+
+    // 清空筛选恢复全量
+    await page.getByRole("button", { name: "清空筛选" }).click();
+    await expect(table.getByRole("row", { name: deviceB })).toBeVisible({
+      timeout: 15_000
+    });
+  } finally {
+    await page.request
+      .delete(`${FRONT_URL}/api/dataset/dynamic-forms/${formPk}`, { headers })
+      .catch(() => undefined);
+  }
+});
+
 test("表单数据：导出按所选表单出动态列文件", async ({ page }) => {
   // 高负载档放宽用例超时：下载等待已放宽到 DOWNLOAD_TIMEOUT
   if (HIGH_LOAD) test.slow();

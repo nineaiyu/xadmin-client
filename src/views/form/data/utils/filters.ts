@@ -1,5 +1,9 @@
 import type { DictItem } from "@/utils/dict";
-import type { FormField, FormFieldType } from "@/api/dataset/dform";
+import type {
+  FormCascaderOption,
+  FormField,
+  FormFieldType
+} from "@/api/dataset/dform";
 
 /**
  * 「表单数据」页字段筛选（物化筛选列）的纯函数装配。
@@ -7,7 +11,8 @@ import type { FormField, FormFieldType } from "@/api/dataset/dform";
  * 筛选口径与服务端同源：只有设计器勾选 `filterable` 且类型可渲染筛选控件的字段
  * 出现在筛选面；条件以 JSON 字符串随列表/导出请求下发（`filter_data`），
  * 服务端按所选表单的当前 schema fail-closed 校验并按 JSON 包含语义过滤。
- * `user` / `cascader` 需要专用选择器，页面 UI 暂不渲染（接口仍可直接筛）。
+ * 选人字段走远程搜索（取值=用户主键，多选为数组）、级联字段走选项树
+ * （取值=整条叶子路径），形态与服务端 `coerce_filter_value` 的规范化口径一致。
  */
 export const FILTER_UI_TYPES: FormFieldType[] = [
   "input",
@@ -18,7 +23,9 @@ export const FILTER_UI_TYPES: FormFieldType[] = [
   "radio",
   "checkbox",
   "date",
-  "switch"
+  "switch",
+  "user",
+  "cascader"
 ];
 
 const OPTIONED_TYPES: FormFieldType[] = ["select", "radio", "checkbox"];
@@ -65,6 +72,21 @@ export function isOptionedField(field: FormField): boolean {
 
 export function isNumberField(field: FormField): boolean {
   return field.type === "number" || field.type === "amount";
+}
+
+export function isUserField(field: FormField): boolean {
+  return field.type === "user";
+}
+
+export function isCascaderField(field: FormField): boolean {
+  return field.type === "cascader";
+}
+
+/** 级联字段的树形选项（平铺字符串项忽略） */
+export function cascaderOptionsOf(field: FormField): FormCascaderOption[] {
+  return (field.options ?? []).filter(
+    (item): item is FormCascaderOption => typeof item !== "string"
+  );
 }
 
 /** 筛选下拉候选项：字典优先（读字典项缓存），否则内联选项（平铺字符串数组） */

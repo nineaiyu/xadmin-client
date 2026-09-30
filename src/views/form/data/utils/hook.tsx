@@ -1,18 +1,8 @@
 import { SUCCESS_CODE } from "@/api/types";
-import {
-  computed,
-  getCurrentInstance,
-  h,
-  onMounted,
-  reactive,
-  ref,
-  shallowRef,
-  watch
-} from "vue";
+import { computed, h, onMounted, reactive, ref, shallowRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElTag } from "element-plus";
 import { addDrawer } from "@/components/ReDrawer";
-import { getDefaultAuths } from "@/router/utils";
 import {
   getDictItems,
   statusTagProps,
@@ -20,20 +10,25 @@ import {
   type StatusTagType
 } from "@/utils/dict";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
+import { usePageAuth } from "@/views/system/hooks";
 import type { RecordType } from "plus-pro-components";
 import {
   formDataApi,
   type FormDataFormOption,
   type FormDataItem,
-  type FormField
+  type FormField,
+  type FormUserOption
 } from "@/api/dataset/dform";
 import SubmissionDetail from "../../components/SubmissionDetail.vue";
 import {
   buildFilterPayload,
+  cascaderOptionsOf,
   filterableFieldsOf,
   filterOptionsOf,
+  isCascaderField,
   isNumberField,
-  isOptionedField
+  isOptionedField,
+  isUserField
 } from "./filters";
 import { fieldValueText } from "./format";
 
@@ -70,13 +65,7 @@ export function useFormData() {
   );
 
   const api = reactive(formDataApi);
-  const auth = reactive({
-    ...getDefaultAuths(getCurrentInstance(), [
-      "exportData",
-      "exportAsync",
-      "formOptions"
-    ])
-  });
+  const auth = usePageAuth(["exportData", "exportAsync", "formOptions"]);
   // 管理端只读：关闭框架默认的新增 / 编辑 / 删除入口
   auth.create = false;
   auth.update = false;
@@ -113,6 +102,30 @@ export function useFormData() {
   /** 筛选下拉候选项（字典项读页面缓存） */
   const optionsOf = (field: FormField) =>
     filterOptionsOf(field, field.dict ? dictCache[field.dict] : undefined);
+
+  /** 选人筛选候选缓存（远程搜索）：字段 key → 候选列表 */
+  const filterUserOptions = reactive<Record<string, FormUserOption[]>>({});
+  const filterUserOptionsOf = (field: FormField) =>
+    filterUserOptions[field.key] ?? [];
+  const filterUserLabel = (user: FormUserOption) =>
+    user.nickname ? `${user.username}-${user.nickname}` : user.username;
+
+  /** 选人筛选项远程搜索（空关键字清空候选，避免无边界枚举通讯录） */
+  const searchFilterUsers = (field: FormField, keyword: string) => {
+    const value = (keyword ?? "").trim();
+    if (!value) {
+      filterUserOptions[field.key] = [];
+      return;
+    }
+    formDataApi
+      .userOptions({ keyword: value })
+      .then(res => {
+        filterUserOptions[field.key] = res?.data ?? [];
+      })
+      .catch(() => {
+        filterUserOptions[field.key] = [];
+      });
+  };
 
   /** 字典项缓存（字典 code → 选项）：select/radio 的 value → label 映射 */
   const dictCache = reactive<Record<string, DictItem[]>>({});
@@ -281,7 +294,9 @@ export function useFormData() {
     }
     const missing = [...pks].filter(pk => !userLabels[String(pk)]);
     if (!missing.length) return;
-    const res = await formDataApi.userOptions(missing).catch(() => null);
+    const res = await formDataApi
+      .userOptions({ pks: missing })
+      .catch(() => null);
     for (const user of res?.data ?? []) {
       userLabels[String(user.pk)] = user.nickname
         ? `${user.username}-${user.nickname}`
@@ -313,6 +328,12 @@ export function useFormData() {
     clearFilters,
     isOptionedField,
     isNumberField,
-    filterOptionsOf: optionsOf
+    isUserField,
+    isCascaderField,
+    filterOptionsOf: optionsOf,
+    filterUserOptionsOf,
+    filterUserLabel,
+    searchFilterUsers,
+    cascaderOptionsOf
   };
 }

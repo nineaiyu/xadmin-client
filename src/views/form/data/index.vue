@@ -25,7 +25,13 @@ const {
   clearFilters,
   isOptionedField,
   isNumberField,
-  filterOptionsOf
+  isUserField,
+  isCascaderField,
+  filterOptionsOf,
+  filterUserOptionsOf,
+  filterUserLabel,
+  searchFilterUsers,
+  cascaderOptionsOf
 } = useFormData();
 </script>
 
@@ -135,6 +141,39 @@ const {
               v-model="filterValues[field.key] as number"
               controls-position="right"
               class="w-40!"
+              :placeholder="field.label"
+              :data-testid="`form-data-filter-${field.key}`"
+              @change="applyFilters"
+            />
+            <el-select
+              v-else-if="isUserField(field)"
+              v-model="filterValues[field.key] as number | number[]"
+              class="w-40!"
+              :multiple="field.multiple === true"
+              filterable
+              remote
+              reserve-keyword
+              clearable
+              :remote-method="
+                (keyword: string) => searchFilterUsers(field, keyword)
+              "
+              :placeholder="t('dform.userSearchPlaceholder')"
+              :data-testid="`form-data-filter-${field.key}`"
+              @change="applyFilters"
+            >
+              <el-option
+                v-for="user in filterUserOptionsOf(field)"
+                :key="user.pk"
+                :value="user.pk"
+                :label="filterUserLabel(user)"
+              />
+            </el-select>
+            <el-cascader
+              v-else-if="isCascaderField(field)"
+              v-model="filterValues[field.key] as (string | number)[]"
+              class="w-40!"
+              :options="cascaderOptionsOf(field)"
+              clearable
               :placeholder="field.label"
               :data-testid="`form-data-filter-${field.key}`"
               @change="applyFilters"
