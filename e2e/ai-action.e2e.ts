@@ -226,14 +226,21 @@ test("AI 受限动作：/do 发全体公告 → 确认卡片 → 执行发布", 
   await expect(page.getByText("操作成功").last()).toBeVisible({
     timeout: 20_000
   });
-  // 公告确已落库（title icontains 过滤可查；双浏览器共享库允许存在历史同名公告）
-  const list = await jsonRequest(
-    page,
-    "get",
-    "/api/notifications/notice-messages?title=E2E"
-  );
-  expect(list.code).toBe(1000);
-  expect(JSON.stringify(list.data)).toContain("E2E 系统公告");
+  // 公告确已落库：轮询而非"看到就查"——AI 房间为共享会话，历史消息可能提前满足
+  // 「操作成功」可见性（等待抢跑），轮询以「结果可达」为完成判据
+  await expect
+    .poll(
+      async () => {
+        const list = await jsonRequest(
+          page,
+          "get",
+          "/api/notifications/notice-messages?title=E2E"
+        );
+        return JSON.stringify(list.data).includes("E2E 系统公告");
+      },
+      { timeout: 20_000 }
+    )
+    .toBe(true);
 });
 
 test("AI 受限动作：/do 禁用用户 → 确认卡片 → 执行（复用现有用户接口）", async ({
@@ -264,14 +271,21 @@ test("AI 受限动作：/do 禁用用户 → 确认卡片 → 执行（复用现
     timeout: 20_000
   });
 
-  // 落库断言：目标用户 is_active 已置 false（复用既有 PATCH /api/system/user/<pk> 的真实写入）
-  const list = await jsonRequest(
-    page,
-    "get",
-    `/api/system/user?username=${username}`
-  );
-  expect(list.code).toBe(1000);
-  expect(JSON.stringify(list.data)).toContain('"is_active":false');
+  // 落库断言：目标用户 is_active 已置 false（复用既有 PATCH /api/system/user/<pk> 的真实写入）。
+  // 轮询而非"看到就查"：AI 房间为共享会话，历史消息可能提前满足「操作成功」可见性（等待抢跑）
+  await expect
+    .poll(
+      async () => {
+        const list = await jsonRequest(
+          page,
+          "get",
+          `/api/system/user?username=${username}`
+        );
+        return JSON.stringify(list.data).includes('"is_active":false');
+      },
+      { timeout: 20_000 }
+    )
+    .toBe(true);
 });
 
 test("AI 受限动作：/do 多步串联 → 两张确认卡片逐项执行", async ({ page }) => {
@@ -337,12 +351,26 @@ test("AI 受限动作：/do 查询用户数 → 结果表渲染（dashboard.over
   await card.locator('[data-testid="chat-action-confirm"]').click();
 
   // 结果表渲染（回归：dashboard.overview 曾只显示 detail 文案看不到数据）
-  // 执行回执是 system 消息，action_result 挂在回执上 → 结果表跟在回执下方
+  // 执行回执是 system 消息，action_result 挂在回执上 → 结果表跟在回执下方。
+  // AI 房间为共享会话（历史消息可能含旧结果表）：`.last()` 的可见性会先被旧表满足，
+  // 以「出现含目标行的结果表」为完成判据轮询，消除渲染竞态
+  await expect
+    .poll(
+      async () =>
+        page
+          .locator(
+            '[data-testid="chat-messages"] [data-testid="ai-result-table"]'
+          )
+          .filter({ hasText: "用户数量" })
+          .count(),
+      { timeout: 30_000, intervals: [500] }
+    )
+    .toBeGreaterThan(0);
   const table = page
-    .locator('[data-testid="chat-messages"]')
-    .locator('[data-testid="ai-result-table"]')
+    .locator('[data-testid="chat-messages"] [data-testid="ai-result-table"]')
+    .filter({ hasText: "用户数量" })
     .last();
-  await expect(table).toBeVisible({ timeout: 30_000 });
+  await expect(table).toBeVisible();
   await expect(table.getByText("用户数量")).toBeVisible();
   // 用户数量行有真实数值（非空）
   const valueCell = table

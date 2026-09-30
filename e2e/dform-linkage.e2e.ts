@@ -263,9 +263,11 @@ test("表单版本：改 schema 生成新版本 → 历史查看 → 回滚生�
     const confirmBox = page.locator(".el-message-box");
     await expect(confirmBox).toBeVisible();
     await confirmBox.getByRole("button", { name: "回滚" }).click();
-    await expect(page.locator(".el-message").first()).toBeVisible({
-      timeout: 10_000
-    });
+    // 同步点必须是「回滚成功」专属文案：页面上可能还残留「保存成功」等消息，
+    // 用 `.el-message` first() 会在回滚请求完成前抢跑（窗口内读到的仍是旧版本）
+    await expect(
+      page.locator(".el-message").filter({ hasText: "已回滚到版本 v1" }).first()
+    ).toBeVisible({ timeout: 10_000 });
 
     // 回滚生成 v3 且字段回到 2 个；历史保留 v1/v2
     const after = await page.request.get(
