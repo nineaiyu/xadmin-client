@@ -38,6 +38,8 @@ export const FieldKeyChoices = {
   DEPARTMENTS: "value.dept.ids",
   LEADER_DEPTS: "value.leader.dept.ids",
   LEADER_USERS: "value.leader.user.ids",
+  MANAGER_DEPTS: "value.manager.dept.ids",
+  MANAGER_USERS: "value.manager.user.ids",
   TABLE_USER: "value.table.user.ids",
   TABLE_MENU: "value.table.menu.ids",
   TABLE_ROLE: "value.table.role.ids",

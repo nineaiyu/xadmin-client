@@ -747,6 +747,7 @@ menus:
   userManagement: User Manage
   directory: Directory
   deptManagement: Department Manage
+  myScope: My Scope
   postManagement: Post Manage
   menuManagement: Menu Manage
   permissionManagement: Permission Manage
@@ -1283,6 +1284,20 @@ systemDept:
   roles: Roles
   rules: Data Permissions
   preview: Permission Preview
+  managers: Managers
+  managerHint: Managers can manage users of this department and all its sub-departments (data scope follows)
+  managerEmpty: No managers
+  managerPlaceholder: Search and add managers
+  managerNoChange: No manager changes
+  managerSaveOk: Managers updated
+
+systemMyScope:
+  deptCount: Managed departments
+  userCount: Managed members
+  hint: Data scope follows the manager assignment in real time; member counts link to user management
+  empty: No managed departments (assign managers on the department page)
+  direct: Direct
+  members: Members { count }
 
 systemPermission:
   permission: Permissions
@@ -1313,6 +1328,8 @@ systemPermission:
   preset_ownDeptTree: My department and sub-departments
   preset_leaderDepts: Departments I lead and sub-departments
   preset_leaderUsers: Members of departments I lead
+  preset_managerDepts: Departments I manage and sub-departments
+  preset_managerUsers: Members of departments I manage
   preset_all: All data
   valueByRuntime: The value is injected by the system for the current user, nothing to fill
   lookupNoAuth: Missing model-field lookup permission, match options cannot be loaded

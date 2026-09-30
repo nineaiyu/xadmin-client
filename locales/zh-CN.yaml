@@ -747,6 +747,7 @@ menus:
   userManagement: 用户管理
   directory: 通讯录
   deptManagement: 部门管理
+  myScope: 我的管辖
   postManagement: 岗位管理
   menuManagement: 菜单管理
   permissionManagement: 权限管理
@@ -1283,6 +1284,20 @@ systemDept:
   roles: 角色
   rules: 数据权限
   preview: 权限预览
+  managers: 部门管理员
+  managerHint: 管理员可管理本部门及全部下级的用户（数据权限自动收敛）
+  managerEmpty: 暂无管理员
+  managerPlaceholder: 搜索并添加管理员
+  managerNoChange: 管理员未发生变化
+  managerSaveOk: 管理员已更新
+
+systemMyScope:
+  deptCount: 管辖部门数
+  userCount: 管辖成员数
+  hint: 数据范围随「部门管理员」任命实时生效；成员数跳转用户管理页
+  empty: 暂无管辖部门（由管理员在部门页任命）
+  direct: 直接管辖
+  members: 成员 { count } 人
 
 systemPermission:
   permission: 数据权限
@@ -1313,6 +1328,8 @@ systemPermission:
   preset_ownDeptTree: 本部门及下级
   preset_leaderDepts: 我主管部门及下级
   preset_leaderUsers: 我主管部门成员
+  preset_managerDepts: 我管理部门及下级
+  preset_managerUsers: 我管理部门的成员
   preset_all: 全部数据
   valueByRuntime: 该类型的值由系统按当前用户自动填充，无需填写
   lookupNoAuth: 缺少模型字段查询权限，无法加载「匹配」选项，可手动输入

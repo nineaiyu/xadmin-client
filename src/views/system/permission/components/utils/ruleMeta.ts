@@ -22,6 +22,8 @@ const FALLBACK_INPUT: Record<string, RuleValueInput> = {
   [FieldKeyChoices.USER_DEPT_IDS]: "none",
   [FieldKeyChoices.LEADER_DEPTS]: "none",
   [FieldKeyChoices.LEADER_USERS]: "none",
+  [FieldKeyChoices.MANAGER_DEPTS]: "none",
+  [FieldKeyChoices.MANAGER_USERS]: "none",
   [FieldKeyChoices.TABLE_USER]: "user",
   [FieldKeyChoices.TABLE_DEPT]: "dept",
   [FieldKeyChoices.DEPARTMENTS]: "dept",
@@ -37,6 +39,8 @@ const FALLBACK_MATCH: Record<string, string> = {
   [FieldKeyChoices.USER_DEPT_IDS]: "in",
   [FieldKeyChoices.LEADER_DEPTS]: "in",
   [FieldKeyChoices.LEADER_USERS]: "in",
+  [FieldKeyChoices.MANAGER_DEPTS]: "in",
+  [FieldKeyChoices.MANAGER_USERS]: "in",
   [FieldKeyChoices.TABLE_USER]: "in",
   [FieldKeyChoices.TABLE_DEPT]: "in",
   [FieldKeyChoices.DEPARTMENTS]: "in",
@@ -133,5 +137,7 @@ export const RULE_PRESETS: RulePreset[] = [
   { key: "ownDeptTree", type: FieldKeyChoices.USER_DEPT_IDS, match: "in" },
   { key: "leaderDepts", type: FieldKeyChoices.LEADER_DEPTS, match: "in" },
   { key: "leaderUsers", type: FieldKeyChoices.LEADER_USERS, match: "in" },
+  { key: "managerDepts", type: FieldKeyChoices.MANAGER_DEPTS, match: "in" },
+  { key: "managerUsers", type: FieldKeyChoices.MANAGER_USERS, match: "in" },
   { key: "all", type: FieldKeyChoices.ALL, match: "all", wildcard: true }
 ];

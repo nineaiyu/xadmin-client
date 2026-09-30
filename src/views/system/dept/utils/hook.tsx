@@ -12,8 +12,14 @@ import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { buildRoleRulesColumns } from "@/views/system/hooks";
 import DeptPermissionPreview from "../components/DeptPermissionPreview.vue";
+import DeptManagersDialog from "../components/DeptManagersDialog.vue";
+import { addDialog } from "@/components/ReDialog";
+import { dialogSize } from "@/components/ReDialog/size";
 import { addDrawer } from "@/components/ReDrawer";
+import { message } from "@/utils/message";
+import { SUCCESS_CODE } from "@/api/types";
 import View from "~icons/ri/eye-line";
+import Manager from "~icons/ri/shield-keyhole-line";
 import { useBatchUpdate } from "@/views/system/components/useBatchUpdate";
 import { handleTree } from "@/utils/tree";
 import {
@@ -36,7 +42,12 @@ export function useDept(tableRef: Ref) {
   const auth = reactive({
     empower: false,
     preview: false,
-    ...getDefaultAuths(getCurrentInstance(), ["empower", "preview"])
+    assignManagers: false,
+    ...getDefaultAuths(getCurrentInstance(), [
+      "empower",
+      "preview",
+      "assignManagers"
+    ])
   });
 
   /** 部门授权预览抽屉（挂载角色 / 数据权限 / 字段权限 / 成员采样；统一走 ReDrawer） */
@@ -179,6 +190,52 @@ export function useDept(tableRef: Ref) {
     });
   }
 
+  /* ---------------- 管理员任命（ReDialog + DeptManagersDialog） ---------------- */
+  /** 弹窗载荷读取口：由内容组件就绪时经 onReady 显式注册（不依赖模板 ref 语义） */
+  let managerDialogApi:
+    { getPayload: () => Record<string, unknown> | null } | undefined;
+
+  const openManagers = (row: DeptRow) => {
+    managerDialogApi = undefined;
+    addDialog({
+      title: `${t("systemDept.managers")}：${row.name}`,
+      width: dialogSize("sm"),
+      draggable: true,
+      destroyOnClose: true,
+      closeOnClickModal: false,
+      sureBtnLoading: true,
+      // 行类型中 pk 为可选（框架 row 宽容形态），此处按弹窗契约收窄
+      contentRenderer: () =>
+        h(DeptManagersDialog, {
+          row: { ...row, pk: row.pk as number | string },
+          onReady: apiRef => {
+            managerDialogApi = apiRef;
+          }
+        }),
+      beforeSure: async (done, { closeLoading }) => {
+        const payload = managerDialogApi?.getPayload();
+        if (!payload) {
+          closeLoading();
+          return;
+        }
+        const res = await api
+          .assignManagers(row.pk as number | string, payload)
+          .catch(error => ({
+            code: -1,
+            detail: String((error as { detail?: string })?.detail ?? error)
+          }));
+        if (res.code === SUCCESS_CODE) {
+          message(t("systemDept.managerSaveOk"), { type: "success" });
+          done();
+          tableRef.value.handleGetData();
+          return;
+        }
+        if (res.detail) message(String(res.detail), { type: "warning" });
+        closeLoading();
+      }
+    });
+  };
+
   // 批量更新：勾选行后统一写入同组字段（字段白名单：启用状态）
   const { batchUpdateButton } = useBatchUpdate({
     t,
@@ -197,7 +254,7 @@ export function useDept(tableRef: Ref) {
   });
 
   const operationButtonsProps = shallowRef<OperationProps>({
-    width: 280,
+    width: 360,
     buttons: [
       {
         text: t("systemDept.assignRoles"),
@@ -211,6 +268,19 @@ export function useDept(tableRef: Ref) {
           handleRoleRules(row);
         },
         show: auth.empower
+      },
+      {
+        text: t("systemDept.managers"),
+        code: "assignManagers",
+        props: {
+          type: "primary",
+          icon: useRenderIcon(Manager),
+          link: true
+        },
+        onClick: ({ row }) => {
+          openManagers(row);
+        },
+        show: auth.assignManagers
       },
       {
         text: t("systemDept.preview"),
