@@ -1,4 +1,5 @@
 import type { FormField } from "@/api/dataset/dform";
+import { formatFormulaValue } from "@/views/form/utils/formulaEval";
 
 /**
  * 表单字段值的列表展示口径（管理端「表单数据」动态列）。
@@ -84,6 +85,8 @@ export function fieldValueText(
         resolvers.option?.(field, value) ?? inlineOptionLabel(field, value);
       return mapped ?? String(value);
     }
+    case "formula":
+      return formatFormulaValue(value, field.precision) || empty;
     default:
       return typeof value === "object" ? JSON.stringify(value) : String(value);
   }

@@ -11,6 +11,7 @@ import type {
   FormSchema
 } from "@/api/dataset/dform";
 import { message } from "@/utils/message";
+import { assertFormulaAcyclic, FormulaError } from "@/views/form/utils/formula";
 import FormFieldDialog from "./FormFieldDialog.vue";
 import FormFieldTable from "./FormFieldTable.vue";
 import FormLinkageSection from "./FormLinkageSection.vue";
@@ -109,7 +110,11 @@ const openFieldDialog = (index: number) => {
     destroyOnClose: true,
     closeOnClickModal: false,
     contentRenderer: () =>
-      h(FormFieldDialog, { ref: fieldDialogRef, field: fields.value[index] }),
+      h(FormFieldDialog, {
+        ref: fieldDialogRef,
+        field: fields.value[index],
+        fields: fields.value
+      }),
     beforeSure: (done, { closeLoading }) => {
       const next = fieldDialogRef.value?.getField();
       if (!next) {
@@ -134,6 +139,15 @@ const getPayload = (): Record<string, unknown> | null => {
   );
   if (tableField) {
     message(t("dform.tableColumnsRequired"), { type: "warning" });
+    return null;
+  }
+  // 公式字段循环引用检测（字段级语法/引用错误在属性弹窗拦截，此处兜全图）
+  try {
+    assertFormulaAcyclic(fields.value);
+  } catch (error) {
+    const code = error instanceof FormulaError ? error.code : "invalid";
+    const params = error instanceof FormulaError ? error.params : {};
+    message(t(`dform.formula.errors.${code}`, params), { type: "warning" });
     return null;
   }
   // 字段被删除/改 key 后，引用失效的联动规则在保存前剔除（服务端会拒绝未知字段）

@@ -22,7 +22,8 @@ export type FormFieldType =
   | "daterange"
   | "table"
   | "user"
-  | "cascader";
+  | "cascader"
+  | "formula";
 
 /** 级联选项节点（value 同时作为提交值，label 为展示文案） */
 export type FormCascaderOption = {
@@ -60,7 +61,13 @@ export type FormField = {
   min?: number;
   max?: number;
   max_length?: number;
-  /** 金额控件（amount）最多保留的小数位（0-6，缺省不限） */
+  /**
+   * 公式表达式（type=formula 时必填）：支持字段引用 `{key}`、表格列聚合
+   * `SUM({table.column})`（AVG/MIN/MAX 同）、四则运算与 ROUND/ABS；
+   * 语法与语义见 src/views/form/my/utils/formula.ts（与后端同口径）
+   */
+  formula?: string;
+  /** 金额（amount）/ 计算（formula）控件展示位保留的小数位（0-6，公式缺省 2） */
   precision?: number;
   /** 选人控件（user）是否多选 */
   multiple?: boolean;

@@ -16,6 +16,10 @@ import {
   isFieldRequired,
   visibleFields
 } from "../utils/linkage";
+import {
+  evaluateFormulaFields,
+  formatFormulaValue
+} from "@/views/form/utils/formulaEval";
 
 /**
  * 动态填报表单（弹窗体系收敛到 ReDialog 的 content 组件形态）。
@@ -173,10 +177,33 @@ const dictPlaceholder = (field: FormField) =>
     ? t("dform.dictEmpty")
     : t("dform.selectPlaceholder");
 
-/** 生成提交载荷（字段校验由后端按 schema 执行） */
+/**
+ * 公式字段计算值（只读派生：不写入 formData，避免被当作用户输入）。
+ *
+ * 与后端提交时的求值同口径（隐藏字段为 null）；服务端会在提交时按落库数据
+ * 重算并覆盖，前端计算仅用于即时展示与载荷完整。
+ */
+const formulaValues = computed<Record<string, number | null>>(() => {
+  if (!schemaFields.value.some(field => field.type === "formula")) return {};
+  const hiddenKeys = new Set(
+    Object.entries(controls.value)
+      .filter(([, control]) => control.hidden)
+      .map(([key]) => key)
+  );
+  return evaluateFormulaFields(
+    schemaFields.value,
+    formData as Record<string, unknown>,
+    hiddenKeys
+  );
+});
+
+const formatFormula = (field: FormField) =>
+  formatFormulaValue(formulaValues.value[field.key], field.precision);
+
+/** 生成提交载荷（字段校验由后端按 schema 执行；公式值随载荷提交，服务端重算覆盖） */
 const getPayload = () => ({
   form: props.form.pk,
-  data: { ...formData }
+  data: { ...formData, ...formulaValues.value }
 });
 
 defineExpose({ getPayload });
@@ -231,6 +258,13 @@ defineExpose({ getPayload });
           :max="field.max"
           :precision="field.precision"
         />
+        <div
+          v-else-if="field.type === 'formula'"
+          class="font-medium text-(--el-text-color-primary)"
+          data-testid="dform-formula-value"
+        >
+          {{ formatFormula(field) || "—" }}
+        </div>
         <el-select
           v-else-if="field.type === 'user'"
           v-model="formData[field.key] as number | number[]"

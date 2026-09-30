@@ -16,7 +16,8 @@ export const FIELD_TYPE_OPTIONS: { value: FormFieldType; labelKey: string }[] =
     { value: "daterange", labelKey: "dform.typeDaterange" },
     { value: "table", labelKey: "dform.typeTable" },
     { value: "user", labelKey: "dform.typeUser" },
-    { value: "cascader", labelKey: "dform.typeCascader" }
+    { value: "cascader", labelKey: "dform.typeCascader" },
+    { value: "formula", labelKey: "dform.typeFormula" }
   ];
 
 /** 控件类型标签词条（未知类型回退单行文本词条） */

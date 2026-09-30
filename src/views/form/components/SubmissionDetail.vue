@@ -14,6 +14,7 @@ import {
   type DictItem,
   type StatusTagType
 } from "@/utils/dict";
+import { formatFormulaValue } from "@/views/form/utils/formulaEval";
 
 /**
  * 提交详情抽屉：基本信息 + 按 schema 渲染的字段明细 + 审批轨迹（时间线）。
@@ -93,6 +94,8 @@ const displayOf = (field: FormField, value: unknown): string => {
       );
       return hit ? hit.label : String(value);
     }
+    case "formula":
+      return formatFormulaValue(value, field.precision);
     default:
       return typeof value === "object" ? JSON.stringify(value) : String(value);
   }
