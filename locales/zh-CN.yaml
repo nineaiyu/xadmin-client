@@ -738,6 +738,7 @@ menus:
   aiAssistant: AI 助手
   aiAssistantConfig: AI 配置
   aiKnowledge: 知识库
+  aiMcpServers: 外部工具
   formCollection: 表单采集
   formDesigner: 表单设计
   formMySubmission: 我的填报
@@ -3083,6 +3084,9 @@ dform:
   fieldRequired: 必填
   fieldFilterable: 可筛选
   fieldFilterableTip: 勾选后该字段取值随提交物化，可在「表单数据」页按该字段筛选
+  fieldFormula: 公式表达式
+  fieldFormulaPlaceholder: "如 {'{'}price{'}'} * {'{'}qty{'}'}、SUM({'{'}items.amount{'}'})"
+  fieldFormulaTip: 支持 + - * / 与括号；{'{'}price{'}'} 形式引用数值字段，SUM/AVG/MIN/MAX 聚合明细列，另有 ROUND/ABS 函数；点击下方标签插入引用
   noForms: 暂无可填表单
   noDescription: 无描述
   approvalRequired: 提交审批
@@ -3111,9 +3115,27 @@ dform:
   typeAmount: 金额
   typeUser: 选人
   typeCascader: 级联
+  typeFormula: 公式计算
   columnsHint: "每行一条：标识,标签,类型[,选项]"
   cascaderHint: "每行一条叶子路径，段以 / 分隔，如：华东/江苏/南京"
   tableColumnsRequired: 明细子表字段需先定义列
+  formula:
+    errors:
+      required: 公式表达式不能为空
+      tooLong: 公式表达式过长（最多 {max} 个字符）
+      invalid: 公式表达式语法错误
+      tooDeep: 公式表达式嵌套过深
+      unknownField: "公式引用了不存在的字段：{key}"
+      notNumeric: "公式只能引用数值字段：{key}"
+      unknownTable: "公式引用了不存在的明细子表：{key}"
+      invalidColumn: "公式引用了无效的明细列：{table}.{column}"
+      columnUsage: 明细列引用只能用于 SUM/AVG/MIN/MAX 聚合
+      columnRequired: SUM/AVG/MIN/MAX 的参数必须是明细列引用
+      unknownFunction: "未知公式函数：{name}"
+      argCount: "公式函数 {name} 需要 {range} 个参数"
+      roundDigits: ROUND 位数必须是 0-{max} 的整数
+      selfReference: "公式不能引用自身：{key}"
+      circular: "公式存在循环引用：{chain}"
   userSearchPlaceholder: 输入用户名或昵称搜索
   approvalFlow: 审批流程
   noApprovalFlow: 不绑定流程
@@ -3249,6 +3271,56 @@ leaveApply:
   statusREJECTED: 已驳回
   statusCANCELLED: 已撤回
 
+mcp:
+  create: 新建服务器
+  createTitle: 新建外部 MCP 服务器
+  editTitle: 编辑外部 MCP 服务器
+  formName: 名称
+  formUrl: 服务地址
+  formUrlTip: Streamable HTTP 端点；http 仅限本机联调或 OUTBOUND_ALLOWED_HOSTS 白名单登记的内网目标
+  formAuthHeader: 鉴权头
+  formAuthToken: 鉴权令牌
+  formAuthTokenPlaceholder: 请输入令牌
+  formAuthTokenLeave: 留空保持不变
+  formTimeout: 超时（秒）
+  formAllowedTools: 允许调用的工具
+  formAllowedToolsTip: 逗号分隔（如 echo, search）；为空则不允许调用任何工具（同步后可按快照维护）
+  formEnabled: 启用
+  formRemark: 备注
+  nameRequired: 请填写名称
+  urlRequired: 请填写服务地址
+  saveDone: 保存成功
+  sync: 同步工具
+  syncDone: 已同步 {count} 个工具
+  tools: 工具
+  drawerTitle: "外部工具 - {name}"
+  panelUrl: 服务地址
+  panelAuth: 令牌状态
+  panelAuthSet: 已配置
+  panelAuthUnset: 未配置
+  panelTimeout: 超时（秒）
+  panelAllowed: 白名单工具
+  panelAllowedEmpty: 未配置（全部禁止）
+  panelLastSync: 上次同步
+  panelSyncError: 同步失败原因
+  toolName: 工具名
+  toolDescription: 描述
+  toolReadOnly: 类型
+  toolParams: 参数
+  toolCall: 调用
+  callTitle: "调用测试 - {name}"
+  callArguments: 参数（JSON）
+  callArgumentsTip: 按工具参数填写 JSON 对象（键为参数名，如 text 参数填 "hello"）
+  callRun: 执行调用
+  callSuccess: 调用成功
+  callFailed: 调用失败
+  callInvalidJson: 参数不是合法的 JSON 对象
+  whitelistTip: 仅白名单内工具可调用，调用会被审计
+  empty: 暂无工具快照，请先「同步工具」
+  readOnlyYes: 只读
+  readOnlyNo: 可写
+  enabled: 已启用
+  disabled: 已停用
 aiKnowledge:
   upload: 上传文档
   uploadTitle: 上传文档

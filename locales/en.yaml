@@ -738,6 +738,7 @@ menus:
   aiAssistant: AI Assistant
   aiAssistantConfig: AI Configuration
   aiKnowledge: Knowledge base
+  aiMcpServers: External tools
   formCollection: Form Collection
   formDesigner: Form Design
   formMySubmission: My Submissions
@@ -3084,6 +3085,9 @@ dform:
   fieldRequired: Required
   fieldFilterable: Filterable
   fieldFilterableTip: Materialize this field on submit so the form data page can filter by it
+  fieldFormula: Formula expression
+  fieldFormulaPlaceholder: "e.g. {'{'}price{'}'} * {'{'}qty{'}'}, SUM({'{'}items.amount{'}'})"
+  fieldFormulaTip: Supports + - * / and parentheses; {'{'}price{'}'} references numeric fields, SUM/AVG/MIN/MAX aggregate detail columns, plus ROUND/ABS; click a tag below to insert
   noForms: No forms available
   noDescription: No description
   approvalRequired: Approval
@@ -3112,9 +3116,27 @@ dform:
   typeAmount: Amount
   typeUser: User picker
   typeCascader: Cascader
+  typeFormula: Formula
   columnsHint: "One per line: key,label,type[,options]"
   cascaderHint: "One leaf path per line, segments split by /, e.g. East/Shanghai/Pudong"
   tableColumnsRequired: Detail table fields require column definitions
+  formula:
+    errors:
+      required: Formula expression is required
+      tooLong: Formula expression is too long (max {max} characters)
+      invalid: Formula expression is invalid
+      tooDeep: Formula expression is too deeply nested
+      unknownField: "Formula references an unknown field: {key}"
+      notNumeric: "Formula can only reference numeric fields: {key}"
+      unknownTable: "Formula references an unknown detail table: {key}"
+      invalidColumn: "Formula references an invalid detail column: {table}.{column}"
+      columnUsage: Detail column references can only be used inside SUM/AVG/MIN/MAX
+      columnRequired: SUM/AVG/MIN/MAX require a detail column reference
+      unknownFunction: "Unknown formula function: {name}"
+      argCount: "Formula function {name} expects {range} argument(s)"
+      roundDigits: ROUND digits must be an integer between 0 and {max}
+      selfReference: "A formula cannot reference itself: {key}"
+      circular: "Formula contains a circular reference: {chain}"
   userSearchPlaceholder: Search by username or nickname
   approvalFlow: Approval flow
   noApprovalFlow: Not bound
@@ -3250,6 +3272,56 @@ leaveApply:
   statusREJECTED: Rejected
   statusCANCELLED: Cancelled
 
+mcp:
+  create: New server
+  createTitle: New external MCP server
+  editTitle: Edit external MCP server
+  formName: Name
+  formUrl: Server URL
+  formUrlTip: Streamable HTTP endpoint; http is limited to loopback or OUTBOUND_ALLOWED_HOSTS targets
+  formAuthHeader: Auth header
+  formAuthToken: Auth token
+  formAuthTokenPlaceholder: Enter token
+  formAuthTokenLeave: Leave blank to keep unchanged
+  formTimeout: Timeout (seconds)
+  formAllowedTools: Allowed tools
+  formAllowedToolsTip: Comma separated (e.g. echo, search); empty means no tool can be called
+  formEnabled: Enabled
+  formRemark: Remark
+  nameRequired: Server name is required
+  urlRequired: Server URL is required
+  saveDone: Saved
+  sync: Sync tools
+  syncDone: Synced {count} tool(s)
+  tools: Tools
+  drawerTitle: "External tools - {name}"
+  panelUrl: Server URL
+  panelAuth: Auth token
+  panelAuthSet: Configured
+  panelAuthUnset: Not configured
+  panelTimeout: Timeout (s)
+  panelAllowed: Allowed tools
+  panelAllowedEmpty: Not configured (all calls blocked)
+  panelLastSync: Last synced
+  panelSyncError: Last sync error
+  toolName: Tool
+  toolDescription: Description
+  toolReadOnly: Kind
+  toolParams: Params
+  toolCall: Call
+  callTitle: "Call test - {name}"
+  callArguments: Arguments (JSON)
+  callArgumentsTip: Fill a JSON object keyed by tool params (e.g. text=hello)
+  callRun: Run
+  callSuccess: Call succeeded
+  callFailed: Call failed
+  callInvalidJson: Arguments must be a valid JSON object
+  whitelistTip: Only whitelisted tools can be called; every call is audited
+  empty: No tool snapshot yet, sync tools first
+  readOnlyYes: Read-only
+  readOnlyNo: Writable
+  enabled: Enabled
+  disabled: Disabled
 aiKnowledge:
   upload: Upload document
   uploadTitle: Upload document
