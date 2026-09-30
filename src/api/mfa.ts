@@ -3,7 +3,7 @@ import type { TokenInfo } from "@/api/auth";
 
 /** 验证方式元数据（由后端按全局配置与用户可用性下发，文案已含翻译） */
 export interface MfaMethod {
-  /** 方式名：otp / sms / email / password */
+  /** 方式名：otp / sms / email / password / passkey / recovery（恢复码自救通道） */
   name: string;
   display_name: string;
   placeholder: string;
@@ -103,13 +103,20 @@ export const otpStartApi = () => {
   return http.request<OtpStartResult>("post", "/api/mfa/otp/start");
 };
 
-/** 确认 OTP 绑定（校验动态码后写入，自动开启登录二次验证） */
+/** 确认 OTP 绑定（校验动态码后写入，自动开启登录二次验证；data 内含一次性展示的恢复码） */
+export interface OtpConfirmResult {
+  code: number;
+  detail: string;
+  data: {
+    /** 10 个一次性恢复码，明文仅此响应内出现一次 */
+    recovery_codes: string[];
+  };
+}
+
 export const otpConfirmApi = (data?: object) => {
-  return http.request<{ code: number; detail: string }>(
-    "post",
-    "/api/mfa/otp/confirm",
-    { data }
-  );
+  return http.request<OtpConfirmResult>("post", "/api/mfa/otp/confirm", {
+    data
+  });
 };
 
 /** 关闭登录二次验证（敏感操作：保留密钥，重新开启无需重新扫码；未二次验证时返回 412 走全局验证弹窗） */
@@ -144,6 +151,29 @@ export const otpDisableApi = () => {
     "post",
     "/api/mfa/otp/disable"
   );
+};
+
+/** 恢复码剩余数量 */
+export interface RecoveryCodesStatus {
+  remaining: number;
+}
+
+/** 查询剩余恢复码数量（不回显任何码面） */
+export const recoveryCodesStatusApi = () => {
+  return http.request<{
+    code: number;
+    detail: string;
+    data: RecoveryCodesStatus;
+  }>("get", "/api/mfa/otp/recovery-codes");
+};
+
+/** 重新生成恢复码（敏感操作：旧码整批作废，明文仅此响应内出现一次；未二次验证时返回 412 走全局验证弹窗） */
+export const recoveryCodesRegenerateApi = () => {
+  return http.request<{
+    code: number;
+    detail: string;
+    data: RecoveryCodesStatus & { recovery_codes: string[] };
+  }>("post", "/api/mfa/otp/recovery-codes/regenerate");
 };
 
 /** 发送登录 MFA 挑战验证码（匿名，凭 mfa_token） */

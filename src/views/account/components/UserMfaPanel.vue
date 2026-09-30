@@ -1,14 +1,15 @@
 <script lang="ts" setup>
 /**
- * 个人 MFA 安全管理：OTP(TOTP) 绑定 / 开关 / 解绑。
+ * 个人 MFA 安全管理：OTP(TOTP) 绑定 / 开关 / 解绑 / 恢复码。
  * - 关闭：仅停用登录二次验证开关，密钥保留，重新开启时校验一次动态码即可（无需重新扫码）；
  *   关闭为敏感操作：未二次验证时后端返回 412，由 http 层全局验证弹窗接管后自动重发。
- * - 解绑：清除密钥，重新开启需重新扫码；同为敏感操作。
+ * - 解绑：清除密钥（恢复码一并作废），重新开启需重新扫码；同为敏感操作。
+ * - 恢复码：绑定确认成功时一次性展示；已绑定态可查剩余数量并重新生成（敏感操作）。
  * 排版对齐同页「基本资料 / 修改密码」tab：固定 label-width 的普通 el-form，
  * 操作按钮置于无 label 的尾部 form-item（与保存按钮列对齐）。
  */
 import { SUCCESS_CODE } from "@/api/types";
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
 import { handleOperation } from "@/components/RePlusPage";
@@ -21,6 +22,8 @@ import {
   otpStartApi,
   otpStatusApi,
   otpTestApi,
+  recoveryCodesRegenerateApi,
+  recoveryCodesStatusApi,
   type OtpStartResult,
   type OtpStatus
 } from "@/api/mfa";
@@ -46,10 +49,29 @@ const verifyCode = ref("");
 const openLoading = ref(false);
 const testLoading = ref(false);
 const code = ref("");
+/** 恢复码：剩余数量（null = 未加载）与一次性展示弹窗 */
+const recoveryRemaining = ref<number | null>(null);
+const recoveryCodes = ref<string[]>([]);
+const recoveryDialogVisible = ref(false);
+const regenerateLoading = ref(false);
+
+const recoveryRemainText = computed(() =>
+  recoveryRemaining.value === null ? "-" : String(recoveryRemaining.value)
+);
 
 const statusText = () => {
   if (status.value.enabled) return t("mfa.otpEnabled");
   return status.value.bound ? t("mfa.otpClosed") : t("mfa.otpDisabled");
+};
+
+const loadRecoveryRemaining = () => {
+  recoveryCodesStatusApi()
+    .then(res => {
+      if (res.code === SUCCESS_CODE) {
+        recoveryRemaining.value = res.data.remaining;
+      }
+    })
+    .catch(() => {});
 };
 
 const loadStatus = () => {
@@ -58,9 +80,15 @@ const loadStatus = () => {
     .then(res => {
       if (res.code === SUCCESS_CODE) {
         status.value = res.data;
+        if (res.data.bound) loadRecoveryRemaining();
       }
     })
     .finally(() => (statusLoading.value = false));
+};
+
+const showRecoveryCodes = (codes: string[]) => {
+  recoveryCodes.value = codes;
+  recoveryDialogVisible.value = true;
 };
 
 const handleStartBind = () => {
@@ -89,6 +117,9 @@ const handleConfirmBind = () => {
         bindInfo.value = null;
         code.value = "";
         loadStatus();
+        if (res.data?.recovery_codes?.length) {
+          showRecoveryCodes(res.data.recovery_codes);
+        }
       } else {
         message(res.detail, { type: "warning" });
       }
@@ -152,6 +183,28 @@ const handleDisable = () => {
   });
 };
 
+const handleRegenerate = () => {
+  regenerateLoading.value = true;
+  handleOperation({
+    t,
+    apiReq: recoveryCodesRegenerateApi(),
+    success: res => {
+      loadRecoveryRemaining();
+      if (res?.data?.recovery_codes?.length) {
+        showRecoveryCodes(res.data.recovery_codes);
+      }
+    },
+    requestEnd() {
+      regenerateLoading.value = false;
+    }
+  });
+};
+
+const handleCopyCodes = async () => {
+  await navigator.clipboard.writeText(recoveryCodes.value.join("\n"));
+  message(t("mfa.recoveryCopied"), { type: "success" });
+};
+
 onMounted(loadStatus);
 </script>
 
@@ -176,6 +229,20 @@ onMounted(loadStatus);
             show-icon
             class="mt-2! w-full!"
           />
+        </div>
+      </el-form-item>
+
+      <!-- 恢复码：已绑定即可查看剩余数量并重新生成（重新生成为敏感操作走全局验证弹窗） -->
+      <el-form-item v-if="status.bound" :label="$t('mfa.recoveryRemaining')">
+        <div class="flex w-full items-center gap-2">
+          <el-tag type="info">{{ recoveryRemainText }}</el-tag>
+          <el-button
+            size="small"
+            :loading="regenerateLoading"
+            @click="handleRegenerate"
+          >
+            {{ $t("mfa.recoveryRegenerate") }}
+          </el-button>
         </div>
       </el-form-item>
 
@@ -296,5 +363,38 @@ onMounted(loadStatus);
         </el-form-item>
       </template>
     </el-form>
+
+    <el-dialog
+      v-model="recoveryDialogVisible"
+      :title="$t('mfa.recoveryTitle')"
+      width="460px"
+      append-to-body
+      :close-on-click-modal="false"
+    >
+      <el-alert
+        :title="$t('mfa.recoveryTip')"
+        type="warning"
+        :closable="false"
+        show-icon
+        class="mb-3!"
+      />
+      <div class="grid grid-cols-2 gap-2 font-mono">
+        <span
+          v-for="item in recoveryCodes"
+          :key="item"
+          class="rounded border border-(--el-border-color-lighter) px-2 py-1 text-center text-sm"
+        >
+          {{ item }}
+        </span>
+      </div>
+      <template #footer>
+        <el-button @click="handleCopyCodes">{{
+          $t("mfa.recoveryCopyAll")
+        }}</el-button>
+        <el-button type="primary" @click="recoveryDialogVisible = false">{{
+          $t("mfa.recoverySaved")
+        }}</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>

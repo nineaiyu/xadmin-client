@@ -1182,6 +1182,13 @@ mfa:
   testSuccess: Code verified, the key is usable
   disableBind: Unbind OTP
   disableConfirmTip: Unbinding clears the key and requires re-scanning to enable again. Are you sure?
+  recoveryRemaining: Recovery codes left
+  recoveryTitle: Save your recovery codes
+  recoveryTip: Store these recovery codes somewhere safe. Use them to complete verification if you lose your authenticator device. Each code works only once and will not be shown again.
+  recoveryRegenerate: Regenerate
+  recoveryCopyAll: Copy all
+  recoveryCopied: Recovery codes copied
+  recoverySaved: I have saved them
 
 account:
   profile: Profile

@@ -1182,6 +1182,13 @@ mfa:
   testSuccess: 动态码校验通过，密钥可用
   disableBind: 解绑 OTP
   disableConfirmTip: 解绑将清除密钥，重新开启需重新扫码绑定，确定解绑？
+  recoveryRemaining: 恢复码剩余
+  recoveryTitle: 保存您的恢复码
+  recoveryTip: 请将恢复码保存在安全的地方。动态码设备丢失时，可使用恢复码完成验证；每个恢复码只能使用一次，且不会再次显示。
+  recoveryRegenerate: 重新生成
+  recoveryCopyAll: 复制全部
+  recoveryCopied: 恢复码已复制
+  recoverySaved: 我已保存
 
 account:
   profile: 个人信息
