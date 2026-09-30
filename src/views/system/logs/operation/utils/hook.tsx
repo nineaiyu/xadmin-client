@@ -3,6 +3,7 @@ import type {
   PageColumn,
   PageTableColumn
 } from "@/components/RePlusPage";
+import { formatPageColumns } from "@/components/RePlusPage";
 import { useRouter } from "vue-router";
 import { getDefaultAuths } from "@/router/utils";
 import { goUserDetail } from "@/views/system/hooks";
@@ -49,53 +50,47 @@ export function useOperationLog() {
   const operationButtonsProps = shallowRef<OperationProps>({
     width: 140
   });
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "creator":
-          column["cellRenderer"] = ({ row }) => (
-            <el-link onClick={() => onGoDetail(row)}>
-              {row.creator?.username ? row.creator?.username : "/"}
-            </el-link>
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      creator: column => {
+        column["cellRenderer"] = ({ row }) => (
+          <el-link onClick={() => onGoDetail(row)}>
+            {row.creator?.username ? row.creator?.username : "/"}
+          </el-link>
+        );
+      },
+      path: column => {
+        column["cellRenderer"] = ({ row }) => (
+          <span>
+            {row.method}: {row.path}
+          </span>
+        );
+      },
+      method: column => {
+        column.hide = true;
+      },
+      status_code: column => {
+        column["minWidth"] = 100;
+      },
+      module: column => {
+        column["minWidth"] = 200;
+      },
+      exec_time: column => {
+        // 慢请求（超阈值）标红；详情/导出含 changes 字段级 diff
+        column["cellRenderer"] = ({ row }) =>
+          h(
+            "span",
+            {
+              style:
+                row.exec_time != null &&
+                Number(row.exec_time) > slowThreshold.value
+                  ? "color:var(--el-color-danger);font-weight:600"
+                  : ""
+            },
+            row.exec_time == null ? "—" : `${Number(row.exec_time).toFixed(3)}s`
           );
-          break;
-        case "path":
-          column["cellRenderer"] = ({ row }) => (
-            <span>
-              {row.method}: {row.path}
-            </span>
-          );
-          break;
-        case "method":
-          column.hide = true;
-          break;
-        case "status_code":
-          column["minWidth"] = 100;
-          break;
-        case "module":
-          column["minWidth"] = 200;
-          break;
-        case "exec_time":
-          // 慢请求（超阈值）标红；详情/导出含 changes 字段级 diff
-          column["cellRenderer"] = ({ row }) =>
-            h(
-              "span",
-              {
-                style:
-                  row.exec_time != null &&
-                  Number(row.exec_time) > slowThreshold.value
-                    ? "color:var(--el-color-danger);font-weight:600"
-                    : ""
-              },
-              row.exec_time == null
-                ? "—"
-                : `${Number(row.exec_time).toFixed(3)}s`
-            );
-          break;
       }
     });
-    return columns;
-  };
 
   const router = useRouter();
 

@@ -11,6 +11,7 @@ import type {
   PageTableColumn,
   RePlusPageProps
 } from "@/components/RePlusPage";
+import { formatPageColumns } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Check from "~icons/ep/check";
 import RefreshLeft from "~icons/ep/refresh-left";
@@ -128,41 +129,37 @@ export function useLeave(tableRef: Ref) {
     ]
   });
 
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "leave_type":
-          column.cellRenderer = ({ row }) => {
-            const raw = row.leave_type;
-            if (raw === null || raw === undefined || raw === "") return "—";
-            if (typeof raw === "string") return raw;
-            const item = raw as { label?: string; color?: string };
-            return h(
-              ElTag,
-              item.color ? { color: item.color, style: SOLID_TAG_STYLE } : {},
-              () => item.label ?? "—"
-            );
-          };
-          break;
-        case "status":
-          column.cellRenderer = ({ row }) =>
-            h(
-              ElTag,
-              statusTagProps(row.status, LEAVE_STATUS_TAG_TYPE),
-              () =>
-                (row.status as { label?: string })?.label ??
-                t(`leaveApply.status${statusOf(row)}`)
-            );
-          break;
-        case "current_node_name":
-          column.cellRenderer = ({ row }) =>
-            row.current_node_name ||
-            (statusOf(row) === "REJECTED" ? t("leaveApply.rejectedTip") : "—");
-          break;
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      leave_type: column => {
+        column.cellRenderer = ({ row }) => {
+          const raw = row.leave_type;
+          if (raw === null || raw === undefined || raw === "") return "—";
+          if (typeof raw === "string") return raw;
+          const item = raw as { label?: string; color?: string };
+          return h(
+            ElTag,
+            item.color ? { color: item.color, style: SOLID_TAG_STYLE } : {},
+            () => item.label ?? "—"
+          );
+        };
+      },
+      status: column => {
+        column.cellRenderer = ({ row }) =>
+          h(
+            ElTag,
+            statusTagProps(row.status, LEAVE_STATUS_TAG_TYPE),
+            () =>
+              (row.status as { label?: string })?.label ??
+              t(`leaveApply.status${statusOf(row)}`)
+          );
+      },
+      current_node_name: column => {
+        column.cellRenderer = ({ row }) =>
+          row.current_node_name ||
+          (statusOf(row) === "REJECTED" ? t("leaveApply.rejectedTip") : "—");
       }
     });
-    return columns;
-  };
 
   const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
     props: {

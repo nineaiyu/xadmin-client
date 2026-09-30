@@ -10,6 +10,7 @@ import { formatDateTime } from "@/utils";
 import { message } from "@/utils/message";
 import { choiceValue, statusTagProps, type StatusTagType } from "@/utils/dict";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
+import { formatPageColumns } from "@/components/RePlusPage";
 import {
   datasetApi,
   type DatasetItem,
@@ -57,48 +58,44 @@ export function useDataset(tableRef: Ref) {
   const visibilityLabel = (value: string) =>
     value === "shared" ? t("dataDataset.shared") : t("dataDataset.personal");
 
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "visibility":
-          column["cellRenderer"] = ({ row }) => {
-            const raw = (row as DatasetItem).visibility;
-            const value = choiceValue(raw);
-            return h(
-              ElTag,
-              { size: "small", ...statusTagProps(raw, VISIBILITY_TAG) },
-              () => visibilityLabel(value)
-            );
-          };
-          break;
-        case "bound_model":
-          column["minWidth"] = 160;
-          break;
-        case "description":
-          column["minWidth"] = 180;
-          break;
-        case "report_count":
-          // 联动：被几张定时报表引用（后端关联计数）可点击，跳转报表页按数据集筛选
-          column["minWidth"] = 100;
-          column["cellRenderer"] = ({ row }) =>
-            h(
-              ElLink,
-              {
-                type: "primary",
-                underline: false,
-                onClick: () =>
-                  router.push({
-                    path: "/analysis/report/index",
-                    query: { dataset: String(row.pk) }
-                  })
-              },
-              () => String(row.report_count ?? 0)
-            );
-          break;
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      visibility: column => {
+        column["cellRenderer"] = ({ row }) => {
+          const raw = (row as DatasetItem).visibility;
+          const value = choiceValue(raw);
+          return h(
+            ElTag,
+            { size: "small", ...statusTagProps(raw, VISIBILITY_TAG) },
+            () => visibilityLabel(value)
+          );
+        };
+      },
+      bound_model: column => {
+        column["minWidth"] = 160;
+      },
+      description: column => {
+        column["minWidth"] = 180;
+      },
+      report_count: column => {
+        // 联动：被几张定时报表引用（后端关联计数）可点击，跳转报表页按数据集筛选
+        column["minWidth"] = 100;
+        column["cellRenderer"] = ({ row }) =>
+          h(
+            ElLink,
+            {
+              type: "primary",
+              underline: false,
+              onClick: () =>
+                router.push({
+                  path: "/analysis/report/index",
+                  query: { dataset: String(row.pk) }
+                })
+            },
+            () => String(row.report_count ?? 0)
+          );
       }
     });
-    return columns;
-  };
 
   /* ---------------- 执行预览（只读展示弹窗，C5 既定保留手写） ---------------- */
   const previewDialog = ref(false);

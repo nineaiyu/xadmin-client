@@ -31,6 +31,7 @@ import type {
   PageTableColumn,
   RePlusPageProps
 } from "@/components/RePlusPage";
+import { formatPageColumns } from "@/components/RePlusPage";
 import type {
   FieldLookupItem,
   FieldLookupNode,
@@ -247,42 +248,39 @@ export function useDataPermission() {
     );
   };
 
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      const key = column._column?.key as string;
-      switch (key) {
-        case "name":
-          column["minWidth"] = 180;
-          break;
-        case "mode_type":
-          column["width"] = 110;
-          column["cellRenderer"] = ({ row }) =>
-            modeTag(row.mode_type, Number(row.rule_count ?? 0));
-          break;
-        // 统计列的表头文案走 `systemPermission.<字段名>` 词条（rule_count / menu_count /
-        // user_count / dept_count），与框架 formatPublicLabels 的口径一致
-        case "rule_count":
-          column["width"] = 90;
-          column["cellRenderer"] = ({ row }) => String(row.rule_count ?? 0);
-          break;
-        case "menu_count":
-          column["minWidth"] = 150;
-          column["cellRenderer"] = ({ row }) => scopeTag(row.menu_count);
-          break;
-        case "user_count":
-        case "dept_count":
-          column["width"] = 100;
-          column["cellRenderer"] = ({ row }) => String(row[key] ?? 0);
-          break;
-        case "created_time":
-          column["width"] = 170;
-          break;
-        default:
-          break;
+  // 统计列共用渲染（user_count / dept_count 同口径；取值键随列而定）
+  const formatCountColumn = (column: PageTableColumn) => {
+    column["width"] = 100;
+    column["cellRenderer"] = ({ row }) =>
+      String(row[column._column?.key as string] ?? 0);
+  };
+
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      name: column => {
+        column["minWidth"] = 180;
+      },
+      mode_type: column => {
+        column["width"] = 110;
+        column["cellRenderer"] = ({ row }) =>
+          modeTag(row.mode_type, Number(row.rule_count ?? 0));
+      },
+      // 统计列的表头文案走 `systemPermission.<字段名>` 词条（rule_count / menu_count /
+      // user_count / dept_count），与框架 formatPublicLabels 的口径一致
+      rule_count: column => {
+        column["width"] = 90;
+        column["cellRenderer"] = ({ row }) => String(row.rule_count ?? 0);
+      },
+      menu_count: column => {
+        column["minWidth"] = 150;
+        column["cellRenderer"] = ({ row }) => scopeTag(row.menu_count);
+      },
+      user_count: formatCountColumn,
+      dept_count: formatCountColumn,
+      created_time: column => {
+        column["width"] = 170;
       }
     });
-    return columns;
-  };
 
   return {
     api,

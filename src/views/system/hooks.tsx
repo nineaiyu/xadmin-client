@@ -1,10 +1,19 @@
 // 抽离可公用的工具函数等用于系统管理页面逻辑
 import type { Router } from "vue-router";
-import type { VNode } from "vue";
+import { getCurrentInstance, reactive, type VNode } from "vue";
 import { cloneDeep, isNullOrUnDef } from "@pureadmin/utils";
-import { hasAuth } from "@/router/utils";
+import { getDefaultAuths, hasAuth } from "@/router/utils";
 import type { RecordType } from "plus-pro-components";
 import { formatPublicLabels, type PageColumn } from "@/components/RePlusPage";
+
+/**
+ * 列表页权限位装配（列表页 hook 共用）：
+ * 默认按钮位（list/create/update/…）与页面专用位（extraKeys）经
+ * getDefaultAuths 统一扫描为 reactive 权限表，页面 `auth.xxx` 读取口径不变。
+ */
+export function usePageAuth(extraKeys: string[] = []) {
+  return reactive(getDefaultAuths(getCurrentInstance(), extraKeys));
+}
 
 // 以下工具已收敛到 RePlusPage 框架层（消除双份实现），此处保留同名出口以兼容既有调用方
 export { formatAddOrEditOptions as formatOptions } from "@/components/RePlusPage";

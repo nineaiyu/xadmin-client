@@ -6,7 +6,8 @@ import { message } from "@/utils/message";
 import {
   handleOperation,
   type OperationProps,
-  type PageTableColumn
+  type PageTableColumn,
+  formatPageColumns
 } from "@/components/RePlusPage";
 import {
   webhookDeliveryApi,
@@ -46,34 +47,30 @@ export function useWebhookDelivery(tableRef: Ref) {
   const auth = reactive({ ...getDefaultAuths("WebhookDelivery") });
   const canRetry = hasAuth("retry:WebhookDelivery");
 
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "status":
-          column["cellRenderer"] = ({ row }) => {
-            const status = (row as WebhookDeliveryItem).status;
-            const value = statusValue(status);
-            const label =
-              typeof status === "object" && status !== null
-                ? (status.label ?? value)
-                : value;
-            return h(
-              ElTag,
-              {
-                size: "small",
-                ...statusTagProps(status as StatusValue, DELIVERY_STATUS_TAG)
-              },
-              () => label
-            );
-          };
-          break;
-        case "response_body":
-          column["minWidth"] = 200;
-          break;
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      status: column => {
+        column["cellRenderer"] = ({ row }) => {
+          const status = (row as WebhookDeliveryItem).status;
+          const value = statusValue(status);
+          const label =
+            typeof status === "object" && status !== null
+              ? (status.label ?? value)
+              : value;
+          return h(
+            ElTag,
+            {
+              size: "small",
+              ...statusTagProps(status as StatusValue, DELIVERY_STATUS_TAG)
+            },
+            () => label
+          );
+        };
+      },
+      response_body: column => {
+        column["minWidth"] = 200;
       }
     });
-    return columns;
-  };
 
   const retry = (row: WebhookDeliveryItem, loading?: { value: boolean }) => {
     if (loading) loading.value = true;

@@ -19,6 +19,7 @@ import type {
   PageTableColumn,
   RePlusPageProps
 } from "@/components/RePlusPage";
+import { formatPageColumns } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import View from "~icons/ep/view";
 import MaskPreview from "../components/MaskPreview.vue";
@@ -211,30 +212,24 @@ export function useMask() {
     }
   });
 
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "mask_type":
-          // labeled_choice 可能为字符串或 {value,label}，做兼容展示
-          column.cellRenderer = ({ row }) =>
-            (row.mask_type as { label?: string })?.label ??
-            row.mask_type ??
-            "—";
-          break;
-        case "roles":
-          // M2M 输出 [ {pk,name} ]，默认逗号连接名字展示
-          column.cellRenderer = ({ row }) =>
-            Array.isArray(row.roles)
-              ? (row.roles as Array<{ name?: string }>)
-                  .map(r => r?.name ?? "")
-                  .filter(Boolean)
-                  .join(", ") || "—"
-              : (row.roles ?? "—");
-          break;
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      mask_type: column => {
+        // labeled_choice 可能为字符串或 {value,label}，做兼容展示
+        column.cellRenderer = ({ row }) =>
+          (row.mask_type as { label?: string })?.label ?? row.mask_type ?? "—";
+      },
+      roles: column => {
+        // M2M 输出 [ {pk,name} ]，默认逗号连接名字展示
+        column.cellRenderer = ({ row }) =>
+          Array.isArray(row.roles)
+            ? (row.roles as Array<{ name?: string }>)
+                .map(r => r?.name ?? "")
+                .filter(Boolean)
+                .join(", ") || "—"
+            : (row.roles ?? "—");
       }
     });
-    return columns;
-  };
 
   return {
     api,

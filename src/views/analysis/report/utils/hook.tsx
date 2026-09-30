@@ -10,6 +10,7 @@ import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
+import { formatPageColumns } from "@/components/RePlusPage";
 import {
   reportApi,
   runReport,
@@ -91,42 +92,38 @@ export function useReport(tableRef: Ref) {
       )
       .join(", ");
 
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "dataset":
-          column["minWidth"] = 140;
-          column["cellRenderer"] = ({ row }) =>
-            h("span", datasetName((row as ReportItem).dataset));
-          break;
-        case "frequency":
-          column["cellRenderer"] = ({ row }) =>
-            h("span", dictLabel((row as ReportItem).frequency));
-          break;
-        case "recipients":
-          column["minWidth"] = 180;
-          column["cellRenderer"] = ({ row }) =>
-            h("span", ((row as ReportItem).recipients || []).join(", ") || "—");
-          break;
-        case "notify_channels":
-          column["cellRenderer"] = ({ row }) =>
-            h("span", channelLabels((row as ReportItem).notify_channels));
-          break;
-        case "last_status":
-          column["cellRenderer"] = ({ row }) => {
-            const status = (row as ReportItem).last_status;
-            if (!status) return h("span", "-");
-            return h(
-              ElTag,
-              { size: "small", ...statusTagProps(status, REPORT_STATUS_TAG) },
-              () => dictLabel(status)
-            );
-          };
-          break;
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      dataset: column => {
+        column["minWidth"] = 140;
+        column["cellRenderer"] = ({ row }) =>
+          h("span", datasetName((row as ReportItem).dataset));
+      },
+      frequency: column => {
+        column["cellRenderer"] = ({ row }) =>
+          h("span", dictLabel((row as ReportItem).frequency));
+      },
+      recipients: column => {
+        column["minWidth"] = 180;
+        column["cellRenderer"] = ({ row }) =>
+          h("span", ((row as ReportItem).recipients || []).join(", ") || "—");
+      },
+      notify_channels: column => {
+        column["cellRenderer"] = ({ row }) =>
+          h("span", channelLabels((row as ReportItem).notify_channels));
+      },
+      last_status: column => {
+        column["cellRenderer"] = ({ row }) => {
+          const status = (row as ReportItem).last_status;
+          if (!status) return h("span", "-");
+          return h(
+            ElTag,
+            { size: "small", ...statusTagProps(status, REPORT_STATUS_TAG) },
+            () => dictLabel(status)
+          );
+        };
       }
     });
-    return columns;
-  };
 
   const run = async (row: ReportItem, loading?: { value: boolean }) => {
     if (loading) loading.value = true;

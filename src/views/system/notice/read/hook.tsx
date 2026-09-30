@@ -14,6 +14,7 @@ import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { goUserDetail } from "@/views/system/hooks";
 import { useI18n } from "vue-i18n";
 import type { PageTableColumn, OperationProps } from "@/components/RePlusPage";
+import { formatPageColumns } from "@/components/RePlusPage";
 import { renderSwitch, usePublicHooks } from "@/components/RePlusPage";
 import NoticeShowForm from "@/views/system/components/NoticeShow.vue";
 
@@ -54,51 +55,47 @@ export function useNoticeRead(tableRef: Ref) {
       }
     ]
   });
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "notice_info":
-          column["cellRenderer"] = ({ row }) => (
-            <el-link
-              type={row.notice_info?.level?.value}
-              onClick={() => onGoNoticeDetail(row)}
-            >
-              {row.notice_info.title}
-            </el-link>
-          );
-          break;
-        case "owner":
-          column["cellRenderer"] = ({ row }) => (
-            <el-link onClick={() => onGoUserDetail(row)}>
-              {row.owner?.username ? row.owner?.username : "/"}
-            </el-link>
-          );
-          break;
-        case "unread":
-          column["cellRenderer"] = renderSwitch({
-            t,
-            updateApi: api.state,
-            switchLoadMap,
-            switchStyle,
-            field: column.prop as string,
-            disabled: () => !auth.state,
-            success() {
-              tableRef.value.handleGetData();
-            },
-            actionMap: {
-              true: t("labels.read"),
-              false: t("labels.unread")
-            },
-            activeMap: {
-              false: true,
-              true: false
-            }
-          });
-          break;
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      notice_info: column => {
+        column["cellRenderer"] = ({ row }) => (
+          <el-link
+            type={row.notice_info?.level?.value}
+            onClick={() => onGoNoticeDetail(row)}
+          >
+            {row.notice_info.title}
+          </el-link>
+        );
+      },
+      owner: column => {
+        column["cellRenderer"] = ({ row }) => (
+          <el-link onClick={() => onGoUserDetail(row)}>
+            {row.owner?.username ? row.owner?.username : "/"}
+          </el-link>
+        );
+      },
+      unread: column => {
+        column["cellRenderer"] = renderSwitch({
+          t,
+          updateApi: api.state,
+          switchLoadMap,
+          switchStyle,
+          field: column.prop as string,
+          disabled: () => !auth.state,
+          success() {
+            tableRef.value.handleGetData();
+          },
+          actionMap: {
+            true: t("labels.read"),
+            false: t("labels.unread")
+          },
+          activeMap: {
+            false: true,
+            true: false
+          }
+        });
       }
     });
-    return columns;
-  };
   const router = useRouter();
 
   /** 行内 `owner` 嵌套字段（点击跳转 SystemUser 详情） */

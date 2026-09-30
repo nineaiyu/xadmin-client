@@ -8,6 +8,7 @@ import { message } from "@/utils/message";
 import { SOLID_TAG_STYLE } from "@/utils/tagTone";
 import { SUCCESS_CODE } from "@/api/types";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
+import { formatPageColumns } from "@/components/RePlusPage";
 import { tagApi, type TagItem } from "@/api/system/tag";
 import TagForm from "../components/TagForm.vue";
 
@@ -32,43 +33,39 @@ export function useTags(tableRef: Ref) {
 
   const refresh = () => tableRef.value?.handleGetData();
 
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "color":
-          column["cellRenderer"] = ({ row }) => {
-            const color = (row as TagItem).color;
-            return color
-              ? h(ElTag, {
-                  size: "small",
-                  color,
-                  style: SOLID_TAG_STYLE
-                })
-              : h("span", "-");
-          };
-          break;
-        case "usage_count":
-          column["cellRenderer"] = ({ row }) => {
-            const count = (row as TagItem).usage_count ?? 0;
-            return h(
-              ElTag,
-              { size: "small", type: count ? "success" : "info" },
-              () => String(count)
-            );
-          };
-          break;
-        case "builtin":
-          column["cellRenderer"] = ({ row }) =>
-            (row as TagItem).builtin
-              ? h(ElTag, { size: "small", type: "warning" }, () =>
-                  t("tag.builtin")
-                )
-              : h("span", "-");
-          break;
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      color: column => {
+        column["cellRenderer"] = ({ row }) => {
+          const color = (row as TagItem).color;
+          return color
+            ? h(ElTag, {
+                size: "small",
+                color,
+                style: SOLID_TAG_STYLE
+              })
+            : h("span", "-");
+        };
+      },
+      usage_count: column => {
+        column["cellRenderer"] = ({ row }) => {
+          const count = (row as TagItem).usage_count ?? 0;
+          return h(
+            ElTag,
+            { size: "small", type: count ? "success" : "info" },
+            () => String(count)
+          );
+        };
+      },
+      builtin: column => {
+        column["cellRenderer"] = ({ row }) =>
+          (row as TagItem).builtin
+            ? h(ElTag, { size: "small", type: "warning" }, () =>
+                t("tag.builtin")
+              )
+            : h("span", "-");
       }
     });
-    return columns;
-  };
 
   /* ---------------- 新建 / 编辑（ReDialog + TagForm） ---------------- */
   const formRef = ref<InstanceType<typeof TagForm>>();

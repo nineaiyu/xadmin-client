@@ -1,18 +1,12 @@
-import {
-  getCurrentInstance,
-  h,
-  reactive,
-  ref,
-  shallowRef,
-  type Ref
-} from "vue";
+import { h, reactive, ref, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessage } from "element-plus";
 import { loginPolicyApi } from "@/api/system/security";
-import { getDefaultAuths, hasAuth, type Auths } from "@/router/utils";
+import { hasAuth } from "@/router/utils";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { handleOperation, type OperationProps } from "@/components/RePlusPage";
+import { usePageAuth } from "@/views/system/hooks";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import type { RecordType } from "plus-pro-components";
 import AddFill from "~icons/ri/add-circle-line";
@@ -31,14 +25,12 @@ export function useLoginPolicy(tableRef: Ref) {
 
   const api = reactive(loginPolicyApi);
   // 关闭框架内建的增/改入口：本页统一走 LoginPolicyForm 自定义弹窗。
-  // 必须写在展开之后——`getDefaultAuths` 的返回值含 create/update，
-  // 放在展开之前会被真实权限值覆盖，导致工具栏同时出现「新增」与「新增策略」
-  // 两个入口，且框架默认入口按元数据自动成表（weekdays 数组会渲染成 JSON 编辑器）。
-  const auth = reactive<Auths>({
-    ...getDefaultAuths(getCurrentInstance(), ["preview"]),
-    create: false,
-    update: false
-  });
+  // 必须在 usePageAuth 之后覆写——默认返回值含 create/update，否则工具栏会
+  // 同时出现「新增」与「新增策略」两个入口，且框架默认入口按元数据自动成表
+  // （weekdays 数组会渲染成 JSON 编辑器）。
+  const auth = usePageAuth(["preview"]);
+  auth.create = false;
+  auth.update = false;
 
   const formRef = ref();
 

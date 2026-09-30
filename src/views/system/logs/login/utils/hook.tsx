@@ -8,7 +8,8 @@ import {
   type PageTableColumn,
   type OperationProps,
   renderBooleanTag,
-  handleOperation
+  handleOperation,
+  formatPageColumns
 } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Logout from "~icons/ri/logout-circle-r-line";
@@ -55,40 +56,36 @@ export function useLoginLog(tableRef: Ref) {
       }
     ]
   });
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "creator":
-          column["cellRenderer"] = ({ row }) => (
-            <el-link onClick={() => onGoDetail(row)}>
-              {row.creator?.username ? row.creator?.username : "/"}
-            </el-link>
-          );
-          break;
-        case "status":
-          column["cellRenderer"] = renderBooleanTag({
-            t,
-            tagStyle,
-            field: column.prop as string,
-            actionMap: { true: t("labels.success"), false: t("labels.failed") }
-          });
-          break;
-        case "online":
-          column["cellRenderer"] = renderBooleanTag({
-            t,
-            tagStyle,
-            field: column.prop as string,
-            actionMap: {
-              true: t("labels.online"),
-              false: t("labels.offline"),
-              "-1": "/"
-            }
-          });
-          break;
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      creator: column => {
+        column["cellRenderer"] = ({ row }) => (
+          <el-link onClick={() => onGoDetail(row)}>
+            {row.creator?.username ? row.creator?.username : "/"}
+          </el-link>
+        );
+      },
+      status: column => {
+        column["cellRenderer"] = renderBooleanTag({
+          t,
+          tagStyle,
+          field: column.prop as string,
+          actionMap: { true: t("labels.success"), false: t("labels.failed") }
+        });
+      },
+      online: column => {
+        column["cellRenderer"] = renderBooleanTag({
+          t,
+          tagStyle,
+          field: column.prop as string,
+          actionMap: {
+            true: t("labels.online"),
+            false: t("labels.offline"),
+            "-1": "/"
+          }
+        });
       }
     });
-    return columns;
-  };
 
   /** 行内 `creator` 嵌套字段（点击跳转 SystemUser 详情） */
   type CreatorRow = {

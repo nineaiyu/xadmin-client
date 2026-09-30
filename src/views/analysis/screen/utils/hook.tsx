@@ -13,6 +13,7 @@ import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { choiceValue, statusTagProps, type StatusTagType } from "@/utils/dict";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
+import { formatPageColumns } from "@/components/RePlusPage";
 import {
   listDashboards,
   screenApi,
@@ -62,34 +63,27 @@ export function useScreen(tableRef: Ref) {
   const visibilityLabel = (value: string) =>
     value === "shared" ? t("dataScreen.shared") : t("dataScreen.personal");
 
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "dashboards":
-          column["minWidth"] = 220;
-          column["cellRenderer"] = ({ row }) => {
-            const pks = (row as ScreenItem).dashboards || [];
-            return h(
-              "span",
-              pks.map(pk => dashboardName(pk)).join(" → ") || "—"
-            );
-          };
-          break;
-        case "visibility":
-          column["cellRenderer"] = ({ row }) => {
-            const raw = (row as ScreenItem).visibility;
-            const value = choiceValue(raw);
-            return h(
-              ElTag,
-              { size: "small", ...statusTagProps(raw, VISIBILITY_TAG) },
-              () => visibilityLabel(value)
-            );
-          };
-          break;
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      dashboards: column => {
+        column["minWidth"] = 220;
+        column["cellRenderer"] = ({ row }) => {
+          const pks = (row as ScreenItem).dashboards || [];
+          return h("span", pks.map(pk => dashboardName(pk)).join(" → ") || "—");
+        };
+      },
+      visibility: column => {
+        column["cellRenderer"] = ({ row }) => {
+          const raw = (row as ScreenItem).visibility;
+          const value = choiceValue(raw);
+          return h(
+            ElTag,
+            { size: "small", ...statusTagProps(raw, VISIBILITY_TAG) },
+            () => visibilityLabel(value)
+          );
+        };
       }
     });
-    return columns;
-  };
 
   /** 投屏：新开独立全屏页（隐藏静态路由，保留原交互） */
   const display = (row: ScreenItem) => {

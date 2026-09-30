@@ -8,6 +8,7 @@ import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { SUCCESS_CODE } from "@/api/types";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
+import { formatPageColumns } from "@/components/RePlusPage";
 import { postApi, type PostItem } from "@/api/system/post";
 import PostForm from "../components/PostForm.vue";
 import PostMembersDialog from "../components/PostMembersDialog.vue";
@@ -37,29 +38,25 @@ export function usePosts(tableRef: Ref) {
 
   const refresh = () => tableRef.value?.handleGetData();
 
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "is_active":
-          column["cellRenderer"] = ({ row }) =>
-            (row as PostItem).is_active
-              ? h(ElTag, { size: "small", type: "success" }, () =>
-                  t("post.enabled")
-                )
-              : h(ElTag, { size: "small", type: "info" }, () =>
-                  t("post.disabled")
-                );
-          break;
-        case "user_count":
-          column["cellRenderer"] = ({ row }) =>
-            h(ElTag, { size: "small", type: "primary" }, () =>
-              String((row as PostItem).user_count ?? 0)
-            );
-          break;
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      is_active: column => {
+        column["cellRenderer"] = ({ row }) =>
+          (row as PostItem).is_active
+            ? h(ElTag, { size: "small", type: "success" }, () =>
+                t("post.enabled")
+              )
+            : h(ElTag, { size: "small", type: "info" }, () =>
+                t("post.disabled")
+              );
+      },
+      user_count: column => {
+        column["cellRenderer"] = ({ row }) =>
+          h(ElTag, { size: "small", type: "primary" }, () =>
+            String((row as PostItem).user_count ?? 0)
+          );
       }
     });
-    return columns;
-  };
 
   /* ---------------- 新建 / 编辑（ReDialog + PostForm） ---------------- */
   const formRef = ref<InstanceType<typeof PostForm>>();

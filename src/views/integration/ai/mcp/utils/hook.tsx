@@ -7,6 +7,7 @@ import { dialogSize } from "@/components/ReDialog/size";
 import { addDrawer } from "@/components/ReDrawer";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
+import { formatPageColumns } from "@/components/RePlusPage";
 import { mcpServerApi, type McpServerItem } from "@/api/ai/mcp";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
@@ -108,46 +109,42 @@ export function useMcpServers(tableRef: Ref) {
   };
 
   /* ---------------- 列渲染（入口 + 只读状态） ---------------- */
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "name":
-          column["cellRenderer"] = ({ row }) => {
-            const item = row as McpRow;
-            return h(
-              ElLink,
-              { type: "primary", onClick: () => openTools(item) },
-              () => item.name
-            );
-          };
-          break;
-        case "enabled":
-          // 只读状态标签：编辑入口收敛到表单弹窗（避免禁用态开关的重复入口）
-          column["cellRenderer"] = ({ row, props }) => {
-            const enabled = Boolean((row as McpRow).enabled);
-            return h(
-              ElTag,
-              {
-                type: enabled ? "success" : "danger",
-                size: props.size,
-                effect: "plain"
-              },
-              () => (enabled ? t("mcp.enabled") : t("mcp.disabled"))
-            );
-          };
-          break;
-        case "last_sync_error":
-          column["cellRenderer"] = ({ row }) => {
-            const detail = String((row as McpRow).last_sync_error || "");
-            return detail
-              ? h("span", { class: "text-(--el-color-danger) text-xs" }, detail)
-              : h("span", {}, "-");
-          };
-          break;
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      name: column => {
+        column["cellRenderer"] = ({ row }) => {
+          const item = row as McpRow;
+          return h(
+            ElLink,
+            { type: "primary", onClick: () => openTools(item) },
+            () => item.name
+          );
+        };
+      },
+      enabled: column => {
+        // 只读状态标签：编辑入口收敛到表单弹窗（避免禁用态开关的重复入口）
+        column["cellRenderer"] = ({ row, props }) => {
+          const enabled = Boolean((row as McpRow).enabled);
+          return h(
+            ElTag,
+            {
+              type: enabled ? "success" : "danger",
+              size: props.size,
+              effect: "plain"
+            },
+            () => (enabled ? t("mcp.enabled") : t("mcp.disabled"))
+          );
+        };
+      },
+      last_sync_error: column => {
+        column["cellRenderer"] = ({ row }) => {
+          const detail = String((row as McpRow).last_sync_error || "");
+          return detail
+            ? h("span", { class: "text-(--el-color-danger) text-xs" }, detail)
+            : h("span", {}, "-");
+        };
       }
     });
-    return columns;
-  };
 
   const tableBarButtonsProps = shallowRef<OperationProps>({
     buttons: [

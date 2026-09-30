@@ -1,22 +1,16 @@
 import { SUCCESS_CODE } from "@/api/types";
-import {
-  getCurrentInstance,
-  h,
-  onMounted,
-  reactive,
-  ref,
-  shallowRef
-} from "vue";
+import { h, onMounted, reactive, ref, shallowRef } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElButton, ElMessageBox, ElTag } from "element-plus";
 import type { DialogOptions } from "@/components/ReDialog";
 import { addDialog, closeDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { addDrawer } from "@/components/ReDrawer";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
+import { usePageAuth } from "@/views/system/hooks";
 import type { RecordType } from "plus-pro-components";
 import {
   submissionApi,
@@ -64,15 +58,13 @@ export function useFormMySubmissions() {
   const forms = ref<FillableFormItem[]>([]);
 
   const api = reactive(submissionApi);
-  const auth = reactive({
-    ...getDefaultAuths(getCurrentInstance(), [
-      "submit",
-      "resubmit",
-      "exportData",
-      "availableForms",
-      "userOptions"
-    ])
-  });
+  const auth = usePageAuth([
+    "submit",
+    "resubmit",
+    "exportData",
+    "availableForms",
+    "userOptions"
+  ]);
   // 本页「新增」入口是顶部可填表单卡片（选择表单填报），关闭表格工具栏的默认新增
   auth.create = false;
 

@@ -7,7 +7,8 @@ import { getCurrentInstance, reactive, shallowRef, type Ref } from "vue";
 import {
   handleOperation,
   type PageTableColumn,
-  type OperationProps
+  type OperationProps,
+  formatPageColumns
 } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
@@ -125,20 +126,16 @@ export function useUserOnline(tableRef: Ref) {
     ]
   });
 
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "creator":
-          column["cellRenderer"] = ({ row }) => (
-            <el-link onClick={() => onGoDetail(row)}>
-              {row.creator?.username ? row.creator?.username : "/"}
-            </el-link>
-          );
-          break;
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      creator: column => {
+        column["cellRenderer"] = ({ row }) => (
+          <el-link onClick={() => onGoDetail(row)}>
+            {row.creator?.username ? row.creator?.username : "/"}
+          </el-link>
+        );
       }
     });
-    return columns;
-  };
 
   /** 行内 `creator` 嵌套字段（点击跳转 SystemUser 详情） */
   function onGoDetail(row: OnlineRow) {

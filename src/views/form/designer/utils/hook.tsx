@@ -7,6 +7,7 @@ import { dialogSize } from "@/components/ReDialog/size";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
+import { formatPageColumns } from "@/components/RePlusPage";
 import {
   dynamicFormApi,
   type DynamicFormItem,
@@ -41,40 +42,36 @@ export function useFormDesigner(tableRef: Ref) {
   const canHistory = hasAuth("schemaHistory:FormDesigner");
   const canRollback = hasAuth("rollback:FormDesigner");
 
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "schema":
-          column["cellRenderer"] = ({ row }) =>
-            h(
-              "span",
-              String(((row as DynamicFormItem).schema?.fields ?? []).length)
-            );
-          break;
-        case "is_active":
-          column["cellRenderer"] = ({ row }) => {
-            const active = (row as DynamicFormItem).is_active;
-            return h(
-              ElTag,
-              { size: "small", type: active ? "success" : "info" },
-              () => (active ? t("dform.active") : t("dform.inactive"))
-            );
-          };
-          break;
-        case "approval_required":
-          column["cellRenderer"] = ({ row }) => {
-            const required = (row as DynamicFormItem).approval_required;
-            return h(
-              ElTag,
-              { size: "small", type: required ? "warning" : "info" },
-              () => (required ? t("dform.approvalOn") : t("dform.approvalOff"))
-            );
-          };
-          break;
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      schema: column => {
+        column["cellRenderer"] = ({ row }) =>
+          h(
+            "span",
+            String(((row as DynamicFormItem).schema?.fields ?? []).length)
+          );
+      },
+      is_active: column => {
+        column["cellRenderer"] = ({ row }) => {
+          const active = (row as DynamicFormItem).is_active;
+          return h(
+            ElTag,
+            { size: "small", type: active ? "success" : "info" },
+            () => (active ? t("dform.active") : t("dform.inactive"))
+          );
+        };
+      },
+      approval_required: column => {
+        column["cellRenderer"] = ({ row }) => {
+          const required = (row as DynamicFormItem).approval_required;
+          return h(
+            ElTag,
+            { size: "small", type: required ? "warning" : "info" },
+            () => (required ? t("dform.approvalOn") : t("dform.approvalOff"))
+          );
+        };
       }
     });
-    return columns;
-  };
 
   /* ---------------- 新建 / 编辑（ReDialog + DynamicFormForm） ---------------- */
   const formRef = ref<InstanceType<typeof DynamicFormForm>>();

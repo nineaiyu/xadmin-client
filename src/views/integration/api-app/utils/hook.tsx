@@ -13,6 +13,7 @@ import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { buildScopeIndex, formatScopeLines } from "@/utils/scopeDisplay";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
+import { formatPageColumns } from "@/components/RePlusPage";
 import {
   apiApplicationApi,
   loadScopeCatalog,
@@ -185,66 +186,62 @@ export function useApiApplication(tableRef: Ref) {
     .catch(() => undefined);
 
   /* ---------------- 列渲染 ---------------- */
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "name":
-          // 应用名同为「管理」抽屉入口：名称即实体标识，点击最直观
-          column["cellRenderer"] = ({ row }) => {
-            const item = row as ApiApplicationItem;
-            return h(
-              ElLink,
-              {
-                type: "primary",
-                onClick: () => openApiAppPanel(item)
-              },
-              () => item.name
-            );
-          };
-          break;
-        case "scopes":
-          // 明细走 tooltip：条目本体是锚定正则，列内只显示条数，hover 看到可读路径
-          column["minWidth"] = 130;
-          column["cellRenderer"] = ({ row }) => {
-            const scopes = (row as ApiApplicationItem).scopes ?? [];
-            if (!scopes.length) return t("apiApp.unlimited");
-            return h(
-              ElTooltip,
-              { placement: "top" },
-              {
-                default: () =>
-                  h(ElTag, { type: "info", size: "small" }, () =>
-                    t("apiApp.scopeCount", { n: scopes.length })
-                  ),
-                content: () =>
-                  h(
-                    "div",
-                    {
-                      class: "text-xs",
-                      style: { maxWidth: "420px", whiteSpace: "pre-line" }
-                    },
-                    formatScopeLines(scopes, scopeIndex.value)
-                  )
-              }
-            );
-          };
-          break;
-        case "is_active":
-          column["cellRenderer"] = ({ row }) =>
-            h(ElSwitch, {
-              modelValue: (row as ApiApplicationItem).is_active,
-              disabled: !canEdit,
-              "onUpdate:modelValue": (value: string | number | boolean) =>
-                toggleActive(row as ApiApplicationItem, value as boolean)
-            });
-          break;
-        case "client_id":
-          column["minWidth"] = 220;
-          break;
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      name: column => {
+        // 应用名同为「管理」抽屉入口：名称即实体标识，点击最直观
+        column["cellRenderer"] = ({ row }) => {
+          const item = row as ApiApplicationItem;
+          return h(
+            ElLink,
+            {
+              type: "primary",
+              onClick: () => openApiAppPanel(item)
+            },
+            () => item.name
+          );
+        };
+      },
+      scopes: column => {
+        // 明细走 tooltip：条目本体是锚定正则，列内只显示条数，hover 看到可读路径
+        column["minWidth"] = 130;
+        column["cellRenderer"] = ({ row }) => {
+          const scopes = (row as ApiApplicationItem).scopes ?? [];
+          if (!scopes.length) return t("apiApp.unlimited");
+          return h(
+            ElTooltip,
+            { placement: "top" },
+            {
+              default: () =>
+                h(ElTag, { type: "info", size: "small" }, () =>
+                  t("apiApp.scopeCount", { n: scopes.length })
+                ),
+              content: () =>
+                h(
+                  "div",
+                  {
+                    class: "text-xs",
+                    style: { maxWidth: "420px", whiteSpace: "pre-line" }
+                  },
+                  formatScopeLines(scopes, scopeIndex.value)
+                )
+            }
+          );
+        };
+      },
+      is_active: column => {
+        column["cellRenderer"] = ({ row }) =>
+          h(ElSwitch, {
+            modelValue: (row as ApiApplicationItem).is_active,
+            disabled: !canEdit,
+            "onUpdate:modelValue": (value: string | number | boolean) =>
+              toggleActive(row as ApiApplicationItem, value as boolean)
+          });
+      },
+      client_id: column => {
+        column["minWidth"] = 220;
       }
     });
-    return columns;
-  };
 
   /* ---------------- 新建 / 编辑（ReDialog + ApiApplicationForm） ---------------- */
   const formRef = ref<InstanceType<typeof ApiApplicationForm>>();

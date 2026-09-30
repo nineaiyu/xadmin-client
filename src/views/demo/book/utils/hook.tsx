@@ -1,12 +1,13 @@
 import { bookApi } from "./api";
-import { getCurrentInstance, h, reactive, type Ref, shallowRef } from "vue";
-import { getDefaultAuths } from "@/router/utils";
+import { h, reactive, type Ref, shallowRef } from "vue";
 import type {
   OperationProps,
   PageColumn,
   PageTableColumn,
   RePlusPageProps
 } from "@/components/RePlusPage";
+import { usePageAuth } from "@/views/system/hooks";
+import { formatPageColumns } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import CircleClose from "~icons/ep/circle-close";
 import { handleOperation } from "@/components/RePlusPage";
@@ -19,18 +20,7 @@ import { ElTag } from "element-plus";
 export function useDemoBook(tableRef: Ref) {
   // 权限判断，用于判断是否有该权限（recycleList 控制回收站入口、changeHistory 控制行级变更历史）
   const api = reactive(bookApi);
-  const auth = reactive({
-    push: false,
-    submit: false,
-    recycleList: false,
-    changeHistory: false,
-    ...getDefaultAuths(getCurrentInstance(), [
-      "push",
-      "submit",
-      "recycleList",
-      "changeHistory"
-    ])
-  });
+  const auth = usePageAuth(["push", "submit", "recycleList", "changeHistory"]);
   const { t } = useI18n();
 
   /**
@@ -195,44 +185,39 @@ export function useDemoBook(tableRef: Ref) {
    * 表格列操作
    * @param columns
    */
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "category":
-          column["cellRenderer"] = ({ row }) => {
-            return h(ElTag, { type: "success" }, () => row.category.label);
-          };
-          break;
-        case "status": {
-          // 上架状态（后端 choices 下发为 {value,label}）：按状态渲染彩色标签
-          const statusTagTypes: Record<
-            string,
-            "success" | "warning" | "info" | "danger"
-          > = {
-            DRAFT: "info",
-            PENDING: "warning",
-            ON_SHELF: "success",
-            REJECTED: "danger"
-          };
-          column["cellRenderer"] = ({ row }) => {
-            const status = row.status;
-            return h(
-              ElTag,
-              { type: statusTagTypes[status?.value] ?? "info" },
-              () => status?.label ?? status
-            );
-          };
-          break;
-        }
-        case "price":
-          // 售价格式化渲染（自定义单元格的又一示例）
-          column["cellRenderer"] = ({ row }) =>
-            h("span", `￥${Number(row.price ?? 0).toFixed(2)}`);
-          break;
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      category: column => {
+        column["cellRenderer"] = ({ row }) => {
+          return h(ElTag, { type: "success" }, () => row.category.label);
+        };
+      },
+      status: column => {
+        // 上架状态（后端 choices 下发为 {value,label}）：按状态渲染彩色标签
+        const statusTagTypes: Record<
+          string,
+          "success" | "warning" | "info" | "danger"
+        > = {
+          DRAFT: "info",
+          PENDING: "warning",
+          ON_SHELF: "success",
+          REJECTED: "danger"
+        };
+        column["cellRenderer"] = ({ row }) => {
+          const status = row.status;
+          return h(
+            ElTag,
+            { type: statusTagTypes[status?.value] ?? "info" },
+            () => status?.label ?? status
+          );
+        };
+      },
+      price: column => {
+        // 售价格式化渲染（自定义单元格的又一示例）
+        column["cellRenderer"] = ({ row }) =>
+          h("span", `￥${Number(row.price ?? 0).toFixed(2)}`);
       }
     });
-    return columns;
-  };
 
   return {
     api,

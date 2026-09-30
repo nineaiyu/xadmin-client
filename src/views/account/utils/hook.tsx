@@ -20,7 +20,8 @@ import {
   type PageTableColumn,
   handleOperation,
   openDialogDrawer,
-  renderBooleanTag
+  renderBooleanTag,
+  formatPageColumns
 } from "@/components/RePlusPage";
 import BindEmailOrPhone from "../components/BindEmailOrPhone.vue";
 import ChangePassword from "../components/ChangePassword.vue";
@@ -207,21 +208,17 @@ export function useUserLoginLog() {
     layout: "prev, pager, next"
   });
 
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "status":
-          column["cellRenderer"] = renderBooleanTag({
-            t,
-            tagStyle,
-            field: column.prop as string,
-            actionMap: { true: t("labels.success"), false: t("labels.failed") }
-          });
-          break;
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      status: column => {
+        column["cellRenderer"] = renderBooleanTag({
+          t,
+          tagStyle,
+          field: column.prop as string,
+          actionMap: { true: t("labels.success"), false: t("labels.failed") }
+        });
       }
     });
-    return columns;
-  };
 
   return {
     t,

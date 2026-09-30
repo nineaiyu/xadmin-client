@@ -1,11 +1,12 @@
-import { getCurrentInstance, h, reactive, shallowRef, type Ref } from "vue";
+import { h, reactive, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElTag } from "element-plus";
 import { dataDictApi, type MoveDirection } from "@/api/system/dict";
-import { getDefaultAuths } from "@/router/utils";
+import { usePageAuth } from "@/views/system/hooks";
 import { message } from "@/utils/message";
 import { clearDictCache, dictTagProps } from "@/utils/dict";
 import {
+  formatPageColumns,
   handleOperation,
   type OperationProps,
   type PageTableColumn,
@@ -34,13 +35,7 @@ type DictRow = {
 /** 数据字典页：RePlusPage 树表（类型 → 字典项），含同层排序、批量启停与缓存刷新 */
 export function useDataDict(tableRef: Ref) {
   const api = reactive(dataDictApi);
-  const auth = reactive({
-    ...getDefaultAuths(getCurrentInstance(), [
-      "batchActive",
-      "refreshCache",
-      "move"
-    ])
-  });
+  const auth = usePageAuth(["batchActive", "refreshCache", "move"]);
   const { t } = useI18n();
 
   const refresh = () => tableRef.value?.handleGetData();
@@ -257,57 +252,55 @@ export function useDataDict(tableRef: Ref) {
     ordering: "sort,created_time"
   });
 
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "parent":
-        case "parent_code":
-          // 所属类型：编辑态为 {pk,label} 关联对象，列表态为只读编码，空值占位
-          column.cellRenderer = ({ row }) =>
-            h("span", row.parent?.label ?? row.parent_code ?? "—");
-          break;
-        case "label":
-          // 与 labeled_choice 渲染保持一致：配了颜色即彩色 tag，否则纯文本；
-          // 彩色 tag props 统一取 dictTagProps（列表/详情同款，避免只换背景色
-          // 导致字体色沿用 ElTag 默认语义色）
-          column.cellRenderer = ({ row }) =>
-            row.color
-              ? h(ElTag, dictTagProps(row.color), () => row.label)
-              : h("span", row.label ?? "—");
-          break;
-        case "color":
-          // 色块 + 色值；表单侧由后端 ColorField（input_type=color）渲染颜色选择器
-          column.cellRenderer = ({ row }) =>
-            row.color
-              ? h("span", { class: "flex items-center" }, [
-                  h("span", {
-                    style: {
-                      display: "inline-block",
-                      width: "14px",
-                      height: "14px",
-                      marginRight: "6px",
-                      borderRadius: "3px",
-                      background: row.color
-                    }
-                  }),
-                  h("span", row.color)
-                ])
-              : h("span", "—");
-          break;
-        case "is_locked":
-          column.cellRenderer = ({ row }) =>
-            row.is_locked
-              ? h(
-                  ElTag,
-                  { type: "warning", size: "small", effect: "plain" },
-                  () => t("dataDict.locked")
-                )
-              : h("span", "—");
-          break;
+  /** 所属类型：编辑态为 {pk,label} 关联对象，列表态为只读编码，空值占位 */
+  const formatParentCell = (column: PageTableColumn) => {
+    column.cellRenderer = ({ row }) =>
+      h("span", row.parent?.label ?? row.parent_code ?? "—");
+  };
+
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      parent: formatParentCell,
+      parent_code: formatParentCell,
+      label: column => {
+        // 与 labeled_choice 渲染保持一致：配了颜色即彩色 tag，否则纯文本；
+        // 彩色 tag props 统一取 dictTagProps（列表/详情同款，避免只换背景色
+        // 导致字体色沿用 ElTag 默认语义色）
+        column.cellRenderer = ({ row }) =>
+          row.color
+            ? h(ElTag, dictTagProps(row.color), () => row.label)
+            : h("span", row.label ?? "—");
+      },
+      color: column => {
+        // 色块 + 色值；表单侧由后端 ColorField（input_type=color）渲染颜色选择器
+        column.cellRenderer = ({ row }) =>
+          row.color
+            ? h("span", { class: "flex items-center" }, [
+                h("span", {
+                  style: {
+                    display: "inline-block",
+                    width: "14px",
+                    height: "14px",
+                    marginRight: "6px",
+                    borderRadius: "3px",
+                    background: row.color
+                  }
+                }),
+                h("span", row.color)
+              ])
+            : h("span", "—");
+      },
+      is_locked: column => {
+        column.cellRenderer = ({ row }) =>
+          row.is_locked
+            ? h(
+                ElTag,
+                { type: "warning", size: "small", effect: "plain" },
+                () => t("dataDict.locked")
+              )
+            : h("span", "—");
       }
     });
-    return columns;
-  };
 
   return {
     api,

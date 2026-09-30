@@ -11,7 +11,8 @@ import NoticeShowForm from "@/views/system/components/NoticeShow.vue";
 import {
   handleOperation,
   type OperationProps,
-  type PageTableColumn
+  type PageTableColumn,
+  formatPageColumns
 } from "@/components/RePlusPage";
 import type { RecordType } from "plus-pro-components";
 
@@ -115,32 +116,28 @@ export function useUserNotice(tableRef: Ref) {
     manySelectData.value = data;
     selectedNum.value = manySelectData.value.length ?? 0;
   };
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "title":
-          // 字典驱动（notice_level）：字典色优先（el-text style），无色回退
-          // 枚举值即 el-text 类型的契约
-          column["cellRenderer"] = ({ row }) => (
-            <el-text
-              type={row.level?.value}
-              style={row.level?.color ? { color: row.level.color } : undefined}
-            >
-              {row.title}
-            </el-text>
-          );
-          break;
-        case "unread":
-          column["cellRenderer"] = ({ row }) => (
-            <el-text type={row.unread ? "success" : "info"}>
-              {row.unread ? t("labels.unread") : t("labels.read")}
-            </el-text>
-          );
-          break;
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      title: column => {
+        // 字典驱动（notice_level）：字典色优先（el-text style），无色回退
+        // 枚举值即 el-text 类型的契约
+        column["cellRenderer"] = ({ row }) => (
+          <el-text
+            type={row.level?.value}
+            style={row.level?.color ? { color: row.level.color } : undefined}
+          >
+            {row.title}
+          </el-text>
+        );
+      },
+      unread: column => {
+        column["cellRenderer"] = ({ row }) => (
+          <el-text type={row.unread ? "success" : "info"}>
+            {row.unread ? t("labels.unread") : t("labels.read")}
+          </el-text>
+        );
       }
     });
-    return columns;
-  };
 
   const tableBarButtonsProps = shallowRef<OperationProps>({
     buttons: [

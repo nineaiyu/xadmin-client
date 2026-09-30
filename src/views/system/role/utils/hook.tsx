@@ -5,15 +5,7 @@ import { addDrawer } from "@/components/ReDrawer";
 import { ElLink } from "element-plus";
 import { useRouter } from "vue-router";
 
-import {
-  getCurrentInstance,
-  h,
-  onMounted,
-  reactive,
-  ref,
-  shallowRef,
-  type Ref
-} from "vue";
+import { h, onMounted, reactive, ref, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { roleApi } from "@/api/system/role";
 import { message } from "@/utils/message";
@@ -21,7 +13,8 @@ import { handleTree } from "@/utils/tree";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { fetchMetaList, META_KEYS } from "@/utils/metaCache";
 import { menuApi } from "@/api/system/menu";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { hasAuth } from "@/router/utils";
+import { usePageAuth } from "@/views/system/hooks";
 import { FieldChoices } from "@/views/system/constants";
 import { cloneDeep, getKeyList } from "@pureadmin/utils";
 import { modelLabelFieldApi } from "@/api/system/field";
@@ -31,10 +24,11 @@ import View from "~icons/ep/view";
 import { useBatchUpdate } from "@/views/system/components/useBatchUpdate";
 import type { PermissionTreeNode } from "./permissionTree";
 import type { RecordType } from "plus-pro-components";
-import type {
-  OperationProps,
-  PageTableColumn,
-  RePlusPageProps
+import {
+  formatPageColumns,
+  type OperationProps,
+  type PageTableColumn,
+  type RePlusPageProps
 } from "@/components/RePlusPage";
 
 export function useRole(pageRef?: Ref) {
@@ -44,10 +38,7 @@ export function useRole(pageRef?: Ref) {
   // 批量更新需要读取勾选行：页面传入 RePlusPage ref（缺省自带一个，供独立使用）
   const tableRef = pageRef ?? ref();
 
-  const auth = reactive({
-    preview: false,
-    ...getDefaultAuths(getCurrentInstance(), ["preview"])
-  });
+  const auth = usePageAuth(["preview"]);
 
   /** 权限预览抽屉（统一走 ReDrawer，不在页面模板手挂 el-drawer） */
   const openPreview = (row: RecordType) => {
@@ -247,27 +238,26 @@ export function useRole(pageRef?: Ref) {
    * 联动：列表「用户数」列（后端关联计数）可点击，跳转到按该角色筛选的用户列表
    * （用户页读取 ?role=<pk> 注入搜索条件并刷新，见 system/user/utils/hook.tsx）
    */
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      if (column._column?.key !== "user_count") return;
-      column["minWidth"] = 90;
-      column["cellRenderer"] = ({ row }) =>
-        h(
-          ElLink,
-          {
-            type: "primary",
-            underline: false,
-            onClick: () =>
-              router.push({
-                path: "/system/user/index",
-                query: { role: String(row.pk) }
-              })
-          },
-          () => String(row.user_count ?? 0)
-        );
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      user_count: column => {
+        column["minWidth"] = 90;
+        column["cellRenderer"] = ({ row }) =>
+          h(
+            ElLink,
+            {
+              type: "primary",
+              underline: false,
+              onClick: () =>
+                router.push({
+                  path: "/system/user/index",
+                  query: { role: String(row.pk) }
+                })
+            },
+            () => String(row.user_count ?? 0)
+          );
+      }
     });
-    return columns;
-  };
 
   return {
     api,

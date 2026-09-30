@@ -12,7 +12,8 @@ import { getDefaultAuths, hasAuth } from "@/router/utils";
 import {
   handleOperation,
   type OperationProps,
-  type PageTableColumn
+  type PageTableColumn,
+  formatPageColumns
 } from "@/components/RePlusPage";
 import {
   knowledgeApi,
@@ -182,43 +183,39 @@ export function useKnowledge(tableRef: Ref) {
   };
 
   /* ---------------- 列渲染（入口 + 只读状态） ---------------- */
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "title":
-          // 文档标题同为抽屉入口（预览/启停/删除都在抽屉内）
-          column["cellRenderer"] = ({ row }) => {
-            const item = row as KnowledgeRow;
-            return h(
-              ElLink,
-              {
-                type: "primary",
-                onClick: () => openKnowledgePanel(item)
-              },
-              () => item.title
-            );
-          };
-          break;
-        case "is_active":
-          // 只读状态标签：启停入口唯一收敛到抽屉（避免与禁用开关并存）
-          column["cellRenderer"] = ({ row, props }) => {
-            const active = Boolean((row as KnowledgeRow).is_active);
-            return h(
-              ElTag,
-              {
-                type: active ? "success" : "danger",
-                size: props.size,
-                effect: "plain"
-              },
-              () =>
-                active ? t("aiKnowledge.enabled") : t("aiKnowledge.disabled")
-            );
-          };
-          break;
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      title: column => {
+        // 文档标题同为抽屉入口（预览/启停/删除都在抽屉内）
+        column["cellRenderer"] = ({ row }) => {
+          const item = row as KnowledgeRow;
+          return h(
+            ElLink,
+            {
+              type: "primary",
+              onClick: () => openKnowledgePanel(item)
+            },
+            () => item.title
+          );
+        };
+      },
+      is_active: column => {
+        // 只读状态标签：启停入口唯一收敛到抽屉（避免与禁用开关并存）
+        column["cellRenderer"] = ({ row, props }) => {
+          const active = Boolean((row as KnowledgeRow).is_active);
+          return h(
+            ElTag,
+            {
+              type: active ? "success" : "danger",
+              size: props.size,
+              effect: "plain"
+            },
+            () =>
+              active ? t("aiKnowledge.enabled") : t("aiKnowledge.disabled")
+          );
+        };
       }
     });
-    return columns;
-  };
 
   /** 批量启停：取勾选行 pk，未勾选时按项目既有口径提示 */
   const batchToggle = (isActive: boolean) => async () => {

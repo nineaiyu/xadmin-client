@@ -24,7 +24,8 @@ import { addDrawer } from "@/components/ReDrawer";
 import {
   handleOperation,
   type OperationProps,
-  type PageTableColumn
+  type PageTableColumn,
+  formatPageColumns
 } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import type { RecordType } from "plus-pro-components";
@@ -226,40 +227,40 @@ export function useAccountRisk(tableRef: Ref) {
     ]
   });
 
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "risk_type":
-          column["cellRenderer"] = scope => {
-            const { value, label } = pick(scope.row?.risk_type);
-            const key = RISK_TYPE_KEYS[value];
-            return h(ElTag, { type: "info", effect: "plain" }, () =>
-              key ? t(key) : label || value
-            );
-          };
-          break;
-        case "level":
-          column["cellRenderer"] = scope =>
-            renderTag(scope.row, "level", LEVEL_TAG);
-          break;
-        case "status":
-          column["cellRenderer"] = scope =>
-            renderTag(scope.row, "status", STATUS_TAG);
-          break;
-        case "handled_at":
-        case "created_time":
-          column["cellRenderer"] = scope => {
-            const value = scope.row?.[column.prop as string];
-            return h(
-              "span",
-              value ? String(value).replace("T", " ").slice(0, 19) : "-"
-            );
-          };
-          break;
-      }
-    });
-    return columns;
+  const formathandledCamelatcreatedCameltimeColumn = (
+    column: PageTableColumn
+  ) => {
+    column["cellRenderer"] = scope => {
+      const value = scope.row?.[column.prop as string];
+      return h(
+        "span",
+        value ? String(value).replace("T", " ").slice(0, 19) : "-"
+      );
+    };
   };
+
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      risk_type: column => {
+        column["cellRenderer"] = scope => {
+          const { value, label } = pick(scope.row?.risk_type);
+          const key = RISK_TYPE_KEYS[value];
+          return h(ElTag, { type: "info", effect: "plain" }, () =>
+            key ? t(key) : label || value
+          );
+        };
+      },
+      level: column => {
+        column["cellRenderer"] = scope =>
+          renderTag(scope.row, "level", LEVEL_TAG);
+      },
+      status: column => {
+        column["cellRenderer"] = scope =>
+          renderTag(scope.row, "status", STATUS_TAG);
+      },
+      handled_at: formathandledCamelatcreatedCameltimeColumn,
+      created_time: formathandledCamelatcreatedCameltimeColumn
+    });
 
   return {
     api,

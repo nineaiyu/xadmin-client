@@ -8,7 +8,8 @@ import {
   type PageTableColumn,
   handleOperation,
   type OperationProps,
-  type RePlusPageProps
+  type RePlusPageProps,
+  formatPageColumns
 } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import type { RecordType } from "plus-pro-components";
@@ -42,20 +43,16 @@ export function useUserConfig(tableRef: Ref) {
     }
   });
 
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "owner":
-          column["cellRenderer"] = ({ row }) => (
-            <el-link onClick={() => onGoUserDetail(row)}>
-              {row.owner?.username ? row.owner?.username : "/"}
-            </el-link>
-          );
-          break;
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      owner: column => {
+        column["cellRenderer"] = ({ row }) => (
+          <el-link onClick={() => onGoUserDetail(row)}>
+            {row.owner?.username ? row.owner?.username : "/"}
+          </el-link>
+        );
       }
     });
-    return columns;
-  };
 
   const router = useRouter();
 

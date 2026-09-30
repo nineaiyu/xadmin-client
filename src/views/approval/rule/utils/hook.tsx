@@ -8,7 +8,8 @@ import { approvalRuleApi } from "@/api/approval/approvalRule";
 import {
   handleOperation,
   type OperationProps,
-  type PageTableColumn
+  type PageTableColumn,
+  formatPageColumns
 } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import RuleForm from "../components/RuleForm.vue";
@@ -105,26 +106,22 @@ export function useApprovalRule(tableRef: Ref) {
   });
 
   /** 列表列：路径清单拼接展示、级次数与启用状态可读化 */
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "path_patterns":
-          column["minWidth"] = 240;
-          column["cellRenderer"] = ({ row }) =>
-            ((row?.path_patterns ?? []) as string[]).join(" ； ") || "-";
-          break;
-        case "level_count":
-          column["width"] = 90;
-          column["cellRenderer"] = ({ row }) =>
-            t("approvalRule.levelCount", { n: Number(row?.level_count ?? 0) });
-          break;
-        case "remark":
-          column["minWidth"] = 160;
-          break;
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      path_patterns: column => {
+        column["minWidth"] = 240;
+        column["cellRenderer"] = ({ row }) =>
+          ((row?.path_patterns ?? []) as string[]).join(" ； ") || "-";
+      },
+      level_count: column => {
+        column["width"] = 90;
+        column["cellRenderer"] = ({ row }) =>
+          t("approvalRule.levelCount", { n: Number(row?.level_count ?? 0) });
+      },
+      remark: column => {
+        column["minWidth"] = 160;
       }
     });
-    return columns;
-  };
 
   return {
     api,

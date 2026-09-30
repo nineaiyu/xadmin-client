@@ -1,6 +1,5 @@
 import {
   computed,
-  getCurrentInstance,
   h,
   reactive,
   ref,
@@ -12,10 +11,12 @@ import { noticeApi } from "@/api/system/notice";
 import { useRouter } from "vue-router";
 import { deviceDetection } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { hasAuth } from "@/router/utils";
+import { usePageAuth } from "@/views/system/hooks";
 import { useI18n } from "vue-i18n";
 import { NoticeChoices } from "@/views/system/constants";
 import {
+  formatPageColumns,
   isReadonlyCell,
   renderSwitch,
   usePublicHooks,
@@ -32,10 +33,7 @@ export function useNotice(tableRef: Ref) {
 
   const api = reactive(noticeApi);
 
-  const auth = reactive({
-    publish: false,
-    ...getDefaultAuths(getCurrentInstance(), ["publish"])
-  });
+  const auth = usePageAuth(["publish"]);
 
   // 发布开关（publish 列）的加载态与样式：走框架 renderSwitch 同款机制
   const switchLoadMap = ref<Record<number, { loading?: boolean }>>({});
@@ -77,67 +75,61 @@ export function useNotice(tableRef: Ref) {
       }
     ]
   });
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "title":
-          // 字典驱动（notice_level）：字典色优先（el-text style），无色回退
-          // 枚举值即 el-text 类型的契约
-          column["cellRenderer"] = ({ row }) => (
-            <el-text
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      title: column => {
+        // 字典驱动（notice_level）：字典色优先（el-text style），无色回退
+        // 枚举值即 el-text 类型的契约
+        column["cellRenderer"] = ({ row }) => (
+          <el-text
+            type={row.level?.value}
+            style={row.level?.color ? { color: row.level.color } : undefined}
+          >
+            {row.title}
+          </el-text>
+        );
+      },
+      publish: column => {
+        // 发布开关：文案用「已发布/未发布」（默认「启用/禁用」语义不符）；
+        // 无 publish 权限时置灰，权限码不再形同虚设
+        column["cellRenderer"] = renderSwitch({
+          t,
+          updateApi: api.publish,
+          switchLoadMap,
+          switchStyle,
+          field: "publish",
+          actionMap: {
+            true: t("labels.publish"),
+            false: t("labels.unPublish")
+          },
+          disabled: () => !auth.publish
+        });
+      },
+      read_user_count: column => {
+        column["cellRenderer"] = scope => {
+          const { row } = scope;
+          const content = `${
+            row.notice_type?.value === NoticeChoices.NOTICE
+              ? t("systemNotice.allRead")
+              : row.user_count
+          }/${row.read_user_count}`;
+          // 回收站只读：不提供「阅读明细」入口
+          if (isReadonlyCell(scope)) {
+            return <span>{content}</span>;
+          }
+          return (
+            <el-link
               type={row.level?.value}
               style={row.level?.color ? { color: row.level.color } : undefined}
+              onClick={() => onGoNoticeReadDetail(row)}
             >
-              {row.title}
-            </el-text>
+              {content}
+            </el-link>
           );
-          break;
-        case "publish":
-          // 发布开关：文案用「已发布/未发布」（默认「启用/禁用」语义不符）；
-          // 无 publish 权限时置灰，权限码不再形同虚设
-          column["cellRenderer"] = renderSwitch({
-            t,
-            updateApi: api.publish,
-            switchLoadMap,
-            switchStyle,
-            field: "publish",
-            actionMap: {
-              true: t("labels.publish"),
-              false: t("labels.unPublish")
-            },
-            disabled: () => !auth.publish
-          });
-          break;
-        case "read_user_count":
-          column["cellRenderer"] = scope => {
-            const { row } = scope;
-            const content = `${
-              row.notice_type?.value === NoticeChoices.NOTICE
-                ? t("systemNotice.allRead")
-                : row.user_count
-            }/${row.read_user_count}`;
-            // 回收站只读：不提供「阅读明细」入口
-            if (isReadonlyCell(scope)) {
-              return <span>{content}</span>;
-            }
-            return (
-              <el-link
-                type={row.level?.value}
-                style={
-                  row.level?.color ? { color: row.level.color } : undefined
-                }
-                onClick={() => onGoNoticeReadDetail(row)}
-              >
-                {content}
-              </el-link>
-            );
-          };
-          column["minWidth"] = 140;
-          break;
+        };
+        column["minWidth"] = 140;
       }
     });
-    return columns;
-  };
 
   const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
     props: {

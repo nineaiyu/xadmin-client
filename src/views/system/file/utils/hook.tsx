@@ -20,7 +20,8 @@ import {
   type PageColumn,
   type PageTableColumn,
   renderBooleanTag,
-  type RePlusPageProps
+  type RePlusPageProps,
+  formatPageColumns
 } from "@/components/RePlusPage";
 import uploadForm from "../components/FileUpload.vue";
 import AccessLogPanel from "../components/AccessLogPanel.vue";
@@ -285,77 +286,75 @@ export function useSystemUploadFile(tableRef: Ref) {
     }
   });
 
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "access_url":
-          column["cellRenderer"] = scope => {
-            // 回收站只读：不提供下载入口，降级为纯文本地址
-            if (isReadonlyCell(scope)) {
-              return h("span", scope.row[column._column?.key as string] ?? "");
+  const formatisCameluploadisCameltmpColumn = (column: PageTableColumn) => {
+    column["cellRenderer"] = renderBooleanTag({
+      t,
+      tagStyle,
+      field: column.prop as string,
+      actionMap: { true: t("labels.yes"), false: t("labels.no") }
+    });
+  };
+
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      access_url: column => {
+        column["cellRenderer"] = scope => {
+          // 回收站只读：不提供下载入口，降级为纯文本地址
+          if (isReadonlyCell(scope)) {
+            return h("span", scope.row[column._column?.key as string] ?? "");
+          }
+          return h(
+            ElLink,
+            {
+              type: "success",
+              href: scope.row[column._column?.key as string],
+              target: "_blank"
+            },
+            {
+              icon: () => h(ElIcon, null, () => h(Link)),
+              default: () => t("systemUploadFile.fileLink")
             }
-            return h(
-              ElLink,
-              {
-                type: "success",
-                href: scope.row[column._column?.key as string],
-                target: "_blank"
-              },
-              {
-                icon: () => h(ElIcon, null, () => h(Link)),
-                default: () => t("systemUploadFile.fileLink")
-              }
-            );
-          };
-          break;
-        case "is_upload":
-        case "is_tmp":
-          column["cellRenderer"] = renderBooleanTag({
-            t,
-            tagStyle,
-            field: column.prop as string,
-            actionMap: { true: t("labels.yes"), false: t("labels.no") }
+          );
+        };
+      },
+      is_upload: formatisCameluploadisCameltmpColumn,
+      is_tmp: formatisCameluploadisCameltmpColumn,
+      preview_kind: column => {
+        // 行内预览入口走 cellRenderer：操作列 slot 传入的 row 是空对象
+        // （框架现状），行级显隐只能在列渲染里取到真实行数据
+        column["cellRenderer"] = scope => {
+          const { row } = scope;
+          // 回收站只读：不提供预览入口
+          if (isReadonlyCell(scope)) return h("span", "-");
+          if (!row?.preview_kind || !auth.preview) return h("span", "-");
+          return h(
+            ElButton,
+            {
+              link: true,
+              type: "primary",
+              onClick: () =>
+                openPreviewDrawer({
+                  pk: row.pk,
+                  filename: row.filename,
+                  mime_type: row.mime_type,
+                  preview_kind: row.preview_kind
+                })
+            },
+            () => t("systemUploadFile.preview")
+          );
+        };
+      },
+      filesize: column => {
+        column["cellRenderer"] = ({ row }) =>
+          h(ElText, { type: "primary" }, () => {
+            return formatBytes(row[column._column?.key as string]);
           });
-          break;
-        case "preview_kind":
-          // 行内预览入口走 cellRenderer：操作列 slot 传入的 row 是空对象
-          // （框架现状），行级显隐只能在列渲染里取到真实行数据
-          column["cellRenderer"] = scope => {
-            const { row } = scope;
-            // 回收站只读：不提供预览入口
-            if (isReadonlyCell(scope)) return h("span", "-");
-            if (!row?.preview_kind || !auth.preview) return h("span", "-");
-            return h(
-              ElButton,
-              {
-                link: true,
-                type: "primary",
-                onClick: () =>
-                  openPreviewDrawer({
-                    pk: row.pk,
-                    filename: row.filename,
-                    mime_type: row.mime_type,
-                    preview_kind: row.preview_kind
-                  })
-              },
-              () => t("systemUploadFile.preview")
-            );
-          };
-          break;
-        case "filesize":
-          column["cellRenderer"] = ({ row }) =>
-            h(ElText, { type: "primary" }, () => {
-              return formatBytes(row[column._column?.key as string]);
-            });
-          break;
-        case "tags":
-          // 通用标签：数组字段需页面自渲染（框架对数组只做 String 化）
-          column["cellRenderer"] = renderTagsCell;
-          break;
+      },
+      tags: column => {
+        // 通用标签：数组字段需页面自渲染（框架对数组只做 String 化）
+        column["cellRenderer"] = renderTagsCell;
       }
     });
-    return columns;
-  };
   return {
     api,
     auth,

@@ -25,6 +25,7 @@ import type {
   PageColumn,
   PageTableColumn
 } from "@/components/RePlusPage";
+import { formatPageColumns } from "@/components/RePlusPage";
 import FileList from "~icons/ri/file-list-3-line";
 
 /**
@@ -172,85 +173,81 @@ export function useTaskExecution(tableRef?: Ref) {
   };
 
   /** 表格列操作 */
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "product_type":
-          // 产物类型：导出/导入任务与执行记录共用主键，此处一次性表达三类记录
-          column.cellRenderer = ({ row }) => {
-            const type = asRow(row).product_type || "task";
-            return h(
-              ElTag,
-              { size: "small", type: PRODUCT_TAG_TYPE[type] ?? "primary" },
-              () => t(`taskCenter.type_${type}`)
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      product_type: column => {
+        // 产物类型：导出/导入任务与执行记录共用主键，此处一次性表达三类记录
+        column.cellRenderer = ({ row }) => {
+          const type = asRow(row).product_type || "task";
+          return h(
+            ElTag,
+            { size: "small", type: PRODUCT_TAG_TYPE[type] ?? "primary" },
+            () => t(`taskCenter.type_${type}`)
+          );
+        };
+      },
+      name: column => {
+        // 产物任务优先展示业务名（如「用户导出-20260924」），其余展示任务路径
+        column.cellRenderer = ({ row }) => {
+          const data = asRow(row);
+          const text = data.product_name || data.name || "";
+          return h("span", { title: text }, text);
+        };
+      },
+      status: column => {
+        // 字典驱动（DictChoiceField）：颜色/文案管理员可在数据字典 task_status
+        // 维护；字典未配置回退枚举时无 color，由 statusTagProps 走本地映射兜底
+        column.cellRenderer = ({ row }) => {
+          const status = asRow(row).status;
+          const value = statusValue(asRow(row));
+          return h(
+            ElTag,
+            statusTagProps(status),
+            () =>
+              (typeof status === "object" && status ? status.label : null) ??
+              t(`systemTaskExecution.status${value}`)
+          );
+        };
+      },
+      product_progress: column => {
+        // 进度与阶段仅产物任务有语义；执行类任务无进度（统一进度助手口径）
+        column.cellRenderer = ({ row }) => {
+          const data = asRow(row);
+          if (!data.product_type) return h("span", "—");
+          const value = statusValue(data);
+          const nodes = [
+            h(ElProgress, {
+              percentage: Number(data.product_progress ?? 0),
+              status:
+                value === "FAILURE" || value === "REVOKED"
+                  ? "exception"
+                  : value === "SUCCESS"
+                    ? "success"
+                    : undefined
+            })
+          ];
+          if (data.product_stage) {
+            nodes.push(
+              h(
+                "div",
+                { class: "text-xs text-(--el-text-color-secondary)" },
+                data.product_stage
+              )
             );
-          };
-          break;
-        case "name":
-          // 产物任务优先展示业务名（如「用户导出-20260924」），其余展示任务路径
-          column.cellRenderer = ({ row }) => {
-            const data = asRow(row);
-            const text = data.product_name || data.name || "";
-            return h("span", { title: text }, text);
-          };
-          break;
-        case "status":
-          // 字典驱动（DictChoiceField）：颜色/文案管理员可在数据字典 task_status
-          // 维护；字典未配置回退枚举时无 color，由 statusTagProps 走本地映射兜底
-          column.cellRenderer = ({ row }) => {
-            const status = asRow(row).status;
-            const value = statusValue(asRow(row));
-            return h(
-              ElTag,
-              statusTagProps(status),
-              () =>
-                (typeof status === "object" && status ? status.label : null) ??
-                t(`systemTaskExecution.status${value}`)
-            );
-          };
-          break;
-        case "product_progress":
-          // 进度与阶段仅产物任务有语义；执行类任务无进度（统一进度助手口径）
-          column.cellRenderer = ({ row }) => {
-            const data = asRow(row);
-            if (!data.product_type) return h("span", "—");
-            const value = statusValue(data);
-            const nodes = [
-              h(ElProgress, {
-                percentage: Number(data.product_progress ?? 0),
-                status:
-                  value === "FAILURE" || value === "REVOKED"
-                    ? "exception"
-                    : value === "SUCCESS"
-                      ? "success"
-                      : undefined
-              })
-            ];
-            if (data.product_stage) {
-              nodes.push(
-                h(
-                  "div",
-                  { class: "text-xs text-(--el-text-color-secondary)" },
-                  data.product_stage
-                )
-              );
-            }
-            return h("div", nodes);
-          };
-          break;
-        case "time_cost":
-          column.cellRenderer = ({ row }) => {
-            const cost = asRow(row).time_cost;
-            return h(
-              "span",
-              cost === null || cost === undefined ? "—" : `${cost}s`
-            );
-          };
-          break;
+          }
+          return h("div", nodes);
+        };
+      },
+      time_cost: column => {
+        column.cellRenderer = ({ row }) => {
+          const cost = asRow(row).time_cost;
+          return h(
+            "span",
+            cost === null || cost === undefined ? "—" : `${cost}s`
+          );
+        };
       }
     });
-    return columns;
-  };
 
   return {
     api,

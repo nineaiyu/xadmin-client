@@ -1,16 +1,9 @@
 import { deptApi } from "@/api/system/dept";
-import {
-  getCurrentInstance,
-  h,
-  reactive,
-  ref,
-  type Ref,
-  shallowRef
-} from "vue";
+import { h, reactive, ref, type Ref, shallowRef } from "vue";
 import { useRouter } from "vue-router";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
-import { buildRoleRulesColumns } from "@/views/system/hooks";
+import { buildRoleRulesColumns, usePageAuth } from "@/views/system/hooks";
 import DeptPermissionPreview from "../components/DeptPermissionPreview.vue";
 import DeptManagersDialog from "../components/DeptManagersDialog.vue";
 import { addDialog } from "@/components/ReDialog";
@@ -25,6 +18,7 @@ import { handleTree } from "@/utils/tree";
 import {
   type PageColumn,
   type PageTableColumn,
+  formatPageColumns,
   handleOperation,
   openDialogDrawer,
   type OperationProps,
@@ -39,16 +33,7 @@ export function useDept(tableRef: Ref) {
 
   const api = reactive(deptApi);
 
-  const auth = reactive({
-    empower: false,
-    preview: false,
-    assignManagers: false,
-    ...getDefaultAuths(getCurrentInstance(), [
-      "empower",
-      "preview",
-      "assignManagers"
-    ])
-  });
+  const auth = usePageAuth(["empower", "preview", "assignManagers"]);
 
   /** 部门授权预览抽屉（挂载角色 / 数据权限 / 字段权限 / 成员采样；统一走 ReDrawer） */
   const openPreview = (row: DeptRow) => {
@@ -61,30 +46,24 @@ export function useDept(tableRef: Ref) {
     });
   };
 
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "user_count":
-          column["cellRenderer"] = ({ row }) => {
-            // 无「用户列表」权限或人数为 0 时不可跳转：渲染为纯文本，
-            // 避免出现可点却无反应（也无提示）的假链接
-            const canJump = hasAuth("list:SystemUser") && row.user_count > 0;
-            if (!canJump) return <span>{row.user_count}</span>;
-            return (
-              <el-link onClick={() => onGoDetail(row)}>
-                {row.user_count}
-              </el-link>
-            );
-          };
-          break;
-        case "name":
-          column["minWidth"] = 200;
-          column["align"] = "left";
-          break;
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      user_count: column => {
+        column["cellRenderer"] = ({ row }) => {
+          // 无「用户列表」权限或人数为 0 时不可跳转：渲染为纯文本，
+          // 避免出现可点却无反应（也无提示）的假链接
+          const canJump = hasAuth("list:SystemUser") && row.user_count > 0;
+          if (!canJump) return <span>{row.user_count}</span>;
+          return (
+            <el-link onClick={() => onGoDetail(row)}>{row.user_count}</el-link>
+          );
+        };
+      },
+      name: column => {
+        column["minWidth"] = 200;
+        column["align"] = "left";
       }
     });
-    return columns;
-  };
 
   const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
     props: {
@@ -208,8 +187,8 @@ export function useDept(tableRef: Ref) {
       contentRenderer: () =>
         h(DeptManagersDialog, {
           row: { ...row, pk: row.pk as number | string },
-          onReady: apiRef => {
-            managerDialogApi = apiRef;
+          onReady: (api: NonNullable<typeof managerDialogApi>) => {
+            managerDialogApi = api;
           }
         }),
       beforeSure: async (done, { closeLoading }) => {

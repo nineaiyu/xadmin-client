@@ -7,6 +7,7 @@ import { dialogSize } from "@/components/ReDialog/size";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
+import { formatPageColumns } from "@/components/RePlusPage";
 import {
   webhookSubscriptionApi,
   type WebhookEvent,
@@ -63,42 +64,38 @@ export function useWebhookSubscription(tableRef: Ref) {
     if (res.detail) message(String(res.detail), { type: "warning" });
   };
 
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "events":
-          column["minWidth"] = 200;
-          column["cellRenderer"] = ({ row }) => {
-            const keys = (row as WebhookSubscriptionItem).events ?? [];
-            if (!keys.length) return h("span", "—");
-            return h(
-              "span",
-              { class: "flex flex-wrap justify-center gap-1" },
-              keys.map(key =>
-                h(ElTag, { key, size: "small" }, () => eventLabel(key))
-              )
-            );
-          };
-          break;
-        case "is_active":
-          column["cellRenderer"] = ({ row }) =>
-            h(ElSwitch, {
-              modelValue: (row as WebhookSubscriptionItem).is_active,
-              disabled: !canEdit,
-              "onUpdate:modelValue": (value: string | number | boolean) =>
-                toggleActive(row as WebhookSubscriptionItem, value as boolean)
-            });
-          break;
-        case "url":
-          column["minWidth"] = 220;
-          break;
-        case "last_failure":
-          column["minWidth"] = 160;
-          break;
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      events: column => {
+        column["minWidth"] = 200;
+        column["cellRenderer"] = ({ row }) => {
+          const keys = (row as WebhookSubscriptionItem).events ?? [];
+          if (!keys.length) return h("span", "—");
+          return h(
+            "span",
+            { class: "flex flex-wrap justify-center gap-1" },
+            keys.map(key =>
+              h(ElTag, { key, size: "small" }, () => eventLabel(key))
+            )
+          );
+        };
+      },
+      is_active: column => {
+        column["cellRenderer"] = ({ row }) =>
+          h(ElSwitch, {
+            modelValue: (row as WebhookSubscriptionItem).is_active,
+            disabled: !canEdit,
+            "onUpdate:modelValue": (value: string | number | boolean) =>
+              toggleActive(row as WebhookSubscriptionItem, value as boolean)
+          });
+      },
+      url: column => {
+        column["minWidth"] = 220;
+      },
+      last_failure: column => {
+        column["minWidth"] = 160;
       }
     });
-    return columns;
-  };
 
   const testSubscription = async (row: WebhookSubscriptionItem) => {
     const res = await webhookSubscriptionApi.test(row.pk);

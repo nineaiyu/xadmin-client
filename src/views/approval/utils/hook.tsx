@@ -11,6 +11,7 @@ import {
   type OperationProps,
   type PageTableColumn
 } from "@/components/RePlusPage";
+import { formatPageColumns } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
 import { statusTagProps } from "@/utils/dict";
@@ -305,37 +306,33 @@ export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
   };
 
   /** 状态列：字典驱动（approval_status）颜色/文案，字典未配置回退页面 i18n */
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "status":
-          column.cellRenderer = data => {
-            const row = data.row;
-            const status = row.status?.value ?? row.status;
-            return h(
-              ElTag,
-              statusTagProps(row.status, APPROVAL_STATUS_TAG_TYPE),
-              () => row.status?.label ?? t(`approval.status${status}`)
-            );
-          };
-          break;
-        // 审批人列：多级链显示「第 N 级：当前级候选人」，扁平单显示实际审批人或
-        // 「待审批」占位；两者均可点击查看审批详情（详情含目标对象变更对照）
-        case "approver":
-          column.cellRenderer = ({ row }) =>
-            h(
-              ElLink,
-              {
-                type: "primary",
-                onClick: () => openProgress(row)
-              },
-              () => approverText(row)
-            );
-          break;
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      status: column => {
+        column.cellRenderer = data => {
+          const row = data.row;
+          const status = row.status?.value ?? row.status;
+          return h(
+            ElTag,
+            statusTagProps(row.status, APPROVAL_STATUS_TAG_TYPE),
+            () => row.status?.label ?? t(`approval.status${status}`)
+          );
+        };
+      },
+      // 审批人列：多级链显示「第 N 级：当前级候选人」，扁平单显示实际审批人或
+      // 「待审批」占位；两者均可点击查看审批详情（详情含目标对象变更对照）
+      approver: column => {
+        column.cellRenderer = ({ row }) =>
+          h(
+            ElLink,
+            {
+              type: "primary",
+              onClick: () => openProgress(row)
+            },
+            () => approverText(row)
+          );
       }
     });
-    return columns;
-  };
 
   return {
     api,
