@@ -1,10 +1,11 @@
 <script lang="ts" setup>
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import AiIcon from "~icons/ep/cpu";
-import WarningIcon from "~icons/ep/warning";
 import AiMessageBlock from "@/components/AiMessageBlock/index.vue";
+import ChatMessageAvatar from "@/components/ChatMessageAvatar/index.vue";
+import ChatSystemNotice from "@/components/ChatSystemNotice/index.vue";
+import ChatTextBubble from "@/components/ChatTextBubble/index.vue";
+import { formatMessageTime, pickActionDrafts } from "@/utils/messageView";
 import type { AiActionDraft, AiConsoleMessage } from "@/api/ai/ai";
 import AiNlCard from "./AiNlCard.vue";
 import AiActionCard from "./AiActionCard.vue";
@@ -36,54 +37,28 @@ const isSystem = computed(() => props.item.role === "system");
 const sources = computed(() => props.item.extra?.sources ?? []);
 const nlResult = computed(() => props.item.extra?.nl ?? null);
 const runResult = computed(() => props.item.extra?.nl_run ?? null);
-/** 动作草稿：多步串联（action_drafts）优先，兼容单动作契约（action_draft） */
-const actionDrafts = computed(() => {
-  const list = props.item.extra?.action_drafts;
-  if (Array.isArray(list) && list.length) return list;
-  const single = props.item.extra?.action_draft;
-  return single ? [single] : [];
-});
 const actionResult = computed(() => props.item.extra?.action_result ?? null);
 
-const timeLabel = computed(() => {
-  const date = new Date(props.item.created_time);
-  if (Number.isNaN(date.getTime())) return "";
-  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
-});
+/** 时间标签走公共格式化口径（与聊天室消息同源） */
+const timeLabel = computed(() => formatMessageTime(props.item.created_time));
 </script>
 
 <template>
   <!-- 系统提示（流内失败降级等）：居中窄条 -->
-  <div v-if="isSystem" class="my-2 flex justify-center">
-    <div
-      class="max-w-[80%] rounded px-3 py-1 text-center text-xs break-all"
-      :class="
-        item.extra?.error
-          ? 'bg-(--el-color-warning-light-9) text-(--el-color-warning)'
-          : 'bg-(--el-fill-color-light) text-(--el-text-color-secondary)'
-      "
-    >
-      <el-icon class="mr-1 align-middle">
-        <component :is="useRenderIcon(WarningIcon)" />
-      </el-icon>
-      {{ item.content }}
-    </div>
-  </div>
+  <ChatSystemNotice
+    v-if="isSystem"
+    :content="item.content"
+    :error="item.extra?.error"
+  />
 
   <!-- 用户消息：主色气泡（与聊天室一致） -->
   <div v-else-if="isUser" class="mb-2 flex justify-end">
-    <div
-      class="max-w-4/5 rounded-lg bg-(--el-color-primary) px-3 py-2 text-sm whitespace-pre-wrap text-white"
-    >
-      {{ item.content }}
-    </div>
+    <ChatTextBubble :content="item.content" mine class="max-w-4/5" />
   </div>
 
   <!-- AI 回复：头像 + 思考/正文/出处 + 内嵌卡片 -->
   <div v-else class="mb-2 flex gap-2">
-    <el-avatar :size="36" class="shrink-0 bg-(--el-color-primary)">
-      <el-icon><component :is="useRenderIcon(AiIcon)" /></el-icon>
-    </el-avatar>
+    <ChatMessageAvatar ai />
     <div class="flex min-w-0 max-w-4/5 flex-col">
       <div class="mb-1 text-xs text-(--el-text-color-secondary)">
         {{ t("chat.aiAssistant") }}
@@ -103,7 +78,7 @@ const timeLabel = computed(() => {
       />
       <AiResultTable v-if="runResult" :data="runResult" />
       <AiActionCard
-        v-for="(draft, index) in actionDrafts"
+        v-for="(draft, index) in pickActionDrafts(item.extra)"
         :key="`${draft.action}-${index}`"
         :draft="draft"
         :runnable="runnable"

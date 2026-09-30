@@ -2,7 +2,6 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import AiIcon from "~icons/ep/cpu";
 import WarningIcon from "~icons/ep/warning";
 import DocumentIcon from "~icons/ep/document";
 import DownloadIcon from "~icons/ep/download";
@@ -11,9 +10,13 @@ import type { AiActionDraft } from "@/api/ai/ai";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { http } from "@/utils/http";
+import { formatMessageTime, pickActionDrafts } from "@/utils/messageView";
 import { SUCCESS_CODE } from "@/api/types";
 import type { ChatAttachment, ChatMessageItem } from "@/api/chat";
 import AiMessageBlock from "@/components/AiMessageBlock/index.vue";
+import ChatMessageAvatar from "@/components/ChatMessageAvatar/index.vue";
+import ChatSystemNotice from "@/components/ChatSystemNotice/index.vue";
+import ChatTextBubble from "@/components/ChatTextBubble/index.vue";
 import AiActionCard from "@/views/integration/ai/components/AiActionCard.vue";
 import AiResultTable from "@/views/integration/ai/components/AiResultTable.vue";
 
@@ -82,16 +85,6 @@ const downloadAttachment = () => {
 const sources = computed(() => props.item.extra?.sources ?? []);
 /** 思考过程（落库的 reasoning_content；历史消息默认折叠，点击展开） */
 const reasoningText = computed(() => String(props.item.extra?.reasoning ?? ""));
-const avatarText = computed(() =>
-  (props.item.sender_name || "?").slice(0, 1).toUpperCase()
-);
-const timeLabel = computed(() => {
-  const date = new Date(props.item.created_time);
-  if (Number.isNaN(date.getTime())) return "";
-  return `${String(date.getHours()).padStart(2, "0")}:${String(
-    date.getMinutes()
-  ).padStart(2, "0")}`;
-});
 const displayName = computed(() =>
   isAi.value
     ? t("chat.aiAssistant")
@@ -99,14 +92,6 @@ const displayName = computed(() =>
 );
 
 /* ---------------- A2 受限动作确认卡片 ---------------- */
-/** 动作草稿：多步串联（action_drafts）优先，兼容单动作契约（action_draft） */
-const actionDrafts = computed<AiActionDraft[]>(() => {
-  const list = props.item.extra?.action_drafts;
-  if (Array.isArray(list) && list.length) return list;
-  const single = props.item.extra?.action_draft;
-  return single ? [single] : [];
-});
-
 /** 只读动作执行结果（结果表渲染） */
 const actionResult = computed(() => props.item.extra?.action_result ?? null);
 
@@ -146,42 +131,29 @@ const chatActionExecutor = async (draft: AiActionDraft) => {
 </script>
 
 <template>
-  <div v-if="isSystem" class="my-2 flex flex-col items-center">
-    <div
-      class="max-w-[80%] rounded px-3 py-1 text-xs text-center break-all"
-      :class="
-        item.extra?.error
-          ? 'bg-(--el-color-warning-light-9) text-(--el-color-warning)'
-          : 'bg-(--el-fill-color-light) text-(--el-text-color-secondary)'
-      "
-    >
-      <el-icon class="mr-1 align-middle"
-        ><component :is="useRenderIcon(WarningIcon)"
-      /></el-icon>
-      {{ item.content }}
-    </div>
+  <ChatSystemNotice
+    v-if="isSystem"
+    :content="item.content"
+    :error="item.extra?.error"
+  >
     <!-- 动作执行回执（system 消息）携带只读结果：结果表跟在回执下方 -->
     <AiResultTable
       v-if="actionResult && Object.keys(actionResult).length"
       :data="actionResult"
       class="mt-1 w-full max-w-[80%]"
     />
-  </div>
+  </ChatSystemNotice>
 
   <div
     v-else
     class="group flex gap-2 px-2 py-1.5"
     :class="{ 'flex-row-reverse': mine }"
   >
-    <el-avatar
-      :size="36"
-      :src="item.sender_avatar || undefined"
-      class="shrink-0"
-      :class="isAi ? 'bg-(--el-color-primary)' : 'bg-(--el-color-info-light-3)'"
-    >
-      <el-icon v-if="isAi"><component :is="useRenderIcon(AiIcon)" /></el-icon>
-      <span v-else>{{ avatarText }}</span>
-    </el-avatar>
+    <ChatMessageAvatar
+      :src="item.sender_avatar"
+      :name="item.sender_name"
+      :ai="isAi"
+    />
 
     <div
       class="flex min-w-0 max-w-[72%] flex-col"
@@ -193,7 +165,7 @@ const chatActionExecutor = async (draft: AiActionDraft) => {
         <span v-if="showName !== false" class="truncate">{{
           displayName
         }}</span>
-        <span>{{ timeLabel }}</span>
+        <span>{{ formatMessageTime(item.created_time) }}</span>
       </div>
 
       <!-- AI 回复（含思考过程与引用出处）统一走 AiMessageBlock：与 AI 助手页同一套布局 -->
@@ -259,23 +231,19 @@ const chatActionExecutor = async (draft: AiActionDraft) => {
         />
       </div>
 
-      <div
+      <ChatTextBubble
         v-else
-        class="rounded-lg px-3 py-2 text-sm wrap-break-word whitespace-pre-wrap"
-        :class="
-          mine
-            ? 'bg-(--el-color-primary) text-white'
-            : 'bg-(--el-fill-color-light) text-(--el-text-color-primary)'
+        :content="item.content"
+        :mine="mine"
+        :muted="Boolean(item.extra?.no_answer)"
+        :recalled-text="
+          !item.is_recalled
+            ? ''
+            : mine
+              ? t('chat.youRecalled')
+              : t('chat.recalled')
         "
-      >
-        <span v-if="item.is_recalled" class="italic opacity-70">
-          {{ mine ? t("chat.youRecalled") : t("chat.recalled") }}
-        </span>
-        <span v-else-if="item.extra?.no_answer" class="opacity-80 italic">
-          {{ item.content }}
-        </span>
-        <template v-else>{{ item.content }}</template>
-      </div>
+      />
 
       <div class="mt-1 flex items-center gap-2 text-xs">
         <span v-if="item.failed" class="text-(--el-color-danger)">
@@ -309,7 +277,7 @@ const chatActionExecutor = async (draft: AiActionDraft) => {
       <!-- A2 受限动作确认卡片：AI 只产出草稿，执行必须由用户在此二次确认（复用助手页组件） -->
       <template v-if="!item.is_recalled">
         <AiActionCard
-          v-for="(draft, index) in actionDrafts"
+          v-for="(draft, index) in pickActionDrafts(item.extra)"
           :key="`${draft.action}-${index}`"
           :draft="draft"
           :runnable="canExecuteActions"

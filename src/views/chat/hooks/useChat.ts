@@ -11,11 +11,11 @@ import {
   type ChatUnreadPayload,
   type UserinfoPayload
 } from "@/utils/websocket/protocol";
-import { chatApi, streamAiMessage, type ChatMessageItem } from "@/api/chat";
-import { SseError } from "@/utils/sse";
+import { chatApi, type ChatMessageItem } from "@/api/chat";
 import { useRooms } from "./useRooms";
 import { createMessageStore } from "./chatMessages";
 import { useChatAttachments } from "./useChatAttachments";
+import { useChatStreaming, type ChatStreaming } from "./useChatStreaming";
 
 /** 历史分页每页条数（与服务端默认/上限一致：20 / 50） */
 const PAGE_SIZE = 20;
@@ -28,14 +28,6 @@ export function genClientMsgId(): string {
       ? crypto.randomUUID()
       : `${Date.now()}${Math.random().toString(16).slice(2)}`;
   return raw.replace(/-/g, "").slice(0, 32);
-}
-
-function isAbortError(error: unknown): boolean {
-  return (
-    typeof DOMException !== "undefined" &&
-    error instanceof DOMException &&
-    error.name === "AbortError"
-  );
 }
 
 export type TimeDivider = { id: number; label: string; time: number };
@@ -57,18 +49,12 @@ export function useChat() {
   const loadingHistory = ref(false);
   const loadingMore = ref(false);
   /** AI 流式回答（SSE）：roomId 为归属会话，content 为已到达的增量拼接 */
-  const streaming = ref<{
-    roomId: number;
-    content: string;
-    /** 思考增量（思考型模型，实时上屏到思考面板） */
-    reasoning: string;
-  } | null>(null);
+  const streaming = ref<ChatStreaming>(null);
   const connected = ref(false);
   const socket = ref<WS>();
   const me = ref({ pk: 0, username: "", avatar: "" });
   /** 离底时的新消息计数（悬浮条「N 条新消息」） */
   const pendingCount = ref(0);
-  let streamAbort: AbortController | null = null;
 
   const activeRoomId = roomState.activeRoomId;
 
@@ -302,58 +288,17 @@ export function useChat() {
     );
   }
 
-  /**
-   * AI 流式提问（SSE，二期）：思考增量与回答增量分别写入 streaming 气泡；
-   * done/error 帧带回正式载荷（服务端落库 + WS 广播，多端经 upsertMessage 对齐）。
-   */
-  async function sendAi(content: string) {
-    const text = content.trim();
-    if (!text || !activeRoomId.value || streaming.value) return;
-    const clientMsgId = genClientMsgId();
-    const roomId = activeRoomId.value;
-    pushText(text, clientMsgId);
-    scrollToBottom();
-    streaming.value = { roomId, content: "", reasoning: "" };
-    streamAbort = new AbortController();
-    try {
-      await streamAiMessage(
-        { room_id: roomId, content: text, client_msg_id: clientMsgId },
-        {
-          onMeta: data => {
-            // 问题回执：以服务端正式载荷对齐乐观上屏（id/created_time）
-            if (data?.question) upsertMessage(data.question);
-          },
-          onReasoning: delta => {
-            if (!streaming.value) return;
-            streaming.value.reasoning += delta;
-            if (atBottom.value) scrollToBottom();
-          },
-          onDelta: delta => {
-            if (!streaming.value) return;
-            streaming.value.content += delta;
-            if (atBottom.value) scrollToBottom();
-          },
-          onDone: data => {
-            if (data?.message) upsertMessage(data.message);
-          },
-          onError: data => {
-            if (data?.message) upsertMessage(data.message);
-            if (data?.detail) message(String(data.detail), { type: "warning" });
-          }
-        },
-        streamAbort.signal
-      );
-    } catch (error) {
-      if (isAbortError(error)) return;
-      const detail =
-        error instanceof SseError ? error.message : t("chat.aiFailed");
-      markFailed(clientMsgId, detail);
-    } finally {
-      streaming.value = null;
-      streamAbort = null;
-      scrollToBottom();
-    }
-  }
+  /** AI 流式（SSE）发送与中断（实现见 useChatStreaming.ts） */
+  const { sendAi, abortStream } = useChatStreaming({
+    activeRoomId,
+    streaming,
+    genClientMsgId,
+    pushText,
+    upsertMessage,
+    scrollToBottom,
+    atBottom,
+    markFailed
+  });
 
   /** 附件发送（上传 + 乐观上屏 + WS 上行，实现见 useChatAttachments.ts） */
   const { uploading, sendAttachment } = useChatAttachments({
@@ -414,13 +359,6 @@ export function useChat() {
     } else {
       message(detail, { type: "warning" });
     }
-  }
-
-  /** 中断进行中的 AI 流（切会话/卸载时）：已到达的增量随 streaming 复位丢弃 */
-  function abortStream() {
-    streamAbort?.abort();
-    streamAbort = null;
-    streaming.value = null;
   }
 
   // 切换会话：中断流 + 拉历史 + 清未读（本地红点 + 服务端游标）

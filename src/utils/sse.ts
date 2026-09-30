@@ -24,6 +24,15 @@ export class SseError extends Error {
   }
 }
 
+/** 流中断判定（AbortController.abort）：聊天室与 AI 助手流式调用共用 */
+export function isAbortError(error: unknown): boolean {
+  return (
+    typeof DOMException !== "undefined" &&
+    error instanceof DOMException &&
+    error.name === "AbortError"
+  );
+}
+
 /** 纯函数：从缓冲区解析完整帧，返回（帧列表, 未成帧的剩余数据） */
 export function parseSseBuffer(buffer: string): {
   frames: SseFrame[];

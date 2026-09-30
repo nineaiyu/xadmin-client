@@ -2,13 +2,11 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import ReEmpty from "@/components/ReEmpty";
-import ReSkeleton from "@/components/ReSkeleton";
-import AiIcon from "~icons/ep/cpu";
 import MenuIcon from "~icons/ep/menu";
 import SendIcon from "~icons/ep/promotion";
 import type { AiActionDraft, AiConsoleMessage } from "@/api/ai/ai";
-import AiMessageBlock from "@/components/AiMessageBlock/index.vue";
+import ChatMessageList from "@/components/ChatMessageList/index.vue";
+import AiStreamingBubble from "@/components/AiStreamingBubble/index.vue";
 import AiMessageRow from "./AiMessageRow.vue";
 
 /**
@@ -58,6 +56,11 @@ const { t } = useI18n();
 const draft = ref("");
 const scrollEl = ref<HTMLElement | null>(null);
 
+/** 列表壳滚动元素就绪：登记后经 defineExpose 供父级滚动到底等操作使用 */
+function onListReady(element: HTMLElement | null) {
+  scrollEl.value = element;
+}
+
 /** 「最新一条 assistant 消息」才可操作（NL 运行 / 动作确认）：执行后新消息
  * 追加在后，卡片自然变为只读回看，与刷新后的历史渲染口径一致 */
 const lastAssistantId = computed(() => {
@@ -103,43 +106,19 @@ defineExpose({ scrollEl });
       <slot name="actions" />
     </div>
 
-    <div
-      ref="scrollEl"
-      class="grow overflow-y-auto px-2 py-3"
-      data-testid="ai-messages"
-      @scroll.passive="emit('scroll')"
+    <ChatMessageList
+      testid="ai-messages"
+      skeleton-testid="ai-history-skeleton"
+      :skeleton-visible="loadingHistory && !groups.length"
+      :history-bar-visible="groups.length > 0"
+      :has-more="hasMore"
+      :loading-more="loadingMore"
+      :empty-visible="!groups.length && !loadingHistory && !activeStreaming"
+      :empty-text="emptyText"
+      @scroll="emit('scroll')"
+      @loadMore="emit('loadMore')"
+      @ready="onListReady"
     >
-      <!-- 历史首屏加载：骨架气泡占位（切换入口时消息已清空，加载态与空态互斥） -->
-      <div
-        v-if="loadingHistory && !groups.length"
-        class="flex flex-col gap-3 py-2"
-        data-testid="ai-history-skeleton"
-      >
-        <ReSkeleton
-          v-for="row in 4"
-          :key="row"
-          variant="fill"
-          class="h-12!"
-          :class="row % 2 ? 'w-2/3! self-start' : 'w-1/2! self-end'"
-        />
-      </div>
-
-      <div
-        v-if="groups.length"
-        class="mb-2 text-center text-xs text-(--el-text-color-secondary)"
-      >
-        <el-button
-          v-if="hasMore"
-          link
-          size="small"
-          :loading="loadingMore"
-          @click="emit('loadMore')"
-        >
-          {{ t("chat.loadMore") }}
-        </el-button>
-        <span v-else>{{ t("chat.noMoreHistory") }}</span>
-      </div>
-
       <template v-for="row in groups" :key="row.key">
         <div v-if="row.type === 'divider'" class="my-3 text-center">
           <span
@@ -160,39 +139,16 @@ defineExpose({ scrollEl });
       </template>
 
       <!-- 流式气泡：思考面板 + 增量正文 + 停止生成 -->
-      <div
+      <AiStreamingBubble
         v-if="activeStreaming"
-        class="flex gap-2 px-2 py-1.5"
-        data-testid="ai-streaming"
-      >
-        <el-avatar :size="36" class="shrink-0 bg-(--el-color-primary)">
-          <el-icon><component :is="useRenderIcon(AiIcon)" /></el-icon>
-        </el-avatar>
-        <div class="flex min-w-0 max-w-[72%] flex-col">
-          <AiMessageBlock
-            :reasoning="activeStreaming.reasoning"
-            :content="activeStreaming.content"
-            streaming
-          />
-          <div class="mt-1">
-            <el-button
-              link
-              type="info"
-              size="small"
-              data-testid="ai-stream-stop"
-              @click="emit('stop')"
-            >
-              {{ t("ai.stopGenerating") }}
-            </el-button>
-          </div>
-        </div>
-      </div>
-
-      <ReEmpty
-        v-if="!groups.length && !loadingHistory && !activeStreaming"
-        :description="emptyText"
+        :reasoning="activeStreaming.reasoning"
+        :content="activeStreaming.content"
+        testid="ai-streaming"
+        stop-testid="ai-stream-stop"
+        :stop-label="t('ai.stopGenerating')"
+        @stop="emit('stop')"
       />
-    </div>
+    </ChatMessageList>
 
     <div
       v-if="pendingCount > 0"

@@ -1,9 +1,7 @@
 <script lang="ts" setup>
-import { computed, h, nextTick, onMounted, ref, watch } from "vue";
+import { computed, h, nextTick, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { addDialog, type DialogOptions } from "@/components/ReDialog";
-import ReEmpty from "@/components/ReEmpty";
-import ReSkeleton from "@/components/ReSkeleton";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
 import {
@@ -28,7 +26,8 @@ import {
 import MessageBubble from "./MessageBubble.vue";
 import ChatEmojiPanel from "./ChatEmojiPanel.vue";
 import ChatGroupMembersPanel from "./ChatGroupMembersPanel.vue";
-import AiMessageBlock from "@/components/AiMessageBlock/index.vue";
+import ChatMessageList from "@/components/ChatMessageList/index.vue";
+import AiStreamingBubble from "@/components/AiStreamingBubble/index.vue";
 
 /**
  * 右栏：会话头部 + 消息区（时间分组 / 向上加载 / 新消息悬浮条 / AI 流式气泡）+ 输入区。
@@ -80,11 +79,8 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 const draft = ref("");
-const scrollEl = ref<HTMLElement | null>(null);
 const inputWrap = ref<HTMLElement | null>(null);
 const desktopOn = ref(desktopNotifyEnabled());
-
-onMounted(() => emit("scroller", scrollEl.value));
 
 const isAiRoom = computed(() => props.room?.room_type === "ai");
 const isPublicRoom = computed(() => props.room?.room_type === "public");
@@ -300,45 +296,21 @@ watch(
       </el-tooltip>
     </div>
 
-    <div
-      ref="scrollEl"
-      class="grow overflow-y-auto px-2 py-3"
-      data-testid="chat-messages"
-      @scroll.passive="emit('scroll')"
+    <ChatMessageList
+      testid="chat-messages"
+      skeleton-testid="chat-history-skeleton"
+      :skeleton-visible="loading && !groups.length"
+      :history-bar-visible="Boolean(room) && groups.length > 0"
+      :has-more="hasMore"
+      :loading-more="loadingMore"
+      :empty-visible="
+        Boolean(room) && !groups.length && !loading && !activeStreaming
+      "
+      :empty-text="t('chat.emptyMessages')"
+      @scroll="emit('scroll')"
+      @loadMore="emit('loadMore')"
+      @ready="emit('scroller', $event)"
     >
-      <!-- 历史首屏加载：骨架气泡占位（切换房间时消息已清空，加载态与空态互斥） -->
-      <div
-        v-if="loading && !groups.length"
-        class="flex flex-col gap-3 py-2"
-        data-testid="chat-history-skeleton"
-      >
-        <ReSkeleton
-          v-for="row in 4"
-          :key="row"
-          variant="fill"
-          class="h-12!"
-          :class="row % 2 ? 'w-2/3! self-start' : 'w-1/2! self-end'"
-        />
-      </div>
-
-      <!-- 仅在有历史消息时显示「加载更早 / 没有更多」：空会话由中部空态统一表达，
-           否则顶部「没有更多历史消息」与中部「还没有消息」同时出现、文案矛盾 -->
-      <div
-        v-if="room && groups.length"
-        class="mb-2 text-center text-xs text-(--el-text-color-secondary)"
-      >
-        <el-button
-          v-if="hasMore"
-          link
-          size="small"
-          :loading="loadingMore"
-          @click="emit('loadMore')"
-        >
-          {{ t("chat.loadMore") }}
-        </el-button>
-        <span v-else>{{ t("chat.noMoreHistory") }}</span>
-      </div>
-
       <template v-for="row in groups" :key="row.key">
         <div v-if="row.type === 'divider'" class="my-3 text-center">
           <span
@@ -357,44 +329,18 @@ watch(
       </template>
 
       <!-- AI 流式回答气泡（SSE 增量逐字上屏；思考增量到达后先展示思考面板） -->
-      <div
+      <AiStreamingBubble
         v-if="activeStreaming"
-        class="flex gap-2 px-2 py-1.5"
-        data-testid="chat-streaming"
-      >
-        <el-avatar :size="36" class="shrink-0 bg-(--el-color-primary)">
-          <el-icon><component :is="useRenderIcon(AiIcon)" /></el-icon>
-        </el-avatar>
-        <div class="flex min-w-0 max-w-[72%] flex-col">
-          <div class="mb-1 text-xs text-(--el-text-color-secondary)">
-            {{ t("chat.aiAssistant") }}
-          </div>
-          <!-- 与 AI 助手页同一套布局：思考面板 + 流式正文 + 光标 -->
-          <AiMessageBlock
-            :reasoning="activeStreaming.reasoning"
-            :content="activeStreaming.content"
-            streaming
-          />
-          <!-- 停止生成：思考型模型输出可能较长，允许用户中断（已到达增量不落库） -->
-          <div class="mt-1">
-            <el-button
-              link
-              type="info"
-              size="small"
-              data-testid="chat-stream-stop"
-              @click="emit('stopStream')"
-            >
-              {{ t("chat.stopGenerating") }}
-            </el-button>
-          </div>
-        </div>
-      </div>
-
-      <ReEmpty
-        v-if="room && !groups.length && !loading && !activeStreaming"
-        :description="t('chat.emptyMessages')"
+        :reasoning="activeStreaming.reasoning"
+        :content="activeStreaming.content"
+        testid="chat-streaming"
+        stop-testid="chat-stream-stop"
+        :stop-label="t('chat.stopGenerating')"
+        show-name
+        :name-label="t('chat.aiAssistant')"
+        @stop="emit('stopStream')"
       />
-    </div>
+    </ChatMessageList>
 
     <div
       v-if="pendingCount > 0"

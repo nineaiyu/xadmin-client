@@ -2,7 +2,7 @@ import { SUCCESS_CODE } from "@/api/types";
 import { computed, nextTick, onUnmounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
-import { SseError } from "@/utils/sse";
+import { isAbortError, SseError } from "@/utils/sse";
 import {
   aiAssistantApi,
   type AiActionDraft,
@@ -27,14 +27,6 @@ type ExecuteResponse = {
   detail?: string;
   type?: string;
 };
-
-function isAbortError(error: unknown): boolean {
-  return (
-    typeof DOMException !== "undefined" &&
-    error instanceof DOMException &&
-    error.name === "AbortError"
-  );
-}
 
 /** 服务端消息载荷校验（history / meta / done / error 共用） */
 function toIncoming(payload: unknown): AiConsoleMessage | null {
