@@ -13,13 +13,8 @@ import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import { useUserStoreHook } from "@/store/modules/user";
 import type { RouteConfigs } from "@/layout/types";
-import {
-  isUrl,
-  openLink,
-  cloneDeep,
-  isAllEmpty,
-  storageLocal
-} from "@pureadmin/utils";
+import { isUrl, openLink, cloneDeep, isAllEmpty } from "@pureadmin/utils";
+import { clearRouteSnapshot } from "@/utils/routeSnapshot";
 import {
   ascending,
   getTopMenu,
@@ -154,9 +149,7 @@ export function resetRouter() {
   usePermissionStoreHook().clearAllCachePage();
   // 一并清掉动态路由/权限的本地缓存（CachingAsyncRoutes 开启时写入）：
   // 否则下一个账号登录会命中上一个账号的菜单缓存
-  storageLocal().removeItem("async-routes");
-  storageLocal().removeItem("async-auths");
-  storageLocal().removeItem("async-routes-version");
+  clearRouteSnapshot();
   resetLoadedPaths();
 }
 

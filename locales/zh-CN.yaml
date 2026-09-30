@@ -3081,6 +3081,8 @@ dform:
   fieldOptions: 选项
   optionsHint: 逗号分隔
   fieldRequired: 必填
+  fieldFilterable: 可筛选
+  fieldFilterableTip: 勾选后该字段取值随提交物化，可在「表单数据」页按该字段筛选
   noForms: 暂无可填表单
   noDescription: 无描述
   approvalRequired: 提交审批
@@ -3216,6 +3218,9 @@ formData:
   selectHint: 请先选择表单
   inactive: 已停用
   tableRows: "{count} 行"
+  filterTitle: 字段筛选
+  filterClear: 清空筛选
+  filterEmpty: 该表单还没有可筛选字段（在设计器中勾选字段的「可筛选」后可用）
 leaveApply:
   leave_type: 请假类型
   start_date: 开始日期

@@ -8,6 +8,7 @@ import {
 } from "./pendingApproval";
 import { redirectToLogin, redirectToModuleDisabled } from "./redirect";
 import type { PureHttpRequestConfig } from "./types.d";
+import { clearRouteSnapshot } from "@/utils/routeSnapshot";
 
 /**
  * `send()` 统一错误处理的策略表（自 index.ts 的状态码 if-chain 收敛而来）。
@@ -142,6 +143,19 @@ const approvalRejectedStrategy: SendErrorStrategy = {
   }
 };
 
+/**
+ * 403 通用（权限被拒）：清动态路由/权限快照——快照模式的原生缺陷是「会话内被收权
+ * 时旧菜单仍可用到下次刷新」，403 是权限面变化的唯一运行时信号；清快照让用户下次
+ * 进入应用重拉路由自愈。提示与落定仍交后续策略/默认兜底（本策略只做副作用）。
+ */
+const forbiddenSnapshotStrategy: SendErrorStrategy = {
+  match: ({ status }) => status === 403,
+  handle: () => {
+    clearRouteSnapshot();
+    return false;
+  }
+};
+
 /** 425 Too Early：资源仍在准备（如 Office 转 PDF 中，业务码 1006），由调用方自行重试，不弹全局错误 */
 const tooEarlyStrategy: SendErrorStrategy = {
   match: ({ status }) => status === 425,
@@ -233,6 +247,7 @@ export const SEND_ERROR_STRATEGIES: SendErrorStrategy[] = [
   mfaConfirmStrategy,
   approvalPendingStrategy,
   approvalRejectedStrategy,
+  forbiddenSnapshotStrategy,
   moduleDisabledStrategy,
   tooEarlyStrategy,
   rateLimitStrategy

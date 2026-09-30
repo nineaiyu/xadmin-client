@@ -28,6 +28,13 @@ import {
   type FormField
 } from "@/api/dataset/dform";
 import SubmissionDetail from "../../components/SubmissionDetail.vue";
+import {
+  buildFilterPayload,
+  filterableFieldsOf,
+  filterOptionsOf,
+  isNumberField,
+  isOptionedField
+} from "./filters";
 import { fieldValueText } from "./format";
 
 /** 提交状态（审批回写）语义色兜底：与「我的填报」同口径（tag props 统一走 statusTagProps） */
@@ -78,6 +85,34 @@ export function useFormData() {
   auth.batchDestroy = false;
 
   const asRow = (row: unknown) => row as FormDataItem;
+
+  /** 可筛选字段（设计器勾选 filterable 且类型可渲染筛选控件） */
+  const filterableFields = computed<FormField[]>(() =>
+    filterableFieldsOf(schemaFields.value)
+  );
+  /** 筛选取值（字段 key → 取值；空值不参与条件） */
+  const filterValues = reactive<Record<string, unknown>>({});
+
+  /** 收集非空筛选条件写入请求参数（JSON 字符串，后端按可筛选面 fail-closed 校验） */
+  const syncFilterData = () => {
+    api.filterData = buildFilterPayload(filterableFields.value, filterValues);
+  };
+
+  /** 应用筛选：写参数并重载列表（导出沿用同参数） */
+  const applyFilters = () => {
+    syncFilterData();
+    tableRef.value?.handleGetData?.();
+  };
+
+  /** 清空筛选（含选择器回显） */
+  const clearFilters = () => {
+    for (const key of Object.keys(filterValues)) delete filterValues[key];
+    applyFilters();
+  };
+
+  /** 筛选下拉候选项（字典项读页面缓存） */
+  const optionsOf = (field: FormField) =>
+    filterOptionsOf(field, field.dict ? dictCache[field.dict] : undefined);
 
   /** 字典项缓存（字典 code → 选项）：select/radio 的 value → label 映射 */
   const dictCache = reactive<Record<string, DictItem[]>>({});
@@ -207,9 +242,12 @@ export function useFormData() {
 
   onMounted(loadForms);
 
-  // 切换表单：写入请求参数；页面按 selectedFormPk 重建 RePlusPage（首屏自动重载）
+  // 切换表单：写入请求参数、清空字段筛选（旧表单的条件对新表单无意义）；
+  // 页面按 selectedFormPk 重建 RePlusPage（首屏自动重载）
   watch(selectedFormPk, pk => {
     api.form = pk;
+    api.filterData = "";
+    for (const key of Object.keys(filterValues)) delete filterValues[key];
   });
 
   // 字典字段预取（select/radio 的 value → label 映射；接口带缓存）
@@ -267,6 +305,14 @@ export function useFormData() {
     selectedForm,
     listColumnsFormat,
     searchColumnsFormat,
-    operationButtonsProps
+    operationButtonsProps,
+    // 字段筛选（物化筛选列）：可筛选字段、取值、应用/清空与渲染辅助
+    filterableFields,
+    filterValues,
+    applyFilters,
+    clearFilters,
+    isOptionedField,
+    isNumberField,
+    filterOptionsOf: optionsOf
   };
 }

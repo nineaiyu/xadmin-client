@@ -3082,6 +3082,8 @@ dform:
   fieldOptions: Options
   optionsHint: Comma-separated
   fieldRequired: Required
+  fieldFilterable: Filterable
+  fieldFilterableTip: Materialize this field on submit so the form data page can filter by it
   noForms: No forms available
   noDescription: No description
   approvalRequired: Approval
@@ -3217,6 +3219,9 @@ formData:
   selectHint: Please select a form first
   inactive: Inactive
   tableRows: "{count} rows"
+  filterTitle: Field Filters
+  filterClear: Clear filters
+  filterEmpty: This form has no filterable fields yet (mark fields as filterable in the designer)
 leaveApply:
   leave_type: Leave type
   start_date: Start date

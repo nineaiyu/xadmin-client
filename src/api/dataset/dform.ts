@@ -67,6 +67,11 @@ export type FormField = {
   placeholder?: string;
   /** 明细子表列定义（type=table 时必填） */
   columns?: FormTableColumn[];
+  /**
+   * 可筛选（等值型控件）：提交时把该字段取值物化到筛选列，
+   * 管理端列表可按该字段筛选（物化列 + GIN 索引，见后端 dataset/utils/dform_filter.py）
+   */
+  filterable?: boolean;
 };
 
 /** 联动规则操作符：eq/ne 标量比较；in/notin 集合包含；empty/notempty 空值判定 */
@@ -288,11 +293,20 @@ export type FormDataItem = {
  */
 class FormDataApi extends BaseApi {
   form = "";
+  /**
+   * 物化筛选条件（页面侧写入的 JSON 字符串，形如 `{"level":"P5"}`）：
+   * 列表 / 导出请求自动带上；字段须在所选表单的可筛选面内（后端 fail-closed）。
+   */
+  filterData = "";
 
   list = (params?: object) =>
     this.request<ListResult>(
       "get",
-      { ...(params ?? {}), ...(this.form ? { form: this.form } : {}) },
+      {
+        ...(params ?? {}),
+        ...(this.form ? { form: this.form } : {}),
+        ...(this.filterData ? { filter_data: this.filterData } : {})
+      },
       {}
     );
 
@@ -302,7 +316,8 @@ class FormDataApi extends BaseApi {
       undefined,
       this.formatParams({
         ...(params ?? {}),
-        ...(this.form ? { form: this.form } : {})
+        ...(this.form ? { form: this.form } : {}),
+        ...(this.filterData ? { filter_data: this.filterData } : {})
       })
     );
 
@@ -310,7 +325,11 @@ class FormDataApi extends BaseApi {
     this.request<BaseResult>(
       "post",
       {},
-      { ...(data ?? {}), ...(this.form ? { form: this.form } : {}) },
+      {
+        ...(data ?? {}),
+        ...(this.form ? { form: this.form } : {}),
+        ...(this.filterData ? { filter_data: this.filterData } : {})
+      },
       `${this.baseApi}/export-async`
     );
 

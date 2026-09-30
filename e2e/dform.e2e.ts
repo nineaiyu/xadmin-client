@@ -39,6 +39,15 @@ test("动态表单：设计（含审批开关）→ 填报 → 提交可见", as
   const secondRow = dialog.locator(".el-table__row").nth(1);
   await secondRow.locator("input").first().fill("location");
   await secondRow.locator("input").nth(1).fill("存放位置");
+  // 字段属性：勾选「可筛选」（该字段随提交物化，表单数据页可按其筛选）
+  await firstRow.getByTestId("field-props").click();
+  // 属性弹窗的可访问名 = 标题「属性」（外层是「新建表单」），按 role 定位避免与行内按钮串台
+  const propsDialog = page.getByRole("dialog", { name: "属性" });
+  await expect(propsDialog).toBeVisible();
+  await propsDialog.getByTestId("field-prop-filterable").click();
+  await propsDialog.getByRole("button", { name: "保存" }).click();
+  await expect(propsDialog).not.toBeVisible();
+  // 外层弹窗保存时携带 filterable 标记（后端 schema 校验通过）
   // C5 收敛后弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确认」）
   await dialog.getByRole("button", { name: "保存" }).click();
   await expect(dialog).not.toBeVisible();

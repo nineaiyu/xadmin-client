@@ -24,6 +24,12 @@ vi.mock("./redirect", () => ({
   redirectToLogin: redirectToLoginMock,
   redirectToModuleDisabled: redirectToModuleDisabledMock
 }));
+const { clearRouteSnapshotMock } = vi.hoisted(() => ({
+  clearRouteSnapshotMock: vi.fn()
+}));
+vi.mock("@/utils/routeSnapshot", () => ({
+  clearRouteSnapshot: clearRouteSnapshotMock
+}));
 
 import { SEND_ERROR_STRATEGIES } from "./errorStrategies";
 
@@ -137,6 +143,36 @@ describe("模块停用网关 404（code=1001）策略", () => {
       strategy!.match(makeCtx({ status: 403, data: { code: 1001 } }))
     ).toBe(false);
     expect(strategy!.match(makeCtx({ status: 425, data: {} }))).toBe(false);
+  });
+});
+
+describe("403 权限被拒：清路由快照自愈", () => {
+  afterEach(() => {
+    clearRouteSnapshotMock.mockClear();
+  });
+
+  it("普通 403 命中清快照策略，且不接管落定（交默认兜底提示）", () => {
+    const ctx = makeCtx({ status: 403, data: { detail: "无权限" } });
+    const target = SEND_ERROR_STRATEGIES.find(candidate =>
+      candidate.match(ctx)
+    );
+    expect(target).toBeDefined();
+    expect(target!.handle(ctx)).toBe(false);
+    expect(clearRouteSnapshotMock).toHaveBeenCalledTimes(1);
+    expect(ctx.reject).not.toHaveBeenCalled();
+  });
+
+  it("403 + approval_required（审批令牌被拒）走专用策略，不误清快照", () => {
+    const ctx = makeCtx({
+      status: 403,
+      data: { type: "approval_required", detail: "令牌已失效" }
+    });
+    const target = SEND_ERROR_STRATEGIES.find(candidate =>
+      candidate.match(ctx)
+    );
+    expect(target).toBeDefined();
+    expect(target!.handle(ctx)).toBe(true);
+    expect(clearRouteSnapshotMock).not.toHaveBeenCalled();
   });
 });
 

@@ -41,6 +41,20 @@ const TYPE_OPTIONS: { value: FormFieldType; labelKey: string }[] = [
 const TEXT_TYPES: FormFieldType[] = ["input", "textarea"];
 const NUMBER_TYPES: FormFieldType[] = ["number", "amount"];
 const OPTIONED_TYPES: FormFieldType[] = ["select", "radio", "checkbox"];
+/** 可勾选「可筛选」的控件类型（与服务端 FILTERABLE_TYPES 同口径；upload/table/daterange 除外） */
+const FILTERABLE_TYPES: FormFieldType[] = [
+  "input",
+  "textarea",
+  "number",
+  "amount",
+  "select",
+  "radio",
+  "checkbox",
+  "date",
+  "switch",
+  "user",
+  "cascader"
+];
 const KEY_RE = /^[a-z][a-z0-9_]{0,31}$/;
 
 const form = reactive<FormField>(JSON.parse(JSON.stringify(props.field)));
@@ -48,6 +62,7 @@ const form = reactive<FormField>(JSON.parse(JSON.stringify(props.field)));
 const isText = computed(() => TEXT_TYPES.includes(form.type));
 const isNumber = computed(() => NUMBER_TYPES.includes(form.type));
 const isOptioned = computed(() => OPTIONED_TYPES.includes(form.type));
+const isFilterable = computed(() => FILTERABLE_TYPES.includes(form.type));
 
 /** 字典类型候选：无字典管理权限时降级为空列表（选择器支持直接输入 code） */
 const dictOptions = ref<{ code: string; label: string }[]>([]);
@@ -79,6 +94,8 @@ const getField = (): FormField | null => {
   }
   if (form.type !== "amount") delete next.precision;
   if (form.type !== "user") delete next.multiple;
+  // 不可筛选的控件类型不携带该标记（服务端同口径校验）
+  if (!isFilterable.value || !next.filterable) delete next.filterable;
   if (isOptioned.value) {
     const dict = (form.dict ?? "").trim();
     if (dict) {
@@ -185,6 +202,15 @@ defineExpose({ getField });
     </el-form-item>
     <el-form-item :label="t('dform.fieldRequired')">
       <el-switch v-model="form.required as boolean" />
+    </el-form-item>
+    <el-form-item v-if="isFilterable" :label="t('dform.fieldFilterable')">
+      <el-switch
+        v-model="form.filterable as boolean"
+        data-testid="field-prop-filterable"
+      />
+      <div class="text-xs text-(--el-text-color-regular)">
+        {{ t("dform.fieldFilterableTip") }}
+      </div>
     </el-form-item>
   </el-form>
 </template>

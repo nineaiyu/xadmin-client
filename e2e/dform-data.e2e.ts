@@ -119,6 +119,80 @@ test("表单数据：选表单浏览动态列 + 详情抽屉", async ({ page }) 
   }
 });
 
+test("表单数据：按可筛选字段筛选列表", async ({ page }) => {
+  await login(page);
+  const suffix = Math.random().toString(36).slice(2, 8);
+  const token = await getAccessToken(page);
+  const headers = { Authorization: `Bearer ${token}` };
+  const formName = `E2E筛选表单-${suffix}`;
+  const deviceA = `E2E筛选路由器-A-${suffix}`;
+  const deviceB = `E2E筛选路由器-B-${suffix}`;
+
+  const formRes = await page.request.post(
+    `${FRONT_URL}/api/dataset/dynamic-forms`,
+    {
+      headers,
+      data: {
+        name: formName,
+        description: "E2E 物化筛选列",
+        is_active: true,
+        schema: {
+          fields: [
+            {
+              key: "device",
+              label: "设备名称",
+              type: "input",
+              required: true,
+              filterable: true
+            },
+            { key: "count", label: "数量", type: "number" }
+          ]
+        }
+      }
+    }
+  );
+  expect(formRes.ok(), await formRes.text()).toBeTruthy();
+  const formPk = (await formRes.json()).data.pk;
+  for (const [device, count] of [
+    [deviceA, 3],
+    [deviceB, 5]
+  ] as const) {
+    const filled = await page.request.post(
+      `${FRONT_URL}/api/dataset/dynamic-form-submissions`,
+      { headers, data: { form: formPk, data: { device, count } } }
+    );
+    expect(filled.ok(), await filled.text()).toBeTruthy();
+  }
+
+  try {
+    await openFormDataPage(page, formName);
+    const table = page.getByTestId("form-data-table");
+    await expect(table.getByRole("row", { name: deviceA })).toBeVisible({
+      timeout: 15_000
+    });
+    await expect(table.getByRole("row", { name: deviceB })).toBeVisible();
+
+    // 筛选框：设备名称 = A（回车触发查询；后端按物化筛选列过滤）
+    const filterInput = page.getByTestId("form-data-filter-device");
+    await filterInput.fill(deviceA);
+    await filterInput.press("Enter");
+    await expect(table.getByRole("row", { name: deviceB })).toHaveCount(0, {
+      timeout: 15_000
+    });
+    await expect(table.getByRole("row", { name: deviceA })).toBeVisible();
+
+    // 清空筛选恢复全量
+    await page.getByRole("button", { name: "清空筛选" }).click();
+    await expect(table.getByRole("row", { name: deviceB })).toBeVisible({
+      timeout: 15_000
+    });
+  } finally {
+    await page.request
+      .delete(`${FRONT_URL}/api/dataset/dynamic-forms/${formPk}`, { headers })
+      .catch(() => undefined);
+  }
+});
+
 test("表单数据：导出按所选表单出动态列文件", async ({ page }) => {
   // 高负载档放宽用例超时：下载等待已放宽到 DOWNLOAD_TIMEOUT
   if (HIGH_LOAD) test.slow();
