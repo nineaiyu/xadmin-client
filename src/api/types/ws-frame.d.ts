@@ -3,7 +3,7 @@
 // 重新生成：pnpm gen:metadata-types；Schema 变更属破坏性契约变更，需与后端一同评审。
 
 /**
- * WebSocket 消息协议 v1 帧（message/protocol.py ↔ client src/utils/websocket/protocol.ts）。上行帧仅需 action；出站帧由 send_base_json 统一携带 code/detail/timestamp/v。新增 action 必须：① 双端 MessageAction 同步登记；② 补对应 payload 定义（可在此追加 definitions 并接入 tests/unit/message/test_protocol.py）。服务端由 tests/unit/common/test_contract_schemas.py 持续校验。
+ * WebSocket 消息协议 v1 帧（生成物：真源为 message/protocol.py 与 message/ws_schema.py）。上行帧仅需 action；出站帧由 send_base_json 统一携带 code/detail/timestamp/v。新增 action 必须：① 双端 MessageAction 同步登记；② 补对应 payload 定义（message/ws_schema.py 的 PAYLOAD_DECLARATIONS）。服务端由 tests/unit/common/test_contract_schemas.py 与 tests/unit/message/test_ws_frame_schema.py 持续校验。
  */
 export type WebSocketFrameV1 = InboundFrame | OutboundFrame;
 /**
