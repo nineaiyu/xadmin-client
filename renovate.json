@@ -48,6 +48,13 @@
       "labels": ["dependencies", "adr-required"]
     },
     {
+      "description": "vue-tsc 锁 3.x：其 peer 上界为 typescript <6.1，TS 7 切换（ADR-014）前不接受主版本升级提单",
+      "matchPackageNames": ["vue-tsc"],
+      "allowedVersions": "<4",
+      "automerge": false,
+      "labels": ["dependencies", "adr-required"]
+    },
+    {
       "description": "GitHub Actions 汇总为一个 PR，降低噪声",
       "matchManagers": ["github-actions"],
       "groupName": "github-actions",
