@@ -298,6 +298,9 @@ cropper:
 
 layout:
   saveConfigSuccess: 项目配置保存成功
+  impersonating: 正在模拟用户「{ user }」，所有操作将以该用户身份执行并留痕，点击退出模拟
+  impersonateExit: 退出模拟
+  impersonateExitFailed: 退出模拟失败，请重试
   resetConfigSuccess: 项目配置重置成功
   saveConfigFailed: 项目配置自动保存失败，请检查网络后重试
   notice: 消息通知
@@ -1243,6 +1246,9 @@ systemUser:
   posts: 岗位
   preview: 权限预览
   logout: 登出
+  impersonate: 模拟用户
+  impersonateTip: 以该用户身份使用后台，全部操作以其身份留痕
+  impersonateConfirm: 将以用户 { user } 的身份使用后台，退出前所有操作均以其身份执行并留痕。确认开始模拟？
   manage: 管理
   manageUser: 管理用户 { user }
   enabled: 已启用

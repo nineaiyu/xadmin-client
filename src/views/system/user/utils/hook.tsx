@@ -17,7 +17,7 @@ import {
 } from "@/components/ReDrawer";
 import { deviceDetection } from "@pureadmin/utils";
 import { rulesPasswordApi } from "@/api/auth";
-import type { PasswordRule } from "@/api/auth";
+import type { PasswordRule, TokenInfo } from "@/api/auth";
 import type { RecordType } from "plus-pro-components";
 import PermissionPreview from "../components/PermissionPreview.vue";
 import UserActionPanel from "../components/UserActionPanel.vue";
@@ -31,6 +31,7 @@ import { useUserImBinding } from "./useUserImBinding";
 import { buildUserActionGroups } from "./userActions";
 import { useTagAssign } from "@/views/system/components/useTagAssign";
 import { TAGGABLE_RESOURCE } from "@/api/system/tag";
+import { useUserStoreHook } from "@/store/modules/user";
 
 /**
  * 用户视图组装入口：
@@ -63,7 +64,8 @@ export function useUser(tableRef: Ref) {
       "preview",
       "changeHistory",
       "imBinding",
-      "invite"
+      "invite",
+      "impersonate"
     ])
   });
   const switchLoadMap = ref({});
@@ -148,6 +150,37 @@ export function useUser(tableRef: Ref) {
   }
 
   /**
+   * 模拟用户：签发该用户的 token 并以其身份使用后台。
+   * 高危动作二次确认（后端另有 impersonate 权限点 + 密码二次确认）；
+   * 成功后 token 已换签，整页刷新以目标身份重建路由/权限/WS。
+   */
+  function handleImpersonate(row: RecordType) {
+    ElMessageBox.confirm(
+      t("systemUser.impersonateConfirm", { user: row.username }),
+      t("systemUser.impersonate"),
+      {
+        confirmButtonText: t("buttons.sure"),
+        cancelButtonText: t("buttons.cancel"),
+        type: "warning"
+      }
+    )
+      .then(() =>
+        handleOperation({
+          t,
+          apiReq: api.impersonate(row.pk as string | number),
+          showSuccessMsg: false,
+          success(res) {
+            // 换签目标身份 token 后整页刷新（switchIdentity 内部处理）
+            if (res?.data) {
+              useUserStoreHook().switchIdentity(res.data as TokenInfo);
+            }
+          }
+        })
+      )
+      .catch(() => undefined);
+  }
+
+  /**
    * 用户抽屉：行内头像/用户名与操作列「管理」共用入口。
    * 动作执行前先收起抽屉再打开二级弹层（避免抽屉与弹窗叠加、焦点归属混乱）；
    * 分组与显隐由 buildUserActionGroups 统一裁决，面板只负责渲染。
@@ -172,6 +205,7 @@ export function useUser(tableRef: Ref) {
         sendNotice: hasAuth("create:SystemNotice"),
         assignTags: hasAuth("assign:Tag")
       },
+      currentUsername: useUserStoreHook().username,
       handlers: {
         resetPassword: withClosed(handleReset),
         uploadAvatar: withClosed(handleUpload),
@@ -182,6 +216,7 @@ export function useUser(tableRef: Ref) {
         invite: withClosed(handleInvite),
         sendNotice: withClosed(handleSendNotice),
         imBinding: withClosed(handleImBinding),
+        impersonate: withClosed(handleImpersonate),
         assignTags: withClosed(target =>
           openTagDialog({ resource: TAGGABLE_RESOURCE.user, row: target })
         ),

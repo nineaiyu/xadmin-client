@@ -134,6 +134,20 @@ class UserApi extends BaseApi {
       }>;
     }>("get", {}, {}, `${this.baseApi}/${pk}/im-binding`);
   };
+  /** 模拟用户：签发被模拟用户的 token，以其身份使用后台（impersonate 权限点 + 密码二次确认） */
+  impersonate = (pk: number | string) => {
+    return this.request<{
+      code: number;
+      detail: string;
+      data: {
+        access: string;
+        refresh: string;
+        access_token_lifetime: number;
+        refresh_token_lifetime: number;
+        user: { pk: string; username: string; nickname: string };
+      };
+    }>("post", {}, {}, `${this.baseApi}/${pk}/impersonate`);
+  };
   /** 管理员代录 IM 身份（免扫码）：创建或更新绑定 */
   imBinding = (
     pk: number | string,

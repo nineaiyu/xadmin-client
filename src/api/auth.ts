@@ -62,6 +62,18 @@ export interface UserInfo {
    * 客户端 App.vue 检测后引导到个人配置页；改密成功由服务端自动清除。
    */
   must_change_password?: boolean;
+  /**
+   * 用户模拟态：当前 token 以该用户身份登录（userinfo 下发模拟发起人摘要）。
+   * 非模拟态不下发；前端据此渲染顶栏「模拟用户中」横幅，退出后消失。
+   */
+  impersonator?: ImpersonatorInfo;
+}
+
+/** 用户模拟发起人摘要（模拟态 userinfo 下发） */
+export interface ImpersonatorInfo {
+  pk: number;
+  username: string;
+  nickname: string;
 }
 
 /** 站点水印配置（基本设置下发的三项口径） */
@@ -151,6 +163,13 @@ export const registerAuthApi = (data?: object) => {
 
 export const logoutApi = (data?: object) => {
   return http.request<TokenResult>("post", "/api/system/logout", {
+    data: data
+  });
+};
+
+/** 退出用户模拟：服务端为模拟发起人重签 token（安全阀，模拟态无条件可达） */
+export const exitImpersonateApi = (data?: object) => {
+  return http.request<TokenResult>("post", "/api/system/impersonate/exit", {
     data: data
   });
 };

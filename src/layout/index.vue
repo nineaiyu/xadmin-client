@@ -32,6 +32,7 @@ import LayTag from "./components/lay-tag/index.vue";
 import LayNavbar from "./components/lay-navbar/index.vue";
 import LayContent from "./components/lay-content/index.vue";
 import LaySetting from "./components/lay-setting/index.vue";
+import LayImpersonation from "./components/lay-impersonation/index.vue";
 import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
 import NavVertical from "./components/lay-sidebar/NavVertical.vue";
 import NavHorizontal from "./components/lay-sidebar/NavHorizontal.vue";
@@ -173,6 +174,8 @@ const LayHeader = defineComponent({
           !pureSetting.hiddenSideBar && layout.value.includes("horizontal")
             ? h(NavHorizontal)
             : null,
+          // 用户模拟横幅：模拟态全局常驻（置于导航栏与页签之间，三种布局均可见）
+          h(LayImpersonation),
           h(LayTag)
         ]
       }

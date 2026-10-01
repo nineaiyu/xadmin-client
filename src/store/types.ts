@@ -1,4 +1,5 @@
 import type { RouteMeta, RouteRecordName } from "vue-router";
+import type { ImpersonatorInfo } from "@/api/auth";
 import type { SiteWatermarkConfig } from "@/utils/watermark";
 
 export type cacheType = {
@@ -56,4 +57,9 @@ export type userType = {
    * App.vue 观察本字段后引导到个人配置页，改密成功由服务端清除标记。
    */
   mustChangePassword?: boolean;
+  /**
+   * 用户模拟态（userinfo 下发）：当前 token 以该用户身份登录。
+   * 顶栏横幅据此渲染「模拟用户中」，点击退出后由服务端重签发起人 token 并整页刷新。
+   */
+  impersonator?: ImpersonatorInfo | null;
 };

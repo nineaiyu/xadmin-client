@@ -298,6 +298,9 @@ cropper:
 
 layout:
   saveConfigSuccess: Site configuration saved
+  impersonating: Impersonating "{ user }" — all actions run as this user and are audited. Click to exit
+  impersonateExit: Exit impersonation
+  impersonateExitFailed: Failed to exit impersonation, please retry
   resetConfigSuccess: Site configuration reset
   saveConfigFailed: Auto-saving the site configuration failed, please check the network and retry
   notice: Notice
@@ -1243,6 +1246,9 @@ systemUser:
   posts: Posts
   preview: Permission Preview
   logout: Logout
+  impersonate: Impersonate
+  impersonateTip: Use the admin console as this user; all actions are audited under their identity
+  impersonateConfirm: You are about to use the console as user { user }. All actions will run and be audited under their identity until you exit. Start impersonation?
   manage: Manage
   manageUser: Manage user { user }
   enabled: Enabled

@@ -3,6 +3,7 @@ import { useNav } from "@/layout/hooks/useNav";
 import LaySearch from "../lay-search/index.vue";
 import LayNotice from "../lay-notice/index.vue";
 import LayNavMix from "../lay-sidebar/NavMix.vue";
+import LayImpersonationDropdownItem from "../lay-impersonation/ImpersonationDropdownItem.vue";
 import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
 import LaySidebarFullScreen from "../lay-sidebar/components/SidebarFullScreen.vue";
 import LaySidebarBreadCrumb from "../lay-sidebar/components/SidebarBreadCrumb.vue";
@@ -110,6 +111,8 @@ const { t, locale, translationCh, translationEn } = useTranslationLang();
               />
               {{ t("menus.accountSettings") }}
             </el-dropdown-item>
+            <!-- 模拟态专属：退出模拟（恢复原身份），与退出登录语义不同 -->
+            <LayImpersonationDropdownItem />
             <el-dropdown-item @click="logout">
               <IconifyIconOffline
                 :icon="LogoutCircleRLine"

@@ -13,6 +13,7 @@ import Logout from "~icons/ri/logout-circle-r-line";
 import Bell from "~icons/ri/notification-3-line";
 import History from "~icons/ri/file-list-3-line";
 import View from "~icons/ep/view";
+import Impersonate from "~icons/ri/user-shared-line";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
@@ -47,6 +48,7 @@ export interface UserActionAuth {
   imBinding?: boolean;
   invite?: boolean;
   changeHistory?: boolean;
+  impersonate?: boolean;
 }
 
 /** 跨模块权限：通知创建与标签授予（非本页权限点，逐项单判） */
@@ -67,6 +69,7 @@ export interface UserActionHandlers {
   imBinding: (row: RecordType) => void;
   assignTags: (row: RecordType) => void;
   changeHistory: (row: RecordType) => void;
+  impersonate: (row: RecordType) => void;
 }
 
 /** 动作收集：上下文类型收敛字面量，并剔除无权限（false/undefined）项 */
@@ -83,11 +86,14 @@ export function buildUserActionGroups({
   t,
   auth,
   flags,
+  currentUsername,
   handlers
 }: {
   t: TFunction;
   auth: UserActionAuth;
   flags: UserActionFlags;
+  /** 当前登录用户名：模拟动作对「模拟自己」禁用（后端同样拒绝，前端前置提示） */
+  currentUsername?: string;
   handlers: UserActionHandlers;
 }): UserActionGroup[] {
   const groups: UserActionGroup[] = [
@@ -126,6 +132,19 @@ export function buildUserActionGroups({
           // 无在线会话时不可用（与行内按钮同一口径）
           disabled: (row: RecordType) => Number(row?.online_count ?? 0) === 0,
           run: handlers.logout
+        },
+        auth.impersonate && {
+          code: "impersonate",
+          label: t("systemUser.impersonate"),
+          description: t("systemUser.impersonateTip"),
+          icon: Impersonate,
+          type: "warning",
+          // 超管不可模拟（防提权）、停用账号无法使用、模拟自己无意义（后端同口径拒绝）
+          disabled: (row: RecordType) =>
+            Boolean(row?.is_superuser) ||
+            row?.is_active === false ||
+            (Boolean(currentUsername) && row?.username === currentUsername),
+          run: handlers.impersonate
         }
       )
     },

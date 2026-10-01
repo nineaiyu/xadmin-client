@@ -17,7 +17,8 @@ const handlers: UserActionHandlers = {
   sendNotice: () => undefined,
   imBinding: () => undefined,
   assignTags: () => undefined,
-  changeHistory: () => undefined
+  changeHistory: () => undefined,
+  impersonate: () => undefined
 };
 
 /** 默认权限面：除跨模块开关外的全部本页权限 */
@@ -30,7 +31,8 @@ const allAuth: Params["auth"] = {
   preview: true,
   imBinding: true,
   invite: true,
-  changeHistory: true
+  changeHistory: true,
+  impersonate: true
 };
 
 const allFlags: Params["flags"] = { sendNotice: true, assignTags: true };
@@ -58,6 +60,7 @@ describe("buildUserActionGroups", () => {
       "resetMfa",
       "upload",
       "logout",
+      "impersonate",
       "empower",
       "preview",
       "invite",
@@ -124,6 +127,39 @@ describe("buildUserActionGroups", () => {
     expect(logout.disabled?.({ online_count: 0 })).toBe(true);
     expect(logout.disabled?.({})).toBe(true);
     expect(logout.disabled?.({ online_count: 2 })).toBe(false);
+  });
+
+  it("模拟用户对超管/停用/自己禁用，普通在职用户可用", () => {
+    const groups = buildUserActionGroups({
+      t,
+      auth: { impersonate: true },
+      flags: {},
+      currentUsername: "me",
+      handlers
+    });
+    const impersonate = groups[0].actions.find(
+      action => action.code === "impersonate"
+    );
+
+    expect(impersonate?.disabled?.({ username: "someone" })).toBe(false);
+    expect(
+      impersonate?.disabled?.({ username: "someone", is_superuser: true })
+    ).toBe(true);
+    expect(
+      impersonate?.disabled?.({ username: "someone", is_active: false })
+    ).toBe(true);
+    expect(impersonate?.disabled?.({ username: "me" })).toBe(true);
+    // 未提供当前用户名时不做自身判定（不影响其余行级判定）
+    const withoutUsername = buildUserActionGroups({
+      t,
+      auth: { impersonate: true },
+      flags: {},
+      handlers
+    });
+    const action = withoutUsername[0].actions.find(
+      item => item.code === "impersonate"
+    );
+    expect(action?.disabled?.({ username: "me" })).toBe(false);
   });
 
   it("高危与谨慎动作带语义色标注", () => {

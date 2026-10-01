@@ -7,6 +7,7 @@ import { isNumber, useGlobal } from "@pureadmin/utils";
 import BackTopIcon from "@/assets/svg/back_top.svg?component";
 import { computed, defineComponent, h, Transition } from "vue";
 import { usePermissionStoreHook } from "@/store/modules/permission";
+import { useUserStoreHook } from "@/store/modules/user";
 
 const props = defineProps({
   fixedHeader: Boolean
@@ -45,6 +46,12 @@ const stretch = computed(() => {
   return $storage?.configure.stretch;
 });
 
+/** 用户模拟横幅高度（fixed-header 时内容区 padding 需同步让位，与横幅 CSS 保持一致） */
+const IMPERSONATION_BANNER_HEIGHT = 32;
+const impersonationExtra = computed(() => {
+  return useUserStoreHook().impersonator ? IMPERSONATION_BANNER_HEIGHT : 0;
+});
+
 const layout = computed(() => {
   return $storage?.layout.layout === "vertical";
 });
@@ -58,18 +65,22 @@ const getMainWidth = computed(() => {
 });
 
 const getSectionStyle = computed(() => {
+  // impersonationExtra > 0 时各项 padding-top 同步让位横幅高度（非 fixed-header
+  // 模式由末项整体重置 padding，不受影响）
+  const pad = (base: number) =>
+    `padding-top: ${base + impersonationExtra.value}px;`;
   return [
-    hideTabs.value && layout ? "padding-top: 48px;" : "",
+    hideTabs.value && layout ? pad(48) : "",
     !hideTabs.value && layout
       ? tagsStyle.value == "chrome"
-        ? "padding-top: 85px;"
-        : "padding-top: 81px;"
+        ? pad(85)
+        : pad(81)
       : "",
-    hideTabs.value && !layout.value ? "padding-top: 48px;" : "",
+    hideTabs.value && !layout.value ? pad(48) : "",
     !hideTabs.value && !layout.value
       ? tagsStyle.value == "chrome"
-        ? "padding-top: 85px;"
-        : "padding-top: 81px;"
+        ? pad(85)
+        : pad(81)
       : "",
     props.fixedHeader
       ? ""

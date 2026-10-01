@@ -11,6 +11,7 @@ import { useTranslationLang } from "../../hooks/useTranslationLang";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import LaySidebarExtraIcon from "../lay-sidebar/components/SidebarExtraIcon.vue";
 import LaySidebarFullScreen from "../lay-sidebar/components/SidebarFullScreen.vue";
+import LayImpersonationDropdownItem from "../lay-impersonation/ImpersonationDropdownItem.vue";
 import GlobalizationIcon from "@/assets/svg/globalization.svg?component";
 import AccountSettingsIcon from "~icons/ri/user-settings-line";
 import LogoutCircleRLine from "~icons/ri/logout-circle-r-line";
@@ -154,6 +155,8 @@ watch(
             {{ t("menus.accountSettings") }}
           </el-dropdown-item>
           <el-dropdown-menu class="logout">
+            <!-- 模拟态专属：退出模拟（恢复原身份），与退出登录语义不同 -->
+            <LayImpersonationDropdownItem />
             <el-dropdown-item @click="logout">
               <IconifyIconOffline
                 :icon="LogoutCircleRLine"

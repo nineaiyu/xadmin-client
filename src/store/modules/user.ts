@@ -2,8 +2,9 @@ import { SUCCESS_CODE } from "@/api/types";
 import { defineStore } from "pinia";
 import { message } from "@/utils/message";
 import { transformI18n } from "@/plugins/i18n";
-import type { LoginResult, TokenResult } from "@/api/auth";
+import type { LoginResult, TokenInfo, TokenResult } from "@/api/auth";
 import {
+  exitImpersonateApi,
   loginBasicApi,
   logoutApi,
   refreshTokenApi,
@@ -20,6 +21,7 @@ import {
   userKey
 } from "@/utils/auth";
 import { clearPendingApprovals } from "@/utils/http/pendingApproval";
+import { clearRouteSnapshot } from "@/utils/routeSnapshot";
 
 import {
   resetRouter,
@@ -61,7 +63,9 @@ export const useUserStore = defineStore("pure-user", {
       // 站点水印配置（用户信息接口下发后写入，App.vue 观察应用）
       siteWatermark: { ...defaultSiteWatermark },
       // 巡检处置联动：管理员要求改密（userinfo 下发，App.vue 观察后引导改密）
-      mustChangePassword: userInfo?.must_change_password ?? false
+      mustChangePassword: userInfo?.must_change_password ?? false,
+      // 用户模拟态（userinfo 下发）：非模拟态为 null
+      impersonator: userInfo?.impersonator ?? null
     };
   },
   actions: {
@@ -78,6 +82,8 @@ export const useUserStore = defineStore("pure-user", {
       this.roles = data?.roles;
       // 巡检处置联动：改密要求随用户信息刷新（App.vue 观察后引导，改密即清除）
       this.mustChangePassword = Boolean(data?.must_change_password);
+      // 用户模拟态随用户信息刷新（顶栏横幅据此渲染；硬刷新后不丢）
+      this.impersonator = data?.impersonator ?? null;
       storageLocal().setItem(userKey, data);
     },
     /**
@@ -223,6 +229,49 @@ export const useUserStore = defineStore("pure-user", {
           window.location.reload();
           // router.push("/login");
         });
+    },
+    /**
+     * 用户模拟：身份切换的统一收口（进入模拟 / 退出模拟共用）。
+     *
+     * 服务端已换签目标身份的 token：这里清理旧身份的本地痕迹（审批令牌、
+     * 路由/权限快照、页签、WS 连接），写入新 token 后整页刷新——路由守卫
+     * 会重新拉取 userinfo（含模拟态）与菜单权限，全部状态以新身份重建。
+     */
+    async switchIdentity(data: TokenInfo, successTip?: string) {
+      if (successTip) {
+        message(successTip, { type: "success" });
+      }
+      clearPendingApprovals();
+      // 审批令牌绑定申请人、WS 绑定旧身份：切换前一并清理，防跨身份残留
+      useNoticeStoreHook().disconnect();
+      clearRouteSnapshot();
+      useMultiTagsStoreHook().handleTags("equal", [...routerArrays]);
+      setToken(data);
+      // 整页跳转重建应用（而非路由内切换）：pinia/内存态/水印/WS 全部以新身份重置
+      window.location.href = "/";
+    },
+    /** 退出用户模拟：服务端失效模拟态凭证并为发起人重签 token */
+    async exitImpersonation() {
+      return new Promise<void>((resolve, reject) => {
+        exitImpersonateApi({ refresh: getRefreshToken() })
+          .then(res => {
+            if (res.code === SUCCESS_CODE) {
+              // 本地先行清除模拟态（含持久化副本）：重载到 userinfo 返回前的
+              // 窗口内横幅不再闪现
+              this.impersonator = null;
+              const stored = storageLocal().getItem<UserInfo>(userKey);
+              if (stored) {
+                delete stored.impersonator;
+                storageLocal().setItem(userKey, stored);
+              }
+              return this.switchIdentity(res.data).then(() => resolve());
+            }
+            reject(res);
+          })
+          .catch(error => {
+            reject(error);
+          });
+      });
     },
     /** 刷新`token` */
     async handRefreshToken(data: { refresh: string }) {
