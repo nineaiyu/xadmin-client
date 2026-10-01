@@ -34,7 +34,7 @@ const pickSelectOption = async (
 test("数据集 + 仪表盘主链路", async ({ page }) => {
   await login(page);
 
-  // 名称唯一约束（Dataset/Dashboard.name unique）+ 双浏览器共享同一 sqlite 库：
+  // 名称唯一约束（Dataset/Dashboard.name unique）+ 双浏览器共享同一独立库：
   // 固定名字会让后跑的浏览器撞唯一约束（曾表现为 webkit 稳定失败、隔离复跑才过），
   // 统一加随机后缀防冲突（e2e/README「历史教训速查」同款处置）
   const suffix = Math.random().toString(36).slice(2, 8);

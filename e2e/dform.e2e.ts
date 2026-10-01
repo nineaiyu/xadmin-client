@@ -13,7 +13,7 @@ import { FRONT_URL, getAccessToken, login, openMenuPath } from "./helpers";
 test("动态表单：设计（含审批开关）→ 填报 → 提交可见", async ({ page }) => {
   await login(page);
 
-  // 名称唯一约束（DynamicForm.name unique）+ 双浏览器共享同一 sqlite 库：
+  // 名称唯一约束（DynamicForm.name unique）+ 双浏览器共享同一独立库：
   // 固定名字会让后跑的浏览器撞唯一约束（保存失败 → 弹窗不关 → 误导性断言失败），
   // 统一加随机后缀（同 dashboard/analysis 的既有教训）
   const suffix = Math.random().toString(36).slice(2, 8);

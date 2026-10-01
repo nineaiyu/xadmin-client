@@ -4,7 +4,7 @@ import { defineConfig } from "@playwright/test";
  * xadmin E2E 配置（环境固化后支持单命令 `pnpm test:e2e` 从零拉起）。
  *
  * 架构：
- * - 后端：xadmin-server 以 tests.settings_e2e 运行（sqlite 文件库 tmp/e2e.sqlite3 +
+ * - 后端：xadmin-server 以 tests.settings_e2e 运行（PG 独立库 E2E_DB_NAME +
  *   进程内 FakeRedis + 关验证码/加密），不触碰本机 config.yml（见规划风险措施 4）
  * - 前端：vite dev server（代理 /api /media /ws → 后端端口，见 vite.config.ts）
  * - 种子：scripts/e2e_seed.py 一键重置（migrate + init_data + E2E 用户）
@@ -79,7 +79,7 @@ export default defineConfig({
       ],
   webServer: [
     {
-      // 种子先行：重置 sqlite 库并写入基础数据（E2E_SEED=0 可跳过），随后拉起后端。
+      // 种子先行：重置 PG 独立库（DROP/CREATE WITH FORCE）并写入基础数据（E2E_SEED=0 可跳过），随后拉起后端。
       // 必须用 daphne 以 ASGI 承载：manage.py runserver（channels 未入 INSTALLED_APPS）
       // 是纯 WSGI，/ws/message/* 升级请求一律 404，站内信实时推送用例无法工作
       command:

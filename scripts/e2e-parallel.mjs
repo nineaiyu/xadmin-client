@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * 并行跑全量 E2E：把测试按文件 shard 切成 E2E_PARALLEL 份，每份由独立进程执行，
- * 并为每个 shard 分配独立后端端口 + 独立前端端口 + 独立 sqlite 库
- * （E2E_DB_FILENAME），彻底隔离共享状态，避免并发时用例互相抢数据产生 flaky。
+ * 并为每个 shard 分配独立后端端口 + 独立前端端口 + 独立 PG 库
+ * （E2E_DB_NAME），彻底隔离共享状态，避免并发时用例互相抢数据产生 flaky。
  *
  * 用法：
  *   pnpm test:e2e:parallel              # 默认 4 路，跑 chromium + webkit 全量
@@ -124,7 +124,7 @@ const jobs = Array.from({ length: total }, (_, i) => {
     // 桩 LLM：端口按路分配，并让用例指向本路的桩（ai-action 读 E2E_STUB_LLM_URL）
     E2E_STUB_LLM_PORT: String(baseStub + i * 2),
     E2E_STUB_LLM_URL: `http://127.0.0.1:${baseStub + i * 2}/v1`,
-    E2E_DB_FILENAME: `e2e-shard-${i}.sqlite3`
+    E2E_DB_NAME: `xadmin_e2e_shard${i}`
   };
   const args = [
     "exec",

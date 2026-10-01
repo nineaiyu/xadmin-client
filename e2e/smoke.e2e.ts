@@ -13,7 +13,7 @@ import {
 /**
  * xadmin E2E 冒烟：登录 → 菜单 → 部门 CRUD → 用户列表 → 登出
  * 后端由 playwright.config.ts 的 webServer 自动拉起（tests.settings_e2e，
- * sqlite + 关验证码/加密），凭据见 e2e/helpers.ts（种子：scripts/e2e_seed.py）
+ * PG 独立库 + 关验证码/加密），凭据见 e2e/helpers.ts（种子：scripts/e2e_seed.py）
  *
  * 全部用例带 `@smoke` 标签：`E2E_SMOKE=1`（pnpm test:e2e:smoke）只跑本文件的
  * 用例 + chromium，供 dev push 快速反馈；全量档（PR/main/夜间）跑全部用例 × 双浏览器。

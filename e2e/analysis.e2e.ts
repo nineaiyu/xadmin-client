@@ -56,7 +56,7 @@ test("报表与大屏主链路", async ({ page }) => {
   await login(page);
 
   // 名称唯一约束（Dataset/Dashboard/Report/Screen.name unique）+ 双浏览器共享同一
-  // sqlite 库：固定名字会让后跑的浏览器撞唯一约束（曾表现为 webkit 稳定失败、隔离
+  // 独立库：固定名字会让后跑的浏览器撞唯一约束（曾表现为 webkit 稳定失败、隔离
   // 复跑才过），统一加随机后缀防冲突（e2e/README「历史教训速查」同款处置）
   const suffix = Math.random().toString(36).slice(2, 8);
   const datasetName = `E2E报表数据集-${suffix}`;
