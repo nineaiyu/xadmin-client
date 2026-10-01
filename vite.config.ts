@@ -3,6 +3,7 @@ import { include, exclude } from "./build/optimize.ts";
 import {
   type UserConfigExport,
   type ConfigEnv,
+  createLogger,
   loadEnv,
   transformWithOxc
 } from "vite";
@@ -22,7 +23,18 @@ export default async ({ mode }: ConfigEnv): Promise<UserConfigExport> => {
   // （见 playwright.config.ts），此处以同端口做 /api 代理目标；常规开发（pnpm dev）无
   // 注入时默认 8896，连本机 compose 容器后端，不受影响
   const apiPort = process.env.E2E_API_PORT ?? "8896";
+  // ws 代理 ECONNRESET 降噪：页面跳转/关闭会重置在途 WebSocket，vite 8 对每个断连
+  // 记两条 error（ws proxy error + ws proxy socket error）——E2E 跑批高频页面切换下
+  // 是纯噪音，非后端故障信号。仅过滤「ws 代理 + ECONNRESET」组合，其余代理错误
+  // （如后端未启动的 ECONNREFUSED）保持原样告警
+  const logger = createLogger();
+  const baseLoggerError = logger.error.bind(logger);
+  logger.error = (msg, options) => {
+    if (msg.includes("ws proxy") && msg.includes("ECONNRESET")) return;
+    baseLoggerError(msg, options);
+  };
   return {
+    customLogger: logger,
     base: VITE_PUBLIC_PATH,
     root,
     resolve: {
