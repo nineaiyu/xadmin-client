@@ -4,10 +4,12 @@ import { FRONT_URL, login, logout, PLAIN_USER } from "./helpers";
 
 /**
  * 我的通知（个人中心 → 我的通知）+ 顶栏铃铛：
- * 1. 用例以超管经 API 自建一条「最新」公告（唯一标题，NOTICE 类型全员可见，
- *    无需定向收件人）。双浏览器共享同一后端库，跑批期间系统消息持续累积
- *    （列表按时间倒序），固定标题的种子通知会被挤出第一页（webkit 阶段实测
- *    踩中）——唯一新标题保证列表首屏可见；
+ * 1. 用例以超管经 API 自建一条「最新」定向通知（唯一标题，USER 类型发给
+ *    e2e_user——系统公告 NOTICE 类型禁止 API 创建，NoticeMessageSerializer
+ *    自 2024-09 起的既有产品语义，公告由系统产生而非人工新建）。双浏览器
+ *    共享同一后端库，跑批期间通知持续累积（列表按时间倒序），固定标题的
+ *    种子通知会被挤出第一页（webkit 阶段实测踩中）——唯一新标题保证列表
+ *    首屏可见；
  * 2. 列表展示标题，「查看」弹层打开后该行自动标记已读（showDialog 内 batchRead）；
  * 3. 「全部已读」后未读清零（按钮随 unreadCount 隐藏、顶栏角标归零）。
  *
@@ -31,9 +33,20 @@ async function jsonRequest(
   };
 }
 
-/** 超管自建唯一标题公告（publish 全员可见），返回标题供列表断言定位 */
+/** 超管自建唯一标题定向通知（USER 类型发给 e2e_user），返回标题供列表断言定位 */
 async function seedFreshNotice(page: Page): Promise<string> {
   const title = `E2E通知：升级预告-${Date.now()}`;
+  // 收件人取 pk：种子助手以超管身份调用，e2e_user 由 scripts/e2e_seed.py 种入
+  const list = await jsonRequest(
+    page,
+    "get",
+    `/api/system/user?username=${PLAIN_USER.username}`
+  );
+  // 列表响应形态：data = { total, results }（common/core/pagination.py PageNumber）
+  const rows = (Array.isArray(list.data) ? list.data : list.data?.results) as
+    { pk?: number; id?: number; username: string }[] | undefined;
+  const target = rows?.find(row => row.username === PLAIN_USER.username);
+  expect(target, "e2e_user 必须已由 scripts/e2e_seed.py 种入").toBeTruthy();
   const created = await jsonRequest(
     page,
     "post",
@@ -41,8 +54,11 @@ async function seedFreshNotice(page: Page): Promise<string> {
     {
       title,
       level: "primary",
-      notice_type: 1,
+      // USER 定向通知：NOTICE(1) 为系统公告，API 创建被序列化器拒绝（400）
+      notice_type: 2,
+      notice_user: [target!.pk ?? target!.id],
       publish: true,
+      files: [],
       message: `<p>${title}——${NOTICE_BODY}，可在「我的通知」中查看。</p>`
     }
   );
