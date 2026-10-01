@@ -9,11 +9,10 @@ import {
   type AiConsoleFeature,
   type AiConsoleMessage
 } from "@/api/ai/ai";
+import { groupByTime } from "@/utils/timeGroups";
 
 /** 历史分页每页条数（与服务端默认/上限一致：20 / 100） */
 const PAGE_SIZE = 20;
-/** 气泡时间分组阈值：超过该间隔另起一个时间分隔（与聊天室同口径） */
-const TIME_GROUP_GAP = 5 * 60 * 1000;
 
 type StreamState = {
   feature: AiConsoleFeature;
@@ -68,38 +67,9 @@ export function useAiConsole() {
 
   // ------------------------------------------------------------------ 时间分组
 
-  const messageGroups = computed(() => {
-    const rows: Array<
-      | { type: "divider"; key: string; label: string }
-      | { type: "message"; key: string; item: AiConsoleMessage }
-    > = [];
-    let lastTime = 0;
-    for (const item of messages.value) {
-      const time = new Date(item.created_time).getTime();
-      if (!lastTime || time - lastTime > TIME_GROUP_GAP) {
-        rows.push({
-          type: "divider",
-          key: `d-${item.id}`,
-          label: formatDivider(time)
-        });
-      }
-      rows.push({ type: "message", key: `m-${item.id}`, item });
-      lastTime = time;
-    }
-    return rows;
-  });
-
-  function formatDivider(time: number) {
-    if (!time) return "";
-    const date = new Date(time);
-    const now = new Date();
-    const hm = `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
-    if (date.toDateString() === now.toDateString()) return hm;
-    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    if (date.toDateString() === yesterday.toDateString())
-      return `${t("chat.yesterday")} ${hm}`;
-    return `${date.getMonth() + 1}-${date.getDate()} ${hm}`;
-  }
+  const messageGroups = computed(() =>
+    groupByTime(messages.value, t("chat.yesterday"))
+  );
 
   // ------------------------------------------------------------------ 消息对齐
 

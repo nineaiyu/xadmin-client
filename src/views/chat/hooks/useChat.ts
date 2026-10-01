@@ -12,6 +12,7 @@ import {
   type UserinfoPayload
 } from "@/utils/websocket/protocol";
 import { chatApi, type ChatMessageItem } from "@/api/chat";
+import { groupByTime } from "@/utils/timeGroups";
 import { useRooms } from "./useRooms";
 import { createMessageStore } from "./chatMessages";
 import { useChatAttachments } from "./useChatAttachments";
@@ -19,8 +20,6 @@ import { useChatStreaming, type ChatStreaming } from "./useChatStreaming";
 
 /** 历史分页每页条数（与服务端默认/上限一致：20 / 50） */
 const PAGE_SIZE = 20;
-/** 气泡时间分组阈值：超过该间隔另起一个时间分隔 */
-const TIME_GROUP_GAP = 5 * 60 * 1000;
 
 export function genClientMsgId(): string {
   const raw =
@@ -29,8 +28,6 @@ export function genClientMsgId(): string {
       : `${Date.now()}${Math.random().toString(16).slice(2)}`;
   return raw.replace(/-/g, "").slice(0, 32);
 }
-
-export type TimeDivider = { id: number; label: string; time: number };
 
 /**
  * 聊天室核心状态（消息流 + WS + 历史分页 + 发送幂等）。
@@ -58,40 +55,10 @@ export function useChat() {
 
   const activeRoomId = roomState.activeRoomId;
 
-  /** 时间分隔：首条 / 跨天 / 间隔超过阈值时插入分组标签 */
-  const messageGroups = computed(() => {
-    const rows: Array<
-      | { type: "divider"; key: string; label: string }
-      | { type: "message"; key: string; item: ChatMessageItem }
-    > = [];
-    let lastTime = 0;
-    for (const item of messages.value) {
-      const time = new Date(item.created_time).getTime();
-      if (!lastTime || time - lastTime > TIME_GROUP_GAP) {
-        rows.push({
-          type: "divider",
-          key: `d-${item.id}`,
-          label: formatDivider(time)
-        });
-      }
-      rows.push({ type: "message", key: `m-${item.id}`, item });
-      lastTime = time;
-    }
-    return rows;
-  });
-
-  function formatDivider(time: number) {
-    if (!time) return "";
-    const date = new Date(time);
-    const now = new Date();
-    const hm = `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
-    const sameDay = date.toDateString() === now.toDateString();
-    if (sameDay) return hm;
-    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    if (date.toDateString() === yesterday.toDateString())
-      return `${t("chat.yesterday")} ${hm}`;
-    return `${date.getMonth() + 1}-${date.getDate()} ${hm}`;
-  }
+  /** 时间分隔：首条 / 跨天 / 间隔超过阈值时插入分组标签（口径见 utils/timeGroups） */
+  const messageGroups = computed(() =>
+    groupByTime(messages.value, t("chat.yesterday"))
+  );
 
   function isMine(item: ChatMessageItem) {
     return !!item.sender_pk && item.sender_pk === me.value.pk;
