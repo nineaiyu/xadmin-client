@@ -15,7 +15,9 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v3
         with:
-          version: 10
+          # 与 engines（pnpm>=11）及 Dockerfile-base corepack 钉版对齐；钉 patch 防 CI 与
+          # 本地/容器口径漂移（O9-4）
+          version: 11.25.0
 
       - name: Run pnpm audit
         # 显式官方源：镜像源不实现 security/advisories 端点，会让 audit 报

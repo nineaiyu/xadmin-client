@@ -73,7 +73,7 @@ jobs:
         if: steps.token.outputs.mode != 'none'
         uses: pnpm/action-setup@v3
         with:
-          version: 11
+          version: 11.25.0
           run_install: false
 
       - name: Renovate (PAT)
