@@ -2,17 +2,17 @@ import { SUCCESS_CODE } from "@/api/types";
 import { message } from "@/utils/message";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import type { Ref } from "vue";
-import { toRaw } from "vue";
-import { cloneDeep, isArray } from "@pureadmin/utils";
+import { cloneDeep } from "@pureadmin/utils";
 import type { useI18n } from "vue-i18n";
 import type { RePlusPageProps } from "./types";
 import type { useBaseColumns } from "./columns";
 import { handleTree } from "@/utils/tree";
+import { buildListParams, splitDateRangeFields } from "./listParams";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 type BaseColumnsReturn = ReturnType<typeof useBaseColumns>;
 
-/** 请求与分页：搜索字段装配、请求序号防过期、分页/搜索事件与首开元数据编排（拆分自 hook.tsx，行为不变） */
+/** 请求与分页：搜索字段装配、请求序号防过期、分页/搜索事件与首开元数据编排（拆分自 hook.tsx，行为不变；参数装配纯函数见 listParams.ts） */
 export function usePlusPageData({
   props,
   emit,
@@ -93,40 +93,10 @@ export function usePlusPageData({
     const requestSeq = ++latestRequestSeq;
     loadingStatus.value = true;
 
-    ["created_time", "updated_time"].forEach(key => {
-      const range = searchFields.value[key];
-      if (isArray(range) && range.length === 2) {
-        searchFields.value[`${key}_after`] = range[0];
-        searchFields.value[`${key}_before`] = range[1];
-      } else {
-        searchFields.value[`${key}_after`] = "";
-        searchFields.value[`${key}_before`] = "";
-      }
-    });
+    // 日期区间字段拆分为 _after/_before（就地写入搜索字段，区间选择器回显共用）
+    splitDateRangeFields(searchFields.value);
 
-    const params = cloneDeep(toRaw({ ...searchFields.value, ...queryParams }));
-
-    // 该方法为了支持pk多选操作将如下格式 [{pk:1},{pk:2}] 转换为 [1,2]
-    Object.keys(params).forEach(key => {
-      const value = params[key];
-      const pks: Array<string | number> = [];
-      if (isArray(value)) {
-        value.forEach(rawItem => {
-          const item = rawItem as {
-            pk?: string | number;
-            id?: string | number;
-          };
-          const identifier = item.pk ?? item.id;
-          if (identifier) {
-            pks.push(identifier);
-          }
-        });
-        if (pks.length > 0) {
-          params[key] = pks;
-        }
-      }
-    });
-
+    const params = buildListParams(searchFields.value, queryParams);
     const data = (beforeSearchSubmit && beforeSearchSubmit(params)) || params;
 
     // 树形列表（菜单/部门等）父子关系不能被分页切断，需全量数据；
@@ -198,35 +168,8 @@ export function usePlusPageData({
     }
   };
 
-  const getPageColumn = (immediate: boolean) => {
-    if (immediate && auth.list && api.list) {
-      // 首开以 with_meta=1 合并 list/search-columns/search-fields 三个请求；
-      // 响应缺元数据键（旧后端/无元数据 Action）时回退分离请求
-      handleGetData(
-        { with_meta: 1 },
-        {
-          inline: true,
-          onInlineMetaMissing: () =>
-            getColumnData(
-              auth.list ? api.columns : null,
-              api.fields,
-              () => {
-                columnsInitCallback();
-                if (!api.fields && immediate) {
-                  handleGetData();
-                }
-              },
-              () => {
-                fieldsInitCallback();
-                if (immediate) {
-                  handleGetData();
-                }
-              }
-            )
-        }
-      );
-      return;
-    }
+  /** 分离请求拉取列/字段元数据（与内联首开回退共用同一回调装配） */
+  const fetchColumnsSeparately = (immediate: boolean) => {
     getColumnData(
       auth.list ? api.columns : null,
       api.fields,
@@ -243,6 +186,22 @@ export function usePlusPageData({
         }
       }
     );
+  };
+
+  const getPageColumn = (immediate: boolean) => {
+    if (immediate && auth.list && api.list) {
+      // 首开以 with_meta=1 合并 list/search-columns/search-fields 三个请求；
+      // 响应缺元数据键（旧后端/无元数据 Action）时回退分离请求
+      handleGetData(
+        { with_meta: 1 },
+        {
+          inline: true,
+          onInlineMetaMissing: () => fetchColumnsSeparately(immediate)
+        }
+      );
+      return;
+    }
+    fetchColumnsSeparately(immediate);
   };
 
   return {

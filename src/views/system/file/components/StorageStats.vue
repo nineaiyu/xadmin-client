@@ -5,7 +5,7 @@ import { useI18n } from "vue-i18n";
 import { formatBytes } from "@pureadmin/utils";
 import { loadEcharts } from "@/plugins/echarts";
 import { epColor } from "@/utils/chartTheme";
-import type { FileStats } from "../utils/hook";
+import type { FileStats } from "../utils/fileStats";
 import CategoryPieChart from "./CategoryPieChart.vue";
 import UploadTrendChart from "./UploadTrendChart.vue";
 

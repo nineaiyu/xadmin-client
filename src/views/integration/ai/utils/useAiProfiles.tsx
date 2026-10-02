@@ -1,22 +1,19 @@
-import { SUCCESS_CODE } from "@/api/types";
-import { h, reactive, ref, shallowRef, type Ref } from "vue";
+import { h, reactive, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElLink, ElMessageBox, ElTag } from "element-plus";
-import { addDialog } from "@/components/ReDialog";
-import { dialogSize } from "@/components/ReDialog/size";
+import { ElLink, ElTag } from "element-plus";
 import {
   addDrawer,
   closeDrawer,
   type DrawerOptions
 } from "@/components/ReDrawer";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
-import { message } from "@/utils/message";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
 import { aiProfileApi, type AiProfileItem } from "@/api/ai/ai";
 import { purposeLabelKey, purposeTagType } from "./purpose";
-import AiProfileForm from "../components/AiProfileForm.vue";
 import AiProfilePanel from "../components/AiProfilePanel.vue";
 import { buildAiProfileActionGroups } from "./aiProfileActions";
+import { useAiProfileActions } from "./useAiProfileActions";
+import { useAiProfileDialog } from "./useAiProfileDialog";
 
 /**
  * AI 配置档案表格：CRUD + 激活/停用/测试 + 统一「管理」抽屉。
@@ -28,6 +25,10 @@ import { buildAiProfileActionGroups } from "./aiProfileActions";
  * - 删除关闭框架默认入口（带二次确认的删除动作移入抽屉危险区，统一入口）；
  * - is_active 列渲染为彩色 tag（使用中/未激活），与「设为默认/停用」按钮语义一致，
  *   故覆盖框架对 boolean 列的自动开关渲染。
+ *
+ * 职责拆分：
+ * - useAiProfileActions  激活/停用/删除（统一确认）/测试/能力探测；
+ * - useAiProfileDialog   新建/编辑弹窗。
  */
 export function useAiProfiles(tableRef: Ref) {
   const { t } = useI18n();
@@ -41,15 +42,21 @@ export function useAiProfiles(tableRef: Ref) {
     destroy: false
   });
   const canCreate = hasAuth("create:AiProfile");
-  const canEdit = hasAuth("partialUpdate:AiProfile");
   const canActivate = hasAuth("activate:AiProfile");
   const canDeactivate = hasAuth("deactivate:AiProfile");
   const canTest = hasAuth("test:AiProfile");
   const canProbe = hasAuth("probe:AiProfile");
+  const canEdit = hasAuth("partialUpdate:AiProfile");
   const canDestroy = hasAuth("destroy:AiProfile");
 
   const refresh = () => tableRef.value?.handleGetData();
 
+  const { activate, deactivate, removeProfile, testProfile, probeProfile } =
+    useAiProfileActions({ t, refresh });
+
+  const { openDialog } = useAiProfileDialog({ t, refresh });
+
+  /* ---------------- 列渲染 ---------------- */
   const listColumnsFormat = (columns: PageTableColumn[]) => {
     columns.forEach(column => {
       switch (column._column?.key) {
@@ -130,133 +137,6 @@ export function useAiProfiles(tableRef: Ref) {
       }
     });
     return columns;
-  };
-
-  /* ---------------- 新建 / 编辑（ReDialog + AiProfileForm） ---------------- */
-  const formRef = ref<InstanceType<typeof AiProfileForm>>();
-
-  const openDialog = (row: AiProfileItem | null) => {
-    formRef.value = undefined;
-    addDialog({
-      title: row ? t("aiConfig.edit") : t("aiConfig.create"),
-      width: dialogSize("md"),
-      draggable: true,
-      destroyOnClose: true,
-      closeOnClickModal: false,
-      sureBtnLoading: true,
-      contentRenderer: () => h(AiProfileForm, { ref: formRef, row }),
-      beforeSure: async (done, { closeLoading }) => {
-        const payload = formRef.value?.getPayload();
-        if (!payload) {
-          closeLoading();
-          return;
-        }
-        // 异常归一为可读失败结果：避免请求异常时 beforeSure 抛错、弹窗 loading 悬挂
-        const res = await (
-          row
-            ? aiProfileApi.partialUpdate(row.pk, payload)
-            : aiProfileApi.create(payload)
-        ).catch(error => ({
-          code: -1,
-          detail: String((error as { detail?: string })?.detail ?? error)
-        }));
-        if (res.code === SUCCESS_CODE) {
-          message(t("aiConfig.saveOk"), { type: "success" });
-          // 先关弹窗再刷新列表，避免刷新耗时导致弹窗滞留
-          done();
-          refresh();
-          return;
-        }
-        if (res.detail) message(String(res.detail), { type: "warning" });
-        closeLoading();
-      }
-    });
-  };
-
-  /* ---------------- 激活 / 停用 / 测试 / 删除 ---------------- */
-  const confirmThen = async (
-    confirmText: string,
-    action: () => Promise<{ code: number; detail?: string }>,
-    doneText: string
-  ) => {
-    const ok = await ElMessageBox.confirm(
-      confirmText,
-      t("aiConfig.profileTitle"),
-      {
-        type: "warning",
-        confirmButtonText: t("buttons.sure"),
-        cancelButtonText: t("buttons.cancel")
-      }
-    )
-      .then(() => true)
-      .catch(() => false);
-    if (!ok) return;
-    // 异常归一为可读失败结果：抽屉内触发的动作不应把异常抛到全局
-    const res = await action().catch(error => ({
-      code: -1,
-      detail: String((error as { detail?: string })?.detail ?? error)
-    }));
-    if (res.code === SUCCESS_CODE) {
-      message(doneText, { type: "success" });
-      refresh();
-    } else if (res.detail) {
-      message(String(res.detail), { type: "warning" });
-    }
-  };
-
-  const activate = (row: AiProfileItem) =>
-    confirmThen(
-      t("aiConfig.activateConfirm"),
-      () => aiProfileApi.activate(row.pk),
-      t("aiConfig.activateDone")
-    );
-
-  const deactivate = (row: AiProfileItem) =>
-    confirmThen(
-      t("aiConfig.deactivateConfirm"),
-      () => aiProfileApi.deactivate(row.pk),
-      t("aiConfig.deactivateDone")
-    );
-
-  const removeProfile = (row: AiProfileItem) =>
-    confirmThen(
-      t("aiConfig.deleteConfirm"),
-      () => aiProfileApi.destroy(row.pk),
-      t("aiConfig.deleteDone")
-    );
-
-  const testProfile = async (row: AiProfileItem) => {
-    const res = await aiProfileApi.test(row.pk);
-    if (res.code === SUCCESS_CODE) {
-      message(String(res.detail ?? t("aiConfig.testOk")), { type: "success" });
-    } else if (res.detail) {
-      message(String(res.detail), { type: "warning" });
-    }
-  };
-
-  /** 能力探测：结果落档案画像，前端按能力项提示（不阻断使用）
-   *  withVision=true 追加多模态探测（默认按钮不触发，避免无多模态模型上的无谓等待） */
-  const probeProfile = async (row: AiProfileItem, withVision = false) => {
-    const res = await aiProfileApi
-      .probe(row.pk, withVision ? { vision: true } : undefined)
-      .catch(error => ({
-        code: -1,
-        detail: String((error as { detail?: string })?.detail ?? error)
-      }));
-    if (res.code === SUCCESS_CODE) {
-      const data = ((res as { data?: Record<string, { ok?: boolean }> }).data ??
-        {}) as Record<string, { ok?: boolean } | undefined>;
-      const okList = ["json", "tool_calls", "reasoning"]
-        .concat(withVision ? ["vision"] : [])
-        .filter(key => data[key]?.ok);
-      message(
-        `${t("aiConfig.probeDone")}: ${okList.length ? okList.join(" / ") : t("aiConfig.capUnknown")}`,
-        { type: "success" }
-      );
-      refresh();
-      return;
-    }
-    if (res.detail) message(String(res.detail), { type: "warning" });
   };
 
   /** 「管理」抽屉：档案资料 + 能力画像 + 探测/配置/删除动作（低频动作唯一入口） */

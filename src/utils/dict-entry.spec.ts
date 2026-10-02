@@ -21,7 +21,7 @@ const SRC_ROOT = path.resolve(
 /** 允许直连字典 API 的文件（相对 src/）*/
 const ALLOWED = [
   "utils/dict.ts", // 统一入口自身
-  "views/system/dict/utils/hook.tsx" // 字典维护页：需要排序/移动等管理动作
+  "views/system/dict/utils/hook.tsx" // 字典维护页：CRUD 装配与排序/移动等管理动作
 ];
 
 const SCAN_EXTENSIONS = [".ts", ".tsx", ".vue"];

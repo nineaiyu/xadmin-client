@@ -6,22 +6,19 @@
  *   或移除对应行，树结构（层级、计数、排序）自动重算，不必整树重拉；
  * - 排名提交沿用后端 `rank` 接口（接收前序 pk 列表，单条 SQL 落库组）；
  * - 删除走影响面预检（后端 `POST {baseApi}/impact`），确认后带 `impact_confirmed`。
+ *
+ * 字典/接口清单/关联模型候选/组件路径清单等「下拉与候选」装配见 useMenuMeta.ts。
  */
 
 import { computed, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { isEmpty, isNullOrUnDef } from "@pureadmin/utils";
-import type { RecordType } from "plus-pro-components";
 import { SUCCESS_CODE } from "@/api/types";
 import { message } from "@/utils/message";
 import { menuApi } from "@/api/system/menu";
-import { modelLabelFieldApi } from "@/api/system/field";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { fetchMetaList, META_KEYS } from "@/utils/metaCache";
 import { handleExportData, handleImportData } from "@/components/RePlusPage";
-import { formatFiledAppParent } from "@/views/system/hooks";
-import { handleTree } from "@/utils/tree";
-import { FieldChoices, MenuChoices } from "@/views/system/constants";
+import { MenuChoices } from "@/views/system/constants";
 import {
   buildMenuTree,
   buildRowIndex,
@@ -31,14 +28,8 @@ import {
 } from "./normalize";
 import { confirmBatchActive, confirmMenuDelete } from "./menuActions";
 import { displayTitle } from "./useMenuFilter";
-import type {
-  MenuAuths,
-  MenuChoiceItem,
-  MenuFormModel,
-  MenuRow,
-  MenuUrlItem,
-  ModelTreeItem
-} from "./types";
+import { useMenuMeta } from "./useMenuMeta";
+import type { MenuFormModel, MenuRow } from "./types";
 
 export function useMenuData() {
   const { t } = useI18n();
@@ -46,13 +37,10 @@ export function useMenuData() {
 
   const rawRows = ref<Array<Record<string, unknown>>>([]);
   const loading = ref(true);
-  const choicesDict = ref<Record<string, MenuChoiceItem[]>>({});
-  const menuUrlList = ref<MenuUrlItem[]>([]);
-  const modelList = ref<ModelTreeItem[]>([]);
-  /** 组件路径清单（value → 视图组件 name，空闲时异步填充） */
-  const viewList = ref<Record<string, string>>({});
   /** 行内启停中：pk 集合（按钮 loading 用） */
   const busyPks = ref<Set<string>>(new Set());
+
+  const meta = useMenuMeta({ api });
 
   const treeData = computed<MenuRow[]>(() =>
     buildMenuTree(rawRows.value.map(normalizeMenuRow))
@@ -250,73 +238,6 @@ export function useMenuData() {
     handleImportData({ t, api, success: () => getMenuData() });
   };
 
-  /** 字典 + 后端接口清单（权限路由下拉） */
-  const getMenuApiList = (auth: MenuAuths) => {
-    if (auth.apiUrl) {
-      api.apiUrl().then(res => {
-        if (res.code === SUCCESS_CODE) {
-          menuUrlList.value = res.data as unknown as MenuUrlItem[];
-        }
-      });
-    }
-    api.choices().then(res => {
-      if (res.code === SUCCESS_CODE) {
-        choicesDict.value = res.choices_dict as Record<
-          string,
-          MenuChoiceItem[]
-        >;
-      }
-    });
-  };
-
-  /** 关联模型（数据/字段权限绑定）候选：需具备模型字段权限列表权限 */
-  const loadModels = () => {
-    fetchAllRows(modelLabelFieldApi.list, {
-      parent: 0,
-      field_type: FieldChoices.ROLE
-    }).then(res => {
-      if (res.code !== SUCCESS_CODE) return;
-      const results: RecordType[] = [];
-      res.data.results.forEach(item => {
-        // 级联值取 pk：与行数据 model（pk 列表）及提交载荷同口径，
-        // 取对象会让「已有选中项回显」与提交形态不一致
-        results.push({
-          pk: item.pk,
-          name: item.name,
-          label: item.label,
-          value: item.pk
-        });
-      });
-      formatFiledAppParent(results);
-      modelList.value = handleTree(results) as ModelTreeItem[];
-    });
-  };
-
-  // 组件路径清单需逐个 import 视图组件才能读到 name，成本高且仅用于下拉：幂等 + 空闲加载
-  let viewsLoading = false;
-  const loadViews = () => {
-    if (viewsLoading) return;
-    viewsLoading = true;
-    const files = import.meta.glob<{ default: { name?: string } }>(
-      "@/views/**/*.vue"
-    );
-    Object.keys(files).forEach((file: string) => {
-      // components 目录为依赖组件而非页面组件，不入候选
-      if (/\/components\//.test(file)) return;
-      files[file]().then(data => {
-        if (
-          isEmpty(data?.default?.name) ||
-          isNullOrUnDef(data?.default?.name)
-        ) {
-          return;
-        }
-        viewList.value[
-          file.replace(/(\.\/|\.vue)/g, "").replace("/src/views/", "")
-        ] = data?.default?.name as string;
-      });
-    });
-  };
-
   return {
     api,
     loading,
@@ -325,14 +246,14 @@ export function useMenuData() {
     rowIndex,
     stats,
     busyPks,
-    choicesDict,
-    menuUrlList,
-    modelList,
-    viewList,
+    choicesDict: meta.choicesDict,
+    menuUrlList: meta.menuUrlList,
+    modelList: meta.modelList,
+    viewList: meta.viewList,
     getMenuData,
-    getMenuApiList,
-    loadModels,
-    loadViews,
+    getMenuApiList: meta.getMenuApiList,
+    loadModels: meta.loadModels,
+    loadViews: meta.loadViews,
     upsertRow,
     dropRows,
     patchRows,

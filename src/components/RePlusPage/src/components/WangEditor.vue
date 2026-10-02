@@ -34,6 +34,10 @@ const Toolbar = defineAsyncComponent(async () => {
 });
 
 const messages = defineModel<string>();
+/** 编辑区最小高度（px）：弹窗内瘦身场景传小值（如 280），默认维持 400 全形态 */
+const props = withDefaults(defineProps<{ minHeight?: number }>(), {
+  minHeight: 400
+});
 const editorRef = shallowRef();
 const mode = "default";
 const { t } = useI18n();
@@ -199,7 +203,10 @@ const beforeUpload = (rawFile: File) => {
 
 <template>
   <el-card shadow="never" class="w-full">
-    <div class="wangeditor">
+    <div
+      class="wangeditor"
+      :style="{ '--wang-editor-min-height': `${props.minHeight}px` }"
+    >
       <Toolbar
         :defaultConfig="toolbarConfig as IToolbarConfig"
         :editor="editorRef"
@@ -211,7 +218,7 @@ const beforeUpload = (rawFile: File) => {
         v-loading="loading"
         :defaultConfig="editorConfig"
         :mode="mode"
-        style="min-height: 400px; overflow-y: hidden"
+        :style="{ minHeight: `${props.minHeight}px`, overflowY: 'hidden' }"
         @onChange="handleChange"
         @onCreated="handleCreated"
       />
@@ -229,10 +236,12 @@ const beforeUpload = (rawFile: File) => {
  * 高度（空内容仅约 52px），于是创建/编辑时抛出告警「编辑区域高度 < 300px 这可能会
  * 导致 modal hoverbar 定位异常」，hoverbar/modal 定位也会偏移。
  * 这里给容器与滚动区补 min-height：既满足 ≥300px 的下限，又保留正文变多时自适应增高
- * （不用固定 height，避免长正文在编辑区内出现滚动条）。
+ * （不用固定 height，避免长正文在编辑区内出现滚动条）。最小值由 props.minHeight 驱动
+ * （CSS 变量下发）；官方对 modal hoverbar 的告警阈值同样是 300px，弹窗瘦身档传值时
+ * 以不依赖 hoverbar 定位的场景为限（如模板富文本编辑）。
  */
 :deep(.w-e-text-container),
 :deep(.w-e-text-container .w-e-scroll) {
-  min-height: 400px;
+  min-height: var(--wang-editor-min-height, 400px);
 }
 </style>

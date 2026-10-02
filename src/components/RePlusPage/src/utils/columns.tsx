@@ -13,15 +13,22 @@ import {
 } from "./registry";
 import type { PageColumn, PlusColumnContext, PlusColumnMeta } from "./types";
 
-import { formatPublicLabels } from "./index";
+import {
+  applyChoicesTruncated,
+  buildColumnRule,
+  columnDefaultValue,
+  detailInputType,
+  resolveColumnLabel
+} from "./columnRules";
 import { formatAddOrEditOptions } from "./renders";
 import { getApiSearchComponents } from "./apiSearch";
-import { isEmail, isNumber } from "@pureadmin/utils";
 
 import Info from "~icons/ri/question-line";
 
 /**
- * @description 用与通过api接口，获取对应的column, 进行前端渲染
+ * @description 用与通过api接口，获取对应的column, 进行前端渲染。
+ * 纯函数段（展示名兜底 / choices 截断降级 / 校验规则 / 默认值形态 / 详情类型映射）
+ * 见同目录 columnRules.ts；本 hook 只负责装配流程与回调时序。
  */
 export function useBaseColumns(localeName: string) {
   /**
@@ -50,39 +57,11 @@ export function useBaseColumns(localeName: string) {
     apiSearchComponents
   });
 
-  /**
-   * 列展示名兜底链：i18n 词条 → 服务端 label（契约允许 null，模型无 verbose_name 时为 null）→ 字段名。
-   * 不兜底会把 null 透传给表头与校验文案（strict 下即类型错误）。
-   */
-  const resolveColumnLabel = (column: {
-    key: string;
-    label: string | null;
-  }): string =>
-    formatPublicLabels(t, te, column.key, localeName) ??
-    column.label ??
-    column.key;
-
-  /**
-   * 降级处理：后端关联列的 choices 超过 SEARCH_CHOICES_MAX_COUNT 时会被截断，
-   * 并带出 choices_truncated 标记。此时下拉必须开启本地过滤，并在开发环境提示
-   * 开发者将该字段改为 api-search-* 远程搜索组件（SearchUser/SearchDept/SearchRole 模式）。
-   */
-  const applyChoicesTruncated = (column: PlusColumnMeta, item: PageColumn) => {
-    if (!column?.choices_truncated) return;
-    item.fieldProps = { ...(item.fieldProps ?? {}), filterable: true };
-    if (import.meta.env.DEV) {
-      console.warn(
-        `[RePlusPage] 字段 "${column.key}" 的 choices 已被后端截断，` +
-          `请为其自定义 input_type="api-search-*" 以启用远程搜索`
-      );
-    }
-  };
-
   const formatSearchColumns = (columns: SearchFieldsResult["data"]) => {
     columns.forEach(column => {
       const item: PageColumn = {
         _column: column,
-        label: resolveColumnLabel(column),
+        label: resolveColumnLabel({ t, te, localeName }, column),
         prop: column.key,
         tooltip: column?.help_text,
         options: computed(() => formatAddOrEditOptions(column.choices ?? [])),
@@ -99,57 +78,10 @@ export function useBaseColumns(localeName: string) {
   };
 
   const formatAddOrEditRules = (column: SearchColumnsResult["data"][0]) => {
-    const message = resolveColumnLabel(column);
-    switch (column.input_type) {
-      case "email":
-        addOrEditRules.value[column.key] = [
-          {
-            required: column.required,
-            validator: (
-              rule: unknown,
-              value: unknown,
-              callback: (error?: Error) => void
-            ) => {
-              if (value === "" || !value) {
-                callback();
-              } else if (!isEmail(value as string)) {
-                callback(new Error(message));
-              } else {
-                callback();
-              }
-            },
-            trigger: "blur"
-          }
-        ];
-        break;
-      case "integer":
-        addOrEditRules.value[column.key] = [
-          {
-            required: column.required,
-            validator: (
-              rule: unknown,
-              value: unknown,
-              callback: (error?: Error) => void
-            ) => {
-              if (value && !isNumber(value)) {
-                callback(new Error("field must be a number"));
-              } else {
-                callback();
-              }
-            },
-            trigger: "blur"
-          }
-        ];
-        break;
-      default:
-        addOrEditRules.value[column.key] = [
-          {
-            required: column.required,
-            message: message,
-            trigger: "blur"
-          }
-        ];
-    }
+    addOrEditRules.value[column.key] = buildColumnRule(
+      column,
+      resolveColumnLabel({ t, te, localeName }, column)
+    );
   };
 
   const formatAddOrEditColumns = (columns: SearchColumnsResult["data"]) => {
@@ -158,7 +90,7 @@ export function useBaseColumns(localeName: string) {
       const item: PageColumn = {
         _column: column,
         prop: column.key,
-        label: resolveColumnLabel(column),
+        label: resolveColumnLabel({ t, te, localeName }, column),
         tooltip: column?.help_text,
         minWidth: 120,
         fieldProps: {
@@ -203,29 +135,13 @@ export function useBaseColumns(localeName: string) {
       }
 
       if (column.hasOwnProperty("default")) {
-        addOrEditDefaultValue.value[column.key] = column?.default;
-        if (column.input_type === "labeled_choice") {
-          addOrEditDefaultValue.value[column.key] = { value: column?.default };
-        }
-        if (column.input_type === "labeled_multiple_choice") {
-          addOrEditDefaultValue.value[column.key] = [
-            { value: column?.default }
-          ];
-        }
-        if (column.input_type === "multiple choice") {
-          addOrEditDefaultValue.value[column.key] = [column?.default];
-        }
+        addOrEditDefaultValue.value[column.key] = columnDefaultValue(column);
       }
       if (!column.write_only) {
-        let input_type = column.input_type;
-        if (input_type.startsWith("api-search-")) {
-          // 详情渲染自定义api-search
-          input_type = "object_related_field";
-          if (column.multiple) {
-            input_type = "m2m_related_field";
-          }
-        }
-        getDetailRenderer(input_type)?.(item, buildContext(column));
+        getDetailRenderer(detailInputType(column))?.(
+          item,
+          buildContext(column)
+        );
         detailColumns.value.push(cloneDeep(item));
         if (column.table_show) {
           const tableItem = cloneDeep(item);

@@ -4,7 +4,7 @@ import { useI18n } from "vue-i18n";
 import { formatBytes, useDark, useECharts } from "@pureadmin/utils";
 import type { UtilsEChartsOption } from "@pureadmin/utils";
 import { epColor } from "@/utils/chartTheme";
-import type { FileTrendPoint } from "../utils/hook";
+import type { FileTrendPoint } from "../utils/fileStats";
 import { waitChartSized } from "../utils/chart";
 
 defineOptions({ name: "FileUploadTrendChart" });

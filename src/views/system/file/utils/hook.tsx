@@ -1,28 +1,16 @@
-import { SUCCESS_CODE } from "@/api/types";
 import { useI18n } from "vue-i18n";
 import { systemUploadFileApi } from "@/api/system/file";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
 import {
-  computed,
-  getCurrentInstance,
-  h,
-  onMounted,
-  reactive,
-  ref,
-  type Ref,
-  shallowRef
-} from "vue";
-import {
   isReadonlyCell,
-  isUrl,
   openDialogDrawer,
   type OperationProps,
-  type PageColumn,
   type PageTableColumn,
   renderBooleanTag,
   type RePlusPageProps,
   formatPageColumns
 } from "@/components/RePlusPage";
+import { h, reactive, shallowRef, getCurrentInstance, type Ref } from "vue";
 import uploadForm from "../components/FileUpload.vue";
 import AccessLogPanel from "../components/AccessLogPanel.vue";
 import { openPreviewDrawer } from "../components/previewDrawer";
@@ -32,54 +20,14 @@ import { ElButton, ElIcon, ElLink, ElText } from "element-plus";
 import { Link } from "@element-plus/icons-vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { renderTagsCell } from "@/utils/tagTone";
-import { useTagAssign } from "@/views/system/components/useTagAssign";
 import { TAGGABLE_RESOURCE } from "@/api/system/tag";
 import type { RecordType } from "plus-pro-components";
 import Upload from "~icons/ep/upload";
 import Tag from "~icons/ri/price-tag-3-line";
 import { formatBytes } from "@pureadmin/utils";
-import { getDictItems } from "@/utils/dict";
-
-/** 分类分布项（stats.category_stats）：value 为 null 表示未分类 */
-export type FileCategoryStat = {
-  value: string | null;
-  /** 分类展示名来自 upload_category 字典；未分类为 null（前端 i18n 兜底） */
-  label: string | null;
-  color: string | null;
-  count: number;
-  size: number;
-};
-
-/** 单日上传趋势（stats.recent_trend，后端已补齐缺失日期） */
-export type FileTrendPoint = {
-  date: string;
-  count: number;
-  size: number;
-};
-
-/** 占用空间最大的文件（stats.top_files） */
-export type FileTopItem = {
-  pk: string;
-  filename: string;
-  filesize: number;
-};
-
-/** 个人文件统计载荷（system/views/admin/file.py::stats） */
-export type FileStats = {
-  count: number;
-  total_size: number;
-  quota_mb: number;
-  usage_rate: number;
-  /** 剩余空间：无配额（0=不限）时为 null，前端显示「不限」 */
-  remaining_size: number | null;
-  avg_size: number;
-  category_stats: FileCategoryStat[];
-  recent_trend: FileTrendPoint[];
-  top_files: FileTopItem[];
-};
-
-/** 分类字典 code：与 UploadFileSerializer.category 的 DictChoiceField 同源 */
-const UPLOAD_CATEGORY_DICT = "upload_category";
+import { withFileUrlRequiredRule } from "./fileFormRules";
+import { useFileTagActions } from "./useFileTagActions";
+import { useFileQuotaStats } from "./useFileQuotaStats";
 
 export function useSystemUploadFile(tableRef: Ref) {
   const { t } = useI18n();
@@ -97,61 +45,18 @@ export function useSystemUploadFile(tableRef: Ref) {
 
   // 通用标签：行内打标（单对象全量替换）与工具栏批量打标共用同一弹窗；
   // 入口按全局 assign:Tag 权限点显示，对象级 update 权限由后端逐对象复核
-  const canAssignTags = hasAuth("assign:Tag");
-  const { openTagDialog } = useTagAssign(tableRef);
-  const selectedNum = ref(0);
-  const manySelectData = ref<RecordType[]>([]);
-  const selectionChange = (rows: RecordType[]) => {
-    manySelectData.value = rows;
-    selectedNum.value = rows.length ?? 0;
-  };
+  const {
+    canAssignTags,
+    openTagDialog,
+    selectedNum,
+    handleBatchTags,
+    selectionChange
+  } = useFileTagActions({ tableRef });
 
-  /** 批量打标（追加语义，避免覆盖各文件既有标签） */
-  const handleBatchTags = () => {
-    openTagDialog({
-      resource: TAGGABLE_RESOURCE.file,
-      pks: manySelectData.value.map(item => String(item.pk))
-    });
-  };
-
-  // 个人配额统计：顶部使用率卡片数据源（服务端 10s 短缓存）
-  const stats = ref<FileStats | null>(null);
-  const loadStats = (fresh = false) => {
-    // 无列表权限时页面不渲染，也不发起统计请求（避免无谓的 403 提示）
-    if (!auth.list) return;
-    // fresh=true 走 ?no_cache=1 旁路服务端短缓存（上传后立即刷新场景）
-    systemUploadFileApi
-      .stats(fresh ? { no_cache: "1" } : undefined)
-      .then(res => {
-        if (res.code === SUCCESS_CODE) stats.value = res.data as FileStats;
-      });
-  };
-  onMounted(loadStats);
-
-  // 分类下拉选项：category 在后端是 CharFilter（search-fields 元数据无 choices），
-  // 选项来源与 DictChoiceField 保持同源（upload_category 字典），保证与表单下拉一致
-  const categoryOptions = ref<Array<{ label: string; value: unknown }>>([]);
-  getDictItems(UPLOAD_CATEGORY_DICT).then(items => {
-    categoryOptions.value = items.map(item => ({
-      label: String(item.label ?? item.value ?? ""),
-      value: item.value
-    }));
+  // 配额统计与分类下拉（搜索区）
+  const { stats, loadStats, searchColumnsFormat } = useFileQuotaStats({
+    hasListAuth: Boolean(auth.list)
   });
-
-  const searchColumnsFormat = (columns: PageColumn[]) => {
-    columns.forEach(column => {
-      if (column._column?.key === "category") {
-        column.valueType = "select";
-        column.fieldProps = {
-          teleported: false,
-          filterable: true,
-          clearable: true
-        };
-        column.options = computed(() => categoryOptions.value);
-      }
-    });
-    return columns;
-  };
 
   /** 访问记录抽屉（上传 / 下载 / 预览 / 删除留痕） */
   const openAccessLogs = (row: RecordType) => {
@@ -251,6 +156,7 @@ export function useSystemUploadFile(tableRef: Ref) {
   const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
     props: {
       formProps: {
+        // 上传登记/存量外链行要求 file_url 为合法 URL（规则见 fileFormRules，可单测直测）
         rules: ({
           rawFormProps: { rules },
           isAdd,
@@ -259,29 +165,7 @@ export function useSystemUploadFile(tableRef: Ref) {
           rawFormProps: { rules: RecordType };
           isAdd?: boolean;
           rawRow?: RecordType;
-        }) => {
-          if (isAdd || !rawRow?.is_upload) {
-            const fileUrlRule = rules["file_url"][0];
-            rules["file_url"] = [
-              {
-                required: true,
-                validator: (
-                  _rule: unknown,
-                  value: string,
-                  callback: (error?: Error) => void
-                ) => {
-                  if (!isUrl(value)) {
-                    callback(new Error(fileUrlRule?.message));
-                  } else {
-                    callback();
-                  }
-                },
-                trigger: "blur"
-              }
-            ];
-          }
-          return rules;
-        }
+        }) => withFileUrlRequiredRule(rules, { isAdd, rawRow })
       }
     }
   });

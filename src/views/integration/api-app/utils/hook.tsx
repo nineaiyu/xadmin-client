@@ -1,30 +1,24 @@
-import { SUCCESS_CODE } from "@/api/types";
-import { h, reactive, ref, shallowRef, type Ref } from "vue";
+import { h, reactive, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElLink, ElMessageBox, ElSwitch, ElTag, ElTooltip } from "element-plus";
-import { addDialog } from "@/components/ReDialog";
-import { dialogSize } from "@/components/ReDialog/size";
-import {
-  addDrawer,
-  closeDrawer,
-  type DrawerOptions
-} from "@/components/ReDrawer";
+import { ElLink, ElSwitch, ElTag, ElTooltip } from "element-plus";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
-import { message } from "@/utils/message";
+import {
+  formatPageColumns,
+  type OperationProps,
+  type PageTableColumn
+} from "@/components/RePlusPage";
 import { buildScopeIndex, formatScopeLines } from "@/utils/scopeDisplay";
-import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
-import { formatPageColumns } from "@/components/RePlusPage";
+import { SUCCESS_CODE } from "@/api/types";
 import {
   apiApplicationApi,
   loadScopeCatalog,
-  type ApiApplicationCredential,
-  type ApiApplicationItem,
-  type ApplicationUsageStats,
-  type CallbackProbeResult
+  type ApiApplicationItem
 } from "@/api/system/open";
-import ApiApplicationForm from "../components/ApiApplicationForm.vue";
-import ApiAppPanel from "../components/ApiAppPanel.vue";
-import { buildApiAppActionGroups } from "./apiAppActions";
+import { useApiAppCredential } from "./useApiAppCredential";
+import { useApiAppActions } from "./useApiAppActions";
+import { useApiAppUsage } from "./useApiAppUsage";
+import { useApiAppDialog } from "./useApiAppDialog";
+import { useApiAppPanel } from "./useApiAppPanel";
 
 /**
  * API 应用（开放平台）：CRUD + 重置密钥 + 回调测试 + 统一「管理」抽屉。
@@ -39,6 +33,13 @@ import { buildApiAppActionGroups } from "./apiAppActions";
  * - is_active 自定义开关渲染：默认编辑按钮关闭（auth.partialUpdate=false）会连带
  *   禁用框架 boolean 列开关，故在列渲染层接管，失败回滚行内值（启停的唯一入口，
  *   抽屉内不再重复提供）。
+ *
+ * 职责拆分：
+ * - useApiAppCredential  一次性密钥展示状态与剪贴板；
+ * - useApiAppActions     行内启停/重置密钥/回调测试；
+ * - useApiAppUsage       用量报表（抽屉）；
+ * - useApiAppDialog      新建/编辑弹窗（含资源授权同步）；
+ * - useApiAppPanel       「管理」抽屉装配。
  */
 export function useApiApplication(tableRef: Ref) {
   const { t } = useI18n();
@@ -58,122 +59,21 @@ export function useApiApplication(tableRef: Ref) {
 
   const refresh = () => tableRef.value?.handleGetData();
 
-  /* ---------------- 一次性密钥展示 ---------------- */
-  const credentialDialog = ref(false);
-  const credential = ref<ApiApplicationCredential | null>(null);
-  const probeResults = ref<CallbackProbeResult[]>([]);
+  const {
+    credentialDialog,
+    credential,
+    probeResults,
+    openCredential,
+    copyText
+  } = useApiAppCredential();
 
-  const openCredential = (data: ApiApplicationCredential) => {
-    credential.value = data;
-    credentialDialog.value = true;
-  };
+  const { toggleActive, confirmRegenerate, runCallbackProbe } =
+    useApiAppActions({ refresh, openCredential, probeResults });
 
-  const copyText = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      message(t("apiApp.copied"), { type: "success" });
-    } catch {
-      message(t("apiApp.copyFailed"), { type: "warning" });
-    }
-  };
+  const { usageVisible, usageLoading, usageRow, usage, openUsage } =
+    useApiAppUsage();
 
-  /* ---------------- 行内启停 / 重置密钥 / 回调测试 ---------------- */
-  const toggleActive = async (row: ApiApplicationItem, value: boolean) => {
-    row.is_active = value;
-    const res = await apiApplicationApi
-      .partialUpdate(row.pk, { is_active: value })
-      .catch(error => ({
-        code: -1,
-        detail: String((error as { detail?: string })?.detail ?? error)
-      }));
-    if (res.code === SUCCESS_CODE) return;
-    row.is_active = !value;
-    message(String(res.detail ?? t("apiApp.saveFailed")), { type: "warning" });
-  };
-
-  const regenerateSecret = async (row: ApiApplicationItem) => {
-    const res = await apiApplicationApi.regenerateSecret(row.pk);
-    if (res.code === SUCCESS_CODE) {
-      openCredential(res.data);
-      refresh();
-    } else if (res.detail) {
-      message(String(res.detail), { type: "warning" });
-    }
-  };
-
-  /**
-   * 重置密钥：旧凭证立即失效、第三方集成需同步更新 —— 执行前二次确认。
-   * （抽屉内触发，确认框为独立遮罩层，不依赖抽屉状态）
-   */
-  const confirmRegenerate = (row: ApiApplicationItem) => {
-    ElMessageBox.confirm(
-      t("apiApp.regenerateConfirm"),
-      t("apiApp.regenerate"),
-      {
-        confirmButtonText: t("buttons.sure"),
-        cancelButtonText: t("buttons.cancel"),
-        type: "warning"
-      }
-    )
-      .then(() => regenerateSecret(row))
-      .catch(() => undefined);
-  };
-
-  /** 回调测试：state 由抽屉持有（测试结果在抽屉内即时展示） */
-  const runCallbackProbe = async (
-    row: ApiApplicationItem,
-    state?: { loading: boolean; results: CallbackProbeResult[] }
-  ) => {
-    if (state) {
-      state.loading = true;
-      state.results = [];
-    }
-    const res = await apiApplicationApi.testCallback(row.pk).catch(error => ({
-      code: -1,
-      data: null,
-      detail: String((error as { detail?: string })?.detail ?? error)
-    }));
-    if (state) state.loading = false;
-    if (res.code === SUCCESS_CODE) {
-      const results = res.data?.results ?? [];
-      probeResults.value = results;
-      if (state) state.results = results;
-      const failed = results.filter(item => !item.success).length;
-      message(
-        failed
-          ? t("apiApp.callbackFailed", { count: failed })
-          : t("apiApp.callbackOk"),
-        { type: failed ? "warning" : "success" }
-      );
-    } else if (res.detail) {
-      message(String(res.detail), { type: "warning" });
-    }
-  };
-
-  /* ---------------- 用量报表（抽屉） ---------------- */
-  const usageVisible = ref(false);
-  const usageLoading = ref(false);
-  const usageRow = ref<ApiApplicationItem | null>(null);
-  const usage = ref<ApplicationUsageStats | null>(null);
-
-  const openUsage = async (row: ApiApplicationItem) => {
-    usageRow.value = row;
-    usage.value = null;
-    usageVisible.value = true;
-    usageLoading.value = true;
-    // 异常归一：抽屉 loading 不悬挂
-    const res = await apiApplicationApi.stats(row.pk, 7).catch(error => ({
-      code: -1,
-      data: null,
-      detail: String((error as { detail?: string })?.detail ?? error)
-    }));
-    usageLoading.value = false;
-    if (res.code === SUCCESS_CODE) {
-      usage.value = res.data as unknown as ApplicationUsageStats;
-    } else if (res.detail) {
-      message(String(res.detail), { type: "warning" });
-    }
-  };
+  const { openDialog } = useApiAppDialog({ t, refresh, openCredential });
 
   /* ---------------- 接口范围展示 ---------------- */
   // 目录只用于「把锚定正则还原成人可读路径」：拉取失败仅退回条目原文，不影响列表
@@ -184,6 +84,17 @@ export function useApiApplication(tableRef: Ref) {
       scopeIndex.value = buildScopeIndex(res.data?.groups);
     })
     .catch(() => undefined);
+
+  const { openApiAppPanel } = useApiAppPanel({
+    t,
+    scopeIndex,
+    copyText,
+    openUsage,
+    confirmRegenerate,
+    runCallbackProbe,
+    openDialog,
+    flags: { canStats, canRegenerate, canTestCallback, canEdit }
+  });
 
   /* ---------------- 列渲染 ---------------- */
   const listColumnsFormat = (columns: PageTableColumn[]) =>
@@ -242,113 +153,6 @@ export function useApiApplication(tableRef: Ref) {
         column["minWidth"] = 220;
       }
     });
-
-  /* ---------------- 新建 / 编辑（ReDialog + ApiApplicationForm） ---------------- */
-  const formRef = ref<InstanceType<typeof ApiApplicationForm>>();
-
-  const openDialog = (row: ApiApplicationItem | null) => {
-    formRef.value = undefined;
-    addDialog({
-      title: row ? t("apiApp.edit") : t("apiApp.create"),
-      width: dialogSize("md"),
-      draggable: true,
-      destroyOnClose: true,
-      closeOnClickModal: false,
-      sureBtnLoading: true,
-      contentRenderer: () => h(ApiApplicationForm, { ref: formRef, row }),
-      beforeSure: async (done, { closeLoading }) => {
-        const payload = formRef.value?.getPayload();
-        if (!payload) {
-          closeLoading();
-          return;
-        }
-        // 异常归一为可读失败结果：避免请求异常时 beforeSure 抛错、弹窗 loading 悬挂
-        const res = await (
-          row
-            ? apiApplicationApi.partialUpdate(row.pk, payload)
-            : apiApplicationApi.create(payload)
-        ).catch(error => ({
-          code: -1,
-          data: null,
-          detail: String((error as { detail?: string })?.detail ?? error)
-        }));
-        if (res.code === SUCCESS_CODE) {
-          // 资源授权为独立端点（全量替换）：加载失败时跳过，绝不覆盖为空
-          const grants = formRef.value?.getGrants();
-          const targetPk =
-            row?.pk ?? (res.data as { pk?: string } | null)?.pk ?? "";
-          if (grants === null || grants === undefined) {
-            message(t("apiApp.grant.loadFailed"), { type: "warning" });
-          } else if (targetPk) {
-            const grantRes = await apiApplicationApi
-              .updateGrants(targetPk, grants)
-              .catch(error => ({
-                code: -1,
-                detail: String((error as { detail?: string })?.detail ?? error)
-              }));
-            if (grantRes.code !== SUCCESS_CODE && grantRes.detail) {
-              message(String(grantRes.detail), { type: "warning" });
-            }
-          }
-          message(t("apiApp.saveOk"), { type: "success" });
-          // 先关表单弹窗，一次性密钥弹窗紧接展示（列表/详情不回传明文）
-          done();
-          const created = res.data as unknown as
-            ApiApplicationCredential | undefined;
-          if (!row && created?.client_secret) {
-            openCredential(created);
-          }
-          refresh();
-          return;
-        }
-        if (res.detail) message(String(res.detail), { type: "warning" });
-        closeLoading();
-      }
-    });
-  };
-
-  /* ---------------- 管理抽屉（行操作收敛） ---------------- */
-  const openApiAppPanel = (row: ApiApplicationItem) => {
-    // 接口范围明细：锚定正则还原为可读路径（目录未加载时退回条目原文）
-    const scopeLines = formatScopeLines(row.scopes ?? [], scopeIndex.value)
-      .split("\n")
-      .filter(Boolean);
-    // 回调测试状态由抽屉持有：结果在抽屉内即时更新（无需关闭抽屉看消息提示）
-    const probe = reactive({
-      loading: false,
-      results: [] as CallbackProbeResult[]
-    });
-    const options: DrawerOptions = {
-      title: t("apiApp.panelTitle", { name: row.name }),
-      size: "520px",
-      destroyOnClose: true,
-      hideFooter: true
-    };
-    // 动作执行前先收起抽屉再打开二级弹层（避免抽屉与弹窗叠加、焦点归属混乱）
-    const withClosed = (run: () => void) => () => {
-      closeDrawer(options, 0);
-      run();
-    };
-    options.contentRenderer = () =>
-      h(ApiAppPanel, {
-        row,
-        scopeLines,
-        probe,
-        copy: copyText,
-        groups: buildApiAppActionGroups({
-          t,
-          flags: { canStats, canRegenerate, canTestCallback, canEdit },
-          handlers: {
-            openUsage: withClosed(() => openUsage(row)),
-            regenerate: withClosed(() => confirmRegenerate(row)),
-            // 回调测试结果在抽屉内展示：不收起抽屉
-            testCallback: () => runCallbackProbe(row, probe),
-            edit: withClosed(() => openDialog(row))
-          }
-        })
-      });
-    addDrawer(options);
-  };
 
   /* ---------------- 按钮装配 ---------------- */
   const operationButtonsProps = shallowRef<OperationProps>({

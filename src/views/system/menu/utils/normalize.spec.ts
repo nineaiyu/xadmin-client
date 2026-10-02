@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { MenuChoices } from "@/views/system/constants";
+import type { MenuRow } from "./types";
 import {
   ancestorChain,
   buildMenuTree,
   buildRowIndex,
   emptyFormModel,
   flattenMenuTree,
+  inferType,
   normalizeMenuRow,
   rowPathText,
   toFormModel,
@@ -236,5 +238,21 @@ describe("表单模型与提交载荷", () => {
       parent: unknown;
     };
     expect(payload.parent).toBeNull();
+  });
+});
+
+describe("inferType（新增子级按父级推断类型）", () => {
+  const rowOf = (menuType: number) => ({ menuType }) as MenuRow;
+
+  it("无父级时为目录", () => {
+    expect(inferType(null)).toBe(MenuChoices.DIRECTORY);
+  });
+
+  it("目录下为菜单，菜单/权限点下为权限点", () => {
+    expect(inferType(rowOf(MenuChoices.DIRECTORY))).toBe(MenuChoices.MENU);
+    expect(inferType(rowOf(MenuChoices.MENU))).toBe(MenuChoices.PERMISSION);
+    expect(inferType(rowOf(MenuChoices.PERMISSION))).toBe(
+      MenuChoices.PERMISSION
+    );
   });
 });

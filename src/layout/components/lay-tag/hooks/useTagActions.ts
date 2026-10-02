@@ -8,10 +8,11 @@ import type { LocationQueryRaw, RouteParamsRaw } from "vue-router";
 import type { menuType } from "@/layout/types";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import { useTagMenuState } from "./useTagMenuState";
+import { useTagDelete } from "./useTagDelete";
 import { handleAliveRoute, getTopMenu } from "@/router/utils";
 import { useSettingStoreHook } from "@/store/modules/settings";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
-import { unref, toRaw, nextTick } from "vue";
+import { unref, nextTick } from "vue";
 import type { Ref } from "vue";
 
 import ExitFullscreen from "~icons/ri/fullscreen-exit-fill";
@@ -62,11 +63,19 @@ export function useTagActions(ctx: TagActionsContext) {
     multiTags,
     topPath
   });
-  const { VITE_HIDE_HOME } = import.meta.env;
   const fixedTags = [
     ...routerArrays,
     ...usePermissionStoreHook().flatteningRoutes.filter(v => v?.meta?.fixedTag)
   ];
+
+  // 标签删除域（左/右/其他/当前裁剪与删除后跳转）见 useTagDelete.ts
+  const { deleteMenu } = useTagDelete({
+    route,
+    router,
+    multiTags,
+    fixedTags,
+    dynamicTagView
+  });
 
   function dynamicRouteTag(value: string): void {
     const hasValue = multiTags.value.some(item => {
@@ -104,82 +113,6 @@ export function useTagActions(ctx: TagActionsContext) {
     });
     handleAliveRoute(route as ToRouteType, "refresh");
     NProgress.done();
-  }
-
-  function deleteDynamicTag(obj: RouteConfigs, current: string, tag?: string) {
-    const valueIndex: number = multiTags.value.findIndex(item => {
-      if (item.query) {
-        if (item.path === obj.path) {
-          return item.query === obj.query;
-        }
-      } else if (item.params) {
-        if (item.path === obj.path) {
-          return item.params === obj.params;
-        }
-      } else {
-        return item.path === obj.path;
-      }
-    });
-
-    const spliceRoute = (
-      startIndex?: number,
-      length?: number,
-      other?: boolean
-    ): void => {
-      if (other) {
-        useMultiTagsStoreHook().handleTags(
-          "equal",
-          [
-            VITE_HIDE_HOME === "false" ? fixedTags : toRaw(getTopMenu()),
-            obj
-          ].flat() as RouteConfigs[]
-        );
-      } else {
-        useMultiTagsStoreHook().handleTags("splice", "", {
-          startIndex,
-          length
-        });
-      }
-      dynamicTagView();
-    };
-
-    if (tag === "other") {
-      spliceRoute(1, 1, true);
-    } else if (tag === "left") {
-      spliceRoute(fixedTags.length, valueIndex - fixedTags.length);
-    } else if (tag === "right") {
-      spliceRoute(valueIndex + 1, multiTags.value.length);
-    } else {
-      // 从当前匹配到的路径中删除
-      spliceRoute(valueIndex, 1);
-    }
-    const newRoute = useMultiTagsStoreHook().handleTags("slice") ?? [];
-    if (current === route.path) {
-      // 如果删除当前激活tag就自动切换到最后一个tag
-      if (tag === "left") return;
-      if (newRoute[0]?.query) {
-        router.push({ name: newRoute[0].name, query: newRoute[0].query });
-      } else if (newRoute[0]?.params) {
-        router.push({ name: newRoute[0].name, params: newRoute[0].params });
-      } else {
-        router.push({ path: newRoute[0].path });
-      }
-    } else {
-      if (!multiTags.value.length) return;
-      if (multiTags.value.some(item => item.path === route.path)) return;
-      if (newRoute[0]?.query) {
-        router.push({ name: newRoute[0].name, query: newRoute[0].query });
-      } else if (newRoute[0]?.params) {
-        router.push({ name: newRoute[0].name, params: newRoute[0].params });
-      } else {
-        router.push({ path: newRoute[0].path });
-      }
-    }
-  }
-
-  function deleteMenu(item: RouteConfigs, tag?: string) {
-    deleteDynamicTag(item, item.path ?? "", tag);
-    handleAliveRoute(route as ToRouteType);
   }
 
   function onClickDrop(

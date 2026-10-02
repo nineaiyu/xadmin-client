@@ -2,17 +2,19 @@
  * 菜单管理页组装入口：数据 / 筛选 / 树交互 / 排序 / 多选 / 抽屉六块能力的接线。
  *
  * 页面（index.vue）只消费本文件返回的扁平引用，逻辑全部落在各职责模块：
- * - useMenuData      数据拉取与增删改（含影响面预检、批量启停、导入导出）
- * - useMenuFilter    关键字/类型/状态/展开层级与可见树
- * - useMenuTree      树交互域：展开应用、勾选联动、拖拽约束/排序、多选与视口高度
- * - useMenuDrawer    新增/编辑/克隆/重命名/权限码抽屉编排
- * - menuActions      行操作清单与危险动作确认（右键菜单/行内下拉/批量）
+ * - useMenuData          数据拉取与增删改（含影响面预检、批量启停、导入导出）；
+ * - useMenuMeta          字典/接口清单/关联模型/组件路径等下拉与候选装配；
+ * - useMenuFilter        关键字/类型/状态/展开层级与可见树；
+ * - useMenuTree          树交互域：展开应用、勾选联动、拖拽约束/排序、多选与视口高度；
+ * - useMenuDrawer        新增/编辑/克隆/重命名/权限码抽屉编排；
+ * - useMenuContextMenu   行右键菜单状态与动作清单（与行内下拉共用声明）；
+ * - useMenuToolbar       工具栏动作（新增/权限码/权限检测/导入导出/批量）；
+ * - menuActions          行操作清单与危险动作确认。
  */
 
 import {
   computed,
   getCurrentInstance,
-  h,
   nextTick,
   onMounted,
   reactive,
@@ -21,20 +23,13 @@ import {
 } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth, getDefaultAuths } from "@/router/utils";
-import { addDialog, closeDialog } from "@/components/ReDialog";
-import { dialogSize } from "@/components/ReDialog/size";
-import MenuPermissionAuditDialog from "../components/MenuPermissionAuditDialog.vue";
 import { useMenuData } from "./useMenuData";
 import { useMenuFilter } from "./useMenuFilter";
 import { useMenuOrder, useMenuSelection, useMenuTree } from "./useMenuTree";
 import { useMenuDrawer } from "./useMenuDrawer";
-import { buildNodeActions, type MenuActionContext } from "./menuActions";
-import type {
-  MenuAuths,
-  MenuNodeAction,
-  MenuRow,
-  MoveDirection
-} from "./types";
+import { useMenuContextMenu } from "./useMenuContextMenu";
+import { useMenuToolbar } from "./useMenuToolbar";
+import type { MenuAuths, MenuRow, MoveDirection } from "./types";
 
 export function useMenu() {
   const { t } = useI18n();
@@ -205,91 +200,28 @@ export function useMenu() {
     }
   };
 
-  /** 动作清单构建器（右键菜单与行内下拉共用同一份声明） */
-  const actionContext: MenuActionContext = {
-    t,
-    auth,
-    openEdit: row => onRowAction("edit", row),
-    openCreate: row => onRowAction("addChild", row),
-    openPermission: row => onRowAction("permissions", row),
-    openRename: row => onRowAction("rename", row),
-    openClone: row => onRowAction("clone", row),
-    remove: row => onRowAction("delete", row),
-    move: (row, direction) => onRowAction(`move:${direction}`, row),
-    toggleActive: row => toggleRowActive(row, !row.isActive)
-  };
-
-  const contextMenu = reactive({
-    visible: false,
-    x: 0,
-    y: 0,
-    row: null as MenuRow | null
-  });
-
-  const contextActions = computed<MenuNodeAction[]>(() =>
-    contextMenu.row ? buildNodeActions(contextMenu.row, actionContext) : []
-  );
-
-  const onRowContextMenu = (event: MouseEvent, row: MenuRow) => {
-    currentRow.value = row;
-    contextMenu.row = row;
-    contextMenu.x = event.clientX;
-    contextMenu.y = event.clientY;
-    contextMenu.visible = true;
-  };
-
-  const closeContextMenu = () => {
-    contextMenu.visible = false;
-  };
+  const { contextMenu, contextActions, onRowContextMenu, closeContextMenu } =
+    useMenuContextMenu({
+      t,
+      auth,
+      currentRow,
+      onRowAction,
+      toggleRowActive
+    });
 
   // ---------------------------------------------------------------- 工具栏
 
-  const onAdd = () => void openWithGuard(() => drawer.openCreate(null));
-  const onGeneratePermissions = () => {
-    if (!currentRow.value) return;
-    // 二级弹层前先收起抽屉（未保存时走守卫，不强收）
-    const target = currentRow.value;
-    void openWithGuard(() => {
-      if (drawer.isOpen()) drawer.close();
-      drawer.openPermission(target);
-    });
-  };
-  const onExport = () => data.exportData(treeRef.value);
-  const onImport = () => data.importData();
-  const onRefresh = () => data.getMenuData();
-  const onResetFilter = () => filter.reset();
-  /** 权限检测：只读报告，定位时收起弹层并展开高亮库内权限点 */
-  const onPermissionAudit = () => {
-    void openWithGuard(() => {
-      if (drawer.isOpen()) drawer.close();
-      addDialog({
-        title: t("systemMenu.permissionAudit.title"),
-        width: dialogSize("xl"),
-        draggable: true,
-        destroyOnClose: true,
-        closeOnClickModal: false,
-        hideFooter: true,
-        contentRenderer: ({ options, index }) =>
-          h(MenuPermissionAuditDialog, {
-            onLocate: (pk: string) => {
-              closeDialog(options, index);
-              const row = data.rowIndex.value.byPk.get(String(pk));
-              if (!row) return;
-              currentRow.value = row;
-              revealRow(row.pk);
-            }
-          })
-      });
-    });
-  };
-  const onToggleAll = (expand: boolean) => {
-    filter.filter.expandLevel = expand ? 3 : 1;
-  };
-  const onBatchActive = (isActive: boolean) => selection.batchActive(isActive);
-  const onBatchDelete = () => selection.batchRemove();
-  const onSelectAll = () =>
-    selection.selectAllVisible(filter.visibleTree.value);
-  const onClearSelection = () => selection.clearSelection();
+  const toolbar = useMenuToolbar({
+    t,
+    treeRef,
+    currentRow,
+    revealRow,
+    openWithGuard,
+    drawer,
+    data,
+    filter,
+    selection
+  });
 
   // ---------------------------------------------------------------- 初始化
 
@@ -337,18 +269,18 @@ export function useMenu() {
     onRowContextMenu,
     closeContextMenu,
     toggleRowActive,
-    onAdd,
-    onGeneratePermissions,
-    onPermissionAudit,
-    onExport,
-    onImport,
-    onRefresh,
-    onResetFilter,
-    onToggleAll,
-    onBatchActive,
-    onBatchDelete,
-    onSelectAll,
-    onClearSelection,
+    onAdd: toolbar.onAdd,
+    onGeneratePermissions: toolbar.onGeneratePermissions,
+    onPermissionAudit: toolbar.onPermissionAudit,
+    onExport: toolbar.onExport,
+    onImport: toolbar.onImport,
+    onRefresh: toolbar.onRefresh,
+    onResetFilter: toolbar.onResetFilter,
+    onToggleAll: toolbar.onToggleAll,
+    onBatchActive: toolbar.onBatchActive,
+    onBatchDelete: toolbar.onBatchDelete,
+    onSelectAll: toolbar.onSelectAll,
+    onClearSelection: toolbar.onClearSelection,
     toggleMultiMode: selection.toggleMultiMode
   };
 }

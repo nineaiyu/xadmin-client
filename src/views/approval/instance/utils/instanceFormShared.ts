@@ -1,3 +1,5 @@
+import type { NodeProgress } from "@/api/approval/approvalFlow";
+import { message } from "@/utils/message";
 import type { useI18n } from "vue-i18n";
 
 /** 实例动作弹窗（单行/批量）共享的小工具：标题简化与 SearchUser 载荷提取 */
@@ -34,4 +36,25 @@ export function pickUsernames(value: unknown): string[] {
   return Array.from(
     new Set(rows.map(item => pickUsername(item)).filter(Boolean))
   );
+}
+
+/**
+ * 会签/比例会签动作成功后的达标线提示：服务端回带 node_progress 且 required>1 时提示
+ * （加签抬高节点任务总数 / 减签恢复达标线；单签场景不打扰）。
+ * 自 useInstanceActions 抽出（addSign / removeSign 成功回调共用，行为不变）。
+ */
+export function notifyNodeProgress(res: unknown, t: TFunction) {
+  const progress = (
+    res as { data?: { node_progress?: NodeProgress } } | undefined
+  )?.data?.node_progress;
+  if (progress && progress.required > 1) {
+    message(
+      t("systemApprovalInstance.addSignThreshold", {
+        approved: progress.approved,
+        required: progress.required,
+        total: progress.total
+      }),
+      { type: "info" }
+    );
+  }
 }

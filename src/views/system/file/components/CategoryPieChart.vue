@@ -5,7 +5,7 @@ import { useI18n } from "vue-i18n";
 import { formatBytes, useDark, useECharts } from "@pureadmin/utils";
 import type { UtilsEChartsOption } from "@pureadmin/utils";
 import { cssVarColor } from "@/utils/chartTheme";
-import type { FileCategoryStat } from "../utils/hook";
+import type { FileCategoryStat } from "../utils/fileStats";
 import { fallbackColor, waitChartSized } from "../utils/chart";
 
 defineOptions({ name: "FileCategoryPieChart" });

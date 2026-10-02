@@ -1,26 +1,22 @@
 import { h, ref, type Ref } from "vue";
 import { approvalInstanceApi } from "@/api/approval/approvalFlow";
-import type { NodeProgress } from "@/api/approval/approvalFlow";
 import { handleOperation } from "@/components/RePlusPage";
 import { message } from "@/utils/message";
 
 import ApproveForm from "../components/ApproveForm.vue";
 import RejectForm from "../components/RejectForm.vue";
 import UrgeForm from "../components/UrgeForm.vue";
-import AddSignForm from "../components/AddSignForm.vue";
-import RemoveSignForm from "../components/RemoveSignForm.vue";
-import ReturnForm from "../components/ReturnForm.vue";
-import TransferForm from "../components/TransferForm.vue";
 import { rowTitle, type TFunction } from "./instanceFormShared";
 import {
   openActionDialog,
   type ActionFormInstance
 } from "./instanceFormDialog";
 import { useInstanceBatchActions } from "./useInstanceBatchActions";
+import { useInstanceNodeActions } from "./useInstanceNodeActions";
 
 type ActionRow = { pk?: string | number; title?: string };
 
-/** 审批动作弹窗：通过（意见选填）/ 驳回（原因必填）/ 加签 / 转交 / 催办 / 重新提交（批量见 useInstanceBatchActions） */
+/** 审批动作弹窗：通过（意见选填）/ 驳回（原因必填）/ 催办 + 节点动作（加签/减签/退回/转交见 useInstanceNodeActions；批量见 useInstanceBatchActions） */
 export function useInstanceActions({
   t,
   refresh,
@@ -102,151 +98,8 @@ export function useInstanceActions({
     });
   };
 
-  /** 加签：多选选人（无选人权限时表单内部回退用户名输入） */
-  const addSignFormRef =
-    ref<ActionFormInstance<{ usernames: string; comment: string }>>();
-  const openAddSign = (row: ActionRow) => {
-    openActionDialog({
-      title: t("systemApprovalInstance.addSignTitle", {
-        title: rowTitle(row)
-      }),
-      formRef: addSignFormRef,
-      render: () => h(AddSignForm, { ref: addSignFormRef }),
-      submit: (payload, done, closeLoading) => {
-        handleOperation({
-          t,
-          apiReq: approvalInstanceApi.addSign(
-            row.pk ?? "",
-            payload.usernames,
-            payload.comment
-          ),
-          success: res => {
-            done();
-            refresh();
-            // 加签抬高节点任务总数：用服务端回带的新达标线提示（比例会签透明可预期）
-            const progress = (
-              res?.data as { node_progress?: NodeProgress } | undefined
-            )?.node_progress;
-            if (progress && progress.required > 1) {
-              message(
-                t("systemApprovalInstance.addSignThreshold", {
-                  approved: progress.approved,
-                  required: progress.required,
-                  total: progress.total
-                }),
-                { type: "info" }
-              );
-            }
-          },
-          requestEnd: closeLoading
-        });
-      }
-    });
-  };
-
-  /** 转交：把我的当前待办交给他人处理（一次性，区别于「委托」的长期代理） */
-  const transferFormRef =
-    ref<ActionFormInstance<{ username: string; comment: string }>>();
-  const openTransfer = (row: ActionRow) => {
-    openActionDialog({
-      title: t("systemApprovalInstance.transferTitle", {
-        title: rowTitle(row)
-      }),
-      formRef: transferFormRef,
-      render: () => h(TransferForm, { ref: transferFormRef }),
-      submit: (payload, done, closeLoading) => {
-        handleOperation({
-          t,
-          apiReq: approvalInstanceApi.transfer(
-            row.pk ?? "",
-            payload.username,
-            payload.comment
-          ),
-          success: () => {
-            message(t("systemApprovalInstance.transferOk"), {
-              type: "success"
-            });
-            done();
-            refresh();
-          },
-          requestEnd: closeLoading
-        });
-      }
-    });
-  };
-
-  /** 减签：移除加签追加的候选（弹窗内列出当前节点的加签待办；返回新达标线提示） */
-  const removeSignFormRef =
-    ref<ActionFormInstance<{ task: string; comment: string }>>();
-  const openRemoveSign = (row: ActionRow) => {
-    openActionDialog({
-      title: t("systemApprovalInstance.removeSignTitle", {
-        title: rowTitle(row)
-      }),
-      formRef: removeSignFormRef,
-      render: () =>
-        h(RemoveSignForm, { ref: removeSignFormRef, pk: row.pk ?? "" }),
-      submit: (payload, done, closeLoading) => {
-        handleOperation({
-          t,
-          apiReq: approvalInstanceApi.removeSign(
-            row.pk ?? "",
-            payload.task,
-            payload.comment
-          ),
-          success: res => {
-            done();
-            refresh();
-            const progress = (
-              res?.data as { node_progress?: NodeProgress } | undefined
-            )?.node_progress;
-            if (progress && progress.required > 1) {
-              message(
-                t("systemApprovalInstance.addSignThreshold", {
-                  approved: progress.approved,
-                  required: progress.required,
-                  total: progress.total
-                }),
-                { type: "info" }
-              );
-            }
-          },
-          requestEnd: closeLoading
-        });
-      }
-    });
-  };
-
-  /** 退回：实例回退到已途经节点重开重审（目标节点与原因在弹窗内选择） */
-  const returnFormRef =
-    ref<ActionFormInstance<{ reason: string; target_order?: number }>>();
-  const openReturn = (row: ActionRow) => {
-    openActionDialog({
-      title: t("systemApprovalInstance.returnTitle", {
-        title: rowTitle(row)
-      }),
-      formRef: returnFormRef,
-      render: () => h(ReturnForm, { ref: returnFormRef, pk: row.pk ?? "" }),
-      submit: (payload, done, closeLoading) => {
-        handleOperation({
-          t,
-          apiReq: approvalInstanceApi.returnTo(
-            row.pk ?? "",
-            payload.reason,
-            payload.target_order
-          ),
-          success: () => {
-            message(t("systemApprovalInstance.returnOk"), {
-              type: "success"
-            });
-            done();
-            refresh();
-          },
-          requestEnd: closeLoading
-        });
-      }
-    });
-  };
+  // 节点动作（加签/减签/退回/转交）拆在 useInstanceNodeActions
+  const nodeActions = useInstanceNodeActions({ t, refresh });
 
   // 批量动作（通过/驳回/转交）拆在 useInstanceBatchActions，这里转发保持调用面不变
   const batchActions = useInstanceBatchActions({ t, refresh, tableRef });
@@ -255,10 +108,7 @@ export function useInstanceActions({
     openApprove,
     openUrge,
     openReject,
-    openAddSign,
-    openRemoveSign,
-    openReturn,
-    openTransfer,
+    ...nodeActions,
     ...batchActions
   };
 }

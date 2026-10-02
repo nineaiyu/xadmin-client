@@ -1,27 +1,28 @@
 /**
- * 菜单新增/编辑抽屉编排：打开（新增/编辑/克隆）、脏检查、保存、权限码生成、快速重命名。
+ * 菜单新增/编辑抽屉编排：打开（新增/编辑/克隆）、脏检查、保存、快速重命名。
  *
  * 新增与编辑共用**同一个抽屉**（旧实现：新增走弹窗、编辑走常驻表单，两套壳）；
  * 关闭/取消/切换节点三处都做未保存拦截，避免静默丢弃编辑内容。
+ *
+ * 子模块：快速重命名 useMenuRename / 权限码生成 useMenuPermissionCode
+ * （两者与抽屉核心状态无耦合）；类型推断 inferType 归入 normalize.ts（纯函数）。
  */
 
-import { h, ref, type Ref } from "vue";
+import { h, ref, type Ref, type Reactive } from "vue";
 import type { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
 import { SUCCESS_CODE } from "@/api/types";
 import { message } from "@/utils/message";
-import { addDialog } from "@/components/ReDialog";
-import { dialogSize } from "@/components/ReDialog/size";
 import {
   addDrawer,
   closeDrawer,
   type DrawerOptions
 } from "@/components/ReDrawer";
-import { MenuChoices } from "@/views/system/constants";
 import MenuDrawerForm from "../components/MenuDrawerForm.vue";
-import MenuPermissionDialog from "../components/MenuPermissionDialog.vue";
-import { emptyFormModel, toFormModel } from "./normalize";
+import { emptyFormModel, inferType, toFormModel } from "./normalize";
 import { displayTitle } from "./useMenuFilter";
+import { useMenuRename } from "./useMenuRename";
+import { useMenuPermissionCode } from "./useMenuPermissionCode";
 import type {
   MenuAuths,
   MenuChoiceItem,
@@ -31,7 +32,6 @@ import type {
   ModelTreeItem
 } from "./types";
 import type { menuApi } from "@/api/system/menu";
-import type { Reactive } from "vue";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
@@ -85,13 +85,6 @@ export function useMenuDrawer({
   const isOpen = () => Boolean(current.value);
   const openPk = () => current.value?.pk;
   const dirty = () => Boolean(formRef.value?.isDirty?.());
-
-  const inferType = (parent: MenuRow | null): number => {
-    if (!parent) return MenuChoices.DIRECTORY;
-    if (parent.menuType === MenuChoices.DIRECTORY) return MenuChoices.MENU;
-    if (parent.menuType === MenuChoices.MENU) return MenuChoices.PERMISSION;
-    return MenuChoices.PERMISSION;
-  };
 
   const close = () => {
     if (options) closeDrawer(options, 0, { command: "close" });
@@ -247,65 +240,13 @@ export function useMenuDrawer({
     open(model, true, t("systemMenu.dialog.clone"));
   };
 
-  /** 快速重命名（不打开整表单） */
-  const openRename = (row: MenuRow) => {
-    ElMessageBox.prompt(
-      t("systemMenu.verifyTitle"),
-      t("systemMenu.action.rename"),
-      {
-        inputValue: row.meta.title,
-        confirmButtonText: t("buttons.save"),
-        cancelButtonText: t("buttons.cancel"),
-        inputValidator: (value: string) =>
-          value?.trim() ? true : t("systemMenu.verifyTitle")
-      }
-    )
-      .then(async ({ value }) => {
-        const res = await renameNode(row, String(value).trim()).catch(
-          error => ({
-            code: -1,
-            detail: String((error as { detail?: string })?.detail ?? error)
-          })
-        );
-        if (res.code !== SUCCESS_CODE) {
-          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-          return;
-        }
-        message(t("results.success"), { type: "success" });
-      })
-      .catch(() => undefined);
-  };
-
-  /** 生成权限码（含 C-/U- 预览，dry_run 与执行共用同一构造逻辑） */
-  const openPermission = (row: MenuRow) => {
-    const dialogRef = ref();
-    addDialog({
-      title: t("systemMenu.addPermissions"),
-      width: dialogSize("lg"),
-      draggable: true,
-      destroyOnClose: true,
-      closeOnClickModal: false,
-      sureBtnLoading: true,
-      contentRenderer: () =>
-        h(MenuPermissionDialog, {
-          ref: dialogRef,
-          row,
-          menuUrlList: menuUrlList.value
-        }),
-      beforeSure: (done, { closeLoading }) => {
-        dialogRef.value
-          ?.submit?.()
-          .then((ok: boolean) => {
-            if (ok) {
-              done();
-              reload();
-            }
-            closeLoading();
-          })
-          .catch(() => closeLoading());
-      }
-    });
-  };
+  // 快速重命名与权限码生成（与抽屉核心状态无耦合的独立弹窗动作）
+  const { openRename } = useMenuRename({ t, renameNode });
+  const { openPermission } = useMenuPermissionCode({
+    t,
+    menuUrlList,
+    reload
+  });
 
   /** 切换节点前的未保存拦截 */
   const confirmSwitch = async (): Promise<UnsavedChoice> => {

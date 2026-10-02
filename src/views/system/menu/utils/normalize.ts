@@ -275,6 +275,17 @@ export function menuTypeTagType(
   return "success";
 }
 
+/**
+ * 新增子级时按父级推断节点类型：无父级 = 目录，目录下 = 菜单，其余（菜单/权限点下）= 权限点。
+ * （自 useMenuDrawer 抽出的纯函数，便于单测直测。）
+ */
+export function inferType(parent: MenuRow | null): number {
+  if (!parent) return MenuChoices.DIRECTORY;
+  if (parent.menuType === MenuChoices.DIRECTORY) return MenuChoices.MENU;
+  if (parent.menuType === MenuChoices.MENU) return MenuChoices.PERMISSION;
+  return MenuChoices.PERMISSION;
+}
+
 /** 行次要信息：权限点展示「方法 + 接口路径」，其余展示路由地址 */
 export function rowPathText(row: MenuRow): string {
   if (row.menuType === MenuChoices.PERMISSION) {

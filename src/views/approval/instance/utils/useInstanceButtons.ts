@@ -10,6 +10,8 @@ import {
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
 import { openInstanceDetail, openStartInstanceDialog } from "./instanceDialogs";
+import { hasMyTask, statusValue } from "./instanceRowRules";
+import { useInstanceBatchButtons } from "./useInstanceBatchButtons";
 import type { InstanceScope } from "./hook";
 import Back from "~icons/ep/back";
 import Bell from "~icons/ep/bell";
@@ -44,18 +46,13 @@ export type InstanceAuth = {
 };
 
 /**
- * 行数据是否含「我的当前待办」（服务端 my_task 口径：仅当前节点、指派给我、审批中）
+ * 行内按钮组：待办=通过/驳回/加签/减签/退回/转交，我的申请=撤回/催办/重提，已办=只读。
  *
  * 按钮顺序权重（`show` 的角色）：框架按 `show` 升序排列，函数形态的返回值同样是
  * 权重（`Number(true) = 1`，一律返回布尔会让所有行级条件按钮并列在最前）。
  * 口径：通过 1 / 驳回 2 / 加签 3 / 减签 4 / 转交 5 / 撤回 6 / 催办 7 / 重提 8 / 详情 9。
+ * （工具栏按钮见 useInstanceBatchButtons；行可见性纯规则见 instanceRowRules.ts。）
  */
-const hasMyTask = (row: { my_task?: unknown }) => !!row.my_task;
-
-const statusValue = (row: { status?: { value?: string } | string }) =>
-  (row.status as { value?: string })?.value ?? row.status;
-
-/** 行内/工具栏按钮组：待办=通过/驳回/加签，我的申请=撤回/催办/重提，已办=只读 */
 export function useInstanceButtons({
   scope,
   auth,
@@ -85,23 +82,6 @@ export function useInstanceButtons({
   /** 发起申请成功后的页面级回调（切页签/刷新角标），由 InstancePanel 从父页面透传 */
   onStarted?: () => void;
 }) {
-  /** 工具栏「发起申请」：所有页签首位（选流程 + 动态表单；成功后页面切页签/刷新角标） */
-  const startButton: OperationButtonsRow = {
-    text: t("systemApprovalInstance.start"),
-    code: "create",
-    props: {
-      type: "primary",
-      icon: useRenderIcon(Plus)
-    },
-    onClick: () => {
-      openStartInstanceDialog(t("systemApprovalInstance.startTitle"), () => {
-        refresh();
-        onStarted?.();
-      });
-    },
-    show: auth.create
-  };
-
   const detailButton: OperationButtonsRow = {
     // 与内置「查看」（通用记录详情）区分：本按钮展示表单数据 + 审批轨迹
     text: t("systemApprovalInstance.detailRich"),
@@ -309,52 +289,14 @@ export function useInstanceButtons({
             : [detailButton]
   });
 
-  const batchApproveButton: OperationButtonsRow = {
-    text: t("systemApprovalInstance.batchApprove"),
-    code: "batchApprove",
-    props: {
-      type: "primary",
-      icon: useRenderIcon(Check),
-      plain: true
-    },
-    // 批量通过走弹窗：审批意见选填（逐单落同一意见）
-    onClick: () => actions.openBatchApprove(),
-    show: auth.batchApprove
-  };
-
-  const batchRejectButton: OperationButtonsRow = {
-    text: t("systemApprovalInstance.batchReject"),
-    code: "batchReject",
-    props: {
-      type: "danger",
-      icon: useRenderIcon(Close),
-      plain: true
-    },
-    onClick: () => actions.openBatchReject(),
-    show: auth.batchReject
-  };
-
-  /** 批量转交（待办页签）：勾选的多条待办一次交给同一人（区别于逐条转交） */
-  const batchTransferButton: OperationButtonsRow = {
-    text: t("systemApprovalInstance.batchTransfer"),
-    code: "batchTransfer",
-    props: {
-      type: "warning",
-      icon: useRenderIcon(Refresh),
-      plain: true
-    },
-    onClick: () => actions.openBatchTransfer(),
-    show: auth.batchTransfer
-  };
-
-  /** 工具栏：发起申请（所有页签）+ 批量（仅待办页签；导出由框架按 auth.exportData 内建） */
-  const tableBarButtonsProps = shallowRef<OperationProps>({
-    buttons: [
-      startButton,
-      ...(scope === "pending"
-        ? [batchApproveButton, batchRejectButton, batchTransferButton]
-        : [])
-    ]
+  // 工具栏：发起申请 + 待办页签批量动作
+  const { tableBarButtonsProps } = useInstanceBatchButtons({
+    scope,
+    auth,
+    t,
+    refresh,
+    actions,
+    onStarted
   });
 
   return { operationButtonsProps, tableBarButtonsProps };

@@ -1,48 +1,23 @@
-import { SUCCESS_CODE } from "@/api/types";
-import { h, reactive, ref, shallowRef, type Ref } from "vue";
+import { h, reactive, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElLink, ElMessageBox, ElTag } from "element-plus";
-import { addDialog } from "@/components/ReDialog";
-import {
-  addDrawer,
-  closeDrawer,
-  type DrawerOptions
-} from "@/components/ReDrawer";
+import { ElLink, ElTag } from "element-plus";
 import { getDefaultAuths, hasAuth } from "@/router/utils";
 import {
-  handleOperation,
+  formatPageColumns,
   type OperationProps,
-  type PageTableColumn,
-  formatPageColumns
+  type PageTableColumn
 } from "@/components/RePlusPage";
-import {
-  knowledgeApi,
-  type KnowledgeBuildStatus,
-  type KnowledgeDocumentItem,
-  type KnowledgeSyncSummary,
-  type KnowledgeVectorStatus
-} from "@/api/ai/knowledge";
+import { knowledgeApi } from "@/api/ai/knowledge";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { message } from "@/utils/message";
-import KnowledgeUploadDialog from "../components/KnowledgeUploadDialog.vue";
-import KnowledgePanel from "../components/KnowledgePanel.vue";
-import { buildKnowledgeActionGroups } from "./knowledgeActions";
 import Plus from "~icons/ep/plus";
 import Refresh from "~icons/ep/refresh";
 import Check from "~icons/ep/check";
 import Close from "~icons/ep/close";
+import { useKnowledgeActions } from "./useKnowledgeActions";
+import { useKnowledgeBuild } from "./useKnowledgeBuild";
+import type { KnowledgeDocumentItem } from "@/api/ai/knowledge";
 
 type KnowledgeRow = KnowledgeDocumentItem & { is_active: boolean };
-
-/** 构建进度轮询节奏：2s 间隔；超时 10 分钟（供应商级全量重算的理论上界） */
-const BUILD_POLL_INTERVAL = 2000;
-const BUILD_POLL_TIMEOUT = 10 * 60 * 1000;
-
-/** 行内字典化字段取标量值：后端 LabeledChoice 下发 {value,label}（或原始字符串） */
-const dictValue = (value: unknown): string =>
-  typeof value === "string"
-    ? value
-    : ((value as { value?: string })?.value ?? "");
 
 /**
  * 知识库页装配：列表走 RePlusPage 标准 CRUD 口径，行操作收敛进「管理文档」抽屉：
@@ -54,6 +29,10 @@ const dictValue = (value: unknown): string =>
  *
  * 默认按钮裁剪：create/update/partialUpdate/destroy 全部关闭走自定义按钮
  * （标准表单与上传文本/启停语义不符；默认删除按钮无法按行隐藏，统一自定义）。
+ *
+ * 职责拆分：
+ * - useKnowledgeActions  上传弹窗、启停/删除、仓库同步、批量启停与管理抽屉；
+ * - useKnowledgeBuild    向量索引构建与进度轮询（findMilestone 为纯函数）。
  */
 export function useKnowledge(tableRef: Ref) {
   const { t } = useI18n();
@@ -66,8 +45,6 @@ export function useKnowledge(tableRef: Ref) {
     destroy: false
   });
   const canCreate = hasAuth("create:AiKnowledge");
-  const canUpdate = hasAuth("partialUpdate:AiKnowledge");
-  const canDestroy = hasAuth("destroy:AiKnowledge");
   const canSync = hasAuth("syncRepo:AiKnowledge");
   const canBatchToggle = hasAuth("batchToggle:AiKnowledge");
   const canBuildEmbeddings = hasAuth("buildEmbeddings:AiKnowledge");
@@ -77,110 +54,10 @@ export function useKnowledge(tableRef: Ref) {
 
   const refresh = () => tableRef.value?.handleGetData();
 
-  const uploadFormRef = ref<InstanceType<typeof KnowledgeUploadDialog>>();
+  const { openUpload, openKnowledgePanel, syncRepo, batchToggle } =
+    useKnowledgeActions({ t, tableRef });
 
-  const openUpload = () => {
-    uploadFormRef.value = undefined;
-    addDialog({
-      title: t("aiKnowledge.uploadTitle"),
-      width: "640px",
-      draggable: true,
-      destroyOnClose: true,
-      closeOnClickModal: false,
-      sureBtnLoading: true,
-      contentRenderer: () => h(KnowledgeUploadDialog, { ref: uploadFormRef }),
-      beforeSure: async (done, { closeLoading }) => {
-        const payload = uploadFormRef.value?.getPayload();
-        if (!payload) {
-          closeLoading();
-          return;
-        }
-        // 异常归一为可读失败结果，避免请求异常时弹窗 loading 悬挂
-        const res = await knowledgeApi
-          .upload(payload.name, payload)
-          .catch(error => ({
-            code: -1,
-            detail: String((error as { detail?: string })?.detail ?? error)
-          }));
-        if (res.code !== SUCCESS_CODE) {
-          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-          return;
-        }
-        message(res.detail ?? t("aiKnowledge.uploadDone"), { type: "success" });
-        // 先关弹窗再刷新列表，避免刷新耗时导致弹窗滞留
-        done();
-        refresh();
-      }
-    });
-  };
-
-  const toggleActive = async (row: KnowledgeRow) => {
-    const res = await knowledgeApi.partialUpdate(row.pk, {
-      is_active: !row.is_active
-    });
-    if (res.code === SUCCESS_CODE) {
-      message(t("aiKnowledge.toggleDone"), { type: "success" });
-      refresh();
-    } else if (res.detail) {
-      message(String(res.detail), { type: "warning" });
-    }
-  };
-
-  /** 删除文档（仅上传来源）：分块级联清理，执行前二次确认 */
-  const removeDocument = (row: KnowledgeRow) => {
-    handleOperation({
-      t,
-      apiReq: knowledgeApi.destroy(row.pk),
-      success() {
-        message(t("aiKnowledge.deleteDone"), { type: "success" });
-        refresh();
-      }
-    });
-  };
-
-  const confirmRemove = (row: KnowledgeRow) => {
-    ElMessageBox.confirm(t("aiKnowledge.deleteConfirm"), t("buttons.delete"), {
-      confirmButtonText: t("buttons.sure"),
-      cancelButtonText: t("buttons.cancel"),
-      type: "warning"
-    })
-      .then(() => removeDocument(row))
-      .catch(() => undefined);
-  };
-
-  /** 「管理文档」抽屉：资料 + 全文/分块 + 启停/删除动作（行操作唯一入口） */
-  const openKnowledgePanel = (row: KnowledgeRow) => {
-    const options: DrawerOptions = {
-      title: t("aiKnowledge.panelTitle", { title: row.title }),
-      size: "55%",
-      destroyOnClose: true,
-      closeOnClickModal: false,
-      hideFooter: true
-    };
-    // 状态变更类动作执行前先收起抽屉：抽屉内的状态标签与动作文案基于行快照，
-    // 收起后重开即为最新状态（同时避免与确认弹窗叠加）
-    const withClosed = (run: () => void) => () => {
-      closeDrawer(options, 0);
-      run();
-    };
-    options.contentRenderer = () =>
-      h(KnowledgePanel, {
-        row,
-        groups: buildKnowledgeActionGroups({
-          t,
-          flags: { canUpdate, canDestroy },
-          target: {
-            isActive: Boolean(row.is_active),
-            removable: dictValue(row.source_type) === "upload"
-          },
-          handlers: {
-            toggle: withClosed(() => toggleActive(row)),
-            remove: withClosed(() => confirmRemove(row))
-          }
-        })
-      });
-    addDrawer(options);
-  };
+  const { buildEmbeddings } = useKnowledgeBuild({ t, refresh });
 
   /* ---------------- 列渲染（入口 + 只读状态） ---------------- */
   const listColumnsFormat = (columns: PageTableColumn[]) =>
@@ -216,146 +93,6 @@ export function useKnowledge(tableRef: Ref) {
         };
       }
     });
-
-  /** 批量启停：取勾选行 pk，未勾选时按项目既有口径提示 */
-  const batchToggle = (isActive: boolean) => async () => {
-    const pks = tableRef.value?.getSelectPks("pk") ?? [];
-    if (!pks.length) {
-      message(t("results.noSelectedData"), { type: "error" });
-      return;
-    }
-    const res = await knowledgeApi.batchToggle(pks, isActive);
-    if (res.code === SUCCESS_CODE) {
-      const changed =
-        (res.data as unknown as { changed?: number })?.changed ?? 0;
-      message(t("aiKnowledge.batchToggleDone", { count: changed }), {
-        type: "success"
-      });
-      tableRef.value?.onSelectionCancel?.();
-      refresh();
-    } else if (res.detail) {
-      message(String(res.detail), { type: "warning" });
-    }
-  };
-
-  /**
-   * 构建向量索引（增量，后台任务）：先取状态——未配置 embedding 档案时给引导；
-   * 已配置则确认后提交任务并轮询进度（单飞锁，重复提交被引导为跟踪既有任务）。
-   * 构建只补「未向量化 / 模型变更 / 正文变更」的块，可反复执行；全量重算用
-   * `manage.py build_ai_embeddings --force`。
-   */
-  const buildEmbeddings = async () => {
-    const statusRes = await knowledgeApi.vectorStatus().catch(error => ({
-      code: -1,
-      detail: String((error as { detail?: string })?.detail ?? error),
-      data: null
-    }));
-    const status = statusRes.data as KnowledgeVectorStatus | null;
-    if (!status?.enabled) {
-      message(t("aiKnowledge.vectorDisabled"), { type: "warning" });
-      return;
-    }
-    try {
-      await ElMessageBox.confirm(
-        t("aiKnowledge.buildConfirm", {
-          fresh: status.fresh,
-          total: status.total,
-          model: status.model
-        }),
-        t("aiKnowledge.buildEmbeddings"),
-        {
-          confirmButtonText: t("buttons.sure"),
-          cancelButtonText: t("buttons.cancel"),
-          type: "info"
-        }
-      );
-    } catch {
-      return;
-    }
-    const res = await knowledgeApi.buildEmbeddings().catch(error => ({
-      code: -1,
-      detail: String((error as { detail?: string })?.detail ?? error),
-      data: null
-    }));
-    if (res.code !== SUCCESS_CODE) {
-      // 已有构建在跑（1001 + running 状态）：不报错，转为跟踪既有任务进度
-      const running = (res as { data?: KnowledgeBuildStatus | null }).data;
-      if (res.code === 1001 && running?.state === "running") {
-        message(t("aiKnowledge.buildAlreadyRunning"), { type: "info" });
-        await pollBuildStatus();
-        return;
-      }
-      message(res.detail ?? t("results.failed"), { type: "error" });
-      return;
-    }
-    message(t("aiKnowledge.buildSubmitted"), { type: "success" });
-    await pollBuildStatus();
-  };
-
-  /** 构建进度轮询：运行中按里程碑提示（25/50/75%，过程可见不刷屏），终态给摘要。 */
-  const pollBuildStatus = async () => {
-    const startedAt = Date.now();
-    let lastPercent = 0;
-    while (Date.now() - startedAt < BUILD_POLL_TIMEOUT) {
-      await new Promise(resolve => setTimeout(resolve, BUILD_POLL_INTERVAL));
-      const res = await knowledgeApi.buildEmbeddingsStatus().catch(error => ({
-        code: -1,
-        detail: String((error as { detail?: string })?.detail ?? error),
-        data: null
-      }));
-      const status = res.data as KnowledgeBuildStatus | null;
-      if (!status) continue;
-      if (status.state === "running") {
-        const milestone = [25, 50, 75].find(
-          mark => lastPercent < mark && status.percent >= mark
-        );
-        if (milestone) {
-          message(t("aiKnowledge.buildProgress", { percent: status.percent }), {
-            type: "info"
-          });
-        }
-        lastPercent = status.percent;
-        continue;
-      }
-      if (status.state === "done") {
-        const summary = status.summary;
-        message(
-          t("aiKnowledge.buildDone", {
-            embedded: summary?.embedded ?? 0,
-            skipped: summary?.skipped ?? 0
-          }),
-          { type: "success" }
-        );
-        refresh();
-        return;
-      }
-      if (status.state === "error") {
-        message(String(status.summary?.detail || t("results.failed")), {
-          type: "error"
-        });
-        return;
-      }
-    }
-    message(t("aiKnowledge.buildPollTimeout"), { type: "warning" });
-  };
-
-  const syncRepo = async () => {
-    const res = await knowledgeApi.syncRepo();
-    if (res.code === SUCCESS_CODE) {
-      const summary = (res.data ?? {}) as unknown as KnowledgeSyncSummary;
-      message(
-        t("aiKnowledge.syncDone", {
-          created: summary.created ?? 0,
-          updated: summary.updated ?? 0,
-          removed: summary.removed ?? 0
-        }),
-        { type: "success" }
-      );
-      refresh();
-    } else if (res.detail) {
-      message(String(res.detail), { type: "warning" });
-    }
-  };
 
   const tableBarButtonsProps = shallowRef<OperationProps>({
     buttons: [
