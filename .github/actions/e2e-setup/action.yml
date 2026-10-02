@@ -1,8 +1,9 @@
 name: E2E setup
 description: >
   准备 E2E 运行环境：检出 xadmin-server 到工作区、安装前后端依赖与 Playwright 浏览器。
-  后端以 sqlite + FakeRedis 运行，零外部依赖；本 action 被 e2e.yml 的 smoke 与 full 两个 job 复用，
-  避免同一份安装步骤复制两遍（smoke 与全量两个 job 都要装同一套环境）。
+  后端以 tests.settings_e2e 运行（真实 PostgreSQL[由 e2e.yml 的 postgres service 提供，
+  DB_HOST/DB_PORT 走其缺省 127.0.0.1:55433] + 进程内 FakeRedis）；本 action 被 e2e.yml
+  的 smoke / visual / full 三个 job 复用，避免同一份安装步骤复制两遍。
 
 inputs:
   server-dir:
@@ -27,7 +28,7 @@ runs:
     - name: Install pnpm
       uses: pnpm/action-setup@v3
       with:
-        version: 11
+        version: 11.25.0
         run_install: false
 
     - name: Set up Node
@@ -41,13 +42,15 @@ runs:
     - name: Set up Python (backend under test)
       uses: actions/setup-python@v5
       with:
-        python-version: "3.13"
+        # 与 pyproject requires-python（>=3.14）及 server CI 门禁同口径（O9-5）
+        python-version: "3.14"
         cache: pip
         cache-dependency-path: ${{ inputs.server-dir }}/requirements.txt
 
     - name: Install backend dependencies
-      # 测试环境使用 sqlite3，无需编译 mysqlclient；E2E 的 FakeRedis 缓存后端
-      # 依赖 fakeredis（requirements-dev.txt 中的测试专用依赖）
+      # E2E 真库化（全真容器化测试迁移方案阶段 4）：后端连 postgres service（settings_e2e
+      # 缺省 127.0.0.1:55433，user/password 与 service env 对齐）；缓存为进程内 FakeRedis，
+      # 依赖 fakeredis（requirements-dev.txt 中的测试专用依赖）；无需编译 mysqlclient
       shell: bash
       run: |
         cd ${{ inputs.server-dir }}

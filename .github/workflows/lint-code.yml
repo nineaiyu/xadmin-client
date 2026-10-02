@@ -27,7 +27,7 @@ jobs:
         name: Install pnpm
         id: pnpm-install
         with:
-          version: 11
+          version: 11.25.0
           run_install: false
 
       - name: Get pnpm store directory
@@ -109,7 +109,7 @@ jobs:
       - name: Set up Python (docs gates)
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.14"
 
       - name: Docs gates (client side)
         # 复用服务端脚本就地守护客户端文档：事实（Node/pnpm 版本）+ 索引登记 + 文档路径可达性

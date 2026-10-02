@@ -16,9 +16,26 @@ jobs:
   smoke:
     name: Smoke (chromium, @smoke)
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        # E2E 真库化（全真容器化测试迁移方案阶段 4）：tests.settings_e2e 硬编码
+        # DB_ENGINE=postgresql，连接参数走其缺省（127.0.0.1:55433 / server / pgtest），
+        # 与本地 compose.test.yml 同构；seed 经 postgres 管理库 DROP/CREATE shard 库
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: server
+          POSTGRES_PASSWORD: pgtest
+          POSTGRES_DB: postgres
+        ports:
+          - 55433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
     env:
-      # 后端解释器：CI 直接用系统 python（sqlite + FakeRedis 零外部依赖），
-      # playwright.config.ts 会以 E2E_PYTHON 组装 tests.settings_e2e 的启动命令
+      # 后端解释器：CI 直接用系统 python；playwright.config.ts 会以 E2E_PYTHON
+      # 组装 tests.settings_e2e 的启动命令（真实 PG[上方 service] + 进程内 FakeRedis）
       E2E_PYTHON: python3
       # server 仓库检出为工作区内的兄弟目录（playwright webServer cwd）
       E2E_SERVER_DIR: xadmin-server
@@ -32,7 +49,7 @@ jobs:
 
       - name: Run smoke E2E
         # playwright.config.ts 的 webServer 会自动：种子重置（e2e_seed.py）→
-        # 拉起 tests.settings_e2e 后端（sqlite + FakeRedis，零外部依赖）→ vite dev
+        # 拉起 tests.settings_e2e 后端 → vite dev
         run: pnpm test:e2e:smoke
 
       - uses: actions/upload-artifact@v4
@@ -55,6 +72,21 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       github.event_name == 'schedule'
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        # 同 smoke：settings_e2e 真库化缺省连接参数（127.0.0.1:55433 / server / pgtest）
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: server
+          POSTGRES_PASSWORD: pgtest
+          POSTGRES_DB: postgres
+        ports:
+          - 55433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
     env:
       E2E_PYTHON: python3
       E2E_SERVER_DIR: xadmin-server
@@ -105,6 +137,22 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       github.event_name == 'schedule'
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        # 同 smoke：settings_e2e 真库化缺省连接参数（127.0.0.1:55433 / server / pgtest）；
+        # 3 个 shard 各自 DROP/CREATE 独立库名（xadmin_e2e_shard<i>），共享同一 PG 实例
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: server
+          POSTGRES_PASSWORD: pgtest
+          POSTGRES_DB: postgres
+        ports:
+          - 55433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
     env:
       E2E_PYTHON: python3
       E2E_SERVER_DIR: xadmin-server
