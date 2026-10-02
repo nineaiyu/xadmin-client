@@ -1,4 +1,5 @@
 {
+  "_note": "档位键 = 平台-CI（perf.e2e.ts ENV_KEY）。当前仅 darwin-local：本门禁按需本地运行（pnpm test:e2e:perf），CI 不设 E2E_PERF，共享 runner 计时噪声大故不预录 linux 档（O10-2 注明触发）。建档触发：专用稳定 runner + 体验回归进 CI 需求，先 E2E_PERF_UPDATE=1 录 linux-ci 档再启用比对；无档环境首跑只立基线不判定。",
   "darwin-local": {
     "login": {
       "ttfb": 143,

@@ -12,6 +12,11 @@ import { login, openMenuPath } from "./helpers";
  *
  * 口径：固定 chromium + E2E 同链路（vite dev + 种子后端）；数字随机器变化，
  * **只看同环境趋势**——基线按「平台-CI」分组存放（perf-baseline.json）。
+ * 当前仅 darwin-local 档：本门禁按需本地运行，CI 不设 E2E_PERF——共享 CI
+ * runner 计时噪声大（TTFB/FCP/LCP 波动远超回归判定容差），预录 linux 档
+ * 无比对意义（O10-2 注明触发）。建档触发条件：出现专用稳定 runner 且需要
+ * 前端体验回归进 CI 时，先 `E2E_PERF=1 E2E_PERF_UPDATE=1` 录制 `linux-ci`
+ * 档入库再启用常态比对；无档环境首跑只立基线不判定（「无基线，先立基线」）。
  * 判定：现阶段只做「离谱回归」兜底（TTFB ≤ 2s / LCP ≤ 5s / CLS ≤ 0.25）；
  * 数据积累后再定预算（与首屏体积预算同思路，见长期优化方案 U1）。
  */
