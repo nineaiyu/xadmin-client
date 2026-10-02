@@ -1,17 +1,10 @@
-import {
-  getCurrentInstance,
-  h,
-  reactive,
-  ref,
-  type Ref,
-  shallowRef
-} from "vue";
+import { h, reactive, ref, type Ref, shallowRef } from "vue";
 import { noticeReadApi } from "@/api/system/notice";
 import { deviceDetection } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog";
 import { useRouter } from "vue-router";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
-import { goUserDetail } from "@/views/system/hooks";
+import { hasAuth } from "@/router/utils";
+import { goUserDetail, usePageAuth } from "@/views/system/hooks";
 import { useI18n } from "vue-i18n";
 import type { PageTableColumn, OperationProps } from "@/components/RePlusPage";
 import { formatPageColumns } from "@/components/RePlusPage";
@@ -23,10 +16,7 @@ export function useNoticeRead(tableRef: Ref) {
 
   const api = reactive(noticeReadApi);
 
-  const auth = reactive({
-    state: false,
-    ...getDefaultAuths(getCurrentInstance(), ["state"])
-  });
+  const auth = usePageAuth(["state"]);
   const switchLoadMap = ref({});
   const { switchStyle } = usePublicHooks();
 
