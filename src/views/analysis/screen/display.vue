@@ -12,6 +12,7 @@ import {
 } from "@/api/dataset/datasets";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
+import type { ScreenDataPayload } from "@/utils/websocket/protocol";
 // 仅类型引用（不进包）：导出实现按需动态加载（保持首屏体积）
 import type { ExportedImage } from "@/utils/imageExport";
 import { useScreenDisplay } from "./utils/useScreenDisplay";
@@ -43,9 +44,10 @@ const { t } = useI18n();
 const screen = ref<ScreenItem | null>(null);
 const dashboards = ref<DashboardItem[]>([]);
 
-/** 卡片组件句柄：模板 ref 收集 ChartCard（loadData 刷新 + renderImage 图片导出） */
+/** 卡片组件句柄：模板 ref 收集 ChartCard（loadData 刷新 + applyData 注入 + renderImage 图片导出） */
 type CardHandle = {
   loadData?: () => void;
+  applyData?: (_entry: CardDataEntry) => Promise<void> | void;
   renderImage?: () => Promise<ExportedImage | null>;
 };
 const cardRefs = ref<Record<string, CardHandle | undefined>>({});
@@ -53,6 +55,22 @@ const setCardRef = (cardId: string) => (el: unknown) => {
   const handle = el as CardHandle | null;
   if (handle) cardRefs.value[cardId] = handle;
 };
+
+/** screen_data 帧的卡片级条目（cards[] 原样 / errors[] 转错误提示口径） */
+type CardDataEntry = {
+  card: string;
+  kind?: string;
+  data?: unknown;
+  detail?: string;
+};
+type ApplyScreenData = (_frame: ScreenDataPayload) => void;
+const toErrorEntry = (error: {
+  card: string;
+  detail: string;
+}): CardDataEntry => ({
+  card: error.card,
+  detail: error.detail
+});
 
 /**
  * 画布模式（P2.2 批次一）：`layout` 非空即按窗格渲染，空则维持既有仪表盘轮播。
@@ -90,9 +108,32 @@ const refreshVisible = () => {
   }
 };
 
+/**
+ * 应用服务端聚合数据帧（screen_data，F2）：按 card id 免拉直渲。
+ * 轮播模式帧按仪表盘分发（dashboard 与当前页不一致的帧不应用——其卡片未渲染）；
+ * 画布模式单帧 dashboard=null，逐窗格路由（窗格持有该卡才应用）。
+ */
+const applyScreenData: ApplyScreenData = frame => {
+  if (isCanvas.value) {
+    for (const entry of [...frame.cards, ...frame.errors.map(toErrorEntry)]) {
+      Object.values(paneRefs.value).some(handle =>
+        handle?.applyCardData?.(entry.card, entry)
+      );
+    }
+    return;
+  }
+  if (frame.dashboard && frame.dashboard !== currentDashboard.value?.pk) return;
+  for (const entry of frame.cards) {
+    cardRefs.value[entry.card]?.applyData?.(entry);
+  }
+  for (const error of frame.errors) {
+    cardRefs.value[error.card]?.applyData?.(toErrorEntry(error));
+  }
+};
+
 /** 轮播 / 数据刷新 / 时钟定时器 + 远程控制通道（实现见 utils/useScreenDisplay.ts） */
 const { pageIndex, paused, clock, controlMode, startTimers, startWs } =
-  useScreenDisplay({ screen, dashboards, refreshVisible });
+  useScreenDisplay({ screen, dashboards, refreshVisible, applyScreenData });
 
 const currentDashboard = computed(
   () => dashboards.value[pageIndex.value] ?? null

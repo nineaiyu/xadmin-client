@@ -39,6 +39,11 @@ const { t } = useI18n();
 
 type CardHandle = {
   loadData?: () => void;
+  applyData?: (_entry: {
+    kind?: string;
+    data?: unknown;
+    detail?: string;
+  }) => Promise<void> | void;
   renderImage?: () => Promise<ExportedImage | null>;
 };
 const cardRefs = ref<Record<string, CardHandle | undefined>>({});
@@ -52,6 +57,16 @@ const refresh = () => {
   for (const card of props.cards ?? []) cardRefs.value[card.id]?.loadData?.();
 };
 
+/** 注入单卡数据帧（screen_data 推送通道）：窗格持有该卡时渲染并返回 true */
+const applyCardData = (
+  cardId: string,
+  entry: { kind?: string; data?: unknown; detail?: string }
+) => {
+  if (!(props.cards ?? []).some(card => card.id === cardId)) return false;
+  void cardRefs.value[cardId]?.applyData?.(entry);
+  return true;
+};
+
 /** 逐卡渲染图片（投屏导出 ZIP 用；非图表卡返回 null 由调用方计入跳过数） */
 const renderImages = async () => {
   const images: { cardId: string; title: string; image: ExportedImage }[] = [];
@@ -62,7 +77,7 @@ const renderImages = async () => {
   return images;
 };
 
-defineExpose({ refresh, renderImages });
+defineExpose({ refresh, applyCardData, renderImages });
 
 const paneTitle = computed(() => props.pane.title || props.dashboardName || "");
 const hasContent = computed(

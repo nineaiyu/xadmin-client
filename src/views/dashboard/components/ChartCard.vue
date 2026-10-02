@@ -158,12 +158,7 @@ const loadData = async () => {
       value_field: card.value_field
     });
     if (res.code === SUCCESS_CODE) {
-      const result = res.data as unknown as AggregateResult;
-      if (await waitSized()) {
-        // 尺寸可能因卡片高度/宽度配置变化而与上次渲染不同，先重算再 set
-        resize();
-        setOptions(buildSeriesOptions(result));
-      }
+      await renderAggregate(res.data as unknown as AggregateResult);
       return;
     }
     // 200 + 业务码非 1000（字段权限/数值字段校验等）：显式提示，避免图表空白无解释
@@ -177,6 +172,38 @@ const loadData = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+/** 渲染聚合数据（HTTP 拉取与 WS 注入共用同一渲染路径） */
+const renderAggregate = async (result: AggregateResult) => {
+  if (await waitSized()) {
+    // 尺寸可能因卡片高度/宽度配置变化而与上次渲染不同，先重算再 set
+    resize();
+    setOptions(buildSeriesOptions(result));
+  }
+};
+
+/**
+ * 注入服务端聚合帧数据（screen_data），免拉直渲——投屏页 WS 推送通道用。
+ * kind=execute 渲染指标数字；kind=aggregate 渲染图表；带 detail（服务端
+ * 单卡失败进 errors，与 HTTP 业务码非 1000 同语义）时显示可读错误。
+ * 数据非本卡时由调用方过滤，此处不做归属校验。
+ */
+const applyData = async (entry: {
+  kind?: string;
+  data?: unknown;
+  detail?: string;
+}) => {
+  if (typeof entry?.detail === "string" && entry.detail) {
+    errorMsg.value = entry.detail;
+    return;
+  }
+  errorMsg.value = "";
+  if (entry.kind === "execute") {
+    total.value = Number((entry.data as ExecuteResult)?.total ?? 0);
+    return;
+  }
+  await renderAggregate(entry.data as AggregateResult);
 };
 
 onMounted(async () => {
@@ -203,7 +230,7 @@ async function renderImage(): Promise<ExportedImage | null> {
   });
 }
 
-defineExpose({ loadData, renderImage });
+defineExpose({ loadData, applyData, renderImage });
 </script>
 
 <template>

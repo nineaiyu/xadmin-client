@@ -149,19 +149,46 @@ test("大屏远程控制：管理端下发切换，展示端实时跟随", async
   await login(page);
 
   const suffix = Math.random().toString(36).slice(2, 8);
+  const datasetName = `E2E遥控数据集-${suffix}`;
   const dashA = `E2E遥控看板A-${suffix}`;
   const dashB = `E2E遥控看板B-${suffix}`;
   const screenName = `E2E遥控大屏-${suffix}`;
 
-  // ---- 素材：两块看板（展示端切换的前后目标） ----
+  // ---- 素材：数据集（F2 数据帧断言需要看板有卡：零卡片屏服务端不产数据帧） ----
+  await openMenuPath(page, ["数据分析"], "/analysis/dataset/index");
+  await expect(page.getByRole("button", { name: "新建数据集" })).toBeVisible({
+    timeout: 15_000
+  });
+  await page.getByRole("button", { name: "新建数据集" }).click();
+  const dsDialog = page.locator(".el-dialog").filter({ hasText: "新建数据集" });
+  await dsDialog.getByLabel("名称").fill(datasetName);
+  await pickSelectOption(page, "绑定模型", "system.userinfo");
+  await pickSelectOption(page, "数据列", "username");
+  await dsDialog.getByRole("button", { name: "保存" }).click();
+  await expect(dsDialog).not.toBeVisible();
+
+  // ---- 素材：两块看板（展示端切换的前后目标），看板 A 带一张数字卡 ----
+  // F2 数据帧断言需要看板有卡（零卡片屏服务端不产数据帧）；「编辑布局」作用于
+  // 当前选中的仪表盘，所以先建 A 并加卡（此刻 current=A），再建 B
   await openMenuPath(page, ["数据分析"], "/analysis/dashboard/index");
-  for (const name of [dashA, dashB]) {
-    await page.getByRole("button", { name: "新建仪表盘" }).first().click();
-    const dialog = page.locator(".el-dialog").filter({ hasText: "新建仪表盘" });
-    await dialog.getByLabel("仪表盘名称").fill(name);
-    await dialog.getByRole("button", { name: "保存" }).click();
-    await expect(dialog).not.toBeVisible();
-  }
+  await page.getByRole("button", { name: "新建仪表盘" }).first().click();
+  const dialogA = page.locator(".el-dialog").filter({ hasText: "新建仪表盘" });
+  await dialogA.getByLabel("仪表盘名称").fill(dashA);
+  await dialogA.getByRole("button", { name: "保存" }).click();
+  await expect(dialogA).not.toBeVisible();
+  await page.getByRole("button", { name: "编辑布局" }).click();
+  await page.getByRole("button", { name: "添加卡片" }).click();
+  const cardDialog = page.locator(".el-dialog").filter({ hasText: "添加卡片" });
+  await pickSelectOption(page, "数据集", datasetName);
+  await cardDialog.getByLabel("卡片标题").fill("遥控卡");
+  await cardDialog.getByRole("button", { name: "保存" }).click();
+  await expect(cardDialog).not.toBeVisible();
+  await page.getByRole("button", { name: "保存布局" }).click();
+  await page.getByRole("button", { name: "新建仪表盘" }).first().click();
+  const dialogB = page.locator(".el-dialog").filter({ hasText: "新建仪表盘" });
+  await dialogB.getByLabel("仪表盘名称").fill(dashB);
+  await dialogB.getByRole("button", { name: "保存" }).click();
+  await expect(dialogB).not.toBeVisible();
 
   // ---- 大屏：仪表盘序列按 A → B 勾选（顺序即服务端下标序） ----
   await openMenuPath(page, ["数据分析"], "/analysis/screen/index");
@@ -188,6 +215,14 @@ test("大屏远程控制：管理端下发切换，展示端实时跟随", async
   const screenPk = rows.find(item => item.name === screenName)?.pk;
   if (!screenPk) throw new Error(`未找到大屏 ${screenName}`);
   const display = await page.context().newPage();
+  // ---- F2 服务端聚合数据推送：挂上 ws/screen 通道监听（在导航前挂，避免漏连） ----
+  let screenDataSeen = false;
+  display.on("websocket", ws => {
+    ws.on("framereceived", frame => {
+      if (String(frame.payload).includes('"screen_data"'))
+        screenDataSeen = true;
+    });
+  });
   await display.goto(`/#/analysis/screen/display?pk=${screenPk}`);
   const root = display.locator(".screen-root");
   await expect(
@@ -226,6 +261,12 @@ test("大屏远程控制：管理端下发切换，展示端实时跟随", async
   await controlDialog.getByRole("button", { name: "恢复轮播" }).click();
   await expect(page.getByText("指令已下发").first()).toBeVisible();
   await expect(root.getByText("远程控制中")).toHaveCount(0);
+
+  // ---- F2 数据帧断言：「刷新数据」指令（REST refresh）触发服务端按观察者聚合，
+  // 展示端本连接收到 screen_data 帧（逐卡免拉刷新的通道证明） ----
+  await controlDialog.getByRole("button", { name: "刷新数据" }).click();
+  await expect(page.getByText("指令已下发").first()).toBeVisible();
+  await expect.poll(() => screenDataSeen, { timeout: 15_000 }).toBe(true);
 
   await display.close();
 });
