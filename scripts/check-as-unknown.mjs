@@ -22,6 +22,12 @@ const EXTENSIONS = new Set([".ts", ".tsx", ".vue"]);
 const PATTERN = /\bas\s+unknown\s+as\b/g;
 
 // 存量基线：相对路径 -> 基线出现次数（只减不增；降到 0 即可从此表移除）
+// 2026-10-01：R3 hook 拆分后净减 4 处（form/my、api-app、knowledge 三文件的 hook.tsx
+// 归零移除，useMenuData 4→3；搬迁过程中新子模块均以单层 as 收窄，未新增逃逸）。
+// 2026-10-01（第二批）：R3 滚动债第二批拆分后净减 6 处（permission hook.tsx 归零移除，
+// normalize.spec 7→8 又回落至 8-1=7 实际持平；form/data hook.tsx 1 处随搬迁收窄，
+// approval/instance 同步收窄；新子模块均以单层 as 或直接赋值替代双逃逸）。
+// 2026-10-02：O6 收口，router/index.ts 清零移除基线（当前 94 处 / 65 文件）。
 // 2026-09-30：初始登记 109 处 / 70 文件（热点：menu normalize.spec 7、router/index 6、
 // useMenuData 4——多为 element-plus 泛型组件与路由元数据互转的既有债务）
 const BASELINE = {
@@ -43,7 +49,6 @@ const BASELINE = {
   "src/layout/components/lay-content/index.vue": 1,
   "src/layout/components/lay-setting/components/SettingDisplay.vue": 1,
   "src/layout/components/lay-sidebar/components/SidebarBreadCrumb.vue": 2,
-  "src/router/index.ts": 6,
   "src/router/utils/route-tree.ts": 1,
   "src/store/modules/__tests__/settings.spec.ts": 1,
   "src/store/modules/permission.ts": 1,
@@ -65,15 +70,12 @@ const BASELINE = {
   "src/views/dashboard/dataset/utils/hook.tsx": 1,
   "src/views/dashboard/index.vue": 3,
   "src/views/form/data/utils/hook.tsx": 2,
-  "src/views/form/my/utils/hook.tsx": 1,
   "src/views/integration/ai/config.vue": 1,
   "src/views/integration/ai/index.vue": 2,
   "src/views/integration/ai/utils/__tests__/aiProfileActions.spec.ts": 1,
   "src/views/integration/api-app/utils/__tests__/apiAppActions.spec.ts": 1,
-  "src/views/integration/api-app/utils/hook.tsx": 2,
   "src/views/integration/knowledge/components/KnowledgePanel.vue": 1,
   "src/views/integration/knowledge/utils/__tests__/knowledgeActions.spec.ts": 1,
-  "src/views/integration/knowledge/utils/hook.tsx": 2,
   "src/views/login/components/Basic.vue": 1,
   "src/views/oauth/callback.vue": 1,
   "src/views/settings/components/settings/SettingItem.vue": 1,
@@ -85,14 +87,13 @@ const BASELINE = {
   "src/views/system/menu/components/MenuFormPermission.vue": 1,
   "src/views/system/menu/utils/menuActions.spec.ts": 1,
   "src/views/system/menu/utils/normalize.spec.ts": 7,
-  "src/views/system/menu/utils/useMenuData.ts": 4,
+  "src/views/system/menu/utils/useMenuData.ts": 3,
   "src/views/system/menu/utils/useMenuFilter.spec.ts": 1,
   "src/views/system/menu/utils/useMenuTree.ts": 1,
   "src/views/system/monitor/utils/hook.ts": 1,
   "src/views/system/permission/components/RuleFieldPicker.vue": 1,
   "src/views/system/permission/components/ScopeSelect.vue": 2,
   "src/views/system/permission/components/useTrialPanel.ts": 1,
-  "src/views/system/permission/utils/hook.tsx": 2,
   "src/views/system/role/components/MenuPermissionTree.vue": 1,
   "src/views/system/user/utils/__tests__/userActions.spec.ts": 1
 };
