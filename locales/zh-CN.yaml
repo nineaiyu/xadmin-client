@@ -144,7 +144,6 @@ messageTemplate:
   subject: 标题模板
   body: 正文模板
   subjectPlaceholder: 留空表示使用代码默认标题
-  bodyPlaceholder: 留空表示使用代码默认正文
   edit: 编辑
   editTitle: 编辑模板 - {name}
   preview: 预览
@@ -1922,6 +1921,8 @@ chat:
   sources: 参考来源
   hideSources: 收起来源
   recall: 撤回
+  react: 回应
+  reactionCount: "{emoji} {count} 人"
   recallConfirm: 确定撤回这条消息吗？撤回后双方都不再可见。
   recalled: 对方撤回了一条消息
   youRecalled: 你撤回了一条消息

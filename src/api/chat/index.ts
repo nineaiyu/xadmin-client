@@ -55,12 +55,16 @@ export interface ChatAttachment {
   filesize: number;
   mime_type: string;
   category: string;
-  kind: "image" | "file";
-  /** 受鉴权取件地址（图片 img / 文件下载共用；撤回或附件被清理后为空） */
+  /** image 与在线预览判定同口径；video/audio 与上传分类同口径（音视频消息）；file 为附件下载语义 */
+  kind: "image" | "video" | "audio" | "file";
+  /** 受鉴权取件地址（图片 img / 音视频 inline / 文件下载共用；撤回或附件被清理后为空） */
   url: string;
   /** 附件记录已失效（服务端外键置空 / 消息已撤回） */
   missing: boolean;
 }
+
+/** 附件消息上传种类（与服务端 UPLOAD_KINDS 同源；file 对实际种类不限） */
+export type ChatAttachmentKind = "image" | "video" | "audio" | "file";
 
 /** 消息（与 WS 广播载荷同形状，见 utils/websocket/protocol.ts::ChatRoomMessage） */
 export interface ChatMessageItem {
@@ -70,8 +74,8 @@ export interface ChatMessageItem {
   sender_pk: number | null;
   sender_name: string;
   sender_avatar: string;
-  /** text/ai/system 为文本类；image/file 为附件消息（附件信息见 extra.file） */
-  message_type: "text" | "ai" | "system" | "image" | "file";
+  /** text/ai/system 为文本类；image/video/audio/file 为附件消息（附件信息见 extra.file） */
+  message_type: "text" | "ai" | "system" | "image" | "video" | "audio" | "file";
   content: string;
   created_time: string;
   client_msg_id: string;
@@ -100,8 +104,10 @@ export interface ChatMessageItem {
       requires_approval: boolean;
     }>;
     action_result?: Record<string, unknown>;
-    /** 附件消息（image/file）的渲染信息：受鉴权取件地址 + 失效标记 */
+    /** 附件消息（image/video/audio/file）的渲染信息：受鉴权取件地址 + 失效标记 */
     file?: ChatAttachment;
+    /** 表情回应表（emoji → 回应用户 pk 列表，全量下发整体替换；历史消息与广播载荷一致） */
+    reactions?: Record<string, number[]>;
   };
   is_recalled?: boolean;
   can_recall?: boolean;
@@ -241,13 +247,14 @@ class ChatApi extends BaseRequest {
     );
   };
   /**
-   * 附件上传（图片 / 文件消息共用）：复用文件中心安全策略（扩展名/大小/配额），
+   * 附件上传（图片 / 音视频 / 文件消息共用）：复用文件中心安全策略（扩展名/大小/配额），
    * 落库为临时件，发送消息后由服务端转正（未发送的临时件由每日清理回收）。
-   * `kind=image` 时服务端校验确为图片（不匹配返回 1001）。
+   * `kind` 必须与真实 MIME 判定一致（image/video/audio），不匹配返回 1001；
+   * `kind=file` 对实际种类不限（图片/音视频也允许按文件消息发送）。
    */
   uploadAttachment = (
     file: File,
-    kind: "image" | "file",
+    kind: ChatAttachmentKind,
     config?: PureHttpRequestConfig
   ) => {
     const form = new FormData();

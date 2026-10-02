@@ -1,25 +1,17 @@
-import { SUCCESS_CODE } from "@/api/types";
-import { computed, nextTick, onUnmounted, ref, watch } from "vue";
+import { computed, ref, watch, onUnmounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
-import { ChatWebSocket, type WS } from "@/utils/websocket";
-import {
-  MessageAction,
-  isOutboundMessage,
-  type ChatRecallPayload,
-  type ChatRoomMessage,
-  type ChatUnreadPayload,
-  type UserinfoPayload
-} from "@/utils/websocket/protocol";
+import { SUCCESS_CODE } from "@/api/types";
+import { MessageAction } from "@/utils/websocket/protocol";
 import { chatApi, type ChatMessageItem } from "@/api/chat";
 import { groupByTime } from "@/utils/timeGroups";
 import { useRooms } from "./useRooms";
 import { createMessageStore } from "./chatMessages";
 import { useChatAttachments } from "./useChatAttachments";
 import { useChatStreaming, type ChatStreaming } from "./useChatStreaming";
-
-/** 历史分页每页条数（与服务端默认/上限一致：20 / 50） */
-const PAGE_SIZE = 20;
+import { useChatScroll } from "./useChatScroll";
+import { useChatHistory } from "./useChatHistory";
+import { useChatSocket } from "./useChatSocket";
 
 export function genClientMsgId(): string {
   const raw =
@@ -36,22 +28,23 @@ export function genClientMsgId(): string {
  * - 发送幂等：乐观上屏用 client_msg_id，服务端广播回来后按 id/client_msg_id 对齐覆盖；
  * - 未读：接收方由服务端 chat_unread 帧驱动，本地清零点在「切到该会话 / 会话内收到消息」；
  * - 历史：before_id 游标向上翻页，保留滚动位置。
+ *
+ * 职责拆分（状态由本 hook 持有，子模块经 options 注入）：
+ * - useChatScroll     离底检测 / 新消息计数 / 滚动定位；
+ * - useChatHistory    历史分页（before_id 游标、滚动位置保持）；
+ * - useChatSocket     WS 连接 / 帧分派 / 已读上报；
+ * - chatMessages      消息集合写入口径（乐观上屏 / 服务端对齐 / 撤回）；
+ * - useChatStreaming  AI 流式（SSE）发送与中断；
+ * - useChatAttachments 附件发送（上传 + 乐观上屏 + WS 上行）。
  */
 export function useChat() {
   const { t } = useI18n();
   const roomState = useRooms();
 
   const messages = ref<ChatMessageItem[]>([]);
-  const hasMore = ref(false);
-  const loadingHistory = ref(false);
-  const loadingMore = ref(false);
   /** AI 流式回答（SSE）：roomId 为归属会话，content 为已到达的增量拼接 */
   const streaming = ref<ChatStreaming>(null);
-  const connected = ref(false);
-  const socket = ref<WS>();
   const me = ref({ pk: 0, username: "", avatar: "" });
-  /** 离底时的新消息计数（悬浮条「N 条新消息」） */
-  const pendingCount = ref(0);
 
   const activeRoomId = roomState.activeRoomId;
 
@@ -64,171 +57,50 @@ export function useChat() {
     return !!item.sender_pk && item.sender_pk === me.value.pk;
   }
 
-  /** 消息集合写入口径（乐观上屏 / 服务端对齐 / 撤回，实现见 chatMessages.ts） */
+  // ------------------------------------------------------------------ 滚动
+
+  const { scroller, atBottom, pendingCount, scrollToBottom, onScroll } =
+    useChatScroll();
+
+  // -------------------------------------------------- 消息集合写入口径（乐观上屏 / 服务端对齐 / 撤回）
+
   const store = createMessageStore(messages, () => ({
     roomId: activeRoomId.value,
     roomType: roomState.activeRoom.value?.room_type ?? "",
     sender: me.value
   }));
-  const { upsert: upsertMessage, applyRecall, pushText } = store;
+  const {
+    upsert: upsertMessage,
+    applyRecall,
+    applyReactions,
+    pushText
+  } = store;
 
   // ------------------------------------------------------------------ WS
 
-  function onFrame(raw: unknown) {
-    if (isOutboundMessage<UserinfoPayload>(raw, MessageAction.USERINFO)) {
-      const data = raw.data ?? {};
-      me.value = {
-        pk: Number(data.pk ?? 0),
-        username: String(data.userinfo?.username ?? ""),
-        avatar: String((data.userinfo as { avatar?: string })?.avatar ?? "")
-      };
-      return;
-    }
-    if (
-      isOutboundMessage<ChatRoomMessage>(raw, MessageAction.CHAT_MESSAGE) &&
-      raw.data
-    ) {
-      onIncomingMessage(raw.data);
-      return;
-    }
-    if (isOutboundMessage<ChatRecallPayload>(raw, MessageAction.CHAT_RECALL)) {
-      if (raw.data?.room_id === activeRoomId.value) applyRecall(raw.data);
-      return;
-    }
-    if (
-      isOutboundMessage<ChatUnreadPayload>(raw, MessageAction.CHAT_UNREAD) &&
-      raw.data
-    ) {
-      roomState.applyUnread(raw.data.room_id, raw.data.unread_count);
-    }
-  }
-
-  function onIncomingMessage(data: ChatRoomMessage) {
-    const isActive = data.room_id === activeRoomId.value;
-    if (isActive) {
-      const appended = upsertMessage(data);
-      if (appended) {
-        if (atBottom.value) scrollToBottom();
-        else pendingCount.value += 1;
-      }
-      // 会话内的新消息视为已读（通知服务端清零未读游标）
-      if (!isMine(data) && data.message_type !== "system")
-        markRead(data.room_id);
-    }
-    if (!roomState.touchRoom(data, !isActive)) {
-      // 会话不在本地列表（对端刚发起的私聊）：拉一次会话列表补上
-      roomState.loadRooms();
-    }
-  }
-
-  function connect() {
-    socket.value?.close();
-    const instance = new ChatWebSocket({
-      openCallback: () => {
-        connected.value = true;
-        instance.onMessage(onFrame);
-        // 取当前登录用户主键（气泡左右对齐）；连接恢复后需重新拉取
-        instance.send(JSON.stringify({ action: MessageAction.USERINFO }));
-      },
-      closeCallback: () => {
-        connected.value = false;
-      },
-      errorCallback: () => {
-        connected.value = false;
-      }
-    });
-    socket.value = instance;
-  }
-
-  function disconnect() {
-    socket.value?.close();
-    socket.value = undefined;
-    connected.value = false;
-  }
+  const { connected, socket, connect, disconnect, markRead } = useChatSocket({
+    activeRoomId,
+    me,
+    roomState,
+    upsertMessage,
+    applyRecall,
+    applyReactions,
+    isMine,
+    atBottom,
+    pendingCount,
+    scrollToBottom
+  });
 
   // ------------------------------------------------------------------ 历史与已读
 
-  async function loadHistory(roomId: number) {
-    loadingHistory.value = true;
-    messages.value = [];
-    pendingCount.value = 0;
-    try {
-      const { code, data } = await chatApi.history({
-        room: roomId,
-        limit: PAGE_SIZE
-      });
-      if (code === SUCCESS_CODE) {
-        messages.value = data?.results ?? [];
-        hasMore.value = !!data?.has_more;
-      }
-    } finally {
-      loadingHistory.value = false;
-    }
-    await nextTick();
-    scrollToBottom();
-  }
-
-  async function loadMore() {
-    if (!hasMore.value || loadingMore.value || !messages.value.length) return;
-    const firstId = messages.value[0]?.id;
-    if (!firstId || firstId < 0) return;
-    loadingMore.value = true;
-    const container = scroller.value;
-    const previousHeight = container?.scrollHeight ?? 0;
-    const previousTop = container?.scrollTop ?? 0;
-    try {
-      const { code, data } = await chatApi.history({
-        room: activeRoomId.value,
-        before_id: firstId,
-        limit: PAGE_SIZE
-      });
-      if (code === SUCCESS_CODE) {
-        messages.value = [...(data?.results ?? []), ...messages.value];
-        hasMore.value = !!data?.has_more;
-        await nextTick();
-        // 保持视觉位置：新增内容的高度差补回 scrollTop
-        if (container) {
-          container.scrollTop =
-            previousTop + (container.scrollHeight - previousHeight);
-        }
-      }
-    } finally {
-      loadingMore.value = false;
-    }
-  }
-
-  function markRead(roomId: number) {
-    roomState.clearUnread(roomId);
-    socket.value?.send(
-      JSON.stringify({
-        action: MessageAction.CHAT_READ,
-        data: { room_id: roomId }
-      })
-    );
-  }
-
-  // ------------------------------------------------------------------ 滚动
-
-  const scroller = ref<HTMLElement | null>(null);
-  const atBottom = ref(true);
-
-  function scrollToBottom() {
-    pendingCount.value = 0;
-    nextTick(() => {
-      if (scroller.value)
-        scroller.value.scrollTop = scroller.value.scrollHeight;
+  const { hasMore, loadingHistory, loadingMore, loadHistory, loadMore } =
+    useChatHistory({
+      messages,
+      activeRoomId,
+      scroller,
+      pendingCount,
+      scrollToBottom
     });
-  }
-
-  function onScroll() {
-    const container = scroller.value;
-    if (!container) return;
-    atBottom.value =
-      container.scrollHeight - container.scrollTop - container.clientHeight <
-      60;
-    if (atBottom.value) pendingCount.value = 0;
-    if (container.scrollTop < 40) loadMore();
-  }
 
   // ------------------------------------------------------------------ 发送
 
@@ -328,6 +200,20 @@ export function useChat() {
     }
   }
 
+  /** 表情回应（chat_reaction 上行）：本地已在回应中则移除，否则添加；
+   * 全量回应表由广播帧整体替换（限流与发送共用 5 条/秒） */
+  function toggleReaction(item: ChatMessageItem, emoji: string) {
+    const op = item.extra?.reactions?.[emoji]?.includes(me.value.pk)
+      ? "remove"
+      : "add";
+    socket.value?.send(
+      JSON.stringify({
+        action: MessageAction.CHAT_REACTION,
+        data: { message: item.id, emoji, op }
+      })
+    );
+  }
+
   // 切换会话：中断流 + 拉历史 + 清未读（本地红点 + 服务端游标）
   watch(
     activeRoomId,
@@ -369,13 +255,14 @@ export function useChat() {
     activate: roomState.activate,
     loadHistory,
     loadMore,
-    onScroll,
+    onScroll: () => onScroll(loadMore),
     scrollToBottom,
     send,
     sendAttachment,
     sendAi,
     resend,
     recall,
+    toggleReaction,
     markRead,
     isMine,
     upsertMessage,

@@ -3,6 +3,7 @@ import { reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessage } from "element-plus";
 import { sanitizeHtml } from "@/utils/sanitize";
+import WangEditor from "@/components/RePlusPage/src/components/WangEditor.vue";
 import {
   messageTemplateApi,
   type MessageTemplateItem
@@ -58,9 +59,23 @@ function getPayload() {
   return {
     message_type: props.row.message_type,
     subject_template: form.subject_template,
-    body_template: form.body_template,
+    body_template: normalizeBody(form.body_template),
     is_active: form.is_active
   };
+}
+
+/**
+ * 编辑器空文档输出 `<p><br></p>` 等占位结构：剥离标签后无可见文本即视为空。
+ * 后端口径「body_template 空 = 用代码默认正文」（notifications/models/template.py），
+ * 不归一会让空覆盖行意外压掉代码默认正文。
+ */
+function normalizeBody(html: string) {
+  if (!html) return "";
+  const text = html
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .trim();
+  return text ? html : "";
 }
 
 defineExpose({ getPayload });
@@ -100,12 +115,13 @@ defineExpose({ getPayload });
         />
       </el-form-item>
       <el-form-item :label="t('messageTemplate.body')">
-        <el-input
+        <!-- 富文本编辑（site/email 渠道正文即 HTML）：弹窗内瘦身档 280px；
+             占位符语法 {{变量}} 编辑器原样保留，保存口径与原 textarea 一致 -->
+        <WangEditor
           v-model="form.body_template"
+          :min-height="280"
           data-testid="template-body"
-          :placeholder="t('messageTemplate.bodyPlaceholder')"
-          :rows="8"
-          type="textarea"
+          class="w-full"
         />
       </el-form-item>
       <el-form-item :label="t('loginPolicy.isActive')">

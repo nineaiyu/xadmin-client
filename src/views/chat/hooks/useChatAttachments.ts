@@ -1,16 +1,20 @@
 import { ref, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { chatApi, type ChatAttachment } from "@/api/chat";
+import {
+  chatApi,
+  type ChatAttachment,
+  type ChatAttachmentKind
+} from "@/api/chat";
 import { SUCCESS_CODE } from "@/api/types";
 import { message } from "@/utils/message";
 import { MessageAction } from "@/utils/websocket/protocol";
 import type { WS } from "@/utils/websocket";
 
 /**
- * 附件消息发送（图片 / 文件）——自 useChat 抽出（行数门禁）。
+ * 附件消息发送（图片 / 音视频 / 文件）——自 useChat 抽出（行数门禁）。
  *
  * 链路：上传端点取 file_pk（复用文件中心安全策略）→ 乐观上屏 → 与文本同一条
- * `chat_message` WS 上行帧（服务端校验归属后落库并广播）。
+ * `chat_message` WS 上行帧（服务端校验归属与种类匹配后落库并广播）。
  * 上传失败给出可读提示；断线时乐观气泡标记失败（重发沿用同一 file_pk，服务端幂等）。
  */
 export function useChatAttachments(deps: {
@@ -27,7 +31,7 @@ export function useChatAttachments(deps: {
   /** 附件上传中（>0 表示进行中，用于禁用重复触发） */
   const uploading = ref(0);
 
-  async function sendAttachment(file: File, kind: "image" | "file") {
+  async function sendAttachment(file: File, kind: ChatAttachmentKind) {
     if (!file || !deps.activeRoomId.value || uploading.value) return;
     const roomId = deps.activeRoomId.value;
     const clientMsgId = deps.genClientMsgId();

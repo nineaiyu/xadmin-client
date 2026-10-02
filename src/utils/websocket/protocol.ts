@@ -59,6 +59,8 @@ export const MessageAction = {
   CHAT_MESSAGE: "chat_message",
   /** 消息撤回（双向，ws/chat/） */
   CHAT_RECALL: "chat_recall",
+  /** 消息表情回应（双向，ws/chat/） */
+  CHAT_REACTION: "chat_reaction",
   /** 已读回执（上行 chat_read → 下行最新游标） */
   CHAT_READ: "chat_read",
   /** 未读红点推送（下行，ws/chat/） */
@@ -68,7 +70,9 @@ export const MessageAction = {
   /** 监控面板指标推送（system/ws_monitor.py） */
   MONITOR: "monitor",
   /** 大屏远程控制指令（system/ws_screen.py，展示端被动接收） */
-  SCREEN_COMMAND: "screen_command"
+  SCREEN_COMMAND: "screen_command",
+  /** 大屏服务端聚合数据推送（dataset/ws_screen.py，按观察者各自聚合后自推） */
+  SCREEN_DATA: "screen_data"
   // 值形态由生成契约约束（未知动作字面量即类型错误）；
   // 双向集合一致性由 protocol.spec.ts 对着镜像 schema 断言（新增 action 必须双端登记）
 } as const satisfies Record<string, WsContractAction>;
@@ -127,6 +131,23 @@ export interface ScreenCommandPayload {
   ts?: string;
 }
 
+/** 大屏聚合数据帧（screen_data；ws/screen/<pk> 下行，按观察者权限各自聚合后自推）。
+ *
+ * 服务端不做组广播数据：execute/aggregate 的数据权限绑定浏览者，触发事件到达各展示
+ * 连接后以连接自身用户视角聚合，再只发给自己——权限语义与旧「客户端逐卡 HTTP 重拉」
+ * 等价，M 卡 × N 观察者的 HTTP 请求收敛为每观察者每轮 1 帧。
+ * canvas（layout 非空）单帧 dashboard=null；carousel（layout 空）逐 dashboards 各一帧。
+ * cards[].data 为 execute/aggregate 的返回结构；单卡失败进 errors，不中断整帧。 */
+export interface ScreenDataPayload {
+  screen: string;
+  dashboard: string | null;
+  rev: number;
+  cards: Array<{ card: string; kind: string; data: unknown }>;
+  errors: Array<{ card: string; detail: string }>;
+  /** 广播时刻（epoch 秒），可据此丢弃乱序到达的旧帧 */
+  ts: number;
+}
+
 /** 通知推送载荷（push_message；message_type 语义见 message/notifications） */
 export interface PushMessagePayload {
   message_type?: string;
@@ -155,8 +176,8 @@ export interface ChatRoomMessage {
   sender_pk: number | null;
   sender_name: string;
   sender_avatar: string;
-  /** text/ai/system 为文本类；image/file 为附件消息（附件信息见 extra.file） */
-  message_type: "text" | "ai" | "system" | "image" | "file";
+  /** text/ai/system 为文本类；image/video/audio/file 为附件消息（附件信息见 extra.file） */
+  message_type: "text" | "ai" | "system" | "image" | "video" | "audio" | "file";
   content: string;
   created_time: string;
   client_msg_id: string;
@@ -168,8 +189,10 @@ export interface ChatRoomMessage {
     reasoning?: string;
     /** 模型只产出思考、未给出最终回答（内容为可读提示文案） */
     no_answer?: boolean;
-    /** 附件（图片/文件消息）的渲染信息（类型定义见 src/api/chat） */
+    /** 附件（图片/音视频/文件消息）的渲染信息（类型定义见 src/api/chat） */
     file?: import("@/api/chat").ChatAttachment;
+    /** 表情回应表（emoji → 回应用户 pk 列表，全量下发整体替换） */
+    reactions?: Record<string, number[]>;
   };
   is_recalled?: boolean;
   can_recall?: boolean;
@@ -181,6 +204,28 @@ export interface ChatRecallPayload {
   id?: number;
   room_id: number;
   operator_pk?: number;
+}
+
+/** 表情回应上行帧（chat_reaction）：对某条消息添加 / 移除自己的 emoji 回应。
+ * add 幂等；remove 只能移除自己的回应。消息不存在 / 已撤回 / 非房间成员 /
+ * 机器消息时服务端静默忽略；emoji 超长或回应数超上限时回执 code=1001。 */
+export interface ChatReactionPayload {
+  /** 目标消息 pk（ChatMessage 自增主键） */
+  message: number;
+  /** 回应表情（去首尾空白后 1-16 字符） */
+  emoji: string;
+  /** add 添加 / remove 移除 */
+  op: "add" | "remove";
+}
+
+/** 表情回应广播帧（chat_reaction 下行）：reactions 为该消息**全量**回应表
+ * （emoji → 回应用户 pk 列表），客户端整体替换本地状态（幂等，无需自行合并）；
+ * ts 为广播时刻（epoch 秒），可据此丢弃乱序到达的旧帧。 */
+export interface ChatReactionUpdatePayload {
+  room: number;
+  message: number;
+  reactions: Record<string, number[]>;
+  ts: number;
 }
 
 /** 已读回执帧（chat_read） */

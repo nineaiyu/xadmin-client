@@ -15,11 +15,13 @@ export type Action =
   | "push_message"
   | "chat_message"
   | "chat_recall"
+  | "chat_reaction"
   | "chat_read"
   | "chat_unread"
   | "task_log"
   | "monitor"
-  | "screen_command";
+  | "screen_command"
+  | "screen_data";
 
 /**
  * 客户端 → 服务端帧（客户端受控，键集合封闭）

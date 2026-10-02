@@ -19,6 +19,7 @@ import GroupIcon from "~icons/ep/user-filled";
 import PictureIcon from "~icons/ep/picture";
 import PaperclipIcon from "~icons/ep/paperclip";
 import {
+  type ChatAttachmentKind,
   type ChatMessageItem,
   type ChatPeer,
   type ChatRoomItem
@@ -56,14 +57,18 @@ const props = defineProps<{
   isNarrow: boolean;
   /** 附件上传中（禁用重复触发） */
   uploading: boolean;
+  /** 当前登录用户主键（表情回应徽标高亮自己的回应） */
+  mePk: number;
 }>();
 
 const emit = defineEmits<{
   send: [string];
-  /** 附件消息：文件 + 种类（image / file），上传与发送由父级（useChat）驱动 */
-  sendAttachment: [File, "image" | "file"];
+  /** 附件消息：文件 + 种类（image/video/audio/file，文件入口按 MIME 分流），上传与发送由父级驱动 */
+  sendAttachment: [File, ChatAttachmentKind];
   recall: [ChatMessageItem];
   resend: [ChatMessageItem];
+  /** 表情回应切换（chat_reaction 上行，全量回应表由广播帧回写） */
+  react: [ChatMessageItem, string];
   loadMore: [];
   scroll: [];
   scrollToBottom: [];
@@ -170,7 +175,19 @@ function onAttachmentChange(event: Event, kind: "image" | "file") {
   const file = input.files?.[0];
   // 清空 value：允许连续选择同一文件（否则 change 不再触发）
   input.value = "";
-  if (file) emit("sendAttachment", file, kind);
+  if (file) emit("sendAttachment", file, detectAttachmentKind(file, kind));
+}
+
+/** 上传种类按 MIME 分流（音视频消息）：图片入口保持原判定，文件入口按 MIME 细分
+ * （video/audio 走对应消息类型，其余为文件下载语义；与服务端 MIME 判定同口径） */
+function detectAttachmentKind(
+  file: File,
+  fallback: "image" | "file"
+): ChatAttachmentKind {
+  if (fallback === "image") return "image";
+  if (file.type.startsWith("video/")) return "video";
+  if (file.type.startsWith("audio/")) return "audio";
+  return "file";
 }
 
 /** 桌面通知开关（全站生效）：开启时按需申请权限，拒绝则保持关闭并提示 */
@@ -323,8 +340,10 @@ watch(
           v-else
           :item="row.item"
           :mine="mine(row.item)"
+          :me-pk="mePk"
           @recall="emit('recall', $event)"
           @resend="emit('resend', $event)"
+          @react="(item, emoji) => emit('react', item, emoji)"
         />
       </template>
 

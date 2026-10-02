@@ -144,7 +144,6 @@ messageTemplate:
   subject: Subject Template
   body: Body Template
   subjectPlaceholder: Leave empty to use the default subject
-  bodyPlaceholder: Leave empty to use the default body
   edit: Edit
   editTitle: Edit Template - {name}
   preview: Preview
@@ -1922,6 +1921,8 @@ chat:
   sources: Sources
   hideSources: Hide sources
   recall: Recall
+  react: React
+  reactionCount: "{emoji} {count} people"
   recallConfirm: Recall this message? It will be hidden for both sides.
   recalled: The other side recalled a message
   youRecalled: You recalled a message

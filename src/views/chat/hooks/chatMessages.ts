@@ -1,15 +1,19 @@
 import type { Ref } from "vue";
 import type { ChatAttachment, ChatMessageItem } from "@/api/chat";
-import type { ChatRecallPayload } from "@/utils/websocket/protocol";
+import type {
+  ChatReactionUpdatePayload,
+  ChatRecallPayload
+} from "@/utils/websocket/protocol";
 
 /**
- * 消息集合的写入口径（乐观上屏 / 服务端对齐 / 撤回）——自 useChat 抽出（行数门禁）。
+ * 消息集合的写入口径（乐观上屏 / 服务端对齐 / 撤回 / 表情回应）——自 useChat 抽出（行数门禁）。
  *
- * 三处口径必须一致，集中在此才能保证「广播回来的正式载荷覆盖乐观气泡」只写一份：
+ * 四处口径必须一致，集中在此才能保证「广播回来的正式载荷覆盖乐观气泡」只写一份：
  * - `upsert`：按 id 或 client_msg_id 命中即覆盖（服务端载荷赢），否则追加；
  *   返回是否为新增（决定滚动/未读计数）；
  * - `pushText / pushAttachment`：乐观上屏（id 取负数避免与服务端主键碰撞）；
- * - `applyRecall`：撤回为终态（清空内容与可撤回标记，保留气泡占位）。
+ * - `applyRecall`：撤回为终态（清空内容与可撤回标记，保留气泡占位）；
+ * - `applyReactions`：回应广播携带**全量**回应表，命中即整体替换（幂等，无需自行合并）。
  */
 
 /** 乐观上屏所需的上下文（房间与发送者快照，取值为调用时刻的实时值） */
@@ -52,6 +56,14 @@ export function createMessageStore(
     }
   }
 
+  /** 表情回应广播（chat_reaction）：reactions 为全量表，整体替换本地状态 */
+  function applyReactions(payload: ChatReactionUpdatePayload) {
+    const target = messages.value.find(item => item.id === payload.message);
+    if (target) {
+      target.extra = { ...target.extra, reactions: payload.reactions };
+    }
+  }
+
   function baseFields(clientMsgId: string) {
     const { roomId, roomType, sender } = context();
     return {
@@ -86,5 +98,5 @@ export function createMessageStore(
     });
   }
 
-  return { upsert, applyRecall, pushText, pushAttachment };
+  return { upsert, applyRecall, applyReactions, pushText, pushAttachment };
 }
