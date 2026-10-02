@@ -6,7 +6,7 @@ import type {
   PageTableColumn,
   RePlusPageProps
 } from "@/components/RePlusPage";
-import { usePageAuth } from "@/views/system/hooks";
+import { usePageAuth } from "@/router/utils";
 import { formatPageColumns } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import CircleClose from "~icons/ep/circle-close";

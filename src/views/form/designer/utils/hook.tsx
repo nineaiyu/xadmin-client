@@ -4,7 +4,7 @@ import { useI18n } from "vue-i18n";
 import { ElMessageBox, ElTag } from "element-plus";
 import { addDialog, closeDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { hasAuth, usePageAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
 import { formatPageColumns } from "@/components/RePlusPage";
@@ -31,12 +31,10 @@ import TemplatePickerDialog from "../components/TemplatePickerDialog.vue";
 export function useFormDesigner(tableRef: Ref) {
   const { t } = useI18n();
   const api = reactive(dynamicFormApi);
-  const auth = reactive({
-    ...getDefaultAuths("FormDesigner"),
-    create: false,
-    update: false,
-    partialUpdate: false
-  });
+  const auth = usePageAuth("FormDesigner");
+  auth.create = false;
+  auth.update = false;
+  auth.partialUpdate = false;
   const canCreate = hasAuth("create:FormDesigner");
   const canEdit = hasAuth("partialUpdate:FormDesigner");
   const canHistory = hasAuth("schemaHistory:FormDesigner");

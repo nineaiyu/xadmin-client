@@ -2,7 +2,7 @@ import { SUCCESS_CODE } from "@/api/types";
 import { onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
-import { usePageAuth } from "@/views/system/hooks";
+import { usePageAuth } from "@/router/utils";
 import type { FillableFormItem } from "@/api/dataset/dform";
 import { submissionApi } from "@/api/dataset/dform";
 import { useFormMyActions } from "./useFormMyActions";

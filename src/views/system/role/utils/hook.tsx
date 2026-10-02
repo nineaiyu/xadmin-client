@@ -6,7 +6,7 @@ import { useRouter } from "vue-router";
 import { h, reactive, ref, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { roleApi } from "@/api/system/role";
-import { usePageAuth } from "@/views/system/hooks";
+import { usePageAuth } from "@/router/utils";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import View from "~icons/ep/view";
 import { useBatchUpdate } from "@/views/system/components/useBatchUpdate";

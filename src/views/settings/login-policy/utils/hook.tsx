@@ -6,7 +6,7 @@ import { hasAuth } from "@/router/utils";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { handleOperation, type OperationProps } from "@/components/RePlusPage";
-import { usePageAuth } from "@/views/system/hooks";
+import { usePageAuth } from "@/router/utils";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import type { RecordType } from "plus-pro-components";
 import AddFill from "~icons/ri/add-circle-line";

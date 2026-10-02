@@ -1,9 +1,9 @@
 import "./reset.css";
-import { getCurrentInstance, h, onMounted, reactive, ref, type Ref } from "vue";
+import { h, onMounted, reactive, ref, type Ref } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessageBox } from "element-plus";
 import { userApi } from "@/api/system/user";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { hasAuth, usePageAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import {
   handleOperation,
@@ -48,26 +48,18 @@ export function useUser(tableRef: Ref) {
 
   const api = reactive(userApi);
 
-  const auth = reactive({
-    unblock: false,
-    empower: false,
-    logout: false,
-    resetPassword: false,
-    resetMfa: false,
-    preview: false,
-    ...getDefaultAuths(getCurrentInstance(), [
-      "resetPassword",
-      "empower",
-      "logout",
-      "unblock",
-      "resetMfa",
-      "preview",
-      "changeHistory",
-      "imBinding",
-      "invite",
-      "impersonate"
-    ])
-  });
+  const auth = usePageAuth([
+    "resetPassword",
+    "empower",
+    "logout",
+    "unblock",
+    "resetMfa",
+    "preview",
+    "changeHistory",
+    "imBinding",
+    "invite",
+    "impersonate"
+  ]);
   const switchLoadMap = ref({});
   const { switchStyle } = usePublicHooks();
   const selectedNum = ref(0);

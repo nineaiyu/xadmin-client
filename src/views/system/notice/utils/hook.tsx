@@ -2,7 +2,7 @@ import { h, reactive, shallowRef, type Ref } from "vue";
 import { noticeApi } from "@/api/system/notice";
 import { deviceDetection } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog";
-import { usePageAuth } from "@/views/system/hooks";
+import { usePageAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { NoticeChoices } from "@/views/system/constants";
 import type { OperationProps } from "@/components/RePlusPage";

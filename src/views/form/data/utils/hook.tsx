@@ -3,7 +3,7 @@ import { useI18n } from "vue-i18n";
 import { SUCCESS_CODE } from "@/api/types";
 import { addDrawer } from "@/components/ReDrawer";
 import type { OperationProps } from "@/components/RePlusPage";
-import { usePageAuth } from "@/views/system/hooks";
+import { usePageAuth } from "@/router/utils";
 import { formDataApi, type FormDataItem } from "@/api/dataset/dform";
 import SubmissionDetail from "../../components/SubmissionDetail.vue";
 import {

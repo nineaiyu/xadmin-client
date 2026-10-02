@@ -1,9 +1,9 @@
 import { useI18n } from "vue-i18n";
 import Money from "~icons/ep/money";
-import { getDefaultAuths } from "@/router/utils";
+import { usePageAuth } from "@/router/utils";
 import { modelLabelFieldApi } from "@/api/system/field";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { getCurrentInstance, reactive, type Ref, shallowRef } from "vue";
+import { reactive, shallowRef, type Ref } from "vue";
 import { handleOperation, type OperationProps } from "@/components/RePlusPage";
 
 export function useModelField(tableRef: Ref) {
@@ -11,10 +11,7 @@ export function useModelField(tableRef: Ref) {
 
   const api = reactive(modelLabelFieldApi);
 
-  const auth = reactive({
-    sync: false,
-    ...getDefaultAuths(getCurrentInstance(), ["sync"])
-  });
+  const auth = usePageAuth(["sync"]);
 
   const tableBarButtonsProps = shallowRef<OperationProps>({
     buttons: [

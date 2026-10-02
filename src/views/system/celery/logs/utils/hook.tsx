@@ -1,11 +1,4 @@
-import {
-  computed,
-  getCurrentInstance,
-  h,
-  reactive,
-  shallowRef,
-  type Ref
-} from "vue";
+import { computed, h, reactive, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElProgress, ElTag } from "element-plus";
 import type { RecordType } from "plus-pro-components";
@@ -15,7 +8,7 @@ import {
   taskExecutionApi,
   type TaskCenterKind
 } from "@/api/system/task";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { hasAuth, usePageAuth } from "@/router/utils";
 import { statusTagProps } from "@/utils/dict";
 import { message } from "@/utils/message";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
@@ -58,7 +51,7 @@ const PRODUCT_TAG_TYPE: Record<string, "primary" | "success" | "warning"> = {
 
 export function useTaskExecution(tableRef?: Ref) {
   const api = reactive(taskExecutionApi);
-  const auth = reactive({ ...getDefaultAuths(getCurrentInstance(), ["log"]) });
+  const auth = usePageAuth(["log"]);
   // 取消 / 重跑走聚合端点，其权限点是另一个资源名（SystemTaskCenter），
   // 不能靠 getDefaultAuths 的组件名推导，直接按权限点判定
   const canCancel = hasAuth("cancel:SystemTaskCenter");

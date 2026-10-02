@@ -1,7 +1,7 @@
-import { getCurrentInstance, h, reactive, shallowRef } from "vue";
+import { h, reactive, shallowRef } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElTag } from "element-plus";
-import { getDefaultAuths } from "@/router/utils";
+import { usePageAuth } from "@/router/utils";
 import { dataPermissionApi } from "@/api/system/permission";
 import { ModeChoices } from "@/views/system/constants";
 import {
@@ -18,9 +18,7 @@ export function useDataPermission() {
 
   const api = reactive(dataPermissionApi);
 
-  const auth = reactive({
-    ...getDefaultAuths(getCurrentInstance())
-  });
+  const auth = usePageAuth();
 
   // 注册表数据源：规则字段/值选项/匹配符文案/菜单行
   const lookups = usePermissionLookups();

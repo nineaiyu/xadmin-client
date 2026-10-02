@@ -1,7 +1,7 @@
 import { h, reactive, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElLink, ElTag } from "element-plus";
-import { getDefaultAuths } from "@/router/utils";
+import { usePageAuth } from "@/router/utils";
 import { approvalApi } from "@/api/approval/approval";
 import { SUCCESS_CODE } from "@/api/types";
 import {
@@ -29,16 +29,13 @@ export type ApprovalScope = "pending" | "mine";
  * 行级可见性与文案规则见 approvalRowRules / approvalTexts（纯函数可单测直测）。
  */
 export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
-  const componentName = "SystemApprovalRequest";
-  const auth = reactive(
-    getDefaultAuths(componentName, [
-      "approve",
-      "reject",
-      "cancel",
-      "batchApprove",
-      "batchReject"
-    ])
-  );
+  const auth = usePageAuth("SystemApprovalRequest", [
+    "approve",
+    "reject",
+    "cancel",
+    "batchApprove",
+    "batchReject"
+  ]);
   const { t } = useI18n();
 
   // 作用域隔离：列表请求按页签追加 scope 参数（后端 ApprovalScopeFilter 收口取值域）

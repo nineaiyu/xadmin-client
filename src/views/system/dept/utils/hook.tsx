@@ -3,7 +3,7 @@ import { h, reactive, shallowRef, type Ref } from "vue";
 import { useRouter } from "vue-router";
 import { hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
-import { usePageAuth } from "@/views/system/hooks";
+import { usePageAuth } from "@/router/utils";
 import DeptPermissionPreview from "../components/DeptPermissionPreview.vue";
 import { addDrawer } from "@/components/ReDrawer";
 import { useBatchUpdate } from "@/views/system/components/useBatchUpdate";

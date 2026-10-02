@@ -3,7 +3,7 @@ import { useI18n } from "vue-i18n";
 import { ElTag } from "element-plus";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { hasAuth, usePageAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { SOLID_TAG_STYLE } from "@/utils/tagTone";
 import { SUCCESS_CODE } from "@/api/types";
@@ -22,12 +22,10 @@ import TagForm from "../components/TagForm.vue";
 export function useTags(tableRef: Ref) {
   const { t } = useI18n();
   const api = reactive(tagApi);
-  const auth = reactive({
-    ...getDefaultAuths("Tag"),
-    create: false,
-    update: false,
-    partialUpdate: false
-  });
+  const auth = usePageAuth("Tag");
+  auth.create = false;
+  auth.update = false;
+  auth.partialUpdate = false;
   const canCreate = hasAuth("create:Tag");
   const canEdit = hasAuth("partialUpdate:Tag");
 

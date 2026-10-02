@@ -12,17 +12,9 @@
  * - menuActions          行操作清单与危险动作确认。
  */
 
-import {
-  computed,
-  getCurrentInstance,
-  nextTick,
-  onMounted,
-  reactive,
-  ref,
-  watch
-} from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { hasAuth, getDefaultAuths } from "@/router/utils";
+import { hasAuth, usePageAuth } from "@/router/utils";
 import { useMenuData } from "./useMenuData";
 import { useMenuFilter } from "./useMenuFilter";
 import { useMenuOrder, useMenuSelection, useMenuTree } from "./useMenuTree";
@@ -33,19 +25,15 @@ import type { MenuAuths, MenuRow, MoveDirection } from "./types";
 
 export function useMenu() {
   const { t } = useI18n();
-  const instance = getCurrentInstance();
-
-  const auth = reactive({
+  const auth = usePageAuth([
     // 排序/权限码/接口清单/影响面/批量更新/权限检测为菜单页扩展动作
-    ...getDefaultAuths(instance, [
-      "rank",
-      "permissions",
-      "apiUrl",
-      "impact",
-      "batchUpdate",
-      "permissionAudit"
-    ])
-  }) as MenuAuths;
+    "rank",
+    "permissions",
+    "apiUrl",
+    "impact",
+    "batchUpdate",
+    "permissionAudit"
+  ]) as MenuAuths;
 
   const treeRef = ref();
   const rootRef = ref<HTMLElement>();

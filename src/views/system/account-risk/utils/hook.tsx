@@ -1,11 +1,4 @@
-import {
-  getCurrentInstance,
-  h,
-  reactive,
-  ref,
-  shallowRef,
-  type Ref
-} from "vue";
+import { h, reactive, ref, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import {
   ElAlert,
@@ -17,7 +10,7 @@ import {
   accountRiskApi,
   type AccountRiskHandleAction
 } from "@/api/system/security";
-import { getDefaultAuths } from "@/router/utils";
+import { usePageAuth } from "@/router/utils";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { addDrawer } from "@/components/ReDrawer";
@@ -66,18 +59,7 @@ export function useAccountRisk(tableRef: Ref) {
   const { t } = useI18n();
 
   const api = reactive(accountRiskApi);
-  const auth = reactive({
-    scan: false,
-    handle: false,
-    batchHandle: false,
-    stats: false,
-    ...getDefaultAuths(getCurrentInstance(), [
-      "scan",
-      "handle",
-      "batchHandle",
-      "stats"
-    ])
-  });
+  const auth = usePageAuth(["scan", "handle", "batchHandle", "stats"]);
 
   /** 取 LabeledChoiceField 的 value / label（兼容后端下发标量的情况） */
   const pick = (raw: unknown) => {

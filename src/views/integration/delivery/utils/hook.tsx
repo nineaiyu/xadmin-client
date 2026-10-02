@@ -1,7 +1,7 @@
 import { h, reactive, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElTag } from "element-plus";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { hasAuth, usePageAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import {
   handleOperation,
@@ -44,7 +44,7 @@ const statusValue = (status: WebhookDeliveryItem["status"]) =>
 export function useWebhookDelivery(tableRef: Ref) {
   const { t } = useI18n();
   const api = reactive(webhookDeliveryApi);
-  const auth = reactive({ ...getDefaultAuths("WebhookDelivery") });
+  const auth = usePageAuth("WebhookDelivery");
   const canRetry = hasAuth("retry:WebhookDelivery");
 
   const listColumnsFormat = (columns: PageTableColumn[]) =>

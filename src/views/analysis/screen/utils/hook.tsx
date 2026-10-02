@@ -9,7 +9,7 @@ import {
   type DialogOptions
 } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { hasAuth, usePageAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { choiceValue, statusTagProps, type StatusTagType } from "@/utils/dict";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
@@ -41,12 +41,10 @@ export function useScreen(tableRef: Ref) {
   const { t } = useI18n();
   const router = useRouter();
   const api = reactive(screenApi);
-  const auth = reactive({
-    ...getDefaultAuths("DataScreen"),
-    create: false,
-    update: false,
-    partialUpdate: false
-  });
+  const auth = usePageAuth("DataScreen");
+  auth.create = false;
+  auth.update = false;
+  auth.partialUpdate = false;
   const canCreate = hasAuth("create:DataScreen");
   const canEdit = hasAuth("partialUpdate:DataScreen");
   const canCommand = hasAuth("command:DataScreen");

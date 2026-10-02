@@ -1,7 +1,7 @@
 import { useI18n } from "vue-i18n";
 import { systemConfigApi } from "@/api/system/config/system";
-import { getDefaultAuths } from "@/router/utils";
-import { getCurrentInstance, reactive, type Ref, shallowRef } from "vue";
+import { usePageAuth } from "@/router/utils";
+import { reactive, shallowRef, type Ref } from "vue";
 import { handleOperation, type OperationProps } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import CircleClose from "~icons/ep/circle-close";
@@ -11,10 +11,7 @@ export function useSystemConfig(tableRef: Ref) {
 
   const api = reactive(systemConfigApi);
 
-  const auth = reactive({
-    invalid: false,
-    ...getDefaultAuths(getCurrentInstance(), ["invalid"])
-  });
+  const auth = usePageAuth(["invalid"]);
 
   const operationButtonsProps = shallowRef<OperationProps>({
     width: 250,

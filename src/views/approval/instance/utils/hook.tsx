@@ -1,6 +1,6 @@
 import { reactive, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { getDefaultAuths } from "@/router/utils";
+import { usePageAuth } from "@/router/utils";
 import { approvalInstanceApi } from "@/api/approval/approvalFlow";
 import { refreshApprovalBadge } from "@/utils/approvalBadge";
 import { refreshApprovalStats } from "@/utils/approvalStats";
@@ -32,8 +32,7 @@ export function useInstancePanel(
   tableRef: Ref,
   onStarted?: () => void
 ) {
-  const componentName = "SystemApprovalInstance";
-  const baseAuth = getDefaultAuths(componentName, [
+  const auth = usePageAuth("SystemApprovalInstance", [
     "approve",
     "reject",
     "cancel",
@@ -50,26 +49,6 @@ export function useInstancePanel(
     // 导出按钮由框架内建（usePlusPageButtons 读 auth.exportData 决定显示与异步开关）
     "exportData"
   ]);
-  // 自定义权限码先声明默认值再展开（与 demo/book、system/role 同范式）：
-  // UnwrapNestedRefs 会丢掉索引签名，不显式声明时 auth.approve 等取用会报 TS2339；
-  // 展开在后保证 hasAuth 的真实取值覆盖默认值
-  const auth = reactive({
-    approve: false,
-    reject: false,
-    cancel: false,
-    urge: false,
-    addSign: false,
-    removeSign: false,
-    returnNode: false,
-    transfer: false,
-    ongoing: false,
-    batchApprove: false,
-    batchReject: false,
-    batchTransfer: false,
-    create: false,
-    exportData: false,
-    ...baseAuth
-  });
   const { t } = useI18n();
 
   // 作用域隔离：列表请求按页签追加 scope 参数

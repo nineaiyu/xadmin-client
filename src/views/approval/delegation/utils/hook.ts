@@ -1,6 +1,6 @@
 import { approvalDelegationApi } from "@/api/approval/approvalDelegation";
-import { getCurrentInstance, reactive } from "vue";
-import { getDefaultAuths } from "@/router/utils";
+import { reactive } from "vue";
+import { usePageAuth } from "@/router/utils";
 import type { PageTableColumn } from "@/components/RePlusPage";
 
 /**
@@ -12,7 +12,7 @@ import type { PageTableColumn } from "@/components/RePlusPage";
  */
 export function useApprovalDelegation() {
   const api = reactive(approvalDelegationApi);
-  const auth = reactive({ ...getDefaultAuths(getCurrentInstance()) });
+  const auth = usePageAuth();
 
   /** 「流程范围（空 = 全部流程）」标题较长：默认 120px 列宽会折行抬高表头 */
   const listColumnsFormat = (columns: PageTableColumn[]) => {

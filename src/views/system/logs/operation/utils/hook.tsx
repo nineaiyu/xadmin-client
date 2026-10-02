@@ -5,19 +5,12 @@ import type {
 } from "@/components/RePlusPage";
 import { formatPageColumns } from "@/components/RePlusPage";
 import { useRouter } from "vue-router";
-import { getDefaultAuths } from "@/router/utils";
+import { usePageAuth } from "@/router/utils";
 import { goUserDetail } from "@/views/system/hooks";
 import { operationLogApi } from "@/api/system/logs/operation";
 import { monitorApi } from "@/api/system/monitor";
 import { useI18n } from "vue-i18n";
-import {
-  getCurrentInstance,
-  h,
-  onMounted,
-  reactive,
-  ref,
-  shallowRef
-} from "vue";
+import { h, onMounted, reactive, ref, shallowRef } from "vue";
 
 export function useOperationLog() {
   const { t } = useI18n();
@@ -27,9 +20,7 @@ export function useOperationLog() {
    *  无监控权限或接口异常时回退默认 1 秒 */
   const slowThreshold = ref(1);
 
-  const auth = reactive({
-    ...getDefaultAuths(getCurrentInstance())
-  });
+  const auth = usePageAuth();
   // 审计日志只读：删除/批量删除端点已下线（留存的收敛由服务端归档命令统一执行），
   // 关闭框架默认入口，避免按钮打了 405
   auth.destroy = false;

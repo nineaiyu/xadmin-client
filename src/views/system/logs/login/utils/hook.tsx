@@ -1,8 +1,8 @@
 import { useI18n } from "vue-i18n";
 import { loginLogApi } from "@/api/system/logs/login";
 import { useRouter } from "vue-router";
-import { getDefaultAuths } from "@/router/utils";
-import { getCurrentInstance, reactive, shallowRef, type Ref } from "vue";
+import { usePageAuth } from "@/router/utils";
+import { reactive, shallowRef, type Ref } from "vue";
 import { goUserDetail, usePublicHooks } from "@/views/system/hooks";
 import {
   type PageTableColumn,
@@ -18,10 +18,7 @@ export function useLoginLog(tableRef: Ref) {
   const { t } = useI18n();
   const api = reactive(loginLogApi);
 
-  const auth = reactive({
-    logout: false,
-    ...getDefaultAuths(getCurrentInstance(), ["logout"])
-  });
+  const auth = usePageAuth(["logout"]);
 
   const router = useRouter();
   const { tagStyle } = usePublicHooks();

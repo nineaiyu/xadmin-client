@@ -4,7 +4,7 @@ import { ElTag } from "element-plus";
 import { addDialog } from "@/components/ReDialog";
 import { addDrawer } from "@/components/ReDrawer";
 import { dialogSize } from "@/components/ReDialog/size";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { hasAuth, usePageAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { SUCCESS_CODE } from "@/api/types";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
@@ -25,12 +25,10 @@ import PostPermissionPreview from "../components/PostPermissionPreview.vue";
 export function usePosts(tableRef: Ref) {
   const { t } = useI18n();
   const api = reactive(postApi);
-  const auth = reactive({
-    ...getDefaultAuths("SystemPost"),
-    create: false,
-    update: false,
-    partialUpdate: false
-  });
+  const auth = usePageAuth("SystemPost");
+  auth.create = false;
+  auth.update = false;
+  auth.partialUpdate = false;
   const canCreate = hasAuth("create:SystemPost");
   const canEdit = hasAuth("partialUpdate:SystemPost");
   const canAssign = hasAuth("assign:SystemPost");

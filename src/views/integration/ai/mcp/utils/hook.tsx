@@ -5,7 +5,7 @@ import { ElLink, ElTag } from "element-plus";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { addDrawer } from "@/components/ReDrawer";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { hasAuth, usePageAuth } from "@/router/utils";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
 import { formatPageColumns } from "@/components/RePlusPage";
 import { mcpServerApi, type McpServerItem } from "@/api/ai/mcp";
@@ -32,12 +32,10 @@ const normalizeError = (error: unknown) => ({
  */
 export function useMcpServers(tableRef: Ref) {
   const { t } = useI18n();
-  const auth = reactive({
-    ...getDefaultAuths("AiMcpServers"),
-    create: false,
-    update: false,
-    partialUpdate: false
-  });
+  const auth = usePageAuth("AiMcpServers");
+  auth.create = false;
+  auth.update = false;
+  auth.partialUpdate = false;
   const canCreate = hasAuth("create:AiMcpServers");
   const canUpdate = hasAuth("partialUpdate:AiMcpServers");
   const canSync = hasAuth("sync:AiMcpServers");

@@ -4,7 +4,7 @@ import { useI18n } from "vue-i18n";
 import { ElSwitch, ElTag } from "element-plus";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { hasAuth, usePageAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
 import { formatPageColumns } from "@/components/RePlusPage";
@@ -26,12 +26,10 @@ import SubscriptionForm from "../components/SubscriptionForm.vue";
 export function useWebhookSubscription(tableRef: Ref) {
   const { t } = useI18n();
   const api = reactive(webhookSubscriptionApi);
-  const auth = reactive({
-    ...getDefaultAuths("WebhookSubscription"),
-    create: false,
-    update: false,
-    partialUpdate: false
-  });
+  const auth = usePageAuth("WebhookSubscription");
+  auth.create = false;
+  auth.update = false;
+  auth.partialUpdate = false;
   const canCreate = hasAuth("create:WebhookSubscription");
   const canEdit = hasAuth("partialUpdate:WebhookSubscription");
   const canTest = hasAuth("test:WebhookSubscription");

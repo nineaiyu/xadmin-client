@@ -1,15 +1,8 @@
 import { SUCCESS_CODE } from "@/api/types";
-import {
-  computed,
-  getCurrentInstance,
-  h,
-  onMounted,
-  reactive,
-  shallowRef
-} from "vue";
+import { computed, h, onMounted, reactive, shallowRef } from "vue";
 import { useI18n } from "vue-i18n";
 import { addDialog } from "@/components/ReDialog";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { hasAuth, usePageAuth } from "@/router/utils";
 import { maskApi } from "@/api/system/mask";
 import { modelLabelFieldApi } from "@/api/system/field";
 import { FieldChoices } from "@/views/system/constants";
@@ -63,10 +56,7 @@ export function buildPreviewRule(row: Record<string, unknown>) {
 /** 字段级数据脱敏规则页：RePlusPage 元数据驱动列表，附自定义「脱敏预览」弹窗 */
 export function useMask() {
   const api = reactive(maskApi);
-  const auth = reactive({
-    preview: false,
-    ...getDefaultAuths(getCurrentInstance(), ["preview"])
-  });
+  const auth = usePageAuth(["preview"]);
   const { t } = useI18n();
 
   /** 模型/字段候选来自模型字段字典；无该权限时退回手填（下拉降级为输入框） */

@@ -1,7 +1,7 @@
 import { h, reactive, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElLink, ElTag } from "element-plus";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { hasAuth, usePageAuth } from "@/router/utils";
 import {
   formatPageColumns,
   type OperationProps,
@@ -36,14 +36,11 @@ type KnowledgeRow = KnowledgeDocumentItem & { is_active: boolean };
  */
 export function useKnowledge(tableRef: Ref) {
   const { t } = useI18n();
-  const baseAuth = getDefaultAuths("AiKnowledge");
-  const auth = reactive({
-    ...baseAuth,
-    create: false,
-    update: false,
-    partialUpdate: false,
-    destroy: false
-  });
+  const auth = usePageAuth("AiKnowledge");
+  auth.create = false;
+  auth.update = false;
+  auth.partialUpdate = false;
+  auth.destroy = false;
   const canCreate = hasAuth("create:AiKnowledge");
   const canSync = hasAuth("syncRepo:AiKnowledge");
   const canBatchToggle = hasAuth("batchToggle:AiKnowledge");

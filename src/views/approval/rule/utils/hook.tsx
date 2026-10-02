@@ -3,7 +3,7 @@ import { useI18n } from "vue-i18n";
 import type { RecordType } from "plus-pro-components";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { hasAuth, usePageAuth } from "@/router/utils";
 import { approvalRuleApi } from "@/api/approval/approvalRule";
 import {
   handleOperation,
@@ -29,12 +29,10 @@ export function useApprovalRule(tableRef: Ref) {
   const api = reactive(approvalRuleApi);
   // 关闭默认 create/update/partialUpdate 按钮（走自定义按钮组与权限码），
   // 同时使 boolean 列的自动 switch 只读（启用状态经由编辑弹窗修改）
-  const auth = reactive({
-    ...getDefaultAuths("SystemApprovalRule", []),
-    create: false,
-    update: false,
-    partialUpdate: false
-  });
+  const auth = usePageAuth("SystemApprovalRule");
+  auth.create = false;
+  auth.update = false;
+  auth.partialUpdate = false;
   const canCreate = hasAuth("create:SystemApprovalRule");
   const canEdit = hasAuth("partialUpdate:SystemApprovalRule");
   const formRef = shallowRef<InstanceType<typeof RuleForm>>();

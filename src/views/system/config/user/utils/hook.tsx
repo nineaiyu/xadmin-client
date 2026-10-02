@@ -1,8 +1,8 @@
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { hasAuth, usePageAuth } from "@/router/utils";
 import { goUserDetail } from "@/views/system/hooks";
-import { getCurrentInstance, reactive, type Ref, shallowRef } from "vue";
+import { reactive, shallowRef, type Ref } from "vue";
 import { userConfigApi } from "@/api/system/config/user";
 import {
   type PageTableColumn,
@@ -20,10 +20,8 @@ export function useUserConfig(tableRef: Ref) {
 
   const api = reactive(userConfigApi);
 
-  const auth = reactive({
-    ...getDefaultAuths(getCurrentInstance()),
-    invalid: hasAuth("invalid:UserConfig")
-  });
+  const auth = usePageAuth();
+  auth.invalid = hasAuth("invalid:UserConfig");
 
   const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
     props: {

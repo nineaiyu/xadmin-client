@@ -3,7 +3,7 @@ import { useI18n } from "vue-i18n";
 import { ElProgress, ElTag } from "element-plus";
 // 文件大小格式化统一走框架工具（与文件管理页同一实现，避免两套口径）
 import { formatBytes } from "@pureadmin/utils";
-import { getDefaultAuths } from "@/router/utils";
+import { usePageAuth } from "@/router/utils";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
 import type { RecordType } from "plus-pro-components";
@@ -54,7 +54,7 @@ interface RecordCenterOptions {
 export function useRecordCenter(options: RecordCenterOptions) {
   const { localePrefix, componentName, sizeKey } = options;
   const api = reactive(options.api);
-  const auth = reactive(getDefaultAuths(componentName, ["download", "log"]));
+  const auth = usePageAuth(componentName, ["download", "log"]);
   const { t, te } = useI18n();
 
   /** 打开任务日志弹窗（复用任务执行日志的 WS 增量消费组件） */

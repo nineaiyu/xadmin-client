@@ -5,7 +5,7 @@ import { ElLink, ElTag } from "element-plus";
 import { useRouter } from "vue-router";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { hasAuth, usePageAuth } from "@/router/utils";
 import { formatDateTime } from "@/utils";
 import { message } from "@/utils/message";
 import { choiceValue, statusTagProps, type StatusTagType } from "@/utils/dict";
@@ -36,12 +36,10 @@ export function useDataset(tableRef: Ref) {
   const { t } = useI18n();
   const api = reactive(datasetApi);
   const router = useRouter();
-  const auth = reactive({
-    ...getDefaultAuths("DataDataset"),
-    create: false,
-    update: false,
-    partialUpdate: false
-  });
+  const auth = usePageAuth("DataDataset");
+  auth.create = false;
+  auth.update = false;
+  auth.partialUpdate = false;
   const canCreate = hasAuth("create:DataDataset");
   const canEdit = hasAuth("partialUpdate:DataDataset");
   const canExecute = hasAuth("execute:DataDataset");

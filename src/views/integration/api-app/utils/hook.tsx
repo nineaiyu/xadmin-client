@@ -1,7 +1,7 @@
 import { h, reactive, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElLink, ElSwitch, ElTag, ElTooltip } from "element-plus";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { hasAuth, usePageAuth } from "@/router/utils";
 import {
   formatPageColumns,
   type OperationProps,
@@ -44,13 +44,11 @@ import { useApiAppPanel } from "./useApiAppPanel";
 export function useApiApplication(tableRef: Ref) {
   const { t } = useI18n();
   const api = reactive(apiApplicationApi);
-  const auth = reactive({
-    ...getDefaultAuths("IntegrationApiApp"),
-    create: false,
-    update: false,
-    partialUpdate: false,
-    destroy: false
-  });
+  const auth = usePageAuth("IntegrationApiApp");
+  auth.create = false;
+  auth.update = false;
+  auth.partialUpdate = false;
+  auth.destroy = false;
   const canCreate = hasAuth("create:IntegrationApiApp");
   const canEdit = hasAuth("partialUpdate:IntegrationApiApp");
   const canRegenerate = hasAuth("regenerateSecret:IntegrationApiApp");

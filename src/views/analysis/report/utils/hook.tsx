@@ -6,7 +6,7 @@ import { useRouter } from "vue-router";
 import { ElTag } from "element-plus";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { hasAuth, usePageAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
@@ -59,12 +59,10 @@ export function useReport(tableRef: Ref) {
   const { t } = useI18n();
   const router = useRouter();
   const api = reactive(reportApi);
-  const auth = reactive({
-    ...getDefaultAuths("DataReport"),
-    create: false,
-    update: false,
-    partialUpdate: false
-  });
+  const auth = usePageAuth("DataReport");
+  auth.create = false;
+  auth.update = false;
+  auth.partialUpdate = false;
   const canCreate = hasAuth("create:DataReport");
   const canEdit = hasAuth("partialUpdate:DataReport");
   const canRun = hasAuth("run:DataReport");

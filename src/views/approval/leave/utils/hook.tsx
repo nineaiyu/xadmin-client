@@ -1,9 +1,9 @@
 import { SUCCESS_CODE } from "@/api/types";
-import { getCurrentInstance, h, reactive, shallowRef, type Ref } from "vue";
+import { h, reactive, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessage, ElMessageBox, ElTag } from "element-plus";
 import { leaveApi } from "@/api/approval/leave";
-import { getDefaultAuths } from "@/router/utils";
+import { usePageAuth } from "@/router/utils";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";
 import { SOLID_TAG_STYLE } from "@/utils/tagTone";
 import type {
@@ -44,11 +44,7 @@ const RESUBMITTABLE = ["DRAFT", "REJECTED", "CANCELLED"];
  */
 export function useLeave(tableRef: Ref) {
   const api = reactive(leaveApi);
-  const auth = reactive({
-    submit: false,
-    cancel: false,
-    ...getDefaultAuths(getCurrentInstance(), ["submit", "cancel"])
-  });
+  const auth = usePageAuth(["submit", "cancel"]);
   const { t } = useI18n();
 
   const refresh = () => tableRef.value?.handleGetData();

@@ -1,9 +1,9 @@
 import { useI18n } from "vue-i18n";
 import { userOnlineApi } from "@/api/system/online";
 import { useRouter } from "vue-router";
-import { getDefaultAuths } from "@/router/utils";
+import { usePageAuth } from "@/router/utils";
 import { goUserDetail } from "@/views/system/hooks";
-import { getCurrentInstance, reactive, shallowRef, type Ref } from "vue";
+import { reactive, shallowRef, type Ref } from "vue";
 import {
   handleOperation,
   type PageTableColumn,
@@ -25,12 +25,7 @@ export function useUserOnline(tableRef: Ref) {
   const { t } = useI18n();
   const api = reactive(userOnlineApi);
 
-  const auth = reactive({
-    ...getDefaultAuths(getCurrentInstance(), [
-      "forceLogout",
-      "batchForceLogout"
-    ])
-  });
+  const auth = usePageAuth(["forceLogout", "batchForceLogout"]);
 
   const router = useRouter();
   const operationButtonsProps = shallowRef<OperationProps>({

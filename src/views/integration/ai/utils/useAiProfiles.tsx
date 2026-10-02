@@ -6,7 +6,7 @@ import {
   closeDrawer,
   type DrawerOptions
 } from "@/components/ReDrawer";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { hasAuth, usePageAuth } from "@/router/utils";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
 import { aiProfileApi, type AiProfileItem } from "@/api/ai/ai";
 import { purposeLabelKey, purposeTagType } from "./purpose";
@@ -33,14 +33,12 @@ import { useAiProfileDialog } from "./useAiProfileDialog";
 export function useAiProfiles(tableRef: Ref) {
   const { t } = useI18n();
   const api = reactive(aiProfileApi);
-  const auth = reactive({
-    ...getDefaultAuths("AiProfile"),
-    create: false,
-    update: false,
-    partialUpdate: false,
-    // 删除收敛进「管理」抽屉危险区，关闭框架默认入口避免两处入口
-    destroy: false
-  });
+  const auth = usePageAuth("AiProfile");
+  auth.create = false;
+  auth.update = false;
+  auth.partialUpdate = false;
+  // 删除收敛进「管理」抽屉危险区，关闭框架默认入口避免两处入口
+  auth.destroy = false;
   const canCreate = hasAuth("create:AiProfile");
   const canActivate = hasAuth("activate:AiProfile");
   const canDeactivate = hasAuth("deactivate:AiProfile");

@@ -1,13 +1,13 @@
 import { crontabScheduleApi } from "@/api/system/task";
-import { getCurrentInstance, reactive } from "vue";
-import { getDefaultAuths } from "@/router/utils";
+import { reactive } from "vue";
+import { usePageAuth } from "@/router/utils";
 import type { PageTableColumn } from "@/components/RePlusPage";
 import { useI18n } from "vue-i18n";
 
 export function useTaskCrontab() {
   // 权限判断，用于判断是否有该权限
   const api = reactive(crontabScheduleApi);
-  const auth = reactive({ ...getDefaultAuths(getCurrentInstance()) });
+  const auth = usePageAuth();
   const { t, locale } = useI18n();
 
   /**

@@ -1,6 +1,6 @@
 import { useI18n } from "vue-i18n";
 import { systemUploadFileApi } from "@/api/system/file";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { hasAuth, usePageAuth } from "@/router/utils";
 import {
   isReadonlyCell,
   openDialogDrawer,
@@ -10,7 +10,7 @@ import {
   type RePlusPageProps,
   formatPageColumns
 } from "@/components/RePlusPage";
-import { h, reactive, shallowRef, getCurrentInstance, type Ref } from "vue";
+import { h, reactive, shallowRef, type Ref } from "vue";
 import uploadForm from "../components/FileUpload.vue";
 import AccessLogPanel from "../components/AccessLogPanel.vue";
 import { openPreviewDrawer } from "../components/previewDrawer";
@@ -36,12 +36,10 @@ export function useSystemUploadFile(tableRef: Ref) {
 
   const { tagStyle } = usePublicHooks();
 
-  const auth = reactive({
-    ...getDefaultAuths(getCurrentInstance()),
-    upload: hasAuth("upload:SystemUploadFile"),
-    config: hasAuth("config:SystemUploadFile"),
-    preview: hasAuth("preview:SystemUploadFile")
-  });
+  const auth = usePageAuth();
+  auth.upload = hasAuth("upload:SystemUploadFile");
+  auth.config = hasAuth("config:SystemUploadFile");
+  auth.preview = hasAuth("preview:SystemUploadFile");
 
   // 通用标签：行内打标（单对象全量替换）与工具栏批量打标共用同一弹窗；
   // 入口按全局 assign:Tag 权限点显示，对象级 update 权限由后端逐对象复核

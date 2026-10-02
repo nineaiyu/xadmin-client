@@ -5,7 +5,7 @@ import {
   closeDrawer,
   type DrawerOptions
 } from "@/components/ReDrawer";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { hasAuth, usePageAuth } from "@/router/utils";
 import { approvalFlowApi } from "@/api/approval/approvalFlow";
 import type { OperationProps } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
@@ -31,13 +31,10 @@ type FlowRow = {
  */
 export function useFlow(tableRef: Ref) {
   const { t } = useI18n();
-  const baseAuth = getDefaultAuths("SystemApprovalFlow");
-  const auth = reactive({
-    ...baseAuth,
-    create: false,
-    update: false,
-    partialUpdate: false
-  });
+  const auth = usePageAuth("SystemApprovalFlow");
+  auth.create = false;
+  auth.update = false;
+  auth.partialUpdate = false;
   const canCreate = hasAuth("create:SystemApprovalFlow");
   const canUpdate =
     hasAuth("partialUpdate:SystemApprovalFlow") ||

@@ -1,7 +1,7 @@
 import { reactive, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { dataDictApi } from "@/api/system/dict";
-import { usePageAuth } from "@/views/system/hooks";
+import { usePageAuth } from "@/router/utils";
 import { clearDictCache } from "@/utils/dict";
 import {
   formatPageColumns,
