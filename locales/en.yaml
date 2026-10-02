@@ -3310,6 +3310,8 @@ mcp:
   formAllowedTools: Allowed tools
   formAllowedToolsTip: Comma separated (e.g. echo, search); empty means no tool can be called
   formEnabled: Enabled
+  formExposeToAi: Expose to AI actions
+  formExposeToAiTip: When on, whitelisted tools join the AI assistant action catalog (called after user confirmation; off by default)
   formRemark: Remark
   nameRequired: Server name is required
   urlRequired: Server URL is required
@@ -3331,6 +3333,7 @@ mcp:
   toolDescription: Description
   toolReadOnly: Kind
   toolParams: Params
+  toolActionSurface: Actions
   toolCall: Call
   callTitle: "Call test - {name}"
   callArguments: Arguments (JSON)
@@ -3345,6 +3348,8 @@ mcp:
   readOnlyNo: Writable
   enabled: Enabled
   disabled: Disabled
+  actionSurfaceIn: Exposed
+  actionSurfaceOut: Not exposed
 aiKnowledge:
   upload: Upload document
   uploadTitle: Upload document

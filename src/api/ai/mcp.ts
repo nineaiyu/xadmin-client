@@ -3,13 +3,17 @@ import type { DetailResult } from "@/api/types";
 
 /** 外部 MCP 服务器（MCP client 侧）：工具同步快照 + 白名单调用 */
 
-/** 工具快照条目（后端只保留展示字段：名称/描述/只读标注/参数名） */
+/** 工具快照条目（后端只保留展示字段：名称/描述/只读标注/参数名 + 有界参数 schema） */
 export type McpToolSnapshot = {
   name: string;
   description: string;
   read_only: boolean;
   params: string[];
   required: string[];
+  /** 白名单化有界参数 schema（AI 动作目录的数据源；旧快照无此键，重新同步恢复） */
+  input_schema?: Record<string, unknown>;
+  /**发生过尺寸截断标记 */
+  schema_truncated?: boolean;
 };
 
 export type McpServerItem = {
@@ -22,6 +26,8 @@ export type McpServerItem = {
   /** 调用白名单（空 = 全部禁止，fail-closed） */
   allowed_tools: string[];
   enabled: boolean;
+  /** 白名单内工具是否接入 AI 动作目录（默认 false，fail-closed） */
+  expose_to_ai?: boolean;
   tools_snapshot: McpToolSnapshot[];
   last_synced_time: string | null;
   last_sync_error: string;
@@ -40,6 +46,7 @@ export type McpServerPayload = {
   timeout?: number;
   allowed_tools?: string[];
   enabled?: boolean;
+  expose_to_ai?: boolean;
   remark?: string;
 };
 

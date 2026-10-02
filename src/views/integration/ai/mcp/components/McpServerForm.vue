@@ -27,6 +27,7 @@ const form = reactive({
   timeout: props.row?.timeout ?? 30,
   allowed_tools: (props.row?.allowed_tools ?? []).join(", "),
   enabled: props.row?.enabled ?? true,
+  expose_to_ai: props.row?.expose_to_ai ?? false,
   remark: props.row?.remark ?? ""
 });
 
@@ -53,6 +54,7 @@ const getPayload = (): McpServerPayload | null => {
     timeout: form.timeout,
     allowed_tools: allowed,
     enabled: form.enabled,
+    expose_to_ai: form.expose_to_ai,
     remark: form.remark.trim()
   };
   // 编辑时留空 = 保持不变（不提交 auth_token 键）
@@ -116,6 +118,12 @@ defineExpose({ getPayload });
     </el-form-item>
     <el-form-item :label="t('mcp.formEnabled')">
       <el-switch v-model="form.enabled" />
+    </el-form-item>
+    <el-form-item :label="t('mcp.formExposeToAi')">
+      <el-switch v-model="form.expose_to_ai" data-testid="mcp-form-expose" />
+      <div class="text-xs text-(--el-text-color-regular)">
+        {{ t("mcp.formExposeToAiTip") }}
+      </div>
     </el-form-item>
     <el-form-item :label="t('mcp.formRemark')">
       <el-input v-model="form.remark" />

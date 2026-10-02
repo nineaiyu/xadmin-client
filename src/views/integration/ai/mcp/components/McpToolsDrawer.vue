@@ -67,6 +67,18 @@ const pickTool = (raw: unknown) => {
   callResult.value = null;
 };
 
+/** 工具是否已接入 AI 动作面（镜像后端 mcp_action_specs 的目录准入：服务器启用 + 暴露 + 白名单 + 快照含参数 schema） */
+const inActionSurface = (raw: unknown) => {
+  const tool = raw as McpToolSnapshot;
+  return Boolean(
+    props.row.enabled &&
+    props.row.expose_to_ai &&
+    (props.row.allowed_tools ?? []).includes(tool.name) &&
+    tool.input_schema &&
+    Object.keys(tool.input_schema).length > 0
+  );
+};
+
 const runCall = async () => {
   let args: Record<string, unknown>;
   try {
@@ -164,6 +176,21 @@ const runCall = async () => {
       <el-table-column :label="t('mcp.toolParams')" min-width="140">
         <template #default="{ row: tool }">
           {{ (tool.params ?? []).join("、") || "-" }}
+        </template>
+      </el-table-column>
+      <el-table-column :label="t('mcp.toolActionSurface')" width="100">
+        <template #default="{ row: tool }">
+          <el-tag
+            :type="inActionSurface(tool) ? 'success' : 'info'"
+            size="small"
+            effect="plain"
+          >
+            {{
+              inActionSurface(tool)
+                ? t("mcp.actionSurfaceIn")
+                : t("mcp.actionSurfaceOut")
+            }}
+          </el-tag>
         </template>
       </el-table-column>
       <el-table-column :label="t('mcp.toolCall')" width="90" fixed="right">

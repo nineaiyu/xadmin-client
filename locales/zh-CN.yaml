@@ -3309,6 +3309,8 @@ mcp:
   formAllowedTools: 允许调用的工具
   formAllowedToolsTip: 逗号分隔（如 echo, search）；为空则不允许调用任何工具（同步后可按快照维护）
   formEnabled: 启用
+  formExposeToAi: 接入 AI 动作面
+  formExposeToAiTip: 开启后，白名单内工具将进入 AI 助手动作目录（助手确认后可调用；默认关闭）
   formRemark: 备注
   nameRequired: 请填写名称
   urlRequired: 请填写服务地址
@@ -3330,6 +3332,7 @@ mcp:
   toolDescription: 描述
   toolReadOnly: 类型
   toolParams: 参数
+  toolActionSurface: 动作面
   toolCall: 调用
   callTitle: "调用测试 - {name}"
   callArguments: 参数（JSON）
@@ -3344,6 +3347,8 @@ mcp:
   readOnlyNo: 可写
   enabled: 已启用
   disabled: 已停用
+  actionSurfaceIn: 已接入
+  actionSurfaceOut: 未接入
 aiKnowledge:
   upload: 上传文档
   uploadTitle: 上传文档
