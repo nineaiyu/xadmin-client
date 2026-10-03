@@ -21,9 +21,11 @@ import {
 } from "vue";
 import { useUserStoreHook } from "@/store/modules/user";
 import {
-  buildWatermarkText,
+  buildWatermarkRenderOptions,
+  defaultSiteWatermark,
   formatWatermarkTime,
-  isSiteWatermarkVisible
+  isSiteWatermarkVisible,
+  renderWatermarkText
 } from "@/utils/watermark";
 import { ReDialog, closeAllDialog } from "@/components/ReDialog";
 import { ReDrawer, closeAllDrawer } from "@/components/ReDrawer";
@@ -50,10 +52,7 @@ export default defineComponent({
     const { setWatermark, clear } = useWatermark();
     const { $storage } = useGlobal<GlobalPropertiesApi>();
     const userStore = useUserStoreHook();
-    // 设置面板的本地水印（每浏览器独立）
-    const watermarkEnable = computed(() => $storage.configure?.watermark);
-    const watermarkText = computed(() => $storage.configure?.watermarkText);
-    // 站点水印（服务端基本设置下发）：仅「敏感页面」范围内生效
+    // 站点水印（服务端「水印设置」下发，样式含字号/透明度/旋转角/颜色）
     const siteWatermark = computed(() => userStore.siteWatermark);
     const onLoginPage = computed(() => route.name === "Login");
     const siteWatermarkVisible = computed(() =>
@@ -66,21 +65,19 @@ export default defineComponent({
         menuWatermark: route.meta?.watermark === true
       })
     );
-    const watermarkVisible = computed(
-      () => siteWatermarkVisible.value || !!watermarkEnable.value
-    );
-    // 时间戳按分钟刷新（仅站点水印含时间；本地水印文案由用户自定义，原样使用）
+    const watermarkVisible = computed(() => siteWatermarkVisible.value);
+    // 时间戳按分钟刷新（文案末尾带时间，便于定位泄露时点）
     const watermarkTime = ref(formatWatermarkTime());
     let timer: number | undefined;
     const watermarkContent = computed(() =>
-      siteWatermarkVisible.value
-        ? buildWatermarkText({
-            username: userStore.username,
-            nickname: userStore.nickname,
-            customText: siteWatermark.value?.text,
-            time: watermarkTime.value
-          })
-        : watermarkText.value
+      renderWatermarkText(siteWatermark.value?.template ?? "", {
+        username: userStore.username,
+        nickname: userStore.nickname,
+        phone: userStore.phone,
+        email: userStore.email,
+        pk: userStore.pk,
+        time: watermarkTime.value
+      })
     );
     const currentLocale = computed(() => {
       return $storage.locale?.locale === "zh"
@@ -125,15 +122,18 @@ export default defineComponent({
       if (timer) window.clearInterval(timer);
     });
 
+    // 渲染样式随站点配置（字号/透明度/旋转角）；样式变化同样触发重挂载
+    const watermarkOptions = computed(() =>
+      buildWatermarkRenderOptions(siteWatermark.value ?? defaultSiteWatermark)
+    );
     watch(
-      [watermarkVisible, watermarkContent, onLoginPage],
-      async ([visible, text]) => {
+      [watermarkVisible, watermarkContent, watermarkOptions, onLoginPage],
+      async ([visible]) => {
         await nextTick();
         if (visible && !onLoginPage.value) {
-          // 先清除再挂载：文案分钟级刷新时避免水印节点叠加
+          // 先清除再挂载：文案/样式刷新时避免水印节点叠加
           clear();
-          // 文案未配置时传空串，避免 canvas 绘制出 "undefined" 文本
-          setWatermark(text ?? "", { verticalOffset: 170 });
+          setWatermark(watermarkContent.value, watermarkOptions.value);
         } else {
           clear();
         }

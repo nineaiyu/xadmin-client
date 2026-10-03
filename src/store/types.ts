@@ -45,6 +45,8 @@ export type userType = {
   nickname?: string;
   email?: string;
   phone?: string;
+  /** 用户唯一标识（userinfo 下发；水印模板 {pk} 占位符取值） */
+  pk?: string | number;
   roles?: Array<string>;
   verifyCodeLength?: number;
   currentPage?: number;

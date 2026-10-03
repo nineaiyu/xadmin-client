@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { SUCCESS_CODE } from "@/api/types";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import {
   handleOperation,
   useBaseColumns,
@@ -19,6 +19,8 @@ defineOptions({
 const emit = defineEmits<{
   /** 透传 PlusForm 的 submit 事件载荷 */
   submit: [values: FieldValues];
+  /** 表单值变化（含回显赋值；节流交给消费方，水印页据此实时预览） */
+  change: [values: FieldValues];
 }>();
 
 const props = withDefaults(defineProps<settingItemProps>(), {
@@ -28,6 +30,7 @@ const props = withDefaults(defineProps<settingItemProps>(), {
   autoSubmit: true,
   formProps: () => ({}),
   queryParams: () => ({}),
+  onSaved: undefined,
   auth: () => ({
     partialUpdate: false,
     retrieve: false,
@@ -55,6 +58,13 @@ const addOrEditData = ref<{
 /** PlusForm 列（框架列元数据与 plus-pro 列在边界收窄） */
 const formColumns = computed(
   () => addOrEditData.value.addOrEditColumns as unknown as PlusColumn[]
+);
+
+// 表单值变化对外广播（回显/编辑都会触发），水印页据此做实时预览
+watch(
+  () => addOrEditData.value.formData,
+  values => emit("change", cloneDeep(values) as FieldValues),
+  { deep: true }
 );
 
 /** 字段白名单过滤：设置页按渠道拆分页签时各页签只渲染/提交自己的字段 */
@@ -117,6 +127,8 @@ const handleSubmitSettings = (data: FieldValues) => {
       apiReq: props.api.partialUpdate(props.queryParams, data),
       success: res => {
         addOrEditData.value.defaultData = res?.data ?? {};
+        // 保存成功后回调（如：水印配置变更后即时刷新当前会话的水印状态）
+        void props.onSaved?.(data);
       },
       requestEnd: () => {
         submitLoading.value = false;

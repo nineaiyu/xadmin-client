@@ -34,7 +34,7 @@ import {
 import { useMultiTagsStoreHook } from "./multiTags";
 import { useNoticeStoreHook } from "./notice";
 import { AesEncrypted } from "@/utils/aes";
-import { defaultSiteWatermark, parseWatermarkPaths } from "@/utils/watermark";
+import { defaultSiteWatermark, toSiteWatermarkConfig } from "@/utils/watermark";
 
 export const useUserStore = defineStore("pure-user", {
   state: (): userType => {
@@ -50,6 +50,8 @@ export const useUserStore = defineStore("pure-user", {
       nickname: userInfo?.nickname ?? "",
       email: userInfo?.email ?? "",
       phone: userInfo?.phone ?? "",
+      // 用户唯一标识（水印模板 {pk} 占位符取值）
+      pk: userInfo?.pk,
       // 页面级别权限
       roles: userInfo?.roles ?? [],
       // 前端生成的验证码（按实际需求替换）
@@ -79,6 +81,7 @@ export const useUserStore = defineStore("pure-user", {
       this.nickname = data.nickname;
       this.email = data.email;
       this.phone = data.phone;
+      this.pk = data.pk;
       this.roles = data?.roles;
       // 巡检处置联动：改密要求随用户信息刷新（App.vue 观察后引导，改密即清除）
       this.mustChangePassword = Boolean(data?.must_change_password);
@@ -92,6 +95,16 @@ export const useUserStore = defineStore("pure-user", {
      */
     clear() {
       this.siteWatermark = { ...defaultSiteWatermark };
+    },
+    /**
+     * 仅刷新站点水印配置（用户信息接口随取随用）：
+     * 管理员保存「水印设置」后立即应用，无需重新登录/刷新页面
+     */
+    async refreshSiteWatermark() {
+      const res = await userInfoApi.retrieve();
+      if (res.code === SUCCESS_CODE) {
+        this.siteWatermark = toSiteWatermarkConfig(res.config);
+      }
     },
     /** 存储用户头像 */
     SET_AVATAR(avatar: string) {
@@ -174,13 +187,7 @@ export const useUserStore = defineStore("pure-user", {
             if (res.code === SUCCESS_CODE) {
               setUserInfo(res.data);
               // 水印配置存入本 store：由 App.vue 按「当前路由是否命中生效范围」应用/清除
-              this.siteWatermark = {
-                enabled: !!res.config?.FRONT_END_WEB_WATERMARK_ENABLED,
-                text: res.config?.FRONT_END_WEB_WATERMARK_TEXT ?? "",
-                paths: parseWatermarkPaths(
-                  res.config?.FRONT_END_WEB_WATERMARK_PATHS
-                )
-              };
+              this.siteWatermark = toSiteWatermarkConfig(res.config);
               resolve(res);
             } else {
               reject(res);

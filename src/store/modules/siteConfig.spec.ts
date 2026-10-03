@@ -54,9 +54,7 @@ const seedStorage = () => {
     showLogo: true,
     tagsStyle: "chrome",
     multiTagsCache: false,
-    stretch: false,
-    watermark: false,
-    watermarkText: ""
+    stretch: false
   });
 };
 

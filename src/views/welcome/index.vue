@@ -172,7 +172,7 @@ const timelineIcons = timelineTones.map(tone =>
                 :fontSize="'1.6em'"
                 :startVal="100"
               />
-              <p class="text-sm font-thin text-(--el-color-success)">
+              <p class="text-sm font-medium text-(--el-color-success-dark-2)">
                 {{ t("welcome.registerUser") }}
               </p>
             </div>
@@ -183,7 +183,7 @@ const timelineIcons = timelineTones.map(tone =>
                 :fontSize="'1.6em'"
                 :startVal="100"
               />
-              <p class="text-sm font-thin text-(--el-color-primary)">
+              <p class="text-sm font-medium text-(--el-color-primary-dark-2)">
                 {{ t("welcome.activeUser") }}
               </p>
             </div>

@@ -275,12 +275,6 @@ tableBar:
   pinRight: 固定在右边
   unpin: 取消固定
 
-panel:
-  fullScreenWatermark: 全屏水印
-  enableWatermark: 水印
-  watermarkText: 文本
-  watermarkTextPlaceholder: 请输入水印文本
-
 avatarUpload:
   tips: 温馨提示：右键上方裁剪区可开启功能菜单
   imageSize: 图像大小：{ x } x { y } 像素
@@ -2193,6 +2187,11 @@ setting:
 
 settingBasic:
   title: 基本设置
+
+settingWatermark:
+  title: 水印设置
+  preview: 实时预览
+  previewTip: 预览使用当前登录用户的真实信息解析占位符，样式与实际水印一致；颜色留空为默认灰
 
 settingMessage:
   mailTitle: 邮件服务器

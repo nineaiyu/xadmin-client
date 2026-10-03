@@ -67,6 +67,18 @@ export type SearchColumnsData = {
    */
   max_length?: number;
   /**
+   * 数值下限（DRF min_value，字段声明时下发；前端 input-number 消费）
+   */
+  min_value?: number;
+  /**
+   * 数值上限（DRF max_value，字段声明时下发；前端 input-number 消费）
+   */
+  max_value?: number;
+  /**
+   * 数值步进（StepFloatField 显式声明时下发；前端 input-number 消费）
+   */
+  step?: number;
+  /**
    * 字段默认值（类型随字段而定；仅非 required 且有默认值时出现）
    */
   default?: {

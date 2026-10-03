@@ -55,9 +55,7 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
           ShowLogo: configure.showLogo,
           TagsStyle: configure.tagsStyle,
           MultiTagsCache: configure.multiTagsCache,
-          Stretch: configure.stretch,
-          Watermark: configure.watermark,
-          WatermarkText: configure.watermarkText
+          Stretch: configure.stretch
         };
         const newConfig = cloneDeep(this.config);
         Object.assign(newConfig, configObj);
@@ -123,9 +121,7 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
                   showLogo: config.ShowLogo ?? true,
                   tagsStyle: config.TagsStyle ?? "chrome",
                   multiTagsCache: config.MultiTagsCache ?? false,
-                  stretch: config.Stretch ?? false,
-                  watermark: config.Watermark ?? false,
-                  watermarkText: config.WatermarkText ?? ""
+                  stretch: config.Stretch ?? false
                 }
               } as PlatformConfigs;
               setConfig(config as PlatformConfigs);

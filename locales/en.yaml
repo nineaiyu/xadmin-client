@@ -275,12 +275,6 @@ tableBar:
   pinRight: Pin Right
   unpin: Unpin
 
-panel:
-  fullScreenWatermark: FullScreen Watermark
-  enableWatermark: Watermark
-  watermarkText: Text
-  watermarkTextPlaceholder: Please enter text
-
 avatarUpload:
   tips: "Tips: Right-click the cropping area can open the function menu"
   imageSize: "Image size: { x } x { y } pixels"
@@ -2193,6 +2187,11 @@ setting:
 
 settingBasic:
   title: Basic Settings
+
+settingWatermark:
+  title: Watermark Settings
+  preview: Live Preview
+  previewTip: Placeholders are resolved with the current logged-in user's real info; the style matches the actual watermark; empty color = default gray
 
 settingMessage:
   mailTitle: Email Server

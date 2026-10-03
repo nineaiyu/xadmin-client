@@ -205,6 +205,13 @@ export const formFallbackRenderer: PlusColumnHandler = (item, ctx) => {
 function numberFormRenderer(item: PageColumn, { column }: PlusColumnContext) {
   item["valueType"] = "input-number";
   item["fieldProps"]!["controlsPosition"] = "right";
+  // 数值边界与步进随元数据下发（DRF min_value/max_value 原生、step 字段显式声明），
+  // 未下发时不设置，保持 el-input-number 默认行为
+  if (column.min_value !== undefined)
+    item["fieldProps"]!["min"] = column.min_value;
+  if (column.max_value !== undefined)
+    item["fieldProps"]!["max"] = column.max_value;
+  if (column.step !== undefined) item["fieldProps"]!["step"] = column.step;
   item["colProps"] = { xs: 24, sm: 24, md: 12, lg: 12, xl: 12 };
   if (column.key === "pk") {
     item["minWidth"] = 80;

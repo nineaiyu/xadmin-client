@@ -18,7 +18,6 @@
   "SidebarStatus": true,
   "EpThemeColor": "#409EFF",
   "ShowLogo": true,
-  "Watermark": false,
   "TagsStyle": "chrome",
   "MenuArrowIconNoTransition": false,
   "CachingAsyncRoutes": false,

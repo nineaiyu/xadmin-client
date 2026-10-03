@@ -1,4 +1,5 @@
 import type { ViewBaseApi } from "@/api/base";
+import type { FieldValues } from "plus-pro-components";
 
 export interface settingItemProps {
   api: ViewBaseApi;
@@ -10,6 +11,8 @@ export interface settingItemProps {
   autoSubmit?: boolean;
   formProps?: object;
   queryParams?: object;
+  /** 保存成功后的回调（autoSubmit 请求 code=1000 时触发；失败不回调） */
+  onSaved?: (values: FieldValues) => void | Promise<void>;
   auth?: {
     partialUpdate?: boolean;
     retrieve: boolean;

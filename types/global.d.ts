@@ -103,8 +103,6 @@ declare global {
     SidebarStatus?: boolean;
     EpThemeColor?: string;
     ShowLogo?: boolean;
-    Watermark?: boolean;
-    WatermarkText?: string;
     TagsStyle?: string;
     MenuArrowIconNoTransition?: boolean;
     CachingAsyncRoutes?: boolean;
@@ -139,8 +137,6 @@ declare global {
     themeColor?: string;
     themeMode?: string;
     showLogo?: boolean;
-    watermark?: boolean;
-    watermarkText?: string;
     tagsStyle?: string;
     menuSearchHistory?: number;
     username?: string;
@@ -168,8 +164,6 @@ declare global {
       hideTabs?: boolean;
       hideFooter?: boolean;
       showLogo?: boolean;
-      watermark?: boolean;
-      watermarkText?: string;
       tagsStyle?: string;
       multiTagsCache?: boolean;
       stretch?: boolean | number;

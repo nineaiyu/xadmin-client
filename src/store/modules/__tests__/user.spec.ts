@@ -50,20 +50,32 @@ describe("user store", () => {
     const store = useUserStore();
     expect(store.siteWatermark).toEqual({
       enabled: false,
-      text: "",
-      paths: []
+      template: "",
+      paths: [],
+      fontSize: 16,
+      opacity: 0.3,
+      rotate: -10,
+      color: ""
     });
     // 模拟用户信息接口写入后（登出/清空缓存需复位）
     store.siteWatermark = {
       enabled: true,
-      text: "内部资料",
-      paths: ["/system/user/index"]
+      template: "{username}-{phone}-{time}",
+      paths: ["/system/user/index"],
+      fontSize: 24,
+      opacity: 0.2,
+      rotate: -30,
+      color: "#909399"
     };
     store.clear();
     expect(store.siteWatermark).toEqual({
       enabled: false,
-      text: "",
-      paths: []
+      template: "",
+      paths: [],
+      fontSize: 16,
+      opacity: 0.3,
+      rotate: -10,
+      color: ""
     });
   });
 

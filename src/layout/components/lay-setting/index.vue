@@ -9,7 +9,6 @@ import SettingMenuLayout from "./components/SettingMenuLayout.vue";
 import SettingStretch from "./components/SettingStretch.vue";
 import SettingTagsStyle from "./components/SettingTagsStyle.vue";
 import SettingDisplay from "./components/SettingDisplay.vue";
-import SettingWatermark from "./components/SettingWatermark.vue";
 
 const { layoutTheme } = useLayout();
 const { setMenuLayout } = useMenuLayout();
@@ -31,7 +30,6 @@ if (unref(layoutTheme)) {
       <SettingStretch />
       <SettingTagsStyle />
       <SettingDisplay />
-      <SettingWatermark />
     </div>
   </LayPanel>
 </template>
