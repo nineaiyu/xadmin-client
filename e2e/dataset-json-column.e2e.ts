@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { FRONT_URL, getAccessToken, login, openMenuPath } from "./helpers";
 
 /**
- * 数据集 JSON 路径列（ADR-069）：设计器手工输入 `字段.键`（含 `|number` 标注）→
+ * 数据集 JSON 路径列：设计器手工输入 `字段.键`（含 `|number` 标注）→
  * 保存 → 执行预览出现动态列与实际值（数据源为表单提交的 JSON 数据）。
  *
  * 素材走 API（表单定义 + 两条提交）；数据集名带随机后缀并在末尾清理

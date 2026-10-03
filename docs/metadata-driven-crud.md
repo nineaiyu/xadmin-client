@@ -39,7 +39,7 @@
 | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | `src/components/ReIcon/`                       | 操作按钮/表头图标（也可换成自己的图标方案）                                                                 |
 | `src/utils/dict.ts` + `/api/system/dict/items` | 字典驱动的选项与状态标签；不接字典时 `input_type` 走静态 `choices`                                          |
-| `src/utils/form.ts`                            | 含文件的表单按 FormData 协议 v1 展开（`ADR-007`）                                                           |
+| `src/utils/form.ts`                            | 含文件的表单按 FormData 协议 v1 展开                                                                        |
 | i18n                                           | 列 label 走 `{localeName}.{key}` → `commonLabels` → 后端 label 回退链路；无 i18n 时退化为直接显示后端 label |
 
 ## 三、后端需要提供什么

@@ -17,7 +17,7 @@ import searchColumnsSchema from "../../../../contract/schema/search-columns.sche
 import searchFieldsSchema from "../../../../contract/schema/search-fields.schema.json";
 
 /**
- * input_type 词表 ⇄ 渲染器注册表 双向覆盖对账（稳定公共契约，ADR-083）。
+ * input_type 词表 ⇄ 渲染器注册表 双向覆盖对账（稳定公共契约）。
  *
  * 服务端词表经 docs/schema 的 input_type 枚举（封闭核心）+ anyOf pattern（开放
  * api-* 前缀族）+ x-fallback-rendered（回退呈现登记）下发到本仓镜像；本测试
@@ -25,7 +25,7 @@ import searchFieldsSchema from "../../../../contract/schema/search-fields.schema
  * - 词表内非回退类型至少有一张内置渲染器映射（后端承诺必有渲染归宿）；
  * - 回退登记类型不得出现在任何内置映射（回退语义即"无内置渲染器"）；
  * - 内置映射键不得超出词表（前端不得发明后端未登记的 input_type）。
- * 任一方向漂移的处置：走 ADR-083 扩展流程（登记词表 → 同步 Schema → 补注册表）。
+ * 任一方向漂移的处置：走扩展流程（登记词表 → 同步 Schema → 补注册表）。
  */
 
 type InputTypeSchema = {
@@ -51,7 +51,7 @@ const builtinKeys = new Set([
   ...Object.keys(builtinDetailRenderers)
 ]);
 
-describe("input_type 词表 ⇄ 渲染器注册表 对账（ADR-083）", () => {
+describe("input_type 词表 ⇄ 渲染器注册表 对账", () => {
   const columnsContract = extractContract(searchColumnsSchema);
   const fieldsContract = extractContract(searchFieldsSchema);
 
@@ -71,7 +71,7 @@ describe("input_type 词表 ⇄ 渲染器注册表 对账（ADR-083）", () => {
     );
     expect(
       uncovered,
-      `词表类型缺少内置渲染器：${uncovered.join("、")}——补 renderers-*.tsx 映射或改登 x-fallback-rendered（ADR-083 扩展流程）`
+      `词表类型缺少内置渲染器：${uncovered.join("、")}——补 renderers-*.tsx 映射或改登 x-fallback-rendered（扩展流程）`
     ).toEqual([]);
     const misRegistered = [...columnsContract.fallback].filter(type =>
       builtinKeys.has(type)
@@ -88,7 +88,7 @@ describe("input_type 词表 ⇄ 渲染器注册表 对账（ADR-083）", () => {
     );
     expect(
       undeclared,
-      `前端注册表存在后端未登记的 input_type：${undeclared.join("、")}——在服务端 DECLARED_INPUT_TYPES 登记（ADR-083 扩展流程）`
+      `前端注册表存在后端未登记的 input_type：${undeclared.join("、")}——在服务端 DECLARED_INPUT_TYPES 登记（扩展流程）`
     ).toEqual([]);
   });
 });

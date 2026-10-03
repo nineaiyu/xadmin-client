@@ -10,7 +10,7 @@ import { BACKEND_URL, FRONT_URL, login } from "./helpers";
  * tools/call（只读动作真实执行 + 未知工具 isError）→ 未知 method -32601。
  *
  * 协议分支由 tests/integration/ai/test_ai_mcp.py 30 例覆盖；本用例把同一
- * 契约钉在真实 HTTP 栈上（ADR-059 前缀、PAT 认证链、AI 门禁、桩 LLM 配置），
+ * 契约钉在真实 HTTP 栈上（前缀、PAT 认证链、AI 门禁、桩 LLM 配置），
  * 防止「单测绿但路由/认证装配漂移」的假绿。
  *
  * AI 配置：与 ai-action.e2e 同源——Setting 打开助手与动作灰度，档案指向

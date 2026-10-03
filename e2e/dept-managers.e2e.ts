@@ -3,7 +3,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import { login, openMenuPath } from "./helpers";
 
 /**
- * 部门级自治（ADR-077）：部门管理员任命闭环与「我的管辖」页。
+ * 部门级自治：部门管理员任命闭环与「我的管辖」页。
  *
  * 共享库幂等：UI 断言只锚定本用例建立的确定性状态，用例前后经 API 清理
  * （assign-managers 为增量幂等端点），双浏览器第二段与后续用例互不影响。
