@@ -1295,14 +1295,47 @@ systemDept:
   managerPlaceholder: Search and add managers
   managerNoChange: No manager changes
   managerSaveOk: Managers updated
+  manage: Manage
+  manageDept: Manage department { dept }
+  viewMembers: View Members
+  assignRolesTip: Adjust roles and data permission scope of this department
+  assignManagersTip: Appoint or remove department managers (roles and data permissions are provisioned)
+  previewTip: Read-only view of mounted roles, data permissions and member sampling
+  viewMembersTip: Open the user list filtered by this department
+  changeHistoryTip: View field-level change records of this department
+  actionGroups:
+    permission: Permission & Roles
+    member: Members & Management
+    record: Records & Audit
 
 systemMyScope:
   deptCount: Managed departments
   userCount: Managed members
-  hint: Data scope follows the manager assignment in real time; member counts link to user management
+  directCount: Directly managed
+  subCount: Sub-departments
+  hint: Data scope follows the manager assignment in real time; preview members per department or continue in user management
   empty: No managed departments (assign managers on the department page)
   direct: Direct
   members: Members { count }
+  searchPlaceholder: Search by name / code
+  searchEmpty: No matching departments
+  cardView: Cards
+  treeView: Tree
+  refresh: Refresh
+  parentDept: Parent
+  leader: Leader
+  managers: Managers
+  viewMembers: Preview members
+  manageMembers: Manage members
+  viewInUserPage: Open in user management
+  memberDrawerTitle: Member preview · { dept }
+  membersTotal: "{ total } in total"
+  colUser: Username
+  colNickname: Nickname
+  colStatus: Status
+  colLastLogin: Last login
+  active: Active
+  disabled: Disabled
 
 systemPermission:
   permission: Permissions

@@ -1,6 +1,11 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-import { login, openMenuPath } from "./helpers";
+import {
+  clickPanelAction,
+  login,
+  openEntityPanel,
+  openMenuPath
+} from "./helpers";
 
 /**
  * 部门级自治：部门管理员任命闭环与「我的管辖」页。
@@ -49,21 +54,12 @@ async function assign(
 }
 
 /**
- * 打开行内「部门管理员」入口：操作列按钮超宽时折叠进「更多」下拉
- * （dropdown popper 保留隐藏副本，按 :visible 限定唯一命中）。
+ * 打开行内「部门管理员」任命弹窗：入口已收敛进「管理」抽屉
+ * （先开抽屉再点 assignManagers 动作，抽屉会先收起再弹弹窗）。
  */
 async function openManagerDialog(page: Page, row: Locator) {
-  const more = row.getByRole("button", { name: "更多" });
-  if (await more.isVisible().catch(() => false)) {
-    await more.click();
-    await page
-      .locator(".el-dropdown-menu:visible")
-      .getByText("部门管理员", { exact: true })
-      .first()
-      .click();
-    return;
-  }
-  await row.getByRole("button", { name: "部门管理员" }).click();
+  const drawer = await openEntityPanel(page, row);
+  await clickPanelAction(drawer, "assignManagers");
 }
 
 test("部门管理员任命与回收（UI 闭环）", async ({ page }) => {
@@ -136,9 +132,21 @@ test("我的管辖页展示任命范围", async ({ page }) => {
     .filter({ hasText: DEPT_NAME })
     .first();
   await expect(card).toBeVisible();
-  // 直接管辖标记 + 成员数跳转入口
+  // 直接管辖标记 + 成员数预览入口
   await expect(card.getByText("直接管辖")).toBeVisible();
   await expect(card.getByText(/成员 \d+ 人/)).toBeVisible();
+
+  // 成员预览抽屉（数据权限自动收敛到管辖范围）
+  await card.getByTestId("my-scope-members").click();
+  const drawer = page.locator(".el-drawer").filter({ hasText: "成员预览" });
+  await expect(drawer).toBeVisible();
+  await drawer.locator(".el-drawer__close-btn").click();
+
+  // 层级视图：部门树渲染任命范围
+  await page.getByText("层级", { exact: true }).click();
+  await expect(
+    page.locator(".el-tree").getByText(DEPT_NAME, { exact: false }).first()
+  ).toBeVisible();
 
   // 回收（幂等收尾）
   await assign(page, pk, { remove: [userPk] });

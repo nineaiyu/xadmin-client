@@ -1295,14 +1295,47 @@ systemDept:
   managerPlaceholder: 搜索并添加管理员
   managerNoChange: 管理员未发生变化
   managerSaveOk: 管理员已更新
+  manage: 管理
+  manageDept: 管理部门 { dept }
+  viewMembers: 查看成员
+  assignRolesTip: 调整部门角色与数据权限范围
+  assignManagersTip: 任命或解任部门管理员（同步装配角色与数据权限）
+  previewTip: 只读查看部门挂载的角色、数据权限与成员采样
+  viewMembersTip: 跳转用户管理页查看该部门成员
+  changeHistoryTip: 查看该部门字段级变更记录
+  actionGroups:
+    permission: 权限与角色
+    member: 成员与管理
+    record: 记录与审计
 
 systemMyScope:
   deptCount: 管辖部门数
   userCount: 管辖成员数
-  hint: 数据范围随「部门管理员」任命实时生效；成员数跳转用户管理页
+  directCount: 直接管辖
+  subCount: 下级部门
+  hint: 数据范围随「部门管理员」任命实时生效；点开部门可预览成员，跳转用户管理可继续操作
   empty: 暂无管辖部门（由管理员在部门页任命）
   direct: 直接管辖
   members: 成员 { count } 人
+  searchPlaceholder: 搜索部门名称 / 编码
+  searchEmpty: 未找到匹配的部门
+  cardView: 卡片
+  treeView: 层级
+  refresh: 刷新
+  parentDept: 上级部门
+  leader: 主管
+  managers: 管理员
+  viewMembers: 预览成员
+  manageMembers: 管理成员
+  viewInUserPage: 在用户管理中查看
+  memberDrawerTitle: 成员预览 · { dept }
+  membersTotal: 共 { total } 人
+  colUser: 用户名
+  colNickname: 昵称
+  colStatus: 状态
+  colLastLogin: 最后登录
+  active: 在用
+  disabled: 停用
 
 systemPermission:
   permission: 数据权限
