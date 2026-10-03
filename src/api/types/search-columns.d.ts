@@ -22,9 +22,46 @@ export type SearchColumnsData = {
   read_only: boolean;
   write_only: boolean;
   /**
-   * 前端渲染器类型：string/integer/float/boolean/datetime/labeled_choice/api-search-user/object_related_field/m2m_related_field/image upload/textarea 等
+   * 前端渲染器类型。封闭核心词表（单一事实源 common/core/modelset/input_types.py DECLARED_INPUT_TYPES，与本枚举锁步对账）+ 开放 api-* 前缀族；x-fallback-rendered 为无内置渲染器、依赖注册表回退语义呈现的登记类型。
    */
-  input_type: string;
+  input_type: (
+    | (
+        | "boolean"
+        | "choice"
+        | "color"
+        | "date"
+        | "datetime"
+        | "datetimerange"
+        | "email"
+        | "field"
+        | "file upload"
+        | "float"
+        | "image upload"
+        | "input"
+        | "integer"
+        | "json"
+        | "labeled_choice"
+        | "labeled_multiple_choice"
+        | "list"
+        | "m2m_related_field"
+        | "m2m_related_field_file"
+        | "m2m_related_field_image"
+        | "multiple choice"
+        | "number"
+        | "object_related_field"
+        | "object_related_field_file"
+        | "object_related_field_image"
+        | "phone"
+        | "select"
+        | "select-multiple"
+        | "select-ordering"
+        | "string"
+        | "text"
+        | "textarea"
+      )
+    | string
+  ) &
+    string;
   /**
    * 字符长度上限（CharField 及路径类字段）
    */
