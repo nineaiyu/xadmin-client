@@ -6,9 +6,11 @@ import { useRoute } from "vue-router";
 import { screenApi, type ScreenItem } from "@/api/dataset/analysis";
 import {
   dashboardApi,
+  datasetApi,
   listRows,
   type DashboardCard,
-  type DashboardItem
+  type DashboardItem,
+  type DatasetItem
 } from "@/api/dataset/datasets";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
@@ -43,6 +45,8 @@ const { t } = useI18n();
 
 const screen = ref<ScreenItem | null>(null);
 const dashboards = ref<DashboardItem[]>([]);
+/** 可见数据集（服务端按浏览者过滤）：指标卡窗格按此口径过滤，与仪表盘窗格一致 */
+const datasets = ref<DatasetItem[]>([]);
 
 /** 卡片组件句柄：模板 ref 收集 ChartCard（loadData 刷新 + applyData 注入 + renderImage 图片导出） */
 type CardHandle = {
@@ -74,14 +78,16 @@ const toErrorEntry = (error: {
 
 /**
  * 画布模式（P2.2 批次一）：`layout` 非空即按窗格渲染，空则维持既有仪表盘轮播。
- * 与轮播同一可见性口径：窗格引用的仪表盘对浏览者不可见时整格跳过
- * （后端口径同 `can_view_screen`，前端只做展示层过滤）。
+ * 与轮播同一可见性口径：窗格引用的仪表盘 / 数据集对浏览者不可见时整格跳过
+ * （后端口径同 `can_view_screen` + 执行侧 fail-closed，前端只做展示层过滤）。
  */
 const layoutPanes = computed(() =>
   (screen.value?.layout ?? []).filter(
     pane =>
-      pane.type !== "dashboard" ||
-      dashboards.value.some(item => item.pk === pane.dashboard)
+      (pane.type !== "dashboard" ||
+        dashboards.value.some(item => item.pk === pane.dashboard)) &&
+      (pane.type !== "metric" ||
+        datasets.value.some(item => item.pk === pane.dataset))
   )
 );
 const isCanvas = computed(() => layoutPanes.value.length > 0);
@@ -225,6 +231,10 @@ onMounted(async () => {
   dashboards.value = (screen.value?.dashboards ?? [])
     .map((id: string) => all.find((item: DashboardItem) => item.pk === id))
     .filter((item): item is DashboardItem => Boolean(item));
+  // 指标卡窗格按可见数据集过滤（同仪表盘窗格口径）
+  datasets.value = listRows<DatasetItem>(
+    (await fetchAllRows(datasetApi.list)) as never
+  );
   startTimers();
   startWs(pk);
 });
@@ -325,7 +335,8 @@ onMounted(async () => {
         <div
           class="screen-card__body"
           :class="{
-            'screen-card__body--plain': card.chart_type === 'number'
+            'screen-card__body--plain':
+              card.chart_type === 'number' || card.chart_type === 'metric'
           }"
           :style="{ height: `${card.height ?? 224}px` }"
         >

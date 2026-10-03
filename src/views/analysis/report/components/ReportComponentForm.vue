@@ -20,11 +20,17 @@ defineOptions({ name: "ReportComponentForm" });
 const props = defineProps<{
   component: ReportDesignComponent;
   dataset: DatasetItem | null;
+  /** 选中组件是否位于列表首位/末位（决定上移/下移可用性） */
+  first?: boolean;
+  last?: boolean;
 }>();
 
 const emit = defineEmits<{
   update: [patch: Partial<ReportDesignComponent>];
   remove: [id: string];
+  moveUp: [];
+  moveDown: [];
+  duplicate: [];
 }>();
 
 const { t } = useI18n();
@@ -67,6 +73,37 @@ const onMetricChange = (metric: "count" | "sum" | "avg") => {
     <div class="component-form__head">
       <span>{{ t("dataReport.componentProps") }}</span>
       <span class="component-form__type">{{ typeLabel }}</span>
+    </div>
+
+    <div class="component-form__toolbar">
+      <el-tooltip :content="t('dataReport.moveUp')" placement="top">
+        <el-button
+          size="small"
+          :disabled="props.first"
+          data-testid="component-move-up"
+          @click="emit('moveUp')"
+        >
+          ↑
+        </el-button>
+      </el-tooltip>
+      <el-tooltip :content="t('dataReport.moveDown')" placement="top">
+        <el-button
+          size="small"
+          :disabled="props.last"
+          data-testid="component-move-down"
+          @click="emit('moveDown')"
+        >
+          ↓
+        </el-button>
+      </el-tooltip>
+      <el-button
+        size="small"
+        class="flex-1"
+        data-testid="component-duplicate"
+        @click="emit('duplicate')"
+      >
+        {{ t("dataReport.duplicateComponent") }}
+      </el-button>
     </div>
 
     <el-form label-width="72px" label-position="left" size="small">
@@ -172,9 +209,21 @@ const onMetricChange = (metric: "count" | "sum" | "avg") => {
   display: flex;
   gap: 8px;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   font-size: var(--el-font-size-base);
   font-weight: 600;
+}
+
+.component-form__toolbar {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 10px;
+
+  /* 清零 EP 横向按钮组的同级左边距，避免工具条间距叠加错位 */
+  :deep(.el-button + .el-button) {
+    margin-left: 0;
+  }
 }
 
 .component-form__type {

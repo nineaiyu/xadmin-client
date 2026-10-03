@@ -31,6 +31,9 @@ export function useLoginPolicy(tableRef: Ref) {
   const auth = usePageAuth(["preview"]);
   auth.create = false;
   auth.update = false;
+  // 操作列默认编辑按钮的显隐条件是 auth.partialUpdate || auth.update，
+  // 只关 update 不够，需一并关掉，否则与自定义编辑按钮重复
+  auth.partialUpdate = false;
 
   const formRef = ref();
 

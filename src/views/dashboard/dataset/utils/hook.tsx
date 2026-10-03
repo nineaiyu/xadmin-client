@@ -1,5 +1,13 @@
 import { SUCCESS_CODE } from "@/api/types";
-import { h, onMounted, reactive, ref, shallowRef, type Ref } from "vue";
+import {
+  computed,
+  h,
+  onMounted,
+  reactive,
+  ref,
+  shallowRef,
+  type Ref
+} from "vue";
 import { useI18n } from "vue-i18n";
 import { ElLink, ElTag } from "element-plus";
 import { useRouter } from "vue-router";
@@ -97,13 +105,81 @@ export function useDataset(tableRef: Ref) {
 
   /* ---------------- 执行预览（只读展示弹窗，C5 既定保留手写） ---------------- */
   const previewDialog = ref(false);
+  const previewRow = ref<DatasetItem | null>(null);
   const preview = ref<{
     columns: string[];
     rows: Record<string, unknown>[];
     total: number;
   } | null>(null);
 
+  /** 预览模式：rows = 行明细；aggregate = 聚合序列（图表数据源同口径） */
+  const previewMode = ref<"rows" | "aggregate">("rows");
+  /** 聚合预览参数：分组 / 指标 / 数值字段 / 时间粒度（与看板卡片同款语义） */
+  const aggregateForm = reactive({
+    group_by: "",
+    metric: "count" as "count" | "sum" | "avg",
+    value_field: "",
+    date_trunc: "" as "" | "day" | "month"
+  });
+  const aggregateResult = ref<{
+    name: string;
+    series: { name: string; value: number }[];
+  } | null>(null);
+  const aggregateLoading = ref(false);
+
+  const needsAggregateValue = computed(
+    () => aggregateForm.metric === "sum" || aggregateForm.metric === "avg"
+  );
+
+  /** sum/avg 数值字段候选：数据集数值列优先，无元数据回落全列 */
+  const aggregateNumericColumns = computed(() => {
+    const numeric = previewRow.value?.numeric_columns ?? [];
+    return numeric.length ? numeric : (previewRow.value?.columns ?? []);
+  });
+
+  /** 指标切换：count 不需要取值列；sum/avg 缺省补首个数值列 */
+  const onAggregateMetricChange = () => {
+    if (
+      needsAggregateValue.value &&
+      !aggregateNumericColumns.value.includes(aggregateForm.value_field)
+    ) {
+      aggregateForm.value_field = aggregateNumericColumns.value[0] ?? "";
+    }
+    if (!needsAggregateValue.value) {
+      aggregateForm.value_field = "";
+    }
+  };
+
+  const runAggregatePreview = async () => {
+    const row = previewRow.value;
+    if (!row) return;
+    aggregateLoading.value = true;
+    try {
+      const res = await datasetApi.aggregate(row.pk, {
+        group_by: aggregateForm.group_by,
+        metric: aggregateForm.metric,
+        date_trunc: aggregateForm.date_trunc || undefined,
+        value_field: needsAggregateValue.value
+          ? aggregateForm.value_field
+          : undefined
+      });
+      if (res.code === SUCCESS_CODE) {
+        aggregateResult.value = res.data as never;
+      } else {
+        aggregateResult.value = null;
+        if (res.detail) message(String(res.detail), { type: "warning" });
+      }
+    } finally {
+      aggregateLoading.value = false;
+    }
+  };
+
   const openPreview = async (row: DatasetItem) => {
+    previewRow.value = row;
+    previewMode.value = "rows";
+    aggregateResult.value = null;
+    aggregateForm.group_by = row.columns[0] ?? "";
+    aggregateForm.value_field = "";
     const res = await datasetApi.execute(row.pk);
     if (res.code === SUCCESS_CODE) {
       preview.value = res.data as never;
@@ -138,6 +214,29 @@ export function useDataset(tableRef: Ref) {
       columns.map(escape).join(","),
       ...rows.map(row => columns.map(col => escape(row[col])).join(","))
     ];
+    downloadCsv(lines, `dataset-preview-${Date.now()}.csv`);
+  };
+
+  /** 聚合预览导出 CSV（序列 name/value 两列，与图表数据源一致） */
+  const exportAggregateCsv = () => {
+    const result = aggregateResult.value;
+    if (!result) return;
+    const escape = (value: unknown) => {
+      const text = formatPreviewCell(value);
+      return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+    };
+    const lines = [
+      [t("dataDataset.groupName"), t("dataDataset.metricValue")]
+        .map(escape)
+        .join(","),
+      ...result.series.map(item =>
+        [escape(item.name), escape(item.value)].join(",")
+      )
+    ];
+    downloadCsv(lines, `dataset-aggregate-${Date.now()}.csv`);
+  };
+
+  const downloadCsv = (lines: string[], filename: string) => {
     // BOM 头保证 Excel 打开中文不乱码
     const blob = new Blob([`\uFEFF${lines.join("\r\n")}`], {
       type: "text/csv;charset=utf-8"
@@ -145,7 +244,7 @@ export function useDataset(tableRef: Ref) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `dataset-preview-${Date.now()}.csv`;
+    link.download = filename;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -234,6 +333,15 @@ export function useDataset(tableRef: Ref) {
     previewDialog,
     preview,
     exportPreviewCsv,
-    formatPreviewCell
+    formatPreviewCell,
+    previewMode,
+    aggregateForm,
+    aggregateResult,
+    aggregateLoading,
+    aggregateNumericColumns,
+    needsAggregateValue,
+    onAggregateMetricChange,
+    runAggregatePreview,
+    exportAggregateCsv
   };
 }

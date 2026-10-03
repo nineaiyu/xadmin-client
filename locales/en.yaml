@@ -229,12 +229,22 @@ loginPolicy:
   previewUser: Sample User
   previewUserTip: Leave empty to use current user
   previewIp: Sample IP
+  previewIpTip: Leave empty to use client IP
+  previewWhen: Sample Time
+  previewWhenTip: Leave empty to use now
   previewRun: Preview
   previewResult: Matched "{policy}" -> {action}
   previewNoMatch: No policy matches this sample
   previewMatched: Matched
+  previewDims: Dimension Detail
+  dimTarget: Target
+  dimTime: Time
+  dimIp: IP
   previewEffective: Effective
   effective: Effective
+  inactive: Inactive
+  previewMfaDegraded: This user has no available MFA method; a real login would fall back to allow
+  invalidIp: Invalid IP format
   invalidForm: Please complete name, target value and time range
 
 batchUpdate:
@@ -2651,6 +2661,8 @@ dashboard:
   chartLine: Trend
   chartBar: Bar
   chartPie: Pie
+  chartMetric: Metric card
+  metricCardTip: Single value; count = row total, sum/avg need a value field
   groupBy: Group By
   dateTrunc: Time Grain
   byDay: Daily
@@ -2682,6 +2694,12 @@ dashboard:
   retry: Retry
   settings: Settings
   refresh: Refresh
+  autoRefreshOff: Off
+  autoRefresh10s: Every 10s
+  autoRefresh30s: Every 30s
+  autoRefresh60s: Every minute
+  autoRefresh5m: Every 5 minutes
+  autoRefreshTip: Refresh the current dashboard cards on a timer (for wall displays)
 
   share: Share
   shareCopied: Dashboard link copied
@@ -2715,6 +2733,20 @@ dataDataset:
   dateFieldTip: Default group field for line-trend cards (optional); JSON date columns need |date
   jsonColumnTip: "JSON path columns: {roots}.key; add |number for numeric, |date for date/trend (value must be YYYY-MM-DD)"
   exportCsv: Export CSV
+  previewRows: Rows
+  previewAggregate: Aggregate
+  groupByOptional: Group by (optional)
+  metricCount: Count
+  metricSum: Sum
+  metricAvg: Average
+  valueField: Value field
+  dateTrunc: Time bucket
+  byDay: By day
+  byMonth: By month
+  runAggregate: Aggregate
+  groupName: Name
+  metricValue: Value
+  aggregateEmpty: Set aggregation and click "Aggregate" to preview
 
 dataScreen:
   designer: Design
@@ -2727,6 +2759,8 @@ dataScreen:
   paneDashboard: Dashboard
   paneText: Text
   paneClock: Clock
+  paneMetric: Metric card
+  paneImage: Image
   paneTitle: Pane title
   paneTitlePlaceholder: Empty = dashboard name
   paneContent: Text content
@@ -2747,6 +2781,23 @@ dataScreen:
   removePane: Remove pane
   dragHint: Drag to move the pane
   textPlaceholder: Empty text (type in the properties panel)
+  dataset: Dataset
+  imageUrl: Image URL
+  imageFit: Fit
+  fitCover: Cover
+  fitContain: Contain
+  fitFill: Fill
+  imageMissing: No image URL configured
+  undo: Undo
+  redo: Redo
+  undoHint: Undo (Ctrl+Z)
+  redoHint: Redo (Ctrl+Shift+Z / Ctrl+Y)
+  duplicate: Duplicate pane
+  duplicateHint: Duplicate the selected pane (Ctrl+D)
+  leaveConfirm: Unsaved canvas changes will be lost. Leave anyway?
+  leave: Leave
+  stay: Stay
+  shortcutsHint: Arrows move the pane (Shift+Arrows resize); Ctrl+D duplicate / Delete remove / Ctrl+S save / Ctrl+Z undo
   paneNoCard: No visible card in this dashboard
   clearLayout: Clear canvas
   clearLayoutConfirm: Clearing returns this screen to carousel mode. Continue?
@@ -2808,6 +2859,7 @@ dataReport:
   templateDetail: Detail table
   templateSummary: Grouped summary
   templateTrend: Trend board
+  templateMetrics: Metric summary
   templateApplied: Template "{name}" applied
   designDetail: Detail table design
   datasetLabel: Dataset
@@ -2834,6 +2886,18 @@ dataReport:
   tableRows: Previewing {shown} of {total} rows
   tableLoadFailed: Failed to load the detail preview
   tableTruncated: Detail truncated by the row limit ({shown} / {total})
+  selectAllColumns: Select all
+  clearColumns: Clear
+  columnsResetHint: Selection cleared; detail columns follow all dataset columns again
+  moveUp: Move up
+  moveDown: Move down
+  duplicateComponent: Duplicate component
+  leaveConfirm: Unsaved design changes will be lost. Leave anyway?
+  leave: Leave
+  stay: Stay
+  runDirty: Save your changes before running
+  cronInvalid: Cron expression must have 5 fields (min hour day month weekday)
+  monthDayHint: Day of month to deliver (1-28)
   columnsRequired: Keep at least one detail column
   groupByRequired: Chart components require a group by field
   refreshData: Refresh data

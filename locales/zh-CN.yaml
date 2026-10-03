@@ -229,12 +229,22 @@ loginPolicy:
   previewUser: 样例用户
   previewUserTip: 留空表示当前用户
   previewIp: 样例 IP
+  previewIpTip: 留空表示当前来源 IP
+  previewWhen: 样例时间
+  previewWhenTip: 留空表示当前时间
   previewRun: 预演
   previewResult: 命中「{policy}」→ {action}
   previewNoMatch: 当前没有策略命中该样例
   previewMatched: 是否匹配
+  previewDims: 匹配明细
+  dimTarget: 对象
+  dimTime: 时段
+  dimIp: 网段
   previewEffective: 最终生效
   effective: 生效
+  inactive: 未启用
+  previewMfaDegraded: 该用户没有可用的二次验证方式，实际登录将降级放行
+  invalidIp: IP 格式不正确
   invalidForm: 请完整填写策略名称、对象值与时段
 
 batchUpdate:
@@ -2651,6 +2661,8 @@ dashboard:
   chartLine: 趋势图
   chartBar: 柱状图
   chartPie: 饼图
+  chartMetric: 指标卡
+  metricCardTip: 单值指标：计数=行总数，求和/平均需选数值字段
   groupBy: 分组字段
   dateTrunc: 时间粒度
   byDay: 按天
@@ -2682,6 +2694,12 @@ dashboard:
   retry: 重试
   settings: 设置
   refresh: 刷新
+  autoRefreshOff: 不自动刷新
+  autoRefresh10s: 每 10 秒
+  autoRefresh30s: 每 30 秒
+  autoRefresh60s: 每 1 分钟
+  autoRefresh5m: 每 5 分钟
+  autoRefreshTip: 定时自动刷新当前仪表盘的卡片数据（挂屏轮看用）
 
   share: 分享
   shareCopied: 仪表盘链接已复制
@@ -2715,6 +2733,20 @@ dataDataset:
   dateFieldTip: 折线趋势卡片的默认分组字段（可选）；JSON 日期列需 |date 标注
   jsonColumnTip: "支持 JSON 路径列：{roots}.键；数值加 |number，日期（趋势用）加 |date（值须为 YYYY-MM-DD）"
   exportCsv: 导出 CSV
+  previewRows: 明细
+  previewAggregate: 聚合
+  groupByOptional: 分组字段（可选）
+  metricCount: 计数
+  metricSum: 求和
+  metricAvg: 平均
+  valueField: 数值字段
+  dateTrunc: 时间粒度
+  byDay: 按天
+  byMonth: 按月
+  runAggregate: 聚合
+  groupName: 名称
+  metricValue: 值
+  aggregateEmpty: 设置聚合方式后点「聚合」查看结果
 
 dataScreen:
   designer: 设计
@@ -2727,6 +2759,8 @@ dataScreen:
   paneDashboard: 仪表盘
   paneText: 文本
   paneClock: 时钟
+  paneMetric: 指标卡
+  paneImage: 图片
   paneTitle: 窗格标题
   paneTitlePlaceholder: 留空则用仪表盘名
   paneContent: 文本内容
@@ -2747,6 +2781,23 @@ dataScreen:
   removePane: 删除窗格
   dragHint: 拖动移动窗格
   textPlaceholder: 空文本（在右侧属性面板输入内容）
+  dataset: 数据集
+  imageUrl: 图片地址
+  imageFit: 填充方式
+  fitCover: 填充
+  fitContain: 适配
+  fitFill: 拉伸
+  imageMissing: 未配置图片地址
+  undo: 撤销
+  redo: 重做
+  undoHint: 撤销（Ctrl+Z）
+  redoHint: 重做（Ctrl+Shift+Z / Ctrl+Y）
+  duplicate: 复制窗格
+  duplicateHint: 复制选中窗格（Ctrl+D）
+  leaveConfirm: 有未保存的画布改动，离开后将丢失，确认离开？
+  leave: 直接离开
+  stay: 留在编辑器
+  shortcutsHint: 方向键移动窗格（Shift+方向=缩放）；Ctrl+D 复制 / Delete 删除 / Ctrl+S 保存 / Ctrl+Z 撤销
   paneNoCard: 该仪表盘暂无可见卡片
   clearLayout: 清空画布
   clearLayoutConfirm: 清空后该大屏回到仪表盘轮播模式，确认继续？
@@ -2808,6 +2859,7 @@ dataReport:
   templateDetail: 明细表
   templateSummary: 分组统计
   templateTrend: 趋势看板
+  templateMetrics: 指标汇总
   templateApplied: 已套用模板「{name}」
   designDetail: 明细表设计
   datasetLabel: 数据集
@@ -2834,6 +2886,18 @@ dataReport:
   tableRows: 预览 {shown} 行 / 共 {total} 行
   tableLoadFailed: 明细预览加载失败
   tableTruncated: 明细已按行数上限截断（{shown} / {total}）
+  selectAllColumns: 全选
+  clearColumns: 清空
+  columnsResetHint: 已清空勾选，明细列恢复为跟随数据集全部列
+  moveUp: 上移
+  moveDown: 下移
+  duplicateComponent: 复制组件
+  leaveConfirm: 有未保存的设计改动，离开后将丢失，确认离开？
+  leave: 直接离开
+  stay: 留在编辑器
+  runDirty: 有未保存改动，请先保存再运行
+  cronInvalid: Cron 表达式需为 5 段（分 时 日 月 周）
+  monthDayHint: 每月几号投递（1~28）
   columnsRequired: 至少保留一列明细
   groupByRequired: 图表组件必须先选分组字段
   refreshData: 刷新数据

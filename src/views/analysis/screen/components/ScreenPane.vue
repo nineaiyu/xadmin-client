@@ -52,9 +52,38 @@ const setCardRef = (cardId: string) => (el: unknown) => {
   if (handle) cardRefs.value[cardId] = handle;
 };
 
+const paneTitle = computed(() => props.pane.title || props.dashboardName || "");
+const hasContent = computed(
+  () => props.pane.type !== "dashboard" || (props.cards ?? []).length > 0
+);
+
+/** 指标卡窗格 → 合成卡（复用 ChartCard 的取数/WS 注入内核；card id 即窗格 pk，
+ * 与服务端 screen_data 对 metric 窗格的合成口径一致） */
+const metricCard = computed<DashboardCard | null>(() => {
+  const pane = props.pane;
+  if (pane.type !== "metric" || !pane.dataset) return null;
+  return {
+    id: pane.pk,
+    dataset: pane.dataset,
+    title: paneTitle.value || "",
+    chart_type: "metric",
+    metric: pane.metric ?? "count",
+    value_field: pane.value_field ?? ""
+  };
+});
+
+/** 实际持有卡片的清单：仪表盘窗格取 cards，指标卡取合成卡（刷新/注入/导出共用） */
+const innerCards = computed<DashboardCard[]>(() =>
+  props.pane.type === "metric"
+    ? metricCard.value
+      ? [metricCard.value]
+      : []
+    : (props.cards ?? [])
+);
+
 /** 定时刷新可见卡片（投屏 refresh / 设计器「刷新数据」） */
 const refresh = () => {
-  for (const card of props.cards ?? []) cardRefs.value[card.id]?.loadData?.();
+  for (const card of innerCards.value) cardRefs.value[card.id]?.loadData?.();
 };
 
 /** 注入单卡数据帧（screen_data 推送通道）：窗格持有该卡时渲染并返回 true */
@@ -62,7 +91,7 @@ const applyCardData = (
   cardId: string,
   entry: { kind?: string; data?: unknown; detail?: string }
 ) => {
-  if (!(props.cards ?? []).some(card => card.id === cardId)) return false;
+  if (!innerCards.value.some(card => card.id === cardId)) return false;
   void cardRefs.value[cardId]?.applyData?.(entry);
   return true;
 };
@@ -70,7 +99,7 @@ const applyCardData = (
 /** 逐卡渲染图片（投屏导出 ZIP 用；非图表卡返回 null 由调用方计入跳过数） */
 const renderImages = async () => {
   const images: { cardId: string; title: string; image: ExportedImage }[] = [];
-  for (const card of props.cards ?? []) {
+  for (const card of innerCards.value) {
     const image = await cardRefs.value[card.id]?.renderImage?.();
     if (image) images.push({ cardId: card.id, title: card.title, image });
   }
@@ -78,11 +107,6 @@ const renderImages = async () => {
 };
 
 defineExpose({ refresh, applyCardData, renderImages });
-
-const paneTitle = computed(() => props.pane.title || props.dashboardName || "");
-const hasContent = computed(
-  () => props.pane.type !== "dashboard" || (props.cards ?? []).length > 0
-);
 
 /** 栅格定位：x/y 为列/行下标（+1 转 CSS 的 1 起编号） */
 const paneStyle = computed(() => ({
@@ -93,6 +117,10 @@ const paneStyle = computed(() => ({
 const textStyle = computed(() => ({
   textAlign: props.pane.align ?? "left",
   fontSize: `${props.pane.size ?? 24}px`
+}));
+
+const clockStyle = computed(() => ({
+  fontSize: `${props.pane.size ?? 40}px`
 }));
 </script>
 
@@ -139,14 +167,29 @@ const textStyle = computed(() => ({
     <div
       v-else-if="pane.type === 'clock'"
       class="screen-pane__clock"
+      :style="clockStyle"
       data-testid="pane-clock"
     >
       {{ clock || "--:--:--" }}
     </div>
 
+    <template v-else-if="pane.type === 'image'">
+      <img
+        v-if="pane.url"
+        class="screen-pane__image"
+        :src="pane.url"
+        :style="{ objectFit: pane.fit ?? 'cover' }"
+        alt=""
+        data-testid="pane-image"
+      />
+      <div v-else class="screen-pane__empty" data-testid="pane-image-missing">
+        {{ t("dataScreen.imageMissing") }}
+      </div>
+    </template>
+
     <div v-else-if="hasContent" class="screen-pane__grid">
       <section
-        v-for="card in cards"
+        v-for="card in innerCards"
         :key="card.id"
         class="screen-card"
         :class="{
@@ -156,10 +199,15 @@ const textStyle = computed(() => ({
           'col-span-12': (card.span ?? 6) === 12
         }"
       >
-        <div class="screen-card__title">{{ card.title }}</div>
+        <div v-if="card.title" class="screen-card__title">
+          {{ card.title }}
+        </div>
         <div
           class="screen-card__body"
-          :class="{ 'screen-card__body--plain': card.chart_type === 'number' }"
+          :class="{
+            'screen-card__body--plain':
+              card.chart_type === 'number' || card.chart_type === 'metric'
+          }"
           :style="{ height: `${card.height ?? 224}px` }"
         >
           <ChartCard :ref="setCardRef(card.id)" :card="card" />
@@ -273,9 +321,17 @@ const textStyle = computed(() => ({
   flex: 1;
   align-items: center;
   justify-content: center;
-  font-size: 40px;
   font-variant-numeric: tabular-nums;
   color: rgb(255 255 255 / 92%);
+}
+
+/* 图片窗格：占满窗格内容区，填充方式由窗格配置（object-fit）决定 */
+.screen-pane__image {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  object-position: center;
+  border-radius: 6px;
 }
 
 .screen-pane__empty {

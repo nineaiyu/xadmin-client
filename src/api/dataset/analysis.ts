@@ -3,8 +3,9 @@ import { fetchAllRows } from "@/utils/fetchAllRows";
 import type { DataListResult, DetailResult, ListResult } from "@/api/types";
 import type { DashboardItem } from "@/api/dataset/datasets";
 
-/** 大屏画布窗格类型（首批三件组件） */
-export type ScreenPaneType = "dashboard" | "text" | "clock";
+/** 大屏画布窗格类型：仪表盘 / 文本 / 时钟 / 指标卡 / 图片 */
+export type ScreenPaneType =
+  "dashboard" | "text" | "clock" | "metric" | "image";
 
 /**
  * 大屏画布窗格：12 列栅格绝对定位（x/y 为列/行下标，x+w≤12、y+h≤60）。
@@ -24,7 +25,15 @@ export type ScreenLayoutPane = {
   /** type=text：文本内容 */
   text?: string;
   align?: "left" | "center" | "right";
+  /** type=text/clock：字号 px（text 缺省 24、clock 缺省 40） */
   size?: number;
+  /** type=metric：指标卡（无分组单值聚合，同数据集聚合口径） */
+  dataset?: string;
+  metric?: "count" | "sum" | "avg";
+  value_field?: string;
+  /** type=image：图片地址（仅 http/https）与填充方式 */
+  url?: string;
+  fit?: "cover" | "contain" | "fill";
 };
 
 /** 大屏与定时报表 */
@@ -92,6 +101,8 @@ export type ReportItem = {
   frequency: "daily" | "weekly" | "monthly";
   send_time: string;
   weekday: number;
+  /** 每月几号投递（1~28，monthly 用） */
+  month_day?: number;
   cron_expression: string;
   recipients: string[];
   /** 投递渠道：email/dingtalk/wecom/feishu；空 = 仅邮件（存量兼容） */

@@ -17,7 +17,9 @@ export const MAX_PANES = 24;
 export const PANE_DEFAULTS: Record<ScreenPaneType, { w: number; h: number }> = {
   dashboard: { w: 6, h: 4 },
   text: { w: 12, h: 2 },
-  clock: { w: 3, h: 2 }
+  clock: { w: 3, h: 2 },
+  metric: { w: 3, h: 2 },
+  image: { w: 3, h: 3 }
 };
 
 export type PaneBox = Pick<ScreenLayoutPane, "x" | "y" | "w" | "h">;
@@ -106,6 +108,20 @@ export function normalizePanes(
       base.text = pane.text ?? "";
       base.align = pane.align ?? "left";
       base.size = pane.size ?? 24;
+    }
+    if (pane.type === "clock") {
+      base.size = pane.size ?? 40;
+    }
+    if (pane.type === "metric") {
+      base.dataset = pane.dataset;
+      base.metric = pane.metric ?? "count";
+      if (base.metric !== "count" && pane.value_field) {
+        base.value_field = pane.value_field;
+      }
+    }
+    if (pane.type === "image") {
+      base.url = pane.url ?? "";
+      base.fit = pane.fit ?? "cover";
     }
     return base;
   });

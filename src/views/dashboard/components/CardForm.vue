@@ -71,6 +71,11 @@ const needsValueField = computed(
   () => form.metric === "sum" || form.metric === "avg"
 );
 
+/** 指标卡与 number 卡同属「无分组」形态：不取分组字段 */
+const noGroupBy = computed(
+  () => form.chart_type === "number" || form.chart_type === "metric"
+);
+
 const onDatasetPicked = () => {
   // 折线（趋势）优先用数据集的「时间字段」作为分组字段，否则退回首列
   const dateField = selectedDataset.value?.config?.date_field;
@@ -97,8 +102,12 @@ const onMetricChanged = () => {
   }
 };
 
-/** 图表类型切换：折线默认分组到时间字段（趋势语义），其余首列 */
+/** 图表类型切换：折线默认分组到时间字段（趋势语义），其余首列；指标卡无分组 */
 const onChartTypeChanged = () => {
+  if (form.chart_type === "metric") {
+    form.group_by = "";
+    return;
+  }
   if (form.chart_type === "line") {
     const dateField = selectedDataset.value?.config?.date_field;
     if (dateField) form.group_by = dateField;
@@ -111,15 +120,11 @@ const getPayload = (): DashboardCard | null => {
     message(t("dashboard.cardRequired"), { type: "warning" });
     return null;
   }
-  if (form.chart_type !== "number" && !form.group_by) {
+  if (!noGroupBy.value && !form.group_by) {
     message(t("dashboard.cardRequired"), { type: "warning" });
     return null;
   }
-  if (
-    form.chart_type !== "number" &&
-    needsValueField.value &&
-    !form.value_field
-  ) {
+  if (needsValueField.value && !form.value_field) {
     message(t("dashboard.valueFieldRequired"), { type: "warning" });
     return null;
   }
@@ -174,15 +179,13 @@ defineExpose({ getPayload });
         @change="onChartTypeChanged"
       >
         <el-option value="number" :label="t('dashboard.chartNumber')" />
+        <el-option value="metric" :label="t('dashboard.chartMetric')" />
         <el-option value="line" :label="t('dashboard.chartLine')" />
         <el-option value="bar" :label="t('dashboard.chartBar')" />
         <el-option value="pie" :label="t('dashboard.chartPie')" />
       </el-select>
     </el-form-item>
-    <el-form-item
-      v-if="form.chart_type !== 'number'"
-      :label="t('dashboard.groupBy')"
-    >
+    <el-form-item v-if="!noGroupBy" :label="t('dashboard.groupBy')">
       <el-select v-model="form.group_by" class="w-full" filterable>
         <el-option
           v-for="field in datasetColumns"
@@ -201,10 +204,7 @@ defineExpose({ getPayload });
         <el-option value="month" :label="t('dashboard.byMonth')" />
       </el-select>
     </el-form-item>
-    <el-form-item
-      v-if="form.chart_type !== 'number'"
-      :label="t('dashboard.metric')"
-    >
+    <el-form-item v-if="!noGroupBy" :label="t('dashboard.metric')">
       <el-select v-model="form.metric" class="w-full" @change="onMetricChanged">
         <el-option value="count" :label="t('dashboard.metricCount')" />
         <el-option value="sum" :label="t('dashboard.metricSum')" />
@@ -212,9 +212,19 @@ defineExpose({ getPayload });
       </el-select>
     </el-form-item>
     <el-form-item
-      v-if="form.chart_type !== 'number' && needsValueField"
-      :label="t('dashboard.valueField')"
+      v-if="form.chart_type === 'metric'"
+      :label="t('dashboard.metric')"
     >
+      <el-select v-model="form.metric" class="w-full" @change="onMetricChanged">
+        <el-option value="count" :label="t('dashboard.metricCount')" />
+        <el-option value="sum" :label="t('dashboard.metricSum')" />
+        <el-option value="avg" :label="t('dashboard.metricAvg')" />
+      </el-select>
+      <div class="text-xs text-(--el-text-color-regular)">
+        {{ t("dashboard.metricCardTip") }}
+      </div>
+    </el-form-item>
+    <el-form-item v-if="needsValueField" :label="t('dashboard.valueField')">
       <el-select v-model="form.value_field" class="w-full" filterable>
         <el-option
           v-for="field in numericColumns"

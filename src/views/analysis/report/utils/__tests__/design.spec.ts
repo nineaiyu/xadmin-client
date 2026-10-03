@@ -12,7 +12,9 @@ import {
   componentToCard,
   designColumns,
   designTableLimit,
+  duplicateComponent,
   genComponentId,
+  moveComponent,
   normalizeDesign
 } from "../design";
 
@@ -224,5 +226,72 @@ describe("模板预设", () => {
   it("genComponentId 生成唯一标识", () => {
     expect(genComponentId()).not.toBe(genComponentId());
     expect(genComponentId().startsWith("cmp-")).toBe(true);
+  });
+});
+
+describe("组件排序 / 复制", () => {
+  const base = (): ReportDesignComponent[] => [
+    { id: "a", type: "number", span: 6, metric: "count" },
+    { id: "b", type: "bar", span: 12, metric: "count", group_by: "username" },
+    { id: "c", type: "pie", span: 12, metric: "count", group_by: "gender" }
+  ];
+
+  it("moveComponent 与相邻组件互换位置", () => {
+    expect(moveComponent(base(), "b", -1).map(item => item.id)).toEqual([
+      "b",
+      "a",
+      "c"
+    ]);
+    expect(moveComponent(base(), "b", 1).map(item => item.id)).toEqual([
+      "a",
+      "c",
+      "b"
+    ]);
+  });
+
+  it("moveComponent 在边界时原样返回（不产生新引用）", () => {
+    const panes = base();
+    expect(moveComponent(panes, "a", -1)).toBe(panes);
+    expect(moveComponent(panes, "c", 1)).toBe(panes);
+    expect(moveComponent(panes, "missing", -1)).toBe(panes);
+  });
+
+  it("duplicateComponent 紧随原组件插入同配置副本", () => {
+    const next = duplicateComponent(base(), "b");
+    expect(next).toHaveLength(4);
+    expect(next?.[2]).toMatchObject({
+      type: "bar",
+      span: 12,
+      group_by: "username",
+      metric: "count"
+    });
+    expect(next?.[2].id).not.toBe("b");
+    expect(next?.[1].id).toBe("b");
+  });
+
+  it("duplicateComponent 未知 id / 达到数量上限时返回 null", () => {
+    expect(duplicateComponent(base(), "missing")).toBeNull();
+    const full = Array.from({ length: REPORT_MAX_COMPONENTS }, (_, index) => ({
+      id: `c${index}`,
+      type: "number" as const,
+      metric: "count" as const
+    }));
+    expect(duplicateComponent(full, "c0")).toBeNull();
+  });
+
+  it("指标汇总模板：行数卡 + 数值列合计卡（半行并排）", () => {
+    const built = REPORT_TEMPLATES[3].build(dataset());
+    expect(built.components?.[0]).toMatchObject({
+      type: "number",
+      metric: "count",
+      span: 6
+    });
+    expect(built.components?.[1]).toMatchObject({
+      type: "number",
+      metric: "sum",
+      value_field: "gender",
+      span: 6
+    });
+    expect(built.components?.every(item => Boolean(item.id))).toBe(true);
   });
 });

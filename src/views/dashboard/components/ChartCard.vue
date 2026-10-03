@@ -150,6 +150,33 @@ const loadData = async () => {
       errorMsg.value = String(res.detail ?? t("dashboard.loadFailed"));
       return;
     }
+    if (card.chart_type === "metric") {
+      // 指标卡：count = 行总数（复用 execute）；sum/avg = 无分组纯聚合单值
+      if ((card.metric ?? "count") === "count") {
+        const res = await datasetApi.execute(card.dataset);
+        if (res.code === SUCCESS_CODE) {
+          total.value = Number(
+            (res.data as unknown as ExecuteResult)?.total ?? 0
+          );
+          return;
+        }
+        errorMsg.value = String(res.detail ?? t("dashboard.loadFailed"));
+        return;
+      }
+      const res = await datasetApi.aggregate(card.dataset, {
+        group_by: "",
+        metric: card.metric ?? "count",
+        value_field: card.value_field
+      });
+      if (res.code === SUCCESS_CODE) {
+        total.value = Number(
+          (res.data as unknown as AggregateResult)?.series?.[0]?.value ?? 0
+        );
+        return;
+      }
+      errorMsg.value = String(res.detail ?? t("dashboard.loadFailed"));
+      return;
+    }
     const res = await datasetApi.aggregate(card.dataset, {
       group_by: card.group_by,
       metric: card.metric ?? "count",
@@ -199,6 +226,13 @@ const applyData = async (entry: {
     return;
   }
   errorMsg.value = "";
+  if (props.card.chart_type === "metric" && entry.kind === "aggregate") {
+    // 服务端对 metric 卡统一走聚合（count 也是单桶 Total 帧），取首值渲染大数字
+    total.value = Number(
+      (entry.data as AggregateResult)?.series?.[0]?.value ?? 0
+    );
+    return;
+  }
   if (entry.kind === "execute") {
     total.value = Number((entry.data as ExecuteResult)?.total ?? 0);
     return;
@@ -246,11 +280,14 @@ defineExpose({ loadData, applyData, renderImage });
       </el-button>
     </div>
     <template v-else>
-      <div v-show="card.chart_type === 'number'" class="flex-c size-full">
+      <div
+        v-show="card.chart_type === 'number' || card.chart_type === 'metric'"
+        class="flex-c size-full"
+      >
         <span class="text-3xl font-semibold">{{ total }}</span>
       </div>
       <div
-        v-show="card.chart_type !== 'number'"
+        v-show="card.chart_type !== 'number' && card.chart_type !== 'metric'"
         ref="chartRef"
         class="size-full"
       />
@@ -262,7 +299,11 @@ defineExpose({ loadData, applyData, renderImage });
       >
         <ReSkeleton
           :rows="2"
-          :variant="card.chart_type === 'number' ? 'text' : 'fill'"
+          :variant="
+            card.chart_type === 'number' || card.chart_type === 'metric'
+              ? 'text'
+              : 'fill'
+          "
         />
       </div>
     </template>

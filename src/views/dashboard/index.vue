@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { SUCCESS_CODE } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
-import { computed, h, onMounted, ref } from "vue";
+import { computed, h, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import Sortable from "sortablejs";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
@@ -46,6 +46,33 @@ const refreshKey = ref(0);
 const refreshCards = () => {
   refreshKey.value += 1;
 };
+
+/* ---------------- 自动刷新（挂屏轮看场景）：间隔选择 + 定时 bump refreshKey ---------------- */
+const AUTO_REFRESH_OPTIONS = [
+  { value: 0, labelKey: "dashboard.autoRefreshOff" },
+  { value: 10, labelKey: "dashboard.autoRefresh10s" },
+  { value: 30, labelKey: "dashboard.autoRefresh30s" },
+  { value: 60, labelKey: "dashboard.autoRefresh60s" },
+  { value: 300, labelKey: "dashboard.autoRefresh5m" }
+];
+const autoRefreshSeconds = ref(0);
+let autoRefreshTimer: number | undefined;
+
+const stopAutoRefresh = () => {
+  if (autoRefreshTimer) {
+    window.clearInterval(autoRefreshTimer);
+    autoRefreshTimer = undefined;
+  }
+};
+
+watch(autoRefreshSeconds, seconds => {
+  stopAutoRefresh();
+  if (seconds > 0) {
+    autoRefreshTimer = window.setInterval(refreshCards, seconds * 1000);
+  }
+});
+
+onBeforeUnmount(stopAutoRefresh);
 
 const layout = computed<DashboardCard[]>(() =>
   editing.value ? draftLayout.value : (current.value?.layout ?? [])
@@ -380,6 +407,20 @@ onMounted(async () => {
         >
           {{ t("dashboard.refresh") }}
         </el-button>
+        <el-select
+          v-model="autoRefreshSeconds"
+          class="w-28!"
+          size="default"
+          data-testid="dashboard-auto-refresh"
+          :title="t('dashboard.autoRefreshTip')"
+        >
+          <el-option
+            v-for="item in AUTO_REFRESH_OPTIONS"
+            :key="item.value"
+            :value="item.value"
+            :label="t(item.labelKey)"
+          />
+        </el-select>
         <el-button link type="primary" @click="goDatasetPage">
           {{ t("dashboard.manageDatasets") }}
         </el-button>

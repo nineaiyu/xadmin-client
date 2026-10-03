@@ -38,6 +38,7 @@ import {
   ElContainer,
   ElDatePicker,
   ElTimePicker,
+  ElTimeSelect,
   ElDescriptions,
   ElDescriptionsItem,
   ElDialog,
@@ -128,6 +129,7 @@ import "element-plus/es/components/config-provider/style/css";
 import "element-plus/es/components/container/style/css";
 import "element-plus/es/components/date-picker/style/css";
 import "element-plus/es/components/time-picker/style/css";
+import "element-plus/es/components/time-select/style/css";
 import "element-plus/es/components/descriptions/style/css";
 import "element-plus/es/components/descriptions-item/style/css";
 import "element-plus/es/components/dialog/style/css";
@@ -212,6 +214,7 @@ const components = [
   ElContainer,
   ElDatePicker,
   ElTimePicker,
+  ElTimeSelect,
   ElDescriptions,
   ElDescriptionsItem,
   ElDialog,

@@ -121,18 +121,71 @@ describe("栅格几何口径", () => {
       align: "left",
       size: 24
     });
-    // clock 只有盒子
+    // clock 补默认字号（与投屏渲染口径一致）
     expect(normalised[2]).toEqual({
       pk: "c1",
       type: "clock",
       x: 0,
       y: 6,
       w: 3,
-      h: 2
+      h: 2,
+      size: 40
     });
   });
 
-  it("默认尺寸覆盖三种类型且都在栅格内", () => {
+  it("normalizePanes 指标卡：count 丢 value_field，sum 保留", () => {
+    const metric: ScreenLayoutPane = {
+      pk: "m1",
+      type: "metric",
+      x: 0,
+      y: 0,
+      w: 3,
+      h: 2,
+      dataset: "ds-1",
+      metric: "sum",
+      value_field: "amount",
+      title: "销售额"
+    };
+    expect(normalizePanes([metric])[0]).toEqual({
+      pk: "m1",
+      type: "metric",
+      x: 0,
+      y: 0,
+      w: 3,
+      h: 2,
+      dataset: "ds-1",
+      metric: "sum",
+      value_field: "amount",
+      title: "销售额"
+    });
+    metric.metric = "count";
+    expect(normalizePanes([metric])[0]).not.toHaveProperty("value_field");
+    expect(normalizePanes([metric])[0]).toMatchObject({ metric: "count" });
+  });
+
+  it("normalizePanes 图片：补默认填充方式", () => {
+    const image: ScreenLayoutPane = {
+      pk: "i1",
+      type: "image",
+      x: 0,
+      y: 0,
+      w: 3,
+      h: 3,
+      url: "https://a.b/c.png"
+    };
+    expect(normalizePanes([image])[0]).toEqual({
+      pk: "i1",
+      type: "image",
+      x: 0,
+      y: 0,
+      w: 3,
+      h: 3,
+      url: "https://a.b/c.png",
+      fit: "cover"
+    });
+  });
+
+  it("默认尺寸覆盖全部类型且都在栅格内", () => {
     Object.values(PANE_DEFAULTS).forEach(({ w, h }) => {
       expect(w).toBeGreaterThan(0);
       expect(w).toBeLessThanOrEqual(GRID_COLS);

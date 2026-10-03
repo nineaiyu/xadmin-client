@@ -45,6 +45,8 @@ const form = reactive({
     "daily" | "weekly" | "monthly",
   send_time: props.row?.send_time ?? "08:00",
   weekday: props.row?.weekday ?? 0,
+  // 每月几号（monthly 用，1~28 避开月末歧义）
+  month_day: props.row?.month_day ?? 1,
   // cron 表达式：非空时优先于上面三档频次
   cron_expression: props.row?.cron_expression ?? "",
   recipients: (props.row?.recipients ?? []).join(", "),
@@ -138,6 +140,13 @@ const onMetricChanged = () => {
   }
 };
 
+/** cron 表达式轻校验：非空时要求 5 段（与服务端 croniter 校验同口径的前置拦截） */
+const cronExpressionValid = computed(() => {
+  const value = form.cron_expression.trim();
+  if (!value) return true;
+  return value.split(/\s+/).length === 5;
+});
+
 /** 校验并生成提交载荷；校验失败返回 null（调用方保持弹窗打开） */
 const getPayload = (): Record<string, unknown> | null => {
   if (!form.name || !form.dataset) {
@@ -153,6 +162,10 @@ const getPayload = (): Record<string, unknown> | null => {
     message(t("dataReport.valueFieldRequired"), { type: "warning" });
     return null;
   }
+  if (!cronExpressionValid.value) {
+    message(t("dataReport.cronInvalid"), { type: "warning" });
+    return null;
+  }
   const recipients = form.recipients.split(/[,;\s]+/).filter(Boolean);
   return {
     name: form.name,
@@ -165,6 +178,7 @@ const getPayload = (): Record<string, unknown> | null => {
     frequency: form.frequency,
     send_time: form.send_time,
     weekday: Number(form.weekday),
+    month_day: Number(form.month_day),
     cron_expression: form.cron_expression.trim(),
     recipients,
     notify_channels: [...form.notify_channels],
@@ -254,7 +268,15 @@ defineExpose({ getPayload });
       </el-radio-group>
     </el-form-item>
     <el-form-item :label="t('dataReport.sendTime')">
-      <el-input v-model="form.send_time" class="w-32!" placeholder="08:00" />
+      <!-- 时间选择器：HH:mm 5 分钟步进（值为 "08:00" 形态，与服务端 SEND_TIME_RE 同口径） -->
+      <el-time-select
+        v-model="form.send_time"
+        class="w-32!"
+        start="00:00"
+        step="00:05"
+        end="23:55"
+        placeholder="08:00"
+      />
       <el-select
         v-if="form.frequency === 'weekly'"
         v-model="form.weekday"
@@ -267,6 +289,20 @@ defineExpose({ getPayload });
           :label="item.label"
         />
       </el-select>
+      <el-input-number
+        v-if="form.frequency === 'monthly'"
+        v-model="form.month_day"
+        class="ml-2 w-32!"
+        :min="1"
+        :max="28"
+        controls-position="right"
+      />
+      <span
+        v-if="form.frequency === 'monthly'"
+        class="ml-2 text-xs text-(--el-text-color-secondary)"
+      >
+        {{ t("dataReport.monthDayHint") }}
+      </span>
     </el-form-item>
     <el-form-item :label="t('dataReport.cronExpression')">
       <el-input

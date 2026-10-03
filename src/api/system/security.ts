@@ -78,8 +78,14 @@ export type LoginPolicyPreviewItem = {
   /** 策略动作裸值：accept / reject / require_mfa / record */
   action: string;
   matched: boolean;
-  /** 是否为最终生效策略（按优先级首个命中） */
+  /** 是否为最终生效策略（按优先级首个命中；仅启用策略可能生效） */
   effective: boolean;
+  /** 策略是否启用：未启用策略仅列出供评估，不参与判定 */
+  is_active?: boolean;
+  /** 逐维度匹配明细：对象 / 时段 / 网段（定位「为什么没生效」用） */
+  target_matched?: boolean;
+  time_matched?: boolean;
+  ip_matched?: boolean;
 };
 
 export type LoginPolicyPreview = {
@@ -90,6 +96,9 @@ export type LoginPolicyPreview = {
   username?: string;
   ip?: string;
   when?: string;
+  /** 样例用户是否有可用二次验证方式（null=探测失败未知）：
+   *  action=require_mfa 且为 false 时实际登录会降级放行 */
+  mfa_usable?: boolean | null;
 };
 
 class LoginPolicyApi extends BaseApi {

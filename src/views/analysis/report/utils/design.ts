@@ -115,6 +115,33 @@ export const REPORT_TEMPLATES: ReportTemplate[] = [
       }
       return { columns, table_limit: 100, components };
     }
+  },
+  {
+    code: "metrics",
+    labelKey: "dataReport.templateMetrics",
+    // 指标汇总：明细表 + 行数指标卡 + 首个数值列求和（半行两卡并排）
+    build: dataset => {
+      const columns = takeColumns(dataset.columns ?? [], 6);
+      const numeric = firstNumeric(dataset);
+      const components: ReportDesignComponent[] = [
+        {
+          id: genComponentId(),
+          type: "number",
+          span: 6,
+          metric: "count"
+        }
+      ];
+      if (numeric) {
+        components.push({
+          id: genComponentId(),
+          type: "number",
+          span: 6,
+          metric: "sum",
+          value_field: numeric
+        });
+      }
+      return { columns, table_limit: 100, components };
+    }
   }
 ];
 
@@ -124,6 +151,42 @@ export function genComponentId(): string {
   return random
     ? `cmp-${random}`
     : `cmp-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+/**
+ * 组件排序：id 组件与相邻组件互换位置（delta = -1 上移 / +1 下移）。
+ * 已在边界时返回原数组（不产生新引用，调用方可据此跳过 dirty 标记）。
+ */
+export function moveComponent(
+  components: ReportDesignComponent[],
+  id: string,
+  delta: -1 | 1
+): ReportDesignComponent[] {
+  const index = components.findIndex(item => item.id === id);
+  const target = index + delta;
+  if (index < 0 || target < 0 || target >= components.length) {
+    return components;
+  }
+  const next = [...components];
+  const [moved] = next.splice(index, 1);
+  next.splice(target, 0, moved);
+  return next;
+}
+
+/** 组件复制：紧随原组件插入同配置副本（新 id；标题补「副本」后缀由调用方按需处理） */
+export function duplicateComponent(
+  components: ReportDesignComponent[],
+  id: string
+): ReportDesignComponent[] | null {
+  const index = components.findIndex(item => item.id === id);
+  if (index < 0 || components.length >= REPORT_MAX_COMPONENTS) return null;
+  const copy: ReportDesignComponent = {
+    ...components[index],
+    id: genComponentId()
+  };
+  const next = [...components];
+  next.splice(index + 1, 0, copy);
+  return next;
 }
 
 /** 明细列：design.columns 命中数据集列的保序子集；设计为空/列空 = 数据集全部列 */

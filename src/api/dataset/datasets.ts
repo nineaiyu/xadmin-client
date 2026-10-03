@@ -54,7 +54,8 @@ export type AggregateResult = {
   series: { name: string; value: number }[];
 };
 
-export type ChartType = "number" | "line" | "bar" | "pie";
+/** metric：指标卡（无分组单值聚合，count = 行总数；与数据集聚合同口径） */
+export type ChartType = "number" | "metric" | "line" | "bar" | "pie";
 
 export type DashboardCard = {
   id: string;

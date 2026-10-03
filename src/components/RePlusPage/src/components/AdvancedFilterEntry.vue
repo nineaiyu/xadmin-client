@@ -5,6 +5,7 @@ import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { message } from "@/utils/message";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import Filter from "~icons/ep/filter";
 import type { PageColumn } from "../utils/types";
 
 /**
@@ -81,7 +82,7 @@ const openFilterDialog = async () => {
 
 <template>
   <el-button
-    :icon="useRenderIcon('ep/filter')"
+    :icon="useRenderIcon(Filter)"
     :type="activeCount ? 'primary' : ''"
     :plain="activeCount > 0"
     class="mr-3"

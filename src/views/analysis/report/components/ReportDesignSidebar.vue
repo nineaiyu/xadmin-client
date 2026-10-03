@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
+import { message } from "@/utils/message";
 import type { ReportComponentType } from "@/api/dataset/analysis";
 import type { DatasetItem } from "@/api/dataset/datasets";
 import {
@@ -13,10 +14,12 @@ import {
  *
  * 纯受控组件（值走 props、改动走 emit），勾选态展示的是「解析后的列」——
  * 设计里 columns 为空 = 全部列，因此首次取消勾选时会下发显式列清单。
+ * 快捷操作：全选 = 显式勾选全部列；清空 = 回到「跟随数据集全部列」
+ * （明细表不可能为空表，空清单语义即全列，消息里说明避免误解）。
  */
 defineOptions({ name: "ReportDesignSidebar" });
 
-defineProps<{
+const props = defineProps<{
   dataset: DatasetItem | null;
   /** 解析后的明细列（空 design = 全部列） */
   columns: string[];
@@ -34,6 +37,15 @@ const { t } = useI18n();
 
 const componentLabel = (type: ReportComponentType) =>
   t(`dataReport.component${type[0].toUpperCase()}${type.slice(1)}`);
+
+const emitSelectAll = () => {
+  emit("columnsChange", [...(props.dataset?.columns ?? [])]);
+};
+
+const emitClear = () => {
+  emit("columnsChange", []);
+  message(t("dataReport.columnsResetHint"), { type: "info" });
+};
 </script>
 
 <template>
@@ -52,7 +64,17 @@ const componentLabel = (type: ReportComponentType) =>
       />
     </el-select>
 
-    <div class="designer-side__title">{{ t("dataReport.designDetail") }}</div>
+    <div class="designer-side__title-row">
+      <div class="designer-side__title">{{ t("dataReport.designDetail") }}</div>
+      <div class="designer-side__quick">
+        <el-button link type="primary" size="small" @click="emitSelectAll">
+          {{ t("dataReport.selectAllColumns") }}
+        </el-button>
+        <el-button link type="primary" size="small" @click="emitClear">
+          {{ t("dataReport.clearColumns") }}
+        </el-button>
+      </div>
+    </div>
     <div class="designer-side__hint">
       {{ t("dataReport.datasetLabel") }}：{{ dataset?.name ?? "—" }}
     </div>
@@ -111,10 +133,22 @@ const componentLabel = (type: ReportComponentType) =>
   border-right: 1px solid var(--el-border-color-lighter);
 }
 
-.designer-side__title {
+.designer-side__title-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  justify-content: space-between;
   margin-top: 6px;
+}
+
+.designer-side__title {
   font-size: var(--el-font-size-base);
   font-weight: 600;
+}
+
+.designer-side__quick {
+  display: flex;
+  gap: 0;
 }
 
 .designer-side__hint {
@@ -148,6 +182,12 @@ const componentLabel = (type: ReportComponentType) =>
   display: flex;
   flex-direction: column;
   gap: 8px;
+
+  /* EP 的 `.el-button + .el-button { margin-left: 12px }` 是横向按钮组语义，
+     纵向列布局里会把第 2 个起的按钮整体顶右 12px，必须清零（宽度由 w-full 决定） */
+  :deep(.el-button + .el-button) {
+    margin-left: 0;
+  }
 }
 
 .designer-side :deep(.el-divider) {
