@@ -28,12 +28,12 @@ export function useLoginPolicy(tableRef: Ref) {
   // 必须在 usePageAuth 之后覆写——默认返回值含 create/update，否则工具栏会
   // 同时出现「新增」与「新增策略」两个入口，且框架默认入口按元数据自动成表
   // （weekdays 数组会渲染成 JSON 编辑器）。
+  // 注意 auth.partialUpdate 必须保留：框架的 is_active 内联开关按
+  // auth.partialUpdate || auth.update 判定置灰，关掉会导致激活状态无法切换；
+  // 操作列默认编辑按钮改用 operationButtonsProps.hideEdit 隐藏。
   const auth = usePageAuth(["preview"]);
   auth.create = false;
   auth.update = false;
-  // 操作列默认编辑按钮的显隐条件是 auth.partialUpdate || auth.update，
-  // 只关 update 不够，需一并关掉，否则与自定义编辑按钮重复
-  auth.partialUpdate = false;
 
   const formRef = ref();
 
@@ -106,6 +106,9 @@ export function useLoginPolicy(tableRef: Ref) {
 
   const operationButtonsProps = shallowRef<OperationProps>({
     width: 140,
+    // 自有编辑弹窗已提供「编辑」入口，藏掉框架默认编辑按钮；
+    // auth.partialUpdate 保持可用以支持激活状态内联开关
+    hideEdit: true,
     buttons: [
       {
         text: t("buttons.edit"),

@@ -122,6 +122,12 @@ export interface OperationProps {
    */
   hideChangeHistory?: boolean;
   /**
+   * 隐藏默认「编辑」按钮：页面用自有编辑弹窗时使用。不要用关 auth 位的方式
+   * 替代——auth.partialUpdate/update 同时控制 boolean 列内联开关的可用性
+   * （见 usePlusPageColumns），关掉会把激活状态开关一起置灰
+   */
+  hideEdit?: boolean;
+  /**
    * 操作按钮集合   默认值为 `[]`
    */
   buttons?: OperationButtonsRow[];

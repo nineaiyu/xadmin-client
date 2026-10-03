@@ -61,6 +61,9 @@ export function usePlusPageButtons({
   // 未声明时保持原行为（按钮按权限点显隐）
   const hideDetail = operationButtonsProps?.hideDetail === true;
   const hideChangeHistory = operationButtonsProps?.hideChangeHistory === true;
+  // 编辑按钮与 boolean 列内联开关共用 auth.partialUpdate/update 位：
+  // 页面只要自有编辑弹窗、但要保留内联开关时，须用 hideEdit 而非关权限位
+  const hideEdit = operationButtonsProps?.hideEdit === true;
 
   // 默认操作按钮
   const defaultOperationButtons = shallowRef<OperationButtonsRow[]>([]);
@@ -76,7 +79,7 @@ export function usePlusPageButtons({
       onClick: ({ row }) => {
         handleAddOrEdit(false, row);
       },
-      show: auth.partialUpdate || auth.update ? -30 : false
+      show: hideEdit ? false : auth.partialUpdate || auth.update ? -30 : false
     },
     {
       text: t("buttons.delete"),
