@@ -18,6 +18,27 @@ import type { RecordType } from "plus-pro-components";
 
 import Success from "~icons/ep/success-filled";
 
+/**
+ * 就地改写地址栏去掉 pk 参数（绕过 vue-router）：主内容组件以 fullPath 为 key，
+ * 走 router.replace 会整页重挂载、把刚打开的详情弹窗卸载。
+ */
+function stripPkFromAddressBar() {
+  const hash = location.hash;
+  const queryIndex = hash.indexOf("?");
+  if (queryIndex === -1) return;
+  const params = new URLSearchParams(hash.slice(queryIndex + 1));
+  if (!params.has("pk")) return;
+  params.delete("pk");
+  const search = params.toString();
+  history.replaceState(
+    history.state,
+    "",
+    `${location.pathname}${location.search}${hash.slice(0, queryIndex)}${
+      search ? `?${search}` : ""
+    }`
+  );
+}
+
 export function useUserNotice(tableRef: Ref) {
   const { t } = useI18n();
 
@@ -62,6 +83,11 @@ export function useUserNotice(tableRef: Ref) {
     if (row.unread) {
       api.batchRead({ pks: [row.pk] });
     }
+    if (routeParams?.pk) {
+      // 深链 pk 只消费一次：打开即从地址栏移除，刷新/重开页签不再重复弹出。
+      // 铃铛未读点击已改为就地弹窗（不产生 ?pk=），此路径仅兼容历史书签与旧页签。
+      stripPkFromAddressBar();
+    }
     addDialog({
       title: t("userNotice.showSystemNotice"),
       props: {
@@ -77,12 +103,12 @@ export function useUserNotice(tableRef: Ref) {
       contentRenderer: () => h(NoticeShowForm),
       closeCallBack: () => {
         if (routeParams?.pk && searchFields) {
+          // 深链进入时列表被 pk 过滤为单条：关闭后清除过滤并重取完整列表
           searchFields.value.pk = "";
+          tableRef.value.handleGetData();
+          return;
         }
         if (row.unread) {
-          if (searchFields) {
-            searchFields.value.pk = "";
-          }
           tableRef.value.handleGetData();
         }
       }

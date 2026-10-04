@@ -4,7 +4,6 @@ import { computed, nextTick, PropType, ref } from "vue";
 import { useNav } from "@/layout/hooks/useNav";
 import { deviceDetection } from "@pureadmin/utils";
 import dayjs from "dayjs";
-import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 
 const props = defineProps({
@@ -17,6 +16,10 @@ const props = defineProps({
     default: 0
   }
 });
+
+const emit = defineEmits<{
+  itemClick: [item: ListItem];
+}>();
 
 const titleRef = ref<HTMLElement | null>(null);
 const titleTooltip = ref(false);
@@ -34,13 +37,8 @@ function hoverTitle() {
   });
 }
 
-const router = useRouter();
-
-const handleRead = (pk: number) => {
-  router.push({
-    name: "UserNotice",
-    query: { pk: pk }
-  });
+const handleRead = (item: ListItem) => {
+  emit("itemClick", item);
 };
 
 const divClass = computed(() => {
@@ -80,7 +78,7 @@ const divClass = computed(() => {
           >
             <el-text
               :type="noticeItem?.level?.value"
-              @click="handleRead(noticeItem.pk)"
+              @click="handleRead(noticeItem)"
               >{{ noticeItem.title }}
             </el-text>
           </div>

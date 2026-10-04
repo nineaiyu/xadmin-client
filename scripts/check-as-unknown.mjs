@@ -2,7 +2,7 @@
 // `as unknown as` 双重断言基线门禁（类型逃逸防回潮）。
 //
 // `as unknown as T` 绕过编译器的双向类型检查，是比 `as T` 更彻底的逃逸 hatch：
-// 数量随迭代自然漂移（layout 路由类型互转 tabDetail.ts / tree.ts 是存量热点），
+// 数量随迭代自然漂移（layout 路由类型互转 tree.ts 是存量热点），
 // 没有基线时无法区分「必要增量」与「随手逃逸」。本门禁按文件建立基线：
 //
 // - 新文件出现 `as unknown as` 即失败（禁止未登记新增）；
@@ -59,7 +59,6 @@ const BASELINE = {
   "src/utils/http/index.spec.ts": 1,
   "src/utils/http/index.ts": 2,
   "src/utils/localforage/index.ts": 1,
-  "src/utils/tabDetail.ts": 2,
   "src/utils/tree.ts": 3,
   "src/views/account/components/AccessToken.vue": 1,
   "src/views/account/utils/hook.tsx": 1,

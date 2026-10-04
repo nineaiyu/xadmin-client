@@ -7,6 +7,7 @@ import UploadIcon from "~icons/ep/upload";
 import { useI18n } from "vue-i18n";
 import { renderBooleanSegmentedOption } from "@/components/RePlusPage";
 import { message } from "@/utils/message";
+import { hasAuth } from "@/router/utils";
 import type { UploadUserFile } from "element-plus";
 import type {
   DetailResult,
@@ -92,6 +93,13 @@ const parsing = ref(false);
 const templates = ref<ImportTemplateItem[]>([]);
 const selectedTemplate = ref("");
 const newTemplateName = ref("");
+// 列映射模板是独立全局资源（/api/system/import-templates），与页面导入按钮
+// （importData:<Page>）权限不同：无对应权限位时不请求、不渲染模板 UI，
+// 列映射本身不受影响（T01-04）
+const templateAuth = {
+  list: hasAuth("list:SystemImportTemplate"),
+  create: hasAuth("create:SystemImportTemplate")
+};
 /** 保留未映射列（未勾选 = 丢弃，与后端 ignore_unknown 默认一致） */
 const keepUnknown = computed({
   get: () => state.value.ignore_unknown === false,
@@ -131,6 +139,7 @@ const applyMapping = (mapping: Record<string, string>) => {
 };
 
 const loadTemplates = async () => {
+  if (!templateAuth.list) return;
   if (!state.value.api?.importTemplates || !modelLabel.value) return;
   const res = await state.value.api.importTemplates({
     model: modelLabel.value,
@@ -196,6 +205,7 @@ const onSelectTemplate = (pk: string) => {
 };
 
 const saveTemplate = async () => {
+  if (!templateAuth.create) return;
   if (!state.value.api?.createImportTemplate) return;
   const name = newTemplateName.value.trim();
   if (!name) {
@@ -384,6 +394,7 @@ defineExpose({ getRef });
           </div>
           <div class="mb-2 flex flex-wrap items-center gap-2">
             <el-select
+              v-if="templateAuth.list"
               v-model="selectedTemplate"
               class="w-50!"
               clearable
@@ -398,15 +409,17 @@ defineExpose({ getRef });
                 :value="item.value"
               />
             </el-select>
-            <el-input
-              v-model="newTemplateName"
-              class="w-40!"
-              maxlength="64"
-              :placeholder="t('exportImport.templateSavePlaceholder')"
-            />
-            <el-button plain type="primary" @click="saveTemplate">
-              {{ t("exportImport.saveAsTemplate") }}
-            </el-button>
+            <template v-if="templateAuth.create">
+              <el-input
+                v-model="newTemplateName"
+                class="w-40!"
+                maxlength="64"
+                :placeholder="t('exportImport.templateSavePlaceholder')"
+              />
+              <el-button plain type="primary" @click="saveTemplate">
+                {{ t("exportImport.saveAsTemplate") }}
+              </el-button>
+            </template>
             <el-tooltip
               :content="t('exportImport.ignoreUnknownTip')"
               placement="top"

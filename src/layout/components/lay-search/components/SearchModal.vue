@@ -16,6 +16,7 @@ import { computed, ref, shallowRef, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import { cloneDeep, isAllEmpty, storageLocal } from "@pureadmin/utils";
+import { hasAuth } from "@/router/utils";
 import { searchGlobal, type GlobalSearchGroup } from "@/api/system/search";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import SearchIcon from "~icons/ri/search-line";
@@ -45,6 +46,9 @@ const historyRef = ref();
 const scrollbarRef = ref();
 const activePath = ref("");
 const historyPath = ref("");
+// 全局搜索权限点：无权限时不触发跨实体检索请求（否则用户输入即 403），
+// 菜单检索与命令面板不依赖该权限，不受影响（T01-03）
+const globalSearchAuth = hasAuth("retrieve:SystemGlobalSearch");
 const resultOptions = shallowRef<optionsItem[]>([]);
 const historyOptions = shallowRef<optionsItem[]>([]);
 // 全局搜索：菜单结果之外跨实体检索的分组结果
@@ -171,6 +175,7 @@ async function search() {
 
 /** 全局搜索：跨实体检索，失败静默降级为仅菜单结果 */
 async function fetchGlobalResults() {
+  if (!globalSearchAuth) return;
   const kw = keyword.value.trim();
   if (!kw) {
     globalGroups.value = [];
@@ -359,7 +364,7 @@ function handleDrag(item: dragItem) {
           :options="resultOptions"
           @click="handleEnter"
         />
-        <div v-if="keyword && globalGroups.length">
+        <div v-if="globalSearchAuth && keyword && globalGroups.length">
           <div class="px-5 py-1.5 text-xs text-(--el-text-color-secondary)">
             {{ t("search.globalResult") }}
           </div>

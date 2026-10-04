@@ -15,6 +15,10 @@ defineProps({
     default: ""
   }
 });
+
+const emit = defineEmits<{
+  itemClick: [item: ListItem];
+}>();
 </script>
 
 <template>
@@ -24,6 +28,7 @@ defineProps({
       :key="index"
       :noticeItem="item"
       :index="index"
+      @item-click="emit('itemClick', $event)"
     />
   </div>
   <ReEmpty v-else :image-size="100" :description="transformI18n(emptyText)" />
