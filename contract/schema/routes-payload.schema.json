@@ -53,29 +53,46 @@
     "routeNode": {
       "type": "object",
       "description": "路由节点（serializer 透传字段放行，仅冻结前端路由消费依赖的键）",
-      "required": ["path"],
+      "required": [
+        "path"
+      ],
       "properties": {
         "path": {
           "type": "string"
         },
         "title": {
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "meta": {
           "type": "object",
           "description": "format_menu_meta 仅保留 icon/title/rank/showLink 四键",
           "properties": {
             "icon": {
-              "type": ["string", "null"]
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "title": {
-              "type": ["string", "null"]
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "rank": {
-              "type": ["integer", "null"]
+              "type": [
+                "integer",
+                "null"
+              ]
             },
             "showLink": {
-              "type": ["boolean", "null"]
+              "type": [
+                "boolean",
+                "null"
+              ]
             }
           },
           "additionalProperties": true

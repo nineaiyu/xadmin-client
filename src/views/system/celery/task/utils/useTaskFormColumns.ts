@@ -1,20 +1,21 @@
 import { computed, onMounted, ref, type Ref } from "vue";
 import type { PageColumn } from "@/components/RePlusPage";
 import type { periodicTaskApi } from "@/api/system/task";
-import { toRegisteredTaskOption } from "./taskOptions";
+import { runnableTaskOptions, toRegisteredTaskOption } from "./taskOptions";
 
 type TaskApiLike = Pick<typeof periodicTaskApi, "registered">;
 
 /**
- * 定时任务新增/编辑表单列：任务路径改为「已注册任务下拉 + 可手输兜底」。
- * 自 useTask 拆出（行为不变）：挂载时拉取已注册任务，baseColumnsFormat 改写 task 列。
+ * 定时任务新增/编辑表单列：任务路径为「可手动执行白名单任务下拉」。
+ * 白名单外任务（后端 registered 附 runnable=false）不下发选项，且不再允许
+ * 自由输入（allowCreate 已移除）——服务端创建与执行侧同样按白名单拦截（T02-04）。
  */
 export function useTaskFormColumns({ api }: { api: TaskApiLike }) {
-  /** 已注册任务下拉选项 */
+  /** 可手动执行任务下拉选项 */
   const registeredOptions = ref<{ name: string; verbose_name: string }[]>([]);
   const loadRegistered = async () => {
     const res = await api.registered();
-    registeredOptions.value = res.data ?? [];
+    registeredOptions.value = runnableTaskOptions(res.data ?? []);
   };
 
   const baseColumnsFormat = ({
@@ -32,7 +33,6 @@ export function useTaskFormColumns({ api }: { api: TaskApiLike }) {
       );
       taskCol.fieldProps = {
         filterable: true,
-        allowCreate: true,
         defaultFirstOption: true
       };
     }

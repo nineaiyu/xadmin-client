@@ -91,7 +91,9 @@ const { setCardRef, exportingCard, exportCardImage } = useCardImageExport(t);
 const loadDashboards = async () => {
   loading.value = true;
   try {
-    const res = await dashboardApi.list();
+    // fetchAllRows：下拉与 ?pk= 分享定位必须覆盖全量仪表盘——只取首页 20 条
+    // 会让超出分页的仪表盘在下拉里缺失、分享定位静默回落（与 loadDatasets 同口径）
+    const res = await fetchAllRows(dashboardApi.list);
     dashboards.value = listRows<DashboardItem>(res as never);
     if (!current.value && dashboards.value.length > 0) {
       // 分享链接定位：?pk=<仪表盘主键> 命中则直接打开对应仪表盘

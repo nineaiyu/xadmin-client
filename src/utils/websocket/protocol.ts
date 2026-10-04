@@ -72,7 +72,9 @@ export const MessageAction = {
   /** 大屏远程控制指令（system/ws_screen.py，展示端被动接收） */
   SCREEN_COMMAND: "screen_command",
   /** 大屏服务端聚合数据推送（dataset/ws_screen.py，按观察者各自聚合后自推） */
-  SCREEN_DATA: "screen_data"
+  SCREEN_DATA: "screen_data",
+  /** 大屏展示端当前页上报（dataset/ws_screen.py，上行单向；carousel 触发聚合按上报页取数） */
+  SCREEN_PAGE_STATE: "screen_page_state"
   // 值形态由生成契约约束（未知动作字面量即类型错误）；
   // 双向集合一致性由 protocol.spec.ts 对着镜像 schema 断言（新增 action 必须双端登记）
 } as const satisfies Record<string, WsContractAction>;
@@ -136,7 +138,8 @@ export interface ScreenCommandPayload {
  * 服务端不做组广播数据：execute/aggregate 的数据权限绑定浏览者，触发事件到达各展示
  * 连接后以连接自身用户视角聚合，再只发给自己——权限语义与旧「客户端逐卡 HTTP 重拉」
  * 等价，M 卡 × N 观察者的 HTTP 请求收敛为每观察者每轮 1 帧。
- * canvas（layout 非空）单帧 dashboard=null；carousel（layout 空）逐 dashboards 各一帧。
+ * canvas（layout 非空）单帧 dashboard=null；carousel（layout 空）按展示连接上报的
+ * 当前页（screen_page_state）聚合单帧，未上报/越界回退全页帧。
  * cards[].data 为 execute/aggregate 的返回结构；单卡失败进 errors，不中断整帧。 */
 export interface ScreenDataPayload {
   screen: string;
@@ -146,6 +149,16 @@ export interface ScreenDataPayload {
   errors: Array<{ card: string; detail: string }>;
   /** 广播时刻（epoch 秒），可据此丢弃乱序到达的旧帧 */
   ts: number;
+}
+
+/** 大屏展示端当前页上报（screen_page_state；ws/screen/<pk> 上行，展示端唯一上行动作）。
+ *
+ * carousel 轮播页由展示端本地推进（auto 模式服务端控制态不含翻页轨迹），触发聚合
+ * 需按展示连接实际所在页取数，否则 (N-1)/N 的聚合查询白跑（T02-08）；canvas 模式
+ * 无页概念不上报。非法/越界页码服务端丢弃并回退全页聚合。 */
+export interface ScreenPageStatePayload {
+  /** 当前页码（0 基，按 Screen.dashboards 原序） */
+  index: number;
 }
 
 /** 通知推送载荷（push_message；message_type 语义见 message/notifications） */

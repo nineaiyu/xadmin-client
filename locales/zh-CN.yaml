@@ -2230,7 +2230,6 @@ settingSms:
   title: 短信设置
 
 demoBook:
-  pushAll: 全部推送
   book: 书籍
   name: 书籍名称
   isbn: ISBN书号

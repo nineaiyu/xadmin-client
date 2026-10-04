@@ -140,7 +140,10 @@ const loadData = async () => {
   errorMsg.value = "";
   try {
     if (card.chart_type === "number") {
-      const res = await datasetApi.execute<ExecuteResult>(card.dataset);
+      // count_only：数字卡只读 total，服务端跳过全量行物化（T02-09）
+      const res = await datasetApi.execute<ExecuteResult>(card.dataset, {
+        count_only: true
+      });
       if (res.code === SUCCESS_CODE) {
         total.value = Number(res.data?.total ?? 0);
         return;
@@ -151,7 +154,9 @@ const loadData = async () => {
     if (card.chart_type === "metric") {
       // 指标卡：count = 行总数（复用 execute）；sum/avg = 无分组纯聚合单值
       if ((card.metric ?? "count") === "count") {
-        const res = await datasetApi.execute<ExecuteResult>(card.dataset);
+        const res = await datasetApi.execute<ExecuteResult>(card.dataset, {
+          count_only: true
+        });
         if (res.code === SUCCESS_CODE) {
           total.value = Number(res.data?.total ?? 0);
           return;

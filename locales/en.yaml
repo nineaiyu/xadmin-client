@@ -2230,7 +2230,6 @@ settingSms:
   title: SMS Setting
 
 demoBook:
-  pushAll: Push all
   book: Book
   name: Name
   isbn: ISBN

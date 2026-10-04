@@ -1,11 +1,12 @@
-import { onBeforeUnmount, ref, type Ref } from "vue";
+import { onBeforeUnmount, ref, watch, type Ref } from "vue";
 import { SUCCESS_CODE } from "@/api/types";
 import { WS } from "@/utils/websocket";
 import {
   isOutboundMessage,
   MessageAction,
   type ScreenCommandPayload,
-  type ScreenDataPayload
+  type ScreenDataPayload,
+  type ScreenPageStatePayload
 } from "@/utils/websocket/protocol";
 import type { ScreenItem } from "@/api/dataset/analysis";
 import type { DashboardItem } from "@/api/dataset/datasets";
@@ -24,6 +25,10 @@ import { resolveScreenFrame } from "./control";
  * F2 服务端聚合推送：同通道接收 `screen_data` 帧（按浏览者各自聚合），收到即转发
  * `applyScreenData` 逐卡免拉刷新；推送活跃期本机数据轮询静默（超过两个刷新周期
  * 未收到帧才回落本地重拉，服务端推送不可用/旧版本后端时行为与之前完全一致）。
+ *
+ * T02-08 当前页上报：轮播页由本端推进（服务端控制态不含 auto 翻页轨迹），连接建立
+ * 后与每次翻页上报 `screen_page_state`，服务端触发聚合只算上报页（避免逐页聚合
+ * 白跑查询）；canvas 画布模式单帧与页码无关，不上报。
  */
 /** 本机轮询回落窗口 = refresh × 该倍数（期间收到过 screen_data 帧即视为推送活跃） */
 const DATA_FALLBACK_FACTOR = 2;
@@ -92,6 +97,30 @@ export function useScreenDisplay(deps: {
     if (localIndex >= 0) pageIndex.value = localIndex;
   };
 
+  /** 本地可见列表下标 → 服务端下标（可见列表是 dashboards 的过滤子集，两者会错位） */
+  const toServerIndex = (localIndex: number) => {
+    const pk = deps.dashboards.value[localIndex]?.pk;
+    if (!pk) return -1;
+    return (deps.screen.value?.dashboards ?? []).indexOf(pk);
+  };
+
+  /**
+   * 上报当前页（screen_page_state，T02-08）：服务端触发聚合按本端所在页取数。
+   * 仅 carousel 模式上报（canvas 单帧与页码无关）；服务端下标由本地页反查
+   * dashboards 原序得出。WS 未开时静默跳过（断线重连后 watch 不触发，
+   * onMessage 首帧/控制帧路径会补报，见 onOpen）。
+   */
+  const reportPageState = () => {
+    if (!ws || deps.dashboards.value.length === 0) return;
+    if ((deps.screen.value?.layout ?? []).length > 0) return;
+    const serverIndex = toServerIndex(pageIndex.value);
+    if (serverIndex < 0) return;
+    const payload: ScreenPageStatePayload = { index: serverIndex };
+    ws.send(
+      JSON.stringify({ action: MessageAction.SCREEN_PAGE_STATE, data: payload })
+    );
+  };
+
   /** 应用控制帧：模式/页码对齐 + refresh 帧仅在代数递增时重拉数据 */
   const applyScreenFrame = (frame: ScreenCommandPayload) => {
     const effect = resolveScreenFrame(
@@ -109,7 +138,9 @@ export function useScreenDisplay(deps: {
     const protocol = location.protocol === "https:" ? "wss:" : "ws:";
     ws = new WS(`${protocol}//${location.host}/ws/screen/${pk}`, {
       autoReconnect: true,
-      heartbeat: true
+      heartbeat: true,
+      // 连接（含断线重连）成功即补报当前页：重连后服务端按新连接重新聚合
+      openCallback: () => reportPageState()
     });
     ws.onMessage((res: unknown) => {
       if (
@@ -136,6 +167,9 @@ export function useScreenDisplay(deps: {
     ws?.close();
     ws = null;
   };
+
+  // 每次翻页（本地轮播 / 远程切换 / 回放对齐）随手上报，服务端下一轮触发按新页聚合
+  watch(pageIndex, reportPageState);
 
   onBeforeUnmount(() => {
     stopTimers();

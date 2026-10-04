@@ -8,6 +8,9 @@ import {
   OAUTH_BIND_FLAG_TTL,
   oauthApi
 } from "@/api/system/oauth";
+import type { LoginMfaRequired } from "@/api/mfa";
+import type { TokenInfo } from "@/api/auth";
+import LoginMfa from "@/views/login/components/LoginMfa.vue";
 import { setToken } from "@/utils/auth";
 import { initRouter } from "@/router/utils";
 import { message } from "@/utils/message";
@@ -17,6 +20,11 @@ import { message } from "@/utils/message";
  *
  * - 登录：后端校验 state 一次性后签发 token → 落地主页；
  * - 绑定：后端把 IdP 身份绑定到本人 → 回账户设置「第三方账号」页签（不下发 token）。
+ *
+ * 登录账号开启 MFA 时后端原样返回 `mfa_required + mfa_token + methods`
+ * （与密码登录的二次验证载荷同构，T02-16）：本页复用 `LoginMfa` 组件走
+ * `loginMfaVerifyApi` 完成二次验证——原先仅显示错误并丢弃 mfa_token，OAuth
+ * 用户开启 MFA 后是死路（只能改走账号密码登录）。
  *
  * 失败一律给可读文案并留在落地页（可返回登录/账户设置），IdP 原始报文不出现在前端。
  */
@@ -28,6 +36,8 @@ const route = useRoute();
 const router = useRouter();
 const loading = ref(true);
 const error = ref("");
+/** 登录 MFA 二次验证载荷（mfa_token + 可用方式）：非空时渲染 LoginMfa 步骤 */
+const mfaInfo = ref<LoginMfaRequired | null>(null);
 /** 本次回调是否源自「绑定」发起（绑定入口写入的时间戳标记，读到即清除且只认有效期内的） */
 const fromBind = ref(false);
 
@@ -40,6 +50,14 @@ const goAccountBindings = () => {
     path: "/account-settings",
     query: { tab: "oauthBindings" }
   });
+};
+
+/** MFA 验证通过：与密码登录成功同一后置链路（写入 token → 初始化路由 → 主页） */
+const handleMfaSuccess = async (data: TokenInfo) => {
+  setToken(data);
+  await initRouter(true);
+  message(t("login.loginSuccess"), { type: "success" });
+  await router.push("/");
 };
 
 onMounted(async () => {
@@ -73,7 +91,8 @@ onMounted(async () => {
       return;
     }
     if (res.data?.mfa_required) {
-      error.value = t("oauth.mfaRequired");
+      // 密码阶段（IdP 身份校验）已通过：进入登录 MFA 二次验证步骤
+      mfaInfo.value = res.data as unknown as LoginMfaRequired;
       return;
     }
     setToken(res.data as unknown as Parameters<typeof setToken>[0]);
@@ -90,8 +109,15 @@ onMounted(async () => {
 
 <template>
   <div v-loading="loading" class="oauth-callback">
+    <LoginMfa
+      v-if="mfaInfo"
+      class="oauth-callback__mfa"
+      :mfa-info="mfaInfo"
+      @success="handleMfaSuccess"
+      @back="goLogin"
+    />
     <el-result
-      v-if="error"
+      v-else-if="error"
       icon="error"
       :sub-title="error"
       :title="fromBind ? t('oauth.bindFailed') : t('oauth.loginFailed')"
@@ -114,5 +140,13 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   min-height: 60vh;
+
+  /* MFA 步骤复用登录页卡片形态：限宽居中，避免整屏拉伸 */
+  &__mfa {
+    width: min(420px, 90vw);
+    padding: 24px;
+    background: var(--el-bg-color-overlay);
+    border-radius: 12px;
+  }
 }
 </style>

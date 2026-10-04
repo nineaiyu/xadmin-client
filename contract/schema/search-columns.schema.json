@@ -21,11 +21,17 @@
         "description": "序列化器字段名"
       },
       "label": {
-        "type": ["string", "null"],
+        "type": [
+          "string",
+          "null"
+        ],
         "description": "展示名（优先取模型 verbose_name）"
       },
       "help_text": {
-        "type": ["string", "null"],
+        "type": [
+          "string",
+          "null"
+        ],
         "description": "字段说明；无 help_text 时缺省"
       },
       "required": {
@@ -82,7 +88,10 @@
             "type": "string"
           }
         ],
-        "x-fallback-rendered": ["email", "input"]
+        "x-fallback-rendered": [
+          "email",
+          "input"
+        ]
       },
       "max_length": {
         "type": "number",
@@ -109,7 +118,10 @@
         "items": {
           "type": "object",
           "additionalProperties": true,
-          "required": ["value", "label"],
+          "required": [
+            "value",
+            "label"
+          ],
           "properties": {
             "value": {},
             "label": {},

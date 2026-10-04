@@ -39,14 +39,22 @@ const opOptions = [
   "isnull"
 ];
 
+// 编辑回显：`in` 过滤的 value 在载荷里是数组，输入框按逗号串展示（提交再拆回）
+const initialFilters = (
+  props.row ? JSON.parse(JSON.stringify(props.row.filters ?? [])) : []
+) as DatasetFilter[];
+initialFilters.forEach(item => {
+  if (item.op === "in" && Array.isArray(item.value)) {
+    item.value = item.value.join(",");
+  }
+});
+
 const form = reactive({
   name: props.row?.name ?? "",
   description: props.row?.description ?? "",
   bound_model: props.row?.bound_model ?? "",
   columns: [...(props.row?.columns ?? [])],
-  filters: (props.row
-    ? JSON.parse(JSON.stringify(props.row.filters ?? []))
-    : []) as DatasetFilter[],
+  filters: initialFilters,
   ordering: props.row?.ordering ?? "",
   row_limit: props.row?.row_limit ?? 1000,
   // visibility 序列化为 {value,label} 对象，radio 只接受标量（归一化取 value）
@@ -101,11 +109,20 @@ const getPayload = (): Record<string, unknown> | null => {
     description: form.description,
     bound_model: form.bound_model,
     columns: form.columns,
-    filters: form.filters.map(item => ({
-      field: item.field,
-      op: item.op,
-      value: item.op === "isnull" ? Boolean(item.value) : item.value
-    })),
+    filters: form.filters.map(item => {
+      let value: unknown = item.value;
+      if (item.op === "isnull") {
+        value = Boolean(item.value);
+      } else if (item.op === "in") {
+        // 后端强制 in 的 value 为 list/tuple，字符串原样提交必 400（T02-13）：
+        // 输入框按逗号拆分为数组（placeholder 已暗示该用法）
+        value = String(item.value ?? "")
+          .split(",")
+          .map(part => part.trim())
+          .filter(part => part !== "");
+      }
+      return { field: item.field, op: item.op, value };
+    }),
     ordering: form.ordering,
     row_limit: Number(form.row_limit) || 1000,
     visibility: form.visibility,

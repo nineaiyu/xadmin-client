@@ -43,10 +43,17 @@ const schemaFields = computed<FormField[]>(
   () => props.form?.schema?.fields ?? []
 );
 
+// 编辑既有提交：按当前 schema 裁剪历史键（T02-14）——schema 演进（字段删除/改名）
+// 后旧 data 的已删字段键渲染不出、用户无法清理，不裁剪会随载荷提交被后端拒绝
+const knownFieldKeys = new Set(schemaFields.value.map(field => field.key));
+const initialData = props.submission
+  ? JSON.parse(JSON.stringify(props.submission.data ?? {}))
+  : {};
+
 const formData = reactive<Record<string, unknown>>(
-  props.submission
-    ? JSON.parse(JSON.stringify(props.submission.data ?? {}))
-    : {}
+  Object.fromEntries(
+    Object.entries(initialData).filter(([key]) => knownFieldKeys.has(key))
+  )
 );
 
 /** 联动：按当前填写内容求值（隐藏字段不渲染、必填动态覆盖） */

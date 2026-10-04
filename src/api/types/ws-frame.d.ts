@@ -21,7 +21,8 @@ export type Action =
   | "task_log"
   | "monitor"
   | "screen_command"
-  | "screen_data";
+  | "screen_data"
+  | "screen_page_state";
 
 /**
  * 客户端 → 服务端帧（客户端受控，键集合封闭）

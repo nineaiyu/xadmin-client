@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import ReEmpty from "@/components/ReEmpty";
-import { computed, onMounted, reactive } from "vue";
+import { SUCCESS_CODE } from "@/api/types";
+import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import {
   submissionApi,
@@ -22,15 +23,22 @@ import { formatFormulaValue } from "@/views/form/utils/formulaEval";
  * 字段 label 与复杂控件（选人/附件/明细子表/字典选项）都按 schema 快照渲染，
  * 填报人无需「表单设计器」权限；轨迹来自提交绑定的流程实例任务（状态口径与
  * 流程审批中心一致）。
+ *
+ * 数据源：列表行只作初值——「我的填报」列表已瘦身（不含 form_schema /
+ * approval_trail，T02-10），挂载后按 pk 拉取 retrieve 全量（schema 快照 +
+ * 审批轨迹）再渲染字段明细与轨迹。
  */
 defineOptions({ name: "FormSubmissionDetail" });
 
 const props = defineProps<{
-  /** 列表行（含 form_schema / approval_trail，retrieve 与 list 同构） */
+  /** 列表行（初值；详情字段以 retrieve 全量为准） */
   row: SubmissionItem;
 }>();
 
 const { t } = useI18n();
+
+/** 详情行：retrieve 全量到达后整体替换（保留列表行兜底，避免请求失败白屏） */
+const row = ref<SubmissionItem>(props.row);
 
 const SUBMISSION_STATUS_TAG_TYPE: Record<string, StatusTagType> = {
   DRAFT: "info",
@@ -47,8 +55,8 @@ const TRAIL_STATUS_TAG_TYPE: Record<string, StatusTagType> = {
   PENDING: "warning"
 };
 
-const schemaFields = computed<FormField[]>(() => props.row.form_schema ?? []);
-const data = computed<Record<string, unknown>>(() => props.row.data ?? {});
+const schemaFields = computed<FormField[]>(() => row.value.form_schema ?? []);
+const data = computed<Record<string, unknown>>(() => row.value.data ?? {});
 
 /** 字典选项缓存（字段 key → 字典项）：展示值时把 value 映射为 label */
 const dictCache = reactive<Record<string, DictItem[]>>({});
@@ -136,7 +144,8 @@ const cellText = (column: { key: string; type?: string }, row: unknown) => {
   return String(value);
 };
 
-onMounted(async () => {
+/** 字段展示辅助数据准备：字典选项缓存 + 选人字段用户名回显（依赖 schema 就绪） */
+const prepareFieldMetadata = () => {
   // 字典字段：拉取字典项用于 value → label 映射（接口带缓存）
   for (const field of schemaFields.value) {
     if (!field.dict) continue;
@@ -165,6 +174,16 @@ onMounted(async () => {
       }
     })
     .catch(() => undefined);
+};
+
+onMounted(async () => {
+  // 列表行已瘦身（无 form_schema/approval_trail，T02-10）：拉取 retrieve 全量
+  // 后再准备字段展示辅助数据；请求失败时保留列表行初值（data 摘要仍可渲染）
+  const res = await submissionApi.retrieve(props.row.pk).catch(() => null);
+  if (res?.code === SUCCESS_CODE && res.data) {
+    row.value = { ...props.row, ...(res.data as SubmissionItem) };
+  }
+  prepareFieldMetadata();
 });
 
 const trailTime = (item: SubmissionTrailItem) =>
