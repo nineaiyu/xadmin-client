@@ -17,7 +17,13 @@
 // 陈旧且可被选中后渲染空白）即退出码 1 并列出——陈旧名在构建期暴露而非线上空白。
 //
 // 用法：node scripts/gen-icon-subset.mjs [--report]
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync
+} from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -84,6 +90,15 @@ function seedNames() {
     }
   }
   return names;
+}
+
+// 依赖层环境（Dockerfile-base 只进 scripts 与锁文件、无 src/）没有可子集化的
+// 引用面：跳过生成，真实构建由 prebuild（有完整源码）重新生成并保持 fail-closed。
+if (!existsSync(DATA_TS)) {
+  console.log(
+    "[icon-subset] 未找到 src/components/ReIcon/data.ts（依赖层镜像无源码），跳过子集生成"
+  );
+  process.exit(0);
 }
 
 const picker = pickerNames();

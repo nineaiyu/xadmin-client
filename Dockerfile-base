@@ -4,6 +4,10 @@ WORKDIR /app
 RUN corepack enable
 RUN corepack prepare pnpm@11.25.0 --activate
 
+# scripts 随依赖层进入镜像：postinstall 按路径调用 scripts/gen-icon-subset.mjs；
+# 依赖层无 src/ 源码，脚本内对 data.ts 的存在性守卫会跳过生成（真实构建由
+# prebuild 重新生成并 fail-closed），否则 postinstall 直接 module not found
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY scripts ./scripts
 
 RUN pnpm install --frozen-lockfile
