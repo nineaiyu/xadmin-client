@@ -1,10 +1,6 @@
 import { h, reactive, type ShallowRef } from "vue";
 import type { useI18n } from "vue-i18n";
-import {
-  addDrawer,
-  closeDrawer,
-  type DrawerOptions
-} from "@/components/ReDrawer";
+import { openManageDrawer } from "@/components/ReActionPanel";
 import { type buildScopeIndex, formatScopeLines } from "@/utils/scopeDisplay";
 import type {
   ApiApplicationItem,
@@ -52,36 +48,28 @@ export function useApiAppPanel({
       loading: false,
       results: [] as CallbackProbeResult[]
     });
-    const options: DrawerOptions = {
+    openManageDrawer({
       title: t("apiApp.panelTitle", { name: row.name }),
       size: "520px",
-      destroyOnClose: true,
-      hideFooter: true
-    };
-    // 动作执行前先收起抽屉再打开二级弹层（避免抽屉与弹窗叠加、焦点归属混乱）
-    const withClosed = (run: () => void) => () => {
-      closeDrawer(options, 0);
-      run();
-    };
-    options.contentRenderer = () =>
-      h(ApiAppPanel, {
-        row,
-        scopeLines,
-        probe,
-        copy: copyText,
-        groups: buildApiAppActionGroups({
-          t,
-          flags,
-          handlers: {
-            openUsage: withClosed(() => openUsage(row)),
-            regenerate: withClosed(() => confirmRegenerate(row)),
-            // 回调测试结果在抽屉内展示：不收起抽屉
-            testCallback: () => runCallbackProbe(row, probe),
-            edit: withClosed(() => openDialog(row))
-          }
+      render: ({ withClosed }) =>
+        h(ApiAppPanel, {
+          row,
+          scopeLines,
+          probe,
+          copy: copyText,
+          groups: buildApiAppActionGroups({
+            t,
+            flags,
+            handlers: {
+              openUsage: withClosed(() => openUsage(row)),
+              regenerate: withClosed(() => confirmRegenerate(row)),
+              // 回调测试结果在抽屉内展示：不收起抽屉
+              testCallback: () => runCallbackProbe(row, probe),
+              edit: withClosed(() => openDialog(row))
+            }
+          })
         })
-      });
-    addDrawer(options);
+    });
   };
 
   return { openApiAppPanel };

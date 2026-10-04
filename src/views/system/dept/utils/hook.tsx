@@ -3,7 +3,6 @@ import { h, reactive, shallowRef, type Ref } from "vue";
 import { useRouter } from "vue-router";
 import { hasAuth, usePageAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
-import { deviceDetection } from "@pureadmin/utils";
 import {
   handleShowChangeHistory,
   type PageTableColumn,
@@ -11,20 +10,22 @@ import {
   type OperationProps,
   type RePlusPageProps
 } from "@/components/RePlusPage";
+import { addDrawer } from "@/components/ReDrawer";
 import {
-  addDrawer,
-  closeDrawer,
-  type DrawerOptions
-} from "@/components/ReDrawer";
+  PanelProfile,
+  ReActionPanel,
+  bindRowGroups,
+  openManageDrawer
+} from "@/components/ReActionPanel";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import type { RecordType } from "plus-pro-components";
 import Setting from "~icons/ri/settings-3-line";
 import DeptPermissionPreview from "../components/DeptPermissionPreview.vue";
-import DeptActionPanel from "../components/DeptActionPanel.vue";
 import { useDeptRoleRules } from "./useDeptRoleRules";
 import { useDeptManagers } from "./useDeptManagers";
 import { applyDeptParentColumn, deptParentFormValue } from "./deptParentColumn";
 import { buildDeptActionGroups } from "./deptActions";
+import { buildDeptMetaItems, buildDeptProfileData } from "./deptPanel";
 import { useBatchUpdate } from "@/views/system/components/useBatchUpdate";
 import type { DeptRow } from "./types";
 
@@ -130,39 +131,43 @@ export function useDept(tableRef: Ref) {
   /**
    * 部门抽屉：行内「管理」入口与抽屉内动作清单共用。
    * 动作执行前先收起抽屉再打开二级弹层（避免抽屉与弹窗叠加、焦点归属混乱），
-   * 分组与显隐由 buildDeptActionGroups 统一裁决，面板只负责渲染。
+   * 分组与显隐由 buildDeptActionGroups 统一裁决，面板渲染走 ReActionPanel
+   * 通用模板（资料卡数据与基础信息由 deptPanel 从行快照构建）。
    */
   function openDeptPanel(row: DeptRow) {
-    const options: DrawerOptions = {
+    openManageDrawer({
       title: t("systemDept.manageDept", { dept: row.name }),
-      size: deviceDetection() ? "100%" : "480px",
-      destroyOnClose: true,
-      hideFooter: true
-    };
-    const close = () => closeDrawer(options, 0);
-    const withClosed =
-      (run: (target: DeptRow) => void) => (target: DeptRow) => {
-        close();
-        run(target);
-      };
-    const groups = buildDeptActionGroups({
-      t,
-      auth,
-      flags: {
-        viewMembers: hasAuth("list:SystemUser")
-      },
-      handlers: {
-        assignRoles: withClosed(handleRoleRules),
-        assignManagers: withClosed(openManagers),
-        preview: withClosed(openPreview),
-        viewMembers: withClosed(onGoDetail),
-        changeHistory: withClosed(target =>
-          handleShowChangeHistory({ t, api, row: target })
+      render: ({ withClosed }) =>
+        h(
+          ReActionPanel,
+          {
+            metaItems: buildDeptMetaItems(row, t),
+            groups: bindRowGroups(
+              buildDeptActionGroups({
+                t,
+                auth,
+                flags: {
+                  viewMembers: hasAuth("list:SystemUser")
+                },
+                handlers: {
+                  assignRoles: withClosed(handleRoleRules),
+                  assignManagers: withClosed(openManagers),
+                  preview: withClosed(openPreview),
+                  viewMembers: withClosed(onGoDetail),
+                  changeHistory: withClosed(target =>
+                    handleShowChangeHistory({ t, api, row: target })
+                  )
+                }
+              }),
+              row
+            )
+          },
+          {
+            profile: () =>
+              h(PanelProfile, { profile: buildDeptProfileData(row, t) })
+          }
         )
-      }
     });
-    options.contentRenderer = () => h(DeptActionPanel, { row, groups });
-    addDrawer(options);
   }
 
   const operationButtonsProps = shallowRef<OperationProps>({

@@ -3,11 +3,7 @@ import { h, ref, type Ref } from "vue";
 import type { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
 import { addDialog } from "@/components/ReDialog";
-import {
-  addDrawer,
-  closeDrawer,
-  type DrawerOptions
-} from "@/components/ReDrawer";
+import { openManageDrawer } from "@/components/ReActionPanel";
 import { hasAuth } from "@/router/utils";
 import { handleOperation } from "@/components/RePlusPage";
 import { knowledgeApi, type KnowledgeSyncSummary } from "@/api/ai/knowledge";
@@ -111,36 +107,29 @@ export function useKnowledgeActions({
 
   /** 「管理文档」抽屉：资料 + 全文/分块 + 启停/删除动作（行操作唯一入口） */
   const openKnowledgePanel = (row: KnowledgeRow) => {
-    const options: DrawerOptions = {
+    openManageDrawer({
       title: t("aiKnowledge.panelTitle", { title: row.title }),
       size: "55%",
-      destroyOnClose: true,
-      closeOnClickModal: false,
-      hideFooter: true
-    };
-    // 状态变更类动作执行前先收起抽屉：抽屉内的状态标签与动作文案基于行快照，
-    // 收起后重开即为最新状态（同时避免与确认弹窗叠加）
-    const withClosed = (run: () => void) => () => {
-      closeDrawer(options, 0);
-      run();
-    };
-    options.contentRenderer = () =>
-      h(KnowledgePanel, {
-        row,
-        groups: buildKnowledgeActionGroups({
-          t,
-          flags: { canUpdate, canDestroy },
-          target: {
-            isActive: Boolean(row.is_active),
-            removable: dictValue(row.source_type) === "upload"
-          },
-          handlers: {
-            toggle: withClosed(() => toggleActive(row)),
-            remove: withClosed(() => confirmRemove(row))
-          }
+      drawerOptions: { closeOnClickModal: false },
+      render: ({ withClosed }) =>
+        h(KnowledgePanel, {
+          row,
+          groups: buildKnowledgeActionGroups({
+            t,
+            flags: { canUpdate, canDestroy },
+            target: {
+              isActive: Boolean(row.is_active),
+              removable: dictValue(row.source_type) === "upload"
+            },
+            handlers: {
+              // 状态变更类动作执行前先收起抽屉：抽屉内的状态标签与动作文案基于
+              // 行快照，收起后重开即为最新状态（同时避免与确认弹窗叠加）
+              toggle: withClosed(() => toggleActive(row)),
+              remove: withClosed(() => confirmRemove(row))
+            }
+          })
         })
-      });
-    addDrawer(options);
+    });
   };
 
   const syncRepo = async () => {

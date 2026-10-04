@@ -10,17 +10,18 @@ import {
   handleShowChangeHistory,
   usePublicHooks
 } from "@/components/RePlusPage";
+import { addDrawer } from "@/components/ReDrawer";
 import {
-  addDrawer,
-  closeDrawer,
-  type DrawerOptions
-} from "@/components/ReDrawer";
+  PanelProfile,
+  ReActionPanel,
+  bindRowGroups,
+  openManageDrawer
+} from "@/components/ReActionPanel";
 import { deviceDetection } from "@pureadmin/utils";
 import { rulesPasswordApi } from "@/api/auth";
 import type { PasswordRule, TokenInfo } from "@/api/auth";
 import type { RecordType } from "plus-pro-components";
 import PermissionPreview from "../components/PermissionPreview.vue";
-import UserActionPanel from "../components/UserActionPanel.vue";
 
 import { useUserOptions } from "./useUserOptions";
 import { useUserAvatarUpload } from "./useUserAvatarUpload";
@@ -29,6 +30,7 @@ import { useUserColumnFormats } from "./useUserColumnFormats";
 import { useUserButtons } from "./useUserButtons";
 import { useUserImBinding } from "./useUserImBinding";
 import { buildUserActionGroups } from "./userActions";
+import { buildUserMetaItems, buildUserProfileData } from "./userPanel";
 import { useTagAssign } from "@/views/system/components/useTagAssign";
 import { TAGGABLE_RESOURCE } from "@/api/system/tag";
 import { useUserStoreHook } from "@/store/modules/user";
@@ -175,50 +177,57 @@ export function useUser(tableRef: Ref) {
   /**
    * 用户抽屉：行内头像/用户名与操作列「管理」共用入口。
    * 动作执行前先收起抽屉再打开二级弹层（避免抽屉与弹窗叠加、焦点归属混乱）；
-   * 分组与显隐由 buildUserActionGroups 统一裁决，面板只负责渲染。
+   * 分组与显隐由 buildUserActionGroups 统一裁决，面板渲染走 ReActionPanel
+   * 通用模板（资料卡数据与基础信息由 userPanel 从行快照构建）。
    */
   function openUserPanel(row: RecordType) {
-    const options: DrawerOptions = {
+    openManageDrawer({
       title: t("systemUser.manageUser", { user: row.username }),
-      size: deviceDetection() ? "100%" : "480px",
-      destroyOnClose: true,
-      hideFooter: true
-    };
-    const close = () => closeDrawer(options, 0);
-    const withClosed =
-      (run: (target: RecordType) => void) => (target: RecordType) => {
-        close();
-        run(target);
-      };
-    const groups = buildUserActionGroups({
-      t,
-      auth,
-      flags: {
-        sendNotice: hasAuth("create:SystemNotice"),
-        assignTags: hasAuth("assign:Tag")
-      },
-      currentUsername: useUserStoreHook().username,
-      handlers: {
-        resetPassword: withClosed(handleReset),
-        uploadAvatar: withClosed(handleUpload),
-        resetMfa: withClosed(handleResetMfa),
-        logout: withClosed(handleLogout),
-        assignRoles: withClosed(handleRoleRules),
-        preview: withClosed(openPreview),
-        invite: withClosed(handleInvite),
-        sendNotice: withClosed(handleSendNotice),
-        imBinding: withClosed(handleImBinding),
-        impersonate: withClosed(handleImpersonate),
-        assignTags: withClosed(target =>
-          openTagDialog({ resource: TAGGABLE_RESOURCE.user, row: target })
-        ),
-        changeHistory: withClosed(target =>
-          handleShowChangeHistory({ t, api, row: target })
+      render: ({ withClosed }) =>
+        h(
+          ReActionPanel,
+          {
+            metaItems: buildUserMetaItems(row, t),
+            groups: bindRowGroups(
+              buildUserActionGroups({
+                t,
+                auth,
+                flags: {
+                  sendNotice: hasAuth("create:SystemNotice"),
+                  assignTags: hasAuth("assign:Tag")
+                },
+                currentUsername: useUserStoreHook().username,
+                handlers: {
+                  resetPassword: withClosed(handleReset),
+                  uploadAvatar: withClosed(handleUpload),
+                  resetMfa: withClosed(handleResetMfa),
+                  logout: withClosed(handleLogout),
+                  assignRoles: withClosed(handleRoleRules),
+                  preview: withClosed(openPreview),
+                  invite: withClosed(handleInvite),
+                  sendNotice: withClosed(handleSendNotice),
+                  imBinding: withClosed(handleImBinding),
+                  impersonate: withClosed(handleImpersonate),
+                  assignTags: withClosed(target =>
+                    openTagDialog({
+                      resource: TAGGABLE_RESOURCE.user,
+                      row: target
+                    })
+                  ),
+                  changeHistory: withClosed(target =>
+                    handleShowChangeHistory({ t, api, row: target })
+                  )
+                }
+              }),
+              row
+            )
+          },
+          {
+            profile: () =>
+              h(PanelProfile, { profile: buildUserProfileData(row, t) })
+          }
         )
-      }
     });
-    options.contentRenderer = () => h(UserActionPanel, { row, groups });
-    addDrawer(options);
   }
 
   const {

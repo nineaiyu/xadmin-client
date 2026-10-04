@@ -1,16 +1,17 @@
 import { h, reactive, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElLink, ElTag } from "element-plus";
-import {
-  addDrawer,
-  closeDrawer,
-  type DrawerOptions
-} from "@/components/ReDrawer";
 import { hasAuth, usePageAuth } from "@/router/utils";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
+import {
+  PanelProfile,
+  ReActionPanel,
+  openManageDrawer
+} from "@/components/ReActionPanel";
 import { aiProfileApi, type AiProfileItem } from "@/api/ai/ai";
 import { purposeLabelKey, purposeTagType } from "./purpose";
-import AiProfilePanel from "../components/AiProfilePanel.vue";
+import { capabilityTagItems } from "./capabilities";
+import { buildAiProfileData, buildAiProfileMetaItems } from "./aiProfilePanel";
 import { buildAiProfileActionGroups } from "./aiProfileActions";
 import { useAiProfileActions } from "./useAiProfileActions";
 import { useAiProfileDialog } from "./useAiProfileDialog";
@@ -104,31 +105,20 @@ export function useAiProfiles(tableRef: Ref) {
           };
           break;
         case "capabilities":
-          // 能力画像：JSON / 原生工具调用 / 思考内容三项（未探测显示灰 tag）
+          // 能力画像：与「管理」抽屉资料卡共用 capabilityTagItems 构建
           column["cellRenderer"] = ({ row }) => {
             const capabilities = ((row as AiProfileItem).capabilities ??
               {}) as Record<string, { ok?: boolean } | undefined>;
-            const items: { key: string; label: string }[] = [
-              { key: "json", label: t("aiConfig.capJson") },
-              { key: "tool_calls", label: t("aiConfig.capToolCalls") },
-              { key: "reasoning", label: t("aiConfig.capReasoning") }
-            ];
-            // 视觉能力（按需探测）：仅在有探测结果时展示，默认形态零变化
-            if (capabilities["vision"]) {
-              items.push({ key: "vision", label: t("aiConfig.capVision") });
-            }
             return h(
               "div",
               { class: "flex flex-wrap gap-1" },
-              items.map(item => {
-                const entry = capabilities[item.key];
-                const type = entry ? (entry.ok ? "success" : "danger") : "info";
-                return h(
+              capabilityTagItems(capabilities, t).map(item =>
+                h(
                   ElTag,
-                  { key: item.key, size: "small", type },
+                  { key: item.key, size: "small", type: item.type },
                   () => item.label
-                );
-              })
+                )
+              )
             );
           };
           break;
@@ -137,35 +127,37 @@ export function useAiProfiles(tableRef: Ref) {
     return columns;
   };
 
-  /** 「管理」抽屉：档案资料 + 能力画像 + 探测/配置/删除动作（低频动作唯一入口） */
+  /**
+   * 「管理」抽屉：档案资料 + 能力画像 + 探测/配置/删除动作（低频动作唯一入口）。
+   * 动作统一「先收起抽屉再执行」：资料卡基于行快照，重开即最新，同时避免与
+   * 编辑弹窗、危险操作确认框叠加。
+   */
   const openProfilePanel = (row: AiProfileItem) => {
-    const options: DrawerOptions = {
+    openManageDrawer({
       title: t("aiConfig.panelTitle", { name: row.name }),
       size: "520px",
-      destroyOnClose: true,
-      hideFooter: true
-    };
-    // 动作执行前先收起抽屉：能力画像/状态标签基于行快照，重开即最新；
-    // 同时避免与编辑弹窗、危险操作确认框叠加
-    const withClosed = (run: () => void) => () => {
-      closeDrawer(options, 0);
-      run();
-    };
-    options.contentRenderer = () =>
-      h(AiProfilePanel, {
-        row,
-        groups: buildAiProfileActionGroups({
-          t,
-          flags: { canProbe, canEdit, canDestroy },
-          handlers: {
-            probe: withClosed(() => probeProfile(row)),
-            probeVision: withClosed(() => probeProfile(row, true)),
-            edit: withClosed(() => openDialog(row)),
-            remove: withClosed(() => removeProfile(row))
+      render: ({ withClosed }) =>
+        h(
+          ReActionPanel,
+          {
+            metaItems: buildAiProfileMetaItems(row, t),
+            groups: buildAiProfileActionGroups({
+              t,
+              flags: { canProbe, canEdit, canDestroy },
+              handlers: {
+                probe: withClosed(() => probeProfile(row)),
+                probeVision: withClosed(() => probeProfile(row, true)),
+                edit: withClosed(() => openDialog(row)),
+                remove: withClosed(() => removeProfile(row))
+              }
+            })
+          },
+          {
+            profile: () =>
+              h(PanelProfile, { profile: buildAiProfileData(row, t) })
           }
-        })
-      });
-    addDrawer(options);
+        )
+    });
   };
 
   /* ---------------- 按钮装配 ---------------- */

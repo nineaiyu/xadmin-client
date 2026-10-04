@@ -2,8 +2,10 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import {
+  PanelProfile,
   ReActionPanel,
-  type PanelActionGroup
+  type PanelActionGroup,
+  type PanelProfileData
 } from "@/components/ReActionPanel";
 import type {
   ApiApplicationItem,
@@ -13,7 +15,8 @@ import type {
 /**
  * API 应用「管理」抽屉内容：应用资料 + 接入密钥/联调/配置动作。
  *
- * - 资料全部取自列表行快照（零额外请求）；接口范围明细由页面格式化后传入；
+ * - 资料全部取自列表行快照（零额外请求）；资料卡走通用 PanelProfile，
+ *   接口范围明细由页面格式化后传入；
  * - 回调测试结果在抽屉内即时回显（消息提示只能给汇总数，定位不到具体是哪条地址失败）；
  * - 动作按钮由页面构建（权限已在构建期收敛），本组件只负责渲染。
  */
@@ -41,7 +44,12 @@ const visibleScopes = computed(() =>
 
 const scopeText = computed(() => props.scopeLines.join("\n"));
 
-const initial = computed(() => String(props.row?.name ?? "?").slice(0, 1));
+/** 资料卡：应用名 + client_id + 启用状态（行快照构建） */
+const profileData = computed<PanelProfileData>(() => ({
+  name: props.row?.name ?? "?",
+  subtitle: props.row?.client_id,
+  badgeText: String(props.row?.name ?? "?").slice(0, 1)
+}));
 
 /** 列表型字段收敛为文本（空数组回退占位符） */
 function listText(value: unknown): string {
@@ -95,20 +103,17 @@ const metaItems = computed(() => [
 <template>
   <ReActionPanel :groups="groups" :meta-items="metaItems">
     <template #profile>
-      <div class="flex items-center gap-3">
-        <span class="app-badge">{{ initial }}</span>
-        <div class="min-w-0 flex-1">
-          <div class="profile-name">{{ row.name }}</div>
-          <div class="profile-sub">{{ row.client_id }}</div>
-        </div>
-        <el-tag
-          :type="row.is_active ? 'success' : 'danger'"
-          size="small"
-          effect="plain"
-        >
-          {{ row.is_active ? t("apiApp.on") : t("apiApp.off") }}
-        </el-tag>
-      </div>
+      <PanelProfile :profile="profileData">
+        <template #trailing>
+          <el-tag
+            :type="row.is_active ? 'success' : 'danger'"
+            size="small"
+            effect="plain"
+          >
+            {{ row.is_active ? t("apiApp.on") : t("apiApp.off") }}
+          </el-tag>
+        </template>
+      </PanelProfile>
 
       <div class="mt-3 flex flex-wrap gap-2">
         <el-button link type="primary" @click="copy(row.client_id)">
@@ -169,40 +174,6 @@ const metaItems = computed(() => [
 </template>
 
 <style scoped lang="scss">
-.app-badge {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  font-size: var(--el-font-size-large);
-  font-weight: 600;
-  color: var(--el-color-primary);
-  user-select: none;
-  background: var(--el-color-primary-light-7);
-  border-radius: 10px;
-}
-
-.profile-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: var(--el-font-size-medium);
-  font-weight: 600;
-  line-height: 22px;
-  color: var(--el-text-color-primary);
-  white-space: nowrap;
-}
-
-.profile-sub {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: var(--el-font-size-extra-small);
-  line-height: 18px;
-  color: var(--el-text-color-secondary);
-  white-space: nowrap;
-}
-
 .section-caption {
   font-size: var(--el-font-size-extra-small);
   line-height: 16px;

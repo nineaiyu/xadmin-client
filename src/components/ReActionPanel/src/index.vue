@@ -1,13 +1,13 @@
 <script lang="ts" setup>
-import type { PanelActionGroup } from "./types";
+import type { PanelActionGroup, PanelMetaItem } from "./types";
 
 /**
  * 实体管理面板（抽屉内容骨架）：资料区 + 基础信息 + 分组动作。
  *
- * 列表页把行操作从操作列收敛进抽屉时的统一形态：`#profile` 插槽承载页面自己的
- * 资料卡（头像/状态标签等），`metaItems` 承载 label/value 两列信息，
- * `groups` 承载按语义分组的动作按钮（整行可点，危险动作红色语义）。
- * 首个消费方为用户管理页（页面私有实现，可切换过来）；集成系三页共用本组件。
+ * 列表页把行操作从操作列收敛进抽屉的统一模板：`#profile` 插槽承载资料卡
+ * （一般放 PanelProfile，页面从行快照构建 PanelProfileData），`metaItems`
+ * 承载 label/value 两列信息，`groups` 承载按语义分组的动作按钮（整行可点，
+ * 危险动作红色语义），默认插槽承载页面附加区。抽屉装配统一走 openManageDrawer。
  */
 defineOptions({ name: "ReActionPanel" });
 
@@ -15,7 +15,7 @@ interface Props {
   /** 动作分组（权限缺失的动作与随之变空的分组由调用方在构建期剔除） */
   groups: PanelActionGroup[];
   /** 基础信息（两列网格）；为空则不渲染该区块 */
-  metaItems?: Array<{ key: string; label: string; value: string }>;
+  metaItems?: PanelMetaItem[];
 }
 
 withDefaults(defineProps<Props>(), {

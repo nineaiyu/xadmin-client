@@ -18,7 +18,7 @@ type Row = RecordType;
 /**
  * 用户视图工具栏批量按钮与行内操作列：
  * 行内只保留「编辑 / 删除」（框架默认）与「管理」入口，其余行操作统一收敛到
- * 用户抽屉（UserActionPanel，动作清单见 userActions.tsx）。
+ * 用户抽屉（ReActionPanel 通用模板，动作清单见 userActions.tsx）。
  */
 export function useUserButtons({
   t,
