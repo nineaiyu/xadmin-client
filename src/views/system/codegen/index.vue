@@ -1,9 +1,17 @@
 <script lang="ts" setup>
-import { computed, reactive, ref } from "vue";
+import {
+  computed,
+  onBeforeUnmount,
+  onMounted,
+  reactive,
+  ref,
+  watch
+} from "vue";
 import { useI18n } from "vue-i18n";
 import { MagicStick, Download } from "@element-plus/icons-vue";
 import { message } from "@/utils/message";
 import { hasAuth } from "@/router/utils";
+import { downloadByData } from "@pureadmin/utils";
 import { systemCodeGenApi } from "@/api/system/codegen";
 import type {
   CodegenArtifact,
@@ -11,44 +19,63 @@ import type {
   CodegenModelPlan,
   CodegenPayload
 } from "@/api/system/codegen";
-import { downloadByData } from "@pureadmin/utils";
+import {
+  buildBatchPayload,
+  buildPayload,
+  defaultFormState,
+  normalizeFormState,
+  type CodegenFormState
+} from "./utils/payload";
+import {
+  importPlan,
+  listPlans,
+  removePlan,
+  savePlan,
+  type SavedPlan
+} from "./utils/plan-storage";
+import BaseConfig from "./components/BaseConfig.vue";
+import OptionSwitches from "./components/OptionSwitches.vue";
+import FieldConfigTable from "./components/FieldConfigTable.vue";
+import ArtifactPreview from "./components/ArtifactPreview.vue";
+import SavedPlans from "./components/SavedPlans.vue";
 
 defineOptions({ name: "SystemCodeGen" });
 
 const { t } = useI18n();
 
+type Mode = "single" | "batch";
+
+const mode = ref<Mode>("single");
 const models = ref<CodegenModelItem[]>([]);
 const modelsLoading = ref(false);
-const selectedModel = ref("");
-const plan = ref<CodegenModelPlan | null>(null);
-const planLoading = ref(false);
+const batchModels = ref<string[]>([]);
 
-const form = reactive({
-  component: "",
-  url_prefix: "",
-  frontend_dir: "",
-  with_import_export: false,
-  with_tags: false,
-  with_module: false
-});
-/** 字段勾选：false = exclude（引擎推导为基准做减法，pk 恒保留） */
-const fieldSelection = ref<Record<string, boolean>>({});
+/** 全量表单状态（生成方案的序列化单元） */
+const state = reactive<CodegenFormState>(defaultFormState());
+const planData = ref<CodegenModelPlan | null>(null);
+const planLoading = ref(false);
+/** 载入保存方案时暂存其字段配置：等新模型计划返回后再回填（避免被默认重建覆盖） */
+const pendingPlanState = ref<CodegenFormState | null>(null);
+
+const fieldTableRef = ref<InstanceType<typeof FieldConfigTable>>();
+
 const previewLoading = ref(false);
 const downloadLoading = ref(false);
 const artifacts = ref<CodegenArtifact[]>([]);
-const activeKey = ref("");
+/** 实时预览：首次手动预览后，表单/字段变更自动防抖刷新右侧产物 */
+const autoPreview = ref(true);
+const hasPreviewed = ref(false);
 
+const savedPlans = ref<SavedPlan[]>([]);
+
+const canPreview = computed(
+  () => Boolean(state.model) && hasAuth("preview:SystemCodeGen")
+);
+const canDownload = computed(() =>
+  mode.value === "batch" ? batchModels.value.length > 0 : Boolean(state.model)
+);
 const selectedLabel = computed(
-  () => models.value.find(item => item.label === selectedModel.value) ?? null
-);
-/** 未勾选字段 = exclude 清单 */
-const excludeFields = computed(() =>
-  Object.entries(fieldSelection.value)
-    .filter(([, checked]) => !checked)
-    .map(([name]) => name)
-);
-const activeArtifact = computed(
-  () => artifacts.value.find(item => item.key === activeKey.value) ?? null
+  () => models.value.find(item => item.label === state.model) ?? null
 );
 
 async function loadModels() {
@@ -61,95 +88,189 @@ async function loadModels() {
   }
 }
 
-async function onModelChange(label: string) {
-  plan.value = null;
-  artifacts.value = [];
-  if (!label) return;
+/** 模型变更 / 载入方案后的计划加载：默认命名 + 字段表重建（或回填方案字段） */
+async function loadPlan(label: string) {
+  if (!label) {
+    planData.value = null;
+    state.fields = [];
+    artifacts.value = [];
+    hasPreviewed.value = false;
+    return;
+  }
   planLoading.value = true;
   try {
     const res = await systemCodeGenApi.modelFields(label);
-    if (res.code !== 1000) return;
-    plan.value = res.data ?? null;
-    if (plan.value) {
-      form.component = plan.value.defaults.component;
-      form.url_prefix = plan.value.defaults.url_prefix;
-      form.frontend_dir = plan.value.defaults.frontend_dir;
-      // 初始勾选 = 引擎推导面（序列化器字段全量，表格列以 in_table 标注仅供参考）
-      fieldSelection.value = Object.fromEntries(
-        (plan.value.fields ?? []).map(field => [field.name, true])
+    if (res.code !== 1000 || !res.data) return;
+    planData.value = res.data;
+    if (pendingPlanState.value) {
+      // 载入保存方案：命名与字段配置以方案为准（仅保留当前模型仍存在的字段）
+      const saved = pendingPlanState.value;
+      pendingPlanState.value = null;
+      state.fields = saved.fields.filter(field =>
+        (res.data?.fields ?? []).some(item => item.name === field.name)
       );
+    } else {
+      state.component = res.data.defaults.component;
+      state.url_prefix = res.data.defaults.url_prefix;
+      state.frontend_dir = res.data.defaults.frontend_dir;
+      fieldTableRef.value?.rebuild(res.data);
     }
   } finally {
     planLoading.value = false;
   }
 }
 
-function buildPayload(): CodegenPayload {
-  const payload: CodegenPayload = {
-    model: selectedModel.value,
-    component: form.component || undefined,
-    url_prefix: form.url_prefix || undefined,
-    frontend_dir: form.frontend_dir || undefined,
-    with_import_export: form.with_import_export,
-    with_tags: form.with_tags,
-    with_module: form.with_module
-  };
-  if (excludeFields.value.length) payload.exclude_fields = excludeFields.value;
-  return payload;
+function buildSinglePayload(): CodegenPayload {
+  return buildPayload(state);
 }
 
-async function handlePreview() {
-  if (!selectedModel.value) return;
+async function runPreview() {
+  if (!state.model) return;
   previewLoading.value = true;
   try {
-    const res = await systemCodeGenApi.preview(buildPayload());
+    const res = await systemCodeGenApi.preview(buildSinglePayload());
     if (res.code !== 1000) return;
     artifacts.value = res.data ?? [];
-    activeKey.value = artifacts.value[0]?.key ?? "";
   } finally {
     previewLoading.value = false;
   }
 }
 
+async function handlePreview() {
+  if (!state.model) return;
+  hasPreviewed.value = true;
+  await runPreview();
+}
+
+/** 实时预览：载荷签名变化 → 600ms 防抖静默刷新（模型切换由 loadPlan 清场，不触发） */
+let previewTimer: ReturnType<typeof setTimeout> | null = null;
+const payloadSignature = computed(() => JSON.stringify(buildSinglePayload()));
+watch(payloadSignature, () => {
+  if (mode.value !== "single" || !hasPreviewed.value || !autoPreview.value)
+    return;
+  if (previewTimer) clearTimeout(previewTimer);
+  previewTimer = setTimeout(() => {
+    previewTimer = null;
+    if (hasPreviewed.value && autoPreview.value) void runPreview();
+  }, 600);
+});
+onBeforeUnmount(() => {
+  if (previewTimer) clearTimeout(previewTimer);
+});
+
 async function handleDownload() {
-  if (!selectedModel.value) return;
+  if (mode.value === "batch" && !batchModels.value.length) {
+    message(t("codegen.batchPickFirst"), { type: "warning" });
+    return;
+  }
+  if (mode.value === "single" && !state.model) return;
   downloadLoading.value = true;
   try {
-    const res = await systemCodeGenApi.download(buildPayload());
-    downloadByData(
-      res.data,
-      `generated-${selectedModel.value.replace(".", "-")}.zip`
-    );
+    const payload =
+      mode.value === "batch"
+        ? buildBatchPayload(batchModels.value, state)
+        : buildSinglePayload();
+    const res = await systemCodeGenApi.download(payload);
+    const name =
+      mode.value === "batch"
+        ? "generated-batch.zip"
+        : `generated-${state.model.replace(".", "-")}.zip`;
+    downloadByData(res.data, name);
     message(t("codegen.downloadStarted"), { type: "success" });
   } finally {
     downloadLoading.value = false;
   }
 }
 
-function artifactLabel(row: CodegenArtifact) {
-  return row.path ? row.path.split("/").slice(-1)[0] : row.label;
+// ------------------------------------------------------------- 生成方案（localStorage）
+function refreshPlans() {
+  savedPlans.value = listPlans();
 }
 
-loadModels();
+function onSavePlan(name: string) {
+  savedPlans.value = savePlan(name, { ...state, fields: [...state.fields] });
+  message(t("codegen.planSaved"), { type: "success" });
+}
+
+function onLoadPlan(plan: SavedPlan) {
+  const restored = normalizeFormState(plan.state);
+  pendingPlanState.value = restored;
+  Object.assign(state, restored);
+  state.fields = [...restored.fields];
+  if (state.model) void loadPlan(state.model);
+  message(t("codegen.planLoaded"), { type: "success" });
+}
+
+function onRemovePlan(name: string) {
+  savedPlans.value = removePlan(name);
+  message(t("codegen.planDeleted"), { type: "success" });
+}
+
+function onImportPlans(json: string) {
+  try {
+    importPlan(json);
+    refreshPlans();
+    message(t("codegen.planImported"), { type: "success" });
+  } catch (error) {
+    message(
+      `${t("codegen.planImportFailed")}：${error instanceof Error ? error.message : error}`,
+      { type: "error" }
+    );
+  }
+}
+
+onMounted(() => {
+  loadModels();
+  refreshPlans();
+});
 </script>
 
 <template>
   <div class="p-2">
     <el-card shadow="never">
       <template #header>
-        <span class="font-medium">{{ t("menus.codeGenerator") }}</span>
+        <div class="flex-bc gap-2 flex-wrap">
+          <span class="font-medium">{{ t("menus.codeGenerator") }}</span>
+          <div class="flex items-center gap-2 flex-wrap">
+            <el-radio-group v-model="mode" size="small">
+              <el-radio-button value="single">
+                {{ t("codegen.modeSingle") }}
+              </el-radio-button>
+              <el-radio-button value="batch">
+                {{ t("codegen.modeBatch") }}
+              </el-radio-button>
+            </el-radio-group>
+            <SavedPlans
+              :plans="savedPlans"
+              @save="onSavePlan"
+              @load="onLoadPlan"
+              @remove="onRemovePlan"
+              @import-plans="onImportPlans"
+            />
+          </div>
+        </div>
       </template>
       <el-row :gutter="16">
         <!-- 左：模型与配置 -->
-        <el-col :xs="24" :md="8">
-          <el-form label-width="110px" label-position="left">
-            <el-form-item :label="t('codegen.model')">
+        <el-col :xs="24" :md="10">
+          <BaseConfig
+            v-if="mode === 'single'"
+            v-model="state"
+            :models="models"
+            :models-loading="modelsLoading"
+            :plan-loading="planLoading"
+            @model-change="loadPlan"
+          />
+          <el-form v-else label-width="92px" label-position="left" class="mb-2">
+            <el-form-item :label="t('codegen.model')" required>
               <el-select
-                v-model="selectedModel"
+                v-model="batchModels"
+                multiple
                 filterable
+                collapse-tags
+                collapse-tags-tooltip
                 :loading="modelsLoading"
-                :placeholder="t('codegen.modelPlaceholder')"
-                @change="onModelChange"
+                :placeholder="t('codegen.batchModelPlaceholder')"
               >
                 <el-option
                   v-for="item in models"
@@ -159,55 +280,38 @@ loadModels();
                 />
               </el-select>
             </el-form-item>
-            <el-form-item :label="t('codegen.component')">
-              <el-input
-                v-model="form.component"
-                :placeholder="t('codegen.defaultDerive')"
-              />
-            </el-form-item>
-            <el-form-item :label="t('codegen.urlPrefix')">
-              <el-input
-                v-model="form.url_prefix"
-                :placeholder="t('codegen.defaultDerive')"
-              />
-            </el-form-item>
-            <el-form-item :label="t('codegen.frontendDir')">
-              <el-input
-                v-model="form.frontend_dir"
-                :placeholder="t('codegen.defaultDerive')"
-              />
-            </el-form-item>
-            <el-form-item :label="t('codegen.options')">
-              <el-checkbox v-model="form.with_import_export">
-                {{ t("codegen.withImportExport") }}
-              </el-checkbox>
-              <el-checkbox v-model="form.with_tags">
-                {{ t("codegen.withTags") }}
-              </el-checkbox>
-              <el-checkbox v-model="form.with_module">
-                {{ t("codegen.withModule") }}
-              </el-checkbox>
-            </el-form-item>
-            <el-form-item v-if="plan" :label="t('codegen.fields')">
-              <div class="w-full">
-                <el-checkbox
-                  v-for="field in plan.fields"
-                  :key="field.name"
-                  v-model="fieldSelection[field.name]"
-                  class="mr-2!"
-                  :disabled="field.name === 'pk'"
-                >
-                  {{ field.name }}（{{ field.verbose_name }}）
-                </el-checkbox>
-              </div>
-            </el-form-item>
-            <el-form-item>
+          </el-form>
+          <el-alert
+            v-if="mode === 'batch'"
+            :title="t('codegen.batchTip')"
+            type="info"
+            :closable="false"
+            class="mb-2!"
+          />
+          <OptionSwitches v-model="state" />
+          <template v-if="mode === 'single'">
+            <el-divider content-position="left">
+              {{ t("codegen.fieldConfig") }}
+            </el-divider>
+            <FieldConfigTable
+              v-show="planData"
+              ref="fieldTableRef"
+              v-model="state.fields"
+              :plan="planData"
+              :dict-types="planData?.dict_types ?? []"
+            />
+            <el-empty
+              v-if="!planData && !planLoading"
+              :description="t('codegen.planEmpty')"
+              :image-size="60"
+            />
+            <el-form-item class="mt-3!">
               <el-button
                 v-if="hasAuth('preview:SystemCodeGen')"
                 type="primary"
                 :icon="MagicStick"
                 :loading="previewLoading"
-                :disabled="!selectedModel"
+                :disabled="!canPreview"
                 @click="handlePreview"
               >
                 {{ t("codegen.preview") }}
@@ -216,48 +320,47 @@ loadModels();
                 v-if="hasAuth('download:SystemCodeGen')"
                 :icon="Download"
                 :loading="downloadLoading"
-                :disabled="!selectedModel"
+                :disabled="!canDownload"
                 @click="handleDownload"
               >
                 {{ t("codegen.download") }}
               </el-button>
+              <el-checkbox v-model="autoPreview" class="ml-2!">
+                {{ t("codegen.autoPreview") }}
+              </el-checkbox>
             </el-form-item>
-          </el-form>
+          </template>
+          <el-form-item v-else class="mt-3!">
+            <el-button
+              v-if="hasAuth('download:SystemCodeGen')"
+              type="primary"
+              :icon="Download"
+              :loading="downloadLoading"
+              :disabled="!canDownload"
+              @click="handleDownload"
+            >
+              {{ t("codegen.batchDownload") }}
+            </el-button>
+          </el-form-item>
         </el-col>
         <!-- 右：产物预览 -->
-        <el-col :xs="24" :md="16">
+        <el-col :xs="24" :md="14">
           <el-alert
-            v-if="selectedLabel"
+            v-if="mode === 'single' && selectedLabel"
             :title="`${selectedLabel.label} → ${t('codegen.artifactTip')}`"
             type="info"
             :closable="false"
             class="mb-2!"
           />
-          <div v-if="artifacts.length" class="flex gap-2 h-140">
-            <el-scrollbar class="w-56 shrink-0 border border-[#e5e7eb] rounded">
-              <div
-                v-for="item in artifacts"
-                :key="item.key"
-                class="px-3 py-2 cursor-pointer text-sm hover:bg-[#f5f7fa]"
-                :class="{
-                  'bg-[#ecf5ff] text-(--el-color-primary)':
-                    item.key === activeKey
-                }"
-                @click="activeKey = item.key"
-              >
-                {{ artifactLabel(item) }}
-                <div class="text-xs text-gray-400">
-                  {{ item.path || item.notice }}
-                </div>
-              </div>
-            </el-scrollbar>
-            <el-card shadow="never" class="flex-1 overflow-hidden">
-              <pre
-                class="h-full m-0 overflow-auto text-xs/5 whitespace-pre"
-              ><code>{{ activeArtifact?.content }}</code></pre>
-            </el-card>
-          </div>
-          <el-empty v-else :description="t('codegen.previewEmpty')" />
+          <template v-if="mode === 'single'">
+            <ArtifactPreview
+              v-if="artifacts.length"
+              :artifacts="artifacts"
+              :loading="previewLoading"
+            />
+            <el-empty v-else :description="t('codegen.previewEmptyTip')" />
+          </template>
+          <el-empty v-else :description="t('codegen.batchPreviewEmpty')" />
         </el-col>
       </el-row>
     </el-card>

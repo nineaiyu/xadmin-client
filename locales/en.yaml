@@ -3603,6 +3603,10 @@ emptyPage:
 codegen:
   model: Target Model
   modelPlaceholder: Search and select a model (app.Model)
+  ordering: Ordering
+  orderingPlaceholder: Empty = engine default (-created_time)
+  menuTitle: Menu Title
+  menuTitlePlaceholder: Empty = model verbose_name
   component: Component
   urlPrefix: API Prefix
   frontendDir: Frontend Dir
@@ -3611,9 +3615,75 @@ codegen:
   withImportExport: Import/Export
   withTags: Tags
   withModule: Module Spec
+  withAi: AI Declarations
+  withFrontend: Frontend Artifacts
+  autoPreview: Live Preview
   fields: Serializer Fields
   preview: Preview
   download: Download zip
   downloadStarted: Download started
-  artifactTip: generated artifacts (field checkboxes decide serializer fields)
+  artifactTip: generated artifacts (field config decides serializer fields)
   previewEmpty: Select a model and click Preview to see generated files
+  previewEmptyTip: Configure options and click Preview to see generated files
+  modeSingle: Single
+  modeBatch: Batch
+  batchModelPlaceholder: Select multiple models to pack
+  batchTip: Batch mode generates per model with engine defaults and shared options below; shared files like urls.py need manual merge when generating multiple models of one app
+  batchDownload: Batch download zip
+  batchPickFirst: Select at least one model first
+  batchPreviewEmpty: Batch mode packs and downloads directly, no preview
+  menuParent: Parent Menu
+  menuParentPlaceholder: Empty = top level
+  menuIcon: Menu Icon
+  planLoading: Loading field plan…
+  withTests: Test skeleton
+  skipMenuSeed: Skip menu seed
+  moduleId: Module ID
+  moduleIdPlaceholder: Empty = app label
+  moduleLevel: Module Level
+  moduleLevel_core: core
+  moduleLevel_standard: standard
+  moduleLevel_optional: optional
+  fieldConfig: Field Config
+  fieldSummary: "{enabled}/{total} fields enabled (drag to reorder)"
+  resetFields: Reset
+  fieldName: Field
+  fieldLabel: Label
+  colTable: Table
+  colSearch: Search
+  colRequired: Required
+  colReadOnly: Read-only
+  colInputType: Input Type
+  colDict: Dict
+  colEnabled: On
+  inputTypeDefault: Default ({type})
+  inputTypeObjectRelated: Related select
+  inputTypeM2m: Multi select
+  inputTypeApiSearchUser: Remote search (user)
+  inputTypeDisabled: Derived from field type
+  dictPlaceholder: Bind dict type
+  planEmpty: Select a model to configure fields
+  groupServer: Backend (xadmin-server)
+  groupClient: Frontend (xadmin-client)
+  groupSeed: Menu Seed
+  groupRoot: Docs
+  copyCode: Copy file content
+  copyOk: Copied to clipboard
+  copyEmpty: Nothing to copy
+  downloadFile: Download current file
+  savedPlans: Saved Plans
+  planPick: Pick a saved plan
+  planPickFirst: Select a plan first
+  planSave: Save
+  planSavePrompt: Enter plan name
+  planNameRequired: Plan name is required
+  planLoad: Load
+  planDelete: Delete
+  planDeleteConfirm: Delete this plan?
+  planExport: Export
+  planImport: Import
+  planSaved: Plan saved
+  planLoaded: Plan loaded
+  planDeleted: Plan deleted
+  planImported: Plans imported
+  planImportFailed: Import failed

@@ -3602,6 +3602,10 @@ emptyPage:
 codegen:
   model: 目标模型
   modelPlaceholder: 搜索并选择模型（app.Model）
+  ordering: 列表排序
+  orderingPlaceholder: 留空 = 引擎推导（-created_time）
+  menuTitle: 菜单标题
+  menuTitlePlaceholder: 留空 = 模型 verbose_name
   component: 组件名
   urlPrefix: API 前缀
   frontendDir: 前端目录
@@ -3610,9 +3614,75 @@ codegen:
   withImportExport: 导入导出
   withTags: 标签接入
   withModule: 模块声明
+  withAi: AI 声明
+  withFrontend: 前端产物
+  autoPreview: 实时预览
   fields: 序列化器字段
   preview: 预览产物
   download: 下载 zip
   downloadStarted: 下载已开始
-  artifactTip: 生成产物（勾选字段决定序列化器字段面）
+  artifactTip: 生成产物（字段配置决定序列化器字段面）
   previewEmpty: 选择模型后点击「预览产物」查看生成文件
+  previewEmptyTip: 配置完成后点击「预览产物」查看生成文件
+  modeSingle: 单模型
+  modeBatch: 批量
+  batchModelPlaceholder: 选择多个模型批量打包
+  batchTip: 批量模式按引擎默认字段计划逐模型生成，共享下方开关；同 app 多模型时 urls.py 等共享文件需按提示手工合并
+  batchDownload: 批量下载 zip
+  batchPickFirst: 请先选择至少一个模型
+  batchPreviewEmpty: 批量模式直接打包下载，无预览
+  menuParent: 菜单上级
+  menuParentPlaceholder: 留空 = 顶级菜单
+  menuIcon: 菜单图标
+  planLoading: 正在加载字段计划…
+  withTests: 测试骨架
+  skipMenuSeed: 跳过菜单种子
+  moduleId: 模块 ID
+  moduleIdPlaceholder: 留空 = app label
+  moduleLevel: 模块等级
+  moduleLevel_core: core 核心
+  moduleLevel_standard: standard 标准
+  moduleLevel_optional: optional 可选
+  fieldConfig: 字段配置
+  fieldSummary: 已启用 {enabled}/{total} 个字段（拖拽调整顺序）
+  resetFields: 恢复默认
+  fieldName: 字段
+  fieldLabel: 显示名
+  colTable: 表格列
+  colSearch: 搜索
+  colRequired: 必填
+  colReadOnly: 只读
+  colInputType: 输入类型
+  colDict: 数据字典
+  colEnabled: 启用
+  inputTypeDefault: 默认（{type}）
+  inputTypeObjectRelated: 关联选择
+  inputTypeM2m: 多选关联
+  inputTypeApiSearchUser: 远程联想（用户）
+  inputTypeDisabled: 引擎按字段类型推导
+  dictPlaceholder: 绑定字典类型
+  planEmpty: 选择模型后展示字段配置
+  groupServer: 后端（xadmin-server）
+  groupClient: 前端（xadmin-client）
+  groupSeed: 菜单种子
+  groupRoot: 说明文档
+  copyCode: 复制文件内容
+  copyOk: 已复制到剪贴板
+  copyEmpty: 没有可复制的内容
+  downloadFile: 下载当前文件
+  savedPlans: 生成方案
+  planPick: 选择已保存方案
+  planPickFirst: 请先选择一个方案
+  planSave: 保存方案
+  planSavePrompt: 输入方案名称
+  planNameRequired: 方案名称不能为空
+  planLoad: 载入
+  planDelete: 删除
+  planDeleteConfirm: 确认删除该方案？
+  planExport: 导出
+  planImport: 导入
+  planSaved: 方案已保存
+  planLoaded: 方案已载入
+  planDeleted: 方案已删除
+  planImported: 方案已导入
+  planImportFailed: 导入失败

@@ -93,6 +93,7 @@
     "dompurify": "^3.4.15",
     "echarts": "^6.1.0",
     "element-plus": "^2.14.5",
+    "highlight.js": "^11.12.0",
     "js-cookie": "^3.0.8",
     "localforage": "^1.10.0",
     "lodash-es": "^4.18.1",
