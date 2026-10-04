@@ -154,7 +154,7 @@ export interface ScreenDataPayload {
 /** 大屏展示端当前页上报（screen_page_state；ws/screen/<pk> 上行，展示端唯一上行动作）。
  *
  * carousel 轮播页由展示端本地推进（auto 模式服务端控制态不含翻页轨迹），触发聚合
- * 需按展示连接实际所在页取数，否则 (N-1)/N 的聚合查询白跑（T02-08）；canvas 模式
+ * 需按展示连接实际所在页取数，否则 (N-1)/N 的聚合查询白跑；canvas 模式
  * 无页概念不上报。非法/越界页码服务端丢弃并回退全页聚合。 */
 export interface ScreenPageStatePayload {
   /** 当前页码（0 基，按 Screen.dashboards 原序） */

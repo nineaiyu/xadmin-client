@@ -47,7 +47,7 @@ const scrollbarRef = ref();
 const activePath = ref("");
 const historyPath = ref("");
 // 全局搜索权限点：无权限时不触发跨实体检索请求（否则用户输入即 403），
-// 菜单检索与命令面板不依赖该权限，不受影响（T01-03）
+// 菜单检索与命令面板不依赖该权限，不受影响
 const globalSearchAuth = hasAuth("retrieve:SystemGlobalSearch");
 const resultOptions = shallowRef<optionsItem[]>([]);
 const historyOptions = shallowRef<optionsItem[]>([]);

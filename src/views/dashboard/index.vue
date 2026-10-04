@@ -249,7 +249,7 @@ const removeDashboard = async () => {
 };
 
 const goDatasetPage = () => {
-  // 护栏（T01-05）：URL 命名空间 /analysis/dataset/index ≠ 组件目录
+  // 护栏：URL 命名空间 /analysis/dataset/index ≠ 组件目录
   // views/dashboard/dataset/，靠 menu.json 种子（DataDataset）的显式映射存活，
   // 线上库菜单行已按该 path 落库。口径结论：保留映射，勿"顺手修齐"（改 URL 或
   // 移目录都会断链）；详见 xadmin-server/docs/guide/menu-maintenance.md

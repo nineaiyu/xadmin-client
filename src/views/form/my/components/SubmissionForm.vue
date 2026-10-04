@@ -43,7 +43,7 @@ const schemaFields = computed<FormField[]>(
   () => props.form?.schema?.fields ?? []
 );
 
-// 编辑既有提交：按当前 schema 裁剪历史键（T02-14）——schema 演进（字段删除/改名）
+// 编辑既有提交：按当前 schema 裁剪历史键——schema 演进（字段删除/改名）
 // 后旧 data 的已删字段键渲染不出、用户无法清理，不裁剪会随载荷提交被后端拒绝
 const knownFieldKeys = new Set(schemaFields.value.map(field => field.key));
 const initialData = props.submission

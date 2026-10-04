@@ -8,7 +8,7 @@ type TaskApiLike = Pick<typeof periodicTaskApi, "registered">;
 /**
  * 定时任务新增/编辑表单列：任务路径为「可手动执行白名单任务下拉」。
  * 白名单外任务（后端 registered 附 runnable=false）不下发选项，且不再允许
- * 自由输入（allowCreate 已移除）——服务端创建与执行侧同样按白名单拦截（T02-04）。
+ * 自由输入（allowCreate 已移除）——服务端创建与执行侧同样按白名单拦截。
  */
 export function useTaskFormColumns({ api }: { api: TaskApiLike }) {
   /** 可手动执行任务下拉选项 */

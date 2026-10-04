@@ -26,7 +26,7 @@ import { resolveScreenFrame } from "./control";
  * `applyScreenData` 逐卡免拉刷新；推送活跃期本机数据轮询静默（超过两个刷新周期
  * 未收到帧才回落本地重拉，服务端推送不可用/旧版本后端时行为与之前完全一致）。
  *
- * T02-08 当前页上报：轮播页由本端推进（服务端控制态不含 auto 翻页轨迹），连接建立
+ * 当前页上报：轮播页由本端推进（服务端控制态不含 auto 翻页轨迹），连接建立
  * 后与每次翻页上报 `screen_page_state`，服务端触发聚合只算上报页（避免逐页聚合
  * 白跑查询）；canvas 画布模式单帧与页码无关，不上报。
  */
@@ -105,7 +105,7 @@ export function useScreenDisplay(deps: {
   };
 
   /**
-   * 上报当前页（screen_page_state，T02-08）：服务端触发聚合按本端所在页取数。
+   * 上报当前页（screen_page_state）：服务端触发聚合按本端所在页取数。
    * 仅 carousel 模式上报（canvas 单帧与页码无关）；服务端下标由本地页反查
    * dashboards 原序得出。WS 未开时静默跳过（断线重连后 watch 不触发，
    * onMessage 首帧/控制帧路径会补报，见 onOpen）。

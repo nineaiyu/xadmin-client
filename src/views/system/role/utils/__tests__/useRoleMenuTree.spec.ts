@@ -3,7 +3,7 @@ import { flushPromises, mount } from "@vue/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
- * 角色授权树数据源（useRoleMenuTree）单测（T02-11）。
+ * 角色授权树数据源（useRoleMenuTree）单测。
  *
  * 核心回归：菜单树先行回填——字段权限缺失（无 list:SystemModelLabelField）
  * 或字段接口失败时只损失注入的字段节点，整树不再空白。
@@ -59,7 +59,7 @@ beforeEach(() => {
   hasAuthMock.mockReset();
 });
 
-describe("useRoleMenuTree 菜单树回填（T02-11）", () => {
+describe("useRoleMenuTree 菜单树回填", () => {
   it("无字段权限：菜单整树仍然回填，不再整树空白", async () => {
     hasAuthMock.mockImplementation(
       (auth: string) => auth === "list:SystemMenu"

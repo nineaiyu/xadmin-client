@@ -113,7 +113,7 @@ export function useDemoBook(tableRef: Ref) {
   /**
    * 新增表格标题栏按钮
    *
-   * 原「批量推送」按钮已移除（T02-15）：确认后仅弹成功提示、不调用任何接口
+   * 原「批量推送」按钮已移除：确认后仅弹成功提示、不调用任何接口
    * （后端也无对应批量端点），属于假成功交互；批量能力需要时先补齐端点再恢复。
    */
   const tableBarButtonsProps = shallowRef<OperationProps>({

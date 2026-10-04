@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import CallbackPage from "../callback.vue";
 
 /**
- * OAuth 回调落地页单测（T02-16）。
+ * OAuth 回调落地页单测。
  *
  * 核心回归：登录账号开启 MFA 时，后端返回 `mfa_required + mfa_token + methods`
  * ——本页渲染 LoginMfa 走二次验证完成登录，不再「显示错误并丢弃 mfa_token」
@@ -70,7 +70,7 @@ beforeEach(() => {
   state.messageMock.mockReset();
 });
 
-describe("OAuth 回调页 MFA 分支（T02-16）", () => {
+describe("OAuth 回调页 MFA 分支", () => {
   it("mfa_required：渲染 LoginMfa 二次验证，mfa_token 保留传入", async () => {
     state.query = { provider: "github", code: "c1", state: "s1" };
     state.callbackMock.mockResolvedValue({

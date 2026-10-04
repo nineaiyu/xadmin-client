@@ -26,9 +26,7 @@
     "inboundFrame": {
       "type": "object",
       "description": "客户端 → 服务端帧（客户端受控，键集合封闭）",
-      "required": [
-        "action"
-      ],
+      "required": ["action"],
       "properties": {
         "action": {
           "$ref": "#/definitions/action"
@@ -50,13 +48,7 @@
     "outboundFrame": {
       "type": "object",
       "description": "服务端 → 客户端帧；服务端可经 send_base_json kwargs 追加顶层键，故不封闭 additionalProperties",
-      "required": [
-        "code",
-        "action",
-        "detail",
-        "timestamp",
-        "v"
-      ],
+      "required": ["code", "action", "detail", "timestamp", "v"],
       "properties": {
         "code": {
           "type": "integer",
@@ -87,11 +79,7 @@
     "taskLogPayload": {
       "type": "object",
       "description": "task_log 增量帧载荷（system/ws.py push_once，前端 TaskLogDialog 增量渲染契约）",
-      "required": [
-        "offset",
-        "content",
-        "finished"
-      ],
+      "required": ["offset", "content", "finished"],
       "properties": {
         "offset": {
           "type": "integer",
@@ -111,11 +99,7 @@
     "chatRoomMessagePayload": {
       "type": "object",
       "description": "聊天室消息帧载荷（ws/chat/ 通道 ChatNotify 落库后广播；与历史 ws/message/* 通道的 chat_message 载荷不同）",
-      "required": [
-        "id",
-        "room_id",
-        "content"
-      ],
+      "required": ["id", "room_id", "content"],
       "properties": {
         "id": {
           "type": "integer",
@@ -129,10 +113,7 @@
           "description": "public / private / ai"
         },
         "sender_pk": {
-          "type": [
-            "integer",
-            "null"
-          ]
+          "type": ["integer", "null"]
         },
         "sender_name": {
           "type": "string"
@@ -163,11 +144,7 @@
     "chatReactionPayload": {
       "type": "object",
       "description": "表情回应上行帧载荷（ws/chat/ 通道 ChatNotify；对消息 add/remove 自己的 emoji 回应，落库后广播全量表）",
-      "required": [
-        "message",
-        "emoji",
-        "op"
-      ],
+      "required": ["message", "emoji", "op"],
       "properties": {
         "message": {
           "type": "integer",
@@ -187,12 +164,7 @@
     "chatReactionUpdatePayload": {
       "type": "object",
       "description": "表情回应广播帧载荷（ws/chat/ 下行；reactions 为该消息全量回应表，客户端整体替换即可）",
-      "required": [
-        "room",
-        "message",
-        "reactions",
-        "ts"
-      ],
+      "required": ["room", "message", "reactions", "ts"],
       "properties": {
         "room": {
           "type": "integer",
@@ -216,9 +188,7 @@
     "screenCommandPayload": {
       "type": "object",
       "description": "大屏远程控制帧载荷（ws/screen/<pk> 下行，dataset/ws_screen.py 广播；展示端被动接收）",
-      "required": [
-        "command"
-      ],
+      "required": ["command"],
       "properties": {
         "command": {
           "type": "string",
@@ -250,24 +220,14 @@
     "screenDataPayload": {
       "type": "object",
       "description": "大屏聚合数据帧载荷（ws/screen/<pk> 下行；按观察者权限各自聚合后自推，dataset/ws_screen.py 的 screen_data_trigger，不做组广播）",
-      "required": [
-        "screen",
-        "dashboard",
-        "rev",
-        "cards",
-        "errors",
-        "ts"
-      ],
+      "required": ["screen", "dashboard", "rev", "cards", "errors", "ts"],
       "properties": {
         "screen": {
           "type": "string",
           "description": "大屏 pk"
         },
         "dashboard": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "所属仪表盘 pk（canvas 画布模式为 null；carousel 轮播模式为展示连接上报的当前页）"
         },
         "rev": {
@@ -291,10 +251,8 @@
     },
     "screenPageStatePayload": {
       "type": "object",
-      "description": "大屏展示端当前页上报帧载荷（ws/screen/<pk> 上行，dataset/ws_screen.py 接收；carousel 触发聚合按上报页取数，避免整屏逐页聚合白跑查询——T02-08）",
-      "required": [
-        "index"
-      ],
+      "description": "大屏展示端当前页上报帧载荷（ws/screen/<pk> 上行，dataset/ws_screen.py 接收；carousel 触发聚合按上报页取数，避免整屏逐页聚合白跑查询）",
+      "required": ["index"],
       "properties": {
         "index": {
           "type": "integer",

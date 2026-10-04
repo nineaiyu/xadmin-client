@@ -114,7 +114,7 @@ const getPayload = (): Record<string, unknown> | null => {
       if (item.op === "isnull") {
         value = Boolean(item.value);
       } else if (item.op === "in") {
-        // 后端强制 in 的 value 为 list/tuple，字符串原样提交必 400（T02-13）：
+        // 后端强制 in 的 value 为 list/tuple，字符串原样提交必 400：
         // 输入框按逗号拆分为数组（placeholder 已暗示该用法）
         value = String(item.value ?? "")
           .split(",")

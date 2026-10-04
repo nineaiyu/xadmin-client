@@ -140,7 +140,7 @@ const loadData = async () => {
   errorMsg.value = "";
   try {
     if (card.chart_type === "number") {
-      // count_only：数字卡只读 total，服务端跳过全量行物化（T02-09）
+      // count_only：数字卡只读 total，服务端跳过全量行物化
       const res = await datasetApi.execute<ExecuteResult>(card.dataset, {
         count_only: true
       });

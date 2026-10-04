@@ -25,7 +25,7 @@ import { formatFormulaValue } from "@/views/form/utils/formulaEval";
  * 流程审批中心一致）。
  *
  * 数据源：列表行只作初值——「我的填报」列表已瘦身（不含 form_schema /
- * approval_trail，T02-10），挂载后按 pk 拉取 retrieve 全量（schema 快照 +
+ * approval_trail），挂载后按 pk 拉取 retrieve 全量（schema 快照 +
  * 审批轨迹）再渲染字段明细与轨迹。
  */
 defineOptions({ name: "FormSubmissionDetail" });
@@ -177,7 +177,7 @@ const prepareFieldMetadata = () => {
 };
 
 onMounted(async () => {
-  // 列表行已瘦身（无 form_schema/approval_trail，T02-10）：拉取 retrieve 全量
+  // 列表行已瘦身（无 form_schema/approval_trail）：拉取 retrieve 全量
   // 后再准备字段展示辅助数据；请求失败时保留列表行初值（data 摘要仍可渲染）
   const res = await submissionApi.retrieve(props.row.pk).catch(() => null);
   if (res?.code === SUCCESS_CODE && res.data) {

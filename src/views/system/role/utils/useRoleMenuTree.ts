@@ -69,7 +69,7 @@ export function useRoleMenuTree() {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
           return;
         }
-        // 菜单树先行回填（T02-11）：字段权限缺失或字段接口失败时只损失注入的
+        // 菜单树先行回填：字段权限缺失或字段接口失败时只损失注入的
         // 字段节点，整树不再空白——原先 menuTreeData 只在「有字段权限 且 字段
         // 接口成功」的嵌套分支赋值，无字段权限的角色页授权树整树不可用
         const tree = handleTree(res.data.results) as PermissionTreeNode[];

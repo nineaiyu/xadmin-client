@@ -22,7 +22,7 @@ import { message } from "@/utils/message";
  * - 绑定：后端把 IdP 身份绑定到本人 → 回账户设置「第三方账号」页签（不下发 token）。
  *
  * 登录账号开启 MFA 时后端原样返回 `mfa_required + mfa_token + methods`
- * （与密码登录的二次验证载荷同构，T02-16）：本页复用 `LoginMfa` 组件走
+ * （与密码登录的二次验证载荷同构）：本页复用 `LoginMfa` 组件走
  * `loginMfaVerifyApi` 完成二次验证——原先仅显示错误并丢弃 mfa_token，OAuth
  * 用户开启 MFA 后是死路（只能改走账号密码登录）。
  *

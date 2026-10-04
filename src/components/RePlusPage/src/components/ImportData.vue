@@ -95,7 +95,7 @@ const selectedTemplate = ref("");
 const newTemplateName = ref("");
 // 列映射模板是独立全局资源（/api/system/import-templates），与页面导入按钮
 // （importData:<Page>）权限不同：无对应权限位时不请求、不渲染模板 UI，
-// 列映射本身不受影响（T01-04）
+// 列映射本身不受影响
 const templateAuth = {
   list: hasAuth("list:SystemImportTemplate"),
   create: hasAuth("create:SystemImportTemplate")

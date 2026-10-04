@@ -5,7 +5,7 @@ import ChartCard from "../ChartCard.vue";
 import type { DashboardCard } from "@/api/dataset/datasets";
 
 /**
- * 仪表盘卡片（ChartCard）单测（T02-09）。
+ * 仪表盘卡片（ChartCard）单测。
  *
  * 核心回归：number / metric(count) 数字卡取数走 `count_only=true`——服务端
  * 跳过全量行物化仅 count，挂屏 M 张数字卡每刷新周期不再产生 M 次全量行查询。
@@ -55,7 +55,7 @@ beforeEach(() => {
   });
 });
 
-describe("ChartCard 数字卡 count_only（T02-09）", () => {
+describe("ChartCard 数字卡 count_only", () => {
   it("number 卡：execute 携带 count_only=true，渲染 total", async () => {
     const wrapper = mountCard(NUMBER_CARD);
     await flushPromises();

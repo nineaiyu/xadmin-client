@@ -16,7 +16,7 @@ jobs:
         uses: pnpm/action-setup@v3
         with:
           # 与 engines（pnpm>=11）及 Dockerfile-base corepack 钉版对齐；钉 patch 防 CI 与
-          # 本地/容器口径漂移（O9-4）
+          # 本地/容器口径漂移
           version: 11.25.0
 
       - name: Run pnpm audit

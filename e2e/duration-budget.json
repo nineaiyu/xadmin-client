@@ -1,5 +1,5 @@
 {
-  "_note": "档位键 = 平台-CI-运行范围（e2e-parallel.mjs ENV_KEY），分片数为二级键。当前仅 darwin-local 档（本地跑批记录）；本档为自录语义——某环境无档首跑只记录基线不比对，故 CI（linux）启用跑批时无需预录，首轮自录 linux-ci-* 档即自动进入常态比对（O10-2 注明触发）。",
+  "_note": "档位键 = 平台-CI-运行范围（e2e-parallel.mjs ENV_KEY），分片数为二级键。当前仅 darwin-local 档（本地跑批记录）；本档为自录语义——某环境无档首跑只记录基线不比对，故 CI（linux）启用跑批时无需预录，首轮自录 linux-ci-* 档即自动进入常态比对。",
   "darwin-local-smoke": {
     "2": {
       "seconds": 35,

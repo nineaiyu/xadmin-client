@@ -42,7 +42,7 @@ runs:
     - name: Set up Python (backend under test)
       uses: actions/setup-python@v5
       with:
-        # 与 pyproject requires-python（>=3.14）及 server CI 门禁同口径（O9-5）
+        # 与 pyproject requires-python（>=3.14）及 server CI 门禁同口径
         python-version: "3.14"
         cache: pip
         cache-dependency-path: ${{ inputs.server-dir }}/requirements.txt

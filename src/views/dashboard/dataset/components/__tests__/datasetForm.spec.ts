@@ -5,7 +5,7 @@ import DatasetForm from "../DatasetForm.vue";
 import type { DatasetItem, DatasetMeta } from "@/api/dataset/datasets";
 
 /**
- * 数据集表单（DatasetForm）单测（T02-13）。
+ * 数据集表单（DatasetForm）单测。
  *
  * 核心回归：`op=in` 过滤的 value 按逗号拆分为数组提交——后端强制 in 的 value
  * 为 list/tuple，字符串原样提交必 400（输入框按逗号串展示，placeholder 已
@@ -67,7 +67,7 @@ const payloadOf = (wrapper: ReturnType<typeof mountForm>) =>
     }
   ).getPayload();
 
-describe("DatasetForm op=in 过滤值（T02-13）", () => {
+describe("DatasetForm op=in 过滤值", () => {
   it("编辑回显：数组 value 以逗号串展示，提交拆回数组（双向可逆）", () => {
     const wrapper = mountForm(ROW);
     const filters = payloadOf(wrapper)!.filters as Array<{

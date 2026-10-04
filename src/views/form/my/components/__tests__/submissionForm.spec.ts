@@ -5,7 +5,7 @@ import SubmissionForm from "../SubmissionForm.vue";
 import type { FillableFormItem, SubmissionItem } from "@/api/dataset/dform";
 
 /**
- * 动态填报表单（SubmissionForm）单测（T02-14）。
+ * 动态填报表单（SubmissionForm）单测。
  *
  * 核心回归：编辑既有提交时按当前 schema 裁剪历史键——schema 演进（字段删除/
  * 改名）后旧 data 的已删字段键渲染不出、用户无法清理，不裁剪会随载荷提交被
@@ -72,7 +72,7 @@ const payloadOf = (wrapper: ReturnType<typeof mountForm>) =>
     }
   ).getPayload().data;
 
-describe("SubmissionForm 历史键裁剪（T02-14）", () => {
+describe("SubmissionForm 历史键裁剪", () => {
   it("编辑既有提交：formData 只保留当前 schema 的键，历史键不随载荷提交", async () => {
     userOptionsMock.mockResolvedValue({ data: [] });
     const wrapper = mountForm({ form: FORM, submission: SUBMISSION });
