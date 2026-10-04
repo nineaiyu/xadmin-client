@@ -1,14 +1,12 @@
 <script lang="ts" setup>
 import { SUCCESS_CODE } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
-import { computed, h, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import Sortable from "sortablejs";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { Download, Setting } from "@element-plus/icons-vue";
 import { ElMessageBox } from "element-plus";
-import { addDialog } from "@/components/ReDialog";
-import { dialogSize } from "@/components/ReDialog/size";
 import ReEmpty from "@/components/ReEmpty";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
@@ -22,9 +20,9 @@ import {
 } from "@/api/dataset/datasets";
 import { useCardImageExport } from "./utils/useCardImageExport";
 import { useCardDialog } from "./utils/useCardDialog";
+import { useDashboardDialogs } from "./utils/useDashboardDialogs";
 import { cardColSpan, cardColSpanNarrow } from "./utils/span";
 import ChartCard from "./components/ChartCard.vue";
-import DashboardCreateForm from "./components/DashboardCreateForm.vue";
 
 defineOptions({
   name: "DataDashboard"
@@ -178,16 +176,17 @@ const setupSortable = () => {
 
 const saveLayout = async () => {
   if (!current.value) return;
-  const res = await dashboardApi.partialUpdate(current.value.pk, {
-    layout: draftLayout.value
-  });
+  const res = await dashboardApi.partialUpdate<DashboardItem>(
+    current.value.pk,
+    { layout: draftLayout.value }
+  );
   if (res.code === SUCCESS_CODE) {
     message(t("dashboard.saveOk"), { type: "success" });
     const index = dashboards.value.findIndex(
       item => item.pk === current.value?.pk
     );
-    if (index >= 0 && (res.data as unknown as DashboardItem)) {
-      dashboards.value[index] = res.data as unknown as DashboardItem;
+    if (index >= 0 && res.data) {
+      dashboards.value[index] = res.data;
       current.value = dashboards.value[index];
     }
     editing.value = false;
@@ -214,97 +213,14 @@ const { openCardSettings, openCardDialog } = useCardDialog({
   }
 });
 
-// ---- 新建仪表盘弹窗 ----
-const dashFormRef = ref<InstanceType<typeof DashboardCreateForm>>();
-
-const openCreateDashboard = () => {
-  dashFormRef.value = undefined;
-  addDialog({
-    title: t("dashboard.create"),
-    width: dialogSize("sm"),
-    draggable: true,
-    destroyOnClose: true,
-    closeOnClickModal: false,
-    sureBtnLoading: true,
-    contentRenderer: () => h(DashboardCreateForm, { ref: dashFormRef }),
-    beforeSure: async (done, { closeLoading }) => {
-      const payload = dashFormRef.value?.getPayload();
-      if (!payload) {
-        closeLoading();
-        return;
-      }
-      // 异常归一为可读失败结果：避免请求异常时 beforeSure 抛错、弹窗 loading 悬挂
-      const res = await dashboardApi
-        .create({ ...payload, layout: [] })
-        .catch(error => ({
-          code: -1,
-          data: null,
-          detail: String((error as { detail?: string })?.detail ?? error)
-        }));
-      if (res.code === SUCCESS_CODE) {
-        message(t("dashboard.saveOk"), { type: "success" });
-        // 先关弹窗再刷新列表（与原手写弹窗行为一致，避免刷新耗时导致弹窗滞留）
-        done();
-        current.value = null;
-        await loadDashboards();
-        current.value =
-          dashboards.value.find(
-            item => item.pk === (res.data as never as DashboardItem)?.pk
-          ) ?? null;
-        syncDashboardQuery();
-        return;
-      }
-      // 200 + 业务码非 1000：全局拦截器只处理 HTTP 层错误，业务失败必须显式提示
-      if (res.detail) message(String(res.detail), { type: "error" });
-      closeLoading();
-    }
-  });
-};
-
-// ---- 仪表盘设置弹窗（重命名 / 可见性；与新建表单同构） ----
-const dashSettingsRef = ref<InstanceType<typeof DashboardCreateForm>>();
-
-const openDashboardSettings = () => {
-  if (!current.value) return;
-  const editingPk = current.value.pk;
-  dashSettingsRef.value = undefined;
-  addDialog({
-    title: t("dashboard.settings"),
-    width: dialogSize("sm"),
-    draggable: true,
-    destroyOnClose: true,
-    closeOnClickModal: false,
-    sureBtnLoading: true,
-    contentRenderer: () =>
-      h(DashboardCreateForm, { ref: dashSettingsRef, row: current.value }),
-    beforeSure: async (done, { closeLoading }) => {
-      const payload = dashSettingsRef.value?.getPayload();
-      if (!payload) {
-        closeLoading();
-        return;
-      }
-      const res = await dashboardApi
-        .partialUpdate(editingPk, payload)
-        .catch(error => ({
-          code: -1,
-          data: null,
-          detail: String((error as { detail?: string })?.detail ?? error)
-        }));
-      if (res.code === SUCCESS_CODE) {
-        message(t("dashboard.saveOk"), { type: "success" });
-        done();
-        const index = dashboards.value.findIndex(item => item.pk === editingPk);
-        if (index >= 0 && res.data) {
-          dashboards.value[index] = res.data as unknown as DashboardItem;
-          current.value = dashboards.value[index];
-        }
-        return;
-      }
-      if (res.detail) message(String(res.detail), { type: "error" });
-      closeLoading();
-    }
-  });
-};
+// ---- 新建 / 设置仪表盘弹窗：独立 composable（控制页面体积） ----
+const { openCreateDashboard, openDashboardSettings } = useDashboardDialogs({
+  t,
+  dashboards,
+  current,
+  reload: loadDashboards,
+  syncQuery: syncDashboardQuery
+});
 
 const removeDashboard = async () => {
   if (!current.value) return;

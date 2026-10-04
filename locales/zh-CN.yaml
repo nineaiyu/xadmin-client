@@ -234,6 +234,7 @@ loginPolicy:
   previewWhenTip: 留空表示当前时间
   previewRun: 预演
   previewResult: 命中「{policy}」→ {action}
+  previewEcho: 实际预演样例——用户 {username} / IP {ip} / 时间 {when}
   previewNoMatch: 当前没有策略命中该样例
   previewMatched: 是否匹配
   previewDims: 匹配明细

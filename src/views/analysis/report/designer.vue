@@ -12,7 +12,6 @@ import {
   relatedPk,
   reportApi,
   runReport,
-  type ReportComponentType,
   type ReportDesign,
   type ReportDesignComponent,
   type ReportItem
@@ -22,18 +21,13 @@ import ReportDesignSidebar from "./components/ReportDesignSidebar.vue";
 import ReportTablePreview from "./components/ReportTablePreview.vue";
 import ReportComponentForm from "./components/ReportComponentForm.vue";
 import {
-  DEFAULT_SPAN,
-  REPORT_MAX_COMPONENTS,
   REPORT_TABLE_LIMIT,
-  REPORT_TEMPLATES,
-  componentToCard,
   designColumns,
   designTableLimit,
-  duplicateComponent,
-  genComponentId,
-  moveComponent,
-  normalizeDesign
+  normalizeDesign,
+  componentToCard
 } from "./utils/design";
+import { useDesignMutations } from "./utils/useDesignMutations";
 
 defineOptions({ name: "DataReportDesigner" });
 
@@ -83,6 +77,26 @@ const selected = computed(() =>
 const columns = computed(() => designColumns(design.value, dataset.value));
 const tableLimit = computed(() => designTableLimit(design.value));
 
+/* 设计变更（模板 / 明细列 / 行数上限 / 组件增删改排复）：独立 composable（控制页面体积） */
+const {
+  applyTemplate,
+  onColumnsChange,
+  onLimitChange,
+  addComponent,
+  updateComponent,
+  removeComponent,
+  moveComponentBy,
+  duplicateComponentById
+} = useDesignMutations({
+  design,
+  selectedId,
+  dataset,
+  markDirty: () => {
+    dirty.value = true;
+  },
+  t
+});
+
 const componentTitle = (component: ReportDesignComponent) =>
   component.title ||
   t(
@@ -131,101 +145,6 @@ onBeforeUnmount(() => {
   window.removeEventListener("keydown", onKeydown);
   window.removeEventListener("beforeunload", onBeforeUnload);
 });
-
-/* ---------------- 模板 ---------------- */
-function applyTemplate(code: string) {
-  if (!dataset.value) return;
-  const template = REPORT_TEMPLATES.find(item => item.code === code);
-  if (!template) return;
-  design.value = template.build(dataset.value);
-  selectedId.value = "";
-  dirty.value = true;
-  message(t("dataReport.templateApplied", { name: t(template.labelKey) }), {
-    type: "success"
-  });
-}
-
-/* ---------------- 明细列与行数上限 ---------------- */
-const onColumnsChange = (values: string[]) => {
-  design.value = { ...design.value, columns: values };
-  dirty.value = true;
-};
-
-const onLimitChange = (value: number) => {
-  design.value = {
-    ...design.value,
-    table_limit: Math.min(
-      Math.max(value || REPORT_TABLE_LIMIT.default, REPORT_TABLE_LIMIT.min),
-      REPORT_TABLE_LIMIT.max
-    )
-  };
-  dirty.value = true;
-};
-
-/* ---------------- 组件增删改 ---------------- */
-function addComponent(type: ReportComponentType) {
-  if (components.value.length >= REPORT_MAX_COMPONENTS) {
-    message(t("dataReport.componentLimit", { max: REPORT_MAX_COMPONENTS }), {
-      type: "warning"
-    });
-    return;
-  }
-  const firstColumn = dataset.value?.columns?.[0] ?? "";
-  const component: ReportDesignComponent = {
-    id: genComponentId(),
-    type,
-    span: DEFAULT_SPAN[type],
-    metric: "count",
-    value_field: "",
-    // 指标卡无分组；图表类默认取首个数据集列，避免保存时才被服务端打回
-    group_by: type === "number" ? "" : firstColumn
-  };
-  design.value = {
-    ...design.value,
-    components: [...components.value, component]
-  };
-  selectedId.value = component.id;
-  dirty.value = true;
-}
-
-function updateComponent(patch: Partial<ReportDesignComponent>) {
-  design.value = {
-    ...design.value,
-    components: components.value.map(item =>
-      item.id === selectedId.value ? { ...item, ...patch } : item
-    )
-  };
-  dirty.value = true;
-}
-
-function removeComponent(id: string) {
-  design.value = {
-    ...design.value,
-    components: components.value.filter(item => item.id !== id)
-  };
-  if (selectedId.value === id) selectedId.value = "";
-  dirty.value = true;
-}
-
-/* ---------------- 组件排序 / 复制 ---------------- */
-function moveComponentBy(id: string, delta: -1 | 1) {
-  const next = moveComponent(components.value, id, delta);
-  if (next === components.value) return;
-  design.value = { ...design.value, components: next };
-  dirty.value = true;
-}
-
-function duplicateComponentById(id: string) {
-  const next = duplicateComponent(components.value, id);
-  if (!next) {
-    message(t("dataReport.componentLimit", { max: REPORT_MAX_COMPONENTS }), {
-      type: "warning"
-    });
-    return;
-  }
-  design.value = { ...design.value, components: next };
-  dirty.value = true;
-}
 
 const refreshData = () => {
   tableRef.value?.load?.();

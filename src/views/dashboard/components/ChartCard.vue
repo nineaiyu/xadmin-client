@@ -140,11 +140,9 @@ const loadData = async () => {
   errorMsg.value = "";
   try {
     if (card.chart_type === "number") {
-      const res = await datasetApi.execute(card.dataset);
+      const res = await datasetApi.execute<ExecuteResult>(card.dataset);
       if (res.code === SUCCESS_CODE) {
-        total.value = Number(
-          (res.data as unknown as ExecuteResult)?.total ?? 0
-        );
+        total.value = Number(res.data?.total ?? 0);
         return;
       }
       errorMsg.value = String(res.detail ?? t("dashboard.loadFailed"));
@@ -153,31 +151,27 @@ const loadData = async () => {
     if (card.chart_type === "metric") {
       // 指标卡：count = 行总数（复用 execute）；sum/avg = 无分组纯聚合单值
       if ((card.metric ?? "count") === "count") {
-        const res = await datasetApi.execute(card.dataset);
+        const res = await datasetApi.execute<ExecuteResult>(card.dataset);
         if (res.code === SUCCESS_CODE) {
-          total.value = Number(
-            (res.data as unknown as ExecuteResult)?.total ?? 0
-          );
+          total.value = Number(res.data?.total ?? 0);
           return;
         }
         errorMsg.value = String(res.detail ?? t("dashboard.loadFailed"));
         return;
       }
-      const res = await datasetApi.aggregate(card.dataset, {
+      const res = await datasetApi.aggregate<AggregateResult>(card.dataset, {
         group_by: "",
         metric: card.metric ?? "count",
         value_field: card.value_field
       });
       if (res.code === SUCCESS_CODE) {
-        total.value = Number(
-          (res.data as unknown as AggregateResult)?.series?.[0]?.value ?? 0
-        );
+        total.value = Number(res.data?.series?.[0]?.value ?? 0);
         return;
       }
       errorMsg.value = String(res.detail ?? t("dashboard.loadFailed"));
       return;
     }
-    const res = await datasetApi.aggregate(card.dataset, {
+    const res = await datasetApi.aggregate<AggregateResult>(card.dataset, {
       group_by: card.group_by,
       metric: card.metric ?? "count",
       date_trunc:
@@ -185,7 +179,7 @@ const loadData = async () => {
       value_field: card.value_field
     });
     if (res.code === SUCCESS_CODE) {
-      await renderAggregate(res.data as unknown as AggregateResult);
+      await renderAggregate(res.data);
       return;
     }
     // 200 + 业务码非 1000（字段权限/数值字段校验等）：显式提示，避免图表空白无解释

@@ -234,6 +234,7 @@ loginPolicy:
   previewWhenTip: Leave empty to use now
   previewRun: Preview
   previewResult: Matched "{policy}" -> {action}
+  previewEcho: Sample actually used — user {username} / IP {ip} / time {when}
   previewNoMatch: No policy matches this sample
   previewMatched: Matched
   previewDims: Dimension Detail

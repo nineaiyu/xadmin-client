@@ -4,7 +4,7 @@ import { buildDeptActionGroups, type DeptActionHandlers } from "../deptActions";
 type Params = Parameters<typeof buildDeptActionGroups>[0];
 
 /** t 仅用于产出稳定断言值：返回键名即可（分组/动作文案均来自 i18n 键） */
-const t = ((key: string) => key) as unknown as Params["t"];
+const t = ((key: string) => key) as Params["t"];
 
 const handlers: DeptActionHandlers = {
   assignRoles: () => undefined,

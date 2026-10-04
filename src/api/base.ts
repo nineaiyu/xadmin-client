@@ -11,6 +11,7 @@ import type {
   SearchColumnsResult,
   SearchFieldsResult
 } from "@/api/types";
+import type { RecordType } from "plus-pro-components";
 
 /**
  * 导入列映射模板接口地址：全局资源（按目标模型隔离），
@@ -124,8 +125,10 @@ export class BaseApi extends BaseRequest {
   list = (params?: object) => {
     return this.request<ListResult>("get", params, {});
   };
-  create = (data?: object) => {
-    return this.request<DetailResult>("post", {}, data);
+  // 泛型默认与既有 DetailResult 一致（RecordType）；调用方可用具体契约收窄
+  // res.data 的类型，避免调用侧双重断言绕过类型检查（类型逃逸门禁）。
+  create = <T = RecordType>(data?: object) => {
+    return this.request<DetailResult<T>>("post", {}, data);
   };
   retrieve = (pk: number | string, params?: object) => {
     return this.request<DetailResult>(
@@ -147,8 +150,8 @@ export class BaseApi extends BaseRequest {
   detail = (pk: number | string, params?: object) => {
     return this.retrieve(pk, params);
   };
-  partialUpdate = (pk: number | string, data?: object) => {
-    return this.request<DetailResult>(
+  partialUpdate = <T = RecordType>(pk: number | string, data?: object) => {
+    return this.request<DetailResult<T>>(
       "patch",
       {},
       data,

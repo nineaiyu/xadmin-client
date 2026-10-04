@@ -21,7 +21,7 @@ function buildOperationButtons(
     isTree: false,
     operationButtonsProps,
     tableBarButtonsProps: undefined
-  } as unknown as RePlusPageProps;
+  } as RePlusPageProps;
   const { operationButtons } = usePlusPageButtons({
     props,
     t,

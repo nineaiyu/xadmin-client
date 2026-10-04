@@ -1,3 +1,4 @@
+import type { RecordType } from "plus-pro-components";
 import { BaseApi } from "@/api/base";
 import type { DetailResult } from "@/api/types";
 
@@ -86,16 +87,16 @@ class DatasetApi extends BaseApi {
   meta = () => {
     return this.request<DetailResult>("get", {}, {}, `${this.baseApi}/meta`);
   };
-  execute = (pk: string, data?: object) => {
-    return this.request<DetailResult>(
+  execute = <T = RecordType>(pk: string, data?: object) => {
+    return this.request<DetailResult<T>>(
       "post",
       {},
       data,
       `${this.baseApi}/${pk}/execute`
     );
   };
-  aggregate = (pk: string, data: object) => {
-    return this.request<DetailResult>(
+  aggregate = <T = RecordType>(pk: string, data: object) => {
+    return this.request<DetailResult<T>>(
       "post",
       {},
       data,
