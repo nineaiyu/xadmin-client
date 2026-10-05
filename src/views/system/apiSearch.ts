@@ -1,11 +1,12 @@
 /**
  * 注册元数据驱动的 `api-search-*` 远程搜索组件。
  *
- * 这些组件原先由框架层（`RePlusPage/src/utils/columns.tsx`）直接 import，
- * 使通用组件反向依赖业务页面：业务组件被拖进主包，且存在循环依赖风险。
- * 现由业务侧在应用启动时（`main.ts`）注册，框架只按名取用。
+ * 框架层（RePlusPage/src/utils/columns.tsx）只按名取用，业务侧在应用启动时
+ * （main.ts）注册，避免通用组件反向依赖业务组件。
  *
- * 采用异步组件保持按需加载：只有页面真正用到对应 `input_type` 时才加载该组件。
+ * 组件本体是统一的 SearchPicker（实体差异在组件内 PRESETS），此处按既有
+ * `api-search-*` 契约名逐一注册；异步组件保持按需加载：只有页面真正用到
+ * 对应 input_type 时才加载该组件。
  */
 import { defineAsyncComponent } from "vue";
 import {
@@ -17,20 +18,15 @@ import { http } from "@/utils/http";
 /** 远程联想fetcher：统一走 axios 拦截器（token / 业务码归一） */
 registerSuggestFetcher((url, params) => http.request("get", url, { params }));
 
+const pickerLoader = (entity: "user" | "dept" | "role" | "post" | "menu") =>
+  defineAsyncComponent(() =>
+    import("@/components/SearchPicker").then(m => m.createSearchPicker(entity))
+  );
+
 registerApiSearchComponents({
-  "api-search-user": defineAsyncComponent(
-    () => import("./components/SearchUser.vue")
-  ),
-  "api-search-dept": defineAsyncComponent(
-    () => import("./components/SearchDept.vue")
-  ),
-  "api-search-role": defineAsyncComponent(
-    () => import("./components/SearchRole.vue")
-  ),
-  "api-search-post": defineAsyncComponent(
-    () => import("./components/SearchPost.vue")
-  ),
-  "api-search-menu": defineAsyncComponent(
-    () => import("./components/SearchMenu.vue")
-  )
+  "api-search-user": pickerLoader("user"),
+  "api-search-dept": pickerLoader("dept"),
+  "api-search-role": pickerLoader("role"),
+  "api-search-post": pickerLoader("post"),
+  "api-search-menu": pickerLoader("menu")
 });

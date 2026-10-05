@@ -2,7 +2,7 @@ import type { NodeProgress } from "@/api/approval/approvalFlow";
 import { message } from "@/utils/message";
 import type { useI18n } from "vue-i18n";
 
-/** 实例动作弹窗（单行/批量）共享的小工具：标题简化与 SearchUser 载荷提取 */
+/** 实例动作弹窗（单行/批量）共享的小工具：标题简化与用户选择器载荷提取 */
 
 export type TFunction = ReturnType<typeof useI18n>["t"];
 
@@ -18,7 +18,7 @@ export const rowTitle = (row: { pk?: string | number; title?: string }) =>
   row.title ?? String(row.pk).slice(0, 8).toUpperCase();
 
 /**
- * 从 SearchUser 的 v-model 载荷提取用户名：
+ * 从用户选择器（SearchPicker）的 v-model 载荷提取用户名：
  * 选择器内部按 valueProps 产出 `{pk, label}`（label=username），兼容直接传 user 行对象的形态。
  */
 export function pickUsername(value: unknown): string {

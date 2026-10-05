@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import SearchUser from "@/views/system/components/SearchUser.vue";
+import SearchPicker from "@/components/SearchPicker";
 import TrialResultPanel from "@/views/system/components/TrialResultPanel.vue";
 import { useTrialPanel, type TrialPanelProps } from "./useTrialPanel";
 
@@ -73,7 +73,12 @@ const {
 
         <!-- 数据权限：用户 + 模型 + 菜单上下文 + 且/或模式 -->
         <div v-if="scope === 'data'" class="flex flex-wrap items-center gap-2">
-          <SearchUser v-model="targetUser" :multiple="false" class="w-60!" />
+          <SearchPicker
+            v-model="targetUser"
+            entity="user"
+            :multiple="false"
+            class="w-60!"
+          />
           <el-select
             v-model="model"
             :placeholder="t('permissionPreview.model')"
@@ -172,7 +177,12 @@ const {
         <!-- 字段权限：用户 + 菜单（必填）+ 可选草稿白名单 -->
         <template v-if="scope === 'field'">
           <div class="flex flex-wrap items-center gap-2">
-            <SearchUser v-model="targetUser" :multiple="false" class="w-60!" />
+            <SearchPicker
+              v-model="targetUser"
+              entity="user"
+              :multiple="false"
+              class="w-60!"
+            />
             <el-select
               v-model="menuContext"
               :placeholder="t('permissionPreview.menuContext')"

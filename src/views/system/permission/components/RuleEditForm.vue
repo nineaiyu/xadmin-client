@@ -7,10 +7,7 @@ import {
   getDateTimePickerShortcuts,
   getPickerShortcuts
 } from "@/components/RePlusPage";
-import SearchUser from "@/views/system/components/SearchUser.vue";
-import SearchDept from "@/views/system/components/SearchDept.vue";
-import SearchRole from "@/views/system/components/SearchRole.vue";
-import SearchMenu from "@/views/system/components/SearchMenu.vue";
+import SearchPicker from "@/components/SearchPicker";
 import RuleFieldPicker from "./RuleFieldPicker.vue";
 import {
   groupRuleTypes,
@@ -409,21 +406,25 @@ defineExpose({ validate });
         :placeholder="t('systemPermission.editor.jsonPlaceholder')"
         type="textarea"
       />
-      <SearchUser
+      <SearchPicker
         v-else-if="input === 'user' && hasAuth('list:SearchUser')"
         v-model="objectValue"
+        entity="user"
       />
-      <SearchDept
+      <SearchPicker
         v-else-if="input === 'dept' && hasAuth('list:SearchDept')"
         v-model="objectValue"
+        entity="dept"
       />
-      <SearchRole
+      <SearchPicker
         v-else-if="input === 'role' && hasAuth('list:SearchRole')"
         v-model="objectValue"
+        entity="role"
       />
-      <SearchMenu
+      <SearchPicker
         v-else-if="input === 'menu' && hasAuth('list:SearchMenu')"
         v-model="objectValue"
+        entity="menu"
       />
       <el-input
         v-else
