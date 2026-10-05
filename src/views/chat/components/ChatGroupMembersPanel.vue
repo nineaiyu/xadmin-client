@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessageBox } from "element-plus";
 import ReEmpty from "@/components/ReEmpty";
 import { message } from "@/utils/message";
+import { useConfirm } from "@/hooks/useConfirm";
 import { SUCCESS_CODE } from "@/api/types";
 import {
   chatApi,
@@ -28,6 +28,7 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+const confirm = useConfirm();
 
 const membersLoading = ref(false);
 const groupMemberList = ref<ChatPeer[]>([]);
@@ -161,15 +162,13 @@ async function submitRename() {
 async function leaveGroup() {
   const room = props.room;
   if (!room) return;
-  try {
-    await ElMessageBox.confirm(t("chat.leaveGroupConfirm"), {
+  if (
+    !(await confirm(t("chat.leaveGroupConfirm"), {
       confirmButtonText: t("chat.leaveGroup"),
-      cancelButtonText: t("buttons.cancel"),
-      type: "warning",
       confirmButtonClass: "el-button--danger",
       draggable: true
-    });
-  } catch {
+    }))
+  ) {
     return;
   }
   const { code, detail } = await chatApi.leaveGroup(room.id);

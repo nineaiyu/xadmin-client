@@ -7,7 +7,7 @@
 </template>
 
 <script lang="ts">
-import { ElConfigProvider, ElMessageBox } from "element-plus";
+import { ElConfigProvider } from "element-plus";
 import { useRouter, useRoute } from "vue-router";
 import { useGlobal, useWatermark } from "@pureadmin/utils";
 import {
@@ -34,6 +34,7 @@ import zhCn from "element-plus/es/locale/lang/zh-cn";
 import plusEn from "plus-pro-components/es/locale/lang/en";
 import plusZhCn from "plus-pro-components/es/locale/lang/zh-cn";
 import { $t, transformI18n } from "@/plugins/i18n";
+import { useConfirm } from "@/hooks/useConfirm";
 
 // wangeditor 附件插件注册已迁移至懒加载路径（src/utils/wangEditorBoot.ts），
 // 由编辑器异步组件在挂载前调用，避免约 1MB 的编辑器栈进入首屏闭包。
@@ -49,6 +50,7 @@ export default defineComponent({
   setup() {
     const route = useRoute();
     const router = useRouter();
+    const confirm = useConfirm();
     const { setWatermark, clear } = useWatermark();
     const { $storage } = useGlobal<GlobalPropertiesApi>();
     const userStore = useUserStoreHook();
@@ -97,17 +99,13 @@ export default defineComponent({
         if (!value || forcePasswordNotified) return;
         if (route.path === "/settings/basic") return;
         forcePasswordNotified = true;
-        ElMessageBox.confirm(
-          transformI18n($t("forcePassword.tip")),
-          transformI18n($t("forcePassword.title")),
-          {
-            confirmButtonText: transformI18n($t("forcePassword.submit")),
-            cancelButtonText: transformI18n($t("forcePassword.later")),
-            type: "warning"
-          }
-        )
-          .then(() => router.push("/settings/basic"))
-          .catch(() => null);
+        confirm(transformI18n($t("forcePassword.tip")), {
+          title: transformI18n($t("forcePassword.title")),
+          confirmButtonText: transformI18n($t("forcePassword.submit")),
+          cancelButtonText: transformI18n($t("forcePassword.later"))
+        }).then(ok => {
+          if (ok) router.push("/settings/basic");
+        });
       },
       { immediate: true }
     );

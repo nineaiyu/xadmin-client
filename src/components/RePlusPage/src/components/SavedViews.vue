@@ -2,11 +2,12 @@
 import { computed, h, onMounted, ref, watch, type Component } from "vue";
 import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { ElMessage, ElMessageBox } from "element-plus";
+import { ElMessage } from "element-plus";
 import { cloneDeep } from "@pureadmin/utils";
 import View from "~icons/ep/view";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
+import { useConfirm } from "@/hooks/useConfirm";
 import { useUserStoreHook } from "@/store/modules/user";
 import { savedViewApi } from "@/api/system/security";
 import type { DetailResult } from "@/api/types";
@@ -46,6 +47,7 @@ const emit = defineEmits<{ apply: [conditions: RecordType] }>();
 const { t } = useI18n();
 const route = useRoute();
 const userStore = useUserStoreHook();
+const confirm = useConfirm();
 const rows = ref<SavedViewRow[]>([]);
 const loading = ref(false);
 const visible = ref(false);
@@ -222,17 +224,7 @@ const toggleDefault = async (row: SavedViewRow) => {
 };
 
 const remove = async (row: SavedViewRow) => {
-  try {
-    await ElMessageBox.confirm(
-      t("savedView.deleteConfirm", { name: row.name }),
-      t("buttons.tips"),
-      {
-        type: "warning",
-        confirmButtonText: t("buttons.sure"),
-        cancelButtonText: t("buttons.cancel")
-      }
-    );
-  } catch {
+  if (!(await confirm(t("savedView.deleteConfirm", { name: row.name })))) {
     return;
   }
   const res = await savedViewApi.destroy(row.pk).catch(fallback);

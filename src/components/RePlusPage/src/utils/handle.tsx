@@ -3,7 +3,7 @@ import type { CSSProperties, Ref } from "vue";
 import { message } from "@/utils/message";
 import { invalidateMetaCache } from "@/utils/metaCache";
 import type { RecordType } from "plus-pro-components";
-import { ElMessageBox } from "element-plus";
+import { useConfirm } from "@/hooks/useConfirm";
 import type { TableColumnRenderer } from "@pureadmin/table";
 import type { ApiResult, DetailResult } from "@/api/types";
 
@@ -125,54 +125,49 @@ const onSwitchChange = (changeOptions: changeOptions) => {
     failed,
     requestEnd
   } = changeOptions;
-  ElMessageBox.confirm(
+  const confirm = useConfirm();
+  confirm(
     `${t("buttons.operateConfirm", {
       action: `<strong>${escapeHtml(actionMsg)}</strong>`,
       message: `<strong style="color:var(--el-color-primary)">${escapeHtml(msg)}</strong>`
     })}`,
     {
-      confirmButtonText: t("buttons.sure"),
-      cancelButtonText: t("buttons.cancel"),
-      type: "warning",
       dangerouslyUseHTMLString: true,
       draggable: true
     }
-  )
-    .then(() => {
-      switchLoadMap.value[index] = Object.assign(
-        {},
-        switchLoadMap.value[index],
-        {
-          loading: true
-        }
-      );
-      const updateData: Record<string, unknown> = {};
-      updateData[field] = row[field];
-      handleOperation({
-        t,
-        apiReq: updateApi((row?.pk ?? row?.id) as string | number, updateData),
-        requestEnd(options) {
-          switchLoadMap.value[index] = Object.assign(
-            {},
-            switchLoadMap.value[index],
-            {
-              loading: false
-            }
-          );
-          if (requestEnd) {
-            requestEnd(options);
-          }
-        },
-        success,
-        failed,
-        exception() {
-          row[field] = row[field] === false;
-        }
-      });
-    })
-    .catch(() => {
+  ).then(ok => {
+    if (!ok) {
+      // 取消/关闭：回滚开关（与请求异常同口径）
       row[field] = row[field] === false;
+      return;
+    }
+    switchLoadMap.value[index] = Object.assign({}, switchLoadMap.value[index], {
+      loading: true
     });
+    const updateData: Record<string, unknown> = {};
+    updateData[field] = row[field];
+    handleOperation({
+      t,
+      apiReq: updateApi((row?.pk ?? row?.id) as string | number, updateData),
+      requestEnd(options) {
+        switchLoadMap.value[index] = Object.assign(
+          {},
+          switchLoadMap.value[index],
+          {
+            loading: false
+          }
+        );
+        if (requestEnd) {
+          requestEnd(options);
+        }
+      },
+      success,
+      failed,
+      exception() {
+        row[field] = row[field] === false;
+      }
+    });
+  });
 };
 
 interface switchOptions {

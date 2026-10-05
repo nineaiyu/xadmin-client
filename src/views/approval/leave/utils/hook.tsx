@@ -1,9 +1,10 @@
 import { SUCCESS_CODE } from "@/api/types";
 import { h, reactive, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessage, ElMessageBox, ElTag } from "element-plus";
+import { ElMessage, ElTag } from "element-plus";
 import { LEAVE_DRAFT_SAVED_CODE, leaveApi } from "@/api/approval/leave";
 import { usePageAuth } from "@/router/utils";
+import { useConfirm } from "@/hooks/useConfirm";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";
 import { SOLID_TAG_STYLE } from "@/utils/tagTone";
 import type {
@@ -50,6 +51,7 @@ export function useLeave(
   const api = reactive(leaveApi);
   const auth = usePageAuth(["submit", "cancel"]);
   const { t } = useI18n();
+  const confirm = useConfirm();
 
   // 状态列 / 操作按钮 / 统计卡随业务单状态联动（提交 → 审批中、撤回 → 已撤回）
   const refresh = () => {
@@ -57,37 +59,32 @@ export function useLeave(
     statsRef?.value?.refresh();
   };
 
-  const confirmAndRun = (
+  const confirmAndRun = async (
     row: Record<string, unknown>,
     titleKey: string,
     run: (pk: string | number) => Promise<{ code: number; detail?: string }>,
     successKey: string
   ) => {
-    ElMessageBox.confirm(
-      t(`leaveApply.${titleKey}`),
-      t("leaveApply.confirmTitle"),
-      {
-        confirmButtonText: t("buttons.sure"),
-        cancelButtonText: t("buttons.cancel"),
-        type: "warning",
+    if (
+      !(await confirm(t(`leaveApply.${titleKey}`), {
+        title: t("leaveApply.confirmTitle"),
         confirmButtonClass: "el-button--danger"
-      }
-    )
-      .then(() => run(row.pk as string | number))
-      .then(res => {
-        if (res?.code === SUCCESS_CODE) {
-          ElMessage.success(t(`leaveApply.${successKey}`));
-          // 状态列/操作按钮随业务单状态联动（提交 → 审批中、撤回 → 已撤回），必须刷新
-          refresh();
-          return;
-        }
-        // 200 + 业务码非 1000（已在审批中 / 区间冲突 / 未配置流程等）：全局拦截器只处理
-        // HTTP 层错误，业务失败必须显式展示后端 detail，否则用户点击后完全无反馈
-        ElMessage.error(String(res?.detail || t("results.failed")));
-      })
-      .catch(() => {
-        /* 用户取消确认 / HTTP 层错误：提示由拦截器统一处理 */
-      });
+      }))
+    ) {
+      return;
+    }
+    // HTTP 层异常：提示由拦截器统一处理，这里静默返回
+    const res = await run(row.pk as string | number).catch(() => undefined);
+    if (!res) return;
+    if (res.code === SUCCESS_CODE) {
+      ElMessage.success(t(`leaveApply.${successKey}`));
+      // 状态列/操作按钮随业务单状态联动（提交 → 审批中、撤回 → 已撤回），必须刷新
+      refresh();
+      return;
+    }
+    // 200 + 业务码非 1000（已在审批中 / 区间冲突 / 未配置流程等）：全局拦截器只处理
+    // HTTP 层错误，业务失败必须显式展示后端 detail，否则用户点击后完全无反馈
+    ElMessage.error(String(res.detail || t("results.failed")));
   };
 
   const operationButtonsProps = shallowRef<OperationProps>({

@@ -2,7 +2,7 @@
 import ReEmpty from "@/components/ReEmpty";
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessageBox } from "element-plus";
+import { useConfirm } from "@/hooks/useConfirm";
 import { SUCCESS_CODE } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { hasAuth } from "@/router/utils";
@@ -29,6 +29,7 @@ const props = defineProps<{
 }>();
 
 const { t } = useI18n();
+const confirm = useConfirm();
 const loading = ref(false);
 const templates = ref<DynamicFormItem[]>([]);
 const canDestroy = hasAuth("destroy:FormDesigner");
@@ -55,18 +56,12 @@ const fieldCount = (row: unknown) =>
 const pick = (row: unknown) => props.onPick(row as DynamicFormItem);
 
 const remove = async (row: DynamicFormItem) => {
-  try {
-    await ElMessageBox.confirm(
-      t("dform.templateRemoveConfirm", { name: row.name }),
-      {
-        confirmButtonText: t("buttons.sure"),
-        cancelButtonText: t("buttons.cancel"),
-        type: "warning",
-        confirmButtonClass: "el-button--danger",
-        draggable: true
-      }
-    );
-  } catch {
+  if (
+    !(await confirm(t("dform.templateRemoveConfirm", { name: row.name }), {
+      confirmButtonClass: "el-button--danger",
+      draggable: true
+    }))
+  ) {
     return;
   }
   const res = await dynamicFormApi.destroy(row.pk).catch(error => ({

@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessageBox } from "element-plus";
 import {
   designerApi,
   type DynamicFormItem,
@@ -9,6 +8,7 @@ import {
   type SchemaHistoryItem,
   type SchemaHistoryResult
 } from "@/api/dataset/dform";
+import { useConfirm } from "@/hooks/useConfirm";
 import { message } from "@/utils/message";
 import { fieldTypeLabelKey } from "../utils/schemaMeta";
 import { LINKAGE_EFFECTS, linkageFieldLabel } from "../utils/linkageMeta";
@@ -36,6 +36,7 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+const confirm = useConfirm();
 const loading = ref(true);
 const submitting = ref(false);
 const data = ref<SchemaHistoryResult>({
@@ -77,35 +78,29 @@ const linkageSummary = (item: SchemaHistoryItem) =>
   });
 
 const rollback = (item: SchemaHistoryItem) => {
-  ElMessageBox.confirm(
-    t("dform.historyRollbackConfirm", { version: item.version }),
-    t("dform.historyRollback"),
-    {
-      confirmButtonText: t("dform.historyRollback"),
-      cancelButtonText: t("buttons.cancel"),
-      type: "warning"
+  confirm(t("dform.historyRollbackConfirm", { version: item.version }), {
+    title: t("dform.historyRollback"),
+    confirmButtonText: t("dform.historyRollback")
+  }).then(async ok => {
+    if (!ok) return;
+    submitting.value = true;
+    const res = await designerApi
+      .rollback(props.row.pk, item.version)
+      .catch(error => ({
+        code: -1,
+        detail: String((error as { detail?: string })?.detail ?? error)
+      }));
+    submitting.value = false;
+    if (res.code !== 1000) {
+      message(res.detail ?? t("results.failed"), { type: "error" });
+      return;
     }
-  )
-    .then(async () => {
-      submitting.value = true;
-      const res = await designerApi
-        .rollback(props.row.pk, item.version)
-        .catch(error => ({
-          code: -1,
-          detail: String((error as { detail?: string })?.detail ?? error)
-        }));
-      submitting.value = false;
-      if (res.code !== 1000) {
-        message(res.detail ?? t("results.failed"), { type: "error" });
-        return;
-      }
-      message(t("dform.historyRollbackDone", { version: item.version }), {
-        type: "success"
-      });
-      emit("done");
-      await load();
-    })
-    .catch(() => undefined);
+    message(t("dform.historyRollbackDone", { version: item.version }), {
+      type: "success"
+    });
+    emit("done");
+    await load();
+  });
 };
 
 const currentVersion = computed(() => data.value.current ?? 1);

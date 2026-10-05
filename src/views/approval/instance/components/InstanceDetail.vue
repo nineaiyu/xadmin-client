@@ -2,7 +2,6 @@
 import ReEmpty from "@/components/ReEmpty";
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessageBox } from "element-plus";
 import { approvalInstanceApi } from "@/api/approval/approvalFlow";
 import type {
   InstanceComment,
@@ -10,6 +9,7 @@ import type {
 } from "@/api/approval/approvalFlow";
 import { SUCCESS_CODE } from "@/api/types";
 import { message } from "@/utils/message";
+import { useConfirm } from "@/hooks/useConfirm";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";
 
 /**
@@ -80,6 +80,7 @@ const FLOW_STATUS_TAG_TYPE: Record<string, StatusTagType> = {
 
 const props = defineProps<{ pk: string | number }>();
 const { t } = useI18n();
+const confirm = useConfirm();
 
 const loading = ref(true);
 const detail = ref<InstanceDetailData | null>(null);
@@ -151,19 +152,7 @@ async function submitComment() {
 }
 
 async function removeComment(item: InstanceComment) {
-  try {
-    await ElMessageBox.confirm(
-      t("approvalDiscussion.deleteConfirm"),
-      t("buttons.tips"),
-      {
-        type: "warning",
-        confirmButtonText: t("buttons.sure"),
-        cancelButtonText: t("buttons.cancel")
-      }
-    );
-  } catch {
-    return;
-  }
+  if (!(await confirm(t("approvalDiscussion.deleteConfirm")))) return;
   const res = await approvalInstanceApi.deleteComment(props.pk, item.pk);
   if (res.code === SUCCESS_CODE) {
     await loadComments();

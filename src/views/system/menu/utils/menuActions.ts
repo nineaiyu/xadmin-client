@@ -10,9 +10,9 @@
 
 import { h } from "vue";
 import type { useI18n } from "vue-i18n";
-import { ElMessageBox } from "element-plus";
 import { copyTextToClipboard } from "@pureadmin/utils";
 import { message } from "@/utils/message";
+import { useConfirm } from "@/hooks/useConfirm";
 import { transformI18n } from "@/plugins/i18n";
 import type { BaseApi } from "@/api/base";
 import { MenuChoices } from "@/views/system/constants";
@@ -294,26 +294,17 @@ export async function confirmMenuDelete(
   t: TFunction
 ): Promise<boolean> {
   if (!rows.length) return false;
+  const confirm = useConfirm();
   const payload = await fetchImpact(
     api,
     rows.map(row => row.pk)
   );
-  try {
-    await ElMessageBox.confirm(
-      renderContent(rows, payload, t),
-      t("systemMenu.confirm.removeTitle"),
-      {
-        confirmButtonText: t("buttons.delete"),
-        cancelButtonText: t("buttons.cancel"),
-        confirmButtonClass: "el-button--danger",
-        type: "warning",
-        customClass: "menu-confirm-box"
-      }
-    );
-    return true;
-  } catch {
-    return false;
-  }
+  return confirm(renderContent(rows, payload, t), {
+    title: t("systemMenu.confirm.removeTitle"),
+    confirmButtonText: t("buttons.delete"),
+    confirmButtonClass: "el-button--danger",
+    customClass: "menu-confirm-box"
+  });
 }
 
 /** 批量启停前的后果说明（停用目录会让子级被提升为顶级菜单） */
@@ -323,6 +314,7 @@ export async function confirmBatchActive(
   t: TFunction
 ): Promise<boolean> {
   if (!rows.length) return false;
+  const confirm = useConfirm();
   const directories = rows.filter(
     row => row.menuType === MenuChoices.DIRECTORY && row.descendantCount > 0
   );
@@ -344,20 +336,9 @@ export async function confirmBatchActive(
       )
     );
   }
-  try {
-    await ElMessageBox.confirm(
-      h("div", blocks),
-      isActive
-        ? t("systemMenu.confirm.activeTitle")
-        : t("systemMenu.confirm.inactiveTitle"),
-      {
-        confirmButtonText: t("buttons.sure"),
-        cancelButtonText: t("buttons.cancel"),
-        type: "warning"
-      }
-    );
-    return true;
-  } catch {
-    return false;
-  }
+  return confirm(h("div", blocks), {
+    title: isActive
+      ? t("systemMenu.confirm.activeTitle")
+      : t("systemMenu.confirm.inactiveTitle")
+  });
 }

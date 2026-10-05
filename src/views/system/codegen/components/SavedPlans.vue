@@ -3,6 +3,7 @@ import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
 import { message } from "@/utils/message";
+import { useConfirm } from "@/hooks/useConfirm";
 import { exportPlan, type SavedPlan } from "../utils/plan-storage";
 
 defineOptions({ name: "CodegenSavedPlans" });
@@ -19,6 +20,7 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+const confirm = useConfirm();
 
 const selected = ref("");
 const fileInput = ref<HTMLInputElement>();
@@ -42,15 +44,14 @@ function onLoad(name: string) {
 }
 
 async function onRemove(name: string) {
-  try {
-    await ElMessageBox.confirm(
-      t("codegen.planDeleteConfirm"),
-      t("codegen.planDelete")
-    );
-    emit("remove", name);
-  } catch {
-    // 用户取消
+  if (
+    !(await confirm(t("codegen.planDeleteConfirm"), {
+      title: t("codegen.planDelete")
+    }))
+  ) {
+    return;
   }
+  emit("remove", name);
 }
 
 function onExport() {

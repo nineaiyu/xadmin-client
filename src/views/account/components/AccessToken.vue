@@ -1,14 +1,7 @@
 <script lang="ts" setup>
 import { h, reactive, ref, shallowRef } from "vue";
 import { useI18n } from "vue-i18n";
-import {
-  ElAlert,
-  ElButton,
-  ElInput,
-  ElMessageBox,
-  ElTag,
-  ElTooltip
-} from "element-plus";
+import { ElAlert, ElButton, ElInput, ElTag, ElTooltip } from "element-plus";
 import type { RecordType } from "plus-pro-components";
 import { SUCCESS_CODE } from "@/api/types";
 import {
@@ -17,6 +10,7 @@ import {
   type DialogOptions
 } from "@/components/ReDialog";
 import { message } from "@/utils/message";
+import { useConfirm } from "@/hooks/useConfirm";
 import {
   handleOperation,
   RePlusPage,
@@ -39,6 +33,7 @@ import { dialogSize } from "@/components/ReDialog/size";
 defineOptions({ name: "AccessToken" });
 
 const { t } = useI18n();
+const confirm = useConfirm();
 const plusPageRef = ref();
 
 /** 创建弹层（名称 / 过期时间 / 接口范围）与明文一次性展示弹层 */
@@ -169,26 +164,19 @@ const openCreate = () => {
 
 /** 吊销：不可恢复，先二次确认（凭证即时失效，所有在用脚本会 401） */
 const handleRevoke = (row: RecordType) => {
-  void ElMessageBox.confirm(
-    t("accessToken.revokeConfirm", { name: row.name }),
-    t("accessToken.revoke"),
-    {
-      type: "warning",
-      confirmButtonText: t("buttons.sure"),
-      cancelButtonText: t("buttons.cancel"),
-      confirmButtonClass: "el-button--danger"
-    }
-  )
-    .then(() =>
+  void confirm(t("accessToken.revokeConfirm", { name: row.name }), {
+    title: t("accessToken.revoke"),
+    confirmButtonClass: "el-button--danger"
+  }).then(ok => {
+    if (ok)
       handleOperation({
         t,
         apiReq: personalAccessTokenApi.partialUpdate(row.pk, {
           is_active: false
         }),
         success: () => refresh()
-      })
-    )
-    .catch(() => undefined);
+      });
+  });
 };
 
 /** 工具栏按钮：创建入口（明文的创建表单不适合走框架内建的通用表单弹窗） */

@@ -1,10 +1,11 @@
 <script lang="ts" setup>
 import { h, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessage, ElMessageBox } from "element-plus";
+import { ElMessage } from "element-plus";
 import type { DialogOptions } from "@/components/ReDialog";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
+import { useConfirm } from "@/hooks/useConfirm";
 import { message } from "@/utils/message";
 import {
   messageTemplateApi,
@@ -21,6 +22,7 @@ import MessageTemplateForm from "./MessageTemplateForm.vue";
  * - 重置即删除覆盖行。
  */
 const { t } = useI18n();
+const confirm = useConfirm();
 
 const loading = ref(false);
 const rows = ref<MessageTemplateItem[]>([]);
@@ -78,19 +80,13 @@ const openEdit = (raw: RecordType) => {
 
 const reset = async (raw: RecordType) => {
   const row = raw as unknown as MessageTemplateItem;
-  try {
-    await ElMessageBox.confirm(
+  if (
+    !(await confirm(
       t("messageTemplate.resetConfirm", {
         name: row.message_type_label || row.message_type
-      }),
-      t("buttons.tips"),
-      {
-        type: "warning",
-        confirmButtonText: t("buttons.sure"),
-        cancelButtonText: t("buttons.cancel")
-      }
-    );
-  } catch {
+      })
+    ))
+  ) {
     return;
   }
   const res = await messageTemplateApi.reset(row.message_type);

@@ -1,6 +1,6 @@
 import { SUCCESS_CODE } from "@/api/types";
 import { useI18n } from "vue-i18n";
-import { ElMessageBox } from "element-plus";
+import { useConfirm } from "@/hooks/useConfirm";
 import { message } from "@/utils/message";
 import {
   apiApplicationApi,
@@ -24,6 +24,7 @@ export function useApiAppActions({
   probeResults: Ref<CallbackProbeResult[]>;
 }) {
   const { t } = useI18n();
+  const confirm = useConfirm();
 
   /* ---------------- 行内启停 / 重置密钥 / 回调测试 ---------------- */
   const toggleActive = async (row: ApiApplicationItem, value: boolean) => {
@@ -54,17 +55,11 @@ export function useApiAppActions({
    * （抽屉内触发，确认框为独立遮罩层，不依赖抽屉状态）
    */
   const confirmRegenerate = (row: ApiApplicationItem) => {
-    ElMessageBox.confirm(
-      t("apiApp.regenerateConfirm"),
-      t("apiApp.regenerate"),
-      {
-        confirmButtonText: t("buttons.sure"),
-        cancelButtonText: t("buttons.cancel"),
-        type: "warning"
-      }
-    )
-      .then(() => regenerateSecret(row))
-      .catch(() => undefined);
+    confirm(t("apiApp.regenerateConfirm"), {
+      title: t("apiApp.regenerate")
+    }).then(ok => {
+      if (ok) regenerateSecret(row);
+    });
   };
 
   /** 回调测试：state 由抽屉持有（测试结果在抽屉内即时展示） */

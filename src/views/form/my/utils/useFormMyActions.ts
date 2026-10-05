@@ -1,6 +1,7 @@
 import { SUCCESS_CODE } from "@/api/types";
 import { h, ref, type Ref } from "vue";
-import { ElButton, ElMessageBox } from "element-plus";
+import { ElButton } from "element-plus";
+import { useConfirm } from "@/hooks/useConfirm";
 import type { DialogOptions } from "@/components/ReDialog";
 import { addDialog, closeDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
@@ -30,6 +31,7 @@ export function useFormMyActions({
   tableRef: Ref;
   forms: Ref<FillableFormItem[]>;
 }) {
+  const confirm = useConfirm();
   const refresh = () => tableRef.value?.handleGetData?.();
   const submissionFormRef = ref<InstanceType<typeof SubmissionForm>>();
 
@@ -146,18 +148,12 @@ export function useFormMyActions({
   };
 
   const remove = async (row: SubmissionItem) => {
-    try {
-      await ElMessageBox.confirm(
-        t("dform.removeConfirm", { name: row.form_name }),
-        {
-          confirmButtonText: t("buttons.sure"),
-          cancelButtonText: t("buttons.cancel"),
-          type: "warning",
-          confirmButtonClass: "el-button--danger",
-          draggable: true
-        }
-      );
-    } catch {
+    if (
+      !(await confirm(t("dform.removeConfirm", { name: row.form_name }), {
+        confirmButtonClass: "el-button--danger",
+        draggable: true
+      }))
+    ) {
       return;
     }
     const res = await submissionApi.destroy(row.pk);

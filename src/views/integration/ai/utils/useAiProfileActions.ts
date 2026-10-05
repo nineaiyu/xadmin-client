@@ -1,6 +1,6 @@
 import { SUCCESS_CODE } from "@/api/types";
 import type { useI18n } from "vue-i18n";
-import { ElMessageBox } from "element-plus";
+import { useConfirm } from "@/hooks/useConfirm";
 import { message } from "@/utils/message";
 import { aiProfileApi, type AiProfileItem } from "@/api/ai/ai";
 
@@ -15,23 +15,16 @@ export function useAiProfileActions({
   t: ReturnType<typeof useI18n>["t"];
   refresh: () => void;
 }) {
+  const confirm = useConfirm();
+
   const confirmThen = async (
     confirmText: string,
     action: () => Promise<{ code: number; detail?: string }>,
     doneText: string
   ) => {
-    const ok = await ElMessageBox.confirm(
-      confirmText,
-      t("aiConfig.profileTitle"),
-      {
-        type: "warning",
-        confirmButtonText: t("buttons.sure"),
-        cancelButtonText: t("buttons.cancel")
-      }
-    )
-      .then(() => true)
-      .catch(() => false);
-    if (!ok) return;
+    if (!(await confirm(confirmText, { title: t("aiConfig.profileTitle") }))) {
+      return;
+    }
     // 异常归一为可读失败结果：抽屉内触发的动作不应把异常抛到全局
     const res = await action().catch(error => ({
       code: -1,

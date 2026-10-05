@@ -2,8 +2,8 @@
 import { onActivated, onMounted, onUnmounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
-import { ElMessageBox } from "element-plus";
 import { message } from "@/utils/message";
+import { useConfirm } from "@/hooks/useConfirm";
 import { useFullHeightPanel } from "@/hooks/useFullHeightPanel";
 import type { ChatMessageItem, ChatRoomItem } from "@/api/chat";
 import { useChat } from "./hooks/useChat";
@@ -26,6 +26,7 @@ defineOptions({
 const { t } = useI18n();
 const route = useRoute();
 const chat = useChat();
+const confirm = useConfirm();
 const drawerVisible = ref(false);
 /** 面板高度与窄屏折叠：与 AI 助手页同一口径（视口实测，标签栏显隐 / 窗口
  *  尺寸变化都自适应），替代 calc(100vh - 164px) 魔数 */
@@ -112,15 +113,12 @@ function submit(content: string) {
 }
 
 async function recall(item: ChatMessageItem) {
-  try {
-    await ElMessageBox.confirm(t("chat.recallConfirm"), {
-      confirmButtonText: t("buttons.sure"),
-      cancelButtonText: t("buttons.cancel"),
-      type: "warning",
+  if (
+    !(await confirm(t("chat.recallConfirm"), {
       confirmButtonClass: "el-button--danger",
       draggable: true
-    });
-  } catch {
+    }))
+  ) {
     return;
   }
   await chat.recall(item);

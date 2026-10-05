@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router";
-import { ElMessageBox } from "element-plus";
+import { useConfirm } from "@/hooks/useConfirm";
 import { SUCCESS_CODE } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { message } from "@/utils/message";
@@ -48,6 +48,7 @@ defineOptions({ name: "DataReportDesigner" });
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
+const confirm = useConfirm();
 const canRun = hasAuth("run:DataReport");
 
 const report = ref<ReportItem | null>(null);
@@ -219,20 +220,11 @@ const onBeforeUnload = (event: BeforeUnloadEvent) => {
 
 onBeforeRouteLeave(async () => {
   if (!dirty.value) return true;
-  try {
-    await ElMessageBox.confirm(
-      t("dataReport.leaveConfirm"),
-      t("dataReport.unsaved"),
-      {
-        type: "warning",
-        confirmButtonText: t("dataReport.leave"),
-        cancelButtonText: t("dataReport.stay")
-      }
-    );
-    return true;
-  } catch {
-    return false;
-  }
+  return confirm(t("dataReport.leaveConfirm"), {
+    title: t("dataReport.unsaved"),
+    confirmButtonText: t("dataReport.leave"),
+    cancelButtonText: t("dataReport.stay")
+  });
 });
 
 function onKeydown(event: KeyboardEvent) {

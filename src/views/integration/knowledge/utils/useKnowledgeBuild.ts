@@ -1,10 +1,10 @@
 import { SUCCESS_CODE } from "@/api/types";
-import { ElMessageBox } from "element-plus";
 import {
   knowledgeApi,
   type KnowledgeBuildStatus,
   type KnowledgeVectorStatus
 } from "@/api/ai/knowledge";
+import { useConfirm } from "@/hooks/useConfirm";
 import { message } from "@/utils/message";
 import {
   BUILD_POLL_INTERVAL,
@@ -25,6 +25,8 @@ export function useKnowledgeBuild({
   t: TFunction;
   refresh: () => void;
 }) {
+  const confirm = useConfirm();
+
   /** 构建进度轮询：运行中按里程碑提示（25/50/75%，过程可见不刷屏），终态给摘要。 */
   const pollBuildStatus = async () => {
     const startedAt = Date.now();
@@ -87,21 +89,19 @@ export function useKnowledgeBuild({
       message(t("aiKnowledge.vectorDisabled"), { type: "warning" });
       return;
     }
-    try {
-      await ElMessageBox.confirm(
+    if (
+      !(await confirm(
         t("aiKnowledge.buildConfirm", {
           fresh: status.fresh,
           total: status.total,
           model: status.model
         }),
-        t("aiKnowledge.buildEmbeddings"),
         {
-          confirmButtonText: t("buttons.sure"),
-          cancelButtonText: t("buttons.cancel"),
+          title: t("aiKnowledge.buildEmbeddings"),
           type: "info"
         }
-      );
-    } catch {
+      ))
+    ) {
       return;
     }
     const res = await knowledgeApi.buildEmbeddings().catch(error => ({

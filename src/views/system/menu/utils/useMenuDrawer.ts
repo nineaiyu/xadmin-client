@@ -13,6 +13,7 @@ import type { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
 import { SUCCESS_CODE } from "@/api/types";
 import { message } from "@/utils/message";
+import { useConfirm } from "@/hooks/useConfirm";
 import {
   addDrawer,
   closeDrawer,
@@ -78,6 +79,7 @@ export function useMenuDrawer({
   reload,
   onSaved
 }: MenuDrawerDeps) {
+  const confirm = useConfirm();
   const formRef = ref();
   const current = ref<{ pk?: number | string; isAdd: boolean } | null>(null);
   let options: DrawerOptions | null = null;
@@ -99,17 +101,12 @@ export function useMenuDrawer({
       done();
       return;
     }
-    ElMessageBox.confirm(
-      t("systemMenu.confirm.unsaved"),
-      t("systemMenu.confirm.unsavedTitle"),
-      {
-        confirmButtonText: t("systemMenu.action.discard"),
-        cancelButtonText: t("buttons.cancel"),
-        type: "warning"
-      }
-    )
-      .then(() => done())
-      .catch(() => undefined);
+    confirm(t("systemMenu.confirm.unsaved"), {
+      title: t("systemMenu.confirm.unsavedTitle"),
+      confirmButtonText: t("systemMenu.action.discard")
+    }).then(ok => {
+      if (ok) done();
+    });
   };
 
   /** 执行保存：返回是否成功（失败保留抽屉与输入） */

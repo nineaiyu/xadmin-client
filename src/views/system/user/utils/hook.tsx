@@ -1,9 +1,9 @@
 import "./reset.css";
 import { h, onMounted, reactive, ref, type Ref } from "vue";
 import { useRouter } from "vue-router";
-import { ElMessageBox } from "element-plus";
 import { userApi } from "@/api/system/user";
 import { hasAuth, usePageAuth } from "@/router/utils";
+import { useConfirm } from "@/hooks/useConfirm";
 import { useI18n } from "vue-i18n";
 import {
   handleOperation,
@@ -47,6 +47,7 @@ import { useUserStoreHook } from "@/store/modules/user";
 export function useUser(tableRef: Ref) {
   const { t } = useI18n();
   const router = useRouter();
+  const confirm = useConfirm();
 
   const api = reactive(userApi);
 
@@ -122,25 +123,18 @@ export function useUser(tableRef: Ref) {
    * 已激活账号重发后原密码失效，需重新激活（后端状态机保证非 pending 不可再激活）。
    */
   function handleInvite(row: RecordType) {
-    ElMessageBox.confirm(
-      t("systemUser.inviteConfirm"),
-      t("systemUser.invite"),
-      {
-        confirmButtonText: t("buttons.sure"),
-        cancelButtonText: t("buttons.cancel"),
-        type: "warning"
-      }
-    )
-      .then(() =>
+    confirm(t("systemUser.inviteConfirm"), {
+      title: t("systemUser.invite")
+    }).then(ok => {
+      if (ok)
         handleOperation({
           t,
           apiReq: api.invite(row.pk),
           success() {
             tableRef.value.handleGetData();
           }
-        })
-      )
-      .catch(() => undefined);
+        });
+    });
   }
 
   /**
@@ -149,16 +143,10 @@ export function useUser(tableRef: Ref) {
    * 成功后 token 已换签，整页刷新以目标身份重建路由/权限/WS。
    */
   function handleImpersonate(row: RecordType) {
-    ElMessageBox.confirm(
-      t("systemUser.impersonateConfirm", { user: row.username }),
-      t("systemUser.impersonate"),
-      {
-        confirmButtonText: t("buttons.sure"),
-        cancelButtonText: t("buttons.cancel"),
-        type: "warning"
-      }
-    )
-      .then(() =>
+    confirm(t("systemUser.impersonateConfirm", { user: row.username }), {
+      title: t("systemUser.impersonate")
+    }).then(ok => {
+      if (ok)
         handleOperation({
           t,
           apiReq: api.impersonate(row.pk as string | number),
@@ -169,9 +157,8 @@ export function useUser(tableRef: Ref) {
               useUserStoreHook().switchIdentity(res.data as TokenInfo);
             }
           }
-        })
-      )
-      .catch(() => undefined);
+        });
+    });
   }
 
   /**

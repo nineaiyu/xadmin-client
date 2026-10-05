@@ -6,10 +6,10 @@ import Sortable from "sortablejs";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { Download, Setting } from "@element-plus/icons-vue";
-import { ElMessageBox } from "element-plus";
 import ReEmpty from "@/components/ReEmpty";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
+import { useConfirm } from "@/hooks/useConfirm";
 import {
   dashboardApi,
   datasetApi,
@@ -31,6 +31,7 @@ defineOptions({
 const { t } = useI18n();
 const router = useRouter();
 const route = useRoute();
+const confirm = useConfirm();
 const canEdit = hasAuth("partialUpdate:DataDashboard");
 const canCreate = hasAuth("create:DataDashboard");
 
@@ -226,18 +227,15 @@ const { openCreateDashboard, openDashboardSettings } = useDashboardDialogs({
 
 const removeDashboard = async () => {
   if (!current.value) return;
-  try {
-    await ElMessageBox.confirm(
+  if (
+    !(await confirm(
       t("dashboard.removeConfirm", { name: current.value.name }),
       {
-        confirmButtonText: t("buttons.sure"),
-        cancelButtonText: t("buttons.cancel"),
-        type: "warning",
         confirmButtonClass: "el-button--danger",
         draggable: true
       }
-    );
-  } catch {
+    ))
+  ) {
     return;
   }
   const res = await dashboardApi.destroy(current.value.pk);

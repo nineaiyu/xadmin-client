@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router";
-import { ElMessageBox } from "element-plus";
+import { useConfirm } from "@/hooks/useConfirm";
 import { SUCCESS_CODE } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { message } from "@/utils/message";
@@ -54,6 +54,7 @@ defineOptions({ name: "DataScreenDesigner" });
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
+const confirm = useConfirm();
 
 const screen = ref<ScreenItem | null>(null);
 const dashboards = ref<DashboardItem[]>([]);
@@ -203,20 +204,11 @@ const onBeforeUnload = (event: BeforeUnloadEvent) => {
 
 onBeforeRouteLeave(async () => {
   if (!dirty.value) return true;
-  try {
-    await ElMessageBox.confirm(
-      t("dataScreen.leaveConfirm"),
-      t("dataScreen.unsaved"),
-      {
-        type: "warning",
-        confirmButtonText: t("dataScreen.leave"),
-        cancelButtonText: t("dataScreen.stay")
-      }
-    );
-    return true;
-  } catch {
-    return false;
-  }
+  return confirm(t("dataScreen.leaveConfirm"), {
+    title: t("dataScreen.unsaved"),
+    confirmButtonText: t("dataScreen.leave"),
+    cancelButtonText: t("dataScreen.stay")
+  });
 });
 
 /* ---------------- 保存 / 清空 / 预览 ---------------- */
@@ -254,13 +246,11 @@ async function save() {
 
 async function clearCanvas() {
   if (panes.value.length === 0) return;
-  try {
-    await ElMessageBox.confirm(
-      t("dataScreen.clearLayoutConfirm"),
-      t("dataScreen.clearLayout"),
-      { type: "warning" }
-    );
-  } catch {
+  if (
+    !(await confirm(t("dataScreen.clearLayoutConfirm"), {
+      title: t("dataScreen.clearLayout")
+    }))
+  ) {
     return;
   }
   pushHistory();

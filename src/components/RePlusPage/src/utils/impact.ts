@@ -11,9 +11,9 @@
  */
 
 import { h } from "vue";
-import { ElMessageBox } from "element-plus";
 import type { BaseApi } from "@/api/base";
 import type { useI18n } from "vue-i18n";
+import { useConfirm } from "@/hooks/useConfirm";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
@@ -106,16 +106,11 @@ async function showImpactConfirm(
   data: ImpactPayload,
   t: TFunction
 ): Promise<boolean> {
-  try {
-    await ElMessageBox.confirm(renderImpact(data, t), t("impact.title"), {
-      confirmButtonText: t("impact.confirmDelete"),
-      cancelButtonText: t("buttons.cancel"),
-      type: "warning"
-    });
-    return true;
-  } catch {
-    return false;
-  }
+  const confirm = useConfirm();
+  return confirm(renderImpact(data, t), {
+    title: t("impact.title"),
+    confirmButtonText: t("impact.confirmDelete")
+  });
 }
 
 /**

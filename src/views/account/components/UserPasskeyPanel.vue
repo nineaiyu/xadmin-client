@@ -8,6 +8,7 @@ import {
   bufferToB64url,
   isPasskeySupported
 } from "@/utils/webauthn";
+import { useConfirm } from "@/hooks/useConfirm";
 import type { RecordType } from "plus-pro-components";
 import {
   ReReadonlyTable,
@@ -23,6 +24,7 @@ import {
  * 系统设置菜单权限保护的页面。
  */
 const { t } = useI18n();
+const confirm = useConfirm();
 
 const loading = ref(false);
 const registering = ref(false);
@@ -113,15 +115,7 @@ const register = async () => {
 };
 
 const remove = async (row: RecordType) => {
-  try {
-    await ElMessageBox.confirm(t("passkey.removeConfirm"), t("buttons.tips"), {
-      type: "warning",
-      confirmButtonText: t("buttons.sure"),
-      cancelButtonText: t("buttons.cancel")
-    });
-  } catch {
-    return;
-  }
+  if (!(await confirm(t("passkey.removeConfirm")))) return;
   const res = await passkeyApi.destroy(row?.pk);
   if (res.code === 1000) {
     ElMessage.success(t("passkey.removeSuccess"));

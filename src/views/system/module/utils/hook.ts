@@ -1,6 +1,5 @@
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessageBox } from "element-plus";
 
 import {
   systemModuleApi,
@@ -11,6 +10,7 @@ import {
 import { SUCCESS_CODE } from "@/api/types";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
+import { useConfirm } from "@/hooks/useConfirm";
 
 /**
  * 功能模块页逻辑（页面唯一无 hook 的历史遗留补齐）：
@@ -18,6 +18,7 @@ import { message } from "@/utils/message";
  */
 export function useSystemModule() {
   const { t } = useI18n();
+  const confirm = useConfirm();
 
   const loading = ref(true);
   const saving = ref(false);
@@ -137,13 +138,7 @@ export function useSystemModule() {
     const next = String(value);
     if (next === draftPreset.value) return;
     if (dirty.value) {
-      try {
-        await ElMessageBox.confirm(t("systemModule.discardConfirm"), {
-          type: "warning"
-        });
-      } catch {
-        return;
-      }
+      if (!(await confirm(t("systemModule.discardConfirm")))) return;
     }
     draftPreset.value = next;
     draftEnabled.value = new Set(presetIds(next));
@@ -177,13 +172,7 @@ export function useSystemModule() {
   };
 
   const resetToBaseline = async () => {
-    try {
-      await ElMessageBox.confirm(t("systemModule.resetConfirm"), {
-        type: "warning"
-      });
-    } catch {
-      return;
-    }
+    if (!(await confirm(t("systemModule.resetConfirm")))) return;
     saving.value = true;
     const res = await systemModuleApi.reset().catch(normalizeError);
     saving.value = false;

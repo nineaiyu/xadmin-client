@@ -1,12 +1,12 @@
 import { SUCCESS_CODE } from "@/api/types";
 import { h, ref, type Ref } from "vue";
 import type { useI18n } from "vue-i18n";
-import { ElMessageBox } from "element-plus";
 import { addDialog } from "@/components/ReDialog";
 import { openManageDrawer } from "@/components/ReActionPanel";
 import { hasAuth } from "@/router/utils";
 import { handleOperation } from "@/components/RePlusPage";
 import { knowledgeApi, type KnowledgeSyncSummary } from "@/api/ai/knowledge";
+import { useConfirm } from "@/hooks/useConfirm";
 import { message } from "@/utils/message";
 import KnowledgeUploadDialog from "../components/KnowledgeUploadDialog.vue";
 import KnowledgePanel from "../components/KnowledgePanel.vue";
@@ -31,6 +31,7 @@ export function useKnowledgeActions({
 }) {
   const canUpdate = hasAuth("partialUpdate:AiKnowledge");
   const canDestroy = hasAuth("destroy:AiKnowledge");
+  const confirm = useConfirm();
 
   const refresh = () => tableRef.value?.handleGetData();
 
@@ -96,13 +97,11 @@ export function useKnowledgeActions({
   };
 
   const confirmRemove = (row: KnowledgeRow) => {
-    ElMessageBox.confirm(t("aiKnowledge.deleteConfirm"), t("buttons.delete"), {
-      confirmButtonText: t("buttons.sure"),
-      cancelButtonText: t("buttons.cancel"),
-      type: "warning"
-    })
-      .then(() => removeDocument(row))
-      .catch(() => undefined);
+    confirm(t("aiKnowledge.deleteConfirm"), {
+      title: t("buttons.delete")
+    }).then(ok => {
+      if (ok) removeDocument(row);
+    });
   };
 
   /** 「管理文档」抽屉：资料 + 全文/分块 + 启停/删除动作（行操作唯一入口） */

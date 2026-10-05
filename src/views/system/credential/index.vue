@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
-import { ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import {
   credentialApi,
@@ -10,6 +9,7 @@ import {
 } from "@/api/system/credential";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
+import { useConfirm } from "@/hooks/useConfirm";
 import {
   ReReadonlyTable,
   type ReadonlyColumn
@@ -19,6 +19,7 @@ defineOptions({ name: "SystemCredential" });
 
 const { t } = useI18n();
 const router = useRouter();
+const confirm = useConfirm();
 const loading = ref(false);
 const canView = hasAuth("overview:Credential");
 const canRotate = hasAuth("rotate:Credential");
@@ -158,13 +159,12 @@ async function handleRotate(row: CredentialRowLike) {
     row.scope === "model_field"
       ? t("credential.rotateModelConfirm", { name })
       : t("credential.rotateConfirm", { name });
-  try {
-    await ElMessageBox.confirm(confirmText, t("credential.rotate"), {
-      type: "warning",
-      confirmButtonText: t("credential.rotate"),
-      cancelButtonText: t("buttons.cancel")
-    });
-  } catch {
+  if (
+    !(await confirm(confirmText, {
+      title: t("credential.rotate"),
+      confirmButtonText: t("credential.rotate")
+    }))
+  ) {
     return;
   }
   const res = await credentialApi
