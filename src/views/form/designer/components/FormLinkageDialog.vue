@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import { computed, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessage } from "element-plus";
 import type { FormField, FormLinkage } from "@/api/dataset/dform";
 import { getDictItems, type DictItem } from "@/utils/dict";
+import { message } from "@/utils/message";
 import {
   LINKAGE_EFFECTS,
   LINKAGE_OPS,
@@ -121,7 +121,7 @@ const onOpChanged = () => {
 /** 校验并产出规则列表（多目标展开为多条）；校验失败返回 null 并提示 */
 const getRules = (): FormLinkage[] | null => {
   if (!form.field || !form.targets.length || !form.effect) {
-    ElMessage.warning(t("dform.linkageRequired"));
+    message(t("dform.linkageRequired"), { type: "warning" });
     return null;
   }
   if (valued.value) {
@@ -129,7 +129,7 @@ const getRules = (): FormLinkage[] | null => {
       ? !Array.isArray(form.value) || form.value.length === 0
       : form.value === "" || form.value === undefined || form.value === null;
     if (empty) {
-      ElMessage.warning(t("dform.linkageValueRequired"));
+      message(t("dform.linkageValueRequired"), { type: "warning" });
       return null;
     }
   }

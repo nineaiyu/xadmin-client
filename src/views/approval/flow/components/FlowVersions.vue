@@ -2,12 +2,13 @@
 import { SUCCESS_CODE } from "@/api/types";
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessage, ElMessageBox } from "element-plus";
+import { ElMessageBox } from "element-plus";
 import { hasAuth } from "@/router/utils";
 import {
   approvalFlowApi,
   type FlowVersionRow
 } from "@/api/approval/approvalFlow";
+import { message } from "@/utils/message";
 
 /**
  * 流程定义版本历史：快照列表 + 回滚动作。
@@ -54,13 +55,17 @@ const handleRollback = (version: number) => {
         .rollback(props.flowPk, version, value || "")
         .then(res => {
           if (res.code === SUCCESS_CODE) {
-            ElMessage.success(t("systemApprovalFlow.rollbackSuccess"));
+            message(t("systemApprovalFlow.rollbackSuccess"), {
+              type: "success"
+            });
             emit("rollback");
             fetchVersions();
             return;
           }
           // 200 + 业务码非 1000：全局拦截器只处理 HTTP 层错误，业务失败显式提示
-          ElMessage.error(String(res.detail || t("results.failed")));
+          message(String(res.detail || t("results.failed")), {
+            type: "error"
+          });
         })
         .catch(() => {
           /* HTTP 层错误提示由拦截器统一处理 */

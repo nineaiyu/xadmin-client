@@ -2,8 +2,9 @@
 import { SUCCESS_CODE } from "@/api/types";
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessage, ElRadioButton, ElRadioGroup } from "element-plus";
+import { ElRadioButton, ElRadioGroup } from "element-plus";
 import { approvalFlowApi } from "@/api/approval/approvalFlow";
+import { message } from "@/utils/message";
 import {
   buildFlowPayload,
   createEmptyNode,
@@ -101,7 +102,7 @@ async function save() {
   canvasRef.value?.syncLayout();
   const errorKey = validateFlowConfig(basic, nodes.value);
   if (errorKey) {
-    ElMessage.error(t(errorKey));
+    message(t(errorKey), { type: "error" });
     return;
   }
   const payload = buildFlowPayload(
@@ -117,14 +118,14 @@ async function save() {
       ? await approvalFlowApi.partialUpdate(props.flow.pk, payload)
       : await approvalFlowApi.create(payload);
     if (res.code === SUCCESS_CODE) {
-      ElMessage.success(t("systemApprovalFlow.saveSuccess"));
+      message(t("systemApprovalFlow.saveSuccess"), { type: "success" });
       props.onSaved?.();
       emit("close");
       return;
     }
     // 200 + 业务码非 1000（表单/节点校验失败等）：全局拦截器只处理 HTTP 层错误，
     // 业务失败必须显式提示
-    ElMessage.error(String(res.detail || t("results.failed")));
+    message(String(res.detail || t("results.failed")), { type: "error" });
   } catch {
     // HTTP 层错误提示由拦截器统一处理
   } finally {

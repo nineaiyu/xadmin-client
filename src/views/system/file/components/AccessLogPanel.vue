@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessage } from "element-plus";
 import {
   systemUploadFileApi,
   type FileAccessLogResult
 } from "@/api/system/file";
+import { message } from "@/utils/message";
 import type { RecordType } from "plus-pro-components";
 
 /**
@@ -38,10 +38,10 @@ const load = async () => {
     if (res.code === 1000) {
       data.value = res.data;
     } else {
-      ElMessage.error(String(res.detail));
+      message(String(res.detail), { type: "error" });
     }
   } catch (error: unknown) {
-    ElMessage.error(String((error as Error)?.message ?? error));
+    message(String((error as Error)?.message ?? error), { type: "error" });
   } finally {
     loading.value = false;
   }

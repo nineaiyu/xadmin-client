@@ -1,8 +1,9 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessage, ElMessageBox } from "element-plus";
+import { ElMessageBox } from "element-plus";
 import { passkeyApi } from "@/api/system/security";
+import { message } from "@/utils/message";
 import {
   b64urlToBuffer,
   bufferToB64url,
@@ -36,7 +37,7 @@ const load = async () => {
     const res = await passkeyApi.list({ page: 1, size: 50 });
     if (res.code === 1000) rows.value = res.data?.results ?? [];
   } catch (error: unknown) {
-    ElMessage.error(String((error as Error)?.message ?? error));
+    message(String((error as Error)?.message ?? error), { type: "error" });
   } finally {
     loading.value = false;
   }
@@ -44,7 +45,7 @@ const load = async () => {
 
 const register = async () => {
   if (!isPasskeySupported()) {
-    ElMessage.warning(t("passkey.unsupported"));
+    message(t("passkey.unsupported"), { type: "warning" });
     return;
   }
   let name = "";
@@ -66,7 +67,7 @@ const register = async () => {
   try {
     const challengeRes = await passkeyApi.challenge("register");
     if (challengeRes.code !== 1000) {
-      ElMessage.error(String(challengeRes.detail));
+      message(String(challengeRes.detail), { type: "error" });
       return;
     }
     const data = challengeRes.data;
@@ -92,7 +93,7 @@ const register = async () => {
       }
     })) as PublicKeyCredential | null;
     if (!credential) {
-      ElMessage.warning(t("passkey.failed"));
+      message(t("passkey.failed"), { type: "warning" });
       return;
     }
     const response = credential.response as AuthenticatorAttestationResponse;
@@ -102,13 +103,13 @@ const register = async () => {
       name: name || t("passkey.name")
     });
     if (res.code === 1000) {
-      ElMessage.success(t("passkey.registerSuccess"));
+      message(t("passkey.registerSuccess"), { type: "success" });
       await load();
     } else {
-      ElMessage.error(String(res.detail));
+      message(String(res.detail), { type: "error" });
     }
   } catch (error: unknown) {
-    ElMessage.error(String((error as Error)?.message ?? error));
+    message(String((error as Error)?.message ?? error), { type: "error" });
   } finally {
     registering.value = false;
   }
@@ -118,10 +119,10 @@ const remove = async (row: RecordType) => {
   if (!(await confirm(t("passkey.removeConfirm")))) return;
   const res = await passkeyApi.destroy(row?.pk);
   if (res.code === 1000) {
-    ElMessage.success(t("passkey.removeSuccess"));
+    message(t("passkey.removeSuccess"), { type: "success" });
     await load();
   } else {
-    ElMessage.error(String(res.detail));
+    message(String(res.detail), { type: "error" });
   }
 };
 

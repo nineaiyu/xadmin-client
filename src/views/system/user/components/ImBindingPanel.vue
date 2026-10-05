@@ -5,7 +5,6 @@ import {
   ElForm,
   ElFormItem,
   ElInput,
-  ElMessage,
   ElOption,
   ElSelect
 } from "element-plus";
@@ -14,6 +13,7 @@ import type { RecordType } from "plus-pro-components";
 
 import { userApi } from "@/api/system/user";
 import { SUCCESS_CODE } from "@/api/types";
+import { message } from "@/utils/message";
 
 /**
  * 管理员代录 IM 账号（免扫码绑定，审批流外的 IM 三期项）。
@@ -45,7 +45,7 @@ async function load() {
 
 async function save() {
   if (!form.value.provider || !form.value.subject.trim()) {
-    ElMessage.error(t("imBinding.required"));
+    message(t("imBinding.required"), { type: "error" });
     return;
   }
   loading.value = true;
@@ -54,23 +54,23 @@ async function save() {
     .catch(() => null);
   loading.value = false;
   if (res?.code === SUCCESS_CODE) {
-    ElMessage.success(t("imBinding.saved"));
+    message(t("imBinding.saved"), { type: "success" });
     form.value.subject = "";
     form.value.nickname = "";
     await load();
     props.done?.();
   } else {
-    ElMessage.error(String(res?.detail || t("results.failed")));
+    message(String(res?.detail || t("results.failed")), { type: "error" });
   }
 }
 
 async function unbind(provider: string) {
   const res = await userApi.imUnbind(props.row.pk, provider).catch(() => null);
   if (res?.code === SUCCESS_CODE) {
-    ElMessage.success(t("imBinding.unbound"));
+    message(t("imBinding.unbound"), { type: "success" });
     await load();
   } else {
-    ElMessage.error(String(res?.detail || t("results.failed")));
+    message(String(res?.detail || t("results.failed")), { type: "error" });
   }
 }
 

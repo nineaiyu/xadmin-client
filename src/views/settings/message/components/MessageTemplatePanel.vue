@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { h, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessage } from "element-plus";
 import type { DialogOptions } from "@/components/ReDialog";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
@@ -34,7 +33,7 @@ const load = async () => {
     const res = await messageTemplateApi.registry();
     if (res.code === 1000) rows.value = res.data ?? [];
   } catch (error: unknown) {
-    ElMessage.error(String((error as Error)?.message ?? error));
+    message(String((error as Error)?.message ?? error), { type: "error" });
   } finally {
     loading.value = false;
   }
@@ -71,7 +70,7 @@ const openEdit = (raw: RecordType) => {
         await load();
         return;
       }
-      if (res.detail) ElMessage.error(String(res.detail));
+      if (res.detail) message(String(res.detail), { type: "error" });
       closeLoading();
     }
   };
@@ -94,7 +93,7 @@ const reset = async (raw: RecordType) => {
     message(t("messageTemplate.resetSuccess"), { type: "success" });
     await load();
   } else {
-    ElMessage.error(String(res.detail));
+    message(String(res.detail), { type: "error" });
   }
 };
 

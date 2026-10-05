@@ -1,9 +1,10 @@
 <script lang="ts" setup>
 import { reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessage, type FormInstance, type FormItemRule } from "element-plus";
+import { type FormInstance, type FormItemRule } from "element-plus";
 import dayjs from "dayjs";
 import { loginPolicyApi, type LoginPolicyPreview } from "@/api/system/security";
+import { message } from "@/utils/message";
 
 /**
  * 登录策略命中预演：给出样例用户 / IP / 时间，逐条策略展示匹配结果与最终判定。
@@ -104,10 +105,10 @@ const runPreview = async () => {
     if (res.code === 1000) {
       result.value = res.data;
     } else {
-      ElMessage.error(String(res.detail));
+      message(String(res.detail), { type: "error" });
     }
   } catch (error: unknown) {
-    ElMessage.error(String((error as Error)?.message ?? error));
+    message(String((error as Error)?.message ?? error), { type: "error" });
   } finally {
     loading.value = false;
   }

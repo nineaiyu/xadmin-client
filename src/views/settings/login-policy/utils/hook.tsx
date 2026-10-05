@@ -1,12 +1,12 @@
 import { h, reactive, ref, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessage } from "element-plus";
 import { loginPolicyApi } from "@/api/system/security";
 import { hasAuth } from "@/router/utils";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { handleOperation, type OperationProps } from "@/components/RePlusPage";
 import { usePageAuth } from "@/router/utils";
+import { message } from "@/utils/message";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import type { RecordType } from "plus-pro-components";
 import AddFill from "~icons/ri/add-circle-line";
@@ -49,7 +49,7 @@ export function useLoginPolicy(tableRef: Ref) {
       beforeSure: (done, { closeLoading }) => {
         const payload = formRef.value?.getPayload?.();
         if (!payload) {
-          ElMessage.warning(t("loginPolicy.invalidForm"));
+          message(t("loginPolicy.invalidForm"), { type: "warning" });
           closeLoading();
           return;
         }

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessage } from "element-plus";
+import { message } from "@/utils/message";
 import { sanitizeHtml } from "@/utils/sanitize";
 import WangEditor from "@/components/RePlusPage/src/components/WangEditor.vue";
 import {
@@ -48,7 +48,7 @@ async function preview() {
       };
       return;
     }
-    ElMessage.error(String((res as { detail?: string }).detail));
+    message(String((res as { detail?: string }).detail), { type: "error" });
   } finally {
     previewing.value = false;
   }

@@ -1,13 +1,13 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessage } from "element-plus";
 import {
   loadGrantCatalog,
   type ApiApplicationGrant,
   type GrantModelOption,
   type RowFilterRule
 } from "@/api/system/open";
+import { message } from "@/utils/message";
 
 /**
  * 应用资源授权编辑器：模型 × 动作 × 字段 × 行 四级收敛。
@@ -53,7 +53,7 @@ onMounted(async () => {
     const res = await loadGrantCatalog();
     models.value = res.data?.models ?? [];
   } catch {
-    ElMessage.error(t("apiApp.grant.catalogFailed"));
+    message(t("apiApp.grant.catalogFailed"), { type: "error" });
   } finally {
     loading.value = false;
   }

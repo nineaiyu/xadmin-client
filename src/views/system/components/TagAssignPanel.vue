@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessage } from "element-plus";
 import { SUCCESS_CODE } from "@/api/types";
 import { tagApi, type TagItem } from "@/api/system/tag";
+import { message } from "@/utils/message";
 
 /**
  * 通用打标面板：单对象打标 / 批量打标（追加·移除·替换）+ 弹窗内新建标签。
@@ -75,7 +75,7 @@ const createTag = async () => {
       data: undefined
     }))) as { code: number; detail?: string; data?: TagItem };
     if (res.code !== SUCCESS_CODE) {
-      ElMessage.warning(String(res.detail || t("results.failed")));
+      message(String(res.detail || t("results.failed")), { type: "warning" });
       return;
     }
     const created = res.data ?? ({} as TagItem);
@@ -84,7 +84,7 @@ const createTag = async () => {
       selected.value = [...selected.value, created.pk];
     }
     newName.value = "";
-    ElMessage.success(t("tag.createDone"));
+    message(t("tag.createDone"), { type: "success" });
   } finally {
     creating.value = false;
   }

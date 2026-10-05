@@ -2,7 +2,6 @@
 import { computed, h, onMounted, ref, watch, type Component } from "vue";
 import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { ElMessage } from "element-plus";
 import { cloneDeep } from "@pureadmin/utils";
 import View from "~icons/ep/view";
 import { addDialog } from "@/components/ReDialog";
@@ -11,6 +10,7 @@ import { useConfirm } from "@/hooks/useConfirm";
 import { useUserStoreHook } from "@/store/modules/user";
 import { savedViewApi } from "@/api/system/security";
 import type { DetailResult } from "@/api/types";
+import { message } from "@/utils/message";
 import type { RecordType } from "plus-pro-components";
 import type { PageColumn } from "../utils/types";
 import SavedViewMenu from "./SavedViewMenu.vue";
@@ -96,7 +96,7 @@ const applyView = (row: SavedViewRow, silent = false) => {
   visible.value = false;
   emit("apply", cloneDeep(row.conditions ?? {}) as RecordType);
   if (!silent) {
-    ElMessage.success(t("savedView.applied", { name: row.name }));
+    message(t("savedView.applied", { name: row.name }), { type: "success" });
   }
 };
 
@@ -161,21 +161,21 @@ const openForm = async (
             });
       const res = await request.catch(fallback);
       if (res.code !== 1000) {
-        ElMessage.error(String(res.detail ?? t("results.failed")));
+        message(String(res.detail ?? t("results.failed")), { type: "error" });
         return;
       }
       currentPk.value =
         mode === "edit" && options.row ? options.row.pk : (res.data?.pk ?? "");
       done();
       await load();
-      ElMessage.success(t("savedView.saveSuccess"));
+      message(t("savedView.saveSuccess"), { type: "success" });
     }
   });
 };
 
 const save = () => {
   if (!hasViewConditions(props.conditions as Record<string, unknown>)) {
-    ElMessage.warning(t("savedView.emptyConditions"));
+    message(t("savedView.emptyConditions"), { type: "warning" });
     return;
   }
   return openForm("create");
@@ -195,17 +195,17 @@ const duplicate = (row: SavedViewRow) =>
 const updateWithCurrent = async (row: SavedViewRow) => {
   const conditions = currentConditions.value;
   if (!Object.keys(conditions).length) {
-    ElMessage.warning(t("savedView.emptyConditions"));
+    message(t("savedView.emptyConditions"), { type: "warning" });
     return;
   }
   const res = await savedViewApi
     .partialUpdate(row.pk, { conditions })
     .catch(fallback);
   if (res.code === 1000) {
-    ElMessage.success(t("savedView.updated", { name: row.name }));
+    message(t("savedView.updated", { name: row.name }), { type: "success" });
     await load();
   } else {
-    ElMessage.error(String(res.detail ?? t("results.failed")));
+    message(String(res.detail ?? t("results.failed")), { type: "error" });
   }
 };
 
@@ -215,11 +215,14 @@ const toggleDefault = async (row: SavedViewRow) => {
     .catch(fallback);
   if (res.code === 1000) {
     await load();
-    ElMessage.success(
-      row.is_default ? t("savedView.defaultCleared") : t("savedView.defaultSet")
+    message(
+      row.is_default
+        ? t("savedView.defaultCleared")
+        : t("savedView.defaultSet"),
+      { type: "success" }
     );
   } else {
-    ElMessage.error(String(res.detail ?? t("results.failed")));
+    message(String(res.detail ?? t("results.failed")), { type: "error" });
   }
 };
 
@@ -232,7 +235,7 @@ const remove = async (row: SavedViewRow) => {
     if (String(currentPk.value) === String(row.pk)) currentPk.value = "";
     await load();
   } else {
-    ElMessage.error(String(res.detail ?? t("results.failed")));
+    message(String(res.detail ?? t("results.failed")), { type: "error" });
   }
 };
 

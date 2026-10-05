@@ -1,10 +1,10 @@
 import { h, ref, type Ref } from "vue";
-import { ElMessage } from "element-plus";
 import type { useI18n } from "vue-i18n";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { handleOperation, type OperationProps } from "@/components/RePlusPage";
 import type { ApiResult } from "@/api/types";
+import { message } from "@/utils/message";
 import BatchUpdateForm from "./BatchUpdateForm.vue";
 
 /**
@@ -45,7 +45,7 @@ export function useBatchUpdate(options: {
       string | number
     >;
     if (!pks.length) {
-      ElMessage.warning(t("batchUpdate.selectFirst"));
+      message(t("batchUpdate.selectFirst"), { type: "warning" });
       return;
     }
     addDialog({
@@ -59,7 +59,7 @@ export function useBatchUpdate(options: {
       beforeSure: (done, { closeLoading }) => {
         const payload = formRef.value?.getPayload?.();
         if (!payload) {
-          ElMessage.warning(t("batchUpdate.fieldRequired"));
+          message(t("batchUpdate.fieldRequired"), { type: "warning" });
           closeLoading();
           return;
         }

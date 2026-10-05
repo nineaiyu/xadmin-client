@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 import { computed, onMounted, reactive, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ElMessage } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { inviteAcceptApi, inviteValidateApi } from "@/api/auth";
 import { SUCCESS_CODE } from "@/api/types";
+import { message } from "@/utils/message";
 
 defineOptions({
   name: "InviteAccept"
@@ -36,11 +36,11 @@ onMounted(async () => {
 
 async function submit() {
   if (!form.password) {
-    ElMessage.warning(t("invite.passwordRequired"));
+    message(t("invite.passwordRequired"), { type: "warning" });
     return;
   }
   if (form.password !== form.confirm) {
-    ElMessage.warning(t("invite.mismatch"));
+    message(t("invite.mismatch"), { type: "warning" });
     return;
   }
   submitting.value = true;
@@ -51,12 +51,12 @@ async function submit() {
     });
     if (res?.code === SUCCESS_CODE) {
       state.value = "accepted";
-      ElMessage.success(res.detail || t("invite.success"));
+      message(res.detail || t("invite.success"), { type: "success" });
       setTimeout(() => router.push("/login"), 1200);
       return;
     }
     // 200 + 业务码非 1000（无效 / 过期 / 密码不合规）：必须显式展示后端 detail
-    ElMessage.error(String(res?.detail || t("results.failed")));
+    message(String(res?.detail || t("results.failed")), { type: "error" });
   } finally {
     submitting.value = false;
   }

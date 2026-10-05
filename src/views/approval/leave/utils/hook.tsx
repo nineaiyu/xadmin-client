@@ -1,11 +1,12 @@
 import { SUCCESS_CODE } from "@/api/types";
 import { h, reactive, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessage, ElTag } from "element-plus";
+import { ElTag } from "element-plus";
 import { LEAVE_DRAFT_SAVED_CODE, leaveApi } from "@/api/approval/leave";
 import { usePageAuth } from "@/router/utils";
 import { useConfirm } from "@/hooks/useConfirm";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";
+import { message } from "@/utils/message";
 import { SOLID_TAG_STYLE } from "@/utils/tagTone";
 import type {
   OperationProps,
@@ -77,14 +78,14 @@ export function useLeave(
     const res = await run(row.pk as string | number).catch(() => undefined);
     if (!res) return;
     if (res.code === SUCCESS_CODE) {
-      ElMessage.success(t(`leaveApply.${successKey}`));
+      message(t(`leaveApply.${successKey}`), { type: "success" });
       // 状态列/操作按钮随业务单状态联动（提交 → 审批中、撤回 → 已撤回），必须刷新
       refresh();
       return;
     }
     // 200 + 业务码非 1000（已在审批中 / 区间冲突 / 未配置流程等）：全局拦截器只处理
     // HTTP 层错误，业务失败必须显式展示后端 detail，否则用户点击后完全无反馈
-    ElMessage.error(String(res.detail || t("results.failed")));
+    message(String(res.detail || t("results.failed")), { type: "error" });
   };
 
   const operationButtonsProps = shallowRef<OperationProps>({
@@ -222,9 +223,9 @@ export function useLeave(
           failed: res => {
             if (res?.code === LEAVE_DRAFT_SAVED_CODE) {
               // 已存草稿：既非成功也非失败，黄色警示避免误当已提交；关闭表单并刷新列表
-              ElMessage.warning(
-                String(res?.detail || t("leaveApply.savedAsDraft"))
-              );
+              message(String(res?.detail || t("leaveApply.savedAsDraft")), {
+                type: "warning"
+              });
               closeLoading();
               done();
               refresh();

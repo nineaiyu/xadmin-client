@@ -2,9 +2,10 @@
 import { SUCCESS_CODE } from "@/api/types";
 import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessage, type FormInstance, type FormRules } from "element-plus";
+import { type FormInstance, type FormRules } from "element-plus";
 import { approvalInstanceApi } from "@/api/approval/approvalFlow";
 import { searchUserApi } from "@/api/system/search";
+import { message } from "@/utils/message";
 
 /**
  * 发起申请弹窗：选择启用中的流程 → 按 form_schema 渲染动态表单 → 提交。
@@ -158,7 +159,7 @@ function applyInitial() {
   if (!initial?.flow) return;
   const flow = flows.value.find(item => item.pk === initial.flow);
   if (!flow) {
-    ElMessage.warning(t("systemApprovalInstance.flowUnavailable"));
+    message(t("systemApprovalInstance.flowUnavailable"), { type: "warning" });
     return;
   }
   form.flow = initial.flow;
@@ -205,13 +206,13 @@ async function submit() {
       cc_users: form.ccUsers
     });
     if (res.code === SUCCESS_CODE) {
-      ElMessage.success(t("systemApprovalInstance.submitSuccess"));
+      message(t("systemApprovalInstance.submitSuccess"), { type: "success" });
       emit("submitted");
       return;
     }
     // 200 + 业务码非 1000（未配置流程 / 校验拒绝等）：全局拦截器只处理 HTTP 层错误，
     // 业务失败必须显式提示
-    ElMessage.error(String(res.detail || t("results.failed")));
+    message(String(res.detail || t("results.failed")), { type: "error" });
   } catch {
     // HTTP 层错误提示由拦截器统一处理
   } finally {
