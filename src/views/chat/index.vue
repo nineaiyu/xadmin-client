@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { ElMessageBox } from "element-plus";
 import { message } from "@/utils/message";
+import { useFullHeightPanel } from "@/hooks/useFullHeightPanel";
 import type { ChatMessageItem, ChatRoomItem } from "@/api/chat";
 import { useChat } from "./hooks/useChat";
 import { ReNavDrawer } from "@/components/ReNavDrawer";
@@ -26,31 +27,9 @@ const { t } = useI18n();
 const route = useRoute();
 const chat = useChat();
 const drawerVisible = ref(false);
-const isNarrow = ref(false);
-/** 面板高度：按视口实测（与 AI 助手页同一口径），替代
- *  calc(100vh - 164px) 魔数——标签栏显隐 / 窗口尺寸变化都自适应 */
-const pageRef = ref<HTMLElement | null>(null);
-const PANEL_MIN_HEIGHT = 420;
-const PANEL_BOTTOM_GAP = 24;
-const panelHeight = ref(PANEL_MIN_HEIGHT);
-
-function measurePanelHeight() {
-  const el = pageRef.value;
-  if (!el) return;
-  const top = el.getBoundingClientRect().top;
-  // 页脚与面板同处一个滚动容器（紧随其后）：不扣除会把「面板 + 页脚」顶出视口，整页出现滚动
-  const footer = document.querySelector(".layout-footer");
-  const footerHeight = footer instanceof HTMLElement ? footer.offsetHeight : 0;
-  panelHeight.value = Math.max(
-    Math.round(window.innerHeight - top - PANEL_BOTTOM_GAP - footerHeight),
-    PANEL_MIN_HEIGHT
-  );
-}
-
-function updateViewport() {
-  isNarrow.value = window.innerWidth < 768;
-  measurePanelHeight();
-}
+/** 面板高度与窄屏折叠：与 AI 助手页同一口径（视口实测，标签栏显隐 / 窗口
+ *  尺寸变化都自适应），替代 calc(100vh - 164px) 魔数 */
+const { pageRef, panelHeight, panelMinHeight, isNarrow } = useFullHeightPanel();
 
 /** 站内信通知点击跳转时会带 `?room=<id>`：定位到目标会话 */
 function applyRouteRoom() {
@@ -69,8 +48,6 @@ function refreshPresence() {
 }
 
 onMounted(async () => {
-  updateViewport();
-  window.addEventListener("resize", updateViewport);
   await Promise.all([
     chat.roomState.loadRooms(),
     chat.roomState.loadContacts()
@@ -83,14 +60,12 @@ onMounted(async () => {
 watch(() => route.query.room, applyRouteRoom);
 
 onActivated(() => {
-  // keep-alive 返回聊天页：重测面板高度 + 刷新在线态（连接由 onUnmounted 关闭，需重连）
-  measurePanelHeight();
+  // keep-alive 返回聊天页：刷新在线态（连接由 onUnmounted 关闭，需重连；面板高度由 hook 重测）
   refreshPresence();
   if (!chat.connected.value) chat.connect();
 });
 
 onUnmounted(() => {
-  window.removeEventListener("resize", updateViewport);
   if (presenceTimer) window.clearInterval(presenceTimer);
 });
 
@@ -156,7 +131,7 @@ async function recall(item: ChatMessageItem) {
   <div
     ref="pageRef"
     class="chat-page flex overflow-hidden rounded bg-bg_color"
-    :style="{ height: `${panelHeight}px`, minHeight: `${PANEL_MIN_HEIGHT}px` }"
+    :style="{ height: `${panelHeight}px`, minHeight: `${panelMinHeight}px` }"
     data-testid="chat-page"
   >
     <ChatSidebar
