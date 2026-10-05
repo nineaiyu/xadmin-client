@@ -1,12 +1,10 @@
 <script lang="ts" setup>
 import OAuthEntry from "./OauthEntry.vue";
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import Motion from "../utils/motion";
-import { useRoute, useRouter } from "vue-router";
 import { useLoginPageStoreHook } from "@/store/modules/loginPage";
 import { LOGIN_PAGE } from "../utils/enums";
-import { getTopMenu, initRouter } from "@/router/utils";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Lock from "~icons/ri/lock-fill";
 import User from "~icons/ri/user-3-fill";
@@ -16,30 +14,47 @@ import {
   type LoginResultData,
   type TokenInfo
 } from "@/api/auth";
-import type { LoginMfaRequired } from "@/api/mfa";
-import { debounce, delay } from "@pureadmin/utils";
-import { useEventListener } from "@vueuse/core";
+import { delay } from "@pureadmin/utils";
 import ReSendVerifyCode from "@/components/ReSendVerifyCode";
-import { AesEncrypted } from "@/utils/aes";
 import { handleOperation } from "@/components/RePlusPage";
-import { setToken } from "@/utils/auth";
 import LoginMfa from "./LoginMfa.vue";
 import type { RecordType } from "plus-pro-components";
+import {
+  backToBasicPage,
+  buildVerifyCodePayload,
+  createIsUsername,
+  useEnterSubmit,
+  useLoginFlow,
+  useRememberLogin
+} from "../useLoginFlow";
 
 defineOptions({
   name: "Login"
 });
 
-const router = useRouter();
-const loading = ref(false);
 const configLoading = ref(false);
-const checked = ref(true);
-const disabled = ref(false);
-const loginDay = ref(1);
-const loginDayList = ref([1]);
 const verifyCodeRef = ref();
-const route = useRoute();
 const { t } = useI18n();
+
+const {
+  checked,
+  loginDay,
+  loginDayList,
+  formatLoginDayOptions,
+  syncRememberToStore
+} = useRememberLogin();
+
+const {
+  loading,
+  disabled,
+  mustChangePassword,
+  loginMfaInfo,
+  afterTokenIssued,
+  handleMfaBack
+} = useLoginFlow();
+
+/** 登录 MFA 验证通过：写入正式 token 并进入系统 */
+const handleMfaSuccess = (data: TokenInfo) => afterTokenIssued(data, "login");
 
 const authInfo = ref({
   access: false,
@@ -57,85 +72,26 @@ const formData = ref({
   verify_token: undefined as string | undefined
 });
 
-/** 登录 MFA 二次验证载荷：非空时登录页切换为动态码验证步骤 */
-const loginMfaInfo = ref<LoginMfaRequired | null>(null);
-
-/** 登录完成（直接登录成功或 MFA 验证通过）：初始化路由并跳转 */
-const handleLoginSuccess = () => {
-  initRouter(true)
-    .then(() => {
-      disabled.value = true;
-      router
-        .push(
-          (route.query?.redirect as string) ?? getTopMenu(true)?.path ?? "/"
-        )
-        .finally(() => {
-          disabled.value = false;
-        });
-    })
-    .catch(() => {
-      // 动态路由拉取失败：跳静态 /error/500 可重试页（返回按钮会重新触发 initRouter）
-      router.push("/error/500").catch(() => undefined);
-    });
-};
-
-/** 登录 MFA 验证通过：写入正式 token 并进入系统 */
-const handleMfaSuccess = (data: TokenInfo) => {
-  setToken(data);
-  handleLoginSuccess();
-};
-
-const handleMfaBack = () => {
-  loginMfaInfo.value = null;
-};
-
-const formatLoginDayList = () => {
-  const start = 1;
-  const middle = Math.ceil(loginDay.value / 2);
-  if (middle > 0) {
-    if (middle !== start) {
-      loginDayList.value.push(middle);
-    }
-    if (middle !== loginDay.value) {
-      loginDayList.value.push(loginDay.value);
-    }
-  } else {
-    loginDayList.value = [loginDay.value];
-  }
-};
-
 const onLogin = async () => {
   loading.value = true;
-  const data: Record<string, string | undefined> = {
-    verify_token: formData.value.verify_token,
-    password: formData.value.password,
-    verify_code: formData.value.verify_code
-  };
-  if (authInfo.value.encrypted) {
-    data["password"] = await AesEncrypted(
-      data["verify_token"] as string,
-      data["password"] as string
-    );
-    data["target"] = await AesEncrypted(
-      data["verify_token"] as string,
-      data["target"] as string
-    );
-  }
+  const data = await buildVerifyCodePayload(formData.value, authInfo.value);
 
   handleOperation({
     t,
     apiReq: loginVerifyCodeApi(data),
+    // 成功提示统一由登录流弹出「登录成功」，关掉 handleOperation 默认的 detail 提示
+    showSuccessMsg: false,
     success(res) {
       // 登录载荷：正常登录为 TokenInfo；开启登录 MFA 时为 mfa_required 引导信息
       const result = res?.data as LoginResultData;
       if ("mfa_required" in result && result.mfa_required) {
         // 密码阶段通过，切换到登录 MFA 动态码验证步骤
         loginMfaInfo.value = result;
+        mustChangePassword.value = Boolean(result.must_change_password);
         return;
       }
-      // 登录接口详情数据即 TokenInfo
-      setToken(result as TokenInfo);
-      handleLoginSuccess();
+      // 登录接口详情数据即 TokenInfo：写 token 并进入系统
+      afterTokenIssued(result as TokenInfo);
     },
     requestEnd() {
       loading.value = false;
@@ -143,49 +99,21 @@ const onLogin = async () => {
   });
 };
 
-const immediateDebounce = debounce(() => handleLogin(), 1000, true);
-
-/** 使用公共函数，避免`removeEventListener`失效 */
-function onkeypress({ code }: KeyboardEvent) {
-  if (code === "Enter" || code === "NumpadEnter") {
-    handleLogin();
-  }
-}
-
 onMounted(() => {
   configLoading.value = true;
-  window.document.addEventListener("keydown", onkeypress);
-});
-
-onBeforeUnmount(() => {
-  useEventListener(document, "keydown", ({ code }) => {
-    if (
-      ["Enter", "NumpadEnter"].includes(code) &&
-      !disabled.value &&
-      !loading.value
-    )
-      immediateDebounce();
-  });
-});
-watch(checked, bool => {
-  useLoginPageStoreHook().SET_ISREMEMBERED(bool);
-});
-watch(loginDay, value => {
-  useLoginPageStoreHook().SET_LOGINDAY(value);
 });
 
 const configReqSuccess = (verifyCodeConfig: RecordType) => {
   authInfo.value = Object.assign(authInfo.value, verifyCodeConfig);
 
   loginDay.value = authInfo.value.lifetime;
-  formatLoginDayList();
-  useLoginPageStoreHook().SET_ISREMEMBERED(checked.value);
-  useLoginPageStoreHook().SET_LOGINDAY(loginDay.value);
+  formatLoginDayOptions();
+  syncRememberToStore();
 
   formData.value.form_type = authInfo.value.basic ? "username" : "";
 };
 
-const isUsername = computed(() => formData.value.form_type === "username");
+const isUsername = createIsUsername(formData);
 
 const handleLogin = () => {
   verifyCodeRef.value?.getRef()?.validate((isValid: boolean) => {
@@ -211,9 +139,10 @@ const handleLogin = () => {
   });
 };
 
-function onBack() {
-  useLoginPageStoreHook().SET_CURRENT_PAGE(LOGIN_PAGE.basic);
-}
+/** 回车提交（随组件卸载自动移除监听） */
+useEnterSubmit(() => handleLogin());
+
+const onBack = backToBasicPage;
 </script>
 
 <template>

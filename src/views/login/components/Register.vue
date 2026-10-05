@@ -1,27 +1,27 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
-import { useRouter } from "vue-router";
 import Motion from "../utils/motion";
 import { delay } from "@pureadmin/utils";
 import { message } from "@/utils/message";
-import { AesEncrypted } from "@/utils/aes";
-import { passwordRulesCheck } from "@/utils";
 import { $t, transformI18n } from "@/plugins/i18n";
-import { getTopMenu, initRouter } from "@/router/utils";
 import { useUserStoreHook } from "@/store/modules/user";
-import { useLoginPageStoreHook } from "@/store/modules/loginPage";
-import { LOGIN_PAGE } from "../utils/enums";
-import { computed, onMounted, reactive, ref } from "vue";
-import type { FormInstance, FormRules } from "element-plus";
+import { onMounted, ref } from "vue";
+import type { FormInstance } from "element-plus";
 import ReSendVerifyCode from "@/components/ReSendVerifyCode";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import User from "~icons/ri/user-3-fill";
 import Lock from "~icons/ri/lock-fill";
 import type { RecordType } from "plus-pro-components";
+import {
+  backToBasicPage,
+  buildVerifyCodePayload,
+  createIsUsername,
+  createPasswordFormRules,
+  useLoginFlow
+} from "../useLoginFlow";
 
 const { t } = useI18n();
 const checked = ref(false);
-const loading = ref(false);
 const configLoading = ref(false);
 const authInfo = ref({
   basic: false,
@@ -41,7 +41,7 @@ const formData = ref({
 const formDataRef = ref<FormInstance>();
 const verifyCodeRef = ref();
 
-const router = useRouter();
+const { loading, handleLoginSuccess } = useLoginFlow();
 const handleRegister = () => {
   verifyCodeRef.value?.getRef()?.validate((isValid: boolean) => {
     if (isValid) {
@@ -78,37 +78,12 @@ const handleRegister = () => {
 
 const onRegister = async () => {
   loading.value = true;
-  const data: Record<string, string | undefined> = {
-    verify_token: formData.value.verify_token,
-    password: formData.value.password,
-    verify_code: formData.value.verify_code
-  };
-  if (authInfo.value.encrypted) {
-    data["password"] = await AesEncrypted(
-      data["verify_token"] as string,
-      data["password"] as string
-    );
-    data["target"] = await AesEncrypted(
-      data["verify_token"] as string,
-      data["target"] as string
-    );
-  }
+  const data = await buildVerifyCodePayload(formData.value, authInfo.value);
   useUserStoreHook()
     .registerByUsername(data)
     .then(() => {
-      message(transformI18n($t("login.registerSuccess")), {
-        type: "success"
-      });
-      // 获取后端路由
-      initRouter(true)
-        .then(() => {
-          router.push(getTopMenu(true)?.path ?? "/");
-        })
-        .catch(() => {
-          // 动态路由拉取失败：跳静态 /error/500 可重试页（返回按钮会重新触发 initRouter）
-          router.push("/error/500").catch(() => undefined);
-        });
-      loading.value = false;
+      // 注册成功走统一登录流：成功提示、动态路由与 redirect 跳转、loading 收口
+      handleLoginSuccess("register");
     })
     .catch(err => {
       loading.value = false;
@@ -118,44 +93,12 @@ const onRegister = async () => {
     });
 };
 
-function onBack() {
-  useLoginPageStoreHook().SET_CURRENT_PAGE(LOGIN_PAGE.basic);
-}
+const onBack = backToBasicPage;
 
-const formRules = reactive<FormRules>({
-  password: [
-    {
-      required: true,
-      validator: (rule, value, callback) => {
-        const { result, msg } = passwordRulesCheck(
-          value,
-          authInfo.value.password,
-          t
-        );
-        if (result) {
-          callback();
-        } else {
-          callback(new Error(msg));
-        }
-      },
-      trigger: "blur"
-    }
-  ],
-  repeatPassword: [
-    {
-      required: true,
-      validator: (rule, value, callback) => {
-        if (value === "") {
-          callback(new Error(transformI18n($t("login.passwordSureReg"))));
-        } else if (formData.value.password !== value) {
-          callback(new Error(transformI18n($t("login.passwordDifferentReg"))));
-        } else {
-          callback();
-        }
-      },
-      trigger: "blur"
-    }
-  ]
+const formRules = createPasswordFormRules({
+  t,
+  getPasswordRules: () => authInfo.value.password,
+  getPassword: () => formData.value.password
 });
 
 const configReqSuccess = (verifyCodeConfig: RecordType) => {
@@ -163,7 +106,7 @@ const configReqSuccess = (verifyCodeConfig: RecordType) => {
   formData.value.form_type = authInfo.value.basic ? "username" : "";
 };
 
-const isUsername = computed(() => formData.value.form_type === "username");
+const isUsername = createIsUsername(formData);
 onMounted(() => (configLoading.value = true));
 </script>
 

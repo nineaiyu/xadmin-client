@@ -1,19 +1,19 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
-import { onMounted, reactive, ref } from "vue";
+import { onMounted, ref } from "vue";
 import Motion from "../utils/motion";
-import type { FormInstance, FormRules } from "element-plus";
-import { $t, transformI18n } from "@/plugins/i18n";
-import { useLoginPageStoreHook } from "@/store/modules/loginPage";
-import { LOGIN_PAGE } from "../utils/enums";
+import type { FormInstance } from "element-plus";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Lock from "~icons/ri/lock-fill";
 import { resetPasswordApi } from "@/api/auth";
 import { handleOperation } from "@/components/RePlusPage";
-import { AesEncrypted } from "@/utils/aes";
-import { passwordRulesCheck } from "@/utils";
 import ReSendVerifyCode from "@/components/ReSendVerifyCode";
 import type { RecordType } from "plus-pro-components";
+import {
+  backToBasicPage,
+  buildVerifyCodePayload,
+  createPasswordFormRules
+} from "../useLoginFlow";
 
 const { t } = useI18n();
 const loading = ref(false);
@@ -34,31 +34,23 @@ const authInfo = ref({
 const formDataRef = ref<FormInstance>();
 const verifyCodeRef = ref();
 
+const onBack = backToBasicPage;
+
 const handleSubmit = () => {
   verifyCodeRef.value.getRef().validate((isValid: boolean) => {
     if (isValid) {
       formDataRef.value?.validate(async valid => {
         if (valid) {
           loading.value = true;
-          const data: Record<string, string | undefined> = {
-            verify_token: formData.value.verify_token,
-            password: formData.value.password,
-            verify_code: formData.value.verify_code
-          };
-          if (authInfo.value.encrypted) {
-            data["password"] = await AesEncrypted(
-              data["verify_token"] as string,
-              data["password"] as string
-            );
-            data["target"] = await AesEncrypted(
-              data["verify_token"] as string,
-              data["target"] as string
-            );
-          }
+          const data = await buildVerifyCodePayload(
+            formData.value,
+            authInfo.value
+          );
           handleOperation({
             t,
             apiReq: resetPasswordApi(data),
             success() {
+              // 重置密码不登录：成功即返回账号密码登录页
               onBack();
             },
             requestEnd() {
@@ -71,45 +63,12 @@ const handleSubmit = () => {
   });
 };
 
-function onBack() {
-  useLoginPageStoreHook().SET_CURRENT_PAGE(LOGIN_PAGE.basic);
-}
-
-const formRules = reactive<FormRules>({
-  password: [
-    {
-      required: true,
-      validator: (rule, value, callback) => {
-        const { result, msg } = passwordRulesCheck(
-          value,
-          authInfo.value.password,
-          t
-        );
-        if (result) {
-          callback();
-        } else {
-          callback(new Error(msg));
-        }
-      },
-      trigger: "blur"
-    }
-  ],
-  repeatPassword: [
-    {
-      required: true,
-      validator: (rule, value, callback) => {
-        if (value === "") {
-          callback(new Error(transformI18n($t("login.passwordSureReg"))));
-        } else if (formData.value.password !== value) {
-          callback(new Error(transformI18n($t("login.passwordDifferentReg"))));
-        } else {
-          callback();
-        }
-      },
-      trigger: "blur"
-    }
-  ]
+const formRules = createPasswordFormRules({
+  t,
+  getPasswordRules: () => authInfo.value.password,
+  getPassword: () => formData.value.password
 });
+
 const configReqSuccess = (verifyCodeConfig: RecordType) => {
   authInfo.value = Object.assign(authInfo.value, verifyCodeConfig);
 };

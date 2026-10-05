@@ -1,17 +1,14 @@
 <script lang="ts" setup>
 import { SUCCESS_CODE } from "@/api/types";
-import { onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
+import { onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import Motion from "../utils/motion";
-import { useRoute, useRouter } from "vue-router";
 import { message } from "@/utils/message";
 import { loginRules } from "../utils/rule";
 import type { FormInstance } from "element-plus";
-import { $t, transformI18n } from "@/plugins/i18n";
 import { LOGIN_PAGE, operates } from "../utils/enums";
 import { useUserStoreHook } from "@/store/modules/user";
 import { useLoginPageStoreHook } from "@/store/modules/loginPage";
-import { getTopMenu, initRouter } from "@/router/utils";
 import { ReImageVerify } from "@/components/ReImageVerify";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Lock from "~icons/ri/lock-fill";
@@ -24,31 +21,32 @@ import {
   loginAuthApi,
   type TokenInfo
 } from "@/api/auth";
-import type { LoginMfaRequired } from "@/api/mfa";
-import { setToken } from "@/utils/auth";
-import { cloneDeep, debounce } from "@pureadmin/utils";
-import { useEventListener } from "@vueuse/core";
+import { cloneDeep } from "@pureadmin/utils";
 import LoginMfa from "./LoginMfa.vue";
 import OAuthEntry from "./OauthEntry.vue";
 import type { RecordType } from "plus-pro-components";
+import {
+  useEnterSubmit,
+  useLoginFlow,
+  useRememberLogin
+} from "../useLoginFlow";
 
 defineOptions({
   name: "BasicLogin"
 });
 
-const router = useRouter();
-const loading = ref(false);
-/** 巡检处置联动：后端登录响应带 must_change_password 时引导改密 */
-const mustChangePassword = ref(false);
 const captchaRef = ref();
 const configLoading = ref(false);
-const checked = ref(true);
-const disabled = ref(false);
-const loginDay = ref(1);
-const loginDayList = ref([1]);
 const ruleFormRef = ref<FormInstance>();
-const route = useRoute();
 const { t } = useI18n();
+
+const {
+  checked,
+  loginDay,
+  loginDayList,
+  formatLoginDayOptions,
+  syncRememberToStore
+} = useRememberLogin();
 
 const authInfo = reactive<AuthInfoResult["data"]>({
   access: false,
@@ -60,9 +58,6 @@ const authInfo = reactive<AuthInfoResult["data"]>({
   reset: false
 });
 
-/** 登录 MFA 二次验证载荷：非空时登录页切换为动态码验证步骤 */
-const loginMfaInfo = ref<LoginMfaRequired | null>(null);
-
 const ruleForm = reactive({
   username: "",
   password: "",
@@ -70,21 +65,6 @@ const ruleForm = reactive({
   captcha_key: "",
   captcha_code: ""
 });
-
-const formatLoginDayList = () => {
-  const start = 1;
-  const middle = Math.ceil(loginDay.value / 2);
-  if (middle > 0) {
-    if (middle !== start) {
-      loginDayList.value.push(middle);
-    }
-    if (middle !== loginDay.value) {
-      loginDayList.value.push(loginDay.value);
-    }
-  } else {
-    loginDayList.value = [loginDay.value];
-  }
-};
 
 /**
  * 临时 Token 首次获取的进行中 Promise：登录提交前 await 它，避免「首帧 token 尚未
@@ -109,6 +89,22 @@ const initToken = (force = false) => {
   return tokenPromise;
 };
 
+const {
+  loading,
+  disabled,
+  mustChangePassword,
+  loginMfaInfo,
+  handleLoginSuccess,
+  afterTokenIssued,
+  handleMfaBack
+} = useLoginFlow({
+  // MFA 步骤返回重新登录：刷新一次性临时 token 与图形验证码
+  onMfaBack: () => {
+    void initToken(true);
+    captchaRef.value?.getImgCode();
+  }
+});
+
 const onLogin = async (formEl: FormInstance | undefined) => {
   if (!formEl) return;
   await formEl.validate(async valid => {
@@ -130,7 +126,7 @@ const onLogin = async (formEl: FormInstance | undefined) => {
             }
             // 巡检处置联动：管理员要求改密时登录后引导到个人配置页
             mustChangePassword.value = Boolean(res.data.must_change_password);
-            handleLoginSuccess();
+            handleLoginSuccess("login");
           } else {
             message(res.detail, {
               type: "warning"
@@ -151,68 +147,13 @@ const onLogin = async (formEl: FormInstance | undefined) => {
   });
 };
 
-/** 登录完成（直接登录成功或 MFA 验证通过）：初始化路由并跳转 */
-const handleLoginSuccess = () => {
-  message(transformI18n($t("login.loginSuccess")), {
-    type: "success"
-  });
-  if (mustChangePassword.value) {
-    message(transformI18n($t("forcePassword.tip")), {
-      type: "warning",
-      duration: 6000
-    });
-  }
-  initRouter(true)
-    .then(() => {
-      disabled.value = true;
-      router
-        .push(
-          mustChangePassword.value
-            ? "/settings/basic"
-            : ((route.query?.redirect as string) ??
-                getTopMenu(true)?.path ??
-                "/")
-        )
-        .finally(() => {
-          disabled.value = false;
-        });
-    })
-    .catch(() => {
-      // 动态路由拉取失败：跳静态 /error/500 可重试页（返回按钮会重新触发 initRouter）
-      router.push("/error/500").catch(() => undefined);
-    })
-    .finally(() => (loading.value = false));
-};
-
 /** 登录 MFA 验证通过：写入正式 token 并进入系统 */
-const handleMfaSuccess = (data: TokenInfo) => {
-  setToken(data);
-  mustChangePassword.value = Boolean(
-    (data as TokenInfo & { must_change_password?: boolean })
-      .must_change_password
-  );
-  handleLoginSuccess();
-};
+const handleMfaSuccess = (data: TokenInfo) => afterTokenIssued(data, "login");
 
-/** 返回重新登录 */
-const handleMfaBack = () => {
-  loginMfaInfo.value = null;
-  void initToken(true);
-  captchaRef.value?.getImgCode();
-};
-
-const immediateDebounce: (_formRef?: FormInstance | undefined) => void =
-  debounce((formRef: FormInstance | undefined) => onLogin(formRef), 1000, true);
-
-/** 使用公共函数，避免`removeEventListener`失效 */
-function onkeypress({ code }: KeyboardEvent) {
-  if (code === "Enter" || code === "NumpadEnter") {
-    onLogin(ruleFormRef.value);
-  }
-}
+/** 回车提交（随组件卸载自动移除监听） */
+useEnterSubmit(() => onLogin(ruleFormRef.value));
 
 onMounted(() => {
-  window.document.addEventListener("keydown", onkeypress);
   configLoading.value = true;
   loginAuthApi()
     .then(res => {
@@ -223,29 +164,11 @@ onMounted(() => {
         });
         void initToken();
         loginDay.value = authInfo.lifetime ?? 1;
-        formatLoginDayList();
-        useLoginPageStoreHook().SET_ISREMEMBERED(checked.value);
-        useLoginPageStoreHook().SET_LOGINDAY(loginDay.value);
+        formatLoginDayOptions();
+        syncRememberToStore();
       }
     })
     .finally(() => (configLoading.value = false));
-});
-
-onBeforeUnmount(() => {
-  useEventListener(document, "keydown", ({ code }) => {
-    if (
-      ["Enter", "NumpadEnter"].includes(code) &&
-      !disabled.value &&
-      !loading.value
-    )
-      immediateDebounce(ruleFormRef.value);
-  });
-});
-watch(checked, bool => {
-  useLoginPageStoreHook().SET_ISREMEMBERED(bool);
-});
-watch(loginDay, value => {
-  useLoginPageStoreHook().SET_LOGINDAY(value);
 });
 </script>
 
