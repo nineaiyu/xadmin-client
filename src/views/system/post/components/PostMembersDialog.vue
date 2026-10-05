@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
 import { SUCCESS_CODE } from "@/api/types";
+import { usePageLoading } from "@/hooks/usePageLoading";
 import {
   postApi,
   type PostItem,
@@ -23,7 +24,7 @@ const props = defineProps<{
 
 const { t } = useI18n();
 
-const loading = ref(false);
+const { loading, runWithLoading } = usePageLoading();
 const members = ref<PostMemberItem[]>([]);
 /** 待新增（尚未提交，去重由服务端幂等兜底） */
 const adding = ref<PostUserOption[]>([]);
@@ -36,21 +37,21 @@ const displayMembers = computed(() =>
   members.value.filter(item => !removing.value.includes(item.pk))
 );
 
+/** 成员加载失败就地提示（明细弹窗无骨架错误态），不外抛 */
 async function loadMembers() {
-  loading.value = true;
-  try {
-    const res = await postApi.members(props.row.pk);
-    if (res.code === SUCCESS_CODE) {
-      members.value = res.data?.members ?? [];
-    } else if (res.detail) {
-      message(String(res.detail), { type: "warning" });
+  await runWithLoading(async () => {
+    try {
+      const res = await postApi.members(props.row.pk);
+      if (res.code === SUCCESS_CODE) {
+        members.value = res.data?.members ?? [];
+      } else if (res.detail) {
+        message(String(res.detail), { type: "warning" });
+      }
+    } catch (error) {
+      const detail = (error as { detail?: string })?.detail;
+      if (detail) message(String(detail), { type: "warning" });
     }
-  } catch (error) {
-    const detail = (error as { detail?: string })?.detail;
-    if (detail) message(String(detail), { type: "warning" });
-  } finally {
-    loading.value = false;
-  }
+  });
 }
 
 /** 远程搜索候选（≤20 条；服务端在无关键字时返回空列表，需要输入才会出候选） */

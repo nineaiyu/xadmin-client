@@ -5,6 +5,7 @@ import { useI18n } from "vue-i18n";
 import ReSkeleton from "@/components/ReSkeleton";
 import { useDark, useECharts } from "@pureadmin/utils";
 import type { UtilsEChartsOption } from "@pureadmin/utils";
+import { usePageLoading } from "@/hooks/usePageLoading";
 import {
   datasetApi,
   type AggregateResult,
@@ -29,7 +30,7 @@ const { isDark } = useDark();
 const theme = computed(() => (isDark.value ? "dark" : "light"));
 
 const chartRef = ref();
-const loading = ref(false);
+const { loading, runWithLoading } = usePageLoading();
 const total = ref(0);
 /** 加载失败原因：图表/数字区域改为可读提示 + 重试（业务码非 1000 与网络异常统一收敛） */
 const errorMsg = ref("");
@@ -134,26 +135,14 @@ const buildSeriesOptions = (result: AggregateResult): UtilsEChartsOption => {
   };
 };
 
-const loadData = async () => {
-  const card = props.card;
-  loading.value = true;
-  errorMsg.value = "";
-  try {
-    if (card.chart_type === "number") {
-      // count_only：数字卡只读 total，服务端跳过全量行物化
-      const res = await datasetApi.execute<ExecuteResult>(card.dataset, {
-        count_only: true
-      });
-      if (res.code === SUCCESS_CODE) {
-        total.value = Number(res.data?.total ?? 0);
-        return;
-      }
-      errorMsg.value = String(res.detail ?? t("dashboard.loadFailed"));
-      return;
-    }
-    if (card.chart_type === "metric") {
-      // 指标卡：count = 行总数（复用 execute）；sum/avg = 无分组纯聚合单值
-      if ((card.metric ?? "count") === "count") {
+/** 卡片加载：失败就地转骨架错误态（errorMsg），不外抛；loading 由 hook 托管 */
+const loadData = () =>
+  runWithLoading(async () => {
+    const card = props.card;
+    errorMsg.value = "";
+    try {
+      if (card.chart_type === "number") {
+        // count_only：数字卡只读 total，服务端跳过全量行物化
         const res = await datasetApi.execute<ExecuteResult>(card.dataset, {
           count_only: true
         });
@@ -164,41 +153,52 @@ const loadData = async () => {
         errorMsg.value = String(res.detail ?? t("dashboard.loadFailed"));
         return;
       }
+      if (card.chart_type === "metric") {
+        // 指标卡：count = 行总数（复用 execute）；sum/avg = 无分组纯聚合单值
+        if ((card.metric ?? "count") === "count") {
+          const res = await datasetApi.execute<ExecuteResult>(card.dataset, {
+            count_only: true
+          });
+          if (res.code === SUCCESS_CODE) {
+            total.value = Number(res.data?.total ?? 0);
+            return;
+          }
+          errorMsg.value = String(res.detail ?? t("dashboard.loadFailed"));
+          return;
+        }
+        const res = await datasetApi.aggregate<AggregateResult>(card.dataset, {
+          group_by: "",
+          metric: card.metric ?? "count",
+          value_field: card.value_field
+        });
+        if (res.code === SUCCESS_CODE) {
+          total.value = Number(res.data?.series?.[0]?.value ?? 0);
+          return;
+        }
+        errorMsg.value = String(res.detail ?? t("dashboard.loadFailed"));
+        return;
+      }
       const res = await datasetApi.aggregate<AggregateResult>(card.dataset, {
-        group_by: "",
+        group_by: card.group_by,
         metric: card.metric ?? "count",
+        date_trunc:
+          card.chart_type === "line" ? (card.date_trunc ?? "day") : undefined,
         value_field: card.value_field
       });
       if (res.code === SUCCESS_CODE) {
-        total.value = Number(res.data?.series?.[0]?.value ?? 0);
+        await renderAggregate(res.data);
         return;
       }
+      // 200 + 业务码非 1000（字段权限/数值字段校验等）：显式提示，避免图表空白无解释
       errorMsg.value = String(res.detail ?? t("dashboard.loadFailed"));
-      return;
+    } catch (error) {
+      errorMsg.value = String(
+        (error as { detail?: string })?.detail ??
+          error ??
+          t("dashboard.loadFailed")
+      );
     }
-    const res = await datasetApi.aggregate<AggregateResult>(card.dataset, {
-      group_by: card.group_by,
-      metric: card.metric ?? "count",
-      date_trunc:
-        card.chart_type === "line" ? (card.date_trunc ?? "day") : undefined,
-      value_field: card.value_field
-    });
-    if (res.code === SUCCESS_CODE) {
-      await renderAggregate(res.data);
-      return;
-    }
-    // 200 + 业务码非 1000（字段权限/数值字段校验等）：显式提示，避免图表空白无解释
-    errorMsg.value = String(res.detail ?? t("dashboard.loadFailed"));
-  } catch (error) {
-    errorMsg.value = String(
-      (error as { detail?: string })?.detail ??
-        error ??
-        t("dashboard.loadFailed")
-    );
-  } finally {
-    loading.value = false;
-  }
-};
+  });
 
 /** 渲染聚合数据（HTTP 拉取与 WS 注入共用同一渲染路径） */
 const renderAggregate = async (result: AggregateResult) => {
