@@ -4,7 +4,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import Motion from "../utils/motion";
 import { useRoute, useRouter } from "vue-router";
-import { useUserStoreHook } from "@/store/modules/user";
+import { useLoginPageStoreHook } from "@/store/modules/loginPage";
 import { LOGIN_PAGE } from "../utils/enums";
 import { getTopMenu, initRouter } from "@/router/utils";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
@@ -168,10 +168,10 @@ onBeforeUnmount(() => {
   });
 });
 watch(checked, bool => {
-  useUserStoreHook().SET_ISREMEMBERED(bool);
+  useLoginPageStoreHook().SET_ISREMEMBERED(bool);
 });
 watch(loginDay, value => {
-  useUserStoreHook().SET_LOGINDAY(value);
+  useLoginPageStoreHook().SET_LOGINDAY(value);
 });
 
 const configReqSuccess = (verifyCodeConfig: RecordType) => {
@@ -179,8 +179,8 @@ const configReqSuccess = (verifyCodeConfig: RecordType) => {
 
   loginDay.value = authInfo.value.lifetime;
   formatLoginDayList();
-  useUserStoreHook().SET_ISREMEMBERED(checked.value);
-  useUserStoreHook().SET_LOGINDAY(loginDay.value);
+  useLoginPageStoreHook().SET_ISREMEMBERED(checked.value);
+  useLoginPageStoreHook().SET_LOGINDAY(loginDay.value);
 
   formData.value.form_type = authInfo.value.basic ? "username" : "";
 };
@@ -212,7 +212,7 @@ const handleLogin = () => {
 };
 
 function onBack() {
-  useUserStoreHook().SET_CURRENT_PAGE(LOGIN_PAGE.basic);
+  useLoginPageStoreHook().SET_CURRENT_PAGE(LOGIN_PAGE.basic);
 }
 </script>
 
@@ -318,7 +318,9 @@ function onBack() {
                 link
                 type="primary"
                 @click="
-                  useUserStoreHook().SET_CURRENT_PAGE(LOGIN_PAGE.resetPassword)
+                  useLoginPageStoreHook().SET_CURRENT_PAGE(
+                    LOGIN_PAGE.resetPassword
+                  )
                 "
               >
                 {{ t("login.forget") }}

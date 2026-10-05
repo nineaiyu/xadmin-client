@@ -9,7 +9,7 @@ import { useAppStoreHook } from "@/store/modules/app";
 import { useEpThemeStoreHook } from "@/store/modules/epTheme";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { useNoticeStoreHook } from "@/store/modules/notice";
-import { useUserStoreHook } from "@/store/modules/user";
+import { useWatermarkStoreHook } from "@/store/modules/watermark";
 import { darken, lighten, useGlobal, storageLocal } from "@pureadmin/utils";
 import { DEFAULT_EP_THEME_COLOR } from "@/utils/themeConstants";
 
@@ -135,7 +135,8 @@ export function useDataThemeChange() {
     // router.push("/login");
     useMultiTagsStoreHook().handleTags("equal", [...routerArrays]);
     resetRouter();
-    useUserStoreHook().clear();
+    // 水印态复位归水印 store（原 user store 的 clear 仅复位水印配置）
+    useWatermarkStoreHook().reset();
     window.location.reload();
   }
 

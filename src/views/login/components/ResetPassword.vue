@@ -4,7 +4,7 @@ import { onMounted, reactive, ref } from "vue";
 import Motion from "../utils/motion";
 import type { FormInstance, FormRules } from "element-plus";
 import { $t, transformI18n } from "@/plugins/i18n";
-import { useUserStoreHook } from "@/store/modules/user";
+import { useLoginPageStoreHook } from "@/store/modules/loginPage";
 import { LOGIN_PAGE } from "../utils/enums";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Lock from "~icons/ri/lock-fill";
@@ -72,7 +72,7 @@ const handleSubmit = () => {
 };
 
 function onBack() {
-  useUserStoreHook().SET_CURRENT_PAGE(LOGIN_PAGE.basic);
+  useLoginPageStoreHook().SET_CURRENT_PAGE(LOGIN_PAGE.basic);
 }
 
 const formRules = reactive<FormRules>({

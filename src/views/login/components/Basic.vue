@@ -10,6 +10,7 @@ import type { FormInstance } from "element-plus";
 import { $t, transformI18n } from "@/plugins/i18n";
 import { LOGIN_PAGE, operates } from "../utils/enums";
 import { useUserStoreHook } from "@/store/modules/user";
+import { useLoginPageStoreHook } from "@/store/modules/loginPage";
 import { getTopMenu, initRouter } from "@/router/utils";
 import { ReImageVerify } from "@/components/ReImageVerify";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
@@ -223,8 +224,8 @@ onMounted(() => {
         void initToken();
         loginDay.value = authInfo.lifetime ?? 1;
         formatLoginDayList();
-        useUserStoreHook().SET_ISREMEMBERED(checked.value);
-        useUserStoreHook().SET_LOGINDAY(loginDay.value);
+        useLoginPageStoreHook().SET_ISREMEMBERED(checked.value);
+        useLoginPageStoreHook().SET_LOGINDAY(loginDay.value);
       }
     })
     .finally(() => (configLoading.value = false));
@@ -241,10 +242,10 @@ onBeforeUnmount(() => {
   });
 });
 watch(checked, bool => {
-  useUserStoreHook().SET_ISREMEMBERED(bool);
+  useLoginPageStoreHook().SET_ISREMEMBERED(bool);
 });
 watch(loginDay, value => {
-  useUserStoreHook().SET_LOGINDAY(value);
+  useLoginPageStoreHook().SET_LOGINDAY(value);
 });
 </script>
 
@@ -345,7 +346,9 @@ watch(loginDay, value => {
                 link
                 type="primary"
                 @click="
-                  useUserStoreHook().SET_CURRENT_PAGE(LOGIN_PAGE.resetPassword)
+                  useLoginPageStoreHook().SET_CURRENT_PAGE(
+                    LOGIN_PAGE.resetPassword
+                  )
                 "
               >
                 {{ t("login.forget") }}
@@ -380,7 +383,7 @@ watch(loginDay, value => {
               :key="item.page"
               class="w-full mt-4!"
               size="default"
-              @click="useUserStoreHook().SET_CURRENT_PAGE(item.page)"
+              @click="useLoginPageStoreHook().SET_CURRENT_PAGE(item.page)"
             >
               {{ t(item.title) }}
             </el-button>

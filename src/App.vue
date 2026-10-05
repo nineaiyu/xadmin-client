@@ -20,6 +20,7 @@ import {
   onBeforeUnmount
 } from "vue";
 import { useUserStoreHook } from "@/store/modules/user";
+import { useWatermarkStoreHook } from "@/store/modules/watermark";
 import {
   buildWatermarkRenderOptions,
   defaultSiteWatermark,
@@ -55,7 +56,8 @@ export default defineComponent({
     const { $storage } = useGlobal<GlobalPropertiesApi>();
     const userStore = useUserStoreHook();
     // 站点水印（服务端「水印设置」下发，样式含字号/透明度/旋转角/颜色）
-    const siteWatermark = computed(() => userStore.siteWatermark);
+    const watermarkStore = useWatermarkStoreHook();
+    const siteWatermark = computed(() => watermarkStore.siteWatermark);
     const onLoginPage = computed(() => route.name === "Login");
     const siteWatermarkVisible = computed(() =>
       isSiteWatermarkVisible({

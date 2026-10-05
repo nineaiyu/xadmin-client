@@ -1,7 +1,7 @@
 import { reactive } from "vue";
 import type { FormRules } from "element-plus";
 import { $t, transformI18n } from "@/plugins/i18n";
-import { useUserStoreHook } from "@/store/modules/user";
+import { useLoginPageStoreHook } from "@/store/modules/loginPage";
 
 /** 6位数字验证码正则 */
 export const REGEXP_SIX = /^\d{6}$/;
@@ -36,7 +36,7 @@ const loginRules = reactive<FormRules>({
       validator: (rule, value, callback) => {
         if (value === "") {
           callback(new Error(transformI18n($t("login.verifyCodeReg"))));
-        } else if (useUserStoreHook().verifyCodeLength !== value.length) {
+        } else if (useLoginPageStoreHook().verifyCodeLength !== value.length) {
           callback(new Error(transformI18n($t("login.verifyCodeCorrectReg"))));
         } else {
           callback();

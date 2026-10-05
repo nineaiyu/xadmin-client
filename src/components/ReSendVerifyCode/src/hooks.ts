@@ -6,7 +6,7 @@ import {
   verifyCodeConfigApi,
   verifyCodeSendApi
 } from "@/api/auth";
-import { useUserStoreHook } from "@/store/modules/user";
+import { useLoginPageStoreHook } from "@/store/modules/loginPage";
 import { isEmail, isEmpty } from "@pureadmin/utils";
 import { useVerifyCode } from "./verifyCode";
 import type { FormRules } from "element-plus";
@@ -117,7 +117,9 @@ export const useSendVerifyCode = (
         validator: (rule, value, callback) => {
           if (value === "") {
             callback(new Error(transformI18n($t("login.verifyCodeReg"))));
-          } else if (useUserStoreHook().verifyCodeLength !== value?.length) {
+          } else if (
+            useLoginPageStoreHook().verifyCodeLength !== value?.length
+          ) {
             callback(
               new Error(transformI18n($t("login.verifyCodeCorrectReg")))
             );

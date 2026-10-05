@@ -2,6 +2,7 @@ import Cookies from "js-cookie";
 import type { PureHttpRequestConfig } from "@/utils/http/types";
 import { storageLocal } from "@pureadmin/utils";
 import { useUserStoreHook } from "@/store/modules/user";
+import { useLoginPageStoreHook } from "@/store/modules/loginPage";
 import type { TokenInfo, UserInfo } from "@/api/auth";
 import { responsiveStorageNameSpace } from "@/config";
 import Storage from "responsive-storage";
@@ -72,7 +73,8 @@ export function setToken(data: TokenInfo) {
   if (data.refresh && data.refresh_token_lifetime) {
     setRefreshToken(data.refresh, data.refresh_token_lifetime - 10);
   }
-  const { isRemembered, loginDay } = useUserStoreHook();
+  // 免登录勾选态归登录页 UI store（auth ↔ store 均为函数体内调用 hook）
+  const { isRemembered, loginDay } = useLoginPageStoreHook();
   Cookies.set(
     multipleTabsKey,
     "true",

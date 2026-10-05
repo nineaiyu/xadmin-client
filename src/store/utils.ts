@@ -22,6 +22,8 @@ export type {
   setType,
   appType,
   userType,
+  loginPageType,
+  watermarkType,
   multiType,
   cacheType,
   positionType

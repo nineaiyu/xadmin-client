@@ -14,14 +14,14 @@ vi.mock("@pureadmin/utils", () => ({
 
 vi.mock("@/store/modules/user", () => ({
   useUserStoreHook: vi.fn(() => ({
+    updateUserInfo: vi.fn()
+  }))
+}));
+
+vi.mock("@/store/modules/loginPage", () => ({
+  useLoginPageStoreHook: vi.fn(() => ({
     isRemembered: false,
-    loginDay: 7,
-    SET_AVATAR: vi.fn(),
-    SET_USERNAME: vi.fn(),
-    SET_NICKNAME: vi.fn(),
-    SET_EMAIL: vi.fn(),
-    SET_PHONE: vi.fn(),
-    SET_ROLES: vi.fn()
+    loginDay: 7
   }))
 }));
 

@@ -9,7 +9,7 @@ import login from "./components/Login.vue";
 import { LOGIN_PAGE } from "./utils/enums";
 import { useNav } from "@/layout/hooks/useNav";
 import { useLayout } from "@/layout/hooks/useLayout";
-import { useUserStoreHook } from "@/store/modules/user";
+import { useLoginPageStoreHook } from "@/store/modules/loginPage";
 import { avatar, bg, illustration } from "./utils/static";
 
 import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
@@ -25,7 +25,7 @@ defineOptions({
 });
 
 const currentPage = computed(() => {
-  return useUserStoreHook().currentPage;
+  return useLoginPageStoreHook().currentPage;
 });
 
 const { initStorage } = useLayout();

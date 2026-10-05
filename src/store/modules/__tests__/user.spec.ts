@@ -45,49 +45,4 @@ describe("user store", () => {
     expect(store.phone).toBe("13900000000");
     expect(store.roles).toEqual(["dev"]);
   });
-
-  it("站点水印配置默认关闭，clear() 复位", () => {
-    const store = useUserStore();
-    expect(store.siteWatermark).toEqual({
-      enabled: false,
-      template: "",
-      paths: [],
-      fontSize: 16,
-      opacity: 0.3,
-      rotate: -10,
-      color: ""
-    });
-    // 模拟用户信息接口写入后（登出/清空缓存需复位）
-    store.siteWatermark = {
-      enabled: true,
-      template: "{username}-{phone}-{time}",
-      paths: ["/system/user/index"],
-      fontSize: 24,
-      opacity: 0.2,
-      rotate: -30,
-      color: "#909399"
-    };
-    store.clear();
-    expect(store.siteWatermark).toEqual({
-      enabled: false,
-      template: "",
-      paths: [],
-      fontSize: 16,
-      opacity: 0.3,
-      rotate: -10,
-      color: ""
-    });
-  });
-
-  it("页面状态", () => {
-    const store = useUserStore();
-    store.SET_VERIFY_CODE_LENGTH(6);
-    store.SET_CURRENT_PAGE(3);
-    store.SET_ISREMEMBERED(true);
-    store.SET_LOGINDAY(14);
-    expect(store.verifyCodeLength).toBe(6);
-    expect(store.currentPage).toBe(3);
-    expect(store.isRemembered).toBe(true);
-    expect(store.loginDay).toBe(14);
-  });
 });

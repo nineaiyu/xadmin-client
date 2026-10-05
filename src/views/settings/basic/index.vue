@@ -7,7 +7,7 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import type { FieldValues } from "plus-pro-components";
 import { hasAuth } from "@/router/utils";
-import { useUserStoreHook } from "@/store/modules/user";
+import { useWatermarkStoreHook } from "@/store/modules/watermark";
 import Setting from "@/views/settings/components/settings/index.vue";
 import SettingItem from "@/views/settings/components/settings/SettingItem.vue";
 import { settingItemProps } from "@/views/settings/components/settings/types";
@@ -31,7 +31,7 @@ const onSaved = async (values: FieldValues) => {
       key.startsWith("FRONT_END_WEB_WATERMARK")
     )
   ) {
-    await useUserStoreHook().refreshSiteWatermark();
+    await useWatermarkStoreHook().refreshSiteWatermark();
   }
 };
 

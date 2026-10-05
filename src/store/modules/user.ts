@@ -33,8 +33,8 @@ import {
 
 import { useMultiTagsStoreHook } from "./multiTags";
 import { useNoticeStoreHook } from "./notice";
+import { useWatermarkStoreHook } from "./watermark";
 import { AesEncrypted } from "@/utils/aes";
-import { defaultSiteWatermark, toSiteWatermarkConfig } from "@/utils/watermark";
 
 export const useUserStore = defineStore("pure-user", {
   state: (): userType => {
@@ -54,16 +54,6 @@ export const useUserStore = defineStore("pure-user", {
       pk: userInfo?.pk,
       // 页面级别权限
       roles: userInfo?.roles ?? [],
-      // 前端生成的验证码（按实际需求替换）
-      verifyCodeLength: 0,
-      // 判断登录页面显示哪个组件（0：登录（默认）、1：手机登录、2：二维码登录、3：注册、4：忘记密码）
-      currentPage: 0,
-      // 是否勾选了登录页的免登录
-      isRemembered: false,
-      // 登录页的免登录存储几天，默认7天
-      loginDay: 7,
-      // 站点水印配置（用户信息接口下发后写入，App.vue 观察应用）
-      siteWatermark: { ...defaultSiteWatermark },
       // 巡检处置联动：管理员要求改密（userinfo 下发，App.vue 观察后引导改密）
       mustChangePassword: userInfo?.must_change_password ?? false,
       // 用户模拟态（userinfo 下发）：非模拟态为 null
@@ -89,23 +79,6 @@ export const useUserStore = defineStore("pure-user", {
       this.impersonator = data?.impersonator ?? null;
       storageLocal().setItem(userKey, data);
     },
-    /**
-     * 清空水印态（登出 / 清空缓存调用）：
-     * 站点水印配置复位，已挂载的水印 DOM 由 App.vue 观察 siteWatermark 变化后清除
-     */
-    clear() {
-      this.siteWatermark = { ...defaultSiteWatermark };
-    },
-    /**
-     * 仅刷新站点水印配置（用户信息接口随取随用）：
-     * 管理员保存「水印设置」后立即应用，无需重新登录/刷新页面
-     */
-    async refreshSiteWatermark() {
-      const res = await userInfoApi.retrieve();
-      if (res.code === SUCCESS_CODE) {
-        this.siteWatermark = toSiteWatermarkConfig(res.config);
-      }
-    },
     /** 存储用户头像 */
     SET_AVATAR(avatar: string) {
       this.avatar = avatar;
@@ -126,22 +99,6 @@ export const useUserStore = defineStore("pure-user", {
     /** 存储角色 */
     SET_ROLES(roles: Array<string>) {
       this.roles = roles;
-    },
-    /** 存储前端生成的验证码 */
-    SET_VERIFY_CODE_LENGTH(length: number) {
-      this.verifyCodeLength = length;
-    },
-    /** 存储登录页面显示哪个组件 */
-    SET_CURRENT_PAGE(value: number) {
-      this.currentPage = value;
-    },
-    /** 存储是否勾选了登录页的免登录 */
-    SET_ISREMEMBERED(bool: boolean) {
-      this.isRemembered = bool;
-    },
-    /** 设置登录页的免登录存储几天，默认7天 */
-    SET_LOGINDAY(value: number) {
-      this.loginDay = Number(value);
     },
     /**
      * 建立消息推送通道（WS 连接与通知分发归 notice store）：
@@ -186,8 +143,9 @@ export const useUserStore = defineStore("pure-user", {
           .then(res => {
             if (res.code === SUCCESS_CODE) {
               setUserInfo(res.data);
-              // 水印配置存入本 store：由 App.vue 按「当前路由是否命中生效范围」应用/清除
-              this.siteWatermark = toSiteWatermarkConfig(res.config);
+              // 水印配置写入水印 store（user → watermark 单向依赖）：
+              // 由 App.vue 按「当前路由是否命中生效范围」应用/清除
+              useWatermarkStoreHook().applyFromUserInfo(res.config);
               resolve(res);
             } else {
               reject(res);
@@ -232,7 +190,8 @@ export const useUserStore = defineStore("pure-user", {
           removeToken();
           useMultiTagsStoreHook().handleTags("equal", [...routerArrays]);
           resetRouter();
-          this.clear();
+          // 水印态复位归水印 store（App.vue 观察水印配置变化后清除已挂载 DOM）
+          useWatermarkStoreHook().reset();
           window.location.reload();
           // router.push("/login");
         });

@@ -48,12 +48,6 @@ export type userType = {
   /** 用户唯一标识（userinfo 下发；水印模板 {pk} 占位符取值） */
   pk?: string | number;
   roles?: Array<string>;
-  verifyCodeLength?: number;
-  currentPage?: number;
-  isRemembered?: boolean;
-  loginDay?: number;
-  /** 站点水印配置（用户信息接口下发）；挂载/刷新由 src/App.vue 观察本字段执行 */
-  siteWatermark?: SiteWatermarkConfig;
   /**
    * 巡检处置联动：管理员要求改密（userinfo 下发）；
    * App.vue 观察本字段后引导到个人配置页，改密成功由服务端清除标记。
@@ -64,4 +58,22 @@ export type userType = {
    * 顶栏横幅据此渲染「模拟用户中」，点击退出后由服务端重签发起人 token 并整页刷新。
    */
   impersonator?: ImpersonatorInfo | null;
+};
+
+/** 登录页 UI 态（子页面切换、免登录勾选与天数、图形验证码长度），与认证身份解耦 */
+export type loginPageType = {
+  /** 判断登录页面显示哪个组件（0：登录（默认）、1：手机登录、2：二维码登录、3：注册、4：忘记密码） */
+  currentPage?: number;
+  /** 是否勾选了登录页的免登录 */
+  isRemembered?: boolean;
+  /** 登录页的免登录存储几天，默认7天 */
+  loginDay?: number;
+  /** 前端生成的验证码（按实际需求替换） */
+  verifyCodeLength?: number;
+};
+
+/** 站点水印配置 store 态；挂载/刷新由 src/App.vue 观察本字段执行 */
+export type watermarkType = {
+  /** 站点水印配置（用户信息接口下发） */
+  siteWatermark?: SiteWatermarkConfig;
 };
