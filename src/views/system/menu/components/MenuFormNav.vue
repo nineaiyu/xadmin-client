@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { inject } from "vue";
 import { useI18n } from "vue-i18n";
-import FormQuestion from "@/components/FormQuestion/index.vue";
+import FormQuestion from "./FormQuestion.vue";
 import { MENU_FORM_KEY } from "../utils/formContext";
 
 /** 侧栏与标签：菜单可见、显示父级、页面缓存、固定/隐藏标签页 */

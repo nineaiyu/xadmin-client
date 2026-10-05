@@ -2,7 +2,7 @@
 import { computed, inject } from "vue";
 import { useI18n } from "vue-i18n";
 import { IconSelect } from "@/components/ReIcon";
-import FormQuestion from "@/components/FormQuestion/index.vue";
+import FormQuestion from "./FormQuestion.vue";
 import { MenuChoices } from "@/views/system/constants";
 import { MENU_FORM_KEY } from "../utils/formContext";
 

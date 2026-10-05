@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import ReTreeLine from "@/components/ReTreeLine";
+import ReTreeLine from "./ReTreeLine";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { MenuChoices } from "@/views/system/constants";
 import { displayTitle } from "../utils/useMenuFilter";

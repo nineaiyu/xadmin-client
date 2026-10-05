@@ -13,7 +13,7 @@ import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
 import { handleOperation } from "@/components/RePlusPage";
-import { ReQrcode } from "@/components/ReQrcode";
+import { ReQrcode } from "./ReQrcode";
 import {
   otpCloseApi,
   otpConfirmApi,

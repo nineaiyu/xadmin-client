@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { useRenderIcon } from "../ReIcon/src/hooks";
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Question from "~icons/ep/question-filled";
 
 defineProps({

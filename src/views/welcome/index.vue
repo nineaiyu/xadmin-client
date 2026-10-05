@@ -3,7 +3,7 @@ import { markRaw, onMounted, ref } from "vue";
 import { loadEcharts } from "@/plugins/echarts";
 import ReCol from "@/components/ReCol";
 import { ReNormalCountTo } from "@/components/ReCountTo";
-import { useRenderFlicker } from "@/components/ReFlicker";
+import { useRenderFlicker } from "./components/ReFlicker";
 import ReSkeleton from "@/components/ReSkeleton";
 import { ChartBar, ChartClock, ChartLine, ChartRound } from "./components";
 import Segmented from "@/components/ReSegmented";

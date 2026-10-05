@@ -2,7 +2,7 @@
 import { computed, toRaw } from "vue";
 import Motion from "./utils/motion";
 import basic from "./components/Basic.vue";
-import TypeIt from "@/components/ReTypeit";
+import TypeIt from "./components/ReTypeit";
 import register from "./components/Register.vue";
 import resetPassword from "./components/ResetPassword.vue";
 import login from "./components/Login.vue";

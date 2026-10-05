@@ -2,7 +2,7 @@
 import { computed, inject } from "vue";
 import { useI18n } from "vue-i18n";
 import type { CascaderOption } from "element-plus";
-import FormQuestion from "@/components/FormQuestion/index.vue";
+import FormQuestion from "./FormQuestion.vue";
 import { MENU_FORM_KEY } from "../utils/formContext";
 import type { ModelTreeItem } from "../utils/types";
 
