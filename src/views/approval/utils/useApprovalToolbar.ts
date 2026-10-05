@@ -1,11 +1,12 @@
 import { shallowRef } from "vue";
 import { useI18n } from "vue-i18n";
+import type { RecordType } from "plus-pro-components";
 import { approvalApi } from "@/api/approval/approval";
 import { handleOperation, type OperationProps } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
 import { openRejectReasonDialog } from "./dialogs";
-import { batchRejectFailedDetail } from "./approvalTexts";
+import { batchFailedDetail } from "./approvalTexts";
 import Check from "~icons/ep/check";
 import Close from "~icons/ep/close";
 import type { Ref } from "vue";
@@ -13,7 +14,7 @@ import type { Ref } from "vue";
 /**
  * 审批面板工具栏：批量通过（仅待我审批页签，作用于勾选行）与批量驳回。
  * 自 useApprovalPanel 拆出（行为不变）：驳回原因必填，逐单校验由服务端收口
- * （部分失败明细逐条提示）。
+ * （取值域外/已失效勾选计入失败明细，部分失败明细逐条提示）。
  */
 export function useApprovalToolbar({
   auth,
@@ -25,6 +26,22 @@ export function useApprovalToolbar({
   refresh: () => void;
 }) {
   const { t } = useI18n();
+
+  /** 服务端返回的失败明细以 warning 逐条提示（succeeded 之外的勾选全在 failed 里） */
+  const notifyPartialFailures = (res?: RecordType) => {
+    const failed =
+      (res?.data as { failed?: Array<{ no: string; reason: string }> })
+        ?.failed ?? [];
+    if (failed.length) {
+      message(
+        t("approval.batchPartial", {
+          n: failed.length,
+          detail: batchFailedDetail(failed)
+        }),
+        { type: "warning" }
+      );
+    }
+  };
 
   /** 批量驳回弹窗：原因必填，逐单校验由服务端收口（部分失败明细逐条提示） */
   const openBatchReject = () => {
@@ -38,18 +55,7 @@ export function useApprovalToolbar({
       title: t("approval.batchRejectTitle", { n: pks.length }),
       submit: reason => approvalApi.batchReject(pks, reason),
       onSuccess: res => {
-        const failed =
-          (res?.data as { failed?: Array<{ no: string; reason: string }> })
-            ?.failed ?? [];
-        if (failed.length) {
-          message(
-            t("approval.batchRejectPartial", {
-              n: failed.length,
-              detail: batchRejectFailedDetail(failed)
-            }),
-            { type: "warning" }
-          );
-        }
+        notifyPartialFailures(res);
         refresh();
       }
     });
@@ -79,7 +85,10 @@ export function useApprovalToolbar({
           handleOperation({
             t,
             apiReq: approvalApi.batchApprove(pks),
-            success: () => refresh(),
+            success: res => {
+              notifyPartialFailures(res);
+              refresh();
+            },
             requestEnd: () => (loading.value = false)
           });
         },

@@ -104,7 +104,13 @@ async function save() {
     ElMessage.error(t(errorKey));
     return;
   }
-  const payload = buildFlowPayload(basic, fields.value, nodes.value);
+  const payload = buildFlowPayload(
+    basic,
+    fields.value,
+    nodes.value,
+    // 乐观锁基线：以打开抽屉时取到的行版本为准，服务端与当前行比对，拦截并发编辑的后写覆盖
+    props.flow?.pk ? props.flow?.updated_time : undefined
+  );
   saving.value = true;
   try {
     const res = props.flow?.pk

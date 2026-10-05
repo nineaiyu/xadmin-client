@@ -34,7 +34,11 @@ export function useApprovalRule(tableRef: Ref) {
   auth.update = false;
   auth.partialUpdate = false;
   const canCreate = hasAuth("create:SystemApprovalRule");
-  const canEdit = hasAuth("partialUpdate:SystemApprovalRule");
+  // 编辑权限兼容 update/partialUpdate（与 flow 页口径一致）：两页的编辑保存
+  // 都走 partialUpdate，但权限点授予习惯不同，只认其一会让另一类角色看不到编辑入口
+  const canEdit =
+    hasAuth("partialUpdate:SystemApprovalRule") ||
+    hasAuth("update:SystemApprovalRule");
   const formRef = shallowRef<InstanceType<typeof RuleForm>>();
 
   /** 新建/编辑弹窗：先 done() 关弹窗再刷新列表（先刷新后关闭会滞留，webkit 复现） */

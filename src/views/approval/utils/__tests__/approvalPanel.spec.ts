@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { canActRow, isChainRow } from "../approvalRowRules";
-import { approverText, batchRejectFailedDetail } from "../approvalTexts";
+import { approverText, batchFailedDetail } from "../approvalTexts";
 
 const t = (key: string, params?: Record<string, unknown>) =>
   params ? `${key}:${JSON.stringify(params)}` : key;
@@ -53,10 +53,10 @@ describe("approverText", () => {
   });
 });
 
-describe("batchRejectFailedDetail", () => {
+describe("batchFailedDetail", () => {
   it("joins failures as no: reason with Chinese semicolon", () => {
     expect(
-      batchRejectFailedDetail([
+      batchFailedDetail([
         { no: "REQ-0001", reason: "已通过" },
         { no: "REQ-0002", reason: "状态变更" }
       ])
@@ -64,6 +64,6 @@ describe("batchRejectFailedDetail", () => {
   });
 
   it("returns empty string for no failures", () => {
-    expect(batchRejectFailedDetail([])).toBe("");
+    expect(batchFailedDetail([])).toBe("");
   });
 });

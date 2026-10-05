@@ -2,7 +2,7 @@ import { SUCCESS_CODE } from "@/api/types";
 import { h, reactive, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessage, ElMessageBox, ElTag } from "element-plus";
-import { leaveApi } from "@/api/approval/leave";
+import { LEAVE_DRAFT_SAVED_CODE, leaveApi } from "@/api/approval/leave";
 import { usePageAuth } from "@/router/utils";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";
 import { SOLID_TAG_STYLE } from "@/utils/tagTone";
@@ -11,7 +11,8 @@ import type {
   PageTableColumn,
   RePlusPageProps
 } from "@/components/RePlusPage";
-import { formatPageColumns } from "@/components/RePlusPage";
+import { formatPageColumns, handleOperation } from "@/components/RePlusPage";
+import { applyServerErrors } from "@/components/RePlusPage/src/utils/serverErrors";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Check from "~icons/ep/check";
 import RefreshLeft from "~icons/ep/refresh-left";
@@ -42,12 +43,19 @@ const RESUBMITTABLE = ["DRAFT", "REJECTED", "CANCELLED"];
  * 审批动作不在本页：审批人统一在「流程审批」中心处理，避免出现第二套审批入口；
  * 本页只展示审批进度（当前节点 / 驳回原因），点击详情可看到流程轨迹。
  */
-export function useLeave(tableRef: Ref) {
+export function useLeave(
+  tableRef: Ref,
+  statsRef?: Ref<{ refresh: () => void } | null>
+) {
   const api = reactive(leaveApi);
   const auth = usePageAuth(["submit", "cancel"]);
   const { t } = useI18n();
 
-  const refresh = () => tableRef.value?.handleGetData();
+  // 状态列 / 操作按钮 / 统计卡随业务单状态联动（提交 → 审批中、撤回 → 已撤回）
+  const refresh = () => {
+    tableRef.value?.handleGetData();
+    statsRef?.value?.refresh();
+  };
 
   const confirmAndRun = (
     row: Record<string, unknown>,
@@ -194,6 +202,49 @@ export function useLeave(tableRef: Ref) {
           };
           return column;
         }
+      },
+      saveCallback: ({
+        formData,
+        done,
+        closeLoading,
+        formRef,
+        setActiveName,
+        success: notifySuccess,
+        failed: notifyFailed
+      }) => {
+        // 新增即提交：成功 / 已存草稿 / 失败三种口径分别提示（覆盖框架默认保存回调）
+        handleOperation({
+          t,
+          showSuccessMsg: false,
+          showFailedMsg: false,
+          apiReq: leaveApi.create(formData),
+          success: res => {
+            refresh();
+            notifySuccess(String(res?.detail || t("leaveApply.submitSuccess")));
+          },
+          failed: res => {
+            if (res?.code === LEAVE_DRAFT_SAVED_CODE) {
+              // 已存草稿：既非成功也非失败，黄色警示避免误当已提交；关闭表单并刷新列表
+              ElMessage.warning(
+                String(res?.detail || t("leaveApply.savedAsDraft"))
+              );
+              closeLoading();
+              done();
+              refresh();
+              return;
+            }
+            notifyFailed(String(res?.detail || t("results.failed")));
+            applyServerErrors(formRef, res?.errors, {
+              activateTab: setActiveName
+            });
+          },
+          exception: err => {
+            // 校验失败（HTTP 400）：提示由拦截器统一处理，错误内联到表单项
+            applyServerErrors(formRef, err?.errors, {
+              activateTab: setActiveName
+            });
+          }
+        });
       },
       minWidth: "560px"
     }

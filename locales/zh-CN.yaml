@@ -855,7 +855,7 @@ approval:
   batchApprove: 批量通过
   batchReject: 批量驳回
   batchRejectTitle: 批量驳回 {n} 条审批单
-  batchRejectPartial: "{n} 条未处理：{detail}"
+  batchPartial: "{n} 条未处理：{detail}"
   statsTip: "统计口径：最近 {n} 天"
   statsSubmitted: 我提交
   statsApproved: 我通过
@@ -916,6 +916,7 @@ approvalRule:
   pathRequired: 请至少填写一条匹配路径
   pathsPlaceholder: 从接口清单中选择需要审批的接口
   pathsTip: 勾选接口后按路径拦截；实际拦截仅发生在删除/批量删除等已登记审批的操作上
+  pathsRequired: 请至少配置一条匹配路径
   pathsCustomTip: 自定义路径正则，每行一条（高级用法，如 api/demo/book/(?P{'<'}pk{'>'}[^/.]+)$）
   approveType: 审批方式
   approveTypeOR: 或签（任一人通过）
@@ -987,6 +988,7 @@ systemApprovalFlow:
   conditionFieldTip: 留空=无条件
   conditionOp: 运算符
   conditionValue: 条件值
+  conditionValueNumericRequired: 数值条件（gt / gte / lt / lte）的值必须是数字
   timeoutHours: 超时（小时）
   timeoutAction: 超时动作
   timeoutAction_none: 仅提醒
@@ -3390,6 +3392,11 @@ leaveApply:
   statusAPPROVED: 已通过
   statusREJECTED: 已驳回
   statusCANCELLED: 已撤回
+  savedAsDraft: 已存草稿，未提交审批
+  statsSubmitted: 我提交
+  statsPending: 审批中
+  statsApproved: 已通过
+  statsRejected: 已驳回
 
 mcp:
   create: 新建服务器

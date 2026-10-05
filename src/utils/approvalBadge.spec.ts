@@ -113,4 +113,23 @@ describe("useApprovalBadge 轮询生命周期", () => {
     await vi.advanceTimersByTimeAsync(120_000);
     expect(pendingCountMock).toHaveBeenCalledTimes(3);
   });
+
+  it("多订阅者去重：共享定时器每周期只发一组请求，全部卸载后停止", async () => {
+    const first = mountBadge();
+    const second = mountBadge();
+    await vi.advanceTimersByTimeAsync(0);
+    // 首个订阅者立即拉取一次；后来者复用共享计数，不再触发请求
+    expect(pendingCountMock).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(pendingCountMock).toHaveBeenCalledTimes(2);
+
+    first.unmount();
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(pendingCountMock).toHaveBeenCalledTimes(3);
+
+    second.unmount();
+    await vi.advanceTimersByTimeAsync(120_000);
+    expect(pendingCountMock).toHaveBeenCalledTimes(3);
+  });
 });

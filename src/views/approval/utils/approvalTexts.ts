@@ -20,7 +20,7 @@ export const approverText = (row: RecordType | undefined, t: Translate) => {
   return row?.approver?.username || t("approval.pendingApprover");
 };
 
-/** 批量驳回部分失败明细：`单号: 原因` 列表以「；」连接（与文案插值口径一致） */
-export const batchRejectFailedDetail = (
+/** 批量操作部分失败明细：`单号: 原因` 列表以「；」连接（与文案插值口径一致） */
+export const batchFailedDetail = (
   failed: Array<{ no: string; reason: string }>
 ) => failed.map(item => `${item.no}: ${item.reason}`).join("；");

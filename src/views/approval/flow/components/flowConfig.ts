@@ -26,6 +26,8 @@ export type FlowRow = {
   name: string;
   code: string;
   is_active: boolean;
+  /** 行版本戳：编辑抽屉保存时原样回传作乐观锁基线（后端比对拦截并发覆盖） */
+  updated_time?: string;
   form_schema?: Array<{
     key: string;
     label?: string;
@@ -77,6 +79,8 @@ export const CONDITION_OPS = [
 export const FIELD_TYPES = ["text", "textarea", "number", "date", "select"];
 /** 超时自动动作（与后端 ApprovalFlowNode.TimeoutAction 同枚举） */
 export const TIMEOUT_ACTIONS = ["none", "approve", "reject", "transfer_up"];
+/** 数值比较运算符：条件值必须可转数值（引擎对转换失败按不命中跳节点，保存期拦截） */
+const NUMERIC_OPS = ["gt", "gte", "lt", "lte"];
 
 /**
  * 取选项类字段的原始值：接口把 choices 序列化为 {value,label}（LabeledChoiceField），
@@ -135,6 +139,13 @@ export function createEmptyNode(): NodeRow {
   };
 }
 
+/** 数值运算符的条件值是否可转数值（空串同样不合格）；in/not_in 为字符串集合比较，不在此列 */
+export function isNumericConditionValue(op: string, raw: string): boolean {
+  if (!NUMERIC_OPS.includes(op)) return true;
+  const text = raw.trim();
+  return text !== "" && !Number.isNaN(Number(text));
+}
+
 /** 保存前校验：返回首个错误的 i18n key，全部通过返回 null */
 export function validateFlowConfig(
   basic: { name: string; code: string },
@@ -168,19 +179,39 @@ export function validateFlowConfig(
   if (missingAssignee) {
     return "systemApprovalFlow.assigneeValueRequired";
   }
+  // 数值条件的值必须可转数值（节点条件与出口路由同口径）：转换失败在引擎里
+  // 一律按不命中处理，节点被静默跳过、流程走向改变且无告警
+  const badNumeric = nodes.find(
+    node =>
+      (node.condition_field.trim() &&
+        !isNumericConditionValue(node.condition_op, node.condition_value)) ||
+      (node.routes || []).some(
+        route =>
+          route.condition?.field?.trim() &&
+          !isNumericConditionValue(
+            route.condition?.op || "eq",
+            String(route.condition?.value ?? "")
+          )
+      )
+  );
+  if (badNumeric) {
+    return "systemApprovalFlow.conditionValueNumericRequired";
+  }
   return null;
 }
 
-/** 编辑态行模型 → 服务端载荷（表单字段 + 顺序化节点列表） */
+/** 编辑态行模型 → 服务端载荷（表单字段 + 顺序化节点列表；baseUpdatedTime 为乐观锁基线） */
 export function buildFlowPayload(
   basic: { name: string; code: string; is_active: boolean },
   fields: FieldRow[],
-  nodes: NodeRow[]
+  nodes: NodeRow[],
+  baseUpdatedTime?: string
 ) {
   return {
     name: basic.name.trim(),
     code: basic.code.trim(),
     is_active: basic.is_active,
+    ...(baseUpdatedTime ? { base_updated_time: baseUpdatedTime } : {}),
     form_schema: fields
       .filter(field => field.key.trim())
       .map(field => ({

@@ -16,6 +16,7 @@ defineOptions({ name: "ApprovalStats" });
  *
  * 双轨复用：默认轻量敏感操作审批；流程审批实例页传 loader/authCode 并关闭
  * 「平均审批时长」卡（实例统计无该指标），避免两份结构相同的统计卡实现。
+ * 业务接入方（如请假页）再传 labelKeys 覆盖统计卡标题（指标结构相同时直接复用）。
  */
 type ApprovalStatsData = {
   days: number;
@@ -36,11 +37,19 @@ const props = withDefaults(
     authCode?: string;
     /** 是否展示「平均审批时长」卡 */
     showAvgDuration?: boolean;
+    /** 统计卡标题的 i18n key 覆盖（默认审批中心口径） */
+    labelKeys?: {
+      submitted?: string;
+      approved?: string;
+      rejected?: string;
+      pending?: string;
+    };
   }>(),
   {
     loader: undefined,
     authCode: "stats:SystemApprovalRequest",
-    showAvgDuration: true
+    showAvgDuration: true,
+    labelKeys: undefined
   }
 );
 
@@ -48,6 +57,13 @@ const { t } = useI18n();
 const allowed = hasAuth(props.authCode);
 const loading = ref(false);
 const stats = ref<ApprovalStatsData | null>(null);
+
+const labels = computed(() => ({
+  submitted: props.labelKeys?.submitted ?? "approval.statsSubmitted",
+  approved: props.labelKeys?.approved ?? "approval.statsApproved",
+  rejected: props.labelKeys?.rejected ?? "approval.statsRejected",
+  pending: props.labelKeys?.pending ?? "approval.statsPending"
+}));
 
 /** 平均审批时长：秒 → 可读文案（保留一位小数的分钟/小时） */
 const avgDuration = computed(() => {
@@ -115,18 +131,12 @@ defineExpose({ refresh: fetchStats });
       :class="showAvgDuration ? 'md:grid-cols-5' : 'md:grid-cols-4'"
     >
       <el-statistic
-        :title="t('approval.statsSubmitted')"
+        :title="t(labels.submitted)"
         :value="stats?.submitted ?? 0"
       />
-      <el-statistic
-        :title="t('approval.statsApproved')"
-        :value="stats?.approved ?? 0"
-      />
-      <el-statistic
-        :title="t('approval.statsRejected')"
-        :value="stats?.rejected ?? 0"
-      />
-      <el-statistic :title="t('approval.statsPending')">
+      <el-statistic :title="t(labels.approved)" :value="stats?.approved ?? 0" />
+      <el-statistic :title="t(labels.rejected)" :value="stats?.rejected ?? 0" />
+      <el-statistic :title="t(labels.pending)">
         <template #default>
           <span>{{ stats?.pending ?? 0 }}</span>
         </template>

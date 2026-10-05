@@ -6,6 +6,7 @@ import type { RecordType } from "plus-pro-components";
 import { SUCCESS_CODE } from "@/api/types";
 import { loadPatScopeCatalog } from "@/api/user/token";
 import { approvalRuleApi } from "@/api/approval/approvalRule";
+import { message } from "@/utils/message";
 import type { ScopeGroup } from "@/utils/scopeDisplay";
 
 defineOptions({ name: "ApprovalRuleForm" });
@@ -215,13 +216,16 @@ onMounted(async () => {
   }
 });
 
-/** 提交载荷：校验失败返回 null（ReDialog beforeSure 约定） */
+/** 提交载荷：校验失败返回 null（ReDialog beforeSure 约定），路径必选同步给出提示 */
 async function getPayload() {
   const valid = await formRef.value?.validate().catch(() => false);
   if (!valid) return null;
   const merged = [...form.pathSelected, ...customPathList.value];
   const paths = merged.filter((item, index) => merged.indexOf(item) === index);
-  if (paths.length === 0) return null;
+  if (paths.length === 0) {
+    message(t("approvalRule.pathsRequired"), { type: "error" });
+    return null;
+  }
   const levels = form.levels.map((level, index) => ({
     order: index + 1,
     name: level.name ?? "",

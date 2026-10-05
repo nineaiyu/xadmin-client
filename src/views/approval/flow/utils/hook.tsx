@@ -1,5 +1,7 @@
 import { h, reactive, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { SUCCESS_CODE } from "@/api/types";
+import { message } from "@/utils/message";
 import {
   addDrawer,
   closeDrawer,
@@ -44,10 +46,27 @@ export function useFlow(tableRef: Ref) {
   const canViewVersions = hasAuth("versions:SystemApprovalFlow");
   const api = reactive(approvalFlowApi);
 
-  const openConfig = (row?: Partial<FlowRow> | null) => {
+  const openConfig = async (row?: Partial<FlowRow> | null) => {
+    // 列表行不带 nodes/form_schema（列表载荷裁剪），编辑前先取全量定义；
+    // 取不到（网络/权限）直接中止：打开一个空节点编辑器再保存会覆盖线上定义
+    let flow: Partial<FlowRow> | null = null;
+    if (row?.pk) {
+      try {
+        const res = await approvalFlowApi.retrieve(row.pk);
+        if (res.code !== SUCCESS_CODE || !res.data) {
+          message(String(res.detail || t("results.failed")), { type: "error" });
+          return;
+        }
+        flow = res.data as Partial<FlowRow>;
+      } catch {
+        // HTTP 层错误提示由拦截器统一处理
+        return;
+      }
+      flow = { ...row, ...flow };
+    }
     const options: DrawerOptions = {
-      title: row?.pk
-        ? `${t("systemApprovalFlow.editTitle")} - ${row.name}`
+      title: flow?.pk
+        ? `${t("systemApprovalFlow.editTitle")} - ${flow.name}`
         : t("systemApprovalFlow.createTitle"),
       size: "60%",
       destroyOnClose: true,
@@ -59,7 +78,7 @@ export function useFlow(tableRef: Ref) {
     // 关闭不走 props（ReDrawer 会把 props 里的 onClose 与模板 @close 合并成数组），
     // 配置抽屉内部 emit("close")，由 ReDrawer 的 @close 统一关闭
     options.props = {
-      flow: row?.pk ? row : null,
+      flow,
       onSaved: () => tableRef.value?.handleGetData()
     };
     addDrawer(options);

@@ -1,5 +1,5 @@
 import { SUCCESS_CODE } from "@/api/types";
-import { computed, ref } from "vue";
+import { computed, getCurrentScope, onScopeDispose, ref } from "vue";
 import { useIntervalFn } from "@vueuse/core";
 import { hasAuth } from "@/router/utils";
 import { approvalApi } from "@/api/approval/approval";
@@ -62,16 +62,40 @@ export function refreshApprovalBadge() {
 }
 
 /**
- * 订阅待办计数：挂载即拉取一次并开启轮询，卸载自动停止
- * （轮询生命周期由 `useIntervalFn` 随组件 scope 清理）。
+ * 轮询定时器（模块级唯一）：顶栏铃铛与两个审批中心页签共用，靠订阅计数启停。
+ *
+ * 各组件各自起 60s interval 会让同一时刻的请求翻三倍；单一定时器下任一时刻
+ * 只有一组 pending-count 请求，首个订阅者挂载时立即拉取一次。
+ */
+const { pause: pausePolling, resume: resumePolling } = useIntervalFn(
+  refreshApprovalBadge,
+  POLL_INTERVAL,
+  { immediate: false }
+);
+let subscriberCount = 0;
+
+/**
+ * 订阅待办计数：首个订阅者出现即拉取一次并开启轮询，全部订阅者卸载后暂停
+ * （订阅计数随组件 scope 自动递减，keep-alive 与多页签共存也只保留一个定时器）。
  *
  * 顶栏铃铛（layout/lay-notice）与两个审批中心页签角标都用它；审批动作成功后调用
  * `refreshApprovalBadge()` 即时更新。
  */
 export function useApprovalBadge() {
-  useIntervalFn(refreshApprovalBadge, POLL_INTERVAL, {
-    immediateCallback: true
-  });
+  subscriberCount += 1;
+  if (subscriberCount === 1) {
+    refreshApprovalBadge();
+    resumePolling();
+  }
+  if (getCurrentScope()) {
+    onScopeDispose(() => {
+      subscriberCount -= 1;
+      if (subscriberCount <= 0) {
+        subscriberCount = 0;
+        pausePolling();
+      }
+    });
+  }
 
   return {
     pendingCount,

@@ -2,6 +2,12 @@ import { BaseApi } from "@/api/base";
 import type { DetailResult } from "@/api/types";
 
 /**
+ * 新增保存后未能提交审批（已存草稿）的业务码：区别于成功 1000 与失败 1001，
+ * 前端据此给「警告」提示而不是成功/失败，避免用户把草稿当成已提交。
+ */
+export const LEAVE_DRAFT_SAVED_CODE = 1002;
+
+/**
  * 请假申请：新增即提交审批。
  *
  * 通过 / 驳回在「流程审批」中心处理（审批人视角），本接口只负责
