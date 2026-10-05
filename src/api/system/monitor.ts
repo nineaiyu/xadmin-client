@@ -1,4 +1,4 @@
-import { BaseRequest } from "@/api/base";
+import { BaseApi } from "@/api/base";
 import { http } from "@/utils/http";
 
 /** 监控接口通用响应（ApiResponse 外壳 + 强类型 data） */
@@ -271,8 +271,11 @@ export type MonitorExportParams = MonitorHistoryParams & {
   item?: string;
 };
 
-/** 系统监控面板（只读 + 告警阈值设置） */
-class MonitorApi extends BaseRequest {
+/**
+ * 系统监控面板（只读 + 告警阈值设置）；动作走自定义完整路径，
+ * 仅 exportReport 依赖 http.autoDownload 的 blob 落盘能力。
+ */
+class MonitorApi extends BaseApi {
   overview = (params?: object) => {
     return this.request<MonitorResult<MonitorOverview>>(
       "get",

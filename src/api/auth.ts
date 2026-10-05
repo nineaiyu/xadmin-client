@@ -1,3 +1,4 @@
+import { BaseApi } from "@/api/base";
 import { http } from "@/utils/http";
 import type { LoginMfaRequired } from "@/api/mfa";
 
@@ -135,63 +136,6 @@ export type AuthInfoResult = {
   };
 };
 
-/** 登录 */
-export const loginBasicApi = (data?: object) => {
-  return http.request<LoginResult>("post", "/api/system/login/basic", { data });
-};
-
-export const loginVerifyCodeApi = (data?: object) => {
-  return http.request<LoginResult>("post", "/api/system/login/code", { data });
-};
-
-export const loginAuthApi = (data?: object) => {
-  return http.request<AuthInfoResult>("get", "/api/system/login/basic", {
-    data
-  });
-};
-
-export const getTempTokenApi = () => {
-  return http.request<TempTokenResult>("get", "/api/system/auth/token");
-};
-export const getCaptchaApi = () => {
-  return http.request<CaptchaResult>("get", "/api/system/auth/captcha");
-};
-
-/** 刷新token */
-export const refreshTokenApi = (data?: object) => {
-  return http.request<TokenResult>("post", "/api/system/refresh", { data });
-};
-
-export const registerApi = (data?: object) => {
-  return http.request<TokenResult>("post", "/api/system/register", { data });
-};
-export const registerAuthApi = (data?: object) => {
-  return http.request<AuthInfoResult>("get", "/api/system/register", { data });
-};
-
-export const logoutApi = (data?: object) => {
-  return http.request<TokenResult>("post", "/api/system/logout", {
-    data: data
-  });
-};
-
-/** 退出用户模拟：服务端为模拟发起人重签 token（安全阀，模拟态无条件可达） */
-export const exitImpersonateApi = (data?: object) => {
-  return http.request<TokenResult>("post", "/api/system/impersonate/exit", {
-    data: data
-  });
-};
-
-export const rulesPasswordApi = () => {
-  return http.request<TokenResult>("get", "/api/system/rules/password");
-};
-
-export const resetPasswordApi = (data?: object) => {
-  return http.request<TokenResult>("post", "/api/system/auth/reset", {
-    data: data
-  });
-};
-
 /** 邀请令牌预检：`state` = pending / accepted / invalid，不消费令牌 */
 export type InviteValidateResult = {
   code: number;
@@ -199,21 +143,179 @@ export type InviteValidateResult = {
   data: { state: string; username: string };
 };
 
-export const inviteValidateApi = (params?: object) => {
-  return http.request<InviteValidateResult>(
-    "get",
-    "/api/system/auth/invite/validate",
-    { params }
-  );
-};
+/**
+ * 认证与账号安全接口：端点分散在 login / register / auth / refresh 等路径下，
+ * 动作一律携带完整 URL（this.request 的 url 参数收完整路径），baseApi 仅作实例化前缀。
+ *
+ * 无参 GET 动作的 data 槽位显式传 undefined：保持与原手写形态一致的无请求体 GET
+ * （传 {} 会被 axios 序列化出 "{}" 请求体，二者线上字节级不同）。
+ */
+class AuthApi extends BaseApi {
+  /** 登录 */
+  loginBasic = (data?: object) => {
+    return this.request<LoginResult>(
+      "post",
+      {},
+      data,
+      "/api/system/login/basic"
+    );
+  };
 
-/** 邀请激活：设置密码完成激活（令牌一次性，激活即失效） */
-export const inviteAcceptApi = (data?: object) => {
-  return http.request<TokenResult>("post", "/api/system/auth/invite/accept", {
-    data
-  });
-};
+  /** 验证码登录 */
+  loginVerifyCode = (data?: object) => {
+    return this.request<LoginResult>(
+      "post",
+      {},
+      data,
+      "/api/system/login/code"
+    );
+  };
 
+  /** 登录方式能力探测（data 仅在显式传入时作为请求体） */
+  loginAuth = (data?: object) => {
+    return this.request<AuthInfoResult>(
+      "get",
+      {},
+      data,
+      "/api/system/login/basic"
+    );
+  };
+
+  /** 短时效临时令牌（登录页与验证码重发等敏感步骤的前置凭据） */
+  tempToken = () => {
+    return this.request<TempTokenResult>(
+      "get",
+      {},
+      undefined,
+      "/api/system/auth/token"
+    );
+  };
+
+  /** 图形验证码 */
+  captcha = () => {
+    return this.request<CaptchaResult>(
+      "get",
+      {},
+      undefined,
+      "/api/system/auth/captcha"
+    );
+  };
+
+  /** 刷新token */
+  refreshToken = (data?: object) => {
+    return this.request<TokenResult>("post", {}, data, "/api/system/refresh");
+  };
+
+  /** 注册 */
+  register = (data?: object) => {
+    return this.request<TokenResult>("post", {}, data, "/api/system/register");
+  };
+
+  /** 注册方式能力探测（data 仅在显式传入时作为请求体） */
+  registerAuth = (data?: object) => {
+    return this.request<AuthInfoResult>(
+      "get",
+      {},
+      data,
+      "/api/system/register"
+    );
+  };
+
+  /** 登出 */
+  logout = (data?: object) => {
+    return this.request<TokenResult>("post", {}, data, "/api/system/logout");
+  };
+
+  /** 退出用户模拟：服务端为模拟发起人重签 token（安全阀，模拟态无条件可达） */
+  exitImpersonate = (data?: object) => {
+    return this.request<TokenResult>(
+      "post",
+      {},
+      data,
+      "/api/system/impersonate/exit"
+    );
+  };
+
+  /** 密码安全规则查询 */
+  passwordRules = () => {
+    return this.request<TokenResult>(
+      "get",
+      {},
+      undefined,
+      "/api/system/rules/password"
+    );
+  };
+
+  /** 重置密码 */
+  resetPassword = (data?: object) => {
+    return this.request<TokenResult>(
+      "post",
+      {},
+      data,
+      "/api/system/auth/reset"
+    );
+  };
+
+  /** 邀请令牌预检（state = pending / accepted / invalid，不消费令牌） */
+  inviteValidate = (params?: object) => {
+    return this.request<InviteValidateResult>(
+      "get",
+      params,
+      undefined,
+      "/api/system/auth/invite/validate"
+    );
+  };
+
+  /** 邀请激活：设置密码完成激活（令牌一次性，激活即失效） */
+  inviteAccept = (data?: object) => {
+    return this.request<TokenResult>(
+      "post",
+      {},
+      data,
+      "/api/system/auth/invite/accept"
+    );
+  };
+}
+
+export const authApi = new AuthApi("/api/system/auth");
+
+/* ---------------- 既有命名导出改薄委托：消费方与测试 mock 依赖这些函数名，签名与返回类型不变 ---------------- */
+
+export const loginBasicApi = (data?: object) => authApi.loginBasic(data);
+
+export const loginVerifyCodeApi = (data?: object) =>
+  authApi.loginVerifyCode(data);
+
+export const loginAuthApi = (data?: object) => authApi.loginAuth(data);
+
+export const getTempTokenApi = () => authApi.tempToken();
+export const getCaptchaApi = () => authApi.captcha();
+
+export const refreshTokenApi = (data?: object) => authApi.refreshToken(data);
+
+export const registerApi = (data?: object) => authApi.register(data);
+export const registerAuthApi = (data?: object) => authApi.registerAuth(data);
+
+export const logoutApi = (data?: object) => authApi.logout(data);
+
+export const exitImpersonateApi = (data?: object) =>
+  authApi.exitImpersonate(data);
+
+export const rulesPasswordApi = () => authApi.passwordRules();
+
+export const resetPasswordApi = (data?: object) => authApi.resetPassword(data);
+
+export const inviteValidateApi = (params?: object) =>
+  authApi.inviteValidate(params);
+
+export const inviteAcceptApi = (data?: object) => authApi.inviteAccept(data);
+
+/**
+ * 验证码配置 / 发送保留手写调用：BaseRequest.request 会对查询参数做
+ * formatParams（空串按「未填写」剔除），而 ReSendVerifyCode 的 category
+ * 缺省即 ""（现网发出 ?category= 形态），挂到 this.request 会改变 query
+ * 载荷，与线上字节级等价约束冲突，故不入 AuthApi。
+ */
 export const verifyCodeConfigApi = (params?: object) => {
   return http.request<AuthInfoResult>("get", "/api/system/auth/verify", {
     params
