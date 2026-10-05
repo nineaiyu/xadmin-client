@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { passwordRulesCheck } from "./index";
+import { passwordRulesCheck } from "./password";
 import { generateRandomPassword } from "./randomPassword";
 
 const t = (key: string) => key;

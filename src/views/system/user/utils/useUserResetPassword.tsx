@@ -16,7 +16,7 @@ import {
   copyToClipboard,
   generateRandomPassword
 } from "@/utils/randomPassword";
-import { passwordStrengthLevels } from "@/utils/passwordStrength";
+import { passwordStrengthLevels } from "@/utils/password";
 import { buildPasswordValidator } from "./passwordRules";
 import { reactive, ref, type UnwrapNestedRefs } from "vue";
 import type { userApi } from "@/api/system/user";

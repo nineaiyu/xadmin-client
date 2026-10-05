@@ -6,7 +6,7 @@ import { isAllEmpty } from "@pureadmin/utils";
 import { ZxcvbnFactory } from "@zxcvbn-ts/core";
 import { useI18n } from "vue-i18n";
 import { passwordRulesCheck } from "@/utils";
-import { passwordStrengthLevels } from "@/utils/passwordStrength";
+import { passwordStrengthLevels } from "@/utils/password";
 import { rulesPasswordApi } from "@/api/auth";
 import { handleOperation } from "@/components/RePlusPage";
 import { type PlusColumn } from "plus-pro-components";
