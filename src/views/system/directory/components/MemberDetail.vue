@@ -1,8 +1,7 @@
 <script lang="ts" setup>
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import { message } from "@/utils/message";
-import { copyToClipboard } from "@/utils/randomPassword";
+import { copyText } from "@/utils/clipboard";
 import type { DirectoryMember } from "@/api/system/directory";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import CopyDocument from "~icons/ep/copy-document";
@@ -22,11 +21,8 @@ const initial = computed(() =>
   (props.row.nickname || props.row.username || "?").slice(0, 1).toUpperCase()
 );
 
-async function copy(text: string) {
-  const ok = await copyToClipboard(text);
-  message(ok ? t("results.copySuccess") : t("results.copyFailed"), {
-    type: ok ? "success" : "error"
-  });
+function copy(text: string) {
+  void copyText(text);
 }
 </script>
 

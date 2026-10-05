@@ -10,10 +10,8 @@
 
 import { h } from "vue";
 import type { useI18n } from "vue-i18n";
-import { copyTextToClipboard } from "@pureadmin/utils";
-import { message } from "@/utils/message";
+import { copyText } from "@/utils/clipboard";
 import { useConfirm } from "@/hooks/useConfirm";
-import { transformI18n } from "@/plugins/i18n";
 import type { BaseApi } from "@/api/base";
 import { MenuChoices } from "@/views/system/constants";
 import { rowPathText } from "./normalize";
@@ -56,11 +54,7 @@ export interface MenuActionContext {
 
 /** 复制并提示（失败给出可读原因，不静默） */
 function copy(value: string) {
-  if (!value) return;
-  const ok = copyTextToClipboard(value);
-  message(transformI18n(ok ? "results.copySuccess" : "results.copyFailed"), {
-    type: ok ? "success" : "error"
-  });
+  if (value) void copyText(value);
 }
 
 /** 组装某个菜单节点的可用动作（无权限的动作不进入清单） */

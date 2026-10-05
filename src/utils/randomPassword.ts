@@ -1,10 +1,11 @@
 /**
- * 随机密码生成与复制（速赢）。
+ * 随机密码生成（速赢）。
  *
  * 按后端下发的密码安全策略（`/api/auth/rules` 的 `password_rules`，与表单校验
  * 同一份数据）生成「必然能通过校验」的强密码：value=0 的规则项视为关闭（与
  * `passwordRulesCheck` 同口径），未声明任何类别规则时按「大小写 + 数字」兜底。
  * 随机源为 WebCrypto（getRandomValues），字符集去掉易混淆字符（I/l/1、O/0）。
+ * 复制到剪贴板统一走 @/utils/clipboard。
  */
 
 export interface PasswordRuleItem {
@@ -78,29 +79,4 @@ export function generateRandomPassword(
   const chars = [...required];
   while (chars.length < length) chars.push(pick(pool));
   return shuffle(chars).join("").slice(0, length);
-}
-
-/** 复制到剪贴板（Clipboard API 优先，回退 execCommand）；返回是否成功。 */
-export async function copyToClipboard(text: string): Promise<boolean> {
-  try {
-    if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(text);
-      return true;
-    }
-  } catch {
-    // 非安全上下文 / 权限被拒：走回退路径
-  }
-  try {
-    const area = document.createElement("textarea");
-    area.value = text;
-    area.style.position = "fixed";
-    area.style.opacity = "0";
-    document.body.appendChild(area);
-    area.select();
-    const ok = document.execCommand("copy");
-    document.body.removeChild(area);
-    return ok;
-  } catch {
-    return false;
-  }
 }

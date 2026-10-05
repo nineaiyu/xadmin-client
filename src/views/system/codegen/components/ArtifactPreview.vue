@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { Download, CopyDocument } from "@element-plus/icons-vue";
 import { downloadByData } from "@pureadmin/utils";
 import { message } from "@/utils/message";
+import { copyText } from "@/utils/clipboard";
 import type { CodegenArtifact } from "@/api/system/codegen";
 
 defineOptions({ name: "CodegenArtifactPreview" });
@@ -129,8 +130,7 @@ async function copyActive() {
     message(t("codegen.copyEmpty"), { type: "warning" });
     return;
   }
-  await navigator.clipboard.writeText(content);
-  message(t("codegen.copyOk"), { type: "success" });
+  await copyText(content);
 }
 
 function downloadActive() {

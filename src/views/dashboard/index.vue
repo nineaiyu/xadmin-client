@@ -9,6 +9,7 @@ import { Download, Setting } from "@element-plus/icons-vue";
 import ReEmpty from "@/components/ReEmpty";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
+import { copyText } from "@/utils/clipboard";
 import { useConfirm } from "@/hooks/useConfirm";
 import {
   dashboardApi,
@@ -130,13 +131,10 @@ const syncDashboardQuery = () => {
 const shareDashboard = async () => {
   if (!current.value) return;
   syncDashboardQuery();
-  try {
-    await navigator.clipboard.writeText(window.location.href);
-    message(t("dashboard.shareCopied"), { type: "success" });
-  } catch {
-    // 剪贴板不可用（非 https/权限受限）时直接展示链接供手动复制
-    message(String(window.location.href), { type: "info", duration: 5000 });
-  }
+  // 剪贴板不可用（非 https/权限受限）时降级展示链接供手动复制
+  await copyText(window.location.href, {
+    failureFallbackText: String(window.location.href)
+  });
 };
 
 const toggleEdit = () => {

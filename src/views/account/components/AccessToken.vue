@@ -10,6 +10,7 @@ import {
   type DialogOptions
 } from "@/components/ReDialog";
 import { message } from "@/utils/message";
+import { copyText } from "@/utils/clipboard";
 import { useConfirm } from "@/hooks/useConfirm";
 import {
   handleOperation,
@@ -68,17 +69,7 @@ loadPatScopeCatalog()
   .catch(() => undefined);
 
 /** 明文令牌复制（弹层内按钮使用；token 由调用参数带入，不再依赖组件级 ref） */
-const copyTokenText = async (token: string) => {
-  try {
-    // clipboard API 仅在安全上下文（https/localhost）可用，非安全上下文降级
-    if (!navigator.clipboard?.writeText)
-      throw new Error("clipboard unavailable");
-    await navigator.clipboard.writeText(token);
-    message(t("accessToken.copied"), { type: "success" });
-  } catch {
-    message(t("accessToken.copyFailed"), { type: "error" });
-  }
-};
+const copyTokenText = (token: string) => copyText(token);
 
 /** 明文一次性展示弹层（创建成功后打开，关闭后不可再读；统一走 ReDialog） */
 const openPlainToken = (token: string) => {

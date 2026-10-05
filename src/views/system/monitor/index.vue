@@ -7,6 +7,7 @@ import { loadEcharts } from "@/plugins/echarts";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { message } from "@/utils/message";
+import { copyText } from "@/utils/clipboard";
 import { SUCCESS_CODE } from "@/api/types";
 import { hasAuth } from "@/router/utils";
 import {
@@ -211,12 +212,10 @@ const exportReport = async (command: string) => {
 };
 
 const shareView = async () => {
-  try {
-    await navigator.clipboard.writeText(window.location.href);
-    message(t("systemMonitor.shareCopied"), { type: "success" });
-  } catch {
-    message(String(window.location.href), { type: "info", duration: 5000 });
-  }
+  // 剪贴板不可用（非 https/权限受限）时降级展示链接供手动复制
+  await copyText(window.location.href, {
+    failureFallbackText: String(window.location.href)
+  });
 };
 
 const historyChartRef = ref<InstanceType<typeof HistoryChart>>();

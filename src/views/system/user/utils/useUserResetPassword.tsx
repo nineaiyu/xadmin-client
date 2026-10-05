@@ -12,10 +12,8 @@ import { addDialog } from "@/components/ReDialog";
 import { deviceDetection, isAllEmpty } from "@pureadmin/utils";
 import { watch } from "vue";
 import { AesEncrypted } from "@/utils/aes";
-import {
-  copyToClipboard,
-  generateRandomPassword
-} from "@/utils/randomPassword";
+import { generateRandomPassword } from "@/utils/randomPassword";
+import { copyText } from "@/utils/clipboard";
 import { passwordStrengthLevels } from "@/utils/password";
 import { buildPasswordValidator } from "./passwordRules";
 import { reactive, ref, type UnwrapNestedRefs } from "vue";
@@ -56,18 +54,13 @@ export function useUserResetPassword({
 
   /**
    * 生成随机密码：按当前安全策略生成并尝试复制到剪贴板，
-   * 管理员无需自己构思密码（生成值必然通过策略校验）。
+   * 管理员无需自己构思密码（生成值必然通过策略校验；复制失败时
+   * 生成值已回填表单，可直接从表单取用）。
    */
   async function handleGeneratePassword() {
     const password = generateRandomPassword(passwordRules.value ?? []);
     pwdForm.newPwd = password;
-    const copied = await copyToClipboard(password);
-    message(
-      copied
-        ? t("systemUser.passwordCopied")
-        : t("systemUser.passwordGenerated"),
-      { type: copied ? "success" : "warning" }
-    );
+    await copyText(password);
   }
 
   /** 重置密码 */

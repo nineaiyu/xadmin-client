@@ -10,6 +10,7 @@ import {
 import { SUCCESS_CODE } from "@/api/types";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
+import { copyText as copyTextWithFeedback } from "@/utils/clipboard";
 import { useConfirm } from "@/hooks/useConfirm";
 
 /**
@@ -186,14 +187,9 @@ export function useSystemModule() {
     message(t("systemModule.resetDone"), { type: "success" });
   };
 
+  /** 复制文本到剪贴板并统一提示（空值不动作） */
   const copyText = async (text: string) => {
-    if (!text) return;
-    try {
-      await navigator.clipboard.writeText(text);
-      message(t("systemModule.copied"), { type: "success" });
-    } catch {
-      message(t("systemModule.copyFailed"), { type: "warning" });
-    }
+    if (text) await copyTextWithFeedback(text);
   };
 
   onMounted(load);

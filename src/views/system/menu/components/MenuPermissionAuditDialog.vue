@@ -1,10 +1,9 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { copyTextToClipboard } from "@pureadmin/utils";
 import { SUCCESS_CODE } from "@/api/types";
 import { message } from "@/utils/message";
-import { transformI18n } from "@/plugins/i18n";
+import { copyText } from "@/utils/clipboard";
 import { menuApi } from "@/api/system/menu";
 import type {
   MenuPermissionAuditItem,
@@ -152,11 +151,7 @@ onMounted(fetchAudit);
 
 /** 复制权限码（复用全局复制提示，失败给出可读原因） */
 const onCopy = (value: string) => {
-  if (!value) return;
-  const ok = copyTextToClipboard(value);
-  message(transformI18n(ok ? "results.copySuccess" : "results.copyFailed"), {
-    type: ok ? "success" : "error"
-  });
+  if (value) void copyText(value);
 };
 
 const onLocateRow = (pk: string | null) => {

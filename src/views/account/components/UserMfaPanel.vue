@@ -12,6 +12,7 @@ import { SUCCESS_CODE } from "@/api/types";
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
+import { copyText } from "@/utils/clipboard";
 import { handleOperation } from "@/components/RePlusPage";
 import { ReQrcode } from "./ReQrcode";
 import {
@@ -200,10 +201,7 @@ const handleRegenerate = () => {
   });
 };
 
-const handleCopyCodes = async () => {
-  await navigator.clipboard.writeText(recoveryCodes.value.join("\n"));
-  message(t("mfa.recoveryCopied"), { type: "success" });
-};
+const handleCopyCodes = () => copyText(recoveryCodes.value.join("\n"));
 
 onMounted(loadStatus);
 </script>

@@ -23,7 +23,7 @@ export function useApiAppPanel({
   t: ReturnType<typeof useI18n>["t"];
   /** 接口范围目录索引（目录加载完成后更新，抽屉实时取当前值） */
   scopeIndex: ShallowRef<ReturnType<typeof buildScopeIndex>>;
-  copyText: (text: string) => Promise<void>;
+  copyText: (text: string) => Promise<boolean>;
   openUsage: (row: ApiApplicationItem) => void;
   confirmRegenerate: (row: ApiApplicationItem) => void;
   runCallbackProbe: (
