@@ -32,7 +32,7 @@
   --app-card-shadow-hover: var(--el-box-shadow);
 
   /* z-index 阶梯（T4）：集中定义避免 magic number 互斗。
-     - layout 1000：侧栏/头部布局固定层（sidebar.scss 内 998/1001/1002 属该层内部细分）
+     - layout 1000：侧栏/头部布局固定层（sidebar/common 内 998/1001/1002 属该层内部细分）
      - settingMask 1005 / settingPanel 1010：设置面板（必须低于 EP 弹层起点 2000，
        否则打开的面板会遮挡 dialog/confirm）
      - Element Plus 弹层：2000 起动态递增（dialog/message-box/popper，不干预）

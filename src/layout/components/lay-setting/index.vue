@@ -13,7 +13,7 @@ import SettingDisplay from "./components/SettingDisplay.vue";
 const { layoutTheme } = useLayout();
 const { setMenuLayout } = useMenuLayout();
 
-/* body添加layout属性，作用于src/style/sidebar.scss */
+/* body添加layout属性，作用于src/style/sidebar/ 目录 */
 if (unref(layoutTheme)) {
   const layout = unref(layoutTheme).layout;
   const theme = unref(layoutTheme).theme;

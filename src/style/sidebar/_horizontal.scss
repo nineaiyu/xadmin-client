@@ -1,0 +1,20 @@
+@use "common" as *;
+
+body[layout="horizontal"] {
+  $sideBarWidth: 0;
+
+  @include merge-style($sideBarWidth);
+
+  .el-menu {
+    --el-menu-hover-text-color: var(--pure-theme-menu-text) !important;
+  }
+
+  .fixed-header,
+  .main-container {
+    transition: none !important;
+  }
+
+  .fixed-header {
+    width: 100%;
+  }
+}

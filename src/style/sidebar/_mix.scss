@@ -1,0 +1,52 @@
+@use "common" as *;
+
+body[layout="mix"] {
+  $sideBarWidth: 210px;
+
+  @include merge-style($sideBarWidth);
+
+  .el-menu--collapse {
+    width: 54px;
+  }
+
+  .el-menu {
+    --el-menu-hover-bg-color: transparent !important;
+    --el-menu-hover-text-color: var(--pure-theme-menu-text) !important;
+  }
+
+  .hideSidebar {
+    .fixed-header {
+      width: calc(100% - 54px);
+      transition: width var(--pure-transition-duration);
+    }
+
+    .sidebar-container {
+      width: 54px !important;
+      transition: width var(--pure-transition-duration);
+
+      .is-active.submenu-title-noDropdown.outer-most {
+        background: transparent !important;
+      }
+    }
+
+    .main-container {
+      margin-left: 54px;
+    }
+
+    /* 菜单折叠 */
+    .el-menu--collapse {
+      .el-sub-menu {
+        & > .el-sub-menu__title {
+          padding: 0;
+
+          & > span {
+            visibility: visible;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+          }
+        }
+      }
+    }
+  }
+}

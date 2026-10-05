@@ -1,0 +1,5 @@
+/* 侧栏与导航布局样式：公共段（merge-style mixin）在 common，三个布局模式的
+   body[layout] 专属覆盖各居其文件；@use 顺序即输出顺序，与原单文件保持一致 */
+@use "vertical";
+@use "horizontal";
+@use "mix";

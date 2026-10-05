@@ -33,7 +33,7 @@ export default {
         "**/components/RePlusPage/src/components/UploadFiles.vue",
         "**/components/RePlusPage/src/components/TagInput.vue",
         "**/components/ReAnimateSelector/src/index.vue",
-        "**/style/sidebar.scss",
+        "**/style/sidebar/**",
         "**/style/element-plus.scss",
         "**/style/transition.scss",
         "**/style/dark.scss",
