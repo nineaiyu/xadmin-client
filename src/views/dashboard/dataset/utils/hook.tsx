@@ -307,7 +307,8 @@ export function useDataset(tableRef: Ref) {
         code: "edit",
         props: { type: "primary", link: true },
         onClick: ({ row }) => openDialog(row as DatasetItem),
-        show: canEdit && 20
+        // 非创建者行不显示编辑（保存会被后端守卫拒绝）
+        show: row => canEdit && row?.is_owner !== false && 20
       }
     ]
   });

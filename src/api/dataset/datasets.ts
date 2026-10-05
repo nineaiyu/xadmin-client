@@ -33,6 +33,8 @@ export type DatasetItem = {
   row_limit: number;
   config: { date_field?: string };
   visibility: DatasetVisibility;
+  /** 行级归属：creator 本人/超管为 true；非本人修改删除会被后端守卫拒绝（1003） */
+  is_owner?: boolean;
 };
 
 export type DatasetMeta = {
@@ -80,6 +82,8 @@ export type DashboardItem = {
   visibility: DatasetVisibility;
   layout: DashboardCard[];
   creator?: { username: string };
+  /** 行级归属：creator 本人/超管为 true；非本人修改删除会被后端守卫拒绝（1003） */
+  is_owner?: boolean;
 };
 
 /** 数据集 API：CRUD 复用 BaseApi，执行/聚合/元数据为自定义动作 */

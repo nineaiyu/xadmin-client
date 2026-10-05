@@ -45,6 +45,8 @@ export type ScreenItem = {
   interval: number;
   refresh: number;
   visibility: "personal" | "shared";
+  /** 行级归属：creator 本人/超管为 true；非本人修改删除会被后端守卫拒绝（1003） */
+  is_owner?: boolean;
 };
 
 /**
@@ -101,6 +103,8 @@ export type ReportItem = {
   frequency: "daily" | "weekly" | "monthly";
   send_time: string;
   weekday: number;
+  /** 行级归属：creator 本人/超管为 true；非本人修改删除会被后端守卫拒绝（1003） */
+  is_owner?: boolean;
   /** 每月几号投递（1~28，monthly 用） */
   month_day?: number;
   cron_expression: string;

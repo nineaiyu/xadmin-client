@@ -36,6 +36,18 @@ function buildOperationButtons(
   return operationButtons.value;
 }
 
+/** show 兼容静态值与按行函数两种形态（按行函数传空行求值） */
+function evalShow(button: { show: unknown }, row: unknown = {}) {
+  if (typeof button.show !== "function") return button.show;
+  return (button.show as (row: unknown) => number | boolean)(row);
+}
+
+const findButton = (buttons: { code: string | number }[], code: string) =>
+  buttons.find(button => button.code === code) as {
+    code: string;
+    show: unknown;
+  };
+
 /** 登录策略页等「自有编辑弹窗」页面的实测权限位：partialUpdate 可用但 update 关闭 */
 const POLICY_AUTH = {
   list: true,
@@ -48,14 +60,14 @@ const POLICY_AUTH = {
 describe("usePlusPageButtons hideEdit", () => {
   it("默认编辑按钮随权限位显隐：partialUpdate 命中即显示（内联开关可用时的既有行为）", () => {
     const buttons = buildOperationButtons(POLICY_AUTH);
-    expect(buttons.find(button => button.code === "update")?.show).toBe(-30);
+    expect(evalShow(findButton(buttons, "update"))).toBe(-30);
   });
 
   it("hideEdit 只藏默认编辑按钮，删除/详情按钮不受影响", () => {
     const buttons = buildOperationButtons(POLICY_AUTH, { hideEdit: true });
-    expect(buttons.find(button => button.code === "update")?.show).toBe(false);
-    expect(buttons.find(button => button.code === "delete")?.show).toBe(-20);
-    expect(buttons.find(button => button.code === "detail")?.show).toBe(-10);
+    expect(evalShow(findButton(buttons, "update"))).toBe(false);
+    expect(evalShow(findButton(buttons, "delete"))).toBe(-20);
+    expect(evalShow(findButton(buttons, "detail"))).toBe(-10);
   });
 
   it("hideEdit 不回写 auth 位：boolean 列内联开关按 partialUpdate||update 判定仍可用", () => {
@@ -63,13 +75,35 @@ describe("usePlusPageButtons hideEdit", () => {
     // 连带把 is_active 内联开关置灰。hideEdit 方案下权限位必须保持原值。
     const authBits = { ...POLICY_AUTH };
     const buttons = buildOperationButtons(authBits, { hideEdit: true });
-    expect(buttons.find(button => button.code === "update")?.show).toBe(false);
+    expect(evalShow(findButton(buttons, "update"))).toBe(false);
     expect(authBits.partialUpdate).toBe(true);
     expect(authBits.update).toBe(false);
   });
 
   it("未声明 hideEdit 时行为不变（undefined 视同 false）", () => {
     const buttons = buildOperationButtons(POLICY_AUTH, {});
-    expect(buttons.find(button => button.code === "update")?.show).toBe(-30);
+    expect(evalShow(findButton(buttons, "update"))).toBe(-30);
+  });
+});
+
+describe("usePlusPageButtons 行级归属守卫", () => {
+  it("行数据 is_owner=false 时默认编辑/删除按钮隐藏", () => {
+    const buttons = buildOperationButtons(POLICY_AUTH);
+    const row = { pk: 1, is_owner: false };
+    expect(evalShow(findButton(buttons, "update"), row)).toBe(false);
+    expect(evalShow(findButton(buttons, "delete"), row)).toBe(false);
+  });
+
+  it("is_owner=true 的行按钮照常显示", () => {
+    const buttons = buildOperationButtons(POLICY_AUTH);
+    const row = { pk: 1, is_owner: true };
+    expect(evalShow(findButton(buttons, "update"), row)).toBe(-30);
+    expect(evalShow(findButton(buttons, "delete"), row)).toBe(-20);
+  });
+
+  it("未下发 is_owner 的行不收敛（存量接口零回归）", () => {
+    const buttons = buildOperationButtons(POLICY_AUTH);
+    expect(evalShow(findButton(buttons, "update"), { pk: 1 })).toBe(-30);
+    expect(evalShow(findButton(buttons, "delete"), { pk: 1 })).toBe(-20);
   });
 });

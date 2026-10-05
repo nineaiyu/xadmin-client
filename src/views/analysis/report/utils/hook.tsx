@@ -201,14 +201,15 @@ export function useReport(tableRef: Ref) {
         code: "design",
         props: { type: "primary", link: true },
         onClick: ({ row }) => design(row as ReportItem),
-        show: canEdit && 15
+        // 非创建者行不显示设计/编辑（保存会被后端守卫拒绝）
+        show: row => canEdit && row?.is_owner !== false && 15
       },
       {
         text: t("dataReport.edit"),
         code: "edit",
         props: { type: "primary", link: true },
         onClick: ({ row }) => openDialog(row as ReportItem),
-        show: canEdit && 20
+        show: row => canEdit && row?.is_owner !== false && 20
       }
     ]
   });

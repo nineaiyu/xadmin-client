@@ -176,7 +176,8 @@ export function useScreen(tableRef: Ref) {
         code: "design",
         props: { type: "primary", link: true },
         onClick: ({ row }) => design(row as ScreenItem),
-        show: canEdit && 6
+        // 非创建者行不显示设计/编辑（保存会被后端守卫拒绝）
+        show: row => canEdit && row?.is_owner !== false && 6
       },
       {
         text: t("dataScreen.remoteControl"),
@@ -191,7 +192,7 @@ export function useScreen(tableRef: Ref) {
         props: { type: "primary", link: true },
         onClick: ({ row }) => openDialog(row as ScreenItem),
         // 索引 5：编辑排在低频的「远程控制」之前，showNumber=4 内联时不被折叠
-        show: canEdit && 5
+        show: row => canEdit && row?.is_owner !== false && 5
       }
     ]
   });

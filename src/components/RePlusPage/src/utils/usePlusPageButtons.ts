@@ -65,6 +65,12 @@ export function usePlusPageButtons({
   // 页面只要自有编辑弹窗、但要保留内联开关时，须用 hideEdit 而非关权限位
   const hideEdit = operationButtonsProps?.hideEdit === true;
 
+  // 行级归属守卫：写守卫域（如 dataset 域 1003）的序列化器在行数据下发
+  // is_owner（creator 本人或超管为 true），默认编辑/删除按钮按行收敛；
+  // 未下发标志的行（undefined）不收敛，保持既有页面零回归。
+  const ownerAllows = (row?: Record<string, unknown>) =>
+    row?.is_owner !== false;
+
   // 默认操作按钮
   const defaultOperationButtons = shallowRef<OperationButtonsRow[]>([]);
   defaultOperationButtons.value = [
@@ -79,7 +85,10 @@ export function usePlusPageButtons({
       onClick: ({ row }) => {
         handleAddOrEdit(false, row);
       },
-      show: hideEdit ? false : auth.partialUpdate || auth.update ? -30 : false
+      show: row =>
+        !hideEdit && (auth.partialUpdate || auth.update) && ownerAllows(row)
+          ? -30
+          : false
     },
     {
       text: t("buttons.delete"),
@@ -96,7 +105,7 @@ export function usePlusPageButtons({
           loading.value = false;
         });
       },
-      show: auth.destroy ? -20 : false
+      show: row => (auth.destroy && ownerAllows(row) ? -20 : false)
     },
     {
       code: "detail",

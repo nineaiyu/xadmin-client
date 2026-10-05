@@ -286,7 +286,7 @@ onMounted(async () => {
           {{ t("dashboard.create") }}
         </el-button>
         <el-button
-          v-if="canEdit && current"
+          v-if="canEdit && current && current.is_owner !== false"
           :type="editing ? 'warning' : 'primary'"
           @click="toggleEdit"
         >
@@ -299,7 +299,7 @@ onMounted(async () => {
           {{ t("dashboard.remove") }}
         </el-button>
         <el-button
-          v-if="canEdit && current && !editing"
+          v-if="canEdit && current && current.is_owner !== false && !editing"
           plain
           data-testid="dashboard-settings"
           @click="openDashboardSettings"
