@@ -235,6 +235,15 @@ interface RePlusPageProps {
    */
   detailColumnsFormat?: (columns: PageColumn[]) => PageColumn[];
   /**
+   * 详情抽屉打开前的行数据兜底拉取：页面在列表行大字段为有界预览时，
+   * 借详情端点回填全量（返回与行数据合并的补充对象，null/undefined 表示沿用行数据）。
+   * 拉取期间详情按钮进入 loading，失败由页面自行兜底后返回 null，抽屉照常打开；
+   * 未提供时保持旧行为（直接渲染列表行）。
+   */
+  detailRowFetch?: (
+    row: Record<string, unknown>
+  ) => Promise<Record<string, unknown> | null | undefined>;
+  /**
    * plus pro search 的 columns, 并返回
    * @param columns
    */

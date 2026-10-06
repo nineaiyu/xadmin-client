@@ -155,42 +155,48 @@ describe("dashboard 统计端点", () => {
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
       "/api/system/dashboard/user-login-total",
-      { params: { days: 7 } }
+      { params: { days: 7 }, data: undefined },
+      {}
     );
 
     getDashBoardUserTotalApi();
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
       "/api/system/dashboard/user-total",
-      { params: undefined }
+      { params: {}, data: undefined },
+      {}
     );
 
     getDashBoardUserRegisterTrendApi({ days: 30 });
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
       "/api/system/dashboard/user-registered-trend",
-      { params: { days: 30 } }
+      { params: { days: 30 }, data: undefined },
+      {}
     );
 
     getDashBoardUserLoginTrendApi();
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
       "/api/system/dashboard/user-login-trend",
-      { params: undefined }
+      { params: {}, data: undefined },
+      {}
     );
 
     getDashBoardUserActiveApi();
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
       "/api/system/dashboard/user-active",
-      { params: undefined }
+      { params: {}, data: undefined },
+      {}
     );
 
     getDashBoardTodayOperateTotalApi();
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
       "/api/system/dashboard/today-operate-total",
-      { params: undefined }
+      { params: {}, data: undefined },
+      {}
     );
   });
 });

@@ -44,8 +44,8 @@ export type TagBatchAssignResult = {
  * 各页面打标入口统一从这取 resource，避免字面量散落各处拼错后静默打不上。
  */
 export const TAGGABLE_RESOURCE = {
-  user: "system.userinfo",
-  file: "system.uploadfile",
+  user: "identity.userinfo",
+  file: "file.uploadfile",
   approvalInstance: "approval.approvalinstance"
 } as const;
 

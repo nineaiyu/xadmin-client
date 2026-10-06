@@ -1,4 +1,4 @@
-import { http } from "@/utils/http";
+import { BaseApi } from "@/api/base";
 import type { DataListResult } from "@/api/types";
 
 export interface DashboardTrendItem {
@@ -15,63 +15,82 @@ type DashBoardResult = {
   results?: Array<DashboardTrendItem>;
 };
 
-export const getDashBoardUserLoginTotalApi = (params?: object) => {
-  return http.request<DashBoardResult>(
-    "get",
-    "/api/system/dashboard/user-login-total",
-    {
-      params: params
-    }
-  );
-};
+/** 欢迎页统计面板：六个只读统计动作（无请求体 GET，查询参数经 formatParams 收口） */
+class DashboardApi extends BaseApi {
+  userLoginTotal = (params?: object) => {
+    return this.request<DashBoardResult>(
+      "get",
+      params,
+      undefined,
+      `${this.baseApi}/user-login-total`
+    );
+  };
 
-export const getDashBoardUserTotalApi = (params?: object) => {
-  return http.request<DashBoardResult>(
-    "get",
-    "/api/system/dashboard/user-total",
-    {
-      params: params
-    }
-  );
-};
+  userTotal = (params?: object) => {
+    return this.request<DashBoardResult>(
+      "get",
+      params,
+      undefined,
+      `${this.baseApi}/user-total`
+    );
+  };
 
-export const getDashBoardUserRegisterTrendApi = (params?: object) => {
-  return http.request<DataListResult<DashboardTrendItem>>(
-    "get",
-    "/api/system/dashboard/user-registered-trend",
-    {
-      params: params
-    }
-  );
-};
+  userRegisterTrend = (params?: object) => {
+    return this.request<DataListResult<DashboardTrendItem>>(
+      "get",
+      params,
+      undefined,
+      `${this.baseApi}/user-registered-trend`
+    );
+  };
 
-export const getDashBoardUserLoginTrendApi = (params?: object) => {
-  return http.request<DataListResult<DashboardTrendItem>>(
-    "get",
-    "/api/system/dashboard/user-login-trend",
-    {
-      params: params
-    }
-  );
-};
+  userLoginTrend = (params?: object) => {
+    return this.request<DataListResult<DashboardTrendItem>>(
+      "get",
+      params,
+      undefined,
+      `${this.baseApi}/user-login-trend`
+    );
+  };
 
-export const getDashBoardUserActiveApi = (params?: object) => {
-  // 行结构为 [天数, 注册数, 活跃数] 的数字数组
-  return http.request<DataListResult<number[]>>(
-    "get",
-    "/api/system/dashboard/user-active",
-    {
-      params: params
-    }
-  );
-};
+  /** 行结构为 [天数, 注册数, 活跃数] 的数字数组 */
+  userActive = (params?: object) => {
+    return this.request<DataListResult<number[]>>(
+      "get",
+      params,
+      undefined,
+      `${this.baseApi}/user-active`
+    );
+  };
 
-export const getDashBoardTodayOperateTotalApi = (params?: object) => {
-  return http.request<DashBoardResult>(
-    "get",
-    "/api/system/dashboard/today-operate-total",
-    {
-      params: params
-    }
-  );
-};
+  todayOperateTotal = (params?: object) => {
+    return this.request<DashBoardResult>(
+      "get",
+      params,
+      undefined,
+      `${this.baseApi}/today-operate-total`
+    );
+  };
+}
+
+export const systemDashboardApi = new DashboardApi("/api/system/dashboard");
+
+/* ---------------- 既有命名导出改薄委托：消费方依赖这些函数名，签名与返回类型不变 ---------------- */
+
+export const getDashBoardUserLoginTotalApi = (params?: object) =>
+  systemDashboardApi.userLoginTotal(params);
+
+export const getDashBoardUserTotalApi = (params?: object) =>
+  systemDashboardApi.userTotal(params);
+
+export const getDashBoardUserRegisterTrendApi = (params?: object) =>
+  systemDashboardApi.userRegisterTrend(params);
+
+export const getDashBoardUserLoginTrendApi = (params?: object) =>
+  systemDashboardApi.userLoginTrend(params);
+
+export const getDashBoardUserActiveApi = (params?: object) =>
+  systemDashboardApi.userActive(params);
+
+export const getDashBoardTodayOperateTotalApi = (params?: object) =>
+  systemDashboardApi.todayOperateTotal(params);

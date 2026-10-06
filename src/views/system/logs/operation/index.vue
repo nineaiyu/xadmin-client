@@ -10,6 +10,7 @@ const {
   auth,
   listColumnsFormat,
   detailColumnsFormat,
+  detailRowFetch,
   operationButtonsProps
 } = useOperationLog();
 </script>
@@ -22,6 +23,7 @@ const {
     locale-name="logsOperation"
     :listColumnsFormat="listColumnsFormat"
     :detailColumnsFormat="detailColumnsFormat"
+    :detailRowFetch="detailRowFetch"
     :operationButtonsProps="operationButtonsProps"
     advanced-filter
   />

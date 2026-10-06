@@ -91,7 +91,7 @@ test("标签中心：新建 → 打标 → 按标签筛选 → 引用保护", as
     `${FRONT_URL}/api/system/tags/assign`,
     {
       headers: auth,
-      data: { resource: "system.userinfo", pk: userId, tags: [tagPk] }
+      data: { resource: "identity.userinfo", pk: userId, tags: [tagPk] }
     }
   );
   expect(assigned.status(), await assigned.text()).toBe(200);

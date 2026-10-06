@@ -49,6 +49,11 @@ export type userType = {
   pk?: string | number;
   roles?: Array<string>;
   /**
+   * 平台超管标记（userinfo 下发）。「非本人也可管理」类入口据此同口径放行
+   * （如流程实例讨论区评论删除）；旧持久化副本可能缺该字段，按非超管处理。
+   */
+  is_superuser?: boolean;
+  /**
    * 巡检处置联动：管理员要求改密（userinfo 下发）；
    * App.vue 观察本字段后引导到个人配置页，改密成功由服务端清除标记。
    */

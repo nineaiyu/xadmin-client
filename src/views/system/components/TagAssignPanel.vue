@@ -17,7 +17,7 @@ defineOptions({ name: "TagAssignPanel" });
 
 const props = withDefaults(
   defineProps<{
-    /** 可打标资源标识（后端 TAGGABLE_MODELS 白名单，如 system.userinfo） */
+    /** 可打标资源标识（后端 TAGGABLE_MODELS 白名单，如 identity.userinfo） */
     resource: string;
     /** 单对象 pk（与 pks 二选一） */
     pk?: string;

@@ -1,3 +1,10 @@
+/**
+ * 模块环约束：api/base → utils/http → utils/auth → store → api/auth → api/base
+ * 成环，环内 api/auth 等 class extends 依赖本模块先完成初始化。
+ * - 本模块（及其静态导入）不得再引入任何 api/* 模块；
+ * - 「先导入任何 api 模块、后加载认证链」的入口序会触发环内 extends 未初始化，
+ *   纯函数消费方请走深路径（如 RePlusPage/src/utils），勿经桶出口连带组件图。
+ */
 import { http } from "@/utils/http";
 import { dataToFormData } from "@/utils/form";
 import type { PureHttpRequestConfig, RequestMethods } from "@/utils/http/types";

@@ -59,6 +59,11 @@ export interface UserInfo {
   is_active: boolean;
   roles: string[];
   /**
+   * 平台超管标记（随 userinfo 下发）。客户端用于「非本人也可管理」类入口的
+   * 同口径放行（如流程实例讨论区评论删除）；字段缺失时按非超管处理。
+   */
+  is_superuser?: boolean;
+  /**
    * 巡检处置联动：管理员要求改密时为 true（随 userinfo 下发），
    * 客户端 App.vue 检测后引导到个人配置页；改密成功由服务端自动清除。
    */

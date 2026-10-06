@@ -3483,6 +3483,9 @@ aiKnowledge:
   uploadTitle: Upload document
   syncRepo: Sync repository docs
   syncDone: "Sync done: created {created}, updated {updated}, removed {removed}"
+  syncSubmitted: "Repository sync task submitted, running in the background"
+  syncAlreadyRunning: "A repository sync is already running; try again later"
+  syncPollTimeout: "The sync is taking long; progress tracking stopped. Refresh the list later to check the result"
   preview: Preview
   previewTitle: Document preview
   enable: Enable

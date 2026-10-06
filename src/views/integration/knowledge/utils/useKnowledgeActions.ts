@@ -1,11 +1,15 @@
 import { SUCCESS_CODE } from "@/api/types";
-import { h, ref, type Ref } from "vue";
+import { getCurrentScope, h, onScopeDispose, ref, type Ref } from "vue";
 import type { useI18n } from "vue-i18n";
 import { addDialog } from "@/components/ReDialog";
 import { openManageDrawer } from "@/components/ReActionPanel";
 import { hasAuth } from "@/router/utils";
 import { handleOperation } from "@/components/RePlusPage";
-import { knowledgeApi, type KnowledgeSyncSummary } from "@/api/ai/knowledge";
+import {
+  knowledgeApi,
+  type KnowledgeSyncStatus,
+  type KnowledgeSyncSummary
+} from "@/api/ai/knowledge";
 import { useConfirm } from "@/hooks/useConfirm";
 import { message } from "@/utils/message";
 import KnowledgeUploadDialog from "../components/KnowledgeUploadDialog.vue";
@@ -14,6 +18,10 @@ import { buildKnowledgeActionGroups } from "./knowledgeActions";
 import type { KnowledgeDocumentItem } from "@/api/ai/knowledge";
 
 type KnowledgeRow = KnowledgeDocumentItem & { is_active: boolean };
+
+/** 仓库同步为后台任务：提交后经状态端点轮询终态摘要（与向量构建进度轮询同思路） */
+export const SYNC_POLL_INTERVAL = 1500;
+export const SYNC_POLL_TIMEOUT = 5 * 60 * 1000;
 
 /** 行内字典化字段取标量值：后端 LabeledChoice 下发 {value,label}（或原始字符串） */
 export const dictValue = (value: unknown): string =>
@@ -137,27 +145,77 @@ export function useKnowledgeActions({
     });
   };
 
+  /** 仓库同步轮询定时器：挂当前作用域，组件卸载即清理，避免卸载后仍轮询/弹消息 */
+  let syncPollTimer: ReturnType<typeof setTimeout> | null = null;
+  const stopSyncPolling = () => {
+    if (syncPollTimer) {
+      clearTimeout(syncPollTimer);
+      syncPollTimer = null;
+    }
+  };
+  if (getCurrentScope()) {
+    onScopeDispose(stopSyncPolling);
+  }
+
+  const waitSyncPollTick = () =>
+    new Promise<void>(resolve => {
+      syncPollTimer = setTimeout(resolve, SYNC_POLL_INTERVAL);
+    });
+
+  /** 轮询仓库同步状态：终态（done/error）或超时停止；卸载后定时器被清理即停 */
+  const pollSyncStatus = async () => {
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < SYNC_POLL_TIMEOUT) {
+      await waitSyncPollTick();
+      // 异常归一为可读失败结果：状态查询失败按一次无效轮询处理，下轮重试
+      const res = await knowledgeApi.syncRepoStatus().catch(error => ({
+        code: -1,
+        detail: String((error as { detail?: string })?.detail ?? error),
+        data: null
+      }));
+      const status = res.data as KnowledgeSyncStatus | null;
+      if (!status || status.state === "running" || status.state === "idle") {
+        continue;
+      }
+      if (status.state === "done") {
+        const summary = (status.summary ?? {}) as Partial<KnowledgeSyncSummary>;
+        message(
+          t("aiKnowledge.syncDone", {
+            created: summary.created ?? 0,
+            updated: summary.updated ?? 0,
+            removed: summary.removed ?? 0
+          }),
+          { type: "success" }
+        );
+        refresh();
+        return;
+      }
+      message(String(status.detail || t("results.failed")), {
+        type: "error"
+      });
+      return;
+    }
+    message(t("aiKnowledge.syncPollTimeout"), { type: "warning" });
+  };
+
   const syncRepo = async () => {
-    // 异常归一为可读失败结果：同步可能因仓库不可达等失败，需给出可读原因
+    // 异常归一为可读失败结果：提交可能因仓库不可达等失败，需给出可读原因
     const res = await knowledgeApi.syncRepo().catch(error => ({
       code: -1,
       data: null,
       detail: String((error as { detail?: string })?.detail ?? error)
     }));
-    if (res.code === SUCCESS_CODE) {
-      const summary = (res.data ?? {}) as KnowledgeSyncSummary;
-      message(
-        t("aiKnowledge.syncDone", {
-          created: summary.created ?? 0,
-          updated: summary.updated ?? 0,
-          removed: summary.removed ?? 0
-        }),
-        { type: "success" }
-      );
-      refresh();
-    } else if (res.detail) {
-      message(String(res.detail), { type: "warning" });
+    if (res.code !== SUCCESS_CODE) {
+      // 已有同步在跑（1001，单飞锁）：提示进行中，不报错、不排队
+      if (res.code === 1001) {
+        message(t("aiKnowledge.syncAlreadyRunning"), { type: "info" });
+        return;
+      }
+      message(res.detail ?? t("results.failed"), { type: "error" });
+      return;
     }
+    message(t("aiKnowledge.syncSubmitted"), { type: "info" });
+    await pollSyncStatus();
   };
 
   /** 批量启停：取勾选行 pk，未勾选时按项目既有口径提示 */

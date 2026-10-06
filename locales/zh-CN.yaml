@@ -3482,6 +3482,9 @@ aiKnowledge:
   uploadTitle: 上传文档
   syncRepo: 同步仓库文档
   syncDone: 同步完成：新增 {created}、更新 {updated}、清理 {removed}
+  syncSubmitted: 仓库同步任务已提交，正在后台执行
+  syncAlreadyRunning: 已有仓库同步在执行，请稍候
+  syncPollTimeout: 仓库同步耗时较长，已停止进度跟踪；稍后刷新查看结果
   preview: 预览
   previewTitle: 文档预览
   enable: 启用

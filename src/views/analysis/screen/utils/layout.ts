@@ -111,12 +111,13 @@ export function cellFromOffset(
 
 /**
  * 图片窗格地址口径：http(s) 绝对地址或站内根相对路径（/ 开头）。
+ * `//` 开头的 protocol-relative 地址按外站处理，与服务端口径一致地拒绝。
  * 空值视为「尚未配置」（画布有占位提示），不算非法；属 UX 层行内校验，
  * 保存时服务端仍会再校验一次。
  */
 export function isValidPaneImageUrl(url: string | undefined | null): boolean {
   const value = (url ?? "").trim();
-  return value.length === 0 || /^(https?:\/\/|\/)/i.test(value);
+  return value.length === 0 || /^(https?:\/\/|\/(?!\/))/i.test(value);
 }
 
 /** 落库前清理：只保留服务端声明键，并按类型补齐默认值（与服务端归一化同口径） */

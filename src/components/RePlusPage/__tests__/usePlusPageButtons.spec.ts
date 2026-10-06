@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { ref } from "vue";
+import { describe, expect, it, vi } from "vitest";
+import { nextTick, ref } from "vue";
 import { usePlusPageButtons } from "../src/utils/usePlusPageButtons";
 import type { RePlusPageProps } from "../src/utils/types";
 
@@ -13,14 +13,19 @@ const treeProps = ref({
 
 function buildOperationButtons(
   authBits: Record<string, boolean>,
-  operationButtonsProps?: Record<string, unknown>
+  operationButtonsProps?: Record<string, unknown>,
+  options?: {
+    detailRowFetch?: RePlusPageProps["detailRowFetch"];
+    handleDetail?: (row: Record<string, unknown>) => void | Promise<void>;
+  }
 ) {
   const props = {
     api: {},
     auth: authBits,
     isTree: false,
     operationButtonsProps,
-    tableBarButtonsProps: undefined
+    tableBarButtonsProps: undefined,
+    detailRowFetch: options?.detailRowFetch
   } as RePlusPageProps;
   const { operationButtons } = usePlusPageButtons({
     props,
@@ -31,7 +36,7 @@ function buildOperationButtons(
     getSelectPks: () => [],
     handleAddOrEdit: () => undefined,
     handleDelete: () => undefined,
-    handleDetail: () => undefined
+    handleDetail: options?.handleDetail ?? (() => undefined)
   });
   return operationButtons.value;
 }
@@ -105,5 +110,51 @@ describe("usePlusPageButtons 行级归属守卫", () => {
     const buttons = buildOperationButtons(POLICY_AUTH);
     expect(evalShow(findButton(buttons, "update"), { pk: 1 })).toBe(-30);
     expect(evalShow(findButton(buttons, "delete"), { pk: 1 })).toBe(-20);
+  });
+});
+
+describe("usePlusPageButtons 详情兜底拉取（detailRowFetch）", () => {
+  type DetailButton = {
+    code: string;
+    onClick: (context: {
+      row: Record<string, unknown>;
+      loading: { value: boolean };
+    }) => void;
+  };
+
+  const clickDetail = (buttons: { code: string | number }[]) =>
+    buttons.find(button => button.code === "detail") as DetailButton;
+
+  it("挂 detailRowFetch 时详情点击进入 loading，抽屉数据就绪后释放", async () => {
+    let resolveDetail: (() => void) | undefined;
+    const handleDetail = vi.fn(
+      () =>
+        new Promise<void>(resolve => {
+          resolveDetail = resolve;
+        })
+    );
+    const buttons = buildOperationButtons(POLICY_AUTH, undefined, {
+      detailRowFetch: async () => ({ body: "full" }),
+      handleDetail
+    });
+    const loading = { value: false };
+    clickDetail(buttons).onClick({ row: { pk: 1 }, loading });
+    expect(loading.value).toBe(true);
+    resolveDetail!();
+    await nextTick();
+    await Promise.resolve();
+    expect(loading.value).toBe(false);
+    expect(handleDetail).toHaveBeenCalledTimes(1);
+  });
+
+  it("未挂 detailRowFetch 时详情点击行为不变（loading 不介入）", async () => {
+    const handleDetail = vi.fn();
+    const buttons = buildOperationButtons(POLICY_AUTH, undefined, {
+      handleDetail
+    });
+    const loading = { value: false };
+    clickDetail(buttons).onClick({ row: { pk: 1 }, loading });
+    expect(loading.value).toBe(false);
+    expect(handleDetail).toHaveBeenCalledTimes(1);
   });
 });

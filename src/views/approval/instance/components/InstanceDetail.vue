@@ -125,12 +125,14 @@ const commentText = ref("");
 const commentLoading = ref(false);
 
 /**
- * 删除入口仅评论作者可见（creator 为 string|number，统一转字符串比对）。
- * 服务端删除接口另放行超管，但 userinfo 不下发超管标记，前端无从同口径放行；
- * 非作者（含超管）不渲染入口，接口侧权限仍由服务端兜底。
+ * 删除入口与后端 delete_comment 的放行口径对齐：评论作者或平台超管。
+ * creator 为 string|number，统一转字符串比对；is_superuser 随 userinfo 下发，
+ * 旧持久化副本可能缺该字段，按非超管处理（行为与仅作者可见一致）。
  */
 const canDeleteComment = (item: InstanceComment) =>
-  item.creator != null && String(item.creator) === String(userStore.pk ?? "");
+  (item.creator != null &&
+    String(item.creator) === String(userStore.pk ?? "")) ||
+  Boolean(userStore.is_superuser);
 
 async function loadComments() {
   try {
@@ -433,6 +435,7 @@ onMounted(() => {
               link
               type="danger"
               size="small"
+              data-testid="comment-delete"
               @click="removeComment(item)"
             >
               {{ t("buttons.delete") }}

@@ -54,6 +54,8 @@ export const useUserStore = defineStore("pure-user", {
       pk: userInfo?.pk,
       // 页面级别权限
       roles: userInfo?.roles ?? [],
+      // 平台超管标记（userinfo 下发；旧持久化副本缺该字段时按非超管）
+      is_superuser: userInfo?.is_superuser ?? false,
       // 巡检处置联动：管理员要求改密（userinfo 下发，App.vue 观察后引导改密）
       mustChangePassword: userInfo?.must_change_password ?? false,
       // 用户模拟态（userinfo 下发）：非模拟态为 null
@@ -73,6 +75,8 @@ export const useUserStore = defineStore("pure-user", {
       this.phone = data.phone;
       this.pk = data.pk;
       this.roles = data?.roles;
+      // 平台超管标记随用户信息刷新（「非本人也可管理」入口据此放行）
+      this.is_superuser = Boolean(data?.is_superuser);
       // 巡检处置联动：改密要求随用户信息刷新（App.vue 观察后引导，改密即清除）
       this.mustChangePassword = Boolean(data?.must_change_password);
       // 用户模拟态随用户信息刷新（顶栏横幅据此渲染；硬刷新后不丢）

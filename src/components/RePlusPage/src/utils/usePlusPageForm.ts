@@ -91,11 +91,21 @@ export function usePlusPageForm({
   };
 
   // 查看详情
-  const handleDetail = (row: Record<string, unknown>) => {
+  const handleDetail = async (row: Record<string, unknown>) => {
+    let rawRow = { ...row };
+    // 页面挂了详情兜底拉取（列表行大字段为有界预览时借详情端点回填全量）：
+    // 抽屉打开前完成合并，失败由页面自行兜底（返回 null 沿用行数据），这里不再拦截
+    const fetchDetailRow = props.detailRowFetch;
+    if (typeof fetchDetailRow === "function") {
+      const extra = await fetchDetailRow(row);
+      if (extra) {
+        rawRow = { ...rawRow, ...extra };
+      }
+    }
     openDialogDrawer({
       t,
       title: t("buttons.detail"),
-      rawRow: { ...row },
+      rawRow,
       rawColumns: detailColumns.value,
       dialogDrawerOptions: { width: "60vw", hideFooter: true },
       minWidth: "600px",

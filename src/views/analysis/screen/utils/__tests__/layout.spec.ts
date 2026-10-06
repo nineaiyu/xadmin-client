@@ -232,6 +232,8 @@ describe("画布栅格常量单一来源", () => {
     expect(isValidPaneImageUrl("www.a.b/c.png")).toBe(false);
     expect(isValidPaneImageUrl("ftp://a.b/c.png")).toBe(false);
     expect(isValidPaneImageUrl("javascript:alert(1)")).toBe(false);
+    // protocol-relative 地址按外站处理，与服务端口径一致地拒绝
+    expect(isValidPaneImageUrl("//evil.com/x.png")).toBe(false);
     // 空值 = 尚未配置（画布有占位提示），不算非法
     expect(isValidPaneImageUrl("")).toBe(true);
     expect(isValidPaneImageUrl("   ")).toBe(true);

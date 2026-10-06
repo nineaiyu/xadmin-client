@@ -343,13 +343,16 @@ describe("common 通用端点", () => {
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
       "/api/common/resources/cache",
-      { data: { resources: [1, 2] } }
+      { params: {}, data: { resources: [1, 2] } },
+      {}
     );
 
     countriesApi();
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/common/countries"
+      "/api/common/countries",
+      { params: {}, data: undefined },
+      {}
     );
   });
 });

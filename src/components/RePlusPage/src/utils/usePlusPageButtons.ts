@@ -46,7 +46,7 @@ export function usePlusPageButtons({
     row: { pk?: string | number; id?: string | number },
     requestEnd?: (options?: object) => void
   ) => void;
-  handleDetail: (row: Record<string, unknown>) => void;
+  handleDetail: (row: Record<string, unknown>) => void | Promise<void>;
 }) {
   const {
     api,
@@ -118,8 +118,16 @@ export function usePlusPageButtons({
         // 键名用 "aria-label" 字符串：ariaLabel 驼峰透传到 DOM 会丢失连字符而失效
         "aria-label": t("buttons.detail")
       },
-      onClick: ({ row }) => {
-        handleDetail(row);
+      onClick: ({ row, loading }) => {
+        // 挂了详情兜底拉取的页面：拉取期间按钮 loading（加载中兜底），完成后开抽屉
+        if (props.detailRowFetch) {
+          loading.value = true;
+          Promise.resolve(handleDetail(row)).finally(() => {
+            loading.value = false;
+          });
+        } else {
+          handleDetail(row);
+        }
       },
       tooltip: { content: t("buttons.detail") },
       show: hideDetail ? false : auth.list || auth.retrieve ? -10 : false

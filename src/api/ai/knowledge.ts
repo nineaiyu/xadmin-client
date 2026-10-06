@@ -36,6 +36,15 @@ export type KnowledgeSyncSummary = {
   synced_at: string;
 };
 
+/** 仓库同步运行状态（轮询端点；终态摘要随状态通道保留 1 小时） */
+export type KnowledgeSyncStatus = {
+  state: "idle" | "running" | "done" | "error";
+  summary?: Partial<KnowledgeSyncSummary>;
+  detail?: string;
+  updated_time?: string;
+  finished_time?: string;
+};
+
 /**
  * 向量通道状态：enabled 表示存在可用的 embedding 档案（用途=文本向量化）；
  * fresh 为可直接参与检索的向量数，stale 为正文/模型变更后待重算的向量数。
@@ -85,13 +94,24 @@ class KnowledgeApi extends BaseApi {
     return this.request<DetailResult>("post", {}, { name, ...payload });
   };
 
-  /** 重新扫描仓库文档（docs/）：上传文档不受影响 */
+  /** 提交仓库文档同步后台任务（docs/ 全量重扫，上传文档不受影响）；
+   * 已有同步在跑时返回 1001，最终摘要经 syncRepoStatus 轮询 */
   syncRepo = () => {
     return this.request<DetailResult>(
       "post",
       {},
       {},
       `${this.baseApi}/sync-repo`
+    );
+  };
+
+  /** 仓库同步运行状态（轮询）：running 期间无摘要，终态带同步摘要。 */
+  syncRepoStatus = () => {
+    return this.request<DetailResult<KnowledgeSyncStatus>>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/sync-repo/status`
     );
   };
 
