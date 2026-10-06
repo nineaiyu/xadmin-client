@@ -29,6 +29,8 @@ const PATTERN = /\bas\s+unknown\s+as\b/g;
 // approval/instance 同步收窄；新子模块均以单层 as 或直接赋值替代双逃逸）。
 // 2026-10-02：O6 收口，router/index.ts 清零移除基线（当前 94 处 / 65 文件）。
 // 2026-10-02（二）：useMenuData 拆分出 useMenuMutations，原 3 处双重断言经诚实类型收窄全部清零（基线移除），新 spec 登记 2 处测试替身断言（净减 1，当前 93 处 / 65 文件）。
+// 2026-10-06：knowledgeSync.spec 新增登记 1 处（i18n ComposerTranslation 测试替身无法
+// 单层收窄，vue-tsc TS2352 要求先转 unknown；tableRef 已改单层 as，未登记即门禁红）。
 // 2026-09-30：初始登记 109 处 / 70 文件（热点：menu normalize.spec 7、router/index 6、
 // useMenuData 4——多为 element-plus 泛型组件与路由元数据互转的既有债务）
 const BASELINE = {
@@ -74,6 +76,7 @@ const BASELINE = {
   "src/views/integration/api-app/utils/__tests__/apiAppActions.spec.ts": 1,
   "src/views/integration/knowledge/components/KnowledgePanel.vue": 1,
   "src/views/integration/knowledge/utils/__tests__/knowledgeActions.spec.ts": 1,
+  "src/views/integration/knowledge/utils/__tests__/knowledgeSync.spec.ts": 1,
   "src/views/login/components/Basic.vue": 1,
   "src/views/settings/components/settings/SettingItem.vue": 1,
   "src/views/settings/message/components/MessageTemplatePanel.vue": 2,

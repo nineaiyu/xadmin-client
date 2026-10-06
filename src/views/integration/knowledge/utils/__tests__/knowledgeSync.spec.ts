@@ -52,7 +52,7 @@ const t = vi.fn(
 
 const tableRef = {
   value: { handleGetData: state.handleGetDataMock }
-} as unknown as Parameters<typeof useKnowledgeActions>[0]["tableRef"];
+} as Parameters<typeof useKnowledgeActions>[0]["tableRef"];
 
 const runningStatus = { code: 1000, data: { state: "running" } };
 const doneStatus = {
