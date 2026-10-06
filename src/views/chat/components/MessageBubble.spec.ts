@@ -218,6 +218,20 @@ describe("MessageBubble 消息气泡分支", () => {
     expect(wrapper.emitted("recall")).toEqual([[item]]);
   });
 
+  it("撤回入口只认 can_recall：本地窗口过期复位或已撤回的消息不渲染入口", () => {
+    const expired = mountBubble(message({ can_recall: false }));
+    expect(
+      expired.findAll("button").find(button => button.text() === "chat.recall")
+    ).toBeUndefined();
+
+    const recalled = mountBubble(
+      message({ can_recall: true, is_recalled: true })
+    );
+    expect(
+      recalled.findAll("button").find(button => button.text() === "chat.recall")
+    ).toBeUndefined();
+  });
+
   it("动作草稿卡：有权限时渲染确认入口，无权限时只读展示并提示", () => {
     const draft = {
       action: "user.disable",

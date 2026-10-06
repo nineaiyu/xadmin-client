@@ -9,7 +9,9 @@ import type {
 } from "@/api/approval/approvalFlow";
 import { SUCCESS_CODE } from "@/api/types";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useUserStoreHook } from "@/store/modules/user";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";
 
 /**
@@ -81,6 +83,7 @@ const FLOW_STATUS_TAG_TYPE: Record<string, StatusTagType> = {
 const props = defineProps<{ pk: string | number }>();
 const { t } = useI18n();
 const confirm = useConfirm();
+const userStore = useUserStoreHook();
 
 const loading = ref(true);
 const detail = ref<InstanceDetailData | null>(null);
@@ -121,6 +124,14 @@ const comments = ref<InstanceComment[]>([]);
 const commentText = ref("");
 const commentLoading = ref(false);
 
+/**
+ * 删除入口仅评论作者可见（creator 为 string|number，统一转字符串比对）。
+ * 服务端删除接口另放行超管，但 userinfo 不下发超管标记，前端无从同口径放行；
+ * 非作者（含超管）不渲染入口，接口侧权限仍由服务端兜底。
+ */
+const canDeleteComment = (item: InstanceComment) =>
+  item.creator != null && String(item.creator) === String(userStore.pk ?? "");
+
 async function loadComments() {
   try {
     const res = await approvalInstanceApi.comments(props.pk);
@@ -137,16 +148,18 @@ async function submitComment() {
   if (!content) return;
   commentLoading.value = true;
   try {
-    const res = await approvalInstanceApi.addComment(props.pk, content);
+    // 异常经 normalizeError 归一为失败信封，与业务失败同走一套 code/detail 分支；
+    // detail 缺失回退通用文案，避免提示里渲染出字面 "undefined"
+    const res = await approvalInstanceApi
+      .addComment(props.pk, content)
+      .catch(normalizeError);
     if (res.code === SUCCESS_CODE) {
       message(t("approvalDiscussion.submitted"), { type: "success" });
       commentText.value = "";
       await loadComments();
     } else {
-      message(String(res.detail), { type: "warning" });
+      message(res.detail || t("results.failed"), { type: "warning" });
     }
-  } catch (error: unknown) {
-    message(String((error as Error)?.message ?? error), { type: "warning" });
   } finally {
     commentLoading.value = false;
   }
@@ -162,7 +175,8 @@ async function removeComment(item: InstanceComment) {
   if (res.code === SUCCESS_CODE) {
     await loadComments();
   } else {
-    message(String(res.detail), { type: "warning" });
+    // 业务失败信封 detail 缺失时回退通用文案（不渲染字面 "undefined"）
+    message(res.detail || t("results.failed"), { type: "warning" });
   }
 }
 
@@ -415,6 +429,7 @@ onMounted(() => {
               {{ commentTime(item.created_time) }}
             </span>
             <el-button
+              v-if="canDeleteComment(item)"
               link
               type="danger"
               size="small"

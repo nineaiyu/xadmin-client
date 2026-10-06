@@ -1,9 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ref } from "vue";
 
 import type { ChatMessageItem } from "@/api/chat";
 import type { ChatRoomMessage } from "@/utils/websocket/protocol";
-import { createMessageStore } from "./chatMessages";
+import { RECALL_WINDOW_MS, createMessageStore } from "./chatMessages";
 
 /** 服务端广播载荷样本（ChatRoomMessage 与 ChatMessageItem 同形状） */
 const serverMessage = (overrides: Partial<ChatRoomMessage>) =>
@@ -22,6 +22,8 @@ const serverMessage = (overrides: Partial<ChatRoomMessage>) =>
     ...overrides
   }) as ChatMessageItem;
 
+const disposers: Array<() => void> = [];
+
 function buildStore() {
   const messages = ref<ChatMessageItem[]>([]);
   const store = createMessageStore(messages, () => ({
@@ -29,8 +31,14 @@ function buildStore() {
     roomType: "public",
     sender: { pk: 1, username: "bob", avatar: "" }
   }));
+  // 每个用例结束都释放窗口巡检定时器，避免用例间悬挂 interval
+  disposers.push(store.dispose);
   return { messages, ...store };
 }
+
+afterEach(() => {
+  disposers.splice(0).forEach(dispose => dispose());
+});
 
 describe("createMessageStore 表情回应与消息写入", () => {
   it("upsert 按 client_msg_id 对齐覆盖乐观气泡（服务端载荷赢），纯新消息追加并报告新增", () => {
@@ -113,6 +121,146 @@ describe("createMessageStore 表情回应与消息写入", () => {
       message_type: "video",
       content: "clip.mp4",
       extra: { file: { kind: "video" } }
+    });
+  });
+});
+
+describe("createMessageStore 本地撤回窗口", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("own 消息：乐观上屏即置位 can_recall，广播回显（载荷不带该字段）后保留", () => {
+    const { messages, pushText, upsert } = buildStore();
+    pushText("草稿", "c-1");
+    expect(messages.value[0]).toMatchObject({
+      sender_pk: 1,
+      sending: true,
+      can_recall: true
+    });
+
+    // 广播回来的正式载荷不带 can_recall：对齐覆盖后本地置位继续有效
+    upsert(
+      serverMessage({
+        id: 7,
+        client_msg_id: "c-1",
+        sender_pk: 1,
+        created_time: new Date().toISOString()
+      })
+    );
+    expect(messages.value[0]).toMatchObject({ id: 7, can_recall: true });
+
+    // 多端回显（无乐观前身的本人广播消息）同样本地置位
+    upsert(
+      serverMessage({
+        id: 9,
+        sender_pk: 1,
+        created_time: new Date().toISOString()
+      })
+    );
+    expect(messages.value[1].can_recall).toBe(true);
+  });
+
+  it("他人消息不置位；服务端明确下发的 can_recall 以服务端为准", () => {
+    const { messages, upsert } = buildStore();
+    upsert(
+      serverMessage({
+        id: 8,
+        sender_pk: 2,
+        created_time: new Date().toISOString()
+      })
+    );
+    expect(messages.value[0].can_recall).toBeUndefined();
+
+    // 服务端明确 false（历史口径）：不得被本地置位翻成 true
+    upsert(
+      serverMessage({
+        id: 10,
+        sender_pk: 1,
+        can_recall: false,
+        created_time: new Date().toISOString()
+      })
+    );
+    expect(messages.value[1].can_recall).toBe(false);
+
+    // 服务端明确 true：原样保留
+    upsert(
+      serverMessage({
+        id: 11,
+        sender_pk: 1,
+        can_recall: true,
+        created_time: new Date().toISOString()
+      })
+    );
+    expect(messages.value[2].can_recall).toBe(true);
+  });
+
+  it("窗口过期：巡检把超窗的本人消息 can_recall 复位，他人消息不受影响", () => {
+    const { messages, upsert } = buildStore();
+    const fresh = new Date(Date.now() - 60_000).toISOString();
+    const stale = new Date(
+      Date.now() - RECALL_WINDOW_MS - 60_000
+    ).toISOString();
+    upsert(serverMessage({ id: 7, sender_pk: 1, created_time: fresh }));
+    upsert(serverMessage({ id: 8, sender_pk: 2, created_time: fresh }));
+    // 历史口径下发的 true 也可能随停留时间超窗：巡检同样复位（与服务端此刻判定一致）
+    upsert(
+      serverMessage({
+        id: 9,
+        sender_pk: 1,
+        can_recall: true,
+        created_time: stale
+      })
+    );
+    expect(messages.value[0].can_recall).toBe(true);
+    expect(messages.value[2].can_recall).toBe(true);
+
+    // 推进到窗口过期后的下一个巡检点（巡检间隔内允许少量超窗残留）
+    vi.advanceTimersByTime(RECALL_WINDOW_MS + 60_000);
+    expect(messages.value[0].can_recall).toBe(false);
+    expect(messages.value[1].can_recall).toBeUndefined();
+    expect(messages.value[2].can_recall).toBe(false);
+  });
+
+  it("过期复位后不再复活：乱序重放同一条消息（广播不带 can_recall）不重新置位", () => {
+    const { messages, pushText, upsert } = buildStore();
+    pushText("草稿", "c-1");
+    vi.advanceTimersByTime(RECALL_WINDOW_MS + 60_000);
+    expect(messages.value[0].can_recall).toBe(false);
+
+    upsert(
+      serverMessage({
+        id: 7,
+        client_msg_id: "c-1",
+        sender_pk: 1,
+        created_time: new Date(
+          Date.now() - RECALL_WINDOW_MS - 1000
+        ).toISOString()
+      })
+    );
+    expect(messages.value[0].can_recall).toBe(false);
+  });
+
+  it("applyRecall 撤回终态不受巡检影响（复位只针对未撤回消息）", () => {
+    const { messages, upsert, applyRecall } = buildStore();
+    upsert(
+      serverMessage({
+        id: 7,
+        sender_pk: 1,
+        can_recall: true,
+        created_time: new Date().toISOString()
+      })
+    );
+    applyRecall({ message_id: 7, room_id: 1 });
+    vi.advanceTimersByTime(RECALL_WINDOW_MS + 60_000);
+    expect(messages.value[0]).toMatchObject({
+      is_recalled: true,
+      content: "",
+      can_recall: false
     });
   });
 });

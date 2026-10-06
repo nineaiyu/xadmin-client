@@ -73,7 +73,8 @@ export function useChat() {
     upsert: upsertMessage,
     applyRecall,
     applyReactions,
-    pushText
+    pushText,
+    dispose: disposeMessageStore
   } = store;
 
   // ------------------------------------------------------------------ WS
@@ -229,6 +230,8 @@ export function useChat() {
   onUnmounted(() => {
     abortStream();
     disconnect();
+    // 停掉消息集合的撤回窗口巡检定时器
+    disposeMessageStore();
   });
 
   return {

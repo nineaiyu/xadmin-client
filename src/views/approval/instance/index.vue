@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { approvalInstanceApi } from "@/api/approval/approvalFlow";
 import { hasAuth } from "@/router/utils";
@@ -20,6 +20,30 @@ const donePanel = ref();
 const ongoingPanel = ref();
 const statsRef = ref<{ refresh: () => void } | null>(null);
 
+/** 页签名 → 面板实例（ref 名与 el-tab-pane 的 name 对齐） */
+const panelByName: Record<string, typeof pendingPanel> = {
+  pending: pendingPanel,
+  mine: minePanel,
+  done: donePanel,
+  ongoing: ongoingPanel
+};
+/** 已挂载过的页签（pending 首屏即挂载）：首次激活由面板挂载自行拉取 */
+const mountedTabs = new Set(["pending"]);
+
+/**
+ * 懒加载页签内容常驻后数据会陈旧（审批在别处流转、他人新发起申请）：
+ * 重访的页签激活即重拉列表；首次激活不重复拉（挂载时面板自身会请求）。
+ */
+watch(activeTab, name => {
+  const panel = panelByName[name];
+  if (!panel) return;
+  if (mountedTabs.has(name)) {
+    panel.value?.refresh();
+  } else {
+    mountedTabs.add(name);
+  }
+});
+
 /** 管理视角（全部在途）：按 ongoing 权限点显示（后端 scope=ongoing 同口径校验） */
 const ongoingVisible = hasAuth("ongoing:SystemApprovalInstance");
 
@@ -33,8 +57,13 @@ const { flowPendingCount: pendingCount } = useApprovalBadge();
 function handleStarted() {
   refreshApprovalBadge();
   statsRef.value?.refresh();
-  activeTab.value = "mine";
-  minePanel.value?.refresh();
+  if (activeTab.value === "mine") {
+    // 已在目标页签：watch 不触发，列表刷新走显式调用
+    minePanel.value?.refresh();
+  } else {
+    // 切页签的刷新交给激活 watch（避免与显式 refresh 叠成两次请求）
+    activeTab.value = "mine";
+  }
   pendingPanel.value?.refresh();
 }
 </script>
