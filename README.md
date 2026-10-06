@@ -66,6 +66,7 @@ pnpm typecheck                            # 类型检查（strict 全仓，单�
 pnpm lint                                 # eslint + prettier + stylelint
 pnpm test:run                             # vitest（覆盖率阈值）
 pnpm check:contract                       # 与后端契约镜像一致性
+pnpm check:menu-permissions               # 权限点 ↔ 菜单种子双向对账（需检出 xadmin-server）
 pnpm check:version                        # 与后端版本号一致性
 pnpm check:bundle-size                    # 首屏体积基线（代码/i18n 双账本各 +15KB 预算）
 ```

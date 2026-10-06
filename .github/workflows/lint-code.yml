@@ -127,6 +127,13 @@ jobs:
           XADMIN_SERVER_DIR: xadmin-server
         run: pnpm check:contract
 
+      - name: Menu permission points reconcile with seed
+        # 前端消费点 ↔ menu.json 种子双向对账（方向 A 种子无消费 / 方向 B 前端无种子 /
+        # 页面 URL=目录例外登记），白名单登记于服务端 docs/guide/menu-maintenance.md §5
+        env:
+          XADMIN_SERVER_DIR: xadmin-server
+        run: pnpm check:menu-permissions
+
       - name: Version is in sync with xadmin-server
         # 前后端版本号必须同步提升：发布侧另有 tag 门禁（server build-image.yml），
         # 这里把校验前移到提交/PR 阶段，避免发版时才暴露
