@@ -40,7 +40,11 @@ const dashboards = ref<DashboardItem[]>([]);
 const current = ref<DashboardItem | null>(null);
 const loading = ref(false);
 const editing = ref(false);
-/** 卡片刷新计数：自增触发卡片重挂载并重新拉数（手动刷新入口） */
+/**
+ * 卡片刷新信号：自增经 refreshToken prop 下发，ChartCard watch 后原位重拉
+ * （保留 ECharts 实例，不再销毁重建）；结构性重挂仍由 layoutKey 承担
+ * （仅卡片集合/顺序变化时变，span/height 走响应式绑定无需重挂）。
+ */
 const refreshKey = ref(0);
 
 const refreshCards = () => {
@@ -407,9 +411,10 @@ onMounted(async () => {
               </div>
             </template>
             <ChartCard
-              :key="`${layoutKey}-${card.id}-${refreshKey}`"
+              :key="`${layoutKey}-${card.id}`"
               :ref="setCardRef(card.id)"
               :card="card"
+              :refresh-token="refreshKey"
             />
           </el-card>
         </el-col>

@@ -2,6 +2,15 @@ import { computed, ref, type Ref } from "vue";
 import type { ScreenLayoutPane } from "@/api/dataset/analysis";
 
 /**
+ * 方向键撤销点的合并键：只含窗格与动作语义段（移动/缩放），不含具体按键——
+ * 连续按不同方向键属于同一次布局微调，撤销点应合并为一步（按键名会让
+ * 每个方向各成一类，连按无法合并）。
+ */
+export function nudgeCoalesceKey(pk: string, resize: boolean): string {
+  return `nudge-${pk}-${resize ? "size" : "move"}`;
+}
+
+/**
  * 大屏窗格布局的撤销 / 重做历史（增删改与拖拽手势共用一个撤销点栈）。
  *
  * - `pushHistory` 在变更**前**调用；`coalesceKey` 用于合并连续同类编辑

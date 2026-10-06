@@ -1,15 +1,21 @@
 import { describe, expect, it } from "vitest";
 import type { ScreenLayoutPane } from "@/api/dataset/analysis";
 import {
+  CANVAS_PADDING,
   GRID_COLS,
+  GRID_GAP_X,
+  GRID_GAP_Y,
   GRID_MAX_ROWS,
+  GRID_ROW_HEIGHT,
   MAX_PANES,
   PANE_DEFAULTS,
+  canvasGridVars,
   canPlace,
   cellFromOffset,
   clampBox,
   findSlot,
   genPaneId,
+  isValidPaneImageUrl,
   normalizePanes,
   overlaps
 } from "../layout";
@@ -200,5 +206,36 @@ describe("栅格几何口径", () => {
     const second = genPaneId();
     expect(first.startsWith("pane-")).toBe(true);
     expect(first).not.toBe(second);
+  });
+});
+
+describe("画布栅格常量单一来源", () => {
+  it("canvasGridVars 由几何常量派生（样式与拖拽换算不会漂移）", () => {
+    expect(canvasGridVars["--screen-grid-cols"]).toBe(String(GRID_COLS));
+    expect(canvasGridVars["--screen-gap-x"]).toBe(`${GRID_GAP_X}px`);
+    expect(canvasGridVars["--screen-gap-y"]).toBe(`${GRID_GAP_Y}px`);
+    expect(canvasGridVars["--screen-row-height"]).toBe(`${GRID_ROW_HEIGHT}px`);
+    expect(canvasGridVars["--screen-canvas-padding"]).toBe(
+      `${CANVAS_PADDING}px`
+    );
+    // 行步长 = 行高 + 行距（拖拽纵步长与画布背景横线间距同源）
+    expect(canvasGridVars["--screen-row-step"]).toBe(
+      `${GRID_ROW_HEIGHT + GRID_GAP_Y}px`
+    );
+  });
+
+  it("isValidPaneImageUrl：http(s) 与根相对路径合法，其余非法，空值视为未配置", () => {
+    expect(isValidPaneImageUrl("https://a.b/c.png")).toBe(true);
+    expect(isValidPaneImageUrl("http://a.b/c.png")).toBe(true);
+    expect(isValidPaneImageUrl("/static/a.png")).toBe(true);
+    expect(isValidPaneImageUrl("  /static/a.png  ")).toBe(true);
+    expect(isValidPaneImageUrl("www.a.b/c.png")).toBe(false);
+    expect(isValidPaneImageUrl("ftp://a.b/c.png")).toBe(false);
+    expect(isValidPaneImageUrl("javascript:alert(1)")).toBe(false);
+    // 空值 = 尚未配置（画布有占位提示），不算非法
+    expect(isValidPaneImageUrl("")).toBe(true);
+    expect(isValidPaneImageUrl("   ")).toBe(true);
+    expect(isValidPaneImageUrl(undefined)).toBe(true);
+    expect(isValidPaneImageUrl(null)).toBe(true);
   });
 });

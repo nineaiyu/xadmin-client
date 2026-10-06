@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import type { ScreenLayoutPane, ScreenPaneType } from "@/api/dataset/analysis";
 import type { DashboardItem, DatasetItem } from "@/api/dataset/datasets";
+import { isValidPaneImageUrl } from "../utils/layout";
 
 /**
  * 窗格属性面板（设计器右侧）。
@@ -88,6 +89,15 @@ const onMetricDatasetChange = (pk: string) => {
 const onImageFitChange = (fit: "cover" | "contain" | "fill") => {
   emit("update", { fit });
 };
+
+/**
+ * 图片地址行内校验：口径见 utils/layout 的 isValidPaneImageUrl（http(s) 或
+ * 根相对路径，空值 = 尚未配置不报错）；输入过程只提示不阻断，保存时服务端
+ * 仍会再校验一次。
+ */
+const imageUrlError = computed(() =>
+  isValidPaneImageUrl(props.pane.url) ? "" : t("dataScreen.imageUrlInvalid")
+);
 </script>
 
 <template>
@@ -177,7 +187,11 @@ const onImageFitChange = (fit: "cover" | "contain" | "fill") => {
       </template>
 
       <template v-if="pane.type === 'image'">
-        <el-form-item :label="t('dataScreen.imageUrl')" required>
+        <el-form-item
+          :label="t('dataScreen.imageUrl')"
+          required
+          :error="imageUrlError"
+        >
           <el-input
             :model-value="pane.url ?? ''"
             placeholder="https://"

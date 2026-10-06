@@ -25,10 +25,11 @@ function isTypingTarget(target: EventTarget | null) {
  * - Ctrl/Cmd+S 保存；Ctrl/Cmd+Z 撤销、Ctrl/Cmd+Shift+Z 或 Ctrl/Cmd+Y 重做；
  * - Ctrl/Cmd+D 复制选中、Delete/Backspace 删除选中、Esc 取消选中；
  * - 方向键移动选中窗格（Shift+方向 = 缩放）。
- * 预览态整体忽略；输入控件聚焦时不劫持（保存/撤销重做除外）。
+ * 整体锁定（预览 / 只读）时不响应；输入控件聚焦时不劫持（保存/撤销重做除外）。
  */
 export function useScreenShortcuts(handlers: {
-  preview: Ref<boolean>;
+  /** 整体锁：预览态或只读态置 true，全部快捷键不响应 */
+  locked: Ref<boolean>;
   save: () => void;
   undo: () => void;
   redo: () => void;
@@ -39,14 +40,13 @@ export function useScreenShortcuts(handlers: {
   /** 方向键移动/缩放（delta 为格数增量）；返回 false = 落点非法被驳回 */
   nudge: (
     pane: ScreenLayoutPane,
-    key: string,
     dx: number,
     dy: number,
     shift: boolean
   ) => boolean;
 }) {
   function onKeydown(event: KeyboardEvent) {
-    if (handlers.preview.value) return;
+    if (handlers.locked.value) return;
     const mod = event.ctrlKey || event.metaKey;
     if (mod && event.key.toLowerCase() === "s") {
       event.preventDefault();
@@ -83,13 +83,7 @@ export function useScreenShortcuts(handlers: {
     const delta = ARROW_DELTAS[event.key];
     if (!delta) return;
     event.preventDefault();
-    handlers.nudge(
-      handlers.selected.value,
-      event.key,
-      delta[0],
-      delta[1],
-      event.shiftKey
-    );
+    handlers.nudge(handlers.selected.value, delta[0], delta[1], event.shiftKey);
   }
 
   onMounted(() => window.addEventListener("keydown", onKeydown));

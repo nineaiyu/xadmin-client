@@ -13,6 +13,26 @@ export const GRID_COLS = 12;
 export const GRID_MAX_ROWS = 60;
 export const MAX_PANES = 24;
 
+/* ---------------- 画布栅格物理度量（px） ----------------
+ * 设计器与投屏页的唯一来源：几何换算（拖拽步长 / drop 落点）与两端画布样式
+ * 都从这里派生，杜绝手工双写导致设计预览与投屏逐像素不一致。 */
+
+export const GRID_GAP_X = 12;
+export const GRID_GAP_Y = 12;
+export const GRID_ROW_HEIGHT = 40;
+/** 画布四边内边距：content box 从 padding 之后开始，落点换算要扣掉 */
+export const CANVAS_PADDING = 16;
+
+/** 画布栅格样式变量：设计器与投屏的根画布 :style 绑定同一份对象（值随上面常量走） */
+export const canvasGridVars: Record<string, string> = {
+  "--screen-grid-cols": String(GRID_COLS),
+  "--screen-gap-x": `${GRID_GAP_X}px`,
+  "--screen-gap-y": `${GRID_GAP_Y}px`,
+  "--screen-row-height": `${GRID_ROW_HEIGHT}px`,
+  "--screen-canvas-padding": `${CANVAS_PADDING}px`,
+  "--screen-row-step": `${GRID_ROW_HEIGHT + GRID_GAP_Y}px`
+};
+
 /** 新增窗格的默认尺寸（按类型给合理的初始占位） */
 export const PANE_DEFAULTS: Record<ScreenPaneType, { w: number; h: number }> = {
   dashboard: { w: 6, h: 4 },
@@ -87,6 +107,16 @@ export function cellFromOffset(
     x: Math.min(Math.max(x, 0), GRID_COLS - 1),
     y: Math.min(Math.max(y, 0), GRID_MAX_ROWS - 1)
   };
+}
+
+/**
+ * 图片窗格地址口径：http(s) 绝对地址或站内根相对路径（/ 开头）。
+ * 空值视为「尚未配置」（画布有占位提示），不算非法；属 UX 层行内校验，
+ * 保存时服务端仍会再校验一次。
+ */
+export function isValidPaneImageUrl(url: string | undefined | null): boolean {
+  const value = (url ?? "").trim();
+  return value.length === 0 || /^(https?:\/\/|\/)/i.test(value);
 }
 
 /** 落库前清理：只保留服务端声明键，并按类型补齐默认值（与服务端归一化同口径） */

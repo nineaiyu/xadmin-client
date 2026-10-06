@@ -21,8 +21,18 @@ import {
 import ScreenPane from "./components/ScreenPane.vue";
 import PaneInspector from "./components/PaneInspector.vue";
 import DesignerPalette from "./components/DesignerPalette.vue";
-import { GRID_COLS, canPlace, clampBox, normalizePanes } from "./utils/layout";
-import { usePaneHistory } from "./utils/history";
+import {
+  CANVAS_PADDING,
+  GRID_COLS,
+  GRID_GAP_X,
+  GRID_GAP_Y,
+  GRID_ROW_HEIGHT,
+  canvasGridVars,
+  canPlace,
+  clampBox,
+  normalizePanes
+} from "./utils/layout";
+import { nudgeCoalesceKey, usePaneHistory } from "./utils/history";
 import { createPaneOps } from "./utils/paneOps";
 import { useCanvasDrag } from "./utils/canvasDrag";
 import { useScreenShortcuts } from "./utils/shortcuts";
@@ -42,11 +52,14 @@ defineOptions({ name: "DataScreenDesigner" });
  *   重叠时**保持原位**（不弹错）；
  * - 组件库点击/拖入（utils/paneOps + utils/dnd）：新增窗格自动找首个空位
  *   （`findSlot`），画布排满给出可读提示；拖入落点可放则直接落格；
- * - 历史（utils/history）：增删改与拖拽手势各记一个撤销点（连续同类编辑合并），
- *   Ctrl/Cmd+Z 撤销、Ctrl/Cmd+Shift+Z 或 Ctrl/Cmd+Y 重做；
+ * - 历史（utils/history）：增删改与拖拽手势各记一个撤销点（连续同类编辑合并；
+ *   拖拽位移超阈值才记，按下未动不产生空撤销点），Ctrl/Cmd+Z 撤销、
+ *   Ctrl/Cmd+Shift+Z 或 Ctrl/Cmd+Y 重做；
  * - 快捷键（utils/shortcuts）：方向键移动选中窗格（Shift+方向 = 缩放）、
  *   Ctrl/Cmd+D 复制、Delete 删除、Ctrl/Cmd+S 保存、Esc 取消选中（输入框聚焦时
  *   不劫持按键）；
+ * - 只读态（非创建者记录）：编辑面板隐藏、保存/撤销/复制/清空禁用、窗格
+ *   拖拽/缩放入口不渲染、编辑类快捷键整体锁定（写权威在后端，此处为 UX 守卫）；
  * - 保存前本地归一化（丢未声明键、按类型补默认值），服务端仍会再校验一次（双保险）；
  * - `layout` 清空即回到轮播模式（存量形态与既有 E2E 不受影响）；
  * - 有未保存改动时离开设计器/关闭页面均给确认拦截。
@@ -69,12 +82,9 @@ const loading = ref(true);
 
 const canvasRef = ref<HTMLElement>();
 
-/** 栅格度量：与样式里的 gap / 行高保持一致（拖拽换算依赖它，改样式必须同步改这里） */
-const GAP_X = 12;
-const GAP_Y = 12;
-const ROW_HEIGHT = 40;
-/** 画布内边距（content box 从 padding 之后开始，drop 落点换算要扣掉） */
-const CANVAS_PADDING = 16;
+/** 只读态：非创建者记录后端会拒绝写入（1003），前端进入即置只读，
+ *  属 UX 层守卫——写权威始终在后端，详情接口未返回 is_owner 时按可编辑放行 */
+const readonly = computed(() => screen.value?.is_owner === false);
 
 const selected = computed(() =>
   panes.value.find(pane => pane.pk === selectedPk.value)
@@ -87,8 +97,8 @@ const cardsOf = (pane: ScreenLayoutPane) =>
 const metrics = () => {
   const width = canvasRef.value?.clientWidth ?? 0;
   const content = Math.max(width - CANVAS_PADDING * 2, 0);
-  const stepX = content > 0 ? (content + GAP_X) / GRID_COLS : 1;
-  return { stepX, stepY: ROW_HEIGHT + GAP_Y };
+  const stepX = content > 0 ? (content + GRID_GAP_X) / GRID_COLS : 1;
+  return { stepX, stepY: GRID_ROW_HEIGHT + GRID_GAP_Y };
 };
 
 const markDirty = () => {
@@ -113,27 +123,23 @@ const { startTracking } = useCanvasDrag({
   pushHistory
 });
 
-/** 方向键移动/缩放选中窗格：与拖拽同口径（夹回栅格 + 重叠驳回） */
-function nudge(
-  pane: ScreenLayoutPane,
-  key: string,
-  dx: number,
-  dy: number,
-  shift: boolean
-) {
+/** 方向键移动/缩放选中窗格：与拖拽同口径（夹回栅格 + 重叠驳回）；只读态驳回 */
+function nudge(pane: ScreenLayoutPane, dx: number, dy: number, shift: boolean) {
+  if (readonly.value) return false;
   const index = panes.value.findIndex(item => item.pk === pane.pk);
   if (index < 0) return false;
   const next = shift
     ? clampBox({ ...pane, w: pane.w + dx, h: pane.h + dy })
     : clampBox({ ...pane, x: pane.x + dx, y: pane.y + dy });
   if (!canPlace(panes.value, next, index)) return false;
-  pushHistory(`nudge-${pane.pk}-${key}-${shift ? "size" : "move"}`);
+  pushHistory(nudgeCoalesceKey(pane.pk, shift));
   panes.value[index] = { ...pane, ...next };
   return true;
 }
 
 useScreenShortcuts({
-  preview,
+  // 预览与只读同锁：编辑类快捷键（移动/缩放/删除/复制/保存/撤销）一概不响应
+  locked: computed(() => preview.value || readonly.value),
   save,
   undo,
   redo,
@@ -148,9 +154,9 @@ const onCanvasDrop = createCanvasDropHandler({
   canvasRef,
   metrics,
   grid: {
-    gapX: GAP_X,
-    gapY: GAP_Y,
-    rowHeight: ROW_HEIGHT,
+    gapX: GRID_GAP_X,
+    gapY: GRID_GAP_Y,
+    rowHeight: GRID_ROW_HEIGHT,
     padding: CANVAS_PADDING
   },
   addPane
@@ -223,7 +229,7 @@ const refreshData = () => {
 };
 
 async function save() {
-  if (!screen.value || saving.value) return;
+  if (!screen.value || saving.value || readonly.value) return;
   saving.value = true;
   try {
     const res = await screenApi
@@ -245,7 +251,7 @@ async function save() {
 }
 
 async function clearCanvas() {
-  if (panes.value.length === 0) return;
+  if (panes.value.length === 0 || readonly.value) return;
   if (
     !(await confirm(t("dataScreen.clearLayoutConfirm"), {
       title: t("dataScreen.clearLayout")
@@ -273,11 +279,20 @@ const back = () => {
       <el-tag v-if="dirty" size="small" type="warning" effect="dark">
         {{ t("dataScreen.unsaved") }}
       </el-tag>
+      <el-tag
+        v-if="readonly"
+        size="small"
+        type="info"
+        effect="plain"
+        data-testid="designer-readonly"
+      >
+        {{ t("dataScreen.readonlyHint") }}
+      </el-tag>
       <div class="flex-1" />
       <el-button
         size="small"
         data-testid="designer-undo"
-        :disabled="!canUndo || preview"
+        :disabled="!canUndo || preview || readonly"
         :title="t('dataScreen.undoHint')"
         @click="undo"
       >
@@ -286,7 +301,7 @@ const back = () => {
       <el-button
         size="small"
         data-testid="designer-redo"
-        :disabled="!canRedo || preview"
+        :disabled="!canRedo || preview || readonly"
         :title="t('dataScreen.redoHint')"
         @click="redo"
       >
@@ -295,7 +310,7 @@ const back = () => {
       <el-button
         size="small"
         data-testid="designer-duplicate"
-        :disabled="!selected || preview"
+        :disabled="!selected || preview || readonly"
         :title="t('dataScreen.duplicateHint')"
         @click="duplicateSelected"
       >
@@ -318,7 +333,7 @@ const back = () => {
       <el-button
         size="small"
         data-testid="designer-clear"
-        :disabled="panes.length === 0"
+        :disabled="panes.length === 0 || readonly"
         @click="clearCanvas"
       >
         {{ t("dataScreen.clearLayout") }}
@@ -330,6 +345,8 @@ const back = () => {
         type="primary"
         size="small"
         :loading="saving"
+        :disabled="readonly"
+        :title="readonly ? t('dataScreen.readonlyHint') : undefined"
         data-testid="designer-save"
         @click="save"
       >
@@ -339,7 +356,7 @@ const back = () => {
 
     <div class="designer-body">
       <DesignerPalette
-        v-if="!preview"
+        v-if="!preview && !readonly"
         :dashboards="dashboards"
         @add="addPane"
         @drag-start="onPaletteDragStart"
@@ -349,6 +366,7 @@ const back = () => {
         ref="canvasRef"
         class="designer-canvas"
         :class="{ 'is-preview': preview }"
+        :style="canvasGridVars"
         data-testid="designer-canvas"
         @pointerdown.self="selectedPk = ''"
         @dragover.prevent
@@ -365,7 +383,7 @@ const back = () => {
           :cards="cardsOf(pane)"
           :clock="clock"
           :dashboard-name="dashboardName(pane.dashboard)"
-          :editable="!preview"
+          :editable="!preview && !readonly"
           :selected="pane.pk === selectedPk"
           @select="selectedPk = $event"
           @remove="removePane"
@@ -374,7 +392,7 @@ const back = () => {
         />
       </main>
 
-      <aside v-if="!preview" class="designer-inspector">
+      <aside v-if="!preview && !readonly" class="designer-inspector">
         <PaneInspector
           v-if="selected"
           :pane="selected"
@@ -432,24 +450,28 @@ const back = () => {
   border-left: 1px solid rgb(255 255 255 / 8%);
 }
 
+/* 画布栅格度量全部走 layout.ts 常量派生的 CSS 变量（:style 绑定 canvasGridVars），
+   与投屏页同一份来源，保证所见即所得 */
 .designer-canvas {
   position: relative;
-
-  /* 栅格底板：与窗格定位口径一致（12 列 / 40px 行高 / 12px 间距） */
   display: grid;
   flex: 1;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  grid-auto-rows: 40px;
-  gap: 12px;
+  grid-template-columns: repeat(var(--screen-grid-cols), minmax(0, 1fr));
+  grid-auto-rows: var(--screen-row-height);
+
+  /* 行距/列距是 layout.ts 里两个独立常量，刻意分写不用 gap 合并 */
+  /* stylelint-disable-next-line declaration-block-no-redundant-longhand-properties */
+  row-gap: var(--screen-gap-y);
+  column-gap: var(--screen-gap-x);
   align-content: start;
-  padding: 16px;
+  padding: var(--screen-canvas-padding);
   overflow: auto;
   background-image:
     linear-gradient(rgb(255 255 255 / 5%) 1px, transparent 0),
     linear-gradient(90deg, rgb(255 255 255 / 5%) 1px, transparent 0);
   background-size:
-    100% 52px,
-    calc(100% / 12) 100%;
+    100% var(--screen-row-step),
+    calc(100% / var(--screen-grid-cols)) 100%;
 }
 
 .designer-canvas.is-preview {

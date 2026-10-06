@@ -23,7 +23,11 @@ import type { EChartsLike, ExportedImage } from "@/utils/imageExport";
 
 defineOptions({ name: "DashboardChartCard" });
 
-const props = defineProps<{ card: DashboardCard }>();
+const props = defineProps<{
+  card: DashboardCard;
+  /** 刷新信号：父组件自增令牌触发原位重拉（不销毁重建实例）；首拉仍走 onMounted */
+  refreshToken?: number;
+}>();
 
 const { t } = useI18n();
 const { isDark } = useDark();
@@ -248,6 +252,12 @@ watch(
   () => props.card,
   () => loadData(),
   { deep: true }
+);
+
+/** 刷新信号：令牌变化即在原实例上重拉数据（手动刷新与自动刷新共用同一入口） */
+watch(
+  () => props.refreshToken,
+  () => loadData()
 );
 
 /**

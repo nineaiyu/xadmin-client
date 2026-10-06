@@ -653,6 +653,8 @@ oauth:
   invalidCallback: Incomplete callback parameters, please login again
   loginFailed: Third-party login failed
   mfaRequired: This account requires a second factor, please login with password and bind it
+  idpError: Third-party authorization was not completed. It was cancelled or the provider failed, please retry or use another method to sign in
+  idpErrorDetail: "Third-party authorization was not completed: {detail}"
 
 plus:
   fileLink: File link
@@ -2046,6 +2048,7 @@ login:
   tickPrivacy: Please tick Privacy Policy
   readAccept: I have read it carefully and accept
   privacyPolicy: Privacy Policy
+  privacyPolicyBody: "This system only collects what is necessary for registration and usage: your username, phone number or email (for identity and verification codes), login credentials (passwords are stored only in irreversible encrypted form), and basic operation logs for security auditing. Such data is used solely for account management and system security — never for advertising or shared with third parties. To export or delete your account data, please contact the administrator."
   getVerifyCode: Get VerifyCode
   info: Seconds
   usernameReg: Please enter username
@@ -2766,6 +2769,7 @@ dataScreen:
   retry: Retry
   layoutSaved: Canvas saved
   unsaved: Unsaved changes
+  readonlyHint: Read-only (only the creator can edit)
   palette: Components
   paneDashboard: Dashboard
   paneText: Text
@@ -2799,6 +2803,7 @@ dataScreen:
   fitContain: Contain
   fitFill: Fill
   imageMissing: No image URL configured
+  imageUrlInvalid: Image URL must start with http(s):// or /
   undo: Undo
   redo: Redo
   undoHint: Undo (Ctrl+Z)
@@ -2866,6 +2871,7 @@ dataReport:
   loadFailed: Failed to load the report
   designSaved: Design saved
   unsaved: Unsaved changes
+  readonlyHint: Read-only (only the creator can edit)
   template: Template
   templateDetail: Detail table
   templateSummary: Grouped summary
@@ -3702,7 +3708,8 @@ codegen:
   planPick: Pick a saved plan
   planPickFirst: Select a plan first
   planSave: Save
-  planSavePrompt: Enter plan name
+  planSavePrompt: Enter plan name (saved in this browser only, export as JSON to migrate)
+  planLocalDraft: Local draft
   planNameRequired: Plan name is required
   planLoad: Load
   planDelete: Delete

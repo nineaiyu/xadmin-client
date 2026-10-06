@@ -44,6 +44,7 @@ defineOptions({ name: "DataReportDesigner" });
  * 保存走 `partialUpdate({design})`，本地先 `normalizeDesign` 收敛，服务端再校验一次；
  * 空 design = 存量口径（全列明细单表），编辑器清空组件与列即回到该口径。
  * 「立即运行」按**已保存**的设计投递执行，有未保存改动时先提示保存。
+ * 只读态（非创建者记录）：编辑面板隐藏、保存/运行禁用（写权威在后端，此处为 UX 守卫）。
  */
 const route = useRoute();
 const router = useRouter();
@@ -63,6 +64,10 @@ const preview = ref(false);
 const saving = ref(false);
 const dirty = ref(false);
 const loading = ref(true);
+
+/** 只读态：非创建者记录后端会拒绝一切写入（含「立即运行」），前端进入即置只读，
+ *  属 UX 层守卫——写权威始终在后端，详情接口未返回 is_owner 时按可编辑放行 */
+const readonly = computed(() => report.value?.is_owner === false);
 
 const tableRef = ref<InstanceType<typeof ReportTablePreview>>();
 const cardRefs = ref<Record<string, { loadData?: () => void } | null>>({});
@@ -154,7 +159,7 @@ const refreshData = () => {
 
 /* ---------------- 保存 / 返回 ---------------- */
 async function save() {
-  if (!report.value || saving.value) return;
+  if (!report.value || saving.value || readonly.value) return;
   if (columns.value.length === 0) {
     message(t("dataReport.columnsRequired"), { type: "warning" });
     return;
@@ -190,7 +195,7 @@ async function save() {
 /** 立即运行：按已保存的设计投递执行（未保存改动先提示，避免产出与所见不一致） */
 const running = ref(false);
 async function runNow() {
-  if (!report.value || running.value) return;
+  if (!report.value || running.value || readonly.value) return;
   if (dirty.value) {
     message(t("dataReport.runDirty"), { type: "warning" });
     return;
@@ -249,6 +254,15 @@ const back = () => {
       <el-tag v-if="dirty" size="small" type="warning" effect="dark">
         {{ t("dataReport.unsaved") }}
       </el-tag>
+      <el-tag
+        v-if="readonly"
+        size="small"
+        type="info"
+        effect="plain"
+        data-testid="designer-readonly"
+      >
+        {{ t("dataReport.readonlyHint") }}
+      </el-tag>
       <div class="flex-1" />
       <el-button
         size="small"
@@ -272,6 +286,8 @@ const back = () => {
         type="success"
         size="small"
         :loading="running"
+        :disabled="readonly"
+        :title="readonly ? t('dataReport.readonlyHint') : undefined"
         data-testid="designer-run"
         @click="runNow"
       >
@@ -281,6 +297,8 @@ const back = () => {
         type="primary"
         size="small"
         :loading="saving"
+        :disabled="readonly"
+        :title="readonly ? t('dataReport.readonlyHint') : undefined"
         data-testid="designer-save"
         @click="save"
       >
@@ -290,7 +308,7 @@ const back = () => {
 
     <div class="designer-body">
       <ReportDesignSidebar
-        v-if="!preview"
+        v-if="!preview && !readonly"
         :dataset="dataset"
         :columns="columns"
         :table-limit="tableLimit"
@@ -342,7 +360,7 @@ const back = () => {
         />
       </main>
 
-      <aside v-if="!preview" class="designer-inspector">
+      <aside v-if="!preview && !readonly" class="designer-inspector">
         <ReportComponentForm
           v-if="selected"
           :component="selected"

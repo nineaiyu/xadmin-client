@@ -42,9 +42,12 @@ const METRIC_COUNT_CARD: DashboardCard = {
   metric: "count"
 };
 
-const mountCard = (card: DashboardCard) =>
+const mountCard = (
+  card: DashboardCard,
+  extraProps: Record<string, unknown> = {}
+) =>
   mount(ChartCard, {
-    props: { card },
+    props: { card, ...extraProps },
     global: { stubs: { "el-button": true, ReSkeleton: true } }
   });
 
@@ -85,5 +88,21 @@ describe("ChartCard 数字卡 count_only", () => {
     expect(wrapper.find('[data-testid="chart-card-error"]').exists()).toBe(
       true
     );
+  });
+
+  it("refreshToken 自增：原位重拉数据，令牌不变不触发", async () => {
+    const wrapper = mountCard(NUMBER_CARD, { refreshToken: 0 });
+    await flushPromises();
+    expect(state.executeMock).toHaveBeenCalledTimes(1);
+
+    // 刷新信号：令牌变化即重拉（卡片实例不销毁重建）
+    await wrapper.setProps({ refreshToken: 1 });
+    await flushPromises();
+    expect(state.executeMock).toHaveBeenCalledTimes(2);
+
+    // 令牌不变不触发拉数
+    await wrapper.setProps({ refreshToken: 1 });
+    await flushPromises();
+    expect(state.executeMock).toHaveBeenCalledTimes(2);
   });
 });

@@ -18,6 +18,7 @@ import type { ScreenDataPayload } from "@/utils/websocket/protocol";
 // 仅类型引用（不进包）：导出实现按需动态加载（保持首屏体积）
 import type { ExportedImage } from "@/utils/imageExport";
 import { useScreenDisplay } from "./utils/useScreenDisplay";
+import { canvasGridVars } from "./utils/layout";
 import ChartCard from "@/views/dashboard/components/ChartCard.vue";
 import ScreenPane from "./components/ScreenPane.vue";
 import ReEmpty from "@/components/ReEmpty";
@@ -323,8 +324,14 @@ onMounted(loadScreen);
       icon="ep/monitor"
     />
 
-    <!-- 画布模式：窗格绝对定位（12 列 / 40px 行高 / 12px 间距，与设计器同口径） -->
-    <div v-if="isCanvas" class="screen-canvas" data-testid="screen-canvas">
+    <!-- 画布模式：窗格绝对按 12 列栅格定位；栅格度量经 :style 绑定 layout.ts
+         常量派生的 CSS 变量（与设计器同一份来源），保证所见即所得 -->
+    <div
+      v-if="isCanvas"
+      class="screen-canvas"
+      :style="canvasGridVars"
+      data-testid="screen-canvas"
+    >
       <ScreenPane
         v-for="pane in layoutPanes"
         :key="pane.pk"
@@ -441,15 +448,20 @@ onMounted(loadScreen);
   padding: 4px 24px 24px;
 }
 
-/* 画布模式栅格：行列步长必须与设计器一致（40 + 12 = 52），否则所见非所得 */
+/* 画布模式栅格：度量走 layout.ts 常量派生的 CSS 变量（与设计器同一份来源），
+   行列步长（行高 + 行距）不一致就会所见非所得 */
 .screen-canvas {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  grid-auto-rows: 40px;
-  gap: 12px;
+  grid-template-columns: repeat(var(--screen-grid-cols), minmax(0, 1fr));
+  grid-auto-rows: var(--screen-row-height);
+
+  /* 行距/列距是 layout.ts 里两个独立常量，刻意分写不用 gap 合并 */
+  /* stylelint-disable-next-line declaration-block-no-redundant-longhand-properties */
+  row-gap: var(--screen-gap-y);
+  column-gap: var(--screen-gap-x);
   align-content: start;
-  padding: 16px 24px 24px;
+  padding: var(--screen-canvas-padding);
 }
 
 .screen-card {

@@ -653,6 +653,8 @@ oauth:
   invalidCallback: 回调参数不完整，请重新发起登录
   loginFailed: 第三方登录失败
   mfaRequired: 该账号需完成二次验证，请改用账号密码登录后绑定
+  idpError: 第三方授权未完成，已取消或认证方出错，请重试或改用其他方式登录
+  idpErrorDetail: "第三方授权未完成：{detail}"
 
 plus:
   fileLink: 文件连接
@@ -2046,6 +2048,7 @@ login:
   tickPrivacy: 请勾选隐私政策
   readAccept: 我已仔细阅读并接受
   privacyPolicy: 《隐私政策》
+  privacyPolicyBody: "本系统仅在你注册与使用过程中收集必要信息：账号名、手机号或邮箱（用于身份识别与验证码送达）、登录凭证（密码仅以不可逆加密形式保存）以及基本操作日志（用于安全审计）。上述信息仅用于账号管理与系统安全，不用于广告推送，亦不对外提供；如需导出或删除账号数据，请联系管理员处理。"
   getVerifyCode: 获取验证码
   info: 秒后重新获取
   usernameReg: 请输入账号
@@ -2766,6 +2769,7 @@ dataScreen:
   retry: 重试
   layoutSaved: 画布已保存
   unsaved: 有未保存改动
+  readonlyHint: 只读（仅创建者可编辑）
   palette: 组件库
   paneDashboard: 仪表盘
   paneText: 文本
@@ -2799,6 +2803,7 @@ dataScreen:
   fitContain: 适配
   fitFill: 拉伸
   imageMissing: 未配置图片地址
+  imageUrlInvalid: 图片地址需以 http(s):// 或 / 开头
   undo: 撤销
   redo: 重做
   undoHint: 撤销（Ctrl+Z）
@@ -2866,6 +2871,7 @@ dataReport:
   loadFailed: 报表加载失败
   designSaved: 设计已保存
   unsaved: 有未保存改动
+  readonlyHint: 只读（仅创建者可编辑）
   template: 模板
   templateDetail: 明细表
   templateSummary: 分组统计
@@ -3701,7 +3707,8 @@ codegen:
   planPick: 选择已保存方案
   planPickFirst: 请先选择一个方案
   planSave: 保存方案
-  planSavePrompt: 输入方案名称
+  planSavePrompt: 输入方案名称（仅保存到当前浏览器，可导出 JSON 迁移）
+  planLocalDraft: 本地草稿
   planNameRequired: 方案名称不能为空
   planLoad: 载入
   planDelete: 删除
