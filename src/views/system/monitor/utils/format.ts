@@ -45,6 +45,25 @@ export const RANGE_SECONDS: Record<string, number> = {
   "30d": 2592000
 };
 
+/** 时间范围选项的 i18n key 后缀（systemMonitor 命名空间） */
+export const RANGE_LABEL_KEYS: Record<string, string> = {
+  "1h": "range1h",
+  "6h": "range6h",
+  "24h": "range24h",
+  "7d": "range7d",
+  "30d": "range30d"
+};
+
+/** 聚合粒度选项的 i18n key 后缀（systemMonitor 命名空间） */
+export const INTERVAL_LABEL_KEYS: Record<string, string> = {
+  auto: "intervalAuto",
+  "1m": "interval1m",
+  "5m": "interval5m",
+  "15m": "interval15m",
+  "1h": "interval1h",
+  "1d": "interval1d"
+};
+
 /** 聚合粒度选项（auto 由后端按窗口长度推导） */
 export const INTERVAL_OPTIONS = ["auto", "1m", "5m", "15m", "1h", "1d"];
 

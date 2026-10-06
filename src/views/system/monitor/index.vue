@@ -28,8 +28,10 @@ import ThresholdForm from "./components/ThresholdForm.vue";
 import { useMonitor } from "./utils/hook";
 import {
   DEFAULT_METRICS,
+  INTERVAL_LABEL_KEYS,
   INTERVAL_OPTIONS,
   METRIC_OPTIONS,
+  RANGE_LABEL_KEYS,
   buildShareQuery,
   formatComparePercent,
   formatMetricValue,
@@ -84,22 +86,6 @@ const shared = parseShareQuery((route.query ?? {}) as Record<string, unknown>);
 const range = ref(shared.range);
 const interval = ref(shared.interval);
 const metrics = ref<MonitorMetric[]>(shared.metrics);
-
-const RANGE_LABEL_KEYS: Record<string, string> = {
-  "1h": "range1h",
-  "6h": "range6h",
-  "24h": "range24h",
-  "7d": "range7d",
-  "30d": "range30d"
-};
-const INTERVAL_LABEL_KEYS: Record<string, string> = {
-  auto: "intervalAuto",
-  "1m": "interval1m",
-  "5m": "interval5m",
-  "15m": "interval15m",
-  "1h": "interval1h",
-  "1d": "interval1d"
-};
 
 const loadHistory = () =>
   fetchHistory({

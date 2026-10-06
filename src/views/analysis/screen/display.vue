@@ -13,11 +13,11 @@ import {
   type DatasetItem
 } from "@/api/dataset/datasets";
 import { useI18n } from "vue-i18n";
-import { message } from "@/utils/message";
 import type { ScreenDataPayload } from "@/utils/websocket/protocol";
 // 仅类型引用（不进包）：导出实现按需动态加载（保持首屏体积）
 import type { ExportedImage } from "@/utils/imageExport";
 import { useScreenDisplay } from "./utils/useScreenDisplay";
+import { useScreenExport } from "./utils/useScreenExport";
 import { canvasGridVars } from "./utils/layout";
 import ChartCard from "@/views/dashboard/components/ChartCard.vue";
 import ScreenPane from "./components/ScreenPane.vue";
@@ -149,67 +149,15 @@ const currentCards = computed<DashboardCard[]>(
   () => currentDashboard.value?.layout ?? []
 );
 
-/**
- * 收集当前屏的卡片图片：画布模式逐窗格、轮播模式逐卡
- * （导出 ZIP 与「跳过数」共用；返回 total 用于算未渲染成功的卡片数）。
- */
-const collectImages = async () => {
-  const images: { title: string; image: ExportedImage }[] = [];
-  if (isCanvas.value) {
-    const total = layoutPanes.value.reduce(
-      (count, pane) => count + paneCards(pane).length,
-      0
-    );
-    for (const handle of Object.values(paneRefs.value)) {
-      if (!handle) continue;
-      for (const item of await handle.renderImages()) {
-        images.push({ title: item.title, image: item.image });
-      }
-    }
-    return { images, total };
-  }
-  for (const card of currentCards.value) {
-    const image = await cardRefs.value[card.id]?.renderImage?.();
-    if (image) images.push({ title: card.title, image });
-  }
-  return { images, total: currentCards.value.length };
-};
-
-/** 导出当前屏：逐卡渲染图片并按 ZIP 打包（一次下载，规避浏览器对连续下载的拦截） */
-const exporting = ref(false);
-const exportScreen = async () => {
-  if (exporting.value) return;
-  exporting.value = true;
-  try {
-    const { buildZipStore, downloadBlob, safeFileName } =
-      await import("@/utils/imageExport");
-    const { images, total } = await collectImages();
-    if (images.length === 0) {
-      message(t("dataScreen.exportNoChart"), { type: "warning" });
-      return;
-    }
-    const files: { name: string; data: Uint8Array }[] = [];
-    for (const item of images) {
-      const base = safeFileName(
-        String(item.title ?? ""),
-        `card-${files.length + 1}`
-      );
-      files.push({
-        name: `${base}.${item.image.extension}`,
-        data: new Uint8Array(await item.image.blob.arrayBuffer())
-      });
-    }
-    downloadBlob(buildZipStore(files), `screen-${Date.now()}.zip`);
-    const skipped = total - images.length;
-    if (skipped > 0) {
-      message(t("dataScreen.exportSkipped", { count: skipped }), {
-        type: "warning"
-      });
-    }
-  } finally {
-    exporting.value = false;
-  }
-};
+/** 导出当前屏：逐卡渲染图片并按 ZIP 打包（实现见 utils/useScreenExport.ts，行数门禁抽出） */
+const { exporting, exportScreen } = useScreenExport({
+  isCanvas,
+  currentCards,
+  cardRefs,
+  paneRefs,
+  layoutPanes,
+  paneCards
+});
 
 const toggleFullscreen = () => {
   if (document.fullscreenElement) {
