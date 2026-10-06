@@ -300,6 +300,12 @@ interface RePlusPageProps {
    * 仅在视图集 opt-in（`controlled_lookup = True`）的页面开启，未开启页面零变化。
    */
   advancedFilter?: boolean;
+  /**
+   * 分离式 search-fields 元数据请求开关（缺省 true）。无该端点或仅消费
+   * 内联 with_meta 元数据的页面显式传 false，代替对 api 实例的就地改写——
+   * api 的方法挂在共享原型上，运行时遮蔽会影响所有复用该实例的消费方。
+   */
+  fetchSearchFields?: boolean;
 }
 
 export type {

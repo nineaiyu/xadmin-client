@@ -77,7 +77,6 @@ const BASELINE = {
   "src/views/login/components/Basic.vue": 1,
   "src/views/settings/components/settings/SettingItem.vue": 1,
   "src/views/settings/message/components/MessageTemplatePanel.vue": 2,
-  "src/views/settings/security/index.vue": 1,
   "src/views/settings/sms.vue": 1,
   "src/views/system/menu/components/MenuDrawerForm.vue": 1,
   "src/views/system/menu/components/MenuFormPermission.vue": 1,

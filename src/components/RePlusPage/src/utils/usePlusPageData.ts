@@ -170,12 +170,15 @@ export function usePlusPageData({
 
   /** 分离请求拉取列/字段元数据（与内联首开回退共用同一回调装配） */
   const fetchColumnsSeparately = (immediate: boolean) => {
+    // fetchSearchFields=false：页面声明不消费分离的 search-fields 端点，
+    // 与「api 无 fields 方法」同一路径（跳过请求、数据装配退回列回调分支）
+    const fieldsApi = props.fetchSearchFields === false ? null : api.fields;
     getColumnData(
       auth.list ? api.columns : null,
-      api.fields,
+      fieldsApi,
       () => {
         columnsInitCallback();
-        if (!api.fields && immediate) {
+        if (!fieldsApi && immediate) {
           handleGetData();
         }
       },
