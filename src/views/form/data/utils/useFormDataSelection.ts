@@ -21,11 +21,17 @@ export function useFormDataSelection() {
   const schemaFields = computed<FormField[]>(
     () => selectedForm.value?.schema?.fields ?? []
   );
+  /** 表单清单加载失败：与「暂无表单」区分，页面据此给显式错误态与重试 */
+  const formsLoadFailed = ref(false);
 
   /** 表单选项：全部非模板表单（含停用），默认选中第一个（打开即有数据） */
   const loadForms = async () => {
     const res = await formDataApi.formOptions().catch(() => null);
-    if (res?.code !== SUCCESS_CODE) return;
+    if (res?.code !== SUCCESS_CODE) {
+      formsLoadFailed.value = true;
+      return;
+    }
+    formsLoadFailed.value = false;
     forms.value = (res.data ?? []) as FormDataFormOption[];
     if (!selectedFormPk.value && forms.value.length) {
       selectedFormPk.value = forms.value[0].pk;
@@ -38,6 +44,8 @@ export function useFormDataSelection() {
     forms,
     selectedFormPk,
     selectedForm,
-    schemaFields
+    schemaFields,
+    formsLoadFailed,
+    loadForms
   };
 }

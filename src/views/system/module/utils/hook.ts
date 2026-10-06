@@ -10,6 +10,7 @@ import {
 import { SUCCESS_CODE } from "@/api/types";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 import { copyText as copyTextWithFeedback } from "@/utils/clipboard";
 import { useConfirm } from "@/hooks/useConfirm";
 
@@ -112,12 +113,6 @@ export function useSystemModule() {
       payload.modules.map(row => row.id).filter(id => !disabled.has(id))
     );
   };
-
-  const normalizeError = (error: unknown) => ({
-    code: -1,
-    detail: String((error as { detail?: string })?.detail ?? error),
-    data: null
-  });
 
   const load = async () => {
     loading.value = true;

@@ -73,9 +73,15 @@ export function useKnowledgeActions({
   };
 
   const toggleActive = async (row: KnowledgeRow) => {
-    const res = await knowledgeApi.partialUpdate(row.pk, {
-      is_active: !row.is_active
-    });
+    // 异常归一为可读失败结果：启停失败（分块重建被拒等）需给出可读原因
+    const res = await knowledgeApi
+      .partialUpdate(row.pk, {
+        is_active: !row.is_active
+      })
+      .catch(error => ({
+        code: -1,
+        detail: String((error as { detail?: string })?.detail ?? error)
+      }));
     if (res.code === SUCCESS_CODE) {
       message(t("aiKnowledge.toggleDone"), { type: "success" });
       refresh();
@@ -132,7 +138,12 @@ export function useKnowledgeActions({
   };
 
   const syncRepo = async () => {
-    const res = await knowledgeApi.syncRepo();
+    // 异常归一为可读失败结果：同步可能因仓库不可达等失败，需给出可读原因
+    const res = await knowledgeApi.syncRepo().catch(error => ({
+      code: -1,
+      data: null,
+      detail: String((error as { detail?: string })?.detail ?? error)
+    }));
     if (res.code === SUCCESS_CODE) {
       const summary = (res.data ?? {}) as KnowledgeSyncSummary;
       message(
@@ -156,7 +167,12 @@ export function useKnowledgeActions({
       message(t("results.noSelectedData"), { type: "error" });
       return;
     }
-    const res = await knowledgeApi.batchToggle(pks, isActive);
+    // 异常归一为可读失败结果：批量启停失败需给出可读原因
+    const res = await knowledgeApi.batchToggle(pks, isActive).catch(error => ({
+      code: -1,
+      data: null,
+      detail: String((error as { detail?: string })?.detail ?? error)
+    }));
     if (res.code === SUCCESS_CODE) {
       const changed = (res.data as { changed?: number })?.changed ?? 0;
       message(t("aiKnowledge.batchToggleDone", { count: changed }), {

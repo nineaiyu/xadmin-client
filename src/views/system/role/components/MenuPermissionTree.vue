@@ -26,7 +26,7 @@ import {
   type PermissionSubmitPayload,
   type PermissionTreeNode
 } from "../utils/permissionTree";
-import type { TreeInstance, TreeKey } from "element-plus";
+import type { TreeInstance } from "element-plus";
 
 defineOptions({ name: "MenuPermissionTree" });
 
@@ -48,13 +48,8 @@ const emit = defineEmits<{
 
 const { locale, t } = useI18n();
 
-/** el-tree 私有 store 节点（展开态批量控制沿用既有实现口径） */
-type TreeStoreNode = {
-  data?: PermissionTreeNode;
-  key?: TreeKey;
-  level?: number;
-  expanded?: boolean;
-};
+/** el-tree 节点实例：经公开的 getNode 取得（展开态批量控制在其公开方法上操作） */
+type ElTreeNode = ReturnType<TreeInstance["getNode"]>;
 
 const treeRef = ref<TreeInstance>();
 
@@ -92,25 +87,35 @@ const matchedCount = computed(() =>
   keyword.value.trim() ? keywordMatched.value.size : 0
 );
 
-function allNodes(): TreeStoreNode[] {
-  // el-tree 未公开 store 的节点形态，按使用到的字段收敛断言
-  const store = treeRef.value?.store as unknown as
-    { _getAllNodes?: () => TreeStoreNode[] } | undefined;
-  return store?._getAllNodes?.() ?? [];
+/** 深度优先遍历渲染树：逐节点经公开的 getNode 取树内实例（键即 node-key「pk」） */
+function eachTreeNode(callback: (_node: ElTreeNode) => void) {
+  const walk = (nodes: PermissionTreeNode[]) => {
+    nodes.forEach(item => {
+      const node =
+        item.pk === undefined ? undefined : treeRef.value?.getNode(item.pk);
+      if (node) callback(node);
+      if (item.children?.length) walk(item.children);
+    });
+  };
+  walk(treeData.value);
 }
+
+const treeNodeKey = (node: ElTreeNode) =>
+  String(node.key ?? node.data?.pk ?? "");
 
 function snapshotExpansion() {
   const snapshot = new Set<string>();
-  allNodes().forEach(node => {
-    if (node.expanded) snapshot.add(String(node.key ?? node.data?.pk ?? ""));
+  eachTreeNode(node => {
+    if (node.expanded) snapshot.add(treeNodeKey(node));
   });
   expansionSnapshot.value = snapshot;
 }
 
 function setNodesExpanded(keys: Set<string>, status: boolean) {
-  allNodes().forEach(node => {
-    const key = String(node.key ?? node.data?.pk ?? "");
-    if (keys.has(key)) node.expanded = status;
+  eachTreeNode(node => {
+    if (!keys.has(treeNodeKey(node))) return;
+    if (status) node.expand();
+    else node.collapse();
   });
 }
 
@@ -119,8 +124,8 @@ function restoreExpansion() {
   expansionSnapshot.value = null;
   if (!snapshot) return;
   const collapse = new Set<string>();
-  allNodes().forEach(node => {
-    const key = String(node.key ?? node.data?.pk ?? "");
+  eachTreeNode(node => {
+    const key = treeNodeKey(node);
     if (!snapshot.has(key)) collapse.add(key);
   });
   setNodesExpanded(snapshot, true);
@@ -142,9 +147,9 @@ function expandAncestors(keys: Iterable<string>) {
 
 function expandTopLevel() {
   const targets = new Set<string>();
-  allNodes().forEach(node => {
-    if ((node.level ?? 0) <= 1) {
-      targets.add(String(node.key ?? node.data?.pk ?? ""));
+  eachTreeNode(node => {
+    if (node.level <= 1) {
+      targets.add(treeNodeKey(node));
     }
   });
   setNodesExpanded(targets, true);
@@ -266,10 +271,10 @@ function onSubtreeAction(node: PermissionTreeNode, checked: boolean) {
 function toggleExpandAll(status: boolean) {
   expandedAll.value = status;
   const targets = new Set<string>();
-  allNodes().forEach(node => {
+  eachTreeNode(node => {
     const kind = nodeKind(node.data ?? {});
     if (kind === "fieldGroup" || kind === "field") return;
-    targets.add(String(node.key ?? node.data?.pk ?? ""));
+    targets.add(treeNodeKey(node));
   });
   setNodesExpanded(targets, status);
 }

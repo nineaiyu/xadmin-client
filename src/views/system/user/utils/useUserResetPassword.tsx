@@ -136,16 +136,19 @@ export function useUserResetPassword({
         ruleFormRef.value.validate(async (valid: boolean) => {
           if (valid) {
             const password = await AesEncrypted(row.username, pwdForm.newPwd);
-            api.resetPassword(row.pk, { password }).then(res => {
-              if (res.code === SUCCESS_CODE) {
-                message(t("results.success"), { type: "success" });
-              } else {
-                message(`${t("results.failed")}，${res.detail}`, {
-                  type: "error"
-                });
-              }
-              done(); // 关闭弹框
-            });
+            api
+              .resetPassword(row.pk, { password })
+              .then(res => {
+                if (res.code === SUCCESS_CODE) {
+                  message(t("results.success"), { type: "success" });
+                } else {
+                  message(`${t("results.failed")}，${res.detail}`, {
+                    type: "error"
+                  });
+                }
+              })
+              // 关闭弹框收口到 settle：请求异常（http 层已提示）不能悬挂按钮 loading
+              .finally(() => done());
           }
         });
       }

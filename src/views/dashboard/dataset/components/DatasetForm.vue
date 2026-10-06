@@ -200,8 +200,16 @@ defineExpose({ getPayload });
               :label="op"
             />
           </el-select>
+          <!-- isnull 无自由值：以开关表达真/假（提交为布尔），空串会被归一为假 -->
+          <el-switch
+            v-if="item.op === 'isnull'"
+            v-model="item.value as boolean"
+            class="flex-1"
+            :active-text="t('dataDataset.isNullTrue')"
+            :inactive-text="t('dataDataset.isNullFalse')"
+          />
           <el-input
-            v-if="item.op !== 'isnull'"
+            v-else
             v-model="item.value as string"
             class="flex-1"
             :placeholder="

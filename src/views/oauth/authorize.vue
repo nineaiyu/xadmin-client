@@ -70,11 +70,16 @@ const decide = async (approved: boolean) => {
     return;
   }
   const { redirect_uri, state, code, error } = res.data;
-  const target = new URL(redirect_uri);
-  if (error) target.searchParams.set("error", error);
-  if (code) target.searchParams.set("code", code);
-  if (state) target.searchParams.set("state", state);
-  window.location.href = target.toString();
+  try {
+    const target = new URL(redirect_uri);
+    if (error) target.searchParams.set("error", error);
+    if (code) target.searchParams.set("code", code);
+    if (state) target.searchParams.set("state", state);
+    window.location.href = target.toString();
+  } catch {
+    // 同意已在服务端生效但回调地址不可解析：留在本页给出可读失败，而非静默无跳转
+    errorText.value = t("oauthAuthorize.invalidRedirect");
+  }
 };
 </script>
 

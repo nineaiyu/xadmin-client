@@ -79,7 +79,8 @@ onMounted(async () => {
       error.value = res.detail || t("oauth.loginFailed");
       return;
     }
-    if (res.data?.bound) {
+    // 载荷三选一按字段判定（bound / mfa_required / 令牌），契约见 OAuthCallbackData
+    if (res.data && "bound" in res.data) {
       message(
         res.data.already ? t("oauth.bindAlready") : t("oauth.bindSuccess"),
         { type: "success" }
@@ -90,15 +91,17 @@ onMounted(async () => {
       });
       return;
     }
-    if (res.data?.mfa_required) {
+    if (res.data && "mfa_required" in res.data) {
       // 密码阶段（IdP 身份校验）已通过：进入登录 MFA 二次验证步骤
-      mfaInfo.value = res.data as unknown as LoginMfaRequired;
+      mfaInfo.value = res.data;
       return;
     }
-    setToken(res.data as unknown as Parameters<typeof setToken>[0]);
-    await initRouter(true);
-    message(t("login.loginSuccess"), { type: "success" });
-    await router.push("/");
+    if (res.data) {
+      setToken(res.data);
+      await initRouter(true);
+      message(t("login.loginSuccess"), { type: "success" });
+      await router.push("/");
+    }
   } catch {
     error.value = t("oauth.loginFailed");
   } finally {

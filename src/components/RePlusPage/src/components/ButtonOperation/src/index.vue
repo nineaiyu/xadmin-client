@@ -54,7 +54,6 @@
 </template>
 
 <script lang="ts" setup>
-import type { Ref, ComputedRef } from "vue";
 import { unref, computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import {
@@ -95,24 +94,30 @@ const props = withDefaults(defineProps<OperationProps>(), {
 const uniqueButtons = computed(() => uniqueArrayObj(props.buttons, "code"));
 
 const getSubButtons = () => {
+  // 显隐与排序解耦：显隐只看 show 的布尔值；排序位优先取显式声明的 index，
+  // 未声明时兼容旧口径——show 为数值时数值即排序（`show: cond ? -30 : false`）。
+  // 不再把解析结果回写进按钮配置（按行函数每行求值，回写会串行不同行的顺序）
   const data = (uniqueButtons.value as OperationButtonsRow[])
-    .filter((item: OperationButtonsRow) => {
-      if (typeof item.show === "function") {
-        const tempFunction = item.show as (
-          _row: RecordType,
-          _button: OperationButtonsRow
-        ) =>
-          | number
-          | boolean
-          | Ref<number | boolean>
-          | ComputedRef<number | boolean>;
-        item.index = Number(unref(tempFunction(props.row, item)));
-        return Boolean(item.index) === true;
-      }
-      item.index = Number(unref(item.show));
-      return Boolean(item.index) === true;
+    .map((item: OperationButtonsRow) => {
+      const resolved = unref(
+        typeof item.show === "function"
+          ? (
+              item.show as (
+                _row: RecordType,
+                _button: OperationButtonsRow
+              ) => unknown
+            )(props.row, item)
+          : item.show
+      );
+      return {
+        item,
+        order: item.index ?? (typeof resolved === "number" ? resolved : 0),
+        visible: Boolean(resolved)
+      };
     })
-    .sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+    .filter(entry => entry.visible)
+    .sort((a, b) => a.order - b.order)
+    .map(entry => entry.item);
   // 获取'更多'之前的按钮组
   const preButtons = data.slice(0, props.showNumber);
   // 获取'更多'之后的按钮组

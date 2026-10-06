@@ -14,6 +14,8 @@ const {
   auth,
   tableRef,
   forms,
+  formsLoadFailed,
+  loadForms,
   selectedFormPk,
   selectedForm,
   listColumnsFormat,
@@ -46,7 +48,16 @@ const {
         <span class="font-semibold">{{ t("formData.selectTitle") }}</span>
       </template>
       <ReEmpty
-        v-if="forms.length === 0"
+        v-if="formsLoadFailed"
+        :description="t('formData.formsLoadFailed')"
+        :image-size="60"
+      >
+        <el-button size="small" type="primary" @click="loadForms">
+          {{ t("formData.retry") }}
+        </el-button>
+      </ReEmpty>
+      <ReEmpty
+        v-else-if="forms.length === 0"
         :description="t('formData.noForms')"
         :image-size="60"
       />

@@ -6,7 +6,6 @@ import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { handleOperation, type OperationProps } from "@/components/RePlusPage";
 import { usePageAuth } from "@/router/utils";
-import { message } from "@/utils/message";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import type { RecordType } from "plus-pro-components";
 import AddFill from "~icons/ri/add-circle-line";
@@ -49,7 +48,7 @@ export function useLoginPolicy(tableRef: Ref) {
       beforeSure: (done, { closeLoading }) => {
         const payload = formRef.value?.getPayload?.();
         if (!payload) {
-          message(t("loginPolicy.invalidForm"), { type: "warning" });
+          // 校验失败原因已由表单内具体提示，这里只复位按钮 loading
           closeLoading();
           return;
         }

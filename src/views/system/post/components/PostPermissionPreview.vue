@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { useI18n } from "vue-i18n";
 import { postApi } from "@/api/system/post";
 import type { PostPreviewResult } from "@/api/types/permission-preview";
@@ -75,5 +76,10 @@ const { loading, data } = usePermissionPreview<PostPreviewResult>(
         </el-collapse-item>
       </el-collapse>
     </template>
+    <ReEmpty
+      v-else
+      :description="t('permissionPreview.loadFailed')"
+      :image-size="70"
+    />
   </div>
 </template>

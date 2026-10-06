@@ -145,7 +145,7 @@ onMounted(() => {
     >
       <template #status_code="{ row }">
         <el-tag
-          :type="row.status_code === 1000 ? 'success' : 'danger'"
+          :type="row.status_code === SUCCESS_CODE ? 'success' : 'danger'"
           size="small"
         >
           {{ row.status_code ?? "—" }}

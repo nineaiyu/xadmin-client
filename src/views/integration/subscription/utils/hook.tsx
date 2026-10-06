@@ -39,8 +39,8 @@ export function useWebhookSubscription(tableRef: Ref) {
     events.value.find(item => item.key === key)?.label ?? key;
 
   onMounted(async () => {
-    const res = await webhookSubscriptionApi.events();
-    if (res.code === SUCCESS_CODE) {
+    const res = await webhookSubscriptionApi.events().catch(() => null);
+    if (res?.code === SUCCESS_CODE) {
       events.value = (res.data as never as WebhookEvent[]) ?? [];
     }
   });
@@ -96,7 +96,11 @@ export function useWebhookSubscription(tableRef: Ref) {
     });
 
   const testSubscription = async (row: WebhookSubscriptionItem) => {
-    const res = await webhookSubscriptionApi.test(row.pk);
+    // 异常归一为可读失败结果：测试触发失败（回调地址不通等）需给出可读原因
+    const res = await webhookSubscriptionApi.test(row.pk).catch(error => ({
+      code: -1,
+      detail: String((error as { detail?: string })?.detail ?? error)
+    }));
     if (res.code === SUCCESS_CODE) {
       message(String(res.detail ?? t("webhook.testDispatched")), {
         type: "success"

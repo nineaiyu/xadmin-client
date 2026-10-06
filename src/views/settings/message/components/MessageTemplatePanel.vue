@@ -6,6 +6,7 @@ import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { useConfirm } from "@/hooks/useConfirm";
 import { message } from "@/utils/message";
+import { SUCCESS_CODE } from "@/api/types";
 import {
   messageTemplateApi,
   type MessageTemplateItem
@@ -31,7 +32,7 @@ const load = async () => {
   loading.value = true;
   try {
     const res = await messageTemplateApi.registry();
-    if (res.code === 1000) rows.value = res.data ?? [];
+    if (res.code === SUCCESS_CODE) rows.value = res.data ?? [];
   } catch (error: unknown) {
     message(String((error as Error)?.message ?? error), { type: "error" });
   } finally {
@@ -64,7 +65,7 @@ const openEdit = (raw: RecordType) => {
         code: -1,
         detail: String((error as { detail?: string })?.detail ?? error)
       }));
-      if (res.code === 1000) {
+      if (res.code === SUCCESS_CODE) {
         message(t("messageTemplate.saveSuccess"), { type: "success" });
         done();
         await load();
@@ -88,8 +89,12 @@ const reset = async (raw: RecordType) => {
   ) {
     return;
   }
-  const res = await messageTemplateApi.reset(row.message_type);
-  if (res.code === 1000) {
+  // 异常归一为可读失败结果：重置失败（权限被拒等）需给出可读原因
+  const res = await messageTemplateApi.reset(row.message_type).catch(error => ({
+    code: -1,
+    detail: String((error as { detail?: string })?.detail ?? error)
+  }));
+  if (res.code === SUCCESS_CODE) {
     message(t("messageTemplate.resetSuccess"), { type: "success" });
     await load();
   } else {

@@ -6,6 +6,7 @@ import {
   type FileAccessLogResult
 } from "@/api/system/file";
 import { message } from "@/utils/message";
+import { SUCCESS_CODE } from "@/api/types";
 import type { RecordType } from "plus-pro-components";
 
 /**
@@ -35,7 +36,7 @@ const load = async () => {
   loading.value = true;
   try {
     const res = await systemUploadFileApi.accessLogs(props.row.pk);
-    if (res.code === 1000) {
+    if (res.code === SUCCESS_CODE) {
       data.value = res.data;
     } else {
       message(String(res.detail), { type: "error" });

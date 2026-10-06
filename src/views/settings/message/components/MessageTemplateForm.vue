@@ -2,6 +2,7 @@
 import { reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
+import { SUCCESS_CODE } from "@/api/types";
 import { sanitizeHtml } from "@/utils/sanitize";
 import WangEditor from "@/components/RePlusPage/src/components/WangEditor.vue";
 import {
@@ -41,7 +42,7 @@ async function preview() {
         code: -1,
         detail: String((error as { detail?: string })?.detail ?? error)
       }));
-    if (res.code === 1000 && "data" in res) {
+    if (res.code === SUCCESS_CODE && "data" in res) {
       previewResult.value = {
         subject: res.data.subject,
         message: res.data.message

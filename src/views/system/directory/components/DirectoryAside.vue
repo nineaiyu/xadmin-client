@@ -3,7 +3,6 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import { SUCCESS_CODE } from "@/api/types";
-import { listRows } from "@/api/base";
 import type {
   DirectoryDeptNode,
   DirectoryPostOption
@@ -64,12 +63,10 @@ const filteredPosts = computed(() => {
 function loadDeptTree() {
   if (!canUseDept) return;
   deptLoading.value = true;
-  fetchAllRows(searchDeptApi.list)
+  fetchAllRows<DirectoryDeptNode>(searchDeptApi.list)
     .then(res => {
       if (res.code === SUCCESS_CODE && res.data) {
-        deptTree.value = handleTree(
-          listRows<Record<string, unknown>>(res as never)
-        ) as unknown as DirectoryDeptNode[];
+        deptTree.value = handleTree(res.data.results);
       }
     })
     .catch(() => undefined)
@@ -79,10 +76,10 @@ function loadDeptTree() {
 function loadPosts() {
   if (!canUsePost) return;
   postLoading.value = true;
-  fetchAllRows(searchPostApi.list)
+  fetchAllRows<DirectoryPostOption>(searchPostApi.list)
     .then(res => {
       if (res.code === SUCCESS_CODE && res.data) {
-        postOptions.value = listRows<DirectoryPostOption>(res as never);
+        postOptions.value = res.data.results;
       }
     })
     .catch(() => undefined)

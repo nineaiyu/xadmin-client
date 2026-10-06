@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { reactive, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import { message } from "@/utils/message";
 import type { RecordType } from "plus-pro-components";
 
 /**
@@ -69,10 +70,20 @@ watch(
 );
 
 function getPayload(): RecordType | null {
-  if (!form.name.trim()) return null;
+  // 三类前置校验各自给出具体原因（父级对 null 不再弹笼统提示）
+  if (!form.name.trim()) {
+    message(t("loginPolicy.nameRequired"), { type: "warning" });
+    return null;
+  }
   // 时段必须成对（后端同口径校验，前端提前拦截避免无谓请求）
-  if (Boolean(form.start_time) !== Boolean(form.end_time)) return null;
-  if (form.target_type !== "all" && !form.target_value.trim()) return null;
+  if (Boolean(form.start_time) !== Boolean(form.end_time)) {
+    message(t("loginPolicy.timePairInvalid"), { type: "warning" });
+    return null;
+  }
+  if (form.target_type !== "all" && !form.target_value.trim()) {
+    message(t("loginPolicy.targetValueRequired"), { type: "warning" });
+    return null;
+  }
   return {
     name: form.name.trim(),
     priority: Number(form.priority) || 100,

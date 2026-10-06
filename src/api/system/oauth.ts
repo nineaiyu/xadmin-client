@@ -1,5 +1,7 @@
 import { BaseApi } from "@/api/base";
 import type { BaseResult, DetailResult } from "@/api/types";
+import type { TokenInfo } from "@/api/auth";
+import type { LoginMfaRequired } from "@/api/mfa";
 
 /**
  * 「本次跳转是绑定」的标记（sessionStorage，值为发起时间戳）。
@@ -20,6 +22,15 @@ export type OAuthProvider = {
   /** 协议类型：oauth2（通用）| oidc（标准 OIDC）| dingtalk | wecom | feishu，本期仅备用字段 */
   flavor?: string;
 };
+
+/** 绑定结果：IdP 身份绑定到本人（不下发 token）；already = 同一身份此前已绑定 */
+export type OAuthBindResult = { bound: true; already: boolean };
+
+/**
+ * 回调落地载荷（三选一，按载荷字段判定）：绑定结果 / 登录 MFA 引导
+ * （与密码登录的 mfa_required 载荷同构）/ 登录令牌（与密码登录一致）
+ */
+export type OAuthCallbackData = OAuthBindResult | LoginMfaRequired | TokenInfo;
 
 /** 第三方登录（OAuth2 / OIDC 通用 provider） */
 class OAuthApi extends BaseApi {
@@ -42,7 +53,7 @@ class OAuthApi extends BaseApi {
   };
   /** 回调落地：code + state → token（或 MFA 引导 / 绑定结果） */
   callback = (provider: string, params: object) => {
-    return this.request<DetailResult>(
+    return this.request<DetailResult<OAuthCallbackData>>(
       "get",
       params,
       {},

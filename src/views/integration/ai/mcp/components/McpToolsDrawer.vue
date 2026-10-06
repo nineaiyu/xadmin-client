@@ -9,6 +9,7 @@ import {
   type McpToolSnapshot
 } from "@/api/ai/mcp";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 
 /**
  * 外部 MCP 服务器抽屉：资料卡 + 工具快照清单 + 调用测试（白名单内）。
@@ -33,13 +34,6 @@ const calling = ref(false);
 const callTool = ref("");
 const callArguments = ref("{}");
 const callResult = ref<McpCallResult | null>(null);
-
-/** 请求异常归一（与弹窗同口径）：失败也给可读 detail，避免 loading 悬挂 */
-const normalizeError = (error: unknown) => ({
-  code: -1,
-  data: null,
-  detail: String((error as { detail?: string })?.detail ?? error)
-});
 
 const runSync = async () => {
   syncing.value = true;

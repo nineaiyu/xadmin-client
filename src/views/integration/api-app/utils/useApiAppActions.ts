@@ -41,8 +41,15 @@ export function useApiAppActions({
   };
 
   const regenerateSecret = async (row: ApiApplicationItem) => {
-    const res = await apiApplicationApi.regenerateSecret(row.pk);
-    if (res.code === SUCCESS_CODE) {
+    // 异常归一为可读失败结果：重置密钥失败必须给出原因（旧凭证已失效场景尤甚）
+    const res = await apiApplicationApi
+      .regenerateSecret(row.pk)
+      .catch(error => ({
+        code: -1,
+        data: null,
+        detail: String((error as { detail?: string })?.detail ?? error)
+      }));
+    if (res.code === SUCCESS_CODE && res.data) {
       openCredential(res.data);
       refresh();
     } else if (res.detail) {

@@ -147,6 +147,9 @@ const cronExpressionValid = computed(() => {
   return value.split(/\s+/).length === 5;
 });
 
+/** 邮箱轻校验：本地@域名（与后端 EmailValidator 非严格对齐，拦截明显非法输入） */
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 /** 校验并生成提交载荷；校验失败返回 null（调用方保持弹窗打开） */
 const getPayload = (): Record<string, unknown> | null => {
   if (!form.name || !form.dataset) {
@@ -167,6 +170,20 @@ const getPayload = (): Record<string, unknown> | null => {
     return null;
   }
   const recipients = form.recipients.split(/[,;\s]+/).filter(Boolean);
+  // 邮件渠道必有收件人且逐个过邮箱格式（模板已标必填，这里前置拦截避免执行期必失败）
+  if (emailSelected.value) {
+    if (recipients.length === 0) {
+      message(t("dataReport.recipientsRequired"), { type: "warning" });
+      return null;
+    }
+    const invalid = recipients.find(item => !EMAIL_RE.test(item));
+    if (invalid) {
+      message(t("dataReport.recipientsInvalid", { value: invalid }), {
+        type: "warning"
+      });
+      return null;
+    }
+  }
   return {
     name: form.name,
     dataset: form.dataset,

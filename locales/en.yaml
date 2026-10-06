@@ -246,7 +246,9 @@ loginPolicy:
   inactive: Inactive
   previewMfaDegraded: This user has no available MFA method; a real login would fall back to allow
   invalidIp: Invalid IP format
-  invalidForm: Please complete name, target value and time range
+  nameRequired: Policy name is required
+  timePairInvalid: Start and end time must be set together, or left empty together
+  targetValueRequired: Target value is required
 
 batchUpdate:
   button: Batch Update
@@ -845,6 +847,8 @@ credential:
   rotateOverdue: Rotation Suggested
   neverRotated: Never Rotated
   modelFieldsHint: Model field credentials are encrypted per row (AESCipherV3); only the configured count is shown here, never the secret itself
+  noPermission: No permission to view credentials
+  noPermissionHint: Ask an administrator to grant the credential overview permission
 
 approval:
   pendingTab: Pending My Approval
@@ -1077,6 +1081,7 @@ systemApprovalInstance:
   titleRequired: Title is required
   titlePlaceholder: Please enter the application title
   fieldRequired: Please fill in {label}
+  numberInvalid: "{label} must be a number"
   fieldPlaceholder: Please enter
   statusPENDING: Pending
   statusAPPROVED: Approved
@@ -1604,6 +1609,7 @@ permissionPreview:
   fieldNone: No visible fields
   draftModel: Draft model (optional)
   draftFields: Draft fields (optional)
+  loadFailed: Failed to load permission preview, please retry
 
 systemMenu:
   menus: Menus
@@ -2560,6 +2566,7 @@ systemMonitor:
   thresholdSettings: Alert threshold settings
   thresholdSaved: Thresholds updated
   thresholdCheckTip: Checked every {seconds}s; admins are notified when thresholds are exceeded
+  thresholdUnavailable: Threshold settings not loaded; refresh the page and retry
   alertsTitle: Resource alert records
   alertFilterAll: All status
   alertFiring: Firing
@@ -2717,6 +2724,8 @@ dataDataset:
   addFilter: Add Filter
   value: Value
   inHint: Comma-separated values
+  isNullTrue: Field is empty (IS NULL)
+  isNullFalse: Field is not empty (IS NOT NULL)
   ordering: Ordering
   rowLimit: Row Limit
   dateField: Date Field (for trends)
@@ -2754,6 +2763,7 @@ dataScreen:
   designerTitle: Screen canvas designer
   pickScreenFirst: Open the designer from a screen row
   loadFailed: Failed to load the screen
+  retry: Retry
   layoutSaved: Canvas saved
   unsaved: Unsaved changes
   palette: Components
@@ -2898,6 +2908,8 @@ dataReport:
   stay: Stay
   runDirty: Save your changes before running
   cronInvalid: Cron expression must have 5 fields (min hour day month weekday)
+  recipientsRequired: Email recipients are required when the email channel is selected
+  recipientsInvalid: "Invalid email recipient: {value}"
   monthDayHint: Day of month to deliver (1-28)
   columnsRequired: Keep at least one detail column
   groupByRequired: Chart components require a group by field
@@ -2986,6 +2998,7 @@ webhook:
   cancel: Cancel
   confirm: Confirm
   required: Name, URL and events are required
+  secretRequired: A signing secret is required when creating a subscription
   saveOk: Saved
   testDispatched: Test event dispatched
   statusFilter: Status
@@ -3063,6 +3076,8 @@ ai:
   stopGenerating: Stop generating
   askFailed: Docs Q&A failed; please retry or switch models
   nlFailed: Data query failed; please retry or switch models
+  statusLoadFailed: Failed to load AI console status
+  retry: Retry
 
 aiConfig:
   title: AI Configuration
@@ -3102,6 +3117,7 @@ aiConfig:
   apiKey: API Key
   apiKeyKeep: Leave blank to keep the current key
   apiKeyHint: OpenAI-compatible key; encrypted at rest and never echoed
+  apiKeyRequired: An API key is required when creating a profile
   temperature: Temperature
   maxTokens: Max Tokens
   topP: Top P
@@ -3366,6 +3382,8 @@ formData:
   filterTitle: Field Filters
   filterClear: Clear filters
   filterEmpty: This form has no filterable fields yet (mark fields as filterable in the designer)
+  formsLoadFailed: Failed to load the form list
+  retry: Retry
 leaveApply:
   leave_type: Leave type
   start_date: Start date
@@ -3498,6 +3516,8 @@ aiKnowledge:
   buildEmbeddings: Build vectors
   buildConfirm: "Build the vector index incrementally: {fresh} / {total} chunks available (model {model}). Only missing or stale chunks are embedded, safe to run repeatedly"
   buildDone: "Vector build finished: {embedded} chunks embedded, {skipped} skipped"
+  detailLoadFailed: Failed to load document details
+  retry: Retry
   binarySelected: "{type} file selected; it will be parsed to plain text on the server (not editable)"
   binaryTooLarge: The file exceeds the 2 MB limit
   buildSubmitted: "Embedding build task submitted, running in the background"
@@ -3526,6 +3546,7 @@ oauthAuthorize:
   deny: Deny
   invalidRequest: Missing request parameters (client_id / redirect_uri)
   loadFailed: Failed to load authorization request
+  invalidRedirect: Authorization completed, but the app's registered redirect URI is invalid and the browser cannot be redirected; ask the app provider to fix redirect_uri
 
 systemModule:
   currentPreset: Current effective preset

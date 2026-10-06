@@ -130,6 +130,7 @@ const emptyText = computed(() =>
               :auth="auth"
               :busy="busyPks.has(String(data.pk))"
               :data="data"
+              :data-pk="String(data.pk)"
               :keyword="filter.keyword"
               :node="node"
               @action="onRowAction"

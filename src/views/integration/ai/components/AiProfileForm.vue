@@ -60,6 +60,11 @@ const getPayload = (): Record<string, unknown> | null => {
     message(t("aiConfig.required"), { type: "warning" });
     return null;
   }
+  // 新建必须提供 API 密钥（模板已标必填，这里前置拦截与标记保持一致）
+  if (!isEdit && !form.api_key) {
+    message(t("aiConfig.apiKeyRequired"), { type: "warning" });
+    return null;
+  }
   const payload: Record<string, unknown> = {
     name: form.name,
     base_url: form.base_url,

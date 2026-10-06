@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, isRef, nextTick, ref, watch, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import type { FilterNodeMethodFunction } from "element-plus";
+import type { FilterNodeMethodFunction, TreeInstance } from "element-plus";
 import { MenuChoices } from "@/views/system/constants";
 import {
   buildScopeTree,
@@ -36,7 +36,7 @@ const { t } = useI18n();
 
 const dialogVisible = ref(false);
 const keyword = ref("");
-const treeRef = ref();
+const treeRef = ref<TreeInstance>();
 
 const treeData = computed(() => buildScopeTree(rowsValue.value));
 const selectedCount = computed(() =>
@@ -62,16 +62,21 @@ function clearAll() {
   treeRef.value?.setCheckedKeys([]);
 }
 
-type TreeNodeLike = { expanded?: boolean };
-
+/** 展开/收起全部：经公开的 getNode 逐节点 expand/collapse（不触碰树私有 store） */
 function setExpandAll(expanded: boolean) {
-  const instance = treeRef.value as unknown as {
-    store?: { nodesMap?: Record<string, TreeNodeLike> };
+  const tree = treeRef.value;
+  if (!tree?.getNode) return;
+  const walk = (nodes: ScopeNode[]) => {
+    nodes.forEach(node => {
+      const instance = tree.getNode(node.pk);
+      if (instance) {
+        if (expanded) instance.expand();
+        else instance.collapse();
+      }
+      if (node.children?.length) walk(node.children);
+    });
   };
-  const nodesMap = instance?.store?.nodesMap ?? {};
-  Object.values(nodesMap).forEach(node => {
-    node.expanded = expanded;
-  });
+  walk(treeData.value);
 }
 
 const filterNode: FilterNodeMethodFunction = (value, data) => {

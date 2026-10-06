@@ -11,18 +11,12 @@ import { formatPageColumns } from "@/components/RePlusPage";
 import { mcpServerApi, type McpServerItem } from "@/api/ai/mcp";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 import McpServerForm from "../components/McpServerForm.vue";
 import McpToolsDrawer from "../components/McpToolsDrawer.vue";
 import Plus from "~icons/ep/plus";
 
 type McpRow = McpServerItem;
-
-/** 请求异常归一（C5 弹窗口径）：失败也给可读 detail，避免 loading 悬挂 */
-const normalizeError = (error: unknown) => ({
-  code: -1,
-  data: null,
-  detail: String((error as { detail?: string })?.detail ?? error)
-});
 
 /**
  * 外部 MCP 服务器页装配：

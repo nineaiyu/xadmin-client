@@ -5,6 +5,7 @@ import { type FormInstance, type FormItemRule } from "element-plus";
 import dayjs from "dayjs";
 import { loginPolicyApi, type LoginPolicyPreview } from "@/api/system/security";
 import { message } from "@/utils/message";
+import { SUCCESS_CODE } from "@/api/types";
 
 /**
  * 登录策略命中预演：给出样例用户 / IP / 时间，逐条策略展示匹配结果与最终判定。
@@ -102,7 +103,7 @@ const runPreview = async () => {
       ip: form.ip || undefined,
       when: form.when || undefined
     });
-    if (res.code === 1000) {
+    if (res.code === SUCCESS_CODE) {
       result.value = res.data;
     } else {
       message(String(res.detail), { type: "error" });

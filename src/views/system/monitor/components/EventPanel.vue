@@ -38,9 +38,9 @@ const fetchEvents = async () => {
       monitorApi.events({ kind: "task", range: range.value })
     ]);
     if (results[0].status === "fulfilled")
-      errorRows.value = results[0].value.data.results as MonitorErrorEvent[];
+      errorRows.value = results[0].value.data.results;
     if (results[1].status === "fulfilled")
-      taskRows.value = results[1].value.data.results as MonitorTaskEvent[];
+      taskRows.value = results[1].value.data.results;
   } finally {
     loading.value = false;
   }

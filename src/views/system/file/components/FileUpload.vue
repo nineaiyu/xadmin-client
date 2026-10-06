@@ -54,9 +54,8 @@ const uploadConfig = ref({ file_upload_size: 1048576 });
 onMounted(() => {
   if (hasAuth("config:SystemUploadFile")) {
     systemUploadFileApi.config().then(res => {
-      if (res.code === SUCCESS_CODE) {
-        // 文件上传配置详情数据，消费侧仅依赖 file_upload_size
-        uploadConfig.value = res.data as { file_upload_size: number };
+      if (res.code === SUCCESS_CODE && res.data) {
+        uploadConfig.value = res.data;
       }
     });
   }

@@ -28,7 +28,8 @@ export interface OperationButtonsRow {
    */
   code: string | number;
   /**
-   * 按钮顺序，从左到右，从小到大， 受show影响
+   * 按钮顺序，从左到右，从小到大。显式声明后与 show 解耦（show 只管显隐）；
+   * 未声明时兼容旧口径：show 为数值时数值即排序位
    */
   index?: number;
   /**

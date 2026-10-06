@@ -257,9 +257,17 @@ export type MonitorEventsParams = {
   item?: string;
 };
 
-/** 事件响应随 kind 变化（调用方按 kind 断言具体行类型）；alert 带 counts */
-export type MonitorEvents = {
-  results: MonitorAlertEvent[] | MonitorErrorEvent[] | MonitorTaskEvent[];
+/**
+ * 事件响应随 kind 变化：行类型与事件类别一一对应（泛型 K 由调用方的 kind 字面量
+ * 推导，免消费侧断言）；alert 额外带 counts。不传 kind（或传完整枚举）时退化为
+ * 三类行的联合。
+ */
+export type MonitorEvents<K extends MonitorEventKind = MonitorEventKind> = {
+  results: (K extends "alert"
+    ? MonitorAlertEvent
+    : K extends "error"
+      ? MonitorErrorEvent
+      : MonitorTaskEvent)[];
   counts?: { firing: number; total_24h: number; resolved_24h: number };
 };
 
@@ -348,8 +356,11 @@ class MonitorApi extends BaseApi {
       `${this.baseApi}/thresholds`
     );
   };
-  events = (params?: MonitorEventsParams) => {
-    return this.request<MonitorResult<MonitorEvents>>(
+  /** 行类型随 kind 字面量收窄（kind 省略时为三类行的联合） */
+  events = <K extends MonitorEventKind = MonitorEventKind>(
+    params?: MonitorEventsParams & { kind?: K }
+  ) => {
+    return this.request<MonitorResult<MonitorEvents<K>>>(
       "get",
       params ?? {},
       {},

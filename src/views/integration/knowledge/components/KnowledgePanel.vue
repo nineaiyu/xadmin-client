@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { SUCCESS_CODE } from "@/api/types";
+import ReEmpty from "@/components/ReEmpty";
 import {
   ReActionPanel,
   type PanelActionGroup
@@ -31,17 +32,25 @@ const { t } = useI18n();
 
 const loading = ref(true);
 const detail = ref<KnowledgeDocumentDetail | null>(null);
+/** 详情加载失败标记：全文/分块区显式呈现错误态并支持重试，不再恒为空内容 */
+const detailFailed = ref(false);
 
-onMounted(async () => {
+const loadDetail = async () => {
+  loading.value = true;
   try {
-    const res = await knowledgeApi.retrieve(props.row.pk);
-    if (res.code === SUCCESS_CODE) {
+    const res = await knowledgeApi.retrieve(props.row.pk).catch(() => null);
+    if (res?.code === SUCCESS_CODE) {
       detail.value = res.data as unknown as KnowledgeDocumentDetail;
+      detailFailed.value = false;
+    } else {
+      detailFailed.value = true;
     }
   } finally {
     loading.value = false;
   }
-});
+};
+
+onMounted(loadDetail);
 
 const sourceLabel = computed(() =>
   props.row.source_type === "upload"
@@ -111,6 +120,15 @@ const activeLabel = computed(() =>
           </el-collapse-item>
         </el-collapse>
       </template>
+      <ReEmpty
+        v-else-if="detailFailed"
+        :description="t('aiKnowledge.detailLoadFailed')"
+        :image-size="70"
+      >
+        <el-button size="small" type="primary" @click="loadDetail">
+          {{ t("aiKnowledge.retry") }}
+        </el-button>
+      </ReEmpty>
     </div>
   </ReActionPanel>
 </template>

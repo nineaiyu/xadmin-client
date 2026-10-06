@@ -3,6 +3,7 @@ import { onActivated, onDeactivated, onUnmounted, ref } from "vue";
 import { isOutboundMessage, MessageAction } from "@/utils/websocket/protocol";
 import type { MonitorPushPayload } from "@/utils/websocket/protocol";
 import { WS } from "@/utils/websocket";
+import { normalizeError } from "@/utils/apiError";
 import {
   monitorApi,
   type MonitorAlertEvent,
@@ -80,7 +81,7 @@ export function useMonitor() {
       if (results[6].status === "fulfilled")
         thresholds.value = results[6].value.data;
       if (results[7].status === "fulfilled") {
-        alerts.value = results[7].value.data.results as MonitorAlertEvent[];
+        alerts.value = results[7].value.data.results;
         if (results[7].value.data.counts)
           alertCounts.value = results[7].value.data.counts;
       }
@@ -113,14 +114,10 @@ export function useMonitor() {
 
   /** 保存阈值：返回原始响应，由调用方按业务码提示（异常归一为失败结果） */
   const saveThresholds = (values: Record<string, number>) =>
-    monitorApi.updateThresholds(values).catch(error => ({
-      code: -1,
-      detail: String((error as { detail?: string })?.detail ?? error),
-      data: null as unknown as MonitorThresholds
-    }));
+    monitorApi.updateThresholds(values).catch(normalizeError);
 
   /** 告警记录（告警卡筛选联动；counts 同步回写顶部横幅口径） */
-  const fetchAlerts = async (params?: MonitorEventsParams) => {
+  const fetchAlerts = async (params?: Omit<MonitorEventsParams, "kind">) => {
     try {
       const res = await monitorApi.events({
         kind: "alert",
@@ -128,7 +125,7 @@ export function useMonitor() {
         ...params
       });
       if (res.code === SUCCESS_CODE) {
-        alerts.value = res.data.results as MonitorAlertEvent[];
+        alerts.value = res.data.results;
         if (res.data.counts) alertCounts.value = res.data.counts;
       }
     } catch {

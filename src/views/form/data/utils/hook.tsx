@@ -46,8 +46,14 @@ export function useFormData() {
   auth.batchDestroy = false;
 
   // 顶部「选择表单」卡片：表单清单与所选 schema
-  const { forms, selectedFormPk, selectedForm, schemaFields } =
-    useFormDataSelection();
+  const {
+    forms,
+    selectedFormPk,
+    selectedForm,
+    schemaFields,
+    formsLoadFailed,
+    loadForms
+  } = useFormDataSelection();
 
   // 字段筛选（物化筛选列）与字典/选人候选
   const {
@@ -126,6 +132,8 @@ export function useFormData() {
     auth,
     tableRef,
     forms,
+    formsLoadFailed,
+    loadForms,
     selectedFormPk,
     selectedForm,
     listColumnsFormat,

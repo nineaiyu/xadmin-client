@@ -217,5 +217,10 @@ const { loading, data } = usePermissionPreview<DeptPreviewResult>(
         </el-collapse-item>
       </el-collapse>
     </template>
+    <ReEmpty
+      v-else
+      :description="t('permissionPreview.loadFailed')"
+      :image-size="70"
+    />
   </div>
 </template>

@@ -112,7 +112,8 @@ export function useTags(tableRef: Ref) {
         code: "edit",
         props: { type: "primary", link: true },
         onClick: ({ row }) => openDialog(row as TagItem),
-        show: canEdit && 10
+        show: canEdit,
+        index: 10
       }
     ]
   });

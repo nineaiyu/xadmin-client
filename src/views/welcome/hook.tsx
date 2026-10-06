@@ -61,88 +61,100 @@ export function useDashboard() {
   const userActiveList = ref<UserActiveCardItem[]>([]);
 
   const getUserActiveList = () => {
-    getDashBoardUserActiveApi().then(res => {
-      if (res.code === SUCCESS_CODE) {
-        res.data.forEach(item => {
-          userActiveList.value.push({
-            name:
-              item[0] === 1
-                ? t("welcome.today")
-                : `${item[0]}${t("welcome.days")}`,
-            value: item,
-            duration: 2200
+    getDashBoardUserActiveApi()
+      .then(res => {
+        if (res.code === SUCCESS_CODE) {
+          res.data.forEach(item => {
+            userActiveList.value.push({
+              name:
+                item[0] === 1
+                  ? t("welcome.today")
+                  : `${item[0]}${t("welcome.days")}`,
+              value: item,
+              duration: 2200
+            });
           });
-        });
-      }
-    });
+        }
+      })
+      .catch(() => undefined);
   };
 
   const getTodayOperateTotal = () => {
-    getDashBoardTodayOperateTotalApi().then(res => {
-      if (hasAuth("list:SystemOperationLog")) {
-        getOperateLogList();
-      }
-      if (res.code === SUCCESS_CODE) {
-        // results 为可选字段，缺失时按空数组处理
-        const results = res.results ?? [];
-        chartData.value.push({
-          icon: LogLine,
-          tone: "warning",
-          duration: 2200,
-          name: t("welcome.requestNum"),
-          value: getKeyList(results, "count", false)[results.length - 1],
-          percent: res.percent > 0 ? `+${res.percent}%` : `${res.percent}%`,
-          data: getKeyList(results, "count", false)
-        });
-      }
-    });
+    getDashBoardTodayOperateTotalApi()
+      .then(res => {
+        if (hasAuth("list:SystemOperationLog")) {
+          getOperateLogList();
+        }
+        if (res.code === SUCCESS_CODE) {
+          // results 为可选字段，缺失时按空数组处理
+          const results = res.results ?? [];
+          chartData.value.push({
+            icon: LogLine,
+            tone: "warning",
+            duration: 2200,
+            name: t("welcome.requestNum"),
+            value: getKeyList(results, "count", false)[results.length - 1],
+            percent: res.percent > 0 ? `+${res.percent}%` : `${res.percent}%`,
+            data: getKeyList(results, "count", false)
+          });
+        }
+      })
+      .catch(() => undefined);
   };
   const getUserTotal = () => {
-    getDashBoardUserTotalApi().then(res => {
-      if (res.code === SUCCESS_CODE) {
-        const results = res.results ?? [];
-        chartData.value.push({
-          icon: GroupLine,
-          tone: "success",
-          duration: 2200,
-          name: t("welcome.userNum"),
-          value: res.count,
-          percent: res.percent > 0 ? `+${res.percent}%` : `${res.percent}%`,
-          data: getKeyList(results, "count", false)
-        });
-      }
-    });
+    getDashBoardUserTotalApi()
+      .then(res => {
+        if (res.code === SUCCESS_CODE) {
+          const results = res.results ?? [];
+          chartData.value.push({
+            icon: GroupLine,
+            tone: "success",
+            duration: 2200,
+            name: t("welcome.userNum"),
+            value: res.count,
+            percent: res.percent > 0 ? `+${res.percent}%` : `${res.percent}%`,
+            data: getKeyList(results, "count", false)
+          });
+        }
+      })
+      .catch(() => undefined);
   };
   const getUserLoginTotal = () => {
-    getDashBoardUserLoginTotalApi().then(res => {
-      if (res.code === SUCCESS_CODE) {
-        const results = res.results ?? [];
-        chartData.value.push({
-          icon: LoginLine,
-          tone: "primary",
-          duration: 2200,
-          name: t("welcome.loginTimes"),
-          value: res.count,
-          percent: res.percent > 0 ? `+${res.percent}%` : `${res.percent}%`,
-          data: getKeyList(results, "count", false)
-        });
-      }
-    });
+    getDashBoardUserLoginTotalApi()
+      .then(res => {
+        if (res.code === SUCCESS_CODE) {
+          const results = res.results ?? [];
+          chartData.value.push({
+            icon: LoginLine,
+            tone: "primary",
+            duration: 2200,
+            name: t("welcome.loginTimes"),
+            value: res.count,
+            percent: res.percent > 0 ? `+${res.percent}%` : `${res.percent}%`,
+            data: getKeyList(results, "count", false)
+          });
+        }
+      })
+      .catch(() => undefined);
   };
   const getUserLoginList = () => {
-    getDashBoardUserLoginTrendApi().then(res => {
-      if (res.code === SUCCESS_CODE) {
-        userLoginList.value = res.data;
-      }
-    });
+    getDashBoardUserLoginTrendApi()
+      .then(res => {
+        if (res.code === SUCCESS_CODE) {
+          userLoginList.value = res.data;
+        }
+      })
+      .catch(() => undefined);
   };
 
   const getUserRegisterList = () => {
-    getDashBoardUserRegisterTrendApi().then(res => {
-      if (res.code === SUCCESS_CODE) {
-        userRegisterList.value = res.data;
-      }
-    });
+    getDashBoardUserRegisterTrendApi()
+      .then(res => {
+        if (res.code === SUCCESS_CODE) {
+          userRegisterList.value = res.data;
+        }
+      })
+      .catch(() => undefined);
   };
 
   const getOperateLogList = () => {
@@ -156,9 +168,11 @@ export function useDashboard() {
         if (res.code === SUCCESS_CODE) {
           operateLogList.value = res.data?.results ?? [];
         }
-      });
+      })
+      .catch(() => undefined);
   };
 
+  // 首页各卡片独立取数：单个请求失败只缺对应卡片（提示由 http 层统一给出），不阻断其余卡片
   onMounted(() => {
     getUserTotal();
     getUserLoginList();

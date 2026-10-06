@@ -22,12 +22,13 @@ vi.mock("@/utils/dict", () => ({
       : value
 }));
 
-const META = {
+const META: DatasetMeta = {
   models: ["system.userinfo"],
   fields: { "system.userinfo": ["username", "nickname"] }
-} as unknown as DatasetMeta;
+};
 
-const ROW = {
+const ROW: DatasetItem = {
+  pk: "ds-1",
   name: "用户数据集",
   description: "",
   bound_model: "system.userinfo",
@@ -40,7 +41,7 @@ const ROW = {
   row_limit: 100,
   visibility: "shared",
   config: {}
-} as unknown as DatasetItem;
+};
 
 const mountForm = (row: DatasetItem | null) =>
   mount(DatasetForm, {
@@ -62,7 +63,7 @@ const mountForm = (row: DatasetItem | null) =>
 
 const payloadOf = (wrapper: ReturnType<typeof mountForm>) =>
   (
-    wrapper.vm as unknown as {
+    wrapper.vm as {
       getPayload: () => Record<string, unknown> | null;
     }
   ).getPayload();
@@ -89,10 +90,10 @@ describe("DatasetForm op=in 过滤值", () => {
   });
 
   it("用户手输逗号串：拆分、去空白、丢弃空段", () => {
-    const row = {
+    const row: DatasetItem = {
       ...ROW,
       filters: [{ field: "username", op: "in", value: "a, b ,,c" }]
-    } as unknown as DatasetItem;
+    };
     const wrapper = mountForm(row);
     const filters = payloadOf(wrapper)!.filters as Array<{
       value: unknown;

@@ -218,11 +218,17 @@ const toggleFullscreen = () => {
   }
 };
 
-onMounted(async () => {
+/** 详情加载失败标记：缺 pk、接口报错或网络异常都显式呈现，不再静默黑屏 */
+const loadFailed = ref(false);
+
+const loadScreen = async () => {
+  loadFailed.value = false;
   const pk = String(route.query.pk ?? "");
-  if (!pk) return;
-  const res = await screenApi.retrieve(pk);
-  if (res.code !== SUCCESS_CODE) return;
+  const res = pk ? await screenApi.retrieve(pk).catch(() => null) : null;
+  if (!res || res.code !== SUCCESS_CODE) {
+    loadFailed.value = true;
+    return;
+  }
   screen.value = res.data as ScreenItem;
   // 仅保留浏览者可见的仪表盘（personal 对他人不在可见列表内）
   const all = listRows<DashboardItem>(
@@ -237,7 +243,9 @@ onMounted(async () => {
   );
   startTimers();
   startWs(pk);
-});
+};
+
+onMounted(loadScreen);
 </script>
 
 <template>
@@ -300,7 +308,17 @@ onMounted(async () => {
     </header>
 
     <ReEmpty
-      v-if="!isCanvas && dashboards.length === 0"
+      v-if="loadFailed"
+      :description="t('dataScreen.loadFailed')"
+      icon="ep/warning"
+    >
+      <el-button size="small" type="primary" @click="loadScreen">
+        {{ t("dataScreen.retry") }}
+      </el-button>
+    </ReEmpty>
+
+    <ReEmpty
+      v-else-if="!isCanvas && dashboards.length === 0"
       :description="t('dataScreen.noDashboards')"
       icon="ep/monitor"
     />

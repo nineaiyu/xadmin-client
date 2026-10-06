@@ -76,12 +76,15 @@ async function searchUsers(query: string) {
   if (!query) return;
   userLoading.value = true;
   try {
-    const res = await searchUserApi.list({
-      page: 1,
-      size: 20,
-      username: query
-    });
-    if (res.code === SUCCESS_CODE && res.data) {
+    // http 层失败已统一提示，归一为 null：搜索静默收尾即可
+    const res = await searchUserApi
+      .list({
+        page: 1,
+        size: 20,
+        username: query
+      })
+      .catch(() => null);
+    if (res?.code === SUCCESS_CODE && res.data) {
       const rows =
         (
           res.data as {
@@ -128,16 +131,42 @@ const rules = computed<FormRules>(() => {
     ]
   };
   fields.value.forEach(field => {
+    const fieldRules: FormRules[string] = [];
     if (field.required) {
-      base[`values.${field.key}`] = [
-        {
-          required: true,
-          message: t("systemApprovalInstance.fieldRequired", {
-            label: field.label ?? field.key
-          }),
-          trigger: "blur"
-        }
-      ];
+      fieldRules.push({
+        required: true,
+        message: t("systemApprovalInstance.fieldRequired", {
+          label: field.label ?? field.key
+        }),
+        trigger: "blur"
+      });
+    }
+    // number 字段前置拦截非数值输入：Number("abc") 为 NaN，提交后端必 400
+    if (field.type === "number") {
+      fieldRules.push({
+        validator: (
+          _rule: unknown,
+          value: unknown,
+          callback: (_error?: Error) => void
+        ) => {
+          const raw = String(value ?? "").trim();
+          if (raw !== "" && Number.isNaN(Number(raw))) {
+            callback(
+              new Error(
+                t("systemApprovalInstance.numberInvalid", {
+                  label: field.label ?? field.key
+                })
+              )
+            );
+            return;
+          }
+          callback();
+        },
+        trigger: "blur"
+      });
+    }
+    if (fieldRules.length) {
+      base[`values.${field.key}`] = fieldRules;
     }
   });
   return base;
@@ -176,11 +205,13 @@ function applyInitial() {
 async function loadFlows() {
   loading.value = true;
   try {
-    const res = await approvalInstanceApi.availableFlows();
+    // http 层失败已统一提示，归一为 null：流程列表保持空态
+    const res = await approvalInstanceApi.availableFlows().catch(() => null);
     // DataListResult 的行类型为通用 RecordType：按本接口契约收窄为 FlowOption
-    flows.value = Array.isArray(res.data)
-      ? (res.data as unknown as FlowOption[])
-      : [];
+    flows.value =
+      res && Array.isArray(res.data)
+        ? (res.data as unknown as FlowOption[])
+        : [];
     applyInitial();
   } finally {
     loading.value = false;

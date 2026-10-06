@@ -34,24 +34,29 @@ const settingData = computed<Array<settingItemProps>>(
 
 onMounted(() => {
   hasAuth("backends:SmsSetting") &&
-    settingsSmsServerApi.backends().then(res => {
-      if (res.code === SUCCESS_CODE) {
-        smsBackends.value = [];
-        res.data.forEach((item: RecordType) => {
-          smsBackends.value.push({
-            auth: {
-              partialUpdate: hasAuth("partialUpdate:SmsConfig"),
-              retrieve: hasAuth("retrieve:SmsConfig"),
-              test: hasAuth("create:SmsConfig")
-            },
-            api: settingsSmsConfigApi,
-            queryParams: { category: item.value },
-            localeName: "settingSms",
-            label: item.label
+    settingsSmsServerApi
+      .backends()
+      .then(res => {
+        if (res.code === SUCCESS_CODE) {
+          smsBackends.value = [];
+          res.data.forEach((item: RecordType) => {
+            smsBackends.value.push({
+              auth: {
+                partialUpdate: hasAuth("partialUpdate:SmsConfig"),
+                retrieve: hasAuth("retrieve:SmsConfig"),
+                test: hasAuth("create:SmsConfig")
+              },
+              api: settingsSmsConfigApi,
+              queryParams: { category: item.value },
+              localeName: "settingSms",
+              label: item.label
+            });
           });
-        });
-      }
-    });
+        }
+      })
+      .catch(() => {
+        // http 层已统一提示；渠道子页签缺失属于可见的降级态，这里收尾防止 unhandled rejection
+      });
 });
 </script>
 

@@ -146,7 +146,10 @@ watch(alertStatus, status => fetchAlerts({ status }));
 
 const thresholdFormRef = ref<InstanceType<typeof ThresholdForm>>();
 const openThresholdDialog = () => {
-  if (!thresholds.value?.items?.length) return;
+  if (!thresholds.value?.items?.length) {
+    message(t("systemMonitor.thresholdUnavailable"), { type: "warning" });
+    return;
+  }
   thresholdFormRef.value = undefined;
   addDialog({
     title: t("systemMonitor.thresholdSettings"),

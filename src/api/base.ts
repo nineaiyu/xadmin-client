@@ -122,8 +122,10 @@ export class BaseApi extends BaseRequest {
       `${this.baseApi}/search-columns`
     );
   };
-  list = (params?: object) => {
-    return this.request<ListResult>("get", params, {});
+  // 泛型默认与既有 ListResult 一致（RecordType）：调用方按接口契约收窄行类型，
+  // 免去消费侧 `res.data.results as Xxx[]` 断言（类型逃逸门禁）
+  list = <T = RecordType>(params?: object) => {
+    return this.request<ListResult<T>>("get", params, {});
   };
   // 泛型默认与既有 DetailResult 一致（RecordType）；调用方可用具体契约收窄
   // res.data 的类型，避免调用侧双重断言绕过类型检查（类型逃逸门禁）。

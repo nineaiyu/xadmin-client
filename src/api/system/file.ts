@@ -38,6 +38,12 @@ export type FileAccessLogItem = {
   created_time: string;
 };
 
+/** 上传配置（config 端点下发；消费侧仅依赖 file_upload_size） */
+export type SystemUploadFileConfig = {
+  file_upload_size: number;
+  [key: string]: unknown;
+};
+
 export type FileAccessLogResult = {
   results: FileAccessLogItem[];
   total: number;
@@ -119,7 +125,7 @@ class SystemUploadFileApi extends BaseApi {
     );
   };
   config = (params?: object) => {
-    return this.request<DetailResult>(
+    return this.request<DetailResult<SystemUploadFileConfig>>(
       "get",
       params,
       {},

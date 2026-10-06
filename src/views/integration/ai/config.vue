@@ -39,8 +39,8 @@ const loadGlobal = async () => {
   if (!canReadGlobal) return;
   globalLoading.value = true;
   try {
-    const res = await aiConfigApi.retrieve();
-    if (res.code === SUCCESS_CODE) {
+    const res = await aiConfigApi.retrieve().catch(() => null);
+    if (res?.code === SUCCESS_CODE) {
       const data = res.data as Record<string, unknown>;
       globalForm.AI_ASSISTANT_ENABLED = Boolean(data?.AI_ASSISTANT_ENABLED);
       globalForm.AI_NL_QUERY_ENABLED = Boolean(data?.AI_NL_QUERY_ENABLED);
@@ -108,8 +108,10 @@ const loadMetrics = async () => {
   if (!canReadMetrics) return;
   metricsLoading.value = true;
   try {
-    const res = await aiAssistantApi.metrics(metricsDays.value);
-    if (res.code === SUCCESS_CODE) {
+    const res = await aiAssistantApi
+      .metrics(metricsDays.value)
+      .catch(() => null);
+    if (res?.code === SUCCESS_CODE) {
       metrics.value = res.data as unknown as AiMetrics;
     }
   } finally {
@@ -151,8 +153,8 @@ const loadUsage = async () => {
   if (!canReadMetrics) return;
   usageLoading.value = true;
   try {
-    const res = await aiAssistantApi.usage(usageDays.value);
-    if (res.code === SUCCESS_CODE) {
+    const res = await aiAssistantApi.usage(usageDays.value).catch(() => null);
+    if (res?.code === SUCCESS_CODE) {
       usage.value = res.data as AiUsageSummary;
     }
   } finally {

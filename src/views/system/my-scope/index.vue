@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import type { TreeInstance, TreeNodeData } from "element-plus";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 import { hasAuth } from "@/router/utils";
 import { SUCCESS_CODE } from "@/api/types";
 import {
@@ -44,15 +45,13 @@ const scope = ref<ManagedScopeResult | null>(null);
 const loadScope = async () => {
   loading.value = true;
   try {
-    const res = await deptApi.managed();
+    // 异常归一为失败结果：HTTP 层错误与业务失败走同一分支提示
+    const res = await deptApi.managed().catch(normalizeError);
     if (res.code === SUCCESS_CODE) {
       scope.value = res.data;
     } else if (res.detail) {
       message(String(res.detail), { type: "warning" });
     }
-  } catch (error) {
-    const detail = (error as { detail?: string })?.detail;
-    if (detail) message(String(detail), { type: "warning" });
   } finally {
     loading.value = false;
   }

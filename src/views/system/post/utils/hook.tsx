@@ -151,21 +151,24 @@ export function usePosts(tableRef: Ref) {
         code: "edit",
         props: { type: "primary", link: true },
         onClick: ({ row }) => openDialog(row as PostItem),
-        show: canEdit && 10
+        show: canEdit,
+        index: 10
       },
       {
         text: t("post.members"),
         code: "members",
         props: { type: "primary", link: true },
         onClick: ({ row }) => openMembers(row as PostItem),
-        show: canAssign && 9
+        show: canAssign,
+        index: 9
       },
       {
         text: t("post.preview"),
         code: "preview",
         props: { type: "primary", link: true },
         onClick: ({ row }) => openPreview(row as PostItem),
-        show: canPreview && 8
+        show: canPreview,
+        index: 8
       }
     ]
   });

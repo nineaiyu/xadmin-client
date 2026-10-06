@@ -39,6 +39,11 @@ const getPayload = (): Record<string, unknown> | null => {
     message(t("webhook.required"), { type: "warning" });
     return null;
   }
+  // 新建必须提供签名密钥（模板已标必填，这里前置拦截与标记保持一致）
+  if (!isEdit && !form.secret) {
+    message(t("webhook.secretRequired"), { type: "warning" });
+    return null;
+  }
   const payload: Record<string, unknown> = {
     name: form.name,
     url: form.url,

@@ -101,7 +101,8 @@ export function useRecordCenter(options: RecordCenterOptions) {
             // 失败提示由 http 拦截器统一处理
           }
         },
-        show: auth.download && 4
+        show: auth.download,
+        index: 4
       },
       {
         text: t(`${localePrefix}.log`),
@@ -114,7 +115,8 @@ export function useRecordCenter(options: RecordCenterOptions) {
         onClick: ({ row }) => {
           openLog(row?.pk ?? row?.id, row.name);
         },
-        show: auth.log && 5
+        show: auth.log,
+        index: 5
       }
     ]
   });

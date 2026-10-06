@@ -27,20 +27,20 @@ vi.mock("@pureadmin/utils", () => ({
   })
 }));
 
-const NUMBER_CARD = {
+const NUMBER_CARD: DashboardCard = {
   id: "c1",
   dataset: "ds-1",
   title: "总数",
   chart_type: "number"
-} as unknown as DashboardCard;
+};
 
-const METRIC_COUNT_CARD = {
+const METRIC_COUNT_CARD: DashboardCard = {
   id: "c2",
   dataset: "ds-1",
   title: "计数",
   chart_type: "metric",
   metric: "count"
-} as unknown as DashboardCard;
+};
 
 const mountCard = (card: DashboardCard) =>
   mount(ChartCard, {

@@ -19,14 +19,13 @@ function stubClipboard(value: unknown) {
 }
 
 function stubExecCommand(impl: () => boolean) {
+  const execCommandMock = vi.fn(impl);
   Object.defineProperty(document, "execCommand", {
-    value: vi.fn(impl),
+    value: execCommandMock,
     configurable: true
   });
+  return execCommandMock;
 }
-
-const execCommandMock = () =>
-  document.execCommand as unknown as ReturnType<typeof vi.fn>;
 
 describe("writeClipboardText", () => {
   afterEach(() => {
@@ -48,18 +47,18 @@ describe("writeClipboardText", () => {
 
   it("Clipboard API 不可用时回退 execCommand", async () => {
     stubClipboard(undefined);
-    stubExecCommand(() => true);
+    const execCommandMock = stubExecCommand(() => true);
     await expect(writeClipboardText("hello")).resolves.toBe(true);
-    expect(execCommandMock()).toHaveBeenCalledWith("copy");
+    expect(execCommandMock).toHaveBeenCalledWith("copy");
     expect(document.body.querySelectorAll("textarea")).toHaveLength(0);
   });
 
   it("Clipboard API 写入被拒时回退 execCommand", async () => {
     writeTextMock.mockRejectedValue(new Error("denied"));
     stubClipboard({ writeText: writeTextMock });
-    stubExecCommand(() => true);
+    const execCommandMock = stubExecCommand(() => true);
     await expect(writeClipboardText("hello")).resolves.toBe(true);
-    expect(execCommandMock()).toHaveBeenCalledWith("copy");
+    expect(execCommandMock).toHaveBeenCalledWith("copy");
   });
 
   it("两条路径都失败返回 false", async () => {

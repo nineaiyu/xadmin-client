@@ -246,7 +246,9 @@ loginPolicy:
   inactive: 未启用
   previewMfaDegraded: 该用户没有可用的二次验证方式，实际登录将降级放行
   invalidIp: IP 格式不正确
-  invalidForm: 请完整填写策略名称、对象值与时段
+  nameRequired: 请填写策略名称
+  timePairInvalid: 生效时段需同时填写开始与结束时间，或同时留空
+  targetValueRequired: 请填写对象值
 
 batchUpdate:
   button: 批量更新
@@ -845,6 +847,8 @@ credential:
   rotateOverdue: 建议轮换
   neverRotated: 从未轮换
   modelFieldsHint: 模型字段级凭据按行值级加密（AESCipherV3），此处仅展示已配置数量，不展示密钥内容
+  noPermission: 无凭据查看权限
+  noPermissionHint: 联系管理员授予「凭据与密钥」的查看权限后可见
 
 approval:
   pendingTab: 待我审批
@@ -1077,6 +1081,7 @@ systemApprovalInstance:
   titleRequired: 请填写申请标题
   titlePlaceholder: 请输入申请标题
   fieldRequired: 请填写 {label}
+  numberInvalid: "{label} 须为数字"
   fieldPlaceholder: 请输入
   statusPENDING: 审批中
   statusAPPROVED: 已通过
@@ -1604,6 +1609,7 @@ permissionPreview:
   fieldNone: 无可见字段
   draftModel: 草稿模型（可选）
   draftFields: 草稿字段（可选）
+  loadFailed: 权限预览加载失败，请重试
 
 systemMenu:
   menus: 菜单
@@ -2560,6 +2566,7 @@ systemMonitor:
   thresholdSettings: 告警阈值设置
   thresholdSaved: 阈值已更新
   thresholdCheckTip: 系统每 {seconds} 秒检查一次，超阈值时通知管理员
+  thresholdUnavailable: 阈值配置未加载，请刷新页面后重试
   alertsTitle: 资源告警记录
   alertFilterAll: 全部状态
   alertFiring: 告警中
@@ -2717,6 +2724,8 @@ dataDataset:
   addFilter: 添加条件
   value: 值
   inHint: 逗号分隔多个值
+  isNullTrue: 字段为空（IS NULL）
+  isNullFalse: 字段非空（IS NOT NULL）
   ordering: 排序
   rowLimit: 行数上限
   dateField: 时间字段（趋势用）
@@ -2754,6 +2763,7 @@ dataScreen:
   designerTitle: 大屏画布设计器
   pickScreenFirst: 请先从大屏列表进入设计器
   loadFailed: 大屏加载失败
+  retry: 重试
   layoutSaved: 画布已保存
   unsaved: 有未保存改动
   palette: 组件库
@@ -2898,6 +2908,8 @@ dataReport:
   stay: 留在编辑器
   runDirty: 有未保存改动，请先保存再运行
   cronInvalid: Cron 表达式需为 5 段（分 时 日 月 周）
+  recipientsRequired: 勾选邮件渠道时必须填写邮件接收人
+  recipientsInvalid: 邮件接收人格式不正确：{value}
   monthDayHint: 每月几号投递（1~28）
   columnsRequired: 至少保留一列明细
   groupByRequired: 图表组件必须先选分组字段
@@ -2986,6 +2998,7 @@ webhook:
   cancel: 取消
   confirm: 确认
   required: 名称、地址与订阅事件为必填
+  secretRequired: 新建订阅必须设置签名密钥
   saveOk: 保存成功
   testDispatched: 测试事件已派发
   statusFilter: 状态
@@ -3063,6 +3076,8 @@ ai:
   stopGenerating: 停止生成
   askFailed: 文档问答失败，请重试或更换模型
   nlFailed: 数据查询失败，请重试或更换模型
+  statusLoadFailed: AI 控制台状态加载失败
+  retry: 重试
 
 aiConfig:
   title: AI 配置
@@ -3101,6 +3116,7 @@ aiConfig:
   apiKey: API 密钥
   apiKeyKeep: 留空表示沿用原密钥
   apiKeyHint: OpenAI 兼容密钥，加密存储、不回显
+  apiKeyRequired: 新建档案必须填写 API 密钥
   temperature: 温度
   maxTokens: 最大输出 tokens
   topP: Top P
@@ -3365,6 +3381,8 @@ formData:
   filterTitle: 字段筛选
   filterClear: 清空筛选
   filterEmpty: 该表单还没有可筛选字段（在设计器中勾选字段的「可筛选」后可用）
+  formsLoadFailed: 表单清单加载失败
+  retry: 重试
 leaveApply:
   leave_type: 请假类型
   start_date: 开始日期
@@ -3497,6 +3515,8 @@ aiKnowledge:
   buildEmbeddings: 构建向量
   buildConfirm: 增量构建向量索引：当前可用 {fresh} / {total} 块（模型 {model}）。只补「未向量化与正文变更」的块，可反复执行
   buildDone: 向量构建完成：新增或更新 {embedded} 块，跳过 {skipped} 块
+  detailLoadFailed: 文档详情加载失败
+  retry: 重试
   binarySelected: 已选择 {type} 文件，解析为纯文本后入库（不可编辑）
   binaryTooLarge: 文件超过 2MB 上限
   buildSubmitted: 向量构建任务已提交，正在后台执行
@@ -3525,6 +3545,7 @@ oauthAuthorize:
   deny: 拒绝
   invalidRequest: 请求参数不完整（缺少 client_id / redirect_uri）
   loadFailed: 授权请求加载失败
+  invalidRedirect: 授权已完成，但应用登记的回调地址无效，无法跳转；请联系应用提供方修正 redirect_uri
 
 systemModule:
   currentPreset: 当前生效预设

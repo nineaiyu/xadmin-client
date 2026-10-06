@@ -45,11 +45,18 @@ const canExecute = hasAuth("actionExecute:AiAssistant");
 
 const status = ref<AiStatus | null>(null);
 const tools = ref<AiToolsResult | null>(null);
+/** 状态拉取失败（尚无可渲染的状态时）显示显式错误态而非整页空白 */
+const statusFailed = ref(false);
 
 const loadStatus = async () => {
-  const res = await aiAssistantApi.status();
-  if (res.code === SUCCESS_CODE) {
+  const res = await aiAssistantApi.status().catch(() => null);
+  if (res?.code === SUCCESS_CODE) {
     status.value = res.data as unknown as AiStatus;
+    statusFailed.value = false;
+  } else {
+    // 重新进入页面（keep-alive）时的失败保留已渲染的控制台，只有无任何状态时才显错误态
+    if (!status.value) statusFailed.value = true;
+    return;
   }
   const toolRes = await aiAssistantApi.tools().catch(() => null);
   if (toolRes && toolRes.code === SUCCESS_CODE) {
@@ -154,7 +161,16 @@ onActivated(() => {
   <div ref="pageRef">
     <!-- 控制台面板满宽铺开（不再 pr-[1%]：与聊天室口径一致，四边只保留
          main-content 的 24px 统一边距）；高度按视口实测（useFullHeightPanel） -->
-    <template v-if="status && !status.enabled">
+    <template v-if="statusFailed">
+      <el-card shadow="never">
+        <ReEmpty :description="t('ai.statusLoadFailed')" icon="ep/warning">
+          <el-button type="primary" @click="loadStatus">
+            {{ t("ai.retry") }}
+          </el-button>
+        </ReEmpty>
+      </el-card>
+    </template>
+    <template v-else-if="status && !status.enabled">
       <el-card shadow="never">
         <ReEmpty :description="t('ai.disabledHint')" icon="ep/lock" />
       </el-card>

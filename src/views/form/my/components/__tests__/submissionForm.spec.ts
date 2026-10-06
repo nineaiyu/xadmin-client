@@ -25,9 +25,10 @@ vi.mock("@/api/dataset/dform", () => ({
   submissionApi: { userOptions: userOptionsMock }
 }));
 
-const FORM = {
+const FORM: FillableFormItem = {
   pk: "form-1",
   name: "测试表单",
+  description: "",
   approval_required: false,
   approval_flow: null,
   schema: {
@@ -36,15 +37,17 @@ const FORM = {
       { key: "score", label: "得分", type: "number" }
     ]
   }
-} as unknown as FillableFormItem;
+};
 
-const SUBMISSION = {
+const SUBMISSION: SubmissionItem = {
   pk: "sub-1",
   form: "form-1",
+  form_name: "测试表单",
   // ghost 为 schema 删掉的历史键；renamed_away 模拟改名前的旧键
   data: { name: "张三", ghost: "x", renamed_away: 1 },
-  status: "REJECTED"
-} as unknown as SubmissionItem;
+  status: { value: "REJECTED", label: "已驳回" },
+  created_time: "2026-01-01T00:00:00"
+};
 
 type SubmissionFormProps = {
   form: FillableFormItem;
@@ -67,7 +70,7 @@ const mountForm = (props: SubmissionFormProps) =>
 
 const payloadOf = (wrapper: ReturnType<typeof mountForm>) =>
   (
-    wrapper.vm as unknown as {
+    wrapper.vm as {
       getPayload: () => { data: Record<string, unknown> };
     }
   ).getPayload().data;
@@ -92,10 +95,10 @@ describe("SubmissionForm 历史键裁剪", () => {
 
   it("编辑正常提交：当前 schema 内的键保留原值", async () => {
     userOptionsMock.mockResolvedValue({ data: [] });
-    const submission = {
+    const submission: SubmissionItem = {
       ...SUBMISSION,
       data: { name: "李四", score: 88 }
-    } as unknown as SubmissionItem;
+    };
     const wrapper = mountForm({ form: FORM, submission });
     await flushPromises();
 

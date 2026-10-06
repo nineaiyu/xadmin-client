@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 import { SUCCESS_CODE } from "@/api/types";
 import { userApi } from "@/api/system/user";
 import { formatDateTime } from "@/utils";
@@ -48,20 +49,20 @@ const loadMembers = async () => {
   if (!props.dept) return;
   loading.value = true;
   try {
-    const res = await userApi.list({
-      dept: props.dept.pk,
-      page: page.value,
-      size: PAGE_SIZE
-    });
+    // 异常归一为失败结果：HTTP 层错误与业务失败走同一分支提示
+    const res = await userApi
+      .list({
+        dept: props.dept.pk,
+        page: page.value,
+        size: PAGE_SIZE
+      })
+      .catch(normalizeError);
     if (res.code === SUCCESS_CODE) {
       rows.value = (res.data?.results ?? []) as MemberRow[];
       total.value = res.data?.total ?? rows.value.length;
     } else if (res.detail) {
       message(String(res.detail), { type: "warning" });
     }
-  } catch (error) {
-    const detail = (error as { detail?: string })?.detail;
-    if (detail) message(String(detail), { type: "warning" });
   } finally {
     loading.value = false;
   }

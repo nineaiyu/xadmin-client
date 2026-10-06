@@ -45,18 +45,20 @@ async function submit() {
   }
   submitting.value = true;
   try {
+    // http 层失败已统一提示，归一为 null 后直接收尾，避免重复弹错
     const res = await inviteAcceptApi({
       token: token.value,
       password: form.password
-    });
-    if (res?.code === SUCCESS_CODE) {
+    }).catch(() => null);
+    if (!res) return;
+    if (res.code === SUCCESS_CODE) {
       state.value = "accepted";
       message(res.detail || t("invite.success"), { type: "success" });
       setTimeout(() => router.push("/login"), 1200);
       return;
     }
     // 200 + 业务码非 1000（无效 / 过期 / 密码不合规）：必须显式展示后端 detail
-    message(String(res?.detail || t("results.failed")), { type: "error" });
+    message(String(res.detail || t("results.failed")), { type: "error" });
   } finally {
     submitting.value = false;
   }

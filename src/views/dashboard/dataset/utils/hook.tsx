@@ -155,19 +155,22 @@ export function useDataset(tableRef: Ref) {
     if (!row) return;
     aggregateLoading.value = true;
     try {
-      const res = await datasetApi.aggregate(row.pk, {
-        group_by: aggregateForm.group_by,
-        metric: aggregateForm.metric,
-        date_trunc: aggregateForm.date_trunc || undefined,
-        value_field: needsAggregateValue.value
-          ? aggregateForm.value_field
-          : undefined
-      });
-      if (res.code === SUCCESS_CODE) {
+      // http 层失败已统一提示，归一为 null：清空上次结果，避免展示陈旧聚合
+      const res = await datasetApi
+        .aggregate(row.pk, {
+          group_by: aggregateForm.group_by,
+          metric: aggregateForm.metric,
+          date_trunc: aggregateForm.date_trunc || undefined,
+          value_field: needsAggregateValue.value
+            ? aggregateForm.value_field
+            : undefined
+        })
+        .catch(() => null);
+      if (res?.code === SUCCESS_CODE) {
         aggregateResult.value = res.data as never;
       } else {
         aggregateResult.value = null;
-        if (res.detail) message(String(res.detail), { type: "warning" });
+        if (res?.detail) message(String(res.detail), { type: "warning" });
       }
     } finally {
       aggregateLoading.value = false;
@@ -180,11 +183,12 @@ export function useDataset(tableRef: Ref) {
     aggregateResult.value = null;
     aggregateForm.group_by = row.columns[0] ?? "";
     aggregateForm.value_field = "";
-    const res = await datasetApi.execute(row.pk);
-    if (res.code === SUCCESS_CODE) {
+    // http 层失败已统一提示，归一为 null：预览弹窗不打开
+    const res = await datasetApi.execute(row.pk).catch(() => null);
+    if (res?.code === SUCCESS_CODE) {
       preview.value = res.data as never;
       previewDialog.value = true;
-    } else if (res.detail) {
+    } else if (res?.detail) {
       message(String(res.detail), { type: "warning" });
     }
   };

@@ -132,10 +132,13 @@ export function useMenuTree({
   };
 
   const scrollToPk = (pk: string) => {
-    // el-tree 的 Node 实例带 $el（公开行为，类型声明未覆盖）
-    const node = treeRef.value?.getNode(pk) as unknown as
-      { $el?: HTMLElement } | null | undefined;
-    node?.$el?.scrollIntoView({ block: "center", behavior: "smooth" });
+    // 节点行根元素带 data-pk（见 index.vue 的 menu-tree-row）：以公开 DOM 查询定位，
+    // 不再依赖 el-tree 内部 Node.$el（类型声明未覆盖的私有字段）
+    const root = treeRef.value?.$el as HTMLElement | undefined;
+    const target = root?.querySelector<HTMLElement>(
+      `[data-pk="${CSS.escape(String(pk))}"]`
+    );
+    target?.scrollIntoView({ block: "center", behavior: "smooth" });
   };
 
   // 入参收敛为 unknown：el-tree 的 TreeOptionProps 回调参数与 MenuRow 名义不同，

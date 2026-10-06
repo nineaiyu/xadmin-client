@@ -56,21 +56,24 @@ export function useDataDict(tableRef: Ref) {
         code: "addChild",
         props: { type: "primary", icon: useRenderIcon(AddFill), link: true },
         onClick: ({ row }) => onAddChild(row),
-        show: row => Boolean(auth.create && isDictTypeRow(row)) && -40
+        show: row => Boolean(auth.create && isDictTypeRow(row)),
+        index: -40
       },
       {
         text: t("dataDict.moveUp"),
         code: "moveUp",
         props: { type: "info", icon: useRenderIcon(ArrowUp), link: true },
         onClick: ({ row, loading }) => onMove(row, "up", loading),
-        show: auth.move && 2
+        show: auth.move,
+        index: 2
       },
       {
         text: t("dataDict.moveDown"),
         code: "moveDown",
         props: { type: "info", icon: useRenderIcon(ArrowDown), link: true },
         onClick: ({ row, loading }) => onMove(row, "down", loading),
-        show: auth.move && 3
+        show: auth.move,
+        index: 3
       }
     ]
   });
@@ -97,7 +100,8 @@ export function useDataDict(tableRef: Ref) {
         code: "create",
         props: { type: "primary", icon: useRenderIcon(AddFill) },
         onClick: () => tableRef.value?.handleAddOrEdit(true, {}),
-        show: auth.create && -30
+        show: auth.create,
+        index: -30
       },
       {
         text: t("dataDict.batchActive"),
@@ -123,7 +127,8 @@ export function useDataDict(tableRef: Ref) {
             }
           });
         },
-        show: auth.batchActive && 1
+        show: auth.batchActive,
+        index: 1
       },
       {
         text: t("dataDict.batchInactive"),
@@ -149,7 +154,8 @@ export function useDataDict(tableRef: Ref) {
             }
           });
         },
-        show: auth.batchActive && 2
+        show: auth.batchActive,
+        index: 2
       },
       {
         text: t("dataDict.refreshCache"),
@@ -170,7 +176,8 @@ export function useDataDict(tableRef: Ref) {
             }
           });
         },
-        show: auth.refreshCache && 3
+        show: auth.refreshCache,
+        index: 3
       },
       batchUpdateButton
     ]

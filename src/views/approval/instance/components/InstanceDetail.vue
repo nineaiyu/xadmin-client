@@ -108,8 +108,9 @@ const formRows = computed(() => {
 
 async function load() {
   try {
-    const res = await approvalInstanceApi.retrieve(props.pk);
-    detail.value = (res.data ?? null) as InstanceDetailData | null;
+    // http 层失败已统一提示，归一为 null：详情区保持空态
+    const res = await approvalInstanceApi.retrieve(props.pk).catch(() => null);
+    detail.value = (res?.data ?? null) as InstanceDetailData | null;
   } finally {
     loading.value = false;
   }
@@ -153,7 +154,11 @@ async function submitComment() {
 
 async function removeComment(item: InstanceComment) {
   if (!(await confirm(t("approvalDiscussion.deleteConfirm")))) return;
-  const res = await approvalInstanceApi.deleteComment(props.pk, item.pk);
+  // http 层失败已统一提示，归一为 null 后直接收尾，避免重复弹错
+  const res = await approvalInstanceApi
+    .deleteComment(props.pk, item.pk)
+    .catch(() => null);
+  if (!res) return;
   if (res.code === SUCCESS_CODE) {
     await loadComments();
   } else {

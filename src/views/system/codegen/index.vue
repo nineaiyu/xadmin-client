@@ -11,6 +11,7 @@ import { useI18n } from "vue-i18n";
 import { MagicStick, Download } from "@element-plus/icons-vue";
 import { message } from "@/utils/message";
 import { hasAuth } from "@/router/utils";
+import { SUCCESS_CODE } from "@/api/types";
 import { downloadByData } from "@pureadmin/utils";
 import { systemCodeGenApi } from "@/api/system/codegen";
 import type {
@@ -81,8 +82,9 @@ const selectedLabel = computed(
 async function loadModels() {
   modelsLoading.value = true;
   try {
-    const res = await systemCodeGenApi.models();
-    if (res.code === 1000) models.value = res.data ?? [];
+    // http 层失败已统一提示，归一为 null：模型下拉保持空态
+    const res = await systemCodeGenApi.models().catch(() => null);
+    if (res?.code === SUCCESS_CODE) models.value = res.data ?? [];
   } finally {
     modelsLoading.value = false;
   }
@@ -99,8 +101,9 @@ async function loadPlan(label: string) {
   }
   planLoading.value = true;
   try {
-    const res = await systemCodeGenApi.modelFields(label);
-    if (res.code !== 1000 || !res.data) return;
+    // http 层失败已统一提示，归一为 null：计划区保持空态
+    const res = await systemCodeGenApi.modelFields(label).catch(() => null);
+    if (res?.code !== SUCCESS_CODE || !res.data) return;
     planData.value = res.data;
     if (pendingPlanState.value) {
       // 载入保存方案：命名与字段配置以方案为准（仅保留当前模型仍存在的字段）
@@ -128,8 +131,11 @@ async function runPreview() {
   if (!state.model) return;
   previewLoading.value = true;
   try {
-    const res = await systemCodeGenApi.preview(buildSinglePayload());
-    if (res.code !== 1000) return;
+    // http 层失败已统一提示，归一为 null：产物区保持上次内容
+    const res = await systemCodeGenApi
+      .preview(buildSinglePayload())
+      .catch(() => null);
+    if (res?.code !== SUCCESS_CODE) return;
     artifacts.value = res.data ?? [];
   } finally {
     previewLoading.value = false;
@@ -170,7 +176,9 @@ async function handleDownload() {
       mode.value === "batch"
         ? buildBatchPayload(batchModels.value, state)
         : buildSinglePayload();
-    const res = await systemCodeGenApi.download(payload);
+    // http 层失败已统一提示，归一为 null：直接收尾，不触发下载
+    const res = await systemCodeGenApi.download(payload).catch(() => null);
+    if (!res) return;
     const name =
       mode.value === "batch"
         ? "generated-batch.zip"

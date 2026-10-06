@@ -6,6 +6,7 @@ import type {
   DetailResult,
   ListResult
 } from "@/api/types";
+import type { RecordType } from "plus-pro-components";
 
 /** 动态表单：收敛控件集 schema + 通用 JSON 提交 */
 export type FormFieldType =
@@ -337,8 +338,8 @@ class FormDataApi extends BaseApi {
     };
   }
 
-  list = (params?: object) =>
-    this.request<ListResult>(
+  list = <T = RecordType>(params?: object) =>
+    this.request<ListResult<T>>(
       "get",
       { ...(params ?? {}), ...this.pageParams() },
       {}

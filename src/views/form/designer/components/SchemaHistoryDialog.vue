@@ -10,6 +10,7 @@ import {
 } from "@/api/dataset/dform";
 import { useConfirm } from "@/hooks/useConfirm";
 import { message } from "@/utils/message";
+import { SUCCESS_CODE } from "@/api/types";
 import { fieldTypeLabelKey } from "../utils/schemaMeta";
 import { LINKAGE_EFFECTS, linkageFieldLabel } from "../utils/linkageMeta";
 
@@ -52,7 +53,7 @@ const load = async () => {
     data: { current: props.row.schema_version ?? 1, history: [] }
   }));
   loading.value = false;
-  if (res.code !== 1000) {
+  if (res.code !== SUCCESS_CODE) {
     message(res.detail ?? t("dform.historyLoadFailed"), { type: "warning" });
     return;
   }
@@ -91,7 +92,7 @@ const rollback = (item: SchemaHistoryItem) => {
         detail: String((error as { detail?: string })?.detail ?? error)
       }));
     submitting.value = false;
-    if (res.code !== 1000) {
+    if (res.code !== SUCCESS_CODE) {
       message(res.detail ?? t("results.failed"), { type: "error" });
       return;
     }

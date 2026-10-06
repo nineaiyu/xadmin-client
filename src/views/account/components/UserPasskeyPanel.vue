@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
 import { passkeyApi } from "@/api/system/security";
 import { message } from "@/utils/message";
+import { SUCCESS_CODE } from "@/api/types";
 import {
   b64urlToBuffer,
   bufferToB64url,
@@ -35,7 +36,7 @@ const load = async () => {
   loading.value = true;
   try {
     const res = await passkeyApi.list({ page: 1, size: 50 });
-    if (res.code === 1000) rows.value = res.data?.results ?? [];
+    if (res.code === SUCCESS_CODE) rows.value = res.data?.results ?? [];
   } catch (error: unknown) {
     message(String((error as Error)?.message ?? error), { type: "error" });
   } finally {
@@ -66,7 +67,7 @@ const register = async () => {
   registering.value = true;
   try {
     const challengeRes = await passkeyApi.challenge("register");
-    if (challengeRes.code !== 1000) {
+    if (challengeRes.code !== SUCCESS_CODE) {
       message(String(challengeRes.detail), { type: "error" });
       return;
     }
@@ -102,7 +103,7 @@ const register = async () => {
       attestation_object: bufferToB64url(response.attestationObject),
       name: name || t("passkey.name")
     });
-    if (res.code === 1000) {
+    if (res.code === SUCCESS_CODE) {
       message(t("passkey.registerSuccess"), { type: "success" });
       await load();
     } else {
@@ -117,8 +118,12 @@ const register = async () => {
 
 const remove = async (row: RecordType) => {
   if (!(await confirm(t("passkey.removeConfirm")))) return;
-  const res = await passkeyApi.destroy(row?.pk);
-  if (res.code === 1000) {
+  // 异常归一为可读失败结果：删除失败（凭据已被移除等）需给出可读原因
+  const res = await passkeyApi.destroy(row?.pk).catch(error => ({
+    code: -1,
+    detail: String((error as { detail?: string })?.detail ?? error)
+  }));
+  if (res.code === SUCCESS_CODE) {
     message(t("passkey.removeSuccess"), { type: "success" });
     await load();
   } else {

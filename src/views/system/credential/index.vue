@@ -9,11 +9,14 @@ import {
 } from "@/api/system/credential";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
+import { SUCCESS_CODE } from "@/api/types";
 import { useConfirm } from "@/hooks/useConfirm";
 import {
   ReReadonlyTable,
   type ReadonlyColumn
 } from "@/components/ReReadonlyTable";
+import ReEmpty from "@/components/ReEmpty";
 
 defineOptions({ name: "SystemCredential" });
 
@@ -136,7 +139,7 @@ async function loadData() {
   loading.value = true;
   try {
     const res = await credentialApi.overview();
-    if (res?.code === 1000 && res.data) {
+    if (res?.code === SUCCESS_CODE && res.data) {
       data.value = res.data;
     }
   } finally {
@@ -169,8 +172,8 @@ async function handleRotate(row: CredentialRowLike) {
   }
   const res = await credentialApi
     .rotate({ key: String(row.name ?? ""), scope: row.scope })
-    .catch(error => ({ code: -1, detail: error?.detail as string }));
-  if (res?.code === 1000) {
+    .catch(normalizeError);
+  if (res?.code === SUCCESS_CODE) {
     message(t("credential.rotateOk"), { type: "success" });
     loadData();
   } else {
@@ -188,169 +191,178 @@ onMounted(() => {
 
 <template>
   <div class="main">
-    <el-alert
-      v-if="plaintextCount"
-      class="mb-3"
-      type="warning"
-      show-icon
-      :closable="false"
-      :title="t('credential.plaintextWarn', { count: plaintextCount })"
+    <!-- 无 overview 权限时给出显式说明，不渲染空表格 -->
+    <ReEmpty
+      v-if="!canView"
+      :description="t('credential.noPermission')"
+      :hint="t('credential.noPermissionHint')"
+      icon="ep/lock"
     />
-    <el-card shadow="never" class="mb-3">
-      <template #header>
-        <span class="font-medium">{{ t("credential.systemConfigs") }}</span>
-      </template>
-      <ReReadonlyTable
-        :columns="systemConfigColumns"
-        :rows="data.system_configs"
-        :loading="loading"
-        border
-      >
-        <template #fields="{ row }">
-          {{ (row.fields ?? []).join("、") }}
+    <template v-else>
+      <el-alert
+        v-if="plaintextCount"
+        class="mb-3"
+        type="warning"
+        show-icon
+        :closable="false"
+        :title="t('credential.plaintextWarn', { count: plaintextCount })"
+      />
+      <el-card shadow="never" class="mb-3">
+        <template #header>
+          <span class="font-medium">{{ t("credential.systemConfigs") }}</span>
         </template>
-        <template #description="{ row }">
-          <span class="text-(--el-text-color-secondary)">
-            {{ row.description || "—" }}
-          </span>
-        </template>
-        <template #masked="{ row }">
-          <span :class="{ 'font-mono': row.masked }">
-            {{ maskedText(row) }}
-          </span>
-        </template>
-        <template #status="{ row }">
-          <el-tag :type="statusMeta(row).type" effect="light">
-            {{ statusMeta(row).text }}
-          </el-tag>
-        </template>
-        <template #rotated="{ row }">
-          <span v-if="row.rotate_overdue" class="flex items-center gap-1">
-            <el-tag type="warning" effect="light">
-              {{ t("credential.rotateOverdue") }}
-            </el-tag>
+        <ReReadonlyTable
+          :columns="systemConfigColumns"
+          :rows="data.system_configs"
+          :loading="loading"
+          border
+        >
+          <template #fields="{ row }">
+            {{ (row.fields ?? []).join("、") }}
+          </template>
+          <template #description="{ row }">
             <span class="text-(--el-text-color-secondary)">
-              {{ t("credential.neverRotated") }}
+              {{ row.description || "—" }}
             </span>
-          </span>
-          <span v-else>{{ row.last_rotated || "—" }}</span>
-        </template>
-        <template #actions="{ row }">
-          <el-button
-            v-if="row.rotatable && canRotate"
-            link
-            type="primary"
-            :disabled="!row.configured"
-            @click="handleRotate(row)"
-          >
-            {{ t("credential.rotate") }}
-          </el-button>
-          <el-button
-            v-else-if="row.change_entry"
-            link
-            type="primary"
-            @click="goChange(row)"
-          >
-            {{ t("credential.goChange") }}
-          </el-button>
-          <span v-else class="text-(--el-text-color-secondary)">—</span>
-        </template>
-      </ReReadonlyTable>
-    </el-card>
-
-    <el-card shadow="never" class="mb-3">
-      <template #header>
-        <span class="font-medium">{{ t("credential.settings") }}</span>
-      </template>
-      <ReReadonlyTable
-        :columns="settingsColumns"
-        :rows="data.settings"
-        :loading="loading"
-        border
-      >
-        <template #masked="{ row }">
-          <span :class="{ 'font-mono': row.masked }">
-            {{ maskedText(row) }}
-          </span>
-        </template>
-        <template #status="{ row }">
-          <el-tag :type="statusMeta(row).type" effect="light">
-            {{ statusMeta(row).text }}
-          </el-tag>
-        </template>
-        <template #actions="{ row }">
-          <el-button
-            v-if="row.rotatable && canRotate"
-            link
-            type="primary"
-            :disabled="!row.configured"
-            @click="handleRotate(row)"
-          >
-            {{ t("credential.rotate") }}
-          </el-button>
-          <el-button
-            v-else-if="row.change_entry"
-            link
-            type="primary"
-            @click="goChange(row)"
-          >
-            {{ t("credential.goChange") }}
-          </el-button>
-          <span v-else class="text-(--el-text-color-secondary)">—</span>
-        </template>
-      </ReReadonlyTable>
-    </el-card>
-
-    <el-card shadow="never">
-      <template #header>
-        <span class="font-medium">{{ t("credential.modelFields") }}</span>
-      </template>
-      <ReReadonlyTable
-        :columns="modelFieldColumns"
-        :rows="data.model_fields"
-        :loading="loading"
-        border
-      >
-        <template #status="{ row }">
-          <el-tag :type="statusMeta(row).type" effect="light">
-            {{ statusMeta(row).text }}
-          </el-tag>
-        </template>
-        <template #rotated="{ row }">
-          <span v-if="row.rotate_overdue" class="flex items-center gap-1">
-            <el-tag type="warning" effect="light">
-              {{ t("credential.rotateOverdue") }}
+          </template>
+          <template #masked="{ row }">
+            <span :class="{ 'font-mono': row.masked }">
+              {{ maskedText(row) }}
+            </span>
+          </template>
+          <template #status="{ row }">
+            <el-tag :type="statusMeta(row).type" effect="light">
+              {{ statusMeta(row).text }}
             </el-tag>
-            <span class="text-(--el-text-color-secondary)">
-              {{ t("credential.neverRotated") }}
+          </template>
+          <template #rotated="{ row }">
+            <span v-if="row.rotate_overdue" class="flex items-center gap-1">
+              <el-tag type="warning" effect="light">
+                {{ t("credential.rotateOverdue") }}
+              </el-tag>
+              <span class="text-(--el-text-color-secondary)">
+                {{ t("credential.neverRotated") }}
+              </span>
             </span>
-          </span>
-          <span v-else>{{ row.last_rotated || "—" }}</span>
+            <span v-else>{{ row.last_rotated || "—" }}</span>
+          </template>
+          <template #actions="{ row }">
+            <el-button
+              v-if="row.rotatable && canRotate"
+              link
+              type="primary"
+              :disabled="!row.configured"
+              @click="handleRotate(row)"
+            >
+              {{ t("credential.rotate") }}
+            </el-button>
+            <el-button
+              v-else-if="row.change_entry"
+              link
+              type="primary"
+              @click="goChange(row)"
+            >
+              {{ t("credential.goChange") }}
+            </el-button>
+            <span v-else class="text-(--el-text-color-secondary)">—</span>
+          </template>
+        </ReReadonlyTable>
+      </el-card>
+
+      <el-card shadow="never" class="mb-3">
+        <template #header>
+          <span class="font-medium">{{ t("credential.settings") }}</span>
         </template>
-        <template #actions="{ row }">
-          <el-button
-            v-if="row.rotatable && canRotate"
-            link
-            type="primary"
-            :disabled="!row.configured"
-            @click="handleRotate(row)"
-          >
-            {{ t("credential.rotate") }}
-          </el-button>
-          <el-button
-            v-else-if="row.change_entry"
-            link
-            type="primary"
-            @click="goChange(row)"
-          >
-            {{ t("credential.goChange") }}
-          </el-button>
-          <span v-else class="text-(--el-text-color-secondary)">—</span>
+        <ReReadonlyTable
+          :columns="settingsColumns"
+          :rows="data.settings"
+          :loading="loading"
+          border
+        >
+          <template #masked="{ row }">
+            <span :class="{ 'font-mono': row.masked }">
+              {{ maskedText(row) }}
+            </span>
+          </template>
+          <template #status="{ row }">
+            <el-tag :type="statusMeta(row).type" effect="light">
+              {{ statusMeta(row).text }}
+            </el-tag>
+          </template>
+          <template #actions="{ row }">
+            <el-button
+              v-if="row.rotatable && canRotate"
+              link
+              type="primary"
+              :disabled="!row.configured"
+              @click="handleRotate(row)"
+            >
+              {{ t("credential.rotate") }}
+            </el-button>
+            <el-button
+              v-else-if="row.change_entry"
+              link
+              type="primary"
+              @click="goChange(row)"
+            >
+              {{ t("credential.goChange") }}
+            </el-button>
+            <span v-else class="text-(--el-text-color-secondary)">—</span>
+          </template>
+        </ReReadonlyTable>
+      </el-card>
+
+      <el-card shadow="never">
+        <template #header>
+          <span class="font-medium">{{ t("credential.modelFields") }}</span>
         </template>
-      </ReReadonlyTable>
-      <div class="mt-2 text-sm text-(--el-text-color-secondary)">
-        {{ t("credential.modelFieldsHint") }}
-      </div>
-    </el-card>
+        <ReReadonlyTable
+          :columns="modelFieldColumns"
+          :rows="data.model_fields"
+          :loading="loading"
+          border
+        >
+          <template #status="{ row }">
+            <el-tag :type="statusMeta(row).type" effect="light">
+              {{ statusMeta(row).text }}
+            </el-tag>
+          </template>
+          <template #rotated="{ row }">
+            <span v-if="row.rotate_overdue" class="flex items-center gap-1">
+              <el-tag type="warning" effect="light">
+                {{ t("credential.rotateOverdue") }}
+              </el-tag>
+              <span class="text-(--el-text-color-secondary)">
+                {{ t("credential.neverRotated") }}
+              </span>
+            </span>
+            <span v-else>{{ row.last_rotated || "—" }}</span>
+          </template>
+          <template #actions="{ row }">
+            <el-button
+              v-if="row.rotatable && canRotate"
+              link
+              type="primary"
+              :disabled="!row.configured"
+              @click="handleRotate(row)"
+            >
+              {{ t("credential.rotate") }}
+            </el-button>
+            <el-button
+              v-else-if="row.change_entry"
+              link
+              type="primary"
+              @click="goChange(row)"
+            >
+              {{ t("credential.goChange") }}
+            </el-button>
+            <span v-else class="text-(--el-text-color-secondary)">—</span>
+          </template>
+        </ReReadonlyTable>
+        <div class="mt-2 text-sm text-(--el-text-color-secondary)">
+          {{ t("credential.modelFieldsHint") }}
+        </div>
+      </el-card>
+    </template>
   </div>
 </template>

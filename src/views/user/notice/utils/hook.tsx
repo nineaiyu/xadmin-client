@@ -81,7 +81,8 @@ export function useUserNotice(tableRef: Ref) {
     searchFields: Ref<RecordType> | null = null
   ) => {
     if (row.unread) {
-      api.batchRead({ pks: [row.pk] });
+      // 行内就地已读：失败不阻断弹窗（关闭时列表会刷新），提示由 http 层统一给出
+      api.batchRead({ pks: [row.pk] }).catch(() => undefined);
     }
     if (routeParams?.pk) {
       // 深链 pk 只消费一次：打开即从地址栏移除，刷新/重开页签不再重复弹出。

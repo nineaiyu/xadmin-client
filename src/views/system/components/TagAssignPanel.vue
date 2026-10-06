@@ -48,6 +48,9 @@ const load = async () => {
     const list = await tagApi.list({ page: 1, size: 1000 });
     if (list.code === SUCCESS_CODE) {
       tags.value = (list.data as { results?: TagItem[] })?.results ?? [];
+    } else {
+      // 业务失败（HTTP 200 但 code 非 1000）拦截器不提示，需显式给出失败原因
+      message(String(list.detail ?? t("results.failed")), { type: "warning" });
     }
     if (props.pk) {
       const current = await tagApi.getObjectTags(props.resource, props.pk);
@@ -55,6 +58,8 @@ const load = async () => {
         selected.value = (current.data?.tags ?? []).map(item => item.pk);
       }
     }
+  } catch {
+    // http 层已统一提示（无权限/网络错误），这里收尾防止 unhandled rejection
   } finally {
     loading.value = false;
   }

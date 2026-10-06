@@ -92,16 +92,28 @@ const formatCategory = (subscriptions: MsgSubscriptionCategory[]) => {
 
 const getInitData = () => {
   if (props.auth.backends) {
-    props.api?.backends().then(res => {
-      receiveBackends.value = res.data;
-    });
+    props.api
+      ?.backends()
+      .then(res => {
+        receiveBackends.value = res.data;
+      })
+      .catch(() => {
+        // http 层已统一提示；渠道列缺失属于可见的降级态，这里收尾防止 unhandled rejection
+      });
   }
   if (props.auth.list) {
     loading.value = true;
-    props.api?.list().then(res => {
-      formatCategory(res.data);
-      loading.value = false;
-    });
+    props.api
+      ?.list()
+      .then(res => {
+        formatCategory(res.data);
+      })
+      .catch(() => {
+        // http 层已统一提示，列表保持空态
+      })
+      .finally(() => {
+        loading.value = false;
+      });
   }
 };
 
