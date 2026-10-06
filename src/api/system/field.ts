@@ -11,8 +11,9 @@ class ModelLabelFieldApi extends BaseApi {
     );
   };
 
+  // 全量字段同步有写副作用，必须用 POST：GET 可被浏览器预取/代理重放误触发
   sync = (params?: object) => {
-    return this.request<BaseResult>("get", params, {}, `${this.baseApi}/sync`);
+    return this.request<BaseResult>("post", params, {}, `${this.baseApi}/sync`);
   };
 }
 

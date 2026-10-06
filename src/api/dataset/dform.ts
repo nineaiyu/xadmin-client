@@ -107,7 +107,10 @@ export type DynamicFormItem = {
   pk: string;
   name: string;
   description: string;
-  schema: FormSchema;
+  /** 列表行仅回传字段数（schema 全文经 retrieve 单条取：编辑 / 模板复用） */
+  schema_fields_count?: number;
+  /** schema 全文：详情与写入响应携带，列表行不回传 */
+  schema?: FormSchema;
   /** schema 版本：每次实质变更 +1；历史版本可查看/回滚 */
   schema_version?: number;
   is_active: boolean;
@@ -238,6 +241,19 @@ class SubmissionApi extends BaseApi {
 
 /** 表单设计器扩展端点：schema 版本历史与回滚（定义类资源，与 dynamicFormApi 同前缀） */
 class DesignerApi extends BaseApi {
+  /**
+   * 按主键取表单定义全文（含 schema）：编辑弹窗 / 存为模板 / 从模板新建的
+   * 「取原文」入口（列表行只回传 schema 字段数，不回传 schema 全文）。
+   */
+  retrieveForm = (pk: string) => {
+    return this.request<DetailResult<DynamicFormItem>>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/${pk}`
+    );
+  };
+
   /** schema 版本历史（新 → 旧，含每个版本的 schema 全文） */
   schemaHistory = (pk: string) => {
     return this.request<DetailResult<SchemaHistoryResult>>(
@@ -305,15 +321,26 @@ class FormDataApi extends BaseApi {
    * 列表 / 导出请求自动带上；字段须在所选表单的可筛选面内（后端 fail-closed）。
    */
   filterData = "";
+  /**
+   * 动态列 key 集合（页面侧按所选表单 schema 写入，逗号分隔）：
+   * 列表请求以 `data_fields` 收缩行内 data 载荷（后端按 key 白名单过滤，缺省全量）；
+   * 导出列集合由后端按行集合的 schema 展开，不受该参数影响。
+   */
+  dataFields = "";
+
+  /** 列表 / 导出请求自动携带的页面侧参数（表单、物化筛选、动态列收缩） */
+  private pageParams(): Record<string, unknown> {
+    return {
+      ...(this.form ? { form: this.form } : {}),
+      ...(this.filterData ? { filter_data: this.filterData } : {}),
+      ...(this.dataFields ? { data_fields: this.dataFields } : {})
+    };
+  }
 
   list = (params?: object) =>
     this.request<ListResult>(
       "get",
-      {
-        ...(params ?? {}),
-        ...(this.form ? { form: this.form } : {}),
-        ...(this.filterData ? { filter_data: this.filterData } : {})
-      },
+      { ...(params ?? {}), ...this.pageParams() },
       {}
     );
 
@@ -321,22 +348,14 @@ class FormDataApi extends BaseApi {
     http.autoDownload(
       `${this.baseApi}/export-data`,
       undefined,
-      this.formatParams({
-        ...(params ?? {}),
-        ...(this.form ? { form: this.form } : {}),
-        ...(this.filterData ? { filter_data: this.filterData } : {})
-      })
+      this.formatParams({ ...(params ?? {}), ...this.pageParams() })
     );
 
   exportAsync = (data?: object) =>
     this.request<BaseResult>(
       "post",
       {},
-      {
-        ...(data ?? {}),
-        ...(this.form ? { form: this.form } : {}),
-        ...(this.filterData ? { filter_data: this.filterData } : {})
-      },
+      { ...(data ?? {}), ...this.pageParams() },
       `${this.baseApi}/export-async`
     );
 

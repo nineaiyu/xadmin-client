@@ -202,7 +202,7 @@ describe("脱敏 / 模型字段", () => {
 
     modelLabelFieldApi.sync();
     expect(requestMock).toHaveBeenLastCalledWith(
-      "get",
+      "post",
       "/api/system/field/sync",
       { params: {}, data: {} },
       {}

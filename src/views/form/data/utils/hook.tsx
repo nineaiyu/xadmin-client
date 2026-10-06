@@ -74,9 +74,12 @@ export function useFormData() {
   });
 
   // 切换表单：写入请求参数、清空字段筛选（旧表单的条件对新表单无意义）；
-  // 页面按 selectedFormPk 重建 RePlusPage（首屏自动重载）
+  // 页面按 selectedFormPk 重建 RePlusPage（首屏自动重载）。
+  // 动态列 key 集合同步写入（当前 ∪ 历史字段，与 form-options 下发口径同源）：
+  // 列表请求以 data_fields 收缩行内 data 载荷（缺省全量；详情/导出不受影响）
   watch(selectedFormPk, pk => {
     api.form = pk;
+    api.dataFields = schemaFields.value.map(field => field.key).join(",");
     api.filterData = "";
     for (const key of Object.keys(filterValues)) delete filterValues[key];
   });

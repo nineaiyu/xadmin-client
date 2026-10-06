@@ -7,6 +7,7 @@ import { SUCCESS_CODE } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { hasAuth } from "@/router/utils";
 import {
+  designerApi,
   dynamicFormApi,
   listRows,
   type DynamicFormItem
@@ -48,12 +49,20 @@ const load = async () => {
   }
 };
 
-/** 字段数（插槽行为 DefaultRow，脚本内统一收窄类型） */
+/** 字段数（列表行只带字段数元数据；插槽行为 DefaultRow，脚本内统一收窄类型） */
 const fieldCount = (row: unknown) =>
-  ((row as DynamicFormItem).schema?.fields ?? []).length;
+  (row as DynamicFormItem).schema_fields_count ?? 0;
 
-/** 模板行点击入口：插槽行为 DefaultRow，统一在脚本内收窄类型 */
-const pick = (row: unknown) => props.onPick(row as DynamicFormItem);
+/** 模板行点击入口：先取详情补全 schema 全文，再交由调用方预填设计器 */
+const pick = async (row: unknown) => {
+  const item = row as DynamicFormItem;
+  const res = await designerApi.retrieveForm(item.pk).catch(() => null);
+  if (res?.code !== SUCCESS_CODE || !res.data) {
+    message(t("results.failed"), { type: "warning" });
+    return;
+  }
+  props.onPick(res.data);
+};
 
 const remove = async (row: DynamicFormItem) => {
   if (

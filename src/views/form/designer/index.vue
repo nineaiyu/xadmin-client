@@ -11,6 +11,7 @@ const {
   api,
   auth,
   listColumnsFormat,
+  detailColumnsFormat,
   operationButtonsProps,
   tableBarButtonsProps
 } = useFormDesigner(tableRef);
@@ -24,6 +25,7 @@ const {
     locale-name="dform"
     :selection="false"
     :listColumnsFormat="listColumnsFormat"
+    :detailColumnsFormat="detailColumnsFormat"
     :operationButtonsProps="operationButtonsProps"
     :tableBarButtonsProps="tableBarButtonsProps"
   />

@@ -57,7 +57,7 @@ export const MessageAction = {
   PUSH_MESSAGE: "push_message",
   /** 聊天室消息（双向） */
   CHAT_MESSAGE: "chat_message",
-  /** 消息撤回（双向，ws/chat/） */
+  /** 消息撤回（下行广播，ws/chat/；上行撤回走 REST /api/chat/message/{id}/recall） */
   CHAT_RECALL: "chat_recall",
   /** 消息表情回应（双向，ws/chat/） */
   CHAT_REACTION: "chat_reaction",
@@ -211,7 +211,7 @@ export interface ChatRoomMessage {
   can_recall?: boolean;
 }
 
-/** 消息撤回帧（chat_recall） */
+/** 消息撤回广播帧（chat_recall 下行；上行撤回走 REST，多端同步靠本帧） */
 export interface ChatRecallPayload {
   message_id: number;
   id?: number;
