@@ -24,7 +24,13 @@ const state = vi.hoisted(() => ({
   messageMock: vi.fn()
 }));
 
-vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
+vi.mock("vue-i18n", () => ({
+  // 仅回调页用到的形态：带插值参数时把参数原样拼接，供断言外部输入未被丢弃
+  useI18n: () => ({
+    t: (key: string, params?: Record<string, unknown>) =>
+      params?.detail != null ? `${key}:${String(params.detail)}` : key
+  })
+}));
 vi.mock("vue-router", () => ({
   useRoute: () => ({ query: state.query }),
   useRouter: () => ({ push: state.pushMock })
@@ -52,7 +58,9 @@ const mountPage = () =>
     global: {
       stubs: {
         "el-result": {
-          template: '<div class="result-stub"><slot name="extra" /></div>'
+          props: ["title", "subTitle"],
+          template:
+            '<div class="result-stub"><span class="result-title">{{ title }}</span><span class="result-sub-title">{{ subTitle }}</span><slot name="extra" /></div>'
         },
         "el-button": true
       },
@@ -134,5 +142,32 @@ describe("OAuth 回调页 MFA 分支", () => {
       query: { tab: "oauthBindings" }
     });
     expect(wrapper.find(".login-mfa-stub").exists()).toBe(false);
+  });
+});
+
+describe("OAuth 回调页 IdP error 分支", () => {
+  it("IdP 回跳 error + error_description：展示带详情的纯文本失败文案，不请求后端", async () => {
+    state.query = {
+      provider: "github",
+      error: "access_denied",
+      error_description: "The user denied the request"
+    };
+    const wrapper = mountPage();
+    await flushPromises();
+
+    expect(state.callbackMock).not.toHaveBeenCalled();
+    expect(wrapper.find(".result-stub").exists()).toBe(true);
+    expect(wrapper.find(".result-sub-title").text()).toBe(
+      "oauth.idpErrorDetail:The user denied the request"
+    );
+  });
+
+  it("IdP 回跳 error 且无 error_description：展示通用第三方失败文案", async () => {
+    state.query = { provider: "github", error: "server_error" };
+    const wrapper = mountPage();
+    await flushPromises();
+
+    expect(state.callbackMock).not.toHaveBeenCalled();
+    expect(wrapper.find(".result-sub-title").text()).toBe("oauth.idpError");
   });
 });

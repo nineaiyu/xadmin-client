@@ -9,6 +9,7 @@ export {
 } from "./auth";
 export { initRouter, addPathMatch, addAsyncRoutes } from "./async-routes";
 export { getTopMenu, getHistoryMode, handleAliveRoute } from "./nav";
+export { hasInAppHistory, goBackOrHome } from "./history";
 export {
   ascending,
   filterTree,

@@ -2,9 +2,10 @@
 import type { Component } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
+import { goBackOrHome, hasInAppHistory } from "@/router/utils";
 
 /**
- * 错误页公共骨架：插画 + 大标题（状态码/文案）+ 说明 + 「返回首页」主按钮。
+ * 错误页公共骨架：插画 + 大标题（状态码/文案）+ 说明 + 「返回」主按钮。
  *
  * 403/404/500 传 `code` + `textKey` 即可（三段渐入动效内建）；
  * module-disabled 变体：`motion: false` 关闭动效、`#tip` 定制说明
@@ -26,6 +27,8 @@ const props = withDefaults(
 
 const router = useRouter();
 const { t } = useI18n();
+/** 是否有站内上一页：决定返回按钮的落点与文案（直达进入时回首页） */
+const canBack = hasInAppHistory(router);
 
 /** 关闭动效时初始即终态：无位移/透明度变化，与不挂 v-motion 视觉一致 */
 const enterFor = (delay: number) =>
@@ -61,9 +64,9 @@ const initialFor = () =>
         :enter="enterFor(160)"
         :initial="initialFor()"
         type="primary"
-        @click="router.push('/')"
+        @click="goBackOrHome(router)"
       >
-        {{ t("error.goBack") }}
+        {{ canBack ? t("error.back") : t("error.goBack") }}
       </el-button>
       <slot name="actions" />
     </div>

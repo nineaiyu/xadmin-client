@@ -292,8 +292,8 @@ test("模块停用整页提示：渲染与返回入口", async ({ page }) => {
   await expect(page.getByText("该功能对应的模块已被停用")).toBeVisible();
   // 命中模块 id 随查询参数展示（网关 404 响应体的 module 字段）
   await expect(page.getByText("(chat)")).toBeVisible();
+  // goto 直达无站内历史：返回按钮落回首页
   await expect(page.getByRole("button", { name: "返回首页" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "返回上一页" })).toBeVisible();
 });
 
 test("通讯录：按部门/按岗位视角渲染", async ({ page }) => {

@@ -14,6 +14,7 @@ import { avatar, bg, illustration } from "./utils/static";
 
 import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
+import { SITE_LINKS } from "@/config/site";
 
 import dayIcon from "@/assets/svg/day.svg?component";
 import darkIcon from "@/assets/svg/dark.svg?component";
@@ -116,11 +117,7 @@ const { locale, translationCh, translationEn } = useTranslationLang();
       class="w-full flex-c absolute bottom-3 text-sm text-text_color_regular"
     >
       Copyright © 2026-present
-      <a
-        class="hover:text-primary!"
-        href="https://github.com/nineaiyu/"
-        target="_blank"
-      >
+      <a class="hover:text-primary!" :href="SITE_LINKS.author" target="_blank">
         &nbsp;{{ title }}
       </a>
     </div>

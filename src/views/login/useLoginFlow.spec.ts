@@ -229,16 +229,15 @@ describe("useLoginFlow 登录流收敛", () => {
     expect(aesEncryptedMock).not.toHaveBeenCalled();
   });
 
-  it("buildVerifyCodePayload 加密时 password 与 target 均以 verify_token 为密钥", async () => {
+  it("buildVerifyCodePayload 加密时 password 以 verify_token 为密钥，不再携带 target", async () => {
     const data = await buildVerifyCodePayload(
       { verify_token: "tok", password: "p@ss", verify_code: "123456" },
       { encrypted: true }
     );
 
     expect(data["password"]).toBe("enc(tok:p@ss)");
-    // target 无来源也照常加密（undefined 入加密函数），保持线上既有字节格式
-    expect(data["target"]).toBe("enc(tok:undefined)");
-    expect(aesEncryptedMock).toHaveBeenNthCalledWith(1, "tok", "p@ss");
-    expect(aesEncryptedMock).toHaveBeenNthCalledWith(2, "tok", undefined);
+    expect(aesEncryptedMock).toHaveBeenCalledTimes(1);
+    expect(aesEncryptedMock).toHaveBeenCalledWith("tok", "p@ss");
+    expect("target" in data).toBe(false);
   });
 });

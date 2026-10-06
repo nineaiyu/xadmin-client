@@ -168,7 +168,7 @@ export function useSystemUploadFile(tableRef: Ref) {
     }
   });
 
-  const formatisCameluploadisCameltmpColumn = (column: PageTableColumn) => {
+  const formatYesNoColumn = (column: PageTableColumn) => {
     column["cellRenderer"] = renderBooleanTag({
       t,
       tagStyle,
@@ -199,8 +199,8 @@ export function useSystemUploadFile(tableRef: Ref) {
           );
         };
       },
-      is_upload: formatisCameluploadisCameltmpColumn,
-      is_tmp: formatisCameluploadisCameltmpColumn,
+      is_upload: formatYesNoColumn,
+      is_tmp: formatYesNoColumn,
       preview_kind: column => {
         // 行内预览入口走 cellRenderer：操作列 slot 传入的 row 是空对象
         // （框架现状），行级显隐只能在列渲染里取到真实行数据

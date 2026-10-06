@@ -1,5 +1,6 @@
 import { useI18n } from "vue-i18n";
 import type { PlusColumn } from "plus-pro-components";
+import { SITE_LINKS } from "@/config/site";
 
 export function useColumns() {
   const { t } = useI18n();
@@ -61,7 +62,7 @@ export function useColumns() {
       className: "pure-version",
       renderDescriptionsItem: () => {
         return (
-          <a href="https://github.com/nineaiyu/xadmin-client" target="_blank">
+          <a href={SITE_LINKS.webRepo} target="_blank">
             <span style="color: var(--el-color-primary)">
               {t("about.webRepo")}
             </span>
@@ -76,7 +77,7 @@ export function useColumns() {
       className: "pure-version",
       renderDescriptionsItem: () => {
         return (
-          <a href="https://github.com/nineaiyu/xadmin-server" target="_blank">
+          <a href={SITE_LINKS.serverRepo} target="_blank">
             <span style="color: var(--el-color-primary)">
               {t("about.serverRepo")}
             </span>
@@ -91,7 +92,7 @@ export function useColumns() {
       className: "pure-version",
       renderDescriptionsItem: () => {
         return (
-          <a href="https://docs.dvcloud.xin" target="_blank">
+          <a href={SITE_LINKS.docs} target="_blank">
             <span style="color: var(--el-color-primary)">
               {t("about.docUrl")}
             </span>
@@ -106,7 +107,7 @@ export function useColumns() {
       className: "pure-version",
       renderDescriptionsItem: () => {
         return (
-          <a href="https://xadmin.dvcloud.xin/" target="_blank">
+          <a href={SITE_LINKS.demo} target="_blank">
             <span style="color: var(--el-color-primary)">
               {t("about.demoUrl")}
             </span>

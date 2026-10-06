@@ -2,7 +2,11 @@
 import { SUCCESS_CODE } from "@/api/types";
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { oauthApi, type OAuthProvider } from "@/api/system/oauth";
+import {
+  oauthApi,
+  OAUTH_BIND_FLAG,
+  type OAuthProvider
+} from "@/api/system/oauth";
 import { message } from "@/utils/message";
 
 /**
@@ -32,6 +36,9 @@ const goAuthorize = (key: string) => {
     .authorize(key)
     .then(res => {
       if (res.code === SUCCESS_CODE && res.data?.url) {
+        // 登录发起即宣告本次回跳非绑定：清掉可能残留的绑定意图标记，
+        // 避免回调失败页被旧标记误导出「返回账户设置」出口
+        sessionStorage.removeItem(OAUTH_BIND_FLAG);
         window.location.href = String(res.data.url);
       } else if (res.detail) {
         message(res.detail, { type: "warning" });

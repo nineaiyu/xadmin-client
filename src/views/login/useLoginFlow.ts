@@ -95,8 +95,9 @@ export function useEnterSubmit(handler: () => void) {
 /**
  * 验证码类接口（验证码登录 / 注册 / 重置密码）的载荷拼装：
  * 固定携带 verify_token / password / verify_code 三个字段；后端开启传输加密时
- * password 与 target 均以 verify_token 为密钥加密——target 无来源（undefined
- * 或空串）也照常加密，服务端按密文解出空值，保持线上既有字节格式。
+ * password 以 verify_token 为密钥加密。target 只属于「发送验证码」请求
+ * （见 ReSendVerifyCode 的发送载荷）；落库类接口的 target 由服务端从
+ * verify_token 缓存载荷读取，请求体携带与否均不被消费。
  */
 export async function buildVerifyCodePayload(
   formData: {
@@ -115,10 +116,6 @@ export async function buildVerifyCodePayload(
     data["password"] = await AesEncrypted(
       data["verify_token"] as string,
       data["password"] as string
-    );
-    data["target"] = await AesEncrypted(
-      data["verify_token"] as string,
-      data["target"] as string
     );
   }
   return data;

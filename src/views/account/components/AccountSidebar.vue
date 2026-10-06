@@ -13,7 +13,7 @@ import leftLine from "~icons/ri/arrow-left-s-line";
  */
 defineProps<{
   /** 当前激活页签 key */
-  witchPane: string;
+  currentPane: string;
   /** 页签清单（key/label/icon/auth 由父级按权限计算） */
   panes: Array<{ key: string; label: string; icon: Component; auth: boolean }>;
 }>();
@@ -28,7 +28,7 @@ const { t } = useI18n();
 </script>
 
 <template>
-  <el-menu :default-active="witchPane" class="pure-account-settings-menu">
+  <el-menu :default-active="currentPane" class="pure-account-settings-menu">
     <div
       class="h-12.5! text-(--pure-theme-menu-text) cursor-pointer text-sm transition-all duration-300 ease-in-out hover:scale-105 will-change-transform transform-gpu origin-center hover:text-base! hover:text-(--pure-theme-menu-title-hover)!"
       @click="router.go(-1)"

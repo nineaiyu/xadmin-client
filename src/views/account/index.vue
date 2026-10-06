@@ -123,7 +123,7 @@ const initialPane = () => {
     ? key
     : "profile";
 };
-const witchPane = ref(initialPane());
+const currentPane = ref(initialPane());
 
 /**
  * 切换页签只改本地状态，**不**同步 URL query。
@@ -135,7 +135,7 @@ const witchPane = ref(initialPane());
  * URL 保持落地时的值。
  */
 const switchPane = (key: string) => {
-  witchPane.value = key;
+  currentPane.value = key;
   if (deviceDetection()) {
     isOpen.value = !isOpen.value;
   }
@@ -156,7 +156,7 @@ const switchPane = (key: string) => {
           class="pure-account-settings h-full overflow-hidden px-2 dark:bg-(--el-bg-color)! border-r border-(--pure-border-color)"
         >
           <AccountSidebar
-            :witch-pane="witchPane"
+            :current-pane="currentPane"
             :panes="panes"
             @switch-pane="switchPane"
           />
@@ -165,7 +165,7 @@ const switchPane = (key: string) => {
       <template #paneR>
         <el-main>
           <component
-            :is="panes.find(item => item.key === witchPane)?.component"
+            :is="panes.find(item => item.key === currentPane)?.component"
           />
         </el-main>
       </template>
@@ -179,7 +179,7 @@ const switchPane = (key: string) => {
       class="pure-account-settings overflow-hidden px-2 dark:bg-(--el-bg-color)! border-r border-(--pure-border-color)"
     >
       <AccountSidebar
-        :witch-pane="witchPane"
+        :current-pane="currentPane"
         :panes="panes"
         @switch-pane="switchPane"
       />
@@ -190,7 +190,9 @@ const switchPane = (key: string) => {
         class="px-0"
         @toggleClick="isOpen = !isOpen"
       />
-      <component :is="panes.find(item => item.key === witchPane)?.component" />
+      <component
+        :is="panes.find(item => item.key === currentPane)?.component"
+      />
     </el-main>
   </el-container>
 </template>

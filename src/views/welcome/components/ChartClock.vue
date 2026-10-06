@@ -151,6 +151,36 @@ interface Ball {
 const canvasRef = ref<HTMLCanvasElement>();
 const divRef = ref<HTMLDivElement>();
 const timer = ref<ReturnType<typeof setInterval>>();
+// 画布上下文在 initCanvas 就绪后保存，供定时器与可见性恢复共用
+let renderContext: CanvasRenderingContext2D | undefined;
+
+const startTimer = () => {
+  // 已在跑或画布尚未初始化时不重复启动；页面在后台时不启动（恢复可见时由
+  // visibilitychange 拉起），避免重建画布发生在后台时空转
+  if (timer.value || document.hidden) return;
+  const context = renderContext;
+  if (!context) return;
+  timer.value = setInterval(() => {
+    render(context);
+  }, 50);
+};
+
+const stopTimer = () => {
+  if (timer.value) {
+    clearInterval(timer.value);
+    timer.value = undefined;
+  }
+};
+
+// 页面切到后台时暂停重绘（后台定时器被浏览器节流，持续空转无意义），回到前台恢复
+const handleVisibilityChange = () => {
+  if (document.hidden) {
+    stopTimer();
+  } else {
+    startTimer();
+  }
+};
+document.addEventListener("visibilitychange", handleVisibilityChange);
 
 const maxBallCount = ref(100);
 const storeTime = ref(new Date());
@@ -188,10 +218,9 @@ const initCanvas = () => {
   if (canvasRef.value && context) {
     canvasRef.value.width = winWidth.value;
     canvasRef.value.height = winHeight.value;
+    renderContext = context;
     render(context); //初始启动绘画
-    timer.value = setInterval(() => {
-      render(context);
-    }, 50);
+    startTimer();
   }
 };
 
@@ -284,6 +313,7 @@ const addBalls = (x: number, y: number, num: number) => {
   });
 };
 const updateBalls = () => {
+  // 物理推进：逐球更新位置与速度
   balls.value.forEach(ball => {
     ball.x += ball.vx;
     ball.y += ball.vy;
@@ -292,25 +322,26 @@ const updateBalls = () => {
       ball.y = winHeight.value - radius.value;
       ball.vy = -ball.vy * 0.75;
     }
-
-    let cnt = 0;
-    balls.value.forEach(item => {
-      if (item.x + radius.value > 0 && item.x - radius.value < winWidth.value)
-        balls.value[cnt++] = item;
-    }); //在这个屏幕内的小球
-    while (balls.value.length > cnt) {
-      balls.value.pop();
-    } //删除屏幕外的小球
-    if (balls.value.length - maxBallCount.value) {
-      let delLen = balls.value.length - maxBallCount.value;
-      for (let i = 0; i < delLen; i++) {
-        let max = balls.value.length - 20;
-        let min = 1;
-        let num = Math.floor(Math.random() * (max - min + 1) + min);
-        balls.value.splice(num, 1);
-      }
-    } //随机删除超出200个小球的球
   });
+  // 淘汰飞出屏幕的小球：整帧只做一次压缩（原实现在每个球的循环里重复压缩，整帧 O(n²)）
+  let cnt = 0;
+  balls.value.forEach(item => {
+    if (item.x + radius.value > 0 && item.x - radius.value < winWidth.value)
+      balls.value[cnt++] = item;
+  });
+  while (balls.value.length > cnt) {
+    balls.value.pop();
+  }
+  // 超出上限时随机丢弃，控制总量
+  if (balls.value.length > maxBallCount.value) {
+    const delLen = balls.value.length - maxBallCount.value;
+    for (let i = 0; i < delLen; i++) {
+      const max = balls.value.length - 20;
+      const min = 1;
+      const num = Math.floor(Math.random() * (max - min + 1) + min);
+      balls.value.splice(num, 1);
+    }
+  }
 };
 const renderTime = (
   hours: number,
@@ -394,7 +425,7 @@ const renderDigit = (
 
 /** 重建画布：容器尺寸变化与主题切换共用（色板在 initConfig 内按主题重算） */
 const restart = () => {
-  clearInterval(timer.value);
+  stopTimer();
   initConfig();
   initCanvas();
 };
@@ -405,10 +436,8 @@ useResizeObserver(divRef as Ref<HTMLDivElement>, restart);
 watch(isDark, restart);
 
 onBeforeUnmount(() => {
-  if (timer.value) {
-    clearInterval(timer.value);
-    timer.value = undefined;
-  }
+  document.removeEventListener("visibilitychange", handleVisibilityChange);
+  stopTimer();
 });
 </script>
 

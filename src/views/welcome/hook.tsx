@@ -51,10 +51,37 @@ export function useDashboard() {
       }
     ];
   });
-  const dataList = ref([]);
-  const loading = ref(true);
-
-  const chartData = ref<ChartCardItem[]>([]);
+  // 三张统计卡预分配固定槽位：各请求完成顺序不定，按下标回填避免卡片顺序竞态；
+  // 占位先撑住卡位（名称/图标立即可见），数值请求返回后覆盖
+  const chartData = ref<ChartCardItem[]>([
+    {
+      icon: LogLine,
+      tone: "warning",
+      duration: 2200,
+      name: t("welcome.requestNum"),
+      value: 0,
+      percent: "",
+      data: []
+    },
+    {
+      icon: GroupLine,
+      tone: "success",
+      duration: 2200,
+      name: t("welcome.userNum"),
+      value: 0,
+      percent: "",
+      data: []
+    },
+    {
+      icon: LoginLine,
+      tone: "primary",
+      duration: 2200,
+      name: t("welcome.loginTimes"),
+      value: 0,
+      percent: "",
+      data: []
+    }
+  ]);
   const userLoginList = ref<DashboardTrendItem[]>([]);
   const userRegisterList = ref<DashboardTrendItem[]>([]);
   const operateLogList = ref<RecordType[]>([]);
@@ -82,21 +109,17 @@ export function useDashboard() {
   const getTodayOperateTotal = () => {
     getDashBoardTodayOperateTotalApi()
       .then(res => {
-        if (hasAuth("list:SystemOperationLog")) {
-          getOperateLogList();
-        }
         if (res.code === SUCCESS_CODE) {
-          // results 为可选字段，缺失时按空数组处理
           const results = res.results ?? [];
-          chartData.value.push({
-            icon: LogLine,
-            tone: "warning",
-            duration: 2200,
-            name: t("welcome.requestNum"),
-            value: getKeyList(results, "count", false)[results.length - 1],
+          // 空结果时按天取数的下标越界，value 兜底 0
+          chartData.value[0] = {
+            ...chartData.value[0],
+            value: results.length
+              ? getKeyList(results, "count", false)[results.length - 1]
+              : 0,
             percent: res.percent > 0 ? `+${res.percent}%` : `${res.percent}%`,
             data: getKeyList(results, "count", false)
-          });
+          };
         }
       })
       .catch(() => undefined);
@@ -106,15 +129,12 @@ export function useDashboard() {
       .then(res => {
         if (res.code === SUCCESS_CODE) {
           const results = res.results ?? [];
-          chartData.value.push({
-            icon: GroupLine,
-            tone: "success",
-            duration: 2200,
-            name: t("welcome.userNum"),
+          chartData.value[1] = {
+            ...chartData.value[1],
             value: res.count,
             percent: res.percent > 0 ? `+${res.percent}%` : `${res.percent}%`,
             data: getKeyList(results, "count", false)
-          });
+          };
         }
       })
       .catch(() => undefined);
@@ -124,15 +144,12 @@ export function useDashboard() {
       .then(res => {
         if (res.code === SUCCESS_CODE) {
           const results = res.results ?? [];
-          chartData.value.push({
-            icon: LoginLine,
-            tone: "primary",
-            duration: 2200,
-            name: t("welcome.loginTimes"),
+          chartData.value[2] = {
+            ...chartData.value[2],
             value: res.count,
             percent: res.percent > 0 ? `+${res.percent}%` : `${res.percent}%`,
             data: getKeyList(results, "count", false)
-          });
+          };
         }
       })
       .catch(() => undefined);
@@ -180,12 +197,14 @@ export function useDashboard() {
     getTodayOperateTotal();
     getUserActiveList();
     getUserRegisterList();
+    // 操作日志时间线与统计接口互不依赖：独立发起，不随 today-operate-total 的成败与耗时联动
+    if (hasAuth("list:SystemOperationLog")) {
+      getOperateLogList();
+    }
   });
 
   return {
     t,
-    loading,
-    dataList,
     chartData,
     optionsBasis,
     userLoginList,

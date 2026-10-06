@@ -56,14 +56,15 @@ const applyOptions = () => {
         realtime: true,
         start: 50,
         end: 100,
-        xAxisIndex: [0, 1]
+        // 仅一个 x 轴，引用不存在的轴下标会让缩放失效
+        xAxisIndex: 0
       },
       {
         type: "inside",
         realtime: true,
         start: 50,
         end: 100,
-        xAxisIndex: [0, 1]
+        xAxisIndex: 0
       }
     ],
     xAxis: [

@@ -23,6 +23,8 @@ import {
 const { t } = useI18n();
 const checked = ref(false);
 const configLoading = ref(false);
+/** 隐私政策弹窗：无独立路由，注册页内以对话框展示简要条款 */
+const privacyVisible = ref(false);
 const authInfo = ref({
   basic: false,
   access: false,
@@ -33,7 +35,6 @@ const formData = ref({
   username: "",
   password: "",
   repeatPassword: "",
-  target: "",
   form_type: "",
   verify_code: "",
   verify_token: undefined as string | undefined
@@ -182,7 +183,7 @@ onMounted(() => (configLoading.value = true));
           <el-checkbox v-model="checked">
             {{ t("login.readAccept") }}
           </el-checkbox>
-          <el-button link type="primary">
+          <el-button link type="primary" @click="privacyVisible = true">
             {{ t("login.privacyPolicy") }}
           </el-button>
         </el-form-item>
@@ -212,5 +213,21 @@ onMounted(() => (configLoading.value = true));
         </el-button>
       </el-form-item>
     </Motion>
+
+    <el-dialog
+      v-model="privacyVisible"
+      :title="t('login.privacyPolicy')"
+      width="480px"
+      append-to-body
+    >
+      <p class="text-sm/6 text-(--el-text-color-regular)">
+        {{ t("login.privacyPolicyBody") }}
+      </p>
+      <template #footer>
+        <el-button type="primary" @click="privacyVisible = false">
+          {{ t("login.definite") }}
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>

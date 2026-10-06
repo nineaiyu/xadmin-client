@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { getConfig } from "@/config";
+import { SITE_LINKS } from "@/config/site";
 
 const TITLE = getConfig("Title");
 </script>
@@ -7,11 +8,7 @@ const TITLE = getConfig("Title");
 <template>
   <footer class="layout-footer text-text_color_regular">
     Copyright © 2026-present
-    <a
-      class="hover:text-primary!"
-      href="https://github.com/nineaiyu"
-      target="_blank"
-    >
+    <a class="hover:text-primary!" :href="SITE_LINKS.author" target="_blank">
       &nbsp;{{ TITLE }}
     </a>
   </footer>

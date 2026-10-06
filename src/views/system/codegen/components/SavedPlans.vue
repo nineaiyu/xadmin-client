@@ -100,7 +100,15 @@ function notifyEmpty() {
         :key="plan.name"
         :value="plan.name"
         :label="plan.name"
-      />
+      >
+        <div class="flex-bc gap-2">
+          <span>{{ plan.name }}</span>
+          <!-- 方案仅存浏览器 localStorage（不落库），条目上明示，避免误解为服务端数据 -->
+          <el-tag size="small" type="info" class="shrink-0">
+            {{ t("codegen.planLocalDraft") }}
+          </el-tag>
+        </div>
+      </el-option>
     </el-select>
     <el-button size="small" @click="onSave">
       {{ t("codegen.planSave") }}

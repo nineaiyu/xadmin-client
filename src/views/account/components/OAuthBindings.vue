@@ -102,7 +102,8 @@ const bind = (provider: OAuthProvider) => {
     .bindAuthorize(provider.key)
     .then(res => {
       if (res.code === SUCCESS_CODE && res.data?.url) {
-        // 标记绑定意图（时间戳）：回调落地页据此在失败时给出「返回账户设置」出口
+        // 标记绑定意图（时间戳）：失败分支（后端错误响应/IdP error 回跳都不回传意图）
+        // 的出口按钮只能靠它区分「返回账户设置」；成功跳转以后端载荷为准，不读它
         sessionStorage.setItem(OAUTH_BIND_FLAG, String(Date.now()));
         window.location.href = String(res.data.url);
         return;

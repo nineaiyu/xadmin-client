@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
+import { goBackOrHome, hasInAppHistory } from "@/router/utils";
 import back from "@/assets/svg/back_top.svg?component";
 
 defineOptions({
@@ -9,13 +10,19 @@ defineOptions({
 
 const router = useRouter();
 const { t } = useI18n();
+/** 是否有站内上一页：决定返回落点与提示文案（直达进入时回首页，go(-1) 是无操作） */
+const canBack = hasInAppHistory(router);
 </script>
 
 <template>
   <div class="size-full text-center">
     <h1>{{ t("emptyPage.title") }}</h1>
     <p>{{ t("emptyPage.description") }}</p>
-    <div class="back" :title="t('emptyPage.back')" @click="router.go(-1)">
+    <div
+      class="back"
+      :title="canBack ? t('emptyPage.back') : t('error.goBack')"
+      @click="goBackOrHome(router)"
+    >
       <back class="size-20" />
     </div>
   </div>

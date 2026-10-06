@@ -179,9 +179,11 @@ async function handleDownload() {
     // http 层失败已统一提示，归一为 null：直接收尾，不触发下载
     const res = await systemCodeGenApi.download(payload).catch(() => null);
     if (!res) return;
+    // 文件名与后端 download 同口径：单模型 generated-{model}.zip（点转连字符）；
+    // 批量载荷无 model 字段，后端按其缺省值 codegen 命名
     const name =
       mode.value === "batch"
-        ? "generated-batch.zip"
+        ? "generated-codegen.zip"
         : `generated-${state.model.replace(".", "-")}.zip`;
     downloadByData(res.data, name);
     message(t("codegen.downloadStarted"), { type: "success" });
