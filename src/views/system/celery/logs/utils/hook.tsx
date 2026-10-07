@@ -54,10 +54,11 @@ const PRODUCT_TAG_TYPE: Record<string, "primary" | "success" | "warning"> = {
 export function useTaskExecution(tableRef?: Ref) {
   const api = reactive(taskExecutionApi);
   const auth = usePageAuth(["log"]);
-  // 取消 / 重跑走聚合端点，其权限点是另一个资源名（SystemTaskCenter），
-  // 不能靠 getDefaultAuths 的组件名推导，直接按权限点判定
-  const canCancel = hasAuth("cancel:SystemTaskCenter");
-  const canRerun = hasAuth("rerun:SystemTaskCenter");
+  // 取消 / 重跑走聚合端点（/api/system/tasks/unified/{cancel,rerun}），权限点
+  // 挂执行历史菜单下（menu-maintenance.md §6），不能靠 getDefaultAuths 的组件名
+  // 推导，直接按权限点判定
+  const canCancel = hasAuth("cancel:SystemTaskExecution");
+  const canRerun = hasAuth("rerun:SystemTaskExecution");
   const { t } = useI18n();
 
   const asRow = (row: unknown) => row as ExecutionRow;

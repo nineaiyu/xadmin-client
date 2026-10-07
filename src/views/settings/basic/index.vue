@@ -19,10 +19,11 @@ defineOptions({
 
 const { t } = useI18n();
 
-// 水印页签与基本页签共用同一份 auth：两者读写同一个 BasicSettingSerializer，
-// 按钮权限位（partialUpdate:SettingBasic / retrieve:SettingBasic）有意共用口径；
-// 独立权限位需后端权限种子变更，不在前端单方面拆分
+// 基本 / 水印两页签共用 BasicSettingSerializer，权限位已拆分：水印页签独立判权
+// （retrieve/partialUpdate:SettingWatermark，与 SettingBasic 同端点、仅授权粒度
+// 拆分，见 menu-maintenance.md §6）；水印单独授权/回收不影响基本页签
 const basicAuth = settingAuth("SettingBasic");
+const watermarkAuth = settingAuth("SettingWatermark");
 
 /** 水印配置随保存即时生效：命中水印字段时刷新当前会话的水印状态（无需重新登录/刷新页面） */
 const onSaved = async (values: FieldValues) => {
@@ -63,9 +64,9 @@ const settingData = computed<Array<settingItemProps>>(() => [
   }
 ]);
 
-/** 水印设置页签：实时预览 + 水印字段（独立页签，保存即时生效） */
+/** 水印设置页签：独立权限位 + 实时预览，保存即时生效 */
 const watermarkItem: settingItemProps = {
-  auth: basicAuth,
+  auth: watermarkAuth,
   api: settingsBasicApi,
   localeName: "settingWatermark",
   fields: watermarkFields,
