@@ -105,26 +105,47 @@ export function useChat() {
 
   // ------------------------------------------------------------------ 发送
 
+  /**
+   * WS 上行（失败收口）：仅判 socket 存在不够——连接未就绪/重连竞态下
+   * send 可能抛错或报文无声丢失。断连或异常时把乐观行标记失败并复用
+   * 断连提示，交给用户手动重发（resend 沿用原 client_msg_id 幂等）。
+   */
+  function sendChatFrame(
+    payload: Record<string, unknown>,
+    clientMsgId?: string
+  ): boolean {
+    if (!socket.value || !connected.value) {
+      if (clientMsgId) markFailed(clientMsgId);
+      message(t("chat.disconnected"), { type: "warning" });
+      return false;
+    }
+    try {
+      socket.value.send(JSON.stringify(payload));
+      return true;
+    } catch (error) {
+      if (clientMsgId) markFailed(clientMsgId);
+      message(t("chat.disconnected"), { type: "warning" });
+      console.warn("[chat] ws send failed:", error);
+      return false;
+    }
+  }
+
   function send(content: string) {
     const text = content.trim();
     if (!text || !activeRoomId.value) return;
     const clientMsgId = genClientMsgId();
     pushText(text, clientMsgId);
     scrollToBottom();
-    if (!socket.value) {
-      markFailed(clientMsgId);
-      message(t("chat.disconnected"), { type: "warning" });
-      return;
-    }
-    socket.value.send(
-      JSON.stringify({
+    sendChatFrame(
+      {
         action: MessageAction.CHAT_MESSAGE,
         data: {
           room_id: activeRoomId.value,
           content: text,
           client_msg_id: clientMsgId
         }
-      })
+      },
+      clientMsgId
     );
   }
 
@@ -187,8 +208,10 @@ export function useChat() {
       payload.message_type = item.message_type;
       payload.file_pk = filePk;
     }
-    socket.value?.send(
-      JSON.stringify({ action: MessageAction.CHAT_MESSAGE, data: payload })
+    // 上行失败由 sendChatFrame 收口：行重新标记 failed，保留重发入口
+    sendChatFrame(
+      { action: MessageAction.CHAT_MESSAGE, data: payload },
+      item.client_msg_id
     );
   }
 

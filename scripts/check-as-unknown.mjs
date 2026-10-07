@@ -89,7 +89,6 @@ const BASELINE = {
   "src/views/system/menu/utils/useMenuFilter.spec.ts": 1,
   "src/views/system/permission/components/RuleFieldPicker.vue": 1,
   "src/views/system/permission/components/ScopeSelect.vue": 1,
-  "src/views/system/permission/components/useTrialPanel.ts": 1,
   "src/views/system/user/utils/__tests__/userActions.spec.ts": 1
 };
 

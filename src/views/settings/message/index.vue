@@ -7,6 +7,7 @@ import Setting from "@/views/settings/components/settings/index.vue";
 import { systemMsgSubscriptionApi } from "@/api/system/notifications";
 import MessageNotifications from "@/views/system/components/MessageNotifications.vue";
 import MessageTemplatePanel from "./components/MessageTemplatePanel.vue";
+import { settingAuth } from "@/views/settings/utils/settingAuth";
 import { useI18n } from "vue-i18n";
 
 defineOptions({
@@ -52,21 +53,13 @@ const imChannelTabs: Array<{
 
 const settingData = computed<Array<settingItemProps>>(() => [
   {
-    auth: {
-      partialUpdate: hasAuth("partialUpdate:EmailServerSetting"),
-      retrieve: hasAuth("retrieve:EmailServerSetting"),
-      test: hasAuth("create:EmailServerSetting")
-    },
+    auth: settingAuth("EmailServerSetting", true),
     api: settingsEmailApi,
     localeName: "settingMessage",
     title: "mailTitle"
   },
   ...imChannelTabs.map(item => ({
-    auth: {
-      partialUpdate: hasAuth("partialUpdate:ImNotifySetting"),
-      retrieve: hasAuth("retrieve:ImNotifySetting"),
-      test: hasAuth("create:ImNotifySetting")
-    },
+    auth: settingAuth("ImNotifySetting", true),
     api: settingsNotifyImApi,
     localeName: "settingMessage",
     title: item.title,

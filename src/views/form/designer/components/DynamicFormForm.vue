@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { approvalFlowApi } from "@/api/approval/approvalFlow";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
+import { fetchAllRows } from "@/utils/fetchAllRows";
 import type {
   DynamicFormItem,
   FormField,
@@ -66,8 +67,9 @@ const linkages = ref<FormLinkage[]>(
 /** 可绑定的审批流程（无流程管理权限时降级为空选项，不阻断表单定义） */
 const flowOptions = ref<{ pk: string; name: string }[]>([]);
 onMounted(() => {
-  approvalFlowApi
-    .list({ is_active: true, page: 1, size: 100 })
+  // 全量拉取（逐页循环）：固定 size 会在流程数超过接口分页上限时静默截断；
+  // 翻页失败由 fetchAllRows 抛出，走同一 catch 降级为空选项
+  fetchAllRows(approvalFlowApi.list, { is_active: true })
     .then(res => {
       flowOptions.value = (
         (res?.data?.results ?? []) as {

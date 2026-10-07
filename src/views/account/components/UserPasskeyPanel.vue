@@ -75,7 +75,7 @@ const register = async () => {
     const credential = (await navigator.credentials.create({
       publicKey: {
         challenge: b64urlToBuffer(data.challenge),
-        rp: { id: data.rp_id, name: "xadmin" },
+        rp: { id: data.rp_id, name: data.rp_name || data.rp_id },
         user: {
           id: b64urlToBuffer(data.user_id),
           name: data.username,

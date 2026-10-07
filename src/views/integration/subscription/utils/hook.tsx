@@ -42,6 +42,10 @@ export function useWebhookSubscription(tableRef: Ref) {
     const res = await webhookSubscriptionApi.events().catch(() => null);
     if (res?.code === SUCCESS_CODE) {
       events.value = (res.data as never as WebhookEvent[]) ?? [];
+    } else {
+      // 目录失败降级为原始 key 展示（eventLabel 兜底），但需一次性可读提示——
+      // 静默会让事件列整列退化为裸标识而无从解释
+      message(t("webhook.eventsLoadFailed"), { type: "warning" });
     }
   });
 

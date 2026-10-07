@@ -59,6 +59,37 @@ const RISK_TYPE_KEYS: Record<string, string> = {
   superuser_count: "accountRisk.typeSuperuserCount"
 };
 
+/** 风险明细指标键 → i18n label（后端 detail 的量化字段；未知键回退原键名） */
+const METRIC_LABEL_KEYS: Record<string, string> = {
+  days: "accountRisk.metricDays",
+  count: "accountRisk.metricCount",
+  threshold: "accountRisk.metricThreshold",
+  date_password_updated: "accountRisk.metricPasswordUpdatedAt"
+};
+
+/**
+ * 风险明细的指标条目：metrics 子对象优先；后端当前为平铺结构
+ * （量化字段与 description/suggestion 同级），回退取 detail 除去
+ * 已单独渲染的说明/建议后的其余键。
+ */
+export function metricEntriesOf(detail: RecordType): Array<[string, unknown]> {
+  const metrics = detail.metrics;
+  if (metrics && typeof metrics === "object") {
+    return Object.entries(metrics as RecordType);
+  }
+  return Object.entries(detail).filter(
+    ([key]) =>
+      key !== "description" && key !== "suggestion" && key !== "metrics"
+  );
+}
+
+/** 指标值统一文本化：标量直出，复合值 JSON 序列化（避免 [object Object]） */
+export function metricText(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "-";
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+}
+
 /** 统计面板的等级 / 状态展示顺序（后端字典值之外的 key 追加在后） */
 const LEVEL_ORDER = ["high", "medium", "low"];
 const STATUS_ORDER = ["pending", "resolved", "ignored"];
@@ -73,7 +104,7 @@ const STATUS_LABEL_KEYS: Record<string, string> = {
   ignored: "accountRisk.statusIgnored"
 };
 
-export function useAccountRisk(tableRef: Ref) {
+export function useAccountRisk(tableRef: Ref, selectedRows: Ref<RecordType[]>) {
   const { t } = useI18n();
 
   const api = reactive(accountRiskApi);
@@ -272,8 +303,17 @@ export function useAccountRisk(tableRef: Ref) {
             h(ElDescriptionsItem, { label: t("accountRisk.suggestion") }, () =>
               String(detail.suggestion ?? "-")
             ),
-            h(ElDescriptionsItem, { label: t("accountRisk.metrics") }, () =>
-              JSON.stringify(detail.metrics ?? {}, null, 2)
+            // 量化指标逐键结构化展示（键名走 i18n，未知键回退原键）
+            ...metricEntriesOf(detail).map(([key, value]) =>
+              h(
+                ElDescriptionsItem,
+                {
+                  label: METRIC_LABEL_KEYS[key]
+                    ? t(METRIC_LABEL_KEYS[key])
+                    : key
+                },
+                () => metricText(value)
+              )
             )
           ])
         ])
@@ -295,6 +335,13 @@ export function useAccountRisk(tableRef: Ref) {
     });
   };
 
+  /** 批量处置按钮显隐：由 selection-change 驱动的响应式选中态决定（点击时仍以
+   * getSelectPks 实时取 pk，两处口径一致）；每行渲染回调查询选中数会随表格
+   * 重渲染反复执行，收敛为 computed 后只在选择变化时重算 */
+  const canBatchHandle = computed(() =>
+    Boolean(auth.batchHandle && selectedRows.value.length)
+  );
+
   const tableBarButtonsProps = shallowRef<OperationProps>({
     buttons: [
       {
@@ -313,8 +360,7 @@ export function useAccountRisk(tableRef: Ref) {
           if (!pks.length) return;
           handleDialog(pks);
         },
-        show: () =>
-          Boolean(auth.batchHandle && tableRef.value?.getSelectPks?.()?.length)
+        show: canBatchHandle
       }
     ]
   });

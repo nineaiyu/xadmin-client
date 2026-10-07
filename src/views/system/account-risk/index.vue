@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { ref } from "vue";
+import type { RecordType } from "plus-pro-components";
 import { useAccountRisk } from "./utils/hook";
 import StatsPanel from "./components/StatsPanel.vue";
 
@@ -8,6 +9,11 @@ defineOptions({
 });
 
 const tableRef = ref();
+/** 多选行（selection-change 驱动）：批量处置按钮的响应式显隐依据 */
+const selectedRows = ref<RecordType[]>([]);
+const onSelectionChange = (rows: RecordType[]) => {
+  selectedRows.value = rows;
+};
 
 const {
   api,
@@ -16,7 +22,7 @@ const {
   tableBarButtonsProps,
   operationButtonsProps,
   listColumnsFormat
-} = useAccountRisk(tableRef);
+} = useAccountRisk(tableRef, selectedRows);
 </script>
 
 <template>
@@ -32,6 +38,7 @@ const {
       :tableBarButtonsProps="tableBarButtonsProps"
       :operationButtonsProps="operationButtonsProps"
       :listColumnsFormat="listColumnsFormat"
+      @selectionChange="onSelectionChange"
     />
   </div>
 </template>

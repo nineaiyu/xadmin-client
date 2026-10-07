@@ -24,7 +24,8 @@ export function useCardDialog({
 
   function newCard(): DashboardCard {
     return {
-      id: `card-${Date.now()}`,
+      // 随机 UUID 防撞：毫秒时间戳在快速连建卡片时会重复，后端布局仅要求 id 非空
+      id: crypto.randomUUID(),
       dataset: "",
       title: "",
       chart_type: "number",

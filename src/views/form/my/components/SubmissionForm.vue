@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import { useDebounceFn } from "@vueuse/core";
 import UploadFiles from "@/components/RePlusPage/src/components/UploadFiles.vue";
 import { getDictItems, type DictItem } from "@/utils/dict";
 import {
@@ -80,22 +81,32 @@ watch(
   { immediate: true }
 );
 
-/** 明细子表：新增一行（按列定义初始化空值） */
-const rowsOf = (field: FormField): Record<string, unknown>[] => {
-  if (!Array.isArray(formData[field.key])) {
+// 明细子表行数组在渲染前初始化（渲染路径只读，不在渲染期写 formData）：
+// 被联动隐藏又恢复的字段其行数组可能被清理，新增行时按需重建后写回
+for (const field of schemaFields.value) {
+  if (field.type === "table" && !Array.isArray(formData[field.key])) {
     formData[field.key] = [];
   }
-  return formData[field.key] as Record<string, unknown>[];
+}
+
+/** 明细子表行数组（只读视图：不存在时返回临时空数组，不写入 formData） */
+const rowsOf = (field: FormField): Record<string, unknown>[] => {
+  const rows = formData[field.key];
+  return Array.isArray(rows) ? rows : [];
 };
 
 const addRow = (field: FormField) => {
   const row: Record<string, unknown> = {};
   for (const column of field.columns ?? []) row[column.key] = "";
-  rowsOf(field).push(row);
+  const rows = rowsOf(field);
+  rows.push(row);
+  formData[field.key] = rows;
 };
 
 const removeRow = (field: FormField, index: number) => {
-  rowsOf(field).splice(index, 1);
+  const rows = rowsOf(field);
+  rows.splice(index, 1);
+  formData[field.key] = rows;
 };
 
 /** 选人控件候选缓存：key → 候选列表（远程搜索与编辑回显共用） */
@@ -104,7 +115,8 @@ const userOptionsOf = (field: FormField) => userOptionCache[field.key] ?? [];
 const userLabel = (user: FormUserOption) =>
   user.nickname ? `${user.username}-${user.nickname}` : user.username;
 
-const searchUsers = (field: FormField, keyword: string) => {
+/** 选人远程搜索（300ms 防抖）：避免逐键打请求；空关键字立即清空候选 */
+const searchUsers = useDebounceFn((field: FormField, keyword: string) => {
   const value = (keyword ?? "").trim();
   if (!value) {
     userOptionCache[field.key] = [];
@@ -118,7 +130,7 @@ const searchUsers = (field: FormField, keyword: string) => {
     .catch(() => {
       userOptionCache[field.key] = [];
     });
-};
+}, 300);
 
 /** 编辑既有提交：按主键批量回显已选用户（避免无边界的通讯录枚举） */
 const loadPickedUsers = () => {
@@ -171,9 +183,14 @@ const optionEntries = (
 const loadDictOptions = () => {
   for (const field of schemaFields.value) {
     if (!field.dict) continue;
-    getDictItems(field.dict).then(items => {
-      dictItemCache[field.key] = items;
-    });
+    getDictItems(field.dict)
+      .then(items => {
+        dictItemCache[field.key] = items;
+      })
+      .catch(() => {
+        // 字典项拉取失败：占位提示由 dictPlaceholder 按"字典为空"口径给出
+        dictItemCache[field.key] = [];
+      });
   }
 };
 onMounted(loadDictOptions);

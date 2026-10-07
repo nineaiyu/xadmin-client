@@ -98,7 +98,8 @@ export function useLoginPolicy(tableRef: Ref) {
         code: "preview",
         props: { type: "info", plain: true, icon: useRenderIcon(Search) },
         onClick: () => openPreview(),
-        show: Boolean(auth.preview)
+        // 与「新增」入口同口径：函数式求值（布尔快照在权限表就绪前求值会失真）
+        show: () => auth.preview
       }
     ]
   });

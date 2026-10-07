@@ -176,7 +176,10 @@ accountRisk:
   action: 处置动作
   remark: 处置备注
   suggestion: 处理建议
-  metrics: 指标
+  metricDays: 距今天数
+  metricCount: 当前数量
+  metricThreshold: 阈值
+  metricPasswordUpdatedAt: 密码更新时间
   actionNotify: 发送提醒
   actionForcePassword: 强制改密
   actionForceLogout: 强制下线
@@ -915,6 +918,7 @@ approval:
   modeAND: 会签
   andProgress: 已通过 {done}/{total}
   actedUsers: 处理记录
+  progressLoadFailed: 审批进度加载失败，请稍后重试
 
 approvalRule:
   createTitle: 新增审批规则
@@ -1736,6 +1740,8 @@ systemMenu:
     removeCount: "将删除 { count } 个节点"
     cascade: "「{ title }」下的 { count } 个子节点会一并进入回收站"
     impactUnavailable: 影响面预检不可用（不阻断删除，请自行确认引用）
+    impactItem: "{ label }：{ count }"
+    impactSamples: "（{ samples }）"
     recycleHint: 删除的菜单可在「回收站」中成组恢复。
     unsavedTitle: 未保存的修改
     unsaved: 当前菜单有未保存的修改，确定要放弃吗？
@@ -2240,7 +2246,7 @@ settingSecurity:
   register: 注册安全配置
   resetPassword: 重置密码配置
   passwordRule: 密码规则配置
-  bingEmail: 绑定邮箱配置
+  bindEmail: 绑定邮箱配置
   bindPhone: 绑定手机配置
   mfa: MFA 二次验证配置
   monitor: 资源告警
@@ -2732,6 +2738,7 @@ dashboard:
   share: 分享
   shareCopied: 仪表盘链接已复制
 dataDataset:
+  previewFailed: 预览执行失败，请检查数据集配置或稍后重试
   title: 数据集
   create: 新建数据集
   edit: 编辑
@@ -2779,6 +2786,7 @@ dataDataset:
   aggregateEmpty: 设置聚合方式后点「聚合」查看结果
 
 dataScreen:
+  dashboardHidden: 不可见仪表盘
   designer: 设计
   designerTitle: 大屏画布设计器
   pickScreenFirst: 请先从大屏列表进入设计器
@@ -2883,6 +2891,7 @@ dataScreen:
   close: 关闭
 
 dataReport:
+  datasetUnavailable: 关联数据集不可见或已删除，无法编辑取数配置
   designer: 设计报表
   pickReportFirst: 请先从报表列表进入设计器
   loadFailed: 报表加载失败
@@ -3024,6 +3033,7 @@ webhook:
   secretRequired: 新建订阅必须设置签名密钥
   saveOk: 保存成功
   testDispatched: 测试事件已派发
+  eventsLoadFailed: 事件目录加载失败，事件列将显示原始标识
   statusFilter: 状态
   stSuccess: 成功
   stFailed: 失败
@@ -3055,6 +3065,7 @@ ai:
   emptyMessages: 还没有与{name}的对话，开始提问吧
   persistHint: 对话与操作记录已保存在服务端，刷新后可回看
   partialHint: 回答未完成
+  streamInterrupted: 回答流已中断，已保留部分内容
   resultRows: "共 {count} 条，显示前 {shown} 条"
   resultName: 指标
   resultValue: 值
@@ -3217,6 +3228,7 @@ aiConfig:
   actions: 操作
 
 dform:
+  detailFallback: 详情加载失败，当前展示列表数据
   noApprovalNeeded: 无需审批
   designerTitle: 表单设计
   fillTitle: 可填表单

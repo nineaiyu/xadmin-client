@@ -9,6 +9,7 @@ import {
   formatPageColumns
 } from "@/components/RePlusPage";
 import { statusTagProps } from "@/utils/dict";
+import { message } from "@/utils/message";
 import { refreshApprovalBadge } from "@/utils/approvalBadge";
 import { refreshApprovalStats } from "@/utils/approvalStats";
 import type { RecordType } from "plus-pro-components";
@@ -68,17 +69,26 @@ export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
   /** 审批进度弹窗（内容渲染见 utils/dialogs.tsx）：先取详情里的 steps + 目标快照再打开 */
   const openProgress = (row?: RecordType) => {
     if (!row?.pk) return;
-    approvalApi.retrieve?.(row.pk)?.then(res => {
-      if (res.code !== SUCCESS_CODE || !res.data) return;
-      const detail = res.data as RecordType;
-      openApprovalProgressDialog({
-        t,
-        no: String(row.pk).slice(0, 8).toUpperCase(),
-        steps: (detail.steps ?? []) as Array<RecordType>,
-        // 目标对象变更对照（敏感操作审批的目标快照；缺失时弹窗跳过该区块）
-        snapshot: (detail.target_snapshot ?? null) as TargetSnapshot | null
+    // 详情拉取失败（网络异常或业务码非成功）显式提示，不再静默无响应
+    approvalApi
+      .retrieve?.(row.pk)
+      ?.then(res => {
+        if (res.code !== SUCCESS_CODE || !res.data) {
+          message(t("approval.progressLoadFailed"), { type: "warning" });
+          return;
+        }
+        const detail = res.data as RecordType;
+        openApprovalProgressDialog({
+          t,
+          no: String(row.pk).slice(0, 8).toUpperCase(),
+          steps: (detail.steps ?? []) as Array<RecordType>,
+          // 目标对象变更对照（敏感操作审批的目标快照；缺失时弹窗跳过该区块）
+          snapshot: (detail.target_snapshot ?? null) as TargetSnapshot | null
+        });
+      })
+      .catch(() => {
+        message(t("approval.progressLoadFailed"), { type: "warning" });
       });
-    });
   };
 
   /** 状态列：字典驱动（approval_status）颜色/文案，字典未配置回退页面 i18n */

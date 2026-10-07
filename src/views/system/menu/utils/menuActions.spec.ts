@@ -1,7 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { MenuChoices } from "@/views/system/constants";
-import { buildNodeActions, type MenuActionContext } from "./menuActions";
+import { useConfirm } from "@/hooks/useConfirm";
+import {
+  buildNodeActions,
+  confirmMenuDelete,
+  type MenuActionContext
+} from "./menuActions";
 import { normalizeMenuRow } from "./normalize";
 import type { MenuAuths, MenuRow } from "./types";
 
@@ -11,7 +16,13 @@ vi.mock("@/plugins/i18n", () => ({
 
 vi.mock("@/utils/message", () => ({ message: vi.fn() }));
 
-const t = ((key: string) => key) as unknown as MenuActionContext["t"];
+// 确认框内容以 vnode 传给 useConfirm，单测捕获后断言其文本
+vi.mock("@/hooks/useConfirm", () => ({ useConfirm: vi.fn() }));
+
+const t = ((key: string, params?: Record<string, unknown>) =>
+  params
+    ? `${key}:${JSON.stringify(params)}`
+    : key) as unknown as MenuActionContext["t"];
 
 const context = (auth: MenuAuths): MenuActionContext => ({
   t,
@@ -115,5 +126,69 @@ describe("buildNodeActions", () => {
     expect(ctx.move).toHaveBeenCalledWith(target, "up");
     actions.find(item => item.code === "delete")?.run();
     expect(ctx.remove).toHaveBeenCalledWith(target);
+  });
+});
+
+// ---------------------------------------------------------------- 删除确认
+
+type VNodeLike = {
+  children?: unknown;
+  type?: unknown;
+};
+
+/** 递归提取 vnode 树的文本（本处内容只含普通元素与字符串） */
+function vnodeText(node: unknown): string {
+  if (node == null || typeof node === "boolean") return "";
+  if (typeof node === "string" || typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(vnodeText).join("");
+  const vnode = node as VNodeLike;
+  return vnodeText(vnode.children);
+}
+
+describe("confirmMenuDelete", () => {
+  it("影响面明细走 i18n 模板（label/count 与 samples 各自成词条）", async () => {
+    const captured: unknown[] = [];
+    vi.mocked(useConfirm).mockImplementation(() => async content => {
+      captured.push(content);
+      return true;
+    });
+    const api = {
+      baseApi: "/api/system/menu",
+      request: vi.fn().mockResolvedValue({
+        data: {
+          results: [
+            {
+              pk: "r-1",
+              name: "角色A",
+              has_impact: true,
+              items: [
+                {
+                  key: "role",
+                  label: "角色",
+                  count: 2,
+                  samples: ["管理员", "审计员"]
+                },
+                { key: "user", label: "用户", count: 0 }
+              ]
+            }
+          ],
+          totals: [],
+          has_impact: true
+        }
+      })
+    };
+    const confirmed = await confirmMenuDelete(api, [row(MenuChoices.MENU)], t);
+    expect(confirmed).toBe(true);
+    const text = vnodeText(captured[0]);
+    expect(text).toContain(
+      'systemMenu.confirm.impactItem:{"label":"角色","count":2}'
+    );
+    expect(text).toContain(
+      'systemMenu.confirm.impactSamples:{"samples":"管理员、审计员"}'
+    );
+    // 计数为 0 的影响项照常渲染（节点级显隐由后端 has_impact 控制）
+    expect(text).toContain(
+      'systemMenu.confirm.impactItem:{"label":"用户","count":0}'
+    );
   });
 });

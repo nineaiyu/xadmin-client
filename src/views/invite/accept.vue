@@ -2,8 +2,14 @@
 import { computed, onMounted, reactive, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { inviteAcceptApi, inviteValidateApi } from "@/api/auth";
+import {
+  inviteAcceptApi,
+  inviteValidateApi,
+  rulesPasswordApi
+} from "@/api/auth";
+import type { PasswordRule } from "@/api/auth";
 import { SUCCESS_CODE } from "@/api/types";
+import { passwordRulesCheck } from "@/utils";
 import { message } from "@/utils/message";
 
 defineOptions({
@@ -18,12 +24,20 @@ const token = computed(() => String(route.query.token ?? ""));
 const state = ref<"loading" | "pending" | "accepted" | "invalid">("loading");
 const form = reactive({ password: "", confirm: "" });
 const submitting = ref(false);
+/** 后端下发的密码安全规则（匿名端点），提交前做与注册/改密同口径的预检 */
+const passwordRules = ref<PasswordRule[]>([]);
 
 onMounted(async () => {
   if (!token.value) {
     state.value = "invalid";
     return;
   }
+  // 规则拉取与令牌预检相互独立：规则失败不阻塞激活流程（后端仍是最终校验方）
+  rulesPasswordApi()
+    .then(res => {
+      passwordRules.value = res?.data?.password_rules ?? [];
+    })
+    .catch(() => undefined);
   const res = await inviteValidateApi({ token: token.value }).catch(() => null);
   const next = res?.data?.state;
   state.value =
@@ -41,6 +55,16 @@ async function submit() {
   }
   if (form.password !== form.confirm) {
     message(t("invite.mismatch"), { type: "warning" });
+    return;
+  }
+  // 与注册/改密同源的密码规则预检：不合规在本地提前拦截，减少无效往返
+  const { result, msg } = passwordRulesCheck(
+    form.password,
+    passwordRules.value,
+    t
+  );
+  if (!result) {
+    message(msg, { type: "warning" });
     return;
   }
   submitting.value = true;

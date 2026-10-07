@@ -121,7 +121,7 @@ export function useTrialPanel(props: TrialPanelProps) {
         model: model.value,
         menu: menuContext.value ? menuContext.value : null,
         draft: {
-          rules: props.rules as unknown as Array<Record<string, unknown>>,
+          rules: props.rules,
           mode_type: effectiveMode.value,
           // 表单绑定的菜单一并带入：草稿只在对应上下文生效（与保存后一致）
           menu: boundMenuPks.value.length ? boundMenuPks.value : null

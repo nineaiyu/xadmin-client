@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useSaveShortcut } from "@/hooks/useSaveShortcut";
 import { SUCCESS_CODE } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { message } from "@/utils/message";
@@ -54,6 +55,8 @@ const canRun = hasAuth("run:DataReport");
 
 const report = ref<ReportItem | null>(null);
 const dataset = ref<DatasetItem | null>(null);
+/** 数据集不可见/已删除：进入显式空态（报表绑定的数据集对当前用户无可见行） */
+const datasetMissing = ref(false);
 const design = ref<ReportDesign>({
   columns: [],
   table_limit: REPORT_TABLE_LIMIT.default,
@@ -68,6 +71,15 @@ const loading = ref(true);
 /** 只读态：非创建者记录后端会拒绝一切写入（含「立即运行」），前端进入即置只读，
  *  属 UX 层守卫——写权威始终在后端，详情接口未返回 is_owner 时按可编辑放行 */
 const readonly = computed(() => report.value?.is_owner === false);
+
+/** 保存/运行禁用态的悬浮说明：数据集不可见优先于只读提示 */
+const disabledTitle = computed(() =>
+  datasetMissing.value
+    ? t("dataReport.datasetUnavailable")
+    : readonly.value
+      ? t("dataReport.readonlyHint")
+      : undefined
+);
 
 const tableRef = ref<InstanceType<typeof ReportTablePreview>>();
 const cardRefs = ref<Record<string, { loadData?: () => void } | null>>({});
@@ -135,6 +147,12 @@ onMounted(async () => {
     listRows<DatasetItem>((await fetchAllRows(datasetApi.list)) as never).find(
       item => item.pk === datasetPk
     ) ?? null;
+  // 数据集对当前用户不可见（personal/已删除）→ 显式降级：提示 + 禁保存/运行，
+  // 侧栏与组件卡不以空数据集取数（明细表预览对空 pk 自身即跳过）
+  if (!dataset.value) {
+    datasetMissing.value = true;
+    message(t("dataReport.datasetUnavailable"), { type: "error" });
+  }
   design.value = {
     columns: [...(report.value.design?.columns ?? [])],
     table_limit: designTableLimit(report.value.design),
@@ -143,12 +161,10 @@ onMounted(async () => {
     }))
   };
   loading.value = false;
-  window.addEventListener("keydown", onKeydown);
   window.addEventListener("beforeunload", onBeforeUnload);
 });
 
 onBeforeUnmount(() => {
-  window.removeEventListener("keydown", onKeydown);
   window.removeEventListener("beforeunload", onBeforeUnload);
 });
 
@@ -159,7 +175,8 @@ const refreshData = () => {
 
 /* ---------------- 保存 / 返回 ---------------- */
 async function save() {
-  if (!report.value || saving.value || readonly.value) return;
+  if (!report.value || saving.value || readonly.value || datasetMissing.value)
+    return;
   if (columns.value.length === 0) {
     message(t("dataReport.columnsRequired"), { type: "warning" });
     return;
@@ -195,7 +212,8 @@ async function save() {
 /** 立即运行：按已保存的设计投递执行（未保存改动先提示，避免产出与所见不一致） */
 const running = ref(false);
 async function runNow() {
-  if (!report.value || running.value || readonly.value) return;
+  if (!report.value || running.value || readonly.value || datasetMissing.value)
+    return;
   if (dirty.value) {
     message(t("dataReport.runDirty"), { type: "warning" });
     return;
@@ -232,12 +250,8 @@ onBeforeRouteLeave(async () => {
   });
 });
 
-function onKeydown(event: KeyboardEvent) {
-  const mod = event.ctrlKey || event.metaKey;
-  if (!mod || event.key.toLowerCase() !== "s") return;
-  event.preventDefault();
-  void save();
-}
+// Ctrl/Cmd+S 保存（与大屏设计器共用 composable；页面守卫在 save 内收敛）
+useSaveShortcut(() => void save());
 
 const back = () => {
   router.push("/analysis/report/index");
@@ -286,8 +300,8 @@ const back = () => {
         type="success"
         size="small"
         :loading="running"
-        :disabled="readonly"
-        :title="readonly ? t('dataReport.readonlyHint') : undefined"
+        :disabled="readonly || datasetMissing"
+        :title="disabledTitle"
         data-testid="designer-run"
         @click="runNow"
       >
@@ -297,8 +311,8 @@ const back = () => {
         type="primary"
         size="small"
         :loading="saving"
-        :disabled="readonly"
-        :title="readonly ? t('dataReport.readonlyHint') : undefined"
+        :disabled="readonly || datasetMissing"
+        :title="disabledTitle"
         data-testid="designer-save"
         @click="save"
       >
@@ -308,7 +322,7 @@ const back = () => {
 
     <div class="designer-body">
       <ReportDesignSidebar
-        v-if="!preview && !readonly"
+        v-if="!preview && !readonly && !datasetMissing"
         :dataset="dataset"
         :columns="columns"
         :table-limit="tableLimit"
@@ -319,45 +333,54 @@ const back = () => {
       />
 
       <main class="designer-canvas" data-testid="designer-canvas">
-        <ReportTablePreview
-          ref="tableRef"
-          :dataset-pk="dataset?.pk ?? ''"
-          :columns="columns"
-          :limit="tableLimit"
-        />
-
-        <div v-if="components.length" class="designer-components">
-          <section
-            v-for="component in components"
-            :key="component.id"
-            class="designer-component"
-            :class="{
-              'is-wide': (component.span ?? 12) === 12,
-              'is-selected': component.id === selectedId
-            }"
-            :data-component-id="component.id"
-            :data-component-type="component.type"
-            @click="!preview && (selectedId = component.id)"
-          >
-            <div class="designer-component__title">
-              {{ componentTitle(component) }}
-              <el-tag v-if="preview === false" size="small" effect="plain">
-                {{ component.group_by || t("dataReport.metricOnly") }}
-              </el-tag>
-            </div>
-            <div class="designer-component__body">
-              <ChartCard
-                :ref="setCardRef(component.id)"
-                :card="componentCard(component)"
-              />
-            </div>
-          </section>
-        </div>
+        <!-- 数据集不可见/已删除：显式空态，组件卡不再以空数据集取数 -->
         <el-empty
-          v-else
-          :description="t('dataReport.noComponent')"
+          v-if="datasetMissing"
+          data-testid="designer-dataset-missing"
+          :description="t('dataReport.datasetUnavailable')"
           :image-size="72"
         />
+        <template v-else>
+          <ReportTablePreview
+            ref="tableRef"
+            :dataset-pk="dataset?.pk ?? ''"
+            :columns="columns"
+            :limit="tableLimit"
+          />
+
+          <div v-if="components.length" class="designer-components">
+            <section
+              v-for="component in components"
+              :key="component.id"
+              class="designer-component"
+              :class="{
+                'is-wide': (component.span ?? 12) === 12,
+                'is-selected': component.id === selectedId
+              }"
+              :data-component-id="component.id"
+              :data-component-type="component.type"
+              @click="!preview && (selectedId = component.id)"
+            >
+              <div class="designer-component__title">
+                {{ componentTitle(component) }}
+                <el-tag v-if="preview === false" size="small" effect="plain">
+                  {{ component.group_by || t("dataReport.metricOnly") }}
+                </el-tag>
+              </div>
+              <div class="designer-component__body">
+                <ChartCard
+                  :ref="setCardRef(component.id)"
+                  :card="componentCard(component)"
+                />
+              </div>
+            </section>
+          </div>
+          <el-empty
+            v-else
+            :description="t('dataReport.noComponent')"
+            :image-size="72"
+          />
+        </template>
       </main>
 
       <aside v-if="!preview && !readonly" class="designer-inspector">

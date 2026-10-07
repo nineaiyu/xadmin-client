@@ -176,7 +176,10 @@ accountRisk:
   action: Action
   remark: Remark
   suggestion: Suggestion
-  metrics: Metrics
+  metricDays: Days
+  metricCount: Count
+  metricThreshold: Threshold
+  metricPasswordUpdatedAt: Password Updated At
   actionNotify: Send Notification
   actionForcePassword: Force Password Change
   actionForceLogout: Force Logout
@@ -915,6 +918,7 @@ approval:
   modeAND: All must approve
   andProgress: "Approved {done}/{total}"
   actedUsers: Action records
+  progressLoadFailed: Failed to load approval progress, please try again later
 
 approvalRule:
   createTitle: New Approval Rule
@@ -1736,6 +1740,8 @@ systemMenu:
     removeCount: "{ count } node(s) will be deleted"
     cascade: "{ count } child node(s) under { title } will be moved to the recycle bin as well"
     impactUnavailable: Impact preview is unavailable (deletion is not blocked, please confirm references manually)
+    impactItem: "{ label }: { count }"
+    impactSamples: " ({ samples })"
     recycleHint: Deleted menus can be restored as a group from the recycle bin.
     unsavedTitle: Unsaved changes
     unsaved: This menu has unsaved changes. Discard them?
@@ -2240,7 +2246,7 @@ settingSecurity:
   register: Register Safe
   resetPassword: Reset Password
   passwordRule: Password Rules
-  bingEmail: Bind Email
+  bindEmail: Bind Email
   bindPhone: Bind Phone
   mfa: MFA Verification Settings
   monitor: Resource Alert
@@ -2732,6 +2738,7 @@ dashboard:
   share: Share
   shareCopied: Dashboard link copied
 dataDataset:
+  previewFailed: Preview failed. Check the dataset configuration or retry later
   title: Datasets
   create: New Dataset
   edit: Edit
@@ -2779,6 +2786,7 @@ dataDataset:
   aggregateEmpty: Set aggregation and click "Aggregate" to preview
 
 dataScreen:
+  dashboardHidden: Invisible dashboard
   designer: Design
   designerTitle: Screen canvas designer
   pickScreenFirst: Open the designer from a screen row
@@ -2883,6 +2891,7 @@ dataScreen:
   close: Close
 
 dataReport:
+  datasetUnavailable: The linked dataset is invisible or deleted; data config is read-only
   designer: Design report
   pickReportFirst: Open the designer from a report row
   loadFailed: Failed to load the report
@@ -3024,6 +3033,7 @@ webhook:
   secretRequired: A signing secret is required when creating a subscription
   saveOk: Saved
   testDispatched: Test event dispatched
+  eventsLoadFailed: Failed to load the event catalog; raw keys will be shown
   statusFilter: Status
   stSuccess: Success
   stFailed: Failed
@@ -3055,6 +3065,7 @@ ai:
   emptyMessages: No conversation with {name} yet, start asking
   persistHint: Conversations and operation records are stored on the server
   partialHint: Answer incomplete
+  streamInterrupted: Answer stream interrupted; partial content retained
   resultRows: "{count} rows in total, showing first {shown}"
   resultName: Metric
   resultValue: Value
@@ -3218,6 +3229,7 @@ aiConfig:
   actions: Actions
 
 dform:
+  detailFallback: Failed to load details, showing list data instead
   noApprovalNeeded: No approval required
   designerTitle: Form Design
   fillTitle: Available Forms

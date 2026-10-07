@@ -16,6 +16,7 @@ import { computed, ref } from "vue";
 import { hasAuth } from "@/router/utils";
 import Setting from "@/views/settings/components/settings/index.vue";
 import { settingItemProps } from "@/views/settings/components/settings/types";
+import { settingAuth } from "@/views/settings/utils/settingAuth";
 
 import { useI18n } from "vue-i18n";
 
@@ -25,91 +26,61 @@ defineOptions({
 
 const settingData = computed<Array<settingItemProps>>(() => [
   {
-    auth: {
-      partialUpdate: hasAuth("partialUpdate:SecurityVerifyCode"),
-      retrieve: hasAuth("retrieve:SecurityVerifyCode")
-    },
+    auth: settingAuth("SecurityVerifyCode"),
     api: settingsVerifyCodeApi,
     localeName: "settingSecurity",
     title: "code"
   },
   {
-    auth: {
-      partialUpdate: hasAuth("partialUpdate:SecurityCaptchaCode"),
-      retrieve: hasAuth("retrieve:SecurityCaptchaCode")
-    },
+    auth: settingAuth("SecurityCaptchaCode"),
     api: settingsCaptchaApi,
     localeName: "settingSecurity",
     title: "captcha"
   },
   {
-    auth: {
-      partialUpdate: hasAuth("partialUpdate:SecurityLoginAuth"),
-      retrieve: hasAuth("retrieve:SecurityLoginAuth")
-    },
+    auth: settingAuth("SecurityLoginAuth"),
     api: settingsLoginAuthApi,
     localeName: "settingSecurity",
     title: "login"
   },
   {
-    auth: {
-      partialUpdate: hasAuth("partialUpdate:SecurityLoginLimit"),
-      retrieve: hasAuth("retrieve:SecurityLoginLimit")
-    },
+    auth: settingAuth("SecurityLoginLimit"),
     api: settingsLoginLimitApi,
     localeName: "settingSecurity",
     title: "limit"
   },
   {
-    auth: {
-      partialUpdate: hasAuth("partialUpdate:SecurityMFA"),
-      retrieve: hasAuth("retrieve:SecurityMFA")
-    },
+    auth: settingAuth("SecurityMFA"),
     api: settingsMfaApi,
     localeName: "settingSecurity",
     title: "mfa"
   },
   {
-    auth: {
-      partialUpdate: hasAuth("partialUpdate:SecurityRegisterAuth"),
-      retrieve: hasAuth("retrieve:SecurityRegisterAuth")
-    },
+    auth: settingAuth("SecurityRegisterAuth"),
     api: settingsRegisterAuthApi,
     localeName: "settingSecurity",
     title: "register"
   },
   {
-    auth: {
-      partialUpdate: hasAuth("partialUpdate:SecurityResetPasswordAuth"),
-      retrieve: hasAuth("retrieve:SecurityResetPasswordAuth")
-    },
+    auth: settingAuth("SecurityResetPasswordAuth"),
     api: settingsResetPasswordCodeApi,
     localeName: "settingSecurity",
     title: "resetPassword"
   },
   {
-    auth: {
-      partialUpdate: hasAuth("partialUpdate:SecurityPasswordRule"),
-      retrieve: hasAuth("retrieve:SecurityPasswordRule")
-    },
+    auth: settingAuth("SecurityPasswordRule"),
     api: settingsPasswordApi,
     localeName: "settingSecurity",
     title: "passwordRule"
   },
   {
-    auth: {
-      partialUpdate: hasAuth("partialUpdate:SecurityBindEmailAuth"),
-      retrieve: hasAuth("retrieve:SecurityBindEmailAuth")
-    },
+    auth: settingAuth("SecurityBindEmailAuth"),
     api: settingsBindEmailApi,
     localeName: "settingSecurity",
-    title: "bingEmail"
+    title: "bindEmail"
   },
   {
-    auth: {
-      partialUpdate: hasAuth("partialUpdate:SecurityBindPhoneAuth"),
-      retrieve: hasAuth("retrieve:SecurityBindPhoneAuth")
-    },
+    auth: settingAuth("SecurityBindPhoneAuth"),
     api: settingsBindPhoneApi,
     localeName: "settingSecurity",
     title: "bindPhone"

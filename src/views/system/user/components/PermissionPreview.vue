@@ -6,6 +6,7 @@ import { userApi } from "@/api/system/user";
 import type { UserPreviewResult } from "@/api/types/permission-preview";
 import { hasAuth } from "@/router/utils";
 import {
+  PreviewDescriptions,
   PreviewMenuTree,
   usePermissionPreview
 } from "@/components/RePermissionPreview";
@@ -62,12 +63,7 @@ const filteredApiPermissions = computed(() => {
   <div v-loading="loading">
     <template v-if="data">
       <!-- 基本信息 -->
-      <el-descriptions
-        :title="t('permissionPreview.basicInfo')"
-        :column="3"
-        border
-        size="small"
-      >
+      <PreviewDescriptions :title="t('permissionPreview.basicInfo')">
         <el-descriptions-item :label="t('systemUser.username')">
           {{ data.user.username }}
         </el-descriptions-item>
@@ -100,7 +96,7 @@ const filteredApiPermissions = computed(() => {
           </el-tag>
           <span v-if="!data.user.roles.length">-</span>
         </el-descriptions-item>
-      </el-descriptions>
+      </PreviewDescriptions>
 
       <el-collapse
         class="mt-3"

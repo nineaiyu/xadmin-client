@@ -74,6 +74,10 @@ const keepField = (key: string) =>
 const getData = () => {
   if (props.auth.retrieve) {
     loading.value = true;
+    // 首载并行：列元数据与当前配置同时发起（原先在列回调里串行补发 retrieve，
+    // 两段 RTT 叠加拖慢首屏）；retrieve 异常归一为 null——网络层失败已有统一
+    // 提示，此处不重复弹错，表单按列默认值兜底渲染
+    const retrieveRes = props.api.retrieve(props.queryParams).catch(() => null);
     getColumnData(
       props.api.columns,
       undefined,
@@ -92,10 +96,9 @@ const getData = () => {
           (_value, key) => keepField(key)
         );
 
-        props.api
-          .retrieve(props.queryParams)
+        retrieveRes
           .then(res => {
-            if (res.code === SUCCESS_CODE) {
+            if (res && res.code === SUCCESS_CODE) {
               addOrEditData.value.formData = pickBy(res.data, (_value, key) =>
                 keepField(key)
               );

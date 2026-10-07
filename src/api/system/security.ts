@@ -117,6 +117,8 @@ export const loginPolicyApi = new LoginPolicyApi("/api/system/login-policies");
 export type PasskeyChallenge = {
   challenge: string;
   rp_id: string;
+  /** relying party 展示名：后端按部署配置下发，缺失时回落 rp_id */
+  rp_name?: string;
   user_id: string;
   username: string;
   display_name: string;

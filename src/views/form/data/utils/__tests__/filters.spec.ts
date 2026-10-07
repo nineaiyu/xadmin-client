@@ -33,13 +33,16 @@ describe("可筛选字段面", () => {
         options: [{ value: "zj", label: "浙江" }],
         filterable: true
       }),
+      // 公式字段在后端可筛选白名单内：筛选栏按文本输入控件渲染
+      field({ key: "total", type: "formula", filterable: true }),
       field({ key: "files", type: "upload", filterable: true }) // 类型不可筛选
     ];
     expect(filterableFieldsOf(fields).map(item => item.key)).toEqual([
       "name",
       "level",
       "owner",
-      "region"
+      "region",
+      "total"
     ]);
   });
 });

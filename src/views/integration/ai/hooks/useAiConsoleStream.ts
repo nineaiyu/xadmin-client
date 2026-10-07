@@ -157,8 +157,22 @@ export function useAiConsoleStream({
     else askAction(content);
   }
 
-  /** 中断进行中的流（切入口/卸载时）：已到达增量随 streaming 复位丢弃 */
+  /** 中断进行中的流（手动停止 / 切入口 / 卸载）。服务端对已到达增量按 partial
+   * 落库（刷新后从历史可见同一份内容），本地同步把已累计内容固化为一条带
+   * 「已中断」标记的助手消息，避免复位 streaming 时把已上屏增量凭空丢掉。 */
   function abortStream() {
+    const partial = streaming.value;
+    if (partial && (partial.content || partial.reasoning)) {
+      upsertMessage({
+        id: -Date.now(),
+        feature: partial.feature,
+        role: "assistant",
+        content: partial.content,
+        reasoning: partial.reasoning,
+        extra: { partial: t("ai.streamInterrupted") },
+        created_time: new Date().toISOString()
+      });
+    }
     streamAbort?.abort();
     streamAbort = null;
     streaming.value = null;

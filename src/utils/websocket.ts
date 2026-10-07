@@ -277,16 +277,44 @@ class WS {
     if (!this.socket) return;
     // 状态为 `1-开启状态` 直接发送
     if (this.socket.readyState === this.socket.OPEN) {
-      this.socket.send(data);
+      this.safeSend(data);
       return;
     }
     // `0-连接中`：等连接就绪后延后发送；`2/3-关闭中/已关闭`：先触发重连再延后发送
     if (this.socket.readyState !== this.socket.CONNECTING) {
       this.connect();
     }
-    this.delay = setTimeout(() => {
+    this.delay = setTimeout(() => this.deferredSend(data), timeout);
+  }
+
+  /**
+   * 延后发送：重连后 socket 已换新实例且未必就绪——OPEN 才发，CONNECTING
+   * 再等一轮（至多顺延一次），仍不可用则放弃并告警。原实现到点盲发，
+   * 连接未就绪时浏览器层抛 InvalidStateError 且报文无声丢失。
+   */
+  private deferredSend(
+    data: string | Blob | BufferSource,
+    retried = false
+  ): void {
+    const state = this.socket?.readyState;
+    if (state === WebSocket.OPEN) {
+      this.safeSend(data);
+      return;
+    }
+    if (state === WebSocket.CONNECTING && !retried) {
+      this.delay = setTimeout(() => this.deferredSend(data, true), timeout);
+      return;
+    }
+    console.warn("[ws] deferred send dropped: socket not open", state);
+  }
+
+  /** 发送兜底：CLOSING/CLOSED 竞态下浏览器抛错，不能变成 uncaught */
+  private safeSend(data: string | Blob | BufferSource): void {
+    try {
       this.socket?.send(data);
-    }, timeout);
+    } catch (error) {
+      console.warn("[ws] send failed:", error);
+    }
   }
 }
 

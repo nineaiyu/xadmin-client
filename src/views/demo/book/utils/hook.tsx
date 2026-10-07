@@ -68,7 +68,7 @@ export function useDemoBook(tableRef: Ref) {
           loading.value = true;
           handleOperation({
             t,
-            apiReq: api.submit(row?.pk ?? row?.id),
+            apiReq: api.submit(row?.pk),
             success() {
               tableRef.value.handleGetData();
             },
@@ -96,7 +96,7 @@ export function useDemoBook(tableRef: Ref) {
           loading.value = true;
           handleOperation({
             t,
-            apiReq: api.push(row?.pk ?? row?.id),
+            apiReq: api.push(row?.pk),
             success() {
               tableRef.value.handleGetData();
             },

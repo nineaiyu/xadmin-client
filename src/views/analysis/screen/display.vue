@@ -163,7 +163,11 @@ const toggleFullscreen = () => {
   if (document.fullscreenElement) {
     void document.exitFullscreen();
   } else {
-    void document.documentElement.requestFullscreen?.();
+    // 浏览器策略拒绝（非用户手势触发 / 已有全屏方等）是常态：静默吞掉，
+    // 避免控制台 unhandled rejection；投屏页保持当前渲染即可
+    void Promise.resolve(document.documentElement.requestFullscreen?.()).catch(
+      () => undefined
+    );
   }
 };
 

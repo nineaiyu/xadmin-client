@@ -4,7 +4,9 @@ import { useI18n } from "vue-i18n";
 import { deptApi } from "@/api/system/dept";
 import type { DeptPreviewResult } from "@/api/types/permission-preview";
 import {
+  PreviewDescriptions,
   PreviewMenuTree,
+  PreviewStatusTag,
   PreviewUsersTable,
   usePermissionPreview
 } from "@/components/RePermissionPreview";
@@ -31,12 +33,7 @@ const { loading, data } = usePermissionPreview<DeptPreviewResult>(
   <div v-loading="loading">
     <template v-if="data">
       <!-- 部门信息 -->
-      <el-descriptions
-        :title="t('permissionPreview.deptInfo')"
-        :column="3"
-        border
-        size="small"
-      >
+      <PreviewDescriptions :title="t('permissionPreview.deptInfo')">
         <el-descriptions-item :label="t('systemDept.name')">
           {{ data.dept.name }}
         </el-descriptions-item>
@@ -44,13 +41,7 @@ const { loading, data } = usePermissionPreview<DeptPreviewResult>(
           {{ data.dept.code }}
         </el-descriptions-item>
         <el-descriptions-item :label="t('permissionPreview.status')">
-          <el-tag :type="data.dept.is_active ? 'success' : 'info'" size="small">
-            {{
-              data.dept.is_active
-                ? t("permissionPreview.enabled")
-                : t("permissionPreview.disabled")
-            }}
-          </el-tag>
+          <PreviewStatusTag :active="data.dept.is_active" />
         </el-descriptions-item>
         <el-descriptions-item :label="t('permissionPreview.deptParent')">
           {{ data.dept.parent?.name || "-" }}
@@ -64,7 +55,7 @@ const { loading, data } = usePermissionPreview<DeptPreviewResult>(
         <el-descriptions-item :label="t('permissionPreview.deptChildren')">
           {{ data.dept.active_child_count }} / {{ data.dept.child_count }}
         </el-descriptions-item>
-      </el-descriptions>
+      </PreviewDescriptions>
 
       <el-alert
         v-for="note in data.notes"

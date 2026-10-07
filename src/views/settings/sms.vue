@@ -8,6 +8,7 @@ import { computed, onMounted, ref } from "vue";
 import { hasAuth } from "@/router/utils";
 import { settingItemProps } from "@/views/settings/components/settings/types";
 import Setting from "@/views/settings/components/settings/index.vue";
+import { settingAuth } from "@/views/settings/utils/settingAuth";
 import type { RecordType } from "plus-pro-components";
 
 defineOptions({
@@ -21,10 +22,7 @@ const settingData = computed<Array<settingItemProps>>(
   () =>
     [
       {
-        auth: {
-          partialUpdate: hasAuth("partialUpdate:SmsSetting"),
-          retrieve: hasAuth("retrieve:SmsSetting")
-        },
+        auth: settingAuth("SmsSetting"),
         api: settingsSmsServerApi,
         localeName: "settingSms"
       },
@@ -41,11 +39,7 @@ onMounted(() => {
           smsBackends.value = [];
           res.data.forEach((item: RecordType) => {
             smsBackends.value.push({
-              auth: {
-                partialUpdate: hasAuth("partialUpdate:SmsConfig"),
-                retrieve: hasAuth("retrieve:SmsConfig"),
-                test: hasAuth("create:SmsConfig")
-              },
+              auth: settingAuth("SmsConfig", true),
               api: settingsSmsConfigApi,
               queryParams: { category: item.value },
               localeName: "settingSms",

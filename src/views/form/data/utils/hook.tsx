@@ -1,9 +1,10 @@
-import { h, reactive, ref, shallowRef, watch } from "vue";
+import { h, onScopeDispose, reactive, ref, shallowRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { SUCCESS_CODE } from "@/api/types";
 import { addDrawer } from "@/components/ReDrawer";
 import type { OperationProps } from "@/components/RePlusPage";
 import { usePageAuth } from "@/router/utils";
+import { message } from "@/utils/message";
 import { formDataApi, type FormDataItem } from "@/api/dataset/dform";
 import SubmissionDetail from "../../components/SubmissionDetail.vue";
 import {
@@ -37,6 +38,16 @@ export function useFormData() {
   const tableRef = ref();
 
   const api = reactive(formDataApi);
+  // 单例 api 携带 form/filterData/dataFields 跨页面挂载存活：进入页面即收敛
+  // 为空，防止上一实例的筛选/列参数泄漏进本实例首屏请求（卸载时同样重置兜底，
+  // 覆盖"请求在途时离开页面"的残留）；页面存活期间由下方 watch 维护取值
+  const resetPageParams = () => {
+    formDataApi.form = "";
+    formDataApi.filterData = "";
+    formDataApi.dataFields = "";
+  };
+  resetPageParams();
+  onScopeDispose(resetPageParams);
   const auth = usePageAuth(["exportData", "exportAsync", "formOptions"]);
   // 管理端只读：关闭框架默认的新增 / 编辑 / 删除入口
   auth.create = false;
@@ -93,6 +104,10 @@ export function useFormData() {
   /** 详情抽屉：先取详情（列表契约不含 schema 快照 / 审批轨迹），失败回落行数据 */
   const openDetail = async (row: FormDataItem) => {
     const res = await formDataApi.retrieve(row.pk).catch(() => null);
+    if (res?.code !== SUCCESS_CODE) {
+      // 回落列表行数据（无 schema 快照 / 审批轨迹）：显式提示，不静默降级
+      message(t("dform.detailFallback"), { type: "info" });
+    }
     const detail =
       res?.code === SUCCESS_CODE ? (res.data as unknown as FormDataItem) : row;
     addDrawer({

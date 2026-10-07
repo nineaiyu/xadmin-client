@@ -6,7 +6,7 @@ import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { listRows } from "@/api/base";
-import { searchUserApi } from "@/api/system/search";
+import { approvalRuleApi } from "@/api/approval/approvalRule";
 import { roleApi } from "@/api/system/role";
 import { postApi } from "@/api/system/post";
 import {
@@ -26,10 +26,12 @@ const { t } = useI18n();
 
 /* ---------------- 审批人选择器（避免裸文本输错用户名/角色码） ---------------- */
 
-/** 始终提供可查询下拉（用户远程搜索 / 角色下拉），搜索无结果时允许直接输入兜底 */
+/** 始终提供可查询下拉（用户候选目录本地过滤 / 角色下拉），搜索无结果时允许直接输入兜底 */
 
 const userOptions = ref<Array<{ username: string; label: string }>>([]);
 const userLoading = ref(false);
+/** 审批模块自给候选目录：单次拉取 + 本地过滤，不依赖可独立裁剪的全局搜索模块 */
+const allUserCandidates = ref<Array<{ username: string; label: string }>>([]);
 const roleOptions = ref<Array<{ name: string; code: string }>>([]);
 /** 岗位下拉（值=岗位 code）：仅启用岗位可选，停用岗位后端不参与解析 */
 const postOptions = ref<Array<{ name: string; code: string }>>([]);
@@ -60,33 +62,22 @@ function ensureUserOption(username: string) {
   }
 }
 
-async function searchUsers(query: string) {
-  if (!query) return;
+function searchUsers(query: string) {
   userLoading.value = true;
   try {
-    const res = await searchUserApi.list({
-      page: 1,
-      size: 20,
-      username: query
-    });
-    if (res.code === SUCCESS_CODE && res.data) {
-      const rows = listRows<{ username: string; nickname?: string }>(
-        res as never
-      );
-      const fetched = rows.map(user => ({
-        username: user.username,
-        label: user.nickname
-          ? `${user.nickname}(${user.username})`
-          : user.username
-      }));
-      const fetchedNames = new Set(fetched.map(item => item.username));
-      userOptions.value = [
-        ...fetched,
-        ...userOptions.value.filter(item => !fetchedNames.has(item.username))
-      ];
-    }
-  } catch {
-    // 搜索失败保持已选选项，不打断编辑
+    const keyword = query.trim().toLowerCase();
+    const matched = keyword
+      ? allUserCandidates.value.filter(
+          item =>
+            item.username.toLowerCase().includes(keyword) ||
+            item.label.toLowerCase().includes(keyword)
+        )
+      : allUserCandidates.value;
+    const matchedNames = new Set(matched.map(item => item.username));
+    userOptions.value = [
+      ...matched,
+      ...userOptions.value.filter(item => !matchedNames.has(item.username))
+    ];
   } finally {
     userLoading.value = false;
   }
@@ -104,6 +95,22 @@ onMounted(async () => {
       code: string;
       is_active?: boolean;
     }>(postRes as never).filter(post => post.is_active !== false);
+  }
+  const candidateRes = await approvalRuleApi
+    .candidateOptions()
+    .catch(() => null);
+  if (candidateRes && candidateRes.code === SUCCESS_CODE && candidateRes.data) {
+    allUserCandidates.value = (
+      (candidateRes.data.users ?? []) as Array<{
+        username: string;
+        nickname?: string;
+      }>
+    ).map(user => ({
+      username: user.username,
+      label: user.nickname
+        ? `${user.nickname}(${user.username})`
+        : user.username
+    }));
   }
 });
 

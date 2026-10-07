@@ -12,6 +12,10 @@ import type { Ref } from "vue";
  * 自 useFormData 拆出（行为不变）：列表数据到达后收集用户 pk 批量请求
  * （不枚举通讯录），pk → 展示名缓存供列渲染与筛选回显共用。
  */
+
+/** 单次回显主键数上限：与后端 user_options 的 MAX_USER_OPTIONS 对齐 */
+const USER_OPTIONS_BATCH_SIZE = 20;
+
 export function useFormDataUserLabels({
   schemaFields,
   tableRef
@@ -26,11 +30,16 @@ export function useFormDataUserLabels({
     const pks = collectUserPks(rows, schemaFields.value);
     const missing = pks.filter(pk => !userLabels[String(pk)]);
     if (!missing.length) return;
-    const res = await formDataApi
-      .userOptions({ pks: missing })
-      .catch(() => null);
-    for (const user of res?.data ?? []) {
-      userLabels[String(user.pk)] = userLabelText(user);
+    // 超过单次上限时按批拆分（顺序请求，结果合并不受影响）；单批失败
+    // 归一为 null 跳过该批，不阻断其余批次的回显
+    for (let i = 0; i < missing.length; i += USER_OPTIONS_BATCH_SIZE) {
+      const batch = missing.slice(i, i + USER_OPTIONS_BATCH_SIZE);
+      const res = await formDataApi
+        .userOptions({ pks: batch })
+        .catch(() => null);
+      for (const user of res?.data ?? []) {
+        userLabels[String(user.pk)] = userLabelText(user);
+      }
     }
   };
 

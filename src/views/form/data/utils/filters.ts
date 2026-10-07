@@ -25,7 +25,9 @@ export const FILTER_UI_TYPES: FormFieldType[] = [
   "date",
   "switch",
   "user",
-  "cascader"
+  "cascader",
+  // 公式字段后端物化为文本型筛选列（FILTERABLE_TYPES 允许），筛选栏按文本输入渲染
+  "formula"
 ];
 
 const OPTIONED_TYPES: FormFieldType[] = ["select", "radio", "checkbox"];

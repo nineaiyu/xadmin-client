@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useColumns } from "./columns";
 import { PlusDescriptions } from "plus-pro-components";
@@ -22,35 +21,12 @@ const devSchema: schemaItem[] = [];
 
 const { columns } = useColumns();
 
-const words = [
-  "@pureadmin/descriptions",
-  "@pureadmin/table",
-  "@pureadmin/utils",
-  "@vueuse/core",
-  "axios",
-  "dayjs",
-  "echarts",
-  "vue",
-  "element-plus",
-  "pinia",
-  "vue-i18n",
-  "vue-router",
-  "@iconify/vue",
-  "@vitejs/plugin-vue",
-  "@vitejs/plugin-vue-jsx",
-  "eslint",
-  "prettier",
-  "sass",
-  "stylelint",
-  "tailwindcss",
-  "typescript",
-  "vite",
-  "vue-tsc"
-];
+/** 主依赖高亮 = 生产依赖键集：构建期随 package.json 派生，不再手维护名单 */
+const mainLabels = new Set(Object.keys(dependencies));
 
-const getMainLabel = computed(
-  () => (label: string) => words.find(w => w === label) && "main-label"
-);
+/** 命中主依赖集合时返回高亮类名（普通函数：入参即全部依赖，无响应式状态） */
+const getMainLabel = (label: string) =>
+  mainLabels.has(label) ? "main-label" : "";
 
 Object.keys(dependencies).forEach(key => {
   schema.push({ field: dependencies[key], label: key });

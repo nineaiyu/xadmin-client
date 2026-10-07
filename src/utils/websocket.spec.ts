@@ -177,25 +177,58 @@ describe("WS 重连策略", () => {
     }
   });
 
-  it("send：CONNECTING 延后发送；CLOSED 先重连再延后发送到新连接", async () => {
+  it("send：OPEN 直接发送；延后发送到点先复查 readyState，不盲发", async () => {
     vi.useFakeTimers();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     try {
       const { ws, instances } = makeWS();
-      // CONNECTING：延后 3s 发送
+      // CONNECTING：延后 3s，到点仍未就绪 → 不发，再等一轮；期间连接建立 → 6s 发出
       ws.send("first");
       expect(instances[0].sent).toHaveLength(0);
       await vi.advanceTimersByTimeAsync(3000);
+      expect(instances[0].sent).toHaveLength(0);
+      instances[0].open();
+      await vi.advanceTimersByTimeAsync(3000);
       expect(instances[0].sent).toEqual(["first"]);
+      expect(warn).not.toHaveBeenCalled();
 
-      // CLOSED：先建新连接，延后发送落在新连接上
+      // 顺延一轮后仍未就绪：放弃发送并告警（连接可能还在退避重连中）
       instances[0].readyState = FakeWebSocket.CLOSED;
       ws.send("second");
       expect(instances).toHaveLength(2);
+      await vi.advanceTimersByTimeAsync(6000);
       expect(instances[1].sent).toHaveLength(0);
+      expect(warn).toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
+  it("send：CLOSED 先重连，新连接就绪后延后发送落到新连接", async () => {
+    vi.useFakeTimers();
+    try {
+      const { ws, instances } = makeWS();
+      instances[0].open();
+      instances[0].drop();
+      ws.send("second");
+      expect(instances).toHaveLength(2);
+      expect(instances[1].sent).toHaveLength(0);
+      // 新连接在复查到点前建立：报文落在新连接上
+      instances[1].open();
       await vi.advanceTimersByTimeAsync(3000);
       expect(instances[1].sent).toEqual(["second"]);
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("send：OPEN 态浏览器层抛错被兜住不冒泡", () => {
+    const { ws, instances } = makeWS();
+    instances[0].open();
+    vi.spyOn(instances[0], "send").mockImplementation(() => {
+      throw new Error("InvalidStateError");
+    });
+    expect(() => ws.send("boom")).not.toThrow();
   });
 });

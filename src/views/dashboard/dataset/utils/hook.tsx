@@ -14,7 +14,6 @@ import { useRouter } from "vue-router";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { hasAuth, usePageAuth } from "@/router/utils";
-import { formatDateTime } from "@/utils";
 import { message } from "@/utils/message";
 import { choiceValue, statusTagProps, type StatusTagType } from "@/utils/dict";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
@@ -25,6 +24,7 @@ import {
   type DatasetMeta
 } from "@/api/dataset/datasets";
 import DatasetForm from "../components/DatasetForm.vue";
+import { escapeCsvCell, formatPreviewCell } from "./csv";
 
 /** 可见性兜底配色（字典未接入时的本地映射） */
 const VISIBILITY_TAG: Record<string, StatusTagType> = {
@@ -177,46 +177,43 @@ export function useDataset(tableRef: Ref) {
     }
   };
 
-  const openPreview = async (row: DatasetItem) => {
+  /** 预览取数：行内「预览」按钮经 onClick 上下文注入 loading（按钮自旋） */
+  const openPreview = async (
+    row: DatasetItem,
+    loading?: { value: boolean }
+  ) => {
     previewRow.value = row;
     previewMode.value = "rows";
     aggregateResult.value = null;
     aggregateForm.group_by = row.columns[0] ?? "";
     aggregateForm.value_field = "";
-    // http 层失败已统一提示，归一为 null：预览弹窗不打开
-    const res = await datasetApi.execute(row.pk).catch(() => null);
-    if (res?.code === SUCCESS_CODE) {
-      preview.value = res.data as never;
-      previewDialog.value = true;
-    } else if (res?.detail) {
-      message(String(res.detail), { type: "warning" });
+    if (loading) loading.value = true;
+    try {
+      // http 层失败已统一提示，归一为 null：预览弹窗不打开
+      const res = await datasetApi.execute(row.pk).catch(() => null);
+      if (res?.code === SUCCESS_CODE) {
+        preview.value = res.data as never;
+        previewDialog.value = true;
+      } else if (res) {
+        // 业务失败（HTTP 层失败已由拦截器提示）：显式归一提示
+        message(String(res.detail || t("dataDataset.previewFailed")), {
+          type: "warning"
+        });
+      }
+    } finally {
+      if (loading) loading.value = false;
     }
   };
 
-  /**
-   * 预览单元格展示口径（表格与 CSV 导出共用，保证"所见即所得"）：
-   *
-   * - 行数据来自后端 `values()`，JSON 字段是对象、时间字段是 ISO 原文，
-   *   直接进表格会渲染成 `[object Object]` 与 `2026-09-22T13:07:31.030781Z`；
-   * - 对象/数组序列化为 JSON；ISO 8601 时间转本地可读格式（微秒先截到毫秒再解析）。
-   */
-  const formatPreviewCell = (value: unknown): string => {
-    if (value === null || value === undefined) return "";
-    if (typeof value === "object") return JSON.stringify(value);
-    return formatDateTime(value);
-  };
+  // 预览单元格展示口径（表格与 CSV 导出共用，保证"所见即所得"）——见 ./csv.ts
 
   /** 预览结果导出 CSV（前端生成，字段权限已在执行侧收敛，导出的即所见行） */
   const exportPreviewCsv = () => {
     if (!preview.value) return;
     const { columns, rows } = preview.value;
-    const escape = (value: unknown) => {
-      const text = formatPreviewCell(value);
-      return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-    };
     const lines = [
-      columns.map(escape).join(","),
-      ...rows.map(row => columns.map(col => escape(row[col])).join(","))
+      columns.map(escapeCsvCell).join(","),
+      ...rows.map(row => columns.map(col => escapeCsvCell(row[col])).join(","))
     ];
     downloadCsv(lines, `dataset-preview-${Date.now()}.csv`);
   };
@@ -225,16 +222,12 @@ export function useDataset(tableRef: Ref) {
   const exportAggregateCsv = () => {
     const result = aggregateResult.value;
     if (!result) return;
-    const escape = (value: unknown) => {
-      const text = formatPreviewCell(value);
-      return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-    };
     const lines = [
       [t("dataDataset.groupName"), t("dataDataset.metricValue")]
-        .map(escape)
+        .map(escapeCsvCell)
         .join(","),
       ...result.series.map(item =>
-        [escape(item.name), escape(item.value)].join(",")
+        [escapeCsvCell(item.name), escapeCsvCell(item.value)].join(",")
       )
     ];
     downloadCsv(lines, `dataset-aggregate-${Date.now()}.csv`);
@@ -303,7 +296,8 @@ export function useDataset(tableRef: Ref) {
         text: t("dataDataset.preview"),
         code: "preview",
         props: { type: "success", link: true },
-        onClick: ({ row }) => openPreview(row as DatasetItem),
+        // 按钮级 loading：取数期间自旋，避免"点击无反馈"
+        onClick: ({ row, loading }) => openPreview(row as DatasetItem, loading),
         show: canExecute && 10
       },
       {

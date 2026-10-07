@@ -14,6 +14,8 @@ export type McpToolSnapshot = {
   input_schema?: Record<string, unknown>;
   /**发生过尺寸截断标记 */
   schema_truncated?: boolean;
+  /** 服务端在列表序列化时计算的调用准入标记（启用 + 白名单）；旧后端无此键 */
+  callable?: boolean;
 };
 
 export type McpServerItem = {

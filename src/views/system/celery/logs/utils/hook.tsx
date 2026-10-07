@@ -8,6 +8,8 @@ import {
   taskExecutionApi,
   type TaskCenterKind
 } from "@/api/system/task";
+import { exportRecordApi } from "@/api/system/export";
+import { importRecordApi } from "@/api/system/import";
 import { hasAuth, usePageAuth } from "@/router/utils";
 import { statusTagProps } from "@/utils/dict";
 import { message } from "@/utils/message";
@@ -106,10 +108,15 @@ export function useTaskExecution(tableRef?: Ref) {
     }
   };
 
-  /** 产物下载：导出 / 导入记录各自端点（与下载中心同一链路） */
-  const download = (row: ExecutionRow) => {
-    const prefix = row.product_type === "import" ? "imports" : "exports";
-    window.open(`/api/system/${prefix}/${row.pk}/download`, "_blank");
+  /** 产物下载：导出 / 导入记录各自端点（与下载中心同一 http 链路，失败走拦截器归一提示） */
+  const download = async (row: ExecutionRow) => {
+    const api =
+      row.product_type === "import" ? importRecordApi : exportRecordApi;
+    try {
+      await api.download(row.pk ?? row.id ?? "");
+    } catch {
+      // 失败提示由 http 拦截器统一处理，这里只吞掉 rejection
+    }
   };
 
   const operationButtonsProps = shallowRef<OperationProps>({

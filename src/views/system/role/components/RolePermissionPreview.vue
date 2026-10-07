@@ -4,7 +4,9 @@ import { useI18n } from "vue-i18n";
 import { roleApi } from "@/api/system/role";
 import type { RolePreviewResult } from "@/api/types/permission-preview";
 import {
+  PreviewDescriptions,
   PreviewMenuTree,
+  PreviewStatusTag,
   PreviewUsersTable,
   usePermissionPreview
 } from "@/components/RePermissionPreview";
@@ -30,7 +32,7 @@ const { loading, data } = usePermissionPreview<RolePreviewResult>(
 <template>
   <div v-loading="loading">
     <template v-if="data">
-      <el-descriptions :column="3" border size="small">
+      <PreviewDescriptions>
         <el-descriptions-item :label="t('systemRole.name')">
           {{ data.role.name }}
         </el-descriptions-item>
@@ -38,15 +40,9 @@ const { loading, data } = usePermissionPreview<RolePreviewResult>(
           {{ data.role.code }}
         </el-descriptions-item>
         <el-descriptions-item :label="t('permissionPreview.status')">
-          <el-tag :type="data.role.is_active ? 'success' : 'info'" size="small">
-            {{
-              data.role.is_active
-                ? t("permissionPreview.enabled")
-                : t("permissionPreview.disabled")
-            }}
-          </el-tag>
+          <PreviewStatusTag :active="data.role.is_active" />
         </el-descriptions-item>
-      </el-descriptions>
+      </PreviewDescriptions>
 
       <el-collapse class="mt-3" :model-value="['menu', 'field', 'users']">
         <el-collapse-item :title="t('permissionPreview.roleMenus')" name="menu">

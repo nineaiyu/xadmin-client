@@ -6,6 +6,7 @@ import { clearDictCache } from "@/utils/dict";
 import {
   formatPageColumns,
   handleOperation,
+  type OperationButtonsRow,
   type OperationProps,
   type PageTableColumn,
   type RePlusPageProps
@@ -92,6 +93,42 @@ export function useDataDict(tableRef: Ref) {
     ]
   });
 
+  /** 批量启停按钮工厂：启用/停用仅差布尔参数、文案与配色，取数与回执链路共用一份 */
+  const batchActiveButton = (
+    active: boolean,
+    index: number
+  ): OperationButtonsRow => ({
+    text: t(active ? "dataDict.batchActive" : "dataDict.batchInactive"),
+    code: active ? "batchActive" : "batchInactive",
+    confirm: {
+      title: t(
+        active ? "dataDict.batchActiveConfirm" : "dataDict.batchInactiveConfirm"
+      )
+    },
+    props: {
+      type: active ? "success" : "warning",
+      icon: useRenderIcon(active ? CircleCheck : CircleClose),
+      plain: true
+    },
+    onClick: ({ loading }) => {
+      const pks = getSelectedPks();
+      if (!pks) return;
+      loading.value = true;
+      handleOperation({
+        t,
+        apiReq: api.batchActive(pks, active),
+        success() {
+          refresh();
+        },
+        requestEnd() {
+          loading.value = false;
+        }
+      });
+    },
+    show: auth.batchActive,
+    index
+  });
+
   /** 工具栏：新增（覆盖内建 create，parent 留空即字典类型）+ 批量启停 + 刷新缓存 */
   const tableBarButtonsProps = shallowRef<OperationProps>({
     buttons: [
@@ -103,60 +140,8 @@ export function useDataDict(tableRef: Ref) {
         show: auth.create,
         index: -30
       },
-      {
-        text: t("dataDict.batchActive"),
-        code: "batchActive",
-        confirm: { title: t("dataDict.batchActiveConfirm") },
-        props: {
-          type: "success",
-          icon: useRenderIcon(CircleCheck),
-          plain: true
-        },
-        onClick: ({ loading }) => {
-          const pks = getSelectedPks();
-          if (!pks) return;
-          loading.value = true;
-          handleOperation({
-            t,
-            apiReq: api.batchActive(pks, true),
-            success() {
-              refresh();
-            },
-            requestEnd() {
-              loading.value = false;
-            }
-          });
-        },
-        show: auth.batchActive,
-        index: 1
-      },
-      {
-        text: t("dataDict.batchInactive"),
-        code: "batchInactive",
-        confirm: { title: t("dataDict.batchInactiveConfirm") },
-        props: {
-          type: "warning",
-          icon: useRenderIcon(CircleClose),
-          plain: true
-        },
-        onClick: ({ loading }) => {
-          const pks = getSelectedPks();
-          if (!pks) return;
-          loading.value = true;
-          handleOperation({
-            t,
-            apiReq: api.batchActive(pks, false),
-            success() {
-              refresh();
-            },
-            requestEnd() {
-              loading.value = false;
-            }
-          });
-        },
-        show: auth.batchActive,
-        index: 2
-      },
+      batchActiveButton(true, 1),
+      batchActiveButton(false, 2),
       {
         text: t("dataDict.refreshCache"),
         code: "refreshCache",

@@ -61,9 +61,11 @@ const pickTool = (raw: unknown) => {
   callResult.value = null;
 };
 
-/** 工具是否已接入 AI 动作面（镜像后端 mcp_action_specs 的目录准入：服务器启用 + 暴露 + 白名单 + 快照含参数 schema） */
+/** 工具是否已接入 AI 动作面：后端快照条目带 callable 标记（列表时按调用准入
+ * 规则计算）时直接消费；字段缺失（在途旧后端）回落前端镜像规则兜底 */
 const inActionSurface = (raw: unknown) => {
   const tool = raw as McpToolSnapshot;
+  if (typeof tool.callable === "boolean") return tool.callable;
   return Boolean(
     props.row.enabled &&
     props.row.expose_to_ai &&

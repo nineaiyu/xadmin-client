@@ -95,7 +95,8 @@ export function useScreen(tableRef: Ref) {
 
   /* ---------------- 远程控制（ReDialog + ScreenControlForm） ---------------- */
   const openControl = (row: ScreenItem) => {
-    // 按大屏自身的仪表盘序列传参（顺序即服务端下标序；不可解析的名称回落 pk）
+    // 按大屏自身的仪表盘序列传参（顺序即服务端下标序）；浏览者不可见的仪表盘
+    // （personal 对他人不在可见列表）名称回落为显式占位文案，避免裸 pk 直出
     const options: DialogOptions = {
       title: `${t("dataScreen.remoteControl")} - ${row.name}`,
       width: dialogSize("md"),
@@ -108,7 +109,9 @@ export function useScreen(tableRef: Ref) {
           row,
           dashboards: (row.dashboards ?? []).map(pk => ({
             pk,
-            name: dashboards.value.find(item => item.pk === pk)?.name ?? pk
+            name:
+              dashboards.value.find(item => item.pk === pk)?.name ??
+              t("dataScreen.dashboardHidden")
           })),
           onClose: () => closeDialog(options, 0)
         })

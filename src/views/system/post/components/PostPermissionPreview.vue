@@ -4,6 +4,8 @@ import { useI18n } from "vue-i18n";
 import { postApi } from "@/api/system/post";
 import type { PostPreviewResult } from "@/api/types/permission-preview";
 import {
+  PreviewDescriptions,
+  PreviewStatusTag,
   PreviewUsersTable,
   usePermissionPreview
 } from "@/components/RePermissionPreview";
@@ -30,7 +32,7 @@ const { loading, data } = usePermissionPreview<PostPreviewResult>(
 <template>
   <div v-loading="loading">
     <template v-if="data">
-      <el-descriptions :column="3" border size="small">
+      <PreviewDescriptions>
         <el-descriptions-item :label="t('post.name')">
           {{ data.post.name }}
         </el-descriptions-item>
@@ -38,13 +40,7 @@ const { loading, data } = usePermissionPreview<PostPreviewResult>(
           {{ data.post.code }}
         </el-descriptions-item>
         <el-descriptions-item :label="t('permissionPreview.status')">
-          <el-tag :type="data.post.is_active ? 'success' : 'info'" size="small">
-            {{
-              data.post.is_active
-                ? t("permissionPreview.enabled")
-                : t("permissionPreview.disabled")
-            }}
-          </el-tag>
+          <PreviewStatusTag :active="data.post.is_active" />
         </el-descriptions-item>
         <el-descriptions-item :label="t('permissionPreview.dept')">
           {{ data.post.dept?.name || "-" }}
@@ -55,7 +51,7 @@ const { loading, data } = usePermissionPreview<PostPreviewResult>(
         <el-descriptions-item :label="t('post.description')">
           {{ data.post.description || "-" }}
         </el-descriptions-item>
-      </el-descriptions>
+      </PreviewDescriptions>
 
       <el-alert
         v-for="note in data.notes"

@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { SUCCESS_CODE } from "@/api/types";
 import { tagApi, type TagItem } from "@/api/system/tag";
 import { message } from "@/utils/message";
+import { fetchAllRows } from "@/utils/fetchAllRows";
 
 /**
  * 通用打标面板：单对象打标 / 批量打标（追加·移除·替换）+ 弹窗内新建标签。
@@ -45,7 +46,8 @@ const isBatch = computed(() => !props.pk && (props.pks?.length ?? 0) > 0);
 const load = async () => {
   loading.value = true;
   try {
-    const list = await tagApi.list({ page: 1, size: 1000 });
+    // 全量拉取（逐页循环），固定 size 会在标签超过接口分页上限时静默截断
+    const list = await fetchAllRows<TagItem>(tagApi.list);
     if (list.code === SUCCESS_CODE) {
       tags.value = (list.data as { results?: TagItem[] })?.results ?? [];
     } else {

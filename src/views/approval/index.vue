@@ -1,8 +1,7 @@
 <script lang="ts" setup>
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
-import PendingPanel from "./components/PendingPanel.vue";
-import MinePanel from "./components/MinePanel.vue";
+import ApprovalPanel from "./components/ApprovalPanel.vue";
 import ApprovalStats from "./components/ApprovalStats.vue";
 import { useApprovalBadge } from "@/utils/approvalBadge";
 
@@ -33,10 +32,10 @@ const { pendingCount } = useApprovalBadge();
             {{ t("approval.pendingTab") }}
           </el-badge>
         </template>
-        <PendingPanel />
+        <ApprovalPanel scope="pending" />
       </el-tab-pane>
       <el-tab-pane :label="t('approval.mineTab')" name="mine" lazy>
-        <MinePanel />
+        <ApprovalPanel scope="mine" />
       </el-tab-pane>
     </el-tabs>
   </div>

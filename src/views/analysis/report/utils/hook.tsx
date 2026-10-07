@@ -194,7 +194,8 @@ export function useReport(tableRef: Ref) {
         code: "run",
         props: { type: "success", link: true },
         onClick: ({ row, loading }) => run(row as ReportItem, loading),
-        show: canRun && 10
+        // 非创建者行同样隐藏：后端 run 有创建者守卫，显示只会点击后 1003
+        show: row => canRun && row?.is_owner !== false && 10
       },
       {
         text: t("dataReport.designer"),

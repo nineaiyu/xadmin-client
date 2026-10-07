@@ -170,8 +170,17 @@ export function useFormMyActions({
     ) {
       return;
     }
-    const res = await submissionApi.destroy(row.pk);
-    if (res.code === SUCCESS_CODE) refresh();
+    // 异常归一为可读失败结果：请求异常不再产生 unhandled rejection
+    const res = await submissionApi.destroy(row.pk).catch(error => ({
+      code: -1,
+      detail: String((error as { detail?: string })?.detail ?? error)
+    }));
+    if (res.code === SUCCESS_CODE) {
+      refresh();
+      return;
+    }
+    // 200 + 业务码非 1000：全局拦截器只处理 HTTP 层错误，业务失败必须显式提示
+    message(String(res.detail || t("results.failed")), { type: "warning" });
   };
 
   /** 提交草稿（仅草稿态）：服务端按 schema 严格校验后进入审批/直接生效 */

@@ -42,13 +42,15 @@ const plusPageRef = ref();
  * PAT 是个人资源：路由挂在 PERMISSION_WHITE_URL（同 MFA 口径，无需菜单权限码），
  * auth 仅作 RePlusPage 显隐开关；内置新增/编辑/导入导出隐藏——
  * 创建走工具栏专用弹层（承载明文一次性展示），字段编辑由行内清单编辑器承载。
+ * 删除同样关闭：吊销（is_active=false）已覆盖下线语义，硬删会让调用记录
+ * 按 token_pk 永久失联，无法回溯历史用量。
  */
 const auth: RePlusPageProps["auth"] = {
   list: true,
   create: false,
   update: false,
   partialUpdate: false,
-  destroy: true,
+  destroy: false,
   retrieve: false,
   exportData: false,
   importData: false

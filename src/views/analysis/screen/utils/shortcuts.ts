@@ -1,5 +1,6 @@
 import { onBeforeUnmount, onMounted, type ComputedRef, type Ref } from "vue";
 import type { ScreenLayoutPane } from "@/api/dataset/analysis";
+import { useSaveShortcut } from "@/hooks/useSaveShortcut";
 
 const ARROW_DELTAS: Record<string, [number, number]> = {
   ArrowUp: [0, -1],
@@ -45,14 +46,13 @@ export function useScreenShortcuts(handlers: {
     shift: boolean
   ) => boolean;
 }) {
+  // Ctrl/Cmd+S 收敛到共享 composable（与报表设计器同源）：保存键不受输入
+  // 焦点限制；整体锁定（预览/只读）时不响应也不拦截，保持浏览器默认行为
+  useSaveShortcut(handlers.save, () => !handlers.locked.value);
+
   function onKeydown(event: KeyboardEvent) {
     if (handlers.locked.value) return;
     const mod = event.ctrlKey || event.metaKey;
-    if (mod && event.key.toLowerCase() === "s") {
-      event.preventDefault();
-      handlers.save();
-      return;
-    }
     if (mod && event.key.toLowerCase() === "z") {
       event.preventDefault();
       if (event.shiftKey) handlers.redo();

@@ -38,10 +38,11 @@ defineOptions({
 const { t } = useI18n();
 const aiConsole = useAiConsole();
 
-const canAsk = hasAuth("ask:AiAssistant");
-const canInterpret = hasAuth("interpret:AiAssistant");
-const canRun = hasAuth("run:AiAssistant");
-const canExecute = hasAuth("actionExecute:AiAssistant");
+// 权限点响应式求值：权限表是异步就绪的 store 状态，setup 期一次性快照会失真
+const canAsk = computed(() => hasAuth("ask:AiAssistant"));
+const canInterpret = computed(() => hasAuth("interpret:AiAssistant"));
+const canRun = computed(() => hasAuth("run:AiAssistant"));
+const canExecute = computed(() => hasAuth("actionExecute:AiAssistant"));
 
 const status = ref<AiStatus | null>(null);
 const tools = ref<AiToolsResult | null>(null);
@@ -49,16 +50,18 @@ const tools = ref<AiToolsResult | null>(null);
 const statusFailed = ref(false);
 
 const loadStatus = async () => {
-  const res = await aiAssistantApi.status().catch(() => null);
+  // 状态与工具清单并行拉取（两者独立渲染，串行只是历史写法的两段 RTT）
+  const [res, toolRes] = await Promise.all([
+    aiAssistantApi.status().catch(() => null),
+    aiAssistantApi.tools().catch(() => null)
+  ]);
   if (res?.code === SUCCESS_CODE) {
     status.value = res.data as unknown as AiStatus;
     statusFailed.value = false;
   } else {
     // 重新进入页面（keep-alive）时的失败保留已渲染的控制台，只有无任何状态时才显错误态
     if (!status.value) statusFailed.value = true;
-    return;
   }
-  const toolRes = await aiAssistantApi.tools().catch(() => null);
   if (toolRes && toolRes.code === SUCCESS_CODE) {
     tools.value = toolRes.data as unknown as AiToolsResult;
   }
@@ -71,7 +74,7 @@ const ready = computed(() =>
 /** 左栏入口按权限点组装（无权限的入口不出现） */
 const entries = computed<AiFeatureEntry[]>(() => {
   const list: AiFeatureEntry[] = [];
-  if (canAsk) {
+  if (canAsk.value) {
     list.push({
       key: "docs",
       title: t("ai.featureDocs"),
@@ -79,7 +82,7 @@ const entries = computed<AiFeatureEntry[]>(() => {
       icon: DocIcon
     });
   }
-  if (canInterpret) {
+  if (canInterpret.value) {
     list.push({
       key: "nl",
       title: t("ai.featureNl"),
@@ -87,7 +90,7 @@ const entries = computed<AiFeatureEntry[]>(() => {
       icon: DataIcon
     });
   }
-  if (canExecute) {
+  if (canExecute.value) {
     list.push({
       key: "action",
       title: t("ai.featureAction"),

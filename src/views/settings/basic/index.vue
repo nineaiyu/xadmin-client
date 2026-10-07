@@ -6,11 +6,11 @@ import { settingsBasicApi, settingsMonitorApi } from "@/api/system/settings";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import type { FieldValues } from "plus-pro-components";
-import { hasAuth } from "@/router/utils";
 import { useWatermarkStoreHook } from "@/store/modules/watermark";
 import Setting from "@/views/settings/components/settings/index.vue";
 import SettingItem from "@/views/settings/components/settings/SettingItem.vue";
 import { settingItemProps } from "@/views/settings/components/settings/types";
+import { settingAuth } from "@/views/settings/utils/settingAuth";
 import WatermarkSetting from "./components/WatermarkSetting.vue";
 
 defineOptions({
@@ -19,10 +19,10 @@ defineOptions({
 
 const { t } = useI18n();
 
-const basicAuth = {
-  partialUpdate: hasAuth("partialUpdate:SettingBasic"),
-  retrieve: hasAuth("retrieve:SettingBasic")
-};
+// 水印页签与基本页签共用同一份 auth：两者读写同一个 BasicSettingSerializer，
+// 按钮权限位（partialUpdate:SettingBasic / retrieve:SettingBasic）有意共用口径；
+// 独立权限位需后端权限种子变更，不在前端单方面拆分
+const basicAuth = settingAuth("SettingBasic");
 
 /** 水印配置随保存即时生效：命中水印字段时刷新当前会话的水印状态（无需重新登录/刷新页面） */
 const onSaved = async (values: FieldValues) => {
@@ -74,10 +74,7 @@ const watermarkItem: settingItemProps = {
 
 /** 资源告警页签：运维监控配置，从安全设置移入（菜单按钮同步迁移） */
 const monitorItem: settingItemProps = {
-  auth: {
-    partialUpdate: hasAuth("partialUpdate:SecurityMonitor"),
-    retrieve: hasAuth("retrieve:SecurityMonitor")
-  },
+  auth: settingAuth("SecurityMonitor"),
   api: settingsMonitorApi,
   localeName: "settingSecurity",
   title: "monitor"

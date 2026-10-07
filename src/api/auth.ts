@@ -38,6 +38,13 @@ export type PasswordRule = {
   key: string;
 };
 
+/** 密码安全规则查询结果（匿名可达端点，data 槽位为规则数组） */
+export type PasswordRulesResult = {
+  code: number;
+  detail: string;
+  data: { password_rules: PasswordRule[] };
+};
+
 /** choices 接口下发的选项条目（userinfo 等接口的 `choices_dict` 数组项） */
 export type ChoiceEntry = {
   value: unknown;
@@ -243,7 +250,7 @@ class AuthApi extends BaseApi {
 
   /** 密码安全规则查询 */
   passwordRules = () => {
-    return this.request<TokenResult>(
+    return this.request<PasswordRulesResult>(
       "get",
       {},
       undefined,

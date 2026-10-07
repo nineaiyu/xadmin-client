@@ -1,3 +1,5 @@
+import type { TrialRuleRow } from "@/api/types/permission-preview";
+
 /** 规则值的输入形态（后端 choices 下发的 input 字段；未知值回退 text） */
 export type RuleValueInput =
   | "none"
@@ -19,16 +21,8 @@ interface FormItemProps {
   value?: unknown;
 }
 
-/** 字段权限规则行（一条 数据权限 过滤规则） */
-export interface FieldRuleRow {
-  table: string;
-  field: string;
-  match: string;
-  exclude?: boolean;
-  type?: string;
-  /** 存储形态由类型决定（文本/秒数/时间串/时间对/关联对象 pk 数组 JSON） */
-  value?: unknown;
-}
+/** 字段权限规则行（一条 数据权限 过滤规则；与试算草稿的规则行同构） */
+export type FieldRuleRow = TrialRuleRow;
 
 /** 规则类型选项（后端 choices 下发：label/hint + 值控件元数据） */
 export interface FieldLookupItem {

@@ -90,14 +90,10 @@ const onPreview = () => {
     .then(res => {
       if (res.code === SUCCESS_CODE && res.data) {
         const data = res.data as {
-          results?: Array<{ input: string; output: string }>;
-          result?: string;
+          results: Array<{ input: string; output: string }>;
           truncated?: boolean;
         };
-        // 兼容只返回单条 result 的旧后端
-        results.value = data.results ?? [
-          { input: values[0], output: String(data.result ?? "") }
-        ];
+        results.value = data.results;
         truncated.value = Boolean(data.truncated);
       } else {
         message(res.detail, { type: "error" });

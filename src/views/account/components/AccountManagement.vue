@@ -20,7 +20,7 @@ const list = computed(() => [
   {
     name: "phone",
     title: t("userinfo.phone"),
-    illustrate: userinfoStore.email
+    illustrate: userinfoStore.phone
       ? `${t("account.bind")}：${userinfoStore.phone}`
       : t("account.unbound"),
     button: hasAuth("bind:UserInfo") && t("buttons.update")

@@ -114,10 +114,20 @@ export interface UserPreviewResult {
   };
 }
 
+/** 数据权限规则行（草稿与页面规则同构：table/field/match，value 存储形态由 type 决定） */
+export interface TrialRuleRow {
+  table: string;
+  field: string;
+  match: string;
+  exclude?: boolean;
+  type?: string;
+  value?: unknown;
+}
+
 /** 试算草稿：配置页即时验证影响面（不落库，仅参与本次试算） */
 export interface TrialDraft {
   /** 数据权限规则草稿（scope=data） */
-  rules?: Array<Record<string, unknown>>;
+  rules?: TrialRuleRow[];
   mode_type?: number;
   /** 草稿绑定的菜单（单 pk 或 pk 列表）：仅在这些菜单上下文下参与试算 */
   menu?: string | string[] | null;

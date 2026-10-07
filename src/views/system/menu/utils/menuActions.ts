@@ -252,8 +252,15 @@ function renderContent(
             "div",
             { class: "pl-2 text-sm text-[var(--el-text-color-secondary)]" },
             [
-              `${child.label}：${child.count}`,
-              child.samples?.length ? `（${child.samples.join("、")}）` : ""
+              t("systemMenu.confirm.impactItem", {
+                label: child.label,
+                count: child.count
+              }),
+              child.samples?.length
+                ? t("systemMenu.confirm.impactSamples", {
+                    samples: child.samples.join("、")
+                  })
+                : ""
             ]
           )
         )

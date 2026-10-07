@@ -2,6 +2,7 @@ import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { addDialog } from "@/components/ReDialog";
+import { dialogSize } from "@/components/ReDialog/size";
 import { userNoticeReadApi } from "@/api/user/notice";
 import { useNoticeStoreHook } from "@/store/modules/notice";
 import { h, reactive, ref, type Ref, shallowRef } from "vue";
@@ -95,7 +96,8 @@ export function useUserNotice(tableRef: Ref) {
         formInline: { ...row },
         hasPublish: false
       },
-      width: "70%",
+      // 通知为长文本查看：走弹窗尺寸档位最大档（尺寸治理收敛，不再用百分比散值）
+      width: dialogSize("xl"),
       draggable: true,
       fullscreen: deviceDetection(),
       fullscreenIcon: true,

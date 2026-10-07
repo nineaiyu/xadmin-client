@@ -240,12 +240,19 @@ const removeDashboard = async () => {
   ) {
     return;
   }
-  const res = await dashboardApi.destroy(current.value.pk);
+  // 异常归一为可读失败结果：请求异常不再产生 unhandled rejection
+  const res = await dashboardApi.destroy(current.value.pk).catch(error => ({
+    code: -1,
+    detail: String((error as { detail?: string })?.detail ?? error)
+  }));
   if (res.code === SUCCESS_CODE) {
     current.value = null;
     await loadDashboards();
     syncDashboardQuery();
+    return;
   }
+  // 200 + 业务码非 1000：全局拦截器只处理 HTTP 层错误，业务失败必须显式提示
+  if (res.detail) message(String(res.detail), { type: "error" });
 };
 
 const goDatasetPage = () => {

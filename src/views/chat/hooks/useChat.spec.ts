@@ -17,6 +17,8 @@ const hooks = vi.hoisted(() => ({
   socketSend: vi.fn(),
   /** 替身 WS 实例（undefined 模拟未连接），由各用例在挂载前设置 */
   socketInstance: undefined as { send: (frame: string) => void } | undefined,
+  /** 替身连接态：发送门控按 connected 收口（各用例可翻转） */
+  connectedValue: true,
   connect: vi.fn(),
   disconnect: vi.fn(),
   markRead: vi.fn(),
@@ -35,7 +37,11 @@ vi.mock("@/api/chat", () => ({ chatApi: { recall: hooks.recallApi } }));
 
 vi.mock("./useChatSocket", () => ({
   useChatSocket: () => ({
-    connected: { value: true },
+    connected: {
+      get value() {
+        return hooks.connectedValue;
+      }
+    },
     socket: { value: hooks.socketInstance },
     connect: hooks.connect,
     disconnect: hooks.disconnect,
@@ -153,6 +159,7 @@ const lastFrame = () =>
 describe("useChat 编排（子 hook 协同冒烟）", () => {
   beforeEach(() => {
     hooks.socketInstance = { send: hooks.socketSend };
+    hooks.connectedValue = true;
   });
 
   it("genClientMsgId 产出 32 位十六进制幂等键，重复调用不重复", () => {
@@ -225,6 +232,38 @@ describe("useChat 编排（子 hook 协同冒烟）", () => {
       failed: true
     });
     expect(hooks.socketSend).not.toHaveBeenCalled();
+    expect(hooks.message).toHaveBeenCalledWith("chat.disconnected", {
+      type: "warning"
+    });
+  });
+
+  it("send 未就绪（重连中 connected=false）：同样失败收口，不把报文交给底层延发", () => {
+    hooks.connectedValue = false;
+    mountChat();
+    chat.rooms.value = [room({})];
+    chat.activate(5);
+
+    chat.send("hello");
+
+    expect(chat.messages.value[0]).toMatchObject({ failed: true });
+    expect(hooks.socketSend).not.toHaveBeenCalled();
+    expect(hooks.message).toHaveBeenCalledWith("chat.disconnected", {
+      type: "warning"
+    });
+  });
+
+  it("send 上行异常（浏览器层抛错）：捕获后标记失败并提示，不产生 uncaught", () => {
+    hooks.socketInstance = {
+      send: vi.fn(() => {
+        throw new Error("InvalidStateError");
+      })
+    };
+    mountChat();
+    chat.rooms.value = [room({})];
+    chat.activate(5);
+
+    expect(() => chat.send("hello")).not.toThrow();
+    expect(chat.messages.value[0]).toMatchObject({ failed: true });
     expect(hooks.message).toHaveBeenCalledWith("chat.disconnected", {
       type: "warning"
     });
