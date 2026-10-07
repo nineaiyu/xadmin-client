@@ -38,7 +38,8 @@ const rawValueOf = (value: unknown) =>
 /**
  * 从列表行提取预览所需规则（行内「脱敏预览」预填当前行）。
  *
- * 只取掩码相关字段：model/field 等业务字段与预览无关，且 pattern 仅在 custom 时使用。
+ * 只取掩码相关字段与 roles：model/field 仅用于弹窗展示，pattern 仅在 custom 时
+ * 使用；roles 供预览视角默认选中与后端判定 viewer 命中。
  */
 export function buildPreviewRule(row: Record<string, unknown>) {
   return {
@@ -49,7 +50,8 @@ export function buildPreviewRule(row: Record<string, unknown>) {
     keep_head: row?.keep_head,
     keep_tail: row?.keep_tail,
     mask_char: row?.mask_char,
-    pattern: row?.pattern
+    pattern: row?.pattern,
+    roles: row?.roles
   };
 }
 

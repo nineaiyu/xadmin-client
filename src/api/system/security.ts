@@ -1,5 +1,10 @@
 import { BaseApi } from "@/api/base";
-import type { BaseResult, DataListResult, DetailResult } from "@/api/types";
+import type {
+  BaseResult,
+  DataListResult,
+  DetailResult,
+  Envelope
+} from "@/api/types";
 
 /**
  * 安全域接口集合。
@@ -101,6 +106,17 @@ export type LoginPolicyPreview = {
   mfa_usable?: boolean | null;
 };
 
+/** choices 端点下发的选项条目（label 由后端元数据给出） */
+export type LoginPolicyChoiceOption = { value: string; label: string };
+
+/** 登录策略选项元数据：choices_dict 在响应顶层（不在 data 槽位），
+ *  与 userinfo / field 等 choices 消费方同口径 */
+export type LoginPolicyChoicesResult = Omit<Envelope, "data"> & {
+  choices_dict: Partial<
+    Record<"target_type" | "action", LoginPolicyChoiceOption[]>
+  >;
+};
+
 class LoginPolicyApi extends BaseApi {
   preview = (data?: { username?: string; ip?: string; when?: string }) => {
     return this.request<DetailResult<LoginPolicyPreview>>(
@@ -108,6 +124,15 @@ class LoginPolicyApi extends BaseApi {
       {},
       data ?? {},
       `${this.baseApi}/preview`
+    );
+  };
+  /** 选项元数据（白名单端点，登录即可访问）；失败由表单回落 i18n 清单 */
+  choices = () => {
+    return this.request<LoginPolicyChoicesResult>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/choices`
     );
   };
 }

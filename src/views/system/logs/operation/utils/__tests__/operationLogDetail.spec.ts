@@ -13,19 +13,19 @@ import { useOperationLog } from "../hook";
 
 const state = vi.hoisted(() => ({
   retrieveMock: vi.fn(),
-  slowMock: vi.fn(),
+  slowThresholdMock: vi.fn(),
   messageMock: vi.fn()
 }));
 
 vi.mock("@/api/system/logs/operation", () => ({
-  operationLogApi: { retrieve: state.retrieveMock }
+  operationLogApi: {
+    retrieve: state.retrieveMock,
+    slowThreshold: state.slowThresholdMock
+  }
 }));
 // 仅列格式化为本测试无关项，替换整包引入（避免拉起 plugins/i18n 初始化）
 vi.mock("@/components/RePlusPage", () => ({
   formatPageColumns: (columns: unknown) => columns
-}));
-vi.mock("@/api/system/monitor", () => ({
-  monitorApi: { slow: state.slowMock }
 }));
 vi.mock("@/router/utils", () => ({
   usePageAuth: () => ({ list: true, retrieve: true })

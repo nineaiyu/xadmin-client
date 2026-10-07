@@ -1,9 +1,12 @@
 <script lang="ts" setup>
 import { SUCCESS_CODE } from "@/api/types";
-import { computed, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
 import { maskApi } from "@/api/system/mask";
+import { roleApi } from "@/api/system/role";
+import { fetchAllRows } from "@/utils/fetchAllRows";
+import { listRows } from "@/api/base";
 
 defineOptions({
   name: "SystemDataMaskRulePreview"
@@ -60,6 +63,40 @@ const isCustom = computed(() => form.maskType === "custom");
 const loading = ref(false);
 const results = ref<Array<{ input: string; output: string }>>([]);
 const truncated = ref(false);
+/** false = 所选视角角色未命中规则（后端原样回显 output） */
+const applied = ref(true);
+
+/** 列表行 roles 为 [{pk,name}] 形态；兼容裸 pk 形态，取规则绑定角色 pk 集合 */
+const ruleRolePks = (): Array<string | number> => {
+  const roles = rule.roles;
+  if (!Array.isArray(roles)) return [];
+  return roles
+    .map(item =>
+      item && typeof item === "object" ? (item as { pk?: unknown }).pk : item
+    )
+    .filter((pk): pk is string | number => pk != null);
+};
+
+/** 预览视角角色（模拟非超管查看者）：默认 = 规则绑定角色，新建表单入口为空 */
+const viewerRoles = ref<Array<string | number>>(ruleRolePks());
+
+/** 角色选项懒加载：拉取失败一次性提示并保留空选项（视角可选仍可用） */
+const roleOptions = ref<Array<{ pk: string | number; name: string }>>([]);
+
+onMounted(async () => {
+  try {
+    const res = await fetchAllRows(roleApi.list);
+    if (res.code === SUCCESS_CODE && res.data) {
+      roleOptions.value = listRows<{ pk: string; name: string }>(res).map(
+        row => ({ pk: row.pk, name: row.name })
+      );
+    } else {
+      message(t("mask.previewRolesLoadFailed"), { type: "warning" });
+    }
+  } catch {
+    message(t("mask.previewRolesLoadFailed"), { type: "warning" });
+  }
+});
 
 /** 样例按行拆分（单值输入即一条），空行忽略 */
 const sampleValues = () =>
@@ -68,7 +105,7 @@ const sampleValues = () =>
     .map(item => item.trim())
     .filter(item => item !== "");
 
-/** 调用后端 preview 接口逐条模拟脱敏 */
+/** 调用后端 preview 接口逐条模拟脱敏（携带规则绑定角色与预览视角角色） */
 const onPreview = () => {
   const values = sampleValues();
   if (!values.length) {
@@ -80,21 +117,25 @@ const onPreview = () => {
     mask_type: form.maskType,
     keep_head: form.keepHead,
     keep_tail: form.keepTail,
-    mask_char: form.maskChar
+    mask_char: form.maskChar,
+    // 规则绑定角色（pk 集合）：后端据此判定 viewer_roles 是否命中
+    roles: ruleRolePks()
   };
   if (isCustom.value) {
     previewRule.pattern = form.pattern;
   }
   maskApi
-    .preview({ values, rule: previewRule })
+    .preview({ values, rule: previewRule, viewer_roles: viewerRoles.value })
     .then(res => {
       if (res.code === SUCCESS_CODE && res.data) {
         const data = res.data as {
           results: Array<{ input: string; output: string }>;
           truncated?: boolean;
+          applied?: boolean;
         };
         results.value = data.results;
         truncated.value = Boolean(data.truncated);
+        applied.value = data.applied !== false;
       } else {
         message(res.detail, { type: "error" });
       }
@@ -153,10 +194,38 @@ const onPreview = () => {
     <el-form-item v-if="isCustom" :label="t('mask.pattern')">
       <el-input v-model="form.pattern" :placeholder="t('mask.customOnlyTip')" />
     </el-form-item>
+    <el-form-item :label="t('mask.previewRoles')">
+      <div class="w-full">
+        <el-select
+          v-model="viewerRoles"
+          multiple
+          clearable
+          filterable
+          style="width: 100%"
+        >
+          <el-option
+            v-for="opt in roleOptions"
+            :key="opt.pk"
+            :label="opt.name"
+            :value="opt.pk"
+          />
+        </el-select>
+        <div class="text-xs/5 text-(--el-text-color-secondary)">
+          {{ t("mask.previewRolesTip") }}
+        </div>
+      </div>
+    </el-form-item>
     <el-form-item>
       <el-button type="primary" :loading="loading" @click="onPreview">
         {{ t("mask.previewBtn") }}
       </el-button>
+    </el-form-item>
+    <el-form-item v-if="results.length && !applied">
+      <el-alert
+        type="warning"
+        :closable="false"
+        :title="t('mask.previewNotApplied')"
+      />
     </el-form-item>
     <el-form-item v-if="results.length">
       <el-alert

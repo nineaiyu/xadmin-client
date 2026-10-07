@@ -8,7 +8,6 @@ import { useRouter } from "vue-router";
 import { usePageAuth } from "@/router/utils";
 import { goUserDetail } from "@/views/system/hooks";
 import { operationLogApi } from "@/api/system/logs/operation";
-import { monitorApi } from "@/api/system/monitor";
 import { SUCCESS_CODE } from "@/api/types";
 import { message } from "@/utils/message";
 import { useI18n } from "vue-i18n";
@@ -18,8 +17,8 @@ export function useOperationLog() {
   const { t } = useI18n();
   const api = reactive(operationLogApi);
 
-  /** 慢请求标红阈值：优先取后端 SysConfig.SLOW_REQUEST_THRESHOLD，
-   *  无监控权限或接口异常时回退默认 1 秒 */
+  /** 慢请求标红阈值：优先后端自持阈值端点（与操作日志列表同权限，
+   *  无监控权限也能拿到），接口异常时回退默认 1 秒 */
   const slowThreshold = ref(1);
 
   const auth = usePageAuth();
@@ -30,13 +29,13 @@ export function useOperationLog() {
 
   onMounted(async () => {
     try {
-      const res = await monitorApi.slow();
+      const res = await operationLogApi.slowThreshold();
       const threshold = res?.data?.threshold;
       if (typeof threshold === "number") {
         slowThreshold.value = threshold;
       }
     } catch {
-      // 无监控权限或接口异常时沿用默认阈值
+      // 接口异常时沿用默认阈值
     }
   });
 

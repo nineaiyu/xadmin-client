@@ -1,29 +1,59 @@
 <script lang="ts" setup>
-import { reactive, watch } from "vue";
+import { onMounted, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
+import { loginPolicyApi } from "@/api/system/security";
+import { SUCCESS_CODE } from "@/api/types";
 import type { RecordType } from "plus-pro-components";
 
 /**
  * 登录访问策略编辑表单。
  *
- * 目标对象与动作由前端给选项（后端为 LabeledChoiceField，回显为 {value,label}），
+ * 目标对象与动作的选项单源在后端 choices 端点（挂载时拉取），
  * `getPayload()` 返回 null 表示校验未通过（父级拦截提交，保持弹窗打开）。
  */
 const props = defineProps<{ row?: RecordType }>();
 const { t } = useI18n();
 
-const targetTypeOptions = [
+type OptionItem = { value: string; label: string };
+
+const fallbackTargetTypeOptions: OptionItem[] = [
   { value: "all", label: t("loginPolicy.targetAll") },
   { value: "role", label: t("loginPolicy.targetRole") },
   { value: "user", label: t("loginPolicy.targetUser") }
 ];
-const actionOptions = [
+const fallbackActionOptions: OptionItem[] = [
   { value: "accept", label: t("loginPolicy.actionAccept") },
   { value: "reject", label: t("loginPolicy.actionReject") },
   { value: "require_mfa", label: t("loginPolicy.actionRequireMfa") },
   { value: "record", label: t("loginPolicy.actionRecord") }
 ];
+const targetTypeOptions = ref<OptionItem[]>(fallbackTargetTypeOptions);
+const actionOptions = ref<OptionItem[]>(fallbackActionOptions);
+
+/** 选项元数据在后端（i18n 清单仅作拉取失败时的兜底，不做双源维护） */
+onMounted(async () => {
+  try {
+    const res = await loginPolicyApi.choices();
+    if (res.code !== SUCCESS_CODE || !res.choices_dict) return;
+    const { target_type: targetType, action } = res.choices_dict;
+    if (Array.isArray(targetType) && targetType.length) {
+      targetTypeOptions.value = targetType.map(item => ({
+        value: String(item.value),
+        label: String(item.label ?? item.value)
+      }));
+    }
+    if (Array.isArray(action) && action.length) {
+      actionOptions.value = action.map(item => ({
+        value: String(item.value),
+        label: String(item.label ?? item.value)
+      }));
+    }
+  } catch {
+    // 拉取失败保持前端回落清单（网络级异常由 http 拦截器统一提示）
+  }
+});
+
 const weekdayOptions = [1, 2, 3, 4, 5, 6, 7].map(value => ({
   value,
   label: t(`loginPolicy.weekday${value}`)

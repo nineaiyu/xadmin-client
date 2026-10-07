@@ -8,7 +8,8 @@ defineOptions({
 
 const tableRef = ref();
 
-const { api, auth, operationButtonsProps } = useSystemConfig(tableRef);
+const { api, auth, baseColumnsFormat, operationButtonsProps } =
+  useSystemConfig(tableRef);
 </script>
 
 <template>
@@ -17,6 +18,7 @@ const { api, auth, operationButtonsProps } = useSystemConfig(tableRef);
     :api="api"
     :auth="auth"
     locale-name="configSystem"
+    :baseColumnsFormat="baseColumnsFormat"
     :operationButtonsProps="operationButtonsProps"
   />
 </template>

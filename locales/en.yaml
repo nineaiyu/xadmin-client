@@ -1369,6 +1369,7 @@ systemMyScope:
   colLastLogin: Last login
   active: Active
   disabled: Disabled
+  loadMore: "Load more ({count} remaining)"
 
 systemPermission:
   permission: Permissions
@@ -1841,6 +1842,13 @@ configSystem:
   inheritTip: Allows users to inherit this configuration
   invalidCache: Invalid Cache
   confirmInvalid: Are you sure to invalid this cache?
+  typeBoolean: Boolean
+  typeInteger: Integer
+  typeNumber: Number
+  typeString: String
+  typeArray: JSON Array
+  typeObject: JSON Object
+  registeredTypeTip: "Expected type: {type}"
 
 configUser:
   configUser: User Config
@@ -2670,6 +2678,10 @@ mask:
   previewResult: Result
   previewTruncated: Too many or too long samples; truncated to the limit
   previewBtn: Preview
+  previewRoles: Viewer Roles
+  previewRolesTip: Simulates a non-superuser viewer's role set; empty means no roles
+  previewNotApplied: Selected viewer roles do not match this rule; the field is not masked in lists
+  previewRolesLoadFailed: Failed to load role options
   customOnlyTip: Only used for custom type
   maskTypePhone: Phone
   maskTypeIdcard: ID Card

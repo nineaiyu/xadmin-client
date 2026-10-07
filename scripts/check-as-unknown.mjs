@@ -33,6 +33,9 @@ const PATTERN = /\bas\s+unknown\s+as\b/g;
 // 单层收窄，vue-tsc TS2352 要求先转 unknown；tableRef 已改单层 as，未登记即门禁红）。
 // 2026-10-07：settings/sms.vue 静态渠道项与动态后端子项统一为 settingItemProps[] 后
 // 双重断言清零，基线条目移除。
+// 2026-10-07（二）：maskPreview / myScopeRenderLimit / loginPolicyForm 三个挂载 spec
+// 各登记 1 处——断言 script setup 内部绑定（组件无 defineExpose）时 vue-tsc TS2352
+// 要求先转 unknown 再收窄为可读形状。
 // 2026-09-30：初始登记 109 处 / 70 文件（热点：menu normalize.spec 7、router/index 6、
 // useMenuData 4——多为 element-plus 泛型组件与路由元数据互转的既有债务）
 const BASELINE = {
@@ -51,6 +54,9 @@ const BASELINE = {
   "src/components/RePlusPage/src/utils/usePlusPageForm.ts": 2,
   "src/views/account/components/ReQrcode/src/index.tsx": 2,
   "src/views/system/menu/components/ReTreeLine/index.ts": 1,
+  "src/views/settings/login-policy/components/__tests__/loginPolicyForm.spec.ts": 1,
+  "src/views/system/mask/components/__tests__/maskPreview.spec.ts": 1,
+  "src/views/system/my-scope/__tests__/myScopeRenderLimit.spec.ts": 1,
   "src/layout/components/lay-content/index.vue": 1,
   "src/layout/components/lay-setting/components/SettingDisplay.vue": 1,
   "src/layout/components/lay-sidebar/components/SidebarBreadCrumb.vue": 2,

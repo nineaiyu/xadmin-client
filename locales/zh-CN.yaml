@@ -1369,6 +1369,7 @@ systemMyScope:
   colLastLogin: 最后登录
   active: 在用
   disabled: 停用
+  loadMore: 加载更多（剩余 {count} 个）
 
 systemPermission:
   permission: 数据权限
@@ -1841,6 +1842,13 @@ configSystem:
   inheritTip: 允许用户继承该配置
   invalidCache: 缓存失效
   confirmInvalid: 确定缓存失效该数据么？
+  typeBoolean: 布尔值
+  typeInteger: 整数
+  typeNumber: 数字
+  typeString: 字符串
+  typeArray: JSON 数组
+  typeObject: JSON 对象
+  registeredTypeTip: 期望类型：{type}
 
 configUser:
   configUser: 用户配置
@@ -2670,6 +2678,10 @@ mask:
   previewResult: 预览结果
   previewTruncated: 样例过多或过长，已按上限截断展示
   previewBtn: 预览
+  previewRoles: 预览视角角色
+  previewRolesTip: 模拟非超管查看者的角色集合；留空表示无任何角色
+  previewNotApplied: 所选视角角色未命中该规则，列表中该字段不脱敏
+  previewRolesLoadFailed: 角色选项加载失败
   customOnlyTip: 仅 custom 类型使用
   maskTypePhone: 手机号
   maskTypeIdcard: 身份证

@@ -1,12 +1,14 @@
 <script lang="ts" setup>
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
-import type { TreeInstance, TreeNodeData } from "element-plus";
+import type { TreeV2Instance } from "element-plus";
+import type { TreeNodeData } from "element-plus/es/components/tree-v2/src/types";
 import { message } from "@/utils/message";
 import { normalizeError } from "@/utils/apiError";
 import { hasAuth } from "@/router/utils";
 import { SUCCESS_CODE } from "@/api/types";
+import { useFullHeightPanel } from "@/hooks/useFullHeightPanel";
 import {
   deptApi,
   type ManagedDeptItem,
@@ -86,7 +88,7 @@ const foldUsers = (users: ManagedUserRef[]) => {
   return shown.join("、");
 };
 
-// —— 关键字检索：卡片视图走内存过滤，层级视图走 el-tree 过滤 ——
+// —— 关键字检索：卡片视图走内存过滤（超量收敛为「加载更多」），层级视图走树过滤 ——
 const keyword = ref("");
 const filteredDepts = computed(() => {
   const value = keyword.value.trim().toLowerCase();
@@ -97,6 +99,19 @@ const filteredDepts = computed(() => {
       dept.code?.toLowerCase().includes(value)
   );
 });
+
+/** 单次渲染上限（具名常量）：超量部门收敛为「加载更多」逐步放量 */
+const RENDER_STEP = 200;
+const renderLimit = ref(RENDER_STEP);
+const visibleDepts = computed(() =>
+  filteredDepts.value.slice(0, renderLimit.value)
+);
+const remainingCount = computed(
+  () => filteredDepts.value.length - renderLimit.value
+);
+const loadMore = () => {
+  renderLimit.value += RENDER_STEP;
+};
 
 // —— 视图切换 ——
 // ReSegmented 的 v-model 为数字下标语义（非数字时仅维护内部选中态，不回写）
@@ -116,10 +131,19 @@ const treeData = computed<ScopeTreeNode[]>(() =>
   handleTree<ManagedDeptItem>(depts.value, "pk", "parent_id", "children")
 );
 
-const treeRef = ref<TreeInstance>();
-const filterNode = (value: string, data: TreeNodeData) => {
-  if (!value) return true;
-  const keywordLower = value.toLowerCase();
+// —— 层级视图：虚拟树（el-tree-v2）+ 全量展开语义 ——
+const { pageRef, panelHeight, measure } = useFullHeightPanel();
+// 层级卡片切换挂载时机晚于 hook 首测，进入视图后重测一次贴合视口
+watch(isTreeView, async value => {
+  if (!value) return;
+  await nextTick();
+  measure();
+});
+
+const treeRef = ref<TreeV2Instance>();
+const filterNode = (query: string, data: TreeNodeData) => {
+  if (!query) return true;
+  const keywordLower = query.toLowerCase();
   return (
     String(data.name ?? "")
       .toLowerCase()
@@ -129,7 +153,19 @@ const filterNode = (value: string, data: TreeNodeData) => {
       .includes(keywordLower)
   );
 };
-watch(keyword, value => treeRef.value?.filter(value));
+watch(keyword, value => {
+  // 关键字变化重置卡片渲染上限，避免沿用旧上限的分页余量
+  renderLimit.value = RENDER_STEP;
+  treeRef.value?.filter(value);
+});
+
+/** 全量展开：tree-v2 无 default-expand-all，展开态即键集合（虚拟化下无性能负担）。
+ *  default-expanded-keys 覆盖挂载态，数据晚到/刷新由 watch 补齐展开键 */
+const allTreeKeys = computed(() => depts.value.map(dept => dept.pk));
+watch(allTreeKeys, async () => {
+  await nextTick();
+  treeRef.value?.setExpandedKeys(allTreeKeys.value);
+});
 
 // —— 成员预览抽屉与跳转 ——
 const drawerVisible = ref(false);
@@ -253,126 +289,139 @@ onMounted(loadScope);
       :description="t('systemMyScope.searchEmpty')"
     />
 
-    <!-- 卡片视图 -->
-    <div
-      v-else-if="!isTreeView"
-      class="grid grid-cols-4 gap-3 max-lg:grid-cols-2 max-md:grid-cols-1"
-    >
-      <el-card
-        v-for="dept in filteredDepts"
-        :key="dept.pk"
-        shadow="hover"
-        data-testid="my-scope-dept"
-      >
-        <div class="flex-bc gap-2">
-          <span class="font-medium truncate">{{ dept.name }}</span>
-          <el-tag v-if="dept.is_direct" size="small" type="primary">
-            {{ t("systemMyScope.direct") }}
-          </el-tag>
-        </div>
-        <div class="mt-1 text-xs opacity-60">{{ dept.code }}</div>
-        <div
-          v-if="dept.parent_id && nameById.get(dept.parent_id)"
-          class="mt-1 text-xs opacity-60"
+    <!-- 卡片视图（渲染上限 + 加载更多） -->
+    <template v-else-if="!isTreeView">
+      <div class="grid grid-cols-4 gap-3 max-lg:grid-cols-2 max-md:grid-cols-1">
+        <el-card
+          v-for="dept in visibleDepts"
+          :key="dept.pk"
+          shadow="hover"
+          data-testid="my-scope-dept"
         >
-          {{ t("systemMyScope.parentDept") }}:
-          {{ nameById.get(dept.parent_id) }}
-        </div>
-
-        <el-divider class="my-2!" />
-
-        <div class="flex items-center gap-1 text-xs">
-          <span class="opacity-60 shrink-0">
-            {{ t("systemMyScope.leader") }}
-          </span>
-          <span class="truncate">
-            {{ dept.leader ? userLabel(dept.leader) : "-" }}
-          </span>
-        </div>
-        <div class="flex items-center gap-1 text-xs mt-1">
-          <span class="opacity-60 shrink-0">
-            {{ t("systemMyScope.managers") }}
-          </span>
-          <span
-            v-if="dept.managers.length"
-            class="truncate"
-            :title="dept.managers.map(userLabel).join('、')"
-          >
-            {{ foldUsers(dept.managers) }}
-          </span>
-          <span v-else>-</span>
-        </div>
-
-        <div class="flex-bc mt-3">
-          <el-link
-            :disabled="!canListUsers"
-            :underline="false"
-            data-testid="my-scope-members"
-            @click="openMembers(dept)"
-          >
-            {{ t("systemMyScope.members", { count: dept.user_count }) }}
-          </el-link>
-          <el-button
-            link
-            type="primary"
-            :disabled="!canListUsers"
-            :title="t('systemMyScope.viewInUserPage')"
-            @click="goDeptUsers(dept.pk)"
-          >
-            {{ t("systemMyScope.manageMembers") }}
-          </el-button>
-        </div>
-      </el-card>
-    </div>
-
-    <!-- 层级视图 -->
-    <el-card v-else shadow="never" body-class="pt-2!">
-      <el-tree
-        ref="treeRef"
-        :data="treeData"
-        node-key="pk"
-        default-expand-all
-        :expand-on-click-node="false"
-        :filter-node-method="filterNode"
-        :props="{ children: 'children', label: 'name' }"
-      >
-        <template #default="{ data }">
-          <div class="flex items-center gap-2 w-full min-w-0 py-0.5">
-            <span class="font-medium truncate">{{ data.name }}</span>
-            <el-tag
-              v-if="data.is_direct"
-              size="small"
-              type="primary"
-              class="shrink-0"
-            >
+          <div class="flex-bc gap-2">
+            <span class="font-medium truncate">{{ dept.name }}</span>
+            <el-tag v-if="dept.is_direct" size="small" type="primary">
               {{ t("systemMyScope.direct") }}
             </el-tag>
-            <span class="text-xs opacity-60 shrink-0">{{ data.code }}</span>
-            <span class="ml-auto text-xs opacity-60 shrink-0">
-              {{ t("systemMyScope.members", { count: data.user_count }) }}
+          </div>
+          <div class="mt-1 text-xs opacity-60">{{ dept.code }}</div>
+          <div
+            v-if="dept.parent_id && nameById.get(dept.parent_id)"
+            class="mt-1 text-xs opacity-60"
+          >
+            {{ t("systemMyScope.parentDept") }}:
+            {{ nameById.get(dept.parent_id) }}
+          </div>
+
+          <el-divider class="my-2!" />
+
+          <div class="flex items-center gap-1 text-xs">
+            <span class="opacity-60 shrink-0">
+              {{ t("systemMyScope.leader") }}
             </span>
+            <span class="truncate">
+              {{ dept.leader ? userLabel(dept.leader) : "-" }}
+            </span>
+          </div>
+          <div class="flex items-center gap-1 text-xs mt-1">
+            <span class="opacity-60 shrink-0">
+              {{ t("systemMyScope.managers") }}
+            </span>
+            <span
+              v-if="dept.managers.length"
+              class="truncate"
+              :title="dept.managers.map(userLabel).join('、')"
+            >
+              {{ foldUsers(dept.managers) }}
+            </span>
+            <span v-else>-</span>
+          </div>
+
+          <div class="flex-bc mt-3">
+            <el-link
+              :disabled="!canListUsers"
+              :underline="false"
+              data-testid="my-scope-members"
+              @click="openMembers(dept)"
+            >
+              {{ t("systemMyScope.members", { count: dept.user_count }) }}
+            </el-link>
             <el-button
               link
               type="primary"
-              size="small"
               :disabled="!canListUsers"
-              :icon="useRenderIcon(ViewIcon)"
-              :title="t('systemMyScope.viewMembers')"
-              :aria-label="t('systemMyScope.viewMembers')"
-              @click="openMembers(data)"
-            />
-            <el-button
-              link
-              size="small"
-              :disabled="!canListUsers"
-              :icon="useRenderIcon(UserIcon)"
               :title="t('systemMyScope.viewInUserPage')"
-              :aria-label="t('systemMyScope.viewInUserPage')"
-              @click="goDeptUsers(data.pk)"
-            />
+              @click="goDeptUsers(dept.pk)"
+            >
+              {{ t("systemMyScope.manageMembers") }}
+            </el-button>
           </div>
-        </template>
-      </el-tree>
+        </el-card>
+      </div>
+      <div v-if="remainingCount > 0" class="mt-3 text-center">
+        <el-button
+          link
+          type="primary"
+          data-testid="my-scope-load-more"
+          @click="loadMore"
+        >
+          {{ t("systemMyScope.loadMore", { count: remainingCount }) }}
+        </el-button>
+      </div>
+    </template>
+
+    <!-- 层级视图：虚拟树（tree-v2），高度按视口实测 -->
+    <el-card v-else shadow="never" body-class="pt-2!">
+      <!-- 量测锚点包一层 div：组件 ref 拿到的是实例而非元素 -->
+      <div ref="pageRef">
+        <el-tree-v2
+          ref="treeRef"
+          :data="treeData"
+          :height="panelHeight"
+          :item-size="32"
+          :expand-on-click-node="false"
+          :props="{ value: 'pk', children: 'children', label: 'name' }"
+          :default-expanded-keys="allTreeKeys"
+          :filter-method="filterNode"
+        >
+          <template #default="{ data }">
+            <div class="flex items-center gap-2 w-full min-w-0 py-0.5">
+              <span class="font-medium truncate">{{ data.name }}</span>
+              <el-tag
+                v-if="data.is_direct"
+                size="small"
+                type="primary"
+                class="shrink-0"
+              >
+                {{ t("systemMyScope.direct") }}
+              </el-tag>
+              <span class="text-xs opacity-60 shrink-0">{{ data.code }}</span>
+              <span class="ml-auto text-xs opacity-60 shrink-0">
+                {{ t("systemMyScope.members", { count: data.user_count }) }}
+              </span>
+              <el-button
+                link
+                type="primary"
+                size="small"
+                :disabled="!canListUsers"
+                :icon="useRenderIcon(ViewIcon)"
+                :title="t('systemMyScope.viewMembers')"
+                :aria-label="t('systemMyScope.viewMembers')"
+                @click="openMembers(data)"
+              />
+              <el-button
+                link
+                size="small"
+                :disabled="!canListUsers"
+                :icon="useRenderIcon(UserIcon)"
+                :title="t('systemMyScope.viewInUserPage')"
+                :aria-label="t('systemMyScope.viewInUserPage')"
+                @click="goDeptUsers(data.pk)"
+              />
+            </div>
+          </template>
+        </el-tree-v2>
+      </div>
     </el-card>
 
     <MemberDrawer v-model="drawerVisible" :dept="activeDept" />

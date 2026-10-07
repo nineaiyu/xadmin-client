@@ -91,6 +91,7 @@ import {
   ElTooltip,
   ElTree,
   ElTreeSelect,
+  ElTreeV2,
   ElUpload,
   // 插件（指令与全局属性对象）
   ElInfiniteScroll, // v-infinite-scroll 指令
@@ -187,6 +188,7 @@ import "element-plus/es/components/timeline-item/style/css";
 import "element-plus/es/components/tooltip/style/css";
 import "element-plus/es/components/tree/style/css";
 import "element-plus/es/components/tree-select/style/css";
+import "element-plus/es/components/tree-v2/style/css";
 import "element-plus/es/components/upload/style/css";
 
 const components = [
@@ -267,6 +269,7 @@ const components = [
   ElTooltip,
   ElTree,
   ElTreeSelect,
+  ElTreeV2,
   ElUpload
 ];
 

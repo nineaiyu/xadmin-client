@@ -21,6 +21,8 @@ import { importRecordApi } from "./import";
 import { systemConfigApi } from "./config/system";
 import { userConfigApi } from "./config/user";
 import { loginLogApi } from "./logs/login";
+import { operationLogApi } from "./logs/operation";
+import { loginPolicyApi } from "./security";
 
 /**
  * api/system 第一批：系统与权限基础域的薄封装契约测试，逐方法断言「方法 + URL + 载荷」。
@@ -181,12 +183,23 @@ describe("menuApi 权限码与排序", () => {
 });
 
 describe("脱敏 / 模型字段", () => {
-  it("maskApi.preview", () => {
-    maskApi.preview({ rule: "phone", sample: "13800000000" });
+  it("maskApi.preview 透传规则角色与预览视角角色", () => {
+    maskApi.preview({
+      values: ["13800000000"],
+      rule: { mask_type: "phone", roles: ["r1"] },
+      viewer_roles: ["r2"]
+    });
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
       "/api/system/mask-rules/preview",
-      { params: {}, data: { rule: "phone", sample: "13800000000" } },
+      {
+        params: {},
+        data: {
+          values: ["13800000000"],
+          rule: { mask_type: "phone", roles: ["r1"] },
+          viewer_roles: ["r2"]
+        }
+      },
       {}
     );
   });
@@ -256,6 +269,40 @@ describe("系统/用户配置失效", () => {
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
       "/api/system/config/user/4/invalid",
+      { params: {}, data: {} },
+      {}
+    );
+  });
+
+  it("systemConfigApi registeredKeys 拉取注册键枚举", () => {
+    systemConfigApi.registeredKeys();
+    expect(requestMock).toHaveBeenLastCalledWith(
+      "get",
+      "/api/system/config/system/registered-keys",
+      { params: {}, data: {} },
+      {}
+    );
+  });
+});
+
+describe("operationLogApi 慢请求阈值", () => {
+  it("slowThreshold 走操作日志自持端点", () => {
+    operationLogApi.slowThreshold();
+    expect(requestMock).toHaveBeenLastCalledWith(
+      "get",
+      "/api/system/logs/operation/slow-threshold",
+      { params: {}, data: {} },
+      {}
+    );
+  });
+});
+
+describe("loginPolicyApi 登录策略", () => {
+  it("choices 拉取选项元数据（顶层 choices_dict）", () => {
+    loginPolicyApi.choices();
+    expect(requestMock).toHaveBeenLastCalledWith(
+      "get",
+      "/api/system/login-policies/choices",
       { params: {}, data: {} },
       {}
     );
