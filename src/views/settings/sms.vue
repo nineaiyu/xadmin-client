@@ -16,44 +16,45 @@ defineOptions({
 });
 
 const smsBackends = ref<Array<settingItemProps>>([]);
-// 渠道实例（ViewBaseApi 子类）与动态子项合并：类实例的私有成员不参与结构比较，
-// 在此按设置项契约收窄（运行时即 ViewBaseApi 实例）
-const settingData = computed<Array<settingItemProps>>(
-  () =>
-    [
-      {
-        auth: settingAuth("SmsSetting"),
-        api: settingsSmsServerApi,
-        localeName: "settingSms"
-      },
-      ...smsBackends.value
-    ] as unknown as Array<settingItemProps>
-);
+// 静态渠道项与动态后端子项按 settingItemProps 契约统一（api 槽位为结构化接口，
+// ViewBaseApi 及其子类实例均可直接赋给）
+const settingData = computed<Array<settingItemProps>>(() => [
+  {
+    auth: settingAuth("SmsSetting"),
+    api: settingsSmsServerApi,
+    localeName: "settingSms"
+  },
+  ...smsBackends.value
+]);
 
-onMounted(() => {
-  hasAuth("backends:SmsSetting") &&
-    settingsSmsServerApi
-      .backends()
-      .then(res => {
-        if (res.code === SUCCESS_CODE) {
-          smsBackends.value = [];
-          res.data.forEach((item: RecordType) => {
-            smsBackends.value.push({
-              auth: settingAuth("SmsConfig", true),
-              api: settingsSmsConfigApi,
-              queryParams: { category: item.value },
-              localeName: "settingSms",
-              label: item.label
-            });
-          });
-        }
-      })
-      .catch(() => {
-        // http 层已统一提示；渠道子页签缺失属于可见的降级态，这里收尾防止 unhandled rejection
+// 渠道 backends 拉取期间页签容器给 loading：缺失子页签属于可见的过渡态
+const backendsLoading = ref(false);
+
+onMounted(async () => {
+  if (!hasAuth("backends:SmsSetting")) return;
+  backendsLoading.value = true;
+  try {
+    const res = await settingsSmsServerApi.backends();
+    if (res.code === SUCCESS_CODE) {
+      smsBackends.value = [];
+      (Array.isArray(res.data) ? res.data : []).forEach((item: RecordType) => {
+        smsBackends.value.push({
+          auth: settingAuth("SmsConfig", true),
+          api: settingsSmsConfigApi,
+          queryParams: { category: item.value },
+          localeName: "settingSms",
+          label: item.label
+        });
       });
+    }
+  } catch {
+    // http 层已统一提示；渠道子页签缺失属于可见的降级态，这里收尾防止 unhandled rejection
+  } finally {
+    backendsLoading.value = false;
+  }
 });
 </script>
 
 <template>
-  <setting :model-value="settingData" />
+  <setting v-loading="backendsLoading" :model-value="settingData" />
 </template>

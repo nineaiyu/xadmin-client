@@ -10,6 +10,7 @@ import {
 import type { PasswordRule } from "@/api/auth";
 import { SUCCESS_CODE } from "@/api/types";
 import { passwordRulesCheck } from "@/utils";
+import { AesEncrypted } from "@/utils/aes";
 import { message } from "@/utils/message";
 
 defineOptions({
@@ -26,6 +27,8 @@ const form = reactive({ password: "", confirm: "" });
 const submitting = ref(false);
 /** 后端下发的密码安全规则（匿名端点），提交前做与注册/改密同口径的预检 */
 const passwordRules = ref<PasswordRule[]>([]);
+/** 传输加密开关：预检下发，开启时激活提交的 password 为令牌作密钥的密文 */
+const encrypted = ref(false);
 
 onMounted(async () => {
   if (!token.value) {
@@ -39,6 +42,7 @@ onMounted(async () => {
     })
     .catch(() => undefined);
   const res = await inviteValidateApi({ token: token.value }).catch(() => null);
+  encrypted.value = Boolean(res?.data?.encrypted);
   const next = res?.data?.state;
   state.value =
     next === "pending"
@@ -69,10 +73,17 @@ async function submit() {
   }
   submitting.value = true;
   try {
+    // 开关开启时先以激活令牌为密钥加密（与注册/重置密码同一套加密协议）：
+    // await 置于 submitting 置位之后、请求之前，加密失败与请求失败同走
+    // catch 归一为 null 直接收尾，绝不降级提交明文
+    const password = encrypted.value
+      ? await AesEncrypted(token.value, form.password).catch(() => null)
+      : form.password;
+    if (password === null) return;
     // http 层失败已统一提示，归一为 null 后直接收尾，避免重复弹错
     const res = await inviteAcceptApi({
       token: token.value,
-      password: form.password
+      password
     }).catch(() => null);
     if (!res) return;
     if (res.code === SUCCESS_CODE) {

@@ -10,11 +10,7 @@ import { message } from "@/utils/message";
 import { copyText } from "@/utils/clipboard";
 import { SUCCESS_CODE } from "@/api/types";
 import { hasAuth } from "@/router/utils";
-import {
-  monitorApi,
-  type MonitorAlertEvent,
-  type MonitorMetric
-} from "@/api/system/monitor";
+import { monitorApi, type MonitorMetric } from "@/api/system/monitor";
 import HealthBanner from "./components/HealthBanner.vue";
 import HistoryChart from "./components/HistoryChart.vue";
 import EventPanel from "./components/EventPanel.vue";
@@ -315,7 +311,7 @@ const queues = computed(
     ) as [string, number][]
 );
 const slowRows = computed(() => slow.value.results ?? []);
-const alertRows = computed(() => alerts.value as MonitorAlertEvent[]);
+const alertRows = computed(() => alerts.value);
 
 /** 趋势摘要（平均 / 峰值 / 环比），逐指标 chips 展示 */
 const metricSummaries = computed(() =>

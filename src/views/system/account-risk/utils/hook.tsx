@@ -385,9 +385,7 @@ export function useAccountRisk(tableRef: Ref, selectedRows: Ref<RecordType[]>) {
     ]
   });
 
-  const formathandledCamelatcreatedCameltimeColumn = (
-    column: PageTableColumn
-  ) => {
+  const formatHandledAtCreatedTimeColumn = (column: PageTableColumn) => {
     column["cellRenderer"] = scope => {
       const value = scope.row?.[column.prop as string];
       return h(
@@ -416,8 +414,8 @@ export function useAccountRisk(tableRef: Ref, selectedRows: Ref<RecordType[]>) {
         column["cellRenderer"] = scope =>
           renderTag(scope.row, "status", STATUS_TAG);
       },
-      handled_at: formathandledCamelatcreatedCameltimeColumn,
-      created_time: formathandledCamelatcreatedCameltimeColumn
+      handled_at: formatHandledAtCreatedTimeColumn,
+      created_time: formatHandledAtCreatedTimeColumn
     });
 
   return {

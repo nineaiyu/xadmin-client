@@ -148,11 +148,12 @@ export type AuthInfoResult = {
   };
 };
 
-/** 邀请令牌预检：`state` = pending / accepted / invalid，不消费令牌 */
+/** 邀请令牌预检：`state` = pending / accepted / invalid，不消费令牌；
+ * `encrypted` 为传输加密开关（开启时激活提交的 password 须为密文） */
 export type InviteValidateResult = {
   code: number;
   detail: string;
-  data: { state: string; username: string };
+  data: { state: string; username: string; encrypted?: boolean };
 };
 
 /**
@@ -278,7 +279,8 @@ class AuthApi extends BaseApi {
     );
   };
 
-  /** 邀请激活：设置密码完成激活（令牌一次性，激活即失效） */
+  /** 邀请激活：设置密码完成激活（令牌一次性，激活即失效）；
+   * 预检下发 encrypted 时 password 为 AesEncrypted(token) 密文 */
   inviteAccept = (data?: object) => {
     return this.request<TokenResult>(
       "post",
