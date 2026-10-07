@@ -9,6 +9,10 @@ import { useI18n } from "vue-i18n";
  * 行数截断展示（最多 20 行）+ 总数提示：完整数据以导出/业务页面为准，
  * 对话流里的结果以"可读概览"为目标。
  */
+defineOptions({
+  name: "AiResultTable"
+});
+
 const props = defineProps<{ data: Record<string, unknown> }>();
 
 const { t } = useI18n();

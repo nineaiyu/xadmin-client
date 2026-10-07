@@ -2,17 +2,19 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import MenuIcon from "~icons/ep/menu";
 import SendIcon from "~icons/ep/promotion";
 import type { AiActionDraft, AiConsoleMessage } from "@/api/ai/ai";
-import ChatMessageList from "@/components/ChatMessageList/index.vue";
+import MessageThreadPanel from "@/components/MessageThreadPanel/index.vue";
+import MessageTimeDivider from "@/components/MessageTimeDivider/index.vue";
 import AiStreamingBubble from "@/components/AiStreamingBubble/index.vue";
 import AiMessageRow from "./AiMessageRow.vue";
 
 /**
  * 右栏：会话头部 + 消息区（时间分组 / 向上加载 / 新消息悬浮条 / 流式气泡）
- * + 输入区。布局与交互对齐聊天室 ChatWindow（Enter 发送、Shift+Enter 换行），
- * 但消息流按助手页入口独立持久化，且支持 NL / 动作内嵌卡片。
+ * + 输入区。面板骨架收敛于 MessageThreadPanel（与聊天室 ChatWindow 同一套壳），
+ * 本组件只组装助手页的行渲染（NL / 动作内嵌卡片）与输入区。布局与交互对齐
+ * 聊天室（Enter 发送、Shift+Enter 换行），但消息流按助手页入口独立持久化，
+ * 且支持 NL / 动作内嵌卡片。
  */
 type ExecuteResult = { ok: boolean; pending?: boolean; detail?: string };
 type MessageGroup =
@@ -84,85 +86,56 @@ defineExpose({ scrollEl });
 </script>
 
 <template>
-  <div class="relative flex h-full min-w-0 grow flex-col">
-    <div
-      class="flex items-center gap-2 border-0 border-b border-solid border-(--pure-border-color) px-3 py-2"
-    >
-      <el-button
-        v-if="isNarrow"
-        link
-        :icon="useRenderIcon(MenuIcon)"
-        :aria-label="t('ai.features')"
-        @click="emit('toggleNav')"
-      />
-      <div class="min-w-0 grow">
-        <span class="truncate font-medium" data-testid="ai-panel-title">
-          {{ title }}
-        </span>
-        <div class="truncate text-xs text-(--el-text-color-secondary)">
-          {{ subtitle }}
-        </div>
-      </div>
+  <MessageThreadPanel
+    :title="title"
+    title-testid="ai-panel-title"
+    :subtitle="subtitle"
+    :toggle-label="t('ai.features')"
+    :is-narrow="isNarrow"
+    list-testid="ai-messages"
+    skeleton-testid="ai-history-skeleton"
+    :skeleton-visible="loadingHistory && !groups.length"
+    :history-bar-visible="groups.length > 0"
+    :has-more="hasMore"
+    :loading-more="loadingMore"
+    :empty-visible="!groups.length && !loadingHistory && !activeStreaming"
+    :empty-text="emptyText"
+    :pending-count="pendingCount"
+    @toggle="emit('toggleNav')"
+    @scroll="emit('scroll')"
+    @load-more="emit('loadMore')"
+    @ready="onListReady"
+    @jump-to-latest="emit('scrollToBottom')"
+  >
+    <template #actions>
       <slot name="actions" />
-    </div>
+    </template>
 
-    <ChatMessageList
-      testid="ai-messages"
-      skeleton-testid="ai-history-skeleton"
-      :skeleton-visible="loadingHistory && !groups.length"
-      :history-bar-visible="groups.length > 0"
-      :has-more="hasMore"
-      :loading-more="loadingMore"
-      :empty-visible="!groups.length && !loadingHistory && !activeStreaming"
-      :empty-text="emptyText"
-      @scroll="emit('scroll')"
-      @loadMore="emit('loadMore')"
-      @ready="onListReady"
-    >
-      <template v-for="row in groups" :key="row.key">
-        <div v-if="row.type === 'divider'" class="my-3 text-center">
-          <span
-            class="rounded bg-(--el-fill-color-light) px-2 py-0.5 text-xs text-(--el-text-color-secondary)"
-          >
-            {{ row.label }}
-          </span>
-        </div>
-        <AiMessageRow
-          v-else
-          :item="row.item"
-          :runnable="row.item.id === lastAssistantId && !streaming"
-          :nl-runnable="nlRunnable"
-          :nl-running="nlRunning"
-          :action-executor="actionExecutor"
-          @run-nl="dsl => emit('runNl', dsl)"
-        />
-      </template>
-
-      <!-- 流式气泡：思考面板 + 增量正文 + 停止生成 -->
-      <AiStreamingBubble
-        v-if="activeStreaming"
-        :reasoning="activeStreaming.reasoning"
-        :content="activeStreaming.content"
-        testid="ai-streaming"
-        stop-testid="ai-stream-stop"
-        :stop-label="t('ai.stopGenerating')"
-        @stop="emit('stop')"
+    <template v-for="row in groups" :key="row.key">
+      <MessageTimeDivider v-if="row.type === 'divider'" :label="row.label" />
+      <AiMessageRow
+        v-else
+        :item="row.item"
+        :runnable="row.item.id === lastAssistantId && !streaming"
+        :nl-runnable="nlRunnable"
+        :nl-running="nlRunning"
+        :action-executor="actionExecutor"
+        @run-nl="dsl => emit('runNl', dsl)"
       />
-    </ChatMessageList>
+    </template>
 
-    <div
-      v-if="pendingCount > 0"
-      class="absolute bottom-40 left-1/2 -translate-x-1/2 cursor-pointer"
-      @click="emit('scrollToBottom')"
-    >
-      <el-tag type="primary" effect="dark" round>
-        {{ t("chat.newMessages", { count: pendingCount }) }}
-      </el-tag>
-    </div>
+    <!-- 流式气泡：思考面板 + 增量正文 + 停止生成 -->
+    <AiStreamingBubble
+      v-if="activeStreaming"
+      :reasoning="activeStreaming.reasoning"
+      :content="activeStreaming.content"
+      testid="ai-streaming"
+      stop-testid="ai-stream-stop"
+      :stop-label="t('ai.stopGenerating')"
+      @stop="emit('stop')"
+    />
 
-    <div
-      class="border-0 border-t border-solid border-(--pure-border-color) p-3"
-    >
+    <template #composer>
       <!-- data-testid 挂 el-input：Element Plus 会把属性透传到内部 textarea
            （E2E 直接 fill 该 testid；挂外层 div 会被判为不可编辑元素） -->
       <el-input
@@ -198,6 +171,6 @@ defineExpose({ scrollEl });
           {{ t("chat.send") }}
         </el-button>
       </div>
-    </div>
-  </div>
+    </template>
+  </MessageThreadPanel>
 </template>

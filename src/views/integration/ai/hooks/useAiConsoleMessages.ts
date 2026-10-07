@@ -1,8 +1,10 @@
-import { computed, ref } from "vue";
+import { ref } from "vue";
 import type { Ref } from "vue";
-import { useI18n } from "vue-i18n";
 import type { AiConsoleFeature, AiConsoleMessage } from "@/api/ai/ai";
-import { groupByTime } from "@/utils/timeGroups";
+import {
+  upsertMessageItem,
+  useMessageTimeGroups
+} from "@/hooks/useMessageCollection";
 
 /** 服务端消息载荷校验（history / meta / done / error 共用） */
 export function toIncoming(payload: unknown): AiConsoleMessage | null {
@@ -11,9 +13,9 @@ export function toIncoming(payload: unknown): AiConsoleMessage | null {
 }
 
 /**
- * AI 控制台消息集合域（自 useAiConsole 抽出）：持久化消息流 + 乐观上屏对齐。
- * 服务端载荷与本地乐观占位（负 id）按「同角色 + 同内容」对齐；
- * 追加行为与滚动域联动（离底自动跟随，否则计新消息数）。
+ * AI 控制台消息集合域：持久化消息流 + 乐观上屏对齐。upsert 骨架与时间分组
+ * 收敛于共享层（聊天室同一套口径）；本域注入「同角色 + 同内容」的乐观占位
+ * 对齐规则，追加行为与滚动域联动（离底自动跟随，否则计新消息数）。
  */
 export function useAiConsoleMessages({
   feature,
@@ -26,30 +28,25 @@ export function useAiConsoleMessages({
   pendingCount: Ref<number>;
   scrollToBottom: () => void;
 }) {
-  const { t } = useI18n();
   const messages = ref<AiConsoleMessage[]>([]);
 
   /** 时间分隔：首条 / 跨天 / 间隔超过阈值时插入分组标签（口径见 utils/timeGroups） */
-  const messageGroups = computed(() =>
-    groupByTime(messages.value, t("chat.yesterday"))
-  );
+  const messageGroups = useMessageTimeGroups(messages);
 
   function upsertMessage(incoming: AiConsoleMessage) {
-    const index = messages.value.findIndex(
-      item =>
-        item.id === incoming.id ||
+    const appended = upsertMessageItem(messages, incoming, {
+      findMatch: (item, incomingItem) =>
+        item.id === incomingItem.id ||
         // 乐观占位（负 id）按「同角色 + 同内容」对齐为服务端载荷
         (item.id < 0 &&
-          item.role === incoming.role &&
-          item.content === incoming.content)
-    );
-    if (index >= 0) {
-      messages.value[index] = { ...messages.value[index], ...incoming };
-      return;
+          item.role === incomingItem.role &&
+          item.content === incomingItem.content),
+      merge: (existing, incomingItem) => ({ ...existing, ...incomingItem })
+    });
+    if (appended) {
+      if (atBottom.value) scrollToBottom();
+      else pendingCount.value += 1;
     }
-    messages.value.push(incoming);
-    if (atBottom.value) scrollToBottom();
-    else pendingCount.value += 1;
   }
 
   function pushOptimistic(content: string) {

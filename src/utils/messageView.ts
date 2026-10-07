@@ -1,9 +1,11 @@
 import type { AiActionDraft } from "@/api/ai/ai";
 
 /** 动作草稿载体：聊天消息 extra / 助手消息 extra 在动作字段上的结构面 */
-type ActionDraftCarrier = {
+export type ActionDraftCarrier = {
   action_drafts?: AiActionDraft[] | null;
   action_draft?: AiActionDraft | null;
+  /** 动作执行结果（读类动作返回数据表，渲染为只读结果表） */
+  action_result?: Record<string, unknown>;
 };
 
 /**

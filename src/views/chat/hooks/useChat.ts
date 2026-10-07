@@ -1,10 +1,10 @@
-import { computed, ref, watch, onUnmounted } from "vue";
+import { ref, watch, onUnmounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
 import { SUCCESS_CODE } from "@/api/types";
 import { MessageAction } from "@/utils/websocket/protocol";
 import { chatApi, type ChatMessageItem } from "@/api/chat";
-import { groupByTime } from "@/utils/timeGroups";
+import { useMessageTimeGroups } from "@/hooks/useMessageCollection";
 import { useRooms } from "./useRooms";
 import { createMessageStore } from "./chatMessages";
 import { useChatAttachments } from "./useChatAttachments";
@@ -49,9 +49,7 @@ export function useChat() {
   const activeRoomId = roomState.activeRoomId;
 
   /** 时间分隔：首条 / 跨天 / 间隔超过阈值时插入分组标签（口径见 utils/timeGroups） */
-  const messageGroups = computed(() =>
-    groupByTime(messages.value, t("chat.yesterday"))
-  );
+  const messageGroups = useMessageTimeGroups(messages);
 
   function isMine(item: ChatMessageItem) {
     return !!item.sender_pk && item.sender_pk === me.value.pk;

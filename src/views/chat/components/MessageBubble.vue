@@ -11,15 +11,15 @@ import type { AiActionDraft } from "@/api/ai/ai";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { http } from "@/utils/http";
-import { formatMessageTime, pickActionDrafts } from "@/utils/messageView";
+import { formatMessageTime } from "@/utils/messageView";
 import { SUCCESS_CODE } from "@/api/types";
 import type { ChatAttachment, ChatMessageItem } from "@/api/chat";
 import AiMessageBlock from "@/components/AiMessageBlock/index.vue";
 import ChatMessageAvatar from "@/components/ChatMessageAvatar/index.vue";
 import ChatSystemNotice from "@/components/ChatSystemNotice/index.vue";
 import ChatTextBubble from "@/components/ChatTextBubble/index.vue";
-import AiActionCard from "@/views/integration/ai/components/AiActionCard.vue";
-import AiResultTable from "@/views/integration/ai/components/AiResultTable.vue";
+import AiResultTable from "@/components/AiResultTable/index.vue";
+import MessageActionAttachments from "@/components/MessageActionAttachments/index.vue";
 
 /**
  * 单条消息气泡：自己靠右、他人靠左；系统消息居中；AI 回复附引用来源；
@@ -415,23 +415,16 @@ const chatActionExecutor = async (draft: AiActionDraft) => {
         </el-button>
       </div>
 
-      <!-- A2 受限动作确认卡片：AI 只产出草稿，执行必须由用户在此二次确认（复用助手页组件） -->
-      <template v-if="!item.is_recalled">
-        <AiActionCard
-          v-for="(draft, index) in pickActionDrafts(item.extra)"
-          :key="`${draft.action}-${index}`"
-          :draft="draft"
-          :runnable="canExecuteActions"
-          :disabled-hint="canExecuteActions ? '' : t('chat.actionNoPermission')"
-          :executor="chatActionExecutor"
-          testid-prefix="chat"
-        />
-        <!-- 只读动作结果表（查询类动作执行后展示数据，与助手页同口径） -->
-        <AiResultTable
-          v-if="actionResult && Object.keys(actionResult).length"
-          :data="actionResult"
-        />
-      </template>
+      <!-- A2 受限动作确认卡片：AI 只产出草稿，执行必须由用户在此二次确认
+           （与助手页同一套动作渲染；执行端点归属助手页权限点） -->
+      <MessageActionAttachments
+        v-if="!item.is_recalled"
+        :extra="item.extra"
+        :runnable="canExecuteActions"
+        :disabled-hint="canExecuteActions ? '' : t('chat.actionNoPermission')"
+        :executor="chatActionExecutor"
+        testid-prefix="chat"
+      />
     </div>
   </div>
 </template>

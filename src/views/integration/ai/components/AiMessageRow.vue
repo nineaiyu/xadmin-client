@@ -5,15 +5,16 @@ import AiMessageBlock from "@/components/AiMessageBlock/index.vue";
 import ChatMessageAvatar from "@/components/ChatMessageAvatar/index.vue";
 import ChatSystemNotice from "@/components/ChatSystemNotice/index.vue";
 import ChatTextBubble from "@/components/ChatTextBubble/index.vue";
-import { formatMessageTime, pickActionDrafts } from "@/utils/messageView";
+import AiResultTable from "@/components/AiResultTable/index.vue";
+import MessageActionAttachments from "@/components/MessageActionAttachments/index.vue";
+import { formatMessageTime } from "@/utils/messageView";
 import type { AiActionDraft, AiConsoleMessage } from "@/api/ai/ai";
 import AiNlCard from "./AiNlCard.vue";
-import AiActionCard from "./AiActionCard.vue";
-import AiResultTable from "./AiResultTable.vue";
 
 /**
  * 助手页单条消息：用户气泡靠右 / 系统提示居中 / AI 回复（思考 + 正文 + 出处
  * 与内嵌卡片）靠左。AI 块统一走 AiMessageBlock（与聊天室同一套布局）；
+ * 动作草稿卡与只读结果表收敛于 MessageActionAttachments（聊天室同一套渲染）；
  * NL 卡片与动作卡片的可操作性由父级按「是否为最新 assistant 消息」判定。
  */
 type ExecuteResult = { ok: boolean; pending?: boolean; detail?: string };
@@ -37,7 +38,6 @@ const isSystem = computed(() => props.item.role === "system");
 const sources = computed(() => props.item.extra?.sources ?? []);
 const nlResult = computed(() => props.item.extra?.nl ?? null);
 const runResult = computed(() => props.item.extra?.nl_run ?? null);
-const actionResult = computed(() => props.item.extra?.action_result ?? null);
 
 /** 时间标签走公共格式化口径（与聊天室消息同源） */
 const timeLabel = computed(() => formatMessageTime(props.item.created_time));
@@ -77,16 +77,10 @@ const timeLabel = computed(() => formatMessageTime(props.item.created_time));
         @run="dsl => emit('runNl', dsl)"
       />
       <AiResultTable v-if="runResult" :data="runResult" />
-      <AiActionCard
-        v-for="(draft, index) in pickActionDrafts(item.extra)"
-        :key="`${draft.action}-${index}`"
-        :draft="draft"
+      <MessageActionAttachments
+        :extra="item.extra"
         :runnable="runnable"
         :executor="actionExecutor"
-      />
-      <AiResultTable
-        v-if="actionResult && Object.keys(actionResult).length"
-        :data="actionResult"
       />
       <div
         v-if="item.extra?.partial"

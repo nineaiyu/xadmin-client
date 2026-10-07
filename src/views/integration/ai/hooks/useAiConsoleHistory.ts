@@ -1,17 +1,17 @@
-import { nextTick, ref, type Ref } from "vue";
+import type { Ref } from "vue";
 import { SUCCESS_CODE } from "@/api/types";
 import {
   aiAssistantApi,
   type AiConsoleFeature,
   type AiConsoleMessage
 } from "@/api/ai/ai";
-
-/** 历史分页每页条数（与服务端默认/上限一致：20 / 100） */
-const PAGE_SIZE = 20;
+import { useHistoryPagination } from "@/hooks/useHistoryPagination";
 
 /**
- * AI 控制台历史分页（自 useAiConsole 抽出）：三个入口各自独立的持久化消息流，
- * 进入/切换入口拉取最近一页，before_id 向上翻页并保持视觉位置。
+ * AI 控制台历史分页（before_id 游标向上翻页，保留滚动位置）：分页机制收敛于
+ * 共享层 useHistoryPagination（与聊天室同一套守卫与滚动补偿），本文件只注入
+ * 按入口拉取的端点口径；三个入口各自独立的持久化消息流，进入/切换入口拉取
+ * 最近一页。
  */
 export function useAiConsoleHistory({
   feature,
@@ -26,61 +26,26 @@ export function useAiConsoleHistory({
   pendingCount: Ref<number>;
   scrollToBottom: () => void;
 }) {
-  const hasMore = ref(false);
-  const loadingHistory = ref(false);
-  const loadingMore = ref(false);
+  const history = useHistoryPagination<AiConsoleMessage, AiConsoleFeature>({
+    messages,
+    scroller,
+    pendingCount,
+    scrollToBottom,
+    // 两个入口方向都以调用时刻的当前入口为准
+    fetchPage: async ({ beforeId, limit, initial }, current) => {
+      const { code, data } = await aiAssistantApi.history(
+        initial
+          ? { feature: current, limit }
+          : { feature: current, before_id: beforeId, limit }
+      );
+      if (code !== SUCCESS_CODE) return null;
+      return {
+        results: ((data?.results ?? []) as AiConsoleMessage[]) || [],
+        hasMore: Boolean(data?.has_more)
+      };
+    },
+    scopeForLoadMore: () => feature.value
+  });
 
-  async function loadHistory() {
-    loadingHistory.value = true;
-    messages.value = [];
-    pendingCount.value = 0;
-    try {
-      const { code, data } = await aiAssistantApi.history({
-        feature: feature.value,
-        limit: PAGE_SIZE
-      });
-      if (code === SUCCESS_CODE) {
-        messages.value = ((data?.results ?? []) as AiConsoleMessage[]) || [];
-        hasMore.value = Boolean(data?.has_more);
-      }
-    } finally {
-      loadingHistory.value = false;
-    }
-    await nextTick();
-    scrollToBottom();
-  }
-
-  async function loadMore() {
-    if (!hasMore.value || loadingMore.value || !messages.value.length) return;
-    const firstId = messages.value[0]?.id;
-    if (!firstId || firstId < 0) return;
-    loadingMore.value = true;
-    const container = scroller.value;
-    const previousHeight = container?.scrollHeight ?? 0;
-    const previousTop = container?.scrollTop ?? 0;
-    try {
-      const { code, data } = await aiAssistantApi.history({
-        feature: feature.value,
-        before_id: firstId,
-        limit: PAGE_SIZE
-      });
-      if (code === SUCCESS_CODE) {
-        messages.value = [
-          ...(((data?.results ?? []) as AiConsoleMessage[]) || []),
-          ...messages.value
-        ];
-        hasMore.value = Boolean(data?.has_more);
-        await nextTick();
-        // 保持视觉位置：新增内容的高度差补回 scrollTop（与聊天室同口径）
-        if (container) {
-          container.scrollTop =
-            previousTop + (container.scrollHeight - previousHeight);
-        }
-      }
-    } finally {
-      loadingMore.value = false;
-    }
-  }
-
-  return { hasMore, loadingHistory, loadingMore, loadHistory, loadMore };
+  return { ...history, loadHistory: () => history.loadHistory(feature.value) };
 }

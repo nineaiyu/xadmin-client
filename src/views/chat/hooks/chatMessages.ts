@@ -4,6 +4,7 @@ import type {
   ChatReactionUpdatePayload,
   ChatRecallPayload
 } from "@/utils/websocket/protocol";
+import { upsertMessageItem } from "@/hooks/useMessageCollection";
 
 /**
  * 消息集合的写入口径（乐观上屏 / 服务端对齐 / 撤回 / 表情回应 / 本地撤回窗口）——自 useChat 抽出（行数门禁）。
@@ -68,33 +69,30 @@ export function createMessageStore(
   }
 
   function upsert(incoming: ChatMessageItem): boolean {
-    const index = messages.value.findIndex(
-      item =>
-        item.id === incoming.id ||
-        (!!incoming.client_msg_id &&
-          item.client_msg_id === incoming.client_msg_id)
-    );
-    if (index >= 0) {
-      const merged = {
-        ...messages.value[index],
-        ...incoming,
-        sending: false,
-        failed: false
-      };
-      // undefined 不覆盖旧值：本地置位在乐观气泡对齐正式载荷后继续有效
-      if (needsLocalRecallFlag(incoming, merged)) {
-        merged.can_recall = true;
-      }
-      messages.value[index] = merged;
-      return false;
-    }
-    // 纯新消息（如其他端登录的同账号广播）同样按本地窗口补位
-    messages.value.push(
-      needsLocalRecallFlag(incoming, incoming)
-        ? { ...incoming, can_recall: true }
-        : incoming
-    );
-    return true;
+    return upsertMessageItem(messages, incoming, {
+      findMatch: (item, incomingItem) =>
+        item.id === incomingItem.id ||
+        (!!incomingItem.client_msg_id &&
+          item.client_msg_id === incomingItem.client_msg_id),
+      merge: (existing, incomingItem) => {
+        const merged: ChatMessageItem = {
+          ...existing,
+          ...incomingItem,
+          sending: false,
+          failed: false
+        };
+        // undefined 不覆盖旧值：本地置位在乐观气泡对齐正式载荷后继续有效
+        if (needsLocalRecallFlag(incomingItem, merged)) {
+          merged.can_recall = true;
+        }
+        return merged;
+      },
+      // 纯新消息（如其他端登录的同账号广播）同样按本地窗口补位
+      prepareAppend: incomingItem =>
+        needsLocalRecallFlag(incomingItem, incomingItem)
+          ? { ...incomingItem, can_recall: true }
+          : incomingItem
+    });
   }
 
   function applyRecall(payload: ChatRecallPayload) {

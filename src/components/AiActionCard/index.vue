@@ -4,10 +4,14 @@ import { useI18n } from "vue-i18n";
 import type { AiActionDraft } from "@/api/ai/ai";
 
 /**
- * 受限动作确认卡片（与聊天室 MessageBubble 的动作卡同一交互口径）：
- * AI 只产出草稿，执行必须由用户在此二次确认；执行走传入的 executor
- * （hook.executeAction），结果消息由服务端落库并回传上屏。
+ * 受限动作确认卡片（聊天室 / 助手页共用）：AI 只产出草稿，执行必须由用户在此
+ * 二次确认；执行走传入的 executor（hook.executeAction），结果消息由服务端落库
+ * 并回传上屏。
  */
+defineOptions({
+  name: "AiActionCard"
+});
+
 type ExecuteResult = { ok: boolean; pending?: boolean; detail?: string };
 
 const props = defineProps<{

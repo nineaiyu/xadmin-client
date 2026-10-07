@@ -1,13 +1,12 @@
-import { nextTick, ref, type Ref } from "vue";
+import type { Ref } from "vue";
 import { SUCCESS_CODE } from "@/api/types";
 import { chatApi, type ChatMessageItem } from "@/api/chat";
-
-/** 历史分页每页条数（与服务端默认/上限一致：20 / 50） */
-const PAGE_SIZE = 20;
+import { useHistoryPagination } from "@/hooks/useHistoryPagination";
 
 /**
- * 聊天室历史分页（自 useChat 抽出）：before_id 游标向上翻页，保留滚动位置。
- * 消息数组与滚动状态由调用方持有，本模块只负责拉取与拼接。
+ * 聊天室历史分页（before_id 游标向上翻页，保留滚动位置）：分页机制收敛于
+ * 共享层 useHistoryPagination（与助手页同一套守卫与滚动补偿），本文件只注入
+ * 按会话拉取的端点口径；消息数组与滚动状态仍由调用方持有。
  */
 export function useChatHistory({
   messages,
@@ -22,58 +21,24 @@ export function useChatHistory({
   pendingCount: Ref<number>;
   scrollToBottom: () => void;
 }) {
-  const hasMore = ref(false);
-  const loadingHistory = ref(false);
-  const loadingMore = ref(false);
+  const history = useHistoryPagination<ChatMessageItem, number>({
+    messages,
+    scroller,
+    pendingCount,
+    scrollToBottom,
+    // 首屏拉取用调用方传入的会话，上翻页用当前会话（切换会话后旧游标作废）
+    fetchPage: async ({ beforeId, limit, initial }, room) => {
+      const { code, data } = await chatApi.history(
+        initial ? { room, limit } : { room, before_id: beforeId, limit }
+      );
+      if (code !== SUCCESS_CODE) return null;
+      return { results: data?.results ?? [], hasMore: !!data?.has_more };
+    },
+    scopeForLoadMore: () => activeRoomId.value
+  });
 
-  async function loadHistory(roomId: number) {
-    loadingHistory.value = true;
-    messages.value = [];
-    pendingCount.value = 0;
-    try {
-      const { code, data } = await chatApi.history({
-        room: roomId,
-        limit: PAGE_SIZE
-      });
-      if (code === SUCCESS_CODE) {
-        messages.value = data?.results ?? [];
-        hasMore.value = !!data?.has_more;
-      }
-    } finally {
-      loadingHistory.value = false;
-    }
-    await nextTick();
-    scrollToBottom();
-  }
-
-  async function loadMore() {
-    if (!hasMore.value || loadingMore.value || !messages.value.length) return;
-    const firstId = messages.value[0]?.id;
-    if (!firstId || firstId < 0) return;
-    loadingMore.value = true;
-    const container = scroller.value;
-    const previousHeight = container?.scrollHeight ?? 0;
-    const previousTop = container?.scrollTop ?? 0;
-    try {
-      const { code, data } = await chatApi.history({
-        room: activeRoomId.value,
-        before_id: firstId,
-        limit: PAGE_SIZE
-      });
-      if (code === SUCCESS_CODE) {
-        messages.value = [...(data?.results ?? []), ...messages.value];
-        hasMore.value = !!data?.has_more;
-        await nextTick();
-        // 保持视觉位置：新增内容的高度差补回 scrollTop
-        if (container) {
-          container.scrollTop =
-            previousTop + (container.scrollHeight - previousHeight);
-        }
-      }
-    } finally {
-      loadingMore.value = false;
-    }
-  }
-
-  return { hasMore, loadingHistory, loadingMore, loadHistory, loadMore };
+  return {
+    ...history,
+    loadHistory: (roomId: number) => history.loadHistory(roomId)
+  };
 }

@@ -10,7 +10,6 @@ import {
   enableDesktopNotify,
   isDesktopNotifySupported
 } from "@/utils/desktopNotify";
-import MenuIcon from "~icons/ep/menu";
 import SendIcon from "~icons/ep/promotion";
 import AiIcon from "~icons/ep/cpu";
 import BellIcon from "~icons/ep/bell";
@@ -24,14 +23,17 @@ import {
   type ChatPeer,
   type ChatRoomItem
 } from "@/api/chat";
+import MessageThreadPanel from "@/components/MessageThreadPanel/index.vue";
+import MessageTimeDivider from "@/components/MessageTimeDivider/index.vue";
+import AiStreamingBubble from "@/components/AiStreamingBubble/index.vue";
 import MessageBubble from "./MessageBubble.vue";
 import ChatEmojiPanel from "./ChatEmojiPanel.vue";
 import ChatGroupMembersPanel from "./ChatGroupMembersPanel.vue";
-import ChatMessageList from "@/components/ChatMessageList/index.vue";
-import AiStreamingBubble from "@/components/AiStreamingBubble/index.vue";
 
 /**
  * 右栏：会话头部 + 消息区（时间分组 / 向上加载 / 新消息悬浮条 / AI 流式气泡）+ 输入区。
+ * 面板骨架（头部 / 消息列表壳 / 悬浮条 / 输入区容器）收敛于 MessageThreadPanel，
+ * 与助手页 AiChatPanel 同一套壳；本组件只组装聊天室域内能力。
  *
  * 输入区约定：Enter 发送、Shift+Enter 换行；`@` 触发在线成员联想；工具条支持表情包
  * 插入（光标处）；AI 会话支持 `/kb 问题` 走知识库问答；头部可开关桌面通知（全站生效）。
@@ -255,34 +257,39 @@ watch(
 </script>
 
 <template>
-  <div class="relative flex h-full min-w-0 grow flex-col">
-    <div
-      class="flex items-center gap-2 border-0 border-b border-solid border-(--pure-border-color) px-3 py-2"
-    >
-      <el-button
-        v-if="isNarrow"
-        link
-        :icon="useRenderIcon(MenuIcon)"
-        :aria-label="t('chat.sessions')"
-        @click="emit('toggleSidebar')"
-      />
-      <div class="min-w-0 grow">
-        <div class="flex items-center gap-2">
-          <!-- E2E 以标题判定「会话切换完成」（切房会清空草稿，早于切换完成的输入会被清掉） -->
-          <span class="truncate font-medium" data-testid="chat-room-title">
-            {{ title }}
-          </span>
-          <el-icon v-if="isAiRoom" class="text-(--el-color-primary)">
-            <component :is="useRenderIcon(AiIcon)" />
-          </el-icon>
-          <el-tag v-if="!connected" size="small" type="warning">
-            {{ t("chat.connecting") }}
-          </el-tag>
-        </div>
-        <div class="truncate text-xs text-(--el-text-color-secondary)">
-          {{ subtitle }}
-        </div>
-      </div>
+  <MessageThreadPanel
+    :title="title"
+    title-testid="chat-room-title"
+    :subtitle="subtitle"
+    :toggle-label="t('chat.sessions')"
+    :is-narrow="isNarrow"
+    list-testid="chat-messages"
+    skeleton-testid="chat-history-skeleton"
+    :skeleton-visible="loading && !groups.length"
+    :history-bar-visible="Boolean(room) && groups.length > 0"
+    :has-more="hasMore"
+    :loading-more="loadingMore"
+    :empty-visible="
+      Boolean(room) && !groups.length && !loading && !activeStreaming
+    "
+    :empty-text="t('chat.emptyMessages')"
+    :pending-count="pendingCount"
+    @toggle="emit('toggleSidebar')"
+    @scroll="emit('scroll')"
+    @load-more="emit('loadMore')"
+    @ready="emit('scroller', $event)"
+    @jump-to-latest="emit('scrollToBottom')"
+  >
+    <template #title-extras>
+      <el-icon v-if="isAiRoom" class="text-(--el-color-primary)">
+        <component :is="useRenderIcon(AiIcon)" />
+      </el-icon>
+      <el-tag v-if="!connected" size="small" type="warning">
+        {{ t("chat.connecting") }}
+      </el-tag>
+    </template>
+
+    <template #actions>
       <el-button
         v-if="isGroupRoom"
         link
@@ -311,69 +318,35 @@ watch(
           @click="toggleDesktopNotify"
         />
       </el-tooltip>
-    </div>
+    </template>
 
-    <ChatMessageList
-      testid="chat-messages"
-      skeleton-testid="chat-history-skeleton"
-      :skeleton-visible="loading && !groups.length"
-      :history-bar-visible="Boolean(room) && groups.length > 0"
-      :has-more="hasMore"
-      :loading-more="loadingMore"
-      :empty-visible="
-        Boolean(room) && !groups.length && !loading && !activeStreaming
-      "
-      :empty-text="t('chat.emptyMessages')"
-      @scroll="emit('scroll')"
-      @loadMore="emit('loadMore')"
-      @ready="emit('scroller', $event)"
-    >
-      <template v-for="row in groups" :key="row.key">
-        <div v-if="row.type === 'divider'" class="my-3 text-center">
-          <span
-            class="rounded bg-(--el-fill-color-light) px-2 py-0.5 text-xs text-(--el-text-color-secondary)"
-          >
-            {{ row.label }}
-          </span>
-        </div>
-        <MessageBubble
-          v-else
-          :item="row.item"
-          :mine="mine(row.item)"
-          :me-pk="mePk"
-          @recall="emit('recall', $event)"
-          @resend="emit('resend', $event)"
-          @react="(item, emoji) => emit('react', item, emoji)"
-        />
-      </template>
-
-      <!-- AI 流式回答气泡（SSE 增量逐字上屏；思考增量到达后先展示思考面板） -->
-      <AiStreamingBubble
-        v-if="activeStreaming"
-        :reasoning="activeStreaming.reasoning"
-        :content="activeStreaming.content"
-        testid="chat-streaming"
-        stop-testid="chat-stream-stop"
-        :stop-label="t('chat.stopGenerating')"
-        show-name
-        :name-label="t('chat.aiAssistant')"
-        @stop="emit('stopStream')"
+    <template v-for="row in groups" :key="row.key">
+      <MessageTimeDivider v-if="row.type === 'divider'" :label="row.label" />
+      <MessageBubble
+        v-else
+        :item="row.item"
+        :mine="mine(row.item)"
+        :me-pk="mePk"
+        @recall="emit('recall', $event)"
+        @resend="emit('resend', $event)"
+        @react="(item, emoji) => emit('react', item, emoji)"
       />
-    </ChatMessageList>
+    </template>
 
-    <div
-      v-if="pendingCount > 0"
-      class="absolute bottom-40 left-1/2 -translate-x-1/2 cursor-pointer"
-      @click="emit('scrollToBottom')"
-    >
-      <el-tag type="primary" effect="dark" round>
-        {{ t("chat.newMessages", { count: pendingCount }) }}
-      </el-tag>
-    </div>
+    <!-- AI 流式回答气泡（SSE 增量逐字上屏；思考增量到达后先展示思考面板） -->
+    <AiStreamingBubble
+      v-if="activeStreaming"
+      :reasoning="activeStreaming.reasoning"
+      :content="activeStreaming.content"
+      testid="chat-streaming"
+      stop-testid="chat-stream-stop"
+      :stop-label="t('chat.stopGenerating')"
+      show-name
+      :name-label="t('chat.aiAssistant')"
+      @stop="emit('stopStream')"
+    />
 
-    <div
-      class="border-0 border-t border-solid border-(--pure-border-color) p-3"
-    >
+    <template #composer>
       <div
         v-if="mentionCandidates.length"
         class="mb-2 rounded border border-solid border-(--pure-border-color) p-1"
@@ -452,6 +425,6 @@ watch(
           {{ t("chat.send") }}
         </el-button>
       </div>
-    </div>
-  </div>
+    </template>
+  </MessageThreadPanel>
 </template>
