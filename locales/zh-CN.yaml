@@ -564,6 +564,7 @@ post:
   memberPlaceholder: 搜索用户名/昵称添加成员
   memberNoChange: 未检测到成员变更
   memberSaveOk: 岗位成员已更新
+  memberSkipped: 岗位成员已更新，{count} 个失效或不存在用户已跳过
   preview: 预览
 
 directory:
@@ -583,6 +584,7 @@ directory:
   empty: 暂无成员
   emptyDept: 暂无可浏览的部门
   emptyPosts: 暂无可用岗位
+  deptTreeTruncated: 部门数量超过单次加载上限，部门树已截断、可能不完整
   noPost: 未分配岗位
   noContact: 暂无联系方式
   memberDetail: 成员详情

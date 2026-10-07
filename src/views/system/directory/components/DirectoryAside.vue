@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import { SUCCESS_CODE } from "@/api/types";
+import { message } from "@/utils/message";
 import type {
   DirectoryDeptNode,
   DirectoryPostOption
@@ -63,7 +64,15 @@ const filteredPosts = computed(() => {
 function loadDeptTree() {
   if (!canUseDept) return;
   deptLoading.value = true;
-  fetchAllRows<DirectoryDeptNode>(searchDeptApi.list)
+  fetchAllRows<DirectoryDeptNode>(
+    searchDeptApi.list,
+    {},
+    {
+      // 建树数据拿不全即失真：翻页触达上限被截断时显式提示，避免静默缺部门
+      onTruncated: () =>
+        message(t("directory.deptTreeTruncated"), { type: "warning" })
+    }
+  )
     .then(res => {
       if (res.code === SUCCESS_CODE && res.data) {
         deptTree.value = handleTree(res.data.results);

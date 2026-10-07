@@ -147,4 +147,45 @@ describe("fetchAllRows", () => {
     expect(list).toHaveBeenCalledTimes(3);
     expect(res.data.results).toHaveLength(3000);
   });
+
+  it("触达 maxPages 仍未拉满时回调 onTruncated（截断显式上报）", async () => {
+    const rows = Array.from({ length: 3000 }, (_, i) => row(i + 1));
+    const list = vi.fn(async () => pageRes(rows.slice(0, 1000), 3000));
+    const onTruncated = vi.fn();
+    const res = await fetchAllRows(
+      list as never,
+      {},
+      { maxPages: 2, onTruncated }
+    );
+    expect(list).toHaveBeenCalledTimes(2);
+    // 已合并 2000 条而 total=3000：结果原样返回已合并数据，同时上报截断
+    expect(res.data.results).toHaveLength(2000);
+    expect(onTruncated).toHaveBeenCalledWith({ fetched: 2000, total: 3000 });
+  });
+
+  it("正常拉满时不触发 onTruncated", async () => {
+    const rows = Array.from({ length: 1500 }, (_, i) => row(i + 1));
+    const list = vi.fn(async (params: Record<string, unknown>) => {
+      const page = Number(params.page ?? 1);
+      return pageRes(rows.slice((page - 1) * 1000, page * 1000), rows.length);
+    });
+    const onTruncated = vi.fn();
+    await fetchAllRows(list as never, {}, { onTruncated });
+    expect(list).toHaveBeenCalledTimes(2);
+    expect(onTruncated).not.toHaveBeenCalled();
+  });
+
+  it("total 谎报后空页兜底终止时同样视为截断并回调", async () => {
+    let calls = 0;
+    const list = vi.fn(async () => {
+      calls += 1;
+      // 首页 1 条、total 谎报 100，次页即空页兜底终止
+      return pageRes(calls === 1 ? [row(1)] : [], 100);
+    });
+    const onTruncated = vi.fn();
+    const res = await fetchAllRows(list as never, {}, { onTruncated });
+    expect(calls).toBe(2);
+    expect(res.data.results).toEqual([row(1)]);
+    expect(onTruncated).toHaveBeenCalledWith({ fetched: 1, total: 100 });
+  });
 });

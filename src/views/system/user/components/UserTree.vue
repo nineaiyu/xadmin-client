@@ -6,6 +6,11 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import MoreIcon from "~icons/ep/more-filled?width=18&height=18";
 import { computed, getCurrentInstance, nextTick, ref, watch } from "vue";
 import type { TreeInstance, TreeNodeData } from "element-plus";
+import {
+  COMPACT_SCROLL_HEIGHT,
+  DESKTOP_CONTAINER_MIN_HEIGHT,
+  DESKTOP_SCROLL_HEIGHT
+} from "../utils/userTreeHeight";
 
 interface Tree {
   id: number;
@@ -20,11 +25,11 @@ const props = defineProps({
   treeData: Array,
   pk: String,
   /**
-   * 堆叠（移动端）形态：高度自适应并限高。
+   * 堆叠（移动端）形态：高度自适应并限高（口径见 utils/userTreeHeight.ts）。
    *
-   * 桌面形态依赖 split-pane 给出的高度，用 `calc(100vh - 141px)` 铺满；移动端是
-   * 「部门树在上、用户列表在下」的堆叠布局，同样的铺满高度会把列表推到整屏之外
-   * （实测 390×664 视口下用户列表完全不可见）。
+   * 桌面形态依赖 split-pane 给出的高度铺满；移动端是「部门树在上、用户列表在下」
+   * 的堆叠布局，同样的铺满高度会把列表推到整屏之外（实测 390×664 视口下用户列表
+   * 完全不可见）。
    */
   compact: Boolean
 });
@@ -138,7 +143,9 @@ defineExpose({ onTreeReset });
 <template>
   <div
     v-loading="props.treeLoading"
-    :style="props.compact ? undefined : { minHeight: `calc(100vh - 141px)` }"
+    :style="
+      props.compact ? undefined : { minHeight: DESKTOP_CONTAINER_MIN_HEIGHT }
+    "
     class="bg-bg_color overflow-hidden relative"
   >
     <div class="flex items-center h-8.5">
@@ -185,7 +192,7 @@ defineExpose({ onTreeReset });
     </div>
     <el-divider />
     <el-scrollbar
-      :height="props.compact ? 'min(32vh, 260px)' : 'calc(90vh - 108px)'"
+      :height="props.compact ? COMPACT_SCROLL_HEIGHT : DESKTOP_SCROLL_HEIGHT"
     >
       <el-tree
         ref="treeRef"

@@ -285,15 +285,21 @@ test("登出后回到登录页", async ({ page }) => {
 
 test("模块停用整页提示：渲染与返回入口", async ({ page }) => {
   await login(page);
+  // hash 同文档 goto 不会开新历史条目（登录期的 SPA 导航 state.back 会原样带到
+  // 目标路由，组件判定为「有站内上一页」）；先离开文档再直达，等价新标签/外链
+  // 落地：令牌随 localStorage 保留，但站内导航史清零
+  await page.goto("about:blank");
   await page.goto("/#/error/module-disabled?module=chat");
-  await expect(page.getByText("功能模块已停用")).toBeVisible({
+  // 冷启动后页签标题与正文大标题同文案：断言收敛到主内容区，避开 lay-tag 命中
+  const main = page.locator("#main-content");
+  await expect(main.getByText("功能模块已停用")).toBeVisible({
     timeout: 15_000
   });
-  await expect(page.getByText("该功能对应的模块已被停用")).toBeVisible();
+  await expect(main.getByText("该功能对应的模块已被停用")).toBeVisible();
   // 命中模块 id 随查询参数展示（网关 404 响应体的 module 字段）
-  await expect(page.getByText("(chat)")).toBeVisible();
-  // goto 直达无站内历史：返回按钮落回首页
-  await expect(page.getByRole("button", { name: "返回首页" })).toBeVisible();
+  await expect(main.getByText("(chat)")).toBeVisible();
+  // 直达无站内历史：返回按钮落回首页
+  await expect(main.getByRole("button", { name: "返回首页" })).toBeVisible();
 });
 
 test("通讯录：按部门/按岗位视角渲染", async ({ page }) => {

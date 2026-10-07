@@ -115,10 +115,20 @@ export function usePosts(tableRef: Ref) {
         }
         const res = await postApi.assign(row.pk, payload).catch(error => ({
           code: -1,
+          data: null,
           detail: String((error as { detail?: string })?.detail ?? error)
         }));
         if (res.code === SUCCESS_CODE) {
-          message(t("post.memberSaveOk"), { type: "success" });
+          // 跳过明细：失效/不存在用户的 pk 不阻断保存，但要点名（与 tags 批量打标同口径）
+          const skipped =
+            (res.data as { skipped?: string[] } | null)?.skipped?.length ?? 0;
+          if (skipped) {
+            message(t("post.memberSkipped", { count: skipped }), {
+              type: "warning"
+            });
+          } else {
+            message(t("post.memberSaveOk"), { type: "success" });
+          }
           done();
           refresh();
           return;

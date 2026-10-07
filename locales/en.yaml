@@ -564,6 +564,7 @@ post:
   memberPlaceholder: Search username or nickname
   memberNoChange: No member changes detected
   memberSaveOk: Post members updated
+  memberSkipped: Post members updated, {count} invalid or inactive user(s) skipped
   preview: Preview
 
 directory:
@@ -583,6 +584,7 @@ directory:
   empty: No members
   emptyDept: No department available
   emptyPosts: No active posts
+  deptTreeTruncated: Department count exceeds the single-load cap; the dept tree was truncated and may be incomplete
   noPost: No post
   noContact: No contact info
   memberDetail: Member details

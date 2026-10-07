@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { type FormInstance, type FormItemRule } from "element-plus";
 import dayjs from "dayjs";
 import { loginPolicyApi, type LoginPolicyPreview } from "@/api/system/security";
+import { isIPv4, isIPv6 } from "../utils/sampleIp";
 import { message } from "@/utils/message";
 import { SUCCESS_CODE } from "@/api/types";
 
@@ -71,18 +72,14 @@ const dimList = (row: Record<string, unknown>) => [
   { key: "ip", ok: row.ip_matched === true, label: t("loginPolicy.dimIp") }
 ];
 
+/** 样例 IP 严格校验（口径见 utils/sampleIp.ts，与后端 ipaddress 解析对齐） */
 const validateIp = (
   _rule: unknown,
   value: string,
   callback: (_error?: Error) => void
 ) => {
   if (!value) return callback();
-  const isIPv4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.test(value);
-  if (isIPv4 && value.split(".").every(part => Number(part) <= 255)) {
-    return callback();
-  }
-  // IPv6 仅做宽松校验（含冒号即可），精确形态交给后端 contains_ip
-  if (value.includes(":")) return callback();
+  if (isIPv4(value) || isIPv6(value)) return callback();
   return callback(new Error(t("loginPolicy.invalidIp")));
 };
 

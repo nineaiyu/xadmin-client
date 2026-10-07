@@ -57,12 +57,14 @@ class PostApi extends BaseApi {
     pk: number | string,
     data: { add?: Array<number | string>; remove?: Array<number | string> }
   ) => {
-    return this.request<DetailResult<{ members: PostMemberItem[] }>>(
-      "post",
-      {},
-      data,
-      `${this.baseApi}/${pk}/assign`
-    );
+    return this.request<
+      DetailResult<{
+        members: PostMemberItem[];
+        total: number;
+        truncated: boolean;
+        skipped: string[];
+      }>
+    >("post", {}, data, `${this.baseApi}/${pk}/assign`);
   };
   /** 成员候选：按关键字搜索在用用户（≤20 条，list 权限同口径） */
   userOptions = (keyword: string) => {

@@ -15,6 +15,12 @@ export interface FetchAllRowsOptions {
   pageSize?: number;
   /** 最大页数保护（默认 200，防御 total 异常导致的死循环） */
   maxPages?: number;
+  /**
+   * 截断回调：翻页结束仍未拿满 total 时触发（如触达 maxPages 上限、
+   * total 谎报后空页兜底）。全量数据用于建树/统计等「拿不全即失真」的场景时，
+   * 调用方应在此提示用户数据可能不完整，避免静默截断。
+   */
+  onTruncated?: (info: { fetched: number; total: number }) => void;
 }
 
 /**
@@ -74,6 +80,11 @@ export async function fetchAllRows<
     if (typeof total !== "number" && typeof next.data.total === "number") {
       total = next.data.total;
     }
+  }
+
+  // 截断上报：total 可信但未拉满（触达 maxPages / 空页兜底提前终止）
+  if (typeof total === "number" && rows.length < total && options.onTruncated) {
+    options.onTruncated({ fetched: rows.length, total });
   }
 
   return {
