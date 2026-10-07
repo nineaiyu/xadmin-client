@@ -1,31 +1,21 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import {
   credentialApi,
-  type CredentialEntry,
   type CredentialOverview
 } from "@/api/system/credential";
 import { hasAuth } from "@/router/utils";
-import { message } from "@/utils/message";
-import { normalizeError } from "@/utils/apiError";
 import { SUCCESS_CODE } from "@/api/types";
-import { useConfirm } from "@/hooks/useConfirm";
-import {
-  ReReadonlyTable,
-  type ReadonlyColumn
-} from "@/components/ReReadonlyTable";
+import { type ReadonlyColumn } from "@/components/ReReadonlyTable";
 import ReEmpty from "@/components/ReEmpty";
+import CredentialTable from "./components/CredentialTable.vue";
 
 defineOptions({ name: "SystemCredential" });
 
 const { t } = useI18n();
-const router = useRouter();
-const confirm = useConfirm();
 const loading = ref(false);
 const canView = hasAuth("overview:Credential");
-const canRotate = hasAuth("rotate:Credential");
 const data = ref<CredentialOverview>({
   settings: [],
   system_configs: [],
@@ -34,32 +24,6 @@ const data = ref<CredentialOverview>({
 });
 
 const plaintextCount = computed(() => data.value.plaintext?.length ?? 0);
-
-/** 表格行（el-table 的 DefaultRow 宽松形态）：只读取用到的字段 */
-type CredentialRowLike = Partial<CredentialEntry> & { name?: string };
-
-/** 加密状态 → tag 展示（encrypted / plaintext / empty） */
-const statusMeta = (
-  row: CredentialRowLike
-): { type: "success" | "info" | "danger"; text: string } => {
-  if (row.scope === "model_field") {
-    return {
-      type: row.configured ? "success" : "info",
-      text: row.configured ? t("credential.encrypted") : t("credential.empty")
-    };
-  }
-  if (row.plaintext || row.status === "plaintext") {
-    return { type: "danger", text: t("credential.plaintext") };
-  }
-  if (!row.configured) {
-    return { type: "info", text: t("credential.empty") };
-  }
-  return { type: "success", text: t("credential.encrypted") };
-};
-
-/** 掩码/未配置文案：只表达「是否已配置」，后端不下发任何明文或长度 */
-const maskedText = (row: CredentialRowLike) =>
-  row.masked ? row.masked : t("credential.empty");
 
 /** 动作列：可原地轮换给轮换按钮，外部签发给「去更换」入口（列集合是数据的一部分） */
 const actionsColumn: ReadonlyColumn = {
@@ -147,43 +111,6 @@ async function loadData() {
   }
 }
 
-/** 外部签发凭据：跳转到对应配置页更换（不自造假值） */
-function goChange(row: CredentialRowLike) {
-  if (row.change_entry) router.push(row.change_entry);
-}
-
-/**
- * 原地轮换（仅服务端自生成密钥）：高危操作，二次确认并说明后果。
- * 模型字段级（Webhook / 回调密钥）变更会影响对端验签，必须显式提示。
- */
-async function handleRotate(row: CredentialRowLike) {
-  const name = String(row.label || row.name || "");
-  const confirmText =
-    row.scope === "model_field"
-      ? t("credential.rotateModelConfirm", { name })
-      : t("credential.rotateConfirm", { name });
-  if (
-    !(await confirm(confirmText, {
-      title: t("credential.rotate"),
-      confirmButtonText: t("credential.rotate")
-    }))
-  ) {
-    return;
-  }
-  const res = await credentialApi
-    .rotate({ key: String(row.name ?? ""), scope: row.scope })
-    .catch(normalizeError);
-  if (res?.code === SUCCESS_CODE) {
-    message(t("credential.rotateOk"), { type: "success" });
-    loadData();
-  } else {
-    message(
-      `${t("credential.rotateFailed")}${res?.detail ? `：${res.detail}` : ""}`,
-      { type: "error" }
-    );
-  }
-}
-
 onMounted(() => {
   loadData();
 });
@@ -211,11 +138,11 @@ onMounted(() => {
         <template #header>
           <span class="font-medium">{{ t("credential.systemConfigs") }}</span>
         </template>
-        <ReReadonlyTable
+        <CredentialTable
           :columns="systemConfigColumns"
           :rows="data.system_configs"
           :loading="loading"
-          border
+          @rotated="loadData"
         >
           <template #fields="{ row }">
             {{ (row.fields ?? []).join("、") }}
@@ -225,140 +152,31 @@ onMounted(() => {
               {{ row.description || "—" }}
             </span>
           </template>
-          <template #masked="{ row }">
-            <span :class="{ 'font-mono': row.masked }">
-              {{ maskedText(row) }}
-            </span>
-          </template>
-          <template #status="{ row }">
-            <el-tag :type="statusMeta(row).type" effect="light">
-              {{ statusMeta(row).text }}
-            </el-tag>
-          </template>
-          <template #rotated="{ row }">
-            <span v-if="row.rotate_overdue" class="flex items-center gap-1">
-              <el-tag type="warning" effect="light">
-                {{ t("credential.rotateOverdue") }}
-              </el-tag>
-              <span class="text-(--el-text-color-secondary)">
-                {{ t("credential.neverRotated") }}
-              </span>
-            </span>
-            <span v-else>{{ row.last_rotated || "—" }}</span>
-          </template>
-          <template #actions="{ row }">
-            <el-button
-              v-if="row.rotatable && canRotate"
-              link
-              type="primary"
-              :disabled="!row.configured"
-              @click="handleRotate(row)"
-            >
-              {{ t("credential.rotate") }}
-            </el-button>
-            <el-button
-              v-else-if="row.change_entry"
-              link
-              type="primary"
-              @click="goChange(row)"
-            >
-              {{ t("credential.goChange") }}
-            </el-button>
-            <span v-else class="text-(--el-text-color-secondary)">—</span>
-          </template>
-        </ReReadonlyTable>
+        </CredentialTable>
       </el-card>
 
       <el-card shadow="never" class="mb-3">
         <template #header>
           <span class="font-medium">{{ t("credential.settings") }}</span>
         </template>
-        <ReReadonlyTable
+        <CredentialTable
           :columns="settingsColumns"
           :rows="data.settings"
           :loading="loading"
-          border
-        >
-          <template #masked="{ row }">
-            <span :class="{ 'font-mono': row.masked }">
-              {{ maskedText(row) }}
-            </span>
-          </template>
-          <template #status="{ row }">
-            <el-tag :type="statusMeta(row).type" effect="light">
-              {{ statusMeta(row).text }}
-            </el-tag>
-          </template>
-          <template #actions="{ row }">
-            <el-button
-              v-if="row.rotatable && canRotate"
-              link
-              type="primary"
-              :disabled="!row.configured"
-              @click="handleRotate(row)"
-            >
-              {{ t("credential.rotate") }}
-            </el-button>
-            <el-button
-              v-else-if="row.change_entry"
-              link
-              type="primary"
-              @click="goChange(row)"
-            >
-              {{ t("credential.goChange") }}
-            </el-button>
-            <span v-else class="text-(--el-text-color-secondary)">—</span>
-          </template>
-        </ReReadonlyTable>
+          @rotated="loadData"
+        />
       </el-card>
 
       <el-card shadow="never">
         <template #header>
           <span class="font-medium">{{ t("credential.modelFields") }}</span>
         </template>
-        <ReReadonlyTable
+        <CredentialTable
           :columns="modelFieldColumns"
           :rows="data.model_fields"
           :loading="loading"
-          border
-        >
-          <template #status="{ row }">
-            <el-tag :type="statusMeta(row).type" effect="light">
-              {{ statusMeta(row).text }}
-            </el-tag>
-          </template>
-          <template #rotated="{ row }">
-            <span v-if="row.rotate_overdue" class="flex items-center gap-1">
-              <el-tag type="warning" effect="light">
-                {{ t("credential.rotateOverdue") }}
-              </el-tag>
-              <span class="text-(--el-text-color-secondary)">
-                {{ t("credential.neverRotated") }}
-              </span>
-            </span>
-            <span v-else>{{ row.last_rotated || "—" }}</span>
-          </template>
-          <template #actions="{ row }">
-            <el-button
-              v-if="row.rotatable && canRotate"
-              link
-              type="primary"
-              :disabled="!row.configured"
-              @click="handleRotate(row)"
-            >
-              {{ t("credential.rotate") }}
-            </el-button>
-            <el-button
-              v-else-if="row.change_entry"
-              link
-              type="primary"
-              @click="goChange(row)"
-            >
-              {{ t("credential.goChange") }}
-            </el-button>
-            <span v-else class="text-(--el-text-color-secondary)">—</span>
-          </template>
-        </ReReadonlyTable>
+          @rotated="loadData"
+        />
         <div class="mt-2 text-sm text-(--el-text-color-secondary)">
           {{ t("credential.modelFieldsHint") }}
         </div>
