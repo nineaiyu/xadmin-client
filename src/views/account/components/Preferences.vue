@@ -5,12 +5,15 @@ import { deviceDetection } from "@pureadmin/utils";
 import { configApi } from "@/api/config";
 import { handleOperation } from "@/components/RePlusPage";
 import { useI18n } from "vue-i18n";
+import { message } from "@/utils/message";
 import type { RecordType } from "plus-pro-components";
 
 defineOptions({
   name: "Preferences"
 });
 const loading = ref(true);
+// 初态未知（配置读取失败）时禁用开关：防止把默认值反向写回服务端
+const loadFailed = ref(false);
 const { t } = useI18n();
 
 const list = ref([
@@ -40,16 +43,28 @@ function onChange(val: unknown, item: RecordType) {
   });
 }
 
-onMounted(() => {
+onMounted(async () => {
   loading.value = true;
-  list.value.forEach(config => {
-    configApi.getConfig(config.name).then(res => {
-      if (res.code === SUCCESS_CODE) {
-        config.checked = res.config.value as boolean;
-      }
-    });
-  });
-  loading.value = false;
+  try {
+    const results = await Promise.all(
+      list.value.map(config => configApi.getConfig(config.name))
+    );
+    // 全部读取成功才回填初态：部分失败时开关状态未知，保持禁用防反向写入
+    if (results.every(res => res.code === SUCCESS_CODE)) {
+      results.forEach((res, index) => {
+        list.value[index].checked = res.config.value as boolean;
+      });
+    } else {
+      loadFailed.value = true;
+      message(t("account.preferenceLoadFailed"), { type: "warning" });
+    }
+  } catch {
+    // 网络层异常（http 层已提示错误详情）：这里只拦住反向写入并给出可读结论
+    loadFailed.value = true;
+    message(t("account.preferenceLoadFailed"), { type: "warning" });
+  } finally {
+    loading.value = false;
+  }
 });
 </script>
 
@@ -69,6 +84,7 @@ onMounted(() => {
         <el-switch
           v-model="item.checked"
           :loading="loading"
+          :disabled="loadFailed"
           :active-text="t('labels.enable')"
           :inactive-text="t('labels.disable')"
           inline-prompt

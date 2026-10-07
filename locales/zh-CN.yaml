@@ -189,6 +189,18 @@ accountRisk:
   typeNeverLoggedIn: 从未登录
   typeSuperuserNoMfa: 管理员未绑定 MFA
   typeSuperuserCount: 超管数量异常
+  statsOverview: 概览
+  statsTotal: 全部
+  statsByLevel: 等级
+  statsByStatus: 状态
+  statsByType: 类型
+  levelHigh: 高危
+  levelMedium: 中危
+  levelLow: 低危
+  statusPending: 待处理
+  statusResolved: 已处理
+  statusIgnored: 已豁免
+  batchHandlePartial: "另有 {n} 项处置失败：{detail}"
 
 loginPolicy:
   add: 新增策略
@@ -1219,6 +1231,7 @@ account:
   messagePushTips: 消息公告将在右上角实时推送通知
   chatPush: "聊天室{'@'}推送"
   chatPushTips: "聊天{'@'}消息将在右上角实时推送通知"
+  preferenceLoadFailed: 偏好配置读取失败，暂不可修改
   password: 密码
   bind: 已绑定
   unbound: 暂未绑定
@@ -1430,6 +1443,7 @@ systemPermission:
     valueRequired: 请填写或选择取值
     jsonPlaceholder: 请输入 JSON（保存时会校验格式）
     jsonInvalid: JSON 格式不正确
+    pickerAuthMissing: 缺少通讯录搜索权限，无法选择对象
     secondsPast: 过去
     secondsFuture: 未来
     secondsUnit:
@@ -1890,6 +1904,7 @@ systemUploadFile:
   clickUpload: 点击上传
   dropFile: 拖拽文件到这里或
   uploadTip: 上传文件大小需要小于
+  defaultSizeTip: 未能读取上传大小配置，当前使用默认限制（{size}）
   quotaTip: 同一文件重复上传会复用磁盘副本，配额仍按记录全量计入
   usageRate: 使用率
   usedSpace: 已用空间
@@ -2167,6 +2182,8 @@ apiApp:
     matchLte: 小于等于
   usage:
     title: 用量
+    range: 统计窗口
+    days: "{n} 天"
     total: 调用量
     failed: 失败数
     avgDuration: 平均耗时
@@ -3244,6 +3261,9 @@ dform:
   cancel: 取消
   confirm: 确认
   required: 请填写名称并添加字段
+  formUnavailable: 表单已停用或不存在
+  requiredFieldMissing: "「{name}」为必填项，请填写后提交"
+  requiredItemTip: 此项为必填
   saveOk: 保存成功
   typeInput: 单行文本
   typeTextarea: 多行文本
@@ -3297,6 +3317,7 @@ dform:
   moveDown: 下移
   fieldKeyHint: 小写字母开头，字母/数字/下划线
   fieldKeyInvalid: 标识需以小写字母开头（字母/数字/下划线，≤32 位）
+  fieldKeyDuplicated: "字段标识「{key}」重复，请修改"
   fieldLabelRequired: 请填写字段标签
   fieldPlaceholder: 占位提示
   fieldPlaceholderHint: 输入框中的灰色提示文案

@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { getDictTypes } from "@/utils/dict";
 import type { FormField, FormFieldType } from "@/api/dataset/dform";
 import { message } from "@/utils/message";
+import { FIELD_KEY_RE } from "../utils/fieldValidate";
 import {
   FormulaError,
   validateFormulaExpression
@@ -63,7 +64,6 @@ const FILTERABLE_TYPES: FormFieldType[] = [
   "cascader",
   "formula"
 ];
-const KEY_RE = /^[a-z][a-z0-9_]{0,31}$/;
 
 const form = reactive<FormField>(JSON.parse(JSON.stringify(props.field)));
 
@@ -108,7 +108,7 @@ onMounted(async () => {
 /** 校验并返回字段副本；失败返回 null（调用方保持弹窗打开） */
 const getField = (): FormField | null => {
   const key = (form.key ?? "").trim();
-  if (!KEY_RE.test(key)) {
+  if (!FIELD_KEY_RE.test(key)) {
     message(t("dform.fieldKeyInvalid"), { type: "warning" });
     return null;
   }

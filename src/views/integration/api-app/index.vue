@@ -23,7 +23,9 @@ const {
   usageVisible,
   usageLoading,
   usageRow,
-  usage
+  usageDays,
+  usage,
+  setUsageDays
 } = useApiApplication(tableRef);
 </script>
 
@@ -113,6 +115,8 @@ const {
       :row="usageRow"
       :loading="usageLoading"
       :data="usage"
+      :days="usageDays"
+      @update:days="setUsageDays"
     />
   </div>
 </template>

@@ -77,13 +77,20 @@ export function useMcpServers(tableRef: Ref) {
   };
 
   /* ---------------- 行操作：同步 / 工具抽屉 ---------------- */
-  const runSync = async (row: McpRow) => {
-    const res = await mcpServerApi.sync(row.pk).catch(normalizeError);
-    if (res.code === SUCCESS_CODE) {
-      const count = (res.data as { count?: number } | null)?.count ?? 0;
-      message(t("mcp.syncDone", { count }), { type: "success" });
-    } else {
-      message(String(res.detail ?? t("results.failed")), { type: "warning" });
+  /** 行内同步：loading 由按钮组件按行持有（每行独立实例），同步期间禁点防并发触发 */
+  const runSync = async (row: McpRow, loading?: { value: boolean }) => {
+    if (loading?.value) return;
+    if (loading) loading.value = true;
+    try {
+      const res = await mcpServerApi.sync(row.pk).catch(normalizeError);
+      if (res.code === SUCCESS_CODE) {
+        const count = (res.data as { count?: number } | null)?.count ?? 0;
+        message(t("mcp.syncDone", { count }), { type: "success" });
+      } else {
+        message(String(res.detail ?? t("results.failed")), { type: "warning" });
+      }
+    } finally {
+      if (loading) loading.value = false;
     }
     refresh();
   };
@@ -163,7 +170,7 @@ export function useMcpServers(tableRef: Ref) {
         text: t("mcp.sync"),
         code: "sync",
         props: { type: "primary", link: true },
-        onClick: ({ row }) => runSync(row as McpRow),
+        onClick: ({ row, loading }) => runSync(row as McpRow, loading),
         show: canSync
       },
       {

@@ -257,16 +257,22 @@ export function loadScopeCatalog(): Promise<ScopeCatalogResponse> {
   );
 }
 
-let grantCatalogPromise: Promise<GrantCatalogResponse> | null = null;
+/** 目录缓存有效期：会话内权限/模型变更靠过期重拉感知，不做主动失效注册 */
+const GRANT_CATALOG_TTL = 5 * 60 * 1000;
 
-/** 资源授权目录（同页只拉一次；失败重置以便重试） */
+let grantCatalogPromise: Promise<GrantCatalogResponse> | null = null;
+let grantCatalogExpiresAt = 0;
+
+/** 资源授权目录（TTL 内复用同一次请求；失败重置以便重试，过期重拉保目录新鲜） */
 export function loadGrantCatalog(): Promise<GrantCatalogResponse> {
-  if (!grantCatalogPromise) {
-    grantCatalogPromise = apiApplicationApi.grantOptions().catch(error => {
-      grantCatalogPromise = null;
-      throw error;
-    });
+  if (grantCatalogPromise && Date.now() < grantCatalogExpiresAt) {
+    return grantCatalogPromise;
   }
+  grantCatalogPromise = apiApplicationApi.grantOptions().catch(error => {
+    grantCatalogPromise = null;
+    throw error;
+  });
+  grantCatalogExpiresAt = Date.now() + GRANT_CATALOG_TTL;
   return grantCatalogPromise;
 }
 

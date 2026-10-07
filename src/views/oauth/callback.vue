@@ -123,6 +123,13 @@ onMounted(async () => {
     if (res.data) {
       setToken(res.data);
       await initRouter(true);
+      // 巡检处置联动：后端带 must_change_password 时与密码登录同口径引导改密
+      if (res.data.must_change_password) {
+        message(t("login.loginSuccess"), { type: "success" });
+        message(t("forcePassword.tip"), { type: "warning", duration: 6000 });
+        await router.push("/settings/basic");
+        return;
+      }
       message(t("login.loginSuccess"), { type: "success" });
       await router.push("/");
     }

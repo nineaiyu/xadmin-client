@@ -1,4 +1,4 @@
-import { h, reactive, shallowRef } from "vue";
+import { h, onScopeDispose, reactive, shallowRef, watch, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElProgress, ElTag } from "element-plus";
 // 文件大小格式化统一走框架工具（与文件管理页同一实现，避免两套口径）
@@ -35,6 +35,11 @@ interface RecordCenterApi {
   download: (pk: string | number) => Promise<unknown>;
 }
 
+/** 进行中的任务状态：存在这些状态的行时列表需要轮询驱动进度（其余为终态） */
+const IN_FLIGHT_STATUSES = new Set(["RUNNING", "PENDING"]);
+/** 轮询间隔（任务中心无记录状态变更的 WS 广播，列表进度以轮询刷新驱动） */
+const PROGRESS_POLL_INTERVAL = 5000;
+
 interface RecordCenterOptions {
   /** i18n 前缀：systemExportRecord / systemImportRecord */
   localePrefix: string;
@@ -44,6 +49,11 @@ interface RecordCenterOptions {
   api: RecordCenterApi;
   /** 文件大小字段键：导出记录 filesize / 导入记录 report_filesize */
   sizeKey: "filesize" | "report_filesize";
+  /**
+   * 页面 RePlusPage 实例引用：轮询经它读取当前行数据并复用 handleGetData
+   * （同一取数入口，搜索/分页参数不旁路）
+   */
+  tableRef?: Ref;
 }
 
 /**
@@ -52,7 +62,7 @@ interface RecordCenterOptions {
  * 权限组件名、API 实例与文件大小字段——统一收口防止两侧样式漂移。
  */
 export function useRecordCenter(options: RecordCenterOptions) {
-  const { localePrefix, componentName, sizeKey } = options;
+  const { localePrefix, componentName, sizeKey, tableRef } = options;
   const api = reactive(options.api);
   const auth = usePageAuth(componentName, ["download", "log"]);
   const { t, te } = useI18n();
@@ -80,6 +90,56 @@ export function useRecordCenter(options: RecordCenterOptions) {
     }
     return h("span", statusValue === "SUCCESS" ? "100%" : "—");
   };
+
+  /* ---------------- 进行中记录的进度轮询 ---------------- */
+  // 页面无记录状态变更的 WS 广播（任务日志 WS 是按记录订阅的日志流，非列表事件），
+  // 列表存在 RUNNING/PENDING 行时启用定时重拉，全部到达终态后停止。
+  let pollTimer: number | null = null;
+
+  const statusOf = (row: RecordType) =>
+    String(
+      (row?.status as { value?: string } | undefined)?.value ??
+        row?.status ??
+        ""
+    );
+
+  const hasInFlightRows = () =>
+    ((tableRef?.value?.dataList ?? []) as RecordType[]).some(row =>
+      IN_FLIGHT_STATUSES.has(statusOf(row))
+    );
+
+  const stopProgressPolling = () => {
+    if (pollTimer === null) return;
+    window.clearInterval(pollTimer);
+    pollTimer = null;
+  };
+
+  const startProgressPolling = () => {
+    if (pollTimer !== null) return;
+    pollTimer = window.setInterval(() => {
+      if (!hasInFlightRows()) {
+        stopProgressPolling();
+        return;
+      }
+      // 复用列表自身取数（不传参 = 沿用当前搜索/分页条件）；刷新后的
+      // 数据经下方 watch 重新判定是否继续轮询
+      tableRef?.value?.handleGetData?.();
+    }, PROGRESS_POLL_INTERVAL);
+  };
+
+  // 每次列表数据落位（首开/搜索/翻页/轮询重拉）后按「存在进行中行」启停轮询
+  watch(
+    () => tableRef?.value?.dataList,
+    rows => {
+      const inFlight = ((rows ?? []) as RecordType[]).some(row =>
+        IN_FLIGHT_STATUSES.has(statusOf(row))
+      );
+      if (inFlight) startProgressPolling();
+      else stopProgressPolling();
+    },
+    { deep: false }
+  );
+  onScopeDispose(stopProgressPolling);
 
   const operationButtonsProps = shallowRef<OperationProps>({
     showNumber: 4,

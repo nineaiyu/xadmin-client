@@ -54,6 +54,7 @@ export function useApiAppDialog({
           const grants = formRef.value?.getGrants();
           const targetPk =
             row?.pk ?? (res.data as { pk?: string } | null)?.pk ?? "";
+          let grantsSaveFailed = false;
           if (grants === null || grants === undefined) {
             message(t("apiApp.grant.loadFailed"), { type: "warning" });
           } else if (targetPk) {
@@ -63,11 +64,18 @@ export function useApiAppDialog({
                 code: -1,
                 detail: String((error as { detail?: string })?.detail ?? error)
               }));
-            if (grantRes.code !== SUCCESS_CODE && grantRes.detail) {
-              message(String(grantRes.detail), { type: "warning" });
+            if (grantRes.code !== SUCCESS_CODE) {
+              grantsSaveFailed = true;
+              message(String(grantRes.detail || t("apiApp.grant.saveFailed")), {
+                type: "warning"
+              });
             }
           }
-          message(t("apiApp.saveOk"), { type: "success" });
+          // 授权同步失败时不弹「保存成功」：避免误导第三方权限已生效
+          // （主记录已落库，弹窗仍关闭，可重新进入编辑重试授权）
+          if (!grantsSaveFailed) {
+            message(t("apiApp.saveOk"), { type: "success" });
+          }
           // 先关表单弹窗，一次性密钥弹窗紧接展示（列表/详情不回传明文）
           done();
           const created = res.data as ApiApplicationCredential | undefined;

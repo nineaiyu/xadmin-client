@@ -189,6 +189,18 @@ accountRisk:
   typeNeverLoggedIn: Never logged in
   typeSuperuserNoMfa: Admin without MFA
   typeSuperuserCount: Abnormal superuser count
+  statsOverview: Overview
+  statsTotal: Total
+  statsByLevel: By Level
+  statsByStatus: By Status
+  statsByType: By Type
+  levelHigh: High
+  levelMedium: Medium
+  levelLow: Low
+  statusPending: Pending
+  statusResolved: Resolved
+  statusIgnored: Ignored
+  batchHandlePartial: "{n} more item(s) failed: {detail}"
 
 loginPolicy:
   add: New Policy
@@ -1219,6 +1231,7 @@ account:
   messagePushTips: The announcement will be a real-time push notification in the upper right corner
   chatPush: "Chat room {'@'} push"
   chatPushTips: "Chat {'@'} messages will be a live push notification in the top right corner"
+  preferenceLoadFailed: Failed to load preferences; editing is disabled
   password: Password
   bind: Bind
   unbound: Unbound
@@ -1430,6 +1443,7 @@ systemPermission:
     valueRequired: Value is required
     jsonPlaceholder: Enter JSON (validated on save)
     jsonInvalid: Invalid JSON
+    pickerAuthMissing: Directory search permission is required to select objects
     secondsPast: Past
     secondsFuture: Future
     secondsUnit:
@@ -1890,6 +1904,7 @@ systemUploadFile:
   clickUpload: click to upload
   dropFile: Drop file here or
   uploadTip: Files with a size less than
+  defaultSizeTip: Upload size config is unavailable; using the default limit ({size})
   quotaTip: Re-uploading the same file reuses the stored copy, while the quota still counts each record in full
   usageRate: Usage
   usedSpace: Used
@@ -2167,6 +2182,8 @@ apiApp:
     matchLte: Less or equal
   usage:
     title: Usage
+    range: Window
+    days: "{n}d"
     total: Requests
     failed: Failed
     avgDuration: Avg duration
@@ -3245,6 +3262,9 @@ dform:
   cancel: Cancel
   confirm: Confirm
   required: Name and at least one field are required
+  formUnavailable: This form is disabled or does not exist
+  requiredFieldMissing: '"{name}" is required, please fill it in before submitting'
+  requiredItemTip: This field is required
   saveOk: Saved
   typeInput: Input
   typeTextarea: Textarea
@@ -3298,6 +3318,7 @@ dform:
   moveDown: Move down
   fieldKeyHint: "Starts with a lowercase letter; letters/digits/underscore"
   fieldKeyInvalid: "Key must start with a lowercase letter (letters/digits/underscore, max 32)"
+  fieldKeyDuplicated: 'Field key "{key}" is duplicated, please change it'
   fieldLabelRequired: Field label is required
   fieldPlaceholder: Placeholder
   fieldPlaceholderHint: Hint text shown inside the input

@@ -75,6 +75,13 @@ const payloadOf = (wrapper: ReturnType<typeof mountForm>) =>
     }
   ).getPayload().data;
 
+const validateOf = (wrapper: ReturnType<typeof mountForm>) =>
+  (
+    wrapper.vm as {
+      validateRequired: () => { key: string; label: string } | null;
+    }
+  ).validateRequired();
+
 describe("SubmissionForm 历史键裁剪", () => {
   it("编辑既有提交：formData 只保留当前 schema 的键，历史键不随载荷提交", async () => {
     userOptionsMock.mockResolvedValue({ data: [] });
@@ -103,5 +110,58 @@ describe("SubmissionForm 历史键裁剪", () => {
     await flushPromises();
 
     expect(payloadOf(wrapper)).toEqual({ name: "李四", score: 88 });
+  });
+});
+
+describe("SubmissionForm 必填预检", () => {
+  it("必填字段为空：返回该字段用于定位提示，类型校验仍交后端", async () => {
+    userOptionsMock.mockResolvedValue({ data: [] });
+    const submission: SubmissionItem = {
+      ...SUBMISSION,
+      data: { ghost: "x" }
+    };
+    const wrapper = mountForm({ form: FORM, submission });
+    await flushPromises();
+
+    expect(validateOf(wrapper)).toEqual({ key: "name", label: "姓名" });
+  });
+
+  it("必填已填、非必填为空：预检通过返回 null", async () => {
+    userOptionsMock.mockResolvedValue({ data: [] });
+    const submission: SubmissionItem = {
+      ...SUBMISSION,
+      data: { name: "张三" }
+    };
+    const wrapper = mountForm({ form: FORM, submission });
+    await flushPromises();
+
+    expect(validateOf(wrapper)).toBeNull();
+  });
+
+  it("联动隐藏的必填字段不参与预检；恢复显示后为空则被拦截", async () => {
+    userOptionsMock.mockResolvedValue({ data: [] });
+    // a 为空时隐藏必填字段 b；a 填写后 b 显示且必填
+    const form: FillableFormItem = {
+      ...FORM,
+      schema: {
+        fields: [
+          { key: "a", label: "触发", type: "select", options: ["x", "y"] },
+          { key: "b", label: "条件必填", type: "input", required: true }
+        ],
+        linkages: [{ target: "b", field: "a", op: "empty", effect: "hide" }]
+      }
+    };
+    // a 为空：b 被隐藏，a 非必填 → 预检通过
+    const hiddenCase = mountForm({ form, submission: null });
+    await flushPromises();
+    expect(validateOf(hiddenCase)).toBeNull();
+
+    // a 已填：b 显示且必填为空 → 预检定位 b
+    const shownCase = mountForm({
+      form,
+      submission: { ...SUBMISSION, data: { a: "x" } }
+    });
+    await flushPromises();
+    expect(validateOf(shownCase)).toEqual({ key: "b", label: "条件必填" });
   });
 });

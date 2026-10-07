@@ -11,6 +11,7 @@ import type {
   FormTableColumnType
 } from "@/api/dataset/dform";
 import { FIELD_TYPE_OPTIONS } from "../utils/schemaMeta";
+import { fieldRowErrorOf } from "../utils/fieldValidate";
 
 /**
  * 字段设计表（从 DynamicFormForm 拆出，行数门禁）：行内编辑 key/标签/控件/选项，
@@ -43,6 +44,16 @@ const COLUMN_TYPES: FormTableColumnType[] = [
 
 const needsOptions = (type: FormFieldType) =>
   ["select", "radio", "checkbox"].includes(type);
+
+/* ---------------- 行内编辑的非法态即时反馈（校验规则与保存兜底同源） ---------------- */
+/** 标识非法（格式错误或整表重复） */
+const keyErrorOf = (field: FormField) => {
+  const error = fieldRowErrorOf(field, props.fields);
+  return error === "keyInvalid" || error === "keyDuplicated";
+};
+/** 标签缺失 */
+const labelErrorOf = (field: FormField) =>
+  fieldRowErrorOf(field, props.fields) === "labelRequired";
 
 const optionsText = (field: FormField) =>
   (field.options ?? [])
@@ -208,12 +219,20 @@ const move = (index: number, offset: -1 | 1) => {
     </el-table-column>
     <el-table-column :label="t('dform.fieldKey')" width="150">
       <template #default="{ row }">
-        <el-input v-model="(row as FormField).key" size="small" />
+        <el-input
+          v-model="(row as FormField).key"
+          size="small"
+          :class="{ 'dform-cell-invalid': keyErrorOf(row as FormField) }"
+        />
       </template>
     </el-table-column>
     <el-table-column :label="t('dform.fieldLabel')" width="140">
       <template #default="{ row }">
-        <el-input v-model="(row as FormField).label" size="small" />
+        <el-input
+          v-model="(row as FormField).label"
+          size="small"
+          :class="{ 'dform-cell-invalid': labelErrorOf(row as FormField) }"
+        />
       </template>
     </el-table-column>
     <el-table-column :label="t('dform.fieldType')" width="120">
@@ -319,3 +338,10 @@ const move = (index: number, offset: -1 | 1) => {
     </el-table-column>
   </el-table>
 </template>
+
+<style scoped lang="scss">
+/* 行内编辑非法态：与 el-form 的错误描边同色，红色随输入即时出现/消除 */
+:deep(.el-input.dform-cell-invalid .el-input__wrapper) {
+  box-shadow: 0 0 0 1px var(--el-color-danger) inset;
+}
+</style>

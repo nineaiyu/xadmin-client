@@ -14,7 +14,8 @@ import { message } from "@/utils/message";
  *
  * - 空清单 = 兼容模式（沿用 owner 权限 + 接口范围）；
  * - 添加任意一条即白名单模式：模型/动作必须命中，字段与行级在覆盖规则上继续收敛；
- * - 目录（模型/动作/字段）由后端 `grant-options` 按当前用户可授权面下发，同页只拉一次。
+ * - 目录（模型/动作/字段）由后端 `grant-options` 按当前用户可授权面下发，
+ *   带 TTL 的请求级缓存内复用（过期重拉，权限变更后目录不长期陈旧）。
  */
 defineOptions({ name: "ApiApplicationGrantEditor" });
 

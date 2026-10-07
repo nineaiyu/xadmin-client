@@ -1,3 +1,9 @@
+<script lang="ts">
+// 默认限制回退告警的模块级一次性标记：上传弹层可反复打开，
+// 避免每次都重复提示同一条信息（<script setup> 的顶层变量是组件实例级的）
+let defaultSizeWarned = false;
+</script>
+
 <script lang="ts" setup>
 import { SUCCESS_CODE } from "@/api/types";
 import { onMounted, ref } from "vue";
@@ -49,16 +55,36 @@ defineOptions({ name: "UploadFile" });
 
 const { t } = useI18n();
 const fileList = ref([]);
-const uploadConfig = ref({ file_upload_size: 1048576 });
+/** 上传大小默认限制：配置端点不可读（无权限/拉取失败）时的回退值 */
+const DEFAULT_FILE_UPLOAD_SIZE = 1048576;
+const uploadConfig = ref({ file_upload_size: DEFAULT_FILE_UPLOAD_SIZE });
+
+const warnDefaultUploadSize = () => {
+  if (defaultSizeWarned) return;
+  defaultSizeWarned = true;
+  message(
+    t("systemUploadFile.defaultSizeTip", {
+      size: formatBytes(DEFAULT_FILE_UPLOAD_SIZE)
+    }),
+    { type: "warning" }
+  );
+};
 
 onMounted(() => {
-  if (hasAuth("config:SystemUploadFile")) {
-    systemUploadFileApi.config().then(res => {
+  if (!hasAuth("config:SystemUploadFile")) {
+    warnDefaultUploadSize();
+    return;
+  }
+  systemUploadFileApi
+    .config()
+    .then(res => {
       if (res.code === SUCCESS_CODE && res.data) {
         uploadConfig.value = res.data;
+      } else {
+        warnDefaultUploadSize();
       }
-    });
-  }
+    })
+    .catch(() => warnDefaultUploadSize());
 });
 
 const uploadRequest = async (option: UploadRequestOptions) => {

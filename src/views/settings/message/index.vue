@@ -78,7 +78,10 @@ const settingData = computed<Array<settingItemProps>>(() => [
 const auth = ref({
   partialUpdate: hasAuth("partialUpdate:SystemMsgSubscription"),
   list: hasAuth("list:SystemMsgSubscription"),
-  backends: hasAuth("backends:SystemMsgSubscription")
+  backends: hasAuth("backends:SystemMsgSubscription"),
+  // 消息模板注册表端点（/api/notifications/message-templates）的权限点挂在
+  // 本页面（SettingMessage）名下，与订阅页签的模型级权限码来源不同
+  templateList: hasAuth("list:SettingMessage")
 });
 </script>
 
@@ -96,8 +99,12 @@ const auth = ref({
         :has-receivers="true"
       />
     </el-tab-pane>
-    <!-- 消息模板：通知文本可配置（代码默认 → DB 覆盖层） -->
-    <el-tab-pane :lazy="true" :label="t('messageTemplate.title')">
+    <!-- 消息模板：通知文本可配置（代码默认 → DB 覆盖层）；无注册表查看权限时隐藏页签 -->
+    <el-tab-pane
+      v-if="auth.templateList"
+      :lazy="true"
+      :label="t('messageTemplate.title')"
+    >
       <MessageTemplatePanel />
     </el-tab-pane>
   </setting>

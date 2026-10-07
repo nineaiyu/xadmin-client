@@ -91,6 +91,14 @@ const valueRequired = computed(() =>
 const typeGroups = computed(() => groupRuleTypes(props.valuesData));
 const typeHint = computed(() => typeItem.value?.hint ?? "");
 const isAll = computed(() => type.value === FieldKeyChoices.ALL);
+/** 关联对象取值需要通讯录搜索选择器；缺对应搜索权限时不给纯文本退化入口 */
+const objectPickerMissing = computed(() => {
+  if (input.value === "user") return !hasAuth("list:SearchUser");
+  if (input.value === "dept") return !hasAuth("list:SearchDept");
+  if (input.value === "role") return !hasAuth("list:SearchRole");
+  if (input.value === "menu") return !hasAuth("list:SearchMenu");
+  return false;
+});
 const effectiveMatch = computed(() =>
   matchFixed.value ? ruleDefaultMatch(type.value, typeItem.value) : match.value
 );
@@ -212,6 +220,10 @@ function validate(): Record<string, string> {
     }
     if (!matchFixed.value && !match.value)
       next.match = t("systemPermission.editor.matchRequired");
+    if (objectPickerMissing.value) {
+      // 取值控件缺搜索权限时无法构造合法的关联对象值，提交前拦截并定位到取值行
+      next.value = t("systemPermission.editor.pickerAuthMissing");
+    }
     if (input.value === "json" && jsonValue.value) {
       try {
         JSON.parse(jsonValue.value);
@@ -425,6 +437,12 @@ defineExpose({ validate });
         v-else-if="input === 'menu' && hasAuth('list:SearchMenu')"
         v-model="objectValue"
         entity="menu"
+      />
+      <!-- 关联对象类型但缺搜索权限：禁用态提示，避免退化为纯文本取值（裸字符串进规则） -->
+      <el-input
+        v-else-if="objectPickerMissing"
+        disabled
+        :placeholder="t('systemPermission.editor.pickerAuthMissing')"
       />
       <el-input
         v-else

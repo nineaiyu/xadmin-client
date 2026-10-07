@@ -98,6 +98,16 @@ export function useFormMyActions({
             : null
         ]),
       beforeSure: async (done, { closeLoading }) => {
+        // 客户端必填预检（联动显隐后的可见字段）：缺失时定位提示并中止提交；
+        // 类型/格式等规则仍以服务端按 schema 校验为准（草稿保存不做必填预检）
+        const missing = submissionFormRef.value?.validateRequired();
+        if (missing) {
+          message(t("dform.requiredFieldMissing", { name: missing.label }), {
+            type: "warning"
+          });
+          closeLoading();
+          return;
+        }
         const payload = submissionFormRef.value?.getPayload();
         if (!payload) {
           closeLoading();
@@ -130,7 +140,11 @@ export function useFormMyActions({
 
   const openEdit = (row: SubmissionItem) => {
     const form = forms.value.find(item => item.pk === row.form);
-    if (!form) return;
+    if (!form) {
+      // 表单不在「可填清单」里：多为表单已停用被过滤，点击编辑必须给出反馈
+      message(t("dform.formUnavailable"), { type: "warning" });
+      return;
+    }
     openForm(form, row);
   };
 

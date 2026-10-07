@@ -1,4 +1,4 @@
-import { h, reactive, ref, shallowRef, type Ref } from "vue";
+import { computed, h, reactive, ref, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import {
   ElAlert,
@@ -8,12 +8,16 @@ import {
 } from "element-plus";
 import {
   accountRiskApi,
-  type AccountRiskHandleAction
+  type AccountRiskHandleAction,
+  type AccountRiskStats
 } from "@/api/system/security";
+import { SUCCESS_CODE } from "@/api/types";
 import { usePageAuth } from "@/router/utils";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { addDrawer } from "@/components/ReDrawer";
+import { message } from "@/utils/message";
+import type { StatsGroup, StatsChip } from "./stats";
 import {
   handleOperation,
   type OperationProps,
@@ -55,11 +59,115 @@ const RISK_TYPE_KEYS: Record<string, string> = {
   superuser_count: "accountRisk.typeSuperuserCount"
 };
 
+/** 统计面板的等级 / 状态展示顺序（后端字典值之外的 key 追加在后） */
+const LEVEL_ORDER = ["high", "medium", "low"];
+const STATUS_ORDER = ["pending", "resolved", "ignored"];
+const LEVEL_LABEL_KEYS: Record<string, string> = {
+  high: "accountRisk.levelHigh",
+  medium: "accountRisk.levelMedium",
+  low: "accountRisk.levelLow"
+};
+const STATUS_LABEL_KEYS: Record<string, string> = {
+  pending: "accountRisk.statusPending",
+  resolved: "accountRisk.statusResolved",
+  ignored: "accountRisk.statusIgnored"
+};
+
 export function useAccountRisk(tableRef: Ref) {
   const { t } = useI18n();
 
   const api = reactive(accountRiskApi);
   const auth = usePageAuth(["scan", "handle", "batchHandle", "stats"]);
+
+  /* ---------------- 统计面板（消费 stats 端点） ---------------- */
+  const stats = ref<AccountRiskStats | null>(null);
+
+  /** 计数分布 → 面板 chip（展示顺序固定，后端多出的枚举值追加在后） */
+  const chipsOf = (
+    source: Record<string, number>,
+    order: string[],
+    labelKeys: Record<string, string>,
+    tagTypes: Record<string, TagType>
+  ): StatsChip[] =>
+    [...order, ...Object.keys(source).filter(key => !order.includes(key))]
+      .filter(key => source[key] !== undefined)
+      .map(key => ({
+        key,
+        label: labelKeys[key] ? t(labelKeys[key]) : key,
+        type: tagTypes[key] ?? "info",
+        count: source[key]
+      }));
+
+  const statsGroups = computed<StatsGroup[]>(() => {
+    const data = stats.value;
+    if (!data) return [];
+    const groups: StatsGroup[] = [
+      {
+        key: "overview",
+        title: t("accountRisk.statsOverview"),
+        chips: [
+          {
+            key: "total",
+            label: t("accountRisk.statsTotal"),
+            type: "primary",
+            count: data.total
+          },
+          {
+            key: "pending",
+            label: t("accountRisk.statusPending"),
+            type: STATUS_TAG.pending,
+            count: data.pending
+          }
+        ]
+      },
+      {
+        key: "level",
+        title: t("accountRisk.statsByLevel"),
+        chips: chipsOf(
+          data.by_level ?? {},
+          LEVEL_ORDER,
+          LEVEL_LABEL_KEYS,
+          LEVEL_TAG
+        )
+      },
+      {
+        key: "status",
+        title: t("accountRisk.statsByStatus"),
+        chips: chipsOf(
+          data.by_status ?? {},
+          STATUS_ORDER,
+          STATUS_LABEL_KEYS,
+          STATUS_TAG
+        )
+      },
+      {
+        key: "type",
+        title: t("accountRisk.statsByType"),
+        chips: (data.by_type ?? []).map(item => ({
+          key: item.risk_type,
+          label: RISK_TYPE_KEYS[item.risk_type]
+            ? t(RISK_TYPE_KEYS[item.risk_type])
+            : item.risk_type,
+          count: item.count
+        }))
+      }
+    ];
+    return groups.filter(group => group.chips.length > 0);
+  });
+
+  /** 刷新统计面板：仅 stats 权限内拉取；加载失败静默降级为不渲染（不提示、不阻断列表） */
+  const refreshStats = () => {
+    if (!auth.stats) return;
+    api
+      .stats()
+      .then(res => {
+        stats.value = res.code === SUCCESS_CODE ? (res.data ?? null) : null;
+      })
+      .catch(() => {
+        stats.value = null;
+      });
+  };
+  refreshStats();
 
   /** 取 LabeledChoiceField 的 value / label（兼容后端下发标量的情况） */
   const pick = (raw: unknown) => {
@@ -112,9 +220,30 @@ export function useAccountRisk(tableRef: Ref) {
             data: null,
             detail: String(error?.message ?? error)
           })),
-          success() {
+          success(res) {
             done();
             tableRef.value?.handleGetData?.();
+            refreshStats();
+            // 批量处置为逐项独立执行（code 成功也含失败项）：补逐条 pk+原因明细，
+            // 与审批批量转交的部分失败提示同范式（明细最多展示 3 条防刷屏）
+            const failures =
+              (
+                res?.data as {
+                  failures?: Array<{ pk: string; reason: string }>;
+                }
+              )?.failures ?? [];
+            if (pks.length > 1 && failures.length) {
+              message(
+                t("accountRisk.batchHandlePartial", {
+                  n: failures.length,
+                  detail: failures
+                    .slice(0, 3)
+                    .map(item => `${item.pk}: ${item.reason}`)
+                    .join("；")
+                }),
+                { type: "warning" }
+              );
+            }
           },
           requestEnd: closeLoading
         });
@@ -161,6 +290,7 @@ export function useAccountRisk(tableRef: Ref) {
       })),
       success() {
         tableRef.value?.handleGetData?.();
+        refreshStats();
       }
     });
   };
@@ -247,6 +377,7 @@ export function useAccountRisk(tableRef: Ref) {
   return {
     api,
     auth,
+    statsGroups,
     tableBarButtonsProps,
     operationButtonsProps,
     listColumnsFormat

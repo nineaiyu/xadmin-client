@@ -134,7 +134,10 @@ export function useSystemUploadFile(tableRef: Ref) {
             }
           });
         },
-        show: auth.upload && auth.config && 3
+        // 上传入口只看上传权限：config 权限只影响上传弹层内的配置读取
+        // （无 config 权限时 FileUpload 弹层回退默认大小限制并提示）
+        show: auth.upload,
+        index: 3
       },
       {
         // 批量打标：勾选后一次性追加/移除/替换（与用户管理页同一弹窗）

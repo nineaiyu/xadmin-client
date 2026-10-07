@@ -18,10 +18,13 @@ const props = defineProps<{
   row?: ApiApplicationItem | null;
   loading?: boolean;
   data?: ApplicationUsageStats | null;
+  /** 统计窗口（天）：头部可切换，切换由父级重拉 */
+  days?: number;
 }>();
 
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
+  "update:days": [value: number];
 }>();
 
 const { t } = useI18n();
@@ -30,6 +33,9 @@ const visible = computed({
   get: () => props.modelValue,
   set: value => emit("update:modelValue", value)
 });
+
+const onDaysChange = (value: number | string | boolean | undefined) =>
+  emit("update:days", Number(value));
 
 const quotaPercent = computed(() => {
   const quota = props.data?.quota;
@@ -55,6 +61,25 @@ const durationText = (value: number) => `${(value * 1000).toFixed(1)} ms`;
 <template>
   <el-drawer v-model="visible" :size="560" :title="t('apiApp.usage.title')">
     <div v-loading="loading" class="usage-body">
+      <!-- 统计窗口切换（1/7/14/30 天）：切换后由父级重拉数据 -->
+      <div class="usage-range">
+        <span class="usage-range-label">
+          {{ t("apiApp.usage.range") }}
+        </span>
+        <el-radio-group
+          :model-value="days"
+          size="small"
+          @update:model-value="onDaysChange"
+        >
+          <el-radio-button
+            v-for="item in [1, 7, 14, 30]"
+            :key="item"
+            :value="item"
+          >
+            {{ t("apiApp.usage.days", { n: item }) }}
+          </el-radio-button>
+        </el-radio-group>
+      </div>
       <template v-if="data">
         <div class="usage-row">
           <div class="usage-card">
@@ -145,6 +170,18 @@ const durationText = (value: number) => `${(value * 1000).toFixed(1)} ms`;
 <style lang="scss" scoped>
 .usage-body {
   min-height: 200px;
+}
+
+.usage-range {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.usage-range-label {
+  font-size: var(--el-font-size-small);
+  color: var(--el-text-color-secondary);
 }
 
 .usage-row {

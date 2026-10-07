@@ -16,6 +16,7 @@ import FormFieldDialog from "./FormFieldDialog.vue";
 import FormFieldTable from "./FormFieldTable.vue";
 import FormLinkageSection from "./FormLinkageSection.vue";
 import { moveItem } from "../utils/fieldOrder";
+import { findFieldError } from "../utils/fieldValidate";
 import { linkageBroken } from "../utils/linkageMeta";
 
 /**
@@ -81,8 +82,15 @@ onMounted(() => {
 });
 
 const addField = () => {
+  // 快速连点会命中同一毫秒时间戳：与既有 key 冲突时追加递增序号防撞
+  const base = `field_${Date.now().toString(36)}`;
+  let key = base;
+  let seq = 1;
+  while (fields.value.some(item => item.key === key)) {
+    key = `${base}_${seq++}`;
+  }
   fields.value.push({
-    key: `field_${Date.now().toString(36)}`,
+    key,
     label: "",
     type: "input"
   });
@@ -132,6 +140,19 @@ const openFieldDialog = (index: number) => {
 const getPayload = (): Record<string, unknown> | null => {
   if (!form.name || fields.value.length === 0) {
     message(t("dform.required"), { type: "warning" });
+    return null;
+  }
+  // 行内编辑兜底校验（与属性弹窗同口径）：标识格式 / 全表唯一 / 标签必填；
+  // 非法行在字段表内即时标红，这里拦截提交并给出首个错误的原因
+  const fieldError = findFieldError(fields.value);
+  if (fieldError) {
+    const { error, index } = fieldError;
+    const key = String(fields.value[index]?.key ?? "");
+    let errorText = t("dform.fieldLabelRequired");
+    if (error === "keyInvalid") errorText = t("dform.fieldKeyInvalid");
+    else if (error === "keyDuplicated")
+      errorText = t("dform.fieldKeyDuplicated", { key });
+    message(errorText, { type: "warning" });
     return null;
   }
   const tableField = fields.value.find(

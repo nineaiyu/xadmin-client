@@ -8,20 +8,17 @@ import {
   type ApiApplicationItem,
   type CallbackProbeResult
 } from "@/api/system/open";
-import type { Ref } from "vue";
 
 /**
  * API 应用行内/抽屉动作：启停（失败回滚）、重置密钥（二次确认）、回调测试。
- * 回调测试结果同时写入抽屉内局部 state 与页面级 probeResults（一次性展示口径）。
+ * 回调测试结果由调用方传入的抽屉局部 state 持有并就地展示。
  */
 export function useApiAppActions({
   refresh,
-  openCredential,
-  probeResults
+  openCredential
 }: {
   refresh: () => void;
   openCredential: (data: ApiApplicationCredential) => void;
-  probeResults: Ref<CallbackProbeResult[]>;
 }) {
   const { t } = useI18n();
   const confirm = useConfirm();
@@ -86,7 +83,6 @@ export function useApiAppActions({
     if (state) state.loading = false;
     if (res.code === SUCCESS_CODE) {
       const results = res.data?.results ?? [];
-      probeResults.value = results;
       if (state) state.results = results;
       const failed = results.filter(item => !item.success).length;
       message(

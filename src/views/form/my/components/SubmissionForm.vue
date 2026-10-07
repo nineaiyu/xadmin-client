@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onMounted, reactive, watch } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import UploadFiles from "@/components/RePlusPage/src/components/UploadFiles.vue";
 import { getDictItems, type DictItem } from "@/utils/dict";
@@ -207,13 +207,52 @@ const formulaValues = computed<Record<string, number | null>>(() => {
 const formatFormula = (field: FormField) =>
   formatFormulaValue(formulaValues.value[field.key], field.precision);
 
+/* ---------------- 客户端必填预检（仅拦截必填为空，规则仍以服务端为准） ---------------- */
+const requiredEmpty = (value: unknown): boolean =>
+  value === undefined ||
+  value === null ||
+  value === "" ||
+  (Array.isArray(value) && value.length === 0);
+
+/** 首个「必填但为空」的可见字段（行内 :error 定位展示），通过预检后清空 */
+const missingFieldKey = ref("");
+
+/**
+ * 提交前的必填预检：按联动求值后的可见字段 + isFieldRequired 判定，
+ * 返回首个缺失字段（label 供提示文案），全部已填返回 null。草稿保存不预检。
+ */
+const validateRequired = (): { key: string; label: string } | null => {
+  missingFieldKey.value = "";
+  for (const field of shownFields.value) {
+    if (!requiredOf(field)) continue;
+    if (requiredEmpty(formData[field.key])) {
+      missingFieldKey.value = field.key;
+      return { key: field.key, label: field.label };
+    }
+  }
+  return null;
+};
+
+// 缺失字段的值被补上后即清除行内错误标记（再次提交会重新预检）
+watch(
+  () => (missingFieldKey.value ? formData[missingFieldKey.value] : undefined),
+  () => {
+    if (
+      missingFieldKey.value &&
+      !requiredEmpty(formData[missingFieldKey.value])
+    ) {
+      missingFieldKey.value = "";
+    }
+  }
+);
+
 /** 生成提交载荷（字段校验由后端按 schema 执行；公式值随载荷提交，服务端重算覆盖） */
 const getPayload = () => ({
   form: props.form.pk,
   data: { ...formData, ...formulaValues.value }
 });
 
-defineExpose({ getPayload });
+defineExpose({ getPayload, validateRequired });
 </script>
 
 <template>
@@ -238,6 +277,7 @@ defineExpose({ getPayload });
         :key="field.key"
         :label="field.label"
         :required="requiredOf(field)"
+        :error="missingFieldKey === field.key ? t('dform.requiredItemTip') : ''"
       >
         <el-input
           v-if="field.type === 'input'"

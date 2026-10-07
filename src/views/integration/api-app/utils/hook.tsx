@@ -57,19 +57,21 @@ export function useApiApplication(tableRef: Ref) {
 
   const refresh = () => tableRef.value?.handleGetData();
 
-  const {
-    credentialDialog,
-    credential,
-    probeResults,
-    openCredential,
-    copyText
-  } = useApiAppCredential();
+  const { credentialDialog, credential, openCredential, copyText } =
+    useApiAppCredential();
 
   const { toggleActive, confirmRegenerate, runCallbackProbe } =
-    useApiAppActions({ refresh, openCredential, probeResults });
+    useApiAppActions({ refresh, openCredential });
 
-  const { usageVisible, usageLoading, usageRow, usage, openUsage } =
-    useApiAppUsage();
+  const {
+    usageVisible,
+    usageLoading,
+    usageRow,
+    usageDays,
+    usage,
+    openUsage,
+    setUsageDays
+  } = useApiAppUsage();
 
   const { openDialog } = useApiAppDialog({ t, refresh, openCredential });
 
@@ -196,11 +198,12 @@ export function useApiApplication(tableRef: Ref) {
     tableBarButtonsProps,
     credentialDialog,
     credential,
-    probeResults,
     copyText,
     usageVisible,
     usageLoading,
     usageRow,
-    usage
+    usageDays,
+    usage,
+    setUsageDays
   };
 }

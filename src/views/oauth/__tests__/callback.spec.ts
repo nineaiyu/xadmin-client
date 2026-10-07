@@ -130,6 +130,28 @@ describe("OAuth 回调页 MFA 分支", () => {
     expect(wrapper.find(".login-mfa-stub").exists()).toBe(false);
   });
 
+  it("token 带 must_change_password：与密码登录同口径引导到改密页", async () => {
+    state.query = { provider: "github", code: "c1", state: "s1" };
+    state.callbackMock.mockResolvedValue({
+      code: 1000,
+      data: { access: "tok-3", must_change_password: true }
+    });
+    const wrapper = mountPage();
+    await flushPromises();
+
+    expect(state.setTokenMock).toHaveBeenCalledWith({
+      access: "tok-3",
+      must_change_password: true
+    });
+    expect(state.initRouterMock).toHaveBeenCalledWith(true);
+    expect(state.messageMock).toHaveBeenCalledWith("forcePassword.tip", {
+      type: "warning",
+      duration: 6000
+    });
+    expect(state.pushMock).toHaveBeenCalledWith("/settings/basic");
+    expect(wrapper.find(".login-mfa-stub").exists()).toBe(false);
+  });
+
   it("绑定意图回调：仍然跳转账户设置页签，不进 MFA", async () => {
     sessionStorage.setItem(state.OAUTH_BIND_FLAG, String(Date.now()));
     state.query = { provider: "github", code: "c1", state: "s1" };
