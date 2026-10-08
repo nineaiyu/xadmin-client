@@ -76,6 +76,7 @@ Object.keys(devDependencies).forEach(key => {
             <a
               :href="'https://www.npmjs.com/package/' + item.label"
               target="_blank"
+              rel="noopener noreferrer"
             >
               <span
                 :class="getMainLabel(item.label)"
@@ -111,6 +112,7 @@ Object.keys(devDependencies).forEach(key => {
             <a
               :href="'https://www.npmjs.com/package/' + item.label"
               target="_blank"
+              rel="noopener noreferrer"
             >
               <span
                 :class="getMainLabel(item.label)"

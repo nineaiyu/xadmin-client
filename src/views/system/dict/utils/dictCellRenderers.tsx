@@ -3,6 +3,7 @@ import { ElTag } from "element-plus";
 import type { useI18n } from "vue-i18n";
 import type { TableColumnRenderer } from "@pureadmin/table";
 import { dictTagProps } from "@/utils/dict";
+import { renderColorSwatch, renderBuiltinBadge } from "@/utils/cellRender";
 import type { PageTableColumn } from "@/components/RePlusPage";
 import type { DictCellRow } from "./types";
 
@@ -34,37 +35,17 @@ export const dictLabelCellRenderer = (column: PageTableColumn) => {
   };
 };
 
-/** 色值：色块 + 色值；表单侧由后端 ColorField（input_type=color）渲染颜色选择器 */
+/** 色值：色块 + 色值（与通用列表页 color 列共用渲染件）；表单侧由后端 ColorField 渲染颜色选择器 */
 export const dictColorCellRenderer = (column: PageTableColumn) => {
-  column.cellRenderer = scope => {
-    const row = asCellRow(scope);
-    return row.color
-      ? h("span", { class: "flex items-center" }, [
-          h("span", {
-            style: {
-              display: "inline-block",
-              width: "14px",
-              height: "14px",
-              marginRight: "6px",
-              borderRadius: "3px",
-              background: row.color
-            }
-          }),
-          h("span", row.color)
-        ])
-      : h("span", "—");
-  };
+  column.cellRenderer = scope => renderColorSwatch(asCellRow(scope).color);
 };
 
 /** 内置标记：warning plain tag，未内置占位 */
 export const dictLockedCellRenderer =
   (t: TFunction) => (column: PageTableColumn) => {
-    column.cellRenderer = scope => {
-      const row = asCellRow(scope);
-      return row.is_locked
-        ? h(ElTag, { type: "warning", size: "small", effect: "plain" }, () =>
-            t("dataDict.locked")
-          )
-        : h("span", "—");
-    };
+    column.cellRenderer = scope =>
+      renderBuiltinBadge(asCellRow(scope).is_locked, t("dataDict.locked"), {
+        plain: true,
+        fallback: "—"
+      });
   };

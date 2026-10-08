@@ -13,6 +13,7 @@ import RoomIcon from "~icons/ep/chat-dot-square";
 import GroupIcon from "~icons/ep/user-filled";
 import PlusIcon from "~icons/ep/plus";
 import SearchIcon from "~icons/ep/search";
+import { normalizeError } from "@/utils/apiError";
 
 /**
  * 左栏：搜索 + 会话列表（公共聊天室 / AI 助手 / 私聊 / 群聊，未读红点）+ 最近在线联系人。
@@ -59,11 +60,7 @@ function openCreateGroupDialog() {
         return;
       }
       // 异常归一为可读失败结果：避免请求异常时 beforeSure 抛错、弹层 loading 悬挂
-      const res = await chatApi.createGroup(payload).catch(error => ({
-        code: -1,
-        data: null,
-        detail: String((error as { detail?: string })?.detail ?? error)
-      }));
+      const res = await chatApi.createGroup(payload).catch(normalizeError);
       if (res.code === SUCCESS_CODE && res.data) {
         done();
         emit("created", res.data);

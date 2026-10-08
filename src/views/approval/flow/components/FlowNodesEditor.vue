@@ -18,6 +18,7 @@ import {
   type NodeRow
 } from "./flowConfig";
 import RouteEditorForm from "./RouteEditorForm.vue";
+import { joinValues, splitValues } from "@/views/approval/utils/assigneeValues";
 
 /** 审批节点编辑表格（顺序 + 策略 OR/AND/RATIO + 审批人解析 + 节点条件 + 出口路由 + 超时）；就地编辑父组件传入的行数组 */
 const props = defineProps<{ nodes: NodeRow[]; fields?: FieldRow[] }>();
@@ -32,21 +33,11 @@ const userOptions = ref<Array<{ username: string; label: string }>>([]);
 const userLoading = ref(false);
 /** 审批模块自给候选目录：单次拉取 + 本地过滤，不依赖可独立裁剪的全局搜索模块 */
 const allUserCandidates = ref<Array<{ username: string; label: string }>>([]);
+/** 候选目录被服务端截断（用户数超上限）：本地过滤结果可能不全，需提示细化搜索 */
+const candidateTruncated = ref(false);
 const roleOptions = ref<Array<{ name: string; code: string }>>([]);
 /** 岗位下拉（值=岗位 code）：仅启用岗位可选，停用岗位后端不参与解析 */
 const postOptions = ref<Array<{ name: string; code: string }>>([]);
-
-/** 逗号分隔串 ↔ 多选数组（服务端契约：assignee_value 为逗号分隔串） */
-function splitValues(value: string): string[] {
-  return String(value || "")
-    .split(",")
-    .map(item => item.trim())
-    .filter(Boolean);
-}
-
-function joinValues(values: unknown): string {
-  return (Array.isArray(values) ? values : [values]).map(String).join(",");
-}
 
 /** el-select 多选回写：事件载荷是宽联合、el-table 的 row 是 DefaultRow，统一按行号写回 */
 function updateMultiValue(index: number, value: unknown) {
@@ -100,6 +91,9 @@ onMounted(async () => {
     .candidateOptions()
     .catch(() => null);
   if (candidateRes && candidateRes.code === SUCCESS_CODE && candidateRes.data) {
+    candidateTruncated.value = Boolean(
+      (candidateRes.data as { truncated?: boolean }).truncated
+    );
     allUserCandidates.value = (
       (candidateRes.data.users ?? []) as Array<{
         username: string;
@@ -169,6 +163,13 @@ function assigneeHint(type: string): string {
 <template>
   <!-- 单根包裹：父组件用 v-show 切换列表/画布，多根组件上运行时指令（v-show）不生效并告警 -->
   <div>
+    <el-alert
+      v-if="candidateTruncated"
+      type="warning"
+      :closable="false"
+      class="mb-2"
+      :title="t('approval.candidateTruncated')"
+    />
     <el-table :data="nodes" size="small" border class="nodes-table">
       <el-table-column
         type="index"

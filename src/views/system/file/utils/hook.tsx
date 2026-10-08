@@ -79,6 +79,8 @@ export function useSystemUploadFile(tableRef: Ref) {
           // 下载走受鉴权端点（服务端记访问审计），不再使用 /media/ 直链
           await api.download(row?.pk, row?.filename);
         },
+        // 无页面级权限点：下载是行级能力（服务端 get_object 数据权限 fail-closed +
+        // 访问审计），能看到该行即可下载——与 upload/config 的页面级权限点不同源
         show: true
       },
       {
@@ -86,6 +88,7 @@ export function useSystemUploadFile(tableRef: Ref) {
         code: "accessLogs",
         props: { type: "info", link: true },
         onClick: ({ row }) => openAccessLogs(row as RecordType),
+        // 同上：访问记录同为行级能力（get_object 数据权限收口），不设页面级权限点
         show: true
       },
       {

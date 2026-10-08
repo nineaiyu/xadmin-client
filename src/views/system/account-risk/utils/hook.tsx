@@ -29,6 +29,7 @@ import type { RecordType } from "plus-pro-components";
 import Search from "~icons/ep/search";
 import Edit from "~icons/ep/edit";
 import RiskHandleForm from "../components/RiskHandleForm.vue";
+import { normalizeError } from "@/utils/apiError";
 
 /** 处置表单实例（getPayload 契约；动作取服务端枚举，备注自由文本） */
 type RiskHandleFormInstance = {
@@ -246,11 +247,7 @@ export function useAccountRisk(tableRef: Ref, selectedRows: Ref<RecordType[]>) {
             : api.handle(pks[0], payload.action, payload.remark);
         handleOperation({
           t,
-          apiReq: request.catch(error => ({
-            code: -1,
-            data: null,
-            detail: String(error?.message ?? error)
-          })),
+          apiReq: request.catch(normalizeError),
           success(res) {
             done();
             tableRef.value?.handleGetData?.();
@@ -323,11 +320,7 @@ export function useAccountRisk(tableRef: Ref, selectedRows: Ref<RecordType[]>) {
   const scan = () => {
     handleOperation({
       t,
-      apiReq: api.scan().catch(error => ({
-        code: -1,
-        data: null,
-        detail: String(error?.message ?? error)
-      })),
+      apiReq: api.scan().catch(normalizeError),
       success() {
         tableRef.value?.handleGetData?.();
         refreshStats();

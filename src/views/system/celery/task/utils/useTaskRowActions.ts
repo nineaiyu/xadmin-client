@@ -99,7 +99,8 @@ export function useTaskRowActions({
             }
           });
         },
-        show: auth.run && 4
+        index: 4,
+        show: auth.run
       },
       {
         text: t("systemTask.latestLog"),
@@ -112,7 +113,8 @@ export function useTaskRowActions({
         onClick: ({ row }) => {
           void openLatestLog(row);
         },
-        show: auth.log && 5
+        index: 5,
+        show: auth.log
       },
       {
         text: t("systemTask.clone"),
@@ -138,7 +140,8 @@ export function useTaskRowActions({
             }
           });
         },
-        show: auth.clone && 6
+        index: 6,
+        show: auth.clone
       }
     ]
   });

@@ -10,7 +10,7 @@ import {
 
 /**
  * 数据集 + 仪表盘主链路：
- * 建数据集（绑定 system.userinfo）→ 建仪表盘 → 添加数字卡片 → 保存布局 →
+ * 建数据集（绑定 identity.userinfo）→ 建仪表盘 → 添加数字卡片 → 保存布局 →
  * 卡片标题与统计渲染。聚合图表由后端集成测试覆盖数据形态，E2E 走 UI 链路。
  */
 
@@ -52,7 +52,7 @@ test("数据集 + 仪表盘主链路", async ({ page }) => {
   const dialog = page.locator(".el-dialog").filter({ hasText: "新建数据集" });
   await expect(dialog).toBeVisible();
   await dialog.getByLabel("名称").fill(datasetName);
-  await pickSelectOption(page, "绑定模型", "system.userinfo");
+  await pickSelectOption(page, "绑定模型", "identity.userinfo");
   await pickSelectOption(page, "数据列", "username");
   // C5 收敛后弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确认」）
   await dialog.getByRole("button", { name: "保存" }).click();

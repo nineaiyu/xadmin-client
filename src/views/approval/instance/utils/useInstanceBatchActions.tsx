@@ -19,6 +19,19 @@ import type { TFunction } from "./instanceFormShared";
  *
  * 表单复用单行动作的同名组件（载荷结构一致，只有弹窗标题与成功文案不同）。
  */
+/** 服务端批量动作失败明细（统一 failures: [{pk, detail}]） */
+type BatchFailureItem = { pk: string; detail: string };
+
+const collectFailures = (res?: { data?: unknown }): BatchFailureItem[] =>
+  (res?.data as { failures?: BatchFailureItem[] })?.failures ?? [];
+
+/** 失败明细展示文本：`单号前 8 位: 原因` 以「；」连接 */
+const failuresText = (failures: BatchFailureItem[], limit?: number) =>
+  failures
+    .slice(0, limit ?? failures.length)
+    .map(item => `${item.pk.slice(0, 8)}: ${item.detail}`)
+    .join("；");
+
 export function useInstanceBatchActions({
   t,
   refresh,
@@ -51,8 +64,19 @@ export function useInstanceBatchActions({
         handleOperation({
           t,
           apiReq: approvalInstanceApi.batchApprove(pks, payload.comment),
-          success: () => {
+          // 与批量驳回/转交同口径：部分失败逐条明细提示（服务端逐单校验）
+          success: res => {
             done();
+            const failures = collectFailures(res);
+            if (failures.length) {
+              message(
+                t("systemApprovalInstance.batchApprovePartial", {
+                  n: failures.length,
+                  detail: failuresText(failures)
+                }),
+                { type: "warning" }
+              );
+            }
             refresh();
           },
           requestEnd: closeLoading
@@ -76,16 +100,12 @@ export function useInstanceBatchActions({
           apiReq: approvalInstanceApi.batchReject(pks, payload.reason),
           success: res => {
             done();
-            const failed =
-              (res?.data as { failed?: Array<{ no: string; reason: string }> })
-                ?.failed ?? [];
-            if (failed.length) {
+            const failures = collectFailures(res);
+            if (failures.length) {
               message(
                 t("systemApprovalInstance.batchRejectPartial", {
-                  n: failed.length,
-                  detail: failed
-                    .map(item => `${item.no}: ${item.reason}`)
-                    .join("；")
+                  n: failures.length,
+                  detail: failuresText(failures)
                 }),
                 { type: "warning" }
               );
@@ -119,20 +139,12 @@ export function useInstanceBatchActions({
           // 成功文案由服务端 detail 给出（「X 条已转交，Y 条失败」）；部分失败再补明细
           success: res => {
             done();
-            const failures =
-              (
-                res?.data as {
-                  failures?: Array<{ pk: string; detail: string }>;
-                }
-              )?.failures ?? [];
+            const failures = collectFailures(res);
             if (failures.length) {
               message(
                 t("systemApprovalInstance.batchTransferPartial", {
                   n: failures.length,
-                  detail: failures
-                    .slice(0, 3)
-                    .map(item => item.detail)
-                    .join("；")
+                  detail: failuresText(failures, 3)
                 }),
                 { type: "warning" }
               );
@@ -141,12 +153,7 @@ export function useInstanceBatchActions({
           },
           failed: res => {
             // 全失败：服务端带首个失败原因，弹窗保持打开便于改人重试
-            const failures =
-              (
-                res?.data as {
-                  failures?: Array<{ pk: string; detail: string }>;
-                }
-              )?.failures ?? [];
+            const failures = collectFailures(res);
             if (failures.length) {
               message(failures[0].detail, { type: "error" });
             }

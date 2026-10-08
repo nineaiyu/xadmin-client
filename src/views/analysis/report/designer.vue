@@ -29,6 +29,7 @@ import {
   componentToCard
 } from "./utils/design";
 import { useDesignMutations } from "./utils/useDesignMutations";
+import { normalizeError } from "@/utils/apiError";
 
 defineOptions({ name: "DataReportDesigner" });
 
@@ -135,8 +136,8 @@ onMounted(async () => {
     router.replace("/analysis/report/index");
     return;
   }
-  const res = await reportApi.retrieve(pk);
-  if (res.code !== SUCCESS_CODE || !res.data) {
+  const res = await reportApi.retrieve(pk).catch(() => null);
+  if (!res || res.code !== SUCCESS_CODE || !res.data) {
     message(t("dataReport.loadFailed"), { type: "warning" });
     router.replace("/analysis/report/index");
     return;
@@ -193,10 +194,7 @@ async function save() {
     const payload = normalizeDesign(design.value, dataset.value);
     const res = await reportApi
       .partialUpdate(report.value.pk, { design: payload })
-      .catch(error => ({
-        code: -1,
-        detail: String((error as { detail?: string })?.detail ?? error)
-      }));
+      .catch(normalizeError);
     if (res.code === SUCCESS_CODE) {
       design.value = payload;
       dirty.value = false;
@@ -220,10 +218,7 @@ async function runNow() {
   }
   running.value = true;
   try {
-    const res = await runReport(report.value.pk).catch(error => ({
-      code: -1,
-      detail: String((error as { detail?: string })?.detail ?? error)
-    }));
+    const res = await runReport(report.value.pk).catch(normalizeError);
     if (res.code === SUCCESS_CODE) {
       message(t("dataReport.runOk"), { type: "success" });
       return;

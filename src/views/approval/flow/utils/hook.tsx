@@ -133,7 +133,8 @@ export function useFlow(tableRef: Ref) {
           link: true
         },
         onClick: ({ row }) => openConfig(row),
-        show: canUpdate && 50
+        index: 50,
+        show: canUpdate
       },
       {
         text: t("systemApprovalFlow.versionsTitle"),
@@ -144,7 +145,8 @@ export function useFlow(tableRef: Ref) {
           link: true
         },
         onClick: ({ row }) => openVersions(row as FlowRow),
-        show: canViewVersions && 40
+        index: 40,
+        show: canViewVersions
       }
     ]
   });

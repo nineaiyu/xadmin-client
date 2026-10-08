@@ -25,6 +25,7 @@ import {
 } from "@/api/dataset/datasets";
 import DatasetForm from "../components/DatasetForm.vue";
 import { escapeCsvCell, formatPreviewCell } from "./csv";
+import { normalizeError } from "@/utils/apiError";
 
 /** 可见性兜底配色（字典未接入时的本地映射） */
 const VISIBILITY_TAG: Record<string, StatusTagType> = {
@@ -55,9 +56,12 @@ export function useDataset(tableRef: Ref) {
   /** 设计器元数据（模型白名单 + 字段清单）：编辑弹窗与列格式共用 */
   const meta = ref<DatasetMeta>({ models: [], fields: {} });
   onMounted(async () => {
-    const res = await datasetApi.meta();
-    if (res.code === SUCCESS_CODE) {
+    // 元数据拉取失败点名（此前无捕获：失败后编辑弹窗模型/字段下拉恒空，无从判断）
+    const res = await datasetApi.meta().catch(() => null);
+    if (res?.code === SUCCESS_CODE) {
       meta.value = res.data as unknown as DatasetMeta;
+    } else {
+      message(t("dataDataset.metaLoadFailed"), { type: "warning" });
     }
   });
 
@@ -271,10 +275,7 @@ export function useDataset(tableRef: Ref) {
           row
             ? datasetApi.partialUpdate(row.pk, payload)
             : datasetApi.create(payload)
-        ).catch(error => ({
-          code: -1,
-          detail: String((error as { detail?: string })?.detail ?? error)
-        }));
+        ).catch(normalizeError);
         if (res.code === SUCCESS_CODE) {
           message(t("dataDataset.saveOk"), { type: "success" });
           // 先关弹窗再刷新列表，避免刷新耗时导致弹窗滞留
@@ -298,7 +299,8 @@ export function useDataset(tableRef: Ref) {
         props: { type: "success", link: true },
         // 按钮级 loading：取数期间自旋，避免"点击无反馈"
         onClick: ({ row, loading }) => openPreview(row as DatasetItem, loading),
-        show: canExecute && 10
+        index: 10,
+        show: canExecute
       },
       {
         text: t("dataDataset.edit"),
@@ -306,7 +308,8 @@ export function useDataset(tableRef: Ref) {
         props: { type: "primary", link: true },
         onClick: ({ row }) => openDialog(row as DatasetItem),
         // 非创建者行不显示编辑（保存会被后端守卫拒绝）
-        show: row => canEdit && row?.is_owner !== false && 20
+        index: 20,
+        show: row => canEdit && row?.is_owner !== false
       }
     ]
   });

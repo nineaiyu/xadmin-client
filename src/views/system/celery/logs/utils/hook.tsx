@@ -22,6 +22,7 @@ import type {
 } from "@/components/RePlusPage";
 import { formatPageColumns } from "@/components/RePlusPage";
 import FileList from "~icons/ri/file-list-3-line";
+import { normalizeError } from "@/utils/apiError";
 
 /**
  * 任务日志（执行历史）列表：所有 celery 任务一行一条。
@@ -51,14 +52,17 @@ const PRODUCT_TAG_TYPE: Record<string, "primary" | "success" | "warning"> = {
   import: "warning"
 };
 
+/** 取消/重跑权限点：挂执行历史菜单下（menu-maintenance.md §6），不能靠组件名推导 */
+const PERM_CANCEL = "cancel:SystemTaskExecution";
+const PERM_RERUN = "rerun:SystemTaskExecution";
+
 export function useTaskExecution(tableRef?: Ref) {
   const api = reactive(taskExecutionApi);
   const auth = usePageAuth(["log"]);
   // 取消 / 重跑走聚合端点（/api/system/tasks/unified/{cancel,rerun}），权限点
-  // 挂执行历史菜单下（menu-maintenance.md §6），不能靠 getDefaultAuths 的组件名
-  // 推导，直接按权限点判定
-  const canCancel = hasAuth("cancel:SystemTaskExecution");
-  const canRerun = hasAuth("rerun:SystemTaskExecution");
+  // 挂执行历史菜单下（menu-maintenance.md §6），直接按权限点判定
+  const canCancel = hasAuth(PERM_CANCEL);
+  const canRerun = hasAuth(PERM_RERUN);
   const { t } = useI18n();
 
   const asRow = (row: unknown) => row as ExecutionRow;
@@ -86,10 +90,7 @@ export function useTaskExecution(tableRef?: Ref) {
   ) => {
     const kind = (row.product_type || "task") as TaskCenterKind;
     const res = await taskCenterApi[action](kind, String(row.pk ?? "")).catch(
-      error => ({
-        code: -1,
-        detail: String((error as { detail?: string })?.detail ?? error)
-      })
+      normalizeError
     );
     if (res.code === SUCCESS_CODE) {
       message(
@@ -154,7 +155,8 @@ export function useTaskExecution(tableRef?: Ref) {
           icon: useRenderIcon(FileList),
           link: true
         },
-        show: auth.log && -10,
+        index: -10,
+        show: auth.log,
         onClick: ({ row }) => openLog(asRow(row))
       }
     ]

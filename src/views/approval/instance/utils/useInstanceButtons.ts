@@ -118,7 +118,8 @@ export function useInstanceButtons({
     },
     // 通过走弹窗：审批意见选填（随任务落轨迹；后端 comment 字段同口径）
     onClick: ({ row }) => actions.openApprove(row),
-    show: auth.approve && 1
+    index: 1,
+    show: auth.approve
   };
 
   const rejectButton: OperationButtonsRow = {
@@ -130,7 +131,8 @@ export function useInstanceButtons({
       link: true
     },
     onClick: ({ row }) => actions.openReject(row),
-    show: auth.reject && 2
+    index: 2,
+    show: auth.reject
   };
 
   const addSignButton: OperationButtonsRow = {
@@ -143,7 +145,8 @@ export function useInstanceButtons({
     },
     onClick: ({ row }) => actions.openAddSign(row),
     // 仅有我的当前待办时可用（或签节点会被服务端以可读原因拒绝并引导转交）
-    show: (row: { my_task?: unknown }) => auth.addSign && hasMyTask(row) && 3
+    index: 3,
+    show: (row: { my_task?: unknown }) => auth.addSign && hasMyTask(row)
   };
 
   /** 减签（待办页签）：移除加签追加的候选（弹窗内选人；或签节点由服务端拒绝引导转交） */
@@ -156,7 +159,8 @@ export function useInstanceButtons({
       link: true
     },
     onClick: ({ row }) => actions.openRemoveSign(row),
-    show: (row: { my_task?: unknown }) => auth.removeSign && hasMyTask(row) && 4
+    index: 4,
+    show: (row: { my_task?: unknown }) => auth.removeSign && hasMyTask(row)
   };
 
   /** 退回（待办页签）：实例回退到已途经节点重开重审（区别于驳回即终止） */
@@ -169,7 +173,8 @@ export function useInstanceButtons({
       link: true
     },
     onClick: ({ row }) => actions.openReturn(row),
-    show: (row: { my_task?: unknown }) => auth.returnNode && hasMyTask(row) && 5
+    index: 5,
+    show: (row: { my_task?: unknown }) => auth.returnNode && hasMyTask(row)
   };
 
   /** 转交（待办页签）：把我的当前待办交给他人处理（一次性，区别于长期委托） */
@@ -182,7 +187,8 @@ export function useInstanceButtons({
       link: true
     },
     onClick: ({ row }) => actions.openTransfer(row),
-    show: (row: { my_task?: unknown }) => auth.transfer && hasMyTask(row) && 6
+    index: 6,
+    show: (row: { my_task?: unknown }) => auth.transfer && hasMyTask(row)
   };
 
   const cancelButton: OperationButtonsRow = {
@@ -206,8 +212,9 @@ export function useInstanceButtons({
         requestEnd: () => (loading.value = false)
       });
     },
+    index: 6,
     show: (row: { status?: { value?: string } | string }) =>
-      auth.cancel && statusValue(row) === "PENDING" && 6
+      auth.cancel && statusValue(row) === "PENDING"
   };
 
   /** 催办（我的申请页签）：审批中才可用，通知当前节点审批人（服务端 10 分钟节流） */
@@ -220,8 +227,9 @@ export function useInstanceButtons({
       link: true
     },
     onClick: ({ row }) => actions.openUrge(row),
+    index: 7,
     show: (row: { status?: { value?: string } | string }) =>
-      auth.urge && statusValue(row) === "PENDING" && 7
+      auth.urge && statusValue(row) === "PENDING"
   };
 
   /** 重新提交（我的申请页签）：已驳回时按原流程与原表单内容发起新申请 */
@@ -258,8 +266,9 @@ export function useInstanceButtons({
         }
       );
     },
+    index: 8,
     show: (row: { status?: { value?: string } | string }) =>
-      auth.create && statusValue(row) === "REJECTED" && 8
+      auth.create && statusValue(row) === "REJECTED"
   };
 
   /** 行内按钮：待办=通过/驳回/加签/转交；我的申请=撤回/催办/重提；

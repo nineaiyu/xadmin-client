@@ -1,4 +1,5 @@
 import { useI18n } from "vue-i18n";
+import { SUCCESS_CODE } from "@/api/types";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { addDialog } from "@/components/ReDialog";
@@ -82,8 +83,18 @@ export function useUserNotice(tableRef: Ref) {
     searchFields: Ref<RecordType> | null = null
   ) => {
     if (row.unread) {
-      // 行内就地已读：失败不阻断弹窗（关闭时列表会刷新），提示由 http 层统一给出
-      api.batchRead({ pks: [row.pk] }).catch(() => undefined);
+      // 行内就地已读：失败不阻断弹窗（关闭时列表会刷新）；业务码失败点名提示，
+      // HTTP 层异常交由拦截器
+      api
+        .batchRead({ pks: [row.pk] })
+        .then(res => {
+          if (res.code !== SUCCESS_CODE) {
+            message(String(res.detail || t("userNotice.readFailed")), {
+              type: "warning"
+            });
+          }
+        })
+        .catch(() => undefined);
     }
     if (routeParams?.pk) {
       // 深链 pk 只消费一次：打开即从地址栏移除，刷新/重开页签不再重复弹出。

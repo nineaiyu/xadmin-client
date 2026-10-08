@@ -8,6 +8,7 @@ import { formatAddOrEditOptions } from "./renders";
 import type { TableColumnRenderer } from "@pureadmin/table";
 import { getColourTypeByIndex } from "./index";
 import { SOLID_TAG_STYLE } from "@/utils/tagTone";
+import { colorBlockStyle } from "@/utils/cellRender";
 import { transformI18n } from "@/plugins/i18n";
 import type {
   ChoiceOptionItem,
@@ -33,16 +34,6 @@ const VueJsonPretty = defineAsyncComponent(async () => {
 const dictTagStyle = (color: string) => ({
   color,
   style: SOLID_TAG_STYLE
-});
-
-/** 色块（14px 圆角方块），用于 color 字段的详情/表格展示 */
-const colorBlockStyle = (color: string) => ({
-  display: "inline-block",
-  width: "14px",
-  height: "14px",
-  marginRight: "6px",
-  borderRadius: "3px",
-  background: color
 });
 
 /**

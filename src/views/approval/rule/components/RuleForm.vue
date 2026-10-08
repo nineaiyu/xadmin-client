@@ -8,6 +8,7 @@ import { loadPatScopeCatalog } from "@/api/user/token";
 import { approvalRuleApi } from "@/api/approval/approvalRule";
 import { message } from "@/utils/message";
 import type { ScopeGroup } from "@/utils/scopeDisplay";
+import { joinValues, splitValues } from "@/views/approval/utils/assigneeValues";
 
 defineOptions({ name: "ApprovalRuleForm" });
 
@@ -116,19 +117,10 @@ const customPathList = computed(() =>
 
 const userOptions = ref<Array<{ username: string; label: string }>>([]);
 const roleOptions = ref<Array<{ name: string; code: string }>>([]);
+/** 候选目录被服务端截断（用户数超上限）：本地过滤结果可能不全，需提示细化搜索 */
+const candidateTruncated = ref(false);
 /** 岗位下拉（值=岗位 code）：仅启用岗位，停用岗位后端不参与解析 */
 const postOptions = ref<Array<{ name: string; code: string }>>([]);
-
-function splitValues(value: string): string[] {
-  return String(value || "")
-    .split(",")
-    .map(item => item.trim())
-    .filter(Boolean);
-}
-
-function joinValues(values: unknown): string {
-  return (Array.isArray(values) ? values : [values]).map(String).join(",");
-}
 
 /** 级次行内下拉回写：多选数组 → 逗号串（服务端契约） */
 function updateLevelValue(index: number, value: unknown) {
@@ -199,6 +191,9 @@ onMounted(async () => {
   // 审批人候选目录（审批模块自带端点，不依赖搜索模块；前端本地过滤）
   const res = await approvalRuleApi.candidateOptions().catch(() => null);
   if (res && res.code === SUCCESS_CODE && res.data) {
+    candidateTruncated.value = Boolean(
+      (res.data as { truncated?: boolean }).truncated
+    );
     userOptions.value = ((res.data.users ?? []) as Array<RecordType>).map(
       user => ({
         username: String(user.username),
@@ -254,6 +249,13 @@ defineExpose({ getPayload });
     label-width="96px"
     class="pr-4"
   >
+    <el-alert
+      v-if="candidateTruncated"
+      type="warning"
+      :closable="false"
+      class="mb-2"
+      :title="t('approval.candidateTruncated')"
+    />
     <el-form-item :label="t('approvalRule.formName')" prop="name">
       <el-input
         v-model="form.name"

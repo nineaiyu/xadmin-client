@@ -5,6 +5,7 @@ import { useDark, useECharts } from "@pureadmin/utils";
 import type { UtilsEChartsOption } from "@pureadmin/utils";
 import type { MonitorHistory, MonitorMetric } from "@/api/system/monitor";
 import { CHART_ACCENT, cssVarColor, epColor } from "@/utils/chartTheme";
+import { waitChartSized } from "@/utils/chart";
 import {
   METRIC_META,
   buildSeries,
@@ -116,20 +117,10 @@ const buildOptions = (): UtilsEChartsOption => {
 
 let mounted = false;
 
-/** 等容器有非 0 宽高再 init：路由切换过渡期间挂载时 DOM 尺寸为 0，
- * echarts init 会报 "Can't get DOM width or height" 且不再自愈 */
-const waitSized = async (): Promise<boolean> => {
-  for (let i = 0; i < 30; i += 1) {
-    const el = chartRef.value as HTMLElement | undefined;
-    if (el && el.clientWidth > 0 && el.clientHeight > 0) return true;
-    await new Promise(resolve => requestAnimationFrame(resolve));
-  }
-  return false;
-};
-
 onMounted(async () => {
   await nextTick();
-  if (!(await waitSized())) return;
+  if (!(await waitChartSized(() => chartRef.value as HTMLElement | undefined)))
+    return;
   mounted = true;
   setOptions(buildOptions());
 });

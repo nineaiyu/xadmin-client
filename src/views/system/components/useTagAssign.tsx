@@ -8,6 +8,7 @@ import { message } from "@/utils/message";
 import { tagApi } from "@/api/system/tag";
 import type { RecordType } from "plus-pro-components";
 import TagAssignPanel from "./TagAssignPanel.vue";
+import { normalizeError } from "@/utils/apiError";
 
 /** 批量打标结果（后端逐对象权限校验后聚合） */
 type BatchAssignResult = {
@@ -81,10 +82,7 @@ export function useTagAssign(tableRef?: Ref) {
               tags: payload.tags,
               mode: payload.mode
             })
-            .catch(error => ({
-              code: -1,
-              detail: String((error as { detail?: string })?.detail ?? error)
-            }))) as BatchAssignResult;
+            .catch(normalizeError)) as BatchAssignResult;
           if (res.code === SUCCESS_CODE) {
             const ok = res.success?.length ?? 0;
             const failed = res.failures?.length ?? 0;
@@ -108,10 +106,7 @@ export function useTagAssign(tableRef?: Ref) {
         }
         const res = await tagApi
           .assign({ resource, pk: payload.pk, tags: payload.tags })
-          .catch(error => ({
-            code: -1,
-            detail: String((error as { detail?: string })?.detail ?? error)
-          }));
+          .catch(normalizeError);
         if (res.code === SUCCESS_CODE) {
           message(t("tag.assignDone"), { type: "success" });
           // 先关弹窗再刷新列表，避免刷新耗时导致弹窗滞留

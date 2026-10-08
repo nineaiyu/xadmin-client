@@ -1,6 +1,9 @@
 import type { AxiosResponse } from "axios";
 import { BaseApi } from "@/api/base";
-import type { DetailResult } from "@/api/types";
+import type { BaseResult, DetailResult, ListResult } from "@/api/types";
+
+/** 代码生成方案的资源基址（与生成器端点同前缀但独立路由） */
+const PLANS_BASE = "/api/system/codegen-plans";
 
 /** 可生成 CRUD 的模型项 */
 export type CodegenModelItem = {
@@ -106,6 +109,31 @@ export type CodegenPayload = {
   models?: string[];
 };
 
+/** 代码生成方案（服务端存储）：本人可见全部，`is_shared` 打开后同页其他用户只读可见 */
+export type CodegenPlanItem = {
+  pk: string;
+  name: string;
+  /** 表单状态全文（CodegenFormState 序列化结果，读侧回填后归一） */
+  payload: Record<string, unknown>;
+  description?: string | null;
+  is_shared: boolean;
+  creator?: unknown;
+  created_time?: string;
+  updated_time?: string;
+};
+
+/** 代码生成方案写入载荷（create / update 共用，同名保存覆盖）
+ *
+ * `payload` 为表单状态对象（CodegenFormState），读侧由 `normalizeFormState` 收窄；
+ * 此处用 `object` 承载以避免与 `views/system/codegen/utils/payload` 形成类型环。
+ */
+export type CodegenPlanPayload = {
+  name: string;
+  payload: object;
+  is_shared?: boolean;
+  description?: string;
+};
+
 class SystemCodeGenApi extends BaseApi {
   models = () => {
     return this.request<DetailResult<CodegenModelItem[]>>(
@@ -140,6 +168,37 @@ class SystemCodeGenApi extends BaseApi {
       `${this.baseApi}/download`,
       { responseType: "blob" }
     );
+  };
+  /** 方案列表（取值域「本人 + 共享」，服务端分页） */
+  planList = () => {
+    return this.request<ListResult<CodegenPlanItem>>(
+      "get",
+      { page: 1, size: 1000 },
+      {},
+      PLANS_BASE
+    );
+  };
+  /** 保存方案（同名覆盖，服务端 upsert） */
+  planSave = (payload: CodegenPlanPayload) => {
+    return this.request<DetailResult<CodegenPlanItem>>(
+      "post",
+      {},
+      payload,
+      PLANS_BASE
+    );
+  };
+  /** 重命名 / 更新方案（仅本人可写） */
+  planUpdate = (pk: string, payload: Partial<CodegenPlanPayload>) => {
+    return this.request<DetailResult<CodegenPlanItem>>(
+      "patch",
+      {},
+      payload,
+      `${PLANS_BASE}/${pk}`
+    );
+  };
+  /** 删除方案（仅本人可删） */
+  planRemove = (pk: string) => {
+    return this.request<BaseResult>("delete", {}, {}, `${PLANS_BASE}/${pk}`);
   };
 }
 

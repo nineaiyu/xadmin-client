@@ -9,6 +9,7 @@ import {
   messageTemplateApi,
   type MessageTemplateItem
 } from "@/api/system/security";
+import { normalizeError } from "@/utils/apiError";
 
 defineOptions({ name: "MessageTemplateForm" });
 
@@ -38,11 +39,8 @@ async function preview() {
         subject_template: form.subject_template,
         body_template: form.body_template
       })
-      .catch(error => ({
-        code: -1,
-        detail: String((error as { detail?: string })?.detail ?? error)
-      }));
-    if (res.code === SUCCESS_CODE && "data" in res) {
+      .catch(normalizeError);
+    if (res.code === SUCCESS_CODE && res.data) {
       previewResult.value = {
         subject: res.data.subject,
         message: res.data.message

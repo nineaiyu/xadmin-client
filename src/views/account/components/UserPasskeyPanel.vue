@@ -5,17 +5,15 @@ import { ElMessageBox } from "element-plus";
 import { passkeyApi } from "@/api/system/security";
 import { message } from "@/utils/message";
 import { SUCCESS_CODE } from "@/api/types";
-import {
-  b64urlToBuffer,
-  bufferToB64url,
-  isPasskeySupported
-} from "@/utils/webauthn";
+import { isPasskeySupported } from "@/utils/webauthn";
+import { useWebAuthn } from "@/hooks/useWebAuthn";
 import { useConfirm } from "@/hooks/useConfirm";
 import type { RecordType } from "plus-pro-components";
 import {
   ReReadonlyTable,
   type ReadonlyColumn
 } from "@/components/ReReadonlyTable";
+import { normalizeError } from "@/utils/apiError";
 
 /**
  * Passkey 凭据管理：浏览器侧完成 WebAuthn 注册仪式，服务端验签落库。
@@ -26,6 +24,7 @@ import {
  * 系统设置菜单权限保护的页面。
  */
 const { t } = useI18n();
+const { registerPasskey } = useWebAuthn();
 const confirm = useConfirm();
 
 const loading = ref(false);
@@ -66,49 +65,11 @@ const register = async () => {
   }
   registering.value = true;
   try {
-    const challengeRes = await passkeyApi.challenge("register");
-    if (challengeRes.code !== SUCCESS_CODE) {
-      message(String(challengeRes.detail), { type: "error" });
-      return;
-    }
-    const data = challengeRes.data;
-    const credential = (await navigator.credentials.create({
-      publicKey: {
-        challenge: b64urlToBuffer(data.challenge),
-        rp: { id: data.rp_id, name: data.rp_name || data.rp_id },
-        user: {
-          id: b64urlToBuffer(data.user_id),
-          name: data.username,
-          displayName: data.display_name || data.username
-        },
-        pubKeyCredParams: [
-          { type: "public-key", alg: -7 },
-          { type: "public-key", alg: -257 }
-        ],
-        timeout: 60000,
-        attestation: "none",
-        authenticatorSelection: {
-          residentKey: "preferred",
-          userVerification: "preferred"
-        }
-      }
-    })) as PublicKeyCredential | null;
-    if (!credential) {
-      message(t("passkey.failed"), { type: "warning" });
-      return;
-    }
-    const response = credential.response as AuthenticatorAttestationResponse;
-    const res = await passkeyApi.register({
-      client_data_json: bufferToB64url(response.clientDataJSON),
-      attestation_object: bufferToB64url(response.attestationObject),
-      name: name || t("passkey.name")
+    const ok = await registerPasskey({
+      challengeApi: () => passkeyApi.challenge("register"),
+      name
     });
-    if (res.code === SUCCESS_CODE) {
-      message(t("passkey.registerSuccess"), { type: "success" });
-      await load();
-    } else {
-      message(String(res.detail), { type: "error" });
-    }
+    if (ok) await load();
   } catch (error: unknown) {
     message(String((error as Error)?.message ?? error), { type: "error" });
   } finally {
@@ -119,10 +80,7 @@ const register = async () => {
 const remove = async (row: RecordType) => {
   if (!(await confirm(t("passkey.removeConfirm")))) return;
   // 异常归一为可读失败结果：删除失败（凭据已被移除等）需给出可读原因
-  const res = await passkeyApi.destroy(row?.pk).catch(error => ({
-    code: -1,
-    detail: String((error as { detail?: string })?.detail ?? error)
-  }));
+  const res = await passkeyApi.destroy(row?.pk).catch(normalizeError);
   if (res.code === SUCCESS_CODE) {
     message(t("passkey.removeSuccess"), { type: "success" });
     await load();

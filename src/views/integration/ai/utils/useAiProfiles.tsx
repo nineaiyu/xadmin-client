@@ -172,23 +172,24 @@ export function useAiProfiles(tableRef: Ref) {
         code: "activate",
         props: { type: "warning", link: true },
         onClick: ({ row }) => activate(row as AiProfileItem),
-        show: row =>
-          Boolean(canActivate && !(row as AiProfileItem).is_active) && -40
+        index: -40,
+        show: row => Boolean(canActivate && !(row as AiProfileItem).is_active)
       },
       {
         text: t("aiConfig.deactivate"),
         code: "deactivate",
         props: { type: "info", link: true },
         onClick: ({ row }) => deactivate(row as AiProfileItem),
-        show: row =>
-          Boolean(canDeactivate && (row as AiProfileItem).is_active) && -40
+        index: -40,
+        show: row => Boolean(canDeactivate && (row as AiProfileItem).is_active)
       },
       {
         text: t("aiConfig.test"),
         code: "test",
         props: { type: "success", link: true },
         onClick: ({ row }) => testProfile(row as AiProfileItem),
-        show: canTest && -30
+        index: -30,
+        show: canTest
       },
       {
         text: t("aiConfig.manage"),

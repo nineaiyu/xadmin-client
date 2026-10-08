@@ -3,18 +3,11 @@ import {
   systemConfigApi,
   type RegisteredConfigKey
 } from "@/api/system/config/system";
-import { usePageAuth } from "@/router/utils";
-import { h, onMounted, reactive, ref, shallowRef, type Ref } from "vue";
-import {
-  handleOperation,
-  type OperationProps,
-  type PageColumn,
-  type RePlusPageProps
-} from "@/components/RePlusPage";
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import { h, onMounted, reactive, ref, type Ref } from "vue";
+import type { PageColumn, RePlusPageProps } from "@/components/RePlusPage";
 import { SUCCESS_CODE } from "@/api/types";
 import { ElAutocomplete } from "element-plus";
-import CircleClose from "~icons/ep/circle-close";
+import { useConfigPage } from "../../useConfigPage";
 
 /** 注册键值类型 → 类型文案 key（未知类型按 string 处理） */
 export function registeredTypeLabelKey(type: string): string {
@@ -44,7 +37,14 @@ export function useSystemConfig(tableRef: Ref) {
 
   const api = reactive(systemConfigApi);
 
-  const auth = usePageAuth(["invalid"]);
+  // 权限表与「清除缓存」行内按钮由配置页共用壳装配（invalid:SystemConfig）
+  const { auth, operationButtonsProps } = useConfigPage({
+    t,
+    api,
+    tableRef,
+    invalidText: t("configSystem.invalidCache"),
+    invalidConfirmTitle: t("configSystem.confirmInvalid")
+  });
 
   /** 注册配置键枚举（表单增强提示用）：拉取失败静默降级为无候选，
    *  不阻断配置列表/编辑主流程 */
@@ -110,40 +110,6 @@ export function useSystemConfig(tableRef: Ref) {
       };
     });
   };
-
-  const operationButtonsProps = shallowRef<OperationProps>({
-    width: 250,
-    buttons: [
-      {
-        text: t("configSystem.invalidCache"),
-        code: "invalid",
-        confirm: { title: t("configSystem.confirmInvalid") },
-        props: {
-          type: "danger",
-          icon: useRenderIcon(CircleClose),
-          link: true
-        },
-        onClick: ({ row, loading }) => {
-          loading.value = true;
-          handleOperation({
-            t,
-            apiReq: api.invalid(row?.pk ?? row?.id),
-            success() {
-              tableRef.value.handleGetData();
-            },
-            requestEnd() {
-              loading.value = false;
-            }
-          });
-        },
-        show: auth.invalid && 3
-      },
-      {
-        code: "detail",
-        show: false
-      }
-    ]
-  });
 
   return {
     api,

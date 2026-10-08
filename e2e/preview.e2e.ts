@@ -159,7 +159,7 @@ test.describe("用户权限预览（超管）", () => {
 
   test("数据权限试算：count + 超管提示 + 样本 + SQL", async ({ page }) => {
     const drawer = await openUserPreviewAsAdmin(page, "xadmin");
-    const trial = await runTrial(page, drawer, "system.userinfo");
+    const trial = await runTrial(page, drawer, "identity.userinfo");
     // 命中行数为正数大字展示
     const hitCount = trial.locator("span.text-xl");
     await expect(hitCount).toBeVisible();
@@ -192,7 +192,7 @@ test.describe("数据权限预览与试算（e2e_dp：仅本人规则真实生�
 
   test("试算仅命中本人（count = 1）", async ({ page }) => {
     const drawer = await openSelfPreviewAsDpUser(page);
-    const trial = await runTrial(page, drawer, "system.userinfo");
+    const trial = await runTrial(page, drawer, "identity.userinfo");
     const hitCount = trial.locator("span.text-xl");
     await expect(hitCount).toBeVisible();
     expect(Number(await hitCount.textContent())).toBe(1);
@@ -273,7 +273,11 @@ test.describe("部门授权预览（超管）", () => {
     await openMenuPath(page, ["系统管理"], "/system/dept/index");
     const row = page.locator(".el-table__row").first();
     await expect(row).toBeVisible({ timeout: 10_000 });
-    await clickRowButton(page, row, "权限预览");
+    // 预览入口收敛进行操作「管理」抽屉（与用户管理页同口径）：开抽屉 → 点动作组
+    await row.getByRole("button", { name: "管理" }).first().click();
+    const panel = page.locator(".el-drawer").filter({ hasText: "管理部门" });
+    await expect(panel).toBeVisible({ timeout: 10_000 });
+    await panel.locator('[data-action-code="preview"]').click();
 
     const drawer = page
       .locator(".el-drawer")
@@ -318,7 +322,7 @@ test.describe("预览接口鉴权（普通用户）", () => {
           "User-Agent": E2E_USER_AGENT,
           Authorization: `Bearer ${token}`
         },
-        data: { model: "system.userinfo" }
+        data: { model: "identity.userinfo" }
       }
     );
     expect(trial.status()).toBe(403);

@@ -6,6 +6,7 @@ import { handleOperation, type OperationProps } from "@/components/RePlusPage";
 import type { ApiResult } from "@/api/types";
 import { message } from "@/utils/message";
 import BatchUpdateForm from "./BatchUpdateForm.vue";
+import { normalizeError } from "@/utils/apiError";
 
 /**
  * 批量更新通用弹窗：勾选行 → 选择字段与值 → POST {baseApi}/batch-update。
@@ -65,11 +66,9 @@ export function useBatchUpdate(options: {
         }
         handleOperation({
           t,
-          apiReq: api.batchUpdate(pks, payload, "batchUpdate").catch(error => ({
-            code: -1,
-            data: null,
-            detail: String(error?.message ?? error)
-          })),
+          apiReq: api
+            .batchUpdate(pks, payload, "batchUpdate")
+            .catch(normalizeError),
           success() {
             done();
             tableRef.value?.handleGetData?.();

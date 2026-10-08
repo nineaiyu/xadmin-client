@@ -6,6 +6,7 @@ import { dialogSize } from "@/components/ReDialog/size";
 import { message } from "@/utils/message";
 import { aiProfileApi, type AiProfileItem } from "@/api/ai/ai";
 import AiProfileForm from "../components/AiProfileForm.vue";
+import { normalizeError } from "@/utils/apiError";
 
 /** 新建/编辑弹窗（ReDialog + AiProfileForm）：api_key 留空沿用的语义收敛在表单内 */
 export function useAiProfileDialog({
@@ -38,10 +39,7 @@ export function useAiProfileDialog({
           row
             ? aiProfileApi.partialUpdate(row.pk, payload)
             : aiProfileApi.create(payload)
-        ).catch(error => ({
-          code: -1,
-          detail: String((error as { detail?: string })?.detail ?? error)
-        }));
+        ).catch(normalizeError);
         if (res.code === SUCCESS_CODE) {
           message(t("aiConfig.saveOk"), { type: "success" });
           // 先关弹窗再刷新列表，避免刷新耗时导致弹窗滞留

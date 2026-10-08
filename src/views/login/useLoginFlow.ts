@@ -1,5 +1,4 @@
-import { computed, reactive, ref, watch } from "vue";
-import type { Ref } from "vue";
+import { reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import type { FormRules } from "element-plus";
 import { useEventListener } from "@vueuse/core";
@@ -168,10 +167,6 @@ export function createPasswordFormRules(options: {
     ]
   });
 }
-
-/** 验证码登录 / 注册子页共用：form_type 为 username 时展示账号密码输入 */
-export const createIsUsername = (formData: Ref<{ form_type: string }>) =>
-  computed(() => formData.value.form_type === "username");
 
 /** 子页返回账号密码登录页（验证码登录 / 注册 / 重置密码共用回退） */
 export function backToBasicPage() {

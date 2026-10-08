@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { login, openMenuPath } from "./helpers";
+import { login, openList, openMenuPath } from "./helpers";
 
 /**
  * 定时任务管理页 E2E（业务侧 celery beat CRUD）。
@@ -11,12 +11,13 @@ const SEED_TASK = "E2E-演示清理任务";
 
 test("定时任务：列表渲染与启停开关循环", async ({ page }) => {
   await login(page);
-  await openMenuPath(
-    page,
-    ["系统管理", "任务管理"],
-    "/system/celery/task/index"
-  );
-  const table = page.locator(".el-table");
+  // 列表默认按 name 正序且分页：一轮里前面用例创建的一批 e2e-* 任务会把中文名的
+  // 种子任务挤出第一页（webkit 阶段数据最多时稳定复现），故先按名称真实搜索一次
+  await openList(page, "/system/celery/task/index", {
+    placeholder: "请输入任务名称",
+    value: SEED_TASK
+  });
+  const table = page.locator(".el-table").first();
   await expect(table).toBeVisible({ timeout: 15_000 });
 
   // 种子任务行可见（业务侧管理页替代 Django Admin 兜底入口）

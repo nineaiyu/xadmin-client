@@ -3,12 +3,12 @@ import type { BaseResult, DetailResult } from "@/api/types";
 
 /** 敏感操作审批单 */
 class ApprovalApi extends BaseApi {
-  /** 通过审批单 */
-  approve = (pk: string | number) => {
+  /** 通过审批单（comment 选填：多级链逐级留痕） */
+  approve = (pk: string | number, comment = "") => {
     return this.request<DetailResult>(
       "post",
       {},
-      {},
+      { comment },
       `${this.baseApi}/${pk}/approve`
     );
   };

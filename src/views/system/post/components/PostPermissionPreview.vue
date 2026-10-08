@@ -1,12 +1,13 @@
 <script lang="ts" setup>
-import ReEmpty from "@/components/ReEmpty";
 import { useI18n } from "vue-i18n";
 import { postApi } from "@/api/system/post";
 import type { PostPreviewResult } from "@/api/types/permission-preview";
 import {
   PreviewDescriptions,
+  PreviewNotes,
   PreviewStatusTag,
   PreviewUsersTable,
+  RePermissionPreviewShell,
   usePermissionPreview
 } from "@/components/RePermissionPreview";
 
@@ -23,59 +24,48 @@ const props = defineProps<{ row: { pk?: string | number } }>();
 
 const { t } = useI18n();
 
-const { loading, data } = usePermissionPreview<PostPreviewResult>(
+const { loading, data: preview } = usePermissionPreview<PostPreviewResult>(
   async pk => (await postApi.preview(pk)).data,
   () => props.row.pk
 );
 </script>
 
 <template>
-  <div v-loading="loading">
-    <template v-if="data">
-      <PreviewDescriptions>
-        <el-descriptions-item :label="t('post.name')">
-          {{ data.post.name }}
-        </el-descriptions-item>
-        <el-descriptions-item :label="t('post.code')">
-          {{ data.post.code }}
-        </el-descriptions-item>
-        <el-descriptions-item :label="t('permissionPreview.status')">
-          <PreviewStatusTag :active="data.post.is_active" />
-        </el-descriptions-item>
-        <el-descriptions-item :label="t('permissionPreview.dept')">
-          {{ data.post.dept?.name || "-" }}
-        </el-descriptions-item>
-        <el-descriptions-item :label="t('post.rank')">
-          {{ data.post.rank }}
-        </el-descriptions-item>
-        <el-descriptions-item :label="t('post.description')">
-          {{ data.post.description || "-" }}
-        </el-descriptions-item>
-      </PreviewDescriptions>
+  <RePermissionPreviewShell
+    v-slot="{ data }"
+    :loading="loading"
+    :data="preview"
+  >
+    <PreviewDescriptions>
+      <el-descriptions-item :label="t('post.name')">
+        {{ data.post.name }}
+      </el-descriptions-item>
+      <el-descriptions-item :label="t('post.code')">
+        {{ data.post.code }}
+      </el-descriptions-item>
+      <el-descriptions-item :label="t('permissionPreview.status')">
+        <PreviewStatusTag :active="data.post.is_active" />
+      </el-descriptions-item>
+      <el-descriptions-item :label="t('permissionPreview.dept')">
+        {{ data.post.dept?.name || "-" }}
+      </el-descriptions-item>
+      <el-descriptions-item :label="t('post.rank')">
+        {{ data.post.rank }}
+      </el-descriptions-item>
+      <el-descriptions-item :label="t('post.description')">
+        {{ data.post.description || "-" }}
+      </el-descriptions-item>
+    </PreviewDescriptions>
 
-      <el-alert
-        v-for="note in data.notes"
-        :key="note"
-        :title="note"
-        class="mt-2"
-        :closable="false"
-        show-icon
-        type="info"
-      />
+    <PreviewNotes :notes="data.notes" />
 
-      <el-collapse class="mt-3" :model-value="['users']">
-        <el-collapse-item
-          :title="`${t('permissionPreview.postUsers')}（${data.users.total}）`"
-          name="users"
-        >
-          <PreviewUsersTable :data="data.users" show-dept />
-        </el-collapse-item>
-      </el-collapse>
-    </template>
-    <ReEmpty
-      v-else
-      :description="t('permissionPreview.loadFailed')"
-      :image-size="70"
-    />
-  </div>
+    <el-collapse class="mt-3" :model-value="['users']">
+      <el-collapse-item
+        :title="`${t('permissionPreview.postUsers')}（${data.users.total}）`"
+        name="users"
+      >
+        <PreviewUsersTable :data="data.users" show-dept />
+      </el-collapse-item>
+    </el-collapse>
+  </RePermissionPreviewShell>
 </template>

@@ -13,6 +13,7 @@ import { postApi, type PostItem } from "@/api/system/post";
 import PostForm from "../components/PostForm.vue";
 import PostMembersDialog from "../components/PostMembersDialog.vue";
 import PostPermissionPreview from "../components/PostPermissionPreview.vue";
+import { normalizeError } from "@/utils/apiError";
 
 /**
  * 岗位管理表格：岗位 CRUD + 成员分配 + 成员数计数。
@@ -32,6 +33,9 @@ export function usePosts(tableRef: Ref) {
   const canCreate = hasAuth("create:SystemPost");
   const canEdit = hasAuth("partialUpdate:SystemPost");
   const canAssign = hasAuth("assign:SystemPost");
+  // 只读名录：后端 members(GET)/assign(POST) 双权限点建模（便于只读授权）——
+  // 前端成员入口对两种权限都开放，无 assign 时以只读模式打开
+  const canViewMembers = hasAuth("members:SystemPost");
   const canPreview = hasAuth("preview:SystemPost");
 
   const refresh = () => tableRef.value?.handleGetData();
@@ -78,10 +82,7 @@ export function usePosts(tableRef: Ref) {
         // 异常归一为可读失败结果：避免 beforeSure 抛错导致弹窗 loading 悬挂
         const res = await (
           row ? postApi.partialUpdate(row.pk, payload) : postApi.create(payload)
-        ).catch(error => ({
-          code: -1,
-          detail: String((error as { detail?: string })?.detail ?? error)
-        }));
+        ).catch(normalizeError);
         if (res.code === SUCCESS_CODE) {
           message(t("post.saveOk"), { type: "success" });
           done();
@@ -97,7 +98,7 @@ export function usePosts(tableRef: Ref) {
   /* ---------------- 成员分配（ReDialog + PostMembersDialog） ---------------- */
   const membersRef = ref<InstanceType<typeof PostMembersDialog>>();
 
-  const openMembers = (row: PostItem) => {
+  const openMembers = (row: PostItem, readonly = false) => {
     membersRef.value = undefined;
     addDialog({
       title: `${t("post.members")}：${row.name}`,
@@ -106,18 +107,20 @@ export function usePosts(tableRef: Ref) {
       destroyOnClose: true,
       closeOnClickModal: false,
       sureBtnLoading: true,
-      contentRenderer: () => h(PostMembersDialog, { ref: membersRef, row }),
+      contentRenderer: () =>
+        h(PostMembersDialog, { ref: membersRef, row, readonly }),
       beforeSure: async (done, { closeLoading }) => {
+        // 只读查看：直接关闭（不提交）
+        if (readonly) {
+          done();
+          return;
+        }
         const payload = membersRef.value?.getPayload();
         if (!payload) {
           closeLoading();
           return;
         }
-        const res = await postApi.assign(row.pk, payload).catch(error => ({
-          code: -1,
-          data: null,
-          detail: String((error as { detail?: string })?.detail ?? error)
-        }));
+        const res = await postApi.assign(row.pk, payload).catch(normalizeError);
         if (res.code === SUCCESS_CODE) {
           // 跳过明细：失效/不存在用户的 pk 不阻断保存，但要点名（与 tags 批量打标同口径）
           const skipped =
@@ -168,8 +171,8 @@ export function usePosts(tableRef: Ref) {
         text: t("post.members"),
         code: "members",
         props: { type: "primary", link: true },
-        onClick: ({ row }) => openMembers(row as PostItem),
-        show: canAssign,
+        onClick: ({ row }) => openMembers(row as PostItem, !canAssign),
+        show: canAssign || canViewMembers,
         index: 9
       },
       {

@@ -18,6 +18,7 @@ import type { ComponentSize } from "element-plus";
 import type { BaseApi } from "@/api/base";
 import { useTableLayout } from "./utils/useTableLayout";
 import { useTableMeasure } from "./utils/useTableMeasure";
+import { resolveOperationRow as resolveOperationRowUtil } from "./utils/operationRow";
 import { useSearchCardCollapse } from "./utils/useSearchCardCollapse";
 import { useListMetaWarning } from "./utils/useListMetaWarning";
 
@@ -56,7 +57,10 @@ const props = withDefaults(defineProps<RePlusPageProps>(), {
   // undefined 时由 hook 按页面导出权限（auth.exportData）自动显示异步开关，false 可显式关闭
   allowAsyncExport: undefined,
   // 我的视图：开启后工具栏出现「视图」下拉（筛选条件命名保存 / 一键套用 / 默认视图）
-  savedViews: false
+  savedViews: false,
+  // 缺省 true：该语义靠「显式传 false 才关闭」区分，而 boolean 类型 prop 的缺省值会被
+  // Vue 归一为 false（未声明默认值时 isAbsent → false），必须在此显式给出默认值
+  fetchSearchFields: true
 });
 const emit = defineEmits<{
   /** 行点击：row 为动态接口数据行 */
@@ -95,6 +99,10 @@ const rootRef = ref<HTMLElement>();
 
 const { tableElWidth, measureTableWidth, ensureRootObserver } =
   useTableMeasure(rootRef);
+
+/** 操作列行兜底（第三方 slot 的 row 会退化为空对象，按行号取真实行，见 utils） */
+const resolveOperationRow = (row: RecordType | undefined, index: unknown) =>
+  resolveOperationRowUtil(row, index, dataList.value);
 
 const {
   t,
@@ -401,9 +409,9 @@ defineExpose({
         @page-current-change="handleCurrentChange"
         @sort-change="handleSortChange"
       >
-        <template #operation="{ row }">
+        <template #operation="{ row, index }">
           <button-operation
-            :row="row"
+            :row="resolveOperationRow(row, index)"
             :size="tableBarData.size as ComponentSize"
             v-bind="operationButtonsProps"
             :buttons="operationButtons"
@@ -413,7 +421,13 @@ defineExpose({
               }
             "
           />
-          <slot name="extOperation" v-bind="{ row, size: tableBarData.size }" />
+          <slot
+            name="extOperation"
+            v-bind="{
+              row: resolveOperationRow(row, index),
+              size: tableBarData.size
+            }"
+          />
         </template>
         <template
           v-for="item in getKeyList(listColumns, 'slot').filter(x => {

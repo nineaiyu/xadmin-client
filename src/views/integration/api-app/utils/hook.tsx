@@ -166,7 +166,8 @@ export function useApiApplication(tableRef: Ref) {
         code: "edit",
         props: { type: "primary", link: true },
         onClick: ({ row }) => openDialog(row as ApiApplicationItem),
-        show: canEdit && -25
+        index: -25,
+        show: canEdit
       },
       {
         text: t("apiApp.manage"),

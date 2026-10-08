@@ -77,7 +77,8 @@ export function useDemoBook(tableRef: Ref) {
             }
           });
         },
-        show: auth.submit && 5
+        index: 5,
+        show: auth.submit
       },
       {
         text: t("demoBook.pushBook"),
@@ -105,7 +106,8 @@ export function useDemoBook(tableRef: Ref) {
             }
           });
         },
-        show: auth.push && 6
+        index: 6,
+        show: auth.push
       }
     ]
   });

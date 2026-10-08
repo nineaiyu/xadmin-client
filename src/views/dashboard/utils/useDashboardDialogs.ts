@@ -6,6 +6,7 @@ import { SUCCESS_CODE } from "@/api/types";
 import type { useI18n } from "vue-i18n";
 import { dashboardApi, type DashboardItem } from "@/api/dataset/datasets";
 import DashboardCreateForm from "../components/DashboardCreateForm.vue";
+import { normalizeError } from "@/utils/apiError";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
@@ -50,11 +51,7 @@ export function useDashboardDialogs({
         // 异常归一为可读失败结果：避免请求异常时 beforeSure 抛错、弹窗 loading 悬挂
         const res = await dashboardApi
           .create<DashboardItem>({ ...payload, layout: [] })
-          .catch(error => ({
-            code: -1,
-            data: null,
-            detail: String((error as { detail?: string })?.detail ?? error)
-          }));
+          .catch(normalizeError);
         if (res.code === SUCCESS_CODE) {
           message(t("dashboard.saveOk"), { type: "success" });
           // 先关弹窗再刷新列表（与原手写弹窗行为一致，避免刷新耗时导致弹窗滞留）
@@ -97,11 +94,7 @@ export function useDashboardDialogs({
         }
         const res = await dashboardApi
           .partialUpdate<DashboardItem>(editingPk, payload)
-          .catch(error => ({
-            code: -1,
-            data: null,
-            detail: String((error as { detail?: string })?.detail ?? error)
-          }));
+          .catch(normalizeError);
         if (res.code === SUCCESS_CODE) {
           message(t("dashboard.saveOk"), { type: "success" });
           done();

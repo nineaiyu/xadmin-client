@@ -3,6 +3,7 @@ import type { useI18n } from "vue-i18n";
 import { useConfirm } from "@/hooks/useConfirm";
 import { message } from "@/utils/message";
 import { aiProfileApi, type AiProfileItem } from "@/api/ai/ai";
+import { normalizeError } from "@/utils/apiError";
 
 /**
  * AI 档案在线处置动作：激活/停用/删除（统一二次确认）+ 连通性测试 + 能力探测。
@@ -26,10 +27,7 @@ export function useAiProfileActions({
       return;
     }
     // 异常归一为可读失败结果：抽屉内触发的动作不应把异常抛到全局
-    const res = await action().catch(error => ({
-      code: -1,
-      detail: String((error as { detail?: string })?.detail ?? error)
-    }));
+    const res = await action().catch(normalizeError);
     if (res.code === SUCCESS_CODE) {
       message(doneText, { type: "success" });
       refresh();
@@ -73,10 +71,7 @@ export function useAiProfileActions({
   const probeProfile = async (row: AiProfileItem, withVision = false) => {
     const res = await aiProfileApi
       .probe(row.pk, withVision ? { vision: true } : undefined)
-      .catch(error => ({
-        code: -1,
-        detail: String((error as { detail?: string })?.detail ?? error)
-      }));
+      .catch(normalizeError);
     if (res.code === SUCCESS_CODE) {
       const data = ((res as { data?: Record<string, { ok?: boolean }> }).data ??
         {}) as Record<string, { ok?: boolean } | undefined>;

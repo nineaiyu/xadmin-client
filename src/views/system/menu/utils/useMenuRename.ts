@@ -8,6 +8,7 @@ import { ElMessageBox } from "element-plus";
 import { SUCCESS_CODE } from "@/api/types";
 import { message } from "@/utils/message";
 import type { MenuRow } from "./types";
+import { normalizeError } from "@/utils/apiError";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
@@ -36,10 +37,7 @@ export function useMenuRename({
     )
       .then(async ({ value }) => {
         const res = await renameNode(row, String(value).trim()).catch(
-          error => ({
-            code: -1,
-            detail: String((error as { detail?: string })?.detail ?? error)
-          })
+          normalizeError
         );
         if (res.code !== SUCCESS_CODE) {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });

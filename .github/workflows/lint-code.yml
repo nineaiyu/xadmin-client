@@ -74,6 +74,14 @@ jobs:
         # （scripts/check-as-unknown.mjs，初始 109 处 / 70 文件）
         run: pnpm check:as-unknown
 
+      - name: Module cycle gate
+        # 顶层静态导入图成环会让环内模块的求值顺序依赖加载入口，class extends 等
+        # 「基类先初始化」的引用在特定入口序下求值失败（典型：api/base → utils/http
+        # → utils/auth → store → api/auth → api/base）。store 层调用依赖 http 链路的
+        # api 一律在动作内动态 import()，本门禁对结构性静态边与初等环清单双重校验
+        # （scripts/check-module-cycles.mjs；豁免项在脚本顶部登记并附原因）
+        run: pnpm check:module-cycles
+
       - name: i18n keys gate
         # 代码引用的静态词条必须同时存在于 zh/en（缺失时界面显示 key 原文）；
         # 两侧 key 集合必须完全对称；词条值含 <tag> 会让 unplugin-vue-i18n 转换期

@@ -5,6 +5,7 @@ import { SUCCESS_CODE } from "@/api/types";
 import { tagApi, type TagItem } from "@/api/system/tag";
 import { message } from "@/utils/message";
 import { fetchAllRows } from "@/utils/fetchAllRows";
+import { normalizeError } from "@/utils/apiError";
 
 /**
  * 通用打标面板：单对象打标 / 批量打标（追加·移除·替换）+ 弹窗内新建标签。
@@ -76,11 +77,11 @@ const createTag = async () => {
   creating.value = true;
   try {
     // 归一异常：API 抛错时给出可读提示（否则外层 catch 会把消息吞成通用失败）
-    const res = (await tagApi.create({ name }).catch(error => ({
-      code: -1,
-      detail: String((error as { detail?: string })?.detail ?? error),
-      data: undefined
-    }))) as { code: number; detail?: string; data?: TagItem };
+    const res = (await tagApi.create({ name }).catch(normalizeError)) as {
+      code: number;
+      detail?: string;
+      data?: TagItem;
+    };
     if (res.code !== SUCCESS_CODE) {
       message(String(res.detail || t("results.failed")), { type: "warning" });
       return;

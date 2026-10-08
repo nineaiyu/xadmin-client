@@ -5,6 +5,7 @@ import { getDictTypes } from "@/utils/dict";
 import type { FormField, FormFieldType } from "@/api/dataset/dform";
 import { message } from "@/utils/message";
 import { FIELD_KEY_RE } from "../utils/fieldValidate";
+import { FIELD_TYPE_OPTIONS as TYPE_OPTIONS } from "../utils/schemaMeta";
 import {
   FormulaError,
   validateFormulaExpression
@@ -27,24 +28,6 @@ const props = defineProps<{
 }>();
 
 const { t } = useI18n();
-
-const TYPE_OPTIONS: { value: FormFieldType; labelKey: string }[] = [
-  { value: "input", labelKey: "dform.typeInput" },
-  { value: "textarea", labelKey: "dform.typeTextarea" },
-  { value: "number", labelKey: "dform.typeNumber" },
-  { value: "amount", labelKey: "dform.typeAmount" },
-  { value: "select", labelKey: "dform.typeSelect" },
-  { value: "radio", labelKey: "dform.typeRadio" },
-  { value: "checkbox", labelKey: "dform.typeCheckbox" },
-  { value: "date", labelKey: "dform.typeDate" },
-  { value: "switch", labelKey: "dform.typeSwitch" },
-  { value: "upload", labelKey: "dform.typeUpload" },
-  { value: "daterange", labelKey: "dform.typeDaterange" },
-  { value: "table", labelKey: "dform.typeTable" },
-  { value: "user", labelKey: "dform.typeUser" },
-  { value: "cascader", labelKey: "dform.typeCascader" },
-  { value: "formula", labelKey: "dform.typeFormula" }
-];
 
 const TEXT_TYPES: FormFieldType[] = ["input", "textarea"];
 const NUMBER_TYPES: FormFieldType[] = ["number", "amount"];

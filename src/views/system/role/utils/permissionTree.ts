@@ -224,6 +224,46 @@ export function normalizeSelection(
 }
 
 /**
+ * 回显折叠：菜单（页面/目录）的全部直接子级均在勾选集中时，折叠为页面级勾选
+ * （移除子级键、保留菜单键）。
+ *
+ * 存储侧（后端 expand_menu_scope）会把页面级勾选展开为该页全部权限点，两种
+ * 提交形态最终授权一致；折叠仅影响回显形态，与用户「勾过页面」的操作记忆对齐。
+ * 自底向上逐层折叠（深层先折叠为菜单键，父级再据直接子级判断），叶子不参与。
+ */
+export function foldFullMenuSelection(
+  index: PermissionTreeIndex,
+  selection: Iterable<string>
+): Set<string> {
+  const incoming = sanitizeSelection(index, selection);
+  /**
+   * 页面 / 目录级勾选（父键在选、直接子级全不在选）等价于「整棵子树生效」——
+   * 与后端授权按子树展开的存储口径一致。先补齐后代再走父链规范化：否则这类
+   * 勾选会被当成「无子级支撑的孤儿」剔除，表现为「明明有授权，打开后一个勾都没有」
+   * （经检索后端存的就是页面键的场景必然命中）。
+   */
+  const expanded = new Set(incoming);
+  for (const key of index.menuKeys) {
+    if (!expanded.has(key)) continue;
+    const children = index.childrenMap.get(key) ?? [];
+    if (!children.length || children.some(child => expanded.has(child))) {
+      continue;
+    }
+    menuDescendants(index, key).forEach(item => expanded.add(item));
+  }
+  const next = normalizeSelection(index, expanded);
+  for (let i = index.menuKeys.length - 1; i >= 0; i--) {
+    const key = index.menuKeys[i];
+    const children = index.childrenMap.get(key) ?? [];
+    if (!children.length) continue;
+    if (children.every(child => next.has(child))) {
+      children.forEach(child => next.delete(child));
+    }
+  }
+  return next;
+}
+
+/**
  * 点击节点后的联动结果。
  *
  * 选中：自身与全部真实菜单后代置为选中，祖先目录一并选中（授权链完整，
@@ -305,6 +345,12 @@ export function computeNodeStatusMap(
     }
     if (!selected.has(key)) {
       statuses.set(key, "unchecked");
+      continue;
+    }
+    // 页面级勾选（回显折叠 / 独立模式直接勾选页面）：子级均未勾选时按「已选」
+    // 呈现——页面级勾选在保存时展开为该页全部权限点，语义上等价整棵子树全选
+    if (!children.some(child => selected.has(child))) {
+      statuses.set(key, "checked");
       continue;
     }
     const allChecked = children.every(

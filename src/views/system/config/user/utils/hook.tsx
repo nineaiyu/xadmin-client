@@ -1,27 +1,29 @@
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
-import { hasAuth, usePageAuth } from "@/router/utils";
 import { goUserDetail } from "@/views/system/hooks";
 import { reactive, shallowRef, type Ref } from "vue";
 import { userConfigApi } from "@/api/system/config/user";
 import {
   type PageTableColumn,
-  handleOperation,
-  type OperationProps,
   type RePlusPageProps,
   formatPageColumns
 } from "@/components/RePlusPage";
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import type { RecordType } from "plus-pro-components";
-import CircleClose from "~icons/ep/circle-close";
+import { useConfigPage } from "../../useConfigPage";
 
 export function useUserConfig(tableRef: Ref) {
   const { t } = useI18n();
 
   const api = reactive(userConfigApi);
 
-  const auth = usePageAuth();
-  auth.invalid = hasAuth("invalid:UserConfig");
+  // 权限表与「清除缓存」行内按钮由配置页共用壳装配（invalid:UserConfig）
+  const { auth, operationButtonsProps } = useConfigPage({
+    t,
+    api,
+    tableRef,
+    invalidText: t("configUser.invalidCache"),
+    invalidConfirmTitle: t("configUser.confirmInvalid")
+  });
 
   const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
     props: {
@@ -62,40 +64,6 @@ export function useUserConfig(tableRef: Ref) {
   const onGoUserDetail = (row: OwnerRow) => {
     goUserDetail(router, row.owner?.pk);
   };
-
-  const operationButtonsProps = shallowRef<OperationProps>({
-    width: 250,
-    buttons: [
-      {
-        text: t("configUser.invalidCache"),
-        code: "invalid",
-        confirm: { title: t("configUser.confirmInvalid") },
-        props: {
-          type: "danger",
-          icon: useRenderIcon(CircleClose),
-          link: true
-        },
-        onClick: ({ row, loading }) => {
-          loading.value = true;
-          handleOperation({
-            t,
-            apiReq: api.invalid(row?.pk ?? row?.id),
-            success() {
-              tableRef.value.handleGetData();
-            },
-            requestEnd() {
-              loading.value = false;
-            }
-          });
-        },
-        show: auth.invalid && 3
-      },
-      {
-        code: "detail",
-        show: false
-      }
-    ]
-  });
 
   return {
     api,

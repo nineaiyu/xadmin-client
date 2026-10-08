@@ -26,7 +26,15 @@ describe("approvalApi 审批单动作", () => {
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
       "/api/approval/approvals/t1/approve",
-      { params: {}, data: {} },
+      { params: {}, data: { comment: "" } },
+      {}
+    );
+
+    approvalApi.approve("t2", "同意按期执行");
+    expect(requestMock).toHaveBeenLastCalledWith(
+      "post",
+      "/api/approval/approvals/t2/approve",
+      { params: {}, data: { comment: "同意按期执行" } },
       {}
     );
 

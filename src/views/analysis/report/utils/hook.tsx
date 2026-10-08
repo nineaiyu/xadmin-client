@@ -19,6 +19,7 @@ import {
 } from "@/api/dataset/analysis";
 import { datasetApi, listRows, type DatasetItem } from "@/api/dataset/datasets";
 import ReportForm from "../components/ReportForm.vue";
+import { normalizeError } from "@/utils/apiError";
 
 /** 最近执行状态兜底配色（后端值：SUCCESS* / FAILURE / 空） */
 const REPORT_STATUS_TAG: Record<string, StatusTagType> = {
@@ -70,7 +71,12 @@ export function useReport(tableRef: Ref) {
   /** 数据集清单：列名映射 + 表单下拉共用 */
   const datasets = ref<DatasetItem[]>([]);
   onMounted(async () => {
-    const res = await fetchAllRows(datasetApi.list);
+    // 数据集下拉失败不阻塞报表主链路：显式提示（此前未捕获，失败用户无感知）
+    const res = await fetchAllRows(datasetApi.list).catch(() => null);
+    if (!res) {
+      message(t("dataReport.datasetsLoadFailed"), { type: "warning" });
+      return;
+    }
     datasets.value = listRows<DatasetItem>(res as never);
   });
 
@@ -125,10 +131,7 @@ export function useReport(tableRef: Ref) {
 
   const run = async (row: ReportItem, loading?: { value: boolean }) => {
     if (loading) loading.value = true;
-    const res = await runReport(row.pk).catch(error => ({
-      code: -1,
-      detail: String((error as { detail?: string })?.detail ?? error)
-    }));
+    const res = await runReport(row.pk).catch(normalizeError);
     if (loading) loading.value = false;
     if (res.code === SUCCESS_CODE) {
       message(t("dataReport.runOk"), { type: "success" });
@@ -163,10 +166,7 @@ export function useReport(tableRef: Ref) {
           row
             ? reportApi.partialUpdate(row.pk, payload)
             : reportApi.create(payload)
-        ).catch(error => ({
-          code: -1,
-          detail: String((error as { detail?: string })?.detail ?? error)
-        }));
+        ).catch(normalizeError);
         if (res.code === SUCCESS_CODE) {
           message(t("dataReport.saveOk"), { type: "success" });
           // 先关弹窗再刷新列表，避免刷新耗时导致弹窗滞留
@@ -195,7 +195,8 @@ export function useReport(tableRef: Ref) {
         props: { type: "success", link: true },
         onClick: ({ row, loading }) => run(row as ReportItem, loading),
         // 非创建者行同样隐藏：后端 run 有创建者守卫，显示只会点击后 1003
-        show: row => canRun && row?.is_owner !== false && 10
+        index: 10,
+        show: row => canRun && row?.is_owner !== false
       },
       {
         text: t("dataReport.designer"),
@@ -203,14 +204,16 @@ export function useReport(tableRef: Ref) {
         props: { type: "primary", link: true },
         onClick: ({ row }) => design(row as ReportItem),
         // 非创建者行不显示设计/编辑（保存会被后端守卫拒绝）
-        show: row => canEdit && row?.is_owner !== false && 15
+        index: 15,
+        show: row => canEdit && row?.is_owner !== false
       },
       {
         text: t("dataReport.edit"),
         code: "edit",
         props: { type: "primary", link: true },
         onClick: ({ row }) => openDialog(row as ReportItem),
-        show: row => canEdit && row?.is_owner !== false && 20
+        index: 20,
+        show: row => canEdit && row?.is_owner !== false
       }
     ]
   });

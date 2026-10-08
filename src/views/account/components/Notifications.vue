@@ -22,6 +22,9 @@ const auth = ref({
 <template>
   <div :class="['min-w-45', deviceDetection() ? 'max-w-full' : 'max-w-[70%]']">
     <h3 class="my-8!">{{ t("account.notifications") }}</h3>
+    <el-text class="mb-4 block" type="info" size="small">
+      {{ t("account.subCrossHint") }}
+    </el-text>
     <MessageNotifications :api="userMsgSubscriptionApi" :auth="auth" />
   </div>
 </template>

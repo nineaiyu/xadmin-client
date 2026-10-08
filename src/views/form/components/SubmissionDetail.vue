@@ -16,6 +16,7 @@ import {
   type StatusTagType
 } from "@/utils/dict";
 import { formatFormulaValue } from "@/views/form/utils/formulaEval";
+import { SUBMISSION_STATUS_TAG_TYPE } from "@/views/form/utils/submissionStatus";
 
 /**
  * 提交详情抽屉：基本信息 + 按 schema 渲染的字段明细 + 审批轨迹（时间线）。
@@ -39,14 +40,6 @@ const { t } = useI18n();
 
 /** 详情行：retrieve 全量到达后整体替换（保留列表行兜底，避免请求失败白屏） */
 const row = ref<SubmissionItem>(props.row);
-
-const SUBMISSION_STATUS_TAG_TYPE: Record<string, StatusTagType> = {
-  DRAFT: "info",
-  PENDING: "warning",
-  APPROVED: "success",
-  REJECTED: "danger",
-  CANCELLED: "info"
-};
 
 const TRAIL_STATUS_TAG_TYPE: Record<string, StatusTagType> = {
   APPROVED: "success",

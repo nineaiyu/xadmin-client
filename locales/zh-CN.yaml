@@ -563,11 +563,13 @@ post:
   memberEmpty: 暂无成员
   memberPlaceholder: 搜索用户名/昵称添加成员
   memberNoChange: 未检测到成员变更
+  memberReadonlyHint: 只读查看成员名录（需要分配成员权限才能调整）
   memberSaveOk: 岗位成员已更新
   memberSkipped: 岗位成员已更新，{count} 个失效或不存在用户已跳过
   preview: 预览
 
 directory:
+  membersLoadFailed: 成员加载失败，请稍后重试
   title: 通讯录
   viewByDept: 按部门
   viewByPost: 按岗位
@@ -872,6 +874,8 @@ credential:
 approval:
   pendingTab: 待我审批
   mineTab: 我发起的
+  candidateTruncated: 审批人候选目录已截断（用户数超出上限），本地搜索结果可能不全，请用关键字精确搜索
+  commentPlaceholder: 审批意见（选填）
   approve: 通过
   reject: 驳回
   cancel: 撤回
@@ -970,6 +974,7 @@ approvalRule:
   levelCount: "{n} 级"
 
 systemApprovalFlow:
+  versionsLoadFailed: 版本列表加载失败，请稍后重试
   createTitle: 新增流程
   editTitle: 编辑配置
   formName: 流程名称
@@ -1093,6 +1098,7 @@ systemApprovalInstance:
   batchApproveConfirm: 确定批量通过选中的申请吗？
   batchRejectTitle: 批量驳回 {n} 条申请
   batchRejectPartial: "{n} 条未处理：{detail}"
+  batchApprovePartial: "{n} 条未通过：{detail}"
   cancelConfirm: 确定撤回申请「{title}」吗？
   submit: 提交申请
   submitSuccess: 申请已提交
@@ -1229,6 +1235,8 @@ mfa:
 account:
   profile: 个人信息
   preference: 偏好设置
+  prefCrossHint: 这里的开关控制实时提醒是否弹出（全局维度）；订阅哪些消息类型见「消息订阅」。
+  subCrossHint: 这里选择订阅哪些消息类型（类型维度）；是否弹出实时提醒见「偏好设置」。
   securityLog: 安全日志
   notifications: 消息订阅
   accountManagement: 账户管理
@@ -1520,6 +1528,7 @@ rolePermission:
   fieldProgress: 已选 {checked}/{total}
   linkedTip: 勾选父级会同时勾选其下全部菜单与权限点；取消后按剩余子级回算父级状态
   independentTip: 各节点独立勾选，勾选子级不会自动勾选父级
+  foldedTip: 页面级勾选表示该页面全部权限点均已授权；如需逐项调整，请先取消页面勾选再重新选择
 
 permissionPreview:
   userTitle: 用户权限预览
@@ -1899,6 +1908,7 @@ noticeRead:
   showSystemNotice: 查看通知公告
 
 userNotice:
+  readFailed: 标记已读失败，请稍后重试
   message: 内容
   batchReadConfirm: 确定将选中的 {count} 条通知标记为已读吗？
   title: 标题
@@ -2097,7 +2107,6 @@ login:
   passwordUpdateReg: 修改密码成功
   emailVerify: 邮件验证
   smsVerify: 短信验证
-  basic: 账户密码
 
 welcome:
   operateLog: 操作日志
@@ -2475,6 +2484,7 @@ imBinding:
   unbound: 已解绑
 
 systemApprovalDelegation:
+  allFlows: 全部流程
   delegator: 委托人
   delegator_name: 委托人
   delegate: 代理人
@@ -2691,6 +2701,7 @@ mask:
   maskTypeCustom: 自定义正则
 
 dashboard:
+  datasetsLoadFailed: 数据集列表加载失败，请刷新页面重试
   exportImage: 导出图片
   exportNoChart: 指标卡没有可导出的图表
   title: 仪表盘
@@ -2752,6 +2763,7 @@ dashboard:
   share: 分享
   shareCopied: 仪表盘链接已复制
 dataDataset:
+  metaLoadFailed: 数据集元数据加载失败，编辑与字段选项暂不可用
   previewFailed: 预览执行失败，请检查数据集配置或稍后重试
   title: 数据集
   create: 新建数据集
@@ -2805,6 +2817,7 @@ dataScreen:
   designerTitle: 大屏画布设计器
   pickScreenFirst: 请先从大屏列表进入设计器
   loadFailed: 大屏加载失败
+  dashboardsLoadFailed: 仪表盘列表加载失败，请刷新页面重试
   retry: 重试
   layoutSaved: 画布已保存
   unsaved: 有未保存改动
@@ -2909,6 +2922,7 @@ dataReport:
   designer: 设计报表
   pickReportFirst: 请先从报表列表进入设计器
   loadFailed: 报表加载失败
+  datasetsLoadFailed: 数据集列表加载失败，请刷新页面重试
   designSaved: 设计已保存
   unsaved: 有未保存改动
   readonlyHint: 只读（仅创建者可编辑）
@@ -3021,6 +3035,7 @@ dataReport:
   valueFieldRequired: 请选择度量字段
 
 webhook:
+  urlInvalid: 回调地址需以 http:// 或 https:// 开头
   title: Webhook 订阅
   deliveryTitle: 投递审计
   create: 新建订阅
@@ -3064,6 +3079,7 @@ webhook:
   duration: 耗时(秒)
 
 ai:
+  toolsLoadFailed: 工具清单加载失败，部分信息暂不可用
   title: AI 助手
   features: 功能入口
   noFeature: 暂无可用功能
@@ -3457,6 +3473,7 @@ leaveApply:
   cancelConfirm: 确定撤回该请假申请吗？撤回后需重新提交。
   submitSuccess: 请假申请已提交审批
   cancelSuccess: 请假申请已撤回
+  viewInstance: 查看审批
   rejectedTip: 已驳回
   statusDRAFT: 草稿
   statusPENDING: 审批中
@@ -3757,8 +3774,9 @@ codegen:
   planPick: 选择已保存方案
   planPickFirst: 请先选择一个方案
   planSave: 保存方案
-  planSavePrompt: 输入方案名称（仅保存到当前浏览器，可导出 JSON 迁移）
-  planLocalDraft: 本地草稿
+  planSavePrompt: 输入方案名称（保存到服务端，可导出 JSON 迁移）
+  planShared: 共享
+  planShareOnSave: 共享给同页用户
   planNameRequired: 方案名称不能为空
   planLoad: 载入
   planDelete: 删除
@@ -3766,7 +3784,9 @@ codegen:
   planExport: 导出
   planImport: 导入
   planSaved: 方案已保存
+  planSaveFailed: 保存失败
   planLoaded: 方案已载入
   planDeleted: 方案已删除
+  planDeleteFailed: 删除失败
   planImported: 方案已导入
   planImportFailed: 导入失败

@@ -5,6 +5,8 @@ import {
   type KnowledgeVectorStatus
 } from "@/api/ai/knowledge";
 import { useConfirm } from "@/hooks/useConfirm";
+import { usePollTask } from "@/hooks/usePollTask";
+import { normalizeError } from "@/utils/apiError";
 import { message } from "@/utils/message";
 import {
   BUILD_POLL_INTERVAL,
@@ -27,29 +29,35 @@ export function useKnowledgeBuild({
 }) {
   const confirm = useConfirm();
 
-  /** 构建进度轮询：运行中按里程碑提示（25/50/75%，过程可见不刷屏），终态给摘要。 */
-  const pollBuildStatus = async () => {
-    const startedAt = Date.now();
-    let lastPercent = 0;
-    while (Date.now() - startedAt < BUILD_POLL_TIMEOUT) {
-      await new Promise(resolve => setTimeout(resolve, BUILD_POLL_INTERVAL));
-      const res = await knowledgeApi.buildEmbeddingsStatus().catch(error => ({
-        code: -1,
-        detail: String((error as { detail?: string })?.detail ?? error),
-        data: null
-      }));
-      const status = res.data as KnowledgeBuildStatus | null;
-      if (!status) continue;
-      if (status.state === "running") {
-        const milestone = findMilestone(lastPercent, status.percent);
-        if (milestone) {
-          message(t("aiKnowledge.buildProgress", { percent: status.percent }), {
-            type: "info"
-          });
-        }
-        lastPercent = status.percent;
-        continue;
+  /** 上次已达成的百分比（里程碑只在跨过 25/50/75 时提示；每次构建开始时重置） */
+  let lastPercent = 0;
+
+  /**
+   * 构建进度轮询：运行中按里程碑提示（过程可见不刷屏），终态给摘要。
+   * 经 usePollTask 随创建作用域注册卸载清理——此前手写 while 无清理能力，
+   * 组件卸载后仍会继续请求并弹消息。
+   */
+  const buildPoll = usePollTask<KnowledgeBuildStatus>({
+    query: async () => {
+      // 异常归一为可读失败结果：状态查询失败按一次无效轮询处理，下轮重试
+      const res = await knowledgeApi
+        .buildEmbeddingsStatus()
+        .catch(normalizeError);
+      return (res.data as KnowledgeBuildStatus | null) ?? null;
+    },
+    interval: BUILD_POLL_INTERVAL,
+    timeout: BUILD_POLL_TIMEOUT,
+    isFinal: status => status.state !== "running",
+    onTick: status => {
+      const milestone = findMilestone(lastPercent, status.percent);
+      if (milestone) {
+        message(t("aiKnowledge.buildProgress", { percent: status.percent }), {
+          type: "info"
+        });
       }
+      lastPercent = status.percent;
+    },
+    onFinal: status => {
       if (status.state === "done") {
         const summary = status.summary;
         message(
@@ -62,14 +70,17 @@ export function useKnowledgeBuild({
         refresh();
         return;
       }
-      if (status.state === "error") {
-        message(String(status.summary?.detail || t("results.failed")), {
-          type: "error"
-        });
-        return;
-      }
-    }
-    message(t("aiKnowledge.buildPollTimeout"), { type: "warning" });
+      message(String(status.summary?.detail || t("results.failed")), {
+        type: "error"
+      });
+    },
+    onTimeout: () =>
+      message(t("aiKnowledge.buildPollTimeout"), { type: "warning" })
+  });
+
+  const pollBuildStatus = () => {
+    lastPercent = 0;
+    return buildPoll.start();
   };
 
   /**
@@ -79,11 +90,7 @@ export function useKnowledgeBuild({
    * `manage.py build_ai_embeddings --force`。
    */
   const buildEmbeddings = async () => {
-    const statusRes = await knowledgeApi.vectorStatus().catch(error => ({
-      code: -1,
-      detail: String((error as { detail?: string })?.detail ?? error),
-      data: null
-    }));
+    const statusRes = await knowledgeApi.vectorStatus().catch(normalizeError);
     const status = statusRes.data as KnowledgeVectorStatus | null;
     if (!status?.enabled) {
       message(t("aiKnowledge.vectorDisabled"), { type: "warning" });
@@ -104,11 +111,7 @@ export function useKnowledgeBuild({
     ) {
       return;
     }
-    const res = await knowledgeApi.buildEmbeddings().catch(error => ({
-      code: -1,
-      detail: String((error as { detail?: string })?.detail ?? error),
-      data: null
-    }));
+    const res = await knowledgeApi.buildEmbeddings().catch(normalizeError);
     if (res.code !== SUCCESS_CODE) {
       // 已有构建在跑（1001 + running 状态）：不报错，转为跟踪既有任务进度
       const running = (res as { data?: KnowledgeBuildStatus | null }).data;

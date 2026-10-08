@@ -73,7 +73,7 @@ test("报表与大屏主链路", async ({ page }) => {
   await page.getByRole("button", { name: "新建数据集" }).click();
   const dsDialog = page.locator(".el-dialog").filter({ hasText: "新建数据集" });
   await dsDialog.getByLabel("名称").fill(datasetName);
-  await pickSelectOption(page, "绑定模型", "system.userinfo");
+  await pickSelectOption(page, "绑定模型", "identity.userinfo");
   await pickSelectOption(page, "数据列", "username");
   // C5 收敛后弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确认」）
   await dsDialog.getByRole("button", { name: "保存" }).click();
@@ -162,7 +162,7 @@ test("大屏远程控制：管理端下发切换，展示端实时跟随", async
   await page.getByRole("button", { name: "新建数据集" }).click();
   const dsDialog = page.locator(".el-dialog").filter({ hasText: "新建数据集" });
   await dsDialog.getByLabel("名称").fill(datasetName);
-  await pickSelectOption(page, "绑定模型", "system.userinfo");
+  await pickSelectOption(page, "绑定模型", "identity.userinfo");
   await pickSelectOption(page, "数据列", "username");
   await dsDialog.getByRole("button", { name: "保存" }).click();
   await expect(dsDialog).not.toBeVisible();

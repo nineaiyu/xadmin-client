@@ -6,6 +6,7 @@ import {
   type ApiApplicationItem,
   type ApplicationUsageStats
 } from "@/api/system/open";
+import { normalizeError } from "@/utils/apiError";
 
 /** 用量报表可选窗口（服务端上限 30 天） */
 export const USAGE_DAY_OPTIONS = [1, 7, 14, 30];
@@ -31,11 +32,7 @@ export function useApiAppUsage() {
     // 异常归一：抽屉 loading 不悬挂
     const res = await apiApplicationApi
       .stats(row.pk, usageDays.value)
-      .catch(error => ({
-        code: -1,
-        data: null,
-        detail: String((error as { detail?: string })?.detail ?? error)
-      }));
+      .catch(normalizeError);
     if (seq !== usageSeq) return;
     usageLoading.value = false;
     if (res.code === SUCCESS_CODE) {

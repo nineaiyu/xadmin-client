@@ -71,6 +71,9 @@ onMounted(async () => {
 <template>
   <div :class="['min-w-45', deviceDetection() ? 'max-w-full' : 'max-w-[70%]']">
     <h3 class="my-8!">{{ t("account.preference") }}</h3>
+    <el-text class="mb-4 block" type="info" size="small">
+      {{ t("account.prefCrossHint") }}
+    </el-text>
     <div v-for="(item, index) in list" :key="index">
       <div class="flex items-center">
         <div class="flex-1">

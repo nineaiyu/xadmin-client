@@ -1,9 +1,17 @@
 /**
- * 模块环约束：api/base → utils/http → utils/auth → store → api/auth → api/base
- * 成环，环内 api/auth 等 class extends 依赖本模块先完成初始化。
- * - 本模块（及其静态导入）不得再引入任何 api/* 模块；
- * - 「先导入任何 api 模块、后加载认证链」的入口序会触发环内 extends 未初始化，
- *   纯函数消费方请走深路径（如 RePlusPage/src/utils），勿经桶出口连带组件图。
+ * 模块环约束（历史）：曾存在
+ * api/base → utils/http → utils/auth → store → api/auth → api/base 的环，
+ * 环内 api/auth 等 class extends 依赖本模块先完成初始化，特定入口序下会求值失败。
+ * 破除方式：认证链上的 store 改为在动作内动态引入 api 模块
+ * （见 store/modules/user.ts、store/modules/siteConfig.ts），
+ * store 不再顶层静态引用任何 api/* 模块，该环随之断开。
+ *
+ * 现行约束：
+ * - 本模块（及其静态导入）不得再引入任何 api/* 模块，api 模块之间不得互相
+ *   导入成环；
+ * - 纯函数消费方请走深路径（如 RePlusPage/src/utils），勿经桶出口连带组件图。
+ *
+ * 守护：scripts/check-module-cycles.mjs（pnpm check:module-cycles）。
  */
 import { http } from "@/utils/http";
 import { dataToFormData } from "@/utils/form";

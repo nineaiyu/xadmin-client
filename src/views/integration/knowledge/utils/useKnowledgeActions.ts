@@ -1,16 +1,14 @@
 import { SUCCESS_CODE } from "@/api/types";
-import { getCurrentScope, h, onScopeDispose, ref, type Ref } from "vue";
+import { h, ref, type Ref } from "vue";
 import type { useI18n } from "vue-i18n";
 import { addDialog } from "@/components/ReDialog";
 import { openManageDrawer } from "@/components/ReActionPanel";
 import { hasAuth } from "@/router/utils";
 import { handleOperation } from "@/components/RePlusPage";
-import {
-  knowledgeApi,
-  type KnowledgeSyncStatus,
-  type KnowledgeSyncSummary
-} from "@/api/ai/knowledge";
+import { knowledgeApi, type KnowledgeSyncStatus } from "@/api/ai/knowledge";
 import { useConfirm } from "@/hooks/useConfirm";
+import { usePollTask } from "@/hooks/usePollTask";
+import { normalizeError } from "@/utils/apiError";
 import { message } from "@/utils/message";
 import KnowledgeUploadDialog from "../components/KnowledgeUploadDialog.vue";
 import KnowledgePanel from "../components/KnowledgePanel.vue";
@@ -64,10 +62,7 @@ export function useKnowledgeActions({
         // 异常归一为可读失败结果，避免请求异常时弹窗 loading 悬挂
         const res = await knowledgeApi
           .upload(payload.name, payload)
-          .catch(error => ({
-            code: -1,
-            detail: String((error as { detail?: string })?.detail ?? error)
-          }));
+          .catch(normalizeError);
         if (res.code !== SUCCESS_CODE) {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
           return;
@@ -86,10 +81,7 @@ export function useKnowledgeActions({
       .partialUpdate(row.pk, {
         is_active: !row.is_active
       })
-      .catch(error => ({
-        code: -1,
-        detail: String((error as { detail?: string })?.detail ?? error)
-      }));
+      .catch(normalizeError);
     if (res.code === SUCCESS_CODE) {
       message(t("aiKnowledge.toggleDone"), { type: "success" });
       refresh();
@@ -145,40 +137,22 @@ export function useKnowledgeActions({
     });
   };
 
-  /** 仓库同步轮询定时器：挂当前作用域，组件卸载即清理，避免卸载后仍轮询/弹消息 */
-  let syncPollTimer: ReturnType<typeof setTimeout> | null = null;
-  const stopSyncPolling = () => {
-    if (syncPollTimer) {
-      clearTimeout(syncPollTimer);
-      syncPollTimer = null;
-    }
-  };
-  if (getCurrentScope()) {
-    onScopeDispose(stopSyncPolling);
-  }
-
-  const waitSyncPollTick = () =>
-    new Promise<void>(resolve => {
-      syncPollTimer = setTimeout(resolve, SYNC_POLL_INTERVAL);
-    });
-
-  /** 轮询仓库同步状态：终态（done/error）或超时停止；卸载后定时器被清理即停 */
-  const pollSyncStatus = async () => {
-    const startedAt = Date.now();
-    while (Date.now() - startedAt < SYNC_POLL_TIMEOUT) {
-      await waitSyncPollTick();
+  /**
+   * 仓库同步状态轮询：终态（done/error）或超时停止；组件卸载时经 usePollTask
+   * 清理定时器，卸载后不再发起请求、不再弹消息。
+   */
+  const syncPoll = usePollTask<KnowledgeSyncStatus>({
+    query: async () => {
       // 异常归一为可读失败结果：状态查询失败按一次无效轮询处理，下轮重试
-      const res = await knowledgeApi.syncRepoStatus().catch(error => ({
-        code: -1,
-        detail: String((error as { detail?: string })?.detail ?? error),
-        data: null
-      }));
-      const status = res.data as KnowledgeSyncStatus | null;
-      if (!status || status.state === "running" || status.state === "idle") {
-        continue;
-      }
+      const res = await knowledgeApi.syncRepoStatus().catch(normalizeError);
+      return (res.data as KnowledgeSyncStatus | null) ?? null;
+    },
+    interval: SYNC_POLL_INTERVAL,
+    timeout: SYNC_POLL_TIMEOUT,
+    isFinal: status => status.state !== "running" && status.state !== "idle",
+    onFinal: status => {
       if (status.state === "done") {
-        const summary = (status.summary ?? {}) as Partial<KnowledgeSyncSummary>;
+        const summary = status.summary ?? {};
         message(
           t("aiKnowledge.syncDone", {
             created: summary.created ?? 0,
@@ -193,18 +167,16 @@ export function useKnowledgeActions({
       message(String(status.detail || t("results.failed")), {
         type: "error"
       });
-      return;
-    }
-    message(t("aiKnowledge.syncPollTimeout"), { type: "warning" });
-  };
+    },
+    onTimeout: () =>
+      message(t("aiKnowledge.syncPollTimeout"), { type: "warning" })
+  });
+
+  const pollSyncStatus = () => syncPoll.start();
 
   const syncRepo = async () => {
     // 异常归一为可读失败结果：提交可能因仓库不可达等失败，需给出可读原因
-    const res = await knowledgeApi.syncRepo().catch(error => ({
-      code: -1,
-      data: null,
-      detail: String((error as { detail?: string })?.detail ?? error)
-    }));
+    const res = await knowledgeApi.syncRepo().catch(normalizeError);
     if (res.code !== SUCCESS_CODE) {
       // 已有同步在跑（1001，单飞锁）：提示进行中，不报错、不排队
       if (res.code === 1001) {
@@ -226,11 +198,9 @@ export function useKnowledgeActions({
       return;
     }
     // 异常归一为可读失败结果：批量启停失败需给出可读原因
-    const res = await knowledgeApi.batchToggle(pks, isActive).catch(error => ({
-      code: -1,
-      data: null,
-      detail: String((error as { detail?: string })?.detail ?? error)
-    }));
+    const res = await knowledgeApi
+      .batchToggle(pks, isActive)
+      .catch(normalizeError);
     if (res.code === SUCCESS_CODE) {
       const changed = (res.data as { changed?: number })?.changed ?? 0;
       message(t("aiKnowledge.batchToggleDone", { count: changed }), {

@@ -13,6 +13,7 @@ import { message } from "@/utils/message";
 import { SUCCESS_CODE } from "@/api/types";
 import { fieldTypeLabelKey } from "../utils/schemaMeta";
 import { LINKAGE_EFFECTS, linkageFieldLabel } from "../utils/linkageMeta";
+import { normalizeError } from "@/utils/apiError";
 
 /**
  * schema 版本历史（行级入口）：查看历史版本配置 / 回滚到指定版本。
@@ -47,6 +48,8 @@ const data = ref<SchemaHistoryResult>({
 
 const load = async () => {
   loading.value = true;
+  // 保留手写兜底（非「异常归一」通用形态）：失败时需给出空历史占位 data，
+  // 以维持 SchemaHistoryResult 形状（normalizeError 的 data 为 null，不满足此契约）
   const res = await designerApi.schemaHistory(props.row.pk).catch(error => ({
     code: -1,
     detail: String((error as { detail?: string })?.detail ?? error),
@@ -87,10 +90,7 @@ const rollback = (item: SchemaHistoryItem) => {
     submitting.value = true;
     const res = await designerApi
       .rollback(props.row.pk, item.version)
-      .catch(error => ({
-        code: -1,
-        detail: String((error as { detail?: string })?.detail ?? error)
-      }));
+      .catch(normalizeError);
     submitting.value = false;
     if (res.code !== SUCCESS_CODE) {
       message(res.detail ?? t("results.failed"), { type: "error" });

@@ -166,7 +166,8 @@ export function useChat() {
     genClientMsgId,
     pushAttachment: store.pushAttachment,
     scrollToBottom,
-    markFailed
+    markFailed,
+    sendFrame: sendChatFrame
   });
 
   function markFailed(clientMsgId: string, detail?: string) {
@@ -223,17 +224,17 @@ export function useChat() {
   }
 
   /** 表情回应（chat_reaction 上行）：本地已在回应中则移除，否则添加；
-   * 全量回应表由广播帧整体替换（限流与发送共用 5 条/秒） */
+   * 全量回应表由广播帧整体替换（限流与发送共用 5 条/秒）；
+   * 上行经 sendChatFrame 收口（断连判定 + 异常吞掉提示，此前裸 send 在重连竞态下
+   * 可能抛错或无声丢失） */
   function toggleReaction(item: ChatMessageItem, emoji: string) {
     const op = item.extra?.reactions?.[emoji]?.includes(me.value.pk)
       ? "remove"
       : "add";
-    socket.value?.send(
-      JSON.stringify({
-        action: MessageAction.CHAT_REACTION,
-        data: { message: item.id, emoji, op }
-      })
-    );
+    sendChatFrame({
+      action: MessageAction.CHAT_REACTION,
+      data: { message: item.id, emoji, op }
+    });
   }
 
   // 切换会话：中断流 + 拉历史 + 清未读（本地红点 + 服务端游标）

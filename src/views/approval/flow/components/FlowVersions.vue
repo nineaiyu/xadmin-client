@@ -33,7 +33,12 @@ const fetchVersions = () => {
     .then(res => {
       if (res.code === SUCCESS_CODE && res.data) {
         rows.value = res.data;
+        return;
       }
+      message(t("systemApprovalFlow.versionsLoadFailed"), { type: "warning" });
+    })
+    .catch(() => {
+      message(t("systemApprovalFlow.versionsLoadFailed"), { type: "warning" });
     })
     .finally(() => {
       loading.value = false;

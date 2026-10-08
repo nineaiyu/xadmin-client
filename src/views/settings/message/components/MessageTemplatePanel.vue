@@ -13,6 +13,7 @@ import {
 } from "@/api/system/security";
 import type { RecordType } from "plus-pro-components";
 import MessageTemplateForm from "./MessageTemplateForm.vue";
+import { normalizeError } from "@/utils/apiError";
 
 /**
  * 通知消息模板：代码内模板是默认值，此处维护可选的 DB 覆盖层。
@@ -61,10 +62,7 @@ const openEdit = (raw: RecordType) => {
         return;
       }
       // 异常归一为可读失败结果：避免请求异常时 beforeSure 抛错、弹窗 loading 悬挂
-      const res = await messageTemplateApi.save(payload).catch(error => ({
-        code: -1,
-        detail: String((error as { detail?: string })?.detail ?? error)
-      }));
+      const res = await messageTemplateApi.save(payload).catch(normalizeError);
       if (res.code === SUCCESS_CODE) {
         message(t("messageTemplate.saveSuccess"), { type: "success" });
         done();
@@ -90,10 +88,9 @@ const reset = async (raw: RecordType) => {
     return;
   }
   // 异常归一为可读失败结果：重置失败（权限被拒等）需给出可读原因
-  const res = await messageTemplateApi.reset(row.message_type).catch(error => ({
-    code: -1,
-    detail: String((error as { detail?: string })?.detail ?? error)
-  }));
+  const res = await messageTemplateApi
+    .reset(row.message_type)
+    .catch(normalizeError);
   if (res.code === SUCCESS_CODE) {
     message(t("messageTemplate.resetSuccess"), { type: "success" });
     await load();

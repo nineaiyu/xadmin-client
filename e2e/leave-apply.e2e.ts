@@ -16,17 +16,27 @@ test("请假申请：列表渲染、状态按钮与删除清理", async ({ page 
   await login(page);
 
   const reason = `E2E请假事由-${Date.now()}`;
+  // 起止日期按运行隔离：固定日期会与「上一轮未清理干净」的残留行在后端重叠校验
+  // （区间重叠 400）互撞，而双浏览器共用同一库，残留行很难人工感知
+  const startOffset = 120 + Math.floor(Math.random() * 240);
+  const startDate = new Date(Date.now() + startOffset * 86_400_000);
+  const endDate = new Date(startDate.getTime() + 86_400_000);
+  const iso = (date: Date) => date.toISOString().slice(0, 10);
   const created = await page.request.post(`${FRONT_URL}/api/approval/leaves`, {
     data: {
       leave_type: "annual",
-      start_date: "2026-12-01",
-      end_date: "2026-12-02",
+      start_date: iso(startDate),
+      end_date: iso(endDate),
       days: "2.0",
       reason
     }
   });
   const payload = await created.json();
-  expect(payload.code, `create leave: ${JSON.stringify(payload)}`).toBe(1000);
+  // 1008（api/approval/leave.ts::LEAVE_DRAFT_SAVED_CODE）= 已保存为草稿但未提交审批；
+  // 1000 = 已提交。E2E 超管无部门，首节点解析不到审批人，必落 1008 草稿
+  expect([1000, 1008], `create leave: ${JSON.stringify(payload)}`).toContain(
+    payload.code
+  );
   expect(payload.data.status.value).toBe("DRAFT");
 
   try {

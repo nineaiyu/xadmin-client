@@ -1,12 +1,13 @@
 <script lang="ts" setup>
-import { computed, onMounted, ref } from "vue";
+import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { message } from "@/utils/message";
-import { SUCCESS_CODE } from "@/api/types";
 import { deptApi, type DeptManagerItem } from "@/api/system/dept";
+import { SUCCESS_CODE } from "@/api/types";
+import MemberTagEditor from "@/views/system/components/MemberTagEditor.vue";
 
 /**
- * 部门管理员任命（ReDialog 内容组件）：现有管理员以标签展示（可移除）+ 远程搜索添加。
+ * 部门管理员任命（ReDialog 内容组件）：成员编辑交给 MemberTagEditor，
+ * 本组件只做数据装配、搜索适配与载荷注册。
  *
  * 提交走增量载荷 `{add, remove}`（服务端幂等，并同步装配预置角色与数据权限规则）；
  * 初始清单直接取行数据快照（列表已带 managers 列），不额外请求。
@@ -29,49 +30,18 @@ const props = defineProps<{
 const { t } = useI18n();
 
 const managers = ref<DeptManagerItem[]>([...(props.row.managers ?? [])]);
-/** 待新增（尚未提交，去重由服务端幂等兜底） */
-const adding = ref<DeptManagerItem[]>([]);
-/** 待移除的管理员 pk */
-const removing = ref<number[]>([]);
-const options = ref<DeptManagerItem[]>([]);
-const searching = ref(false);
+const editorRef = ref<InstanceType<typeof MemberTagEditor>>();
 
-const displayMembers = computed(() =>
-  managers.value.filter(item => !removing.value.includes(item.pk))
-);
-
-/** 远程搜索候选（≤20 条；服务端在无关键字时返回空列表，需要输入才会出候选） */
+/** 远程搜索候选（≤20 条；无关键字时服务端返回空列表，需要输入才会出候选） */
 async function searchUsers(keyword: string) {
-  searching.value = true;
-  try {
-    const res = await deptApi.userOptions(keyword ?? "");
-    if (res.code === SUCCESS_CODE) {
-      options.value = (res.data ?? []) as DeptManagerItem[];
-    }
-  } catch {
-    options.value = [];
-  } finally {
-    searching.value = false;
-  }
+  const res = await deptApi.userOptions(keyword ?? "");
+  return res.code === SUCCESS_CODE
+    ? ((res.data ?? []) as DeptManagerItem[])
+    : [];
 }
 
-function markRemove(pk: number) {
-  removing.value = [...removing.value, pk];
-}
-
-/** 校验并生成提交载荷；无变更返回 null（调用方保持弹窗打开） */
-const getPayload = (): Record<string, unknown> | null => {
-  const existing = new Set(managers.value.map(item => item.pk));
-  const add = adding.value
-    .map(item => item.pk)
-    .filter(pk => !existing.has(pk) || removing.value.includes(pk));
-  const remove = [...removing.value];
-  if (!add.length && !remove.length) {
-    message(t("systemDept.managerNoChange"), { type: "warning" });
-    return null;
-  }
-  return { add, remove };
-};
+const getPayload = (): Record<string, unknown> | null =>
+  editorRef.value?.getPayload() ?? null;
 
 onMounted(() => props.onReady?.({ getPayload }));
 
@@ -79,45 +49,14 @@ defineExpose({ getPayload });
 </script>
 
 <template>
-  <div>
-    <div class="mb-2 text-sm text-(--el-text-color-secondary)">
-      {{ t("systemDept.managerHint") }}
-    </div>
-    <div class="mb-3 flex flex-wrap gap-1">
-      <el-tag
-        v-for="item in displayMembers"
-        :key="item.pk"
-        closable
-        size="small"
-        @close="markRemove(item.pk)"
-      >
-        {{ item.nickname || item.username }}
-      </el-tag>
-      <span
-        v-if="!displayMembers.length"
-        class="text-xs text-(--el-text-color-secondary)"
-      >
-        {{ t("systemDept.managerEmpty") }}
-      </span>
-    </div>
-    <el-select
-      v-model="adding"
-      multiple
-      filterable
-      remote
-      reserve-keyword
-      :remote-method="searchUsers"
-      :loading="searching"
-      :placeholder="t('systemDept.managerPlaceholder')"
-      style="width: 100%"
-      data-testid="dept-manager-select"
-    >
-      <el-option
-        v-for="item in options"
-        :key="item.pk"
-        :label="item.nickname || item.username"
-        :value="item"
-      />
-    </el-select>
-  </div>
+  <MemberTagEditor
+    ref="editorRef"
+    :members="managers"
+    :hint="t('systemDept.managerHint')"
+    :empty-text="t('systemDept.managerEmpty')"
+    :placeholder="t('systemDept.managerPlaceholder')"
+    testid="dept-manager-select"
+    :no-change-text="t('systemDept.managerNoChange')"
+    :search="searchUsers"
+  />
 </template>

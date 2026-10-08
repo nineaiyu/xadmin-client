@@ -121,6 +121,8 @@ export type DynamicFormItem = {
   approval_flow?: { pk: string; label?: string } | null;
   /** 表单模板：只保存 schema 供「从模板新建」复用，不进入可填报表单列表 */
   is_template?: boolean;
+  /** 行级归属：creator 本人/超管为 true；非本人修改删除会被后端守卫拒绝（1003） */
+  is_owner?: boolean;
 };
 
 /** 可填报表单（available-forms 返回结构：流程字段给名称与主键，不回传整个定义） */

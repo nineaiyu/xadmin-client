@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { deviceDetection } from "@pureadmin/utils";
 import { SUCCESS_CODE } from "@/api/types";
 import { directoryApi, type DirectoryMember } from "@/api/system/directory";
+import { message } from "@/utils/message";
 import { addDrawer } from "@/components/ReDrawer";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Search from "~icons/ri/search-line";
@@ -54,9 +55,18 @@ async function fetchData(resetPage = false) {
       const body = res.data as { results?: DirectoryMember[]; total?: number };
       members.value = body.results ?? [];
       total.value = body.total ?? 0;
+    } else {
+      message(String(res.detail || t("directory.membersLoadFailed")), {
+        type: "warning"
+      });
     }
-  } catch {
-    // 请求失败保持现状（加载态在 finally 收口）
+  } catch (error) {
+    // 失败点名（此前静默吞错：用户只见空列表，无从判断是无人还是加载失败）
+    message(
+      (error as { detail?: string })?.detail ||
+        t("directory.membersLoadFailed"),
+      { type: "warning" }
+    );
   } finally {
     loading.value = false;
   }

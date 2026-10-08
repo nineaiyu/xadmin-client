@@ -27,16 +27,16 @@ export function useApprovalToolbar({
 }) {
   const { t } = useI18n();
 
-  /** 服务端返回的失败明细以 warning 逐条提示（succeeded 之外的勾选全在 failed 里） */
+  /** 服务端返回的失败明细以 warning 逐条提示（succeeded 之外的勾选全在 failures 里） */
   const notifyPartialFailures = (res?: RecordType) => {
-    const failed =
-      (res?.data as { failed?: Array<{ no: string; reason: string }> })
-        ?.failed ?? [];
-    if (failed.length) {
+    const failures =
+      (res?.data as { failures?: Array<{ pk: string; detail: string }> })
+        ?.failures ?? [];
+    if (failures.length) {
       message(
         t("approval.batchPartial", {
-          n: failed.length,
-          detail: batchFailedDetail(failed)
+          n: failures.length,
+          detail: batchFailedDetail(failures)
         }),
         { type: "warning" }
       );

@@ -13,6 +13,7 @@ import Edit from "~icons/ep/edit";
 import Search from "~icons/ep/search";
 import LoginPolicyForm from "../components/LoginPolicyForm.vue";
 import PolicyPreviewPanel from "../components/PolicyPreviewPanel.vue";
+import { normalizeError } from "@/utils/apiError";
 
 /**
  * 登录访问策略：策略 CRUD 走自定义弹窗（关闭框架默认新增/编辑按钮，
@@ -57,11 +58,7 @@ export function useLoginPolicy(tableRef: Ref) {
           : api.create(payload);
         handleOperation({
           t,
-          apiReq: request.catch(error => ({
-            code: -1,
-            data: null,
-            detail: String(error?.message ?? error)
-          })),
+          apiReq: request.catch(normalizeError),
           success() {
             done();
             tableRef.value?.handleGetData?.();

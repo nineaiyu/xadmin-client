@@ -11,6 +11,7 @@ import {
   type AiUsageSummary
 } from "@/api/ai/ai";
 import { useAiProfiles } from "./utils/useAiProfiles";
+import { normalizeError } from "@/utils/apiError";
 
 defineOptions({
   name: "AiAssistantConfig"
@@ -69,10 +70,7 @@ const saveGlobal = async () => {
   // 异常归一为可读失败结果：PATCH 失败（网络/HTTP 层）不能让 Promise 未处理
   const res = await aiConfigApi
     .partialUpdate({}, { ...globalForm })
-    .catch(error => ({
-      code: -1,
-      detail: String((error as { detail?: string })?.detail ?? error)
-    }));
+    .catch(normalizeError);
   if (res.code === SUCCESS_CODE) {
     message(t("aiConfig.globalSaved"), { type: "success" });
   } else if (res.detail) {

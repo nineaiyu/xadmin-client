@@ -33,6 +33,7 @@ import type {
   ModelTreeItem
 } from "./types";
 import type { menuApi } from "@/api/system/menu";
+import { normalizeError } from "@/utils/apiError";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
@@ -115,10 +116,7 @@ export function useMenuDrawer({
     isAdd: boolean,
     cascadePks: Array<number | string>
   ): Promise<boolean> => {
-    const res = await saveNode(model, isAdd).catch(error => ({
-      code: -1,
-      detail: String((error as { detail?: string })?.detail ?? error)
-    }));
+    const res = await saveNode(model, isAdd).catch(normalizeError);
     if (res.code !== SUCCESS_CODE) {
       message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       return false;

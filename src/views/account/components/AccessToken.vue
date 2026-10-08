@@ -30,6 +30,7 @@ import Location from "~icons/ep/location";
 import Document from "~icons/ep/document";
 import Plus from "~icons/ep/plus";
 import { dialogSize } from "@/components/ReDialog/size";
+import { normalizeError } from "@/utils/apiError";
 
 defineOptions({ name: "AccessToken" });
 
@@ -134,11 +135,9 @@ const openCreate = () => {
         return;
       }
       // 异常归一为可读失败结果：避免请求异常时 beforeSure 抛错、弹窗 loading 悬挂
-      const res = await personalAccessTokenApi.create(payload).catch(error => ({
-        code: -1,
-        data: null,
-        detail: String((error as { detail?: string })?.detail ?? error)
-      }));
+      const res = await personalAccessTokenApi
+        .create(payload)
+        .catch(normalizeError);
       if (res.code === SUCCESS_CODE) {
         const token = String(
           (res.data as unknown as { token?: string })?.token ?? ""

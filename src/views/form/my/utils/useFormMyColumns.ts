@@ -1,6 +1,7 @@
 import { h, shallowRef } from "vue";
 import { ElTag } from "element-plus";
-import { statusTagProps, type StatusTagType } from "@/utils/dict";
+import { statusTagProps } from "@/utils/dict";
+import { SUBMISSION_STATUS_TAG_TYPE } from "@/views/form/utils/submissionStatus";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
 import type { RecordType } from "plus-pro-components";
 import type { SubmissionItem } from "@/api/dataset/dform";
@@ -11,14 +12,6 @@ type TFunction = ReturnType<typeof useI18n>["t"];
 
 /** 提交状态（审批回写）语义色兜底：字典未配 color 时按审批结果取 EP 语义色，
  * tag props 统一经 `statusTagProps`（与列表/详情同口径，禁止页面自建映射函数） */
-const SUBMISSION_STATUS_TAG_TYPE: Record<string, StatusTagType> = {
-  DRAFT: "info",
-  PENDING: "warning",
-  APPROVED: "success",
-  REJECTED: "danger",
-  CANCELLED: "info"
-};
-
 const asRow = (row: unknown) => row as SubmissionItem;
 const statusOf = (row: unknown) => asRow(row).status?.value ?? "";
 

@@ -42,7 +42,7 @@ test("报表设计器：模板 → 组件 → 保存落库", async ({ page }) =>
     token,
     {
       name: `E2E设计数据集-${suffix}`,
-      bound_model: "system.userinfo",
+      bound_model: "identity.userinfo",
       columns: ["username", "gender", "is_active"],
       visibility: "shared"
     }

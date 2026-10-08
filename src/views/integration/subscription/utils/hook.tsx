@@ -14,6 +14,7 @@ import {
   type WebhookSubscriptionItem
 } from "@/api/system/webhook";
 import SubscriptionForm from "../components/SubscriptionForm.vue";
+import { normalizeError } from "@/utils/apiError";
 
 /**
  * Webhook 订阅：CRUD + 测试 + 行内启停。
@@ -54,10 +55,7 @@ export function useWebhookSubscription(tableRef: Ref) {
     row.is_active = value;
     const res = await webhookSubscriptionApi
       .partialUpdate(row.pk, { is_active: value })
-      .catch(error => ({
-        code: -1,
-        detail: String((error as { detail?: string })?.detail ?? error)
-      }));
+      .catch(normalizeError);
     if (res.code === SUCCESS_CODE) {
       message(t("webhook.saveOk"), { type: "success" });
       return;
@@ -101,10 +99,7 @@ export function useWebhookSubscription(tableRef: Ref) {
 
   const testSubscription = async (row: WebhookSubscriptionItem) => {
     // 异常归一为可读失败结果：测试触发失败（回调地址不通等）需给出可读原因
-    const res = await webhookSubscriptionApi.test(row.pk).catch(error => ({
-      code: -1,
-      detail: String((error as { detail?: string })?.detail ?? error)
-    }));
+    const res = await webhookSubscriptionApi.test(row.pk).catch(normalizeError);
     if (res.code === SUCCESS_CODE) {
       message(String(res.detail ?? t("webhook.testDispatched")), {
         type: "success"
@@ -139,10 +134,7 @@ export function useWebhookSubscription(tableRef: Ref) {
           row
             ? webhookSubscriptionApi.partialUpdate(row.pk, payload)
             : webhookSubscriptionApi.create(payload)
-        ).catch(error => ({
-          code: -1,
-          detail: String((error as { detail?: string })?.detail ?? error)
-        }));
+        ).catch(normalizeError);
         if (res.code === SUCCESS_CODE) {
           message(t("webhook.saveOk"), { type: "success" });
           // 先关弹窗再刷新列表，避免刷新耗时导致弹窗滞留
@@ -158,20 +150,25 @@ export function useWebhookSubscription(tableRef: Ref) {
 
   const operationButtonsProps = shallowRef<OperationProps>({
     width: 200,
+    // 页面自绘表单承载编辑，详情抽屉没有适配;补充 retrieve 权限点后框架的详情按钮会
+    // 自动出现并挤占操作列（测试按钮被收进「更多」下拉），故此处显式收敛
+    hideDetail: true,
     buttons: [
       {
         text: t("webhook.test"),
         code: "test",
         props: { type: "success", link: true },
         onClick: ({ row }) => testSubscription(row as WebhookSubscriptionItem),
-        show: canTest && 10
+        index: 10,
+        show: canTest
       },
       {
         text: t("webhook.edit"),
         code: "edit",
         props: { type: "primary", link: true },
         onClick: ({ row }) => openDialog(row as WebhookSubscriptionItem),
-        show: canEdit && 20
+        index: 20,
+        show: canEdit
       }
     ]
   });

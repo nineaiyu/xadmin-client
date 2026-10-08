@@ -37,6 +37,7 @@ import { createPaneOps } from "./utils/paneOps";
 import { useCanvasDrag } from "./utils/canvasDrag";
 import { useScreenShortcuts } from "./utils/shortcuts";
 import { createCanvasDropHandler, onPaletteDragStart } from "./utils/dnd";
+import { normalizeError } from "@/utils/apiError";
 
 defineOptions({ name: "DataScreenDesigner" });
 
@@ -171,8 +172,8 @@ onMounted(async () => {
     router.replace("/analysis/screen/index");
     return;
   }
-  const res = await screenApi.retrieve(pk);
-  if (res.code !== SUCCESS_CODE || !res.data) {
+  const res = await screenApi.retrieve(pk).catch(() => null);
+  if (!res || res.code !== SUCCESS_CODE || !res.data) {
     message(t("dataScreen.loadFailed"), { type: "warning" });
     router.replace("/analysis/screen/index");
     return;
@@ -234,10 +235,7 @@ async function save() {
   try {
     const res = await screenApi
       .partialUpdate(screen.value.pk, { layout: normalizePanes(panes.value) })
-      .catch(error => ({
-        code: -1,
-        detail: String((error as { detail?: string })?.detail ?? error)
-      }));
+      .catch(normalizeError);
     if (res.code === SUCCESS_CODE) {
       dirty.value = false;
       resetCoalesce();

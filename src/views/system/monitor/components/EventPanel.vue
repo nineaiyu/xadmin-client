@@ -10,18 +10,15 @@ import {
   ReReadonlyTable,
   type ReadonlyColumn
 } from "@/components/ReReadonlyTable";
+import { RANGE_LABEL_KEYS } from "../utils/format";
 
 defineOptions({ name: "MonitorEventPanel" });
 
 const { t } = useI18n();
 
-const EVENT_RANGES = ["1h", "24h", "7d", "30d"];
-const RANGE_LABEL_KEYS: Record<string, string> = {
-  "1h": "range1h",
-  "24h": "range24h",
-  "7d": "range7d",
-  "30d": "range30d"
-};
+// 标签词条与趋势图共用（range1h/range24h/…）；事件查询后端仅支持
+// 1h/24h/7d/30d（无 6h），从共享键中显式过滤排除
+const EVENT_RANGES = Object.keys(RANGE_LABEL_KEYS).filter(key => key !== "6h");
 
 const activeKind = ref<"error" | "task">("error");
 const range = ref("24h");

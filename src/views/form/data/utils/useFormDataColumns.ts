@@ -1,11 +1,8 @@
 import { h, type Ref } from "vue";
 import type { useI18n } from "vue-i18n";
 import { ElTag } from "element-plus";
-import {
-  statusTagProps,
-  type DictItem,
-  type StatusTagType
-} from "@/utils/dict";
+import { statusTagProps, type DictItem } from "@/utils/dict";
+import { SUBMISSION_STATUS_TAG_TYPE } from "@/views/form/utils/submissionStatus";
 import type { PageTableColumn } from "@/components/RePlusPage";
 import type { FormDataItem, FormField } from "@/api/dataset/dform";
 import type { RecordType } from "plus-pro-components";
@@ -14,14 +11,6 @@ import { fieldValueText } from "./format";
 type TFunction = ReturnType<typeof useI18n>["t"];
 
 /** 提交状态（审批回写）语义色兜底：与「我的填报」同口径（tag props 统一走 statusTagProps） */
-const SUBMISSION_STATUS_TAG_TYPE: Record<string, StatusTagType> = {
-  DRAFT: "info",
-  PENDING: "warning",
-  APPROVED: "success",
-  REJECTED: "danger",
-  CANCELLED: "info"
-};
-
 const asRow = (row: unknown) => row as FormDataItem;
 
 /**

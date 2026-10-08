@@ -45,7 +45,7 @@ test("大屏设计器：加窗格 → 拖动 → 保存 → 投屏按画布渲�
     token,
     {
       name: `E2E设计器数据集-${suffix}`,
-      bound_model: "system.userinfo",
+      bound_model: "identity.userinfo",
       columns: ["username", "nickname", "gender", "is_active"],
       visibility: "shared"
     }

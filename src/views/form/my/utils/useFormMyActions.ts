@@ -15,6 +15,7 @@ import {
 import SubmissionForm from "../components/SubmissionForm.vue";
 import SubmissionDetail from "../../components/SubmissionDetail.vue";
 import type { useI18n } from "vue-i18n";
+import { normalizeError } from "@/utils/apiError";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
@@ -58,10 +59,7 @@ export function useFormMyActions({
           ? submissionApi.partialUpdate(submission.pk, payload)
           : submissionApi.create({ ...payload, as_draft: true })
       )
-        .catch(error => ({
-          code: -1,
-          detail: String((error as { detail?: string })?.detail ?? error)
-        }))
+        .catch(normalizeError)
         .finally(() => (savingDraft.value = false));
       if (res.code === SUCCESS_CODE) {
         message(t("dform.draftSaved"), { type: "success" });
@@ -118,10 +116,7 @@ export function useFormMyActions({
           submission
             ? submissionApi.partialUpdate(submission.pk, payload)
             : submissionApi.create(payload)
-        ).catch(error => ({
-          code: -1,
-          detail: String((error as { detail?: string })?.detail ?? error)
-        }));
+        ).catch(normalizeError);
         if (res.code === SUCCESS_CODE) {
           message(t("dform.saveOk"), { type: "success" });
           // 先关弹窗再刷新列表（避免刷新耗时导致弹窗滞留）
@@ -171,10 +166,7 @@ export function useFormMyActions({
       return;
     }
     // 异常归一为可读失败结果：请求异常不再产生 unhandled rejection
-    const res = await submissionApi.destroy(row.pk).catch(error => ({
-      code: -1,
-      detail: String((error as { detail?: string })?.detail ?? error)
-    }));
+    const res = await submissionApi.destroy(row.pk).catch(normalizeError);
     if (res.code === SUCCESS_CODE) {
       refresh();
       return;
@@ -185,10 +177,7 @@ export function useFormMyActions({
 
   /** 提交草稿（仅草稿态）：服务端按 schema 严格校验后进入审批/直接生效 */
   const submitDraft = async (row: SubmissionItem) => {
-    const res = await submissionApi.submit(row.pk).catch(error => ({
-      code: -1,
-      detail: String((error as { detail?: string })?.detail ?? error)
-    }));
+    const res = await submissionApi.submit(row.pk).catch(normalizeError);
     if (res.code === SUCCESS_CODE) {
       message(t("dform.submitDraftOk"), { type: "success" });
       refresh();
@@ -199,10 +188,7 @@ export function useFormMyActions({
 
   /** 重新提交被驳回的填报（仅申请人、仅驳回态：按当前数据重新发起流程实例） */
   const resubmit = async (row: SubmissionItem) => {
-    const res = await submissionApi.resubmit(row.pk).catch(error => ({
-      code: -1,
-      detail: String((error as { detail?: string })?.detail ?? error)
-    }));
+    const res = await submissionApi.resubmit(row.pk).catch(normalizeError);
     if (res.code === SUCCESS_CODE) {
       message(t("dform.resubmitOk"), { type: "success" });
       refresh();

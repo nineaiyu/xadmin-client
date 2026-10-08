@@ -1,13 +1,16 @@
 <script lang="ts" setup>
-import ReEmpty from "@/components/ReEmpty";
 import { useI18n } from "vue-i18n";
 import { roleApi } from "@/api/system/role";
 import type { RolePreviewResult } from "@/api/types/permission-preview";
+import ReEmpty from "@/components/ReEmpty";
 import {
   PreviewDescriptions,
+  PreviewFieldMatrix,
   PreviewMenuTree,
   PreviewStatusTag,
   PreviewUsersTable,
+  RePermissionPreviewShell,
+  toFieldMatrixEntries,
   usePermissionPreview
 } from "@/components/RePermissionPreview";
 
@@ -23,76 +26,54 @@ const props = defineProps<{ row: { pk?: string | number } }>();
 
 const { t } = useI18n();
 
-const { loading, data } = usePermissionPreview<RolePreviewResult>(
+const { loading, data: preview } = usePermissionPreview<RolePreviewResult>(
   async pk => (await roleApi.preview(pk)).data,
   () => props.row.pk
 );
 </script>
 
 <template>
-  <div v-loading="loading">
-    <template v-if="data">
-      <PreviewDescriptions>
-        <el-descriptions-item :label="t('systemRole.name')">
-          {{ data.role.name }}
-        </el-descriptions-item>
-        <el-descriptions-item :label="t('systemRole.code')">
-          {{ data.role.code }}
-        </el-descriptions-item>
-        <el-descriptions-item :label="t('permissionPreview.status')">
-          <PreviewStatusTag :active="data.role.is_active" />
-        </el-descriptions-item>
-      </PreviewDescriptions>
+  <RePermissionPreviewShell
+    v-slot="{ data }"
+    :loading="loading"
+    :data="preview"
+  >
+    <PreviewDescriptions>
+      <el-descriptions-item :label="t('systemRole.name')">
+        {{ data.role.name }}
+      </el-descriptions-item>
+      <el-descriptions-item :label="t('systemRole.code')">
+        {{ data.role.code }}
+      </el-descriptions-item>
+      <el-descriptions-item :label="t('permissionPreview.status')">
+        <PreviewStatusTag :active="data.role.is_active" />
+      </el-descriptions-item>
+    </PreviewDescriptions>
 
-      <el-collapse class="mt-3" :model-value="['menu', 'field', 'users']">
-        <el-collapse-item :title="t('permissionPreview.roleMenus')" name="menu">
-          <PreviewMenuTree :data="data.menu_tree" show-code-tag />
-        </el-collapse-item>
+    <el-collapse class="mt-3" :model-value="['menu', 'field', 'users']">
+      <el-collapse-item :title="t('permissionPreview.roleMenus')" name="menu">
+        <PreviewMenuTree :data="data.menu_tree" show-code-tag />
+      </el-collapse-item>
 
-        <el-collapse-item
-          :title="t('permissionPreview.roleFields')"
-          name="field"
-        >
-          <ReEmpty
-            v-if="!data.field_permissions.length"
-            :description="t('permissionPreview.fieldBlank')"
-            :image-size="70"
-          />
-          <el-collapse v-else>
-            <el-collapse-item
-              v-for="item in data.field_permissions"
-              :key="item.menu.pk"
-              :title="item.menu.title"
-            >
-              <div v-for="model in item.models" :key="model.model" class="mb-2">
-                <div class="mb-1 text-sm font-medium">
-                  {{ model.model_label }} ({{ model.model }})
-                </div>
-                <el-tag
-                  v-for="(label, index) in model.field_labels"
-                  :key="model.fields[index]"
-                  size="small"
-                  class="mr-1 mb-0.5"
-                >
-                  {{ label }}
-                </el-tag>
-              </div>
-            </el-collapse-item>
-          </el-collapse>
-        </el-collapse-item>
+      <el-collapse-item :title="t('permissionPreview.roleFields')" name="field">
+        <ReEmpty
+          v-if="!data.field_permissions.length"
+          :description="t('permissionPreview.fieldBlank')"
+          :image-size="70"
+        />
+        <PreviewFieldMatrix
+          v-else
+          variant="collapse"
+          :entries="toFieldMatrixEntries(data.field_permissions)"
+        />
+      </el-collapse-item>
 
-        <el-collapse-item
-          :title="`${t('permissionPreview.users')}（${data.users.total}）`"
-          name="users"
-        >
-          <PreviewUsersTable :data="data.users" show-dept />
-        </el-collapse-item>
-      </el-collapse>
-    </template>
-    <ReEmpty
-      v-else
-      :description="t('permissionPreview.loadFailed')"
-      :image-size="70"
-    />
-  </div>
+      <el-collapse-item
+        :title="`${t('permissionPreview.users')}（${data.users.total}）`"
+        name="users"
+      >
+        <PreviewUsersTable :data="data.users" show-dept />
+      </el-collapse-item>
+    </el-collapse>
+  </RePermissionPreviewShell>
 </template>

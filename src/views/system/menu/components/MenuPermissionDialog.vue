@@ -11,6 +11,7 @@ import {
 } from "@/components/ReReadonlyTable";
 import { displayTitle } from "../utils/useMenuFilter";
 import type { MenuRow, MenuUrlItem } from "../utils/types";
+import { normalizeError } from "@/utils/apiError";
 
 /**
  * 权限码批量生成：选择后端视图 → dry_run 预览「将新建 C- / 将覆盖 U-」清单 → 确认执行。
@@ -126,10 +127,7 @@ const submit = async (): Promise<boolean> => {
       component: component.value,
       skip_existing: skipExisting.value
     })
-    .catch(error => ({
-      code: -1,
-      detail: String((error as { detail?: string })?.detail ?? error)
-    }));
+    .catch(normalizeError);
   if (res.code !== SUCCESS_CODE) {
     message(`${t("results.failed")}，${res.detail}`, { type: "error" });
     return false;

@@ -2,6 +2,7 @@
 import { computed, onActivated, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
+import { message } from "@/utils/message";
 import { SUCCESS_CODE } from "@/api/types";
 import {
   aiAssistantApi,
@@ -64,6 +65,9 @@ const loadStatus = async () => {
   }
   if (toolRes && toolRes.code === SUCCESS_CODE) {
     tools.value = toolRes.data as unknown as AiToolsResult;
+  } else if (!tools.value) {
+    // 工具清单失败且无缓存值：显式提示（此前静默，工具数恒显示 0 无从判断）
+    message(t("ai.toolsLoadFailed"), { type: "warning" });
   }
 };
 

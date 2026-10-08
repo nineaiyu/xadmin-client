@@ -563,11 +563,13 @@ post:
   memberEmpty: No members yet
   memberPlaceholder: Search username or nickname
   memberNoChange: No member changes detected
+  memberReadonlyHint: Read-only member list (assignment permission is required to manage members)
   memberSaveOk: Post members updated
   memberSkipped: Post members updated, {count} invalid or inactive user(s) skipped
   preview: Preview
 
 directory:
+  membersLoadFailed: Failed to load members, please retry later
   title: Directory
   viewByDept: By Department
   viewByPost: By Post
@@ -872,6 +874,8 @@ credential:
 approval:
   pendingTab: Pending My Approval
   mineTab: Submitted By Me
+  candidateTruncated: The approver candidate list was truncated (too many users); local search may be incomplete, please refine by keyword
+  commentPlaceholder: Comment (optional)
   approve: Approve
   reject: Reject
   cancel: Cancel
@@ -970,6 +974,7 @@ approvalRule:
   levelCount: "{n} levels"
 
 systemApprovalFlow:
+  versionsLoadFailed: Failed to load versions, please retry later
   createTitle: New Flow
   editTitle: Edit Configuration
   formName: Flow Name
@@ -1093,6 +1098,7 @@ systemApprovalInstance:
   batchApproveConfirm: Batch approve the selected applications?
   batchRejectTitle: Reject {n} applications
   batchRejectPartial: "{n} not processed: {detail}"
+  batchApprovePartial: "{n} not approved: {detail}"
   cancelConfirm: Cancel application "{title}"?
   submit: Submit
   submitSuccess: Application submitted
@@ -1229,6 +1235,8 @@ mfa:
 account:
   profile: Profile
   preference: Preference
+  prefCrossHint: These switches control whether real-time alerts pop up (global). To choose which message types you subscribe to, see "Notifications".
+  subCrossHint: Choose which message types you subscribe to here (per-type). To control whether real-time alerts pop up, see "Preferences".
   securityLog: Security Log
   accountManagement: Account Management
   notifications: Notifications
@@ -1520,6 +1528,7 @@ rolePermission:
   fieldProgress: "{checked}/{total} selected"
   linkedTip: Selecting a parent also selects all of its menus and permissions; deselecting recalculates parent state from the remaining children
   independentTip: Each node is selected independently; children do not affect parents
+  foldedTip: A page-level check grants all permissions of that page; uncheck the page first to adjust individual permissions
 
 permissionPreview:
   userTitle: User Permission Preview
@@ -1899,6 +1908,7 @@ noticeRead:
   showSystemNotice: Check the system announcement
 
 userNotice:
+  readFailed: Failed to mark as read, please retry later
   message: Message
   batchReadConfirm: Mark the selected {count} notifications as read?
   title: Title
@@ -2097,7 +2107,6 @@ login:
   passwordUpdateReg: Password has been updated
   emailVerify: Email Auth
   smsVerify: SMS Auth
-  basic: Username Auth
 
 welcome:
   operateLog: Log of operations
@@ -2475,6 +2484,7 @@ imBinding:
   unbound: Unbound
 
 systemApprovalDelegation:
+  allFlows: All flows
   delegator: Delegator
   delegator_name: Delegator
   delegate: Delegate
@@ -2691,6 +2701,7 @@ mask:
   maskTypeCustom: Custom Pattern
 
 dashboard:
+  datasetsLoadFailed: Failed to load the dataset list, please refresh and retry
   exportImage: Export image
   exportNoChart: Metric cards have no chart to export
   title: Dashboards
@@ -2752,6 +2763,7 @@ dashboard:
   share: Share
   shareCopied: Dashboard link copied
 dataDataset:
+  metaLoadFailed: Failed to load dataset metadata; editing and field options are unavailable
   previewFailed: Preview failed. Check the dataset configuration or retry later
   title: Datasets
   create: New Dataset
@@ -2805,6 +2817,7 @@ dataScreen:
   designerTitle: Screen canvas designer
   pickScreenFirst: Open the designer from a screen row
   loadFailed: Failed to load the screen
+  dashboardsLoadFailed: Failed to load the dashboard list, please refresh and retry
   retry: Retry
   layoutSaved: Canvas saved
   unsaved: Unsaved changes
@@ -2909,6 +2922,7 @@ dataReport:
   designer: Design report
   pickReportFirst: Open the designer from a report row
   loadFailed: Failed to load the report
+  datasetsLoadFailed: Failed to load the dataset list, please refresh and retry
   designSaved: Design saved
   unsaved: Unsaved changes
   readonlyHint: Read-only (only the creator can edit)
@@ -3021,6 +3035,7 @@ dataReport:
   valueFieldRequired: Please select a measure field
 
 webhook:
+  urlInvalid: Callback URL must start with http:// or https://
   title: Webhook Subscriptions
   deliveryTitle: Delivery Audit
   create: New Subscription
@@ -3064,6 +3079,7 @@ webhook:
   duration: Duration(s)
 
 ai:
+  toolsLoadFailed: Failed to load the tool list, some information is unavailable
   title: AI Assistant
   features: Features
   noFeature: No available feature
@@ -3458,6 +3474,7 @@ leaveApply:
   cancelConfirm: Cancel this leave request? It must be resubmitted afterwards.
   submitSuccess: Leave request submitted
   cancelSuccess: Leave request cancelled
+  viewInstance: View approval
   rejectedTip: Rejected
   statusDRAFT: Draft
   statusPENDING: Pending
@@ -3758,8 +3775,9 @@ codegen:
   planPick: Pick a saved plan
   planPickFirst: Select a plan first
   planSave: Save
-  planSavePrompt: Enter plan name (saved in this browser only, export as JSON to migrate)
-  planLocalDraft: Local draft
+  planSavePrompt: Enter plan name (saved on the server, export as JSON to migrate)
+  planShared: Shared
+  planShareOnSave: Share with same-page users
   planNameRequired: Plan name is required
   planLoad: Load
   planDelete: Delete
@@ -3767,7 +3785,9 @@ codegen:
   planExport: Export
   planImport: Import
   planSaved: Plan saved
+  planSaveFailed: Save failed
   planLoaded: Plan loaded
   planDeleted: Plan deleted
+  planDeleteFailed: Delete failed
   planImported: Plans imported
   planImportFailed: Import failed

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { credentialApi, type CredentialEntry } from "@/api/system/credential";
@@ -69,7 +70,11 @@ function goChange(row: CredentialRowLike) {
  * 原地轮换（仅服务端自生成密钥）：高危操作，二次确认并说明后果。
  * 模型字段级（Webhook / 回调密钥）变更会影响对端验签，必须显式提示。
  */
+/** 轮换进行中（防重复点击 + 按钮 loading）；轮换为 PATCH 类写操作不可并发 */
+const rotating = ref(false);
+
 async function handleRotate(row: CredentialRowLike) {
+  if (rotating.value) return;
   const name = String(row.label || row.name || "");
   const confirmText =
     row.scope === "model_field"
@@ -83,17 +88,22 @@ async function handleRotate(row: CredentialRowLike) {
   ) {
     return;
   }
-  const res = await credentialApi
-    .rotate({ key: String(row.name ?? ""), scope: row.scope })
-    .catch(normalizeError);
-  if (res?.code === SUCCESS_CODE) {
-    message(t("credential.rotateOk"), { type: "success" });
-    emit("rotated");
-  } else {
-    message(
-      `${t("credential.rotateFailed")}${res?.detail ? `：${res.detail}` : ""}`,
-      { type: "error" }
-    );
+  rotating.value = true;
+  try {
+    const res = await credentialApi
+      .rotate({ key: String(row.name ?? ""), scope: row.scope })
+      .catch(normalizeError);
+    if (res?.code === SUCCESS_CODE) {
+      message(t("credential.rotateOk"), { type: "success" });
+      emit("rotated");
+    } else {
+      message(
+        `${t("credential.rotateFailed")}${res?.detail ? `：${res.detail}` : ""}`,
+        { type: "error" }
+      );
+    }
+  } finally {
+    rotating.value = false;
   }
 }
 </script>
@@ -133,7 +143,8 @@ async function handleRotate(row: CredentialRowLike) {
         v-if="row.rotatable && canRotate"
         link
         type="primary"
-        :disabled="!row.configured"
+        :loading="rotating"
+        :disabled="!row.configured || rotating"
         @click="handleRotate(row)"
       >
         {{ t("credential.rotate") }}

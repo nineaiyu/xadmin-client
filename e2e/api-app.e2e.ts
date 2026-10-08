@@ -123,7 +123,7 @@ test("API 应用：资源授权配置保存并回显", async ({ page }) => {
   );
   const grantsBody = await grantsRes.json();
   expect(grantsBody.data?.results?.length).toBe(1);
-  expect(grantsBody.data?.results?.[0]?.model).toBe("system.userinfo");
+  expect(grantsBody.data?.results?.[0]?.model).toBe("identity.userinfo");
 
   // 重新打开：规则回显（模型下拉显示已保存的模型）
   await row.getByRole("button", { name: "编辑应用" }).click();

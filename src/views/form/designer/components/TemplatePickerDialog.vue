@@ -13,6 +13,7 @@ import {
   type DynamicFormItem
 } from "@/api/dataset/dform";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 
 /**
  * 表单模板选择器：「从模板新建」的数据源。
@@ -73,10 +74,7 @@ const remove = async (row: DynamicFormItem) => {
   ) {
     return;
   }
-  const res = await dynamicFormApi.destroy(row.pk).catch(error => ({
-    code: -1,
-    detail: String((error as { detail?: string })?.detail ?? error)
-  }));
+  const res = await dynamicFormApi.destroy(row.pk).catch(normalizeError);
   if (res.code === SUCCESS_CODE) {
     message(t("dform.templateRemoved"), { type: "success" });
     await load();

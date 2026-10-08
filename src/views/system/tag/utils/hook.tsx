@@ -6,11 +6,13 @@ import { dialogSize } from "@/components/ReDialog/size";
 import { hasAuth, usePageAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { SOLID_TAG_STYLE } from "@/utils/tagTone";
+import { renderBuiltinBadge } from "@/utils/cellRender";
 import { SUCCESS_CODE } from "@/api/types";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
 import { formatPageColumns } from "@/components/RePlusPage";
 import { tagApi, type TagItem } from "@/api/system/tag";
 import TagForm from "../components/TagForm.vue";
+import { normalizeError } from "@/utils/apiError";
 
 /**
  * 标签中心表格：标签 CRUD + 使用计数 + 删除保护提示。
@@ -57,11 +59,9 @@ export function useTags(tableRef: Ref) {
       },
       builtin: column => {
         column["cellRenderer"] = ({ row }) =>
-          (row as TagItem).builtin
-            ? h(ElTag, { size: "small", type: "warning" }, () =>
-                t("tag.builtin")
-              )
-            : h("span", "-");
+          renderBuiltinBadge((row as TagItem).builtin, t("tag.builtin"), {
+            fallback: "-"
+          });
       }
     });
 
@@ -87,10 +87,7 @@ export function useTags(tableRef: Ref) {
         // 异常归一为可读失败结果：避免 beforeSure 抛错导致弹窗 loading 悬挂
         const res = await (
           row ? tagApi.partialUpdate(row.pk, payload) : tagApi.create(payload)
-        ).catch(error => ({
-          code: -1,
-          detail: String((error as { detail?: string })?.detail ?? error)
-        }));
+        ).catch(normalizeError);
         if (res.code === SUCCESS_CODE) {
           message(t("tag.saveOk"), { type: "success" });
           done();

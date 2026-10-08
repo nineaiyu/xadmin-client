@@ -10,6 +10,7 @@ import {
   type ApiApplicationItem
 } from "@/api/system/open";
 import ApiApplicationForm from "../components/ApiApplicationForm.vue";
+import { normalizeError } from "@/utils/apiError";
 
 /** 新建/编辑弹窗（ReDialog + ApiApplicationForm）：保存后同步资源授权（全量替换端点） */
 export function useApiAppDialog({
@@ -44,11 +45,7 @@ export function useApiAppDialog({
           row
             ? apiApplicationApi.partialUpdate(row.pk, payload)
             : apiApplicationApi.create(payload)
-        ).catch(error => ({
-          code: -1,
-          data: null,
-          detail: String((error as { detail?: string })?.detail ?? error)
-        }));
+        ).catch(normalizeError);
         if (res.code === SUCCESS_CODE) {
           // 资源授权为独立端点（全量替换）：加载失败时跳过，绝不覆盖为空
           const grants = formRef.value?.getGrants();
@@ -60,10 +57,7 @@ export function useApiAppDialog({
           } else if (targetPk) {
             const grantRes = await apiApplicationApi
               .updateGrants(targetPk, grants)
-              .catch(error => ({
-                code: -1,
-                detail: String((error as { detail?: string })?.detail ?? error)
-              }));
+              .catch(normalizeError);
             if (grantRes.code !== SUCCESS_CODE) {
               grantsSaveFailed = true;
               message(String(grantRes.detail || t("apiApp.grant.saveFailed")), {

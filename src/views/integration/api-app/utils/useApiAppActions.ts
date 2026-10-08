@@ -8,6 +8,7 @@ import {
   type ApiApplicationItem,
   type CallbackProbeResult
 } from "@/api/system/open";
+import { normalizeError } from "@/utils/apiError";
 
 /**
  * API 应用行内/抽屉动作：启停（失败回滚）、重置密钥（二次确认）、回调测试。
@@ -28,10 +29,7 @@ export function useApiAppActions({
     row.is_active = value;
     const res = await apiApplicationApi
       .partialUpdate(row.pk, { is_active: value })
-      .catch(error => ({
-        code: -1,
-        detail: String((error as { detail?: string })?.detail ?? error)
-      }));
+      .catch(normalizeError);
     if (res.code === SUCCESS_CODE) return;
     row.is_active = !value;
     message(String(res.detail ?? t("apiApp.saveFailed")), { type: "warning" });
@@ -41,11 +39,7 @@ export function useApiAppActions({
     // 异常归一为可读失败结果：重置密钥失败必须给出原因（旧凭证已失效场景尤甚）
     const res = await apiApplicationApi
       .regenerateSecret(row.pk)
-      .catch(error => ({
-        code: -1,
-        data: null,
-        detail: String((error as { detail?: string })?.detail ?? error)
-      }));
+      .catch(normalizeError);
     if (res.code === SUCCESS_CODE && res.data) {
       openCredential(res.data);
       refresh();
@@ -75,11 +69,9 @@ export function useApiAppActions({
       state.loading = true;
       state.results = [];
     }
-    const res = await apiApplicationApi.testCallback(row.pk).catch(error => ({
-      code: -1,
-      data: null,
-      detail: String((error as { detail?: string })?.detail ?? error)
-    }));
+    const res = await apiApplicationApi
+      .testCallback(row.pk)
+      .catch(normalizeError);
     if (state) state.loading = false;
     if (res.code === SUCCESS_CODE) {
       const results = res.data?.results ?? [];

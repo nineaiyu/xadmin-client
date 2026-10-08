@@ -192,14 +192,25 @@ async function handleDownload() {
   }
 }
 
-// ------------------------------------------------------------- 生成方案（localStorage）
-function refreshPlans() {
-  savedPlans.value = listPlans();
+// ------------------------------------------------------------- 生成方案（服务端存储）
+async function refreshPlans() {
+  savedPlans.value = await listPlans();
 }
 
-function onSavePlan(name: string) {
-  savedPlans.value = savePlan(name, { ...state, fields: [...state.fields] });
-  message(t("codegen.planSaved"), { type: "success" });
+async function onSavePlan(name: string, isShared: boolean) {
+  try {
+    savedPlans.value = await savePlan(
+      name,
+      { ...state, fields: [...state.fields] },
+      isShared
+    );
+    message(t("codegen.planSaved"), { type: "success" });
+  } catch (error) {
+    message(
+      `${t("codegen.planSaveFailed")}：${error instanceof Error ? error.message : error}`,
+      { type: "error" }
+    );
+  }
 }
 
 function onLoadPlan(plan: SavedPlan) {
@@ -211,15 +222,22 @@ function onLoadPlan(plan: SavedPlan) {
   message(t("codegen.planLoaded"), { type: "success" });
 }
 
-function onRemovePlan(name: string) {
-  savedPlans.value = removePlan(name);
-  message(t("codegen.planDeleted"), { type: "success" });
+async function onRemovePlan(pk: string) {
+  try {
+    savedPlans.value = await removePlan(pk);
+    message(t("codegen.planDeleted"), { type: "success" });
+  } catch (error) {
+    message(
+      `${t("codegen.planDeleteFailed")}：${error instanceof Error ? error.message : error}`,
+      { type: "error" }
+    );
+  }
 }
 
-function onImportPlans(json: string) {
+async function onImportPlans(json: string) {
   try {
-    importPlan(json);
-    refreshPlans();
+    await importPlan(json);
+    await refreshPlans();
     message(t("codegen.planImported"), { type: "success" });
   } catch (error) {
     message(
@@ -231,7 +249,7 @@ function onImportPlans(json: string) {
 
 onMounted(() => {
   loadModels();
-  refreshPlans();
+  void refreshPlans();
 });
 </script>
 

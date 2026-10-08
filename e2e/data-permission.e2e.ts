@@ -67,8 +67,10 @@ test.describe("数据权限配置（抽屉式新增/编辑）", () => {
         .click();
     };
     await scope.locator("input").first().click();
-    await pickScopeNode(0, "(system)");
-    await pickScopeNode(1, "(system.userinfo)");
+    // 一级是应用（app_label）：用户模型已从 system 域迁到 identity 域，
+    // 模型树按当前 app 归属生成，故此处选 identity 而非 system
+    await pickScopeNode(0, "(identity)");
+    await pickScopeNode(1, "(identity.userinfo)");
     await pickScopeNode(2, "(creator)");
     // 级联选中值显示在输入框 value（完整路径），不是文本节点
     await expect(scope.locator("input").first()).toHaveValue(/创建人/);

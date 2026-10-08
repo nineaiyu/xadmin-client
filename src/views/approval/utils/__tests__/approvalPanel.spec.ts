@@ -54,13 +54,13 @@ describe("approverText", () => {
 });
 
 describe("batchFailedDetail", () => {
-  it("joins failures as no: reason with Chinese semicolon", () => {
+  it("joins failures as pk-prefix: detail with Chinese semicolon", () => {
     expect(
       batchFailedDetail([
-        { no: "REQ-0001", reason: "已通过" },
-        { no: "REQ-0002", reason: "状态变更" }
+        { pk: "11111111-aaaa-bbbb-cccc-000000000001", detail: "已通过" },
+        { pk: "22222222-aaaa-bbbb-cccc-000000000002", detail: "状态变更" }
       ])
-    ).toBe("REQ-0001: 已通过；REQ-0002: 状态变更");
+    ).toBe("11111111: 已通过；22222222: 状态变更");
   });
 
   it("returns empty string for no failures", () => {

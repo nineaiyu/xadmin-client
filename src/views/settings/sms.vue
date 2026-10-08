@@ -6,6 +6,7 @@ import {
 } from "@/api/system/settings";
 import { computed, onMounted, ref } from "vue";
 import { hasAuth } from "@/router/utils";
+import { message } from "@/utils/message";
 import { settingItemProps } from "@/views/settings/components/settings/types";
 import Setting from "@/views/settings/components/settings/index.vue";
 import { settingAuth } from "@/views/settings/utils/settingAuth";
@@ -46,6 +47,9 @@ onMounted(async () => {
           label: item.label
         });
       });
+    } else if (res.detail) {
+      // 业务码失败点名（此前静默：子页签少了几项无从判断；重试=刷新页面）
+      message(String(res.detail), { type: "warning" });
     }
   } catch {
     // http 层已统一提示；渠道子页签缺失属于可见的降级态，这里收尾防止 unhandled rejection

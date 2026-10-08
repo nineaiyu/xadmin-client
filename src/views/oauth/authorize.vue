@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { SUCCESS_CODE } from "@/api/types";
 import { oauthAuthorizeApi, type OAuthAuthorizeInfo } from "@/api/system/open";
+import { normalizeError } from "@/utils/apiError";
 
 /**
  * OAuth 授权码同意页：第三方应用「代表用户访问」的授权确认。
@@ -41,11 +42,7 @@ onMounted(async () => {
     loading.value = false;
     return;
   }
-  const res = await oauthAuthorizeApi.authorize(params).catch(error => ({
-    code: -1,
-    data: null,
-    detail: String((error as { detail?: string })?.detail ?? error)
-  }));
+  const res = await oauthAuthorizeApi.authorize(params).catch(normalizeError);
   loading.value = false;
   if (res.code === SUCCESS_CODE && res.data) {
     info.value = res.data;
@@ -59,11 +56,7 @@ const decide = async (approved: boolean) => {
   submitting.value = true;
   const res = await oauthAuthorizeApi
     .approve({ ...readQuery(), approved })
-    .catch(error => ({
-      code: -1,
-      data: null,
-      detail: String((error as { detail?: string })?.detail ?? error)
-    }));
+    .catch(normalizeError);
   submitting.value = false;
   if (res.code !== SUCCESS_CODE || !res.data) {
     errorText.value = String(res.detail ?? t("oauthAuthorize.loadFailed"));

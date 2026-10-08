@@ -24,6 +24,7 @@ import { useCardDialog } from "./utils/useCardDialog";
 import { useDashboardDialogs } from "./utils/useDashboardDialogs";
 import { cardColSpan, cardColSpanNarrow } from "./utils/span";
 import ChartCard from "./components/ChartCard.vue";
+import { normalizeError } from "@/utils/apiError";
 
 defineOptions({
   name: "DataDashboard"
@@ -115,7 +116,12 @@ const loadDashboards = async () => {
 
 const datasets = ref<DatasetItem[]>([]);
 const loadDatasets = async () => {
-  const res = await fetchAllRows(datasetApi.list);
+  // 数据集下拉失败不阻塞看板主链路：显式提示（此前未捕获，失败用户无感知）
+  const res = await fetchAllRows(datasetApi.list).catch(() => null);
+  if (!res) {
+    message(t("dashboard.datasetsLoadFailed"), { type: "warning" });
+    return;
+  }
   datasets.value = listRows<DatasetItem>(res as never);
 };
 
@@ -241,10 +247,9 @@ const removeDashboard = async () => {
     return;
   }
   // 异常归一为可读失败结果：请求异常不再产生 unhandled rejection
-  const res = await dashboardApi.destroy(current.value.pk).catch(error => ({
-    code: -1,
-    detail: String((error as { detail?: string })?.detail ?? error)
-  }));
+  const res = await dashboardApi
+    .destroy(current.value.pk)
+    .catch(normalizeError);
   if (res.code === SUCCESS_CODE) {
     current.value = null;
     await loadDashboards();

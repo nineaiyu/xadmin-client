@@ -123,7 +123,8 @@ export function useTaskToolbar({
           const pks = tableRef.value?.getSelectPks("pk") ?? [];
           runBatch(pks, api.batchEnable(pks, false), loading);
         },
-        show: auth.batchDisable && 3
+        index: 3,
+        show: auth.batchDisable
       },
       batchUpdateButton
     ]

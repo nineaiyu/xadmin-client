@@ -26,6 +26,15 @@ export function useChatAttachments(deps: {
   pushAttachment: (attachment: ChatAttachment, clientMsgId: string) => void;
   scrollToBottom: () => void;
   markFailed: (clientMsgId: string, detail?: string) => void;
+  /**
+   * WS 上行出口（useChat.sendChatFrame 注入）：连接未就绪/发送异常时内部
+   * 已做断连提示 + 乐观行失败标记，此处不再自行判 socket（此前只判 socket
+   * 存在，重连竞态下 send 可能抛错或报文无声丢失）
+   */
+  sendFrame: (
+    payload: Record<string, unknown>,
+    clientMsgId?: string
+  ) => boolean;
 }) {
   const { t } = useI18n();
   /** 附件上传中（>0 表示进行中，用于禁用重复触发） */
@@ -55,12 +64,8 @@ export function useChatAttachments(deps: {
     if (!attachment) return;
     deps.pushAttachment(attachment, clientMsgId);
     deps.scrollToBottom();
-    if (!deps.socket.value) {
-      deps.markFailed(clientMsgId, t("chat.disconnected"));
-      return;
-    }
-    deps.socket.value.send(
-      JSON.stringify({
+    deps.sendFrame(
+      {
         action: MessageAction.CHAT_MESSAGE,
         data: {
           room_id: roomId,
@@ -68,7 +73,8 @@ export function useChatAttachments(deps: {
           file_pk: attachment.pk,
           client_msg_id: clientMsgId
         }
-      })
+      },
+      clientMsgId
     );
   }
 

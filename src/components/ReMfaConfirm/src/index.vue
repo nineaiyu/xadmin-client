@@ -6,15 +6,12 @@
  */
 import { SUCCESS_CODE } from "@/api/types";
 import { passkeyApi } from "@/api/system/security";
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import ReEmpty from "@/components/ReEmpty";
 import { message } from "@/utils/message";
-import {
-  b64urlToBuffer,
-  bufferToB64url,
-  isPasskeySupported
-} from "@/utils/webauthn";
+import { useWebAuthn } from "@/hooks/useWebAuthn";
+import { useCountdownCooldown } from "@/hooks/useCountdownCooldown";
 import {
   mfaConfirmApi,
   mfaConfirmInfoApi,
@@ -36,6 +33,7 @@ const props = defineProps<{
 }>();
 
 const { t } = useI18n();
+const { assertPasskey } = useWebAuthn();
 
 const visible = ref(true);
 const loading = ref(false);
@@ -44,8 +42,7 @@ const methods = ref<MfaMethod[]>([]);
 const currentMethod = ref<string>("");
 const formData = reactive({ code: "" });
 const formRef = ref();
-const sendCooldown = ref(0);
-let cooldownTimer: ReturnType<typeof setInterval> | null = null;
+const { cooldown: sendCooldown, start: startCooldown } = useCountdownCooldown();
 
 const activeMethod = computed(() =>
   methods.value.find(item => item.name === currentMethod.value)
@@ -74,18 +71,6 @@ const loadMethods = () => {
       }
     })
     .finally(() => (infoLoading.value = false));
-};
-
-const startCooldown = (seconds: number) => {
-  sendCooldown.value = seconds;
-  if (cooldownTimer) clearInterval(cooldownTimer);
-  cooldownTimer = setInterval(() => {
-    sendCooldown.value -= 1;
-    if (sendCooldown.value <= 0) {
-      clearInterval(cooldownTimer!);
-      cooldownTimer = null;
-    }
-  }, 1000);
 };
 
 const handleSendCode = () => {
@@ -129,37 +114,12 @@ const handleConfirm = () => {
 
 /** Passkey 确认：取挑战 → 浏览器断言 → 断言 JSON 作为 code 提交（与登录 MFA 同链路） */
 const handlePasskeyConfirm = async () => {
-  if (!isPasskeySupported()) {
-    message(t("passkey.unsupported"), { type: "warning" });
-    return;
-  }
   loading.value = true;
   try {
-    const challengeRes = await passkeyApi.challenge("authenticate");
-    if (challengeRes.code !== SUCCESS_CODE) {
-      message(challengeRes.detail, { type: "warning" });
-      return;
-    }
-    const { challenge, rp_id } = challengeRes.data;
-    const credential = (await navigator.credentials.get({
-      publicKey: {
-        challenge: b64urlToBuffer(challenge),
-        rpId: rp_id,
-        timeout: 60000,
-        userVerification: "preferred"
-      }
-    })) as PublicKeyCredential | null;
-    if (!credential) {
-      message(t("passkey.failed"), { type: "warning" });
-      return;
-    }
-    const response = credential.response as AuthenticatorAssertionResponse;
-    const payload = {
-      credential_id: credential.id,
-      client_data_json: bufferToB64url(response.clientDataJSON),
-      authenticator_data: bufferToB64url(response.authenticatorData),
-      signature: bufferToB64url(response.signature)
-    };
+    const payload = await assertPasskey({
+      challengeApi: () => passkeyApi.challenge("authenticate")
+    });
+    if (!payload) return;
     const res = await mfaConfirmApi({
       confirm_type: props.confirmType ?? "mfa",
       method: "passkey",
@@ -188,9 +148,6 @@ const handleVerify = () => {
 };
 
 onMounted(loadMethods);
-onBeforeUnmount(() => {
-  if (cooldownTimer) clearInterval(cooldownTimer);
-});
 
 const emit = defineEmits<{ destroy: [] }>();
 </script>

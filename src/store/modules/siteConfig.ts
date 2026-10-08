@@ -5,8 +5,10 @@ import { message } from "@/utils/message";
 import { transformI18n } from "@/plugins/i18n";
 import { cloneDeep } from "@pureadmin/utils";
 import { responsiveStorageNameSpace, store } from "../utils";
-import { configApi } from "@/api/config";
 import { DEFAULT_EP_THEME_COLOR } from "@/utils/themeConstants";
+
+// 站点配置接口在动作内动态引入：顶层静态边 store/siteConfig → api/config
+// 会经 api/base → utils/http → store 成环（环检测脚本守护）。
 
 /** 设置项变更后的自动保存防抖窗口（合并设置面板里的连续操作） */
 const AUTO_SAVE_DEBOUNCE_MS = 600;
@@ -24,6 +26,7 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
       });
     },
     async resetSiteConfig() {
+      const { configApi } = await import("@/api/config");
       configApi.resetSiteConfig().then(() => {
         message(transformI18n("layout.resetConfigSuccess"), {
           type: "success"
@@ -36,6 +39,7 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
      * @param silent 自动保存场景传 true：成功不弹提示，避免每次设置变更刷屏
      */
     async saveSiteConfig(silent = false) {
+      const { configApi } = await import("@/api/config");
       return new Promise((resolve, reject) => {
         const locale = Storage.getData("locale", this.nameSpace);
         const layout = Storage.getData("layout", this.nameSpace);
@@ -91,6 +95,7 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
       }, AUTO_SAVE_DEBOUNCE_MS);
     },
     async getSiteConfig() {
+      const { configApi } = await import("@/api/config");
       return new Promise<PlatformConfigs>((resolve, reject) => {
         configApi
           .getSiteConfig()

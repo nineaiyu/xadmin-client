@@ -1,5 +1,6 @@
 import { h, shallowRef } from "vue";
 import { useI18n } from "vue-i18n";
+import { ElMessageBox } from "element-plus";
 import { addDialog } from "@/components/ReDialog";
 import { hasAuth } from "@/router/utils";
 import { approvalApi } from "@/api/approval/approval";
@@ -78,7 +79,8 @@ export function useApprovalRowActions({
     },
     tooltip: { content: t("approval.relatedLogs") },
     onClick: ({ row }) => openRelatedLogs(row),
-    show: canReadOperationLog && 6
+    index: 6,
+    show: canReadOperationLog
   };
 
   /** 行内按钮：待我审批页签 = 通过/驳回；我发起的页签 = 撤回（仅 PENDING） */
@@ -96,24 +98,32 @@ export function useApprovalRowActions({
                 icon: useRenderIcon(Check),
                 link: true
               },
-              confirm: {
-                // renderString 以 (row, buttonRow) 直传首参，不能写 ({ row }) 解构
-                title: row =>
+              onClick: async ({ row, loading }) => {
+                // 通过意见选填（多级链逐级留痕；后端 comment 字段自始支持，此前前端
+                // 不采集导致审批意见恒为空）：输入弹窗承载确认语义，取消输入即中止
+                const { value } = await ElMessageBox.prompt(
                   t("approval.approveConfirm", {
                     no: String(row.pk).slice(0, 8).toUpperCase()
-                  })
-              },
-              onClick: ({ row, loading }) => {
+                  }),
+                  t("approval.approve"),
+                  {
+                    confirmButtonText: t("buttons.confirm"),
+                    cancelButtonText: t("buttons.cancel"),
+                    inputPlaceholder: t("approval.commentPlaceholder")
+                  }
+                ).catch(() => ({ value: null as string | null }));
+                if (value === null) return;
                 loading.value = true;
                 handleOperation({
                   t,
-                  apiReq: approvalApi.approve(row.pk),
+                  apiReq: approvalApi.approve(row.pk, value || ""),
                   success: () => refresh(),
                   requestEnd: () => (loading.value = false)
                 });
               },
               // 多级链：只有当前级候选人可见（服务端 can_act），避免点了才报「不是当前级审批人」
-              show: row => (auth.approve && canActRow(row) ? 4 : false)
+              index: 4,
+              show: row => Boolean(auth.approve && canActRow(row))
             },
             {
               text: t("approval.reject"),

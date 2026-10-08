@@ -135,7 +135,8 @@ export function useMask() {
         text: t("mask.preview"),
         props: { type: "primary", icon: useRenderIcon(View), plain: true },
         onClick: () => openPreview(),
-        show: auth.preview && 2
+        index: 2,
+        show: auth.preview
       }
     ]
   });
@@ -152,7 +153,8 @@ export function useMask() {
         props: { type: "primary", icon: useRenderIcon(View), link: true },
         onClick: ({ row }) =>
           openPreview(buildPreviewRule(row as Record<string, unknown>)),
-        show: auth.preview && -15
+        index: -15,
+        show: auth.preview
       }
     ]
   });

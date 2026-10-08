@@ -188,7 +188,8 @@ export function useDept(tableRef: Ref) {
         onClick: ({ row }) => {
           openDeptPanel(row);
         },
-        show: true
+        // 面板内容受各自权限点控制；无任何可看内容时不渲染入口（避免点开空抽屉）
+        show: hasAuth("preview:SystemDept") || hasAuth("list:SystemUser")
       }
     ]
   });

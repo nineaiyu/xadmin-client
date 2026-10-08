@@ -6,7 +6,7 @@ import { useRouter } from "vue-router";
 import { h, reactive, ref, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { roleApi } from "@/api/system/role";
-import { usePageAuth } from "@/router/utils";
+import { hasAuth, usePageAuth } from "@/router/utils";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import View from "~icons/ep/view";
 import { useBatchUpdate } from "@/views/system/components/useBatchUpdate";
@@ -90,6 +90,12 @@ export function useRole(pageRef?: Ref) {
     formatPageColumns(columns, {
       user_count: column => {
         column["minWidth"] = 90;
+        // 跳转需用户列表权限：无权限时退化为纯文本（此前恒渲染链接，点击被 403 拦，
+        // 与 dept 页 user_count 跳转的判定口径对齐）
+        if (!hasAuth("list:SystemUser")) {
+          column["cellRenderer"] = ({ row }) => String(row.user_count ?? 0);
+          return;
+        }
         column["cellRenderer"] = ({ row }) =>
           h(
             ElLink,

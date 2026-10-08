@@ -18,6 +18,7 @@ import {
   epColor,
   withAlpha
 } from "@/utils/chartTheme";
+import { waitChartSized } from "@/utils/chart";
 // 仅类型引用（不进包）：导出实现按需动态加载（保持首屏体积）
 import type { EChartsLike, ExportedImage } from "@/utils/imageExport";
 
@@ -43,16 +44,6 @@ const { setOptions, resize, getInstance } = useECharts(chartRef, {
   theme,
   renderer: "svg"
 });
-
-/** 容器非 0 宽高等待（路由过渡期 DOM 尺寸为 0 会报错且不自愈），照抄 TrendChart */
-const waitSized = async (): Promise<boolean> => {
-  for (let i = 0; i < 30; i += 1) {
-    const el = chartRef.value as HTMLElement | undefined;
-    if (el && el.clientWidth > 0 && el.clientHeight > 0) return true;
-    await new Promise(resolve => requestAnimationFrame(resolve));
-  }
-  return false;
-};
 
 /** 分类色板：EP 语义色跟随主题（第 6 色为图表专用强调色，集中定义于 chartTheme）；调用时读取 */
 const palette = () => [
@@ -206,7 +197,7 @@ const loadData = () =>
 
 /** 渲染聚合数据（HTTP 拉取与 WS 注入共用同一渲染路径） */
 const renderAggregate = async (result: AggregateResult) => {
-  if (await waitSized()) {
+  if (await waitChartSized(() => chartRef.value as HTMLElement | undefined)) {
     // 尺寸可能因卡片高度/宽度配置变化而与上次渲染不同，先重算再 set
     resize();
     setOptions(buildSeriesOptions(result));

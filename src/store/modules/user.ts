@@ -2,17 +2,16 @@ import { SUCCESS_CODE } from "@/api/types";
 import { defineStore } from "pinia";
 import { message } from "@/utils/message";
 import { transformI18n } from "@/plugins/i18n";
-import type { LoginResult, TokenInfo, TokenResult } from "@/api/auth";
-import {
-  exitImpersonateApi,
-  loginBasicApi,
-  logoutApi,
-  refreshTokenApi,
-  registerApi,
-  type UserInfo,
-  type UserInfoResult
+// 类型导入保持顶层静态（编译期擦除）；认证接口是运行期值，改在动作内动态引入：
+// store → api/auth 的顶层静态边会与 api/auth → utils/http → store 的链路成环，
+// 环内 api 模块的类声明可能在基类就绪前求值。环检测脚本守护此约束。
+import type {
+  LoginResult,
+  TokenInfo,
+  TokenResult,
+  UserInfo,
+  UserInfoResult
 } from "@/api/auth";
-import { userInfoApi } from "@/api/user/userinfo";
 import {
   getRefreshToken,
   removeToken,
@@ -126,6 +125,7 @@ export const useUserStore = defineStore("pure-user", {
           String(data["username"] ?? "")
         );
       }
+      const { loginBasicApi } = await import("@/api/auth");
       return new Promise<LoginResult>((resolve, reject) => {
         loginBasicApi(data)
           .then(res => {
@@ -141,6 +141,7 @@ export const useUserStore = defineStore("pure-user", {
       });
     },
     async getUserInfo() {
+      const { userInfoApi } = await import("@/api/user/userinfo");
       return new Promise<UserInfoResult>((resolve, reject) => {
         userInfoApi
           .retrieve()
@@ -162,6 +163,7 @@ export const useUserStore = defineStore("pure-user", {
     },
     /** 注册 */
     async registerByUsername(data: Record<string, unknown>) {
+      const { registerApi } = await import("@/api/auth");
       return new Promise<TokenResult>((resolve, reject) => {
         registerApi(data)
           .then(res => {
@@ -178,11 +180,12 @@ export const useUserStore = defineStore("pure-user", {
       });
     },
     /** 前端登出 **/
-    logOut() {
+    async logOut() {
       this.username = "";
       this.roles = [];
       // 审批令牌绑定申请人：登出即清空，防跨账号残留（不依赖整页 reload）
       clearPendingApprovals();
+      const { logoutApi } = await import("@/api/auth");
       logoutApi({ refresh: getRefreshToken() })
         .then(res => {
           if (res.code === SUCCESS_CODE) {
@@ -222,6 +225,7 @@ export const useUserStore = defineStore("pure-user", {
     },
     /** 退出用户模拟：服务端失效模拟态凭证并为发起人重签 token */
     async exitImpersonation() {
+      const { exitImpersonateApi } = await import("@/api/auth");
       return new Promise<void>((resolve, reject) => {
         exitImpersonateApi({ refresh: getRefreshToken() })
           .then(res => {
@@ -245,6 +249,7 @@ export const useUserStore = defineStore("pure-user", {
     },
     /** 刷新`token` */
     async handRefreshToken(data: { refresh: string }) {
+      const { refreshTokenApi } = await import("@/api/auth");
       return new Promise<TokenResult>((resolve, reject) => {
         refreshTokenApi(data)
           .then(res => {

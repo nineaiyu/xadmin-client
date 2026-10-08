@@ -90,6 +90,7 @@ onMounted(loadMenus);
     <el-form-item :label="t('codegen.model')" required>
       <el-select
         v-model="state.model"
+        data-testid="codegen-model-select"
         filterable
         :loading="modelsLoading"
         :placeholder="t('codegen.modelPlaceholder')"

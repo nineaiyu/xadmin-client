@@ -22,6 +22,7 @@ import {
 import type { DashboardItem } from "@/api/dataset/datasets";
 import ScreenForm from "../components/ScreenForm.vue";
 import ScreenControlForm from "../components/ScreenControlForm.vue";
+import { normalizeError } from "@/utils/apiError";
 
 /** 可见性兜底配色（与数据集同款语义） */
 const VISIBILITY_TAG: Record<string, StatusTagType> = {
@@ -52,7 +53,13 @@ export function useScreen(tableRef: Ref) {
   /** 仪表盘清单：列名映射 + 表单多选共用 */
   const dashboards = ref<DashboardItem[]>([]);
   onMounted(async () => {
-    dashboards.value = await listDashboards();
+    // 仪表盘下拉失败不阻塞大屏主链路：显式提示（此前未捕获，失败用户无感知）
+    const res = await listDashboards().catch(() => null);
+    if (!res) {
+      message(t("dataScreen.dashboardsLoadFailed"), { type: "warning" });
+      return;
+    }
+    dashboards.value = res;
   });
 
   const dashboardName = (pk: string) =>
@@ -144,10 +151,7 @@ export function useScreen(tableRef: Ref) {
           row
             ? screenApi.partialUpdate(row.pk, payload)
             : screenApi.create(payload)
-        ).catch(error => ({
-          code: -1,
-          detail: String((error as { detail?: string })?.detail ?? error)
-        }));
+        ).catch(normalizeError);
         if (res.code === SUCCESS_CODE) {
           message(t("dataScreen.saveOk"), { type: "success" });
           // 先关弹窗再刷新列表，避免刷新耗时导致弹窗滞留
@@ -180,22 +184,25 @@ export function useScreen(tableRef: Ref) {
         props: { type: "primary", link: true },
         onClick: ({ row }) => design(row as ScreenItem),
         // 非创建者行不显示设计/编辑（保存会被后端守卫拒绝）
-        show: row => canEdit && row?.is_owner !== false && 6
+        index: 6,
+        show: row => canEdit && row?.is_owner !== false
       },
       {
         text: t("dataScreen.remoteControl"),
         code: "command",
         props: { type: "warning", link: true },
         onClick: ({ row }) => openControl(row as ScreenItem),
-        show: canCommand && 15
+        index: 15,
+        show: canCommand
       },
       {
         text: t("dataScreen.edit"),
         code: "edit",
         props: { type: "primary", link: true },
         onClick: ({ row }) => openDialog(row as ScreenItem),
-        // 索引 5：编辑排在低频的「远程控制」之前，showNumber=4 内联时不被折叠
-        show: row => canEdit && row?.is_owner !== false && 5
+        // 索引 5：编辑排在低频的「远程控制」之前，showNumber=6 内联时不被折叠
+        index: 5,
+        show: row => canEdit && row?.is_owner !== false
       }
     ]
   });

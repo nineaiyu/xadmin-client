@@ -11,6 +11,7 @@ import { useAiConsoleScroll } from "./useAiConsoleScroll";
 import { useAiConsoleMessages, toIncoming } from "./useAiConsoleMessages";
 import { useAiConsoleHistory } from "./useAiConsoleHistory";
 import { useAiConsoleStream } from "./useAiConsoleStream";
+import { normalizeError } from "@/utils/apiError";
 
 type ExecuteResponse = {
   code: number;
@@ -33,6 +34,9 @@ type ExecuteResponse = {
  * - useAiConsoleHistory   历史分页（before_id 游标、滚动位置保持）；
  * - useAiConsoleStream    流式发送（三入口共用帧分派）与中断。
  */
+/** 审批守卫业务码：type=approval_required 时后端以 1002（待审批）提示，上层引导去审批中心 */
+const APPROVAL_REQUIRED_CODE = 1002;
+
 export function useAiConsole() {
   const { t } = useI18n();
 
@@ -93,11 +97,7 @@ export function useAiConsole() {
     try {
       const res = (await aiAssistantApi
         .nlRun(dsl)
-        .catch((error: { detail?: string }) => ({
-          code: -1,
-          data: null,
-          detail: String(error?.detail ?? error)
-        }))) as ExecuteResponse;
+        .catch(normalizeError)) as ExecuteResponse;
       if (res.code === SUCCESS_CODE && res.data) {
         const incoming = toIncoming(
           (res.data as Record<string, unknown>).message
@@ -135,7 +135,10 @@ export function useAiConsole() {
       if (incoming) upsertMessage(incoming);
       return { ok: true, detail: String(res.detail || "") };
     }
-    if (res.type === "approval_required" && res.code === 1002) {
+    if (
+      res.type === "approval_required" &&
+      res.code === APPROVAL_REQUIRED_CODE
+    ) {
       return { ok: false, pending: true, detail: res.detail };
     }
     return { ok: false, detail: res.detail };

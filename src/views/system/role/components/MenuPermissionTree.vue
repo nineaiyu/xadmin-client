@@ -16,6 +16,7 @@ import {
   computeNodeStatusMap,
   computeSelectionStats,
   countFieldSelection,
+  foldFullMenuSelection,
   invertSelection,
   matchPermissionNode,
   menuAncestors,
@@ -197,17 +198,34 @@ function applySelection(next: Set<string>) {
   emitSelection();
 }
 
+/** 是否存在折叠态节点（页面在选且其直接子级全部未选；用于提示文案） */
+const hasFolded = computed(() => {
+  for (const key of index.value.menuKeys) {
+    if (!selection.value.has(key)) continue;
+    const children = index.value.childrenMap.get(key) ?? [];
+    if (
+      children.length &&
+      !children.some(child => selection.value.has(child))
+    ) {
+      return true;
+    }
+  }
+  return false;
+});
+
 /** 应用缓冲的初始勾选（树数据到达前调用则等待数据就绪） */
 function applyPending() {
   if (!pendingKeys.value || !treeData.value.length) return;
   const keys = pendingKeys.value;
   pendingKeys.value = null;
-  baseline.value = keys;
-  selection.value = new Set(keys);
+  // 回显折叠：拥有页面全部后代时呈现为页面级勾选（保存提交页面键，后端再展开为权限点）
+  const folded = [...foldFullMenuSelection(index.value, keys)];
+  baseline.value = folded;
+  selection.value = new Set(folded);
   // 等 el-tree 完成 setData（其内部 watch 与本次同批执行）后再回显勾选
   nextTick(() => {
-    treeRef.value?.setCheckedKeys(keys, false);
-    expandAncestors(keys);
+    treeRef.value?.setCheckedKeys(folded, false);
+    expandAncestors(folded);
   });
 }
 
@@ -394,6 +412,9 @@ defineExpose({ setCheckedKeys });
             ? t("rolePermission.linkedTip")
             : t("rolePermission.independentTip")
         }}
+      </span>
+      <span v-if="hasFolded" class="menu-permission__legend-tip">
+        {{ t("rolePermission.foldedTip") }}
       </span>
     </div>
   </div>

@@ -21,6 +21,7 @@ import {
 import DynamicFormForm from "../components/DynamicFormForm.vue";
 import SchemaHistoryDialog from "../components/SchemaHistoryDialog.vue";
 import TemplatePickerDialog from "../components/TemplatePickerDialog.vue";
+import { normalizeError } from "@/utils/apiError";
 
 /**
  * 表单设计：定义 CRUD + 模板复用 + schema 版本历史。
@@ -125,10 +126,7 @@ export function useFormDesigner(tableRef: Ref) {
           source
             ? dynamicFormApi.partialUpdate(source.pk, payload)
             : dynamicFormApi.create(payload)
-        ).catch(error => ({
-          code: -1,
-          detail: String((error as { detail?: string })?.detail ?? error)
-        }));
+        ).catch(normalizeError);
         if (res.code === SUCCESS_CODE) {
           message(t("dform.saveOk"), { type: "success" });
           // 先关弹窗再刷新列表，避免刷新耗时导致弹窗滞留
@@ -204,10 +202,7 @@ export function useFormDesigner(tableRef: Ref) {
         approval_required: false,
         approval_flow: null
       })
-      .catch(error => ({
-        code: -1,
-        detail: String((error as { detail?: string })?.detail ?? error)
-      }));
+      .catch(normalizeError);
     if (res.code === SUCCESS_CODE) {
       message(t("dform.templateSaved"), { type: "success" });
       return;
@@ -243,21 +238,25 @@ export function useFormDesigner(tableRef: Ref) {
         code: "edit",
         props: { type: "primary", link: true },
         onClick: ({ row }) => openDialog(row as DynamicFormItem),
-        show: canEdit && 20
+        // 非创建者行不显示编辑（保存会被后端守卫拒绝）
+        index: 20,
+        show: row => canEdit && row?.is_owner !== false
       },
       {
         text: t("dform.history"),
         code: "history",
         props: { type: "primary", link: true },
         onClick: ({ row }) => openHistory(row as DynamicFormItem),
-        show: canHistory && 15
+        index: 15,
+        show: canHistory
       },
       {
         text: t("dform.saveAsTemplate"),
         code: "template",
         props: { type: "primary", link: true },
         onClick: ({ row }) => saveAsTemplate(row as DynamicFormItem),
-        show: canCreate && 10
+        index: 10,
+        show: canCreate
       }
     ]
   });

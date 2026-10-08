@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onMounted, ref, shallowRef, watch } from "vue";
+import { computed, onMounted, ref, shallowRef } from "vue";
 import { useI18n } from "vue-i18n";
 import { Download, CopyDocument } from "@element-plus/icons-vue";
 import { downloadByData } from "@pureadmin/utils";
@@ -17,15 +17,16 @@ const props = defineProps<{
 const { t } = useI18n();
 
 const activeKey = ref("");
+/**
+ * 当前选中产物：以 key 命中为主，未命中（挂载时 artifacts 已就绪、尚未点选，或
+ * 重新预览后原选中文件不在新清单里）回落到首个产物——否则代码区恒为空包裹，
+ * 高度 0 会被判为不可见。
+ */
 const active = computed(
-  () => props.artifacts.find(item => item.key === activeKey.value) ?? null
-);
-
-watch(
-  () => props.artifacts,
-  list => {
-    activeKey.value = list[0]?.key ?? "";
-  }
+  () =>
+    props.artifacts.find(item => item.key === activeKey.value) ??
+    props.artifacts[0] ??
+    null
 );
 
 /** 产物按落点分组：后端仓 / 前端仓 / 菜单种子 / 说明文档；notice 产物单列 */
@@ -158,7 +159,7 @@ function downloadActive() {
           :key="item.key"
           class="px-3 py-1.5 cursor-pointer text-sm hover:bg-[#f5f7fa]"
           :class="{
-            'bg-[#ecf5ff] text-(--el-color-primary)': item.key === activeKey
+            'bg-[#ecf5ff] text-(--el-color-primary)': item.key === active?.key
           }"
           @click="activeKey = item.key"
         >

@@ -27,7 +27,7 @@ const {
     :api="api"
     :auth="auth"
     locale-name="approval"
-    :selection="true"
+    :selection="scope === 'pending'"
     :list-columns-format="listColumnsFormat"
     :operationButtonsProps="operationButtonsProps"
     :tableBarButtonsProps="

@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
 import Motion from "../utils/motion";
-import { delay } from "@pureadmin/utils";
 import { message } from "@/utils/message";
 import { $t, transformI18n } from "@/plugins/i18n";
 import { useUserStoreHook } from "@/store/modules/user";
@@ -9,13 +8,11 @@ import { onMounted, ref } from "vue";
 import type { FormInstance } from "element-plus";
 import ReSendVerifyCode from "@/components/ReSendVerifyCode";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import User from "~icons/ri/user-3-fill";
 import Lock from "~icons/ri/lock-fill";
 import type { RecordType } from "plus-pro-components";
 import {
   backToBasicPage,
   buildVerifyCodePayload,
-  createIsUsername,
   createPasswordFormRules,
   useLoginFlow
 } from "../useLoginFlow";
@@ -26,13 +23,11 @@ const configLoading = ref(false);
 /** 隐私政策弹窗：无独立路由，注册页内以对话框展示简要条款 */
 const privacyVisible = ref(false);
 const authInfo = ref({
-  basic: false,
   access: false,
   encrypted: false,
   password: []
 });
 const formData = ref({
-  username: "",
   password: "",
   repeatPassword: "",
   form_type: "",
@@ -49,23 +44,7 @@ const handleRegister = () => {
       formDataRef.value?.validate(valid => {
         if (valid) {
           if (checked.value) {
-            if (isUsername.value) {
-              verifyCodeRef.value?.handleSendCode(
-                ({
-                  verify_code,
-                  verify_token
-                }: {
-                  verify_code: string;
-                  verify_token: string;
-                }) => {
-                  formData.value.verify_code = verify_code;
-                  formData.value.verify_token = verify_token;
-                  delay().then(() => onRegister());
-                }
-              );
-            } else {
-              onRegister();
-            }
+            onRegister();
           } else {
             message(transformI18n($t("login.tickPrivacy")), {
               type: "warning"
@@ -104,10 +83,8 @@ const formRules = createPasswordFormRules({
 
 const configReqSuccess = (verifyCodeConfig: RecordType) => {
   authInfo.value = Object.assign(authInfo.value, verifyCodeConfig);
-  formData.value.form_type = authInfo.value.basic ? "username" : "";
 };
 
-const isUsername = createIsUsername(formData);
 onMounted(() => (configLoading.value = true));
 </script>
 
@@ -119,32 +96,7 @@ onMounted(() => (configLoading.value = true));
       category="register"
       @configReqSuccess="configReqSuccess"
       @configReqEnd="configLoading = false"
-    >
-      <el-tab-pane
-        v-if="authInfo.basic"
-        :label="t('login.basic')"
-        name="username"
-      >
-        <el-form-item
-          v-if="isUsername"
-          :rules="[
-            {
-              required: true,
-              message: transformI18n($t('login.usernameReg')),
-              trigger: 'blur'
-            }
-          ]"
-          prop="username"
-        >
-          <el-input
-            v-model="formData.username"
-            :placeholder="t('login.username')"
-            :prefix-icon="useRenderIcon(User)"
-            clearable
-          />
-        </el-form-item>
-      </el-tab-pane>
-    </ReSendVerifyCode>
+    />
 
     <el-form
       v-if="authInfo.access"
@@ -153,7 +105,7 @@ onMounted(() => (configLoading.value = true));
       :rules="formRules"
       size="large"
     >
-      <div v-if="formData.verify_token || isUsername">
+      <div v-if="formData.verify_token">
         <Motion :delay="200">
           <el-form-item prop="password">
             <el-input

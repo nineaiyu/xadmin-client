@@ -3,7 +3,8 @@ import { h, reactive, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElTag } from "element-plus";
 import { LEAVE_DRAFT_SAVED_CODE, leaveApi } from "@/api/approval/leave";
-import { usePageAuth } from "@/router/utils";
+import { hasAuth, usePageAuth } from "@/router/utils";
+import { openInstanceDetail } from "@/views/approval/instance/utils/instanceDialogs";
 import { useConfirm } from "@/hooks/useConfirm";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";
 import { message } from "@/utils/message";
@@ -18,6 +19,7 @@ import { applyServerErrors } from "@/components/RePlusPage/src/utils/serverError
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Check from "~icons/ep/check";
 import RefreshLeft from "~icons/ep/refresh-left";
+import View from "~icons/ep/view";
 
 /** 请假状态语义色兜底（字典 leave_status 未配 color 时使用） */
 const LEAVE_STATUS_TAG_TYPE: Record<string, StatusTagType> = {
@@ -100,8 +102,9 @@ export function useLeave(
         props: { type: "primary", link: true, icon: useRenderIcon(Check) },
         // 排序索引避开内置按钮（编辑 -30 / 删除 -20 / 详情 -10 / 变更历史 -5）：
         // 与「删除」同索引时两者先后不确定
+        index: -25,
         show: (row: Record<string, unknown>) =>
-          auth.submit && RESUBMITTABLE.includes(statusOf(row)) && -25,
+          auth.submit && RESUBMITTABLE.includes(statusOf(row)),
         onClick: ({ row }) =>
           confirmAndRun(
             row as Record<string, unknown>,
@@ -118,8 +121,9 @@ export function useLeave(
           link: true,
           icon: useRenderIcon(RefreshLeft)
         },
+        index: -15,
         show: (row: Record<string, unknown>) =>
-          auth.cancel && statusOf(row) === "PENDING" && -15,
+          auth.cancel && statusOf(row) === "PENDING",
         onClick: ({ row }) =>
           confirmAndRun(
             row as Record<string, unknown>,
@@ -127,6 +131,21 @@ export function useLeave(
             pk => api.cancel(pk),
             "cancelSuccess"
           )
+      },
+      {
+        code: "instance",
+        text: t("leaveApply.viewInstance"),
+        props: { type: "info", link: true, icon: useRenderIcon(View) },
+        // 流程轨迹钻取：后端已随行下发 instance_pk（未提交/草稿为空）；需实例查看权限
+        show: (row: Record<string, unknown>) =>
+          Boolean((row as { instance_pk?: string }).instance_pk) &&
+          hasAuth("retrieve:SystemApprovalInstance") &&
+          -28,
+        onClick: ({ row }) =>
+          openInstanceDetail({
+            pk: (row as { instance_pk?: string }).instance_pk,
+            title: t("leaveApply.viewInstance")
+          })
       }
     ]
   });

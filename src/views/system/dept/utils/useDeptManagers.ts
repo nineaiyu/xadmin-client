@@ -7,6 +7,7 @@ import { SUCCESS_CODE } from "@/api/types";
 import DeptManagersDialog from "../components/DeptManagersDialog.vue";
 import type { deptApi } from "@/api/system/dept";
 import type { DeptRow } from "./types";
+import { normalizeError } from "@/utils/apiError";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 type DeptApiLike = Pick<typeof deptApi, "assignManagers">;
@@ -54,10 +55,7 @@ export function useDeptManagers({
         }
         const res = await api
           .assignManagers(row.pk as number | string, payload)
-          .catch(error => ({
-            code: -1,
-            detail: String((error as { detail?: string })?.detail ?? error)
-          }));
+          .catch(normalizeError);
         if (res.code === SUCCESS_CODE) {
           message(t("systemDept.managerSaveOk"), { type: "success" });
           done();

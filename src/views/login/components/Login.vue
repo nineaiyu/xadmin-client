@@ -5,16 +5,12 @@ import { useI18n } from "vue-i18n";
 import Motion from "../utils/motion";
 import { useLoginPageStoreHook } from "@/store/modules/loginPage";
 import { LOGIN_PAGE } from "../utils/enums";
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import Lock from "~icons/ri/lock-fill";
-import User from "~icons/ri/user-3-fill";
 import Info from "~icons/ri/information-line";
 import {
   loginVerifyCodeApi,
   type LoginResultData,
   type TokenInfo
 } from "@/api/auth";
-import { delay } from "@pureadmin/utils";
 import ReSendVerifyCode from "@/components/ReSendVerifyCode";
 import { handleOperation } from "@/components/RePlusPage";
 import LoginMfa from "./LoginMfa.vue";
@@ -22,7 +18,6 @@ import type { RecordType } from "plus-pro-components";
 import {
   backToBasicPage,
   buildVerifyCodePayload,
-  createIsUsername,
   useEnterSubmit,
   useLoginFlow,
   useRememberLogin
@@ -59,14 +54,11 @@ const handleMfaSuccess = (data: TokenInfo) => afterTokenIssued(data, "login");
 const authInfo = ref({
   access: false,
   encrypted: false,
-  basic: false,
   lifetime: 1,
   reset: false
 });
 
 const formData = ref({
-  username: "",
-  password: "",
   form_type: "",
   verify_code: "",
   verify_token: undefined as string | undefined
@@ -109,32 +101,12 @@ const configReqSuccess = (verifyCodeConfig: RecordType) => {
   loginDay.value = authInfo.value.lifetime;
   formatLoginDayOptions();
   syncRememberToStore();
-
-  formData.value.form_type = authInfo.value.basic ? "username" : "";
 };
-
-const isUsername = createIsUsername(formData);
 
 const handleLogin = () => {
   verifyCodeRef.value?.getRef()?.validate((isValid: boolean) => {
     if (isValid) {
-      if (isUsername.value) {
-        verifyCodeRef.value?.handleSendCode(
-          ({
-            verify_code,
-            verify_token
-          }: {
-            verify_code: string;
-            verify_token: string;
-          }) => {
-            formData.value.verify_code = verify_code;
-            formData.value.verify_token = verify_token;
-            delay().then(() => onLogin());
-          }
-        );
-      } else {
-        onLogin();
-      }
+      onLogin();
     }
   });
 };
@@ -160,53 +132,7 @@ const onBack = backToBasicPage;
         category="login"
         @configReqSuccess="configReqSuccess"
         @configReqEnd="configLoading = false"
-      >
-        <el-tab-pane
-          v-if="authInfo.basic"
-          :label="t('login.basic')"
-          name="username"
-        >
-          <Motion v-if="isUsername" :delay="150">
-            <el-form-item
-              :rules="[
-                {
-                  required: true,
-                  message: t('login.usernameReg'),
-                  trigger: 'blur'
-                }
-              ]"
-              prop="username"
-            >
-              <el-input
-                v-model="formData.username"
-                :placeholder="t('login.username')"
-                :aria-label="t('login.username')"
-                :prefix-icon="useRenderIcon(User)"
-                clearable
-              />
-            </el-form-item>
-            <el-form-item
-              :rules="[
-                {
-                  required: true,
-                  message: t('login.passwordReg'),
-                  trigger: 'blur'
-                }
-              ]"
-              prop="password"
-            >
-              <el-input
-                v-model="formData.password"
-                :placeholder="t('login.password')"
-                :aria-label="t('login.password')"
-                :prefix-icon="useRenderIcon(Lock)"
-                clearable
-                show-password
-              />
-            </el-form-item>
-          </Motion>
-        </el-tab-pane>
-      </ReSendVerifyCode>
+      />
 
       <el-form v-if="authInfo.access" :model="formData" size="large">
         <Motion :delay="250">

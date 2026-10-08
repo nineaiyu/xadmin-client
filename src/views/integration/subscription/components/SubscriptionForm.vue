@@ -39,6 +39,12 @@ const getPayload = (): Record<string, unknown> | null => {
     message(t("webhook.required"), { type: "warning" });
     return null;
   }
+  // 协议白名单前置校验：服务端探测/投递均走出站守卫只接受 http(s)，
+  // 前端先给可读提示，避免提交后才 400
+  if (!/^https?:\/\/.+/i.test(form.url.trim())) {
+    message(t("webhook.urlInvalid"), { type: "warning" });
+    return null;
+  }
   // 新建必须提供签名密钥（模板已标必填，这里前置拦截与标记保持一致）
   if (!isEdit && !form.secret) {
     message(t("webhook.secretRequired"), { type: "warning" });

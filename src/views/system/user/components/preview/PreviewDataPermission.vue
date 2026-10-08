@@ -2,6 +2,7 @@
 import ReEmpty from "@/components/ReEmpty";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
+import { PreviewRuleGroupTable } from "@/components/RePermissionPreview";
 import type {
   PreviewDataPermissions,
   PreviewDataRuleGroup
@@ -77,43 +78,7 @@ function groupTitle(group: PreviewDataRuleGroup) {
               </el-tag>
             </el-tooltip>
           </div>
-          <el-table :data="group.rules" size="small" border>
-            <el-table-column
-              prop="table_label"
-              :label="t('permissionPreview.colTable')"
-              min-width="110"
-            />
-            <el-table-column
-              prop="field_label"
-              :label="t('permissionPreview.colField')"
-              min-width="100"
-            />
-            <el-table-column
-              prop="type_text"
-              :label="t('permissionPreview.colType')"
-              min-width="120"
-            />
-            <el-table-column
-              prop="match_text"
-              :label="t('permissionPreview.colMatch')"
-              width="110"
-            />
-            <el-table-column
-              prop="value_text"
-              :label="t('permissionPreview.colValue')"
-              min-width="140"
-            />
-            <el-table-column
-              :label="t('permissionPreview.colExclude')"
-              width="70"
-            >
-              <template #default="{ row }">
-                <el-tag v-if="row.exclude" type="danger" size="small">
-                  {{ t("permissionPreview.excludeYes") }}
-                </el-tag>
-              </template>
-            </el-table-column>
-          </el-table>
+          <PreviewRuleGroupTable :rules="group.rules" />
         </div>
       </el-collapse-item>
 
@@ -162,43 +127,7 @@ function groupTitle(group: PreviewDataRuleGroup) {
               </el-tag>
             </el-tooltip>
           </div>
-          <el-table :data="group.rules" size="small" border>
-            <el-table-column
-              prop="table_label"
-              :label="t('permissionPreview.colTable')"
-              min-width="110"
-            />
-            <el-table-column
-              prop="field_label"
-              :label="t('permissionPreview.colField')"
-              min-width="100"
-            />
-            <el-table-column
-              prop="type_text"
-              :label="t('permissionPreview.colType')"
-              min-width="120"
-            />
-            <el-table-column
-              prop="match_text"
-              :label="t('permissionPreview.colMatch')"
-              width="110"
-            />
-            <el-table-column
-              prop="value_text"
-              :label="t('permissionPreview.colValue')"
-              min-width="140"
-            />
-            <el-table-column
-              :label="t('permissionPreview.colExclude')"
-              width="70"
-            >
-              <template #default="{ row }">
-                <el-tag v-if="row.exclude" type="danger" size="small">
-                  {{ t("permissionPreview.excludeYes") }}
-                </el-tag>
-              </template>
-            </el-table-column>
-          </el-table>
+          <PreviewRuleGroupTable :rules="group.rules" />
         </div>
       </el-collapse-item>
     </el-collapse>

@@ -7,6 +7,7 @@ import {
   computeNodeStatusMap,
   computeSelectionStats,
   countFieldSelection,
+  foldFullMenuSelection,
   invertSelection,
   matchPermissionNode,
   menuAncestors,
@@ -236,6 +237,63 @@ describe("normalizeSelection", () => {
     const next = normalizeSelection(index, ["a1-1", "b", "a1+f1"]);
     // b 虽被传入，但其子级 b1 未选中，规范化后剔除
     expect([...next].sort()).toEqual(["a", "a1", "a1+f1", "a1-1"]);
+  });
+});
+
+describe("foldFullMenuSelection", () => {
+  const index = buildPermissionTreeIndex(buildTree());
+
+  it("页面全部后代在勾选集中时折叠为页面级勾选（字段键保留）", () => {
+    const selection = new Set([
+      ...cascadeSelection(index, "a1", true, []),
+      "a1+f1"
+    ]);
+    const folded = foldFullMenuSelection(index, selection);
+    expect([...folded].sort()).toEqual(["a", "a1", "a1+f1"]);
+  });
+
+  it("部分勾选的页面不折叠", () => {
+    const folded = foldFullMenuSelection(
+      index,
+      cascadeSelection(index, "a1-1", true, [])
+    );
+    expect([...folded].sort()).toEqual(["a", "a1", "a1-1"]);
+  });
+
+  it("整棵目录全选时逐层折叠为目录级勾选", () => {
+    const folded = foldFullMenuSelection(
+      index,
+      cascadeSelection(index, "a", true, [])
+    );
+    expect([...folded].sort()).toEqual(["a"]);
+  });
+
+  it("折叠态在状态映射中呈现为已选（页面级勾选等价全选）", () => {
+    const folded = foldFullMenuSelection(
+      index,
+      cascadeSelection(index, "a1", true, [])
+    );
+    const statuses = computeNodeStatusMap(index, folded);
+    // 页面 a1 折叠后子级不在勾选集内，仍按「已选」呈现
+    expect(statuses.get("a1")).toBe("checked");
+    // 目录 a 另有未授权的 a2，保持「部分选中」
+    expect(statuses.get("a")).toBe("partial");
+    expect(statuses.get("a1-1")).toBe("unchecked");
+  });
+
+  it("只存了页面键的场景：按子树展开后再折叠，勾选不丢", () => {
+    // 后端授权（含 API 建角色）可只落页面/目录主键，其语义为整棵子树生效
+    const folded = foldFullMenuSelection(index, ["a1"]);
+    expect([...folded].sort()).toEqual(["a", "a1"]);
+    expect(computeNodeStatusMap(index, folded).get("a1")).toBe("checked");
+
+    const rootFolded = foldFullMenuSelection(index, ["a"]);
+    expect([...rootFolded].sort()).toEqual(["a"]);
+  });
+
+  it("部分勾选的页面不被展开放大", () => {
+    const folded = foldFullMenuSelection(index, ["a1", "a1-1"]);
+    expect([...folded].sort()).toEqual(["a", "a1", "a1-1"]);
   });
 });
 
