@@ -4,20 +4,13 @@ import { useI18n } from "vue-i18n";
 import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router";
 import { useConfirm } from "@/hooks/useConfirm";
 import { SUCCESS_CODE } from "@/api/types";
-import { fetchAllRows } from "@/utils/fetchAllRows";
 import { message } from "@/utils/message";
 import {
-  listDashboards,
   screenApi,
   type ScreenItem,
   type ScreenLayoutPane
 } from "@/api/dataset/analysis";
-import {
-  datasetApi,
-  listRows,
-  type DashboardItem,
-  type DatasetItem
-} from "@/api/dataset/datasets";
+import type { DashboardItem, DatasetItem } from "@/api/dataset/datasets";
 import ScreenPane from "./components/ScreenPane.vue";
 import PaneInspector from "./components/PaneInspector.vue";
 import DesignerPalette from "./components/DesignerPalette.vue";
@@ -37,6 +30,7 @@ import { createPaneOps } from "./utils/paneOps";
 import { useCanvasDrag } from "./utils/canvasDrag";
 import { useScreenShortcuts } from "./utils/shortcuts";
 import { createCanvasDropHandler, onPaletteDragStart } from "./utils/dnd";
+import { loadScreenReferenceData } from "./utils/referenceData";
 import { normalizeError } from "@/utils/apiError";
 
 defineOptions({ name: "DataScreenDesigner" });
@@ -180,10 +174,17 @@ onMounted(async () => {
   }
   screen.value = res.data as ScreenItem;
   panes.value = [...(screen.value.layout ?? [])];
-  [dashboards.value, datasets.value] = await Promise.all([
-    listDashboards(),
-    loadDatasets()
-  ]);
+  // 引用数据失败不阻塞设计器主链路：显式提示并按空清单降级（此前未捕获——异常
+  // 逃逸且 loading 永久悬挂，画布空白且用户无感知）
+  const reference = await loadScreenReferenceData();
+  if (!reference.dashboards) {
+    message(t("dataScreen.dashboardsLoadFailed"), { type: "warning" });
+  }
+  if (!reference.datasets) {
+    message(t("dataScreen.datasetsLoadFailed"), { type: "warning" });
+  }
+  dashboards.value = reference.dashboards ?? [];
+  datasets.value = reference.datasets ?? [];
   loading.value = false;
   clock.value = new Date().toLocaleTimeString("zh-CN", { hour12: false });
   clockTimer = window.setInterval(() => {
@@ -196,11 +197,6 @@ onBeforeUnmount(() => {
   window.clearInterval(clockTimer);
   window.removeEventListener("beforeunload", onBeforeUnload);
 });
-
-const loadDatasets = async () => {
-  const res = (await fetchAllRows(datasetApi.list)) as never;
-  return listRows<DatasetItem>(res);
-};
 
 /* ---------------- 未保存守卫 ---------------- */
 const onBeforeUnload = (event: BeforeUnloadEvent) => {

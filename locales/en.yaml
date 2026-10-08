@@ -2818,6 +2818,7 @@ dataScreen:
   pickScreenFirst: Open the designer from a screen row
   loadFailed: Failed to load the screen
   dashboardsLoadFailed: Failed to load the dashboard list, please refresh and retry
+  datasetsLoadFailed: Failed to load the dataset list, please refresh and retry
   retry: Retry
   layoutSaved: Canvas saved
   unsaved: Unsaved changes

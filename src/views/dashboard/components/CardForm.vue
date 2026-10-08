@@ -10,6 +10,7 @@ import {
   type DatasetItem
 } from "@/api/dataset/datasets";
 import { message } from "@/utils/message";
+import { CARD_HEIGHT_OPTIONS, DEFAULT_CARD_HEIGHT } from "@/utils/cardHeight";
 
 /**
  * 仪表盘卡片表单（C5：弹窗体系收敛到 ReDialog 的 content 组件形态）。
@@ -28,13 +29,13 @@ const props = defineProps<{
 
 const { t } = useI18n();
 
-/** 卡片宽度档位（12 栅格）与高度档位（px）：标准 224 与存量 h-56 渲染一致 */
+/** 卡片宽度档位（12 栅格）与高度档位（px，单一来源 utils/cardHeight） */
 const spanOptions = [3, 6, 9, 12];
-const heightOptions = [160, 224, 320, 440];
+const heightOptions = [...CARD_HEIGHT_OPTIONS];
 
 const form = reactive<DashboardCard>({
   ...props.card,
-  height: props.card.height ?? 224,
+  height: props.card.height ?? DEFAULT_CARD_HEIGHT,
   allowed_roles: props.card.allowed_roles ?? []
 });
 

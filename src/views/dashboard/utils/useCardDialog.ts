@@ -4,6 +4,7 @@ import { dialogSize } from "@/components/ReDialog/size";
 import CardForm from "../components/CardForm.vue";
 import type { useI18n } from "vue-i18n";
 import type { DashboardCard, DatasetItem } from "@/api/dataset/datasets";
+import { DEFAULT_CARD_HEIGHT } from "@/utils/cardHeight";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
@@ -31,7 +32,7 @@ export function useCardDialog({
       chart_type: "number",
       metric: "count",
       span: 6,
-      height: 224
+      height: DEFAULT_CARD_HEIGHT
     };
   }
 

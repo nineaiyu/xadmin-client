@@ -1,6 +1,11 @@
 import { BaseApi, listRows } from "@/api/base";
 import { fetchAllRows } from "@/utils/fetchAllRows";
-import type { DataListResult, DetailResult, ListResult } from "@/api/types";
+import type {
+  DataListResult,
+  DetailResult,
+  Envelope,
+  ListResult
+} from "@/api/types";
 import type { DashboardItem } from "@/api/dataset/datasets";
 
 /** 大屏画布窗格类型：仪表盘 / 文本 / 时钟 / 指标卡 / 图片 */
@@ -148,6 +153,24 @@ export type ScreenCommandPayload =
 
 export const screenApi = new BaseApi("/api/dataset/screens");
 export const reportApi = new BaseApi("/api/dataset/reports");
+
+/** 投递渠道枚举：choices_dict 在响应顶层（与其它 choices 消费方同口径） */
+export type ReportChannelChoicesResult = Omit<Envelope, "data"> & {
+  choices_dict: Partial<{
+    notify_channels: string[];
+    im_notify_channels: string[];
+  }>;
+};
+
+/** 投递渠道枚举（结构元数据）：值集单源在后端 REPORT_NOTIFY_CHANNELS / IM_NOTIFY_CHANNELS */
+export const fetchReportChannels = () => {
+  return reportApi.request<ReportChannelChoicesResult>(
+    "get",
+    {},
+    {},
+    `${reportApi.baseApi}/choices`
+  );
+};
 
 /** 读取控制态：state + 该大屏的仪表盘清单（pk 数组） */
 export const getScreenCommandState = (pk: string) => {

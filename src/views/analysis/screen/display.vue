@@ -1,16 +1,12 @@
 <script lang="ts" setup>
 import { SUCCESS_CODE } from "@/api/types";
-import { fetchAllRows } from "@/utils/fetchAllRows";
 import { computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import { screenApi, type ScreenItem } from "@/api/dataset/analysis";
-import {
-  dashboardApi,
-  datasetApi,
-  listRows,
-  type DashboardCard,
-  type DashboardItem,
-  type DatasetItem
+import type {
+  DashboardCard,
+  DashboardItem,
+  DatasetItem
 } from "@/api/dataset/datasets";
 import { useI18n } from "vue-i18n";
 import type { ScreenDataPayload } from "@/utils/websocket/protocol";
@@ -18,7 +14,9 @@ import type { ScreenDataPayload } from "@/utils/websocket/protocol";
 import type { ExportedImage } from "@/utils/imageExport";
 import { useScreenDisplay } from "./utils/useScreenDisplay";
 import { useScreenExport } from "./utils/useScreenExport";
+import { cardRenderHeight } from "@/utils/cardHeight";
 import { canvasGridVars } from "./utils/layout";
+import { loadScreenReferenceData } from "./utils/referenceData";
 import ChartCard from "@/views/dashboard/components/ChartCard.vue";
 import ScreenPane from "./components/ScreenPane.vue";
 import ReEmpty from "@/components/ReEmpty";
@@ -183,17 +181,20 @@ const loadScreen = async () => {
     return;
   }
   screen.value = res.data as ScreenItem;
+  // 引用数据失败按「加载失败 + 重试」呈现（此前未捕获——异常逃逸且页面落入
+  // 「暂无可展示看板」空态，与真实原因不符，也无法重试）
+  const reference = await loadScreenReferenceData();
+  if (!reference.dashboards || !reference.datasets) {
+    loadFailed.value = true;
+    return;
+  }
+  const all = reference.dashboards;
   // 仅保留浏览者可见的仪表盘（personal 对他人不在可见列表内）
-  const all = listRows<DashboardItem>(
-    (await fetchAllRows(dashboardApi.list)) as never
-  );
   dashboards.value = (screen.value?.dashboards ?? [])
     .map((id: string) => all.find((item: DashboardItem) => item.pk === id))
     .filter((item): item is DashboardItem => Boolean(item));
   // 指标卡窗格按可见数据集过滤（同仪表盘窗格口径）
-  datasets.value = listRows<DatasetItem>(
-    (await fetchAllRows(datasetApi.list)) as never
-  );
+  datasets.value = reference.datasets;
   startTimers();
   startWs(pk);
 };
@@ -308,14 +309,14 @@ onMounted(loadScreen);
         }"
       >
         <div class="screen-card__title">{{ card.title }}</div>
-        <!-- 高度跟随卡片配置（与仪表盘页所见即所得），缺省 224 兼容存量布局 -->
+        <!-- 高度跟随卡片配置（与仪表盘页所见即所得），缺省档位见 utils/cardHeight -->
         <div
           class="screen-card__body"
           :class="{
             'screen-card__body--plain':
               card.chart_type === 'number' || card.chart_type === 'metric'
           }"
-          :style="{ height: `${card.height ?? 224}px` }"
+          :style="{ height: `${cardRenderHeight(card.height)}px` }"
         >
           <ChartCard
             :key="`${currentDashboard?.pk}-${card.id}`"

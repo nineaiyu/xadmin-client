@@ -144,15 +144,23 @@ onMounted(async () => {
   }
   report.value = res.data as ReportItem;
   const datasetPk = relatedPk(report.value.dataset);
-  dataset.value =
-    listRows<DatasetItem>((await fetchAllRows(datasetApi.list)) as never).find(
-      item => item.pk === datasetPk
-    ) ?? null;
-  // 数据集对当前用户不可见（personal/已删除）→ 显式降级：提示 + 禁保存/运行，
-  // 侧栏与组件卡不以空数据集取数（明细表预览对空 pk 自身即跳过）
-  if (!dataset.value) {
-    datasetMissing.value = true;
-    message(t("dataReport.datasetUnavailable"), { type: "error" });
+  // 数据集清单装载失败与「清单里没有该数据集」是两种语义：前者提示后可继续看
+  // 设计（取数入口按空数据集降级），后者才是「不可见/已删除」的业务降级——此前
+  // 未捕获异常会让 loading 永久悬挂、设计器空白且用户无感知
+  const datasetRows = await fetchAllRows(datasetApi.list).catch(() => null);
+  if (!datasetRows) {
+    message(t("dataReport.datasetsLoadFailed"), { type: "warning" });
+  } else {
+    dataset.value =
+      listRows<DatasetItem>(datasetRows as never).find(
+        item => item.pk === datasetPk
+      ) ?? null;
+    // 数据集对当前用户不可见（personal/已删除）→ 显式降级：提示 + 禁保存/运行，
+    // 侧栏与组件卡不以空数据集取数（明细表预览对空 pk 自身即跳过）
+    if (!dataset.value) {
+      datasetMissing.value = true;
+      message(t("dataReport.datasetUnavailable"), { type: "error" });
+    }
   }
   design.value = {
     columns: [...(report.value.design?.columns ?? [])],

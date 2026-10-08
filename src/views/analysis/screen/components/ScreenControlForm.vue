@@ -58,8 +58,17 @@ const syncTarget = () => {
 };
 
 const loadState = async () => {
-  const res = await getScreenCommandState(props.row.pk);
-  if (res.code !== SUCCESS_CODE) return;
+  // 控制态读取失败不阻塞面板：异常归一为可读失败结果并提示（此前未捕获——请求
+  // 异常时抛 unhandled rejection 且面板以默认态静默呈现，用户误判为展示端 auto）
+  const res = await getScreenCommandState(props.row.pk).catch(error => ({
+    code: -1,
+    detail: String((error as { detail?: string })?.detail ?? error),
+    data: { state: state.value }
+  }));
+  if (res.code !== SUCCESS_CODE) {
+    if (res.detail) message(String(res.detail), { type: "warning" });
+    return;
+  }
   state.value = res.data.state;
   syncTarget();
 };

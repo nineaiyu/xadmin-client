@@ -1,8 +1,33 @@
 import { $t } from "@/plugins/i18n";
 
+/**
+ * 菜单外页面（`showLink: false`）路由表，由两部分组成：
+ *
+ * - **框架级**：登录 / 重定向 / 空白页 / 账号设置 / 邀请激活 / OAuth 回调与同意页
+ *   —— 不随业务模块走，直接登记在下方 `frameworkRoutes`；
+ * - **模块级**：业务模块自带的全屏页（大屏投屏页与设计器、报表设计器等）在模块
+ *   目录的 `routes.ts` 内自声明，本文件用 glob 自动收集——新增同类页面无需改
+ *   框架文件（示例见 `views/analysis/screen/routes.ts`）。
+ */
+
 const Layout = () => import("@/layout/index.vue");
 
-const remainingRoutes: Array<RouteConfigsTable> = [
+/** 模块自带全屏页声明（glob 模式见下方代码，默认导出单条或数组，按路径排序装配） */
+const fullscreenPageModules = import.meta.glob<{
+  default: RouteConfigsTable | RouteConfigsTable[];
+}>("/src/views/**/routes.ts", { eager: true });
+
+const declaredFullscreenRoutes: Array<RouteConfigsTable> = Object.keys(
+  fullscreenPageModules
+)
+  .sort()
+  .flatMap(key => {
+    const declared = fullscreenPageModules[key].default;
+    return Array.isArray(declared) ? declared : [declared];
+  });
+
+/** 框架级菜单外页面 */
+const frameworkRoutes: Array<RouteConfigsTable> = [
   {
     path: "/login",
     name: "Login",
@@ -38,36 +63,6 @@ const remainingRoutes: Array<RouteConfigsTable> = [
       title: $t("menus.empty"),
       showLink: false,
       rank: 10103
-    }
-  },
-  {
-    path: "/analysis/screen/display",
-    name: "DataScreenDisplay",
-    component: () => import("@/views/analysis/screen/display.vue"),
-    meta: {
-      title: $t("menus.dataScreen"),
-      showLink: false,
-      rank: 10105
-    }
-  },
-  {
-    path: "/analysis/screen/designer",
-    name: "DataScreenDesigner",
-    component: () => import("@/views/analysis/screen/designer.vue"),
-    meta: {
-      title: $t("menus.dataScreen"),
-      showLink: false,
-      rank: 10106
-    }
-  },
-  {
-    path: "/analysis/report/designer",
-    name: "DataReportDesigner",
-    component: () => import("@/views/analysis/report/designer.vue"),
-    meta: {
-      title: $t("menus.dataReport"),
-      showLink: false,
-      rank: 10107
     }
   },
   // 邀请激活：令牌即凭据，未登录访问，独立无侧栏页面
@@ -112,6 +107,11 @@ const remainingRoutes: Array<RouteConfigsTable> = [
       rank: 104
     }
   }
+];
+
+const remainingRoutes: Array<RouteConfigsTable> = [
+  ...frameworkRoutes,
+  ...declaredFullscreenRoutes
 ];
 
 export default remainingRoutes;

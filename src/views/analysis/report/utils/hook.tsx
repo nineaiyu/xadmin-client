@@ -19,6 +19,7 @@ import {
 } from "@/api/dataset/analysis";
 import { datasetApi, listRows, type DatasetItem } from "@/api/dataset/datasets";
 import ReportForm from "../components/ReportForm.vue";
+import { channelLabelKey } from "./channels";
 import { normalizeError } from "@/utils/apiError";
 
 /** 最近执行状态兜底配色（后端值：SUCCESS* / FAILURE / 空） */
@@ -29,14 +30,6 @@ const REPORT_STATUS_TAG: Record<string, StatusTagType> = {
   SUCCESS_WITH_DELIVERY_ERROR: "warning",
   SUCCESS_WITH_EMAIL_ERROR: "warning",
   FAILURE: "danger"
-};
-
-/** 投递渠道取值 → i18n key（与后端 REPORT_NOTIFY_CHANNELS 对齐） */
-const CHANNEL_LABEL_KEYS: Record<string, string> = {
-  email: "dataReport.channelEmail",
-  dingtalk: "dataReport.channelDingtalk",
-  wecom: "dataReport.channelWecom",
-  feishu: "dataReport.channelFeishu"
 };
 
 /** LabeledChoiceField（如 frequency）取展示文案：对象取 label，标量原样 */
@@ -88,12 +81,13 @@ export function useReport(tableRef: Ref) {
     return datasets.value.find(item => item.pk === pk)?.name ?? pk;
   };
 
-  /** 投递渠道展示：空 = 仅邮件（存量兼容） */
+  /** 投递渠道展示：空 = 仅邮件（存量兼容）；未知取值原样回显（值集单源在后端） */
   const channelLabels = (channels: string[] | undefined) =>
     (channels?.length ? channels : ["email"])
-      .map(item =>
-        CHANNEL_LABEL_KEYS[item] ? t(CHANNEL_LABEL_KEYS[item]) : item
-      )
+      .map(item => {
+        const key = channelLabelKey(item);
+        return key ? t(key) : item;
+      })
       .join(", ");
 
   const listColumnsFormat = (columns: PageTableColumn[]) =>

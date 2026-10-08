@@ -19,6 +19,7 @@ import {
   type DashboardItem,
   type DatasetItem
 } from "@/api/dataset/datasets";
+import { cardRenderHeight } from "@/utils/cardHeight";
 import { useCardImageExport } from "./utils/useCardImageExport";
 import { useCardDialog } from "./utils/useCardDialog";
 import { useDashboardDialogs } from "./utils/useDashboardDialogs";
@@ -383,7 +384,7 @@ onMounted(async () => {
           <el-card
             shadow="never"
             class="app-card flex flex-col overflow-hidden"
-            :style="{ height: `${card.height ?? 224}px` }"
+            :style="{ height: `${cardRenderHeight(card.height)}px` }"
             :body-style="{ flex: '1 1 0%', minHeight: '0' }"
           >
             <template #header>

@@ -2818,6 +2818,7 @@ dataScreen:
   pickScreenFirst: 请先从大屏列表进入设计器
   loadFailed: 大屏加载失败
   dashboardsLoadFailed: 仪表盘列表加载失败，请刷新页面重试
+  datasetsLoadFailed: 数据集列表加载失败，请刷新页面重试
   retry: 重试
   layoutSaved: 画布已保存
   unsaved: 有未保存改动

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onMounted, reactive } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { choiceValue } from "@/utils/dict";
 import { message } from "@/utils/message";
@@ -10,6 +10,12 @@ import {
   type ReportItem,
   type ReportUserOption
 } from "@/api/dataset/analysis";
+import {
+  FALLBACK_CHANNEL_VALUES,
+  FALLBACK_IM_CHANNEL_VALUES,
+  channelLabelKey,
+  loadReportChannels
+} from "../utils/channels";
 
 /**
  * 定时报表表单（C5：弹窗体系收敛到 ReDialog 的 content 组件形态）。
@@ -66,16 +72,23 @@ const weekdayOptions = computed(() =>
   }))
 );
 
-/** 渠道选项（值与后端 REPORT_NOTIFY_CHANNELS 对齐） */
-const CHANNEL_OPTIONS = [
-  { value: "email", labelKey: "dataReport.channelEmail" },
-  { value: "dingtalk", labelKey: "dataReport.channelDingtalk" },
-  { value: "wecom", labelKey: "dataReport.channelWecom" },
-  { value: "feishu", labelKey: "dataReport.channelFeishu" }
-];
+/** 渠道选项：值集来自后端 choices（不可达时回落兜底清单），文案走 i18n；
+ *  已选中的未知取值一并呈现，避免存量数据在表单里「消失」 */
+const channelValues = ref<string[]>([...FALLBACK_CHANNEL_VALUES]);
+const imChannelValues = ref<string[]>([...FALLBACK_IM_CHANNEL_VALUES]);
+const channelOptions = computed(() => {
+  const values = [...channelValues.value];
+  for (const value of form.notify_channels) {
+    if (!values.includes(value)) values.push(value);
+  }
+  return values.map(value => {
+    const key = channelLabelKey(value);
+    return { value, label: key ? t(key) : value };
+  });
+});
 const emailSelected = computed(() => form.notify_channels.includes("email"));
-const imSelected = computed(
-  () => form.notify_channels.filter(item => item !== "email").length > 0
+const imSelected = computed(() =>
+  form.notify_channels.some(item => imChannelValues.value.includes(item))
 );
 
 /** IM 接收人候选缓存：远程搜索与编辑回显共用 */
@@ -99,12 +112,16 @@ const searchUsers = (keyword: string) => {
 };
 
 /** 编辑既有报表：按主键回显已选接收人（避免无边界的通讯录枚举） */
-onMounted(() => {
+onMounted(async () => {
   if (form.im_recipients.length) {
     searchReportUsers({ pks: form.im_recipients })
       .then(res => mergeUsers(res?.data ?? []))
       .catch(() => undefined);
   }
+  // 渠道值集来自后端 choices（失败回落兜底清单）：新增渠道无需前端改代码
+  const channels = await loadReportChannels();
+  channelValues.value = channels.channels;
+  imChannelValues.value = channels.imChannels;
 });
 
 /** 当前数据集（驱动分组字段候选） */
@@ -334,11 +351,11 @@ defineExpose({ getPayload });
     <el-form-item :label="t('dataReport.notifyChannels')">
       <el-checkbox-group v-model="form.notify_channels">
         <el-checkbox
-          v-for="channel in CHANNEL_OPTIONS"
+          v-for="channel in channelOptions"
           :key="channel.value"
           :value="channel.value"
         >
-          {{ t(channel.labelKey) }}
+          {{ channel.label }}
         </el-checkbox>
       </el-checkbox-group>
       <div class="text-xs text-(--el-text-color-secondary)">

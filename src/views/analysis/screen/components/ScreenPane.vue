@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { cardRenderHeight } from "@/utils/cardHeight";
 import ChartCard from "@/views/dashboard/components/ChartCard.vue";
 import type { DashboardCard } from "@/api/dataset/datasets";
 import type { ScreenLayoutPane } from "@/api/dataset/analysis";
@@ -208,7 +209,7 @@ const clockStyle = computed(() => ({
             'screen-card__body--plain':
               card.chart_type === 'number' || card.chart_type === 'metric'
           }"
-          :style="{ height: `${card.height ?? 224}px` }"
+          :style="{ height: `${cardRenderHeight(card.height)}px` }"
         >
           <ChartCard :ref="setCardRef(card.id)" :card="card" />
         </div>
