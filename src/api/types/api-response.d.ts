@@ -3,7 +3,7 @@
 // 重新生成：pnpm gen:metadata-types；Schema 变更属破坏性契约变更，需与后端一同评审。
 
 /**
- * 所有业务接口的统一响应信封（common/core/response.py ApiResponse）。code=1000 为成功；业务载荷在 data（无载荷时缺省）；额外键（如 auths）由各接口经 kwargs 追加。服务端由 tests/unit/common/test_contract_schemas.py 持续校验。
+ * 所有业务接口的统一响应信封（packages/xadmin-common/common/core/response.py ApiResponse）。code=1000 为成功；业务载荷在 data（无载荷时缺省）；额外键（如 auths）由各接口经 kwargs 追加。服务端由 tests/unit/common/test_contract_schemas.py 持续校验。
  */
 export interface ApiResponseEnvelope {
   /**
