@@ -86,7 +86,8 @@ export function useApprovalRule(tableRef: Ref) {
           link: true
         },
         onClick: ({ row }) => openForm(row),
-        show: canEdit ? -30 : false
+        index: -30,
+        show: canEdit
       },
       { code: "detail", show: false }
     ]
@@ -102,7 +103,8 @@ export function useApprovalRule(tableRef: Ref) {
           icon: useRenderIcon(AddFill)
         },
         onClick: () => openForm(),
-        show: canCreate ? -30 : false
+        index: -30,
+        show: canCreate
       }
     ]
   });

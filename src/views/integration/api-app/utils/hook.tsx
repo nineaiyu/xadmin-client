@@ -174,7 +174,8 @@ export function useApiApplication(tableRef: Ref) {
         code: "manage",
         props: { type: "primary", link: true },
         onClick: ({ row }) => openApiAppPanel(row as ApiApplicationItem),
-        show: -15
+        index: -15,
+        show: true
       }
     ]
   });

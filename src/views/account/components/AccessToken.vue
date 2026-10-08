@@ -374,7 +374,8 @@ const operationButtonsProps: OperationProps = {
         icon: useRenderIcon(Lock)
       },
       onClick: ({ row }) => openScopeEditor(row),
-      show: 2
+      index: 2,
+      show: true
     },
     {
       code: "ipAllowlist",
@@ -385,7 +386,8 @@ const operationButtonsProps: OperationProps = {
         icon: useRenderIcon(Location)
       },
       onClick: ({ row }) => openIpAllowlistEditor(row),
-      show: 3
+      index: 3,
+      show: true
     },
     {
       code: "callLogs",
@@ -396,7 +398,8 @@ const operationButtonsProps: OperationProps = {
         icon: useRenderIcon(Document)
       },
       onClick: ({ row }) => openCallLogs(row),
-      show: 4
+      index: 4,
+      show: true
     }
   ]
 };

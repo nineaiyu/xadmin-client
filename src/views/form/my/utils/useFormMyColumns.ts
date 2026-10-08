@@ -113,7 +113,8 @@ export function useFormMyColumns({
           link: true,
           "data-testid": "submission-detail"
         },
-        show: () => -50,
+        index: -50,
+        show: true,
         onClick: ({ row }) => actions.openDetail(row as SubmissionItem)
       },
       {
@@ -121,8 +122,8 @@ export function useFormMyColumns({
           statusOf(row) === "DRAFT" ? t("dform.continueEdit") : t("dform.edit"),
         code: "my-edit",
         props: { type: "primary", link: true },
-        show: (row: RecordType) =>
-          canEdit && statusOf(row) !== "PENDING" ? -40 : false,
+        index: -40,
+        show: (row: RecordType) => canEdit && statusOf(row) !== "PENDING",
         onClick: ({ row }) => actions.openEdit(row as SubmissionItem)
       },
       {
@@ -133,8 +134,8 @@ export function useFormMyColumns({
           link: true,
           "data-testid": "submission-submit-draft"
         },
-        show: (row: RecordType) =>
-          canSubmit && statusOf(row) === "DRAFT" ? -30 : false,
+        index: -30,
+        show: (row: RecordType) => canSubmit && statusOf(row) === "DRAFT",
         onClick: ({ row }) => actions.submitDraft(row as SubmissionItem)
       },
       {
@@ -145,16 +146,16 @@ export function useFormMyColumns({
           link: true,
           "data-testid": "submission-resubmit"
         },
-        show: (row: RecordType) =>
-          canResubmit && statusOf(row) === "REJECTED" ? -20 : false,
+        index: -20,
+        show: (row: RecordType) => canResubmit && statusOf(row) === "REJECTED",
         onClick: ({ row }) => actions.resubmit(row as SubmissionItem)
       },
       {
         text: t("dform.delete"),
         code: "my-delete",
         props: { type: "danger", link: true },
-        show: (row: RecordType) =>
-          canDestroy && statusOf(row) !== "PENDING" ? -10 : false,
+        index: -10,
+        show: (row: RecordType) => canDestroy && statusOf(row) !== "PENDING",
         onClick: ({ row }) => actions.remove(row as SubmissionItem)
       }
     ]

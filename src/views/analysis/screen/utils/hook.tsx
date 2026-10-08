@@ -176,7 +176,8 @@ export function useScreen(tableRef: Ref) {
         code: "display",
         props: { type: "success", link: true },
         onClick: ({ row }) => display(row as ScreenItem),
-        show: 10
+        index: 10,
+        show: true
       },
       {
         text: t("dataScreen.designer"),

@@ -145,7 +145,8 @@ export function useKnowledge(tableRef: Ref) {
         code: "preview",
         props: { type: "primary", link: true },
         onClick: ({ row }) => openKnowledgePanel(row as KnowledgeRow),
-        show: 10
+        index: 10,
+        show: true
       }
     ]
   });

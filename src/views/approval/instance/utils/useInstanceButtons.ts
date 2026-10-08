@@ -92,7 +92,8 @@ export function useInstanceButtons({
       link: true
     },
     onClick: ({ row }) => openInstanceDetail(row),
-    show: 9
+    index: 9,
+    show: true
   };
 
   /** 打标（管理视角）：给在途实例打分类标签（如「加急」），走通用打标弹窗 */

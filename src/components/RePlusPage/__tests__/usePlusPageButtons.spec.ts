@@ -51,7 +51,13 @@ const findButton = (buttons: { code: string | number }[], code: string) =>
   buttons.find(button => button.code === code) as {
     code: string;
     show: unknown;
+    index?: number;
   };
+
+/** 排序位统一走 index（show 只管显隐，不再承载排序数值） */
+function expectOrder(button: { index?: number }, expectedIndex: number): void {
+  expect(button.index).toBe(expectedIndex);
+}
 
 /** 登录策略页等「自有编辑弹窗」页面的实测权限位：partialUpdate 可用但 update 关闭 */
 const POLICY_AUTH = {
@@ -65,14 +71,20 @@ const POLICY_AUTH = {
 describe("usePlusPageButtons hideEdit", () => {
   it("默认编辑按钮随权限位显隐：partialUpdate 命中即显示（内联开关可用时的既有行为）", () => {
     const buttons = buildOperationButtons(POLICY_AUTH);
-    expect(evalShow(findButton(buttons, "update"))).toBe(-30);
+    const update = findButton(buttons, "update");
+    expect(evalShow(update)).toBe(true);
+    expectOrder(update, -30);
   });
 
   it("hideEdit 只藏默认编辑按钮，删除/详情按钮不受影响", () => {
     const buttons = buildOperationButtons(POLICY_AUTH, { hideEdit: true });
     expect(evalShow(findButton(buttons, "update"))).toBe(false);
-    expect(evalShow(findButton(buttons, "delete"))).toBe(-20);
-    expect(evalShow(findButton(buttons, "detail"))).toBe(-10);
+    const del = findButton(buttons, "delete");
+    expect(evalShow(del)).toBe(true);
+    expectOrder(del, -20);
+    const detail = findButton(buttons, "detail");
+    expect(evalShow(detail)).toBe(true);
+    expectOrder(detail, -10);
   });
 
   it("hideEdit 不回写 auth 位：boolean 列内联开关按 partialUpdate||update 判定仍可用", () => {
@@ -87,7 +99,7 @@ describe("usePlusPageButtons hideEdit", () => {
 
   it("未声明 hideEdit 时行为不变（undefined 视同 false）", () => {
     const buttons = buildOperationButtons(POLICY_AUTH, {});
-    expect(evalShow(findButton(buttons, "update"))).toBe(-30);
+    expect(evalShow(findButton(buttons, "update"))).toBe(true);
   });
 });
 
@@ -102,14 +114,18 @@ describe("usePlusPageButtons 行级归属守卫", () => {
   it("is_owner=true 的行按钮照常显示", () => {
     const buttons = buildOperationButtons(POLICY_AUTH);
     const row = { pk: 1, is_owner: true };
-    expect(evalShow(findButton(buttons, "update"), row)).toBe(-30);
-    expect(evalShow(findButton(buttons, "delete"), row)).toBe(-20);
+    const update = findButton(buttons, "update");
+    const del = findButton(buttons, "delete");
+    expect(evalShow(update, row)).toBe(true);
+    expect(evalShow(del, row)).toBe(true);
+    expectOrder(update, -30);
+    expectOrder(del, -20);
   });
 
   it("未下发 is_owner 的行不收敛（存量接口零回归）", () => {
     const buttons = buildOperationButtons(POLICY_AUTH);
-    expect(evalShow(findButton(buttons, "update"), { pk: 1 })).toBe(-30);
-    expect(evalShow(findButton(buttons, "delete"), { pk: 1 })).toBe(-20);
+    expect(evalShow(findButton(buttons, "update"), { pk: 1 })).toBe(true);
+    expect(evalShow(findButton(buttons, "delete"), { pk: 1 })).toBe(true);
   });
 });
 

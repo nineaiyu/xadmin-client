@@ -178,7 +178,8 @@ export function useMcpServers(tableRef: Ref) {
         code: "tools",
         props: { link: true },
         onClick: ({ row }) => openTools(row as McpRow),
-        show: 10
+        index: 10,
+        show: true
       },
       {
         text: t("buttons.edit"),

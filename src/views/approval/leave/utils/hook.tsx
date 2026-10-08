@@ -136,11 +136,13 @@ export function useLeave(
         code: "instance",
         text: t("leaveApply.viewInstance"),
         props: { type: "info", link: true, icon: useRenderIcon(View) },
+        // 排序索引避开内置按钮（编辑 -30 / 删除 -20 / 详情 -10 / 变更历史 -5）：
+        // 与「编辑」同索引时两者先后不确定
+        index: -28,
         // 流程轨迹钻取：后端已随行下发 instance_pk（未提交/草稿为空）；需实例查看权限
         show: (row: Record<string, unknown>) =>
           Boolean((row as { instance_pk?: string }).instance_pk) &&
-          hasAuth("retrieve:SystemApprovalInstance") &&
-          -28,
+          hasAuth("retrieve:SystemApprovalInstance"),
         onClick: ({ row }) =>
           openInstanceDetail({
             pk: (row as { instance_pk?: string }).instance_pk,

@@ -134,7 +134,8 @@ export function useApprovalRowActions({
                 link: true
               },
               onClick: ({ row }) => openReject(row),
-              show: row => (auth.reject && canActRow(row) ? 5 : false)
+              index: 5,
+              show: row => Boolean(auth.reject && canActRow(row))
             },
             relatedLogsButton
           ]

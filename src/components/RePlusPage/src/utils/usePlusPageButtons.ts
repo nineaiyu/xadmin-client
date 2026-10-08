@@ -85,10 +85,11 @@ export function usePlusPageButtons({
       onClick: ({ row }) => {
         handleAddOrEdit(false, row);
       },
+      index: -30,
       show: row =>
-        !hideEdit && (auth.partialUpdate || auth.update) && ownerAllows(row)
-          ? -30
-          : false
+        Boolean(
+          !hideEdit && (auth.partialUpdate || auth.update) && ownerAllows(row)
+        )
     },
     {
       text: t("buttons.delete"),
@@ -105,7 +106,8 @@ export function usePlusPageButtons({
           loading.value = false;
         });
       },
-      show: row => (auth.destroy && ownerAllows(row) ? -20 : false)
+      index: -20,
+      show: row => Boolean(auth.destroy && ownerAllows(row))
     },
     {
       code: "detail",
@@ -130,7 +132,8 @@ export function usePlusPageButtons({
         }
       },
       tooltip: { content: t("buttons.detail") },
-      show: hideDetail ? false : auth.list || auth.retrieve ? -10 : false
+      index: -10,
+      show: hideDetail ? false : Boolean(auth.list || auth.retrieve)
     },
     {
       text: t("buttons.changeHistory"),
@@ -146,7 +149,8 @@ export function usePlusPageButtons({
       tooltip: { content: t("buttons.changeHistory") },
       // 页面在 getDefaultAuths 中声明 changeHistory 且菜单授予
       // changeHistory:<ComponentName> 权限码时显示（用户管理页已开启示范）
-      show: hideChangeHistory ? false : auth.changeHistory ? -5 : false
+      index: -5,
+      show: hideChangeHistory ? false : Boolean(auth.changeHistory)
     }
   ];
 
@@ -175,7 +179,8 @@ export function usePlusPageButtons({
       onClick: () => {
         treeProps.value.checkStrictly = !treeProps.value.checkStrictly;
       },
-      show: isTree ? -30 : false
+      index: -30,
+      show: isTree
     },
     {
       text: t("buttons.add"),
@@ -187,7 +192,8 @@ export function usePlusPageButtons({
       onClick: ({ row }) => {
         handleAddOrEdit(true, row);
       },
-      show: auth.create ? -30 : false
+      index: -30,
+      show: Boolean(auth.create)
     },
     {
       code: "export",
@@ -209,7 +215,8 @@ export function usePlusPageButtons({
         });
       },
       tooltip: { content: t("exportImport.export") },
-      show: auth.exportData ? -20 : false
+      index: -20,
+      show: Boolean(auth.exportData)
     },
     {
       code: "import",
@@ -228,7 +235,8 @@ export function usePlusPageButtons({
         });
       },
       tooltip: { content: t("exportImport.import") },
-      show: auth.importData ? -10 : false
+      index: -10,
+      show: Boolean(auth.importData)
     }
   ];
 

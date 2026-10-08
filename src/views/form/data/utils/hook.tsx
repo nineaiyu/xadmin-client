@@ -136,7 +136,8 @@ export function useFormData() {
           link: true,
           "data-testid": "form-data-detail"
         },
-        show: () => -10,
+        index: -10,
+        show: true,
         onClick: ({ row }) => openDetail(row as FormDataItem)
       }
     ]

@@ -128,23 +128,24 @@ export function useTaskExecution(tableRef?: Ref) {
         text: t("taskCenter.cancel"),
         code: "cancel",
         props: { type: "warning", link: true },
-        show: (row: RecordType) =>
-          canCancel && asRow(row).can_cancel ? -40 : false,
+        index: -40,
+        show: (row: RecordType) => canCancel && !!asRow(row).can_cancel,
         onClick: ({ row }) => runCenterAction(asRow(row), "cancel")
       },
       {
         text: t("taskCenter.rerun"),
         code: "rerun",
         props: { type: "primary", link: true },
-        show: (row: RecordType) =>
-          canRerun && asRow(row).can_rerun ? -30 : false,
+        index: -30,
+        show: (row: RecordType) => canRerun && !!asRow(row).can_rerun,
         onClick: ({ row }) => runCenterAction(asRow(row), "rerun")
       },
       {
         text: t("taskCenter.download"),
         code: "download",
         props: { type: "primary", link: true },
-        show: (row: RecordType) => (asRow(row).product_has_file ? -20 : false),
+        index: -20,
+        show: (row: RecordType) => !!asRow(row).product_has_file,
         onClick: ({ row }) => download(asRow(row))
       },
       {
