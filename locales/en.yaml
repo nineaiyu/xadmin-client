@@ -942,6 +942,10 @@ approvalRule:
   formPaths: Path Patterns
   # angle brackets wrapped in literal interpolation {'<'} - raw <pk> is detected as HTML by message-compiler
   formPathsTip: "One regex per line; matching requests are approved level by level (e.g. api/demo/book/(?P{'<'}pk{'>'}[^/.]+)$)"
+  formMethods: Limited Methods
+  methodsPlaceholder: Empty = all methods
+  methodsTip: When set, the rule matches only requests using these methods (HEAD matches GET)
+  methodsAll: All methods
   pathRequired: At least one path pattern is required
   pathsPlaceholder: Select the endpoints that require approval
   pathsTip: Selected endpoints are matched by path; only operations registered for approval (delete / batch delete etc.) are actually intercepted

@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { AxiosInstance } from "axios";
 
 const {
   instanceMock,
@@ -19,7 +18,7 @@ const {
       response: { use: responseUse }
     },
     request
-  } as unknown as AxiosInstance;
+  };
   // 捕获注册进来的拦截器回调，供审批令牌生命周期用例直接驱动
   const interceptorHooks = {
     requestResolved: undefined as ((config: unknown) => unknown) | undefined,

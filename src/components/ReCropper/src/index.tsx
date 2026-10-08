@@ -17,7 +17,6 @@ import {
   debounce,
   delay,
   downloadByBase64,
-  isArray,
   useResizeObserver
 } from "@pureadmin/utils";
 import {
@@ -47,11 +46,16 @@ import {
   resolveImageQuality
 } from "./utils";
 
+/** 裁剪器命令：模板按钮 / 长按手势触发的动作集合（对应 Cropper 实例方法） */
+type CropperCommand =
+  "reset" | "move" | "scaleX" | "scaleY" | "rotate" | "zoom";
+
 export default defineComponent({
   name: "ReCropper",
   props: cropperProps,
   setup(props, { attrs, emit }) {
-    const tippyElRef = ref<ElRef<HTMLImageElement>>();
+    // tippy 挂载容器（模板最外层 div），非 img
+    const tippyElRef = ref<ElRef<HTMLDivElement>>();
     const imgElRef = ref<ElRef<HTMLImageElement>>();
     const cropper = ref<Nullable<Cropper>>();
     const inCircled = ref(props.circled);
@@ -110,7 +114,8 @@ export default defineComponent({
       scaleY = 1;
     });
 
-    useResizeObserver(tippyElRef as unknown as Ref<HTMLDivElement>, () =>
+    // useResizeObserver 的 ElementRef 声明为非空 value：容器 ref 的可空性在此收窄
+    useResizeObserver(tippyElRef as Ref<HTMLDivElement>, () =>
       handCropper("reset")
     );
 
@@ -183,7 +188,7 @@ export default defineComponent({
       );
     }
 
-    function handCropper(event: string, arg?: number | Array<number>) {
+    function handCropper(event: CropperCommand, arg?: number | Array<number>) {
       if (event === "scaleX") {
         scaleX = arg = scaleX === -1 ? 1 : -1;
       }
@@ -191,14 +196,27 @@ export default defineComponent({
       if (event === "scaleY") {
         scaleY = arg = scaleY === -1 ? 1 : -1;
       }
-      const cropperApi = cropper.value as unknown as Record<
-        string,
-        ((...args: unknown[]) => void) | undefined
-      >;
-      if (arg && isArray(arg)) {
-        cropperApi?.[event]?.(...arg);
-      } else {
-        cropperApi?.[event]?.(arg);
+      const instance = cropper.value;
+      if (!instance) return;
+      switch (event) {
+        case "reset":
+          instance.reset();
+          break;
+        case "move":
+          if (Array.isArray(arg)) instance.move(arg[0], arg[1]);
+          break;
+        case "scaleX":
+          instance.scaleX(arg as number);
+          break;
+        case "scaleY":
+          instance.scaleY(arg as number);
+          break;
+        case "rotate":
+          instance.rotate(arg as number);
+          break;
+        case "zoom":
+          instance.zoom(arg as number);
+          break;
       }
     }
 

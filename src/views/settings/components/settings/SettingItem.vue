@@ -55,9 +55,18 @@ const addOrEditData = ref<{
   formData: {}
 });
 
-/** PlusForm 列（框架列元数据与 plus-pro 列在边界收窄） */
-const formColumns = computed(
-  () => addOrEditData.value.addOrEditColumns as unknown as PlusColumn[]
+/**
+ * PlusForm 列：从框架列元数据逐项派生（plus-pro 必填 prop 补齐；
+ * 框架列在 UnwrapRef 映射后按索引访问字段，避免交叉类型属性丢失）
+ */
+const formColumns = computed<PlusColumn[]>(() =>
+  addOrEditData.value.addOrEditColumns.map(
+    column =>
+      ({
+        ...column,
+        prop: String(column["prop"] ?? "")
+      }) as PlusColumn
+  )
 );
 
 // 表单值变化对外广播（回显/编辑都会触发），水印页据此做实时预览

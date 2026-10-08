@@ -110,7 +110,7 @@ const loadMetrics = async () => {
       .metrics(metricsDays.value)
       .catch(() => null);
     if (res?.code === SUCCESS_CODE) {
-      metrics.value = res.data as unknown as AiMetrics;
+      metrics.value = res.data as AiMetrics;
     }
   } finally {
     metricsLoading.value = false;

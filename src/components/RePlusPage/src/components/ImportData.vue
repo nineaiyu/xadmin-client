@@ -72,9 +72,9 @@ const props = withDefaults(defineProps<FormProps>(), {
       template_id: "",
       ignore_unknown: true,
       api: {
-        exportData: null
+        exportData: undefined
       }
-    }) as unknown as FormInline
+    }) as FormInline
 });
 const { t } = useI18n();
 

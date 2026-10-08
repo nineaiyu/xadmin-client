@@ -54,7 +54,7 @@ function makeCtx({
     reissue: vi.fn(),
     resolve: vi.fn(),
     reject: vi.fn()
-  } as unknown as Parameters<
+  } as Parameters<
     NonNullable<(typeof SEND_ERROR_STRATEGIES)[number]>["match"]
   >[0];
 }

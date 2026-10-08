@@ -27,7 +27,7 @@ const makeCtx = (inputType: string): PlusColumnContext => ({
 });
 
 const makeColumn = (inputType: string): PageColumn =>
-  ({ _column: { input_type: inputType } }) as unknown as PageColumn;
+  ({ _column: { input_type: inputType } }) as PageColumn;
 
 const taggingHandler: PlusColumnHandler = (item, ctx) => {
   (item as { tagged?: boolean }).tagged = true;

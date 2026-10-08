@@ -55,7 +55,7 @@ export function usePlusPageForm({
   ) => {
     const pk = (row?.pk ?? row?.id) as string | number;
     // 影响面预检：有引用先弹窗确认；取消时收尾按钮 loading
-    if (!(await confirmImpact(rawApi as unknown as BaseApi, [pk], t))) {
+    if (!(await confirmImpact(rawApi as BaseApi, [pk], t))) {
       requestEnd?.();
       return;
     }
@@ -76,7 +76,7 @@ export function usePlusPageForm({
       return;
     }
     const pks = getSelectPks("pk");
-    if (!(await confirmImpact(rawApi as unknown as BaseApi, pks, t))) {
+    if (!(await confirmImpact(rawApi as BaseApi, pks, t))) {
       return;
     }
 

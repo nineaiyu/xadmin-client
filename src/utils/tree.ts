@@ -182,7 +182,7 @@ export const handleTree = <T extends object>(
 
   for (const d of data) {
     // 行字段动态，读取父级引用走 unknown 边界；JS 对象键会将 undefined/null 字符串化，与原实现一致
-    const row = d as unknown as Record<string, unknown>;
+    const row = d as Record<string, unknown>;
     const parentId =
       (row[config.parentId] as { pk?: PropertyKey } | undefined)?.pk ??
       (row[config.parentId] as PropertyKey | undefined);
@@ -194,7 +194,7 @@ export const handleTree = <T extends object>(
   }
 
   for (const d of data) {
-    const row = d as unknown as Record<string, unknown>;
+    const row = d as Record<string, unknown>;
     const parentId =
       (row[config.parentId] as { pk?: PropertyKey } | undefined)?.pk ??
       (row[config.parentId] as PropertyKey | undefined);
@@ -208,7 +208,7 @@ export const handleTree = <T extends object>(
   }
 
   function adaptToChildrenList(o: T) {
-    const row = o as unknown as Record<string, unknown>;
+    const row = o as Record<string, unknown>;
     const key = row[config.id] as PropertyKey;
     if (childrenListMap[key] !== null) {
       row[config.childrenList] = childrenListMap[key];

@@ -59,7 +59,7 @@ export function useDataset(tableRef: Ref) {
     // 元数据拉取失败点名（此前无捕获：失败后编辑弹窗模型/字段下拉恒空，无从判断）
     const res = await datasetApi.meta().catch(() => null);
     if (res?.code === SUCCESS_CODE) {
-      meta.value = res.data as unknown as DatasetMeta;
+      meta.value = res.data as DatasetMeta;
     } else {
       message(t("dataDataset.metaLoadFailed"), { type: "warning" });
     }

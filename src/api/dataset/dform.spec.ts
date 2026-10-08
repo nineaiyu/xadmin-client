@@ -15,9 +15,9 @@ vi.mock("@/utils/http", () => ({
 
 import { http } from "@/utils/http";
 import {
+  createFormDataApi,
   designerApi,
   dynamicFormApi,
-  formDataApi,
   submissionApi
 } from "./dform";
 
@@ -138,15 +138,13 @@ describe("submissionApi 填报与提交", () => {
   });
 });
 
-describe("formDataApi 表单数据（管理端）", () => {
+describe("createFormDataApi 表单数据（管理端，按页实例）", () => {
   beforeEach(() => {
     requestMock.mockClear();
-    formDataApi.form = "";
-    formDataApi.filterData = "";
-    formDataApi.dataFields = "";
   });
 
-  it("list 自动携带页面侧参数（表单 / 物化筛选 / 动态列收缩）", () => {
+  it("list 自动携带本实例页面侧参数（表单 / 物化筛选 / 动态列收缩）", () => {
+    const formDataApi = createFormDataApi();
     formDataApi.form = "f1";
     formDataApi.filterData = '{"level":"P5"}';
     formDataApi.dataFields = "kind,reason";
@@ -167,7 +165,8 @@ describe("formDataApi 表单数据（管理端）", () => {
     );
   });
 
-  it("exportData 下载参数同样携带页面侧参数", () => {
+  it("exportData 下载参数同样携带本实例页面侧参数", () => {
+    const formDataApi = createFormDataApi();
     formDataApi.form = "f1";
     formDataApi.dataFields = "kind,reason";
     formDataApi.exportData({ type: "csv" });
@@ -179,11 +178,42 @@ describe("formDataApi 表单数据（管理端）", () => {
   });
 
   it("页面侧参数缺省时不占用查询串", () => {
+    const formDataApi = createFormDataApi();
     formDataApi.list();
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
       "/api/dataset/form-data",
       { params: {}, data: {} },
+      {}
+    );
+  });
+
+  it("实例隔离：上一实例的参数不泄漏进新实例（工厂化核心保证）", () => {
+    const first = createFormDataApi();
+    first.form = "f1";
+    first.filterData = '{"level":"P5"}';
+    first.dataFields = "kind";
+    const second = createFormDataApi();
+    second.list();
+    expect(requestMock).toHaveBeenLastCalledWith(
+      "get",
+      "/api/dataset/form-data",
+      { params: {}, data: {} },
+      {}
+    );
+    // 首实例参数不受新实例影响，仍随请求携带
+    first.list();
+    expect(requestMock).toHaveBeenLastCalledWith(
+      "get",
+      "/api/dataset/form-data",
+      {
+        params: {
+          form: "f1",
+          filter_data: '{"level":"P5"}',
+          data_fields: "kind"
+        },
+        data: {}
+      },
       {}
     );
   });

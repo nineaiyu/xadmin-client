@@ -159,9 +159,7 @@ onMounted(() => {
     .then(res => {
       if (res.code === SUCCESS_CODE) {
         const authData = res.data as RecordType;
-        Object.keys(authData).forEach(key => {
-          (authInfo as unknown as RecordType)[key] = authData[key];
-        });
+        Object.assign(authInfo, authData);
         void initToken();
         loginDay.value = authInfo.lifetime ?? 1;
         formatLoginDayOptions();

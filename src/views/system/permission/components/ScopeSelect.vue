@@ -81,7 +81,7 @@ function setExpandAll(expanded: boolean) {
 
 const filterNode: FilterNodeMethodFunction = (value, data) => {
   if (!value) return true;
-  const node = data as unknown as ScopeNode;
+  const node = data as ScopeNode;
   return (
     node.title.includes(String(value)) ||
     String(node.pk).includes(String(value))

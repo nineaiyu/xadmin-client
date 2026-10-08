@@ -42,5 +42,7 @@ export function searchGlobal(
 ): Promise<GlobalSearchResult> {
   const params: Record<string, string> = { keyword };
   if (scope) params.scope = scope;
-  return globalSearchApi.list(params) as unknown as Promise<GlobalSearchResult>;
+  // 响应为全局搜索专有形状（keyword + groups），不是标准分页列表，
+  // 直接走泛型请求，避免经 ListResult 再双重断言
+  return globalSearchApi.request<GlobalSearchResult>("get", params, {});
 }

@@ -81,7 +81,7 @@ function fetchStats() {
   load()
     .then(res => {
       if (res.code === SUCCESS_CODE && res.data) {
-        stats.value = res.data as unknown as ApprovalStatsData;
+        stats.value = res.data as ApprovalStatsData;
       }
     })
     .catch(() => {

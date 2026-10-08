@@ -53,12 +53,12 @@ const load = async () => {
   loading.value = true;
   errorMsg.value = "";
   try {
-    const res = await datasetApi.execute(props.datasetPk);
+    const res = await datasetApi.execute<ExecuteResult>(props.datasetPk);
     if (res.code !== SUCCESS_CODE) {
       errorMsg.value = String(res.detail ?? t("dataReport.tableLoadFailed"));
       return;
     }
-    const result = res.data as unknown as ExecuteResult;
+    const result = res.data;
     available.value = result?.columns ?? [];
     rows.value = (result?.rows ?? []).slice(0, props.limit);
     total.value = result?.total ?? rows.value.length;

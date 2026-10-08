@@ -942,6 +942,10 @@ approvalRule:
   formPaths: 匹配路径
   # 尖括号用字面量插值 {'<'} 包裹：直接写 <pk> 会被 message-compiler 判定为 HTML 而告警
   formPathsTip: "每行一条路径正则，命中即按本规则逐级审批（如 api/demo/book/(?P{'<'}pk{'>'}[^/.]+)$）"
+  formMethods: 限定方法
+  methodsPlaceholder: 留空 = 不限方法
+  methodsTip: 非空时仅当请求方法在清单内才命中本规则（HEAD 按 GET 匹配）
+  methodsAll: 全部方法
   pathRequired: 请至少填写一条匹配路径
   pathsPlaceholder: 从接口清单中选择需要审批的接口
   pathsTip: 勾选接口后按路径拦截；实际拦截仅发生在删除/批量删除等已登记审批的操作上

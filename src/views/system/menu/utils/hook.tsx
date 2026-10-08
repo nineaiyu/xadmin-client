@@ -7,7 +7,7 @@
  * - useMenuTransfer      导入导出通道；
  * - useMenuMeta          字典/接口清单/关联模型/组件路径等下拉与候选装配；
  * - useMenuFilter        关键字/类型/状态/展开层级与可见树；
- * - useMenuTree          树交互域：展开应用、勾选联动、拖拽约束/排序、多选与视口高度；
+ * - useMenuTree/useMenuSelection/useMenuOrder/useTreeHeight  树交互域拆分（展开、多选、排序、视口高度）；
  * - useMenuDrawer        新增/编辑/克隆/重命名/权限码抽屉编排；
  * - useMenuRowActions    行点击与行操作分发（含未保存拦截，工具栏复用）；
  * - useMenuContextMenu   行右键菜单状态与动作清单（与行内下拉共用声明）；
@@ -20,7 +20,9 @@ import { useI18n } from "vue-i18n";
 import { hasAuth, usePageAuth } from "@/router/utils";
 import { useMenuData } from "./useMenuData";
 import { useMenuFilter } from "./useMenuFilter";
-import { useMenuOrder, useMenuSelection, useMenuTree } from "./useMenuTree";
+import { useMenuTree } from "./useMenuTree";
+import { useMenuSelection } from "./useMenuSelection";
+import { useMenuOrder } from "./useMenuOrder";
 import { useMenuDrawer } from "./useMenuDrawer";
 import { useMenuRowActions } from "./useMenuRowActions";
 import { useMenuContextMenu } from "./useMenuContextMenu";

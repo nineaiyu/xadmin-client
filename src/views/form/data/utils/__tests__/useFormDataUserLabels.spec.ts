@@ -1,13 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { nextTick, ref } from "vue";
 
-const userOptionsMock = vi.hoisted(() => vi.fn());
-
-vi.mock("@/api/dataset/dform", () => ({
-  formDataApi: {
-    userOptions: userOptionsMock
-  }
-}));
+const userOptionsMock = vi.fn();
 
 import { useFormDataUserLabels } from "../useFormDataUserLabels";
 import type { FormField } from "@/api/dataset/dform";
@@ -20,6 +14,8 @@ async function setup(schemaFields: FormField[]) {
   const fields = ref(schemaFields);
   const tableRef = ref();
   const { userLabels } = useFormDataUserLabels({
+    // 工厂化后接口实例由页面注入：测试直接注入桩，无需模块级 mock
+    api: { userOptions: userOptionsMock },
     schemaFields: fields,
     tableRef
   });

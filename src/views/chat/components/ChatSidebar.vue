@@ -81,12 +81,15 @@ const filteredContacts = computed(() =>
   filterByName(props.contacts, item => item.nickname || item.username || "")
 );
 
-function filterByName<T>(list: T[], titleOf: (_item: T) => string) {
+function filterByName<T extends object>(
+  list: T[],
+  titleOf: (_item: T) => string
+) {
   const word = keyword.value.trim().toLowerCase();
   if (!word) return list;
   return list.filter(item => {
     if (titleOf(item).toLowerCase().includes(word)) return true;
-    const extra = (item as unknown as RoomLike).last_message;
+    const extra = (item as RoomLike).last_message;
     return typeof extra === "string" && extra.toLowerCase().includes(word);
   });
 }

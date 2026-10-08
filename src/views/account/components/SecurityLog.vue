@@ -18,6 +18,7 @@ const { t, api, auth, pagination, listColumnsFormat } = useUserLoginLog();
       :auth="auth"
       :operation="false"
       :selection="false"
+      :fetch-search-fields="false"
       :pagination="pagination"
       :listColumnsFormat="listColumnsFormat"
       title=""

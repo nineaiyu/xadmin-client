@@ -20,9 +20,7 @@ vi.mock("@/utils/message", () => ({ message: vi.fn() }));
 vi.mock("@/hooks/useConfirm", () => ({ useConfirm: vi.fn() }));
 
 const t = ((key: string, params?: Record<string, unknown>) =>
-  params
-    ? `${key}:${JSON.stringify(params)}`
-    : key) as unknown as MenuActionContext["t"];
+  params ? `${key}:${JSON.stringify(params)}` : key) as MenuActionContext["t"];
 
 const context = (auth: MenuAuths): MenuActionContext => ({
   t,

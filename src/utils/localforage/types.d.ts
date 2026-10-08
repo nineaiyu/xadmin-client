@@ -159,7 +159,8 @@ export interface LocalForage extends LocalForageDbMethods {
 export interface ProxyStorage {
   setItem<T>(k: string, v: T, m: number): Promise<T>;
 
-  getItem<T>(k: string): Promise<T>;
+  /** 过期 / 不存在时为 null */
+  getItem<T>(k: string): Promise<T | null>;
 
   removeItem(k: string): Promise<void>;
 

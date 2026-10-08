@@ -25,7 +25,8 @@ export const renderBooleanSegmentedOption = (
  * 格式化后端选择列表，如果是obj的数据，isObjValue为true
  */
 export const formatAddOrEditOptions = (
-  data: Array<{
+  // 允许空值输入（后端 choices 缺省 / 未下发）：实现按可选处理，返回空数组
+  data?: Array<{
     value: unknown;
     label?: unknown;
     disabled?: boolean;

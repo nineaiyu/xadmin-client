@@ -8,7 +8,8 @@ import {
   filterTree,
   formatFlatteningRoutes,
   getKeyList,
-  store
+  store,
+  toMenuTree
 } from "../utils";
 import type { RouteRecordRaw } from "vue-router";
 import { useMultiTagsStoreHook } from "./multiTags";
@@ -35,14 +36,15 @@ export const usePermissionStore = defineStore("pure-permission", {
     },
     /** 组装整体路由生成的菜单 */
     handleWholeMenus(routes: RouteRecordRaw[]) {
-      this.wholeMenus = filterNoPermissionTree(
-        // Pinia 会对 state 做 UnwrapRef 映射，路由联合类型经映射后与 RouteRecordRaw 失去直接可赋值性，需在边界断言
-        filterTree(
-          ascending(this.constantMenus.concat(routes) as RouteRecordRaw[])
+      // 路由联合类型与菜单消费类型不重叠：经 toMenuTree 显式转换（path/name/meta/children）
+      this.wholeMenus = toMenuTree(
+        filterNoPermissionTree(
+          filterTree(
+            ascending(this.constantMenus.concat(routes) as RouteRecordRaw[])
+          )
         )
-      ) as unknown as menuType[];
+      );
       this.flatteningRoutes = formatFlatteningRoutes(
-        // 同上：UnwrapRef 映射后需在边界断言
         this.constantMenus.concat(routes) as RouteRecordRaw[]
       );
     },

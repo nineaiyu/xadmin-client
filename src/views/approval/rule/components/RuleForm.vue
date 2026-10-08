@@ -7,8 +7,9 @@ import { SUCCESS_CODE } from "@/api/types";
 import { loadPatScopeCatalog } from "@/api/user/token";
 import { message } from "@/utils/message";
 import type { ScopeGroup } from "@/utils/scopeDisplay";
-import { joinValues, splitValues } from "@/views/approval/utils/assigneeValues";
-import { useAssigneeCandidates } from "@/views/approval/utils/useAssigneeCandidates";
+import { splitValues } from "@/views/approval/utils/assigneeValues";
+import RuleLevelsEditor from "./RuleLevelsEditor.vue";
+import { createLevelRow, type LevelRow } from "../utils/types";
 
 defineOptions({ name: "ApprovalRuleForm" });
 
@@ -28,14 +29,16 @@ const props = defineProps<{ row?: RecordType | null }>();
 const { t, te } = useI18n();
 const formRef = ref<FormInstance>();
 
-type LevelRow = {
-  name: string;
-  approve_type: string;
-  assignee_type: string;
-  assignee_value: string;
-  /** 级次行内 el-select 的展示值（多选数组），提交时 join 成逗号串 */
-  assignee_list: string[];
-};
+/** 限定方法候选项（与后端 RULE_METHODS 白名单同源；空清单 = 不限方法） */
+const METHOD_OPTIONS = [
+  "GET",
+  "POST",
+  "PUT",
+  "PATCH",
+  "DELETE",
+  "OPTIONS",
+  "HEAD"
+];
 
 const form = reactive({
   name: "",
@@ -43,6 +46,8 @@ const form = reactive({
   pathSelected: [] as Array<string>,
   /** 自定义路径正则（一行一条） */
   customPaths: "",
+  /** 限定命中的 HTTP 方法（空 = 全部方法） */
+  methods: [] as Array<string>,
   priority: 0,
   is_active: true,
   remark: "",
@@ -113,48 +118,7 @@ const customPathList = computed(() =>
     .filter(Boolean)
 );
 
-/* ---------------- 审批人选择器（候选目录：与流程节点编辑器共用） ---------------- */
-
-const { userOptions, candidateTruncated, roleOptions, postOptions } =
-  useAssigneeCandidates();
-
-/** 级次行内下拉回写：多选数组 → 逗号串（服务端契约） */
-function updateLevelValue(index: number, value: unknown) {
-  const level = form.levels[index];
-  if (!level) return;
-  level.assignee_list = (Array.isArray(value) ? value : [value]).map(String);
-  level.assignee_value = joinValues(value);
-}
-
-/** 切换审批人类型：清空已选（用户名与角色 code 不通用） */
-function onAssigneeTypeChange(index: number) {
-  const level = form.levels[index];
-  if (!level) return;
-  level.assignee_list = [];
-  level.assignee_value = "";
-}
-
-function addLevel() {
-  form.levels.push({
-    name: "",
-    approve_type: "OR",
-    assignee_type: "user",
-    assignee_value: "",
-    assignee_list: []
-  });
-}
-
-function removeLevel(index: number) {
-  form.levels.splice(index, 1);
-}
-
-/** 上移/下移：级次顺序即审批顺序（服务端按数组下标重排 order） */
-function moveLevel(index: number, delta: number) {
-  const target = index + delta;
-  if (target < 0 || target >= form.levels.length) return;
-  const [row] = form.levels.splice(index, 1);
-  form.levels.splice(target, 0, row);
-}
+/* 审批人候选与级次增删改上移下移：见 RuleLevelsEditor（同一份候选目录） */
 
 onMounted(async () => {
   if (props.row) {
@@ -162,6 +126,7 @@ onMounted(async () => {
     form.priority = Number(props.row.priority ?? 0);
     form.is_active = Boolean(props.row.is_active);
     form.remark = String(props.row.remark ?? "");
+    form.methods = ((props.row.methods ?? []) as Array<string>).map(String);
     form.levels = ((props.row.levels ?? []) as Array<RecordType>).map(
       level => ({
         name: String(level.name ?? ""),
@@ -172,7 +137,7 @@ onMounted(async () => {
       })
     );
   }
-  if (form.levels.length === 0) addLevel();
+  if (form.levels.length === 0) form.levels.push(createLevelRow());
 
   await loadScopeGroups();
 
@@ -205,6 +170,7 @@ async function getPayload() {
   return {
     name: form.name.trim(),
     path_patterns: paths,
+    methods: form.methods,
     priority: Number(form.priority ?? 0),
     is_active: form.is_active,
     remark: form.remark?.trim() || null,
@@ -223,13 +189,6 @@ defineExpose({ getPayload });
     label-width="96px"
     class="pr-4"
   >
-    <el-alert
-      v-if="candidateTruncated"
-      type="warning"
-      :closable="false"
-      class="mb-2"
-      :title="t('approval.candidateTruncated')"
-    />
     <el-form-item :label="t('approvalRule.formName')" prop="name">
       <el-input
         v-model="form.name"
@@ -286,6 +245,30 @@ defineExpose({ getPayload });
       </div>
     </el-form-item>
 
+    <el-form-item :label="t('approvalRule.formMethods')">
+      <div class="w-full">
+        <el-select
+          v-model="form.methods"
+          multiple
+          clearable
+          collapse-tags
+          collapse-tags-tooltip
+          class="w-full!"
+          :placeholder="t('approvalRule.methodsPlaceholder')"
+        >
+          <el-option
+            v-for="method in METHOD_OPTIONS"
+            :key="method"
+            :value="method"
+            :label="method"
+          />
+        </el-select>
+        <div class="el-form-item__help mt-1">
+          {{ t("approvalRule.methodsTip") }}
+        </div>
+      </div>
+    </el-form-item>
+
     <el-form-item :label="t('approvalRule.formPriority')">
       <el-input-number
         v-model="form.priority"
@@ -304,167 +287,7 @@ defineExpose({ getPayload });
     </el-form-item>
 
     <el-form-item :label="t('approvalRule.levels')">
-      <div class="w-full">
-        <p class="mb-2 text-xs text-(--el-text-color-regular)">
-          {{ t("approvalRule.levelsTip") }}
-        </p>
-        <el-table :data="form.levels" size="small" border>
-          <el-table-column
-            type="index"
-            width="50"
-            :label="t('approvalRule.levelOrder')"
-          />
-          <el-table-column :label="t('approvalRule.levelName')" width="120">
-            <template #default="{ row }">
-              <el-input v-model="row.name" size="small" />
-            </template>
-          </el-table-column>
-          <el-table-column :label="t('approvalRule.approveType')" width="120">
-            <template #default="{ row }">
-              <el-select v-model="row.approve_type" size="small">
-                <el-option
-                  :label="t('approvalRule.approveTypeOR')"
-                  value="OR"
-                />
-                <el-option
-                  :label="t('approvalRule.approveTypeAND')"
-                  value="AND"
-                />
-              </el-select>
-            </template>
-          </el-table-column>
-          <el-table-column :label="t('approvalRule.levelType')" width="110">
-            <template #default="{ row, $index }">
-              <el-select
-                v-model="row.assignee_type"
-                size="small"
-                @change="onAssigneeTypeChange($index)"
-              >
-                <el-option
-                  :label="t('approvalRule.levelTypeUser')"
-                  value="user"
-                />
-                <el-option
-                  :label="t('approvalRule.levelTypeRole')"
-                  value="role"
-                />
-                <el-option
-                  :label="t('approvalRule.levelTypePost')"
-                  value="post"
-                />
-              </el-select>
-            </template>
-          </el-table-column>
-          <el-table-column
-            :label="t('approvalRule.levelAssignee')"
-            min-width="210"
-          >
-            <template #default="{ row, $index }">
-              <!-- 指定用户：远程搜索 + 允许直接输入用户名兜底（无搜索结果时回车即录入） -->
-              <el-select
-                v-if="row.assignee_type === 'user'"
-                :model-value="row.assignee_list"
-                multiple
-                filterable
-                allow-create
-                default-first-option
-                size="small"
-                :placeholder="t('approvalRule.levelUserTip')"
-                @update:model-value="value => updateLevelValue($index, value)"
-              >
-                <el-option
-                  v-for="user in userOptions"
-                  :key="user.username"
-                  :label="user.label"
-                  :value="user.username"
-                />
-              </el-select>
-              <!-- 角色：下拉选择（值=角色 code，可直接输入 code 兜底） -->
-              <el-select
-                v-else-if="row.assignee_type === 'role'"
-                :model-value="row.assignee_list"
-                multiple
-                filterable
-                allow-create
-                default-first-option
-                size="small"
-                :placeholder="t('approvalRule.levelRoleTip')"
-                @update:model-value="value => updateLevelValue($index, value)"
-              >
-                <el-option
-                  v-for="role in roleOptions"
-                  :key="role.code"
-                  :label="`${role.name}(${role.code})`"
-                  :value="role.code"
-                />
-              </el-select>
-              <!-- 岗位：下拉选择（值=岗位 code，仅启用岗位的在岗用户参与解析） -->
-              <el-select
-                v-else-if="row.assignee_type === 'post'"
-                :model-value="row.assignee_list"
-                multiple
-                filterable
-                allow-create
-                default-first-option
-                size="small"
-                :placeholder="t('approvalRule.levelPostTip')"
-                @update:model-value="value => updateLevelValue($index, value)"
-              >
-                <el-option
-                  v-for="post in postOptions"
-                  :key="post.code"
-                  :label="`${post.name}(${post.code})`"
-                  :value="post.code"
-                />
-              </el-select>
-              <!-- 未知/历史类型兜底：纯文本输入 -->
-              <el-input
-                v-else
-                :model-value="row.assignee_value"
-                size="small"
-                :placeholder="t('approvalRule.levelAssigneeFallback')"
-                @update:model-value="
-                  value => updateLevelValue($index, splitValues(String(value)))
-                "
-              />
-            </template>
-          </el-table-column>
-          <el-table-column :label="t('approvalRule.levelActions')" width="190">
-            <template #default="{ $index }">
-              <el-button
-                link
-                type="primary"
-                size="small"
-                :disabled="$index === 0"
-                @click="moveLevel($index, -1)"
-              >
-                {{ t("approvalRule.moveUp") }}
-              </el-button>
-              <el-button
-                link
-                type="primary"
-                size="small"
-                :disabled="$index === form.levels.length - 1"
-                @click="moveLevel($index, 1)"
-              >
-                {{ t("approvalRule.moveDown") }}
-              </el-button>
-              <el-button
-                link
-                type="danger"
-                size="small"
-                :disabled="form.levels.length <= 1"
-                @click="removeLevel($index)"
-              >
-                {{ t("buttons.delete") }}
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-        <el-button class="mt-2" size="small" @click="addLevel">
-          {{ t("approvalRule.addLevel") }}
-        </el-button>
-      </div>
+      <RuleLevelsEditor v-model:levels="form.levels" />
     </el-form-item>
   </el-form>
 </template>

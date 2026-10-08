@@ -67,7 +67,7 @@ const fetchHistory = () => {
         return;
       }
       // 操作日志接口返回宽表行（RecordType[]），这里只消费变更历史所需字段
-      dataList.value = res.data.results as unknown as HistoryRow[];
+      dataList.value = res.data.results as HistoryRow[];
       pagination.total = res.data.total ?? dataList.value.length;
     })
     .catch(() => {

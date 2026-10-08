@@ -31,8 +31,12 @@ vi.mock("./menuActions", () => ({
 import { message } from "@/utils/message";
 import { confirmBatchActive, confirmMenuDelete } from "./menuActions";
 
-function fakeApi(overrides: Record<string, unknown> = {}) {
+function fakeApi(
+  overrides: Record<string, unknown> = {}
+): Parameters<typeof useMenuMutations>[0]["api"] {
   return {
+    baseApi: "/api/system/menu",
+    request: vi.fn(),
     create: vi.fn(),
     partialUpdate: vi.fn(),
     destroy: vi.fn(),
@@ -40,12 +44,12 @@ function fakeApi(overrides: Record<string, unknown> = {}) {
     batchUpdate: vi.fn(),
     rank: vi.fn(),
     ...overrides
-  } as unknown as Parameters<typeof useMenuMutations>[0]["api"];
+  };
 }
 
 // 真实 t 为 vue-i18n ComposerTranslation（含 plural 重载）；单测用透传实现等价替换
 const passthroughT = ((key: string, params?: Record<string, unknown>) =>
-  params ? `${key}:${JSON.stringify(params)}` : key) as unknown as TFunction;
+  params ? `${key}:${JSON.stringify(params)}` : key) as TFunction;
 
 function makeDeps(api = fakeApi()) {
   return {

@@ -12,7 +12,7 @@ import MenuPermissionAuditDialog from "../components/MenuPermissionAuditDialog.v
 import type { useMenuData } from "./useMenuData";
 import type { useMenuFilter } from "./useMenuFilter";
 import type { useMenuDrawer } from "./useMenuDrawer";
-import type { useMenuSelection } from "./useMenuTree";
+import type { useMenuSelection } from "./useMenuSelection";
 import type { MenuRow } from "./types";
 
 type TFunction = ReturnType<typeof useI18n>["t"];

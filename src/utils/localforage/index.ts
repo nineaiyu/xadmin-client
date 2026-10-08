@@ -36,10 +36,10 @@ class StorageProxy implements ProxyStorage {
   }
 
   /**
-   * @description 从离线仓库中获取对应键名的值
+   * @description 从离线仓库中获取对应键名的值（过期 / 不存在时为 null）
    * @param k 键名
    */
-  public async getItem<T>(k: string): Promise<T> {
+  public async getItem<T>(k: string): Promise<T | null> {
     return new Promise((resolve, reject) => {
       this.storage
         .getItem<ExpiresData<T>>(k)
@@ -50,8 +50,8 @@ class StorageProxy implements ProxyStorage {
           ) {
             resolve(value.data);
           } else {
-            // 过期/不存在时按既有语义返回 null（ProxyStorage 的 Promise<T> 签名在类型层无法表达该分支）
-            resolve(null as unknown as T);
+            // 过期/不存在：如实返回 null（签名已声明 T | null）
+            resolve(null);
           }
         })
         .catch(err => {

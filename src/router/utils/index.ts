@@ -18,5 +18,7 @@ export {
   findRouteByPath,
   formatTwoStageRoutes,
   formatFlatteningRoutes,
-  filterNoPermissionTree
+  filterNoPermissionTree,
+  toMenuNode,
+  toMenuTree
 } from "./route-tree";

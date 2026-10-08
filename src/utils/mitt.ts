@@ -6,7 +6,7 @@ type Events = {
   openPanel: string;
   tagOnClick: string;
   logoChange: boolean;
-  tagViewsChange: string;
+  tagViewsChange: boolean;
   changLayoutRoute: string;
   tagViewsTagsStyle: string;
   imageInfo: {

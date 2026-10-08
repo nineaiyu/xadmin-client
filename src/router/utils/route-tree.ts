@@ -3,6 +3,33 @@ import type { RouteRecordName, RouteRecordRaw } from "vue-router";
 import { cloneDeep, intersection, isAllEmpty } from "@pureadmin/utils";
 import { buildHierarchyTree } from "@/utils/tree";
 import { useUserStoreHook } from "@/store/modules/user";
+import type { menuType } from "@/layout/types";
+
+/**
+ * 路由原始节点 → 菜单节点：按菜单 / 面包屑消费面取字段
+ * （path / name / meta / redirect，children 递归映射）。
+ *
+ * 路由联合类型与菜单消费类型在类型层不重叠，统一在此做一次显式转换，
+ * 避免各消费点出现双重断言。
+ */
+function toMenuNode(node: RouteRecordRaw): menuType {
+  return {
+    value: undefined,
+    name: typeof node.name === "string" ? node.name : undefined,
+    path: node.path,
+    redirect:
+      "redirect" in node && typeof node.redirect === "string"
+        ? node.redirect
+        : undefined,
+    meta: node.meta,
+    children: node.children?.map(toMenuNode)
+  };
+}
+
+/** 路由节点数组 → 菜单节点数组（见 toMenuNode） */
+function toMenuTree(nodes: RouteRecordRaw[]): menuType[] {
+  return nodes.map(toMenuNode);
+}
 
 /** 可参与 rank 排序/层级补齐的路由节点（parentId 由 buildHierarchyTree 运行时挂载） */
 type RankableRoute = {
@@ -92,8 +119,7 @@ function getParentPaths(value: string, routes: RouteRecordRaw[], key = "path") {
     for (let i = 0; i < routes.length; i++) {
       const item = routes[i];
       // 返回父级path（key 可为 path/name 等字符串键，按运行时键索引）
-      if ((item as unknown as Record<string, unknown>)[key] === value)
-        return parents;
+      if (item[key as keyof RouteRecordRaw] === value) return parents;
       // children不存在或为空则不递归
       const children = item.children;
       if (!Array.isArray(children) || children.length === 0) continue;
@@ -191,5 +217,7 @@ export {
   findRouteByPath,
   formatTwoStageRoutes,
   formatFlatteningRoutes,
-  filterNoPermissionTree
+  filterNoPermissionTree,
+  toMenuNode,
+  toMenuTree
 };

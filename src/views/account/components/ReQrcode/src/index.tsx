@@ -77,19 +77,15 @@ export default defineComponent({
         const _width: number = await getOriginWidth(unref(renderText), options);
         options.scale =
           props.width === 0 ? undefined : (props.width / _width) * 4;
-        const canvasRef = await toCanvas(
-          unref(wrapRef) as HTMLCanvasElement,
-          unref(renderText),
-          options
-        );
+        // 渲染目标即模板 canvas（wrapRef）：直接复用同一元素，无需依赖 toCanvas 的返回值类型
+        const canvasEl = unref(wrapRef) as HTMLCanvasElement;
+        await toCanvas(canvasEl, unref(renderText), options);
         if (props.logo) {
-          const url = await createLogoCode(
-            canvasRef as unknown as HTMLCanvasElement
-          );
+          const url = await createLogoCode(canvasEl);
           emit("done", url);
           loading.value = false;
         } else {
-          emit("done", (canvasRef as unknown as HTMLCanvasElement).toDataURL());
+          emit("done", canvasEl.toDataURL());
           loading.value = false;
         }
       } else {

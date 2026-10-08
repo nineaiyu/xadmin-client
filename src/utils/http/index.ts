@@ -156,10 +156,11 @@ class PureHttp {
     // 单独处理自定义请求/响应回调
     return new Promise((resolve, reject) => {
       PureHttp.axiosInstance
-        .request(config)
+        // 第二泛型显式声明响应类型：响应拦截器已把响应壳拆成业务数据（运行时即 T），
+        // 以此把运行时事实反映到类型层，避免双重断言
+        .request<unknown, T>(config)
         .then(response => {
-          // 响应拦截器已把响应壳拆成业务数据（运行时即 T），axios 类型层无此信息
-          resolve(response as unknown as T);
+          resolve(response as T);
         })
         .catch(error => {
           // 路由切换主动取消的请求静默失败，不打扰用户
@@ -184,9 +185,7 @@ class PureHttp {
               // 412-MFA 验证通过后经 send 重发，保留统一错误处理（同一 config 防递归弹窗）
               resend: () => this.send<T>(config),
               reissue: () =>
-                PureHttp.axiosInstance.request(
-                  config
-                ) as unknown as Promise<unknown>,
+                PureHttp.axiosInstance.request<unknown, unknown>(config),
               resolve: value => resolve(value as T),
               reject
             };

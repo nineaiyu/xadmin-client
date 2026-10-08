@@ -8,7 +8,7 @@ import {
   getFormRenderer,
   getSearchRenderer
 } from "../registry";
-import type { PageColumn, PlusColumnContext } from "../types";
+import type { PageColumn, PlusColumnContext, PlusColumnMeta } from "../types";
 
 /**
  * 「列表 / 详情渲染器成对」守护（Q6）。
@@ -72,19 +72,25 @@ const SEARCH_REGISTRY_TYPES = [
 
 const SEARCH_CLASSIFIED = new Set<string>([...SEARCH_REGISTRY_TYPES]);
 
-function makeColumn(inputType: string): PageColumn {
+function makeColumn(inputType: string): PageColumn & PlusColumnMeta {
   return {
     key: "field_a",
     label: "A",
     prop: "field_a",
     input_type: inputType,
-    choices: [{ value: "a", label: "A", color: "#f00" }]
-  } as unknown as PageColumn;
+    choices: [{ value: "a", label: "A", color: "#f00" }],
+    _column: {
+      key: "field_a",
+      label: "A",
+      input_type: inputType,
+      choices: [{ value: "a", label: "A", color: "#f00" }]
+    }
+  } as PageColumn & PlusColumnMeta;
 }
 
-function makeContext(column: PageColumn): PlusColumnContext {
+function makeContext(column: PageColumn & PlusColumnMeta): PlusColumnContext {
   return {
-    column: column as unknown as PlusColumnContext["column"],
+    column,
     t: (key: string) => key,
     te: () => false,
     localeName: "zh",
@@ -98,7 +104,7 @@ function apply(inputType: string): Record<string, unknown> {
   expect(handler, `渲染器注册表缺少 ${inputType}`).toBeTypeOf("function");
   const item = makeColumn(inputType);
   handler(item, makeContext(item));
-  return item as unknown as Record<string, unknown>;
+  return item as Record<string, unknown>;
 }
 
 describe("RePlusPage 详情/列表渲染器成对守护", () => {
@@ -156,7 +162,7 @@ describe("RePlusPage 详情/列表渲染器成对守护", () => {
     ) => unknown;
     const vnode = cellRenderer({
       row: { field_a: { value: "a", label: "A", color: "#f00" } }
-    } as unknown as TableColumnRenderer);
+    } as TableColumnRenderer);
     expect(vnode, "列表渲染器对 {value,label} 行数据不应产出空值").toBeTruthy();
   });
 

@@ -4,7 +4,7 @@ import type { menuType } from "@/layout/types";
 import { transformI18n } from "@/plugins/i18n";
 import { useRoute, useRouter, type RouteRecordRaw } from "vue-router";
 import { onMounted, ref, toRaw, watch } from "vue";
-import { findRouteByPath, getParentPaths } from "@/router/utils";
+import { findRouteByPath, getParentPaths, toMenuNode } from "@/router/utils";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 
 const route = useRoute();
@@ -31,11 +31,9 @@ const getBreadcrumb = (): void => {
       }
     });
   } else {
-    // findRouteByPath 返回路由树原始节点，与面包屑使用的 menuType 在边界处收窄
-    currentRoute = findRouteByPath(
-      router.currentRoute.value.path,
-      routes
-    ) as unknown as menuType;
+    // findRouteByPath 返回路由树原始节点：经 toMenuNode 转为菜单消费面
+    const node = findRouteByPath(router.currentRoute.value.path, routes);
+    if (node) currentRoute = toMenuNode(node);
   }
 
   // 当前路由的父级路径组成的数组
@@ -49,8 +47,9 @@ const getBreadcrumb = (): void => {
 
   // 获取每个父级路径对应的路由信息
   parentRoutes.forEach(path => {
-    if (path !== "/")
-      matched.push(findRouteByPath(path, routes) as unknown as menuType);
+    if (path === "/") return;
+    const node = findRouteByPath(path, routes);
+    if (node) matched.push(toMenuNode(node));
   });
 
   matched.push(currentRoute);

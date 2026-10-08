@@ -97,10 +97,10 @@ onMounted(() => {
   showMenuModel(route.fullPath);
 
   // 触发隐藏标签页
-  emitter.on("tagViewsChange", (key: string | boolean) => {
-    // 载荷实际为布尔开关（emit 侧经 string 通道传出），showTags 运行时为布尔 ref
+  emitter.on("tagViewsChange", key => {
+    // 载荷为布尔开关（与 mitt 事件类型一致），showTags 运行时为布尔 ref
     if (unref(showTags as Ref<boolean>) === key) return;
-    (showTags as Ref<boolean>).value = key as boolean;
+    (showTags as Ref<boolean>).value = key;
   });
 
   // 改变标签风格

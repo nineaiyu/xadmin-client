@@ -21,9 +21,7 @@ const modelProps = {
 } as const;
 
 /** 级联选项：后端下发的模型树（含应用分组节点），结构由调用方保证 */
-const cascaderOptions = computed(
-  () => ctx.modelList as unknown as CascaderOption[]
-);
+const cascaderOptions = computed(() => ctx.modelList as CascaderOption[]);
 </script>
 
 <template>

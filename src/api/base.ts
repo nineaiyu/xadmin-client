@@ -147,16 +147,23 @@ export class BaseApi extends BaseRequest {
   create = <T = RecordType>(data?: object) => {
     return this.request<DetailResult<T>>("post", {}, data);
   };
-  retrieve = (pk: number | string, params?: object) => {
-    return this.request<DetailResult>(
+  // 泛型默认与 list / create 同口径（RecordType）：调用方可用具体契约收窄
+  // res.data 的类型，避免调用侧双重断言绕过类型检查（类型逃逸门禁）。
+  retrieve = <T = RecordType>(pk: number | string, params?: object) => {
+    return this.request<DetailResult<T>>(
       "get",
       params,
       {},
       `${this.baseApi}/${pk}`
     );
   };
-  update = (pk: number | string, data?: object) => {
-    return this.request<DetailResult>("put", {}, data, `${this.baseApi}/${pk}`);
+  update = <T = RecordType>(pk: number | string, data?: object) => {
+    return this.request<DetailResult<T>>(
+      "put",
+      {},
+      data,
+      `${this.baseApi}/${pk}`
+    );
   };
   /**
    * 按主键取详情：与 retrieve 同协议，作为「编辑态取原文」的能力入口。
@@ -164,8 +171,8 @@ export class BaseApi extends BaseRequest {
    * RePlusPage 据此判断页面是否支持详情拉取（ViewBaseApi 的单对象接口无此方法，
    * 不会触发多余的详情请求）。
    */
-  detail = (pk: number | string, params?: object) => {
-    return this.retrieve(pk, params);
+  detail = <T = RecordType>(pk: number | string, params?: object) => {
+    return this.retrieve<T>(pk, params);
   };
   partialUpdate = <T = RecordType>(pk: number | string, data?: object) => {
     return this.request<DetailResult<T>>(

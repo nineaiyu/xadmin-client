@@ -5,14 +5,10 @@ import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { hasAuth, usePageAuth } from "@/router/utils";
 import { approvalRuleApi } from "@/api/approval/approvalRule";
-import {
-  handleOperation,
-  type OperationProps,
-  type PageTableColumn,
-  formatPageColumns
-} from "@/components/RePlusPage";
+import { handleOperation, type OperationProps } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import RuleForm from "../components/RuleForm.vue";
+import { useRuleColumns } from "./ruleColumns";
 import EditPen from "~icons/ep/edit-pen";
 import AddFill from "~icons/ri/add-circle-line";
 
@@ -27,15 +23,13 @@ import AddFill from "~icons/ri/add-circle-line";
 export function useApprovalRule(tableRef: Ref) {
   const { t } = useI18n();
   const api = reactive(approvalRuleApi);
-  // 关闭默认 create/update/partialUpdate 按钮（走自定义按钮组与权限码），
-  // 同时使 boolean 列的自动 switch 只读（启用状态经由编辑弹窗修改）
+  // 关闭默认 create/update/partialUpdate 按钮（走自定义按钮组；boolean 列自动 switch 随之只读）
   const auth = usePageAuth("SystemApprovalRule");
   auth.create = false;
   auth.update = false;
   auth.partialUpdate = false;
   const canCreate = hasAuth("create:SystemApprovalRule");
-  // 编辑权限兼容 update/partialUpdate（与 flow 页口径一致）：两页的编辑保存
-  // 都走 partialUpdate，但权限点授予习惯不同，只认其一会让另一类角色看不到编辑入口
+  // 编辑权限兼容 update/partialUpdate：两页的编辑保存都走 partialUpdate，只认其一会漏入口
   const canEdit =
     hasAuth("partialUpdate:SystemApprovalRule") ||
     hasAuth("update:SystemApprovalRule");
@@ -109,23 +103,7 @@ export function useApprovalRule(tableRef: Ref) {
     ]
   });
 
-  /** 列表列：路径清单拼接展示、级次数与启用状态可读化 */
-  const listColumnsFormat = (columns: PageTableColumn[]) =>
-    formatPageColumns(columns, {
-      path_patterns: column => {
-        column["minWidth"] = 240;
-        column["cellRenderer"] = ({ row }) =>
-          ((row?.path_patterns ?? []) as string[]).join(" ； ") || "-";
-      },
-      level_count: column => {
-        column["width"] = 90;
-        column["cellRenderer"] = ({ row }) =>
-          t("approvalRule.levelCount", { n: Number(row?.level_count ?? 0) });
-      },
-      remark: column => {
-        column["minWidth"] = 160;
-      }
-    });
+  const { listColumnsFormat } = useRuleColumns();
 
   return {
     api,

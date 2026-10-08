@@ -25,7 +25,9 @@ const props = defineProps<{
   defaultName?: string;
 }>();
 const { t } = useI18n();
-const translate = t as unknown as SummaryTranslator;
+/** i18n 翻译函数按摘要最小契约收窄（vue-i18n 重载签名在边界对齐） */
+const translate: SummaryTranslator = (key, named) =>
+  named ? String(t(key, named)) : String(t(key));
 
 const name = ref(String(props.row?.name ?? props.defaultName ?? ""));
 const remark = ref(String(props.row?.remark ?? ""));

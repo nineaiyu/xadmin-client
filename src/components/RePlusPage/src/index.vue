@@ -234,7 +234,7 @@ const recycleBinColumns = computed<RecycleBinColumn[]>(() => {
     .map(column => ({
       prop: column.prop,
       label: column.label,
-      cellRenderer: column.cellRenderer as unknown as
+      cellRenderer: column.cellRenderer as
         RecycleBinColumn["cellRenderer"] | undefined
     }));
 });
@@ -401,7 +401,7 @@ defineExpose({
         default-expand-all
         row-key="pk"
         table-layout="fixed"
-        v-bind="pureTableProps as unknown as Record<string, unknown>"
+        v-bind="pureTableProps as object"
         :tree-props="getTreeProps()"
         @selection-change="handleSelectionChange"
         @row-click="onRowClick"

@@ -55,7 +55,7 @@ const field = computed(() => {
 });
 
 const cascaderOptions = computed(
-  () => props.fieldLookupsData as unknown as CascaderOption[]
+  () => props.fieldLookupsData as CascaderOption[]
 );
 
 const fieldMetaText = computed(() => {

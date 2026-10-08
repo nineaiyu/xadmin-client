@@ -44,9 +44,7 @@ describe("setting store", () => {
     expect(store.title).toBe("新标题");
 
     store.CHANGE_SETTING({ key: "notExistKey", value: "x" });
-    expect(
-      (store as unknown as Record<string, unknown>).notExistKey
-    ).toBeUndefined();
+    expect(store).not.toHaveProperty("notExistKey");
   });
 
   it("changeSetting 透传到 CHANGE_SETTING", () => {

@@ -54,16 +54,12 @@ const RAW_PERMISSION = {
 
 const buildTree = () =>
   buildMenuTree(
-    [RAW_DIRECTORY, RAW_MENU, RAW_PERMISSION].map(row =>
-      normalizeMenuRow(row as unknown as Record<string, unknown>)
-    )
+    [RAW_DIRECTORY, RAW_MENU, RAW_PERMISSION].map(row => normalizeMenuRow(row))
   );
 
 describe("normalizeMenuRow", () => {
   it("对象化字段取标量：类型/父级/请求方法", () => {
-    const row = normalizeMenuRow(
-      RAW_PERMISSION as unknown as Record<string, unknown>
-    );
+    const row = normalizeMenuRow(RAW_PERMISSION);
     expect(row.menuType).toBe(MenuChoices.PERMISSION);
     expect(row.parent).toBe(2);
     expect(row.method).toBe("GET");
@@ -71,13 +67,9 @@ describe("normalizeMenuRow", () => {
   });
 
   it("父级为对象时取 pk，关联模型取 pk 列表", () => {
-    const row = normalizeMenuRow(
-      RAW_PERMISSION as unknown as Record<string, unknown>
-    );
+    const row = normalizeMenuRow(RAW_PERMISSION);
     expect(row.modelPks).toEqual(["m1"]);
-    const menu = normalizeMenuRow(
-      RAW_MENU as unknown as Record<string, unknown>
-    );
+    const menu = normalizeMenuRow(RAW_MENU);
     expect(menu.parent).toBe(1);
     expect(menu.modelPks).toEqual([]);
   });
@@ -131,15 +123,13 @@ describe("buildMenuTree", () => {
         menu_type: 0,
         meta: {}
       }
-    ].map(row => normalizeMenuRow(row as unknown as Record<string, unknown>));
+    ].map(row => normalizeMenuRow(row));
     const tree = buildMenuTree(rows);
     expect(tree.map(item => item.name)).toEqual(["a", "b"]);
   });
 
   it("可重复装配且结果一致（幂等）", () => {
-    const rows = [RAW_DIRECTORY, RAW_MENU].map(row =>
-      normalizeMenuRow(row as unknown as Record<string, unknown>)
-    );
+    const rows = [RAW_DIRECTORY, RAW_MENU].map(row => normalizeMenuRow(row));
     const first = buildMenuTree(rows);
     const second = buildMenuTree(rows);
     expect(second).toHaveLength(1);
@@ -166,7 +156,7 @@ describe("buildMenuTree", () => {
         meta: {}
       },
       { pk: 22, parent: 21, name: "loop-b", path: "/b", menu_type: 0, meta: {} }
-    ].map(row => normalizeMenuRow(row as unknown as Record<string, unknown>));
+    ].map(row => normalizeMenuRow(row));
     const tree = buildMenuTree(rows);
     expect(flattenMenuTree(tree)).toHaveLength(3);
   });

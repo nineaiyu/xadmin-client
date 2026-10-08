@@ -7,7 +7,7 @@
 import type { Ref } from "vue";
 import type { useMenuData } from "./useMenuData";
 import type { useMenuDrawer } from "./useMenuDrawer";
-import type { useMenuOrder } from "./useMenuTree";
+import type { useMenuOrder } from "./useMenuOrder";
 import type { MenuRow, MoveDirection } from "./types";
 
 type MenuDataState = ReturnType<typeof useMenuData>;

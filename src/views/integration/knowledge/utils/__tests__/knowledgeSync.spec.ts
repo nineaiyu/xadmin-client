@@ -46,9 +46,9 @@ vi.mock("../../components/KnowledgePanel.vue", () => ({
 }));
 
 /** t 仅产出键名：计数断言落在插值参数上（与 i18n 文案解耦） */
-const t = vi.fn(
-  (key: string, _params?: Record<string, unknown>) => key
-) as unknown as Parameters<typeof useKnowledgeActions>[0]["t"];
+const tMock = vi.fn((key: string, _params?: Record<string, unknown>) => key);
+const t = ((key: string, _params?: Record<string, unknown>) =>
+  tMock(key, _params)) as Parameters<typeof useKnowledgeActions>[0]["t"];
 
 const tableRef = {
   value: { handleGetData: state.handleGetDataMock }
@@ -98,7 +98,7 @@ describe("useKnowledgeActions.syncRepo 轮询", () => {
 
     // 第一轮 running 继续，第二轮 done 拿到终态摘要后停止
     expect(state.syncRepoStatusMock).toHaveBeenCalledTimes(2);
-    expect(t).toHaveBeenCalledWith("aiKnowledge.syncDone", {
+    expect(tMock).toHaveBeenCalledWith("aiKnowledge.syncDone", {
       created: 3,
       updated: 2,
       removed: 1

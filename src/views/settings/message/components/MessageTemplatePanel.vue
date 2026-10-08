@@ -43,7 +43,7 @@ const load = async () => {
 
 const openEdit = (raw: RecordType) => {
   // el-table 插槽 row 为宽类型，按注册表契约收窄
-  const row = raw as unknown as MessageTemplateItem;
+  const row = raw as MessageTemplateItem;
   formRef.value = undefined;
   const options: DialogOptions = {
     title: t("messageTemplate.editTitle", {
@@ -77,7 +77,7 @@ const openEdit = (raw: RecordType) => {
 };
 
 const reset = async (raw: RecordType) => {
-  const row = raw as unknown as MessageTemplateItem;
+  const row = raw as MessageTemplateItem;
   if (
     !(await confirm(
       t("messageTemplate.resetConfirm", {

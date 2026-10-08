@@ -1,8 +1,8 @@
 import { computed, reactive, watch } from "vue";
-import {
-  formDataApi,
-  type FormField,
-  type FormUserOption
+import type {
+  FormDataApi,
+  FormField,
+  FormUserOption
 } from "@/api/dataset/dform";
 import { getDictItems, type DictItem } from "@/utils/dict";
 import {
@@ -24,7 +24,7 @@ export function useFormDataFilters({
   tableRef
 }: {
   schemaFields: Ref<FormField[]>;
-  api: { filterData?: string };
+  api: Pick<FormDataApi, "filterData" | "userOptions">;
   tableRef: Ref;
 }) {
   /** 可筛选字段（设计器勾选 filterable 且类型可渲染筛选控件） */
@@ -71,7 +71,7 @@ export function useFormDataFilters({
       filterUserOptions[field.key] = [];
       return;
     }
-    formDataApi
+    api
       .userOptions({ keyword: value })
       .then(res => {
         filterUserOptions[field.key] = res?.data ?? [];

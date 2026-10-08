@@ -178,7 +178,7 @@ const context = reactive({
   menuUrlList: props.menuUrlList ?? [],
   modelList: props.modelList ?? [],
   viewList: props.viewList ?? {}
-}) as unknown as MenuFormContext;
+}) as MenuFormContext;
 provide(MENU_FORM_KEY, context);
 
 watch(

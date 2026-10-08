@@ -1,9 +1,9 @@
 import { computed, onMounted, ref } from "vue";
 import { SUCCESS_CODE } from "@/api/types";
-import {
-  formDataApi,
-  type FormDataFormOption,
-  type FormField
+import type {
+  FormDataApi,
+  FormDataFormOption,
+  FormField
 } from "@/api/dataset/dform";
 
 /**
@@ -11,8 +11,13 @@ import {
  * 自 useFormData 拆出（行为不变）：全部非模板表单（含停用），默认选中第一个
  * （打开即有数据）；schemaFields 随所选表单联动。
  * （切换表单写请求参数与清空筛选的 watch 留在 useFormData，因其同时触及两组状态。）
+ * 接口实例由页面注入（工厂实例），本模块不持有模块级单例。
  */
-export function useFormDataSelection() {
+export function useFormDataSelection({
+  api
+}: {
+  api: Pick<FormDataApi, "formOptions">;
+}) {
   const forms = ref<FormDataFormOption[]>([]);
   const selectedFormPk = ref("");
   const selectedForm = computed(
@@ -26,7 +31,7 @@ export function useFormDataSelection() {
 
   /** 表单选项：全部非模板表单（含停用），默认选中第一个（打开即有数据） */
   const loadForms = async () => {
-    const res = await formDataApi.formOptions().catch(() => null);
+    const res = await api.formOptions().catch(() => null);
     if (res?.code !== SUCCESS_CODE) {
       formsLoadFailed.value = true;
       return;

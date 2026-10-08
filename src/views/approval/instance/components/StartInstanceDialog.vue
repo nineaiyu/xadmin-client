@@ -209,9 +209,7 @@ async function loadFlows() {
     const res = await approvalInstanceApi.availableFlows().catch(() => null);
     // DataListResult 的行类型为通用 RecordType：按本接口契约收窄为 FlowOption
     flows.value =
-      res && Array.isArray(res.data)
-        ? (res.data as unknown as FlowOption[])
-        : [];
+      res && Array.isArray(res.data) ? (res.data as FlowOption[]) : [];
     applyInitial();
   } finally {
     loading.value = false;

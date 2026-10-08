@@ -314,10 +314,12 @@ export type FormDataItem = {
 /**
  * 表单数据（管理端）接口：只读浏览 + 按表单筛选 + 导出。
  *
- * `form` 为页面侧写入的当前表单（响应式）：列表 / 导出请求自动带上，
- * 行可见性由后端数据权限编译器收敛（超管全量、非超管按授权 fail-closed）。
+ * `form` / `filterData` / `dataFields` 为页面侧写入的请求参数（实例级状态）：
+ * 列表 / 导出请求自动带上，行可见性由后端数据权限编译器收敛
+ * （超管全量、非超管按授权 fail-closed）。
+ * 经 `createFormDataApi` 按页实例化，状态不跨页面共享。
  */
-class FormDataApi extends BaseApi {
+export class FormDataApi extends BaseApi {
   form = "";
   /**
    * 物化筛选条件（页面侧写入的 JSON 字符串，形如 `{"level":"P5"}`）：
@@ -385,7 +387,13 @@ class FormDataApi extends BaseApi {
   };
 }
 
-export const formDataApi = new FormDataApi("/api/dataset/form-data");
+/**
+ * 工厂：每个消费页面创建独立实例。
+ * 页面级请求参数（表单 / 物化筛选 / 动态列收缩）挂在本实例上，
+ * 无模块级共享状态，天然消除跨页参数泄漏。
+ */
+export const createFormDataApi = () =>
+  new FormDataApi("/api/dataset/form-data");
 
 /** 列表结果取行：统一实现在 api/base.ts */
 export { listRows } from "@/api/base";

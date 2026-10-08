@@ -108,7 +108,7 @@ export default defineComponent({
         ];
     // 取得每一层的当前节点是不是在当前层级列表的最后一个
     const lastnodeArr = [];
-    let currentNode: TreeLikeNode | null = this.node as unknown as TreeLikeNode;
+    let currentNode: TreeLikeNode | null = this.node as TreeLikeNode;
     while (currentNode) {
       let parentNode: TreeLikeNode | null = currentNode.parent ?? null;
       // 兼容element-plus的 el-tree-v2 (Virtualized Tree 虚拟树)

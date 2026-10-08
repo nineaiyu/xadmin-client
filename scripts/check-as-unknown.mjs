@@ -22,82 +22,15 @@ const EXTENSIONS = new Set([".ts", ".tsx", ".vue"]);
 const PATTERN = /\bas\s+unknown\s+as\b/g;
 
 // 存量基线：相对路径 -> 基线出现次数（只减不增；降到 0 即可从此表移除）
-// 2026-10-01：R3 hook 拆分后净减 4 处（form/my、api-app、knowledge 三文件的 hook.tsx
-// 归零移除，useMenuData 4→3；搬迁过程中新子模块均以单层 as 收窄，未新增逃逸）。
-// 2026-10-01（第二批）：R3 滚动债第二批拆分后净减 6 处（permission hook.tsx 归零移除，
-// normalize.spec 7→8 又回落至 8-1=7 实际持平；form/data hook.tsx 1 处随搬迁收窄，
-// approval/instance 同步收窄；新子模块均以单层 as 或直接赋值替代双逃逸）。
-// 2026-10-02：O6 收口，router/index.ts 清零移除基线（当前 94 处 / 65 文件）。
-// 2026-10-02（二）：useMenuData 拆分出 useMenuMutations，原 3 处双重断言经诚实类型收窄全部清零（基线移除），新 spec 登记 2 处测试替身断言（净减 1，当前 93 处 / 65 文件）。
-// 2026-10-06：knowledgeSync.spec 新增登记 1 处（i18n ComposerTranslation 测试替身无法
-// 单层收窄，vue-tsc TS2352 要求先转 unknown；tableRef 已改单层 as，未登记即门禁红）。
-// 2026-10-07：settings/sms.vue 静态渠道项与动态后端子项统一为 settingItemProps[] 后
-// 双重断言清零，基线条目移除。
-// 2026-10-07（二）：maskPreview / myScopeRenderLimit / loginPolicyForm 三个挂载 spec
-// 各登记 1 处——断言 script setup 内部绑定（组件无 defineExpose）时 vue-tsc TS2352
-// 要求先转 unknown 再收窄为可读形状。
 // 2026-09-30：初始登记 109 处 / 70 文件（热点：menu normalize.spec 7、router/index 6、
 // useMenuData 4——多为 element-plus 泛型组件与路由元数据互转的既有债务）
-const BASELINE = {
-  "src/api/system/search.ts": 1,
-  "src/components/ReCropper/src/index.tsx": 2,
-  "src/components/RePlusPage/__tests__/advancedFilter.spec.ts": 1,
-  "src/components/RePlusPage/__tests__/registry.spec.ts": 1,
-  "src/components/RePlusPage/__tests__/renders.spec.ts": 1,
-  "src/components/RePlusPage/__tests__/savedViewSummary.spec.ts": 1,
-  "src/components/RePlusPage/src/components/ChangeHistoryDialog.vue": 1,
-  "src/components/RePlusPage/src/components/ImportData.vue": 1,
-  "src/components/RePlusPage/src/components/SavedViewForm.vue": 1,
-  "src/components/RePlusPage/src/components/SavedViewMenu.vue": 1,
-  "src/components/RePlusPage/src/index.vue": 2,
-  "src/components/RePlusPage/src/utils/__tests__/renderers-pairing.spec.ts": 4,
-  "src/components/RePlusPage/src/utils/usePlusPageForm.ts": 2,
-  "src/views/account/components/ReQrcode/src/index.tsx": 2,
-  "src/views/system/menu/components/ReTreeLine/index.ts": 1,
-  "src/views/settings/login-policy/components/__tests__/loginPolicyForm.spec.ts": 1,
-  "src/views/system/mask/components/__tests__/maskPreview.spec.ts": 1,
-  "src/views/system/my-scope/__tests__/myScopeRenderLimit.spec.ts": 1,
-  "src/layout/components/lay-content/index.vue": 1,
-  "src/layout/components/lay-setting/components/SettingDisplay.vue": 1,
-  "src/layout/components/lay-sidebar/components/SidebarBreadCrumb.vue": 2,
-  "src/router/utils/route-tree.ts": 1,
-  "src/store/modules/__tests__/settings.spec.ts": 1,
-  "src/store/modules/permission.ts": 1,
-  "src/utils/__tests__/webauthn.spec.ts": 3,
-  "src/utils/fetchAllRows.spec.ts": 2,
-  "src/utils/http/errorStrategies.spec.ts": 1,
-  "src/utils/http/index.spec.ts": 1,
-  "src/utils/http/index.ts": 2,
-  "src/utils/localforage/index.ts": 1,
-  "src/utils/tree.ts": 3,
-  "src/views/account/components/AccessToken.vue": 1,
-  "src/views/account/utils/hook.tsx": 1,
-  "src/views/analysis/report/components/ReportTablePreview.vue": 1,
-  "src/views/approval/components/ApprovalStats.vue": 1,
-  "src/views/approval/instance/components/StartInstanceDialog.vue": 1,
-  "src/views/chat/components/ChatSidebar.vue": 1,
-  "src/views/dashboard/dataset/utils/hook.tsx": 1,
-  "src/views/form/data/utils/hook.tsx": 1,
-  "src/views/integration/ai/config.vue": 1,
-  "src/views/integration/ai/index.vue": 2,
-  "src/views/integration/ai/utils/__tests__/aiProfileActions.spec.ts": 1,
-  "src/views/integration/api-app/utils/__tests__/apiAppActions.spec.ts": 1,
-  "src/views/integration/knowledge/components/KnowledgePanel.vue": 1,
-  "src/views/integration/knowledge/utils/__tests__/knowledgeActions.spec.ts": 1,
-  "src/views/integration/knowledge/utils/__tests__/knowledgeSync.spec.ts": 1,
-  "src/views/login/components/Basic.vue": 1,
-  "src/views/settings/components/settings/SettingItem.vue": 1,
-  "src/views/settings/message/components/MessageTemplatePanel.vue": 2,
-  "src/views/system/menu/components/MenuDrawerForm.vue": 1,
-  "src/views/system/menu/components/MenuFormPermission.vue": 1,
-  "src/views/system/menu/utils/menuActions.spec.ts": 1,
-  "src/views/system/menu/utils/normalize.spec.ts": 7,
-  "src/views/system/menu/utils/useMenuMutations.spec.ts": 2,
-  "src/views/system/menu/utils/useMenuFilter.spec.ts": 1,
-  "src/views/system/permission/components/RuleFieldPicker.vue": 1,
-  "src/views/system/permission/components/ScopeSelect.vue": 1,
-  "src/views/system/user/utils/__tests__/userActions.spec.ts": 1
-};
+// 2026-10-01 ~ 10-07：经 O6 收口与各批滚动拆分净减至 81 处 / 58 文件。
+// 2026-10-08：**全量清零**——81 处逐处重构（请求泛型管道补 retrieve/update/detail，
+// 路由/菜单跨类型边界改用显式 toMenuNode 转换，localforage 签名如实声明 `T | null`，
+// 测试替身改 Reflect 反射桥接与包装函数），基线清空。
+// 此后任何 `as unknown as` 出现即门禁失败；新代码请用具体类型收窄、
+// 显式转换函数或 Reflect 系列 API。
+const BASELINE = {};
 
 function walk(dir) {
   const rows = [];

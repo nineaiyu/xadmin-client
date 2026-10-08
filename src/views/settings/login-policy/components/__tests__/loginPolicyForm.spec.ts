@@ -37,12 +37,21 @@ const mountForm = () =>
     }
   });
 
-/** script setup 内部绑定经 vm 代理读写（ref 自动解包；内部无 defineExpose，须先转 unknown 收窄） */
-const setupOf = (wrapper: ReturnType<typeof mountForm>) =>
-  wrapper.vm as unknown as {
-    targetTypeOptions: Array<{ value: string; label: string }>;
-    actionOptions: Array<{ value: string; label: string }>;
-  };
+/** script setup 内部绑定经 vm 代理读取（组件无 defineExpose）：Reflect 反射桥接，避免双重断言 */
+const setupOf = (wrapper: ReturnType<typeof mountForm>) => ({
+  get targetTypeOptions(): Array<{ value: string; label: string }> {
+    return Reflect.get(wrapper.vm, "targetTypeOptions") as Array<{
+      value: string;
+      label: string;
+    }>;
+  },
+  get actionOptions(): Array<{ value: string; label: string }> {
+    return Reflect.get(wrapper.vm, "actionOptions") as Array<{
+      value: string;
+      label: string;
+    }>;
+  }
+});
 
 describe("LoginPolicyForm 选项元数据", () => {
   it("choices 成功：target_type / action 采用后端选项与 label", async () => {

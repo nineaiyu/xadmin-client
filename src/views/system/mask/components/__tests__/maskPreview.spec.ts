@@ -86,15 +86,30 @@ const previewButtonOf = (wrapper: ReturnType<typeof mountPreview>) => {
   return button!;
 };
 
-/** script setup 内部绑定经 vm 代理读写（ref 自动解包；内部无 defineExpose，须先转 unknown 收窄） */
-const setupOf = (wrapper: ReturnType<typeof mountPreview>) =>
-  wrapper.vm as unknown as {
-    viewerRoles: Array<string | number>;
-    roleOptions: Array<{ pk: string | number; name: string }>;
-    applied: boolean;
-    results: Array<{ input: string; output: string }>;
-    form: { value: string };
-  };
+/** script setup 内部绑定经 vm 代理读写（组件无 defineExpose）：Reflect 反射桥接，避免双重断言 */
+const setupOf = (wrapper: ReturnType<typeof mountPreview>) => ({
+  get viewerRoles(): Array<string | number> {
+    return Reflect.get(wrapper.vm, "viewerRoles") as Array<string | number>;
+  },
+  get roleOptions(): Array<{ pk: string | number; name: string }> {
+    return Reflect.get(wrapper.vm, "roleOptions") as Array<{
+      pk: string | number;
+      name: string;
+    }>;
+  },
+  get applied(): boolean {
+    return Reflect.get(wrapper.vm, "applied") as boolean;
+  },
+  get results(): Array<{ input: string; output: string }> {
+    return Reflect.get(wrapper.vm, "results") as Array<{
+      input: string;
+      output: string;
+    }>;
+  },
+  get form(): { value: string } {
+    return Reflect.get(wrapper.vm, "form") as { value: string };
+  }
+});
 
 describe("MaskPreview 视角角色", () => {
   it("默认视角 = 行内规则绑定角色的 pk 集合，载荷携带 roles 与 viewer_roles", async () => {

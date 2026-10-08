@@ -76,9 +76,18 @@ const loadMoreButton = (wrapper: ReturnType<typeof mountPage>) =>
     .findAll("button")
     .find(node => node.text().includes("systemMyScope.loadMore"));
 
-/** script setup 内部绑定经 vm 代理读写（ref 自动解包；内部无 defineExpose，须先转 unknown 收窄） */
-const setupOf = (wrapper: ReturnType<typeof mountPage>) =>
-  wrapper.vm as unknown as { keyword: string; renderLimit: number };
+/** script setup 内部绑定经 vm 代理读写（组件无 defineExpose）：Reflect 反射桥接，避免双重断言 */
+const setupOf = (wrapper: ReturnType<typeof mountPage>) => ({
+  get keyword(): string {
+    return Reflect.get(wrapper.vm, "keyword") as string;
+  },
+  set keyword(value: string) {
+    Reflect.set(wrapper.vm, "keyword", value);
+  },
+  get renderLimit(): number {
+    return Reflect.get(wrapper.vm, "renderLimit") as number;
+  }
+});
 
 describe("MyScope 卡片渲染上限", () => {
   it("超量部门只渲染 RENDER_STEP 上限，「加载更多」提示剩余量", async () => {

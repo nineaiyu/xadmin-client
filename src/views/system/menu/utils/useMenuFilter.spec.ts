@@ -62,11 +62,7 @@ const RAW_ROWS = [
 ];
 
 const tree = ref<MenuRow[]>(
-  buildMenuTree(
-    RAW_ROWS.map(row =>
-      normalizeMenuRow(row as unknown as Record<string, unknown>)
-    )
-  )
+  buildMenuTree(RAW_ROWS.map(row => normalizeMenuRow(row)))
 );
 
 const setup = () => useMenuFilter(tree);

@@ -25,7 +25,7 @@ const column = (over: Record<string, unknown>): PageColumn => {
     lookups: [],
     _column: { key: prop, label: "字段", input_type: "string" },
     ...over
-  } as unknown as PageColumn;
+  } as PageColumn;
 };
 
 const columns = [

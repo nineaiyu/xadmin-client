@@ -32,10 +32,6 @@ describe("formatAddOrEditOptions", () => {
 
   it("data 为空时返回空数组", () => {
     expect(formatAddOrEditOptions([])).toEqual([]);
-    expect(
-      formatAddOrEditOptions(
-        undefined as unknown as Array<{ value: unknown; label?: unknown }>
-      )
-    ).toEqual([]);
+    expect(formatAddOrEditOptions(undefined)).toEqual([]);
   });
 });

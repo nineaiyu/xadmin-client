@@ -21,6 +21,18 @@ type TFunction = ReturnType<typeof useI18n>["t"];
 // reactive(menuApi) 的类型：UnwrapNestedRefs 映射会剥离类私有成员标记，
 // 不能直接写 typeof menuApi（hasFileObject 为 private，赋值检查会缺属性报错）
 type MenuApi = UnwrapNestedRefs<typeof menuApi>;
+/** 变更动作所需的 API 面（含删除前影响面预检的 baseApi/request；页面装配保证存在） */
+type MenuMutationApi = Pick<
+  MenuApi,
+  | "create"
+  | "partialUpdate"
+  | "destroy"
+  | "batchDestroy"
+  | "batchUpdate"
+  | "rank"
+  | "baseApi"
+  | "request"
+>;
 
 /** 目录删除会级联软删全部后代：本地按行内已装配的 children 一并剔除，避免残影 */
 function collectDescendantPks(row: MenuRow): string[] {
@@ -35,7 +47,7 @@ export function useMenuMutations({
   upsertRow,
   dropRows
 }: {
-  api: MenuApi;
+  api: MenuMutationApi;
   t: TFunction;
   setBusy: (pk: string | number, busy: boolean) => void;
   patchRows: (patch: Map<string, Record<string, unknown>>) => void;

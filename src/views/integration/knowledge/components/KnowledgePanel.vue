@@ -38,9 +38,11 @@ const detailFailed = ref(false);
 const loadDetail = async () => {
   loading.value = true;
   try {
-    const res = await knowledgeApi.retrieve(props.row.pk).catch(() => null);
+    const res = await knowledgeApi
+      .retrieve<KnowledgeDocumentDetail>(props.row.pk)
+      .catch(() => null);
     if (res?.code === SUCCESS_CODE) {
-      detail.value = res.data as unknown as KnowledgeDocumentDetail;
+      detail.value = res.data;
       detailFailed.value = false;
     } else {
       detailFailed.value = true;

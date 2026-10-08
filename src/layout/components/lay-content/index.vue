@@ -5,7 +5,7 @@ import LayFooter from "../lay-footer/index.vue";
 import { useTags } from "@/layout/hooks/useTag";
 import { isNumber, useGlobal } from "@pureadmin/utils";
 import BackTopIcon from "@/assets/svg/back_top.svg?component";
-import { computed, defineComponent, h, Transition } from "vue";
+import { computed, defineComponent, h, Transition, type PropType } from "vue";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import { useUserStoreHook } from "@/store/modules/user";
 
@@ -105,14 +105,13 @@ const focusMainContent = () => {
 const transitionMain = defineComponent({
   props: {
     route: {
-      type: undefined,
+      // 声明为过渡配置消费面：render 内可直接读取 meta.transition（无需断言）
+      type: Object as PropType<{ meta: { transition?: RouteTransition } }>,
       required: true
     }
   },
   render() {
-    const transition = transitions.value(
-      this.route as unknown as { meta: { transition?: RouteTransition } }
-    );
+    const transition = transitions.value(this.route);
     const transitionName = transition?.name || "fade-transform";
     const enterTransition = transition?.enterTransition;
     const leaveTransition = transition?.leaveTransition;

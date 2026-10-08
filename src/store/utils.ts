@@ -6,7 +6,8 @@ export {
   ascending,
   filterTree,
   filterNoPermissionTree,
-  formatFlatteningRoutes
+  formatFlatteningRoutes,
+  toMenuTree
 } from "@/router/utils";
 export {
   isUrl,

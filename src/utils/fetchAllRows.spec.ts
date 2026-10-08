@@ -92,7 +92,7 @@ describe("fetchAllRows", () => {
       detail: "forbidden",
       code: 4001,
       data: null
-    } as unknown as ListResult<Row>;
+    };
     const list = vi.fn(async () => failed);
     const res = await fetchAllRows(list as never);
     expect(list).toHaveBeenCalledTimes(1);
@@ -107,7 +107,7 @@ describe("fetchAllRows", () => {
           detail: "boom",
           code: 4001,
           data: null
-        } as unknown as ListResult<Row>;
+        };
       }
       const page = Number(params.page ?? 1);
       return pageRes(rows.slice((page - 1) * 1000, page * 1000), rows.length);

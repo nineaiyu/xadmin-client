@@ -38,9 +38,7 @@ describe("webauthn utils", () => {
       "credentials"
     );
     try {
-      (
-        window as unknown as { PublicKeyCredential: unknown }
-      ).PublicKeyCredential = class {};
+      Reflect.set(window, "PublicKeyCredential", class {});
       expect(isPasskeySupported()).toBe(false);
 
       Object.defineProperty(navigator, "credentials", {
@@ -55,15 +53,13 @@ describe("webauthn utils", () => {
       });
       expect(isPasskeySupported()).toBe(false);
     } finally {
-      delete (window as unknown as { PublicKeyCredential?: unknown })
-        .PublicKeyCredential;
+      Reflect.deleteProperty(window, "PublicKeyCredential");
       if (descriptor)
         Object.defineProperty(navigator, "credentials", descriptor);
     }
   });
 
   afterEach(() => {
-    delete (window as unknown as { PublicKeyCredential?: unknown })
-      .PublicKeyCredential;
+    Reflect.deleteProperty(window, "PublicKeyCredential");
   });
 });

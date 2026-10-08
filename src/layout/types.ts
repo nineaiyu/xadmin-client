@@ -34,8 +34,8 @@ export type routeMetaType = {
   rank?: number;
   /** 菜单树展开时是否显示父级（SidebarItem 折叠判定） */
   showParent?: boolean;
-  /** 菜单右侧附加图标 */
-  extraIcon?: string;
+  /** 菜单右侧附加图标（与路由 meta 同口径：字符串图标名或组件） */
+  extraIcon?: string | FunctionalComponent;
   /** 当前激活的父级菜单路径 */
   activePath?: string;
   /** 菜单级水印开关（后端菜单 meta 透传，置顶强制挂载） */

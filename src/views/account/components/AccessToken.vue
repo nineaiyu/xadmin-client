@@ -136,12 +136,10 @@ const openCreate = () => {
       }
       // 异常归一为可读失败结果：避免请求异常时 beforeSure 抛错、弹窗 loading 悬挂
       const res = await personalAccessTokenApi
-        .create(payload)
+        .create<{ token?: string }>(payload)
         .catch(normalizeError);
       if (res.code === SUCCESS_CODE) {
-        const token = String(
-          (res.data as unknown as { token?: string })?.token ?? ""
-        );
+        const token = String(res.data?.token ?? "");
         // 先关创建弹窗再打开明文弹层，避免双弹窗叠层
         done();
         openPlainToken(token);
