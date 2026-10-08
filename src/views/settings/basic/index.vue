@@ -25,17 +25,6 @@ const { t } = useI18n();
 const basicAuth = settingAuth("SettingBasic");
 const watermarkAuth = settingAuth("SettingWatermark");
 
-/** 水印配置随保存即时生效：命中水印字段时刷新当前会话的水印状态（无需重新登录/刷新页面） */
-const onSaved = async (values: FieldValues) => {
-  if (
-    Object.keys(values ?? {}).some(key =>
-      key.startsWith("FRONT_END_WEB_WATERMARK")
-    )
-  ) {
-    await useWatermarkStoreHook().refreshSiteWatermark();
-  }
-};
-
 // 基本 / 水印两页签共用 BasicSettingSerializer，用 fields 白名单隔离各自的渲染与提交字段
 const basicFields = [
   "SITE_URL",
@@ -53,6 +42,14 @@ const watermarkFields = [
   "FRONT_END_WEB_WATERMARK_ROTATE",
   "FRONT_END_WEB_WATERMARK_COLOR"
 ];
+
+/** 水印配置随保存即时生效：命中水印字段时刷新当前会话的水印状态（无需重新登录/刷新页面）。
+ * 命中判定复用上方白名单（同一份字段清单，避免前缀匹配与清单漂移）。 */
+const onSaved = async (values: FieldValues) => {
+  if (Object.keys(values ?? {}).some(key => watermarkFields.includes(key))) {
+    await useWatermarkStoreHook().refreshSiteWatermark();
+  }
+};
 
 /** 循环页签：基本设置（水印字段已拆走） */
 const settingData = computed<Array<settingItemProps>>(() => [

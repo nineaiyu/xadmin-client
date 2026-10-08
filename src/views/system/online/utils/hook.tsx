@@ -62,7 +62,7 @@ export function useUserOnline(tableRef: Ref) {
         },
         onClick: ({ row, loading }) => {
           // detail pk 必须是用户主键（踢该用户全部会话）；
-          // row.pk 是登录日志主键，不能回退兜底，creator 缺失时明确报错
+          // row.pk 是会话行主键（UserSession UUID），语义不同，不能回退兜底，creator 缺失时明确报错
           const userPk = row?.creator?.pk;
           if (userPk == null) {
             message(t("systemOnline.forceLogoutNoUser"), { type: "warning" });

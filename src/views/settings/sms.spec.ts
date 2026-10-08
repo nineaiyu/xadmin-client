@@ -1,6 +1,7 @@
 import { flushPromises, mount } from "@vue/test-utils";
 import { nextTick } from "vue";
 import { describe, expect, it, vi } from "vitest";
+import { ElAlert, ElButton } from "element-plus";
 
 const mocks = vi.hoisted(() => ({
   hasAuth: vi.fn((_code: string) => true),
@@ -8,6 +9,8 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/router/utils", () => ({ hasAuth: mocks.hasAuth }));
+// 失败态提示与重试按钮需要 i18n 的 t（key 直出即可）
+vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
 vi.mock("@/api/system/settings", () => ({
   settingsSmsServerApi: { backends: mocks.backends },
   settingsSmsConfigApi: { marker: "sms-config-api" }
@@ -30,6 +33,7 @@ const loadingValues = vi.fn();
 const mountPage = () =>
   mount(sms, {
     global: {
+      components: { ElAlert, ElButton },
       directives: {
         loading: {
           mounted: (_el: unknown, binding: { value: unknown }) =>
@@ -111,5 +115,20 @@ describe("SettingSms 渠道页签装配", () => {
     await flushPromises();
 
     expect(mocks.backends).not.toHaveBeenCalled();
+  });
+
+  it("backends 失败：给出可读提示与重试入口，点击重试再次拉取", async () => {
+    mocks.hasAuth.mockImplementation(() => true);
+    mocks.backends.mockResolvedValue({ code: 1001, detail: "boom" });
+    const wrapper = mountPage();
+    await flushPromises();
+
+    expect(loadingValues).toHaveBeenLastCalledWith(false);
+    expect(wrapper.text()).toContain("settingSms.backendsLoadFailed");
+
+    mocks.backends.mockResolvedValue({ code: SUCCESS_CODE, data: [] });
+    await wrapper.find("button").trigger("click");
+    await flushPromises();
+    expect(mocks.backends).toHaveBeenCalledTimes(2);
   });
 });

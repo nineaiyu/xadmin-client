@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { computed, h, nextTick, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import { hasAuth } from "@/router/utils";
 import { addDialog, type DialogOptions } from "@/components/ReDialog";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
@@ -165,6 +166,8 @@ function insertEmoji(emoji: string) {
 
 const imageInput = ref<HTMLInputElement | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
+/** 附件入口按权限点收敛（上传走文件中心策略，服务端同样 fail-closed） */
+const canUploadAttachment = computed(() => hasAuth("upload:ChatMessage"));
 
 /** 唤起系统选择器（隐藏 input 作为唯一入口，避免额外弹层组件） */
 function pickAttachment(kind: "image" | "file") {
@@ -369,6 +372,7 @@ watch(
         <div class="flex items-center gap-1 pb-1">
           <ChatEmojiPanel @select="insertEmoji" />
           <el-button
+            v-if="canUploadAttachment"
             text
             :disabled="!room || uploading"
             :icon="useRenderIcon(PictureIcon)"
@@ -377,6 +381,7 @@ watch(
             @click="pickAttachment('image')"
           />
           <el-button
+            v-if="canUploadAttachment"
             text
             :disabled="!room || uploading"
             :icon="useRenderIcon(PaperclipIcon)"

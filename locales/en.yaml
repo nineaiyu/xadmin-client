@@ -587,6 +587,7 @@ directory:
   emptyDept: No department available
   emptyPosts: No active posts
   deptTreeTruncated: Department count exceeds the single-load cap; the dept tree was truncated and may be incomplete
+  postListTruncated: Post count exceeds the single-load cap; the post list was truncated and may be incomplete
   noPost: No post
   noContact: No contact info
   memberDetail: Member details
@@ -2281,6 +2282,7 @@ settingPassword:
 
 settingSms:
   title: SMS Setting
+  backendsLoadFailed: Failed to load SMS channel tabs
 
 demoBook:
   book: Book
@@ -3729,7 +3731,7 @@ codegen:
   modeSingle: Single
   modeBatch: Batch
   batchModelPlaceholder: Select multiple models to pack
-  batchTip: Batch mode generates per model with engine defaults and shared options below; shared files like urls.py need manual merge when generating multiple models of one app
+  batchTip: Batch mode generates per model with engine defaults, ignoring per-field overrides and model-specific naming; shared options below apply; shared files like urls.py need manual merge when generating multiple models of one app
   batchDownload: Batch download zip
   batchPickFirst: Select at least one model first
   batchPreviewEmpty: Batch mode packs and downloads directly, no preview

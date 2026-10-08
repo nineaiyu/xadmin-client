@@ -85,7 +85,15 @@ function loadDeptTree() {
 function loadPosts() {
   if (!canUsePost) return;
   postLoading.value = true;
-  fetchAllRows<DirectoryPostOption>(searchPostApi.list)
+  fetchAllRows<DirectoryPostOption>(
+    searchPostApi.list,
+    {},
+    {
+      // 与部门树同口径：岗位清单拿不全即失真，翻页触达上限被截断时显式提示
+      onTruncated: () =>
+        message(t("directory.postListTruncated"), { type: "warning" })
+    }
+  )
     .then(res => {
       if (res.code === SUCCESS_CODE && res.data) {
         postOptions.value = res.data.results;

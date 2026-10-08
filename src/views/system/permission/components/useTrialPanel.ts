@@ -36,6 +36,10 @@ export interface TrialPanelProps {
  *   预演「该用户按这组规则能查到多少行」——与保存走同一套写入校验，不能绕过校验；
  * - 字段权限：预演「该用户在某菜单下实际能看到哪些字段」（未配置=裁空），
  *   可叠加一份未保存的字段白名单草稿看新增可见字段。
+ *
+ * 跨域依赖登记：试算复用 SystemUser 域的能力——权限点 `previewTrial:SystemUser`
+ * 与 userApi.previewTrial / previewFieldTrial（`/api/system/user/{pk}/preview/trial`、
+ * `.../preview/field-trial`）；用户域权限点或这两个端点变更时需同步本页。
  */
 export function useTrialPanel(props: TrialPanelProps) {
   const { t } = useI18n();

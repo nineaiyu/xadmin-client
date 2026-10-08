@@ -135,6 +135,9 @@ const actionResult = computed(() => props.item.extra?.action_result ?? null);
  */
 const canExecuteActions = hasAuth("actionExecute:AiAssistant");
 
+/** 撤回入口同样按权限点收敛（服务端 fail-closed；无权限时不渲染必失败的操作） */
+const canRecall = hasAuth("recall:ChatMessage");
+
 const chatActionExecutor = async (draft: AiActionDraft) => {
   try {
     const res = await aiAssistantApi.actionExecute({
@@ -399,7 +402,7 @@ const chatActionExecutor = async (draft: AiActionDraft) => {
           </div>
         </el-popover>
         <el-button
-          v-if="item.can_recall && !item.is_recalled"
+          v-if="canRecall && item.can_recall && !item.is_recalled"
           link
           type="info"
           size="small"

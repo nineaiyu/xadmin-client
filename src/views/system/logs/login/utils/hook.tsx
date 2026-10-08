@@ -75,6 +75,8 @@ export function useLoginLog(tableRef: Ref) {
           t,
           tagStyle,
           field: column.prop as string,
+          // 三元语义与后端 UserLoginLogSerializer.get_online 对齐：
+          // -1 = 不适用（非 WS 登录或无 creator），True/False = WS 会话是否在线
           actionMap: {
             true: t("labels.online"),
             false: t("labels.offline"),

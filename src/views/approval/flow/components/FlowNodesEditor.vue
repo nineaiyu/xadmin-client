@@ -1,14 +1,9 @@
 <script lang="ts" setup>
-import { h, onMounted, ref } from "vue";
+import { h, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { SUCCESS_CODE } from "@/api/types";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
-import { fetchAllRows } from "@/utils/fetchAllRows";
-import { listRows } from "@/api/base";
-import { approvalRuleApi } from "@/api/approval/approvalRule";
-import { roleApi } from "@/api/system/role";
-import { postApi } from "@/api/system/post";
+import { useAssigneeCandidates } from "@/views/approval/utils/useAssigneeCandidates";
 import {
   ASSIGNEE_TYPES,
   CONDITION_OPS,
@@ -27,86 +22,23 @@ const { t } = useI18n();
 
 /* ---------------- 审批人选择器（避免裸文本输错用户名/角色码） ---------------- */
 
-/** 始终提供可查询下拉（用户候选目录本地过滤 / 角色下拉），搜索无结果时允许直接输入兜底 */
-
-const userOptions = ref<Array<{ username: string; label: string }>>([]);
-const userLoading = ref(false);
-/** 审批模块自给候选目录：单次拉取 + 本地过滤，不依赖可独立裁剪的全局搜索模块 */
-const allUserCandidates = ref<Array<{ username: string; label: string }>>([]);
-/** 候选目录被服务端截断（用户数超上限）：本地过滤结果可能不全，需提示细化搜索 */
-const candidateTruncated = ref(false);
-const roleOptions = ref<Array<{ name: string; code: string }>>([]);
-/** 岗位下拉（值=岗位 code）：仅启用岗位可选，停用岗位后端不参与解析 */
-const postOptions = ref<Array<{ name: string; code: string }>>([]);
+/** 始终提供可查询下拉（用户候选目录本地过滤 / 角色下拉），搜索无结果时允许直接输入兜底；
+ * 候选目录与审批规则表单共用 useAssigneeCandidates（同一端点、同一截断提示口径） */
+const {
+  userOptions,
+  userLoading,
+  candidateTruncated,
+  roleOptions,
+  postOptions,
+  searchUsers,
+  ensureUserOption
+} = useAssigneeCandidates();
 
 /** el-select 多选回写：事件载荷是宽联合、el-table 的 row 是 DefaultRow，统一按行号写回 */
 function updateMultiValue(index: number, value: unknown) {
   const node = props.nodes[index];
   if (node) node.assignee_value = joinValues(value);
 }
-
-/** 已选用户并入选项：未搜索时也能看到已选人员（后端只存用户名，无法反查昵称） */
-function ensureUserOption(username: string) {
-  if (!username) return;
-  if (!userOptions.value.some(item => item.username === username)) {
-    userOptions.value.push({ username, label: username });
-  }
-}
-
-function searchUsers(query: string) {
-  userLoading.value = true;
-  try {
-    const keyword = query.trim().toLowerCase();
-    const matched = keyword
-      ? allUserCandidates.value.filter(
-          item =>
-            item.username.toLowerCase().includes(keyword) ||
-            item.label.toLowerCase().includes(keyword)
-        )
-      : allUserCandidates.value;
-    const matchedNames = new Set(matched.map(item => item.username));
-    userOptions.value = [
-      ...matched,
-      ...userOptions.value.filter(item => !matchedNames.has(item.username))
-    ];
-  } finally {
-    userLoading.value = false;
-  }
-}
-
-onMounted(async () => {
-  const res = await fetchAllRows(roleApi.list).catch(() => null);
-  if (res && res.code === SUCCESS_CODE && res.data) {
-    roleOptions.value = listRows<{ name: string; code: string }>(res as never);
-  }
-  const postRes = await fetchAllRows(postApi.list).catch(() => null);
-  if (postRes && postRes.code === SUCCESS_CODE && postRes.data) {
-    postOptions.value = listRows<{
-      name: string;
-      code: string;
-      is_active?: boolean;
-    }>(postRes as never).filter(post => post.is_active !== false);
-  }
-  const candidateRes = await approvalRuleApi
-    .candidateOptions()
-    .catch(() => null);
-  if (candidateRes && candidateRes.code === SUCCESS_CODE && candidateRes.data) {
-    candidateTruncated.value = Boolean(
-      (candidateRes.data as { truncated?: boolean }).truncated
-    );
-    allUserCandidates.value = (
-      (candidateRes.data.users ?? []) as Array<{
-        username: string;
-        nickname?: string;
-      }>
-    ).map(user => ({
-      username: user.username,
-      label: user.nickname
-        ? `${user.nickname}(${user.username})`
-        : user.username
-    }));
-  }
-});
 
 /** 分支路由编辑（C5：统一走 ReDialog，路由表格在 RouteEditorForm 中） */
 const routeFormRef = ref<InstanceType<typeof RouteEditorForm>>();

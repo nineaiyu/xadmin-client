@@ -14,6 +14,7 @@ import GroupIcon from "~icons/ep/user-filled";
 import PlusIcon from "~icons/ep/plus";
 import SearchIcon from "~icons/ep/search";
 import { normalizeError } from "@/utils/apiError";
+import { hasAuth } from "@/router/utils";
 
 /**
  * 左栏：搜索 + 会话列表（公共聊天室 / AI 助手 / 私聊 / 群聊，未读红点）+ 最近在线联系人。
@@ -40,6 +41,9 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 const keyword = ref("");
+
+/** 新建群聊入口按权限点显隐（服务端同样 fail-closed：无权限时不必渲染无效入口） */
+const canCreateGroup = computed(() => hasAuth("createGroup:ChatRoom"));
 
 // ------------------------------------------------------------------ 新建群聊
 
@@ -131,7 +135,11 @@ function avatarText(peer: ChatPeer) {
           <span class="text-xs text-(--el-text-color-secondary)">
             {{ t("chat.sessions") }}
           </span>
-          <el-tooltip :content="t('chat.newGroup')" placement="bottom">
+          <el-tooltip
+            v-if="canCreateGroup"
+            :content="t('chat.newGroup')"
+            placement="bottom"
+          >
             <el-button
               link
               size="small"

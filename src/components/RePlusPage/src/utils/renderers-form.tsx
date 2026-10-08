@@ -149,6 +149,8 @@ export const builtinFormRenderers: PlusColumnRegistry = {
     };
   },
   json: item => {
+    // 注意：renderField 在 plus-pro-components 中优先于 valueType——页面用
+    // baseColumnsFormat 把 json 字段改为下拉等内置控件时，必须先清 renderField
     item["renderField"] = (
       value: unknown,
       onChange: (val: unknown) => void

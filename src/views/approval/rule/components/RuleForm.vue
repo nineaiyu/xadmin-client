@@ -5,10 +5,10 @@ import type { FormInstance, FormRules } from "element-plus";
 import type { RecordType } from "plus-pro-components";
 import { SUCCESS_CODE } from "@/api/types";
 import { loadPatScopeCatalog } from "@/api/user/token";
-import { approvalRuleApi } from "@/api/approval/approvalRule";
 import { message } from "@/utils/message";
 import type { ScopeGroup } from "@/utils/scopeDisplay";
 import { joinValues, splitValues } from "@/views/approval/utils/assigneeValues";
+import { useAssigneeCandidates } from "@/views/approval/utils/useAssigneeCandidates";
 
 defineOptions({ name: "ApprovalRuleForm" });
 
@@ -113,14 +113,10 @@ const customPathList = computed(() =>
     .filter(Boolean)
 );
 
-/* ---------------- 审批人选择器（候选目录：审批模块自给自足） ---------------- */
+/* ---------------- 审批人选择器（候选目录：与流程节点编辑器共用） ---------------- */
 
-const userOptions = ref<Array<{ username: string; label: string }>>([]);
-const roleOptions = ref<Array<{ name: string; code: string }>>([]);
-/** 候选目录被服务端截断（用户数超上限）：本地过滤结果可能不全，需提示细化搜索 */
-const candidateTruncated = ref(false);
-/** 岗位下拉（值=岗位 code）：仅启用岗位，停用岗位后端不参与解析 */
-const postOptions = ref<Array<{ name: string; code: string }>>([]);
+const { userOptions, candidateTruncated, roleOptions, postOptions } =
+  useAssigneeCandidates();
 
 /** 级次行内下拉回写：多选数组 → 逗号串（服务端契约） */
 function updateLevelValue(index: number, value: unknown) {
@@ -186,28 +182,6 @@ onMounted(async () => {
     form.pathSelected = saved.filter(item => knownPaths.value.has(item));
     const rest = saved.filter(item => !knownPaths.value.has(item));
     if (rest.length) form.customPaths = rest.join("\n");
-  }
-
-  // 审批人候选目录（审批模块自带端点，不依赖搜索模块；前端本地过滤）
-  const res = await approvalRuleApi.candidateOptions().catch(() => null);
-  if (res && res.code === SUCCESS_CODE && res.data) {
-    candidateTruncated.value = Boolean(
-      (res.data as { truncated?: boolean }).truncated
-    );
-    userOptions.value = ((res.data.users ?? []) as Array<RecordType>).map(
-      user => ({
-        username: String(user.username),
-        label: user.nickname
-          ? `${user.nickname}(${user.username})`
-          : String(user.username)
-      })
-    );
-    roleOptions.value = ((res.data.roles ?? []) as Array<RecordType>).map(
-      role => ({ code: String(role.code), name: String(role.name) })
-    );
-    postOptions.value = ((res.data.posts ?? []) as Array<RecordType>).map(
-      post => ({ code: String(post.code), name: String(post.name) })
-    );
   }
 });
 

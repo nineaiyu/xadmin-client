@@ -317,13 +317,18 @@ export function useAccountRisk(tableRef: Ref, selectedRows: Ref<RecordType[]>) {
     });
   };
 
-  const scan = () => {
+  /** 同步巡检：后端为同步调用（大库扫描耗时明显），按钮置 loading 防重复触发 */
+  const scan = (loading?: { value: boolean }) => {
+    if (loading) loading.value = true;
     handleOperation({
       t,
       apiReq: api.scan().catch(normalizeError),
       success() {
         tableRef.value?.handleGetData?.();
         refreshStats();
+      },
+      requestEnd() {
+        if (loading) loading.value = false;
       }
     });
   };
@@ -341,7 +346,7 @@ export function useAccountRisk(tableRef: Ref, selectedRows: Ref<RecordType[]>) {
         text: t("accountRisk.scan"),
         code: "scan",
         props: { type: "primary", icon: useRenderIcon(Search) },
-        onClick: () => scan(),
+        onClick: ({ loading }) => scan(loading),
         show: auth.scan
       },
       {

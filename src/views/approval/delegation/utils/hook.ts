@@ -2,11 +2,11 @@ import { approvalDelegationApi } from "@/api/approval/approvalDelegation";
 import { approvalFlowApi } from "@/api/approval/approvalFlow";
 import { listRows } from "@/api/base";
 import { ElTag } from "element-plus";
-import { h, onMounted, reactive, ref } from "vue";
+import { computed, h, onMounted, reactive, ref, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { usePageAuth } from "@/router/utils";
 import { fetchAllRows } from "@/utils/fetchAllRows";
-import type { PageTableColumn } from "@/components/RePlusPage";
+import type { PageColumn, PageTableColumn } from "@/components/RePlusPage";
 
 /**
  * 审批委托管理（审批流三期）。
@@ -25,12 +25,46 @@ export function useApprovalDelegation() {
 
   /** 流程 code → 名称映射（列表渲染用；拉取失败退化为原 code） */
   const flowNames = ref<Record<string, string>>({});
+  /** 流程多选选项（表单用，值=流程 code；与列表渲染同一次拉取） */
+  const flowOptions = ref<Array<{ label: string; value: string }>>([]);
   onMounted(async () => {
     const res = await fetchAllRows(approvalFlowApi.list).catch(() => null);
     if (!res) return;
     const rows = listRows<{ code: string; name: string }>(res as never);
     flowNames.value = Object.fromEntries(rows.map(row => [row.code, row.name]));
+    flowOptions.value = rows.map(row => ({
+      label: row.name,
+      value: row.code
+    }));
   });
+
+  /**
+   * 表单列定制：flow_codes 后端是 JSONField，默认渲染为 jsoneditor（手填 code 易错）。
+   * 改为流程多选（选项与列表渲染同源），空 = 全部流程；写入侧码的合法性仍由服务端
+   * fail-closed 校验（错码委托静默不生效）。
+   */
+  const baseColumnsFormat = ({
+    addOrEditColumns
+  }: {
+    addOrEditColumns: Ref<PageColumn[]>;
+  }) => {
+    const flowCol = addOrEditColumns.value.find(
+      (column: PageColumn) => column._column.key === "flow_codes"
+    );
+    if (flowCol) {
+      // 元数据按 JSONField 下发的 json 渲染器走 renderField（优先于 valueType），
+      // 必须先清掉，否则仍是 jsoneditor 手填
+      flowCol.renderField = undefined;
+      flowCol.valueType = "select";
+      flowCol.options = computed(() => flowOptions.value);
+      flowCol.fieldProps = {
+        multiple: true,
+        filterable: true,
+        collapseTags: true,
+        collapseTagsTooltip: true
+      };
+    }
+  };
 
   /** 「流程范围（空 = 全部流程）」标题较长：默认 120px 列宽会折行抬高表头 */
   const listColumnsFormat = (columns: PageTableColumn[]) => {
@@ -65,6 +99,7 @@ export function useApprovalDelegation() {
   return {
     api,
     auth,
+    baseColumnsFormat,
     listColumnsFormat
   };
 }

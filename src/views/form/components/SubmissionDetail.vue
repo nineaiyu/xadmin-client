@@ -142,9 +142,14 @@ const prepareFieldMetadata = () => {
   // 字典字段：拉取字典项用于 value → label 映射（接口带缓存）
   for (const field of schemaFields.value) {
     if (!field.dict) continue;
-    getDictItems(field.dict).then(items => {
-      dictCache[field.key] = items;
-    });
+    getDictItems(field.dict)
+      .then(items => {
+        dictCache[field.key] = items;
+      })
+      .catch(() => {
+        // 字典项拉取失败不阻断详情渲染：值回落原码展示（与填报表单的兜底同口径）
+        dictCache[field.key] = [];
+      });
   }
   // 选人字段：按主键批量回显用户名（仅在需要展示时请求，不枚举通讯录）
   const pks = new Set<number>();

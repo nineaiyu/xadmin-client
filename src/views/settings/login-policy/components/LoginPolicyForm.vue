@@ -105,7 +105,8 @@ function getPayload(): RecordType | null {
     message(t("loginPolicy.nameRequired"), { type: "warning" });
     return null;
   }
-  // 时段必须成对（后端同口径校验，前端提前拦截避免无谓请求）
+  // 时段必须成对（后端同口径校验，前端提前拦截避免无谓请求）；
+  // start_time > end_time 表示跨天窗口（如 22:00-06:00），后端按跨天语义判定
   if (Boolean(form.start_time) !== Boolean(form.end_time)) {
     message(t("loginPolicy.timePairInvalid"), { type: "warning" });
     return null;

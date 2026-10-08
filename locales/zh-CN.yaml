@@ -587,6 +587,7 @@ directory:
   emptyDept: 暂无可浏览的部门
   emptyPosts: 暂无可用岗位
   deptTreeTruncated: 部门数量超过单次加载上限，部门树已截断、可能不完整
+  postListTruncated: 岗位数量超过单次加载上限，岗位清单已截断、可能不完整
   noPost: 未分配岗位
   noContact: 暂无联系方式
   memberDetail: 成员详情
@@ -2281,6 +2282,7 @@ settingPassword:
 
 settingSms:
   title: 短信设置
+  backendsLoadFailed: 短信渠道子页签加载失败
 
 demoBook:
   book: 书籍
@@ -3728,7 +3730,7 @@ codegen:
   modeSingle: 单模型
   modeBatch: 批量
   batchModelPlaceholder: 选择多个模型批量打包
-  batchTip: 批量模式按引擎默认字段计划逐模型生成，共享下方开关；同 app 多模型时 urls.py 等共享文件需按提示手工合并
+  batchTip: 批量模式按引擎默认字段计划逐模型生成、忽略字段级覆盖与模型专属命名，共享下方开关；同 app 多模型时 urls.py 等共享文件需按提示手工合并
   batchDownload: 批量下载 zip
   batchPickFirst: 请先选择至少一个模型
   batchPreviewEmpty: 批量模式直接打包下载，无预览

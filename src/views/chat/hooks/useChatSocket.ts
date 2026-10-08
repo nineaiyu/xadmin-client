@@ -130,13 +130,20 @@ export function useChatSocket({
   }
 
   function markRead(roomId: number) {
+    // 本地未读先行清零；已读上报是"尽力而为"（服务端游标由后续上报收敛）：
+    // 断连/重连窗口内 socket 不可用或发送抛错时静默跳过，不再裸 send
     roomState.clearUnread(roomId);
-    socket.value?.send(
-      JSON.stringify({
-        action: MessageAction.CHAT_READ,
-        data: { room_id: roomId }
-      })
-    );
+    if (!socket.value || !connected.value) return;
+    try {
+      socket.value.send(
+        JSON.stringify({
+          action: MessageAction.CHAT_READ,
+          data: { room_id: roomId }
+        })
+      );
+    } catch {
+      // 与消息上行同口径：WS 竞态下的发送异常不外抛
+    }
   }
 
   return { connected, socket, connect, disconnect, markRead };

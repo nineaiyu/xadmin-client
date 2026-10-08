@@ -1,7 +1,17 @@
 import { BaseApi } from "@/api/base";
-import type { BaseResult, DataListResult } from "@/api/types";
+import type { BaseResult, ChoicesResult, DataListResult } from "@/api/types";
 
 class ModelLabelFieldApi extends BaseApi {
+  /** 枚举选项元数据：显式声明（与 BaseApi 同名方法同实现），保证契约面可读、改动就地下沉 */
+  choices = () => {
+    return this.request<ChoicesResult>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/choices`
+    );
+  };
+
   lookups = (params?: object) => {
     return this.request<DataListResult>(
       "get",

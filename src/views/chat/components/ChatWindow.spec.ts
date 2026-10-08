@@ -14,6 +14,8 @@ import type { ChatRoomItem } from "@/api/chat";
 const mocks = vi.hoisted(() => ({ message: vi.fn(), addDialog: vi.fn() }));
 
 vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
+// 附件入口按权限点显隐：真实实现依赖路由/权限 store，这里直接放行
+vi.mock("@/router/utils", () => ({ hasAuth: () => true }));
 vi.mock("@/utils/message", () => ({ message: mocks.message }));
 vi.mock("@/utils/desktopNotify", () => ({
   desktopNotifyEnabled: () => false,

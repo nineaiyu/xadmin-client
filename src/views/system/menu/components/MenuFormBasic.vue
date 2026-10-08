@@ -20,6 +20,9 @@ const onComponentChange = (value: string) => {
   form.path = `/${value}`;
   form.name = ctx.viewList[value] ?? form.name;
 };
+
+/** 排序值上限：与后端 rank 整数域对齐（自动生成权限点从 10000 起，手工菜单留足调整余量） */
+const MENU_RANK_MAX = 100000;
 </script>
 
 <template>
@@ -111,7 +114,7 @@ const onComponentChange = (value: string) => {
     <el-input-number
       v-model="form.rank"
       :min="0"
-      :max="100000"
+      :max="MENU_RANK_MAX"
       controls-position="right"
     />
   </el-form-item>
