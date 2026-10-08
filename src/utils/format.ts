@@ -18,3 +18,15 @@ export const formatDateTime = (value: unknown): string => {
     ` ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
   );
 };
+
+/**
+ * 字节数可读化（B / KB / MB，KB 与 MB 保留一位小数）：附件大小等
+ * 「后端直出字节数」场景共用；空值/0 返回空串（由调用方决定占位）。
+ */
+export const formatFileSize = (size?: number | null): string => {
+  const value = Number(size ?? 0);
+  if (!value) return "";
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${(value / 1024 / 1024).toFixed(1)} MB`;
+};

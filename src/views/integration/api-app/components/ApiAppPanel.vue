@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import {
   PanelProfile,
   ReActionPanel,
+  toDisplayText,
   type PanelActionGroup,
   type PanelProfileData
 } from "@/components/ReActionPanel";
@@ -51,12 +52,6 @@ const profileData = computed<PanelProfileData>(() => ({
   badgeText: String(props.row?.name ?? "?").slice(0, 1)
 }));
 
-/** 列表型字段收敛为文本（空数组回退占位符） */
-function listText(value: unknown): string {
-  const list = Array.isArray(value) ? value.filter(Boolean) : [];
-  return list.length ? list.join("、") : "—";
-}
-
 const metaItems = computed(() => [
   {
     key: "scopes",
@@ -73,12 +68,12 @@ const metaItems = computed(() => [
   {
     key: "ip",
     label: t("apiApp.ipAllowlist"),
-    value: listText(props.row?.ip_allowlist)
+    value: toDisplayText(props.row?.ip_allowlist)
   },
   {
     key: "callbacks",
     label: t("apiApp.callbackUrls"),
-    value: listText(props.row?.callback_urls)
+    value: toDisplayText(props.row?.callback_urls)
   },
   {
     key: "ttl",

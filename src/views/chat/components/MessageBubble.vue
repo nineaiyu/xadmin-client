@@ -11,6 +11,7 @@ import type { AiActionDraft } from "@/api/ai/ai";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { http } from "@/utils/http";
+import { formatFileSize } from "@/utils";
 import { formatMessageTime } from "@/utils/messageView";
 import { SUCCESS_CODE } from "@/api/types";
 import type { ChatAttachment, ChatMessageItem } from "@/api/chat";
@@ -85,13 +86,6 @@ const previewSrc = computed(() =>
 const mediaSrc = computed(() =>
   attachment.value?.url ? withApiDomain(attachment.value.url) : ""
 );
-const formatSize = (size?: number) => {
-  const value = Number(size ?? 0);
-  if (!value) return "";
-  if (value < 1024) return `${value} B`;
-  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
-  return `${(value / 1024 / 1024).toFixed(1)} MB`;
-};
 const downloadAttachment = () => {
   if (attachment.value?.url)
     http.autoDownload(withApiDomain(attachment.value.url));
@@ -291,7 +285,7 @@ const chatActionExecutor = async (draft: AiActionDraft) => {
             {{ attachment?.filename || item.content }}
           </div>
           <div class="text-xs opacity-70">
-            {{ formatSize(attachment?.filesize) }}
+            {{ formatFileSize(attachment?.filesize) }}
           </div>
         </div>
         <el-button
