@@ -3,15 +3,16 @@
  * 全局身份二次验证对话框（命令式服务，见 index.ts confirmMfa）。
  * 敏感接口返回 412（type=user_confirm_required）时由 http 层唤起，
  * 验证成功后 http 层自动重发原请求。
+ * 验证交互（方式选择 / 发码冷却 / 动态码与 Passkey 提交）与登录 MFA
+ * 共用 `useMfaVerify`，本组件只保留对话框布局与表单校验。
  */
 import { SUCCESS_CODE } from "@/api/types";
 import { passkeyApi } from "@/api/system/security";
-import { computed, onMounted, reactive, ref } from "vue";
+import { onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import ReEmpty from "@/components/ReEmpty";
 import { message } from "@/utils/message";
-import { useWebAuthn } from "@/hooks/useWebAuthn";
-import { useCountdownCooldown } from "@/hooks/useCountdownCooldown";
+import { useMfaVerify } from "@/hooks/useMfaVerify";
 import {
   mfaConfirmApi,
   mfaConfirmInfoApi,
@@ -33,23 +34,42 @@ const props = defineProps<{
 }>();
 
 const { t } = useI18n();
-const { assertPasskey } = useWebAuthn();
 
 const visible = ref(true);
-const loading = ref(false);
 const infoLoading = ref(false);
 const methods = ref<MfaMethod[]>([]);
-const currentMethod = ref<string>("");
-const formData = reactive({ code: "" });
 const formRef = ref();
-const { cooldown: sendCooldown, start: startCooldown } = useCountdownCooldown();
 
-const activeMethod = computed(() =>
-  methods.value.find(item => item.name === currentMethod.value)
-);
+const {
+  loading,
+  code,
+  currentMethod,
+  activeMethod,
+  isPasskey: isPasskeyMethod,
+  sendCooldown,
+  handleSendCode,
+  submitCode,
+  submitPasskey
+} = useMfaVerify({
+  methods,
+  sendCode: method => mfaSendCodeApi({ method }),
+  verify: (method, value) =>
+    mfaConfirmApi({
+      confirm_type: props.confirmType ?? "mfa",
+      method,
+      code: value
+    }),
+  passkeyChallenge: () => passkeyApi.challenge("authenticate"),
+  onSuccess: res => {
+    message(res.detail || t("mfa.verifySuccess"), { type: "success" });
+    visible.value = false;
+    props.resolve({ expire_at: res.data?.expire_at ?? null });
+  }
+});
 
-/** Passkey 方式：无验证码输入，走浏览器断言（challenge → credentials.get） */
-const isPasskeyMethod = computed(() => currentMethod.value === "passkey");
+// el-form 校验契约：model 持 code（reactive 对 ref 属性自动解包），
+// rules 的 prop="code" 与提交读取同一份值
+const formData = reactive({ code });
 
 const rules = {
   code: [
@@ -67,22 +87,9 @@ const loadMethods = () => {
     .then(res => {
       if (res.code === SUCCESS_CODE) {
         methods.value = res.data.methods;
-        currentMethod.value = res.data.methods[0]?.name ?? "";
       }
     })
     .finally(() => (infoLoading.value = false));
-};
-
-const handleSendCode = () => {
-  if (!currentMethod.value) return;
-  mfaSendCodeApi({ method: currentMethod.value }).then(res => {
-    if (res.code === SUCCESS_CODE) {
-      message(res.detail || t("mfa.codeSent"), { type: "success" });
-      startCooldown(60);
-    } else {
-      message(res.detail, { type: "warning" });
-    }
-  });
 };
 
 const handleCancel = () => {
@@ -90,61 +97,16 @@ const handleCancel = () => {
   props.reject();
 };
 
-const handleConfirm = () => {
-  formRef.value?.validate((isValid: boolean) => {
-    if (!isValid) return;
-    loading.value = true;
-    mfaConfirmApi({
-      confirm_type: props.confirmType ?? "mfa",
-      method: currentMethod.value,
-      code: formData.code
-    })
-      .then(res => {
-        if (res.code === SUCCESS_CODE) {
-          message(res.detail || t("mfa.verifySuccess"), { type: "success" });
-          visible.value = false;
-          props.resolve({ expire_at: res.data?.expire_at ?? null });
-        } else {
-          message(res.detail, { type: "warning" });
-        }
-      })
-      .finally(() => (loading.value = false));
-  });
-};
-
-/** Passkey 确认：取挑战 → 浏览器断言 → 断言 JSON 作为 code 提交（与登录 MFA 同链路） */
-const handlePasskeyConfirm = async () => {
-  loading.value = true;
-  try {
-    const payload = await assertPasskey({
-      challengeApi: () => passkeyApi.challenge("authenticate")
-    });
-    if (!payload) return;
-    const res = await mfaConfirmApi({
-      confirm_type: props.confirmType ?? "mfa",
-      method: "passkey",
-      code: JSON.stringify(payload)
-    });
-    if (res.code === SUCCESS_CODE) {
-      message(res.detail || t("mfa.verifySuccess"), { type: "success" });
-      visible.value = false;
-      props.resolve({ expire_at: res.data?.expire_at ?? null });
-    } else {
-      message(res.detail, { type: "warning" });
-    }
-  } catch {
-    // 用户取消系统弹窗或验证失败：停留弹窗可重试
-  } finally {
-    loading.value = false;
-  }
-};
-
 const handleVerify = () => {
+  // Passkey 走浏览器断言（无表单字段）；其余先过表单校验再提交动态码
   if (isPasskeyMethod.value) {
-    handlePasskeyConfirm();
+    submitPasskey();
     return;
   }
-  handleConfirm();
+  formRef.value?.validate((isValid: boolean) => {
+    if (!isValid) return;
+    submitCode();
+  });
 };
 
 onMounted(loadMethods);

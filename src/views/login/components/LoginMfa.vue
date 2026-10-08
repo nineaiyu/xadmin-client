@@ -2,19 +2,17 @@
 /**
  * 登录 MFA 二次验证步骤：密码阶段通过后（mfa_required），
  * 选择验证方式 → 挑战码发送 → 动态码校验，通过后由父组件完成登录跳转。
+ * 交互逻辑（方式选择 / 发码冷却 / 动态码与 Passkey 提交）收敛在
+ * `useMfaVerify`，与敏感操作确认弹窗共用同一份实现。
  */
-import { SUCCESS_CODE } from "@/api/types";
-import { computed, ref } from "vue";
-import { useI18n } from "vue-i18n";
+import { computed } from "vue";
 import Motion from "../utils/motion";
-import { message } from "@/utils/message";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import type { LoginMfaRequired } from "@/api/mfa";
 import { loginMfaSendCodeApi, loginMfaVerifyApi } from "@/api/mfa";
 import type { TokenInfo } from "@/api/auth";
 import { passkeyApi } from "@/api/system/security";
-import { useWebAuthn } from "@/hooks/useWebAuthn";
-import { useCountdownCooldown } from "@/hooks/useCountdownCooldown";
+import { useMfaVerify } from "@/hooks/useMfaVerify";
 import Shield from "~icons/ri/shield-keyhole-line";
 
 defineOptions({
@@ -33,83 +31,30 @@ const emit = defineEmits<{
   back: [];
 }>();
 
-const { t } = useI18n();
-const { assertPasskey } = useWebAuthn();
-const loading = ref(false);
-const { cooldown: sendCooldown, start: startCooldown } = useCountdownCooldown();
-const code = ref("");
-const currentMethod = ref(props.mfaInfo.methods[0]?.name ?? "");
+const methods = computed(() => props.mfaInfo.methods);
 
-const activeMethod = computed(() =>
-  props.mfaInfo.methods.find(item => item.name === currentMethod.value)
-);
-
-/** Passkey 方式：无验证码输入，走浏览器断言（challenge → credentials.get） */
-const isPasskey = computed(() => currentMethod.value === "passkey");
-
-const handlePasskeyVerify = async () => {
-  loading.value = true;
-  try {
-    const payload = await assertPasskey({
-      challengeApi: () => passkeyApi.loginChallenge(props.mfaInfo.mfa_token)
-    });
-    if (!payload) return;
-    const res = await loginMfaVerifyApi({
+const {
+  loading,
+  code,
+  currentMethod,
+  activeMethod,
+  isPasskey,
+  sendCooldown,
+  handleSendCode,
+  handleVerify
+} = useMfaVerify({
+  methods,
+  sendCode: method =>
+    loginMfaSendCodeApi({ mfa_token: props.mfaInfo.mfa_token, method }),
+  verify: (method, value) =>
+    loginMfaVerifyApi({
       mfa_token: props.mfaInfo.mfa_token,
-      method: "passkey",
-      code: JSON.stringify(payload)
-    });
-    if (res.code === SUCCESS_CODE) {
-      emit("success", res.data);
-    } else {
-      message(res.detail, { type: "warning" });
-    }
-  } catch {
-    // 用户取消系统弹窗或验证失败：停留在本页可重试
-  } finally {
-    loading.value = false;
-  }
-};
-
-const handleSendCode = () => {
-  loginMfaSendCodeApi({
-    mfa_token: props.mfaInfo.mfa_token,
-    method: currentMethod.value
-  }).then(res => {
-    if (res.code === SUCCESS_CODE) {
-      message(res.detail || t("mfa.codeSent"), { type: "success" });
-      startCooldown(60);
-    } else {
-      message(res.detail, { type: "warning" });
-    }
-  });
-};
-
-const handleVerify = () => {
-  if (!code.value) {
-    message(t("mfa.codeRequired"), { type: "warning" });
-    return;
-  }
-  loading.value = true;
-  loginMfaVerifyApi({
-    mfa_token: props.mfaInfo.mfa_token,
-    method: currentMethod.value,
-    code: code.value
-  })
-    .then(res => {
-      if (res.code === SUCCESS_CODE) {
-        emit("success", res.data);
-      } else {
-        message(res.detail, { type: "warning" });
-      }
-    })
-    .catch(() => {
-      // 验证失败（412 等已由 http 层提示），停留在本页可重试
-    })
-    .finally(() => {
-      loading.value = false;
-    });
-};
+      method,
+      code: value
+    }),
+  passkeyChallenge: () => passkeyApi.loginChallenge(props.mfaInfo.mfa_token),
+  onSuccess: res => emit("success", res.data)
+});
 </script>
 
 <template>
@@ -184,7 +129,7 @@ const handleVerify = () => {
           class="w-full!"
           size="default"
           type="primary"
-          @click="isPasskey ? handlePasskeyVerify() : handleVerify()"
+          @click="handleVerify"
         >
           {{ isPasskey ? $t("passkey.login") : $t("mfa.loginVerify") }}
         </el-button>
