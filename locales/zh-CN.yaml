@@ -933,6 +933,7 @@ approvalRule:
   name: 规则名称
   nameRequired: 请输入规则名称
   path_patterns: 匹配路径
+  methods: 方法限定
   level_count: 审批级数
   priority: 优先级
   is_active: 启用

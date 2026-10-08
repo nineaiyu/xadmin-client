@@ -933,6 +933,7 @@ approvalRule:
   name: Rule Name
   nameRequired: Rule name is required
   path_patterns: Path Patterns
+  methods: Methods
   level_count: Levels
   priority: Priority
   is_active: Active

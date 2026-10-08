@@ -26,7 +26,9 @@ async function waitNotificationsGone(page: Page) {
  * - 初审（OR）= e2e_approver；复核（AND）= e2e_approver + e2e_user；
  * - 覆盖：拦截建单 → 逐级推进（列表显示「第 N 级：候选人」）→ 会签等待（1/2，
  *   第二人无 API 审批权限，作为进度展示断言）→ 申请人撤回清理；
- * - 初审驳回 → 整单终止（其余级作废）；两级通过 → 令牌重发删除成功。
+ * - 初审驳回 → 整单终止（其余级作废）；两级通过 → 令牌重发删除成功；
+ * - 规则限定方法（POST）而请求方法不匹配（DELETE）→ 规则不命中，回落到全局
+ *   审批人扁平单（current_level=0、无级次快照、审批人列显示占位而非「第 N 级」）。
  *
  * 拦截清单（APPROVAL_REQUIRED_PATHS）用例内开启、finally 复位；规则用例内
  * 创建并在 finally 停用，避免污染 approval.e2e.ts 等既有用例的全局审批人行为。
@@ -51,7 +53,8 @@ async function createChainRule(
   page: Page,
   token: string,
   name: string,
-  levels: Array<Record<string, unknown>>
+  levels: Array<Record<string, unknown>>,
+  methods?: string[]
 ): Promise<ChainRule> {
   const response = await page.request.post(
     `${BACKEND_URL}/api/approval/approval-rules`,
@@ -60,6 +63,8 @@ async function createChainRule(
       data: {
         name,
         path_patterns: ["api/system/user/(?P<pk>[^/.]+)$"],
+        // 空清单 = 不限方法（存量语义）；限定后仅清单内方法命中
+        ...(methods ? { methods } : {}),
         priority: 100,
         is_active: true,
         levels
@@ -344,6 +349,105 @@ test.describe.serial("审批规则多级审批链", () => {
         `${BACKEND_URL}/api/system/user/${userPk}`,
         {
           headers: { ...headers, "X-Approval-Id": approvedId }
+        }
+      );
+      expect(deleteAgain.status(), await deleteAgain.text()).toBe(200);
+    } finally {
+      await disableRule(page, token, rule.pk);
+      await setApprovalPaths(page, token, []).catch(() => undefined);
+    }
+  });
+
+  test("方法限定不命中 → 回落全局扁平审批", async ({ page }) => {
+    await login(page);
+    const token = await getAccessToken(page);
+    const headers = { Authorization: `Bearer ${token}` };
+
+    const username = `e2e_chain_m_${Date.now()}`;
+    const created = await page.request.post(`${BACKEND_URL}/api/system/user`, {
+      headers,
+      data: {
+        username,
+        nickname: "e2e-chain-method",
+        password: await AesEncrypted(username, "E2E-Chain-2026!")
+      }
+    });
+    const createdPayload = await created.json();
+    const userPk = createdPayload?.data?.pk as string;
+    expect(userPk, JSON.stringify(createdPayload)).toBeTruthy();
+
+    // 规则限定 POST：DELETE 请求方法不匹配 → 规则不命中（若方法维度失效，
+    // 这里会命中规则走出多级链，下面「扁平单判据」立即失败）
+    const rule = await createChainRule(
+      page,
+      token,
+      "E2E 链-方法限定",
+      [
+        {
+          order: 1,
+          name: "初审",
+          approve_type: "OR",
+          assignee_type: "user",
+          assignee_value: APPROVER.username
+        }
+      ],
+      ["POST"]
+    );
+
+    try {
+      await setApprovalPaths(page, token, ["^/api/system/user/[^/]+$"]);
+      const approvalId = await submitDelete(page, token, userPk);
+      const no8 = approvalId.slice(0, 8).toUpperCase();
+
+      // 扁平单判据：current_level=0（规则链为 1）且无级次快照
+      const detail = await page.request
+        .get(`${BACKEND_URL}/api/approval/approvals/${approvalId}`, { headers })
+        .then(res => res.json());
+      expect(Number(detail?.data?.current_level ?? -1)).toBe(0);
+      expect(detail?.data?.steps ?? []).toHaveLength(0);
+
+      // 全局审批人（第二超管）待办可见：审批人列显示扁平占位而非「第 1 级」
+      const browser = page.context().browser();
+      const contextB = await browser!.newContext({
+        baseURL: FRONT_URL,
+        locale: "zh-CN"
+      });
+      const pageB = await contextB.newPage();
+      await login(pageB, APPROVER);
+      await openMenuPath(pageB, ["审批"], "/approval/index");
+      await expect(pageB.locator(".el-table").first()).toBeVisible({
+        timeout: 15_000
+      });
+      await waitNotificationsGone(pageB);
+      const row = pageB.locator(".el-table__row", { hasText: no8 }).first();
+      await row.waitFor({ state: "visible", timeout: 15_000 });
+      await expect(row).not.toContainText("第 1 级");
+
+      // 全局审批人通过（回落链路可正常推进）→ 单终态
+      await row.getByRole("button", { name: "通过" }).first().click();
+      await pageB
+        .locator(".el-popconfirm:visible, .el-message-box:visible")
+        .getByRole("button", { name: "确定" })
+        .first()
+        .click();
+      await expect(row).toHaveCount(0, { timeout: 15_000 });
+      await contextB.close();
+
+      const approved = await page.request
+        .get(`${BACKEND_URL}/api/approval/approvals/${approvalId}`, { headers })
+        .then(res => res.json());
+      expect(approved?.data?.status?.value).toBe("APPROVED");
+
+      // 申请人携令牌重发删除 → 成功（全局链路的令牌口径与规则链一致）
+      await page
+        .locator(".el-notification")
+        .first()
+        .waitFor({ state: "detached", timeout: 12_000 })
+        .catch(() => undefined);
+      const deleteAgain = await page.request.delete(
+        `${BACKEND_URL}/api/system/user/${userPk}`,
+        {
+          headers: { ...headers, "X-Approval-Id": approvalId }
         }
       );
       expect(deleteAgain.status(), await deleteAgain.text()).toBe(200);

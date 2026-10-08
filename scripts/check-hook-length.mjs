@@ -97,7 +97,7 @@ const BASELINE = {
   "src/views/system/user/utils/useUserListColumns.tsx": 175,
   "src/views/system/user/utils/useUserResetPassword.tsx": 159,
   "src/views/user/notice/utils/hook.tsx": 245,
-  "src/views/welcome/hook.tsx": 215,
+  "src/views/welcome/hook.tsx": 215
 };
 
 function walk(dir) {
@@ -139,9 +139,13 @@ if (process.argv.includes("--report")) {
 const violations = [];
 for (const { rel, lines } of found) {
   if (BASELINE[rel] === undefined) {
-    violations.push(`${rel}: ${lines} 行（未登记的超长 hook 新增——请拆分或登记基线）`);
+    violations.push(
+      `${rel}: ${lines} 行（未登记的超长 hook 新增——请拆分或登记基线）`
+    );
   } else if (lines > BASELINE[rel]) {
-    violations.push(`${rel}: ${lines} 行（超过基线 ${BASELINE[rel]}，只减不增）`);
+    violations.push(
+      `${rel}: ${lines} 行（超过基线 ${BASELINE[rel]}，只减不增）`
+    );
   }
 }
 const cleared = Object.keys(BASELINE).filter(
