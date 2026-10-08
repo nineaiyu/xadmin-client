@@ -21,6 +21,14 @@ function getRef() {
 
 defineExpose({ getRef });
 
+/**
+ * 改密表单字段（口径说明，改动前必读）：`new_password` 仅用于本地强度条与
+ * 「确认密码」一致性比对，**不进提交载荷**；提交层把 `sure_password` 作为
+ * 新密码发送（后端 resetPassword 契约只有 old_password + sure_password，
+ * 服务端以 `set_password(sure_password)` 落库）。命名错位属历史口径，
+ * 改名会波及前后端契约，故保留并以注释消歧（提交点见 account/utils/hook.tsx
+ * 的 handleChangePassword）。
+ */
 interface FormPasswordProps {
   old_password: string;
   new_password: string;

@@ -298,6 +298,9 @@ export function useAccountManage() {
       },
       form: ChangePassword,
       saveCallback: async ({ formData, done, closeLoading }) => {
+        // 载荷口径：sure_password 即新密码（后端 resetPassword 契约只收
+        // old_password + sure_password，服务端 set_password 取后者）；
+        // formData.new_password 是表单本地校验字段，绝不出现在载荷里
         const rowData = {
           old_password: await AesEncrypted(
             userinfoStore.username as string,
