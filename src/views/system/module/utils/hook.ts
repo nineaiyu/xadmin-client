@@ -1,22 +1,19 @@
-import { computed, onMounted, ref } from "vue";
+import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 
-import {
-  systemModuleApi,
-  type ModuleLevel,
-  type SystemModuleApplyPayload,
-  type SystemModulesData
-} from "@/api/system/modules";
+import { systemModuleApi } from "@/api/system/modules";
 import { SUCCESS_CODE } from "@/api/types";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { normalizeError } from "@/utils/apiError";
 import { copyText as copyTextWithFeedback } from "@/utils/clipboard";
 import { useConfirm } from "@/hooks/useConfirm";
+import { MODULE_LEVEL_KEY, MODULE_LEVEL_TAG_TYPE } from "./moduleDraft";
+import { useSystemModuleDraft } from "./useSystemModuleDraft";
 
 /**
- * 功能模块页逻辑（页面唯一无 hook 的历史遗留补齐）：
- * 加载模块清单 → 维护「预设 + 启用集合」草稿 → 保存/恢复基线 → 复制命令。
+ * 功能模块页逻辑：加载模块清单 → 维护「预设 + 启用集合」草稿 → 保存/恢复基线
+ * → 复制命令。草稿派生与脏检查见 useSystemModuleDraft.ts，纯函数见 moduleDraft.ts。
  */
 export function useSystemModule() {
   const { t } = useI18n();
@@ -24,95 +21,10 @@ export function useSystemModule() {
 
   const loading = ref(true);
   const saving = ref(false);
-  const data = ref<SystemModulesData | null>(null);
-
-  /** 编辑草稿：预设 + 启用的模块 id 集合（保存前不落库） */
-  const draftPreset = ref("");
-  const draftEnabled = ref<Set<string>>(new Set());
-
-  /** 等级 → 标签色（内核不可裁 / 标配默认开 / 可选按需开） */
-  const LEVEL_TAG_TYPE: Record<ModuleLevel, "info" | "success" | "warning"> = {
-    core: "info",
-    standard: "success",
-    optional: "warning"
-  };
-  const LEVEL_KEY: Record<ModuleLevel, string> = {
-    core: "levelCore",
-    standard: "levelStandard",
-    optional: "levelOptional"
-  };
+  const draft = useSystemModuleDraft();
 
   const canApply = hasAuth("apply:SystemModule");
   const canReset = hasAuth("reset:SystemModule");
-
-  const rows = computed(() => data.value?.modules ?? []);
-  const allIds = computed(() => rows.value.map(row => row.id));
-  const presets = computed(() => data.value?.presets ?? []);
-  const summary = computed(() => {
-    const item = data.value;
-    return item
-      ? t("systemModule.enabledSummary", {
-          enabled: item.enabled_count,
-          total: item.total
-        })
-      : "";
-  });
-  const baselineText = computed(() => {
-    const baseline = data.value?.baseline;
-    if (!baseline) return "";
-    const none = t("systemModule.baselineEmpty");
-    return t("systemModule.baselineValue", {
-      preset: baseline.preset,
-      enable: baseline.enable.length ? baseline.enable.join(", ") : none,
-      disable: baseline.disable.length ? baseline.disable.join(", ") : none
-    });
-  });
-
-  const presetIds = (preset: string) =>
-    new Set(
-      presets.value.find(item => item.value === preset)?.module_ids ?? []
-    );
-
-  /** 把「预设 + 启用集合」反推为 config.yml 同语义的增删项 */
-  const buildPayload = (
-    preset: string,
-    enabled: Set<string>
-  ): SystemModuleApplyPayload => {
-    const defaults = presetIds(preset);
-    return {
-      preset,
-      enable: allIds.value
-        .filter(id => enabled.has(id) && !defaults.has(id))
-        .sort(),
-      disable: allIds.value
-        .filter(id => defaults.has(id) && !enabled.has(id))
-        .sort()
-    };
-  };
-
-  const desiredEnabled = computed(() => {
-    const disabled = new Set(data.value?.desired.disabled ?? []);
-    return new Set(allIds.value.filter(id => !disabled.has(id)));
-  });
-
-  const dirty = computed(() => {
-    if (!data.value) return false;
-    const current = buildPayload(
-      data.value.desired.preset,
-      desiredEnabled.value
-    );
-    const draft = buildPayload(draftPreset.value, draftEnabled.value);
-    return JSON.stringify(current) !== JSON.stringify(draft);
-  });
-
-  const initDraft = (payload: SystemModulesData) => {
-    data.value = payload;
-    draftPreset.value = payload.desired.preset;
-    const disabled = new Set(payload.desired.disabled);
-    draftEnabled.value = new Set(
-      payload.modules.map(row => row.id).filter(id => !disabled.has(id))
-    );
-  };
 
   const load = async () => {
     loading.value = true;
@@ -125,36 +37,19 @@ export function useSystemModule() {
       });
       return;
     }
-    initDraft(res.data);
-  };
-
-  const onPresetChange = async (
-    value: string | number | boolean | undefined
-  ) => {
-    const next = String(value);
-    if (next === draftPreset.value) return;
-    if (dirty.value) {
-      if (!(await confirm(t("systemModule.discardConfirm")))) return;
-    }
-    draftPreset.value = next;
-    draftEnabled.value = new Set(presetIds(next));
-  };
-
-  const onToggle = (id: string, value: string | number | boolean) => {
-    const next = new Set(draftEnabled.value);
-    if (value) next.add(id);
-    else next.delete(id);
-    draftEnabled.value = next;
+    draft.initDraft(res.data);
   };
 
   const save = async () => {
-    if (!dirty.value) {
+    if (!draft.dirty.value) {
       message(t("systemModule.noChange"), { type: "info" });
       return;
     }
     saving.value = true;
     const res = await systemModuleApi
-      .apply(buildPayload(draftPreset.value, draftEnabled.value))
+      .apply(
+        draft.buildPayload(draft.draftPreset.value, draft.draftEnabled.value)
+      )
       .catch(normalizeError);
     saving.value = false;
     if (res.code !== SUCCESS_CODE || !res.data) {
@@ -163,7 +58,7 @@ export function useSystemModule() {
       });
       return;
     }
-    initDraft(res.data);
+    draft.initDraft(res.data);
     message(t("systemModule.saved"), { type: "success" });
   };
 
@@ -178,7 +73,7 @@ export function useSystemModule() {
       });
       return;
     }
-    initDraft(res.data);
+    draft.initDraft(res.data);
     message(t("systemModule.resetDone"), { type: "success" });
   };
 
@@ -193,19 +88,19 @@ export function useSystemModule() {
     t,
     loading,
     saving,
-    data,
-    draftPreset,
-    draftEnabled,
-    LEVEL_TAG_TYPE,
-    LEVEL_KEY,
+    data: draft.data,
+    draftPreset: draft.draftPreset,
+    draftEnabled: draft.draftEnabled,
+    LEVEL_TAG_TYPE: MODULE_LEVEL_TAG_TYPE,
+    LEVEL_KEY: MODULE_LEVEL_KEY,
     canApply,
     canReset,
-    presets,
-    rows,
-    summary,
-    baselineText,
-    onPresetChange,
-    onToggle,
+    presets: draft.presets,
+    rows: draft.rows,
+    summary: draft.summary,
+    baselineText: draft.baselineText,
+    onPresetChange: draft.onPresetChange,
+    onToggle: draft.onToggle,
     save,
     resetToBaseline,
     copyText

@@ -1,37 +1,19 @@
 import { h, ref, type Ref } from "vue";
 import { approvalInstanceApi } from "@/api/approval/approvalFlow";
-import { handleOperation } from "@/components/RePlusPage";
 import { message } from "@/utils/message";
 
 import ApproveForm from "../components/ApproveForm.vue";
 import RejectForm from "../components/RejectForm.vue";
 import TransferForm from "../components/TransferForm.vue";
-import {
-  openActionDialog,
-  type ActionFormInstance
-} from "./instanceFormDialog";
+import type { ActionFormInstance } from "./instanceFormDialog";
+import { openBatchAction } from "./instanceBatchOutcome";
 import type { TFunction } from "./instanceFormShared";
 
 /**
- * 实例**批量**动作弹窗（自 useInstanceActions 拆出，仅因文件行数门禁）：
- * 批量通过 / 批量驳回 / 批量转交——都以「勾选的行（getSelectPks）」为作用域，
- * 服务端逐条独立校验（部分失败给明细，不整体拒绝）。
- *
- * 表单复用单行动作的同名组件（载荷结构一致，只有弹窗标题与成功文案不同）。
+ * 实例**批量**动作弹窗：批量通过 / 批量驳回 / 批量转交——都以「勾选的行
+ * （getSelectPks）」为作用域，服务端逐条独立校验（部分失败给明细，不整体拒绝），
+ * 弹窗与结果收口见 instanceBatchOutcome.ts；表单复用单行动作的同名组件。
  */
-/** 服务端批量动作失败明细（统一 failures: [{pk, detail}]） */
-type BatchFailureItem = { pk: string; detail: string };
-
-const collectFailures = (res?: { data?: unknown }): BatchFailureItem[] =>
-  (res?.data as { failures?: BatchFailureItem[] })?.failures ?? [];
-
-/** 失败明细展示文本：`单号前 8 位: 原因` 以「；」连接 */
-const failuresText = (failures: BatchFailureItem[], limit?: number) =>
-  failures
-    .slice(0, limit ?? failures.length)
-    .map(item => `${item.pk.slice(0, 8)}: ${item.detail}`)
-    .join("；");
-
 export function useInstanceBatchActions({
   t,
   refresh,
@@ -56,111 +38,57 @@ export function useInstanceBatchActions({
   const openBatchApprove = () => {
     const pks = selectedPks();
     if (!pks) return;
-    openActionDialog({
-      title: t("systemApprovalInstance.batchApproveTitle", { n: pks.length }),
+    openBatchAction({
+      t,
+      pks,
+      refresh,
+      titleKey: "systemApprovalInstance.batchApproveTitle",
+      partialKey: "systemApprovalInstance.batchApprovePartial",
       formRef: batchApproveFormRef,
       render: () => h(ApproveForm, { ref: batchApproveFormRef }),
-      submit: (payload, done, closeLoading) => {
-        handleOperation({
-          t,
-          apiReq: approvalInstanceApi.batchApprove(pks, payload.comment),
-          // 与批量驳回/转交同口径：部分失败逐条明细提示（服务端逐单校验）
-          success: res => {
-            done();
-            const failures = collectFailures(res);
-            if (failures.length) {
-              message(
-                t("systemApprovalInstance.batchApprovePartial", {
-                  n: failures.length,
-                  detail: failuresText(failures)
-                }),
-                { type: "warning" }
-              );
-            }
-            refresh();
-          },
-          requestEnd: closeLoading
-        });
-      }
+      apiReq: payload => approvalInstanceApi.batchApprove(pks, payload.comment)
     });
   };
 
-  /** 批量驳回：原因必填，部分失败明细逐条提示（服务端逐单校验） */
+  /** 批量驳回：原因必填（部分失败明细逐条提示） */
   const batchRejectFormRef = ref<ActionFormInstance<{ reason: string }>>();
   const openBatchReject = () => {
     const pks = selectedPks();
     if (!pks) return;
-    openActionDialog({
-      title: t("systemApprovalInstance.batchRejectTitle", { n: pks.length }),
+    openBatchAction({
+      t,
+      pks,
+      refresh,
+      titleKey: "systemApprovalInstance.batchRejectTitle",
+      partialKey: "systemApprovalInstance.batchRejectPartial",
       formRef: batchRejectFormRef,
       render: () => h(RejectForm, { ref: batchRejectFormRef }),
-      submit: (payload, done, closeLoading) => {
-        handleOperation({
-          t,
-          apiReq: approvalInstanceApi.batchReject(pks, payload.reason),
-          success: res => {
-            done();
-            const failures = collectFailures(res);
-            if (failures.length) {
-              message(
-                t("systemApprovalInstance.batchRejectPartial", {
-                  n: failures.length,
-                  detail: failuresText(failures)
-                }),
-                { type: "warning" }
-              );
-            }
-            refresh();
-          },
-          requestEnd: closeLoading
-        });
-      }
+      apiReq: payload => approvalInstanceApi.batchReject(pks, payload.reason)
     });
   };
 
-  /** 批量转交：把勾选的多条待办一次性交给同一人（逐条独立，部分失败给明细） */
+  /** 批量转交：勾选的多条待办一次交给同一人（部分失败只带 3 条明细，全失败给首条原因） */
   const batchTransferFormRef =
     ref<ActionFormInstance<{ username: string; comment: string }>>();
   const openBatchTransfer = () => {
     const pks = selectedPks();
     if (!pks) return;
-    openActionDialog({
-      title: t("systemApprovalInstance.batchTransferTitle", { n: pks.length }),
+    openBatchAction({
+      t,
+      pks,
+      refresh,
+      titleKey: "systemApprovalInstance.batchTransferTitle",
+      partialKey: "systemApprovalInstance.batchTransferPartial",
+      limit: 3,
+      handleFailed: true,
       formRef: batchTransferFormRef,
       render: () => h(TransferForm, { ref: batchTransferFormRef }),
-      submit: (payload, done, closeLoading) => {
-        handleOperation({
-          t,
-          apiReq: approvalInstanceApi.batchTransfer(
-            pks,
-            payload.username,
-            payload.comment
-          ),
-          // 成功文案由服务端 detail 给出（「X 条已转交，Y 条失败」）；部分失败再补明细
-          success: res => {
-            done();
-            const failures = collectFailures(res);
-            if (failures.length) {
-              message(
-                t("systemApprovalInstance.batchTransferPartial", {
-                  n: failures.length,
-                  detail: failuresText(failures, 3)
-                }),
-                { type: "warning" }
-              );
-            }
-            refresh();
-          },
-          failed: res => {
-            // 全失败：服务端带首个失败原因，弹窗保持打开便于改人重试
-            const failures = collectFailures(res);
-            if (failures.length) {
-              message(failures[0].detail, { type: "error" });
-            }
-          },
-          requestEnd: closeLoading
-        });
-      }
+      apiReq: payload =>
+        approvalInstanceApi.batchTransfer(
+          pks,
+          payload.username,
+          payload.comment
+        )
     });
   };
 

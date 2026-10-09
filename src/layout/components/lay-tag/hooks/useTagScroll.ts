@@ -1,5 +1,6 @@
 import { nextTick, ref } from "vue";
 import { isEqual, isAllEmpty } from "@pureadmin/utils";
+import { computeScrollTranslate, computeTagView } from "./tagScrollMath";
 import type { useTags } from "../../../hooks/useTag";
 
 /** useTags 中滚动/视口所需的上下文切片 */
@@ -8,7 +9,9 @@ type TagScrollContext = Pick<
   "route" | "multiTags" | "instance" | "translateX" | "isScrolling"
 >;
 
-/** 标签页导航的滚动与可视区域定位逻辑（拆分自 lay-tag/index.vue） */
+/**
+ * 标签页导航的滚动与可视区域定位逻辑：几何计算见 tagScrollMath.ts（纯函数）。
+ */
 export function useTagScroll(ctx: TagScrollContext) {
   const { route, multiTags, instance, translateX, isScrolling } = ctx;
 
@@ -32,71 +35,37 @@ export function useTagScroll(ctx: TagScrollContext) {
 
   const moveToView = async (index: number): Promise<void> => {
     await nextTick();
-    const tabNavPadding = 10;
     const refs = instance?.refs as Record<string, HTMLElement[]> | undefined;
     const tabItemEl = refs?.["dynamic" + index]?.[0];
     if (!tabItemEl) return;
-    const tabItemElOffsetLeft = tabItemEl?.offsetLeft;
-    const tabItemOffsetWidth = tabItemEl?.offsetWidth;
-    // 标签页导航栏可视长度（不包含溢出部分）
-    const scrollbarDomWidth = scrollbarDom.value
+    // 标签页导航栏可视长度（不含溢出部分）与已有标签总长度（含溢出部分）
+    const scrollbarWidth = scrollbarDom.value
       ? scrollbarDom.value?.offsetWidth
       : 0;
+    const tabWidth = tabDom.value ? tabDom.value?.offsetWidth : 0;
 
-    // 已有标签页总长度（包含溢出部分）
-    const tabDomWidth = tabDom.value ? tabDom.value?.offsetWidth : 0;
-
-    if (scrollbarDomWidth <= tabDomWidth) {
-      isShowArrow.value = true;
-    } else {
-      isShowArrow.value = false;
-    }
-    if (tabDomWidth < scrollbarDomWidth || tabItemElOffsetLeft === 0) {
-      translateX.value = 0;
-    } else if (tabItemElOffsetLeft < -translateX.value) {
-      // 标签在可视区域左侧
-      translateX.value = -tabItemElOffsetLeft + tabNavPadding;
-    } else if (
-      tabItemElOffsetLeft > -translateX.value &&
-      tabItemElOffsetLeft + tabItemOffsetWidth <
-        -translateX.value + scrollbarDomWidth
-    ) {
-      // 标签在可视区域
-      translateX.value = Math.min(
-        0,
-        scrollbarDomWidth -
-          tabItemOffsetWidth -
-          tabItemElOffsetLeft -
-          tabNavPadding
-      );
-    } else {
-      // 标签在可视区域右侧
-      translateX.value = -(
-        tabItemElOffsetLeft -
-        (scrollbarDomWidth - tabNavPadding - tabItemOffsetWidth)
-      );
-    }
+    const view = computeTagView({
+      translateX: translateX.value,
+      tabItemLeft: tabItemEl?.offsetLeft,
+      tabItemWidth: tabItemEl?.offsetWidth,
+      scrollbarWidth,
+      tabWidth
+    });
+    isShowArrow.value = view.isShowArrow;
+    translateX.value = view.translateX;
   };
 
   const handleScroll = (offset: number): void => {
-    const scrollbarDomWidth = scrollbarDom.value
+    const scrollbarWidth = scrollbarDom.value
       ? scrollbarDom.value?.offsetWidth
       : 0;
-    const tabDomWidth = tabDom.value ? tabDom.value.offsetWidth : 0;
-    if (offset > 0) {
-      translateX.value = Math.min(0, translateX.value + offset);
-    } else {
-      if (scrollbarDomWidth < tabDomWidth) {
-        if (translateX.value >= -(tabDomWidth - scrollbarDomWidth)) {
-          translateX.value = Math.max(
-            translateX.value + offset,
-            scrollbarDomWidth - tabDomWidth
-          );
-        }
-      } else {
-        translateX.value = 0;
-      }
-    }
+    const tabWidth = tabDom.value ? tabDom.value.offsetWidth : 0;
+    translateX.value = computeScrollTranslate({
+      translateX: translateX.value,
+      offset,
+      scrollbarWidth,
+      tabWidth
+    });
     isScrolling.value = false;
   };
 

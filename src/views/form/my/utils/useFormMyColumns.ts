@@ -1,23 +1,20 @@
-import { h, shallowRef } from "vue";
+import { h } from "vue";
 import { ElTag } from "element-plus";
 import { statusTagProps } from "@/utils/dict";
 import { SUBMISSION_STATUS_TAG_TYPE } from "@/views/form/utils/submissionStatus";
-import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
+import type { PageTableColumn } from "@/components/RePlusPage";
 import type { RecordType } from "plus-pro-components";
 import type { SubmissionItem } from "@/api/dataset/dform";
 import { submissionDataText } from "./submissionData";
+import { useFormMyRowButtons } from "./formMyRowButtons";
 import type { useI18n } from "vue-i18n";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
-/** 提交状态（审批回写）语义色兜底：字典未配 color 时按审批结果取 EP 语义色，
- * tag props 统一经 `statusTagProps`（与列表/详情同口径，禁止页面自建映射函数） */
-const asRow = (row: unknown) => row as SubmissionItem;
-const statusOf = (row: unknown) => asRow(row).status?.value ?? "";
-
 /**
- * 我的填报列渲染：状态列语义色 tag、提交数据摘要列、搜索区裁剪与行操作按钮。
- * 行为动作（详情/编辑/提交/重新提交/删除）由 useFormMyActions 提供，注入装配。
+ * 我的填报列渲染：状态列语义色 tag、提交数据摘要列、搜索区裁剪与行操作按钮
+ * （按钮声明见 formMyRowButtons.ts）。行为动作（详情/编辑/提交/重新提交/删除）
+ * 由 useFormMyActions 提供，注入装配。
  */
 export function useFormMyColumns({
   t,
@@ -96,69 +93,10 @@ export function useFormMyColumns({
   const searchColumnsFormat = (columns: PageTableColumn[]) =>
     columns.filter(column => column._column?.key !== "creator");
 
-  // 行操作全部自定义（详情/编辑/提交/重新提交/删除），故关闭框架默认的编辑与删除按钮；
-  // 导出沿用框架工具栏默认按钮（api.exportData + 选中行/异步开关，由 auth.exportData 控制）
-  const operationButtonsProps = shallowRef<OperationProps>({
-    width: 320,
-    showNumber: 5,
-    hideDetail: true,
-    buttons: [
-      { code: "update", show: false },
-      { code: "delete", show: false },
-      {
-        text: t("dform.detail"),
-        code: "my-detail",
-        props: {
-          type: "primary",
-          link: true,
-          "data-testid": "submission-detail"
-        },
-        index: -50,
-        show: true,
-        onClick: ({ row }) => actions.openDetail(row as SubmissionItem)
-      },
-      {
-        text: (row: RecordType) =>
-          statusOf(row) === "DRAFT" ? t("dform.continueEdit") : t("dform.edit"),
-        code: "my-edit",
-        props: { type: "primary", link: true },
-        index: -40,
-        show: (row: RecordType) => canEdit && statusOf(row) !== "PENDING",
-        onClick: ({ row }) => actions.openEdit(row as SubmissionItem)
-      },
-      {
-        text: t("dform.submitDraft"),
-        code: "my-submit",
-        props: {
-          type: "success",
-          link: true,
-          "data-testid": "submission-submit-draft"
-        },
-        index: -30,
-        show: (row: RecordType) => canSubmit && statusOf(row) === "DRAFT",
-        onClick: ({ row }) => actions.submitDraft(row as SubmissionItem)
-      },
-      {
-        text: t("dform.resubmit"),
-        code: "my-resubmit",
-        props: {
-          type: "primary",
-          link: true,
-          "data-testid": "submission-resubmit"
-        },
-        index: -20,
-        show: (row: RecordType) => canResubmit && statusOf(row) === "REJECTED",
-        onClick: ({ row }) => actions.resubmit(row as SubmissionItem)
-      },
-      {
-        text: t("dform.delete"),
-        code: "my-delete",
-        props: { type: "danger", link: true },
-        index: -10,
-        show: (row: RecordType) => canDestroy && statusOf(row) !== "PENDING",
-        onClick: ({ row }) => actions.remove(row as SubmissionItem)
-      }
-    ]
+  const { operationButtonsProps } = useFormMyRowButtons({
+    t,
+    flags: { canEdit, canDestroy, canResubmit, canSubmit },
+    actions
   });
 
   return { listColumnsFormat, searchColumnsFormat, operationButtonsProps };

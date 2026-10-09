@@ -53,6 +53,18 @@ const batchModels = ref<string[]>([]);
 
 /** 全量表单状态（生成方案的序列化单元） */
 const state = reactive<CodegenFormState>(defaultFormState());
+/**
+ * 子组件 v-model 的写入目标。
+ *
+ * 不能把 v-model 直接绑到 reactive 根对象：编译器需要为绑定生成赋值语句，
+ * 只能把 `const state` 降级成 `let` 并给出告警。子级本就是共享同一份对象、
+ * 只做嵌套字段变更，这里用可写计算属性承接潜在的整体回吐（合并回 state），
+ * 绑定保持可赋值形态。
+ */
+const stateModel = computed<CodegenFormState>({
+  get: () => state,
+  set: value => Object.assign(state, value)
+});
 const planData = ref<CodegenModelPlan | null>(null);
 const planLoading = ref(false);
 /** 载入保存方案时暂存其字段配置：等新模型计划返回后再回填（避免被默认重建覆盖） */
@@ -283,7 +295,7 @@ onMounted(() => {
         <el-col :xs="24" :md="10">
           <BaseConfig
             v-if="mode === 'single'"
-            v-model="state"
+            v-model="stateModel"
             :models="models"
             :models-loading="modelsLoading"
             :plan-loading="planLoading"
@@ -316,7 +328,7 @@ onMounted(() => {
             :closable="false"
             class="mb-2!"
           />
-          <OptionSwitches v-model="state" />
+          <OptionSwitches v-model="stateModel" />
           <template v-if="mode === 'single'">
             <el-divider content-position="left">
               {{ t("codegen.fieldConfig") }}

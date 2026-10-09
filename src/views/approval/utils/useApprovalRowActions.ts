@@ -1,28 +1,23 @@
 import { h, shallowRef } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessageBox } from "element-plus";
+import type { RecordType } from "plus-pro-components";
 import { addDialog } from "@/components/ReDialog";
 import { hasAuth } from "@/router/utils";
 import { approvalApi } from "@/api/approval/approval";
-import {
-  handleOperation,
-  type OperationButtonsRow,
-  type OperationProps
+import type {
+  OperationButtonsRow,
+  OperationProps
 } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import ApprovalLogsDialog from "../components/ApprovalLogsDialog.vue";
 import { openRejectReasonDialog } from "./dialogs";
-import { canActRow } from "./approvalRowRules";
-import Check from "~icons/ep/check";
-import Close from "~icons/ep/close";
+import { approvalRowButtons } from "./approvalRowButtons";
 import Document from "~icons/ep/document";
-import RefreshLeft from "~icons/ep/refresh-left";
-import type { RecordType } from "plus-pro-components";
 
 /**
  * 审批面板行内操作：通过/驳回（待我审批）与撤回（我发起的），及互跳操作日志。
  * 自 useApprovalPanel 拆出（行为不变）：多级链按服务端 can_act 收口
- * （见 approvalRowRules.ts）。
+ * （见 approvalRowRules.ts），按钮数组见 approvalRowButtons.ts。
  */
 export function useApprovalRowActions({
   scope,
@@ -87,89 +82,13 @@ export function useApprovalRowActions({
   const operationButtonsProps = shallowRef<OperationProps>({
     showNumber: 4,
     width: 300,
-    buttons:
-      scope === "pending"
-        ? [
-            {
-              text: t("approval.approve"),
-              code: "approve",
-              props: {
-                type: "primary",
-                icon: useRenderIcon(Check),
-                link: true
-              },
-              onClick: async ({ row, loading }) => {
-                // 通过意见选填（多级链逐级留痕；后端 comment 字段自始支持，此前前端
-                // 不采集导致审批意见恒为空）：输入弹窗承载确认语义，取消输入即中止
-                const { value } = await ElMessageBox.prompt(
-                  t("approval.approveConfirm", {
-                    no: String(row.pk).slice(0, 8).toUpperCase()
-                  }),
-                  t("approval.approve"),
-                  {
-                    confirmButtonText: t("buttons.confirm"),
-                    cancelButtonText: t("buttons.cancel"),
-                    inputPlaceholder: t("approval.commentPlaceholder")
-                  }
-                ).catch(() => ({ value: null as string | null }));
-                if (value === null) return;
-                loading.value = true;
-                handleOperation({
-                  t,
-                  apiReq: approvalApi.approve(row.pk, value || ""),
-                  success: () => refresh(),
-                  requestEnd: () => (loading.value = false)
-                });
-              },
-              // 多级链：只有当前级候选人可见（服务端 can_act），避免点了才报「不是当前级审批人」
-              index: 4,
-              show: row => Boolean(auth.approve && canActRow(row))
-            },
-            {
-              text: t("approval.reject"),
-              code: "reject",
-              props: {
-                type: "danger",
-                icon: useRenderIcon(Close),
-                link: true
-              },
-              onClick: ({ row }) => openReject(row),
-              index: 5,
-              show: row => Boolean(auth.reject && canActRow(row))
-            },
-            relatedLogsButton
-          ]
-        : [
-            {
-              text: t("approval.cancel"),
-              code: "cancel",
-              props: {
-                type: "info",
-                icon: useRenderIcon(RefreshLeft),
-                link: true
-              },
-              confirm: {
-                title: row =>
-                  t("approval.cancelConfirm", {
-                    no: String(row.pk).slice(0, 8).toUpperCase()
-                  })
-              },
-              onClick: ({ row, loading }) => {
-                loading.value = true;
-                handleOperation({
-                  t,
-                  apiReq: approvalApi.cancel(row.pk),
-                  success: () => refresh(),
-                  requestEnd: () => (loading.value = false)
-                });
-              },
-              show: row =>
-                Boolean(
-                  auth.cancel && (row.status?.value ?? row.status) === "PENDING"
-                )
-            },
-            relatedLogsButton
-          ]
+    buttons: approvalRowButtons(scope, {
+      t,
+      auth,
+      refresh,
+      openReject,
+      relatedLogsButton
+    })
   });
 
   return {

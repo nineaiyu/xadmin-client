@@ -1,20 +1,17 @@
-import { SUCCESS_CODE } from "@/api/types";
-import { h, onMounted, reactive, ref, shallowRef, type Ref } from "vue";
+import { reactive, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElSwitch, ElTag } from "element-plus";
-import { addDialog } from "@/components/ReDialog";
-import { dialogSize } from "@/components/ReDialog/size";
 import { hasAuth, usePageAuth } from "@/router/utils";
-import { message } from "@/utils/message";
-import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
-import { formatPageColumns } from "@/components/RePlusPage";
+import { SUCCESS_CODE } from "@/api/types";
 import {
   webhookSubscriptionApi,
-  type WebhookEvent,
   type WebhookSubscriptionItem
 } from "@/api/system/webhook";
-import SubscriptionForm from "../components/SubscriptionForm.vue";
 import { normalizeError } from "@/utils/apiError";
+import { message } from "@/utils/message";
+import { useSubscriptionEvents } from "./useSubscriptionEvents";
+import { useSubscriptionDialog } from "./useSubscriptionDialog";
+import { useSubscriptionColumns } from "./useSubscriptionColumns";
+import { useSubscriptionButtons } from "./useSubscriptionButtons";
 
 /**
  * Webhook 订阅：CRUD + 测试 + 行内启停。
@@ -23,6 +20,12 @@ import { normalizeError } from "@/utils/apiError";
  * - is_active 自定义开关渲染：默认编辑按钮关闭（auth.partialUpdate=false）会连带
  *   禁用框架 boolean 列开关，故在列渲染层接管，失败回滚行内值；
  * - 删除保留框架默认入口（带二次确认）。
+ *
+ * 职责拆分：
+ * - useSubscriptionEvents   事件目录拉取与标签回落；
+ * - useSubscriptionDialog   新建/编辑弹窗；
+ * - useSubscriptionColumns  列渲染（含行内启停开关）；
+ * - useSubscriptionButtons  工具栏与行操作按钮装配。
  */
 export function useWebhookSubscription(tableRef: Ref) {
   const { t } = useI18n();
@@ -35,20 +38,9 @@ export function useWebhookSubscription(tableRef: Ref) {
   const canEdit = hasAuth("partialUpdate:WebhookSubscription");
   const canTest = hasAuth("test:WebhookSubscription");
 
-  const events = ref<WebhookEvent[]>([]);
-  const eventLabel = (key: string) =>
-    events.value.find(item => item.key === key)?.label ?? key;
+  const refresh = () => tableRef.value?.handleGetData();
 
-  onMounted(async () => {
-    const res = await webhookSubscriptionApi.events().catch(() => null);
-    if (res?.code === SUCCESS_CODE) {
-      events.value = (res.data as never as WebhookEvent[]) ?? [];
-    } else {
-      // 目录失败降级为原始 key 展示（eventLabel 兜底），但需一次性可读提示——
-      // 静默会让事件列整列退化为裸标识而无从解释
-      message(t("webhook.eventsLoadFailed"), { type: "warning" });
-    }
-  });
+  const { events, eventLabel } = useSubscriptionEvents({ t });
 
   /** 行内启停：乐观更新，失败回滚（框架默认编辑按钮关闭后的等价能力） */
   const toggleActive = async (row: WebhookSubscriptionItem, value: boolean) => {
@@ -64,38 +56,7 @@ export function useWebhookSubscription(tableRef: Ref) {
     if (res.detail) message(String(res.detail), { type: "warning" });
   };
 
-  const listColumnsFormat = (columns: PageTableColumn[]) =>
-    formatPageColumns(columns, {
-      events: column => {
-        column["minWidth"] = 200;
-        column["cellRenderer"] = ({ row }) => {
-          const keys = (row as WebhookSubscriptionItem).events ?? [];
-          if (!keys.length) return h("span", "—");
-          return h(
-            "span",
-            { class: "flex flex-wrap justify-center gap-1" },
-            keys.map(key =>
-              h(ElTag, { key, size: "small" }, () => eventLabel(key))
-            )
-          );
-        };
-      },
-      is_active: column => {
-        column["cellRenderer"] = ({ row }) =>
-          h(ElSwitch, {
-            modelValue: (row as WebhookSubscriptionItem).is_active,
-            disabled: !canEdit,
-            "onUpdate:modelValue": (value: string | number | boolean) =>
-              toggleActive(row as WebhookSubscriptionItem, value as boolean)
-          });
-      },
-      url: column => {
-        column["minWidth"] = 220;
-      },
-      last_failure: column => {
-        column["minWidth"] = 160;
-      }
-    });
+  const { openDialog } = useSubscriptionDialog({ t, refresh, events });
 
   const testSubscription = async (row: WebhookSubscriptionItem) => {
     // 异常归一为可读失败结果：测试触发失败（回调地址不通等）需给出可读原因
@@ -109,81 +70,19 @@ export function useWebhookSubscription(tableRef: Ref) {
     }
   };
 
-  /* ---------------- 新建 / 编辑（ReDialog + SubscriptionForm） ---------------- */
-  const formRef = ref<InstanceType<typeof SubscriptionForm>>();
+  const { listColumnsFormat } = useSubscriptionColumns({
+    canEdit,
+    eventLabel,
+    toggleActive
+  });
 
-  const openDialog = (row: WebhookSubscriptionItem | null) => {
-    formRef.value = undefined;
-    addDialog({
-      title: row ? t("webhook.edit") : t("webhook.create"),
-      width: dialogSize("md"),
-      draggable: true,
-      destroyOnClose: true,
-      closeOnClickModal: false,
-      sureBtnLoading: true,
-      contentRenderer: () =>
-        h(SubscriptionForm, { ref: formRef, row, events: events.value }),
-      beforeSure: async (done, { closeLoading }) => {
-        const payload = formRef.value?.getPayload();
-        if (!payload) {
-          closeLoading();
-          return;
-        }
-        // 异常归一为可读失败结果：避免请求异常时 beforeSure 抛错、弹窗 loading 悬挂
-        const res = await (
-          row
-            ? webhookSubscriptionApi.partialUpdate(row.pk, payload)
-            : webhookSubscriptionApi.create(payload)
-        ).catch(normalizeError);
-        if (res.code === SUCCESS_CODE) {
-          message(t("webhook.saveOk"), { type: "success" });
-          // 先关弹窗再刷新列表，避免刷新耗时导致弹窗滞留
-          done();
-          tableRef.value?.handleGetData();
-          return;
-        }
-        if (res.detail) message(String(res.detail), { type: "warning" });
-        closeLoading();
-      }
+  const { operationButtonsProps, tableBarButtonsProps } =
+    useSubscriptionButtons({
+      t,
+      flags: { canCreate, canEdit, canTest },
+      testSubscription,
+      openDialog
     });
-  };
-
-  const operationButtonsProps = shallowRef<OperationProps>({
-    width: 200,
-    // 页面自绘表单承载编辑，详情抽屉没有适配;补充 retrieve 权限点后框架的详情按钮会
-    // 自动出现并挤占操作列（测试按钮被收进「更多」下拉），故此处显式收敛
-    hideDetail: true,
-    buttons: [
-      {
-        text: t("webhook.test"),
-        code: "test",
-        props: { type: "success", link: true },
-        onClick: ({ row }) => testSubscription(row as WebhookSubscriptionItem),
-        index: 10,
-        show: canTest
-      },
-      {
-        text: t("webhook.edit"),
-        code: "edit",
-        props: { type: "primary", link: true },
-        onClick: ({ row }) => openDialog(row as WebhookSubscriptionItem),
-        index: 20,
-        show: canEdit
-      }
-    ]
-  });
-
-  const tableBarButtonsProps = shallowRef<OperationProps>({
-    buttons: [
-      {
-        text: t("webhook.create"),
-        code: "create",
-        props: { type: "primary" },
-        onClick: () => openDialog(null),
-        show: canCreate
-      }
-    ]
-  });
 
   return {
     api,

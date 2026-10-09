@@ -1,24 +1,11 @@
-import { ref, watch, onUnmounted } from "vue";
+import { onUnmounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { message } from "@/utils/message";
-import { SUCCESS_CODE } from "@/api/types";
-import {
-  aiAssistantApi,
-  type AiActionDraft,
-  type AiConsoleFeature
-} from "@/api/ai/ai";
+import type { AiConsoleFeature } from "@/api/ai/ai";
 import { useAiConsoleScroll } from "./useAiConsoleScroll";
-import { useAiConsoleMessages, toIncoming } from "./useAiConsoleMessages";
+import { useAiConsoleMessages } from "./useAiConsoleMessages";
 import { useAiConsoleHistory } from "./useAiConsoleHistory";
 import { useAiConsoleStream } from "./useAiConsoleStream";
-import { normalizeError } from "@/utils/apiError";
-
-type ExecuteResponse = {
-  code: number;
-  data: unknown;
-  detail?: string;
-  type?: string;
-};
+import { useAiConsoleActions } from "./useAiConsoleActions";
 
 /**
  * AI 助手控制台状态（左右分栏三入口：文档问答 / 数据查询 / 指令执行）。
@@ -32,22 +19,16 @@ type ExecuteResponse = {
  * - useAiConsoleScroll    离底检测 / 新消息计数 / 滚动定位；
  * - useAiConsoleMessages  消息集合（乐观上屏对齐）+ toIncoming 载荷校验；
  * - useAiConsoleHistory   历史分页（before_id 游标、滚动位置保持）；
- * - useAiConsoleStream    流式发送（三入口共用帧分派）与中断。
+ * - useAiConsoleStream    流式发送（帧分派见 useAiConsoleFrames）与中断；
+ * - useAiConsoleActions   执行类操作（NL 运行 / 动作草稿执行）。
  */
-/** 审批守卫业务码：type=approval_required 时后端以 1002（待审批）提示，上层引导去审批中心 */
-const APPROVAL_REQUIRED_CODE = 1002;
-
 export function useAiConsole() {
   const { t } = useI18n();
 
   const feature = ref<AiConsoleFeature>("docs");
 
-  // ------------------------------------------------------------------ 滚动
-
   const { scroller, atBottom, pendingCount, scrollToBottom, onScroll } =
     useAiConsoleScroll();
-
-  // ------------------------------------------------------------------ 消息集合
 
   const {
     messages,
@@ -62,8 +43,6 @@ export function useAiConsole() {
     scrollToBottom
   });
 
-  // ------------------------------------------------------------------ 历史
-
   const { hasMore, loadingHistory, loadingMore, loadHistory, loadMore } =
     useAiConsoleHistory({
       feature,
@@ -72,8 +51,6 @@ export function useAiConsole() {
       pendingCount,
       scrollToBottom
     });
-
-  // ------------------------------------------------------------------ 流式发送
 
   const { streaming, activeStreaming, send, abortStream } = useAiConsoleStream({
     t,
@@ -85,64 +62,10 @@ export function useAiConsole() {
     scrollToBottom
   });
 
-  // ------------------------------------------------------------------ 执行类操作
-
-  /** NL 查询运行中（运行按钮 loading） */
-  const nlRunning = ref(false);
-
-  /** 运行 NL 查询：服务端重校验 + 结果消息落库，载荷回传后上屏 */
-  async function runNl(dsl: object): Promise<boolean> {
-    if (nlRunning.value) return false;
-    nlRunning.value = true;
-    try {
-      const res = (await aiAssistantApi
-        .nlRun(dsl)
-        .catch(normalizeError)) as ExecuteResponse;
-      if (res.code === SUCCESS_CODE && res.data) {
-        const incoming = toIncoming(
-          (res.data as Record<string, unknown>).message
-        );
-        if (incoming) upsertMessage(incoming);
-        return true;
-      }
-      message(String(res.detail || t("results.failed")), { type: "warning" });
-      return false;
-    } finally {
-      nlRunning.value = false;
-    }
-  }
-
-  /**
-   * 执行已确认的动作草稿：以当前用户身份执行，服务端重校验 + 审计。
-   * 412 + approval_required（需审批动作）返回 pending——审批通过后再次点击
-   * 确认即原样重发，由 http 拦截器自动携带 X-Approval-Id。
-   */
-  async function executeAction(
-    draft: AiActionDraft
-  ): Promise<{ ok: boolean; pending?: boolean; detail?: string }> {
-    const res = (await aiAssistantApi
-      .actionExecute({ action: draft.action, params: draft.params })
-      .catch((error: { code?: number; type?: string; detail?: string }) => ({
-        code: Number(error?.code ?? -1),
-        data: null,
-        detail: String(error?.detail ?? error),
-        type: error?.type
-      }))) as ExecuteResponse;
-    if (res.code === SUCCESS_CODE) {
-      const incoming = toIncoming(
-        (res.data as Record<string, unknown>)?.message
-      );
-      if (incoming) upsertMessage(incoming);
-      return { ok: true, detail: String(res.detail || "") };
-    }
-    if (
-      res.type === "approval_required" &&
-      res.code === APPROVAL_REQUIRED_CODE
-    ) {
-      return { ok: false, pending: true, detail: res.detail };
-    }
-    return { ok: false, detail: res.detail };
-  }
+  const { nlRunning, runNl, executeAction } = useAiConsoleActions({
+    t,
+    upsertMessage
+  });
 
   // 切换入口：中断流 + 拉取该入口的持久化消息流
   watch(

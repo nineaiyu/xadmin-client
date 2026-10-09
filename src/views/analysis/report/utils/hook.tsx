@@ -1,53 +1,23 @@
 import { SUCCESS_CODE } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
-import { h, onMounted, reactive, ref, shallowRef, type Ref } from "vue";
+import { onMounted, reactive, ref, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
-import { ElTag } from "element-plus";
-import { addDialog } from "@/components/ReDialog";
-import { dialogSize } from "@/components/ReDialog/size";
 import { hasAuth, usePageAuth } from "@/router/utils";
 import { message } from "@/utils/message";
-import { statusTagProps, type StatusTagType } from "@/utils/dict";
-import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
-import { formatPageColumns } from "@/components/RePlusPage";
-import {
-  reportApi,
-  runReport,
-  relatedPk,
-  type ReportItem
-} from "@/api/dataset/analysis";
+import { reportApi, runReport, type ReportItem } from "@/api/dataset/analysis";
 import { datasetApi, listRows, type DatasetItem } from "@/api/dataset/datasets";
-import ReportForm from "../components/ReportForm.vue";
-import { channelLabelKey } from "./channels";
 import { normalizeError } from "@/utils/apiError";
-
-/** 最近执行状态兜底配色（后端值：SUCCESS* / FAILURE / 空） */
-const REPORT_STATUS_TAG: Record<string, StatusTagType> = {
-  SUCCESS: "success",
-  // 投递失败（任一渠道）：SUCCESS_WITH_DELIVERY_ERROR 为通用口径，
-  // SUCCESS_WITH_EMAIL_ERROR 为存量行兼容
-  SUCCESS_WITH_DELIVERY_ERROR: "warning",
-  SUCCESS_WITH_EMAIL_ERROR: "warning",
-  FAILURE: "danger"
-};
-
-/** LabeledChoiceField（如 frequency）取展示文案：对象取 label，标量原样 */
-const dictLabel = (raw: unknown): string => {
-  if (raw && typeof raw === "object") {
-    const item = raw as { value?: string; label?: string };
-    return item.label ?? String(item.value ?? "");
-  }
-  return String(raw ?? "");
-};
+import { useReportColumns } from "./useReportColumns";
+import { useReportDialogs } from "./useReportDialogs";
+import { useReportButtons } from "./useReportButtons";
 
 /**
  * 定时报表：CRUD + 立即运行。
  *
- * - 新建/编辑走 ReDialog + ReportForm（数据集下拉 / 聚合细则在表单内收敛）；
+ * - 新建/编辑走 ReDialog + ReportForm（见 useReportDialogs）；
  * - 删除保留框架默认入口；立即运行为行内按钮（派发后刷新，状态列联动）；
- * - dataset 列接口下发 `{pk,label}` 关联对象（label 与 pk 同值）：取 pk 后用
- *   数据集清单映射名称展示。
+ * - 列渲染见 useReportColumns、按钮装配见 useReportButtons（行数门禁拆分）。
  */
 export function useReport(tableRef: Ref) {
   const { t } = useI18n();
@@ -76,52 +46,8 @@ export function useReport(tableRef: Ref) {
   // 联动：数据集列表「报表数」跳转携带 ?dataset=<pk> —— 由 RePlusPage 的
   // routeParams 装配（route.query → 搜索默认值）自动生效，页面无需再注入。
 
-  const datasetName = (value: ReportItem["dataset"]) => {
-    const pk = relatedPk(value);
-    return datasets.value.find(item => item.pk === pk)?.name ?? pk;
-  };
-
-  /** 投递渠道展示：空 = 仅邮件（存量兼容）；未知取值原样回显（值集单源在后端） */
-  const channelLabels = (channels: string[] | undefined) =>
-    (channels?.length ? channels : ["email"])
-      .map(item => {
-        const key = channelLabelKey(item);
-        return key ? t(key) : item;
-      })
-      .join(", ");
-
-  const listColumnsFormat = (columns: PageTableColumn[]) =>
-    formatPageColumns(columns, {
-      dataset: column => {
-        column["minWidth"] = 140;
-        column["cellRenderer"] = ({ row }) =>
-          h("span", datasetName((row as ReportItem).dataset));
-      },
-      frequency: column => {
-        column["cellRenderer"] = ({ row }) =>
-          h("span", dictLabel((row as ReportItem).frequency));
-      },
-      recipients: column => {
-        column["minWidth"] = 180;
-        column["cellRenderer"] = ({ row }) =>
-          h("span", ((row as ReportItem).recipients || []).join(", ") || "—");
-      },
-      notify_channels: column => {
-        column["cellRenderer"] = ({ row }) =>
-          h("span", channelLabels((row as ReportItem).notify_channels));
-      },
-      last_status: column => {
-        column["cellRenderer"] = ({ row }) => {
-          const status = (row as ReportItem).last_status;
-          if (!status) return h("span", "-");
-          return h(
-            ElTag,
-            { size: "small", ...statusTagProps(status, REPORT_STATUS_TAG) },
-            () => dictLabel(status)
-          );
-        };
-      }
-    });
+  const { listColumnsFormat } = useReportColumns({ datasets });
+  const { openDialog } = useReportDialogs({ datasets, tableRef });
 
   const run = async (row: ReportItem, loading?: { value: boolean }) => {
     if (loading) loading.value = true;
@@ -135,93 +61,18 @@ export function useReport(tableRef: Ref) {
     if (res.detail) message(String(res.detail), { type: "warning" });
   };
 
-  /* ---------------- 新建 / 编辑（ReDialog + ReportForm） ---------------- */
-  const formRef = ref<InstanceType<typeof ReportForm>>();
-
-  const openDialog = (row: ReportItem | null) => {
-    formRef.value = undefined;
-    addDialog({
-      title: row ? t("dataReport.edit") : t("dataReport.create"),
-      width: dialogSize("md"),
-      draggable: true,
-      destroyOnClose: true,
-      closeOnClickModal: false,
-      sureBtnLoading: true,
-      contentRenderer: () =>
-        h(ReportForm, { ref: formRef, row, datasets: datasets.value }),
-      beforeSure: async (done, { closeLoading }) => {
-        const payload = formRef.value?.getPayload();
-        if (!payload) {
-          closeLoading();
-          return;
-        }
-        // 异常归一为可读失败结果：避免请求异常时 beforeSure 抛错、弹窗 loading 悬挂
-        const res = await (
-          row
-            ? reportApi.partialUpdate(row.pk, payload)
-            : reportApi.create(payload)
-        ).catch(normalizeError);
-        if (res.code === SUCCESS_CODE) {
-          message(t("dataReport.saveOk"), { type: "success" });
-          // 先关弹窗再刷新列表，避免刷新耗时导致弹窗滞留
-          done();
-          tableRef.value?.handleGetData();
-          return;
-        }
-        if (res.detail) message(String(res.detail), { type: "warning" });
-        closeLoading();
-      }
-    });
-  };
-
-  /** 报表设计器：新开独立页（P2.2 批次二；保存走 partialUpdate，需编辑权限） */
+  /** 报表设计器：新开独立页（保存走 partialUpdate，需编辑权限） */
   const design = (row: ReportItem) => {
     router.push({ path: "/analysis/report/designer", query: { pk: row.pk } });
   };
 
-  const operationButtonsProps = shallowRef<OperationProps>({
-    showNumber: 5,
-    width: 300,
-    buttons: [
-      {
-        text: t("dataReport.run"),
-        code: "run",
-        props: { type: "success", link: true },
-        onClick: ({ row, loading }) => run(row as ReportItem, loading),
-        // 非创建者行同样隐藏：后端 run 有创建者守卫，显示只会点击后 1003
-        index: 10,
-        show: row => canRun && row?.is_owner !== false
-      },
-      {
-        text: t("dataReport.designer"),
-        code: "design",
-        props: { type: "primary", link: true },
-        onClick: ({ row }) => design(row as ReportItem),
-        // 非创建者行不显示设计/编辑（保存会被后端守卫拒绝）
-        index: 15,
-        show: row => canEdit && row?.is_owner !== false
-      },
-      {
-        text: t("dataReport.edit"),
-        code: "edit",
-        props: { type: "primary", link: true },
-        onClick: ({ row }) => openDialog(row as ReportItem),
-        index: 20,
-        show: row => canEdit && row?.is_owner !== false
-      }
-    ]
-  });
-
-  const tableBarButtonsProps = shallowRef<OperationProps>({
-    buttons: [
-      {
-        text: t("dataReport.create"),
-        code: "create",
-        props: { type: "primary" },
-        onClick: () => openDialog(null),
-        show: canCreate
-      }
-    ]
+  const { operationButtonsProps, tableBarButtonsProps } = useReportButtons({
+    canCreate,
+    canEdit,
+    canRun,
+    run,
+    design,
+    openDialog
   });
 
   return {

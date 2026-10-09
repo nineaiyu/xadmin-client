@@ -1,23 +1,13 @@
-import { h, reactive, type Ref } from "vue";
+import { reactive, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElLink, ElTag } from "element-plus";
 import { usePageAuth } from "@/router/utils";
 import { approvalApi } from "@/api/approval/approval";
-import { SUCCESS_CODE } from "@/api/types";
-import {
-  type PageTableColumn,
-  formatPageColumns
-} from "@/components/RePlusPage";
-import { statusTagProps } from "@/utils/dict";
-import { message } from "@/utils/message";
 import { refreshApprovalBadge } from "@/utils/approvalBadge";
 import { refreshApprovalStats } from "@/utils/approvalStats";
-import type { RecordType } from "plus-pro-components";
-import { APPROVAL_STATUS_TAG_TYPE } from "./constants";
-import { openApprovalProgressDialog, type TargetSnapshot } from "./dialogs";
+import { useApprovalColumns } from "./approvalColumns";
+import { useApprovalProgress } from "./useApprovalProgress";
 import { useApprovalRowActions } from "./useApprovalRowActions";
 import { useApprovalToolbar } from "./useApprovalToolbar";
-import { approverText } from "./approvalTexts";
 
 export type ApprovalScope = "pending" | "mine";
 
@@ -25,9 +15,10 @@ export type ApprovalScope = "pending" | "mine";
  * 审批中心面板公共装配：待我审批 / 我发起的两页签同构，唯一差异是
  * scope 过滤与操作按钮（通过/驳回 vs 撤回）。权限码挂页面组件名
  * SystemApprovalRequest 下（页签无独立菜单，显式传字符串后缀）。
- * 弹窗内容（驳回原因 / 逐级进度）见 utils/dialogs.tsx；
- * 行内操作与工具栏见 useApprovalRowActions / useApprovalToolbar，
- * 行级可见性与文案规则见 approvalRowRules / approvalTexts（纯函数可单测直测）。
+ * 弹窗内容（驳回原因 / 逐级进度）见 utils/dialogs.tsx；行内操作与工具栏见
+ * useApprovalRowActions / useApprovalToolbar，列渲染见 approvalColumns，
+ * 进度弹窗入口见 useApprovalProgress；行级可见性与文案规则见
+ * approvalRowRules / approvalTexts（纯函数可单测直测）。
  */
 export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
   const auth = usePageAuth("SystemApprovalRequest", [
@@ -66,60 +57,8 @@ export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
     refresh
   });
 
-  /** 审批进度弹窗（内容渲染见 utils/dialogs.tsx）：先取详情里的 steps + 目标快照再打开 */
-  const openProgress = (row?: RecordType) => {
-    if (!row?.pk) return;
-    // 详情拉取失败（网络异常或业务码非成功）显式提示，不再静默无响应
-    approvalApi
-      .retrieve?.(row.pk)
-      ?.then(res => {
-        if (res.code !== SUCCESS_CODE || !res.data) {
-          message(t("approval.progressLoadFailed"), { type: "warning" });
-          return;
-        }
-        const detail = res.data as RecordType;
-        openApprovalProgressDialog({
-          t,
-          no: String(row.pk).slice(0, 8).toUpperCase(),
-          steps: (detail.steps ?? []) as Array<RecordType>,
-          // 目标对象变更对照（敏感操作审批的目标快照；缺失时弹窗跳过该区块）
-          snapshot: (detail.target_snapshot ?? null) as TargetSnapshot | null
-        });
-      })
-      .catch(() => {
-        message(t("approval.progressLoadFailed"), { type: "warning" });
-      });
-  };
-
-  /** 状态列：字典驱动（approval_status）颜色/文案，字典未配置回退页面 i18n */
-  const listColumnsFormat = (columns: PageTableColumn[]) =>
-    formatPageColumns(columns, {
-      status: column => {
-        column.cellRenderer = data => {
-          const row = data.row;
-          const status = row.status?.value ?? row.status;
-          return h(
-            ElTag,
-            statusTagProps(row.status, APPROVAL_STATUS_TAG_TYPE),
-            () => row.status?.label ?? t(`approval.status${status}`)
-          );
-        };
-      },
-      // 审批人列：多级链显示「第 N 级：当前级候选人」，扁平单显示实际审批人或
-      // 「待审批」占位（文案规则见 approvalTexts.ts）；两者均可点击查看审批详情
-      // （详情含目标对象变更对照）
-      approver: column => {
-        column.cellRenderer = ({ row }) =>
-          h(
-            ElLink,
-            {
-              type: "primary",
-              onClick: () => openProgress(row)
-            },
-            () => approverText(row, t)
-          );
-      }
-    });
+  const { openProgress } = useApprovalProgress();
+  const { listColumnsFormat } = useApprovalColumns({ t, openProgress });
 
   return {
     api,

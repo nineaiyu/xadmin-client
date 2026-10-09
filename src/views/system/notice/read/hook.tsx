@@ -1,118 +1,41 @@
-import { h, reactive, ref, type Ref, shallowRef } from "vue";
+import { reactive, shallowRef, type Ref } from "vue";
 import { noticeReadApi } from "@/api/system/notice";
-import { deviceDetection } from "@pureadmin/utils";
-import { addDialog } from "@/components/ReDialog";
-import { useRouter } from "vue-router";
-import { hasAuth } from "@/router/utils";
 import { usePageAuth } from "@/router/utils";
-import { goUserDetail } from "@/views/system/hooks";
 import { useI18n } from "vue-i18n";
-import type { PageTableColumn, OperationProps } from "@/components/RePlusPage";
-import { formatPageColumns } from "@/components/RePlusPage";
-import { renderSwitch, usePublicHooks } from "@/components/RePlusPage";
-import NoticeShowForm from "@/views/system/components/NoticeShow.vue";
+import type { OperationProps } from "@/components/RePlusPage";
+import { useNoticeReadColumns } from "./useNoticeReadColumns";
+import { openNoticeReadDetail } from "./noticeReadDetail";
 
+/**
+ * 通知接收列表：列渲染与行内跳转见 useNoticeReadColumns.tsx，
+ * 详情弹窗见 noticeReadDetail.ts，本文件负责数据源与操作列装配。
+ */
 export function useNoticeRead(tableRef: Ref) {
   const { t } = useI18n();
 
   const api = reactive(noticeReadApi);
 
   const auth = usePageAuth(["state"]);
-  const switchLoadMap = ref({});
-  const { switchStyle } = usePublicHooks();
+
+  const { listColumnsFormat } = useNoticeReadColumns({
+    t,
+    api,
+    auth,
+    tableRef
+  });
 
   const operationButtonsProps = shallowRef<OperationProps>({
     width: 140,
     buttons: [
       {
         code: "detail",
-        onClick({ row: { notice_info } }) {
-          addDialog({
-            title: t("noticeRead.showSystemNotice"),
-            props: {
-              formInline: { ...notice_info },
-              hasPublish: false
-            },
-            width: "70%",
-            draggable: true,
-            fullscreen: deviceDetection(),
-            fullscreenIcon: true,
-            closeOnClickModal: false,
-            hideFooter: true,
-            contentRenderer: () => h(NoticeShowForm)
-          });
+        onClick({ row }) {
+          openNoticeReadDetail({ t, row });
         },
         update: true
       }
     ]
   });
-  const listColumnsFormat = (columns: PageTableColumn[]) =>
-    formatPageColumns(columns, {
-      notice_info: column => {
-        column["cellRenderer"] = ({ row }) => (
-          <el-link
-            type={row.notice_info?.level?.value}
-            onClick={() => onGoNoticeDetail(row)}
-          >
-            {row.notice_info.title}
-          </el-link>
-        );
-      },
-      owner: column => {
-        column["cellRenderer"] = ({ row }) => (
-          <el-link onClick={() => onGoUserDetail(row)}>
-            {row.owner?.username ? row.owner?.username : "/"}
-          </el-link>
-        );
-      },
-      unread: column => {
-        column["cellRenderer"] = renderSwitch({
-          t,
-          updateApi: api.state,
-          switchLoadMap,
-          switchStyle,
-          field: column.prop as string,
-          disabled: () => !auth.state,
-          success() {
-            tableRef.value.handleGetData();
-          },
-          actionMap: {
-            true: t("labels.read"),
-            false: t("labels.unread")
-          },
-          activeMap: {
-            false: true,
-            true: false
-          }
-        });
-      }
-    });
-  const router = useRouter();
-
-  /** 行内 `owner` 嵌套字段（点击跳转 SystemUser 详情） */
-  type OwnerRow = {
-    owner?: { username?: string; pk?: number | string };
-  };
-
-  function onGoUserDetail(row: OwnerRow) {
-    goUserDetail(router, row.owner?.pk);
-  }
-
-  /** 行内 `notice_info` 嵌套字段（点击跳转 SystemNotice 详情） */
-  type NoticeRow = { notice_info?: { pk?: number | string } };
-
-  function onGoNoticeDetail(row: NoticeRow) {
-    if (
-      hasAuth("list:SystemNotice") &&
-      row?.notice_info &&
-      row.notice_info?.pk
-    ) {
-      router.push({
-        name: "SystemNotice",
-        query: { pk: row.notice_info.pk }
-      });
-    }
-  }
 
   return {
     api,

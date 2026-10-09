@@ -1,23 +1,11 @@
-import { h, reactive, shallowRef, type Ref } from "vue";
+import { reactive, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElLink, ElTag } from "element-plus";
 import { hasAuth, usePageAuth } from "@/router/utils";
-import {
-  formatPageColumns,
-  type OperationProps,
-  type PageTableColumn
-} from "@/components/RePlusPage";
 import { knowledgeApi } from "@/api/ai/knowledge";
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import Plus from "~icons/ep/plus";
-import Refresh from "~icons/ep/refresh";
-import Check from "~icons/ep/check";
-import Close from "~icons/ep/close";
 import { useKnowledgeActions } from "./useKnowledgeActions";
 import { useKnowledgeBuild } from "./useKnowledgeBuild";
-import type { KnowledgeDocumentItem } from "@/api/ai/knowledge";
-
-type KnowledgeRow = KnowledgeDocumentItem & { is_active: boolean };
+import { useKnowledgeColumns } from "./useKnowledgeColumns";
+import { useKnowledgeButtons } from "./useKnowledgeButtons";
 
 /**
  * 知识库页装配：列表走 RePlusPage 标准 CRUD 口径，行操作收敛进「管理文档」抽屉：
@@ -32,7 +20,9 @@ type KnowledgeRow = KnowledgeDocumentItem & { is_active: boolean };
  *
  * 职责拆分：
  * - useKnowledgeActions  上传弹窗、启停/删除、仓库同步、批量启停与管理抽屉；
- * - useKnowledgeBuild    向量索引构建与进度轮询（findMilestone 为纯函数）。
+ * - useKnowledgeBuild    向量索引构建与进度轮询（findMilestone 为纯函数）；
+ * - useKnowledgeColumns  列渲染；
+ * - useKnowledgeButtons  工具栏与行操作按钮装配。
  */
 export function useKnowledge(tableRef: Ref) {
   const { t } = useI18n();
@@ -56,99 +46,16 @@ export function useKnowledge(tableRef: Ref) {
 
   const { buildEmbeddings } = useKnowledgeBuild({ t, refresh });
 
-  /* ---------------- 列渲染（入口 + 只读状态） ---------------- */
-  const listColumnsFormat = (columns: PageTableColumn[]) =>
-    formatPageColumns(columns, {
-      title: column => {
-        // 文档标题同为抽屉入口（预览/启停/删除都在抽屉内）
-        column["cellRenderer"] = ({ row }) => {
-          const item = row as KnowledgeRow;
-          return h(
-            ElLink,
-            {
-              type: "primary",
-              onClick: () => openKnowledgePanel(item)
-            },
-            () => item.title
-          );
-        };
-      },
-      is_active: column => {
-        // 只读状态标签：启停入口唯一收敛到抽屉（避免与禁用开关并存）
-        column["cellRenderer"] = ({ row, props }) => {
-          const active = Boolean((row as KnowledgeRow).is_active);
-          return h(
-            ElTag,
-            {
-              type: active ? "success" : "danger",
-              size: props.size,
-              effect: "plain"
-            },
-            () =>
-              active ? t("aiKnowledge.enabled") : t("aiKnowledge.disabled")
-          );
-        };
-      }
-    });
+  const { listColumnsFormat } = useKnowledgeColumns({ t, openKnowledgePanel });
 
-  const tableBarButtonsProps = shallowRef<OperationProps>({
-    buttons: [
-      {
-        text: t("aiKnowledge.upload"),
-        code: "upload",
-        props: {
-          type: "primary",
-          icon: useRenderIcon(Plus)
-        },
-        onClick: openUpload,
-        show: canCreate
-      },
-      {
-        text: t("aiKnowledge.syncRepo"),
-        code: "syncRepo",
-        props: { icon: useRenderIcon(Refresh) },
-        onClick: syncRepo,
-        show: canSync
-      },
-      {
-        text: t("aiKnowledge.buildEmbeddings"),
-        code: "buildEmbeddings",
-        props: { icon: useRenderIcon("ep/magic-stick") },
-        onClick: buildEmbeddings,
-        show: canBuildEmbeddings
-      },
-      {
-        text: t("aiKnowledge.batchEnable"),
-        code: "batchEnable",
-        props: { type: "success", plain: true, icon: useRenderIcon(Check) },
-        onClick: batchToggle(true),
-        show: canBatchToggle
-      },
-      {
-        text: t("aiKnowledge.batchDisable"),
-        code: "batchDisable",
-        props: { type: "warning", plain: true, icon: useRenderIcon(Close) },
-        onClick: batchToggle(false),
-        show: canBatchToggle
-      }
-    ]
-  });
-
-  const operationButtonsProps = shallowRef<OperationProps>({
-    // 行操作收敛进抽屉后操作列只需容纳「预览」一个入口
-    width: 140,
-    // 文档资料与正文由「管理文档」抽屉承载，关闭框架默认详情入口避免重复
-    hideDetail: true,
-    buttons: [
-      {
-        text: t("aiKnowledge.preview"),
-        code: "preview",
-        props: { type: "primary", link: true },
-        onClick: ({ row }) => openKnowledgePanel(row as KnowledgeRow),
-        index: 10,
-        show: true
-      }
-    ]
+  const { tableBarButtonsProps, operationButtonsProps } = useKnowledgeButtons({
+    t,
+    flags: { canCreate, canSync, canBatchToggle, canBuildEmbeddings },
+    openUpload,
+    syncRepo,
+    buildEmbeddings,
+    batchToggle,
+    openKnowledgePanel
   });
 
   return {

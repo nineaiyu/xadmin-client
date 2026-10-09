@@ -1,183 +1,46 @@
-import { storeToRefs } from "pinia";
-import { getConfig } from "@/config";
 import { useRouter } from "vue-router";
-import { emitter } from "@/utils/mitt";
-import Avatar from "@/assets/avatar.png";
-import { getTopMenu } from "@/router/utils";
 import { useFullscreen } from "@vueuse/core";
-import type { menuType, routeMetaType } from "../types";
-import { transformI18n } from "@/plugins/i18n";
-import { remainingPaths, router } from "@/router";
-import { computed, type CSSProperties } from "vue";
-import { useAppStoreHook } from "@/store/modules/app";
-import { useUserStoreHook } from "@/store/modules/user";
-import { isAllEmpty, useGlobal } from "@pureadmin/utils";
-import { useEpThemeStoreHook } from "@/store/modules/epTheme";
-import { usePermissionStoreHook } from "@/store/modules/permission";
+import { useI18n } from "vue-i18n";
 import Fullscreen from "~icons/ri/fullscreen-fill";
 import ExitFullscreen from "~icons/ri/fullscreen-exit-fill";
-import { useI18n } from "vue-i18n";
+import { useNavState } from "./useNavState";
+import { createNavActions } from "./navActions";
 
-const errorInfo =
-  "The current routing configuration is incorrect, please check the configuration";
-
+/**
+ * 顶栏装配：状态（布局/用户信息/样式）见 useNavState.ts，
+ * 动作（标题/登出/跳转/菜单交互）见 navActions.ts。
+ */
 export function useNav() {
   const { t } = useI18n();
-  const pureApp = useAppStoreHook();
   const routers = useRouter().options.routes;
   const { isFullscreen, toggle } = useFullscreen();
-  const { wholeMenus } = storeToRefs(usePermissionStoreHook());
-  /** 平台`layout`中所有`el-tooltip`的`effect`配置，默认`light` */
-  const tooltipEffect = getConfig()?.TooltipEffect ?? "light";
 
-  const getDivStyle = computed((): CSSProperties => {
-    return {
-      width: "100%",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      overflow: "hidden"
-    };
+  const state = useNavState();
+  const actions = createNavActions({
+    pureApp: state.pureApp,
+    wholeMenus: state.wholeMenus
   });
-
-  /** 头像（如果头像为空则使用 src/assets/user.jpg ） */
-  const userAvatar = computed(() => {
-    return isAllEmpty(useUserStoreHook()?.avatar)
-      ? Avatar
-      : useUserStoreHook()?.avatar;
-  });
-
-  /** 昵称（如果昵称为空则显示用户名） */
-  const username = computed(() => {
-    return isAllEmpty(useUserStoreHook()?.nickname)
-      ? useUserStoreHook()?.username
-      : useUserStoreHook()?.nickname;
-  });
-
-  /** 设置国际化选中后的样式 */
-  const getDropdownItemStyle = computed(() => {
-    return (locale: string, t: string) => {
-      return {
-        background: locale === t ? useEpThemeStoreHook().epThemeColor : "",
-        color: locale === t ? "#f4f4f5" : "#000"
-      };
-    };
-  });
-
-  const getDropdownItemClass = computed(() => {
-    return (locale: string, t: string) => {
-      return locale === t ? "" : "dark:hover:text-primary!";
-    };
-  });
-
-  const avatarsStyle = computed(() => {
-    return username.value ? { marginRight: "10px" } : "";
-  });
-
-  const isCollapse = computed(() => {
-    return !pureApp.getSidebarStatus;
-  });
-
-  const device = computed(() => {
-    return pureApp.getDevice;
-  });
-
-  const { $storage, $config } = useGlobal<GlobalPropertiesApi>();
-  const layout = computed((): string => {
-    return $storage?.layout?.layout ?? "vertical";
-  });
-
-  const title = computed(() => {
-    return $config.Title;
-  });
-
-  /** 动态title */
-  function changeTitle(meta: routeMetaType) {
-    const Title = getConfig().Title;
-    if (Title) document.title = `${transformI18n(meta.title)} | ${Title}`;
-    else document.title = transformI18n(meta.title);
-  }
-
-  /** 退出登录 */
-  function logout() {
-    useUserStoreHook().logOut();
-  }
-
-  function backTopMenu() {
-    router.push(getTopMenu()?.path ?? "/");
-  }
-
-  function onPanel() {
-    emitter.emit("openPanel" as never);
-  }
-
-  function toAccountSettings() {
-    router.push({ name: "AccountSettings" });
-  }
-
-  function toggleSideBar() {
-    pureApp.toggleSideBar();
-  }
-
-  function handleResize(menuRef: { handleResize: () => void } | null) {
-    menuRef?.handleResize();
-  }
-
-  function resolvePath(route: menuType) {
-    if (!route.children) return console.error(errorInfo);
-    const httpReg = /^http(s?):\/\//;
-    const routeChildPath = route.children[0]?.path;
-    if (httpReg.test(routeChildPath ?? "")) {
-      return route.path + "/" + routeChildPath;
-    } else {
-      return routeChildPath;
-    }
-  }
-
-  function menuSelect(indexPath: string) {
-    if (wholeMenus.value.length === 0 || isRemaining(indexPath)) return;
-    emitter.emit("changLayoutRoute", indexPath);
-  }
-
-  /** 判断路径是否参与菜单 */
-  function isRemaining(path: string) {
-    return remainingPaths.includes(path);
-  }
-
-  /** 获取`logo` */
-  function getLogo() {
-    return new URL("/logo.svg", import.meta.url).href;
-  }
 
   return {
     t,
-    title,
-    device,
-    layout,
-    logout,
+    title: state.title,
+    device: state.device,
+    layout: state.layout,
     routers,
-    $storage,
     isFullscreen,
     Fullscreen,
     ExitFullscreen,
     toggle,
-    backTopMenu,
-    onPanel,
-    getDivStyle,
-    changeTitle,
-    toggleSideBar,
-    menuSelect,
-    handleResize,
-    resolvePath,
-    getLogo,
-    isCollapse,
-    pureApp,
-    username,
-    userAvatar,
-    avatarsStyle,
-    tooltipEffect,
-    toAccountSettings,
-    getDropdownItemStyle,
-    getDropdownItemClass
+    $storage: state.$storage,
+    isCollapse: state.isCollapse,
+    pureApp: state.pureApp,
+    username: state.username,
+    userAvatar: state.userAvatar,
+    avatarsStyle: state.avatarsStyle,
+    tooltipEffect: state.tooltipEffect,
+    getDivStyle: state.getDivStyle,
+    getDropdownItemStyle: state.getDropdownItemStyle,
+    getDropdownItemClass: state.getDropdownItemClass,
+    ...actions
   };
 }

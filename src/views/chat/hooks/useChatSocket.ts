@@ -3,21 +3,17 @@ import type { Ref } from "vue";
 import { ChatWebSocket, type WS } from "@/utils/websocket";
 import {
   MessageAction,
-  isOutboundMessage,
   type ChatReactionUpdatePayload,
   type ChatRecallPayload,
-  type ChatRoomMessage,
-  type ChatUnreadPayload,
-  type UserinfoPayload
+  type ChatRoomMessage
 } from "@/utils/websocket/protocol";
 import type { ChatMessageItem } from "@/api/chat";
-import type { useRooms } from "./useRooms";
-
-type RoomsState = ReturnType<typeof useRooms>;
+import type { RoomsState } from "./useRooms";
+import { dispatchChatFrame } from "./chatFrames";
 
 /**
  * 聊天室 WS 连接域（自 useChat 抽出）：自建 `ws/chat/` 连接（不与 user store 的
- * 全局通知连接争抢 onmessage）、帧分派（userinfo/消息/撤回/表情回应/未读）与已读上报。
+ * 全局通知连接争抢 onmessage）、帧分派（口径见 chatFrames.ts）与已读上报。
  * 消息集合与滚动状态由调用方持有，经 options 注入。
  */
 export function useChatSocket({
@@ -47,60 +43,20 @@ export function useChatSocket({
   const connected = ref(false);
   const socket = ref<WS>();
 
-  function onFrame(raw: unknown) {
-    if (isOutboundMessage<UserinfoPayload>(raw, MessageAction.USERINFO)) {
-      const data = raw.data ?? {};
-      me.value = {
-        pk: Number(data.pk ?? 0),
-        username: String(data.userinfo?.username ?? ""),
-        avatar: String((data.userinfo as { avatar?: string })?.avatar ?? "")
-      };
-      return;
-    }
-    if (
-      isOutboundMessage<ChatRoomMessage>(raw, MessageAction.CHAT_MESSAGE) &&
-      raw.data
-    ) {
-      onIncomingMessage(raw.data);
-      return;
-    }
-    if (isOutboundMessage<ChatRecallPayload>(raw, MessageAction.CHAT_RECALL)) {
-      if (raw.data?.room_id === activeRoomId.value) applyRecall(raw.data);
-      return;
-    }
-    if (
-      isOutboundMessage<ChatReactionUpdatePayload>(
-        raw,
-        MessageAction.CHAT_REACTION
-      ) &&
-      raw.data
-    ) {
-      if (raw.data.room === activeRoomId.value) applyReactions(raw.data);
-      return;
-    }
-    if (
-      isOutboundMessage<ChatUnreadPayload>(raw, MessageAction.CHAT_UNREAD) &&
-      raw.data
-    ) {
-      roomState.applyUnread(raw.data.room_id, raw.data.unread_count);
-    }
-  }
-
-  function onIncomingMessage(data: ChatRoomMessage) {
-    const isActive = data.room_id === activeRoomId.value;
-    if (isActive) {
-      const appended = upsertMessage(data);
-      if (appended) {
-        if (atBottom.value) scrollToBottom();
-        else pendingCount.value += 1;
-      }
-      // 会话内的新消息视为已读（通知服务端清零未读游标）
-      if (!isMine(data) && data.message_type !== "system")
-        markRead(data.room_id);
-    }
-    if (!roomState.touchRoom(data, !isActive)) {
-      // 会话不在本地列表（对端刚发起的私聊）：拉一次会话列表补上
-      roomState.loadRooms();
+  function markRead(roomId: number) {
+    // 本地未读先行清零；已读上报是"尽力而为"（服务端游标由后续上报收敛）：
+    // 断连/重连窗口内 socket 不可用或发送抛错时静默跳过，不再裸 send
+    roomState.clearUnread(roomId);
+    if (!socket.value || !connected.value) return;
+    try {
+      socket.value.send(
+        JSON.stringify({
+          action: MessageAction.CHAT_READ,
+          data: { room_id: roomId }
+        })
+      );
+    } catch {
+      // 与消息上行同口径：WS 竞态下的发送异常不外抛
     }
   }
 
@@ -109,7 +65,21 @@ export function useChatSocket({
     const instance = new ChatWebSocket({
       openCallback: () => {
         connected.value = true;
-        instance.onMessage(onFrame);
+        instance.onMessage(raw =>
+          dispatchChatFrame(raw, {
+            activeRoomId,
+            me,
+            roomState,
+            upsertMessage,
+            applyRecall,
+            applyReactions,
+            isMine,
+            atBottom,
+            pendingCount,
+            scrollToBottom,
+            markRead
+          })
+        );
         // 取当前登录用户主键（气泡左右对齐）；连接恢复后需重新拉取
         instance.send(JSON.stringify({ action: MessageAction.USERINFO }));
       },
@@ -127,23 +97,6 @@ export function useChatSocket({
     socket.value?.close();
     socket.value = undefined;
     connected.value = false;
-  }
-
-  function markRead(roomId: number) {
-    // 本地未读先行清零；已读上报是"尽力而为"（服务端游标由后续上报收敛）：
-    // 断连/重连窗口内 socket 不可用或发送抛错时静默跳过，不再裸 send
-    roomState.clearUnread(roomId);
-    if (!socket.value || !connected.value) return;
-    try {
-      socket.value.send(
-        JSON.stringify({
-          action: MessageAction.CHAT_READ,
-          data: { room_id: roomId }
-        })
-      );
-    } catch {
-      // 与消息上行同口径：WS 竞态下的发送异常不外抛
-    }
   }
 
   return { connected, socket, connect, disconnect, markRead };

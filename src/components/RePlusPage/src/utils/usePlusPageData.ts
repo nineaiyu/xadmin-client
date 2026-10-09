@@ -1,18 +1,23 @@
-import { SUCCESS_CODE } from "@/api/types";
-import { message } from "@/utils/message";
-import { fetchAllRows } from "@/utils/fetchAllRows";
 import type { Ref } from "vue";
-import { cloneDeep } from "@pureadmin/utils";
 import type { useI18n } from "vue-i18n";
 import type { RePlusPageProps } from "./types";
 import type { useBaseColumns } from "./columns";
-import { handleTree } from "@/utils/tree";
-import { buildListParams, splitDateRangeFields } from "./listParams";
+import { createPageRequest } from "./plusPageRequest";
+import {
+  createFetchColumnsSeparately,
+  createFieldsInitCallback,
+  createGetPageColumn
+} from "./plusPageMetadata";
+import { createSearchEvents } from "./plusPageSearchEvents";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 type BaseColumnsReturn = ReturnType<typeof useBaseColumns>;
 
-/** 请求与分页：搜索字段装配、请求序号防过期、分页/搜索事件与首开元数据编排（拆分自 hook.tsx，行为不变；参数装配纯函数见 listParams.ts） */
+/**
+ * 请求与分页：搜索字段装配、请求序号防过期、分页/搜索事件与首开元数据编排。
+ * 参数装配纯函数见 listParams.ts，请求编排见 plusPageRequest.ts，
+ * 元数据装配与首开回退见 plusPageMetadata.ts，搜索区事件见 plusPageSearchEvents.ts。
+ */
 export function usePlusPageData({
   props,
   emit,
@@ -44,168 +49,54 @@ export function usePlusPageData({
   searchDefaultValue: BaseColumnsReturn["searchDefaultValue"];
   columnsInitCallback: () => void;
 }) {
-  const { api, auth, isTree, beforeSearchSubmit, searchResultFormat } = props;
+  const { auth } = props;
 
-  const initSearchFields = () => {
-    searchFields.value = cloneDeep(defaultValue.value);
-    tablePagination.value.pageSize = searchFields.value.size;
-    tablePagination.value.currentPage = searchFields.value.page;
-  };
-
-  const handleReset = () => {
-    initSearchFields();
-    handleGetData();
-  };
-
-  const handleSearch = async () => {
-    searchFields.value.page = tablePagination.value.currentPage = 1;
-    handleGetData();
-  };
-
-  const handleSizeChange = (val: number) => {
-    searchFields.value.page = 1;
-    searchFields.value.size = val;
-    handleGetData();
-  };
-
-  const handleCurrentChange = (val: number) => {
-    searchFields.value.page = val;
-    handleGetData();
-  };
+  const fieldsInitCallback = createFieldsInitCallback({
+    searchFields,
+    defaultValue,
+    tablePagination,
+    searchDefaultValue,
+    routeParams
+  });
 
   // 数据获取
-  // 请求序号：仅接受最新一次请求的响应，避免同页快速切换筛选/分页时旧响应覆盖新列表
-  let latestRequestSeq = 0;
-  const handleGetData = (
-    queryParams = {},
-    options: {
-      /** 首开内联元数据消费（with_meta=1 响应中的 search_columns/search_fields） */
-      inline?: boolean;
-      /** 内联响应缺元数据键时的一次性回退（旧后端/无元数据 Action 视图集） */
-      onInlineMetaMissing?: () => void;
-    } = {}
-  ) => {
-    // 列表接口是分页数据源的必要条件（缺省时直接收尾 loading，不发起请求）
-    if (!api.list) {
-      loadingStatus.value = false;
-      return;
-    }
-    const requestSeq = ++latestRequestSeq;
-    loadingStatus.value = true;
+  const handleGetData = createPageRequest({
+    props,
+    t,
+    emit,
+    routeParams,
+    dataList,
+    loadingStatus,
+    searchFields,
+    tablePagination,
+    getColumnData,
+    columnsInitCallback,
+    fieldsInitCallback
+  });
 
-    // 日期区间字段拆分为 _after/_before（就地写入搜索字段，区间选择器回显共用）
-    splitDateRangeFields(searchFields.value);
+  const fetchColumnsSeparately = createFetchColumnsSeparately({
+    props,
+    auth,
+    getColumnData,
+    columnsInitCallback,
+    fieldsInitCallback,
+    handleGetData
+  });
 
-    const params = buildListParams(searchFields.value, queryParams);
-    const data = (beforeSearchSubmit && beforeSearchSubmit(params)) || params;
+  const getPageColumn = createGetPageColumn({
+    props,
+    auth,
+    handleGetData,
+    fetchColumnsSeparately
+  });
 
-    // 树形列表（菜单/部门等）父子关系不能被分页切断，需全量数据；
-    // fetchAllRows 按页循环拉满 total，返回形状与单页响应一致，消费逻辑无需区分
-    const request = isTree ? fetchAllRows(api.list, data) : api.list(data);
-
-    request
-      .then(res => {
-        // 过期响应直接丢弃：不覆盖新数据、不触发 searchComplete、不关闭 loading
-        if (requestSeq !== latestRequestSeq) return;
-        if (res.code === SUCCESS_CODE && res.data) {
-          if (searchResultFormat && typeof searchResultFormat === "function") {
-            dataList.value = searchResultFormat(res.data.results);
-          } else {
-            dataList.value = isTree
-              ? handleTree(res.data.results)
-              : res.data.results;
-          }
-          tablePagination.value.total = res.data.total;
-          if (options.inline) {
-            if (res.data.search_columns || res.data.search_fields) {
-              getColumnData(
-                null,
-                null,
-                columnsInitCallback,
-                fieldsInitCallback,
-                {},
-                {},
-                {
-                  search_columns: res.data.search_columns,
-                  search_fields: res.data.search_fields
-                }
-              );
-            } else {
-              // 旧后端/未混入元数据 Action：回退分离请求
-              options.onInlineMetaMissing?.();
-            }
-          }
-        } else {
-          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-        }
-        emit("searchComplete", { routeParams, searchFields, dataList, res });
-        loadingStatus.value = false;
-      })
-      .catch(() => {
-        // 过期请求的失败同样忽略；其它失败的提示由 http 层统一给出，此处只收尾 loading
-        if (requestSeq !== latestRequestSeq) return;
-        loadingStatus.value = false;
-      });
-  };
-
-  /** 搜索表单默认值装配（fieldsCallback 与 内联首开共用） */
-  const fieldsInitCallback = () => {
-    defaultValue.value = {
-      ...{
-        page: tablePagination.value.currentPage,
-        size: tablePagination.value.pageSize,
-        ordering: "-created_time"
-      },
-      ...searchDefaultValue.value
-    };
-    searchFields.value = cloneDeep(defaultValue.value);
-
-    if (routeParams) {
-      const parameter = cloneDeep(routeParams);
-      Object.keys(parameter).forEach(param => {
-        searchFields.value[param] = parameter[param];
-      });
-    }
-  };
-
-  /** 分离请求拉取列/字段元数据（与内联首开回退共用同一回调装配） */
-  const fetchColumnsSeparately = (immediate: boolean) => {
-    // fetchSearchFields=false：页面声明不消费分离的 search-fields 端点，
-    // 与「api 无 fields 方法」同一路径（跳过请求、数据装配退回列回调分支）
-    const fieldsApi = props.fetchSearchFields === false ? null : api.fields;
-    getColumnData(
-      auth.list ? api.columns : null,
-      fieldsApi,
-      () => {
-        columnsInitCallback();
-        if (!fieldsApi && immediate) {
-          handleGetData();
-        }
-      },
-      () => {
-        fieldsInitCallback();
-        if (immediate) {
-          handleGetData();
-        }
-      }
-    );
-  };
-
-  const getPageColumn = (immediate: boolean) => {
-    if (immediate && auth.list && api.list) {
-      // 首开以 with_meta=1 合并 list/search-columns/search-fields 三个请求；
-      // 响应缺元数据键（旧后端/无元数据 Action）时回退分离请求
-      handleGetData(
-        { with_meta: 1 },
-        {
-          inline: true,
-          onInlineMetaMissing: () => fetchColumnsSeparately(immediate)
-        }
-      );
-      return;
-    }
-    fetchColumnsSeparately(immediate);
-  };
+  const { handleReset, handleSearch, handleSizeChange, handleCurrentChange } =
+    createSearchEvents({
+      searchFields,
+      defaultValue,
+      tablePagination,
+      handleGetData
+    });
 
   return {
     handleReset,

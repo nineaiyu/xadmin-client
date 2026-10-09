@@ -1,24 +1,16 @@
-import { h, reactive, shallowRef, type Ref } from "vue";
+import { reactive, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElLink, ElSwitch, ElTag, ElTooltip } from "element-plus";
 import { hasAuth, usePageAuth } from "@/router/utils";
-import {
-  formatPageColumns,
-  type OperationProps,
-  type PageTableColumn
-} from "@/components/RePlusPage";
-import { buildScopeIndex, formatScopeLines } from "@/utils/scopeDisplay";
+import { buildScopeIndex } from "@/utils/scopeDisplay";
 import { SUCCESS_CODE } from "@/api/types";
-import {
-  apiApplicationApi,
-  loadScopeCatalog,
-  type ApiApplicationItem
-} from "@/api/system/open";
+import { apiApplicationApi, loadScopeCatalog } from "@/api/system/open";
 import { useApiAppCredential } from "./useApiAppCredential";
 import { useApiAppActions } from "./useApiAppActions";
 import { useApiAppUsage } from "./useApiAppUsage";
 import { useApiAppDialog } from "./useApiAppDialog";
 import { useApiAppPanel } from "./useApiAppPanel";
+import { useApiAppColumns } from "./useApiAppColumns";
+import { useApiAppButtons } from "./useApiAppButtons";
 
 /**
  * API 应用（开放平台）：CRUD + 重置密钥 + 回调测试 + 统一「管理」抽屉。
@@ -34,12 +26,8 @@ import { useApiAppPanel } from "./useApiAppPanel";
  *   禁用框架 boolean 列开关，故在列渲染层接管，失败回滚行内值（启停的唯一入口，
  *   抽屉内不再重复提供）。
  *
- * 职责拆分：
- * - useApiAppCredential  一次性密钥展示状态与剪贴板；
- * - useApiAppActions     行内启停/重置密钥/回调测试；
- * - useApiAppUsage       用量报表（抽屉）；
- * - useApiAppDialog      新建/编辑弹窗（含资源授权同步）；
- * - useApiAppPanel       「管理」抽屉装配。
+ * 职责拆分：credential / actions / usage / dialog / panel 见同名子模块，
+ * 列渲染见 useApiAppColumns、按钮装配见 useApiAppButtons。
  */
 export function useApiApplication(tableRef: Ref) {
   const { t } = useI18n();
@@ -96,100 +84,19 @@ export function useApiApplication(tableRef: Ref) {
     flags: { canStats, canRegenerate, canTestCallback, canEdit }
   });
 
-  /* ---------------- 列渲染 ---------------- */
-  const listColumnsFormat = (columns: PageTableColumn[]) =>
-    formatPageColumns(columns, {
-      name: column => {
-        // 应用名同为「管理」抽屉入口：名称即实体标识，点击最直观
-        column["cellRenderer"] = ({ row }) => {
-          const item = row as ApiApplicationItem;
-          return h(
-            ElLink,
-            {
-              type: "primary",
-              onClick: () => openApiAppPanel(item)
-            },
-            () => item.name
-          );
-        };
-      },
-      scopes: column => {
-        // 明细走 tooltip：条目本体是锚定正则，列内只显示条数，hover 看到可读路径
-        column["minWidth"] = 130;
-        column["cellRenderer"] = ({ row }) => {
-          const scopes = (row as ApiApplicationItem).scopes ?? [];
-          if (!scopes.length) return t("apiApp.unlimited");
-          return h(
-            ElTooltip,
-            { placement: "top" },
-            {
-              default: () =>
-                h(ElTag, { type: "info", size: "small" }, () =>
-                  t("apiApp.scopeCount", { n: scopes.length })
-                ),
-              content: () =>
-                h(
-                  "div",
-                  {
-                    class: "text-xs",
-                    style: { maxWidth: "420px", whiteSpace: "pre-line" }
-                  },
-                  formatScopeLines(scopes, scopeIndex.value)
-                )
-            }
-          );
-        };
-      },
-      is_active: column => {
-        column["cellRenderer"] = ({ row }) =>
-          h(ElSwitch, {
-            modelValue: (row as ApiApplicationItem).is_active,
-            disabled: !canEdit,
-            "onUpdate:modelValue": (value: string | number | boolean) =>
-              toggleActive(row as ApiApplicationItem, value as boolean)
-          });
-      },
-      client_id: column => {
-        column["minWidth"] = 220;
-      }
-    });
-
-  /* ---------------- 按钮装配 ---------------- */
-  const operationButtonsProps = shallowRef<OperationProps>({
-    // 行操作收敛后操作列只需容纳编辑 / 管理两个按钮
-    width: 200,
-    // 应用资料由「管理」抽屉承载，关闭框架默认详情入口避免重复
-    hideDetail: true,
-    buttons: [
-      {
-        text: t("apiApp.edit"),
-        code: "edit",
-        props: { type: "primary", link: true },
-        onClick: ({ row }) => openDialog(row as ApiApplicationItem),
-        index: -25,
-        show: canEdit
-      },
-      {
-        text: t("apiApp.manage"),
-        code: "manage",
-        props: { type: "primary", link: true },
-        onClick: ({ row }) => openApiAppPanel(row as ApiApplicationItem),
-        index: -15,
-        show: true
-      }
-    ]
+  const { listColumnsFormat } = useApiAppColumns({
+    t,
+    canEdit,
+    scopeIndex,
+    toggleActive,
+    openApiAppPanel
   });
 
-  const tableBarButtonsProps = shallowRef<OperationProps>({
-    buttons: [
-      {
-        text: t("apiApp.create"),
-        code: "create",
-        props: { type: "primary", "data-testid": "api-app-create" },
-        onClick: () => openDialog(null),
-        show: canCreate
-      }
-    ]
+  const { operationButtonsProps, tableBarButtonsProps } = useApiAppButtons({
+    t,
+    flags: { canCreate, canEdit },
+    openDialog,
+    openApiAppPanel
   });
 
   return {

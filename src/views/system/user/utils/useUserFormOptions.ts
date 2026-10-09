@@ -1,9 +1,8 @@
-import { isPhone } from "@pureadmin/utils";
 import { AesEncrypted } from "@/utils/aes";
 import { handleTree } from "@/utils/tree";
 import { ref, shallowRef } from "vue";
 import type { RePlusPageProps } from "@/components/RePlusPage";
-import { buildPasswordValidator } from "./passwordRules";
+import { buildUserFormRules } from "./userFormRules";
 import type { useI18n } from "vue-i18n";
 import type { PasswordRule } from "@/api/auth";
 import type { RecordType } from "plus-pro-components";
@@ -83,45 +82,11 @@ export function useUserFormOptions({
         }: {
           rawFormProps: { rules: RecordType };
         }) => {
-          // 一步邀请：邀请模式下密码由被邀请人自行设置 → 密码非必填（动态校验）
-          rules["password"] = [
-            {
-              validator: (
-                rule: unknown,
-                value: string | undefined,
-                callback: (error?: Error) => void
-              ) => {
-                if (inviteMode.value) {
-                  callback();
-                  return;
-                }
-                if (!value) {
-                  callback(new Error(t("systemUser.passwordRequired")));
-                  return;
-                }
-                buildPasswordValidator(t, passwordRules)(rule, value, callback);
-              },
-              trigger: "blur"
-            }
-          ];
-          rules["phone"] = [
-            {
-              validator: (
-                _rule: unknown,
-                value: string | undefined,
-                callback: (error?: Error) => void
-              ) => {
-                if (value === "" || !value) {
-                  callback();
-                } else if (!isPhone(value)) {
-                  callback(new Error(t("login.phoneCorrectReg")));
-                } else {
-                  callback();
-                }
-              },
-              trigger: "blur"
-            }
-          ];
+          // 密码/手机号动态校验规则见 userFormRules.ts（一步邀请模式下密码非必填）
+          Object.assign(
+            rules,
+            buildUserFormRules({ t, passwordRules, inviteMode })
+          );
           return rules;
         }
       },

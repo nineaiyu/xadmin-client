@@ -1,5 +1,4 @@
-import { computed, onMounted, ref, type Ref } from "vue";
-import { getKeyList, isEmpty } from "@pureadmin/utils";
+import { onMounted, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import type { RePlusPageProps } from "./types";
@@ -9,125 +8,32 @@ import { usePlusPageData } from "./usePlusPageData";
 import { usePlusPageForm } from "./usePlusPageForm";
 import { usePlusPageButtons } from "./usePlusPageButtons";
 import { useTableSort } from "./useTableSort";
+import { usePlusPageState } from "./usePlusPageState";
 
-/**
- * RePlusPage 视图组装入口（拆分自 720 行单体，行为与返回契约不变）：
- * - usePlusPageColumns 列表列渲染（开关列、多选/操作列注入、三类列格式化出口）
- * - usePlusPageData    请求与分页（搜索字段装配、请求序号防过期、首开元数据编排）
- * - useTableSort       表头排序（元数据 sortable 列 → ordering 参数，与搜索区同源）
- * - usePlusPageForm    表单与详情（新增/编辑、脱敏原文回取、详情、删除）
- * - usePlusPageButtons 默认操作列与工具栏按钮组
- */
+/** RePlusPage 视图组装入口（行为与返回契约不变）：六个子 hook 的接线 */
 export function usePlusPage(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Vue EmitFn 交叉类型在参数逆变下需 any 才能收宽
   emit: (...args: any[]) => void,
   tableRef: Ref,
   props: RePlusPageProps
 ) {
-  const { isTree, immediate, pagination, localeName } = props;
+  const { immediate, localeName } = props;
 
   const route = useRoute();
   const { t, te } = useI18n();
-  const dataList = ref([]);
-  const loadingStatus = ref(false);
-  // 显式对齐 @pureadmin/table 的 treeProps 期望形状（其 default 字面量类型三字段全必填）
-  const treeProps = ref<{
-    hasChildren: string;
-    children: string;
-    checkStrictly: boolean;
-  }>({
-    hasChildren: "hasChildren",
-    children: "children",
-    checkStrictly: isTree ?? false
+  const baseCols = useBaseColumns(localeName ?? "");
+  const { listColumns, searchColumns } = baseCols;
+
+  const state = usePlusPageState({
+    props,
+    emit,
+    tableRef,
+    route,
+    t,
+    te,
+    listColumns
   });
-  const selectedNum = ref(0);
-  const defaultValue = ref({});
-  const switchLoadMap = ref({});
-  const routeParams = isEmpty(route.params) ? route.query : route.params;
-  const defaultPagination: RePlusPageProps["pagination"] = {
-    total: 0,
-    pageSize: 15,
-    currentPage: 1,
-    pageSizes: [5, 10, 15, 30, 50, 100],
-    background: true,
-    size: "default"
-  };
-  if (isTree) {
-    // 树形列表数据经 fetchAllRows 全量拉取（见 usePlusPageData），分页器仅
-    // 展示总数；不再提供翻页/切页大小（切页会破坏树形父子结构的展示完整性）
-    defaultPagination.pageSize = 1000;
-    defaultPagination.layout = "total";
-    defaultPagination.pageSizes = [];
-  }
-  const tablePagination = ref<NonNullable<RePlusPageProps["pagination"]>>({
-    ...defaultPagination,
-    ...pagination
-  });
-  const {
-    listColumns,
-    detailColumns,
-    searchColumns,
-    getColumnData,
-    addOrEditRules,
-    addOrEditColumns,
-    searchDefaultValue,
-    addOrEditDefaultValue
-  } = useBaseColumns(localeName ?? "");
-  const searchFields = ref({
-    size: tablePagination.value.pageSize,
-    page: tablePagination.value.currentPage
-  });
-
-  const pageTitle = computed(() => {
-    if (te(route.meta.title)) {
-      return t(route.meta.title);
-    }
-    return route.meta.title;
-  });
-
-  const tableBarData = ref<{
-    size: string;
-    dynamicColumns: typeof listColumns.value;
-    renderClass: string[];
-  }>({
-    size: "default",
-    dynamicColumns: listColumns.value,
-    renderClass: []
-  });
-
-  const handleTableBarChange = ({
-    dynamicColumns,
-    size,
-    renderClass
-  }: {
-    dynamicColumns: typeof listColumns.value;
-    size: string;
-    renderClass: string[];
-  }) => {
-    tableBarData.value.dynamicColumns = dynamicColumns;
-    tableBarData.value.size = size;
-    tableBarData.value.renderClass = renderClass;
-    tablePagination.value.size = size as typeof tablePagination.value.size;
-  };
-
-  const handleFullscreen = () => {
-    tableRef.value.setAdaptive();
-  };
-
-  const handleSelectionChange = (val: Array<{ pk?: string | number }>) => {
-    selectedNum.value = val.length;
-    emit("selectionChange", tableRef.value.getTableRef().getSelectionRows());
-  };
-
-  const onSelectionCancel = () => {
-    selectedNum.value = 0;
-    tableRef.value.getTableRef().clearSelection();
-  };
-
-  const getSelectPks = (key = "pk") => {
-    const manySelectData = tableRef.value.getTableRef().getSelectionRows();
-    return getKeyList(manySelectData, key);
-  };
+  const { switchLoadMap, routeParams, ...viewState } = state;
 
   // 列表列渲染：操作列需要按钮集合，而 buttons 子 hook 依赖 data/form 的动作，
   // 故经 getter 延迟取值（formatColumnsRender 仅在挂载后执行，无初始化顺序风险）
@@ -135,18 +41,12 @@ export function usePlusPage(
     props,
     t,
     te,
-    listColumns,
-    detailColumns,
-    searchColumns,
-    addOrEditRules,
-    addOrEditColumns,
-    searchDefaultValue,
-    addOrEditDefaultValue,
+    ...baseCols,
     switchLoadMap,
     getOperationButtons: () => buttons.operationButtons.value
   });
 
-  // 请求与分页
+  // 请求与分页（数据与分页态取自视图状态容器）
   const {
     handleReset,
     handleSearch,
@@ -158,38 +58,27 @@ export function usePlusPage(
     props,
     emit,
     t,
+    ...viewState,
     routeParams,
-    dataList,
-    loadingStatus,
-    searchFields,
-    defaultValue,
-    tablePagination,
-    getColumnData,
-    searchDefaultValue,
+    getColumnData: baseCols.getColumnData,
+    searchDefaultValue: baseCols.searchDefaultValue,
     columnsInitCallback: formatColumnsRender
   });
 
   // 表头排序：与搜索区 ordering 同源（未声明 sortable 的页面零变化）
   const { handleSortChange } = useTableSort({
-    searchFields,
-    defaultValue,
+    ...viewState,
     tableRef,
     handleGetData
   });
 
-  // 表单与详情
+  // 表单与详情（pageTitle / selectedNum / onSelectionCancel / getSelectPks 取自视图状态）
   const { handleAddOrEdit, handleDetail, handleDelete, handleManyDelete } =
     usePlusPageForm({
       props,
       t,
-      pageTitle,
-      detailColumns,
-      addOrEditColumns,
-      addOrEditRules,
-      addOrEditDefaultValue,
-      selectedNum,
-      onSelectionCancel,
-      getSelectPks,
+      ...baseCols,
+      ...viewState,
       handleGetData
     });
 
@@ -197,47 +86,32 @@ export function usePlusPage(
   const buttons = usePlusPageButtons({
     props,
     t,
-    treeProps,
-    searchFields,
+    treeProps: state.treeProps,
+    searchFields: state.searchFields,
     handleGetData,
-    getSelectPks,
+    getSelectPks: state.getSelectPks,
     handleAddOrEdit,
     handleDelete,
     handleDetail
   });
 
-  onMounted(() => {
-    getPageColumn(!!immediate);
-  });
+  onMounted(() => getPageColumn(!!immediate));
 
   return {
     t,
-    dataList,
-    pageTitle,
-    treeProps,
+    ...viewState,
     listColumns,
-    selectedNum,
-    defaultValue,
-    tableBarData,
-    searchFields,
     searchColumns,
-    loadingStatus,
-    tablePagination,
     tableBarButtons: buttons.tableBarButtons,
     operationButtons: buttons.operationButtons,
     handleReset,
     handleSearch,
-    getSelectPks,
     getPageColumn,
     handleGetData,
     handleAddOrEdit,
     handleManyDelete,
     handleSizeChange,
-    handleFullscreen,
-    onSelectionCancel,
     handleCurrentChange,
-    handleTableBarChange,
-    handleSelectionChange,
     handleSortChange
   };
 }

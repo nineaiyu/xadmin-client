@@ -1,26 +1,46 @@
 import { computed, ref, type Ref } from "vue";
 import type { useI18n } from "vue-i18n";
-import { message } from "@/utils/message";
-import { isAbortError, SseError } from "@/utils/sse";
 import {
   aiAssistantApi,
   type AiConsoleFeature,
   type AiConsoleMessage
 } from "@/api/ai/ai";
-import { toIncoming } from "./useAiConsoleMessages";
+import {
+  buildPartialMessage,
+  buildStreamHandlers,
+  notifyStreamError,
+  type StreamHandlers,
+  type StreamState
+} from "./useAiConsoleFrames";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
-type StreamState = {
-  feature: AiConsoleFeature;
-  content: string;
-  reasoning: string;
+function runEntry(
+  kind: AiConsoleFeature,
+  text: string,
+  handlers: StreamHandlers,
+  signal: AbortSignal
+) {
+  if (kind === "nl") {
+    return aiAssistantApi.nlInterpretStream(text, handlers, signal);
+  }
+  if (kind === "action") {
+    return aiAssistantApi.actionInterpretStream(text, handlers, signal);
+  }
+  return aiAssistantApi.askStream(text, handlers, signal);
+}
+
+const FAILED_KEY: Record<AiConsoleFeature, string> = {
+  docs: "ai.askFailed",
+  nl: "ai.nlFailed",
+  action: "ai.actionFailed"
 };
 
 /**
  * AI 控制台流式发送域（自 useAiConsole 抽出）：同一时刻只允许一路流式生成；
- * 三个入口（文档问答 / 数据查询 / 指令执行）共用同一套帧分派，仅端点不同。
- * 中断句柄（streamAbort）为本模块私有，切入口/卸载时经 abortStream 复位。
+ * 三个入口（文档问答 / 数据查询 / 指令执行）共用同一套帧分派（useAiConsoleFrames），
+ * 仅端点与失败文案不同。中断句柄（streamAbort）为本模块私有，切入口/卸载时经
+ * abortStream 复位。
  */
 export function useAiConsoleStream({
   t,
@@ -48,130 +68,41 @@ export function useAiConsoleStream({
   );
   let streamAbort: AbortController | null = null;
 
-  function startStream(current: AiConsoleFeature, text: string) {
+  const handlers = buildStreamHandlers({
+    streaming,
+    atBottom,
+    scrollToBottom,
+    upsertMessage
+  });
+
+  /** 单次流式请求：乐观上屏 → 帧分派 → 失败归一 → 收尾复位 */
+  async function runStream(kind: AiConsoleFeature, text: string) {
     pushOptimistic(text);
     scrollToBottom();
-    streaming.value = { feature: current, content: "", reasoning: "" };
+    streaming.value = { feature: kind, content: "", reasoning: "" };
     streamAbort = new AbortController();
-    return streamAbort.signal;
-  }
-
-  function endStream() {
-    streaming.value = null;
-    streamAbort = null;
-    scrollToBottom();
-  }
-
-  function onMeta(data: Record<string, unknown> | undefined) {
-    const incoming = toIncoming(data?.user_message);
-    if (incoming) upsertMessage(incoming);
-  }
-
-  function onReasoning(delta: string) {
-    if (!streaming.value) return;
-    streaming.value.reasoning += delta;
-    if (atBottom.value) scrollToBottom();
-  }
-
-  function onDelta(delta: string) {
-    if (!streaming.value) return;
-    streaming.value.content += delta;
-    if (atBottom.value) scrollToBottom();
-  }
-
-  function onDone(data: { message?: unknown } | undefined) {
-    const incoming = toIncoming(data?.message);
-    if (incoming) upsertMessage(incoming);
-  }
-
-  function onError(data: { detail?: unknown; message?: unknown } | undefined) {
-    const incoming = toIncoming(data?.message);
-    if (incoming) upsertMessage(incoming);
-    if (data?.detail) message(String(data.detail), { type: "warning" });
-  }
-
-  /** 网络级失败兜底：头前错误（SseError）移除乐观占位，其余保留（服务端已落库） */
-  function onStreamError(error: unknown, fallback: string, text: string) {
-    if (isAbortError(error)) return;
-    if (error instanceof SseError) removeOptimistic(text);
-    const detail = error instanceof SseError ? error.message : fallback;
-    message(detail, { type: "warning" });
-  }
-
-  async function askDocs(text: string) {
-    const signal = startStream("docs", text);
+    const signal = streamAbort.signal;
     try {
-      await aiAssistantApi.askStream(
-        text,
-        {
-          onMeta,
-          onReasoning,
-          onDelta,
-          onDone,
-          onError
-        },
-        signal
-      );
+      await runEntry(kind, text, handlers, signal);
     } catch (error) {
-      onStreamError(error, t("ai.askFailed"), text);
+      notifyStreamError(error, t(FAILED_KEY[kind]), text, removeOptimistic);
     } finally {
-      endStream();
-    }
-  }
-
-  async function askNl(text: string) {
-    const signal = startStream("nl", text);
-    try {
-      await aiAssistantApi.nlInterpretStream(
-        text,
-        { onMeta, onReasoning, onDelta, onDone, onError },
-        signal
-      );
-    } catch (error) {
-      onStreamError(error, t("ai.nlFailed"), text);
-    } finally {
-      endStream();
-    }
-  }
-
-  async function askAction(text: string) {
-    const signal = startStream("action", text);
-    try {
-      await aiAssistantApi.actionInterpretStream(
-        text,
-        { onMeta, onReasoning, onDelta, onDone, onError },
-        signal
-      );
-    } catch (error) {
-      onStreamError(error, t("ai.actionFailed"), text);
-    } finally {
-      endStream();
+      streaming.value = null;
+      streamAbort = null;
+      scrollToBottom();
     }
   }
 
   function send(text: string) {
     const content = text.trim();
     if (!content || streaming.value) return;
-    if (feature.value === "docs") askDocs(content);
-    else if (feature.value === "nl") askNl(content);
-    else askAction(content);
+    runStream(feature.value, content);
   }
 
-  /** 中断进行中的流（手动停止 / 切入口 / 卸载）。服务端对已到达增量按 partial
-   * 落库（刷新后从历史可见同一份内容），本地同步把已累计内容固化为一条带
-   * 「已中断」标记的助手消息，避免复位 streaming 时把已上屏增量凭空丢掉。 */
   function abortStream() {
     const partial = streaming.value;
     if (partial && (partial.content || partial.reasoning)) {
-      upsertMessage({
-        id: -Date.now(),
-        feature: partial.feature,
-        role: "assistant",
-        content: partial.content,
-        reasoning: partial.reasoning,
-        extra: { partial: t("ai.streamInterrupted") },
-        created_time: new Date().toISOString()
-      });
+      upsertMessage(buildPartialMessage(partial, t));
     }
     streamAbort?.abort();
     streamAbort = null;

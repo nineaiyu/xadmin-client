@@ -1,12 +1,7 @@
-import { h, reactive, ref, shallowRef, watch } from "vue";
+import { reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { SUCCESS_CODE } from "@/api/types";
-import { addDrawer } from "@/components/ReDrawer";
-import type { OperationProps } from "@/components/RePlusPage";
 import { usePageAuth } from "@/router/utils";
-import { message } from "@/utils/message";
-import { createFormDataApi, type FormDataItem } from "@/api/dataset/dform";
-import SubmissionDetail from "../../components/SubmissionDetail.vue";
+import { createFormDataApi } from "@/api/dataset/dform";
 import {
   cascaderOptionsOf,
   isCascaderField,
@@ -18,27 +13,20 @@ import { useFormDataSelection } from "./useFormDataSelection";
 import { useFormDataFilters } from "./useFormDataFilters";
 import { useFormDataColumns } from "./useFormDataColumns";
 import { useFormDataUserLabels } from "./useFormDataUserLabels";
+import { createFormDataDetailOpener } from "./formDataDetail";
+import { useFormDataButtons } from "./formDataButtons";
 
 /**
- * 表单数据（管理端）页面装配。
- *
- * 页面级形态：
- * - 顶部「选择表单」卡片：数据源为全部非模板表单（含停用），选择后重建表格
- *   （RePlusPage 以 key=表单 pk 重建：动态列随 schema 变化重新生成）；
- * - 表格区由框架接管搜索 / 分页 / 列设置 / 导出；行可见性由后端数据权限
- *   编译器收敛（超管全量、非超管按授权 fail-closed）；
- * - 动态列：按所选表单 schema 展开，字段值取自行数据 `data[key]`；
- * - 只读：仅「详情」行操作（提交与改动在「我的填报」）。
- *
- * 子模块：表单选择 useFormDataSelection / 字段筛选 useFormDataFilters /
- * 列装配 useFormDataColumns / 选人回显 useFormDataUserLabels。
+ * 表单数据（管理端）页面装配：顶部「选择表单」卡片（选择后以 key 重建表格，
+ * 动态列随 schema 重新生成）、框架接管的搜索/分页/列设置/导出、按 schema 展开的
+ * 动态列与只读「详情」行操作；行可见性由后端数据权限编译器收敛（非超管按授权
+ * fail-closed）。子模块：选择/筛选/列装配/选人回显/详情/按钮（见同目录模块）。
  */
 export function useFormData() {
   const { t } = useI18n();
   const tableRef = ref();
 
-  // 工厂化：本页独立实例持有 form/filterData/dataFields，页面存活期间由下方
-  // watch 维护取值；无共享单例，无需挂载时收敛历史实例参数（不再跨页存活）
+  // 工厂化：本页独立实例持有 form/filterData/dataFields，由下方 watch 维护取值
   const formDataApi = createFormDataApi();
   const api = reactive(formDataApi);
   const auth = usePageAuth(["exportData", "exportAsync", "formOptions"]);
@@ -78,15 +66,14 @@ export function useFormData() {
   // 列装配：动态列/状态列/搜索区裁剪
   const { listColumnsFormat, searchColumnsFormat } = useFormDataColumns({
     t,
-    schemaFields,
     dictCache,
-    userLabels
+    userLabels,
+    schemaFields
   });
 
-  // 切换表单：写入请求参数、清空字段筛选（旧表单的条件对新表单无意义）；
-  // 页面按 selectedFormPk 重建 RePlusPage（首屏自动重载）。
-  // 动态列 key 集合同步写入（当前 ∪ 历史字段，与 form-options 下发口径同源）：
-  // 列表请求以 data_fields 收缩行内 data 载荷（缺省全量；详情/导出不受影响）
+  // 切换表单：写入请求参数、清空字段筛选（旧表单的条件对新表单无意义），页面
+  // 按 selectedFormPk 重建 RePlusPage。data_fields 以动态列 key 收缩行内 data
+  // 载荷（与 form-options 下发口径同源；详情/导出不受影响）
   watch(selectedFormPk, pk => {
     api.form = pk;
     api.dataFields = schemaFields.value.map(field => field.key).join(",");
@@ -94,48 +81,12 @@ export function useFormData() {
     for (const key of Object.keys(filterValues)) delete filterValues[key];
   });
 
-  /** 详情抽屉：先取详情（列表契约不含 schema 快照 / 审批轨迹），失败回落行数据 */
-  const openDetail = async (row: FormDataItem) => {
-    const res = await formDataApi
-      .retrieve<FormDataItem>(row.pk)
-      .catch(() => null);
-    if (res?.code !== SUCCESS_CODE) {
-      // 回落列表行数据（无 schema 快照 / 审批轨迹）：显式提示，不静默降级
-      message(t("dform.detailFallback"), { type: "info" });
-    }
-    const detail = res?.code === SUCCESS_CODE ? res.data : row;
-    addDrawer({
-      title: `${detail.form_name} - ${String(detail.pk).slice(0, 8).toUpperCase()}`,
-      size: "45%",
-      destroyOnClose: true,
-      closeOnClickModal: true,
-      hideFooter: true,
-      props: { row: detail },
-      contentRenderer: () => h(SubmissionDetail)
-    });
-  };
-
-  const operationButtonsProps = shallowRef<OperationProps>({
-    width: 120,
-    showNumber: 2,
-    hideDetail: true,
-    buttons: [
-      { code: "update", show: false },
-      { code: "delete", show: false },
-      {
-        text: t("dform.detail"),
-        code: "data-detail",
-        props: {
-          type: "primary",
-          link: true,
-          "data-testid": "form-data-detail"
-        },
-        index: -10,
-        show: true,
-        onClick: ({ row }) => openDetail(row as FormDataItem)
-      }
-    ]
+  const openDetail = createFormDataDetailOpener({
+    t,
+    retrieve: pk => formDataApi.retrieve(pk)
   });
+
+  const { operationButtonsProps } = useFormDataButtons({ t, openDetail });
 
   return {
     api,

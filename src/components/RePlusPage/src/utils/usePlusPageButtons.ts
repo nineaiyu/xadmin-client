@@ -1,19 +1,12 @@
 import type { Ref } from "vue";
 import { computed, shallowRef } from "vue";
 import type { useI18n } from "vue-i18n";
-import type { OperationButtonsRow } from "@/components/RePlusPage";
 import type { RePlusPageProps } from "./types";
-import { handleExportData, handleImportData } from "./handle";
-import { handleShowChangeHistory } from "./handle-history";
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-
-import View from "~icons/ep/view";
-import Delete from "~icons/ep/delete";
-import Upload from "~icons/ep/upload";
-import Download from "~icons/ep/download";
-import EditPen from "~icons/ep/edit-pen";
-import AddFill from "~icons/ri/add-circle-line";
-import FileList from "~icons/ri/file-list-3-line";
+// 导入顺序有语义：工具栏模块（经 ./handle）先于操作列模块（经 ./handle-history）
+// 求值，与拆分前的单文件顺序一致。倒序会让 handle-history 链路先拉起 api/base
+// 与 store/notice 的环，单测在模块求值期报 "Class extends value undefined"。
+import { buildDefaultToolbarButtons } from "./plusPageToolbarButtons";
+import { buildDefaultOperationButtons } from "./plusPageOperationButtons";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
@@ -23,7 +16,11 @@ type TreeProps = Ref<{
   checkStrictly: boolean;
 }>;
 
-/** 默认按钮组：操作列（编辑/变更历史/删除/详情）与工具栏（父子联动/新增/导入/导出）（拆分自 hook.tsx，行为不变） */
+/**
+ * 默认按钮组：操作列（编辑/变更历史/删除/详情）与工具栏（父子联动/新增/导入/导出）。
+ * 按钮声明见 plusPageOperationButtons.ts / plusPageToolbarButtons.ts，
+ * 本文件负责与页面自定义按钮合并。
+ */
 export function usePlusPageButtons({
   props,
   t,
@@ -65,94 +62,20 @@ export function usePlusPageButtons({
   // 页面只要自有编辑弹窗、但要保留内联开关时，须用 hideEdit 而非关权限位
   const hideEdit = operationButtonsProps?.hideEdit === true;
 
-  // 行级归属守卫：写守卫域（如 dataset 域 1003）的序列化器在行数据下发
-  // is_owner（creator 本人或超管为 true），默认编辑/删除按钮按行收敛；
-  // 未下发标志的行（undefined）不收敛，保持既有页面零回归。
-  const ownerAllows = (row?: Record<string, unknown>) =>
-    row?.is_owner !== false;
-
-  // 默认操作按钮
-  const defaultOperationButtons = shallowRef<OperationButtonsRow[]>([]);
-  defaultOperationButtons.value = [
-    {
-      text: t("buttons.edit"),
-      code: "update",
-      props: {
-        type: "primary",
-        icon: useRenderIcon(EditPen),
-        link: true
-      },
-      onClick: ({ row }) => {
-        handleAddOrEdit(false, row);
-      },
-      index: -30,
-      show: row =>
-        Boolean(
-          !hideEdit && (auth.partialUpdate || auth.update) && ownerAllows(row)
-        )
-    },
-    {
-      text: t("buttons.delete"),
-      code: "delete",
-      confirm: { title: t("buttons.confirmDelete") },
-      props: {
-        type: "danger",
-        icon: useRenderIcon(Delete),
-        link: true
-      },
-      onClick: ({ row, loading }) => {
-        loading.value = true;
-        handleDelete(row, () => {
-          loading.value = false;
-        });
-      },
-      index: -20,
-      show: row => Boolean(auth.destroy && ownerAllows(row))
-    },
-    {
-      code: "detail",
-      props: {
-        type: "primary",
-        icon: useRenderIcon(View),
-        link: true,
-        // icon-only 按钮：tooltip 不产生可编程可访问名（axe button-name critical），
-        // 必须显式提供 aria-label（种子/演示数据让列表有行后，a11y 扩面扫描即暴露）；
-        // 键名用 "aria-label" 字符串：ariaLabel 驼峰透传到 DOM 会丢失连字符而失效
-        "aria-label": t("buttons.detail")
-      },
-      onClick: ({ row, loading }) => {
-        // 挂了详情兜底拉取的页面：拉取期间按钮 loading（加载中兜底），完成后开抽屉
-        if (props.detailRowFetch) {
-          loading.value = true;
-          Promise.resolve(handleDetail(row)).finally(() => {
-            loading.value = false;
-          });
-        } else {
-          handleDetail(row);
-        }
-      },
-      tooltip: { content: t("buttons.detail") },
-      index: -10,
-      show: hideDetail ? false : Boolean(auth.list || auth.retrieve)
-    },
-    {
-      text: t("buttons.changeHistory"),
-      code: "changeHistory",
-      props: {
-        type: "info",
-        icon: useRenderIcon(FileList),
-        link: true
-      },
-      onClick: ({ row }) => {
-        handleShowChangeHistory({ t, api, row });
-      },
-      tooltip: { content: t("buttons.changeHistory") },
-      // 页面在 getDefaultAuths 中声明 changeHistory 且菜单授予
-      // changeHistory:<ComponentName> 权限码时显示（用户管理页已开启示范）
-      index: -5,
-      show: hideChangeHistory ? false : Boolean(auth.changeHistory)
-    }
-  ];
+  const defaultOperationButtons = shallowRef(
+    buildDefaultOperationButtons({
+      t,
+      api,
+      auth,
+      hideEdit,
+      hideDetail,
+      hideChangeHistory,
+      hasDetailFetch: Boolean(props.detailRowFetch),
+      handleAddOrEdit,
+      handleDelete,
+      handleDetail
+    })
+  );
 
   const operationButtons = computed(() => {
     return [
@@ -161,84 +84,20 @@ export function usePlusPageButtons({
     ];
   });
 
-  // 默认tableBar按钮
-  const defaultTableBarButtons = shallowRef<OperationButtonsRow[]>([]);
-
-  defaultTableBarButtons.value = [
-    {
-      text: computed(() =>
-        treeProps.value.checkStrictly
-          ? t("buttons.checkUnStrictly")
-          : t("buttons.checkStrictly")
-      ),
-      code: "checkStrictly",
-      props: {
-        type: "success",
-        plain: true
-      },
-      onClick: () => {
-        treeProps.value.checkStrictly = !treeProps.value.checkStrictly;
-      },
-      index: -30,
-      show: isTree
-    },
-    {
-      text: t("buttons.add"),
-      code: "create",
-      props: {
-        type: "primary",
-        icon: useRenderIcon(AddFill)
-      },
-      onClick: ({ row }) => {
-        handleAddOrEdit(true, row);
-      },
-      index: -30,
-      show: Boolean(auth.create)
-    },
-    {
-      code: "export",
-      props: {
-        type: "primary",
-        icon: useRenderIcon(Download),
-        plain: true
-      },
-      onClick: () => {
-        const pks = getSelectPks();
-        handleExportData({
-          t,
-          pks,
-          api,
-          searchFields,
-          // 未显式设置时按页面导出权限自动显示异步开关（与导出按钮同源判定），
-          // 保证所有支持导出的页面都提供大数据量异步导出入口
-          allowAsync: allowAsyncExport ?? Boolean(auth.exportData)
-        });
-      },
-      tooltip: { content: t("exportImport.export") },
-      index: -20,
-      show: Boolean(auth.exportData)
-    },
-    {
-      code: "import",
-      props: {
-        type: "primary",
-        icon: useRenderIcon(Upload),
-        plain: true
-      },
-      onClick: () => {
-        handleImportData({
-          t,
-          api,
-          success: () => {
-            handleGetData();
-          }
-        });
-      },
-      tooltip: { content: t("exportImport.import") },
-      index: -10,
-      show: Boolean(auth.importData)
-    }
-  ];
+  const defaultTableBarButtons = shallowRef(
+    buildDefaultToolbarButtons({
+      t,
+      api,
+      auth,
+      isTree,
+      treeProps,
+      searchFields,
+      allowAsyncExport,
+      getSelectPks,
+      handleGetData,
+      handleAddOrEdit
+    })
+  );
 
   const tableBarButtons = computed(() => {
     return [

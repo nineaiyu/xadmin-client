@@ -18,14 +18,11 @@ export { openStartInstanceDialog, openInstanceDetail } from "./instanceDialogs";
 
 /**
  * 流程审批面板公共装配（待我审批 / 我的申请 / 已办 / 全部在途四页签同构）：
- * - useInstanceActions        审批动作弹窗（驳回/加签/转交/批量驳回）
- * - useInstanceButtons        行内/工具栏按钮组
- * - useInstanceColumnFormats  状态列与当前节点列渲染
- * - instanceDialogs           发起申请弹窗与详情抽屉（页面级复用）
- * 返回值形状与拆分前一致（InstancePanel.vue 无需改动）。
- *
- * 唯一差异：scope 过滤（后端 ApprovalInstanceScopeFilter 收口取值域）与行内
- * 操作按钮；权限码挂页面组件名 SystemApprovalInstance 下。
+ * 审批动作弹窗（useInstanceActions）、按钮组（useInstanceButtons）、列渲染
+ * （useInstanceColumnFormats）与发起/详情弹层（instanceDialogs 页面级复用）；
+ * 返回值形状与拆分前一致（InstancePanel.vue 无需改动）。唯一差异：scope 过滤
+ * （后端 ApprovalInstanceScopeFilter 收口取值域）与行内操作按钮；权限码挂页面
+ * 组件名 SystemApprovalInstance 下。
  */
 export function useInstancePanel(
   scope: InstanceScope,

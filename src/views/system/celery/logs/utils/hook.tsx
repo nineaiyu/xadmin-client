@@ -1,28 +1,11 @@
-import { computed, h, reactive, shallowRef, type Ref } from "vue";
+import { reactive, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElProgress, ElTag } from "element-plus";
-import type { RecordType } from "plus-pro-components";
-import { SUCCESS_CODE } from "@/api/types";
-import {
-  taskCenterApi,
-  taskExecutionApi,
-  type TaskCenterKind
-} from "@/api/system/task";
-import { exportRecordApi } from "@/api/system/export";
-import { importRecordApi } from "@/api/system/import";
+import { taskExecutionApi } from "@/api/system/task";
 import { hasAuth, usePageAuth } from "@/router/utils";
-import { statusTagProps } from "@/utils/dict";
-import { message } from "@/utils/message";
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { openTaskLogDialog } from "@/views/system/components/taskLogDialog";
-import type {
-  OperationProps,
-  PageColumn,
-  PageTableColumn
-} from "@/components/RePlusPage";
-import { formatPageColumns } from "@/components/RePlusPage";
-import FileList from "~icons/ri/file-list-3-line";
-import { normalizeError } from "@/utils/apiError";
+import { buildTaskExecutionColumns } from "./taskExecutionColumns";
+import { createTaskExecutionActions } from "./taskExecutionActions";
+import { useTaskExecutionButtons } from "./useTaskExecutionButtons";
+import { PERM_CANCEL, PERM_RERUN } from "./taskExecutionTypes";
 
 /**
  * 任务日志（执行历史）列表：所有 celery 任务一行一条。
@@ -30,228 +13,31 @@ import { normalizeError } from "@/utils/apiError";
  * 导出/导入/报表产物任务与执行记录共用主键，列表按 pk 带出产物信息
  * （类型 / 业务名 / 进度 / 阶段 / 产物文件），因此同一件事只有一个入口：
  * 查看日志、取消、重跑、下载产物、删除/批量删除都在本页完成。
+ *
+ * 职责拆分：列渲染 taskExecutionColumns.tsx、行级动作 taskExecutionActions.ts、
+ * 行操作按钮 useTaskExecutionButtons.ts、行字段口径 taskExecutionTypes.ts。
  */
-type ExecutionRow = {
-  pk?: string | number;
-  id?: string | number;
-  name?: string;
-  product_type?: string;
-  product_name?: string;
-  product_progress?: number;
-  product_stage?: string;
-  product_has_file?: boolean;
-  can_cancel?: boolean;
-  can_rerun?: boolean;
-  status?: { value?: string; label?: string } | string;
-  time_cost?: number | null;
-};
-
-/** 产物类型标签语义色（非产物任务为「任务」默认色） */
-const PRODUCT_TAG_TYPE: Record<string, "primary" | "success" | "warning"> = {
-  export: "success",
-  import: "warning"
-};
-
-/** 取消/重跑权限点：挂执行历史菜单下（menu-maintenance.md §6），不能靠组件名推导 */
-const PERM_CANCEL = "cancel:SystemTaskExecution";
-const PERM_RERUN = "rerun:SystemTaskExecution";
-
 export function useTaskExecution(tableRef?: Ref) {
   const api = reactive(taskExecutionApi);
   const auth = usePageAuth(["log"]);
-  // 取消 / 重跑走聚合端点（/api/system/tasks/unified/{cancel,rerun}），权限点
-  // 挂执行历史菜单下（menu-maintenance.md §6），直接按权限点判定
-  const canCancel = hasAuth(PERM_CANCEL);
-  const canRerun = hasAuth(PERM_RERUN);
   const { t } = useI18n();
 
-  const asRow = (row: unknown) => row as ExecutionRow;
+  // 取消 / 重跑走聚合端点（/api/system/tasks/unified/{cancel,rerun}），权限点
+  // 挂执行历史菜单下，直接按权限点判定（框架默认清单只覆盖组件名同源 action）
+  const canCancel = hasAuth(PERM_CANCEL);
+  const canRerun = hasAuth(PERM_RERUN);
 
-  const statusValue = (row: ExecutionRow) => {
-    const status = row.status;
-    return typeof status === "object" && status ? status.value : status;
-  };
-
-  const refresh = () => tableRef?.value?.handleGetData?.();
-
-  /** 打开某条执行记录的实时日志弹窗（WebSocket 增量推送） */
-  const openLog = (row: ExecutionRow) => {
-    const name = row.product_name || row.name || "";
-    openTaskLogDialog(
-      row.pk ?? row.id ?? "",
-      `${name} ${t("systemTask.logTitle")}`
-    );
-  };
-
-  /** 取消 / 重跑：走任务中心聚合端点（产物类型取行上注解，非产物任务为 task） */
-  const runCenterAction = async (
-    row: ExecutionRow,
-    action: "cancel" | "rerun"
-  ) => {
-    const kind = (row.product_type || "task") as TaskCenterKind;
-    const res = await taskCenterApi[action](kind, String(row.pk ?? "")).catch(
-      normalizeError
-    );
-    if (res.code === SUCCESS_CODE) {
-      message(
-        String(
-          res.detail ??
-            t(
-              action === "cancel"
-                ? "taskCenter.cancelDone"
-                : "taskCenter.rerunDone"
-            )
-        ),
-        { type: "success" }
-      );
-      refresh();
-    } else if (res.detail) {
-      message(String(res.detail), { type: "warning" });
-    }
-  };
-
-  /** 产物下载：导出 / 导入记录各自端点（与下载中心同一 http 链路，失败走拦截器归一提示） */
-  const download = async (row: ExecutionRow) => {
-    const api =
-      row.product_type === "import" ? importRecordApi : exportRecordApi;
-    try {
-      await api.download(row.pk ?? row.id ?? "");
-    } catch {
-      // 失败提示由 http 拦截器统一处理，这里只吞掉 rejection
-    }
-  };
-
-  const operationButtonsProps = shallowRef<OperationProps>({
-    showNumber: 5,
-    buttons: [
-      {
-        text: t("taskCenter.cancel"),
-        code: "cancel",
-        props: { type: "warning", link: true },
-        index: -40,
-        show: (row: RecordType) => canCancel && !!asRow(row).can_cancel,
-        onClick: ({ row }) => runCenterAction(asRow(row), "cancel")
-      },
-      {
-        text: t("taskCenter.rerun"),
-        code: "rerun",
-        props: { type: "primary", link: true },
-        index: -30,
-        show: (row: RecordType) => canRerun && !!asRow(row).can_rerun,
-        onClick: ({ row }) => runCenterAction(asRow(row), "rerun")
-      },
-      {
-        text: t("taskCenter.download"),
-        code: "download",
-        props: { type: "primary", link: true },
-        index: -20,
-        show: (row: RecordType) => !!asRow(row).product_has_file,
-        onClick: ({ row }) => download(asRow(row))
-      },
-      {
-        text: t("systemTaskExecution.log"),
-        code: "log",
-        props: {
-          type: "primary",
-          icon: useRenderIcon(FileList),
-          link: true
-        },
-        index: -10,
-        show: auth.log,
-        onClick: ({ row }) => openLog(asRow(row))
-      }
-    ]
+  const actions = createTaskExecutionActions({ t, tableRef });
+  const { listColumnsFormat, searchColumnsFormat } = buildTaskExecutionColumns({
+    t
   });
-
-  /** 搜索区：记录类型选项文案走前端词条（后端 choices 为英文 msgid，无中文翻译包） */
-  const searchColumnsFormat = (columns: PageColumn[]) => {
-    columns.forEach(column => {
-      if (column._column?.key !== "product_type") return;
-      column.options = computed(() => [
-        { label: t("taskCenter.type_task"), value: "task" },
-        { label: t("taskCenter.type_export"), value: "export" },
-        { label: t("taskCenter.type_import"), value: "import" }
-      ]);
-    });
-    return columns;
-  };
-
-  /** 表格列操作 */
-  const listColumnsFormat = (columns: PageTableColumn[]) =>
-    formatPageColumns(columns, {
-      product_type: column => {
-        // 产物类型：导出/导入任务与执行记录共用主键，此处一次性表达三类记录
-        column.cellRenderer = ({ row }) => {
-          const type = asRow(row).product_type || "task";
-          return h(
-            ElTag,
-            { size: "small", type: PRODUCT_TAG_TYPE[type] ?? "primary" },
-            () => t(`taskCenter.type_${type}`)
-          );
-        };
-      },
-      name: column => {
-        // 产物任务优先展示业务名（如「用户导出-20260924」），其余展示任务路径
-        column.cellRenderer = ({ row }) => {
-          const data = asRow(row);
-          const text = data.product_name || data.name || "";
-          return h("span", { title: text }, text);
-        };
-      },
-      status: column => {
-        // 字典驱动（DictChoiceField）：颜色/文案管理员可在数据字典 task_status
-        // 维护；字典未配置回退枚举时无 color，由 statusTagProps 走本地映射兜底
-        column.cellRenderer = ({ row }) => {
-          const status = asRow(row).status;
-          const value = statusValue(asRow(row));
-          return h(
-            ElTag,
-            statusTagProps(status),
-            () =>
-              (typeof status === "object" && status ? status.label : null) ??
-              t(`systemTaskExecution.status${value}`)
-          );
-        };
-      },
-      product_progress: column => {
-        // 进度与阶段仅产物任务有语义；执行类任务无进度（统一进度助手口径）
-        column.cellRenderer = ({ row }) => {
-          const data = asRow(row);
-          if (!data.product_type) return h("span", "—");
-          const value = statusValue(data);
-          const nodes = [
-            h(ElProgress, {
-              percentage: Number(data.product_progress ?? 0),
-              status:
-                value === "FAILURE" || value === "REVOKED"
-                  ? "exception"
-                  : value === "SUCCESS"
-                    ? "success"
-                    : undefined
-            })
-          ];
-          if (data.product_stage) {
-            nodes.push(
-              h(
-                "div",
-                { class: "text-xs text-(--el-text-color-secondary)" },
-                data.product_stage
-              )
-            );
-          }
-          return h("div", nodes);
-        };
-      },
-      time_cost: column => {
-        column.cellRenderer = ({ row }) => {
-          const cost = asRow(row).time_cost;
-          return h(
-            "span",
-            cost === null || cost === undefined ? "—" : `${cost}s`
-          );
-        };
-      }
-    });
+  const { operationButtonsProps } = useTaskExecutionButtons({
+    t,
+    auth,
+    canCancel,
+    canRerun,
+    actions
+  });
 
   return {
     api,

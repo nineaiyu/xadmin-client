@@ -1,39 +1,21 @@
 import "./reset.css";
-import { h, onMounted, reactive, ref, type Ref } from "vue";
-import { useRouter } from "vue-router";
-import { userApi } from "@/api/system/user";
-import { hasAuth, usePageAuth } from "@/router/utils";
-import { useConfirm } from "@/hooks/useConfirm";
+import { reactive, ref, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import {
-  handleOperation,
-  handleShowChangeHistory,
-  usePublicHooks
-} from "@/components/RePlusPage";
-import { addDrawer } from "@/components/ReDrawer";
-import {
-  PanelProfile,
-  ReActionPanel,
-  bindRowGroups,
-  openManageDrawer
-} from "@/components/ReActionPanel";
+import { userApi } from "@/api/system/user";
+import { usePageAuth } from "@/router/utils";
+import { usePublicHooks } from "@/components/RePlusPage";
 import { deviceDetection } from "@pureadmin/utils";
-import { rulesPasswordApi } from "@/api/auth";
-import type { PasswordRule, TokenInfo } from "@/api/auth";
-import type { RecordType } from "plus-pro-components";
-import PermissionPreview from "../components/PermissionPreview.vue";
-
 import { useUserOptions } from "./useUserOptions";
 import { useUserAvatarUpload } from "./useUserAvatarUpload";
 import { useUserResetPassword } from "./useUserResetPassword";
 import { useUserColumnFormats } from "./useUserColumnFormats";
 import { useUserButtons } from "./useUserButtons";
 import { useUserImBinding } from "./useUserImBinding";
-import { buildUserActionGroups } from "./userActions";
-import { buildUserMetaItems, buildUserProfileData } from "./userPanel";
+import { useUserRowHandlers } from "./useUserRowHandlers";
+import { useUserPanel } from "./useUserPanel";
+import { useUserPasswordRules } from "./useUserPasswordRules";
 import { useTagAssign } from "@/views/system/components/useTagAssign";
 import { TAGGABLE_RESOURCE } from "@/api/system/tag";
-import { useUserStoreHook } from "@/store/modules/user";
 
 /**
  * 用户视图组装入口：
@@ -42,13 +24,11 @@ import { useUserStoreHook } from "@/store/modules/user";
  * - useUserResetPassword  重置密码 + 强度评分
  * - useUserColumnFormats  列渲染与新增/编辑表单格式化（头像/用户名是抽屉入口）
  * - useUserButtons        工具栏批量按钮与操作列「管理」入口
- * - userActions           用户抽屉的动作清单（权限在构建期收敛）
+ * - useUserRowHandlers    行级动作（重置 MFA/下线/通知/邀请/模拟用户）
+ * - useUserPanel          用户抽屉（动作分组与资料卡，见 userPanel.ts / userActions.tsx）
  */
 export function useUser(tableRef: Ref) {
   const { t } = useI18n();
-  const router = useRouter();
-  const confirm = useConfirm();
-
   const api = reactive(userApi);
 
   const auth = usePageAuth([
@@ -65,9 +45,8 @@ export function useUser(tableRef: Ref) {
   ]);
   const switchLoadMap = ref({});
   const { switchStyle } = usePublicHooks();
-  const selectedNum = ref(0);
-  const manySelectData = ref([]);
-  const passwordRules = ref<PasswordRule[]>([]);
+  // 全局密码规则（重置密码与新增/编辑表单校验共用）
+  const { passwordRules } = useUserPasswordRules({ t });
 
   const { treeData, treeLoading, onTreeSelect } = useUserOptions(tableRef);
   const { handleUpload } = useUserAvatarUpload({ t, api, tableRef });
@@ -75,147 +54,20 @@ export function useUser(tableRef: Ref) {
   const { handleImBinding } = useUserImBinding({ t });
   // 通用标签：行内打标（单对象全量替换）与工具栏批量打标共用同一弹窗
   const { openTagDialog } = useTagAssign(tableRef);
-  /** 用户权限预览抽屉（统一走 ReDrawer，不在页面模板手挂 el-drawer） */
-  const openPreview = (row: RecordType) => {
-    addDrawer({
-      title: t("permissionPreview.userTitle"),
-      size: "70%",
-      destroyOnClose: true,
-      hideFooter: true,
-      contentRenderer: () => h(PermissionPreview, { row })
-    });
-  };
+  const handlers = useUserRowHandlers({ t, api, tableRef });
 
-  /** 重置 MFA：清除动态口令与 Passkey 绑定，用户下次登录需重新绑定 */
-  function handleResetMfa(row: RecordType) {
-    handleOperation({
-      t,
-      apiReq: api.resetMfa(row.pk),
-      success() {
-        tableRef.value.handleGetData();
-      }
-    });
-  }
-
-  /** 强制下线：终止该用户全部在线会话 */
-  function handleLogout(row: RecordType) {
-    handleOperation({
-      t,
-      apiReq: api.logout(row.pk, {}),
-      success() {
-        tableRef.value.handleGetData();
-      }
-    });
-  }
-
-  /** 单行发送通知：跳转通知公告并预填收件人（与工具栏批量入口同参数口径） */
-  function handleSendNotice(row: RecordType) {
-    router.push({
-      name: "SystemNotice",
-      query: {
-        notice_user: JSON.stringify([{ pk: row.pk, username: row.username }])
-      }
-    });
-  }
-
-  /**
-   * 邀请激活：发送/重发邀请邮件（重置为待激活 + 密码立即失效）——高危动作二次确认；
-   * 已激活账号重发后原密码失效，需重新激活（后端状态机保证非 pending 不可再激活）。
-   */
-  function handleInvite(row: RecordType) {
-    confirm(t("systemUser.inviteConfirm"), {
-      title: t("systemUser.invite")
-    }).then(ok => {
-      if (ok)
-        handleOperation({
-          t,
-          apiReq: api.invite(row.pk),
-          success() {
-            tableRef.value.handleGetData();
-          }
-        });
-    });
-  }
-
-  /**
-   * 模拟用户：签发该用户的 token 并以其身份使用后台。
-   * 高危动作二次确认（后端另有 impersonate 权限点 + 密码二次确认）；
-   * 成功后 token 已换签，整页刷新以目标身份重建路由/权限/WS。
-   */
-  function handleImpersonate(row: RecordType) {
-    confirm(t("systemUser.impersonateConfirm", { user: row.username }), {
-      title: t("systemUser.impersonate")
-    }).then(ok => {
-      if (ok)
-        handleOperation({
-          t,
-          apiReq: api.impersonate(row.pk as string | number),
-          showSuccessMsg: false,
-          success(res) {
-            // 换签目标身份 token 后整页刷新（switchIdentity 内部处理）
-            if (res?.data) {
-              useUserStoreHook().switchIdentity(res.data as TokenInfo);
-            }
-          }
-        });
-    });
-  }
-
-  /**
-   * 用户抽屉：行内头像/用户名与操作列「管理」共用入口。
-   * 动作执行前先收起抽屉再打开二级弹层（避免抽屉与弹窗叠加、焦点归属混乱）；
-   * 分组与显隐由 buildUserActionGroups 统一裁决，面板渲染走 ReActionPanel
-   * 通用模板（资料卡数据与基础信息由 userPanel 从行快照构建）。
-   */
-  function openUserPanel(row: RecordType) {
-    openManageDrawer({
-      title: t("systemUser.manageUser", { user: row.username }),
-      render: ({ withClosed }) =>
-        h(
-          ReActionPanel,
-          {
-            metaItems: buildUserMetaItems(row, t),
-            groups: bindRowGroups(
-              buildUserActionGroups({
-                t,
-                auth,
-                flags: {
-                  sendNotice: hasAuth("create:SystemNotice"),
-                  assignTags: hasAuth("assign:Tag")
-                },
-                currentUsername: useUserStoreHook().username,
-                handlers: {
-                  resetPassword: withClosed(handleReset),
-                  uploadAvatar: withClosed(handleUpload),
-                  resetMfa: withClosed(handleResetMfa),
-                  logout: withClosed(handleLogout),
-                  assignRoles: withClosed(handleRoleRules),
-                  preview: withClosed(openPreview),
-                  invite: withClosed(handleInvite),
-                  sendNotice: withClosed(handleSendNotice),
-                  imBinding: withClosed(handleImBinding),
-                  impersonate: withClosed(handleImpersonate),
-                  assignTags: withClosed(target =>
-                    openTagDialog({
-                      resource: TAGGABLE_RESOURCE.user,
-                      row: target
-                    })
-                  ),
-                  changeHistory: withClosed(target =>
-                    handleShowChangeHistory({ t, api, row: target })
-                  )
-                }
-              }),
-              row
-            )
-          },
-          {
-            profile: () =>
-              h(PanelProfile, { profile: buildUserProfileData(row, t) })
-          }
-        )
-    });
-  }
+  // 抽屉先装配：角色授权入口以 getter 延迟取用（列装配完成后才会被点击）
+  const { openUserPanel } = useUserPanel({
+    t,
+    api,
+    auth,
+    openTagDialog,
+    handlers,
+    handleReset,
+    handleUpload,
+    handleImBinding,
+    getHandleRoleRules: () => handleRoleRules
+  });
 
   const {
     listColumnsFormat,
@@ -238,28 +90,14 @@ export function useUser(tableRef: Ref) {
       t,
       api,
       tableRef,
-      selectedNum,
-      manySelectData,
       handleBatchTags: pks =>
         openTagDialog({ resource: TAGGABLE_RESOURCE.user, pks }),
       openUserPanel
     });
 
-  // 全局密码规则（重置密码与新增/编辑表单校验共用）
-  onMounted(() => {
-    handleOperation({
-      t,
-      apiReq: rulesPasswordApi(),
-      success(res) {
-        passwordRules.value = res?.data?.password_rules;
-      },
-      showSuccessMsg: false
-    });
-  });
-
-  // 联动：角色列表「用户数」跳转携带 ?role=<pk> —— 由 RePlusPage 的
-  // routeParams 装配（route.query → 搜索默认值）自动生效，页面无需再注入：
-  // 首开后二次手动刷新会覆盖请求序号，导致首开内联元数据被丢弃（表格无列）。
+  // 联动：角色列表「用户数」跳转携带 ?role=<pk> —— 由 RePlusPage 的 routeParams
+  // 装配（route.query → 搜索默认值）自动生效，页面无需再注入：首开后二次手动
+  // 刷新会覆盖请求序号，导致首开内联元数据被丢弃（表格无列）。
 
   return {
     api,

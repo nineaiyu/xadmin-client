@@ -1,50 +1,29 @@
-import { $t } from "@/plugins/i18n";
-import { emitter } from "@/utils/mitt";
-import NProgress from "@/utils/progress";
-import type { RouteConfigs, tagsViewsType } from "../../../types";
-import type { useTags } from "../../../hooks/useTag";
 import { routerArrays } from "@/layout/types";
-import type { LocationQueryRaw, RouteParamsRaw } from "vue-router";
-import type { menuType } from "@/layout/types";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import { useTagMenuState } from "./useTagMenuState";
 import { useTagDelete } from "./useTagDelete";
-import { handleAliveRoute, getTopMenu } from "@/router/utils";
-import { useSettingStoreHook } from "@/store/modules/settings";
-import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
-import { unref, nextTick } from "vue";
-import type { Ref } from "vue";
+import { getTopMenu } from "@/router/utils";
+import { createDynamicRouteTag } from "./tagDynamicRoute";
+import { createTagDropActions } from "./tagDropActions";
+import {
+  createTagCommandHandler,
+  createTagContextMenu
+} from "./tagContextMenu";
+import { createTagOnClick } from "./tagNavigate";
+import type { TagActionsContext } from "./tagActionTypes";
+import type { tagsViewsType } from "../../../types";
 
-import ExitFullscreen from "~icons/ri/fullscreen-exit-fill";
-import Fullscreen from "~icons/ri/fullscreen-fill";
+export type { TagActionsContext } from "./tagActionTypes";
 
-/** useTags 中标签操作所需的上下文切片 + 滚动 hook 的视口定位回调 */
-type TagActionsContext = Pick<
-  ReturnType<typeof useTags>,
-  | "route"
-  | "router"
-  | "visible"
-  | "multiTags"
-  | "tagsViews"
-  | "buttonTop"
-  | "buttonLeft"
-  | "currentSelect"
-  | "pureSetting"
-  | "closeMenu"
-  | "onContentFullScreen"
-> & {
-  /** 视口定位（useTagScroll），删签/切签后把激活标签滚入可视区 */
-  dynamicTagView: () => Promise<void>;
-  /** 右键菜单定位基准：tags-view 容器 DOM（模板 ref） */
-  containerDom: Ref;
-};
-
-/** 标签页增删与右键/下拉菜单逻辑（拆分自 lay-tag/index.vue） */
+/**
+ * 标签页增删与右键/下拉菜单逻辑：动态标签补开见 tagDynamicRoute.ts，
+ * 下拉命令见 tagDropActions.ts，右键菜单见 tagContextMenu.ts，
+ * 删除域见 useTagDelete.ts。
+ */
 export function useTagActions(ctx: TagActionsContext) {
   const {
     route,
     router,
-    visible,
     multiTags,
     tagsViews,
     buttonTop,
@@ -77,199 +56,41 @@ export function useTagActions(ctx: TagActionsContext) {
     dynamicTagView
   });
 
-  function dynamicRouteTag(value: string): void {
-    const hasValue = multiTags.value.some(item => {
-      return item.path === value;
-    });
+  const dynamicRouteTag = createDynamicRouteTag({ multiTags, router });
+  const { onClickDrop } = createTagDropActions({
+    ctx: {
+      route,
+      router,
+      multiTags,
+      tagsViews,
+      pureSetting,
+      onContentFullScreen
+    },
+    topPath,
+    fixedTags,
+    deleteMenu,
+    showMenuModel
+  });
+  const { openMenu, selectTag } = createTagContextMenu({
+    ctx: {
+      route,
+      multiTags,
+      tagsViews,
+      buttonTop,
+      buttonLeft,
+      currentSelect,
+      visible: ctx.visible,
+      closeMenu
+    },
+    topPath,
+    containerDom,
+    showMenus,
+    showMenuModel,
+    onClickDrop
+  });
+  const handleCommand = createTagCommandHandler(onClickDrop);
 
-    function concatPath(arr: RouteConfigs[], value: string) {
-      if (!hasValue) {
-        arr.forEach(arrItem => {
-          if (arrItem.path === value) {
-            useMultiTagsStoreHook().handleTags("push", {
-              path: value,
-              meta: arrItem.meta,
-              name: arrItem.name
-            });
-          } else {
-            if (arrItem.children && arrItem.children.length > 0) {
-              concatPath(arrItem.children, value);
-            }
-          }
-        });
-      }
-    }
-    // options.routes 为 readonly 路由树，本项目路由项均符合 RouteConfigs 契约（name 恒为 string）
-    concatPath(router.options.routes as RouteConfigs[], value);
-  }
-
-  /** 刷新路由 */
-  function onFresh() {
-    NProgress.start();
-    const { fullPath, query } = unref(route);
-    router.replace({
-      path: "/redirect" + fullPath,
-      query
-    });
-    handleAliveRoute(route as ToRouteType, "refresh");
-    NProgress.done();
-  }
-
-  function onClickDrop(
-    key: number,
-    item: { disabled?: boolean },
-    selectRoute?: RouteConfigs
-  ) {
-    if (item && item.disabled) return;
-
-    let selectTagRoute: menuType;
-    if (selectRoute) {
-      selectTagRoute = {
-        path: selectRoute.path,
-        value: undefined,
-        meta: selectRoute.meta as menuType["meta"],
-        name: selectRoute.name as string,
-        query: selectRoute?.query as LocationQueryRaw,
-        params: selectRoute?.params as RouteParamsRaw
-      };
-    } else {
-      selectTagRoute = {
-        path: route.path,
-        value: undefined,
-        meta: route.meta as menuType["meta"]
-      };
-    }
-
-    // 当前路由信息
-    switch (key) {
-      case 0:
-        // 刷新路由
-        onFresh();
-        break;
-      case 1:
-        // 关闭当前标签页
-        deleteMenu(selectTagRoute);
-        break;
-      case 2:
-        // 关闭左侧标签页
-        deleteMenu(selectTagRoute, "left");
-        break;
-      case 3:
-        // 关闭右侧标签页
-        deleteMenu(selectTagRoute, "right");
-        break;
-      case 4:
-        // 关闭其他标签页
-        deleteMenu(selectTagRoute, "other");
-        break;
-      case 5:
-        // 关闭全部标签页
-        useMultiTagsStoreHook().handleTags("splice", "", {
-          startIndex: fixedTags.length,
-          length: multiTags.value.length
-        });
-        router.push(topPath ?? "/");
-        // router.push(fixedTags[fixedTags.length - 1]?.path);
-        handleAliveRoute(route as ToRouteType);
-        break;
-      case 6:
-        // 内容区全屏
-        onContentFullScreen();
-        setTimeout(() => {
-          if (pureSetting.hiddenSideBar) {
-            tagsViews[6].icon = ExitFullscreen;
-            tagsViews[6].text = $t("buttons.contentExitFullScreen");
-          } else {
-            tagsViews[6].icon = Fullscreen;
-            tagsViews[6].text = $t("buttons.contentFullScreen");
-          }
-        }, 100);
-        break;
-    }
-    setTimeout(() => {
-      showMenuModel(route.fullPath, route.query, route.params);
-    });
-  }
-
-  /** el-dropdown 命令载荷：菜单索引 + 菜单项 */
-  type TagCommand = {
-    key: number;
-    item: tagsViewsType;
-  };
-
-  function handleCommand(command: TagCommand) {
-    const { key, item } = command;
-    onClickDrop(key, item);
-  }
-
-  /** 触发右键中菜单的点击事件 */
-  function selectTag(key: number, item: { disabled?: boolean }) {
-    closeMenu();
-    onClickDrop(key, item, currentSelect.value);
-  }
-
-  function openMenu(tag: RouteConfigs, e: MouseEvent) {
-    closeMenu();
-    if (tag.path === topPath || tag?.meta?.fixedTag) {
-      // 右键菜单为顶级菜单或拥有 fixedTag 属性，只显示刷新
-      showMenus(false);
-      tagsViews[0].show = true;
-    } else if (route.path !== tag.path && route.name !== tag.name) {
-      // 右键菜单不匹配当前路由，隐藏刷新
-      tagsViews[0].show = false;
-      showMenuModel(tag.path ?? "", tag.query, tag.params);
-    } else if (multiTags.value.length === 2 && route.path !== tag.path) {
-      showMenus(true);
-      // 只有两个标签时不显示关闭其他标签页
-      tagsViews[4].show = false;
-      showMenuModel(tag.path ?? "", tag.query, tag.params);
-    } else {
-      showMenuModel(tag.path ?? "", tag.query, tag.params, true);
-    }
-
-    currentSelect.value = tag;
-    const menuMinWidth = 140;
-    const offsetLeft = unref(containerDom).getBoundingClientRect().left;
-    const offsetWidth = unref(containerDom).offsetWidth;
-    const maxLeft = offsetWidth - menuMinWidth;
-    const left = e.clientX - offsetLeft + 5;
-    if (left > maxLeft) {
-      buttonLeft.value = maxLeft;
-    } else {
-      buttonLeft.value = left;
-    }
-    if (useSettingStoreHook().hiddenSideBar) {
-      buttonTop.value = e.clientY;
-    } else {
-      buttonTop.value = e.clientY - 40;
-    }
-    nextTick(() => {
-      visible.value = true;
-    });
-  }
-
-  /** 触发tags标签切换 */
-  function tagOnClick(item: RouteConfigs) {
-    const { name, path } = item;
-    if (name) {
-      if (item.query) {
-        router.push({
-          name,
-          query: item.query
-        });
-      } else if (item.params) {
-        router.push({
-          name,
-          params: item.params
-        });
-      } else {
-        router.push({ name });
-      }
-    } else {
-      router.push({ path });
-    }
-    emitter.emit("tagOnClick", item as never);
-  }
+  const tagOnClick = createTagOnClick(router);
 
   return {
     dynamicRouteTag,
@@ -281,3 +102,5 @@ export function useTagActions(ctx: TagActionsContext) {
     tagOnClick
   };
 }
+
+export type { tagsViewsType };

@@ -2,30 +2,17 @@ import { reactive, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { dataDictApi } from "@/api/system/dict";
 import { usePageAuth } from "@/router/utils";
-import { clearDictCache } from "@/utils/dict";
 import {
   formatPageColumns,
-  handleOperation,
-  type OperationButtonsRow,
   type OperationProps,
   type PageTableColumn,
   type RePlusPageProps
 } from "@/components/RePlusPage";
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import AddFill from "~icons/ri/add-circle-line";
-import ArrowUp from "~icons/ep/arrow-up-bold";
-import ArrowDown from "~icons/ep/arrow-down-bold";
-import CircleCheck from "~icons/ep/circle-check";
-import CircleClose from "~icons/ep/circle-close";
-import Refresh from "~icons/ep/refresh";
 import { useBatchUpdate } from "@/views/system/components/useBatchUpdate";
 import { useDictRowActions } from "./useDictRowActions";
-import {
-  dictCodeColumnTransform,
-  dictParentColumnTransform,
-  dictValueColumnTransform,
-  isDictTypeRow
-} from "./dictColumnRules";
+import { buildDictRowButtons } from "./dictRowButtons";
+import { buildDictToolbarButtons } from "./dictToolbarButtons";
+import { buildDictFormColumns } from "./dictFormColumns";
 import {
   dictColorCellRenderer,
   dictLabelCellRenderer,
@@ -33,7 +20,13 @@ import {
   dictParentCellRenderer
 } from "./dictCellRenderers";
 
-/** 数据字典页：RePlusPage 树表（类型 → 字典项），含同层排序、批量启停与缓存刷新 */
+/**
+ * 数据字典页：RePlusPage 树表（类型 → 字典项），含同层排序、批量启停与缓存刷新。
+ *
+ * 职责拆分：行内动作 useDictRowActions / 行内按钮 dictRowButtons.ts /
+ * 工具栏按钮 dictToolbarButtons.ts / 列转换 dictColumnRules /
+ * 单元格渲染 dictCellRenderers。
+ */
 export function useDataDict(tableRef: Ref) {
   const api = reactive(dataDictApi);
   const auth = usePageAuth(["batchActive", "refreshCache", "move"]);
@@ -44,39 +37,6 @@ export function useDataDict(tableRef: Ref) {
     t,
     api,
     tableRef
-  });
-
-  /** 行内操作：新增子项（-40，类型行专属）+ 上移/下移（编辑/删除/详情为框架内建）
-   * showNumber 与 width 放大到 6 / 380，保证六个按钮全部平铺不进「更多」 */
-  const operationButtonsProps = shallowRef<OperationProps>({
-    showNumber: 6,
-    width: 420,
-    buttons: [
-      {
-        text: t("dataDict.addChild"),
-        code: "addChild",
-        props: { type: "primary", icon: useRenderIcon(AddFill), link: true },
-        onClick: ({ row }) => onAddChild(row),
-        show: row => Boolean(auth.create && isDictTypeRow(row)),
-        index: -40
-      },
-      {
-        text: t("dataDict.moveUp"),
-        code: "moveUp",
-        props: { type: "info", icon: useRenderIcon(ArrowUp), link: true },
-        onClick: ({ row, loading }) => onMove(row, "up", loading),
-        show: auth.move,
-        index: 2
-      },
-      {
-        text: t("dataDict.moveDown"),
-        code: "moveDown",
-        props: { type: "info", icon: useRenderIcon(ArrowDown), link: true },
-        onClick: ({ row, loading }) => onMove(row, "down", loading),
-        show: auth.move,
-        index: 3
-      }
-    ]
   });
 
   // 批量更新：勾选行后统一写入同组字段（字段白名单：启用状态）
@@ -93,97 +53,31 @@ export function useDataDict(tableRef: Ref) {
     ]
   });
 
-  /** 批量启停按钮工厂：启用/停用仅差布尔参数、文案与配色，取数与回执链路共用一份 */
-  const batchActiveButton = (
-    active: boolean,
-    index: number
-  ): OperationButtonsRow => ({
-    text: t(active ? "dataDict.batchActive" : "dataDict.batchInactive"),
-    code: active ? "batchActive" : "batchInactive",
-    confirm: {
-      title: t(
-        active ? "dataDict.batchActiveConfirm" : "dataDict.batchInactiveConfirm"
-      )
-    },
-    props: {
-      type: active ? "success" : "warning",
-      icon: useRenderIcon(active ? CircleCheck : CircleClose),
-      plain: true
-    },
-    onClick: ({ loading }) => {
-      const pks = getSelectedPks();
-      if (!pks) return;
-      loading.value = true;
-      handleOperation({
-        t,
-        apiReq: api.batchActive(pks, active),
-        success() {
-          refresh();
-        },
-        requestEnd() {
-          loading.value = false;
-        }
-      });
-    },
-    show: auth.batchActive,
-    index
+  /** 行内操作：新增子项 + 上移/下移（编辑/删除/详情为框架内建），见 dictRowButtons.ts */
+  const operationButtonsProps = shallowRef<OperationProps>({
+    // showNumber 与 width 放大到 6 / 420，保证六个按钮全部平铺不进「更多」
+    showNumber: 6,
+    width: 420,
+    buttons: buildDictRowButtons({ t, auth, onAddChild, onMove })
   });
 
-  /** 工具栏：新增（覆盖内建 create，parent 留空即字典类型）+ 批量启停 + 刷新缓存 */
+  /** 工具栏：新增类型 + 批量启停 + 刷新缓存，见 dictToolbarButtons.ts */
   const tableBarButtonsProps = shallowRef<OperationProps>({
-    buttons: [
-      {
-        text: t("dataDict.addType"),
-        code: "create",
-        props: { type: "primary", icon: useRenderIcon(AddFill) },
-        onClick: () => tableRef.value?.handleAddOrEdit(true, {}),
-        show: auth.create,
-        index: -30
-      },
-      batchActiveButton(true, 1),
-      batchActiveButton(false, 2),
-      {
-        text: t("dataDict.refreshCache"),
-        code: "refreshCache",
-        props: { type: "info", icon: useRenderIcon(Refresh), plain: true },
-        onClick: ({ loading }) => {
-          loading.value = true;
-          handleOperation({
-            t,
-            apiReq: api.refreshCache(),
-            success() {
-              // 同步清空前端进程内字典缓存：否则其他页面在 5 分钟 TTL 内仍读旧字典
-              // （成功提示由 handleOperation 统一给出，重复 message 会弹两次）
-              clearDictCache();
-            },
-            requestEnd() {
-              loading.value = false;
-            }
-          });
-        },
-        show: auth.refreshCache,
-        index: 3
-      },
+    buttons: buildDictToolbarButtons({
+      t,
+      api,
+      auth,
+      tableRef,
+      refresh,
+      getSelectedPks,
       batchUpdateButton
-    ]
+    })
   });
 
-  /** 新增/编辑弹窗列调整：主键与系统内置标记不进表单，类型行隐藏「所属类型/字典值」，
-   * 内置字典（is_locked）锁死编码与所属类型——改 code 会让代码里的引用断链
-   * （转换规则见 dictColumnRules，纯函数可单测直测） */
+  /** 新增/编辑弹窗列调整见 dictFormColumns.ts */
   const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
     props: {
-      columns: {
-        pk: ({ column }) => ({ ...column, hideInForm: true }),
-        is_locked: ({ column }) => ({ ...column, hideInForm: true }),
-        code: ({ column, rawRow }) =>
-          dictCodeColumnTransform({ column, rawRow }),
-        parent: ({ column, rawRow, isAdd }) =>
-          dictParentColumnTransform({ column, rawRow, isAdd }),
-        // 字典值仅字典项使用；类型行隐藏
-        value: ({ column, rawRow }) =>
-          dictValueColumnTransform({ column, rawRow })
-      }
+      columns: buildDictFormColumns()
     }
   });
 

@@ -1,20 +1,12 @@
-import { h, reactive, shallowRef, type Ref } from "vue";
+import { reactive, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElLink, ElTag } from "element-plus";
 import { hasAuth, usePageAuth } from "@/router/utils";
-import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
-import {
-  PanelProfile,
-  ReActionPanel,
-  openManageDrawer
-} from "@/components/ReActionPanel";
-import { aiProfileApi, type AiProfileItem } from "@/api/ai/ai";
-import { purposeLabelKey, purposeTagType } from "./purpose";
-import { capabilityTagItems } from "./capabilities";
-import { buildAiProfileData, buildAiProfileMetaItems } from "./aiProfilePanel";
-import { buildAiProfileActionGroups } from "./aiProfileActions";
+import { aiProfileApi } from "@/api/ai/ai";
 import { useAiProfileActions } from "./useAiProfileActions";
 import { useAiProfileDialog } from "./useAiProfileDialog";
+import { useAiProfileManage } from "./useAiProfileManage";
+import { useAiProfileColumns } from "./useAiProfileColumns";
+import { useAiProfileButtons } from "./useAiProfileButtons";
 
 /**
  * AI 配置档案表格：CRUD + 激活/停用/测试 + 统一「管理」抽屉。
@@ -29,7 +21,10 @@ import { useAiProfileDialog } from "./useAiProfileDialog";
  *
  * 职责拆分：
  * - useAiProfileActions  激活/停用/删除（统一确认）/测试/能力探测；
- * - useAiProfileDialog   新建/编辑弹窗。
+ * - useAiProfileDialog   新建/编辑弹窗；
+ * - useAiProfileManage   「管理」抽屉装配；
+ * - useAiProfileColumns  列渲染；
+ * - useAiProfileButtons  工具栏与行操作按钮装配。
  */
 export function useAiProfiles(tableRef: Ref) {
   const { t } = useI18n();
@@ -55,163 +50,24 @@ export function useAiProfiles(tableRef: Ref) {
 
   const { openDialog } = useAiProfileDialog({ t, refresh });
 
-  /* ---------------- 列渲染 ---------------- */
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "name":
-          // 档案名同为「管理」抽屉入口
-          column["cellRenderer"] = ({ row }) => {
-            const item = row as AiProfileItem;
-            return h(
-              ElLink,
-              {
-                type: "primary",
-                onClick: () => openProfilePanel(item)
-              },
-              () => item.name
-            );
-          };
-          break;
-        case "is_active":
-          column["cellRenderer"] = ({ row }) => {
-            const active = (row as AiProfileItem).is_active;
-            return h(
-              ElTag,
-              { size: "small", type: active ? "success" : "info" },
-              () =>
-                active ? t("aiConfig.profileOn") : t("aiConfig.profileOff")
-            );
-          };
-          break;
-        case "temperature":
-        case "max_tokens":
-          // 采样参数未配置为 null：与表单「未设置」语义一致
-          column["cellRenderer"] = ({ row }) => {
-            const value = (row as Record<string, unknown>)[
-              column.prop as string
-            ];
-            return value == null ? t("aiConfig.unset") : String(value);
-          };
-          break;
-        case "purpose":
-          column["cellRenderer"] = ({ row }) => {
-            const purpose = (row as AiProfileItem).purpose;
-            return h(
-              ElTag,
-              { size: "small", type: purposeTagType(purpose) },
-              () => t(purposeLabelKey(purpose))
-            );
-          };
-          break;
-        case "capabilities":
-          // 能力画像：与「管理」抽屉资料卡共用 capabilityTagItems 构建
-          column["cellRenderer"] = ({ row }) => {
-            const capabilities = ((row as AiProfileItem).capabilities ??
-              {}) as Record<string, { ok?: boolean } | undefined>;
-            return h(
-              "div",
-              { class: "flex flex-wrap gap-1" },
-              capabilityTagItems(capabilities, t).map(item =>
-                h(
-                  ElTag,
-                  { key: item.key, size: "small", type: item.type },
-                  () => item.label
-                )
-              )
-            );
-          };
-          break;
-      }
-    });
-    return columns;
-  };
-
-  /**
-   * 「管理」抽屉：档案资料 + 能力画像 + 探测/配置/删除动作（低频动作唯一入口）。
-   * 动作统一「先收起抽屉再执行」：资料卡基于行快照，重开即最新，同时避免与
-   * 编辑弹窗、危险操作确认框叠加。
-   */
-  const openProfilePanel = (row: AiProfileItem) => {
-    openManageDrawer({
-      title: t("aiConfig.panelTitle", { name: row.name }),
-      size: "520px",
-      render: ({ withClosed }) =>
-        h(
-          ReActionPanel,
-          {
-            metaItems: buildAiProfileMetaItems(row, t),
-            groups: buildAiProfileActionGroups({
-              t,
-              flags: { canProbe, canEdit, canDestroy },
-              handlers: {
-                probe: withClosed(() => probeProfile(row)),
-                probeVision: withClosed(() => probeProfile(row, true)),
-                edit: withClosed(() => openDialog(row)),
-                remove: withClosed(() => removeProfile(row))
-              }
-            })
-          },
-          {
-            profile: () =>
-              h(PanelProfile, { profile: buildAiProfileData(row, t) })
-          }
-        )
-    });
-  };
-
-  /* ---------------- 按钮装配 ---------------- */
-  const operationButtonsProps = shallowRef<OperationProps>({
-    // 行内保留在线处置（激活/停用、测试）+ 管理抽屉入口：列宽由 430 收窄
-    width: 240,
-    // 档案资料/参数与能力画像由「管理」抽屉承载，关闭框架默认详情入口避免重复
-    hideDetail: true,
-    buttons: [
-      {
-        text: t("aiConfig.activate"),
-        code: "activate",
-        props: { type: "warning", link: true },
-        onClick: ({ row }) => activate(row as AiProfileItem),
-        index: -40,
-        show: row => Boolean(canActivate && !(row as AiProfileItem).is_active)
-      },
-      {
-        text: t("aiConfig.deactivate"),
-        code: "deactivate",
-        props: { type: "info", link: true },
-        onClick: ({ row }) => deactivate(row as AiProfileItem),
-        index: -40,
-        show: row => Boolean(canDeactivate && (row as AiProfileItem).is_active)
-      },
-      {
-        text: t("aiConfig.test"),
-        code: "test",
-        props: { type: "success", link: true },
-        onClick: ({ row }) => testProfile(row as AiProfileItem),
-        index: -30,
-        show: canTest
-      },
-      {
-        text: t("aiConfig.manage"),
-        code: "manage",
-        props: { type: "primary", link: true },
-        onClick: ({ row }) => openProfilePanel(row as AiProfileItem),
-        index: -15,
-        show: true
-      }
-    ]
+  const { openProfilePanel } = useAiProfileManage({
+    t,
+    flags: { canProbe, canEdit, canDestroy },
+    probeProfile,
+    openDialog,
+    removeProfile
   });
 
-  const tableBarButtonsProps = shallowRef<OperationProps>({
-    buttons: [
-      {
-        text: t("aiConfig.create"),
-        code: "create",
-        props: { type: "primary" },
-        onClick: () => openDialog(null),
-        show: canCreate
-      }
-    ]
+  const { listColumnsFormat } = useAiProfileColumns({ t, openProfilePanel });
+
+  const { operationButtonsProps, tableBarButtonsProps } = useAiProfileButtons({
+    t,
+    flags: { canCreate, canActivate, canDeactivate, canTest },
+    activate,
+    deactivate,
+    testProfile,
+    openDialog,
+    openProfilePanel
   });
 
   return {

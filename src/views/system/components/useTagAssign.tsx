@@ -2,28 +2,18 @@ import { h, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
-import { SUCCESS_CODE } from "@/api/types";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
-import { tagApi } from "@/api/system/tag";
 import type { RecordType } from "plus-pro-components";
 import TagAssignPanel from "./TagAssignPanel.vue";
-import { normalizeError } from "@/utils/apiError";
-
-/** 批量打标结果（后端逐对象权限校验后聚合） */
-type BatchAssignResult = {
-  success?: unknown[];
-  failures?: unknown[];
-  detail?: string;
-  code?: number;
-};
+import { submitTagAssign, submitTagBatchAssign } from "./tagAssignSubmit";
 
 /**
  * 通用打标弹窗编排：行操作（单对象）与工具栏（批量 + 选中行）共用。
  *
  * - 打标权限回落对象级 update 权限点（后端 `ensure_tag_permission` 逐对象校验）；
  * - 入口显示用全局 `assign:Tag` 权限点，弹窗内「新建标签」按 `create:Tag` 放开；
- * - 批量默认「追加」语义，避免覆盖各对象既有标签。
+ * - 批量默认「追加」语义，避免覆盖各对象既有标签（提交明细见 tagAssignSubmit.ts）。
  */
 export function useTagAssign(tableRef?: Ref) {
   const { t } = useI18n();
@@ -75,47 +65,27 @@ export function useTagAssign(tableRef?: Ref) {
           return;
         }
         if (isBatch) {
-          const res = (await tagApi
-            .batchAssign({
-              resource,
-              pks: payload.pks,
-              tags: payload.tags,
-              mode: payload.mode
-            })
-            .catch(normalizeError)) as BatchAssignResult;
-          if (res.code === SUCCESS_CODE) {
-            const ok = res.success?.length ?? 0;
-            const failed = res.failures?.length ?? 0;
-            if (failed) {
-              message(
-                t("tag.batchDonePartial", { success: ok, failures: failed }),
-                {
-                  type: "warning"
-                }
-              );
-            } else {
-              message(t("tag.batchDone", { success: ok }), { type: "success" });
-            }
-            done();
-            tableRef?.value?.handleGetData();
-            return;
-          }
-          if (res.detail) message(String(res.detail), { type: "warning" });
-          closeLoading();
+          await submitTagBatchAssign({
+            t,
+            tableRef,
+            resource,
+            pks: payload.pks,
+            tags: payload.tags,
+            mode: payload.mode,
+            done,
+            closeLoading
+          });
           return;
         }
-        const res = await tagApi
-          .assign({ resource, pk: payload.pk, tags: payload.tags })
-          .catch(normalizeError);
-        if (res.code === SUCCESS_CODE) {
-          message(t("tag.assignDone"), { type: "success" });
-          // 先关弹窗再刷新列表，避免刷新耗时导致弹窗滞留
-          done();
-          tableRef?.value?.handleGetData();
-          return;
-        }
-        if (res.detail) message(String(res.detail), { type: "warning" });
-        closeLoading();
+        await submitTagAssign({
+          t,
+          tableRef,
+          resource,
+          pk: payload.pk,
+          tags: payload.tags,
+          done,
+          closeLoading
+        });
       }
     });
   };
