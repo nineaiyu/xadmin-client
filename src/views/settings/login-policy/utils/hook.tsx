@@ -56,7 +56,10 @@ export function useLoginPolicy(tableRef: Ref) {
   });
 
   const operationButtonsProps = shallowRef<OperationProps>({
-    width: 140,
+    // 操作列三个入口（删除 / 查看 / 编辑）同行排布：实测 54 + 20 + 54，间距各 12px，
+    // 加单元格左右内边距 24px 共需 176px；140 / 160 都会把末位按钮折到下一行、
+    // 把行高撑成两倍，180 留出余量
+    width: 180,
     // 自有编辑弹窗已提供「编辑」入口，藏掉框架默认编辑按钮；
     // auth.partialUpdate 保持可用以支持激活状态内联开关
     hideEdit: true,

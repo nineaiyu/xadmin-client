@@ -87,8 +87,8 @@ onMounted(loadBackends);
 </template>
 
 <style lang="scss" scoped>
-/* 页签外的失败提示：与页签卡片同宽铺满，仅保留与卡片的间距 */
+/* 页签外的失败提示：与页签卡片同宽铺满，间距取竖排节奏的 12px */
 .sms-setting-notice {
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 </style>

@@ -111,7 +111,7 @@ onMounted(load);
 
 <template>
   <div v-loading="loading">
-    <div class="mb-3 flex-bc">
+    <div class="mb-3 flex-bc gap-3">
       <span class="text-sm text-(--el-text-color-secondary)">
         {{ t("passkey.loginTip") }}
       </span>
@@ -119,7 +119,8 @@ onMounted(load);
         {{ t("passkey.add") }}
       </el-button>
     </div>
-    <ReReadonlyTable :columns="columns" :rows="rows" border>
+    <!-- 表头底纹由 ReReadonlyTable 统一（与列表页同源）；不带竖向网格线，避免比同页其它表格更重 -->
+    <ReReadonlyTable :columns="columns" :rows="rows">
       <template #created="{ row }">
         {{ formatTime(row.created_time) }}
       </template>

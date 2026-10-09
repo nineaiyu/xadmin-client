@@ -141,7 +141,6 @@ onMounted(() => {
       :rows="rows"
       :loading="loading"
       size="small"
-      border
     >
       <template #status_code="{ row }">
         <el-tag

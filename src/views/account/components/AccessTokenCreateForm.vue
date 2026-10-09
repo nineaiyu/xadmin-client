@@ -42,7 +42,8 @@ defineExpose({ getPayload });
 </script>
 
 <template>
-  <el-form label-width="90px" @submit.prevent>
+  <!-- 弹窗内表单统一左置标签 100px（与登录策略 / 消息模板 / 修改密码弹窗同口径） -->
+  <el-form label-width="100px" @submit.prevent>
     <el-form-item :label="t('accessToken.name')" required>
       <el-input
         v-model="form.name"

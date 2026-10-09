@@ -210,8 +210,11 @@ const handleTest = () => {
  * 设置项标签普遍较长（如「登录 MFA 令牌有效期（秒）」），左置标签必须预留固定
  * 宽度，短标签被撑出大片空白、长标签又会溢出压到控件上；上置标签按内容自然换行，
  * 列宽只由控件形态决定（见 utils/settingLayout.ts）。
+ *
+ * 按钮组（重置 / 保存 / 测试）左对齐紧贴最后一行的列位，与页签内容区左内边距同一
+ * 条竖向轴线；按钮间距交给 EP 默认的 12px。
  */
 .setting-form :deep(.plus-form__footer) {
-  padding: 4px 0 8px;
+  padding: 4px 0 0;
 }
 </style>

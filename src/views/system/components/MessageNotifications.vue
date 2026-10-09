@@ -195,6 +195,10 @@ const receiverLabels = (row: DefaultRow) => {
     :stripe="true"
     default-expand-all
     row-key="pk"
+    :header-cell-style="{
+      background: 'var(--el-table-row-hover-bg-color)',
+      color: 'var(--el-text-color-primary)'
+    }"
   >
     <el-table-column
       :label="t('messageNotifications.messageType')"
@@ -233,22 +237,44 @@ const receiverLabels = (row: DefaultRow) => {
         </span>
       </template>
     </el-table-column>
+    <!-- 操作列：与列表页操作列同口径的链接按钮，同一行排布（宽度按两枚按钮的自然宽收住） -->
     <el-table-column
       v-if="auth.partialUpdate || auth.list"
       :label="t('commonLabels.operation')"
-      width="240"
+      width="250"
     >
       <template v-slot="{ row }">
         <template v-if="!row.children">
-          <!-- 发送测试：按订阅行真实下发一条测试消息（系统订阅发超管 / 个人订阅发自己） -->
-          <el-button @click="handleSendTestMsg(row)">
-            {{ t("messageNotifications.sendTestMessage") }}
-          </el-button>
-          <el-button v-if="hasOperations" @click="handleSaveReceivers(row)">
-            {{ t("messageNotifications.editRecipient") }}
-          </el-button>
+          <div class="notification-actions">
+            <!-- 发送测试：按订阅行真实下发一条测试消息（系统订阅发超管 / 个人订阅发自己） -->
+            <el-button link type="primary" @click="handleSendTestMsg(row)">
+              {{ t("messageNotifications.sendTestMessage") }}
+            </el-button>
+            <el-button
+              v-if="hasOperations"
+              link
+              type="primary"
+              @click="handleSaveReceivers(row)"
+            >
+              {{ t("messageNotifications.editRecipient") }}
+            </el-button>
+          </div>
         </template>
       </template>
     </el-table-column>
   </el-table>
 </template>
+
+<style lang="scss" scoped>
+/* 行内操作按钮同行排布：默认的块级间距会让两枚按钮各占一行、把行高撑到两倍 */
+.notification-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+.notification-actions :deep(.el-button + .el-button) {
+  margin-left: 0;
+}
+</style>

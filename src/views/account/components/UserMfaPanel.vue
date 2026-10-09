@@ -5,8 +5,8 @@
  *   关闭为敏感操作：未二次验证时后端返回 412，由 http 层全局验证弹窗接管后自动重发。
  * - 解绑：清除密钥（恢复码一并作废），重新开启需重新扫码；同为敏感操作。
  * - 恢复码：绑定确认成功时一次性展示；已绑定态可查剩余数量并重新生成（敏感操作）。
- * 排版对齐同页「基本资料 / 修改密码」tab：固定 label-width 的普通 el-form，
- * 操作按钮置于无 label 的尾部 form-item（与保存按钮列对齐）。
+ * 排版对齐同页「个人信息」面板：上置标签的普通 el-form，控件与说明左缘同卡片内边距，
+ * 操作按钮置于无标签的尾部 form-item。
  */
 import { SUCCESS_CODE } from "@/api/types";
 import { computed, onMounted, ref } from "vue";
@@ -208,7 +208,7 @@ onMounted(loadStatus);
 
 <template>
   <div v-loading="statusLoading">
-    <el-form label-width="110px">
+    <el-form label-position="top">
       <el-form-item :label="$t('mfa.otpStatus')">
         <div class="w-full">
           <el-tag :type="status.enabled ? 'success' : 'info'">

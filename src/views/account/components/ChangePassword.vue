@@ -122,11 +122,13 @@ onMounted(() => {
 </script>
 
 <template>
+  <!-- 弹窗内表单统一左置标签 100px（与登录策略 / 消息模板 / 新建令牌弹窗同口径）：
+       弹窗宽度有限，左置标签比上置标签省一屏高度；页面级表单（个人信息等）用上置标签 -->
   <el-form
     ref="ruleFormRef"
     :model="password"
     :rules="formPasswordRules"
-    label-width="130px"
+    label-width="100px"
   >
     <el-row :gutter="30">
       <re-col :sm="24" :value="24" :xs="24">

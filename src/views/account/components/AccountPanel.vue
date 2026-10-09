@@ -43,10 +43,12 @@ withDefaults(
 /**
  * 非 scoped：插槽内容在父组件（各页签）作用域编译，scoped 规则命中不到，
  * 因此共享的行样式只能在此声明——一律挂在 `.account-panel` 前缀下，不外溢。
+ *
+ * 面板四周留白由分栏内容区（el-main）提供，这里只负责内部结构间距，
+ * 避免两层内边距叠加把内容压窄。
  */
 .account-panel {
   box-sizing: border-box;
-  padding: 4px 0 24px;
 }
 
 .account-panel__header {
@@ -68,8 +70,9 @@ withDefaults(
   color: var(--el-text-color-secondary);
 }
 
+/* 内容纸：留白与系统设置页签内容区同一来源（--app-panel-pad-*），两模块观感一致 */
 .account-panel__body {
-  padding: 20px;
+  padding: var(--app-panel-pad-y) var(--app-panel-pad-x);
   background: var(--el-bg-color);
   border: 1px solid var(--el-border-color-lighter);
   border-radius: var(--app-card-radius);
@@ -115,12 +118,12 @@ withDefaults(
   color: var(--el-text-color-secondary);
 }
 
-/* 行内分组小标题（已绑定 / 可绑定等） */
+/* 行内分组小标题（已绑定 / 可绑定等）：与行标题同字号，靠颜色与位置区分层级 */
 .account-panel .account-section-title {
-  margin: 0 0 4px;
-  font-size: 13px;
+  margin: 0 0 8px;
+  font-size: 14px;
   font-weight: 500;
-  line-height: 20px;
+  line-height: 22px;
   color: var(--el-text-color-regular);
 }
 
@@ -130,19 +133,18 @@ withDefaults(
 
 /* 空状态：虚线兜底框，与有数据时的行列节奏区分开 */
 .account-panel .account-empty {
-  padding: 8px 0;
+  padding: 16px 0;
   background: var(--el-fill-color-lighter);
   border: 1px dashed var(--el-border-color);
   border-radius: var(--app-card-radius);
 }
 
-@media (width <= 768px) {
-  .account-panel {
-    padding: 0 0 16px;
-  }
-
-  .account-panel__body {
-    padding: 16px 12px;
-  }
+/**
+ * 面板内嵌列表（个人访问令牌 / 安全日志的 RePlusPage）：搜索卡与表格栏铺满
+ * 卡片内宽。框架的 99% 宽是为页面级列表留的余量，嵌进卡片后会在右侧露出一条缝，
+ * 与下方表格右缘对不齐。
+ */
+.account-panel .w-99\/100 {
+  width: 100%;
 }
 </style>

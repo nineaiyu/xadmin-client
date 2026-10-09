@@ -104,7 +104,15 @@ onMounted(load);
 
 <template>
   <div v-loading="loading">
-    <el-table :data="rows" border data-testid="template-table">
+    <!-- 表头浅灰底与列表页 / 订阅表同口径，页签之间切换不再出现两种表格皮肤 -->
+    <el-table
+      :data="rows"
+      data-testid="template-table"
+      :header-cell-style="{
+        background: 'var(--el-table-row-hover-bg-color)',
+        color: 'var(--el-text-color-primary)'
+      }"
+    >
       <el-table-column
         prop="message_type_label"
         :label="t('messageTemplate.messageType')"

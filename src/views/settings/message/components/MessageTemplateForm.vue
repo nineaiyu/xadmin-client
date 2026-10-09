@@ -105,7 +105,8 @@ defineExpose({ getPayload });
       />
     </el-alert>
 
-    <el-form label-width="90px">
+    <!-- 弹窗内表单统一左置标签 100px（与登录策略 / 修改密码 / 新建令牌弹窗同口径） -->
+    <el-form label-width="100px">
       <el-form-item :label="t('messageTemplate.subject')">
         <el-input
           v-model="form.subject_template"

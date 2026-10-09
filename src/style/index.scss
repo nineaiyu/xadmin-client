@@ -31,6 +31,11 @@
   --app-card-shadow: var(--el-box-shadow-light);
   --app-card-shadow-hover: var(--el-box-shadow);
 
+  /* 内容面板留白（系统设置 / 账户设置两模块共用，窄屏值见文件末尾媒体查询）：
+     桌面 20×24，窄屏 16×12；面板 = 承载表单或列表的「内容纸」 */
+  --app-panel-pad-y: 20px;
+  --app-panel-pad-x: 24px;
+
   /* z-index 阶梯（T4）：集中定义避免 magic number 互斗。
      - layout 1000：侧栏/头部布局固定层（sidebar/common 内 998/1001/1002 属该层内部细分）
      - settingMask 1005 / settingPanel 1010：设置面板（必须低于 EP 弹层起点 2000，
@@ -42,6 +47,14 @@
   --pure-z-index-setting-mask: 1005;
   --pure-z-index-setting-panel: 1010;
   --pure-z-index-tippy: 9999;
+}
+
+/* 窄屏收紧内容面板留白：移动端视口小，24px 外内边距会把内容压成窄条 */
+@media (width <= 768px) {
+  :root {
+    --app-panel-pad-y: 16px;
+    --app-panel-pad-x: 12px;
+  }
 }
 
 /* 灰色模式 */
