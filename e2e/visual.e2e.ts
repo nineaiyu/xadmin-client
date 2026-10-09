@@ -95,6 +95,26 @@ async function stabilize(page: Page) {
       "transition-duration: 0s !important; transition-delay: 0s !important; caret-color: transparent !important; }"
   });
   await page.waitForLoadState("networkidle").catch(() => undefined);
+  // 侧栏菜单是登录后按 routes 渐进装配的（分组逐段插入）：等菜单项计数
+  // 连续两个观察窗不再增长再截图，否则基线可能截到「只有部分菜单」的中间态，
+  // 复跑时菜单补全引发整页布局偏移、击穿 2% 容差（实测 system-user 命中过）
+  await page
+    .evaluate(async () => {
+      const count = () =>
+        document.querySelectorAll(".sidebar-container .el-menu-item").length;
+      let previous = count();
+      let stable = 0;
+      for (let i = 0; i < 40 && stable < 2; i++) {
+        await new Promise(resolve => setTimeout(resolve, 250));
+        const current = count();
+        if (current === previous) stable += 1;
+        else {
+          stable = 0;
+          previous = current;
+        }
+      }
+    })
+    .catch(() => undefined);
   // 字体就绪后再截图，避免首帧字体回退
   await page.evaluate(() => document.fonts.ready.then(() => undefined));
   // ECharts 走 canvas 内部动画（CSS 禁不掉），默认时长 ~1s；canvas 绘制无 DOM 信号，
