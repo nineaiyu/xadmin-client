@@ -17,7 +17,10 @@ import { PlusSearch, type RecordType } from "plus-pro-components";
 import type { ComponentSize } from "element-plus";
 import type { BaseApi } from "@/api/base";
 import { useTableLayout } from "./utils/useTableLayout";
-import { useTableMeasure } from "./utils/useTableMeasure";
+import {
+  DEFAULT_ADAPTIVE_OFFSET_BOTTOM,
+  useTableMeasure
+} from "./utils/useTableMeasure";
 import { resolveOperationRow as resolveOperationRowUtil } from "./utils/operationRow";
 import { useSearchCardCollapse } from "./utils/useSearchCardCollapse";
 import { useListMetaWarning } from "./utils/useListMetaWarning";
@@ -97,8 +100,23 @@ const applySavedView = (conditions: RecordType) => {
 const tableRef = ref();
 const rootRef = ref<HTMLElement>();
 
-const { tableElWidth, measureTableWidth, ensureRootObserver } =
-  useTableMeasure(rootRef);
+/**
+ * 自适应高度底部预留：以页面传入的 pureTableProps.adaptiveConfig.offsetBottom
+ * 为准（缺省 110 = 列表页直铺口径）。库内 setAdaptive 与本文件 ResizeObserver
+ * 的重算必须共用同一取值，否则页面覆写了库内配置、重算仍按缺省值执行，
+ * 表格会被顶出视口（页面出现滚动条）。
+ */
+const adaptiveOffsetBottom = () =>
+  (
+    props.pureTableProps as {
+      adaptiveConfig?: { offsetBottom?: number };
+    }
+  )?.adaptiveConfig?.offsetBottom ?? DEFAULT_ADAPTIVE_OFFSET_BOTTOM;
+
+const { tableElWidth, measureTableWidth, ensureRootObserver } = useTableMeasure(
+  rootRef,
+  { offsetBottom: adaptiveOffsetBottom }
+);
 
 /** 操作列行兜底（第三方 slot 的 row 会退化为空对象，按行号取真实行，见 utils） */
 const resolveOperationRow = (row: RecordType | undefined, index: unknown) =>

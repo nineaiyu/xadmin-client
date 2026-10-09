@@ -353,6 +353,13 @@ const listColumnsFormat = (columns: PageTableColumn[]) => {
   return columns;
 };
 
+/**
+ * 表格自适应高度的底部预留：框架缺省 110px 只按「列表页直铺」口径，
+ * 本页表格外面包了面板卡片（卡片内边距 + 面板底部留白 + 分栏页边距），
+ * 按缺省值算表格会高出视口，把页面顶出滚动条，这里按实测加到 150。
+ */
+const pureTableProps = { adaptiveConfig: { offsetBottom: 150 } };
+
 /** 行内动作：吊销（仅启用态）+ 接口范围 + IP 白名单 + 调用记录 */
 const operationButtonsProps: OperationProps = {
   showNumber: 6,
@@ -419,6 +426,7 @@ const operationButtonsProps: OperationProps = {
       :list-columns-format="listColumnsFormat"
       :operation-buttons-props="operationButtonsProps"
       :table-bar-buttons-props="tableBarButtonsProps"
+      :pure-table-props="pureTableProps"
     />
   </AccountPanel>
 </template>

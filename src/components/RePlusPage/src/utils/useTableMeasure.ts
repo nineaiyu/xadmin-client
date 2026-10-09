@@ -8,11 +8,23 @@ import { onMounted, onUnmounted, ref, type Ref } from "vue";
  * 挤出视口造成页面级滚动条。这里观察根节点高度变化后重算高度；可视区宽度供
  * 固定操作列宽度对齐使用（见 useTableLayout）。
  */
-export function useTableMeasure(rootRef: Ref<HTMLElement | undefined>) {
+/** 自适应高度底部预留缺省值：按「列表页直铺」口径实测得出 */
+export const DEFAULT_ADAPTIVE_OFFSET_BOTTOM = 110;
+
+export function useTableMeasure(
+  rootRef: Ref<HTMLElement | undefined>,
+  /** 底部预留（px）取值函数：缺省 110 为「列表页直铺」口径，页面经
+   * pureTableProps.adaptiveConfig.offsetBottom 覆写（表格被卡片等容器包裹时
+   * 下方余量更大，需按页面口径给值，否则表格会高出视口顶出页面滚动条） */
+  options?: { offsetBottom?: () => number }
+) {
   /** 表格可视区实测宽度（布局变化时由根 ResizeObserver 触发） */
   const tableElWidth = ref(0);
 
   let rootResizeObserver: ResizeObserver | undefined;
+
+  const resolveOffsetBottom = () =>
+    options?.offsetBottom?.() ?? DEFAULT_ADAPTIVE_OFFSET_BOTTOM;
 
   /**
    * 自适应高度的最小可用高度钳制（框架级兜底）：
@@ -23,7 +35,6 @@ export function useTableMeasure(rootRef: Ref<HTMLElement | undefined>) {
    * 期望高度只依赖表格顶部位置（与当前高度无关），写定后不再变化，
    * 因此不会与 ResizeObserver 形成收缩/放开的振荡循环。
    */
-  const ADAPTIVE_OFFSET_BOTTOM = 110;
   const MIN_ADAPTIVE_TABLE_HEIGHT = 260;
   let adaptiveRaf = 0;
 
@@ -37,7 +48,7 @@ export function useTableMeasure(rootRef: Ref<HTMLElement | undefined>) {
       const rect = table.getBoundingClientRect();
       if (!rect.height) return;
       const desired = Math.round(
-        window.innerHeight - rect.top - ADAPTIVE_OFFSET_BOTTOM
+        window.innerHeight - rect.top - resolveOffsetBottom()
       );
       const next = Math.max(MIN_ADAPTIVE_TABLE_HEIGHT, desired);
       if (Math.abs(rect.height - next) <= 1) return;
