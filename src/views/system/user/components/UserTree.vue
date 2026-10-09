@@ -146,7 +146,7 @@ defineExpose({ onTreeReset });
     :style="
       props.compact ? undefined : { minHeight: DESKTOP_CONTAINER_MIN_HEIGHT }
     "
-    class="bg-bg_color overflow-hidden relative"
+    class="user-tree-panel bg-bg_color overflow-hidden relative"
   >
     <div class="flex items-center h-8.5">
       <el-input
@@ -237,6 +237,14 @@ defineExpose({ onTreeReset });
 </template>
 
 <style lang="scss" scoped>
+/* 面板卡片化：与右侧列表（RePlusPage 搜索卡/表格卡）同一张「卡片纸」，
+   分栏两侧观感一致；变量同源 style/index.scss 的 --app-card-* */
+.user-tree-panel {
+  border: var(--app-card-border);
+  border-radius: var(--app-card-radius);
+  box-shadow: var(--app-card-shadow);
+}
+
 :deep(.el-divider) {
   margin: 0;
 }

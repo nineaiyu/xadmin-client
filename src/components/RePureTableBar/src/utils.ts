@@ -74,7 +74,16 @@ export function buildRenderClass(isFullscreen: boolean) {
     "px-2",
     "pb-2",
     "bg-bg_color",
-    isFullscreen ? ["w-full!", "h-full!", "z-2002", "fixed", "inset-0"] : "mt-2"
+    isFullscreen
+      ? [
+          "w-full!",
+          "h-full!",
+          "z-2002",
+          "fixed",
+          "inset-0",
+          "re-plus-table-card--fullscreen"
+        ]
+      : "mt-2"
   ];
 }
 

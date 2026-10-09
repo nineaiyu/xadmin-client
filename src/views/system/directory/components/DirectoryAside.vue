@@ -153,7 +153,7 @@ function postTitle(item: DirectoryPostOption) {
     class="directory-aside bg-bg_color flex flex-col overflow-hidden"
     :class="
       compact
-        ? 'max-h-90 rounded-lg border border-(--el-border-color-lighter)'
+        ? 'max-h-90 rounded-(--app-card-radius) border border-(--el-border-color-light)'
         : 'directory-desktop'
     "
   >
@@ -276,6 +276,11 @@ function postTitle(item: DirectoryPostOption) {
 <style scoped lang="scss">
 .directory-desktop {
   height: calc(100vh - 141px);
+
+  /* 卡片化：与列表区及全局卡片体系（--app-card-*）同一观感 */
+  border: var(--app-card-border);
+  border-radius: var(--app-card-radius);
+  box-shadow: var(--app-card-shadow);
 }
 
 .directory-mode {

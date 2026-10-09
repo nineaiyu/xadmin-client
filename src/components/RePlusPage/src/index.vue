@@ -316,7 +316,7 @@ defineExpose({
         @keyup.enter="handleSearch"
       />
     </div>
-    <div :class="tableBarData.renderClass">
+    <div class="re-plus-table-card" :class="tableBarData.renderClass">
       <el-scrollbar class="max-h-15!">
         <PureTableBar
           v-if="tableBar"
@@ -482,6 +482,26 @@ defineExpose({
    固定 106px 会在卡片底部留出可见空白（2026-09-18 反馈回归修复）。 */
 .re-plus-search-card--pending {
   min-height: 106px;
+}
+
+/* 列表页卡片化：搜索卡与表格区统一应用外观层的卡片体系（圆角 / 描边 / 静态阴影，
+   变量同源 style/index.scss 的 --app-card-*），与个人中心等手写面板的「内容纸」观感一致。
+   全屏态铺满视口时撤除描边与圆角，避免四边露出边框线。 */
+.re-plus-search-card,
+.re-plus-table-card {
+  border: var(--app-card-border);
+  border-radius: var(--app-card-radius);
+  box-shadow: var(--app-card-shadow);
+}
+
+.re-plus-table-card {
+  overflow: hidden;
+}
+
+.re-plus-table-card--fullscreen {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 /* 列首帧隐藏（同上）：el-table 列宽在 rAF 内才落位，隐藏这一两帧即可

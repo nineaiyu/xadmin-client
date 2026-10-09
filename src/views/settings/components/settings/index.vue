@@ -56,7 +56,7 @@ const { t } = useI18n();
 
 /* 页签卡片对齐应用卡片体系（圆角 / 描边 / 阴影），与账户设置面板同一张「内容纸」 */
 .setting-page > .el-tabs--border-card {
-  border-color: var(--el-border-color-lighter);
+  border-color: var(--el-border-color-light);
   border-radius: var(--app-card-radius);
   box-shadow: var(--app-card-shadow);
 }

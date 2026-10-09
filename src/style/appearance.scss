@@ -22,6 +22,16 @@
   }
 }
 
+/* 全站 el-card 兜底统一（监控 / 表单采集 / 分析等页的普通卡片）：
+   EP 缺省是 4px 小圆角 + 无阴影，与全局卡片体系（--app-card-*）脱节；
+   描边沿用 EP 自带的 border（--el-border-color-light，与 --app-card-border 同档）。
+   标注 .app-card 的卡片仍走上方规则获得 hover 上浮。 */
+.el-card {
+  --el-card-border-radius: var(--app-card-radius);
+
+  box-shadow: var(--app-card-shadow);
+}
+
 /* 侧栏列表项（聊天会话 / 联系人 / AI 功能导航）：
    选中态以左侧主题色条 + 主题浅底强化（此前仅换底色，选中与 hover 难以区分） */
 .sidebar-item {

@@ -74,7 +74,7 @@ withDefaults(
 .account-panel__body {
   padding: var(--app-panel-pad-y) var(--app-panel-pad-x);
   background: var(--el-bg-color);
-  border: 1px solid var(--el-border-color-lighter);
+  border: var(--app-card-border);
   border-radius: var(--app-card-radius);
   box-shadow: var(--app-card-shadow);
 }
@@ -146,5 +146,17 @@ withDefaults(
  */
 .account-panel .w-99\/100 {
   width: 100%;
+}
+
+/**
+ * 面板内嵌的 RePlusPage 已落在面板「内容纸」上：内层搜索卡与表格区
+ * 撤除框架的卡片描边 / 圆角 / 阴影（选择器压过组件 scoped 规则），
+ * 避免纸中套卡——搜索与表格保持与本页签其他表单一致的一体观感。
+ */
+.account-panel .re-plus-page .re-plus-search-card,
+.account-panel .re-plus-page .re-plus-table-card {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 </style>
