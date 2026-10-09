@@ -282,3 +282,42 @@ describe("429 限流策略", () => {
     expect(parseRetryAfterSeconds("120")).toBe(5);
   });
 });
+
+const { announceMock } = vi.hoisted(() => ({ announceMock: vi.fn() }));
+vi.mock("@/utils/announcer", () => ({ announce: announceMock }));
+
+describe("业务 400 策略（PROTECT 引用不可删除 code=998 等）", () => {
+  afterEach(() => {
+    elMessageMock.mockClear();
+    announceMock.mockClear();
+  });
+
+  it("400 命中：提示 detail + 读屏播报并 reject（不得静默）", () => {
+    const badRequest = SEND_ERROR_STRATEGIES.find(candidate =>
+      candidate.match(makeCtx({ status: 400, data: {} }))
+    );
+    expect(badRequest).toBeDefined();
+    const ctx = makeCtx({
+      status: 400,
+      data: { code: 998, detail: "该数据被其它部门引用，无法删除" }
+    });
+    expect(badRequest!.match(ctx)).toBe(true);
+    expect(badRequest!.handle(ctx)).toBe(true);
+    expect(elMessageMock).toHaveBeenCalledWith(
+      "该数据被其它部门引用，无法删除"
+    );
+    expect(announceMock).toHaveBeenCalledWith("该数据被其它部门引用，无法删除");
+    expect(ctx.reject).toHaveBeenCalledWith({
+      code: 998,
+      detail: "该数据被其它部门引用，无法删除"
+    });
+  });
+
+  it("非 400 不命中（401/403/404 等由各自策略处理）", () => {
+    const badRequest = SEND_ERROR_STRATEGIES.find(candidate =>
+      candidate.match(makeCtx({ status: 400, data: {} }))
+    );
+    expect(badRequest!.match(makeCtx({ status: 401, data: {} }))).toBe(false);
+    expect(badRequest!.match(makeCtx({ status: 404, data: {} }))).toBe(false);
+  });
+});

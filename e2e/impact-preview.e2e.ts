@@ -92,3 +92,95 @@ test("删除有引用的角色：影响面弹窗展示绑定用户，取消则�
       .catch(() => undefined);
   }
 });
+
+/**
+ * 引用兜底（业务码 998 / HTTP 400）：影响面预检确认后仍有 PROTECT 引用时，
+ * 后端返回 HTTP 400 + 业务码 998，引用提示由全局 400 策略弹出——页面不静默、
+ * 数据保留。部门父子关系为 PROTECT（删除有子部门的部门必触发）。
+ */
+test("删除有子部门的部门：确认后返回引用提示（998/HTTP 400），数据保留", async ({
+  page
+}) => {
+  await login(page);
+  const token = await getAccessToken(page);
+  const headers = { Authorization: `Bearer ${token}` };
+  const suffix = Date.now();
+
+  const parentName = `E2E父部门${suffix}`;
+  // parent: null = 显式置顶（未提交 parent 会默认挂到操作者部门）
+  const parentResp = await page.request.post(`${BACKEND_URL}/api/system/dept`, {
+    headers,
+    data: { name: parentName, code: `e2e_dept_parent_${suffix}`, parent: null }
+  });
+  expect(parentResp.ok(), await parentResp.text()).toBeTruthy();
+  const parentPk = ((await parentResp.json()) as { data: { pk: string } }).data
+    .pk;
+
+  const childName = `E2E子部门${suffix}`;
+  const childResp = await page.request.post(`${BACKEND_URL}/api/system/dept`, {
+    headers,
+    data: {
+      name: childName,
+      code: `e2e_dept_child_${suffix}`,
+      parent: parentPk
+    }
+  });
+  expect(childResp.ok(), await childResp.text()).toBeTruthy();
+  const childPk = ((await childResp.json()) as { data: { pk: string } }).data
+    .pk;
+
+  try {
+    await openMenuPath(page, ["系统管理"], "/system/dept/index");
+    const row = page
+      .locator(".el-table__row")
+      .filter({ hasText: parentName })
+      .first();
+    await row.waitFor({ state: "visible", timeout: 30_000 });
+
+    await row.getByRole("button", { name: "删除" }).first().click();
+    await page
+      .locator(".el-popconfirm, .el-popper, .el-message-box")
+      .getByRole("button", { name: "确定" })
+      .first()
+      .click();
+
+    // dept 在影响面白名单内：先弹「影响面预览」（展示子部门），确认后走后端删除
+    const impactDialog = page
+      .locator(".el-message-box", { hasText: "影响面预览" })
+      .first();
+    await expect(impactDialog).toBeVisible({ timeout: 15_000 });
+    await impactDialog
+      .getByRole("button", { name: "确认删除" })
+      .first()
+      .click();
+
+    // PROTECT 引用 → HTTP 400 + 业务码 998：全局 400 策略弹出引用提示
+    const errorToast = page
+      .locator(".el-message--error")
+      .filter({ hasText: "不能删除" })
+      .first();
+    await expect(errorToast).toBeVisible({ timeout: 15_000 });
+
+    // 删除被拒：数据保留
+    const stillThere = await page.request.get(
+      `${BACKEND_URL}/api/system/dept/${parentPk}`,
+      { headers }
+    );
+    expect(stillThere.ok()).toBeTruthy();
+    await expect(row).toBeVisible();
+  } finally {
+    // 清理：先删子部门再删父部门（精确 pk，避免误删共享库其它数据）
+    await page.request
+      .delete(
+        `${BACKEND_URL}/api/system/dept/${childPk}?impact_confirmed=true`,
+        { headers }
+      )
+      .catch(() => undefined);
+    await page.request
+      .delete(
+        `${BACKEND_URL}/api/system/dept/${parentPk}?impact_confirmed=true`,
+        { headers }
+      )
+      .catch(() => undefined);
+  }
+});

@@ -111,9 +111,16 @@ export function buildColumnRule(
 /**
  * 表单默认值形态：labeled 系列把标量包成 {value}（与选择器回显结构一致），
  * 多选包成数组；其余沿用元数据 default 原值。
+ *
+ * 契约：labeled 系列提交 {value, label} 对象，后端按字段的 allow_null 校验空值。
+ * 默认值缺失（null/undefined）时返回 undefined——不再构造 {value: undefined}
+ * （它会被 JSON 序列化成 `{}` 脏载荷，后端会以「不允许为空」拒绝）。
  */
 export function columnDefaultValue(column: ColumnMeta): unknown {
   const value = column?.default;
+  if (value === undefined || value === null) {
+    return undefined;
+  }
   if (column.input_type === "labeled_choice") {
     return { value };
   }

@@ -1,5 +1,6 @@
 import type { AxiosResponseHeaders, RawAxiosResponseHeaders } from "axios";
 import { ElMessage } from "element-plus";
+import { announce } from "@/utils/announcer";
 import { remoteAccessToken, removeToken } from "@/utils/auth";
 import {
   approvalKey,
@@ -241,7 +242,26 @@ const rateLimitStrategy: SendErrorStrategy = {
   }
 };
 
+/**
+ * 400 Bad Request：业务拒绝（字段校验失败 / 状态冲突 / PROTECT 引用不可删除（业务码 998）等）。
+ *
+ * 显式落定：提示 detail 并读屏播报后 reject。此分支不得静默——删除类操作依赖它
+ * （后端 998 已从 HTTP 200 改为 400，页面侧 handleOperation 的 failed 回调不再执行，
+ * 提示由本策略承担）；编辑表单仍会在 catch 里做 applyServerErrors 内联展示。
+ */
+const badRequestStrategy: SendErrorStrategy = {
+  match: ({ status }) => status === 400,
+  handle: ({ data, reject }) => {
+    const detail = String(data?.detail ?? "");
+    ElMessage.error(detail);
+    announce(detail);
+    reject(data);
+    return true;
+  }
+};
+
 export const SEND_ERROR_STRATEGIES: SendErrorStrategy[] = [
+  badRequestStrategy,
   tokenExpiredStrategy,
   unauthorizedStrategy,
   mfaConfirmStrategy,
