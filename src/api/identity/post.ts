@@ -90,4 +90,4 @@ class PostApi extends BaseApi {
   };
 }
 
-export const postApi = new PostApi("/api/system/posts");
+export const postApi = new PostApi("/api/identity/posts");

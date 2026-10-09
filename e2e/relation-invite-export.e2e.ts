@@ -38,7 +38,7 @@ test("角色列表用户数可点击，跳转到按角色筛选的用户列表",
   const roleName = `E2E计数角色${suffix}`;
   const usernames = [`e2e_cnt_${suffix}_0`, `e2e_cnt_${suffix}_1`];
 
-  const roleResp = await page.request.post(`${BACKEND_URL}/api/system/role`, {
+  const roleResp = await page.request.post(`${BACKEND_URL}/api/identity/role`, {
     headers,
     // fields 为字段权限地图（write_only 必填）：空对象 = 不设字段权限
     data: { name: roleName, code: `e2e_count_${suffix}`, fields: {} }
@@ -49,16 +49,19 @@ test("角色列表用户数可点击，跳转到按角色筛选的用户列表",
   const rolePk = roleBody.data?.pk ?? "";
 
   for (const username of usernames) {
-    const userResp = await page.request.post(`${BACKEND_URL}/api/system/user`, {
-      headers,
-      data: { username, password: E2E_PASSWORD, nickname: username }
-    });
+    const userResp = await page.request.post(
+      `${BACKEND_URL}/api/identity/user`,
+      {
+        headers,
+        data: { username, password: E2E_PASSWORD, nickname: username }
+      }
+    );
     expect(userResp.ok(), await userResp.text()).toBeTruthy();
     const userBody = (await userResp.json()) as ApiBody;
     expect(userBody.code, JSON.stringify(userBody)).toBe(1000);
     const userPk = userBody.data?.pk ?? "";
     const bindResp = await page.request.patch(
-      `${BACKEND_URL}/api/system/user/${userPk}`,
+      `${BACKEND_URL}/api/identity/user/${userPk}`,
       { headers, data: { roles: [rolePk] } }
     );
     expect(bindResp.ok(), await bindResp.text()).toBeTruthy();
@@ -86,7 +89,7 @@ test("邀请激活：发送邀请后状态列显示待接受", async ({ page }) 
   const suffix = Date.now();
   const username = `e2e_invite_${suffix}`;
 
-  const userResp = await page.request.post(`${BACKEND_URL}/api/system/user`, {
+  const userResp = await page.request.post(`${BACKEND_URL}/api/identity/user`, {
     headers,
     data: {
       username,

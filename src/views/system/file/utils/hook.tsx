@@ -1,6 +1,6 @@
 import { reactive, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { systemUploadFileApi } from "@/api/system/file";
+import { systemUploadFileApi } from "@/api/file/file";
 import { hasAuth, usePageAuth } from "@/router/utils";
 import { usePublicHooks } from "@/views/system/hooks";
 import { withFileUrlRequiredRule } from "./fileFormRules";

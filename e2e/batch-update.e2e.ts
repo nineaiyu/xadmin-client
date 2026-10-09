@@ -18,7 +18,7 @@ test("角色列表：批量更新启用状态（通用弹窗端到端）", async
   const suffix = Date.now();
   const roleName = `E2E批量更新${suffix}`;
   const headers = { Authorization: `Bearer ${token}` };
-  const created = await page.request.post(`${BACKEND_URL}/api/system/role`, {
+  const created = await page.request.post(`${BACKEND_URL}/api/identity/role`, {
     headers,
     // fields 为字段权限地图（write_only 必填）：空对象 = 不设字段权限
     data: { name: roleName, code: `e2e_batch_${suffix}`, fields: {} }
@@ -53,7 +53,7 @@ test("角色列表：批量更新启用状态（通用弹窗端到端）", async
 
   // 落库断言（该行有多个布尔列开关，按接口判据更稳）
   const detail = await page.request.get(
-    `${BACKEND_URL}/api/system/role/${rolePk}`,
+    `${BACKEND_URL}/api/identity/role/${rolePk}`,
     { headers }
   );
   expect(

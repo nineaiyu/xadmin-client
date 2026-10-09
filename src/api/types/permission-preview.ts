@@ -97,7 +97,7 @@ export interface PreviewUser {
   roles: Array<{ pk: string; name: string; code: string; is_active: boolean }>;
 }
 
-/** GET /api/system/user/{pk}/preview 响应 data */
+/** GET /api/identity/user/{pk}/preview 响应 data */
 export interface UserPreviewResult {
   user: PreviewUser;
   menu_tree: PreviewMenuItem[];
@@ -153,7 +153,7 @@ export interface TrialSampleRow {
   label: string;
 }
 
-/** POST /api/system/user/{pk}/preview/trial 响应 data（scope=data） */
+/** POST /api/identity/user/{pk}/preview/trial 响应 data（scope=data） */
 export interface TrialResult {
   scope: "data";
   model: string;
@@ -189,7 +189,7 @@ export interface FieldTrialModel {
   total_field_labels: string[];
 }
 
-/** POST /api/system/user/{pk}/preview/trial 响应 data（scope=field） */
+/** POST /api/identity/user/{pk}/preview/trial 响应 data（scope=field） */
 export interface FieldTrialResult {
   scope: "field";
   menu: { pk: string; title: string };
@@ -259,7 +259,7 @@ export interface PreviewUsersSample {
   list: PreviewUserSampleRow[];
 }
 
-/** GET /api/system/role/{pk}/preview 响应 data */
+/** GET /api/identity/role/{pk}/preview 响应 data */
 export interface RolePreviewResult {
   role: { pk: string; name: string; code: string; is_active: boolean };
   menu_tree: PreviewMenuItem[];
@@ -275,7 +275,7 @@ export interface RolePreviewResult {
   users: PreviewUsersSample;
 }
 
-/** GET /api/system/posts/{pk}/preview 响应 data（岗位为人员维度，不参与权限判定，无授权段） */
+/** GET /api/identity/posts/{pk}/preview 响应 data（岗位为人员维度，不参与权限判定，无授权段） */
 export interface PostPreviewResult {
   post: {
     pk: string;

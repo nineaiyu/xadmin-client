@@ -68,6 +68,8 @@ test("项目设置实时生效并自动保存（灰色模式）", async ({ page 
   await switchEl.click();
   await expect(page.locator("html")).toHaveClass(/html-grey/);
   await patch;
+  // 防抖窗内的后续 PATCH 需观察一段时间，才能断言「只发一次」（自动保存经 pub/sub
+  // 异步回写），无终止事件可等，保留固定观察窗
   await page.waitForTimeout(1200);
   expect(patchCount).toBeLessThanOrEqual(2);
   page.off("request", onRequest);

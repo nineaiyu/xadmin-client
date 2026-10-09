@@ -2,9 +2,9 @@ import { SUCCESS_CODE } from "@/api/types";
 import { computed, type Ref, ref } from "vue";
 import { useIntervalFn } from "@vueuse/core";
 import { hasAuth } from "@/router/utils";
-import { exportRecordApi } from "@/api/system/export";
-import { importRecordApi } from "@/api/system/import";
-import { taskExecutionApi } from "@/api/system/task";
+import { exportRecordApi } from "@/api/task/export";
+import { importRecordApi } from "@/api/task/import";
+import { taskExecutionApi } from "@/api/task/task";
 import type { DetailResult, RecordStats } from "@/api/types";
 
 /**

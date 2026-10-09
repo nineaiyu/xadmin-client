@@ -10,7 +10,7 @@ import { useUserStoreHook } from "@/store/modules/user";
 import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
 import { clearRouteSnapshot } from "@/utils/routeSnapshot";
 
-import { router } from "../index";
+import { router } from "../router";
 import { resolveComponentKey } from "./resolve-component";
 import { ascending, formatFlatteningRoutes } from "./route-tree";
 

@@ -37,7 +37,7 @@ export const personalAccessTokenApi = new (class extends BaseApi {
       `${this.baseApi}/scope-options`
     );
   };
-})("/api/system/personal-access-tokens");
+})("/api/identity/personal-access-tokens");
 
 /**
  * 令牌接口范围目录（同页只拉一次：列表 tooltip 与勾选器共用，见 utils/scopeDisplay）。

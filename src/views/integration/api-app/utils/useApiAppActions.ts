@@ -7,7 +7,7 @@ import {
   type ApiApplicationCredential,
   type ApiApplicationItem,
   type CallbackProbeResult
-} from "@/api/system/open";
+} from "@/api/identity/open";
 import { normalizeError } from "@/utils/apiError";
 
 /**

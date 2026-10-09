@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { computed } from "vue";
-import { deviceDetection } from "@pureadmin/utils";
 import { useAccountManage } from "../utils/hook";
 import { hasAuth } from "@/router/utils";
+import AccountPanel from "./AccountPanel.vue";
 import type { RecordType } from "plus-pro-components";
 
 defineOptions({
@@ -47,30 +47,17 @@ function onClick(item: RecordType) {
 </script>
 
 <template>
-  <div :class="['min-w-45', deviceDetection() ? 'max-w-full' : 'max-w-[70%]']">
-    <h3 class="my-8!">{{ t("account.accountManagement") }}</h3>
-    <div v-for="(item, index) in list" :key="index">
-      <div class="flex items-center">
-        <div class="flex-1">
-          <p>{{ item.title }}</p>
-          <el-text class="mx-1" type="info">{{ item.illustrate }}</el-text>
-        </div>
-        <el-button
-          v-if="item.button"
-          text
-          type="primary"
-          @click="onClick(item)"
-        >
-          {{ item.button }}
-        </el-button>
+  <AccountPanel :title="t('account.accountManagement')">
+    <div v-for="item in list" :key="item.name" class="account-row">
+      <div class="account-row__main">
+        <p class="account-row__title">{{ item.title }}</p>
+        <el-text class="account-row__desc" type="info" size="small">
+          {{ item.illustrate }}
+        </el-text>
       </div>
-      <el-divider />
+      <el-button v-if="item.button" text type="primary" @click="onClick(item)">
+        {{ item.button }}
+      </el-button>
     </div>
-  </div>
+  </AccountPanel>
 </template>
-
-<style lang="scss" scoped>
-.el-divider--horizontal {
-  border-top: 0.1px var(--el-border-color) var(--el-border-style);
-}
-</style>

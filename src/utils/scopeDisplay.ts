@@ -4,9 +4,9 @@ import { createTtlCache } from "./ttlCache";
 /**
  * 接口范围（scope）目录缓存与展示工具。
  *
- * 背景：scope 条目本体是判定用的锚定正则（如 `GET ^/api/system/user/[^/]+/?$`），
+ * 背景：scope 条目本体是判定用的锚定正则（如 `GET ^/api/identity/user/[^/]+/?$`），
  * 直接展示给用户不可读；`scope-options` 下发的目录把它还原成人可读的
- * 「METHOD /api/system/user/{pk}」。目录同时是勾选器的选项来源——令牌页与
+ * 「METHOD /api/identity/user/{pk}」。目录同时是勾选器的选项来源——令牌页与
  * API 应用页各有一套端点，但数据结构一致，故展示/索引逻辑收敛在本模块。
  *
  * 缓存口径：同一页面内「列表 tooltip」与「表单勾选器」消费同一份目录，
@@ -15,9 +15,9 @@ import { createTtlCache } from "./ttlCache";
 
 /** 目录缓存键：令牌与 API 应用端点不同，各自独立缓存避免串用 */
 export const SCOPE_CATALOG_KEYS = {
-  /** 个人访问令牌：/api/system/personal-access-tokens/scope-options */
+  /** 个人访问令牌：/api/identity/personal-access-tokens/scope-options */
   pat: "pat",
-  /** API 应用：/api/system/api-applications/scope-options */
+  /** API 应用：/api/identity/api-applications/scope-options */
   application: "application"
 } as const;
 
@@ -85,7 +85,7 @@ export function buildScopeIndex(
   return index;
 }
 
-/** 单条展示：命中目录显示 `GET /api/system/user/{pk}`，未命中回退条目原文 */
+/** 单条展示：命中目录显示 `GET /api/identity/user/{pk}`，未命中回退条目原文 */
 export function formatScopeEntry(
   value: string,
   index?: Map<string, ScopeOption>

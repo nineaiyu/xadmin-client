@@ -1,6 +1,6 @@
 import { shallowRef } from "vue";
 import type { useI18n } from "vue-i18n";
-import type { periodicTaskApi } from "@/api/system/task";
+import type { periodicTaskApi } from "@/api/task/task";
 import { useBatchUpdate } from "@/views/system/components/useBatchUpdate";
 import { buildTaskToolbarButtons } from "./taskToolbarButtons";
 import type { OperationProps } from "@/components/RePlusPage";

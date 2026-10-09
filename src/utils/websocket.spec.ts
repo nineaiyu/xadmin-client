@@ -1,13 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
 
-const { getUsedAccessTokenMock } = vi.hoisted(() => ({
-  getUsedAccessTokenMock: vi.fn(async () => "token")
-}));
-
-vi.mock("@/utils/token", () => ({
-  getUsedAccessToken: getUsedAccessTokenMock
-}));
-
 /** WebSocket 测试替身：记录实例与发送内容，测试手动驱动 open/drop */
 class FakeWebSocket {
   /** 真实 WebSocket 的 readyState 常量静态/原型两处都有（socket.OPEN 与 WebSocket.CLOSED 均可读），替身对齐 */
@@ -58,7 +50,7 @@ class FakeWebSocket {
 
 vi.stubGlobal("WebSocket", FakeWebSocket);
 
-import { WS, type WSOptions } from "./websocket";
+import { WS, setReconnectTokenProvider, type WSOptions } from "./websocket";
 
 function makeWS(options: WSOptions = {}) {
   FakeWebSocket.instances = [];
@@ -91,6 +83,22 @@ describe("WS 重连策略", () => {
       }
       expect(FakeWebSocket.instances).toHaveLength(6);
     } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("重连前调用注入的 token 刷新器", async () => {
+    vi.useFakeTimers();
+    const provider = vi.fn(async () => undefined);
+    setReconnectTokenProvider(provider);
+    try {
+      const { instances } = makeWS();
+      instances[0].drop();
+      await vi.advanceTimersByTimeAsync(3000);
+      expect(provider).toHaveBeenCalledTimes(1);
+      expect(instances).toHaveLength(2);
+    } finally {
+      setReconnectTokenProvider(null);
       vi.useRealTimers();
     }
   });

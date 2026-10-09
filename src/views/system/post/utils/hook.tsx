@@ -1,7 +1,7 @@
 import { reactive, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth, usePageAuth } from "@/router/utils";
-import { postApi, type PostItem } from "@/api/system/post";
+import { postApi, type PostItem } from "@/api/identity/post";
 import { usePostButtons } from "./usePostButtons";
 import { usePostColumns } from "./usePostColumns";
 import { openPostFormDialog } from "./postFormDialog";

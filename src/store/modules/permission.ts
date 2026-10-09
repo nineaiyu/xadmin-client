@@ -2,17 +2,18 @@ import { defineStore } from "pinia";
 import type { menuType } from "@/layout/types";
 import {
   ascending,
-  type cacheType,
-  constantMenus,
   filterNoPermissionTree,
   filterTree,
   formatFlatteningRoutes,
-  getKeyList,
-  store,
   toMenuTree
-} from "../utils";
+} from "@/router/utils/route-tree";
+import { constantMenus } from "@/router/constants";
+import { getKeyList } from "@pureadmin/utils";
+import { store } from "@/store";
+import type { cacheType } from "../types";
 import type { RouteRecordRaw } from "vue-router";
 import { useMultiTagsStoreHook } from "./multiTags";
+import { useUserStoreHook } from "./user";
 
 export const usePermissionStore = defineStore("pure-permission", {
   state: () => ({
@@ -41,7 +42,8 @@ export const usePermissionStore = defineStore("pure-permission", {
         filterNoPermissionTree(
           filterTree(
             ascending(this.constantMenus.concat(routes) as RouteRecordRaw[])
-          )
+          ),
+          useUserStoreHook().roles ?? []
         )
       );
       this.flatteningRoutes = formatFlatteningRoutes(

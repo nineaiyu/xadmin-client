@@ -5,7 +5,7 @@ import uploadForm from "../components/FileUpload.vue";
 import { buildFileRowButtons } from "./fileRowActions";
 import Upload from "~icons/ep/upload";
 import Tag from "~icons/ri/price-tag-3-line";
-import type { systemUploadFileApi } from "@/api/system/file";
+import type { systemUploadFileApi } from "@/api/file/file";
 import type { useI18n } from "vue-i18n";
 import type { useTagAssign } from "@/views/system/components/useTagAssign";
 

@@ -4,7 +4,7 @@ import { buildRoleRulesColumns } from "@/views/system/hooks";
 import { handleOperation, openDialogDrawer } from "@/components/RePlusPage";
 import type { PageColumn } from "@/components/RePlusPage";
 import type { RecordType } from "plus-pro-components";
-import type { deptApi } from "@/api/system/dept";
+import type { deptApi } from "@/api/identity/dept";
 import type { DeptRow } from "./types";
 
 type TFunction = ReturnType<typeof useI18n>["t"];

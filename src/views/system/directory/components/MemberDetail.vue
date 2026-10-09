@@ -2,7 +2,7 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { copyText } from "@/utils/clipboard";
-import type { DirectoryMember } from "@/api/system/directory";
+import type { DirectoryMember } from "@/api/identity/directory";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import CopyDocument from "~icons/ep/copy-document";
 

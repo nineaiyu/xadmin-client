@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
-import { roleApi } from "@/api/system/role";
+import { roleApi } from "@/api/identity/role";
 import type { RolePreviewResult } from "@/api/types/permission-preview";
 import ReEmpty from "@/components/ReEmpty";
 import {

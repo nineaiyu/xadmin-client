@@ -184,12 +184,35 @@ export type AiProfileItem = {
   created_time: string;
 };
 
+/** 用量账本：档案 / 模型维度的公共统计字段（含成功率与延迟） */
+export type AiUsageDimensionStat = {
+  calls: number;
+  failed: number;
+  tokens: number;
+  success_rate: number;
+  /** 平均延迟（毫秒）；无数据为 null */
+  avg_latency_ms: number | null;
+  /** P95 延迟（毫秒）；样本不足为 null（降级给均值，前端应提示抽样不足） */
+  p95_latency_ms: number | null;
+  latency_samples: number;
+};
+
+export type AiUsageProfileRow = AiUsageDimensionStat & { profile_name: string };
+export type AiUsageModelRow = AiUsageDimensionStat & { model: string };
+
 /** AI 用量账本汇总 */
 export type AiUsageSummary = {
   days: number;
   total_calls: number;
   total_tokens: number;
   failed: number;
+  /** 成功调用数 = total_calls - failed */
+  success: number;
+  /** 总体成功率（百分比，1 位小数）；无调用为 0 */
+  success_rate: number;
+  avg_latency_ms: number | null;
+  p95_latency_ms: number | null;
+  latency_samples: number;
   by_day: { day: string; calls: number; tokens: number }[];
   by_feature: { feature: string; calls: number; tokens: number }[];
   /** 双轨对照：动作草稿链路按轨道（native / prompt）的成功率统计 */
@@ -200,6 +223,10 @@ export type AiUsageSummary = {
     tokens: number;
     success_rate: number;
   }[];
+  /** 按配置档案分布（键为空的行不入表） */
+  by_profile: AiUsageProfileRow[];
+  /** 按模型分布（键为空的行不入表） */
+  by_model: AiUsageModelRow[];
   top_users: { username: string; calls: number; tokens: number }[];
   quota: {
     daily_calls: number;

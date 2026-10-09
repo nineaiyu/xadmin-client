@@ -1,7 +1,7 @@
 import { shallowRef } from "vue";
 import type { useI18n } from "vue-i18n";
 import type { OperationProps } from "@/components/RePlusPage";
-import type { WebhookSubscriptionItem } from "@/api/system/webhook";
+import type { WebhookSubscriptionItem } from "@/api/task/webhook";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 

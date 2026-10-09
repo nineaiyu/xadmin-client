@@ -1,9 +1,15 @@
 import type { App } from "vue";
 
 let echartsPromise: Promise<typeof import("echarts/core")> | null = null;
+/** 首个传入的 app 引用：无论哪一次调用先触发加载，都能把 $echarts 挂到全局属性 */
+let echartsApp: App | null = null;
 
-/** 按需异步加载 echarts 并挂到全局属性（首屏延迟约 180KB gzip，仅仪表盘图表消费） */
+/**
+ * 按需异步加载 echarts 并挂到全局属性（约 180KB gzip，仅图表页面消费）。
+ * 页面侧（welcome / monitor / 文件统计）会自行 `await loadEcharts()` 后再渲染图表。
+ */
 export function loadEcharts(app?: App) {
+  if (app) echartsApp = app;
   echartsPromise ??= Promise.all([
     import("echarts/core"),
     import("echarts/charts"),
@@ -21,17 +27,25 @@ export function loadEcharts(app?: App) {
       components.DataZoomComponent,
       components.LegendComponent
     ]);
-    if (app) {
+    if (echartsApp) {
       // @pureadmin/utils 的 useECharts 在 hook 初始化时同步读取 $echarts，
-      // 消费方（welcome 图表组件）须在 echartsReady 后渲染，见 welcome/index.vue
-      app.config.globalProperties.$echarts = core;
+      // 消费方须在 echartsReady 后渲染，见 welcome/index.vue
+      echartsApp.config.globalProperties.$echarts = core;
     }
     return core;
   });
   return echartsPromise;
 }
 
-/** Vue 插件：启动即预热 echarts chunk（与登录页资源并行加载），不阻塞首屏挂载 */
+/**
+ * Vue 插件：只记住 app 引用，**不做任何预热**。
+ *
+ * `load` 后的空闲预热对图表页没有提前量（页面挂载即调 `loadEcharts()`，共用同一个
+ * promise），却会让「不图表」的页面在后台多拉约 1MB（raw）——首屏画像实测
+ * system-user 页的 Script 传输量因此高出 21%（docs/perf-firstscreen.md）。
+ * 因此按「谁用谁加载」：图表消费方自行 `await loadEcharts()` 或经
+ * `views/dashboard/components/ChartCardAsync` 的门控包装挂载。
+ */
 export function useEcharts(app: App) {
-  loadEcharts(app);
+  echartsApp = app;
 }

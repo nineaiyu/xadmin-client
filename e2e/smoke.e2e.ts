@@ -177,7 +177,7 @@ test("角色权限：编辑弹层回显授权树勾选 @smoke", async ({ page })
   if (!rootMenu) {
     throw new Error("种子菜单缺少根级节点");
   }
-  const created = await page.request.post(`${BACKEND_URL}/api/system/role`, {
+  const created = await page.request.post(`${BACKEND_URL}/api/identity/role`, {
     headers,
     data: {
       name: roleName,
@@ -208,7 +208,7 @@ test("角色权限：编辑弹层回显授权树勾选 @smoke", async ({ page })
       }
     );
   } finally {
-    await page.request.delete(`${BACKEND_URL}/api/system/role/${rolePk}`, {
+    await page.request.delete(`${BACKEND_URL}/api/identity/role/${rolePk}`, {
       headers
     });
   }

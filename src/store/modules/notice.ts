@@ -7,13 +7,11 @@ import {
 } from "@/utils/websocket/protocol";
 import { PureWebSocket } from "@/utils/websocket";
 import { notifyDesktop, stripHtml } from "@/utils/desktopNotify";
-import {
-  ElNotification,
-  type NotificationOptions,
-  type NotificationType
-} from "element-plus";
+import { ElNotification } from "element-plus/es/components/notification/index.mjs";
+import type { NotificationOptions, NotificationType } from "element-plus";
 
-import { router, store } from "../utils";
+import { router } from "@/router/router";
+import { store } from "../utils";
 
 /**
  * 站内消息通知 store：消息推送 WebSocket 连接 + 未读计数 + 桌面/应用内通知分发。

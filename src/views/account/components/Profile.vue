@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 import { ref } from "vue";
-import { deviceDetection } from "@pureadmin/utils";
 import uploadLine from "~icons/ep/upload";
 import { PlusForm } from "plus-pro-components";
 import { formRules } from "../utils/rule";
 import { useUserProfileForm } from "../utils/hook";
+import AccountPanel from "./AccountPanel.vue";
 import avatar from "@/assets/avatar.png";
 
 defineOptions({
@@ -25,8 +25,7 @@ const {
 </script>
 
 <template>
-  <div :class="['min-w-45', deviceDetection() ? 'max-w-full' : 'max-w-[70%]']">
-    <h3 class="my-8!">{{ t("account.profile") }}</h3>
+  <AccountPanel :title="t('account.profile')">
     <PlusForm
       ref="formRef"
       v-model="userInfo"
@@ -35,7 +34,6 @@ const {
       :row-props="{ gutter: 24 }"
       :rules="formRules"
       label-position="top"
-      label-width="120px"
     >
       <template #plus-field-avatar>
         <el-avatar :size="80" :src="userinfoStore.avatar ?? avatar" />
@@ -66,11 +64,9 @@ const {
     <!-- 岗位为人员维度只读回显（不参与权限判定），由服务端 userinfo 下发 -->
     <div
       v-if="(userInfo.posts as string[] | undefined)?.length"
-      class="mt-3 flex flex-wrap items-center gap-2"
+      class="profile-posts"
     >
-      <span class="text-sm text-(--el-text-color-regular)">
-        {{ t("userinfo.posts") }}
-      </span>
+      <span class="profile-posts__label">{{ t("userinfo.posts") }}</span>
       <el-tag
         v-for="post in userInfo.posts"
         :key="post"
@@ -81,5 +77,23 @@ const {
         {{ post }}
       </el-tag>
     </div>
-  </div>
+  </AccountPanel>
 </template>
+
+<style lang="scss" scoped>
+.profile-posts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding-top: 16px;
+  margin-top: 4px;
+  border-top: 1px solid var(--el-border-color-lighter);
+}
+
+.profile-posts__label {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--el-text-color-secondary);
+}
+</style>

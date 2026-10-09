@@ -1,4 +1,4 @@
-import { crontabScheduleApi } from "@/api/system/task";
+import { crontabScheduleApi } from "@/api/task/task";
 import { reactive } from "vue";
 import { usePageAuth } from "@/router/utils";
 import type { PageTableColumn } from "@/components/RePlusPage";

@@ -5,7 +5,7 @@ import { dialogSize } from "@/components/ReDialog/size";
 import { message } from "@/utils/message";
 import { SUCCESS_CODE } from "@/api/types";
 import DeptManagersDialog from "../components/DeptManagersDialog.vue";
-import type { deptApi } from "@/api/system/dept";
+import type { deptApi } from "@/api/identity/dept";
 import type { DeptRow } from "./types";
 import { normalizeError } from "@/utils/apiError";
 

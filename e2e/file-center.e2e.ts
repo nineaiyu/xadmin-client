@@ -13,7 +13,7 @@ test("文件中心：上传刷新统计卡片 + 分类下拉筛选", async ({ pa
 
   // 基线统计（?no_cache=1 穿透服务端 10s 短缓存，保证读到真实值）
   const baseResp = await page.request.get(
-    `${FRONT_URL}/api/system/file/stats?no_cache=1`
+    `${FRONT_URL}/api/file/file/stats?no_cache=1`
   );
   const basePayload = await baseResp.json();
   expect(basePayload.code, `stats: ${JSON.stringify(basePayload)}`).toBe(1000);
@@ -73,7 +73,7 @@ test("文件中心：上传刷新统计卡片 + 分类下拉筛选", async ({ pa
   await expect(autoRow).toContainText("文档");
 
   const listResp = await page.request.get(
-    `${FRONT_URL}/api/system/file?filename=${encodeURIComponent(filename)}`
+    `${FRONT_URL}/api/file/file?filename=${encodeURIComponent(filename)}`
   );
   const listPayload = await listResp.json();
   const row = listPayload.data.results[0];
@@ -81,7 +81,7 @@ test("文件中心：上传刷新统计卡片 + 分类下拉筛选", async ({ pa
   // 字典驱动字段序列化为 {value,label,color}
   expect(row.category?.value ?? row.category, "auto category").toBe("document");
   const patchResp = await page.request.patch(
-    `${FRONT_URL}/api/system/file/${row.pk}`,
+    `${FRONT_URL}/api/file/file/${row.pk}`,
     { data: { category: "image" } }
   );
   expect((await patchResp.json()).code, "set category").toBe(1000);
@@ -131,13 +131,13 @@ test("文件中心：重复上传同一文件复用磁盘副本", async ({ page 
   const content = "dedup e2e content";
 
   const statsResp = await page.request.get(
-    `${FRONT_URL}/api/system/file/stats?no_cache=1`
+    `${FRONT_URL}/api/file/file/stats?no_cache=1`
   );
   const baseCount = (await statsResp.json()).data.count as number;
 
   // 第一次：API 上传
   const firstResp = await page.request.post(
-    `${FRONT_URL}/api/system/file/upload`,
+    `${FRONT_URL}/api/file/file/upload`,
     {
       multipart: {
         file: {
@@ -175,7 +175,7 @@ test("文件中心：重复上传同一文件复用磁盘副本", async ({ page 
 
   // 两条记录指向同一物理文件（access_url 相同）＋配额按记录全量计入
   const listResp = await page.request.get(
-    `${FRONT_URL}/api/system/file?filename=${encodeURIComponent(filename)}`
+    `${FRONT_URL}/api/file/file?filename=${encodeURIComponent(filename)}`
   );
   const results = (await listResp.json()).data.results as Array<
     Record<string, unknown>
@@ -184,7 +184,7 @@ test("文件中心：重复上传同一文件复用磁盘副本", async ({ page 
   expect(results[0].access_url).toBe(results[1].access_url);
 
   const afterResp = await page.request.get(
-    `${FRONT_URL}/api/system/file/stats?no_cache=1`
+    `${FRONT_URL}/api/file/file/stats?no_cache=1`
   );
   expect((await afterResp.json()).data.count).toBe(baseCount + 2);
 });
@@ -199,7 +199,7 @@ async function uploadViaApi(
   mime: string,
   buffer: Buffer
 ) {
-  const resp = await page.request.post(`${FRONT_URL}/api/system/file/upload`, {
+  const resp = await page.request.post(`${FRONT_URL}/api/file/file/upload`, {
     multipart: { file: { name, mimeType: mime, buffer } }
   });
   expect((await resp.json()).code).toBe(1000);
@@ -273,7 +273,7 @@ test("文件中心：大文件上传走分片协议并落库", async ({ page }) 
   const chunkEvents: string[] = [];
   page.on("response", response => {
     const url = response.url();
-    if (!url.includes("/api/system/file/chunk/")) return;
+    if (!url.includes("/api/file/file/chunk/")) return;
     if (url.includes("/chunk/init")) chunkEvents.push("init");
     if (url.includes("/chunk/part")) chunkEvents.push("part");
     if (url.includes("/chunk/complete")) chunkEvents.push("complete");
@@ -306,7 +306,7 @@ test("文件中心：大文件上传走分片协议并落库", async ({ page }) 
 
   // 落库记录与单请求上传同构：文件名、大小、自动分类
   const listResp = await page.request.get(
-    `${FRONT_URL}/api/system/file?filename=${encodeURIComponent(filename)}`
+    `${FRONT_URL}/api/file/file?filename=${encodeURIComponent(filename)}`
   );
   const results = (await listResp.json()).data.results as Array<
     Record<string, unknown>

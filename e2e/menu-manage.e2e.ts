@@ -131,11 +131,11 @@ test("菜单管理：右键排序、批量停用与行内启停", async ({ page 
 test("菜单管理：搜索命中深层节点（自动展开定位）", async ({ page }) => {
   await openPage(page);
   const search = page.getByPlaceholder("搜索菜单名称 / 路由 / 权限码");
-  await search.fill("api/system/user$");
+  await search.fill("api/identity/user$");
 
   // 三级权限点：旧实现只隐藏不展开，命中项藏在折叠里不可见
   await expect(
-    page.locator(".menu-row", { hasText: "api/system/user$" }).first()
+    page.locator(".menu-row", { hasText: "api/identity/user$" }).first()
   ).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText(/命中 \d+/).first()).toBeVisible();
 

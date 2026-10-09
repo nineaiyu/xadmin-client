@@ -12,7 +12,7 @@ vi.mock("@/router/utils", () => ({
   hasAuth: () => true,
   usePageAuth: () => ({})
 }));
-vi.mock("@/api/system/webhook", () => ({
+vi.mock("@/api/task/webhook", () => ({
   webhookSubscriptionApi: {
     events: mocks.events,
     create: vi.fn(),

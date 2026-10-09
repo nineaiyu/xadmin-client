@@ -10,18 +10,18 @@ vi.mock("@/utils/http", () => ({
 }));
 
 import { dataDictApi } from "./dict";
-import { userOnlineApi } from "./online";
-import { deptApi } from "./dept";
-import { roleApi } from "./role";
+import { userOnlineApi } from "../identity/online";
+import { deptApi } from "../identity/dept";
+import { roleApi } from "../identity/role";
 import { menuApi } from "./menu";
 import { maskApi } from "./mask";
 import { modelLabelFieldApi } from "./field";
-import { exportRecordApi } from "./export";
-import { importRecordApi } from "./import";
+import { exportRecordApi } from "../task/export";
+import { importRecordApi } from "../task/import";
 import { systemConfigApi } from "./config/system";
 import { userConfigApi } from "./config/user";
-import { loginLogApi } from "./logs/login";
-import { operationLogApi } from "./logs/operation";
+import { loginLogApi } from "../audit/logs/login";
+import { operationLogApi } from "../audit/logs/operation";
 import { loginPolicyApi } from "./security";
 
 /**
@@ -92,7 +92,7 @@ describe("userOnlineApi 在线用户", () => {
     userOnlineApi.forceLogout(5);
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/online/5/force-logout",
+      "/api/identity/online/5/force-logout",
       { params: {}, data: {} },
       {}
     );
@@ -100,7 +100,7 @@ describe("userOnlineApi 在线用户", () => {
     userOnlineApi.batchForceLogout(["a", "b"]);
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/online/batch-force-logout",
+      "/api/identity/online/batch-force-logout",
       { params: {}, data: ["a", "b"] },
       {}
     );
@@ -112,7 +112,7 @@ describe("deptApi / roleApi 授权与预览", () => {
     deptApi.empower(9, { roles: [1] });
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/dept/9/empower",
+      "/api/identity/dept/9/empower",
       { params: {}, data: { roles: [1] } },
       {}
     );
@@ -120,7 +120,7 @@ describe("deptApi / roleApi 授权与预览", () => {
     deptApi.preview(9);
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/dept/9/preview",
+      "/api/identity/dept/9/preview",
       { params: {}, data: {} },
       {}
     );
@@ -130,7 +130,7 @@ describe("deptApi / roleApi 授权与预览", () => {
     roleApi.preview("r1");
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/role/r1/preview",
+      "/api/identity/role/r1/preview",
       { params: {}, data: {} },
       {}
     );
@@ -138,7 +138,7 @@ describe("deptApi / roleApi 授权与预览", () => {
     roleApi.batchUpdate([1, 2], { is_active: true });
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/role/batch-update",
+      "/api/identity/role/batch-update",
       {
         params: {},
         data: {
@@ -191,7 +191,7 @@ describe("脱敏 / 模型字段", () => {
     });
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/mask-rules/preview",
+      "/api/audit/mask-rules/preview",
       {
         params: {},
         data: {
@@ -227,13 +227,13 @@ describe("导入导出下载中心", () => {
   it("exportRecordApi download / stats", () => {
     exportRecordApi.download(3);
     expect(autoDownloadMock).toHaveBeenLastCalledWith(
-      "/api/system/exports/3/download"
+      "/api/task/exports/3/download"
     );
 
     exportRecordApi.stats();
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/exports/stats",
+      "/api/task/exports/stats",
       { params: {}, data: {} },
       {}
     );
@@ -242,13 +242,13 @@ describe("导入导出下载中心", () => {
   it("importRecordApi download / stats", () => {
     importRecordApi.download(8);
     expect(autoDownloadMock).toHaveBeenLastCalledWith(
-      "/api/system/imports/8/download"
+      "/api/task/imports/8/download"
     );
 
     importRecordApi.stats();
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/imports/stats",
+      "/api/task/imports/stats",
       { params: {}, data: {} },
       {}
     );
@@ -290,7 +290,7 @@ describe("operationLogApi 慢请求阈值", () => {
     operationLogApi.slowThreshold();
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/logs/operation/slow-threshold",
+      "/api/audit/logs/operation/slow-threshold",
       { params: {}, data: {} },
       {}
     );
@@ -302,7 +302,7 @@ describe("loginPolicyApi 登录策略", () => {
     loginPolicyApi.choices();
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/login-policies/choices",
+      "/api/identity/login-policies/choices",
       { params: {}, data: {} },
       {}
     );
@@ -314,7 +314,7 @@ describe("loginLogApi 强制登出", () => {
     loginLogApi.logout(4, { reason: "kick" });
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/logs/login/4/logout",
+      "/api/audit/logs/login/4/logout",
       { params: {}, data: { reason: "kick" } },
       {}
     );

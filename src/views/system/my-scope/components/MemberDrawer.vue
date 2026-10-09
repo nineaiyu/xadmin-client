@@ -6,14 +6,14 @@ import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { normalizeError } from "@/utils/apiError";
 import { SUCCESS_CODE } from "@/api/types";
-import { userApi } from "@/api/system/user";
+import { userApi } from "@/api/identity/user";
 import { formatDateTime } from "@/utils";
-import type { ManagedDeptItem } from "@/api/system/dept";
+import type { ManagedDeptItem } from "@/api/identity/dept";
 
 /**
  * 我的管辖：部门成员预览抽屉（只读）。
  *
- * 数据源 `GET /api/system/user?dept=<pk>`（数据权限自动收敛到管辖范围），
+ * 数据源 `GET /api/identity/user?dept=<pk>`（数据权限自动收敛到管辖范围），
  * 仅在具备用户列表权限时可用；页脚跳转「用户管理」继续操作。
  */
 defineOptions({ name: "SystemMyScopeMemberDrawer" });

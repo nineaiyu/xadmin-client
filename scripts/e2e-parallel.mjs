@@ -36,6 +36,13 @@ const baseFront = Number(process.env.E2E_FRONT_PORT ?? "8848");
 const baseStub = Number(process.env.E2E_STUB_LLM_PORT ?? "18897");
 const extra = process.argv.slice(2);
 
+// 隔离清单排除（由 scripts/e2e-run.mjs 下发）：主线跑批跳过已知抖动用例
+const grepInvert = process.env.E2E_GREP_INVERT;
+// JSON 上报（CI 全量档）：每个 shard 输出到独立目录 + 独立文件名，避免并行互相覆盖；
+// 榜单解析见 scripts/e2e-flaky-report.mjs
+const jsonReport = process.env.E2E_JSON_REPORT === "1";
+const jsonReportDir = process.env.E2E_JSON_REPORT_DIR ?? "e2e-reports";
+
 // 启动前清理本次并行将独占的端口：上一次串行/并行 e2e 若有残留 daphne/vite，
 // webServer 的 reuseExistingServer=false 探活会命中旧进程直接报 "already used"。
 function freePort(port) {
@@ -124,7 +131,15 @@ const jobs = Array.from({ length: total }, (_, i) => {
     // 桩 LLM：端口按路分配，并让用例指向本路的桩（ai-action 读 E2E_STUB_LLM_URL）
     E2E_STUB_LLM_PORT: String(baseStub + i * 2),
     E2E_STUB_LLM_URL: `http://127.0.0.1:${baseStub + i * 2}/v1`,
-    E2E_DB_NAME: `xadmin_e2e_shard${i}`
+    E2E_DB_NAME: `xadmin_e2e_shard${i}`,
+    // JSON 上报：按 shard 分配独立输出目录 + 文件名（json reporter 读
+    // PLAYWRIGHT_JSON_OUTPUT_DIR / PLAYWRIGHT_JSON_OUTPUT_NAME 环境变量）
+    ...(jsonReport
+      ? {
+          PLAYWRIGHT_JSON_OUTPUT_DIR: jsonReportDir,
+          PLAYWRIGHT_JSON_OUTPUT_NAME: `shard-${i}.json`
+        }
+      : {})
   };
   const args = [
     "exec",
@@ -136,6 +151,7 @@ const jobs = Array.from({ length: total }, (_, i) => {
     // 下更是直接抛 FSMoveObjectToTrashSync 错误）
     `--output=test-results-shard-${i}`,
     "--workers=1",
+    ...(grepInvert ? ["--grep-invert", grepInvert] : []),
     ...extra
   ];
   return new Promise(resolve => {

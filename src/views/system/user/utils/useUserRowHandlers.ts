@@ -3,7 +3,7 @@ import { useConfirm } from "@/hooks/useConfirm";
 import { handleOperation } from "@/components/RePlusPage";
 import { useUserStoreHook } from "@/store/modules/user";
 import type { Ref, UnwrapNestedRefs } from "vue";
-import type { userApi } from "@/api/system/user";
+import type { userApi } from "@/api/identity/user";
 import type { TokenInfo } from "@/api/auth";
 import type { useI18n } from "vue-i18n";
 import type { RecordType } from "plus-pro-components";

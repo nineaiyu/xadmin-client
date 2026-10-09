@@ -137,6 +137,9 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       github.event_name == 'schedule'
     runs-on: ubuntu-latest
+    permissions:
+      # 夜间跑批把抖动历史（e2e/flaky-history.jsonl）由 bot 提交回仓库
+      contents: write
     services:
       postgres:
         # 同 smoke：settings_e2e 真库化缺省连接参数（127.0.0.1:55433 / server / pgtest）；
@@ -158,18 +161,56 @@ jobs:
       E2E_SERVER_DIR: xadmin-server
       CI: "1"
       # 并行分片：runner 4 vCPU 取 3 路（vite/daphne/浏览器各一份），全量 ~12m → ~5m。
-      # --reporter=list 覆盖配置里的 html reporter：4 个 shard 进程不能共写 playwright-report/
-      # （失败现场仍由 test-results/ 逐用例目录承载，upload 不受影响）
+      # --reporter=list,json 覆盖配置里的 html reporter：4 个 shard 进程不能共写 playwright-report/
+      # （失败现场仍由 test-results/ 逐用例目录承载，upload 不受影响）；json 供抖动榜单解析，
+      # 各 shard 经 PLAYWRIGHT_JSON_OUTPUT_DIR/NAME 输出到独立文件（scripts/e2e-parallel.mjs）
       E2E_PARALLEL: "3"
+      E2E_JSON_REPORT: "1"
     steps:
       - name: Checkout client repository
         uses: actions/checkout@v4
+        with:
+          # 抖动历史轨道由 bot 提交（git pull --rebase 需要完整历史，浅克隆会拒绝 rebase）
+          fetch-depth: 0
 
       - name: Setup E2E environment
         uses: ./.github/actions/e2e-setup
 
       - name: Run full E2E (parallel shards)
-        run: pnpm test:e2e:parallel --reporter=list
+        run: pnpm test:e2e:parallel --reporter=list,json
+
+      - name: Flaky ranking (parse JSON → step summary)
+        # 跑批失败也要出榜（失败态同样带抖动信号）；无报告时不阻断
+        if: always()
+        run: |
+          node scripts/e2e-flaky-report.mjs \
+            --input-dir e2e-reports \
+            --run "${{ github.run_id }}-${{ github.run_attempt }}"
+
+      - name: Append flaky history (bot commit)
+        # 仅夜间 main 跑批把历史沉淀进仓库；其余档只上传 artifact（避免 PR 噪声与推送竞态）
+        if: always() && github.event_name == 'schedule' && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        run: |
+          node scripts/e2e-flaky-report.mjs \
+            --input-dir e2e-reports \
+            --run "${{ github.run_id }}-${{ github.run_attempt }}" \
+            --history e2e/flaky-history.jsonl
+          if [ ! -f e2e/flaky-history.jsonl ]; then
+            echo "无历史文件，跳过提交"
+            exit 0
+          fi
+          git add -- e2e/flaky-history.jsonl
+          if git diff --cached --quiet -- e2e/flaky-history.jsonl; then
+            echo "无新增历史数据，跳过提交"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(e2e): append flaky history"
+          for attempt in 1 2 3; do
+            git pull --rebase && git push && break || sleep 5
+          done
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -179,4 +220,5 @@ jobs:
           path: |
             playwright-report/
             test-results/
+            e2e-reports/
           retention-days: 7

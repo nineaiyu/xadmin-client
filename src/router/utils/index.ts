@@ -8,8 +8,8 @@ export {
   usePageAuth
 } from "./auth";
 export { initRouter, addPathMatch, addAsyncRoutes } from "./async-routes";
-export { getTopMenu, getHistoryMode, handleAliveRoute } from "./nav";
-export { hasInAppHistory, goBackOrHome } from "./history";
+export { getTopMenu, handleAliveRoute } from "./nav";
+export { hasInAppHistory, goBackOrHome, getHistoryMode } from "./history";
 export {
   ascending,
   filterTree,

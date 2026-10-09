@@ -114,6 +114,8 @@ test("页面层 CSP：核心页面零违规 + 探针负对照命中", async ({ p
   };
 
   // 登录页（外壳：全部 vendor 资源 / 字体 / 图标）
+  // 说明：本节各固定窗口是「浏览器事件域」等待——securitypolicyviolation 事件在资源
+  // 加载后异步到达，CSP 违规无法用 DOM 断言表达，故按资源加载量留观察窗
   await page.goto("/#/login");
   await expect(page.getByPlaceholder("账号")).toBeVisible();
   await page.waitForTimeout(800);

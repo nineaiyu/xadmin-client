@@ -32,7 +32,7 @@ const rows: MenuScopeRow[] = [
     menu_type: 2,
     meta: { title: "查询用户" },
     method: "GET",
-    path: "api/system/user$",
+    path: "api/identity/user$",
     rank: 1
   },
   {

@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import { SUCCESS_CODE } from "@/api/types";
 import { onMounted, ref } from "vue";
-import { deviceDetection } from "@pureadmin/utils";
 import { configApi } from "@/api/config";
 import { handleOperation } from "@/components/RePlusPage";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
+import AccountPanel from "./AccountPanel.vue";
 import type { RecordType } from "plus-pro-components";
 
 defineOptions({
@@ -69,38 +69,26 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div :class="['min-w-45', deviceDetection() ? 'max-w-full' : 'max-w-[70%]']">
-    <h3 class="my-8!">{{ t("account.preference") }}</h3>
-    <el-text class="mb-4 block" type="info" size="small">
-      {{ t("account.prefCrossHint") }}
-    </el-text>
-    <div v-for="(item, index) in list" :key="index">
-      <div class="flex items-center">
-        <div class="flex-1">
-          <p>{{ item.title }}</p>
-          <p class="wp-4">
-            <el-text class="mx-1" type="info">
-              {{ item.illustrate }}
-            </el-text>
-          </p>
-        </div>
-        <el-switch
-          v-model="item.checked"
-          :loading="loading"
-          :disabled="loadFailed"
-          :active-text="t('labels.enable')"
-          :inactive-text="t('labels.disable')"
-          inline-prompt
-          @change="val => onChange(val, item)"
-        />
+  <AccountPanel
+    :title="t('account.preference')"
+    :description="t('account.prefCrossHint')"
+  >
+    <div v-for="item in list" :key="item.name" class="account-row">
+      <div class="account-row__main">
+        <p class="account-row__title">{{ item.title }}</p>
+        <el-text class="account-row__desc" type="info" size="small">
+          {{ item.illustrate }}
+        </el-text>
       </div>
-      <el-divider />
+      <el-switch
+        v-model="item.checked"
+        :loading="loading"
+        :disabled="loadFailed"
+        :active-text="t('labels.enable')"
+        :inactive-text="t('labels.disable')"
+        inline-prompt
+        @change="val => onChange(val, item)"
+      />
     </div>
-  </div>
+  </AccountPanel>
 </template>
-
-<style lang="scss" scoped>
-.el-divider--horizontal {
-  border-top: 0.1px var(--el-border-color) var(--el-border-style);
-}
-</style>

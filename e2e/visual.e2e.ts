@@ -97,7 +97,8 @@ async function stabilize(page: Page) {
   await page.waitForLoadState("networkidle").catch(() => undefined);
   // 字体就绪后再截图，避免首帧字体回退
   await page.evaluate(() => document.fonts.ready.then(() => undefined));
-  // ECharts 走 canvas 内部动画（CSS 禁不掉），默认时长 ~1s：等它画完再比对
+  // ECharts 走 canvas 内部动画（CSS 禁不掉），默认时长 ~1s；canvas 绘制无 DOM 信号，
+  // 只有像素比对可见，故保留固定观察窗（未用 ECharts 的页面此窗口也仅多等 1.5s）
   await page.waitForTimeout(1500);
 }
 

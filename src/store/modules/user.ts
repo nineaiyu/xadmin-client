@@ -12,23 +12,11 @@ import type {
   UserInfo,
   UserInfoResult
 } from "@/api/auth";
-import {
-  getRefreshToken,
-  removeToken,
-  setToken,
-  setUserInfo,
-  userKey
-} from "@/utils/auth";
+import { getRefreshToken, removeToken, setToken, userKey } from "@/utils/auth";
 import { clearPendingApprovals } from "@/utils/http/pendingApproval";
 import { clearRouteSnapshot } from "@/utils/routeSnapshot";
 
-import {
-  resetRouter,
-  routerArrays,
-  storageLocal,
-  store,
-  type userType
-} from "../utils";
+import { routerArrays, storageLocal, store, type userType } from "../utils";
 
 import { useMultiTagsStoreHook } from "./multiTags";
 import { useNoticeStoreHook } from "./notice";
@@ -147,7 +135,7 @@ export const useUserStore = defineStore("pure-user", {
           .retrieve()
           .then(res => {
             if (res.code === SUCCESS_CODE) {
-              setUserInfo(res.data);
+              this.updateUserInfo(res.data);
               // 水印配置写入水印 store（user → watermark 单向依赖）：
               // 由 App.vue 按「当前路由是否命中生效范围」应用/清除
               useWatermarkStoreHook().applyFromUserInfo(res.config);
@@ -192,10 +180,12 @@ export const useUserStore = defineStore("pure-user", {
             message(transformI18n("login.logoutSuccess"), { type: "success" });
           }
         })
-        .finally(() => {
+        .finally(async () => {
           useNoticeStoreHook().disconnect();
           removeToken();
           useMultiTagsStoreHook().handleTags("equal", [...routerArrays]);
+          // 路由重置动态引入：store ↔ router 顶层静态引用会成环（门禁守护）
+          const { resetRouter } = await import("@/router");
           resetRouter();
           // 水印态复位归水印 store（App.vue 观察水印配置变化后清除已挂载 DOM）
           useWatermarkStoreHook().reset();

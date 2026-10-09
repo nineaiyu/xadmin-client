@@ -1,7 +1,7 @@
 import "./reset.css";
 import { reactive, ref, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { userApi } from "@/api/system/user";
+import { userApi } from "@/api/identity/user";
 import { usePageAuth } from "@/router/utils";
 import { usePublicHooks } from "@/components/RePlusPage";
 import { deviceDetection } from "@pureadmin/utils";

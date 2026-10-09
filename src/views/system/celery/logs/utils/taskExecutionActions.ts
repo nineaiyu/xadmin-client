@@ -1,9 +1,9 @@
 import { SUCCESS_CODE } from "@/api/types";
 import { message } from "@/utils/message";
 import { normalizeError } from "@/utils/apiError";
-import { taskCenterApi, type TaskCenterKind } from "@/api/system/task";
-import { exportRecordApi } from "@/api/system/export";
-import { importRecordApi } from "@/api/system/import";
+import { taskCenterApi, type TaskCenterKind } from "@/api/task/task";
+import { exportRecordApi } from "@/api/task/export";
+import { importRecordApi } from "@/api/task/import";
 import { openTaskLogDialog } from "@/views/system/components/taskLogDialog";
 import type { Ref } from "vue";
 import type { useI18n } from "vue-i18n";

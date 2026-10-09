@@ -86,7 +86,7 @@ test("API 应用：资源授权配置保存并回显", async ({ page }) => {
   await login(page);
   const name = `E2E 授权应用 ${Date.now()}`;
   // 应用经 API 创建（本用例只验证授权配置的 UI 主链路）
-  const created = await page.request.post("/api/system/api-applications", {
+  const created = await page.request.post("/api/identity/api-applications", {
     data: { name, rate_limit_per_minute: 0 }
   });
   expect(created.ok()).toBeTruthy();
@@ -119,7 +119,7 @@ test("API 应用：资源授权配置保存并回显", async ({ page }) => {
 
   // 先钉服务端落库（区分「没保存」与「没回显」）
   const grantsRes = await page.request.get(
-    `/api/system/api-applications/${appPk}/grants`
+    `/api/identity/api-applications/${appPk}/grants`
   );
   const grantsBody = await grantsRes.json();
   expect(grantsBody.data?.results?.length).toBe(1);
@@ -144,7 +144,7 @@ test("API 应用：资源授权配置保存并回显", async ({ page }) => {
 test("API 应用：管理抽屉内打开用量报表", async ({ page }) => {
   await login(page);
   const name = `E2E 用量应用 ${Date.now()}`;
-  const created = await page.request.post("/api/system/api-applications", {
+  const created = await page.request.post("/api/identity/api-applications", {
     data: { name, rate_limit_per_minute: 0 }
   });
   expect(created.ok()).toBeTruthy();
@@ -173,7 +173,7 @@ test("API 应用：管理抽屉内打开用量报表", async ({ page }) => {
 test("API 应用：管理抽屉资料与密钥重置确认", async ({ page }) => {
   await login(page);
   const name = `E2E 抽屉应用 ${Date.now()}`;
-  const created = await page.request.post("/api/system/api-applications", {
+  const created = await page.request.post("/api/identity/api-applications", {
     data: { name, rate_limit_per_minute: 30 }
   });
   expect(created.ok()).toBeTruthy();

@@ -1,7 +1,7 @@
 import type { Ref, UnwrapNestedRefs } from "vue";
 import type { useI18n } from "vue-i18n";
 import type { usePublicHooks } from "@/components/RePlusPage";
-import type { userApi } from "@/api/system/user";
+import type { userApi } from "@/api/identity/user";
 import type { PasswordRule } from "@/api/auth";
 import type { RecordType } from "plus-pro-components";
 import { useUserListColumns } from "./useUserListColumns";

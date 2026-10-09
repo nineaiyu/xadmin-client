@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const { elMessageMock } = vi.hoisted(() => ({ elMessageMock: vi.fn() }));
 
-vi.mock("element-plus", () => ({
+vi.mock("element-plus/es/components/message/index.mjs", () => ({
   ElMessage: { error: elMessageMock, warning: elMessageMock }
 }));
 vi.mock("@/utils/auth", () => ({

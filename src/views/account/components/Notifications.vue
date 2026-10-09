@@ -3,8 +3,8 @@ import { ref } from "vue";
 
 import { userMsgSubscriptionApi } from "@/api/user/notifications";
 import { useI18n } from "vue-i18n";
-import { deviceDetection } from "@pureadmin/utils";
 import { hasAuth } from "@/router/utils";
+import AccountPanel from "./AccountPanel.vue";
 import MessageNotifications from "@/views/system/components/MessageNotifications.vue";
 
 defineOptions({
@@ -20,11 +20,10 @@ const auth = ref({
 </script>
 
 <template>
-  <div :class="['min-w-45', deviceDetection() ? 'max-w-full' : 'max-w-[70%]']">
-    <h3 class="my-8!">{{ t("account.notifications") }}</h3>
-    <el-text class="mb-4 block" type="info" size="small">
-      {{ t("account.subCrossHint") }}
-    </el-text>
+  <AccountPanel
+    :title="t('account.notifications')"
+    :description="t('account.subCrossHint')"
+  >
     <MessageNotifications :api="userMsgSubscriptionApi" :auth="auth" />
-  </div>
+  </AccountPanel>
 </template>

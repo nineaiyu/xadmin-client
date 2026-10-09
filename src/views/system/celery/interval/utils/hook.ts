@@ -1,4 +1,4 @@
-import { intervalScheduleApi } from "@/api/system/task";
+import { intervalScheduleApi } from "@/api/task/task";
 import { reactive } from "vue";
 import { usePageAuth } from "@/router/utils";
 

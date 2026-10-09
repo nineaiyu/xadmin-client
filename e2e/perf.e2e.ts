@@ -212,6 +212,8 @@ test.describe("前端体验基线（chromium，dev 链路）", () => {
       await page.addInitScript(INIT_PERF_SCRIPT);
       await spec.open(page);
       await page.waitForLoadState("load");
+      // 观测窗：TTFB/FCP/LCP/CLS 由 PerformanceObserver 缓冲，需页面稳定后再读数
+      // （E2E_PERF_SETTLE 可调）；指标非 DOM 断言可表达，保留固定窗口
       await page.waitForTimeout(SETTLE_MS);
       const metrics = (await page.evaluate(
         READ_PERF_SCRIPT

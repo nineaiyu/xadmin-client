@@ -75,8 +75,28 @@ for (const viewport of VIEWPORTS) {
           .locator(".re-plus-page .el-table__header th")
           .first()
           .waitFor({ state: "visible", timeout: 15_000 });
-        // 列元数据异步到达、操作列宽度对齐后再采集
-        await page.waitForTimeout(1_000);
+        // 列元数据异步到达 + 操作列宽度在 rAF 内对齐，直接采集会读到中间态：
+        // 轮询「固定操作列宽度」直到连续两次读数一致（稳定）再采集
+        let lastWidth = -1;
+        await expect
+          .poll(
+            async () => {
+              const width = await page.evaluate(() =>
+                Math.round(
+                  document
+                    .querySelector(
+                      ".re-plus-page .el-table__header th.el-table-fixed-column--right"
+                    )
+                    ?.getBoundingClientRect().width ?? 0
+                )
+              );
+              const stable = width > 0 && width === lastWidth;
+              lastWidth = width;
+              return stable;
+            },
+            { timeout: 15_000, intervals: [200, 300, 500] }
+          )
+          .toBe(true);
 
         const result = await page.evaluate(() => {
           const table = document.querySelector(

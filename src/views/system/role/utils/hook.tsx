@@ -1,6 +1,6 @@
 import { reactive, ref, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { roleApi } from "@/api/system/role";
+import { roleApi } from "@/api/identity/role";
 import { usePageAuth } from "@/router/utils";
 import { useRoleButtons } from "./useRoleButtons";
 import { useRoleColumns } from "./useRoleColumns";

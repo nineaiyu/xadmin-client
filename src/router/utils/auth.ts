@@ -3,7 +3,7 @@ import { getCurrentInstance, reactive } from "vue";
 import { isObject } from "@pureadmin/utils";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 
-import { router } from "../index";
+import { router } from "../router";
 
 /** 获取当前页面按钮级别的权限 */
 function getAuths(): Array<string> {

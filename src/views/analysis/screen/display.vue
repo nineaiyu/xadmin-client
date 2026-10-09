@@ -17,7 +17,7 @@ import { useScreenExport } from "./utils/useScreenExport";
 import { cardRenderHeight } from "@/utils/cardHeight";
 import { canvasGridVars } from "./utils/layout";
 import { loadScreenReferenceData } from "./utils/referenceData";
-import ChartCard from "@/views/dashboard/components/ChartCard.vue";
+import { ChartCardAsync as ChartCard } from "@/views/dashboard/components/ChartCardAsync";
 import ScreenPane from "./components/ScreenPane.vue";
 import ReEmpty from "@/components/ReEmpty";
 import PauseIcon from "~icons/ep/video-pause";

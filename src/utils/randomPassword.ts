@@ -1,8 +1,8 @@
 /**
  * 随机密码生成（速赢）。
  *
- * 按后端下发的密码安全策略（`/api/auth/rules` 的 `password_rules`，与表单校验
- * 同一份数据）生成「必然能通过校验」的强密码：value=0 的规则项视为关闭（与
+ * 按后端下发的密码安全策略（`/api/identity/rules/password` 的 `password_rules`，
+ * 与表单校验同一份数据）生成「必然能通过校验」的强密码：value=0 的规则项视为关闭（与
  * `passwordRulesCheck` 同口径），未声明任何类别规则时按「大小写 + 数字」兜底。
  * 随机源为 WebCrypto（getRandomValues），字符集去掉易混淆字符（I/l/1、O/0）。
  * 复制到剪贴板统一走 @/utils/clipboard。

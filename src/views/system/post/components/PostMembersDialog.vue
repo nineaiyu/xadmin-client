@@ -9,7 +9,7 @@ import {
   type PostItem,
   type PostMemberItem,
   type PostUserOption
-} from "@/api/system/post";
+} from "@/api/identity/post";
 import MemberTagEditor from "@/views/system/components/MemberTagEditor.vue";
 
 /**

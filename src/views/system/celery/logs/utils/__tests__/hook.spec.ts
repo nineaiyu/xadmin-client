@@ -17,17 +17,17 @@ vi.mock("@/router/utils", () => ({
   usePageAuth: () => ({ log: true })
 }));
 
-vi.mock("@/api/system/task", () => ({
+vi.mock("@/api/task/task", () => ({
   taskCenterApi: { cancel: vi.fn(), rerun: vi.fn() },
   taskExecutionApi: { stats: vi.fn() }
 }));
 
 const exportDownload = vi.fn();
 const importDownload = vi.fn();
-vi.mock("@/api/system/export", () => ({
+vi.mock("@/api/task/export", () => ({
   exportRecordApi: { download: (...args: unknown[]) => exportDownload(...args) }
 }));
-vi.mock("@/api/system/import", () => ({
+vi.mock("@/api/task/import", () => ({
   importRecordApi: { download: (...args: unknown[]) => importDownload(...args) }
 }));
 

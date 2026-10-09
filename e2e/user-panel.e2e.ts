@@ -82,7 +82,7 @@ test("用户抽屉：无在线会话时强制下线不可用", async ({ page }) 
   // 「密码不满足安全规则」，必须选解密抛异常（回退明文）的字符串，见 e2e/README 陷阱表
   const username = `e2e_panel_${Date.now()}`;
   const token = await getAccessToken(page);
-  const created = await page.request.post(`${BACKEND_URL}/api/system/user`, {
+  const created = await page.request.post(`${BACKEND_URL}/api/identity/user`, {
     data: {
       username,
       nickname: "抽屉面板用例",

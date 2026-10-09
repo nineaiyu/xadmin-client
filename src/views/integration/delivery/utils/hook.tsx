@@ -12,7 +12,7 @@ import {
 import {
   webhookDeliveryApi,
   type WebhookDeliveryItem
-} from "@/api/system/webhook";
+} from "@/api/task/webhook";
 import {
   choiceValue,
   statusTagProps,

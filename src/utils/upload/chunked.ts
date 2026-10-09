@@ -10,7 +10,7 @@
  * 小文件直传（一次往返），大文件分片（抗网络抖动 + 绕过单请求体限制）。
  */
 import { SUCCESS_CODE } from "@/api/types";
-import { systemUploadFileApi } from "@/api/system/file";
+import { systemUploadFileApi } from "@/api/file/file";
 
 /** 服务端建议的缺省分片大小（与服务端 DEFAULT_CHUNK_SIZE 对齐，服务端会钳制） */
 export const DEFAULT_CHUNK_SIZE = 5 * 1024 * 1024;

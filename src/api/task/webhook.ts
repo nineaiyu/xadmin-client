@@ -60,10 +60,10 @@ class WebhookDeliveryApi extends BaseApi {
 }
 
 export const webhookSubscriptionApi = new WebhookSubscriptionApi(
-  "/api/system/webhooks/subscriptions"
+  "/api/task/webhooks/subscriptions"
 );
 export const webhookDeliveryApi = new WebhookDeliveryApi(
-  "/api/system/webhooks/deliveries"
+  "/api/task/webhooks/deliveries"
 );
 
 export const listWebhookRows = <T>(body: unknown): T[] =>

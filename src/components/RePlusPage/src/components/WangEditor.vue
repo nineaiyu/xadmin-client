@@ -10,7 +10,7 @@ import {
 } from "vue";
 import "@wangeditor/editor/dist/css/style.css";
 import { ensureWangEditorBoot } from "@/utils/wangEditorBoot";
-import { systemUploadFileApi } from "@/api/system/file";
+import { systemUploadFileApi } from "@/api/file/file";
 import { message } from "@/utils/message";
 import { formatBytes, getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";

@@ -26,7 +26,7 @@ test("脱敏规则：创建、列表展示、预览（行内预填 + 批量样�
   // 用不存在的字段名建规则：只验证管理/预览链路，不影响真实用户数据展示
   const field = `phone_${Date.now()}`;
   const createResp = await page.request.post(
-    `${FRONT_URL}/api/system/mask-rules`,
+    `${FRONT_URL}/api/audit/mask-rules`,
     {
       data: {
         model,
@@ -90,7 +90,7 @@ test("脱敏规则：创建、列表展示、预览（行内预填 + 批量样�
   // 关闭弹窗并删除规则；删除后刷新页面确保表格不再展示该行
   await page.keyboard.press("Escape");
   const delResp = await page.request.delete(
-    `${FRONT_URL}/api/system/mask-rules/${pk}`
+    `${FRONT_URL}/api/audit/mask-rules/${pk}`
   );
   expect((await delResp.json()).code, "delete rule").toBe(1000);
   await page.reload();
@@ -109,7 +109,7 @@ test("原文通道：列表见掩码、编辑表单见原文、原样保存后�
 
   // 取种子账号 e2e_dp 的主键与角色（规则按角色生效，作用面收窄到该账号）
   const listResp = await page.request.get(
-    `${FRONT_URL}/api/system/user?page=1&limit=10&username=${DP_USER.username}`
+    `${FRONT_URL}/api/identity/user?page=1&limit=10&username=${DP_USER.username}`
   );
   const listPayload = await listResp.json();
   const dpRow = (listPayload?.data?.results ?? []).find(
@@ -118,7 +118,7 @@ test("原文通道：列表见掩码、编辑表单见原文、原样保存后�
   expect(dpRow, `seed user ${DP_USER.username} missing`).toBeTruthy();
 
   const detailResp = await page.request.get(
-    `${FRONT_URL}/api/system/user/${dpRow.pk}`
+    `${FRONT_URL}/api/identity/user/${dpRow.pk}`
   );
   const dpDetail = (await detailResp.json())?.data;
   const rolePk = (dpDetail?.roles ?? [])[0]?.pk;
@@ -131,7 +131,7 @@ test("原文通道：列表见掩码、编辑表单见原文、原样保存后�
       : "*".repeat(originalNickname.length);
 
   const ruleResp = await page.request.post(
-    `${FRONT_URL}/api/system/mask-rules`,
+    `${FRONT_URL}/api/audit/mask-rules`,
     {
       data: {
         model: "system.userinfo",
@@ -170,7 +170,7 @@ test("原文通道：列表见掩码、编辑表单见原文、原样保存后�
     // 接口口径先行断言：详情 + ?mask=false 必须返回原文（字段白名单/门禁任一
     // 不满足时，UI 断言会给出无上下文的「值不对」，这里先锁定协议层）
     const detailResp = await page.request.get(
-      `${FRONT_URL}/api/system/user/${dpRow.pk}?mask=false`
+      `${FRONT_URL}/api/identity/user/${dpRow.pk}?mask=false`
     );
     expect(
       (await detailResp.json())?.data?.nickname,
@@ -204,13 +204,13 @@ test("原文通道：列表见掩码、编辑表单见原文、原样保存后�
 
   // 库内原文未被掩码值污染
   const afterResp = await page.request.get(
-    `${FRONT_URL}/api/system/user/${dpRow.pk}`
+    `${FRONT_URL}/api/identity/user/${dpRow.pk}`
   );
   expect((await afterResp.json())?.data?.nickname).toBe(originalNickname);
 
   // 清理规则：作用面已按角色收窄，这里仍及时删除，避免影响同进程内的其他用例
   const cleanupResp = await page.request.delete(
-    `${FRONT_URL}/api/system/mask-rules/${rulePk}`
+    `${FRONT_URL}/api/audit/mask-rules/${rulePk}`
   );
   expect((await cleanupResp.json()).code, "cleanup rule").toBe(1000);
 });

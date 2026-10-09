@@ -1,4 +1,4 @@
-import { deptApi } from "@/api/system/dept";
+import { deptApi } from "@/api/identity/dept";
 import { reactive, shallowRef, type Ref } from "vue";
 import { hasAuth, usePageAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";

@@ -4,11 +4,12 @@
 
 ## 本目录
 
-| 文档                                               | 内容                                                                                                           |
-| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| [development-guide.md](development-guide.md)       | **前端开发指引（含独立检出）**：独立检出场景与前置、目录速览、高频任务索引、跨仓文档地图、提交前自检、常见问题 |
-| [accessibility-audit.md](accessibility-audit.md)   | 可访问性（a11y）审计记录（N2）：键盘走查 / 读屏语义修复明细、axe-core 门禁豁免登记（随交付追加）               |
-| [metadata-driven-crud.md](metadata-driven-crud.md) | 元数据驱动 CRUD 前端方案（RePlusPage + contract/schema）的复用说明：最小依赖集、后端前置、移植步骤、边界与耦合 |
+| 文档                                               | 内容                                                                                                                              |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| [development-guide.md](development-guide.md)       | **前端开发指引（含独立检出）**：独立检出场景与前置、目录速览、高频任务索引、跨仓文档地图、提交前自检、常见问题                    |
+| [accessibility-audit.md](accessibility-audit.md)   | 可访问性（a11y）审计记录（N2）：键盘走查 / 读屏语义修复明细、axe-core 门禁豁免登记（随交付追加）                                  |
+| [perf-firstscreen.md](perf-firstscreen.md)         | 首屏画像与体积治理：闭包体积构成 / 资源瀑布与 Long Task·TBT·LCP / 拆包改动账与遗留，含 `scripts/firstscreen-profile.mjs` 复跑方式 |
+| [metadata-driven-crud.md](metadata-driven-crud.md) | 元数据驱动 CRUD 前端方案（RePlusPage + contract/schema）的复用说明：最小依赖集、后端前置、移植步骤、边界与耦合                    |
 
 ## 仓库内其他约定文档
 

@@ -8,7 +8,7 @@ import { renderTagsCell } from "@/utils/tagTone";
 import { userEntryCells } from "./userEntryCells";
 import { userBadgeCells } from "./userBadgeCells";
 import type { useI18n } from "vue-i18n";
-import type { userApi } from "@/api/system/user";
+import type { userApi } from "@/api/identity/user";
 import type { RecordType } from "plus-pro-components";
 
 type TFunction = ReturnType<typeof useI18n>["t"];

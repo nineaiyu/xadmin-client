@@ -24,7 +24,7 @@ import {
  * 跨域直连后端不带 Cookie 会直接 401。
  */
 
-const USER_LIST_API = `${FRONT_URL}/api/system/user?page=1&limit=10`;
+const USER_LIST_API = `${FRONT_URL}/api/identity/user?page=1&limit=10`;
 
 test.describe("数据权限", () => {
   test("仅本人数据：界面列表只出现自己一条记录", async ({ page }) => {
@@ -96,7 +96,7 @@ test.describe("字段权限", () => {
   }) => {
     await login(page, FP_USER);
     const response = await page.request.get(
-      `${FRONT_URL}/api/system/user?page=1&limit=10`,
+      `${FRONT_URL}/api/identity/user?page=1&limit=10`,
       {
         headers: {
           Authorization: `Bearer ${await getAccessToken(page)}`,

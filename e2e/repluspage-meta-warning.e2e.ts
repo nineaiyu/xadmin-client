@@ -23,10 +23,10 @@ test("RePlusPage：元数据缺失时 DEV 出现显式警示", async ({ page }) 
   });
 
   // 只拦目标页面的**接口**：其余请求（登录 / 站点配置 / 菜单）保持原样。
-  // 必须按 pathname 前缀判定——glob 写法 `**/api/system/online*` 会把 Vite 的模块
-  // 请求 `/src/api/system/online.ts` 一并拦下，页面直接加载失败（实测踩过）。
+  // 必须按 pathname 前缀判定——glob 写法 `**/api/identity/online*` 会把 Vite 的模块
+  // 请求 `/src/api/identity/online.ts` 一并拦下，页面直接加载失败（实测踩过）。
   await page.route(
-    url => url.pathname.startsWith("/api/system/online"),
+    url => url.pathname.startsWith("/api/identity/online"),
     async route => {
       const requestUrl = route.request().url();
       if (/search-(columns|fields)/.test(requestUrl)) {

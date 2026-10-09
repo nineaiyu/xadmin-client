@@ -44,6 +44,9 @@ pnpm build      # 生产构建
 | 元数据类型 regen | `pnpm gen:metadata-types && git diff --exit-code src/api/types/` | 改动依赖 schema 时执行（CI regen-check 门禁）                                          |
 | 契约镜像         | `pnpm check:contract`（同步用 `pnpm sync:contract`）             | server 改 `docs/schema/` 后同步镜像并重新生成类型（CI 校验）                           |
 | 版本一致性       | `pnpm check:version`                                             | `package.json` 版本需与 server `const.py` 同步提升（发布另有 tag 门禁）                |
+| 模块环           | `pnpm check:module-cycles`                                       | 顶层静态导入图成环检测（`--report`/`--json` 可查环与豁免归属；豁免按批次登记）         |
+| 类型逃逸         | `pnpm check:as-unknown`                                          | `as unknown as` 双重断言防回潮（新文件即失败，存量按基线只减不增）                     |
+| 超长 hook        | `pnpm check:hook-length`                                         | `useXxx` / `hook` 文件 ≥120 行防回潮（新文件即失败，存量按基线只减不增）               |
 | E2E              | `pnpm test:e2e`                                                  | 涉及核心流程/权限场景时本地跑受影响用例                                                |
 
 约束清单：

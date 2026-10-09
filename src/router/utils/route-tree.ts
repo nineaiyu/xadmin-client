@@ -2,7 +2,6 @@ import { isProxy, toRaw } from "vue";
 import type { RouteRecordName, RouteRecordRaw } from "vue-router";
 import { cloneDeep, intersection, isAllEmpty } from "@pureadmin/utils";
 import { buildHierarchyTree } from "@/utils/tree";
-import { useUserStoreHook } from "@/store/modules/user";
 import type { menuType } from "@/layout/types";
 
 /**
@@ -100,14 +99,23 @@ function isOneOfArray(
     : true;
 }
 
-/** 从用户 store 读取当前登录用户的角色，过滤无权限的菜单 */
-function filterNoPermissionTree(data: RouteRecordRaw[]): RouteRecordRaw[] {
-  const currentRoles = useUserStoreHook().roles ?? [];
+/**
+ * 过滤无权限的菜单：按调用方传入的当前用户角色过滤。
+ *
+ * 角色作为参数注入（而非在此读取用户 store），使本模块保持纯函数、不反向
+ * 依赖 store —— 否则「store → 路由工具 → store」会形成顶层静态环。
+ */
+function filterNoPermissionTree(
+  data: RouteRecordRaw[],
+  currentRoles: string[] = []
+): RouteRecordRaw[] {
   const newTree = (cloneDeep(data) as RouteRecordRaw[]).filter(v =>
     isOneOfArray(v.meta?.roles, currentRoles)
   );
   newTree.forEach(
-    v => v.children && (v.children = filterNoPermissionTree(v.children))
+    v =>
+      v.children &&
+      (v.children = filterNoPermissionTree(v.children, currentRoles))
   );
   return filterChildrenTree(newTree);
 }

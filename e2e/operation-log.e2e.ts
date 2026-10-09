@@ -25,7 +25,7 @@ test("审计日志：DELETE 操作入日志且可按方法检索", async ({ page
 
   // 操作日志按方法检索（on_commit 落库有延迟，轮询等待）
   const listResp = await page.request.get(
-    `${FRONT_URL}/api/system/logs/operation?method=DELETE&page_size=20`
+    `${FRONT_URL}/api/audit/logs/operation?method=DELETE&page_size=20`
   );
   expect(listResp.status()).toBe(200);
   const rows = (await listResp.json()).data.results as Array<{

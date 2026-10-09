@@ -2,6 +2,9 @@ node_modules
 .DS_Store
 dist
 dist-ssr
+# bundle-analyze 分析产物（scripts/bundle-analyze.mjs 默认自动清理；KEEP_ANALYSIS_DIR=1 时保留）
+dist-analysis/
+bundle-analysis.json
 *.local
 .eslintcache
 report.html
@@ -20,6 +23,8 @@ test-results/
 test-results-shard-*/
 playwright-report/
 blob-report/
+# 抖动榜单产物（scripts/e2e-flaky-report.mjs 输出：各 shard JSON + flaky-<run>.json）
+e2e-reports/
 
 # Editor directories and files
 .idea

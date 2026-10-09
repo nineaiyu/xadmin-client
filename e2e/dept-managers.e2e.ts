@@ -18,7 +18,7 @@ const MANAGER_USERNAME = "xadmin";
 
 /** 目标部门主键（E2E 种子部门） */
 async function deptPk(page: Page): Promise<string> {
-  const res = await page.request.get("/api/system/dept?page=1&size=1000");
+  const res = await page.request.get("/api/identity/dept?page=1&size=1000");
   const body = await res.json();
   const row = (body.data?.results ?? []).find(
     (item: { name: string }) => item.name === DEPT_NAME
@@ -33,7 +33,7 @@ async function managerPk(
   keyword = MANAGER_USERNAME
 ): Promise<number> {
   const res = await page.request.get(
-    `/api/system/dept/user-options?keyword=${keyword}`
+    `/api/identity/dept/user-options?keyword=${keyword}`
   );
   const body = await res.json();
   expect(body.data?.length).toBeGreaterThan(0);
@@ -47,7 +47,7 @@ async function assign(
   payload: { add?: number[]; remove?: number[] }
 ) {
   const res = await page.request.post(
-    `/api/system/dept/${pk}/assign-managers`,
+    `/api/identity/dept/${pk}/assign-managers`,
     { data: payload }
   );
   expect(res.ok()).toBeTruthy();

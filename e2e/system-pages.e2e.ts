@@ -219,7 +219,10 @@ test("岗位管理：新增 → 分配成员 → 搜索可见 → 删除", async
     '[data-testid="post-member-select"] input'
   );
   await memberSelect.fill("xadmin");
-  await page.waitForTimeout(500); // 远程搜索（≤20 条）返回后下拉才出候选
+  // 远程搜索（≤20 条）返回后下拉才出候选：等候选可见再走键盘选中，避免盲等
+  await expect(
+    page.locator(".el-select-dropdown__item:visible").first()
+  ).toBeVisible({ timeout: 15_000 });
   await memberSelect.press("ArrowDown");
   await memberSelect.press("Enter");
   // 选中后下拉仍在可见态并拦截后续点击（EP 已知行为）：点弹窗标题区强制收起再保存
@@ -269,6 +272,35 @@ test("系统设置：打开后切其他页面不白屏（单元素根守护）",
     .locator("#main-content")
     .evaluate(el => el.innerHTML.length);
   expect(contentLen).toBeGreaterThan(200);
+});
+
+/**
+ * 回归守护：设置页页签卡片不得溢出内容区。
+ * 页面根节点即 layout 注入的 .main-content（自带 24px 页面边距）——
+ * 若页面根再写 width:100%，宽度按父容器解析而不扣自身外边距，
+ * 卡片右侧会溢出视口被裁到贴边。
+ */
+test("系统设置：页签卡片右侧保留页面边距（不贴边不裁切）", async ({ page }) => {
+  await login(page);
+  await openMenuPath(page, ["系统设置"], "/settings/message");
+
+  const card = page.locator(".setting-page").first();
+  await expect(card).toBeVisible({ timeout: 15_000 });
+  const vw = await page.evaluate(() => window.innerWidth);
+
+  // 路由进场动画带 transform，包围盒会先偏左再归位：轮询至右边距稳定
+  await expect
+    .poll(
+      async () => {
+        const box = await card.boundingBox();
+        return box ? vw - (box.x + box.width) : -1;
+      },
+      { timeout: 5_000 }
+    )
+    .toBeGreaterThan(8);
+
+  const box = await card.boundingBox();
+  expect(box!.x).toBeGreaterThan(100);
 });
 
 test("WebSocket：登录后建立应用 ws 连接", async ({ page }) => {

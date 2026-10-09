@@ -23,7 +23,9 @@ vi.mock("vue-i18n", () => ({
 vi.mock("@/api/system/mask", () => ({
   maskApi: { preview: state.previewMock }
 }));
-vi.mock("@/api/system/role", () => ({ roleApi: { list: state.roleListMock } }));
+vi.mock("@/api/identity/role", () => ({
+  roleApi: { list: state.roleListMock }
+}));
 vi.mock("@/api/base", () => ({
   listRows: (body: { data?: { results?: unknown[] } }) =>
     body?.data?.results ?? []

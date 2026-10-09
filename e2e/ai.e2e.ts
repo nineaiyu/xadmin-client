@@ -135,7 +135,7 @@ test("NL 查数：灰度开启后解释卡片渲染", async ({ page }) => {
   await expect(page.getByTestId("ai-ask-input")).toBeVisible({
     timeout: 20_000
   });
-  await page.waitForTimeout(500);
+  // 左栏功能入口由权限点组装，可见性由下方 toBeVisible 自动重试覆盖，无需固定延时
   const nlEntry = page.getByTestId("ai-feature-nl");
   await expect(nlEntry).toBeVisible({ timeout: 20_000 });
   await nlEntry.click();

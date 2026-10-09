@@ -6,7 +6,7 @@ import VideoPause from "~icons/ep/video-pause";
 import CircleCheck from "~icons/ep/circle-check";
 import type { OperationButtonsRow } from "@/components/RePlusPage";
 import type { ApiResult } from "@/api/types";
-import type { periodicTaskApi } from "@/api/system/task";
+import type { periodicTaskApi } from "@/api/task/task";
 import type { Ref } from "vue";
 import type { useI18n } from "vue-i18n";
 

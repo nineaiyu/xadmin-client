@@ -14,7 +14,7 @@ import type {
   UploadRequestOptions
 } from "element-plus";
 import type { AxiosProgressEvent } from "axios";
-import { systemUploadFileApi } from "@/api/system/file";
+import { systemUploadFileApi } from "@/api/file/file";
 import {
   DEFAULT_CHUNK_SIZE as CHUNK_UPLOAD_THRESHOLD,
   ChunkUploadBusinessError,

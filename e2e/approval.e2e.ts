@@ -41,17 +41,20 @@ test("敏感操作审批：删除用户 → 提交审批 → 审批中心通过 
 
   try {
     // 开启审批拦截（仅用户详情 DELETE；批量销毁同挂拦截点）
-    await setApprovalPaths(page, token, ["^/api/system/user/[^/]+$"]);
+    await setApprovalPaths(page, token, ["^/api/identity/user/[^/]+$"]);
 
     // API 创建待删除用户
-    const created = await page.request.post(`${BACKEND_URL}/api/system/user`, {
-      headers,
-      data: {
-        username,
-        nickname: username,
-        password: await AesEncrypted(username, "E2E-Approve-2026!")
+    const created = await page.request.post(
+      `${BACKEND_URL}/api/identity/user`,
+      {
+        headers,
+        data: {
+          username,
+          nickname: username,
+          password: await AesEncrypted(username, "E2E-Approve-2026!")
+        }
       }
-    });
+    );
     expect(created.ok(), await created.text()).toBeTruthy();
 
     // 用户管理页行删除 → popconfirm 确认
@@ -162,13 +165,13 @@ test("审批中心：待办角标 → 批量驳回 → 角标归零", async ({ p
   const approvalNos: string[] = [];
 
   try {
-    await setApprovalPaths(page, token, ["^/api/system/user/[^/]+$"]);
+    await setApprovalPaths(page, token, ["^/api/identity/user/[^/]+$"]);
 
     // 建两个待审批单：不同用户 → 不同请求指纹 → 各自独立建单
     for (const index of [1, 2]) {
       const username = `e2e_batch_${index}_${suffix}`;
       const created = await page.request.post(
-        `${BACKEND_URL}/api/system/user`,
+        `${BACKEND_URL}/api/identity/user`,
         {
           headers,
           data: {
@@ -186,7 +189,7 @@ test("审批中心：待办角标 → 批量驳回 → 角标归零", async ({ p
       ).toBeTruthy();
 
       const denied = await page.request.delete(
-        `${BACKEND_URL}/api/system/user/${userPk}`,
+        `${BACKEND_URL}/api/identity/user/${userPk}`,
         { headers }
       );
       expect(denied.status(), await denied.text()).toBe(412);

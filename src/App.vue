@@ -7,7 +7,7 @@
 </template>
 
 <script lang="ts">
-import { ElConfigProvider } from "element-plus";
+import { ElConfigProvider } from "element-plus/es/components/config-provider/index.mjs";
 import { useRouter, useRoute } from "vue-router";
 import { useGlobal, useWatermark } from "@pureadmin/utils";
 import {

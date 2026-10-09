@@ -1,7 +1,7 @@
 import { h } from "vue";
 import { addDrawer } from "@/components/ReDrawer";
 import PostPermissionPreview from "../components/PostPermissionPreview.vue";
-import type { PostItem } from "@/api/system/post";
+import type { PostItem } from "@/api/identity/post";
 import type { useI18n } from "vue-i18n";
 
 type TFunction = ReturnType<typeof useI18n>["t"];

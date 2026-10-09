@@ -35,4 +35,4 @@ class UserOnlineApi extends BaseApi {
   };
 }
 
-export const userOnlineApi = new UserOnlineApi("/api/system/online");
+export const userOnlineApi = new UserOnlineApi("/api/identity/online");

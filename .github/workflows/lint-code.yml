@@ -69,6 +69,11 @@ jobs:
         # 防巨型文件回潮：>500 行新增即失败；存量基线只减不增（scripts/check-file-length.mjs）
         run: node scripts/check-file-length.mjs
 
+      - name: Quarantine manifest gate
+        # 隔离清单是临时收容（非永久跳过）：任何条目必须可追踪、有责任人、且未过期
+        # （scripts/check-quarantine.mjs，过期 / 缺 owner / 缺 issue 即失败）
+        run: node scripts/check-quarantine.mjs
+
       - name: as-unknown-as baseline gate
         # 类型逃逸防回潮：`as unknown as` 新文件即失败、存量按文件基线只减不增
         # （scripts/check-as-unknown.mjs，初始 109 处 / 70 文件）
@@ -81,6 +86,10 @@ jobs:
         # api 一律在动作内动态 import()，本门禁对结构性静态边与初等环清单双重校验
         # （scripts/check-module-cycles.mjs；豁免项在脚本顶部登记并附原因）
         run: pnpm check:module-cycles
+
+      - name: Hook length gate (anti-regression)
+        # 超长 hook 形态文件防回潮：useXxx / hook 文件 ≥120 行新增即失败（scripts/check-hook-length.mjs）
+        run: pnpm check:hook-length
 
       - name: i18n keys gate
         # 代码引用的静态词条必须同时存在于 zh/en（缺失时界面显示 key 原文）；

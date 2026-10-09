@@ -7,7 +7,7 @@ import { message } from "@/utils/message";
 import type {
   DirectoryDeptNode,
   DirectoryPostOption
-} from "@/api/system/directory";
+} from "@/api/identity/directory";
 import { searchDeptApi, searchPostApi } from "@/api/system/search";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { handleTree } from "@/utils/tree";

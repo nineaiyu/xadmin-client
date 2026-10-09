@@ -299,14 +299,14 @@ test.describe("预览接口鉴权（普通用户）", () => {
     const token = await getAccessToken(page);
     expect(token).toBeTruthy();
     const anon = await page.request.get(
-      `${BACKEND_URL}/api/system/user/1/preview`,
+      `${BACKEND_URL}/api/identity/user/1/preview`,
       {
         headers: { "User-Agent": E2E_USER_AGENT }
       }
     );
     expect(anon.status()).toBe(401);
     const resp = await page.request.get(
-      `${BACKEND_URL}/api/system/user/1/preview`,
+      `${BACKEND_URL}/api/identity/user/1/preview`,
       {
         headers: {
           "User-Agent": E2E_USER_AGENT,
@@ -316,7 +316,7 @@ test.describe("预览接口鉴权（普通用户）", () => {
     );
     expect(resp.status()).toBe(403);
     const trial = await page.request.post(
-      `${BACKEND_URL}/api/system/user/1/preview/trial`,
+      `${BACKEND_URL}/api/identity/user/1/preview/trial`,
       {
         headers: {
           "User-Agent": E2E_USER_AGENT,
@@ -337,7 +337,7 @@ test("岗位维度预览：抽屉渲染（基本信息 + 持有用户采样）",
   const postName = `E2E岗位预览-${suffix}`;
 
   // 夹具走 API 建岗位（共享库幂等：用例末尾删除，不影响其它 spec 的岗位列表）
-  const created = await page.request.post(`${FRONT_URL}/api/system/posts`, {
+  const created = await page.request.post(`${FRONT_URL}/api/identity/posts`, {
     headers,
     data: {
       name: postName,
@@ -369,7 +369,7 @@ test("岗位维度预览：抽屉渲染（基本信息 + 持有用户采样）",
       drawer.getByRole("button", { name: /^持有该岗位的用户（/ })
     ).toBeVisible();
   } finally {
-    await page.request.delete(`${FRONT_URL}/api/system/posts/${pk}`, {
+    await page.request.delete(`${FRONT_URL}/api/identity/posts/${pk}`, {
       headers
     });
   }

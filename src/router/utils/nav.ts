@@ -1,35 +1,7 @@
-import {
-  createWebHashHistory,
-  createWebHistory,
-  type RouterHistory
-} from "vue-router";
 import { useTimeoutFn } from "@vueuse/core";
 import type { menuType } from "@/layout/types";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { usePermissionStoreHook } from "@/store/modules/permission";
-
-/** 获取路由历史模式 https://next.router.vuejs.org/zh/guide/essentials/history-mode.html（构建配置保证命中合法值，未命中时返回 undefined） */
-function getHistoryMode(routerHistory: string): RouterHistory | undefined {
-  // len为1 代表只有历史模式 为2 代表历史模式中存在base参数 https://next.router.vuejs.org/zh/api/#%E5%8F%82%E6%95%B0-1
-  const historyMode = routerHistory.split(",");
-  const leftMode = historyMode[0];
-  const rightMode = historyMode[1];
-  // no param
-  if (historyMode.length === 1) {
-    if (leftMode === "hash") {
-      return createWebHashHistory("");
-    } else if (leftMode === "h5") {
-      return createWebHistory("");
-    }
-  } //has param
-  else if (historyMode.length === 2) {
-    if (leftMode === "hash") {
-      return createWebHashHistory(rightMode);
-    } else if (leftMode === "h5") {
-      return createWebHistory(rightMode);
-    }
-  }
-}
 
 /** 处理缓存路由（添加、删除、刷新） */
 function handleAliveRoute({ name }: ToRouteType, mode?: string) {
@@ -90,4 +62,4 @@ function getTopMenu(tag = false): menuType | undefined {
   return topMenu;
 }
 
-export { getHistoryMode, handleAliveRoute, getTopMenu };
+export { handleAliveRoute, getTopMenu };

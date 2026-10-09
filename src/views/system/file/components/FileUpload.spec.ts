@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
 vi.mock("@/router/utils", () => ({ hasAuth: mocks.hasAuth }));
 vi.mock("@/utils/message", () => ({ message: mocks.message }));
-vi.mock("@/api/system/file", () => ({
+vi.mock("@/api/file/file", () => ({
   systemUploadFileApi: {
     config: mocks.config,
     upload: vi.fn(),

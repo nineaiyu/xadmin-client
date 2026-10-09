@@ -40,7 +40,7 @@ async function seedFreshNotice(page: Page): Promise<string> {
   const list = await jsonRequest(
     page,
     "get",
-    `/api/system/user?username=${PLAIN_USER.username}`
+    `/api/identity/user?username=${PLAIN_USER.username}`
   );
   // 列表响应形态：data = { total, results }（common/core/pagination.py PageNumber）
   const rows = (Array.isArray(list.data) ? list.data : list.data?.results) as

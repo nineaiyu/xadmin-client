@@ -51,8 +51,8 @@ export interface ImpactPayload {
  * （污染正常交互）；白名单让非支持资源零请求、零噪音。
  */
 const IMPACT_SUPPORTED = new Set([
-  "/api/system/role",
-  "/api/system/dept",
+  "/api/identity/role",
+  "/api/identity/dept",
   "/api/system/dict",
   "/api/dataset/datasets",
   "/api/approval/approval-flows",

@@ -47,4 +47,4 @@ export interface DirectoryDeptNode {
 }
 
 /** 通讯录（list:SystemDirectory 权限点；数据权限随调用者收口） */
-export const directoryApi = new BaseApi("/api/system/directory");
+export const directoryApi = new BaseApi("/api/identity/directory");

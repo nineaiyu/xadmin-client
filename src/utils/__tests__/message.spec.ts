@@ -5,7 +5,7 @@ const { elMessage, closeAll } = vi.hoisted(() => ({
   closeAll: vi.fn()
 }));
 
-vi.mock("element-plus", () => ({
+vi.mock("element-plus/es/components/message/index.mjs", () => ({
   ElMessage: Object.assign(elMessage, { closeAll })
 }));
 

@@ -15,15 +15,12 @@ import { storageLocal } from "@pureadmin/utils";
 import { getPlatformConfig } from "./config";
 import { MotionPlugin } from "@vueuse/motion";
 import { useEcharts } from "@/plugins/echarts";
-import { createApp, type Directive } from "vue";
-import { RePlusPage } from "@/components/RePlusPage";
+import { createApp, defineAsyncComponent, type Directive } from "vue";
 // 注册 `api-search-*` 元数据搜索组件（框架层不反向依赖业务页面，改由业务侧注入）
 import "@/views/system/apiSearch";
 import { useElementPlus } from "@/plugins/elementPlus";
 import { usePlusProComponents } from "@/plugins/plusProComponents";
 import { injectResponsiveStorage } from "@/utils/responsive";
-
-import Table from "@pureadmin/table";
 
 // 导入plus-pro-components 及其样式
 import "plus-pro-components/index.css";
@@ -50,7 +47,15 @@ app.component("FontIcon", FontIcon);
 // 全局注册按钮级别权限组件
 import { Auth } from "@/components/ReAuth";
 app.component("Auth", Auth);
-app.component("RePlusPage", RePlusPage);
+// RePlusPage 是业务页面组件（登录/外壳不需要），全局注册为异步组件：
+// 模板中的 <RePlusPage> 仍按同名解析，但组件代码与它独有的依赖（表格栈等）
+// 不再进入首屏闭包，首次进入列表页时按需加载（见 docs/perf-firstscreen.md）
+app.component(
+  "RePlusPage",
+  defineAsyncComponent(() =>
+    import("@/components/RePlusPage").then(m => m.RePlusPage)
+  )
+);
 
 // 全局注册vue-tippy
 import "tippy.js/dist/tippy.css";
@@ -59,6 +64,11 @@ import VueTippy from "vue-tippy";
 import { getToken } from "@/utils/auth";
 import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
 app.use(VueTippy);
+
+// WebSocket 重连前无感刷新 token：由入口注入刷新器（utils 层不直连 api 层）
+import { setReconnectTokenProvider } from "@/utils/websocket";
+import { getUsedAccessToken } from "@/utils/http/accessToken";
+setReconnectTokenProvider(getUsedAccessToken);
 
 getPlatformConfig(app).then(async config => {
   injectResponsiveStorage(app, config);
@@ -82,12 +92,13 @@ getPlatformConfig(app).then(async config => {
   }
   app.use(router);
   await router.isReady();
+  // @pureadmin/table 不在此全局注册：唯一消费方 RePlusPage 内部按需 import
+  // （<pure-table> 由该文件的局部 import 解析），避免表格栈进入首屏闭包
   app
     .use(MotionPlugin)
     .use(useI18n)
     .use(useElementPlus)
     .use(usePlusProComponents)
-    .use(Table)
     .use(useEcharts);
   // 初始语言为 en 时按需加载语言包（en 不随首屏闭包；zh 为 eager，无额外开销）
   await ensureLocale();

@@ -170,7 +170,7 @@ class AuthApi extends BaseApi {
       "post",
       {},
       data,
-      "/api/system/login/basic"
+      "/api/identity/login/basic"
     );
   };
 
@@ -180,7 +180,7 @@ class AuthApi extends BaseApi {
       "post",
       {},
       data,
-      "/api/system/login/code"
+      "/api/identity/login/code"
     );
   };
 
@@ -190,7 +190,7 @@ class AuthApi extends BaseApi {
       "get",
       {},
       data,
-      "/api/system/login/basic"
+      "/api/identity/login/basic"
     );
   };
 
@@ -200,7 +200,7 @@ class AuthApi extends BaseApi {
       "get",
       {},
       undefined,
-      "/api/system/auth/token"
+      "/api/identity/auth/token"
     );
   };
 
@@ -210,18 +210,23 @@ class AuthApi extends BaseApi {
       "get",
       {},
       undefined,
-      "/api/system/auth/captcha"
+      "/api/identity/auth/captcha"
     );
   };
 
   /** 刷新token */
   refreshToken = (data?: object) => {
-    return this.request<TokenResult>("post", {}, data, "/api/system/refresh");
+    return this.request<TokenResult>("post", {}, data, "/api/identity/refresh");
   };
 
   /** 注册 */
   register = (data?: object) => {
-    return this.request<TokenResult>("post", {}, data, "/api/system/register");
+    return this.request<TokenResult>(
+      "post",
+      {},
+      data,
+      "/api/identity/register"
+    );
   };
 
   /** 注册方式能力探测（data 仅在显式传入时作为请求体） */
@@ -230,13 +235,13 @@ class AuthApi extends BaseApi {
       "get",
       {},
       data,
-      "/api/system/register"
+      "/api/identity/register"
     );
   };
 
   /** 登出 */
   logout = (data?: object) => {
-    return this.request<TokenResult>("post", {}, data, "/api/system/logout");
+    return this.request<TokenResult>("post", {}, data, "/api/identity/logout");
   };
 
   /** 退出用户模拟：服务端为模拟发起人重签 token（安全阀，模拟态无条件可达） */
@@ -245,7 +250,7 @@ class AuthApi extends BaseApi {
       "post",
       {},
       data,
-      "/api/system/impersonate/exit"
+      "/api/identity/impersonate/exit"
     );
   };
 
@@ -255,7 +260,7 @@ class AuthApi extends BaseApi {
       "get",
       {},
       undefined,
-      "/api/system/rules/password"
+      "/api/identity/rules/password"
     );
   };
 
@@ -265,7 +270,7 @@ class AuthApi extends BaseApi {
       "post",
       {},
       data,
-      "/api/system/auth/reset"
+      "/api/identity/auth/reset"
     );
   };
 
@@ -275,7 +280,7 @@ class AuthApi extends BaseApi {
       "get",
       params,
       undefined,
-      "/api/system/auth/invite/validate"
+      "/api/identity/auth/invite/validate"
     );
   };
 
@@ -286,12 +291,12 @@ class AuthApi extends BaseApi {
       "post",
       {},
       data,
-      "/api/system/auth/invite/accept"
+      "/api/identity/auth/invite/accept"
     );
   };
 }
 
-export const authApi = new AuthApi("/api/system/auth");
+export const authApi = new AuthApi("/api/identity/auth");
 
 /* ---------------- 既有命名导出改薄委托：消费方与测试 mock 依赖这些函数名，签名与返回类型不变 ---------------- */
 
@@ -331,12 +336,12 @@ export const inviteAcceptApi = (data?: object) => authApi.inviteAccept(data);
  * 载荷，与线上字节级等价约束冲突，故不入 AuthApi。
  */
 export const verifyCodeConfigApi = (params?: object) => {
-  return http.request<AuthInfoResult>("get", "/api/system/auth/verify", {
+  return http.request<AuthInfoResult>("get", "/api/identity/auth/verify", {
     params
   });
 };
 export const verifyCodeSendApi = (params?: object, data?: object) => {
-  return http.request<TokenResult>("post", "/api/system/auth/verify", {
+  return http.request<TokenResult>("post", "/api/identity/auth/verify", {
     params,
     data
   });

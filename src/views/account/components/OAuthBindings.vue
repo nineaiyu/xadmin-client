@@ -3,14 +3,14 @@ import ReEmpty from "@/components/ReEmpty";
 import { SUCCESS_CODE } from "@/api/types";
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { deviceDetection } from "@pureadmin/utils";
 import {
   OAUTH_BIND_FLAG,
   oauthApi,
   type OAuthProvider
-} from "@/api/system/oauth";
+} from "@/api/identity/oauth";
 import { message } from "@/utils/message";
 import { ElMessageBox } from "element-plus";
+import AccountPanel from "./AccountPanel.vue";
 
 /**
  * 个人中心「第三方账号」：已绑定清单（解绑需口令二次确认）+ 可绑定入口。
@@ -125,30 +125,19 @@ defineExpose({ load });
 </script>
 
 <template>
-  <div :class="['min-w-45', deviceDetection() ? 'max-w-full' : 'max-w-[70%]']">
-    <h3 class="my-8!">{{ t("oauth.tabTitle") }}</h3>
-    <el-alert
-      type="info"
-      :closable="false"
-      :title="t('oauth.bindTip')"
-      class="mb-4"
-    />
-
-    <div class="mb-2 text-sm font-medium">{{ t("oauth.bound") }}</div>
-    <div v-loading="loading" class="binding-list">
-      <ReEmpty
-        v-if="rows.length === 0"
-        :description="t('oauth.noBindings')"
-        :image-size="60"
-      />
-      <div v-for="row in rows" :key="row.pk" class="binding-row">
-        <div class="min-w-0 flex-1">
-          <div class="truncate">
+  <AccountPanel :title="t('oauth.tabTitle')" :description="t('oauth.bindTip')">
+    <p class="account-section-title">{{ t("oauth.bound") }}</p>
+    <div v-loading="loading">
+      <div v-if="rows.length === 0" class="account-empty">
+        <ReEmpty :description="t('oauth.noBindings')" :image-size="60" />
+      </div>
+      <!-- provider-row / binding-row：既有 E2E 的行定位钩子，与样式类并存 -->
+      <div v-for="row in rows" :key="row.pk" class="account-row binding-row">
+        <div class="account-row__main">
+          <div class="account-row__title truncate">
             {{ row.provider_name || row.provider }} · {{ displayName(row) }}
           </div>
-          <div class="mt-1 text-xs text-(--el-text-color-regular)">
-            {{ row.created_time }}
-          </div>
+          <span class="account-row__desc">{{ row.created_time }}</span>
         </div>
         <el-button link type="danger" @click="unbind(row)">
           {{ t("oauth.unbind") }}
@@ -156,17 +145,14 @@ defineExpose({ load });
       </div>
     </div>
 
-    <div class="mt-6 mb-2 text-sm font-medium">{{ t("oauth.bindable") }}</div>
-    <div
-      v-loading="providersLoading"
-      :class="{ 'provider-list': bindableProviders.length > 0 }"
-    >
+    <p class="account-section-title">{{ t("oauth.bindable") }}</p>
+    <div v-loading="providersLoading">
       <div
         v-for="item in bindableProviders"
         :key="item.key"
-        class="provider-row"
+        class="account-row provider-row"
       >
-        <div class="min-w-0 flex-1 truncate">{{ item.name }}</div>
+        <div class="account-row__main truncate">{{ item.name }}</div>
         <el-button
           type="primary"
           plain
@@ -189,26 +175,5 @@ defineExpose({ load });
         :title="t('oauth.allBound')"
       />
     </div>
-  </div>
+  </AccountPanel>
 </template>
-
-<style lang="scss" scoped>
-.binding-list,
-.provider-list {
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 6px;
-}
-
-.binding-row,
-.provider-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  padding: 8px 10px;
-
-  & + .binding-row,
-  & + .provider-row {
-    border-top: 1px solid var(--el-border-color-lighter);
-  }
-}
-</style>

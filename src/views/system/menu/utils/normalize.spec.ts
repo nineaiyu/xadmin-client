@@ -42,7 +42,7 @@ const RAW_MENU = {
 const RAW_PERMISSION = {
   pk: 3,
   name: "list:SystemUser",
-  path: "api/system/user$",
+  path: "api/identity/user$",
   method: { value: "GET", label: "GET" },
   menu_type: { value: MenuChoices.PERMISSION, label: "权限" },
   parent: 2,
@@ -182,7 +182,7 @@ describe("行派生能力", () => {
   it("rowPathText：权限点带请求方法，其余只给路由", () => {
     const tree = buildTree();
     const flat = flattenMenuTree(tree);
-    expect(rowPathText(flat[2])).toBe("GET api/system/user$");
+    expect(rowPathText(flat[2])).toBe("GET api/identity/user$");
     expect(rowPathText(flat[1])).toBe("/system/user/index");
   });
 });

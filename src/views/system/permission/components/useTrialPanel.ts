@@ -14,7 +14,7 @@ export type { TrialPanelProps } from "./useTrialContext";
  * - 共享上下文（折叠态/权限码/作用域/目标用户/表单草稿上下文）见 useTrialContext。
  *
  * 跨域依赖登记：试算复用 SystemUser 域的能力——权限点 `previewTrial:SystemUser`
- * 与 userApi.previewTrial / previewFieldTrial（`/api/system/user/{pk}/preview/trial`、
+ * 与 userApi.previewTrial / previewFieldTrial（`/api/identity/user/{pk}/preview/trial`、
  * `.../preview/field-trial`）；用户域权限点或这两个端点变更时需同步本页。
  */
 export function useTrialPanel(props: TrialPanelProps) {

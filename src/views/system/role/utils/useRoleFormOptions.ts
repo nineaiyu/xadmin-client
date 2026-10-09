@@ -1,6 +1,6 @@
 import { h, shallowRef } from "vue";
 import { getKeyList } from "@pureadmin/utils";
-import type { roleApi } from "@/api/system/role";
+import type { roleApi } from "@/api/identity/role";
 import menuFieldForm from "../components/RoleForm.vue";
 import type { RePlusPageProps } from "@/components/RePlusPage";
 import type { PermissionTreeNode } from "./permissionTree";

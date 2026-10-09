@@ -22,7 +22,7 @@ test("变更历史：编辑用户后行按钮弹窗展示字段级 diff", async 
   const username = `e2e_hist_${Date.now()}`;
   const token = await getAccessToken(page);
   const createResponse = await page.request.post(
-    `${BACKEND_URL}/api/system/user`,
+    `${BACKEND_URL}/api/identity/user`,
     {
       data: {
         username,

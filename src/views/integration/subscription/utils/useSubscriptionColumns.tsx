@@ -4,7 +4,7 @@ import {
   formatPageColumns,
   type PageTableColumn
 } from "@/components/RePlusPage";
-import type { WebhookSubscriptionItem } from "@/api/system/webhook";
+import type { WebhookSubscriptionItem } from "@/api/task/webhook";
 
 /**
  * Webhook 订阅列渲染（自 subscription/utils/hook 抽出）：事件标签列表与

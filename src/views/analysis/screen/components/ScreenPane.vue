@@ -2,7 +2,7 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { cardRenderHeight } from "@/utils/cardHeight";
-import ChartCard from "@/views/dashboard/components/ChartCard.vue";
+import { ChartCardAsync as ChartCard } from "@/views/dashboard/components/ChartCardAsync";
 import type { DashboardCard } from "@/api/dataset/datasets";
 import type { ScreenLayoutPane } from "@/api/dataset/analysis";
 import type { ExportedImage } from "@/utils/imageExport";

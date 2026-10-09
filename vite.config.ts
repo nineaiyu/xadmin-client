@@ -113,20 +113,21 @@ export default async ({ mode }: ConfigEnv): Promise<UserConfigExport> => {
           // 第三方 vendor 分包：首屏并行加载 + 长缓存，主 chunk 只保留应用代码。
           // 注意：不要加"兜底 node_modules"组——它会把仅被懒加载视图使用的库
           // 提升进急加载依赖图（实测首屏 gzip 699KB→1203KB 的回退）。
+          // 同理，为「既被急加载、又被按需 import」的库（plus-pro 语言包 + 组件库）
+          // 分组时须把两者拆成两个组，否则合并后的 chunk 会被急加载侧拉回首屏。
           advancedChunks: {
             groups: [
               {
                 name: "vue-core",
                 test: /node_modules[\\/](vue|@vue|vue-router|pinia|vue-demi|@intlify|vue-i18n|@vueuse|@vueuse\/motion)[\\/]/
               },
-              {
-                name: "element-plus",
-                test: /node_modules[\\/](element-plus|@element-plus)[\\/]/
-              },
-              {
-                name: "plus-pro",
-                test: /node_modules[\\/]plus-pro-components[\\/]/
-              },
+              // element-plus 不设分组：手工分组会把「外壳共享内部模块」与
+              // 「仅业务页面消费的组件」并进同一 chunk，该 chunk 一旦被急加载侧
+              // 引用就整体回到首屏（实测闭包无收益）。交由 rolldown 按
+              // 静态 / 动态 import 边界自然分块。
+              // plus-pro 不设分组：语言包（App.vue 急加载）与其样式入口
+              // (`plus-pro-components/index.css`) 会把同名 chunk 变成急加载块，
+              // 从而把按需的组件库一并拉回首屏。交由 rolldown 自然分块。
               {
                 name: "echarts",
                 test: /node_modules[\\/](echarts|zrender)[\\/]/

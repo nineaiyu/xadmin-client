@@ -9,14 +9,14 @@ vi.mock("@/utils/http", () => ({
   http: { request: requestMock, upload: uploadMock }
 }));
 
-import { userApi } from "./user";
+import { userApi } from "../identity/user";
 import {
   crontabScheduleApi,
   intervalScheduleApi,
   periodicTaskApi,
   taskCenterApi,
   taskExecutionApi
-} from "./task";
+} from "../task/task";
 import { configApi } from "@/api/config";
 import { countriesApi, resourcesIDCacheApi } from "@/api/common";
 
@@ -32,7 +32,7 @@ describe("userApi 用户管理动作", () => {
     userApi.batchUpdate([1], { dept: 2 });
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/user/batch-update",
+      "/api/identity/user/batch-update",
       {
         params: {},
         data: { pks: [1], fields: { dept: 2 }, _write_marker: "batchUpdate" }
@@ -42,7 +42,7 @@ describe("userApi 用户管理动作", () => {
 
     userApi.upload(9, { avatar: "x" }, "avatar");
     expect(uploadMock).toHaveBeenLastCalledWith(
-      "/api/system/user/9/avatar",
+      "/api/identity/user/9/avatar",
       {},
       { avatar: "x" },
       undefined
@@ -50,7 +50,7 @@ describe("userApi 用户管理动作", () => {
 
     userApi.upload(9, { file: "x" });
     expect(uploadMock).toHaveBeenLastCalledWith(
-      "/api/system/user/9/upload",
+      "/api/identity/user/9/upload",
       {},
       { file: "x" },
       undefined
@@ -61,7 +61,7 @@ describe("userApi 用户管理动作", () => {
     userApi.resetPassword(1, { password: "x" });
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/user/1/reset-password",
+      "/api/identity/user/1/reset-password",
       { params: {}, data: { password: "x" } },
       {}
     );
@@ -69,7 +69,7 @@ describe("userApi 用户管理动作", () => {
     userApi.invite(1, { email: "a@b.c" });
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/user/1/invite",
+      "/api/identity/user/1/invite",
       { params: {}, data: { email: "a@b.c" } },
       {}
     );
@@ -77,7 +77,7 @@ describe("userApi 用户管理动作", () => {
     userApi.empower(1, { roles: [3] });
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/user/1/empower",
+      "/api/identity/user/1/empower",
       { params: {}, data: { roles: [3] } },
       {}
     );
@@ -85,7 +85,7 @@ describe("userApi 用户管理动作", () => {
     userApi.unblock(1);
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/user/1/unblock",
+      "/api/identity/user/1/unblock",
       { params: {}, data: undefined },
       {}
     );
@@ -93,7 +93,7 @@ describe("userApi 用户管理动作", () => {
     userApi.resetMfa(1);
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/user/1/reset-mfa",
+      "/api/identity/user/1/reset-mfa",
       { params: {}, data: undefined },
       {}
     );
@@ -101,7 +101,7 @@ describe("userApi 用户管理动作", () => {
     userApi.logout(1, { reason: "admin" });
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/user/1/logout",
+      "/api/identity/user/1/logout",
       { params: {}, data: { reason: "admin" } },
       {}
     );
@@ -111,7 +111,7 @@ describe("userApi 用户管理动作", () => {
     userApi.preview(1);
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/user/1/preview",
+      "/api/identity/user/1/preview",
       { params: {}, data: {} },
       {}
     );
@@ -119,7 +119,7 @@ describe("userApi 用户管理动作", () => {
     userApi.previewTrial(1, { model: "system.User" });
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/user/1/preview/trial",
+      "/api/identity/user/1/preview/trial",
       { params: {}, data: { model: "system.User" } },
       {}
     );
@@ -127,7 +127,7 @@ describe("userApi 用户管理动作", () => {
     userApi.previewFieldTrial(1, { menu: "user" });
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/user/1/preview/trial",
+      "/api/identity/user/1/preview/trial",
       { params: {}, data: { menu: "user", scope: "field" } },
       {}
     );
@@ -137,7 +137,7 @@ describe("userApi 用户管理动作", () => {
     userApi.imBindingList(1);
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/user/1/im-binding",
+      "/api/identity/user/1/im-binding",
       { params: {}, data: {} },
       {}
     );
@@ -145,7 +145,7 @@ describe("userApi 用户管理动作", () => {
     userApi.imBinding(1, { provider: "wecom", subject: "s1" });
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/user/1/im-binding",
+      "/api/identity/user/1/im-binding",
       { params: {}, data: { provider: "wecom", subject: "s1" } },
       {}
     );
@@ -153,7 +153,7 @@ describe("userApi 用户管理动作", () => {
     userApi.imUnbind(1, "wecom");
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/user/1/im-unbind",
+      "/api/identity/user/1/im-unbind",
       { params: {}, data: { provider: "wecom" } },
       {}
     );
@@ -167,7 +167,7 @@ describe("periodicTaskApi 定时任务", () => {
     periodicTaskApi.run(5);
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/tasks/periodic/5/run",
+      "/api/task/periodic/5/run",
       { params: {}, data: {} },
       {}
     );
@@ -175,7 +175,7 @@ describe("periodicTaskApi 定时任务", () => {
     periodicTaskApi.batchRun([1, 2]);
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/tasks/periodic/batch-run",
+      "/api/task/periodic/batch-run",
       { params: {}, data: [1, 2] },
       {}
     );
@@ -183,7 +183,7 @@ describe("periodicTaskApi 定时任务", () => {
     periodicTaskApi.batchEnable([1, 2]);
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/tasks/periodic/batch-enable",
+      "/api/task/periodic/batch-enable",
       { params: {}, data: { pks: [1, 2], enabled: undefined } },
       {}
     );
@@ -191,7 +191,7 @@ describe("periodicTaskApi 定时任务", () => {
     periodicTaskApi.batchEnable([3], true);
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/tasks/periodic/batch-enable",
+      "/api/task/periodic/batch-enable",
       { params: {}, data: { pks: [3], enabled: true } },
       {}
     );
@@ -201,7 +201,7 @@ describe("periodicTaskApi 定时任务", () => {
     periodicTaskApi.clone(7);
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/tasks/periodic/7/clone",
+      "/api/task/periodic/7/clone",
       { params: {}, data: {} },
       {}
     );
@@ -209,7 +209,7 @@ describe("periodicTaskApi 定时任务", () => {
     periodicTaskApi.registered();
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/tasks/periodic/registered",
+      "/api/task/periodic/registered",
       { params: {}, data: {} },
       {}
     );
@@ -217,7 +217,7 @@ describe("periodicTaskApi 定时任务", () => {
     periodicTaskApi.batchUpdate([1], { is_active: false });
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/tasks/periodic/batch-update",
+      "/api/task/periodic/batch-update",
       {
         params: {},
         data: {
@@ -234,7 +234,7 @@ describe("periodicTaskApi 定时任务", () => {
     crontabScheduleApi.list({ page: 1 });
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/tasks/crontab",
+      "/api/task/crontab",
       { params: { page: 1 }, data: {} },
       {}
     );
@@ -242,7 +242,7 @@ describe("periodicTaskApi 定时任务", () => {
     intervalScheduleApi.list();
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/tasks/interval",
+      "/api/task/interval",
       { params: {}, data: {} },
       {}
     );
@@ -250,7 +250,7 @@ describe("periodicTaskApi 定时任务", () => {
     taskExecutionApi.stats();
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/tasks/executions/stats",
+      "/api/task/executions/stats",
       { params: {}, data: {} },
       {}
     );
@@ -264,7 +264,7 @@ describe("taskCenterApi 任务中心", () => {
     taskCenterApi.getUnified({ type: "export", page: 2, size: 20 });
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/tasks/unified",
+      "/api/task/unified",
       { params: { type: "export", page: 2, size: 20 }, data: {} },
       {}
     );
@@ -274,7 +274,7 @@ describe("taskCenterApi 任务中心", () => {
     taskCenterApi.cancel("task", "t1");
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/tasks/unified/cancel",
+      "/api/task/unified/cancel",
       { params: {}, data: { type: "task", pk: "t1" } },
       {}
     );
@@ -282,7 +282,7 @@ describe("taskCenterApi 任务中心", () => {
     taskCenterApi.rerun("export", "e1");
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/tasks/unified/rerun",
+      "/api/task/unified/rerun",
       { params: {}, data: { type: "export", pk: "e1" } },
       {}
     );

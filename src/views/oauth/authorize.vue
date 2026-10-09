@@ -3,7 +3,10 @@ import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { SUCCESS_CODE } from "@/api/types";
-import { oauthAuthorizeApi, type OAuthAuthorizeInfo } from "@/api/system/open";
+import {
+  oauthAuthorizeApi,
+  type OAuthAuthorizeInfo
+} from "@/api/identity/open";
 import { normalizeError } from "@/utils/apiError";
 
 /**

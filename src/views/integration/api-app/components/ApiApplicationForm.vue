@@ -8,7 +8,7 @@ import {
   parseListText,
   type ApiApplicationGrant,
   type ApiApplicationItem
-} from "@/api/system/open";
+} from "@/api/identity/open";
 import ApiScopeEditor from "@/components/ApiScopeEditor/index.vue";
 import ApiGrantEditor from "./ApiGrantEditor.vue";
 

@@ -33,4 +33,4 @@ class UserInfoApi extends ViewBaseApi {
   };
 }
 
-export const userInfoApi = new UserInfoApi("/api/system/userinfo");
+export const userInfoApi = new UserInfoApi("/api/identity/userinfo");

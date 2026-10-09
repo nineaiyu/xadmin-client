@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 /**
  * 账户设置页「Passkey 凭据」面板：复用个人凭据管理面板，
- * 按账户页面板规范补 h3 标题与宽度约束（对齐 Profile / MfaSecurity）。
+ * 容器 / 标题 / 留白由 AccountPanel 统一提供（对齐其余页签）。
  */
-import { deviceDetection } from "@pureadmin/utils";
+import AccountPanel from "./AccountPanel.vue";
 import UserPasskeyPanel from "./UserPasskeyPanel.vue";
 
 defineOptions({
@@ -12,8 +12,7 @@ defineOptions({
 </script>
 
 <template>
-  <div :class="['min-w-45', deviceDetection() ? 'max-w-full' : 'max-w-[70%]']">
-    <h3 class="my-8!">{{ $t("passkey.title") }}</h3>
+  <AccountPanel :title="$t('passkey.title')">
     <UserPasskeyPanel />
-  </div>
+  </AccountPanel>
 </template>

@@ -6,7 +6,7 @@ import {
   type ApiApplicationGrant,
   type GrantModelOption,
   type RowFilterRule
-} from "@/api/system/open";
+} from "@/api/identity/open";
 import { message } from "@/utils/message";
 
 /**

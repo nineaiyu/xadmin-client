@@ -62,7 +62,7 @@ async function createChainRule(
       headers: { Authorization: `Bearer ${token}` },
       data: {
         name,
-        path_patterns: ["api/system/user/(?P<pk>[^/.]+)$"],
+        path_patterns: ["api/identity/user/(?P<pk>[^/.]+)$"],
         // 空清单 = 不限方法（存量语义）；限定后仅清单内方法命中
         ...(methods ? { methods } : {}),
         priority: 100,
@@ -87,7 +87,7 @@ async function disableRule(page: Page, token: string, pk: string) {
 
 async function submitDelete(page: Page, token: string, userPk: string) {
   const denied = await page.request.delete(
-    `${BACKEND_URL}/api/system/user/${userPk}`,
+    `${BACKEND_URL}/api/identity/user/${userPk}`,
     {
       headers: { Authorization: `Bearer ${token}` }
     }
@@ -106,14 +106,17 @@ test.describe.serial("审批规则多级审批链", () => {
 
     // 待删除用户（申请人对敏感操作发起删除 → 412 建单）；密码走 AES v2 加密
     const username = `e2e_chain_u_${Date.now()}`;
-    const created = await page.request.post(`${BACKEND_URL}/api/system/user`, {
-      headers,
-      data: {
-        username,
-        nickname: "e2e-chain",
-        password: await AesEncrypted(username, "E2E-Chain-2026!")
+    const created = await page.request.post(
+      `${BACKEND_URL}/api/identity/user`,
+      {
+        headers,
+        data: {
+          username,
+          nickname: "e2e-chain",
+          password: await AesEncrypted(username, "E2E-Chain-2026!")
+        }
       }
-    });
+    );
     const createdPayload = await created.json();
     const userPk = createdPayload?.data?.pk as string;
     expect(userPk, JSON.stringify(createdPayload)).toBeTruthy();
@@ -136,7 +139,7 @@ test.describe.serial("审批规则多级审批链", () => {
     ]);
 
     try {
-      await setApprovalPaths(page, token, ["^/api/system/user/[^/]+$"]);
+      await setApprovalPaths(page, token, ["^/api/identity/user/[^/]+$"]);
       const approvalId = await submitDelete(page, token, userPk);
       const no8 = approvalId.slice(0, 8).toUpperCase();
 
@@ -235,14 +238,17 @@ test.describe.serial("审批规则多级审批链", () => {
     const headers = { Authorization: `Bearer ${token}` };
 
     const username = `e2e_chain_r_${Date.now()}`;
-    const created = await page.request.post(`${BACKEND_URL}/api/system/user`, {
-      headers,
-      data: {
-        username,
-        nickname: "e2e-chain-reject",
-        password: await AesEncrypted(username, "E2E-Chain-2026!")
+    const created = await page.request.post(
+      `${BACKEND_URL}/api/identity/user`,
+      {
+        headers,
+        data: {
+          username,
+          nickname: "e2e-chain-reject",
+          password: await AesEncrypted(username, "E2E-Chain-2026!")
+        }
       }
-    });
+    );
     const createdPayload = await created.json();
     const userPk = createdPayload?.data?.pk as string;
     expect(userPk, JSON.stringify(createdPayload)).toBeTruthy();
@@ -265,7 +271,7 @@ test.describe.serial("审批规则多级审批链", () => {
     ]);
 
     try {
-      await setApprovalPaths(page, token, ["^/api/system/user/[^/]+$"]);
+      await setApprovalPaths(page, token, ["^/api/identity/user/[^/]+$"]);
 
       // 单 A：初审驳回 → 整单终止
       const rejectedId = await submitDelete(page, token, userPk);
@@ -346,7 +352,7 @@ test.describe.serial("审批规则多级审批链", () => {
         .waitFor({ state: "detached", timeout: 12_000 })
         .catch(() => undefined);
       const deleteAgain = await page.request.delete(
-        `${BACKEND_URL}/api/system/user/${userPk}`,
+        `${BACKEND_URL}/api/identity/user/${userPk}`,
         {
           headers: { ...headers, "X-Approval-Id": approvedId }
         }
@@ -364,14 +370,17 @@ test.describe.serial("审批规则多级审批链", () => {
     const headers = { Authorization: `Bearer ${token}` };
 
     const username = `e2e_chain_m_${Date.now()}`;
-    const created = await page.request.post(`${BACKEND_URL}/api/system/user`, {
-      headers,
-      data: {
-        username,
-        nickname: "e2e-chain-method",
-        password: await AesEncrypted(username, "E2E-Chain-2026!")
+    const created = await page.request.post(
+      `${BACKEND_URL}/api/identity/user`,
+      {
+        headers,
+        data: {
+          username,
+          nickname: "e2e-chain-method",
+          password: await AesEncrypted(username, "E2E-Chain-2026!")
+        }
       }
-    });
+    );
     const createdPayload = await created.json();
     const userPk = createdPayload?.data?.pk as string;
     expect(userPk, JSON.stringify(createdPayload)).toBeTruthy();
@@ -395,7 +404,7 @@ test.describe.serial("审批规则多级审批链", () => {
     );
 
     try {
-      await setApprovalPaths(page, token, ["^/api/system/user/[^/]+$"]);
+      await setApprovalPaths(page, token, ["^/api/identity/user/[^/]+$"]);
       const approvalId = await submitDelete(page, token, userPk);
       const no8 = approvalId.slice(0, 8).toUpperCase();
 
@@ -445,7 +454,7 @@ test.describe.serial("审批规则多级审批链", () => {
         .waitFor({ state: "detached", timeout: 12_000 })
         .catch(() => undefined);
       const deleteAgain = await page.request.delete(
-        `${BACKEND_URL}/api/system/user/${userPk}`,
+        `${BACKEND_URL}/api/identity/user/${userPk}`,
         {
           headers: { ...headers, "X-Approval-Id": approvalId }
         }

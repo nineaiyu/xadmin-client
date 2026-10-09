@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
-import { postApi } from "@/api/system/post";
+import { postApi } from "@/api/identity/post";
 import type { PostPreviewResult } from "@/api/types/permission-preview";
 import {
   PreviewDescriptions,

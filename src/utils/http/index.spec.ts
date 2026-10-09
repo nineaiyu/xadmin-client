@@ -67,7 +67,7 @@ vi.mock("@/utils/message", () => ({
   message: vi.fn()
 }));
 
-vi.mock("element-plus", () => ({
+vi.mock("element-plus/es/components/message/index.mjs", () => ({
   ElMessage: { error: elMessageMock, warning: elMessageMock }
 }));
 
@@ -93,22 +93,22 @@ describe("PureHttp 请求分发", () => {
   });
 
   it("get 透传 method / url / params", async () => {
-    await http.get("/api/system/user", { params: { page: 1 } });
+    await http.get("/api/identity/user", { params: { page: 1 } });
     expect(instanceMock.request).toHaveBeenCalledWith(
       expect.objectContaining({
         method: "get",
-        url: "/api/system/user",
+        url: "/api/identity/user",
         params: { page: 1 }
       })
     );
   });
 
   it("post 透传 method / url / data", async () => {
-    await http.post("/api/system/user", { data: { username: "lisi" } });
+    await http.post("/api/identity/user", { data: { username: "lisi" } });
     expect(instanceMock.request).toHaveBeenCalledWith(
       expect.objectContaining({
         method: "post",
-        url: "/api/system/user",
+        url: "/api/identity/user",
         data: { username: "lisi" }
       })
     );
@@ -295,7 +295,7 @@ describe("PureHttp 412 敏感操作审批（code=1002）令牌生命周期", () 
     instanceMock.request.mockRejectedValueOnce(makeApproval412());
 
     await expect(
-      http.request("delete", "/api/system/user/1", {})
+      http.request("delete", "/api/identity/user/1", {})
     ).rejects.toMatchObject({ code: 1002 });
 
     expect(confirmMfaMock).not.toHaveBeenCalled();
@@ -309,7 +309,7 @@ describe("PureHttp 412 敏感操作审批（code=1002）令牌生命周期", () 
     // 无暂存令牌的请求：拦截器不注入审批头
     const plainConfig = {
       method: "delete",
-      url: "/api/system/user/1",
+      url: "/api/identity/user/1",
       headers: {} as Record<string, string>
     };
     await interceptorHooks.requestResolved?.(plainConfig);
@@ -318,13 +318,13 @@ describe("PureHttp 412 敏感操作审批（code=1002）令牌生命周期", () 
     // 触发 1002：令牌入暂存表
     instanceMock.request.mockRejectedValueOnce(makeApproval412());
     await expect(
-      http.request("delete", "/api/system/user/1", {})
+      http.request("delete", "/api/identity/user/1", {})
     ).rejects.toBeTruthy();
 
     // 有暂存令牌的同指纹请求：拦截器注入令牌
     const retryConfig = {
       method: "delete",
-      url: "/api/system/user/1",
+      url: "/api/identity/user/1",
       headers: {} as Record<string, string>
     };
     await interceptorHooks.requestResolved?.(retryConfig);
@@ -338,7 +338,7 @@ describe("PureHttp 412 敏感操作审批（code=1002）令牌生命周期", () 
     });
     const thirdConfig = {
       method: "delete",
-      url: "/api/system/user/1",
+      url: "/api/identity/user/1",
       headers: {} as Record<string, string>
     };
     await interceptorHooks.requestResolved?.(thirdConfig);
@@ -351,12 +351,12 @@ describe("PureHttp 412 敏感操作审批（code=1002）令牌生命周期", () 
     const body = { pks: ["pk-a"] };
     instanceMock.request.mockRejectedValueOnce(makeApproval412());
     await expect(
-      http.request("post", "/api/system/user/batch-destroy", { data: body })
+      http.request("post", "/api/identity/user/batch-destroy", { data: body })
     ).rejects.toBeTruthy();
 
     const retryConfig = {
       method: "post",
-      url: "/api/system/user/batch-destroy",
+      url: "/api/identity/user/batch-destroy",
       data: { ...body },
       headers: {} as Record<string, string>
     };
@@ -372,7 +372,7 @@ describe("PureHttp 412 敏感操作审批（code=1002）令牌生命周期", () 
 
     const thirdConfig = {
       method: "post",
-      url: "/api/system/user/batch-destroy",
+      url: "/api/identity/user/batch-destroy",
       data: { ...body },
       headers: {} as Record<string, string>
     };
@@ -386,17 +386,17 @@ describe("PureHttp 412 敏感操作审批（code=1002）令牌生命周期", () 
       .mockRejectedValueOnce(makeApproval403());
 
     await expect(
-      http.request("delete", "/api/system/user/2", {})
+      http.request("delete", "/api/identity/user/2", {})
     ).rejects.toBeTruthy();
     await expect(
-      http.request("delete", "/api/system/user/2", {})
+      http.request("delete", "/api/identity/user/2", {})
     ).rejects.toBeTruthy();
 
     // 第二次请求虽携带了暂存令牌，但消费被拒 403 后令牌已清除：
     // 第三次重发不再注入
     const thirdConfig = {
       method: "delete",
-      url: "/api/system/user/2",
+      url: "/api/identity/user/2",
       headers: {}
     };
     await interceptorHooks.requestResolved?.(thirdConfig);
@@ -408,14 +408,14 @@ describe("PureHttp 412 敏感操作审批（code=1002）令牌生命周期", () 
   it("不同指纹（body 不同）不串用暂存令牌", async () => {
     instanceMock.request.mockRejectedValueOnce(makeApproval412());
     await expect(
-      http.request("post", "/api/system/user/batch-destroy", {
+      http.request("post", "/api/identity/user/batch-destroy", {
         data: ["pk-a"]
       })
     ).rejects.toBeTruthy();
 
     const otherBodyConfig = {
       method: "post",
-      url: "/api/system/user/batch-destroy",
+      url: "/api/identity/user/batch-destroy",
       data: ["pk-b"],
       headers: {}
     };

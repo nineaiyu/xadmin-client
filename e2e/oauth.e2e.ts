@@ -100,7 +100,7 @@ test("provider 配置清空：登录页第三方入口整体休眠", async ({
 test("未配置 provider：authorize 返回可读业务错误", async ({ page }) => {
   await login(page);
   const resp = await page.request.get(
-    `${FRONT_URL}/api/system/auth/oauth/stub-idp/authorize`
+    `${FRONT_URL}/api/identity/auth/oauth/stub-idp/authorize`
   );
   const body = await resp.json();
   expect(body.code).toBe(1006);
@@ -128,7 +128,7 @@ test("个人中心：第三方账号页签展示空态与绑定入口", async ({
 test("个人中心：绑定授权地址可取（已登录 + 带 state）", async ({ page }) => {
   await login(page);
   const resp = await page.request.get(
-    `${FRONT_URL}/api/system/auth/oauth/feishu/bind-authorize`
+    `${FRONT_URL}/api/identity/auth/oauth/feishu/bind-authorize`
   );
   const body = await resp.json();
   expect(body.code).toBe(1000);

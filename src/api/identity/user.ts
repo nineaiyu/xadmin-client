@@ -170,4 +170,4 @@ class UserApi extends BaseApi {
   };
 }
 
-export const userApi = new UserApi("/api/system/user");
+export const userApi = new UserApi("/api/identity/user");

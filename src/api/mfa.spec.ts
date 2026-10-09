@@ -142,7 +142,7 @@ describe("mfaApi 二次验证与 OTP 管理", () => {
     loginMfaSendCodeApi({ method: "email", mfa_token: "t1" });
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/login/mfa/send-code",
+      "/api/identity/login/mfa/send-code",
       { params: {}, data: { method: "email", mfa_token: "t1" } },
       {}
     );
@@ -150,7 +150,7 @@ describe("mfaApi 二次验证与 OTP 管理", () => {
     loginMfaVerifyApi({ method: "email", code: "654321", mfa_token: "t1" });
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/login/mfa/verify",
+      "/api/identity/login/mfa/verify",
       {
         params: {},
         data: { method: "email", code: "654321", mfa_token: "t1" }

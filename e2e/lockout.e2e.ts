@@ -15,7 +15,7 @@ import {
  * settings_e2e 已将 IP 限流放宽，避免本机 IP 被连带封禁影响其他用例。
  */
 
-const LOGIN_API = `${FRONT_URL}/api/system/login/basic`;
+const LOGIN_API = `${FRONT_URL}/api/identity/login/basic`;
 
 async function wrongLogin(page: import("@playwright/test").Page) {
   // 登录接口强制校验一次性临时 Token（system/utils/auth.py::check_tmp_token）：

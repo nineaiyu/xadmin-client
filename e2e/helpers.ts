@@ -319,7 +319,7 @@ export function waitAppWebSocket(page: Page, timeout = 20_000) {
  */
 export async function fetchTempToken(page: Page): Promise<string> {
   const response = await page.request.get(
-    `${FRONT_URL}/api/system/auth/token`,
+    `${FRONT_URL}/api/identity/auth/token`,
     {
       headers: { "User-Agent": E2E_USER_AGENT }
     }

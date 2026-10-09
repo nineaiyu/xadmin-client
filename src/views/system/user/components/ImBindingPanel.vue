@@ -11,7 +11,7 @@ import {
 import { useI18n } from "vue-i18n";
 import type { RecordType } from "plus-pro-components";
 
-import { userApi } from "@/api/system/user";
+import { userApi } from "@/api/identity/user";
 import { SUCCESS_CODE } from "@/api/types";
 import { message } from "@/utils/message";
 

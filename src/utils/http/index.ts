@@ -23,7 +23,7 @@ import {
 } from "@/utils/auth";
 import { useUserStoreHook } from "@/store/modules/user";
 import { message } from "@/utils/message";
-import { ElMessage } from "element-plus";
+import { ElMessage } from "element-plus/es/components/message/index.mjs";
 import { announce } from "@/utils/announcer";
 import { downloadByData } from "@pureadmin/utils";
 import { resolveDownloadFilename } from "@/utils/download";
@@ -95,7 +95,7 @@ class PureHttp {
   ): AbortController | null {
     if (config.skipRouteCancel || config.responseType === "blob") return null;
     if (
-      ["/api/system/refresh", "/api/system/login"].some(url =>
+      ["/api/identity/refresh", "/api/identity/login"].some(url =>
         (config.url ?? "").endsWith(url)
       )
     ) {
@@ -327,7 +327,7 @@ class PureHttp {
           return config as InternalAxiosRequestConfig;
         }
         /** 请求白名单，放置一些不需要`token`的接口（通过设置请求白名单，防止`token`过期后再请求造成的死循环问题） */
-        const whiteList = ["/api/system/refresh", "/api/system/login"];
+        const whiteList = ["/api/identity/refresh", "/api/identity/login"];
         return whiteList.some(url => (config.url ?? "").endsWith(url))
           ? (config as InternalAxiosRequestConfig)
           : new Promise(resolve => {

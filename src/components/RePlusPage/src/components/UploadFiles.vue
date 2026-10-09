@@ -14,7 +14,7 @@ import type { AxiosProgressEvent } from "axios";
 import defaultFile from "../assets/defaultFile.png";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
-import { systemUploadFileApi } from "@/api/system/file";
+import { systemUploadFileApi } from "@/api/file/file";
 import { message } from "@/utils/message";
 import { formatBytes } from "@pureadmin/utils";
 

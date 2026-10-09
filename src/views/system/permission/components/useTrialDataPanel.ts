@@ -1,6 +1,6 @@
 import { computed, ref } from "vue";
 import { message } from "@/utils/message";
-import { userApi } from "@/api/system/user";
+import { userApi } from "@/api/identity/user";
 import { buildModelOptions } from "./utils/trial";
 import type { useTrialContext, TrialPanelProps } from "./useTrialContext";
 import type { TrialResult } from "@/api/types/permission-preview";

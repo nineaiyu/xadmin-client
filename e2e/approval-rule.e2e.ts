@@ -60,7 +60,7 @@ test.describe("审批规则方法限定", () => {
       await dialog.getByPlaceholder("例如「书籍删除审批」").fill(ruleName);
       await dialog
         .getByPlaceholder(/自定义路径正则/)
-        .fill("api/system/user/(?P<pk>[^/.]+)$");
+        .fill("api/identity/user/(?P<pk>[^/.]+)$");
 
       // 限定方法：多选勾选 POST
       const methodItem = dialog.locator(".el-form-item", {

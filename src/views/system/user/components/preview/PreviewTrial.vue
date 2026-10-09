@@ -2,7 +2,7 @@
 import ReEmpty from "@/components/ReEmpty";
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { userApi } from "@/api/system/user";
+import { userApi } from "@/api/identity/user";
 import { message } from "@/utils/message";
 import TrialResultPanel from "@/views/system/components/TrialResultPanel.vue";
 import type {

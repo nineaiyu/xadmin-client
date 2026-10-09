@@ -2,7 +2,7 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import ReEmpty from "@/components/ReEmpty";
-import { userApi } from "@/api/system/user";
+import { userApi } from "@/api/identity/user";
 import type { UserPreviewResult } from "@/api/types/permission-preview";
 import { hasAuth } from "@/router/utils";
 import {

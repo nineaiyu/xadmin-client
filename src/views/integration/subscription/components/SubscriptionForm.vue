@@ -1,10 +1,7 @@
 <script lang="ts" setup>
 import { reactive } from "vue";
 import { useI18n } from "vue-i18n";
-import type {
-  WebhookEvent,
-  WebhookSubscriptionItem
-} from "@/api/system/webhook";
+import type { WebhookEvent, WebhookSubscriptionItem } from "@/api/task/webhook";
 import { message } from "@/utils/message";
 
 /**

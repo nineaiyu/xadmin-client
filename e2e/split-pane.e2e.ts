@@ -112,15 +112,14 @@ test("分栏拖拽持久化、刷新保持与重置", async ({ page }) => {
   );
   expect(selection).toBe("");
 
-  // 远端 PATCH（debounce 800ms）载荷为 SplitPanes 单键，其余站点配置由后端 merge
-  const patch = page.waitForRequest(
-    req =>
-      req.method() === "PATCH" &&
-      req.url().includes("/api/system/configs/WEB_SITE_CONFIG")
+  // 远端 PATCH（debounce 800ms）载荷为 SplitPanes 单键，其余站点配置由后端 merge；
+  // 等「响应」而非「请求」：刷新需读到落库后的服务器值（等请求只保证已发出，仍有竞态）
+  const patch = page.waitForResponse(
+    resp =>
+      resp.request().method() === "PATCH" &&
+      resp.url().includes("/api/system/configs/WEB_SITE_CONFIG")
   );
   await patch;
-  // 给 debounce 后的请求留出发送窗口后再刷新，避免竞态
-  await page.waitForTimeout(300);
 
   // ---- 刷新后保持（本地缓存优先） ----
   await page.reload();
@@ -166,7 +165,8 @@ test("跨设备：本机旧缓存不压制服务器值", async ({ page }) => {
   await expect(resizer).toBeVisible({ timeout: 15_000 });
   await waitListLoaded(page);
 
-  // 设备 A：拖到约 60% 并等 PATCH 落库
+  // 设备 A：拖到约 60% 并等 PATCH 落库。防抖（800ms）+ 落库缓冲属服务端写路径的
+  // 时间域，后续步骤要先刷新再读服务器值，无单一 DOM 信号可替代，保留固定观察窗
   await dragResizer(page, 0.6);
   expect(await leftPanePercent(page)).toBeGreaterThan(55);
   await page.waitForTimeout(1200);

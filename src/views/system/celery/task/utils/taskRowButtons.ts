@@ -4,7 +4,7 @@ import VideoPlay from "~icons/ep/video-play";
 import FileList from "~icons/ri/file-list-3-line";
 import FileCopy from "~icons/ri/file-copy-line";
 import type { OperationButtonsRow } from "@/components/RePlusPage";
-import type { periodicTaskApi } from "@/api/system/task";
+import type { periodicTaskApi } from "@/api/task/task";
 import type { Ref } from "vue";
 import type { useI18n } from "vue-i18n";
 

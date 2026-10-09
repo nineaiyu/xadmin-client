@@ -6,7 +6,7 @@ import {
   oauthApi,
   OAUTH_BIND_FLAG,
   type OAuthProvider
-} from "@/api/system/oauth";
+} from "@/api/identity/oauth";
 import { message } from "@/utils/message";
 
 /**

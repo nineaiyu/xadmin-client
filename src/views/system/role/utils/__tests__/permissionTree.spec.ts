@@ -42,14 +42,14 @@ function buildTree(): PermissionTreeNode[] {
             {
               pk: "a1-1",
               name: "list:SystemUser",
-              path: "api/system/user",
+              path: "api/identity/user",
               menu_type: { value: 2 },
               meta: { title: "查看用户" }
             },
             {
               pk: "a1-2",
               name: "create:SystemUser",
-              path: "api/system/user",
+              path: "api/identity/user",
               menu_type: { value: 2 },
               meta: { title: "新建用户" }
             },
@@ -365,12 +365,12 @@ describe("matchPermissionNode", () => {
     const node: PermissionTreeNode = {
       pk: "x",
       name: "list:SystemUser",
-      path: "api/system/user",
+      path: "api/identity/user",
       meta: { title: "用户管理" }
     };
     expect(matchPermissionNode(node, "用户")).toBe(true);
     expect(matchPermissionNode(node, "systemuser")).toBe(true);
-    expect(matchPermissionNode(node, "API/SYSTEM")).toBe(true);
+    expect(matchPermissionNode(node, "API/IDENTITY")).toBe(true);
     expect(matchPermissionNode(node, "角色")).toBe(false);
     expect(matchPermissionNode(node, "  ")).toBe(true);
   });

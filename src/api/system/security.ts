@@ -74,7 +74,7 @@ class AccountRiskApi extends BaseApi {
   };
 }
 
-export const accountRiskApi = new AccountRiskApi("/api/system/account-risks");
+export const accountRiskApi = new AccountRiskApi("/api/identity/account-risks");
 
 export type LoginPolicyPreviewItem = {
   pk: string;
@@ -137,7 +137,9 @@ class LoginPolicyApi extends BaseApi {
   };
 }
 
-export const loginPolicyApi = new LoginPolicyApi("/api/system/login-policies");
+export const loginPolicyApi = new LoginPolicyApi(
+  "/api/identity/login-policies"
+);
 
 export type PasskeyChallenge = {
   challenge: string;
@@ -156,7 +158,7 @@ class PasskeyApi extends BaseApi {
       "post",
       {},
       { mfa_token: mfaToken },
-      "/api/system/login/mfa/passkey/challenge"
+      "/api/identity/login/mfa/passkey/challenge"
     );
   };
   challenge = (scene: "register" | "authenticate" = "register") => {
@@ -177,7 +179,7 @@ class PasskeyApi extends BaseApi {
   };
 }
 
-export const passkeyApi = new PasskeyApi("/api/system/passkeys");
+export const passkeyApi = new PasskeyApi("/api/identity/passkeys");
 
 class SavedViewApi extends BaseApi {}
 

@@ -3,12 +3,10 @@ import Cookies from "js-cookie";
 import { getConfig } from "@/config";
 import NProgress from "@/utils/progress";
 import { transformI18n } from "@/plugins/i18n";
-import { buildHierarchyTree } from "@/utils/tree";
 import {
   cancelRoutePending,
   setCurrentRoutePath
 } from "@/utils/http/routeCancel";
-import remainingRouter from "./modules/remaining";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import { useUserStoreHook } from "@/store/modules/user";
@@ -16,120 +14,38 @@ import type { RouteConfigs } from "@/layout/types";
 import { isUrl, openLink, cloneDeep, isAllEmpty } from "@pureadmin/utils";
 import { clearRouteSnapshot } from "@/utils/routeSnapshot";
 import {
-  ascending,
   getTopMenu,
   initRouter,
-  getHistoryMode,
   findRouteByPath,
   handleAliveRoute,
-  formatTwoStageRoutes,
-  formatFlatteningRoutes,
   isOneOfArray
 } from "./utils";
-import {
-  type Router,
-  type RouterHistory,
-  type RouteRecordRaw,
-  createRouter
-} from "vue-router";
-import { defineComponent } from "vue";
+import remainingRouter from "./modules/remaining";
+import type { Router, RouteRecordRaw } from "vue-router";
 import {
   removeToken,
   multipleTabsKey,
   getRefreshToken,
   getToken
 } from "@/utils/auth";
-
-/** 自动导入全部静态路由，无需再手动引入！匹配 src/router/modules 目录（任何嵌套级别）中具有 .ts 扩展名的所有文件，除了 remaining.ts 文件
- * 如何匹配所有文件请看：https://github.com/mrmlnc/fast-glob#basic-syntax
- * 如何排除文件请看：https://cn.vitejs.dev/guide/features.html#negative-patterns
- */
-const modules = import.meta.glob<{ default: RouteConfigsTable }>(
-  ["./modules/**/*.ts", "!./modules/**/remaining.ts"],
-  {
-    eager: true
-  }
-);
-
-/** 原始静态路由（未做任何处理） */
-const routes: RouteConfigsTable[] = [];
-
-Object.keys(modules).forEach(key => {
-  routes.push(modules[key].default);
-});
-
-/**
- * 路由类型边界收窄（单点收敛，替代各调用点的双重断言）：
- * 静态路由配置表（宽松的 RouteConfigsTable 接口）与 vue-router 的
- * RouteRecordRaw 联合类型互不兼容判定，但运行时形态即合法路由记录
- * （含 children 递归与 meta），此处在类型边界统一收窄。
- */
-const asRouteRecords = (value: unknown): RouteRecordRaw[] =>
-  value as RouteRecordRaw[];
+import { router } from "./router";
+import {
+  constantMenus,
+  constantRoutes,
+  initConstantRoutes,
+  pathMatchRoute,
+  remainingPaths
+} from "./constants";
 
 /** 标签页记录收窄（multiTags 入参形态：运行时只消费 path / name / meta） */
 const asRouteConfig = (value: unknown): RouteConfigs => value as RouteConfigs;
 
-/** 导出处理后的静态路由（三级及以上的路由全部拍成二级） */
-export const constantRoutes: Array<RouteRecordRaw> = formatTwoStageRoutes(
-  formatFlatteningRoutes(
-    asRouteRecords(buildHierarchyTree(ascending(routes.flat(Infinity))))
-  )
-);
+/** 原始路由数组收窄（remainingRouter 记录与 RouteRecordRaw 联合类型不兼容判定） */
+const asRouteRecords = (value: unknown): RouteRecordRaw[] =>
+  value as RouteRecordRaw[];
 
-/** 初始的静态路由，用于退出登录时重置路由 */
-const initConstantRoutes: Array<RouteRecordRaw> = cloneDeep(constantRoutes);
-
-/** 用于渲染菜单，保持原始层级 */
-export const constantMenus: Array<RouteRecordRaw> = asRouteRecords(
-  ascending(routes.flat(Infinity))
-).concat(...asRouteRecords(remainingRouter));
-
-/** 不参与菜单的路由 */
-export const remainingPaths = remainingRouter.map(v => v.path);
-
-/**
- * 顶层兜底路由（无 redirect、无组件），必须在创建路由实例时就注册：
- * 强制刷新动态路由页面（如 /system/field/index）时，首次导航发生在 initRouter
- * 注册异步路由之前，若无兜底匹配会触发 [VUE_ROUTER_R0004] No match found 警告。
- * 此处仅让首次导航命中以消除警告，to.fullPath 仍为原路径，待 initRouter 完成后
- * 由守卫重新 push；动态路由就绪后 utils.ts 的 addPathMatch() 会用 redirect 到
- * /error/404 的同名路由替换本记录，恢复未匹配路径跳 404 的行为。
- */
-const pathMatchRoute: RouteRecordRaw = {
-  path: "/:pathMatch(.*)",
-  name: "pathMatch",
-  // 必须是组件对象而非普通箭头函数：vue-router 会把不带 render 的函数当懒加载器
-  // 调用，返回 null 会在 extractComponentsGuards 中报 'catch' in null，
-  // 导致首次导航失败、router.isReady() 永不结束、应用无法挂载（黑屏）
-  component: defineComponent({ name: "PathMatchEmpty", render: () => null })
-};
-
-/** 创建路由实例 */
-export const router: Router = createRouter({
-  // VITE_ROUTER_HISTORY 由构建配置保证为合法值（hash / h5[,base]），未命中场景不发生后端兜底
-  history: getHistoryMode(import.meta.env.VITE_ROUTER_HISTORY) as RouterHistory,
-  // vue-router 5 的 RouteRecordRaw 联合判定不认宽松的 RouteConfigsTable 接口（redirect 可选性），
-  // 运行时 remainingRoutes 即合法路由，此处按原始路由边界收窄
-  routes: constantRoutes.concat(
-    ...asRouteRecords(remainingRouter),
-    pathMatchRoute
-  ),
-  strict: true,
-  scrollBehavior(to, from, savedPosition) {
-    return new Promise(resolve => {
-      if (savedPosition) {
-        return savedPosition;
-      } else {
-        if (from.meta.saveSrollTop) {
-          const top: number =
-            document.documentElement.scrollTop || document.body.scrollTop;
-          resolve({ left: 0, top });
-        }
-      }
-    });
-  }
-});
+// 向后兼容再导出（router 实例与静态路由常量现由叶子模块提供）
+export { router, constantMenus, constantRoutes, remainingPaths };
 
 /** 记录已经加载的页面路径 */
 const loadedPaths = new Set<string>();
@@ -148,11 +64,7 @@ export function resetRouter() {
     router.addRoute(route);
   }
   router.addRoute(pathMatchRoute);
-  router.options.routes = formatTwoStageRoutes(
-    formatFlatteningRoutes(
-      asRouteRecords(buildHierarchyTree(ascending(routes.flat(Infinity))))
-    )
-  );
+  router.options.routes = cloneDeep(constantRoutes);
   usePermissionStoreHook().clearAllCachePage();
   // 一并清掉动态路由/权限的本地缓存（CachingAsyncRoutes 开启时写入）：
   // 否则下一个账号登录会命中上一个账号的菜单缓存

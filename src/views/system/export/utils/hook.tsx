@@ -1,5 +1,5 @@
 import type { Ref } from "vue";
-import { exportRecordApi } from "@/api/system/export";
+import { exportRecordApi } from "@/api/task/export";
 import { useRecordCenter } from "./recordCenter";
 
 /**

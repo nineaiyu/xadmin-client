@@ -16,7 +16,7 @@ test("角色回收站：删除 → 回收站恢复 → 列表重现", async ({ p
   // API 创建待删角色（表单创建链路已由其他用例覆盖）；先创建后进页面，
   // 使新角色自然出现在首屏列表，无需手动刷新
   const token = await getAccessToken(page);
-  const created = await page.request.post(`${BACKEND_URL}/api/system/role`, {
+  const created = await page.request.post(`${BACKEND_URL}/api/identity/role`, {
     headers: {
       Authorization: `Bearer ${token}`,
       "User-Agent": "e2e-test"

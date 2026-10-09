@@ -39,12 +39,15 @@ test("敏感操作审批：详情弹窗展示目标对象快照", async ({ page 
   let approvalPk = "";
 
   try {
-    await setApprovalPaths(page, token, ["^/api/system/role/"]);
-    const roleResp = await page.request.post(`${BACKEND_URL}/api/system/role`, {
-      headers,
-      // fields 为字段权限地图（write_only 必填）：空对象 = 不设字段权限
-      data: { name: roleName, code: `e2e_snapshot_${suffix}`, fields: {} }
-    });
+    await setApprovalPaths(page, token, ["^/api/identity/role/"]);
+    const roleResp = await page.request.post(
+      `${BACKEND_URL}/api/identity/role`,
+      {
+        headers,
+        // fields 为字段权限地图（write_only 必填）：空对象 = 不设字段权限
+        data: { name: roleName, code: `e2e_snapshot_${suffix}`, fields: {} }
+      }
+    );
     expect(roleResp.ok(), await roleResp.text()).toBeTruthy();
     rolePk = ((await roleResp.json()) as { data: { pk: string } }).data.pk;
 
@@ -104,7 +107,7 @@ test("敏感操作审批：详情弹窗展示目标对象快照", async ({ page 
     if (rolePk) {
       await page.request
         .delete(
-          `${BACKEND_URL}/api/system/role/${rolePk}?impact_confirmed=true`,
+          `${BACKEND_URL}/api/identity/role/${rolePk}?impact_confirmed=true`,
           {
             headers
           }

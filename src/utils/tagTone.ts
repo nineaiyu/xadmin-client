@@ -1,5 +1,5 @@
 import { h, type CSSProperties } from "vue";
-import { ElTag } from "element-plus";
+import { ElTag } from "element-plus/es/components/tag/index.mjs";
 import type { TagItem } from "@/api/system/tag";
 
 /**

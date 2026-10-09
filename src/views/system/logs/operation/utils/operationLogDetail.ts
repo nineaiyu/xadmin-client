@@ -1,6 +1,6 @@
 import { SUCCESS_CODE } from "@/api/types";
 import { message } from "@/utils/message";
-import { operationLogApi } from "@/api/system/logs/operation";
+import { operationLogApi } from "@/api/audit/logs/operation";
 import type { useI18n } from "vue-i18n";
 
 type TFunction = ReturnType<typeof useI18n>["t"];

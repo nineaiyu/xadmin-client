@@ -1,10 +1,7 @@
 import { onMounted, ref } from "vue";
 import type { useI18n } from "vue-i18n";
 import { SUCCESS_CODE } from "@/api/types";
-import {
-  webhookSubscriptionApi,
-  type WebhookEvent
-} from "@/api/system/webhook";
+import { webhookSubscriptionApi, type WebhookEvent } from "@/api/task/webhook";
 import { message } from "@/utils/message";
 
 type TFunction = ReturnType<typeof useI18n>["t"];

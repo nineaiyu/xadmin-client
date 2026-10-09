@@ -10,7 +10,7 @@ import DirectoryMembers from "./components/DirectoryMembers.vue";
 /**
  * 通讯录（只读人员名录）：按部门/按岗位两种视角浏览在用用户。
  *
- * - 成员列表走 /api/system/directory（list:SystemDirectory 权限点，数据权限随调用者）；
+ * - 成员列表走 /api/identity/directory（list:SystemDirectory 权限点，数据权限随调用者）；
  * - 部门树复用 search/dept 候选端点（list:SearchDept，带部门人数），岗位清单复用
  *   search/post（list:SearchPost，带成员数）——与通知选人等远程搜索同口径；
  * - 桌面为可拖拽分栏（宽度比例持久化，与用户管理同口径），移动端上下堆叠。

@@ -3,7 +3,7 @@ import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { message } from "@/utils/message";
 import { SUCCESS_CODE } from "@/api/types";
-import { postApi, type PostItem } from "@/api/system/post";
+import { postApi, type PostItem } from "@/api/identity/post";
 import PostForm from "../components/PostForm.vue";
 import { normalizeError } from "@/utils/apiError";
 import type { useI18n } from "vue-i18n";

@@ -17,7 +17,7 @@ test("新增用户用户名重复：错误内联并聚焦到该字段", async ({
   const headers = { Authorization: `Bearer ${token}` };
   const username = `e2e_locate_${Date.now()}`;
 
-  const created = await page.request.post(`${BACKEND_URL}/api/system/user`, {
+  const created = await page.request.post(`${BACKEND_URL}/api/identity/user`, {
     headers,
     data: {
       username,
@@ -76,14 +76,14 @@ test("新增用户用户名重复：错误内联并聚焦到该字段", async ({
       .toBe(true);
   } finally {
     const listed = await page.request.get(
-      `${BACKEND_URL}/api/system/user?username=${encodeURIComponent(username)}`,
+      `${BACKEND_URL}/api/identity/user?username=${encodeURIComponent(username)}`,
       { headers }
     );
     const rows = ((await listed.json()) as { data?: { results?: unknown[] } })
       .data?.results as Array<{ pk: string }> | undefined;
     for (const item of rows ?? []) {
       await page.request
-        .delete(`${BACKEND_URL}/api/system/user/${item.pk}`, { headers })
+        .delete(`${BACKEND_URL}/api/identity/user/${item.pk}`, { headers })
         .catch(() => undefined);
     }
   }

@@ -105,4 +105,4 @@ class DeptApi extends BaseApi {
   };
 }
 
-export const deptApi = new DeptApi("/api/system/dept");
+export const deptApi = new DeptApi("/api/identity/dept");

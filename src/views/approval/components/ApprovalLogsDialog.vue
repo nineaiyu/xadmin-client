@@ -3,7 +3,7 @@ import { SUCCESS_CODE } from "@/api/types";
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import type { RecordType } from "plus-pro-components";
-import { operationLogApi } from "@/api/system/logs/operation";
+import { operationLogApi } from "@/api/audit/logs/operation";
 
 defineOptions({ name: "ApprovalLogsDialog" });
 

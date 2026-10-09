@@ -32,7 +32,7 @@ import type { RecordType } from "plus-pro-components";
  * 导入列映射模板接口地址：全局资源（按目标模型隔离），
  * 不挂在任何具体资源 baseApi 下，故在通用 API 层集中声明。
  */
-export const IMPORT_TEMPLATE_API = "/api/system/import-templates";
+export const IMPORT_TEMPLATE_API = "/api/task/import-templates";
 
 /**
  * 从统一列表响应壳中解包行数据（`data.results`）。

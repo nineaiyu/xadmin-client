@@ -136,14 +136,17 @@ test("移动审批操作面：待办列表无溢出 + 驳回弹窗在视口内 +
   /** 开拦截后 API 删除新建用户 → 412 建单，返回单号（pk 前 8 位大写） */
   async function createPendingApproval(index: number) {
     const username = `e2e_mobile_${index}_${suffix}`;
-    const created = await page.request.post(`${BACKEND_URL}/api/system/user`, {
-      headers,
-      data: {
-        username,
-        nickname: username,
-        password: await AesEncrypted(username, "E2E-Mobile-2026!")
+    const created = await page.request.post(
+      `${BACKEND_URL}/api/identity/user`,
+      {
+        headers,
+        data: {
+          username,
+          nickname: username,
+          password: await AesEncrypted(username, "E2E-Mobile-2026!")
+        }
       }
-    });
+    );
     const createdPayload = await created.json();
     const userPk = createdPayload?.data?.pk;
     expect(
@@ -151,7 +154,7 @@ test("移动审批操作面：待办列表无溢出 + 驳回弹窗在视口内 +
       `create user: ${JSON.stringify(createdPayload)}`
     ).toBeTruthy();
     const denied = await page.request.delete(
-      `${BACKEND_URL}/api/system/user/${userPk}`,
+      `${BACKEND_URL}/api/identity/user/${userPk}`,
       { headers }
     );
     expect(denied.status(), await denied.text()).toBe(412);
@@ -161,7 +164,7 @@ test("移动审批操作面：待办列表无溢出 + 驳回弹窗在视口内 +
   }
 
   try {
-    await setApprovalPaths(page, token, ["^/api/system/user/[^/]+$"]);
+    await setApprovalPaths(page, token, ["^/api/identity/user/[^/]+$"]);
     const rejectNo = await createPendingApproval(1);
     const approveNo = await createPendingApproval(2);
 

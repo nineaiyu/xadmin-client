@@ -17,7 +17,7 @@ const state = vi.hoisted(() => ({
   messageMock: vi.fn()
 }));
 
-vi.mock("@/api/system/logs/operation", () => ({
+vi.mock("@/api/audit/logs/operation", () => ({
   operationLogApi: {
     retrieve: state.retrieveMock,
     slowThreshold: state.slowThresholdMock

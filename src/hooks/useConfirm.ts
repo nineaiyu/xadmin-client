@@ -1,5 +1,5 @@
 import type { VNode } from "vue";
-import { ElMessageBox } from "element-plus";
+import { ElMessageBox } from "element-plus/es/components/message-box/index.mjs";
 import type { ElMessageBoxOptions } from "element-plus";
 import type { Composer } from "vue-i18n";
 import { i18n } from "@/plugins/i18n";

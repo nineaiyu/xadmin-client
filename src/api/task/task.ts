@@ -75,11 +75,9 @@ class PeriodicTaskApi extends BaseApi {
   };
 }
 
-export const periodicTaskApi = new PeriodicTaskApi(
-  "/api/system/tasks/periodic"
-);
-export const crontabScheduleApi = new BaseApi("/api/system/tasks/crontab");
-export const intervalScheduleApi = new BaseApi("/api/system/tasks/interval");
+export const periodicTaskApi = new PeriodicTaskApi("/api/task/periodic");
+export const crontabScheduleApi = new BaseApi("/api/task/crontab");
+export const intervalScheduleApi = new BaseApi("/api/task/interval");
 
 /** 任务执行历史（日志经 WebSocket 增量推送，见 TaskLogDialog.vue） */
 class TaskExecutionApi extends BaseApi {
@@ -94,9 +92,7 @@ class TaskExecutionApi extends BaseApi {
   };
 }
 
-export const taskExecutionApi = new TaskExecutionApi(
-  "/api/system/tasks/executions"
-);
+export const taskExecutionApi = new TaskExecutionApi("/api/task/executions");
 
 /* ---------------- 任务中心：三类记录统一视图 + 取消 / 重跑 ---------------- */
 
@@ -171,4 +167,4 @@ class TaskCenterApi extends BaseApi {
   };
 }
 
-export const taskCenterApi = new TaskCenterApi("/api/system/tasks/unified");
+export const taskCenterApi = new TaskCenterApi("/api/task/unified");

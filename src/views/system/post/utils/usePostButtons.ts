@@ -1,6 +1,6 @@
 import { shallowRef } from "vue";
 import type { OperationProps } from "@/components/RePlusPage";
-import type { PostItem } from "@/api/system/post";
+import type { PostItem } from "@/api/identity/post";
 import type { useI18n } from "vue-i18n";
 
 type TFunction = ReturnType<typeof useI18n>["t"];

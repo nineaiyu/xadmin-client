@@ -7,7 +7,7 @@ const chunkInit = vi.fn();
 const chunkPart = vi.fn();
 const chunkComplete = vi.fn();
 
-vi.mock("@/api/system/file", () => ({
+vi.mock("@/api/file/file", () => ({
   systemUploadFileApi: {
     chunkInit: (...args: unknown[]) => chunkInit(...args),
     chunkPart: (...args: unknown[]) => chunkPart(...args),

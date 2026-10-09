@@ -4,7 +4,7 @@ import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
 import { maskApi } from "@/api/system/mask";
-import { roleApi } from "@/api/system/role";
+import { roleApi } from "@/api/identity/role";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { listRows } from "@/api/base";
 

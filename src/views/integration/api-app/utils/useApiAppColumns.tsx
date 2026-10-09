@@ -6,7 +6,7 @@ import {
   type PageTableColumn
 } from "@/components/RePlusPage";
 import { type buildScopeIndex, formatScopeLines } from "@/utils/scopeDisplay";
-import type { ApiApplicationItem } from "@/api/system/open";
+import type { ApiApplicationItem } from "@/api/identity/open";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 

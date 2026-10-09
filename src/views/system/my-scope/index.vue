@@ -14,7 +14,7 @@ import {
   type ManagedDeptItem,
   type ManagedScopeResult,
   type ManagedUserRef
-} from "@/api/system/dept";
+} from "@/api/identity/dept";
 import { handleTree } from "@/utils/tree";
 import { ReNormalCountTo } from "@/components/ReCountTo";
 import Segmented from "@/components/ReSegmented";
@@ -32,7 +32,7 @@ import MemberDrawer from "./components/MemberDrawer.vue";
 /**
  * 我的管辖（部门管理员视图）：本人任管理员的部门（含下级）与成员统计。
  *
- * 只读页——数据源 `GET /api/system/dept/managed`（恒定本人范围，不随查询参数放大）；
+ * 只读页——数据源 `GET /api/identity/dept/managed`（恒定本人范围，不随查询参数放大）；
  * 支持关键字检索、卡片/层级两种视图，点开部门可预览成员（数据权限自动收敛），
  * 并可跳转「用户管理」继续操作。
  */

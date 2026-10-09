@@ -24,7 +24,8 @@ import { useCardImageExport } from "./utils/useCardImageExport";
 import { useCardDialog } from "./utils/useCardDialog";
 import { useDashboardDialogs } from "./utils/useDashboardDialogs";
 import { cardColSpan, cardColSpanNarrow } from "./utils/span";
-import ChartCard from "./components/ChartCard.vue";
+// 门控包装：内部等 echarts 就绪后再挂载 ChartCard（useECharts 初始化时同步读 $echarts）
+import { ChartCardAsync as ChartCard } from "./components/ChartCardAsync";
 import { normalizeError } from "@/utils/apiError";
 
 defineOptions({

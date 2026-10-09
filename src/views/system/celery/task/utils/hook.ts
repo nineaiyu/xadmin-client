@@ -1,6 +1,6 @@
 import { reactive, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { periodicTaskApi } from "@/api/system/task";
+import { periodicTaskApi } from "@/api/task/task";
 import { usePageAuth } from "@/router/utils";
 import { useTaskFormColumns } from "./useTaskFormColumns";
 import { useTaskRowActions } from "./useTaskRowActions";

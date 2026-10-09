@@ -1,6 +1,6 @@
 import { ref } from "vue";
 import { copyText } from "@/utils/clipboard";
-import type { ApiApplicationCredential } from "@/api/system/open";
+import type { ApiApplicationCredential } from "@/api/identity/open";
 
 /**
  * 一次性明文密钥展示状态（C5 既定保留手写弹窗）：

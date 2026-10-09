@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
-import { deptApi } from "@/api/system/dept";
+import { deptApi } from "@/api/identity/dept";
 import type { DeptPreviewResult } from "@/api/types/permission-preview";
 import ReEmpty from "@/components/ReEmpty";
 import {

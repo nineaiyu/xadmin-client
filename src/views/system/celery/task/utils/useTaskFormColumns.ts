@@ -1,6 +1,6 @@
 import { computed, onMounted, ref, type Ref } from "vue";
 import type { PageColumn } from "@/components/RePlusPage";
-import type { periodicTaskApi } from "@/api/system/task";
+import type { periodicTaskApi } from "@/api/task/task";
 import { runnableTaskOptions, toRegisteredTaskOption } from "./taskOptions";
 
 type TaskApiLike = Pick<typeof periodicTaskApi, "registered">;

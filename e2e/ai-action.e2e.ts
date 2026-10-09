@@ -251,7 +251,7 @@ test("AI 受限动作：/do 禁用用户 → 确认卡片 → 执行（复用现
 
   // 目标用户（API 创建，随机名避免双浏览器共享库冲突）
   const username = `e2e_ai_target_${Date.now()}`;
-  const created = await jsonRequest(page, "post", "/api/system/user", {
+  const created = await jsonRequest(page, "post", "/api/identity/user", {
     username,
     nickname: `AI目标${Date.now() % 100000}`,
     password: "Test@123456"
@@ -271,7 +271,7 @@ test("AI 受限动作：/do 禁用用户 → 确认卡片 → 执行（复用现
     timeout: 20_000
   });
 
-  // 落库断言：目标用户 is_active 已置 false（复用既有 PATCH /api/system/user/<pk> 的真实写入）。
+  // 落库断言：目标用户 is_active 已置 false（复用既有 PATCH /api/identity/user/<pk> 的真实写入）。
   // 轮询而非"看到就查"：AI 房间为共享会话，历史消息可能提前满足「操作成功」可见性（等待抢跑）
   await expect
     .poll(
@@ -279,7 +279,7 @@ test("AI 受限动作：/do 禁用用户 → 确认卡片 → 执行（复用现
         const list = await jsonRequest(
           page,
           "get",
-          `/api/system/user?username=${username}`
+          `/api/identity/user?username=${username}`
         );
         return JSON.stringify(list.data).includes('"is_active":false');
       },
@@ -300,7 +300,7 @@ test("AI 受限动作：/do 多步串联 → 两张确认卡片逐项执行", as
     const res = await jsonRequest(
       page,
       "get",
-      "/api/system/logs/operation?module=AI%3Aaction&page_size=1"
+      "/api/audit/logs/operation?module=AI%3Aaction&page_size=1"
     );
     expect(res.code).toBe(1000);
     return Number(res.data?.total ?? 0);

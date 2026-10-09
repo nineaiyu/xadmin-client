@@ -20,7 +20,7 @@ test("删除有引用的角色：影响面弹窗展示绑定用户，取消则�
   const suffix = Date.now();
 
   const roleName = `E2E影响面角色${suffix}`;
-  const roleResp = await page.request.post(`${BACKEND_URL}/api/system/role`, {
+  const roleResp = await page.request.post(`${BACKEND_URL}/api/identity/role`, {
     headers,
     // fields 为字段权限地图（write_only 必填）：空对象 = 不设字段权限
     data: { name: roleName, code: `e2e_impact_${suffix}`, fields: {} }
@@ -29,7 +29,7 @@ test("删除有引用的角色：影响面弹窗展示绑定用户，取消则�
   const rolePk = ((await roleResp.json()) as { data: { pk: string } }).data.pk;
 
   const username = `e2e_impact_user_${suffix}`;
-  const userResp = await page.request.post(`${BACKEND_URL}/api/system/user`, {
+  const userResp = await page.request.post(`${BACKEND_URL}/api/identity/user`, {
     headers,
     data: {
       username,
@@ -65,26 +65,26 @@ test("删除有引用的角色：影响面弹窗展示绑定用户，取消则�
     await expect(impactDialog).not.toBeVisible();
     await expect(row).toBeVisible();
     const stillThere = await page.request.get(
-      `${BACKEND_URL}/api/system/role/${rolePk}`,
+      `${BACKEND_URL}/api/identity/role/${rolePk}`,
       { headers }
     );
     expect(stillThere.ok()).toBeTruthy();
   } finally {
     // 清理：先解绑用户再删除角色（角色被引用时 PROTECT/影响面均可能阻断）
     const listed = await page.request.get(
-      `${BACKEND_URL}/api/system/user?username=${encodeURIComponent(username)}`,
+      `${BACKEND_URL}/api/identity/user?username=${encodeURIComponent(username)}`,
       { headers }
     );
     const rows = ((await listed.json()) as { data?: { results?: unknown[] } })
       .data?.results as Array<{ pk: string }> | undefined;
     for (const item of rows ?? []) {
       await page.request
-        .delete(`${BACKEND_URL}/api/system/user/${item.pk}`, { headers })
+        .delete(`${BACKEND_URL}/api/identity/user/${item.pk}`, { headers })
         .catch(() => undefined);
     }
     await page.request
       .delete(
-        `${BACKEND_URL}/api/system/role/${rolePk}?impact_confirmed=true`,
+        `${BACKEND_URL}/api/identity/role/${rolePk}?impact_confirmed=true`,
         {
           headers
         }
@@ -108,23 +108,33 @@ test("删除有子部门的部门：确认后返回引用提示（998/HTTP 400�
 
   const parentName = `E2E父部门${suffix}`;
   // parent: null = 显式置顶（未提交 parent 会默认挂到操作者部门）
-  const parentResp = await page.request.post(`${BACKEND_URL}/api/system/dept`, {
-    headers,
-    data: { name: parentName, code: `e2e_dept_parent_${suffix}`, parent: null }
-  });
+  const parentResp = await page.request.post(
+    `${BACKEND_URL}/api/identity/dept`,
+    {
+      headers,
+      data: {
+        name: parentName,
+        code: `e2e_dept_parent_${suffix}`,
+        parent: null
+      }
+    }
+  );
   expect(parentResp.ok(), await parentResp.text()).toBeTruthy();
   const parentPk = ((await parentResp.json()) as { data: { pk: string } }).data
     .pk;
 
   const childName = `E2E子部门${suffix}`;
-  const childResp = await page.request.post(`${BACKEND_URL}/api/system/dept`, {
-    headers,
-    data: {
-      name: childName,
-      code: `e2e_dept_child_${suffix}`,
-      parent: parentPk
+  const childResp = await page.request.post(
+    `${BACKEND_URL}/api/identity/dept`,
+    {
+      headers,
+      data: {
+        name: childName,
+        code: `e2e_dept_child_${suffix}`,
+        parent: parentPk
+      }
     }
-  });
+  );
   expect(childResp.ok(), await childResp.text()).toBeTruthy();
   const childPk = ((await childResp.json()) as { data: { pk: string } }).data
     .pk;
@@ -163,7 +173,7 @@ test("删除有子部门的部门：确认后返回引用提示（998/HTTP 400�
 
     // 删除被拒：数据保留
     const stillThere = await page.request.get(
-      `${BACKEND_URL}/api/system/dept/${parentPk}`,
+      `${BACKEND_URL}/api/identity/dept/${parentPk}`,
       { headers }
     );
     expect(stillThere.ok()).toBeTruthy();
@@ -172,13 +182,13 @@ test("删除有子部门的部门：确认后返回引用提示（998/HTTP 400�
     // 清理：先删子部门再删父部门（精确 pk，避免误删共享库其它数据）
     await page.request
       .delete(
-        `${BACKEND_URL}/api/system/dept/${childPk}?impact_confirmed=true`,
+        `${BACKEND_URL}/api/identity/dept/${childPk}?impact_confirmed=true`,
         { headers }
       )
       .catch(() => undefined);
     await page.request
       .delete(
-        `${BACKEND_URL}/api/system/dept/${parentPk}?impact_confirmed=true`,
+        `${BACKEND_URL}/api/identity/dept/${parentPk}?impact_confirmed=true`,
         { headers }
       )
       .catch(() => undefined);

@@ -8,13 +8,13 @@ const { exportStatsMock, importStatsMock, taskStatsMock, hasAuthMock } =
     hasAuthMock: vi.fn()
   }));
 
-vi.mock("@/api/system/export", () => ({
+vi.mock("@/api/task/export", () => ({
   exportRecordApi: { stats: exportStatsMock }
 }));
-vi.mock("@/api/system/import", () => ({
+vi.mock("@/api/task/import", () => ({
   importRecordApi: { stats: importStatsMock }
 }));
-vi.mock("@/api/system/task", () => ({
+vi.mock("@/api/task/task", () => ({
   taskExecutionApi: { stats: taskStatsMock }
 }));
 vi.mock("@/router/utils", () => ({ hasAuth: hasAuthMock }));

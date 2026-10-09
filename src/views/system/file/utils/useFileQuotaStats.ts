@@ -1,6 +1,6 @@
 import { computed, onMounted, ref } from "vue";
 import { SUCCESS_CODE } from "@/api/types";
-import { systemUploadFileApi } from "@/api/system/file";
+import { systemUploadFileApi } from "@/api/file/file";
 import { getDictItems } from "@/utils/dict";
 import type { PageColumn } from "@/components/RePlusPage";
 import { UPLOAD_CATEGORY_DICT, type FileStats } from "./fileStats";

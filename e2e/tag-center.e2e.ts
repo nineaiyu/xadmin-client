@@ -47,7 +47,7 @@ test("标签中心：新建 → 打标 → 按标签筛选 → 引用保护", as
   const auth = { Authorization: `Bearer ${token}` };
 
   // 0) 新建一个确定性用户（列表默认倒序 → 第一行即目标行）
-  const created = await page.request.post(`${FRONT_URL}/api/system/user`, {
+  const created = await page.request.post(`${FRONT_URL}/api/identity/user`, {
     headers: auth,
     data: {
       username: USERNAME,

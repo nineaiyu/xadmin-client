@@ -89,4 +89,4 @@ class OAuthApi extends BaseApi {
   };
 }
 
-export const oauthApi = new OAuthApi("/api/system/auth/oauth");
+export const oauthApi = new OAuthApi("/api/identity/auth/oauth");

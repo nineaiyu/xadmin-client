@@ -2,9 +2,9 @@ import { http } from "@/utils/http";
 import { BaseApi } from "@/api/base";
 import type { DetailResult, RecordStats } from "@/api/types";
 
-/** 导入记录（下载中心「导入记录」页签） */
-class ImportRecordApi extends BaseApi {
-  /** 下载失败行错误报告（走鉴权，非 /media/ 直出） */
+/** 导出下载中心 */
+class ExportRecordApi extends BaseApi {
+  /** 下载导出文件（走鉴权，非 /media/ 直出） */
   download = (pk: string | number) => {
     return http.autoDownload(`${this.baseApi}/${pk}/download`);
   };
@@ -19,4 +19,4 @@ class ImportRecordApi extends BaseApi {
   };
 }
 
-export const importRecordApi = new ImportRecordApi("/api/system/imports");
+export const exportRecordApi = new ExportRecordApi("/api/task/exports");

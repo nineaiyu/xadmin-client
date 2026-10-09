@@ -23,7 +23,7 @@ vi.mock("vue-i18n", () => ({
 }));
 vi.mock("vue-router", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 vi.mock("@/router/utils", () => ({ hasAuth: () => true }));
-vi.mock("@/api/system/dept", () => ({
+vi.mock("@/api/identity/dept", () => ({
   deptApi: { managed: state.managedMock }
 }));
 vi.mock("@/components/ReCountTo", () => ({

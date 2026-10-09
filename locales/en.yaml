@@ -2129,7 +2129,7 @@ search:
   globalResult: Global search
 apiApp:
   title: API applications
-  tip: "Exchange credentials with POST /api/system/open/token (client_id/client_secret), then call APIs with the Authorization: Pat token header"
+  tip: "Exchange credentials with POST /api/identity/open/token (client_id/client_secret), then call APIs with the Authorization: Pat token header"
   create: New application
   edit: Edit application
   name: Name
@@ -2233,11 +2233,11 @@ apiScope:
   selected: "{n} selected"
   emptyMeansUnlimited: Nothing selected = unrestricted (every API you can access)
   custom: Custom entries (advanced)
-  customTip: Paths or regexes not listed above, one per line, e.g. GET /api/system/user
+  customTip: Paths or regexes not listed above, one per line, e.g. GET /api/identity/user
   other: Other
   placeholder: |-
-    /api/system/user
-    /api/system/exports
+    /api/identity/user
+    /api/task/exports
 setting:
   name: Name
   value: Value
@@ -3245,6 +3245,17 @@ aiConfig:
   usageFailed: Failed
   usageByFeature: By flow
   usageByDay: Daily usage
+  dashboardTitle: Run dashboard
+  dashboardHint: Success rate and latency come from the usage ledger; P95 shows only with enough samples
+  dashboardRate: Success rate
+  dashboardAvg: Avg latency
+  dashboardP95: P95 latency
+  dashboardP95LowSample: Not enough samples
+  dashboardSamples: Latency samples
+  dashboardTrend: Daily calls
+  dashboardByProfile: By profile
+  dashboardByModel: By model
+  dashboardEmpty: No usage data yet
   manage: Manage
   panelTitle: "Manage {name}"
   apiKeySet: Configured

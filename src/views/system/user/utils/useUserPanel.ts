@@ -14,7 +14,7 @@ import { buildUserMetaItems, buildUserProfileData } from "./userPanel";
 import { openUserPreview } from "./userPreview";
 import type { UnwrapNestedRefs } from "vue";
 import type { useI18n } from "vue-i18n";
-import type { userApi } from "@/api/system/user";
+import type { userApi } from "@/api/identity/user";
 import type { RecordType } from "plus-pro-components";
 import type { useTagAssign } from "@/views/system/components/useTagAssign";
 

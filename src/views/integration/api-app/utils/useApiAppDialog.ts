@@ -8,7 +8,7 @@ import {
   apiApplicationApi,
   type ApiApplicationCredential,
   type ApiApplicationItem
-} from "@/api/system/open";
+} from "@/api/identity/open";
 import ApiApplicationForm from "../components/ApiApplicationForm.vue";
 import { normalizeError } from "@/utils/apiError";
 

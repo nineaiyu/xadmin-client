@@ -23,6 +23,7 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import ApiScopeEditor from "@/components/ApiScopeEditor/index.vue";
 import { loadPatScopeCatalog, personalAccessTokenApi } from "@/api/user/token";
 import { buildScopeIndex, formatScopeLines } from "@/utils/scopeDisplay";
+import AccountPanel from "./AccountPanel.vue";
 import PatCallLogs from "./PatCallLogs.vue";
 import AccessTokenCreateForm from "./AccessTokenCreateForm.vue";
 import Lock from "~icons/ep/lock";
@@ -404,24 +405,20 @@ const operationButtonsProps: OperationProps = {
 </script>
 
 <template>
-  <div>
-    <el-alert
-      type="info"
-      :closable="false"
-      :title="t('accessToken.tip')"
-      class="mt-8 mb-4"
-    />
-
+  <AccountPanel
+    :title="t('accessToken.title')"
+    :description="t('accessToken.tip')"
+  >
     <RePlusPage
       ref="plusPageRef"
       :api="personalAccessTokenApi"
       :auth="auth"
       :selection="false"
-      :title="t('accessToken.title')"
+      title=""
       locale-name="accessToken"
       :list-columns-format="listColumnsFormat"
       :operation-buttons-props="operationButtonsProps"
       :table-bar-buttons-props="tableBarButtonsProps"
     />
-  </div>
+  </AccountPanel>
 </template>

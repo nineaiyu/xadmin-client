@@ -192,7 +192,7 @@ class ApiApplicationApi extends BaseApi {
 }
 
 export const apiApplicationApi = new ApiApplicationApi(
-  "/api/system/api-applications"
+  "/api/identity/api-applications"
 );
 
 /* ---------------- OAuth 授权码（同意页） ---------------- */
@@ -233,7 +233,7 @@ class OAuthAuthorizeApi extends BaseApi {
       "get",
       params,
       {},
-      "/api/system/open/oauth/authorize"
+      "/api/identity/open/oauth/authorize"
     );
 
   /** 用户同意 / 拒绝（同意返回一次性授权码，拒绝回传 access_denied） */
@@ -242,12 +242,12 @@ class OAuthAuthorizeApi extends BaseApi {
       "post",
       {},
       payload,
-      "/api/system/open/oauth/approve"
+      "/api/identity/open/oauth/approve"
     );
 }
 
 export const oauthAuthorizeApi = new OAuthAuthorizeApi(
-  "/api/system/open/oauth"
+  "/api/identity/open/oauth"
 );
 
 /** 应用接口范围目录（同页只拉一次：列表 tooltip 与表单勾选器共用，见 utils/scopeDisplay） */

@@ -75,7 +75,7 @@ onMounted(loadBackends);
       v-if="backendsFailed"
       type="warning"
       :closable="false"
-      class="mb-2"
+      class="sms-setting-notice"
       :title="t('settingSms.backendsLoadFailed')"
     >
       <el-button link type="primary" size="small" @click="loadBackends">
@@ -85,3 +85,10 @@ onMounted(loadBackends);
     <setting v-loading="backendsLoading" :model-value="settingData" />
   </div>
 </template>
+
+<style lang="scss" scoped>
+/* 页签外的失败提示：与页签卡片同宽铺满，仅保留与卡片的间距 */
+.sms-setting-notice {
+  margin-bottom: 8px;
+}
+</style>

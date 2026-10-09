@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { onMounted, onUnmounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { systemUploadFileApi } from "@/api/system/file";
+import { systemUploadFileApi } from "@/api/file/file";
 
 /**
  * 文件在线预览抽屉：按后端下发的 `preview_kind` 分流（类型判定单一真源在服务端）。

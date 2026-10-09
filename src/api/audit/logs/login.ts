@@ -11,4 +11,4 @@ class LoginLogApi extends BaseApi {
     );
   };
 }
-export const loginLogApi = new LoginLogApi("/api/system/logs/login");
+export const loginLogApi = new LoginLogApi("/api/audit/logs/login");

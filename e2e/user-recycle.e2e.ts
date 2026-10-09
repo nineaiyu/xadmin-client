@@ -21,7 +21,7 @@ test("用户回收站：删除 → 回收站恢复 → 列表重现", async ({ p
   };
 
   // API 创建并删除用户（新增表单链路由其他用例覆盖）
-  const created = await page.request.post(`${BACKEND_URL}/api/system/user`, {
+  const created = await page.request.post(`${BACKEND_URL}/api/identity/user`, {
     headers,
     data: {
       username,
@@ -35,7 +35,7 @@ test("用户回收站：删除 → 回收站恢复 → 列表重现", async ({ p
   expect(pk).toBeTruthy();
 
   const deleted = await page.request.delete(
-    `${BACKEND_URL}/api/system/user/${pk}`,
+    `${BACKEND_URL}/api/identity/user/${pk}`,
     { headers }
   );
   expect(deleted.ok(), await deleted.text()).toBeTruthy();

@@ -14,4 +14,4 @@ class MaskApi extends BaseApi {
   };
 }
 
-export const maskApi = new MaskApi("/api/system/mask-rules");
+export const maskApi = new MaskApi("/api/audit/mask-rules");

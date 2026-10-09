@@ -1,7 +1,7 @@
 import { h, type UnwrapNestedRefs } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
-import type { deptApi } from "@/api/system/dept";
+import type { deptApi } from "@/api/identity/dept";
 import { handleShowChangeHistory } from "@/components/RePlusPage";
 import { addDrawer } from "@/components/ReDrawer";
 import {

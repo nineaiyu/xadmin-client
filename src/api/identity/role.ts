@@ -30,4 +30,4 @@ class RoleApi extends BaseApi {
   };
 }
 
-export const roleApi = new RoleApi("/api/system/role");
+export const roleApi = new RoleApi("/api/identity/role");

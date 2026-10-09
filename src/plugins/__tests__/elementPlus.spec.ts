@@ -10,9 +10,13 @@ import { describe, expect, it } from "vitest";
  * 一旦模板里用了没登记的组件，构建不报错、运行时才报
  * "Failed to resolve component: el-<name>"，属于典型的「本地过了、用户炸了」。
  * 本用例把三条一致性固化为门禁：
- *   1. src 中出现的 el-* 用法 ⊆ 已注册组件
+ *   1. src 中出现的 el-* 用法 ⊆ 已注册组件（急加载 + 异步两档合并计）
  *   2. 已注册组件 ⊆ 样式清单（否则组件能跑但没样式）
  *   3. 样式清单 ⊆ 已注册组件（否则白付体积）
+ *
+ * 注册分两档：`components`（应用外壳，静态 import）与 `lazyComponents`（业务页面，
+ * 全局注册为异步组件、不进入首屏闭包）。两档的模板解析行为一致，故一致性校验
+ * 必须合并计算，避免异步档被误判为「未注册」。
  */
 
 const PLUGINS_DIR = resolve(__dirname, "..");
@@ -66,14 +70,24 @@ function readElementPlusFile(): string {
   return readFileSync(ELEMENT_PLUS_FILE, "utf-8");
 }
 
-/** components 数组内登记的组件（驼峰标识转连字符，便于与模板用法比对） */
+/**
+ * 登记的组件（急加载 `components` 数组 + 异步 `lazyComponents` 映射键），
+ * 统一转连字符便于与模板用法比对。
+ */
 function registeredComponents(source: string): Set<string> {
-  const block = source.match(/const components = \[([\s\S]*?)\];/);
-  if (!block)
+  const eager = source.match(/const components = \[([\s\S]*?)\];/);
+  if (!eager)
     throw new Error("未找到 components 数组，elementPlus.ts 结构已变更");
-  return new Set(
-    [...block[1].matchAll(/\bEl[A-Z][A-Za-z0-9]*\b/g)].map(m => kebab(m[0]))
-  );
+  // 说明：声明处带类型标注（含 `=>`），故用非贪婪的“任意字符 + 首个 `= {`”匹配
+  const lazy = source.match(/const lazyComponents[\s\S]*?= \{([\s\S]*?)\n\};/);
+  if (!lazy)
+    throw new Error("未找到 lazyComponents 映射，elementPlus.ts 结构已变更");
+  const names = [
+    ...[...eager[1].matchAll(/\bEl[A-Z][A-Za-z0-9]*\b/g)].map(m => m[0]),
+    // 映射键为 `ElXxx:`（带缩进与冒号），取捕获组而非整段匹配
+    ...[...lazy[1].matchAll(/^\s*(El[A-Z][A-Za-z0-9]*):/gm)].map(m => m[1])
+  ];
+  return new Set(names.map(kebab));
 }
 
 /** 按需样式清单（element-plus/es/components/<name>/style/css） */
@@ -126,5 +140,18 @@ describe("element-plus 按需注册", () => {
       name => !registered.has(name) && !PLUGIN_STYLES.has(name)
     );
     expect(extra, `多余样式引入：${extra.join(", ")}`).toEqual([]);
+  });
+
+  it("被父组件按类型名收集的子组件必须走同步档（el-descriptions-item）", () => {
+    // `el-descriptions` 在渲染期用 flattedChildren 扫描默认插槽，按
+    // `type.name === "ElDescriptionsItem"` 收集子项。全局注册为异步组件时插槽里是
+    // AsyncComponentWrapper，子项全部匹配不到 → 描述列表渲染成空表（真实回归：
+    // 成员详情 / 提交详情 / 审批详情等抽屉的资料区全空，仅 E2E 能拦住）。
+    // 新增同类父子（父组件扫描插槽 vnode 判定子组件类型）时，父子必须登记在本数组。
+    const eager = source.match(/const components = \[([\s\S]*?)\];/)?.[1] ?? "";
+    expect(
+      /\bElDescriptionsItem\b/.test(eager),
+      "ElDescriptionsItem 必须登记在 components（急加载 / 同步档），不能走 lazyComponents"
+    ).toBe(true);
   });
 });

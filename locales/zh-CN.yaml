@@ -2129,7 +2129,7 @@ search:
   globalResult: 全局搜索
 apiApp:
   title: API 应用
-  tip: "换发凭证：POST /api/system/open/token（client_id/client_secret），随后以 Authorization: Pat 令牌头调用接口"
+  tip: "换发凭证：POST /api/identity/open/token（client_id/client_secret），随后以 Authorization: Pat 令牌头调用接口"
   create: 新建应用
   edit: 编辑应用
   name: 应用名称
@@ -2233,11 +2233,11 @@ apiScope:
   selected: "已选 {n} 条"
   emptyMeansUnlimited: 未选择 = 不限（可调用你权限内的全部接口）
   custom: 自定义条目（高级）
-  customTip: 下拉未覆盖的路径或正则，一行一条，例如 GET /api/system/user
+  customTip: 下拉未覆盖的路径或正则，一行一条，例如 GET /api/identity/user
   other: 其它
   placeholder: |-
-    /api/system/user
-    /api/system/exports
+    /api/identity/user
+    /api/task/exports
 setting:
   name: 配置名称
   value: 配置数值
@@ -3244,6 +3244,17 @@ aiConfig:
   usageFailed: 失败数
   usageByFeature: 链路分布
   usageByDay: 日用量
+  dashboardTitle: 运行看板
+  dashboardHint: 成功率与延迟取自用量账本；P95 需样本足够才给出
+  dashboardRate: 成功率
+  dashboardAvg: 平均延迟
+  dashboardP95: P95 延迟
+  dashboardP95LowSample: 抽样不足
+  dashboardSamples: 延迟样本数
+  dashboardTrend: 日调用量
+  dashboardByProfile: 按档案分布
+  dashboardByModel: 按模型分布
+  dashboardEmpty: 暂无用量数据
   manage: 管理
   panelTitle: "管理档案 {name}"
   apiKeySet: 已配置

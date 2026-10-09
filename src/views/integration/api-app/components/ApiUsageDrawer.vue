@@ -5,7 +5,7 @@ import { useI18n } from "vue-i18n";
 import type {
   ApiApplicationItem,
   ApplicationUsageStats
-} from "@/api/system/open";
+} from "@/api/identity/open";
 
 /**
  * 应用用量抽屉：近 N 天调用量 / 失败数 / 平均耗时 + Top 路径 +

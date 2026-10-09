@@ -153,4 +153,4 @@ class SystemUploadFileApi extends BaseApi {
   };
 }
 
-export const systemUploadFileApi = new SystemUploadFileApi("/api/system/file");
+export const systemUploadFileApi = new SystemUploadFileApi("/api/file/file");

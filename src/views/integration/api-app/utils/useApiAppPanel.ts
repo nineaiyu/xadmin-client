@@ -5,7 +5,7 @@ import { type buildScopeIndex, formatScopeLines } from "@/utils/scopeDisplay";
 import type {
   ApiApplicationItem,
   CallbackProbeResult
-} from "@/api/system/open";
+} from "@/api/identity/open";
 import ApiAppPanel from "../components/ApiAppPanel.vue";
 import { buildApiAppActionGroups } from "./apiAppActions";
 

@@ -16,19 +16,16 @@ async function createCrontab(
   page: import("@playwright/test").Page,
   token: string
 ) {
-  const res = await page.request.post(
-    `${BACKEND_URL}/api/system/tasks/crontab`,
-    {
-      headers: { Authorization: `Bearer ${token}`, "User-Agent": "e2e-test" },
-      data: {
-        minute: "7",
-        hour: "4",
-        day_of_week: "*",
-        day_of_month: "*",
-        month_of_year: "*"
-      }
+  const res = await page.request.post(`${BACKEND_URL}/api/task/crontab`, {
+    headers: { Authorization: `Bearer ${token}`, "User-Agent": "e2e-test" },
+    data: {
+      minute: "7",
+      hour: "4",
+      day_of_week: "*",
+      day_of_month: "*",
+      month_of_year: "*"
     }
-  );
+  });
   expect(res.ok()).toBeTruthy();
   const body = await res.json();
   return String(body?.data?.pk ?? "");
@@ -41,20 +38,17 @@ async function createPeriodicTask(
   name: string,
   crontabPk: string
 ) {
-  const res = await page.request.post(
-    `${BACKEND_URL}/api/system/tasks/periodic`,
-    {
-      headers: { Authorization: `Bearer ${token}`, "User-Agent": "e2e-test" },
-      data: {
-        name,
-        task: TASK_PATH,
-        crontab: crontabPk,
-        args: "[]",
-        kwargs: "{}",
-        enabled: true
-      }
+  const res = await page.request.post(`${BACKEND_URL}/api/task/periodic`, {
+    headers: { Authorization: `Bearer ${token}`, "User-Agent": "e2e-test" },
+    data: {
+      name,
+      task: TASK_PATH,
+      crontab: crontabPk,
+      args: "[]",
+      kwargs: "{}",
+      enabled: true
     }
-  );
+  });
   expect(res.ok()).toBeTruthy();
   const body = await res.json();
   return String(body?.data?.pk ?? "");
@@ -67,7 +61,7 @@ async function runTask(
   periodicPk: string
 ) {
   const res = await page.request.post(
-    `${BACKEND_URL}/api/system/tasks/periodic/${periodicPk}/run`,
+    `${BACKEND_URL}/api/task/periodic/${periodicPk}/run`,
     { headers: { Authorization: `Bearer ${token}`, "User-Agent": "e2e-test" } }
   );
   expect(res.ok()).toBeTruthy();
@@ -384,19 +378,16 @@ test("定时表达式页：crontab 列表渲染", async ({ page }) => {
   await login(page);
   const token = await getAccessToken(page);
   // 造一条特殊 minute（7），验证列表页展示
-  const res = await page.request.post(
-    `${BACKEND_URL}/api/system/tasks/crontab`,
-    {
-      headers: { Authorization: `Bearer ${token}`, "User-Agent": "e2e-test" },
-      data: {
-        minute: "7",
-        hour: "4",
-        day_of_week: "*",
-        day_of_month: "*",
-        month_of_year: "*"
-      }
+  const res = await page.request.post(`${BACKEND_URL}/api/task/crontab`, {
+    headers: { Authorization: `Bearer ${token}`, "User-Agent": "e2e-test" },
+    data: {
+      minute: "7",
+      hour: "4",
+      day_of_week: "*",
+      day_of_month: "*",
+      month_of_year: "*"
     }
-  );
+  });
   expect(res.ok()).toBeTruthy();
 
   await openMenuPath(
@@ -453,14 +444,14 @@ test("间隔调度页：新增间隔 → 周期任务引用后列表显示可读
 
   // 2) 新建的间隔可直接挂到周期任务（任务表单「执行间隔」下拉即来自该表）
   const listRes = await page.request.get(
-    `${BACKEND_URL}/api/system/tasks/interval?every=${every}`,
+    `${BACKEND_URL}/api/task/interval?every=${every}`,
     { headers: { Authorization: `Bearer ${token}`, "User-Agent": "e2e-test" } }
   );
   expect(listRes.ok()).toBeTruthy();
   const intervalPk = (await listRes.json())?.data?.results?.[0]?.pk;
   expect(intervalPk).toBeTruthy();
   const createRes = await page.request.post(
-    `${BACKEND_URL}/api/system/tasks/periodic`,
+    `${BACKEND_URL}/api/task/periodic`,
     {
       headers: { Authorization: `Bearer ${token}`, "User-Agent": "e2e-test" },
       data: {

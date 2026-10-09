@@ -1,5 +1,5 @@
 import { useI18n } from "vue-i18n";
-import { loginLogApi } from "@/api/system/logs/login";
+import { loginLogApi } from "@/api/audit/logs/login";
 import { useRouter } from "vue-router";
 import { usePageAuth } from "@/router/utils";
 import { reactive, shallowRef, type Ref } from "vue";

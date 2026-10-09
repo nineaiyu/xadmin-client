@@ -55,7 +55,7 @@ test("访问令牌：创建 → Pat 头调 API → 吊销后 401", async ({ page
 
   // Pat 头调 API：200（权限与账号一致）
   const listResponse = await page.request.get(
-    `${BACKEND_URL}/api/system/personal-access-tokens`,
+    `${BACKEND_URL}/api/identity/personal-access-tokens`,
     { headers: { Authorization: `Pat ${plainToken}` } }
   );
   expect(listResponse.status()).toBe(200);
@@ -71,7 +71,7 @@ test("访问令牌：创建 → Pat 头调 API → 吊销后 401", async ({ page
   await expect(row).toContainText("禁用", { timeout: 15_000 });
 
   const revokedResponse = await page.request.get(
-    `${BACKEND_URL}/api/system/personal-access-tokens`,
+    `${BACKEND_URL}/api/identity/personal-access-tokens`,
     { headers: { Authorization: `Pat ${plainToken}` } }
   );
   expect(revokedResponse.status()).toBe(401);
@@ -93,7 +93,7 @@ test("访问令牌 IP 白名单：未命中拒绝 / 命中放行", async ({ page
   const plainToken = await createToken(page, tokenName);
 
   const patCall = () =>
-    page.request.get(`${BACKEND_URL}/api/system/personal-access-tokens`, {
+    page.request.get(`${BACKEND_URL}/api/identity/personal-access-tokens`, {
       headers: { Authorization: `Pat ${plainToken}` }
     });
 
@@ -161,7 +161,7 @@ test("访问令牌 scope 方法前缀：GET 放行 / POST 拒绝", async ({ page
   // 自定义条目（下拉未覆盖的路径/正则），一行一条
   await scopeDialog
     .locator("textarea")
-    .fill("GET /api/system/personal-access-tokens");
+    .fill("GET /api/identity/personal-access-tokens");
   await scopeDialog.getByRole("button", { name: "保存" }).first().click();
   await expect(scopeDialog).not.toBeVisible({ timeout: 10_000 });
 
@@ -169,7 +169,7 @@ test("访问令牌 scope 方法前缀：GET 放行 / POST 拒绝", async ({ page
   expect(
     (
       await page.request.get(
-        `${BACKEND_URL}/api/system/personal-access-tokens`,
+        `${BACKEND_URL}/api/identity/personal-access-tokens`,
         { headers }
       )
     ).status()
@@ -178,7 +178,7 @@ test("访问令牌 scope 方法前缀：GET 放行 / POST 拒绝", async ({ page
   expect(
     (
       await page.request.post(
-        `${BACKEND_URL}/api/system/personal-access-tokens`,
+        `${BACKEND_URL}/api/identity/personal-access-tokens`,
         { headers, data: { name: "e2e-should-be-denied" } }
       )
     ).status()
@@ -213,20 +213,20 @@ test("访问令牌 scope：命中 200 / 越界 403 / 吊销 401", async ({ page 
   // 令牌自身接口在权限白名单里（不在权限菜单），走自定义条目
   await scopeDialog
     .locator("textarea")
-    .fill("/api/system/personal-access-tokens");
+    .fill("/api/identity/personal-access-tokens");
   // ReDialog 默认确认按钮文案为「保存」
   await scopeDialog.getByRole("button", { name: "保存" }).first().click();
   await expect(scopeDialog).not.toBeVisible({ timeout: 10_000 });
 
   // 命中 scope 的路径 200（凭证调自身清单接口）
   const hit = await page.request.get(
-    `${BACKEND_URL}/api/system/personal-access-tokens`,
+    `${BACKEND_URL}/api/identity/personal-access-tokens`,
     { headers: { Authorization: `Pat ${plainToken}` } }
   );
   expect(hit.status()).toBe(200);
 
   // 越界路径 403
-  const denied = await page.request.get(`${BACKEND_URL}/api/system/user`, {
+  const denied = await page.request.get(`${BACKEND_URL}/api/identity/user`, {
     headers: { Authorization: `Pat ${plainToken}` }
   });
   expect(denied.status()).toBe(403);
@@ -241,7 +241,7 @@ test("访问令牌 scope：命中 200 / 越界 403 / 吊销 401", async ({ page 
   await confirm.click();
   await expect(row).toContainText("禁用", { timeout: 15_000 });
   const revoked = await page.request.get(
-    `${BACKEND_URL}/api/system/personal-access-tokens`,
+    `${BACKEND_URL}/api/identity/personal-access-tokens`,
     { headers: { Authorization: `Pat ${plainToken}` } }
   );
   expect(revoked.status()).toBe(401);
@@ -289,7 +289,7 @@ test("访问令牌接口范围：勾选有权限的接口即生效", async ({ pa
 
   // 勾选项即生效：未勾选的令牌自身接口被 scope 拦下 403
   const denied = await page.request.get(
-    `${BACKEND_URL}/api/system/personal-access-tokens`,
+    `${BACKEND_URL}/api/identity/personal-access-tokens`,
     { headers: { Authorization: `Pat ${plainToken}` } }
   );
   expect(denied.status()).toBe(403);

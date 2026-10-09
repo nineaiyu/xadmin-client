@@ -4,12 +4,12 @@ import { onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import type { PaginationProps } from "@pureadmin/table";
 import type { ListResult } from "@/api/types";
-import { operationLogApi } from "@/api/system/logs/operation";
+import { operationLogApi } from "@/api/audit/logs/operation";
 
 defineOptions({ name: "ChangeHistoryDialog" });
 
 interface Props {
-  /** 当前页面 API 前缀（如 /api/system/user），用于 path 前缀过滤 */
+  /** 当前页面 API 前缀（如 /api/identity/user），用于 path 前缀过滤 */
   baseApi: string;
   /** 行主键：变更历史按 object_pk（detail 路由提取）回溯 */
   pk: string | number;

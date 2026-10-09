@@ -18,7 +18,7 @@ vi.mock("@/api/auth", () => ({
   refreshTokenApi: refreshTokenApiMock
 }));
 
-import { getUsedAccessToken } from "./token";
+import { getUsedAccessToken } from "./accessToken";
 
 describe("getUsedAccessToken", () => {
   beforeEach(() => {

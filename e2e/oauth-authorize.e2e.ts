@@ -13,7 +13,7 @@ import { login } from "./helpers";
 const CALLBACK = "http://127.0.0.1:19999/cb";
 
 async function createApplication(page: Page, name: string) {
-  const created = await page.request.post("/api/system/api-applications", {
+  const created = await page.request.post("/api/identity/api-applications", {
     data: { name, callback_urls: [CALLBACK], rate_limit_per_minute: 0 }
   });
   expect(created.ok()).toBeTruthy();

@@ -1,5 +1,5 @@
 import { useI18n } from "vue-i18n";
-import { userOnlineApi } from "@/api/system/online";
+import { userOnlineApi } from "@/api/identity/online";
 import { useRouter } from "vue-router";
 import { usePageAuth } from "@/router/utils";
 import { goUserDetail } from "@/views/system/hooks";

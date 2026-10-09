@@ -1,7 +1,7 @@
 import { shallowRef } from "vue";
 import type { useI18n } from "vue-i18n";
 import type { OperationProps } from "@/components/RePlusPage";
-import type { ApiApplicationItem } from "@/api/system/open";
+import type { ApiApplicationItem } from "@/api/identity/open";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 

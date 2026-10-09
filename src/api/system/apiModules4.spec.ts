@@ -23,8 +23,8 @@ import {
   listWebhookRows,
   webhookDeliveryApi,
   webhookSubscriptionApi
-} from "./webhook";
-import { systemUploadFileApi } from "./file";
+} from "../task/webhook";
+import { systemUploadFileApi } from "../file/file";
 import {
   getDashBoardTodayOperateTotalApi,
   getDashBoardUserActiveApi,
@@ -67,7 +67,7 @@ describe("webhook 订阅与投递", () => {
     webhookSubscriptionApi.events();
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/webhooks/subscriptions/events",
+      "/api/task/webhooks/subscriptions/events",
       { params: {}, data: {} },
       {}
     );
@@ -75,7 +75,7 @@ describe("webhook 订阅与投递", () => {
     webhookSubscriptionApi.test("w1");
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/webhooks/subscriptions/w1/test",
+      "/api/task/webhooks/subscriptions/w1/test",
       { params: {}, data: {} },
       {}
     );
@@ -83,7 +83,7 @@ describe("webhook 订阅与投递", () => {
     webhookDeliveryApi.retry("d1");
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/webhooks/deliveries/d1/retry",
+      "/api/task/webhooks/deliveries/d1/retry",
       { params: {}, data: {} },
       {}
     );
@@ -101,7 +101,7 @@ describe("systemUploadFileApi 文件", () => {
   it("download 走鉴权下载", () => {
     systemUploadFileApi.download(12, "a.png");
     expect(autoDownloadMock).toHaveBeenLastCalledWith(
-      "/api/system/file/12/download",
+      "/api/file/file/12/download",
       "a.png"
     );
   });
@@ -110,7 +110,7 @@ describe("systemUploadFileApi 文件", () => {
     systemUploadFileApi.accessLogs(12);
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/file/12/access-logs",
+      "/api/file/file/12/access-logs",
       { params: {}, data: {} },
       {}
     );
@@ -118,7 +118,7 @@ describe("systemUploadFileApi 文件", () => {
     systemUploadFileApi.config({ scope: "user" });
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/file/config",
+      "/api/file/file/config",
       { params: { scope: "user" }, data: {} },
       {}
     );
@@ -126,7 +126,7 @@ describe("systemUploadFileApi 文件", () => {
     systemUploadFileApi.stats();
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/file/stats",
+      "/api/file/file/stats",
       { params: {}, data: {} },
       {}
     );
@@ -135,17 +135,16 @@ describe("systemUploadFileApi 文件", () => {
   it("upload / preview 走 http 专用通道", () => {
     systemUploadFileApi.upload({ name: "f" });
     expect(uploadMock).toHaveBeenLastCalledWith(
-      "/api/system/file/upload",
+      "/api/file/file/upload",
       {},
       { name: "f" },
       undefined
     );
 
     systemUploadFileApi.preview(12, { kind: "text" });
-    expect(downloadMock).toHaveBeenLastCalledWith(
-      "/api/system/file/12/preview",
-      { kind: "text" }
-    );
+    expect(downloadMock).toHaveBeenLastCalledWith("/api/file/file/12/preview", {
+      kind: "text"
+    });
   });
 });
 

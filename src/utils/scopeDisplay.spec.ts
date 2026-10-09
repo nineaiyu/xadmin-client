@@ -13,16 +13,16 @@ const GROUP: ScopeGroup = {
   title: "menus.userManagement",
   options: [
     {
-      value: "GET ^/api/system/user/?$",
+      value: "GET ^/api/identity/user/?$",
       method: "GET",
-      path: "/api/system/user",
+      path: "/api/identity/user",
       label: "获取用户的列表",
       code: "list:SystemUser"
     },
     {
-      value: "GET ^/api/system/user/[^/]+/?$",
+      value: "GET ^/api/identity/user/[^/]+/?$",
       method: "GET",
-      path: "/api/system/user/{pk}",
+      path: "/api/identity/user/{pk}",
       label: "获取用户详情",
       code: "retrieve:SystemUser"
     }
@@ -38,9 +38,9 @@ describe("buildScopeIndex", () => {
         title: "",
         options: [
           {
-            value: "POST ^/api/system/role/?$",
+            value: "POST ^/api/identity/role/?$",
             method: "POST",
-            path: "/api/system/role",
+            path: "/api/identity/role",
             label: "添加角色",
             code: "create:SystemRole"
           }
@@ -48,10 +48,10 @@ describe("buildScopeIndex", () => {
       }
     ]);
     expect(index.size).toBe(3);
-    expect(index.get("GET ^/api/system/user/?$")?.path).toBe(
-      "/api/system/user"
+    expect(index.get("GET ^/api/identity/user/?$")?.path).toBe(
+      "/api/identity/user"
     );
-    expect(index.get("POST ^/api/system/role/?$")?.method).toBe("POST");
+    expect(index.get("POST ^/api/identity/role/?$")?.method).toBe("POST");
   });
 
   it("无目录/空分组时返回空索引，不抛错", () => {
@@ -66,17 +66,17 @@ describe("formatScopeEntry", () => {
   const index = buildScopeIndex([GROUP]);
 
   it("命中目录显示「METHOD 可读路径」", () => {
-    expect(formatScopeEntry("GET ^/api/system/user/[^/]+/?$", index)).toBe(
-      "GET /api/system/user/{pk}"
+    expect(formatScopeEntry("GET ^/api/identity/user/[^/]+/?$", index)).toBe(
+      "GET /api/identity/user/{pk}"
     );
   });
 
   it("未命中（自定义条目/白名单接口）原样返回", () => {
-    expect(formatScopeEntry("/api/system/personal-access-tokens", index)).toBe(
-      "/api/system/personal-access-tokens"
-    );
-    expect(formatScopeEntry("GET ^/api/system/user/?$")).toBe(
-      "GET ^/api/system/user/?$"
+    expect(
+      formatScopeEntry("/api/identity/personal-access-tokens", index)
+    ).toBe("/api/identity/personal-access-tokens");
+    expect(formatScopeEntry("GET ^/api/identity/user/?$")).toBe(
+      "GET ^/api/identity/user/?$"
     );
   });
 });
@@ -86,10 +86,10 @@ describe("formatScopeLines", () => {
     const index = buildScopeIndex([GROUP]);
     expect(
       formatScopeLines(
-        ["GET ^/api/system/user/?$", "/api/system/userinfo"],
+        ["GET ^/api/identity/user/?$", "/api/identity/userinfo"],
         index
       )
-    ).toBe("GET /api/system/user\n/api/system/userinfo");
+    ).toBe("GET /api/identity/user\n/api/identity/userinfo");
   });
 
   it("空清单返回空串", () => {

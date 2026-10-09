@@ -1,9 +1,8 @@
 import Cookies from "js-cookie";
 import type { PureHttpRequestConfig } from "@/utils/http/types";
 import { storageLocal } from "@pureadmin/utils";
-import { useUserStoreHook } from "@/store/modules/user";
 import { useLoginPageStoreHook } from "@/store/modules/loginPage";
-import type { TokenInfo, UserInfo } from "@/api/auth";
+import type { TokenInfo } from "@/api/auth";
 import { responsiveStorageNameSpace } from "@/config";
 import Storage from "responsive-storage";
 
@@ -84,11 +83,6 @@ export function setToken(data: TokenInfo) {
         }
       : {}
   );
-}
-
-/** 用户信息统一经 user store 写入（state + 持久化副本一并更新） */
-export function setUserInfo(data: UserInfo) {
-  useUserStoreHook().updateUserInfo(data);
 }
 
 /** 删除`token`以及key值为`user-info`的session信息 */

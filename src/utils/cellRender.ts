@@ -1,5 +1,5 @@
 import { h, type VNode } from "vue";
-import { ElTag } from "element-plus";
+import { ElTag } from "element-plus/es/components/tag/index.mjs";
 
 /**
  * 单元格视觉件（纯渲染函数）：数据字典与通用列表页共用，避免色块样式、

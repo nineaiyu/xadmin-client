@@ -1,9 +1,9 @@
 import { BaseApi } from "@/api/base";
 
-export const searchDeptApi = new BaseApi("/api/system/search/dept");
-export const searchUserApi = new BaseApi("/api/system/search/user");
-export const searchRoleApi = new BaseApi("/api/system/search/role");
-export const searchPostApi = new BaseApi("/api/system/search/post");
+export const searchDeptApi = new BaseApi("/api/identity/search/dept");
+export const searchUserApi = new BaseApi("/api/identity/search/user");
+export const searchRoleApi = new BaseApi("/api/identity/search/role");
+export const searchPostApi = new BaseApi("/api/identity/search/post");
 export const searchMenuApi = new BaseApi("/api/system/search/menu");
 
 /** 全局搜索单条结果 */

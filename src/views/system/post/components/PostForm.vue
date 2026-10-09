@@ -3,10 +3,10 @@ import { onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
 import { fetchAllRows } from "@/utils/fetchAllRows";
-import { deptApi } from "@/api/system/dept";
+import { deptApi } from "@/api/identity/dept";
 import { hasAuth } from "@/router/utils";
 import { SUCCESS_CODE } from "@/api/types";
-import type { PostItem } from "@/api/system/post";
+import type { PostItem } from "@/api/identity/post";
 
 /**
  * 岗位表单（C5：弹窗体系收敛到 ReDialog 的 content 组件形态）。

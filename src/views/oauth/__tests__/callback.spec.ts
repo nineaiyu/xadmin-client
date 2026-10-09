@@ -35,7 +35,7 @@ vi.mock("vue-router", () => ({
   useRoute: () => ({ query: state.query }),
   useRouter: () => ({ push: state.pushMock })
 }));
-vi.mock("@/api/system/oauth", () => ({
+vi.mock("@/api/identity/oauth", () => ({
   OAUTH_BIND_FLAG: state.OAUTH_BIND_FLAG,
   OAUTH_BIND_FLAG_TTL: state.OAUTH_BIND_FLAG_TTL,
   oauthApi: { callback: state.callbackMock }

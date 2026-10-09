@@ -1,5 +1,5 @@
 import type { AxiosResponseHeaders, RawAxiosResponseHeaders } from "axios";
-import { ElMessage } from "element-plus";
+import { ElMessage } from "element-plus/es/components/message/index.mjs";
 import { announce } from "@/utils/announcer";
 import { remoteAccessToken, removeToken } from "@/utils/auth";
 import {

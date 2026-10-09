@@ -13,6 +13,4 @@ class OperationLogApi extends BaseApi {
   };
 }
 
-export const operationLogApi = new OperationLogApi(
-  "/api/system/logs/operation"
-);
+export const operationLogApi = new OperationLogApi("/api/audit/logs/operation");

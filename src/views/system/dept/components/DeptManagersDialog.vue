@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { deptApi, type DeptManagerItem } from "@/api/system/dept";
+import { deptApi, type DeptManagerItem } from "@/api/identity/dept";
 import { SUCCESS_CODE } from "@/api/types";
 import MemberTagEditor from "@/views/system/components/MemberTagEditor.vue";
 

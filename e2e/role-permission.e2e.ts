@@ -141,6 +141,10 @@ test("父子联动：勾选目录联动其下菜单与权限点", async ({ page 
   const content = nodeContent(dialog, "系统管理");
   await expect(content.locator(NODE_STATUS)).toHaveText("未选");
 
+  // 清空会触发回显重算（树数据重建 ⇒ 节点回到折叠态）；下方联动断言按 DOM 勾选
+  // 计数（只统计已渲染节点），故先「展开全部」把子节点渲染出来再勾选。
+  await dialog.getByRole("button", { name: /展开全部|收起全部/ }).click();
+
   const before = await tree.locator(".el-checkbox.is-checked").count();
   await content.locator(".el-checkbox").first().click();
 
@@ -171,7 +175,7 @@ test("勾选保存后重新打开正确回显", async ({ page }) => {
   const roleCode = `e2e_perm_${suffix}`;
   const token = await getAccessToken(page);
 
-  const created = await page.request.post(`${FRONT_URL}/api/system/role`, {
+  const created = await page.request.post(`${FRONT_URL}/api/identity/role`, {
     headers: { Authorization: `Bearer ${token}` },
     data: {
       name: roleName,
@@ -225,7 +229,7 @@ test("勾选保存后重新打开正确回显", async ({ page }) => {
       readTotal(await reopenedAgain.locator(TOTAL).innerText()).checked
     ).toBe(restored.checked);
   } finally {
-    await page.request.delete(`${FRONT_URL}/api/system/role/${rolePk}`, {
+    await page.request.delete(`${FRONT_URL}/api/identity/role/${rolePk}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
   }

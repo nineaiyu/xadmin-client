@@ -42,22 +42,30 @@ export interface PrefetchOptions {
   schedule?: (task: () => void) => void;
 }
 
-/** 默认调度：空闲回调优先，兜底 2s 延迟（Safari 等无 requestIdleCallback 的浏览器） */
+/**
+ * 默认调度：先等首屏 load 事件（预取不得与首屏资源争抢带宽），再进入空闲调度——
+ * 支持 requestIdleCallback 时用它，否则兜底 2s 延迟（Safari 等）。
+ * 文档已 load 完成（二次导航 / 单测环境）时立即按同一规则调度。
+ */
 function defaultSchedule(task: () => void) {
   if (typeof window === "undefined") return;
-  const idle = (
-    window as Window & {
-      requestIdleCallback?: (
-        callback: () => void,
-        options?: { timeout: number }
-      ) => void;
+  const run = () => {
+    const idle = (
+      window as Window & {
+        requestIdleCallback?: (
+          callback: () => void,
+          options?: { timeout: number }
+        ) => void;
+      }
+    ).requestIdleCallback;
+    if (typeof idle === "function") {
+      idle(() => task(), { timeout: 3000 });
+    } else {
+      window.setTimeout(task, 2000);
     }
-  ).requestIdleCallback;
-  if (typeof idle === "function") {
-    idle(() => task(), { timeout: 3000 });
-  } else {
-    window.setTimeout(task, 2000);
-  }
+  };
+  if (document.readyState === "complete") run();
+  else window.addEventListener("load", run, { once: true });
 }
 
 /**

@@ -11,7 +11,7 @@ import {
   storageLocal,
   responsiveStorageNameSpace
 } from "../utils";
-import { usePermissionStoreHook } from "./permission";
+import { fixedTagRoutes } from "@/router/constants";
 
 /** 标签页持久化防抖句柄：标签增删频繁，合并写盘避免逐次同步序列化阻塞主线程 */
 let tagsCacheTimer: ReturnType<typeof setTimeout> | null = null;
@@ -33,12 +33,7 @@ export const useMultiTagsStore = defineStore("pure-multiTags", {
       ? (storageLocal().getItem<RouteConfigs[]>(
           `${responsiveStorageNameSpace()}tags`
         ) ?? [])
-      : [
-          ...routerArrays,
-          ...usePermissionStoreHook().flatteningRoutes.filter(
-            v => v?.meta?.fixedTag
-          )
-        ]) as RouteConfigs[],
+      : [...routerArrays, ...fixedTagRoutes]) as RouteConfigs[],
     multiTagsCache: storageLocal().getItem<StorageConfigs>(
       `${responsiveStorageNameSpace()}configure`
     )?.multiTagsCache

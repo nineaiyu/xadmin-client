@@ -41,7 +41,7 @@ const RAW_ROWS = [
   {
     pk: 3,
     name: "list:SystemUser",
-    path: "api/system/user$",
+    path: "api/identity/user$",
     method: "GET",
     menu_type: MenuChoices.PERMISSION,
     parent: 2,
@@ -88,7 +88,7 @@ describe("useMenuFilter", () => {
 
   it("关键字可命中路由与组件路径（不限于标题）", () => {
     const { filter, matchPks } = setup();
-    filter.keyword = "api/system/user$";
+    filter.keyword = "api/identity/user$";
     expect([...matchPks.value]).toEqual(["3"]);
     filter.keyword = "system/role/index";
     expect([...matchPks.value]).toEqual(["4"]);

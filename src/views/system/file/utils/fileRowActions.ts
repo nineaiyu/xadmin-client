@@ -3,7 +3,7 @@ import { addDrawer } from "@/components/ReDrawer";
 import AccessLogPanel from "../components/AccessLogPanel.vue";
 import { TAGGABLE_RESOURCE } from "@/api/system/tag";
 import type { OperationButtonsRow } from "@/components/RePlusPage";
-import type { systemUploadFileApi } from "@/api/system/file";
+import type { systemUploadFileApi } from "@/api/file/file";
 import type { UnwrapNestedRefs } from "vue";
 import type { RecordType } from "plus-pro-components";
 import type { useI18n } from "vue-i18n";

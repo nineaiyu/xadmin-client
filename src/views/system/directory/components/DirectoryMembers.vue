@@ -3,7 +3,7 @@ import { h, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { deviceDetection } from "@pureadmin/utils";
 import { SUCCESS_CODE } from "@/api/types";
-import { directoryApi, type DirectoryMember } from "@/api/system/directory";
+import { directoryApi, type DirectoryMember } from "@/api/identity/directory";
 import { message } from "@/utils/message";
 import { addDrawer } from "@/components/ReDrawer";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
@@ -15,7 +15,7 @@ import MemberDetail from "./MemberDetail.vue";
 /**
  * 通讯录右栏：成员名录（服务端分页）。
  *
- * - 数据源 /api/system/directory（list:SystemDirectory；数据权限随调用者收口）；
+ * - 数据源 /api/identity/directory（list:SystemDirectory；数据权限随调用者收口）；
  * - 卡片（默认，认人场景）/ 列表（找联系方式场景）两种视图共用同一份数据与分页；
  * - 点击成员打开只读详情抽屉（ReDrawer，无编辑动作）。
  */

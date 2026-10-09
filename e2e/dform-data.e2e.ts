@@ -203,13 +203,13 @@ test("表单数据：选人字段按主键筛选（远程搜索）", async ({ pa
   const deviceB = `E2E选人路由器-B-${suffix}`;
 
   // 选人筛选取值为用户主键：本用例用「当前用户」与种子账号各提交一条
-  const meRes = await page.request.get(`${FRONT_URL}/api/system/userinfo`, {
+  const meRes = await page.request.get(`${FRONT_URL}/api/identity/userinfo`, {
     headers
   });
   expect(meRes.ok(), await meRes.text()).toBeTruthy();
   const me = (await meRes.json()).data;
   const otherRes = await page.request.get(
-    `${FRONT_URL}/api/system/user?page=1&limit=10&username=e2e_user`,
+    `${FRONT_URL}/api/identity/user?page=1&limit=10&username=e2e_user`,
     { headers }
   );
   const other = ((await otherRes.json())?.data?.results ?? []).find(

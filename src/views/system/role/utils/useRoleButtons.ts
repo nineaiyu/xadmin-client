@@ -4,7 +4,7 @@ import { useBatchUpdate } from "@/views/system/components/useBatchUpdate";
 import View from "~icons/ep/view";
 import type { OperationProps } from "@/components/RePlusPage";
 import type { useI18n } from "vue-i18n";
-import type { roleApi } from "@/api/system/role";
+import type { roleApi } from "@/api/identity/role";
 import type { RecordType } from "plus-pro-components";
 
 type TFunction = ReturnType<typeof useI18n>["t"];

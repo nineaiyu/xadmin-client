@@ -5,7 +5,7 @@ import { SUCCESS_CODE } from "@/api/types";
 import {
   webhookSubscriptionApi,
   type WebhookSubscriptionItem
-} from "@/api/system/webhook";
+} from "@/api/task/webhook";
 import { normalizeError } from "@/utils/apiError";
 import { message } from "@/utils/message";
 import { useSubscriptionEvents } from "./useSubscriptionEvents";

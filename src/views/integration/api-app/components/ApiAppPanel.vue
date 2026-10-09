@@ -11,7 +11,7 @@ import {
 import type {
   ApiApplicationItem,
   CallbackProbeResult
-} from "@/api/system/open";
+} from "@/api/identity/open";
 
 /**
  * API 应用「管理」抽屉内容：应用资料 + 接入密钥/联调/配置动作。

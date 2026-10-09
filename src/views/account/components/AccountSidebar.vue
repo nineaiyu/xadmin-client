@@ -10,6 +10,9 @@ import leftLine from "~icons/ri/arrow-left-s-line";
 /**
  * 账户设置侧栏内容（返回入口 + 用户名片 + 页签导航）。
  * 桌面端作为分栏容器 paneL 的内容、移动端作为 el-aside 的内容复用。
+ *
+ * 返回入口 / 名片 / 页签的行高与左侧内边距同源（48px + 菜单级 padding），
+ * 三段内容左右对齐成同一列。
  */
 defineProps<{
   /** 当前激活页签 key */
@@ -29,18 +32,13 @@ const { t } = useI18n();
 
 <template>
   <el-menu :default-active="currentPane" class="pure-account-settings-menu">
-    <div
-      class="h-12.5! text-(--pure-theme-menu-text) cursor-pointer text-sm transition-all duration-300 ease-in-out hover:scale-105 will-change-transform transform-gpu origin-center hover:text-base! hover:text-(--pure-theme-menu-title-hover)!"
-      @click="router.go(-1)"
-    >
-      <div class="h-full flex items-center px-(--el-menu-base-level-padding)">
-        <IconifyIconOffline :icon="leftLine" />
-        <span class="ml-2">{{ t("account.back") }}</span>
-      </div>
+    <div class="account-sidebar__back" @click="router.go(-1)">
+      <IconifyIconOffline :icon="leftLine" />
+      <span class="ml-2">{{ t("account.back") }}</span>
     </div>
-    <div class="flex items-center ml-8 my-4">
+    <div class="account-sidebar__profile">
       <el-avatar :size="48" :src="userinfoStore.avatar ?? avatar" />
-      <div class="ml-4 flex flex-col max-w-25">
+      <div class="account-sidebar__identity">
         <ReText class="font-bold self-baseline!">
           {{ userinfoStore.nickname }}
         </ReText>
@@ -64,3 +62,35 @@ const { t } = useI18n();
     </el-menu-item>
   </el-menu>
 </template>
+
+<style lang="scss" scoped>
+.account-sidebar__back {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  height: 48px;
+  padding: 0 var(--el-menu-base-level-padding);
+  font-size: 14px;
+  color: var(--pure-theme-menu-text);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.account-sidebar__back:hover {
+  color: var(--pure-theme-menu-title-hover);
+}
+
+.account-sidebar__profile {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px var(--el-menu-base-level-padding) 16px;
+}
+
+.account-sidebar__identity {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 100px;
+}
+</style>

@@ -1,7 +1,7 @@
 import { ref, shallowRef, type Ref, type UnwrapNestedRefs } from "vue";
 import type { OperationProps } from "@/components/RePlusPage";
 import type { useI18n } from "vue-i18n";
-import type { userApi } from "@/api/system/user";
+import type { userApi } from "@/api/identity/user";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import type { RecordType } from "plus-pro-components";
 import Setting from "~icons/ri/settings-3-line";

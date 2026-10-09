@@ -5,7 +5,7 @@ import {
   apiApplicationApi,
   type ApiApplicationItem,
   type ApplicationUsageStats
-} from "@/api/system/open";
+} from "@/api/identity/open";
 import { normalizeError } from "@/utils/apiError";
 
 /** 用量报表可选窗口（服务端上限 30 天） */

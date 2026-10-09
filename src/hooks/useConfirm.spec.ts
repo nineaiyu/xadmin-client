@@ -4,7 +4,9 @@ import { useConfirm } from "./useConfirm";
 
 const mocks = vi.hoisted(() => ({ confirm: vi.fn() }));
 
-vi.mock("element-plus", () => ({ ElMessageBox: { confirm: mocks.confirm } }));
+vi.mock("element-plus/es/components/message-box/index.mjs", () => ({
+  ElMessageBox: { confirm: mocks.confirm }
+}));
 
 // useConfirm 走 i18n.global 取词（无组件上下文），测试桩直接返回 key 形态
 vi.mock("@/plugins/i18n", () => ({

@@ -1,10 +1,7 @@
 <script lang="ts" setup>
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import {
-  systemUploadFileApi,
-  type FileAccessLogResult
-} from "@/api/system/file";
+import { systemUploadFileApi, type FileAccessLogResult } from "@/api/file/file";
 import { message } from "@/utils/message";
 import { SUCCESS_CODE } from "@/api/types";
 import type { RecordType } from "plus-pro-components";

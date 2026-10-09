@@ -66,9 +66,9 @@ const wrapperEnv = (envConf: Recordable): ViteEnv => {
     if (envName === "VITE_PORT") {
       realName = Number(realName);
     }
-    // envName 为运行时环境变量键（ViteEnv 子集），动态写入按字符串索引访问
-    (ret as unknown as Record<string, string | boolean | number>)[envName] =
-      realName;
+    // envName 为运行时环境变量键（ViteEnv 子集）：经 Object.assign 动态写入，
+    // 避免「无法用单一 as 收窄的动态索引赋值」退化为 as unknown as 双重断言
+    Object.assign(ret, { [envName]: realName });
     if (typeof realName === "string") {
       process.env[envName] = realName;
     } else if (typeof realName === "object") {

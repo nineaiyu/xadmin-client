@@ -67,7 +67,7 @@ test("受限用户：直接访问系统管理路由仍无法取得用户列表�
     await expect(page.locator(".el-table__row")).toHaveCount(0);
   }
   const response = await page.request.get(
-    `${BACKEND_URL}/api/system/user?page=1&limit=10`,
+    `${BACKEND_URL}/api/identity/user?page=1&limit=10`,
     {
       headers: {
         Authorization: `Bearer ${await getAccessToken(page)}`,
@@ -83,7 +83,7 @@ test("普通用户 API 越权：携带合法 token 直接调用用户管理接�
 }) => {
   await login(page, PLAIN_USER);
   const response = await page.request.get(
-    `${BACKEND_URL}/api/system/role?page=1&limit=10`,
+    `${BACKEND_URL}/api/identity/role?page=1&limit=10`,
     {
       headers: {
         Authorization: `Bearer ${await getAccessToken(page)}`,
@@ -97,7 +97,7 @@ test("普通用户 API 越权：携带合法 token 直接调用用户管理接�
 test("管理员合法调用同一接口返回 200 @smoke", async ({ page }) => {
   await login(page, ADMIN);
   const response = await page.request.get(
-    `${BACKEND_URL}/api/system/role?page=1&limit=10`,
+    `${BACKEND_URL}/api/identity/role?page=1&limit=10`,
     {
       headers: {
         Authorization: `Bearer ${await getAccessToken(page)}`,

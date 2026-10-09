@@ -87,7 +87,7 @@ test("文件中心：Office 在线预览（docx 转换后 PDF 内嵌渲染）", 
 
   const filename = `e2e-office-${Date.now()}.docx`;
   const uploadResp = await page.request.post(
-    `${FRONT_URL}/api/system/file/upload`,
+    `${FRONT_URL}/api/file/file/upload`,
     {
       multipart: {
         file: {

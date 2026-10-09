@@ -7,7 +7,7 @@ import {
 } from "@/components/RePlusPage";
 import type { useI18n } from "vue-i18n";
 import type { UnwrapNestedRefs } from "vue";
-import type { userApi } from "@/api/system/user";
+import type { userApi } from "@/api/identity/user";
 import type { RecordType } from "plus-pro-components";
 
 type TFunction = ReturnType<typeof useI18n>["t"];

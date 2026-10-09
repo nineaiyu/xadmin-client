@@ -13,7 +13,7 @@ import { AesEncrypted } from "@/utils/aes";
 import { passwordStrengthLevels } from "@/utils/password";
 import { buildPasswordValidator } from "./passwordRules";
 import type { Ref, UnwrapNestedRefs } from "vue";
-import type { userApi } from "@/api/system/user";
+import type { userApi } from "@/api/identity/user";
 import type { PasswordRule } from "@/api/auth";
 import type { useI18n } from "vue-i18n";
 import type { RecordType } from "plus-pro-components";

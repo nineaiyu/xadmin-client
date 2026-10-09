@@ -7,7 +7,7 @@ import {
   OAUTH_BIND_FLAG,
   OAUTH_BIND_FLAG_TTL,
   oauthApi
-} from "@/api/system/oauth";
+} from "@/api/identity/oauth";
 import type { LoginMfaRequired } from "@/api/mfa";
 import type { TokenInfo } from "@/api/auth";
 import LoginMfa from "@/views/login/components/LoginMfa.vue";

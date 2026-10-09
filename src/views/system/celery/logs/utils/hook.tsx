@@ -1,6 +1,6 @@
 import { reactive, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { taskExecutionApi } from "@/api/system/task";
+import { taskExecutionApi } from "@/api/task/task";
 import { hasAuth, usePageAuth } from "@/router/utils";
 import { buildTaskExecutionColumns } from "./taskExecutionColumns";
 import { createTaskExecutionActions } from "./taskExecutionActions";
@@ -22,7 +22,7 @@ export function useTaskExecution(tableRef?: Ref) {
   const auth = usePageAuth(["log"]);
   const { t } = useI18n();
 
-  // 取消 / 重跑走聚合端点（/api/system/tasks/unified/{cancel,rerun}），权限点
+  // 取消 / 重跑走聚合端点（/api/task/unified/{cancel,rerun}），权限点
   // 挂执行历史菜单下，直接按权限点判定（框架默认清单只覆盖组件名同源 action）
   const canCancel = hasAuth(PERM_CANCEL);
   const canRerun = hasAuth(PERM_RERUN);

@@ -9,10 +9,11 @@
  * 对应 input_type 时才加载该组件。
  */
 import { defineAsyncComponent } from "vue";
-import {
-  registerApiSearchComponents,
-  registerSuggestFetcher
-} from "@/components/RePlusPage";
+// 只取注册器（子路径导入）：若从 `@/components/RePlusPage` 桶导入，会把 RePlusPage
+// 组件与它的重依赖（plus-pro、element-plus 页面级组件）静态拉进入口模块图，
+// 使按需分块失去意义（实测首屏闭包因此多出整块 element-plus）
+import { registerApiSearchComponents } from "@/components/RePlusPage/src/utils/apiSearch";
+import { registerSuggestFetcher } from "@/components/RePlusPage/src/utils/suggest";
 import { http } from "@/utils/http";
 
 /** 远程联想fetcher：统一走 axios 拦截器（token / 业务码归一） */

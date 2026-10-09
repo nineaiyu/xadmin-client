@@ -25,7 +25,7 @@ describe("userInfoApi 个人信息", () => {
     userInfoApi.retrieve({ expand: "roles" });
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/userinfo",
+      "/api/identity/userinfo",
       { params: { expand: "roles" }, data: {} },
       {}
     );
@@ -35,7 +35,7 @@ describe("userInfoApi 个人信息", () => {
     userInfoApi.choices();
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/userinfo/choices",
+      "/api/identity/userinfo/choices",
       { params: {}, data: {} },
       {}
     );
@@ -43,7 +43,7 @@ describe("userInfoApi 个人信息", () => {
     userInfoApi.resetPassword({ old: "a", new: "b" });
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/userinfo/reset-password",
+      "/api/identity/userinfo/reset-password",
       { params: {}, data: { old: "a", new: "b" } },
       {}
     );
@@ -51,7 +51,7 @@ describe("userInfoApi 个人信息", () => {
     userInfoApi.bind({ email: "a@b.c" });
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/system/userinfo/bind",
+      "/api/identity/userinfo/bind",
       { params: {}, data: { email: "a@b.c" } },
       {}
     );
@@ -60,7 +60,7 @@ describe("userInfoApi 个人信息", () => {
   it("upload 走 http.upload 通道", () => {
     userInfoApi.upload({ avatar: "x" });
     expect(uploadMock).toHaveBeenLastCalledWith(
-      "/api/system/userinfo/upload",
+      "/api/identity/userinfo/upload",
       {},
       { avatar: "x" }
     );
@@ -104,7 +104,7 @@ describe("personalAccessTokenApi 访问令牌", () => {
     personalAccessTokenApi.logs("pat1", { limit: 5 });
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/personal-access-tokens/pat1/logs",
+      "/api/identity/personal-access-tokens/pat1/logs",
       { params: { limit: 5 }, data: {} },
       {}
     );
@@ -112,7 +112,7 @@ describe("personalAccessTokenApi 访问令牌", () => {
     personalAccessTokenApi.stats("pat1");
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/personal-access-tokens/pat1/stats",
+      "/api/identity/personal-access-tokens/pat1/stats",
       { params: {}, data: {} },
       {}
     );
@@ -120,7 +120,7 @@ describe("personalAccessTokenApi 访问令牌", () => {
     personalAccessTokenApi.scopeOptions();
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/personal-access-tokens/scope-options",
+      "/api/identity/personal-access-tokens/scope-options",
       { params: {}, data: {} },
       {}
     );
@@ -134,13 +134,13 @@ describe("personalAccessTokenApi 访问令牌", () => {
     await loadPatScopeCatalog();
     expect(requestMock).toHaveBeenCalledWith(
       "get",
-      "/api/system/personal-access-tokens/scope-options",
+      "/api/identity/personal-access-tokens/scope-options",
       { params: {}, data: {} },
       {}
     );
     // 缓存命中路径：scopeOptions 不再触发第二次请求
     const count = requestMock.mock.calls.filter(
-      ([, url]) => url === "/api/system/personal-access-tokens/scope-options"
+      ([, url]) => url === "/api/identity/personal-access-tokens/scope-options"
     ).length;
     expect(count).toBe(1);
   });

@@ -4,7 +4,7 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
 import Logout from "~icons/ri/logout-circle-r-line";
 import CloseCircle from "~icons/ep/circle-close";
-import type { userOnlineApi } from "@/api/system/online";
+import type { userOnlineApi } from "@/api/identity/online";
 import type { useI18n } from "vue-i18n";
 
 type TFunction = ReturnType<typeof useI18n>["t"];

@@ -1,6 +1,21 @@
 import qs from "qs";
-import { getUsedAccessToken } from "@/utils/token";
 import { MessageAction } from "@/utils/websocket/protocol";
+
+/**
+ * 重连前的 token 刷新器（由应用入口注入）。
+ *
+ * utils 工具层不直连 api 层：WebSocket 重连需要「无感刷新 accessToken」，
+ * 若在此静态导入刷新助手，会与 store / api 形成顶层静态环。改由建连方在
+ * 应用初始化时注入；未注入时跳过刷新（重连本身仍按退避策略进行）。
+ */
+let reconnectTokenProvider: (() => Promise<unknown>) | null = null;
+
+/** 注册重连前的 token 刷新器（应用入口初始化时调用一次） */
+export function setReconnectTokenProvider(
+  provider: (() => Promise<unknown>) | null
+) {
+  reconnectTokenProvider = provider;
+}
 
 /**
  * setTimeout 类型
@@ -224,7 +239,7 @@ class WS {
           reconnectMaxTimeout
         );
         this.delay = setTimeout(async () => {
-          await getUsedAccessToken();
+          await reconnectTokenProvider?.();
           this.reconnectHandle();
         }, backoff);
       };

@@ -3,7 +3,7 @@ import { useI18n } from "vue-i18n";
 import { hasAuth, usePageAuth } from "@/router/utils";
 import { buildScopeIndex } from "@/utils/scopeDisplay";
 import { SUCCESS_CODE } from "@/api/types";
-import { apiApplicationApi, loadScopeCatalog } from "@/api/system/open";
+import { apiApplicationApi, loadScopeCatalog } from "@/api/identity/open";
 import { useApiAppCredential } from "./useApiAppCredential";
 import { useApiAppActions } from "./useApiAppActions";
 import { useApiAppUsage } from "./useApiAppUsage";

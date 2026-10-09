@@ -27,6 +27,9 @@
 - [ ] 用户态读写走 Pinia / utils 封装，无直接 localStorage/cookie 调用
 - [ ] 新文件 ≤400 行，巨型文件拆分符合 composables 约定
 - [ ] `node scripts/check-file-length.mjs` 通过（>500 行新增即失败，存量基线只减不增）
+- [ ] `pnpm check:module-cycles` 通过（无未豁免的顶层静态导入环，豁免按批次登记）
+- [ ] `pnpm check:as-unknown` 通过（无未登记的 `as unknown as`）
+- [ ] `pnpm check:hook-length` 通过（无 ≥120 行的新增 hook 形态文件）
 - [ ] 断言与环境/语言无关（locale、时区、排序等，避免本地与 CI 不一致的假绿）
 
 ## 验证方式

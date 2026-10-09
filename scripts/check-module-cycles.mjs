@@ -56,31 +56,52 @@ const FORBIDDEN_EDGES = [
 
 /* ------------------------------------------------------------------ *
  * 环清单豁免（仅用于已知、且不在本次可改文件范围内的存量环）。
- * - EXEMPT_PREFIX：环内【任一】节点命中该路径前缀即豁免（如组件内部环）；
- * - EXEMPT_NODES：环内【任一】节点命中该精确路径即豁免（既有跨层反向边枢纽）；
- * - ALLOWED_CYCLES：精确豁免（成员相对路径排序后的数组，签名匹配）。
+ *
+ * 每条豁免是一个对象：{ path | members, batch, reason, since }
+ * - kind=prefix：环内【任一】节点命中 path 前缀即豁免（组件内部环）；
+ * - kind=node  ：环内【任一】节点命中 path 精确路径即豁免（跨层反向边枢纽）；
+ * - kind=cycle ：成员相对路径排序后与 members 完全一致即豁免（精确存量环）。
+ *
+ * batch 为语义批次标签（非台账编号），reason 说明为何暂不改动，since 登记日期。
+ * 为向后兼容也接受字符串条目：等价于 { path }（batch 记为 unlabeled）。
  * 注意：命中豁免的环不再计入退出码；FORBIDDEN_EDGES 仍独立生效，
  * 因此核心环回归不会被下面的豁免掩盖。
  * ------------------------------------------------------------------ */
 const EXEMPT_PREFIX = [
-  // 组件内部环（index.ts ↔ index.vue 等）：本次不可改 src/components/**
-  "src/components/"
+  {
+    path: "src/components/",
+    batch: "components-internal",
+    reason:
+      "组件目录内部 index.ts ↔ index.vue / 工具互引，属组件封装自洽，不在跨层收敛范围。",
+    since: "2026-10-09"
+  }
 ];
-const EXEMPT_NODES = [
-  // 认证链上的存量反向边枢纽：utils/token.ts（→ api/auth）、utils/websocket.ts、
-  // store/utils.ts（桶出口 → @/router）、router/index.ts（→ store）均不在本次
-  // 可改文件范围内，其参与的环留待后续专项收敛。
-  "src/utils/token.ts",
-  "src/utils/websocket.ts",
-  "src/store/utils.ts",
-  "src/router/index.ts"
-];
-const ALLOWED_CYCLES = [
-  // 两个 store 内部存量环（与 api 环无关，本次不改）：
-  // multiTags ↔ permission 互相调用 hook；user ↔ utils/auth（setToken/setUserInfo 双向）。
-  ["src/store/modules/multiTags.ts", "src/store/modules/permission.ts"],
-  ["src/store/modules/user.ts", "src/utils/auth.ts"]
-];
+const EXEMPT_NODES = [];
+const ALLOWED_CYCLES = [];
+
+/** 兼容字符串写法：{ path } / { members } 归一 */
+function normalizeExempt(entry) {
+  if (typeof entry === "string") {
+    return { path: entry, batch: "unlabeled", reason: "", since: "" };
+  }
+  return entry;
+}
+
+/** 归一后的查找结构（前缀表 / 节点 map / 精确环签名 map） */
+const exemptPrefixList = EXEMPT_PREFIX.map(normalizeExempt);
+const exemptNodeByPath = new Map(
+  EXEMPT_NODES.map(entry => {
+    const normalized = normalizeExempt(entry);
+    return [normalized.path, normalized];
+  })
+);
+const allowedCycleByKey = new Map(
+  ALLOWED_CYCLES.map(entry =>
+    Array.isArray(entry)
+      ? [entry.join("|"), { members: entry, batch: "unlabeled", reason: "" }]
+      : [entry.members.join("|"), entry]
+  )
+);
 
 function walk(dir, out = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -317,22 +338,97 @@ function checkForbiddenEdges(nodes, adj, rel) {
   return violations;
 }
 
-function isExempt(members, sig, allowedKeys) {
-  if (allowedKeys.has(sig)) return true;
-  return members.some(
-    m => EXEMPT_PREFIX.some(p => m.startsWith(p)) || EXEMPT_NODES.includes(m)
-  );
+/**
+ * 判定一条环的豁免归属。
+ * 命中顺序：精确环签名 → 节点前缀 → 精确节点。返回命中的豁免条目（未命中返回 null）。
+ */
+function exemptionFor(members, sig) {
+  const cycleEntry = allowedCycleByKey.get(sig);
+  if (cycleEntry) return { ...cycleEntry, kind: "cycle" };
+  for (const m of members) {
+    const pref = exemptPrefixList.find(e => m.startsWith(e.path));
+    if (pref) return { ...pref, kind: "prefix", matched: m };
+    const node = exemptNodeByPath.get(m);
+    if (node) return { ...node, kind: "node", matched: m };
+  }
+  return null;
 }
+
+const REPORT = process.argv.includes("--report");
+const JSON_OUT = process.argv.includes("--json");
 
 function main() {
   const { files, rel, adj } = buildGraph();
   const { cycles, truncated, steps } = findElementaryCycles(files, adj);
 
-  const allowedKeys = new Set(ALLOWED_CYCLES.map(list => list.join("|")));
-  const seen = new Set();
-
   // 1) 结构性策略
   const edgeViolations = checkForbiddenEdges(files, adj, rel);
+
+  // 2) 初等环清单（豁免项仅作展示，不计入退出码）
+  const seen = new Set();
+  const results = [];
+  const batchCounts = new Map();
+  let offending = 0;
+  let exemptCount = 0;
+
+  for (const cycle of cycles) {
+    const members = cycle.slice(0, -1).map(n => rel.get(n));
+    const sig = cycleSignature(members);
+    if (seen.has(sig)) continue;
+    seen.add(sig);
+    const exemption = exemptionFor(members, sig);
+    const ignored = exemption !== null;
+    if (ignored) {
+      exemptCount++;
+      const batch = exemption.batch;
+      batchCounts.set(batch, (batchCounts.get(batch) ?? 0) + 1);
+    } else {
+      offending++;
+    }
+    results.push({
+      members: cycle.map(n => rel.get(n)),
+      exempt: ignored,
+      exemptBy: exemption
+        ? {
+            kind: exemption.kind,
+            batch: exemption.batch,
+            path: exemption.path,
+            members: exemption.members,
+            matched: exemption.matched
+          }
+        : null
+    });
+  }
+
+  const summary = {
+    scannedFiles: files.length,
+    cycles: seen.size,
+    offending,
+    exempted: exemptCount,
+    truncated,
+    steps,
+    batches: Object.fromEntries(
+      [...batchCounts.entries()].sort((a, b) => b[1] - a[1])
+    ),
+    edgeViolations
+  };
+
+  if (JSON_OUT) {
+    console.log(
+      JSON.stringify(
+        {
+          summary,
+          forbiddenEdgeViolations: edgeViolations,
+          cycles: results
+        },
+        null,
+        2
+      )
+    );
+    if (edgeViolations.length > 0 || offending > 0) process.exit(1);
+    return;
+  }
+
   console.log("== 结构性策略校验（禁止的静态边）==");
   if (edgeViolations.length === 0) {
     console.log("通过：未发现禁止的顶层静态边。");
@@ -340,32 +436,45 @@ function main() {
     for (const v of edgeViolations) console.log(`  违规：${v}`);
   }
 
-  // 2) 初等环清单（豁免项仅作展示，不计入退出码）
-  let offending = 0;
-  let exemptCount = 0;
   console.log(
     `\n== 初等环清单 ==\n扫描 ${files.length} 个源码文件，发现 ${cycles.length} 个初等环` +
       `${truncated ? `（已达上限，仅展开 ${steps} 步）` : ""}。`
   );
 
-  for (const cycle of cycles) {
-    const members = cycle.slice(0, -1).map(n => rel.get(n));
-    const sig = cycleSignature(members);
-    if (seen.has(sig)) continue;
-    seen.add(sig);
-    const ignored = isExempt(members, sig, allowedKeys);
-    if (ignored) exemptCount++;
-    else offending++;
-    console.log(`\n[${ignored ? "已豁免" : "环"}] ${members.length} 个模块：`);
-    console.log(`  ${rel.get(cycle[0])}`);
+  for (const item of results) {
+    if (!REPORT && item.exempt) continue;
+    const cycle = item.members;
+    console.log(
+      `\n[${item.exempt ? "已豁免" : "环"}] ${cycle.length - 1} 个模块：`
+    );
+    console.log(`  ${cycle[0]}`);
     for (let i = 1; i < cycle.length; i++) {
-      console.log(`  → ${rel.get(cycle[i])}`);
+      console.log(`  → ${cycle[i]}`);
+    }
+    if (item.exempt && item.exemptBy) {
+      const by = item.exemptBy;
+      const who =
+        by.kind === "cycle"
+          ? `精确环（${(by.members ?? []).join(", ")}）`
+          : `${by.kind === "prefix" ? "前缀" : "节点"} ${by.matched}`;
+      console.log(`  ← 豁免归属：${who} · 批次 ${by.batch}`);
     }
   }
 
   console.log(
     `\n合计：${seen.size} 个初等环（未豁免 ${offending} 个，已豁免 ${exemptCount} 个）。`
   );
+  console.log("批次豁免分布：");
+  if (batchCounts.size === 0) {
+    console.log("  （无）");
+  } else {
+    for (const [batch, count] of [...batchCounts.entries()].sort(
+      (a, b) => b[1] - a[1]
+    )) {
+      console.log(`  ${batch}: ${count}`);
+    }
+  }
+
   if (truncated) {
     console.error(
       "注意：枚举达到上限（环数量过多），输出可能不完整——请优先破除已列出的环。"

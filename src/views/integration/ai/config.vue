@@ -10,6 +10,7 @@ import {
   type AiMetrics,
   type AiUsageSummary
 } from "@/api/ai/ai";
+import RunDashboard from "./components/RunDashboard.vue";
 import { useAiProfiles } from "./utils/useAiProfiles";
 import { normalizeError } from "@/utils/apiError";
 
@@ -385,6 +386,13 @@ onMounted(() => {
         </el-tag>
       </div>
     </el-card>
+
+    <!-- 运行看板：成功率 / 延迟 / 档案与模型分布（数据源同用量账本端点） -->
+    <RunDashboard
+      v-if="canReadMetrics"
+      :usage="usage"
+      :loading="usageLoading"
+    />
 
     <RePlusPage
       ref="tableRef"

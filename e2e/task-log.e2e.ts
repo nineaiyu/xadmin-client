@@ -27,7 +27,7 @@ test("任务日志：记录类型过滤 + 重跑 + 日志入口", async ({ page 
 
   // 造一条导出记录（用户管理异步导出；EAGER 下同步跑完 → SUCCESS）
   const created = await page.request.post(
-    `${FRONT_URL}/api/system/user/export-async`,
+    `${FRONT_URL}/api/identity/user/export-async`,
     {
       headers: { Authorization: `Bearer ${token}` },
       data: { type: "xlsx" }
@@ -39,7 +39,7 @@ test("任务日志：记录类型过滤 + 重跑 + 日志入口", async ({ page 
 
   // 记录名（列表按产物业务名展示）
   const listed = await page.request.get(
-    `${FRONT_URL}/api/system/tasks/unified?type=export&size=50`,
+    `${FRONT_URL}/api/task/unified?type=export&size=50`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
   expect(listed.status()).toBe(200);

@@ -2,7 +2,7 @@ import { SUCCESS_CODE } from "@/api/types";
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 
-import { deptApi } from "@/api/system/dept";
+import { deptApi } from "@/api/identity/dept";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { fetchAllRows } from "@/utils/fetchAllRows";

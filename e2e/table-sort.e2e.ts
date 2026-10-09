@@ -18,8 +18,8 @@ function collectUserRequests(page: import("@playwright/test").Page) {
   page.on("request", request => {
     const url = request.url();
     if (
-      url.includes("/api/system/user?") ||
-      url.includes("/api/system/user/?")
+      url.includes("/api/identity/user?") ||
+      url.includes("/api/identity/user/?")
     ) {
       urls.push(url);
     }

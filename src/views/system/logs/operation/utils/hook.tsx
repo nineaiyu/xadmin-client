@@ -1,6 +1,6 @@
 import { onMounted, reactive, ref, shallowRef } from "vue";
 import { useI18n } from "vue-i18n";
-import { operationLogApi } from "@/api/system/logs/operation";
+import { operationLogApi } from "@/api/audit/logs/operation";
 import { usePageAuth } from "@/router/utils";
 import { useOperationLogColumns } from "./operationLogColumns";
 import { fetchOperationLogDetail } from "./operationLogDetail";

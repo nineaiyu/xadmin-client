@@ -3,7 +3,7 @@ import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { SUCCESS_CODE } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
-import { roleApi } from "@/api/system/role";
+import { roleApi } from "@/api/identity/role";
 import {
   listRows,
   type DashboardCard,

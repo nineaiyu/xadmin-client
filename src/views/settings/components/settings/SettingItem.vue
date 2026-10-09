@@ -10,6 +10,7 @@ import { PlusForm } from "plus-pro-components";
 import type { FieldValues, PlusColumn, RecordType } from "plus-pro-components";
 import { cloneDeep, pickBy } from "lodash-es";
 import { useI18n } from "vue-i18n";
+import { resolveSettingFieldSpan } from "@/views/settings/utils/settingLayout";
 import { settingItemProps } from "./types";
 
 defineOptions({
@@ -96,7 +97,9 @@ const getData = () => {
           addOrEditColumns.value
         ).filter(column => keepField(column.prop as string));
         addOrEditData.value.addOrEditColumns.forEach(column => {
-          column["colProps"] = {};
+          // 宽度按控件形态分配（长文本独占整行、开关最窄），不再一律拉满：
+          // 后端的响应式默认值对设置页同样过宽，这里整体覆写
+          column["colProps"] = resolveSettingFieldSpan(column["_column"]);
           (column["fieldProps"] as { disabled?: boolean })["disabled"] =
             !props.auth.partialUpdate;
         });
@@ -171,34 +174,44 @@ const handleTest = () => {
     :rules="addOrEditData.addOrEditRules"
     :default-values="cloneDeep(addOrEditData.defaultData)"
     :row-props="{ gutter: 24 }"
-    class="mx-12 m-5"
-    label-position="left"
-    label-width="300px"
+    class="setting-form"
+    label-position="top"
     :has-footer="auth.partialUpdate"
     v-bind="formProps"
     @submit="handleSubmitSettings"
   >
     <template #footer="{ handleSubmit }">
-      <div style="justify-content: flex-start">
-        <el-button v-if="auth.partialUpdate" @click="getData"
-          >{{ t("buttons.reset") }}
-        </el-button>
+      <el-button v-if="auth.partialUpdate" @click="getData"
+        >{{ t("buttons.reset") }}
+      </el-button>
 
-        <el-button
-          v-if="auth.partialUpdate"
-          type="primary"
-          :loading="submitLoading"
-          @click="handleSubmit"
-          >{{ t("buttons.save") }}
-        </el-button>
-        <el-button
-          v-if="auth.test"
-          type="success"
-          :loading="testLoading"
-          @click="handleTest"
-          >{{ t("buttons.test") }}
-        </el-button>
-      </div>
+      <el-button
+        v-if="auth.partialUpdate"
+        type="primary"
+        :loading="submitLoading"
+        @click="handleSubmit"
+        >{{ t("buttons.save") }}
+      </el-button>
+      <el-button
+        v-if="auth.test"
+        type="success"
+        :loading="testLoading"
+        @click="handleTest"
+        >{{ t("buttons.test") }}
+      </el-button>
     </template>
   </PlusForm>
 </template>
+
+<style lang="scss" scoped>
+/**
+ * 设置表单：标签置于控件上方（label-position="top"）。
+ *
+ * 设置项标签普遍较长（如「登录 MFA 令牌有效期（秒）」），左置标签必须预留固定
+ * 宽度，短标签被撑出大片空白、长标签又会溢出压到控件上；上置标签按内容自然换行，
+ * 列宽只由控件形态决定（见 utils/settingLayout.ts）。
+ */
+.setting-form :deep(.plus-form__footer) {
+  padding: 4px 0 8px;
+}
+</style>

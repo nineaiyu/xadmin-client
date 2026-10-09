@@ -17,7 +17,7 @@ import {
   type ReportDesignComponent,
   type ReportItem
 } from "@/api/dataset/analysis";
-import ChartCard from "@/views/dashboard/components/ChartCard.vue";
+import { ChartCardAsync as ChartCard } from "@/views/dashboard/components/ChartCardAsync";
 import ReportDesignSidebar from "./components/ReportDesignSidebar.vue";
 import ReportTablePreview from "./components/ReportTablePreview.vue";
 import ReportComponentForm from "./components/ReportComponentForm.vue";

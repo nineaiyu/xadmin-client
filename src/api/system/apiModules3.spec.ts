@@ -11,7 +11,7 @@ import { noticeApi, noticeReadApi } from "./notice";
 import { systemMsgSubscriptionApi } from "./notifications";
 import { tagApi } from "./tag";
 import { knowledgeApi } from "@/api/ai/knowledge";
-import { oauthApi } from "./oauth";
+import { oauthApi } from "../identity/oauth";
 
 /**
  * api/system 第三批（拆分自第一批超长文件）：审批、通知协作与平台集成域的契约测试，
@@ -236,7 +236,7 @@ describe("oauthApi 第三方登录", () => {
     oauthApi.providers();
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/auth/oauth/providers",
+      "/api/identity/auth/oauth/providers",
       { params: {}, data: {} },
       {}
     );
@@ -244,7 +244,7 @@ describe("oauthApi 第三方登录", () => {
     oauthApi.authorize("github");
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/auth/oauth/github/authorize",
+      "/api/identity/auth/oauth/github/authorize",
       { params: {}, data: {} },
       {}
     );
@@ -252,7 +252,7 @@ describe("oauthApi 第三方登录", () => {
     oauthApi.callback("github", { code: "c", state: "s" });
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/auth/oauth/github/callback",
+      "/api/identity/auth/oauth/github/callback",
       { params: { code: "c", state: "s" }, data: {} },
       {}
     );
@@ -262,7 +262,7 @@ describe("oauthApi 第三方登录", () => {
     oauthApi.bindAuthorize("github");
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/auth/oauth/github/bind-authorize",
+      "/api/identity/auth/oauth/github/bind-authorize",
       { params: {}, data: {} },
       {}
     );
@@ -270,7 +270,7 @@ describe("oauthApi 第三方登录", () => {
     oauthApi.bindings();
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
-      "/api/system/auth/oauth/bindings",
+      "/api/identity/auth/oauth/bindings",
       { params: {}, data: {} },
       {}
     );
@@ -278,7 +278,7 @@ describe("oauthApi 第三方登录", () => {
     oauthApi.unbind("b1", "pw");
     expect(requestMock).toHaveBeenLastCalledWith(
       "delete",
-      "/api/system/auth/oauth/bindings/b1",
+      "/api/identity/auth/oauth/bindings/b1",
       { params: {}, data: { password: "pw" } },
       {}
     );

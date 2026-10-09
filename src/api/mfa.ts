@@ -212,7 +212,7 @@ class MfaApi extends BaseApi {
       "post",
       {},
       data,
-      "/api/system/login/mfa/send-code"
+      "/api/identity/login/mfa/send-code"
     );
   };
 
@@ -222,7 +222,7 @@ class MfaApi extends BaseApi {
       "post",
       {},
       data,
-      "/api/system/login/mfa/verify"
+      "/api/identity/login/mfa/verify"
     );
   };
 }

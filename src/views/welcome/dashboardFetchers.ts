@@ -7,7 +7,7 @@ import {
   getDashBoardUserRegisterTrendApi,
   getDashBoardTodayOperateTotalApi
 } from "@/api/system/dashboard";
-import { operationLogApi } from "@/api/system/logs/operation";
+import { operationLogApi } from "@/api/audit/logs/operation";
 import { getKeyList } from "@pureadmin/utils";
 import type { DashboardState } from "./dashboardState";
 import type { useI18n } from "vue-i18n";

@@ -97,7 +97,7 @@ test("导入：API 同步链路（celery=false）返回成功且数据落库", a
   await login(page);
   const username = `e2e_sync_${Date.now()}`;
   const response = await page.request.post(
-    `${BACKEND}/api/system/user/import-data?action=create&task=false`,
+    `${BACKEND}/api/identity/user/import-data?action=create&task=false`,
     {
       // 导入接口由 CSVFileParser 解析（media_type=text/csv），需以原始文本提交；
       // 用 multipart 会走 AxiosMultiPartParser，request.data 被解析为空列表，
