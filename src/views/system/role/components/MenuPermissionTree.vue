@@ -213,18 +213,24 @@ const hasFolded = computed(() => {
   return false;
 });
 
-/** 应用缓冲的初始勾选（树数据到达前调用则等待数据就绪） */
+/**
+ * 应用缓冲的初始勾选（树数据到达前调用则等待数据就绪）。
+ * 树由 v-if 按数据就绪挂载：el-tree 实例尚未就绪时保留缓冲并直接返回，
+ * 待 treeRef 就绪的监听补应用——否则 setCheckedKeys 落空、勾选态静默丢失
+ * （内部 selection 已有键，但树勾选框停留在未选）。
+ */
 function applyPending() {
   if (!pendingKeys.value || !treeData.value.length) return;
   const keys = pendingKeys.value;
-  pendingKeys.value = null;
   // 回显折叠：拥有页面全部后代时呈现为页面级勾选（保存提交页面键，后端再展开为权限点）
   const folded = [...foldFullMenuSelection(index.value, keys)];
   baseline.value = folded;
   selection.value = new Set(folded);
   // 等 el-tree 完成 setData（其内部 watch 与本次同批执行）后再回显勾选
   nextTick(() => {
-    treeRef.value?.setCheckedKeys(folded, false);
+    if (!treeRef.value || pendingKeys.value !== keys) return;
+    pendingKeys.value = null;
+    treeRef.value.setCheckedKeys(folded, false);
     expandAncestors(folded);
   });
 }
@@ -335,6 +341,9 @@ watch(treeData, () => {
     });
   }
 });
+
+// el-tree 经 v-if 按数据就绪延迟挂载：实例就绪时补应用缓冲的初始勾选
+watch(treeRef, () => applyPending());
 
 onMounted(() => {
   // 数据早于挂载到达（同步 props）时 watch 不会触发
