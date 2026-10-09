@@ -57,6 +57,10 @@ runs:
         python -m pip install --upgrade pip
         grep -v '^mysqlclient' requirements.txt > /tmp/requirements-e2e.txt
         pip install -r /tmp/requirements-e2e.txt "fakeredis[lua]>=2.23"
+        # 框架内核 common 已抽为 uv 工作区成员（packages/xadmin-common），
+        # requirements.txt 以 --no-emit-workspace 导出天然不含它；内核第三方依赖
+        # 已随上方 requirements 锁定，此处 --no-deps 只补装内核本体（导入名 common）
+        pip install --no-deps ./packages/xadmin-common
 
     - name: Compile backend translations
       # locale/*.mo 被 gitignore，全新检出没有编译翻译；USE_I18N=True 时缺 .mo
