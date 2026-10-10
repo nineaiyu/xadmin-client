@@ -5,8 +5,13 @@ import { useDark, useGlobal } from "@pureadmin/utils";
 import { emitter } from "@/utils/mitt";
 import { useNav } from "@/layout/hooks/useNav";
 import {
+  DEFAULT_SIDEBAR_COLLAPSE_WIDTH,
   DEFAULT_SIDEBAR_WIDTH,
+  SIDEBAR_COLLAPSE_WIDTH_RANGE,
+  SIDEBAR_MIXED_WIDTH_RANGE,
   SIDEBAR_WIDTH_RANGE,
+  normalizeSidebarCollapseWidth,
+  normalizeSidebarMixedWidth,
   normalizeSidebarWidth
 } from "@/layout/hooks/usePreferenceAttributes";
 import { useConfigureStorage } from "../hooks/useConfigureStorage";
@@ -48,11 +53,75 @@ const semiDarkSidebar = computed({
   set: value => storageConfigureChange("semiDarkSidebar", value)
 });
 
+/** 半暗子侧栏：仅混合布局的侧栏（第二列）存在该形态 */
+const isMixLayout = computed(() =>
+  String($storage?.layout?.layout ?? "vertical").includes("mix")
+);
+const semiDarkSidebarSub = computed({
+  get: () => $storage?.configure?.semiDarkSidebarSub ?? false,
+  set: value => storageConfigureChange("semiDarkSidebarSub", value)
+});
+
 /** 折叠态悬停临时展开（仅视觉层，不写回存储） */
 const sidebarExpandOnHover = computed({
   get: () => $storage?.configure?.sidebarExpandOnHover ?? true,
   set: value => storageConfigureChange("sidebarExpandOnHover", value)
 });
+
+/** Logo 自定义：图片地址（空 = 内置资源）/ 标题文字显隐 / 图片填充方式 */
+const logoSource = computed({
+  get: () => $storage?.configure?.logoSource ?? "",
+  set: value => storageConfigureChange("logoSource", String(value ?? "").trim())
+});
+const logoShowText = computed({
+  get: () => $storage?.configure?.logoShowText ?? true,
+  set: value => storageConfigureChange("logoShowText", value)
+});
+const logoFit = computed({
+  get: () => $storage?.configure?.logoFit ?? "contain",
+  set: value => storageConfigureChange("logoFit", value)
+});
+
+/** 折叠宽度 / 混合布局宽度：写入内联 CSS 变量（见 usePreferenceAttributes） */
+const sidebarCollapseWidth = computed<number>({
+  get: () =>
+    $storage?.configure?.sidebarCollapseWidth ?? DEFAULT_SIDEBAR_COLLAPSE_WIDTH,
+  set: value =>
+    storageConfigureChange(
+      "sidebarCollapseWidth",
+      normalizeSidebarCollapseWidth(value)
+    )
+});
+const sidebarMixedWidth = computed<number>({
+  get: () => normalizeSidebarMixedWidth($storage?.configure?.sidebarMixedWidth),
+  set: value =>
+    storageConfigureChange(
+      "sidebarMixedWidth",
+      normalizeSidebarMixedWidth(value)
+    )
+});
+
+/** 隐藏侧栏（内容区最大化）/ 钉住按钮 / 混合布局额外收起 */
+const sidebarHidden = computed({
+  get: () => $storage?.configure?.sidebarHidden ?? false,
+  set: value => storageConfigureChange("sidebarHidden", value)
+});
+const sidebarFixedButton = computed({
+  get: () => $storage?.configure?.sidebarFixedButton ?? false,
+  set: value => storageConfigureChange("sidebarFixedButton", value)
+});
+const sidebarExtraCollapse = computed({
+  get: () => $storage?.configure?.sidebarExtraCollapse ?? false,
+  set: value => storageConfigureChange("sidebarExtraCollapse", value)
+});
+
+const logoFitOptions = computed(() => [
+  { value: "contain", label: t("layout.logoFitContain") },
+  { value: "cover", label: t("layout.logoFitCover") },
+  { value: "fill", label: t("layout.logoFitFill") },
+  { value: "none", label: t("layout.logoFitNone") },
+  { value: "scale-down", label: t("layout.logoFitScaleDown") }
+]);
 
 /** 侧栏右缘拖拽调宽把手（松开时保存宽度） */
 const sidebarDraggable = computed({
@@ -119,6 +188,42 @@ function logoChange() {
         />
       </template>
     </PrefRow>
+    <PrefRow :label="t('layout.logoSource')" :tip="t('layout.logoSourceTip')">
+      <template #control>
+        <el-input
+          v-model="logoSource"
+          :placeholder="t('layout.logoSourcePlaceholder')"
+          size="small"
+          clearable
+          style="width: 168px"
+        />
+      </template>
+    </PrefRow>
+    <PrefRow
+      :label="t('layout.logoShowText')"
+      :tip="t('layout.logoShowTextTip')"
+    >
+      <template #control>
+        <el-switch
+          v-model="logoShowText"
+          :active-text="t('labels.active')"
+          :inactive-text="t('labels.inactive')"
+          inline-prompt
+        />
+      </template>
+    </PrefRow>
+    <PrefRow :label="t('layout.logoFit')" :tip="t('layout.logoFitTip')">
+      <template #control>
+        <el-select v-model="logoFit" size="small" style="width: 128px">
+          <el-option
+            v-for="item in logoFitOptions"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
+        </el-select>
+      </template>
+    </PrefRow>
     <PrefRow
       :label="t('layout.semiDarkSidebar')"
       :tip="t('layout.semiDarkSidebarTip')"
@@ -129,6 +234,21 @@ function logoChange() {
           v-model="semiDarkSidebar"
           :active-text="t('labels.active')"
           :disabled="isDark"
+          :inactive-text="t('labels.inactive')"
+          inline-prompt
+        />
+      </template>
+    </PrefRow>
+    <PrefRow
+      :label="t('layout.semiDarkSidebarSub')"
+      :tip="t('layout.semiDarkSidebarSubTip')"
+      :disabled="isDark || !isMixLayout"
+    >
+      <template #control>
+        <el-switch
+          v-model="semiDarkSidebarSub"
+          :active-text="t('labels.active')"
+          :disabled="isDark || !isMixLayout"
           :inactive-text="t('labels.inactive')"
           inline-prompt
         />
@@ -147,6 +267,79 @@ function logoChange() {
           size="small"
           controls-position="right"
           style="width: 108px"
+        />
+      </template>
+    </PrefRow>
+    <PrefRow
+      :label="t('layout.sidebarCollapseWidth')"
+      :tip="t('layout.sidebarCollapseWidthTip')"
+    >
+      <template #control>
+        <el-input-number
+          v-model="sidebarCollapseWidth"
+          :min="SIDEBAR_COLLAPSE_WIDTH_RANGE.min"
+          :max="SIDEBAR_COLLAPSE_WIDTH_RANGE.max"
+          :step="2"
+          size="small"
+          controls-position="right"
+          style="width: 108px"
+        />
+      </template>
+    </PrefRow>
+    <PrefRow
+      :label="t('layout.sidebarMixedWidth')"
+      :tip="t('layout.sidebarMixedWidthTip')"
+    >
+      <template #control>
+        <el-input-number
+          v-model="sidebarMixedWidth"
+          :min="SIDEBAR_MIXED_WIDTH_RANGE.min"
+          :max="SIDEBAR_MIXED_WIDTH_RANGE.max"
+          :step="10"
+          size="small"
+          controls-position="right"
+          style="width: 108px"
+        />
+      </template>
+    </PrefRow>
+    <PrefRow
+      :label="t('layout.sidebarFixedButton')"
+      :tip="t('layout.sidebarFixedButtonTip')"
+    >
+      <template #control>
+        <el-switch
+          v-model="sidebarFixedButton"
+          :active-text="t('labels.active')"
+          :inactive-text="t('labels.inactive')"
+          inline-prompt
+        />
+      </template>
+    </PrefRow>
+    <PrefRow
+      :label="t('layout.sidebarExtraCollapse')"
+      :tip="t('layout.sidebarExtraCollapseTip')"
+      :disabled="!isMixLayout"
+    >
+      <template #control>
+        <el-switch
+          v-model="sidebarExtraCollapse"
+          :active-text="t('labels.active')"
+          :disabled="!isMixLayout"
+          :inactive-text="t('labels.inactive')"
+          inline-prompt
+        />
+      </template>
+    </PrefRow>
+    <PrefRow
+      :label="t('layout.sidebarHidden')"
+      :tip="t('layout.sidebarHiddenTip')"
+    >
+      <template #control>
+        <el-switch
+          v-model="sidebarHidden"
+          :active-text="t('labels.active')"
+          :inactive-text="t('labels.inactive')"
+          inline-prompt
         />
       </template>
     </PrefRow>

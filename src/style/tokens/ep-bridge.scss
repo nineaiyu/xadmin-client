@@ -82,32 +82,46 @@ html.dark {
 :root,
 html.dark {
   --el-color-primary: hsl(var(--primary));
+
+  /* 语义色（成功 / 警告 / 危险）：基础令牌 → EP 变量；色阶派生见下方 color-mix 段
+     （可在设置面板「功能色」自定义；令牌缺省即 EP 缺省值，属像素中性桥接） */
+  --el-color-success: hsl(var(--success));
+  --el-color-warning: hsl(var(--warning));
+  --el-color-danger: hsl(var(--danger));
 }
 
 @supports (color: color-mix(in srgb, red, blue)) {
+  /* 需要派生色阶的语义色令牌（主色 + 成功 / 警告 / 危险），
+     公式与 EP 原生一致（light-i = (100-i*10)% 本色 + 表面底色，dark-2 = 80% 本色 + 黑/白） */
+  $derived-colors: "primary", "success", "warning", "danger";
+
   :root,
   html.dark {
-    /* dark-2：hover / active 的加深档（亮色向黑压暗，暗色向白提亮，同 EP 缺省语义） */
-    --el-color-primary-dark-2: color-mix(
-      in srgb,
-      hsl(var(--primary)) 80%,
-      black
-    );
-
-    @for $i from 1 through 9 {
-      --el-color-primary-light-#{$i}: color-mix(
+    @each $name in $derived-colors {
+      /* dark-2：hover / active 的加深档（亮色向黑压暗，暗色向白提亮，同 EP 缺省语义） */
+      --el-color-#{$name}-dark-2: color-mix(
         in srgb,
-        hsl(var(--primary)) #{100 - $i * 10}%,
-        hsl(var(--bg-card))
+        hsl(var(--#{$name})) 80%,
+        black
       );
+
+      @for $i from 1 through 9 {
+        --el-color-#{$name}-light-#{$i}: color-mix(
+          in srgb,
+          hsl(var(--#{$name})) #{100 - $i * 10}%,
+          hsl(var(--bg-card))
+        );
+      }
     }
   }
 
   html.dark {
-    --el-color-primary-dark-2: color-mix(
-      in srgb,
-      hsl(var(--primary)) 80%,
-      white
-    );
+    @each $name in $derived-colors {
+      --el-color-#{$name}-dark-2: color-mix(
+        in srgb,
+        hsl(var(--#{$name})) 80%,
+        white
+      );
+    }
   }
 }

@@ -73,7 +73,7 @@ export function createNavActions({
     return remainingPaths.includes(path);
   }
 
-  /** 获取`logo` */
+  /** 获取`logo`（内置资源；设置面板 →「Logo 图片」可覆写地址，见各布局的 logoSrc） */
   function getLogo() {
     return new URL("/logo.svg", import.meta.url).href;
   }

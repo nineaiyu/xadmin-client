@@ -361,6 +361,24 @@ layout:
     lime: Lime
     brown: Brown
     custom: Custom
+  themePreset: Theme preset
+  themePresetDesc: A preset tints background, card, border and fill hues and applies its matching primary color
+  themePresetNames:
+    default: Default
+    violet: Violet
+    pink: Pink
+    yellow: Yellow
+    skyBlue: Sky blue
+    green: Green
+    zinc: Zinc
+    deepGreen: Deep green
+    deepBlue: Deep blue
+    orange: Orange
+    rose: Rose
+    neutral: Neutral
+    slate: Slate
+    gray: Gray
+    custom: Custom
   tabAppearance: Appearance
   tabLayout: Layout
   tabGeneral: General
@@ -386,6 +404,63 @@ layout:
   tagsStyleSmart: Smart
   tagsStyleChrome: Chrome
   displayEffect: Display effects
+  semanticColors: Functional colors
+  navigationStyle: Navigation style
+  navStyleRounded: Rounded
+  navStyleRoundedTip: The active menu block keeps rounded corners and side insets
+  navStylePlain: Plain
+  navStylePlainTip: Drop the corner radius and insets; the active block fills the row
+  tagsHeight: Tab height
+  tagsHeightTip: Height of a tab item (28~48px); the header plus tab bar height follows
+  tagsKeepAlive: Page cache
+  tagsKeepAliveTip: When off, no page is cached (the per-route cache setting is ignored)
+  tagsVisitHistory: Tab visit history
+  tagsVisitHistoryTip: Record the visit order; closing the active tab returns to the previously visited one
+  footerFixed: Fixed footer
+  footerFixedTip: Stick the footer to the content bottom so it stays visible while scrolling
+  footerHeight: Footer height
+  footerHeightTip: Footer height in px; 0 means auto (built-in spacing)
+  logoSource: Logo image
+  logoSourceTip: Custom logo image URL or site path; leave empty for the built-in asset
+  logoSourcePlaceholder: Empty for the built-in logo
+  logoShowText: Logo text
+  logoShowTextTip: Show the platform title next to the logo
+  logoFit: Image fit
+  logoFitTip: How the logo image fills its box (object-fit)
+  logoFitContain: Contain
+  logoFitCover: Cover
+  logoFitFill: Fill
+  logoFitNone: Original size
+  logoFitScaleDown: Scale down
+  moreWidgets: More
+  navbarWidgets: Header widgets
+  navbarWidgetsDesc: Drag to reorder and pick where each widget lives (header / More menu / hidden)
+  navbarWidgetsTip: Search, language, fullscreen and notifications open popovers, so they stay in the header
+  navbarPositionHeader: Header
+  navbarPositionMore: More menu
+  navbarPositionHidden: Hidden
+  headerMenuAlign: Header menu align
+  headerMenuAlignTip: Alignment of the top menu in horizontal and mixed layouts (sidebar menus are unaffected)
+  menuAlignStart: Start
+  menuAlignCenter: Center
+  menuAlignEnd: End
+  sidebarCollapseWidth: Collapsed width
+  sidebarCollapseWidthTip: Width of the collapsed sidebar (48~96px)
+  sidebarMixedWidth: Mixed layout width
+  sidebarMixedWidthTip: Sidebar width in the mixed layout (0 follows the sidebar width)
+  sidebarHidden: Hide sidebar
+  sidebarHiddenTip: "Hide the sidebar and let the content fill the screen (same as the tab content fullscreen action)"
+  sidebarFixedButton: Pin button
+  sidebarFixedButtonTip: "Show a pin button in the sidebar; pinned keeps it expanded, unpinned restores expand-on-hover"
+  sidebarExtraCollapse: Extra collapse
+  sidebarExtraCollapseTip: "Mixed layout only; collapse the second column without touching other layouts"
+  semanticColorsDesc: Success / warning / danger colors drive the Element Plus ladders (buttons, tags, messages)
+  semanticColorsTip: Leave empty to follow the built-in default; use the button on the right to reset
+  semanticColorsPick: Pick a color
+  semanticColorsReset: Reset to default
+  semanticColorSuccess: Success
+  semanticColorWarning: Warning
+  semanticColorDanger: Danger
   greyModeTip: Render the site in grayscale for contrast or print checks
   colorWeakModeTip: Invert colours to help users with colour weakness
   radius: Radius
@@ -412,6 +487,8 @@ layout:
   semiDarkHeader: Semi-dark header
   semiDarkHeaderTip: Keep the header dark in light appearance (dark appearance needs no such option)
   semiDarkSidebarTip: Keep the sidebar dark in light appearance (dark appearance needs no such option)
+  semiDarkSidebarSub: Semi-dark sub sidebar
+  semiDarkSidebarSubTip: Keep the mixed-layout sidebar (second column) dark in light appearance (mixed layout only)
   sidebarWidth: Sidebar width
   sidebarWidthTip: Width of the expanded sidebar (160~320px); the collapsed width stays fixed
   sidebarExpandOnHover: Expand on hover

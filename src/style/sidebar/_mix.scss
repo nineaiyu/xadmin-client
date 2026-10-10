@@ -2,12 +2,12 @@
 
 body[layout="mix"] {
   /* 侧栏宽度改为 CSS 变量：设置面板 →「侧栏宽度」运行期覆写（令牌见 tokens/primitives.scss） */
-  $sideBarWidth: var(--sidebar-width);
+  $sideBarWidth: var(--sidebar-mixed-width, var(--sidebar-width));
 
   @include merge-style($sideBarWidth, calc(-1 * #{$sideBarWidth}));
 
   .el-menu--collapse {
-    width: 54px;
+    width: var(--sidebar-collapse-width);
   }
 
   .el-menu {
@@ -17,12 +17,12 @@ body[layout="mix"] {
 
   .hideSidebar {
     .fixed-header {
-      width: calc(100% - 54px);
+      width: calc(100% - var(--sidebar-collapse-width));
       transition: width var(--duration-base);
     }
 
     .sidebar-container {
-      width: 54px !important;
+      width: var(--sidebar-collapse-width) !important;
       transition: width var(--duration-base);
 
       .is-active.submenu-title-noDropdown.outer-most {
@@ -31,7 +31,7 @@ body[layout="mix"] {
     }
 
     .main-container {
-      margin-left: 54px;
+      margin-left: var(--sidebar-collapse-width);
     }
 
     /* 菜单折叠 */

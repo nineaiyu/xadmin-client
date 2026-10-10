@@ -59,7 +59,16 @@ type BooleanPreferenceField =
   | "NavbarSidebarToggle"
   | "NavbarThemeToggle"
   | "SemiDarkSidebar"
-  | "SemiDarkHeader";
+  | "SemiDarkSidebarSub"
+  | "SemiDarkHeader"
+  | "HideFooter"
+  | "TagsKeepAlive"
+  | "TagsVisitHistory"
+  | "FooterFixed"
+  | "LogoShowText"
+  | "SidebarHidden"
+  | "SidebarFixedButton"
+  | "SidebarExtraCollapse";
 
 type PreferenceField =
   | BooleanPreferenceField
@@ -78,7 +87,21 @@ type PreferenceField =
   | "ShortcutSidebarKeys"
   | "ShortcutSearchKeys"
   | "ShortcutPreferencesKeys"
-  | "ShortcutLogoutKeys";
+  | "ShortcutLogoutKeys"
+  | "ThemePreset"
+  | "NavigationStyle"
+  | "TagsHeight"
+  | "FooterHeight"
+  | "LogoSource"
+  | "LogoFit"
+  | "HeaderMenuAlign"
+  | "SidebarCollapseWidth"
+  | "SidebarMixedWidth"
+  | "SuccessColor"
+  | "WarningColor"
+  | "DangerColor"
+  | "NavbarMoreWidgets"
+  | "Layout";
 
 /** 正则转义：键位串含 `+`（量词）等元字符，直接内插会让匹配语义漂移 */
 const escapeRegExp = (text: string) =>
@@ -272,6 +295,155 @@ const sidebarWidthVar = (page: Page) =>
   page.evaluate(() =>
     document.documentElement.style.getPropertyValue("--sidebar-width").trim()
   );
+
+/** 主题预设属性（默认 / 自定义档不写属性） */
+const presetAttr = (page: Page) =>
+  page.evaluate(() =>
+    document.documentElement.getAttribute("data-theme-preset")
+  );
+
+/** 根元素内联 CSS 变量值（语义色 / 页签高度 / 侧栏宽度等的运行时覆写） */
+const inlineVar = (page: Page, name: string) =>
+  page.evaluate(
+    key => document.documentElement.style.getPropertyValue(key).trim(),
+    name
+  );
+
+/** 令牌 → 实际颜色的解析结果（探针元素读 computed 值，验证派生链路） */
+const resolvedColor = (page: Page, expression: string) =>
+  page.evaluate(value => {
+    const probe = document.createElement("span");
+    probe.style.background = value;
+    document.body.appendChild(probe);
+    const color = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return color;
+  }, expression);
+
+/** 根元素上某令牌的 computed 取值（用于档位型令牌断言） */
+const rootVar = (page: Page, name: string) =>
+  page.evaluate(
+    key =>
+      getComputedStyle(document.documentElement).getPropertyValue(key).trim(),
+    name
+  );
+
+/** 主题预设色卡（title 为预设名称，key 为偏好取值） */
+async function pickThemePreset(page: Page, label: string, key: string) {
+  const item = page.locator(
+    `.right-panel .theme-preset__item[title="${label}"]`
+  );
+  await expect(item).toBeVisible({ timeout: 10_000 });
+  await waitForSiteConfigPatch(page, "ThemePreset", key, async () => {
+    await item.click();
+  });
+}
+
+/** 功能色取色（原生 input[type=color] 跨浏览器用脚本填值 + 派发 input） */
+async function pickSemanticColor(
+  page: Page,
+  label: string | RegExp,
+  color: string,
+  field: PreferenceField
+) {
+  const target = row(page, label);
+  await expect(target).toBeVisible({ timeout: 10_000 });
+  const picker = target.locator(".semantic-color__picker");
+  await waitForSiteConfigPatch(page, field, color, async () => {
+    await picker.evaluate((el, value) => {
+      const input = el as HTMLInputElement;
+      input.value = value;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    }, color);
+  });
+}
+
+/** 功能色恢复默认（panel 行内的恢复按钮，写入空串） */
+async function resetSemanticColor(
+  page: Page,
+  label: string | RegExp,
+  field: PreferenceField
+) {
+  const target = row(page, label);
+  const button = target.locator(".semantic-color__reset");
+  if (!(await button.count())) return;
+  await waitForSiteConfigPatch(page, field, "", async () => {
+    await button.click();
+  });
+}
+
+/** 文本偏好行填值（失焦提交，如 Logo 图片地址） */
+async function setText(
+  page: Page,
+  label: string | RegExp,
+  field: PreferenceField,
+  value: string
+) {
+  const target = row(page, label);
+  await expect(target).toBeVisible({ timeout: 10_000 });
+  const input = target.locator("input").first();
+  if ((await input.inputValue()) === value) return;
+  await waitForSiteConfigPatch(page, field, value, async () => {
+    await input.fill(value);
+    await input.blur();
+  });
+}
+
+/**
+ * 确保导航模式为「垂直」：侧栏 / 顶栏齿轮 / 侧栏 Logo 等断言只在垂直布局成立，
+ * 而布局模式随站点配置持久化——上个用例（或上一次跑批）留下的水平 / 混合布局
+ * 会让后续用例找不到入口（`.set-icon` 不在水平顶栏里）。
+ */
+async function ensureVerticalLayout(page: Page) {
+  await ensurePanelClosed(page);
+  await openSettingPanel(page);
+  await switchSettingTab(page, "布局");
+  const block = page
+    .locator(".right-panel .pref-block")
+    .filter({ hasText: /菜单布局/ })
+    .first();
+  const vertical = block.locator('.pref-choice__item[data-choice="vertical"]');
+  await expect(vertical).toBeVisible({ timeout: 10_000 });
+  if ((await vertical.getAttribute("aria-pressed")) !== "true") {
+    await waitForSiteConfigPatch(page, "Layout", "vertical", async () => {
+      await vertical.click();
+    });
+  }
+  await closePanel(page);
+}
+
+/** 确保设置面板处于关闭态：抽屉遮罩会盖住顶栏图标，跨用例残留会让入口不可见 */
+async function ensurePanelClosed(page: Page) {
+  const panel = page.locator(".right-panel");
+  if (await panel.isVisible().catch(() => false)) {
+    await closePanel(page);
+  }
+}
+
+/** 顶栏组件落位选择（组件列表不是 `PrefRow`，用列表项自身的选择器定位） */
+async function setWidgetPosition(
+  page: Page,
+  label: string | RegExp,
+  optionLabel: string | RegExp,
+  value: string
+) {
+  const item = page
+    .locator(".right-panel .navbar-widgets__item")
+    .filter({ hasText: label })
+    .first();
+  await expect(item).toBeVisible({ timeout: 10_000 });
+  await waitForSiteConfigPatch(page, "NavbarMoreWidgets", value, async () => {
+    await item.locator(".el-select").click();
+    const listId = await item
+      .locator("[aria-controls]")
+      .first()
+      .getAttribute("aria-controls");
+    const option = listId
+      ? page.locator(`#${listId} .el-select-dropdown__item`)
+      : page.locator(".el-select-dropdown__item");
+    await option.filter({ hasText: optionLabel }).first().click();
+  });
+}
 
 /** 按坐标中键点击（页签条带过渡动画，webkit 下 click 会卡在稳定性等待） */
 async function middleClick(page: Page, index: number) {
@@ -1895,5 +2067,285 @@ test.describe("布局偏好（面板实时生效）", () => {
     await openSettingPanel(page);
     await switchSettingTab(page, "布局");
     await setSwitch(page, "自动激活子菜单", false, "SidebarAutoActivateChild");
+  });
+
+  test("外观：主题预设切换表面色系并应用配套主色，回默认复位", async ({
+    page
+  }) => {
+    await ensurePanelClosed(page);
+    const bgPage = () => rootVar(page, "--bg-page");
+    const defaultBg = await bgPage();
+    expect(defaultBg).not.toBe("");
+    expect(await presetAttr(page)).toBeNull();
+
+    await openSettingPanel(page);
+    await switchSettingTab(page, "外观");
+    await pickThemePreset(page, "紫罗兰", "violet");
+
+    expect(await presetAttr(page)).toBe("violet");
+    // 表面色系：背景令牌换到预设色相（内置值 220 系 → 紫罗兰 245 系）
+    expect(await bgPage()).toContain("245");
+    // 配套主色：内联三元组写入，且色阶随主色派生
+    // 配套主色经 hex 往返写入（通道值有 ±0.1 的换算误差），解析后与预设色一致
+    expect(await inlineVar(page, "--primary")).toMatch(/^24[45](\.\d)?\s/);
+    expect(await resolvedColor(page, "hsl(var(--primary))")).toBe(
+      "rgb(113, 102, 240)"
+    );
+
+    // 回默认：属性撤除、表面与主色复位
+    await pickThemePreset(page, "默认", "default");
+    expect(await presetAttr(page)).toBeNull();
+    expect(await bgPage()).toBe(defaultBg);
+    expect(await inlineVar(page, "--primary")).toBe("");
+    await closePanel(page);
+  });
+
+  test("外观：功能色自定义生效并可恢复默认", async ({ page }) => {
+    await ensurePanelClosed(page);
+    expect(await resolvedColor(page, "hsl(var(--success))")).toBe(
+      "rgb(103, 194, 58)"
+    );
+
+    await openSettingPanel(page);
+    await switchSettingTab(page, "外观");
+    await pickSemanticColor(page, "成功色", "#123456", "SuccessColor");
+    expect(await inlineVar(page, "--success")).not.toBe("");
+    expect(await resolvedColor(page, "hsl(var(--success))")).toBe(
+      "rgb(18, 52, 86)"
+    );
+
+    await resetSemanticColor(page, "成功色", "SuccessColor");
+    expect(await inlineVar(page, "--success")).toBe("");
+    expect(await resolvedColor(page, "hsl(var(--success))")).toBe(
+      "rgb(103, 194, 58)"
+    );
+    await closePanel(page);
+  });
+
+  test("布局：页签高度调整后令牌与实际页签高度同步", async ({ page }) => {
+    await ensurePanelClosed(page);
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setNumber(page, "页签高度", "TagsHeight", 42);
+    await closePanel(page);
+
+    expect(await inlineVar(page, "--layout-tags-item-h")).toBe("42px");
+    const box = await page
+      .locator(".tags-view .scroll-item")
+      .first()
+      .boundingBox();
+    expect(Math.round(box?.height ?? 0)).toBe(42);
+
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setNumber(page, "页签高度", "TagsHeight", 34);
+    expect(await inlineVar(page, "--layout-tags-item-h")).toBe("");
+    await closePanel(page);
+  });
+
+  test("布局：页签缓存与访问历史开关（关闭后关签回落不落空）", async ({
+    page
+  }) => {
+    await ensurePanelClosed(page);
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setSwitch(page, "页签缓存", false, "TagsKeepAlive");
+    expect(await storedPreferenceValue(page, "TagsKeepAlive")).toBe(false);
+    await setSwitch(page, "页签访问历史", false, "TagsVisitHistory");
+    expect(await storedPreferenceValue(page, "TagsVisitHistory")).toBe(false);
+    await closePanel(page);
+
+    // 关闭历史后：关闭当前页签仍回落相邻页签（回落路径不回归）
+    await openMenuPath(page, ["系统管理"], "/system/user/index");
+    await openMenuPath(page, ["系统管理"], "/system/menu/index");
+    const tags = page.locator(".tags-view .scroll-item");
+    const total = await tags.count();
+    expect(total).toBeGreaterThan(1);
+    await middleClick(page, total - 1);
+    await expect.poll(() => tags.count(), { timeout: 10_000 }).toBe(total - 1);
+    expect(new URL(page.url()).hash).toMatch(/^#\/system\//);
+
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setSwitch(page, "页签缓存", true, "TagsKeepAlive");
+    await setSwitch(page, "页签访问历史", true, "TagsVisitHistory");
+    await closePanel(page);
+  });
+
+  test("布局：页脚固定与高度生效", async ({ page }) => {
+    await ensurePanelClosed(page);
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    // 前置：页脚需可见（「隐藏页脚」可能在其它用例被改过）
+    await setSwitch(page, "隐藏页脚", false, "HideFooter");
+    await setSwitch(page, "固定页脚", true, "FooterFixed");
+    await setNumber(page, "页脚高度", "FooterHeight", 40);
+    await closePanel(page);
+
+    const footer = page.locator(".layout-footer").first();
+    await expect(footer).toBeVisible();
+    const style = await footer.evaluate(el => {
+      const computed = getComputedStyle(el);
+      return { height: computed.height, position: computed.position };
+    });
+    expect(style.height).toBe("40px");
+    expect(style.position).toBe("sticky");
+
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setNumber(page, "页脚高度", "FooterHeight", 0);
+    await setSwitch(page, "固定页脚", false, "FooterFixed");
+    await closePanel(page);
+  });
+
+  test("布局：Logo 图片地址与文字开关生效", async ({ page }) => {
+    await ensureVerticalLayout(page);
+    // 内置 logo 的 src 按环境取值（dev 下可能是内联 data URI），复位时与它比对
+    const builtinSrc = await page
+      .locator(".sidebar-logo-container img")
+      .first()
+      .getAttribute("src");
+    expect(builtinSrc).toBeTruthy();
+
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setText(page, "Logo 图片", "LogoSource", "/favicon.ico");
+    await setSwitch(page, "Logo 文字", false, "LogoShowText");
+    await closePanel(page);
+
+    const logo = page.locator(".sidebar-logo-container img").first();
+    await expect(logo).toHaveAttribute("src", /favicon\.ico/);
+    await expect(
+      page.locator(".sidebar-logo-container .sidebar-title")
+    ).toHaveCount(0);
+
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setText(page, "Logo 图片", "LogoSource", "");
+    await setSwitch(page, "Logo 文字", true, "LogoShowText");
+    await closePanel(page);
+    await expect(
+      page.locator(".sidebar-logo-container img").first()
+    ).toHaveAttribute("src", builtinSrc as string);
+    await expect(
+      page.locator(".sidebar-logo-container .sidebar-title").first()
+    ).toBeVisible();
+  });
+
+  test("布局：导航风格切朴素后菜单激活块去圆角", async ({ page }) => {
+    await ensurePanelClosed(page);
+    expect(await rootVar(page, "--nav-item-radius")).toBe("3px");
+
+    const navStyleBlock = () =>
+      page
+        .locator(".right-panel .pref-block")
+        .filter({ hasText: /导航风格/ })
+        .first();
+
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await waitForSiteConfigPatch(page, "NavigationStyle", "plain", async () => {
+      await navStyleBlock()
+        .locator('.pref-choice__item[data-choice="plain"]')
+        .click();
+    });
+    await closePanel(page);
+
+    expect(await rootVar(page, "--nav-item-radius")).toBe("0px");
+    expect(await rootVar(page, "--nav-item-inset")).toBe("0px");
+
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await waitForSiteConfigPatch(
+      page,
+      "NavigationStyle",
+      "rounded",
+      async () => {
+        await navStyleBlock()
+          .locator('.pref-choice__item[data-choice="rounded"]')
+          .click();
+      }
+    );
+    expect(await rootVar(page, "--nav-item-radius")).toBe("3px");
+    await closePanel(page);
+  });
+
+  test("布局：折叠宽度、隐藏侧栏与钉住按钮生效", async ({ page }) => {
+    await ensureVerticalLayout(page);
+    await page.keyboard.press("Alt+S");
+    await page.mouse.move(700, 300);
+    const container = page.locator(".sidebar-container").first();
+    const containerWidth = () =>
+      container.evaluate(el => getComputedStyle(el).width);
+    await expect.poll(containerWidth, { timeout: 10_000 }).toBe("54px");
+
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setNumber(page, "折叠宽度", "SidebarCollapseWidth", 72);
+    expect(await inlineVar(page, "--sidebar-collapse-width")).toBe("72px");
+    await setSwitch(page, "钉住按钮", true, "SidebarFixedButton");
+    await closePanel(page);
+
+    await page.mouse.move(700, 300);
+    await expect.poll(containerWidth, { timeout: 10_000 }).toBe("72px");
+
+    // 钉住：常驻展开（取消悬停展开形态）
+    const pin = page.locator(".sidebar-fixed-button");
+    await expect(pin).toBeVisible();
+    await pin.click();
+    await expect(page.locator(".app-wrapper").first()).not.toHaveClass(
+      /hideSidebar/
+    );
+    // 再点一次：取消钉住并收起
+    await pin.click();
+    await expect(page.locator(".app-wrapper").first()).toHaveClass(
+      /hideSidebar/
+    );
+
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setSwitch(page, "隐藏侧栏", true, "SidebarHidden");
+    await closePanel(page);
+    await expect(container).toBeHidden();
+
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setSwitch(page, "隐藏侧栏", false, "SidebarHidden");
+    await setSwitch(page, "钉住按钮", false, "SidebarFixedButton");
+    await setNumber(page, "折叠宽度", "SidebarCollapseWidth", 54);
+    await closePanel(page);
+    // 复位展开态（与用例开始前一致）
+    await page.mouse.move(700, 300);
+    await page.keyboard.press("Alt+S");
+    await expect.poll(containerWidth, { timeout: 10_000 }).not.toBe("72px");
+  });
+
+  test("布局：顶栏组件可移入「更多」下拉并复位", async ({ page }) => {
+    await ensureVerticalLayout(page);
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setWidgetPosition(page, "顶栏刷新", "更多下拉", '["refresh"]');
+    await closePanel(page);
+
+    await expect(page.locator("#header-more")).toBeVisible();
+    // 移出顶栏：直挂顶栏的刷新按钮消失；组件出现在「更多」下拉里
+    await expect(
+      page.locator(".vertical-header-right > #header-refresh")
+    ).toHaveCount(0);
+    await expect(
+      page.locator(".more-widgets #header-refresh").first()
+    ).toBeAttached();
+    await page.locator("#header-more").click();
+    await expect(
+      page.locator(".more-widgets #header-refresh").first()
+    ).toBeVisible();
+    await page.keyboard.press("Escape");
+
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setWidgetPosition(page, "顶栏刷新", "顶栏", "[]");
+    await closePanel(page);
+    await expect(page.locator("#header-refresh")).toBeVisible();
+    await expect(page.locator("#header-more")).toHaveCount(0);
   });
 });

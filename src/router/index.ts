@@ -15,6 +15,7 @@ import { isUrl, openLink, cloneDeep, isAllEmpty } from "@pureadmin/utils";
 import { clearRouteSnapshot } from "@/utils/routeSnapshot";
 import { readConfigurePreferences } from "@/utils/preferences";
 import { useRouteLoading } from "@/utils/routeLoading";
+import { pushVisitHistory } from "@/utils/visitHistory";
 import {
   getTopMenu,
   initRouter,
@@ -87,6 +88,14 @@ const progressEnabled = () =>
 const contentLoadingEnabled = () =>
   readConfigurePreferences().transitionLoading === true;
 
+/** 页签缓存总开关（设置面板 →「布局」→「页签缓存」）：关闭后不再登记页面缓存 */
+const keepAliveEnabled = () =>
+  readConfigurePreferences().tagsKeepAlive !== false;
+
+/** 页签访问历史开关（同区块）：开启时记录访问顺序，供关闭页签回落（见 utils/visitHistory） */
+const visitHistoryEnabled = () =>
+  readConfigurePreferences().tagsVisitHistory !== false;
+
 const { startRouteLoading, doneRouteLoading } = useRouteLoading();
 
 router.beforeEach((to: ToRouteType, _from) => {
@@ -99,7 +108,7 @@ router.beforeEach((to: ToRouteType, _from) => {
     if (contentLoadingEnabled()) startRouteLoading();
   }
 
-  if (to.meta?.keepAlive) {
+  if (to.meta?.keepAlive && keepAliveEnabled()) {
     handleAliveRoute(to, "add");
     // 页面整体刷新和点击标签页刷新
     if (_from.name === undefined || _from.name === "Redirect") {
@@ -216,6 +225,7 @@ router.beforeEach((to: ToRouteType, _from) => {
 
 router.afterEach((to, from) => {
   loadedPaths.add(to.path);
+  if (visitHistoryEnabled()) pushVisitHistory(to.path);
   NProgress.done();
   doneRouteLoading();
   // 路由切换时取消来源页面的在途请求（登记见 utils/http/routeCancel）。

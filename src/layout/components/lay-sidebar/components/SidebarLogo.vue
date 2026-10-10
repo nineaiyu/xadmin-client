@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { computed, type CSSProperties } from "vue";
+import { useGlobal } from "@pureadmin/utils";
 import { getTopMenu } from "@/router/utils";
 import { useNav } from "@/layout/hooks/useNav";
 
@@ -7,6 +9,17 @@ defineProps({
 });
 
 const { title, getLogo } = useNav();
+const { $storage } = useGlobal<GlobalPropertiesApi>();
+
+/** 自定义 Logo 地址（设置面板 →「Logo 图片」），缺省用内置资源 */
+const logoSrc = computed(() => $storage?.configure?.logoSource || getLogo());
+/** 是否在 Logo 右侧显示平台标题 */
+const showLogoText = computed(() => $storage?.configure?.logoShowText ?? true);
+/** 图片填充方式（object-fit） */
+const logoFit = computed(() => $storage?.configure?.logoFit ?? "contain");
+const logoStyle = computed<CSSProperties>(() => ({
+  objectFit: logoFit.value as CSSProperties["objectFit"]
+}));
 </script>
 
 <template>
@@ -19,8 +32,8 @@ const { title, getLogo } = useNav();
         :to="getTopMenu()?.path ?? '/'"
         class="sidebar-logo-link"
       >
-        <img :src="getLogo()" alt="logo" />
-        <span class="sidebar-title">{{ title }}</span>
+        <img :src="logoSrc" :style="logoStyle" alt="logo" />
+        <span v-if="showLogoText" class="sidebar-title">{{ title }}</span>
       </router-link>
       <router-link
         v-else
@@ -29,8 +42,8 @@ const { title, getLogo } = useNav();
         :to="getTopMenu()?.path ?? '/'"
         class="sidebar-logo-link"
       >
-        <img :src="getLogo()" alt="logo" />
-        <span class="sidebar-title">{{ title }}</span>
+        <img :src="logoSrc" :style="logoStyle" alt="logo" />
+        <span v-if="showLogoText" class="sidebar-title">{{ title }}</span>
       </router-link>
     </transition>
   </div>

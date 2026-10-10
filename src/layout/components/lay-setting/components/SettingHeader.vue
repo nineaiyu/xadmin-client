@@ -7,6 +7,7 @@ import { useConfigureStorage } from "../hooks/useConfigureStorage";
 import PrefBlock from "./PrefBlock.vue";
 import PrefRow from "./PrefRow.vue";
 import PrefChoice from "./PrefChoice.vue";
+import SettingNavbarWidgets from "./SettingNavbarWidgets.vue";
 import type { PrefChoiceOption } from "./prefTypes";
 
 import LayoutTopLine from "~icons/ri/layout-top-line";
@@ -54,6 +55,22 @@ const navbarLock = booleanSetting("navbarLock", true);
 const navbarRefresh = booleanSetting("navbarRefresh", true);
 const navbarSidebarToggle = booleanSetting("navbarSidebarToggle", false);
 const navbarThemeToggle = booleanSetting("navbarThemeToggle", false);
+
+/** 顶栏菜单对齐（水平 / 混合布局）：纵向布局无顶栏菜单，禁用该项 */
+const menuAlign = computed<string>({
+  get: () => $storage?.configure?.headerMenuAlign ?? "start",
+  set: value => storageConfigureChange("headerMenuAlign", value)
+});
+const isHorizontalMenu = computed(
+  () =>
+    String($storage?.layout?.layout ?? "vertical").includes("horizontal") ||
+    String($storage?.layout?.layout ?? "vertical").includes("mix")
+);
+const menuAlignOptions = computed<PrefChoiceOption[]>(() => [
+  { value: "start", label: t("layout.menuAlignStart") },
+  { value: "center", label: t("layout.menuAlignCenter") },
+  { value: "end", label: t("layout.menuAlignEnd") }
+]);
 </script>
 
 <template>
@@ -232,5 +249,21 @@ const navbarThemeToggle = booleanSetting("navbarThemeToggle", false);
         />
       </template>
     </PrefRow>
+    <PrefRow
+      :label="t('layout.headerMenuAlign')"
+      :tip="t('layout.headerMenuAlignTip')"
+      :disabled="!isHorizontalMenu"
+      stack
+    >
+      <template #control>
+        <PrefChoice
+          :options="menuAlignOptions"
+          :model-value="menuAlign"
+          @change="value => (menuAlign = value)"
+        />
+      </template>
+    </PrefRow>
   </PrefBlock>
+
+  <SettingNavbarWidgets />
 </template>

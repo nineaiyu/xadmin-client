@@ -63,12 +63,29 @@
      固定头部由顶栏（--layout-header-h）与页签条组成，两种页签风格的总高不同；
      内容区按「当前固定头部总高」让位，避免各处 calc 里写裸数字。 */
   --layout-header-h: 48px; /* 顶栏高度（隐藏页签时的固定头部总高） */
-  --layout-tags-chrome-h: 85px; /* 顶栏 + 谷歌风格页签的固定头部总高 */
-  --layout-tags-compact-h: 81px; /* 顶栏 + 灵动/卡片风格页签的固定头部总高 */
+  --layout-tags-item-h: 34px; /* 页签项高度（设置面板 →「页签高度」覆写） */
+  --layout-tags-chrome-h: calc(
+    var(--layout-header-h) + var(--layout-tags-item-h) + 3px
+  ); /* 顶栏 + 谷歌风格页签的固定头部总高 */
+
+  --layout-tags-compact-h: calc(
+    var(--layout-header-h) + var(--layout-tags-item-h) - 1px
+  ); /* 顶栏 + 灵动/卡片风格页签的固定头部总高 */
+
+  /* 导航风格（圆角 / 朴素）：菜单激活块的圆角与左右内缩，`data-nav-style="plain"` 收平 */
+  --nav-item-radius: 3px;
+  --nav-item-inset: 8px;
+  --nav-item-inset-mix: 5px;
+
+  /* 水平 / 混合布局的顶栏菜单对齐（设置面板 →「顶栏菜单对齐」） */
+  --menu-align: start;
 
   /* 侧栏宽度（纵向 / 混合布局的内容区左偏移）：基准值，设置面板 →「侧栏宽度」
      会以内联 --sidebar-width 覆写；折叠宽度（54px）不参与缩放 */
   --sidebar-width: 210px;
+
+  /* 侧栏折叠态宽度（设置面板 →「折叠宽度」运行期以内联变量覆写） */
+  --sidebar-collapse-width: 54px;
 
   /* 内容区留白（密度令牌）：在 lay-content 一处应用，页面不再各自覆写外边距；
      窄屏收紧值见 style/index.scss 的媒体查询；贴边页面用 content-flush 类 */
@@ -155,4 +172,20 @@ html[data-font="small"] {
 
 html[data-font="large"] {
   --font-scale: 1.12;
+}
+
+/* 导航风格：朴素（plain）去掉菜单激活块的圆角与左右内缩，回到整行铺满 */
+html[data-nav-style="plain"] {
+  --nav-item-radius: 0px;
+  --nav-item-inset: 0px;
+  --nav-item-inset-mix: 0px;
+}
+
+/* 顶栏菜单对齐：仅水平 / 混合布局的顶栏菜单消费（侧栏菜单不受影响） */
+html[data-menu-align="center"] {
+  --menu-align: center;
+}
+
+html[data-menu-align="end"] {
+  --menu-align: end;
 }

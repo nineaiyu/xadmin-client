@@ -1,18 +1,24 @@
 <script lang="ts" setup>
 // 系统设置面板：导航模式（垂直/水平/混合）设置区块——预览卡形态（悬停看说明，点选即切换）
 import { computed } from "vue";
+import { useGlobal } from "@pureadmin/utils";
 import { useNav } from "@/layout/hooks/useNav";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
+import { DEFAULT_NAVIGATION_STYLE } from "@/layout/hooks/usePreferenceAttributes";
+import { useConfigureStorage } from "../hooks/useConfigureStorage";
 import { useMenuLayout } from "../hooks/useMenuLayout";
 import PrefBlock from "./PrefBlock.vue";
 import PrefChoice from "./PrefChoice.vue";
 import type { PrefChoiceOption } from "./prefTypes";
 
 import LayoutLine from "~icons/ri/layout-line";
+import DragMoveLine from "~icons/ri/drag-move-2-line";
 
 const { device, t } = useNav();
 const { layoutTheme } = useDataThemeChange();
 const { setMenuLayout } = useMenuLayout();
+const { $storage } = useGlobal<GlobalPropertiesApi>();
+const { storageConfigureChange } = useConfigureStorage();
 
 const options = computed<PrefChoiceOption[]>(() => {
   const list: PrefChoiceOption[] = [
@@ -41,6 +47,25 @@ const options = computed<PrefChoiceOption[]>(() => {
 });
 
 const current = computed(() => layoutTheme.value.layout ?? "vertical");
+
+/** 导航风格（对齐 vben `navigation.styleType`）：圆角 = 激活块带圆角与内缩，朴素 = 整行铺满 */
+const navigationStyle = computed({
+  get: () => $storage?.configure?.navigationStyle ?? DEFAULT_NAVIGATION_STYLE,
+  set: value => storageConfigureChange("navigationStyle", value)
+});
+
+const navStyleOptions = computed<PrefChoiceOption[]>(() => [
+  {
+    value: "rounded",
+    label: t("layout.navStyleRounded"),
+    tip: t("layout.navStyleRoundedTip")
+  },
+  {
+    value: "plain",
+    label: t("layout.navStylePlain"),
+    tip: t("layout.navStylePlainTip")
+  }
+]);
 </script>
 
 <template>
@@ -59,9 +84,58 @@ const current = computed(() => layoutTheme.value.layout ?? "vertical");
       </template>
     </PrefChoice>
   </PrefBlock>
+
+  <PrefBlock :title="t('layout.navigationStyle')" :icon="DragMoveLine">
+    <PrefChoice
+      :options="navStyleOptions"
+      :model-value="navigationStyle"
+      :preview-height="30"
+      @change="value => (navigationStyle = value)"
+    >
+      <template #preview="{ value }">
+        <span class="nav-style-preview" :class="`nav-style-preview--${value}`">
+          <i class="nav-style-preview__item" />
+          <i class="nav-style-preview__item nav-style-preview__item--active" />
+          <i class="nav-style-preview__item" />
+        </span>
+      </template>
+    </PrefChoice>
+  </PrefBlock>
 </template>
 
 <style lang="scss" scoped>
+/* 导航风格缩略图：三行菜单项，激活行用主色；圆角档激活块内缩并带圆角，朴素档整行铺满 */
+.nav-style-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  justify-content: center;
+  width: 46px;
+  height: 30px;
+  padding: 0 6px;
+
+  &__item {
+    display: block;
+    width: 100%;
+    height: 4px;
+    background: var(--el-border-color);
+    border-radius: 0;
+  }
+
+  &__item--active {
+    background: var(--el-color-primary);
+  }
+
+  &--rounded &__item {
+    border-radius: 2px;
+  }
+
+  &--rounded &__item--active {
+    width: 88%;
+    margin-left: 6%;
+  }
+}
+
 .layout-preview {
   position: relative;
   display: block;

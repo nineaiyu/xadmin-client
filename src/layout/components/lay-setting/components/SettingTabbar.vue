@@ -5,6 +5,11 @@ import { computed, reactive } from "vue";
 import { useGlobal } from "@pureadmin/utils";
 import { emitter } from "@/utils/mitt";
 import { useNav } from "@/layout/hooks/useNav";
+import {
+  DEFAULT_TAGS_HEIGHT,
+  TAGS_HEIGHT_RANGE,
+  normalizeTagsHeight
+} from "@/layout/hooks/usePreferenceAttributes";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { useConfigureStorage } from "../hooks/useConfigureStorage";
 import PrefBlock from "./PrefBlock.vue";
@@ -103,6 +108,24 @@ const tagsShowRefresh = computed({
 const tagsShowMore = computed({
   get: () => $storage?.configure?.tagsShowMore ?? true,
   set: value => storageConfigureChange("tagsShowMore", value)
+});
+
+/** 页签项高度（px）：写入 --layout-tags-item-h，顶栏 + 页签条总高随之计算 */
+const tagsHeight = computed<number>({
+  get: () => $storage?.configure?.tagsHeight ?? DEFAULT_TAGS_HEIGHT,
+  set: value => storageConfigureChange("tagsHeight", normalizeTagsHeight(value))
+});
+
+/** 页签缓存总开关：关闭后所有页面都不再缓存（逐页 meta.keepAlive 失效） */
+const tagsKeepAlive = computed({
+  get: () => $storage?.configure?.tagsKeepAlive ?? true,
+  set: value => storageConfigureChange("tagsKeepAlive", value)
+});
+
+/** 页签访问历史：记录访问顺序，关闭当前页签时回到上一个访问过的页面 */
+const tagsVisitHistory = computed({
+  get: () => $storage?.configure?.tagsVisitHistory ?? true,
+  set: value => storageConfigureChange("tagsVisitHistory", value)
 });
 </script>
 
@@ -234,6 +257,45 @@ const tagsShowMore = computed({
           size="small"
           controls-position="right"
           style="width: 108px"
+        />
+      </template>
+    </PrefRow>
+    <PrefRow :label="t('layout.tagsHeight')" :tip="t('layout.tagsHeightTip')">
+      <template #control>
+        <el-input-number
+          v-model="tagsHeight"
+          :min="TAGS_HEIGHT_RANGE.min"
+          :max="TAGS_HEIGHT_RANGE.max"
+          :step="TAGS_HEIGHT_RANGE.step"
+          size="small"
+          controls-position="right"
+          style="width: 108px"
+        />
+      </template>
+    </PrefRow>
+    <PrefRow
+      :label="t('layout.tagsKeepAlive')"
+      :tip="t('layout.tagsKeepAliveTip')"
+    >
+      <template #control>
+        <el-switch
+          v-model="tagsKeepAlive"
+          :active-text="t('labels.active')"
+          :inactive-text="t('labels.inactive')"
+          inline-prompt
+        />
+      </template>
+    </PrefRow>
+    <PrefRow
+      :label="t('layout.tagsVisitHistory')"
+      :tip="t('layout.tagsVisitHistoryTip')"
+    >
+      <template #control>
+        <el-switch
+          v-model="tagsVisitHistory"
+          :active-text="t('labels.active')"
+          :inactive-text="t('labels.inactive')"
+          inline-prompt
         />
       </template>
     </PrefRow>

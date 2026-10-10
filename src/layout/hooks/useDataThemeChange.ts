@@ -22,14 +22,18 @@ export function useDataThemeChange() {
   const themeMode = ref<string>($storage?.layout?.themeMode ?? "");
   const body = document.documentElement as HTMLElement;
 
-  const { setEpThemeColor, setLayoutThemeColor, setCustomThemeColor } =
-    createThemeColorScheme({
-      layoutTheme,
-      layout,
-      dataTheme,
-      themeMode,
-      storage: $storage
-    });
+  const {
+    setEpThemeColor,
+    setLayoutThemeColor,
+    setCustomThemeColor,
+    applyThemePreset
+  } = createThemeColorScheme({
+    layoutTheme,
+    layout,
+    dataTheme,
+    themeMode,
+    storage: $storage
+  });
 
   /**
    * 浅色、深色整体风格切换。
@@ -68,7 +72,8 @@ export function useDataThemeChange() {
     dataThemeChange,
     setEpThemeColor,
     setLayoutThemeColor,
-    setCustomThemeColor
+    setCustomThemeColor,
+    applyThemePreset
   };
 }
 

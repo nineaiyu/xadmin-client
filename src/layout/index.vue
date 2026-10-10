@@ -15,6 +15,7 @@ import {
 } from "@/layout/hooks/useDataThemeChange";
 import { useHeaderAutoHide } from "@/layout/hooks/useHeaderAutoHide";
 import { usePreferenceAttributes } from "@/layout/hooks/usePreferenceAttributes";
+import { mixedExtraCollapsed } from "@/layout/hooks/useNavState";
 import { useLayoutShortcutKeys } from "@/layout/hooks/useLayoutShortcutKeys";
 import { useLockScreen } from "@/layout/hooks/useLockScreen";
 import {
@@ -55,6 +56,20 @@ const { isDark } = useDark();
 const { layout } = useLayout();
 const isMobile = deviceDetection();
 const pureSetting = useSettingStoreHook();
+
+/** 侧栏隐藏（内容区最大化）：页签右键「内容全屏」的内存态，或设置面板 →「隐藏侧栏」的持久化开关 */
+const sidebarHidden = computed(
+  () =>
+    pureSetting.hiddenSideBar || ($storage?.configure?.sidebarHidden ?? false)
+);
+
+/** 混合布局的「额外收起」：第二列侧栏单独收起（与主折叠共同决定 hideSidebar） */
+const extraCollapsed = computed(() =>
+  mixedExtraCollapsed(
+    $storage?.layout?.layout,
+    $storage?.configure?.sidebarExtraCollapse
+  )
+);
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 
 /** 固定顶栏（设置面板 →「布局」→「顶栏」）：关闭后走非固定头布局，顶栏随内容滚动；
@@ -109,7 +124,7 @@ const set: setType = reactive({
 
   classes: computed(() => {
     return {
-      hideSidebar: !set.sidebar.opened,
+      hideSidebar: !set.sidebar.opened || extraCollapsed.value,
       openSidebar: set.sidebar.opened,
       withoutAnimation: set.sidebar.withoutAnimation,
       mobile: set.device === "mobile"
@@ -189,6 +204,9 @@ onBeforeMount(() => {
   useDataThemeChange().dataThemeChange($storage.layout?.themeMode);
 });
 
+/** 顶栏（含设置入口）的隐藏只跟随「内容全屏」内存态：设置面板的「隐藏侧栏」只隐藏侧栏 */
+const headerHiddenByStore = computed(() => pureSetting.hiddenSideBar);
+
 const LayHeader = defineComponent({
   name: "LayHeader",
   render() {
@@ -209,11 +227,11 @@ const LayHeader = defineComponent({
       },
       {
         default: () => [
-          !pureSetting.hiddenSideBar &&
+          !headerHiddenByStore.value &&
           (layout.value.includes("vertical") || layout.value.includes("mix"))
             ? h(LayNavbar)
             : null,
-          !pureSetting.hiddenSideBar && layout.value.includes("horizontal")
+          !headerHiddenByStore.value && layout.value.includes("horizontal")
             ? h(NavHorizontal)
             : null,
           // 用户模拟横幅：模拟态全局常驻（置于导航栏与页签之间，三种布局均可见）
@@ -239,16 +257,11 @@ const LayHeader = defineComponent({
     />
     <NavVertical
       v-show="
-        !pureSetting.hiddenSideBar &&
+        !sidebarHidden &&
         (layout.includes('vertical') || layout.includes('mix'))
       "
     />
-    <div
-      :class="[
-        'main-container',
-        pureSetting.hiddenSideBar ? 'main-hidden' : ''
-      ]"
-    >
+    <div :class="['main-container', sidebarHidden ? 'main-hidden' : '']">
       <div v-if="set.fixedHeader">
         <LayHeader />
         <!-- 主体内容 -->

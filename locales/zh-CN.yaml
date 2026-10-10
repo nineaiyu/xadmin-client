@@ -360,6 +360,24 @@ layout:
     lime: 青柠
     brown: 咖褐
     custom: 自定义
+  themePreset: 主题预设
+  themePresetDesc: 预设色系同时调整背景、卡片、描边与填充的色相，并应用配套主色
+  themePresetNames:
+    default: 默认
+    violet: 紫罗兰
+    pink: 樱花粉
+    yellow: 柠檬黄
+    skyBlue: 天蓝
+    green: 浅绿
+    zinc: 锌灰
+    deepGreen: 深绿
+    deepBlue: 深蓝
+    orange: 橙黄
+    rose: 玫瑰红
+    neutral: 中性
+    slate: 石板灰
+    gray: 中灰
+    custom: 自定义
   tabAppearance: 外观
   tabLayout: 布局
   tabGeneral: 通用
@@ -385,6 +403,63 @@ layout:
   tagsStyleSmart: 灵动
   tagsStyleChrome: 谷歌
   displayEffect: 显示效果
+  semanticColors: 功能色
+  navigationStyle: 导航风格
+  navStyleRounded: 圆角
+  navStyleRoundedTip: 菜单激活块带圆角并在两侧留出间距
+  navStylePlain: 朴素
+  navStylePlainTip: 去掉圆角与内缩，激活块整行铺满
+  tagsHeight: 页签高度
+  tagsHeightTip: 页签项的高度（28~48px），顶栏与页签条总高随之计算
+  tagsKeepAlive: 页签缓存
+  tagsKeepAliveTip: 关闭后所有页面都不再缓存（逐页的缓存设置整体失效）
+  tagsVisitHistory: 页签访问历史
+  tagsVisitHistoryTip: 记录访问顺序；关闭当前页签时回到上一个访问过的页面（否则回到最后一个页签）
+  footerFixed: 固定页脚
+  footerFixedTip: 页脚吸附在内容区底部，页面滚动时保持可见
+  footerHeight: 页脚高度
+  footerHeightTip: 页脚高度（px），0 = 自动（沿用内置留白）
+  logoSource: Logo 图片
+  logoSourceTip: 自定义 Logo 图片地址（站内路径或图片 URL），留空使用内置资源
+  logoSourcePlaceholder: 留空使用内置 Logo
+  logoShowText: Logo 文字
+  logoShowTextTip: 在 Logo 右侧显示平台标题文字
+  logoFit: 图片填充
+  logoFitTip: Logo 图片在容器内的填充方式（object-fit）
+  logoFitContain: 完整显示
+  logoFitCover: 裁剪铺满
+  logoFitFill: 拉伸铺满
+  logoFitNone: 原始尺寸
+  logoFitScaleDown: 等比缩小
+  moreWidgets: 更多
+  navbarWidgets: 顶栏组件
+  navbarWidgetsDesc: 拖拽调整顺序，右侧选择每个组件的落位（顶栏 / 更多下拉 / 不显示）
+  navbarWidgetsTip: 搜索、语言、全屏、通知为弹层类组件，固定顶栏位置
+  navbarPositionHeader: 顶栏
+  navbarPositionMore: 更多下拉
+  navbarPositionHidden: 不显示
+  headerMenuAlign: 顶栏菜单对齐
+  headerMenuAlignTip: 水平与混合布局的顶栏菜单对齐方式（侧栏菜单不受影响）
+  menuAlignStart: 左侧
+  menuAlignCenter: 居中
+  menuAlignEnd: 右侧
+  sidebarCollapseWidth: 折叠宽度
+  sidebarCollapseWidthTip: 侧栏收起后的宽度（48~96px）
+  sidebarMixedWidth: 混合布局宽度
+  sidebarMixedWidthTip: 混合布局侧栏宽度（0 = 跟随「侧栏宽度」）
+  sidebarHidden: 隐藏侧栏
+  sidebarHiddenTip: 隐藏侧栏并把内容区铺满（与页签右键「内容全屏」同效）
+  sidebarFixedButton: 钉住按钮
+  sidebarFixedButtonTip: 侧栏显示「钉住」按钮：钉住常驻展开，取消后恢复悬停展开
+  sidebarExtraCollapse: 额外收起
+  sidebarExtraCollapseTip: 仅混合布局：单独收起第二列侧栏，不影响其它布局的折叠状态
+  semanticColorsDesc: 成功 / 警告 / 危险三色驱动 Element Plus 的语义色阶（按钮、标签、消息等）
+  semanticColorsTip: 留空即跟随内置默认；自定义后可用右侧按钮恢复默认
+  semanticColorsPick: 点击取色
+  semanticColorsReset: 恢复默认
+  semanticColorSuccess: 成功色
+  semanticColorWarning: 警告色
+  semanticColorDanger: 危险色
   greyModeTip: 整站转为灰度，便于核对对比度或打印观感
   colorWeakModeTip: 反色补偿，缓解色弱用户辨识困难
   radius: 圆角
@@ -411,6 +486,8 @@ layout:
   semiDarkHeader: 半暗顶栏
   semiDarkHeaderTip: 浅色外观下顶栏用深色调色板（暗色外观本身即深色，无需此档）
   semiDarkSidebarTip: 浅色外观下让侧栏保持深色（深色外观本身即深色，无需此档）
+  semiDarkSidebarSub: 半暗子侧栏
+  semiDarkSidebarSubTip: 浅色外观下让混合布局的侧栏（第二列）保持深色（仅混合布局生效）
   sidebarWidth: 侧栏宽度
   sidebarWidthTip: 侧栏展开时的宽度（160~320px），折叠宽度不随之变化
   sidebarExpandOnHover: 悬停展开

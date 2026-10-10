@@ -113,10 +113,20 @@ declare global {
     Weak?: boolean;
     HideTabs?: boolean;
     HideFooter?: boolean;
+    /** 固定页脚（吸附内容区底部） */
+    FooterFixed?: boolean;
+    /** 页脚高度（px，0 = 自动） */
+    FooterHeight?: number;
     Stretch?: boolean | number;
     SidebarStatus?: boolean;
     EpThemeColor?: string;
     ShowLogo?: boolean;
+    /** 自定义 Logo 图片地址（空 = 内置资源） */
+    LogoSource?: string;
+    /** 是否显示 Logo 右侧的平台标题文字 */
+    LogoShowText?: boolean;
+    /** Logo 图片填充方式（object-fit） */
+    LogoFit?: string;
     TagsStyle?: string;
     /** 顶栏滚动自动隐藏（下滑隐藏 / 上滑显示） */
     HeaderAutoHide?: boolean;
@@ -128,6 +138,10 @@ declare global {
     FontScale?: FontScaleType;
     /** 自定义字号的基准字号（px，12~20）：仅 FontScale=custom 时生效 */
     FontScaleCustom?: number;
+    /** 主题预设（内置色系名 / default / custom）：控制背景 / 卡片 / 描边 / 填充的表面色系与配套主色 */
+    ThemePreset?: string;
+    /** 导航风格（rounded / plain）：菜单激活块的圆角与左右内缩 */
+    NavigationStyle?: string;
     /** 侧栏手风琴：同级菜单只展开一项 */
     SidebarAccordion?: boolean;
     /** 侧栏底部折叠按钮显隐 */
@@ -136,6 +150,11 @@ declare global {
     SemiDarkSidebar?: boolean;
     /** 浅色外观下顶栏用深色调色板 */
     SemiDarkHeader?: boolean;
+    SemiDarkSidebarSub?: boolean;
+    /** 功能色（成功 / 警告 / 危险）：空串 = 跟随内置默认 */
+    SuccessColor?: string;
+    WarningColor?: string;
+    DangerColor?: string;
     /** 侧栏宽度（px，160~320）；折叠宽度与 hover 弹出菜单不随此值变化 */
     SidebarWidth?: number;
     /** 折叠态悬停临时展开（仅视觉层，不写回存储） */
@@ -167,6 +186,22 @@ declare global {
     NavbarRefresh?: boolean;
     NavbarSidebarToggle?: boolean;
     NavbarThemeToggle?: boolean;
+    /** 顶栏组件顺序（键见 lay-navbar/widgets/catalog.ts，缺省用内置顺序） */
+    NavbarOrder?: string[];
+    /** 收进「更多」下拉的顶栏组件键（仅动作类组件可收） */
+    NavbarMoreWidgets?: string[];
+    /** 水平布局顶栏菜单对齐（start / center / end） */
+    HeaderMenuAlign?: string;
+    /** 侧栏折叠态宽度（px） */
+    SidebarCollapseWidth?: number;
+    /** 混合布局侧栏宽度（px，0 = 跟随侧栏宽度） */
+    SidebarMixedWidth?: number;
+    /** 隐藏侧栏（内容区最大化） */
+    SidebarHidden?: boolean;
+    /** 侧栏「钉住展开」按钮（切换悬停展开） */
+    SidebarFixedButton?: boolean;
+    /** 混合布局下额外收起侧栏（第二列） */
+    SidebarExtraCollapse?: boolean;
     /** 页签中键关闭 */
     TagsMiddleClickClose?: boolean;
     /** 滚轮横向滚动页签条 */
@@ -175,6 +210,12 @@ declare global {
     TagsShowIcon?: boolean;
     TagsShowRefresh?: boolean;
     TagsShowMore?: boolean;
+    /** 页签项高度（px） */
+    TagsHeight?: number;
+    /** 页签缓存总开关（关闭后所有页面不缓存） */
+    TagsKeepAlive?: boolean;
+    /** 页签访问历史（关闭当前页签回到上一个访问过的页面） */
+    TagsVisitHistory?: boolean;
     /** 动态标题：document.title 随路由变化 */
     DynamicTitle?: boolean;
     /** 设置入口总开关；入口位置：header（顶栏齿轮）| fixed（右下角悬浮球） */
@@ -256,7 +297,13 @@ declare global {
       weak?: boolean;
       hideTabs?: boolean;
       hideFooter?: boolean;
+      footerFixed?: boolean;
+      /** 页脚高度（px，0 = 自动） */
+      footerHeight?: number;
       showLogo?: boolean;
+      logoSource?: string;
+      logoShowText?: boolean;
+      logoFit?: string;
       tagsStyle?: string;
       multiTagsCache?: boolean;
       stretch?: boolean | number;
@@ -266,11 +313,19 @@ declare global {
       fontScale?: FontScaleType;
       /** 自定义字号基准（px）：fontScale=custom 时写入 --font-scale 倍率 */
       fontScaleCustom?: number;
+      /** 主题预设（内置色系名 / default / custom）：写 `html[data-theme-preset]` 表面色系 */
+      themePreset?: string;
+      /** 导航风格（rounded / plain）：写 `html[data-nav-style]` */
+      navigationStyle?: string;
       sidebarAccordion?: boolean;
       sidebarCollapseButton?: boolean;
       /** 半暗侧栏（`html.semi-dark-sidebar`，暗色外观下自动失效） */
       semiDarkSidebar?: boolean;
       semiDarkHeader?: boolean;
+      semiDarkSidebarSub?: boolean;
+      successColor?: string;
+      warningColor?: string;
+      dangerColor?: string;
       /** 侧栏宽度（px）：由 JS 写入 `--sidebar-width`，默认档撤除内联覆写 */
       sidebarWidth?: number;
       /** 折叠态悬停临时展开 / 侧栏拖拽调宽 */
@@ -299,11 +354,22 @@ declare global {
       navbarRefresh?: boolean;
       navbarSidebarToggle?: boolean;
       navbarThemeToggle?: boolean;
+      navbarOrder?: string[];
+      navbarMoreWidgets?: string[];
+      headerMenuAlign?: string;
+      sidebarCollapseWidth?: number;
+      sidebarMixedWidth?: number;
+      sidebarHidden?: boolean;
+      sidebarFixedButton?: boolean;
+      sidebarExtraCollapse?: boolean;
       tagsMiddleClickClose?: boolean;
       tagsWheelSwitch?: boolean;
       tagsShowIcon?: boolean;
       tagsShowRefresh?: boolean;
       tagsShowMore?: boolean;
+      tagsHeight?: number;
+      tagsKeepAlive?: boolean;
+      tagsVisitHistory?: boolean;
       dynamicTitle?: boolean;
       enablePreferences?: boolean;
       preferencesPosition?: "header" | "fixed";

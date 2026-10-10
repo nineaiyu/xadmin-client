@@ -12,6 +12,20 @@ import { usePermissionStoreHook } from "@/store/modules/permission";
  * 顶栏状态（自 useNav.ts 抽出）：布局配置、用户信息兜底、国际化选中样式、
  * 侧栏折叠与设备形态、动态标题来源。
  */
+/**
+ * 混合布局的「额外收起」：第二列侧栏（混合布局的侧栏）单独收起，
+ * 不影响纵向布局的折叠状态；开关见设置面板 →「布局」→「额外收起」。
+ *
+ * 纯函数（入参由调用方从响应式存储取值）：会被计算属性在任意上下文求值，
+ * 内部不能调用依赖组件实例的 `useGlobal`。
+ */
+export function mixedExtraCollapsed(
+  layout: unknown,
+  extraCollapse: unknown
+): boolean {
+  return String(layout ?? "vertical").includes("mix") && Boolean(extraCollapse);
+}
+
 export function useNavState() {
   const pureApp = useAppStoreHook();
   const { wholeMenus } = storeToRefs(usePermissionStoreHook());
@@ -62,8 +76,19 @@ export function useNavState() {
     return username.value ? { marginRight: "10px" } : "";
   });
 
+  /**
+   * 侧栏折叠态：主折叠（sidebarStatus）或「混合布局额外收起」偏好
+   * （设置面板 →「布局」→「额外收起」，仅混合布局生效；语义见 mixedExtraCollapsed）。
+   */
+  const { $storage: storage } = useGlobal<GlobalPropertiesApi>();
   const isCollapse = computed(() => {
-    return !pureApp.getSidebarStatus;
+    return (
+      !pureApp.getSidebarStatus ||
+      mixedExtraCollapsed(
+        storage?.layout?.layout,
+        storage?.configure?.sidebarExtraCollapse
+      )
+    );
   });
 
   const device = computed(() => {

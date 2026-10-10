@@ -2,6 +2,8 @@ import type { RouteConfigs } from "../../../types";
 import type { useTags } from "../../../hooks/useTag";
 import { handleAliveRoute } from "@/router/utils";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
+import { readConfigurePreferences } from "@/utils/preferences";
+import { previousVisitHistory, removeVisitHistory } from "@/utils/visitHistory";
 import { createTagFixedScope } from "./tagFixedScope";
 
 type TagRoute = ReturnType<typeof useTags>["route"];
@@ -87,27 +89,48 @@ export function useTagDelete({
       spliceRoute(valueIndex, 1);
     }
     const newRoute = useMultiTagsStoreHook().handleTags("slice") ?? [];
+    const closedPath = obj.path ?? "";
+    // 关闭的页签同步移出访问历史，避免回落到已关闭的页签
+    removeVisitHistory(closedPath);
+    const nextRoute = resolveVisitTarget(closedPath) ?? newRoute[0];
     if (current === route.path) {
-      // 如果删除当前激活tag就自动切换到最后一个tag
+      // 如果删除当前激活tag就自动切换到上一个访问过的tag（无历史则回落最后一个tag）
       if (tag === "left") return;
-      if (newRoute[0]?.query) {
-        router.push({ name: newRoute[0].name, query: newRoute[0].query });
-      } else if (newRoute[0]?.params) {
-        router.push({ name: newRoute[0].name, params: newRoute[0].params });
+      if (!nextRoute) return;
+      if (nextRoute.query) {
+        router.push({ name: nextRoute.name, query: nextRoute.query });
+      } else if (nextRoute.params) {
+        router.push({ name: nextRoute.name, params: nextRoute.params });
       } else {
-        router.push({ path: newRoute[0].path });
+        router.push({ path: nextRoute.path });
       }
     } else {
       if (!multiTags.value.length) return;
       if (multiTags.value.some(item => item.path === route.path)) return;
-      if (newRoute[0]?.query) {
-        router.push({ name: newRoute[0].name, query: newRoute[0].query });
-      } else if (newRoute[0]?.params) {
-        router.push({ name: newRoute[0].name, params: newRoute[0].params });
+      if (!nextRoute) return;
+      if (nextRoute.query) {
+        router.push({ name: nextRoute.name, query: nextRoute.query });
+      } else if (nextRoute.params) {
+        router.push({ name: nextRoute.name, params: nextRoute.params });
       } else {
-        router.push({ path: newRoute[0].path });
+        router.push({ path: nextRoute.path });
       }
     }
+  }
+
+  /**
+   * 关闭页签后的落点（设置面板 →「页签访问历史」）：优先回到上一个访问过、
+   * 且仍在页签栏中的页面；开关关闭或找不到时返回 undefined（回落到最后一个页签）。
+   */
+  function resolveVisitTarget(closedPath: string) {
+    if (readConfigurePreferences().tagsVisitHistory === false) return undefined;
+    const remaining = multiTags.value.filter(item => item.path !== closedPath);
+    if (!remaining.length) return undefined;
+    const path = previousVisitHistory([
+      closedPath,
+      ...remaining.map(item => String(item.path ?? ""))
+    ]);
+    return remaining.find(item => item.path === path);
   }
 
   function deleteMenu(item: RouteConfigs, tag?: string) {

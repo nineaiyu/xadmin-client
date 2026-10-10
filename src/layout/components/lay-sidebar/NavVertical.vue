@@ -16,6 +16,8 @@ import LaySidebarLogo from "../lay-sidebar/components/SidebarLogo.vue";
 import LaySidebarItem from "../lay-sidebar/components/SidebarItem.vue";
 import LaySidebarLeftCollapse from "../lay-sidebar/components/SidebarLeftCollapse.vue";
 import LaySidebarCenterCollapse from "../lay-sidebar/components/SidebarCenterCollapse.vue";
+import PushpinIcon from "~icons/ri/pushpin-line";
+import PushpinActiveIcon from "~icons/ri/pushpin-2-line";
 
 const route = useRoute();
 const isShow = ref(false);
@@ -36,6 +38,23 @@ const sidebarAccordion = computed(
 const sidebarCollapseButton = computed(
   () => $storage?.configure?.sidebarCollapseButton ?? true
 );
+
+/**
+ * 侧栏「钉住」按钮（设置面板 →「钉住按钮」，默认关）：
+ * 钉住 = 侧栏常驻展开（关掉悬停展开），取消钉住 = 收起重回悬停展开形态。
+ */
+const sidebarFixedButton = computed(
+  () => $storage?.configure?.sidebarFixedButton ?? false
+);
+const pinnedExpanded = computed(
+  () => !($storage?.configure?.sidebarExpandOnHover ?? true)
+);
+
+function toggleFixedExpand() {
+  const nextPinned = !pinnedExpanded.value;
+  storageConfigureChange("sidebarExpandOnHover", !nextPinned);
+  pureApp.toggleSideBar(nextPinned, "resize");
+}
 
 const {
   t,
@@ -246,12 +265,50 @@ onBeforeUnmount(() => {
       :is-active="pureApp.sidebar.opened"
       @toggleClick="toggleSideBar"
     />
+    <span
+      v-if="sidebarFixedButton && device !== 'mobile'"
+      class="sidebar-fixed-button"
+      :class="{ 'is-pinned': pinnedExpanded }"
+      role="button"
+      tabindex="0"
+      :title="t('layout.sidebarFixedButton')"
+      :aria-label="t('layout.sidebarFixedButton')"
+      @click="toggleFixedExpand"
+      @keydown.enter.prevent="toggleFixedExpand"
+      @keydown.space.prevent="toggleFixedExpand"
+    >
+      <IconifyIconOffline
+        :icon="pinnedExpanded ? PushpinActiveIcon : PushpinIcon"
+      />
+    </span>
   </div>
 </template>
 
 <style scoped>
 :deep(.el-loading-mask) {
   opacity: 0.45;
+}
+
+/* 钉住展开按钮：贴在底部折叠条上方（折叠态下仍居中可辨） */
+.sidebar-fixed-button {
+  position: absolute;
+  right: 10px;
+  bottom: 46px;
+  z-index: 1002;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  color: var(--pure-theme-menu-text, var(--el-text-color-secondary));
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: color var(--duration-fast) var(--ease-standard);
+
+  &:hover,
+  &.is-pinned {
+    color: var(--el-color-primary);
+  }
 }
 
 /* 拖拽调宽把手：贴右缘的窄条，悬停 / 拖拽时显示主色细线 */

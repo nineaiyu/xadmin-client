@@ -20,9 +20,16 @@ const { t } = useI18n();
 const { tagsStyle } = useTags();
 const { $storage, $config } = useGlobal<GlobalPropertiesApi>();
 
-const isKeepAlive = computed(() => {
-  return $config?.KeepAlive;
-});
+/** 页面缓存总开关：平台级 KeepAlive × 偏好「页签缓存」（关闭后所有页面都不缓存） */
+const isKeepAlive = computed(
+  () =>
+    Boolean($config?.KeepAlive) && ($storage?.configure?.tagsKeepAlive ?? true)
+);
+
+/** keep-alive 缓存名单：总开关关闭时给空数组（模板两个分支共用） */
+const keepAliveList = computed(() =>
+  isKeepAlive.value ? usePermissionStoreHook().cachePageList : []
+);
 
 /** 内容区紧凑模式（项目设置 →「通用」）：留白收紧一档并居中限宽 */
 const compactMode = computed(() => Boolean($storage?.configure?.compactMode));
@@ -198,10 +205,7 @@ const transitionMain = defineComponent({
               </el-backtop>
               <div id="main-content" class="grow" role="main">
                 <transitionMain :route="route">
-                  <keep-alive
-                    v-if="isKeepAlive"
-                    :include="usePermissionStoreHook().cachePageList"
-                  >
+                  <keep-alive v-if="isKeepAlive" :include="keepAliveList">
                     <component
                       :is="Comp"
                       :key="fullPath"
@@ -222,10 +226,7 @@ const transitionMain = defineComponent({
             </el-scrollbar>
             <div v-else id="main-content" class="grow" role="main">
               <transitionMain :route="route">
-                <keep-alive
-                  v-if="isKeepAlive"
-                  :include="usePermissionStoreHook().cachePageList"
-                >
+                <keep-alive v-if="isKeepAlive" :include="keepAliveList">
                   <component
                     :is="Comp"
                     :key="fullPath"

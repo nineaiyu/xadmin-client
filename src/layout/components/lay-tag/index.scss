@@ -31,9 +31,9 @@
   .scroll-item {
     position: relative;
     display: inline-block;
-    height: 34px;
+    height: var(--layout-tags-item-h);
     padding-left: 6px;
-    line-height: 34px;
+    line-height: var(--layout-tags-item-h);
     cursor: pointer;
     transition: all var(--duration-slow) var(--ease-standard);
 
@@ -247,7 +247,7 @@
   align-items: center;
   justify-content: center;
   width: 40px;
-  height: 34px;
+  height: var(--layout-tags-item-h);
   color: var(--el-text-color-primary);
 
   svg {

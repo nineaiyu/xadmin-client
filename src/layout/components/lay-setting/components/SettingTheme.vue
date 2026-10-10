@@ -12,6 +12,8 @@ import { CUSTOM_THEME_COLOR } from "@/layout/hooks/themeColorScheme";
 import { useConfigureStorage } from "../hooks/useConfigureStorage";
 import PrefBlock from "./PrefBlock.vue";
 import PrefRow from "./PrefRow.vue";
+import SettingThemePreset from "./SettingThemePreset.vue";
+import SettingSemanticColors from "./SettingSemanticColors.vue";
 
 import Check from "~icons/ep/check";
 import PaletteLine from "~icons/ri/palette-line";
@@ -212,6 +214,10 @@ function onThemeChange(theme: { index: number; option: { theme: string } }) {
       </li>
     </ul>
   </PrefBlock>
+
+  <SettingThemePreset />
+
+  <SettingSemanticColors />
 
   <PrefBlock :title="t('layout.displayEffect')" :icon="ContrastLine" list flush>
     <PrefRow :label="t('layout.greyMode')" :tip="t('layout.greyModeTip')">

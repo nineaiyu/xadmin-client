@@ -13,3 +13,31 @@ export const DEFAULT_EP_THEME_COLOR = "#006be6";
 
 /** 默认主色的 HSL 三元组（与 primitives.scss 的 `--primary` 保持一致） */
 export const DEFAULT_PRIMARY_TRIPLET = "212 100% 45%";
+
+/**
+ * 语义色偏好（成功 / 警告 / 危险）的可覆盖键：值存 hex，空串 = 跟随内置默认。
+ * `cssVar` 为 `tokens/primitives.scss` 中的基础令牌（EP 色阶由 ep-bridge 派生）。
+ */
+export const SEMANTIC_COLOR_FIELDS = [
+  {
+    key: "successColor",
+    cssVar: "--success",
+    labelKey: "layout.semanticColorSuccess",
+    defaultColor: "#67c23a"
+  },
+  {
+    key: "warningColor",
+    cssVar: "--warning",
+    labelKey: "layout.semanticColorWarning",
+    defaultColor: "#e6a23c"
+  },
+  {
+    key: "dangerColor",
+    cssVar: "--danger",
+    labelKey: "layout.semanticColorDanger",
+    defaultColor: "#f56c6c"
+  }
+] as const;
+
+/** 语义色偏好键（供登记守卫与面板遍历） */
+export type SemanticColorKey = (typeof SEMANTIC_COLOR_FIELDS)[number]["key"];

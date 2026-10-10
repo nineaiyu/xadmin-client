@@ -3,6 +3,7 @@ import { getConfig } from "@/config";
 import { useEpThemeStoreHook } from "@/store/modules/epTheme";
 import { hexToHslTriplet } from "@/utils/color";
 import { DEFAULT_EP_THEME_COLOR } from "@/utils/themeConstants";
+import { DEFAULT_THEME_PRESET, themePresetPrimaryHex } from "./themePresets";
 import type { Ref } from "vue";
 import type { useLayout } from "./useLayout";
 import type { themeColorsType } from "../types";
@@ -126,6 +127,29 @@ export function createThemeColorScheme({
     }
   };
 
+  /**
+   * 内置主题预设接管主色：预设自带配套主色（随明暗取值）。
+   * 「默认 / 自定义」不接管（返回 false，主色仍由主题色卡 / 取色器决定）。
+   */
+  const applyPresetPrimary = () => {
+    const preset = storage.configure?.themePreset;
+    if (!preset || preset === DEFAULT_THEME_PRESET) return false;
+    const hex = themePresetPrimaryHex(preset, dataTheme.value);
+    if (!hex) return false;
+    setEpThemeColor(hex);
+    return true;
+  };
+
+  /** 应用主题预设主色（面板选择预设时调用；选择「默认」回到内置默认主色） */
+  const applyThemePreset = (preset: string) => {
+    if (preset === DEFAULT_THEME_PRESET) {
+      setEpThemeColor(DEFAULT_EP_THEME_COLOR);
+      return;
+    }
+    const hex = themePresetPrimaryHex(preset, dataTheme.value);
+    if (hex) setEpThemeColor(hex);
+  };
+
   /** 设置导航主题色 */
   function setLayoutThemeColor(
     theme = getConfig().Theme ?? "light",
@@ -144,6 +168,10 @@ export function createThemeColorScheme({
       themeColor: isClick ? theme : storageThemeColor,
       themeMode: themeMode.value
     };
+
+    // 内置主题预设接管主色：明暗切换 / 布局切换时按新明暗取配套主色
+    // （导航皮肤仍按上面的 data-theme 生效，预设只接管主色）
+    if (applyPresetPrimary()) return;
 
     // 自定义主色：非点击路径（明暗切换、布局切换等「保留原配置」场景）
     // 沿用已保存的色值，避免被下面的预设回退重置为默认色
@@ -178,7 +206,12 @@ export function createThemeColorScheme({
     };
   };
 
-  return { setEpThemeColor, setLayoutThemeColor, setCustomThemeColor };
+  return {
+    setEpThemeColor,
+    setLayoutThemeColor,
+    setCustomThemeColor,
+    applyThemePreset
+  };
 }
 
 /** 切换目标元素的类名（原 useDataThemeChange 内部工具，独立导出供重置流程复用） */

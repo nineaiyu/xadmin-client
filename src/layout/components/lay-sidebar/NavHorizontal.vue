@@ -4,8 +4,8 @@ import { useNav } from "@/layout/hooks/useNav";
 import LaySearch from "../lay-search/index.vue";
 import LayNotice from "../lay-notice/index.vue";
 import { responsiveStorageNameSpace } from "@/config";
-import { ref, nextTick, computed, onMounted } from "vue";
-import { storageLocal, isAllEmpty } from "@pureadmin/utils";
+import { ref, nextTick, computed, onMounted, type CSSProperties } from "vue";
+import { storageLocal, isAllEmpty, useGlobal } from "@pureadmin/utils";
 import { useTranslationLang } from "../../hooks/useTranslationLang";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import LaySidebarItem from "../lay-sidebar/components/SidebarItem.vue";
@@ -44,6 +44,15 @@ const defaultActive = computed(() =>
   !isAllEmpty(route.meta?.activePath) ? route.meta.activePath : route.path
 );
 
+/** Logo 自定义三件套（设置面板 →「布局」→「侧边栏」）：来源地址 / 标题文字 / 填充方式 */
+const { $storage } = useGlobal<GlobalPropertiesApi>();
+const logoSrc = computed(() => $storage?.configure?.logoSource || getLogo());
+const showLogoText = computed(() => $storage?.configure?.logoShowText ?? true);
+const logoFit = computed(() => $storage?.configure?.logoFit ?? "contain");
+const logoStyle = computed<CSSProperties>(() => ({
+  objectFit: logoFit.value as CSSProperties["objectFit"]
+}));
+
 nextTick(() => {
   menuRef.value?.handleResize();
 });
@@ -61,8 +70,8 @@ onMounted(() => {
     class="horizontal-header"
   >
     <div v-if="showLogo" class="horizontal-header-left" @click="backTopMenu">
-      <img :src="getLogo()" alt="logo" />
-      <span>{{ title }}</span>
+      <img :src="logoSrc" :style="logoStyle" alt="logo" />
+      <span v-if="showLogoText">{{ title }}</span>
     </div>
     <el-menu
       ref="menuRef"

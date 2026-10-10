@@ -7,7 +7,7 @@ body[layout="vertical"] {
   @include merge-style($sideBarWidth, calc(-1 * #{$sideBarWidth}));
 
   .el-menu--collapse {
-    width: 54px;
+    width: var(--sidebar-collapse-width);
   }
 
   .sidebar-logo-container {
@@ -16,12 +16,12 @@ body[layout="vertical"] {
 
   .hideSidebar {
     .fixed-header {
-      width: calc(100% - 54px);
+      width: calc(100% - var(--sidebar-collapse-width));
       transition: width var(--duration-base);
     }
 
     .sidebar-container {
-      width: 54px !important;
+      width: var(--sidebar-collapse-width) !important;
       transition: width var(--duration-base);
 
       .is-active.submenu-title-noDropdown.outer-most {
@@ -37,7 +37,7 @@ body[layout="vertical"] {
     }
 
     .main-container {
-      margin-left: 54px;
+      margin-left: var(--sidebar-collapse-width);
     }
 
     /* 菜单折叠 */
