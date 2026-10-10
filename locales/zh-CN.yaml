@@ -417,6 +417,10 @@ layout:
   sidebarExpandOnHoverTip: 折叠态鼠标移入时临时展开侧栏，移开复位（不改变保存的折叠状态）
   sidebarDraggable: 拖拽调宽
   sidebarDraggableTip: 侧栏右缘出现拖拽把手，松开后保存宽度
+  sidebarCollapsedShowTitle: 折叠态显示标题
+  sidebarCollapsedShowTitleTip: 折叠侧栏时一级菜单在图标下方显示标题（仅垂直布局）
+  sidebarAutoActivateChild: 自动激活子菜单
+  sidebarAutoActivateChildTip: 点击展开有子级的顶层菜单时，自动跳转到第一个子菜单
   header: 顶栏
   headerFixed: 固定顶栏
   headerFixedTip: 关闭后顶栏随页面一起滚动（页签条同步跟随）

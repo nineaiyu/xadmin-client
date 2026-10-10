@@ -38,6 +38,8 @@ const SERVER_PERSISTED_FIELDS = [
   "SidebarWidth",
   "SidebarExpandOnHover",
   "SidebarDraggable",
+  "SidebarCollapsedShowTitle",
+  "SidebarAutoActivateChild",
   "SidebarAccordion",
   "SidebarCollapseButton",
   "SemiDarkSidebar",

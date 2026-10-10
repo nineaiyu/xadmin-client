@@ -40,6 +40,7 @@ const sidebarCollapseButton = computed(
 const {
   t,
   device,
+  layout,
   pureApp,
   isCollapse,
   tooltipEffect,
@@ -61,6 +62,14 @@ const hoverExpandEnabled = computed(
 
 /** 菜单折叠态：悬停临时展开期间不折叠 */
 const menuCollapse = computed(() => isCollapse.value && !hoverExpanded.value);
+
+/** 折叠态显示菜单标题（设置面板 →「折叠态显示标题」，仅垂直布局） */
+const collapseShowTitle = computed(
+  () =>
+    layout.value === "vertical" &&
+    menuCollapse.value &&
+    ($storage?.configure?.sidebarCollapsedShowTitle ?? false)
+);
 
 // 主动折叠 / 展开切换、或开关关闭时复位悬停态，避免残留
 watch(isCollapse, () => {
@@ -200,6 +209,7 @@ onBeforeUnmount(() => {
         mode="vertical"
         popper-class="pure-scrollbar"
         class="outer-most select-none"
+        :class="{ 'sidebar-collapse-show-title': collapseShowTitle }"
         :collapse="menuCollapse"
         :collapse-transition="false"
         :popper-effect="tooltipEffect"
@@ -210,6 +220,7 @@ onBeforeUnmount(() => {
           :key="routes.path"
           :item="routes as never"
           :base-path="routes.path"
+          :collapse="menuCollapse"
           class="outer-most select-none"
         />
       </el-menu>

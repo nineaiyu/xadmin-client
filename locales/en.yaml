@@ -418,6 +418,10 @@ layout:
   sidebarExpandOnHoverTip: Temporarily expand the collapsed sidebar while hovering; resets on leave (the saved state is untouched)
   sidebarDraggable: Drag to resize
   sidebarDraggableTip: Show a drag handle on the sidebar edge; the width is saved on release
+  sidebarCollapsedShowTitle: Show titles when collapsed
+  sidebarCollapsedShowTitleTip: Show first-level menu titles under the icons while the sidebar is collapsed (vertical layout only)
+  sidebarAutoActivateChild: Auto activate child menu
+  sidebarAutoActivateChildTip: Expanding a top-level menu with children navigates to its first child menu automatically
   header: Header
   headerFixed: Fixed header
   headerFixedTip: When off, the header (and the tab strip) scrolls with the page
@@ -503,7 +507,7 @@ layout:
   preferencesEntry: Preferences entry
   enablePreferences: Settings entry
   enablePreferencesTip: Show the header gear or the floating ball at the bottom-right
-  enablePreferencesOffConfirm: Turning this off hides the settings entry and the open-preferences shortcut. To reopen it: clear the responsive-configure key in browser local storage and refresh the page. Turn it off?
+  enablePreferencesOffConfirm: "Turning this off hides the settings entry and the open-preferences shortcut. To reopen it: clear the responsive-configure key in browser local storage and refresh the page. Turn it off?"
   preferencesPosition: Entry position
   preferencesPositionTip: The header gear, or a floating ball at the bottom-right
   preferencesPositionHeader: Header

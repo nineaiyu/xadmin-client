@@ -48,6 +48,8 @@ export const injectResponsiveStorage = (app: App, config: PlatformConfigs) => {
         sidebarWidth: config.SidebarWidth ?? 210,
         sidebarExpandOnHover: config.SidebarExpandOnHover ?? true,
         sidebarDraggable: config.SidebarDraggable ?? false,
+        sidebarCollapsedShowTitle: config.SidebarCollapsedShowTitle ?? false,
+        sidebarAutoActivateChild: config.SidebarAutoActivateChild ?? false,
         headerFixed: config.HeaderFixed ?? true,
         breadcrumbVisible: config.BreadcrumbVisible ?? true,
         breadcrumbShowIcon: config.BreadcrumbShowIcon ?? true,

@@ -62,6 +62,66 @@ body[layout="vertical"] {
       }
     }
 
+    /* 折叠态显示菜单标题（设置面板 →「折叠态显示标题」）：折叠时一级菜单项
+       在图标下方显示标题；仅对带图标的一级项生效，无图标项保持既有单行文字形态 */
+    .el-menu-item .collapse-show-title-text {
+      display: none;
+    }
+
+    .el-menu--collapse.sidebar-collapse-show-title {
+      > .el-sub-menu.collapse-show-title > .el-sub-menu__title {
+        flex-direction: column;
+        align-items: center;
+        height: auto;
+        min-height: 54px;
+        padding: 8px 0;
+        line-height: 1.4;
+
+        .sub-menu-icon {
+          height: 18px;
+          line-height: 1;
+        }
+
+        > span {
+          visibility: visible;
+          width: auto;
+          max-width: 100%;
+          height: auto;
+          margin-top: 4px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          font-size: 12px;
+          line-height: 1.4;
+          text-align: center;
+          white-space: nowrap;
+        }
+      }
+
+      /* 叶子项被 router-link 包裹（li 非菜单直接子级），选择器不能用直接子级 */
+      .el-menu-item {
+        height: auto;
+        min-height: 54px;
+        line-height: 1.4;
+
+        .el-menu-tooltip__trigger {
+          flex-direction: column;
+          justify-content: center;
+          padding: 0;
+        }
+
+        .collapse-show-title-text {
+          display: block;
+          max-width: 48px;
+          margin-top: 4px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          font-size: 12px;
+          line-height: 1.4;
+          white-space: nowrap;
+        }
+      }
+    }
+
     .sub-menu-icon {
       margin-right: 0;
     }

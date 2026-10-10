@@ -33,6 +33,8 @@ type BooleanPreferenceField =
   | "SidebarAccordion"
   | "SidebarExpandOnHover"
   | "SidebarDraggable"
+  | "SidebarCollapsedShowTitle"
+  | "SidebarAutoActivateChild"
   | "TagsMiddleClickClose"
   | "TagsShowIcon"
   | "TagsShowRefresh"
@@ -1200,6 +1202,10 @@ test.describe("布局偏好（面板实时生效）", () => {
     // 面板打开时输入态不响应快捷键，收起面板再验
     await closePanel(page);
 
+    // 鼠标移出侧栏：关闭面板的遮罩点击会把光标留在侧栏区域内，
+    // 与「折叠态悬停临时展开」存在竞态（悬停展开期间折叠类不出现）
+    await page.mouse.move(700, 300);
+
     // Alt + S：折叠 / 展开侧栏（与顶栏折叠按钮等效）
     const collapsed = page.locator(".sidebar-container .el-menu--collapse");
     await expect(collapsed).toHaveCount(0);
@@ -1742,5 +1748,152 @@ test.describe("布局偏好（面板实时生效）", () => {
     });
     await page.reload();
     await expect(headerGear).toBeVisible({ timeout: 15_000 });
+  });
+
+  test("侧栏：折叠态默认只显示图标，悬停临时展开恢复标题", async ({ page }) => {
+    const collapsedMenu = page.locator(".sidebar-container .el-menu--collapse");
+    const railTitles = page.locator(
+      ".sidebar-container .el-sub-menu.outer-most > .el-sub-menu__title > span"
+    );
+
+    // 确保「折叠态显示标题」关闭（幂等：失败残留时先归位）
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setSwitch(page, "折叠态显示标题", false, "SidebarCollapsedShowTitle");
+    await closePanel(page);
+
+    // 鼠标移出侧栏后折叠（折叠态悬停会临时展开，避免干扰本次断言）
+    await page.mouse.move(700, 300);
+    await page.keyboard.press("Alt+s");
+    await expect(collapsedMenu).toHaveCount(1, { timeout: 10_000 });
+
+    // 一级带图标项：标题不渲染，只留图标（叶子项标题同样只在悬浮提示里）
+    await expect(railTitles).toHaveCount(0);
+    await expect(
+      page
+        .locator(".sidebar-container .el-sub-menu.outer-most .sub-menu-icon")
+        .first()
+    ).toBeVisible();
+    await expect(
+      page
+        .locator(
+          ".sidebar-container .el-menu-item.submenu-title-noDropdown svg"
+        )
+        .first()
+    ).toBeVisible();
+    await expect(
+      page.locator(".sidebar-container .collapse-show-title-text")
+    ).toHaveCount(0);
+
+    // 悬停临时展开：侧栏恢复完整形态，标题随之恢复渲染
+    const box = await page.locator(".sidebar-container").boundingBox();
+    expect(box, "侧栏应可见").not.toBeNull();
+    await page.mouse.move((box?.x ?? 0) + 20, (box?.y ?? 0) + 300);
+    await expect(collapsedMenu).toHaveCount(0, { timeout: 10_000 });
+    await expect(railTitles.first()).toBeVisible({ timeout: 10_000 });
+
+    // 复位：移开鼠标 → 展开侧栏（折叠态判定复位）
+    await page.mouse.move(700, 300);
+    await page.keyboard.press("Alt+s");
+    await expect(collapsedMenu).toHaveCount(0, { timeout: 10_000 });
+  });
+
+  test("侧栏：折叠态显示标题——折叠时一级菜单在图标下方显示标题", async ({
+    page
+  }) => {
+    const collapsedMenu = page.locator(".sidebar-container .el-menu--collapse");
+    const showTitleMenu = page.locator(
+      ".sidebar-container .el-menu--collapse.sidebar-collapse-show-title"
+    );
+
+    // 开启开关（幂等：失败残留时先归位）
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setSwitch(page, "折叠态显示标题", true, "SidebarCollapsedShowTitle");
+    await closePanel(page);
+
+    // 鼠标移出侧栏后折叠（折叠态悬停会临时展开，避免干扰本次断言）
+    await page.mouse.move(700, 300);
+    await page.keyboard.press("Alt+s");
+    await expect(collapsedMenu).toHaveCount(1, { timeout: 10_000 });
+    await expect(showTitleMenu).toHaveCount(1);
+
+    // 一级有图标项：标题可见且在图标下方（图标在上、标题在下）
+    const item = page
+      .locator(".sidebar-container .el-sub-menu.outer-most.collapse-show-title")
+      .first();
+    await expect(item).toBeVisible();
+    const title = item.locator(".el-sub-menu__title > span").first();
+    await expect(title).toBeVisible();
+    const iconBox = await item.locator(".sub-menu-icon").first().boundingBox();
+    const titleBox = await title.boundingBox();
+    if (!iconBox || !titleBox) {
+      throw new Error("折叠态的一级菜单图标与标题都应可见");
+    }
+    expect(titleBox.y).toBeGreaterThanOrEqual(iconBox.y + iconBox.height - 1);
+
+    // 叶子项（无子级的一级菜单）同样在图标下方显示标题
+    await expect(
+      page
+        .locator(".sidebar-container .el-menu-item .collapse-show-title-text")
+        .first()
+    ).toBeVisible();
+
+    // 关闭开关：折叠标题形态与文本均不再渲染
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setSwitch(page, "折叠态显示标题", false, "SidebarCollapsedShowTitle");
+    await closePanel(page);
+    await page.mouse.move(700, 300);
+    await expect(showTitleMenu).toHaveCount(0);
+    await expect(
+      page.locator(
+        ".sidebar-container .el-sub-menu.outer-most.collapse-show-title"
+      )
+    ).toHaveCount(0);
+    await expect(
+      page.locator(".sidebar-container .collapse-show-title-text")
+    ).toHaveCount(0);
+
+    // 复位：展开侧栏
+    await page.keyboard.press("Alt+s");
+    await expect(collapsedMenu).toHaveCount(0, { timeout: 10_000 });
+  });
+
+  test("侧栏：自动激活子菜单——点击顶层父级展开时跳转第一个子菜单", async ({
+    page
+  }) => {
+    /** hash 路由的路径（`new URL().pathname` 不含 hash，统一取 hash 段） */
+    const hashPath = (url: string) => new URL(url).hash.replace(/^#/, "");
+
+    // 开启开关（幂等：失败残留时先归位）
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setSwitch(page, "自动激活子菜单", true, "SidebarAutoActivateChild");
+    await closePanel(page);
+
+    // 先离开「系统管理」分支：其默认展开时点击为收起动作，不触发自动激活
+    await page.goto("/#/welcome");
+    expect(hashPath(page.url())).toBe("/welcome");
+
+    // 点击父级展开：自动跳转到该分支下第一个子菜单（/system/**）
+    const parentTitle = page
+      .locator(
+        ".sidebar-container .el-sub-menu.outer-most > .el-sub-menu__title"
+      )
+      .filter({ hasText: "系统管理" })
+      .first();
+    await parentTitle.click();
+    await expect
+      .poll(() => hashPath(page.url()), { timeout: 10_000 })
+      .toMatch(/^\/system\//);
+    await expect(
+      page.locator(".sidebar-container .el-menu-item.is-active").first()
+    ).toBeVisible();
+
+    // 复位：关闭开关
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setSwitch(page, "自动激活子菜单", false, "SidebarAutoActivateChild");
   });
 });

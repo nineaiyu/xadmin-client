@@ -60,6 +60,18 @@ const sidebarDraggable = computed({
   set: value => storageConfigureChange("sidebarDraggable", value)
 });
 
+/** 折叠态显示菜单标题（图标在上、标题在下，仅垂直布局） */
+const sidebarCollapsedShowTitle = computed({
+  get: () => $storage?.configure?.sidebarCollapsedShowTitle ?? false,
+  set: value => storageConfigureChange("sidebarCollapsedShowTitle", value)
+});
+
+/** 点击顶层父级菜单展开时自动激活并跳转第一个子菜单 */
+const sidebarAutoActivateChild = computed({
+  get: () => $storage?.configure?.sidebarAutoActivateChild ?? false,
+  set: value => storageConfigureChange("sidebarAutoActivateChild", value)
+});
+
 function logoChange() {
   storageConfigureChange("showLogo", logoVal.value);
   emitter.emit("logoChange", logoVal.value);
@@ -158,6 +170,32 @@ function logoChange() {
       <template #control>
         <el-switch
           v-model="sidebarDraggable"
+          :active-text="t('labels.active')"
+          :inactive-text="t('labels.inactive')"
+          inline-prompt
+        />
+      </template>
+    </PrefRow>
+    <PrefRow
+      :label="t('layout.sidebarCollapsedShowTitle')"
+      :tip="t('layout.sidebarCollapsedShowTitleTip')"
+    >
+      <template #control>
+        <el-switch
+          v-model="sidebarCollapsedShowTitle"
+          :active-text="t('labels.active')"
+          :inactive-text="t('labels.inactive')"
+          inline-prompt
+        />
+      </template>
+    </PrefRow>
+    <PrefRow
+      :label="t('layout.sidebarAutoActivateChild')"
+      :tip="t('layout.sidebarAutoActivateChildTip')"
+    >
+      <template #control>
+        <el-switch
+          v-model="sidebarAutoActivateChild"
           :active-text="t('labels.active')"
           :inactive-text="t('labels.inactive')"
           inline-prompt

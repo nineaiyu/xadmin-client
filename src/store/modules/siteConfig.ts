@@ -73,6 +73,8 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
           SidebarWidth: configure.sidebarWidth,
           SidebarExpandOnHover: configure.sidebarExpandOnHover,
           SidebarDraggable: configure.sidebarDraggable,
+          SidebarCollapsedShowTitle: configure.sidebarCollapsedShowTitle,
+          SidebarAutoActivateChild: configure.sidebarAutoActivateChild,
           HeaderFixed: configure.headerFixed,
           BreadcrumbVisible: configure.breadcrumbVisible,
           BreadcrumbShowIcon: configure.breadcrumbShowIcon,
@@ -188,6 +190,10 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
                   sidebarWidth: config.SidebarWidth ?? 210,
                   sidebarExpandOnHover: config.SidebarExpandOnHover ?? true,
                   sidebarDraggable: config.SidebarDraggable ?? false,
+                  sidebarCollapsedShowTitle:
+                    config.SidebarCollapsedShowTitle ?? false,
+                  sidebarAutoActivateChild:
+                    config.SidebarAutoActivateChild ?? false,
                   headerFixed: config.HeaderFixed ?? true,
                   breadcrumbVisible: config.BreadcrumbVisible ?? true,
                   breadcrumbShowIcon: config.BreadcrumbShowIcon ?? true,

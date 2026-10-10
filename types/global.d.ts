@@ -142,6 +142,10 @@ declare global {
     SidebarExpandOnHover?: boolean;
     /** 侧栏右缘拖拽调宽把手 */
     SidebarDraggable?: boolean;
+    /** 折叠态侧栏显示菜单标题（图标在上、标题在下，仅垂直布局） */
+    SidebarCollapsedShowTitle?: boolean;
+    /** 点击顶层父级菜单展开时自动激活并跳转第一个子菜单 */
+    SidebarAutoActivateChild?: boolean;
     /** 固定顶栏：关闭后顶栏随页面一起滚动 */
     HeaderFixed?: boolean;
     /** 显示面包屑（顶栏左侧路径导航） */
@@ -272,6 +276,9 @@ declare global {
       /** 折叠态悬停临时展开 / 侧栏拖拽调宽 */
       sidebarExpandOnHover?: boolean;
       sidebarDraggable?: boolean;
+      /** 折叠态侧栏显示菜单标题 / 点击顶层父级展开时自动激活第一个子菜单 */
+      sidebarCollapsedShowTitle?: boolean;
+      sidebarAutoActivateChild?: boolean;
       /** 固定顶栏：关闭后走非固定头布局（顶栏随内容滚动） */
       headerFixed?: boolean;
       /** 显示面包屑 */
