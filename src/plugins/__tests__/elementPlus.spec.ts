@@ -48,7 +48,12 @@ function walk(dir: string): string[] {
 function scanUsedElementTags(): Set<string> {
   const used = new Set<string>();
   for (const file of walk(SRC_DIR)) {
-    const content = readFileSync(file, "utf-8");
+    // 类名判定字符串（classList.contains("el-overlay") 等）按类名消费、不是组件用法：
+    // 先剔除，避免把 EP 弹层的 BEM 类名误判为未登记组件（弹层宿主判定循环曾误报）
+    const content = readFileSync(file, "utf-8").replace(
+      /classList\.[a-zA-Z]+\(\s*["'`][^"'`]*["'`]/g,
+      ""
+    );
     for (const match of content.matchAll(/(?:<|["'`])el-([a-z][a-z0-9-]*)/g)) {
       const name = match[1];
       // BEM 修饰类（el-icon--upload）与元素类不是组件

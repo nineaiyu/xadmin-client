@@ -1,15 +1,10 @@
 import { computed, onBeforeUnmount } from "vue";
 import { onKeyStroke } from "@vueuse/core";
 import { hasAuth } from "@/router/utils";
-import { readConfigurePreferences } from "@/utils/preferences";
-import {
-  matchShortcut,
-  parseShortcut,
-  resolveShortcutKeys
-} from "@/utils/shortcutKeys";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
 import { QUICK_ACTIONS } from "./commandPaletteRegistry";
 import { createNavController } from "./commandPaletteNav";
+import { isPaletteShortcut } from "./commandPaletteShortcut";
 import type { CommandPaletteOptions } from "./commandPaletteTypes";
 
 export type { CommandPaletteOptions } from "./commandPaletteTypes";
@@ -91,15 +86,8 @@ export function useCommandPalette(options: CommandPaletteOptions) {
   const stopDown = onKeyStroke("ArrowDown", nav.handleDown);
   const stopCmdK = onKeyStroke(
     (event: KeyboardEvent) => {
-      const prefs = readConfigurePreferences();
       // 快捷键总开关 / 全局搜索键位关闭后：仍可从顶栏入口打开面板
-      if (prefs.shortcutEnable === false) return;
-      const value = resolveShortcutKeys(
-        prefs.shortcutSearchKeys,
-        prefs.shortcutSearch,
-        "mod+k"
-      );
-      if (!matchShortcut(event, parseShortcut(value))) return;
+      if (!isPaletteShortcut(event)) return;
       event.preventDefault();
       nav.activeNav.value = "";
       show.value = true;

@@ -38,11 +38,11 @@ const displayList = computed(() => {
     return list;
   }
   // meta.title 存词条 key，由模板 transformI18n 统一翻译
-  const home = {
+  const home: menuType = {
     path: "/",
     value: undefined,
     meta: { title: "layout.breadcrumbHome" }
-  } as unknown as menuType;
+  };
   return [home, ...list];
 });
 
