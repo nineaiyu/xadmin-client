@@ -95,6 +95,30 @@ RePlusPage 列表**固定发 `ordering=-created_time` 且默认 `pageSize=15`**�
 3. 弹层内选择器（`api-search-user`）同理：等目标行渲染后按需退化到首行，并等
    `.el-loading-mask` 等浮层消失再点击（否则点击被 `intercepts pointer events` 拦截）。
 
+## ⚠️ 折叠态侧栏断言：先把鼠标移出侧栏（与「折叠态悬停临时展开」竞态）
+
+`sidebarExpandOnHover` 默认开启：侧栏**已折叠**时鼠标进入侧栏会临时展开，此时
+`menuCollapse` 为 false → `.el-menu--collapse` 消失。而关闭设置面板的遮罩点击坐标
+（`closePanel` 点 `.right-panel-background`）常落在侧栏区域内，"点完面板 → 按 Alt+S → 断言折叠"
+的写法就会假失败（10s 内计数恒 0，重试也失败、隔离跑却通过，极易误判为负载瞬态）。
+
+**纪律**：断言折叠 / 展开前先 `await page.mouse.move(700, 300)`（本例与 `layout-preferences.e2e.ts`
+的折叠相关用例统一口径）；`layout-preferences.e2e.ts`「半暗顶栏与快捷键」用例已按此加固
+（2026-10-10，此前全量 webkit 两轮必现、隔离必过）。
+
+## ⚠️ 视觉基线比对失败：先做「回退改动」对照实验再定性
+
+`visual.e2e.ts` 的 webkit 基线可能落后于渲染（例：顶栏新增按钮默认开启的批次未重录基线），
+表现为 `system-user` 稳定差 3%（19941 px，超 2% 容差），而 chromium 通过。
+
+**定性方法**（比猜"负载瞬态"可靠）：
+
+1. 比对 `expected` / `actual` / `diff` 三张图，先看**差异区域**（顶栏按钮？文字抗锯齿？侧栏？）；
+2. **回退本批改动做对照**：把待判定的源文件用 `git show HEAD:<file>` 临时覆盖（**先备份到
+   /tmp**，勿用 `git checkout --`），重跑同一用例；差异像素数与回退前**完全相同**即可判定
+   "与本次改动无关"（2026-10-10 实测：回退后同样 19941 px）；
+3. 不要在未定性前 `--update-snapshots` 重录——会把真实回归固化进基线。
+
 ## ⚠️ 禁止固定延时：一律用 web-first 断言（仅保留少量带时间域理由的例外）
 
 `page.waitForTimeout(ms)` 是**盲等**：快机器白等、慢机器照样挂，且掩盖真实原因。
