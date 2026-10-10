@@ -104,6 +104,10 @@ declare global {
     EpThemeColor?: string;
     ShowLogo?: boolean;
     TagsStyle?: string;
+    /** 顶栏滚动自动隐藏（下滑隐藏 / 上滑显示） */
+    HeaderAutoHide?: boolean;
+    /** 内容区紧凑模式（收紧留白并居中限宽） */
+    CompactMode?: boolean;
     MenuArrowIconNoTransition?: boolean;
     CachingAsyncRoutes?: boolean;
     TooltipEffect?: Effect;
@@ -167,8 +171,12 @@ declare global {
       tagsStyle?: string;
       multiTagsCache?: boolean;
       stretch?: boolean | number;
+      headerAutoHide?: boolean;
+      compactMode?: boolean;
     };
     tags?: Array<Recordable>;
+    /** 右键「固定」的标签（fullPath 列表） */
+    pinnedTags?: string[];
   }
 
   /**

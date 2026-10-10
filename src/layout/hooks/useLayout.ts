@@ -43,7 +43,9 @@ export function useLayout() {
         showLogo: $config?.ShowLogo ?? true,
         tagsStyle: $config?.TagsStyle ?? "chrome",
         multiTagsCache: $config?.MultiTagsCache ?? false,
-        stretch: $config?.Stretch ?? false
+        stretch: $config?.Stretch ?? false,
+        headerAutoHide: $config?.HeaderAutoHide ?? false,
+        compactMode: $config?.CompactMode ?? false
       };
     }
   };

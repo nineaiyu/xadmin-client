@@ -237,7 +237,7 @@ watch(
     color: var(--el-color-primary);
     border-color: var(--el-color-primary);
     transform: scaleX(1.05);
-    transition: all 0.4s;
+    transition: all var(--duration-slow) var(--ease-standard);
   }
 }
 

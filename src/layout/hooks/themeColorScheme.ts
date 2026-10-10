@@ -1,7 +1,7 @@
 import { ref } from "vue";
 import { getConfig } from "@/config";
 import { useEpThemeStoreHook } from "@/store/modules/epTheme";
-import { darken, lighten } from "@pureadmin/utils";
+import { hexToHslTriplet } from "@/utils/color";
 import { DEFAULT_EP_THEME_COLOR } from "@/utils/themeConstants";
 import type { Ref } from "vue";
 import type { useLayout } from "./useLayout";
@@ -28,8 +28,8 @@ export const themeColors = ref<Array<themeColorsType>>([
 ]);
 
 /**
- * 主题色应用（自 useDataThemeChange.ts 抽出）：EP 主色变量与深浅色阶、
- * 导航主题色落库（保留非点击场景的历史 themeColor）。
+ * 主题色应用（自 useDataThemeChange.ts 抽出）：主色令牌写入、导航主题色落库
+ * （保留非点击场景的历史 themeColor）。
  */
 export function createThemeColorScheme({
   layoutTheme,
@@ -44,22 +44,23 @@ export function createThemeColorScheme({
   themeMode: Ref<string>;
   storage: GlobalPropertiesApi["$storage"];
 }) {
-  function setPropertyPrimary(mode: string, i: number, color: string) {
-    document.documentElement.style.setProperty(
-      `--el-color-primary-${mode}-${i}`,
-      dataTheme.value ? darken(color, i / 10) : lighten(color, i / 10)
-    );
-  }
-
-  /** 设置 `element-plus` 主题色 */
+  /**
+   * 设置 `element-plus` 主题色：只写主色**基础令牌**（HSL 三元组）。
+   * `--el-color-primary` 与深浅色阶由 ep-bridge 用 EP 原生混色公式派生，
+   * 随明暗模式（混色基准 = 表面底色）自动切换，不再由 JS 逐档近似写入。
+   *
+   * 默认主色清除内联覆写、直接用设计令牌取值，避免 hex 反算出的等价三元组
+   * （±0.1）遮蔽 primitives.scss 的令牌原值。
+   */
   const setEpThemeColor = (color: string) => {
     useEpThemeStoreHook().setEpThemeColor(color);
-    document.documentElement.style.setProperty("--el-color-primary", color);
-    for (let i = 1; i <= 2; i++) {
-      setPropertyPrimary("dark", i, color);
+    if (color.toLowerCase() === DEFAULT_EP_THEME_COLOR) {
+      document.documentElement.style.removeProperty("--primary");
+      return;
     }
-    for (let i = 1; i <= 9; i++) {
-      setPropertyPrimary("light", i, color);
+    const triplet = hexToHslTriplet(color);
+    if (triplet) {
+      document.documentElement.style.setProperty("--primary", triplet);
     }
   };
 

@@ -98,7 +98,7 @@ onMounted(() => {
   <div
     v-loading="loading"
     :element-loading-text="t('status.hsLoad')"
-    class="frame"
+    class="frame content-flush"
   >
     <iframe ref="frameRef" :src="frameSrc" class="frame-iframe" />
   </div>
@@ -116,9 +116,5 @@ onMounted(() => {
     overflow: hidden;
     border: 0;
   }
-}
-
-.main-content {
-  --main-content-margin: 2px 0 0;
 }
 </style>

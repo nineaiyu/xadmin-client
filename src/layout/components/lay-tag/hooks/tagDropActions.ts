@@ -63,6 +63,21 @@ export function createTagDropActions({
     NProgress.done();
   }
 
+  /** 新窗口打开标签：hash 路由以当前页面地址为基底拼接（含查询串） */
+  function openInNewWindow(selectTagRoute: menuType) {
+    const query = (selectTagRoute.query ?? {}) as Record<string, unknown>;
+    const search = Object.keys(query).length
+      ? `?${new URLSearchParams(
+          Object.entries(query).map(([key, value]) => [key, String(value)])
+        ).toString()}`
+      : "";
+    window.open(
+      `${window.location.origin}${window.location.pathname}#${selectTagRoute.path}${search}`,
+      "_blank",
+      "noopener"
+    );
+  }
+
   function onClickDrop(
     key: number,
     item: { disabled?: boolean },
@@ -110,15 +125,22 @@ export function createTagDropActions({
         // 关闭其他标签页
         deleteMenu(selectTagRoute, "other");
         break;
-      case 5:
-        // 关闭全部标签页
-        useMultiTagsStoreHook().handleTags("splice", "", {
-          startIndex: fixedTags.length,
-          length: multiTags.value.length
-        });
+      case 5: {
+        // 关闭全部标签页：保留固定标签（路由级 fixedTag + 右键固定的标签）
+        const keep = new Set<string | undefined>(
+          (fixedTags as { path?: string }[]).map(tag => tag.path)
+        );
+        multiTags.value
+          .filter(tag => useMultiTagsStoreHook().isPinnedTag(tag.path ?? ""))
+          .forEach(tag => keep.add(tag.path));
+        useMultiTagsStoreHook().handleTags(
+          "equal",
+          multiTags.value.filter(tag => keep.has(tag.path))
+        );
         router.push(topPath ?? "/");
         handleAliveRoute(route as ToRouteType);
         break;
+      }
       case 6:
         // 内容区全屏
         onContentFullScreen();
@@ -131,6 +153,14 @@ export function createTagDropActions({
             tagsViews[6].text = $t("buttons.contentFullScreen");
           }
         }, 100);
+        break;
+      case 7:
+        // 固定 / 取消固定标签（固定标签不参与按侧/全部关闭）
+        useMultiTagsStoreHook().togglePinnedTag(selectTagRoute.path ?? "");
+        break;
+      case 8:
+        // 新窗口打开
+        openInNewWindow(selectTagRoute);
         break;
     }
     setTimeout(() => {

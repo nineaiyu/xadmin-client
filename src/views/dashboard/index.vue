@@ -448,7 +448,7 @@ onMounted(async () => {
   height: 16px;
   color: var(--el-text-color-placeholder);
   cursor: move;
-  transition: color var(--el-transition-duration);
+  transition: color var(--duration-fast) var(--ease-standard);
 
   &::before {
     display: block;

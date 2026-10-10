@@ -9,6 +9,8 @@ import CloseRightTags from "~icons/ri/text-direction-l";
 import CloseLeftTags from "~icons/ri/text-direction-r";
 import RefreshRight from "~icons/ep/refresh-right";
 import Close from "~icons/ep/close";
+import Pushpin from "~icons/ri/pushpin-2-line";
+import ExternalLink from "~icons/ri/external-link-line";
 import type { tagsViewsType } from "../types";
 
 /**
@@ -63,6 +65,21 @@ export function createTagsViews(tagCount: number) {
       icon: Fullscreen,
       text: $t("buttons.contentFullScreen"),
       divided: true,
+      disabled: false,
+      show: true
+    },
+    {
+      // 文本与图标随目标标签的固定态在 showMenuModel 中更新（固定 / 取消固定）
+      icon: Pushpin,
+      text: $t("buttons.pinTab"),
+      divided: true,
+      disabled: false,
+      show: true
+    },
+    {
+      icon: ExternalLink,
+      text: $t("buttons.openInNewWindow"),
+      divided: false,
       disabled: false,
       show: true
     }

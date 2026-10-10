@@ -10,7 +10,9 @@ import { usePermissionStoreHook } from "@/store/modules/permission";
 import { useUserStoreHook } from "@/store/modules/user";
 
 const props = defineProps({
-  fixedHeader: Boolean
+  fixedHeader: Boolean,
+  /** 顶栏滚动自动隐藏（useHeaderAutoHide）：隐藏时内容区不再让位固定头部 */
+  headerHidden: Boolean
 });
 
 const { t } = useI18n();
@@ -20,6 +22,9 @@ const { $storage, $config } = useGlobal<GlobalPropertiesApi>();
 const isKeepAlive = computed(() => {
   return $config?.KeepAlive;
 });
+
+/** 内容区紧凑模式（项目设置 →「通用」）：留白收紧一档并居中限宽 */
+const compactMode = computed(() => Boolean($storage?.configure?.compactMode));
 
 /** 路由过渡配置：pure-admin 的 meta.transition 为对象（name/enterTransition/leaveTransition） */
 interface RouteTransition {
@@ -64,31 +69,29 @@ const getMainWidth = computed(() => {
       : "100%";
 });
 
+/** 当前固定头部总高（CSS 令牌引用，数值见 tokens/primitives.scss）：
+ *  隐藏页签 = 顶栏；显示页签按风格取「顶栏 + 页签条」总高 */
+const chromeHeight = computed(() =>
+  hideTabs.value
+    ? "var(--layout-header-h)"
+    : tagsStyle.value === "chrome"
+      ? "var(--layout-tags-chrome-h)"
+      : "var(--layout-tags-compact-h)"
+);
+
 const getSectionStyle = computed(() => {
+  // 顶栏自动隐藏态：固定头部整体移出视口，内容区不再让位（剩余算式同口径取 0px）
+  const chrome = props.headerHidden ? "0px" : chromeHeight.value;
   // impersonationExtra > 0 时各项 padding-top 同步让位横幅高度（非 fixed-header
   // 模式由末项整体重置 padding，不受影响）
-  const pad = (base: number) =>
-    `padding-top: ${base + impersonationExtra.value}px;`;
+  const pad = (base: string) =>
+    `padding-top: calc(${base} + ${impersonationExtra.value}px);`;
   return [
-    hideTabs.value && layout ? pad(48) : "",
-    !hideTabs.value && layout
-      ? tagsStyle.value == "chrome"
-        ? pad(85)
-        : pad(81)
-      : "",
-    hideTabs.value && !layout.value ? pad(48) : "",
-    !hideTabs.value && !layout.value
-      ? tagsStyle.value == "chrome"
-        ? pad(85)
-        : pad(81)
-      : "",
+    layout.value ? (props.headerHidden ? "padding-top: 0;" : pad(chrome)) : "",
+    // 非 fixed-header：不预留 padding，改为最小高度兜底（dvh 兼顾移动端浏览器工具栏）
     props.fixedHeader
       ? ""
-      : `padding-top: 0;${
-          hideTabs.value
-            ? "min-height: calc(100vh - 48px);"
-            : "min-height: calc(100vh - 86px);"
-        }`
+      : `padding-top: 0;min-height: calc(100dvh - ${chrome});`
   ];
 });
 
@@ -138,7 +141,10 @@ const transitionMain = defineComponent({
 
 <template>
   <section
-    :class="[fixedHeader ? 'app-main' : 'app-main-nofixed-header']"
+    :class="[
+      fixedHeader ? 'app-main' : 'app-main-nofixed-header',
+      { compact: compactMode }
+    ]"
     :style="getSectionStyle"
   >
     <!-- 跳转主内容（R5）：仅键盘聚焦时可见；@click.prevent 避免 hash 路由被锚点改写 -->
@@ -162,7 +168,7 @@ const transitionMain = defineComponent({
                 'flex-wrap': 'wrap',
                 'max-width': getMainWidth,
                 margin: '0 auto',
-                transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)'
+                transition: 'all var(--duration-base) var(--ease-standard)'
               }"
             >
               <el-backtop
@@ -253,8 +259,8 @@ const transitionMain = defineComponent({
   font-size: 14px;
   color: #fff;
   background-color: var(--el-color-primary);
-  border-radius: 0 0 6px 6px;
-  transition: top 0.2s ease-in-out;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  transition: top var(--duration-fast) var(--ease-standard);
 }
 
 /* 仅键盘聚焦时滑入可视区（display/visibility 隐藏会导致不可聚焦） */
@@ -271,8 +277,31 @@ const transitionMain = defineComponent({
 }
 
 .main-content {
-  /* 页面外边距单点提供（T1）：页面通过覆盖 --main-content-margin 调整，
-     不再各自 !important 互搏；缺省 24px 与原行为一致 */
-  margin: var(--main-content-margin, 24px);
+  /* 页面外边距单点提供（密度令牌 --content-gap）：底边不留白，内容区与页脚贴合；
+     窄屏收紧值见 style/index.scss 的媒体查询；贴边页面（iframe / 满幅页）在自身
+     根节点加 content-flush 类显式声明，不再逐页覆写外边距变量 */
+  margin: var(--content-gap) var(--content-gap) 0;
+}
+
+.main-content.content-flush {
+  margin: 0;
+}
+
+/* 紧凑模式：留白收紧一档（24 → 16；窄屏同样以此为准），内容居中限宽避免超宽屏铺满 */
+.app-main.compact,
+.app-main-nofixed-header.compact {
+  --content-gap: var(--space-4);
+}
+
+.compact .main-content {
+  width: calc(100% - var(--content-gap) * 2);
+  max-width: 1600px;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.compact .main-content.content-flush {
+  width: 100%;
+  max-width: none;
 }
 </style>

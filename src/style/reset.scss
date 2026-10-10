@@ -16,9 +16,7 @@ body {
   width: 100%;
   height: 100%;
   margin: 0;
-  font-family:
-    "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB",
-    "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+  font-family: var(--font-family-base);
   line-height: inherit;
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;
@@ -49,9 +47,7 @@ code,
 kbd,
 samp,
 pre {
-  font-family:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-    "Courier New", monospace;
+  font-family: var(--font-family-mono);
   font-size: 1em;
 }
 
@@ -151,6 +147,43 @@ pre {
   margin: 0;
 }
 
+/* 标题层级：由字号 / 字重 / 行高令牌驱动，替代此前的「浏览器默认字号 + 一刀切
+   margin: 0」。外边距保持 0——后台界面的间距由容器布局决定，标题不携带默认
+   外边距，避免页面局部出现不可控的纵向位移（需要留白时用布局容器的间距类）。 */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+}
+
+h1 {
+  font-size: var(--font-size-2xl);
+}
+
+h2 {
+  font-size: var(--font-size-xl);
+}
+
+h3 {
+  font-size: var(--font-size-lg);
+}
+
+h4 {
+  font-size: var(--font-size-md);
+}
+
+h5 {
+  font-size: var(--font-size-base);
+}
+
+h6 {
+  font-size: var(--font-size-sm);
+}
+
 fieldset {
   padding: 0;
   margin: 0;
@@ -208,12 +241,8 @@ video {
   display: none;
 }
 
-.dark {
-  color-scheme: dark;
-}
-
 label {
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 *,

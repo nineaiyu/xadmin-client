@@ -16,12 +16,12 @@ body[layout="vertical"] {
   .hideSidebar {
     .fixed-header {
       width: calc(100% - 54px);
-      transition: width var(--pure-transition-duration);
+      transition: width var(--duration-base);
     }
 
     .sidebar-container {
       width: 54px !important;
-      transition: width var(--pure-transition-duration);
+      transition: width var(--duration-base);
 
       .is-active.submenu-title-noDropdown.outer-most {
         background: transparent !important;

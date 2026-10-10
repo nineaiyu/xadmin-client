@@ -288,8 +288,4 @@ const timelineIcons = timelineTones.map(tone =>
     margin: 0 6px;
   }
 }
-
-.main-content {
-  --main-content-margin: 20px 20px 0;
-}
 </style>

@@ -10,16 +10,16 @@
  */
 
 const EP_COLOR_FALLBACK = {
-  primary: "#409eff",
+  primary: "#006be6",
   success: "#67c23a",
   warning: "#e6a23c",
   danger: "#f56c6c",
   info: "#909399"
 } as const;
 
-/** EP 浅色档（`-light-9`）回退值：与默认主题下的 tint 底色一致 */
+/** EP 浅色档（`-light-9`）回退值：与默认主题下的 tint 底色一致（默认主色的 10% + 白） */
 const EP_LIGHT_FALLBACK = {
-  primary: "#ecf5ff",
+  primary: "#e6f0fd",
   success: "#f0f9eb",
   warning: "#fdf6ec",
   danger: "#fef0f0",

@@ -29,7 +29,7 @@
   background-position: center;
   background-repeat: repeat-x;
   pointer-events: none;
-  transition: background-image 0.2s;
+  transition: background-image var(--duration-fast) var(--ease-standard);
 }
 
 .splitter-pane-resizer.vertical::after {
@@ -79,7 +79,7 @@
   box-shadow: 0 0 4px rgb(0 0 0 / 20%);
   opacity: 0;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: opacity var(--duration-fast) var(--ease-standard);
   z-index: 2;
 }
 

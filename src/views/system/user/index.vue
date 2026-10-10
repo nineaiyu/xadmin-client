@@ -105,9 +105,3 @@ const { percent, handleDragEnd } = useSplitPaneConfig("system/user", {
     <!-- 权限可视化：三层权限只读预览 + 数据权限试算（hook 经 addDrawer 打开） -->
   </div>
 </template>
-
-<style scoped lang="scss">
-.main-content {
-  --main-content-margin: 24px 24px 0;
-}
-</style>

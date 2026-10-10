@@ -50,12 +50,18 @@ async function switchTheme(page: Page, mode: "dark" | "light") {
   if ((await isDark(page)) === (mode === "dark")) return;
 
   // 等 PATCH **响应**（而非仅请求发出）：请求在途时立刻导航会读到旧配置，
-  // 表现为「切换成功 → 下一页主题回退」（2026-09-28 webkit 全量跑批实测竞态）
+  // 表现为「切换成功 → 下一页主题回退」（2026-09-28 webkit 全量跑批实测竞态）。
+  // 且必须认「目标状态」的那一次保存：切页面前后可能各有一次在途保存（防抖合并），
+  // 只等第一个 PATCH 会等到旧配置的响应，重载后主题回退（2026-10-10 复现）。
+  const expectedDark = mode === "dark";
   const saved = page
     .waitForResponse(
       resp =>
         resp.request().method() === "PATCH" &&
-        resp.url().includes(SITE_CONFIG_URL),
+        resp.url().includes(SITE_CONFIG_URL) &&
+        new RegExp(`"DarkMode"\\s*:\\s*${expectedDark}`).test(
+          resp.request().postData() ?? ""
+        ),
       { timeout: 15_000 }
     )
     .catch(() => null);

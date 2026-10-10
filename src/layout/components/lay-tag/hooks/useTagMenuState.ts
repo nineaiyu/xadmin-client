@@ -1,4 +1,6 @@
 import { isEqual, isAllEmpty } from "@pureadmin/utils";
+import { $t } from "@/plugins/i18n";
+import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import type { useTags } from "../../../hooks/useTag";
 
 /** useTags 中菜单可见性状态所需的上下文切片 */
@@ -56,6 +58,17 @@ export function useTagMenuState(ctx: TagMenuStateContext) {
     }
 
     showMenus(true);
+
+    /**
+     * 固定项（下标 7）：路由级 fixedTag（首页等路由声明的固定标签）不允许再固定，
+     * 直接隐藏；其余按当前标签的固定态切换「固定 / 取消固定」文案。
+     */
+    tagsViews[7].show = Boolean(
+      allRoute[currentIndex] && !allRoute[currentIndex]?.meta?.fixedTag
+    );
+    tagsViews[7].text = useMultiTagsStoreHook().isPinnedTag(currentPath)
+      ? $t("buttons.unpinTab")
+      : $t("buttons.pinTab");
 
     if (refresh) {
       tagsViews[0].show = true;

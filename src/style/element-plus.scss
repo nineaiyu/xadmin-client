@@ -1,5 +1,7 @@
+@use "tokens/breakpoints" as bp;
+
 .el-form-item__label {
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .el-breadcrumb__inner,
@@ -85,12 +87,12 @@
       color 0.2s;
 
     &:hover {
-      color: rgb(0 0 0 / 88%) !important;
+      color: hsl(var(--fg) / 88%) !important;
       text-decoration: none;
-      background-color: rgb(0 0 0 / 6%);
+      background-color: hsl(var(--fg) / 6%);
 
       .pure-dialog-svg {
-        color: rgb(0 0 0 / 88%) !important;
+        color: hsl(var(--fg) / 88%) !important;
       }
     }
   }
@@ -98,7 +100,7 @@
 
 /* 克隆并自定义 ElMessage 样式，不会影响 ElMessage 原本样式，在 src/utils/message.ts 中调用自定义样式 ElMessage 方法即可，整体暗色风格在 src/style/dark.scss 文件进行了适配 */
 .pure-message {
-  background: #fff !important;
+  background: hsl(var(--bg-elevated)) !important;
   border-width: 0 !important;
   box-shadow:
     0 3px 6px -4px #0000001f,
@@ -106,34 +108,34 @@
     0 9px 28px 8px #0000000d !important;
 
   & .el-message__content {
-    color: #000000d9 !important;
+    color: hsl(var(--fg)) !important;
     pointer-events: all !important;
     background-image: initial !important;
   }
 
   & .el-message__closeBtn {
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     transition:
-      background-color 0.2s,
-      color 0.2s;
+      background-color var(--duration-fast) var(--ease-standard),
+      color var(--duration-fast) var(--ease-standard);
 
     &:hover {
-      background-color: rgb(0 0 0 / 6%);
+      background-color: hsl(var(--fg) / 6%);
     }
   }
 }
 
 /* 自定义菜单搜索样式 */
 .pure-search-dialog {
-  @media screen and (width > 760px) and (width <= 940px) {
+  @include bp.between("md", "lg") {
     .el-input__inner {
-      font-size: 12px;
+      font-size: var(--font-size-xs);
     }
   }
 
-  @media screen and (width <= 470px) {
+  @include bp.below("xs") {
     .el-input__inner {
-      font-size: 12px;
+      font-size: var(--font-size-xs);
     }
   }
 
@@ -150,14 +152,14 @@
     padding: 10px 20px;
     margin: auto -16px -16px;
     box-shadow:
-      0 -1px 0 0 #e0e3e8,
+      0 -1px 0 0 hsl(var(--border-strong)),
       0 -3px 6px 0 rgb(69 98 155 / 12%);
   }
 }
 
 /* 仿 el-scrollbar 滚动条样式，支持大多数浏览器，如Chrome、Edge、Firefox、Safari等。整体暗色风格在 src/style/dark.scss 文件进行了适配 */
 .pure-scrollbar {
-  scrollbar-color: rgb(221 222 224) transparent; /* 滑块颜色、轨道颜色 */
+  scrollbar-color: hsl(var(--border)) transparent; /* 滑块颜色、轨道颜色 */
 
   /* Firefox */
   scrollbar-width: thin; /* 可选值为 'auto', 'thin', 'none' */
@@ -170,14 +172,14 @@
     background: transparent; /* 轨道颜色 */
   }
 
-  /* 滚动条滑块 */
+  /* 滚动条滑块（与 EP 边框色同源，暗色由 --border 自动反转） */
   ::-webkit-scrollbar-thumb {
-    background-color: rgb(221 222 224);
-    border-radius: 4px;
+    background-color: hsl(var(--border));
+    border-radius: var(--radius-sm);
   }
 
   /* 滚动条滑块：hover状态 */
   ::-webkit-scrollbar-thumb:hover {
-    background: rgb(199 201 203); /* 滑块hover颜色 */
+    background: hsl(var(--border-strong)); /* 滑块hover颜色 */
   }
 }

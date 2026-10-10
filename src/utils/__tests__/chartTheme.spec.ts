@@ -18,16 +18,16 @@ describe("chartTheme 取色与回退", () => {
     document.documentElement.style.cssText = "";
   });
 
-  it("EP 语义色在变量缺失时回退到 EP 默认值", () => {
-    expect(epColor("primary")).toBe("#409eff");
+  it("EP 语义色在变量缺失时回退到默认主色体系", () => {
+    expect(epColor("primary")).toBe("#006be6");
     expect(epColor("success")).toBe("#67c23a");
     expect(epColor("warning")).toBe("#e6a23c");
     expect(epColor("danger")).toBe("#f56c6c");
     expect(epColor("info")).toBe("#909399");
   });
 
-  it("浅色档缺失时回退到 EP 默认 tint（图标底托用）", () => {
-    expect(epColorLight("primary")).toBe("#ecf5ff");
+  it("浅色档缺失时回退到默认 tint（图标底托用）", () => {
+    expect(epColorLight("primary")).toBe("#e6f0fd");
     expect(epColorLight("warning")).toBe("#fdf6ec");
   });
 

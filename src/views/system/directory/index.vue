@@ -62,9 +62,3 @@ const { percent, handleDragEnd } = useSplitPaneConfig("system/directory", {
     </div>
   </div>
 </template>
-
-<style scoped lang="scss">
-.main-content {
-  --main-content-margin: 24px 24px 0;
-}
-</style>

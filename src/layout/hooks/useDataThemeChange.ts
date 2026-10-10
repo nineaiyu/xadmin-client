@@ -8,9 +8,11 @@ import {
   toggleClass
 } from "./themeColorScheme";
 import { createAppReset } from "./appReset";
+import { withCircleReveal } from "@/utils/viewTransition";
 
 /**
- * 深浅色与主题色切换：主题色方案见 themeColorScheme.ts，重置流程见 appReset.ts。
+ * 深浅色与主题色切换：主题色方案见 themeColorScheme.ts，重置流程见 appReset.ts，
+ * 明暗切换的圆形揭示动效见 utils/viewTransition.ts。
  */
 export function useDataThemeChange() {
   const { layoutTheme, layout } = useLayout();
@@ -28,7 +30,14 @@ export function useDataThemeChange() {
     storage: $storage
   });
 
-  /** 浅色、深色整体风格切换 */
+  /**
+   * 浅色、深色整体风格切换。
+   *
+   * 状态与持久化（`$storage.layout`、EP 主题色）**同步完成**；只有暗色 class
+   * 这一视觉动作放进圆形揭示动效（见 utils/viewTransition.ts）——View Transition
+   * 的回调会被推迟到下一次渲染，若把存储写入放进去，站点配置自动保存会读到旧值
+   * （实测表现为「切深色后刷新回浅色」）。
+   */
   function dataThemeChange(overall?: string) {
     themeMode.value = overall ?? "";
     if (useEpThemeStoreHook().epTheme === "light" && dataTheme.value) {
@@ -36,15 +45,13 @@ export function useDataThemeChange() {
     } else {
       setLayoutThemeColor(useEpThemeStoreHook().epTheme, false);
     }
-
-    if (dataTheme.value) {
-      document.documentElement.classList.add("dark");
-    } else {
-      if ($storage.layout.themeColor === "light") {
-        setLayoutThemeColor("light", false);
-      }
-      document.documentElement.classList.remove("dark");
+    if (!dataTheme.value && $storage.layout.themeColor === "light") {
+      setLayoutThemeColor("light", false);
     }
+
+    withCircleReveal(() => {
+      document.documentElement.classList.toggle("dark", dataTheme.value);
+    });
   }
 
   const onReset = createAppReset({ setEpThemeColor });

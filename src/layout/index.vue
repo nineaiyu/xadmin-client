@@ -8,6 +8,7 @@ import { useLayout } from "./hooks/useLayout";
 import { useAppStoreHook } from "@/store/modules/app";
 import { useSettingStoreHook } from "@/store/modules/settings";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
+import { useHeaderAutoHide } from "@/layout/hooks/useHeaderAutoHide";
 import {
   computed,
   defineComponent,
@@ -27,6 +28,7 @@ import {
 
 import { useRoute } from "vue-router";
 import { usePermissionStoreHook } from "@/store/modules/permission";
+import { BREAKPOINTS } from "@/utils/breakpoints";
 import { prefetchRoutesTo } from "@/utils/routePrefetch";
 import LayTag from "./components/lay-tag/index.vue";
 import LayNavbar from "./components/lay-navbar/index.vue";
@@ -45,6 +47,11 @@ const { layout } = useLayout();
 const isMobile = deviceDetection();
 const pureSetting = useSettingStoreHook();
 const { $storage } = useGlobal<GlobalPropertiesApi>();
+
+// 顶栏滚动自动隐藏：仅在固定头模式下有意义（隐藏「顶栏 + 页签条」整块）
+const { hidden: headerHidden } = useHeaderAutoHide(
+  () => pureSetting.fixedHeader
+);
 
 // 项目设置实时生效：layout/configure 任意设置项变更即防抖自动 PATCH
 // （不再依赖面板里的「保存配置」按钮；首次挂载不触发）
@@ -110,21 +117,23 @@ useResizeObserver(appWrapperRef, entries => {
   const entry = entries[0];
   const [{ inlineSize: width, blockSize: height }] = entry.borderBoxSize;
   useAppStoreHook().setViewportSize({ width, height });
-  width <= 760 ? setTheme("vertical") : setTheme(useAppStoreHook().layout);
-  /** width app-wrapper类容器宽度
-   * 0 < width <= 760 隐藏侧边栏
-   * 760 < width <= 990 折叠侧边栏
-   * width > 990 展开侧边栏
+  width <= BREAKPOINTS.md
+    ? setTheme("vertical")
+    : setTheme(useAppStoreHook().layout);
+  /** width app-wrapper类容器宽度（断点见 src/utils/breakpoints.ts，与 SCSS 侧同源）
+   * 0 < width <= md(768) 隐藏侧边栏
+   * md(768) < width <= lg(1024) 折叠侧边栏
+   * width > lg(1024) 展开侧边栏
    */
-  if (width > 0 && width <= 760) {
+  if (width > 0 && width <= BREAKPOINTS.md) {
     toggle("mobile", false);
     isAutoCloseSidebar = true;
-  } else if (width > 760 && width <= 990) {
+  } else if (width > BREAKPOINTS.md && width <= BREAKPOINTS.lg) {
     if (isAutoCloseSidebar) {
       toggle("desktop", false);
       isAutoCloseSidebar = false;
     }
-  } else if (width > 990 && !set.sidebar.isClickCollapse) {
+  } else if (width > BREAKPOINTS.lg && !set.sidebar.isClickCollapse) {
     toggle("desktop", true);
     isAutoCloseSidebar = true;
   } else {
@@ -156,7 +165,10 @@ const LayHeader = defineComponent({
     return h(
       "div",
       {
-        class: { "fixed-header": set.fixedHeader },
+        class: {
+          "fixed-header": set.fixedHeader,
+          "header-hidden": headerHidden.value
+        },
         style: [
           set.hideTabs && layout.value.includes("horizontal")
             ? isDark.value
@@ -210,7 +222,10 @@ const LayHeader = defineComponent({
       <div v-if="set.fixedHeader">
         <LayHeader />
         <!-- 主体内容 -->
-        <LayContent :fixed-header="set.fixedHeader" />
+        <LayContent
+          :fixed-header="set.fixedHeader"
+          :header-hidden="headerHidden"
+        />
       </div>
       <el-scrollbar v-else>
         <el-backtop
@@ -221,7 +236,10 @@ const LayHeader = defineComponent({
         </el-backtop>
         <LayHeader />
         <!-- 主体内容 -->
-        <LayContent :fixed-header="set.fixedHeader" />
+        <LayContent
+          :fixed-header="set.fixedHeader"
+          :header-hidden="headerHidden"
+        />
       </el-scrollbar>
     </div>
     <!-- 系统设置 -->

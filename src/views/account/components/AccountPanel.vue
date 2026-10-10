@@ -70,13 +70,13 @@ withDefaults(
   color: var(--el-text-color-secondary);
 }
 
-/* 内容纸：留白与系统设置页签内容区同一来源（--app-panel-pad-*），两模块观感一致 */
+/* 内容纸：留白与系统设置页签内容区同一来源（--panel-pad-*），两模块观感一致 */
 .account-panel__body {
-  padding: var(--app-panel-pad-y) var(--app-panel-pad-x);
+  padding: var(--panel-pad-y) var(--panel-pad-x);
   background: var(--el-bg-color);
-  border: var(--app-card-border);
-  border-radius: var(--app-card-radius);
-  box-shadow: var(--app-card-shadow);
+  border: var(--card-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
 }
 
 /* 列表行：标题 + 说明在左、操作在右，行高由内容撑开 */
@@ -136,7 +136,7 @@ withDefaults(
   padding: 16px 0;
   background: var(--el-fill-color-lighter);
   border: 1px dashed var(--el-border-color);
-  border-radius: var(--app-card-radius);
+  border-radius: var(--radius-lg);
 }
 
 /**

@@ -1,11 +1,12 @@
 import { computed } from "vue";
 import { isBoolean, isEqual } from "@pureadmin/utils";
+import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import type { RouteConfigs } from "../types";
 import type { RouteLocationNormalizedLoaded } from "vue-router";
 
 /**
  * 标签激活态判定（自 useTag.ts 抽取）：无 showLink 的动态路由按 query/params
- * 比对，其余按路由名比对；fixedTag 单独判定。
+ * 比对，其余按路由名比对；fixedTag 与右键「固定」的标签单独判定（均不可关闭）。
  */
 export function createTagActiveState(route: RouteLocationNormalizedLoaded) {
   function conditionHandle(
@@ -31,7 +32,8 @@ export function createTagActiveState(route: RouteLocationNormalizedLoaded) {
 
   const isFixedTag = computed(() => {
     return (item: RouteConfigs) =>
-      isBoolean(item?.meta?.fixedTag) && item?.meta?.fixedTag === true;
+      (isBoolean(item?.meta?.fixedTag) && item?.meta?.fixedTag === true) ||
+      useMultiTagsStoreHook().isPinnedTag(item?.path ?? "");
   });
 
   const iconIsActive = computed(() => {

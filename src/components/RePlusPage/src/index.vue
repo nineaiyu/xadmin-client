@@ -461,16 +461,6 @@ defineExpose({
   </div>
 </template>
 
-<style lang="scss">
-/* 列表页主内容底边距归零：.main-content 类由 layout 注入到路由组件根节点，
-   页面包 div 或 el-tabs 时本组件 scoped 属性带不上该节点（实测 var 永远为空），
-   改用全局块并以本组件根类锚定——自身即根时类落同一节点，包裹时经 :has 命中 */
-.main-content.re-plus-page,
-.main-content:has(.re-plus-page) {
-  --main-content-margin: 24px 24px 0;
-}
-</style>
-
 <style scoped lang="scss">
 /* 搜索卡片高度占位（体验基线 U1 / CLS 主因修复）：**仅在列元数据到达前生效**。
    搜索列元数据随列表首包（with_meta=1）到达，此前卡片只渲染按钮行（56px），
@@ -485,13 +475,13 @@ defineExpose({
 }
 
 /* 列表页卡片化：搜索卡与表格区统一应用外观层的卡片体系（圆角 / 描边 / 静态阴影，
-   变量同源 style/index.scss 的 --app-card-*），与个人中心等手写面板的「内容纸」观感一致。
+   取值同源设计令牌），与个人中心等手写面板的「内容纸」观感一致。
    全屏态铺满视口时撤除描边与圆角，避免四边露出边框线。 */
 .re-plus-search-card,
 .re-plus-table-card {
-  border: var(--app-card-border);
-  border-radius: var(--app-card-radius);
-  box-shadow: var(--app-card-shadow);
+  border: var(--card-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
 }
 
 .re-plus-table-card {

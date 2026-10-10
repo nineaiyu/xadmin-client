@@ -68,9 +68,10 @@ export function createTagContextMenu({
   function openMenu(tag: RouteConfigs, e: MouseEvent) {
     closeMenu();
     if (tag.path === topPath || tag?.meta?.fixedTag) {
-      // 右键菜单为顶级菜单或拥有 fixedTag 属性，只显示刷新
+      // 右键菜单为顶级菜单或拥有 fixedTag 属性，只显示刷新（固定项对已固定标签无意义）
       showMenus(false);
       tagsViews[0].show = true;
+      tagsViews[7].show = false;
     } else if (route.path !== tag.path && route.name !== tag.name) {
       // 右键菜单不匹配当前路由，隐藏刷新
       tagsViews[0].show = false;

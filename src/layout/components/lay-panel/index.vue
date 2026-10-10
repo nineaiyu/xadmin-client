@@ -146,11 +146,11 @@ onBeforeUnmount(() => {
   max-width: 280px;
   box-shadow: 0 0 15px 0 rgb(0 0 0 / 5%);
   transform: translate(100%);
-  transition: all 0.25s cubic-bezier(0.7, 0.3, 0.1, 1);
+  transition: all var(--duration-fast) var(--ease-emphasized);
 }
 
 .show {
-  transition: all 0.3s cubic-bezier(0.7, 0.3, 0.1, 1);
+  transition: all var(--duration-base) var(--ease-emphasized);
 
   .right-panel-background {
     z-index: var(--pure-z-index-setting-mask);

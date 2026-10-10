@@ -340,6 +340,14 @@ layout:
   topMode: Top mode
   mixedMode: Mixed mode
   themeColor: ThemeColor
+  tabAppearance: Appearance
+  tabLayout: Layout
+  tabGeneral: General
+  general: General settings
+  headerAutoHide: Auto-hide header
+  headerAutoHideTip: Hide the header when scrolling down, restore on scroll up
+  compactMode: Compact mode
+  compactModeTip: Tighter content padding with a centered max width
   display: Display
   greyMode: Grey mode
   colorWeakMode: Color weak mode
@@ -725,6 +733,9 @@ buttons:
   closeAllTabs: Close AllTabs
   contentFullScreen: Content FullScreen
   contentExitFullScreen: Content ExitFullScreen
+  pinTab: Pin Tab
+  unpinTab: Unpin Tab
+  openInNewWindow: Open in new window
   fullScreenToggle: Toggle full screen
   language: Switch language
   splitPaneReset: Reset pane width

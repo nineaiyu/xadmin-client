@@ -1,0 +1,217 @@
+/**
+ * 设计令牌 · 语义层（层 2/3）
+ *
+ * `:root`（亮色）与 `html.dark`（暗色）成对声明的语义槽：背景 / 前景 / 描边 /
+ * 填充 / 遮罩 / 导航 / 阴影。颜色值为 hsl() 参数列表（消费方 `hsl(var(--x))`），
+ * 当前取值与 Element Plus 对应变量逐通道一致（迁移期像素中性）。
+ *
+ * 另吸收原 style/theme.scss 的菜单调色板（8 套 `html[data-theme=...]`）与
+ * --pure-theme-* 缺省值：这些是完整色值（非三元组），由 ts/sidebar 样式直接消费。
+ */
+
+:root {
+  /* ================ 背景 ================ */
+  --bg-page: 220 13% 95.5%; /* #f2f3f5 */
+  --bg-card: 0 0% 100%; /* #ffffff */
+  --bg-elevated: 0 0% 100%; /* #ffffff（弹层/浮层） */
+
+  /* ================ 前景（文本 / 图标） ================ */
+  --fg: 220 3% 19.4%; /* #303133 */
+  --fg-muted: 220 3% 38.8%; /* #606266 */
+  --fg-subtle: 220 4.2% 58.2%; /* #909399 */
+  --fg-placeholder: 222 6.1% 67.8%; /* #a8abb2 */
+  --fg-disabled: 220 10.5% 77.6%; /* #c0c4cc */
+
+  /* ================ 描边 ================ */
+  --border: 222 16.7% 88.2%; /* #dcdfe6 */
+  --border-light: 220 20% 91.2%; /* #e4e7ed */
+  --border-lighter: 222 33.3% 94.1%; /* #ebeef5 */
+  --border-strong: 222 13.2% 85.1%; /* #d4d7de */
+
+  /* ================ 组合值 ================ */
+
+  /* 卡片/面板描边（1px 实线 + 边框色）：随 --border-light 明暗自动反转 */
+  --card-border: 1px solid hsl(var(--border-light));
+
+  /* ================ 填充（区块底色 / hover 态） ================ */
+  --fill: 216 20% 95.1%; /* #f0f2f5 */
+  --fill-muted: 216 33.3% 97.1%; /* #f5f7fa */
+  --fill-subtle: 0 0% 98%; /* #fafafa */
+  --fill-strong: 216 14.3% 93.1%; /* #ebedf0 */
+
+  /* ================ 强调 ================ */
+  --ring: var(--primary); /* 键盘焦点环：跟随主色 */
+  --overlay: 0 0% 0% / 50%; /* 遮罩（带透明度） */
+
+  /* ================ 导航 ================ */
+  --header: hsl(var(--bg-card)); /* 顶栏背景（完整色值） */
+  --sidebar: var(
+    --pure-theme-menu-bg
+  ); /* 侧栏背景（完整色值，由菜单调色板驱动） */
+
+  /* ================ 阴影（明暗成对的完整值） ================ */
+  --shadow-sm: 0 0 6px #0000001f;
+  --shadow-md: 0 0 12px #0000001f;
+  --shadow-lg: 0 12px 32px 4px #0000000a, 0 8px 20px #00000014;
+  --shadow-float:
+    0 16px 48px 16px #00000014, 0 12px 32px #0000001f, 0 8px 16px -8px #00000029;
+
+  /* ================ 历史别名（语义化取值，消费方迁移完成后删除） ================ */
+
+  /* 细分隔线：前景色的低透明度表达，随明暗自动反转（原为两处字面量分别声明） */
+  --pure-border-color: hsl(var(--fg) / 6%);
+  --pure-switch-off-color: hsl(var(--fg-placeholder)); /* 开关关闭态底色 */
+
+  color-scheme: light;
+}
+
+html.dark {
+  /* ================ 背景 ================ */
+  --bg-page: 0 0% 3.9%; /* #0a0a0a */
+  --bg-card: 0 0% 7.8%; /* #141414 */
+  --bg-elevated: 210 3.3% 11.8%; /* #1d1e1f */
+
+  /* ================ 前景 ================ */
+  --fg: 218.6 36.8% 92.5%; /* #e5eaf3 */
+  --fg-muted: 221.5 15.7% 83.7%; /* #cfd3dc */
+  --fg-subtle: 222 5.7% 65.9%; /* #a3a6ad */
+  --fg-placeholder: 217.5 3.6% 56.9%; /* #8d9095 */
+  --fg-disabled: 220 2.7% 43.5%; /* #6c6e72 */
+
+  /* ================ 描边 ================ */
+  --border: 220 1.9% 30.4%; /* #4c4d4f */
+  --border-light: 210 1.5% 25.9%; /* #414243 */
+  --border-lighter: 240 0.9% 21.4%; /* #363637 */
+  --border-strong: 240 1.7% 35.1%; /* #58585b */
+
+  /* ================ 填充 ================ */
+  --fill: 0 0% 18.8%; /* #303030 */
+  --fill-muted: 180 1.3% 15.1%; /* #262727 */
+  --fill-subtle: 0 0% 11.4%; /* #1d1d1d */
+  --fill-strong: 240 0.9% 22.5%; /* #39393a */
+
+  /* ================ 强调 ================ */
+  --overlay: 0 0% 0% / 40%;
+
+  /* ================ 历史别名（暗色取值） ================ */
+  --pure-border-color: hsl(var(--fg) / 12%);
+  --pure-switch-off-color: hsl(var(--fg) / 25%);
+
+  /* ================ 阴影 ================ */
+  --shadow-sm: 0 0 6px #000000b8;
+  --shadow-md: 0 0 12px #000000b8;
+  --shadow-lg: 0 12px 32px 4px #0000005c, 0 8px 20px #000000b8;
+  --shadow-float:
+    0 16px 48px 16px #000000b8, 0 12px 32px #000, 0 8px 16px -8px #000;
+}
+
+/* ================ 菜单调色板（自 style/theme.scss 迁入） ================
+   侧栏 / 顶栏菜单的导航配色：--sidebar 语义槽的来源。值为完整色值。 */
+
+:root {
+  /** 主题色 */
+  --pure-theme-sub-menu-active-text: initial;
+  --pure-theme-menu-bg: none;
+  --pure-theme-menu-hover: none;
+  --pure-theme-sub-menu-bg: transparent;
+  --pure-theme-menu-text: initial;
+  --pure-theme-sidebar-logo: none;
+  --pure-theme-menu-title-hover: initial;
+  --pure-theme-menu-active-before: transparent;
+}
+
+/* 亮白色 */
+html[data-theme="light"] {
+  --pure-theme-sub-menu-active-text: #000000d9;
+  --pure-theme-menu-bg: #fff;
+  --pure-theme-menu-hover: #f6f6f6;
+  --pure-theme-sub-menu-bg: #fff;
+  --pure-theme-menu-text: rgb(0 0 0 / 60%);
+  --pure-theme-sidebar-logo: #fff;
+  --pure-theme-menu-title-hover: #000;
+  --pure-theme-menu-active-before: #4091f7;
+}
+
+/* 道奇蓝 */
+html[data-theme="default"] {
+  --pure-theme-sub-menu-active-text: #fff;
+  --pure-theme-menu-bg: #001529;
+  --pure-theme-menu-hover: rgb(64 145 247 / 15%);
+  --pure-theme-sub-menu-bg: #0f0303;
+  --pure-theme-menu-text: rgb(254 254 254 / 65%);
+  --pure-theme-sidebar-logo: #002140;
+  --pure-theme-menu-title-hover: #fff;
+  --pure-theme-menu-active-before: #4091f7;
+}
+
+/* 深紫罗兰色 */
+html[data-theme="saucePurple"] {
+  --pure-theme-sub-menu-active-text: #fff;
+  --pure-theme-menu-bg: #130824;
+  --pure-theme-menu-hover: rgb(105 58 201 / 15%);
+  --pure-theme-sub-menu-bg: #000;
+  --pure-theme-menu-text: #7a80b4;
+  --pure-theme-sidebar-logo: #1f0c38;
+  --pure-theme-menu-title-hover: #fff;
+  --pure-theme-menu-active-before: #693ac9;
+}
+
+/* 深粉色 */
+html[data-theme="pink"] {
+  --pure-theme-sub-menu-active-text: #fff;
+  --pure-theme-menu-bg: #28081a;
+  --pure-theme-menu-hover: rgb(216 68 147 / 15%);
+  --pure-theme-sub-menu-bg: #000;
+  --pure-theme-menu-text: #7a80b4;
+  --pure-theme-sidebar-logo: #3f0d29;
+  --pure-theme-menu-title-hover: #fff;
+  --pure-theme-menu-active-before: #d84493;
+}
+
+/* 猩红色 */
+html[data-theme="dusk"] {
+  --pure-theme-sub-menu-active-text: #fff;
+  --pure-theme-menu-bg: #2a0608;
+  --pure-theme-menu-hover: rgb(225 60 57 / 15%);
+  --pure-theme-sub-menu-bg: #000;
+  --pure-theme-menu-text: rgb(254 254 254 / 65.1%);
+  --pure-theme-sidebar-logo: #42090c;
+  --pure-theme-menu-title-hover: #fff;
+  --pure-theme-menu-active-before: #e13c39;
+}
+
+/* 橙红色 */
+html[data-theme="volcano"] {
+  --pure-theme-sub-menu-active-text: #fff;
+  --pure-theme-menu-bg: #2b0e05;
+  --pure-theme-menu-hover: rgb(232 95 51 / 15%);
+  --pure-theme-sub-menu-bg: #0f0603;
+  --pure-theme-menu-text: rgb(254 254 254 / 65%);
+  --pure-theme-sidebar-logo: #441708;
+  --pure-theme-menu-title-hover: #fff;
+  --pure-theme-menu-active-before: #e85f33;
+}
+
+/* 绿宝石 */
+html[data-theme="mingQing"] {
+  --pure-theme-sub-menu-active-text: #fff;
+  --pure-theme-menu-bg: #032121;
+  --pure-theme-menu-hover: rgb(89 191 193 / 15%);
+  --pure-theme-sub-menu-bg: #000;
+  --pure-theme-menu-text: #7a80b4;
+  --pure-theme-sidebar-logo: #053434;
+  --pure-theme-menu-title-hover: #fff;
+  --pure-theme-menu-active-before: #59bfc1;
+}
+
+/* 酸橙绿 */
+html[data-theme="auroraGreen"] {
+  --pure-theme-sub-menu-active-text: #fff;
+  --pure-theme-menu-bg: #0b1e15;
+  --pure-theme-menu-hover: rgb(96 172 128 / 15%);
+  --pure-theme-sub-menu-bg: #000;
+  --pure-theme-menu-text: #7a80b4;
+  --pure-theme-sidebar-logo: #112f21;
+  --pure-theme-menu-title-hover: #fff;
+  --pure-theme-menu-active-before: #60ac80;
+}

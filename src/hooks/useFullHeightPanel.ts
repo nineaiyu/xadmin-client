@@ -1,11 +1,13 @@
 import { onActivated, onMounted, onUnmounted, ref } from "vue";
 
+import { BREAKPOINTS } from "@/utils/breakpoints";
+
 /** 面板高度下限：视口过矮或多标签栏挤压时保底可用高度 */
 export const PANEL_MIN_HEIGHT = 420;
 /** 面板底部与视口底边的留白 */
 export const PANEL_BOTTOM_GAP = 24;
-/** 窄屏判定阈值（视口宽度 px）：低于此宽度左栏折叠为抽屉 */
-export const PANEL_NARROW_BREAKPOINT = 768;
+/** 窄屏判定阈值（视口宽度 px）：低于此宽度左栏折叠为抽屉（= md 断点） */
+export const PANEL_NARROW_BREAKPOINT = BREAKPOINTS.md;
 
 export interface FullHeightPanelOptions {
   /** 面板高度下限，默认 {@link PANEL_MIN_HEIGHT} */

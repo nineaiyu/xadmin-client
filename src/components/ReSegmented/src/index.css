@@ -86,7 +86,7 @@
   text-align: center;
   cursor: pointer;
   border-radius: var(--el-border-radius-base);
-  transition: all 0.1s cubic-bezier(0.645, 0.045, 0.355, 1);
+  transition: all var(--duration-instant) var(--ease-standard);
 }
 
 .pure-segmented .pure-segmented-item > div {

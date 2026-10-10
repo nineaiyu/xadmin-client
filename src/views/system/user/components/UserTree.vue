@@ -238,11 +238,11 @@ defineExpose({ onTreeReset });
 
 <style lang="scss" scoped>
 /* 面板卡片化：与右侧列表（RePlusPage 搜索卡/表格卡）同一张「卡片纸」，
-   分栏两侧观感一致；变量同源 style/index.scss 的 --app-card-* */
+   分栏两侧观感一致；圆角/描边/阴影取设计令牌 */
 .user-tree-panel {
-  border: var(--app-card-border);
-  border-radius: var(--app-card-radius);
-  box-shadow: var(--app-card-shadow);
+  border: var(--card-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
 }
 
 :deep(.el-divider) {

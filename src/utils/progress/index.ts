@@ -57,9 +57,9 @@ function ensureBar(): HTMLDivElement {
   inner.style.cssText = [
     "height:100%",
     "width:0%",
-    "background-color:var(--el-color-primary, #409eff)",
+    "background-color:var(--el-color-primary, #006be6)",
     "transition:width 200ms ease",
-    "box-shadow:0 0 10px var(--el-color-primary, #409eff), 0 0 5px var(--el-color-primary, #409eff)"
+    "box-shadow:0 0 10px var(--el-color-primary, #006be6), 0 0 5px var(--el-color-primary, #006be6)"
   ].join(";");
   el.appendChild(inner);
   document.body.appendChild(el);

@@ -151,6 +151,7 @@ onBeforeUnmount(() => {
             isFixedTag(item) && 'fixed-tag'
           ]"
           @contextmenu.prevent="openMenu(item, $event)"
+          @mousedown.middle.prevent="!isFixedTag(item) && deleteMenu(item)"
           @mouseenter.prevent="onMouseenter(index)"
           @mouseleave.prevent="onMouseleave(index)"
           @click="tagOnClick(item)"
@@ -214,7 +215,7 @@ onBeforeUnmount(() => {
         class="contextmenu"
       >
         <div
-          v-for="(item, key) in tagsViews.slice(0, 6)"
+          v-for="(item, key) in tagsViews"
           :key="key"
           style="display: flex; align-items: center"
         >

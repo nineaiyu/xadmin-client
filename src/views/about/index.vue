@@ -38,7 +38,7 @@ Object.keys(devDependencies).forEach(key => {
 </script>
 
 <template>
-  <div>
+  <div class="content-flush">
     <el-card class="m-4 box-card" shadow="never">
       <span>{{ t("about.intro") }}</span>
     </el-card>
@@ -150,9 +150,5 @@ Object.keys(devDependencies).forEach(key => {
 /* descriptions 自带表头间距在本页不需要（卡片 header 已提供） */
 :deep(.el-descriptions__header) {
   margin: 0 !important;
-}
-
-.main-content {
-  --main-content-margin: 0;
 }
 </style>

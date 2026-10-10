@@ -27,28 +27,6 @@ const { t } = useI18n();
   </div>
 </template>
 
-<style lang="scss">
-/**
- * 页面外边距（非 scoped：`.main-content` 由 layout 注入到路由组件根节点）。
- *
- * 本组件根节点即 `.main-content`（自带 24px 外边距）；短信设置页在 Setting 外
- * 还包了一层（承载渠道失败提示），所以两种结构都要覆盖。底部外边距归零与列表页
- * 同口径，避免卡片下方多出一条空白。注意页面内不要写 `width: 100%`：
- * 按父容器宽解析、不扣自身外边距，会让卡片右侧溢出视口。
- */
-.main-content.setting-page,
-.main-content:has(.setting-page) {
-  --main-content-margin: 24px 24px 0;
-}
-
-@media (width <= 768px) {
-  .main-content.setting-page,
-  .main-content:has(.setting-page) {
-    --main-content-margin: 12px 12px 0;
-  }
-}
-</style>
-
 <style lang="scss" scoped>
 .setting-page {
   box-sizing: border-box;
@@ -57,8 +35,8 @@ const { t } = useI18n();
 /* 页签卡片对齐应用卡片体系（圆角 / 描边 / 阴影），与账户设置面板同一张「内容纸」 */
 .setting-page > .el-tabs--border-card {
   border-color: var(--el-border-color-light);
-  border-radius: var(--app-card-radius);
-  box-shadow: var(--app-card-shadow);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
 }
 
 /**
@@ -89,7 +67,7 @@ const { t } = useI18n();
  * 底部不留额外内边距：表单页签的按钮组、列表页签的分页各自带下边距。
  */
 .setting-page :deep(.el-tabs__content) {
-  padding: var(--app-panel-pad-y) var(--app-panel-pad-x);
+  padding: var(--panel-pad-y) var(--panel-pad-x);
 }
 
 @media (width <= 768px) {

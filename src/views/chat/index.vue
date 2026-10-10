@@ -198,10 +198,10 @@ async function recall(item: ChatMessageItem) {
 </template>
 
 <style lang="scss" scoped>
-/* 整页容器接入全局卡片体系（--app-card-*）：与列表页卡片、通讯录同一观感 */
+/* 整页容器接入全局卡片体系（见 style/appearance.scss）：与列表页卡片、通讯录同一观感 */
 .chat-page {
-  border: var(--app-card-border);
-  border-radius: var(--app-card-radius);
-  box-shadow: var(--app-card-shadow);
+  border: var(--card-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
 }
 </style>

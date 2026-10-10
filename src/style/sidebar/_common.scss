@@ -1,12 +1,15 @@
+@use "../tokens/breakpoints" as bp;
+
 /* $sideBarWidth: vertical 模式下主体内容距离网页文档左侧的距离 */
 @mixin merge-style($sideBarWidth) {
-  @media screen and (width >= 150px) and (width <= 420px) {
+  /* 极窄视口允许纵向滚动（固定头模式下的内容高度补偿），断点见 tokens/breakpoints */
+  @include bp.below("xs") {
     .app-main-nofixed-header {
       overflow-y: hidden;
     }
   }
 
-  @media screen and (width >= 420px) {
+  @include bp.above("xs") {
     .app-main-nofixed-header {
       overflow: hidden;
     }
@@ -61,10 +64,10 @@
     height: 100vh;
     min-height: 100%;
     margin-left: $sideBarWidth;
-    background: #f0f2f5;
+    background: hsl(var(--bg-page));
 
     /* main-content 属性动画 */
-    transition: margin-left var(--pure-transition-duration);
+    transition: margin-left var(--duration-base);
 
     .el-scrollbar__wrap {
       height: 100%;
@@ -80,7 +83,14 @@
     width: calc(100% - #{$sideBarWidth});
 
     /* fixed-header 属性左上角动画 */
-    transition: width var(--pure-transition-duration);
+    transition:
+      width var(--duration-base),
+      transform var(--duration-base) var(--ease-standard);
+  }
+
+  /* 顶栏滚动自动隐藏（useHeaderAutoHide）：整块固定头部（顶栏 + 页签条）上移出视口 */
+  .fixed-header.header-hidden {
+    transform: translateY(-100%);
   }
 
   .main-hidden {
@@ -105,11 +115,11 @@
     height: 100%;
     overflow: visible;
     font-size: 0;
-    background: var(--pure-theme-menu-bg) !important;
+    background: var(--sidebar) !important;
     border-right: 1px solid var(--pure-border-color);
 
     /* 展开动画 */
-    transition: width var(--pure-transition-duration);
+    transition: width var(--duration-base);
 
     .scrollbar-wrapper {
       overflow-x: hidden !important;
@@ -189,7 +199,7 @@
 
     .is-active {
       color: var(--pure-theme-sub-menu-active-text) !important;
-      transition: color 0.3s;
+      transition: color var(--duration-base) var(--ease-standard);
     }
 
     .el-menu-item.is-active.nest-menu > * {
@@ -227,7 +237,7 @@
       content: "";
       background-color: var(--pure-theme-menu-active-before);
       transform: translateY(0);
-      transition: all var(--pure-transition-duration) ease-in-out;
+      transition: all var(--duration-base) var(--ease-standard);
     }
 
     .el-menu--collapse .outer-most.el-sub-menu > .el-sub-menu__title::before {
@@ -302,7 +312,7 @@
 
     .is-active {
       color: var(--pure-theme-sub-menu-active-text) !important;
-      transition: color 0.3s;
+      transition: color var(--duration-base) var(--ease-standard);
     }
 
     .el-menu-item.is-active.nest-menu > * {
@@ -390,7 +400,7 @@
 
     .el-menu-item.is-active {
       color: var(--pure-theme-sub-menu-active-text) !important;
-      transition: color 0.3s;
+      transition: color var(--duration-base) var(--ease-standard);
     }
 
     .el-menu-item.is-active.nest-menu > * {
@@ -424,7 +434,7 @@
       height: 100%;
       padding-left: 10px;
       cursor: pointer;
-      transition: all var(--pure-transition-duration) ease;
+      transition: all var(--duration-base) var(--ease-standard);
 
       img {
         display: inline-block;
@@ -541,7 +551,7 @@
 
     .is-active {
       color: var(--pure-theme-sub-menu-active-text) !important;
-      transition: color 0.3s;
+      transition: color var(--duration-base) var(--ease-standard);
     }
   }
 
@@ -553,7 +563,7 @@
   .mobile {
     .fixed-header {
       width: 100% !important;
-      transition: width var(--pure-transition-duration);
+      transition: width var(--duration-base);
     }
 
     .main-container {
@@ -563,14 +573,14 @@
     .sidebar-container {
       z-index: 2001;
       width: $sideBarWidth;
-      transition: transform var(--pure-transition-duration);
+      transition: transform var(--duration-base);
     }
 
     &.hideSidebar {
       .sidebar-container {
         pointer-events: none;
         transform: translate3d(-$sideBarWidth, 0, 0);
-        transition-duration: 0.3s;
+        transition-duration: var(--duration-base);
       }
     }
   }

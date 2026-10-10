@@ -36,14 +36,33 @@ export const useMultiTagsStore = defineStore("pure-multiTags", {
       : [...routerArrays, ...fixedTagRoutes]) as RouteConfigs[],
     multiTagsCache: storageLocal().getItem<StorageConfigs>(
       `${responsiveStorageNameSpace()}configure`
-    )?.multiTagsCache
+    )?.multiTagsCache,
+    /** 右键「固定」的标签（fullPath 列表，本地持久化）：固定标签不参与按侧/全部关闭 */
+    pinnedTags: (storageLocal().getItem<string[]>(
+      `${responsiveStorageNameSpace()}pinnedTags`
+    ) ?? []) as string[]
   }),
   getters: {
     getMultiTagsCache(state) {
       return state.multiTagsCache;
-    }
+    },
+    isPinnedTag:
+      state =>
+      (path: string): boolean =>
+        state.pinnedTags.includes(path)
   },
   actions: {
+    /** 固定 / 取消固定标签（右键菜单项），并落本地存储 */
+    togglePinnedTag(path: string) {
+      if (!path) return;
+      const index = this.pinnedTags.indexOf(path);
+      if (index === -1) this.pinnedTags.push(path);
+      else this.pinnedTags.splice(index, 1);
+      storageLocal().setItem(
+        `${responsiveStorageNameSpace()}pinnedTags`,
+        this.pinnedTags
+      );
+    },
     multiTagsCacheChange(multiTagsCache: boolean) {
       this.multiTagsCache = multiTagsCache;
       if (multiTagsCache) {

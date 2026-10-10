@@ -1,8 +1,8 @@
-import { toRaw } from "vue";
 import type { RouteConfigs } from "../../../types";
 import type { useTags } from "../../../hooks/useTag";
-import { handleAliveRoute, getTopMenu } from "@/router/utils";
+import { handleAliveRoute } from "@/router/utils";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
+import { createTagFixedScope } from "./tagFixedScope";
 
 type TagRoute = ReturnType<typeof useTags>["route"];
 type TagRouter = ReturnType<typeof useTags>["router"];
@@ -19,10 +19,8 @@ type TagDeleteContext = {
   dynamicTagView: () => Promise<void>;
 };
 
-/**
- * 标签删除域（拆分自 useTagActions）：按左/右/其他/当前维度裁剪 multiTags
- * 并处理删除后的路由跳转。其余标签动作（刷新/全屏/右键定位）见 useTagActions.ts。
- */
+/** 标签删除域（拆分自 useTagActions）：按左/右/其他/当前维度裁剪 multiTags 并跳转。
+ *  其余标签动作（刷新/全屏/右键定位）见 useTagActions.ts，固定集判定见 tagFixedScope.ts。 */
 export function useTagDelete({
   route,
   router,
@@ -30,7 +28,10 @@ export function useTagDelete({
   fixedTags,
   dynamicTagView
 }: TagDeleteContext) {
-  const { VITE_HIDE_HOME } = import.meta.env;
+  const { keepFixedAnd, spliceNonFixed } = createTagFixedScope({
+    multiTags,
+    fixedTags
+  });
 
   function deleteDynamicTag(
     obj: RouteConfigs,
@@ -57,13 +58,7 @@ export function useTagDelete({
       other?: boolean
     ): void => {
       if (other) {
-        useMultiTagsStoreHook().handleTags(
-          "equal",
-          [
-            VITE_HIDE_HOME === "false" ? fixedTags : toRaw(getTopMenu()),
-            obj
-          ].flat() as RouteConfigs[]
-        );
+        useMultiTagsStoreHook().handleTags("equal", keepFixedAnd(obj));
       } else {
         useMultiTagsStoreHook().handleTags("splice", "", {
           startIndex,
@@ -73,12 +68,20 @@ export function useTagDelete({
       dynamicTagView();
     };
 
+    /** 按路径逐个删除范围内的非固定标签（固定标签与右键固定的标签保留） */
+    const removeScope = (scope: RouteConfigs[]) => {
+      spliceNonFixed(scope, path =>
+        useMultiTagsStoreHook().handleTags("splice", path)
+      );
+      dynamicTagView();
+    };
+
     if (tag === "other") {
       spliceRoute(1, 1, true);
     } else if (tag === "left") {
-      spliceRoute(fixedTags.length, valueIndex - fixedTags.length);
+      removeScope(multiTags.value.slice(0, valueIndex));
     } else if (tag === "right") {
-      spliceRoute(valueIndex + 1, multiTags.value.length);
+      removeScope(multiTags.value.slice(valueIndex + 1));
     } else {
       // 从当前匹配到的路径中删除
       spliceRoute(valueIndex, 1);

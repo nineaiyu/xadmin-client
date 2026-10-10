@@ -1,18 +1,31 @@
+/**
+ * 全局过渡与动效：状态过渡预设（页面切换 / 面包屑 / 折叠）、通用过渡类与
+ * 「减弱动效」无障碍降级。时长与缓动统一消费 tokens/primitives.scss 的
+ * --duration-* / --ease-*，不在本文件内联数值。
+ *
+ * 预设命名对齐 vue-vben-admin 的形态（本地命名，不引 vben 依赖），
+ * 路由侧缺省过渡名仍为 fade-transform（见 layout/components/lay-content）。
+ */
+
+/* ============ 页面 / 内容过渡 ============ */
+
 /* fade */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.28s;
+  transition: opacity var(--duration-base) var(--ease-standard);
 }
 
+/* Vue 2 / Vue 3 兼容：-enter 为 2.x 类名，-enter-from 为 3.x 类名 */
 .fade-enter,
+.fade-enter-from,
 .fade-leave-active {
   opacity: 0;
 }
 
-/* fade-transform */
+/* fade-transform：路由缺省过渡 */
 .fade-transform-leave-active,
 .fade-transform-enter-active {
-  transition: all 0.5s;
+  transition: all var(--duration-slower) var(--ease-standard);
 }
 
 .fade-transform-enter-from {
@@ -27,12 +40,12 @@
 
 /* breadcrumb transition */
 .breadcrumb-enter-active {
-  transition: all 0.4s;
+  transition: all var(--duration-slow) var(--ease-standard);
 }
 
 .breadcrumb-leave-active {
   position: absolute;
-  transition: all 0.3s;
+  transition: all var(--duration-base) var(--ease-standard);
 }
 
 .breadcrumb-enter-from,
@@ -41,14 +54,165 @@
   transform: translateX(20px);
 }
 
+/* ============ 过渡预设（供业务按需引用） ============ */
+
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition:
+    opacity var(--duration-base) var(--ease-standard),
+    transform var(--duration-base) var(--ease-standard);
+}
+
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.fade-up-enter-active,
+.fade-up-leave-active {
+  transition:
+    opacity var(--duration-fast) var(--ease-standard),
+    transform var(--duration-base) var(--ease-standard);
+}
+
+.fade-up-enter-from {
+  opacity: 0;
+  transform: translateY(10%);
+}
+
+.fade-up-leave-to {
+  opacity: 0;
+  transform: translateY(-10%);
+}
+
+.fade-down-enter-active,
+.fade-down-leave-active {
+  transition:
+    opacity var(--duration-base) var(--ease-standard),
+    transform var(--duration-base) var(--ease-standard);
+}
+
+.fade-down-enter-from {
+  opacity: 0;
+  transform: translateY(-10%);
+}
+
+.fade-down-leave-to {
+  opacity: 0;
+  transform: translateY(10%);
+}
+
+.fade-scale-enter-active,
+.fade-scale-leave-active {
+  transition: all var(--duration-base) var(--ease-standard);
+}
+
+.fade-scale-enter-from {
+  opacity: 0;
+  transform: scale(1.2);
+}
+
+.fade-scale-leave-to {
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.slide-up-enter-active,
+.slide-up-leave-active,
+.slide-down-enter-active,
+.slide-down-leave-active,
+.slide-left-enter-active,
+.slide-left-leave-active,
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: all var(--duration-base) var(--ease-emphasized);
+}
+
+.slide-up-move,
+.slide-down-move,
+.slide-left-move,
+.slide-right-move {
+  transition: transform var(--duration-base) var(--ease-standard);
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(-15px);
+}
+
+.slide-down-enter-from,
+.slide-down-leave-to {
+  opacity: 0;
+  transform: translateY(15px);
+}
+
+.slide-left-enter-from,
+.slide-left-leave-to {
+  opacity: 0;
+  transform: translateX(-15px);
+}
+
+.slide-right-enter-from,
+.slide-right-leave-to {
+  opacity: 0;
+  transform: translateX(15px);
+}
+
+/* ============ Element Plus 折叠过渡覆写 ============ */
+
 /**
- * @description 重置el-menu的展开收起动画时长
+ * @description 重置 el-menu 的展开收起动画时长
  */
 .outer-most .el-collapse-transition-leave-active,
 .outer-most .el-collapse-transition-enter-active {
-  transition: 0.2s all ease-in-out !important;
+  transition: var(--duration-fast) all var(--ease-standard) !important;
 }
 
 .horizontal-collapse-transition {
-  transition: var(--pure-transition-duration) all !important;
+  transition: var(--duration-base) all !important;
+}
+
+/* ============ 视图过渡（主题切换圆形揭示） ============ */
+
+/**
+ * View Transitions 基础规则：关闭默认的交叉淡入，让新快照按下层动效
+ * （utils/viewTransition.ts 注入的 clip-path 圆形扩散）呈现；旧快照静止垫底。
+ */
+@layer base {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    mix-blend-mode: normal;
+    animation: none;
+  }
+
+  ::view-transition-old(root) {
+    z-index: 1;
+  }
+
+  ::view-transition-new(root) {
+    z-index: 2;
+  }
+}
+
+/* ============ 减弱动效（无障碍） ============ */
+
+/**
+ * 唯一能同时压住 Element Plus 自带过渡与 animate.css 的写法：通配选择器 + !important。
+ * 用户系统开启「减弱动态效果」时，所有动画/过渡退化为瞬时，仅保留状态终值。
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

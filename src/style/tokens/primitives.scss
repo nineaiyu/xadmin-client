@@ -1,0 +1,121 @@
+/**
+ * 设计令牌 · 原始尺度层（层 1/3）
+ *
+ * 与主题无关的原始值：中性灰阶、品牌语义色、圆角 / 间距 / 动效 / 字号尺度。
+ * 由 semantic 层（明暗成对语义槽）、ep-bridge 层（Element Plus 变量映射）与
+ * 组件样式消费。
+ *
+ * 颜色约定：本层与 semantic 层存「hsl() 的参数列表」（如 `210.5 100% 62.5%`，
+ * 带透明度写作 `0 0% 0% / 50%`），消费方以 `hsl(var(--x))` 包装成完整色值——
+ * 这样可以参与变量链式引用与 color-mix 派生。所有三元组保证浏览器解析后与
+ * 来源 hex 逐通道一致（对齐 Element Plus 变量取值，迁移期像素中性）。
+ * 阴影是明暗成对的完整值（不是颜色），定义在 semantic 层。
+ */
+
+:root {
+  /* ================ 品牌语义色 ================
+     主色缺省为 hsl(212 100% 45%)（= #006be6，与 vue-vben-admin 默认主色一致，
+     解析值经 Chromium / WebKit 实测确认）；运行期用户自定义主色由 JS 覆写
+     --primary 三元组，色阶交由 ep-bridge 派生。 */
+  --primary: 212 100% 45%; /* #006be6 */
+  --success: 100.1 54% 49.4%; /* #67c23a */
+  --warning: 36 77.3% 56.9%; /* #e6a23c */
+  --danger: 0 87.3% 69.2%; /* #f56c6c */
+  --info: 220 4.2% 58.2%; /* #909399（与灰阶 700 同值） */
+
+  /* ================ 中性灰阶 ================
+     锚定 Element Plus 中性色族（偏蓝的 220 系灰，深端收敛为纯中性），
+     明度从 50（最浅）到 950（最深）单调递降。 */
+  --gray-50: 0 0% 98%; /* #fafafa */
+  --gray-100: 216 33.3% 97.1%; /* #f5f7fa */
+  --gray-200: 216 20% 95.1%; /* #f0f2f5 */
+  --gray-300: 222 33.3% 94.1%; /* #ebeef5 */
+  --gray-400: 220 20% 91.2%; /* #e4e7ed */
+  --gray-500: 222 16.7% 88.2%; /* #dcdfe6 */
+  --gray-600: 220 10.5% 77.6%; /* #c0c4cc */
+  --gray-700: 220 4.2% 58.2%; /* #909399 */
+  --gray-800: 220 3% 38.8%; /* #606266 */
+  --gray-900: 220 3% 19.4%; /* #303133 */
+  --gray-950: 0 0% 3.9%; /* #0a0a0a */
+
+  /* ================ 圆角尺度 ================ */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+
+  /* ================ 间距尺度（4px 基准） ================ */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* ================ 布局尺度 ================
+     固定头部由顶栏（--layout-header-h）与页签条组成，两种页签风格的总高不同；
+     内容区按「当前固定头部总高」让位，避免各处 calc 里写裸数字。 */
+  --layout-header-h: 48px; /* 顶栏高度（隐藏页签时的固定头部总高） */
+  --layout-tags-chrome-h: 85px; /* 顶栏 + 谷歌风格页签的固定头部总高 */
+  --layout-tags-compact-h: 81px; /* 顶栏 + 灵动/卡片风格页签的固定头部总高 */
+
+  /* 内容区留白（密度令牌）：在 lay-content 一处应用，页面不再各自覆写外边距；
+     窄屏收紧值见 style/index.scss 的媒体查询；贴边页面用 content-flush 类 */
+  --content-gap: 24px;
+
+  /* 内容面板留白（系统设置 / 账户设置两模块共用）：面板 = 承载表单或列表的「内容纸」 */
+  --panel-pad-y: var(--space-5);
+  --panel-pad-x: var(--space-6);
+
+  /* ================ 动效尺度 ================
+     时长分档覆盖项目既有取值（0.1~0.5s）；缓动曲线与 Element Plus 同源：
+     standard = 官方 ease-in-out-bezier（匀速段主用），
+     emphasized = 官方 fast-bezier（入场/收尾的减速感）。 */
+  --duration-instant: 0.1s;
+  --duration-fast: 0.2s;
+  --duration-base: 0.3s;
+  --duration-slow: 0.4s;
+  --duration-slower: 0.5s;
+  --ease-standard: cubic-bezier(0.645, 0.045, 0.355, 1);
+  --ease-emphasized: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in: cubic-bezier(0.42, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.58, 1);
+  --ease-linear: linear;
+
+  /* ================ 字号阶梯 ================
+     步进与 Element Plus 文本令牌对齐（xs/sm/base 对应 extra-small/small/base，
+     md/lg 对应 medium/large）；html 根字号保持 16px 不动，
+     Tailwind 的 --spacing 推导不受影响。 */
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-base: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+
+  /* ================ 字重 ================ */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* ================ 行高 ================ */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* ================ 字体族 ================
+     完整值（含逗号，非三元组）：西文系统字体优先、其后是 CJK 回退栈，
+     保证中英文混排时西文走系统字体、中文走苹方/微软雅黑一档。 */
+  --font-family-base:
+    -apple-system, "Segoe UI", roboto, "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --font-family-mono:
+    ui-monospace, sfmono-regular, menlo, monaco, consolas, "Liberation Mono",
+    "Courier New", monospace;
+}

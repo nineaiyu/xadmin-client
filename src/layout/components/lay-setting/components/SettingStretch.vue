@@ -5,6 +5,7 @@ import { isNumber, useGlobal } from "@pureadmin/utils";
 import Segmented, { type OptionsType } from "@/components/ReSegmented";
 import { useNav } from "@/layout/hooks/useNav";
 import { useAppStoreHook } from "@/store/modules/app";
+import { BREAKPOINTS } from "@/utils/breakpoints";
 import { useConfigureStorage } from "../hooks/useConfigureStorage";
 import { pClass } from "../hooks/useSectionClass";
 
@@ -47,7 +48,7 @@ const stretchTypeChange = ({ option }: { option: { value: string } }) => {
 </script>
 
 <template>
-  <span v-if="useAppStoreHook().getViewportWidth > 1280">
+  <span v-if="useAppStoreHook().getViewportWidth > BREAKPOINTS.xl">
     <p :class="['mt-5!', pClass]">{{ t("layout.pageWidth") }}</p>
     <Segmented
       :modelValue="isNumber(settings.stretch) ? 1 : 0"

@@ -1,0 +1,113 @@
+/**
+ * 设计令牌 · Element Plus 桥接层（层 3/3）
+ *
+ * 语义槽 → --el-* 变量映射：Element Plus 组件只消费 --el-* 变量，本层是设计
+ * 令牌体系的唯一 EP 出口。必须由 appearance.scss 引入（main.ts 里最后一个
+ * 样式导入，位于 EP 按需样式之后），同特异性的 `:root` 声明靠加载顺序生效。
+ *
+ * 桥接原则：令牌取值与 EP 缺省一致时属像素中性替换；如需改变 EP 观感，
+ * 先改令牌层，本层只做映射。
+ */
+
+/* ================ 排版 ================ */
+:root {
+  --el-font-family: var(--font-family-base);
+  --el-font-size-extra-small: var(--font-size-xs);
+  --el-font-size-small: var(--font-size-sm);
+  --el-font-size-base: var(--font-size-base);
+  --el-font-size-medium: var(--font-size-md);
+  --el-font-size-large: var(--font-size-lg);
+  --el-font-size-extra-large: var(--font-size-xl);
+  --el-font-weight-primary: var(--font-weight-medium);
+}
+
+/* ================ 动效 ================
+   EP 组件（菜单项 / 弹层 / 折叠等）的过渡时长与缓动统一由令牌驱动，
+   取值与 EP 缺省一致（0.3s / 0.2s + 官方贝塞尔曲线），属像素中性桥接。 */
+:root {
+  --el-transition-duration: var(--duration-base);
+  --el-transition-duration-fast: var(--duration-fast);
+  --el-transition-function-ease-in-out-bezier: var(--ease-standard);
+  --el-transition-function-fast-bezier: var(--ease-emphasized);
+}
+
+/* ================ 颜色 ================
+   语义槽 → EP 颜色变量：EP 组件只消费 --el-*，本段让语义层成为颜色的唯一来源。
+   取值与 EP 缺省逐通道一致（像素中性）。EP 暗色 css-vars 走 `html.dark` 选择器，
+   特异性高于 `:root`，故此处暗色同样以 `html.dark` 声明，保证暗色下桥接生效
+   （本层加载顺序在 EP 之后，同特异性下后者胜）。 */
+:root,
+html.dark {
+  --el-bg-color: hsl(var(--bg-card));
+  --el-bg-color-page: hsl(var(--bg-page));
+  --el-bg-color-overlay: hsl(var(--bg-elevated));
+  --el-text-color-primary: hsl(var(--fg));
+  --el-text-color-regular: hsl(var(--fg-muted));
+  --el-text-color-secondary: hsl(var(--fg-subtle));
+  --el-text-color-placeholder: hsl(var(--fg-placeholder));
+  --el-text-color-disabled: hsl(var(--fg-disabled));
+  --el-border-color: hsl(var(--border));
+  --el-border-color-light: hsl(var(--border-light));
+  --el-border-color-lighter: hsl(var(--border-lighter));
+  --el-border-color-dark: hsl(var(--border-strong));
+  --el-fill-color: hsl(var(--fill));
+  --el-fill-color-light: hsl(var(--fill-muted));
+  --el-fill-color-lighter: hsl(var(--fill-subtle));
+  --el-fill-color-dark: hsl(var(--fill-strong));
+}
+
+/* ================ 圆角与阴影 ================ */
+:root {
+  --el-border-radius-small: var(--radius-xs);
+  --el-border-radius-base: var(--radius-sm);
+  --el-border-radius-round: var(--radius-full);
+  --el-box-shadow-lighter: var(--shadow-sm);
+  --el-box-shadow-light: var(--shadow-md);
+  --el-box-shadow: var(--shadow-lg);
+  --el-box-shadow-dark: var(--shadow-float);
+}
+
+/* ================ 主色与色阶 ================
+   主色只由 `--primary`（HSL 三元组）驱动，色阶用 Element Plus 原生混色公式
+   现场派生——`<el-tag type="primary" effect="light">` 这类浅底、图表 tint 底托
+   都随主色与明暗主题自动跟随，不再由 JS 逐档写入（历史上 JS 用 HSL 明度加减
+   近似，既非 EP 原生公式，也不区分明暗模式）。
+
+   混色基准 = 表面底色 `--bg-card`：亮色即白（与 EP 亮色缺省公式一致），
+   暗色为深表面（与 EP 暗色缺省色阶同源）。
+
+   主色本身不依赖 `color-mix()`；色阶在 `color-mix()` 不可用时不展开，
+   自动落回 EP 自带静态色阶（缺省主色下观感一致；仅自定义主色时色阶不跟随，
+   属可接受的降级）。 */
+:root,
+html.dark {
+  --el-color-primary: hsl(var(--primary));
+}
+
+@supports (color: color-mix(in srgb, red, blue)) {
+  :root,
+  html.dark {
+    /* dark-2：hover / active 的加深档（亮色向黑压暗，暗色向白提亮，同 EP 缺省语义） */
+    --el-color-primary-dark-2: color-mix(
+      in srgb,
+      hsl(var(--primary)) 80%,
+      black
+    );
+
+    @for $i from 1 through 9 {
+      --el-color-primary-light-#{$i}: color-mix(
+        in srgb,
+        hsl(var(--primary)) #{100 - $i * 10}%,
+        hsl(var(--bg-card))
+      );
+    }
+  }
+
+  html.dark {
+    --el-color-primary-dark-2: color-mix(
+      in srgb,
+      hsl(var(--primary)) 80%,
+      white
+    );
+  }
+}

@@ -102,7 +102,7 @@ const items = computed(
   flex-direction: column;
   gap: 10px;
   transform-origin: bottom left;
-  animation: chat-emoji-panel-in 0.18s ease-out;
+  animation: chat-emoji-panel-in var(--duration-fast) var(--ease-out);
 
   &__tabs {
     display: flex;
