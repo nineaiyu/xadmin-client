@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { useGlobal } from "@pureadmin/utils";
 import { useNav } from "@/layout/hooks/useNav";
 import LaySearch from "../lay-search/index.vue";
@@ -8,6 +9,8 @@ import LayNavMix from "../lay-sidebar/NavMix.vue";
 import LayImpersonationDropdownItem from "../lay-impersonation/ImpersonationDropdownItem.vue";
 import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
 import { useLockScreen } from "@/layout/hooks/useLockScreen";
+import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
+import { refreshCurrentRoute } from "@/utils/routeRefresh";
 import LaySidebarFullScreen from "../lay-sidebar/components/SidebarFullScreen.vue";
 import LaySidebarBreadCrumb from "../lay-sidebar/components/SidebarBreadCrumb.vue";
 import LaySidebarTopCollapse from "../lay-sidebar/components/SidebarTopCollapse.vue";
@@ -16,6 +19,11 @@ import AccountSettingsIcon from "~icons/ri/user-settings-line";
 import LogoutCircleRLine from "~icons/ri/logout-circle-r-line";
 import Setting from "~icons/ri/settings-3-line";
 import LockIcon from "~icons/ri/lock-2-line";
+import RefreshIcon from "~icons/ep/refresh-right";
+import MenuFoldIcon from "~icons/ri/menu-fold-fill";
+import MenuUnfoldIcon from "~icons/ri/menu-unfold-fill";
+import SunIcon from "~icons/ri/sun-line";
+import MoonIcon from "~icons/ri/moon-line";
 import Check from "~icons/ep/check";
 
 const {
@@ -35,6 +43,8 @@ const {
 
 const { t, locale, translationCh, translationEn } = useTranslationLang();
 const { $storage } = useGlobal<GlobalPropertiesApi>();
+const route = useRoute();
+const router = useRouter();
 
 /** 面包屑显隐（设置面板 →「布局」→「顶栏」） */
 const breadcrumbVisible = computed(
@@ -42,7 +52,7 @@ const breadcrumbVisible = computed(
 );
 
 /**
- * 顶栏组件显隐（设置面板 →「布局」→「顶栏」）：缺省全部显示；
+ * 顶栏组件显隐（设置面板 →「布局」→「顶栏」）：缺省显示；
  * 用户下拉与设置入口不参与开关（避免出现无法打开设置面板的死角）。
  */
 const navbarVisible = computed(() => ({
@@ -50,11 +60,36 @@ const navbarVisible = computed(() => ({
   language: $storage?.configure?.navbarLanguage ?? true,
   fullscreen: $storage?.configure?.navbarFullscreen ?? true,
   lock: $storage?.configure?.navbarLock ?? true,
-  notice: $storage?.configure?.navbarNotice ?? true
+  notice: $storage?.configure?.navbarNotice ?? true,
+  refresh: $storage?.configure?.navbarRefresh ?? true,
+  sidebarToggle: $storage?.configure?.navbarSidebarToggle ?? false,
+  themeToggle: $storage?.configure?.navbarThemeToggle ?? false
 }));
 
 /** 一键锁屏（遮罩 + 口令解锁，见 lay-lock） */
 const { lock } = useLockScreen();
+
+/** 设置入口显隐：总开关 + 位置为顶栏（悬浮球形态见 lay-setting/index.vue） */
+const preferencesVisible = computed(
+  () =>
+    ($storage?.configure?.enablePreferences ?? true) &&
+    ($storage?.configure?.preferencesPosition ?? "header") === "header"
+);
+
+/** 明暗切换（与命令面板的主题动作同口径） */
+const { dataTheme, dataThemeChange } = useDataThemeChange();
+function toggleTheme() {
+  dataTheme.value = !dataTheme.value;
+  dataThemeChange();
+}
+
+/** 刷新当前页（与页签右键菜单「刷新」同口径） */
+function refreshPage() {
+  refreshCurrentRoute(router, {
+    fullPath: route.fullPath,
+    query: { ...route.query }
+  });
+}
 </script>
 
 <template>
@@ -74,6 +109,38 @@ const { lock } = useLockScreen();
     <LayNavMix v-if="layout === 'mix'" />
 
     <div v-if="layout === 'vertical'" class="vertical-header-right">
+      <!-- 折叠侧栏（默认关：与侧栏底部折叠按钮重复时可按需开启） -->
+      <span
+        v-if="navbarVisible.sidebarToggle"
+        id="header-sidebar-toggle"
+        class="navbar-bg-hover hover:[&>svg]:animate-scale-bounce"
+        role="button"
+        tabindex="0"
+        :title="t('layout.sidebarToggle')"
+        :aria-label="t('layout.sidebarToggle')"
+        @click="toggleSideBar"
+        @keydown.enter.prevent="toggleSideBar"
+        @keydown.space.prevent="toggleSideBar"
+      >
+        <IconifyIconOffline
+          :icon="pureApp.sidebar.opened ? MenuFoldIcon : MenuUnfoldIcon"
+        />
+      </span>
+      <!-- 刷新当前页 -->
+      <span
+        v-if="navbarVisible.refresh"
+        id="header-refresh"
+        class="navbar-bg-hover hover:[&>svg]:animate-scale-bounce"
+        role="button"
+        tabindex="0"
+        :title="t('layout.refreshPage')"
+        :aria-label="t('layout.refreshPage')"
+        @click="refreshPage"
+        @keydown.enter.prevent="refreshPage"
+        @keydown.space.prevent="refreshPage"
+      >
+        <IconifyIconOffline :icon="RefreshIcon" />
+      </span>
       <!-- 菜单搜索 -->
       <LaySearch v-if="navbarVisible.search" id="header-search" />
       <!-- 国际化 -->
@@ -119,6 +186,21 @@ const { lock } = useLockScreen();
       </el-dropdown>
       <!-- 全屏 -->
       <LaySidebarFullScreen v-if="navbarVisible.fullscreen" id="full-screen" />
+      <!-- 明暗切换（默认关） -->
+      <span
+        v-if="navbarVisible.themeToggle"
+        id="header-theme-toggle"
+        class="navbar-bg-hover hover:[&>svg]:animate-scale-bounce"
+        role="button"
+        tabindex="0"
+        :title="dataTheme ? t('layout.light') : t('layout.dark')"
+        :aria-label="dataTheme ? t('layout.light') : t('layout.dark')"
+        @click="toggleTheme"
+        @keydown.enter.prevent="toggleTheme"
+        @keydown.space.prevent="toggleTheme"
+      >
+        <IconifyIconOffline :icon="dataTheme ? SunIcon : MoonIcon" />
+      </span>
       <!-- 锁屏 -->
       <span
         v-if="navbarVisible.lock"
@@ -168,6 +250,7 @@ const { lock } = useLockScreen();
         </template>
       </el-dropdown>
       <span
+        v-if="preferencesVisible"
         class="set-icon navbar-bg-hover hover:[&>svg]:animate-scale-bounce"
         :title="t('buttons.systemSet')"
         role="button"

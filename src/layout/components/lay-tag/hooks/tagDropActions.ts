@@ -1,7 +1,7 @@
 import { $t } from "@/plugins/i18n";
-import NProgress from "@/utils/progress";
 import { unref } from "vue";
 import { handleAliveRoute } from "@/router/utils";
+import { refreshCurrentRoute } from "@/utils/routeRefresh";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import ExitFullscreen from "~icons/ri/fullscreen-exit-fill";
 import Fullscreen from "~icons/ri/fullscreen-fill";
@@ -51,16 +51,9 @@ export function createTagDropActions({
     onContentFullScreen
   } = ctx;
 
-  /** 刷新路由 */
+  /** 刷新路由（与页签条刷新按钮、顶栏刷新按钮同口径） */
   function onFresh() {
-    NProgress.start();
-    const { fullPath, query } = unref(route);
-    router.replace({
-      path: "/redirect" + fullPath,
-      query
-    });
-    handleAliveRoute(route as ToRouteType, "refresh");
-    NProgress.done();
+    refreshCurrentRoute(router, unref(route));
   }
 
   /** 新窗口打开标签：hash 路由以当前页面地址为基底拼接（含查询串） */

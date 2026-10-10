@@ -40,6 +40,20 @@ function closeByMask() {
 }
 
 onClickOutside(target, event => {
+  /**
+   * Element Plus 弹层（确认框 / 下拉 / 取色器）挂在 body 上：其内部的点击
+   * 不是「点面板之外」——否则面板内打开的任何弹窗一被点击就会连带关闭面板。
+   */
+  const inPopup = event
+    .composedPath()
+    .some(
+      node =>
+        node instanceof HTMLElement &&
+        (node.classList.contains("el-overlay") ||
+          node.classList.contains("el-popper") ||
+          node.classList.contains("el-message-box"))
+    );
+  if (inPopup) return;
   if (event.clientX > (target.value?.offsetLeft ?? 0)) return;
   show.value = false;
 });

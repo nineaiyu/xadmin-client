@@ -14,6 +14,7 @@ import type { RouteConfigs } from "@/layout/types";
 import { isUrl, openLink, cloneDeep, isAllEmpty } from "@pureadmin/utils";
 import { clearRouteSnapshot } from "@/utils/routeSnapshot";
 import { readConfigurePreferences } from "@/utils/preferences";
+import { useRouteLoading } from "@/utils/routeLoading";
 import {
   getTopMenu,
   initRouter,
@@ -78,11 +79,24 @@ const whiteList = ["/login", "/invite/accept"];
 
 const { VITE_HIDE_HOME } = import.meta.env;
 
+/** 顶部进度条开关（设置面板 →「通用」→「切换动画」→「顶部进度条」） */
+const progressEnabled = () =>
+  readConfigurePreferences().transitionProgress !== false;
+
+/** 内容区 loading 开关（同区块「内容区 loading」，默认关） */
+const contentLoadingEnabled = () =>
+  readConfigurePreferences().transitionLoading === true;
+
+const { startRouteLoading, doneRouteLoading } = useRouteLoading();
+
 router.beforeEach((to: ToRouteType, _from) => {
+  // 上一次导航被取消（守卫返回 false）时不会触发 afterEach：本次开始时先复位 loading
+  doneRouteLoading();
   to.meta.loaded = loadedPaths.has(to.path);
 
   if (!to.meta.loaded) {
-    NProgress.start();
+    if (progressEnabled()) NProgress.start();
+    if (contentLoadingEnabled()) startRouteLoading();
   }
 
   if (to.meta?.keepAlive) {
@@ -203,6 +217,7 @@ router.beforeEach((to: ToRouteType, _from) => {
 router.afterEach((to, from) => {
   loadedPaths.add(to.path);
   NProgress.done();
+  doneRouteLoading();
   // 路由切换时取消来源页面的在途请求（登记见 utils/http/routeCancel）。
   // 以 path（不含 query）为粒度：同页 query 变化（监控筛选/账号页签）属视图状态更新，
   // 按 fullPath 粒度会取消刚发起的请求（图表恒空、表格偶发空白）。
@@ -213,5 +228,8 @@ router.afterEach((to, from) => {
   }
   setCurrentRoutePath(to.path);
 });
+
+// 导航错误（组件加载失败等）兜底关闭内容区 loading，避免遮罩悬挂
+router.onError(() => doneRouteLoading());
 
 export default router;

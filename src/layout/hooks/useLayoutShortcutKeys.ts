@@ -1,64 +1,102 @@
 import { onUnmounted } from "vue";
-import { onKeyStroke } from "@vueuse/core";
 import { useGlobal } from "@pureadmin/utils";
+import {
+  isEditableTarget,
+  matchShortcut,
+  parseShortcut,
+  resolveShortcutKeys
+} from "@/utils/shortcutKeys";
 
 /**
- * 布局级快捷键（设置面板 →「通用」→「快捷键」）。
+ * 布局级快捷键（设置面板 →「快捷键」页签），键位支持自定义：
  *
- * - `Alt + L` 锁屏
- * - `Alt + S` 折叠 / 展开侧栏
+ * - 锁屏（默认 `Alt + L`）；折叠 / 展开侧栏（默认 `Alt + S`）
+ * - 打开项目配置面板（默认 `⌘/Ctrl + ,`）；退出登录（默认未启用，空键位）
  *
- * 与 vben 的默认按键口径对齐；刻意不用 Ctrl 组合：`Ctrl+L`（聚焦地址栏）与
- * `Ctrl+S`（保存页面）属浏览器保留键，页面内无法可靠拦截。
+ * 键位串从响应式存储实时读取（面板改动即时生效）；`shortcutEnable === false`
+ * 总开关关闭时全部断开。历史存储里只有布尔开关（shortcutLock 等）、没有键位串，
+ * 读取时以布尔开关作兼容输入（false = 该动作未启用）；命令面板（⌘K）由
+ * useCommandPalette 消费 shortcutSearchKeys，同一口径。
  *
  * 输入态（input / textarea / select / contenteditable）不响应，避免在表单里打字
- * 误触发；开关取自响应式存储，面板改动即时生效（与 ⌘K 全局搜索同一存储口径）。
+ * 误触发；键位录制控件通过 stopPropagation 独占键盘，录制期间不会触发动作。
  */
 export function useLayoutShortcutKeys(handlers: {
   lock: () => void;
   toggleSidebar: () => void;
+  openPreferences: () => void;
+  logout: () => void;
 }) {
   const { $storage } = useGlobal<GlobalPropertiesApi>();
 
-  const enabled = (key: "shortcutLock" | "shortcutSidebar") =>
-    Boolean($storage?.configure?.[key] ?? true);
-
-  /** 输入态与组合键前置过滤（返回 true 表示本次按键不处理） */
-  const shouldIgnore = (event: KeyboardEvent) => {
-    if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
-      return true;
-    }
-    if (event.repeat) return true;
-    const target = event.target as HTMLElement | null;
-    if (!target) return false;
-    if (target.isContentEditable) return true;
-    return ["input", "textarea", "select"].includes(
-      target.tagName.toLowerCase()
-    );
+  type ShortcutAction = {
+    keysKey:
+      | "shortcutLockKeys"
+      | "shortcutSidebarKeys"
+      | "shortcutPreferencesKeys"
+      | "shortcutLogoutKeys";
+    /** 兼容用历史布尔开关：键位串缺失时以它为据（false = 不启用） */
+    legacyKey: "shortcutLock" | "shortcutSidebar" | "";
+    fallback: string;
+    run: () => void;
   };
 
-  const stopLock = onKeyStroke(
-    "l",
-    (event: KeyboardEvent) => {
-      if (shouldIgnore(event) || !enabled("shortcutLock")) return;
-      event.preventDefault();
-      handlers.lock();
+  const actions: ShortcutAction[] = [
+    {
+      keysKey: "shortcutLockKeys",
+      legacyKey: "shortcutLock",
+      fallback: "alt+l",
+      run: handlers.lock
     },
-    { eventName: "keydown" }
-  );
-
-  const stopSidebar = onKeyStroke(
-    "s",
-    (event: KeyboardEvent) => {
-      if (shouldIgnore(event) || !enabled("shortcutSidebar")) return;
-      event.preventDefault();
-      handlers.toggleSidebar();
+    {
+      keysKey: "shortcutSidebarKeys",
+      legacyKey: "shortcutSidebar",
+      fallback: "alt+s",
+      run: handlers.toggleSidebar
     },
-    { eventName: "keydown" }
-  );
+    {
+      keysKey: "shortcutPreferencesKeys",
+      legacyKey: "",
+      fallback: "mod+,",
+      run: handlers.openPreferences
+    },
+    {
+      keysKey: "shortcutLogoutKeys",
+      legacyKey: "",
+      fallback: "",
+      run: handlers.logout
+    }
+  ];
 
-  onUnmounted(() => {
-    stopLock?.();
-    stopSidebar?.();
-  });
+  /** 读取动作键位串：显式键位优先，缺失时由旧布尔开关推导 */
+  const keysOf = (action: ShortcutAction) =>
+    resolveShortcutKeys(
+      $storage?.configure?.[action.keysKey],
+      action.legacyKey ? $storage?.configure?.[action.legacyKey] : undefined,
+      action.fallback
+    );
+
+  const onKeydown = (event: KeyboardEvent) => {
+    if ($storage?.configure?.shortcutEnable === false) return;
+    if (isEditableTarget(event)) return;
+
+    for (const action of actions) {
+      // 设置入口关闭后：「打开偏好面板」动作同步失效（避免打开无入口可关闭的面板）
+      if (
+        action.keysKey === "shortcutPreferencesKeys" &&
+        $storage?.configure?.enablePreferences === false
+      ) {
+        continue;
+      }
+      const value = keysOf(action);
+      if (!value) continue;
+      if (!matchShortcut(event, parseShortcut(value))) continue;
+      event.preventDefault();
+      action.run();
+      return;
+    }
+  };
+
+  window.addEventListener("keydown", onKeydown);
+  onUnmounted(() => window.removeEventListener("keydown", onKeydown));
 }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { emitter } from "@/utils/mitt";
 import { useTags } from "../../hooks/useTag";
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { onClickOutside } from "@vueuse/core";
 import TagChrome from "./components/TagChrome.vue";
 import {
@@ -8,6 +9,7 @@ import {
   ref,
   watch,
   unref,
+  toRaw,
   onMounted,
   onBeforeUnmount,
   type Ref
@@ -21,6 +23,7 @@ import { useTagDrag } from "./hooks/useTagDrag";
 import ArrowDown from "~icons/ri/arrow-down-s-line";
 import ArrowRightSLine from "~icons/ri/arrow-right-s-line";
 import ArrowLeftSLine from "~icons/ri/arrow-left-s-line";
+import RefreshRight from "~icons/ep/refresh-right";
 
 const {
   Close,
@@ -66,6 +69,13 @@ const tagsWheelSwitch = computed(
   () => $storage?.configure?.tagsWheelSwitch ?? true
 );
 
+/** 页签条细分开关（默认全开）：页签图标 / 刷新按钮 / 更多按钮 */
+const tagsShowIcon = computed(() => $storage?.configure?.tagsShowIcon ?? true);
+const tagsShowRefresh = computed(
+  () => $storage?.configure?.tagsShowRefresh ?? true
+);
+const tagsShowMore = computed(() => $storage?.configure?.tagsShowMore ?? true);
+
 /**
  * 页签 v-for 的稳定 key（path + query，与 store 的去重口径一致）。
  *
@@ -95,7 +105,8 @@ const {
   selectTag,
   showMenuModel,
   openMenu,
-  tagOnClick
+  tagOnClick,
+  refreshRoute
 } = useTagActions({
   route,
   router,
@@ -196,6 +207,13 @@ onBeforeUnmount(() => {
           @click="tagOnClick(item)"
         >
           <template v-if="tagsStyle !== 'chrome'">
+            <span
+              v-if="tagsShowIcon && item.meta?.icon"
+              class="tag-icon"
+              aria-hidden="true"
+            >
+              <component :is="useRenderIcon(toRaw(item.meta.icon))" />
+            </span>
             <span class="tag-title dark:text-fg! dark:hover:text-primary!">
               {{ transformI18n(item.meta?.title ?? "") }}
             </span>
@@ -225,6 +243,13 @@ onBeforeUnmount(() => {
             <div class="chrome-tab__bg">
               <TagChrome />
             </div>
+            <span
+              v-if="tagsShowIcon && item.meta?.icon"
+              class="tag-icon"
+              aria-hidden="true"
+            >
+              <component :is="useRenderIcon(toRaw(item.meta.icon))" />
+            </span>
             <span class="tag-title">
               {{ transformI18n(item.meta?.title ?? "") }}
             </span>
@@ -241,6 +266,20 @@ onBeforeUnmount(() => {
     </div>
     <span v-show="isShowArrow" class="arrow-right">
       <IconifyIconOffline :icon="ArrowRightSLine" @click="handleScroll(-200)" />
+    </span>
+    <!-- 刷新当前页按钮（与右键菜单「刷新」同口径） -->
+    <span
+      v-if="tagsShowRefresh"
+      class="tags-refresh"
+      role="button"
+      tabindex="0"
+      :title="transformI18n('buttons.reload')"
+      :aria-label="transformI18n('buttons.reload')"
+      @click="refreshRoute"
+      @keydown.enter.prevent="refreshRoute"
+      @keydown.space.prevent="refreshRoute"
+    >
+      <IconifyIconOffline :icon="RefreshRight" class="dark:text-white" />
     </span>
     <!-- 右键菜单按钮 -->
     <transition name="el-zoom-in-top">
@@ -263,8 +302,9 @@ onBeforeUnmount(() => {
         </div>
       </ul>
     </transition>
-    <!-- 右侧功能按钮 -->
+    <!-- 右侧功能按钮（更多：页签批量操作） -->
     <el-dropdown
+      v-if="tagsShowMore"
       trigger="click"
       placement="bottom-end"
       @command="handleCommand"

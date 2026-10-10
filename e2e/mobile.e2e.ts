@@ -99,6 +99,50 @@ test.describe("移动端形态（iPhone 13）", () => {
     expect(metrics.tableTop).toBeGreaterThan(0);
     expect(metrics.tableTop).toBeLessThan(metrics.viewportHeight);
   });
+
+  test("移动端不渲染侧栏拖拽把手（桌面专属能力）", async ({ page }) => {
+    await login(page);
+
+    // 服务端直接打开拖拽开关：移动形态（UA 判定）下把手仍必须不渲染
+    const listUrl = `${FRONT_URL}/api/system/config/system`;
+    const readConfig = async () => {
+      const resp = await page.request.get(`${listUrl}?key=WEB_SITE_CONFIG`);
+      const rows = (await resp.json())?.data?.results ?? [];
+      const row = Array.isArray(rows)
+        ? rows.find((item: { key: string }) => item.key === "WEB_SITE_CONFIG")
+        : undefined;
+      return {
+        pk: row?.pk as string,
+        value:
+          typeof row?.value === "string"
+            ? (JSON.parse(row.value) as Record<string, unknown>)
+            : ((row?.value ?? {}) as Record<string, unknown>)
+      };
+    };
+    const writeDraggable = async (enabled: boolean) => {
+      const { pk, value } = await readConfig();
+      await page.request.patch(`${listUrl}/${pk}`, {
+        data: { value: { ...value, SidebarDraggable: enabled } }
+      });
+    };
+
+    await writeDraggable(true);
+    try {
+      await page.reload();
+      await page
+        .locator(".hamburger-container")
+        .first()
+        .waitFor({ timeout: 15_000 });
+      // 开关已在服务端打开，移动形态下把手仍不进入 DOM
+      await expect(page.locator(".sidebar-resizer")).toHaveCount(0);
+      // 抽屉打开后同样不渲染
+      await page.locator(".hamburger-container").first().click();
+      await expect(page.locator(".sidebar-container")).toBeVisible();
+      await expect(page.locator(".sidebar-resizer")).toHaveCount(0);
+    } finally {
+      await writeDraggable(false);
+    }
+  });
 });
 
 /**

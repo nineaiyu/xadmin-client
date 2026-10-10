@@ -29,6 +29,13 @@ body[layout="vertical"] {
       }
     }
 
+    /* 折叠态悬停临时展开（设置面板 →「侧栏悬停展开」）：
+       仅视觉层加宽并浮于内容之上，移开即复位，不写回存储 */
+    .sidebar-container.sidebar-hover-expanded {
+      width: $sideBarWidth !important;
+      box-shadow: 2px 0 10px rgb(0 0 0 / 12%);
+    }
+
     .main-container {
       margin-left: 54px;
     }

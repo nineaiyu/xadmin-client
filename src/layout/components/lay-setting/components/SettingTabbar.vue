@@ -90,6 +90,20 @@ const maxTagsCount = computed<number>({
   set: value =>
     storageConfigureChange("maxTagsCount", Math.max(0, Number(value) || 0))
 });
+
+/** 页签条细分开关：页签图标 / 刷新按钮 / 更多按钮 */
+const tagsShowIcon = computed({
+  get: () => $storage?.configure?.tagsShowIcon ?? true,
+  set: value => storageConfigureChange("tagsShowIcon", value)
+});
+const tagsShowRefresh = computed({
+  get: () => $storage?.configure?.tagsShowRefresh ?? true,
+  set: value => storageConfigureChange("tagsShowRefresh", value)
+});
+const tagsShowMore = computed({
+  get: () => $storage?.configure?.tagsShowMore ?? true,
+  set: value => storageConfigureChange("tagsShowMore", value)
+});
 </script>
 
 <template>
@@ -165,6 +179,45 @@ const maxTagsCount = computed<number>({
           :inactive-text="t('labels.inactive')"
           inline-prompt
           @change="tagsWheelSwitchChange"
+        />
+      </template>
+    </PrefRow>
+    <PrefRow
+      :label="t('layout.tagsShowIcon')"
+      :tip="t('layout.tagsShowIconTip')"
+    >
+      <template #control>
+        <el-switch
+          v-model="tagsShowIcon"
+          :active-text="t('labels.active')"
+          :inactive-text="t('labels.inactive')"
+          inline-prompt
+        />
+      </template>
+    </PrefRow>
+    <PrefRow
+      :label="t('layout.tagsShowRefresh')"
+      :tip="t('layout.tagsShowRefreshTip')"
+    >
+      <template #control>
+        <el-switch
+          v-model="tagsShowRefresh"
+          :active-text="t('labels.active')"
+          :inactive-text="t('labels.inactive')"
+          inline-prompt
+        />
+      </template>
+    </PrefRow>
+    <PrefRow
+      :label="t('layout.tagsShowMore')"
+      :tip="t('layout.tagsShowMoreTip')"
+    >
+      <template #control>
+        <el-switch
+          v-model="tagsShowMore"
+          :active-text="t('labels.active')"
+          :inactive-text="t('labels.inactive')"
+          inline-prompt
         />
       </template>
     </PrefRow>

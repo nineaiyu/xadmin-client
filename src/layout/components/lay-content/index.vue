@@ -3,6 +3,7 @@ import { useI18n } from "vue-i18n";
 import LayFrame from "../lay-frame/index.vue";
 import LayFooter from "../lay-footer/index.vue";
 import { useTags } from "@/layout/hooks/useTag";
+import { useRouteLoading } from "@/utils/routeLoading";
 import { isNumber, useGlobal } from "@pureadmin/utils";
 import BackTopIcon from "@/assets/svg/back_top.svg?component";
 import { computed, defineComponent, h, Transition, type PropType } from "vue";
@@ -29,6 +30,12 @@ const compactMode = computed(() => Boolean($storage?.configure?.compactMode));
 /** 页面切换动画预设（项目设置 →「通用」→「切换动画」） */
 const globalTransition = computed(
   () => $storage?.configure?.pageTransition ?? "fade-transform"
+);
+
+/** 路由切换期间的内容区 loading（同区块「内容区 loading」，默认关） */
+const { routeLoading } = useRouteLoading();
+const contentLoading = computed(
+  () => Boolean($storage?.configure?.transitionLoading) && routeLoading.value
 );
 
 /** 路由过渡配置：pure-admin 的 meta.transition 为对象（name/enterTransition/leaveTransition） */
@@ -150,6 +157,8 @@ const transitionMain = defineComponent({
 
 <template>
   <section
+    v-loading="contentLoading"
+    element-loading-background="var(--el-mask-color-extra-light)"
     :class="[
       fixedHeader ? 'app-main' : 'app-main-nofixed-header',
       { compact: compactMode }

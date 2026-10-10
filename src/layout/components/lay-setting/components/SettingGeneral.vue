@@ -1,25 +1,28 @@
 <script lang="ts" setup>
 // 系统设置面板「通用」：界面语言、顶栏自动隐藏、内容区（紧凑模式）、
-// 页面（动态标题）、快捷键（⌘/Ctrl + K）与「检查更新」；
+// 页面（动态标题）、偏好入口与「检查更新」；快捷键见 SettingShortcut.vue，
 // 切换动画见 SettingAnimation.vue
 import { computed, reactive, ref } from "vue";
 import { useGlobal } from "@pureadmin/utils";
 import { message } from "@/utils/message";
 import { checkRemoteVersion } from "@/utils/versionCheck";
+import { useConfirm } from "@/hooks/useConfirm";
 import { useNav } from "@/layout/hooks/useNav";
 import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
 import { useConfigureStorage } from "../hooks/useConfigureStorage";
 import PrefBlock from "./PrefBlock.vue";
 import PrefRow from "./PrefRow.vue";
+import PrefChoice from "./PrefChoice.vue";
+import type { PrefChoiceOption } from "./prefTypes";
 
 import SettingLine from "~icons/ri/settings-3-line";
-import KeyboardLine from "~icons/ri/keyboard-line";
 import InfoLine from "~icons/ri/information-line";
 import RefreshLine from "~icons/ri/refresh-line";
 
 const { t } = useNav();
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 const { storageConfigureChange } = useConfigureStorage();
+const confirm = useConfirm();
 const { locale, translationCh, translationEn } = useTranslationLang();
 
 const {
@@ -29,8 +32,7 @@ const {
 const settings = reactive({
   headerAutoHide: $storage.configure.headerAutoHide ?? false,
   compactMode: $storage.configure.compactMode ?? false,
-  dynamicTitle: $storage.configure.dynamicTitle ?? true,
-  shortcutSearch: $storage.configure.shortcutSearch ?? true
+  dynamicTitle: $storage.configure.dynamicTitle ?? true
 });
 
 /** 固定顶栏：非固定头布局下没有可隐藏的固定头部，自动隐藏开关须禁用 */
@@ -68,23 +70,30 @@ const dynamicTitleChange = () => {
   storageConfigureChange("dynamicTitle", settings.dynamicTitle ?? true);
 };
 
-/** 全局搜索快捷键（⌘/Ctrl + K） */
-const shortcutSearch = computed({
-  get: () => $storage?.configure?.shortcutSearch ?? true,
-  set: value => storageConfigureChange("shortcutSearch", value)
-});
+/** 设置入口总开关（关闭前二次确认并给出恢复路径） */
+const prefsEnabled = computed(
+  () => $storage?.configure?.enablePreferences ?? true
+);
 
-/** 锁屏快捷键（Alt + L） */
-const shortcutLock = computed({
-  get: () => $storage?.configure?.shortcutLock ?? true,
-  set: value => storageConfigureChange("shortcutLock", value)
-});
+async function onPrefsEnabledChange(value: string | number | boolean) {
+  if (Boolean(value)) {
+    storageConfigureChange("enablePreferences", true);
+    return;
+  }
+  const ok = await confirm(t("layout.enablePreferencesOffConfirm"));
+  if (!ok) return;
+  storageConfigureChange("enablePreferences", false);
+}
 
-/** 折叠侧栏快捷键（Alt + S） */
-const shortcutSidebar = computed({
-  get: () => $storage?.configure?.shortcutSidebar ?? true,
-  set: value => storageConfigureChange("shortcutSidebar", value)
+/** 入口位置：顶栏齿轮 / 右下角悬浮球 */
+const preferencesPosition = computed<string>({
+  get: () => $storage?.configure?.preferencesPosition ?? "header",
+  set: value => storageConfigureChange("preferencesPosition", value)
 });
+const preferencesPositionOptions = computed<PrefChoiceOption[]>(() => [
+  { value: "header", label: t("layout.preferencesPositionHeader") },
+  { value: "fixed", label: t("layout.preferencesPositionFixed") }
+]);
 
 /** 检查更新：拉取部署端 version.json 与本地版本比对（自动轮询由 version-rocket 承担） */
 const checking = ref(false);
@@ -166,48 +175,6 @@ async function checkUpdate() {
     </PrefRow>
   </PrefBlock>
 
-  <PrefBlock :title="t('layout.shortcut')" :icon="KeyboardLine" list flush>
-    <PrefRow
-      :label="t('layout.shortcutSearch')"
-      :tip="t('layout.shortcutSearchTip')"
-    >
-      <template #control>
-        <el-switch
-          v-model="shortcutSearch"
-          :active-text="t('labels.active')"
-          :inactive-text="t('labels.inactive')"
-          inline-prompt
-        />
-      </template>
-    </PrefRow>
-    <PrefRow
-      :label="t('layout.shortcutLock')"
-      :tip="t('layout.shortcutLockTip')"
-    >
-      <template #control>
-        <el-switch
-          v-model="shortcutLock"
-          :active-text="t('labels.active')"
-          :inactive-text="t('labels.inactive')"
-          inline-prompt
-        />
-      </template>
-    </PrefRow>
-    <PrefRow
-      :label="t('layout.shortcutSidebar')"
-      :tip="t('layout.shortcutSidebarTip')"
-    >
-      <template #control>
-        <el-switch
-          v-model="shortcutSidebar"
-          :active-text="t('labels.active')"
-          :inactive-text="t('labels.inactive')"
-          inline-prompt
-        />
-      </template>
-    </PrefRow>
-  </PrefBlock>
-
   <PrefBlock :title="t('layout.about')" :icon="InfoLine" list flush>
     <PrefRow :label="t('layout.currentVersion')">
       <template #control>
@@ -226,6 +193,41 @@ async function checkUpdate() {
           <IconifyIconOffline :icon="RefreshLine" class="mr-1" />
           {{ t("layout.checkUpdate") }}
         </el-button>
+      </template>
+    </PrefRow>
+  </PrefBlock>
+
+  <PrefBlock
+    :title="t('layout.preferencesEntry')"
+    :icon="SettingLine"
+    list
+    flush
+  >
+    <PrefRow
+      :label="t('layout.enablePreferences')"
+      :tip="t('layout.enablePreferencesTip')"
+    >
+      <template #control>
+        <el-switch
+          :model-value="prefsEnabled"
+          :active-text="t('labels.active')"
+          :inactive-text="t('labels.inactive')"
+          inline-prompt
+          @change="onPrefsEnabledChange"
+        />
+      </template>
+    </PrefRow>
+    <PrefRow
+      :label="t('layout.preferencesPosition')"
+      :tip="t('layout.preferencesPositionTip')"
+      stack
+    >
+      <template #control>
+        <PrefChoice
+          :options="preferencesPositionOptions"
+          :model-value="preferencesPosition"
+          @change="value => (preferencesPosition = value)"
+        />
       </template>
     </PrefRow>
   </PrefBlock>

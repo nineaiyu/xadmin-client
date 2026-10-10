@@ -48,6 +48,18 @@ const semiDarkSidebar = computed({
   set: value => storageConfigureChange("semiDarkSidebar", value)
 });
 
+/** 折叠态悬停临时展开（仅视觉层，不写回存储） */
+const sidebarExpandOnHover = computed({
+  get: () => $storage?.configure?.sidebarExpandOnHover ?? true,
+  set: value => storageConfigureChange("sidebarExpandOnHover", value)
+});
+
+/** 侧栏右缘拖拽调宽把手（松开时保存宽度） */
+const sidebarDraggable = computed({
+  get: () => $storage?.configure?.sidebarDraggable ?? false,
+  set: value => storageConfigureChange("sidebarDraggable", value)
+});
+
 function logoChange() {
   storageConfigureChange("showLogo", logoVal.value);
   emitter.emit("logoChange", logoVal.value);
@@ -123,6 +135,32 @@ function logoChange() {
           size="small"
           controls-position="right"
           style="width: 108px"
+        />
+      </template>
+    </PrefRow>
+    <PrefRow
+      :label="t('layout.sidebarExpandOnHover')"
+      :tip="t('layout.sidebarExpandOnHoverTip')"
+    >
+      <template #control>
+        <el-switch
+          v-model="sidebarExpandOnHover"
+          :active-text="t('labels.active')"
+          :inactive-text="t('labels.inactive')"
+          inline-prompt
+        />
+      </template>
+    </PrefRow>
+    <PrefRow
+      :label="t('layout.sidebarDraggable')"
+      :tip="t('layout.sidebarDraggableTip')"
+    >
+      <template #control>
+        <el-switch
+          v-model="sidebarDraggable"
+          :active-text="t('labels.active')"
+          :inactive-text="t('labels.inactive')"
+          inline-prompt
         />
       </template>
     </PrefRow>

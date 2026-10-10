@@ -4,9 +4,11 @@ import "animate.css";
 import "@/components/ReIcon/src/offlineIcon";
 import { setType } from "./types";
 import { useI18n } from "vue-i18n";
+import { emitter } from "@/utils/mitt";
 import { useLayout } from "./hooks/useLayout";
 import { useAppStoreHook } from "@/store/modules/app";
 import { useSettingStoreHook } from "@/store/modules/settings";
+import { useUserStoreHook } from "@/store/modules/user";
 import {
   useDataThemeChange,
   useSystemThemeWatch
@@ -70,11 +72,14 @@ const { hidden: headerHidden } = useHeaderAutoHide(
 // 「跟随系统」的常驻监听同样挂在布局层（设置面板按需挂载，不承载常驻副作用）
 usePreferenceAttributes();
 
-// 布局级快捷键：Alt+L 锁屏、Alt+S 折叠侧栏（开关见设置面板「通用」→「快捷键」）
+// 布局级快捷键：锁屏 / 折叠侧栏 / 打开偏好面板 / 退出登录，
+// 键位与总开关见设置面板「快捷键」页签（键位录制即改即生效）
 const { lock } = useLockScreen();
 useLayoutShortcutKeys({
   lock,
-  toggleSidebar: () => useAppStoreHook().toggleSideBar()
+  toggleSidebar: () => useAppStoreHook().toggleSideBar(),
+  openPreferences: () => emitter.emit("openPanel" as never),
+  logout: () => useUserStoreHook().logOut()
 });
 useSystemThemeWatch();
 

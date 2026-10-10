@@ -77,6 +77,19 @@
     text-decoration: none;
   }
 
+  /* 页签图标（设置面板「顶栏」→「页签图标」开关控制显隐） */
+  .tag-icon {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 2px;
+    vertical-align: middle;
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+  }
+
   .scroll-container {
     position: relative;
     flex: 1;
@@ -227,7 +240,8 @@
 
 .arrow-left,
 .arrow-right,
-.arrow-down {
+.arrow-down,
+.tags-refresh {
   position: relative;
   display: flex;
   align-items: center;
@@ -239,6 +253,16 @@
   svg {
     width: 20px;
     height: 20px;
+  }
+}
+
+/* 刷新当前页按钮（设置面板「顶栏」→「刷新按钮」开关控制显隐） */
+.tags-refresh {
+  cursor: pointer;
+  border-left: 0.5px solid hsl(var(--border-strong));
+
+  &:hover {
+    color: var(--el-color-primary);
   }
 }
 

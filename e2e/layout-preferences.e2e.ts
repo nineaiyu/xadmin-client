@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 import {
   ADMIN,
+  HIGH_LOAD,
   login,
   openMenuPath,
   openSettingPanel,
@@ -19,20 +20,42 @@ import {
 
 const SITE_CONFIG_URL = "/api/system/configs/WEB_SITE_CONFIG";
 
+/**
+ * 站点配置 PATCH 等待上限：正常保存 = 600ms 防抖 + 单次请求（本地 <300ms）。
+ * 收紧上限让「操作未触发保存」的场景尽快暴露（15s 档一遇空等即整批变慢）；
+ * 高负载档放宽，避免把机器忙记成回归（与 helpers 的负载档口径一致）。
+ */
+const SITE_CONFIG_PATCH_TIMEOUT = HIGH_LOAD ? 15_000 : 5_000;
+
 type BooleanPreferenceField =
   | "CompactMode"
   | "HeaderAutoHide"
   | "SidebarAccordion"
+  | "SidebarExpandOnHover"
+  | "SidebarDraggable"
   | "TagsMiddleClickClose"
+  | "TagsShowIcon"
+  | "TagsShowRefresh"
+  | "TagsShowMore"
   | "DynamicTitle"
+  | "EnablePreferences"
   | "ShortcutSearch"
+  | "ShortcutEnable"
   | "HeaderFixed"
   | "BreadcrumbVisible"
+  | "BreadcrumbShowIcon"
+  | "BreadcrumbShowHome"
+  | "BreadcrumbHideOnlyOne"
+  | "TransitionProgress"
+  | "TransitionLoading"
   | "NavbarSearch"
   | "NavbarLanguage"
   | "NavbarFullscreen"
   | "NavbarNotice"
   | "NavbarLock"
+  | "NavbarRefresh"
+  | "NavbarSidebarToggle"
+  | "NavbarThemeToggle"
   | "SemiDarkSidebar"
   | "SemiDarkHeader";
 
@@ -45,8 +68,19 @@ type PreferenceField =
   | "PageTransition"
   | "SidebarWidth"
   | "MaxTagsCount"
+  | "BreadcrumbStyle"
+  | "PreferencesPosition"
   | "Locale"
-  | "EpThemeColor";
+  | "EpThemeColor"
+  | "ShortcutLockKeys"
+  | "ShortcutSidebarKeys"
+  | "ShortcutSearchKeys"
+  | "ShortcutPreferencesKeys"
+  | "ShortcutLogoutKeys";
+
+/** 正则转义：键位串含 `+`（量词）等元字符，直接内插会让匹配语义漂移 */
+const escapeRegExp = (text: string) =>
+  text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /**
  * 等待面板触发的站点配置 PATCH 落库（自动保存防抖 600ms）。
@@ -65,15 +99,37 @@ async function waitForSiteConfigPatch(
       resp =>
         resp.request().method() === "PATCH" &&
         resp.url().includes(SITE_CONFIG_URL) &&
-        new RegExp(`"${field}"\\s*:\\s*"?${value}"?`).test(
-          resp.request().postData() ?? ""
-        ),
-      { timeout: 15_000 }
+        new RegExp(
+          `"${field}"\\s*:\\s*"?${escapeRegExp(String(value))}"?`
+        ).test(resp.request().postData() ?? ""),
+      { timeout: SITE_CONFIG_PATCH_TIMEOUT }
     )
     .catch(() => null);
   await action();
   const response = await saved;
   await response?.finished().catch(() => undefined);
+}
+
+/** 键位字段（Pascal）→ 本地存储键（camel） */
+const camelField = (field: string) => field[0].toLowerCase() + field.slice(1);
+
+/**
+ * 本地存储里的偏好现值：与页面 hydrate/落库同一来源。
+ * Locale 存独立命名空间（responsive-locale），其余偏好存 configure 命名空间。
+ * 读不到（尚未 hydrate）时返回 undefined，调用方按「值不等」继续操作（安全兜底）。
+ */
+async function storedPreferenceValue(page: Page, field: PreferenceField) {
+  return page.evaluate(
+    ([name, key]) => {
+      const namespace =
+        name === "Locale" ? "responsive-locale" : "responsive-configure";
+      const raw = localStorage.getItem(namespace);
+      if (!raw) return undefined;
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      return name === "Locale" ? parsed.locale : parsed[key];
+    },
+    [field, camelField(field)] as const
+  );
 }
 
 /** 面板行（`.setting li` 契约：区块内的行组件）；
@@ -133,6 +189,9 @@ async function setSelect(
 ) {
   const target = row(page, label);
   await expect(target).toBeVisible({ timeout: 10_000 });
+  // 现值已等于目标值时跳过：点击已选中项不触发保存，
+  // 等 PATCH 会空等满整个超时（复位场景下几乎每个用例都会命中一次）
+  if ((await storedPreferenceValue(page, field)) === value) return;
   await waitForSiteConfigPatch(page, field, value, async () => {
     await target.locator(".el-select").click();
     const listId = await target
@@ -249,12 +308,146 @@ async function closePanel(page: Page) {
     .toBeGreaterThan(width - 20);
 }
 
+/** 读取本地存储 configure 命名空间里的字段值 */
+async function storedConfigureValue(page: Page, key: string) {
+  return page.evaluate(k => {
+    const raw = localStorage.getItem("responsive-configure");
+    return raw ? (JSON.parse(raw)[k] as unknown) : undefined;
+  }, key);
+}
+
+/**
+ * 键位录制：点击键位控件进入录制态 → 按键 → 等待落库。
+ * 当前值已等于目标值时跳过（避免等一次不会发生的 PATCH）。
+ */
+async function recordShortcut(
+  page: Page,
+  label: string | RegExp,
+  keys: string,
+  field: PreferenceField,
+  expected: string
+) {
+  if ((await storedConfigureValue(page, camelField(field))) === expected)
+    return;
+  const target = row(page, label);
+  await expect(target).toBeVisible({ timeout: 10_000 });
+  const trigger = target.locator(".shortcut-input__trigger");
+  await waitForSiteConfigPatch(page, field, expected, async () => {
+    await trigger.click();
+    await expect(trigger).toHaveClass(/is-recording/);
+    await page.keyboard.press(keys);
+  });
+  await expect(trigger).not.toHaveClass(/is-recording/, { timeout: 10_000 });
+}
+
+/** 清除键位（空串 = 不启用该动作） */
+async function clearShortcut(
+  page: Page,
+  label: string | RegExp,
+  field: PreferenceField
+) {
+  if ((await storedConfigureValue(page, camelField(field))) === "") return;
+  const target = row(page, label);
+  await expect(target).toBeVisible({ timeout: 10_000 });
+  await waitForSiteConfigPatch(page, field, "", async () => {
+    await target.locator(".shortcut-input__clear").click();
+  });
+}
+
+/** PrefChoice 卡片组（面包屑样式 / 偏好入口位置等）：按 data-choice 定位并等待落库 */
+async function setPrefChoice(
+  page: Page,
+  value: string,
+  field: PreferenceField
+) {
+  const choice = page.locator(
+    `.right-panel .pref-choice__item[data-choice="${value}"]`
+  );
+  await expect(choice).toBeVisible({ timeout: 10_000 });
+  if ((await choice.getAttribute("aria-pressed")) === "true") return;
+  await waitForSiteConfigPatch(page, field, value, async () => {
+    await choice.click();
+  });
+}
+
+/** 面包屑样式（普通 / 浅底） */
+function setBreadcrumbStyle(page: Page, value: "normal" | "background") {
+  return setPrefChoice(page, value, "BreadcrumbStyle");
+}
+
+/** 读取前端站点配置（聚合端点，与页面 getSiteConfig 同源） */
+async function readSiteConfig(page: Page) {
+  const resp = await page.request.get("/api/system/configs/WEB_SITE_CONFIG");
+  return ((await resp.json())?.config ?? {}) as Record<string, unknown>;
+}
+
+/**
+ * 站点配置直写（跨用例共享状态的自愈/还原用）：与页面 saveSiteConfig 走同一
+ * 聚合端点——通用 CRUD 端点（`/api/system/config/system`）写库不刷新该端点的
+ * 读缓存，直写后页面刷新仍见旧值。写入后回读确认：在途自动保存可能晚到覆盖。
+ */
+async function patchSiteConfig(page: Page, patch: Record<string, unknown>) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const current = await readSiteConfig(page);
+    await page.request.patch("/api/system/configs/WEB_SITE_CONFIG", {
+      data: { ...current, ...patch }
+    });
+    const after = await readSiteConfig(page);
+    const ok = Object.entries(patch).every(
+      ([key, expected]) => after[key] === expected
+    );
+    if (ok) return;
+    await page.waitForTimeout(400);
+  }
+}
+
 test.describe("布局偏好（面板实时生效）", () => {
   test.beforeEach(async ({ page }) => {
     await login(page);
   });
 
   test.afterEach(async ({ page }) => {
+    // 偏好入口自愈（用例可能关闭入口或切到悬浮球）：直写站点配置 + 本地存储后重载
+    if (
+      (await page
+        .locator(".set-icon")
+        .count()
+        .catch(() => 0)) === 0
+    ) {
+      // 等自动保存（600ms 防抖）落地，避免自愈被在途保存覆盖
+      await page.waitForTimeout(800);
+      await patchSiteConfig(page, {
+        EnablePreferences: true,
+        PreferencesPosition: "header"
+      }).catch(() => undefined);
+      await page
+        .evaluate(() => {
+          const raw = localStorage.getItem("responsive-configure");
+          if (!raw) return;
+          const cfg = JSON.parse(raw);
+          cfg.enablePreferences = true;
+          cfg.preferencesPosition = "header";
+          localStorage.setItem("responsive-configure", JSON.stringify(cfg));
+        })
+        .catch(() => undefined);
+      await page.reload().catch(() => undefined);
+      await page
+        .locator(".set-icon")
+        .first()
+        .waitFor({ timeout: 15_000 })
+        .catch(() => undefined);
+    }
+
+    // 侧栏若处于折叠态（快捷键 / 悬停用例可能折叠过），先展开复位
+    if (
+      (await page
+        .locator(".sidebar-container .el-menu--collapse")
+        .count()
+        .catch(() => 0)) > 0
+    ) {
+      await page.keyboard.press("Alt+s").catch(() => undefined);
+    }
+
     // 复位：所有被本用例改过的偏好都回到默认，避免污染其它用例与视觉基线。
     // 面板文案可能被语言用例切成英文，行/页签定位一律中英双语。
     await openSettingPanel(page).catch(() => undefined);
@@ -365,22 +558,148 @@ test.describe("布局偏好（面板实时生效）", () => {
     await setSwitch(page, /动态标题|Dynamic title/, true, "DynamicTitle").catch(
       () => undefined
     );
+    await setTransitionCard(page, "fade-transform").catch(() => undefined);
+
+    // 快捷键页签：总开关与各动作键位全部复位（键位串比较走本地存储，值一致即跳过录制）
+    await switchSettingTab(page, /快捷键|Shortcuts/).catch(() => undefined);
     await setSwitch(
       page,
-      /全局搜索|Global search/,
+      /快捷键开关|Enable shortcuts/,
       true,
-      "ShortcutSearch"
+      "ShortcutEnable"
     ).catch(() => undefined);
-    await setTransitionCard(page, "fade-transform").catch(() => undefined);
+    await recordShortcut(
+      page,
+      /锁屏|Lock screen/,
+      "Alt+l",
+      "ShortcutLockKeys",
+      "alt+l"
+    ).catch(() => undefined);
+    await recordShortcut(
+      page,
+      /折叠侧栏|Toggle sidebar/,
+      "Alt+s",
+      "ShortcutSidebarKeys",
+      "alt+s"
+    ).catch(() => undefined);
+    await recordShortcut(
+      page,
+      /全局搜索|Global search/,
+      "Control+k",
+      "ShortcutSearchKeys",
+      "mod+k"
+    ).catch(() => undefined);
+    await recordShortcut(
+      page,
+      /打开项目配置|Open preferences/,
+      "Control+,",
+      "ShortcutPreferencesKeys",
+      "mod+,"
+    ).catch(() => undefined);
+    await clearShortcut(page, /退出登录|Sign out/, "ShortcutLogoutKeys").catch(
+      () => undefined
+    );
+
+    // 页签细分 / 面包屑细分 / 顶栏补充按钮复位（布局页签区块）
+    await switchSettingTab(page, /布局|Layout/).catch(() => undefined);
+    await setSwitch(page, /页签图标|Tab icons/, true, "TagsShowIcon").catch(
+      () => undefined
+    );
+    await setSwitch(
+      page,
+      /刷新按钮|Refresh button/,
+      true,
+      "TagsShowRefresh"
+    ).catch(() => undefined);
+    await setSwitch(page, /更多按钮|More button/, true, "TagsShowMore").catch(
+      () => undefined
+    );
+    await setSwitch(
+      page,
+      /面包屑图标|Breadcrumb icons/,
+      true,
+      "BreadcrumbShowIcon"
+    ).catch(() => undefined);
+    await setSwitch(
+      page,
+      /显示首页|Show home/,
+      false,
+      "BreadcrumbShowHome"
+    ).catch(() => undefined);
+    await setSwitch(
+      page,
+      /仅一项时隐藏|Hide when single/,
+      false,
+      "BreadcrumbHideOnlyOne"
+    ).catch(() => undefined);
+    await setSwitch(
+      page,
+      /悬停展开|Expand on hover/,
+      true,
+      "SidebarExpandOnHover"
+    ).catch(() => undefined);
+    await setSwitch(
+      page,
+      /拖拽调宽|Drag to resize/,
+      false,
+      "SidebarDraggable"
+    ).catch(() => undefined);
+    await setBreadcrumbStyle(page, "normal").catch(() => undefined);
+    await setSwitch(
+      page,
+      /顶栏刷新|Header refresh/,
+      true,
+      "NavbarRefresh"
+    ).catch(() => undefined);
+    await setSwitch(
+      page,
+      /顶栏折叠|Header sidebar toggle/,
+      false,
+      "NavbarSidebarToggle"
+    ).catch(() => undefined);
+    await setSwitch(
+      page,
+      /顶栏明暗切换|Header theme toggle/,
+      false,
+      "NavbarThemeToggle"
+    ).catch(() => undefined);
+
+    // 偏好入口复位（通用页签）：开关与位置
+    await switchSettingTab(page, /通用|General/).catch(() => undefined);
+    await setSwitch(
+      page,
+      /设置入口|Settings entry/,
+      true,
+      "EnablePreferences"
+    ).catch(() => undefined);
+    await setPrefChoice(page, "header", "PreferencesPosition").catch(
+      () => undefined
+    );
+
+    // 过渡开关复位（通用页签）
+    await switchSettingTab(page, /通用|General/).catch(() => undefined);
+    await setSwitch(
+      page,
+      /顶部进度条|Top progress bar/,
+      true,
+      "TransitionProgress"
+    ).catch(() => undefined);
+    await setSwitch(
+      page,
+      /内容区 loading|Content loading/,
+      false,
+      "TransitionLoading"
+    ).catch(() => undefined);
   });
 
-  test("偏好抽屉为三页签结构，紧凑模式实时生效并持久化", async ({ page }) => {
+  test("偏好抽屉为四页签结构，紧凑模式实时生效并持久化", async ({ page }) => {
     await openSettingPanel(page);
     const tabs = page.locator(".right-panel .el-tabs__item");
-    await expect(tabs).toHaveCount(3);
+    await expect(tabs).toHaveCount(4);
     await expect(tabs.nth(0)).toHaveText(/外观|Appearance/);
     await expect(tabs.nth(1)).toHaveText(/布局|Layout/);
     await expect(tabs.nth(2)).toHaveText(/通用|General/);
+    await expect(tabs.nth(3)).toHaveText(/快捷键|Shortcuts/);
 
     await switchSettingTab(page, "通用");
     await expect(row(page, "紧凑模式")).toBeVisible();
@@ -542,7 +861,7 @@ test.describe("布局偏好（面板实时生效）", () => {
     await expect(tabs).toHaveCount(2, { timeout: 10_000 });
   });
 
-  test("通用：动态标题与 ⌘K 快捷键开关", async ({ page }) => {
+  test("通用：动态标题与 ⌘K 快捷键", async ({ page }) => {
     await openSettingPanel(page);
     await switchSettingTab(page, "通用");
 
@@ -565,10 +884,10 @@ test.describe("布局偏好（面板实时生效）", () => {
       .poll(() => page.title(), { timeout: 10_000 })
       .not.toBe(titleBefore);
 
-    // ⌘K 关闭：快捷键不再唤起命令面板，顶栏入口仍可用
+    // 全局搜索键位清空：快捷键不再唤起命令面板，顶栏入口仍可用
     await openSettingPanel(page);
-    await switchSettingTab(page, "通用");
-    await setSwitch(page, "全局搜索", false, "ShortcutSearch");
+    await switchSettingTab(page, /快捷键|Shortcuts/);
+    await clearShortcut(page, /全局搜索|Global search/, "ShortcutSearchKeys");
     await closePanel(page);
     const palette = page.getByTestId("command-palette");
     await page.keyboard.press("Control+k");
@@ -578,12 +897,19 @@ test.describe("布局偏好（面板实时生效）", () => {
     await page.keyboard.press("Escape");
     await expect(palette).toBeHidden();
 
-    // 打开后：⌘K 重新生效
+    // 录回默认键位后：⌘K 重新生效（末尾统一验证）
     await openSettingPanel(page);
-    await switchSettingTab(page, "通用");
-    await setSwitch(page, "全局搜索", true, "ShortcutSearch");
+    await switchSettingTab(page, /快捷键|Shortcuts/);
+    await recordShortcut(
+      page,
+      /全局搜索|Global search/,
+      "Control+k",
+      "ShortcutSearchKeys",
+      "mod+k"
+    );
 
-    // 切换动画：预览卡片选「关闭」后落库，再选回默认预设
+    // 切换动画：预览卡片选「关闭」后落库，再选回默认预设（动画区块在通用页签）
+    await switchSettingTab(page, "通用");
     await setTransitionCard(page, "none");
     const storedTransition = await page.evaluate(() => {
       const raw = localStorage.getItem("responsive-configure");
@@ -957,5 +1283,464 @@ test.describe("布局偏好（面板实时生效）", () => {
     expect(after[0], "首页固定位不变").toBe(before[0]);
     expect(after[1], "拖拽项落到第二位").toBe(before[2]);
     expect(after[2]).toBe(before[1]);
+  });
+
+  test("快捷键：自定义锁屏键位即时生效，旧键位失效", async ({ page }) => {
+    await openSettingPanel(page);
+    await switchSettingTab(page, /快捷键|Shortcuts/);
+
+    // 锁屏键位录成 Ctrl+Shift+L（录制回显随平台：macOS 用符号串）
+    await recordShortcut(
+      page,
+      /锁屏|Lock screen/,
+      "Control+Shift+l",
+      "ShortcutLockKeys",
+      "mod+shift+l"
+    );
+    const lockTrigger = row(page, /锁屏|Lock screen/).locator(
+      ".shortcut-input__trigger"
+    );
+    await expect(lockTrigger).toContainText(/Ctrl\+Shift\+L|⌘⇧L/);
+    await closePanel(page);
+
+    // 旧键位 Alt+L 不再触发（负断言：给一个确定的时间窗）
+    await page.keyboard.press("Alt+l");
+    await page.waitForTimeout(300);
+    await expect(page.locator(".lock-screen")).toHaveCount(0);
+
+    // 新键位 Ctrl+Shift+L 触发锁屏，口令解锁
+    await page.keyboard.press("Control+Shift+l");
+    await expect(page.locator(".lock-screen")).toBeVisible({ timeout: 10_000 });
+    await page.locator("#lock-screen-password").fill(ADMIN.password);
+    await page.locator("#lock-screen-password").press("Enter");
+    await expect(page.locator(".lock-screen")).toHaveCount(0, {
+      timeout: 15_000
+    });
+  });
+
+  test("快捷键：总开关关闭后全部失效，顶栏按钮不受影响", async ({ page }) => {
+    await openSettingPanel(page);
+    await switchSettingTab(page, /快捷键|Shortcuts/);
+    await setSwitch(
+      page,
+      /快捷键开关|Enable shortcuts/,
+      false,
+      "ShortcutEnable"
+    );
+    await closePanel(page);
+
+    // 锁屏 / 折叠侧栏 / 命令面板均不响应（负断言：给一个确定的时间窗）
+    await page.keyboard.press("Alt+l");
+    await page.keyboard.press("Alt+s");
+    await page.keyboard.press("Control+k");
+    await page.waitForTimeout(300);
+    await expect(page.locator(".lock-screen")).toHaveCount(0);
+    await expect(
+      page.locator(".sidebar-container .el-menu--collapse")
+    ).toHaveCount(0);
+    await expect(page.getByTestId("command-palette")).toHaveCount(0);
+
+    // 顶栏按钮不受开关影响：仍可一键锁屏并解锁
+    await page.locator("#header-lock").click();
+    await expect(page.locator(".lock-screen")).toBeVisible({ timeout: 10_000 });
+    await page.locator("#lock-screen-password").fill(ADMIN.password);
+    await page.locator("#lock-screen-password").press("Enter");
+    await expect(page.locator(".lock-screen")).toHaveCount(0, {
+      timeout: 15_000
+    });
+
+    // 复位：重新打开总开关
+    await openSettingPanel(page);
+    await switchSettingTab(page, /快捷键|Shortcuts/);
+    await setSwitch(
+      page,
+      /快捷键开关|Enable shortcuts/,
+      true,
+      "ShortcutEnable"
+    );
+  });
+
+  test("快捷键：保留键与冲突键被拒绝并提示", async ({ page }) => {
+    await openSettingPanel(page);
+    await switchSettingTab(page, /快捷键|Shortcuts/);
+
+    const lockTrigger = row(page, /锁屏|Lock screen/).locator(
+      ".shortcut-input__trigger"
+    );
+    await lockTrigger.click();
+    await expect(lockTrigger).toHaveClass(/is-recording/);
+
+    // 浏览器保留键 Ctrl+S：拒绝并保持录制态
+    await page.keyboard.press("Control+s");
+    await expect(
+      page
+        .locator(".el-message")
+        .filter({ hasText: /保留键|Reserved/ })
+        .first()
+    ).toBeVisible({ timeout: 10_000 });
+    await expect(lockTrigger).toHaveClass(/is-recording/);
+
+    // 冲突键 Alt+S（已被折叠侧栏占用）：拒绝并保持录制态
+    await page.keyboard.press("Alt+s");
+    await expect(
+      page
+        .locator(".el-message")
+        .filter({ hasText: /占用|used/ })
+        .first()
+    ).toBeVisible({ timeout: 10_000 });
+    await expect(lockTrigger).toHaveClass(/is-recording/);
+
+    // Esc 取消：退出录制且原键位不变
+    await page.keyboard.press("Escape");
+    await expect(lockTrigger).not.toHaveClass(/is-recording/);
+    await expect(lockTrigger).toContainText(/Alt\+L|⌥L/);
+  });
+
+  test("快捷键：Ctrl+, 唤起项目配置面板", async ({ page }) => {
+    const panel = page.locator(".right-panel").first();
+    const width = page.viewportSize()?.width ?? 1280;
+    // 初始为关闭态：面板整体平移出视口右侧
+    expect((await panel.boundingBox())?.x ?? 0).toBeGreaterThanOrEqual(
+      width - 20
+    );
+
+    await page.keyboard.press("Control+,");
+    await expect(panel).toBeVisible({ timeout: 10_000 });
+    await expect(panel.locator(".el-tabs__item").first()).toBeVisible();
+    await closePanel(page);
+  });
+
+  test("布局：页签图标、刷新与更多按钮开关", async ({ page }) => {
+    await openMenuPath(page, ["系统管理"], "/system/user/index");
+    const tabs = page.locator(".tags-view .scroll-item");
+    await expect(tabs).toHaveCount(2, { timeout: 15_000 }); // 首页 + 用户管理
+    const userTab = tabs.filter({ hasText: /用户管理|Users/ }).first();
+
+    // 默认全开：页签图标 / 刷新按钮 / 更多按钮
+    await expect(userTab.locator(".tag-icon")).toHaveCount(1);
+    await expect(page.locator(".tags-view .tags-refresh")).toBeVisible();
+    await expect(page.locator(".tags-view .arrow-down")).toBeVisible();
+
+    // 刷新按钮可用：点击后当前页重建（redirect 中转，表格恢复可见）
+    await page.locator(".tags-view .tags-refresh").click();
+    await expect(page.locator(".el-table").first()).toBeVisible({
+      timeout: 15_000
+    });
+
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setSwitch(page, "页签图标", false, "TagsShowIcon");
+    await expect(userTab.locator(".tag-icon")).toHaveCount(0);
+    await setSwitch(page, "刷新按钮", false, "TagsShowRefresh");
+    await expect(page.locator(".tags-view .tags-refresh")).toHaveCount(0);
+    await setSwitch(page, "更多按钮", false, "TagsShowMore");
+    await expect(page.locator(".tags-view .arrow-down")).toHaveCount(0);
+
+    // 复位（面板内操作，afterEach 兜底之外先就地收口）
+    await setSwitch(page, "页签图标", true, "TagsShowIcon");
+    await setSwitch(page, "刷新按钮", true, "TagsShowRefresh");
+    await setSwitch(page, "更多按钮", true, "TagsShowMore");
+    await expect(userTab.locator(".tag-icon")).toHaveCount(1);
+    await expect(page.locator(".tags-view .tags-refresh")).toBeVisible();
+    await expect(page.locator(".tags-view .arrow-down")).toBeVisible();
+  });
+
+  test("布局：面包屑图标、首页项、单层隐藏与浅底样式", async ({ page }) => {
+    await openMenuPath(page, ["系统管理"], "/system/user/index");
+    // `.breadcrumb-container` 即 el-breadcrumb 根（父级传入的类合并到组件根上）
+    const crumb = page.locator(".breadcrumb-container");
+    await expect(crumb).toBeVisible({ timeout: 15_000 });
+    // 默认：显示图标、无首页项
+    await expect(crumb.locator(".breadcrumb-icon").first()).toBeVisible();
+    await expect(crumb).not.toContainText(/首页|Home/);
+
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+
+    // 关闭图标：图标节点消失
+    await setSwitch(page, "面包屑图标", false, "BreadcrumbShowIcon");
+    await expect(crumb.locator(".breadcrumb-icon")).toHaveCount(0);
+    // 显示首页：列表最前出现「首页」项
+    await setSwitch(page, "显示首页", true, "BreadcrumbShowHome");
+    await expect(crumb).toContainText(/首页|Home/);
+    // 样式切「浅底」：根元素出现背景类
+    await setBreadcrumbStyle(page, "background");
+    await expect(crumb).toHaveClass(/breadcrumb--background/);
+    // 仅一项时隐藏：单层面包屑（首页）整条不渲染
+    await setSwitch(page, "仅一项时隐藏", true, "BreadcrumbHideOnlyOne");
+
+    await closePanel(page);
+    await page.goto("/#/welcome");
+    await expect(page.locator(".breadcrumb-container")).toHaveCount(0);
+    // 深层页面仍显示
+    await openMenuPath(page, ["系统管理"], "/system/user/index");
+    await expect(crumb).toBeVisible();
+
+    // 复位
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setSwitch(page, "面包屑图标", true, "BreadcrumbShowIcon");
+    await setSwitch(page, "显示首页", false, "BreadcrumbShowHome");
+    await setSwitch(page, "仅一项时隐藏", false, "BreadcrumbHideOnlyOne");
+    await setBreadcrumbStyle(page, "normal");
+    await expect(crumb).not.toHaveClass(/breadcrumb--background/);
+  });
+
+  test("过渡：顶部进度条与内容区 loading 开关", async ({ page }) => {
+    /** 采样器：导航窗口内持续记录进度条透明度与内容区 loading 遮罩 */
+    const startSampling = () =>
+      page.evaluate(() => {
+        const w = window as unknown as {
+          __progressSamples: string[];
+          __loadingSeen: boolean;
+          __sampler?: ReturnType<typeof setInterval>;
+        };
+        w.__progressSamples = [];
+        w.__loadingSeen = false;
+        w.__sampler = setInterval(() => {
+          const el = document.getElementById("app-progress");
+          w.__progressSamples.push(el ? getComputedStyle(el).opacity : "none");
+          // 只认内容区自身的 loading 遮罩（页内表格等组件的 loading 挂在更深处）
+          if (
+            document.querySelector(
+              "section.app-main > .el-loading-mask, section.app-main-nofixed-header > .el-loading-mask"
+            )
+          ) {
+            w.__loadingSeen = true;
+          }
+        }, 16);
+      });
+    const stopSampling = () =>
+      page.evaluate(() => {
+        const w = window as unknown as {
+          __progressSamples: string[];
+          __loadingSeen: boolean;
+          __sampler?: ReturnType<typeof setInterval>;
+        };
+        if (w.__sampler) clearInterval(w.__sampler);
+        return { progress: w.__progressSamples, loading: w.__loadingSeen };
+      });
+
+    // 默认（进度条开 / loading 关）：首次访问某页时进度条被点亮
+    await startSampling();
+    await openMenuPath(page, ["系统管理"], "/system/user/index");
+    // 覆盖 done 后的淡出窗口（200ms 推进 + 200ms 淡出）
+    await page.waitForTimeout(700);
+    const first = await stopSampling();
+    expect(
+      first.progress.some(o => parseFloat(o) > 0),
+      "默认应点亮顶部进度条"
+    ).toBe(true);
+    expect(first.loading, "默认不显示内容区 loading").toBe(false);
+
+    // 关进度条 + 开内容区 loading：再访问一个未加载的重页面
+    await openSettingPanel(page);
+    await switchSettingTab(page, "通用");
+    await setSwitch(page, "顶部进度条", false, "TransitionProgress");
+    await setSwitch(page, "内容区 loading", true, "TransitionLoading");
+    await closePanel(page);
+
+    await startSampling();
+    await openMenuPath(page, ["数据分析"], "/analysis/dashboard/index");
+    await page.waitForTimeout(700);
+    const second = await stopSampling();
+    expect(
+      second.progress.every(o => o === "0" || o === "none"),
+      "关闭后不点亮进度条"
+    ).toBe(true);
+    expect(second.loading, "开启后显示内容区 loading").toBe(true);
+
+    // 复位
+    await openSettingPanel(page);
+    await switchSettingTab(page, "通用");
+    await setSwitch(page, "顶部进度条", true, "TransitionProgress");
+    await setSwitch(page, "内容区 loading", false, "TransitionLoading");
+  });
+
+  test("顶栏：刷新、折叠与明暗切换按钮开关与行为", async ({ page }) => {
+    await openMenuPath(page, ["系统管理"], "/system/user/index");
+    const html = page.locator("html");
+
+    // 默认：刷新可见，折叠与明暗切换隐藏
+    await expect(page.locator("#header-refresh")).toBeVisible();
+    await expect(page.locator("#header-sidebar-toggle")).toHaveCount(0);
+    await expect(page.locator("#header-theme-toggle")).toHaveCount(0);
+
+    // 刷新按钮：点击后当前页重建（表格恢复可见）
+    await page.locator("#header-refresh").click();
+    await expect(page.locator(".el-table").first()).toBeVisible({
+      timeout: 15_000
+    });
+
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setSwitch(page, "顶栏折叠", true, "NavbarSidebarToggle");
+    await setSwitch(page, "顶栏明暗切换", true, "NavbarThemeToggle");
+    await closePanel(page);
+
+    // 折叠按钮：与侧栏底部折叠等效
+    const collapsed = page.locator(".sidebar-container .el-menu--collapse");
+    await page.locator("#header-sidebar-toggle").click();
+    await expect(collapsed).toHaveCount(1, { timeout: 10_000 });
+    await page.locator("#header-sidebar-toggle").click();
+    await expect(collapsed).toHaveCount(0, { timeout: 10_000 });
+
+    // 明暗切换：html.dark 往返
+    await expect(html).not.toHaveClass(/dark/);
+    await page.locator("#header-theme-toggle").click();
+    await expect(html).toHaveClass(/dark/, { timeout: 10_000 });
+    await page.locator("#header-theme-toggle").click();
+    await expect(html).not.toHaveClass(/dark/, { timeout: 10_000 });
+
+    // 复位
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setSwitch(page, "顶栏折叠", false, "NavbarSidebarToggle");
+    await setSwitch(page, "顶栏明暗切换", false, "NavbarThemeToggle");
+  });
+
+  test("侧栏：折叠态悬停临时展开，关闭开关后不展开", async ({ page }) => {
+    const sidebar = page.locator(".sidebar-container");
+    const collapsed = page.locator(".sidebar-container .el-menu--collapse");
+
+    // 折叠侧栏（Alt+S 默认快捷键）
+    await page.keyboard.press("Alt+s");
+    await expect(collapsed).toHaveCount(1, { timeout: 10_000 });
+
+    // 悬停侧栏：临时展开（折叠类消失）
+    const box = await sidebar.boundingBox();
+    expect(box, "侧栏应可见").not.toBeNull();
+    await page.mouse.move((box?.x ?? 0) + 20, (box?.y ?? 0) + 300);
+    await expect(collapsed).toHaveCount(0, { timeout: 10_000 });
+
+    // 移开：复位为折叠态
+    await page.mouse.move((box?.x ?? 0) + 700, (box?.y ?? 0) + 300);
+    await expect(collapsed).toHaveCount(1, { timeout: 10_000 });
+
+    // 关闭开关后悬停不再展开（负断言：给一个确定的时间窗）
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setSwitch(page, "悬停展开", false, "SidebarExpandOnHover");
+    await closePanel(page);
+    const boxAfter = await sidebar.boundingBox();
+    await page.mouse.move((boxAfter?.x ?? 0) + 20, (boxAfter?.y ?? 0) + 300);
+    await page.waitForTimeout(300);
+    await expect(collapsed).toHaveCount(1);
+
+    // 复位：移开鼠标 → 展开侧栏 → 打开开关
+    await page.mouse.move((boxAfter?.x ?? 0) + 700, (boxAfter?.y ?? 0) + 300);
+    await page.keyboard.press("Alt+s");
+    await expect(collapsed).toHaveCount(0, { timeout: 10_000 });
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setSwitch(page, "悬停展开", true, "SidebarExpandOnHover");
+  });
+
+  test("侧栏：拖拽把手调宽并落库", async ({ page }) => {
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setSwitch(page, "拖拽调宽", true, "SidebarDraggable");
+    await closePanel(page);
+
+    const resizer = page.locator(".sidebar-resizer");
+    await expect(resizer).toBeVisible({ timeout: 10_000 });
+    const box = await resizer.boundingBox();
+    expect(box, "拖拽把手应可见").not.toBeNull();
+
+    // 拖 +60px：拖拽中只改 CSS 变量，松开才落库
+    await page.mouse.move((box?.x ?? 0) + 2, (box?.y ?? 0) + 200);
+    await page.mouse.down();
+    await page.mouse.move((box?.x ?? 0) + 62, (box?.y ?? 0) + 200, {
+      steps: 10
+    });
+    await page.mouse.up();
+
+    // 默认 210 + 60 = 270px，落库到本地存储
+    await expect
+      .poll(() => sidebarWidthVar(page), { timeout: 10_000 })
+      .toBe("270px");
+    expect(await storedConfigureValue(page, "sidebarWidth")).toBe(270);
+
+    // 复位：宽度回默认、关闭拖拽开关（面板内数字输入档仍可精确设置）
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setNumber(page, "侧栏宽度", "SidebarWidth", 210);
+    await setSwitch(page, "拖拽调宽", false, "SidebarDraggable");
+    await expect
+      .poll(() => sidebarWidthVar(page), { timeout: 10_000 })
+      .toBe("");
+  });
+
+  test("偏好入口：位置切悬浮球；总开关关闭后入口与快捷键同步失效", async ({
+    page
+  }) => {
+    const headerGear = page.locator(".navbar .set-icon");
+    const floating = page.locator(".setting-fab");
+
+    // 默认：顶栏齿轮可见，无悬浮球
+    await openMenuPath(page, ["系统管理"], "/system/user/index");
+    await expect(headerGear).toBeVisible();
+    await expect(floating).toHaveCount(0);
+
+    // 位置切「悬浮球」：齿轮消失、悬浮球出现且可打开面板
+    await openSettingPanel(page);
+    await switchSettingTab(page, "通用");
+    await setPrefChoice(page, "fixed", "PreferencesPosition");
+    await closePanel(page);
+    await expect(headerGear).toHaveCount(0);
+    await expect(floating).toBeVisible({ timeout: 10_000 });
+    await floating.click();
+    await expect(page.locator(".right-panel")).toBeVisible({
+      timeout: 10_000
+    });
+
+    // 切回「顶栏」：齿轮恢复、悬浮球消失
+    await switchSettingTab(page, "通用");
+    await setPrefChoice(page, "header", "PreferencesPosition");
+    await closePanel(page);
+    await expect(headerGear).toBeVisible({ timeout: 10_000 });
+    await expect(floating).toHaveCount(0);
+
+    // 总开关关闭：二次确认（恢复路径见提示文案）
+    await openSettingPanel(page);
+    await switchSettingTab(page, "通用");
+    const toggle = row(page, /设置入口|Settings entry/).locator(".el-switch");
+    await waitForSiteConfigPatch(page, "EnablePreferences", false, async () => {
+      await toggle.click();
+      await page
+        .locator(".el-message-box")
+        .getByRole("button", { name: /确定|OK|Confirm/ })
+        .first()
+        .click();
+    });
+    await expect(toggle.locator("input[type=checkbox]")).not.toBeChecked();
+
+    // 关闭后：两个入口都不渲染、快捷键不再唤起面板
+    await closePanel(page);
+    await expect(headerGear).toHaveCount(0);
+    await expect(floating).toHaveCount(0);
+    await page.keyboard.press("Control+,");
+    await page.waitForTimeout(300);
+    const width = page.viewportSize()?.width ?? 1280;
+    expect(
+      (await page.locator(".right-panel").first().boundingBox())?.x ?? 0
+    ).toBeGreaterThanOrEqual(width - 20);
+
+    // 恢复路径：直写站点配置 + 本地存储后重载即可找回入口。
+    // 先等关闭动作的自动保存（600ms 防抖）落地，避免恢复被在途保存覆盖
+    await page.waitForTimeout(800);
+    await patchSiteConfig(page, {
+      EnablePreferences: true,
+      PreferencesPosition: "header"
+    });
+    await page.evaluate(() => {
+      const raw = localStorage.getItem("responsive-configure");
+      if (!raw) return;
+      const cfg = JSON.parse(raw);
+      cfg.enablePreferences = true;
+      localStorage.setItem("responsive-configure", JSON.stringify(cfg));
+    });
+    await page.reload();
+    await expect(headerGear).toBeVisible({ timeout: 15_000 });
   });
 });

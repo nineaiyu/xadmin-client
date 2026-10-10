@@ -138,10 +138,19 @@ declare global {
     SemiDarkHeader?: boolean;
     /** 侧栏宽度（px，160~320）；折叠宽度与 hover 弹出菜单不随此值变化 */
     SidebarWidth?: number;
+    /** 折叠态悬停临时展开（仅视觉层，不写回存储） */
+    SidebarExpandOnHover?: boolean;
+    /** 侧栏右缘拖拽调宽把手 */
+    SidebarDraggable?: boolean;
     /** 固定顶栏：关闭后顶栏随页面一起滚动 */
     HeaderFixed?: boolean;
     /** 显示面包屑（顶栏左侧路径导航） */
     BreadcrumbVisible?: boolean;
+    /** 面包屑细分：显示图标 / 显示首页项 / 仅一项时隐藏 / 样式（normal|background） */
+    BreadcrumbShowIcon?: boolean;
+    BreadcrumbShowHome?: boolean;
+    BreadcrumbHideOnlyOne?: boolean;
+    BreadcrumbStyle?: "normal" | "background";
     /** 页签最大数量（0 = 不限制，超出后自动关闭最旧的非固定页签） */
     MaxTagsCount?: number;
     /** 顶栏组件显隐：菜单搜索 / 语言切换 / 全屏 / 锁屏 / 消息通知 */
@@ -150,18 +159,40 @@ declare global {
     NavbarFullscreen?: boolean;
     NavbarLock?: boolean;
     NavbarNotice?: boolean;
+    /** 顶栏补充按钮：刷新当前页 / 折叠侧栏 / 明暗切换 */
+    NavbarRefresh?: boolean;
+    NavbarSidebarToggle?: boolean;
+    NavbarThemeToggle?: boolean;
     /** 页签中键关闭 */
     TagsMiddleClickClose?: boolean;
     /** 滚轮横向滚动页签条 */
     TagsWheelSwitch?: boolean;
+    /** 页签条：显示页签图标 / 刷新按钮 / 更多按钮 */
+    TagsShowIcon?: boolean;
+    TagsShowRefresh?: boolean;
+    TagsShowMore?: boolean;
     /** 动态标题：document.title 随路由变化 */
     DynamicTitle?: boolean;
+    /** 设置入口总开关；入口位置：header（顶栏齿轮）| fixed（右下角悬浮球） */
+    EnablePreferences?: boolean;
+    PreferencesPosition?: "header" | "fixed";
     /** 全局页面切换动画预设（none 表示不做过渡） */
     PageTransition?: PageTransitionType;
+    /** 路由切换：顶部进度条 / 内容区 loading 遮罩 */
+    TransitionProgress?: boolean;
+    TransitionLoading?: boolean;
     /** ⌘/Ctrl + K 唤起命令面板 */
     ShortcutSearch?: boolean;
     ShortcutLock?: boolean;
     ShortcutSidebar?: boolean;
+    /** 快捷键总开关：关闭后键位自定义全部失效（顶栏按钮不受影响） */
+    ShortcutEnable?: boolean;
+    /** 键位串：小写 `mod+alt+shift+<key>`，空串 = 不启用该动作 */
+    ShortcutLockKeys?: string;
+    ShortcutSidebarKeys?: string;
+    ShortcutSearchKeys?: string;
+    ShortcutPreferencesKeys?: string;
+    ShortcutLogoutKeys?: string;
     MenuArrowIconNoTransition?: boolean;
     CachingAsyncRoutes?: boolean;
     TooltipEffect?: Effect;
@@ -238,10 +269,18 @@ declare global {
       semiDarkHeader?: boolean;
       /** 侧栏宽度（px）：由 JS 写入 `--sidebar-width`，默认档撤除内联覆写 */
       sidebarWidth?: number;
+      /** 折叠态悬停临时展开 / 侧栏拖拽调宽 */
+      sidebarExpandOnHover?: boolean;
+      sidebarDraggable?: boolean;
       /** 固定顶栏：关闭后走非固定头布局（顶栏随内容滚动） */
       headerFixed?: boolean;
       /** 显示面包屑 */
       breadcrumbVisible?: boolean;
+      /** 面包屑细分：显示图标 / 显示首页项 / 仅一项时隐藏 / 样式 */
+      breadcrumbShowIcon?: boolean;
+      breadcrumbShowHome?: boolean;
+      breadcrumbHideOnlyOne?: boolean;
+      breadcrumbStyle?: "normal" | "background";
       /** 页签最大数量（0 = 不限制） */
       maxTagsCount?: number;
       /** 顶栏组件显隐 */
@@ -250,13 +289,29 @@ declare global {
       navbarFullscreen?: boolean;
       navbarLock?: boolean;
       navbarNotice?: boolean;
+      navbarRefresh?: boolean;
+      navbarSidebarToggle?: boolean;
+      navbarThemeToggle?: boolean;
       tagsMiddleClickClose?: boolean;
       tagsWheelSwitch?: boolean;
+      tagsShowIcon?: boolean;
+      tagsShowRefresh?: boolean;
+      tagsShowMore?: boolean;
       dynamicTitle?: boolean;
+      enablePreferences?: boolean;
+      preferencesPosition?: "header" | "fixed";
       pageTransition?: PageTransitionType;
+      transitionProgress?: boolean;
+      transitionLoading?: boolean;
       shortcutSearch?: boolean;
       shortcutLock?: boolean;
       shortcutSidebar?: boolean;
+      shortcutEnable?: boolean;
+      shortcutLockKeys?: string;
+      shortcutSidebarKeys?: string;
+      shortcutSearchKeys?: string;
+      shortcutPreferencesKeys?: string;
+      shortcutLogoutKeys?: string;
     };
     tags?: Array<Recordable>;
     /** 右键「固定」的标签（fullPath 列表） */

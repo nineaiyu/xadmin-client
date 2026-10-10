@@ -363,6 +363,7 @@ layout:
   tabAppearance: 外观
   tabLayout: 布局
   tabGeneral: 通用
+  tabShortcut: 快捷键
   general: 通用设置
   language: 语言
   languageTip: 界面语言，与顶栏语言切换为同一入口
@@ -412,23 +413,51 @@ layout:
   semiDarkSidebarTip: 浅色外观下让侧栏保持深色（深色外观本身即深色，无需此档）
   sidebarWidth: 侧栏宽度
   sidebarWidthTip: 侧栏展开时的宽度（160~320px），折叠宽度不随之变化
+  sidebarExpandOnHover: 悬停展开
+  sidebarExpandOnHoverTip: 折叠态鼠标移入时临时展开侧栏，移开复位（不改变保存的折叠状态）
+  sidebarDraggable: 拖拽调宽
+  sidebarDraggableTip: 侧栏右缘出现拖拽把手，松开后保存宽度
   header: 顶栏
   headerFixed: 固定顶栏
   headerFixedTip: 关闭后顶栏随页面一起滚动（页签条同步跟随）
   breadcrumbVisible: 面包屑
   breadcrumbVisibleTip: 顶栏左侧显示当前页面的路径导航
+  breadcrumbShowIcon: 面包屑图标
+  breadcrumbShowIconTip: 面包屑项前显示菜单图标
+  breadcrumbShowHome: 显示首页
+  breadcrumbShowHomeTip: 面包屑最前追加「首页」项
+  breadcrumbHideOnlyOne: 仅一项时隐藏
+  breadcrumbHideOnlyOneTip: 面包屑只有一层（例如首页）时整条隐藏
+  breadcrumbStyle: 面包屑样式
+  breadcrumbStyleTip: 普通文字或浅底卡片
+  breadcrumbStyleNormal: 普通
+  breadcrumbStyleBackground: 浅底
+  breadcrumbHome: 首页
   navbarSearch: 菜单搜索
   navbarLanguage: 语言切换
   navbarFullscreen: 全屏按钮
   navbarLock: 锁屏按钮
   navbarLockTip: 顶栏显示一键锁屏按钮，锁屏后需输入登录密码解锁
   navbarNotice: 消息通知
+  navbarRefresh: 顶栏刷新
+  navbarSidebarToggle: 顶栏折叠
+  navbarSidebarToggleTip: 与侧栏底部折叠按钮等效（默认隐藏，避免重复）
+  navbarThemeToggle: 顶栏明暗切换
+  navbarThemeToggleTip: 顶栏一键切换浅色 / 深色外观
+  refreshPage: 刷新当前页
+  sidebarToggle: 折叠侧栏
   tabbar: 页签
   persistenceTip: 刷新后保留已打开的页签（写入本地存储）
   tagsMiddleClickClose: 中键关闭
   tagsMiddleClickCloseTip: 鼠标中键点击页签即关闭，固定标签不受影响
   tagsWheelSwitch: 滚轮滚动
   tagsWheelSwitchTip: 在页签条上滚动滚轮横向浏览
+  tagsShowIcon: 页签图标
+  tagsShowIconTip: 页签标题前显示菜单图标
+  tagsShowRefresh: 刷新按钮
+  tagsShowRefreshTip: 页签条右侧显示刷新当前页按钮
+  tagsShowMore: 更多按钮
+  tagsShowMoreTip: 页签条右侧显示批量操作下拉（关闭、固定等）
   maxTagsCount: 最大数量
   maxTagsCountTip: 超出后自动关闭最早打开的可关闭页签（首页与固定页签除外）；0 表示不限制
   footer: 页脚
@@ -442,17 +471,42 @@ layout:
   transitionFadeUp: 上滑淡入
   transitionFadeDown: 下滑淡入
   transitionFadeScale: 缩放淡入
+  transitionProgress: 顶部进度条
+  transitionProgressTip: 路由切换时顶栏显示加载进度条
+  transitionLoading: 内容区 loading
+  transitionLoadingTip: 首次加载页面时内容区显示加载遮罩（已访问页面瞬时切换不点亮）
+  transitionEffect: 切换效果
   shortcut: 快捷键
+  shortcutEnable: 快捷键开关
+  shortcutEnableTip: 关闭后所有快捷键失效（顶栏按钮不受影响）
   shortcutSearch: 全局搜索
-  shortcutSearchTip: Cmd 或 Ctrl 加 K 唤起命令面板，关闭后仍可点顶栏搜索图标
-  shortcutLock: 锁屏（Alt + L）
+  shortcutSearchTip: 唤起命令面板；关闭后仍可点顶栏搜索图标
+  shortcutLock: 锁屏
   shortcutLockTip: 输入框聚焦时不响应，避免打字误触发
-  shortcutSidebar: 折叠侧栏（Alt + S）
+  shortcutSidebar: 折叠侧栏
   shortcutSidebarTip: 与顶栏折叠按钮等效；移动端同样生效
+  shortcutPreferences: 打开项目配置
+  shortcutPreferencesTip: 快速打开右侧项目配置面板
+  shortcutLogout: 退出登录
+  shortcutLogoutTip: 默认未设置：留空可避免误触退出
+  shortcutUnset: 未设置
+  shortcutRecording: 请按组合键
+  shortcutRecord: 录制快捷键
+  shortcutClear: 清除
+  shortcutReserved: 该组合为浏览器保留键，请换一组
+  shortcutConflict: 该组合已被其它动作占用，请换一组
   copyPreferences: 复制偏好
   copyPreferencesTip: 复制当前完整界面偏好（语言 / 布局 / 主题 / 界面开关），反馈问题时一并贴出
   copyPreferencesSuccess: 界面偏好已复制到剪贴板
   cleanOut: 清空缓存并返回登录页
+  preferencesEntry: 偏好入口
+  enablePreferences: 设置入口
+  enablePreferencesTip: 显示顶栏齿轮或右下角悬浮球入口
+  enablePreferencesOffConfirm: 关闭后设置入口与「打开项目配置」快捷键将隐藏。重新打开：清除浏览器本地存储中的 responsive-configure 键后刷新页面。确认关闭？
+  preferencesPosition: 入口位置
+  preferencesPositionTip: 顶栏齿轮，或右下角悬浮球
+  preferencesPositionHeader: 顶栏
+  preferencesPositionFixed: 悬浮球
   noticeTime: YYYY年MM月DD日 HH:mm:ss
   backTop: 回到顶部
   skipToContent: 跳到主内容

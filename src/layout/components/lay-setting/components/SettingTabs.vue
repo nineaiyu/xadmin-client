@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-// 设置面板内容（按需加载）：三页签「外观 / 布局 / 通用」+ 各设置区块
+// 设置面板内容（按需加载）：四页签「外观 / 布局 / 通用 / 快捷键」+ 各设置区块
 import { ref } from "vue";
 import { useNav } from "@/layout/hooks/useNav";
 import SettingTheme from "./SettingTheme.vue";
@@ -12,10 +12,11 @@ import SettingTabbar from "./SettingTabbar.vue";
 import SettingFooter from "./SettingFooter.vue";
 import SettingGeneral from "./SettingGeneral.vue";
 import SettingAnimation from "./SettingAnimation.vue";
+import SettingShortcut from "./SettingShortcut.vue";
 
 const { t } = useNav();
 
-/** 当前页签：外观（默认）/ 布局 / 通用 */
+/** 当前页签：外观（默认）/ 布局 / 通用 / 快捷键 */
 const activeTab = ref("appearance");
 </script>
 
@@ -35,10 +36,14 @@ const activeTab = ref("appearance");
       <SettingTabbar />
       <SettingFooter />
     </el-tab-pane>
-    <!-- 通用：语言与内容区、快捷键、检查更新、页面切换动画 -->
+    <!-- 通用：语言与内容区、检查更新、页面切换动画 -->
     <el-tab-pane :label="t('layout.tabGeneral')" name="general">
       <SettingGeneral />
       <SettingAnimation />
+    </el-tab-pane>
+    <!-- 快捷键：总开关 + 每动作键位录制 -->
+    <el-tab-pane :label="t('layout.tabShortcut')" name="shortcut">
+      <SettingShortcut />
     </el-tab-pane>
   </el-tabs>
 </template>

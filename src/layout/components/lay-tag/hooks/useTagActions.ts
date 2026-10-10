@@ -92,6 +92,9 @@ export function useTagActions(ctx: TagActionsContext) {
 
   const tagOnClick = createTagOnClick(router);
 
+  /** 刷新当前页：与右键菜单「刷新」同口径（redirect 中转 + keep-alive 重建） */
+  const refreshRoute = () => onClickDrop(0, { disabled: false });
+
   return {
     dynamicRouteTag,
     deleteMenu,
@@ -99,7 +102,8 @@ export function useTagActions(ctx: TagActionsContext) {
     selectTag,
     showMenuModel,
     openMenu,
-    tagOnClick
+    tagOnClick,
+    refreshRoute
   };
 }
 

@@ -2,6 +2,11 @@ import { computed, onBeforeUnmount } from "vue";
 import { onKeyStroke } from "@vueuse/core";
 import { hasAuth } from "@/router/utils";
 import { readConfigurePreferences } from "@/utils/preferences";
+import {
+  matchShortcut,
+  parseShortcut,
+  resolveShortcutKeys
+} from "@/utils/shortcutKeys";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
 import { QUICK_ACTIONS } from "./commandPaletteRegistry";
 import { createNavController } from "./commandPaletteNav";
@@ -84,14 +89,23 @@ export function useCommandPalette(options: CommandPaletteOptions) {
   const stopEnter = onKeyStroke("Enter", nav.handleEnter);
   const stopUp = onKeyStroke("ArrowUp", nav.handleUp);
   const stopDown = onKeyStroke("ArrowDown", nav.handleDown);
-  const stopCmdK = onKeyStroke("k", event => {
-    if (!(event.metaKey || event.ctrlKey)) return;
-    // 快捷键开关（设置面板 →「全局搜索快捷键」）：关闭后仍可从顶栏入口打开面板
-    if (readConfigurePreferences().shortcutSearch === false) return;
-    event.preventDefault();
-    nav.activeNav.value = "";
-    show.value = true;
-  });
+  const stopCmdK = onKeyStroke(
+    (event: KeyboardEvent) => {
+      const prefs = readConfigurePreferences();
+      // 快捷键总开关 / 全局搜索键位关闭后：仍可从顶栏入口打开面板
+      if (prefs.shortcutEnable === false) return;
+      const value = resolveShortcutKeys(
+        prefs.shortcutSearchKeys,
+        prefs.shortcutSearch,
+        "mod+k"
+      );
+      if (!matchShortcut(event, parseShortcut(value))) return;
+      event.preventDefault();
+      nav.activeNav.value = "";
+      show.value = true;
+    },
+    { eventName: "keydown" }
+  );
 
   onBeforeUnmount(() => {
     stopEnter();

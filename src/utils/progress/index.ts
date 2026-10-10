@@ -7,9 +7,14 @@
  * - `done`：直接推到 100% 并淡出（随后隐藏）；
  * - 主题色随 element-plus 的 `--el-color-primary`（含暗色主题），无额外样式文件。
  *
+ * 开关：设置面板 →「通用」→「切换动画」→「顶部进度条」（`transitionProgress`）。
+ * 路由守卫与请求拦截器都会点亮进度条，因此开关判定收敛在本模块的 `start` 内，
+ * 关闭后不再创建/点亮进度条元素（`done` 无害保留）。
+ *
  * 之所以自实现：nprogress 0.2.0 于 2015 年后停更（无类型、无维护），
  * 而本项目只需要「顶栏细进度条」这一点能力，替换成本远低于长期依赖风险。
  */
+import { readConfigurePreferences } from "@/utils/preferences";
 
 type ProgressOptions = {
   /** 初始化时的最小百分比（0-1） */
@@ -84,7 +89,13 @@ function clearTimers() {
   }
 }
 
+/** 顶部进度条开关（设置面板 →「切换动画」）：关闭后 start 为空操作 */
+function progressEnabled(): boolean {
+  return readConfigurePreferences().transitionProgress !== false;
+}
+
 function start() {
+  if (!progressEnabled()) return;
   clearTimers();
   const el = ensureBar();
   el.style.transition = "opacity 200ms linear";

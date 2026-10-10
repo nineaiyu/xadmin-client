@@ -7,10 +7,23 @@ import { useGlobal } from "@pureadmin/utils";
 import { useNav } from "@/layout/hooks/useNav";
 import { useConfigureStorage } from "../hooks/useConfigureStorage";
 import PrefBlock from "./PrefBlock.vue";
+import PrefRow from "./PrefRow.vue";
 
 const { t } = useNav();
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 const { storageConfigureChange } = useConfigureStorage();
+
+/** 路由切换期间的顶部进度条（默认开） */
+const transitionProgress = computed({
+  get: () => $storage?.configure?.transitionProgress ?? true,
+  set: value => storageConfigureChange("transitionProgress", value)
+});
+
+/** 路由切换期间的内容区 loading 遮罩（默认关，仅首次加载页面时点亮） */
+const transitionLoading = computed({
+  get: () => $storage?.configure?.transitionLoading ?? false,
+  set: value => storageConfigureChange("transitionLoading", value)
+});
 
 /** 预设清单（value 与 style/transition.scss 的类名前缀同源） */
 const PRESETS: Array<{ value: PageTransitionType; labelKey: string }> = [
@@ -36,25 +49,56 @@ const pageTransition = computed<PageTransitionType>({
   <PrefBlock
     :title="t('layout.pageTransition')"
     :tip="t('layout.pageTransitionTip')"
+    list
   >
-    <ul class="anim-grid">
-      <li
-        v-for="item in options"
-        :key="item.value"
-        class="anim-card"
-        :class="{ 'is-active': pageTransition === item.value }"
-        :data-transition="item.value"
-        @click="pageTransition = item.value"
-      >
-        <span class="anim-card__stage">
-          <span
-            class="anim-card__block"
-            :class="`anim-card__block--${item.value}`"
-          />
-        </span>
-        <span class="anim-card__label">{{ item.label }}</span>
-      </li>
-    </ul>
+    <PrefRow
+      :label="t('layout.transitionProgress')"
+      :tip="t('layout.transitionProgressTip')"
+    >
+      <template #control>
+        <el-switch
+          v-model="transitionProgress"
+          :active-text="t('labels.active')"
+          :inactive-text="t('labels.inactive')"
+          inline-prompt
+        />
+      </template>
+    </PrefRow>
+    <PrefRow
+      :label="t('layout.transitionLoading')"
+      :tip="t('layout.transitionLoadingTip')"
+    >
+      <template #control>
+        <el-switch
+          v-model="transitionLoading"
+          :active-text="t('labels.active')"
+          :inactive-text="t('labels.inactive')"
+          inline-prompt
+        />
+      </template>
+    </PrefRow>
+    <PrefRow :label="t('layout.transitionEffect')" stack>
+      <template #control>
+        <ul class="anim-grid">
+          <li
+            v-for="item in options"
+            :key="item.value"
+            class="anim-card"
+            :class="{ 'is-active': pageTransition === item.value }"
+            :data-transition="item.value"
+            @click="pageTransition = item.value"
+          >
+            <span class="anim-card__stage">
+              <span
+                class="anim-card__block"
+                :class="`anim-card__block--${item.value}`"
+              />
+            </span>
+            <span class="anim-card__label">{{ item.label }}</span>
+          </li>
+        </ul>
+      </template>
+    </PrefRow>
   </PrefBlock>
 </template>
 

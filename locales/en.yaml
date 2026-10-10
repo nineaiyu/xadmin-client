@@ -364,6 +364,7 @@ layout:
   tabAppearance: Appearance
   tabLayout: Layout
   tabGeneral: General
+  tabShortcut: Shortcuts
   general: General settings
   language: Language
   languageTip: Interface language, the same switch as the one in the header
@@ -413,23 +414,51 @@ layout:
   semiDarkSidebarTip: Keep the sidebar dark in light appearance (dark appearance needs no such option)
   sidebarWidth: Sidebar width
   sidebarWidthTip: Width of the expanded sidebar (160~320px); the collapsed width stays fixed
+  sidebarExpandOnHover: Expand on hover
+  sidebarExpandOnHoverTip: Temporarily expand the collapsed sidebar while hovering; resets on leave (the saved state is untouched)
+  sidebarDraggable: Drag to resize
+  sidebarDraggableTip: Show a drag handle on the sidebar edge; the width is saved on release
   header: Header
   headerFixed: Fixed header
   headerFixedTip: When off, the header (and the tab strip) scrolls with the page
   breadcrumbVisible: Breadcrumb
   breadcrumbVisibleTip: Show the current page path at the left of the header
+  breadcrumbShowIcon: Breadcrumb icons
+  breadcrumbShowIconTip: Show menu icons before breadcrumb items
+  breadcrumbShowHome: Show home
+  breadcrumbShowHomeTip: Prepend a Home item to the breadcrumb
+  breadcrumbHideOnlyOne: Hide when single
+  breadcrumbHideOnlyOneTip: Hide the whole breadcrumb when it only has one item (e.g. home)
+  breadcrumbStyle: Breadcrumb style
+  breadcrumbStyleTip: Plain text or a light background card
+  breadcrumbStyleNormal: Plain
+  breadcrumbStyleBackground: Light
+  breadcrumbHome: Home
   navbarSearch: Menu search
   navbarLanguage: Language switch
   navbarFullscreen: Fullscreen button
   navbarLock: Lock screen button
   navbarLockTip: Show a lock button in the header; unlocking requires the login password
   navbarNotice: Notifications
+  navbarRefresh: Header refresh
+  navbarSidebarToggle: Header sidebar toggle
+  navbarSidebarToggleTip: Same as the sidebar bottom toggle (hidden by default to avoid duplication)
+  navbarThemeToggle: Header theme toggle
+  navbarThemeToggleTip: Switch between light and dark appearance from the header
+  refreshPage: Refresh page
+  sidebarToggle: Toggle sidebar
   tabbar: Tabs
   persistenceTip: Keep opened tabs after a reload (stored locally)
   tagsMiddleClickClose: Middle-click close
   tagsMiddleClickCloseTip: Close a tab with the middle mouse button; pinned tabs are excluded
   tagsWheelSwitch: Wheel scrolling
   tagsWheelSwitchTip: Scroll the tab strip horizontally with the wheel
+  tagsShowIcon: Tab icons
+  tagsShowIconTip: Show menu icons before tab titles
+  tagsShowRefresh: Refresh button
+  tagsShowRefreshTip: Show the refresh-current-page button on the right of the tab bar
+  tagsShowMore: More button
+  tagsShowMoreTip: Show the bulk actions dropdown (close, pin, ...) on the right of the tab bar
   maxTagsCount: Max count
   maxTagsCountTip: Close the earliest closable tab beyond this limit (home and pinned tabs are excluded); 0 means unlimited
   footer: Footer
@@ -443,17 +472,42 @@ layout:
   transitionFadeUp: Fade up
   transitionFadeDown: Fade down
   transitionFadeScale: Fade scale
+  transitionProgress: Top progress bar
+  transitionProgressTip: Show the top loading bar during route changes
+  transitionLoading: Content loading
+  transitionLoadingTip: Show a loading mask in the content area on first page load (already-loaded pages switch instantly)
+  transitionEffect: Transition effect
   shortcut: Shortcut keys
+  shortcutEnable: Enable shortcuts
+  shortcutEnableTip: Turning this off disables all shortcuts (header buttons keep working)
   shortcutSearch: Global search
-  shortcutSearchTip: Cmd or Ctrl plus K opens the command palette; the header icon keeps working
-  shortcutLock: Lock screen (Alt + L)
+  shortcutSearchTip: Opens the command palette; the header icon keeps working when disabled
+  shortcutLock: Lock screen
   shortcutLockTip: Ignored while typing in a form field
-  shortcutSidebar: Toggle sidebar (Alt + S)
+  shortcutSidebar: Toggle sidebar
   shortcutSidebarTip: Same as the header toggle button; works on mobile too
+  shortcutPreferences: Open preferences
+  shortcutPreferencesTip: Open the project preferences panel with one keystroke
+  shortcutLogout: Sign out
+  shortcutLogoutTip: Unset by default to avoid accidental sign-out
+  shortcutUnset: Not set
+  shortcutRecording: Press keys
+  shortcutRecord: Record shortcut
+  shortcutClear: Clear
+  shortcutReserved: Reserved by the browser, please pick another combination
+  shortcutConflict: Already used by another action, please pick another combination
   copyPreferences: Copy preferences
   copyPreferencesTip: Copy the full current UI preferences (locale, layout, theme, switches) to attach to bug reports
   copyPreferencesSuccess: UI preferences copied to the clipboard
   cleanOut: Clear the cache and return the login page
+  preferencesEntry: Preferences entry
+  enablePreferences: Settings entry
+  enablePreferencesTip: Show the header gear or the floating ball at the bottom-right
+  enablePreferencesOffConfirm: Turning this off hides the settings entry and the open-preferences shortcut. To reopen it: clear the responsive-configure key in browser local storage and refresh the page. Turn it off?
+  preferencesPosition: Entry position
+  preferencesPositionTip: The header gear, or a floating ball at the bottom-right
+  preferencesPositionHeader: Header
+  preferencesPositionFixed: Floating ball
   noticeTime: YYYY-MM-DD HH:mm:ss
   backTop: Back Top
   updateCheck: New version detected
