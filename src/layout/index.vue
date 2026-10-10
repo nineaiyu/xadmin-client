@@ -7,8 +7,14 @@ import { useI18n } from "vue-i18n";
 import { useLayout } from "./hooks/useLayout";
 import { useAppStoreHook } from "@/store/modules/app";
 import { useSettingStoreHook } from "@/store/modules/settings";
-import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
+import {
+  useDataThemeChange,
+  useSystemThemeWatch
+} from "@/layout/hooks/useDataThemeChange";
 import { useHeaderAutoHide } from "@/layout/hooks/useHeaderAutoHide";
+import { usePreferenceAttributes } from "@/layout/hooks/usePreferenceAttributes";
+import { useLayoutShortcutKeys } from "@/layout/hooks/useLayoutShortcutKeys";
+import { useLockScreen } from "@/layout/hooks/useLockScreen";
 import {
   computed,
   defineComponent,
@@ -34,6 +40,7 @@ import LayTag from "./components/lay-tag/index.vue";
 import LayNavbar from "./components/lay-navbar/index.vue";
 import LayContent from "./components/lay-content/index.vue";
 import LaySetting from "./components/lay-setting/index.vue";
+import LayLock from "./components/lay-lock/index.vue";
 import LayImpersonation from "./components/lay-impersonation/index.vue";
 import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
 import NavVertical from "./components/lay-sidebar/NavVertical.vue";
@@ -48,10 +55,28 @@ const isMobile = deviceDetection();
 const pureSetting = useSettingStoreHook();
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 
-// 顶栏滚动自动隐藏：仅在固定头模式下有意义（隐藏「顶栏 + 页签条」整块）
-const { hidden: headerHidden } = useHeaderAutoHide(
-  () => pureSetting.fixedHeader
+/** 固定顶栏（设置面板 →「布局」→「顶栏」）：关闭后走非固定头布局，顶栏随内容滚动；
+ *  站点配置（`FixedHeader`）作为兜底默认值 */
+const fixedHeader = computed(
+  () => $storage?.configure?.headerFixed ?? pureSetting.fixedHeader
 );
+
+// 顶栏滚动自动隐藏：开关与「固定顶栏」同时成立才启用（非固定头布局下无固定头部可隐藏）
+const { hidden: headerHidden } = useHeaderAutoHide(
+  () => fixedHeader.value && ($storage?.configure?.headerAutoHide ?? false)
+);
+
+// 圆角 / 字号 / 侧栏宽度 / 灰度色弱 / 半暗侧栏同步到 <html>，随设置面板改动实时生效；
+// 「跟随系统」的常驻监听同样挂在布局层（设置面板按需挂载，不承载常驻副作用）
+usePreferenceAttributes();
+
+// 布局级快捷键：Alt+L 锁屏、Alt+S 折叠侧栏（开关见设置面板「通用」→「快捷键」）
+const { lock } = useLockScreen();
+useLayoutShortcutKeys({
+  lock,
+  toggleSidebar: () => useAppStoreHook().toggleSideBar()
+});
+useSystemThemeWatch();
 
 // 项目设置实时生效：layout/configure 任意设置项变更即防抖自动 PATCH
 // （不再依赖面板里的「保存配置」按钮；首次挂载不触发）
@@ -74,7 +99,7 @@ const set: setType = reactive({
   }),
 
   fixedHeader: computed(() => {
-    return pureSetting.fixedHeader;
+    return fixedHeader.value;
   }),
 
   classes: computed(() => {
@@ -244,6 +269,8 @@ const LayHeader = defineComponent({
     </div>
     <!-- 系统设置 -->
     <LaySetting />
+    <!-- 锁屏遮罩：覆盖整个应用外壳（含设置面板与已打开的弹窗） -->
+    <LayLock />
   </div>
 </template>
 
@@ -252,6 +279,12 @@ const LayHeader = defineComponent({
   position: relative;
   width: 100%;
   height: 100%;
+
+  /* 外壳不参与文档滚动：布局内的滚动一律由内容区/侧栏自己的 el-scrollbar 承担。
+     任何一处溢出（菜单展开、卡片高度误差）都会被计入 html/body 的 scrollHeight，
+     从而给每个页面加上一条常驻纵向滚动条；这里裁剪溢出可一次性消除该类问题。
+     注：overflow: clip 不裁剪 fixed 定位后代（设置面板/顶栏等 teleport 或 fixed 层不受影响） */
+  overflow: clip;
 
   &::after {
     clear: both;

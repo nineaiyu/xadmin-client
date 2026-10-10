@@ -194,4 +194,75 @@ test.describe("暗色模式主题一致性", () => {
     await switchTheme(page, "dark");
     expect(await activeColor()).toBe("rgb(255, 255, 255)");
   });
+
+  test("明暗切换走视图过渡（圆形揭示），不支持时降级为瞬时切换", async ({
+    page
+  }) => {
+    /**
+     * 计数包装 `document.startViewTransition`：圆形揭示是一次性视觉动作，
+     * 动画伪元素转瞬即逝，直接断言动画会随负载抖动；改为断言「切换确实经过
+     * 过渡封装」+「主题仍然切换成功」（降级分支的行为等价性）。
+     *
+     * 计数随页面加载归零（addInitScript 每次导航重跑），切换与取样因此必须在
+     * **同一文档内**完成——不能复用 switchTheme（其收尾 reload 会把计数清零）。
+     */
+    await page.addInitScript(() => {
+      const target = window as unknown as { __vtCalls?: number };
+      target.__vtCalls = 0;
+      const original = document.startViewTransition;
+      if (typeof original !== "function") return;
+      const bound = original.bind(document);
+      document.startViewTransition = ((...args: Parameters<typeof bound>) => {
+        target.__vtCalls = (target.__vtCalls ?? 0) + 1;
+        return bound(...args);
+      }) as typeof document.startViewTransition;
+    });
+
+    const count = () =>
+      page.evaluate(
+        () => (window as unknown as { __vtCalls?: number }).__vtCalls ?? 0
+      );
+
+    await login(page, ADMIN);
+    await switchTheme(page, "light"); // 归一浅色（含 reload，计数归零）
+
+    await page.locator(".set-icon").first().click();
+    const panel = page.locator(".right-panel");
+    await expect(panel).toBeVisible({ timeout: 15_000 });
+
+    const before = await count();
+    await panel
+      .locator(".pure-segmented")
+      .first()
+      .locator(".pure-segmented-item", { hasText: DARK_LABEL })
+      .click();
+    await expect(page.locator("html")).toHaveClass(/dark/, { timeout: 10_000 });
+
+    const supported = await page.evaluate(
+      () => typeof document.startViewTransition === "function"
+    );
+    if (supported) {
+      expect(await count()).toBeGreaterThan(before);
+    }
+
+    // 还原浅色并等服务端落库（面板保持打开：同面板内点击「浅色」；
+    // 不复用 switchTheme —— 其入口 .set-icon 此时被面板遮挡，收尾 reload 也会清零计数）
+    const saved = page
+      .waitForResponse(
+        resp =>
+          resp.request().method() === "PATCH" &&
+          resp.url().includes(SITE_CONFIG_URL) &&
+          /"DarkMode"\s*:\s*false/.test(resp.request().postData() ?? ""),
+        { timeout: 15_000 }
+      )
+      .catch(() => null);
+    await panel
+      .locator(".pure-segmented")
+      .first()
+      .locator(".pure-segmented-item", { hasText: LIGHT_LABEL })
+      .click();
+    await expect(page.locator("html")).not.toHaveClass(/dark/);
+    const response = await saved;
+    await response?.finished().catch(() => null); // 响应体收尾 = 服务端已落库
+  });
 });

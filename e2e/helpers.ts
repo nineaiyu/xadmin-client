@@ -372,3 +372,35 @@ export async function clickPanelAction(panel: Locator, code: string) {
   await expect(action).toBeVisible({ timeout: 10_000 });
   await action.click();
 }
+/**
+ * 打开「项目设置」面板：收起态只是 translate 出视口（DOM 仍在），
+ * 因此按 boundingBox 判定开合并必要时点击顶栏齿轮打开。
+ */
+export async function openSettingPanel(page: Page) {
+  // 仅在当前页面没有设置入口（非布局页，如账户设置）时回退到首页：
+  // 多余的跳转会在 multiTagsCache 关闭时重置标签页，破坏「先开页签再改偏好」的用例
+  const hasTrigger = await page
+    .locator(".set-icon")
+    .first()
+    .isVisible()
+    .catch(() => false);
+  if (!hasTrigger) await page.goto("/#/welcome");
+  await page.locator(".set-icon").first().waitFor({ timeout: 15_000 });
+  const panel = page.locator(".right-panel").first();
+  const width = page.viewportSize()?.width ?? 1280;
+  const box = await panel.boundingBox();
+  if (!box || box.x >= width - 20) {
+    await page.locator(".set-icon").first().click();
+  }
+  await expect(panel).toBeVisible({ timeout: 15_000 });
+  return panel;
+}
+
+/** 切换「项目设置」面板页签（外观 / 布局 / 通用；非活动页签内容不可见） */
+export async function switchSettingTab(page: Page, label: string | RegExp) {
+  const tab = page.locator(".right-panel .el-tabs__item").filter({
+    hasText: label
+  });
+  await tab.first().click();
+  await expect(tab.first()).toHaveClass(/is-active/, { timeout: 10_000 });
+}

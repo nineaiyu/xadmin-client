@@ -373,3 +373,45 @@
     }
   }
 }
+
+/* 拖拽排序：被拖拽项的原位占位（幽灵元素），松手后写回 multiTags */
+.tag-drag-ghost {
+  background: var(--el-fill-color-light) !important;
+  border: 1px dashed var(--el-color-primary-light-5) !important;
+  border-radius: var(--radius-sm);
+  opacity: 0.45;
+}
+
+/* 朴素风格（plain）：激活页签用主色浅底圆角块标识，无下划线、无浏览器页签形状 */
+.tags-view .scroll-container.plain-scroll-container {
+  .scroll-item {
+    padding-right: 22px;
+    margin-right: 4px;
+    border-radius: var(--radius-sm);
+    transition:
+      background-color var(--duration-instant),
+      color var(--duration-instant);
+
+    &:nth-child(1) {
+      margin-left: 4px;
+    }
+
+    &:hover:not(.is-active) {
+      color: var(--el-color-primary);
+      background: var(--el-fill-color-light);
+    }
+
+    &.is-active {
+      background: var(--el-color-primary-light-9);
+      box-shadow: none;
+
+      .tag-title {
+        font-weight: 500;
+      }
+
+      .el-icon-close {
+        color: var(--el-color-primary);
+      }
+    }
+  }
+}

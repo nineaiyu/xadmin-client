@@ -3,7 +3,7 @@
   position: relative;
   z-index: 1;
   flex: 0 0 6px;
-  background: var(--pure-border-color, var(--el-border-color, #dcdfe6));
+  background: var(--divider, var(--el-border-color, #dcdfe6));
   border-radius: 3px;
   background-clip: padding-box;
   transition:

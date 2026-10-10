@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { computed } from "vue";
+import { useGlobal } from "@pureadmin/utils";
 import { useNav } from "@/layout/hooks/useNav";
 import LaySearch from "../lay-search/index.vue";
 import LayNotice from "../lay-notice/index.vue";
 import LayNavMix from "../lay-sidebar/NavMix.vue";
 import LayImpersonationDropdownItem from "../lay-impersonation/ImpersonationDropdownItem.vue";
 import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
+import { useLockScreen } from "@/layout/hooks/useLockScreen";
 import LaySidebarFullScreen from "../lay-sidebar/components/SidebarFullScreen.vue";
 import LaySidebarBreadCrumb from "../lay-sidebar/components/SidebarBreadCrumb.vue";
 import LaySidebarTopCollapse from "../lay-sidebar/components/SidebarTopCollapse.vue";
@@ -12,6 +15,7 @@ import GlobalizationIcon from "@/assets/svg/globalization.svg?component";
 import AccountSettingsIcon from "~icons/ri/user-settings-line";
 import LogoutCircleRLine from "~icons/ri/logout-circle-r-line";
 import Setting from "~icons/ri/settings-3-line";
+import LockIcon from "~icons/ri/lock-2-line";
 import Check from "~icons/ep/check";
 
 const {
@@ -30,6 +34,27 @@ const {
 } = useNav();
 
 const { t, locale, translationCh, translationEn } = useTranslationLang();
+const { $storage } = useGlobal<GlobalPropertiesApi>();
+
+/** 面包屑显隐（设置面板 →「布局」→「顶栏」） */
+const breadcrumbVisible = computed(
+  () => $storage?.configure?.breadcrumbVisible ?? true
+);
+
+/**
+ * 顶栏组件显隐（设置面板 →「布局」→「顶栏」）：缺省全部显示；
+ * 用户下拉与设置入口不参与开关（避免出现无法打开设置面板的死角）。
+ */
+const navbarVisible = computed(() => ({
+  search: $storage?.configure?.navbarSearch ?? true,
+  language: $storage?.configure?.navbarLanguage ?? true,
+  fullscreen: $storage?.configure?.navbarFullscreen ?? true,
+  lock: $storage?.configure?.navbarLock ?? true,
+  notice: $storage?.configure?.navbarNotice ?? true
+}));
+
+/** 一键锁屏（遮罩 + 口令解锁，见 lay-lock） */
+const { lock } = useLockScreen();
 </script>
 
 <template>
@@ -42,7 +67,7 @@ const { t, locale, translationCh, translationEn } = useTranslationLang();
     />
 
     <LaySidebarBreadCrumb
-      v-if="layout !== 'mix' && device !== 'mobile'"
+      v-if="layout !== 'mix' && device !== 'mobile' && breadcrumbVisible"
       class="breadcrumb-container"
     />
 
@@ -50,9 +75,13 @@ const { t, locale, translationCh, translationEn } = useTranslationLang();
 
     <div v-if="layout === 'vertical'" class="vertical-header-right">
       <!-- 菜单搜索 -->
-      <LaySearch id="header-search" />
+      <LaySearch v-if="navbarVisible.search" id="header-search" />
       <!-- 国际化 -->
-      <el-dropdown id="header-translation" trigger="click">
+      <el-dropdown
+        v-if="navbarVisible.language"
+        id="header-translation"
+        trigger="click"
+      >
         <div
           class="globalization-icon navbar-bg-hover hover:[&>svg]:animate-scale-bounce"
           role="button"
@@ -89,9 +118,24 @@ const { t, locale, translationCh, translationEn } = useTranslationLang();
         </template>
       </el-dropdown>
       <!-- 全屏 -->
-      <LaySidebarFullScreen id="full-screen" />
+      <LaySidebarFullScreen v-if="navbarVisible.fullscreen" id="full-screen" />
+      <!-- 锁屏 -->
+      <span
+        v-if="navbarVisible.lock"
+        id="header-lock"
+        class="navbar-bg-hover hover:[&>svg]:animate-scale-bounce"
+        role="button"
+        tabindex="0"
+        :title="t('layout.lockScreen')"
+        :aria-label="t('layout.lockScreen')"
+        @click="lock"
+        @keydown.enter.prevent="lock"
+        @keydown.space.prevent="lock"
+      >
+        <IconifyIconOffline :icon="LockIcon" />
+      </span>
       <!-- 消息通知 -->
-      <LayNotice id="header-notice" />
+      <LayNotice v-if="navbarVisible.notice" id="header-notice" />
       <!-- 退出登录 -->
       <el-dropdown trigger="click">
         <span

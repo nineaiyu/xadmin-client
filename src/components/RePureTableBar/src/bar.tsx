@@ -399,7 +399,7 @@ export default defineComponent({
                               >
                                 <span
                                   title={transformI18n(item)}
-                                  class="inline-block w-30 truncate hover:text-text_color_primary"
+                                  class="inline-block w-30 truncate hover:text-fg"
                                 >
                                   {transformI18n(item)}
                                 </span>

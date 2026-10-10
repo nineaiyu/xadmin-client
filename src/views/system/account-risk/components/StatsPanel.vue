@@ -42,7 +42,7 @@ defineProps<{
 /* 与页面提示条同风格：浅底 + 描边的轻量横条，不与表格主体争视觉 */
 .risk-stats {
   background: var(--el-fill-color-light);
-  border: 1px solid var(--pure-border-color);
+  border: 1px solid var(--divider);
   border-radius: 4px;
 }
 </style>

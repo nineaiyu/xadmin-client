@@ -62,8 +62,9 @@ export function createTagsViews(tagCount: number) {
       show: true
     },
     {
+      // 最大化 / 还原：文本与图标随全屏态在 showMenuModel / onContentFullScreen 中更新
       icon: Fullscreen,
-      text: $t("buttons.contentFullScreen"),
+      text: $t("buttons.maximize"),
       divided: true,
       disabled: false,
       show: true

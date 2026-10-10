@@ -13,6 +13,7 @@ import { useUserStoreHook } from "@/store/modules/user";
 import type { RouteConfigs } from "@/layout/types";
 import { isUrl, openLink, cloneDeep, isAllEmpty } from "@pureadmin/utils";
 import { clearRouteSnapshot } from "@/utils/routeSnapshot";
+import { readConfigurePreferences } from "@/utils/preferences";
 import {
   getTopMenu,
   initRouter,
@@ -93,7 +94,8 @@ router.beforeEach((to: ToRouteType, _from) => {
   }
   const refresh = getRefreshToken();
   const externalLink = isUrl(to?.name as string);
-  if (!externalLink) {
+  // 动态标题关闭时保持平台标题不随路由变化（偏好在设置面板 →「动态标题」）
+  if (!externalLink && readConfigurePreferences().dynamicTitle !== false) {
     to.matched.some(item => {
       if (!item.meta.title) return "";
       const Title = getConfig().Title;

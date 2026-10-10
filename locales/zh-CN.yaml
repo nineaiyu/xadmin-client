@@ -334,15 +334,38 @@ layout:
   unfold: 点击展开
   searchPlaceholder: 搜索菜单（中文模式下支持拼音搜索）
   theme: 主题模式
+  themeDesc: 亮暗外观，可跟随系统
   menuLayout: 菜单布局
   leftMode: 左侧菜单，亲切熟悉
   topMode: 顶部菜单，简洁概览
   mixedMode: 混合菜单，灵活多变
+  menuLayoutVertical: 侧边栏
+  menuLayoutHorizontal: 顶部
+  menuLayoutMix: 混合
   themeColor: 主题色
+  themeColorDesc: 预设色板或自定义取色，实时生效
+  themeColorCustom: 自定义主色
+  themeColorCustomTip: 取任意颜色作为主色（只改主色与派生色阶，不改变导航皮肤）
+  themeColorNames:
+    light: 亮白
+    default: 默认
+    saucePurple: 紫罗兰
+    pink: 深粉
+    dusk: 猩红
+    volcano: 橙红
+    mingQing: 绿宝石
+    auroraGreen: 酸橙
+    geekblue: 极客蓝
+    gold: 金盏黄
+    lime: 青柠
+    brown: 咖褐
+    custom: 自定义
   tabAppearance: 外观
   tabLayout: 布局
   tabGeneral: 通用
   general: 通用设置
+  language: 语言
+  languageTip: 界面语言，与顶栏语言切换为同一入口
   headerAutoHide: 顶栏自动隐藏
   headerAutoHideTip: 向下滚动自动收起顶栏，向上滚动恢复
   compactMode: 紧凑模式
@@ -355,9 +378,80 @@ layout:
   sidebarLogo: 侧边栏Logo
   labelPersistence: 标签页持久化
   labelStyle: 标签风格
+  tagsStylePlain: 朴素风格
+  tagsStylePlainTip: 去底色与卡片边，激活页签用主色浅底圆角块标识
   tagsStyleCard: 卡片
   tagsStyleSmart: 灵动
   tagsStyleChrome: 谷歌
+  displayEffect: 显示效果
+  greyModeTip: 整站转为灰度，便于核对对比度或打印观感
+  colorWeakModeTip: 反色补偿，缓解色弱用户辨识困难
+  radius: 圆角
+  radiusTip: 统一缩放卡片、按钮、输入框的圆角（设计令牌档位）
+  radiusNone: 无
+  radiusSmall: 小
+  radiusDefault: 默认
+  radiusLarge: 大
+  radiusXlarge: 特大
+  fontSize: 字号
+  fontSizeTip: 缩放全站文字大小；根字号与控件高度、间距不变
+  fontSmall: 小
+  fontDefault: 默认
+  fontLarge: 大
+  fontCustom: 自定义
+  fontSizeScale: 字号档位
+  fontCustomSize: 基准字号
+  sidebar: 侧边栏
+  sidebarAccordion: 手风琴展开
+  sidebarAccordionTip: 同级菜单只保留一项展开
+  sidebarCollapseButton: 折叠按钮
+  sidebarCollapseButtonTip: 显示侧栏底部的折叠与展开按钮
+  semiDarkSidebar: 半暗侧栏
+  semiDarkHeader: 半暗顶栏
+  semiDarkHeaderTip: 浅色外观下顶栏用深色调色板（暗色外观本身即深色，无需此档）
+  semiDarkSidebarTip: 浅色外观下让侧栏保持深色（深色外观本身即深色，无需此档）
+  sidebarWidth: 侧栏宽度
+  sidebarWidthTip: 侧栏展开时的宽度（160~320px），折叠宽度不随之变化
+  header: 顶栏
+  headerFixed: 固定顶栏
+  headerFixedTip: 关闭后顶栏随页面一起滚动（页签条同步跟随）
+  breadcrumbVisible: 面包屑
+  breadcrumbVisibleTip: 顶栏左侧显示当前页面的路径导航
+  navbarSearch: 菜单搜索
+  navbarLanguage: 语言切换
+  navbarFullscreen: 全屏按钮
+  navbarLock: 锁屏按钮
+  navbarLockTip: 顶栏显示一键锁屏按钮，锁屏后需输入登录密码解锁
+  navbarNotice: 消息通知
+  tabbar: 页签
+  persistenceTip: 刷新后保留已打开的页签（写入本地存储）
+  tagsMiddleClickClose: 中键关闭
+  tagsMiddleClickCloseTip: 鼠标中键点击页签即关闭，固定标签不受影响
+  tagsWheelSwitch: 滚轮滚动
+  tagsWheelSwitchTip: 在页签条上滚动滚轮横向浏览
+  maxTagsCount: 最大数量
+  maxTagsCountTip: 超出后自动关闭最早打开的可关闭页签（首页与固定页签除外）；0 表示不限制
+  footer: 页脚
+  dynamicTitle: 动态标题
+  dynamicTitleTip: 浏览器标题随当前页面变化
+  pageTransition: 切换动画
+  pageTransitionTip: 页面切换的过渡效果，单个路由可单独覆盖
+  transitionNone: 关闭
+  transitionFadeTransform: 横向滑动
+  transitionFadeSlide: 淡入滑动
+  transitionFadeUp: 上滑淡入
+  transitionFadeDown: 下滑淡入
+  transitionFadeScale: 缩放淡入
+  shortcut: 快捷键
+  shortcutSearch: 全局搜索
+  shortcutSearchTip: Cmd 或 Ctrl 加 K 唤起命令面板，关闭后仍可点顶栏搜索图标
+  shortcutLock: 锁屏（Alt + L）
+  shortcutLockTip: 输入框聚焦时不响应，避免打字误触发
+  shortcutSidebar: 折叠侧栏（Alt + S）
+  shortcutSidebarTip: 与顶栏折叠按钮等效；移动端同样生效
+  copyPreferences: 复制偏好
+  copyPreferencesTip: 复制当前完整界面偏好（语言 / 布局 / 主题 / 界面开关），反馈问题时一并贴出
+  copyPreferencesSuccess: 界面偏好已复制到剪贴板
   cleanOut: 清空缓存并返回登录页
   noticeTime: YYYY年MM月DD日 HH:mm:ss
   backTop: 回到顶部
@@ -382,6 +476,26 @@ layout:
   fixedTip: 紧凑页面，轻松找到所需信息
   customization: 自定义
   customTip: 最小1280、最大1600
+  fluid: 流式
+  fluidTip: 内容区占满可用宽度，宽表页更从容
+  fixedWidth: 定宽
+  fixedWidthTip: 内容区居中并限制最大宽度，阅读更聚焦
+  pageWidthMode: 页宽模式
+  pageWidthSize: 内容宽度
+  about: 关于
+  currentVersion: 当前版本
+  checkUpdate: 检查更新
+  checkUpdateTip: 拉取部署端版本文件与本地版本比对
+  checkUpdateLatest: 已是最新版本
+  checkUpdateFound: 发现新版本 {version}
+  checkUpdateFailed: 检查更新失败，请稍后重试
+  lockScreen: 锁屏
+  lockScreenTip: 锁屏后界面被遮挡，需输入登录密码解锁
+  lockScreenPlaceholder: 请输入登录密码解锁
+  lockScreenUnlock: 解锁
+  lockScreenLocked: 已锁定
+  lockScreenPasswordError: 密码不正确
+  lockScreenBack: 返回登录页
   saveConfig: 保存
   saveConfigTip: 将当前项目配置保存到服务器
   resetConfig: 重置
@@ -731,8 +845,8 @@ buttons:
   closeRightTabs: 关闭右侧标签页
   closeOtherTabs: 关闭其他标签页
   closeAllTabs: 关闭全部标签页
-  contentFullScreen: 内容区全屏
-  contentExitFullScreen: 内容区退出全屏
+  maximize: 最大化
+  restoreMaximize: 还原
   pinTab: 固定标签
   unpinTab: 取消固定
   openInNewWindow: 新窗口打开

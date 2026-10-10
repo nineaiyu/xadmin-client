@@ -1,0 +1,26 @@
+/* ================ 半暗顶栏（设置面板 →「布局」→「顶栏」→「半暗顶栏」） ================
+   浅色外观下顶栏保持深色调色板（内容区与页签条维持浅色，与 vben 的 semiDarkHeader 口径一致）。
+   - 底色：`.navbar` 浅色态由 Tailwind `bg-white` 给色；本文件不在 Tailwind 的
+     `@layer utilities` 内，选择器特异性（html + 3 个类）也更高，直接声明即可覆盖；
+   - 文字/图标：顶栏内多处文字色是硬编码 `#000000d9`（.vertical-header-right /
+     .el-dropdown-link），一并改为深底上的浅色；图标用 currentColor 自动跟随；
+   - hover：`.navbar-bg-hover` 只在暗色态给 hover 底色，深色顶栏下需补一层浅色叠加；
+   - 暗色外观本身即深色，`:not(.dark)` 让该类自动失效。 */
+html.semi-dark-header:not(.dark) {
+  .navbar {
+    color: rgb(254 254 254 / 85%);
+    background: #1d2b45;
+
+    .hamburger-container,
+    .breadcrumb-container,
+    .vertical-header-right,
+    .vertical-header-right .el-dropdown-link,
+    .el-dropdown-link {
+      color: rgb(254 254 254 / 85%);
+    }
+
+    .navbar-bg-hover:hover {
+      background: rgb(255 255 255 / 12%);
+    }
+  }
+}

@@ -20,10 +20,13 @@ export const injectResponsiveStorage = (app: App, config: PlatformConfigs) => {
         darkMode: config.DarkMode ?? false,
         sidebarStatus: config.SidebarStatus ?? true,
         epThemeColor: config.EpThemeColor ?? DEFAULT_EP_THEME_COLOR,
-        themeColor: config.Theme ?? "light", // 主题色（对应项目配置中的主题色，与theme不同的是它不会受到浅色、深色整体风格切换的影响，只会在手动点击主题色时改变）
+        // 主题色（手点主题色，预设名或 custom）：与 theme（导航皮肤）分离持久化，
+        // 缺省回落 Theme，保证历史数据与未改动状态取值不变
+        themeColor: config.ThemeColor ?? config.Theme ?? "light",
         themeMode: config.ThemeMode ?? "light" // 整体风格（浅色：light、深色：dark、自动：system）
       },
-      // 项目配置-界面显示
+      // 项目配置-界面显示：新增键必须同步登记（platform-config.json、本文件、
+      // useLayout.initStorage、siteConfig 读/写、后端 WEB_SITE_CONFIG 种子 + 类型）
       configure: {
         grey: config.Grey ?? false,
         weak: config.Weak ?? false,
@@ -32,7 +35,32 @@ export const injectResponsiveStorage = (app: App, config: PlatformConfigs) => {
         showLogo: config.ShowLogo ?? true,
         tagsStyle: config.TagsStyle ?? "chrome",
         multiTagsCache: config.MultiTagsCache ?? false,
-        stretch: config.Stretch ?? false
+        stretch: config.Stretch ?? false,
+        headerAutoHide: config.HeaderAutoHide ?? false,
+        compactMode: config.CompactMode ?? false,
+        radius: config.Radius ?? "default",
+        fontScale: config.FontScale ?? "default",
+        fontScaleCustom: config.FontScaleCustom ?? 14,
+        sidebarAccordion: config.SidebarAccordion ?? true,
+        sidebarCollapseButton: config.SidebarCollapseButton ?? true,
+        semiDarkSidebar: config.SemiDarkSidebar ?? false,
+        semiDarkHeader: config.SemiDarkHeader ?? false,
+        sidebarWidth: config.SidebarWidth ?? 210,
+        headerFixed: config.HeaderFixed ?? true,
+        breadcrumbVisible: config.BreadcrumbVisible ?? true,
+        maxTagsCount: config.MaxTagsCount ?? 0,
+        navbarSearch: config.NavbarSearch ?? true,
+        navbarLanguage: config.NavbarLanguage ?? true,
+        navbarFullscreen: config.NavbarFullscreen ?? true,
+        navbarLock: config.NavbarLock ?? true,
+        navbarNotice: config.NavbarNotice ?? true,
+        tagsMiddleClickClose: config.TagsMiddleClickClose ?? true,
+        tagsWheelSwitch: config.TagsWheelSwitch ?? true,
+        dynamicTitle: config.DynamicTitle ?? true,
+        pageTransition: config.PageTransition ?? "fade-transform",
+        shortcutSearch: config.ShortcutSearch ?? true,
+        shortcutLock: config.ShortcutLock ?? true,
+        shortcutSidebar: config.ShortcutSidebar ?? true
       }
     },
     config.MultiTagsCache

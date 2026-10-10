@@ -121,7 +121,7 @@ function avatarText(peer: ChatPeer) {
 
 <template>
   <div
-    class="flex h-full flex-col border-0 border-r border-solid border-(--pure-border-color)"
+    class="flex h-full flex-col border-0 border-r border-solid border-(--divider)"
   >
     <div class="p-3">
       <el-input

@@ -292,7 +292,7 @@ defineExpose({ reload: load });
         }}</span>
         <span
           v-if="!activeName && rows.length"
-          class="ml-1 text-xs text-text_color_secondary"
+          class="ml-1 text-xs text-fg-subtle"
         >
           ({{ rows.length }})
         </span>

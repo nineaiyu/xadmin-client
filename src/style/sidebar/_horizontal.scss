@@ -3,7 +3,7 @@
 body[layout="horizontal"] {
   $sideBarWidth: 0;
 
-  @include merge-style($sideBarWidth);
+  @include merge-style($sideBarWidth, 0);
 
   .el-menu {
     --el-menu-hover-text-color: var(--pure-theme-menu-text) !important;

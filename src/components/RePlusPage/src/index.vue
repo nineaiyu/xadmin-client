@@ -17,10 +17,8 @@ import { PlusSearch, type RecordType } from "plus-pro-components";
 import type { ComponentSize } from "element-plus";
 import type { BaseApi } from "@/api/base";
 import { useTableLayout } from "./utils/useTableLayout";
-import {
-  DEFAULT_ADAPTIVE_OFFSET_BOTTOM,
-  useTableMeasure
-} from "./utils/useTableMeasure";
+import { useTableMeasure } from "./utils/useTableMeasure";
+import { DEFAULT_ADAPTIVE_OFFSET_BOTTOM } from "./utils/tableMeasureMath";
 import { resolveOperationRow as resolveOperationRowUtil } from "./utils/operationRow";
 import { useSearchCardCollapse } from "./utils/useSearchCardCollapse";
 import { useListMetaWarning } from "./utils/useListMetaWarning";
@@ -286,7 +284,7 @@ defineExpose({
       v-if="api?.fields"
       ref="searchCardRef"
       :class="[
-        're-plus-search-card bg-bg_color w-99/100 px-6 py-3',
+        're-plus-search-card bg-bg-card w-99/100 px-6 py-3',
         { 're-plus-search-card--pending': !searchMetaReady }
       ]"
     >
@@ -336,7 +334,7 @@ defineExpose({
                 v-motion-fade
                 class="bg-(--el-fill-color-light) w-40 h-10 m-2 pl-4 flex items-center rounded-md"
               >
-                <span class="text-text_color_secondary" style="font-size: 14px">
+                <span class="text-fg-subtle" style="font-size: 14px">
                   {{ t("buttons.selected", { count: selectedNum }) }}
                 </span>
                 <el-button text type="primary" @click="onSelectionCancel">
@@ -463,20 +461,17 @@ defineExpose({
 
 <style scoped lang="scss">
 /* 搜索卡片高度占位（体验基线 U1 / CLS 主因修复）：**仅在列元数据到达前生效**。
-   搜索列元数据随列表首包（with_meta=1）到达，此前卡片只渲染按钮行（56px），
-   到达后叠加一行字段（+50px）；同帧还伴随 el-table 列宽首绘与自适应高度重算，
-   中间帧会被真实绘制（表头换行 155px → 41px 的瞬态位移）。
-   数值 = py-3(12+12) + 按钮行(32) + 行间距与字段行(50) = 106px；
-   字段多于一行（窄屏 2 行）时自然更高，仅预留下限、不影响布局。
-   元数据到达后必须撤掉占位改由内容自适应：字段与按钮同行的页面实际约 74px，
-   固定 106px 会在卡片底部留出可见空白（2026-09-18 反馈回归修复）。 */
+   搜索列元数据随列表首包（with_meta=1）到达，此前卡片只渲染按钮行（56px），到达后
+   叠加一行字段（+50px），同帧还伴随 el-table 列宽首绘与自适应高度重算，中间帧会被
+   真实绘制（表头换行 155px → 41px 的瞬态位移）。数值 = py-3(24) + 按钮行(32) + 行间距
+   与字段行(50) = 106px，作为下限；元数据到达后必须撤掉占位改由内容自适应——字段与按钮
+   同行的页面实际约 74px，固定 106px 会在卡片底部留出可见空白（2026-09-18 回归修复）。 */
 .re-plus-search-card--pending {
   min-height: 106px;
 }
 
-/* 列表页卡片化：搜索卡与表格区统一应用外观层的卡片体系（圆角 / 描边 / 静态阴影，
-   取值同源设计令牌），与个人中心等手写面板的「内容纸」观感一致。
-   全屏态铺满视口时撤除描边与圆角，避免四边露出边框线。 */
+/* 列表页卡片化：搜索卡与表格区统一应用外观层卡片体系（圆角 / 描边 / 静态阴影，
+   取值同源设计令牌）；全屏态铺满视口时撤除描边与圆角，避免四边露出边框线。 */
 .re-plus-search-card,
 .re-plus-table-card {
   border: var(--card-border);
@@ -494,8 +489,8 @@ defineExpose({
   box-shadow: none;
 }
 
-/* 列首帧隐藏（同上）：el-table 列宽在 rAF 内才落位，隐藏这一两帧即可
-   消除「表头换行 → 回弹」的瞬态位移；visibility 保留占位、不影响自适应高度测量 */
+/* 列首帧隐藏（同上）：el-table 列宽在 rAF 内才落位，隐藏这一两帧即可消除
+   「表头换行 → 回弹」的瞬态位移；visibility 保留占位、不影响自适应高度测量 */
 .re-plus-table-layout-pending {
   visibility: hidden;
 }

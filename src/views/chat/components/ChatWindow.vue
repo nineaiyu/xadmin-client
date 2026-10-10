@@ -352,7 +352,7 @@ watch(
     <template #composer>
       <div
         v-if="mentionCandidates.length"
-        class="mb-2 rounded border border-solid border-(--pure-border-color) p-1"
+        class="mb-2 rounded border border-solid border-(--divider) p-1"
       >
         <div
           v-for="peer in mentionCandidates"

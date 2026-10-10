@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { login } from "./helpers";
+import { login, switchSettingTab } from "./helpers";
 
 /**
  * 项目设置实时生效（不再有「保存配置」按钮）：
@@ -38,6 +38,8 @@ test("项目设置实时生效并自动保存（灰色模式）", async ({ page 
   await setIcon.click();
   const panel = page.locator(".right-panel");
   await expect(panel).toBeVisible();
+  // 灰色模式位于「外观」页签（首个页签，显式切换以防默认页签变化）
+  await switchSettingTab(page, /外观|Appearance/);
   // 「保存配置」按钮已移除（改动实时生效）
   await expect(
     panel.getByRole("button", { name: /保存配置|Save config/ })
@@ -83,6 +85,7 @@ test("项目设置实时生效并自动保存（灰色模式）", async ({ page 
 
   // 收尾：关闭灰色模式并等待自动保存落库（避免影响其他用例）
   await page.locator(".set-icon").click();
+  await switchSettingTab(page, /外观|Appearance/);
   const restore = page.waitForRequest(SITE_CONFIG_PATCH);
   await page
     .locator(".right-panel li")

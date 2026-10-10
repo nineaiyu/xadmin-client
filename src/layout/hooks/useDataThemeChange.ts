@@ -1,4 +1,4 @@
-import { ref } from "vue";
+import { onMounted, onUnmounted, ref } from "vue";
 import { useLayout } from "./useLayout";
 import { useEpThemeStoreHook } from "@/store/modules/epTheme";
 import { useGlobal } from "@pureadmin/utils";
@@ -22,13 +22,14 @@ export function useDataThemeChange() {
   const themeMode = ref<string>($storage?.layout?.themeMode ?? "");
   const body = document.documentElement as HTMLElement;
 
-  const { setEpThemeColor, setLayoutThemeColor } = createThemeColorScheme({
-    layoutTheme,
-    layout,
-    dataTheme,
-    themeMode,
-    storage: $storage
-  });
+  const { setEpThemeColor, setLayoutThemeColor, setCustomThemeColor } =
+    createThemeColorScheme({
+      layoutTheme,
+      layout,
+      dataTheme,
+      themeMode,
+      storage: $storage
+    });
 
   /**
    * 浅色、深色整体风格切换。
@@ -66,6 +67,36 @@ export function useDataThemeChange() {
     toggleClass,
     dataThemeChange,
     setEpThemeColor,
-    setLayoutThemeColor
+    setLayoutThemeColor,
+    setCustomThemeColor
   };
+}
+
+/**
+ * 「跟随系统」的常驻监听：操作系统明暗变化时即时应用（仅 `themeMode === "system"` 生效）。
+ *
+ * 挂在布局层而非设置面板内——面板内容按需挂载（打开时才渲染），监听若随面板卸载
+ * 会丢；模式判定读 `$storage.layout.themeMode`（面板改动写入同一处，避免快照过期）。
+ */
+export function useSystemThemeWatch() {
+  const { $storage } = useGlobal<GlobalPropertiesApi>();
+  const mediaQueryList = window.matchMedia("(prefers-color-scheme: dark)");
+
+  function applySystemTheme() {
+    if (($storage?.layout?.themeMode ?? "") !== "system") return;
+    const { dataTheme, dataThemeChange } = useDataThemeChange();
+    dataTheme.value = mediaQueryList.matches;
+    dataThemeChange("system");
+  }
+
+  onMounted(() => {
+    applySystemTheme();
+    mediaQueryList.addEventListener("change", applySystemTheme);
+  });
+
+  onUnmounted(() =>
+    mediaQueryList.removeEventListener("change", applySystemTheme)
+  );
+
+  return { applySystemTheme };
 }

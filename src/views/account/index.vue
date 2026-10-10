@@ -67,7 +67,7 @@ const switchPane = (key: string) => {
     >
       <template #paneL>
         <div
-          class="pure-account-settings h-full overflow-hidden px-2 dark:bg-(--el-bg-color)! border-r border-(--pure-border-color)"
+          class="pure-account-settings h-full overflow-hidden px-2 dark:bg-(--el-bg-color)! border-r border-(--divider)"
         >
           <AccountSidebar
             :current-pane="currentPane"
@@ -90,7 +90,7 @@ const switchPane = (key: string) => {
     <el-aside
       v-if="isOpen"
       width="180px"
-      class="pure-account-settings overflow-hidden px-2 dark:bg-(--el-bg-color)! border-r border-(--pure-border-color)"
+      class="pure-account-settings overflow-hidden px-2 dark:bg-(--el-bg-color)! border-r border-(--divider)"
     >
       <AccountSidebar
         :current-pane="currentPane"

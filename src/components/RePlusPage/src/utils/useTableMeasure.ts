@@ -1,4 +1,10 @@
 import { onMounted, onUnmounted, ref, type Ref } from "vue";
+import {
+  DEFAULT_ADAPTIVE_OFFSET_BOTTOM,
+  MIN_ADAPTIVE_TABLE_HEIGHT,
+  correctHeightByOverflow,
+  resolvePageOverflow
+} from "./tableMeasureMath";
 
 /**
  * 表格自适应高度与可视区宽度测量（含根节点 ResizeObserver）。
@@ -8,9 +14,6 @@ import { onMounted, onUnmounted, ref, type Ref } from "vue";
  * 挤出视口造成页面级滚动条。这里观察根节点高度变化后重算高度；可视区宽度供
  * 固定操作列宽度对齐使用（见 useTableLayout）。
  */
-/** 自适应高度底部预留缺省值：按「列表页直铺」口径实测得出 */
-export const DEFAULT_ADAPTIVE_OFFSET_BOTTOM = 110;
-
 export function useTableMeasure(
   rootRef: Ref<HTMLElement | undefined>,
   /** 底部预留（px）取值函数：缺省 110 为「列表页直铺」口径，页面经
@@ -35,8 +38,9 @@ export function useTableMeasure(
    * 期望高度只依赖表格顶部位置（与当前高度无关），写定后不再变化，
    * 因此不会与 ResizeObserver 形成收缩/放开的振荡循环。
    */
-  const MIN_ADAPTIVE_TABLE_HEIGHT = 260;
   let adaptiveRaf = 0;
+  /** 自校正剩余轮次：溢出 → 回收 → 复测，最多两轮，避免与根 ResizeObserver 互推 */
+  let correctPasses = 0;
 
   const applyAdaptiveTableHeight = () => {
     cancelAnimationFrame(adaptiveRaf);
@@ -47,12 +51,27 @@ export function useTableMeasure(
       if (!table || !table.isConnected) return;
       const rect = table.getBoundingClientRect();
       if (!rect.height) return;
-      const desired = Math.round(
-        window.innerHeight - rect.top - resolveOffsetBottom()
+      // 1px 余量 + 按滚动容器实测溢出自校正：宁可少 1px，也不让内容区出现常驻滚动条
+      const desired =
+        Math.round(window.innerHeight - rect.top - resolveOffsetBottom()) - 1;
+      const overflow = resolvePageOverflow(table);
+      const next = correctHeightByOverflow(
+        Math.max(MIN_ADAPTIVE_TABLE_HEIGHT, desired),
+        overflow
       );
-      const next = Math.max(MIN_ADAPTIVE_TABLE_HEIGHT, desired);
-      if (Math.abs(rect.height - next) <= 1) return;
+      if (Math.abs(rect.height - next) <= 1) {
+        // 已收敛：允许下一轮重新自校正
+        correctPasses = 0;
+        return;
+      }
       table.style.height = `${next}px`;
+      // 写高后复测一轮：首次测量拿到的溢出不包含本轮写入的影响
+      if (overflow > 1 && correctPasses < 2) {
+        correctPasses += 1;
+        applyAdaptiveTableHeight();
+      } else {
+        correctPasses = 0;
+      }
     });
   };
 

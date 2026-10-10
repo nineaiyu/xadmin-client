@@ -95,7 +95,7 @@ export default defineComponent({
         "rounded-sm",
         "outline-hidden",
         "cursor-pointer",
-        "hover:bg-fill_color"
+        "hover:bg-fill"
       ];
     });
 

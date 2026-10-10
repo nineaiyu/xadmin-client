@@ -128,7 +128,7 @@ async function recall(item: ChatMessageItem) {
 <template>
   <div
     ref="pageRef"
-    class="chat-page flex overflow-hidden bg-bg_color"
+    class="chat-page flex overflow-hidden bg-bg-card"
     :style="{ height: `${panelHeight}px`, minHeight: `${panelMinHeight}px` }"
     data-testid="chat-page"
   >

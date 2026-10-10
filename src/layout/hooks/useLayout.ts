@@ -4,6 +4,7 @@ import { routerArrays } from "../types";
 import { useGlobal } from "@pureadmin/utils";
 import { useMultiTagsStore } from "@/store/modules/multiTags";
 import { DEFAULT_EP_THEME_COLOR } from "@/utils/themeConstants";
+import { applyPreferenceAttributes } from "./usePreferenceAttributes";
 
 export function useLayout() {
   const { $storage, $config } = useGlobal<GlobalPropertiesApi>();
@@ -29,11 +30,12 @@ export function useLayout() {
         darkMode: $config?.DarkMode ?? false,
         sidebarStatus: $config?.SidebarStatus ?? true,
         epThemeColor: $config?.EpThemeColor ?? DEFAULT_EP_THEME_COLOR,
-        themeColor: $config?.Theme ?? "light",
+        /** 手点主题色（预设名或 custom）：缺省回落导航皮肤名 */
+        themeColor: $config?.ThemeColor ?? $config?.Theme ?? "light",
         themeMode: $config?.ThemeMode ?? "light"
       };
     }
-    /** 灰色模式、色弱模式、隐藏标签页 */
+    /** 界面显示与交互偏好（缺省值见 public/platform-config.json 与后端 WEB_SITE_CONFIG 种子） */
     if (!$storage.configure) {
       $storage.configure = {
         grey: $config?.Grey ?? false,
@@ -45,9 +47,34 @@ export function useLayout() {
         multiTagsCache: $config?.MultiTagsCache ?? false,
         stretch: $config?.Stretch ?? false,
         headerAutoHide: $config?.HeaderAutoHide ?? false,
-        compactMode: $config?.CompactMode ?? false
+        compactMode: $config?.CompactMode ?? false,
+        radius: $config?.Radius ?? "default",
+        fontScale: $config?.FontScale ?? "default",
+        fontScaleCustom: $config?.FontScaleCustom ?? 14,
+        sidebarAccordion: $config?.SidebarAccordion ?? true,
+        sidebarCollapseButton: $config?.SidebarCollapseButton ?? true,
+        semiDarkSidebar: $config?.SemiDarkSidebar ?? false,
+        semiDarkHeader: $config?.SemiDarkHeader ?? false,
+        sidebarWidth: $config?.SidebarWidth ?? 210,
+        headerFixed: $config?.HeaderFixed ?? true,
+        breadcrumbVisible: $config?.BreadcrumbVisible ?? true,
+        maxTagsCount: $config?.MaxTagsCount ?? 0,
+        navbarSearch: $config?.NavbarSearch ?? true,
+        navbarLanguage: $config?.NavbarLanguage ?? true,
+        navbarFullscreen: $config?.NavbarFullscreen ?? true,
+        navbarLock: $config?.NavbarLock ?? true,
+        navbarNotice: $config?.NavbarNotice ?? true,
+        tagsMiddleClickClose: $config?.TagsMiddleClickClose ?? true,
+        tagsWheelSwitch: $config?.TagsWheelSwitch ?? true,
+        dynamicTitle: $config?.DynamicTitle ?? true,
+        pageTransition: $config?.PageTransition ?? "fade-transform",
+        shortcutSearch: $config?.ShortcutSearch ?? true,
+        shortcutLock: $config?.ShortcutLock ?? true,
+        shortcutSidebar: $config?.ShortcutSidebar ?? true
       };
     }
+    /** 圆角 / 字号档位落到 <html> 属性（登录页等无布局页面同样生效） */
+    applyPreferenceAttributes($storage.configure);
   };
 
   /** 清空缓存后从platform-config.json读取默认配置并赋值到storage中 */

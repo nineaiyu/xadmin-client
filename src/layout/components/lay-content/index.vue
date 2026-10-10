@@ -26,6 +26,11 @@ const isKeepAlive = computed(() => {
 /** 内容区紧凑模式（项目设置 →「通用」）：留白收紧一档并居中限宽 */
 const compactMode = computed(() => Boolean($storage?.configure?.compactMode));
 
+/** 页面切换动画预设（项目设置 →「通用」→「切换动画」） */
+const globalTransition = computed(
+  () => $storage?.configure?.pageTransition ?? "fade-transform"
+);
+
 /** 路由过渡配置：pure-admin 的 meta.transition 为对象（name/enterTransition/leaveTransition） */
 interface RouteTransition {
   name?: string;
@@ -115,13 +120,17 @@ const transitionMain = defineComponent({
   },
   render() {
     const transition = transitions.value(this.route);
-    const transitionName = transition?.name || "fade-transform";
+    // 预设优先级：路由 meta.transition > 设置面板「切换动画」> 缺省 fade-transform；
+    // none = 关闭全局过渡（css:false 直接切换，不生成过渡类）
+    const preset = transition?.name || globalTransition.value;
+    const enableTransition = preset !== "none";
     const enterTransition = transition?.enterTransition;
     const leaveTransition = transition?.leaveTransition;
     return h(
       Transition,
       {
-        name: enterTransition ? "pure-classes-transition" : transitionName,
+        css: enableTransition,
+        name: enterTransition ? "pure-classes-transition" : preset,
         enterActiveClass: enterTransition
           ? `animate__animated animate__${enterTransition}`
           : undefined,
@@ -157,6 +166,7 @@ const transitionMain = defineComponent({
           <template #default="{ Comp, fullPath, frameInfo }">
             <el-scrollbar
               v-if="fixedHeader"
+              :always="false"
               :view-style="{
                 display: 'flex',
                 flex: 'auto',

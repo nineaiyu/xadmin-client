@@ -34,7 +34,7 @@ const {
     <!-- 一次性密钥为只读展示弹窗（C5 既定保留手写场景），
          明文只在创建/重置响应中出现一次，列表与详情不回传 -->
     <div
-      class="api-app-tip mb-3 flex w-99/100 items-center gap-2 px-3 py-2.5 text-sm text-text_color_regular"
+      class="api-app-tip mb-3 flex w-99/100 items-center gap-2 px-3 py-2.5 text-sm text-fg-muted"
     >
       <IconifyIconOffline
         :icon="Info"
@@ -124,6 +124,6 @@ const {
 <style lang="scss" scoped>
 .api-app-tip {
   background: var(--el-fill-color-light);
-  border: 1px solid var(--pure-border-color);
+  border: 1px solid var(--divider);
 }
 </style>

@@ -102,6 +102,8 @@ export type menuType = {
 export type themeColorsType = {
   color: string;
   themeColor: string;
+  /** 色卡名称的 i18n key（设置面板色卡下方的标签） */
+  labelKey: string;
 };
 
 export interface scrollbarDomType extends HTMLElement {

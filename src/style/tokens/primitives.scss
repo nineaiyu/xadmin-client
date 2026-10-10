@@ -38,12 +38,15 @@
   --gray-900: 220 3% 19.4%; /* #303133 */
   --gray-950: 0 0% 3.9%; /* #0a0a0a */
 
-  /* ================ 圆角尺度 ================ */
-  --radius-xs: 2px;
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 12px;
+  /* ================ 圆角尺度 ================
+     档位倍率由设置面板写入 html[data-radius]（见文件末尾），这里只放基准值；
+     --radius-full 为胶囊/圆形，不参与缩放。 */
+  --radius-scale: 1;
+  --radius-xs: calc(2px * var(--radius-scale));
+  --radius-sm: calc(4px * var(--radius-scale));
+  --radius-md: calc(6px * var(--radius-scale));
+  --radius-lg: calc(8px * var(--radius-scale));
+  --radius-xl: calc(12px * var(--radius-scale));
   --radius-full: 9999px;
 
   /* ================ 间距尺度（4px 基准） ================ */
@@ -62,6 +65,10 @@
   --layout-header-h: 48px; /* 顶栏高度（隐藏页签时的固定头部总高） */
   --layout-tags-chrome-h: 85px; /* 顶栏 + 谷歌风格页签的固定头部总高 */
   --layout-tags-compact-h: 81px; /* 顶栏 + 灵动/卡片风格页签的固定头部总高 */
+
+  /* 侧栏宽度（纵向 / 混合布局的内容区左偏移）：基准值，设置面板 →「侧栏宽度」
+     会以内联 --sidebar-width 覆写；折叠宽度（54px）不参与缩放 */
+  --sidebar-width: 210px;
 
   /* 内容区留白（密度令牌）：在 lay-content 一处应用，页面不再各自覆写外边距；
      窄屏收紧值见 style/index.scss 的媒体查询；贴边页面用 content-flush 类 */
@@ -88,15 +95,17 @@
 
   /* ================ 字号阶梯 ================
      步进与 Element Plus 文本令牌对齐（xs/sm/base 对应 extra-small/small/base，
-     md/lg 对应 medium/large）；html 根字号保持 16px 不动，
-     Tailwind 的 --spacing 推导不受影响。 */
-  --font-size-xs: 12px;
-  --font-size-sm: 13px;
-  --font-size-base: 14px;
-  --font-size-md: 16px;
-  --font-size-lg: 18px;
-  --font-size-xl: 20px;
-  --font-size-2xl: 24px;
+     md/lg 对应 medium/large）；档位倍率由设置面板写入 html[data-font]（见文件末尾）。
+     html 根字号保持 16px 不动——Tailwind 的 --spacing 由根字号推导，
+     改根字号会连带缩放全站间距与控件高度。 */
+  --font-scale: 1;
+  --font-size-xs: calc(12px * var(--font-scale));
+  --font-size-sm: calc(13px * var(--font-scale));
+  --font-size-base: calc(14px * var(--font-scale));
+  --font-size-md: calc(16px * var(--font-scale));
+  --font-size-lg: calc(18px * var(--font-scale));
+  --font-size-xl: calc(20px * var(--font-scale));
+  --font-size-2xl: calc(24px * var(--font-scale));
 
   /* ================ 字重 ================ */
   --font-weight-normal: 400;
@@ -118,4 +127,32 @@
   --font-family-mono:
     ui-monospace, sfmono-regular, menlo, monaco, consolas, "Liberation Mono",
     "Courier New", monospace;
+}
+
+/* ================ 偏好档位（设置面板 →「圆角」/「字号」） ================
+   档位写在 `<html>` 的 data 属性上（与 data-theme 同层，由 usePreferences 同步），
+   只改倍率、不改基准值：默认档不写属性，取值与迁移前逐像素一致。 */
+
+html[data-radius="none"] {
+  --radius-scale: 0;
+}
+
+html[data-radius="small"] {
+  --radius-scale: 0.5;
+}
+
+html[data-radius="large"] {
+  --radius-scale: 1.5;
+}
+
+html[data-radius="xlarge"] {
+  --radius-scale: 2;
+}
+
+html[data-font="small"] {
+  --font-scale: 0.92;
+}
+
+html[data-font="large"] {
+  --font-scale: 1.12;
 }

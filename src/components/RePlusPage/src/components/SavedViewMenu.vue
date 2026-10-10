@@ -98,7 +98,7 @@ const filtered = computed(() => {
     />
     <el-scrollbar max-height="320px">
       <div v-if="!filtered.length" class="px-2 py-6 text-center">
-        <p class="mb-0 text-sm text-text_color_secondary">
+        <p class="mb-0 text-sm text-fg-subtle">
           {{ views.length ? t("savedView.noMatch") : t("savedView.emptyHint") }}
         </p>
         <el-button
@@ -126,9 +126,7 @@ const filtered = computed(() => {
             class="mt-0.5 shrink-0"
             :icon="row.is_default ? StarFilled : Star"
             :class="
-              row.is_default
-                ? 'text-(--el-color-warning)'
-                : 'text-text_color_secondary'
+              row.is_default ? 'text-(--el-color-warning)' : 'text-fg-subtle'
             "
             :disabled="!isOwner(row)"
             :title="
@@ -156,7 +154,7 @@ const filtered = computed(() => {
                 {{ t("savedView.current") }}
               </span>
             </div>
-            <div class="mt-0.5 truncate text-xs text-text_color_secondary">
+            <div class="mt-0.5 truncate text-xs text-fg-subtle">
               {{ summaries.get(String(row.pk)) || t("savedView.noConditions") }}
             </div>
             <div class="mt-1 flex flex-wrap items-center">
@@ -202,7 +200,7 @@ const filtered = computed(() => {
         </div>
       </div>
     </el-scrollbar>
-    <p class="mb-0 mt-1 px-1 text-xs text-text_color_secondary">
+    <p class="mb-0 mt-1 px-1 text-xs text-fg-subtle">
       {{ t("savedView.footerHint") }}
     </p>
   </div>

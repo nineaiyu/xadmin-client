@@ -7,24 +7,86 @@ import type { Ref } from "vue";
 import type { useLayout } from "./useLayout";
 import type { themeColorsType } from "../types";
 
-/** 可选主题色（自 useDataThemeChange.ts 抽出）：亮白 / 道奇蓝 / 深紫罗兰 / 深粉 / 猩红 / 橙红 / 绿宝石 / 酸橙绿 */
+/** 自定义主色在 `themeColor` 中的取值（实际色值存 `epThemeColor`） */
+export const CUSTOM_THEME_COLOR = "custom";
+
+/** 可选主题色（自 useDataThemeChange.ts 抽出）：亮白 / 道奇蓝 / 深紫罗兰 / 深粉 / 猩红 / 橙红 /
+ *  绿宝石 / 酸橙绿 / 极客蓝 / 金盏黄 / 青柠 / 咖褐
+ *  （每新增一项都要在 tokens/semantic.scss 配一套 `html[data-theme=...]` 菜单调色板，
+ *  并在 locales 的 `layout.themeColorNames` 补双语名称） */
 export const themeColors = ref<Array<themeColorsType>>([
   /* 亮白色 */
-  { color: "#ffffff", themeColor: "light" },
+  {
+    color: "#ffffff",
+    themeColor: "light",
+    labelKey: "layout.themeColorNames.light"
+  },
   /* 道奇蓝 */
-  { color: "#1b2a47", themeColor: "default" },
+  {
+    color: "#1b2a47",
+    themeColor: "default",
+    labelKey: "layout.themeColorNames.default"
+  },
   /* 深紫罗兰色 */
-  { color: "#722ed1", themeColor: "saucePurple" },
+  {
+    color: "#722ed1",
+    themeColor: "saucePurple",
+    labelKey: "layout.themeColorNames.saucePurple"
+  },
   /* 深粉色 */
-  { color: "#eb2f96", themeColor: "pink" },
+  {
+    color: "#eb2f96",
+    themeColor: "pink",
+    labelKey: "layout.themeColorNames.pink"
+  },
   /* 猩红色 */
-  { color: "#f5222d", themeColor: "dusk" },
+  {
+    color: "#f5222d",
+    themeColor: "dusk",
+    labelKey: "layout.themeColorNames.dusk"
+  },
   /* 橙红色 */
-  { color: "#fa541c", themeColor: "volcano" },
+  {
+    color: "#fa541c",
+    themeColor: "volcano",
+    labelKey: "layout.themeColorNames.volcano"
+  },
   /* 绿宝石 */
-  { color: "#13c2c2", themeColor: "mingQing" },
+  {
+    color: "#13c2c2",
+    themeColor: "mingQing",
+    labelKey: "layout.themeColorNames.mingQing"
+  },
   /* 酸橙绿 */
-  { color: "#52c41a", themeColor: "auroraGreen" }
+  {
+    color: "#52c41a",
+    themeColor: "auroraGreen",
+    labelKey: "layout.themeColorNames.auroraGreen"
+  },
+  /* 极客蓝 */
+  {
+    color: "#2f54eb",
+    themeColor: "geekblue",
+    labelKey: "layout.themeColorNames.geekblue"
+  },
+  /* 金盏黄 */
+  {
+    color: "#faad14",
+    themeColor: "gold",
+    labelKey: "layout.themeColorNames.gold"
+  },
+  /* 青柠 */
+  {
+    color: "#a0d911",
+    themeColor: "lime",
+    labelKey: "layout.themeColorNames.lime"
+  },
+  /* 咖褐 */
+  {
+    color: "#a0522d",
+    themeColor: "brown",
+    labelKey: "layout.themeColorNames.brown"
+  }
 ]);
 
 /**
@@ -83,6 +145,16 @@ export function createThemeColorScheme({
       themeMode: themeMode.value
     };
 
+    // 自定义主色：非点击路径（明暗切换、布局切换等「保留原配置」场景）
+    // 沿用已保存的色值，避免被下面的预设回退重置为默认色
+    if (!isClick && storageThemeColor === CUSTOM_THEME_COLOR) {
+      const customColor = storage.layout?.epThemeColor;
+      if (customColor) {
+        setEpThemeColor(customColor);
+        return;
+      }
+    }
+
     if (theme === "default" || theme === "light") {
       // 当用户自定义主题色之后，保存服务器，默认的主题色会被覆盖，该操作可以修复默认的主题色
       setEpThemeColor(DEFAULT_EP_THEME_COLOR);
@@ -92,7 +164,21 @@ export function createThemeColorScheme({
     setEpThemeColor(colors?.color ?? DEFAULT_EP_THEME_COLOR);
   }
 
-  return { setEpThemeColor, setLayoutThemeColor };
+  /**
+   * 应用自定义主色（设置面板 →「主题色」→ 自定义取色）：
+   * 不动导航皮肤（`data-theme` 与 `theme` 保持原值），只覆写主色令牌；
+   * `themeColor` 记 `custom` 供面板回显选中态，色值存 `epThemeColor`（随站点配置同步）。
+   */
+  const setCustomThemeColor = (color: string) => {
+    setEpThemeColor(color);
+    storage.layout = {
+      ...storage.layout,
+      themeColor: CUSTOM_THEME_COLOR,
+      epThemeColor: color
+    };
+  };
+
+  return { setEpThemeColor, setLayoutThemeColor, setCustomThemeColor };
 }
 
 /** 切换目标元素的类名（原 useDataThemeChange 内部工具，独立导出供重置流程复用） */

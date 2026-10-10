@@ -262,7 +262,7 @@ const timelineIcons = timelineTones.map(tone =>
                 center
                 placement="top"
               >
-                <p class="text-text_color_regular text-sm">
+                <p class="text-fg-muted text-sm">
                   {{
                     `${item?.creator?.username ?? ""} ${item.method} ${item.module} ${item.system} ${item?.browser}`
                   }}

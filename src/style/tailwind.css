@@ -27,19 +27,6 @@
   --color-warning: var(--el-color-warning);
   --color-danger: var(--el-color-danger);
   --color-info: var(--el-color-info);
-
-  /* ============ 兼容别名（历史命名，指向新语义槽） ============
-     185 个使用工具类的 .vue 文件零改动即随新令牌生效；待迁移到新别名后删除。 */
-  --color-bg_color: var(--color-bg-card);
-  --color-bg_color_page: var(--color-bg-page);
-  --color-text_color_primary: var(--color-fg);
-  --color-text_color_regular: var(--color-fg-muted);
-  --color-text_color_secondary: var(--color-fg-subtle);
-  --color-text_color_placeholder: var(--color-fg-placeholder);
-  --color-border_color: var(--color-border);
-  --color-border_color_light: var(--color-border-light);
-  --color-fill_color: var(--color-fill);
-  --color-fill_color_light: var(--color-fill-muted);
 }
 
 /*

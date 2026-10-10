@@ -1,7 +1,9 @@
 @use "../tokens/breakpoints" as bp;
 
-/* $sideBarWidth: vertical 模式下主体内容距离网页文档左侧的距离 */
-@mixin merge-style($sideBarWidth) {
+/* $sideBarWidth: vertical 模式下主体内容距离网页文档左侧的距离
+   $sideBarOffset: 移动端侧栏收起时向左平移的距离（值为 var() / calc() 表达式，
+   水平布局传 0；宽度已是变量，负值必须在调用侧用 calc 求值） */
+@mixin merge-style($sideBarWidth, $sideBarOffset) {
   /* 极窄视口允许纵向滚动（固定头模式下的内容高度补偿），断点见 tokens/breakpoints */
   @include bp.below("xs") {
     .app-main-nofixed-header {
@@ -116,7 +118,7 @@
     overflow: visible;
     font-size: 0;
     background: var(--sidebar) !important;
-    border-right: 1px solid var(--pure-border-color);
+    border-right: 1px solid var(--divider);
 
     /* 展开动画 */
     transition: width var(--duration-base);
@@ -579,7 +581,7 @@
     &.hideSidebar {
       .sidebar-container {
         pointer-events: none;
-        transform: translate3d(-$sideBarWidth, 0, 0);
+        transform: translate3d($sideBarOffset, 0, 0);
         transition-duration: var(--duration-base);
       }
     }

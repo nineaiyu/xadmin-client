@@ -3,7 +3,7 @@ import { useRoute, type RouteRecordRaw } from "vue-router";
 import { emitter } from "@/utils/mitt";
 import { useNav } from "@/layout/hooks/useNav";
 import { responsiveStorageNameSpace } from "@/config";
-import { isAllEmpty, storageLocal } from "@pureadmin/utils";
+import { isAllEmpty, storageLocal, useGlobal } from "@pureadmin/utils";
 import { findRouteByPath, getParentPaths } from "@/router/utils";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
@@ -14,10 +14,21 @@ import LaySidebarCenterCollapse from "../lay-sidebar/components/SidebarCenterCol
 
 const route = useRoute();
 const isShow = ref(false);
+const { $storage } = useGlobal<GlobalPropertiesApi>();
 const showLogo = ref(
   storageLocal().getItem<StorageConfigs>(
     `${responsiveStorageNameSpace()}configure`
   )?.showLogo ?? true
+);
+
+/** 侧栏手风琴：同级菜单只展开一项（默认开，等同项目历史行为） */
+const sidebarAccordion = computed(
+  () => $storage?.configure?.sidebarAccordion ?? true
+);
+
+/** 侧栏底部折叠按钮显隐（默认显示） */
+const sidebarCollapseButton = computed(
+  () => $storage?.configure?.sidebarCollapseButton ?? true
 );
 
 const {
@@ -98,7 +109,7 @@ onBeforeUnmount(() => {
       :class="[device === 'mobile' ? 'mobile' : 'pc']"
     >
       <el-menu
-        unique-opened
+        :unique-opened="sidebarAccordion"
         mode="vertical"
         popper-class="pure-scrollbar"
         class="outer-most select-none"
@@ -117,7 +128,9 @@ onBeforeUnmount(() => {
       </el-menu>
     </el-scrollbar>
     <LaySidebarCenterCollapse
-      v-if="device !== 'mobile' && (isShow || isCollapse)"
+      v-if="
+        sidebarCollapseButton && device !== 'mobile' && (isShow || isCollapse)
+      "
       :is-active="pureApp.sidebar.opened"
       @toggleClick="toggleSideBar"
     />

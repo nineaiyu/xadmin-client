@@ -3,3 +3,32 @@
 @use "vertical";
 @use "horizontal";
 @use "mix";
+
+/* ================ 半暗侧栏（设置面板 →「布局」→「半暗侧栏」） ================
+   浅色外观下让侧栏保持深色调色板（顶栏与内容区维持浅色）。
+   覆盖的是菜单调色板令牌（tokens/semantic.scss 的 --pure-theme-*）：
+   - 深色外观（html.dark）本身即深色，`:not(.dark)` 让该类自动失效；
+   - 水平布局没有侧栏容器，选择器天然不命中；
+   - 折叠态 hover 弹出的子菜单挂在 body 上，需同步覆盖（否则弹层仍是浅色）。 */
+html.semi-dark-sidebar:not(.dark) {
+  .sidebar-container {
+    --pure-theme-menu-bg: #1d2b45;
+    --pure-theme-sub-menu-bg: #14203a;
+    --pure-theme-menu-hover: rgb(64 145 247 / 15%);
+    --pure-theme-menu-text: rgb(254 254 254 / 65%);
+    --pure-theme-sub-menu-active-text: #fff;
+    --pure-theme-sidebar-logo: #17253f;
+    --pure-theme-menu-title-hover: #fff;
+  }
+
+  /* 折叠态 hover 弹出的子菜单 teleport 到 body（popper-class="pure-scrollbar"），
+     不在 .sidebar-container 内，需单独覆盖同一组令牌 */
+  .el-popper.pure-scrollbar {
+    --pure-theme-menu-bg: #1d2b45;
+    --pure-theme-sub-menu-bg: #14203a;
+    --pure-theme-menu-hover: rgb(64 145 247 / 15%);
+    --pure-theme-menu-text: rgb(254 254 254 / 65%);
+    --pure-theme-sub-menu-active-text: #fff;
+    --pure-theme-menu-title-hover: #fff;
+  }
+}

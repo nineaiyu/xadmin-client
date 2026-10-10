@@ -150,7 +150,7 @@ function postTitle(item: DirectoryPostOption) {
 
 <template>
   <div
-    class="directory-aside bg-bg_color flex flex-col overflow-hidden"
+    class="directory-aside bg-bg-card flex flex-col overflow-hidden"
     :class="
       compact
         ? 'max-h-90 rounded-lg border border-(--el-border-color-light)'

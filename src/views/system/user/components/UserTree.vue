@@ -146,7 +146,7 @@ defineExpose({ onTreeReset });
     :style="
       props.compact ? undefined : { minHeight: DESKTOP_CONTAINER_MIN_HEIGHT }
     "
-    class="user-tree-panel bg-bg_color overflow-hidden relative"
+    class="user-tree-panel bg-bg-card overflow-hidden relative"
   >
     <div class="flex items-center h-8.5">
       <el-input

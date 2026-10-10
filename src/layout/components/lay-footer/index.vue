@@ -6,7 +6,7 @@ const TITLE = getConfig("Title");
 </script>
 
 <template>
-  <footer class="layout-footer text-text_color_regular">
+  <footer class="layout-footer text-fg-muted">
     Copyright © 2026-present
     <a class="hover:text-primary!" :href="SITE_LINKS.author" target="_blank">
       &nbsp;{{ TITLE }}

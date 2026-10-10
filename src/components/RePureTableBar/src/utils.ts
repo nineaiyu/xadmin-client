@@ -73,7 +73,7 @@ export function buildRenderClass(isFullscreen: boolean) {
     "w-99/100",
     "px-2",
     "pb-2",
-    "bg-bg_color",
+    "bg-bg-card",
     isFullscreen
       ? [
           "w-full!",

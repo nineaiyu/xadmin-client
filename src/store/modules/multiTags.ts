@@ -24,6 +24,21 @@ function scheduleTagsCache(multiTags: RouteConfigs[]) {
   }, 150);
 }
 
+/**
+ * 页签上限（设置面板 →「布局」→「页签」→「最大数量」）：
+ * 0 / 未设置表示不限制，回落站点配置的 `MaxTagsLevel`（平台级默认）。
+ * 每次 push 时从响应式存储现取，面板改动即时生效、无需重载。
+ */
+function resolveMaxTagsCount(): number {
+  const configure = storageLocal().getItem<ResponsiveStorage["configure"]>(
+    `${responsiveStorageNameSpace()}configure`
+  );
+  const preferred = Number(configure?.maxTagsCount ?? 0);
+  if (preferred > 0) return preferred;
+  const fallback = getConfig()?.MaxTagsLevel;
+  return typeof fallback === "number" ? fallback : 0;
+}
+
 export const useMultiTagsStore = defineStore("pure-multiTags", {
   state: () => ({
     // 存储标签页信息（路由信息）
@@ -134,14 +149,16 @@ export const useMultiTagsStore = defineStore("pure-multiTags", {
               }
             }
             this.multiTags.push(tagVal);
-            this.tagsCache(this.multiTags);
-            const maxTagsLevel = getConfig()?.MaxTagsLevel;
-            if (
-              typeof maxTagsLevel === "number" &&
-              this.multiTags.length > maxTagsLevel
-            ) {
-              this.multiTags.splice(1, 1);
+            const maxTagsCount = resolveMaxTagsCount();
+            if (maxTagsCount > 0 && this.multiTags.length > maxTagsCount) {
+              // 关闭最早打开的可关闭页签：跳过首页固定页签（索引 0）与右键固定的页签
+              const removableIndex = this.multiTags.findIndex(
+                (tag, index) =>
+                  index > 0 && !(tag.path && this.pinnedTags.includes(tag.path))
+              );
+              if (removableIndex > 0) this.multiTags.splice(removableIndex, 1);
             }
+            this.tagsCache(this.multiTags);
           }
           break;
         case "splice":

@@ -335,15 +335,38 @@ layout:
   skipToContent: Skip to main content
   searchPlaceholder: Search menu (Pinyin search is supported)
   theme: Theme Mode
+  themeDesc: Light and dark appearance, with system following
   menuLayout: Menu Layout
   leftMode: Left mode
   topMode: Top mode
   mixedMode: Mixed mode
+  menuLayoutVertical: Sidebar
+  menuLayoutHorizontal: Top
+  menuLayoutMix: Mixed
   themeColor: ThemeColor
+  themeColorDesc: Preset palette or a custom pick, applied instantly
+  themeColorCustom: Custom color
+  themeColorCustomTip: Pick any colour as the primary colour (navigation skin stays unchanged)
+  themeColorNames:
+    light: Light
+    default: Default
+    saucePurple: Violet
+    pink: Pink
+    dusk: Crimson
+    volcano: Orange
+    mingQing: Teal
+    auroraGreen: Green
+    geekblue: Geekblue
+    gold: Gold
+    lime: Lime
+    brown: Brown
+    custom: Custom
   tabAppearance: Appearance
   tabLayout: Layout
   tabGeneral: General
   general: General settings
+  language: Language
+  languageTip: Interface language, the same switch as the one in the header
   headerAutoHide: Auto-hide header
   headerAutoHideTip: Hide the header when scrolling down, restore on scroll up
   compactMode: Compact mode
@@ -356,9 +379,80 @@ layout:
   sidebarLogo: Sidebar Logo
   labelPersistence: Label persistence
   labelStyle: Label style
+  tagsStylePlain: Plain
+  tagsStylePlainTip: Flat tabs; the active one is marked with a subtle primary-tinted block
   tagsStyleCard: Card
   tagsStyleSmart: Smart
   tagsStyleChrome: Chrome
+  displayEffect: Display effects
+  greyModeTip: Render the site in grayscale for contrast or print checks
+  colorWeakModeTip: Invert colours to help users with colour weakness
+  radius: Radius
+  radiusTip: Scale the corner radius of cards, buttons and inputs (token preset)
+  radiusNone: None
+  radiusSmall: Small
+  radiusDefault: Default
+  radiusLarge: Large
+  radiusXlarge: XL
+  fontSize: Font size
+  fontSizeTip: Scale all text; the root font size, control heights and spacing stay unchanged
+  fontSmall: Small
+  fontDefault: Default
+  fontLarge: Large
+  fontCustom: Custom
+  fontSizeScale: Font scale
+  fontCustomSize: Base font size
+  sidebar: Sidebar
+  sidebarAccordion: Accordion
+  sidebarAccordionTip: Keep only one menu group expanded at a time
+  sidebarCollapseButton: Collapse button
+  sidebarCollapseButtonTip: Show the collapse and expand button at the sidebar bottom
+  semiDarkSidebar: Semi-dark sidebar
+  semiDarkHeader: Semi-dark header
+  semiDarkHeaderTip: Keep the header dark in light appearance (dark appearance needs no such option)
+  semiDarkSidebarTip: Keep the sidebar dark in light appearance (dark appearance needs no such option)
+  sidebarWidth: Sidebar width
+  sidebarWidthTip: Width of the expanded sidebar (160~320px); the collapsed width stays fixed
+  header: Header
+  headerFixed: Fixed header
+  headerFixedTip: When off, the header (and the tab strip) scrolls with the page
+  breadcrumbVisible: Breadcrumb
+  breadcrumbVisibleTip: Show the current page path at the left of the header
+  navbarSearch: Menu search
+  navbarLanguage: Language switch
+  navbarFullscreen: Fullscreen button
+  navbarLock: Lock screen button
+  navbarLockTip: Show a lock button in the header; unlocking requires the login password
+  navbarNotice: Notifications
+  tabbar: Tabs
+  persistenceTip: Keep opened tabs after a reload (stored locally)
+  tagsMiddleClickClose: Middle-click close
+  tagsMiddleClickCloseTip: Close a tab with the middle mouse button; pinned tabs are excluded
+  tagsWheelSwitch: Wheel scrolling
+  tagsWheelSwitchTip: Scroll the tab strip horizontally with the wheel
+  maxTagsCount: Max count
+  maxTagsCountTip: Close the earliest closable tab beyond this limit (home and pinned tabs are excluded); 0 means unlimited
+  footer: Footer
+  dynamicTitle: Dynamic title
+  dynamicTitleTip: Update the browser title with the current page
+  pageTransition: Page transition
+  pageTransitionTip: Transition effect between pages; a route may override it
+  transitionNone: Off
+  transitionFadeTransform: Slide
+  transitionFadeSlide: Fade slide
+  transitionFadeUp: Fade up
+  transitionFadeDown: Fade down
+  transitionFadeScale: Fade scale
+  shortcut: Shortcut keys
+  shortcutSearch: Global search
+  shortcutSearchTip: Cmd or Ctrl plus K opens the command palette; the header icon keeps working
+  shortcutLock: Lock screen (Alt + L)
+  shortcutLockTip: Ignored while typing in a form field
+  shortcutSidebar: Toggle sidebar (Alt + S)
+  shortcutSidebarTip: Same as the header toggle button; works on mobile too
+  copyPreferences: Copy preferences
+  copyPreferencesTip: Copy the full current UI preferences (locale, layout, theme, switches) to attach to bug reports
+  copyPreferencesSuccess: UI preferences copied to the clipboard
   cleanOut: Clear the cache and return the login page
   noticeTime: YYYY-MM-DD HH:mm:ss
   backTop: Back Top
@@ -371,12 +465,32 @@ layout:
   lightTip: Fresh start, light up the comfortable working interface
   darkTip: Moonlight overture, drunk in the quiet and elegant night
   autoTip: Synchronous time, interface with the morning and dusk natural echo
+  fluid: Fluid
+  fluidTip: Content fills the available width — handy for wide tables
+  fixedWidth: Fixed width
+  fixedWidthTip: Center the content with a max width for focused reading
+  pageWidthMode: Page width mode
+  pageWidthSize: Content width
   tagsStyleSmartTip: Smart tags add fun and brilliance
   tagsStyleCardTip: Card tags for efficient browsing
   tagsStyleChromeTip: Chrome style is classic and elegant
   favorite: Favorite
   dragSort: (Drag the sorting)
   searchHistory: Search History
+  about: About
+  currentVersion: Current version
+  checkUpdate: Check for updates
+  checkUpdateTip: Compare the deployed version file with the local version
+  checkUpdateLatest: You are on the latest version
+  checkUpdateFound: New version {version} available
+  checkUpdateFailed: Failed to check for updates, please retry later
+  lockScreen: Lock screen
+  lockScreenTip: The screen is covered until the login password is entered
+  lockScreenPlaceholder: Enter your login password to unlock
+  lockScreenUnlock: Unlock
+  lockScreenLocked: Locked
+  lockScreenPasswordError: Incorrect password
+  lockScreenBack: Back to login
   pageWidth: Page Width
   fixed: Fixed
   fixedTip: Compact page to easily find the information you need
@@ -731,8 +845,8 @@ buttons:
   closeRightTabs: Close RightTabs
   closeOtherTabs: Close OtherTabs
   closeAllTabs: Close AllTabs
-  contentFullScreen: Content FullScreen
-  contentExitFullScreen: Content ExitFullScreen
+  maximize: Maximize
+  restoreMaximize: Restore
   pinTab: Pin Tab
   unpinTab: Unpin Tab
   openInNewWindow: Open in new window

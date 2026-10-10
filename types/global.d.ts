@@ -78,6 +78,18 @@ declare global {
    *  继承 `@pureadmin/table` 的 `TableColumns` ，方便全局直接调用
    */
   type TableColumnList = Array<TableColumns>;
+  /** 圆角档位（设置面板 →「圆角」）：除 default 外均按比例缩放 --radius-* 令牌 */
+  type RadiusScaleType = "none" | "small" | "default" | "large" | "xlarge";
+  /** 字号档位（设置面板 →「字号」）：只缩放文字令牌，根字号保持 16px；custom 档读 fontScaleCustom */
+  type FontScaleType = "small" | "default" | "large" | "custom";
+  /** 页面切换动画预设（none 为直接切换）；与 style/transition.scss 的类名前缀一致 */
+  type PageTransitionType =
+    | "none"
+    | "fade-transform"
+    | "fade-slide"
+    | "fade-up"
+    | "fade-down"
+    | "fade-scale";
   /**
    * 对应 `public/platform-config.json` 文件的类型声明
    * @see {@link https://pure-admin.github.io/pure-admin-doc/pages/config/#platform-config-json}
@@ -93,6 +105,8 @@ declare global {
     Locale?: string;
     Layout?: string;
     Theme?: string;
+    /** 手点主题色（预设名或 custom）；缺省回落到 Theme（皮肤名），两者可分离 */
+    ThemeColor?: string;
     DarkMode?: boolean;
     ThemeMode?: string;
     Grey?: boolean;
@@ -108,6 +122,46 @@ declare global {
     HeaderAutoHide?: boolean;
     /** 内容区紧凑模式（收紧留白并居中限宽） */
     CompactMode?: boolean;
+    /** 圆角档位（none / small / default / large / xlarge）：缩放 --radius-* 令牌 */
+    Radius?: RadiusScaleType;
+    /** 字号档位（small / default / large / custom）：缩放 --font-size-* 令牌，根字号不随之变化 */
+    FontScale?: FontScaleType;
+    /** 自定义字号的基准字号（px，12~20）：仅 FontScale=custom 时生效 */
+    FontScaleCustom?: number;
+    /** 侧栏手风琴：同级菜单只展开一项 */
+    SidebarAccordion?: boolean;
+    /** 侧栏底部折叠按钮显隐 */
+    SidebarCollapseButton?: boolean;
+    /** 半暗侧栏：浅色外观下侧栏保持深色调色板 */
+    SemiDarkSidebar?: boolean;
+    /** 浅色外观下顶栏用深色调色板 */
+    SemiDarkHeader?: boolean;
+    /** 侧栏宽度（px，160~320）；折叠宽度与 hover 弹出菜单不随此值变化 */
+    SidebarWidth?: number;
+    /** 固定顶栏：关闭后顶栏随页面一起滚动 */
+    HeaderFixed?: boolean;
+    /** 显示面包屑（顶栏左侧路径导航） */
+    BreadcrumbVisible?: boolean;
+    /** 页签最大数量（0 = 不限制，超出后自动关闭最旧的非固定页签） */
+    MaxTagsCount?: number;
+    /** 顶栏组件显隐：菜单搜索 / 语言切换 / 全屏 / 锁屏 / 消息通知 */
+    NavbarSearch?: boolean;
+    NavbarLanguage?: boolean;
+    NavbarFullscreen?: boolean;
+    NavbarLock?: boolean;
+    NavbarNotice?: boolean;
+    /** 页签中键关闭 */
+    TagsMiddleClickClose?: boolean;
+    /** 滚轮横向滚动页签条 */
+    TagsWheelSwitch?: boolean;
+    /** 动态标题：document.title 随路由变化 */
+    DynamicTitle?: boolean;
+    /** 全局页面切换动画预设（none 表示不做过渡） */
+    PageTransition?: PageTransitionType;
+    /** ⌘/Ctrl + K 唤起命令面板 */
+    ShortcutSearch?: boolean;
+    ShortcutLock?: boolean;
+    ShortcutSidebar?: boolean;
     MenuArrowIconNoTransition?: boolean;
     CachingAsyncRoutes?: boolean;
     TooltipEffect?: Effect;
@@ -173,6 +227,36 @@ declare global {
       stretch?: boolean | number;
       headerAutoHide?: boolean;
       compactMode?: boolean;
+      radius?: RadiusScaleType;
+      fontScale?: FontScaleType;
+      /** 自定义字号基准（px）：fontScale=custom 时写入 --font-scale 倍率 */
+      fontScaleCustom?: number;
+      sidebarAccordion?: boolean;
+      sidebarCollapseButton?: boolean;
+      /** 半暗侧栏（`html.semi-dark-sidebar`，暗色外观下自动失效） */
+      semiDarkSidebar?: boolean;
+      semiDarkHeader?: boolean;
+      /** 侧栏宽度（px）：由 JS 写入 `--sidebar-width`，默认档撤除内联覆写 */
+      sidebarWidth?: number;
+      /** 固定顶栏：关闭后走非固定头布局（顶栏随内容滚动） */
+      headerFixed?: boolean;
+      /** 显示面包屑 */
+      breadcrumbVisible?: boolean;
+      /** 页签最大数量（0 = 不限制） */
+      maxTagsCount?: number;
+      /** 顶栏组件显隐 */
+      navbarSearch?: boolean;
+      navbarLanguage?: boolean;
+      navbarFullscreen?: boolean;
+      navbarLock?: boolean;
+      navbarNotice?: boolean;
+      tagsMiddleClickClose?: boolean;
+      tagsWheelSwitch?: boolean;
+      dynamicTitle?: boolean;
+      pageTransition?: PageTransitionType;
+      shortcutSearch?: boolean;
+      shortcutLock?: boolean;
+      shortcutSidebar?: boolean;
     };
     tags?: Array<Recordable>;
     /** 右键「固定」的标签（fullPath 列表） */

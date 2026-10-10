@@ -142,22 +142,26 @@ export function createTagDropActions({
         break;
       }
       case 6:
-        // 内容区全屏
+        // 内容区最大化 / 还原（隐藏顶栏与侧边栏，页签条保留作为还原入口）
         onContentFullScreen();
         setTimeout(() => {
           if (pureSetting.hiddenSideBar) {
             tagsViews[6].icon = ExitFullscreen;
-            tagsViews[6].text = $t("buttons.contentExitFullScreen");
+            tagsViews[6].text = $t("buttons.restoreMaximize");
           } else {
             tagsViews[6].icon = Fullscreen;
-            tagsViews[6].text = $t("buttons.contentFullScreen");
+            tagsViews[6].text = $t("buttons.maximize");
           }
         }, 100);
         break;
-      case 7:
+      case 7: {
         // 固定 / 取消固定标签（固定标签不参与按侧/全部关闭）
+        // 路由级 fixedTag（首页等）本就不可关闭，固定无意义：下拉菜单不按 show 过滤，
+        // 这里直接忽略，避免把冗余项写进本地固定清单
+        if (selectTagRoute.meta?.fixedTag) break;
         useMultiTagsStoreHook().togglePinnedTag(selectTagRoute.path ?? "");
         break;
+      }
       case 8:
         // 新窗口打开
         openInNewWindow(selectTagRoute);

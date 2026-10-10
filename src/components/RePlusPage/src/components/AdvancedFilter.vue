@@ -156,7 +156,7 @@ defineExpose({ getConditions });
         :data-testid="`af-row-${index}`"
       >
         <span
-          class="flex-c size-5 shrink-0 rounded-full bg-(--el-fill-color) text-xs text-text_color_secondary"
+          class="flex-c size-5 shrink-0 rounded-full bg-(--el-fill-color) text-xs text-fg-subtle"
         >
           {{ index + 1 }}
         </span>
@@ -177,7 +177,7 @@ defineExpose({ getConditions });
             >
               <span class="flex-bc w-full gap-3">
                 <span class="truncate">{{ item.label }}</span>
-                <span class="shrink-0 text-xs text-text_color_secondary">
+                <span class="shrink-0 text-xs text-fg-subtle">
                   {{ kindLabel(item) }}
                 </span>
               </span>
@@ -243,7 +243,7 @@ defineExpose({ getConditions });
           {{ t("advancedFilter.clearAll") }}
         </el-button>
       </div>
-      <p class="mb-0 mt-2 text-sm text-text_color_secondary">
+      <p class="mb-0 mt-2 text-sm text-fg-subtle">
         {{ t("advancedFilter.hint") }}
       </p>
     </template>

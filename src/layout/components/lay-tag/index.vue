@@ -3,11 +3,20 @@ import { emitter } from "@/utils/mitt";
 import { useTags } from "../../hooks/useTag";
 import { onClickOutside } from "@vueuse/core";
 import TagChrome from "./components/TagChrome.vue";
-import { ref, watch, unref, onMounted, onBeforeUnmount, type Ref } from "vue";
-import { delay, useResizeObserver } from "@pureadmin/utils";
+import {
+  computed,
+  ref,
+  watch,
+  unref,
+  onMounted,
+  onBeforeUnmount,
+  type Ref
+} from "vue";
+import { delay, useGlobal, useResizeObserver } from "@pureadmin/utils";
 
 import { useTagScroll } from "./hooks/useTagScroll";
 import { useTagActions } from "./hooks/useTagActions";
+import { useTagDrag } from "./hooks/useTagDrag";
 
 import ArrowDown from "~icons/ri/arrow-down-s-line";
 import ArrowRightSLine from "~icons/ri/arrow-right-s-line";
@@ -45,6 +54,28 @@ const {
 
 const containerDom = ref();
 const contextmenuRef = ref();
+const { $storage } = useGlobal<GlobalPropertiesApi>();
+
+/** 中键关闭页签（默认开） */
+const middleClickClose = computed(
+  () => $storage?.configure?.tagsMiddleClickClose ?? true
+);
+
+/** 滚轮横向滚动页签条（默认开） */
+const tagsWheelSwitch = computed(
+  () => $storage?.configure?.tagsWheelSwitch ?? true
+);
+
+/**
+ * 页签 v-for 的稳定 key（path + query，与 store 的去重口径一致）。
+ *
+ * 不能用下标做 key：拖拽排序由 sortable 直接搬动 DOM，Vue 的下标补丁会把
+ * 「搬动过」的节点按老位置写文本，等于把排序结果抵消（实测：store 已更新为新序，
+ * 界面仍是旧序）。
+ */
+function tagKey(item: { path?: string; query?: unknown }) {
+  return `${item?.path ?? ""}-${JSON.stringify(item?.query ?? {})}`;
+}
 
 /** 滚动与可视区域定位 */
 const {
@@ -80,6 +111,9 @@ const {
   dynamicTagView,
   containerDom
 });
+
+/** 拖拽排序：固定页签不参与拖拽，排序结果写回 multiTags */
+useTagDrag({ tabDom, refresh: dynamicTagView });
 
 onClickOutside(contextmenuRef, closeMenu, {
   detectIframe: true
@@ -136,14 +170,17 @@ onBeforeUnmount(() => {
     <div
       ref="scrollbarDom"
       class="scroll-container"
-      :class="tagsStyle === 'chrome' && 'chrome-scroll-container'"
-      @wheel.prevent="handleWheel"
+      :class="[
+        tagsStyle === 'chrome' && 'chrome-scroll-container',
+        tagsStyle === 'plain' && 'plain-scroll-container'
+      ]"
+      @wheel.prevent="tagsWheelSwitch && handleWheel($event)"
     >
       <div ref="tabDom" class="tab select-none" :style="getTabStyle">
         <div
           v-for="(item, index) in multiTags"
           :ref="'dynamic' + index"
-          :key="index"
+          :key="tagKey(item)"
           :class="[
             'scroll-item is-closable',
             linkIsActive(item),
@@ -151,15 +188,15 @@ onBeforeUnmount(() => {
             isFixedTag(item) && 'fixed-tag'
           ]"
           @contextmenu.prevent="openMenu(item, $event)"
-          @mousedown.middle.prevent="!isFixedTag(item) && deleteMenu(item)"
+          @mousedown.middle.prevent="
+            middleClickClose && !isFixedTag(item) && deleteMenu(item)
+          "
           @mouseenter.prevent="onMouseenter(index)"
           @mouseleave.prevent="onMouseleave(index)"
           @click="tagOnClick(item)"
         >
           <template v-if="tagsStyle !== 'chrome'">
-            <span
-              class="tag-title dark:text-text_color_primary! dark:hover:text-primary!"
-            >
+            <span class="tag-title dark:text-fg! dark:hover:text-primary!">
               {{ transformI18n(item.meta?.title ?? "") }}
             </span>
             <span
@@ -175,7 +212,7 @@ onBeforeUnmount(() => {
               <IconifyIconOffline :icon="Close" />
             </span>
             <span
-              v-if="tagsStyle !== 'card'"
+              v-if="tagsStyle !== 'card' && tagsStyle !== 'plain'"
               :ref="'schedule' + index"
               :class="[scheduleIsActive(item)]"
             />

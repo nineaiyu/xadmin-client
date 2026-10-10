@@ -97,7 +97,7 @@ defineExpose({ getPayload });
         >
           {{ chip }}
         </el-tag>
-        <span v-if="!chips.length" class="text-sm text-text_color_secondary">
+        <span v-if="!chips.length" class="text-sm text-fg-subtle">
           {{ t("savedView.noConditions") }}
         </span>
       </div>
@@ -106,7 +106,7 @@ defineExpose({ getPayload });
       <div class="flex-bc rounded-lg bg-(--el-fill-color-lighter) px-3 py-2">
         <div>
           <div class="text-sm">{{ t("savedView.defaultLabel") }}</div>
-          <div class="text-xs text-text_color_secondary">
+          <div class="text-xs text-fg-subtle">
             {{ t("savedView.defaultHint") }}
           </div>
         </div>
@@ -115,7 +115,7 @@ defineExpose({ getPayload });
       <div class="flex-bc rounded-lg bg-(--el-fill-color-lighter) px-3 py-2">
         <div>
           <div class="text-sm">{{ t("savedView.sharedLabel") }}</div>
-          <div class="text-xs text-text_color_secondary">
+          <div class="text-xs text-fg-subtle">
             {{ t("savedView.sharedHint") }}
           </div>
         </div>

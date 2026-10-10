@@ -76,6 +76,50 @@ describe("multiTags store", () => {
     expect(store.handleTags("slice")).toEqual([tagOf("/b", "B")]);
   });
 
+  it("页签最大数量：超出后自动关闭最早打开的可关闭页签", () => {
+    localStorage.setItem(
+      "responsive-configure",
+      JSON.stringify({ maxTagsCount: 3 })
+    );
+    const store = useMultiTagsStore();
+    store.handleTags("equal", [tagOf("/home", "首页")]);
+    ["/a", "/b", "/c", "/d"].forEach(path =>
+      store.handleTags("push", tagOf(path, path))
+    );
+    // 上限含首页固定页签：每次超限移除当前最早打开的一项（首页与固定页签不参与）
+    expect(store.multiTags.map(t => t.path)).toEqual(["/home", "/c", "/d"]);
+  });
+
+  it("页签最大数量：右键固定的页签不被自动关闭", () => {
+    localStorage.setItem(
+      "responsive-configure",
+      JSON.stringify({ maxTagsCount: 3 })
+    );
+    const store = useMultiTagsStore();
+    store.handleTags("equal", [tagOf("/home", "首页")]);
+    store.handleTags("push", tagOf("/a", "A"));
+    store.togglePinnedTag("/a");
+    ["/b", "/c", "/d"].forEach(path =>
+      store.handleTags("push", tagOf(path, path))
+    );
+    // 固定页签占用名额但不参与关闭：超限时先淘汰 /b，再淘汰 /c
+    expect(store.multiTags.map(t => t.path)).toEqual(["/home", "/a", "/d"]);
+  });
+
+  it("页签最大数量为 0 时不限制", () => {
+    localStorage.setItem(
+      "responsive-configure",
+      JSON.stringify({ maxTagsCount: 0 })
+    );
+    const store = useMultiTagsStore();
+    store.handleTags("equal", [tagOf("/home", "首页")]);
+    // 平台配置 MaxTagsLevel = 20：0 优先于平台级上限，仍按不限制处理到 20 以内
+    for (let i = 0; i < 10; i++) {
+      store.handleTags("push", tagOf(`/p${i}`, `P${i}`));
+    }
+    expect(store.multiTags).toHaveLength(11);
+  });
+
   it("multiTagsCacheChange 切换持久化开关", () => {
     const store = useMultiTagsStore();
     store.multiTagsCacheChange(true);

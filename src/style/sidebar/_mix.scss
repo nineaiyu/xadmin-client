@@ -1,9 +1,10 @@
 @use "common" as *;
 
 body[layout="mix"] {
-  $sideBarWidth: 210px;
+  /* 侧栏宽度改为 CSS 变量：设置面板 →「侧栏宽度」运行期覆写（令牌见 tokens/primitives.scss） */
+  $sideBarWidth: var(--sidebar-width);
 
-  @include merge-style($sideBarWidth);
+  @include merge-style($sideBarWidth, calc(-1 * #{$sideBarWidth}));
 
   .el-menu--collapse {
     width: 54px;

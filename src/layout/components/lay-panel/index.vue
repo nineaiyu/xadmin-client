@@ -1,9 +1,11 @@
 <script lang="ts" setup>
 import { emitter } from "@/utils/mitt";
 import { Z_INDEX } from "@/utils/zIndex";
-import { onClickOutside } from "@vueuse/core";
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { onClickOutside, useClipboard } from "@vueuse/core";
+import { onBeforeUnmount, onMounted, ref } from "vue";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
+import { buildPreferenceSnapshot } from "@/utils/preferenceDiff";
+import { message } from "@/utils/message";
 import CloseIcon from "~icons/ep/close";
 import { useI18n } from "vue-i18n";
 import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
@@ -15,25 +17,27 @@ const {
   pkg: { version }
 } = __APP_INFO__;
 
-const iconClass = computed(() => {
-  return [
-    "size-5.5",
-    "flex-c",
-    "outline-hidden",
-    "rounded-sm",
-    "cursor-pointer",
-    "transition-colors",
-    // 悬浮底色取 EP 令牌（暗色下由 EP 重定义，无需 dark 变体）
-    "hover:bg-(--el-fill-color-light)",
-    "dark:hover:text-(--el-text-color-primary)"
-  ];
-});
-
 const { onReset } = useDataThemeChange();
+
+// 复制偏好：一键导出当前完整界面偏好（语言 / 布局 / 主题 / 界面开关），反馈问题时一并贴出
+const { copy } = useClipboard({ legacy: true });
+const copyPreferences = async () => {
+  await copy(JSON.stringify(buildPreferenceSnapshot(), null, 2));
+  message(t("layout.copyPreferencesSuccess"), { type: "success" });
+};
 
 // 设置项已实时自动保存（layout/index.vue 的 watch + store.autoSaveSiteConfig），
 // 面板不再提供「保存配置」按钮，仅保留重置与清缓存
 const { resetSiteConfig } = useSiteConfigStoreHook();
+
+/**
+ * 点击遮罩关闭面板：遮罩铺满视口（z-index 低于面板），点击它即「点在面板之外」。
+ * 不依赖 @vueuse 的 onClickOutside 状态机——它在「面板内 pointerdown 之后的首次
+ * 外部点击」会被吞掉（需要点两次才关），这里直接挂在遮罩元素上，行为确定。
+ */
+function closeByMask() {
+  show.value = false;
+}
 
 onClickOutside(target, event => {
   if (event.clientX > (target.value?.offsetLeft ?? 0)) return;
@@ -53,46 +57,32 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div :class="{ show }">
-    <div class="right-panel-background" />
-    <div ref="target" class="right-panel bg-bg_color">
-      <div
-        class="flex-bc py-3 px-5 border-0 border-l border-solid border-(--pure-border-color)"
-      >
-        <el-badge
-          :value="version"
-          class="item"
-          :offset="[12, 5]"
-          type="primary"
+  <div :class="{ show }" class="lay-panel">
+    <div class="right-panel-background" @click="closeByMask" />
+    <div ref="target" class="right-panel flex flex-col bg-bg-card">
+      <!-- 头部：标题 + 版本 + 关闭 -->
+      <header class="lay-panel__header">
+        <div class="lay-panel__heading">
+          <h4 class="lay-panel__title">{{ t("layout.settings") }}</h4>
+          <span class="lay-panel__version">v{{ version }}</span>
+        </div>
+        <button
+          type="button"
+          class="lay-panel__close"
+          :aria-label="t('buttons.close')"
+          @click="show = !show"
         >
-          <h4 class="dark:text-white">{{ t("layout.settings") }}</h4>
-        </el-badge>
-        <span
-          v-tippy="{
-            content: t('buttons.close'),
-            placement: 'bottom-start',
-            zIndex: Z_INDEX.tippy
-          }"
-          :class="iconClass"
-        >
-          <IconifyIconOffline
-            :icon="CloseIcon"
-            class="dark:text-white"
-            height="18px"
-            width="18px"
-            @click="show = !show"
-          />
-        </span>
-      </div>
-      <el-scrollbar
-        class="border-y border-l border-r-0 border-solid border-(--pure-border-color) h-[calc(100vh-104px)]!"
-      >
-        <slot />
+          <IconifyIconOffline :icon="CloseIcon" height="16px" width="16px" />
+        </button>
+      </header>
+
+      <!-- 内容区：面板按需挂载，`show` 透传给内容决定是否渲染 -->
+      <el-scrollbar class="lay-panel__body">
+        <slot :show="show" />
       </el-scrollbar>
 
-      <div
-        class="flex justify-end p-3 border-0 border-l border-solid border-(--pure-border-color)"
-      >
+      <!-- 底部操作：重置 / 清缓存 / 复制偏好 -->
+      <footer class="lay-panel__footer">
         <el-button
           v-tippy="{
             content: t('layout.resetConfigTip'),
@@ -119,12 +109,28 @@ onBeforeUnmount(() => {
         >
           {{ t("layout.clearCache") }}
         </el-button>
-      </div>
+        <el-button
+          v-tippy="{
+            content: t('layout.copyPreferencesTip'),
+            placement: 'top-start',
+            zIndex: Z_INDEX.tippy
+          }"
+          bg
+          text
+          @click="copyPreferences"
+        >
+          {{ t("layout.copyPreferences") }}
+        </el-button>
+      </footer>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
+.lay-panel {
+  height: 100%;
+}
+
 .right-panel-background {
   position: fixed;
   top: 0;
@@ -132,7 +138,7 @@ onBeforeUnmount(() => {
   z-index: -1;
   background: rgb(0 0 0 / 20%);
   opacity: 0;
-  transition: opacity 0.3s cubic-bezier(0.7, 0.3, 0.1, 1);
+  transition: opacity var(--duration-base) cubic-bezier(0.7, 0.3, 0.1, 1);
 }
 
 .right-panel {
@@ -143,10 +149,74 @@ onBeforeUnmount(() => {
   /* z-index 阶梯（T4）：面板必须低于 EP 弹层（2000 起），避免遮挡 dialog/confirm */
   z-index: var(--pure-z-index-setting-panel);
   width: 100%;
-  max-width: 280px;
-  box-shadow: 0 0 15px 0 rgb(0 0 0 / 5%);
+  max-width: 360px;
+  height: 100vh;
+  box-shadow: -6px 0 16px rgb(0 0 0 / 8%);
   transform: translate(100%);
   transition: all var(--duration-fast) var(--ease-emphasized);
+}
+
+/* 面板骨架：头/底固定，内容区独立滚动 */
+.lay-panel__header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--divider);
+}
+
+.lay-panel__heading {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.lay-panel__title {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.lay-panel__version {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  color: var(--el-text-color-placeholder);
+}
+
+.lay-panel__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  color: var(--el-text-color-secondary);
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--duration-fast) var(--ease-standard);
+
+  &:hover {
+    color: var(--el-text-color-primary);
+    background: var(--el-fill-color-light);
+  }
+}
+
+.lay-panel__body {
+  flex: 1;
+  min-height: 0;
+}
+
+.lay-panel__footer {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 8px 12px;
+  border-top: 1px solid var(--divider);
 }
 
 .show {

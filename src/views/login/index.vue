@@ -113,9 +113,7 @@ const { locale, translationCh, translationEn } = useTranslationLang();
         </div>
       </div>
     </div>
-    <div
-      class="w-full flex-c absolute bottom-3 text-sm text-text_color_regular"
-    >
+    <div class="w-full flex-c absolute bottom-3 text-sm text-fg-muted">
       Copyright © 2026-present
       <a class="hover:text-primary!" :href="SITE_LINKS.author" target="_blank">
         &nbsp;{{ title }}

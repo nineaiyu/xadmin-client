@@ -177,6 +177,7 @@ import "element-plus/es/components/result/style/css";
 import "element-plus/es/components/row/style/css";
 import "element-plus/es/components/scrollbar/style/css";
 import "element-plus/es/components/select/style/css";
+import "element-plus/es/components/slider/style/css";
 import "element-plus/es/components/space/style/css";
 import "element-plus/es/components/splitter/style/css";
 import "element-plus/es/components/splitter-panel/style/css";
@@ -314,6 +315,8 @@ const lazyComponents: Record<string, () => Promise<Component>> = {
     import("element-plus/es/components/menu/index.mjs").then(
       m => m.ElMenuItemGroup
     ),
+  ElSlider: () =>
+    import("element-plus/es/components/slider/index.mjs").then(m => m.ElSlider),
   ElSplitter: () =>
     import("element-plus/es/components/splitter/index.mjs").then(
       m => m.ElSplitter

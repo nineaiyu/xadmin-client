@@ -111,7 +111,7 @@ function openDetail(row: DirectoryMember) {
 
 <template>
   <div
-    class="directory-members bg-bg_color flex flex-col overflow-hidden"
+    class="directory-members bg-bg-card flex flex-col overflow-hidden"
     :class="
       compact
         ? 'max-h-150 rounded-lg border border-(--el-border-color-light)'
