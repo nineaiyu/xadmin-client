@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   PANE_ROTATE_MAX,
   PANE_ROTATE_MIN,
+  clampAnimationMs,
   clampRotate,
   hasPaneAnimation,
   paneAnimationClass,
-  paneAnimationOptions
+  paneAnimationOptions,
+  paneAnimationStyle
 } from "../paneEffects";
 
 describe("clampRotate", () => {
@@ -58,5 +60,39 @@ describe("paneAnimationOptions", () => {
     expect(options[0].label).toBe("dataScreen.animationNone");
     expect(options[2].label).toBe("dataScreen.animationSlideUp");
     expect(options[6].label).toBe("dataScreen.animationZoomIn");
+  });
+});
+
+describe("clampAnimationMs 与 paneAnimationStyle", () => {
+  it("毫秒夹取：非法值回落缺省，越界落到 0~5000", () => {
+    expect(clampAnimationMs(Number.NaN, 320)).toBe(320);
+    expect(clampAnimationMs(undefined, 320)).toBe(320);
+    expect(clampAnimationMs(800.4, 320)).toBe(800);
+    expect(clampAnimationMs(-100, 320)).toBe(0);
+    expect(clampAnimationMs(99999, 320)).toBe(5000);
+  });
+
+  it("未配动画不给时序样式（编辑态载荷原样）", () => {
+    expect(paneAnimationStyle({ animation: "none" })).toEqual({});
+    expect(paneAnimationStyle({})).toEqual({});
+  });
+
+  it("缺省时序不写内联样式，非缺省才写", () => {
+    expect(paneAnimationStyle({ animation: "fade" })).toEqual({});
+    expect(
+      paneAnimationStyle({ animation: "fade", animation_duration: 320 })
+    ).toEqual({});
+    expect(
+      paneAnimationStyle({
+        animation: "fade",
+        animation_duration: 800,
+        animation_delay: 200,
+        animation_loop: true
+      })
+    ).toEqual({
+      animationDuration: "800ms",
+      animationDelay: "200ms",
+      animationIterationCount: "infinite"
+    });
   });
 });

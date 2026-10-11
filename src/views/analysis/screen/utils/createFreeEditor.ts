@@ -17,6 +17,7 @@ import { createFreePaneOps, type FreeLayerAction } from "./freePaneOps";
 import {
   alignBoxes,
   distributeBoxes,
+  snapBoxesToGrid,
   type AlignMode,
   type DistributeAxis
 } from "./freeAlign";
@@ -350,6 +351,18 @@ export function createFreeEditor(deps: {
       `distribute-${axis}-${selection.value.join(",")}`
     );
 
+  /** 批量对齐网格：坐标与尺寸都落到当前步长倍数（已在网格上 = 不产生变更） */
+  const alignToGrid = (): number =>
+    applyBoxes(
+      snapBoxesToGrid(
+        panes.value,
+        selection.value,
+        design.value,
+        gridSnap.value.step
+      ),
+      `grid-${selection.value.join(",")}`
+    );
+
   /** 层级：单选走 freePaneOps；多选按选区整体置顶 / 置底 / 上移 / 下移一位 */
   function moveLayer(action: FreeLayerAction) {
     const pks = selection.value;
@@ -446,6 +459,7 @@ export function createFreeEditor(deps: {
     nudge,
     align,
     distribute,
+    alignToGrid,
     moveLayer,
     duplicate,
     copy,

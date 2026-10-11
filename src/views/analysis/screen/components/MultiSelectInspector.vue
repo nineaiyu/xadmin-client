@@ -35,6 +35,8 @@ const emit = defineEmits<{
   remove: [];
   /** 批量改属性（统一值语义，一次一个撤销点） */
   batch: [patch: Partial<ScreenLayoutPane>];
+  /** 批量对齐网格（坐标与尺寸落到当前步长倍数） */
+  alignGrid: [];
 }>();
 
 const { t } = useI18n();
@@ -212,6 +214,14 @@ const LAYER_ACTIONS: { action: FreeLayerAction; key: string }[] = [
           @click="emit('distribute', item.axis)"
         >
           {{ t(`dataScreen.${item.key}`) }}
+        </el-button>
+        <!-- 批量对齐网格：坐标与尺寸都落到当前步长（工具栏「吸附网格」的步长） -->
+        <el-button
+          size="small"
+          data-testid="multi-align-grid"
+          @click="emit('alignGrid')"
+        >
+          {{ t("dataScreen.alignToGrid") }}
         </el-button>
       </div>
     </div>

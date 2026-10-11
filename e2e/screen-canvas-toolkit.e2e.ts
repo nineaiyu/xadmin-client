@@ -126,10 +126,31 @@ test("画布工具集三期：旋转 / 动画 / 富文本 / 网格吸附 / 键�
   await expect(pane.locator(".screen-pane")).not.toHaveClass(
     /pane-animation--fade/
   );
+  // 时序：时长 800ms + 循环播放（时序控件只在配了动画时出现）
+  const durationInput = page
+    .getByTestId("inspector-animation-duration")
+    .locator("input");
+  await durationInput.fill("800");
+  await durationInput.press("Enter");
+  const delayInput = page
+    .getByTestId("inspector-animation-delay")
+    .locator("input");
+  await delayInput.fill("200");
+  await delayInput.press("Enter");
+  await page.getByTestId("inspector-animation-loop").click();
+
   await page.getByTestId("designer-preview").click();
   await expect(
     freeCanvas.locator(".screen-pane.pane-animation--fade")
   ).toHaveCount(1);
+  await expect(pane.locator(".screen-pane")).toHaveAttribute(
+    "style",
+    /animation-duration: 800ms/
+  );
+  await expect(pane.locator(".screen-pane")).toHaveAttribute(
+    "style",
+    /animation-iteration-count: infinite/
+  );
   await page.getByTestId("designer-preview").click();
 
   // ---- 元素级网格吸附：开开关 + 步长 20，拖动后坐标必须是步长倍数 ----
@@ -161,6 +182,9 @@ test("画布工具集三期：旋转 / 动画 / 富文本 / 网格吸附 / 键�
   const savedPane = savedData.free_layout.panes[0] as {
     rotate: number;
     animation: string;
+    animation_duration: number;
+    animation_delay: number;
+    animation_loop: boolean;
     text_format: string;
     x: number;
     y: number;
@@ -168,6 +192,9 @@ test("画布工具集三期：旋转 / 动画 / 富文本 / 网格吸附 / 键�
   };
   expect(savedPane.rotate).toBe(45);
   expect(savedPane.animation).toBe("fade");
+  expect(savedPane.animation_duration).toBe(800);
+  expect(savedPane.animation_delay).toBe(200);
+  expect(savedPane.animation_loop).toBe(true);
   expect(savedPane.text_format).toBe("rich");
   expect(savedPane.text).toContain("**加粗标题**");
   // 网格吸附：坐标落在 20px 的倍数上（参考线命中的目标线也是步长倍数）
@@ -272,6 +299,8 @@ test("画布工具集三期：旋转 / 动画 / 富文本 / 网格吸附 / 键�
   // 公共值回显：三格一致后控件显示该值（多值不一时为空）
   await expect(batchSize).toHaveValue("48");
   await expect(batchRotate).toHaveValue("30");
+  // 批量对齐网格：坐标与尺寸落到工具栏当前步长（前面已选 20px）
+  await page.getByTestId("multi-align-grid").click();
 
   await saveAndWait(page, screen.pk);
   const afterBatch = await page.request.get(
@@ -280,7 +309,15 @@ test("画布工具集三期：旋转 / 动画 / 富文本 / 网格吸附 / 键�
   );
   const batchData = (await afterBatch.json()).data as {
     free_layout: {
-      panes: { size?: number; rotate?: number; text_format?: string }[];
+      panes: {
+        size?: number;
+        rotate?: number;
+        text_format?: string;
+        x: number;
+        y: number;
+        w: number;
+        h: number;
+      }[];
     };
   };
   // 统一值：三格全部被改写（含此前旋转 45 的那一格），文本格式回到 plain 后不下发
@@ -289,6 +326,10 @@ test("画布工具集三期：旋转 / 动画 / 富文本 / 网格吸附 / 键�
     expect(item.size).toBe(48);
     expect(item.rotate).toBe(30);
     expect(item.text_format).toBeUndefined();
+    // 批量对齐网格：坐标与尺寸都是 20px 的倍数
+    for (const value of [item.x, item.y, item.w, item.h]) {
+      expect(value % 20).toBe(0);
+    }
   }
 
   // ---- 团队模板删除（管理入口，创建者本人可删）----

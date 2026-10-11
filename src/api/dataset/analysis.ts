@@ -48,8 +48,14 @@ export type ScreenLayoutPane = {
    * **不参与几何**：吸附 / 框选 / 对齐仍按未旋转的轴对齐盒模型计算。
    */
   rotate?: number;
-  /** 入场动画（仅展示态播放一次；缺省 none 不下发） */
+  /** 入场动画（仅展示态播放；缺省 none 不下发） */
   animation?: ScreenPaneAnimation;
+  /** 动画时长 ms（0~5000，缺省 320 不下发；见 utils/paneEffects） */
+  animation_duration?: number;
+  /** 动画延迟 ms（0~5000，缺省 0 不下发） */
+  animation_delay?: number;
+  /** 循环播放（缺省 false 不下发；用于「呼吸」类强调效果） */
+  animation_loop?: boolean;
   /** type=text：文本格式（缺省 plain 不下发；rich = 受限标记，见 utils/richText） */
   text_format?: "plain" | "rich";
 };

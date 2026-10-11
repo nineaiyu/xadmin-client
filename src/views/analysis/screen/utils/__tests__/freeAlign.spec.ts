@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ScreenLayoutPane } from "@/api/dataset/analysis";
-import { alignBoxes, distributeBoxes } from "../freeAlign";
+import { alignBoxes, distributeBoxes, snapBoxesToGrid } from "../freeAlign";
 
 const DESIGN = { design_w: 1920, design_h: 1080 };
 
@@ -72,5 +72,49 @@ describe("分布：两端不动、中间均分边距", () => {
   it("少于 3 个窗格时不做分布（无意义的「均分」）", () => {
     expect(distributeBoxes(PANES, ["a", "b"], "h", DESIGN)).toEqual({});
     expect(distributeBoxes(PANES, ["a"], "h", DESIGN)).toEqual({});
+  });
+});
+describe("snapBoxesToGrid 批量对齐网格", () => {
+  const pane = (
+    pk: string,
+    box: { x: number; y: number; w: number; h: number }
+  ) => ({
+    pk,
+    type: "text" as const,
+    ...box
+  });
+
+  it("坐标与尺寸四舍五入到步长倍数", () => {
+    const result = snapBoxesToGrid(
+      [pane("a", { x: 103, y: 197, w: 251, h: 79 })],
+      ["a"],
+      { design_w: 1920, design_h: 1080 },
+      20
+    );
+    expect(result.a).toEqual({ x: 100, y: 200, w: 260, h: 80 });
+  });
+
+  it("尺寸不小于最小窗格尺寸，结果夹回画幅", () => {
+    const result = snapBoxesToGrid(
+      [pane("a", { x: 1901, y: 1071, w: 12, h: 12 })],
+      ["a"],
+      { design_w: 1920, design_h: 1080 },
+      20
+    );
+    expect(result.a.w).toBeGreaterThanOrEqual(16);
+    expect(result.a.h).toBeGreaterThanOrEqual(16);
+    expect(result.a.x + result.a.w).toBeLessThanOrEqual(1920);
+    expect(result.a.y + result.a.h).toBeLessThanOrEqual(1080);
+  });
+
+  it("已在网格上 / 未选中 / step 非法都不产生变更", () => {
+    const panes = [
+      pane("a", { x: 100, y: 200, w: 260, h: 80 }),
+      pane("b", { x: 103, y: 197, w: 251, h: 79 })
+    ];
+    const design = { design_w: 1920, design_h: 1080 };
+    expect(snapBoxesToGrid(panes, ["a"], design, 20)).toEqual({});
+    expect(snapBoxesToGrid(panes, ["b"], design, 0)).toEqual({});
+    expect(snapBoxesToGrid(panes, [], design, 20)).toEqual({});
   });
 });

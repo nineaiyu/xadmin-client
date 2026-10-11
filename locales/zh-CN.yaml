@@ -3140,6 +3140,9 @@ dataScreen:
   freeHint: 自由画布按像素定位（位置与尺寸为 px，允许重叠）；层级 = 数组顺序（后者在上）
   paneRotate: 旋转
   paneAnimation: 入场动画
+  paneAnimationDuration: 动画时长(ms)
+  paneAnimationDelay: 动画延迟(ms)
+  paneAnimationLoop: 循环播放
   paneTextFormat: 文本格式
   textFormatPlain: 纯文本
   textFormatRich: 富文本
@@ -3169,6 +3172,7 @@ dataScreen:
   alignBottomEdge: 底对齐
   distribute: 分布
   distributeH: 水平等间距
+  alignToGrid: 对齐网格
   distributeV: 垂直等间距
   copy: 复制
   paste: 粘贴

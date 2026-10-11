@@ -1,5 +1,9 @@
 import type { ScreenLayoutPane } from "@/api/dataset/analysis";
-import { clampFreeBox, type FreeDesign } from "./freeLayout";
+import {
+  FREE_MIN_PANE_SIZE,
+  clampFreeBox,
+  type FreeDesign
+} from "./freeLayout";
 import { selectionBounds } from "./freeSelect";
 import type { PaneBox } from "./layout";
 
@@ -84,6 +88,49 @@ export function distributeBoxes(
     else box.y = cursor;
     result[pane.pk] = clampFreeBox(box, design);
     cursor += size(pane) + gap;
+  }
+  return result;
+}
+
+/**
+ * 批量对齐网格（多选动作）：把选区内每个窗格的 x / y / w / h 四舍五入到步长倍数
+ * （尺寸不小于最小 16px，结果夹回画幅）。已在网格上的窗格不进结果，调用方据此
+ * 判断「是否需要记撤销点」——连续点同一个按钮不会堆空历史。
+ *
+ * 与手势吸附共用同一份网格语义（`freeSnap.FreeGridSnap`）：参考线只在拖动时优先，
+ * 这里是显式命令，直接落网格；`step <= 0` 返回空（无网格配置）。
+ */
+export function snapBoxesToGrid(
+  panes: readonly ScreenLayoutPane[],
+  pks: readonly string[],
+  design: FreeDesign,
+  step: number
+): Record<string, PaneBox> {
+  const result: Record<string, PaneBox> = {};
+  if (!(step > 0)) return result;
+  const round = (value: number) => Math.round(value / step) * step;
+  for (const pk of pks) {
+    const pane = panes.find(item => item.pk === pk);
+    if (!pane) continue;
+    const w = Math.max(round(pane.w), FREE_MIN_PANE_SIZE);
+    const h = Math.max(round(pane.h), FREE_MIN_PANE_SIZE);
+    const box = clampFreeBox(
+      {
+        x: round(pane.x),
+        y: round(pane.y),
+        w,
+        h
+      },
+      design
+    );
+    if (
+      box.x !== pane.x ||
+      box.y !== pane.y ||
+      box.w !== pane.w ||
+      box.h !== pane.h
+    ) {
+      result[pk] = box;
+    }
   }
   return result;
 }

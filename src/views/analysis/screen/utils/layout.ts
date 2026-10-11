@@ -1,4 +1,9 @@
 import type { ScreenLayoutPane, ScreenPaneType } from "@/api/dataset/analysis";
+import {
+  PANE_ANIMATION_DELAY_DEFAULT,
+  PANE_ANIMATION_DURATION_DEFAULT,
+  clampAnimationMs
+} from "./paneEffects";
 
 /**
  * 大屏画布栅格的纯几何口径（设计器与展示端共用，单测见 __tests__/layout.spec.ts）。
@@ -155,6 +160,20 @@ export function paneBody(pane: ScreenLayoutPane): PaneBody {
   if (pane.rotate) base.rotate = pane.rotate;
   if (pane.animation && pane.animation !== "none") {
     base.animation = pane.animation;
+    // 时序只在配了动画时下发；缺省（320ms / 0ms / 不循环）不写，让 CSS 基线继续生效
+    const duration = clampAnimationMs(
+      pane.animation_duration,
+      PANE_ANIMATION_DURATION_DEFAULT
+    );
+    const delay = clampAnimationMs(
+      pane.animation_delay,
+      PANE_ANIMATION_DELAY_DEFAULT
+    );
+    if (duration !== PANE_ANIMATION_DURATION_DEFAULT) {
+      base.animation_duration = duration;
+    }
+    if (delay > 0) base.animation_delay = delay;
+    if (pane.animation_loop) base.animation_loop = true;
   }
   if (pane.type === "dashboard") {
     base.dashboard = pane.dashboard;

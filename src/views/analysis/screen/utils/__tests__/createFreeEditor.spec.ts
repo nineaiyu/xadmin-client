@@ -360,3 +360,35 @@ describe("自由画布编辑域：批量改属性（多选，统一值语义）"
     expect(api.updateMany({ rotate: 60 })).toBe(0);
   });
 });
+
+describe("自由画布编辑域：批量对齐网格", () => {
+  it("坐标与尺寸落到当前步长（默认 8px），一次一个撤销点", async () => {
+    const { api, pushes } = await setup([
+      pane("a", { x: 103, y: 197, w: 251, h: 79 }),
+      pane("b", { x: 400, y: 200, w: 300, h: 150 })
+    ]);
+    api.selectMany(["a", "b"]);
+    // 两个都不在网格上（b 的宽高 300/150 也不是 8 的倍数）→ 都改，但仍只记一个撤销点
+    expect(api.alignToGrid()).toBe(2);
+    const aligned = api.panes.value.find(item => item.pk === "a")!;
+    expect([aligned.x, aligned.y, aligned.w, aligned.h]).toEqual([
+      104, 200, 248, 80
+    ]);
+    expect(pushes).toHaveLength(1);
+    // 已经全在网格上 → 不再产生变更（也不记撤销点）
+    api.selectMany(["a"]);
+    expect(api.alignToGrid()).toBe(0);
+    expect(pushes).toHaveLength(1);
+  });
+
+  it("步长随工具栏选择变化（20px：坐标与尺寸都按 20 取整）", async () => {
+    const { api } = await setup([pane("a", { x: 103, y: 197, w: 251, h: 79 })]);
+    api.setGrid({ enabled: true, step: 20 });
+    api.selectMany(["a"]);
+    expect(api.alignToGrid()).toBe(1);
+    const aligned = api.panes.value[0];
+    expect([aligned.x, aligned.y, aligned.w, aligned.h]).toEqual([
+      100, 200, 260, 80
+    ]);
+  });
+});

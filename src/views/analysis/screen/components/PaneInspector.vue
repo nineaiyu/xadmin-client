@@ -8,10 +8,9 @@ import type { FreeLayerAction } from "../utils/freePaneOps";
 import {
   PANE_ROTATE_MAX,
   PANE_ROTATE_MIN,
-  clampRotate,
-  paneAnimationOptions,
-  type PaneAnimation
+  clampRotate
 } from "../utils/paneEffects";
+import PaneAnimationFields from "./PaneAnimationFields.vue";
 import { isValidPaneImageUrl } from "../utils/layout";
 
 /**
@@ -99,16 +98,11 @@ const rotate = computed({
   get: () => clampRotate(props.pane.rotate),
   set: (value: number) => emit("update", { rotate: clampRotate(value) })
 });
-const animation = computed({
-  get: () => props.pane.animation ?? "none",
-  set: (value: PaneAnimation) => emit("update", { animation: value })
-});
 const textFormat = computed({
   get: () => (props.pane.text_format === "rich" ? "rich" : "plain"),
   set: (value: string) =>
     emit("update", { text_format: value === "rich" ? "rich" : "plain" })
 });
-const animationOptions = paneAnimationOptions();
 
 /* ---------------- 指标卡窗格 ---------------- */
 const datasets = computed(() => props.datasets ?? []);
@@ -344,20 +338,9 @@ const imageUrlError = computed(() =>
           data-testid="inspector-rotate"
         />
       </el-form-item>
-      <el-form-item :label="t('dataScreen.paneAnimation')">
-        <el-select
-          v-model="animation"
-          size="small"
-          data-testid="inspector-animation"
-        >
-          <el-option
-            v-for="item in animationOptions"
-            :key="item.value"
-            :label="t(item.label)"
-            :value="item.value"
-          />
-        </el-select>
-      </el-form-item>
+      <!-- 动画（种类 + 时长 / 延迟 / 循环）由子组件承载：属性面板行数门禁拆分，
+           时序只在配了动画时出现（none 时服务端静默忽略） -->
+      <PaneAnimationFields :pane="pane" @update="emit('update', $event)" />
 
       <el-divider />
       <el-form-item :label="t('dataScreen.panePosition')">

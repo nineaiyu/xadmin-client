@@ -6,7 +6,11 @@ import { ChartCardAsync as ChartCard } from "@/views/dashboard/components/ChartC
 import type { DashboardCard } from "@/api/dataset/datasets";
 import type { ScreenLayoutPane } from "@/api/dataset/analysis";
 import type { ExportedImage } from "@/utils/imageExport";
-import { clampRotate, paneAnimationClass } from "../utils/paneEffects";
+import {
+  clampRotate,
+  paneAnimationClass,
+  paneAnimationStyle
+} from "../utils/paneEffects";
 import { renderRichText } from "../utils/richText";
 
 /**
@@ -126,15 +130,6 @@ defineExpose({ refresh, applyCardData, renderImages });
  * 吸附 / 框选 / 对齐仍按未旋转的盒模型算（见 utils/paneEffects）。
  */
 const rotate = computed(() => clampRotate(props.pane.rotate));
-const paneStyle = computed(() => ({
-  ...(props.layout === "free"
-    ? { position: "absolute" as const, inset: "0" }
-    : {
-        gridColumn: `${props.pane.x + 1} / span ${props.pane.w}`,
-        gridRow: `${props.pane.y + 1} / span ${props.pane.h}`
-      }),
-  ...(rotate.value ? { transform: `rotate(${rotate.value}deg)` } : {})
-}));
 
 /** 编辑件反向旋转：手柄 / 抓手始终轴对齐（旋转的只是内容视觉） */
 const counterRotate = computed(() =>
@@ -145,6 +140,22 @@ const counterRotate = computed(() =>
 const animationClass = computed(() =>
   props.playAnimation ? paneAnimationClass(props.pane.animation) : ""
 );
+
+/** 动画时序（时长 / 延迟 / 循环）：只在真的要播时写内联样式，编辑态保持载荷原样 */
+const animationStyle = computed(() =>
+  animationClass.value ? paneAnimationStyle(props.pane) : {}
+);
+
+const paneStyle = computed(() => ({
+  ...(props.layout === "free"
+    ? { position: "absolute" as const, inset: "0" }
+    : {
+        gridColumn: `${props.pane.x + 1} / span ${props.pane.w}`,
+        gridRow: `${props.pane.y + 1} / span ${props.pane.h}`
+      }),
+  ...(rotate.value ? { transform: `rotate(${rotate.value}deg)` } : {}),
+  ...animationStyle.value
+}));
 
 /** 富文本渲染结果（受限标记 → 白名单 HTML；纯文本为空串，走插值分支） */
 const richHtml = computed(() =>

@@ -3140,6 +3140,9 @@ dataScreen:
   freeHint: Free canvas places panes in pixels (x/y/w/h in px, overlapping allowed); layer order = array order (later on top)
   paneRotate: Rotation
   paneAnimation: Entrance animation
+  paneAnimationDuration: Duration (ms)
+  paneAnimationDelay: Delay (ms)
+  paneAnimationLoop: Loop
   paneTextFormat: Text format
   textFormatPlain: Plain
   textFormatRich: Rich
@@ -3169,6 +3172,7 @@ dataScreen:
   alignBottomEdge: Bottom
   distribute: Distribute
   distributeH: Horizontal
+  alignToGrid: Align to grid
   distributeV: Vertical
   copy: Copy
   paste: Paste

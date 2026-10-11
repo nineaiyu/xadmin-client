@@ -442,6 +442,7 @@ const back = () => {
           :panes="freeSelectedPanes"
           @align="free.align"
           @distribute="free.distribute"
+          @align-grid="free.alignToGrid"
           @layer="free.moveLayer"
           @duplicate="free.duplicate"
           @remove="free.removeSelected"
