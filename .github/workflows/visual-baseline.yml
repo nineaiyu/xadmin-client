@@ -23,6 +23,22 @@ jobs:
   baseline:
     name: Generate linux baseline
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        # E2E 真库化：tests.settings_e2e 硬编码 DB_ENGINE=postgresql，
+        # 连接参数走其缺省（127.0.0.1:55433 / server / pgtest），与 e2e 档同构
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: server
+          POSTGRES_PASSWORD: pgtest
+          POSTGRES_DB: postgres
+        ports:
+          - 55433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
     env:
       E2E_PYTHON: python3
       E2E_SERVER_DIR: xadmin-server
