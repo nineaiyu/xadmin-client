@@ -63,6 +63,7 @@ test("画布工具集三期：旋转 / 动画 / 富文本 / 网格吸附 / 键�
   const suffix = Math.random().toString(36).slice(2, 8);
   const screenName = `E2E工具集三期-${suffix}`;
   const templateName = `E2E团队模板-${suffix}`;
+  const templateGroup = "E2E分组";
 
   await login(page);
   const token = await getAccessToken(page);
@@ -227,6 +228,9 @@ test("画布工具集三期：旋转 / 动画 / 富文本 / 网格吸附 / 键�
   await page.getByTestId("free-template-save-server").click();
   await page.locator(".el-message-box input").last().fill(templateName);
   await clickBoxButton(page, "保存为模板");
+  // 分组名（ADR-090 D4；可留空 = 未分组）
+  await page.locator(".el-message-box input").last().fill(templateGroup);
+  await clickBoxButton(page, "保存为模板");
   await clickBoxButton(page, "团队共享");
   await expect(page.getByText(/已保存为团队模板/)).toBeVisible();
   const templates = await page.request.get(
@@ -236,11 +240,13 @@ test("画布工具集三期：旋转 / 动画 / 富文本 / 网格吸附 / 键�
   const templateRows = (await templates.json()).data.results as {
     pk: string;
     name: string;
+    group?: string;
     free_layout: { panes: { rotate?: number }[] };
   }[];
   const created = templateRows.find(item => item.name === templateName);
   expect(created).toBeTruthy();
   expect(created?.free_layout.panes[0].rotate).toBe(45);
+  expect(created?.group).toBe(templateGroup);
 
   await page.getByTestId("free-template-menu").click();
   await page

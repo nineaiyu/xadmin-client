@@ -20,6 +20,8 @@ export const FREE_TEMPLATE_LIMIT = 20;
 export type FreeTemplate = {
   id: string;
   name: string;
+  /** 分组（团队模板用；本地 / 内置为空串） */
+  group?: string;
   /** 内置模板不可改名 / 删除 */
   builtin: boolean;
   /**

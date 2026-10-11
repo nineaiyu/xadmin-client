@@ -3232,6 +3232,21 @@ dataScreen:
   templateGroupBuiltin: 内置模板
   templateGroupServer: 团队模板
   templateServerEmpty: 暂无团队模板
+  templateGroup: 模板分组
+  templateGroupPrompt: 分组名（可留空 = 未分组）：
+  templateName: 模板名称
+  templateVersions: 版本历史
+  templateRollback: 回滚
+  templateRollbackConfirm: 回滚到版本 {n}？当前名称 / 分组 / 画布会被该版本覆盖（历史仍保留，可再回滚回来）
+  templateRolledBack: 已回滚到版本 {n}
+  templateRollbackFailed: 回滚失败（只有创建者可以回滚）
+  templateVersionEmpty: 暂无历史版本
+  templateVersionColumn: 版本
+  updatedTime: 最近更新
+  pasteCloud: 云端粘贴
+  clipboardCloudEmpty: 云端剪贴板还是空的（先在另一台设备复制一次）
+  clipboardCloudFailed: 云端剪贴板写入失败（本地剪贴板仍可用）
+  loading: 加载中…
   templateSaveServer: 另存团队模板
   templateVisibilityHint: 是否共享给团队（取消 = 仅自己可见）
   templateVisibilityShared: 团队共享

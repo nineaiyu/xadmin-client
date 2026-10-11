@@ -13,10 +13,13 @@ import {
 } from "./freeTemplates";
 import {
   fetchServerTemplates,
+  fetchTemplateVersions,
   removeServerTemplate,
   renameServerTemplate,
+  rollbackTemplate,
   saveServerTemplate
 } from "./serverTemplates";
+import type { ScreenTemplateVersionItem } from "@/api/dataset/analysis";
 import { exportTemplateJson, parseTemplateJson } from "./templateJson";
 import type { PaneInserter } from "./freeInserter";
 import type { TranslateFn } from "./types";
@@ -60,7 +63,8 @@ export function createFreeTemplates(deps: {
   /** 另存为团队模板：名称 + 可见性（本地模板与团队模板各自独立，互不覆盖） */
   async function saveToServer(
     name: string,
-    visibility: "personal" | "shared"
+    visibility: "personal" | "shared",
+    group = ""
   ): Promise<boolean> {
     const trimmed = name.trim();
     if (!trimmed) {
@@ -73,6 +77,7 @@ export function createFreeTemplates(deps: {
     }
     const ok = await saveServerTemplate({
       name: trimmed.slice(0, 40),
+      group: group.trim().slice(0, 40),
       design: deps.design.value,
       panes: deps.panes.value,
       visibility
@@ -115,6 +120,25 @@ export function createFreeTemplates(deps: {
     );
     if (ok) await refreshServer();
     return ok;
+  }
+
+  /** 模板历史版本（只读）：无版本或失败返回空数组（UI 给空态） */
+  async function versions(id: string): Promise<ScreenTemplateVersionItem[]> {
+    return fetchTemplateVersions(id);
+  }
+
+  /** 回滚到指定版本：成功后刷新团队模板列表（名称 / 分组 / 载荷都变了） */
+  async function rollback(id: string, version: number): Promise<boolean> {
+    const updated = await rollbackTemplate(id, version);
+    if (!updated) {
+      message(deps.t("dataScreen.templateRollbackFailed"), { type: "warning" });
+      return false;
+    }
+    await refreshServer();
+    message(deps.t("dataScreen.templateRolledBack", { n: version }), {
+      type: "success"
+    });
+    return true;
   }
 
   /* ---------------- 本地模板 ---------------- */
@@ -228,7 +252,9 @@ export function createFreeTemplates(deps: {
     remove,
     removeServer,
     importJson,
-    exportJson
+    exportJson,
+    versions,
+    rollback
   };
 }
 

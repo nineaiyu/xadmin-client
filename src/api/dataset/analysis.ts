@@ -225,6 +225,8 @@ export const reportApi = new BaseApi("/api/dataset/reports");
 export type ScreenTemplateItem = {
   pk: string;
   name: string;
+  /** 模板分组（ADR-090 D4；空 = 未分组） */
+  group?: string;
   free_layout?: Partial<ScreenFreeLayout>;
   visibility: "personal" | "shared";
   is_owner?: boolean;
@@ -233,6 +235,37 @@ export type ScreenTemplateItem = {
 };
 
 export const screenTemplateApi = new BaseApi("/api/dataset/screen-templates");
+
+/** 模板历史版本（只读；回滚目标选择用） */
+export type ScreenTemplateVersionItem = {
+  pk: string;
+  version: number;
+  name: string;
+  group?: string;
+  free_layout?: Partial<ScreenFreeLayout>;
+  created_time?: string;
+};
+
+/** 模板历史版本列表（最新在前） */
+export const listScreenTemplateVersions = (pk: string) =>
+  screenTemplateApi.request<DataListResult<ScreenTemplateVersionItem>>(
+    "get",
+    {},
+    {},
+    `${screenTemplateApi.baseApi}/${pk}/versions`
+  );
+
+/** 回滚模板到指定版本（回滚本身也会记一版，可再回滚回来） */
+export const rollbackScreenTemplate = (pk: string, version: number) =>
+  screenTemplateApi.request<DetailResult<ScreenTemplateItem>>(
+    "post",
+    {},
+    { version },
+    `${screenTemplateApi.baseApi}/${pk}/rollback`
+  );
+
+/** 云端剪贴板（按用户单槽，ADR-090 D4）：跨设备复制粘贴 */
+export const screenClipboardApi = new BaseApi("/api/dataset/screen-clipboard");
 
 /** 投递渠道枚举：choices_dict 在响应顶层（与其它 choices 消费方同口径） */
 export type ReportChannelChoicesResult = Omit<Envelope, "data"> & {

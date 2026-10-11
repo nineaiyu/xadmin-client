@@ -3232,6 +3232,21 @@ dataScreen:
   templateGroupBuiltin: Built-in templates
   templateGroupServer: Team templates
   templateServerEmpty: No team template yet
+  templateGroup: Group
+  templateGroupPrompt: "Group name (leave empty = ungrouped):"
+  templateName: Template name
+  templateVersions: Version history
+  templateRollback: Roll back
+  templateRollbackConfirm: Roll back to version {n}? Name / group / canvas will be overwritten by that version (history is kept, you can roll forward again)
+  templateRolledBack: Rolled back to version {n}
+  templateRollbackFailed: Rollback failed (only the creator can roll back)
+  templateVersionEmpty: No version history yet
+  templateVersionColumn: Version
+  updatedTime: Updated
+  pasteCloud: Paste from cloud
+  clipboardCloudEmpty: The cloud clipboard is empty (copy something on another device first)
+  clipboardCloudFailed: Failed to write the cloud clipboard (the local clipboard still works)
+  loading: Loading…
   templateSaveServer: Save as team template
   templateVisibilityHint: Share with the team? (Cancel = visible only to me)
   templateVisibilityShared: Share with team

@@ -4,6 +4,17 @@ import type { ScreenLayoutPane } from "@/api/dataset/analysis";
 import type { DashboardItem, DatasetItem } from "@/api/dataset/datasets";
 
 vi.mock("@/utils/message", () => ({ message: vi.fn() }));
+vi.mock("../serverTemplates", () => ({
+  fetchServerTemplates: vi.fn(async () => []),
+  saveServerTemplate: vi.fn(async () => true),
+  renameServerTemplate: vi.fn(async () => true),
+  removeServerTemplate: vi.fn(async () => true),
+  fetchTemplateVersions: vi.fn(async () => []),
+  rollbackTemplate: vi.fn(async () => ({ pk: "t1", name: "回滚后" })),
+  fetchCloudClipboard: vi.fn(async () => null),
+  saveCloudClipboard: vi.fn(async () => true),
+  clearCloudClipboard: vi.fn(async () => true)
+}));
 vi.mock("@/utils/download", () => ({ downloadTextFile: vi.fn(() => true) }));
 
 import { message } from "@/utils/message";
@@ -390,5 +401,64 @@ describe("自由画布编辑域：批量对齐网格", () => {
     expect([aligned.x, aligned.y, aligned.w, aligned.h]).toEqual([
       100, 200, 260, 80
     ]);
+  });
+});
+
+describe("自由画布编辑域：云端剪贴板与模板版本（ADR-090 D4）", () => {
+  it("复制时双写云端（本地照旧可用）", async () => {
+    const { fetchCloudClipboard, saveCloudClipboard } =
+      await import("../serverTemplates");
+    const { api } = await setup();
+    api.selectMany(["a"]);
+    api.copy();
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(saveCloudClipboard).toHaveBeenCalledTimes(1);
+    const payload = vi.mocked(saveCloudClipboard).mock.calls[0][0];
+    expect(payload.design_w).toBe(1920);
+    expect(payload.panes).toHaveLength(1);
+    expect(fetchCloudClipboard).not.toHaveBeenCalled();
+  });
+
+  it("云端粘贴：空槽位给提示且不插窗格；有槽位走插入链路", async () => {
+    const server = await import("../serverTemplates");
+    const { api, pushes } = await setup([
+      pane("a", { x: 100, y: 100, w: 200, h: 100 })
+    ]);
+    expect(await api.pasteFromCloud()).toBe(0);
+
+    vi.mocked(server.fetchCloudClipboard).mockResolvedValue({
+      pk: "c1",
+      free_layout: {
+        design_w: 1920,
+        design_h: 1080,
+        panes: [
+          { pk: "x1", type: "text", x: 10, y: 20, w: 200, h: 80, text: "云端" }
+        ]
+      }
+    });
+    expect(await api.pasteFromCloud()).toBe(1);
+    expect(api.panes.value).toHaveLength(2);
+    expect(api.panes.value.at(-1)?.pk).not.toBe("x1");
+    expect(pushes).toHaveLength(1);
+  });
+
+  it("模板版本：列表透传 + 回滚成功后刷新团队模板", async () => {
+    const server = await import("../serverTemplates");
+    const { api } = await setup();
+    vi.mocked(server.fetchTemplateVersions).mockResolvedValue([
+      { pk: "v2", version: 2, name: "两版" },
+      { pk: "v1", version: 1, name: "一版" }
+    ]);
+    const rows = await api.templateVersions("t1");
+    expect(rows.map(row => row.version)).toEqual([2, 1]);
+
+    vi.mocked(server.rollbackTemplate).mockResolvedValue({
+      pk: "t1",
+      name: "一版",
+      visibility: "shared"
+    });
+    expect(await api.rollbackTemplate("t1", 1)).toBe(true);
+    expect(server.rollbackTemplate).toHaveBeenCalledWith("t1", 1);
+    expect(server.fetchServerTemplates).toHaveBeenCalled();
   });
 });

@@ -1,9 +1,16 @@
 import { SUCCESS_CODE } from "@/api/types";
 import {
+  listScreenTemplateVersions,
+  rollbackScreenTemplate,
+  screenClipboardApi,
   screenTemplateApi,
-  type ScreenTemplateItem
+  type ScreenTemplateItem,
+  type ScreenTemplateVersionItem
 } from "@/api/dataset/analysis";
-import type { ScreenLayoutPane } from "@/api/dataset/analysis";
+import type {
+  ScreenFreeLayout,
+  ScreenLayoutPane
+} from "@/api/dataset/analysis";
 import { readFreeLayout, type FreeDesign } from "./freeLayout";
 import type { FreeTemplate } from "./freeTemplates";
 
@@ -19,6 +26,7 @@ export function toFreeTemplate(item: ScreenTemplateItem): FreeTemplate {
   return {
     id: item.pk,
     name: item.name,
+    group: item.group ?? "",
     builtin: false,
     source: "server",
     is_owner: item.is_owner !== false,
@@ -27,6 +35,59 @@ export function toFreeTemplate(item: ScreenTemplateItem): FreeTemplate {
     panes: read.panes,
     updated_at: item.updated_time ? Date.parse(item.updated_time) || 0 : 0
   };
+}
+
+/** 模板历史版本（只读，最新在前）；失败返回空数组由调用方降级 */
+export async function fetchTemplateVersions(
+  pk: string
+): Promise<ScreenTemplateVersionItem[]> {
+  const res = await listScreenTemplateVersions(pk).catch(() => null);
+  if (!res || res.code !== SUCCESS_CODE) return [];
+  return res.data ?? [];
+}
+
+/** 回滚模板到指定版本（服务端同时记一版，可再回滚） */
+export async function rollbackTemplate(
+  pk: string,
+  version: number
+): Promise<ScreenTemplateItem | null> {
+  const res = await rollbackScreenTemplate(pk, version).catch(() => null);
+  if (!res || res.code !== SUCCESS_CODE) return null;
+  return res.data as ScreenTemplateItem;
+}
+
+/** 云端剪贴板：读取本人槽位（无槽位返回 null） */
+export async function fetchCloudClipboard(): Promise<{
+  pk: string;
+  free_layout: Partial<ScreenFreeLayout>;
+} | null> {
+  const res = await screenClipboardApi
+    .list({ page: 1, size: 1 })
+    .catch(() => null);
+  if (!res || res.code !== SUCCESS_CODE) return null;
+  const rows = ((res.data as { results?: unknown[] })?.results ?? []) as {
+    pk: string;
+    free_layout: Partial<ScreenFreeLayout>;
+  }[];
+  return rows[0] ?? null;
+}
+
+/** 云端剪贴板：写入本人槽位（服务端 upsert，返回是否成功） */
+export async function saveCloudClipboard(payload: {
+  design_w: number;
+  design_h: number;
+  panes: readonly ScreenLayoutPane[];
+}): Promise<boolean> {
+  const res = await screenClipboardApi
+    .create({ free_layout: payload })
+    .catch(() => null);
+  return Boolean(res && res.code === SUCCESS_CODE);
+}
+
+/** 云端剪贴板：清空本人槽位 */
+export async function clearCloudClipboard(pk: string): Promise<boolean> {
+  const res = await screenClipboardApi.destroy(pk).catch(() => null);
+  return Boolean(res && res.code === SUCCESS_CODE);
 }
 
 /** 拉取当前用户可见的团队模板（失败返回空数组，调用方按「不可用」降级） */
@@ -40,6 +101,7 @@ export async function fetchServerTemplates(): Promise<FreeTemplate[]> {
 /** 另存为团队模板（名称 + 可见性；成功返回 true） */
 export async function saveServerTemplate(payload: {
   name: string;
+  group?: string;
   design: FreeDesign;
   panes: readonly ScreenLayoutPane[];
   visibility: "personal" | "shared";
@@ -47,6 +109,7 @@ export async function saveServerTemplate(payload: {
   const res = await screenTemplateApi
     .create({
       name: payload.name,
+      group: payload.group ?? "",
       visibility: payload.visibility,
       free_layout: {
         design_w: payload.design.design_w,

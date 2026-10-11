@@ -22,13 +22,14 @@ import {
   type DistributeAxis
 } from "./freeAlign";
 import { clampGroupDelta } from "./freeSelect";
-import { clampRotate } from "./paneEffects";
+import { batchCoalesceKey, batchUpdateTargets } from "./freeBatchUpdate";
 import {
   createClipboard,
   readClipboard,
   writeClipboard
 } from "./freeClipboard";
 import { createPaneInserter } from "./freeInserter";
+import { fetchCloudClipboard, saveCloudClipboard } from "./serverTemplates";
 import { createFreeTemplates } from "./createFreeTemplates";
 import { nudgeCoalesceKey } from "./history";
 import type { PaneBox } from "./layout";
@@ -37,13 +38,11 @@ import {
   FREE_GRID_STEPS,
   type FreeGridSnap
 } from "./freeSnap";
-import { readScreenStorage, writeScreenStorage } from "./screenStorage";
+import { readGridSnap, writeGridSnap } from "./gridPrefs";
 import { useCanvasZoom } from "./useCanvasZoom";
 import type { TranslateFn } from "./types";
 
 /** 元素级网格吸附的本地记忆键（开关 + 步长；与本模块其它偏好同一命名空间） */
-const GRID_SNAP_KEY = "free-grid-snap";
-
 export type FreeBoxMap = Record<string, PaneBox>;
 
 /**
@@ -80,7 +79,7 @@ export function createFreeEditor(deps: {
         ? next.step
         : FREE_GRID_DEFAULT_STEP
     };
-    writeScreenStorage(GRID_SNAP_KEY, gridSnap.value);
+    writeGridSnap(gridSnap.value);
   }
 
   const zoomApi = useCanvasZoom({ design, viewport: deps.viewport });
@@ -204,41 +203,26 @@ export function createFreeEditor(deps: {
    * 避免把 `text_format` 塞给时钟、把 `size` 塞给图片这类「注定被服务端丢掉」的写入）。
    * `rotate` / `animation` 适用于全部类型。
    */
-  const FIELD_APPLIES: Record<string, ScreenPaneType[]> = {
-    size: ["text", "clock"],
-    align: ["text"],
-    text_format: ["text"],
-    fit: ["image"],
-    rotate: ["dashboard", "text", "clock", "metric", "image"],
-    animation: ["dashboard", "text", "clock", "metric", "image"]
-  };
-
   /**
-   * 批量改属性：**统一值语义**——把同一个值写给选区里「该字段适用」的窗格，
-   * 一次操作一个撤销点；不适用的跳过，值没变化的跳过（连续设置不堆空撤销点）。
-   * 返回实际改动的窗格数。
+   * 批量改属性（多选）：**统一值语义**——同一个值写给选区里「该字段适用」的窗格，
+   * 一次操作一个撤销点；不适用的跳过、值没变化的跳过（规则与适用性在 freeBatchUpdate）。
    */
   function updateMany(patch: Partial<ScreenLayoutPane>): number {
-    const keys = Object.keys(patch) as (keyof ScreenLayoutPane)[];
-    if (selection.value.length === 0 || keys.length === 0) return 0;
-    const safe: Partial<ScreenLayoutPane> = { ...patch };
-    if (safe.rotate !== undefined) safe.rotate = clampRotate(safe.rotate);
-    let changed = 0;
-    const next = panes.value.map(pane => {
-      if (!selection.value.includes(pane.pk)) return pane;
-      const applicable = keys.every(key =>
-        (FIELD_APPLIES[String(key)] ?? []).includes(pane.type)
-      );
-      if (!applicable) return pane;
-      if (keys.every(key => pane[key] === safe[key])) return pane;
-      changed += 1;
-      return { ...pane, ...safe };
-    });
-    if (changed === 0) return 0;
-    deps.pushHistory(`batch-${keys.join("-")}-${selection.value.join(",")}`);
-    panes.value = next;
+    const targets = batchUpdateTargets(panes.value, selection.value, patch);
+    const keys = Object.keys(targets);
+    if (keys.length === 0) return 0;
+    deps.pushHistory(
+      batchCoalesceKey(
+        Object.keys(patch).sort(),
+        selection.value.filter(pk => keys.includes(pk))
+      )
+    );
+    for (const pk of keys) {
+      const index = panes.value.findIndex(pane => pane.pk === pk);
+      if (index >= 0) panes.value[index] = targets[pk];
+    }
     deps.markDirty();
-    return changed;
+    return keys.length;
   }
 
   /* ---------------- 手势：停手落数据（整组一个撤销点） ---------------- */
@@ -418,6 +402,16 @@ export function createFreeEditor(deps: {
       message(deps.t("dataScreen.clipboardBlocked"), { type: "warning" });
     }
     hasClipboard.value = true;
+    // 双写云端（ADR-090 D4）：失败只警告不阻断——本地剪贴板仍然可用
+    void saveCloudClipboard({
+      design_w: payload.design.design_w,
+      design_h: payload.design.design_h,
+      panes: payload.panes
+    }).then(ok => {
+      if (!ok) {
+        message(deps.t("dataScreen.clipboardCloudFailed"), { type: "warning" });
+      }
+    });
     message(deps.t("dataScreen.copyDone", { n: payload.panes.length }), {
       type: "success"
     });
@@ -427,6 +421,17 @@ export function createFreeEditor(deps: {
   function paste(): number {
     const payload = readClipboard();
     if (!payload) return 0;
+    return inserter.insert(payload.panes);
+  }
+
+  /** 从云端粘贴（跨设备）：读服务端槽位 → 走插入链路；空槽位给可读提示 */
+  async function pasteFromCloud(): Promise<number> {
+    const slot = await fetchCloudClipboard();
+    const payload = readFreeLayout(slot?.free_layout ?? null);
+    if (payload.panes.length === 0) {
+      message(deps.t("dataScreen.clipboardCloudEmpty"), { type: "warning" });
+      return 0;
+    }
     return inserter.insert(payload.panes);
   }
 
@@ -464,6 +469,7 @@ export function createFreeEditor(deps: {
     duplicate,
     copy,
     paste,
+    pasteFromCloud,
     templates: templateApi.templates,
     serverTemplates: templateApi.serverTemplates,
     refreshTemplates: templateApi.refresh,
@@ -476,22 +482,13 @@ export function createFreeEditor(deps: {
     removeSavedTemplate: templateApi.remove,
     removeServerTemplate: templateApi.removeServer,
     importTemplateJson: templateApi.importJson,
-    exportSavedTemplate: templateApi.exportJson
+    exportSavedTemplate: templateApi.exportJson,
+    templateVersions: templateApi.versions,
+    rollbackTemplate: templateApi.rollback
   };
 }
 
 export type FreeEditorApi = ReturnType<typeof createFreeEditor>;
-
-/** 网格吸附的本地记忆（首次进入默认关闭，与一期手感一致） */
-function readGridSnap(): FreeGridSnap {
-  const raw = readScreenStorage<FreeGridSnap>(GRID_SNAP_KEY);
-  return {
-    enabled: Boolean(raw?.enabled),
-    step: FREE_GRID_STEPS.includes(Number(raw?.step))
-      ? Number(raw?.step)
-      : FREE_GRID_DEFAULT_STEP
-  };
-}
 
 /** 模板应用方式（工具条与组合层的公共契约） */
 export type { TemplateApplyMode } from "./createFreeTemplates";

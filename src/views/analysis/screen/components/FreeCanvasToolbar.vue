@@ -10,6 +10,7 @@ import {
 } from "../utils/freeSnap";
 import { ZOOM_STEPS } from "../utils/viewport";
 import type { TemplateApplyMode } from "../utils/createFreeEditor";
+import TemplateVersionsDialog from "./TemplateVersionsDialog.vue";
 
 defineOptions({ name: "ScreenFreeCanvasToolbar" });
 
@@ -45,6 +46,8 @@ const emit = defineEmits<{
   saveServerTemplate: [
     payload: {
       name: string;
+      /** 分组名（可空 = 未分组） */
+      group: string;
       visibility: "personal" | "shared";
     }
   ];
@@ -55,6 +58,10 @@ const emit = defineEmits<{
   renameServerTemplate: [payload: { id: string; name: string }];
   removeServerTemplate: [id: string];
   importTemplate: [payload: { raw: string; mode: TemplateApplyMode }];
+  /** 模板回滚（版本历史弹窗触发） */
+  rollbackTemplate: [payload: { id: string; version: number }];
+  /** 从云端粘贴（跨设备剪贴板） */
+  pasteCloud: [];
 }>();
 
 const { t } = useI18n();
@@ -62,6 +69,27 @@ const { t } = useI18n();
 const zoomLabel = (value: number) => `${Math.round(value * 100)}%`;
 
 const serverTemplates = computed(() => props.serverTemplates ?? []);
+/** 团队模板按分组聚合（空分组排最后并归到「未分组」） */
+const serverGroups = computed(() => {
+  const buckets = new Map<string, FreeTemplate[]>();
+  for (const item of serverTemplates.value) {
+    const key = (item.group ?? "").trim();
+    buckets.set(key, [...(buckets.get(key) ?? []), item]);
+  }
+  return [...buckets.entries()]
+    .sort(([a], [b]) => (a === "" ? 1 : b === "" ? -1 : a.localeCompare(b)))
+    .map(([group, items]) => ({ group, items }));
+});
+
+/* 版本历史弹窗（自管拉取，回滚经组合层执行） */
+const versionsVisible = ref(false);
+const versionsId = ref("");
+const versionsName = ref("");
+function openVersions(id: string, name: string) {
+  versionsId.value = id;
+  versionsName.value = name;
+  versionsVisible.value = true;
+}
 const gridSnap = computed<FreeGridSnap>(
   () => props.gridSnap ?? { enabled: false, step: FREE_GRID_DEFAULT_STEP }
 );
@@ -83,6 +111,15 @@ async function askName(title: string, initial = ""): Promise<string | null> {
   return value?.trim() ? value.trim() : null;
 }
 
+/** 可选文本（取消 = 空串）：用于「分组名」这类可留空的输入 */
+async function askOptionalText(title: string, prompt: string): Promise<string> {
+  const answer = await ElMessageBox.prompt(prompt, title, {
+    confirmButtonText: t("dataScreen.templateSave"),
+    cancelButtonText: t("dataScreen.cancel")
+  }).catch(() => null);
+  return String((answer as { value?: string } | null)?.value ?? "").trim();
+}
+
 async function onSaveTemplate() {
   const name = await askName(t("dataScreen.templateSave"));
   if (name) emit("saveTemplate", name);
@@ -92,6 +129,10 @@ async function onSaveTemplate() {
 async function onSaveServerTemplate() {
   const name = await askName(t("dataScreen.templateSaveServer"));
   if (!name) return;
+  const group = await askOptionalText(
+    t("dataScreen.templateGroup"),
+    t("dataScreen.templateGroupPrompt")
+  );
   const shared = await ElMessageBox.confirm(
     t("dataScreen.templateVisibilityHint"),
     t("dataScreen.templateSaveServer"),
@@ -104,6 +145,7 @@ async function onSaveServerTemplate() {
     .catch(() => false);
   emit("saveServerTemplate", {
     name,
+    group: group ?? "",
     visibility: shared ? "shared" : "personal"
   });
 }
@@ -177,6 +219,11 @@ async function onCommand(command: string) {
     if (confirmed) emit("removeServerTemplate", id);
     return;
   }
+  if (action === "versions") {
+    const target = serverTemplates.value.find(item => item.id === id);
+    openVersions(id, target?.name ?? "");
+    return;
+  }
   if (action === "export") emit("exportTemplate", id);
 }
 </script>
@@ -231,6 +278,14 @@ async function onCommand(command: string) {
       @click="emit('paste')"
     >
       {{ t("dataScreen.paste") }}
+    </el-button>
+    <!-- 跨设备剪贴板（ADR-090 D4）：读服务端槽位后走同一条插入链路 -->
+    <el-button
+      size="small"
+      data-testid="free-paste-cloud"
+      @click="emit('pasteCloud')"
+    >
+      {{ t("dataScreen.pasteCloud") }}
     </el-button>
 
     <el-divider direction="vertical" />
@@ -288,13 +343,18 @@ async function onCommand(command: string) {
           >
             {{ t("dataScreen.templateServerEmpty") }}
           </el-dropdown-item>
-          <template v-for="item in serverTemplates" :key="`sv-${item.id}`">
-            <el-dropdown-item :command="`replace:${item.id}`">
-              {{ t("dataScreen.templateApplyReplace") }} · {{ item.name }}
+          <template v-for="bucket in serverGroups" :key="`grp-${bucket.group}`">
+            <el-dropdown-item v-if="bucket.group" disabled>
+              {{ bucket.group }}
             </el-dropdown-item>
-            <el-dropdown-item :command="`append:${item.id}`">
-              {{ t("dataScreen.templateApplyAppend") }} · {{ item.name }}
-            </el-dropdown-item>
+            <template v-for="item in bucket.items" :key="`sv-${item.id}`">
+              <el-dropdown-item :command="`replace:${item.id}`">
+                {{ t("dataScreen.templateApplyReplace") }} · {{ item.name }}
+              </el-dropdown-item>
+              <el-dropdown-item :command="`append:${item.id}`">
+                {{ t("dataScreen.templateApplyAppend") }} · {{ item.name }}
+              </el-dropdown-item>
+            </template>
           </template>
         </el-dropdown-menu>
       </template>
@@ -320,6 +380,13 @@ async function onCommand(command: string) {
     >
       {{ t("dataScreen.templateImport") }}
     </el-button>
+    <TemplateVersionsDialog
+      v-model="versionsVisible"
+      :template-id="versionsId"
+      :template-name="versionsName"
+      @rollback="emit('rollbackTemplate', { id: versionsId, version: $event })"
+    />
+
     <input
       ref="fileInput"
       class="free-toolbar__file"
@@ -359,7 +426,10 @@ async function onCommand(command: string) {
           </template>
           <template v-for="item in serverTemplates" :key="`manage-${item.id}`">
             <template v-if="item.is_owner !== false">
-              <el-dropdown-item :command="`export:${item.id}`" divided>
+              <el-dropdown-item :command="`versions:${item.id}`" divided>
+                {{ t("dataScreen.templateVersions") }} · {{ item.name }}
+              </el-dropdown-item>
+              <el-dropdown-item :command="`export:${item.id}`">
                 {{ t("dataScreen.templateExport") }} · {{ item.name }}
               </el-dropdown-item>
               <el-dropdown-item :command="`server-rename:${item.id}`">

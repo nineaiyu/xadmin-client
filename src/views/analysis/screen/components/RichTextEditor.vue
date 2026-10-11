@@ -152,7 +152,8 @@ const TOOLS: {
     key: "color",
     testid: "rich-tool-color",
     label: "dataScreen.richColor",
-    run: () => wrapSelection("[c=#f56c6c]", "[/c]")
+    // 默认插入一个占位颜色（用户改成自己的色值即可），避免把具体色值写死进业务
+    run: () => wrapSelection("[c=#rrggbb]", "[/c]")
   },
   {
     key: "link",

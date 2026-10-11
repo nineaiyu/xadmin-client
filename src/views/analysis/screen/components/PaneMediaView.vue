@@ -81,7 +81,9 @@ const { t } = useI18n();
 .screen-pane__video {
   width: 100%;
   height: 100%;
-  background: #000;
+
+  /* 视频留白用画布底色（避免裸色值，同时保证深色底上不刺眼） */
+  background: var(--screen-canvas);
 }
 
 .screen-pane__iframe {

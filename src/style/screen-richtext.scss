@@ -38,11 +38,11 @@
   :deep(td) {
     padding: 0.2em 0.5em;
     text-align: left;
-    border: 1px solid rgb(255 255 255 / 24%);
+    border: 1px solid var(--el-border-color);
   }
 
   :deep(th) {
     font-weight: 600;
-    background: rgb(255 255 255 / 8%);
+    background: var(--el-fill-color-light);
   }
 }

@@ -374,8 +374,10 @@ const back = () => {
       @grid="free.setGrid"
       @save-template="free.saveCurrentAsTemplate"
       @save-server-template="
-        free.saveCurrentToServer($event.name, $event.visibility)
+        free.saveCurrentToServer($event.name, $event.visibility, $event.group)
       "
+      @paste-cloud="free.pasteFromCloud"
+      @rollback-template="free.rollbackTemplate($event.id, $event.version)"
       @import-template="free.importTemplateJson($event.raw, $event.mode)"
       @apply-template="free.applyTemplate($event.id, $event.mode)"
       @rename-template="free.renameSavedTemplate($event.id, $event.name)"
