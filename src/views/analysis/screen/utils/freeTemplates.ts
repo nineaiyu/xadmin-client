@@ -217,6 +217,24 @@ export function listTemplates(t: TranslateFn): FreeTemplate[] {
   ];
 }
 
+/**
+ * 模板按分组聚合（团队模板下拉用）：组名先去空白，**空分组排最后**（落到「未分组」），
+ * 其余组名按本地化顺序排；组内保持传入顺序（服务端已按更新时间倒序）。
+ * 纯函数：组件只负责渲染，排序 / 归并口径可单测。
+ */
+export function groupTemplates(
+  templates: readonly FreeTemplate[]
+): { group: string; items: FreeTemplate[] }[] {
+  const buckets = new Map<string, FreeTemplate[]>();
+  for (const item of templates) {
+    const key = (item.group ?? "").trim();
+    buckets.set(key, [...(buckets.get(key) ?? []), item]);
+  }
+  return [...buckets.entries()]
+    .sort(([a], [b]) => (a === "" ? 1 : b === "" ? -1 : a.localeCompare(b)))
+    .map(([group, items]) => ({ group, items }));
+}
+
 function writeMine(items: FreeTemplate[]): boolean {
   return writeScreenStorage(FREE_TEMPLATE_KEY, {
     version: FREE_TEMPLATE_VERSION,

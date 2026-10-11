@@ -2,7 +2,7 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
-import type { FreeTemplate } from "../utils/freeTemplates";
+import { groupTemplates, type FreeTemplate } from "../utils/freeTemplates";
 import {
   FREE_GRID_DEFAULT_STEP,
   FREE_GRID_STEPS,
@@ -69,17 +69,8 @@ const { t } = useI18n();
 const zoomLabel = (value: number) => `${Math.round(value * 100)}%`;
 
 const serverTemplates = computed(() => props.serverTemplates ?? []);
-/** 团队模板按分组聚合（空分组排最后并归到「未分组」） */
-const serverGroups = computed(() => {
-  const buckets = new Map<string, FreeTemplate[]>();
-  for (const item of serverTemplates.value) {
-    const key = (item.group ?? "").trim();
-    buckets.set(key, [...(buckets.get(key) ?? []), item]);
-  }
-  return [...buckets.entries()]
-    .sort(([a], [b]) => (a === "" ? 1 : b === "" ? -1 : a.localeCompare(b)))
-    .map(([group, items]) => ({ group, items }));
-});
+/** 团队模板按分组聚合（空分组排最后并归到「未分组」；排序口径在纯函数里，可单测） */
+const serverGroups = computed(() => groupTemplates(serverTemplates.value));
 
 /* 版本历史弹窗（自管拉取，回滚经组合层执行） */
 const versionsVisible = ref(false);

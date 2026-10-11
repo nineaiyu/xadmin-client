@@ -5,6 +5,7 @@ import {
   FREE_TEMPLATE_KEY,
   FREE_TEMPLATE_LIMIT,
   builtinTemplates,
+  groupTemplates,
   listMyTemplates,
   listTemplates,
   removeTemplate,
@@ -141,5 +142,36 @@ describe("我的模板（localStorage）", () => {
     const copies = templatePanes(result.template);
     expect(copies[0].pk).not.toBe(PANE.pk);
     expect(copies[0]).toMatchObject({ text: "标题", size: 32 });
+  });
+});
+
+describe("团队模板分组（groupTemplates，工具条下拉口径）", () => {
+  const tpl = (id: string, name: string, group?: string) => ({
+    id,
+    name,
+    builtin: false,
+    source: "server" as const,
+    group,
+    design: { ...FREE_DESIGN_DEFAULTS },
+    panes: [{ ...PANE, pk: `${id}-p` }],
+    updated_at: 1
+  });
+
+  it("组名去空白归并；空分组排最后", () => {
+    const buckets = groupTemplates([
+      tpl("b", "B 未分组"),
+      tpl("a1", "A1", " Alpha "),
+      tpl("a2", "A2", "Alpha"),
+      tpl("c", "C", "Beta"),
+      tpl("d", "D", undefined)
+    ]);
+    expect(buckets.map(item => item.group)).toEqual(["Alpha", "Beta", ""]);
+    // trim 后同名归到同一组，组内保持传入顺序（服务端已按更新时间倒序）
+    expect(buckets[0].items.map(item => item.name)).toEqual(["A1", "A2"]);
+    expect(buckets[2].items.map(item => item.name)).toEqual(["B 未分组", "D"]);
+  });
+
+  it("空输入返回空数组（下拉显示「暂无团队模板」）", () => {
+    expect(groupTemplates([])).toEqual([]);
   });
 });
