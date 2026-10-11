@@ -1,6 +1,7 @@
 import { mount } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { nextTick } from "vue";
 
 import ReStateContainer from "../src/index.vue";
 
@@ -50,11 +51,13 @@ describe("ReStateContainer 四态容器", () => {
   });
 
   it("loading 默认骨架屏；skeletonFill 走填充块", () => {
-    expect(mountState({ state: "loading" }).find(".re-skeleton").exists()).toBe(
-      true
-    );
     expect(
-      mountState({ state: "loading", skeletonFill: true })
+      mountState({ state: "loading", minLoadingTime: 0 })
+        .find(".re-skeleton")
+        .exists()
+    ).toBe(true);
+    expect(
+      mountState({ state: "loading", minLoadingTime: 0, skeletonFill: true })
         .find(".re-skeleton__fill")
         .exists()
     ).toBe(true);
@@ -63,6 +66,7 @@ describe("ReStateContainer 四态容器", () => {
   it("loading 转圈形态展示文案", () => {
     const wrapper = mountState({
       state: "loading",
+      minLoadingTime: 0,
       loadingVariant: "spinner",
       loadingText: "正在提交"
     });
@@ -90,7 +94,7 @@ describe("ReStateContainer 四态容器", () => {
 
   it("各态插槽可整体替换默认渲染", () => {
     const wrapper = mountState(
-      { state: "loading" },
+      { state: "loading", minLoadingTime: 0 },
       { loading: "<div class='custom-loading'>自定义</div>" }
     );
     expect(wrapper.find(".custom-loading").exists()).toBe(true);
@@ -103,5 +107,58 @@ describe("ReStateContainer 四态容器", () => {
         .find(".re-state-container")
         .attributes("style")
     ).toContain("min-height: 120px");
+  });
+});
+
+describe("ReStateContainer 加载态延迟展示（minLoadingTime）", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("默认窗口内不渲染 loading 占位，到期未就绪才展示", async () => {
+    vi.useFakeTimers();
+    const wrapper = mountState({ state: "loading" });
+    expect(wrapper.find(".re-skeleton").exists()).toBe(false);
+
+    vi.advanceTimersByTime(50);
+    await nextTick();
+    expect(wrapper.find(".re-skeleton").exists()).toBe(true);
+  });
+
+  it("窗口内就绪则始终不渲染 loading 占位（防闪现）", async () => {
+    vi.useFakeTimers();
+    const wrapper = mountState(
+      { state: "loading" },
+      { default: "<div class='body'>内容</div>" }
+    );
+    await wrapper.setProps({ state: "ready" });
+
+    vi.advanceTimersByTime(500);
+    await nextTick();
+    expect(wrapper.find(".re-skeleton").exists()).toBe(false);
+    expect(wrapper.find(".body").text()).toBe("内容");
+  });
+
+  it("占位已展示后切 ready 立即让位，不再延迟", async () => {
+    vi.useFakeTimers();
+    const wrapper = mountState(
+      { state: "loading" },
+      { default: "<div class='body'>内容</div>" }
+    );
+    vi.advanceTimersByTime(50);
+    await nextTick();
+    expect(wrapper.find(".re-skeleton").exists()).toBe(true);
+
+    await wrapper.setProps({ state: "ready" });
+    expect(wrapper.find(".re-skeleton").exists()).toBe(false);
+    expect(wrapper.find(".body").text()).toBe("内容");
+  });
+
+  it("延迟未到期即卸载不残留计时器", async () => {
+    vi.useFakeTimers();
+    const wrapper = mountState({ state: "loading" });
+    wrapper.unmount();
+
+    expect(() => vi.advanceTimersByTime(200)).not.toThrow();
   });
 });
