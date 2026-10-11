@@ -361,6 +361,74 @@ test("画布工具集三期：旋转 / 动画 / 富文本 / 网格吸附 / 键�
   }[];
   expect(leftRows.some(item => item.name === templateName)).toBe(false);
 
+  // ---- 视频与自定义 HTML 窗格（ADR-090 D3）----
+  await page.keyboard.press("Escape");
+  await page.getByTestId("palette-video").click();
+  await expect(paneEls).toHaveCount(4);
+  await page
+    .getByTestId("inspector-media-url")
+    .fill("https://example.invalid/demo.mp4");
+  // 关掉循环（非缺省才下发）
+  await page.getByTestId("inspector-video-loop").click();
+  await page.getByTestId("palette-html").click();
+  await expect(paneEls).toHaveCount(5);
+  await page
+    .getByTestId("inspector-media-url")
+    .fill("https://example.invalid/embed");
+
+  await saveAndWait(page, screen.pk);
+  const afterMedia = await page.request.get(
+    `${BACKEND_URL}/api/dataset/screens/${screen.pk}`,
+    { headers: auth(token) }
+  );
+  const mediaData = (await afterMedia.json()).data as {
+    free_layout: {
+      panes: {
+        type: string;
+        url?: string;
+        loop?: boolean;
+        muted?: boolean;
+      }[];
+    };
+  };
+  const videoPane = mediaData.free_layout.panes.find(
+    item => item.type === "video"
+  );
+  const htmlPane = mediaData.free_layout.panes.find(
+    item => item.type === "html"
+  );
+  expect(videoPane?.url).toBe("https://example.invalid/demo.mp4");
+  // 缺省播放行为不下发：静音仍在缺省（未下发），循环被显式关掉（下发 false）
+  expect(videoPane?.loop).toBe(false);
+  expect(videoPane?.muted).toBeUndefined();
+  expect(htmlPane?.url).toBe("https://example.invalid/embed");
+
+  // ---- 投屏：两类窗格真实渲染（video 属性 / iframe sandbox 收紧）----
+  await page.goto(`/#/analysis/screen/index`);
+  await expect(page.getByRole("button", { name: "新建大屏" })).toBeVisible({
+    timeout: 15_000
+  });
+  await page
+    .getByRole("row", { name: screenName })
+    .getByRole("button", { name: "投屏" })
+    .click();
+  const screenRoot = page.locator(".screen-root");
+  await expect(screenRoot.getByTestId("screen-free")).toBeVisible({
+    timeout: 15_000
+  });
+  const video = screenRoot.getByTestId("pane-video");
+  await expect(video).toHaveCount(1);
+  await expect(video).toHaveAttribute(
+    "src",
+    "https://example.invalid/demo.mp4"
+  );
+  await expect(video).not.toHaveAttribute("loop", /.*/);
+  const frame = screenRoot.getByTestId("pane-html");
+  await expect(frame).toHaveCount(1);
+  await expect(frame).toHaveAttribute("src", "https://example.invalid/embed");
+  await expect(frame).toHaveAttribute("sandbox", /allow-scripts/);
+  await expect(frame).toHaveAttribute("referrerpolicy", "no-referrer");
+
   // 清理大屏（素材由 API 直建，走 API 删除保持与其它用例一致）
   await page.request.delete(`${BACKEND_URL}/api/dataset/screens/${screen.pk}`, {
     headers: auth(token)

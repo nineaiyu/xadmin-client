@@ -3119,6 +3119,19 @@ dataScreen:
   paneClock: Clock
   paneMetric: Metric card
   paneImage: Image
+  paneVideo: Video
+  paneHtml: Custom HTML
+  paneUrl: URL
+  panePoster: Poster
+  urlPlaceholder: https://…
+  videoMuted: Muted
+  videoLoop: Loop
+  videoAutoplay: Autoplay
+  videoHint: On the display the video is muted, looping and autoplaying (browsers block autoplay with sound); it does not autoplay while editing.
+  embedHint: Only http(s) iframe URLs are accepted (no raw HTML); the embedded page is interactive on the display.
+  videoMissing: No video URL yet
+  embedMissing: No embed URL yet
+  embedUrlInvalid: Only absolute http(s) URLs are accepted
   paneTitle: Pane title
   paneTitlePlaceholder: Empty = dashboard name
   paneContent: Text content

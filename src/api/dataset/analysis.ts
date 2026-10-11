@@ -8,9 +8,9 @@ import type {
 } from "@/api/types";
 import type { DashboardItem } from "@/api/dataset/datasets";
 
-/** 大屏画布窗格类型：仪表盘 / 文本 / 时钟 / 指标卡 / 图片 */
+/** 大屏画布窗格类型：仪表盘 / 文本 / 时钟 / 指标卡 / 图片 / 视频 / 自定义 HTML */
 export type ScreenPaneType =
-  "dashboard" | "text" | "clock" | "metric" | "image";
+  "dashboard" | "text" | "clock" | "metric" | "image" | "video" | "html";
 
 /**
  * 大屏画布窗格：坐标语义随模式变化，类型字段两模式共用。
@@ -40,9 +40,19 @@ export type ScreenLayoutPane = {
   dataset?: string;
   metric?: "count" | "sum" | "avg";
   value_field?: string;
-  /** type=image：图片地址（仅 http/https）与填充方式 */
+  /**
+   * type=image / video / html：地址。图片收 http(s) 或站内根相对路径；视频同图片口径；
+   * **自定义 HTML 只收 http(s) 绝对地址**（iframe src，绝不接受原样 HTML）。
+   */
   url?: string;
+  /** type=image / video：填充方式（video 只支持 cover / contain） */
   fit?: "cover" | "contain" | "fill";
+  /** type=video：封面地址（http(s) 或站内根相对路径） */
+  poster?: string;
+  /** type=video：播放行为（缺省「静音 + 循环 + 自动播放」，只有显式关掉才下发） */
+  muted?: boolean;
+  loop?: boolean;
+  autoplay?: boolean;
   /**
    * 视觉旋转角度（度，-180~180；缺省 0 不下发）。
    * **不参与几何**：吸附 / 框选 / 对齐仍按未旋转的轴对齐盒模型计算。

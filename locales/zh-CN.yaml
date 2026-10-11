@@ -3119,6 +3119,19 @@ dataScreen:
   paneClock: 时钟
   paneMetric: 指标卡
   paneImage: 图片
+  paneVideo: 视频
+  paneHtml: 自定义 HTML
+  paneUrl: 地址
+  panePoster: 封面
+  urlPlaceholder: https://…
+  videoMuted: 静音
+  videoLoop: 循环
+  videoAutoplay: 自动播放
+  videoHint: 投屏默认静音 + 循环 + 自动播放（带声音的自动播放会被浏览器拦下）；编辑态不自动播。
+  embedHint: 只接受 http(s) 的 iframe 地址（不接受原样 HTML）；内嵌页面在投屏态可交互。
+  videoMissing: 未配置视频地址
+  embedMissing: 未配置嵌入地址
+  embedUrlInvalid: 只接受 http(s) 绝对地址
   paneTitle: 窗格标题
   paneTitlePlaceholder: 留空则用仪表盘名
   paneContent: 文本内容

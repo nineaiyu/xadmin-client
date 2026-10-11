@@ -12,6 +12,7 @@ import {
 } from "../utils/paneEffects";
 import PaneAnimationFields from "./PaneAnimationFields.vue";
 import RichTextEditor from "./RichTextEditor.vue";
+import PaneMediaFields from "./PaneMediaFields.vue";
 import { isValidPaneImageUrl } from "../utils/layout";
 
 /**
@@ -72,7 +73,9 @@ const typeLabel = computed(() => {
     text: t("dataScreen.paneText"),
     clock: t("dataScreen.paneClock"),
     metric: t("dataScreen.paneMetric"),
-    image: t("dataScreen.paneImage")
+    image: t("dataScreen.paneImage"),
+    video: t("dataScreen.paneVideo"),
+    html: t("dataScreen.paneHtml")
   };
   return map[props.pane.type];
 });
@@ -320,6 +323,10 @@ const imageUrlError = computed(() =>
             </el-radio-button>
           </el-radio-group>
         </el-form-item>
+      </template>
+
+      <template v-if="pane.type === 'video' || pane.type === 'html'">
+        <PaneMediaFields :pane="pane" @update="emit('update', $event)" />
       </template>
 
       <el-form-item

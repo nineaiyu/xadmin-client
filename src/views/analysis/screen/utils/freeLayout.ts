@@ -39,7 +39,9 @@ export const FREE_PANE_DEFAULTS: Record<
   text: { w: 600, h: 80 },
   clock: { w: 240, h: 120 },
   metric: { w: 240, h: 120 },
-  image: { w: 320, h: 240 }
+  image: { w: 320, h: 240 },
+  video: { w: 640, h: 360 },
+  html: { w: 640, h: 480 }
 };
 
 /** 画幅单边：非有限数值回落缺省，取整后夹在允许范围内 */

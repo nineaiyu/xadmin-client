@@ -58,6 +58,24 @@ const { t } = useI18n();
     >
       {{ t("dataScreen.paneClock") }}
     </el-button>
+    <el-button
+      class="w-full"
+      draggable="true"
+      data-testid="palette-video"
+      @click="emit('add', 'video')"
+      @dragstart="emit('dragStart', $event, 'video')"
+    >
+      {{ t("dataScreen.paneVideo") }}
+    </el-button>
+    <el-button
+      class="w-full"
+      draggable="true"
+      data-testid="palette-html"
+      @click="emit('add', 'html')"
+      @dragstart="emit('dragStart', $event, 'html')"
+    >
+      {{ t("dataScreen.paneHtml") }}
+    </el-button>
     <el-divider />
     <div class="designer-palette__title">
       {{ t("dataScreen.paneDashboard") }}

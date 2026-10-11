@@ -12,6 +12,7 @@ import {
   paneAnimationStyle
 } from "../utils/paneEffects";
 import { renderRichText } from "../utils/richText";
+import PaneMediaView from "./PaneMediaView.vue";
 
 /**
  * 画布窗格渲染（设计器与投屏共用同一组件，所见即所得）。
@@ -166,6 +167,11 @@ const richHtml = computed(() =>
     : ""
 );
 
+/** 媒体类窗格（图片 / 视频 / 自定义 HTML）：内容交给 PaneMediaView 渲染 */
+const isMediaPane = computed(() =>
+  ["image", "video", "html"].includes(props.pane.type)
+);
+
 /** 栅格模式由本组件承接拖拽 / 缩放入口；自由模式手势归外层 ReResize */
 const gridEditable = computed(() => props.editable && props.layout !== "free");
 
@@ -237,19 +243,13 @@ const clockStyle = computed(() => ({
       {{ clock || "--:--:--" }}
     </div>
 
-    <template v-else-if="pane.type === 'image'">
-      <img
-        v-if="pane.url"
-        class="screen-pane__image"
-        :src="pane.url"
-        :style="{ objectFit: pane.fit ?? 'cover' }"
-        alt=""
-        data-testid="pane-image"
-      />
-      <div v-else class="screen-pane__empty" data-testid="pane-image-missing">
-        {{ t("dataScreen.imageMissing") }}
-      </div>
-    </template>
+    <!-- 媒体类内容（图片 / 视频 / 自定义 HTML）由子组件渲染：行数门禁拆分，口径见 PaneMediaView -->
+    <PaneMediaView
+      v-else-if="isMediaPane"
+      :pane="pane"
+      :editable="editable"
+      :play-animation="playAnimation"
+    />
 
     <div v-else-if="hasContent" class="screen-pane__grid">
       <section

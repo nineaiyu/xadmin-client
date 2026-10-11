@@ -10,6 +10,8 @@ import {
   MAX_PANES,
   PANE_DEFAULTS,
   canvasGridVars,
+  isValidPaneEmbedUrl,
+  paneBody,
   canPlace,
   cellFromOffset,
   clampBox,
@@ -239,5 +241,73 @@ describe("画布栅格常量单一来源", () => {
     expect(isValidPaneImageUrl("   ")).toBe(true);
     expect(isValidPaneImageUrl(undefined)).toBe(true);
     expect(isValidPaneImageUrl(null)).toBe(true);
+  });
+});
+
+describe("视频与自定义 HTML 窗格（ADR-090 D3）", () => {
+  it("两类窗格都有栅格默认尺寸", () => {
+    expect(PANE_DEFAULTS.video).toEqual({ w: 6, h: 4 });
+    expect(PANE_DEFAULTS.html).toEqual({ w: 6, h: 4 });
+  });
+
+  it("只收 http(s) 绝对地址（自定义 HTML 比图片更严：不收站内相对路径）", () => {
+    expect(isValidPaneEmbedUrl("https://a.com/embed")).toBe(true);
+    expect(isValidPaneEmbedUrl("http://a.com/embed")).toBe(true);
+    expect(isValidPaneEmbedUrl("")).toBe(true);
+    for (const bad of ["/local/page", "//evil.com", "javascript:alert(1)"]) {
+      expect(isValidPaneEmbedUrl(bad)).toBe(false);
+    }
+  });
+
+  it("video 落库：缺省播放行为不下发，非缺省才写", () => {
+    const pane = {
+      pk: "v1",
+      type: "video",
+      x: 0,
+      y: 0,
+      w: 6,
+      h: 4,
+      url: "https://a.com/c.mp4"
+    } as ScreenLayoutPane;
+    expect(paneBody(pane)).toEqual({
+      pk: "v1",
+      type: "video",
+      url: "https://a.com/c.mp4"
+    });
+    expect(
+      paneBody({
+        ...pane,
+        poster: "https://a.com/c.jpg",
+        fit: "contain",
+        muted: false,
+        loop: false
+      })
+    ).toEqual({
+      pk: "v1",
+      type: "video",
+      url: "https://a.com/c.mp4",
+      poster: "https://a.com/c.jpg",
+      fit: "contain",
+      muted: false,
+      loop: false
+    });
+  });
+
+  it("html 落库：只留 pk / type / url", () => {
+    const pane = {
+      pk: "h1",
+      type: "html",
+      x: 0,
+      y: 0,
+      w: 6,
+      h: 4,
+      url: "https://a.com/embed",
+      fit: "cover"
+    } as ScreenLayoutPane;
+    expect(paneBody(pane)).toEqual({
+      pk: "h1",
+      type: "html",
+      url: "https://a.com/embed"
+    });
   });
 });
