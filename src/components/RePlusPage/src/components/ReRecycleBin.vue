@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import dayjs from "dayjs";
 import type { BaseApi } from "@/api/base";
 import type { RecycleBinColumn } from "../utils/types";
+import { buildRecycleCellScope } from "../utils/recycleScope";
 import { message } from "@/utils/message";
 import Delete from "~icons/ep/delete";
 import RefreshRight from "~icons/ep/refresh-right";
@@ -31,13 +32,13 @@ const CellContent = (props: {
   index: number;
 }) => {
   if (!props.row?.pk) return h("span");
-  const rendered = props.column.cellRenderer?.({
-    row: props.row,
-    index: props.index,
-    size: "default",
-    props: { size: "default" },
-    readonly: true
-  });
+  const rendered = props.column.cellRenderer?.(
+    buildRecycleCellScope({
+      row: props.row,
+      column: { label: props.column.label },
+      index: props.index
+    }) as never
+  );
   if (isVNode(rendered)) return rendered;
   if (rendered != null && rendered !== "") return h("span", String(rendered));
   return h(

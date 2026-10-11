@@ -224,13 +224,13 @@ const renderSwitch = (switchOptions: switchOptions) => {
       active-text={defaultActionMap["true"]}
       inactive-text={defaultActionMap["false"]}
       inline-prompt
-      aria-label={String(scope.column.label ?? t("labels.enable"))}
+      aria-label={String(scope.column?.label ?? t("labels.enable"))}
       disabled={isReadonlyCell(scope) || Boolean(disabled?.(scope.row))}
       style={switchStyle.value}
       onChange={() => {
         onSwitchChange({
           t,
-          msg: msg ?? scope.column.label,
+          msg: msg ?? scope.column?.label,
           field,
           updateApi,
           switchLoadMap,
