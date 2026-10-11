@@ -1,6 +1,7 @@
 import type { FreeDesign } from "./freeLayout";
 import { FREE_MIN_PANE_SIZE } from "./freeLayout";
 import type { PaneBox } from "./layout";
+import { isAxisAligned, rotatedBounds } from "./paneGeometry";
 
 /**
  * 自由画布的吸附参考线（纯函数，单测见 `__tests__/freeSnap.spec.ts`）。
@@ -26,17 +27,22 @@ export type FreeSnapGuide = { axis: "x" | "y"; position: number };
 
 export type FreeSnapResult = { box: PaneBox; guides: FreeSnapGuide[] };
 
-/** 单轴候选线：画幅边界与中线 + 其他窗格的边框与中心线 */
+/**
+ * 单轴候选线：画幅边界与中线 + 其他窗格的边框与中心线。
+ *
+ * 其他窗格若带旋转，取**外接 AABB**的边与中线（ADR-090 D2：吸附看视觉边界）。
+ */
 function axisTargets(
   axis: "x" | "y",
-  others: readonly PaneBox[],
+  others: readonly (PaneBox & { rotate?: number })[],
   design: FreeDesign
 ): number[] {
   const size = axis === "x" ? design.design_w : design.design_h;
   const targets = [0, size / 2, size];
   for (const pane of others) {
-    const start = axis === "x" ? pane.x : pane.y;
-    const length = axis === "x" ? pane.w : pane.h;
+    const box = rotatedBounds(pane, pane.rotate ?? 0);
+    const start = axis === "x" ? box.x : box.y;
+    const length = axis === "x" ? box.w : box.h;
     targets.push(start, start + length / 2, start + length);
   }
   return targets;
@@ -119,24 +125,31 @@ function hitGuides(
  */
 export function snapFreeBox(
   box: PaneBox,
-  others: readonly PaneBox[],
+  others: readonly (PaneBox & { rotate?: number })[],
   design: FreeDesign,
   dir = "",
   threshold = FREE_SNAP_THRESHOLD,
-  grid?: FreeGridSnap
+  grid?: FreeGridSnap,
+  rotate = 0
 ): FreeSnapResult {
+  // 旋转窗格的**缩放**不吸附（ADR-090 D2 的取舍）：视觉盒尺寸是 w/h 与角度的耦合函数，
+  // 逐像素反解在 cosθ→0 时发散；「要么精确、要么不吸附」比近似吸附更可预测。
+  // 对齐 / 分布 / 组拖动 / 移动吸附都已覆盖视觉语义，缩放的视觉吸附可后补。
+  if (dir && !isAxisAligned(rotate)) return { box: { ...box }, guides: [] };
   const xTargets = axisTargets("x", others, design);
   const yTargets = axisTargets("y", others, design);
+  const visual = rotatedBounds(box, rotate);
   let next: PaneBox = { ...box };
 
   if (!dir) {
     next = {
       ...next,
+      // 拖动：锚点取视觉盒的边与中线，位移原样施加到未旋转盒（尺寸不动）
       x:
         next.x +
         axisDelta(
-          [box.x, box.x + box.w / 2, box.x + box.w],
-          box.x,
+          [visual.x, visual.x + visual.w / 2, visual.x + visual.w],
+          visual.x,
           xTargets,
           threshold,
           grid
@@ -144,8 +157,8 @@ export function snapFreeBox(
       y:
         next.y +
         axisDelta(
-          [box.y, box.y + box.h / 2, box.y + box.h],
-          box.y,
+          [visual.y, visual.y + visual.h / 2, visual.y + visual.h],
+          visual.y,
           yTargets,
           threshold,
           grid
@@ -174,11 +187,13 @@ export function snapFreeBox(
     }
   }
 
+  // 命中判定同样按视觉盒（旋转窗格用外接 AABB）：参考线画在画布坐标系里，读数一致
+  const visualNext = rotatedBounds(next, rotate);
   return {
     box: next,
     guides: [
-      ...hitGuides("x", next, xTargets),
-      ...hitGuides("y", next, yTargets)
+      ...hitGuides("x", visualNext, xTargets),
+      ...hitGuides("y", visualNext, yTargets)
     ]
   };
 }

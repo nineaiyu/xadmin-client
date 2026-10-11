@@ -203,3 +203,48 @@ describe("snapFreeBox 网格吸附（ADR-088）", () => {
     expect(result.box.w).toBe(49);
   });
 });
+
+describe("旋转窗格吸附（ADR-090 D2）", () => {
+  it("移动吸附按视觉盒：4px 内命中后位移施加到未旋转盒", () => {
+    const pane = { x: 100, y: 100, w: 200, h: 100 };
+    // 旋转 90° 后视觉盒为 x∈[150,250]；把视觉左边界放到 402（距 OTHER 左边界 400 差 2px）
+    const result = snapFreeBox(
+      { ...pane, x: 352 },
+      [OTHER],
+      DESIGN,
+      "",
+      FREE_SNAP_THRESHOLD,
+      undefined,
+      90
+    );
+    // 视觉左边界 352+50=402 → 吸附到 400 → 未旋转 x 相应减 2
+    expect(result.box.x).toBe(350);
+    expect(hasGuide(result.guides, "x", 400)).toBe(true);
+  });
+
+  it("未知旋转角的缩放不做吸附（要么精确要么不吸附）", () => {
+    const result = snapFreeBox(
+      { x: 400, y: 300, w: 200, h: 100 },
+      [OTHER],
+      DESIGN,
+      "br",
+      FREE_SNAP_THRESHOLD,
+      { enabled: true, step: 10 },
+      45
+    );
+    expect(result.box).toEqual({ x: 400, y: 300, w: 200, h: 100 });
+    expect(result.guides).toEqual([]);
+  });
+
+  it("其他窗格带旋转时，参考线取它的外接 AABB", () => {
+    const rotated = { x: 400, y: 300, w: 300, h: 300, rotate: 45 };
+    // 300×300 转 45°：外接盒边长 300√2，中心 550 → 左边界 ≈ 337.87
+    const left = 400 + 150 - (300 * Math.SQRT2) / 2;
+    const result = snapFreeBox(
+      { x: left + 2, y: 0, w: 200, h: 100 },
+      [rotated],
+      DESIGN
+    );
+    expect(result.box.x).toBeCloseTo(left, 4);
+  });
+});

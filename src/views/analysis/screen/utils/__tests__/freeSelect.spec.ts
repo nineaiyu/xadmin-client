@@ -81,3 +81,41 @@ describe("组位移夹取", () => {
     });
   });
 });
+
+describe("旋转窗格的框选与包围盒（ADR-090 D2）", () => {
+  const textPane = (
+    pk: string,
+    box: { x: number; y: number; w: number; h: number },
+    rotate?: number
+  ) =>
+    ({
+      pk,
+      type: "text",
+      ...box,
+      ...(rotate ? { rotate } : {})
+    }) as ScreenLayoutPane;
+
+  it("框选按旋转矩形命中：AABB 角落不算命中", () => {
+    const pane = textPane("a", { x: 0, y: 90, w: 200, h: 20 }, 45);
+    // 细条 45° 后的外接盒右上角小块（本体对角走向，不覆盖那里）
+    const corner = { x: 160, y: 60, w: 6, h: 6 };
+    expect(panesInRect([pane], corner)).toEqual([]);
+    // 中心必然命中
+    expect(panesInRect([pane], { x: 90, y: 90, w: 10, h: 10 })).toEqual(["a"]);
+  });
+
+  it("选区包围盒取视觉 AABB（旋转后比原始盒大）", () => {
+    const pane = textPane("a", { x: 0, y: 0, w: 100, h: 100 }, 45);
+    const bounds = selectionBounds([pane], ["a"])!;
+    expect(bounds.w).toBeCloseTo(100 * Math.SQRT2, 4);
+    expect(bounds.x).toBeLessThan(0);
+  });
+
+  it("组夹取按视觉 AABB：旋转溢出画幅时整组停住", () => {
+    const pane = textPane("a", { x: 0, y: 0, w: 100, h: 100 }, 45);
+    const design = { design_w: 1000, design_h: 1000 };
+    // 视觉盒左边界已经溢到 -20.71：向左推被夹到「把它推回画幅内」的 +20.71
+    const clamped = clampGroupDelta([pane], ["a"], -50, 0, design);
+    expect(clamped.dx).toBeCloseTo((100 * Math.SQRT2) / 2 - 100 / 2, 4);
+  });
+});

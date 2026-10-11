@@ -118,3 +118,24 @@ describe("snapBoxesToGrid 批量对齐网格", () => {
     expect(snapBoxesToGrid(panes, [], design, 20)).toEqual({});
   });
 });
+
+describe("旋转窗格对齐（ADR-090 D2）", () => {
+  it("左对齐按视觉左边界：位移施加到未旋转 x", () => {
+    const pane = {
+      pk: "a",
+      type: "text" as const,
+      x: 100,
+      y: 100,
+      w: 100,
+      h: 100,
+      rotate: 45
+    };
+    const result = alignBoxes([pane], ["a"], "left", {
+      design_w: 1000,
+      design_h: 1000
+    });
+    // 单选基准 = 画幅左边界 0：视觉左边界当前为 100 - 20.71 ≈ 79.29，需左移该量；
+    // 结果经 clampFreeBox 取整 → 21
+    expect(Math.round(result.a.x)).toBe(21);
+  });
+});

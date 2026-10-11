@@ -1,6 +1,7 @@
 import type { ScreenLayoutPane } from "@/api/dataset/analysis";
 import type { FreeDesign } from "./freeLayout";
 import type { PaneBox } from "./layout";
+import { rectIntersectsPane, rotatedBounds } from "./paneGeometry";
 
 /**
  * 自由画布多选的几何口径：框选命中、选区包围盒、组位移夹取（纯函数 + 单测）。
@@ -25,8 +26,18 @@ export function rectFromPoints(
   };
 }
 
-/** 框选矩形与窗格是否相交（任意重叠即命中；边界相接不算） */
-export function rectHitsPane(rect: FreeRect, pane: PaneBox): boolean {
+/**
+ * 框选矩形与窗格是否相交。
+ *
+ * 未旋转窗格 = 轴对齐重叠判定（边界相接不算，与历史一致）；
+ * **旋转窗格按旋转矩形做 SAT 相交**（ADR-090 D2：框选看真正覆盖到的像素）。
+ */
+export function rectHitsPane(
+  rect: FreeRect,
+  pane: PaneBox,
+  rotate = 0
+): boolean {
+  if (rotate) return rectIntersectsPane(rect, pane, rotate);
   return (
     pane.x < rect.x + rect.w &&
     pane.x + pane.w > rect.x &&
@@ -40,7 +51,9 @@ export function panesInRect(
   panes: readonly ScreenLayoutPane[],
   rect: FreeRect
 ): string[] {
-  return panes.filter(pane => rectHitsPane(rect, pane)).map(pane => pane.pk);
+  return panes
+    .filter(pane => rectHitsPane(rect, pane, pane.rotate ?? 0))
+    .map(pane => pane.pk);
 }
 
 /** 选区包围盒（空选区返回 null） */
@@ -50,10 +63,17 @@ export function selectionBounds(
 ): FreeRect | null {
   const chosen = panes.filter(pane => pks.includes(pane.pk));
   if (chosen.length === 0) return null;
-  const left = Math.min(...chosen.map(pane => pane.x));
-  const top = Math.min(...chosen.map(pane => pane.y));
-  const right = Math.max(...chosen.map(pane => pane.x + pane.w));
-  const bottom = Math.max(...chosen.map(pane => pane.y + pane.h));
+  // 视觉盒（旋转窗格取外接 AABB）：对齐 / 分布 / 组夹取都以「看得见的边界」为准
+  const boxes = chosen.map(pane =>
+    rotatedBounds(
+      { x: pane.x, y: pane.y, w: pane.w, h: pane.h },
+      pane.rotate ?? 0
+    )
+  );
+  const left = Math.min(...boxes.map(box => box.x));
+  const top = Math.min(...boxes.map(box => box.y));
+  const right = Math.max(...boxes.map(box => box.x + box.w));
+  const bottom = Math.max(...boxes.map(box => box.y + box.h));
   return { x: left, y: top, w: right - left, h: bottom - top };
 }
 

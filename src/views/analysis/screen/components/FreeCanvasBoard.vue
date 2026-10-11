@@ -166,7 +166,9 @@ const snapFor = (pk: string) => (box: Box, dir: string) => {
     props.design,
     dir,
     FREE_SNAP_THRESHOLD,
-    props.gridSnap
+    props.gridSnap,
+    // 旋转窗格按视觉盒吸附（ADR-090 D2）：把本窗格的旋转角带进去
+    props.panes.find(pane => pane.pk === pk)?.rotate ?? 0
   );
   if (dir || !groupMode.value || !isChosen(pk)) return result;
   const start = groupStart ?? (groupStart = { pk, ...snapshot() });
