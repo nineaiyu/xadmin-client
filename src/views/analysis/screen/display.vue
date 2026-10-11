@@ -332,7 +332,7 @@ onMounted(loadScreen);
 <style lang="scss" scoped>
 /* 恒深色投屏页（刻意不随站点主题）：色值按深色设计基线写定 */
 .screen-root {
-  background: #070b14;
+  background: var(--screen-canvas);
 }
 
 .screen-ambient {
@@ -342,32 +342,36 @@ onMounted(loadScreen);
   background:
     radial-gradient(
       1100px 520px at 18% -10%,
-      rgb(64 158 255 / 16%),
+      var(--screen-glow-primary),
       transparent 62%
     ),
     radial-gradient(
       900px 480px at 100% 0%,
-      rgb(154 102 228 / 14%),
+      var(--screen-glow-accent),
       transparent 58%
     ),
-    linear-gradient(180deg, #0b1220 0%, #070b14 100%);
+    linear-gradient(
+      180deg,
+      var(--screen-canvas-top) 0%,
+      var(--screen-canvas) 100%
+    );
 }
 
 /* 顶部工具条与卡片同一视觉语言：半透明玻璃 + 细分隔线 */
 .screen-header {
   position: relative;
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
   align-items: center;
   padding: 14px 24px;
-  margin-bottom: 4px;
-  background: rgb(255 255 255 / 3%);
-  border-bottom: 1px solid rgb(255 255 255 / 6%);
+  margin-bottom: var(--space-1);
+  background: var(--screen-surface);
+  border-bottom: 1px solid var(--screen-border-subtle);
   backdrop-filter: blur(8px);
 }
 
 .screen-title {
-  font-size: 20px;
+  font-size: var(--font-size-xl);
   font-weight: 600;
   letter-spacing: 0.02em;
 }
@@ -376,29 +380,29 @@ onMounted(loadScreen);
 .screen-subtitle {
   font-size: var(--el-font-size-base);
   font-weight: 400;
-  color: rgb(255 255 255 / 62%);
+  color: var(--screen-fg-subtle);
 }
 
 .screen-page {
   padding: 1px 8px;
   font-size: var(--el-font-size-extra-small);
-  color: rgb(255 255 255 / 70%);
-  background: rgb(255 255 255 / 8%);
-  border-radius: 999px;
+  color: var(--screen-fg-muted);
+  background: var(--screen-surface-strong);
+  border-radius: var(--radius-full);
 }
 
 .screen-clock {
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   font-variant-numeric: tabular-nums;
-  color: rgb(255 255 255 / 85%);
+  color: var(--screen-fg);
 }
 
 .screen-grid {
   position: relative;
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 16px;
-  padding: 4px 24px 24px;
+  gap: var(--space-4);
+  padding: var(--space-1) var(--space-6) var(--space-6);
 }
 
 /* 画布模式栅格：度量走 layout.ts 常量派生的 CSS 变量（与设计器同一份来源），
@@ -420,20 +424,20 @@ onMounted(loadScreen);
 .screen-card {
   position: relative;
   padding: 12px 14px 14px;
-  background: rgb(255 255 255 / 4%);
-  border: 1px solid rgb(255 255 255 / 8%);
-  border-radius: 12px;
-  box-shadow: 0 8px 28px rgb(0 0 0 / 26%);
+  background: var(--screen-surface-raised);
+  border: 1px solid var(--screen-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--screen-shadow);
   backdrop-filter: blur(6px);
 }
 
 .screen-card__title {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
   font-size: var(--el-font-size-small);
-  color: rgb(255 255 255 / 82%);
+  color: var(--screen-fg-strong);
 
   &::before {
     width: 3px;
@@ -450,7 +454,7 @@ onMounted(loadScreen);
   overflow: hidden;
   color: var(--el-text-color-primary);
   background: var(--el-bg-color-overlay);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
 
   /* 指标卡（大数字）：不做画框内层，数字直接浮在深色卡上（白色醒目） */
   &--plain {
@@ -462,11 +466,11 @@ onMounted(loadScreen);
 
 /* 恒深色页的空态：文字与底托取白色透明度（不随站点主题的深浅） */
 .screen-root :deep(.el-empty__description p) {
-  color: rgb(255 255 255 / 62%);
+  color: var(--screen-fg-subtle);
 }
 
 .screen-root :deep(.re-empty-art) {
-  color: rgb(255 255 255 / 78%);
-  background: rgb(255 255 255 / 8%);
+  color: var(--screen-fg-dense);
+  background: var(--screen-surface-strong);
 }
 </style>

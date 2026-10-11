@@ -20,7 +20,7 @@ import {
   type RePlusPageProps
 } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import ApiScopeEditor from "@/components/ApiScopeEditor/index.vue";
+import ApiScopeEditor from "@/components/ApiScopeEditor";
 import { loadPatScopeCatalog, personalAccessTokenApi } from "@/api/user/token";
 import { buildScopeIndex, formatScopeLines } from "@/utils/scopeDisplay";
 import AccountPanel from "./AccountPanel.vue";

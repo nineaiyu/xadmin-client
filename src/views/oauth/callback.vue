@@ -180,7 +180,7 @@ onMounted(async () => {
     width: min(420px, 90vw);
     padding: 24px;
     background: var(--el-bg-color-overlay);
-    border-radius: 12px;
+    border-radius: var(--radius-xl);
   }
 }
 </style>

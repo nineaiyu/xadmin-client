@@ -258,7 +258,13 @@ onMounted(() => {
                     effect="dark"
                     placement="top"
                   >
-                    <IconifyIconOffline :icon="Info" class="ml-1" />
+                    <!-- 提示图标：键盘焦点可达（EP 注入 tooltip trigger 语义），
+                         以说明文案作可访问名，避免焦点停在无名称元素上 -->
+                    <IconifyIconOffline
+                      :icon="Info"
+                      class="ml-1"
+                      :aria-label="t('login.rememberInfo')"
+                    />
                   </el-tooltip>
                 </span>
               </el-checkbox>

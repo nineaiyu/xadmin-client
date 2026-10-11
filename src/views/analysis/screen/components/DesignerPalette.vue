@@ -88,12 +88,12 @@ const { t } = useI18n();
   display: flex;
   flex: none;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
   width: 220px;
-  padding: 14px 12px;
+  padding: var(--space-3);
   overflow: auto;
-  background: rgb(255 255 255 / 3%);
-  border-right: 1px solid rgb(255 255 255 / 8%);
+  background: var(--screen-surface);
+  border-right: 1px solid var(--screen-border);
 
   /* EP 的 `.el-button + .el-button { margin-left: 12px }` 是横向按钮组语义，
      纵向组件库里会把第 2 个起的按钮整体顶右 12px（含仪表盘清单），统一清零 */
@@ -104,13 +104,13 @@ const { t } = useI18n();
 
 .designer-palette__title {
   font-size: var(--el-font-size-small);
-  color: rgb(255 255 255 / 70%);
+  color: var(--screen-fg-muted);
 }
 
 .designer-palette__list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-2);
   max-height: 40vh;
   overflow: auto;
 }
@@ -118,6 +118,6 @@ const { t } = useI18n();
 .designer-hint {
   font-size: var(--el-font-size-extra-small);
   line-height: 1.6;
-  color: rgb(255 255 255 / 55%);
+  color: var(--screen-fg-dim);
 }
 </style>

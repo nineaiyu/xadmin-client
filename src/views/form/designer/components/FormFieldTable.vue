@@ -1,8 +1,8 @@
 <script lang="ts" setup>
-import { nextTick, onMounted, onUnmounted, ref } from "vue";
+import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElTag } from "element-plus";
-import Sortable from "sortablejs";
+import { useSortable } from "@/hooks/useSortable";
 import type {
   FormCascaderOption,
   FormField,
@@ -152,20 +152,17 @@ const onColumnsChanged = (field: FormField, value: string) => {
   field.columns = columns;
 };
 
-/* ---------------- 拖拽排序（sortablejs，fallback 走鼠标事件） ---------------- */
+/* ---------------- 拖拽排序（useSortable，sortablejs 按需加载） ---------------- */
 const tableRef = ref();
-let sortable: Sortable | null = null;
 
-const bindRowSortable = () => {
-  const tbody = tableRef.value?.$el?.querySelector("tbody");
-  if (!tbody) return;
-  sortable = Sortable.create(tbody as HTMLElement, {
+useSortable(
+  () => tableRef.value?.$el?.querySelector("tbody") as HTMLElement | null,
+  {
     handle: ".dform-drag-handle",
     animation: 150,
     forceFallback: true,
     fallbackOnBody: true,
-    onEnd: event => {
-      const { oldIndex, newIndex, item, from } = event;
+    onEnd: ({ oldIndex, newIndex, evt }) => {
       if (
         oldIndex === undefined ||
         newIndex === undefined ||
@@ -175,22 +172,13 @@ const bindRowSortable = () => {
       }
       // 撤销 Sortable 的 DOM 位移：DOM 顺序交给 Vue 按数据重排
       // （否则 el-table 的虚拟 DOM 与真实 DOM 失步，数据已换序但界面不更新）
-      const parent = (from ?? item.parentNode) as HTMLElement;
+      const parent = (evt.from ?? evt.item.parentNode) as HTMLElement;
       const reference = parent.children[oldIndex] ?? null;
-      parent.insertBefore(item as HTMLElement, reference);
+      parent.insertBefore(evt.item, reference);
       emit("move", oldIndex, newIndex);
     }
-  });
-};
-
-onMounted(() => {
-  nextTick(bindRowSortable);
-});
-
-onUnmounted(() => {
-  sortable?.destroy();
-  sortable = null;
-});
+  }
+);
 
 const move = (index: number, offset: -1 | 1) => {
   const target = index + offset;

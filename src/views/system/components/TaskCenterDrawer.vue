@@ -280,7 +280,7 @@ defineExpose({ load });
 
   .record-list {
     border: 1px solid var(--el-border-color-lighter);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
   }
 
   .record-row {

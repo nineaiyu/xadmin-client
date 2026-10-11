@@ -405,28 +405,28 @@ const back = () => {
 <style lang="scss" scoped>
 /* 画布恒深色（与投屏页同底），保证设计所见即投屏所得 */
 .designer-root {
-  background: #070b14;
+  background: var(--screen-canvas);
 }
 
 .designer-header {
   display: flex;
   flex: none;
-  gap: 10px;
+  gap: var(--space-2);
   align-items: center;
-  padding: 12px 20px;
-  background: rgb(255 255 255 / 3%);
-  border-bottom: 1px solid rgb(255 255 255 / 8%);
+  padding: var(--space-3) var(--space-5);
+  background: var(--screen-surface);
+  border-bottom: 1px solid var(--screen-border);
 }
 
 .designer-title {
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   font-weight: 600;
 }
 
 .designer-subtitle {
   font-size: var(--el-font-size-base);
   font-weight: 400;
-  color: rgb(255 255 255 / 62%);
+  color: var(--screen-fg-subtle);
 }
 
 .designer-body {
@@ -438,10 +438,10 @@ const back = () => {
 .designer-inspector {
   flex: none;
   width: 260px;
-  padding: 14px 12px;
+  padding: var(--space-3);
   overflow: auto;
-  background: rgb(255 255 255 / 3%);
-  border-left: 1px solid rgb(255 255 255 / 8%);
+  background: var(--screen-surface);
+  border-left: 1px solid var(--screen-border);
 }
 
 /* 画布栅格度量全部走 layout.ts 常量派生的 CSS 变量（:style 绑定 canvasGridVars），
@@ -461,8 +461,8 @@ const back = () => {
   padding: var(--screen-canvas-padding);
   overflow: auto;
   background-image:
-    linear-gradient(rgb(255 255 255 / 5%) 1px, transparent 0),
-    linear-gradient(90deg, rgb(255 255 255 / 5%) 1px, transparent 0);
+    linear-gradient(var(--screen-grid-line) 1px, transparent 0),
+    linear-gradient(90deg, var(--screen-grid-line) 1px, transparent 0);
   background-size:
     100% var(--screen-row-step),
     calc(100% / var(--screen-grid-cols)) 100%;
@@ -474,14 +474,14 @@ const back = () => {
 
 .designer-empty {
   grid-column: 1 / -1;
-  padding: 40px 0;
-  color: rgb(255 255 255 / 45%);
+  padding: var(--space-10) 0;
+  color: var(--screen-fg-faint);
   text-align: center;
 }
 
 .designer-hint {
   font-size: var(--el-font-size-extra-small);
   line-height: 1.6;
-  color: rgb(255 255 255 / 55%);
+  color: var(--screen-fg-dim);
 }
 </style>

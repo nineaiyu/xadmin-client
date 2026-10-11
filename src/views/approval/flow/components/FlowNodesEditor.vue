@@ -110,12 +110,20 @@ function assigneeHint(type: string): string {
       />
       <el-table-column :label="t('systemApprovalFlow.nodeName')" width="140">
         <template #default="{ row }">
-          <el-input v-model="row.name" size="small" />
+          <el-input
+            v-model="row.name"
+            size="small"
+            :aria-label="t('systemApprovalFlow.nodeName')"
+          />
         </template>
       </el-table-column>
       <el-table-column :label="t('systemApprovalFlow.approveType')" width="110">
         <template #default="{ row }">
-          <el-select v-model="row.approve_type" size="small">
+          <el-select
+            v-model="row.approve_type"
+            size="small"
+            :aria-label="t('systemApprovalFlow.approveType')"
+          >
             <el-option
               :label="t('systemApprovalFlow.approveTypeOR')"
               value="OR"
@@ -143,6 +151,7 @@ function assigneeHint(type: string): string {
             size="small"
             :min="1"
             :max="100"
+            :aria-label="t('systemApprovalFlow.approveRatio')"
             controls-position="right"
           />
           <span v-else>—</span>
@@ -153,7 +162,11 @@ function assigneeHint(type: string): string {
         width="130"
       >
         <template #default="{ row }">
-          <el-select v-model="row.assignee_type" size="small">
+          <el-select
+            v-model="row.assignee_type"
+            size="small"
+            :aria-label="t('systemApprovalFlow.assigneeType')"
+          >
             <el-option
               v-for="type in ASSIGNEE_TYPES"
               :key="type"
@@ -175,6 +188,7 @@ function assigneeHint(type: string): string {
             size="small"
             disabled
             :placeholder="t('systemApprovalFlow.assigneeHint_leader')"
+            :aria-label="t('systemApprovalFlow.assigneeValue')"
           />
           <!-- 指定用户：按用户名远程搜索多选（值=用户名，逗号分隔）；搜索无结果可直接输入用户名兜底 -->
           <el-select
@@ -190,6 +204,7 @@ function assigneeHint(type: string): string {
             :remote-method="searchUsers"
             :loading="userLoading"
             :placeholder="t('systemApprovalFlow.assigneeHint_user')"
+            :aria-label="t('systemApprovalFlow.assigneeValue')"
             @focus="splitValues(row.assignee_value).forEach(ensureUserOption)"
             @update:model-value="value => updateMultiValue($index, value)"
           >
@@ -210,6 +225,7 @@ function assigneeHint(type: string): string {
             default-first-option
             size="small"
             :placeholder="t('systemApprovalFlow.assigneeHint_role')"
+            :aria-label="t('systemApprovalFlow.assigneeValue')"
             @update:model-value="value => updateMultiValue($index, value)"
           >
             <el-option
@@ -229,6 +245,7 @@ function assigneeHint(type: string): string {
             default-first-option
             size="small"
             :placeholder="t('systemApprovalFlow.assigneeHint_post')"
+            :aria-label="t('systemApprovalFlow.assigneeValue')"
             @update:model-value="value => updateMultiValue($index, value)"
           >
             <el-option
@@ -245,6 +262,7 @@ function assigneeHint(type: string): string {
             size="small"
             clearable
             :placeholder="t('systemApprovalFlow.assigneeHint_field')"
+            :aria-label="t('systemApprovalFlow.assigneeValue')"
           >
             <el-option
               v-for="field in fields"
@@ -259,6 +277,7 @@ function assigneeHint(type: string): string {
             v-model="row.assignee_value"
             size="small"
             :placeholder="t(assigneeHint(row.assignee_type))"
+            :aria-label="t('systemApprovalFlow.assigneeValue')"
           />
         </template>
       </el-table-column>
@@ -277,6 +296,7 @@ function assigneeHint(type: string): string {
             :remote-method="searchUsers"
             :loading="userLoading"
             :placeholder="t('systemApprovalFlow.ccUsersHint')"
+            :aria-label="t('systemApprovalFlow.ccUsers')"
             @focus="(row.cc_users || []).forEach(ensureUserOption)"
             @update:model-value="value => (row.cc_users = value)"
           >
@@ -298,6 +318,7 @@ function assigneeHint(type: string): string {
             v-model="row.condition_field"
             size="small"
             :placeholder="t('systemApprovalFlow.conditionFieldTip')"
+            :aria-label="t('systemApprovalFlow.conditionField')"
           />
         </template>
       </el-table-column>
@@ -307,6 +328,7 @@ function assigneeHint(type: string): string {
             v-model="row.condition_op"
             size="small"
             :disabled="!row.condition_field"
+            :aria-label="t('systemApprovalFlow.conditionOp')"
           >
             <el-option
               v-for="op in CONDITION_OPS"
@@ -324,6 +346,7 @@ function assigneeHint(type: string): string {
         <template #default="{ row }">
           <el-input
             v-model="row.condition_value"
+            :aria-label="t('systemApprovalFlow.conditionValue')"
             size="small"
             :disabled="
               !row.condition_field ||
@@ -341,6 +364,7 @@ function assigneeHint(type: string): string {
             v-model="row.timeout_hours"
             size="small"
             :min="0"
+            :aria-label="t('systemApprovalFlow.timeoutHours')"
             controls-position="right"
           />
         </template>
@@ -354,6 +378,7 @@ function assigneeHint(type: string): string {
           <el-select
             v-if="Number(row.timeout_hours) > 0"
             v-model="row.timeout_action"
+            :aria-label="t('systemApprovalFlow.timeoutAction')"
             size="small"
           >
             <el-option

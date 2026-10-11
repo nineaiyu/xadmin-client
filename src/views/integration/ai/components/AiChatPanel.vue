@@ -4,9 +4,9 @@ import { useI18n } from "vue-i18n";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import SendIcon from "~icons/ep/promotion";
 import type { AiActionDraft, AiConsoleMessage } from "@/api/ai/ai";
-import MessageThreadPanel from "@/components/MessageThreadPanel/index.vue";
-import MessageTimeDivider from "@/components/MessageTimeDivider/index.vue";
-import AiStreamingBubble from "@/components/AiStreamingBubble/index.vue";
+import MessageThreadPanel from "@/components/MessageThreadPanel";
+import MessageTimeDivider from "@/components/MessageTimeDivider";
+import AiStreamingBubble from "@/components/AiStreamingBubble";
 import AiMessageRow from "./AiMessageRow.vue";
 
 /**

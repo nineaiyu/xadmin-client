@@ -485,7 +485,7 @@ defineExpose({ validate });
   padding: 16px;
   background: var(--el-fill-color-lighter);
   border: 1px solid var(--el-border-color-lighter);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
 }
 
 .rule-edit-label {

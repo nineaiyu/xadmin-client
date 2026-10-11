@@ -1,8 +1,9 @@
 <script lang="ts" setup>
-import { h, onMounted, reactive, ref } from "vue";
+import { h, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { approvalFlowApi } from "@/api/approval/approvalFlow";
 import { addDialog } from "@/components/ReDialog";
+import ReApiSelect from "@/components/ReApiSelect";
 import { dialogSize } from "@/components/ReDialog/size";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import type {
@@ -64,24 +65,12 @@ const linkages = ref<FormLinkage[]>(
   )
 );
 
-/** 可绑定的审批流程（无流程管理权限时降级为空选项，不阻断表单定义） */
-const flowOptions = ref<{ pk: string; name: string }[]>([]);
-onMounted(() => {
-  // 全量拉取（逐页循环）：固定 size 会在流程数超过接口分页上限时静默截断；
-  // 翻页失败由 fetchAllRows 抛出，走同一 catch 降级为空选项
-  fetchAllRows(approvalFlowApi.list, { is_active: true })
-    .then(res => {
-      flowOptions.value = (
-        (res?.data?.results ?? []) as {
-          pk: string;
-          name: string;
-        }[]
-      ).map(item => ({ pk: item.pk, name: item.name }));
-    })
-    .catch(() => {
-      flowOptions.value = [];
-    });
-});
+/**
+ * 可绑定的审批流程取数（ReApiSelect 的 api）：逐页拉全——固定 size 会在流程数
+ * 超过接口分页上限时静默截断；拉取失败由取数层降级为空选项，不阻断表单定义。
+ */
+const loadFlowOptions = (params?: Record<string, unknown>) =>
+  fetchAllRows(approvalFlowApi.list, { is_active: true, ...(params ?? {}) });
 
 const addField = () => {
   // 快速连点会命中同一毫秒时间戳：与既有 key 冲突时追加递增序号防撞
@@ -209,19 +198,15 @@ defineExpose({ getPayload });
         <el-input v-model="form.description" />
       </el-form-item>
       <el-form-item :label="t('dform.approvalFlow')">
-        <el-select
+        <ReApiSelect
           v-model="form.approval_flow"
+          :api="loadFlowOptions"
+          label-field="name"
+          value-field="pk"
           clearable
           :placeholder="t('dform.noApprovalFlow')"
           :style="{ width: '100%' }"
-        >
-          <el-option
-            v-for="item in flowOptions"
-            :key="item.pk"
-            :value="item.pk"
-            :label="item.name"
-          />
-        </el-select>
+        />
         <div class="text-xs text-(--el-text-color-regular)">
           {{ t("dform.approvalFlowTip") }}
         </div>

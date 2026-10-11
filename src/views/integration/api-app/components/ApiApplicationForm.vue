@@ -9,7 +9,7 @@ import {
   type ApiApplicationGrant,
   type ApiApplicationItem
 } from "@/api/identity/open";
-import ApiScopeEditor from "@/components/ApiScopeEditor/index.vue";
+import ApiScopeEditor from "@/components/ApiScopeEditor";
 import ApiGrantEditor from "./ApiGrantEditor.vue";
 
 /**

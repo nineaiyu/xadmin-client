@@ -66,11 +66,11 @@ const { t } = useI18n();
 <style lang="scss" scoped>
 .account-sidebar__back {
   display: flex;
-  gap: 4px;
+  gap: var(--space-1);
   align-items: center;
   height: 48px;
   padding: 0 var(--el-menu-base-level-padding);
-  font-size: 14px;
+  font-size: var(--font-size-base);
   color: var(--pure-theme-menu-text);
   cursor: pointer;
   transition: color 0.2s;
@@ -82,9 +82,9 @@ const { t } = useI18n();
 
 .account-sidebar__profile {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
   align-items: center;
-  padding: 12px var(--el-menu-base-level-padding) 16px;
+  padding: var(--space-3) var(--el-menu-base-level-padding) var(--space-4);
 }
 
 .account-sidebar__identity {

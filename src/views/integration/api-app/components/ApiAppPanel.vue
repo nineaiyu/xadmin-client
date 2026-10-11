@@ -203,7 +203,7 @@ const metaItems = computed(() => [
   padding: 8px 10px;
   font-size: var(--el-font-size-extra-small);
   background: var(--el-fill-color-light);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
 }
 
 .probe-url {

@@ -74,8 +74,8 @@ onBeforeUnmount(() => clear());
  * 样式从行内迁移到类上，便于与设置项表单共享同一套圆角 / 边框变量。
  */
 .watermark-preview__label {
-  margin-bottom: 8px;
-  font-size: 13px;
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-sm);
   font-weight: 500;
   color: var(--el-text-color-primary);
 }
@@ -90,8 +90,8 @@ onBeforeUnmount(() => clear());
 }
 
 .watermark-preview__tip {
-  margin-top: 6px;
-  font-size: 12px;
+  margin-top: var(--space-1);
+  font-size: var(--font-size-xs);
   line-height: 20px;
   color: var(--el-text-color-secondary);
 }

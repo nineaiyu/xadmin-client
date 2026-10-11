@@ -14,6 +14,7 @@ import {
 import type { RecordType } from "plus-pro-components";
 import MessageTemplateForm from "./MessageTemplateForm.vue";
 import { normalizeError } from "@/utils/apiError";
+import { TABLE_HEADER_CELL_STYLE } from "@/utils/tableHeader";
 
 /**
  * 通知消息模板：代码内模板是默认值，此处维护可选的 DB 覆盖层。
@@ -108,10 +109,7 @@ onMounted(load);
     <el-table
       :data="rows"
       data-testid="template-table"
-      :header-cell-style="{
-        background: 'var(--el-table-row-hover-bg-color)',
-        color: 'var(--el-text-color-primary)'
-      }"
+      :header-cell-style="TABLE_HEADER_CELL_STYLE"
     >
       <el-table-column
         prop="message_type_label"

@@ -101,7 +101,7 @@ const onSelect = (action: MenuNodeAction) => {
   padding: 4px;
   background: var(--el-bg-color-overlay);
   border: 1px solid var(--el-border-color-lighter);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   box-shadow: var(--el-box-shadow-light);
 
   &__title {

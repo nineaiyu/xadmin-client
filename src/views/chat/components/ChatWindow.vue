@@ -24,9 +24,9 @@ import {
   type ChatPeer,
   type ChatRoomItem
 } from "@/api/chat";
-import MessageThreadPanel from "@/components/MessageThreadPanel/index.vue";
-import MessageTimeDivider from "@/components/MessageTimeDivider/index.vue";
-import AiStreamingBubble from "@/components/AiStreamingBubble/index.vue";
+import MessageThreadPanel from "@/components/MessageThreadPanel";
+import MessageTimeDivider from "@/components/MessageTimeDivider";
+import AiStreamingBubble from "@/components/AiStreamingBubble";
 import MessageBubble from "./MessageBubble.vue";
 import ChatEmojiPanel from "./ChatEmojiPanel.vue";
 import ChatGroupMembersPanel from "./ChatGroupMembersPanel.vue";
@@ -250,12 +250,18 @@ function submit() {
   emit("send", content);
 }
 
-// 切换会话时清空草稿（避免把 A 会话的内容发到 B 会话）
+// 切换会话时清空草稿（避免把 A 会话的内容发到 B 会话）。
+// 只按「有效会话」比较：会话列表刷新 / 加载态会使 room 短暂为 undefined，
+// 若把它当作一次切换，用户正在输入的内容会被清掉（发送按钮随即置灰）。
+let lastRoomId: string | number | undefined;
 watch(
   () => props.room?.id,
-  () => {
-    draft.value = "";
-  }
+  id => {
+    if (id === undefined) return;
+    if (lastRoomId !== undefined && id !== lastRoomId) draft.value = "";
+    lastRoomId = id;
+  },
+  { immediate: true }
 );
 </script>
 

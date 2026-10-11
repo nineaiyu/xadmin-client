@@ -304,7 +304,7 @@ defineExpose({ normalize });
   padding: 10px 12px;
   margin-bottom: 8px;
   border: 1px solid var(--el-border-color-lighter);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
 }
 
 .grant-row {

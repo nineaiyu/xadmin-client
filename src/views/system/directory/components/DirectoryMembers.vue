@@ -335,6 +335,8 @@ function openDetail(row: DirectoryMember) {
 </template>
 
 <style scoped lang="scss">
+@use "@/style/tokens/breakpoints" as bp;
+
 .directory-desktop {
   height: calc(100vh - 141px);
 
@@ -354,7 +356,7 @@ function openDetail(row: DirectoryMember) {
   cursor: pointer;
   background: var(--el-bg-color);
   border: 1px solid var(--el-border-color-lighter);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   transition:
     border-color 0.2s,
     box-shadow 0.2s;
@@ -385,26 +387,26 @@ function openDetail(row: DirectoryMember) {
 .member-list {
   overflow: hidden;
   border: 1px solid var(--el-border-color-lighter);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
 }
 
 .member-head,
 .member-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-  gap: 8px;
-  align-items: center;
-
-  @media (width >= 1024px) {
+  @include bp.above("lg") {
     grid-template-columns:
       minmax(150px, 1.3fr) minmax(0, 0.9fr) minmax(0, 1fr)
       minmax(0, 1.2fr) minmax(0, 0.9fr) minmax(0, 1fr);
   }
+
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
 }
 
 .member-head {
   padding: 8px 12px;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--el-text-color-secondary);
   background: var(--el-fill-color-light);
 }

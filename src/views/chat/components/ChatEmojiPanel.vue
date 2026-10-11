@@ -91,7 +91,7 @@ const items = computed(
     ),
     var(--el-bg-color-overlay);
   border: 1px solid var(--el-border-color-lighter);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
 
   /* 浮起阴影取 EP 令牌：暗色主题下 EP 会换成更强的深色阴影，无需页面特判 */
   box-shadow: var(--el-box-shadow);
@@ -109,7 +109,7 @@ const items = computed(
     gap: 2px;
     padding: 3px;
     background: var(--el-fill-color-light);
-    border-radius: 11px;
+    border-radius: var(--radius-xl);
   }
 
   &__tab {
@@ -122,7 +122,7 @@ const items = computed(
     line-height: 1;
     cursor: pointer;
     user-select: none;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     opacity: 0.7;
     transition:
       opacity 0.18s ease,
@@ -152,13 +152,13 @@ const items = computed(
     justify-content: center;
     aspect-ratio: 1;
     padding: 0;
-    font-size: 21px;
+    font-size: var(--display-size-sm);
     line-height: 1;
     cursor: pointer;
     user-select: none;
     background: transparent;
     border: none;
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     opacity: 0.92;
     transition:
       transform 0.15s ease,

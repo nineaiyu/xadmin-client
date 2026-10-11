@@ -43,6 +43,6 @@ defineProps<{
 .risk-stats {
   background: var(--el-fill-color-light);
   border: 1px solid var(--divider);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 </style>

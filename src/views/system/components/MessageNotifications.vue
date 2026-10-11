@@ -11,6 +11,7 @@ import { dialogSize } from "@/components/ReDialog/size";
 import { useI18n } from "vue-i18n";
 import SearchDialog from "@/views/system/components/SearchDialog.vue";
 import type { RecordType } from "plus-pro-components";
+import { TABLE_HEADER_CELL_STYLE } from "@/utils/tableHeader";
 
 /** el-table 行作用域类型（element-plus 的 DefaultRow 结构；模板侧按 RecordType 接收） */
 type DefaultRow = RecordType;
@@ -195,10 +196,7 @@ const receiverLabels = (row: DefaultRow) => {
     :stripe="true"
     default-expand-all
     row-key="pk"
-    :header-cell-style="{
-      background: 'var(--el-table-row-hover-bg-color)',
-      color: 'var(--el-text-color-primary)'
-    }"
+    :header-cell-style="TABLE_HEADER_CELL_STYLE"
   >
     <el-table-column
       :label="t('messageNotifications.messageType')"

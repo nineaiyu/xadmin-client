@@ -139,7 +139,7 @@ export const customRolePermissionOptions = (
             <span
               style="
                   float: right;
-                  font-size: 13px;
+                  font-size: var(--font-size-sm);
                   color: var(--el-text-color-secondary);
                 "
             >

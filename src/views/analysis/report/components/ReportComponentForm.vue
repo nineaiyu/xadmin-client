@@ -207,18 +207,18 @@ const onMetricChange = (metric: "count" | "sum" | "avg") => {
 <style lang="scss" scoped>
 .component-form__head {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
   font-size: var(--el-font-size-base);
   font-weight: 600;
 }
 
 .component-form__toolbar {
   display: flex;
-  gap: 6px;
+  gap: var(--space-1);
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: var(--space-3);
 
   /* 清零 EP 横向按钮组的同级左边距，避免工具条间距叠加错位 */
   :deep(.el-button + .el-button) {
@@ -227,11 +227,11 @@ const onMetricChange = (metric: "count" | "sum" | "avg") => {
 }
 
 .component-form__type {
-  padding: 1px 6px;
+  padding: 1px var(--space-2);
   font-size: var(--el-font-size-extra-small);
   font-weight: 400;
   color: var(--el-text-color-secondary);
   background: var(--el-fill-color-light);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
 }
 </style>

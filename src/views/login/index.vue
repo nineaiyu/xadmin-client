@@ -15,6 +15,7 @@ import { avatar, bg, illustration } from "./utils/static";
 import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
 import { SITE_LINKS } from "@/config/site";
+import { useI18n } from "vue-i18n";
 
 import dayIcon from "@/assets/svg/day.svg?component";
 import darkIcon from "@/assets/svg/dark.svg?component";
@@ -40,6 +41,7 @@ const handleDataThemeChange = (value: string | number | boolean) => {
 };
 const { title, getDropdownItemStyle, getDropdownItemClass } = useNav();
 const { locale, translationCh, translationEn } = useTranslationLang();
+const { t } = useI18n();
 </script>
 
 <template>
@@ -52,12 +54,14 @@ const { locale, translationCh, translationEn } = useTranslationLang();
         :active-icon="dayIcon"
         :inactive-icon="darkIcon"
         inline-prompt
+        :aria-label="t('layout.theme')"
         @change="handleDataThemeChange"
       />
       <!-- 国际化 -->
       <el-dropdown trigger="click">
         <globalization
           class="hover:text-primary hover:bg-transparent! size-5 ml-1.5 cursor-pointer outline-hidden duration-300"
+          :aria-label="t('buttons.language')"
         />
         <template #dropdown>
           <el-dropdown-menu class="translation">
@@ -88,10 +92,10 @@ const { locale, translationCh, translationEn } = useTranslationLang();
       </el-dropdown>
     </div>
     <div class="login-container">
-      <div class="img">
+      <div class="img enter-y">
         <component :is="toRaw(illustration)" />
       </div>
-      <div class="login-box">
+      <div class="login-box enter-y">
         <div class="login-form">
           <avatar class="avatar" />
           <Motion>

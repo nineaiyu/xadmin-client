@@ -402,7 +402,7 @@ function applyPreset(preset: RulePreset) {
   padding: 10px 12px;
   background: var(--el-bg-color);
   border: 1px solid var(--el-border-color-lighter);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   transition: border-color 0.2s;
 }
 

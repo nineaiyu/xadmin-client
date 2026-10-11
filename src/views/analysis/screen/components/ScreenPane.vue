@@ -237,10 +237,10 @@ const clockStyle = computed(() => ({
   flex-direction: column;
   padding: 12px 14px 14px;
   overflow: hidden;
-  background: rgb(255 255 255 / 4%);
-  border: 1px solid rgb(255 255 255 / 8%);
-  border-radius: 12px;
-  box-shadow: 0 8px 28px rgb(0 0 0 / 26%);
+  background: var(--screen-surface-raised);
+  border: 1px solid var(--screen-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--screen-shadow);
   backdrop-filter: blur(6px);
 
   &.is-editable {
@@ -258,18 +258,18 @@ const clockStyle = computed(() => ({
   display: grid;
   flex: 1;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 12px;
+  gap: var(--space-3);
   align-content: start;
 }
 
 .screen-pane__title {
   display: flex;
   flex: none;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
   font-size: var(--el-font-size-small);
-  color: rgb(255 255 255 / 82%);
+  color: var(--screen-fg-strong);
 
   &::before {
     width: 3px;
@@ -283,15 +283,15 @@ const clockStyle = computed(() => ({
 .screen-card {
   position: relative;
   padding: 10px 12px 12px;
-  background: rgb(255 255 255 / 4%);
-  border: 1px solid rgb(255 255 255 / 8%);
-  border-radius: 10px;
+  background: var(--screen-surface-raised);
+  border: 1px solid var(--screen-border);
+  border-radius: var(--radius-xl);
 }
 
 .screen-card__title {
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
   font-size: var(--el-font-size-extra-small);
-  color: rgb(255 255 255 / 78%);
+  color: var(--screen-fg-dense);
 }
 
 /* 图表内层用站点主题底色：图表按主题渲染，在深色卡片里保持清晰（与投屏页同口径） */
@@ -299,7 +299,7 @@ const clockStyle = computed(() => ({
   overflow: hidden;
   color: var(--el-text-color-primary);
   background: var(--el-bg-color-overlay);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
 
   &--plain {
     color: inherit;
@@ -313,7 +313,7 @@ const clockStyle = computed(() => ({
   overflow: auto;
   font-weight: 600;
   line-height: 1.5;
-  color: rgb(255 255 255 / 92%);
+  color: var(--screen-fg-bold);
   white-space: pre-wrap;
 }
 
@@ -323,7 +323,7 @@ const clockStyle = computed(() => ({
   align-items: center;
   justify-content: center;
   font-variant-numeric: tabular-nums;
-  color: rgb(255 255 255 / 92%);
+  color: var(--screen-fg-bold);
 }
 
 /* 图片窗格：占满窗格内容区，填充方式由窗格配置（object-fit）决定 */
@@ -332,7 +332,7 @@ const clockStyle = computed(() => ({
   width: 100%;
   min-height: 0;
   object-position: center;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
 }
 
 .screen-pane__empty {
@@ -341,7 +341,7 @@ const clockStyle = computed(() => ({
   align-items: center;
   justify-content: center;
   font-size: var(--el-font-size-small);
-  color: rgb(255 255 255 / 55%);
+  color: var(--screen-fg-dim);
 }
 
 /* 设计态操作件：拖拽区（左上角抓手）与缩放柄（右下角） */
@@ -352,7 +352,7 @@ const clockStyle = computed(() => ({
   width: 18px;
   height: 18px;
   cursor: grab;
-  background-image: radial-gradient(rgb(255 255 255 / 55%) 1px, transparent 0);
+  background-image: radial-gradient(var(--screen-fg-dim) 1px, transparent 0);
   background-size: 5px 5px;
 }
 

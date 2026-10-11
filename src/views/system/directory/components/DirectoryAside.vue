@@ -301,13 +301,13 @@ function postTitle(item: DirectoryPostOption) {
   height: 30px;
   padding: 0 8px;
   overflow: hidden;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   color: var(--el-text-color-regular);
   text-align: left;
   cursor: pointer;
   background: transparent;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 
   &:hover {
     color: var(--el-color-primary);
@@ -331,11 +331,11 @@ function postTitle(item: DirectoryPostOption) {
   min-width: 18px;
   height: 16px;
   padding: 0 5px;
-  font-size: 11px;
+  font-size: var(--font-size-2xs);
   line-height: 16px;
   color: var(--el-text-color-secondary);
   text-align: center;
   background: var(--el-fill-color-light);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
 }
 </style>

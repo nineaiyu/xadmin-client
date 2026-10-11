@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import ReEmpty from "@/components/ReEmpty";
+import ReStateContainer from "@/components/ReStateContainer";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import type {
@@ -60,7 +60,7 @@ const durationText = (value: number) => `${(value * 1000).toFixed(1)} ms`;
 
 <template>
   <el-drawer v-model="visible" :size="560" :title="t('apiApp.usage.title')">
-    <div v-loading="loading" class="usage-body">
+    <div class="usage-body">
       <!-- 统计窗口切换（1/7/14/30 天）：切换后由父级重拉数据 -->
       <div class="usage-range">
         <span class="usage-range-label">
@@ -162,7 +162,13 @@ const durationText = (value: number) => `${(value * 1000).toFixed(1)} ms`;
           </el-table>
         </div>
       </template>
-      <ReEmpty v-else-if="!loading" :description="t('apiApp.usage.empty')" />
+      <ReStateContainer
+        v-else
+        :state="loading ? 'loading' : 'empty'"
+        loading-variant="spinner"
+        :empty-hint="t('apiApp.usage.empty')"
+        :min-height="180"
+      />
     </div>
   </el-drawer>
 </template>
@@ -194,7 +200,7 @@ const durationText = (value: number) => `${(value * 1000).toFixed(1)} ms`;
   padding: 12px;
   text-align: center;
   background: var(--el-fill-color-lighter);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
 }
 
 .usage-label {

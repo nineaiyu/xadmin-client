@@ -15,9 +15,9 @@ import type {
   NlInterpretResult,
   NlQueryDsl
 } from "@/api/ai/ai";
-import AiMessageBlock from "@/components/AiMessageBlock/index.vue";
-import ChatSystemNotice from "@/components/ChatSystemNotice/index.vue";
-import ChatTextBubble from "@/components/ChatTextBubble/index.vue";
+import AiMessageBlock from "@/components/AiMessageBlock";
+import ChatSystemNotice from "@/components/ChatSystemNotice";
+import ChatTextBubble from "@/components/ChatTextBubble";
 import { formatMessageTime } from "@/utils/messageView";
 
 vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));

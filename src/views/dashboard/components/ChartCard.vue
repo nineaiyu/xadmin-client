@@ -313,7 +313,7 @@ defineExpose({ loadData, applyData, renderImage });
 <style lang="scss" scoped>
 /* 覆盖层需不透明底色（挡住加载中的旧数据/零值），取 EP 卡片底色变量 */
 .chart-card-skeleton {
-  padding: 16px;
+  padding: var(--space-4);
   background: var(--el-card-bg-color, var(--el-bg-color-overlay));
 }
 </style>

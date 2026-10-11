@@ -1,12 +1,12 @@
 <script lang="ts" setup>
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import AiMessageBlock from "@/components/AiMessageBlock/index.vue";
-import ChatMessageAvatar from "@/components/ChatMessageAvatar/index.vue";
-import ChatSystemNotice from "@/components/ChatSystemNotice/index.vue";
-import ChatTextBubble from "@/components/ChatTextBubble/index.vue";
-import AiResultTable from "@/components/AiResultTable/index.vue";
-import MessageActionAttachments from "@/components/MessageActionAttachments/index.vue";
+import AiMessageBlock from "@/components/AiMessageBlock";
+import ChatMessageAvatar from "@/components/ChatMessageAvatar";
+import ChatSystemNotice from "@/components/ChatSystemNotice";
+import ChatTextBubble from "@/components/ChatTextBubble";
+import AiResultTable from "@/components/AiResultTable";
+import MessageActionAttachments from "@/components/MessageActionAttachments";
 import { formatMessageTime } from "@/utils/messageView";
 import type { AiActionDraft, AiConsoleMessage } from "@/api/ai/ai";
 import AiNlCard from "./AiNlCard.vue";

@@ -410,15 +410,15 @@ const back = () => {
 <style lang="scss" scoped>
 .designer-header {
   display: flex;
-  gap: 10px;
+  gap: var(--space-2);
   align-items: center;
-  padding: 12px 20px;
+  padding: var(--space-3) var(--space-5);
   background: var(--el-bg-color);
   border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
 .designer-title {
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   font-weight: 600;
 }
 
@@ -437,7 +437,7 @@ const back = () => {
 .designer-inspector {
   flex: none;
   width: 280px;
-  padding: 14px 12px;
+  padding: var(--space-3);
   overflow: auto;
   background: var(--el-bg-color);
   border-left: 1px solid var(--el-border-color-lighter);
@@ -452,7 +452,7 @@ const back = () => {
 .designer-canvas {
   flex: 1;
   min-width: 0;
-  padding: 16px 20px 32px;
+  padding: var(--space-4) var(--space-5) var(--space-8);
   overflow: auto;
   background: var(--el-fill-color-blank);
 }
@@ -460,16 +460,16 @@ const back = () => {
 .designer-components {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 16px;
-  margin-top: 20px;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
 }
 
 .designer-component {
   grid-column: span 6;
-  padding: 12px;
+  padding: var(--space-3);
   background: var(--el-bg-color);
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 10px;
+  border: var(--card-border);
+  border-radius: var(--radius-lg);
 
   &.is-wide {
     grid-column: span 12;
@@ -483,9 +483,9 @@ const back = () => {
 
 .designer-component__title {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
   font-size: var(--el-font-size-small);
   font-weight: 600;
 }

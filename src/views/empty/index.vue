@@ -42,7 +42,7 @@ const canBack = hasInAppHistory(router);
 
   /* 底色/悬浮色取 EP 令牌（暗色下由 EP 重定义）；18px 为设计圆角，无对应令牌 */
   background: var(--el-fill-color-light);
-  border-radius: 18px;
+  border-radius: var(--radius-xl);
   transform: translate(-50%, -50%);
 
   &:hover {

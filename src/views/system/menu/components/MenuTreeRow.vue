@@ -277,7 +277,7 @@ const onSwitch = (value: boolean | string | number) => {
     font-size: var(--el-font-size-extra-small);
     color: var(--el-text-color-regular);
     background: var(--el-fill-color-light);
-    border-radius: 9px;
+    border-radius: var(--radius-lg);
   }
 
   /* el-tag 的 light 效果文字色取主题色（12px 下白底对比不足）：统一覆写为 regular */

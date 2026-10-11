@@ -125,9 +125,9 @@ const emitClear = () => {
   display: flex;
   flex: none;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
   width: 240px;
-  padding: 14px 12px;
+  padding: var(--space-3);
   overflow: auto;
   background: var(--el-bg-color);
   border-right: 1px solid var(--el-border-color-lighter);
@@ -138,7 +138,7 @@ const emitClear = () => {
   gap: 4px;
   align-items: center;
   justify-content: space-between;
-  margin-top: 6px;
+  margin-top: var(--space-1);
 }
 
 .designer-side__title {
@@ -160,7 +160,7 @@ const emitClear = () => {
 .designer-columns {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-1);
   max-height: 32vh;
   overflow: auto;
 }
@@ -181,7 +181,7 @@ const emitClear = () => {
 .designer-shelf {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 
   /* EP 的 `.el-button + .el-button { margin-left: 12px }` 是横向按钮组语义，
      纵向列布局里会把第 2 个起的按钮整体顶右 12px，必须清零（宽度由 w-full 决定） */
@@ -191,6 +191,6 @@ const emitClear = () => {
 }
 
 .designer-side :deep(.el-divider) {
-  margin: 4px 0;
+  margin: var(--space-1) 0;
 }
 </style>

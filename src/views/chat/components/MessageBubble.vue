@@ -15,12 +15,12 @@ import { formatFileSize } from "@/utils";
 import { formatMessageTime } from "@/utils/messageView";
 import { SUCCESS_CODE } from "@/api/types";
 import type { ChatAttachment, ChatMessageItem } from "@/api/chat";
-import AiMessageBlock from "@/components/AiMessageBlock/index.vue";
-import ChatMessageAvatar from "@/components/ChatMessageAvatar/index.vue";
-import ChatSystemNotice from "@/components/ChatSystemNotice/index.vue";
-import ChatTextBubble from "@/components/ChatTextBubble/index.vue";
-import AiResultTable from "@/components/AiResultTable/index.vue";
-import MessageActionAttachments from "@/components/MessageActionAttachments/index.vue";
+import AiMessageBlock from "@/components/AiMessageBlock";
+import ChatMessageAvatar from "@/components/ChatMessageAvatar";
+import ChatSystemNotice from "@/components/ChatSystemNotice";
+import ChatTextBubble from "@/components/ChatTextBubble";
+import AiResultTable from "@/components/AiResultTable";
+import MessageActionAttachments from "@/components/MessageActionAttachments";
 
 /**
  * 单条消息气泡：自己靠右、他人靠左；系统消息居中；AI 回复附引用来源；

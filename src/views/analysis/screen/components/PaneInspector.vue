@@ -302,24 +302,24 @@ const imageUrlError = computed(() =>
 <style lang="scss" scoped>
 .pane-inspector__title {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
   font-size: var(--el-font-size-small);
-  color: rgb(255 255 255 / 78%);
+  color: var(--screen-fg-dense);
 }
 
 .pane-inspector__type {
   padding: 1px 6px;
   font-size: var(--el-font-size-extra-small);
-  color: rgb(255 255 255 / 70%);
-  background: rgb(255 255 255 / 8%);
-  border-radius: 999px;
+  color: var(--screen-fg-muted);
+  background: var(--screen-surface-strong);
+  border-radius: var(--radius-full);
 }
 
 .pane-inspector__pair {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   width: 100%;
 
   :deep(.el-input-number) {
@@ -331,15 +331,15 @@ const imageUrlError = computed(() =>
 .pane-inspector__hint {
   font-size: var(--el-font-size-extra-small);
   line-height: 1.6;
-  color: rgb(255 255 255 / 55%);
+  color: var(--screen-fg-dim);
 }
 
 /* 深色画布内的表单：标签与分割线取白色透明度（不随站点主题） */
 .pane-inspector :deep(.el-form-item__label) {
-  color: rgb(255 255 255 / 70%);
+  color: var(--screen-fg-muted);
 }
 
 .pane-inspector :deep(.el-divider) {
-  border-color: rgb(255 255 255 / 12%);
+  border-color: var(--screen-border-strong);
 }
 </style>

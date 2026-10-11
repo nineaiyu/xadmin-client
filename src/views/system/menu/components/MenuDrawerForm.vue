@@ -353,7 +353,7 @@ defineExpose({ validate, getPayload, isDirty, getCascadePks });
   &__head-title {
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: 15px;
+    font-size: var(--font-size-md);
     font-weight: 600;
     white-space: nowrap;
   }

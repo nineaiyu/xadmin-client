@@ -215,6 +215,6 @@ const handleTest = () => {
  * 条竖向轴线；按钮间距交给 EP 默认的 12px。
  */
 .setting-form :deep(.plus-form__footer) {
-  padding: 4px 0 0;
+  padding: var(--space-1) 0 0;
 }
 </style>

@@ -52,20 +52,20 @@ withDefaults(
 }
 
 .account-panel__header {
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
 }
 
 .account-panel__title {
   margin: 0;
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   font-weight: 600;
   line-height: 26px;
   color: var(--el-text-color-primary);
 }
 
 .account-panel__desc {
-  margin: 6px 0 0;
-  font-size: 13px;
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-sm);
   line-height: 20px;
   color: var(--el-text-color-secondary);
 }
@@ -82,9 +82,9 @@ withDefaults(
 /* 列表行：标题 + 说明在左、操作在右，行高由内容撑开 */
 .account-panel .account-row {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
   align-items: center;
-  padding: 12px 0;
+  padding: var(--space-3) 0;
 }
 
 .account-panel .account-row:first-child {
@@ -105,15 +105,15 @@ withDefaults(
 }
 
 .account-panel .account-row__title {
-  font-size: 14px;
+  font-size: var(--font-size-base);
   line-height: 22px;
   color: var(--el-text-color-primary);
 }
 
 .account-panel .account-row__desc {
   display: block;
-  margin-top: 2px;
-  font-size: 13px;
+  margin-top: var(--space-1);
+  font-size: var(--font-size-sm);
   line-height: 20px;
   color: var(--el-text-color-secondary);
 }
@@ -121,19 +121,19 @@ withDefaults(
 /* 行内分组小标题（已绑定 / 可绑定等）：与行标题同字号，靠颜色与位置区分层级 */
 .account-panel .account-section-title {
   margin: 0 0 8px;
-  font-size: 14px;
+  font-size: var(--font-size-base);
   font-weight: 500;
   line-height: 22px;
   color: var(--el-text-color-regular);
 }
 
 .account-panel .account-section-title:not(:first-child) {
-  margin-top: 20px;
+  margin-top: var(--space-5);
 }
 
 /* 空状态：虚线兜底框，与有数据时的行列节奏区分开 */
 .account-panel .account-empty {
-  padding: 16px 0;
+  padding: var(--space-4) 0;
   background: var(--el-fill-color-lighter);
   border: 1px dashed var(--el-border-color);
   border-radius: var(--radius-lg);

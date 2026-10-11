@@ -8,7 +8,13 @@ import {
 } from "element-plus";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
+vi.mock("vue-i18n", () => ({
+  useI18n: () => ({ t: (key: string) => key, te: () => true })
+}));
+// 页头标题取自路由 meta（与页签/面包屑同源），测试态注入等价 meta
+vi.mock("vue-router", () => ({
+  useRoute: () => ({ meta: { title: "aboutTitle" } })
+}));
 
 // SFC 与平台信息列直接读取构建期注入的 __APP_INFO__，测试态注入等价形态
 vi.stubGlobal("__APP_INFO__", {

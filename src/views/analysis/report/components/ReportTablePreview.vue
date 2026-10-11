@@ -131,9 +131,9 @@ defineExpose({ load, notifyFull });
 <style lang="scss" scoped>
 .report-table__head {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: baseline;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
 }
 
 .report-table__title {
@@ -148,7 +148,7 @@ defineExpose({ load, notifyFull });
 }
 
 .report-table__error {
-  padding: 24px 0;
+  padding: var(--space-6) 0;
   color: var(--el-color-danger);
   text-align: center;
 }

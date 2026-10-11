@@ -112,18 +112,20 @@ const switchPane = (key: string) => {
 </template>
 
 <style lang="scss" scoped>
+@use "@/style/tokens/breakpoints" as bp;
+
 /**
  * 内容区留白：左右上下对齐面板留白规范。
  * 上边距取 12px 而非对称值——侧栏首行（返回）是 48px 行高的居中行，
  * 面板标题行需要落在同一条基线上，标题 26px 行高加 12px 上边距后中心与之齐平。
  */
 .account-pane {
-  padding: 12px 24px 16px;
+  padding: var(--space-3) var(--space-6) var(--space-4);
 }
 
-@media (width <= 768px) {
+@include bp.below("md") {
   .account-pane {
-    padding: 12px 12px 16px;
+    padding: var(--space-3) var(--space-3) var(--space-4);
   }
 }
 </style>
@@ -165,10 +167,10 @@ const switchPane = (key: string) => {
         position: absolute;
         inset: 0;
         clear: both;
-        margin: 4px 0;
+        margin: var(--space-1) 0;
         content: "";
         background: var(--el-color-primary);
-        border-radius: 3px;
+        border-radius: var(--radius-sm);
       }
     }
   }

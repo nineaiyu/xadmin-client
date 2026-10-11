@@ -10,7 +10,7 @@ import {
 } from "element-plus";
 
 import type { ChatAttachment, ChatMessageItem } from "@/api/chat";
-import AiMessageBlock from "@/components/AiMessageBlock/index.vue";
+import AiMessageBlock from "@/components/AiMessageBlock";
 
 const mocks = vi.hoisted(() => ({
   hasAuth: vi.fn(() => true),

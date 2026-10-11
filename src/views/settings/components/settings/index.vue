@@ -28,13 +28,15 @@ const { t } = useI18n();
 </template>
 
 <style lang="scss" scoped>
+@use "@/style/tokens/breakpoints" as bp;
+
 .setting-page {
   box-sizing: border-box;
 }
 
 /* 页签卡片对齐应用卡片体系（圆角 / 描边 / 阴影），与账户设置面板同一张「内容纸」 */
 .setting-page > .el-tabs--border-card {
-  border-color: var(--el-border-color-light);
+  border: var(--card-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
 }
@@ -70,10 +72,10 @@ const { t } = useI18n();
   padding: var(--panel-pad-y) var(--panel-pad-x);
 }
 
-@media (width <= 768px) {
+@include bp.below("md") {
   /* 窄屏页签字号收紧一档：一行能多放一个页签 */
   .setting-page :deep(.el-tabs__item) {
-    font-size: 13px;
+    font-size: var(--font-size-sm);
   }
 }
 </style>

@@ -13,7 +13,7 @@ import {
 import { useAiConsole } from "./hooks/useAiConsole";
 import { useFullHeightPanel } from "@/hooks/useFullHeightPanel";
 import { ReNavDrawer } from "@/components/ReNavDrawer";
-import ReEmpty from "@/components/ReEmpty";
+import ReResult from "@/components/ReResult";
 import AiFeatureNav, {
   type AiFeatureEntry
 } from "./components/AiFeatureNav.vue";
@@ -170,25 +170,29 @@ onActivated(() => {
          main-content 的 24px 统一边距）；高度按视口实测（useFullHeightPanel） -->
     <template v-if="statusFailed">
       <el-card shadow="never">
-        <ReEmpty :description="t('ai.statusLoadFailed')" icon="ep/warning">
-          <el-button type="primary" @click="loadStatus">
-            {{ t("ai.retry") }}
-          </el-button>
-        </ReEmpty>
+        <ReResult status="error" :title="t('ai.statusLoadFailed')">
+          <template #extra>
+            <el-button type="primary" @click="loadStatus">
+              {{ t("ai.retry") }}
+            </el-button>
+          </template>
+        </ReResult>
       </el-card>
     </template>
     <template v-else-if="status && !status.enabled">
       <el-card shadow="never">
-        <ReEmpty :description="t('ai.disabledHint')" icon="ep/lock" />
+        <ReResult status="warning" :title="t('ai.disabledHint')" />
       </el-card>
     </template>
     <template v-else-if="status && !status.configured">
       <el-card shadow="never">
-        <ReEmpty :description="t('ai.notConfiguredHint')" icon="ep/setting">
-          <router-link to="/integration/ai/config">
-            <el-button type="primary">{{ t("ai.goConfig") }}</el-button>
-          </router-link>
-        </ReEmpty>
+        <ReResult status="info" :title="t('ai.notConfiguredHint')">
+          <template #extra>
+            <router-link to="/integration/ai/config">
+              <el-button type="primary">{{ t("ai.goConfig") }}</el-button>
+            </router-link>
+          </template>
+        </ReResult>
       </el-card>
     </template>
     <div
@@ -254,7 +258,7 @@ onActivated(() => {
 .ai-console {
   background: var(--el-bg-color-overlay);
   border: 1px solid var(--el-border-color-lighter);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   box-shadow: var(--el-box-shadow-light);
 }
 </style>

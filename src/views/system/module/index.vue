@@ -307,7 +307,7 @@ const moduleColumns = computed<ReadonlyColumn[]>(() => [
 <style lang="scss" scoped>
 .module-page {
   :deep(.el-card__body) {
-    padding: 16px;
+    padding: var(--space-4);
   }
 }
 </style>

@@ -2,7 +2,6 @@
 import { SUCCESS_CODE } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import Sortable from "sortablejs";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { Download, Setting } from "@element-plus/icons-vue";
@@ -11,6 +10,7 @@ import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { copyText } from "@/utils/clipboard";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useSortable } from "@/hooks/useSortable";
 import {
   dashboardApi,
   datasetApi,
@@ -91,7 +91,6 @@ const layoutKey = computed(() =>
   draftLayout.value.map(card => card.id).join("|")
 );
 
-let sortable: Sortable | null = null;
 const rowRef = ref();
 
 /** 卡片图片导出（composable：句柄收集 + 单卡导出，控制页面体积） */
@@ -161,15 +160,13 @@ const toggleEdit = () => {
   }
 };
 
-const destroySortable = () => {
-  sortable?.destroy();
-  sortable = null;
-};
-
-const setupSortable = () => {
-  destroySortable();
-  if (!rowRef.value?.$el) return;
-  sortable = Sortable.create(rowRef.value.$el, {
+/**
+ * 卡片拖拽排序：手柄 `drag-handle` 仅编辑态渲染，编辑期间把手柄拖动结果写回草稿。
+ * 拖拽手势由 useSortable 统一承载（sortablejs 按需加载），本处只保留数据重排。
+ */
+const { init: setupSortable, destroy: destroySortable } = useSortable(
+  () => rowRef.value?.$el as HTMLElement | undefined,
+  {
     animation: 200,
     handle: ".drag-handle",
     onEnd: ({ oldIndex, newIndex }) => {
@@ -184,8 +181,8 @@ const setupSortable = () => {
       next.splice(newIndex, 0, moved);
       draftLayout.value = next;
     }
-  });
-};
+  }
+);
 
 const saveLayout = async () => {
   if (!current.value) return;
@@ -240,10 +237,7 @@ const removeDashboard = async () => {
   if (
     !(await confirm(
       t("dashboard.removeConfirm", { name: current.value.name }),
-      {
-        confirmButtonClass: "el-button--danger",
-        draggable: true
-      }
+      { danger: true, draggable: true }
     ))
   ) {
     return;

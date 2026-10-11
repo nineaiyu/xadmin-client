@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import Sortable from "sortablejs";
+import { useSortable } from "@/hooks/useSortable";
 import type {
   CodegenFieldItem,
   CodegenFieldOverride,
@@ -98,12 +98,12 @@ function resetAll() {
 }
 
 // ------------------------------------------------------------- 拖拽排序
-onMounted(() => {
-  const tbody = tableRef.value?.$el?.querySelector(
-    ".el-table__body-wrapper tbody"
-  );
-  if (!tbody) return;
-  Sortable.create(tbody, {
+useSortable(
+  () =>
+    tableRef.value?.$el?.querySelector(
+      ".el-table__body-wrapper tbody"
+    ) as HTMLElement | null,
+  {
     handle: ".drag-handle",
     animation: 150,
     onEnd({ oldIndex, newIndex }) {
@@ -113,8 +113,8 @@ onMounted(() => {
       rows.splice(newIndex, 0, moved);
       fields.value = rows;
     }
-  });
-});
+  }
+);
 </script>
 
 <template>
@@ -152,7 +152,7 @@ onMounted(() => {
         <template #default="{ row }">
           <div class="leading-tight">
             <div class="text-xs font-medium">{{ row.name }}</div>
-            <div class="text-[11px] text-gray-400">
+            <div class="text-(length:--font-size-2xs) text-gray-400">
               {{ planByName.get(row.name)?.verbose_name }}
               <el-tag
                 v-if="planByName.get(row.name)?.is_relation"

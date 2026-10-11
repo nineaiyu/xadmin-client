@@ -164,7 +164,7 @@ const decide = async (approved: boolean) => {
 
 .oauth-app {
   margin-bottom: 6px;
-  font-size: 15px;
+  font-size: var(--font-size-base);
   font-weight: 600;
 }
 

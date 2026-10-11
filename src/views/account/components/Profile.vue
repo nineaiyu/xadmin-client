@@ -84,15 +84,15 @@ const {
 .profile-posts {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
-  padding-top: 16px;
-  margin-top: 4px;
+  padding-top: var(--space-4);
+  margin-top: var(--space-1);
   border-top: 1px solid var(--el-border-color-lighter);
 }
 
 .profile-posts__label {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   line-height: 20px;
   color: var(--el-text-color-secondary);
 }

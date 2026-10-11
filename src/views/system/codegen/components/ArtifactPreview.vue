@@ -147,19 +147,20 @@ function downloadActive() {
 
 <template>
   <div class="flex gap-2 codegen-preview">
-    <el-scrollbar class="w-60 shrink-0 border border-[#e5e7eb] rounded">
+    <el-scrollbar class="w-60 shrink-0 border border-border-light rounded">
       <div v-for="group in groups" :key="group.key" class="py-1">
         <div
-          class="px-3 py-1 text-xs font-medium text-gray-400 bg-[#f5f7fa] sticky top-0"
+          class="px-3 py-1 text-xs font-medium text-gray-400 bg-fill-muted sticky top-0"
         >
           {{ group.title }}
         </div>
         <div
           v-for="item in group.items"
           :key="item.key"
-          class="px-3 py-1.5 cursor-pointer text-sm hover:bg-[#f5f7fa]"
+          class="px-3 py-1.5 cursor-pointer text-sm hover:bg-fill-muted"
           :class="{
-            'bg-[#ecf5ff] text-(--el-color-primary)': item.key === active?.key
+            'bg-(--el-color-primary-light-9) text-(--el-color-primary)':
+              item.key === active?.key
           }"
           @click="activeKey = item.key"
         >

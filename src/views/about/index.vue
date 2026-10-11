@@ -1,5 +1,8 @@
 <script lang="ts" setup>
+import { computed } from "vue";
+import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
+import RePage from "@/components/RePage";
 import { useColumns } from "./columns";
 import { PlusDescriptions } from "plus-pro-components";
 
@@ -12,7 +15,14 @@ defineOptions({
   name: "About"
 });
 
-const { t } = useI18n();
+const { t, te } = useI18n();
+const route = useRoute();
+/** 页头标题：与页签/面包屑同源（路由 meta.title，i18n key 直用 t） */
+const pageTitle = computed(() => {
+  const key = route.meta?.title;
+  if (typeof key === "string" && key) return te(key) ? t(key) : key;
+  return t("about.platformInfo");
+});
 const { pkg } = __APP_INFO__;
 const { dependencies, devDependencies } = pkg;
 
@@ -38,94 +48,108 @@ Object.keys(devDependencies).forEach(key => {
 </script>
 
 <template>
-  <div class="content-flush">
-    <el-card class="m-4 box-card" shadow="never">
-      <span>{{ t("about.intro") }}</span>
-    </el-card>
+  <RePage
+    class="content-flush"
+    :title="pageTitle"
+    :description="t('about.intro')"
+  >
+    <div class="px-4 pb-4">
+      <el-card class="mb-4 box-card" shadow="never">
+        <template #header>
+          <div class="card-header">
+            <span class="font-medium">{{ t("about.platformInfo") }}</span>
+          </div>
+        </template>
+        <el-scrollbar>
+          <PlusDescriptions border :columns="columns" :column="4" />
+        </el-scrollbar>
+      </el-card>
 
-    <el-card class="m-4 box-card" shadow="never">
-      <template #header>
-        <div class="card-header">
-          <span class="font-medium">{{ t("about.platformInfo") }}</span>
-        </div>
-      </template>
-      <el-scrollbar>
-        <PlusDescriptions border :columns="columns" :column="4" />
-      </el-scrollbar>
-    </el-card>
-
-    <el-card class="m-4 box-card" shadow="never">
-      <template #header>
-        <div class="card-header flex items-center">
-          <span class="font-medium">{{ t("about.prodDeps") }}</span>
-          <el-tag class="ml-1" effect="dark" round size="small" type="primary">
-            {{ schema.length }}
-          </el-tag>
-        </div>
-      </template>
-      <el-scrollbar>
-        <el-descriptions :column="6" border size="small">
-          <el-descriptions-item
-            v-for="(item, index) in schema"
-            :key="index"
-            :label="item.label"
-            :label-class-name="getMainLabel(item.label)"
-            class-name="pure-version"
-            label-align="right"
-          >
-            <a
-              :href="'https://www.npmjs.com/package/' + item.label"
-              target="_blank"
-              rel="noopener noreferrer"
+      <el-card class="mb-4 box-card" shadow="never">
+        <template #header>
+          <div class="card-header flex items-center">
+            <span class="font-medium">{{ t("about.prodDeps") }}</span>
+            <el-tag
+              class="ml-1"
+              effect="dark"
+              round
+              size="small"
+              type="primary"
             >
-              <span
-                :class="getMainLabel(item.label)"
-                style="color: var(--el-color-primary)"
-              >
-                {{ item.field }}
-              </span>
-            </a>
-          </el-descriptions-item>
-        </el-descriptions>
-      </el-scrollbar>
-    </el-card>
-
-    <el-card class="m-4 box-card" shadow="never">
-      <template #header>
-        <div class="card-header flex items-center">
-          <span class="font-medium">{{ t("about.devDeps") }}</span>
-          <el-tag class="ml-1" effect="dark" round size="small" type="primary">
-            {{ devSchema.length }}
-          </el-tag>
-        </div>
-      </template>
-      <el-scrollbar>
-        <el-descriptions :column="5" border size="small">
-          <el-descriptions-item
-            v-for="(item, index) in devSchema"
-            :key="index"
-            :label="item.label"
-            :label-class-name="getMainLabel(item.label)"
-            class-name="pure-version"
-            label-align="right"
-          >
-            <a
-              :href="'https://www.npmjs.com/package/' + item.label"
-              target="_blank"
-              rel="noopener noreferrer"
+              {{ schema.length }}
+            </el-tag>
+          </div>
+        </template>
+        <el-scrollbar>
+          <el-descriptions :column="6" border size="small">
+            <el-descriptions-item
+              v-for="(item, index) in schema"
+              :key="index"
+              :label="item.label"
+              :label-class-name="getMainLabel(item.label)"
+              class-name="pure-version"
+              label-align="right"
             >
-              <span
-                :class="getMainLabel(item.label)"
-                style="color: var(--el-color-primary)"
+              <a
+                :href="'https://www.npmjs.com/package/' + item.label"
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                {{ item.field }}
-              </span>
-            </a>
-          </el-descriptions-item>
-        </el-descriptions>
-      </el-scrollbar>
-    </el-card>
-  </div>
+                <span
+                  :class="getMainLabel(item.label)"
+                  style="color: var(--el-color-primary)"
+                >
+                  {{ item.field }}
+                </span>
+              </a>
+            </el-descriptions-item>
+          </el-descriptions>
+        </el-scrollbar>
+      </el-card>
+
+      <el-card class="mb-4 box-card" shadow="never">
+        <template #header>
+          <div class="card-header flex items-center">
+            <span class="font-medium">{{ t("about.devDeps") }}</span>
+            <el-tag
+              class="ml-1"
+              effect="dark"
+              round
+              size="small"
+              type="primary"
+            >
+              {{ devSchema.length }}
+            </el-tag>
+          </div>
+        </template>
+        <el-scrollbar>
+          <el-descriptions :column="5" border size="small">
+            <el-descriptions-item
+              v-for="(item, index) in devSchema"
+              :key="index"
+              :label="item.label"
+              :label-class-name="getMainLabel(item.label)"
+              class-name="pure-version"
+              label-align="right"
+            >
+              <a
+                :href="'https://www.npmjs.com/package/' + item.label"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span
+                  :class="getMainLabel(item.label)"
+                  style="color: var(--el-color-primary)"
+                >
+                  {{ item.field }}
+                </span>
+              </a>
+            </el-descriptions-item>
+          </el-descriptions>
+        </el-scrollbar>
+      </el-card>
+    </div>
+  </RePage>
 </template>
 
 <style lang="scss" scoped>

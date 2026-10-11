@@ -282,9 +282,10 @@ onMounted(() => {
             >
               {{ progressCount }}
             </el-tag>
-            <span class="text-[13px] text-(--el-text-color-regular)">{{
-              progressHint
-            }}</span>
+            <span
+              class="text-(length:--font-size-sm) text-(--el-text-color-regular)"
+              >{{ progressHint }}</span
+            >
           </div>
         </el-descriptions-item>
         <el-descriptions-item

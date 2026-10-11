@@ -137,7 +137,7 @@ const activeLabel = computed(() =>
 
 <style scoped lang="scss">
 .doc-title {
-  font-size: 15px;
+  font-size: var(--font-size-md);
   font-weight: 600;
   line-height: 22px;
   color: var(--el-text-color-primary);
@@ -176,7 +176,7 @@ const activeLabel = computed(() =>
   overflow-wrap: break-word;
   white-space: pre-wrap;
   background: var(--el-fill-color-light);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
 }
 
 .chunk-preview {

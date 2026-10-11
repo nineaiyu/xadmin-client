@@ -2,7 +2,7 @@
 import { reactive } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
-import ApiScopeEditor from "@/components/ApiScopeEditor/index.vue";
+import ApiScopeEditor from "@/components/ApiScopeEditor";
 import { loadPatScopeCatalog } from "@/api/user/token";
 
 /**

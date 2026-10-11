@@ -236,7 +236,7 @@ function handleConfirm() {
 .scope-tree {
   padding: 4px;
   border: 1px solid var(--el-border-color-lighter);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
 }
 
 .scope-node {

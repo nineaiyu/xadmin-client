@@ -1,4 +1,4 @@
-$--element-tree-line-color: #dcdfe6 !default;
+$--element-tree-line-color: var(--el-border-color) !default;
 $--element-tree-line-style: dashed !default;
 $--element-tree-line-width: 1px !default;
 
@@ -14,7 +14,7 @@ $--element-tree-line-width: 1px !default;
 }
 
 .element-tree-node-label {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
 }
 
 .element-tree-node-line-ver {

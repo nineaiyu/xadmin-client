@@ -149,7 +149,12 @@ const onMoreCommand = (command: string) => {
           <span class="menu-toolbar__kbd">⌘K</span>
         </template>
       </el-input>
-      <el-select v-model="menuType" class="menu-toolbar__select" size="default">
+      <el-select
+        v-model="menuType"
+        class="menu-toolbar__select"
+        size="default"
+        :aria-label="t('systemMenu.filter.typeLabel')"
+      >
         <el-option
           v-for="item in typeOptions"
           :key="String(item.value)"
@@ -157,7 +162,12 @@ const onMoreCommand = (command: string) => {
           :value="item.value"
         />
       </el-select>
-      <el-select v-model="status" class="menu-toolbar__select" size="default">
+      <el-select
+        v-model="status"
+        class="menu-toolbar__select"
+        size="default"
+        :aria-label="t('systemMenu.filter.statusLabel')"
+      >
         <el-option
           v-for="item in statusOptions"
           :key="item.value"
@@ -169,6 +179,7 @@ const onMoreCommand = (command: string) => {
         v-model="expandLevel"
         class="menu-toolbar__select"
         size="default"
+        :aria-label="t('systemMenu.filter.levelLabel')"
       >
         <el-option
           v-for="item in levelOptions"
@@ -403,7 +414,7 @@ const onMoreCommand = (command: string) => {
   }
 
   &__kbd {
-    font-size: 11px;
+    font-size: var(--font-size-2xs);
     color: var(--el-text-color-regular);
   }
 
