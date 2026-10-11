@@ -64,7 +64,7 @@ watch(
 </script>
 
 <template>
-  <div class="navbar bg-white shadow-xs shadow-[rgba(0,21,41,0.08)]">
+  <div class="navbar bg-bg-card shadow-(--shadow-navbar)">
     <LaySidebarTopCollapse
       v-if="device === 'mobile'"
       class="hamburger-container"
@@ -180,7 +180,7 @@ watch(
     justify-content: flex-end;
     min-width: 280px;
     height: 48px;
-    color: #000000d9;
+    color: hsl(var(--fg));
 
     .el-dropdown-link {
       display: flex;
@@ -188,11 +188,11 @@ watch(
       justify-content: space-around;
       height: 48px;
       padding: 10px;
-      color: #000000d9;
+      color: hsl(var(--fg));
       cursor: pointer;
 
       p {
-        font-size: 14px;
+        font-size: var(--font-size-base);
       }
 
       img {

@@ -238,7 +238,7 @@ onBeforeUnmount(() => {
           <div v-else class="chrome-tab">
             <span
               v-if="index !== 0 && index !== activeIndex"
-              class="chrome-tab-divider bg-[#e2e2e2] dark:bg-[#2d2d2d]"
+              class="chrome-tab-divider bg-border-light dark:bg-fill"
             />
             <div class="chrome-tab__bg">
               <TagChrome />
@@ -309,7 +309,7 @@ onBeforeUnmount(() => {
       placement="bottom-end"
       @command="handleCommand"
     >
-      <span class="arrow-down">
+      <span class="arrow-down" :aria-label="transformI18n('layout.more')">
         <IconifyIconOffline :icon="ArrowDown" class="dark:text-white" />
       </span>
       <template #dropdown>

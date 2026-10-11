@@ -5,26 +5,18 @@ import { computed, type CSSProperties } from "vue";
 import { useAppStoreHook } from "@/store/modules/app";
 import { useUserStoreHook } from "@/store/modules/user";
 import { isAllEmpty, useGlobal } from "@pureadmin/utils";
-import { useEpThemeStoreHook } from "@/store/modules/epTheme";
 import { usePermissionStoreHook } from "@/store/modules/permission";
+import {
+  createLocaleDropdownStyles,
+  mixedExtraCollapsed
+} from "./navPresentation";
 
 /**
  * 顶栏状态（自 useNav.ts 抽出）：布局配置、用户信息兜底、国际化选中样式、
- * 侧栏折叠与设备形态、动态标题来源。
+ * 侧栏折叠与设备形态、动态标题来源。展示派生（额外收起判定 / 国际化下拉样式）
+ * 见 navPresentation.ts。
  */
-/**
- * 混合布局的「额外收起」：第二列侧栏（混合布局的侧栏）单独收起，
- * 不影响纵向布局的折叠状态；开关见设置面板 →「布局」→「额外收起」。
- *
- * 纯函数（入参由调用方从响应式存储取值）：会被计算属性在任意上下文求值，
- * 内部不能调用依赖组件实例的 `useGlobal`。
- */
-export function mixedExtraCollapsed(
-  layout: unknown,
-  extraCollapse: unknown
-): boolean {
-  return String(layout ?? "vertical").includes("mix") && Boolean(extraCollapse);
-}
+export { mixedExtraCollapsed };
 
 export function useNavState() {
   const pureApp = useAppStoreHook();
@@ -56,53 +48,35 @@ export function useNavState() {
       : useUserStoreHook()?.nickname;
   });
 
-  /** 设置国际化选中后的样式 */
-  const getDropdownItemStyle = computed(() => {
-    return (locale: string, t: string) => {
-      return {
-        background: locale === t ? useEpThemeStoreHook().epThemeColor : "",
-        color: locale === t ? "#f4f4f5" : "#000"
-      };
-    };
-  });
-
-  const getDropdownItemClass = computed(() => {
-    return (locale: string, t: string) => {
-      return locale === t ? "" : "dark:hover:text-primary!";
-    };
-  });
+  /** 设置国际化选中后的样式（实现见 navPresentation.ts） */
+  const { getDropdownItemStyle, getDropdownItemClass } =
+    createLocaleDropdownStyles();
 
   const avatarsStyle = computed(() => {
     return username.value ? { marginRight: "10px" } : "";
   });
 
+  const { $storage, $config } = useGlobal<GlobalPropertiesApi>();
+
   /**
    * 侧栏折叠态：主折叠（sidebarStatus）或「混合布局额外收起」偏好
    * （设置面板 →「布局」→「额外收起」，仅混合布局生效；语义见 mixedExtraCollapsed）。
    */
-  const { $storage: storage } = useGlobal<GlobalPropertiesApi>();
   const isCollapse = computed(() => {
     return (
       !pureApp.getSidebarStatus ||
       mixedExtraCollapsed(
-        storage?.layout?.layout,
-        storage?.configure?.sidebarExtraCollapse
+        $storage?.layout?.layout,
+        $storage?.configure?.sidebarExtraCollapse
       )
     );
   });
 
-  const device = computed(() => {
-    return pureApp.getDevice;
-  });
+  const device = computed(() => pureApp.getDevice);
 
-  const { $storage, $config } = useGlobal<GlobalPropertiesApi>();
-  const layout = computed((): string => {
-    return $storage?.layout?.layout ?? "vertical";
-  });
+  const layout = computed((): string => $storage?.layout?.layout ?? "vertical");
 
-  const title = computed(() => {
-    return $config.Title;
-  });
+  const title = computed(() => $config.Title);
 
   return {
     pureApp,

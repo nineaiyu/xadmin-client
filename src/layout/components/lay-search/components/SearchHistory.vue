@@ -1,11 +1,11 @@
 <script lang="ts" setup>
-import Sortable from "sortablejs";
 import SearchHistoryItem from "./SearchHistoryItem.vue";
 import type { dragItem, optionsItem, Props } from "../types";
 import { useEpThemeStoreHook } from "@/store/modules/epTheme";
 import { delay, isArray, useResizeObserver } from "@pureadmin/utils";
 import { computed, getCurrentInstance, nextTick, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import { useSortable } from "@/hooks/useSortable";
 
 const historyRef = ref();
 const innerHeight = ref();
@@ -27,7 +27,7 @@ const itemStyle = computed(() => {
     return {
       background:
         item?.path === active.value ? useEpThemeStoreHook().epThemeColor : "",
-      color: item.path === active.value ? "#fff" : "",
+      color: item.path === active.value ? "var(--el-color-white)" : "",
       fontSize: item.path === active.value ? "16px" : "14px"
     };
   };
@@ -113,34 +113,33 @@ const handleChangeIndex = (evt: {
   });
 };
 
-let sortableInstance: ReturnType<typeof Sortable.create> | null = null;
+const { init: initCollectSortable } = useSortable(
+  () => document.querySelector(".collect-container") as HTMLElement | null,
+  {
+    animation: 160,
+    onStart: ({ evt }) => {
+      evt.item.style.cursor = "move";
+    },
+    onEnd: ({ evt }) => {
+      evt.item.style.cursor = "pointer";
+    },
+    onUpdate: ({ oldIndex, newIndex }) =>
+      handleChangeIndex({ oldIndex, newIndex })
+  }
+);
 
 watch(
   collectList,
   val => {
     if (val.length > 1) {
       nextTick(() => {
-        const wrapper = document.querySelector(
-          ".collect-container"
-        ) as HTMLElement | null;
-        if (!wrapper || sortableInstance) return;
-        sortableInstance = Sortable.create(wrapper, {
-          animation: 160,
-          onStart: event => {
-            event.item.style.cursor = "move";
-          },
-          onEnd: event => {
-            event.item.style.cursor = "pointer";
-          },
-          onUpdate: handleChangeIndex
-        });
+        initCollectSortable();
         resizeResult();
       });
     }
   },
   { deep: true, immediate: true }
 );
-
 defineExpose({ handleScroll });
 </script>
 
@@ -153,7 +152,7 @@ defineExpose({ handleScroll });
         :key="item.path"
         :ref="'historyItemRef' + index"
         :style="itemStyle(item)"
-        class="history-item dark:bg-[#1d1d1d]"
+        class="history-item dark:bg-fill-subtle"
         @click="handleTo"
         @mouseenter="handleMouse(item)"
       >
@@ -175,7 +174,7 @@ defineExpose({ handleScroll });
           :key="item.path"
           :ref="'historyItemRef' + (index + historyList.length)"
           :style="itemStyle(item)"
-          class="history-item dark:bg-[#1d1d1d]"
+          class="history-item dark:bg-fill-subtle"
           @click="handleTo"
           @mouseenter="handleMouse(item)"
         >
@@ -197,9 +196,9 @@ defineExpose({ handleScroll });
     padding: 14px;
     margin: 8px auto 10px;
     cursor: pointer;
-    border: 0.1px solid #ccc;
-    border-radius: 4px;
-    transition: font-size 0.16s;
+    border: 0.1px solid hsl(var(--border));
+    border-radius: var(--radius-sm);
+    transition: font-size var(--duration-fast) var(--ease-standard);
   }
 }
 </style>

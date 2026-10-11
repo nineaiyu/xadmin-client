@@ -228,7 +228,7 @@ const getLabel = computed(
   cursor: pointer;
 
   .header-notice-icon {
-    font-size: 18px;
+    font-size: var(--font-size-lg);
   }
 
   &:hover {

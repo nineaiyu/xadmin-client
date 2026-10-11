@@ -114,6 +114,8 @@ const fontBasePx = computed<number>({
 </template>
 
 <style lang="scss" scoped>
+@use "@/style/tokens/breakpoints" as bp;
+
 .pref-scale__slider {
   width: 132px;
 }
@@ -126,7 +128,7 @@ const fontBasePx = computed<number>({
 }
 
 /* 窄屏：滑块占满控件行 */
-@media (width <= 768px) {
+@include bp.below("md") {
   .pref-scale__slider {
     width: 100%;
   }

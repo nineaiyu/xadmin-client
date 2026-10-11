@@ -44,17 +44,11 @@ withDefaults(
 </template>
 
 <style lang="scss" scoped>
-.pref-row {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  justify-content: space-between;
-  padding: 7px 6px;
-  border-radius: var(--radius-sm);
-  transition: background-color var(--duration-fast) var(--ease-standard);
+@use "@/style/tokens/breakpoints" as bp;
 
+.pref-row {
   /* 窄屏（面板 100% 宽）：标签在上、控件在下左对齐 */
-  @media (width <= 768px) {
+  @include bp.below("md") {
     flex-direction: column;
     gap: 6px;
     align-items: flex-start;
@@ -64,6 +58,14 @@ withDefaults(
       justify-content: flex-start;
     }
   }
+
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 6px;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--duration-fast) var(--ease-standard);
 
   & + & {
     border-top: 1px solid var(--el-border-color-extra-light);

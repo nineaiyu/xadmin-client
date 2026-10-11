@@ -47,8 +47,7 @@ const divClass = computed(() => {
     props.index === 0 ? "" : "border-t-[1px]",
     "border-solid",
     "border-0",
-    "border-[#f0f0f0]",
-    "dark:border-[#303030]"
+    "border-border-lighter"
   ];
 });
 </script>
@@ -62,7 +61,7 @@ const divClass = computed(() => {
       class="notice-container-avatar"
     />
     <div class="notice-container-text">
-      <div class="notice-text-title text-[#000000d9] dark:text-white">
+      <div class="notice-text-title text-fg dark:text-white">
         <el-tooltip
           :content="noticeItem.title"
           :disabled="!titleTooltip"
@@ -84,7 +83,7 @@ const divClass = computed(() => {
           </div>
         </el-tooltip>
       </div>
-      <div class="notice-text-datetime text-[#00000073] dark:text-white">
+      <div class="notice-text-datetime text-fg-muted dark:text-white">
         {{ dayjs(noticeItem.created_time).format(t("layout.noticeTime")) }}
       </div>
     </div>
@@ -103,11 +102,9 @@ const divClass = computed(() => {
   justify-content: space-between;
   padding: 8px 0;
 
-  // border-bottom: 1px solid #f0f0f0;
-
   .notice-container-avatar {
     margin-right: 16px;
-    background: #fff;
+    background: hsl(var(--bg-card));
   }
 
   .notice-container-text {
@@ -119,7 +116,7 @@ const divClass = computed(() => {
     .notice-text-title {
       display: flex;
       margin-bottom: 4px;
-      font-size: 14px;
+      font-size: var(--font-size-base);
       font-weight: 400;
       line-height: 1.5715;
       cursor: pointer;
@@ -141,7 +138,7 @@ const divClass = computed(() => {
 
     .notice-text-description,
     .notice-text-datetime {
-      font-size: 12px;
+      font-size: var(--font-size-xs);
       line-height: 1.5715;
     }
 

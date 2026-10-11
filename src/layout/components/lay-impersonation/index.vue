@@ -51,7 +51,7 @@ const { exiting, exitImpersonation } = useImpersonationExit();
   align-items: center;
   justify-content: center;
   height: 32px;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   color: var(--el-color-warning-dark-2);
   cursor: pointer;
   user-select: none;

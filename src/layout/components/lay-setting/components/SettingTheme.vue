@@ -65,7 +65,7 @@ const showThemeColors = computed(() => {
 
 /** 色卡勾选图标颜色：亮白色卡用深色勾，其余（含自定义取色）用白勾，投影兜底可辨性 */
 const checkColor = (themeColor: string) =>
-  themeColor === "light" ? "#1d2b45" : "#fff";
+  themeColor === "light" ? "hsl(var(--fg))" : "var(--el-color-white)";
 
 /** 自定义主色是否处于选中态 */
 const isCustomColor = computed(
@@ -93,21 +93,21 @@ const themeOptions = computed<Array<OptionsType>>(() => {
       icon: DayIcon,
       theme: "light",
       tip: t("layout.lightTip"),
-      iconAttrs: { fill: isDark.value ? "#fff" : "#000" }
+      iconAttrs: { fill: "currentColor" }
     },
     {
       label: t("layout.dark"),
       icon: DarkIcon,
       theme: "dark",
       tip: t("layout.darkTip"),
-      iconAttrs: { fill: isDark.value ? "#fff" : "#000" }
+      iconAttrs: { fill: "currentColor" }
     },
     {
       label: t("layout.auto"),
       icon: SystemIcon,
       theme: "system",
       tip: t("layout.autoTip"),
-      iconAttrs: { fill: isDark.value ? "#fff" : "#000" }
+      iconAttrs: { fill: "currentColor" }
     }
   ];
 });
@@ -293,14 +293,14 @@ function onThemeChange(theme: { index: number; option: { theme: string } }) {
     width: 22px;
     height: 22px;
     border-radius: var(--radius-sm);
-    box-shadow: rgb(0 0 0 / 15%) 0 0 0 1px inset;
+    box-shadow: hsl(var(--fg) / 15%) 0 0 0 1px inset;
   }
 
   &__check {
     pointer-events: none;
 
     /* 白勾在浅色自定义取色上也能辨认 */
-    filter: drop-shadow(0 0 1px rgb(0 0 0 / 45%));
+    filter: drop-shadow(0 0 1px hsl(var(--fg) / 45%));
   }
 
   &__name {
@@ -336,7 +336,7 @@ function onThemeChange(theme: { index: number; option: { theme: string } }) {
   }
 
   &__custom.is-active &__swatch {
-    color: #fff;
+    color: var(--el-color-white);
   }
 
   /* 原生取色器铺满色卡（不可见但可点、可聚焦） */

@@ -333,9 +333,9 @@ function handleDrag(item: dragItem) {
           <div
             v-for="item in commandItems"
             :key="item.id"
-            class="mx-2.5 my-0.5 flex cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-sm hover:bg-[#f5f5f5] dark:hover:bg-[#242424]"
+            class="mx-2.5 my-0.5 flex cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-sm hover:bg-fill-muted"
             :class="{
-              'bg-[#f5f5f5] dark:bg-[#242424]': commandActive === item.id
+              'bg-fill-muted': commandActive === item.id
             }"
             :data-testid="`command-${item.id.replace('cmd:', '')}`"
             @click="runQuickAction(item.id)"
@@ -378,9 +378,9 @@ function handleDrag(item: dragItem) {
             <div
               v-for="item in group.items"
               :key="item.pk"
-              class="mx-2.5 my-0.5 flex cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-sm hover:bg-[#f5f5f5] dark:hover:bg-[#242424]"
+              class="mx-2.5 my-0.5 flex cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-sm hover:bg-fill-muted"
               :class="{
-                'bg-[#f5f5f5] dark:bg-[#242424]':
+                'bg-fill-muted':
                   globalActive === `global:${group.key}:${item.pk}`
               }"
               :data-testid="`global-search-item-${group.key}`"

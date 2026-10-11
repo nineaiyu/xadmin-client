@@ -65,8 +65,8 @@
         color var(--duration-instant);
 
       &:hover {
-        color: rgb(0 0 0 / 88%) !important;
-        background-color: rgb(0 0 0 / 6%);
+        color: hsl(var(--fg)) !important;
+        background-color: var(--divider);
       }
     }
   }

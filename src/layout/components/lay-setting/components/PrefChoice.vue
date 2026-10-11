@@ -105,7 +105,7 @@ const emit = defineEmits<{ change: [value: string] }>();
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: var(--font-size-lg);
 }
 
 .pref-choice__preview {
@@ -125,7 +125,7 @@ const emit = defineEmits<{ change: [value: string] }>();
   position: absolute;
   top: 2px;
   right: 2px;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--el-color-primary);
 }
 </style>

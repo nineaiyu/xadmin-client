@@ -13,7 +13,7 @@ const { device, t } = useNav();
 </script>
 
 <template>
-  <div class="search-footer text-[#333] dark:text-white">
+  <div class="search-footer text-fg dark:text-white">
     <span class="search-footer-item">
       <EnterOutlined class="icon" />
       {{ t("buttons.sure") }}
@@ -46,11 +46,11 @@ const { device, t } = useNav();
   .icon {
     padding: 2px;
     margin-right: 3px;
-    font-size: 20px;
+    font-size: var(--font-size-xl);
     box-shadow:
-      inset 0 -2px #cdcde6,
-      inset 0 0 1px 1px #fff,
-      0 1px 2px 1px #1e235a66;
+      inset 0 -2px hsl(var(--border-lighter)),
+      inset 0 0 1px 1px hsl(var(--bg-card)),
+      0 1px 2px 1px hsl(var(--fg) / 40%);
   }
 
   .search-footer-total {

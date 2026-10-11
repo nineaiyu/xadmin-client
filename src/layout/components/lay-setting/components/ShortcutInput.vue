@@ -170,7 +170,7 @@ function onKeydown(event: KeyboardEvent) {
   width: 20px;
   height: 20px;
   padding: 0;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--el-text-color-secondary);
   cursor: pointer;
   background: transparent;

@@ -5,6 +5,7 @@ import { useGlobal } from "@pureadmin/utils";
 import { useMultiTagsStore } from "@/store/modules/multiTags";
 import { DEFAULT_EP_THEME_COLOR } from "@/utils/themeConstants";
 import { applyPreferenceAttributes } from "./usePreferenceAttributes";
+import { buildConfigureDefaults } from "./layoutPreferences";
 
 export function useLayout() {
   const { $storage, $config } = useGlobal<GlobalPropertiesApi>();
@@ -35,89 +36,9 @@ export function useLayout() {
         themeMode: $config?.ThemeMode ?? "light"
       };
     }
-    /** 界面显示与交互偏好（缺省值见 public/platform-config.json 与后端 WEB_SITE_CONFIG 种子） */
+    /** 界面显示与交互偏好（缺省值构建见 layoutPreferences.ts，来源 platform-config.json 与后端 WEB_SITE_CONFIG 种子） */
     if (!$storage.configure) {
-      $storage.configure = {
-        grey: $config?.Grey ?? false,
-        weak: $config?.Weak ?? false,
-        hideTabs: $config?.HideTabs ?? false,
-        hideFooter: $config.HideFooter ?? true,
-        footerFixed: $config.FooterFixed ?? false,
-        footerHeight: $config.FooterHeight ?? 0,
-        showLogo: $config?.ShowLogo ?? true,
-        logoSource: $config?.LogoSource ?? "",
-        logoShowText: $config?.LogoShowText ?? true,
-        logoFit: $config?.LogoFit ?? "contain",
-        tagsStyle: $config?.TagsStyle ?? "chrome",
-        multiTagsCache: $config?.MultiTagsCache ?? false,
-        stretch: $config?.Stretch ?? false,
-        headerAutoHide: $config?.HeaderAutoHide ?? false,
-        compactMode: $config?.CompactMode ?? false,
-        radius: $config?.Radius ?? "default",
-        fontScale: $config?.FontScale ?? "default",
-        fontScaleCustom: $config?.FontScaleCustom ?? 14,
-        themePreset: $config?.ThemePreset ?? "default",
-        navigationStyle: $config?.NavigationStyle ?? "rounded",
-        sidebarAccordion: $config?.SidebarAccordion ?? true,
-        sidebarCollapseButton: $config?.SidebarCollapseButton ?? true,
-        semiDarkSidebar: $config?.SemiDarkSidebar ?? false,
-        semiDarkHeader: $config?.SemiDarkHeader ?? false,
-        semiDarkSidebarSub: $config?.SemiDarkSidebarSub ?? false,
-        successColor: $config?.SuccessColor ?? "",
-        warningColor: $config?.WarningColor ?? "",
-        dangerColor: $config?.DangerColor ?? "",
-        sidebarWidth: $config?.SidebarWidth ?? 210,
-        sidebarExpandOnHover: $config?.SidebarExpandOnHover ?? true,
-        sidebarDraggable: $config?.SidebarDraggable ?? false,
-        sidebarCollapsedShowTitle: $config?.SidebarCollapsedShowTitle ?? false,
-        sidebarAutoActivateChild: $config?.SidebarAutoActivateChild ?? false,
-        headerFixed: $config?.HeaderFixed ?? true,
-        breadcrumbVisible: $config?.BreadcrumbVisible ?? true,
-        breadcrumbShowIcon: $config?.BreadcrumbShowIcon ?? true,
-        breadcrumbShowHome: $config?.BreadcrumbShowHome ?? false,
-        breadcrumbHideOnlyOne: $config?.BreadcrumbHideOnlyOne ?? false,
-        breadcrumbStyle: $config?.BreadcrumbStyle ?? "normal",
-        maxTagsCount: $config?.MaxTagsCount ?? 0,
-        navbarSearch: $config?.NavbarSearch ?? true,
-        navbarLanguage: $config?.NavbarLanguage ?? true,
-        navbarFullscreen: $config?.NavbarFullscreen ?? true,
-        navbarLock: $config?.NavbarLock ?? true,
-        navbarNotice: $config?.NavbarNotice ?? true,
-        navbarRefresh: $config?.NavbarRefresh ?? true,
-        navbarSidebarToggle: $config?.NavbarSidebarToggle ?? false,
-        navbarThemeToggle: $config?.NavbarThemeToggle ?? false,
-        navbarOrder: $config?.NavbarOrder ?? [],
-        navbarMoreWidgets: $config?.NavbarMoreWidgets ?? [],
-        headerMenuAlign: $config?.HeaderMenuAlign ?? "start",
-        sidebarCollapseWidth: $config?.SidebarCollapseWidth ?? 54,
-        sidebarMixedWidth: $config?.SidebarMixedWidth ?? 0,
-        sidebarHidden: $config?.SidebarHidden ?? false,
-        sidebarFixedButton: $config?.SidebarFixedButton ?? false,
-        sidebarExtraCollapse: $config?.SidebarExtraCollapse ?? false,
-        tagsMiddleClickClose: $config?.TagsMiddleClickClose ?? true,
-        tagsWheelSwitch: $config?.TagsWheelSwitch ?? true,
-        tagsShowIcon: $config?.TagsShowIcon ?? true,
-        tagsShowRefresh: $config?.TagsShowRefresh ?? true,
-        tagsShowMore: $config?.TagsShowMore ?? true,
-        tagsHeight: $config?.TagsHeight ?? 34,
-        tagsKeepAlive: $config?.TagsKeepAlive ?? true,
-        tagsVisitHistory: $config?.TagsVisitHistory ?? true,
-        dynamicTitle: $config?.DynamicTitle ?? true,
-        enablePreferences: $config?.EnablePreferences ?? true,
-        preferencesPosition: $config?.PreferencesPosition ?? "header",
-        pageTransition: $config?.PageTransition ?? "fade-transform",
-        transitionProgress: $config?.TransitionProgress ?? true,
-        transitionLoading: $config?.TransitionLoading ?? false,
-        shortcutSearch: $config?.ShortcutSearch ?? true,
-        shortcutLock: $config?.ShortcutLock ?? true,
-        shortcutSidebar: $config?.ShortcutSidebar ?? true,
-        shortcutEnable: $config?.ShortcutEnable ?? true,
-        shortcutLockKeys: $config?.ShortcutLockKeys ?? "alt+l",
-        shortcutSidebarKeys: $config?.ShortcutSidebarKeys ?? "alt+s",
-        shortcutSearchKeys: $config?.ShortcutSearchKeys ?? "mod+k",
-        shortcutPreferencesKeys: $config?.ShortcutPreferencesKeys ?? "mod+,",
-        shortcutLogoutKeys: $config?.ShortcutLogoutKeys ?? ""
-      };
+      $storage.configure = buildConfigureDefaults($config);
     }
     /** 圆角 / 字号档位落到 <html> 属性（登录页等无布局页面同样生效） */
     applyPreferenceAttributes($storage.configure);

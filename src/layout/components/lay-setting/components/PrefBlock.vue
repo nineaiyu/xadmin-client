@@ -70,7 +70,7 @@ withDefaults(
     justify-content: center;
     width: 22px;
     height: 22px;
-    font-size: 13px;
+    font-size: var(--font-size-sm);
     color: var(--el-color-primary);
     background: var(--el-color-primary-light-9);
     border-radius: var(--radius-sm);

@@ -30,7 +30,6 @@ import {
 } from "vue";
 import {
   deviceDetection,
-  useDark,
   useGlobal,
   useResizeObserver
 } from "@pureadmin/utils";
@@ -52,7 +51,6 @@ import BackTopIcon from "@/assets/svg/back_top.svg?component";
 
 const { t } = useI18n();
 const appWrapperRef = ref();
-const { isDark } = useDark();
 const { layout } = useLayout();
 const isMobile = deviceDetection();
 const pureSetting = useSettingStoreHook();
@@ -135,6 +133,15 @@ const set: setType = reactive({
     return $storage?.configure.hideTabs ?? false;
   })
 });
+
+/**
+ * 侧栏不可见时（隐藏侧栏 / 移动端抽屉关闭）用 `inert` 移出 Tab 键序与无障碍树：
+ * 移动端关闭态是 `transform` 移出画布（元素仍在 DOM、链接仍可聚焦），
+ * 键盘用户会 Tab 到看不见的菜单项上。
+ */
+const sidebarInert = computed(
+  () => sidebarHidden.value || (set.device === "mobile" && !set.sidebar.opened)
+);
 
 function setTheme(menuLayout: string) {
   window.document.body.setAttribute("layout", menuLayout);
@@ -219,9 +226,7 @@ const LayHeader = defineComponent({
         },
         style: [
           set.hideTabs && layout.value.includes("horizontal")
-            ? isDark.value
-              ? "box-shadow: 0 1px 4px #0d0d0d"
-              : "box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08)"
+            ? "box-shadow: var(--shadow-navbar)"
             : ""
         ]
       },
@@ -260,6 +265,7 @@ const LayHeader = defineComponent({
         !sidebarHidden &&
         (layout.includes('vertical') || layout.includes('mix'))
       "
+      :inert="sidebarInert"
     />
     <div :class="['main-container', sidebarHidden ? 'main-hidden' : '']">
       <div v-if="set.fixedHeader">
@@ -322,8 +328,7 @@ const LayHeader = defineComponent({
   z-index: 2001;
   width: 100%;
   height: 100%;
-  background: #000;
-  opacity: 0.3;
+  background: hsl(var(--overlay-soft));
 }
 
 .re-screen {

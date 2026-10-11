@@ -90,6 +90,8 @@ function onChoiceChange(value: string) {
 </template>
 
 <style lang="scss" scoped>
+@use "@/style/tokens/breakpoints" as bp;
+
 .pref-stretch__slider {
   width: 132px;
 }
@@ -101,7 +103,7 @@ function onChoiceChange(value: string) {
   text-align: right;
 }
 
-@media (width <= 768px) {
+@include bp.below("md") {
   .pref-stretch__slider {
     width: 100%;
   }

@@ -96,7 +96,7 @@ function resetColor(key: SemanticColorKey) {
     height: 18px;
     cursor: pointer;
     border-radius: var(--radius-sm);
-    box-shadow: rgb(0 0 0 / 15%) 0 0 0 1px inset;
+    box-shadow: hsl(var(--fg) / 15%) 0 0 0 1px inset;
   }
 
   /* 原生取色器铺满色块（不可见但可点、可聚焦） */

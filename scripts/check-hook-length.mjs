@@ -20,8 +20,10 @@ const HOOK_PATTERN = /^(use[A-Z].*|hook)\.(ts|tsx)$/;
 // 存量基线：相对路径 -> 行数（只减不增；拆到 <120 即从此表移除）。
 // 2026-10-08：初始登记（此前 R3 滚动债余量 45 个后又自然增长，门禁首次覆盖 120 线）。
 // 2026-10-09：集成域 11 个（ai 4 / knowledge 3 / api-app / subscription / login / login-policy）拆分下线。
-// 2026-10-09：系统域 / 布局与框架 / 表单域 / 仪表盘数据集全部拆分下线，基线清零
-//             （即当前口径为零容忍：任何 ≥120 行的 hook 形态文件都会失败）。
+// 2026-10-09：系统域 / 布局与框架 / 表单域 / 仪表盘数据集全部拆分下线，基线清零。
+// 2026-10-11：偏好二期与底座改造陆续回潮 4 个（usePreferenceAttributes / useTagDelete /
+//             useLayout / useNavState），按「存量只减不增」冻结。
+// 2026-10-11（收尾）：上列 4 个已按「实现域下沉（纯函数模块）+ hook 只留接线」拆分下线，基线清零。
 const BASELINE = {};
 
 function walk(dir) {

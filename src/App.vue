@@ -36,6 +36,7 @@ import plusEn from "plus-pro-components/es/locale/lang/en";
 import plusZhCn from "plus-pro-components/es/locale/lang/zh-cn";
 import { $t, transformI18n } from "@/plugins/i18n";
 import { useConfirm } from "@/hooks/useConfirm";
+import { epColor } from "@/utils/chartTheme";
 
 // wangeditor 附件插件注册已迁移至懒加载路径（src/utils/wangEditorBoot.ts），
 // 由编辑器异步组件在挂载前调用，避免约 1MB 的编辑器栈进入首屏闭包。
@@ -170,7 +171,7 @@ export default defineComponent({
               title,
               description: transformI18n($t("layout.updateCheck")),
               buttonText: transformI18n($t("layout.updateNow")),
-              primaryColor: "#758bfd"
+              primaryColor: epColor("primary")
             }
           )
         )

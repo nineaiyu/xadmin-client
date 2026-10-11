@@ -1,5 +1,5 @@
-import Sortable from "sortablejs";
-import { nextTick, onBeforeUnmount, watch, type Ref } from "vue";
+import { nextTick, type Ref } from "vue";
+import { useSortable } from "@/hooks/useSortable";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 
 /**
@@ -16,54 +16,33 @@ export function useTagDrag(options: {
   refresh: () => void;
 }) {
   const { tabDom, refresh } = options;
-  let sortable: Sortable | null = null;
 
-  function destroy() {
-    sortable?.destroy();
-    sortable = null;
-  }
-
-  function init() {
-    if (sortable || !tabDom.value) return;
-    sortable = Sortable.create(tabDom.value as HTMLElement, {
-      animation: 200,
-      draggable: ".scroll-item",
-      filter: ".fixed-tag",
-      ghostClass: "tag-drag-ghost",
-      // 统一走鼠标/触摸实现（而非浏览器原生 HTML5 拖放）：桌面与移动端行为一致，
-      // 且原生拖放的拖影样式在各浏览器不可控（页签需要跟随指针的轻量占位效果）
-      forceFallback: true,
-      onEnd: ({ oldIndex, newIndex }) => {
-        if (
-          oldIndex === undefined ||
-          newIndex === undefined ||
-          oldIndex === newIndex
-        ) {
-          return;
-        }
-        const store = useMultiTagsStoreHook();
-        /** 首页固定页签的路径：以排序前的首位为准（固定页签不参与拖拽） */
-        const homePath = store.multiTags[0]?.path;
-        const list = [...store.multiTags];
-        const [moved] = list.splice(oldIndex, 1);
-        list.splice(newIndex, 0, moved);
-        const homeIndex = list.findIndex(tag => tag.path === homePath);
-        if (homeIndex > 0) list.unshift(list.splice(homeIndex, 1)[0]);
-        store.handleTags("equal", list);
-        nextTick(refresh);
+  return useSortable(tabDom, {
+    animation: 200,
+    draggable: ".scroll-item",
+    filter: ".fixed-tag",
+    ghostClass: "tag-drag-ghost",
+    // 统一走鼠标/触摸实现（而非浏览器原生 HTML5 拖放）：桌面与移动端行为一致，
+    // 且原生拖放的拖影样式在各浏览器不可控（页签需要跟随指针的轻量占位效果）
+    forceFallback: true,
+    onEnd: ({ oldIndex, newIndex }) => {
+      if (
+        oldIndex === undefined ||
+        newIndex === undefined ||
+        oldIndex === newIndex
+      ) {
+        return;
       }
-    });
-  }
-
-  watch(
-    tabDom,
-    value => {
-      if (value) init();
-    },
-    { immediate: true }
-  );
-
-  onBeforeUnmount(destroy);
-
-  return { init, destroy };
+      const store = useMultiTagsStoreHook();
+      /** 首页固定页签的路径：以排序前的首位为准（固定页签不参与拖拽） */
+      const homePath = store.multiTags[0]?.path;
+      const list = [...store.multiTags];
+      const [moved] = list.splice(oldIndex, 1);
+      list.splice(newIndex, 0, moved);
+      const homeIndex = list.findIndex(tag => tag.path === homePath);
+      if (homeIndex > 0) list.unshift(list.splice(homeIndex, 1)[0]);
+      store.handleTags("equal", list);
+      nextTick(refresh);
+    }
+  });
 }

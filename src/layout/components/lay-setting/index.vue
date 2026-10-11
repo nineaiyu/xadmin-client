@@ -71,8 +71,8 @@ if (unref(layoutTheme)) {
   z-index: var(--pure-z-index-layout);
   width: 44px;
   height: 44px;
-  font-size: 20px;
-  color: #fff;
+  font-size: var(--font-size-xl);
+  color: var(--el-color-white);
   cursor: pointer;
   background: var(--el-color-primary);
   border-radius: var(--radius-full);

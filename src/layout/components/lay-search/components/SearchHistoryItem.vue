@@ -31,12 +31,12 @@ function handleDelete(item: optionsItem) {
   <IconifyIconOffline
     v-show="item.type === 'history'"
     :icon="StarIcon"
-    class="size-4.5 mr-2 hover:text-[#d7d5d4]"
+    class="size-4.5 mr-2 hover:opacity-70"
     @click.stop="handleCollect(item)"
   />
   <IconifyIconOffline
     :icon="CloseIcon"
-    class="size-4.5 hover:text-[#d7d5d4] cursor-pointer"
+    class="size-4.5 hover:opacity-70 cursor-pointer"
     @click.stop="handleDelete(item)"
   />
 </template>

@@ -2,10 +2,10 @@
 // 布局 - 顶栏组件：拖拽调序 + 逐个组件选择落位（顶栏 / 更多下拉 / 不显示）。
 // 顺序写 `navbarOrder`，落位写各组件既有显隐开关（navbarXxx）与 `navbarMoreWidgets`；
 // 组件目录见 lay-navbar/widgets/catalog.ts（弹层类组件固定顶栏，见 catalog.more）。
-import { computed, onBeforeUnmount, ref, watch } from "vue";
-import Sortable from "sortablejs";
+import { computed, ref } from "vue";
 import { useGlobal } from "@pureadmin/utils";
 import { useNav } from "@/layout/hooks/useNav";
+import { useSortable } from "@/hooks/useSortable";
 import {
   DEFAULT_NAVBAR_ORDER,
   findNavbarWidget
@@ -21,7 +21,6 @@ const { $storage } = useGlobal<GlobalPropertiesApi>();
 const { storageConfigureChange } = useConfigureStorage();
 
 const listDom = ref<HTMLElement>();
-let sortable: Sortable | null = null;
 
 /** 当前顺序：偏好优先，缺省内置顺序；目录新增但未入队列的组件按内置顺序补在末尾 */
 const orderedKeys = computed<string[]>(() => {
@@ -89,29 +88,19 @@ function writeOrder(keys: string[]) {
   storageConfigureChange("navbarOrder", keys);
 }
 
-function initSortable() {
-  if (sortable || !listDom.value) return;
-  sortable = Sortable.create(listDom.value, {
-    animation: 200,
-    draggable: "[data-widget-key]",
-    handle: ".navbar-widgets__handle",
-    ghostClass: "navbar-widgets__ghost",
-    forceFallback: true,
-    onEnd: () => {
-      const keys = Array.from(
-        listDom.value?.querySelectorAll<HTMLElement>("[data-widget-key]") ?? []
-      ).map(node => node.dataset.widgetKey ?? "");
-      writeOrder(keys.filter(Boolean));
-    }
-  });
-}
-
-watch(listDom, value => {
-  if (value) initSortable();
-});
-onBeforeUnmount(() => {
-  sortable?.destroy();
-  sortable = null;
+/** 拖拽调序：松手后按 DOM 顺序写回偏好 */
+useSortable(listDom, {
+  animation: 200,
+  draggable: "[data-widget-key]",
+  handle: ".navbar-widgets__handle",
+  ghostClass: "navbar-widgets__ghost",
+  forceFallback: true,
+  onEnd: () => {
+    const keys = Array.from(
+      listDom.value?.querySelectorAll<HTMLElement>("[data-widget-key]") ?? []
+    ).map(node => node.dataset.widgetKey ?? "");
+    writeOrder(keys.filter(Boolean));
+  }
 });
 </script>
 

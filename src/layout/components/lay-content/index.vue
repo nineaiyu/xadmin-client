@@ -276,8 +276,8 @@ const transitionMain = defineComponent({
   left: 12px;
   z-index: var(--pure-z-index-layout);
   padding: 8px 14px;
-  font-size: 14px;
-  color: #fff;
+  font-size: var(--font-size-base);
+  color: var(--el-color-white);
   background-color: var(--el-color-primary);
   border-radius: 0 0 var(--radius-md) var(--radius-md);
   transition: top var(--duration-fast) var(--ease-standard);

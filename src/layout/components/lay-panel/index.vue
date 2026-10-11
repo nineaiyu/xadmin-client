@@ -150,7 +150,7 @@ onBeforeUnmount(() => {
   top: 0;
   left: 0;
   z-index: -1;
-  background: rgb(0 0 0 / 20%);
+  background: hsl(var(--overlay-soft));
   opacity: 0;
   transition: opacity var(--duration-base) cubic-bezier(0.7, 0.3, 0.1, 1);
 }
@@ -165,7 +165,7 @@ onBeforeUnmount(() => {
   width: 100%;
   max-width: 360px;
   height: 100vh;
-  box-shadow: -6px 0 16px rgb(0 0 0 / 8%);
+  box-shadow: var(--shadow-panel);
   transform: translate(100%);
   transition: all var(--duration-fast) var(--ease-emphasized);
 }

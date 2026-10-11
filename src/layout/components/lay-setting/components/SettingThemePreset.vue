@@ -56,7 +56,7 @@ function selectPreset(type: string) {
           >
             <el-icon
               v-if="currentPreset === item.type"
-              color="#fff"
+              color="var(--el-color-white)"
               :size="14"
               class="theme-preset__check"
             >
@@ -77,7 +77,7 @@ function selectPreset(type: string) {
           <span class="theme-preset__swatch theme-preset__swatch--custom">
             <el-icon
               v-if="currentPreset === CUSTOM_THEME_PRESET"
-              color="#fff"
+              color="var(--el-color-white)"
               :size="14"
               class="theme-preset__check"
             >
@@ -140,12 +140,12 @@ function selectPreset(type: string) {
     width: 22px;
     height: 22px;
     border-radius: var(--radius-full);
-    box-shadow: rgb(0 0 0 / 15%) 0 0 0 1px inset;
+    box-shadow: hsl(var(--fg) / 15%) 0 0 0 1px inset;
   }
 
   &__check {
     pointer-events: none;
-    filter: drop-shadow(0 0 1px rgb(0 0 0 / 45%));
+    filter: drop-shadow(0 0 1px hsl(var(--fg) / 45%));
   }
 
   &__custom &__swatch {

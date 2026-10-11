@@ -22,7 +22,7 @@ const itemStyle = computed(() => {
     return {
       background:
         item?.path === active.value ? useEpThemeStoreHook().epThemeColor : "",
-      color: item.path === active.value ? "#fff" : "",
+      color: item.path === active.value ? "var(--el-color-white)" : "",
       fontSize: item.path === active.value ? "16px" : "14px"
     };
   };
@@ -77,7 +77,7 @@ defineExpose({ handleScroll });
       :key="item.path"
       :ref="'resultItemRef' + index"
       :style="itemStyle(item)"
-      class="result-item dark:bg-[#1d1d1d]"
+      class="result-item dark:bg-fill-subtle"
       @click="handleTo"
       @mouseenter="handleMouse(item)"
     >
@@ -101,9 +101,9 @@ defineExpose({ handleScroll });
     padding: 14px;
     margin-top: 8px;
     cursor: pointer;
-    border: 0.1px solid #ccc;
-    border-radius: 4px;
-    transition: font-size 0.16s;
+    border: 0.1px solid hsl(var(--border));
+    border-radius: var(--radius-sm);
+    transition: font-size var(--duration-fast) var(--ease-standard);
 
     &-title {
       display: flex;
