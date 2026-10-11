@@ -317,6 +317,25 @@ cropper:
   anticlockwise: Anticlockwise Rotation
   clockwise: Clockwise Rotation
 
+jsonViewer:
+  copy: Copy
+  copied: Copied
+
+sliderCaptcha:
+  text: Slide right to verify
+  successText: Verified
+
+reState:
+  empty: No data
+  error: Failed to load
+
+tableAction:
+  confirmTitle: Are you sure you want to proceed?
+
+tableA11y:
+  dataTable: Data table
+  pageSize: Items per page
+
 layout:
   saveConfigSuccess: Site configuration saved
   impersonating: Impersonating "{ user }" — all actions run as this user and are audited. Click to exit
@@ -908,6 +927,7 @@ invite:
   invalid: The invitation link is invalid or has expired. Please contact the administrator to resend it.
   accepted: The account is already activated, please sign in directly
   toLogin: Go to sign in
+  sliderRequired: Please complete the slider verification first
 
 oauth:
   title: Third-party login
@@ -1991,6 +2011,9 @@ systemMenu:
     level1: Expand 1 level
     level2: Expand 2 levels
     levelAll: Expand all
+    typeLabel: Menu type
+    statusLabel: Menu status
+    levelLabel: Expand level
   stats:
     summary: "{ total } nodes · { directory } directories / { menu } menus / { permission } permissions"
     inactive: "{ count } disabled"

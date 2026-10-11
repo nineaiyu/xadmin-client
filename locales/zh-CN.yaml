@@ -317,6 +317,25 @@ cropper:
   anticlockwise: 逆时针旋转
   clockwise: 顺时针旋转
 
+jsonViewer:
+  copy: 复制
+  copied: 已复制
+
+sliderCaptcha:
+  text: 向右拖动滑块填充拼图
+  successText: 验证通过
+
+reState:
+  empty: 暂无数据
+  error: 加载失败
+
+tableAction:
+  confirmTitle: 确定执行该操作吗？
+
+tableA11y:
+  dataTable: 数据表格
+  pageSize: 每页条数
+
 layout:
   saveConfigSuccess: 项目配置保存成功
   impersonating: 正在模拟用户「{ user }」，所有操作将以该用户身份执行并留痕，点击退出模拟
@@ -908,6 +927,7 @@ invite:
   invalid: 邀请链接无效或已过期，请联系管理员重新发送邀请
   accepted: 账号已激活，请直接登录
   toLogin: 去登录
+  sliderRequired: 请先拖动滑块完成验证
 
 oauth:
   title: 第三方登录
@@ -1991,6 +2011,9 @@ systemMenu:
     level1: 展开 1 级
     level2: 展开 2 级
     levelAll: 全部展开
+    typeLabel: 菜单类型
+    statusLabel: 菜单状态
+    levelLabel: 展开层级
   stats:
     summary: "共 { total } 个节点 · 目录 { directory } / 菜单 { menu } / 权限点 { permission }"
     inactive: "停用 { count }"
