@@ -220,18 +220,28 @@ function handleSubMenuClick(event: MouseEvent) {
 </script>
 
 <template>
+  <!--
+    叶子项的可访问语义由链接包装承担：EP 的 el-menu 根渲染 `ul[role=menubar]`，
+    但其 li[role=menuitem] 被这里的 <a>（router-link / 外链）包裹后，
+    menubar 的直接子级变成链接、menuitem 的父级变成链接——两处均属 ARIA 结构违规
+    （axe aria-required-children / aria-required-parent，critical）。
+    故把 menuitem 放到链接上（链接是 menubar 的合法子级），内层 li 置 presentation
+    退出无障碍树（EP 无键盘焦点导航，不依赖该 li 的语义）。
+  -->
   <SidebarLinkItem
     v-if="
       hasOneShowingChild(item.children, item) &&
       (!onlyOneChild.children || onlyOneChild.noShowingChildren)
     "
     :to="item"
+    role="menuitem"
   >
     <el-menu-item
       :index="resolvePath(onlyOneChild.path ?? '')"
       :class="{ 'submenu-title-noDropdown': !isNest }"
       :style="getNoDropdownStyle"
       v-bind="attrs"
+      role="presentation"
     >
       <div
         v-if="toRaw(item.meta.icon)"

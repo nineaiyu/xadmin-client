@@ -16,33 +16,26 @@ import { login, openMenuPath } from "./helpers";
 const IMPACT_BLOCKING = new Set(["critical", "serious"]);
 
 /**
- * 豁免登记（规则 id → 节点选择器摘要的匹配正则）：
+ * 豁免登记（规则 id → 节点选择器摘要的匹配正则）：**当前无豁免项**。
  *
- * 仅存 EP 菜单垂直模式的 ARIA 结构问题：el-menu 渲染 `ul[role=menubar] > a > li[role=menuitem]`，
- * axe 判 `aria-required-children`（menubar 下出现不被允许的 `a`）与 `aria-required-parent`
- * （`li[role=menuitem]` 的父级是 `a` 而非 menu/menubar/group）。DOM 由组件库生成、
- * 侧栏契约冻结（仓库侧不覆写其结构），待上游补全；命中节点全部位于侧栏/菜单树区域。
+ * 2026-10-11 收尾：侧栏菜单最后两项结构性违规已本地收口——EP 的 `el-menu` 根渲染
+ * `ul[role=menubar]`，叶子项本应是 `li[role=menuitem]` 直挂其下，但本项目用 `<a>`
+ * （router-link / 外链，保留真实 href）包裹叶子项，形成 `menubar > a > li[role=menuitem]`，
+ * axe 判 `aria-required-children`（menubar 的子级出现链接）与 `aria-required-parent`
+ * （menuitem 的父级是链接）critical。修复 = 把 `menuitem` 语义上移到链接、内层 li 置
+ * `presentation`（EP 无键盘焦点导航，不依赖该 li 语义），见
+ * `src/layout/components/lay-sidebar/components/SidebarItem.vue`。
  *
- * 2026-10-11 收尾：其余豁免已全部消化——`color-contrast`（主题色收口与对比度修复）、
- * `button-name` / `aria-command-name`（仓库图标按钮可访问名：页签「更多」、开关渲染器）、
- * `label`（el-switch 渲染器 + 菜单工具栏下拉补 aria-label，分页器下拉经 tableA11y 收口）、
- * `scrollable-region-focusable`（多值标签渲染器 el-scrollbar 补 tabindex）、
- * `svg-img-alt`（Iconify 渲染层统一 aria-hidden 后无命中）、`aria-roles .bar`（无命中）。
- * 摘除项若在其他扫描面重新命中，按「先本地收口、再登记」路径处理（见 docs/accessibility-audit.md）。
+ * 此前已消化的豁免：`color-contrast`（主题色收口与对比度修复）、`button-name` /
+ * `aria-command-name`（页签「更多」、开关渲染器补名）、`label`（el-switch 渲染器 +
+ * 菜单工具栏下拉，分页器下拉经 tableA11y 收口）、`scrollable-region-focusable`
+ * （多值标签渲染器 el-scrollbar 补 tabindex）、`svg-img-alt`（Iconify 渲染层统一
+ * aria-hidden 后无命中）、`aria-roles .bar`（无命中）。
+ *
+ * 新增豁免必须先到 `docs/accessibility-audit.md` 登记跟踪项，禁止静默放行；
+ * 摘除项若在其他扫描面重新命中，按「先本地收口、再登记」路径处理。
  */
-const ALLOWED_VIOLATIONS: Record<string, RegExp[]> = {
-  "aria-required-children": [/\.el-menu--vertical/, /ul\[data-old-padding-top/],
-  "aria-required-parent": [
-    /\.submenu-title-noDropdown/,
-    /\.el-menu-item\.nest-menu/,
-    // 当前激活菜单项：axe 对该节点取「最短唯一选择器」（命中形态 .is-active.el-menu-item[role=menuitem]），
-    // 不带 nest-menu / a[href$=...] 前缀，属同一 EP 菜单垂直模式 ARIA 结构问题（见 docs/accessibility-audit.md）
-    /\.is-active\.el-menu-item/,
-    // 垂直菜单叶子项（a[href$=...] > .el-menu-item[role=menuitem]）：同一 EP 菜单
-    // ARIA 结构的第三种取选择器形态（2026-10-11 扩面，菜单数据新增后成批暴露）
-    /> \.el-menu-item\[role="menuitem"\]$/
-  ]
-};
+const ALLOWED_VIOLATIONS: Record<string, RegExp[]> = {};
 
 /** axe 阻断级违规摘要（豁免剔除后的最小结构） */
 type ViolationSummary = {
