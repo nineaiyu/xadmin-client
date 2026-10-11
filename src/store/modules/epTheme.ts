@@ -26,7 +26,7 @@ export const useEpThemeStore = defineStore("pure-epTheme", {
       if (state.epTheme === "light") {
         return state.epThemeColor;
       } else {
-        return "#fff";
+        return "var(--el-color-white)";
       }
     }
   },

@@ -46,7 +46,7 @@
 .login-form h2 {
   text-transform: uppercase;
   margin: 15px 0;
-  color: #999;
+  color: hsl(var(--fg-subtle));
   font:
     bold 200% Consolas,
     Monaco,

@@ -58,7 +58,7 @@ describe("epTheme store", () => {
     store.epTheme = "light";
     expect(store.fill).toBe("#409eff");
     store.epTheme = "dark";
-    expect(store.fill).toBe("#fff");
+    expect(store.fill).toBe("var(--el-color-white)");
   });
 
   it("setEpThemeColor 更新主题色并写回 storage", () => {

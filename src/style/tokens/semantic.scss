@@ -56,6 +56,14 @@
   --shadow-float:
     0 16px 48px 16px #00000014, 0 12px 32px #0000001f, 0 8px 16px -8px #00000029;
 
+  /* 组件级投影：导航区（顶栏 / 页签条）下沿的分隔投影；
+     设置面板等右侧浮层的向左投影 */
+  --shadow-navbar: 0 1px 2px 0 rgb(0 21 41 / 8%);
+  --shadow-panel: -6px 0 16px rgb(0 0 0 / 8%);
+
+  /* 轻遮罩：设置面板 / 移动端侧栏这类「抽屉型」浮层，比对话框遮罩更轻 */
+  --overlay-soft: 0 0% 0% / 30%;
+
   /* ================ 组件槽（完整色值，直接作为颜色/描边消费） ================ */
 
   /* 分隔线：前景色的低透明度表达，随明暗自动反转。面板、侧栏的 1px 细分隔用它，
@@ -99,6 +107,9 @@ html.dark {
   /* ================ 组件槽（暗色取值） ================ */
   --divider: hsl(var(--fg) / 12%);
   --switch-off: hsl(var(--fg) / 25%);
+  --overlay-soft: 0 0% 0% / 45%;
+  --shadow-navbar: 0 1px 2px 0 rgb(0 0 0 / 45%);
+  --shadow-panel: -6px 0 16px rgb(0 0 0 / 45%);
 
   /* ================ 阴影 ================ */
   --shadow-sm: 0 0 6px #000000b8;
@@ -106,6 +117,34 @@ html.dark {
   --shadow-lg: 0 12px 32px 4px #0000005c, 0 8px 20px #000000b8;
   --shadow-float:
     0 16px 48px 16px #000000b8, 0 12px 32px #000, 0 8px 16px -8px #000;
+}
+
+/* ================ 数据大屏画布（恒深色，不随站点主题） ================
+   大屏设计器与投屏页刻意保持深色（设计所见即投屏所得），其工具条 / 侧栏 /
+   卡片的「玻璃表面」自成一套层级；与明暗主题无关，故不进 html.dark 成对块。
+   消费方：views/analysis/screen 的 designer / display 与三个子组件。 */
+
+:root {
+  --screen-canvas: #070b14; /* 画布底色 */
+  --screen-canvas-top: #0b1220; /* 环境光渐变顶部 */
+  --screen-glow-primary: rgb(64 158 255 / 16%); /* 环境光·主色 */
+  --screen-glow-accent: rgb(154 102 228 / 14%); /* 环境光·辅色 */
+  --screen-surface: rgb(255 255 255 / 3%); /* 工具条 / 侧栏表面 */
+  --screen-surface-raised: rgb(255 255 255 / 4%); /* 卡片表面 */
+  --screen-surface-strong: rgb(255 255 255 / 8%); /* 交互底 / 胶囊底 */
+  --screen-border: rgb(255 255 255 / 8%); /* 常规描边 */
+  --screen-border-subtle: rgb(255 255 255 / 6%); /* 顶栏下沿细分隔线 */
+  --screen-border-strong: rgb(255 255 255 / 12%); /* 表单控件描边 */
+  --screen-grid-line: rgb(255 255 255 / 5%); /* 画布栅格线 */
+  --screen-shadow: 0 8px 28px rgb(0 0 0 / 26%); /* 卡片投影 */
+  --screen-fg-bold: rgb(255 255 255 / 92%); /* 文本窗格 / 时钟 */
+  --screen-fg: rgb(255 255 255 / 85%); /* 时钟 / 强调文本 */
+  --screen-fg-strong: rgb(255 255 255 / 82%); /* 卡片标题 */
+  --screen-fg-dense: rgb(255 255 255 / 78%); /* 次级标题 / 空态图形 */
+  --screen-fg-muted: rgb(255 255 255 / 70%); /* 侧栏标签 / 胶囊文字 */
+  --screen-fg-subtle: rgb(255 255 255 / 62%); /* 副标题 / 空态说明 */
+  --screen-fg-dim: rgb(255 255 255 / 55%); /* 提示文本 */
+  --screen-fg-faint: rgb(255 255 255 / 45%); /* 画布空态 */
 }
 
 /* ================ 菜单调色板（自 style/theme.scss 迁入） ================

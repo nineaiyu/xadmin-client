@@ -164,6 +164,259 @@
   transform: translateX(15px);
 }
 
+/* ============ 对齐 vben 的补充预设（本地命名，不引 vben 依赖） ============ */
+
+/**
+ * 侧栏 / 面板按方向入场：容器固定时长与缓动，方向由 `data-side` 决定，
+ * 位移 50px（对齐 vue-vben-admin `ui.css` 的 `.side-content`）。
+ * 用法：<div class="side-content" :data-side="side">…</div>
+ */
+.side-content {
+  animation-duration: var(--duration-base);
+  animation-timing-function: var(--ease-emphasized);
+}
+
+.side-content[data-side="top"] {
+  animation-name: side-slide-up;
+}
+
+.side-content[data-side="bottom"] {
+  animation-name: side-slide-down;
+}
+
+.side-content[data-side="left"] {
+  animation-name: side-slide-left;
+}
+
+.side-content[data-side="right"] {
+  animation-name: side-slide-right;
+}
+
+@keyframes side-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes side-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes side-slide-left {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes side-slide-right {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 面包屑切换：错切滑动（skewX），离场即时让位 */
+.breadcrumb-transition-enter-active {
+  transition:
+    transform var(--duration-slow) var(--ease-standard),
+    opacity var(--duration-slow) var(--ease-standard);
+}
+
+.breadcrumb-transition-leave-active {
+  display: none;
+}
+
+.breadcrumb-transition-enter-from {
+  opacity: 0;
+  transform: translateX(30px) skewX(-30deg);
+}
+
+/* 循环呼吸类（3s infinite）：供加载 / 占位等循环提示按需引用 */
+@keyframes fade-loop {
+  0% {
+    opacity: 0;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-slide-loop {
+  0% {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+}
+
+@keyframes fade-up-loop {
+  0% {
+    opacity: 0;
+    transform: translateY(10%);
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-10%);
+  }
+}
+
+@keyframes fade-down-loop {
+  0% {
+    opacity: 0;
+    transform: translateY(-10%);
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(10%);
+  }
+}
+
+.fade-slow {
+  animation: fade-loop 3s infinite;
+}
+
+.fade-slide-slow {
+  animation: fade-slide-loop 3s infinite;
+}
+
+.fade-up-slow {
+  animation: fade-up-loop 3s infinite;
+}
+
+.fade-down-slow {
+  animation: fade-down-loop 3s infinite;
+}
+
+/**
+ * 入场阶梯：按 `:nth-child(1..5)` 递增延迟逐个入场（对齐 vben 的
+ * `.enter-x` / `.enter-y` / `.-enter-x` / `.-enter-y`）。
+ * 供登录页等「整块内容阶梯入场」的页面复用；`-` 前缀为反向（自左 / 自上）。
+ *
+ * 实现取向：起始态写在 keyframes 的 `from`（而非基础声明），配
+ * `animation-fill-mode: backwards`——动画结束后元素回到自然态（无残留
+ * transform），不会给容器平白加上包含块 / 层叠上下文。
+ */
+@keyframes enter-x-animation {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes enter-x-reverse-animation {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes enter-y-animation {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes enter-y-reverse-animation {
+  from {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+$enter-staircase-delays: (
+  1: var(--duration-instant),
+  2: var(--duration-fast),
+  3: var(--duration-base),
+  4: var(--duration-slow),
+  5: var(--duration-slower)
+);
+
+@mixin enter-staircase($className, $keyframes) {
+  @each $nth, $delay in $enter-staircase-delays {
+    .#{$className}:nth-child(#{$nth}) {
+      animation-name: #{$keyframes};
+      animation-duration: var(--duration-base);
+      animation-timing-function: var(--ease-standard);
+      animation-delay: #{$delay};
+      animation-fill-mode: backwards;
+    }
+  }
+}
+
+@include enter-staircase("enter-x", "enter-x-animation");
+@include enter-staircase("enter-y", "enter-y-animation");
+@include enter-staircase("-enter-x", "enter-x-reverse-animation");
+@include enter-staircase("-enter-y", "enter-y-reverse-animation");
+
 /* ============ Element Plus 折叠过渡覆写 ============ */
 
 /**

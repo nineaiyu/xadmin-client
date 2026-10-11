@@ -19,6 +19,8 @@
     "check:i18n": "node scripts/check-i18n-keys.mjs",
     "check:as-unknown": "node scripts/check-as-unknown.mjs",
     "check:hook-length": "node scripts/check-hook-length.mjs",
+    "check:font-size-literals": "node scripts/check-font-size-literals.mjs",
+    "check:color-literals": "node scripts/check-color-literals.mjs",
     "check:module-cycles": "node scripts/check-module-cycles.mjs",
     "analyze:bundle": "node scripts/bundle-analyze.mjs",
     "gen:metadata-types": "node scripts/gen-metadata-types.mjs",

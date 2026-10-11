@@ -19,6 +19,8 @@
   --color-border-light: hsl(var(--border-light));
   --color-fill: hsl(var(--fill));
   --color-fill-muted: hsl(var(--fill-muted));
+  --color-fill-subtle: hsl(var(--fill-subtle));
+  --color-fill-strong: hsl(var(--fill-strong));
 
   /* 品牌色：沿用 Element Plus 变量（运行期自定义主题色由 JS 写入
      --el-color-primary 及其色阶，见 layout/hooks/themeColorScheme.ts） */

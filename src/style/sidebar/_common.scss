@@ -30,7 +30,7 @@
 
   .sub-menu-icon {
     margin-right: 5px;
-    font-size: 18px;
+    font-size: var(--font-size-lg);
 
     svg,
     .svg-raw-icon {
@@ -57,7 +57,7 @@
     justify-content: center;
     width: 40px;
     height: 48px;
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     cursor: pointer;
   }
 
@@ -206,7 +206,7 @@
 
     .el-menu-item.is-active.nest-menu > * {
       z-index: 1;
-      color: #fff;
+      color: var(--el-color-white);
     }
 
     .el-menu-item.is-active.nest-menu::before {
@@ -222,7 +222,7 @@
     .el-menu .el-menu--inline .el-sub-menu__title,
     & .el-sub-menu .el-menu-item {
       min-width: $sideBarWidth !important;
-      font-size: 14px;
+      font-size: var(--font-size-base);
       background-color: var(--pure-theme-sub-menu-bg) !important;
     }
 
@@ -255,7 +255,7 @@
     /* 无子集的激活菜单背景 */
     .is-active.submenu-title-noDropdown.outer-most > * {
       z-index: 1;
-      color: #fff;
+      color: var(--el-color-white);
     }
 
     .is-active.submenu-title-noDropdown.outer-most::before {
@@ -276,7 +276,7 @@
 
       .el-menu-item {
         span {
-          font-size: 14px;
+          font-size: var(--font-size-base);
         }
       }
     }
@@ -296,7 +296,7 @@
     /* 子菜单中还有子菜单 */
     .el-menu .el-sub-menu__title {
       min-width: $sideBarWidth !important;
-      font-size: 14px;
+      font-size: var(--font-size-base);
       background-color: var(--pure-theme-sub-menu-bg) !important;
     }
 
@@ -319,7 +319,7 @@
 
     .el-menu-item.is-active.nest-menu > * {
       z-index: 1;
-      color: #fff;
+      color: var(--el-color-white);
     }
 
     .el-menu-item.is-active.nest-menu::before {
@@ -334,7 +334,7 @@
     .el-menu-item,
     .el-sub-menu {
       .iconfont {
-        font-size: 18px;
+        font-size: var(--font-size-lg);
       }
 
       .el-menu-tooltip__trigger {
@@ -368,7 +368,7 @@
         background-color: var(--pure-theme-sub-menu-bg);
 
         span {
-          font-size: 14px;
+          font-size: var(--font-size-base);
         }
       }
 
@@ -380,7 +380,7 @@
     /* 子菜单中还有子菜单 */
     .el-menu .el-sub-menu__title {
       min-width: $sideBarWidth !important;
-      font-size: 14px;
+      font-size: var(--font-size-base);
       background-color: var(--pure-theme-sub-menu-bg) !important;
 
       &:hover {
@@ -407,7 +407,7 @@
 
     .el-menu-item.is-active.nest-menu > * {
       z-index: 1;
-      color: #fff;
+      color: var(--el-color-white);
     }
 
     .el-menu-item.is-active.nest-menu::before {
@@ -449,7 +449,7 @@
         margin: 2px 0 0 12px;
         overflow: hidden;
         text-overflow: ellipsis;
-        font-size: 18px;
+        font-size: var(--font-size-lg);
         font-weight: 600;
         line-height: 32px;
         color: var(--pure-theme-sub-menu-active-text);
@@ -508,7 +508,7 @@
         cursor: pointer;
 
         p {
-          font-size: 14px;
+          font-size: var(--font-size-base);
         }
 
         img {

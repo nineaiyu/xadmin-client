@@ -116,6 +116,7 @@
      html 根字号保持 16px 不动——Tailwind 的 --spacing 由根字号推导，
      改根字号会连带缩放全站间距与控件高度。 */
   --font-scale: 1;
+  --font-size-2xs: calc(11px * var(--font-scale));
   --font-size-xs: calc(12px * var(--font-scale));
   --font-size-sm: calc(13px * var(--font-scale));
   --font-size-base: calc(14px * var(--font-scale));
@@ -123,6 +124,16 @@
   --font-size-lg: calc(18px * var(--font-scale));
   --font-size-xl: calc(20px * var(--font-scale));
   --font-size-2xl: calc(24px * var(--font-scale));
+
+  /* ================ 展示型尺寸 ================
+     图标字符 / 表情 / 插画 / 大数字等「图形元素」的字形尺寸：这些位置用
+     font-size 控制图形大小（Iconify 图标、emoji、插画字符），不属正文排版，
+     但同随字号缩放设置同比放大。正文/标签/标题一律用上方 --font-size-* 阶梯。 */
+  --display-size-sm: calc(21px * var(--font-scale));
+  --display-size-md: calc(26px * var(--font-scale));
+  --display-size-lg: calc(32px * var(--font-scale));
+  --display-size-xl: calc(34px * var(--font-scale));
+  --display-size-2xl: calc(48px * var(--font-scale));
 
   /* ================ 字重 ================ */
   --font-weight-normal: 400;

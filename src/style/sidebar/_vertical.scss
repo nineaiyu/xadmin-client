@@ -33,7 +33,7 @@ body[layout="vertical"] {
        仅视觉层加宽并浮于内容之上，移开即复位，不写回存储 */
     .sidebar-container.sidebar-hover-expanded {
       width: $sideBarWidth !important;
-      box-shadow: 2px 0 10px rgb(0 0 0 / 12%);
+      box-shadow: var(--shadow-md);
     }
 
     .main-container {
@@ -90,7 +90,7 @@ body[layout="vertical"] {
           margin-top: 4px;
           overflow: hidden;
           text-overflow: ellipsis;
-          font-size: 12px;
+          font-size: var(--font-size-xs);
           line-height: 1.4;
           text-align: center;
           white-space: nowrap;
@@ -115,7 +115,7 @@ body[layout="vertical"] {
           margin-top: 4px;
           overflow: hidden;
           text-overflow: ellipsis;
-          font-size: 12px;
+          font-size: var(--font-size-xs);
           line-height: 1.4;
           white-space: nowrap;
         }
@@ -140,7 +140,7 @@ body[layout="vertical"] {
     /* 设置 */
   .set-icon {
     &:hover {
-      background: #f6f6f6;
+      background: hsl(var(--fill-muted));
     }
   }
 }
