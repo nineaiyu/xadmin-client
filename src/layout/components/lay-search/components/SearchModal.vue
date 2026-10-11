@@ -338,6 +338,7 @@ function handleDrag(item: dragItem) {
               'bg-fill-muted': commandActive === item.id
             }"
             :data-testid="`command-${item.id.replace('cmd:', '')}`"
+            :data-active="commandActive === item.id ? 'true' : undefined"
             @click="runQuickAction(item.id)"
           >
             <component :is="useRenderIcon(item.icon)" class="size-4" />

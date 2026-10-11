@@ -46,9 +46,10 @@ test("命令面板：Ctrl+K 唤起、↑↓ 移动指针、Enter 执行快捷动
   await expect(page.locator(".search-footer")).toContainText(/切换|Switch/);
 
   // 初始无选中态：↑ 直接落到最后一个动作「返回首页」，高亮随指针移动
+  // 选中态以 data-active 判定（高亮样式类是设计令牌，会随主题体系改名漂移）
   await page.keyboard.press("ArrowUp");
   const homeAction = page.getByTestId("command-home");
-  await expect(homeAction).toHaveClass(/bg-\[#f5f5f5\]/);
+  await expect(homeAction).toHaveAttribute("data-active", "true");
 
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/#\/welcome/, { timeout: 10_000 });
