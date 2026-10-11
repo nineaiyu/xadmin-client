@@ -3130,6 +3130,102 @@ dataScreen:
   panePosition: Position
   paneSize: Size
   gridHint: 12 columns x 60 rows; position and size are column/row indexes
+  modeGrid: Grid
+  modeFree: Free canvas
+  layer: Layer
+  layerTop: Front
+  layerUp: Up
+  layerDown: Down
+  layerBottom: Back
+  freeHint: Free canvas places panes in pixels (x/y/w/h in px, overlapping allowed); layer order = array order (later on top)
+  paneRotate: Rotation
+  paneAnimation: Entrance animation
+  paneTextFormat: Text format
+  textFormatPlain: Plain
+  textFormatRich: Rich
+  richTextHint: "Rich markup: **bold** *italic* __underline__ ~~strike~~ [c=#rrggbb]color[/c]"
+  animationNone: None
+  animationFade: Fade in
+  animationSlideUp: Slide up
+  animationSlideDown: Slide down
+  animationSlideLeft: Slide left
+  animationSlideRight: Slide right
+  animationZoomIn: Zoom in
+  gridSnap: Snap to grid
+  zoomKeyboardHint: "Shortcuts: Ctrl/Cmd + = / - to step zoom, Ctrl/Cmd + 0 to fit"
+  zoom: Zoom
+  zoomFit: Fit
+  zoomReset: "100%"
+  multiSelected: "{n} panes selected"
+  multiHint: Drag on empty canvas to marquee-select; drag any selected pane to move the group; arrow keys nudge the group
+  multiBatch: Batch edit
+  multiBatchHint: Changes are applied to every selected pane (panes the field does not apply to are skipped)
+  align: Align
+  alignLeftEdge: Left
+  alignCenterH: Center
+  alignRightEdge: Right
+  alignTopEdge: Top
+  alignCenterV: Middle
+  alignBottomEdge: Bottom
+  distribute: Distribute
+  distributeH: Horizontal
+  distributeV: Vertical
+  copy: Copy
+  paste: Paste
+  copyDone: Copied {n} pane(s)
+  clipboardBlocked: Browser storage unavailable; this copy works in the current page only
+  pasteNothing: Nothing to paste (empty clipboard or all references are invisible)
+  insertSkipped: Skipped {n} pane(s) with invisible references
+  insertTruncated: Pane limit reached, {n} pane(s) truncated
+  templateMenu: Apply template
+  templateApplyReplace: Replace with
+  templateApplyAppend: Append
+  templateSave: Save as template
+  templateManage: Manage my templates
+  templateEmptyMine: No saved template yet
+  templateRename: Rename
+  templateExport: Export
+  templateDelete: Delete
+  templateNamePrompt: Enter a template name (max 40 characters)
+  templateNameRequired: Template name is required
+  templateEmptyCanvas: No pane to save on this canvas
+  templateLimit: Template limit reached (20)
+  templateStorageFailed: Browser storage unavailable, template not saved
+  templateSaved: Template "{name}" saved
+  templateApplied: Template "{name}" applied
+  templateMissing: Template not found (maybe deleted)
+  templateRenamed: Template renamed
+  templateRemoved: Template deleted
+  templateReplaceConfirm: All free canvas panes will be replaced (and the canvas size switched). Continue?
+  templateDeleteConfirm: Delete this template?
+  templateExportDone: Template exported
+  templateExportFailed: Export failed (download not supported)
+  templateGroupBuiltin: Built-in templates
+  templateGroupServer: Team templates
+  templateServerEmpty: No team template yet
+  templateSaveServer: Save as team template
+  templateVisibilityHint: Share with the team? (Cancel = visible only to me)
+  templateVisibilityShared: Share with team
+  templateVisibilityPersonal: Only me
+  templateServerSaved: Saved as a team template
+  templateServerFailed: Failed to save the team template (duplicate name or invisible reference)
+  templateServerWriteDenied: Only the creator can modify this team template
+  templateImport: Import JSON
+  templateImportModeHint: "Import mode: OK = replace the canvas, Cancel = append to it"
+  templateImportFormat: Invalid JSON — nothing was imported
+  templateImportEmpty: No importable pane (missing coordinates or type)
+  templateImportTooLarge: File too large — import cancelled
+  templateImported: Imported {n} panes
+  tplPromo: Promo screen
+  tplPromoTitle: Title
+  tplPromoSubtitle: Subtitle / description
+  tplReport: Report screen
+  tplReportTitle: Report title
+  tplReportBody: Type the body text here
+  tplReportFooter: "Footer: author / date"
+  tplSkeleton: Data skeleton
+  tplSkeletonTitle: Board title
+  tplSkeletonSection: Section title
   inspector: Pane properties
   noSelection: Select a pane on the canvas to edit its properties
   emptyCanvas: Add panes from the left (text / clock / dashboard)
@@ -3160,6 +3256,7 @@ dataScreen:
   paneNoCard: No visible card in this dashboard
   clearLayout: Clear canvas
   clearLayoutConfirm: Clearing returns this screen to carousel mode. Continue?
+  freeClearConfirm: Clear the free canvas panes? (The grid layout is kept; if it is empty too, the screen falls back to carousel)
   preview: Preview
   editMode: Exit preview
   refreshData: Refresh data

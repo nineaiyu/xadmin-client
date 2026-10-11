@@ -1,5 +1,4 @@
 import type { Ref } from "vue";
-import type { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
 import type { ScreenLayoutPane, ScreenPaneType } from "@/api/dataset/analysis";
 import {
@@ -11,8 +10,7 @@ import {
   genPaneId,
   type PaneBox
 } from "./layout";
-
-type TFunction = ReturnType<typeof useI18n>["t"];
+import type { TranslateFn } from "./types";
 
 /**
  * 窗格增删改的本地变更（新增 / 复制 / 删除 / 属性面板更新）。
@@ -32,7 +30,7 @@ export function createPaneOps({
   panes: Ref<ScreenLayoutPane[]>;
   selectedPk: Ref<string>;
   pushHistory: (key?: string) => void;
-  t: TFunction;
+  t: TranslateFn;
 }) {
   function addPane(type: ScreenPaneType, dashboard?: string, at?: PaneBox) {
     if (panes.value.length >= MAX_PANES) {

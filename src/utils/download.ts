@@ -38,6 +38,28 @@ function extractPlainFilename(disposition: string): string | undefined {
   }
 }
 
+/**
+ * 下载一段前端自产的文本（JSON / CSV 等）：Blob 对象 URL + 锚点点击，用完立即释放。
+ * 浏览器策略或环境限制（如无 `URL.createObjectURL`）导致失败时返回 false，由调用方提示。
+ */
+export function downloadTextFile(
+  fileName: string,
+  text: string,
+  mime = "application/json"
+): boolean {
+  try {
+    const url = URL.createObjectURL(new Blob([text], { type: mime }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** 由响应头解析下载文件名（无 content-disposition 时回退随机名 + 可选扩展名） */
 export function resolveDownloadFilename(
   headers: unknown,

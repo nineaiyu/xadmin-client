@@ -6,13 +6,20 @@ import { ChartCardAsync as ChartCard } from "@/views/dashboard/components/ChartC
 import type { DashboardCard } from "@/api/dataset/datasets";
 import type { ScreenLayoutPane } from "@/api/dataset/analysis";
 import type { ExportedImage } from "@/utils/imageExport";
+import { clampRotate, paneAnimationClass } from "../utils/paneEffects";
+import { renderRichText } from "../utils/richText";
 
 /**
  * 画布窗格渲染（设计器与投屏共用同一组件，所见即所得）。
  *
  * 纯展示 + 暴露数据动作：窗格内容 = 仪表盘卡片组（嵌套 12 列栅格）/ 文本 / 时钟；
- * 拖拽与缩放由设计器在窗格外层处理（本组件只上抛 pointerdown，不持有画布坐标系），
- * 时钟文本由父组件统一按秒下发（多窗格共用定时器，避免每窗格一个 interval）。
+ * 拖拽与缩放由外层画布处理——栅格模式上抛 pointerdown（`pane-drag` / `pane-resize`），
+ * 自由模式由 `ReResize` 包裹并整块接管手势；时钟文本由父组件统一按秒下发
+ * （多窗格共用定时器，避免每窗格一个 interval）。
+ *
+ * `layout` 决定定位方式：栅格模式按 `x/y/w/h` 落到 CSS Grid 行列；自由模式由
+ * 外层盒模型定位，本组件铺满宿主（`position: absolute; inset: 0`）且不渲染
+ * 栅格专用的拖拽抓手 / 缩放手柄。
  */
 defineOptions({ name: "ScreenPane" });
 
@@ -27,6 +34,10 @@ const props = defineProps<{
   /** 设计态：显示选中框与操作入口 */
   editable?: boolean;
   selected?: boolean;
+  /** 坐标语义：grid 按栅格行列定位（缺省），free 铺满宿主（外层盒模型定位） */
+  layout?: "grid" | "free";
+  /** 播放入场动画（仅预览 / 投屏态为 true；编辑态不播，见 utils/paneEffects） */
+  playAnimation?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -109,11 +120,43 @@ const renderImages = async () => {
 
 defineExpose({ refresh, applyCardData, renderImages });
 
-/** 栅格定位：x/y 为列/行下标（+1 转 CSS 的 1 起编号） */
+/**
+ * 栅格定位：x/y 为列/行下标（+1 转 CSS 的 1 起编号）；自由模式由外层盒模型定位。
+ * 旋转叠加在定位之上（`transform-origin: center`）：**视觉旋转**，不进几何——
+ * 吸附 / 框选 / 对齐仍按未旋转的盒模型算（见 utils/paneEffects）。
+ */
+const rotate = computed(() => clampRotate(props.pane.rotate));
 const paneStyle = computed(() => ({
-  gridColumn: `${props.pane.x + 1} / span ${props.pane.w}`,
-  gridRow: `${props.pane.y + 1} / span ${props.pane.h}`
+  ...(props.layout === "free"
+    ? { position: "absolute" as const, inset: "0" }
+    : {
+        gridColumn: `${props.pane.x + 1} / span ${props.pane.w}`,
+        gridRow: `${props.pane.y + 1} / span ${props.pane.h}`
+      }),
+  ...(rotate.value ? { transform: `rotate(${rotate.value}deg)` } : {})
 }));
+
+/** 编辑件反向旋转：手柄 / 抓手始终轴对齐（旋转的只是内容视觉） */
+const counterRotate = computed(() =>
+  rotate.value ? { transform: `rotate(${-rotate.value}deg)` } : {}
+);
+
+/** 入场动画类名（仅展示态；`playAnimation` 为 false 时恒为空） */
+const animationClass = computed(() =>
+  props.playAnimation ? paneAnimationClass(props.pane.animation) : ""
+);
+
+/** 富文本渲染结果（受限标记 → 白名单 HTML；纯文本为空串，走插值分支） */
+const richHtml = computed(() =>
+  props.pane.type === "text" &&
+  props.pane.text_format === "rich" &&
+  props.pane.text
+    ? renderRichText(props.pane.text)
+    : ""
+);
+
+/** 栅格模式由本组件承接拖拽 / 缩放入口；自由模式手势归外层 ReResize */
+const gridEditable = computed(() => props.editable && props.layout !== "free");
 
 const textStyle = computed(() => ({
   textAlign: props.pane.align ?? "left",
@@ -128,20 +171,25 @@ const clockStyle = computed(() => ({
 <template>
   <div
     class="screen-pane"
-    :class="{ 'is-editable': editable, 'is-selected': selected }"
+    :class="[
+      { 'is-editable': editable, 'is-selected': selected },
+      animationClass
+    ]"
     :style="paneStyle"
     :data-pane-id="pane.pk"
     :data-pane-type="pane.type"
+    :data-pane-animation="pane.animation || 'none'"
     @pointerdown="editable && emit('select', pane.pk)"
   >
     <div
-      v-if="editable"
+      v-if="gridEditable"
       class="screen-pane__grip"
+      :style="counterRotate"
       :title="t('dataScreen.dragHint')"
       data-testid="pane-drag"
       @pointerdown.stop="emit('dragStart', { pk: pane.pk, event: $event })"
     />
-    <div v-if="editable" class="screen-pane__tools">
+    <div v-if="editable" class="screen-pane__tools" :style="counterRotate">
       <el-button
         size="small"
         text
@@ -162,7 +210,11 @@ const clockStyle = computed(() => ({
       :style="textStyle"
       data-testid="pane-text"
     >
-      {{ pane.text || t("dataScreen.textPlaceholder") }}
+      <!-- 富文本：内容由 utils/richText 生成（先转义再套白名单），不接受外部 HTML -->
+      <span v-if="richHtml" v-html="richHtml" />
+      <template v-else>{{
+        pane.text || t("dataScreen.textPlaceholder")
+      }}</template>
     </div>
 
     <div
@@ -221,8 +273,9 @@ const clockStyle = computed(() => ({
     </div>
 
     <div
-      v-if="editable"
+      v-if="gridEditable"
       class="screen-pane__resize"
+      :style="counterRotate"
       data-testid="pane-resize"
       @pointerdown.stop="emit('resizeStart', { pk: pane.pk, event: $event })"
     />
@@ -230,6 +283,10 @@ const clockStyle = computed(() => ({
 </template>
 
 <style lang="scss" scoped>
+/* 入场动画（ADR-088）：类名由 utils/paneEffects 给出，样式定义在共享 partial 里
+   （keyframes 与本组件 scoped 样式一起编译，命名口径一致；编辑态不挂类 = 不播） */
+@use "@/style/screen-animations";
+
 /* 窗格视觉与投屏页一致（恒深色画布）：设计器与展示端共用，保证所见即所得 */
 .screen-pane {
   position: relative;

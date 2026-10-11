@@ -22,11 +22,15 @@ export function nudgeCoalesceKey(pk: string, resize: boolean): string {
 export function usePaneHistory({
   panes,
   selectedPk,
+  selection,
   markDirty,
   limit = 50
 }: {
   panes: Ref<ScreenLayoutPane[]>;
-  selectedPk: Ref<string>;
+  /** 单选模式的选择（栅格画布）：恢复后按「窗格是否仍存在」清理 */
+  selectedPk?: Ref<string>;
+  /** 多选模式的选择（自由画布）：恢复后按集合裁剪（多选下不能只看主选） */
+  selection?: Ref<string[]>;
   markDirty: () => void;
   limit?: number;
 }) {
@@ -36,6 +40,18 @@ export function usePaneHistory({
   let coalesceAt = 0;
 
   const snapshot = () => panes.value.map(pane => ({ ...pane }));
+
+  /** 恢复后清理已消失的选中（被撤销掉的窗格不能再留在选区内） */
+  function pruneSelection() {
+    const alive = new Set(panes.value.map(pane => pane.pk));
+    if (selection) {
+      const next = selection.value.filter(pk => alive.has(pk));
+      if (next.length !== selection.value.length) selection.value = next;
+    }
+    if (selectedPk?.value && !alive.has(selectedPk.value)) {
+      selectedPk.value = "";
+    }
+  }
 
   function pushHistory(key?: string) {
     const now = Date.now();
@@ -60,9 +76,7 @@ export function usePaneHistory({
     if (!prev) return;
     future.value.push(snapshot());
     panes.value = prev;
-    if (!panes.value.some(pane => pane.pk === selectedPk.value)) {
-      selectedPk.value = "";
-    }
+    pruneSelection();
     markDirty();
   }
 
@@ -71,6 +85,7 @@ export function usePaneHistory({
     if (!next) return;
     past.value.push(snapshot());
     panes.value = next;
+    pruneSelection();
     markDirty();
   }
 

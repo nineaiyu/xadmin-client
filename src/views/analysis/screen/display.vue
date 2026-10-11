@@ -1,8 +1,6 @@
 <script lang="ts" setup>
-import { SUCCESS_CODE } from "@/api/types";
 import { computed, onMounted, ref } from "vue";
-import { useRoute } from "vue-router";
-import { screenApi, type ScreenItem } from "@/api/dataset/analysis";
+import type { ScreenItem } from "@/api/dataset/analysis";
 import type {
   DashboardCard,
   DashboardItem,
@@ -14,11 +12,14 @@ import type { ScreenDataPayload } from "@/utils/websocket/protocol";
 import type { ExportedImage } from "@/utils/imageExport";
 import { useScreenDisplay } from "./utils/useScreenDisplay";
 import { useScreenExport } from "./utils/useScreenExport";
+import { useScreenLoader } from "./utils/useScreenLoader";
+import { useFreeStage } from "./utils/useFreeStage";
+import { visiblePanes } from "./utils/paneVisibility";
 import { cardRenderHeight } from "@/utils/cardHeight";
 import { canvasGridVars } from "./utils/layout";
-import { loadScreenReferenceData } from "./utils/referenceData";
 import { ChartCardAsync as ChartCard } from "@/views/dashboard/components/ChartCardAsync";
 import ScreenPane from "./components/ScreenPane.vue";
+import ScreenFreeStage from "./components/ScreenFreeStage.vue";
 import ReEmpty from "@/components/ReEmpty";
 import PauseIcon from "~icons/ep/video-pause";
 import PlayIcon from "~icons/ep/video-play";
@@ -30,8 +31,9 @@ defineOptions({
 });
 
 /**
- * 大屏投屏：全屏轮播 Screen 内的仪表盘，按 refresh 秒自动重拉数据。
- * 权限复用仪表盘可见性：对当前浏览者不可见的仪表盘自动跳过。
+ * 大屏投屏：三种形态共用一页——自由画布（自由载荷窗格非空）/ 栅格画布（`layout`
+ * 非空）/ 仪表盘轮播（皆空，存量形态），判定与服务端同序。
+ * 权限复用仪表盘可见性：对当前浏览者不可见的仪表盘与数据集自动跳过。
  * 图表渲染复用一期的 ChartCard（defineExpose loadData 供定时刷新）。
  *
  * 远程控制：连接 ws/screen/<pk> 接收管理端指令（切换/翻页/刷新/恢复轮播）；
@@ -39,7 +41,6 @@ defineOptions({
  * 「服务端 dashboards 下标 → 本地可见列表」映射，跳过不可见仪表盘不会错位。
  */
 
-const route = useRoute();
 const { t } = useI18n();
 
 const screen = ref<ScreenItem | null>(null);
@@ -67,6 +68,7 @@ type CardDataEntry = {
   detail?: string;
 };
 type ApplyScreenData = (_frame: ScreenDataPayload) => void;
+/** 服务端逐卡错误 → 与卡片同一条注入通道（ChartCard 按 detail 渲染错误态） */
 const toErrorEntry = (error: {
   card: string;
   detail: string;
@@ -76,20 +78,24 @@ const toErrorEntry = (error: {
 });
 
 /**
- * 画布模式（P2.2 批次一）：`layout` 非空即按窗格渲染，空则维持既有仪表盘轮播。
- * 与轮播同一可见性口径：窗格引用的仪表盘 / 数据集对浏览者不可见时整格跳过
- * （后端口径同 `can_view_screen` + 执行侧 fail-closed，前端只做展示层过滤）。
+ * 形态判定（与服务端同序）：自由画布（自由载荷窗格非空）> 栅格画布（`layout` 非空）
+ * > 轮播。两种画布与轮播同一可见性口径：窗格引用的仪表盘 / 数据集对浏览者不可见时
+ * 整格跳过（后端口径同 `can_view_screen` + 执行侧 fail-closed，前端只做展示层过滤）。
  */
 const layoutPanes = computed(() =>
-  (screen.value?.layout ?? []).filter(
-    pane =>
-      (pane.type !== "dashboard" ||
-        dashboards.value.some(item => item.pk === pane.dashboard)) &&
-      (pane.type !== "metric" ||
-        datasets.value.some(item => item.pk === pane.dataset))
-  )
+  visiblePanes(screen.value?.layout ?? [], dashboards.value, datasets.value)
 );
-const isCanvas = computed(() => layoutPanes.value.length > 0);
+const { freeLayout, freePanes, isFree } = useFreeStage({
+  screen,
+  dashboards,
+  datasets
+});
+const isCanvas = computed(() => !isFree.value && layoutPanes.value.length > 0);
+/** 画布态（栅格 / 自由）：无轮播页码与暂停控件，刷新与导出逐窗格 */
+const isStage = computed(() => isFree.value || isCanvas.value);
+const activePanes = computed(() =>
+  isFree.value ? freePanes.value : layoutPanes.value
+);
 const paneCards = (pane: { dashboard?: string }) =>
   dashboards.value.find(item => item.pk === pane.dashboard)?.layout ?? [];
 const paneTitle = (pane: { dashboard?: string }) =>
@@ -104,7 +110,7 @@ const setPaneRef = (pk: string) => (el: unknown) => {
 };
 
 const refreshVisible = () => {
-  if (isCanvas.value) {
+  if (isStage.value) {
     Object.values(paneRefs.value).forEach(handle => handle?.refresh?.());
     return;
   }
@@ -119,7 +125,7 @@ const refreshVisible = () => {
  * 画布模式单帧 dashboard=null，逐窗格路由（窗格持有该卡才应用）。
  */
 const applyScreenData: ApplyScreenData = frame => {
-  if (isCanvas.value) {
+  if (isStage.value) {
     for (const entry of [...frame.cards, ...frame.errors.map(toErrorEntry)]) {
       Object.values(paneRefs.value).some(handle =>
         handle?.applyCardData?.(entry.card, entry)
@@ -149,11 +155,11 @@ const currentCards = computed<DashboardCard[]>(
 
 /** 导出当前屏：逐卡渲染图片并按 ZIP 打包（实现见 utils/useScreenExport.ts，行数门禁抽出） */
 const { exporting, exportScreen } = useScreenExport({
-  isCanvas,
+  isCanvas: isStage,
   currentCards,
   cardRefs,
   paneRefs,
-  layoutPanes,
+  layoutPanes: activePanes,
   paneCards
 });
 
@@ -169,41 +175,25 @@ const toggleFullscreen = () => {
   }
 };
 
-/** 详情加载失败标记：缺 pk、接口报错或网络异常都显式呈现，不再静默黑屏 */
-const loadFailed = ref(false);
-
-const loadScreen = async () => {
-  loadFailed.value = false;
-  const pk = String(route.query.pk ?? "");
-  const res = pk ? await screenApi.retrieve(pk).catch(() => null) : null;
-  if (!res || res.code !== SUCCESS_CODE) {
-    loadFailed.value = true;
-    return;
+/** 详情装载（失败标记 + 重试入口，实现见 utils/useScreenLoader.ts，行数门禁抽出） */
+const { loadFailed, loadScreen } = useScreenLoader({
+  screen,
+  dashboards,
+  datasets,
+  onLoaded: pk => {
+    startTimers();
+    startWs(pk);
   }
-  screen.value = res.data as ScreenItem;
-  // 引用数据失败按「加载失败 + 重试」呈现（此前未捕获——异常逃逸且页面落入
-  // 「暂无可展示看板」空态，与真实原因不符，也无法重试）
-  const reference = await loadScreenReferenceData();
-  if (!reference.dashboards || !reference.datasets) {
-    loadFailed.value = true;
-    return;
-  }
-  const all = reference.dashboards;
-  // 仅保留浏览者可见的仪表盘（personal 对他人不在可见列表内）
-  dashboards.value = (screen.value?.dashboards ?? [])
-    .map((id: string) => all.find((item: DashboardItem) => item.pk === id))
-    .filter((item): item is DashboardItem => Boolean(item));
-  // 指标卡窗格按可见数据集过滤（同仪表盘窗格口径）
-  datasets.value = reference.datasets;
-  startTimers();
-  startWs(pk);
-};
+});
 
 onMounted(loadScreen);
 </script>
 
 <template>
-  <div class="screen-root fixed inset-0 overflow-auto text-white">
+  <div
+    class="screen-root fixed inset-0 overflow-auto text-white"
+    :class="{ 'is-free': isFree }"
+  >
     <!-- 氛围底：径向光晕 + 纵向渐变（恒深色投屏，不随站点主题） -->
     <div class="screen-ambient" aria-hidden="true" />
 
@@ -213,13 +203,13 @@ onMounted(loadScreen);
              视觉层次由内层 span 的字号/透明度表达 -->
         <span class="screen-title">
           {{ screen?.name }}
-          <!-- 画布模式没有「当前看板」概念：副标题与页码仅轮播态渲染 -->
-          <span v-if="!isCanvas" class="screen-subtitle"
+          <!-- 画布态（栅格 / 自由）没有「当前看板」概念：副标题与页码仅轮播态渲染 -->
+          <span v-if="!isStage" class="screen-subtitle"
             >· {{ currentDashboard?.name }}</span
           >
         </span>
       </div>
-      <span v-if="!isCanvas" class="screen-page"
+      <span v-if="!isStage" class="screen-page"
         >{{ pageIndex + 1 }} / {{ dashboards.length }}</span
       >
       <!-- 远程接管指示：manual 态停本地轮播，回到 auto 后指示消失 -->
@@ -243,7 +233,7 @@ onMounted(loadScreen);
         {{ t("dataScreen.exportScreen") }}
       </el-button>
       <el-button
-        v-if="!isCanvas"
+        v-if="!isStage"
         size="small"
         :icon="paused ? PlayIcon : PauseIcon"
         :aria-label="paused ? t('dataScreen.resume') : t('dataScreen.pause')"
@@ -272,15 +262,27 @@ onMounted(loadScreen);
     </ReEmpty>
 
     <ReEmpty
-      v-else-if="!isCanvas && dashboards.length === 0"
+      v-else-if="!isStage && dashboards.length === 0"
       :description="t('dataScreen.noDashboards')"
       icon="ep/monitor"
     />
 
-    <!-- 画布模式：窗格绝对按 12 列栅格定位；栅格度量经 :style 绑定 layout.ts
+    <!-- 自由画布：按基准设计画幅固定尺寸渲染 + 整体等比缩放（contain 居中，letterbox
+         用画布底色）；窗格渲染与栅格共用 ScreenPane，缩放只作用于展示不写回数据 -->
+    <ScreenFreeStage
+      v-if="isFree"
+      :panes="freePanes"
+      :design="freeLayout.design"
+      :clock="clock"
+      :pane-cards="paneCards"
+      :pane-title="paneTitle"
+      :set-pane-ref="setPaneRef"
+    />
+
+    <!-- 栅格画布：窗格绝对按 12 列栅格定位；栅格度量经 :style 绑定 layout.ts
          常量派生的 CSS 变量（与设计器同一份来源），保证所见即所得 -->
     <div
-      v-if="isCanvas"
+      v-else-if="isCanvas"
       class="screen-canvas"
       :style="canvasGridVars"
       data-testid="screen-canvas"
@@ -289,6 +291,7 @@ onMounted(loadScreen);
         v-for="pane in layoutPanes"
         :key="pane.pk"
         :ref="setPaneRef(pane.pk)"
+        play-animation
         :pane="pane"
         :cards="paneCards(pane)"
         :clock="clock"
@@ -333,6 +336,14 @@ onMounted(loadScreen);
 /* 恒深色投屏页（刻意不随站点主题）：色值按深色设计基线写定 */
 .screen-root {
   background: var(--screen-canvas);
+}
+
+/* 自由画布：舞台按设计画幅固定尺寸后整体缩放，页面转为纵向弹性布局
+   （避免 1:1 画幅把页面撑出滚动条），letterbox 由舞台组件用画布底色铺满 */
+.screen-root.is-free {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .screen-ambient {

@@ -3,14 +3,27 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import type { ScreenLayoutPane, ScreenPaneType } from "@/api/dataset/analysis";
 import type { DashboardItem, DatasetItem } from "@/api/dataset/datasets";
+import { FREE_MIN_PANE_SIZE, type FreeDesign } from "../utils/freeLayout";
+import type { FreeLayerAction } from "../utils/freePaneOps";
+import {
+  PANE_ROTATE_MAX,
+  PANE_ROTATE_MIN,
+  clampRotate,
+  paneAnimationOptions,
+  type PaneAnimation
+} from "../utils/paneEffects";
 import { isValidPaneImageUrl } from "../utils/layout";
 
 /**
  * 窗格属性面板（设计器右侧）。
  *
- * 只改数据、不碰画布坐标：位置/尺寸变化由设计器统一走 `canPlace` 校验（重叠即拒绝并提示），
- * 因此这里的 number 输入直接提交，非法值由上层就地驳回（输入框保持用户填的值，便于回改）。
+ * 只改数据、不碰画布坐标：栅格模式下位置/尺寸变化由设计器统一走 `canPlace`
+ * 校验（重叠即拒绝并提示），自由模式由设计器夹回画幅（允许重叠）；因此这里的
+ * number 输入直接提交，非法值由上层就地处理（输入框保持用户填的值，便于回改）。
  * 指标卡的 sum/avg 取值列限定数据集数值列（与服务端校验同口径，避免保存被 400 打回）。
+ *
+ * 坐标段随模式换语义：栅格为列/行下标（x≤11、y≤59），自由为像素（下限 16px、
+ * 上线由基准设计画幅决定）；自由模式另有层级操作（数组顺序即层级，后者在上）。
  */
 defineOptions({ name: "ScreenPaneInspector" });
 
@@ -18,13 +31,40 @@ const props = defineProps<{
   pane: ScreenLayoutPane;
   dashboards: DashboardItem[];
   datasets?: DatasetItem[];
+  /** 坐标语义：grid 为列/行下标（缺省），free 为像素 */
+  layout?: "grid" | "free";
+  /** 自由模式：基准设计画幅（像素步进器的上限） */
+  design?: FreeDesign;
 }>();
 
 const emit = defineEmits<{
   update: [patch: Partial<ScreenLayoutPane>];
+  /** 自由模式层级操作：数组顺序即层级（后者在上） */
+  layer: [action: FreeLayerAction];
 }>();
 
 const { t } = useI18n();
+
+const isFree = computed(() => props.layout === "free");
+const design = computed(
+  () => props.design ?? { design_w: 1920, design_h: 1080 }
+);
+const sizeMin = computed(() => (isFree.value ? FREE_MIN_PANE_SIZE : 1));
+const wMax = computed(() => (isFree.value ? design.value.design_w : 12));
+const hMax = computed(() => (isFree.value ? design.value.design_h : 60));
+const xMax = computed(() =>
+  isFree.value ? Math.max(design.value.design_w - (props.pane.w || 0), 0) : 11
+);
+const yMax = computed(() =>
+  isFree.value ? Math.max(design.value.design_h - (props.pane.h || 0), 0) : 59
+);
+
+const LAYER_ACTIONS: { action: FreeLayerAction; label: string }[] = [
+  { action: "top", label: "dataScreen.layerTop" },
+  { action: "up", label: "dataScreen.layerUp" },
+  { action: "down", label: "dataScreen.layerDown" },
+  { action: "bottom", label: "dataScreen.layerBottom" }
+];
 
 const typeLabel = computed(() => {
   const map: Record<ScreenPaneType, string> = {
@@ -51,6 +91,24 @@ const w = numeric("w");
 const h = numeric("h");
 const size = numeric("size", 24);
 const clockSize = numeric("size", 40);
+
+/* ---------------- 表达类字段（ADR-088）：旋转 / 动画 / 富文本 ----------------
+ * 旋转是**视觉旋转**（不进几何：吸附 / 框选 / 对齐仍按未旋转的盒模型算），
+ * 动画只在展示态播放一次；三者都随保存载荷下发（默认值不下发，见 utils/layout.paneBody）。 */
+const rotate = computed({
+  get: () => clampRotate(props.pane.rotate),
+  set: (value: number) => emit("update", { rotate: clampRotate(value) })
+});
+const animation = computed({
+  get: () => props.pane.animation ?? "none",
+  set: (value: PaneAnimation) => emit("update", { animation: value })
+});
+const textFormat = computed({
+  get: () => (props.pane.text_format === "rich" ? "rich" : "plain"),
+  set: (value: string) =>
+    emit("update", { text_format: value === "rich" ? "rich" : "plain" })
+});
+const animationOptions = paneAnimationOptions();
 
 /* ---------------- 指标卡窗格 ---------------- */
 const datasets = computed(() => props.datasets ?? []);
@@ -228,6 +286,22 @@ const imageUrlError = computed(() =>
             @update:model-value="emit('update', { text: $event })"
           />
         </el-form-item>
+        <el-form-item :label="t('dataScreen.paneTextFormat')">
+          <el-radio-group
+            v-model="textFormat"
+            data-testid="inspector-text-format"
+          >
+            <el-radio-button value="plain">
+              {{ t("dataScreen.textFormatPlain") }}
+            </el-radio-button>
+            <el-radio-button value="rich">
+              {{ t("dataScreen.textFormatRich") }}
+            </el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+        <div v-if="textFormat === 'rich'" class="pane-inspector__hint">
+          {{ t("dataScreen.richTextHint") }}
+        </div>
         <el-form-item :label="t('dataScreen.paneFontSize')">
           <el-input-number v-model="size" :min="14" :max="200" />
         </el-form-item>
@@ -261,19 +335,43 @@ const imageUrlError = computed(() =>
         />
       </el-form-item>
 
+      <el-form-item :label="t('dataScreen.paneRotate')">
+        <el-input-number
+          v-model="rotate"
+          :min="PANE_ROTATE_MIN"
+          :max="PANE_ROTATE_MAX"
+          controls-position="right"
+          data-testid="inspector-rotate"
+        />
+      </el-form-item>
+      <el-form-item :label="t('dataScreen.paneAnimation')">
+        <el-select
+          v-model="animation"
+          size="small"
+          data-testid="inspector-animation"
+        >
+          <el-option
+            v-for="item in animationOptions"
+            :key="item.value"
+            :label="t(item.label)"
+            :value="item.value"
+          />
+        </el-select>
+      </el-form-item>
+
       <el-divider />
       <el-form-item :label="t('dataScreen.panePosition')">
         <div class="pane-inspector__pair">
           <el-input-number
             v-model="x"
             :min="0"
-            :max="11"
+            :max="xMax"
             controls-position="right"
           />
           <el-input-number
             v-model="y"
             :min="0"
-            :max="59"
+            :max="yMax"
             controls-position="right"
           />
         </div>
@@ -282,19 +380,36 @@ const imageUrlError = computed(() =>
         <div class="pane-inspector__pair">
           <el-input-number
             v-model="w"
-            :min="1"
-            :max="12"
+            :min="sizeMin"
+            :max="wMax"
             controls-position="right"
           />
           <el-input-number
             v-model="h"
-            :min="1"
-            :max="60"
+            :min="sizeMin"
+            :max="hMax"
             controls-position="right"
           />
         </div>
       </el-form-item>
-      <div class="pane-inspector__hint">{{ t("dataScreen.gridHint") }}</div>
+
+      <el-form-item v-if="isFree" :label="t('dataScreen.layer')">
+        <div class="pane-inspector__layer">
+          <el-button
+            v-for="item in LAYER_ACTIONS"
+            :key="item.action"
+            size="small"
+            :data-testid="`inspector-layer-${item.action}`"
+            @click="emit('layer', item.action)"
+          >
+            {{ t(item.label) }}
+          </el-button>
+        </div>
+      </el-form-item>
+
+      <div class="pane-inspector__hint">
+        {{ isFree ? t("dataScreen.freeHint") : t("dataScreen.gridHint") }}
+      </div>
     </el-form>
   </div>
 </template>
@@ -325,6 +440,18 @@ const imageUrlError = computed(() =>
   :deep(.el-input-number) {
     flex: 1;
     width: auto;
+  }
+}
+
+/* 层级操作：2×2 平铺（置顶/上移/下移/置底） */
+.pane-inspector__layer {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-1);
+  width: 100%;
+
+  :deep(.el-button + .el-button) {
+    margin-left: 0;
   }
 }
 

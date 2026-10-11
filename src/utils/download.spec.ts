@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { buildUUIDMock } = vi.hoisted(() => ({
   buildUUIDMock: vi.fn(() => "uuid-123")
@@ -8,7 +8,7 @@ vi.mock("@pureadmin/utils", () => ({
   buildUUID: buildUUIDMock
 }));
 
-import { resolveDownloadFilename } from "./download";
+import { downloadTextFile, resolveDownloadFilename } from "./download";
 
 describe("resolveDownloadFilename", () => {
   beforeEach(() => {
@@ -77,5 +77,38 @@ describe("resolveDownloadFilename", () => {
     expect(
       resolveDownloadFilename({ "content-disposition": "attachment" })
     ).toBe("uuid-123");
+  });
+});
+
+describe("downloadTextFile", () => {
+  const originalCreate = URL.createObjectURL;
+
+  beforeEach(() => {
+    URL.createObjectURL = vi.fn(() => "blob:mock");
+    URL.revokeObjectURL = vi.fn();
+  });
+
+  it("构造 Blob 对象 URL + 锚点点击，并立即释放 URL", () => {
+    const clicks: string[] = [];
+    const originalClick = HTMLAnchorElement.prototype.click;
+    HTMLAnchorElement.prototype.click = function () {
+      clicks.push(`${this.download}:${this.href}`);
+    };
+    expect(downloadTextFile("tpl.json", '{"a":1}')).toBe(true);
+    expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:mock");
+    expect(clicks).toEqual(["tpl.json:blob:mock"]);
+    HTMLAnchorElement.prototype.click = originalClick;
+  });
+
+  it("环境不支持对象 URL 时返回 false（不抛）", () => {
+    URL.createObjectURL = vi.fn(() => {
+      throw new Error("not supported");
+    });
+    expect(downloadTextFile("tpl.json", "{}")).toBe(false);
+  });
+
+  afterAll(() => {
+    URL.createObjectURL = originalCreate;
   });
 });

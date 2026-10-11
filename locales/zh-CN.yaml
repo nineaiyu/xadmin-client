@@ -3130,6 +3130,102 @@ dataScreen:
   panePosition: 位置
   paneSize: 尺寸
   gridHint: 栅格 12 列 × 60 行；位置与尺寸为列/行下标
+  modeGrid: 栅格
+  modeFree: 自由画布
+  layer: 层级
+  layerTop: 置顶
+  layerUp: 上移
+  layerDown: 下移
+  layerBottom: 置底
+  freeHint: 自由画布按像素定位（位置与尺寸为 px，允许重叠）；层级 = 数组顺序（后者在上）
+  paneRotate: 旋转
+  paneAnimation: 入场动画
+  paneTextFormat: 文本格式
+  textFormatPlain: 纯文本
+  textFormatRich: 富文本
+  richTextHint: "富文本标记：**粗体** *斜体* __下划线__ ~~删除线~~ [c=#rrggbb]彩字[/c]"
+  animationNone: 无
+  animationFade: 淡入
+  animationSlideUp: 上滑入
+  animationSlideDown: 下滑入
+  animationSlideLeft: 左滑入
+  animationSlideRight: 右滑入
+  animationZoomIn: 缩放进入
+  gridSnap: 吸附网格
+  zoomKeyboardHint: 快捷键：Ctrl/⌘ + = / - 切换档位，Ctrl/⌘ + 0 适应窗口
+  zoom: 缩放
+  zoomFit: 适应窗口
+  zoomReset: "100%"
+  multiSelected: 已选 {n} 个窗格
+  multiHint: 拖动画布空白处框选；拖动任一选中窗格可整组移动；方向键整组微调
+  multiBatch: 批量设置
+  multiBatchHint: 改动会统一写到选中的窗格（不适用的窗格自动跳过）
+  align: 对齐
+  alignLeftEdge: 左对齐
+  alignCenterH: 水平居中
+  alignRightEdge: 右对齐
+  alignTopEdge: 顶对齐
+  alignCenterV: 垂直居中
+  alignBottomEdge: 底对齐
+  distribute: 分布
+  distributeH: 水平等间距
+  distributeV: 垂直等间距
+  copy: 复制
+  paste: 粘贴
+  copyDone: 已复制 {n} 个窗格
+  clipboardBlocked: 浏览器存储不可用，本次复制仅在同一页面内有效
+  pasteNothing: 没有可插入的窗格（剪贴板为空或引用均不可见）
+  insertSkipped: 已跳过 {n} 个引用不可见的窗格
+  insertTruncated: 画布窗格已达上限，已截断 {n} 个窗格
+  templateMenu: 应用模板
+  templateApplyReplace: 替换应用
+  templateApplyAppend: 追加应用
+  templateSave: 保存为模板
+  templateManage: 管理我的模板
+  templateEmptyMine: 暂无我的模板
+  templateRename: 重命名
+  templateExport: 导出
+  templateDelete: 删除
+  templateNamePrompt: 请输入模板名称（最多 40 字）
+  templateNameRequired: 模板名称不能为空
+  templateEmptyCanvas: 当前画布没有可保存的窗格
+  templateLimit: 模板数量已达上限（20 个）
+  templateStorageFailed: 浏览器存储不可用，模板未保存
+  templateSaved: 已保存模板「{name}」
+  templateApplied: 已应用模板「{name}」
+  templateMissing: 模板不存在（可能已被删除）
+  templateRenamed: 模板已重命名
+  templateRemoved: 模板已删除
+  templateReplaceConfirm: 将替换当前自由画布的全部窗格（画幅随之切换），确认继续？
+  templateDeleteConfirm: 删除该模板？
+  templateExportDone: 模板已导出
+  templateExportFailed: 导出失败（浏览器不支持下载）
+  templateGroupBuiltin: 内置模板
+  templateGroupServer: 团队模板
+  templateServerEmpty: 暂无团队模板
+  templateSaveServer: 另存团队模板
+  templateVisibilityHint: 是否共享给团队（取消 = 仅自己可见）
+  templateVisibilityShared: 团队共享
+  templateVisibilityPersonal: 仅自己可见
+  templateServerSaved: 已保存为团队模板
+  templateServerFailed: 团队模板保存失败（名称重复或引用不可见）
+  templateServerWriteDenied: 仅创建者可修改该团队模板
+  templateImport: 导入 JSON
+  templateImportModeHint: 导入方式：确认 = 替换当前画布，取消 = 追加到当前画布
+  templateImportFormat: JSON 格式不正确，未导入任何窗格
+  templateImportEmpty: 没有可导入的窗格（坐标或类型缺失）
+  templateImportTooLarge: 文件过大，已取消导入
+  templateImported: 已导入 {n} 个窗格
+  tplPromo: 宣传屏
+  tplPromoTitle: 标题
+  tplPromoSubtitle: 副标题 / 说明
+  tplReport: 汇报屏
+  tplReportTitle: 汇报标题
+  tplReportBody: 在此输入正文内容
+  tplReportFooter: 页脚：单位 / 日期
+  tplSkeleton: 数据骨架
+  tplSkeletonTitle: 看板标题
+  tplSkeletonSection: 分区标题
   inspector: 窗格属性
   noSelection: 选中画布上的窗格后可编辑属性
   emptyCanvas: 从左侧组件库添加窗格（文本 / 时钟 / 仪表盘）
@@ -3160,6 +3256,7 @@ dataScreen:
   paneNoCard: 该仪表盘暂无可见卡片
   clearLayout: 清空画布
   clearLayoutConfirm: 清空后该大屏回到仪表盘轮播模式，确认继续？
+  freeClearConfirm: 清空自由画布窗格？（栅格布局保留；若栅格也为空则回到轮播）
   preview: 预览
   editMode: 退出预览
   refreshData: 刷新数据

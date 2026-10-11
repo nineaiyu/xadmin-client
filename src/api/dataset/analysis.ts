@@ -13,9 +13,13 @@ export type ScreenPaneType =
   "dashboard" | "text" | "clock" | "metric" | "image";
 
 /**
- * 大屏画布窗格：12 列栅格绝对定位（x/y 为列/行下标，x+w≤12、y+h≤60）。
- * `layout` 为空 = 轮播模式（存量形态），非空 = 画布模式。
- * 服务端会丢弃未声明键并拒绝越界/重叠（见 dataset/utils/screen_layout.py）。
+ * 大屏画布窗格：坐标语义随模式变化，类型字段两模式共用。
+ *
+ * - 栅格模式（`layout`）：12 列栅格绝对定位（x/y 为列/行下标，x+w≤12、y+h≤60）；
+ * - 自由模式（`free_layout.panes`）：像素坐标（x/y 非负、w/h≥16、不超设计画幅，
+ *   **允许重叠**——数组顺序即层级，后者在上）。
+ *
+ * 服务端会丢弃未声明键并按当前模式校验（见 dataset/utils/screen_layout.py）。
  */
 export type ScreenLayoutPane = {
   pk: string;
@@ -39,7 +43,47 @@ export type ScreenLayoutPane = {
   /** type=image：图片地址（仅 http/https）与填充方式 */
   url?: string;
   fit?: "cover" | "contain" | "fill";
+  /**
+   * 视觉旋转角度（度，-180~180；缺省 0 不下发）。
+   * **不参与几何**：吸附 / 框选 / 对齐仍按未旋转的轴对齐盒模型计算。
+   */
+  rotate?: number;
+  /** 入场动画（仅展示态播放一次；缺省 none 不下发） */
+  animation?: ScreenPaneAnimation;
+  /** type=text：文本格式（缺省 plain 不下发；rich = 受限标记，见 utils/richText） */
+  text_format?: "plain" | "rich";
 };
+
+/** 入场动画取值（与服务端 `SCREEN_ANIMATIONS` 同序同值） */
+export type ScreenPaneAnimation =
+  | "none"
+  | "fade"
+  | "slide-up"
+  | "slide-down"
+  | "slide-left"
+  | "slide-right"
+  | "zoom-in";
+
+/** 画布模式：grid 用 layout（缺省），free 用 free_layout */
+export type ScreenLayoutMode = "grid" | "free";
+
+/**
+ * 自由画布载荷：基准设计画幅（投屏按此等比适配）+ 像素窗格。
+ * 空对象 = 未启用自由画布（投屏回退链：自由窗格非空 → 栅格 > 轮播）。
+ */
+export type ScreenFreeLayout = {
+  design_w: number;
+  design_h: number;
+  panes: ScreenLayoutPane[];
+};
+
+/**
+ * choices 字段（layout_mode / visibility）经 BaseModelSerializer 序列化为
+ * labeled choice（`{value,label}`）；历史纯字符串输入按标量兼容，读取统一走
+ * `choiceValue`（见 @/utils/dict）。
+ */
+export type ScreenChoiceValue =
+  string | { value?: string; label?: string } | null | undefined;
 
 /** 大屏与定时报表 */
 export type ScreenItem = {
@@ -47,6 +91,10 @@ export type ScreenItem = {
   name: string;
   dashboards: string[];
   layout?: ScreenLayoutPane[];
+  /** 画布模式（labeled choice 形态，读取用 choiceValue） */
+  layout_mode?: ScreenChoiceValue;
+  /** 自由画布载荷（空对象 = 未启用） */
+  free_layout?: Partial<ScreenFreeLayout>;
   interval: number;
   refresh: number;
   visibility: "personal" | "shared";
@@ -153,6 +201,22 @@ export type ScreenCommandPayload =
 
 export const screenApi = new BaseApi("/api/dataset/screens");
 export const reportApi = new BaseApi("/api/dataset/reports");
+
+/**
+ * 大屏模板（团队共享，ADR-088）：载荷与自由画布同形（`free_layout`），
+ * 可见性 / 行级归属守卫与大屏同口径（非创建者改删 1003，列表下发 is_owner）。
+ */
+export type ScreenTemplateItem = {
+  pk: string;
+  name: string;
+  free_layout?: Partial<ScreenFreeLayout>;
+  visibility: "personal" | "shared";
+  is_owner?: boolean;
+  created_time?: string;
+  updated_time?: string;
+};
+
+export const screenTemplateApi = new BaseApi("/api/dataset/screen-templates");
 
 /** 投递渠道枚举：choices_dict 在响应顶层（与其它 choices 消费方同口径） */
 export type ReportChannelChoicesResult = Omit<Envelope, "data"> & {

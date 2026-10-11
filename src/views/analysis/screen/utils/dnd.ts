@@ -1,6 +1,14 @@
 import type { Ref } from "vue";
 import type { ScreenPaneType } from "@/api/dataset/analysis";
-import { cellFromOffset, PANE_DEFAULTS, type PaneBox } from "./layout";
+import {
+  CANVAS_PADDING,
+  GRID_GAP_X,
+  GRID_GAP_Y,
+  GRID_ROW_HEIGHT,
+  PANE_DEFAULTS,
+  cellFromOffset,
+  type PaneBox
+} from "./layout";
 
 /**
  * 组件库 → 画布的 HTML5 拖放：payload 走自定义 MIME，避免与文件/文本拖放串扰；
@@ -42,13 +50,10 @@ export function parsePaletteDrop(event: DragEvent): PalettePayload | null {
 export function createCanvasDropHandler({
   canvasRef,
   metrics,
-  grid,
   addPane
 }: {
   canvasRef: Ref<HTMLElement | undefined>;
   metrics: () => { stepX: number; stepY: number };
-  /** 与画布样式保持一致的栅格常量（gap / 行高 / 内边距） */
-  grid: { gapX: number; gapY: number; rowHeight: number; padding: number };
   addPane: (type: ScreenPaneType, dashboard?: string, at?: PaneBox) => void;
 }) {
   return (event: DragEvent) => {
@@ -60,13 +65,13 @@ export function createCanvasDropHandler({
     const { stepX } = metrics();
     const size = PANE_DEFAULTS[payload.type];
     const cell = cellFromOffset(
-      event.clientX - rect.left - grid.padding,
-      event.clientY - rect.top - grid.padding,
+      event.clientX - rect.left - CANVAS_PADDING,
+      event.clientY - rect.top - CANVAS_PADDING,
       {
-        cellW: stepX - grid.gapX,
-        cellH: grid.rowHeight,
-        gapX: grid.gapX,
-        gapY: grid.gapY
+        cellW: stepX - GRID_GAP_X,
+        cellH: GRID_ROW_HEIGHT,
+        gapX: GRID_GAP_X,
+        gapY: GRID_GAP_Y
       }
     );
     addPane(payload.type, payload.dashboard, {

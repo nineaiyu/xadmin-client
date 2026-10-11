@@ -5,59 +5,49 @@ import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router";
 import { useConfirm } from "@/hooks/useConfirm";
 import { SUCCESS_CODE } from "@/api/types";
 import { message } from "@/utils/message";
+import { choiceValue } from "@/utils/dict";
 import {
   screenApi,
   type ScreenItem,
-  type ScreenLayoutPane
+  type ScreenLayoutMode,
+  type ScreenLayoutPane,
+  type ScreenPaneType
 } from "@/api/dataset/analysis";
 import type { DashboardItem, DatasetItem } from "@/api/dataset/datasets";
+import DesignerToolbar from "./components/DesignerToolbar.vue";
+import FreeCanvasToolbar from "./components/FreeCanvasToolbar.vue";
+import GridCanvasBoard from "./components/GridCanvasBoard.vue";
+import FreeCanvasBoard from "./components/FreeCanvasBoard.vue";
 import ScreenPane from "./components/ScreenPane.vue";
 import PaneInspector from "./components/PaneInspector.vue";
+import MultiSelectInspector from "./components/MultiSelectInspector.vue";
 import DesignerPalette from "./components/DesignerPalette.vue";
+import { normalizePanes } from "./utils/layout";
+import { usePaneHistory } from "./utils/history";
 import {
-  CANVAS_PADDING,
-  GRID_COLS,
-  GRID_GAP_X,
-  GRID_GAP_Y,
-  GRID_ROW_HEIGHT,
-  canvasGridVars,
-  canPlace,
-  clampBox,
-  normalizePanes
-} from "./utils/layout";
-import { nudgeCoalesceKey, usePaneHistory } from "./utils/history";
-import { createPaneOps } from "./utils/paneOps";
-import { useCanvasDrag } from "./utils/canvasDrag";
+  createGridEditor,
+  type GridBoardHandle
+} from "./utils/createGridEditor";
+import { createFreeEditor } from "./utils/createFreeEditor";
 import { useScreenShortcuts } from "./utils/shortcuts";
-import { createCanvasDropHandler, onPaletteDragStart } from "./utils/dnd";
+import { onPaletteDragStart } from "./utils/dnd";
 import { loadScreenReferenceData } from "./utils/referenceData";
 import { normalizeError } from "@/utils/apiError";
 
 defineOptions({ name: "DataScreenDesigner" });
 
 /**
- * 大屏画布设计器（编排层：状态持有 + 各交互域组装）。
+ * 大屏画布设计器（编排层：模式 / 选中 / 撤销栈 / 保存 / 预览）。
  *
- * 形态：左侧组件库（指标卡 / 图片 / 文本 / 时钟 / 仪表盘）→ 画布（12 列栅格，拖拽
- * 移动 + 右下角缩放）→ 右侧属性面板 → 顶部撤销重做/保存/预览。画布与投屏页共用
- * `ScreenPane`，所见即所得。
+ * 两种画布模式各有**独立的编辑域工厂**，本层只做模式分派与公共时序：
+ * - 栅格（缺省）：`createGridEditor`（12 列栅格、步进拖拽、重叠驳回、单选）；
+ * - 自由：`createFreeEditor`（像素坐标、`ReResize` 手势、组拖动、对齐分布、
+ *   剪贴板、模板、**显示缩放**；多选）。
  *
- * 交互口径（实现分散在各 utils composable，此处只持状态与接线）：
- * - 拖拽/缩放（utils/canvasDrag）：先算「格数增量」再夹回栅格，落点与其他窗格
- *   重叠时**保持原位**（不弹错）；
- * - 组件库点击/拖入（utils/paneOps + utils/dnd）：新增窗格自动找首个空位
- *   （`findSlot`），画布排满给出可读提示；拖入落点可放则直接落格；
- * - 历史（utils/history）：增删改与拖拽手势各记一个撤销点（连续同类编辑合并；
- *   拖拽位移超阈值才记，按下未动不产生空撤销点），Ctrl/Cmd+Z 撤销、
- *   Ctrl/Cmd+Shift+Z 或 Ctrl/Cmd+Y 重做；
- * - 快捷键（utils/shortcuts）：方向键移动选中窗格（Shift+方向 = 缩放）、
- *   Ctrl/Cmd+D 复制、Delete 删除、Ctrl/Cmd+S 保存、Esc 取消选中（输入框聚焦时
- *   不劫持按键）；
- * - 只读态（非创建者记录）：编辑面板隐藏、保存/撤销/复制/清空禁用、窗格
- *   拖拽/缩放入口不渲染、编辑类快捷键整体锁定（写权威在后端，此处为 UX 守卫）；
- * - 保存前本地归一化（丢未声明键、按类型补默认值），服务端仍会再校验一次（双保险）；
- * - `layout` 清空即回到轮播模式（存量形态与既有 E2E 不受影响）；
- * - 有未保存改动时离开设计器/关闭页面均给确认拦截。
+ * 交给画布板与面板的只有「数据 + 事件」，几何与批量语义都在工厂与纯函数里；
+ * 模式切换只写 `layout_mode` 语义（坐标不互转，另一模式载荷原样保留）。
+ * 只读态（非创建者记录）：编辑入口整体隐藏/禁用（写权威在后端，此处为 UX 守卫）。
+ * 保存前各载荷本地归一化（丢未声明键、补默认值、夹回栅格/画幅），服务端再校验一次。
  */
 const route = useRoute();
 const router = useRouter();
@@ -67,95 +57,158 @@ const confirm = useConfirm();
 const screen = ref<ScreenItem | null>(null);
 const dashboards = ref<DashboardItem[]>([]);
 const datasets = ref<DatasetItem[]>([]);
-const panes = ref<ScreenLayoutPane[]>([]);
-const selectedPk = ref("");
+const mode = ref<ScreenLayoutMode>("grid");
 const preview = ref(false);
 const saving = ref(false);
 const dirty = ref(false);
 const clock = ref("");
 const loading = ref(true);
 
-const canvasRef = ref<HTMLElement>();
+const gridBoardRef = ref<GridBoardHandle>(null);
+const freeBoardRef = ref<InstanceType<typeof FreeCanvasBoard> | null>(null);
 
 /** 只读态：非创建者记录后端会拒绝写入（1003），前端进入即置只读，
  *  属 UX 层守卫——写权威始终在后端，详情接口未返回 is_owner 时按可编辑放行 */
 const readonly = computed(() => screen.value?.is_owner === false);
-
-const selected = computed(() =>
-  panes.value.find(pane => pane.pk === selectedPk.value)
-);
-const dashboardName = (pk?: string) =>
-  dashboards.value.find(item => item.pk === pk)?.name ?? "";
-const cardsOf = (pane: ScreenLayoutPane) =>
-  dashboards.value.find(item => item.pk === pane.dashboard)?.layout ?? [];
-
-const metrics = () => {
-  const width = canvasRef.value?.clientWidth ?? 0;
-  const content = Math.max(width - CANVAS_PADDING * 2, 0);
-  const stepX = content > 0 ? (content + GRID_GAP_X) / GRID_COLS : 1;
-  return { stepX, stepY: GRID_ROW_HEIGHT + GRID_GAP_Y };
-};
+const locked = computed(() => preview.value || readonly.value);
+const isFree = computed(() => mode.value === "free");
 
 const markDirty = () => {
   dirty.value = true;
 };
 
-const { pushHistory, canUndo, canRedo, undo, redo, resetCoalesce } =
-  usePaneHistory({ panes, selectedPk, markDirty });
-
-const { addPane, duplicateSelected, removePane, updatePane } = createPaneOps({
-  panes,
-  selectedPk,
-  pushHistory,
-  t
-});
-
-const { startTracking } = useCanvasDrag({
-  panes,
-  selectedPk,
+/* 两模式各持一个撤销栈（模式切换不把另一份载荷混进历史）；导出面按当前模式分派 */
+const grid = createGridEditor({
+  t,
   markDirty,
-  metrics,
-  pushHistory
+  pushHistory: key => gridHistory.pushHistory(key),
+  board: gridBoardRef
+});
+const {
+  panes: gridPanes,
+  selectedPk: gridSelectedPk,
+  selected: gridSelected
+} = grid;
+
+const free = createFreeEditor({
+  t,
+  markDirty,
+  pushHistory: key => freeHistory.pushHistory(key),
+  dashboards,
+  datasets,
+  viewport: computed(() => freeBoardRef.value?.viewportEl)
+});
+const {
+  design: freeDesign,
+  panes: freePanes,
+  selection: freeSelection,
+  selectionCount: freeSelectionCount,
+  singleSelected: freeSingleSelected,
+  primaryPane: freePrimaryPane,
+  templates: freeTemplates,
+  serverTemplates: freeServerTemplates,
+  gridSnap: freeGridSnap,
+  hasClipboard: freeHasClipboard,
+  zoom: freeZoom,
+  autoFit: freeAutoFit
+} = free;
+
+const gridHistory = usePaneHistory({
+  panes: gridPanes,
+  selectedPk: gridSelectedPk,
+  markDirty
+});
+const freeHistory = usePaneHistory({
+  panes: freePanes,
+  selection: freeSelection,
+  markDirty
 });
 
-/** 方向键移动/缩放选中窗格：与拖拽同口径（夹回栅格 + 重叠驳回）；只读态驳回 */
+const history = computed(() => (isFree.value ? freeHistory : gridHistory));
+const pushHistory = (key?: string) => history.value.pushHistory(key);
+const canUndo = computed(() => history.value.canUndo.value);
+const canRedo = computed(() => history.value.canRedo.value);
+const undo = () => history.value.undo();
+const redo = () => history.value.redo();
+
+/** 当前模式的窗格清单（清空 / 提示按它工作） */
+const activePanes = computed(() =>
+  isFree.value ? freePanes.value : gridPanes.value
+);
+/** 属性面板目标：自由多选时切「多选面板」，其余按各模式单选目标 */
+const inspectorPane = computed(() =>
+  isFree.value ? freeSingleSelected.value : gridSelected.value
+);
+/** 多选面板的批量属性按选中的窗格算公共值与适用性（顺序 = 数据顺序） */
+const freeSelectedPanes = computed(() =>
+  freePanes.value.filter(pane => freeSelection.value.includes(pane.pk))
+);
+
+/** 组件库点击：按当前模式落到对应载荷（栅格找空位 / 自由层叠错开） */
+const onPaletteAdd = (type: ScreenPaneType, dashboard?: string) =>
+  isFree.value ? free.addPane(type, dashboard) : grid.addPane(type, dashboard);
+
+/** 属性面板更新：按当前模式落到对应载荷（栅格重叠驳回 / 自由夹回画幅） */
+const updateSelected = (patch: Partial<ScreenLayoutPane>) =>
+  isFree.value ? free.updatePane(patch) : grid.updatePane(patch);
+
+const duplicatePane = () =>
+  isFree.value ? free.duplicate() : grid.duplicateSelected();
+const removeSelected = () =>
+  isFree.value ? free.removeSelected() : grid.removeSelected();
+const clearSelection = () =>
+  isFree.value ? free.clearSelection() : grid.clearSelection();
+
+/** 方向键：栅格 = 移动（Shift 缩放），自由 = 整组移动（Shift 10px 步进） */
 function nudge(pane: ScreenLayoutPane, dx: number, dy: number, shift: boolean) {
   if (readonly.value) return false;
-  const index = panes.value.findIndex(item => item.pk === pane.pk);
-  if (index < 0) return false;
-  const next = shift
-    ? clampBox({ ...pane, w: pane.w + dx, h: pane.h + dy })
-    : clampBox({ ...pane, x: pane.x + dx, y: pane.y + dy });
-  if (!canPlace(panes.value, next, index)) return false;
-  pushHistory(nudgeCoalesceKey(pane.pk, shift));
-  panes.value[index] = { ...pane, ...next };
-  return true;
+  return isFree.value
+    ? free.nudge(dx, dy, shift)
+    : grid.nudge(pane, dx, dy, shift);
 }
 
 useScreenShortcuts({
-  // 预览与只读同锁：编辑类快捷键（移动/缩放/删除/复制/保存/撤销）一概不响应
-  locked: computed(() => preview.value || readonly.value),
+  locked,
   save,
   undo,
   redo,
-  duplicateSelected,
-  removePane,
-  selected,
-  selectedPk,
-  nudge
+  duplicateSelected: duplicatePane,
+  removeSelected,
+  clearSelection,
+  selected: computed(() =>
+    isFree.value ? freePrimaryPane.value : gridSelected.value
+  ),
+  nudge,
+  // 三键只在自由模式生效：这里按模式判定而非装配期取函数（模式可中途切换）
+  copy: () => {
+    if (isFree.value) free.copy();
+  },
+  paste: () => {
+    if (isFree.value) free.paste();
+  },
+  selectAll: () => {
+    if (isFree.value) free.selectAll();
+  },
+  // zoom 键盘档位同样只在自由模式生效（栅格画布是响应式布局，无固定画幅）
+  zoomIn: () => {
+    if (isFree.value) free.zoomIn();
+  },
+  zoomOut: () => {
+    if (isFree.value) free.zoomOut();
+  },
+  zoomFit: () => {
+    if (isFree.value) free.fitToView();
+  }
 });
 
-const onCanvasDrop = createCanvasDropHandler({
-  canvasRef,
-  metrics,
-  grid: {
-    gapX: GRID_GAP_X,
-    gapY: GRID_GAP_Y,
-    rowHeight: GRID_ROW_HEIGHT,
-    padding: CANVAS_PADDING
-  },
-  addPane
-});
+/** 模式切换：只改模式（坐标不互转），切回另一模式即见原布局；未保存过则标脏 */
+function switchMode(next: ScreenLayoutMode) {
+  if (next === mode.value) return;
+  mode.value = next;
+  grid.clearSelection();
+  free.clearSelection();
+  if (choiceValue(screen.value?.layout_mode) !== next) markDirty();
+}
 
 let clockTimer: number | undefined;
 
@@ -173,7 +226,14 @@ onMounted(async () => {
     return;
   }
   screen.value = res.data as ScreenItem;
-  panes.value = [...(screen.value.layout ?? [])];
+  // 模式与两份载荷各自装载：切回另一模式即见原布局（服务端已归一化，前端只读）
+  mode.value =
+    choiceValue(screen.value.layout_mode) === "free" ? "free" : "grid";
+  grid.load(screen.value.layout);
+  free.load(screen.value.free_layout);
+  free.refreshTemplates();
+  // 团队模板按需拉取（失败静默降级为空：不挡住本地模板与画布编辑）
+  void free.refreshServerTemplates();
   // 引用数据失败不阻塞设计器主链路：显式提示并按空清单降级（此前未捕获——异常
   // 逃逸且 loading 永久悬挂，画布空白且用户无感知）
   const reference = await loadScreenReferenceData();
@@ -229,12 +289,20 @@ async function save() {
   if (!screen.value || saving.value || readonly.value) return;
   saving.value = true;
   try {
+    // 只写当前模式的载荷 + layout_mode（另一模式载荷原样保留；服务端校验对应关系）
+    const payload = isFree.value
+      ? { layout_mode: "free" as const, free_layout: free.toPayload() }
+      : {
+          layout_mode: "grid" as const,
+          layout: normalizePanes(gridPanes.value)
+        };
     const res = await screenApi
-      .partialUpdate(screen.value.pk, { layout: normalizePanes(panes.value) })
+      .partialUpdate(screen.value.pk, payload)
       .catch(normalizeError);
     if (res.code === SUCCESS_CODE) {
       dirty.value = false;
-      resetCoalesce();
+      gridHistory.resetCoalesce();
+      freeHistory.resetCoalesce();
       message(t("dataScreen.layoutSaved"), { type: "success" });
       return;
     }
@@ -244,18 +312,20 @@ async function save() {
   }
 }
 
+/** 清空当前模式的载荷（另一模式的载荷保留，切回即可见） */
 async function clearCanvas() {
-  if (panes.value.length === 0 || readonly.value) return;
-  if (
-    !(await confirm(t("dataScreen.clearLayoutConfirm"), {
-      title: t("dataScreen.clearLayout")
-    }))
-  ) {
+  if (activePanes.value.length === 0 || readonly.value) return;
+  const prompt = isFree.value
+    ? t("dataScreen.freeClearConfirm")
+    : t("dataScreen.clearLayoutConfirm");
+  if (!(await confirm(prompt, { title: t("dataScreen.clearLayout") }))) {
     return;
   }
   pushHistory();
-  panes.value = [];
-  selectedPk.value = "";
+  if (isFree.value) freePanes.value = [];
+  else gridPanes.value = [];
+  grid.clearSelection();
+  free.clearSelection();
 }
 
 const back = () => {
@@ -265,134 +335,127 @@ const back = () => {
 
 <template>
   <div class="designer-root fixed inset-0 flex flex-col text-white">
-    <header class="designer-header">
-      <span class="designer-title">
-        {{ t("dataScreen.designer") }}
-        <span class="designer-subtitle">· {{ screen?.name }}</span>
-      </span>
-      <el-tag v-if="dirty" size="small" type="warning" effect="dark">
-        {{ t("dataScreen.unsaved") }}
-      </el-tag>
-      <el-tag
-        v-if="readonly"
-        size="small"
-        type="info"
-        effect="plain"
-        data-testid="designer-readonly"
-      >
-        {{ t("dataScreen.readonlyHint") }}
-      </el-tag>
-      <div class="flex-1" />
-      <el-button
-        size="small"
-        data-testid="designer-undo"
-        :disabled="!canUndo || preview || readonly"
-        :title="t('dataScreen.undoHint')"
-        @click="undo"
-      >
-        {{ t("dataScreen.undo") }}
-      </el-button>
-      <el-button
-        size="small"
-        data-testid="designer-redo"
-        :disabled="!canRedo || preview || readonly"
-        :title="t('dataScreen.redoHint')"
-        @click="redo"
-      >
-        {{ t("dataScreen.redo") }}
-      </el-button>
-      <el-button
-        size="small"
-        data-testid="designer-duplicate"
-        :disabled="!selected || preview || readonly"
-        :title="t('dataScreen.duplicateHint')"
-        @click="duplicateSelected"
-      >
-        {{ t("dataScreen.duplicate") }}
-      </el-button>
-      <el-button
-        size="small"
-        data-testid="designer-refresh"
-        @click="refreshData"
-      >
-        {{ t("dataScreen.refreshData") }}
-      </el-button>
-      <el-button
-        size="small"
-        data-testid="designer-preview"
-        @click="preview = !preview"
-      >
-        {{ preview ? t("dataScreen.editMode") : t("dataScreen.preview") }}
-      </el-button>
-      <el-button
-        size="small"
-        data-testid="designer-clear"
-        :disabled="panes.length === 0 || readonly"
-        @click="clearCanvas"
-      >
-        {{ t("dataScreen.clearLayout") }}
-      </el-button>
-      <el-button size="small" @click="back">
-        {{ t("dataScreen.backToList") }}
-      </el-button>
-      <el-button
-        type="primary"
-        size="small"
-        :loading="saving"
-        :disabled="readonly"
-        :title="readonly ? t('dataScreen.readonlyHint') : undefined"
-        data-testid="designer-save"
-        @click="save"
-      >
-        {{ t("dataScreen.save") }}
-      </el-button>
-    </header>
+    <DesignerToolbar
+      :screen-name="screen?.name"
+      :dirty="dirty"
+      :readonly="readonly"
+      :preview="preview"
+      :saving="saving"
+      :mode="mode"
+      :can-undo="canUndo"
+      :can-redo="canRedo"
+      :has-selection="Boolean(inspectorPane) || freeSelectionCount > 0"
+      :panes-empty="activePanes.length === 0"
+      @mode="switchMode"
+      @undo="undo"
+      @redo="redo"
+      @duplicate="duplicatePane"
+      @refresh="refreshData"
+      @preview="preview = !preview"
+      @clear="clearCanvas"
+      @back="back"
+      @save="save"
+    />
+
+    <!-- 自由画布工具条（缩放 / 复制粘贴 / 模板）：只在自由模式且未锁定时出现 -->
+    <FreeCanvasToolbar
+      v-if="isFree && !locked"
+      :zoom="freeZoom"
+      :auto-fit="freeAutoFit"
+      :can-copy="freeSelectionCount > 0"
+      :can-paste="freeHasClipboard"
+      :templates="freeTemplates"
+      :server-templates="freeServerTemplates"
+      :grid-snap="freeGridSnap"
+      @zoom="free.setZoom"
+      @fit="free.fitToView"
+      @copy="free.copy"
+      @paste="free.paste"
+      @grid="free.setGrid"
+      @save-template="free.saveCurrentAsTemplate"
+      @save-server-template="
+        free.saveCurrentToServer($event.name, $event.visibility)
+      "
+      @import-template="free.importTemplateJson($event.raw, $event.mode)"
+      @apply-template="free.applyTemplate($event.id, $event.mode)"
+      @rename-template="free.renameSavedTemplate($event.id, $event.name)"
+      @rename-server-template="
+        free.renameServerTemplate($event.id, $event.name)
+      "
+      @remove-template="free.removeSavedTemplate"
+      @remove-server-template="free.removeServerTemplate"
+      @export-template="free.exportSavedTemplate"
+    />
 
     <div class="designer-body">
       <DesignerPalette
         v-if="!preview && !readonly"
         :dashboards="dashboards"
-        @add="addPane"
+        @add="onPaletteAdd"
         @drag-start="onPaletteDragStart"
       />
 
-      <main
-        ref="canvasRef"
-        class="designer-canvas"
-        :class="{ 'is-preview': preview }"
-        :style="canvasGridVars"
-        data-testid="designer-canvas"
-        @pointerdown.self="selectedPk = ''"
-        @dragover.prevent
-        @drop.prevent="onCanvasDrop"
-      >
-        <span v-if="!loading && panes.length === 0" class="designer-empty">
-          {{ t("dataScreen.emptyCanvas") }}
-        </span>
-        <ScreenPane
-          v-for="pane in panes"
-          :key="pane.pk"
-          :ref="setPaneRef(pane.pk)"
-          :pane="pane"
-          :cards="cardsOf(pane)"
-          :clock="clock"
-          :dashboard-name="dashboardName(pane.dashboard)"
-          :editable="!preview && !readonly"
-          :selected="pane.pk === selectedPk"
-          @select="selectedPk = $event"
-          @remove="removePane"
-          @drag-start="startTracking('move', $event.pk, $event.event)"
-          @resize-start="startTracking('resize', $event.pk, $event.event)"
-        />
-      </main>
+      <FreeCanvasBoard
+        v-if="isFree"
+        ref="freeBoardRef"
+        :panes="freePanes"
+        :design="freeDesign"
+        :selection="freeSelection"
+        :editable="!locked"
+        :zoom="freeZoom"
+        :clock="clock"
+        :dashboards="dashboards"
+        :set-pane-ref="setPaneRef"
+        :wheel-handler="free.onWheel"
+        :grid-snap="freeGridSnap"
+        :play-animation="preview"
+        @select="free.selectPk($event.pk, $event.additive)"
+        @select-many="free.selectMany($event.pks, $event.additive)"
+        @remove="free.removePk"
+        @group-move="free.onGroupMove"
+        @box-stop="free.onBoxStop"
+        @drop="free.onDrop"
+      />
+
+      <GridCanvasBoard
+        v-else
+        ref="gridBoardRef"
+        :panes="gridPanes"
+        :selected-pk="gridSelectedPk"
+        :editable="!locked"
+        :loading="loading"
+        :preview="preview"
+        :clock="clock"
+        :dashboards="dashboards"
+        :set-pane-ref="setPaneRef"
+        @select="grid.selectPk($event)"
+        @remove="grid.removePane"
+        @drag-start="grid.startTracking('move', $event.pk, $event.event)"
+        @resize-start="grid.startTracking('resize', $event.pk, $event.event)"
+        @drop="grid.onDrop"
+      />
 
       <aside v-if="!preview && !readonly" class="designer-inspector">
+        <MultiSelectInspector
+          v-if="isFree && freeSelectionCount > 1"
+          :count="freeSelectionCount"
+          :panes="freeSelectedPanes"
+          @align="free.align"
+          @distribute="free.distribute"
+          @layer="free.moveLayer"
+          @duplicate="free.duplicate"
+          @remove="free.removeSelected"
+          @batch="free.updateMany"
+        />
         <PaneInspector
-          v-if="selected"
-          :pane="selected"
+          v-else-if="inspectorPane"
+          :pane="inspectorPane"
+          :layout="isFree ? 'free' : 'grid'"
+          :design="freeDesign"
           :dashboards="dashboards"
           :datasets="datasets"
-          @update="updatePane"
+          @update="updateSelected"
+          @layer="free.moveLayer"
         />
         <span v-else class="designer-hint">{{
           t("dataScreen.noSelection")
@@ -408,27 +471,6 @@ const back = () => {
   background: var(--screen-canvas);
 }
 
-.designer-header {
-  display: flex;
-  flex: none;
-  gap: var(--space-2);
-  align-items: center;
-  padding: var(--space-3) var(--space-5);
-  background: var(--screen-surface);
-  border-bottom: 1px solid var(--screen-border);
-}
-
-.designer-title {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-}
-
-.designer-subtitle {
-  font-size: var(--el-font-size-base);
-  font-weight: 400;
-  color: var(--screen-fg-subtle);
-}
-
 .designer-body {
   display: flex;
   flex: 1;
@@ -442,41 +484,6 @@ const back = () => {
   overflow: auto;
   background: var(--screen-surface);
   border-left: 1px solid var(--screen-border);
-}
-
-/* 画布栅格度量全部走 layout.ts 常量派生的 CSS 变量（:style 绑定 canvasGridVars），
-   与投屏页同一份来源，保证所见即所得 */
-.designer-canvas {
-  position: relative;
-  display: grid;
-  flex: 1;
-  grid-template-columns: repeat(var(--screen-grid-cols), minmax(0, 1fr));
-  grid-auto-rows: var(--screen-row-height);
-
-  /* 行距/列距是 layout.ts 里两个独立常量，刻意分写不用 gap 合并 */
-  /* stylelint-disable-next-line declaration-block-no-redundant-longhand-properties */
-  row-gap: var(--screen-gap-y);
-  column-gap: var(--screen-gap-x);
-  align-content: start;
-  padding: var(--screen-canvas-padding);
-  overflow: auto;
-  background-image:
-    linear-gradient(var(--screen-grid-line) 1px, transparent 0),
-    linear-gradient(90deg, var(--screen-grid-line) 1px, transparent 0);
-  background-size:
-    100% var(--screen-row-step),
-    calc(100% / var(--screen-grid-cols)) 100%;
-}
-
-.designer-canvas.is-preview {
-  background-image: none;
-}
-
-.designer-empty {
-  grid-column: 1 / -1;
-  padding: var(--space-10) 0;
-  color: var(--screen-fg-faint);
-  text-align: center;
 }
 
 .designer-hint {

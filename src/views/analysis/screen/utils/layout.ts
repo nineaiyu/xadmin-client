@@ -92,6 +92,21 @@ export function findSlot(
 }
 
 /**
+ * 栅格像素度量：画布内容宽 → 列步长 / 行步长。
+ *
+ * 设计器拖拽换算（像素 → 格数）与组件库 drop 落点共用同一份换算，
+ * 改动列数 / 行高 / 间距常量时两处不会漂移。
+ */
+export function gridMetrics(canvasWidth: number): {
+  stepX: number;
+  stepY: number;
+} {
+  const content = Math.max(canvasWidth - CANVAS_PADDING * 2, 0);
+  const stepX = content > 0 ? (content + GRID_GAP_X) / GRID_COLS : 1;
+  return { stepX, stepY: GRID_ROW_HEIGHT + GRID_GAP_Y };
+}
+
+/**
  * 指针坐标 → 栅格下标（画布内偏移 + 单元格尺寸；落在 gap 上时归到更近的一侧）。
  */
 export function cellFromOffset(
@@ -120,42 +135,58 @@ export function isValidPaneImageUrl(url: string | undefined | null): boolean {
   return value.length === 0 || /^(https?:\/\/|\/(?!\/))/i.test(value);
 }
 
-/** 落库前清理：只保留服务端声明键，并按类型补齐默认值（与服务端归一化同口径） */
+/** 窗格公共体（不含坐标段） */
+export type PaneBody = Omit<ScreenLayoutPane, "x" | "y" | "w" | "h">;
+
+/**
+ * 按类型归一化窗格公共体：只保留服务端声明键并补齐默认值。
+ *
+ * 栅格与自由画布两套坐标语义共用同一份类型字段规则（与服务端
+ * `_normalize_pane_body` 同口径），坐标段由各自调用方按模式处理。
+ */
+export function paneBody(pane: ScreenLayoutPane): PaneBody {
+  const base: PaneBody = {
+    pk: pane.pk,
+    type: pane.type,
+    ...(pane.title ? { title: pane.title } : {})
+  };
+  // 表达类字段（ADR-088）：非默认才下发——默认值（0 / none / plain）不下发，
+  // 既有载荷升级后字节不变，服务端缺省也按同口径补齐
+  if (pane.rotate) base.rotate = pane.rotate;
+  if (pane.animation && pane.animation !== "none") {
+    base.animation = pane.animation;
+  }
+  if (pane.type === "dashboard") {
+    base.dashboard = pane.dashboard;
+  }
+  if (pane.type === "text") {
+    base.text = pane.text ?? "";
+    base.align = pane.align ?? "left";
+    base.size = pane.size ?? 24;
+    if (pane.text_format === "rich") base.text_format = "rich";
+  }
+  if (pane.type === "clock") {
+    base.size = pane.size ?? 40;
+  }
+  if (pane.type === "metric") {
+    base.dataset = pane.dataset;
+    base.metric = pane.metric ?? "count";
+    if (base.metric !== "count" && pane.value_field) {
+      base.value_field = pane.value_field;
+    }
+  }
+  if (pane.type === "image") {
+    base.url = pane.url ?? "";
+    base.fit = pane.fit ?? "cover";
+  }
+  return base;
+}
+
+/** 落库前清理（栅格）：只保留服务端声明键 + 夹回栅格（与服务端归一化同口径） */
 export function normalizePanes(
   panes: readonly ScreenLayoutPane[]
 ): ScreenLayoutPane[] {
-  return panes.map(pane => {
-    const box = clampBox(pane);
-    const base: ScreenLayoutPane = {
-      pk: pane.pk,
-      type: pane.type,
-      ...box,
-      ...(pane.title ? { title: pane.title } : {})
-    };
-    if (pane.type === "dashboard") {
-      base.dashboard = pane.dashboard;
-    }
-    if (pane.type === "text") {
-      base.text = pane.text ?? "";
-      base.align = pane.align ?? "left";
-      base.size = pane.size ?? 24;
-    }
-    if (pane.type === "clock") {
-      base.size = pane.size ?? 40;
-    }
-    if (pane.type === "metric") {
-      base.dataset = pane.dataset;
-      base.metric = pane.metric ?? "count";
-      if (base.metric !== "count" && pane.value_field) {
-        base.value_field = pane.value_field;
-      }
-    }
-    if (pane.type === "image") {
-      base.url = pane.url ?? "";
-      base.fit = pane.fit ?? "cover";
-    }
-    return base;
-  });
+  return panes.map(pane => ({ ...paneBody(pane), ...clampBox(pane) }));
 }
 
 /** 窗格标识：仅用于定位与列表 key（不落业务语义） */
