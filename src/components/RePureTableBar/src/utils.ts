@@ -1,4 +1,4 @@
-import type { PropType } from "vue";
+import type { ComputedRef, PropType, Ref } from "vue";
 import { transformI18n } from "@/plugins/i18n";
 
 /** 树形表格行：展开/折叠按 `children` 递归 */
@@ -117,4 +117,18 @@ export function rendTippyProps(content: string) {
     followCursor: true,
     hideOnClick: "toggle"
   } as const;
+}
+
+/** 密度下拉项样式（选中项主色底白字）：消费方传当前密度与主题色 */
+export function buildDropdownItemStyle(
+  size: Ref<string>,
+  themeColor: ComputedRef<string | undefined>
+): (s: string) => Record<string, string> {
+  return s => ({
+    background: s === size.value ? (themeColor.value ?? "") : "",
+    color:
+      s === size.value
+        ? "var(--el-color-white)"
+        : "var(--el-text-color-primary)"
+  });
 }

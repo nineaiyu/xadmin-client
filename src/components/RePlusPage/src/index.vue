@@ -17,7 +17,9 @@ import { PlusSearch, type RecordType } from "plus-pro-components";
 import type { ComponentSize } from "element-plus";
 import type { BaseApi } from "@/api/base";
 import { TABLE_HEADER_CELL_STYLE } from "@/utils/tableHeader";
-import { syncPaginationA11y, syncTableA11y } from "@/utils/tableA11y";
+import { useTableA11y } from "./utils/useTableA11y";
+import { resolveTreeProps } from "./utils/treeProps";
+import { createApplySavedView } from "./utils/savedView";
 import { useTableLayout } from "./utils/useTableLayout";
 import { useTableMeasure } from "./utils/useTableMeasure";
 import { DEFAULT_ADAPTIVE_OFFSET_BOTTOM } from "./utils/tableMeasureMath";
@@ -87,16 +89,6 @@ const emit = defineEmits<{
   operationClickAction: [data: ButtonsCallBackParams];
 }>();
 
-/**
- * 我的视图：把保存的筛选条件写回搜索区并刷新列表。
- *
- * 组件只上抛条件快照，写入 searchFields 由页面侧统一完成（单向数据流）。
- */
-const applySavedView = (conditions: RecordType) => {
-  searchFields.value = cloneDeep(conditions ?? {});
-  handleGetData();
-};
-
 const tableRef = ref();
 const rootRef = ref<HTMLElement>();
 
@@ -153,10 +145,12 @@ const {
   handleSortChange
 } = usePlusPage(emit, tableRef, props);
 
-/**
- * pure-table 的 treeProps 期望三字段全必填的形状（其 default 字面量类型），
- * 模板层对 setup ref 的类型展开会丢失 checkStrictly，经由此处显式签名传递。
- */
+// 我的视图：把保存的筛选条件写回搜索区并刷新列表（实现见 utils/savedView）
+const applySavedView = createApplySavedView({
+  searchFields,
+  reload: handleGetData
+});
+
 /** 搜索列类型变化（select/date-picker 等）后自动触发查询（模板内联类型注解会触发 eslint 解析错误，改 script 函数） */
 const onSearchColumnChange = (_: unknown, column: { valueType?: string }) => {
   const canChangeType = ["select", "date-picker", "time-picker", "time-select"];
@@ -204,27 +198,16 @@ watch(searchMetaReady, ready => {
 // 元数据缺失检测（DEV 控制台排查清单 + PROD 降级提示条，实现见 useListMetaWarning）
 const { metaMissing } = useListMetaWarning(searchMetaReady, loadingStatus);
 
-/**
- * 表格可访问名（读屏）：取页面标题（路由 meta.title，与页签/面包屑同源），
- * 无标题时兜底通用词条；分页器「每页条数」下拉同步补可访问名（EP 无 props 入口）。
- * 数据或列变化后重新同步（见 utils/tableA11y）。
- */
-const tableA11yLabel = computed(
-  () => pageTitle.value || t("tableA11y.dataTable")
-);
-watch(
-  () => [
+// 表格可访问名同步（实现见 utils/useTableA11y）
+useTableA11y({
+  rootRef,
+  pageTitle,
+  sources: () => [
     tableBarData.value.dynamicColumns,
     dataList.value,
     loadingStatus.value
-  ],
-  () =>
-    nextTick(() => {
-      syncTableA11y(rootRef.value, tableA11yLabel.value);
-      syncPaginationA11y(rootRef.value, t("tableA11y.pageSize"));
-    }),
-  { flush: "post", immediate: true }
-);
+  ]
+});
 
 const { tableLayoutPending } = useTableLayout({
   tableElWidth,
@@ -236,15 +219,7 @@ const { tableLayoutPending } = useTableLayout({
 /** 搜索区展开/收起的过渡（实现见 utils/useSearchCardCollapse，含口径说明） */
 const { searchCardRef, onSearchCollapse } = useSearchCardCollapse();
 
-function getTreeProps() {
-  // pure-table 的 treeProps 期望三字段全必填（其 default 字面量类型），
-  // setup ref 展开会丢可选性，这里显式签名传递（与组件内注记一致）
-  return treeProps.value as {
-    hasChildren: string;
-    children: string;
-    checkStrictly: boolean;
-  };
-}
+const getTreeProps = () => resolveTreeProps(treeProps);
 
 function getTableRef() {
   return tableRef.value;

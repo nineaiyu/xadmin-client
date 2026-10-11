@@ -5,6 +5,8 @@
  * 用户权限裁剪；这里集中收口，避免各组件重复判断。
  */
 
+import type { Ref } from "vue";
+import type { RecordType } from "plus-pro-components";
 import { cloneDeep } from "@pureadmin/utils";
 
 /** 视图列表行（后端 SavedListViewSerializer 契约） */
@@ -63,4 +65,18 @@ export function sortViews(
       String(a.updated_time ?? "")
     );
   });
+}
+
+/**
+ * 生成「应用我的视图」动作：把条件快照写回搜索区并触发重查。
+ * 组件只上抛快照，写入 `searchFields` 由页面侧统一完成（单向数据流）。
+ */
+export function createApplySavedView(options: {
+  searchFields: Ref<RecordType>;
+  reload: () => void;
+}): (conditions: RecordType) => void {
+  return conditions => {
+    options.searchFields.value = cloneDeep(conditions ?? {});
+    options.reload();
+  };
 }

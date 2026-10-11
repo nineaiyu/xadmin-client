@@ -33,6 +33,7 @@ import { useI18n } from "vue-i18n";
 import {
   ICON_CLASS,
   TOP_CLASS,
+  buildDropdownItemStyle,
   buildRenderClass,
   rendTippyProps,
   resolveFixedState,
@@ -74,13 +75,9 @@ export default defineComponent({
 
     // 密度下拉项样式：选中项用主题色高亮
     const themeColor = computed(() => useEpThemeStoreHook().epThemeColor);
-    const getDropdownItemStyle = computed(() => (s: string) => ({
-      background: s === size.value ? themeColor.value : "",
-      color:
-        s === size.value
-          ? "var(--el-color-white)"
-          : "var(--el-text-color-primary)"
-    }));
+    const getDropdownItemStyle = computed(() =>
+      buildDropdownItemStyle(size, themeColor)
+    );
 
     const iconClass = computed(() => ICON_CLASS);
 
