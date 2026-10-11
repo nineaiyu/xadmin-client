@@ -114,7 +114,134 @@ async function healSharedLocale(page: Page) {
   }
 }
 
-export async function login(page: Page, creds: Credentials = ADMIN) {
+/**
+ * 会话复用（跑批提速）：以 API 取号 + 注入凭据 Cookie 代替每个用例的表单登录。
+ *
+ * 背景：全量档 648 条结果、每条都要走「表单填写 → 登录 POST → 跳转 → 拉路由」约
+ * 1.6~3.2s（CI 高负载下更久），累计占跑批时长的三成以上；而且登录链路本身是负载
+ * 抖动的高发点（历史 flaky 多数卡在「登录后未离开 #/login」）。
+ *
+ * 实现：
+ * - `POST /api/identity/login/basic` 直接取 token（E2E 档关加密与验证码，
+ *   真实登录接口、真实会话登记）；
+ * - 注入 `X-Token` / `X-Refresh-Token` / `multiple-tabs` 三枚 Cookie（与
+ *   `src/utils/auth.ts::setToken` 同口径，缺少 multiple-tabs 路由守卫不会认已登录）；
+ * - token 在进程内缓存复用（access 1h / refresh 15 天），超过 45 分钟重新取号，
+ *   避免「每个用例一次登录请求」撞登录限流；
+ * - 任何一步失败（接口异常 / 会话被逐出 / 页面没进应用壳）都回落到真实表单登录，
+ *   保证用例语义不变；`E2E_SESSION_REUSE=0` 可整体关闭以便隔离排查登录链路。
+ */
+const SESSION_REUSE_ENABLED = process.env.E2E_SESSION_REUSE !== "0";
+/** 取号缓存有效期：access token 1h，留足余量（refresh 15 天照常兜底续期） */
+const SESSION_CACHE_MS = 45 * 60 * 1000;
+let cachedAdminAuth:
+  | {
+      access: string;
+      refresh: string;
+      accessLifetime: number;
+      refreshLifetime: number;
+      at: number;
+    }
+  | undefined;
+
+async function acquireAdminAuth(page: Page) {
+  if (cachedAdminAuth && Date.now() - cachedAdminAuth.at < SESSION_CACHE_MS) {
+    return cachedAdminAuth;
+  }
+  // 临时令牌与登录两步的客户端指纹必须完全一致（UA + Accept + IP 参与 ident 计算），
+  // 因此两请求显式带同一组头；临时令牌一次性消费，每次取号都要重新申请
+  const headers = { "User-Agent": E2E_USER_AGENT, Accept: "application/json" };
+  const tempResp = await page.request.get(
+    `${FRONT_URL}/api/identity/auth/token`,
+    { headers }
+  );
+  const tempBody = (await tempResp.json().catch(() => ({}))) as {
+    token?: string;
+    data?: { token?: string };
+  };
+  const tempToken = tempBody?.token ?? tempBody?.data?.token ?? "";
+  if (!tempResp.ok() || !tempToken) {
+    throw new Error(
+      `临时令牌获取失败：HTTP ${tempResp.status()} ${JSON.stringify(tempBody).slice(0, 200)}`
+    );
+  }
+  const resp = await page.request.post(
+    `${FRONT_URL}/api/identity/login/basic`,
+    {
+      headers,
+      data: {
+        username: ADMIN.username,
+        password: ADMIN.password,
+        token: tempToken
+      }
+    }
+  );
+  const body = (await resp.json().catch(() => ({}))) as {
+    data?: {
+      access?: string;
+      refresh?: string;
+      access_token_lifetime?: number;
+      refresh_token_lifetime?: number;
+    };
+  };
+  const data = body?.data ?? {};
+  if (!resp.ok() || !data.access || !data.refresh) {
+    throw new Error(
+      `会话取号失败：HTTP ${resp.status()} ${JSON.stringify(body).slice(0, 200)}`
+    );
+  }
+  cachedAdminAuth = {
+    access: data.access,
+    refresh: data.refresh,
+    accessLifetime: data.access_token_lifetime ?? 3600,
+    refreshLifetime: data.refresh_token_lifetime ?? 15 * 24 * 3600,
+    at: Date.now()
+  };
+  return cachedAdminAuth;
+}
+
+/** 注入登录 Cookie 并引导至应用壳；会话不可用返回 false（由调用方回落表单登录） */
+async function trySessionLogin(page: Page): Promise<boolean> {
+  try {
+    const auth = await acquireAdminAuth(page);
+    const now = Math.floor(Date.now() / 1000);
+    await page.context().addCookies([
+      {
+        name: "X-Token",
+        value: auth.access,
+        url: FRONT_URL,
+        expires: now + Math.max(auth.accessLifetime - 10, 60),
+        sameSite: "Lax"
+      },
+      {
+        name: "X-Refresh-Token",
+        value: auth.refresh,
+        url: FRONT_URL,
+        expires: now + Math.max(auth.refreshLifetime - 10, 3600),
+        sameSite: "Lax"
+      },
+      // 路由守卫以该 Cookie 判定「已登录」（见 src/router/index.ts）
+      { name: "multiple-tabs", value: "true", url: FRONT_URL }
+    ]);
+    await page.goto("/");
+    const shell = page.locator("#header-translation");
+    const loginForm = page.getByPlaceholder("账号");
+    await expect(shell.or(loginForm).first()).toBeVisible({ timeout: 30_000 });
+    if (!(await shell.isVisible())) return false;
+    await healSharedLocale(page);
+    return true;
+  } catch (error) {
+    console.warn(
+      `[e2e] 会话复用登录失败，回落表单登录：${String(error).slice(0, 200)}`
+    );
+    return false;
+  }
+}
+
+/** 真实表单登录（登录链路本身的用例应直调本函数，避免被会话复用绕过） */
+export async function loginWithForm(page: Page, creds: Credentials = ADMIN) {
+  // 复用态残留会让路由守卫把 /#/login 重定向回首页，先清凭据再走表单
+  await page.context().clearCookies();
   const accountInput = page.getByPlaceholder("账号");
   await page.goto("/#/login");
   // 登录表单依赖站点配置：配置请求失败/被拖慢时登录页会落到「当前服务器不允许登录」
@@ -135,6 +262,36 @@ export async function login(page: Page, creds: Credentials = ADMIN) {
   // 高负载下登录 POST + 路由拉取可能超过 15s（auto-retry 断言的上界，非盲等）
   await expect(page).not.toHaveURL(/#\/login/, { timeout: 30_000 });
   await healSharedLocale(page);
+}
+
+/**
+ * 登录入口：默认走会话复用快路径（仅管理员账号），失败或指定其它账号时回落表单登录。
+ * 用例语义不变（调用后即为已登录且处于应用壳），登录链路自身的用例请直调 loginWithForm。
+ */
+export async function login(page: Page, creds: Credentials = ADMIN) {
+  if (
+    SESSION_REUSE_ENABLED &&
+    creds.username === ADMIN.username &&
+    (await trySessionLogin(page))
+  ) {
+    return;
+  }
+  await loginWithForm(page, creds);
+}
+
+/**
+ * 等待可见的 el-loading 遮罩退场。
+ *
+ * 框架的表/树在刷新期间挂 el-loading-mask，遮罩会拦截点击（高负载档下刷新更慢，
+ * Playwright 的点击重试窗口被吃满就表现为「click timeout」。等待上限取
+ * PANEL_ACTION_TIMEOUT；遮罩本就缺席或已退场时立即返回，不引入固定延时。
+ */
+export async function waitForLoadingMaskGone(page: Page) {
+  await page
+    .locator(".el-loading-mask:visible")
+    .first()
+    .waitFor({ state: "hidden", timeout: PANEL_ACTION_TIMEOUT })
+    .catch(() => undefined);
 }
 
 export async function openMenu(page: Page, parent: string, child: string) {

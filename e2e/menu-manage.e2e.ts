@@ -1,6 +1,11 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-import { login, openMenuPath } from "./helpers";
+import {
+  PANEL_ACTION_TIMEOUT,
+  login,
+  openMenuPath,
+  waitForLoadingMaskGone
+} from "./helpers";
 
 /**
  * 菜单管理页（重构后）：全宽菜单树 + 抽屉新增/编辑 + 右键菜单 + 批量启停 + 权限码预览。
@@ -38,7 +43,9 @@ async function createMenu(page: Page, name: string) {
   await drawer.getByPlaceholder("请输入路由地址").fill(`/${name}`);
   await drawer.getByRole("button", { name: "保存" }).click();
   await expect(drawer).toBeHidden({ timeout: 15_000 });
-  await expect(row(page, name)).toBeVisible({ timeout: 15_000 });
+  // 保存后树会整棵重拉（刷新期间挂遮罩），高负载档下 15s 可能不够
+  await waitForLoadingMaskGone(page);
+  await expect(row(page, name)).toBeVisible({ timeout: PANEL_ACTION_TIMEOUT });
 }
 
 /** 行内「更多」下拉（el-dropdown 会保留隐藏副本，断言限定可见菜单） */
@@ -68,15 +75,22 @@ test("菜单管理：新增（抽屉）→ 编辑改名 → 删除（含影响�
   const name = uniqueName("A");
   await createMenu(page, name);
 
-  // 点行（标题）打开编辑抽屉：改名后保存，树内就地更新
-  await row(page, name).locator(".menu-row__title").click();
+  // 点行（标题）打开编辑抽屉：改名后保存，树内就地更新。
+  // 树刷新期间遮罩会拦截点击、节点还会被重建（detached），以重试窗口骑过这段抖动
+  await waitForLoadingMaskGone(page);
+  await expect(async () => {
+    await row(page, name).locator(".menu-row__title").click({ timeout: 5_000 });
+  }).toPass({ timeout: PANEL_ACTION_TIMEOUT });
   const drawer = page.locator(".el-drawer:visible").first();
   await expect(drawer).toBeVisible({ timeout: 15_000 });
   const renamed = `${name}改`;
   await drawer.getByPlaceholder("请输入菜单标题").fill(renamed);
   await drawer.getByRole("button", { name: "保存" }).click();
   await expect(drawer).toBeHidden({ timeout: 15_000 });
-  await expect(row(page, renamed)).toBeVisible({ timeout: 15_000 });
+  await waitForLoadingMaskGone(page);
+  await expect(row(page, renamed)).toBeVisible({
+    timeout: PANEL_ACTION_TIMEOUT
+  });
 
   await removeMenu(page, renamed);
 });
@@ -88,6 +102,7 @@ test("菜单管理：右键排序、批量停用与行内启停", async ({ page 
 
   // 右键菜单（与行内「更多」同一份动作清单）→ 同层下移
   // 新建节点 rank 最小、位于同级首位，故取「下移一位」（上移在边界是空操作）
+  await waitForLoadingMaskGone(page);
   await row(page, name).click({ button: "right" });
   const context = page.locator(".menu-context");
   await expect(context).toBeVisible({ timeout: 10_000 });

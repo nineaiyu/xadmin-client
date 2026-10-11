@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { login, openMenuPath } from "./helpers";
+import { PANEL_ACTION_TIMEOUT, login, openMenuPath } from "./helpers";
 
 /**
  * 站点配置持久化 E2E：用户配置页新增配置项 → 刷新页面后仍然存在。
@@ -27,9 +27,21 @@ test("用户配置：新增配置项 → 刷新后仍存在", async ({ page }) =
   // RePlusPage 弹层首个 el-select 即必填的「用户ID」，点击后打开「用户选择器」
   // 弹层（api-search-user 组件：用户表格 + 确定，非 el-dialog 结构），勾选种子
   // 用户 e2e_user 后确定；缺此步前端校验不过，beforeSure 卡 loading 弹层不关闭
-  await dialog.locator(".el-select").first().click();
+  // 打开「用户选择器」：高负载档下拉浮层偶尔没被首点唤起（点击落在渲染中/被遮罩吞掉），
+  // 以「可见即通过、未见补点」的轮询替代单次点击，避免用固定延时掩盖真实状态
+  const userSelect = dialog.locator(".el-select").first();
+  await expect(userSelect).toBeVisible({ timeout: 15_000 });
   const pickerSearch = page.getByPlaceholder("请输入用户名");
-  await pickerSearch.waitFor({ state: "visible", timeout: 15_000 });
+  await expect
+    .poll(
+      async () => {
+        if (await pickerSearch.isVisible().catch(() => false)) return true;
+        await userSelect.click({ timeout: 5_000 }).catch(() => undefined);
+        return pickerSearch.isVisible().catch(() => false);
+      },
+      { timeout: PANEL_ACTION_TIMEOUT, intervals: [500, 1_000, 1_500] }
+    )
+    .toBe(true);
   // 选择器内的用户表格是页面最后一个表格，先等它加载出行；列表默认
   // ordering=-created_time + pageSize=15，早建的 e2e_user 可能已被挤出首页 —
   // 此时退化为选择首行（本用例只要求「配置绑定到某个用户」，不关心是哪一个）

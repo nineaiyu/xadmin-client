@@ -1,6 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { BACKEND_URL, getAccessToken, login, openMenuPath } from "./helpers";
+import {
+  BACKEND_URL,
+  PANEL_ACTION_TIMEOUT,
+  getAccessToken,
+  login,
+  openMenuPath
+} from "./helpers";
 
 /**
  * 可拖拽分栏（ReSplitPane）+ 宽度持久化主链路（system/user 页）：
@@ -95,10 +101,22 @@ test("分栏拖拽持久化、刷新保持与重置", async ({ page }) => {
   await waitListLoaded(page);
 
   // ---- 拖拽到约 40% ----
+  // 远端 PATCH（debounce 800ms）的等待必须先于拖拽注册，且只认「载荷含 SplitPanes」
+  // 的那一条：该端点是站点配置的通用写入口，其它偏好的 PATCH 响应会让等待提前满足
+  // （CI 曾因此读到未落库的服务器值——刷新后回到默认 20）。宽度落位是拖拽后的异步
+  // 重排结果，「拖完立刻量」在高负载档会读到旧值，故用轮询断言。
+  const patch = page.waitForResponse(resp => {
+    if (resp.request().method() !== "PATCH") return false;
+    if (!resp.url().includes("/api/system/configs/WEB_SITE_CONFIG")) {
+      return false;
+    }
+    return (resp.request().postData() ?? "").includes("SplitPanes");
+  });
   await dragResizer(page, 0.4);
-  const dragged = await leftPanePercent(page);
-  expect(dragged).toBeGreaterThan(35);
-  expect(dragged).toBeLessThan(45);
+  await expect
+    .poll(() => leftPanePercent(page), { timeout: PANEL_ACTION_TIMEOUT })
+    .toBeGreaterThan(35);
+  expect(await leftPanePercent(page)).toBeLessThan(45);
 
   // localStorage 即时层（拖拽结束同步写入，不经 debounce）
   const stored = await readSplitPanes(page);
@@ -112,22 +130,18 @@ test("分栏拖拽持久化、刷新保持与重置", async ({ page }) => {
   );
   expect(selection).toBe("");
 
-  // 远端 PATCH（debounce 800ms）载荷为 SplitPanes 单键，其余站点配置由后端 merge；
-  // 等「响应」而非「请求」：刷新需读到落库后的服务器值（等请求只保证已发出，仍有竞态）
-  const patch = page.waitForResponse(
-    resp =>
-      resp.request().method() === "PATCH" &&
-      resp.url().includes("/api/system/configs/WEB_SITE_CONFIG")
-  );
+  // 等「落库响应」而非「请求已发出」：刷新需读到服务器上的新比例（见上方 waiter 注释）
   await patch;
 
   // ---- 刷新后保持（本地缓存优先） ----
   await page.reload();
   await expect(resizer).toBeVisible({ timeout: 15_000 });
   await waitListLoaded(page);
-  const kept = await leftPanePercent(page);
-  expect(kept).toBeGreaterThan(35);
-  expect(kept).toBeLessThan(45);
+  // 刷新后按本地缓存优先渲染，落位同样是异步的（CI 曾出现读到默认 20 的一次性断言失败）
+  await expect
+    .poll(() => leftPanePercent(page), { timeout: PANEL_ACTION_TIMEOUT })
+    .toBeGreaterThan(35);
+  expect(await leftPanePercent(page)).toBeLessThan(45);
 
   // ---- 双击分隔条重置回默认 20% ----
   // 双击的两次 click 之间存在重排：第一次 click 触发重置后分隔条跳回左侧，第二次
@@ -136,7 +150,7 @@ test("分栏拖拽持久化、刷新保持与重置", async ({ page }) => {
   // 可能的误开抽屉，保证后续步骤在无遮罩状态下进行（详见 e2e/README 陷阱表）。
   await resizer.dblclick();
   await expect
-    .poll(() => leftPanePercent(page), { timeout: 5_000 })
+    .poll(() => leftPanePercent(page), { timeout: PANEL_ACTION_TIMEOUT })
     .toBeLessThan(25);
   const strayDrawer = page.locator(".el-drawer:visible").first();
   if (await strayDrawer.count()) {
@@ -147,10 +161,22 @@ test("分栏拖拽持久化、刷新保持与重置", async ({ page }) => {
   // ---- 中央重置按钮：单击（无位移）触发重置 ----
   await dragResizer(page, 0.6);
   expect(await leftPanePercent(page)).toBeGreaterThan(55);
+  // 单击重置：点击可能落在重排瞬间（未命中分隔条）或重置链路在高负载下变慢，
+  // 以「点击 → 复测」的轮询替代单次点击（首次即生效时不再补点）
   const box = await resizer.boundingBox();
-  await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
   await expect
-    .poll(() => leftPanePercent(page), { timeout: 5_000 })
+    .poll(
+      async () => {
+        if ((await leftPanePercent(page)) < 25) return 0;
+        await page.mouse.click(
+          box!.x + box!.width / 2,
+          box!.y + box!.height / 2
+        );
+        await page.waitForTimeout(400);
+        return leftPanePercent(page);
+      },
+      { timeout: PANEL_ACTION_TIMEOUT, intervals: [800, 1_200] }
+    )
     .toBeLessThan(25);
   const resetStored = await readSplitPanes(page);
   expect(resetStored!["system/user"]).toBeLessThan(25);
@@ -168,7 +194,9 @@ test("跨设备：本机旧缓存不压制服务器值", async ({ page }) => {
   // 设备 A：拖到约 60% 并等 PATCH 落库。防抖（800ms）+ 落库缓冲属服务端写路径的
   // 时间域，后续步骤要先刷新再读服务器值，无单一 DOM 信号可替代，保留固定观察窗
   await dragResizer(page, 0.6);
-  expect(await leftPanePercent(page)).toBeGreaterThan(55);
+  await expect
+    .poll(() => leftPanePercent(page), { timeout: PANEL_ACTION_TIMEOUT })
+    .toBeGreaterThan(55);
   await page.waitForTimeout(1200);
 
   // 场景一（曾复现"刷新还是老数据"）：本机此前拖过、本地残留旧值 20%，
@@ -180,7 +208,7 @@ test("跨设备：本机旧缓存不压制服务器值", async ({ page }) => {
   await page.reload();
   await expect(resizer).toBeVisible({ timeout: 15_000 });
   await expect
-    .poll(() => leftPanePercent(page), { timeout: 5_000 })
+    .poll(() => leftPanePercent(page), { timeout: PANEL_ACTION_TIMEOUT })
     .toBeGreaterThan(55);
   const rewritten = await readSplitPanes(page);
   expect(rewritten!["system/user"]).toBeGreaterThan(55);
@@ -194,6 +222,6 @@ test("跨设备：本机旧缓存不压制服务器值", async ({ page }) => {
   await page.reload();
   await expect(resizer).toBeVisible({ timeout: 15_000 });
   await expect
-    .poll(() => leftPanePercent(page), { timeout: 5_000 })
+    .poll(() => leftPanePercent(page), { timeout: PANEL_ACTION_TIMEOUT })
     .toBeGreaterThan(55);
 });

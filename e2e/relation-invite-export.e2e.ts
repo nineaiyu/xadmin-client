@@ -119,6 +119,11 @@ test("邀请激活：发送邀请后状态列显示待接受", async ({ page }) 
 });
 
 test("仪表盘卡片导出图片触发下载且文件非空", async ({ page }) => {
+  // 高负载档 60s 预算不够：登录 + 建数据集/看板 + 图表就绪 + 下载事件，
+  // 并行分片下曾三次都卡在下载事件等待上（超时口径掩盖了真实原因）
+  test.slow();
+  const pageErrors: string[] = [];
+  page.on("pageerror", error => pageErrors.push(String(error)));
   await login(page);
   const token = await getAccessToken(page);
   const headers = { Authorization: `Bearer ${token}` };
@@ -179,10 +184,23 @@ test("仪表盘卡片导出图片触发下载且文件非空", async ({ page }) 
   const exportBtn = page.locator('[data-testid="card-export-image"]').first();
   await expect(exportBtn).toBeVisible({ timeout: 20_000 });
 
-  const [download] = await Promise.all([
-    page.waitForEvent("download", { timeout: DOWNLOAD_TIMEOUT }),
-    exportBtn.click()
-  ]);
+  let download;
+  try {
+    [download] = await Promise.all([
+      page.waitForEvent("download", { timeout: DOWNLOAD_TIMEOUT }),
+      exportBtn.click()
+    ]);
+  } catch (error) {
+    // 失败现场自带取证：renderImage 为空时页面只弹提示不下载，超时口径会掩盖这一点
+    const toasts = await page
+      .locator(".el-message")
+      .allInnerTexts()
+      .catch(() => [] as string[]);
+    throw new Error(
+      `点击导出后未触发下载事件：toasts=${JSON.stringify(toasts)} ` +
+        `pageErrors=${JSON.stringify(pageErrors.slice(0, 3))} cause=${String(error)}`
+    );
+  }
   // 项目 ECharts 为 SVGRenderer：优先转 PNG，浏览器受限时回退 SVG 原图
   expect(download.suggestedFilename()).toMatch(/\.(png|svg)$/);
   const filePath = await download.path();
