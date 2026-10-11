@@ -17,20 +17,18 @@ const IMPACT_BLOCKING = new Set(["critical", "serious"]);
 
 /**
  * 豁免登记（规则 id → 节点选择器摘要的匹配正则）：
- * - aria-required-children / aria-required-parent：Element Plus el-menu 在垂直模式
- *   生成的 ARIA 结构不完整，属组件库内部实现，仓库侧不覆盖其 DOM；
- * - color-contrast：主题色（--el-color-primary #409EFF）白字对比度不足，
- *   命中形态为 el-button / el-link（两者同源取主题色），修复需换全局主题色，
- *   影响面大，另行决策；el-button 的 link/plain 变体文字节点（登录页「忘记密码」
- *   「登录」按钮，axe target 取最短唯一选择器、不含 el-button 字面）与 el-divider
- *   文字同属该主题级问题——登录页表单为异步渲染，采样窗口不同会时而命中时而躲开，
- *   2026-09-14 用干净基线复核确认与功能改动无关（详见 docs/accessibility-audit.md）；
- * - button-name：EP 动态 id（#el-id-*）的无名命令按钮；RePlusPage 工具栏图标按钮
- *   已于 R2 补 aria-label，不再依赖 el-tooltip__trigger 形态豁免；
- * - scrollable-region-focusable：EP 表格内嵌 el-scrollbar 滚动区不可键盘聚焦，组件库行为；
- * - svg-img-alt：Iconify 菜单/输入框装饰图标以 role="img" 渲染且无 alt，统一改渲染层后移出；
- * - label：plus-pro-components 动态表单控件的 label 关联缺失（EP 动态 id）；
- * - aria-roles `.bar`：来源待查（仓库源码无该元素，疑似第三方注入）。
+ *
+ * 仅存 EP 菜单垂直模式的 ARIA 结构问题：el-menu 渲染 `ul[role=menubar] > a > li[role=menuitem]`，
+ * axe 判 `aria-required-children`（menubar 下出现不被允许的 `a`）与 `aria-required-parent`
+ * （`li[role=menuitem]` 的父级是 `a` 而非 menu/menubar/group）。DOM 由组件库生成、
+ * 侧栏契约冻结（仓库侧不覆写其结构），待上游补全；命中节点全部位于侧栏/菜单树区域。
+ *
+ * 2026-10-11 收尾：其余豁免已全部消化——`color-contrast`（主题色收口与对比度修复）、
+ * `button-name` / `aria-command-name`（仓库图标按钮可访问名：页签「更多」、开关渲染器）、
+ * `label`（el-switch 渲染器 + 菜单工具栏下拉补 aria-label，分页器下拉经 tableA11y 收口）、
+ * `scrollable-region-focusable`（多值标签渲染器 el-scrollbar 补 tabindex）、
+ * `svg-img-alt`（Iconify 渲染层统一 aria-hidden 后无命中）、`aria-roles .bar`（无命中）。
+ * 摘除项若在其他扫描面重新命中，按「先本地收口、再登记」路径处理（见 docs/accessibility-audit.md）。
  */
 const ALLOWED_VIOLATIONS: Record<string, RegExp[]> = {
   "aria-required-children": [/\.el-menu--vertical/, /ul\[data-old-padding-top/],
@@ -39,37 +37,11 @@ const ALLOWED_VIOLATIONS: Record<string, RegExp[]> = {
     /\.el-menu-item\.nest-menu/,
     // 当前激活菜单项：axe 对该节点取「最短唯一选择器」（命中形态 .is-active.el-menu-item[role=menuitem]），
     // 不带 nest-menu / a[href$=...] 前缀，属同一 EP 菜单垂直模式 ARIA 结构问题（见 docs/accessibility-audit.md）
-    /\.is-active\.el-menu-item/
-  ],
-  "color-contrast": [
-    /el-button/,
-    /el-link/,
-    /plus-form-item__label/,
-    /(^|\s)p($|\s|\.)/,
-    /^#el-id-/,
-    // EP 空表格占位文字与 info alert 标题（主题级对比度，需换主题色统一修复）
-    /el-table__empty-text/,
-    /el-alert__title/,
-    // el-button 的 link/plain 变体文字节点（axe target 取「最短唯一选择器」，
-    // 不含 el-button 字面）与分隔线文字：同属主题级对比度问题
-    /\.is-(link|plain) > span/,
-    /el-divider__text/,
-    // 未读消息角标（danger 红底白字，EP Badge 组件默认配色）——通知类功能
-    // （审批提醒/催办）在跑批中随时产生未读，命中与否取决于采样窗口
-    /el-badge__content--danger/,
-    // ReDrawer/ReDialog 页脚按钮：`text + bg` 形态取主题色文字 + 浅底（2.9:1），
-    // axe 为该节点取「最短唯一选择器」为 button[label=...]，不含 el-button 字面；
-    // 属框架级主题色问题，登记见 docs/accessibility-audit.md（2026-09-24 补充登记）
-    /button\[label=/
-  ],
-  // EP 动态 id 的无名命令按钮（RePlusPage 工具栏/EIcon 触发器等已补 aria-label）
-  "button-name": [/^#el-id-/],
-  "aria-command-name": [/^#el-id-/],
-  "scrollable-region-focusable": [/el-scrollbar__wrap/],
-  // Iconify 图标无 alt（有 role="img" 与无 role 两种渲染形态，统一豁免至渲染层修复）
-  "svg-img-alt": [/\[role="img"\]/, /iconify--/],
-  label: [/^#el-id-/],
-  "aria-roles": [/^\.bar$/]
+    /\.is-active\.el-menu-item/,
+    // 垂直菜单叶子项（a[href$=...] > .el-menu-item[role=menuitem]）：同一 EP 菜单
+    // ARIA 结构的第三种取选择器形态（2026-10-11 扩面，菜单数据新增后成批暴露）
+    /> \.el-menu-item\[role="menuitem"\]$/
+  ]
 };
 
 /** axe 阻断级违规摘要（豁免剔除后的最小结构） */
@@ -91,13 +63,10 @@ function isAllowed(violation: ViolationSummary): boolean {
   );
 }
 
-/** 扫描并返回阻断级违规摘要（豁免项已剔除） */
-async function scanBlockingViolations(
+/** 单次 axe 扫描（阻断级 → 摘要 → 剔除豁免） */
+async function scanOnce(
   page: import("@playwright/test").Page
 ): Promise<ViolationSummary[]> {
-  // axe 采样必须在动画终态进行：el-tree 等组件入场 opacity transition 未结束时，
-  // 半透明文字与背景混色会拉低对比度，产生瞬态 color-contrast 假违规
-  // （首扫偶发、隔离重跑必过）。注入样式让所有动画立即跳到终态再扫描。
   await page.addStyleTag({
     content:
       "*, *::before, *::after { transition: none !important; animation: none !important; }"
@@ -116,6 +85,23 @@ async function scanBlockingViolations(
         .join(" | ")
     }))
     .filter(violation => !isAllowed(violation));
+}
+
+/**
+ * 扫描并返回阻断级违规摘要（豁免项已剔除）。
+ *
+ * axe 采样必须在动画终态进行：入场 opacity transition 未结束时，半透明文字与
+ * 背景混色会拉低对比度，产生瞬态 color-contrast 假违规（首扫偶发、隔离重跑必过）。
+ * 注入样式让所有动画立即跳到终态仍不足以覆盖 JS 驱动的入场（登录页第三方登录区
+ * 异步渲染），故命中违规时**等一拍复扫**，以稳定后的结果判定（真实缺陷复扫仍在）。
+ */
+async function scanBlockingViolations(
+  page: import("@playwright/test").Page
+): Promise<ViolationSummary[]> {
+  const first = await scanOnce(page);
+  if (first.length === 0) return first;
+  await page.waitForTimeout(500);
+  return scanOnce(page);
 }
 
 function formatViolations(violations: ViolationSummary[]): string {
@@ -227,4 +213,45 @@ test("a11y 扩面：菜单管理页（树行 + 编辑抽屉）无 critical/serio
     drawerViolations,
     `菜单编辑抽屉 a11y 违规：\n${formatViolations(drawerViolations)}`
   ).toEqual([]);
+});
+
+test("a11y 交互：数据表有可访问名，弹窗/抽屉关闭后焦点归还触发元素", async ({
+  page
+}) => {
+  await login(page);
+  await openMenuPath(page, ["系统管理"], "/system/user/index");
+  await expect(page.locator(".el-table").first()).toBeVisible({
+    timeout: 15_000
+  });
+
+  // 数据表可访问名（读屏以页面标题播报表体/表头两张原生表）
+  const tableLabel = await page
+    .locator("table.el-table__body")
+    .first()
+    .getAttribute("aria-label");
+  expect(tableLabel && tableLabel.trim().length > 0, "表体缺少可访问名").toBe(
+    true
+  );
+
+  // 焦点归还（ReDialog）：键盘唤起弹窗 → Esc 关闭 → 焦点回到触发按钮
+  const addButton = page.getByRole("button", { name: "新增" }).first();
+  await addButton.focus();
+  await page.keyboard.press("Enter");
+  const dialog = page.locator(".el-dialog:visible").first();
+  await expect(dialog).toBeVisible({ timeout: 15_000 });
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden({ timeout: 15_000 });
+  await expect(addButton).toBeFocused();
+
+  // 焦点归还（ReDrawer）：行内「管理」抽屉同样归还
+  const row = page.locator(".el-table__row").first();
+  await expect(row).toBeVisible({ timeout: 15_000 });
+  const manageButton = row.getByRole("button", { name: "管理" }).first();
+  await manageButton.focus();
+  await page.keyboard.press("Enter");
+  const drawer = page.locator(".el-drawer:visible").first();
+  await expect(drawer).toBeVisible({ timeout: 15_000 });
+  await page.keyboard.press("Escape");
+  await expect(drawer).toBeHidden({ timeout: 15_000 });
+  await expect(manageButton).toBeFocused();
 });

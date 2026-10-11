@@ -32,6 +32,17 @@ const CASES: Array<{ path: string; label: string; surface: string }> = [
     path: "/#/account-settings",
     label: "账户设置侧栏",
     surface: ".pure-account-settings"
+  },
+  // 三期新组件落点：列表容器（RePlusPage/表格）/ 知识库面板（抽屉源）
+  {
+    path: "/#/integration/api-app/index",
+    label: "开放平台·API 应用",
+    surface: ".el-table"
+  },
+  {
+    path: "/#/integration/knowledge/index",
+    label: "知识库",
+    surface: ".el-table"
   }
 ];
 
@@ -173,6 +184,32 @@ test.describe("暗色模式主题一致性", () => {
     await expect(page.locator("html")).not.toHaveClass(/dark/);
     const back = await measure(page, ".el-card");
     expect(luminance(back.background)).toBeGreaterThan(0.8);
+  });
+
+  test("深色下抽屉（用户管理面板）为深表面 + 浅文本", async ({ page }) => {
+    await login(page, ADMIN);
+    await switchTheme(page, "dark");
+
+    await page.goto("/#/system/user/index");
+    const row = page.locator(".el-table__row").first();
+    await expect(row).toBeVisible({ timeout: 15_000 });
+    await row.getByRole("button", { name: "管理" }).first().click();
+
+    const drawer = page.locator(".el-drawer:visible").first();
+    await expect(drawer).toBeVisible({ timeout: 15_000 });
+    const style = await drawer.evaluate(el => {
+      const computed = getComputedStyle(el);
+      return { background: computed.backgroundColor, color: computed.color };
+    });
+    expect(
+      luminance(style.background),
+      `抽屉深色表面应偏暗：${JSON.stringify(style)}`
+    ).toBeLessThan(0.35);
+    expect(
+      luminance(style.color),
+      `抽屉深色文本应偏亮：${JSON.stringify(style)}`
+    ).toBeGreaterThan(0.6);
+    await page.keyboard.press("Escape");
   });
 
   test("账户设置侧栏激活项在两态下都是白字（皮肤锚定后既生效也不外泄）", async ({

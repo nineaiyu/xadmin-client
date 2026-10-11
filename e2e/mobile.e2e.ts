@@ -80,6 +80,13 @@ test.describe("移动端形态（iPhone 13）", () => {
       })
       .toBeLessThan(0);
 
+    // 关闭态侧栏 inert：画布外的菜单链接不得留在 Tab 键序里（a11y）
+    await expect(page.locator(".sidebar-container[inert]")).toHaveCount(1);
+    await page.locator(".hamburger-container").first().click();
+    await expect(page.locator(".sidebar-container[inert]")).toHaveCount(0);
+    await page.locator(".app-mask").click({ position: { x: 300, y: 300 } });
+    await expect(page.locator(".sidebar-container[inert]")).toHaveCount(1);
+
     // 用户管理：部门树限高（不得占满视口），用户列表进入首屏
     await page.goto(`${FRONT_URL}/#/system/user/index`);
     // 只断言「有数据行」：不得钉具体行（xadmin 是最早创建的账号，共享库跑批后
