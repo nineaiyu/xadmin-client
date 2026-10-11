@@ -111,15 +111,15 @@ const badgeText = computed(
 .pp-badge--circle {
   width: 56px;
   height: 56px;
-  font-size: 22px;
+  font-size: var(--display-size-sm);
   border-radius: 50%;
 }
 
 .pp-badge--square {
   width: 44px;
   height: 44px;
-  font-size: 20px;
-  border-radius: 10px;
+  font-size: var(--font-size-xl);
+  border-radius: var(--radius-lg);
 }
 
 .profile-name {

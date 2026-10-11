@@ -2,6 +2,7 @@
 import { nextTick, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
+import type { AiThinkingProps } from "./types";
 /**
  * AI 思考过程面板（聊天室 + AI 助手页共用，经 AiMessageBlock 承载）。
  *
@@ -14,17 +15,11 @@ defineOptions({
   name: "AiThinking"
 });
 
-const props = withDefaults(
-  defineProps<{
-    /** 思考内容（流式追加 / 落库全文） */
-    text?: string;
-    /** 是否正在流式输出 */
-    streaming?: boolean;
-    /** 初始展开（历史消息默认折叠） */
-    defaultOpen?: boolean;
-  }>(),
-  { text: "", streaming: false, defaultOpen: false }
-);
+const props = withDefaults(defineProps<AiThinkingProps>(), {
+  text: "",
+  streaming: false,
+  defaultOpen: false
+});
 
 const { t } = useI18n();
 const open = ref(props.defaultOpen || props.streaming);
@@ -133,7 +128,7 @@ watch(
   font-size: var(--el-font-size-extra-small);
   background: var(--el-fill-color-lighter);
   border-left: 2px solid var(--el-border-color);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   transition: border-color 0.2s;
 }
 

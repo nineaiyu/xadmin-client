@@ -93,4 +93,84 @@ const message = (
  */
 const closeAllMessage = (): void => ElMessage.closeAll();
 
-export { message, closeAllMessage };
+/** 同 key 消息句柄表：同 key 的新消息展示前先关闭旧句柄（覆盖式反馈） */
+const keyedHandlers = new Map<string, MessageHandler>();
+
+/** 关闭指定 key 的挂起消息（不传则忽略） */
+const closeKeyedMessage = (key: string): void => {
+  const handler = keyedHandlers.get(key);
+  if (handler) {
+    handler.close();
+    keyedHandlers.delete(key);
+  }
+};
+
+/**
+ * 覆盖式消息：以 `key` 为句柄键，同 key 的旧消息先关闭再展示新消息。
+ * 用于「加载中 →（同 key）成功 / 失败」的串联反馈。
+ */
+const keyedMessage = (
+  key: string,
+  text: string | VNode,
+  params?: MessageParams
+): MessageHandler => {
+  closeKeyedMessage(key);
+  const handler = message(text, params);
+  keyedHandlers.set(key, handler);
+  return handler;
+};
+
+interface KeyedLoadingOptions<T> {
+  /** 加载中文案（缺省则不展示加载态） */
+  loading?: string;
+  /** 成功文案（可传函数由结果生成；缺省则直接收尾关闭） */
+  success?: string | ((result: T) => string);
+  /** 失败文案（可传函数由错误生成；缺省取错误 message） */
+  error?: string | ((error: unknown) => string);
+}
+
+/**
+ * 以同 key 串联「加载中 → 成功 / 失败」的消息反馈：开始时展示 loading
+ * （`duration: 0` 不自动关闭），结束时用同 key 覆盖为成功 / 失败。
+ * 失败会展示错误消息并继续抛出（调用方可继续 catch）。
+ */
+async function withKeyedLoading<T>(
+  key: string,
+  task: Promise<T> | (() => Promise<T>),
+  options: KeyedLoadingOptions<T> = {}
+): Promise<T> {
+  const { loading, success, error } = options;
+  if (loading) {
+    keyedMessage(key, loading, { type: "info", duration: 0, showClose: false });
+  }
+  try {
+    const result = await (typeof task === "function" ? task() : task);
+    if (success) {
+      const text = typeof success === "function" ? success(result) : success;
+      keyedMessage(key, text, { type: "success" });
+    } else {
+      closeKeyedMessage(key);
+    }
+    return result;
+  } catch (err) {
+    const text =
+      typeof error === "function"
+        ? error(err)
+        : typeof error === "string" && error
+          ? error
+          : err instanceof Error
+            ? err.message
+            : String(err ?? "");
+    keyedMessage(key, text, { type: "error" });
+    throw err;
+  }
+}
+
+export {
+  message,
+  closeAllMessage,
+  keyedMessage,
+  closeKeyedMessage,
+  withKeyedLoading
+};
+export type { KeyedLoadingOptions };

@@ -3,8 +3,15 @@ import { SUCCESS_CODE } from "@/api/types";
 import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
-import type { ScopeCatalogResponse, ScopeGroup } from "@/utils/scopeDisplay";
+import type { ScopeGroup } from "@/utils/scopeDisplay";
+import {
+  mergeScopes,
+  methodTagType,
+  splitCustomItems,
+  splitSavedScopes
+} from "./utils";
 
+import type { ApiScopeEditorProps } from "./types";
 /**
  * 接口范围编辑器（访问令牌与 API 应用共用）：勾选「有权限的接口」+ 自定义条目（高级）。
  *
@@ -18,15 +25,9 @@ import type { ScopeCatalogResponse, ScopeGroup } from "@/utils/scopeDisplay";
 
 defineOptions({ name: "ApiScopeEditor" });
 
-const props = withDefaults(
-  defineProps<{
-    /** 隐藏「自定义条目」区（创建弹窗空间有限时用） */
-    hideCustom?: boolean;
-    /** 选项目录加载器（令牌 / 应用两套端点由调用方注入，组件不绑定具体接口） */
-    loadOptions: () => Promise<ScopeCatalogResponse>;
-  }>(),
-  { hideCustom: false }
-);
+const props = withDefaults(defineProps<ApiScopeEditorProps>(), {
+  hideCustom: false
+});
 /** 已保存的 scope 条目（空 = 不限），双向绑定给调用方 */
 const scopes = defineModel<string[]>({ default: () => [] });
 
@@ -44,32 +45,15 @@ const knownValues = computed(
       groups.value.flatMap(group => group.options.map(option => option.value))
     )
 );
-const customItems = computed(() =>
-  customText.value
-    .split("\n")
-    .map(item => item.trim())
-    .filter(Boolean)
-);
+const customItems = computed(() => splitCustomItems(customText.value));
 
 const merge = () => {
-  const merged = [...picked.value, ...customItems.value];
-  scopes.value = merged.filter((item, index) => merged.indexOf(item) === index);
+  scopes.value = mergeScopes(picked.value, customItems.value);
 };
 
 /** 分组/标题翻译：菜单标题可能是 i18n key（如 menus.userManagement） */
 const labelOf = (title: string) =>
   title ? (te(title) ? t(title) : title) : t("apiScope.other");
-
-type MethodTagType = "success" | "primary" | "warning" | "danger" | "info";
-const METHOD_TAG_TYPES: Record<string, MethodTagType> = {
-  GET: "success",
-  POST: "primary",
-  PUT: "warning",
-  PATCH: "warning",
-  DELETE: "danger"
-};
-const methodTagType = (method: string): MethodTagType =>
-  METHOD_TAG_TYPES[String(method).toUpperCase()] ?? "info";
 
 watch([picked, customText], merge);
 
@@ -83,9 +67,9 @@ onMounted(() => {
       groups.value = payload.groups ?? [];
       // 已有条目分流：命中选项的进勾选，其余进自定义（不丢历史/正则条目）
       const saved = scopes.value ?? [];
-      picked.value = saved.filter(item => knownValues.value.has(item));
-      const rest = saved.filter(item => !knownValues.value.has(item));
-      if (rest.length) customText.value = rest.join("\n");
+      const split = splitSavedScopes(saved, knownValues.value);
+      picked.value = split.picked;
+      if (split.rest.length) customText.value = split.rest.join("\n");
       merge();
     })
     .catch(() => {

@@ -24,7 +24,7 @@
             :value="country"
           >
             <span class="country-name">{{ country.name }}</span>
-            <span style="float: right; font-size: 13px">{{
+            <span style="float: right; font-size: var(--font-size-sm)">{{
               country.value
             }}</span>
           </el-option>

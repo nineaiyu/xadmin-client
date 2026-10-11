@@ -3,14 +3,12 @@
  * 消息流时间分隔行（聊天室 / 助手页共用）：标签文案由调用方按公共时间分组
  * 口径（utils/timeGroups）生成后传入。
  */
+import type { MessageTimeDividerProps } from "./types";
 defineOptions({
   name: "MessageTimeDivider"
 });
 
-defineProps<{
-  /** 分隔标签（今日时分 / 昨天前缀 / 更早月-日 时分） */
-  label: string;
-}>();
+defineProps<MessageTimeDividerProps>();
 </script>
 
 <template>

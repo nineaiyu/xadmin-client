@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
   CHART_ACCENT,
+  CHART_FALLBACK_FONT_FAMILY,
+  chartFontFamily,
+  chartTextTheme,
   cssVarColor,
   epColor,
   epColorLight,
@@ -48,6 +51,32 @@ describe("chartTheme 取色与回退", () => {
 
   it("图表强调色集中定义（不再散落各页面写死）", () => {
     expect(CHART_ACCENT).toBe("#9a66e4");
+  });
+});
+
+/**
+ * 图表文字字体栈：zrender 不消费 CSS，字体只能在 init 主题层注入；
+ * `--font-family-base` 是 SCSS 多行值，读取后必须折叠换行/空白（ECharts 收到
+ * 带换行的字体串时 canvas/SVG 解析会静默丢字体）。
+ */
+describe("chartFontFamily 字体栈注入", () => {
+  afterEach(() => {
+    document.documentElement.style.cssText = "";
+  });
+
+  it("变量缺失时回退到与应用字体栈同源的常量", () => {
+    expect(chartFontFamily()).toBe(CHART_FALLBACK_FONT_FAMILY);
+    expect(chartTextTheme()).toEqual({
+      textStyle: { fontFamily: CHART_FALLBACK_FONT_FAMILY }
+    });
+  });
+
+  it("变量存在时取实际值并折叠换行与多余空白", () => {
+    document.documentElement.style.setProperty(
+      "--font-family-base",
+      '-apple-system,\n    "PingFang SC",\n    sans-serif'
+    );
+    expect(chartFontFamily()).toBe('-apple-system, "PingFang SC", sans-serif');
   });
 });
 

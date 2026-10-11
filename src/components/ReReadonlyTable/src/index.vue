@@ -1,8 +1,11 @@
 <script lang="ts" setup>
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import type { RecordType } from "plus-pro-components";
 import ReEmpty from "@/components/ReEmpty";
 import type { ReadonlyColumn } from "./types";
+import { TABLE_HEADER_CELL_STYLE } from "@/utils/tableHeader";
+import { syncTableA11y } from "@/utils/tableA11y";
 
 /**
  * 只读明细表（展示型表格统一形态）。
@@ -29,6 +32,8 @@ const props = withDefaults(
     maxHeight?: string | number;
     /** 空态文案；缺省时用 EP 表格默认空文案 */
     emptyText?: string;
+    /** 可访问名（读屏播报的表格标题）；缺省时用通用词条 */
+    label?: string;
   }>(),
   {
     rows: () => [],
@@ -38,28 +43,37 @@ const props = withDefaults(
     border: false,
     rowKey: "pk",
     maxHeight: undefined,
-    emptyText: ""
+    emptyText: "",
+    label: ""
   }
 );
 
 const { t } = useI18n();
 
-/** 表头底纹与字色：与 RePlusPage 列表页一致（同一变量，主题切换自动跟随） */
-const HEADER_CELL_STYLE = {
-  background: "var(--el-table-row-hover-bg-color)",
-  color: "var(--el-text-color-primary)"
-};
+/** el-table 实例（仅取根元素做可访问名同步，不触碰内部状态） */
+const tableRef = ref<{ $el?: HTMLElement } | null>(null);
+const a11yLabel = computed(() => props.label || t("tableA11y.dataTable"));
+
+function syncA11y() {
+  nextTick(() => syncTableA11y(tableRef.value?.$el ?? null, a11yLabel.value));
+}
+
+onMounted(syncA11y);
+watch(() => [props.rows, props.columns, a11yLabel.value], syncA11y, {
+  flush: "post"
+});
 </script>
 
 <template>
   <el-table
+    ref="tableRef"
     v-loading="props.loading"
     :data="props.rows"
     :size="props.size"
     :border="props.border"
     :row-key="props.rowKey"
     :max-height="props.maxHeight"
-    :header-cell-style="HEADER_CELL_STYLE"
+    :header-cell-style="TABLE_HEADER_CELL_STYLE"
   >
     <el-table-column
       v-for="column in props.columns"

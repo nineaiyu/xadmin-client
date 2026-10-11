@@ -180,7 +180,7 @@ watch(
                     v-for="(item, key) in pageList"
                     :key="key"
                     :title="item"
-                    class="icon-item p-2 cursor-pointer mr-2 mt-1 flex-c border border-[#e5e7eb]"
+                    class="icon-item p-2 cursor-pointer mr-2 mt-1 flex-c border border-border-light"
                     :style="iconItemStyle(item)"
                     @click="onChangeIcon(item)"
                   >
@@ -201,7 +201,7 @@ watch(
           </el-tabs>
 
           <div
-            class="w-full h-9 flex items-center overflow-auto border-t border-[#e5e7eb]"
+            class="w-full h-9 flex items-center overflow-auto border-t border-border-light"
           >
             <el-pagination
               class="flex-auto ml-2"
@@ -242,15 +242,15 @@ watch(
 }
 
 :deep(.el-tabs__nav-next) {
-  font-size: 15px;
+  font-size: var(--font-size-base);
   line-height: 32px;
-  box-shadow: -5px 0 5px -6px #ccc;
+  box-shadow: -5px 0 5px -6px hsl(var(--fg) / 20%);
 }
 
 :deep(.el-tabs__nav-prev) {
-  font-size: 15px;
+  font-size: var(--font-size-base);
   line-height: 32px;
-  box-shadow: 5px 0 5px -6px #ccc;
+  box-shadow: 5px 0 5px -6px hsl(var(--fg) / 20%);
 }
 
 :deep(.el-input-group__append) {
@@ -268,7 +268,7 @@ watch(
 :deep(.el-tabs__nav-wrap) {
   position: static;
   margin: 0;
-  box-shadow: 0 2px 5px rgb(0 0 0 / 6%);
+  box-shadow: var(--shadow-sm);
 }
 
 :deep(.el-tabs__nav-wrap::after) {

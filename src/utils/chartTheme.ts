@@ -29,6 +29,39 @@ const EP_LIGHT_FALLBACK = {
 /** 图表专用强调色：无 EP 语义对应的第 6 系列色，集中定义避免页面层散落写死 */
 export const CHART_ACCENT = "#9a66e4";
 
+/**
+ * 图表文字字体栈回退值：与 tokens/primitives.scss 的 `--font-family-base` 同源
+ * （CSS 变量缺失时使用，保证图表文字不落回浏览器默认 sans-serif）。
+ */
+export const CHART_FALLBACK_FONT_FAMILY =
+  '-apple-system, "Segoe UI", roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif';
+
+/**
+ * 图表文字字体栈：zrender 把 font-family 写进 SVG `<text>` 的行内样式（或 canvas
+ * 字体串），外部 CSS（含 `--el-font-family` 桥接）覆盖不到，只能在 init 的主题层注入。
+ * 运行时读取 `--font-family-base` 并折叠 SCSS 多行值里的换行/空白。
+ */
+export function chartFontFamily(): string {
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    return CHART_FALLBACK_FONT_FAMILY;
+  }
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue("--font-family-base")
+    .replace(/\s+/g, " ")
+    .trim();
+  return value || CHART_FALLBACK_FONT_FAMILY;
+}
+
+/**
+ * ECharts 主题对象：仅注入字体栈（其他全部沿用内置默认/页面 option）。
+ * 由 `plugins/echarts.ts` 在加载时注册为 `light` / `dark` 两个主题名——
+ * 与 `useECharts` 的 `theme: computed(() => isDark ? "dark" : "light")` 约定配对，
+ * 页面侧零改动即可让图表文字跟随应用字体栈。
+ */
+export function chartTextTheme(): { textStyle: { fontFamily: string } } {
+  return { textStyle: { fontFamily: chartFontFamily() } };
+}
+
 export type EpColorName = keyof typeof EP_COLOR_FALLBACK;
 
 /** 读取当前主题下的任意 CSS 变量色值（图表只接受字面量，不能消费 `var()`）。 */

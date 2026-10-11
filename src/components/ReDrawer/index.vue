@@ -119,6 +119,7 @@ function handleChange(options: DrawerOptions, index: number, values: unknown) {
     :append-to="options?.appendTo ? options.appendTo : 'body'"
     class="pure-drawer"
     v-bind="options"
+    :close-on-press-escape="options.closeOnPressEscape ?? true"
     @closed="handleClose(options, index)"
     @opened="eventsCallBack('open', options, index)"
     @open-auto-focus="eventsCallBack('openAutoFocus', options, index)"

@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 
+import type { AiResultTableProps } from "./types";
 /**
  * 通用执行结果表：NL 查询结果（columns/rows 或 series）与读类动作结果
  * （分页 results）共用同一渲染，避免每种动作各写一套表格。
@@ -13,7 +14,7 @@ defineOptions({
   name: "AiResultTable"
 });
 
-const props = defineProps<{ data: Record<string, unknown> }>();
+const props = defineProps<AiResultTableProps>();
 
 const { t } = useI18n();
 
@@ -35,7 +36,12 @@ const table = computed(() => {
   if (Array.isArray(data.columns) && isRecordArray(data.rows)) {
     const columns = (data.columns as string[]).slice(0, COLUMNS_LIMIT);
     const rows = (data.rows as Record<string, unknown>[]).slice(0, ROWS_LIMIT);
-    return { columns, rows, total: Number(data.total ?? rows.length) };
+    return {
+      columns,
+      rows,
+      total: Number(data.total ?? rows.length),
+      labels: {} as Record<string, string>
+    };
   }
   if (Array.isArray(data.series)) {
     const series = (data.series as { name: unknown; value: unknown }[]).slice(
@@ -44,6 +50,7 @@ const table = computed(() => {
     );
     return {
       columns: ["name", "value"],
+      labels: {} as Record<string, string>,
       rows: series.map(item => ({
         name: String(item.name ?? ""),
         value: String(item.value ?? "")
@@ -61,7 +68,14 @@ const table = computed(() => {
           .filter(key => key !== "pk")
           .slice(0, COLUMNS_LIMIT)
       : [];
-    return { columns, rows, total: Number(data.total ?? rows.length) };
+    // 只有主键等无可展示列时不渲染（避免空表头 + 空单元格的空壳）
+    if (!columns.length) return null;
+    return {
+      columns,
+      rows,
+      total: Number(data.total ?? rows.length),
+      labels: {} as Record<string, string>
+    };
   }
   return keyValueTable(data);
 });
@@ -73,6 +87,7 @@ const table = computed(() => {
  */
 function keyValueTable(data: Record<string, unknown>): {
   columns: string[];
+  labels: Record<string, string>;
   rows: Record<string, unknown>[];
   total: number;
 } | null {
@@ -82,12 +97,19 @@ function keyValueTable(data: Record<string, unknown>): {
     !Array.isArray(data.metrics)
       ? (data.metrics as Record<string, unknown>)
       : data;
+  // 数组值（分页 results、嵌套列表等）不强行入表
   const entries = Object.entries(source).filter(
-    ([key]) => key !== "columns" && key !== "rows"
+    ([key, value]) =>
+      key !== "columns" && key !== "rows" && !Array.isArray(value)
   );
   if (!entries.length || entries.length > 12) return null;
   return {
-    columns: [t("ai.resultName"), t("ai.resultValue")],
+    // 列名是取值键，展示名走 labels（此前把翻译当键用，单元格恒为空）
+    columns: ["name", "value"],
+    labels: {
+      name: t("ai.resultName"),
+      value: t("ai.resultValue")
+    },
     rows: entries.map(([key, value]) => ({
       name: key,
       value:
@@ -125,7 +147,7 @@ function valueOf(row: Record<string, unknown>, column: string) {
         v-for="col in table.columns"
         :key="col"
         :prop="col"
-        :label="col"
+        :label="table.labels[col] || col"
         min-width="110"
         show-overflow-tooltip
       >

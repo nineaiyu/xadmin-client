@@ -347,7 +347,7 @@ defineExpose({ getRef });
     :row-props="{ gutter: 24 }"
     class="m-5"
     label-position="left"
-    label-width="140px"
+    label-width="100px"
   >
     <template #plus-field-tips>
       <el-col :span="24">

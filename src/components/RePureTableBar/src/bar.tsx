@@ -1,7 +1,7 @@
-import type SortableJs from "sortablejs";
 import { $t, transformI18n } from "@/plugins/i18n";
 import type { CheckboxValueType } from "element-plus";
 import { useEpThemeStoreHook } from "@/store/modules/epTheme";
+import { useSortable } from "@/hooks/useSortable";
 import {
   computed,
   defineComponent,
@@ -76,7 +76,10 @@ export default defineComponent({
     const themeColor = computed(() => useEpThemeStoreHook().epThemeColor);
     const getDropdownItemStyle = computed(() => (s: string) => ({
       background: s === size.value ? themeColor.value : "",
-      color: s === size.value ? "#fff" : "var(--el-text-color-primary)"
+      color:
+        s === size.value
+          ? "var(--el-color-white)"
+          : "var(--el-text-color-primary)"
     }));
 
     const iconClass = computed(() => ICON_CLASS);
@@ -210,50 +213,50 @@ export default defineComponent({
       )
     };
 
-    /** 列展示拖拽排序 */
-    // 复用同一 Sortable 实例：rowDrop 会在每次触发拖拽按钮时重整实例，
-    // 重复 create 会在同一 wrapper 上叠加监听，需先销毁旧实例
-    // R9 触屏降级：原先仅 mouseenter 触发（触屏无 hover，列排序不可用），
-    // 现由 mousedown / touchstart 同样触发（Sortable 自身支持 touch 拖拽）
-    let sortableInstance: ReturnType<typeof SortableJs.create> | null = null;
+    /** 列展示拖拽排序（手势由 useSortable 承载，sortablejs 按需加载） */
+    // 复用同一实例：rowDrop 会在每次触发拖拽按钮时重整（先销毁再挂载），
+    // 重复 create 会在同一 wrapper 上叠加监听。触屏降级：原先仅 mouseenter
+    // 触发（触屏无 hover，列排序不可用），现由 mousedown / touchstart 同样触发
+    // （Sortable 自身支持 touch 拖拽）
+    const { init: initColumnSort, destroy: destroyColumnSort } = useSortable(
+      () =>
+        (
+          instance?.proxy?.$refs[`GroupRef${unref(props.tableKey)}`] as
+            { $el: HTMLElement } | undefined
+        )?.$el?.firstElementChild as HTMLElement | undefined,
+      {
+        animation: 300,
+        handle: ".drag-btn",
+        onEnd: ({ newIndex, oldIndex, evt }) => {
+          if (newIndex === undefined || oldIndex === undefined) return;
+          const targetThElem = evt.item;
+          const wrapperElem = targetThElem.parentNode as HTMLElement;
+          const oldColumn = dynamicColumns.value[oldIndex];
+          const newColumn = dynamicColumns.value[newIndex];
+          if (oldColumn?.fixed || newColumn?.fixed) {
+            // 当前列存在 fixed 属性则不可拖拽：撤销 DOM 位移
+            const oldThElem = wrapperElem.children[oldIndex] as HTMLElement;
+            if (newIndex > oldIndex) {
+              wrapperElem.insertBefore(targetThElem, oldThElem);
+            } else {
+              wrapperElem.insertBefore(
+                targetThElem,
+                oldThElem ? oldThElem.nextElementSibling : oldThElem
+              );
+            }
+            return;
+          }
+          const currentRow = dynamicColumns.value.splice(oldIndex, 1)[0];
+          dynamicColumns.value.splice(newIndex, 0, currentRow);
+        }
+      }
+    );
+
     const rowDrop = (event: { preventDefault: () => void }) => {
       event.preventDefault();
       nextTick(async () => {
-        // sortablejs 仅由“列排序”交互触发时加载（静态引入会被打进入口闭包）；
-        // 加载完成后的行为与原先一致：每次重整前先销毁旧实例
-        const { default: Sortable } = await import("sortablejs");
-        const wrapper: HTMLElement = (
-          instance?.proxy?.$refs[`GroupRef${unref(props.tableKey)}`] as {
-            $el: HTMLElement;
-          }
-        ).$el.firstElementChild as HTMLElement;
-        sortableInstance?.destroy();
-        sortableInstance = Sortable.create(wrapper, {
-          animation: 300,
-          handle: ".drag-btn",
-          onEnd: ({ newIndex, oldIndex, item }) => {
-            if (newIndex === undefined || oldIndex === undefined) return;
-            const targetThElem = item;
-            const wrapperElem = targetThElem.parentNode as HTMLElement;
-            const oldColumn = dynamicColumns.value[oldIndex];
-            const newColumn = dynamicColumns.value[newIndex];
-            if (oldColumn?.fixed || newColumn?.fixed) {
-              // 当前列存在fixed属性 则不可拖拽
-              const oldThElem = wrapperElem.children[oldIndex] as HTMLElement;
-              if (newIndex > oldIndex) {
-                wrapperElem.insertBefore(targetThElem, oldThElem);
-              } else {
-                wrapperElem.insertBefore(
-                  targetThElem,
-                  oldThElem ? oldThElem.nextElementSibling : oldThElem
-                );
-              }
-              return;
-            }
-            const currentRow = dynamicColumns.value.splice(oldIndex, 1)[0];
-            dynamicColumns.value.splice(newIndex, 0, currentRow);
-          }
-        });
+        destroyColumnSort();
+        await initColumnSort();
       });
     };
 

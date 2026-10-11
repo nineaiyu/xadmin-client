@@ -1,8 +1,9 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
 
-import AiThinking from "@/components/AiThinking/index.vue";
+import AiThinking from "@/components/AiThinking";
 
+import type { AiMessageBlockProps } from "./types";
 /**
  * AI 回复统一块（聊天室 / AI 助手文档问答 共用的一套布局）。
  *
@@ -20,19 +21,12 @@ defineOptions({
   name: "AiMessageBlock"
 });
 
-const props = withDefaults(
-  defineProps<{
-    /** 思考过程（reasoning_content，流式追加 / 落库全文） */
-    reasoning?: string;
-    /** 回复正文（流式追加 / 落库全文） */
-    content?: string;
-    /** 是否正在流式输出 */
-    streaming?: boolean;
-    /** 引用出处（知识库问答） */
-    sources?: Array<{ title: string; path: string; chunk_index: number }>;
-  }>(),
-  { reasoning: "", content: "", streaming: false, sources: () => [] }
-);
+const props = withDefaults(defineProps<AiMessageBlockProps>(), {
+  reasoning: "",
+  content: "",
+  streaming: false,
+  sources: () => []
+});
 
 const { t } = useI18n();
 
@@ -80,7 +74,7 @@ const showThinking = () => Boolean(props.reasoning);
   color: var(--el-text-color-primary);
   white-space: pre-wrap;
   background: var(--el-fill-color-light);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
 }
 
 .ai-message__text {

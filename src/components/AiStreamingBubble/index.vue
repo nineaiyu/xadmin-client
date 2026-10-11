@@ -1,7 +1,8 @@
 <script lang="ts" setup>
-import AiMessageBlock from "@/components/AiMessageBlock/index.vue";
-import ChatMessageAvatar from "@/components/ChatMessageAvatar/index.vue";
+import AiMessageBlock from "@/components/AiMessageBlock";
+import ChatMessageAvatar from "@/components/ChatMessageAvatar";
 
+import type { AiStreamingBubbleProps } from "./types";
 /**
  * AI 流式回答气泡（聊天室 / 助手页共用）：头像 + 可选名字行 + 思考/正文流式块
  * + 停止生成。两处调用只有展示标识与文案差异（testid / 名字行 / 停止文案），
@@ -12,25 +13,12 @@ defineOptions({
   name: "AiStreamingBubble"
 });
 
-withDefaults(
-  defineProps<{
-    /** 思考增量（reasoning_content 流式累积） */
-    reasoning?: string;
-    /** 正文增量 */
-    content?: string;
-    /** 气泡容器 testid（chat-streaming / ai-streaming） */
-    testid: string;
-    /** 停止按钮 testid（chat-stream-stop / ai-stream-stop） */
-    stopTestid: string;
-    /** 停止按钮文案 */
-    stopLabel: string;
-    /** 是否显示名字行（聊天室显示「AI 助手」，助手页省略） */
-    showName?: boolean;
-    /** 名字行文案 */
-    nameLabel?: string;
-  }>(),
-  { reasoning: "", content: "", showName: false, nameLabel: "" }
-);
+withDefaults(defineProps<AiStreamingBubbleProps>(), {
+  reasoning: "",
+  content: "",
+  showName: false,
+  nameLabel: ""
+});
 
 const emit = defineEmits<{
   stop: [];

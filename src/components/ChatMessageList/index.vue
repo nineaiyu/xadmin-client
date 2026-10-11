@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import ReEmpty from "@/components/ReEmpty";
 import ReSkeleton from "@/components/ReSkeleton";
 
+import type { ChatMessageListProps } from "./types";
 /**
  * 消息列表壳（聊天室 / 助手页共用）：滚动容器 + 历史骨架 + 「加载更早」条 +
  * 空态；消息行与流式气泡经默认插槽渲染（两条线的行组件与数据层不同，
@@ -14,22 +15,7 @@ defineOptions({
   name: "ChatMessageList"
 });
 
-defineProps<{
-  /** 滚动容器 testid（chat-messages / ai-messages） */
-  testid: string;
-  /** 骨架 testid（chat-history-skeleton / ai-history-skeleton） */
-  skeletonTestid: string;
-  /** 历史首屏加载且无行：骨架占位（与空态互斥） */
-  skeletonVisible: boolean;
-  /** 显示「加载更早 / 没有更多」区（聊天室要求已选中会话） */
-  historyBarVisible: boolean;
-  hasMore: boolean;
-  loadingMore: boolean;
-  /** 空态条件（各线口径不同，由调用方判定） */
-  emptyVisible: boolean;
-  /** 空态文案 */
-  emptyText: string;
-}>();
+defineProps<ChatMessageListProps>();
 
 const emit = defineEmits<{
   scroll: [];

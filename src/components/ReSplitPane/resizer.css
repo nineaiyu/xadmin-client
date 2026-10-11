@@ -3,7 +3,7 @@
   position: relative;
   z-index: 1;
   flex: 0 0 6px;
-  background: var(--divider, var(--el-border-color, #dcdfe6));
+  background: var(--divider);
   border-radius: 3px;
   background-clip: padding-box;
   transition:
@@ -41,11 +41,15 @@
 
 .splitter-pane-resizer:hover {
   background: var(--el-color-primary);
-  box-shadow: 0 0 0 3px rgb(64 158 255 / 15%);
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 15%);
 }
 
 .splitter-pane-resizer:hover::after {
-  background-image: radial-gradient(circle, #fff 1.5px, transparent 2px);
+  background-image: radial-gradient(
+    circle,
+    var(--el-color-white) 1.5px,
+    transparent 2px
+  );
 }
 
 .splitter-pane-resizer.vertical {
@@ -76,7 +80,7 @@
   border-radius: 50%;
   color: var(--el-text-color-secondary);
   background: var(--el-bg-color);
-  box-shadow: 0 0 4px rgb(0 0 0 / 20%);
+  box-shadow: var(--shadow-sm);
   opacity: 0;
   cursor: pointer;
   transition: opacity var(--duration-fast) var(--ease-standard);

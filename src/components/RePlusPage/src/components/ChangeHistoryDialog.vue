@@ -5,6 +5,7 @@ import { useI18n } from "vue-i18n";
 import type { PaginationProps } from "@pureadmin/table";
 import type { ListResult } from "@/api/types";
 import { operationLogApi } from "@/api/audit/logs/operation";
+import ReJsonViewer from "@/components/ReJsonViewer";
 
 defineOptions({ name: "ChangeHistoryDialog" });
 
@@ -102,6 +103,35 @@ const diffEntries = (changes: HistoryRow["changes"]) =>
     new: value?.new
   }));
 
+/**
+ * 结构化值识别：JSON 文本（对象/数组字面量）或已是结构化值（旧口径落库为对象）。
+ * 命中即走 JSON 查看器，标量返回 null 走内联 diff。
+ */
+const parseJsonLike = (value: unknown): unknown => {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "object") return value;
+  const text = String(value).trim();
+  if (!text.startsWith("{") && !text.startsWith("[")) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+};
+
+type DiffEntry = { field: string; old: unknown; new: unknown };
+
+/**
+ * 结构化 diff：两侧至少一侧是 JSON 文本（M2M / JSONField / 子表单等）时，
+ * 以内联可展开的 JSON 查看器呈现（对象直接展开、可复制），标量仍走文本 diff。
+ */
+const entryJson = (entry: DiffEntry) => {
+  const oldValue = parseJsonLike(entry.old);
+  const newValue = parseJsonLike(entry.new);
+  if (oldValue === null && newValue === null) return null;
+  return { old: oldValue ?? entry.old, new: newValue ?? entry.new };
+};
+
 onMounted(fetchHistory);
 </script>
 
@@ -146,13 +176,25 @@ onMounted(fetchHistory);
               class="text-xs/5"
             >
               <span class="font-medium">{{ entry.field }}</span>
-              <span class="text-red-500 line-through ml-1">
-                {{ entry.old ?? "null" }}
-              </span>
-              <el-icon class="mx-0.5 align-middle">
-                <IconifyIconOffline icon="ep:arrow-right" />
-              </el-icon>
-              <span class="text-green-600">{{ entry.new ?? "null" }}</span>
+              <template v-if="entryJson(entry)">
+                <ReJsonViewer
+                  class="mt-1"
+                  :value="entryJson(entry)"
+                  :expand-depth="1"
+                  boxed
+                  copyable
+                  show-double-quotes
+                />
+              </template>
+              <template v-else>
+                <span class="text-red-500 line-through ml-1">
+                  {{ entry.old ?? "null" }}
+                </span>
+                <el-icon class="mx-0.5 align-middle">
+                  <IconifyIconOffline icon="ep:arrow-right" />
+                </el-icon>
+                <span class="text-green-600">{{ entry.new ?? "null" }}</span>
+              </template>
             </div>
           </div>
         </template>

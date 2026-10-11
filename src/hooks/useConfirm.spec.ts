@@ -90,4 +90,40 @@ describe("useConfirm", () => {
       expect.objectContaining({ type: "warning" })
     );
   });
+
+  it("danger 口径：确认按钮危险色且焦点默认不落在确认按钮", async () => {
+    mocks.confirm.mockResolvedValue("confirm");
+    const confirm = setupHook();
+    await confirm("确定删除？", { danger: true });
+    const options = mocks.confirm.mock.calls[0][2];
+    expect(options).toMatchObject({
+      type: "warning",
+      confirmButtonClass: "el-button--danger",
+      autofocus: false
+    });
+  });
+
+  it("danger 口径下显式传值可覆盖默认", async () => {
+    mocks.confirm.mockResolvedValue("confirm");
+    const confirm = setupHook();
+    await confirm("确定删除？", {
+      danger: true,
+      confirmButtonClass: "custom-class",
+      autofocus: true
+    });
+    const options = mocks.confirm.mock.calls[0][2];
+    expect(options).toMatchObject({
+      confirmButtonClass: "custom-class",
+      autofocus: true
+    });
+  });
+
+  it("非 danger 口径不注入 autofocus（保持 ElMessageBox 默认）", async () => {
+    mocks.confirm.mockResolvedValue("confirm");
+    const confirm = setupHook();
+    await confirm("普通确认");
+    const options = mocks.confirm.mock.calls[0][2];
+    expect(options).not.toHaveProperty("autofocus");
+    expect(options).not.toHaveProperty("confirmButtonClass");
+  });
 });

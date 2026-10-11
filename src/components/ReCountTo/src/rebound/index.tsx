@@ -44,7 +44,7 @@ export default defineComponent({
           class="scroll-num"
           style={{ "--i": props.i, "--delay": props.delay }}
         >
-          <ul ref="ulRef" style={{ fontSize: "32px" }}>
+          <ul ref="ulRef" style={{ fontSize: "var(--display-size-lg)" }}>
             <li>0</li>
             <li>1</li>
             <li>2</li>

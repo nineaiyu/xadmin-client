@@ -4,16 +4,17 @@
   --pure-segmented-track-padding: 2px;
   --pure-segmented-line-width: 1px;
 
-  --pure-segmented-border-radius-small: 4px;
-  --pure-segmented-border-radius-base: 6px;
-  --pure-segmented-border-radius-large: 8px;
+  --pure-segmented-border-radius-small: var(--radius-sm);
+  --pure-segmented-border-radius-base: var(--radius-md);
+  --pure-segmented-border-radius-large: var(--radius-lg);
 
   box-sizing: border-box;
   display: inline-block;
   padding: var(--pure-segmented-track-padding);
   font-size: var(--el-font-size-base);
-  color: rgba(0, 0, 0, 0.65);
-  background-color: rgb(0 0 0 / 4%);
+  /* 未选中文案：72% 在 --bg-page 上 ≈5.1:1，满足 WCAG AA；与选中态 88% 保留层次差 */
+  color: hsl(var(--fg) / 72%);
+  background-color: hsl(var(--bg-page));
   border-radius: var(--pure-segmented-border-radius-base);
 }
 
@@ -121,16 +122,13 @@
   display: none;
   width: 0;
   height: 100%;
-  padding: 4px 0;
-  background-color: #fff;
-  border-radius: 4px;
-  box-shadow:
-    0 2px 8px -2px rgb(0 0 0 / 5%),
-    0 1px 4px -1px rgb(0 0 0 / 7%),
-    0 0 1px rgb(0 0 0 / 7%);
+  padding: var(--space-1) 0;
+  background-color: hsl(var(--bg-elevated));
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
   transition:
-    transform 0.5s cubic-bezier(0.645, 0.045, 0.355, 1),
-    width 0.5s cubic-bezier(0.645, 0.045, 0.355, 1);
+    transform var(--duration-slower) var(--ease-standard),
+    width var(--duration-slower) var(--ease-standard);
   will-change: transform, width;
   border: 2px solid var(--el-color-primary);
 }
@@ -164,6 +162,6 @@
 }
 
 .pure-segmented-item-disabled {
-  color: rgba(0, 0, 0, 0.25);
+  color: hsl(var(--fg) / 25%);
   cursor: not-allowed;
 }

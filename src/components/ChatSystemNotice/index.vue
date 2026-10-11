@@ -2,6 +2,7 @@
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import WarningIcon from "~icons/ep/warning";
 
+import type { ChatSystemNoticeProps } from "./types";
 /**
  * 系统提示窄条（聊天室 / 助手页共用）：流内失败降级、动作执行回执等居中提示。
  * 默认插槽挂在窄条下方（聊天室的只读结果表跟随回执展示）。
@@ -10,12 +11,7 @@ defineOptions({
   name: "ChatSystemNotice"
 });
 
-defineProps<{
-  /** 提示文案 */
-  content: string;
-  /** 错误态配色（警告色） */
-  error?: boolean;
-}>();
+defineProps<ChatSystemNoticeProps>();
 </script>
 
 <template>

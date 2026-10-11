@@ -16,6 +16,8 @@ import Delete from "~icons/ep/delete";
 import { PlusSearch, type RecordType } from "plus-pro-components";
 import type { ComponentSize } from "element-plus";
 import type { BaseApi } from "@/api/base";
+import { TABLE_HEADER_CELL_STYLE } from "@/utils/tableHeader";
+import { syncPaginationA11y, syncTableA11y } from "@/utils/tableA11y";
 import { useTableLayout } from "./utils/useTableLayout";
 import { useTableMeasure } from "./utils/useTableMeasure";
 import { DEFAULT_ADAPTIVE_OFFSET_BOTTOM } from "./utils/tableMeasureMath";
@@ -202,6 +204,28 @@ watch(searchMetaReady, ready => {
 // 元数据缺失检测（DEV 控制台排查清单 + PROD 降级提示条，实现见 useListMetaWarning）
 const { metaMissing } = useListMetaWarning(searchMetaReady, loadingStatus);
 
+/**
+ * 表格可访问名（读屏）：取页面标题（路由 meta.title，与页签/面包屑同源），
+ * 无标题时兜底通用词条；分页器「每页条数」下拉同步补可访问名（EP 无 props 入口）。
+ * 数据或列变化后重新同步（见 utils/tableA11y）。
+ */
+const tableA11yLabel = computed(
+  () => pageTitle.value || t("tableA11y.dataTable")
+);
+watch(
+  () => [
+    tableBarData.value.dynamicColumns,
+    dataList.value,
+    loadingStatus.value
+  ],
+  () =>
+    nextTick(() => {
+      syncTableA11y(rootRef.value, tableA11yLabel.value);
+      syncPaginationA11y(rootRef.value, t("tableA11y.pageSize"));
+    }),
+  { flush: "post", immediate: true }
+);
+
 const { tableLayoutPending } = useTableLayout({
   tableElWidth,
   dynamicColumns: computed(() => tableBarData.value.dynamicColumns),
@@ -274,6 +298,7 @@ defineExpose({
     <el-alert
       v-if="metaMissing"
       class="mb-2"
+      data-table-a11y-desc
       type="error"
       :closable="false"
       show-icon
@@ -334,7 +359,10 @@ defineExpose({
                 v-motion-fade
                 class="bg-(--el-fill-color-light) w-40 h-10 m-2 pl-4 flex items-center rounded-md"
               >
-                <span class="text-fg-subtle" style="font-size: 14px">
+                <span
+                  class="text-fg-subtle"
+                  style="font-size: var(--font-size-base)"
+                >
                   {{ t("buttons.selected", { count: selectedNum }) }}
                 </span>
                 <el-button text type="primary" @click="onSelectionCancel">
@@ -405,10 +433,7 @@ defineExpose({
         :adaptiveConfig="{ offsetBottom: 110 }"
         :columns="tableBarData.dynamicColumns as never"
         :data="dataList"
-        :header-cell-style="{
-          background: 'var(--el-table-row-hover-bg-color)',
-          color: 'var(--el-text-color-primary)'
-        }"
+        :header-cell-style="TABLE_HEADER_CELL_STYLE"
         :loading="loadingStatus"
         :pagination="tablePagination"
         :size="tableBarData.size as ComponentSize"

@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import type { AiActionDraft } from "@/api/ai/ai";
 
+import type { AiActionCardProps } from "./types";
 /**
  * 受限动作确认卡片（聊天室 / 助手页共用）：AI 只产出草稿，执行必须由用户在此
  * 二次确认；执行走传入的 executor（hook.executeAction），结果消息由服务端落库
@@ -12,17 +12,7 @@ defineOptions({
   name: "AiActionCard"
 });
 
-type ExecuteResult = { ok: boolean; pending?: boolean; detail?: string };
-
-const props = defineProps<{
-  draft: AiActionDraft;
-  runnable: boolean;
-  executor: (_draft: AiActionDraft) => Promise<ExecuteResult>;
-  /** 卡片 testid 前缀（助手页默认 ai；聊天室复用本组件传 chat，E2E 选择器不变） */
-  testidPrefix?: string;
-  /** 不可执行时的提示文案（如无「AI 指令执行」权限）；空则不提示（历史回看场景） */
-  disabledHint?: string;
-}>();
+const props = defineProps<AiActionCardProps>();
 
 const { t } = useI18n();
 

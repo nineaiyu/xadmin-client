@@ -63,8 +63,7 @@ export const TOP_CLASS = [
   "px-2.75",
   "border-b",
   "border-b-solid",
-  "border-[#dcdfe6]",
-  "dark:border-[#303030]"
+  "border-border"
 ];
 
 /** 容器类名：全屏时铺满并提升层级，否则保留上边距 */

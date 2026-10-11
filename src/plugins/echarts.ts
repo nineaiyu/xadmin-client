@@ -1,4 +1,5 @@
 import type { App } from "vue";
+import { chartTextTheme } from "@/utils/chartTheme";
 
 let echartsPromise: Promise<typeof import("echarts/core")> | null = null;
 /** 首个传入的 app 引用：无论哪一次调用先触发加载，都能把 $echarts 挂到全局属性 */
@@ -27,6 +28,12 @@ export function loadEcharts(app?: App) {
       components.DataZoomComponent,
       components.LegendComponent
     ]);
+    // 图表文字字体栈：zrender 把 font-family 写为行内样式，外部 CSS 覆盖不到，
+    // 随主题名（页面统一传 theme: "light" | "dark"）在 init 层注入应用字体栈。
+    // 若将来引入 ECharts 内置 dark 主题，需把其色板与字体栈合并后一并注册。
+    const textTheme = chartTextTheme();
+    core.registerTheme("light", textTheme);
+    core.registerTheme("dark", textTheme);
     if (echartsApp) {
       // @pureadmin/utils 的 useECharts 在 hook 初始化时同步读取 $echarts，
       // 消费方须在 echartsReady 后渲染，见 welcome/index.vue

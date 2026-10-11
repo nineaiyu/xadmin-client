@@ -133,6 +133,7 @@ function handleChange(options: DialogOptions, index: number, values: unknown) {
     v-model="options.visible"
     class="pure-dialog"
     :fullscreen="fullscreen ? true : options?.fullscreen ? true : false"
+    :close-on-press-escape="options.closeOnPressEscape ?? true"
     @closed="handleClose(options, index)"
     @opened="eventsCallBack('open', options, index)"
     @openAutoFocus="eventsCallBack('openAutoFocus', options, index)"

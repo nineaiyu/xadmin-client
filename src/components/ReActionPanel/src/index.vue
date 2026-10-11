@@ -79,7 +79,7 @@ withDefaults(defineProps<Props>(), {
 .panel-card {
   padding: 16px;
   background: var(--el-fill-color-light);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
 }
 
 .meta-grid {
@@ -132,7 +132,7 @@ withDefaults(defineProps<Props>(), {
   cursor: pointer;
   background: var(--el-bg-color);
   border: 1px solid var(--el-border-color-lighter);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   transition:
     background-color 0.2s,
     border-color 0.2s;
@@ -158,7 +158,7 @@ withDefaults(defineProps<Props>(), {
   font-size: var(--el-font-size-medium);
   color: var(--el-color-primary);
   background: var(--el-color-primary-light-9);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
 }
 
 .action-label {

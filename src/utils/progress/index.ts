@@ -60,12 +60,27 @@ function ensureBar(): HTMLDivElement {
   const inner = document.createElement("div");
   inner.className = "app-progress-bar";
   inner.style.cssText = [
+    "position:relative",
     "height:100%",
     "width:0%",
-    "background-color:var(--el-color-primary, #006be6)",
-    "transition:width 200ms ease",
-    "box-shadow:0 0 10px var(--el-color-primary, #006be6), 0 0 5px var(--el-color-primary, #006be6)"
+    "background-color:var(--el-color-primary)",
+    "transition:width 200ms ease"
   ].join(";");
+  // 右端模糊光晕（nprogress 的 peg 形态：实心条 + 100px 宽的辉光尾迹）
+  const peg = document.createElement("div");
+  peg.className = "app-progress-peg";
+  peg.style.cssText = [
+    "position:absolute",
+    "top:0",
+    "right:0",
+    "display:block",
+    "width:100px",
+    "height:100%",
+    "opacity:1",
+    "box-shadow:0 0 10px var(--el-color-primary), 0 0 5px var(--el-color-primary)",
+    "transform:rotate(3deg) translate(0,-4px)"
+  ].join(";");
+  inner.appendChild(peg);
   el.appendChild(inner);
   document.body.appendChild(el);
   bar = el;

@@ -111,7 +111,7 @@ defineExpose({ getRef, setActiveName });
           :hasFooter="false"
           :row-props="{ gutter: 24 }"
           label-position="right"
-          label-width="120px"
+          label-width="100px"
           v-bind="formProps"
           @change="
             (values, column) => {
@@ -129,7 +129,7 @@ defineExpose({ getRef, setActiveName });
       :hasFooter="false"
       :row-props="{ gutter: 24 }"
       label-position="right"
-      label-width="120px"
+      label-width="100px"
       v-bind="formProps"
       @change="
         (values, column) => {

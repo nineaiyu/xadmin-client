@@ -111,7 +111,10 @@ const platformConfig = JSON.parse(
   read("public/platform-config.json")
 ) as Record<string, unknown>;
 const responsiveSource = read("src/utils/responsive.ts");
-const useLayoutSource = read("src/layout/hooks/useLayout.ts");
+// 缺省值构建在 layoutPreferences.ts（useLayout 初始化链路的一部分），两文件合并校验
+const useLayoutSource =
+  read("src/layout/hooks/useLayout.ts") +
+  read("src/layout/hooks/layoutPreferences.ts");
 const siteConfigSource = read("src/store/modules/siteConfig.ts");
 const diffSource = read("src/utils/preferenceDiff.ts");
 

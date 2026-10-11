@@ -1,9 +1,10 @@
 <script lang="ts" setup>
 import { computed } from "vue";
-import type { AiActionDraft } from "@/api/ai/ai";
-import { pickActionDrafts, type ActionDraftCarrier } from "@/utils/messageView";
-import AiActionCard from "@/components/AiActionCard/index.vue";
-import AiResultTable from "@/components/AiResultTable/index.vue";
+import { pickActionDrafts } from "@/utils/messageView";
+import AiActionCard from "@/components/AiActionCard";
+import AiResultTable from "@/components/AiResultTable";
+
+import type { MessageActionAttachmentsProps } from "./types";
 
 /**
  * 消息内嵌动作渲染（聊天室 / 助手页共用）：受限动作草稿确认卡（多步串联逐项
@@ -14,19 +15,7 @@ defineOptions({
   name: "MessageActionAttachments"
 });
 
-type ExecuteResult = { ok: boolean; pending?: boolean; detail?: string };
-
-const props = defineProps<{
-  /** 消息 extra（动作草稿与执行结果的公共载体） */
-  extra?: ActionDraftCarrier | null;
-  /** 草稿卡可执行（false 时只读展示，可附 disabledHint） */
-  runnable: boolean;
-  executor: (_draft: AiActionDraft) => Promise<ExecuteResult>;
-  /** 卡片 testid 前缀（助手页缺省 ai；聊天室传 chat，E2E 选择器不变） */
-  testidPrefix?: string;
-  /** 不可执行时的提示文案；空则不提示 */
-  disabledHint?: string;
-}>();
+const props = defineProps<MessageActionAttachmentsProps>();
 
 const drafts = computed(() => pickActionDrafts(props.extra));
 const actionResult = computed(() => props.extra?.action_result ?? null);

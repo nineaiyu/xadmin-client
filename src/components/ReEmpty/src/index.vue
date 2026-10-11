@@ -66,13 +66,13 @@ const imageSize = computed(() => (props.size === "small" ? 44 : 64));
   &--default {
     width: 76px;
     height: 76px;
-    font-size: 34px;
+    font-size: var(--display-size-xl);
   }
 
   &--small {
     width: 56px;
     height: 56px;
-    font-size: 26px;
+    font-size: var(--display-size-md);
   }
 }
 

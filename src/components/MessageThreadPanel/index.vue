@@ -2,9 +2,10 @@
 import { ref } from "vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import MenuIcon from "~icons/ep/menu";
-import ChatMessageList from "@/components/ChatMessageList/index.vue";
-import NewMessagesBadge from "@/components/NewMessagesBadge/index.vue";
+import ChatMessageList from "@/components/ChatMessageList";
+import NewMessagesBadge from "@/components/NewMessagesBadge";
 
+import type { MessageThreadPanelProps } from "./types";
 /**
  * 消息流面板骨架（聊天室 ChatWindow / 助手页 AiChatPanel 共用）：
  * 头部（窄屏折叠按钮 + 标题/副标题 + 右侧动作）+ 消息区（ChatMessageList 壳，
@@ -16,30 +17,7 @@ defineOptions({
   name: "MessageThreadPanel"
 });
 
-defineProps<{
-  /** 头部标题与挂点（chat-room-title / ai-panel-title，E2E 以标题判定切换完成） */
-  title: string;
-  titleTestid: string;
-  subtitle: string;
-  /** 窄屏折叠按钮的可达名（会话列表 / 功能导航） */
-  toggleLabel: string;
-  isNarrow: boolean;
-  /** 消息区滚动容器 testid（chat-messages / ai-messages） */
-  listTestid: string;
-  /** 历史骨架 testid（chat-history-skeleton / ai-history-skeleton） */
-  skeletonTestid: string;
-  /** 历史首屏加载且无行：骨架占位（与空态互斥，口径由调用方判定） */
-  skeletonVisible: boolean;
-  /** 显示「加载更早 / 没有更多」区（聊天室要求已选中会话） */
-  historyBarVisible: boolean;
-  hasMore: boolean;
-  loadingMore: boolean;
-  /** 空态条件（各线口径不同，由调用方判定） */
-  emptyVisible: boolean;
-  emptyText: string;
-  /** 离底期间的新消息计数（>0 显示悬浮条） */
-  pendingCount: number;
-}>();
+defineProps<MessageThreadPanelProps>();
 
 const emit = defineEmits<{
   /** 窄屏折叠按钮：展开左侧导航抽屉 */

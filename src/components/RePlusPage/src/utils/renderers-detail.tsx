@@ -403,7 +403,8 @@ function multipleListDetailRenderer(
     if (value instanceof Array) {
       return (
         <>
-          <el-scrollbar>
+          {/* tabindex：多值标签区横向溢出时键盘可聚焦滚动（axe scrollable-region-focusable） */}
+          <el-scrollbar tabindex={0}>
             <el-space>
               {value?.map((item, index) => {
                 return (
@@ -424,7 +425,8 @@ function multipleListDetailRenderer(
   // pure-table ******
   item["cellRenderer"] = ({ row }) => (
     <>
-      <el-scrollbar>
+      {/* tabindex：多值标签区横向溢出时键盘可聚焦滚动（axe scrollable-region-focusable） */}
+      <el-scrollbar tabindex={0}>
         <el-space>
           {row[column.key]?.map((item: ChoiceOptionItem, index: number) => {
             return (
