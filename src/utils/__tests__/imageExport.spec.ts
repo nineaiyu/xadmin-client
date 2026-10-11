@@ -3,6 +3,7 @@ import {
   buildZipStore,
   crc32,
   dataUrlToBytes,
+  dataUrlToText,
   safeFileName
 } from "@/utils/imageExport";
 
@@ -58,6 +59,25 @@ describe("dataUrlToBytes", () => {
     expect(Array.from(dataUrlToBytes("data:image/png;base64,AQID"))).toEqual([
       1, 2, 3
     ]);
+  });
+
+  it("decodes percent-encoded payload（ECharts SVG renderer 形态）", () => {
+    const svg =
+      '<svg xmlns="http://www.w3.org/2000/svg"><rect fill="#fff"/></svg>';
+    const dataUrl = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+    expect(new TextDecoder().decode(dataUrlToBytes(dataUrl))).toBe(svg);
+  });
+
+  it("keeps CJK text intact for percent-encoded payloads", () => {
+    const svg = "<svg><text>销售趋势</text></svg>";
+    const dataUrl = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+    expect(dataUrlToText(dataUrl)).toBe(svg);
+  });
+
+  it("tolerates invalid escape sequences（尽力导出优先）", () => {
+    expect(
+      new TextDecoder().decode(dataUrlToBytes("data:image/svg+xml,%E4%B8"))
+    ).toBe("%E4%B8");
   });
 });
 

@@ -54,15 +54,43 @@ export function crc32(data: Uint8Array): number {
   return (crc ^ 0xffffffff) >>> 0;
 }
 
-/** dataURL → 二进制（base64 解码）；显式 ArrayBuffer 泛型以适配 BlobPart（TS 5.7+） */
+/**
+ * dataURL → 二进制；显式 ArrayBuffer 泛型以适配 BlobPart（TS 5.7+）。
+ *
+ * 兼容两种载荷：`;base64,` 后缀（canvas.toDataURL / 二进制图）与百分号编码
+ * （ECharts 的 SVG renderer 走 `data:image/svg+xml;charset=UTF-8,` + encodeURIComponent）。
+ * 历史上只按 base64 处理，SVG 走 atob 抛 InvalidCharacterError，导出静默失败
+ * （面板弹「无图表可导出」以外的场景里表现为点了没反应、下载事件永不触发）。
+ */
 export function dataUrlToBytes(dataUrl: string): Uint8Array<ArrayBuffer> {
-  const base64 = dataUrl.slice(dataUrl.indexOf(",") + 1);
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let index = 0; index < binary.length; index += 1) {
-    bytes[index] = binary.charCodeAt(index);
+  const comma = dataUrl.indexOf(",");
+  const meta = comma >= 0 ? dataUrl.slice(0, comma) : "";
+  const payload = comma >= 0 ? dataUrl.slice(comma + 1) : "";
+  if (/;base64(;|$)/i.test(meta)) {
+    const binary = atob(payload);
+    const bytes = new Uint8Array(binary.length);
+    for (let index = 0; index < binary.length; index += 1) {
+      bytes[index] = binary.charCodeAt(index);
+    }
+    return bytes;
   }
-  return bytes;
+  // 非 base64（百分号编码 / 明文）载荷：先解码再按 UTF-8 编码成字节
+  let text = payload;
+  try {
+    text = decodeURIComponent(payload);
+  } catch {
+    // 非法转义序列按原样处理（保持「尽力导出」优先）
+  }
+  return new TextEncoder().encode(text);
+}
+
+/** dataURL → 文本（SVG 源码）；解码失败返回 null */
+export function dataUrlToText(dataUrl: string): string | null {
+  try {
+    return new TextDecoder().decode(dataUrlToBytes(dataUrl));
+  } catch {
+    return null;
+  }
 }
 
 /** dataURL / Blob 下载（`<a download>` 一次性触发，随后释放对象 URL） */
@@ -85,14 +113,27 @@ export function downloadBlob(blob: Blob, filename: string): void {
   }
 }
 
-/** SVG dataURL → PNG dataURL（Image + canvas，零依赖）；失败返回 null */
+/**
+ * SVG 源码 → PNG dataURL（Image + canvas，零依赖）；失败返回 null。
+ *
+ * 经 Blob 对象 URL 交给 Image：ECharts 下发的 SVG dataURL 是百分号编码形态，
+ * 直接作为 img.src 会受 URL 解析（`#`、超长）影响而触发 onerror；Blob 形态
+ * 与 MIME 明确绑定，跨浏览器（含 WebKit）更稳定。
+ */
 async function svgToPngDataUrl(
-  svgDataUrl: string,
+  svgText: string,
   pixelRatio: number,
   backgroundColor: string
 ): Promise<string | null> {
+  const blobUrl = URL.createObjectURL(
+    new Blob([svgText], { type: "image/svg+xml;charset=utf-8" })
+  );
   return new Promise(resolve => {
     const image = new Image();
+    const done = (result: string | null) => {
+      URL.revokeObjectURL(blobUrl);
+      resolve(result);
+    };
     image.onload = () => {
       try {
         const width = Math.max(Math.round(image.width || 1200), 1);
@@ -102,19 +143,19 @@ async function svgToPngDataUrl(
         canvas.height = Math.round(height * pixelRatio);
         const ctx = canvas.getContext("2d");
         if (!ctx) {
-          resolve(null);
+          done(null);
           return;
         }
         ctx.fillStyle = backgroundColor;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/png"));
+        done(canvas.toDataURL("image/png"));
       } catch {
-        resolve(null);
+        done(null);
       }
     };
-    image.onerror = () => resolve(null);
-    image.src = svgDataUrl;
+    image.onerror = () => done(null);
+    image.src = blobUrl;
   });
 }
 
@@ -136,7 +177,11 @@ export async function renderEchartsImage(
   });
   if (!dataUrl) return null;
   if (dataUrl.startsWith("data:image/svg+xml")) {
-    const png = await svgToPngDataUrl(dataUrl, pixelRatio, backgroundColor);
+    // SVG 源码（百分号编码 / base64 两种 dataURL 形态都要能取到）
+    const svgText = dataUrlToText(dataUrl);
+    const png = svgText
+      ? await svgToPngDataUrl(svgText, pixelRatio, backgroundColor)
+      : null;
     if (png) {
       return {
         blob: new Blob([dataUrlToBytes(png)], { type: "image/png" }),
