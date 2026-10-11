@@ -160,11 +160,14 @@ jobs:
       E2E_PYTHON: python3
       E2E_SERVER_DIR: xadmin-server
       CI: "1"
-      # 并行分片：runner 4 vCPU 取 3 路（vite/daphne/浏览器各一份），全量 ~12m → ~5m。
-      # --reporter=list,json 覆盖配置里的 html reporter：4 个 shard 进程不能共写 playwright-report/
-      # （失败现场仍由 test-results/ 逐用例目录承载，upload 不受影响）；json 供抖动榜单解析，
-      # 各 shard 经 PLAYWRIGHT_JSON_OUTPUT_DIR/NAME 输出到独立文件（scripts/e2e-parallel.mjs）
-      E2E_PARALLEL: "3"
+      # 并行分片：runner 4 vCPU 取 4 路（vite/daphne/浏览器各一份）。
+      # 分片按 e2e/shard-weights.json 的「文件时长权重」做 LPT 均衡装箱
+      # （Playwright 原生 --shard 只按条数均分，实测最重/最轻片相差 ~700s，
+      # 最慢片决定总时长；权重表由 scripts/e2e-weights.mjs 从上次全量报告生成）。
+      # --reporter=list,json 覆盖配置里的 html reporter：多个 shard 进程不能共写
+      # playwright-report/；json 供抖动榜单解析，各 shard 经
+      # PLAYWRIGHT_JSON_OUTPUT_DIR/NAME 输出到独立文件（scripts/e2e-parallel.mjs）
+      E2E_PARALLEL: "4"
       E2E_JSON_REPORT: "1"
     steps:
       - name: Checkout client repository
@@ -217,8 +220,12 @@ jobs:
         name: Upload full report
         with:
           name: playwright-report-full
+          # 分片跑的失败现场写在各自 --output 目录（test-results-shard-N），
+          # 只传 test-results/ 会丢掉截图与 error-context（曾是 CI-only 失败无法
+          # 定位的根因之一：唯一可下载的产物里只有 JSON 报告）
           path: |
             playwright-report/
             test-results/
+            test-results-shard-*/
             e2e-reports/
           retention-days: 7

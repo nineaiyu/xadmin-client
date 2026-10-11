@@ -18,7 +18,7 @@
  *   E2E_NO_KILL=1     跳过启动前清理端口（CI 全新无残留，或自行管理端口）
  */
 import { spawn, execSync } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const total = Number(process.env.E2E_PARALLEL ?? "4");
@@ -119,6 +119,93 @@ function checkDurationBudget(seconds) {
   }
 }
 
+/**
+ * 时长均衡分片：Playwright 的 `--shard` 按「用例条数」均分，而 spec 之间的耗时差
+ * 可达一个数量级（layout-preferences 一个文件占全量 16%），实测三片负载
+ * 3406 / 4058 / 4115s —— 最慢的一片决定跑批总时长。
+ *
+ * 权重表（e2e/shard-weights.json，由 scripts/e2e-weights.mjs 从上次全量报告生成）
+ * 存在时改为「按文件权重做 LPT 贪心装箱」，每片直接跑自己的文件列表；
+ * 缺失/为空或 E2E_SHARD_MODE=count 时回落到原生 `--shard`。
+ */
+const WEIGHTS_FILE = fileURLToPath(
+  new URL("../e2e/shard-weights.json", import.meta.url)
+);
+const SPEC_DIR = fileURLToPath(new URL("../e2e", import.meta.url));
+
+function loadWeights() {
+  if (process.env.E2E_SHARD_MODE === "count") return undefined;
+  if (!existsSync(WEIGHTS_FILE)) return undefined;
+  try {
+    const files = JSON.parse(readFileSync(WEIGHTS_FILE, "utf-8"))?.files;
+    return files && Object.keys(files).length ? files : undefined;
+  } catch (error) {
+    console.warn(
+      `[e2e-parallel] 权重表解析失败，回落条数分片：${error.message}`
+    );
+    return undefined;
+  }
+}
+
+/** 权重表按最后一次全量跑批生成，新增文件（无权重）按中位数估算，避免被当 0 跳过 */
+function partitionByWeight(files, weights, shards) {
+  const measured = files
+    .map(file => weights[file])
+    .filter(value => typeof value === "number" && value > 0)
+    .sort((a, b) => a - b);
+  const median = measured.length
+    ? measured[Math.floor(measured.length / 2)]
+    : 30;
+  const items = files
+    .map(file => ({
+      file,
+      weight: typeof weights[file] === "number" ? weights[file] : median
+    }))
+    .sort((a, b) => b.weight - a.weight);
+  const groups = Array.from({ length: shards }, () => ({
+    files: [],
+    weight: 0
+  }));
+  for (const item of items) {
+    const lightest = groups.reduce(
+      (min, group) => (group.weight < min.weight ? group : min),
+      groups[0]
+    );
+    lightest.files.push(item.file);
+    lightest.weight += item.weight;
+  }
+  return groups;
+}
+
+const weights = loadWeights();
+const specFiles = readdirSync(SPEC_DIR)
+  .filter(name => name.endsWith(".e2e.ts") && !name.startsWith("_"))
+  .sort();
+const shardGroups = weights
+  ? partitionByWeight(specFiles, weights, total)
+  : undefined;
+if (shardGroups) {
+  console.log(
+    `[e2e-parallel] 时长均衡分片（权重表 ${specFiles.length} 个文件）：` +
+      shardGroups
+        .map((group, i) => `#${i + 1}≈${Math.round(group.weight)}s`)
+        .join(" / ")
+  );
+}
+
+// 只打印分片计划（不启动服务/浏览器）：用于核对权重表与新增加的文件落在哪一片
+if (process.env.E2E_PLAN_ONLY === "1") {
+  shardGroups?.forEach((group, i) => {
+    console.log(
+      `[e2e-plan] shard ${i + 1}/${total} ≈${Math.round(group.weight)}s (${group.files.length} 文件)：${group.files.join(" ")}`
+    );
+  });
+  if (!shardGroups) {
+    console.log("[e2e-plan] 无权重表，将使用 Playwright 原生 --shard 分片");
+  }
+  process.exit(0);
+}
+
 const startedAt = Date.now();
 const jobs = Array.from({ length: total }, (_, i) => {
   const env = {
@@ -141,11 +228,15 @@ const jobs = Array.from({ length: total }, (_, i) => {
         }
       : {})
   };
+  const group = shardGroups?.[i];
   const args = [
     "exec",
     "playwright",
     "test",
-    `--shard=${i + 1}/${total}`,
+    // 有权重表：显式文件清单（均衡分片）；否则回落 Playwright 原生按条数分片
+    ...(group
+      ? group.files.map(file => `e2e/${file}`)
+      : [`--shard=${i + 1}/${total}`]),
     // 每个 shard 独立产物目录：共用 ./test-results 时各 shard 启动阶段会并发清理/写入
     // 同一目录，互相踩到就整片退出（表现为随机 shard "启动即失败"，Node 安全删除 shim
     // 下更是直接抛 FSMoveObjectToTrashSync 错误）
