@@ -98,6 +98,15 @@ test("画布工具集三期：旋转 / 动画 / 富文本 / 网格吸附 / 键�
   await page
     .getByTestId("inspector-text")
     .fill("**加粗标题** 与 [c=#f00]彩字[/c]");
+  // 工具条：先插无序列表、再插表格骨架（顺序有意义：列表会把选区整体加前缀，
+  // 先插表格再点列表会把表格行吃成列表项——预览与投屏同一渲染函数，立刻可见）
+  await expect(page.getByTestId("rich-editor")).toBeVisible();
+  await page.getByTestId("rich-tool-ul").click();
+  await page.getByTestId("rich-tool-table").click();
+  await expect(page.getByTestId("rich-preview").locator("table")).toHaveCount(
+    1
+  );
+  await expect(page.getByTestId("rich-preview").locator("li")).toHaveCount(1);
   const paneText = freeCanvas.getByTestId("pane-text");
   await expect(paneText.locator("strong")).toHaveText("加粗标题");
   // 颜色 span 带内联样式；窗格内的操作按钮也渲染 span，故按属性定位
@@ -143,6 +152,8 @@ test("画布工具集三期：旋转 / 动画 / 富文本 / 网格吸附 / 键�
   await expect(
     freeCanvas.locator(".screen-pane.pane-animation--fade")
   ).toHaveCount(1);
+  // 富文本块级（表格）在窗格里同源渲染
+  await expect(paneText.locator("table")).toHaveCount(1);
   await expect(pane.locator(".screen-pane")).toHaveAttribute(
     "style",
     /animation-duration: 800ms/

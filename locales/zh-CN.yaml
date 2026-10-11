@@ -3146,7 +3146,19 @@ dataScreen:
   paneTextFormat: 文本格式
   textFormatPlain: 纯文本
   textFormatRich: 富文本
-  richTextHint: "富文本标记：**粗体** *斜体* __下划线__ ~~删除线~~ [c=#rrggbb]彩字[/c]"
+  richTextHint: "标记：**粗体** *斜体* __下划线__ ~~删除线~~ [c=#rrggbb]彩字[/c] [文本](https://…) ![图片](https://…)；“- ”无序列表、“1. ”有序列表、| a | b | 表格用 |---| 分隔行"
+  richBold: 粗体
+  richItalic: 斜体
+  richUnderline: 下划线
+  richStrike: 删除线
+  richColor: 颜色
+  richLink: 链接
+  richImage: 图片
+  richList: 无序列表
+  richOrderedList: 有序列表
+  richTable: 表格
+  richPreview: 实时预览
+  richPlaceholder: 文本
   animationNone: 无
   animationFade: 淡入
   animationSlideUp: 上滑入

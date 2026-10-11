@@ -297,6 +297,7 @@ const clockStyle = computed(() => ({
 /* 入场动画（ADR-088）：类名由 utils/paneEffects 给出，样式定义在共享 partial 里
    （keyframes 与本组件 scoped 样式一起编译，命名口径一致；编辑态不挂类 = 不播） */
 @use "@/style/screen-animations";
+@use "@/style/screen-richtext";
 
 /* 窗格视觉与投屏页一致（恒深色画布）：设计器与展示端共用，保证所见即所得 */
 .screen-pane {

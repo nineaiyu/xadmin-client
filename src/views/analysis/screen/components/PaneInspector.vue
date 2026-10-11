@@ -11,6 +11,7 @@ import {
   clampRotate
 } from "../utils/paneEffects";
 import PaneAnimationFields from "./PaneAnimationFields.vue";
+import RichTextEditor from "./RichTextEditor.vue";
 import { isValidPaneImageUrl } from "../utils/layout";
 
 /**
@@ -272,7 +273,14 @@ const imageUrlError = computed(() =>
 
       <template v-if="pane.type === 'text'">
         <el-form-item :label="t('dataScreen.paneContent')">
+          <!-- 富文本走「工具条 + 实时预览」（ADR-090）；纯文本保持朴素 textarea -->
+          <RichTextEditor
+            v-if="textFormat === 'rich'"
+            :model-value="pane.text ?? ''"
+            @update:model-value="emit('update', { text: $event })"
+          />
           <el-input
+            v-else
             :model-value="pane.text ?? ''"
             type="textarea"
             :rows="4"
@@ -293,9 +301,6 @@ const imageUrlError = computed(() =>
             </el-radio-button>
           </el-radio-group>
         </el-form-item>
-        <div v-if="textFormat === 'rich'" class="pane-inspector__hint">
-          {{ t("dataScreen.richTextHint") }}
-        </div>
         <el-form-item :label="t('dataScreen.paneFontSize')">
           <el-input-number v-model="size" :min="14" :max="200" />
         </el-form-item>

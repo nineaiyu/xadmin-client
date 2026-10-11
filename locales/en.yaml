@@ -3146,7 +3146,19 @@ dataScreen:
   paneTextFormat: Text format
   textFormatPlain: Plain
   textFormatRich: Rich
-  richTextHint: "Rich markup: **bold** *italic* __underline__ ~~strike~~ [c=#rrggbb]color[/c]"
+  richTextHint: "Markup: **bold** *italic* __underline__ ~~strike~~ [c=#rrggbb]color[/c] [text](https://…) ![image](https://…); '- ' bullet lists, '1. ' ordered lists, and | a | b | tables with a |---| separator row"
+  richBold: Bold
+  richItalic: Italic
+  richUnderline: Underline
+  richStrike: Strikethrough
+  richColor: Color
+  richLink: Link
+  richImage: Image
+  richList: Bullet list
+  richOrderedList: Numbered list
+  richTable: Table
+  richPreview: Live preview
+  richPlaceholder: text
   animationNone: None
   animationFade: Fade in
   animationSlideUp: Slide up
