@@ -2,7 +2,7 @@
 import { useI18n } from "vue-i18n";
 import LayFrame from "../lay-frame/index.vue";
 import LayFooter from "../lay-footer/index.vue";
-import { useTags } from "@/layout/hooks/useTag";
+import { isFullContent, isHeaderNav } from "@/layout/hooks/layoutModes";
 import { useRouteLoading } from "@/utils/routeLoading";
 import { isNumber, useGlobal } from "@pureadmin/utils";
 import BackTopIcon from "@/assets/svg/back_top.svg?component";
@@ -14,11 +14,12 @@ import { useUserStoreHook } from "@/store/modules/user";
 const props = defineProps({
   fixedHeader: Boolean,
   /** 顶栏滚动自动隐藏（useHeaderAutoHide）：隐藏时内容区不再让位固定头部 */
-  headerHidden: Boolean
+  headerHidden: Boolean,
+  /** 固定头部总高（顶栏 + 页签条，含隐藏页签 / 隐藏顶栏 / 全屏内容三态）：由外壳统一计算 */
+  chromeHeight: { type: String, default: "0px" }
 });
 
 const { t } = useI18n();
-const { tagsStyle } = useTags();
 const { $storage, $config } = useGlobal<GlobalPropertiesApi>();
 
 /** 页面缓存总开关：平台级 KeepAlive × 偏好「页签缓存」（关闭后所有页面都不缓存） */
@@ -59,13 +60,11 @@ const transitions = computed(() => {
   };
 });
 
-const hideTabs = computed(() => {
-  return $storage?.configure.hideTabs;
-});
-
-const hideFooter = computed(() => {
-  return $storage?.configure.hideFooter;
-});
+/** 页脚显隐：配置关闭或全屏内容（不渲染外壳，只显示内容主体）时隐藏 */
+const fullContent = computed(() => isFullContent($storage?.layout.layout));
+const hideFooter = computed(
+  () => $storage?.configure.hideFooter || fullContent.value
+);
 
 const stretch = computed(() => {
   return $storage?.configure.stretch;
@@ -77,13 +76,11 @@ const impersonationExtra = computed(() => {
   return useUserStoreHook().impersonator ? IMPERSONATION_BANNER_HEIGHT : 0;
 });
 
-/** 是否预留固定头部内边距：除水平布局（顶栏自带高度、无侧栏）外均需让位 */
-const reserveHeader = computed(() => $storage?.layout.layout !== "horizontal");
-
-/** CSS 级隐藏顶栏（设置面板 →「布局」→「隐藏顶栏」）：顶栏整块不渲染，页签条保留，
- *  固定头部总高同步扣掉顶栏高度 */
-const headerHiddenByConfig = computed(
-  () => $storage?.configure?.headerHidden ?? false
+/** 布局语义模式（全屏内容不渲染固定头部，水平布局的顶栏自带高度） */
+const layoutMode = computed(() => $storage?.layout.layout);
+/** 是否预留固定头部内边距：除水平布局与全屏内容外均需让位 */
+const reserveHeader = computed(
+  () => !isHeaderNav(layoutMode.value) && !isFullContent(layoutMode.value)
 );
 
 const getMainWidth = computed(() => {
@@ -94,23 +91,9 @@ const getMainWidth = computed(() => {
       : "100%";
 });
 
-/** 当前固定头部总高（CSS 令牌引用，数值见 tokens/primitives.scss）：
- *  隐藏页签 = 顶栏；显示页签按风格取「顶栏 + 页签条」总高；隐藏顶栏时同步扣除顶栏高度 */
-const chromeHeight = computed(() => {
-  const headerHidden = headerHiddenByConfig.value;
-  if (hideTabs.value) {
-    return headerHidden ? "0px" : "var(--layout-header-h)";
-  }
-  const tags =
-    tagsStyle.value === "chrome"
-      ? "var(--layout-tags-chrome-h)"
-      : "var(--layout-tags-compact-h)";
-  return headerHidden ? `calc(${tags} - var(--layout-header-h))` : tags;
-});
-
 const getSectionStyle = computed(() => {
   // 顶栏自动隐藏态：固定头部整体移出视口，内容区不再让位（剩余算式同口径取 0px）
-  const chrome = props.headerHidden ? "0px" : chromeHeight.value;
+  const chrome = props.headerHidden ? "0px" : props.chromeHeight;
   // impersonationExtra > 0 时各项 padding-top 同步让位横幅高度（非 fixed-header
   // 模式由末项整体重置 padding，不受影响）
   const pad = (base: string) =>

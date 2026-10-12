@@ -10,8 +10,10 @@ import {
   resolveLogoTextVisible
 } from "@/layout/hooks/logoPreferences";
 
-defineProps({
-  collapse: Boolean
+const props = defineProps({
+  collapse: Boolean,
+  /** 隐藏标题文字（双列侧栏的一级窄列：列宽放不下标题，仅保留图标） */
+  hideTitle: Boolean
 });
 
 const { title, getLogo } = useNav();
@@ -25,7 +27,9 @@ const logoSrc = computed(() =>
 );
 /** 整图模式：图片含图标与文字，标题文字不再单独渲染、图片按偏好定高 */
 const logoMode = computed(() => resolveLogoMode(configure.value));
-const showLogoText = computed(() => resolveLogoTextVisible(configure.value));
+const showLogoText = computed(
+  () => !props.hideTitle && resolveLogoTextVisible(configure.value)
+);
 const logoStyle = computed(() => resolveLogoImageStyle(configure.value));
 </script>
 
@@ -62,7 +66,7 @@ const logoStyle = computed(() => resolveLogoImageStyle(configure.value));
 .sidebar-logo-container {
   position: relative;
   width: 100%;
-  height: 48px;
+  height: var(--sidebar-logo-h);
   overflow: hidden;
 
   .sidebar-logo-link {

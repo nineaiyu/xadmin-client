@@ -19,4 +19,9 @@ body[layout="horizontal"] {
   .fixed-header {
     width: 100%;
   }
+
+  /* 通栏顶栏下沿 1px 分隔线（与顶栏容器同口径，替代投影） */
+  .horizontal-header {
+    border-bottom: 1px solid hsl(var(--border-light));
+  }
 }

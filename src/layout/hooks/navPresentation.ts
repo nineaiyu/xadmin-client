@@ -1,8 +1,9 @@
 import { computed } from "vue";
 import { useEpThemeStoreHook } from "@/store/modules/epTheme";
+import { isTwoColumnSidebar } from "./layoutModes";
 
 /**
- * 混合布局的「额外收起」：第二列侧栏（混合布局的侧栏）单独收起，
+ * 双列布局的「额外收起」：次级侧栏（双列菜单 / 混合双列的第二列）单独收起，
  * 不影响纵向布局的折叠状态；开关见设置面板 →「布局」→「额外收起」。
  *
  * 纯函数（入参由调用方从响应式存储取值）：会被计算属性在任意上下文求值，
@@ -12,7 +13,7 @@ export function mixedExtraCollapsed(
   layout: unknown,
   extraCollapse: unknown
 ): boolean {
-  return String(layout ?? "vertical").includes("mix") && Boolean(extraCollapse);
+  return isTwoColumnSidebar(layout) && Boolean(extraCollapse);
 }
 
 /**

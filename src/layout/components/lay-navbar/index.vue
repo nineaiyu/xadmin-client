@@ -2,8 +2,9 @@
 import { computed } from "vue";
 import { useGlobal } from "@pureadmin/utils";
 import { useNav } from "@/layout/hooks/useNav";
-import { hasHeaderMenu } from "@/layout/hooks/layoutModes";
+import { hasNavbarLogo, hasNavbarMenu } from "@/layout/hooks/layoutModes";
 import LayNavMix from "../lay-sidebar/NavMix.vue";
+import NavbarLogo from "./NavbarLogo.vue";
 import LaySidebarBreadCrumb from "../lay-sidebar/components/SidebarBreadCrumb.vue";
 import LaySidebarTopCollapse from "../lay-sidebar/components/SidebarTopCollapse.vue";
 import NavbarActions from "./NavbarActions.vue";
@@ -17,23 +18,33 @@ const breadcrumbVisible = computed(
   () => $storage?.configure?.breadcrumbVisible ?? true
 );
 
-/** 顶栏一级菜单条：混合系布局（mix / header-sidebar-nav / header-mixed-nav） */
-const headerMenuVisible = computed(() => hasHeaderMenu(layout.value));
+/** 顶栏一级菜单条：混合系布局（混合 / 混合双列） */
+const headerMenuVisible = computed(() => hasNavbarMenu(layout.value));
 
-/** 面包屑：仅在无顶栏菜单的模式显示（纵向 / 双列侧栏） */
+/**
+ * 顶栏品牌区：Logo 归顶栏的布局（混合 / 侧边导航）——这两种布局的侧栏排在
+ * 顶栏下方，没有侧栏顶部品牌位，Logo 随顶栏展示。
+ */
+const headerLogoVisible = computed(
+  () => device.value !== "mobile" && hasNavbarLogo(layout.value)
+);
+
+/** 面包屑：仅在无顶栏菜单的模式显示（纵向 / 双列侧栏 / 侧边导航） */
 const breadcrumbMode = computed(
   () => !headerMenuVisible.value && device.value !== "mobile"
 );
 </script>
 
 <template>
-  <div class="navbar bg-bg-card shadow-(--shadow-navbar)">
+  <div class="navbar bg-bg-card">
     <LaySidebarTopCollapse
       v-if="device === 'mobile'"
       class="hamburger-container"
       :is-active="pureApp.sidebar.opened"
       @toggleClick="toggleSideBar"
     />
+
+    <NavbarLogo v-if="headerLogoVisible" />
 
     <template v-if="headerMenuVisible">
       <LayNavMix />
@@ -51,13 +62,14 @@ const breadcrumbMode = computed(
 <style lang="scss" scoped>
 .navbar {
   width: 100%;
-  height: 48px;
+  height: var(--layout-header-h);
   overflow: hidden;
+  border-bottom: 1px solid hsl(var(--border-light));
 
   .hamburger-container {
     float: left;
     height: 100%;
-    line-height: 48px;
+    line-height: var(--layout-header-h);
     cursor: pointer;
   }
 

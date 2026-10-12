@@ -1,13 +1,14 @@
-import { computed, ref, watch, type Ref } from "vue";
+import { computed, watch, type Ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import type { menuType } from "@/layout/types";
-import { findRouteByPath, getParentPaths } from "@/router/utils";
+import { getParentPaths } from "@/router/utils";
 import { usePermissionStoreHook } from "@/store/modules/permission";
+import { useSplitSidebar } from "./useSplitSidebar";
 
 /**
- * 侧栏菜单数据装配（自 NavVertical 抽出）：
- * - 单列模式：整棵菜单树；双列模式：一级窄列 + 当前一级的子菜单列表；
- * - 一级高亮（窄列）与一级点击跳转；路由/菜单变化时重算子菜单数据。
+ * 侧栏菜单数据装配：
+ * - 整树模式：整棵菜单树；
+ * - 切割形态（混合 / 双列）：当前一级的子菜单列表（口径见 useSplitSidebar）。
+ * 另含一级窄列高亮与「路由变化 → 菜单选中态」联动。
  */
 export function useSidebarMenu(
   submenuSidebar: Ref<boolean>,
@@ -16,11 +17,11 @@ export function useSidebarMenu(
 ) {
   const route = useRoute();
   const router = useRouter();
-  const subMenuData = ref<menuType[]>([]);
+  const { splitMenus } = useSplitSidebar(defaultActive);
 
   const menuData = computed(() =>
     submenuSidebar.value
-      ? subMenuData.value
+      ? splitMenus.value
       : usePermissionStoreHook().wholeMenus
   );
 
@@ -53,29 +54,10 @@ export function useSidebarMenu(
     if (typeof target === "string" && target) router.push(target);
   }
 
-  function getSubMenuData() {
-    const path = defaultActive.value;
-    subMenuData.value = [];
-    // path 的上级路由组成的数组
-    const parentPathArr = getParentPaths(
-      path,
-      usePermissionStoreHook().wholeMenus as never
-    );
-    // 当前路由的父级路由信息
-    const parenetRoute = findRouteByPath(
-      parentPathArr[0] || path,
-      usePermissionStoreHook().wholeMenus as never
-    );
-    if (!parenetRoute?.children) return;
-    // 路由记录与菜单消费类型在类型层不重叠，运行时同源（与 toMenuNode 的边界收窄同口径）
-    subMenuData.value = parenetRoute.children as unknown as menuType[];
-  }
-
   watch(
     () => [route.path, usePermissionStoreHook().wholeMenus],
     () => {
       if (route.path.includes("/redirect")) return;
-      getSubMenuData();
       menuSelect(route.path);
     }
   );
@@ -84,7 +66,6 @@ export function useSidebarMenu(
     menuData,
     loading,
     topLevelActive,
-    handleTopLevelSelect,
-    getSubMenuData
+    handleTopLevelSelect
   };
 }

@@ -1,4 +1,4 @@
-/* 侧栏与导航布局样式：公共段（merge-style mixin）在 common，三个布局模式的
+/* 侧栏与导航布局样式：公共段（merge-style mixin）在 common，各布局模式的
    body[layout] 专属覆盖各居其文件；@use 顺序即输出顺序，与原单文件保持一致 */
 @use "vertical";
 @use "horizontal";
@@ -6,15 +6,16 @@
 @use "sidebar-mixed-nav";
 @use "header-sidebar-nav";
 @use "header-mixed-nav";
+@use "full-content";
 
 /* ================ 半暗侧栏（设置面板 →「布局」→「半暗侧栏」/「半暗子侧栏」） ================
    浅色外观下让侧栏保持深色调色板（顶栏与内容区维持浅色）。
    覆盖的是菜单调色板令牌（tokens/semantic.scss 的 --pure-theme-*）：
    - 深色外观（html.dark）本身即深色，`:not(.dark)` 让该类自动失效；
-   - 水平布局没有侧栏容器，选择器天然不命中；
+   - 水平布局与全屏内容没有侧栏容器，选择器天然不命中；
    - 折叠态 hover 弹出的子菜单挂在 body 上，需同步覆盖（否则弹层仍是浅色）；
-   - 「半暗子侧栏」（semi-dark-sidebar-sub）只作用于混合布局的第二列侧栏
-     （顶栏菜单条为主列，侧栏为子列），与主开关可独立启用。 */
+   - 「半暗子侧栏」（semi-dark-sidebar-sub）只作用于双列布局的次级侧栏
+     （双列菜单 / 混合双列），与主开关可独立启用。 */
 
 /** 深色侧栏调色板（暗色外观下由 `:not(.dark)` 自动失效） */
 @mixin sidebar-dark-palette {
@@ -40,9 +41,7 @@ html.semi-dark-sidebar:not(.dark) {
   }
 }
 
-html.semi-dark-sidebar-sub:not(.dark) body[layout="mix"],
 html.semi-dark-sidebar-sub:not(.dark) body[layout="sidebar-mixed-nav"],
-html.semi-dark-sidebar-sub:not(.dark) body[layout="header-sidebar-nav"],
 html.semi-dark-sidebar-sub:not(.dark) body[layout="header-mixed-nav"] {
   .sidebar-container {
     --pure-theme-sidebar-logo: #17253f;

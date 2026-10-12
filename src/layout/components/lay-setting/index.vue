@@ -7,6 +7,7 @@ import { computed, defineAsyncComponent, unref } from "vue";
 import { useGlobal } from "@pureadmin/utils";
 import { emitter } from "@/utils/mitt";
 import { useNav } from "@/layout/hooks/useNav";
+import { isFullContent } from "@/layout/hooks/layoutModes";
 import LayPanel from "../lay-panel/index.vue";
 import { useLayout } from "@/layout/hooks/useLayout";
 import { useMenuLayout } from "./hooks/useMenuLayout";
@@ -22,11 +23,16 @@ const { $storage } = useGlobal<GlobalPropertiesApi>();
 const { layoutTheme } = useLayout();
 const { setMenuLayout } = useMenuLayout();
 
-/** 悬浮球入口：总开关开启，且位置为「悬浮球」；auto 档在水平布局（无侧栏顶栏菜单）走悬浮球 */
+/**
+ * 悬浮球入口：总开关开启，且位置为「悬浮球」；auto 档在水平布局（无侧栏顶栏菜单）
+ * 走悬浮球；全屏内容模式顶栏整块不渲染（顶栏齿轮形态无处安放），任何位置档
+ * 都回落悬浮球，保证始终有切回其它布局的入口。
+ */
 const floatingVisible = computed(() => {
   if (!($storage?.configure?.enablePreferences ?? true)) return false;
   const position = $storage?.configure?.preferencesPosition ?? "header";
   if (position === "fixed") return true;
+  if (isFullContent($storage?.layout?.layout)) return true;
   return position === "auto" && $storage?.layout?.layout === "horizontal";
 });
 

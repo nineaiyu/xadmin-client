@@ -29,7 +29,7 @@ export const DEFAULT_NAVIGATION_STYLE = "rounded";
 const NAVIGATION_STYLE_ATTR = "data-nav-style";
 
 /** 页签项高度（px）+ 可调范围（与设置面板控件同源） */
-export const DEFAULT_TAGS_HEIGHT = 34;
+export const DEFAULT_TAGS_HEIGHT = 38;
 export const TAGS_HEIGHT_RANGE = { min: 28, max: 48, step: 2 } as const;
 
 /** 页签高度取值钳制（配置缺失/越界时回落到基准值） */
@@ -46,7 +46,7 @@ export function normalizeTagsHeight(value: unknown): number {
 }
 
 /** 侧栏宽度基准（与 tokens/primitives.scss 的 `--sidebar-width` 一致） */
-export const DEFAULT_SIDEBAR_WIDTH = 210;
+export const DEFAULT_SIDEBAR_WIDTH = 224;
 /** 侧栏宽度可调范围（px）：与设置面板控件同源，读取端再做一次钳制 */
 export const SIDEBAR_WIDTH_RANGE = { min: 160, max: 320 } as const;
 
@@ -56,7 +56,7 @@ export const FONT_BASE_PX = 14;
 export const FONT_SIZE_RANGE = { min: 12, max: 20, step: 0.5 } as const;
 
 /** 侧栏折叠态宽度基准（与 tokens/primitives.scss 的 `--sidebar-collapse-width` 一致） */
-export const DEFAULT_SIDEBAR_COLLAPSE_WIDTH = 54;
+export const DEFAULT_SIDEBAR_COLLAPSE_WIDTH = 60;
 /** 侧栏折叠态宽度可调范围（px） */
 export const SIDEBAR_COLLAPSE_WIDTH_RANGE = { min: 48, max: 96 } as const;
 /** 侧栏折叠态宽度取值钳制 */
@@ -72,16 +72,13 @@ export function normalizeSidebarCollapseWidth(value: unknown): number {
   );
 }
 
-/** 混合布局侧栏宽度：0 = 跟随「侧栏宽度」（默认档），>0 = 独立宽度（px） */
-export const SIDEBAR_MIXED_WIDTH_RANGE = { min: 0, max: 320 } as const;
+/** 双列侧栏一级窄列宽度（vben `sidebar.mixedWidth`）：0 = 设计令牌默认档（80px），>0 = 覆写（px） */
+export const SIDEBAR_MIXED_WIDTH_RANGE = { min: 0, max: 160 } as const;
 export function normalizeSidebarMixedWidth(value: unknown): number {
   if (value === null || value === undefined || value === "") return 0;
   const width = Number(value);
   if (!Number.isFinite(width) || width <= 0) return 0;
-  return Math.min(
-    SIDEBAR_WIDTH_RANGE.max,
-    Math.max(SIDEBAR_WIDTH_RANGE.min, Math.round(width))
-  );
+  return Math.min(SIDEBAR_MIXED_WIDTH_RANGE.max, Math.round(width));
 }
 
 /** 顶栏菜单对齐（水平 / 混合布局）：默认左对齐 */
@@ -172,7 +169,7 @@ export function applyPreferenceAttributes(
     root.setAttribute(MENU_ALIGN_ATTR, String(menuAlign));
   }
 
-  // 侧栏折叠宽度 / 混合布局宽度：默认档撤除内联覆写，回到设计令牌取值
+  // 侧栏折叠宽度：默认档撤除内联覆写，回到设计令牌取值
   const collapseWidth = configure?.sidebarCollapseWidth;
   if (
     collapseWidth === undefined ||
@@ -187,11 +184,12 @@ export function applyPreferenceAttributes(
     );
   }
 
+  // 双列侧栏一级窄列宽度：默认档撤除内联覆写，回到设计令牌基准值
   const mixedWidth = normalizeSidebarMixedWidth(configure?.sidebarMixedWidth);
   if (mixedWidth === 0) {
-    root.style.removeProperty("--sidebar-mixed-width");
+    root.style.removeProperty("--sidebar-mixed-narrow-width");
   } else {
-    root.style.setProperty("--sidebar-mixed-width", `${mixedWidth}px`);
+    root.style.setProperty("--sidebar-mixed-narrow-width", `${mixedWidth}px`);
   }
 
   // 页签项高度：默认档撤除内联覆写，回到设计令牌基准值

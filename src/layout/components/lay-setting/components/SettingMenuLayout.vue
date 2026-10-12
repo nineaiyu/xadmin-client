@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-// 系统设置面板：导航模式（垂直/水平/混合）设置区块——预览卡形态（悬停看说明，点选即切换）
+// 系统设置面板：导航模式（7 种布局，与 vben 布局矩阵同序同口径）设置区块
+// —— 预览卡形态（悬停看说明，点选即切换）
 import { computed } from "vue";
 import { useGlobal } from "@pureadmin/utils";
 import { useNav } from "@/layout/hooks/useNav";
@@ -27,26 +28,21 @@ const options = computed<PrefChoiceOption[]>(() => {
     {
       value: "vertical",
       label: t("layout.menuLayoutVertical"),
-      tip: t("layout.leftMode")
+      tip: t("layout.menuLayoutVerticalTip")
     }
   ];
   // 移动端只保留纵向布局（顶栏与双列侧栏在窄屏下强制回落竖排）
   if (device.value !== "mobile") {
     list.push(
       {
-        value: "horizontal",
-        label: t("layout.menuLayoutHorizontal"),
-        tip: t("layout.topMode")
-      },
-      {
-        value: "mix",
-        label: t("layout.menuLayoutMix"),
-        tip: t("layout.mixedMode")
-      },
-      {
         value: "sidebar-mixed-nav",
         label: t("layout.menuLayoutSidebarMixed"),
         tip: t("layout.menuLayoutSidebarMixedTip")
+      },
+      {
+        value: "horizontal",
+        label: t("layout.menuLayoutHorizontal"),
+        tip: t("layout.menuLayoutHorizontalTip")
       },
       {
         value: "header-sidebar-nav",
@@ -54,9 +50,19 @@ const options = computed<PrefChoiceOption[]>(() => {
         tip: t("layout.menuLayoutHeaderSidebarTip")
       },
       {
+        value: "mix",
+        label: t("layout.menuLayoutMix"),
+        tip: t("layout.menuLayoutMixTip")
+      },
+      {
         value: "header-mixed-nav",
         label: t("layout.menuLayoutHeaderMixed"),
         tip: t("layout.menuLayoutHeaderMixedTip")
+      },
+      {
+        value: "full-content",
+        label: t("layout.menuLayoutFullContent"),
+        tip: t("layout.menuLayoutFullContentTip")
       }
     );
   }
@@ -182,6 +188,8 @@ const navStyleOptions = computed<PrefChoiceOption[]>(() => [
   }
 }
 
+/* 布局缩略图（与 vben 布局矩阵的形态一致）：nav = 侧栏区，head = 顶栏区；
+   承载菜单区域的块用主色标识，次级列用更浅一档的灰 */
 .layout-preview {
   position: relative;
   display: block;
@@ -198,13 +206,14 @@ const navStyleOptions = computed<PrefChoiceOption[]>(() => [
     background: var(--el-text-color-regular);
   }
 
-  /* 垂直：左侧通栏导航 + 顶部条 */
+  /* 垂直：左侧通栏导航（主色）+ 右侧顶部条 */
   &--vertical {
     .layout-preview__nav {
       top: 0;
       left: 0;
       width: 30%;
       height: 100%;
+      background: var(--el-color-primary);
     }
 
     .layout-preview__head {
@@ -215,40 +224,14 @@ const navStyleOptions = computed<PrefChoiceOption[]>(() => [
     }
   }
 
-  /* 水平：仅顶部导航条 */
-  &--horizontal {
-    .layout-preview__nav {
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 24%;
-    }
-  }
-
-  /* 混合：顶部导航条 + 左侧次级导航 */
-  &--mix {
-    .layout-preview__head {
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 24%;
-    }
-
-    .layout-preview__nav {
-      bottom: 0;
-      left: 0;
-      width: 30%;
-      height: 76%;
-    }
-  }
-
-  /* 双列菜单：一级窄列通栏 + 二级列 + 右侧顶栏 */
+  /* 双列菜单：一级窄列（主色）通栏 + 二级列 + 右侧顶栏 */
   &--sidebar-mixed-nav {
     .layout-preview__nav {
       top: 0;
       left: 0;
       width: 20%;
       height: 100%;
+      background: var(--el-color-primary);
     }
 
     .layout-preview__nav::after {
@@ -258,7 +241,7 @@ const navStyleOptions = computed<PrefChoiceOption[]>(() => [
       width: 30%;
       height: 100%;
       content: "";
-      background: color-mix(in srgb, currentcolor 55%, transparent);
+      background: var(--el-text-color-placeholder);
     }
 
     .layout-preview__head {
@@ -269,7 +252,18 @@ const navStyleOptions = computed<PrefChoiceOption[]>(() => [
     }
   }
 
-  /* 侧边导航：顶栏通栏 + 左侧次级导航 */
+  /* 水平：仅顶部通栏导航条（主色，承载完整菜单） */
+  &--horizontal {
+    .layout-preview__head {
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 24%;
+      background: var(--el-color-primary);
+    }
+  }
+
+  /* 侧边导航：顶栏通栏（无菜单）+ 左侧导航（主色）排在顶栏下方 */
   &--header-sidebar-nav {
     .layout-preview__head {
       top: 0;
@@ -283,23 +277,70 @@ const navStyleOptions = computed<PrefChoiceOption[]>(() => [
       left: 0;
       width: 30%;
       height: 76%;
+      background: var(--el-color-primary);
     }
   }
 
-  /* 混合双列：顶栏（避开窄列）+ 一级窄列通栏 + 二级列 */
+  /* 混合：顶部通栏导航条（主色，一级菜单）+ 左侧次级导航（主色）在条下 */
+  &--mix {
+    .layout-preview__head {
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 24%;
+      background: var(--el-color-primary);
+    }
+
+    .layout-preview__nav {
+      bottom: 0;
+      left: 0;
+      width: 30%;
+      height: 76%;
+      background: var(--el-color-primary);
+    }
+  }
+
+  /* 混合双列：一级窄列 + 二级列通栏 + 右侧顶栏（主色，一级菜单） */
   &--header-mixed-nav {
     .layout-preview__nav {
       top: 0;
       left: 0;
       width: 20%;
       height: 100%;
+      background: var(--el-color-primary);
+    }
+
+    .layout-preview__nav::after {
+      position: absolute;
+      top: 0;
+      left: 100%;
+      width: 30%;
+      height: 100%;
+      content: "";
+      background: var(--el-text-color-placeholder);
     }
 
     .layout-preview__head {
-      top: 24%;
+      top: 0;
       right: 0;
-      width: 70%;
+      width: 50%;
       height: 24%;
+      background: var(--el-color-primary);
+    }
+  }
+
+  /* 内容全屏：无侧栏无顶栏，仅内容主体 */
+  &--full-content {
+    .layout-preview__nav {
+      display: none;
+    }
+
+    .layout-preview__head {
+      inset: 14% 10%;
+      width: auto;
+      height: auto;
+      background: var(--el-color-primary);
+      opacity: 0.25;
     }
   }
 }

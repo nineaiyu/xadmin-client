@@ -14,6 +14,8 @@ import {
 } from "@/layout/hooks/useDataThemeChange";
 import { useHeaderAutoHide } from "@/layout/hooks/useHeaderAutoHide";
 import { usePreferenceAttributes } from "@/layout/hooks/usePreferenceAttributes";
+import { useSplitSidebar } from "@/layout/hooks/useSplitSidebar";
+import { createTagsPreferences } from "@/layout/hooks/tagViewsConfig";
 import { mixedExtraCollapsed } from "@/layout/hooks/useNavState";
 import { useLayoutShortcutKeys } from "@/layout/hooks/useLayoutShortcutKeys";
 import { useLockScreen } from "@/layout/hooks/useLockScreen";
@@ -21,6 +23,7 @@ import {
   hasSidebar,
   headerModeToAutoHide,
   headerModeToFixed,
+  isFullContent,
   resolveHeaderMode,
   resolveLayoutMode
 } from "@/layout/hooks/layoutModes";
@@ -99,12 +102,51 @@ const layoutMode = computed(() =>
     useAppStoreHook().device === "mobile"
   )
 );
-/** 是否渲染侧栏（水平布局外全部渲染） */
-const sidebarVisible = computed(() => hasSidebar(layoutMode.value));
+/** 切割形态的侧栏可见性（口径见 useSplitSidebar） */
+const { hiddenByEmptySplit } = useSplitSidebar();
 
-// 顶栏滚动自动隐藏：开关与「固定顶栏」同时成立才启用（非固定头布局下无固定头部可隐藏）
+/**
+ * 是否渲染侧栏：水平布局与全屏内容不渲染；「顶栏承担一级导航」的混合系布局
+ * 在当前一级没有子菜单时也不渲染（对齐 vben 的「无子菜单即隐藏侧栏」，否则
+ * 顶栏下方会留一条空白侧栏）。
+ */
+const sidebarVisible = computed(
+  () => hasSidebar(layoutMode.value) && !hiddenByEmptySplit.value
+);
+
+/**
+ * 全屏内容模式（vben `full-content`）：不渲染侧栏 / 顶栏 / 页签条 / 页脚，
+ * 只显示内容主体；设置入口由设置面板的悬浮球兜底（见 lay-setting）。
+ */
+const fullContent = computed(() => isFullContent(layoutMode.value));
+
+/**
+ * 固定头部总高（顶栏 + 页签条）：「内容区让位」（lay-content）与「侧栏排在
+ * 顶栏下方」的偏移（混合 / 侧边导航，见 style/sidebar）共用同一口径，落到
+ * `--layout-chrome-h` 变量上。
+ * - 隐藏页签：只剩顶栏；隐藏顶栏（CSS 级）：只剩页签条；全屏内容：0。
+ */
+const { tagsStyle } = createTagsPreferences();
+const chromeHeight = computed(() => {
+  if (fullContent.value) return "0px";
+  if ($storage?.configure?.hideTabs) {
+    return headerHiddenByConfig.value ? "0px" : "var(--layout-header-h)";
+  }
+  const tags =
+    tagsStyle.value === "chrome"
+      ? "var(--layout-tags-chrome-h)"
+      : "var(--layout-tags-compact-h)";
+  return headerHiddenByConfig.value
+    ? `calc(${tags} - var(--layout-header-h))`
+    : tags;
+});
+
+// 顶栏滚动自动隐藏：开关与「固定顶栏」同时成立才启用（非固定头布局与全屏内容下无固定头部可隐藏）
 const { hidden: headerHidden } = useHeaderAutoHide(
-  () => fixedHeader.value && headerModeToAutoHide(headerMode.value)
+  () =>
+    fixedHeader.value &&
+    headerModeToAutoHide(headerMode.value) &&
+    !fullContent.value
 );
 
 // 圆角 / 字号 / 侧栏宽度 / 灰度色弱 / 半暗侧栏同步到 <html>，随设置面板改动实时生效；
@@ -279,8 +321,9 @@ const LayHeader = defineComponent({
     :class="[
       'app-wrapper',
       set.classes,
-      { 'header-off': headerHiddenByConfig }
+      { 'header-off': headerHiddenByConfig, 'no-sidebar': !sidebarVisible }
     ]"
+    :style="{ '--layout-chrome-h': chromeHeight }"
   >
     <div
       v-show="set.device === 'mobile' && set.sidebar.opened && sidebarVisible"
@@ -293,11 +336,14 @@ const LayHeader = defineComponent({
     />
     <div :class="['main-container', sidebarHidden ? 'main-hidden' : '']">
       <div v-if="set.fixedHeader">
-        <LayHeader />
+        <!-- 全屏内容模式不渲染顶栏（含页签条）；用户模拟横幅保持常驻（安全提示） -->
+        <LayHeader v-if="!fullContent" />
+        <LayImpersonation v-else />
         <!-- 主体内容 -->
         <LayContent
           :fixed-header="set.fixedHeader"
           :header-hidden="headerHidden"
+          :chrome-height="chromeHeight"
         />
       </div>
       <el-scrollbar v-else>
@@ -307,11 +353,13 @@ const LayHeader = defineComponent({
         >
           <BackTopIcon />
         </ReBackTop>
-        <LayHeader />
+        <LayHeader v-if="!fullContent" />
+        <LayImpersonation v-else />
         <!-- 主体内容 -->
         <LayContent
           :fixed-header="set.fixedHeader"
           :header-hidden="headerHidden"
+          :chrome-height="chromeHeight"
         />
       </el-scrollbar>
     </div>

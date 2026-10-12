@@ -10,17 +10,14 @@ import { transformI18n } from "@/plugins/i18n";
 import { groupMenuChildren } from "@/utils/menuGroups";
 import { useSidebarResize } from "@/layout/hooks/useSidebarResize";
 import { useSidebarMenu } from "@/layout/hooks/useSidebarMenu";
+import { useSplitSidebar } from "@/layout/hooks/useSplitSidebar";
 import {
   useMenuScrollActive,
   type ScrollbarExpose
 } from "@/layout/hooks/useMenuScrollActive";
 import { useHoverToggle } from "@/hooks/useHoverToggle";
 import { useConfigureStorage } from "../lay-setting/hooks/useConfigureStorage";
-import {
-  isTwoColumnSidebar,
-  resolveLayoutMode,
-  sidebarShowsSubmenu
-} from "@/layout/hooks/layoutModes";
+import { hasNavbarLogo, isTwoColumnSidebar } from "@/layout/hooks/layoutModes";
 import {
   computed,
   nextTick,
@@ -76,7 +73,6 @@ function toggleFixedExpand() {
 const {
   t,
   device,
-  layout,
   pureApp,
   isCollapse,
   tooltipEffect,
@@ -140,29 +136,30 @@ const {
     device.value !== "mobile"
 );
 
-/** 侧栏语义模式（移动端强制回落竖排，见 layoutModes） */
-const sidebarMode = computed(() =>
-  resolveLayoutMode(layout.value, device.value === "mobile")
-);
-/** 双列侧栏（一级窄列 + 二级展开列） */
-const twoColumn = computed(() => isTwoColumnSidebar(sidebarMode.value));
-/** 侧栏只显示「当前一级路由的子菜单」（一级导航在顶栏 / 窄列；受「导航切割」控制） */
-const submenuSidebar = computed(() =>
-  sidebarShowsSubmenu(sidebarMode.value, $storage?.configure?.navigationSplit)
-);
-
 const defaultActive = computed(() =>
   !isAllEmpty(route.meta?.activePath) ? route.meta.activePath : route.path
 );
 
+/** 侧栏语义模式 + 切割形态（口径见 useSplitSidebar，与外壳守卫同一来源） */
+const { sidebarMode, splitActive } = useSplitSidebar(defaultActive);
+/** 双列侧栏（一级窄列 + 二级展开列） */
+const twoColumn = computed(() => isTwoColumnSidebar(sidebarMode.value));
+/**
+ * 侧栏品牌区可见性：Logo 归顶栏的布局（混合 / 侧边导航）不在侧栏重复渲染，
+ * 顶栏被配置隐藏（顶栏整块不渲染）时回落侧栏，避免品牌位整体消失。
+ */
+const sidebarLogoVisible = computed(
+  () =>
+    showLogo.value &&
+    (!hasNavbarLogo(sidebarMode.value) ||
+      ($storage?.configure?.headerHidden ?? false))
+);
+/** 侧栏只显示「当前一级路由的子菜单」（一级导航在顶栏 / 窄列；受「导航切割」控制） */
+const submenuSidebar = splitActive;
+
 /** 菜单数据装配（整树 / 二级列 + 一级高亮与点击），实现见 hooks/useSidebarMenu */
-const {
-  menuData,
-  loading,
-  topLevelActive,
-  handleTopLevelSelect,
-  getSubMenuData
-} = useSidebarMenu(submenuSidebar, defaultActive, menuSelect);
+const { menuData, loading, topLevelActive, handleTopLevelSelect } =
+  useSidebarMenu(submenuSidebar, defaultActive, menuSelect);
 
 /** 激活项滚入可视区（长菜单下进入深层路由时保持高亮项可见） */
 const mainScrollbarRef = ref<ScrollbarExpose>();
@@ -183,7 +180,6 @@ function handleMenuOpen() {
 }
 
 onMounted(() => {
-  getSubMenuData();
   scrollToActive();
 
   emitter.on("logoChange", key => {
@@ -203,7 +199,7 @@ onBeforeUnmount(() => {
     v-loading="loading"
     :class="[
       'sidebar-container',
-      showLogo ? 'has-logo' : 'no-logo',
+      sidebarLogoVisible ? 'has-logo' : 'no-logo',
       {
         'is-two-column': twoColumn,
         'sidebar-hover-expanded': hoverExpanded,
@@ -215,9 +211,10 @@ onBeforeUnmount(() => {
     <!-- 双列侧栏的一级窄列：Logo（图标形态）+ 一级图标菜单；二级内容在右侧主列 -->
     <div v-if="twoColumn" class="sidebar-mixed-narrow">
       <LaySidebarLogo
-        v-if="showLogo"
+        v-if="sidebarLogoVisible"
         class="sidebar-mixed-narrow__logo"
         collapse
+        hide-title
       />
       <el-scrollbar class="sidebar-mixed-narrow__scroll">
         <el-menu
@@ -229,24 +226,30 @@ onBeforeUnmount(() => {
           :unique-opened="sidebarAccordion"
           @select="handleTopLevelSelect"
         >
+          <!-- 窄列只显示一级图标（与 vben 的一级窄列同口径）：
+               列宽放不下「图标 + 标题」，标题在模板层不渲染（CSS 隐藏受
+               scoped/:deep 与组件作用域权重影响不可靠），改由原生 title /
+               aria-label 提供悬停提示与可访问名 -->
           <el-menu-item
             v-for="item in usePermissionStoreHook().wholeMenus"
             :key="item.path"
             :index="item.path ?? ''"
+            :title="transformI18n(item.meta?.title ?? '')"
+            :aria-label="transformI18n(item.meta?.title ?? '')"
           >
             <div v-if="item.meta?.icon" class="sub-menu-icon">
               <component :is="useRenderIcon(item.meta.icon ?? '')" />
             </div>
-            <template #title>
-              <span>{{ transformI18n(item.meta?.title ?? "") }}</span>
-            </template>
           </el-menu-item>
         </el-menu>
       </el-scrollbar>
     </div>
     <!-- 侧栏主列：单列模式为整列；双列模式为二级展开列 -->
     <div class="sidebar-main">
-      <LaySidebarLogo v-if="showLogo && !twoColumn" :collapse="menuCollapse" />
+      <LaySidebarLogo
+        v-if="sidebarLogoVisible && !twoColumn"
+        :collapse="menuCollapse"
+      />
       <el-scrollbar
         ref="mainScrollbarRef"
         wrap-class="scrollbar-wrapper"
@@ -418,25 +421,22 @@ onBeforeUnmount(() => {
 .sidebar-mixed-narrow__logo {
   flex: none;
 
-  /* 窄列容不下标题文字：只保留图标（整图形态亦按整图定高居中） */
-  :deep(.sidebar-title) {
-    display: none;
-  }
-
+  /* 窄列容不下标题文字：标题经 hideTitle 由 Logo 组件自身不渲染（整图形态亦按整图定高居中） */
   :deep(.sidebar-logo-link) {
     justify-content: center;
     padding-left: 0;
   }
 }
 
-/* 一级窄列菜单：图标居中（激活项配色沿用公共菜单样式） */
+/* 一级窄列菜单：图标居中（激活项配色沿用公共菜单样式）
+   标题在模板层不渲染（见模板注释），此处只负责居中与项高 */
 .sidebar-mixed-menu {
   height: 100%;
   border: none;
 
   :deep(.el-menu-item) {
     justify-content: center;
-    height: 50px;
+    height: var(--nav-item-height);
     padding-inline: 0;
   }
 }

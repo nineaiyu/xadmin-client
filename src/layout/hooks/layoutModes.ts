@@ -1,13 +1,14 @@
 /**
  * 布局模式的语义判定与派生（纯函数域，非 `use*` 命名不计入 hook 长度门禁）。
  *
- * xadmin 的 6 种布局模式与 vben 布局矩阵对应：
- * - `vertical`           侧栏 + 顶栏（顶栏在侧栏右侧）—— 对应 vben `sidebar-nav`
- * - `horizontal`         顶栏菜单、无侧栏 —— 对应 vben `header-nav`
- * - `mix`                顶栏一级菜单（位于侧栏右侧）+ 侧栏显示所属一级的子菜单
- * - `sidebar-mixed-nav`  双列侧栏（一级窄列 + 二级展开列），顶栏在侧栏右侧
- * - `header-sidebar-nav` 顶栏通栏（含一级菜单）+ 侧栏显示子菜单
- * - `header-mixed-nav`   顶栏通栏（含一级菜单）+ 双列侧栏
+ * xadmin 的 7 种布局模式与 vben 布局矩阵一一对应，形态语义以 vben 为准：
+ * - `vertical`           侧栏（Logo + 全树）全高 + 顶栏在侧栏右侧 —— vben `sidebar-nav`
+ * - `sidebar-mixed-nav`  双列侧栏（一级窄列含 Logo + 二级列）全高 + 顶栏在侧栏右侧 —— vben `sidebar-mixed-nav`
+ * - `horizontal`         无侧栏，顶栏通栏（Logo + 全树菜单）—— vben `header-nav`
+ * - `mix`                顶栏通栏（Logo + 一级菜单）+ 侧栏排在顶栏下方（子菜单，受导航切割控制）—— vben `mixed-nav`
+ * - `header-sidebar-nav` 顶栏通栏（Logo + 面包屑，无菜单）+ 侧栏排在顶栏下方（全树）—— vben `header-sidebar-nav`
+ * - `header-mixed-nav`   双列侧栏（含 Logo）全高 + 顶栏在侧栏右侧（一级菜单）—— vben `header-mixed-nav`
+ * - `full-content`       不渲染侧栏 / 顶栏 / 页签 / 页脚，只显示内容主体 —— vben `full-content`
  *
  * 判定函数替代原先散落的 `layout.includes("vertical")` 子串判定——子串判定有
  * 两类事故：`sidebar-mixed-nav` 命中 `includes("mix")` 被误判为混合布局；
@@ -21,7 +22,8 @@ export type LayoutMode =
   | "mix"
   | "sidebar-mixed-nav"
   | "header-sidebar-nav"
-  | "header-mixed-nav";
+  | "header-mixed-nav"
+  | "full-content";
 
 export const LAYOUT_MODES: readonly LayoutMode[] = [
   "vertical",
@@ -29,7 +31,8 @@ export const LAYOUT_MODES: readonly LayoutMode[] = [
   "mix",
   "sidebar-mixed-nav",
   "header-sidebar-nav",
-  "header-mixed-nav"
+  "header-mixed-nav",
+  "full-content"
 ];
 
 /** 归一化布局标识：未知/空值回落 `vertical` */
@@ -40,48 +43,103 @@ export function normalizeLayoutMode(layout: unknown): LayoutMode {
     : "vertical";
 }
 
-/** 是否渲染侧栏容器（除水平布局外全部渲染） */
+/** 是否渲染侧栏容器（水平布局与全屏内容不渲染） */
 export function hasSidebar(layout: unknown): boolean {
-  return normalizeLayoutMode(layout) !== "horizontal";
+  const mode = normalizeLayoutMode(layout);
+  return mode !== "horizontal" && mode !== "full-content";
 }
 
-/** 顶栏是否渲染一级菜单条（`mix` 及两种 header 系布局） */
+/**
+ * 侧栏模式（vben `isSideMode` 同口径）：侧栏 + 顶栏共存的五种布局；
+ * 水平布局（无侧栏）与全屏内容（无外壳）除外。
+ */
+export function isSideMode(layout: unknown): boolean {
+  return hasSidebar(layout);
+}
+
+/** 是否为顶部导航模式（vben `header-nav`） */
+export function isHeaderNav(layout: unknown): boolean {
+  return normalizeLayoutMode(layout) === "horizontal";
+}
+
+/** 是否为混合导航模式（vben `mixed-nav`：顶栏一级菜单 + 侧栏子菜单） */
+export function isMixedNav(layout: unknown): boolean {
+  return normalizeLayoutMode(layout) === "mix";
+}
+
+/** 是否为双列侧栏模式（vben `sidebar-mixed-nav`） */
+export function isSidebarMixedNav(layout: unknown): boolean {
+  return normalizeLayoutMode(layout) === "sidebar-mixed-nav";
+}
+
+/** 是否为顶部通栏 + 侧边导航模式（vben `header-sidebar-nav`） */
+export function isHeaderSidebarNav(layout: unknown): boolean {
+  return normalizeLayoutMode(layout) === "header-sidebar-nav";
+}
+
+/** 是否为顶部混合双列模式（vben `header-mixed-nav`） */
+export function isHeaderMixedNav(layout: unknown): boolean {
+  return normalizeLayoutMode(layout) === "header-mixed-nav";
+}
+
+/**
+ * 是否为全屏内容模式（vben `full-content`）：不渲染侧栏 / 顶栏 / 页签 / 页脚，
+ * 只显示内容主体。
+ */
+export function isFullContent(layout: unknown): boolean {
+  return normalizeLayoutMode(layout) === "full-content";
+}
+
+/**
+ * 顶栏是否渲染水平菜单：
+ * - `horizontal`：顶栏承载完整菜单树（NavHorizontal 自带渲染）；
+ * - `mix` / `header-mixed-nav`：顶栏渲染一级菜单条（NavMix）。
+ * `header-sidebar-nav` 的顶栏只有面包屑与动作区，不在此列。
+ */
 export function hasHeaderMenu(layout: unknown): boolean {
-  return (
-    normalizeLayoutMode(layout) === "mix" ||
-    normalizeLayoutMode(layout) === "header-sidebar-nav" ||
-    normalizeLayoutMode(layout) === "header-mixed-nav"
-  );
+  const mode = normalizeLayoutMode(layout);
+  return mode === "horizontal" || mode === "mix" || mode === "header-mixed-nav";
+}
+
+/**
+ * 顶栏容器内是否内嵌一级菜单条（混合系布局）。
+ * 与 `hasHeaderMenu` 的差别：水平布局的一级菜单由通栏顶栏组件自行渲染。
+ */
+export function hasNavbarMenu(layout: unknown): boolean {
+  const mode = normalizeLayoutMode(layout);
+  return mode === "mix" || mode === "header-mixed-nav";
+}
+
+/**
+ * Logo 是否归属顶栏（vben `showHeaderLogo` 同口径）：侧栏排在顶栏下方的
+ * 混合系布局没有「侧栏顶部品牌区」，Logo 随顶栏展示（消费侧在顶栏隐藏时
+ * 由侧栏 Logo 兜底，避免品牌位整体消失）。
+ */
+export function hasNavbarLogo(layout: unknown): boolean {
+  const mode = normalizeLayoutMode(layout);
+  return mode === "mix" || mode === "header-sidebar-nav";
 }
 
 /** 顶栏是否通栏（跨越侧栏宽度、占满整宽） */
 export function isHeaderFullWidth(layout: unknown): boolean {
+  const mode = normalizeLayoutMode(layout);
   return (
-    normalizeLayoutMode(layout) === "horizontal" ||
-    normalizeLayoutMode(layout) === "header-sidebar-nav" ||
-    normalizeLayoutMode(layout) === "header-mixed-nav"
+    mode === "horizontal" || mode === "mix" || mode === "header-sidebar-nav"
   );
 }
 
 /** 侧栏是否双列（一级窄列 + 二级展开列） */
 export function isTwoColumnSidebar(layout: unknown): boolean {
-  return (
-    normalizeLayoutMode(layout) === "sidebar-mixed-nav" ||
-    normalizeLayoutMode(layout) === "header-mixed-nav"
-  );
-}
-
-/** 侧栏菜单是否收敛为「当前一级路由的子菜单」（竖排外均如此） */
-export function isSidebarSubmenu(layout: unknown): boolean {
   const mode = normalizeLayoutMode(layout);
-  return hasSidebar(mode) && mode !== "vertical";
+  return mode === "sidebar-mixed-nav" || mode === "header-mixed-nav";
 }
 
 /**
  * 侧栏是否显示「当前一级路由的子菜单」（运行期判定，含 `navigationSplit` 开关）：
  * - 双列布局与 `header-mixed-nav`：一级导航在窄列 / 顶栏，侧栏恒为子菜单；
- * - `header-sidebar-nav` 与 `mix`：一级导航在顶栏，`navigationSplit` 关时侧栏
- *   回到完整菜单树（对齐 vben `navigation.split`）。
+ * - `mix`：一级导航在顶栏，`navigationSplit` 关时侧栏回到完整菜单树
+ *   （对齐 vben `navigation.split`）；
+ * - `header-sidebar-nav`：一级导航在侧栏（全树），不做切割。
  */
 export function sidebarShowsSubmenu(
   layout: unknown,
@@ -90,6 +148,7 @@ export function sidebarShowsSubmenu(
   const mode = normalizeLayoutMode(layout);
   if (!hasSidebar(mode) || mode === "vertical") return false;
   if (mode === "sidebar-mixed-nav" || mode === "header-mixed-nav") return true;
+  if (mode === "header-sidebar-nav") return false;
   return Boolean(navigationSplit);
 }
 

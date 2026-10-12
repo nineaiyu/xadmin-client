@@ -376,14 +376,19 @@ layout:
   topMode: Top mode
   mixedMode: Mixed mode
   menuLayoutVertical: Sidebar
+  menuLayoutVerticalTip: Sidebar vertical menu mode
   menuLayoutHorizontal: Top
+  menuLayoutHorizontalTip: Horizontal menu mode, all menus on the top
   menuLayoutMix: Mixed
+  menuLayoutMixTip: Vertical and horizontal menus combined
   menuLayoutSidebarMixed: Two columns
   menuLayoutSidebarMixedTip: Vertical two-column menu
   menuLayoutHeaderSidebar: Header sidebar
   menuLayoutHeaderSidebarTip: Full-width header with side navigation
   menuLayoutHeaderMixed: Header two columns
   menuLayoutHeaderMixedTip: Two columns with a horizontal top menu
+  menuLayoutFullContent: Full content
+  menuLayoutFullContentTip: Hide all menus and show the content only
   themeColor: ThemeColor
   themeColorDesc: Preset palette or a custom pick, applied instantly
   themeColorCustom: Custom color
@@ -499,8 +504,8 @@ layout:
   menuAlignEnd: End
   sidebarCollapseWidth: Collapsed width
   sidebarCollapseWidthTip: Width of the collapsed sidebar (48~96px)
-  sidebarMixedWidth: Mixed layout width
-  sidebarMixedWidthTip: Sidebar width in the mixed layout (0 follows the sidebar width); the narrow first column of the two-column layouts uses a fixed design token
+  sidebarMixedWidth: Mixed width
+  sidebarMixedWidthTip: First-column width of the two-column layouts (0 uses the 80px design token)
   sidebarHidden: Hide sidebar
   sidebarHiddenTip: "Hide the sidebar and let the content fill the screen (same as the tab content fullscreen action)"
   sidebarFixedButton: Pin button

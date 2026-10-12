@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { injectResponsiveStorage } from "../responsive";
+import {
+  DEFAULT_SIDEBAR_COLLAPSE_WIDTH,
+  DEFAULT_SIDEBAR_WIDTH,
+  DEFAULT_TAGS_HEIGHT
+} from "@/layout/hooks/preferenceAttributes";
 
 /**
  * 响应式存储注入测试：界面配置项必须有默认值注入，
@@ -39,7 +44,10 @@ describe("injectResponsiveStorage", () => {
 
   it("顶栏 / 页签 / 侧栏新增偏好默认值（未配置时与迁移前行为一致）", () => {
     const configure = inject();
-    expect(configure.sidebarWidth).toBe(210);
+    // 断言取设计令牌默认值常量：令牌调整（如对齐 vben）不牵动用例
+    expect(configure.sidebarWidth).toBe(DEFAULT_SIDEBAR_WIDTH);
+    expect(configure.sidebarCollapseWidth).toBe(DEFAULT_SIDEBAR_COLLAPSE_WIDTH);
+    expect(configure.tagsHeight).toBe(DEFAULT_TAGS_HEIGHT);
     expect(configure.headerFixed).toBe(true);
     expect(configure.breadcrumbVisible).toBe(true);
     expect(configure.maxTagsCount).toBe(0);

@@ -10,7 +10,7 @@ body[layout="sidebar-mixed-nav"] {
 
   /* 主列无 Logo（Logo 在一级窄列），滚动区少 40px 折叠条与 4px 投影即可 */
   .is-two-column .sidebar-main .el-scrollbar.pc {
-    height: calc(100% - 44px);
+    height: calc(100% - var(--sidebar-collapse-bar-h));
   }
 
   .hideSidebar {

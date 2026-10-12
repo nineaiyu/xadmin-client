@@ -4,7 +4,7 @@ import { computed, ref } from "vue";
 import { useDark, useGlobal } from "@pureadmin/utils";
 import { emitter } from "@/utils/mitt";
 import { useNav } from "@/layout/hooks/useNav";
-import { isSidebarSubmenu } from "@/layout/hooks/layoutModes";
+import { isTwoColumnSidebar } from "@/layout/hooks/layoutModes";
 import {
   DEFAULT_SIDEBAR_COLLAPSE_WIDTH,
   DEFAULT_SIDEBAR_WIDTH,
@@ -62,8 +62,10 @@ const semiDarkSidebar = computed({
   set: value => storageConfigureChange("semiDarkSidebar", value)
 });
 
-/** 次级侧栏形态（混合系 / 双列布局）：「半暗子侧栏」「额外收起」仅在这些模式存在 */
-const isMixLayout = computed(() => isSidebarSubmenu($storage?.layout?.layout));
+/** 次级侧栏形态（双列布局：双列菜单 / 混合双列）：「半暗子侧栏」「额外收起」仅在这些模式存在 */
+const isMixLayout = computed(() =>
+  isTwoColumnSidebar($storage?.layout?.layout)
+);
 const semiDarkSidebarSub = computed({
   get: () => $storage?.configure?.semiDarkSidebarSub ?? false,
   set: value => storageConfigureChange("semiDarkSidebarSub", value)

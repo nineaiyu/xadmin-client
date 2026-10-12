@@ -59,8 +59,8 @@ export function useNavState() {
   const { $storage, $config } = useGlobal<GlobalPropertiesApi>();
 
   /**
-   * 侧栏折叠态：主折叠（sidebarStatus）或「混合布局额外收起」偏好
-   * （设置面板 →「布局」→「额外收起」，仅混合布局生效；语义见 mixedExtraCollapsed）。
+   * 侧栏折叠态：主折叠（sidebarStatus）或双列布局的「额外收起」偏好
+   * （设置面板 →「布局」→「额外收起」，仅双列布局生效；语义见 mixedExtraCollapsed）。
    */
   const isCollapse = computed(() => {
     return (

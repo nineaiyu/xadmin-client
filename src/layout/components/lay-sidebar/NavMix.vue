@@ -2,6 +2,7 @@
 import { isAllEmpty, useGlobal, useResizeObserver } from "@pureadmin/utils";
 import { useRoute } from "vue-router";
 import { useNav } from "@/layout/hooks/useNav";
+import { isMixedNav } from "@/layout/hooks/layoutModes";
 import { transformI18n } from "@/plugins/i18n";
 import { ref, toRaw, computed, watch, onMounted, nextTick } from "vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
@@ -13,11 +14,12 @@ import LaySidebarItem from "./components/SidebarItem.vue";
 import NavbarActions from "../lay-navbar/NavbarActions.vue";
 
 /**
- * 顶栏一级菜单条（混合系布局：mix / header-sidebar-nav / header-mixed-nav）：
+ * 顶栏一级菜单条（混合系布局：mix / header-mixed-nav）：
  * 菜单取全量一级路由，右侧动作区与纵向顶栏共用 NavbarActions（同一套落位编排）。
  *
- * 「导航切割」（`navigationSplit`，仅 mix 生效）：开 = 顶栏只显示一级菜单、侧栏
- * 显示所属一级的子菜单；关 = 顶栏显示完整菜单树（可下拉）、侧栏显示完整菜单。
+ * 「导航切割」（`navigationSplit`，仅混合布局 mix 生效）：开 = 顶栏只显示一级菜单、
+ * 侧栏显示所属一级的子菜单；关 = 顶栏显示完整菜单树（可下拉）、侧栏显示完整菜单。
+ * 混合双列（header-mixed-nav）的顶栏恒为一级菜单（一级导航在顶栏，侧栏承担子级）。
  */
 const menuRef = ref();
 const headerRef = ref();
@@ -25,11 +27,15 @@ const defaultActive = ref<string | undefined>(undefined);
 
 const route = useRoute();
 const { $storage } = useGlobal<GlobalPropertiesApi>();
-const { resolvePath } = useNav();
+const { layout, resolvePath } = useNav();
 
 /** 导航切割开关（默认开，保持历史行为） */
-const navigationSplit = computed(
+const navigationSplitConfig = computed(
   () => $storage?.configure?.navigationSplit ?? true
+);
+/** 切割生效：混合布局由开关控制；混合双列恒切割（vben 同口径） */
+const navigationSplit = computed(() =>
+  isMixedNav(layout.value) ? navigationSplitConfig.value : true
 );
 
 /** 完整菜单树渲染序列：支持一级菜单按 groupName/groupRank 分组（仅影响展示层） */

@@ -62,8 +62,8 @@
   /* ================ 布局尺度 ================
      固定头部由顶栏（--layout-header-h）与页签条组成，两种页签风格的总高不同；
      内容区按「当前固定头部总高」让位，避免各处 calc 里写裸数字。 */
-  --layout-header-h: 48px; /* 顶栏高度（隐藏页签时的固定头部总高） */
-  --layout-tags-item-h: 34px; /* 页签项高度（设置面板 →「页签高度」覆写） */
+  --layout-header-h: 50px; /* 顶栏高度（隐藏页签时的固定头部总高） */
+  --layout-tags-item-h: 38px; /* 页签项高度（设置面板 →「页签高度」覆写） */
   --layout-tags-chrome-h: calc(
     var(--layout-header-h) + var(--layout-tags-item-h) + 3px
   ); /* 顶栏 + 谷歌风格页签的固定头部总高 */
@@ -73,28 +73,38 @@
   ); /* 顶栏 + 灵动/卡片风格页签的固定头部总高 */
 
   /* 导航风格（圆角 / 朴素）：菜单激活块的圆角与左右内缩，`data-nav-style="plain"` 收平 */
-  --nav-item-radius: 3px;
+  --nav-item-radius: 8px;
   --nav-item-inset: 8px;
-  --nav-item-inset-mix: 5px;
+  --nav-item-inset-mix: 8px;
 
   /* 菜单项尺度：项高、层级缩进步长、图标尺寸与图标-文字间距（侧栏与弹层共用） */
-  --nav-item-height: 50px;
-  --nav-item-indent: 20px;
-  --nav-item-icon-size: 18px;
+  --nav-item-height: 38px;
+  --nav-item-indent: 16px;
+  --nav-item-icon-size: 16px;
   --nav-item-icon-gap: 8px;
+
+  /* 菜单项垂直外边距（激活块上下留白，圆角块的呼吸感来源） */
+  --nav-item-margin-y: 2px;
+
+  /* 顶栏（水平 / 混合）菜单项高度：矮于顶栏本身，形成圆角块 */
+  --nav-item-height-horizontal: 40px;
+
+  /* 侧栏结构高度：品牌区与顶栏等高，底部折叠条固定高 */
+  --sidebar-logo-h: var(--layout-header-h);
+  --sidebar-collapse-bar-h: 44px;
 
   /* 水平 / 混合布局的顶栏菜单对齐（设置面板 →「顶栏菜单对齐」） */
   --menu-align: start;
 
   /* 侧栏宽度（纵向 / 混合布局的内容区左偏移）：基准值，设置面板 →「侧栏宽度」
-     会以内联 --sidebar-width 覆写；折叠宽度（54px）不参与缩放 */
-  --sidebar-width: 210px;
+     会以内联 --sidebar-width 覆写；折叠宽度（60px）不参与缩放 */
+  --sidebar-width: 224px;
 
   /* 侧栏折叠态宽度（设置面板 →「折叠宽度」运行期以内联变量覆写） */
-  --sidebar-collapse-width: 54px;
+  --sidebar-collapse-width: 60px;
 
-  /* 双列侧栏（导航模式 → 双列 / 混合双列）的一级窄列宽度：设计令牌固定值，
-     与「混合布局宽度」（--sidebar-mixed-width，仅供混合模式的整列宽度）语义分离 */
+  /* 双列侧栏（导航模式 → 双列 / 混合双列）的一级窄列宽度：设计令牌基准值，
+     设置面板 →「混合宽度」会以内联同名变量覆写（vben `sidebar.mixedWidth` 同口径） */
   --sidebar-mixed-narrow-width: 80px;
 
   /* 内容区留白（密度令牌）：在 lay-content 一处应用，页面不再各自覆写外边距；

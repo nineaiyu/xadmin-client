@@ -606,6 +606,9 @@ async function patchSiteConfig(page: Page, patch: Record<string, unknown>) {
 test.describe("布局偏好（面板实时生效）", () => {
   test.beforeEach(async ({ page }) => {
     await login(page);
+    // 布局残留防御：切换菜单布局的用例会把 Layout 落库（站点配置），跨用例 /
+    // 跨浏览器批次残留时页面会以横向或混合布局启动，依赖纵向形态的断言随之失败
+    await ensureVerticalLayout(page);
   });
 
   test.afterEach(async ({ page }) => {
@@ -1171,7 +1174,9 @@ test.describe("布局偏好（面板实时生效）", () => {
         .locator(".sidebar-container")
         .first()
         .evaluate(el => getComputedStyle(el).width);
-    expect(await sidebarWidth()).toBe("210px");
+    // 基准宽度取设计令牌现值：令牌调整（如对齐 vben 的 224px）不牵动用例
+    const baseWidth = await rootVar(page, "--sidebar-width");
+    expect(await sidebarWidth()).toBe(baseWidth);
 
     await setNumber(page, "侧栏宽度", "SidebarWidth", 260);
     await expect
@@ -1189,11 +1194,23 @@ test.describe("布局偏好（面板实时生效）", () => {
     // 复位到基准宽度：撤除内联覆写、回到设计令牌默认值
     await openSettingPanel(page);
     await switchSettingTab(page, "布局");
-    await setNumber(page, "侧栏宽度", "SidebarWidth", 210);
+    await setNumber(
+      page,
+      "侧栏宽度",
+      "SidebarWidth",
+      Number.parseInt(baseWidth, 10)
+    );
+    // 复位后：库值等于设计令牌默认时会撤除内联覆写；库值若为历史值则保留内联基准
     await expect
-      .poll(() => sidebarWidthVar(page), { timeout: 10_000 })
-      .toBe("");
-    await expect.poll(sidebarWidth, { timeout: 10_000 }).toBe("210px");
+      .poll(
+        async () => {
+          const value = await sidebarWidthVar(page);
+          return value === "" || value === baseWidth;
+        },
+        { timeout: 10_000 }
+      )
+      .toBe(true);
+    await expect.poll(sidebarWidth, { timeout: 10_000 }).toBe(baseWidth);
   });
 
   test("布局：固定顶栏、面包屑与顶栏组件显隐", async ({ page }) => {
@@ -1916,7 +1933,12 @@ test.describe("布局偏好（面板实时生效）", () => {
     // 复位：宽度回默认、关闭拖拽开关（面板内数字输入档仍可精确设置）
     await openSettingPanel(page);
     await switchSettingTab(page, "布局");
-    await setNumber(page, "侧栏宽度", "SidebarWidth", 210);
+    await setNumber(
+      page,
+      "侧栏宽度",
+      "SidebarWidth",
+      Number.parseInt(await rootVar(page, "--sidebar-width"), 10)
+    );
     await setSwitch(page, "拖拽调宽", false, "SidebarDraggable");
     await expect
       .poll(() => sidebarWidthVar(page), { timeout: 10_000 })
@@ -2318,7 +2340,9 @@ test.describe("布局偏好（面板实时生效）", () => {
 
   test("布局：导航风格切朴素后菜单激活块去圆角", async ({ page }) => {
     await ensurePanelClosed(page);
-    expect(await rootVar(page, "--nav-item-radius")).toBe("3px");
+    // 圆角基准取设计令牌现值：只校验「plain 归零 / rounded 恢复」
+    const baseRadius = await rootVar(page, "--nav-item-radius");
+    expect(baseRadius).not.toBe("0px");
 
     const navStyleBlock = () =>
       page
@@ -2350,7 +2374,7 @@ test.describe("布局偏好（面板实时生效）", () => {
           .click();
       }
     );
-    expect(await rootVar(page, "--nav-item-radius")).toBe("3px");
+    expect(await rootVar(page, "--nav-item-radius")).toBe(baseRadius);
     await closePanel(page);
   });
 
@@ -2361,7 +2385,10 @@ test.describe("布局偏好（面板实时生效）", () => {
     const container = page.locator(".sidebar-container").first();
     const containerWidth = () =>
       container.evaluate(el => getComputedStyle(el).width);
-    await expect.poll(containerWidth, { timeout: 10_000 }).toBe("54px");
+    const baseCollapseWidth = await rootVar(page, "--sidebar-collapse-width");
+    await expect
+      .poll(containerWidth, { timeout: 10_000 })
+      .toBe(baseCollapseWidth);
 
     await openSettingPanel(page);
     await switchSettingTab(page, "布局");
@@ -2396,7 +2423,12 @@ test.describe("布局偏好（面板实时生效）", () => {
     await switchSettingTab(page, "布局");
     await setSwitch(page, "隐藏侧栏", false, "SidebarHidden");
     await setSwitch(page, "钉住按钮", false, "SidebarFixedButton");
-    await setNumber(page, "折叠宽度", "SidebarCollapseWidth", 54);
+    await setNumber(
+      page,
+      "折叠宽度",
+      "SidebarCollapseWidth",
+      Number.parseInt(baseCollapseWidth, 10)
+    );
     await closePanel(page);
     // 复位展开态（与用例开始前一致）
     await page.mouse.move(700, 300);
@@ -2495,7 +2527,7 @@ test.describe("布局偏好（面板实时生效）", () => {
     ).toBeVisible();
     await expect(page.locator(".sidebar-mixed-narrow")).toBeVisible();
 
-    // 侧边导航：顶栏通栏（宽度 100%）、侧栏排在顶栏下方
+    // 侧边导航：顶栏通栏（宽度 100%、只有面包屑与动作区）、侧栏排在顶栏下方并显示完整菜单
     await openSettingPanel(page);
     await switchSettingTab(page, "布局");
     await waitForSiteConfigPatch(
@@ -2517,8 +2549,15 @@ test.describe("布局偏好（面板实时生效）", () => {
       .evaluate(el => el.getBoundingClientRect().width);
     const viewportWidth = await page.evaluate(() => window.innerWidth);
     expect(Math.abs(fullWidthHeader - viewportWidth)).toBeLessThan(2);
+    // 顶栏不承载一级菜单条，改由面包屑指示当前位置
+    await expect(page.locator(".fixed-header .horizontal-header")).toHaveCount(
+      0
+    );
+    await expect(
+      page.locator(".fixed-header .breadcrumb-container")
+    ).toBeVisible();
 
-    // 混合双列：顶栏通栏 + 双列侧栏
+    // 混合双列：双列侧栏全高，顶栏在侧栏右侧（承载一级菜单）
     await openSettingPanel(page);
     await switchSettingTab(page, "布局");
     await waitForSiteConfigPatch(
@@ -2538,6 +2577,17 @@ test.describe("布局偏好（面板实时生效）", () => {
     await expect(
       page.locator(".sidebar-container.is-two-column")
     ).toBeVisible();
+    // 顶栏让位侧栏宽度（左边界落在侧栏右缘），且承载一级菜单条
+    await expect(page.locator(".fixed-header .horizontal-header")).toHaveCount(
+      1
+    );
+    const mixedHeader = await page
+      .locator(".fixed-header")
+      .evaluate(el => el.getBoundingClientRect());
+    const mixedSidebarWidth = await page
+      .locator(".sidebar-container")
+      .evaluate(el => el.getBoundingClientRect().width);
+    expect(Math.abs(mixedHeader.x - mixedSidebarWidth)).toBeLessThan(2);
 
     // 复位竖排
     await openSettingPanel(page);
@@ -2577,6 +2627,17 @@ test.describe("布局偏好（面板实时生效）", () => {
     );
     await closePanel(page);
     await expect(page.locator("body[layout='mix']")).toHaveCount(1);
+    // 形态：Logo 归顶栏并与一级菜单条并排（顶栏为 flex 行，不堆叠），侧栏不再渲染品牌区
+    const brand = await page
+      .locator(".fixed-header .navbar-logo")
+      .evaluate(el => el.getBoundingClientRect());
+    const navHeader = await page
+      .locator(".fixed-header .horizontal-header")
+      .evaluate(el => el.getBoundingClientRect());
+    expect(navHeader.x).toBeGreaterThanOrEqual(brand.x + brand.width - 1);
+    await expect(
+      page.locator(".sidebar-container .sidebar-logo-container")
+    ).toHaveCount(0);
     // 未切割：侧栏回到完整菜单树（一级项全部铺开，项数必然多于子菜单）
     await expect
       .poll(() => sidebarEntries.count(), { timeout: 10_000 })
@@ -2590,6 +2651,43 @@ test.describe("布局偏好（面板实时生效）", () => {
     });
     await closePanel(page);
     await expect(page.locator("body[layout='vertical']")).toHaveCount(1);
+  });
+
+  test("布局：内容全屏模式不渲染外壳，设置入口回落悬浮球并可切回", async ({
+    page
+  }) => {
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    const block = page
+      .locator(".right-panel .pref-block")
+      .filter({ hasText: /菜单布局/ })
+      .first();
+    await waitForSiteConfigPatch(page, "Layout", "full-content", async () => {
+      await block
+        .locator('.pref-choice__item[data-choice="full-content"]')
+        .click();
+    });
+    await closePanel(page);
+
+    // 外壳整块不渲染：顶栏（含页签条）与侧栏都不可见，仅内容主体
+    await expect(page.locator("body[layout='full-content']")).toHaveCount(1);
+    await expect(page.locator(".fixed-header")).toHaveCount(0);
+    await expect(page.locator(".tags-view")).toHaveCount(0);
+    await expect(page.locator(".sidebar-container")).toBeHidden();
+    await expect(page.locator("#main-content")).toBeVisible();
+
+    // 全屏内容没有顶栏齿轮，设置入口回落到悬浮球（保证有切回其它布局的入口）
+    await expect(page.locator(".setting-fab")).toBeVisible();
+
+    // 悬浮球打开面板 → 切回竖排 → 外壳恢复
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await waitForSiteConfigPatch(page, "Layout", "vertical", async () => {
+      await block.locator('.pref-choice__item[data-choice="vertical"]').click();
+    });
+    await closePanel(page);
+    await expect(page.locator("body[layout='vertical']")).toHaveCount(1);
+    await expect(page.locator(".fixed-header")).toHaveCount(1);
   });
 });
 
@@ -2781,7 +2879,9 @@ test.describe("布局：侧栏菜单装饰与激活联动", () => {
 
 test.describe("布局：顶栏水平菜单溢出", () => {
   test.afterEach(async ({ page }) => {
-    // 复位本地布局偏好（失败残留也恢复纵向，避免污染后续用例与视觉基线）
+    // 复位布局偏好：本组用例会切到水平布局并落库（站点配置），本地存储与后端值
+    // 都要复位——只改本地存储时下一个用例、甚至下一个浏览器批次仍会读回横向布局
+    await ensureVerticalLayout(page).catch(() => undefined);
     await page
       .evaluate(() => {
         const raw = localStorage.getItem("responsive-layout");

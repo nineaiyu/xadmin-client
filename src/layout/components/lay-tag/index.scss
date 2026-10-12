@@ -25,7 +25,7 @@
   width: 100%;
   font-size: var(--font-size-base);
   color: var(--el-text-color-primary);
-  background: hsl(var(--bg-card));
+  background: hsl(var(--fill-muted));
   box-shadow: 0 0 1px hsl(var(--border-strong));
 
   .scroll-item {
@@ -44,7 +44,8 @@
     &.chrome-item {
       padding-right: 0;
       padding-left: 0;
-      margin-right: -18px;
+      margin-right: 6px;
+      border-radius: var(--radius-md);
       box-shadow: none;
     }
 
@@ -205,11 +206,13 @@
 .scroll-item.is-active {
   position: relative;
   z-index: 4;
-  color: var(--el-color-white);
-  box-shadow: 0 0 0.7px hsl(var(--border-strong));
+  color: var(--el-color-primary);
+  background: hsl(var(--bg-card));
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
 
   .chrome-tab__bg {
-    color: var(--el-color-primary-light-9) !important;
+    display: none;
   }
 
   .tag-title {
@@ -231,6 +234,8 @@
 
 .chrome-item:hover:not(.is-active) {
   z-index: 3;
+  background: hsl(var(--fill));
+  border-radius: var(--radius-md);
 }
 
 .scroll-item.is-active + .scroll-item .chrome-tab-divider,
@@ -339,10 +344,10 @@
   position: relative;
   z-index: 0;
   display: inline-flex;
-  gap: 16px;
+  gap: 8px;
   align-items: center;
   justify-content: center;
-  padding: 0 24px;
+  padding: 0 12px;
   white-space: nowrap;
   cursor: pointer;
 
@@ -438,4 +443,10 @@
       }
     }
   }
+}
+
+/* vben 观感：圆角块之间不画分隔线，页签形状（chrome-tab__bg）整体隐藏 */
+.tags-view .chrome-tab-divider,
+.tags-view .chrome-tab .chrome-tab__bg {
+  display: none;
 }

@@ -375,14 +375,19 @@ layout:
   topMode: 顶部菜单，简洁概览
   mixedMode: 混合菜单，灵活多变
   menuLayoutVertical: 侧边栏
+  menuLayoutVerticalTip: 侧边垂直菜单模式
   menuLayoutHorizontal: 顶部
+  menuLayoutHorizontalTip: 水平菜单模式，菜单全部显示在顶部
   menuLayoutMix: 混合
+  menuLayoutMixTip: 垂直水平菜单共存
   menuLayoutSidebarMixed: 双列菜单
   menuLayoutSidebarMixedTip: 垂直双列菜单模式
   menuLayoutHeaderSidebar: 侧边导航
   menuLayoutHeaderSidebarTip: 顶部通栏，侧边导航模式
   menuLayoutHeaderMixed: 混合双列
   menuLayoutHeaderMixedTip: 双列、水平菜单共存模式
+  menuLayoutFullContent: 内容全屏
+  menuLayoutFullContentTip: 不显示任何菜单，只显示内容主体
   themeColor: 主题色
   themeColorDesc: 预设色板或自定义取色，实时生效
   themeColorCustom: 自定义主色
@@ -498,8 +503,8 @@ layout:
   menuAlignEnd: 右侧
   sidebarCollapseWidth: 折叠宽度
   sidebarCollapseWidthTip: 侧栏收起后的宽度（48~96px）
-  sidebarMixedWidth: 混合布局宽度
-  sidebarMixedWidthTip: 混合模式的侧栏宽度（0 = 跟随「侧栏宽度」）；双列模式的一级窄列宽度为设计令牌固定值
+  sidebarMixedWidth: 混合宽度
+  sidebarMixedWidthTip: 双列布局的一级窄列宽度（0 = 设计令牌默认值 80px）
   sidebarHidden: 隐藏侧栏
   sidebarHiddenTip: 隐藏侧栏并把内容区铺满（与页签右键「内容全屏」同效）
   sidebarFixedButton: 钉住按钮
