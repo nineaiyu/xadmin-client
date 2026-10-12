@@ -152,7 +152,7 @@ onBeforeUnmount(() => {
   z-index: -1;
   background: hsl(var(--overlay-soft));
   opacity: 0;
-  transition: opacity var(--duration-base) cubic-bezier(0.7, 0.3, 0.1, 1);
+  transition: opacity var(--duration-base) var(--ease-emphasized);
 }
 
 .right-panel {
@@ -160,11 +160,12 @@ onBeforeUnmount(() => {
   top: 0;
   right: 0;
 
-  /* z-index 阶梯（T4）：面板必须低于 EP 弹层（2000 起），避免遮挡 dialog/confirm */
+  /* z-index 阶梯：面板必须低于 EP 弹层（2000 起），避免遮挡 dialog/confirm */
   z-index: var(--pure-z-index-setting-panel);
   width: 100%;
   max-width: 360px;
   height: 100vh;
+  height: 100dvh;
   box-shadow: var(--shadow-panel);
   transform: translate(100%);
   transition: all var(--duration-fast) var(--ease-emphasized);

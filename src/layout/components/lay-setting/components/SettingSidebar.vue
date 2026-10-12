@@ -4,6 +4,7 @@ import { computed, ref } from "vue";
 import { useDark, useGlobal } from "@pureadmin/utils";
 import { emitter } from "@/utils/mitt";
 import { useNav } from "@/layout/hooks/useNav";
+import { isSidebarSubmenu } from "@/layout/hooks/layoutModes";
 import {
   DEFAULT_SIDEBAR_COLLAPSE_WIDTH,
   DEFAULT_SIDEBAR_WIDTH,
@@ -14,9 +15,17 @@ import {
   normalizeSidebarMixedWidth,
   normalizeSidebarWidth
 } from "@/layout/hooks/usePreferenceAttributes";
+import {
+  DEFAULT_FULL_LOGO_HEIGHT,
+  FULL_LOGO_HEIGHT_RANGE,
+  normalizeFullLogoHeight,
+  resolveLogoMode
+} from "@/layout/hooks/logoPreferences";
 import { useConfigureStorage } from "../hooks/useConfigureStorage";
 import PrefBlock from "./PrefBlock.vue";
 import PrefRow from "./PrefRow.vue";
+import PrefChoice from "./PrefChoice.vue";
+import type { PrefChoiceOption } from "./prefTypes";
 
 import SidebarLine from "~icons/ri/side-bar-line";
 
@@ -53,10 +62,8 @@ const semiDarkSidebar = computed({
   set: value => storageConfigureChange("semiDarkSidebar", value)
 });
 
-/** 半暗子侧栏：仅混合布局的侧栏（第二列）存在该形态 */
-const isMixLayout = computed(() =>
-  String($storage?.layout?.layout ?? "vertical").includes("mix")
-);
+/** 次级侧栏形态（混合系 / 双列布局）：「半暗子侧栏」「额外收起」仅在这些模式存在 */
+const isMixLayout = computed(() => isSidebarSubmenu($storage?.layout?.layout));
 const semiDarkSidebarSub = computed({
   get: () => $storage?.configure?.semiDarkSidebarSub ?? false,
   set: value => storageConfigureChange("semiDarkSidebarSub", value)
@@ -80,6 +87,28 @@ const logoShowText = computed({
 const logoFit = computed({
   get: () => $storage?.configure?.logoFit ?? "contain",
   set: value => storageConfigureChange("logoFit", value)
+});
+
+/** Logo 形态：图标（图标 + 标题文字）/ 整图（图片含文字，按整图高度渲染） */
+const logoMode = computed<"icon" | "full">({
+  get: () => resolveLogoMode($storage?.configure),
+  set: value => storageConfigureChange("logoMode", value)
+});
+const logoModeOptions = computed<PrefChoiceOption[]>(() => [
+  { value: "icon", label: t("layout.logoModeIcon") },
+  { value: "full", label: t("layout.logoModeFull") }
+]);
+/** 整图高度（px）：仅整图形态生效 */
+const fullLogoHeight = computed<number>({
+  get: () => $storage?.configure?.fullLogoHeight ?? DEFAULT_FULL_LOGO_HEIGHT,
+  set: value =>
+    storageConfigureChange("fullLogoHeight", normalizeFullLogoHeight(value))
+});
+/** 暗色外观专用图（空 = 与浅色共用） */
+const logoSourceDark = computed({
+  get: () => $storage?.configure?.logoSourceDark ?? "",
+  set: value =>
+    storageConfigureChange("logoSourceDark", String(value ?? "").trim())
 });
 
 /** 折叠宽度 / 混合布局宽度：写入内联 CSS 变量（见 usePreferenceAttributes） */
@@ -222,6 +251,47 @@ function logoChange() {
             :value="item.value"
           />
         </el-select>
+      </template>
+    </PrefRow>
+    <PrefRow :label="t('layout.logoMode')" :tip="t('layout.logoModeTip')" stack>
+      <template #control>
+        <PrefChoice
+          :options="logoModeOptions"
+          :model-value="logoMode"
+          @change="value => (logoMode = value === 'full' ? 'full' : 'icon')"
+        />
+      </template>
+    </PrefRow>
+    <PrefRow
+      :label="t('layout.fullLogoHeight')"
+      :tip="t('layout.fullLogoHeightTip')"
+      :disabled="logoMode !== 'full'"
+    >
+      <template #control>
+        <el-input-number
+          v-model="fullLogoHeight"
+          :min="FULL_LOGO_HEIGHT_RANGE.min"
+          :max="FULL_LOGO_HEIGHT_RANGE.max"
+          :step="FULL_LOGO_HEIGHT_RANGE.step"
+          :disabled="logoMode !== 'full'"
+          size="small"
+          controls-position="right"
+          style="width: 108px"
+        />
+      </template>
+    </PrefRow>
+    <PrefRow
+      :label="t('layout.logoSourceDark')"
+      :tip="t('layout.logoSourceDarkTip')"
+    >
+      <template #control>
+        <el-input
+          v-model="logoSourceDark"
+          :placeholder="t('layout.logoSourcePlaceholder')"
+          size="small"
+          clearable
+          style="width: 168px"
+        />
       </template>
     </PrefRow>
     <PrefRow

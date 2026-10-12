@@ -150,6 +150,9 @@ function handleLogout() {
   align-items: center;
   justify-content: center;
   background: var(--el-bg-color-page);
+
+  /* 入场微动效：遮罩淡入 + 卡片轻微上浮，锁定是「状态切换」需要被感知 */
+  animation: lock-screen-fade var(--duration-base) var(--ease-standard) both;
 }
 
 .lock-screen__card {
@@ -162,6 +165,36 @@ function handleLogout() {
   border: 1px solid var(--el-border-color-lighter);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
+  animation: lock-screen-rise var(--duration-base) var(--ease-standard) both;
+}
+
+@keyframes lock-screen-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes lock-screen-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lock-screen,
+  .lock-screen__card {
+    animation: none;
+  }
 }
 
 .lock-screen__brand {

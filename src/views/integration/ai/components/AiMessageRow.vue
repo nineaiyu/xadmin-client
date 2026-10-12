@@ -25,6 +25,8 @@ const props = defineProps<{
   nlRunnable: boolean;
   nlRunning: boolean;
   actionExecutor: (_draft: AiActionDraft) => Promise<ExecuteResult>;
+  /** 新增行进入动画标记（尾部追加场景由宿主判定，见 hooks/useListAppendAnimation） */
+  fresh?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -52,12 +54,16 @@ const timeLabel = computed(() => formatMessageTime(props.item.created_time));
   />
 
   <!-- 用户消息：主色气泡（与聊天室一致） -->
-  <div v-else-if="isUser" class="mb-2 flex justify-end">
+  <div
+    v-else-if="isUser"
+    class="mb-2 flex justify-end"
+    :class="{ 'list-item-enter': fresh }"
+  >
     <ChatTextBubble :content="item.content" mine class="max-w-4/5" />
   </div>
 
   <!-- AI 回复：头像 + 思考/正文/出处 + 内嵌卡片 -->
-  <div v-else class="mb-2 flex gap-2">
+  <div v-else class="mb-2 flex gap-2" :class="{ 'list-item-enter': fresh }">
     <ChatMessageAvatar ai />
     <div class="flex min-w-0 max-w-4/5 flex-col">
       <div class="mb-1 text-xs text-(--el-text-color-secondary)">

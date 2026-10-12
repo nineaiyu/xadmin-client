@@ -41,6 +41,8 @@ const props = defineProps<{
   showName?: boolean;
   /** 当前登录用户主键（回应徽标高亮自己的回应；缺省不高亮） */
   mePk?: number;
+  /** 新增行进入动画标记（尾部追加场景由宿主判定，见 hooks/useListAppendAnimation） */
+  fresh?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -184,7 +186,7 @@ const chatActionExecutor = async (draft: AiActionDraft) => {
   <div
     v-else
     class="group flex gap-2 px-2 py-1.5"
-    :class="{ 'flex-row-reverse': mine }"
+    :class="{ 'flex-row-reverse': mine, 'list-item-enter': fresh }"
   >
     <ChatMessageAvatar
       :src="item.sender_avatar"

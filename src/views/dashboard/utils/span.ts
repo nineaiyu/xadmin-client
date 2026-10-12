@@ -8,6 +8,6 @@ import type { DashboardCard } from "@/api/dataset/datasets";
 export const cardColSpan = (card: Pick<DashboardCard, "span">) =>
   Math.min((card.span ?? 6) * 2, 24);
 
-/** 窄屏（<1200px）最多两列：避免 990-1280 中屏四列图表挤压（R8）。 */
+/** 窄屏（<1200px）最多两列：避免 990-1280 中屏四列图表挤压。 */
 export const cardColSpanNarrow = (card: Pick<DashboardCard, "span">) =>
   Math.min(cardColSpan(card), 12);

@@ -3,6 +3,7 @@ import type { Component } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import ReEmpty from "@/components/ReEmpty";
+import ReScrollbar from "@/components/ReScrollbar";
 import type { AiConsoleFeature } from "@/api/ai/ai";
 
 /**
@@ -40,7 +41,7 @@ const { t } = useI18n();
       <span class="font-semibold">{{ t("ai.title") }}</span>
     </div>
 
-    <el-scrollbar class="grow">
+    <ReScrollbar class="grow" :label="t('ai.features')">
       <div class="pb-4">
         <div class="px-3 py-1">
           <span class="text-xs text-(--el-text-color-secondary)">
@@ -83,7 +84,7 @@ const { t } = useI18n();
           size="small"
         />
       </div>
-    </el-scrollbar>
+    </ReScrollbar>
 
     <div
       v-if="footer"

@@ -19,11 +19,14 @@ import { delay, useGlobal, useResizeObserver } from "@pureadmin/utils";
 import { useTagScroll } from "./hooks/useTagScroll";
 import { useTagActions } from "./hooks/useTagActions";
 import { useTagDrag } from "./hooks/useTagDrag";
+import { useListAppendAnimation } from "@/hooks/useListAppendAnimation";
 
 import ArrowDown from "~icons/ri/arrow-down-s-line";
 import ArrowRightSLine from "~icons/ri/arrow-right-s-line";
 import ArrowLeftSLine from "~icons/ri/arrow-left-s-line";
 import RefreshRight from "~icons/ep/refresh-right";
+import Fullscreen from "~icons/ri/fullscreen-fill";
+import ExitFullscreen from "~icons/ri/fullscreen-exit-fill";
 
 const {
   Close,
@@ -76,6 +79,12 @@ const tagsShowRefresh = computed(
 );
 const tagsShowMore = computed(() => $storage?.configure?.tagsShowMore ?? true);
 
+/** 页签栏内的「内容最大化」按钮（等同右键菜单「最大化 / 还原」） */
+const tagsShowMaximize = computed(
+  () => $storage?.configure?.tagsShowMaximize ?? false
+);
+const maximizeOn = computed(() => Boolean(pureSetting.hiddenSideBar));
+
 /**
  * 页签 v-for 的稳定 key（path + query，与 store 的去重口径一致）。
  *
@@ -86,6 +95,11 @@ const tagsShowMore = computed(() => $storage?.configure?.tagsShowMore ?? true);
 function tagKey(item: { path?: string; query?: unknown }) {
   return `${item?.path ?? ""}-${JSON.stringify(item?.query ?? {})}`;
 }
+
+/** 新增页签的进入动画标记：仅「尾部追加」播一次（刷新恢复页签 / 批量变形不播） */
+const { isFresh: isFreshTag } = useListAppendAnimation(() =>
+  multiTags.value.map(item => tagKey(item))
+);
 
 /** 滚动与可视区域定位 */
 const {
@@ -194,9 +208,11 @@ onBeforeUnmount(() => {
           :key="tagKey(item)"
           :class="[
             'scroll-item is-closable',
+            'group',
             linkIsActive(item),
             tagsStyle === 'chrome' && 'chrome-item',
-            isFixedTag(item) && 'fixed-tag'
+            isFixedTag(item) && 'fixed-tag',
+            isFreshTag(tagKey(item)) && 'list-item-enter'
           ]"
           @contextmenu.prevent="openMenu(item, $event)"
           @mousedown.middle.prevent="
@@ -209,7 +225,7 @@ onBeforeUnmount(() => {
           <template v-if="tagsStyle !== 'chrome'">
             <span
               v-if="tagsShowIcon && item.meta?.icon"
-              class="tag-icon"
+              class="tag-icon group-hover:animate-scale-bounce"
               aria-hidden="true"
             >
               <component :is="useRenderIcon(toRaw(item.meta.icon))" />
@@ -245,7 +261,7 @@ onBeforeUnmount(() => {
             </div>
             <span
               v-if="tagsShowIcon && item.meta?.icon"
-              class="tag-icon"
+              class="tag-icon group-hover:animate-scale-bounce"
               aria-hidden="true"
             >
               <component :is="useRenderIcon(toRaw(item.meta.icon))" />
@@ -270,7 +286,7 @@ onBeforeUnmount(() => {
     <!-- 刷新当前页按钮（与右键菜单「刷新」同口径） -->
     <span
       v-if="tagsShowRefresh"
-      class="tags-refresh"
+      class="tags-refresh hover:[&>svg]:animate-scale-bounce"
       role="button"
       tabindex="0"
       :title="transformI18n('buttons.reload')"
@@ -280,6 +296,31 @@ onBeforeUnmount(() => {
       @keydown.space.prevent="refreshRoute"
     >
       <IconifyIconOffline :icon="RefreshRight" class="dark:text-white" />
+    </span>
+    <!-- 内容区最大化 / 还原（与右键菜单同口径：隐藏顶栏与侧栏、保留页签条作为还原入口） -->
+    <span
+      v-if="tagsShowMaximize"
+      class="tags-refresh tags-maximize hover:[&>svg]:animate-scale-bounce"
+      role="button"
+      tabindex="0"
+      :title="
+        transformI18n(
+          maximizeOn ? 'buttons.restoreMaximize' : 'buttons.maximize'
+        )
+      "
+      :aria-label="
+        transformI18n(
+          maximizeOn ? 'buttons.restoreMaximize' : 'buttons.maximize'
+        )
+      "
+      @click="onContentFullScreen"
+      @keydown.enter.prevent="onContentFullScreen"
+      @keydown.space.prevent="onContentFullScreen"
+    >
+      <IconifyIconOffline
+        :icon="maximizeOn ? ExitFullscreen : Fullscreen"
+        class="dark:text-white"
+      />
     </span>
     <!-- 右键菜单按钮 -->
     <transition name="el-zoom-in-top">

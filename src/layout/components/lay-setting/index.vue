@@ -22,12 +22,13 @@ const { $storage } = useGlobal<GlobalPropertiesApi>();
 const { layoutTheme } = useLayout();
 const { setMenuLayout } = useMenuLayout();
 
-/** 悬浮球入口：总开关开启且位置选「悬浮球」时渲染 */
-const floatingVisible = computed(
-  () =>
-    ($storage?.configure?.enablePreferences ?? true) &&
-    ($storage?.configure?.preferencesPosition ?? "header") === "fixed"
-);
+/** 悬浮球入口：总开关开启，且位置为「悬浮球」；auto 档在水平布局（无侧栏顶栏菜单）走悬浮球 */
+const floatingVisible = computed(() => {
+  if (!($storage?.configure?.enablePreferences ?? true)) return false;
+  const position = $storage?.configure?.preferencesPosition ?? "header";
+  if (position === "fixed") return true;
+  return position === "auto" && $storage?.layout?.layout === "horizontal";
+});
 
 function openPanel() {
   emitter.emit("openPanel" as never);

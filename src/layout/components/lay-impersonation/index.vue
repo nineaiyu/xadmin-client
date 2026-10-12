@@ -57,7 +57,7 @@ const { exiting, exitImpersonation } = useImpersonationExit();
   user-select: none;
   background: var(--el-color-warning-light-9);
   border-bottom: 1px solid var(--el-color-warning-light-5);
-  transition: filter 0.2s;
+  transition: filter var(--duration-fast) var(--ease-standard);
 
   &:hover {
     filter: brightness(0.97);

@@ -1,4 +1,8 @@
-@layer theme, base, components, utilities;
+/* 层顺序声明：与 build/cssLayer.ts 的 CSS_LAYER_ORDER 逐字符一致（两处同源）。
+   el 层承载 Element Plus 组件样式（由 css-layer 插件包层），压到 utilities 之下
+   使 Tailwind 工具类可覆盖 EP 组件样式；base 层承载 reset.scss 的元素级重置
+   （入层后组件库样式优先于兜底重置）；其余自身样式保持无层（优先级最高）。 */
+@layer theme, base, el, components, utilities;
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities);
 
@@ -29,6 +33,65 @@
   --color-warning: var(--el-color-warning);
   --color-danger: var(--el-color-danger);
   --color-info: var(--el-color-info);
+
+  /* 过渡工具类（transition-colors 等）的默认时长与缓动：统一到动效令牌，
+     避免 Tailwind 默认的 150ms / 自带曲线与全站节奏脱节；显式 duration-* /
+     ease-* 工具类仍可逐处覆写。 */
+  --default-transition-duration: var(--duration-fast);
+  --default-transition-timing-function: var(--ease-standard);
+}
+
+/* ============ 品牌色阶别名 ============
+   透传 Element Plus 的色阶变量，让 Tailwind 工具类能表达品牌色的深浅与浅底
+   （如 `bg-primary-light-9`、`text-danger-hover`、`border-success-border`）。
+   light-N / dark-2 由 tokens/ep-bridge.scss 用 color-mix 现场派生（随主色与明暗
+   主题自动跟随），本处只做命名映射，不新造色板；`inline` 形态不额外产出 :root
+   变量，仅在用到对应工具类时内联取值。 */
+@theme inline {
+  --color-primary-light-3: var(--el-color-primary-light-3);
+  --color-primary-light-5: var(--el-color-primary-light-5);
+  --color-primary-light-7: var(--el-color-primary-light-7);
+  --color-primary-light-8: var(--el-color-primary-light-8);
+  --color-primary-light-9: var(--el-color-primary-light-9);
+  --color-primary-dark-2: var(--el-color-primary-dark-2);
+  --color-primary-hover: var(--el-color-primary-light-3);
+  --color-primary-active: var(--el-color-primary-dark-2);
+
+  --color-success-light-3: var(--el-color-success-light-3);
+  --color-success-light-5: var(--el-color-success-light-5);
+  --color-success-light-7: var(--el-color-success-light-7);
+  --color-success-light-8: var(--el-color-success-light-8);
+  --color-success-light-9: var(--el-color-success-light-9);
+  --color-success-dark-2: var(--el-color-success-dark-2);
+  --color-success-hover: var(--el-color-success-light-3);
+  --color-success-active: var(--el-color-success-dark-2);
+
+  --color-warning-light-3: var(--el-color-warning-light-3);
+  --color-warning-light-5: var(--el-color-warning-light-5);
+  --color-warning-light-7: var(--el-color-warning-light-7);
+  --color-warning-light-8: var(--el-color-warning-light-8);
+  --color-warning-light-9: var(--el-color-warning-light-9);
+  --color-warning-dark-2: var(--el-color-warning-dark-2);
+  --color-warning-hover: var(--el-color-warning-light-3);
+  --color-warning-active: var(--el-color-warning-dark-2);
+
+  --color-danger-light-3: var(--el-color-danger-light-3);
+  --color-danger-light-5: var(--el-color-danger-light-5);
+  --color-danger-light-7: var(--el-color-danger-light-7);
+  --color-danger-light-8: var(--el-color-danger-light-8);
+  --color-danger-light-9: var(--el-color-danger-light-9);
+  --color-danger-dark-2: var(--el-color-danger-dark-2);
+  --color-danger-hover: var(--el-color-danger-light-3);
+  --color-danger-active: var(--el-color-danger-dark-2);
+
+  --color-info-light-3: var(--el-color-info-light-3);
+  --color-info-light-5: var(--el-color-info-light-5);
+  --color-info-light-7: var(--el-color-info-light-7);
+  --color-info-light-8: var(--el-color-info-light-8);
+  --color-info-light-9: var(--el-color-info-light-9);
+  --color-info-dark-2: var(--el-color-info-dark-2);
+  --color-info-hover: var(--el-color-info-light-3);
+  --color-info-active: var(--el-color-info-dark-2);
 }
 
 /*

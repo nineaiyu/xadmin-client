@@ -6,8 +6,14 @@ import { computed, reactive, ref } from "vue";
 import { useGlobal } from "@pureadmin/utils";
 import { message } from "@/utils/message";
 import { checkRemoteVersion } from "@/utils/versionCheck";
+import {
+  checkUpdatesEnabled,
+  setCheckUpdatesEnabled
+} from "@/utils/autoUpdate";
+import { emitter } from "@/utils/mitt";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useNav } from "@/layout/hooks/useNav";
+import { resolveHeaderMode } from "@/layout/hooks/layoutModes";
 import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
 import { useConfigureStorage } from "../hooks/useConfigureStorage";
 import PrefBlock from "./PrefBlock.vue";
@@ -55,9 +61,23 @@ const languageOptions = computed(() => [
   { label: "English", value: "en" }
 ]);
 
-/** 顶栏自动隐藏：实时生效（useHeaderAutoHide 读同一存储项） */
+/** 顶栏自动隐藏：实时生效（useHeaderAutoHide 读同一存储项）；
+ *  与「布局」页签的顶栏模式四态同源——同时镜像 `headerMode`，两个入口不互相覆盖 */
 const headerAutoHideChange = () => {
-  storageConfigureChange("headerAutoHide", settings.headerAutoHide ?? false);
+  const enabled = settings.headerAutoHide ?? false;
+  storageConfigureChange("headerAutoHide", enabled);
+  storageConfigureChange(
+    "headerMode",
+    enabled
+      ? "auto"
+      : resolveHeaderMode(
+            $storage?.configure?.headerMode,
+            $storage?.configure?.headerFixed ?? true,
+            false
+          ) === "static"
+        ? "static"
+        : "fixed"
+  );
 };
 
 /** 内容区紧凑模式：实时生效（lay-content 读同一存储项） */
@@ -69,6 +89,17 @@ const compactModeChange = () => {
 const dynamicTitleChange = () => {
   storageConfigureChange("dynamicTitle", settings.dynamicTitle ?? true);
 };
+
+/** 认证页（登录）外壳形态：插画左 / 居中（不显示插画）/ 插画右 */
+const authPageLayout = computed<string>({
+  get: () => $storage?.configure?.authPageLayout ?? "panel-left",
+  set: value => storageConfigureChange("authPageLayout", value)
+});
+const authPageLayoutOptions = computed<PrefChoiceOption[]>(() => [
+  { value: "panel-left", label: t("layout.authPanelLeft") },
+  { value: "panel-center", label: t("layout.authPanelCenter") },
+  { value: "panel-right", label: t("layout.authPanelRight") }
+]);
 
 /** 设置入口总开关（关闭前二次确认并给出恢复路径） */
 const prefsEnabled = computed(
@@ -85,15 +116,31 @@ async function onPrefsEnabledChange(value: string | number | boolean) {
   storageConfigureChange("enablePreferences", false);
 }
 
-/** 入口位置：顶栏齿轮 / 右下角悬浮球 */
+/** 入口位置（对齐 vben `preferencesButtonPosition` 五态）：
+ *  auto = 水平布局走悬浮球、其余走顶栏齿轮；none = 不显示；user-dropdown = 收进头像菜单 */
 const preferencesPosition = computed<string>({
   get: () => $storage?.configure?.preferencesPosition ?? "header",
   set: value => storageConfigureChange("preferencesPosition", value)
 });
 const preferencesPositionOptions = computed<PrefChoiceOption[]>(() => [
+  { value: "auto", label: t("layout.preferencesPositionAuto") },
   { value: "header", label: t("layout.preferencesPositionHeader") },
-  { value: "fixed", label: t("layout.preferencesPositionFixed") }
+  { value: "fixed", label: t("layout.preferencesPositionFixed") },
+  {
+    value: "user-dropdown",
+    label: t("layout.preferencesPositionUserDropdown")
+  },
+  { value: "none", label: t("layout.preferencesPositionNone") }
 ]);
+
+/** 自动检查更新（本地偏好）：后台轮询部署端版本；切换后经全局事件实时启停（App.vue） */
+const autoCheckUpdates = ref(checkUpdatesEnabled());
+function onAutoCheckUpdatesChange(value: string | number | boolean) {
+  const enabled = Boolean(value);
+  autoCheckUpdates.value = enabled;
+  setCheckUpdatesEnabled(enabled);
+  emitter.emit("checkUpdatesChange", enabled);
+}
 
 /** 检查更新：拉取部署端 version.json 与本地版本比对（自动轮询由 version-rocket 承担） */
 const checking = ref(false);
@@ -175,10 +222,40 @@ async function checkUpdate() {
     </PrefRow>
   </PrefBlock>
 
+  <PrefBlock :title="t('layout.authPage')" :icon="SettingLine" list flush>
+    <PrefRow
+      :label="t('layout.authPageLayout')"
+      :tip="t('layout.authPageLayoutTip')"
+      stack
+    >
+      <template #control>
+        <PrefChoice
+          :options="authPageLayoutOptions"
+          :model-value="authPageLayout"
+          @change="value => (authPageLayout = value)"
+        />
+      </template>
+    </PrefRow>
+  </PrefBlock>
+
   <PrefBlock :title="t('layout.about')" :icon="InfoLine" list flush>
     <PrefRow :label="t('layout.currentVersion')">
       <template #control>
         <span class="pref-about__version">{{ version }}</span>
+      </template>
+    </PrefRow>
+    <PrefRow
+      :label="t('layout.autoCheckUpdates')"
+      :tip="t('layout.autoCheckUpdatesTip')"
+    >
+      <template #control>
+        <el-switch
+          :model-value="autoCheckUpdates"
+          :active-text="t('labels.active')"
+          :inactive-text="t('labels.inactive')"
+          inline-prompt
+          @change="onAutoCheckUpdatesChange"
+        />
       </template>
     </PrefRow>
     <PrefRow :label="t('layout.checkUpdate')" :tip="t('layout.checkUpdateTip')">

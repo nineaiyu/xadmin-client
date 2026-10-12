@@ -325,6 +325,22 @@ sliderCaptcha:
   text: Slide right to verify
   successText: Verified
 
+sliderRotateCaptcha:
+  text: Drag to rotate the image upright
+
+sliderTranslateCaptcha:
+  text: Drag to fit the puzzle piece
+
+backTop:
+  text: Back to top
+
+collapseParams:
+  name: Name
+  value: Value
+  description: Description
+  unfold: Unfold
+  fold: Fold
+
 reState:
   empty: No data
   error: Failed to load
@@ -362,6 +378,12 @@ layout:
   menuLayoutVertical: Sidebar
   menuLayoutHorizontal: Top
   menuLayoutMix: Mixed
+  menuLayoutSidebarMixed: Two columns
+  menuLayoutSidebarMixedTip: Vertical two-column menu
+  menuLayoutHeaderSidebar: Header sidebar
+  menuLayoutHeaderSidebarTip: Full-width header with side navigation
+  menuLayoutHeaderMixed: Header two columns
+  menuLayoutHeaderMixedTip: Two columns with a horizontal top menu
   themeColor: ThemeColor
   themeColorDesc: Preset palette or a custom pick, applied instantly
   themeColorCustom: Custom color
@@ -425,6 +447,9 @@ layout:
   displayEffect: Display effects
   semanticColors: Functional colors
   navigationStyle: Navigation style
+  navigation: Navigation behaviour
+  navigationSplit: Navigation split
+  navigationSplitTip: "Mixed layout only: when on, the sidebar shows the children of the top menu selected in the header; when off, both show the full menu"
   navStyleRounded: Rounded
   navStyleRoundedTip: The active menu block keeps rounded corners and side insets
   navStylePlain: Plain
@@ -451,6 +476,14 @@ layout:
   logoFitFill: Fill
   logoFitNone: Original size
   logoFitScaleDown: Scale down
+  logoMode: Logo mode
+  logoModeTip: Icon = image plus the platform title; Full = the image already contains the title and none is rendered
+  logoModeIcon: Icon
+  logoModeFull: Full image
+  fullLogoHeight: Full logo height
+  fullLogoHeightTip: Height of the logo image in full mode (px)
+  logoSourceDark: Dark logo
+  logoSourceDarkTip: Image used in dark appearance (empty = reuse the light one)
   moreWidgets: More
   navbarWidgets: Header widgets
   navbarWidgetsDesc: Drag to reorder and pick where each widget lives (header / More menu / hidden)
@@ -458,6 +491,7 @@ layout:
   navbarPositionHeader: Header
   navbarPositionMore: More menu
   navbarPositionHidden: Hidden
+  navbarPositionUserDropdown: User menu
   headerMenuAlign: Header menu align
   headerMenuAlignTip: Alignment of the top menu in horizontal and mixed layouts (sidebar menus are unaffected)
   menuAlignStart: Start
@@ -466,7 +500,7 @@ layout:
   sidebarCollapseWidth: Collapsed width
   sidebarCollapseWidthTip: Width of the collapsed sidebar (48~96px)
   sidebarMixedWidth: Mixed layout width
-  sidebarMixedWidthTip: Sidebar width in the mixed layout (0 follows the sidebar width)
+  sidebarMixedWidthTip: Sidebar width in the mixed layout (0 follows the sidebar width); the narrow first column of the two-column layouts uses a fixed design token
   sidebarHidden: Hide sidebar
   sidebarHiddenTip: "Hide the sidebar and let the content fill the screen (same as the tab content fullscreen action)"
   sidebarFixedButton: Pin button
@@ -521,6 +555,14 @@ layout:
   header: Header
   headerFixed: Fixed header
   headerFixedTip: When off, the header (and the tab strip) scrolls with the page
+  headerVisible: Show header
+  headerVisibleTip: When off the header is not rendered at all (the tab strip stays); it takes no space, unlike "static"
+  headerMode: Header mode
+  headerModeTip: Static scrolls with the page; fixed sticks to the top; auto hides on scroll down and shows on scroll up
+  headerModeStatic: Static
+  headerModeFixed: Fixed
+  headerModeAuto: Auto hide and show
+  headerModeAutoScroll: Scroll hide and show
   breadcrumbVisible: Breadcrumb
   breadcrumbVisibleTip: Show the current page path at the left of the header
   breadcrumbShowIcon: Breadcrumb icons
@@ -540,6 +582,7 @@ layout:
   navbarLock: Lock screen button
   navbarLockTip: Show a lock button in the header; unlocking requires the login password
   navbarNotice: Notifications
+  navbarTimezone: Timezone
   navbarRefresh: Header refresh
   navbarSidebarToggle: Header sidebar toggle
   navbarSidebarToggleTip: Same as the sidebar bottom toggle (hidden by default to avoid duplication)
@@ -559,9 +602,17 @@ layout:
   tagsShowRefreshTip: Show the refresh-current-page button on the right of the tab bar
   tagsShowMore: More button
   tagsShowMoreTip: Show the bulk actions dropdown (close, pin, ...) on the right of the tab bar
+  tagsShowMaximize: Maximize button
+  tagsShowMaximizeTip: Show a maximize/restore button in the tab bar (same as the context menu, hides the header and sidebar)
   maxTagsCount: Max count
   maxTagsCountTip: Close the earliest closable tab beyond this limit (home and pinned tabs are excluded); 0 means unlimited
   footer: Footer
+  authPage: Login page
+  authPageLayout: Login page layout
+  authPageLayoutTip: Where the illustration sits relative to the form on auth pages; narrow screens always centre the form without the illustration
+  authPanelLeft: Illustration left
+  authPanelCenter: Form only
+  authPanelRight: Illustration right
   dynamicTitle: Dynamic title
   dynamicTitleTip: Update the browser title with the current page
   pageTransition: Page transition
@@ -605,10 +656,15 @@ layout:
   enablePreferencesTip: Show the header gear or the floating ball at the bottom-right
   enablePreferencesOffConfirm: "Turning this off hides the settings entry and the open-preferences shortcut. To reopen it: clear the responsive-configure key in browser local storage and refresh the page. Turn it off?"
   preferencesPosition: Entry position
-  preferencesPositionTip: The header gear, or a floating ball at the bottom-right
+  preferencesPositionTip: Header gear, floating ball, user menu, auto (floating ball in horizontal layout) or hidden
   preferencesPositionHeader: Header
   preferencesPositionFixed: Floating ball
+  preferencesPositionUserDropdown: User menu
+  preferencesPositionAuto: Auto
+  preferencesPositionNone: Hidden
   noticeTime: YYYY-MM-DD HH:mm:ss
+  timezone: Timezone
+  timezoneFollowBrowser: Follow browser timezone
   backTop: Back Top
   updateCheck: New version detected
   updateNow: Update now
@@ -635,6 +691,8 @@ layout:
   currentVersion: Current version
   checkUpdate: Check for updates
   checkUpdateTip: Compare the deployed version file with the local version
+  autoCheckUpdates: Auto check for updates
+  autoCheckUpdatesTip: Poll the deployed version in the background and prompt to refresh when a new version is found; turn it off to check manually below
   checkUpdateLatest: You are on the latest version
   checkUpdateFound: New version {version} available
   checkUpdateFailed: Failed to check for updates, please retry later
@@ -927,7 +985,7 @@ invite:
   invalid: The invitation link is invalid or has expired. Please contact the administrator to resend it.
   accepted: The account is already activated, please sign in directly
   toLogin: Go to sign in
-  sliderRequired: Please complete the slider verification first
+  captchaRequired: Please complete the puzzle verification first
 
 oauth:
   title: Third-party login
@@ -990,6 +1048,7 @@ buttons:
   collapseAll: Collapse All
   selectAll: Select All
   unSelectAll: Cancel Select
+  selectIcon: Select icon
   systemSet: Open ProjectConfig
   delete: Delete
   reload: Reload

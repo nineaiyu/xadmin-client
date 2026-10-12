@@ -5,7 +5,6 @@ import "@/components/ReIcon/src/offlineIcon";
 import { setType } from "./types";
 import { useI18n } from "vue-i18n";
 import { emitter } from "@/utils/mitt";
-import { useLayout } from "./hooks/useLayout";
 import { useAppStoreHook } from "@/store/modules/app";
 import { useSettingStoreHook } from "@/store/modules/settings";
 import { useUserStoreHook } from "@/store/modules/user";
@@ -18,6 +17,13 @@ import { usePreferenceAttributes } from "@/layout/hooks/usePreferenceAttributes"
 import { mixedExtraCollapsed } from "@/layout/hooks/useNavState";
 import { useLayoutShortcutKeys } from "@/layout/hooks/useLayoutShortcutKeys";
 import { useLockScreen } from "@/layout/hooks/useLockScreen";
+import {
+  hasSidebar,
+  headerModeToAutoHide,
+  headerModeToFixed,
+  resolveHeaderMode,
+  resolveLayoutMode
+} from "@/layout/hooks/layoutModes";
 import {
   computed,
   defineComponent,
@@ -48,10 +54,10 @@ import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
 import NavVertical from "./components/lay-sidebar/NavVertical.vue";
 import NavHorizontal from "./components/lay-sidebar/NavHorizontal.vue";
 import BackTopIcon from "@/assets/svg/back_top.svg?component";
+import ReBackTop from "@/components/ReBackTop";
 
 const { t } = useI18n();
 const appWrapperRef = ref();
-const { layout } = useLayout();
 const isMobile = deviceDetection();
 const pureSetting = useSettingStoreHook();
 
@@ -70,15 +76,35 @@ const extraCollapsed = computed(() =>
 );
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 
-/** 固定顶栏（设置面板 →「布局」→「顶栏」）：关闭后走非固定头布局，顶栏随内容滚动；
- *  站点配置（`FixedHeader`）作为兜底默认值 */
-const fixedHeader = computed(
-  () => $storage?.configure?.headerFixed ?? pureSetting.fixedHeader
+/** 固定顶栏（设置面板 →「布局」→「顶栏」）：顶栏模式由 `headerMode` 归一（空值回落
+ *  历史 headerFixed / headerAutoHide 布尔键），站点配置作为兜底默认值 */
+const headerMode = computed(() =>
+  resolveHeaderMode(
+    $storage?.configure?.headerMode,
+    $storage?.configure?.headerFixed ?? pureSetting.fixedHeader,
+    $storage?.configure?.headerAutoHide
+  )
 );
+const fixedHeader = computed(() => headerModeToFixed(headerMode.value));
+
+/** CSS 级隐藏顶栏（区别于「非固定」）：隐藏后顶栏整块不渲染，页签条保留 */
+const headerHiddenByConfig = computed(
+  () => $storage?.configure?.headerHidden ?? false
+);
+
+/** 布局语义模式：移动端强制回落竖排（顶栏与双列侧栏在窄屏下不可用） */
+const layoutMode = computed(() =>
+  resolveLayoutMode(
+    $storage?.layout?.layout,
+    useAppStoreHook().device === "mobile"
+  )
+);
+/** 是否渲染侧栏（水平布局外全部渲染） */
+const sidebarVisible = computed(() => hasSidebar(layoutMode.value));
 
 // 顶栏滚动自动隐藏：开关与「固定顶栏」同时成立才启用（非固定头布局下无固定头部可隐藏）
 const { hidden: headerHidden } = useHeaderAutoHide(
-  () => fixedHeader.value && ($storage?.configure?.headerAutoHide ?? false)
+  () => fixedHeader.value && headerModeToAutoHide(headerMode.value)
 );
 
 // 圆角 / 字号 / 侧栏宽度 / 灰度色弱 / 半暗侧栏同步到 <html>，随设置面板改动实时生效；
@@ -225,19 +251,17 @@ const LayHeader = defineComponent({
           "header-hidden": headerHidden.value
         },
         style: [
-          set.hideTabs && layout.value.includes("horizontal")
+          set.hideTabs && layoutMode.value === "horizontal"
             ? "box-shadow: var(--shadow-navbar)"
             : ""
         ]
       },
       {
         default: () => [
-          !headerHiddenByStore.value &&
-          (layout.value.includes("vertical") || layout.value.includes("mix"))
-            ? h(LayNavbar)
-            : null,
-          !headerHiddenByStore.value && layout.value.includes("horizontal")
-            ? h(NavHorizontal)
+          !headerHiddenByStore.value && !headerHiddenByConfig.value
+            ? layoutMode.value === "horizontal"
+              ? h(NavHorizontal)
+              : h(LayNavbar)
             : null,
           // 用户模拟横幅：模拟态全局常驻（置于导航栏与页签之间，三种布局均可见）
           h(LayImpersonation),
@@ -250,21 +274,21 @@ const LayHeader = defineComponent({
 </script>
 
 <template>
-  <div ref="appWrapperRef" :class="['app-wrapper', set.classes]">
+  <div
+    ref="appWrapperRef"
+    :class="[
+      'app-wrapper',
+      set.classes,
+      { 'header-off': headerHiddenByConfig }
+    ]"
+  >
     <div
-      v-show="
-        set.device === 'mobile' &&
-        set.sidebar.opened &&
-        layout.includes('vertical')
-      "
+      v-show="set.device === 'mobile' && set.sidebar.opened && sidebarVisible"
       class="app-mask"
       @click="useAppStoreHook().toggleSideBar()"
     />
     <NavVertical
-      v-show="
-        !sidebarHidden &&
-        (layout.includes('vertical') || layout.includes('mix'))
-      "
+      v-show="!sidebarHidden && sidebarVisible"
       :inert="sidebarInert"
     />
     <div :class="['main-container', sidebarHidden ? 'main-hidden' : '']">
@@ -277,12 +301,12 @@ const LayHeader = defineComponent({
         />
       </div>
       <el-scrollbar v-else>
-        <el-backtop
+        <ReBackTop
           :title="t('layout.backTop')"
           target=".main-container .el-scrollbar__wrap"
         >
           <BackTopIcon />
-        </el-backtop>
+        </ReBackTop>
         <LayHeader />
         <!-- 主体内容 -->
         <LayContent

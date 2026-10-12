@@ -152,3 +152,25 @@ for (const viewport of VIEWPORTS) {
     }
   });
 }
+
+test("表格工具栏：全屏铺满与退出还原", async ({ page }) => {
+  await login(page);
+  await openMenuPath(page, ["系统管理"], "/system/user/index");
+
+  const card = page.locator(".re-plus-table-card");
+  await expect(card.first()).toBeVisible({ timeout: 15_000 });
+  const fullscreenCard = page.locator(".re-plus-table-card--fullscreen");
+  await expect(fullscreenCard).toHaveCount(0);
+
+  await page
+    .getByLabel(/^全屏$/)
+    .first()
+    .click();
+  await expect(fullscreenCard).toBeVisible();
+
+  await page
+    .getByLabel(/^退出全屏$/)
+    .first()
+    .click();
+  await expect(fullscreenCard).toHaveCount(0);
+});

@@ -1,16 +1,21 @@
 <script setup lang="ts">
-import { useRoute, type RouteRecordRaw } from "vue-router";
+import { useRoute, type RouteRecordRaw, useRouter } from "vue-router";
 import { emitter } from "@/utils/mitt";
 import { useNav } from "@/layout/hooks/useNav";
 import { responsiveStorageNameSpace } from "@/config";
 import { isAllEmpty, storageLocal, useGlobal } from "@pureadmin/utils";
 import { findRouteByPath, getParentPaths } from "@/router/utils";
 import { usePermissionStoreHook } from "@/store/modules/permission";
-import {
-  DEFAULT_SIDEBAR_WIDTH,
-  normalizeSidebarWidth
-} from "@/layout/hooks/usePreferenceAttributes";
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import { transformI18n } from "@/plugins/i18n";
+import { useSidebarResize } from "@/layout/hooks/useSidebarResize";
+import { useHoverToggle } from "@/hooks/useHoverToggle";
 import { useConfigureStorage } from "../lay-setting/hooks/useConfigureStorage";
+import {
+  isTwoColumnSidebar,
+  resolveLayoutMode,
+  sidebarShowsSubmenu
+} from "@/layout/hooks/layoutModes";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import LaySidebarLogo from "../lay-sidebar/components/SidebarLogo.vue";
 import LaySidebarItem from "../lay-sidebar/components/SidebarItem.vue";
@@ -20,6 +25,7 @@ import PushpinIcon from "~icons/ri/pushpin-line";
 import PushpinActiveIcon from "~icons/ri/pushpin-2-line";
 
 const route = useRoute();
+const router = useRouter();
 const isShow = ref(false);
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 const { storageConfigureChange } = useConfigureStorage();
@@ -69,8 +75,14 @@ const {
 
 /**
  * 折叠态悬停临时展开（设置面板 →「侧栏悬停展开」，默认开）：
- * 鼠标进入侧栏时视觉层展开、离开复位；仅 hover 期间生效，不写回存储。
+ * 鼠标进入侧栏时视觉层展开、离开即复位；仅 hover 期间生效，不写回存储。
+ *
+ * 延迟取 0（不启用 leaveDelay 防闪断）：本场景「移开即收起」是既有行为，
+ * 且展开态还受 `hoverExpandEnabled` 门控——若离开后快速返回仍在防闪断窗口内，
+ * hover 布尔不产生变化沿，会漏掉期间的门控变化。
  */
+const sidebarRootRef = ref<HTMLElement>();
+const [sidebarHovered] = useHoverToggle(sidebarRootRef, 0);
 const hoverExpanded = ref(false);
 const hoverExpandEnabled = computed(
   () =>
@@ -82,13 +94,19 @@ const hoverExpandEnabled = computed(
 /** 菜单折叠态：悬停临时展开期间不折叠 */
 const menuCollapse = computed(() => isCollapse.value && !hoverExpanded.value);
 
-/** 折叠态显示菜单标题（设置面板 →「折叠态显示标题」，仅垂直布局） */
+/** 折叠态显示菜单标题（设置面板 →「折叠态显示标题」，仅单列整树侧栏） */
 const collapseShowTitle = computed(
   () =>
-    layout.value === "vertical" &&
+    !submenuSidebar.value &&
     menuCollapse.value &&
     ($storage?.configure?.sidebarCollapsedShowTitle ?? false)
 );
+
+/** 悬停进入 / 离开：驱动折叠按钮显隐与临时展开 */
+watch(sidebarHovered, inside => {
+  isShow.value = inside;
+  hoverExpanded.value = inside && hoverExpandEnabled.value;
+});
 
 // 主动折叠 / 展开切换、或开关关闭时复位悬停态，避免残留
 watch(isCollapse, () => {
@@ -98,74 +116,70 @@ watch(hoverExpandEnabled, enabled => {
   if (!enabled) hoverExpanded.value = false;
 });
 
-function onSidebarEnter() {
-  isShow.value = true;
-  if (hoverExpandEnabled.value) hoverExpanded.value = true;
-}
-
-function onSidebarLeave() {
-  isShow.value = false;
-  hoverExpanded.value = false;
-}
-
-/**
- * 拖拽调宽（设置面板 →「侧栏拖拽」，默认关）：拖拽中只改 `--sidebar-width`
- * CSS 变量不落库，松开时才写回偏好（钳制在区间内，数字输入档仍可精确设置）。
- */
-const resizing = ref(false);
-const sidebarDraggable = computed(
+/** 拖拽调宽：实现见 hooks/useSidebarResize（越界态视觉反馈 + 松开才落库） */
+const {
+  draggable: sidebarDraggable,
+  resizing,
+  resizeOutOfRange,
+  startResize
+} = useSidebarResize(
   () =>
     ($storage?.configure?.sidebarDraggable ?? false) &&
     !isCollapse.value &&
     device.value !== "mobile"
 );
 
-function startResize(event: MouseEvent) {
-  if (resizing.value) return;
-  resizing.value = true;
-  const startX = event.clientX;
-  const startWidth = normalizeSidebarWidth(
-    $storage?.configure?.sidebarWidth ?? DEFAULT_SIDEBAR_WIDTH
-  );
-  const widthAt = (clientX: number) =>
-    normalizeSidebarWidth(startWidth + (clientX - startX));
-
-  document.body.style.userSelect = "none";
-  document.body.style.cursor = "col-resize";
-
-  const onMove = (moveEvent: MouseEvent) => {
-    document.documentElement.style.setProperty(
-      "--sidebar-width",
-      `${widthAt(moveEvent.clientX)}px`
-    );
-  };
-  const onUp = (upEvent: MouseEvent) => {
-    window.removeEventListener("mousemove", onMove);
-    window.removeEventListener("mouseup", onUp);
-    document.body.style.userSelect = "";
-    document.body.style.cursor = "";
-    resizing.value = false;
-    storageConfigureChange("sidebarWidth", widthAt(upEvent.clientX));
-  };
-  window.addEventListener("mousemove", onMove);
-  window.addEventListener("mouseup", onUp);
-}
-
 const subMenuData = ref<RouteRecordRaw[]>([]);
 
+/** 侧栏语义模式（移动端强制回落竖排，见 layoutModes） */
+const sidebarMode = computed(() =>
+  resolveLayoutMode(layout.value, device.value === "mobile")
+);
+/** 双列侧栏（一级窄列 + 二级展开列） */
+const twoColumn = computed(() => isTwoColumnSidebar(sidebarMode.value));
+/** 侧栏只显示「当前一级路由的子菜单」（一级导航在顶栏 / 窄列；受「导航切割」控制） */
+const submenuSidebar = computed(() =>
+  sidebarShowsSubmenu(sidebarMode.value, $storage?.configure?.navigationSplit)
+);
+
 const menuData = computed(() => {
-  return pureApp.layout === "mix" && device.value !== "mobile"
+  return submenuSidebar.value
     ? subMenuData.value
     : usePermissionStoreHook().wholeMenus;
 });
 
 const loading = computed(() =>
-  pureApp.layout === "mix" ? false : menuData.value.length === 0 ? true : false
+  submenuSidebar.value ? false : menuData.value.length === 0
 );
 
 const defaultActive = computed(() =>
   !isAllEmpty(route.meta?.activePath) ? route.meta.activePath : route.path
 );
+
+/** 一级窄列高亮项：当前路由所属的一级路由 */
+const topLevelActive = computed(() => {
+  const parents = getParentPaths(
+    defaultActive.value,
+    usePermissionStoreHook().wholeMenus as never
+  );
+  return parents[0] ?? defaultActive.value;
+});
+
+/** 一级窄列点击：跳到该一级路由的首个子路由（与顶栏一级菜单同口径） */
+function handleTopLevelSelect(index: string) {
+  const item = usePermissionStoreHook().wholeMenus.find(
+    menu => menu.path === index
+  );
+  if (!item) return;
+  const child = item.children?.[0]?.path;
+  const httpReg = /^http(s?):\/\//;
+  const target = child
+    ? httpReg.test(child)
+      ? `${item.path}/${child}`
+      : child
+    : (item.redirect ?? item.path);
+  if (typeof target === "string" && target) router.push(target);
+}
 
 function getSubMenuData() {
   let path = defaultActive.value;
@@ -209,42 +223,109 @@ onBeforeUnmount(() => {
 
 <template>
   <div
+    ref="sidebarRootRef"
     v-loading="loading"
     :class="[
       'sidebar-container',
       showLogo ? 'has-logo' : 'no-logo',
-      { 'sidebar-hover-expanded': hoverExpanded, 'is-resizing': resizing }
+      {
+        'is-two-column': twoColumn,
+        'sidebar-hover-expanded': hoverExpanded,
+        'is-resizing': resizing,
+        'is-resize-out': resizeOutOfRange
+      }
     ]"
-    @mouseenter.prevent="onSidebarEnter"
-    @mouseleave.prevent="onSidebarLeave"
   >
-    <LaySidebarLogo v-if="showLogo" :collapse="menuCollapse" />
-    <el-scrollbar
-      wrap-class="scrollbar-wrapper"
-      :class="[device === 'mobile' ? 'mobile' : 'pc']"
-    >
-      <el-menu
-        :unique-opened="sidebarAccordion"
-        mode="vertical"
-        popper-class="pure-scrollbar"
-        class="outer-most select-none"
-        :class="{ 'sidebar-collapse-show-title': collapseShowTitle }"
-        :collapse="menuCollapse"
-        :collapse-transition="false"
-        :popper-effect="tooltipEffect"
-        :default-active="defaultActive"
+    <!-- 双列侧栏的一级窄列：Logo（图标形态）+ 一级图标菜单；二级内容在右侧主列 -->
+    <div v-if="twoColumn" class="sidebar-mixed-narrow">
+      <LaySidebarLogo
+        v-if="showLogo"
+        class="sidebar-mixed-narrow__logo"
+        collapse
+      />
+      <el-scrollbar class="sidebar-mixed-narrow__scroll">
+        <el-menu
+          mode="vertical"
+          popper-class="pure-scrollbar"
+          class="sidebar-mixed-menu select-none"
+          :default-active="topLevelActive"
+          :popper-effect="tooltipEffect"
+          :unique-opened="sidebarAccordion"
+          @select="handleTopLevelSelect"
+        >
+          <el-menu-item
+            v-for="item in usePermissionStoreHook().wholeMenus"
+            :key="item.path"
+            :index="item.path ?? ''"
+          >
+            <div v-if="item.meta?.icon" class="sub-menu-icon">
+              <component :is="useRenderIcon(item.meta.icon ?? '')" />
+            </div>
+            <template #title>
+              <span>{{ transformI18n(item.meta?.title ?? "") }}</span>
+            </template>
+          </el-menu-item>
+        </el-menu>
+      </el-scrollbar>
+    </div>
+    <!-- 侧栏主列：单列模式为整列；双列模式为二级展开列 -->
+    <div class="sidebar-main">
+      <LaySidebarLogo v-if="showLogo && !twoColumn" :collapse="menuCollapse" />
+      <el-scrollbar
+        wrap-class="scrollbar-wrapper"
+        :class="[device === 'mobile' ? 'mobile' : 'pc']"
       >
-        <LaySidebarItem
-          v-for="routes in menuData"
-          :key="routes.path"
-          :item="routes as never"
-          :base-path="routes.path"
-          :collapse="menuCollapse"
+        <el-menu
+          :unique-opened="sidebarAccordion"
+          mode="vertical"
+          popper-class="pure-scrollbar"
           class="outer-most select-none"
+          :class="{ 'sidebar-collapse-show-title': collapseShowTitle }"
+          :collapse="menuCollapse"
+          :collapse-transition="false"
+          :popper-effect="tooltipEffect"
+          :default-active="defaultActive"
+        >
+          <LaySidebarItem
+            v-for="routes in menuData"
+            :key="routes.path"
+            :item="routes as never"
+            :base-path="routes.path"
+            :collapse="menuCollapse"
+            class="outer-most select-none"
+          />
+        </el-menu>
+      </el-scrollbar>
+      <LaySidebarCenterCollapse
+        v-if="
+          sidebarCollapseButton && device !== 'mobile' && (isShow || isCollapse)
+        "
+        :is-active="pureApp.sidebar.opened"
+        @toggleClick="toggleSideBar"
+      />
+      <LaySidebarLeftCollapse
+        v-if="device !== 'mobile'"
+        :is-active="pureApp.sidebar.opened"
+        @toggleClick="toggleSideBar"
+      />
+      <span
+        v-if="sidebarFixedButton && device !== 'mobile'"
+        class="sidebar-fixed-button"
+        :class="{ 'is-pinned': pinnedExpanded }"
+        role="button"
+        tabindex="0"
+        :title="t('layout.sidebarFixedButton')"
+        :aria-label="t('layout.sidebarFixedButton')"
+        @click="toggleFixedExpand"
+        @keydown.enter.prevent="toggleFixedExpand"
+        @keydown.space.prevent="toggleFixedExpand"
+      >
+        <IconifyIconOffline
+          :icon="pinnedExpanded ? PushpinActiveIcon : PushpinIcon"
         />
-      </el-menu>
-    </el-scrollbar>
-    <!-- 拖拽调宽把手：仅展开态 + 拖拽开关开启时渲染 -->
+      </span>
+    </div>
+    <!-- 拖拽调宽把手：仅展开态 + 拖拽开关开启时渲染（贴侧栏右缘） -->
     <div
       v-if="sidebarDraggable"
       class="sidebar-resizer"
@@ -253,34 +334,6 @@ onBeforeUnmount(() => {
       :aria-label="t('layout.sidebarWidth')"
       @mousedown.prevent="startResize"
     />
-    <LaySidebarCenterCollapse
-      v-if="
-        sidebarCollapseButton && device !== 'mobile' && (isShow || isCollapse)
-      "
-      :is-active="pureApp.sidebar.opened"
-      @toggleClick="toggleSideBar"
-    />
-    <LaySidebarLeftCollapse
-      v-if="device !== 'mobile'"
-      :is-active="pureApp.sidebar.opened"
-      @toggleClick="toggleSideBar"
-    />
-    <span
-      v-if="sidebarFixedButton && device !== 'mobile'"
-      class="sidebar-fixed-button"
-      :class="{ 'is-pinned': pinnedExpanded }"
-      role="button"
-      tabindex="0"
-      :title="t('layout.sidebarFixedButton')"
-      :aria-label="t('layout.sidebarFixedButton')"
-      @click="toggleFixedExpand"
-      @keydown.enter.prevent="toggleFixedExpand"
-      @keydown.space.prevent="toggleFixedExpand"
-    >
-      <IconifyIconOffline
-        :icon="pinnedExpanded ? PushpinActiveIcon : PushpinIcon"
-      />
-    </span>
   </div>
 </template>
 
@@ -339,5 +392,73 @@ onBeforeUnmount(() => {
 
 .is-resizing .sidebar-resizer::after {
   background: var(--el-color-primary);
+}
+
+/* 拖拽越界：把手光标变为禁止态、指示线转为警示色（越界松手仍按钳制值落库） */
+.is-resize-out .sidebar-resizer {
+  cursor: not-allowed;
+
+  &::after {
+    background: var(--el-color-warning);
+  }
+}
+
+/* ================ 双列侧栏（导航模式 → 双列 / 混合双列） ================
+   一级窄列（图标）+ 二级展开列并排；单列模式下 .sidebar-main 即整列 */
+.sidebar-container.is-two-column {
+  display: flex;
+  flex-direction: row;
+}
+
+.sidebar-main {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.sidebar-mixed-narrow {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: var(--sidebar-mixed-narrow-width);
+  height: 100%;
+  overflow: hidden;
+  background: var(--pure-theme-sub-menu-bg);
+  border-right: 1px solid var(--divider);
+}
+
+.sidebar-mixed-narrow__scroll {
+  flex: 1;
+  min-height: 0;
+}
+
+.sidebar-mixed-narrow__logo {
+  flex: none;
+
+  /* 窄列容不下标题文字：只保留图标（整图形态亦按整图定高居中） */
+  :deep(.sidebar-title) {
+    display: none;
+  }
+
+  :deep(.sidebar-logo-link) {
+    justify-content: center;
+    padding-left: 0;
+  }
+}
+
+/* 一级窄列菜单：图标居中（激活项配色沿用公共菜单样式） */
+.sidebar-mixed-menu {
+  height: 100%;
+  border: none;
+
+  :deep(.el-menu-item) {
+    justify-content: center;
+    height: 50px;
+    padding-inline: 0;
+  }
 }
 </style>

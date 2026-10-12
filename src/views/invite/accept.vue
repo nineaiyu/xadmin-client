@@ -12,7 +12,8 @@ import { SUCCESS_CODE } from "@/api/types";
 import { passwordRulesCheck } from "@/utils";
 import { AesEncrypted } from "@/utils/aes";
 import { message } from "@/utils/message";
-import ReSliderCaptcha from "@/components/ReSliderCaptcha";
+import ReSliderTranslateCaptcha from "@/components/ReSliderTranslateCaptcha";
+import puzzleSrc from "@/assets/captcha/puzzle.svg";
 
 defineOptions({
   name: "InviteAccept"
@@ -27,10 +28,10 @@ const state = ref<"loading" | "pending" | "accepted" | "invalid">("loading");
 const form = reactive({ password: "", confirm: "" });
 const submitting = ref(false);
 /**
- * 人机校验（滑块）：匿名激活入口按「一次提交一次校验」放行——
- * 本地密码规则通过后仍需完成滑动，提交收尾即复位（成功跳登录、失败要求重新滑动）。
+ * 人机校验（拼图）：匿名激活入口按「一次提交一次校验」放行——
+ * 本地密码规则通过后仍需对齐拼图，提交收尾即复位（成功跳登录、失败要求重新验证）。
  */
-const sliderPassed = ref(false);
+const captchaPassed = ref(false);
 /** 后端下发的密码安全规则（匿名端点），提交前做与注册/改密同口径的预检 */
 const passwordRules = ref<PasswordRule[]>([]);
 /** 传输加密开关：预检下发，开启时激活提交的 password 为令牌作密钥的密文 */
@@ -77,8 +78,8 @@ async function submit() {
     message(msg, { type: "warning" });
     return;
   }
-  if (!sliderPassed.value) {
-    message(t("invite.sliderRequired"), { type: "warning" });
+  if (!captchaPassed.value) {
+    message(t("invite.captchaRequired"), { type: "warning" });
     return;
   }
   submitting.value = true;
@@ -106,7 +107,7 @@ async function submit() {
     message(String(res.detail || t("results.failed")), { type: "error" });
   } finally {
     submitting.value = false;
-    sliderPassed.value = false;
+    captchaPassed.value = false;
   }
 }
 </script>
@@ -148,7 +149,11 @@ async function submit() {
             @keyup.enter="submit"
           />
         </el-form-item>
-        <ReSliderCaptcha v-model="sliderPassed" class="mb-4" />
+        <ReSliderTranslateCaptcha
+          v-model="captchaPassed"
+          :src="puzzleSrc"
+          class="mb-4"
+        />
         <el-button
           class="w-full"
           type="primary"

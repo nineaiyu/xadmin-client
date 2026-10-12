@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, inject } from "vue";
 import { useI18n } from "vue-i18n";
-import { IconSelect } from "@/components/ReIcon";
+import ReIconPicker from "@/components/ReIconPicker";
 import FormQuestion from "./FormQuestion.vue";
 import { MenuChoices } from "@/views/system/constants";
 import { MENU_FORM_KEY } from "../utils/formContext";
@@ -44,7 +44,7 @@ const MENU_RANK_MAX = 100000;
   </el-form-item>
 
   <el-form-item v-if="!isPermission" :label="t('systemMenu.icon')" prop="icon">
-    <icon-select v-model="form.icon" />
+    <ReIconPicker v-model="form.icon" />
   </el-form-item>
 
   <el-form-item

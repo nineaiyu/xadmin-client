@@ -325,6 +325,22 @@ sliderCaptcha:
   text: 向右拖动滑块填充拼图
   successText: 验证通过
 
+sliderRotateCaptcha:
+  text: 拖动滑块旋转图片至正向
+
+sliderTranslateCaptcha:
+  text: 拖动滑块拼合图片缺口
+
+backTop:
+  text: 回到顶部
+
+collapseParams:
+  name: 名称
+  value: 值
+  description: 说明
+  unfold: 展开
+  fold: 收起
+
 reState:
   empty: 暂无数据
   error: 加载失败
@@ -361,6 +377,12 @@ layout:
   menuLayoutVertical: 侧边栏
   menuLayoutHorizontal: 顶部
   menuLayoutMix: 混合
+  menuLayoutSidebarMixed: 双列菜单
+  menuLayoutSidebarMixedTip: 垂直双列菜单模式
+  menuLayoutHeaderSidebar: 侧边导航
+  menuLayoutHeaderSidebarTip: 顶部通栏，侧边导航模式
+  menuLayoutHeaderMixed: 混合双列
+  menuLayoutHeaderMixedTip: 双列、水平菜单共存模式
   themeColor: 主题色
   themeColorDesc: 预设色板或自定义取色，实时生效
   themeColorCustom: 自定义主色
@@ -424,6 +446,9 @@ layout:
   displayEffect: 显示效果
   semanticColors: 功能色
   navigationStyle: 导航风格
+  navigation: 导航行为
+  navigationSplit: 导航切割
+  navigationSplitTip: 仅混合模式生效：开启后侧栏显示顶栏所选一级菜单的子菜单，关闭则顶栏与侧栏都显示完整菜单
   navStyleRounded: 圆角
   navStyleRoundedTip: 菜单激活块带圆角并在两侧留出间距
   navStylePlain: 朴素
@@ -450,13 +475,22 @@ layout:
   logoFitFill: 拉伸铺满
   logoFitNone: 原始尺寸
   logoFitScaleDown: 等比缩小
+  logoMode: Logo 形态
+  logoModeTip: 图标 = 图片 + 右侧平台标题；整图 = 图片自身含文字，不再单独渲染标题
+  logoModeIcon: 图标
+  logoModeFull: 整图
+  fullLogoHeight: 整图高度
+  fullLogoHeightTip: 整图形态下 Logo 图片的高度（px）
+  logoSourceDark: 暗色 Logo
+  logoSourceDarkTip: 暗色外观下的专用图片地址（空 = 与浅色共用）
   moreWidgets: 更多
   navbarWidgets: 顶栏组件
-  navbarWidgetsDesc: 拖拽调整顺序，右侧选择每个组件的落位（顶栏 / 更多下拉 / 不显示）
+  navbarWidgetsDesc: 拖拽调整顺序，右侧选择每个组件的落位（顶栏 / 更多下拉 / 头像菜单 / 不显示）
   navbarWidgetsTip: 搜索、语言、全屏、通知为弹层类组件，固定顶栏位置
   navbarPositionHeader: 顶栏
   navbarPositionMore: 更多下拉
   navbarPositionHidden: 不显示
+  navbarPositionUserDropdown: 头像菜单
   headerMenuAlign: 顶栏菜单对齐
   headerMenuAlignTip: 水平与混合布局的顶栏菜单对齐方式（侧栏菜单不受影响）
   menuAlignStart: 左侧
@@ -465,7 +499,7 @@ layout:
   sidebarCollapseWidth: 折叠宽度
   sidebarCollapseWidthTip: 侧栏收起后的宽度（48~96px）
   sidebarMixedWidth: 混合布局宽度
-  sidebarMixedWidthTip: 混合布局侧栏宽度（0 = 跟随「侧栏宽度」）
+  sidebarMixedWidthTip: 混合模式的侧栏宽度（0 = 跟随「侧栏宽度」）；双列模式的一级窄列宽度为设计令牌固定值
   sidebarHidden: 隐藏侧栏
   sidebarHiddenTip: 隐藏侧栏并把内容区铺满（与页签右键「内容全屏」同效）
   sidebarFixedButton: 钉住按钮
@@ -520,6 +554,14 @@ layout:
   header: 顶栏
   headerFixed: 固定顶栏
   headerFixedTip: 关闭后顶栏随页面一起滚动（页签条同步跟随）
+  headerVisible: 显示顶栏
+  headerVisibleTip: 关闭后顶栏整块不渲染（页签条保留）；与「非固定」的区别是不占位
+  headerMode: 顶栏模式
+  headerModeTip: 静止 = 随内容滚动；固定 = 吸附顶部；自动 = 下滑隐藏、上滑显示
+  headerModeStatic: 静止
+  headerModeFixed: 固定
+  headerModeAuto: 自动隐藏和显示
+  headerModeAutoScroll: 滚动隐藏和显示
   breadcrumbVisible: 面包屑
   breadcrumbVisibleTip: 顶栏左侧显示当前页面的路径导航
   breadcrumbShowIcon: 面包屑图标
@@ -539,6 +581,7 @@ layout:
   navbarLock: 锁屏按钮
   navbarLockTip: 顶栏显示一键锁屏按钮，锁屏后需输入登录密码解锁
   navbarNotice: 消息通知
+  navbarTimezone: 时区
   navbarRefresh: 顶栏刷新
   navbarSidebarToggle: 顶栏折叠
   navbarSidebarToggleTip: 与侧栏底部折叠按钮等效（默认隐藏，避免重复）
@@ -558,9 +601,17 @@ layout:
   tagsShowRefreshTip: 页签条右侧显示刷新当前页按钮
   tagsShowMore: 更多按钮
   tagsShowMoreTip: 页签条右侧显示批量操作下拉（关闭、固定等）
+  tagsShowMaximize: 最大化按钮
+  tagsShowMaximizeTip: 页签栏内显示「内容最大化 / 还原」按钮（等同右键菜单，隐藏顶栏与侧栏）
   maxTagsCount: 最大数量
   maxTagsCountTip: 超出后自动关闭最早打开的可关闭页签（首页与固定页签除外）；0 表示不限制
   footer: 页脚
+  authPage: 登录页
+  authPageLayout: 登录页布局
+  authPageLayoutTip: 认证页（登录 / 注册 / 找回密码）插画与表单的相对位置；窄屏一律居中且不显示插画
+  authPanelLeft: 插画在左
+  authPanelCenter: 仅表单
+  authPanelRight: 插画在右
   dynamicTitle: 动态标题
   dynamicTitleTip: 浏览器标题随当前页面变化
   pageTransition: 切换动画
@@ -604,10 +655,15 @@ layout:
   enablePreferencesTip: 显示顶栏齿轮或右下角悬浮球入口
   enablePreferencesOffConfirm: 关闭后设置入口与「打开项目配置」快捷键将隐藏。重新打开：清除浏览器本地存储中的 responsive-configure 键后刷新页面。确认关闭？
   preferencesPosition: 入口位置
-  preferencesPositionTip: 顶栏齿轮，或右下角悬浮球
+  preferencesPositionTip: 顶栏齿轮 / 悬浮球 / 头像菜单 / 自动（水平布局走悬浮球）/ 不显示
   preferencesPositionHeader: 顶栏
   preferencesPositionFixed: 悬浮球
+  preferencesPositionUserDropdown: 头像菜单
+  preferencesPositionAuto: 自动
+  preferencesPositionNone: 不显示
   noticeTime: YYYY年MM月DD日 HH:mm:ss
+  timezone: 时区
+  timezoneFollowBrowser: 跟随浏览器时区
   backTop: 回到顶部
   skipToContent: 跳到主内容
   updateCheck: 检测到新版本
@@ -640,6 +696,8 @@ layout:
   currentVersion: 当前版本
   checkUpdate: 检查更新
   checkUpdateTip: 拉取部署端版本文件与本地版本比对
+  autoCheckUpdates: 自动检查更新
+  autoCheckUpdatesTip: 后台定时轮询部署端版本，发现新版本时提示刷新；关闭后可在下方手动检查
   checkUpdateLatest: 已是最新版本
   checkUpdateFound: 发现新版本 {version}
   checkUpdateFailed: 检查更新失败，请稍后重试
@@ -927,7 +985,7 @@ invite:
   invalid: 邀请链接无效或已过期，请联系管理员重新发送邀请
   accepted: 账号已激活，请直接登录
   toLogin: 去登录
-  sliderRequired: 请先拖动滑块完成验证
+  captchaRequired: 请先完成拼图验证
 
 oauth:
   title: 第三方登录
@@ -990,6 +1048,7 @@ buttons:
   collapseAll: 全部折叠
   selectAll: 选择全部
   unSelectAll: 取消选择
+  selectIcon: 选择图标
   systemSet: 打开项目配置
   delete: 删除
   reload: 重新加载

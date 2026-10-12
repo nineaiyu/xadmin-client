@@ -21,6 +21,7 @@ import "@/views/system/apiSearch";
 import { useElementPlus } from "@/plugins/elementPlus";
 import { usePlusProComponents } from "@/plugins/plusProComponents";
 import { injectResponsiveStorage } from "@/utils/responsive";
+import { initPlatform } from "@/utils/platform";
 
 // 导入plus-pro-components 及其样式
 import "plus-pro-components/index.css";
@@ -29,6 +30,9 @@ import "./style/appearance.scss";
 // 导入字体图标
 import "./assets/iconfont/iconfont.js";
 import "./assets/iconfont/iconfont.css";
+
+// 平台标记（写入 html[data-platform]）：滚动条等平台差异化样式依赖它，须在挂载前执行
+initPlatform();
 
 const app = createApp(App);
 

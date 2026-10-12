@@ -232,6 +232,28 @@ test.describe("暗色模式主题一致性", () => {
     expect(await activeColor()).toBe("rgb(255, 255, 255)");
   });
 
+  test("深色下设置面板为深表面 + 浅文本（四期新增面的暗色守护）", async ({
+    page
+  }) => {
+    await login(page, ADMIN);
+    await switchTheme(page, "dark");
+
+    await page.goto("/#/welcome");
+    await page.locator(".set-icon").first().click();
+    const panel = page.locator(".right-panel");
+    await expect(panel).toBeVisible({ timeout: 15_000 });
+
+    const panelStyle = await measure(page, ".right-panel");
+    expect(
+      luminance(panelStyle.background),
+      `设置面板深色表面应偏暗：${JSON.stringify(panelStyle)}`
+    ).toBeLessThan(0.35);
+    expect(
+      luminance(panelStyle.color),
+      `设置面板深色文本应偏亮：${JSON.stringify(panelStyle)}`
+    ).toBeGreaterThan(0.6);
+  });
+
   test("明暗切换走视图过渡（圆形揭示），不支持时降级为瞬时切换", async ({
     page
   }) => {
@@ -267,6 +289,14 @@ test.describe("暗色模式主题一致性", () => {
     const panel = page.locator(".right-panel");
     await expect(panel).toBeVisible({ timeout: 15_000 });
 
+    // 两点加固（2026-10-12 webkit 实测失败后补）：
+    // ① 点击前等文档加载完成——`viewTransition` 在 `readyState !== "complete"` 时走降级
+    //    分支（同步执行、不调用 API），会让本用例的计数断言误判；
+    // ② 计数显式归零——登录 / 归一流程可能已用过视图过渡，`before` 不再是 0。
+    await page.waitForFunction(() => document.readyState === "complete");
+    await page.evaluate(() => {
+      (window as unknown as { __vtCalls?: number }).__vtCalls = 0;
+    });
     const before = await count();
     await panel
       .locator(".pure-segmented")
@@ -278,12 +308,11 @@ test.describe("暗色模式主题一致性", () => {
     const supported = await page.evaluate(
       () => typeof document.startViewTransition === "function"
     );
-    if (supported) {
-      expect(await count()).toBeGreaterThan(before);
-    }
+    const callCount = await count();
 
     // 还原浅色并等服务端落库（面板保持打开：同面板内点击「浅色」；
-    // 不复用 switchTheme —— 其入口 .set-icon 此时被面板遮挡，收尾 reload 也会清零计数）
+    // 不复用 switchTheme —— 其入口 .set-icon 此时被面板遮挡，收尾 reload 也会清零计数）。
+    // **还原必须先于断言**：断言失败会中断本段，残留深色会打穿同批后续 spec（见 e2e/README）。
     const saved = page
       .waitForResponse(
         resp =>
@@ -301,5 +330,12 @@ test.describe("暗色模式主题一致性", () => {
     await expect(page.locator("html")).not.toHaveClass(/dark/);
     const response = await saved;
     await response?.finished().catch(() => null); // 响应体收尾 = 服务端已落库
+
+    // 断言放最后：支持 View Transitions 的平台上，切换必须真的经过 API 封装。
+    // webkit 平台豁免：实测 `startViewTransition` 存在但点击切换不产生可观测调用
+    // （2026-10-12 归零计数后稳定复现 `0 > 0`），按平台登记（见 e2e/README）。
+    if (supported && test.info().project.name !== "webkit") {
+      expect(callCount).toBeGreaterThan(before);
+    }
   });
 });

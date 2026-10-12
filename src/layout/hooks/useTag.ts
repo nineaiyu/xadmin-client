@@ -34,9 +34,7 @@ export function useTags() {
   const isScrolling = ref(false);
 
   const { tagsStyle, showTags } = createTagsPreferences();
-  const multiTags = computed(() => {
-    return useMultiTagsStoreHook().multiTags;
-  });
+  const multiTags = computed(() => useMultiTagsStoreHook().multiTags);
 
   const tagsViews = createTagsViews(multiTags.value.length);
 
@@ -46,7 +44,9 @@ export function useTags() {
   const getTabStyle = computed((): CSSProperties => {
     return {
       transform: `translateX(${translateX.value}px)`,
-      transition: isScrolling.value ? "none" : "transform 0.5s ease-in-out"
+      transition: isScrolling.value
+        ? "none"
+        : "transform var(--duration-slower) var(--ease-standard)"
     };
   });
 

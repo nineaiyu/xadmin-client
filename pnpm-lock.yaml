@@ -70,6 +70,9 @@ importers:
       axios:
         specifier: ^1.20.0
         version: 1.20.0(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
       cropperjs:
         specifier: ^1.6.3
         version: 1.6.3
@@ -127,6 +130,9 @@ importers:
       sortablejs:
         specifier: ^1.15.7
         version: 1.15.7
+      tailwind-merge:
+        specifier: ^3.7.0
+        version: 3.7.0
       typeit:
         specifier: ^8.8.7
         version: 8.8.7
@@ -4381,6 +4387,9 @@ packages:
     peerDependenciesMeta:
       '@eslint/css':
         optional: true
+
+  tailwind-merge@3.7.0:
+    resolution: {integrity: sha512-XPPUyAc+cvspz3lHTcR/QgPfW2A0lv/xQNIjX3HGhLR+Nq2lHaLq5MtTesHn8GUr3W3DguT2KT5x3NVgRtYwmA==}
 
   tailwindcss@4.3.3:
     resolution: {integrity: sha512-gOhV3P7ufE62QDGg1zVaTgCR+EtPv92k2nIhVcVKcLmxT1sUBsQGhnZj175j+MqRt4zLF7ic+sCYjfhxMxj7YQ==}
@@ -9017,6 +9026,8 @@ snapshots:
       strip-ansi: 6.0.1
 
   tailwind-csstree@0.3.3: {}
+
+  tailwind-merge@3.7.0: {}
 
   tailwindcss@4.3.3: {}
 

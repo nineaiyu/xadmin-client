@@ -35,6 +35,7 @@ const read = (p: string) => readFileSync(join(ROOT, p), "utf-8");
 
 /** configure 命名空间：随站点配置持久化的界面偏好（服务端字段名） */
 const SERVER_PERSISTED_FIELDS = [
+  "AuthPageLayout",
   "SidebarWidth",
   "SidebarExpandOnHover",
   "SidebarDraggable",
@@ -73,6 +74,7 @@ const SERVER_PERSISTED_FIELDS = [
   "NavbarRefresh",
   "NavbarSidebarToggle",
   "NavbarThemeToggle",
+  "NavbarTimezone",
   "NavbarOrder",
   "NavbarMoreWidgets",
   "HeaderMenuAlign",
@@ -90,6 +92,15 @@ const SERVER_PERSISTED_FIELDS = [
   "LogoSource",
   "LogoShowText",
   "LogoFit",
+  "LogoMode",
+  "FullLogoHeight",
+  "LogoSourceDark",
+  "Timezone",
+  "NavigationSplit",
+  "HeaderMode",
+  "HeaderHidden",
+  "WidgetPositions",
+  "TagsShowMaximize",
   "FontScaleCustom",
   "ShortcutLock",
   "ShortcutSidebar",

@@ -2,6 +2,8 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 
+import ReRenderContent from "@/components/ReRenderContent";
+
 import type { AiResultTableProps } from "./types";
 /**
  * 通用执行结果表：NL 查询结果（columns/rows 或 series）与读类动作结果
@@ -151,7 +153,9 @@ function valueOf(row: Record<string, unknown>, column: string) {
         min-width="110"
         show-overflow-tooltip
       >
-        <template #default="{ row }">{{ valueOf(row, col) }}</template>
+        <template #default="{ row }">
+          <ReRenderContent :content="valueOf(row, col)" />
+        </template>
       </el-table-column>
     </el-table>
   </div>

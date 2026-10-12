@@ -56,7 +56,6 @@ import {
   ElSelect
 } from "element-plus/es/components/select/index.mjs";
 import { ElAvatar } from "element-plus/es/components/avatar/index.mjs";
-import { ElBacktop } from "element-plus/es/components/backtop/index.mjs";
 import { ElBadge } from "element-plus/es/components/badge/index.mjs";
 import {
   ElBreadcrumb,
@@ -116,7 +115,6 @@ import "element-plus/es/components/alert/style/css";
 import "element-plus/es/components/aside/style/css";
 import "element-plus/es/components/autocomplete/style/css";
 import "element-plus/es/components/avatar/style/css";
-import "element-plus/es/components/backtop/style/css";
 import "element-plus/es/components/badge/style/css";
 import "element-plus/es/components/breadcrumb/style/css";
 import "element-plus/es/components/breadcrumb-item/style/css";
@@ -202,7 +200,6 @@ import "element-plus/es/components/upload/style/css";
 const components = [
   ElAlert,
   ElAvatar,
-  ElBacktop,
   ElBadge,
   ElBreadcrumb,
   ElBreadcrumbItem,

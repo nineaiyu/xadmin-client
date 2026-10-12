@@ -240,6 +240,28 @@
   }
 }
 
+/**
+ * 列表项进入（消息流 / 页签等「尾部追加」场景）：宿主判定出新增项后为其加
+ * `.list-item-enter`，播放一次轻微上浮淡入。与 TransitionGroup 过渡类不同——
+ * 节点立即进出 DOM（不延迟移除），滚动定位与页签宽度计量不受影响；首次填充 /
+ * 整批替换（切会话）/ 前插（加载更早）由 `utils/listAppend` 判定后不加此类。
+ */
+@keyframes list-item-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.list-item-enter {
+  animation: list-item-enter var(--duration-base) var(--ease-standard);
+}
+
 /* 面包屑切换：错切滑动（skewX），离场即时让位 */
 .breadcrumb-transition-enter-active {
   transition:

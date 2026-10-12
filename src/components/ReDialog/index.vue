@@ -8,11 +8,13 @@ import {
   dialogStore,
   getDialogUid
 } from "./index";
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { isFunction } from "@pureadmin/utils";
 import Fullscreen from "~icons/ri/fullscreen-fill";
 import ExitFullscreen from "~icons/ri/fullscreen-exit-fill";
 import { useI18n } from "vue-i18n";
+import { getLayoutScrollElement } from "@/utils/dom";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 defineOptions({
   name: "ReDialog"
@@ -21,6 +23,20 @@ defineOptions({
 const sureBtnMap = ref<Record<string | number, { loading?: boolean }>>({});
 const fullscreen = ref(false);
 const { t } = useI18n();
+
+/**
+ * 弹层打开期间锁定布局滚动容器：防止背景滚动穿透，并以滚动条槽位预留
+ * （`scrollbar-gutter`）避免关闭后内容横向跳动；独立页（无布局滚动容器）
+ * 不重复锁定——EP 内置 lock-scroll 已锁 body，避免双重补偿。
+ */
+const overlayLocked = useScrollLock({ immediate: false });
+watch(
+  () => dialogStore.value.some(options => options.visible),
+  visible => {
+    if (!getLayoutScrollElement()) return;
+    overlayLocked.value = visible;
+  }
+);
 const footerButtons = computed(() => {
   return (options: DialogOptions) => {
     return (options?.footerButtons?.length ?? 0) > 0

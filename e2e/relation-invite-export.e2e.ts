@@ -207,3 +207,13 @@ test("仪表盘卡片导出图片触发下载且文件非空", async ({ page }) 
   expect(filePath, "download path should exist").toBeTruthy();
   expect(statSync(filePath as string).size).toBeGreaterThan(500);
 });
+
+test("激活页：无效令牌给出失效提示（匿名可达）", async ({ page }) => {
+  await page.goto("/#/invite/accept?token=e2e-invalid-token");
+  await expect(page.getByText("账号激活", { exact: true })).toBeVisible({
+    timeout: 15_000
+  });
+  const alert = page.locator(".el-alert");
+  await expect(alert).toBeVisible({ timeout: 15_000 });
+  await expect(alert).toContainText("无效");
+});

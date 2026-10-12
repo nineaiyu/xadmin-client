@@ -59,10 +59,15 @@ const attachment = (overrides: Partial<ChatAttachment>): ChatAttachment =>
 
 const mountBubble = (
   item: ChatMessageItem,
-  props: { mine?: boolean; mePk?: number } = {}
+  props: { mine?: boolean; mePk?: number; fresh?: boolean } = {}
 ) =>
   mount(MessageBubble, {
-    props: { item, mine: props.mine ?? false, mePk: props.mePk },
+    props: {
+      item,
+      mine: props.mine ?? false,
+      mePk: props.mePk,
+      fresh: props.fresh
+    },
     global: {
       components: {
         ElAvatar,
@@ -95,6 +100,15 @@ describe("MessageBubble 消息气泡分支", () => {
 
     const mine = mountBubble(message({ sender_pk: 1 }), { mine: true });
     expect(mine.find(".group").classes()).toContain("flex-row-reverse");
+  });
+
+  it("新增行标记 fresh：仅传 fresh 时主行带 list-item-enter（进入动画）", () => {
+    expect(mountBubble(message({})).find(".group").classes()).not.toContain(
+      "list-item-enter"
+    );
+    expect(
+      mountBubble(message({}), { fresh: true }).find(".group").classes()
+    ).toContain("list-item-enter");
   });
 
   it("AI 消息走 AiMessageBlock：思考过程读 extra.reasoning，引用读 extra.sources", () => {

@@ -129,7 +129,7 @@ watch(
   background: var(--el-fill-color-lighter);
   border-left: 2px solid var(--el-border-color);
   border-radius: var(--radius-md);
-  transition: border-color 0.2s;
+  transition: border-color var(--duration-fast) var(--ease-standard);
 }
 
 .ai-thinking.is-running {
@@ -203,7 +203,7 @@ watch(
   display: inline-flex;
   align-items: center;
   opacity: 0.6;
-  transition: transform 0.18s ease;
+  transition: transform var(--duration-fast) var(--ease-standard);
 }
 
 .ai-thinking__chevron svg {

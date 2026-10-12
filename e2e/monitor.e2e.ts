@@ -78,11 +78,17 @@ test("系统监控：健康总览、趋势筛选与告警事件区块", async ({
     alertPanel.locator(".el-table").getByText("告警中").first()
   ).toBeVisible();
 
-  // 阈值设置弹窗：四个阈值输入框渲染后取消（不写库，避免污染其他用例）
+  // 阈值设置弹窗：参数折叠面板（名称 / 值 / 说明三列）渲染四个阈值后取消
+  // （不写库，避免污染其他用例）
   await page.getByTestId("monitor-threshold-settings").click();
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByText("告警阈值设置")).toBeVisible();
   await expect(dialog.locator(".el-input-number")).toHaveCount(4);
+  const paramsHeader = dialog.locator(".re-collapse-params__header");
+  await expect(paramsHeader).toContainText("名称");
+  await expect(paramsHeader).toContainText("值");
+  await expect(paramsHeader).toContainText("说明");
+  await expect(dialog.getByText("磁盘使用率阈值")).toBeVisible();
   await dialog.getByRole("button", { name: "取消" }).click();
   await expect(dialog).toBeHidden();
 

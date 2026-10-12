@@ -1,8 +1,14 @@
 <script lang="ts" setup>
-import { computed, type CSSProperties } from "vue";
-import { useGlobal } from "@pureadmin/utils";
+import { computed } from "vue";
+import { useDark, useGlobal } from "@pureadmin/utils";
 import { getTopMenu } from "@/router/utils";
 import { useNav } from "@/layout/hooks/useNav";
+import {
+  resolveLogoImageStyle,
+  resolveLogoMode,
+  resolveLogoSrc,
+  resolveLogoTextVisible
+} from "@/layout/hooks/logoPreferences";
 
 defineProps({
   collapse: Boolean
@@ -10,16 +16,17 @@ defineProps({
 
 const { title, getLogo } = useNav();
 const { $storage } = useGlobal<GlobalPropertiesApi>();
+const { isDark } = useDark();
 
-/** 自定义 Logo 地址（设置面板 →「Logo 图片」），缺省用内置资源 */
-const logoSrc = computed(() => $storage?.configure?.logoSource || getLogo());
-/** 是否在 Logo 右侧显示平台标题 */
-const showLogoText = computed(() => $storage?.configure?.logoShowText ?? true);
-/** 图片填充方式（object-fit） */
-const logoFit = computed(() => $storage?.configure?.logoFit ?? "contain");
-const logoStyle = computed<CSSProperties>(() => ({
-  objectFit: logoFit.value as CSSProperties["objectFit"]
-}));
+const configure = computed(() => $storage?.configure);
+/** 图源（暗色专用图优先，缺省用内置资源） */
+const logoSrc = computed(() =>
+  resolveLogoSrc(configure.value, getLogo(), Boolean(isDark.value))
+);
+/** 整图模式：图片含图标与文字，标题文字不再单独渲染、图片按偏好定高 */
+const logoMode = computed(() => resolveLogoMode(configure.value));
+const showLogoText = computed(() => resolveLogoTextVisible(configure.value));
+const logoStyle = computed(() => resolveLogoImageStyle(configure.value));
 </script>
 
 <template>
@@ -31,6 +38,7 @@ const logoStyle = computed<CSSProperties>(() => ({
         :title="title"
         :to="getTopMenu()?.path ?? '/'"
         class="sidebar-logo-link"
+        :class="[`logo-mode-${logoMode}`]"
       >
         <img :src="logoSrc" :style="logoStyle" alt="logo" />
         <span v-if="showLogoText" class="sidebar-title">{{ title }}</span>
@@ -41,6 +49,7 @@ const logoStyle = computed<CSSProperties>(() => ({
         :title="title"
         :to="getTopMenu()?.path ?? '/'"
         class="sidebar-logo-link"
+        :class="[`logo-mode-${logoMode}`]"
       >
         <img :src="logoSrc" :style="logoStyle" alt="logo" />
         <span v-if="showLogoText" class="sidebar-title">{{ title }}</span>
@@ -79,6 +88,11 @@ const logoStyle = computed<CSSProperties>(() => ({
       line-height: 32px;
       color: var(--pure-theme-sub-menu-active-text);
       white-space: nowrap;
+    }
+
+    /* 整图模式：图片按偏好定高（行内样式），折叠态下亦保持整图可辨 */
+    &.logo-mode-full {
+      justify-content: flex-start;
     }
   }
 }

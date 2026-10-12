@@ -6,6 +6,7 @@ import { useTags } from "@/layout/hooks/useTag";
 import { useRouteLoading } from "@/utils/routeLoading";
 import { isNumber, useGlobal } from "@pureadmin/utils";
 import BackTopIcon from "@/assets/svg/back_top.svg?component";
+import ReBackTop from "@/components/ReBackTop";
 import { computed, defineComponent, h, Transition, type PropType } from "vue";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import { useUserStoreHook } from "@/store/modules/user";
@@ -76,9 +77,14 @@ const impersonationExtra = computed(() => {
   return useUserStoreHook().impersonator ? IMPERSONATION_BANNER_HEIGHT : 0;
 });
 
-const layout = computed(() => {
-  return $storage?.layout.layout === "vertical";
-});
+/** 是否预留固定头部内边距：除水平布局（顶栏自带高度、无侧栏）外均需让位 */
+const reserveHeader = computed(() => $storage?.layout.layout !== "horizontal");
+
+/** CSS 级隐藏顶栏（设置面板 →「布局」→「隐藏顶栏」）：顶栏整块不渲染，页签条保留，
+ *  固定头部总高同步扣掉顶栏高度 */
+const headerHiddenByConfig = computed(
+  () => $storage?.configure?.headerHidden ?? false
+);
 
 const getMainWidth = computed(() => {
   return isNumber(stretch.value)
@@ -89,14 +95,18 @@ const getMainWidth = computed(() => {
 });
 
 /** 当前固定头部总高（CSS 令牌引用，数值见 tokens/primitives.scss）：
- *  隐藏页签 = 顶栏；显示页签按风格取「顶栏 + 页签条」总高 */
-const chromeHeight = computed(() =>
-  hideTabs.value
-    ? "var(--layout-header-h)"
-    : tagsStyle.value === "chrome"
+ *  隐藏页签 = 顶栏；显示页签按风格取「顶栏 + 页签条」总高；隐藏顶栏时同步扣除顶栏高度 */
+const chromeHeight = computed(() => {
+  const headerHidden = headerHiddenByConfig.value;
+  if (hideTabs.value) {
+    return headerHidden ? "0px" : "var(--layout-header-h)";
+  }
+  const tags =
+    tagsStyle.value === "chrome"
       ? "var(--layout-tags-chrome-h)"
-      : "var(--layout-tags-compact-h)"
-);
+      : "var(--layout-tags-compact-h)";
+  return headerHidden ? `calc(${tags} - var(--layout-header-h))` : tags;
+});
 
 const getSectionStyle = computed(() => {
   // 顶栏自动隐藏态：固定头部整体移出视口，内容区不再让位（剩余算式同口径取 0px）
@@ -106,15 +116,21 @@ const getSectionStyle = computed(() => {
   const pad = (base: string) =>
     `padding-top: calc(${base} + ${impersonationExtra.value}px);`;
   return [
-    layout.value ? (props.headerHidden ? "padding-top: 0;" : pad(chrome)) : "",
-    // 非 fixed-header：不预留 padding，改为最小高度兜底（dvh 兼顾移动端浏览器工具栏）
+    reserveHeader.value
+      ? props.headerHidden
+        ? "padding-top: 0;"
+        : pad(chrome)
+      : "",
+    // 非 fixed-header：不预留 padding，改为最小高度兜底。先写 vh 再写 dvh——
+    // 不支持 dvh 的浏览器保留 vh 声明（整条声明不会因解析失败被丢弃），支持者
+    // 用 dvh 兼顾移动端浏览器工具栏收放
     props.fixedHeader
       ? ""
-      : `padding-top: 0;min-height: calc(100dvh - ${chrome});`
+      : `padding-top: 0;min-height: calc(100vh - ${chrome});min-height: calc(100dvh - ${chrome});`
   ];
 });
 
-/** 跳转主内容（R5）：编程聚焦 + tabindex=-1（非交互容器可聚焦）；
+/** 跳转主内容：编程聚焦 + tabindex=-1（非交互容器可聚焦）；
  *  不用锚点默认跳转——hash 路由下会把 location.hash 改写成 #main-content 造成路由错乱 */
 const focusMainContent = () => {
   const main = document.getElementById("main-content");
@@ -172,7 +188,7 @@ const transitionMain = defineComponent({
     ]"
     :style="getSectionStyle"
   >
-    <!-- 跳转主内容（R5）：仅键盘聚焦时可见；@click.prevent 避免 hash 路由被锚点改写 -->
+    <!-- 跳转主内容：仅键盘聚焦时可见；@click.prevent 避免 hash 路由被锚点改写 -->
     <a class="skip-link" href="#main-content" @click.prevent="focusMainContent">
       {{ t("layout.skipToContent") }}
     </a>
@@ -197,12 +213,9 @@ const transitionMain = defineComponent({
                 transition: 'all var(--duration-base) var(--ease-standard)'
               }"
             >
-              <el-backtop
-                :title="t('layout.backTop')"
-                target=".app-main .el-scrollbar__wrap"
-              >
+              <ReBackTop :title="t('layout.backTop')">
                 <BackTopIcon />
-              </el-backtop>
+              </ReBackTop>
               <div id="main-content" class="grow" role="main">
                 <transitionMain :route="route">
                   <keep-alive v-if="isKeepAlive" :include="keepAliveList">
@@ -251,7 +264,7 @@ const transitionMain = defineComponent({
     <!-- 页脚 -->
     <LayFooter v-if="!hideFooter && !fixedHeader" />
 
-    <!-- 读屏播报区（R5）：异步操作结果经 utils/announcer 写入此处 -->
+    <!-- 读屏播报区：异步操作结果经 utils/announcer 写入此处 -->
     <div
       id="a11y-live"
       class="sr-only"
@@ -267,6 +280,7 @@ const transitionMain = defineComponent({
   position: relative;
   width: 100%;
   height: 100vh;
+  height: 100dvh;
   overflow-x: hidden;
 }
 

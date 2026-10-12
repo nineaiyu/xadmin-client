@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { IconSelect } from "@/components/ReIcon";
+import ReIconPicker from "@/components/ReIconPicker";
 import { menuApi } from "@/api/system/menu";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { transformI18n } from "@/plugins/i18n";
@@ -146,7 +146,7 @@ onMounted(loadMenus);
       />
     </el-form-item>
     <el-form-item :label="t('codegen.menuIcon')">
-      <icon-select v-model="state.menu_icon" />
+      <ReIconPicker v-model="state.menu_icon" />
     </el-form-item>
     <div v-if="planLoading" class="text-xs text-gray-400">
       {{ t("codegen.planLoading") }}

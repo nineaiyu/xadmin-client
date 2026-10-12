@@ -7,6 +7,7 @@ import type { AiActionDraft, AiConsoleMessage } from "@/api/ai/ai";
 import MessageThreadPanel from "@/components/MessageThreadPanel";
 import MessageTimeDivider from "@/components/MessageTimeDivider";
 import AiStreamingBubble from "@/components/AiStreamingBubble";
+import { useListAppendAnimation } from "@/hooks/useListAppendAnimation";
 import AiMessageRow from "./AiMessageRow.vue";
 
 /**
@@ -82,6 +83,11 @@ function submit() {
   emit("send", content);
 }
 
+/** 新增消息的进入动画标记：仅「尾部追加」播一次（整批替换 / 加载更早不播） */
+const { isFresh } = useListAppendAnimation(() =>
+  props.groups.map(row => row.key)
+);
+
 defineExpose({ scrollEl });
 </script>
 
@@ -120,6 +126,7 @@ defineExpose({ scrollEl });
         :nl-runnable="nlRunnable"
         :nl-running="nlRunning"
         :action-executor="actionExecutor"
+        :fresh="isFresh(row.key)"
         @run-nl="dsl => emit('runNl', dsl)"
       />
     </template>

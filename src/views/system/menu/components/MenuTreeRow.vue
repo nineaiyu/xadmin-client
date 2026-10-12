@@ -317,7 +317,7 @@ const onSwitch = (value: boolean | string | number) => {
     gap: 2px;
     align-items: center;
     opacity: 0;
-    transition: opacity 0.15s ease;
+    transition: opacity var(--duration-fast) var(--ease-standard);
   }
 
   &:hover &__actions,

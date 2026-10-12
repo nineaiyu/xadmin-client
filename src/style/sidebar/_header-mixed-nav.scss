@@ -1,0 +1,52 @@
+@use "common" as *;
+
+/* 混合双列（vben `header-mixed-nav`）：顶栏通栏 + 双列侧栏（一级窄列 + 二级列） */
+body[layout="header-mixed-nav"] {
+  $narrow: var(--sidebar-mixed-narrow-width);
+  $sideBarWidth: calc(#{$narrow} + var(--sidebar-width));
+  $sideBarCollapsed: calc(#{$narrow} + var(--sidebar-collapse-width));
+
+  @include merge-style($sideBarWidth, calc(-1 * #{$sideBarWidth}));
+
+  /* 顶栏通栏：跨越侧栏宽度 */
+  .fixed-header {
+    right: auto;
+    left: 0;
+    width: 100%;
+  }
+
+  /* 侧栏排在顶栏下方；一级窄列自带 Logo，主列滚动区少 44px 折叠条即可 */
+  .sidebar-container {
+    top: var(--layout-header-h);
+    height: calc(100% - var(--layout-header-h));
+  }
+
+  /* 顶栏被配置隐藏时不再让位（顶栏整块不渲染，留出的 48px 会变成死白条） */
+  .app-wrapper.header-off .sidebar-container {
+    top: 0;
+    height: 100%;
+  }
+
+  .is-two-column .sidebar-main .el-scrollbar.pc {
+    height: calc(100% - 44px);
+  }
+
+  .hideSidebar {
+    .fixed-header {
+      width: 100%;
+    }
+
+    .sidebar-container {
+      width: $sideBarCollapsed !important;
+      transition: width var(--duration-base);
+    }
+
+    .main-container {
+      margin-left: $sideBarCollapsed;
+    }
+
+    .el-menu--collapse {
+      width: var(--sidebar-collapse-width);
+    }
+  }
+}

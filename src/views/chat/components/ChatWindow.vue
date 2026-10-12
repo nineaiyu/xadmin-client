@@ -27,6 +27,7 @@ import {
 import MessageThreadPanel from "@/components/MessageThreadPanel";
 import MessageTimeDivider from "@/components/MessageTimeDivider";
 import AiStreamingBubble from "@/components/AiStreamingBubble";
+import { useListAppendAnimation } from "@/hooks/useListAppendAnimation";
 import MessageBubble from "./MessageBubble.vue";
 import ChatEmojiPanel from "./ChatEmojiPanel.vue";
 import ChatGroupMembersPanel from "./ChatGroupMembersPanel.vue";
@@ -242,6 +243,11 @@ const activeStreaming = computed(() =>
     : null
 );
 
+/** 新增消息的进入动画标记：仅「尾部追加」播一次（切会话整批替换 / 加载更早不播） */
+const { isFresh } = useListAppendAnimation(() =>
+  props.groups.map(row => row.key)
+);
+
 function submit() {
   const content = draft.value.trim();
   if (!content) return;
@@ -336,6 +342,7 @@ watch(
         :item="row.item"
         :mine="mine(row.item)"
         :me-pk="mePk"
+        :fresh="isFresh(row.key)"
         @recall="emit('recall', $event)"
         @resend="emit('resend', $event)"
         @react="(item, emoji) => emit('react', item, emoji)"

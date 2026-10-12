@@ -1,5 +1,5 @@
 /**
- * 读屏播报（R5）：把异步操作结果写入全局 aria-live 区域（视觉隐藏）。
+ * 读屏播报：把异步操作结果写入全局 aria-live 区域（视觉隐藏）。
  *
  * - 挂载点：布局层 `lay-content/index.vue` 的 `#a11y-live`（role="status" + aria-live="polite"）；
  * - 区域不存在（如未进入主布局的登录页）时静默降级，不影响业务流程；

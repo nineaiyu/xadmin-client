@@ -125,8 +125,8 @@ const items = computed(
     border-radius: var(--radius-lg);
     opacity: 0.7;
     transition:
-      opacity 0.18s ease,
-      background-color 0.18s ease;
+      opacity var(--duration-fast) var(--ease-standard),
+      background-color var(--duration-fast) var(--ease-standard);
 
     &:hover {
       background: var(--el-fill-color);
@@ -161,9 +161,9 @@ const items = computed(
     border-radius: var(--radius-lg);
     opacity: 0.92;
     transition:
-      transform 0.15s ease,
-      background-color 0.15s ease,
-      opacity 0.15s ease;
+      transform var(--duration-fast) var(--ease-standard),
+      background-color var(--duration-fast) var(--ease-standard),
+      opacity var(--duration-fast) var(--ease-standard);
 
     &:hover {
       background: var(--el-fill-color);
@@ -200,8 +200,8 @@ html.dark .chat-emoji-panel__tab.is-active {
 .chat-emoji-swap-enter-active,
 .chat-emoji-swap-leave-active {
   transition:
-    opacity 0.12s ease,
-    transform 0.12s ease;
+    opacity var(--duration-instant) var(--ease-standard),
+    transform var(--duration-instant) var(--ease-standard);
 }
 
 .chat-emoji-swap-enter-from {

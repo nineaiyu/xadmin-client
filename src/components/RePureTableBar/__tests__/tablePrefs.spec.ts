@@ -130,8 +130,16 @@ describe("RePureTableBar 工具函数", () => {
     expect(normal).toContain("mt-2");
     const fullscreen = buildRenderClass(true);
     expect(fullscreen).not.toContain("mt-2");
-    expect(fullscreen.join(" ")).toContain("re-plus-table-card--fullscreen");
-    expect(fullscreen.join(" ")).toContain("fixed");
+    expect(fullscreen).toContain("re-plus-table-card--fullscreen");
+    expect(fullscreen).toContain("fixed");
+  });
+
+  it("宽度冲突类由 cn 收敛：全屏分支胜出，基础宽度类不残留", () => {
+    const normal = buildRenderClass(false);
+    expect(normal).toContain("w-99/100");
+    const fullscreen = buildRenderClass(true);
+    expect(fullscreen).toContain("w-full");
+    expect(fullscreen).not.toContain("w-99/100");
   });
 
   it("列固定状态归一：true/right 归右固定，left 归左固定", () => {

@@ -8,6 +8,7 @@ import vueJsx from "@vitejs/plugin-vue-jsx";
 import tailwindcss from "@tailwindcss/vite";
 import removeNoMatch from "vite-plugin-router-warn";
 import { configCompressPlugin } from "./compress.ts";
+import { viteCssLayerPlugin } from "./cssLayer.ts";
 import { visualizer } from "rollup-plugin-visualizer";
 import viteRemove from "unplugin-remove/vite";
 import VueI18nPlugin from "@intlify/unplugin-vue-i18n/vite";
@@ -20,6 +21,9 @@ export async function getPluginsList(
 ): Promise<PluginOption[]> {
   const lifecycle = process.env.npm_lifecycle_event;
   return [
+    // 把 Element Plus 的 CSS 包进 `@layer el`（层顺序见 src/style/tailwind.css 首行），
+    // 使 Tailwind 工具类可覆盖其组件样式；自身样式无层，覆写行为不受影响。
+    viteCssLayerPlugin({ packageName: "element-plus", layerName: "el" }),
     tailwindcss(),
     vue(),
     // jsx、tsx语法支持

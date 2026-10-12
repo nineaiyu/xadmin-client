@@ -8,9 +8,11 @@ import {
   type ArgsType,
   getDrawerUid
 } from "./index";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { isFunction } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
+import { getLayoutScrollElement } from "@/utils/dom";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 defineOptions({
   name: "ReDrawer"
@@ -18,6 +20,20 @@ defineOptions({
 
 const sureBtnMap = ref<Record<string | number, { loading?: boolean }>>({});
 const { t } = useI18n();
+
+/**
+ * 抽屉打开期间锁定布局滚动容器：防止背景滚动穿透，并以滚动条槽位预留
+ * （`scrollbar-gutter`）避免关闭后内容横向跳动；独立页（无布局滚动容器）
+ * 不重复锁定——EP 内置 lock-scroll 已锁 body，避免双重补偿。
+ */
+const overlayLocked = useScrollLock({ immediate: false });
+watch(
+  () => drawerStore.value.some(options => options.visible),
+  visible => {
+    if (!getLayoutScrollElement()) return;
+    overlayLocked.value = visible;
+  }
+);
 
 const footerButtons = computed(() => {
   return (options: DrawerOptions) => {

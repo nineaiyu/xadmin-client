@@ -261,7 +261,7 @@ defineExpose({ resume });
     background: var(--el-color-success-light-7);
 
     &.is-reset {
-      transition: width 0.3s;
+      transition: width var(--duration-base) var(--ease-standard);
     }
   }
 
@@ -291,7 +291,7 @@ defineExpose({ resume });
     border-radius: var(--radius-sm);
 
     &.is-reset {
-      transition: left 0.3s;
+      transition: left var(--duration-base) var(--ease-standard);
     }
 
     &.is-passing {

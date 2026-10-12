@@ -1,38 +1,49 @@
 <script lang="ts" setup>
-import { reactive } from "vue";
+import { computed, ref } from "vue";
+import ReCollapseParams from "@/components/ReCollapseParams";
+import type {
+  CollapseParamSchema,
+  CollapseParamValues
+} from "@/components/ReCollapseParams";
 import type { MonitorThresholdItem } from "@/api/system/monitor";
 
 defineOptions({ name: "MonitorThresholdForm" });
 
 const props = defineProps<{ items: MonitorThresholdItem[] }>();
 
-/** 表单初值取当前阈值；el-input-number 以 min/max 约束取值范围，无需额外校验 */
-const form = reactive<Record<string, number>>({});
-props.items.forEach(item => {
-  form[item.key] = Number(item.value ?? item.min);
-});
+/** 参数 schema：名称取后端可读 label、说明取 help_text，初值取当前阈值（空值回落下限）；
+ *  数值控件由 min/max 约束取值范围，无需额外校验 */
+const params = computed<CollapseParamSchema[]>(() =>
+  props.items.map(item => ({
+    key: item.key,
+    label: item.label,
+    description: item.help_text,
+    defaultValue: Number(item.value ?? item.min),
+    option: { type: "number", min: item.min, max: item.max }
+  }))
+);
 
-const getPayload = (): Record<string, number> => ({ ...form });
+/** 阈值取值：初始化由面板按 schema 完成（已有值不覆盖），提交前逐项回读 */
+const values = ref<CollapseParamValues>({});
+
+/** 面板未初始化的键回落到当前阈值 / 下限，避免清空输入后提交空值 */
+const getPayload = (): Record<string, number> => {
+  const payload: Record<string, number> = {};
+  for (const item of props.items) {
+    payload[item.key] = Number(
+      values.value[item.key] ?? item.value ?? item.min
+    );
+  }
+  return payload;
+};
 
 defineExpose({ getPayload });
 </script>
 
 <template>
-  <el-form label-position="top">
-    <el-form-item
-      v-for="item in props.items"
-      :key="item.key"
-      :label="item.label"
-    >
-      <el-input-number
-        v-model="form[item.key]"
-        :min="item.min"
-        :max="item.max"
-        class="w-full!"
-      />
-      <div class="mt-1 text-xs text-(--el-text-color-secondary)">
-        {{ item.help_text }}
-      </div>
-    </el-form-item>
-  </el-form>
+  <ReCollapseParams
+    v-model:value="values"
+    :params="params"
+    :visible-count="props.items.length"
+  />
 </template>

@@ -1,70 +1,77 @@
 <script setup lang="ts">
-import { isAllEmpty } from "@pureadmin/utils";
+import { isAllEmpty, useGlobal, useResizeObserver } from "@pureadmin/utils";
+import { useRoute } from "vue-router";
 import { useNav } from "@/layout/hooks/useNav";
 import { transformI18n } from "@/plugins/i18n";
-import LaySearch from "../lay-search/index.vue";
-import LayNotice from "../lay-notice/index.vue";
-import { ref, toRaw, watch, onMounted, nextTick } from "vue";
+import { ref, toRaw, computed, watch, onMounted, nextTick } from "vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { getParentPaths, findRouteByPath } from "@/router/utils";
-import { useTranslationLang } from "../../hooks/useTranslationLang";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import LaySidebarExtraIcon from "../lay-sidebar/components/SidebarExtraIcon.vue";
-import LaySidebarFullScreen from "../lay-sidebar/components/SidebarFullScreen.vue";
-import LayImpersonationDropdownItem from "../lay-impersonation/ImpersonationDropdownItem.vue";
-import GlobalizationIcon from "@/assets/svg/globalization.svg?component";
-import AccountSettingsIcon from "~icons/ri/user-settings-line";
-import LogoutCircleRLine from "~icons/ri/logout-circle-r-line";
-import Setting from "~icons/ri/settings-3-line";
-import Check from "~icons/ep/check";
+import LaySidebarItem from "./components/SidebarItem.vue";
+import NavbarActions from "../lay-navbar/NavbarActions.vue";
 
+/**
+ * 顶栏一级菜单条（混合系布局：mix / header-sidebar-nav / header-mixed-nav）：
+ * 菜单取全量一级路由，右侧动作区与纵向顶栏共用 NavbarActions（同一套落位编排）。
+ *
+ * 「导航切割」（`navigationSplit`，仅 mix 生效）：开 = 顶栏只显示一级菜单、侧栏
+ * 显示所属一级的子菜单；关 = 顶栏显示完整菜单树（可下拉）、侧栏显示完整菜单。
+ */
 const menuRef = ref();
+const headerRef = ref();
 const defaultActive = ref<string | undefined>(undefined);
 
-const { t, route, locale, translationCh, translationEn } =
-  useTranslationLang(menuRef);
-const {
-  device,
-  logout,
-  onPanel,
-  resolvePath,
-  username,
-  userAvatar,
-  getDivStyle,
-  avatarsStyle,
-  toAccountSettings,
-  getDropdownItemStyle,
-  getDropdownItemClass
-} = useNav();
+const route = useRoute();
+const { $storage } = useGlobal<GlobalPropertiesApi>();
+const { resolvePath } = useNav();
 
+/** 导航切割开关（默认开，保持历史行为） */
+const navigationSplit = computed(
+  () => $storage?.configure?.navigationSplit ?? true
+);
+
+/** 高亮项：一级菜单取「当前路由所属一级路由的第一个子菜单」 */
 function getDefaultActive(routePath: string) {
   const wholeMenus = usePermissionStoreHook().wholeMenus;
-  /** 当前路由的父级路径 */
   const parentRoutes = getParentPaths(routePath, wholeMenus as never)[0];
   defaultActive.value = !isAllEmpty(route.meta?.activePath)
     ? route.meta.activePath
     : findRouteByPath(parentRoutes, wholeMenus as never)?.children?.[0]?.path;
 }
 
+/** 菜单项数量/宽度变化后重算 EP 的溢出收纳（否则多出的一级项会盖到右侧动作区） */
+function relayoutMenu() {
+  nextTick(() => menuRef.value?.handleResize());
+}
+
 onMounted(() => {
   getDefaultActive(route.path);
+  relayoutMenu();
 });
+
+useResizeObserver(headerRef, relayoutMenu);
 
 nextTick(() => {
   menuRef.value?.handleResize();
 });
 
 watch(
-  () => [route.path, usePermissionStoreHook().wholeMenus],
+  () => [
+    route.path,
+    usePermissionStoreHook().wholeMenus,
+    navigationSplit.value
+  ],
   () => {
     getDefaultActive(route.path);
+    relayoutMenu();
   }
 );
 </script>
 
 <template>
   <div
-    v-if="device !== 'mobile'"
+    ref="headerRef"
     v-loading="usePermissionStoreHook().wholeMenus.length === 0"
     class="horizontal-header"
   >
@@ -76,136 +83,51 @@ watch(
       class="horizontal-header-menu"
       :default-active="defaultActive"
     >
-      <el-menu-item
-        v-for="route in usePermissionStoreHook().wholeMenus"
-        :key="route.path"
-        :index="resolvePath(route) || route.redirect || ''"
-      >
-        <template #title>
-          <div
-            v-if="toRaw(route.meta?.icon)"
-            :class="['sub-menu-icon', route.meta?.icon]"
-          >
-            <component
-              :is="
-                useRenderIcon(route.meta ? (toRaw(route.meta.icon) ?? '') : '')
-              "
-            />
-          </div>
-          <div :style="getDivStyle">
-            <span class="select-none">
-              {{ transformI18n(route.meta?.title ?? "") }}
-            </span>
-            <LaySidebarExtraIcon :extraIcon="route.meta?.extraIcon" />
-          </div>
-        </template>
-      </el-menu-item>
-    </el-menu>
-    <div class="horizontal-header-right">
-      <!-- 菜单搜索 -->
-      <LaySearch id="header-search" />
-      <!-- 国际化 -->
-      <el-dropdown id="header-translation" trigger="click">
-        <div
-          class="globalization-icon navbar-bg-hover hover:[&>svg]:animate-scale-bounce"
+      <!-- 未切割：完整菜单树（一级项下拉二级），与侧栏整树一致 -->
+      <template v-if="!navigationSplit">
+        <LaySidebarItem
+          v-for="route in usePermissionStoreHook().wholeMenus"
+          :key="route.path"
+          :item="route as never"
+          :base-path="route.path"
+        />
+      </template>
+      <!-- 切割：仅一级菜单，点击进入该一级下的首个子页 -->
+      <template v-else>
+        <el-menu-item
+          v-for="route in usePermissionStoreHook().wholeMenus"
+          :key="route.path"
+          :index="resolvePath(route) || route.redirect || ''"
         >
-          <IconifyIconOffline :icon="GlobalizationIcon" />
-        </div>
-        <template #dropdown>
-          <el-dropdown-menu class="translation">
-            <el-dropdown-item
-              :style="getDropdownItemStyle(locale, 'zh')"
-              :class="['dark:text-white!', getDropdownItemClass(locale, 'zh')]"
-              @click="translationCh"
+          <template #title>
+            <div
+              v-if="toRaw(route.meta?.icon)"
+              :class="['sub-menu-icon', route.meta?.icon]"
             >
-              <span v-show="locale === 'zh'" class="check-zh">
-                <IconifyIconOffline :icon="Check" />
-              </span>
-              简体中文
-            </el-dropdown-item>
-            <el-dropdown-item
-              :style="getDropdownItemStyle(locale, 'en')"
-              :class="['dark:text-white!', getDropdownItemClass(locale, 'en')]"
-              @click="translationEn"
-            >
-              <span v-show="locale === 'en'" class="check-en">
-                <IconifyIconOffline :icon="Check" />
-              </span>
-              English
-            </el-dropdown-item>
-          </el-dropdown-menu>
-        </template>
-      </el-dropdown>
-      <!-- 全屏 -->
-      <LaySidebarFullScreen id="full-screen" />
-      <!-- 消息通知 -->
-      <LayNotice id="header-notice" />
-      <!-- 退出登录 -->
-      <el-dropdown trigger="click">
-        <span class="el-dropdown-link navbar-bg-hover select-none">
-          <img :src="userAvatar" :style="avatarsStyle" />
-          <p v-if="username" class="dark:text-white">{{ username }}</p>
-        </span>
-        <template #dropdown>
-          <el-dropdown-item @click="toAccountSettings">
-            <IconifyIconOffline
-              :icon="AccountSettingsIcon"
-              style="margin: 5px"
-            />
-            {{ t("menus.accountSettings") }}
-          </el-dropdown-item>
-          <el-dropdown-menu class="logout">
-            <!-- 模拟态专属：退出模拟（恢复原身份），与退出登录语义不同 -->
-            <LayImpersonationDropdownItem />
-            <el-dropdown-item @click="logout">
-              <IconifyIconOffline
-                :icon="LogoutCircleRLine"
-                style="margin: 5px"
+              <component
+                :is="
+                  useRenderIcon(
+                    route.meta ? (toRaw(route.meta.icon) ?? '') : ''
+                  )
+                "
               />
-              {{ t("buttons.loginOut") }}
-            </el-dropdown-item>
-          </el-dropdown-menu>
-        </template>
-      </el-dropdown>
-      <span
-        class="set-icon navbar-bg-hover hover:[&>svg]:animate-scale-bounce"
-        :title="t('buttons.systemSet')"
-        @click="onPanel"
-      >
-        <IconifyIconOffline :icon="Setting" />
-      </span>
-    </div>
+            </div>
+            <div style="display: flex; align-items: center; width: 100%">
+              <span class="select-none">
+                {{ transformI18n(route.meta?.title ?? "") }}
+              </span>
+              <LaySidebarExtraIcon :extraIcon="route.meta?.extraIcon" />
+            </div>
+          </template>
+        </el-menu-item>
+      </template>
+    </el-menu>
+    <NavbarActions class="horizontal-header-right" />
   </div>
 </template>
 
 <style lang="scss" scoped>
 :deep(.el-loading-mask) {
   opacity: 0.45;
-}
-
-.translation {
-  :deep(.el-dropdown-menu__item) {
-    padding: 5px 40px;
-  }
-
-  .check-zh {
-    position: absolute;
-    left: 20px;
-  }
-
-  .check-en {
-    position: absolute;
-    left: 20px;
-  }
-}
-
-.logout {
-  width: 120px;
-
-  :deep(.el-dropdown-menu__item) {
-    display: inline-flex;
-    flex-wrap: wrap;
-    min-width: 100%;
-  }
 }
 </style>

@@ -134,8 +134,8 @@ withDefaults(defineProps<Props>(), {
   border: 1px solid var(--el-border-color-lighter);
   border-radius: var(--radius-lg);
   transition:
-    background-color 0.2s,
-    border-color 0.2s;
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
 
   &:hover:not(:disabled) {
     background: var(--el-fill-color-light);

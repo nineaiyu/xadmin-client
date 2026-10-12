@@ -71,14 +71,14 @@ const timelineIcons = timelineTones.map(tone =>
         :xs="24"
         class="mb-4.5"
       >
-        <el-card class="app-card line-card" shadow="never">
+        <el-card class="app-card line-card group" shadow="never">
           <div class="flex justify-between">
             <span class="text-md font-medium">
               {{ item.name }}
             </span>
             <div
               :style="{ backgroundColor: epColorLight(item.tone) }"
-              class="size-8 flex-c rounded-md"
+              class="size-8 flex-c rounded-md group-hover:[&>svg]:animate-scale-bounce"
             >
               <IconifyIconOffline
                 :color="epColor(item.tone)"

@@ -83,8 +83,8 @@
     /* 不抹除焦点环：键盘用户需要看到关闭按钮的焦点位置（a11y） */
     border-radius: 4px;
     transition:
-      background-color 0.2s,
-      color 0.2s;
+      background-color var(--duration-fast) var(--ease-standard),
+      color var(--duration-fast) var(--ease-standard);
 
     &:hover {
       color: hsl(var(--fg) / 88%) !important;

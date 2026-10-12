@@ -47,7 +47,7 @@ const canBack = hasInAppHistory(router);
 
   &:hover {
     background: var(--el-fill-color);
-    transition: background 0.6s;
+    transition: background var(--duration-slower) var(--ease-standard);
   }
 }
 </style>

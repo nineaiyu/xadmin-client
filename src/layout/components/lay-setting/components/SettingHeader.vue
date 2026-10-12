@@ -3,6 +3,7 @@
 import { computed } from "vue";
 import { useGlobal } from "@pureadmin/utils";
 import { useNav } from "@/layout/hooks/useNav";
+import { hasHeaderMenu, resolveHeaderMode } from "@/layout/hooks/layoutModes";
 import { useConfigureStorage } from "../hooks/useConfigureStorage";
 import PrefBlock from "./PrefBlock.vue";
 import PrefRow from "./PrefRow.vue";
@@ -25,8 +26,35 @@ function booleanSetting(key: string, fallback: boolean) {
   });
 }
 
-/** 固定顶栏：关闭后顶栏随内容滚动（非固定头布局） */
-const headerFixed = booleanSetting("headerFixed", true);
+/** 顶栏模式四态（静止 / 固定 / 自动隐藏 / 滚动隐藏）：归一历史 HeaderFixed + HeaderAutoHide，
+ *  写入同时镜像旧键，保证历史读取端与既有用例语义不变 */
+const headerMode = computed<string>({
+  get: () =>
+    resolveHeaderMode(
+      $storage?.configure?.headerMode,
+      $storage?.configure?.headerFixed ?? true,
+      $storage?.configure?.headerAutoHide
+    ),
+  set: value => {
+    storageConfigureChange("headerMode", value);
+    storageConfigureChange("headerFixed", value !== "static");
+    storageConfigureChange(
+      "headerAutoHide",
+      value === "auto" || value === "auto-scroll"
+    );
+  }
+});
+const headerModeOptions = computed<PrefChoiceOption[]>(() => [
+  { value: "static", label: t("layout.headerModeStatic") },
+  { value: "fixed", label: t("layout.headerModeFixed") },
+  { value: "auto", label: t("layout.headerModeAuto") },
+  { value: "auto-scroll", label: t("layout.headerModeAutoScroll") }
+]);
+/** 显示顶栏：关闭即整块不渲染（页签条保留，区别于「非固定」） */
+const headerVisible = computed<boolean>({
+  get: () => !($storage?.configure?.headerHidden ?? false),
+  set: value => storageConfigureChange("headerHidden", !value)
+});
 /** 半暗顶栏：浅色外观下顶栏用深色调色板（暗色外观下自动失效） */
 const semiDarkHeader = booleanSetting("semiDarkHeader", false);
 /** 面包屑显隐（纵向 / 混合布局的顶栏左侧） */
@@ -56,15 +84,13 @@ const navbarRefresh = booleanSetting("navbarRefresh", true);
 const navbarSidebarToggle = booleanSetting("navbarSidebarToggle", false);
 const navbarThemeToggle = booleanSetting("navbarThemeToggle", false);
 
-/** 顶栏菜单对齐（水平 / 混合布局）：纵向布局无顶栏菜单，禁用该项 */
+/** 顶栏菜单对齐（有顶栏菜单的模式）：无顶栏菜单时禁用该项 */
 const menuAlign = computed<string>({
   get: () => $storage?.configure?.headerMenuAlign ?? "start",
   set: value => storageConfigureChange("headerMenuAlign", value)
 });
-const isHorizontalMenu = computed(
-  () =>
-    String($storage?.layout?.layout ?? "vertical").includes("horizontal") ||
-    String($storage?.layout?.layout ?? "vertical").includes("mix")
+const isHorizontalMenu = computed(() =>
+  hasHeaderMenu($storage?.layout?.layout)
 );
 const menuAlignOptions = computed<PrefChoiceOption[]>(() => [
   { value: "start", label: t("layout.menuAlignStart") },
@@ -75,13 +101,30 @@ const menuAlignOptions = computed<PrefChoiceOption[]>(() => [
 
 <template>
   <PrefBlock :title="t('layout.header')" :icon="LayoutTopLine" list flush>
-    <PrefRow :label="t('layout.headerFixed')" :tip="t('layout.headerFixedTip')">
+    <PrefRow
+      :label="t('layout.headerVisible')"
+      :tip="t('layout.headerVisibleTip')"
+    >
       <template #control>
         <el-switch
-          v-model="headerFixed"
+          v-model="headerVisible"
           :active-text="t('labels.active')"
           :inactive-text="t('labels.inactive')"
           inline-prompt
+        />
+      </template>
+    </PrefRow>
+    <PrefRow
+      :label="t('layout.headerMode')"
+      :tip="t('layout.headerModeTip')"
+      :disabled="!headerVisible"
+      stack
+    >
+      <template #control>
+        <PrefChoice
+          :options="headerModeOptions"
+          :model-value="headerMode"
+          @change="value => (headerMode = value)"
         />
       </template>
     </PrefRow>

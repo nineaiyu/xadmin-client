@@ -3,6 +3,9 @@
 @use "vertical";
 @use "horizontal";
 @use "mix";
+@use "sidebar-mixed-nav";
+@use "header-sidebar-nav";
+@use "header-mixed-nav";
 
 /* ================ 半暗侧栏（设置面板 →「布局」→「半暗侧栏」/「半暗子侧栏」） ================
    浅色外观下让侧栏保持深色调色板（顶栏与内容区维持浅色）。
@@ -37,7 +40,10 @@ html.semi-dark-sidebar:not(.dark) {
   }
 }
 
-html.semi-dark-sidebar-sub:not(.dark) body[layout="mix"] {
+html.semi-dark-sidebar-sub:not(.dark) body[layout="mix"],
+html.semi-dark-sidebar-sub:not(.dark) body[layout="sidebar-mixed-nav"],
+html.semi-dark-sidebar-sub:not(.dark) body[layout="header-sidebar-nav"],
+html.semi-dark-sidebar-sub:not(.dark) body[layout="header-mixed-nav"] {
   .sidebar-container {
     --pure-theme-sidebar-logo: #17253f;
 

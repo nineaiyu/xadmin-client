@@ -104,6 +104,10 @@ declare global {
     KeepAlive?: boolean;
     Locale?: string;
     Layout?: string;
+    /** 认证页（登录）外壳形态：panel-left | panel-center | panel-right */
+    AuthPageLayout?: "panel-left" | "panel-center" | "panel-right";
+    /** 展示时区（IANA 名称，如 Asia/Shanghai；空 = 跟随浏览器本地时区） */
+    Timezone?: string;
     Theme?: string;
     /** 手点主题色（预设名或 custom）；缺省回落到 Theme（皮肤名），两者可分离 */
     ThemeColor?: string;
@@ -127,6 +131,12 @@ declare global {
     LogoShowText?: boolean;
     /** Logo 图片填充方式（object-fit） */
     LogoFit?: string;
+    /** Logo 形态：icon（图标，随侧栏折叠）| full（整图，固定高度不折叠） */
+    LogoMode?: "icon" | "full";
+    /** 整图 Logo 的高度（px）：仅 LogoMode=full 生效 */
+    FullLogoHeight?: number;
+    /** 暗色外观下的 Logo 图片地址（空 = 与浅色共用 LogoSource） */
+    LogoSourceDark?: string;
     TagsStyle?: string;
     /** 顶栏滚动自动隐藏（下滑隐藏 / 上滑显示） */
     HeaderAutoHide?: boolean;
@@ -144,6 +154,8 @@ declare global {
     NavigationStyle?: string;
     /** 侧栏手风琴：同级菜单只展开一项 */
     SidebarAccordion?: boolean;
+    /** 导航切割（混合系布局）：顶栏与侧栏的菜单切割方式（true = 顶栏一级 + 侧栏子菜单） */
+    NavigationSplit?: boolean;
     /** 侧栏底部折叠按钮显隐 */
     SidebarCollapseButton?: boolean;
     /** 半暗侧栏：浅色外观下侧栏保持深色调色板 */
@@ -167,6 +179,10 @@ declare global {
     SidebarAutoActivateChild?: boolean;
     /** 固定顶栏：关闭后顶栏随页面一起滚动 */
     HeaderFixed?: boolean;
+    /** 顶栏模式四态（static / fixed / auto / auto-scroll）：归一 HeaderFixed/HeaderAutoHide */
+    HeaderMode?: "static" | "fixed" | "auto" | "auto-scroll" | "";
+    /** CSS 级隐藏顶栏（区别于「非固定」：隐藏后顶栏整块不渲染） */
+    HeaderHidden?: boolean;
     /** 显示面包屑（顶栏左侧路径导航） */
     BreadcrumbVisible?: boolean;
     /** 面包屑细分：显示图标 / 显示首页项 / 仅一项时隐藏 / 样式（normal|background） */
@@ -186,10 +202,17 @@ declare global {
     NavbarRefresh?: boolean;
     NavbarSidebarToggle?: boolean;
     NavbarThemeToggle?: boolean;
+    /** 时区切换（顶栏世界时钟 + 展示时区选择，默认关） */
+    NavbarTimezone?: boolean;
     /** 顶栏组件顺序（键见 lay-navbar/widgets/catalog.ts，缺省用内置顺序） */
     NavbarOrder?: string[];
     /** 收进「更多」下拉的顶栏组件键（仅动作类组件可收） */
     NavbarMoreWidgets?: string[];
+    /** 各顶栏组件落位：{组件键: header | more | user-dropdown | none}，未登记走各组件默认 */
+    WidgetPositions?: Record<
+      string,
+      "header" | "more" | "user-dropdown" | "none"
+    >;
     /** 水平布局顶栏菜单对齐（start / center / end） */
     HeaderMenuAlign?: string;
     /** 侧栏折叠态宽度（px） */
@@ -210,6 +233,8 @@ declare global {
     TagsShowIcon?: boolean;
     TagsShowRefresh?: boolean;
     TagsShowMore?: boolean;
+    /** 页签栏内「内容最大化」按钮（等同右键「内容全屏」的内存态切换） */
+    TagsShowMaximize?: boolean;
     /** 页签项高度（px） */
     TagsHeight?: number;
     /** 页签缓存总开关（关闭后所有页面不缓存） */
@@ -218,9 +243,10 @@ declare global {
     TagsVisitHistory?: boolean;
     /** 动态标题：document.title 随路由变化 */
     DynamicTitle?: boolean;
-    /** 设置入口总开关；入口位置：header（顶栏齿轮）| fixed（右下角悬浮球） */
+    /** 设置入口总开关；入口位置：auto（跟随布局）| header（顶栏齿轮）| fixed（右下角悬浮球）| none | user-dropdown */
     EnablePreferences?: boolean;
-    PreferencesPosition?: "header" | "fixed";
+    PreferencesPosition?:
+      "auto" | "header" | "fixed" | "none" | "user-dropdown";
     /** 全局页面切换动画预设（none 表示不做过渡） */
     PageTransition?: PageTransitionType;
     /** 路由切换：顶部进度条 / 内容区 loading 遮罩 */
@@ -304,6 +330,14 @@ declare global {
       logoSource?: string;
       logoShowText?: boolean;
       logoFit?: string;
+      /** 认证页（登录）外壳形态：插画左 / 居中 / 右 */
+      authPageLayout?: "panel-left" | "panel-center" | "panel-right";
+      /** Logo 形态（icon | full）/ 整图高度（px）/ 暗色专用图地址 */
+      logoMode?: "icon" | "full";
+      fullLogoHeight?: number;
+      logoSourceDark?: string;
+      /** 展示时区（IANA 名称；空 = 跟随浏览器本地时区） */
+      timezone?: string;
       tagsStyle?: string;
       multiTagsCache?: boolean;
       stretch?: boolean | number;
@@ -317,6 +351,8 @@ declare global {
       themePreset?: string;
       /** 导航风格（rounded / plain）：写 `html[data-nav-style]` */
       navigationStyle?: string;
+      /** 导航切割：混合系布局顶栏一级 / 侧栏子菜单的切割开关 */
+      navigationSplit?: boolean;
       sidebarAccordion?: boolean;
       sidebarCollapseButton?: boolean;
       /** 半暗侧栏（`html.semi-dark-sidebar`，暗色外观下自动失效） */
@@ -336,6 +372,10 @@ declare global {
       sidebarAutoActivateChild?: boolean;
       /** 固定顶栏：关闭后走非固定头布局（顶栏随内容滚动） */
       headerFixed?: boolean;
+      /** 顶栏模式四态（static / fixed / auto / auto-scroll）：归一 HeaderFixed/HeaderAutoHide */
+      headerMode?: "static" | "fixed" | "auto" | "auto-scroll" | "";
+      /** CSS 级隐藏顶栏（整块不渲染，区别于「非固定」） */
+      headerHidden?: boolean;
       /** 显示面包屑 */
       breadcrumbVisible?: boolean;
       /** 面包屑细分：显示图标 / 显示首页项 / 仅一项时隐藏 / 样式 */
@@ -354,8 +394,15 @@ declare global {
       navbarRefresh?: boolean;
       navbarSidebarToggle?: boolean;
       navbarThemeToggle?: boolean;
+      /** 时区切换按钮（顶栏世界时钟 + 展示时区选择） */
+      navbarTimezone?: boolean;
       navbarOrder?: string[];
       navbarMoreWidgets?: string[];
+      /** 各顶栏组件落位：{组件键: header | more | user-dropdown | none} */
+      widgetPositions?: Record<
+        string,
+        "header" | "more" | "user-dropdown" | "none"
+      >;
       headerMenuAlign?: string;
       sidebarCollapseWidth?: number;
       sidebarMixedWidth?: number;
@@ -367,12 +414,15 @@ declare global {
       tagsShowIcon?: boolean;
       tagsShowRefresh?: boolean;
       tagsShowMore?: boolean;
+      /** 页签栏内「内容最大化」按钮 */
+      tagsShowMaximize?: boolean;
       tagsHeight?: number;
       tagsKeepAlive?: boolean;
       tagsVisitHistory?: boolean;
       dynamicTitle?: boolean;
       enablePreferences?: boolean;
-      preferencesPosition?: "header" | "fixed";
+      preferencesPosition?:
+        "auto" | "header" | "fixed" | "none" | "user-dropdown";
       pageTransition?: PageTransitionType;
       transitionProgress?: boolean;
       transitionLoading?: boolean;

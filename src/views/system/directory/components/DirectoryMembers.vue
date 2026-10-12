@@ -358,8 +358,8 @@ function openDetail(row: DirectoryMember) {
   border: 1px solid var(--el-border-color-lighter);
   border-radius: var(--radius-lg);
   transition:
-    border-color 0.2s,
-    box-shadow 0.2s;
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
 
   &:hover {
     border-color: var(--el-color-primary-light-5);

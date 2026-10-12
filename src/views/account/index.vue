@@ -150,7 +150,7 @@ const switchPane = (key: string) => {
     height: 48px !important;
     color: var(--pure-theme-menu-text);
     background-color: transparent !important;
-    transition: color 0.2s;
+    transition: color var(--duration-fast) var(--ease-standard);
 
     &:hover {
       color: var(--pure-theme-menu-title-hover) !important;
@@ -187,7 +187,7 @@ const switchPane = (key: string) => {
  */
 body[layout] .pure-account-settings .el-menu--vertical .is-active {
   color: var(--el-color-white) !important;
-  transition: color 0.2s;
+  transition: color var(--duration-fast) var(--ease-standard);
 
   &:hover {
     color: var(--el-color-white) !important;

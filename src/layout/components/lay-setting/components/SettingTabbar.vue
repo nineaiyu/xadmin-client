@@ -109,6 +109,11 @@ const tagsShowMore = computed({
   get: () => $storage?.configure?.tagsShowMore ?? true,
   set: value => storageConfigureChange("tagsShowMore", value)
 });
+/** 页签栏内「内容最大化」按钮（等同右键菜单「最大化 / 还原」） */
+const tagsShowMaximize = computed({
+  get: () => $storage?.configure?.tagsShowMaximize ?? false,
+  set: value => storageConfigureChange("tagsShowMaximize", value)
+});
 
 /** 页签项高度（px）：写入 --layout-tags-item-h，顶栏 + 页签条总高随之计算 */
 const tagsHeight = computed<number>({
@@ -238,6 +243,19 @@ const tagsVisitHistory = computed({
       <template #control>
         <el-switch
           v-model="tagsShowMore"
+          :active-text="t('labels.active')"
+          :inactive-text="t('labels.inactive')"
+          inline-prompt
+        />
+      </template>
+    </PrefRow>
+    <PrefRow
+      :label="t('layout.tagsShowMaximize')"
+      :tip="t('layout.tagsShowMaximizeTip')"
+    >
+      <template #control>
+        <el-switch
+          v-model="tagsShowMaximize"
           :active-text="t('labels.active')"
           :inactive-text="t('labels.inactive')"
           inline-prompt

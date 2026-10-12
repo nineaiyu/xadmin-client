@@ -1,0 +1,50 @@
+@use "common" as *;
+
+/* 侧边导航（vben `header-sidebar-nav`）：顶栏通栏 + 侧栏显示所属一级的子菜单 */
+body[layout="header-sidebar-nav"] {
+  $sideBarWidth: var(--sidebar-width);
+
+  @include merge-style($sideBarWidth, calc(-1 * #{$sideBarWidth}));
+
+  /* 顶栏通栏：跨越侧栏宽度 */
+  .fixed-header {
+    right: auto;
+    left: 0;
+    width: 100%;
+  }
+
+  /* 侧栏排在顶栏下方 */
+  .sidebar-container {
+    top: var(--layout-header-h);
+    height: calc(100% - var(--layout-header-h));
+
+    &.has-logo .el-scrollbar.pc {
+      height: calc(100% - 92px);
+    }
+  }
+
+  /* 顶栏被配置隐藏时不再让位（顶栏整块不渲染，留出的 48px 会变成死白条） */
+  .app-wrapper.header-off .sidebar-container {
+    top: 0;
+    height: 100%;
+  }
+
+  .hideSidebar {
+    .fixed-header {
+      width: 100%;
+    }
+
+    .sidebar-container {
+      width: var(--sidebar-collapse-width) !important;
+      transition: width var(--duration-base);
+    }
+
+    .main-container {
+      margin-left: var(--sidebar-collapse-width);
+    }
+
+    .el-menu--collapse {
+      width: var(--sidebar-collapse-width);
+    }
+  }
+}

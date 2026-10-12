@@ -73,7 +73,7 @@ const { t } = useI18n();
   font-size: var(--font-size-base);
   color: var(--pure-theme-menu-text);
   cursor: pointer;
-  transition: color 0.2s;
+  transition: color var(--duration-fast) var(--ease-standard);
 }
 
 .account-sidebar__back:hover {

@@ -37,6 +37,8 @@ import plusZhCn from "plus-pro-components/es/locale/lang/zh-cn";
 import { $t, transformI18n } from "@/plugins/i18n";
 import { useConfirm } from "@/hooks/useConfirm";
 import { epColor } from "@/utils/chartTheme";
+import { emitter } from "@/utils/mitt";
+import { checkUpdatesEnabled } from "@/utils/autoUpdate";
 
 // wangeditor 附件插件注册已迁移至懒加载路径（src/utils/wangEditorBoot.ts），
 // 由编辑器异步组件在挂载前调用，避免约 1MB 的编辑器栈进入首屏闭包。
@@ -119,8 +121,63 @@ export default defineComponent({
           watermarkTime.value = formatWatermarkTime();
       }, 60_000);
     });
+
+    /**
+     * 版本实时更新检测（仅线上环境 + 「自动检查更新」开关开启）：轮询部署端
+     * version.json，发现新版本时弹刷新提示。
+     *
+     * 懒加载：version-rocket 及其主题约占 130KB（rendered），不进入首屏闭包；
+     * 开关在设置面板（「关于」页签）切换时经全局事件实时启停轮询。
+     */
+    const VERSION_CHECK_POLLING_MS = 300_000;
+    const { version: appVersion, name: appTitle } = __APP_INFO__.pkg;
+    const { VITE_PUBLIC_PATH, MODE } = import.meta.env;
+
+    function startVersionCheck() {
+      import("version-rocket")
+        .then(({ checkVersion }) =>
+          checkVersion(
+            // config
+            {
+              pollingTime: VERSION_CHECK_POLLING_MS,
+              localPackageVersion: appVersion,
+              originVersionFileUrl: `${location.origin}${VITE_PUBLIC_PATH}version.json`
+            },
+            // options
+            {
+              title: appTitle,
+              description: transformI18n($t("layout.updateCheck")),
+              buttonText: transformI18n($t("layout.updateNow")),
+              primaryColor: epColor("primary")
+            }
+          )
+        )
+        .catch(() => {
+          // 版本检测不可用（资源/网络异常）不影响主流程，静默忽略
+        });
+    }
+
+    function stopVersionCheck() {
+      import("version-rocket")
+        .then(({ unCheckVersion }) =>
+          unCheckVersion({ closeDialog: true, closeWorker: true })
+        )
+        .catch(() => undefined);
+    }
+
+    function applyCheckUpdates(enabled: boolean) {
+      if (enabled) startVersionCheck();
+      else stopVersionCheck();
+    }
+
+    if (MODE === "production" && checkUpdatesEnabled()) {
+      startVersionCheck();
+    }
+    emitter.on("checkUpdatesChange", applyCheckUpdates);
+
     onBeforeUnmount(() => {
       if (timer) window.clearInterval(timer);
+      emitter.off("checkUpdatesChange", applyCheckUpdates);
     });
 
     // 渲染样式随站点配置（字号/透明度/旋转角）；样式变化同样触发重挂载
@@ -147,38 +204,6 @@ export default defineComponent({
     return {
       currentLocale
     };
-  },
-  beforeCreate() {
-    const { version, name: title } = __APP_INFO__.pkg;
-    const { VITE_PUBLIC_PATH, MODE } = import.meta.env;
-    // https://github.com/guMcrey/version-rocket/blob/main/README.zh-CN.md#api
-    if (MODE === "production") {
-      // 版本实时更新检测，只作用于线上环境。
-      // 懒加载：version-rocket 及其主题约占 130KB（rendered），不进入首屏闭包；
-      // 检测本身是 5 分钟轮询的后台行为，延后到动态 chunk 加载完成即可。
-      import("version-rocket")
-        .then(({ checkVersion }) =>
-          checkVersion(
-            // config
-            {
-              // 5分钟检测一次版本
-              pollingTime: 300000,
-              localPackageVersion: version,
-              originVersionFileUrl: `${location.origin}${VITE_PUBLIC_PATH}version.json`
-            },
-            // options
-            {
-              title,
-              description: transformI18n($t("layout.updateCheck")),
-              buttonText: transformI18n($t("layout.updateNow")),
-              primaryColor: epColor("primary")
-            }
-          )
-        )
-        .catch(() => {
-          // 版本检测不可用（资源/网络异常）不影响主流程，静默忽略
-        });
-    }
   }
 });
 </script>

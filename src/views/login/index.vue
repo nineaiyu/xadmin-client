@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { computed, toRaw } from "vue";
+import { useGlobal } from "@pureadmin/utils";
 import Motion from "./utils/motion";
 import basic from "./components/Basic.vue";
 import TypeIt from "./components/ReTypeit";
@@ -42,10 +43,16 @@ const handleDataThemeChange = (value: string | number | boolean) => {
 const { title, getDropdownItemStyle, getDropdownItemClass } = useNav();
 const { locale, translationCh, translationEn } = useTranslationLang();
 const { t } = useI18n();
+
+/** 认证页外壳形态（设置面板 →「通用」→「登录页」）：panel-left / panel-center / panel-right */
+const { $storage } = useGlobal<GlobalPropertiesApi>();
+const authPanel = computed(
+  () => $storage?.configure?.authPageLayout ?? "panel-left"
+);
 </script>
 
 <template>
-  <div class="select-none">
+  <div class="select-none" :data-auth-panel="authPanel">
     <img :src="bg" alt="" class="wave" />
     <div class="flex-c absolute right-5 top-3">
       <!-- 主题 -->

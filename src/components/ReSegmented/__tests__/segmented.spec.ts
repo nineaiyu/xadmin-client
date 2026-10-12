@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import ReSegmented from "../src/index";
 
 /**
- * ReSegmented 键盘/读屏语义守护（R1）：
+ * ReSegmented 键盘/读屏语义守护：
  * 组件必须渲染为原生 radio 组（组名唯一、checked 与 modelValue 同步、
  * 由 change 事件统一处理），保证键盘方向键与读屏可用。
  */

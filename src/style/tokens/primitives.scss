@@ -87,6 +87,10 @@
   /* 侧栏折叠态宽度（设置面板 →「折叠宽度」运行期以内联变量覆写） */
   --sidebar-collapse-width: 54px;
 
+  /* 双列侧栏（导航模式 → 双列 / 混合双列）的一级窄列宽度：设计令牌固定值，
+     与「混合布局宽度」（--sidebar-mixed-width，仅供混合模式的整列宽度）语义分离 */
+  --sidebar-mixed-narrow-width: 80px;
+
   /* 内容区留白（密度令牌）：在 lay-content 一处应用，页面不再各自覆写外边距；
      窄屏收紧值见 style/index.scss 的媒体查询；贴边页面用 content-flush 类 */
   --content-gap: 24px;

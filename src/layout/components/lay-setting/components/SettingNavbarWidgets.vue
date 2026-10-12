@@ -1,6 +1,7 @@
 <script lang="ts" setup>
-// 布局 - 顶栏组件：拖拽调序 + 逐个组件选择落位（顶栏 / 更多下拉 / 不显示）。
-// 顺序写 `navbarOrder`，落位写各组件既有显隐开关（navbarXxx）与 `navbarMoreWidgets`；
+// 布局 - 顶栏组件：拖拽调序 + 逐个组件选择落位（顶栏 / 更多下拉 / 头像菜单 / 不显示）。
+// 顺序写 `navbarOrder`；落位写 `widgetPositions`（权威），并镜像到各组件既有显隐开关
+// （navbarXxx）与 `navbarMoreWidgets`，保证历史键读取端与既有用例语义不变。
 // 组件目录见 lay-navbar/widgets/catalog.ts（弹层类组件固定顶栏，见 catalog.more）。
 import { computed, ref } from "vue";
 import { useGlobal } from "@pureadmin/utils";
@@ -8,7 +9,9 @@ import { useNav } from "@/layout/hooks/useNav";
 import { useSortable } from "@/hooks/useSortable";
 import {
   DEFAULT_NAVBAR_ORDER,
-  findNavbarWidget
+  findNavbarWidget,
+  resolveWidgetPosition,
+  type WidgetPosition
 } from "@/layout/components/lay-navbar/widgets/catalog";
 import { useConfigureStorage } from "../hooks/useConfigureStorage";
 import PrefBlock from "./PrefBlock.vue";
@@ -43,22 +46,20 @@ const moreWidgets = computed<string[]>(() => {
   return Array.isArray(list) ? list : [];
 });
 
-/** 落位取值：hidden = 既有显隐开关关闭；more = 收进「更多」下拉；header = 顶栏 */
-function positionOf(key: string): string {
-  const item = findNavbarWidget(key);
-  if (!item) return "header";
-  const visible =
-    ($storage?.configure?.[item.visibleKey] as boolean | undefined) ??
-    item.defaultVisible;
-  if (!visible) return "hidden";
-  return moreWidgets.value.includes(key) ? "more" : "header";
+/** 落位取值（权威 = widgetPositions，缺省回落历史显隐 / 更多键，实现见 catalog） */
+function positionOf(key: string): WidgetPosition {
+  return resolveWidgetPosition(
+    key,
+    $storage?.configure as Record<string, unknown> | undefined
+  );
 }
 
 const positionOptions = computed(() =>
   [
     { value: "header", label: t("layout.navbarPositionHeader") },
     { value: "more", label: t("layout.navbarPositionMore") },
-    { value: "hidden", label: t("layout.navbarPositionHidden") }
+    { value: "user-dropdown", label: t("layout.navbarPositionUserDropdown") },
+    { value: "none", label: t("layout.navbarPositionHidden") }
   ].filter(
     option => option.value !== "more" || widgets.value.some(item => item.more)
   )
@@ -74,14 +75,21 @@ function optionsFor(key: string) {
 function changePosition(key: string, position: string) {
   const item = findNavbarWidget(key);
   if (!item) return;
+  const target = position as WidgetPosition;
   const others = moreWidgets.value.filter(value => value !== key);
-  if (position === "more") {
-    storageConfigureChange(item.visibleKey, true);
-    storageConfigureChange("navbarMoreWidgets", [...others, key]);
-    return;
-  }
-  storageConfigureChange("navbarMoreWidgets", others);
-  storageConfigureChange(item.visibleKey, position === "header");
+  // 权威：整包写 `widgetPositions`（引用替换，否则深层监听不触发自动保存）
+  const positions = {
+    ...(($storage?.configure?.widgetPositions as
+      Record<string, WidgetPosition> | undefined) ?? {}),
+    [key]: target
+  };
+  storageConfigureChange("widgetPositions", positions);
+  // 兼容镜像：既有显隐开关 + 「更多」下拉键
+  storageConfigureChange(item.visibleKey, target !== "none");
+  storageConfigureChange(
+    "navbarMoreWidgets",
+    target === "more" ? [...others, key] : others
+  );
 }
 
 function writeOrder(keys: string[]) {

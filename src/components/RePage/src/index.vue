@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { computed, useSlots } from "vue";
+import { usePriorityValue } from "@/hooks/usePriorityValue";
 
 defineOptions({ name: "RePage" });
 
@@ -34,13 +35,12 @@ const props = withDefaults(
 
 const slots = useSlots();
 
+/** 页头标题 / 描述：插槽优先、其次 props —— 与模板渲染同源，不重复判定 */
+const title = usePriorityValue("title", props);
+const description = usePriorityValue("description", props);
+
 const hasHeader = computed(
-  () =>
-    !!props.title ||
-    !!props.description ||
-    !!slots.title ||
-    !!slots.description ||
-    !!slots.extra
+  () => !!title.value || !!description.value || !!slots.extra
 );
 
 const contentStyle = computed(() =>

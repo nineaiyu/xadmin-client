@@ -55,7 +55,7 @@ function ensureBar(): HTMLDivElement {
     "pointer-events:none",
     "background:transparent",
     "opacity:0",
-    "transition:opacity 200ms linear"
+    "transition:opacity var(--duration-fast) linear"
   ].join(";");
   const inner = document.createElement("div");
   inner.className = "app-progress-bar";
@@ -64,7 +64,7 @@ function ensureBar(): HTMLDivElement {
     "height:100%",
     "width:0%",
     "background-color:var(--el-color-primary)",
-    "transition:width 200ms ease"
+    "transition:width var(--duration-fast) var(--ease-standard)"
   ].join(";");
   // 右端模糊光晕（nprogress 的 peg 形态：实心条 + 100px 宽的辉光尾迹）
   const peg = document.createElement("div");

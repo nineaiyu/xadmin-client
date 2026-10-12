@@ -64,11 +64,12 @@ describe("resolveNavbarLayout：顶栏组件编排", () => {
     expect(layout.header.map(entry => entry.item.key)).toContain("refresh");
   });
 
-  it("默认关闭的组件（折叠 / 明暗切换）需显式开启才出现", () => {
+  it("默认关闭的组件（折叠 / 明暗切换 / 时区）需显式开启才出现", () => {
     const off = resolveNavbarLayout({});
     const on = resolveNavbarLayout({
       navbarSidebarToggle: true,
-      navbarThemeToggle: true
+      navbarThemeToggle: true,
+      navbarTimezone: true
     });
     expect(off.header.map(entry => entry.item.key)).not.toContain(
       "sidebarToggle"
@@ -76,5 +77,44 @@ describe("resolveNavbarLayout：顶栏组件编排", () => {
     const keys = on.header.map(entry => entry.item.key);
     expect(keys).toContain("sidebarToggle");
     expect(keys).toContain("themeToggle");
+    expect(keys).toContain("timezone");
+  });
+
+  it("widgetPositions 决定落位：头像下拉 / 不显示；未登记时回落历史键", () => {
+    const layout = resolveNavbarLayout({
+      widgetPositions: {
+        lock: "user-dropdown",
+        themeToggle: "header",
+        refresh: "none"
+      },
+      navbarLock: true,
+      navbarRefresh: true,
+      navbarThemeToggle: true,
+      navbarMoreWidgets: ["lock", "refresh"]
+    });
+    expect(layout.userDropdown.map(entry => entry.item.key)).toEqual(["lock"]);
+    expect(layout.header.map(entry => entry.item.key)).toContain("themeToggle");
+    expect(layout.header.map(entry => entry.item.key)).not.toContain("refresh");
+    expect(layout.more).toEqual([]);
+  });
+
+  it("显式落位优先于历史显隐键（关闭的组件也能被登记为落位）", () => {
+    const layout = resolveNavbarLayout({
+      navbarThemeToggle: false,
+      widgetPositions: { themeToggle: "user-dropdown" }
+    });
+    expect(layout.userDropdown.map(entry => entry.item.key)).toEqual([
+      "themeToggle"
+    ]);
+  });
+
+  it("弹层类组件（more=false）登记为 more 时按顶栏处理", () => {
+    const layout = resolveNavbarLayout({
+      widgetPositions: { search: "more" },
+      navbarSearch: true
+    });
+    // 弹层类组件在下拉里无法展开弹层：即使偏好被写成 more，也按 header 兜底
+    expect(layout.more).toEqual([]);
+    expect(layout.header.map(entry => entry.item.key)).toContain("search");
   });
 });

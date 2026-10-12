@@ -158,7 +158,7 @@ const getLabel = computed(
           <span v-else>
             <template v-for="item in notices" :key="item.key">
               <el-tab-pane :label="getLabel(item)" :name="`${item.key}`">
-                <el-scrollbar max-height="330px">
+                <el-scrollbar max-height="330px" class="notice-scroll">
                   <div class="noticeList-container">
                     <NoticeList
                       :empty-text="t('layout.noData')"
@@ -166,6 +166,8 @@ const getLabel = computed(
                       @item-click="handleItemClick"
                     />
                   </div>
+                  <!-- 列表末尾留白：末条与「更多 / 任务中心」底栏不贴边 -->
+                  <div class="notice-scroll__spacer" />
                 </el-scrollbar>
               </el-tab-pane>
             </template>
@@ -227,6 +229,13 @@ const getLabel = computed(
   height: 48px;
   cursor: pointer;
 
+  /* 减少动效偏好：铃铛摇摆是纯装饰，直接跳过 */
+  @media (prefers-reduced-motion: reduce) {
+    &:hover .header-notice-icon svg {
+      animation: none;
+    }
+  }
+
   .header-notice-icon {
     font-size: var(--font-size-lg);
   }
@@ -241,6 +250,10 @@ const getLabel = computed(
 .dropdown-tabs {
   .noticeList-container {
     padding: 5px 10px 0;
+  }
+
+  .notice-scroll__spacer {
+    height: 8px;
   }
 
   :deep(.el-tabs__header) {

@@ -167,7 +167,7 @@ const prettyTheme = computed<"light" | "dark">(() =>
     background-color: var(--el-fill-color-light);
     border-radius: var(--radius-sm);
     opacity: 0;
-    transition: opacity 0.2s;
+    transition: opacity var(--duration-fast) var(--ease-standard);
 
     &:hover {
       background-color: var(--el-fill-color);

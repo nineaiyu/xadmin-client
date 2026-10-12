@@ -68,7 +68,9 @@ type BooleanPreferenceField =
   | "LogoShowText"
   | "SidebarHidden"
   | "SidebarFixedButton"
-  | "SidebarExtraCollapse";
+  | "SidebarExtraCollapse"
+  | "HeaderHidden"
+  | "NavigationSplit";
 
 type PreferenceField =
   | BooleanPreferenceField
@@ -101,6 +103,8 @@ type PreferenceField =
   | "WarningColor"
   | "DangerColor"
   | "NavbarMoreWidgets"
+  | "WidgetPositions"
+  | "HeaderMode"
   | "Layout";
 
 /** 正则转义：键位串含 `+`（量词）等元字符，直接内插会让匹配语义漂移 */
@@ -202,6 +206,28 @@ async function setScale(
   await waitForSiteConfigPatch(page, field, value, async () => {
     await option.first().click();
   });
+}
+
+/** 卡片组（PrefChoice）：按 data-choice 精确定位目标卡片，与档位选择同口径 */
+async function setChoice(
+  page: Page,
+  label: string | RegExp,
+  choice: string,
+  field: PreferenceField,
+  value: string
+) {
+  const target = row(page, label);
+  await expect(target).toBeVisible({ timeout: 10_000 });
+  const option = target.locator(`.pref-choice__item[data-choice="${choice}"]`);
+  if ((await option.getAttribute("aria-pressed")) === "true") return;
+  await waitForSiteConfigPatch(page, field, value, async () => {
+    await option.click();
+  });
+}
+
+/** 顶栏模式四态：静止 = 非固定头布局（旧「固定顶栏」关闭的等价档） */
+async function setHeaderMode(page: Page, mode: string) {
+  await setChoice(page, /顶栏模式|Header mode/, mode, "HeaderMode", mode);
 }
 
 /** 下拉选择（切换动画）：下拉挂到 body，按 combobox 的 aria-controls 精确定位 */
@@ -528,15 +554,17 @@ async function clearShortcut(
   });
 }
 
-/** PrefChoice 卡片组（面包屑样式 / 偏好入口位置等）：按 data-choice 定位并等待落库 */
+/** PrefChoice 卡片组（面包屑样式 / 偏好入口位置等）：按 data-choice 定位并等待落库。
+ * 可选 `label` 把定位收进目标行——不同区块可能出现同值档位（如顶栏模式的「固定」
+ * 与偏好入口的「悬浮球」同为 `fixed`），不收窄会命中多个卡片（strict mode 冲突）。 */
 async function setPrefChoice(
   page: Page,
   value: string,
-  field: PreferenceField
+  field: PreferenceField,
+  label?: string | RegExp
 ) {
-  const choice = page.locator(
-    `.right-panel .pref-choice__item[data-choice="${value}"]`
-  );
+  const scope = label ? row(page, label) : page.locator(".right-panel");
+  const choice = scope.locator(`.pref-choice__item[data-choice="${value}"]`);
   await expect(choice).toBeVisible({ timeout: 10_000 });
   if ((await choice.getAttribute("aria-pressed")) === "true") return;
   await waitForSiteConfigPatch(page, field, value, async () => {
@@ -655,9 +683,7 @@ test.describe("布局偏好（面板实时生效）", () => {
     ).catch(() => undefined);
 
     await switchSettingTab(page, /布局|Layout/).catch(() => undefined);
-    await setSwitch(page, /固定顶栏|Fixed header/, true, "HeaderFixed").catch(
-      () => undefined
-    );
+    await setHeaderMode(page, "fixed").catch(() => undefined);
     await setSwitch(page, /面包屑|Breadcrumb/, true, "BreadcrumbVisible").catch(
       () => undefined
     );
@@ -846,9 +872,12 @@ test.describe("布局偏好（面板实时生效）", () => {
       true,
       "EnablePreferences"
     ).catch(() => undefined);
-    await setPrefChoice(page, "header", "PreferencesPosition").catch(
-      () => undefined
-    );
+    await setPrefChoice(
+      page,
+      "header",
+      "PreferencesPosition",
+      /入口位置|Entry position/
+    ).catch(() => undefined);
 
     // 过渡开关复位（通用页签）
     await switchSettingTab(page, /通用|General/).catch(() => undefined);
@@ -1188,19 +1217,64 @@ test.describe("布局偏好（面板实时生效）", () => {
     await setSwitch(page, "消息通知", true, "NavbarNotice");
     await expect(page.locator("#header-notice")).toBeVisible();
 
-    // 固定顶栏：关闭后走非固定头布局（固定头部整块消失，改由外层滚动）
-    await setSwitch(page, "固定顶栏", false, "HeaderFixed");
+    // 顶栏模式四态：静止档 = 非固定头布局（固定头部整块消失，改由外层滚动）
+    await setHeaderMode(page, "static");
     await expect(page.locator("section.app-main-nofixed-header")).toBeVisible({
       timeout: 10_000
     });
     await expect(page.locator(".fixed-header")).toHaveCount(0);
 
-    // 打开后恢复固定头布局
-    await setSwitch(page, "固定顶栏", true, "HeaderFixed");
+    // 回到固定档恢复固定头布局
+    await setHeaderMode(page, "fixed");
     await expect(page.locator("section.app-main")).toBeVisible({
       timeout: 10_000
     });
     await expect(page.locator(".fixed-header")).toHaveCount(1);
+  });
+
+  test("布局：顶栏模式四态与会话级自动隐藏可切换", async ({ page }) => {
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+
+    // 自动档：固定头保留 + 自动隐藏生效（下滑隐藏、上滑恢复由顶栏用例覆盖）
+    await setHeaderMode(page, "auto");
+    await expect(page.locator(".fixed-header")).toHaveCount(1);
+    await expect
+      .poll(
+        () =>
+          page.evaluate(() => {
+            const raw = localStorage.getItem("responsive-configure");
+            return raw ? JSON.parse(raw).headerAutoHide === true : false;
+          }),
+        { timeout: 10_000 }
+      )
+      .toBe(true);
+
+    // 复位：回固定档（同时把镜像键 headerAutoHide 归位）
+    await setHeaderMode(page, "fixed");
+    await expect
+      .poll(
+        () =>
+          page.evaluate(() => {
+            const raw = localStorage.getItem("responsive-configure");
+            return raw ? JSON.parse(raw).headerAutoHide === false : false;
+          }),
+        { timeout: 10_000 }
+      )
+      .toBe(true);
+  });
+
+  test("布局：显示顶栏关闭后顶栏整块不渲染（页签条保留）", async ({ page }) => {
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+
+    await setSwitch(page, /显示顶栏|Show header/, false, "HeaderHidden");
+    await expect(page.locator(".navbar")).toHaveCount(0);
+    // 页签条保留（还原入口仍在）
+    await expect(page.locator(".tags-view")).toBeVisible();
+
+    await setSwitch(page, /显示顶栏|Show header/, true, "HeaderHidden");
+    await expect(page.locator(".navbar")).toHaveCount(1);
   });
 
   test("布局：页签最大数量自动关闭最早打开的可关闭页签", async ({ page }) => {
@@ -1863,7 +1937,12 @@ test.describe("布局偏好（面板实时生效）", () => {
     // 位置切「悬浮球」：齿轮消失、悬浮球出现且可打开面板
     await openSettingPanel(page);
     await switchSettingTab(page, "通用");
-    await setPrefChoice(page, "fixed", "PreferencesPosition");
+    await setPrefChoice(
+      page,
+      "fixed",
+      "PreferencesPosition",
+      /入口位置|Entry position/
+    );
     await closePanel(page);
     await expect(headerGear).toHaveCount(0);
     await expect(floating).toBeVisible({ timeout: 10_000 });
@@ -1874,7 +1953,12 @@ test.describe("布局偏好（面板实时生效）", () => {
 
     // 切回「顶栏」：齿轮恢复、悬浮球消失
     await switchSettingTab(page, "通用");
-    await setPrefChoice(page, "header", "PreferencesPosition");
+    await setPrefChoice(
+      page,
+      "header",
+      "PreferencesPosition",
+      /入口位置|Entry position/
+    );
     await closePanel(page);
     await expect(headerGear).toBeVisible({ timeout: 10_000 });
     await expect(floating).toHaveCount(0);
@@ -2347,5 +2431,222 @@ test.describe("布局偏好（面板实时生效）", () => {
     await closePanel(page);
     await expect(page.locator("#header-refresh")).toBeVisible();
     await expect(page.locator("#header-more")).toHaveCount(0);
+  });
+
+  test("布局：顶栏组件可移入头像菜单并复位", async ({ page }) => {
+    await ensureVerticalLayout(page);
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+
+    // 刷新按钮落位改「头像菜单」：顶栏不再直挂，头像下拉内出现
+    await setWidgetPosition(
+      page,
+      "顶栏刷新",
+      /头像菜单|User menu/,
+      JSON.stringify({ refresh: "user-dropdown" })
+    );
+    await closePanel(page);
+    await expect(
+      page.locator(".vertical-header-right > #header-refresh")
+    ).toHaveCount(0);
+    await page.locator(".navbar .el-dropdown-link").first().click();
+    await expect(page.locator("#header-refresh")).toBeVisible();
+
+    // 复位：顶栏（同时把 widgetPositions 与镜像旧键都归位）
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setWidgetPosition(
+      page,
+      "顶栏刷新",
+      /顶栏|Header/,
+      JSON.stringify({ refresh: "header" })
+    );
+    await closePanel(page);
+    await expect(page.locator("#header-refresh")).toBeVisible();
+  });
+
+  test("布局：双列菜单 / 侧边导航 / 混合双列三种模式可切换并复位", async ({
+    page
+  }) => {
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    const block = page
+      .locator(".right-panel .pref-block")
+      .filter({ hasText: /菜单布局/ })
+      .first();
+
+    // 双列菜单：一级窄列 + 二级列，顶栏与首列同排（无通栏）
+    await waitForSiteConfigPatch(
+      page,
+      "Layout",
+      "sidebar-mixed-nav",
+      async () => {
+        await block
+          .locator('.pref-choice__item[data-choice="sidebar-mixed-nav"]')
+          .click();
+      }
+    );
+    await closePanel(page);
+    await expect(page.locator("body[layout='sidebar-mixed-nav']")).toHaveCount(
+      1
+    );
+    await expect(
+      page.locator(".sidebar-container.is-two-column")
+    ).toBeVisible();
+    await expect(page.locator(".sidebar-mixed-narrow")).toBeVisible();
+
+    // 侧边导航：顶栏通栏（宽度 100%）、侧栏排在顶栏下方
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await waitForSiteConfigPatch(
+      page,
+      "Layout",
+      "header-sidebar-nav",
+      async () => {
+        await block
+          .locator('.pref-choice__item[data-choice="header-sidebar-nav"]')
+          .click();
+      }
+    );
+    await closePanel(page);
+    await expect(page.locator("body[layout='header-sidebar-nav']")).toHaveCount(
+      1
+    );
+    const fullWidthHeader = await page
+      .locator(".fixed-header")
+      .evaluate(el => el.getBoundingClientRect().width);
+    const viewportWidth = await page.evaluate(() => window.innerWidth);
+    expect(Math.abs(fullWidthHeader - viewportWidth)).toBeLessThan(2);
+
+    // 混合双列：顶栏通栏 + 双列侧栏
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await waitForSiteConfigPatch(
+      page,
+      "Layout",
+      "header-mixed-nav",
+      async () => {
+        await block
+          .locator('.pref-choice__item[data-choice="header-mixed-nav"]')
+          .click();
+      }
+    );
+    await closePanel(page);
+    await expect(page.locator("body[layout='header-mixed-nav']")).toHaveCount(
+      1
+    );
+    await expect(
+      page.locator(".sidebar-container.is-two-column")
+    ).toBeVisible();
+
+    // 复位竖排
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await waitForSiteConfigPatch(page, "Layout", "vertical", async () => {
+      await block.locator('.pref-choice__item[data-choice="vertical"]').click();
+    });
+    await closePanel(page);
+    await expect(page.locator("body[layout='vertical']")).toHaveCount(1);
+  });
+
+  test("布局：导航切割关闭后混合模式顶栏与侧栏都显示完整菜单", async ({
+    page
+  }) => {
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    const block = page
+      .locator(".right-panel .pref-block")
+      .filter({ hasText: /菜单布局/ })
+      .first();
+    await waitForSiteConfigPatch(page, "Layout", "mix", async () => {
+      await block.locator('.pref-choice__item[data-choice="mix"]').click();
+    });
+    // 侧栏一级项（分支项为 el-sub-menu，叶子项为外层 router-link）
+    const sidebarEntries = page.locator(
+      ".sidebar-container .sidebar-main .el-menu.outer-most " +
+        "> .el-sub-menu, .sidebar-container .sidebar-main .el-menu.outer-most > a[role=menuitem]"
+    );
+    // 切割开（默认）：侧栏只显示当前一级的子菜单
+    const splitCount = await sidebarEntries.count();
+
+    await setSwitch(
+      page,
+      /导航切割|Navigation split/,
+      false,
+      "NavigationSplit"
+    );
+    await closePanel(page);
+    await expect(page.locator("body[layout='mix']")).toHaveCount(1);
+    // 未切割：侧栏回到完整菜单树（一级项全部铺开，项数必然多于子菜单）
+    await expect
+      .poll(() => sidebarEntries.count(), { timeout: 10_000 })
+      .toBeGreaterThan(splitCount);
+
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setSwitch(page, /导航切割|Navigation split/, true, "NavigationSplit");
+    await waitForSiteConfigPatch(page, "Layout", "vertical", async () => {
+      await block.locator('.pref-choice__item[data-choice="vertical"]').click();
+    });
+    await closePanel(page);
+    await expect(page.locator("body[layout='vertical']")).toHaveCount(1);
+  });
+});
+
+test.describe("布局：内容区回顶", () => {
+  // 矮视口：保证可滚动距离显著超过回顶按钮的出现阈值（200px）
+  test.use({ viewport: { width: 1280, height: 600 } });
+
+  test("滚动后出现回顶按钮，点击回到顶部并隐藏", async ({ page }) => {
+    await login(page);
+    await openMenuPath(page, ["系统管理"], "/system/user/index");
+
+    const wrap = page.locator(".app-main .el-scrollbar__wrap").first();
+    await wrap.waitFor({ state: "visible", timeout: 15_000 });
+
+    const backtop = page.locator(".re-backtop");
+    await expect(backtop).toBeHidden();
+
+    await wrap.evaluate(el => (el as HTMLElement).scrollTo({ top: 9999 }));
+    await expect(backtop).toBeVisible({ timeout: 5_000 });
+
+    await backtop.click();
+    await expect
+      .poll(() => wrap.evaluate(el => (el as HTMLElement).scrollTop), {
+        timeout: 5_000
+      })
+      .toBeLessThan(10);
+    await expect(backtop).toBeHidden({ timeout: 5_000 });
+  });
+});
+
+test.describe("通用：自动检查更新开关", () => {
+  test("默认开启，切换写入本地偏好并复位", async ({ page }) => {
+    await login(page);
+    await openSettingPanel(page);
+    await switchSettingTab(page, "通用");
+
+    const target = page
+      .locator(".right-panel .pref-row")
+      .filter({ hasText: "自动检查更新" })
+      .first();
+    await expect(target).toBeVisible({ timeout: 10_000 });
+    const toggle = target.locator('.el-switch input[type="checkbox"]');
+    const stored = () =>
+      page.evaluate(() =>
+        localStorage.getItem("responsive-check-updates-enabled")
+      );
+
+    // 默认开启（无存储 = 与历史行为一致）
+    await expect(toggle).toBeChecked();
+
+    await target.locator(".el-switch").click();
+    await expect.poll(stored).toBe("false");
+    await expect(toggle).not.toBeChecked();
+
+    // 复位：重新开启，避免污染同批后续用例
+    await target.locator(".el-switch").click();
+    await expect.poll(stored).toBe("true");
+    await expect(toggle).toBeChecked();
   });
 });

@@ -1,5 +1,6 @@
 import type { ComputedRef, PropType, Ref } from "vue";
 import { transformI18n } from "@/plugins/i18n";
+import { cn } from "@/utils/cn";
 
 /** 树形表格行：展开/折叠按 `children` 递归 */
 export type TableRowLike = Record<string, unknown> & {
@@ -66,24 +67,16 @@ export const TOP_CLASS = [
   "border-border"
 ];
 
-/** 容器类名：全屏时铺满并提升层级，否则保留上边距 */
+/** 容器类名：全屏时铺满并提升层级，否则保留上边距；
+ *  宽度类冲突由 cn（tailwind-merge）收敛——全屏分支胜出，不残留 w-99/100，
+ *  因此无需 important 压制 */
 export function buildRenderClass(isFullscreen: boolean) {
-  return [
-    "w-99/100",
-    "px-2",
-    "pb-2",
-    "bg-bg-card",
+  return cn(
+    "w-99/100 px-2 pb-2 bg-bg-card",
     isFullscreen
-      ? [
-          "w-full!",
-          "h-full!",
-          "z-2002",
-          "fixed",
-          "inset-0",
-          "re-plus-table-card--fullscreen"
-        ]
+      ? "w-full h-full z-2002 fixed inset-0 re-plus-table-card--fullscreen"
       : "mt-2"
-  ];
+  );
 }
 
 /** 递归展开/折叠全部树形行（依赖表格实例的 toggleRowExpansion） */

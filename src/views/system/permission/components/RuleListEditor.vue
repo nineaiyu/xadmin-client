@@ -403,7 +403,7 @@ function applyPreset(preset: RulePreset) {
   background: var(--el-bg-color);
   border: 1px solid var(--el-border-color-lighter);
   border-radius: var(--radius-lg);
-  transition: border-color 0.2s;
+  transition: border-color var(--duration-fast) var(--ease-standard);
 }
 
 .rule-row:hover {

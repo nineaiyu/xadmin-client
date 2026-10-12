@@ -80,6 +80,9 @@ E2E_SERVER_DIR=$XADMIN pnpm test:e2e
 - 防护：改完后端后用 `pnpm test:e2e:fresh`（或 `test:e2e:smoke:fresh`），
   脚本先 `kill` 18896/8848 旧进程，再由 webServer 重新拉起 + 重新种子；
 - 纯前端改动不受影响（vite dev 自带热更新），可放心用 `test:e2e`；
+  **但跑批进行中不要改前端源码**——HMR 会在用例执行期间重渲染/重载页面，造成瞬态
+  失败（2026-10-12 实测：批内改动触发某布局用例首跑失败、retry 通过）；前端改动
+  安排在跑批之前或之后完成；
 - CI（`CI=1`）下 `reuseExistingServer` 强制关闭，无需关心此问题；
 - 历史案例：N3 功能迭代（2026-09-09）中 DataDict 序列化器修复后，复用旧进程
   导致 E2E 两次假失败（400 行为与已修复代码不符）。
@@ -121,6 +124,36 @@ RePlusPage 列表**固定发 `ordering=-created_time` 且默认 `pageSize=15`**�
 的折叠相关用例统一口径）；`layout-preferences.e2e.ts`「半暗顶栏与快捷键」用例已按此加固
 （2026-10-10，此前全量 webkit 两轮必现、隔离必过）。
 
+**2026-10-12 补充（确定性回归的定位与处置）**：侧栏悬停展开改为 `useHoverToggle` 接线后，
+「侧栏：折叠态默认只显示图标，悬停临时展开恢复标题」用例 `toHaveCount(0)` 10s 恒不满足
+（隔离复现、重试同挂）。根因：hook 的 `leaveDelay` 防闪断窗口把「移开后在窗口内快速返回」
+视为「未离开」——hover 布尔**不产生变化沿**，而消费端 `watch(value)` 只在变化沿上重算，
+漏掉了窗口期间 `isCollapse` 的门控变化（本例时序：`closePanel` 的遮罩点击把鼠标留在侧栏上
+→ `mouse.move(700,300)` → 200ms 窗口内 `Alt+S` 折叠 → 快速返回侧栏）。
+**定位手法**：①源码加调试日志确认 hook 生效但只出现一次 `true` 边沿；②侧栏元素事件序列探针
+（`mouseenter@120,300` → `mouseleave@700,300` → `mouseenter@20,300` 均正常）→ 排除事件丢失，
+收敛到「变化沿缺失」。**处置**：该场景显式 `leaveDelay: 0`（与既有「移开即收起」行为逐事件等价）。
+**通用判据**：凡「消费 hover 布尔并叠加其它门控条件」的接线，不要依赖带延迟的值变化沿。
+
+## ⚠️ a11y `color-contrast` 系统性失败：先查全局样式级联，再查组件
+
+2026-10-12 实测：`a11y.e2e.ts` 四个用例 **× 双浏览器（含 retry）全部失败**，命中节点都是
+「primary 按钮内的 span」（登录页 / 用户管理 / 流程抽屉 / 菜单管理），**复扫仍命中**（排除
+入场动画瞬态）。根因不在组件：`reset.scss` 的元素级重置 `button { color: inherit }` 处于
+**无层**，而 EP 组件样式被 `@layer el` 包层后**层优先级低于无层**——兜底重置反向压过组件库，
+EP primary 按钮文字拿到继承色（黑字 + 主色底 = 4.24:1，低于 4.5:1）。
+
+**定位手法（可复用）**：临时探针 spec 打印两样东西——
+
+1. `getComputedStyle` 的**实际前景 / 背景色**（本例黑字 `rgb(0,0,0)` + `rgb(0,107,230)`）；
+2. axe violation 的 `failureSummary`（含对比度数值与两色：`4.24 (foreground #000000,
+background #006be6, font size 14pt ...)`）。
+
+比读 aria 快照直观得多；探针用完移入工作区回收站（`_delete/`，勿直接删）。
+
+**判据**：多页面 × 多浏览器**同时**命中同一规则且**复扫不消失** → 先查**全局样式 / 令牌**
+（无层 vs `@layer` 的优先级最易被忽略），不要从组件内部找问题；单页偶发且隔离复跑通过才是瞬态。
+
 ## ⚠️ 视觉基线比对失败：先做「回退改动」对照实验再定性
 
 `visual.e2e.ts` 的 webkit 基线可能落后于渲染（例：顶栏新增按钮默认开启的批次未重录基线），
@@ -155,6 +188,17 @@ RePlusPage 列表**固定发 `ordering=-created_time` 且默认 `pageSize=15`**�
 - **纪律**：视觉核对一律在「干净种子 + 独立库（`E2E_DB_NAME`）+ 独立端口（不复用既有栈）」下跑；
   比对失败先看差异热力分布——**侧栏整块位移 = 菜单数据差异**（库残留 / 基线被污染），
   **全页散布 = 字体或令牌变更**（才可能是真回归），再决定是否重录。
+
+**2026-10-12（四期交付批）**：在「visual 与 a11y / smoke / system-pages 等**同批串行**」的跑法下，
+`system-user`（chromium + webkit）与 `system-menu`（chromium）失败；**把 visual 单独 fresh 跑**
+（干净库、无前置用例）后这三条**全部匹配**——差异来自**前置 spec 对库数据的写入**（列表页新增 /
+删除记录后行内容与基线不同），**既不是基线过期也不是 UI 回归**。同批仅 `system-menu`（webkit）
+在干净库下**仍不匹配**（与 10-11 记录的同类基线漂移一致）→ 只重录该条（`node scripts/e2e-run.mjs
+visual --grep "视觉基线：system-" --update-snapshots`，基线文件为 git 追踪物），复跑双浏览器 14/14。
+
+**纪律强化**：`visual.e2e.ts` 必须**单独** fresh 跑（或置于同批**最先**执行、其后无写入型用例），
+否则数据污染会被误读成「基线漂移 / UI 回归」；`e2e-run.mjs visual` 与 `pnpm test:e2e:visual` 已是
+单 spec 形态，**手工拼批**（把 visual 与其它 spec 写进同一条命令）会破坏该前提。
 
 ## ⚠️ 读接口「刚写入的数据查不到」：先分清「缓存/快照」与真回归（2026-10-11 观察）
 
@@ -220,6 +264,23 @@ RePlusPage 列表**固定发 `ordering=-created_time` 且默认 `pageSize=15`**�
 - 账户设置等页面不渲染主布局（无顶栏、无侧栏），切主题前需先 `page.goto("/#/welcome")`；
 - 语言同理：切英文会破坏其它 spec 的中文定位——语言用例（`layout-preferences.e2e.ts`）
   必须在用例内切回中文并配 `afterEach` 兜底（定位一律中英双语正则），其余 spec 不要切语言。
+
+**2026-10-12 实测（四期交付批）：用例失败会**连锁打穿后续 spec**。`theme-dark` 的「明暗切换
+走视图过渡」在 **webkit** 失败，且失败会留下**主题残留**：
+
+- **断言失败的双重背景**：① `viewTransition` 在 `document.readyState !== "complete"` 时走
+  **降级分支**（同步执行、不调用 API）→ 计数不增；② `switchTheme` 在「已是目标态」时
+  **提前 return（不 reload）**，登录 / 归一流程已消耗过的计数不会清零。已加固：点击前等
+  `document.readyState === "complete"` + 显式把 `window.__vtCalls` 归零（归零后 chromium
+  稳定通过）。
+- **webkit 平台豁免**：归零后 webkit 稳定复现 `0 > 0`（`startViewTransition` 存在但点击切换
+  不产生**可观测**调用）→ 用例改「**先还原主题、后断言**」并把计数断言按平台豁免
+  （`test.info().project.name !== "webkit"`）。
+- **连锁效应（教训）**：旧版用例的断言在「还原浅色」**之前**，失败即中断还原；`afterEach`
+  兜底又走 `.set-icon` 入口（此时 `.right-panel` 仍开着、入口被遮）→ 还原在 `.catch` 里静默
+  失败 → **主题残留 dark** → 同批后续 **webkit 的 6 条视觉基线全部失败**（唯一通过的 `login`
+  不消费站点主题）。**写「改全局状态」的用例时，还原必须放在断言之前或用 `try/finally`。**
+- **排查口诀**：`theme-dark` 失败后先查 `html.dark` 是否残留，再谈「基线漂移 / UI 回归」。
 
 ## 视觉回归（`visual.e2e.ts`）
 
@@ -393,6 +454,8 @@ E2E_PARALLEL=4 E2E_PLAN_ONLY=1 node scripts/e2e-parallel.mjs  # 核对各片负�
 | a11y `aria-required-parent` 出现新节点形态 `.is-active.el-menu-item[role=menuitem]`（当前激活菜单项）：axe 对该节点取「最短唯一选择器」，不带 `a[href$=…] >` / `.nest-menu` 前缀，既有豁免模式未覆盖 → 用户管理页用例稳定失败 | 先判性质再补豁免：临时 axe 探针打印节点 `html` 与 `data-insp-path`（本次全部命中 `lay-sidebar` 组件，页面内容区零违规）→ 补 `ALLOWED_VIOLATIONS` 模式并登记 `docs/accessibility-audit.md`（2026-09-24） |
 | EP 2.14 的 `el-select` 选中值渲染为**文本节点**（filterable 模式下 input 不承载 label）→ 对选中值用 `toHaveValue` 断言恒失败；处置=对 select 容器用 `toContainText`（2026-09-18 仪表盘设置重命名实测） |
 | 表单模板场景：副本名 = 模板名 + 后缀，`getByRole('row', { name: templateName })` 是**子串匹配**→ 副本行被命中，`toHaveCount(0)`（断言模板不在表单列表）必失败；处置=断言名避免子串包含关系，或断言正向存在性而非数量（2026-09-18 模板用例实测） |
+| 【根因分类：时序（防闪断延迟吞掉变化沿）】`useHoverToggle` 的 `leaveDelay` 窗口内「离开后快速返回」不产生 hover 布尔变化沿 → `watch(value)` 漏掉「重新进入」；叠加期间门控（`isCollapse`）变化即表现为「悬停不再展开」（侧栏折叠态用例确定性失败，隔离复现；详见「折叠态侧栏断言」节） | 需要「每次进入都重算」的消费端显式 `leaveDelay: 0`；定位手法=源码调试日志（只一次 `true` 边沿）+ 元素事件序列探针（mouseenter/mouseleave 正常）→ 收敛到边沿缺失（2026-10-12） |
+| 短标题词同时出现在标题与说明文字中（`getByText("账号激活")` 命中标题 + 副标题「设置登录密码以完成账号激活」）→ strict mode violation 而非找不到 | 短词断言补 `{ exact: true }`；同类：`getByLabel("全屏")` 默认子串匹配会同时命中「退出全屏」→ 用 `/^全屏$/` 正则锚定（2026-10-12 邀请激活页 / 表格全屏用例实测） |
 | 表单草稿 × 操作审批：审批通过后的**重放必须先于草稿态检查**（自动落库后状态已不是 DRAFT，否则重放被「仅草稿可提交」拒绝）、且通过后动作按 `approval.object_pk` 更新既有行（不重复建行）——协议顺序由 `test_dform_draft_template.py::test_draft_submit_then_auto_complete_and_replay` 守护（2026-09-18） |
 
 | 自研功能给审批人/管理员发通知（催办/审批提醒）后，共享库里管理员出现未读角标（`.el-badge__content--danger`）→ a11y 扫描新增 color-contrast 节点成批失败；**全新种子（test:e2e:fresh）下 a11y 字母序靠前先跑、不受影响**，非 fresh 的复跑才会命中（2026-09-18 实测：污染库双浏览器挂、fresh 全绿） |

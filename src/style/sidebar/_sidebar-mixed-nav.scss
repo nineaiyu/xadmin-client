@@ -1,0 +1,35 @@
+@use "common" as *;
+
+/* 双列侧栏（vben `sidebar-mixed-nav`）：一级窄列 + 二级展开列并排，顶栏在侧栏右侧 */
+body[layout="sidebar-mixed-nav"] {
+  $narrow: var(--sidebar-mixed-narrow-width);
+  $sideBarWidth: calc(#{$narrow} + var(--sidebar-width));
+  $sideBarCollapsed: calc(#{$narrow} + var(--sidebar-collapse-width));
+
+  @include merge-style($sideBarWidth, calc(-1 * #{$sideBarWidth}));
+
+  /* 主列无 Logo（Logo 在一级窄列），滚动区少 40px 折叠条与 4px 投影即可 */
+  .is-two-column .sidebar-main .el-scrollbar.pc {
+    height: calc(100% - 44px);
+  }
+
+  .hideSidebar {
+    .fixed-header {
+      width: calc(100% - #{$sideBarCollapsed});
+      transition: width var(--duration-base);
+    }
+
+    .sidebar-container {
+      width: $sideBarCollapsed !important;
+      transition: width var(--duration-base);
+    }
+
+    .main-container {
+      margin-left: $sideBarCollapsed;
+    }
+
+    .el-menu--collapse {
+      width: var(--sidebar-collapse-width);
+    }
+  }
+}

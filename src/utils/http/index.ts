@@ -196,7 +196,7 @@ class PureHttp {
               data?.detail ?? error.response.statusText ?? ""
             );
             ElMessage.error(detail);
-            // 读屏播报（R5）：全局兜底错误提示同步播报到 aria-live 区域
+            // 读屏播报：全局兜底错误提示同步播报到 aria-live 区域
             announce(detail);
             // router.push("/error/500");
             reject(error.response.data);

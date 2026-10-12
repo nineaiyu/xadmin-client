@@ -36,7 +36,7 @@ vi.mock("@/utils", async () => {
   return { passwordRulesCheck };
 });
 
-import ReSliderCaptcha from "@/components/ReSliderCaptcha";
+import ReSliderTranslateCaptcha from "@/components/ReSliderTranslateCaptcha";
 import InviteAccept from "./accept.vue";
 
 const SUCCESS_CODE = 1000;
@@ -65,11 +65,13 @@ const setInput = async (wrapper: Awaited<ReturnType<typeof mountPage>>) => {
 };
 
 /**
- * 完成滑块人机校验（ReSliderCaptcha 的 v-model）：匿名激活入口按
+ * 完成拼图人机校验（ReSliderTranslateCaptcha 的 v-model）：匿名激活入口按
  * 「一次提交一次校验」放行，测试态直接置为通过。
  */
 const passSlider = async (wrapper: Awaited<ReturnType<typeof mountPage>>) => {
-  wrapper.findComponent(ReSliderCaptcha).vm.$emit("update:modelValue", true);
+  wrapper
+    .findComponent(ReSliderTranslateCaptcha)
+    .vm.$emit("update:modelValue", true);
   await flushPromises();
 };
 
@@ -182,7 +184,7 @@ describe("InviteAccept 激活密码规则前置校验", () => {
     expect(await AesDecrypted("tok-1", payload.password)).toBe("Str0ng!pwd");
   });
 
-  it("未完成滑块人机校验时本地拦截，不发起激活请求", async () => {
+  it("未完成拼图人机校验时本地拦截，不发起激活请求", async () => {
     mocks.inviteValidateApi.mockResolvedValue({
       code: SUCCESS_CODE,
       data: { state: "pending" }
@@ -196,7 +198,7 @@ describe("InviteAccept 激活密码规则前置校验", () => {
     await clickSubmit(wrapper);
     await flushPromises();
 
-    expect(mocks.message).toHaveBeenCalledWith("invite.sliderRequired", {
+    expect(mocks.message).toHaveBeenCalledWith("invite.captchaRequired", {
       type: "warning"
     });
     expect(mocks.inviteAcceptApi).not.toHaveBeenCalled();

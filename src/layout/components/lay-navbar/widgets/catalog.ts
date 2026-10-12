@@ -8,6 +8,7 @@ import NavbarFullscreen from "./NavbarFullscreen.vue";
 import NavbarThemeToggle from "./NavbarThemeToggle.vue";
 import NavbarLock from "./NavbarLock.vue";
 import NavbarNotice from "./NavbarNotice.vue";
+import NavbarTimezone from "./NavbarTimezone.vue";
 
 /**
  * 顶栏组件目录（设置面板 →「布局」→「顶栏组件」的数据源）。
@@ -15,7 +16,9 @@ import NavbarNotice from "./NavbarNotice.vue";
  * - `visibleKey` / `defaultVisible`：沿用各组件既有的显隐开关与缺省值；
  * - `more`：是否可收进「更多」下拉——弹层类组件（搜索 / 语言 / 全屏 / 通知）
  *   在下拉里无法正常展开弹层，固定顶栏；
- * - 顺序由偏好 `navbarOrder` 控制（缺省即本目录顺序）。
+ * - 顺序由偏好 `navbarOrder` 控制（缺省即本目录顺序）；
+ * - 落位由偏好 `widgetPositions` 控制（顶栏 / 更多 / 头像下拉 / 不显示），
+ *   未登记时回落各组件既有显隐开关与 `navbarMoreWidgets`。
  */
 export interface NavbarWidgetItem {
   key: string;
@@ -90,6 +93,14 @@ export const NAVBAR_WIDGETS: NavbarWidgetItem[] = [
     visibleKey: "navbarNotice",
     defaultVisible: true,
     more: false
+  },
+  {
+    key: "timezone",
+    labelKey: "layout.navbarTimezone",
+    component: NavbarTimezone,
+    visibleKey: "navbarTimezone",
+    defaultVisible: false,
+    more: true
   }
 ];
 
@@ -107,17 +118,62 @@ export function findNavbarWidget(key: string): NavbarWidgetItem | undefined {
   return NAVBAR_WIDGETS.find(item => item.key === key);
 }
 
-/** 顶栏组件编排结果：`order` 为渲染序（落成 flex order），header / more 两组共用同一序号空间 */
+/** 顶栏组件落位：顶栏 / 更多下拉 / 头像下拉 / 不显示 */
+export type WidgetPosition = "header" | "more" | "user-dropdown" | "none";
+
+export const WIDGET_POSITIONS: readonly WidgetPosition[] = [
+  "header",
+  "more",
+  "user-dropdown",
+  "none"
+];
+
+function isWidgetPosition(value: unknown): value is WidgetPosition {
+  return WIDGET_POSITIONS.includes(value as WidgetPosition);
+}
+
+/**
+ * 单个组件的落位（纯函数）：
+ * 1) `widgetPositions[key]` 显式登记优先；
+ * 2) 未登记时回落历史键——显隐开关关闭即 `none`，在 `navbarMoreWidgets` 内
+ *    且可收纳即 `more`，否则 `header`。
+ */
+export function resolveWidgetPosition(
+  key: string,
+  configure: Record<string, unknown> | undefined
+): WidgetPosition {
+  const item = findNavbarWidget(key);
+  if (!item) return "none";
+  const config = configure ?? {};
+  const positions = config.widgetPositions as
+    Record<string, unknown> | undefined;
+  const explicit = positions?.[key];
+  if (isWidgetPosition(explicit)) {
+    // 弹层类组件（more=false）登记为 more 时按顶栏处理：下拉里无法正常展开弹层，
+    // 且偏好可由任意客户端写入，不能只靠面板侧过滤
+    return explicit === "more" && !item.more ? "header" : explicit;
+  }
+
+  const visible =
+    (config[item.visibleKey] as boolean | undefined) ?? item.defaultVisible;
+  if (!visible) return "none";
+  const more = Array.isArray(config.navbarMoreWidgets)
+    ? (config.navbarMoreWidgets as unknown[])
+    : [];
+  return item.more && more.includes(key) ? "more" : "header";
+}
+
+/** 顶栏组件编排结果：三组共用同一序号空间（`order` 落成 flex order） */
 export interface NavbarWidgetLayout {
   header: Array<{ item: NavbarWidgetItem; order: number }>;
   more: Array<{ item: NavbarWidgetItem; order: number }>;
+  userDropdown: Array<{ item: NavbarWidgetItem; order: number }>;
 }
 
 /**
  * 依据偏好计算顶栏组件编排（纯函数，供顶栏渲染与单测）：
  * - 顺序：`navbarOrder`（缺省内置顺序；未知键忽略，未登记的组件按内置顺序补在末尾）；
- * - 位置：`navbarMoreWidgets` 内的动作类组件收进「更多」下拉；
- * - 显隐：各组件既有开关（`visibleKey`），关闭即不进任何一组。
+ * - 落位：`widgetPositions`（缺省回落历史显隐开关与 `navbarMoreWidgets`）。
  */
 export function resolveNavbarLayout(
   configure: Record<string, unknown> | undefined
@@ -132,27 +188,22 @@ export function resolveNavbarLayout(
     ...configured.filter(key => Boolean(findNavbarWidget(key))),
     ...DEFAULT_NAVBAR_ORDER.filter(key => !configured.includes(key))
   ];
-  const more = Array.isArray(config.navbarMoreWidgets)
-    ? (config.navbarMoreWidgets as unknown[]).filter(
-        (key): key is string => typeof key === "string"
-      )
-    : [];
 
   const entries = order
-    .map(key => findNavbarWidget(key))
-    .filter((item): item is NavbarWidgetItem => Boolean(item))
+    .map(key => ({
+      item: findNavbarWidget(key),
+      position: resolveWidgetPosition(key, config)
+    }))
     .filter(
-      item =>
-        (config[item.visibleKey] as boolean | undefined) ?? item.defaultVisible
+      (entry): entry is { item: NavbarWidgetItem; position: WidgetPosition } =>
+        Boolean(entry.item) && entry.position !== "none"
     )
-    .map((item, index) => ({ item, order: index }));
+    // 序号在可见集合内连续（落成 flex order，无需携带被隐藏项的占位）
+    .map((entry, index) => ({ ...entry, order: index }));
 
   return {
-    header: entries.filter(
-      entry => !(entry.item.more && more.includes(entry.item.key))
-    ),
-    more: entries.filter(
-      entry => entry.item.more && more.includes(entry.item.key)
-    )
+    header: entries.filter(entry => entry.position === "header"),
+    more: entries.filter(entry => entry.position === "more"),
+    userDropdown: entries.filter(entry => entry.position === "user-dropdown")
   };
 }

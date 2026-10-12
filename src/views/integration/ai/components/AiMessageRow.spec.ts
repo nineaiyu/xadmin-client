@@ -43,6 +43,7 @@ const mountRow = (
     runnable?: boolean;
     nlRunnable?: boolean;
     nlRunning?: boolean;
+    fresh?: boolean;
   } = {}
 ) =>
   mount(AiMessageRow, {
@@ -51,7 +52,8 @@ const mountRow = (
       runnable: props.runnable ?? false,
       nlRunnable: props.nlRunnable ?? true,
       nlRunning: props.nlRunning ?? false,
-      actionExecutor: vi.fn(async () => ({ ok: true, detail: "" }))
+      actionExecutor: vi.fn(async () => ({ ok: true, detail: "" })),
+      fresh: props.fresh
     },
     global: {
       components: {
@@ -81,6 +83,19 @@ describe("AiMessageRow 单条助手消息", () => {
     );
     expect(system.findComponent(ChatSystemNotice).exists()).toBe(true);
     expect(system.text()).toContain("连接中断");
+  });
+
+  it("新增行标记 fresh：气泡行带 list-item-enter（进入动画），缺省不带", () => {
+    const plain = mountRow(row({ role: "user", content: "问题" }));
+    expect(plain.find(".mb-2").classes()).not.toContain("list-item-enter");
+
+    const freshUser = mountRow(row({ role: "user", content: "问题" }), {
+      fresh: true
+    });
+    expect(freshUser.find(".mb-2").classes()).toContain("list-item-enter");
+
+    const freshAssistant = mountRow(row({}), { fresh: true });
+    expect(freshAssistant.find(".mb-2").classes()).toContain("list-item-enter");
   });
 
   it("AI 块透传思考与正文，附时间标签", () => {
