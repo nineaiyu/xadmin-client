@@ -50,6 +50,20 @@ const isMenu = computed(() => form.menuType === MenuChoices.MENU);
         :disabled="!form.meta.transition_enter"
       />
     </el-form-item>
+
+    <el-form-item :label="t('systemMenu.query')" prop="meta.query">
+      <template #label>
+        <form-question
+          :description="t('systemMenu.queryTip')"
+          :label="t('systemMenu.query')"
+        />
+      </template>
+      <el-input
+        v-model="form.meta.query"
+        :placeholder="t('systemMenu.queryPlaceholder')"
+        clearable
+      />
+    </el-form-item>
   </template>
 
   <el-form-item :label="t('systemMenu.pageWatermark')">

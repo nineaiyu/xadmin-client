@@ -60,8 +60,39 @@ const pathValidator = (
   }
 };
 
+/** 高亮路径校验：可空；非空必须是绝对路由（"/" 开头） */
+const activePathValidator = (
+  _rule: unknown,
+  value: string | undefined,
+  callback: (error?: Error) => void
+) => {
+  const text = String(value ?? "").trim();
+  if (!text || text.startsWith("/")) {
+    callback();
+  } else {
+    callback(new Error(transformI18n($t("systemMenu.activePathError"))));
+  }
+};
+
+/** 查询参数形态：k=v 或 k=v&k2=v2（键值均不含 = & #） */
+const queryPattern = /^[^=&#\s]+=[^&#\s]*(&[^=&#\s]+=[^&#\s]*)*$/;
+
+/** 查询参数校验：可空；非空必须符合 k=v(&k2=v2) 形态 */
+const queryValidator = (
+  _rule: unknown,
+  value: string | undefined,
+  callback: (error?: Error) => void
+) => {
+  const text = String(value ?? "").trim();
+  if (!text || queryPattern.test(text)) {
+    callback();
+  } else {
+    callback(new Error(transformI18n($t("systemMenu.queryError"))));
+  }
+};
+
 export const dirFormRules = {
-  menu_type: [
+  menuType: [
     {
       required: true,
       message: transformI18n($t("systemMenu.verifyType")),
@@ -97,7 +128,7 @@ export const dirFormRules = {
   ]
 };
 export const menuFormRules = {
-  menu_type: [
+  menuType: [
     {
       required: true,
       message: transformI18n($t("systemMenu.verifyType")),
@@ -128,10 +159,23 @@ export const menuFormRules = {
       message: transformI18n($t("systemMenu.verifyComponentPath")),
       trigger: "blur"
     }
+  ],
+  // 键名为 el-form-item 的 prop 路径（嵌套 meta 字段用点号路径直达）
+  "meta.active_path": [
+    {
+      validator: activePathValidator,
+      trigger: "blur"
+    }
+  ],
+  "meta.query": [
+    {
+      validator: queryValidator,
+      trigger: "blur"
+    }
   ]
 };
 export const permissionFormRules = {
-  menu_type: [
+  menuType: [
     {
       required: true,
       message: transformI18n($t("systemMenu.verifyType")),

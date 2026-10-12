@@ -2040,6 +2040,23 @@ systemMenu:
   hiddenTagTip: The current menu name or custom information is prohibited from being added to the TAB
   pageWatermark: Page Watermark
   pageWatermarkTip: When enabled, this page always shows the site watermark (the global watermark switch in Basic Settings still applies; works in addition to the path list)
+  activePath: Active path
+  activePathTip: Menu to highlight when visiting a page outside this menu (e.g. a detail page); fill in that menu's route path
+  activePathPlaceholder: "e.g. /system/user/index"
+  activePathError: Active path must start with "/"
+  badge: Menu badge
+  badgeTip: Badge shown next to the menu title; numbers greater than 99 show as 99+
+  badgePlaceholder: Badge text or number; leave empty to hide
+  badgeTypeNormal: Text
+  badgeTypeDot: Dot
+  query: Query
+  queryTip: Query parameters appended to the route when the menu is clicked, e.g. k=v&k2=v2
+  queryPlaceholder: "e.g. status=pending&page=1"
+  queryError: Invalid query format, expected k=v or k=v&k2=v2
+  groupName: Group title
+  groupNameTip: Sibling menus with the same group title are grouped under it
+  groupNamePlaceholder: Group title; leave empty to disable grouping
+  groupRank: Group rank
   addPermissions: Automatic batch add permissions
   codeSuffix: Permission identity suffix
   codeSuffixTip: It is by default the component name. If it is empty, it will be by default the name of the back-end view, and it can be modified by yourself.

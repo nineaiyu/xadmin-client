@@ -2620,6 +2620,214 @@ test.describe("布局：内容区回顶", () => {
   });
 });
 
+test.describe("布局：侧栏菜单装饰与激活联动", () => {
+  /**
+   * 「E2E菜单演示」目录（E2E 种子，rank 靠后位于侧栏底部）：
+   * 徽标 / 红点 / 分组标题 / 查询参数 / 高亮路径（activePath）的渲染素材。
+   */
+  const demoGroups = (page: Page) =>
+    page.locator(".sidebar-container .sidebar-menu-group");
+
+  test("侧栏装饰：徽标与分组标题渲染，带查询参数菜单点击后 URL 携带参数", async ({
+    page
+  }) => {
+    await login(page);
+    await openMenuPath(page, ["E2E菜单演示"], "/e2e-menu-demo/badge");
+
+    // 分组标题：两个组按 groupRank 升序（基础功能 → 高级功能）
+    const groups = demoGroups(page);
+    await expect(groups).toHaveCount(2, { timeout: 10_000 });
+    await expect(
+      groups.nth(0).locator(".el-menu-item-group__title")
+    ).toHaveText("基础功能");
+    await expect(
+      groups.nth(1).locator(".el-menu-item-group__title")
+    ).toHaveText("高级功能");
+
+    // 组内聚合：基础功能组含徽标项与红点项，高级功能组仅查询项
+    await expect(groups.nth(0).locator(".el-menu-item")).toHaveCount(2);
+    await expect(groups.nth(1).locator(".el-menu-item")).toHaveCount(1);
+
+    // 文本徽标（12 不截断）
+    await expect(
+      groups
+        .nth(0)
+        .locator(".el-menu-item")
+        .filter({ hasText: "E2E徽标菜单" })
+        .locator(".sidebar-menu-badge")
+    ).toHaveText("12");
+
+    // 红点徽标：无文本 + is-dot
+    const dot = groups
+      .nth(0)
+      .locator(".el-menu-item")
+      .filter({ hasText: "E2E红点菜单" })
+      .locator(".sidebar-menu-badge");
+    await expect(dot).toHaveClass(/is-dot/);
+    await expect(dot).toHaveText("");
+
+    // 查询参数：点击后路由携带 meta.query（tab=e2e）
+    await page.locator('a[href^="#/e2e-menu-demo/query"]').first().click();
+    await expect(page).toHaveURL(/\/e2e-menu-demo\/query\?tab=e2e/, {
+      timeout: 10_000
+    });
+  });
+
+  test("侧栏装饰：菜单外页面进入时高亮 activePath 指定菜单", async ({
+    page
+  }) => {
+    await login(page);
+    // 「E2E详情页」菜单不可见（showLink=false），只能经 URL 进入
+    await page.goto("/#/e2e-menu-demo/detail");
+    await expect(page.locator('a[href="#/e2e-menu-demo/detail"]')).toHaveCount(
+      0
+    );
+
+    // 目录自动展开（EP 展开包含激活项的子菜单），activePath 指定的「E2E徽标菜单」高亮
+    await expect(
+      page.locator('a[href="#/e2e-menu-demo/badge"] .el-menu-item')
+    ).toHaveClass(/is-active/, { timeout: 10_000 });
+  });
+
+  test("侧栏装饰：进入侧栏底部路由后激活项自动滚入可视区", async ({ page }) => {
+    await login(page);
+    const wrap = page.locator(".sidebar-container .el-scrollbar__wrap").first();
+    await wrap.waitFor({ state: "visible", timeout: 15_000 });
+    expect(
+      await wrap.evaluate(el => el.scrollTop),
+      "首页时侧栏滚动位置在顶部"
+    ).toBeLessThan(5);
+
+    // 整页进入底部路由（不产生人工滚动），激活项应被自动滚入可视区
+    await page.goto("/#/e2e-menu-demo/query");
+    const active = page.locator(
+      'a[href^="#/e2e-menu-demo/query"] .el-menu-item'
+    );
+    await expect(active).toBeVisible({ timeout: 10_000 });
+    await expect
+      .poll(() => wrap.evaluate(el => el.scrollTop), { timeout: 5_000 })
+      .toBeGreaterThan(0);
+
+    // 展开动画期间位置会变化：轮询等待校正收敛（激活项完整落入滚动容器可视区）
+    await expect
+      .poll(
+        async () => {
+          const wrapBox = await wrap.boundingBox();
+          const itemBox = await active.boundingBox();
+          if (!wrapBox || !itemBox) return "hidden";
+          const fits =
+            itemBox.y >= wrapBox.y - 2 &&
+            itemBox.y + itemBox.height <= wrapBox.y + wrapBox.height + 2;
+          return fits
+            ? "visible"
+            : `overflow:${Math.round(itemBox.y + itemBox.height - (wrapBox.y + wrapBox.height))}`;
+        },
+        { timeout: 5_000 }
+      )
+      .toBe("visible");
+  });
+
+  test("侧栏装饰：悬停菜单项出现浅背景与图标放大", async ({ page }) => {
+    await login(page);
+    await page.mouse.move(700, 300);
+
+    // 取首个一级叶子菜单项（`.submenu-title-noDropdown` 标记）：与语言/文案解耦
+    const item = page
+      .locator(".sidebar-container .el-menu-item.submenu-title-noDropdown")
+      .first();
+    await expect(item).toBeVisible({ timeout: 10_000 });
+    expect(
+      await item.evaluate(el => getComputedStyle(el).backgroundColor),
+      "默认无悬停背景"
+    ).toBe("rgba(0, 0, 0, 0)");
+
+    await item.hover();
+    await expect
+      .poll(() => item.evaluate(el => getComputedStyle(el).backgroundColor), {
+        timeout: 5_000
+      })
+      .not.toBe("rgba(0, 0, 0, 0)");
+    await expect
+      .poll(
+        () =>
+          item
+            .locator(".sub-menu-icon > *")
+            .first()
+            .evaluate(el => getComputedStyle(el).transform),
+        { timeout: 5_000 }
+      )
+      .toContain("1.1");
+  });
+
+  test("侧栏装饰：折叠态目录徽标以角标显示", async ({ page }) => {
+    await login(page);
+    await page.mouse.move(700, 300);
+    await page.keyboard.press("Alt+s");
+    const collapsed = page.locator(".sidebar-container .el-menu--collapse");
+    await expect(collapsed).toHaveCount(1, { timeout: 10_000 });
+
+    await expect(
+      page
+        .locator(".sidebar-container .el-menu--collapse .sidebar-menu-badge")
+        .first()
+    ).toBeVisible();
+
+    // 复位展开
+    await page.mouse.move(700, 300);
+    await page.keyboard.press("Alt+s");
+    await expect(collapsed).toHaveCount(0, { timeout: 10_000 });
+  });
+});
+
+test.describe("布局：顶栏水平菜单溢出", () => {
+  test.afterEach(async ({ page }) => {
+    // 复位本地布局偏好（失败残留也恢复纵向，避免污染后续用例与视觉基线）
+    await page
+      .evaluate(() => {
+        const raw = localStorage.getItem("responsive-layout");
+        if (!raw) return;
+        const cfg = JSON.parse(raw);
+        cfg.layout = "vertical";
+        localStorage.setItem("responsive-layout", JSON.stringify(cfg));
+      })
+      .catch(() => undefined);
+  });
+
+  test("窄视口下放不下的一级菜单收纳进「更多」下拉", async ({ page }) => {
+    // 窄视口保证一级菜单超出顶栏可用宽度
+    await page.setViewportSize({ width: 900, height: 720 });
+    await login(page);
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await page
+      .locator('.right-panel .pref-choice__item[data-choice="horizontal"]')
+      .first()
+      .click();
+    await expect(page.locator("body[layout='horizontal']")).toHaveCount(1, {
+      timeout: 10_000
+    });
+    await closePanel(page);
+
+    const headerMenu = page.locator(".horizontal-header-menu").first();
+    await expect(headerMenu).toBeVisible({ timeout: 10_000 });
+
+    // 溢出收纳：放不下的项折叠进带 More 图标的子菜单（图标标记 el-sub-menu__icon-more）
+    const more = headerMenu
+      .locator(".el-sub-menu:has(.el-sub-menu__icon-more)")
+      .first();
+    await expect(more).toBeVisible({ timeout: 10_000 });
+
+    // 被收纳的一级菜单可从「更多」下拉进入（悬停展开弹层；
+    // 页面存在多个常驻隐藏弹层，按可见性筛选，避免命中隐藏副本）
+    await more.locator(".el-sub-menu__title").hover();
+    const popup = page.locator(".el-menu--popup:visible").first();
+    await expect(popup).toBeVisible({ timeout: 10_000 });
+    await expect(
+      popup.locator(".el-sub-menu__title, .el-menu-item").first()
+    ).toBeVisible();
+  });
+});
+
 test.describe("通用：自动检查更新开关", () => {
   test("默认开启，切换写入本地偏好并复位", async ({ page }) => {
     await login(page);

@@ -6,6 +6,8 @@ body[layout="horizontal"] {
   @include merge-style($sideBarWidth, 0);
 
   .el-menu {
+    /* 悬停背景走主题令牌（顶栏菜单项另有显式 !important 规则兜底） */
+    --el-menu-hover-bg-color: var(--pure-theme-menu-hover) !important;
     --el-menu-hover-text-color: var(--pure-theme-menu-text) !important;
   }
 

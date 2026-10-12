@@ -1,14 +1,19 @@
 <script setup lang="ts">
-import { useRoute, type RouteRecordRaw, useRouter } from "vue-router";
+import { useRoute } from "vue-router";
 import { emitter } from "@/utils/mitt";
 import { useNav } from "@/layout/hooks/useNav";
 import { responsiveStorageNameSpace } from "@/config";
 import { isAllEmpty, storageLocal, useGlobal } from "@pureadmin/utils";
-import { findRouteByPath, getParentPaths } from "@/router/utils";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { transformI18n } from "@/plugins/i18n";
+import { groupMenuChildren } from "@/utils/menuGroups";
 import { useSidebarResize } from "@/layout/hooks/useSidebarResize";
+import { useSidebarMenu } from "@/layout/hooks/useSidebarMenu";
+import {
+  useMenuScrollActive,
+  type ScrollbarExpose
+} from "@/layout/hooks/useMenuScrollActive";
 import { useHoverToggle } from "@/hooks/useHoverToggle";
 import { useConfigureStorage } from "../lay-setting/hooks/useConfigureStorage";
 import {
@@ -16,7 +21,14 @@ import {
   resolveLayoutMode,
   sidebarShowsSubmenu
 } from "@/layout/hooks/layoutModes";
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch
+} from "vue";
 import LaySidebarLogo from "../lay-sidebar/components/SidebarLogo.vue";
 import LaySidebarItem from "../lay-sidebar/components/SidebarItem.vue";
 import LaySidebarLeftCollapse from "../lay-sidebar/components/SidebarLeftCollapse.vue";
@@ -25,7 +37,6 @@ import PushpinIcon from "~icons/ri/pushpin-line";
 import PushpinActiveIcon from "~icons/ri/pushpin-2-line";
 
 const route = useRoute();
-const router = useRouter();
 const isShow = ref(false);
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 const { storageConfigureChange } = useConfigureStorage();
@@ -129,8 +140,6 @@ const {
     device.value !== "mobile"
 );
 
-const subMenuData = ref<RouteRecordRaw[]>([]);
-
 /** 侧栏语义模式（移动端强制回落竖排，见 layoutModes） */
 const sidebarMode = computed(() =>
   resolveLayoutMode(layout.value, device.value === "mobile")
@@ -142,73 +151,40 @@ const submenuSidebar = computed(() =>
   sidebarShowsSubmenu(sidebarMode.value, $storage?.configure?.navigationSplit)
 );
 
-const menuData = computed(() => {
-  return submenuSidebar.value
-    ? subMenuData.value
-    : usePermissionStoreHook().wholeMenus;
-});
-
-const loading = computed(() =>
-  submenuSidebar.value ? false : menuData.value.length === 0
-);
-
 const defaultActive = computed(() =>
   !isAllEmpty(route.meta?.activePath) ? route.meta.activePath : route.path
 );
 
-/** 一级窄列高亮项：当前路由所属的一级路由 */
-const topLevelActive = computed(() => {
-  const parents = getParentPaths(
-    defaultActive.value,
-    usePermissionStoreHook().wholeMenus as never
-  );
-  return parents[0] ?? defaultActive.value;
-});
+/** 菜单数据装配（整树 / 二级列 + 一级高亮与点击），实现见 hooks/useSidebarMenu */
+const {
+  menuData,
+  loading,
+  topLevelActive,
+  handleTopLevelSelect,
+  getSubMenuData
+} = useSidebarMenu(submenuSidebar, defaultActive, menuSelect);
 
-/** 一级窄列点击：跳到该一级路由的首个子路由（与顶栏一级菜单同口径） */
-function handleTopLevelSelect(index: string) {
-  const item = usePermissionStoreHook().wholeMenus.find(
-    menu => menu.path === index
-  );
-  if (!item) return;
-  const child = item.children?.[0]?.path;
-  const httpReg = /^http(s?):\/\//;
-  const target = child
-    ? httpReg.test(child)
-      ? `${item.path}/${child}`
-      : child
-    : (item.redirect ?? item.path);
-  if (typeof target === "string" && target) router.push(target);
+/** 激活项滚入可视区（长菜单下进入深层路由时保持高亮项可见） */
+const mainScrollbarRef = ref<ScrollbarExpose>();
+const { scrollToActive } = useMenuScrollActive(mainScrollbarRef, [
+  () => defaultActive.value,
+  () => menuData.value
+]);
+
+/** 主列渲染序列：支持一级菜单按 groupName/groupRank 分组（仅影响展示层） */
+const topMenuData = computed(() => groupMenuChildren(menuData.value));
+
+/**
+ * 子菜单展开后重算滚动定位：EP 会自动展开激活项所在的目录（初始化与路由切换时），
+ * 展开事件即「激活项首次渲染」的信号（位置仍会随展开动画变化，hook 内自有重试校正）。
+ */
+function handleMenuOpen() {
+  nextTick(scrollToActive);
 }
-
-function getSubMenuData() {
-  let path = defaultActive.value;
-  subMenuData.value = [];
-  // path的上级路由组成的数组
-  const parentPathArr = getParentPaths(
-    path,
-    usePermissionStoreHook().wholeMenus as never
-  );
-  // 当前路由的父级路由信息
-  const parenetRoute = findRouteByPath(
-    parentPathArr[0] || path,
-    usePermissionStoreHook().wholeMenus as never
-  );
-  if (!parenetRoute?.children) return;
-  subMenuData.value = parenetRoute?.children;
-}
-
-watch(
-  () => [route.path, usePermissionStoreHook().wholeMenus],
-  () => {
-    if (route.path.includes("/redirect")) return;
-    getSubMenuData();
-    menuSelect(route.path);
-  }
-);
 
 onMounted(() => {
   getSubMenuData();
+  scrollToActive();
 
   emitter.on("logoChange", key => {
     showLogo.value = key;
@@ -272,6 +248,7 @@ onBeforeUnmount(() => {
     <div class="sidebar-main">
       <LaySidebarLogo v-if="showLogo && !twoColumn" :collapse="menuCollapse" />
       <el-scrollbar
+        ref="mainScrollbarRef"
         wrap-class="scrollbar-wrapper"
         :class="[device === 'mobile' ? 'mobile' : 'pc']"
       >
@@ -282,12 +259,14 @@ onBeforeUnmount(() => {
           class="outer-most select-none"
           :class="{ 'sidebar-collapse-show-title': collapseShowTitle }"
           :collapse="menuCollapse"
-          :collapse-transition="false"
           :popper-effect="tooltipEffect"
           :default-active="defaultActive"
+          :show-timeout="300"
+          :hide-timeout="300"
+          @open="handleMenuOpen"
         >
           <LaySidebarItem
-            v-for="routes in menuData"
+            v-for="routes in topMenuData"
             :key="routes.path"
             :item="routes as never"
             :base-path="routes.path"

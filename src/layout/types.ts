@@ -40,6 +40,18 @@ export type routeMetaType = {
   activePath?: string;
   /** 菜单级水印开关（后端菜单 meta 透传，置顶强制挂载） */
   watermark?: boolean;
+  /** 侧栏徽标文本（纯数字大于 99 显示 99+） */
+  badge?: string | null;
+  /** 徽标形态：normal 文本 / dot 红点 */
+  badgeType?: string | null;
+  /** 点击菜单时携带的查询参数（后端 k=v&k2=v2 解析后的对象） */
+  query?: Record<string, string> | null;
+  /** 分组标题：同组同级菜单聚合在标题之下 */
+  groupName?: string | null;
+  /** 分组排序（同层分组升序） */
+  groupRank?: number | null;
+  /** 分组虚拟节点标记（SidebarItem 据此渲染 el-menu-item-group） */
+  group?: boolean;
 };
 
 export type RouteConfigs = {

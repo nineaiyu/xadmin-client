@@ -87,6 +87,46 @@ describe("normalizeMenuRow", () => {
     expect(row.meta.is_show_menu).toBe(true);
     expect(row.meta.is_keepalive).toBe(true);
   });
+
+  it("侧栏装饰字段归一：badge_type 取标量（对象形态）、其余按文本", () => {
+    const row = normalizeMenuRow({
+      pk: 11,
+      name: "decorated",
+      path: "/decorated",
+      menu_type: 1,
+      is_active: true,
+      meta: {
+        title: "装饰",
+        badge: "12",
+        badge_type: { value: "dot", label: "红点" },
+        query: "tab=a",
+        group_name: "基础",
+        group_rank: 3,
+        active_path: "/list"
+      }
+    });
+    expect(row.meta.badge).toBe("12");
+    expect(row.meta.badge_type).toBe("dot");
+    expect(row.meta.query).toBe("tab=a");
+    expect(row.meta.group_name).toBe("基础");
+    expect(row.meta.group_rank).toBe(3);
+    expect(row.meta.active_path).toBe("/list");
+  });
+
+  it("装饰字段缺省值：徽标形态 normal、分组排序 null", () => {
+    const row = normalizeMenuRow({
+      pk: 12,
+      name: "y",
+      path: "/y",
+      menu_type: 0,
+      is_active: true,
+      meta: { title: "Y" }
+    });
+    expect(row.meta.badge_type).toBe("normal");
+    expect(row.meta.group_rank).toBeNull();
+    expect(row.meta.badge).toBe("");
+    expect(row.meta.active_path).toBe("");
+  });
 });
 
 describe("buildMenuTree", () => {

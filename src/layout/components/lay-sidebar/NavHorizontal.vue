@@ -12,6 +12,7 @@ import {
   useResizeObserver
 } from "@pureadmin/utils";
 import { usePermissionStoreHook } from "@/store/modules/permission";
+import { groupMenuChildren } from "@/utils/menuGroups";
 import {
   resolveLogoImageStyle,
   resolveLogoMode,
@@ -49,6 +50,11 @@ const logoStyle = computed(() => resolveLogoImageStyle(configure.value));
 
 const defaultActive = computed(() =>
   !isAllEmpty(route.meta?.activePath) ? route.meta.activePath : route.path
+);
+
+/** 顶栏渲染序列：支持一级菜单按 groupName/groupRank 分组（仅影响展示层） */
+const topMenuData = computed(() =>
+  groupMenuChildren(usePermissionStoreHook().wholeMenus)
 );
 
 /** 菜单项数量/宽度变化后重算 EP 的溢出收纳（否则多出的一级项会盖到右侧动作区） */
@@ -95,9 +101,11 @@ onBeforeUnmount(() => {
       popper-class="pure-scrollbar"
       class="horizontal-header-menu"
       :default-active="defaultActive"
+      :show-timeout="300"
+      :hide-timeout="300"
     >
       <LaySidebarItem
-        v-for="route in usePermissionStoreHook().wholeMenus"
+        v-for="route in topMenuData"
         :key="route.path"
         :item="route as never"
         :base-path="route.path"

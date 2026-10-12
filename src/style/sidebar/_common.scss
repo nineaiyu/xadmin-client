@@ -30,13 +30,13 @@
   }
 
   .sub-menu-icon {
-    margin-right: 5px;
+    margin-right: var(--nav-item-icon-gap);
     font-size: var(--font-size-lg);
 
     svg,
     .svg-raw-icon {
-      width: 18px;
-      height: 18px;
+      width: var(--nav-item-icon-size);
+      height: var(--nav-item-icon-size);
     }
 
     .svg-raw-icon {
@@ -47,6 +47,17 @@
     .svg-raw-icon svg path {
       fill: currentcolor !important;
     }
+
+    /* hover 图标微缩放：作用于图标本体（svg / img / iconfont 包裹层），不影响布局宽度 */
+    > * {
+      transition: transform var(--duration-fast) var(--ease-standard);
+    }
+  }
+
+  /* 菜单项 hover：图标轻微放大（配合文字提亮与浅背景，强化当前操作目标） */
+  .el-menu-item:hover .sub-menu-icon > *,
+  .el-sub-menu__title:hover .sub-menu-icon > * {
+    transform: scale(1.1);
   }
 
   .set-icon,
@@ -167,6 +178,9 @@
     }
 
     .el-menu {
+      /* 层级缩进步长收敛到导航令牌（与 tokens/primitives 的 --nav-item-indent 同源） */
+      --el-menu-level-padding: var(--nav-item-indent);
+
       height: 100%;
       background-color: transparent !important;
       border: none;
@@ -174,25 +188,21 @@
 
     .el-menu-item,
     .el-sub-menu__title {
-      height: 50px;
+      height: var(--nav-item-height);
       color: var(--pure-theme-menu-text);
       background-color: transparent !important;
 
       &:hover {
         color: var(--pure-theme-menu-title-hover) !important;
+
+        /* 悬停浅背景（主题令牌，深浅主题各自取色）：替代既往的强制透明 */
+        background-color: var(--pure-theme-menu-hover) !important;
       }
 
       div,
       span {
-        height: 50px;
-        line-height: 50px;
-      }
-    }
-
-    .submenu-title-noDropdown,
-    .el-sub-menu__title {
-      &:hover {
-        background-color: transparent;
+        height: var(--nav-item-height);
+        line-height: var(--nav-item-height);
       }
     }
 
@@ -286,7 +296,7 @@
     & > .el-menu {
       i,
       svg {
-        margin-right: 5px;
+        margin-right: var(--nav-item-icon-gap);
       }
     }
 
@@ -304,13 +314,14 @@
 
     .el-menu-item,
     .el-sub-menu__title {
-      height: 50px;
-      line-height: 50px;
+      height: var(--nav-item-height);
+      line-height: var(--nav-item-height);
       color: var(--pure-theme-menu-text);
       background-color: var(--pure-theme-sub-menu-bg);
 
       &:hover {
         color: var(--pure-theme-menu-title-hover) !important;
+        background-color: var(--pure-theme-menu-hover) !important;
       }
     }
 
@@ -369,6 +380,10 @@
         color: var(--pure-theme-menu-text);
         background-color: var(--pure-theme-sub-menu-bg);
 
+        &:hover {
+          background-color: var(--pure-theme-menu-hover) !important;
+        }
+
         span {
           font-size: var(--font-size-base);
         }
@@ -376,6 +391,10 @@
 
       .el-sub-menu__title {
         color: var(--pure-theme-menu-text);
+
+        &:hover {
+          background-color: var(--pure-theme-menu-hover) !important;
+        }
       }
     }
 
@@ -399,6 +418,7 @@
     .el-menu-item {
       &:hover {
         color: var(--pure-theme-menu-title-hover) !important;
+        background-color: var(--pure-theme-menu-hover) !important;
       }
     }
 
@@ -535,6 +555,9 @@
 
       &:hover {
         color: var(--pure-theme-menu-title-hover) !important;
+
+        /* 顶栏菜单项悬停浅背景（主题令牌）：覆盖下方「菜单底色」强制声明 */
+        background: var(--pure-theme-menu-hover) !important;
       }
     }
 
@@ -558,6 +581,66 @@
       color: var(--pure-theme-sub-menu-active-text) !important;
       transition: color var(--duration-base) var(--ease-standard);
     }
+  }
+
+  /* ================ 菜单徽标（后端 meta：badge / badgeType） ================ */
+  .sidebar-menu-badge {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 6px;
+    margin-left: 6px;
+    font-size: var(--font-size-2xs);
+    font-weight: var(--font-weight-medium);
+    line-height: 1;
+    color: var(--el-color-white);
+    background: var(--el-color-danger);
+    border-radius: 9px;
+
+    &.is-dot {
+      width: 8px;
+      min-width: 8px;
+      height: 8px;
+      padding: 0;
+      border-radius: 50%;
+    }
+  }
+
+  /* 折叠态（仅图标）：徽标叠在图标右上角；悬停临时展开时按展开形态渲染 */
+  .el-menu--collapse {
+    .sidebar-menu-badge {
+      position: absolute;
+      top: 5px;
+      right: 6px;
+      z-index: 2;
+      visibility: visible;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 4px;
+      margin-left: 0;
+    }
+  }
+
+  /* ================ 菜单分组标题（后端 meta：groupName / groupRank 的渲染层装配） ================ */
+  .sidebar-menu-group {
+    .el-menu-item-group__title {
+      height: 30px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: var(--font-size-xs);
+      line-height: 30px;
+      color: var(--pure-theme-menu-text);
+      white-space: nowrap;
+      opacity: 0.7;
+    }
+  }
+
+  /* 折叠态隐藏分组标题（仅图标形态容不下标题） */
+  .el-menu--collapse .sidebar-menu-group .el-menu-item-group__title {
+    display: none;
   }
 
   .el-menu--collapse .el-menu .el-sub-menu {

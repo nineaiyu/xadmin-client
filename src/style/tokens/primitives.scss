@@ -77,6 +77,12 @@
   --nav-item-inset: 8px;
   --nav-item-inset-mix: 5px;
 
+  /* 菜单项尺度：项高、层级缩进步长、图标尺寸与图标-文字间距（侧栏与弹层共用） */
+  --nav-item-height: 50px;
+  --nav-item-indent: 20px;
+  --nav-item-icon-size: 18px;
+  --nav-item-icon-gap: 8px;
+
   /* 水平 / 混合布局的顶栏菜单对齐（设置面板 →「顶栏菜单对齐」） */
   --menu-align: start;
 

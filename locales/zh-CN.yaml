@@ -2040,6 +2040,23 @@ systemMenu:
   hiddenTagTip: 当前菜单名称或自定义信息禁止添加到标签页
   pageWatermark: 页面水印
   pageWatermarkTip: 开启后该页面强制显示站点水印（需在基本设置中开启水印总开关，与生效页面路径范围是或关系）
+  activePath: 高亮路径
+  activePathTip: 进入本菜单之外的页面（如详情页）时，高亮侧栏中的指定菜单（填该菜单的路由地址）
+  activePathPlaceholder: "例如 /system/user/index"
+  activePathError: 高亮路径必须以 `/` 开头
+  badge: 菜单徽标
+  badgeTip: 显示在菜单标题旁的徽标；纯数字大于 99 时显示 99+
+  badgePlaceholder: 徽标文本或数字，留空不显示
+  badgeTypeNormal: 文本
+  badgeTypeDot: 红点
+  query: 查询参数
+  queryTip: 点击菜单时附加到路由上的查询参数，形如 k=v&k2=v2
+  queryPlaceholder: "例如 status=pending&page=1"
+  queryError: 查询参数格式不正确，应为 k=v 或 k=v&k2=v2
+  groupName: 分组标题
+  groupNameTip: 同级菜单配置相同分组标题时，聚合显示在该标题之下
+  groupNamePlaceholder: 分组标题，留空不分组
+  groupRank: 分组排序
   addPermissions: 自动批量添加权限
   codeSuffix: 权限标识后缀
   codeSuffixTip: 默认为组件名称，若为空，则默认为后端视图名称，可自行修改

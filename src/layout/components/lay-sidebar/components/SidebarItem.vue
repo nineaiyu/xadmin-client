@@ -7,8 +7,10 @@ import { ReText } from "@/components/ReText";
 import { useNav } from "@/layout/hooks/useNav";
 import { transformI18n } from "@/plugins/i18n";
 import { firstLeafPath } from "@/utils/menuActivate";
+import { groupMenuChildren, isMenuGroupNode } from "@/utils/menuGroups";
 import SidebarLinkItem from "./SidebarLinkItem.vue";
 import SidebarExtraIcon from "./SidebarExtraIcon.vue";
+import SidebarBadge from "./SidebarBadge.vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import {
   computed,
@@ -92,6 +94,14 @@ const textClass = computed(() => {
   }
   return baseClass;
 });
+
+/** 子级渲染序列：按 groupName/groupRank 装配分组节点（无分组配置时原样返回） */
+const groupedChildren = computed(() =>
+  groupMenuChildren(props.item.children ?? [])
+);
+
+/** 分组虚拟节点：渲染 el-menu-item-group（仅展示层，不参与路由与激活推导） */
+const isGroup = computed(() => isMenuGroupNode(props.item));
 
 const expandCloseIcon = computed(() => {
   if (!getConfig()?.MenuArrowIconNoTransition) return "";
@@ -228,8 +238,20 @@ function handleSubMenuClick(event: MouseEvent) {
     故把 menuitem 放到链接上（链接是 menubar 的合法子级），内层 li 置 presentation
     退出无障碍树（EP 无键盘焦点导航，不依赖该 li 的语义）。
   -->
+  <!-- 分组节点（渲染层虚拟节点）：组标题 + 组内子项 -->
+  <el-menu-item-group v-if="isGroup" class="sidebar-menu-group">
+    <template #title>{{ transformI18n(item.meta.title) }}</template>
+    <sidebar-item
+      v-for="child in item.children"
+      :key="child.path"
+      :is-nest="true"
+      :item="asMenuNode(child)"
+      :base-path="resolvePath(child.path ?? '')"
+      class="nest-menu"
+    />
+  </el-menu-item-group>
   <SidebarLinkItem
-    v-if="
+    v-else-if="
       hasOneShowingChild(item.children, item) &&
       (!onlyOneChild.children || onlyOneChild.noShowingChildren)
     "
@@ -256,6 +278,12 @@ function handleSubMenuClick(event: MouseEvent) {
           "
         />
       </div>
+      <!-- 折叠态徽标：叠在图标右上角（展开态见 title 插槽内） -->
+      <SidebarBadge
+        v-if="collapse"
+        :badge="onlyOneChild.meta.badge ?? item.meta.badge"
+        :type="onlyOneChild.meta.badgeType ?? item.meta.badgeType"
+      />
       <el-text v-if="showLeafText" truncated :class="leafTextClass">
         {{ transformI18n(onlyOneChild.meta.title) }}
       </el-text>
@@ -271,6 +299,11 @@ function handleSubMenuClick(event: MouseEvent) {
           >
             {{ transformI18n(onlyOneChild.meta.title) }}
           </ReText>
+          <SidebarBadge
+            v-if="!collapse"
+            :badge="onlyOneChild.meta.badge ?? item.meta.badge"
+            :type="onlyOneChild.meta.badgeType ?? item.meta.badgeType"
+          />
           <SidebarExtraIcon :extraIcon="onlyOneChild.meta.extraIcon" />
         </div>
       </template>
@@ -314,11 +347,12 @@ function handleSubMenuClick(event: MouseEvent) {
       >
         {{ transformI18n(item.meta.title) }}
       </ReText>
+      <SidebarBadge :badge="item.meta.badge" :type="item.meta.badgeType" />
       <SidebarExtraIcon v-if="!collapse" :extraIcon="item.meta.extraIcon" />
     </template>
 
     <sidebar-item
-      v-for="child in item.children"
+      v-for="child in groupedChildren"
       :key="child.path"
       :is-nest="true"
       :item="asMenuNode(child)"

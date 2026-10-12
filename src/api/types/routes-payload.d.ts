@@ -33,13 +33,39 @@ export interface RouteNode {
   path: string;
   title?: string | null;
   /**
-   * format_menu_meta 仅保留 icon/title/rank/showLink 四键
+   * 菜单元数据。空目录包装层（format_menu_meta）仅保留 icon/title/rank/showLink 四键；真实节点透传 RouteMetaSerializer 的全部键。
    */
   meta?: {
     icon?: string | null;
     title?: string | null;
     rank?: number | null;
     showLink?: boolean | null;
+    /**
+     * 菜单外页面（详情页等）进入时高亮的菜单路径
+     */
+    activePath?: string | null;
+    /**
+     * 菜单徽标文本；纯数字大于 99 时前端显示 99+
+     */
+    badge?: string | null;
+    /**
+     * 徽标形态：normal 显示文本，dot 只显示红点
+     */
+    badgeType?: "normal" | "dot" | null;
+    /**
+     * 菜单项携带的查询参数（存储为 k=v&k2=v2，下发时解析为对象）
+     */
+    query?: {
+      [k: string]: string;
+    } | null;
+    /**
+     * 分组标题：同组同级菜单渲染在该标题之下
+     */
+    groupName?: string | null;
+    /**
+     * 分组排序（同层分组间升序）
+     */
+    groupRank?: number | null;
     [k: string]: unknown;
   };
   /**

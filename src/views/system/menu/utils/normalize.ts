@@ -23,8 +23,19 @@ export const EMPTY_META: MenuMeta = {
   is_hidden_tag: false,
   fixed_tag: false,
   dynamic_level: 0,
-  watermark: false
+  watermark: false,
+  active_path: "",
+  badge: "",
+  badge_type: "normal",
+  query: "",
+  group_name: "",
+  group_rank: null
 };
+
+/** 文本字段归一：空值安全取值 + 去首尾空白（提交前统一收敛） */
+function normalizedText(value: unknown): string {
+  return String(value ?? "").trim();
+}
 
 /** 对象化字段取标量（`{value,label}` → value，兼容裸值） */
 function scalar(value: unknown): unknown {
@@ -68,7 +79,17 @@ export function normalizeMenuRow(raw: Record<string, unknown>): MenuRow {
       ...meta,
       title: String(meta.title ?? ""),
       icon: String(meta.icon ?? ""),
-      watermark: Boolean(meta.watermark)
+      watermark: Boolean(meta.watermark),
+      active_path: String(meta.active_path ?? ""),
+      badge: String(meta.badge ?? ""),
+      // 详情接口对 choices 字段下发 {value,label} 对象（与 menu_type/method 同形）
+      badge_type: String(scalar(meta.badge_type) ?? "normal"),
+      query: String(meta.query ?? ""),
+      group_name: String(meta.group_name ?? ""),
+      group_rank:
+        meta.group_rank === null || meta.group_rank === undefined
+          ? null
+          : Number(meta.group_rank)
     },
     raw,
     children: [],
@@ -261,7 +282,13 @@ export function toPayload(model: MenuFormModel): Record<string, unknown> {
       transition_leave: isMenu ? model.meta.transition_leave : "",
       frame_url: model.meta.frame_url,
       frame_loading: Boolean(model.meta.frame_loading),
-      watermark: Boolean(model.meta.watermark)
+      watermark: Boolean(model.meta.watermark),
+      // 高亮路径与查询参数只在可导航的页面菜单上生效（目录点击只展开、权限点无路由）
+      active_path: isMenu ? normalizedText(model.meta.active_path) : "",
+      query: isMenu ? normalizedText(model.meta.query) : "",
+      badge: normalizedText(model.meta.badge),
+      group_name: normalizedText(model.meta.group_name),
+      group_rank: model.meta.group_rank ?? null
     }
   };
 }

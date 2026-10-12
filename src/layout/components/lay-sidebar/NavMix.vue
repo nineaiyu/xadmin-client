@@ -7,6 +7,7 @@ import { ref, toRaw, computed, watch, onMounted, nextTick } from "vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { getParentPaths, findRouteByPath } from "@/router/utils";
 import { usePermissionStoreHook } from "@/store/modules/permission";
+import { groupMenuChildren } from "@/utils/menuGroups";
 import LaySidebarExtraIcon from "../lay-sidebar/components/SidebarExtraIcon.vue";
 import LaySidebarItem from "./components/SidebarItem.vue";
 import NavbarActions from "../lay-navbar/NavbarActions.vue";
@@ -29,6 +30,11 @@ const { resolvePath } = useNav();
 /** 导航切割开关（默认开，保持历史行为） */
 const navigationSplit = computed(
   () => $storage?.configure?.navigationSplit ?? true
+);
+
+/** 完整菜单树渲染序列：支持一级菜单按 groupName/groupRank 分组（仅影响展示层） */
+const topMenuData = computed(() =>
+  groupMenuChildren(usePermissionStoreHook().wholeMenus)
 );
 
 /** 高亮项：一级菜单取「当前路由所属一级路由的第一个子菜单」 */
@@ -82,11 +88,13 @@ watch(
       popper-class="pure-scrollbar"
       class="horizontal-header-menu"
       :default-active="defaultActive"
+      :show-timeout="300"
+      :hide-timeout="300"
     >
       <!-- 未切割：完整菜单树（一级项下拉二级），与侧栏整树一致 -->
       <template v-if="!navigationSplit">
         <LaySidebarItem
-          v-for="route in usePermissionStoreHook().wholeMenus"
+          v-for="route in topMenuData"
           :key="route.path"
           :item="route as never"
           :base-path="route.path"

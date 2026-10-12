@@ -25,6 +25,18 @@ export interface MenuMeta {
   fixed_tag: boolean;
   dynamic_level: number;
   watermark: boolean;
+  /** 菜单外页面（详情页等）进入时需要高亮的菜单路径 */
+  active_path: string;
+  /** 侧栏徽标文本（纯数字大于 99 显示 99+） */
+  badge: string;
+  /** 徽标形态：normal 文本 / dot 红点 */
+  badge_type: string;
+  /** 点击菜单时携带的查询参数（k=v&k2=v2） */
+  query: string;
+  /** 分组标题：同组同级菜单聚合在标题之下 */
+  group_name: string;
+  /** 分组排序（同层分组升序；空表示按首成员顺序） */
+  group_rank: number | null;
 }
 
 /** 归一化后的菜单行（树节点）：接口字段 + 树/展示派生字段 */

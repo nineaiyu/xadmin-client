@@ -11,7 +11,8 @@ body[layout="mix"] {
   }
 
   .el-menu {
-    --el-menu-hover-bg-color: transparent !important;
+    /* 悬停背景走主题令牌（侧栏与顶栏同口径；菜单项显式 hover 规则带 !important 兜底） */
+    --el-menu-hover-bg-color: var(--pure-theme-menu-hover) !important;
     --el-menu-hover-text-color: var(--pure-theme-menu-text) !important;
   }
 

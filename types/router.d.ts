@@ -60,6 +60,18 @@ declare global {
      * 而通过设置`activePath`指定激活菜单即可获得高亮，`activePath`为指定激活菜单的`path`）
      */
     activePath?: string;
+    /** 侧栏徽标文本（纯数字大于 99 显示 99+；`badgeType: "dot"` 时只显示红点）`可选` */
+    badge?: string | null;
+    /** 徽标形态：`normal` 文本 / `dot` 红点 `可选` */
+    badgeType?: string | null;
+    /** 点击菜单项时携带的查询参数（后端 `k=v&k2=v2` 解析后的对象）`可选` */
+    query?: Record<string, string> | null;
+    /** 分组标题：同组同级菜单聚合在标题之下 `可选` */
+    groupName?: string | null;
+    /** 分组排序（同层分组升序）`可选` */
+    groupRank?: number | null;
+    /** 分组虚拟节点标记（渲染层插入，非后端下发字段）`可选` */
+    group?: boolean;
     /** 当前页面是否已经加载过 */
     loaded?: boolean;
   }
