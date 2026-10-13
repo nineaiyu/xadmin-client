@@ -1,8 +1,8 @@
 export { store } from "@/store";
 export { routerArrays } from "@/layout/types";
 export { getConfig, responsiveStorageNameSpace } from "@/config";
+export { isExternalRoute } from "@/utils/rules/url";
 export {
-  isUrl,
   isEqual,
   isNumber,
   debounce,

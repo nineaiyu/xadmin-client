@@ -7,7 +7,9 @@ import {
   verifyCodeSendApi
 } from "@/api/auth";
 import { useLoginPageStoreHook } from "@/store/modules/loginPage";
-import { isEmail, isEmpty } from "@pureadmin/utils";
+import { isEmpty } from "@pureadmin/utils";
+import { buildEmailRule } from "@/utils/rules/email";
+import { buildPhoneRule } from "@/utils/rules/phone";
 import { useVerifyCode } from "./verifyCode";
 import type { FormRules } from "element-plus";
 import { $t, transformI18n } from "@/plugins/i18n";
@@ -79,36 +81,24 @@ export const useSendVerifyCode = (
   };
 
   const formRules = reactive<FormRules>({
+    // 手机号 / 邮箱规则统一走 @/utils/rules（判定与文案装配同源）；手机号在
+    // 登录 / 注册 / 重置密码页只校验非空（格式由发送接口与后端兜底），用户管理
+    // 表单启用格式校验——差异以显式开关表达，不再散落两份实现（原实现里格式
+    // 校验被注释掉的漂移即在此收敛）。
     phone: [
-      {
+      buildPhoneRule({
         required: true,
-        validator: (rule, value, callback) => {
-          if (value === "") {
-            callback(new Error(transformI18n($t("login.phoneReg"))));
-            // } else if (!isPhone(value)) {
-            //   callback(new Error(transformI18n($t("login.phoneCorrectReg"))));
-          } else {
-            callback();
-          }
-        },
-        trigger: "blur"
-      }
+        requiredMessage: transformI18n($t("login.phoneReg")),
+        formatMessage: transformI18n($t("login.phoneCorrectReg")),
+        formatCheck: false
+      })
     ],
     email: [
-      {
+      buildEmailRule({
         required: true,
-
-        validator: (rule, value, callback) => {
-          if (value === "") {
-            callback(new Error(transformI18n($t("login.emailReg"))));
-          } else if (!isEmail(value)) {
-            callback(new Error(transformI18n($t("login.emailCorrectReg"))));
-          } else {
-            callback();
-          }
-        },
-        trigger: "blur"
-      }
+        requiredMessage: transformI18n($t("login.emailReg")),
+        formatMessage: transformI18n($t("login.emailCorrectReg"))
+      })
     ],
     captcha_code: [
       {

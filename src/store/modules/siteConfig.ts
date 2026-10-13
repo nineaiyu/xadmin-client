@@ -320,7 +320,9 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
                   navbarMoreWidgets: config.NavbarMoreWidgets ?? [],
                   widgetPositions: config.WidgetPositions ?? {},
                   headerMenuAlign: config.HeaderMenuAlign ?? "start",
-                  sidebarCollapseWidth: config.SidebarCollapseWidth ?? 54,
+                  // 缺省值与 layout/hooks/preferenceAttributes 的
+                  // DEFAULT_SIDEBAR_COLLAPSE_WIDTH 同源（60），勿用历史值
+                  sidebarCollapseWidth: config.SidebarCollapseWidth ?? 60,
                   sidebarMixedWidth: config.SidebarMixedWidth ?? 0,
                   sidebarHidden: config.SidebarHidden ?? false,
                   sidebarFixedButton: config.SidebarFixedButton ?? false,
@@ -331,7 +333,8 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
                   tagsShowRefresh: config.TagsShowRefresh ?? true,
                   tagsShowMore: config.TagsShowMore ?? true,
                   tagsShowMaximize: config.TagsShowMaximize ?? false,
-                  tagsHeight: config.TagsHeight ?? 34,
+                  // 与 layout/hooks/preferenceAttributes 的 DEFAULT_TAGS_HEIGHT 同源（38）
+                  tagsHeight: config.TagsHeight ?? 38,
                   tagsKeepAlive: config.TagsKeepAlive ?? true,
                   tagsVisitHistory: config.TagsVisitHistory ?? true,
                   dynamicTitle: config.DynamicTitle ?? true,

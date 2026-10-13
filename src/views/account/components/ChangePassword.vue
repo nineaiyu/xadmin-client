@@ -6,6 +6,7 @@ import { isAllEmpty } from "@pureadmin/utils";
 import { ZxcvbnFactory } from "@zxcvbn-ts/core";
 import { useI18n } from "vue-i18n";
 import { passwordRulesCheck } from "@/utils";
+import { buildRepeatPasswordValidator } from "@/utils/rules/confirmPassword";
 import { passwordStrengthLevels } from "@/utils/password";
 import { rulesPasswordApi } from "@/api/auth";
 import { handleOperation } from "@/components/RePlusPage";
@@ -89,14 +90,13 @@ const formPasswordRules = reactive<FormRules>({
     }
   ],
   sure_password: [
+    // 一致性校验与登录/注册/重置密码页同源（@/utils/rules/confirmPassword）；
+    // 本页非必填（仅比对），空值放行
     {
-      validator: (rule, value, callback) => {
-        if (value !== password.value.new_password) {
-          callback(new Error(t("login.passwordDifferentReg")));
-        } else {
-          callback();
-        }
-      },
+      validator: buildRepeatPasswordValidator({
+        getPassword: () => password.value.new_password,
+        mismatchMessage: t("login.passwordDifferentReg")
+      }),
       trigger: "blur"
     }
   ]

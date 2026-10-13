@@ -62,18 +62,18 @@ app.component(
   )
 );
 
-// 全局注册vue-tippy
-import "tippy.js/dist/tippy.css";
-import "tippy.js/themes/light.css";
-import VueTippy from "vue-tippy";
 import { getToken } from "@/utils/auth";
 import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
-app.use(VueTippy);
 
-// WebSocket 重连前无感刷新 token：由入口注入刷新器（utils 层不直连 api 层）
-import { setReconnectTokenProvider } from "@/utils/websocket";
-import { getUsedAccessToken } from "@/utils/http/accessToken";
-setReconnectTokenProvider(getUsedAccessToken);
+// WebSocket 重连前无感刷新 token：由入口注入刷新器（utils 层不直连 api 层）。
+// 延迟注入：WS 客户端仅在登录后建连时才需要，静态导入会把 WS 客户端与 http
+// 层一并拖进首屏闭包（见 scripts/check-entry-closure.mjs 的入口白名单）。
+void Promise.all([
+  import("@/utils/websocket"),
+  import("@/utils/http/accessToken")
+]).then(([ws, token]) => {
+  ws.setReconnectTokenProvider(token.getUsedAccessToken);
+});
 
 getPlatformConfig(app).then(async config => {
   injectResponsiveStorage(app, config);

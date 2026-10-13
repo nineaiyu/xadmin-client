@@ -6,9 +6,9 @@ import { useRoute } from "vue-router";
 import { loadEcharts } from "@/plugins/echarts";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
+import { useDialogForm } from "@/hooks/useDialogForm";
 import { message } from "@/utils/message";
 import { copyText } from "@/utils/clipboard";
-import { isSuccess } from "@/api/types";
 import { hasAuth } from "@/router/utils";
 import { monitorApi, type MonitorMetric } from "@/api/system/monitor";
 import HealthBanner from "./components/HealthBanner.vue";
@@ -133,6 +133,15 @@ const openThresholdDialog = () => {
     return;
   }
   thresholdFormRef.value = undefined;
+  // 显式指定载荷泛型：ref 包装的实例类型无法从 getPayload 返回类型反推（TS 退化 unknown）
+  const { beforeSure } = useDialogForm<Record<string, number>>({
+    formRef: thresholdFormRef,
+    submit: payload => saveThresholds(payload),
+    successText: t("systemMonitor.thresholdSaved"),
+    failType: "error",
+    // 先关弹窗再刷新（刷新慢时不滞留弹窗）；useDialogForm 内 done 先于回调
+    onSuccess: () => fetchThresholds()
+  });
   addDialog({
     title: t("systemMonitor.thresholdSettings"),
     width: dialogSize("sm"),
@@ -145,23 +154,7 @@ const openThresholdDialog = () => {
         ref: thresholdFormRef,
         items: thresholds.value?.items ?? []
       }),
-    beforeSure: async (done, { closeLoading }) => {
-      const payload = thresholdFormRef.value?.getPayload();
-      if (!payload) {
-        closeLoading();
-        return;
-      }
-      const res = await saveThresholds(payload);
-      if (isSuccess(res)) {
-        message(t("systemMonitor.thresholdSaved"), { type: "success" });
-        // 先关弹窗再刷新（刷新慢时不滞留弹窗）
-        done();
-        await fetchThresholds();
-        return;
-      }
-      if (res.detail) message(String(res.detail), { type: "error" });
-      closeLoading();
-    }
+    beforeSure
   });
 };
 

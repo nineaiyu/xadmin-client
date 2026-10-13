@@ -1,4 +1,4 @@
-import { isPhone } from "@pureadmin/utils";
+import { buildPhoneRule } from "@/utils/rules/phone";
 import { buildPasswordValidator } from "./passwordRules";
 import type { useI18n } from "vue-i18n";
 import type { PasswordRule } from "@/api/auth";
@@ -41,22 +41,8 @@ export function buildUserFormRules({
       }
     ],
     phone: [
-      {
-        validator: (
-          _rule: unknown,
-          value: string | undefined,
-          callback: (error?: Error) => void
-        ) => {
-          if (value === "" || !value) {
-            callback();
-          } else if (!isPhone(value)) {
-            callback(new Error(t("login.phoneCorrectReg")));
-          } else {
-            callback();
-          }
-        },
-        trigger: "blur"
-      }
+      // 选填：为空放行，填写时按手机号格式校验（判定与提示见 @/utils/rules/phone）
+      buildPhoneRule({ formatMessage: t("login.phoneCorrectReg") })
     ]
   };
 }

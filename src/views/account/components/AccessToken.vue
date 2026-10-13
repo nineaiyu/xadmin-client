@@ -9,9 +9,9 @@ import {
   closeDialog,
   type DialogOptions
 } from "@/components/ReDialog";
-import { message } from "@/utils/message";
 import { copyText } from "@/utils/clipboard";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useDialogForm } from "@/hooks/useDialogForm";
 import {
   handleOperation,
   RePlusPage,
@@ -31,7 +31,6 @@ import Location from "~icons/ep/location";
 import Document from "~icons/ep/document";
 import Plus from "~icons/ep/plus";
 import { dialogSize } from "@/components/ReDialog/size";
-import { normalizeError } from "@/utils/apiError";
 
 defineOptions({ name: "AccessToken" });
 
@@ -121,6 +120,21 @@ const createFormRef = ref<InstanceType<typeof AccessTokenCreateForm>>();
 
 const openCreate = () => {
   createFormRef.value = undefined;
+  // 显式指定载荷泛型：ref 包装的实例类型无法从 getPayload 返回类型反推（TS 退化 unknown）
+  const { beforeSure } = useDialogForm<Record<string, unknown>>({
+    formRef: createFormRef,
+    submit: payload =>
+      personalAccessTokenApi.create<{ token?: string }>(payload),
+    // 先关创建弹窗再打开明文弹层（避免双弹窗叠层），再刷新列表
+    // （useDialogForm 内 done 先于回调）
+    onSuccess: res => {
+      const token = String(
+        (res.data as { token?: string } | null | undefined)?.token ?? ""
+      );
+      openPlainToken(token);
+      refresh();
+    }
+  });
   addDialog({
     title: t("accessToken.createDialogTitle"),
     width: dialogSize("md"),
@@ -129,27 +143,7 @@ const openCreate = () => {
     closeOnClickModal: false,
     sureBtnLoading: true,
     contentRenderer: () => h(AccessTokenCreateForm, { ref: createFormRef }),
-    beforeSure: async (done, { closeLoading }) => {
-      const payload = createFormRef.value?.getPayload();
-      if (!payload) {
-        closeLoading();
-        return;
-      }
-      // 异常归一为可读失败结果：避免请求异常时 beforeSure 抛错、弹窗 loading 悬挂
-      const res = await personalAccessTokenApi
-        .create<{ token?: string }>(payload)
-        .catch(normalizeError);
-      if (isSuccess(res)) {
-        const token = String(res.data?.token ?? "");
-        // 先关创建弹窗再打开明文弹层，避免双弹窗叠层
-        done();
-        openPlainToken(token);
-        refresh();
-        return;
-      }
-      if (res.detail) message(String(res.detail), { type: "warning" });
-      closeLoading();
-    }
+    beforeSure
   });
 };
 

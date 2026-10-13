@@ -1,3 +1,5 @@
+@use "nav-palette" as nav;
+
 /* ================ 半暗顶栏（设置面板 →「布局」→「顶栏」→「半暗顶栏」） ================
    浅色外观下顶栏保持深色调色板（内容区与页签条维持浅色，与 vben 的 semiDarkHeader 口径一致）。
    - 底色：`.navbar` 浅色态由 Tailwind `bg-white` 给色；本文件不在 Tailwind 的
@@ -8,6 +10,10 @@
    - 暗色外观本身即深色，`:not(.dark)` 让该类自动失效。 */
 html.semi-dark-header:not(.dark) {
   .navbar {
+    /* 顶栏内嵌的一级菜单（混合系布局）与品牌区同源消费菜单调色板：在顶栏作用域
+       重绑深色调色板，否则菜单文字 / 品牌标题仍是浅色主题的深色，落在深底上不可见 */
+    @include nav.nav-dark-palette;
+
     color: rgb(254 254 254 / 85%);
     background: #1d2b45;
 
@@ -15,7 +21,12 @@ html.semi-dark-header:not(.dark) {
     .breadcrumb-container,
     .vertical-header-right,
     .vertical-header-right .el-dropdown-link,
-    .el-dropdown-link {
+    .el-dropdown-link,
+    /* 品牌标题（顶栏 Logo 文字）与面包屑内层：走 EP 文字色（--el-text-color-primary）
+       等显式色，不随菜单调色板，需在半暗顶栏下显式转浅（否则深字落深底不可见） */
+    .navbar-logo__title,
+    .breadcrumb-container .el-breadcrumb__inner,
+    .breadcrumb-container .el-breadcrumb__separator {
       color: rgb(254 254 254 / 85%);
     }
 

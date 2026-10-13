@@ -1,13 +1,13 @@
 <script lang="ts" setup>
 import { computed } from "vue";
-import { isUrl } from "@pureadmin/utils";
+import { isExternalRoute } from "@/utils/rules/url";
 import { menuType } from "@/layout/types";
 
 const props = defineProps<{
   to: menuType;
 }>();
 
-const isExternalLink = computed(() => isUrl(props.to.name ?? ""));
+const isExternalLink = computed(() => isExternalRoute(props.to.name ?? ""));
 
 /** 菜单项携带的查询参数（后端 meta.query 解析对象）：附加到路由跳转上，如 /list?status=pending */
 const menuQuery = computed<Record<string, string>>(() => {

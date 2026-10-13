@@ -3,6 +3,7 @@ import type { FormRules } from "element-plus";
 import { $t, transformI18n } from "@/plugins/i18n";
 import { AesEncrypted } from "@/utils/aes";
 import { passwordRulesCheck } from "@/utils";
+import { buildRepeatPasswordValidator } from "@/utils/rules/confirmPassword";
 import { useLoginPageStoreHook } from "@/store/modules/loginPage";
 import { LOGIN_PAGE } from "./enums";
 import type { PasswordRule } from "@/api/auth";
@@ -95,19 +96,16 @@ export function createPasswordFormRules(options: {
       }
     ],
     repeatPassword: [
+      // 一致性校验与改密弹窗同源（@/utils/rules/confirmPassword）；
+      // 本页为必填口径（注册 / 重置密码），空值提示用「请再次输入密码」
       {
         required: true,
-        validator: (rule, value, callback) => {
-          if (value === "") {
-            callback(new Error(transformI18n($t("login.passwordSureReg"))));
-          } else if (options.getPassword() !== value) {
-            callback(
-              new Error(transformI18n($t("login.passwordDifferentReg")))
-            );
-          } else {
-            callback();
-          }
-        },
+        validator: buildRepeatPasswordValidator({
+          required: true,
+          getPassword: options.getPassword,
+          requiredMessage: transformI18n($t("login.passwordSureReg")),
+          mismatchMessage: transformI18n($t("login.passwordDifferentReg"))
+        }),
         trigger: "blur"
       }
     ]

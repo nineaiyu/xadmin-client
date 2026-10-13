@@ -9,6 +9,7 @@ import {
 import { dialogSize } from "@/components/ReDialog/size";
 import { message } from "@/utils/message";
 import { normalizeError } from "@/utils/apiError";
+import { useDialogForm } from "@/hooks/useDialogForm";
 import { submissionApi } from "@/api/dataset/dform";
 import SubmissionForm from "../components/SubmissionForm.vue";
 import type { FillableFormItem, SubmissionItem } from "@/api/dataset/dform";
@@ -56,6 +57,29 @@ export function createSubmissionFormOpener({
       if (res.detail) message(String(res.detail), { type: "warning" });
     };
 
+    // 显式指定载荷泛型：ref 包装的实例类型无法从 getPayload 返回类型反推（TS 退化 unknown）
+    const { beforeSure } = useDialogForm<Record<string, unknown>>({
+      readPayload: () => {
+        // 客户端必填预检（联动显隐后的可见字段）：缺失时定位提示并中止提交；
+        // 类型/格式等规则仍以服务端按 schema 校验为准（草稿保存不做必填预检）
+        const missing = submissionFormRef.value?.validateRequired();
+        if (missing) {
+          message(t("dform.requiredFieldMissing", { name: missing.label }), {
+            type: "warning"
+          });
+          return null;
+        }
+        return submissionFormRef.value?.getPayload();
+      },
+      submit: payload =>
+        submission
+          ? submissionApi.partialUpdate(submission.pk, payload)
+          : submissionApi.create(payload),
+      successText: t("dform.saveOk"),
+      // 先关弹窗再刷新列表（避免刷新耗时导致弹窗滞留；useDialogForm 内 done 先于回调）
+      onSuccess: refresh
+    });
+
     const options: DialogOptions = {
       title: submission ? t("dform.editSubmission") : form.name,
       width: dialogSize("md"),
@@ -81,38 +105,7 @@ export function createSubmissionFormOpener({
               ])
             : null
         ]),
-      beforeSure: async (done, { closeLoading }) => {
-        // 客户端必填预检（联动显隐后的可见字段）：缺失时定位提示并中止提交；
-        // 类型/格式等规则仍以服务端按 schema 校验为准（草稿保存不做必填预检）
-        const missing = submissionFormRef.value?.validateRequired();
-        if (missing) {
-          message(t("dform.requiredFieldMissing", { name: missing.label }), {
-            type: "warning"
-          });
-          closeLoading();
-          return;
-        }
-        const payload = submissionFormRef.value?.getPayload();
-        if (!payload) {
-          closeLoading();
-          return;
-        }
-        // 异常归一为可读失败结果：避免请求异常时 beforeSure 抛错、弹窗 loading 悬挂
-        const res = await (
-          submission
-            ? submissionApi.partialUpdate(submission.pk, payload)
-            : submissionApi.create(payload)
-        ).catch(normalizeError);
-        if (isSuccess(res)) {
-          message(t("dform.saveOk"), { type: "success" });
-          // 先关弹窗再刷新列表（避免刷新耗时导致弹窗滞留）
-          done();
-          refresh();
-          return;
-        }
-        if (res.detail) message(String(res.detail), { type: "warning" });
-        closeLoading();
-      }
+      beforeSure
     };
     addDialog(options);
   };

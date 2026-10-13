@@ -21,19 +21,14 @@
     "@/store",
     "@/store/modules/siteConfig",
     "@/utils/auth",
-    "@/utils/http/accessToken",
     "@/utils/platform",
     "@/utils/preferences",
     "@/utils/responsive",
-    "@/utils/websocket",
     "@/views/system/apiSearch",
     "@pureadmin/utils",
     "@vueuse/motion",
     "plus-pro-components/index.css",
-    "tippy.js/dist/tippy.css",
-    "tippy.js/themes/light.css",
-    "vue",
-    "vue-tippy"
+    "vue"
   ],
   "src/App.vue": [
     "@/components/ReDialog",

@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
+import type { UploadPayload } from "../utils/knowledgePayload";
 
 /**
  * 上传知识库文档：文本入库，不落文件系统。
@@ -77,10 +78,7 @@ const onFileChange = (event: Event) => {
   reader.readAsText(file, "utf-8");
 };
 
-/** 提交载荷（与后端契约同构的判别联合：文本直传 / 二进制解析二选一） */
-type UploadPayload =
-  | { name: string; content: string }
-  | { name: string; file_type: "pdf" | "docx"; file_b64: string };
+/** 提交载荷（声明归 utils/knowledgePayload，打开方的提交底座复用同一份） */
 
 /** 校验并生成提交载荷；校验失败返回 null（调用方保持弹窗打开） */
 const getPayload = (): UploadPayload | null => {

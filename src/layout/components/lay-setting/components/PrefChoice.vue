@@ -10,8 +10,10 @@ withDefaults(
     modelValue: string;
     /** 卡片内容区最小高度（预览卡用，如 34px） */
     previewHeight?: number;
+    /** 整组只读（如站点级配置对非管理员）：置于选项自身 disabled 之前 */
+    disabled?: boolean;
   }>(),
-  { previewHeight: 0 }
+  { previewHeight: 0, disabled: false }
 );
 
 const emit = defineEmits<{ change: [value: string] }>();
@@ -26,7 +28,7 @@ const emit = defineEmits<{ change: [value: string] }>();
         :class="{ 'is-active': item.value === modelValue }"
         :data-choice="item.value"
         :aria-pressed="item.value === modelValue"
-        :disabled="item.disabled"
+        :disabled="disabled || item.disabled"
         :title="item.tip || item.label"
         @click="emit('change', item.value)"
       >

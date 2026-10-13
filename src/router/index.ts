@@ -11,7 +11,8 @@ import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import { useUserStoreHook } from "@/store/modules/user";
 import type { RouteConfigs } from "@/layout/types";
-import { isUrl, openLink, cloneDeep, isAllEmpty } from "@pureadmin/utils";
+import { openLink, cloneDeep, isAllEmpty } from "@pureadmin/utils";
+import { isExternalRoute } from "@/utils/rules/url";
 import { clearRouteSnapshot } from "@/utils/routeSnapshot";
 import { readConfigurePreferences } from "@/utils/preferences";
 import { useRouteLoading } from "@/utils/routeLoading";
@@ -116,7 +117,7 @@ router.beforeEach((to: ToRouteType, _from) => {
     }
   }
   const refresh = getRefreshToken();
-  const externalLink = isUrl(to?.name as string);
+  const externalLink = isExternalRoute(to?.name as string);
   // 动态标题关闭时保持平台标题不随路由变化（偏好在设置面板 →「动态标题」）
   if (!externalLink && readConfigurePreferences().dynamicTitle !== false) {
     to.matched.some(item => {

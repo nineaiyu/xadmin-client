@@ -8,6 +8,7 @@
 @use "header-mixed-nav";
 @use "full-content";
 @use "sidebar-narrow";
+@use "../nav-palette" as nav;
 
 /* ================ 半暗侧栏（设置面板 →「布局」→「半暗侧栏」/「半暗子侧栏」） ================
    浅色外观下让侧栏保持深色调色板（顶栏与内容区维持浅色）。
@@ -18,33 +19,20 @@
    - 「半暗子侧栏」（semi-dark-sidebar-sub）只作用于双列布局的次级侧栏
      （双列菜单 / 混合双列），与主开关可独立启用。 */
 
-/** 深色侧栏调色板（暗色外观下由 `:not(.dark)` 自动失效） */
-@mixin sidebar-dark-palette {
-  /* 侧栏容器底色由 `--sidebar`（= var(--pure-theme-menu-bg)）驱动，但它在 `:root`
-     已按浅色主题求值成字面量（白），后代覆盖 menu-bg **不会回填**——需在此作用域内
-     重新绑定，否则半暗侧栏下容器仍是白底，与调色板的浅色菜单文字相撞而不可见。
-     `--sidebar-deep`（双列一级窄列底色 = var(--sidebar)）同理，需一并重绑。 */
-  --sidebar: var(--pure-theme-menu-bg);
-  --sidebar-deep: var(--pure-theme-menu-bg);
-  --pure-theme-menu-bg: #1d2b45;
-  --pure-theme-sub-menu-bg: #14203a;
-  --pure-theme-menu-hover: rgb(64 145 247 / 15%);
-  --pure-theme-menu-text: rgb(254 254 254 / 65%);
-  --pure-theme-sub-menu-active-text: #fff;
-  --pure-theme-menu-title-hover: #fff;
-}
+/* 深色调色板 mixin 与半暗顶栏共用（含 `--sidebar` / `--sidebar-deep` 派生变量
+   的重绑说明），定义见 style/_nav-palette.scss */
 
 html.semi-dark-sidebar:not(.dark) {
   .sidebar-container {
     --pure-theme-sidebar-logo: #17253f;
 
-    @include sidebar-dark-palette;
+    @include nav.nav-dark-palette;
   }
 
   /* 折叠态 hover 弹出的子菜单 teleport 到 body（popper-class="pure-scrollbar"），
      不在 .sidebar-container 内，需单独覆盖同一组令牌 */
   .el-popper.pure-scrollbar {
-    @include sidebar-dark-palette;
+    @include nav.nav-dark-palette;
   }
 }
 
@@ -56,13 +44,13 @@ html.semi-dark-sidebar-sub:not(.dark) body[layout="header-mixed-nav"] {
   .sidebar-container .sidebar-main {
     --pure-theme-sidebar-logo: #17253f;
 
-    @include sidebar-dark-palette;
+    @include nav.nav-dark-palette;
 
     /* 次级列自身铺底色：容器底色由 --sidebar 提供，此处只让第二列变深 */
     background: var(--pure-theme-menu-bg);
   }
 
   .el-popper.pure-scrollbar {
-    @include sidebar-dark-palette;
+    @include nav.nav-dark-palette;
   }
 }

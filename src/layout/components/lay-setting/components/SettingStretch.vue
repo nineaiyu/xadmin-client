@@ -58,7 +58,9 @@ function onChoiceChange(value: string) {
 
 <template>
   <PrefBlock
-    v-if="useAppStoreHook().getViewportWidth > BREAKPOINTS.xl"
+    v-if="
+      useAppStoreHook().getViewportWidth > BREAKPOINTS.xl || current === 'fixed'
+    "
     :title="t('layout.pageWidth')"
     :icon="WidthLine"
     list

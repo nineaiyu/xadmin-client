@@ -1,12 +1,14 @@
 /**
- * 登录策略预演样例 IP 校验（纯函数，配 vitest）。
+ * IP 地址严格校验（唯一入口，纯函数）。
  *
  * 口径对齐服务端 `common/utils/ip/utils.py::is_ip_address`（Python
  * `ipaddress.ip_address` 严格解析）：
  * - IPv4 每段 0-255 且不接受前导零（`01.2.3.4` 服务端即按非法处理）；
  * - IPv6 接受 RFC 4291 完整/压缩形态（`::` 压缩至多一处、IPv4 映射尾按 2 组计）；
- * - 只收单个样例地址：CIDR / `a-b` 区间 / `*` / zone index（`fe80::1%eth0`）
+ * - 只收单个地址：CIDR / `a-b` 区间 / `*` / zone index（`fe80::1%eth0`）
  *   均不合法——那些是策略配置面的写法，预演输入是具体的一次登录来源。
+ *
+ * 原先只服务登录策略预演页，现下沉为通用 IP 判定，供任意「输入单个 IP」的场景复用。
  */
 
 export function isIPv4(value: string): boolean {
@@ -53,4 +55,9 @@ export function isIPv6(value: string): boolean {
 
   // 无压缩：恰 8 组；有压缩：显式组最多 7（:: 至少替代 1 组，`::` 本身即全零地址）
   return sections.length === 2 ? count <= 7 : count === 8;
+}
+
+/** 单个 IP 地址（IPv4 或 IPv6）判定 */
+export function isIpAddress(value: string): boolean {
+  return isIPv4(value) || isIPv6(value);
 }

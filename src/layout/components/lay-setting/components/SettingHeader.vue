@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 // 系统设置面板「布局」：顶栏（固定方式、面包屑与顶栏组件显隐）
 import { computed } from "vue";
-import { useGlobal } from "@pureadmin/utils";
+import { useDark, useGlobal } from "@pureadmin/utils";
 import { useNav } from "@/layout/hooks/useNav";
 import { hasHeaderMenu, resolveHeaderMode } from "@/layout/hooks/layoutModes";
 import { useConfigureStorage } from "../hooks/useConfigureStorage";
@@ -16,6 +16,7 @@ import LayoutTopLine from "~icons/ri/layout-top-line";
 const { t } = useNav();
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 const { storageConfigureChange } = useConfigureStorage();
+const { isDark } = useDark();
 
 /** 布尔偏好双向绑定：读存储（缺省回落平台默认值），写回响应式存储并触发自动保存 */
 function booleanSetting(key: string, fallback: boolean) {
@@ -282,11 +283,13 @@ const menuAlignOptions = computed<PrefChoiceOption[]>(() => [
     <PrefRow
       :label="t('layout.semiDarkHeader')"
       :tip="t('layout.semiDarkHeaderTip')"
+      :disabled="isDark"
     >
       <template #control>
         <el-switch
           v-model="semiDarkHeader"
           :active-text="t('labels.active')"
+          :disabled="isDark"
           :inactive-text="t('labels.inactive')"
           inline-prompt
         />

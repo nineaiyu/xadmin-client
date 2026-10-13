@@ -1534,9 +1534,11 @@ test.describe("布局偏好（面板实时生效）", () => {
         .locator(".sidebar-container")
         .first()
         .evaluate(el => getComputedStyle(el).backgroundColor);
+    // 断言普通菜单项（排除激活项）：激活项取 --pure-theme-sub-menu-active-text（#fff）
+    // 属设计口径，选 .first() 会命中激活的「首页」而误报
     const itemColor = () =>
       page
-        .locator(".sidebar-container .el-menu-item")
+        .locator(".sidebar-container .el-menu-item:not(.is-active)")
         .first()
         .evaluate(el => getComputedStyle(el).color);
     await expect.poll(containerBg, { timeout: 10_000 }).toBe("rgb(29, 43, 69)");
@@ -2076,6 +2078,10 @@ test.describe("布局偏好（面板实时生效）", () => {
     await switchSettingTab(page, "布局");
     await setSwitch(page, "悬停展开", false, "SidebarExpandOnHover");
     await closePanel(page);
+    // closePanel 的遮罩点击落在侧栏区域内（x≈120），会先触发一次悬停展开；
+    // 先把鼠标移出侧栏并等折叠态稳定，再做负断言（否则状态残留导致 flaky）
+    await page.mouse.move(900, 300);
+    await expect(collapsed).toHaveCount(1, { timeout: 10_000 });
     const boxAfter = await sidebar.boundingBox();
     await page.mouse.move((boxAfter?.x ?? 0) + 20, (boxAfter?.y ?? 0) + 300);
     await page.waitForTimeout(300);

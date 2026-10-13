@@ -440,6 +440,7 @@ layout:
   siteTitle: 站点标题
   siteTitleTip: 侧栏 / 顶栏品牌区与浏览器标签页的站点名（留空用平台配置的 Title）
   siteTitlePlaceholder: 如：xAdmin 管理平台
+  siteWideAdminOnly: 站点级外观配置全局生效（所有账号与登录页一致），仅管理员可修改
   language: 语言
   languageTip: 界面语言，与顶栏语言切换为同一入口
   headerAutoHide: 顶栏自动隐藏

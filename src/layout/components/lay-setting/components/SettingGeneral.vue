@@ -18,6 +18,7 @@ import { resolveHeaderMode } from "@/layout/hooks/layoutModes";
 import { resolveTimezoneOptions } from "@/layout/hooks/timezoneOptions";
 import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
 import { useConfigureStorage } from "../hooks/useConfigureStorage";
+import { useSiteWideEdit } from "../hooks/useSiteWideEdit";
 import PrefBlock from "./PrefBlock.vue";
 import PrefRow from "./PrefRow.vue";
 import PrefChoice from "./PrefChoice.vue";
@@ -31,6 +32,7 @@ const { t, changeTitle } = useNav();
 const router = useRouter();
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 const { storageConfigureChange } = useConfigureStorage();
+const { siteWideEditable } = useSiteWideEdit();
 const confirm = useConfirm();
 const { locale, translationCh, translationEn } = useTranslationLang();
 
@@ -119,6 +121,10 @@ const authPageLayoutOptions = computed<PrefChoiceOption[]>(() => [
   { value: "panel-right", label: t("layout.authPanelRight") }
 ]);
 
+/** 站点级行提示：只读时替换为「仅管理员可修改」，解释为何控件不可用 */
+const siteWideTip = (tipKey: string) =>
+  siteWideEditable.value ? t(tipKey) : t("layout.siteWideAdminOnly");
+
 /** 设置入口总开关（关闭前二次确认并给出恢复路径） */
 const prefsEnabled = computed(
   () => $storage?.configure?.enablePreferences ?? true
@@ -193,13 +199,18 @@ async function checkUpdate() {
 
 <template>
   <PrefBlock :title="t('layout.general')" :icon="SettingLine" list flush>
-    <PrefRow :label="t('layout.siteTitle')" :tip="t('layout.siteTitleTip')">
+    <PrefRow
+      :label="t('layout.siteTitle')"
+      :tip="siteWideTip('layout.siteTitleTip')"
+      :disabled="!siteWideEditable"
+    >
       <template #control>
         <el-input
           v-model="settings.title"
           size="small"
           class="w-36"
           maxlength="24"
+          :disabled="!siteWideEditable"
           :placeholder="t('layout.siteTitlePlaceholder')"
           @change="titleChange"
         />
@@ -282,13 +293,15 @@ async function checkUpdate() {
   <PrefBlock :title="t('layout.authPage')" :icon="SettingLine" list flush>
     <PrefRow
       :label="t('layout.authPageLayout')"
-      :tip="t('layout.authPageLayoutTip')"
+      :tip="siteWideTip('layout.authPageLayoutTip')"
+      :disabled="!siteWideEditable"
       stack
     >
       <template #control>
         <PrefChoice
           :options="authPageLayoutOptions"
           :model-value="authPageLayout"
+          :disabled="!siteWideEditable"
           @change="value => (authPageLayout = value)"
         />
       </template>

@@ -4,7 +4,7 @@ import { useI18n } from "vue-i18n";
 import { type FormInstance, type FormItemRule } from "element-plus";
 import dayjs from "dayjs";
 import { loginPolicyApi, type LoginPolicyPreview } from "@/api/system/security";
-import { isIPv4, isIPv6 } from "../utils/sampleIp";
+import { isIPv4, isIPv6 } from "@/utils/rules/ip";
 import { message } from "@/utils/message";
 import { isSuccess } from "@/api/types";
 

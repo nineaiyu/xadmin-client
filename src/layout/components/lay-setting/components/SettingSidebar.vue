@@ -14,17 +14,11 @@ import {
   normalizeSidebarMixedWidth,
   normalizeSidebarWidth
 } from "@/layout/hooks/usePreferenceAttributes";
-import {
-  DEFAULT_FULL_LOGO_HEIGHT,
-  FULL_LOGO_HEIGHT_RANGE,
-  normalizeFullLogoHeight,
-  resolveLogoMode
-} from "@/layout/hooks/logoPreferences";
 import { useConfigureStorage } from "../hooks/useConfigureStorage";
 import PrefBlock from "./PrefBlock.vue";
 import PrefRow from "./PrefRow.vue";
-import PrefChoice from "./PrefChoice.vue";
-import type { PrefChoiceOption } from "./prefTypes";
+// 品牌位（Logo）设置行自本组件拆出：内容较多且承载站点级只读态
+import SettingLogoSettings from "./SettingLogoSettings.vue";
 
 import SidebarLine from "~icons/ri/side-bar-line";
 
@@ -38,16 +32,6 @@ const sidebarWidth = computed<number>({
   get: () => $storage?.configure?.sidebarWidth ?? DEFAULT_SIDEBAR_WIDTH,
   set: value =>
     storageConfigureChange("sidebarWidth", normalizeSidebarWidth(value))
-});
-
-/**
- * 侧栏 Logo 图片显隐：与「Logo 文字」两个开关正交——只关图片时标题仍在，
- * 两者都关时品牌位整体收起。走响应式 `$storage.configure`（跨组件天然同步），
- * 不再经 emitter 广播（历史实现：ref + logoChange 事件）。
- */
-const showLogo = computed({
-  get: () => $storage?.configure?.showLogo ?? true,
-  set: value => storageConfigureChange("showLogo", value)
 });
 
 /** 侧栏手风琴：同级菜单只展开一项（NavVertical 的 el-menu unique-opened） */
@@ -83,42 +67,6 @@ const sidebarExpandOnHover = computed({
   set: value => storageConfigureChange("sidebarExpandOnHover", value)
 });
 
-/** Logo 自定义：图片地址（空 = 内置资源）/ 标题文字显隐 / 图片填充方式 */
-const logoSource = computed({
-  get: () => $storage?.configure?.logoSource ?? "",
-  set: value => storageConfigureChange("logoSource", String(value ?? "").trim())
-});
-const logoShowText = computed({
-  get: () => $storage?.configure?.logoShowText ?? true,
-  set: value => storageConfigureChange("logoShowText", value)
-});
-const logoFit = computed({
-  get: () => $storage?.configure?.logoFit ?? "contain",
-  set: value => storageConfigureChange("logoFit", value)
-});
-
-/** Logo 形态：图标（图标 + 标题文字）/ 整图（图片含文字，按整图高度渲染） */
-const logoMode = computed<"icon" | "full">({
-  get: () => resolveLogoMode($storage?.configure),
-  set: value => storageConfigureChange("logoMode", value)
-});
-const logoModeOptions = computed<PrefChoiceOption[]>(() => [
-  { value: "icon", label: t("layout.logoModeIcon") },
-  { value: "full", label: t("layout.logoModeFull") }
-]);
-/** 整图高度（px）：仅整图形态生效 */
-const fullLogoHeight = computed<number>({
-  get: () => $storage?.configure?.fullLogoHeight ?? DEFAULT_FULL_LOGO_HEIGHT,
-  set: value =>
-    storageConfigureChange("fullLogoHeight", normalizeFullLogoHeight(value))
-});
-/** 暗色外观专用图（空 = 与浅色共用） */
-const logoSourceDark = computed({
-  get: () => $storage?.configure?.logoSourceDark ?? "",
-  set: value =>
-    storageConfigureChange("logoSourceDark", String(value ?? "").trim())
-});
-
 /** 折叠宽度 / 混合布局宽度：写入内联 CSS 变量（见 usePreferenceAttributes） */
 const sidebarCollapseWidth = computed<number>({
   get: () =>
@@ -151,14 +99,6 @@ const sidebarExtraCollapse = computed({
   get: () => $storage?.configure?.sidebarExtraCollapse ?? false,
   set: value => storageConfigureChange("sidebarExtraCollapse", value)
 });
-
-const logoFitOptions = computed(() => [
-  { value: "contain", label: t("layout.logoFitContain") },
-  { value: "cover", label: t("layout.logoFitCover") },
-  { value: "fill", label: t("layout.logoFitFill") },
-  { value: "none", label: t("layout.logoFitNone") },
-  { value: "scale-down", label: t("layout.logoFitScaleDown") }
-]);
 
 /** 侧栏右缘拖拽调宽把手（松开时保存宽度） */
 const sidebarDraggable = computed({
@@ -207,95 +147,7 @@ const sidebarAutoActivateChild = computed({
         />
       </template>
     </PrefRow>
-    <PrefRow :label="t('layout.sidebarLogo')" :tip="t('layout.sidebarLogoTip')">
-      <template #control>
-        <el-switch
-          v-model="showLogo"
-          :active-text="t('labels.active')"
-          :active-value="true"
-          :inactive-text="t('labels.inactive')"
-          :inactive-value="false"
-          inline-prompt
-        />
-      </template>
-    </PrefRow>
-    <PrefRow :label="t('layout.logoSource')" :tip="t('layout.logoSourceTip')">
-      <template #control>
-        <el-input
-          v-model="logoSource"
-          :placeholder="t('layout.logoSourcePlaceholder')"
-          size="small"
-          clearable
-          style="width: 168px"
-        />
-      </template>
-    </PrefRow>
-    <PrefRow
-      :label="t('layout.logoShowText')"
-      :tip="t('layout.logoShowTextTip')"
-    >
-      <template #control>
-        <el-switch
-          v-model="logoShowText"
-          :active-text="t('labels.active')"
-          :inactive-text="t('labels.inactive')"
-          inline-prompt
-        />
-      </template>
-    </PrefRow>
-    <PrefRow :label="t('layout.logoFit')" :tip="t('layout.logoFitTip')">
-      <template #control>
-        <el-select v-model="logoFit" size="small" style="width: 128px">
-          <el-option
-            v-for="item in logoFitOptions"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
-          />
-        </el-select>
-      </template>
-    </PrefRow>
-    <PrefRow :label="t('layout.logoMode')" :tip="t('layout.logoModeTip')" stack>
-      <template #control>
-        <PrefChoice
-          :options="logoModeOptions"
-          :model-value="logoMode"
-          @change="value => (logoMode = value === 'full' ? 'full' : 'icon')"
-        />
-      </template>
-    </PrefRow>
-    <PrefRow
-      :label="t('layout.fullLogoHeight')"
-      :tip="t('layout.fullLogoHeightTip')"
-      :disabled="logoMode !== 'full'"
-    >
-      <template #control>
-        <el-input-number
-          v-model="fullLogoHeight"
-          :min="FULL_LOGO_HEIGHT_RANGE.min"
-          :max="FULL_LOGO_HEIGHT_RANGE.max"
-          :step="FULL_LOGO_HEIGHT_RANGE.step"
-          :disabled="logoMode !== 'full'"
-          size="small"
-          controls-position="right"
-          style="width: 108px"
-        />
-      </template>
-    </PrefRow>
-    <PrefRow
-      :label="t('layout.logoSourceDark')"
-      :tip="t('layout.logoSourceDarkTip')"
-    >
-      <template #control>
-        <el-input
-          v-model="logoSourceDark"
-          :placeholder="t('layout.logoSourcePlaceholder')"
-          size="small"
-          clearable
-          style="width: 168px"
-        />
-      </template>
-    </PrefRow>
+    <SettingLogoSettings />
     <PrefRow
       :label="t('layout.semiDarkSidebar')"
       :tip="t('layout.semiDarkSidebarTip')"
@@ -361,6 +213,7 @@ const sidebarAutoActivateChild = computed({
     <PrefRow
       :label="t('layout.sidebarMixedWidth')"
       :tip="t('layout.sidebarMixedWidthTip')"
+      :disabled="!isMixLayout"
     >
       <template #control>
         <el-input-number
@@ -368,6 +221,7 @@ const sidebarAutoActivateChild = computed({
           :min="SIDEBAR_MIXED_WIDTH_RANGE.min"
           :max="SIDEBAR_MIXED_WIDTH_RANGE.max"
           :step="10"
+          :disabled="!isMixLayout"
           size="small"
           controls-position="right"
           style="width: 108px"

@@ -3,9 +3,9 @@ import { computed, h, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import ReEmpty from "@/components/ReEmpty";
-import { addDialog } from "@/components/ReDialog";
+import { addDialog, type DialogOptions } from "@/components/ReDialog";
 import { message } from "@/utils/message";
-import { isSuccess } from "@/api/types";
+import { useDialogForm } from "@/hooks/useDialogForm";
 import { filterByKeyword } from "@/utils/keywordFilter";
 import {
   chatApi,
@@ -19,7 +19,6 @@ import RoomIcon from "~icons/ep/chat-dot-square";
 import GroupIcon from "~icons/ep/user-filled";
 import PlusIcon from "~icons/ep/plus";
 import SearchIcon from "~icons/ep/search";
-import { normalizeError } from "@/utils/apiError";
 import { hasAuth } from "@/router/utils";
 
 /**
@@ -55,38 +54,42 @@ const canCreateGroup = computed(() => hasAuth("createGroup:ChatRoom"));
 
 /** 打开新建群聊弹窗（弹层体系统一收敛：addDialog + 内容组件 + 类型化载荷通道） */
 function openCreateGroupDialog() {
-  addDialog<ChatGroupCreatePayload>({
+  const options: DialogOptions<ChatGroupCreatePayload> & {
+    payload: ChatGroupCreatePayload;
+  } = {
     title: t("chat.newGroup"),
     width: "420px",
     destroyOnClose: true,
     closeOnClickModal: false,
     sureBtnLoading: true,
     payload: { name: "", member_pks: [] },
-    contentRenderer: () => h(ChatGroupCreateForm),
-    beforeSure: async (done, { options, closeLoading }) => {
-      // 草稿由内容组件经载荷通道实时回写；提交校验归打开方（空值时保持弹层打开）
+    contentRenderer: () => h(ChatGroupCreateForm)
+  };
+  const { beforeSure } = useDialogForm<ChatGroupCreatePayload>({
+    // 草稿由内容组件经载荷通道实时回写；提交校验归打开方——校验不过返回 null，
+    // 由底座复位按钮 loading 并保持弹层打开（原先手写 closeLoading）。
+    // 通道挂在 addDialog 的同一选项对象上，故 readPayload 直接读该对象
+    // （读取发生在提交时，此时 addDialog 已注入 getData）
+    readPayload: () => {
       const payload = options.getData?.();
       if (!payload?.name) {
         message(t("chat.groupNameRequired"), { type: "warning" });
-        closeLoading();
-        return;
+        return null;
       }
       if (!payload.member_pks.length) {
         message(t("chat.membersRequired"), { type: "warning" });
-        closeLoading();
-        return;
+        return null;
       }
-      // 异常归一为可读失败结果：避免请求异常时 beforeSure 抛错、弹层 loading 悬挂
-      const res = await chatApi.createGroup(payload).catch(normalizeError);
-      if (isSuccess(res) && res.data) {
-        done();
-        emit("created", res.data);
-        return;
-      }
-      if (res.detail) message(String(res.detail), { type: "warning" });
-      closeLoading();
+      return payload;
+    },
+    submit: payload => chatApi.createGroup(payload),
+    onSuccess: res => {
+      const created = res.data as ChatRoomItem | null | undefined;
+      if (created) emit("created", created);
     }
   });
+  options.beforeSure = beforeSure;
+  addDialog<ChatGroupCreatePayload>(options);
 }
 
 /** 房间过滤：标题（AI / 公开房间用 i18n 名）或最近消息命中 */

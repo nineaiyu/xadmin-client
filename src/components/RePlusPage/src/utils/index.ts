@@ -1,22 +1,13 @@
 import { transformI18n } from "@/plugins/i18n";
 
 /**
- * 是否是链接
- * @param url
- * @returns
+ * 链接判定（严格口径：协议限 http(s)，域名或 IPv4 主机）。
+ *
+ * 实现已下沉 `@/utils/rules/url`——该判定此前只住在列表页框架里，但消费方
+ * 包含 store / router / 侧栏外链 / 文件表单规则，通用工具反向依赖组件目录。
+ * 此处保留再导出以维持既有 API 与深路径导入。
  */
-export function isUrl(url: string) {
-  const regex = new RegExp(
-    "^(https?:\\/\\/)?" + // protocol
-      "((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|" + // domain name
-      "((\\d{1,3}\\.){3}\\d{1,3}))" + // OR ip (v4) address
-      "(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*" + // port and path
-      "(\\?[;&a-z\\d%_.~+=-]*)?" + // query string
-      "(\\#[-a-z\\d_]*)?$",
-    "i"
-  );
-  return regex.test(url);
-}
+export { isUrl } from "@/utils/rules/url";
 
 /**
  * 日期、时间选择器快捷选项，常搭配 [DatePicker](https://element-plus.org/zh-CN/component/date-picker.html)

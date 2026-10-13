@@ -30,6 +30,7 @@ import {
 import {
   computed,
   defineComponent,
+  getCurrentInstance,
   h,
   onBeforeMount,
   onMounted,
@@ -59,6 +60,11 @@ import NavVertical from "./components/lay-sidebar/NavVertical.vue";
 import NavHorizontal from "./components/lay-sidebar/NavHorizontal.vue";
 import BackTopIcon from "@/assets/svg/back_top.svg?component";
 import ReBackTop from "@/components/ReBackTop";
+import { setupTippy } from "./tippy";
+
+// vue-tippy 全局注册下移到布局层（消费点全在布局树内；入口注册会把
+// tippy 引擎与主题样式拖进首屏闭包，详见 ./tippy 的说明）
+setupTippy(getCurrentInstance()!.appContext.app);
 
 const { t } = useI18n();
 const appWrapperRef = ref();

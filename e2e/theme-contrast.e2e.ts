@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { login } from "./helpers";
+import { login, openSettingPanel, switchSettingTab } from "./helpers";
 
 /**
  * 主题可见性门禁：各调色板档位（浅色 / 暗色 / 半暗侧栏 / 半暗顶栏）下，
@@ -84,6 +84,22 @@ async function assertVisible(page: Page, tag: string) {
     nav!.ratio,
     `${tag}：顶栏文字不可见（前景 ${nav!.fg} / 背景 ${nav!.bg}，对比度 ${nav!.ratio.toFixed(2)}）`
   ).toBeGreaterThanOrEqual(MIN_CONTRAST);
+
+  // 顶栏内显式着色的子元素（不继承 .navbar 的文字色）：逐一断言，防「容器变深、
+  // 子元素仍用浅色主题深字」的隐性不可见（历史缺陷：品牌标题 / 面包屑内层）
+  for (const sel of [
+    ".navbar-logo__title",
+    ".breadcrumb-container .el-breadcrumb__inner",
+    ".navbar-actions .el-dropdown-link"
+  ]) {
+    const r = await contrastOf(page, sel, ".navbar");
+    if (r) {
+      expect(
+        r.ratio,
+        `${tag}：${sel} 不可见（前景 ${r.fg} / 背景 ${r.bg}，对比度 ${r.ratio.toFixed(2)}）`
+      ).toBeGreaterThanOrEqual(MIN_CONTRAST);
+    }
+  }
 }
 
 /** 直接切 html 类（聚焦 CSS 调色板层；偏好写入路径由 layout-preferences 覆盖） */
@@ -134,5 +150,58 @@ test.describe("主题可见性（对比度门禁）", () => {
     await setHtmlClass(page, {
       remove: ["dark", "semi-dark-sidebar", "semi-dark-header"]
     });
+  });
+
+  test("混合布局：半暗顶栏下顶栏一级菜单与品牌标题可见", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await login(page);
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    const block = page
+      .locator(".right-panel .pref-block")
+      .filter({ hasText: /菜单布局|Menu layout/ })
+      .first();
+    await block.locator('.pref-choice__item[data-choice="mix"]').click();
+    await page.waitForTimeout(1500);
+    await page
+      .locator(".right-panel-background")
+      .click({ position: { x: 120, y: 300 }, force: true })
+      .catch(() => undefined);
+    await page.waitForTimeout(800);
+
+    // 混合布局：顶栏承载一级菜单
+    await expect(page.locator(".navbar .el-menu-item").first()).toBeVisible({
+      timeout: 10_000
+    });
+
+    // 半暗顶栏：顶栏内嵌菜单与品牌区文字必须随调色板变浅（历史缺陷：
+    // 只改了顶栏容器色，菜单文字仍是浅色主题的深色 → 深底上不可见；
+    // 激活项取主色，属设计调色板范畴，不在本断言内）
+    await setHtmlClass(page, { add: ["semi-dark-header"] });
+    const menu = await contrastOf(
+      page,
+      ".navbar .el-menu-item:not(.is-active)",
+      ".navbar"
+    );
+    expect(menu, "顶栏一级菜单应存在").not.toBeNull();
+    expect(
+      menu!.ratio,
+      `半暗顶栏：顶栏菜单不可见（前景 ${menu!.fg} / 背景 ${menu!.bg}，对比度 ${menu!.ratio.toFixed(2)}）`
+    ).toBeGreaterThanOrEqual(MIN_CONTRAST);
+
+    const logoTitle = await contrastOf(page, ".navbar-logo__title", ".navbar");
+    if (logoTitle) {
+      expect(
+        logoTitle.ratio,
+        `半暗顶栏：品牌标题不可见（前景 ${logoTitle.fg} / 背景 ${logoTitle.bg}）`
+      ).toBeGreaterThanOrEqual(MIN_CONTRAST);
+    }
+
+    // 复位：撤半暗类 + 布局回纵向
+    await setHtmlClass(page, { remove: ["semi-dark-header"] });
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await block.locator('.pref-choice__item[data-choice="vertical"]').click();
+    await page.waitForTimeout(1200);
   });
 });

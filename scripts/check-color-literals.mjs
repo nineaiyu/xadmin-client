@@ -56,6 +56,7 @@ const BASELINE = {
   "src/components/RePlusPage/src/utils/renderers-form.tsx": 9,
   "src/style/sidebar/_index.scss": 8,
   "src/style/_header.scss": 5,
+  "src/style/_nav-palette.scss": 6,
   "src/utils/imageExport.ts": 1,
   "src/views/dashboard/components/ChartCard.vue": 4,
   "src/views/system/monitor/components/HistoryChart.vue": 1,

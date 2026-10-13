@@ -2,11 +2,11 @@ import { h, ref } from "vue";
 import type { useI18n } from "vue-i18n";
 import { addDialog } from "@/components/ReDialog";
 import { openManageDrawer } from "@/components/ReActionPanel";
-import { isSuccess } from "@/api/types";
+import { useDialogForm } from "@/hooks/useDialogForm";
 import { knowledgeApi } from "@/api/ai/knowledge";
-import { normalizeError } from "@/utils/apiError";
 import { message } from "@/utils/message";
 import KnowledgeUploadDialog from "../components/KnowledgeUploadDialog.vue";
+import type { UploadPayload } from "./knowledgePayload";
 import KnowledgePanel from "../components/KnowledgePanel.vue";
 import { buildKnowledgeActionGroups } from "./knowledgeActions";
 import type { KnowledgeRow } from "./useKnowledgeDocument";
@@ -42,6 +42,23 @@ export function useKnowledgeDialogs({
 
   const openUpload = () => {
     uploadFormRef.value = undefined;
+    // 显式指定载荷泛型：ref 包装的实例类型无法从 getPayload 返回类型反推（TS 退化 unknown）
+    const { beforeSure } = useDialogForm<UploadPayload>({
+      formRef: uploadFormRef,
+      submit: payload => knowledgeApi.upload(payload.name, payload),
+      // 成功文案优先用服务端 detail（上传完成提示含文档信息）
+      onSuccess: res => {
+        message(String(res.detail ?? t("aiKnowledge.uploadDone")), {
+          type: "success"
+        });
+        // 先关弹窗再刷新列表（useDialogForm 内 done 先于回调）
+        refresh();
+      },
+      onFail: res =>
+        message(`${t("results.failed")}，${String(res.detail)}`, {
+          type: "error"
+        })
+    });
     addDialog({
       title: t("aiKnowledge.uploadTitle"),
       width: dialogSize("md"),
@@ -50,27 +67,7 @@ export function useKnowledgeDialogs({
       closeOnClickModal: false,
       sureBtnLoading: true,
       contentRenderer: () => h(KnowledgeUploadDialog, { ref: uploadFormRef }),
-      beforeSure: async (done, { closeLoading }) => {
-        const payload = uploadFormRef.value?.getPayload();
-        if (!payload) {
-          closeLoading();
-          return;
-        }
-        // 异常归一为可读失败结果，避免请求异常时弹窗 loading 悬挂
-        const res = await knowledgeApi
-          .upload(payload.name, payload)
-          .catch(normalizeError);
-        if (!isSuccess(res)) {
-          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-          // 失败必须复位按钮 loading（否则确定按钮永久转圈）
-          closeLoading();
-          return;
-        }
-        message(res.detail ?? t("aiKnowledge.uploadDone"), { type: "success" });
-        // 先关弹窗再刷新列表，避免刷新耗时导致弹窗滞留
-        done();
-        refresh();
-      }
+      beforeSure
     });
   };
 

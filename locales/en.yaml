@@ -441,6 +441,7 @@ layout:
   siteTitle: Site title
   siteTitleTip: Site name in the brand area and browser tab (falls back to the platform-config Title when empty)
   siteTitlePlaceholder: e.g. xAdmin Console
+  siteWideAdminOnly: Site-wide appearance settings apply globally (all accounts and the sign-in page); only administrators can change them
   language: Language
   languageTip: Interface language, the same switch as the one in the header
   headerAutoHide: Auto-hide header

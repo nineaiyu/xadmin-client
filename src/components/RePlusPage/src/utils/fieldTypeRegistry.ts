@@ -18,7 +18,8 @@
  * `fieldTypeRegistry.spec.ts` 自动对账（清单键 ⊇ 契约词表；渲染面 ≡ 实现集合）。
  */
 
-import { isEmail, isNumber } from "@pureadmin/utils";
+import { isNumber } from "@pureadmin/utils";
+import { buildEmailRule } from "@/utils/rules/email";
 import { builtinDetailRenderers } from "./renderers-detail";
 import { builtinFormRenderers } from "./renderers-form";
 import { builtinSearchRenderers } from "./renderers-search";
@@ -53,25 +54,9 @@ export type FieldTypeSpec = {
   filterKind?: LookupFieldKind;
 };
 
-/** email 字段校验规则（空值放行，由 required 声明接管） */
+/** email 字段校验规则（空值放行，由 required 声明接管；实现见 @/utils/rules/email） */
 const emailRuleFactory: FieldRuleFactory = (column, message) => [
-  {
-    required: column.required,
-    validator: (
-      rule: unknown,
-      value: unknown,
-      callback: (error?: Error) => void
-    ) => {
-      if (value === "" || !value) {
-        callback();
-      } else if (!isEmail(value as string)) {
-        callback(new Error(message));
-      } else {
-        callback();
-      }
-    },
-    trigger: "blur"
-  }
+  { ...buildEmailRule({ required: column.required, formatMessage: message }) }
 ];
 
 /** integer 字段校验规则（非数字拒绝，空值放行） */

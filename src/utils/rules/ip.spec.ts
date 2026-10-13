@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { isIPv4, isIPv6 } from "../sampleIp";
+import { isIpAddress, isIPv4, isIPv6 } from "./ip";
 
 /**
- * 样例 IP 严格校验：口径对齐服务端 `ipaddress.ip_address`
+ * 单个 IP 地址严格校验：口径对齐服务端 `ipaddress.ip_address`
  * （`common/utils/ip/utils.py::is_ip_address`）——合法形态两侧一致，
- * 前端提前拦下畸形输入，避免预演出现「全部未命中」却无从解释的假象。
+ * 前端提前拦下畸形输入，避免「全部未命中」却无从解释的假象。
  */
 describe("isIPv4", () => {
   it.each(["192.168.1.1", "0.0.0.0", "255.255.255.255", "10.0.0.1"])(
@@ -69,5 +69,14 @@ describe("isIPv6", () => {
     expect(isIPv4("192.168.1.0/24")).toBe(false);
     expect(isIPv4("192.168.1.1-192.168.1.20")).toBe(false);
     expect(isIPv4("*")).toBe(false);
+  });
+});
+
+describe("isIpAddress", () => {
+  it("接收 IPv4 与 IPv6，拒绝非地址", () => {
+    expect(isIpAddress("10.1.2.3")).toBe(true);
+    expect(isIpAddress("::1")).toBe(true);
+    expect(isIpAddress("")).toBe(false);
+    expect(isIpAddress("localhost")).toBe(false);
   });
 });

@@ -1,80 +1,15 @@
 import type { useI18n } from "vue-i18n";
 
-type TFunction = ReturnType<typeof useI18n>["t"];
-
-/** 最小长度 */
-const wordMinLength = (word: string, minLength: number) => {
-  return word?.match(new RegExp("^(.{" + minLength + ",})$"));
-};
-
-/** 大写字母 */
-const wordUpperCase = (word: string) => {
-  return word?.match(/([A-Z]+)/);
-};
-
-/** 小写字母 */
-const wordLowerCase = (word: string) => {
-  return word?.match(/([a-z]+)/);
-};
-
-/** 数字字符 */
-const wordNumber = (word: string) => {
-  return word.match(/([\d]+)/);
-};
-
-/** 特殊字符 */
-const wordSpecialChar = (word: string) => {
-  return word?.match(
-    /[`,~,!,@,#,\$,%,\^,&,\*,\(,\),\-,_,=,\+,\{,\},\[,\],\|,\\,;,',:,",\,,\.,<,>,\/,\?]+/
-  );
-};
-
 /**
- * 按 `SECURITY_PASSWORD_*` 规则逐条校验密码，返回是否全部满足与拼装好的
- * i18n 提示文案。`generateRandomPassword`（randomPassword.ts）按同一份
- * 规则键生成必过校验的随机密码，两者口径必须保持一致。
+ * 密码策略校验与强度展示。
+ *
+ * 校验实现已归口 `src/utils/rules/passwordPolicy.ts`（与随机密码生成同源，
+ * 规则键与「value=0 视为关闭」判定共用一份，避免两套独立实现漂移）；
+ * 本文件保留原导入路径，并承载密码强度条（UI 专用）展示数据。
  */
-export const passwordRulesCheck = (
-  word: string,
-  rules: Array<{ value: number; key: string }>,
-  t: TFunction
-) => {
-  let result = true;
-  let msg = t("settingPassword.tips");
-  for (const rule of rules) {
-    switch (rule.key) {
-      case "SECURITY_PASSWORD_MIN_LENGTH":
-        result = result && Boolean(wordMinLength(word, rule.value));
-        msg = `${msg},${t("settingPassword.minLength", { length: rule.value })}`;
-        break;
-      case "SECURITY_PASSWORD_UPPER_CASE":
-        if (rule.value) {
-          msg = `${msg},${t("settingPassword.upperCase")}`;
-          result = result && Boolean(wordUpperCase(word));
-        }
-        break;
-      case "SECURITY_PASSWORD_LOWER_CASE":
-        if (rule.value) {
-          msg = `${msg},${t("settingPassword.lowerCase")}`;
-          result = result && Boolean(wordLowerCase(word));
-        }
-        break;
-      case "SECURITY_PASSWORD_NUMBER":
-        if (rule.value) {
-          msg = `${msg},${t("settingPassword.number")}`;
-          result = result && Boolean(wordNumber(word));
-        }
-        break;
-      case "SECURITY_PASSWORD_SPECIAL_CHAR":
-        if (rule.value) {
-          msg = `${msg},${t("settingPassword.specialChar")}`;
-          result = result && Boolean(wordSpecialChar(word));
-        }
-        break;
-    }
-  }
-  return { result, msg };
-};
+export { passwordRulesCheck } from "./rules/passwordPolicy";
+
+type TFunction = ReturnType<typeof useI18n>["t"];
 
 /**
  * 密码强度五档配色（zxcvbn 评分 0-4）。

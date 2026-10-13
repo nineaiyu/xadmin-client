@@ -5,6 +5,7 @@ import type { DialogOptions } from "@/components/ReDialog";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useDialogForm } from "@/hooks/useDialogForm";
 import { message } from "@/utils/message";
 import { formatDateTime } from "@/utils/format";
 import { isSuccess } from "@/api/types";
@@ -28,6 +29,14 @@ import { TABLE_HEADER_CELL_STYLE } from "@/utils/tableHeader";
  */
 const { t } = useI18n();
 const confirm = useConfirm();
+
+/** 保存载荷（与 MessageTemplateForm.getPayload 契约一致：message_type 为行主键） */
+type MessageTemplatePayload = {
+  message_type: string;
+  subject_template: string;
+  body_template: string;
+  is_active: boolean;
+};
 
 const loading = ref(false);
 const rows = ref<MessageTemplateItem[]>([]);
@@ -82,6 +91,15 @@ const openEdit = (raw: RecordType) => {
   // el-table 插槽 row 为宽类型，按注册表契约收窄
   const row = raw as MessageTemplateItem;
   formRef.value = undefined;
+  // 显式指定载荷泛型：ref 包装的实例类型无法从 getPayload 返回类型反推（TS 退化 unknown）
+  const { beforeSure } = useDialogForm<MessageTemplatePayload>({
+    formRef,
+    submit: payload => messageTemplateApi.save(payload),
+    successText: t("messageTemplate.saveSuccess"),
+    failType: "error",
+    // 先关弹窗再刷新（与手写弹窗行为一致）
+    onSuccess: () => load()
+  });
   const options: DialogOptions = {
     title: t("messageTemplate.editTitle", {
       name: row.message_type_label ?? ""
@@ -92,23 +110,7 @@ const openEdit = (raw: RecordType) => {
     closeOnClickModal: false,
     sureBtnLoading: true,
     contentRenderer: () => h(MessageTemplateForm, { ref: formRef, row }),
-    beforeSure: async (done, { closeLoading }) => {
-      const payload = formRef.value?.getPayload();
-      if (!payload) {
-        closeLoading();
-        return;
-      }
-      // 异常归一为可读失败结果：避免请求异常时 beforeSure 抛错、弹窗 loading 悬挂
-      const res = await messageTemplateApi.save(payload).catch(normalizeError);
-      if (isSuccess(res)) {
-        message(t("messageTemplate.saveSuccess"), { type: "success" });
-        done();
-        await load();
-        return;
-      }
-      if (res.detail) message(String(res.detail), { type: "error" });
-      closeLoading();
-    }
+    beforeSure
   };
   addDialog(options);
 };
