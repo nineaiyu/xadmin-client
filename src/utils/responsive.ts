@@ -32,7 +32,8 @@ export const injectResponsiveStorage = (app: App, config: PlatformConfigs) => {
         grey: config.Grey ?? false,
         weak: config.Weak ?? false,
         hideTabs: config.HideTabs ?? false,
-        hideFooter: config.HideFooter ?? true,
+        // 缺省与 platform-config.json / WEB_SITE_CONFIG 种子一致：默认显示页脚
+        hideFooter: config.HideFooter ?? false,
         footerFixed: config.FooterFixed ?? false,
         footerHeight: config.FooterHeight ?? 0,
         showLogo: config.ShowLogo ?? true,
@@ -106,6 +107,8 @@ export const injectResponsiveStorage = (app: App, config: PlatformConfigs) => {
         dynamicTitle: config.DynamicTitle ?? true,
         enablePreferences: config.EnablePreferences ?? true,
         preferencesPosition: config.PreferencesPosition ?? "header",
+        preferencesStickyNav: config.PreferencesStickyNav ?? true,
+        enableCopyPreferences: config.EnableCopyPreferences ?? true,
         pageTransition: config.PageTransition ?? "fade-transform",
         transitionProgress: config.TransitionProgress ?? true,
         transitionLoading: config.TransitionLoading ?? false,

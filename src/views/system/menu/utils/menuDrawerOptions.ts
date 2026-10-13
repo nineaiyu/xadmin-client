@@ -2,6 +2,7 @@ import { h } from "vue";
 import MenuDrawerForm from "../components/MenuDrawerForm.vue";
 import type { DrawerOptions } from "@/components/ReDrawer";
 import type { Ref } from "vue";
+import { drawerSize } from "@/components/ReDialog/size";
 import type {
   MenuAuths,
   MenuChoiceItem,
@@ -60,7 +61,7 @@ export function buildMenuDrawerOptions(
 
   return {
     title,
-    size: "620px",
+    size: drawerSize("md"),
     destroyOnClose: true,
     closeOnClickModal: false,
     sureBtnLoading: true,

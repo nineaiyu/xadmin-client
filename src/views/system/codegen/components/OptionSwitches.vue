@@ -10,7 +10,7 @@ const { t } = useI18n();
 </script>
 
 <template>
-  <el-form label-width="92px" label-position="left" class="codegen-options">
+  <el-form label-width="90px" label-position="left" class="codegen-options">
     <el-form-item :label="t('codegen.options')">
       <div class="flex flex-wrap gap-x-4 gap-y-1">
         <el-checkbox v-model="state.with_import_export">

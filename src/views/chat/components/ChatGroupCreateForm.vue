@@ -74,7 +74,7 @@ onUnmounted(() => window.clearTimeout(memberSearchTimer));
 </script>
 
 <template>
-  <el-form label-width="80px">
+  <el-form label-width="90px">
     <el-form-item :label="t('chat.groupName')" required>
       <el-input
         v-model="groupName"

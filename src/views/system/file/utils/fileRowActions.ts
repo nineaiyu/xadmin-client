@@ -9,6 +9,7 @@ import type { RecordType } from "plus-pro-components";
 import type { useI18n } from "vue-i18n";
 import type { useTagAssign } from "@/views/system/components/useTagAssign";
 
+import { drawerSize } from "@/components/ReDialog/size";
 type TFunction = ReturnType<typeof useI18n>["t"];
 
 /** 访问记录抽屉（上传 / 下载 / 预览 / 删除留痕） */
@@ -21,7 +22,7 @@ export function openAccessLogsDrawer({
 }) {
   addDrawer({
     title: t("fileAccess.accessLogsTitle", { name: row?.filename ?? "" }),
-    size: "50%",
+    size: drawerSize("md"),
     destroyOnClose: true,
     hideFooter: true,
     props: { row },

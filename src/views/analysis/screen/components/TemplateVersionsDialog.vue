@@ -5,6 +5,7 @@ import { ElMessageBox } from "element-plus";
 import type { ScreenTemplateVersionItem } from "@/api/dataset/analysis";
 import { fetchTemplateVersions } from "../utils/serverTemplates";
 
+import { dialogSize } from "@/components/ReDialog/size";
 defineOptions({ name: "ScreenTemplateVersionsDialog" });
 
 /**
@@ -63,7 +64,7 @@ const formatTime = (value?: string) =>
   <el-dialog
     :model-value="modelValue"
     :title="`${t('dataScreen.templateVersions')} · ${templateName}`"
-    width="520px"
+    :width="dialogSize('md')"
     data-testid="template-versions-dialog"
     @update:model-value="emit('update:modelValue', $event)"
   >

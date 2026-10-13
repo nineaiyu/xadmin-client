@@ -9,6 +9,7 @@ import type {
 import ApiAppPanel from "../components/ApiAppPanel.vue";
 import { buildApiAppActionGroups } from "./apiAppActions";
 
+import { drawerSize } from "@/components/ReDialog/size";
 /** 「管理」抽屉（行操作收敛）：接入与密钥 / 联调与验证 / 应用配置三组动作装配 */
 export function useApiAppPanel({
   t,
@@ -50,7 +51,7 @@ export function useApiAppPanel({
     });
     openManageDrawer({
       title: t("apiApp.panelTitle", { name: row.name }),
-      size: "520px",
+      size: drawerSize("md"),
       render: ({ withClosed }) =>
         h(ApiAppPanel, {
           row,

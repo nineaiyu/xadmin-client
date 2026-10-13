@@ -9,6 +9,7 @@ import type { AiProfileItem } from "@/api/ai/ai";
 import { buildAiProfileData, buildAiProfileMetaItems } from "./aiProfilePanel";
 import { buildAiProfileActionGroups } from "./aiProfileActions";
 
+import { drawerSize } from "@/components/ReDialog/size";
 type TFunction = ReturnType<typeof useI18n>["t"];
 
 /**
@@ -36,7 +37,7 @@ export function useAiProfileManage({
   const openProfilePanel = (row: AiProfileItem) => {
     openManageDrawer({
       title: t("aiConfig.panelTitle", { name: row.name }),
-      size: "520px",
+      size: drawerSize("md"),
       render: ({ withClosed }) =>
         h(
           ReActionPanel,

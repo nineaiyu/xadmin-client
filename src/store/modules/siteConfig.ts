@@ -1,3 +1,5 @@
+import type { PreferenceBaseline } from "@/utils/preferenceDiff";
+
 import { defineStore } from "pinia";
 import { setConfig } from "@/config";
 import Storage from "responsive-storage";
@@ -17,13 +19,44 @@ let autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
 export const useSiteConfigStore = defineStore("pure-site-config", {
   state: () => ({
     config: {},
-    nameSpace: responsiveStorageNameSpace()
+    nameSpace: responsiveStorageNameSpace(),
+    /**
+     * 偏好比对基线（设置面板「重置配置」脏标记）：站点配置同步完成
+     * （或首次打开面板兜底）时对 locale / layout / configure 三命名空间的
+     * 深拷贝快照，与当前值比对得出「是否偏离同步态」。
+     */
+    preferenceBaseline: null as PreferenceBaseline | null
   }),
   actions: {
     setSiteConfig(config: PlatformConfigs) {
       Object.entries(config).forEach(([key, value]) => {
         Storage.set(`${this.nameSpace}${key}`, value);
       });
+    },
+    /**
+     * 捕获偏好比对基线（站点配置同步完成后调用；每次调用整体替换）。
+     * 「重置配置 → 重载 → 重新同步」后基线重捕，面板脏标记自动熄灭。
+     */
+    capturePreferenceBaseline() {
+      const locale = Storage.getData("locale", this.nameSpace);
+      const layout = Storage.getData("layout", this.nameSpace);
+      const configure = Storage.getData("configure", this.nameSpace);
+      this.preferenceBaseline = JSON.parse(
+        JSON.stringify({
+          locale: locale ?? {},
+          layout: layout ?? {},
+          configure: configure ?? {}
+        })
+      );
+    },
+    /**
+     * 基线缺失时兜底捕获（设置面板打开路径）。
+     * 仅捕获一次：面板内继续修改偏好不应刷新基线，否则脏标记恒为空。
+     */
+    ensurePreferenceBaseline() {
+      if (!this.preferenceBaseline) {
+        this.capturePreferenceBaseline();
+      }
     },
     async resetSiteConfig() {
       const { configApi } = await import("@/api/config");
@@ -131,6 +164,8 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
           DynamicTitle: configure.dynamicTitle,
           EnablePreferences: configure.enablePreferences,
           PreferencesPosition: configure.preferencesPosition,
+          PreferencesStickyNav: configure.preferencesStickyNav,
+          EnableCopyPreferences: configure.enableCopyPreferences,
           PageTransition: configure.pageTransition,
           TransitionProgress: configure.transitionProgress,
           TransitionLoading: configure.transitionLoading,
@@ -207,7 +242,8 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
                   grey: config.Grey ?? false,
                   weak: config.Weak ?? false,
                   hideTabs: config.HideTabs ?? false,
-                  hideFooter: config.HideFooter ?? true,
+                  // 缺省与 platform-config.json / WEB_SITE_CONFIG 种子一致：默认显示页脚
+                  hideFooter: config.HideFooter ?? false,
                   footerFixed: config.FooterFixed ?? false,
                   footerHeight: config.FooterHeight ?? 0,
                   showLogo: config.ShowLogo ?? true,
@@ -237,7 +273,7 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
                   successColor: config.SuccessColor ?? "",
                   warningColor: config.WarningColor ?? "",
                   dangerColor: config.DangerColor ?? "",
-                  sidebarWidth: config.SidebarWidth ?? 210,
+                  sidebarWidth: config.SidebarWidth ?? 224,
                   sidebarExpandOnHover: config.SidebarExpandOnHover ?? true,
                   sidebarDraggable: config.SidebarDraggable ?? false,
                   sidebarCollapsedShowTitle:
@@ -283,6 +319,8 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
                   dynamicTitle: config.DynamicTitle ?? true,
                   enablePreferences: config.EnablePreferences ?? true,
                   preferencesPosition: config.PreferencesPosition ?? "header",
+                  preferencesStickyNav: config.PreferencesStickyNav ?? true,
+                  enableCopyPreferences: config.EnableCopyPreferences ?? true,
                   pageTransition: config.PageTransition ?? "fade-transform",
                   transitionProgress: config.TransitionProgress ?? true,
                   transitionLoading: config.TransitionLoading ?? false,
@@ -300,6 +338,8 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
               } as PlatformConfigs;
               setConfig(config as PlatformConfigs);
               this.setSiteConfig(configObj);
+              // 同步完成后捕获偏好比对基线（设置面板重置脏标记的比对基准）
+              this.capturePreferenceBaseline();
               resolve(config as PlatformConfigs);
             } else {
               reject(config);

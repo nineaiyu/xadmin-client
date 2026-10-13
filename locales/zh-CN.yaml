@@ -155,6 +155,14 @@ messageTemplate:
   syntaxHint: "变量以 {'{{'}名称{'}}'} 形式插入；留空表示沿用代码默认内容"
   previewUnsupported: 该消息类型未提供样例数据，暂不支持预览
   defaultContent: 代码默认内容
+  panelHint: 未编辑的模板沿用系统默认文案；保存覆盖后即时生效，可随时重置为默认
+  searchPlaceholder: 搜索消息类型
+  filterCategory: 按分类筛选
+  updatedAt: 修改时间
+  inactiveMark: 停用
+  variableCopied: 已复制 {name}
+  previewTitle: 预览 - {name}
+  prefilledHint: 已预填代码默认内容，可直接在此基础上修改；与默认一致的部分不会产生覆盖
 
 approvalDiscussion:
   title: 讨论
@@ -654,6 +662,8 @@ layout:
   copyPreferences: 复制偏好
   copyPreferencesTip: 复制当前完整界面偏好（语言 / 布局 / 主题 / 界面开关），反馈问题时一并贴出
   copyPreferencesSuccess: 界面偏好已复制到剪贴板
+  enableCopyPreferences: 显示复制偏好按钮
+  enableCopyPreferencesTip: 面板底部提供一键复制当前界面偏好的按钮
   cleanOut: 清空缓存并返回登录页
   preferencesEntry: 偏好入口
   enablePreferences: 设置入口
@@ -666,9 +676,12 @@ layout:
   preferencesPositionUserDropdown: 头像菜单
   preferencesPositionAuto: 自动
   preferencesPositionNone: 不显示
+  preferencesStickyNavEnable: 吸顶页签导航
+  preferencesStickyNavDisable: 取消吸顶
   noticeTime: YYYY年MM月DD日 HH:mm:ss
   timezone: 时区
   timezoneFollowBrowser: 跟随浏览器时区
+  timezoneTip: 顶栏时区组件与时钟展示使用的时区，默认跟随浏览器
   backTop: 回到顶部
   skipToContent: 跳到主内容
   updateCheck: 检测到新版本

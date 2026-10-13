@@ -9,6 +9,7 @@ import type { useConfirm } from "@/hooks/useConfirm";
 import type { SubmissionItem } from "@/api/dataset/dform";
 import type { useI18n } from "vue-i18n";
 
+import { drawerSize } from "@/components/ReDialog/size";
 type TFunction = ReturnType<typeof useI18n>["t"];
 
 /**
@@ -28,7 +29,7 @@ export function createSubmissionActions({
   const openDetail = (row: SubmissionItem) => {
     addDrawer({
       title: `${row.form_name} - ${String(row.pk).slice(0, 8).toUpperCase()}`,
-      size: "45%",
+      size: drawerSize("md"),
       destroyOnClose: true,
       closeOnClickModal: true,
       hideFooter: true,

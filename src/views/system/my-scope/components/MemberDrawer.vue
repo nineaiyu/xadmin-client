@@ -10,6 +10,7 @@ import { userApi } from "@/api/identity/user";
 import { formatDateTime } from "@/utils";
 import type { ManagedDeptItem } from "@/api/identity/dept";
 
+import { drawerSize } from "@/components/ReDialog/size";
 /**
  * 我的管辖：部门成员预览抽屉（只读）。
  *
@@ -93,7 +94,7 @@ watch(visible, open => {
         ? t('systemMyScope.memberDrawerTitle', { dept: dept.name })
         : t('systemMyScope.viewMembers')
     "
-    size="560px"
+    :size="drawerSize('md')"
     class="max-w-[92vw]!"
   >
     <div v-loading="loading" class="flex flex-col h-full">

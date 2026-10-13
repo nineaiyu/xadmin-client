@@ -3,6 +3,7 @@ import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useDataset } from "./utils/hook";
 
+import { dialogSize } from "@/components/ReDialog/size";
 defineOptions({
   name: "DataDataset"
 });
@@ -48,7 +49,7 @@ const {
     <el-dialog
       v-model="previewDialog"
       :title="t('dataDataset.preview')"
-      width="720px"
+      :width="dialogSize('lg')"
     >
       <div class="mb-2 flex-bc gap-2">
         <el-radio-group v-model="previewMode" size="small">

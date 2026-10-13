@@ -1,6 +1,7 @@
 import type { Ref, VNode } from "vue";
 import { addDialog } from "@/components/ReDialog";
 
+import { dialogSize } from "@/components/ReDialog/size";
 /** 表单组件的提交契约：返回载荷对象；返回 `null` 表示校验未过（保持弹窗） */
 export type ActionFormInstance<T> = { getPayload: () => T | null };
 
@@ -28,7 +29,7 @@ export function openActionDialog<T>({
   addDialog({
     title,
     // 档位口径：动作弹窗只有一段文本/一个选人控件，固定 md 宽度与既有实现一致
-    width: "440px",
+    width: dialogSize("md"),
     draggable: true,
     destroyOnClose: true,
     closeOnClickModal: false,

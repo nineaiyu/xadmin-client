@@ -37,7 +37,7 @@ describe("ReNavDrawer 窄屏导航抽屉", () => {
     const drawer = wrapper.findComponent(ElDrawerStub);
     expect(drawer.exists()).toBe(true);
     expect(drawer.props("direction")).toBe("ltr");
-    expect(drawer.props("size")).toBe("80%");
+    expect(drawer.props("size")).toBe("75%");
     expect(drawer.props("withHeader")).toBe(false);
     expect(wrapper.find(".nav-slot").text()).toBe("侧栏内容");
   });

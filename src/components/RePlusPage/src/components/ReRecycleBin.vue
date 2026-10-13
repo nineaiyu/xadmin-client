@@ -11,6 +11,7 @@ import RefreshRight from "~icons/ep/refresh-right";
 import ReEmpty from "@/components/ReEmpty";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 
+import { drawerSize } from "@/components/ReDialog/size";
 defineOptions({ name: "RecycleBin" });
 
 type RecycleBinApi = Pick<
@@ -185,7 +186,7 @@ defineExpose({ open });
   <el-drawer
     v-model="visible"
     :title="title || t('recycleBin.title')"
-    size="60%"
+    :size="drawerSize('lg')"
     destroy-on-close
     class="recycle-bin-drawer"
   >

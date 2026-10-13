@@ -2,11 +2,19 @@
 import { emitter } from "@/utils/mitt";
 import { Z_INDEX } from "@/utils/zIndex";
 import { onClickOutside, useClipboard } from "@vueuse/core";
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { useGlobal } from "@pureadmin/utils";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
-import { buildPreferenceSnapshot } from "@/utils/preferenceDiff";
+import {
+  buildPreferenceDiff,
+  buildPreferenceSnapshot,
+  hasPreferenceDiff
+} from "@/utils/preferenceDiff";
 import { message } from "@/utils/message";
+import { useConfigureStorage } from "../lay-setting/hooks/useConfigureStorage";
 import CloseIcon from "~icons/ep/close";
+import PinOffIcon from "~icons/ri/pushpin-2-fill";
+import PinIcon from "~icons/ri/pushpin-2-line";
 import { useI18n } from "vue-i18n";
 import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
 
@@ -18,6 +26,38 @@ const {
 } = __APP_INFO__;
 
 const { onReset } = useDataThemeChange();
+
+const { $storage } = useGlobal<GlobalPropertiesApi>();
+const { storageConfigureChange } = useConfigureStorage();
+const siteConfig = useSiteConfigStoreHook();
+
+/** 面板页签导航吸顶（对齐 vben `enableStickyPreferencesNavigationBar`，面板头部 Pin 切换） */
+const stickyNav = computed({
+  get: () => $storage?.configure?.preferencesStickyNav ?? true,
+  set: value => storageConfigureChange("preferencesStickyNav", value)
+});
+
+/** 「复制偏好」按钮显隐（对齐 vben `enableCopyPreferences`） */
+const copyPreferencesEnabled = computed(
+  () => $storage?.configure?.enableCopyPreferences ?? true
+);
+
+/**
+ * 偏好差异（「重置配置」脏标记）：当前值与同步完成基线比对，
+ * 无差异时按钮禁用，有差异时可用并显示标记（对齐 vben 抽屉重置按钮）。
+ */
+const preferenceDirty = computed(() =>
+  hasPreferenceDiff(
+    buildPreferenceDiff(
+      {
+        locale: $storage?.locale,
+        layout: $storage?.layout,
+        configure: $storage?.configure
+      },
+      siteConfig.preferenceBaseline
+    )
+  )
+);
 
 // 复制偏好：一键导出当前完整界面偏好（语言 / 布局 / 主题 / 界面开关），反馈问题时一并贴出
 const { copy } = useClipboard({ legacy: true });
@@ -60,6 +100,8 @@ onClickOutside(target, event => {
 
 onMounted(() => {
   emitter.on("openPanel", () => {
+    // 基线兜底：站点配置同步尚未完成（或离线）时，以打开面板时的状态为比对基准
+    siteConfig.ensurePreferenceBaseline();
     show.value = true;
   });
 });
@@ -80,14 +122,39 @@ onBeforeUnmount(() => {
           <h4 class="lay-panel__title">{{ t("layout.settings") }}</h4>
           <span class="lay-panel__version">v{{ version }}</span>
         </div>
-        <button
-          type="button"
-          class="lay-panel__close"
-          :aria-label="t('buttons.close')"
-          @click="show = !show"
-        >
-          <IconifyIconOffline :icon="CloseIcon" height="16px" width="16px" />
-        </button>
+        <div class="lay-panel__actions">
+          <button
+            type="button"
+            class="lay-panel__icon-btn"
+            :class="{ 'is-active': stickyNav }"
+            :title="
+              stickyNav
+                ? t('layout.preferencesStickyNavDisable')
+                : t('layout.preferencesStickyNavEnable')
+            "
+            :aria-label="
+              stickyNav
+                ? t('layout.preferencesStickyNavDisable')
+                : t('layout.preferencesStickyNavEnable')
+            "
+            :aria-pressed="stickyNav"
+            @click="stickyNav = !stickyNav"
+          >
+            <IconifyIconOffline
+              :icon="stickyNav ? PinOffIcon : PinIcon"
+              height="15px"
+              width="15px"
+            />
+          </button>
+          <button
+            type="button"
+            class="lay-panel__icon-btn"
+            :aria-label="t('buttons.close')"
+            @click="show = !show"
+          >
+            <IconifyIconOffline :icon="CloseIcon" height="16px" width="16px" />
+          </button>
+        </div>
       </header>
 
       <!-- 内容区：面板按需挂载，`show` 透传给内容决定是否渲染 -->
@@ -106,8 +173,14 @@ onBeforeUnmount(() => {
           bg
           text
           type="primary"
+          :disabled="!preferenceDirty"
           @click="resetSiteConfig"
         >
+          <span
+            v-if="preferenceDirty"
+            class="lay-panel__dirty-dot"
+            aria-hidden="true"
+          />
           {{ t("layout.resetConfig") }}
         </el-button>
         <el-button
@@ -124,6 +197,7 @@ onBeforeUnmount(() => {
           {{ t("layout.clearCache") }}
         </el-button>
         <el-button
+          v-if="copyPreferencesEnabled"
           v-tippy="{
             content: t('layout.copyPreferencesTip'),
             placement: 'top-start',
@@ -163,7 +237,7 @@ onBeforeUnmount(() => {
   /* z-index 阶梯：面板必须低于 EP 弹层（2000 起），避免遮挡 dialog/confirm */
   z-index: var(--z-index-setting-panel);
   width: 100%;
-  max-width: 360px;
+  max-width: 440px;
   height: 100vh;
   height: 100dvh;
   box-shadow: var(--shadow-panel);
@@ -199,7 +273,13 @@ onBeforeUnmount(() => {
   color: var(--el-text-color-placeholder);
 }
 
-.lay-panel__close {
+.lay-panel__actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.lay-panel__icon-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -210,12 +290,29 @@ onBeforeUnmount(() => {
   background: transparent;
   border: 0;
   border-radius: var(--radius-sm);
-  transition: background-color var(--duration-fast) var(--ease-standard);
+  transition:
+    color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard);
 
   &:hover {
     color: var(--el-text-color-primary);
     background: var(--el-fill-color-light);
   }
+
+  &.is-active {
+    color: var(--el-color-primary);
+  }
+}
+
+/* 「重置配置」脏标记：存在未重置的偏好差异时显示（对齐 vben 抽屉重置按钮角标） */
+.lay-panel__dirty-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 4px;
+  vertical-align: 1px;
+  background: var(--el-color-danger);
+  border-radius: var(--radius-full);
 }
 
 .lay-panel__body {

@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 // 设置面板内容（按需加载）：四页签「外观 / 布局 / 通用 / 快捷键」+ 各设置区块
-import { ref } from "vue";
+import { computed, ref } from "vue";
+import { useGlobal } from "@pureadmin/utils";
 import { useNav } from "@/layout/hooks/useNav";
 import SettingTheme from "./SettingTheme.vue";
 import SettingScale from "./SettingScale.vue";
@@ -15,13 +16,23 @@ import SettingAnimation from "./SettingAnimation.vue";
 import SettingShortcut from "./SettingShortcut.vue";
 
 const { t } = useNav();
+const { $storage } = useGlobal<GlobalPropertiesApi>();
 
 /** 当前页签：外观（默认）/ 布局 / 通用 / 快捷键 */
 const activeTab = ref("appearance");
+
+/** 页签导航吸顶（面板头部 Pin 切换；关闭后页签头随内容滚动） */
+const stickyNav = computed(
+  () => $storage?.configure?.preferencesStickyNav ?? true
+);
 </script>
 
 <template>
-  <el-tabs v-model="activeTab" class="setting-tabs px-3 pt-2 pb-4">
+  <el-tabs
+    v-model="activeTab"
+    class="setting-tabs px-3 pt-2 pb-4"
+    :class="{ 'setting-tabs--sticky': stickyNav }"
+  >
     <!-- 外观：主题模式、主题色、尺度档位（圆角/字号）、显示效果 -->
     <el-tab-pane :label="t('layout.tabAppearance')" name="appearance">
       <SettingTheme />
@@ -49,8 +60,8 @@ const activeTab = ref("appearance");
 </template>
 
 <style lang="scss" scoped>
-/* 页签头吸顶：面板内容滚动时保持可见（负数抵消 el-tabs 自身内边距） */
-:deep(.el-tabs__header) {
+/* 页签头吸顶：面板内容滚动时保持可见（负数抵消 el-tabs 自身内边距）；开关见面板头部 Pin */
+.setting-tabs--sticky :deep(.el-tabs__header) {
   position: sticky;
   top: -8px;
   z-index: 1;

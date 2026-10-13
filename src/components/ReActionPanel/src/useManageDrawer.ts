@@ -1,5 +1,6 @@
 import type { VNode } from "vue";
 import { deviceDetection } from "@pureadmin/utils";
+import { drawerSize, DRAWER_NARROW_WIDTH } from "@/components/ReDialog/size";
 import {
   addDrawer,
   closeDrawer,
@@ -44,7 +45,8 @@ export function openManageDrawer({
 }: ManageDrawerConfig): void {
   const options: DrawerOptions = {
     title,
-    size: size ?? (deviceDetection() ? "100%" : "480px"),
+    size:
+      size ?? (deviceDetection() ? drawerSize("full") : DRAWER_NARROW_WIDTH),
     destroyOnClose: true,
     hideFooter: true,
     ...drawerOptions

@@ -6,6 +6,7 @@ import type {
   ApiApplicationItem,
   ApplicationUsageStats
 } from "@/api/identity/open";
+import { drawerSize } from "@/components/ReDialog/size";
 
 /**
  * 应用用量抽屉：近 N 天调用量 / 失败数 / 平均耗时 + Top 路径 +
@@ -59,7 +60,11 @@ const durationText = (value: number) => `${(value * 1000).toFixed(1)} ms`;
 </script>
 
 <template>
-  <el-drawer v-model="visible" :size="560" :title="t('apiApp.usage.title')">
+  <el-drawer
+    v-model="visible"
+    :size="drawerSize('md')"
+    :title="t('apiApp.usage.title')"
+  >
     <div class="usage-body">
       <!-- 统计窗口切换（1/7/14/30 天）：切换后由父级重拉数据 -->
       <div class="usage-range">

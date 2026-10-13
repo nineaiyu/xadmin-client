@@ -9,6 +9,7 @@ import type { systemUploadFileApi } from "@/api/file/file";
 import type { useI18n } from "vue-i18n";
 import type { useTagAssign } from "@/views/system/components/useTagAssign";
 
+import { dialogSize } from "@/components/ReDialog/size";
 type TFunction = ReturnType<typeof useI18n>["t"];
 
 /**
@@ -56,8 +57,7 @@ export function useFileButtons({
             title: t("systemUploadFile.upload"),
             rawRow: {},
             rawColumns: [],
-            dialogDrawerOptions: { width: "600px", hideFooter: true },
-            minWidth: "600px",
+            dialogDrawerOptions: { width: dialogSize("md"), hideFooter: true },
             form: uploadForm,
             props: {
               // 弹层 props 的函数值会被 openDialogDrawer 立即求值（resolveSpec），

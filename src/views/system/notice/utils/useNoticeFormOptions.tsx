@@ -6,6 +6,7 @@ import type { RePlusPageProps } from "@/components/RePlusPage";
 import { buildNoticeFormColumns } from "./noticeColumns";
 import type { RecordType } from "plus-pro-components";
 
+import { dialogSize } from "@/components/ReDialog/size";
 type NoticeApiLike = Pick<typeof noticeApi, "announcement">;
 
 /**
@@ -17,10 +18,9 @@ export function useNoticeFormOptions({ api }: { api: NoticeApiLike }) {
   const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
     props: {
       columns: buildNoticeFormColumns(),
-      minWidth: "600px",
       dialogDrawerOptions: {
         top: "10vh",
-        width: "60vw"
+        width: dialogSize("xxl")
       }
     },
     apiReq: ({ isAdd, formData }) => {

@@ -60,6 +60,10 @@ const emit = defineEmits<{ change: [value: string] }>();
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
   gap: 8px;
+
+  /* 显式撑满控件区：stack 行里控件区被拉伸后，网格若不撑满会按 max-content
+     结算宽度，auto-fit 的重复次数退化为 1（每行只剩一列卡片） */
+  width: 100%;
 }
 
 .pref-choice__item {

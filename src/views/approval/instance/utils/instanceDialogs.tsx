@@ -6,7 +6,7 @@ import {
   type DialogOptions
 } from "@/components/ReDialog";
 import { addDrawer } from "@/components/ReDrawer";
-import { dialogSize } from "@/components/ReDialog/size";
+import { dialogSize, drawerSize } from "@/components/ReDialog/size";
 import StartInstanceDialog from "../components/StartInstanceDialog.vue";
 import InstanceDetail from "../components/InstanceDetail.vue";
 
@@ -58,7 +58,7 @@ export function openInstanceDetail(row: {
       ),
     // 移动端审批操作面：45% 抽屉在手机视口只剩 ~175px 不可读，全屏展示
     // （先例：DirectoryMembers 的 deviceDetection 分支）
-    size: deviceDetection() ? "100%" : "45%",
+    size: deviceDetection() ? drawerSize("full") : drawerSize("md"),
     destroyOnClose: true,
     closeOnClickModal: true,
     hideFooter: true,

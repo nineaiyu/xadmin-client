@@ -12,6 +12,7 @@ import { useNoticeFormOptions } from "./useNoticeFormOptions";
 import { useNoticeListColumns } from "./useNoticeListColumns";
 import { parseNoticeUserParam } from "./noticeFormRules";
 
+import { dialogSize } from "@/components/ReDialog/size";
 export function useNotice(tableRef: Ref) {
   const { t } = useI18n();
 
@@ -95,7 +96,7 @@ function buildOperationButtons(
               formInline: { ...row },
               hasPublish: true
             },
-            width: "60%",
+            width: dialogSize("lg"),
             draggable: true,
             fullscreen: deviceDetection(),
             fullscreenIcon: true,

@@ -5,6 +5,7 @@ import NoticeShowForm from "@/views/system/components/NoticeShow.vue";
 import type { useI18n } from "vue-i18n";
 import type { RecordType } from "plus-pro-components";
 
+import { dialogSize } from "@/components/ReDialog/size";
 type TFunction = ReturnType<typeof useI18n>["t"];
 
 /** 系统通知详情弹窗（只读展示，行内 notice_info 快照渲染） */
@@ -21,7 +22,7 @@ export function openNoticeReadDetail({
       formInline: { ...row.notice_info },
       hasPublish: false
     },
-    width: "70%",
+    width: dialogSize("xl"),
     draggable: true,
     fullscreen: deviceDetection(),
     fullscreenIcon: true,

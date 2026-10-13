@@ -3,6 +3,7 @@ import { addDialog } from "@/components/ReDialog";
 import MaskPreview from "../components/MaskPreview.vue";
 import type { useI18n } from "vue-i18n";
 
+import { dialogSize } from "@/components/ReDialog/size";
 type TFunction = ReturnType<typeof useI18n>["t"];
 
 /**
@@ -18,7 +19,7 @@ export function openMaskPreview({
 }) {
   addDialog({
     title: t("mask.preview"),
-    width: "40%",
+    width: dialogSize("lg"),
     draggable: true,
     closeOnClickModal: false,
     hideFooter: true,

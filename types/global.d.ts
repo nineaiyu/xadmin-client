@@ -247,6 +247,10 @@ declare global {
     EnablePreferences?: boolean;
     PreferencesPosition?:
       "auto" | "header" | "fixed" | "none" | "user-dropdown";
+    /** 偏好面板页签导航吸顶：面板内容滚动时页签头保持可见 */
+    PreferencesStickyNav?: boolean;
+    /** 显示面板底部「复制偏好」按钮 */
+    EnableCopyPreferences?: boolean;
     /** 全局页面切换动画预设（none 表示不做过渡） */
     PageTransition?: PageTransitionType;
     /** 路由切换：顶部进度条 / 内容区 loading 遮罩 */
@@ -423,6 +427,8 @@ declare global {
       enablePreferences?: boolean;
       preferencesPosition?:
         "auto" | "header" | "fixed" | "none" | "user-dropdown";
+      preferencesStickyNav?: boolean;
+      enableCopyPreferences?: boolean;
       pageTransition?: PageTransitionType;
       transitionProgress?: boolean;
       transitionLoading?: boolean;

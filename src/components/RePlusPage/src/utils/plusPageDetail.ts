@@ -4,6 +4,7 @@ import type { useBaseColumns } from "./columns";
 import type { RePlusPageProps } from "./types";
 import type { useI18n } from "vue-i18n";
 
+import { dialogSize } from "@/components/ReDialog/size";
 type TFunction = ReturnType<typeof useI18n>["t"];
 type BaseColumnsReturn = ReturnType<typeof useBaseColumns>;
 
@@ -33,8 +34,7 @@ export function createDetailAction({
       title: t("buttons.detail"),
       rawRow,
       rawColumns: detailColumns.value,
-      dialogDrawerOptions: { width: "60vw", hideFooter: true },
-      minWidth: "600px",
+      dialogDrawerOptions: { width: dialogSize("xxl"), hideFooter: true },
       formProps: { ...props.plusDescriptionsProps },
       form: DetailDataForm
     });

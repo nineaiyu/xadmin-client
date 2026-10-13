@@ -301,7 +301,7 @@ onMounted(() => {
             :plan-loading="planLoading"
             @model-change="loadPlan"
           />
-          <el-form v-else label-width="92px" label-position="left" class="mb-2">
+          <el-form v-else label-width="90px" label-position="left" class="mb-2">
             <el-form-item :label="t('codegen.model')" required>
               <el-select
                 v-model="batchModels"

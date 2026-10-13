@@ -191,6 +191,15 @@
   color: var(--el-text-color-regular);
 }
 
+/* 表格表头统一单行：EP 的表头 `.cell` 默认 `white-space: normal`，列宽不足即折成两行；
+   只有开了 showOverflowTooltip 的列（列表页全列）才走 nowrap —— 于是「有的表两行、
+   有的表单行」。这里统一为单行 + 省略号，与列表页口径一致（列头文案短，省略极少见）。 */
+.el-table th.el-table__cell > .cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .el-alert--info .el-alert__title {
   color: var(--el-text-color-regular);
 }

@@ -219,7 +219,7 @@ export const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
 
   const clientWidth = document.documentElement.clientWidth;
   const minWidth = Number((formOptions.minWidth ?? "600px").replace("px", ""));
-  const width = formOptions?.dialogDrawerOptions?.width ?? "50%";
+  const width = formOptions?.dialogDrawerOptions?.width ?? dialogSize("md");
   let numberWidth: number;
   if (width.endsWith("%") || width.endsWith("vw")) {
     numberWidth =

@@ -68,7 +68,7 @@ defineExpose({ getPayload });
 </script>
 
 <template>
-  <el-form label-width="120px">
+  <el-form label-width="130px">
     <el-form-item :label="t('mcp.formName')" required>
       <el-input v-model="form.name" data-testid="mcp-form-name" />
     </el-form-item>

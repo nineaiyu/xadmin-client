@@ -12,6 +12,7 @@ import CardView from "~icons/ri/layout-grid-line";
 import ListView from "~icons/ri/list-unordered";
 import MemberDetail from "./MemberDetail.vue";
 
+import { drawerSize, DRAWER_NARROW_WIDTH } from "@/components/ReDialog/size";
 /**
  * 通讯录右栏：成员名录（服务端分页）。
  *
@@ -101,7 +102,7 @@ function postNames(row: DirectoryMember): string {
 function openDetail(row: DirectoryMember) {
   addDrawer({
     title: t("directory.memberDetail"),
-    size: deviceDetection() ? "100%" : "420px",
+    size: deviceDetection() ? drawerSize("full") : DRAWER_NARROW_WIDTH,
     destroyOnClose: true,
     hideFooter: true,
     contentRenderer: () => h(MemberDetail, { row })

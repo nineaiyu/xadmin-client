@@ -10,6 +10,7 @@ import type { RecordType } from "plus-pro-components";
 import type { ApiResult, DetailResult } from "@/api/types";
 import { APPROVAL_STATUS_TAG_TYPE } from "./constants";
 
+import { dialogSize } from "@/components/ReDialog/size";
 /** 驳回原因输入弹窗：单条驳回 / 批量驳回共用同构表单，原因必填在此显式收口 */
 export function openRejectReasonDialog(options: {
   /** 与 handleOperation 同宽松签名，便于直接透传 useI18n 的 t */
@@ -24,7 +25,7 @@ export function openRejectReasonDialog(options: {
   const form = reactive({ reason: "" });
   addDialog({
     title,
-    width: "440px",
+    width: dialogSize("sm"),
     draggable: true,
     closeOnClickModal: false,
     contentRenderer: () => (
@@ -100,7 +101,7 @@ export function openApprovalProgressDialog(options: {
   const changes = (snapshot?.changes ?? []).filter(item => item?.field);
   addDialog({
     title: t("approval.progressTitle", { no }),
-    width: "620px",
+    width: dialogSize("md"),
     draggable: true,
     destroyOnClose: true,
     closeOnClickModal: false,

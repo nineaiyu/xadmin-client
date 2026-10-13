@@ -8,6 +8,7 @@ import type { RecordType } from "plus-pro-components";
 import { roleFieldFormValue } from "./roleFormValues";
 import type { Ref } from "vue";
 
+import { dialogSize } from "@/components/ReDialog/size";
 type RoleApiLike = Partial<typeof roleApi>;
 type RoleAuth = Record<string, boolean | undefined>;
 
@@ -74,10 +75,9 @@ export function useRoleFormOptions({
           return column;
         }
       },
-      minWidth: "860px",
       dialogDrawerOptions: {
         // 授权树节点含类型标签 / 权限码 / 状态标识，宽度不足会被裁剪
-        width: "72vw"
+        width: dialogSize("xxl")
       }
     }
   });

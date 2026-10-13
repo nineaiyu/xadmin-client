@@ -41,6 +41,8 @@ type BooleanPreferenceField =
   | "TagsShowMore"
   | "DynamicTitle"
   | "EnablePreferences"
+  | "PreferencesStickyNav"
+  | "EnableCopyPreferences"
   | "ShortcutSearch"
   | "ShortcutEnable"
   | "HeaderFixed"
@@ -83,6 +85,9 @@ type PreferenceField =
   | "MaxTagsCount"
   | "BreadcrumbStyle"
   | "PreferencesPosition"
+  | "PreferencesStickyNav"
+  | "EnableCopyPreferences"
+  | "Timezone"
   | "Locale"
   | "EpThemeColor"
   | "ShortcutLockKeys"
@@ -681,6 +686,17 @@ test.describe("布局偏好（面板实时生效）", () => {
     // 面板文案可能被语言用例切成英文，行/页签定位一律中英双语。
     await openSettingPanel(page).catch(() => undefined);
 
+    // 面板头部吸顶开关（Pin 按钮，不属任何页签）：关闭态点回开启
+    const pinButton = page.locator(
+      ".right-panel .lay-panel__header button[aria-pressed]"
+    );
+    if (
+      (await pinButton.getAttribute("aria-pressed").catch(() => "true")) ===
+      "false"
+    ) {
+      await pinButton.click().catch(() => undefined);
+    }
+
     await switchSettingTab(page, /外观|Appearance/).catch(() => undefined);
     // 自定义主色：仅自定义态需要回退（点回亮白色块 = 默认皮肤 + 默认主色）
     if (
@@ -785,6 +801,12 @@ test.describe("布局偏好（面板实时生效）", () => {
     await setSwitch(page, /动态标题|Dynamic title/, true, "DynamicTitle").catch(
       () => undefined
     );
+    await setSwitch(
+      page,
+      /显示复制偏好按钮|Show copy-preferences button/,
+      true,
+      "EnableCopyPreferences"
+    ).catch(() => undefined);
     await setTransitionCard(page, "fade-transform").catch(() => undefined);
 
     // 快捷键页签：总开关与各动作键位全部复位（键位串比较走本地存储，值一致即跳过录制）
@@ -2832,6 +2854,139 @@ test.describe("布局偏好（面板实时生效）", () => {
     await closePanel(page);
     await expect(page.locator("body[layout='vertical']")).toHaveCount(1);
     await expect(page.locator(".fixed-header")).toHaveCount(1);
+  });
+
+  test("偏好：面板吸顶导航、复制偏好按钮与组件快捷键提示", async ({ page }) => {
+    await openSettingPanel(page);
+    const panel = page.locator(".right-panel").first();
+    const tabsRoot = panel.locator(".setting-tabs");
+
+    // 默认吸顶开启：页签头 sticky 类在、头部 Pin 按钮按下
+    await expect(tabsRoot).toHaveClass(/setting-tabs--sticky/);
+    const pin = panel.locator(".lay-panel__header button[aria-pressed]");
+    await expect(pin).toHaveAttribute("aria-pressed", "true");
+
+    // 顶栏组件行快捷键提示（kbd）：菜单搜索显示 ⌘/Ctrl+K（符号随平台）
+    await switchSettingTab(page, "布局");
+    const searchWidgetRow = panel
+      .locator(".navbar-widgets__item")
+      .filter({ hasText: /菜单搜索|Menu search/ })
+      .first();
+    await expect(searchWidgetRow.locator("kbd")).toHaveText(/⌘K|Ctrl\+K/);
+
+    // 关闭吸顶：sticky 类移除并落库
+    await waitForSiteConfigPatch(
+      page,
+      "PreferencesStickyNav",
+      false,
+      async () => {
+        await pin.click();
+      }
+    );
+    await expect(tabsRoot).not.toHaveClass(/setting-tabs--sticky/);
+    await expect(pin).toHaveAttribute("aria-pressed", "false");
+
+    // 关闭「显示复制偏好按钮」：页脚复制按钮消失
+    await switchSettingTab(page, "通用");
+    const copyButton = panel
+      .locator(".lay-panel__footer .el-button")
+      .filter({ hasText: /复制偏好|Copy preferences/ });
+    await expect(copyButton).toHaveCount(1);
+    await setSwitch(
+      page,
+      /显示复制偏好按钮|Show copy-preferences button/,
+      false,
+      "EnableCopyPreferences"
+    );
+    await expect(copyButton).toHaveCount(0);
+
+    // 复位：复制按钮开关恢复，吸顶重新开启
+    await setSwitch(
+      page,
+      /显示复制偏好按钮|Show copy-preferences button/,
+      true,
+      "EnableCopyPreferences"
+    );
+    await expect(copyButton).toHaveCount(1);
+    await waitForSiteConfigPatch(
+      page,
+      "PreferencesStickyNav",
+      true,
+      async () => {
+        await pin.click();
+      }
+    );
+    await expect(tabsRoot).toHaveClass(/setting-tabs--sticky/);
+  });
+
+  test("偏好：重置配置按钮脏标记随偏好差异联动", async ({ page }) => {
+    await openSettingPanel(page);
+    const resetButton = page
+      .locator(".right-panel .lay-panel__footer .el-button")
+      .first();
+    const dirtyDot = page.locator(".right-panel .lay-panel__dirty-dot");
+
+    // 以初始态为基准（跑批环境可能有其它未复位差异，不做绝对「干净」假设）
+    const initiallyDisabled = await resetButton.isDisabled();
+    const initialDotCount = await dirtyDot.count();
+
+    // 产生差异：打开紧凑模式 → 标记出现、按钮可用
+    await switchSettingTab(page, "通用");
+    await setSwitch(page, /紧凑模式|Compact mode/, true, "CompactMode");
+    await expect(dirtyDot).toBeVisible({ timeout: 10_000 });
+    await expect(resetButton).toBeEnabled();
+
+    // 消除差异：切回基线值 → 回到初始态
+    await setSwitch(page, /紧凑模式|Compact mode/, false, "CompactMode");
+    if (initialDotCount === 0) {
+      await expect(dirtyDot).toHaveCount(0, { timeout: 10_000 });
+    }
+    if (initiallyDisabled) {
+      await expect(resetButton).toBeDisabled({ timeout: 10_000 });
+    }
+  });
+
+  test("通用：时区选择落库并持久化", async ({ page }) => {
+    await openSettingPanel(page);
+    await switchSettingTab(page, "通用");
+    const timezoneRow = row(page, /^时区|^Timezone/);
+    await expect(timezoneRow).toBeVisible({ timeout: 10_000 });
+
+    const pickTimezone = async (
+      typed: string,
+      optionLabel: string | RegExp,
+      patchText?: string
+    ) => {
+      const action = async () => {
+        await timezoneRow.locator(".el-select").click();
+        if (typed) await page.keyboard.type(typed);
+        const listId = await timezoneRow
+          .locator("[aria-controls]")
+          .first()
+          .getAttribute("aria-controls");
+        const option = listId
+          ? page.locator(`#${listId} .el-select-dropdown__item`)
+          : page.locator(".el-select-dropdown__item");
+        await option.filter({ hasText: optionLabel }).first().click();
+      };
+      if (patchText === undefined) {
+        await action();
+        return;
+      }
+      await waitForSiteConfigPatch(page, "Timezone", patchText, action);
+    };
+
+    // 选择 Asia/Tokyo（filterable 下拉：键入过滤后点选）
+    if ((await storedPreferenceValue(page, "Timezone")) !== "Asia/Tokyo") {
+      await pickTimezone("Tokyo", "Asia/Tokyo", "Asia/Tokyo");
+    }
+    expect(await storedPreferenceValue(page, "Timezone")).toBe("Asia/Tokyo");
+
+    // 复位：跟随浏览器（空串）
+    if ((await storedPreferenceValue(page, "Timezone")) !== "") {
+      await pickTimezone("", /跟随浏览器时区|Follow browser timezone/, "");
+    }
+    expect(await storedPreferenceValue(page, "Timezone")).toBe("");
   });
 });
 

@@ -285,7 +285,7 @@ defineExpose({ validate, getPayload, isDirty, getCascadePks });
       :disabled="disabled"
       :model="form"
       :rules="rules"
-      label-width="108px"
+      label-width="110px"
       @submit.prevent
     >
       <el-collapse v-model="activeGroups" class="menu-form__groups">

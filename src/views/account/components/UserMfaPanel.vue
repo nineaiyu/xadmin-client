@@ -28,6 +28,7 @@ import {
   type OtpStartResult,
   type OtpStatus
 } from "@/api/mfa";
+import { dialogSize } from "@/components/ReDialog/size";
 
 defineOptions({
   name: "EditUserMfa"
@@ -365,7 +366,7 @@ onMounted(loadStatus);
     <el-dialog
       v-model="recoveryDialogVisible"
       :title="$t('mfa.recoveryTitle')"
-      width="460px"
+      :width="dialogSize('sm')"
       append-to-body
       :close-on-click-modal="false"
     >

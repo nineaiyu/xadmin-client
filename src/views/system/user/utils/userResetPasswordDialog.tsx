@@ -18,6 +18,7 @@ import type { PasswordRule } from "@/api/auth";
 import type { useI18n } from "vue-i18n";
 import type { RecordType } from "plus-pro-components";
 
+import { dialogSize } from "@/components/ReDialog/size";
 type TFunction = ReturnType<typeof useI18n>["t"];
 
 /** 重置密码弹窗依赖（状态归 useUserResetPassword，本模块只负责渲染与提交） */
@@ -46,7 +47,7 @@ export function openUserResetPasswordDialog({
   const pwdProgress = passwordStrengthLevels(t);
   addDialog({
     title: t("systemUser.resetPasswd", { user: row.username }),
-    width: "30%",
+    width: dialogSize("sm"),
     draggable: true,
     fullscreen: deviceDetection(),
     closeOnClickModal: false,

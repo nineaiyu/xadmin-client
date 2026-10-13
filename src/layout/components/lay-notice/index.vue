@@ -16,6 +16,7 @@ import { useApprovalBadge } from "@/utils/approvalBadge";
 import { useTaskCenter } from "@/utils/taskCenter";
 import { openTaskCenterDrawer } from "@/views/system/components/taskCenterDrawer";
 
+import { dialogSize } from "@/components/ReDialog/size";
 const { t } = useI18n();
 
 /**
@@ -86,7 +87,7 @@ const handleItemClick = (item: ListItem) => {
       formInline: { ...item },
       hasPublish: false
     },
-    width: "70%",
+    width: dialogSize("xl"),
     draggable: true,
     fullscreen: deviceDetection(),
     fullscreenIcon: true,

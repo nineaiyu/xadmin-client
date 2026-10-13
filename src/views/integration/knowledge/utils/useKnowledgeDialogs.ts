@@ -11,6 +11,7 @@ import KnowledgePanel from "../components/KnowledgePanel.vue";
 import { buildKnowledgeActionGroups } from "./knowledgeActions";
 import type { KnowledgeRow } from "./useKnowledgeDocument";
 
+import { dialogSize, drawerSize } from "@/components/ReDialog/size";
 type TFunction = ReturnType<typeof useI18n>["t"];
 
 /** 行内字典化字段取标量值：后端 LabeledChoice 下发 {value,label}（或原始字符串） */
@@ -43,7 +44,7 @@ export function useKnowledgeDialogs({
     uploadFormRef.value = undefined;
     addDialog({
       title: t("aiKnowledge.uploadTitle"),
-      width: "640px",
+      width: dialogSize("md"),
       draggable: true,
       destroyOnClose: true,
       closeOnClickModal: false,
@@ -74,7 +75,7 @@ export function useKnowledgeDialogs({
   const openKnowledgePanel = (row: KnowledgeRow) => {
     openManageDrawer({
       title: t("aiKnowledge.panelTitle", { title: row.title }),
-      size: "55%",
+      size: drawerSize("lg"),
       drawerOptions: { closeOnClickModal: false },
       render: ({ withClosed }) =>
         h(KnowledgePanel, {

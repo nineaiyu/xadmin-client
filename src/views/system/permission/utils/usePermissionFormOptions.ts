@@ -6,6 +6,7 @@ import type { FieldLookupItem } from "../components/utils/types";
 import type { MenuScopeRow } from "../components/utils/menuScope";
 import type { TreeResult } from "@/utils/tree";
 
+import { dialogSize } from "@/components/ReDialog/size";
 type LookupRows = Ref<TreeResult<RecordType>[]>;
 
 /**
@@ -44,7 +45,7 @@ export function usePermissionFormOptions({
       // 新增与编辑共用右侧抽屉：规则编辑器 + 试算面板需要宽于默认弹窗的内容区
       mode: "drawer",
       dialogDrawerOptions: {
-        width: "900px"
+        width: dialogSize("xxl")
       }
     }
   });

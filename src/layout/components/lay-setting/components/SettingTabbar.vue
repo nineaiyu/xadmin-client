@@ -136,7 +136,8 @@ const tagsVisitHistory = computed({
 
 <template>
   <PrefBlock :title="t('layout.labelStyle')" :icon="TabLine" list flush>
-    <PrefRow :label="t('layout.labelStyle')" stack>
+    <!-- 卡片组自身已有风格名与选中态，区块标题即语义来源，不再重复行标签 -->
+    <PrefRow stack>
       <template #control>
         <PrefChoice
           :options="styleOptions"

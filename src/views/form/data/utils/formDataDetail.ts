@@ -6,6 +6,7 @@ import SubmissionDetail from "../../components/SubmissionDetail.vue";
 import type { FormDataItem } from "@/api/dataset/dform";
 import type { useI18n } from "vue-i18n";
 
+import { drawerSize } from "@/components/ReDialog/size";
 type TFunction = ReturnType<typeof useI18n>["t"];
 
 /** 数据详情抽屉（自 hook.tsx 抽出）：先取详情（列表契约不含 schema 快照 /
@@ -29,7 +30,7 @@ export function createFormDataDetailOpener({
     const detail = res?.code === SUCCESS_CODE ? (res.data ?? row) : row;
     addDrawer({
       title: `${detail.form_name} - ${String(detail.pk).slice(0, 8).toUpperCase()}`,
-      size: "45%",
+      size: drawerSize("md"),
       destroyOnClose: true,
       closeOnClickModal: true,
       hideFooter: true,

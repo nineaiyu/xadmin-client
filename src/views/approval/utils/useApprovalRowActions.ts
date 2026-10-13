@@ -14,6 +14,7 @@ import { openRejectReasonDialog } from "./dialogs";
 import { approvalRowButtons } from "./approvalRowButtons";
 import Document from "~icons/ep/document";
 
+import { dialogSize } from "@/components/ReDialog/size";
 /**
  * 审批面板行内操作：通过/驳回（待我审批）与撤回（我发起的），及互跳操作日志。
  * 自 useApprovalPanel 拆出（行为不变）：多级链按服务端 can_act 收口
@@ -49,7 +50,7 @@ export function useApprovalRowActions({
   const openRelatedLogs = (row: RecordType) => {
     addDialog({
       title: `${t("approval.relatedLogs")} - ${String(row.pk).slice(0, 8).toUpperCase()}`,
-      width: "860px",
+      width: dialogSize("xl"),
       draggable: true,
       destroyOnClose: true,
       closeOnClickModal: false,

@@ -86,7 +86,7 @@ onMounted(loadMenus);
 </script>
 
 <template>
-  <el-form label-width="92px" label-position="left" class="codegen-base">
+  <el-form label-width="90px" label-position="left" class="codegen-base">
     <el-form-item :label="t('codegen.model')" required>
       <el-select
         v-model="state.model"

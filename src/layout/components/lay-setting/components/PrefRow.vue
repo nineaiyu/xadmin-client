@@ -23,7 +23,7 @@ withDefaults(
     class="pref-row"
     :class="{ 'pref-row--stack': stack, 'is-disabled': disabled }"
   >
-    <span class="pref-row__label">
+    <span v-if="label || $slots.default || desc" class="pref-row__label">
       <span class="pref-row__text">
         <slot>{{ label }}</slot>
         <el-tooltip

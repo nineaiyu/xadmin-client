@@ -3,6 +3,7 @@ import { addDialog } from "@/components/ReDialog";
 import ChangeHistoryDialog from "../components/ChangeHistoryDialog.vue";
 import type { BaseApi } from "@/api/base";
 
+import { dialogSize } from "@/components/ReDialog/size";
 interface changeHistoryOptions {
   t: (arg0: string, arg1?: object) => string;
   /** 当前页面 API（取 baseApi 拼出 detail 路由） */
@@ -18,7 +19,7 @@ const handleShowChangeHistory = (options: changeHistoryOptions) => {
   const { t, api, row } = options;
   addDialog({
     title: t("buttons.changeHistory"),
-    width: "960px",
+    width: dialogSize("xxl"),
     draggable: true,
     hideFooter: true,
     destroyOnClose: true,

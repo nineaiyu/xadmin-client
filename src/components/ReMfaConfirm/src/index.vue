@@ -19,6 +19,7 @@ import {
   mfaSendCodeApi,
   type MfaMethod
 } from "@/api/mfa";
+import { dialogSize } from "@/components/ReDialog/size";
 
 defineOptions({ name: "ReMfaConfirm" });
 
@@ -118,7 +119,7 @@ const emit = defineEmits<{ destroy: [] }>();
   <el-dialog
     v-model="visible"
     :title="$t('mfa.confirmTitle')"
-    width="440px"
+    :width="dialogSize('sm')"
     append-to-body
     destroy-on-close
     :close-on-click-modal="false"

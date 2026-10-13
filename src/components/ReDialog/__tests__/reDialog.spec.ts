@@ -13,7 +13,13 @@ import {
   updateDialog,
   ReDialog
 } from "../index";
-import { DIALOG_SIZES, dialogSize } from "../size";
+import {
+  DIALOG_SIZES,
+  DRAWER_NARROW_WIDTH,
+  DRAWER_SIZES,
+  dialogSize,
+  drawerSize
+} from "../size";
 
 const i18n = createI18n({
   legacy: false,
@@ -154,6 +160,17 @@ describe("ReDialog 尺寸档位", () => {
     expect(dialogSize("md")).toBe("640px");
     expect(dialogSize("lg")).toBe("760px");
     expect(dialogSize("xl")).toBe("860px");
-    expect(Object.keys(DIALOG_SIZES)).toEqual(["sm", "md", "lg", "xl"]);
+    expect(dialogSize("xxl")).toBe("960px");
+    expect(Object.keys(DIALOG_SIZES)).toEqual(["sm", "md", "lg", "xl", "xxl"]);
+  });
+
+  it("抽屉档位映射为视口比例字符串，并提供固定窄档", () => {
+    expect(drawerSize("sm")).toBe("40%");
+    expect(drawerSize("md")).toBe("50%");
+    expect(drawerSize("lg")).toBe("60%");
+    expect(drawerSize("xl")).toBe("75%");
+    expect(drawerSize("full")).toBe("100%");
+    expect(Object.keys(DRAWER_SIZES)).toEqual(["sm", "md", "lg", "xl", "full"]);
+    expect(DRAWER_NARROW_WIDTH).toBe("480px");
   });
 });

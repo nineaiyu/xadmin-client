@@ -14,6 +14,7 @@ import {
   type WidgetPosition
 } from "@/layout/components/lay-navbar/widgets/catalog";
 import { useConfigureStorage } from "../hooks/useConfigureStorage";
+import { formatShortcut, resolveShortcutKeys } from "@/utils/shortcutKeys";
 import PrefBlock from "./PrefBlock.vue";
 
 import DragMoveLine from "~icons/ri/drag-move-2-line";
@@ -24,6 +25,48 @@ const { $storage } = useGlobal<GlobalPropertiesApi>();
 const { storageConfigureChange } = useConfigureStorage();
 
 const listDom = ref<HTMLElement>();
+
+/**
+ * 组件 ↔ 全局快捷键动作映射（对齐 vben 小部件开关行的 kbd 提示）：
+ * 有快捷键的组件在行内展示当前键位，提升快捷键可发现性。
+ */
+type WidgetShortcut = {
+  keysKey: "shortcutSearchKeys" | "shortcutLockKeys" | "shortcutSidebarKeys";
+  legacyKey: "shortcutSearch" | "shortcutLock" | "shortcutSidebar";
+  fallback: string;
+};
+
+const WIDGET_SHORTCUTS: Record<string, WidgetShortcut> = {
+  search: {
+    keysKey: "shortcutSearchKeys",
+    legacyKey: "shortcutSearch",
+    fallback: "mod+k"
+  },
+  lock: {
+    keysKey: "shortcutLockKeys",
+    legacyKey: "shortcutLock",
+    fallback: "alt+l"
+  },
+  sidebarToggle: {
+    keysKey: "shortcutSidebarKeys",
+    legacyKey: "shortcutSidebar",
+    fallback: "alt+s"
+  }
+};
+
+/** 行内快捷键提示文本（总开关关闭 / 该组件无快捷键 / 动作未启用时为空） */
+function shortcutHint(key: string): string {
+  if ($storage?.configure?.shortcutEnable === false) return "";
+  const item = WIDGET_SHORTCUTS[key];
+  if (!item) return "";
+  const configure = $storage?.configure;
+  const keys = resolveShortcutKeys(
+    configure?.[item.keysKey],
+    configure?.[item.legacyKey],
+    item.fallback
+  );
+  return formatShortcut(keys);
+}
 
 /** 当前顺序：偏好优先，缺省内置顺序；目录新增但未入队列的组件按内置顺序补在末尾 */
 const orderedKeys = computed<string[]>(() => {
@@ -137,6 +180,9 @@ useSortable(listDom, {
           <IconifyIconOffline :icon="DraggableIcon" />
         </span>
         <span class="navbar-widgets__label">{{ t(item.labelKey) }}</span>
+        <kbd v-if="shortcutHint(item.key)" class="navbar-widgets__kbd">
+          {{ shortcutHint(item.key) }}
+        </kbd>
         <el-select
           :model-value="positionOf(item.key)"
           size="small"
@@ -191,6 +237,17 @@ useSortable(listDom, {
     font-size: var(--font-size-sm);
     color: var(--el-text-color-regular);
     white-space: nowrap;
+  }
+
+  &__kbd {
+    flex: none;
+    padding: 1px 5px;
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-2xs);
+    color: var(--el-text-color-secondary);
+    background: var(--el-fill-color);
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: var(--radius-xs);
   }
 
   &__ghost {

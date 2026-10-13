@@ -80,7 +80,7 @@ const sanitizedMessage = computed(() =>
 </script>
 
 <template>
-  <el-form ref="formRef" :model="newFormInline" label-width="82px">
+  <el-form ref="formRef" :model="newFormInline" label-width="90px">
     <el-card shadow="never">
       <template #header>
         <h2 class="inline-block mr-6">

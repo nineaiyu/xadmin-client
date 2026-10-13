@@ -155,6 +155,14 @@ messageTemplate:
   syntaxHint: "Insert variables as {'{{'}name{'}}'}; leave empty to keep the code default"
   previewUnsupported: This message type has no sample data, preview is unavailable
   defaultContent: Code default content
+  panelHint: Templates without an override use the system default text; saving an override takes effect immediately and can be reset at any time
+  searchPlaceholder: Search message type
+  filterCategory: Filter by category
+  updatedAt: Updated At
+  inactiveMark: Disabled
+  variableCopied: Copied {name}
+  previewTitle: Preview - {name}
+  prefilledHint: Prefilled with the code default text; edit on top of it — parts identical to the default will not create an override
 
 approvalDiscussion:
   title: Discussion
@@ -655,6 +663,8 @@ layout:
   copyPreferences: Copy preferences
   copyPreferencesTip: Copy the full current UI preferences (locale, layout, theme, switches) to attach to bug reports
   copyPreferencesSuccess: UI preferences copied to the clipboard
+  enableCopyPreferences: Show copy-preferences button
+  enableCopyPreferencesTip: Show a button at the panel footer to copy the full current UI preferences
   cleanOut: Clear the cache and return the login page
   preferencesEntry: Preferences entry
   enablePreferences: Settings entry
@@ -667,9 +677,12 @@ layout:
   preferencesPositionUserDropdown: User menu
   preferencesPositionAuto: Auto
   preferencesPositionNone: Hidden
+  preferencesStickyNavEnable: Sticky tab navigation
+  preferencesStickyNavDisable: Unpin tab navigation
   noticeTime: YYYY-MM-DD HH:mm:ss
   timezone: Timezone
   timezoneFollowBrowser: Follow browser timezone
+  timezoneTip: Timezone used by the header clock widget; leave empty to follow the browser
   backTop: Back Top
   updateCheck: New version detected
   updateNow: Update now

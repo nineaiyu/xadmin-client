@@ -10,6 +10,7 @@ import {
   type MenuScopeRow,
   type ScopeNode
 } from "./utils/menuScope";
+import { dialogSize } from "@/components/ReDialog/size";
 
 defineOptions({ name: "PermissionScopeSelect" });
 
@@ -140,7 +141,7 @@ function handleConfirm() {
     append-to-body
     destroy-on-close
     :title="t('systemPermission.scope.dialogTitle')"
-    width="560px"
+    :width="dialogSize('md')"
   >
     <div class="scope-toolbar">
       <el-input

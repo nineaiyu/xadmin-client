@@ -12,6 +12,7 @@ import type { Ref, UnwrapNestedRefs } from "vue";
 import type { userApi } from "@/api/identity/user";
 import type { RecordType } from "plus-pro-components";
 
+import { dialogSize } from "@/components/ReDialog/size";
 type TFunction = ReturnType<typeof useI18n>["t"];
 
 /** 用户视图头像裁剪上传弹窗 */
@@ -31,7 +32,7 @@ export function useUserAvatarUpload({
   function handleUpload(row: RecordType) {
     addDialog({
       title: t("systemUser.updateAvatar", { user: row.username }),
-      width: "40%",
+      width: dialogSize("sm"),
       draggable: true,
       fullscreen: deviceDetection(),
       closeOnClickModal: false,

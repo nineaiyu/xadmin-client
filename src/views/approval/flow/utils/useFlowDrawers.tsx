@@ -12,6 +12,7 @@ import { approvalFlowApi } from "@/api/approval/approvalFlow";
 import FlowConfigDrawer from "../components/FlowConfigDrawer.vue";
 import FlowVersions from "../components/FlowVersions.vue";
 
+import { drawerSize } from "@/components/ReDialog/size";
 export type FlowRow = {
   pk: string;
   name: string;
@@ -48,7 +49,7 @@ export function useFlowDrawers({ tableRef }: { tableRef: Ref }) {
       title: flow?.pk
         ? `${t("systemApprovalFlow.editTitle")} - ${flow.name}`
         : t("systemApprovalFlow.createTitle"),
-      size: "60%",
+      size: drawerSize("lg"),
       destroyOnClose: true,
       closeOnClickModal: false,
       hideFooter: true,
@@ -67,7 +68,7 @@ export function useFlowDrawers({ tableRef }: { tableRef: Ref }) {
   const openVersions = (row: FlowRow) => {
     const options: DrawerOptions = {
       title: `${t("systemApprovalFlow.versionsTitle")} - ${row.name}`,
-      size: "40%",
+      size: drawerSize("sm"),
       destroyOnClose: true,
       closeOnClickModal: false,
       hideFooter: true,

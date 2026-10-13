@@ -2,12 +2,21 @@
 // 系统设置面板「通用」：页面切换动画（预览卡片常驻循环播放，与 vben 口径一致，
 // 无需重新触发即可实时看到每个预设的动效）。
 // 预设清单与 style/transition.scss 的过渡类名前缀一一对应，none = 关闭过渡。
+import type { Component } from "vue";
 import { computed } from "vue";
 import { useGlobal } from "@pureadmin/utils";
 import { useNav } from "@/layout/hooks/useNav";
 import { useConfigureStorage } from "../hooks/useConfigureStorage";
 import PrefBlock from "./PrefBlock.vue";
 import PrefRow from "./PrefRow.vue";
+
+import ArrowDownLine from "~icons/ri/arrow-down-line";
+import ArrowLeftRightLine from "~icons/ri/arrow-left-right-line";
+import ArrowRightLine from "~icons/ri/arrow-right-line";
+import ArrowUpLine from "~icons/ri/arrow-up-line";
+import ForbidLine from "~icons/ri/forbid-2-line";
+import CheckIcon from "~icons/ep/select";
+import ZoomInLine from "~icons/ri/zoom-in-line";
 
 const { t } = useNav();
 const { $storage } = useGlobal<GlobalPropertiesApi>();
@@ -25,18 +34,42 @@ const transitionLoading = computed({
   set: value => storageConfigureChange("transitionLoading", value)
 });
 
-/** 预设清单（value 与 style/transition.scss 的类名前缀同源） */
-const PRESETS: Array<{ value: PageTransitionType; labelKey: string }> = [
-  { value: "none", labelKey: "layout.transitionNone" },
-  { value: "fade-transform", labelKey: "layout.transitionFadeTransform" },
-  { value: "fade-slide", labelKey: "layout.transitionFadeSlide" },
-  { value: "fade-up", labelKey: "layout.transitionFadeUp" },
-  { value: "fade-down", labelKey: "layout.transitionFadeDown" },
-  { value: "fade-scale", labelKey: "layout.transitionFadeScale" }
+/** 预设清单（value 与 style/transition.scss 的类名前缀同源）；徽标图标标示位移方向 */
+const PRESETS: Array<{
+  value: PageTransitionType;
+  labelKey: string;
+  icon: Component;
+}> = [
+  { value: "none", labelKey: "layout.transitionNone", icon: ForbidLine },
+  {
+    value: "fade-transform",
+    labelKey: "layout.transitionFadeTransform",
+    icon: ArrowLeftRightLine
+  },
+  {
+    value: "fade-slide",
+    labelKey: "layout.transitionFadeSlide",
+    icon: ArrowRightLine
+  },
+  { value: "fade-up", labelKey: "layout.transitionFadeUp", icon: ArrowUpLine },
+  {
+    value: "fade-down",
+    labelKey: "layout.transitionFadeDown",
+    icon: ArrowDownLine
+  },
+  {
+    value: "fade-scale",
+    labelKey: "layout.transitionFadeScale",
+    icon: ZoomInLine
+  }
 ];
 
 const options = computed(() =>
-  PRESETS.map(item => ({ value: item.value, label: t(item.labelKey) }))
+  PRESETS.map(item => ({
+    value: item.value,
+    label: t(item.labelKey),
+    icon: item.icon
+  }))
 );
 
 const pageTransition = computed<PageTransitionType>({
@@ -94,7 +127,15 @@ const pageTransition = computed<PageTransitionType>({
                 :class="`anim-card__block--${item.value}`"
               />
             </span>
-            <span class="anim-card__label">{{ item.label }}</span>
+            <span class="anim-card__label">
+              <IconifyIconOffline :icon="item.icon" class="anim-card__badge" />
+              {{ item.label }}
+            </span>
+            <IconifyIconOffline
+              v-if="pageTransition === item.value"
+              :icon="CheckIcon"
+              class="anim-card__mark"
+            />
           </li>
         </ul>
       </template>
@@ -197,15 +238,34 @@ const pageTransition = computed<PageTransitionType>({
 }
 
 .anim-card {
-  padding: 4px;
+  position: relative;
+  padding: 5px;
   cursor: pointer;
-  outline: 1px solid var(--el-border-color);
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-lighter);
   border-radius: var(--radius-md);
-  transition: outline-color var(--duration-fast) var(--ease-standard);
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
 
-  &:hover,
+  /* 选中/悬停口径与偏好卡组（PrefChoice）一致：主色描边 + 主色浅底 + 微上浮 */
+  &:hover {
+    border-color: var(--el-color-primary-light-5);
+    transform: translateY(-1px);
+  }
+
   &.is-active {
-    outline: 2px solid var(--el-color-primary);
+    background: var(--el-color-primary-light-9);
+    border-color: var(--el-color-primary);
+  }
+
+  &__mark {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: var(--font-size-xs);
+    color: var(--el-color-primary);
   }
 
   &__stage {
@@ -231,6 +291,11 @@ const pageTransition = computed<PageTransitionType>({
     animation-iteration-count: infinite;
   }
 
+  /* 关闭：无动效预设，方块降饱和表达「静止」 */
+  &__block--none {
+    background: var(--el-fill-color-dark);
+  }
+
   &__block--fade-transform {
     animation-name: anim-card-fade-transform;
   }
@@ -252,11 +317,31 @@ const pageTransition = computed<PageTransitionType>({
   }
 
   &__label {
-    display: block;
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    justify-content: center;
     padding-top: 4px;
     font-size: var(--font-size-sm);
     color: var(--el-text-color-regular);
-    text-align: center;
+  }
+
+  /* 方向徽标：静止状态下也能读出各预设的位移方向 */
+  &__badge {
+    font-size: var(--font-size-sm);
+    color: var(--el-text-color-secondary);
+  }
+
+  &.is-active &__badge {
+    color: var(--el-color-primary);
+  }
+}
+
+/* 相位错开：六张卡按序各错半个周期（3s ÷ 6），同屏不再是同一相位——
+   常驻播放时扫视一眼即可分辨「谁在左右滑、谁在上下滑、谁在缩放」 */
+@for $i from 1 through 6 {
+  .anim-grid > .anim-card:nth-child(#{$i}) .anim-card__block {
+    animation-delay: ($i - 1) * -0.5s;
   }
 }
 </style>

@@ -9,6 +9,7 @@ import { picturePng } from "@/views/system/hooks";
 import croppingUpload from "@/components/RePictureUpload";
 import type { CropperPayload } from "@/components/RePictureUpload";
 
+import { dialogSize } from "@/components/ReDialog/size";
 /** 头像上传弹窗（裁剪 → 上传 → 回刷资料；自 useUserProfileForm 拆出，行为不变） */
 export function useAvatarUpload({
   api,
@@ -25,7 +26,7 @@ export function useAvatarUpload({
   const handleUpload = (row: RecordType) => {
     addDialog({
       title: t("userinfo.updateAvatar", { user: row.username }),
-      width: "40%",
+      width: dialogSize("sm"),
       draggable: true,
       fullscreen: deviceDetection(),
       // destroyOnClose: true,

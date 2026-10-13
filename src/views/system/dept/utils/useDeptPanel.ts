@@ -15,6 +15,7 @@ import { buildDeptActionGroups, type DeptActionAuth } from "./deptActions";
 import { buildDeptMetaItems, buildDeptProfileData } from "./deptPanel";
 import type { DeptRow } from "./types";
 
+import { drawerSize } from "@/components/ReDialog/size";
 /**
  * 部门抽屉：授权预览与行内「管理」入口（自 utils/hook 拆出，行为不变）。
  *
@@ -41,7 +42,7 @@ export function useDeptPanel({
   const openPreview = (row: DeptRow) => {
     addDrawer({
       title: t("permissionPreview.deptTitle"),
-      size: "70%",
+      size: drawerSize("xl"),
       destroyOnClose: true,
       hideFooter: true,
       contentRenderer: () => h(DeptPermissionPreview, { row })

@@ -5,6 +5,7 @@ import Info from "~icons/ri/information-line";
 import { useApiApplication } from "./utils/hook";
 import ApiUsageDrawer from "./components/ApiUsageDrawer.vue";
 
+import { dialogSize } from "@/components/ReDialog/size";
 defineOptions({
   name: "IntegrationApiApp"
 });
@@ -56,7 +57,7 @@ const {
     <el-dialog
       v-model="credentialDialog"
       :title="t('apiApp.credentialTitle')"
-      width="620px"
+      :width="dialogSize('md')"
     >
       <el-alert
         class="mb-3"

@@ -3,6 +3,7 @@ import { addDrawer } from "@/components/ReDrawer";
 
 import PreviewDrawer from "./PreviewDrawer.vue";
 
+import { drawerSize } from "@/components/ReDialog/size";
 /** 打开预览抽屉的行数据（类型由后端 `preview_kind` 判定，前端不重复判 mime） */
 export type PreviewRow = {
   pk: string | number;
@@ -19,7 +20,7 @@ export type PreviewRow = {
 export function openPreviewDrawer(row: PreviewRow) {
   addDrawer({
     title: `${row.filename ?? ""} - ${row.pk}`.replace(/^-\s*/, ""),
-    size: "50%",
+    size: drawerSize("md"),
     destroyOnClose: true,
     closeOnClickModal: true,
     hideFooter: true,

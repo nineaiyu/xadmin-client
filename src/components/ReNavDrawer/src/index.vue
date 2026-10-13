@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { drawerSize } from "@/components/ReDialog/size";
+
 /**
  * 窄屏导航抽屉（两栏布局的窄屏形态）。
  *
@@ -15,7 +17,7 @@ const props = withDefaults(
     /** 抽屉宽度（el-drawer 的 size 语义） */
     width?: string;
   }>(),
-  { narrow: false, width: "80%" }
+  { narrow: false, width: drawerSize("xl") }
 );
 
 const visible = defineModel<boolean>({ required: true });

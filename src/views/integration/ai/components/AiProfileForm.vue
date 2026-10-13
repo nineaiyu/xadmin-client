@@ -95,7 +95,7 @@ defineExpose({ getPayload });
 </script>
 
 <template>
-  <el-form label-width="120px">
+  <el-form label-width="130px">
     <el-divider content-position="left">{{
       t("aiConfig.sectionBasic")
     }}</el-divider>

@@ -90,6 +90,8 @@
   "DynamicTitle": true,
   "EnablePreferences": true,
   "PreferencesPosition": "header",
+  "PreferencesStickyNav": true,
+  "EnableCopyPreferences": true,
   "PageTransition": "fade-transform",
   "TransitionProgress": true,
   "TransitionLoading": false,

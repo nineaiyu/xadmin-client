@@ -5,6 +5,7 @@ import type { useI18n } from "vue-i18n";
 import { addDialog } from "@/components/ReDialog";
 import ImBindingPanel from "../components/ImBindingPanel.vue";
 
+import { dialogSize } from "@/components/ReDialog/size";
 type TFunction = ReturnType<typeof useI18n>["t"];
 
 /**
@@ -15,7 +16,7 @@ export function useUserImBinding({ t }: { t: TFunction }) {
   function handleImBinding(row: RecordType) {
     addDialog({
       title: t("imBinding.title", { user: row.username }),
-      width: "560px",
+      width: dialogSize("md"),
       draggable: true,
       destroyOnClose: true,
       closeOnClickModal: false,

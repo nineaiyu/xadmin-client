@@ -4,13 +4,14 @@ import PermissionPreview from "../components/PermissionPreview.vue";
 import type { useI18n } from "vue-i18n";
 import type { RecordType } from "plus-pro-components";
 
+import { drawerSize } from "@/components/ReDialog/size";
 type TFunction = ReturnType<typeof useI18n>["t"];
 
 /** 用户权限预览抽屉（统一走 ReDrawer，不在页面模板手挂 el-drawer） */
 export function openUserPreview({ t, row }: { t: TFunction; row: RecordType }) {
   addDrawer({
     title: t("permissionPreview.userTitle"),
-    size: "70%",
+    size: drawerSize("xl"),
     destroyOnClose: true,
     hideFooter: true,
     contentRenderer: () => h(PermissionPreview, { row })

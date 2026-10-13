@@ -5,6 +5,7 @@ import type { RecordType } from "plus-pro-components";
 import { addDrawer } from "@/components/ReDrawer";
 import { METRIC_LABEL_KEYS, metricEntriesOf, metricText } from "./display";
 
+import { drawerSize } from "@/components/ReDialog/size";
 /**
  * 账号安全风险详情抽屉（自 useAccountRisk 拆出，行为不变）：
  * 展示风险说明（description）/ 建议（suggestion）与量化指标（键名走 i18n）。
@@ -16,7 +17,7 @@ export function useRiskDetail() {
     const detail = (row?.detail ?? {}) as RecordType;
     addDrawer({
       title: t("accountRisk.detailTitle", { name: row?.user_display || "-" }),
-      size: "40%",
+      size: drawerSize("sm"),
       destroyOnClose: true,
       hideFooter: true,
       props: { row },

@@ -186,7 +186,7 @@ defineExpose({ getPayload });
     ref="formRef"
     :model="form"
     :rules="rules"
-    label-width="96px"
+    label-width="90px"
     class="pr-4"
   >
     <el-form-item :label="t('approvalRule.formName')" prop="name">

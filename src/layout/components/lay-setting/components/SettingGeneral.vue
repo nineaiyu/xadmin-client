@@ -14,6 +14,7 @@ import { emitter } from "@/utils/mitt";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useNav } from "@/layout/hooks/useNav";
 import { resolveHeaderMode } from "@/layout/hooks/layoutModes";
+import { resolveTimezoneOptions } from "@/layout/hooks/timezoneOptions";
 import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
 import { useConfigureStorage } from "../hooks/useConfigureStorage";
 import PrefBlock from "./PrefBlock.vue";
@@ -60,6 +61,13 @@ const languageOptions = computed(() => [
   { label: "简体中文", value: "zh" },
   { label: "English", value: "en" }
 ]);
+
+/** 时区（顶栏时区组件与时钟展示消费同一存储项；空串 = 跟随浏览器） */
+const timezone = computed<string>({
+  get: () => String($storage?.configure?.timezone ?? ""),
+  set: value => storageConfigureChange("timezone", value)
+});
+const timezoneOptions = computed(() => resolveTimezoneOptions());
 
 /** 顶栏自动隐藏：实时生效（useHeaderAutoHide 读同一存储项）；
  *  与「布局」页签的顶栏模式四态同源——同时镜像 `headerMode`，两个入口不互相覆盖 */
@@ -133,6 +141,14 @@ const preferencesPositionOptions = computed<PrefChoiceOption[]>(() => [
   { value: "none", label: t("layout.preferencesPositionNone") }
 ]);
 
+/** 面板「复制偏好」按钮显隐（对齐 vben `enableCopyPreferences`） */
+const copyPreferencesEnabled = computed(
+  () => $storage?.configure?.enableCopyPreferences ?? true
+);
+function onCopyPreferencesChange(value: string | number | boolean) {
+  storageConfigureChange("enableCopyPreferences", Boolean(value));
+}
+
 /** 自动检查更新（本地偏好）：后台轮询部署端版本；切换后经全局事件实时启停（App.vue） */
 const autoCheckUpdates = ref(checkUpdatesEnabled());
 function onAutoCheckUpdatesChange(value: string | number | boolean) {
@@ -172,6 +188,25 @@ async function checkUpdate() {
         <el-select v-model="language" size="small" style="width: 132px">
           <el-option
             v-for="item in languageOptions"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
+        </el-select>
+      </template>
+    </PrefRow>
+    <PrefRow :label="t('layout.timezone')" :tip="t('layout.timezoneTip')">
+      <template #control>
+        <el-select
+          v-model="timezone"
+          size="small"
+          style="width: 180px"
+          filterable
+          :placeholder="t('layout.timezoneFollowBrowser')"
+        >
+          <el-option :label="t('layout.timezoneFollowBrowser')" value="" />
+          <el-option
+            v-for="item in timezoneOptions"
             :key="item.value"
             :label="item.label"
             :value="item.value"
@@ -242,6 +277,20 @@ async function checkUpdate() {
     <PrefRow :label="t('layout.currentVersion')">
       <template #control>
         <span class="pref-about__version">{{ version }}</span>
+      </template>
+    </PrefRow>
+    <PrefRow
+      :label="t('layout.enableCopyPreferences')"
+      :tip="t('layout.enableCopyPreferencesTip')"
+    >
+      <template #control>
+        <el-switch
+          :model-value="copyPreferencesEnabled"
+          :active-text="t('labels.active')"
+          :inactive-text="t('labels.inactive')"
+          inline-prompt
+          @change="onCopyPreferencesChange"
+        />
       </template>
     </PrefRow>
     <PrefRow

@@ -109,7 +109,24 @@ const SERVER_PERSISTED_FIELDS = [
   "ShortcutSidebarKeys",
   "ShortcutSearchKeys",
   "ShortcutPreferencesKeys",
-  "ShortcutLogoutKeys"
+  "ShortcutLogoutKeys",
+  "PreferencesStickyNav",
+  "EnableCopyPreferences",
+  "Grey",
+  "Weak",
+  "HideTabs",
+  "HideFooter",
+  "ShowLogo",
+  "TagsStyle",
+  "MultiTagsCache",
+  "Stretch",
+  "HeaderAutoHide",
+  "CompactMode",
+  "TagsMiddleClickClose",
+  "TagsWheelSwitch",
+  "DynamicTitle",
+  "PageTransition",
+  "ShortcutSearch"
 ] as const;
 
 /** layout 命名空间：与导航皮肤/主题色一起持久化的字段 */
