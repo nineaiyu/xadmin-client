@@ -20,7 +20,7 @@
 // 守护测试：src/style/__tests__/animateSubset.spec.ts。
 //
 // 用法：node scripts/gen-animate-subset.mjs [--report]
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import postcss from "postcss";
@@ -33,6 +33,16 @@ const ANIMATES_TS = join(
 );
 const OUT = join(ROOT, "src/style/animate-subset.css");
 const reportOnly = process.argv.includes("--report");
+
+// 依赖层镜像（Dockerfile-base）只带 scripts 与依赖清单、无 src 源码：源文件缺失
+// 时跳过生成（与 gen-icon-subset 同口径），真实构建由 prebuild（有完整源码）
+// 重新生成并保持 fail-closed（清单动画缺失仍退出码 1）。
+if (!existsSync(ANIMATES_TS)) {
+  console.log(
+    "[animate-subset] 未找到 ReAnimateSelector/src/animate.ts（依赖层镜像无源码），跳过子集生成"
+  );
+  process.exit(0);
+}
 
 /** 清单：选择器可选项 = 页面级过渡的完整取值范围 */
 const names = [
